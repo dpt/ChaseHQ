@@ -185,6 +185,9 @@ t $6B47
 b $6B4C
 t $6B56
 b $6B5A
+
+B $6B88,32 Graphic: Turn sign, stored inverted (32x32)
+
 t $6DE7
 b $6DEC
 t $6DED
@@ -248,15 +251,15 @@ b $7AE8
 t $7B22
 b $7B28
 t $7B2A
+
 b $7B2D
-t $7C89
-b $7C9D
-t $7CE2
-b $7CE5
-t $7D3D
-b $7D51
-t $7DF1
-b $7E05
+B $7BE9,160 Graphic: Nancy's face (32x40)
+B $7C9D,160 Graphic: Raymond's face (32x40)
+B $7D52,160 Graphic: Tony's face (32x40)
+
+
+
+
 c $8014
 c $8088
 c $80B9
@@ -535,42 +538,9 @@ c $A0D6
 c $A112
 c $A11E
 b $A139
-t $A27A
-b $A27E
-t $A28A
-b $A28D
-t $A29B
-b $A2A4
-t $A2AA
-b $A2AD
-t $A2CB
-b $A2CE
-t $A2D2
-b $A2E0
-t $A2E2
-b $A2E6
-t $A2E7
-b $A2EA
-t $A2F9
-b $A2FE
-t $A310
-b $A317
-t $A318
-b $A31C
-t $A326
-b $A330
-t $A341
-b $A34C
-t $A353
-b $A35A
-t $A35E
-b $A363
-t $A36F
-b $A37C
-t $A384
-b $A387
-t $A388
-b $A38F
+
+b $A27A Font: 8x7 bitmap of symbols(!(),.) then 0-9A-Z
+
 c $A399
 c $A579
 c $A60E
@@ -676,18 +646,25 @@ t $CE58
 b $CE5E
 t $CE6A
 b $CE71
-t $E028
-b $E02E
-t $E06A
-b $E070
-t $E088
-b $E08E
-t $E0A0
-b $E0A4
+
+b $D20E Smoke plume. Perhaps 64x64 in total, but includes masks.
+b $DD68 Striped thing. Perhaps 14x36?
+
+b $DF62 LED numeric font used for scores
+B $DF62,150 8x15 pixels digits 0..9 only
+
+b $DFF8 Mini font used for in-game messages
+B $DFF8,174 8x6 pixels (though the digits are thinner than 8) A-Z + (probably 3 symbols)
+
 t $E1B8
 b $E1BC
 t $E1BF
 b $E1C3
+
+b $E35D (roughly) spiral inward animation mask used for transitions
+b $E3BD circle expanding animation mask used for transitions
+b $E540 looks like a table of flipped bytes (but not quite)
+
 t $E601
 b $E607
 t $E617
@@ -749,65 +726,38 @@ b $E8BC
 t $E8D8
 b $E8DC
 c $E90F
-b $E9B4
-t $E9B6
-b $E9C3
-t $E9C5
-b $E9DF
-t $E9E2
-b $E9EE
-t $E9F1
-b $EA05
-t $EA08
-b $EA1A
-t $EA1C
-b $EA31
-t $EA34
-b $EA3F
-t $EA42
-b $EA50
-t $EA53
-b $EA62
-t $EA65
-b $EA71
-t $EA74
-b $EA80
-t $EA83
-b $EA8F
-t $EA91
-b $EA9E
-t $EAA0
-b $EAAD
-t $EAB0
-b $EABC
-t $EABF
-b $EACB
-t $EACE
-b $EADA
-t $EAE4
-b $EAE7
-t $EAE9
-b $EB02
-t $EB05
-b $EB0F
-t $EB11
-b $EB2F
-t $EB31
-b $EB46
-t $EB49
-b $EB5D
-t $EB60
-b $EB76
-t $EB79
-b $EB85
-t $EB88
-b $EBA3
-t $EBA6
-b $EBBB
-t $EBBD
-b $EBDD
-t $EBE0
-b $EBF5
+
+b $E9B4 Messages
+T $E9B7,13 "STOP THE TAPE"
+T $E9C7,25 "PRESS ANY KEY TO CONTINUE"
+T $E9E4,11 "CHASE  H.Q."
+T $E9F2,20 "1. SINCLAIR JOYSTICK"
+T $EA09,18 "2. CURSOR JOYSTICK"
+T $EA1E,20 "3. KEMPSTON JOYSTICK"
+T $EA35,11 "4. KEYBOARD"
+T $EA43,14 "5. DEFINE KEYS"
+T $EA55,14 "REDEFINE  KEYS"
+T $EA66,12 "GEAR........"
+T $EA75,12 "ACCELERATE.."
+T $EA84,12 "BRAKE......."
+T $EA93,12 "LEFT........"
+T $EAA2,12 "RIGHT......."
+T $EAB1,12 "QUIT........"
+T $EAC0,12 "PAUSE......."
+T $EACF,12 "TURBO......."
+T $EAE4,4 "TEST"
+T $EAEB,24 "CHASE H.Q.     TEST MODE"  ooh!
+T $EB06,10 "IN GAME..."
+T $EB13,29 "PRESS 1....... RESTART LEVEL."
+T $EB33,20 "2....... NEXT LEVEL."
+T $EB4A,20 "3....... END SCREEN."
+T $EB61,22 "4....... EXTRA CREDIT."
+T $EB7B,11 "CHASE  H.Q."
+T $EB89,27 "PLEASE NOTE CONTROL OPTIONS"
+T $EBA7,21 "CANNOT BE REMODIFIED."
+T $EBBF,31 "ARE YOU HAPPY WITH YOUR CHOICE."
+T $EBE1,21 "PRESS YES(Y) OR NO(N)"
+
 c $EBF7
 c $EBFF
 c $EC2C
