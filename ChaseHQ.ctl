@@ -1,107 +1,55 @@
 ; Chase H.Q. by Ocean/Taito. Spectrum 48K version.
 ;
 ; Strings are top bit set terminated ASCII.
+; $F000 is a screen buffer. There are a column spare either side of the screen...
+;
+
+; RELATED GAMES
+; -------------
+; "WEC Le Mans" - earlier game by the same authors.
+; https://www.mobygames.com/game/15167/wec-le-mans-24/
+;
+; "Batman The Movie" - same authors worked on the driving sequences for that ST/Amiga game.
+;
+; "Burnin' Rubber" (1990) a later Amstrad game by JOBBEEE.
+; https://www.mobygames.com/game/70894/burnin-rubber/
+
+; OTHER VERSIONS
+; --------------
+; Amstrad CPC version is by the same authors.
+;
+; Code = JOBBEEE aka John O'Brien  https://www.mobygames.com/person/28679/john-obrien/
+; Graphics = BILL aka Bill Harbison
+; Music = Jon Dunn
+;
+; http://reassembler.blogspot.com/2012/06/interview-with-spectrum-legend-bill.html
+
+; RESEARCH
+; --------
+; https://www.mobygames.com/game/9832/chase-hq/
+;
+; https://spectrumcomputing.co.uk/entry/903/ZX-Spectrum/Chase_HQ
+; Known Errors:
+; Bugfix provided by Russell Marks:
+; When you finish a stage, a hidden bonus is sometimes given randomly. At
+; address $8b3d, instructions EX AF,AF' and LD B,A are in the wrong order.
+; Therefore calculation of time bonus is using random value from A' instead of
+; low digit from remaining time. Fixed with POKE 35645,71: POKE 35646,8.
+
 
 @ $4000 start
 @ $4000 org
-b $4000
-t $4310
-b $4314
-t $4512
-b $4515
-t $504A
-b $504D
-t $5055
-b $5058
-t $5059
-b $505C
-t $514A
-b $514D
-t $5155
-b $5158
-t $5159
-b $515C
-t $524A
-b $524D
-t $5255
-b $5258
-t $5275
-b $5278
-t $534A
-b $534D
-t $5355
-b $5358
-t $5375
-b $5378
-t $5475
-b $5478
-t $5479
-b $547C
-t $5575
-b $5578
-t $5579
-b $557C
-t $5646
-b $5649
-t $564E
-b $5651
-t $565A
-b $565D
-t $5746
-b $5749
-t $574E
-b $5751
-t $575A
-s $575D
-t $5800
-b $5820
-t $5825
-b $5836
-t $586D
-b $5876
-t $5885
-b $588C
-t $588D
-b $5890
-t $58A0
-b $58A6
-t $58A7
-b $58AC
-t $58B0
-b $58B6
-t $58BA
-s $5900
-t $598A
-s $598E
-t $598F
-s $5992
-t $5993
-b $5997
-t $5A44
-s $5A49
-t $5A4A
-s $5A4D
-t $5A4E
-b $5A51
-t $5A55
-b $5A5D
-t $5B91
-b $5B95
-t $5BFA
-b $5C00
-t $5C3F
-b $5C42
-t $5D0C
-b $5D10
-t $5D11
-b $5D18
-t $5D36
-b $5D39
-t $5D3A
+b $4000 Screen memory
 
-b $5D3E
-W $5D3E,2 -> "IS FLEEING ..."
-W $5D40,2 -> "VEHICLE IS..."
+b $5B00 Graphics
+B $5B00,260 Hill backdrop (80x26?)
+B $5C04,260 Another hill backdrop (80x26?) looks similar but pre-shifted
+
+b $5D3A
+W $5D3A,2 Points at "THIS IS NANCY..."
+W $5D3C,2 Points at "EMERGENCY HERE..."
+W $5D3E,2 Points at "IS FLEEING ..."
+W $5D40,2 Points at "VEHICLE IS..."
 
 b $5D45 Messages
 T $5D45,40 "THIS IS NANCY AT CHASE H.Q. WE'VE GOT AN"
@@ -112,114 +60,14 @@ T $5DF4,27 "OK! YOU ARE UNDER ARREST ON"
 T $5E17,26 "SUSPICION OF FIRST DEGREE "
 T $5E38,6 "MURDER"
 
-b $5E3E
-t $5E45
-b $5E49
-t $5E62
-b $5E65
-t $5E69
-b $5E6C
-t $5E70
-b $5E73
-t $5EF1
-b $5EF4
-t $5EF6
-b $5EFA
-t $5EFB
-b $5EFF
-t $5FE7
-b $5FEA
-t $5FF4
-b $5FF8
-t $6197
-b $619A
-t $61EA
-b $61F1
-t $6214
-b $6217
-t $6221
-b $6225
-t $6228
-b $622C
-t $622F
-b $6232
-t $6237
-b $623B
-t $6256
-b $6259
-t $6275
-b $6278
-t $6292
-b $6295
-t $642A
-b $643E
-t $6448
-b $644C
-t $6465
-b $6468
-t $6548
-b $654B
-t $6591
-b $6594
-t $65C6
-b $65C9
-t $6658
-b $665E
-t $673E
-b $6741
-t $6895
-b $6899
-t $68A5
-b $68AA
-t $68BE
-b $68C2
-t $6AF6
-b $6AF9
-t $6B0C
-b $6B0F
-t $6B24
-b $6B29
-t $6B33
-b $6B37
-t $6B47
-b $6B4C
-t $6B56
-b $6B5A
-
-B $6B88,32 Graphic: Turn sign, stored inverted (32x32)
-
-t $6DE7
-b $6DEC
-t $6DED
-b $6DF1
-t $6F1A
-b $6F1E
-t $6F3D
-b $6F41
-t $701F
-b $7023
-t $7026
-b $702A
-t $7060
-b $7063
-t $7181
-b $7185
-t $71A4
-b $71A8
-t $71AB
-b $71AF
-t $71F1
-b $71F5
-t $71F8
-b $71FC
-t $71FF
-b $7203
-t $722A
-b $722D
-t $73A4
-b $73A7
-t $73D4
-b $73D8
+b $5E3E Graphics. All are stored inverted.
+B $638A,160 Perp w/ sunglasses (32x40)
+B $64BC Lamborghini 48x30?
+B $6570 Lamborghini small 40x20?
+B $660B Truck 48x40?
+B $66F5 Truck 40x30?
+B $6804 Car 48x20?
+B $6B88,32 Turn sign (32x32)
 
 b $779D Pre-game screen messages
 T $779D,28 "CHASE H.Q. MONITORING SYSTEM"
@@ -308,6 +156,10 @@ c $860F
 c $865A
 b $86F6
 c $87DC
+
+c $8860 this clears the flashing lights
+; flashing lights are 5 attrs wide, 4 high
+
 c $8876
 c $88D5
 c $88E2
@@ -345,6 +197,8 @@ c $8D8F
 c $8DD8
 c $8DF9
 c $8E29
+;$8E35 writes attrs to screen
+
 c $8E42
 c $8E6C Message printing related. Increments HL then loads A,E,D,C,B from where HL points.
 c $8E7E
@@ -531,9 +385,12 @@ c $9F47
 c $9F99
 c $9FA3
 c $9FB4
+
+@ $A03D label=double_height_glyph
+c $A03D Plots double-height glyphs. DE->screen HL->font def
+
 s $A0CC
-t $A0CD
-b $A0D0
+b $A0CD
 c $A0D6
 c $A112
 c $A11E
@@ -554,10 +411,6 @@ c $A955
 c $A97E
 c $A9DE
 b $AA38
-t $AA5E
-b $AA61
-t $AA98
-b $AA9B
 c $AAC6
 c $AB33
 c $AB9A
@@ -566,8 +419,6 @@ c $AC3C
 b $ACDB
 t $ACDC
 b $ACE3
-t $ACE8
-b $ACEB
 c $AD0D
 c $AD4B
 c $AD51
@@ -595,13 +446,16 @@ b $B79C
 c $B7A4
 c $B7EF
 b $B828
-t $B82A
-b $B82F
 c $B848
 c $B8D2
 c $B9F4
 c $BB69
-c $BC3E
+
+@ $BC3E label=draw_screen
+c $BC3E Copies the backbuffer at $F000 to the screen.
+C $BC3E Point #REGhl at screen.
+C $BC42 Point #REGhl' at backbuffer.
+
 c $BDC1
 c $BDFB
 c $C0E1
@@ -618,6 +472,10 @@ c $C598
 c $C60C
 c $C61D
 c $C62E
+
+;$C635 does the road plotting
+
+
 c $C813
 c $C821
 c $C86E
@@ -642,13 +500,11 @@ c $CBD6
 c $CD3A
 c $CDD6
 b $CDEC
-t $CE58
-b $CE5E
-t $CE6A
-b $CE71
 
 b $D20E Smoke plume. Perhaps 64x64 in total, but includes masks.
-b $DD68 Striped thing. Perhaps 14x36?
+b $DD6A Components of the car graphic or its shadow?. Straight on. Byte pairs of value and mask. three sets of 14 x 8 UDGs.
+b $DE12 Same, but turning.
+b $DEBA Same again, but turning hard.
 
 b $DF62 LED numeric font used for scores
 B $DF62,150 8x15 pixels digits 0..9 only
@@ -656,75 +512,15 @@ B $DF62,150 8x15 pixels digits 0..9 only
 b $DFF8 Mini font used for in-game messages
 B $DFF8,174 8x6 pixels (though the digits are thinner than 8) A-Z + (probably 3 symbols)
 
-t $E1B8
-b $E1BC
-t $E1BF
-b $E1C3
+b $E1B8
 
 b $E35D (roughly) spiral inward animation mask used for transitions
 b $E3BD circle expanding animation mask used for transitions
 b $E540 looks like a table of flipped bytes (but not quite)
 
-t $E601
-b $E607
-t $E617
-b $E61D
-t $E62D
-b $E633
-t $E643
-b $E648
-t $E659
-b $E65E
-t $E66F
-b $E676
-t $E685
-b $E68C
-t $E69B
-b $E6A2
-t $E6B5
-b $E6BF
-t $E6C0
-b $E6C6
-t $E6CB
-b $E6D5
-t $E6D6
-b $E6DC
-t $E6E2
-b $E6EB
-t $E6EC
-b $E6F2
-t $E6F7
-b $E701
-t $E702
-b $E708
-t $E70E
-b $E717
-t $E718
-b $E71E
-t $E726
-b $E72D
-t $E72E
-b $E735
-t $E73C
-b $E743
-t $E744
-b $E74B
-t $E752
-b $E75A
-t $E75B
-b $E762
-t $E78C
-b $E78F
-t $E7A2
-b $E7A5
-t $E7B8
-b $E7BB
+b $E601
 c $E839
 b $E858
-t $E8B8
-b $E8BC
-t $E8D8
-b $E8DC
 c $E90F
 
 b $E9B4 Messages
@@ -761,7 +557,10 @@ T $EBE1,21 "PRESS YES(Y) OR NO(N)"
 c $EBF7
 c $EBFF
 c $EC2C
-c $ECDA
+
+@ $ECDA label=clear_screen
+c $ECDA Clears the screen.
+
 c $ECF3
 b $ED4D
 t $EDD6
@@ -777,61 +576,29 @@ c $EF38
 b $EF5E
 c $F0C6
 b $F0FE
-t $F134
-b $F139
-t $F22C
-b $F22F
-t $F286
-b $F289
-t $F29D
-b $F2A0
-t $F2BD
-b $F2C1
-t $F2F1
-b $F2F4
-t $F3AC
-b $F3AF
-t $F423
-b $F426
-t $F496
-b $F4A1
-t $F4A7
-b $F4B8
-t $F4BF
-b $F4C7
-t $F4CE
-b $F4E2
-t $F4E8
-b $F4FD
-t $F504
-b $F518
-t $F521
-b $F52F
-t $F536
-b $F552
-t $F558
-b $F575
-t $F57C
-b $F598
-t $F59F
-b $F5BB
-t $F8CE
+
+b $F490 Credits / Score messages
+T $F497,10 "PRESS GEAR"
+T $F4A8,17 "ENTER FOR OPTIONS"
+T $F4C1,7 "CREDITS"
+T $F4CF,20 "PROGRAM      JOBBEEE"
+T $F4EA,20 "GRAPHICS        BILL"
+T $F505,20 "MUSIC       JON DUNN"
+T $F523,13 "BEST OFFICERS"
+T $F537,28 "RANK  SCORE  STAGE PLAY NAME"
+T $F55A,28 "1ST  56784010  ALL    1  JOB"
+T $F57D,28 "2ND  35678000   4     1  ABC"
+T $F5A0,28 "3RD   4340300   3     2  DEF"
+
+b $F5BC
 b $F8D2
-t $FAD0
 b $FAD3
-t $FE2B
 b $FE34
-t $FE43
 b $FE4A
-t $FE4B
 b $FE4E
-t $FE5E
 b $FE64
-t $FE65
 b $FE6A
-t $FE6E
 b $FE74
-t $FE78
 s $FEBE
 c $FEFE
 b $FF01
