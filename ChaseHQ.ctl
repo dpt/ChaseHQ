@@ -89,6 +89,13 @@ b $5B00 Graphics
 B $5B00,260 Hill backdrop (80x26?)
 B $5C04,260 Another hill backdrop (80x26?) looks similar but pre-shifted
 
+b $5D08
+W $5D10,2 -> car_lods
+W $5D12,2 -> lambo_lods
+W $5D14,2 -> truck_lods
+W $5D16,2 -> lambo_lods
+W $5D18,2 -> car_lods
+
 b $5D3A
 W $5D3A,2 Points at "THIS IS NANCY..."
 W $5D3C,2 Points at "EMERGENCY HERE..."
@@ -124,36 +131,106 @@ W $5E34,2 Backbuffer address
 W $5E36,2 Attribute address
 T $5E38,6 "MURDER"
 
-b $5E3E Graphics. All are stored inverted except noted.
-B $638A,160 Perp w/ sunglasses (32x40). Stored top-down.
+b $5E3E Graphics. All are stored inverted except where noted.
 ;
+W $5E41,2 Pointer to tumbleweed LODs table
+W $5E44,2 Pointer to another LOD table
+
+;
+B $638A,160 Perp w/ sunglasses (32x40). Stored top-down.
+B $642A TBD
+;
+; Flags in these LOD structures: 1 seems to indicate
+; interleaved masks, 2 is probably to flip
+;
+@ $643E label=lambo_lods
 B $643E Width (bytes)
-B $643F Flags (TBD, seems to indicate stripy masks)
+B $643F Flags
 B $6440 Height (pixels)
 W $6441,2 Bitmap
 W $6443,2 Mask
-L $643E,7,18
+L $643E,7,6
 ;
-B $64BC Lamborghini_1 (48x30)
-B $6570 Lamborghini_2 (40x22)
-B $65DE Lamborghini_3 (24x15)
-B $660B Truck_1 (48x39)
-B $66F5 Truck_2 (40x29)
-B $6786 Truck_3 (24x20)
-B $67C2 Car_1 (48x31)
-B $687C Car_2 (40x22)
-B $68EA Car_3 (24x16)
-B $691A Lamborghini_4 perhaps (24x8)
-B $694A Lamborghini_5 mask (24x8)
-B $697A TBD4
-B $69AA TBD5
-B $69DA TBD6
-B $6A10 TBD7
-B $6B88,32 Turn sign (32x32)
-B $6C70 Smaller turn sign
+@ $6468 label=truck_lods
+B $6468 Width (bytes)
+B $6469 Flags
+B $646A Height (pixels)
+W $646B,2 Bitmap
+W $646D,2 Mask
+L $6468,7,6
+;
+@ $6492 label=car_lods
+B $6492 Width (bytes)
+B $6493 Flags
+B $6494 Height (pixels)
+W $6495,2 Bitmap
+W $6497,2 Mask
+L $6492,7,6
+;
+B $64BC,180 Lamborghini_1 (48x30)
+B $6570,110 Lamborghini_2 (40x22)
+B $65DE,45 Lamborghini_3 (24x15)
+B $660B,234 Truck_1 (48x39)
+B $66F5,145 Truck_2 (40x29)
+B $6786,60 Truck_3 (24x20)
+B $67C2,186 Car_1 (48x31)
+B $687C,110 Car_2 (40x22)
+B $68EA,48 Car_3 (24x16)
+B $691A,24 Lamborghini_4 perhaps (24x8)
+B $694A,24 Lamborghini_5 mask (24x8)
+B $697A,24 Truck_4/5
+B $69AA,24 Truck_4/5 mask
+B $69DA,27 Car_4/5
+B $6A10,27 Car_4/5 mask
+B $6932 TBD
+B $6962 TBD
+B $6992 TBD
+B $69C2 TBD
+B $69C2 TBD
+B $69F5 TBD
+B $6A2B mystery block
+;
+B $6A46 Width (bytes)
+B $6A47 Flags
+B $6A48 Height (pixels)
+W $6A49,2 Bitmap
+W $6A4B,2 Mask
+L $6A46,7,12
+;
+B $6A9A,10 bitmap interleaved
+B $6AA4 TBD
+B $6AAE,8 bitmap interleaved
+B $6ABE,8 mask
+B $6ACE,6 bitmap
+B $6ADA,6 mask
+B $6AE6,2 bitmap
+B $6AEA,2 mask
+B $6AEE,1 bitmap
+B $6AF0,1 mask
+B $6AF2,1 bitmap
+B $6AF4,1 mask
+B $6AF5 TBD
+;
+B $6B22 Width (bytes)
+B $6B23 Flags
+B $6B24 Height (pixels)
+W $6B25,2 Bitmap
+W $6B27,2 Mask
+L $6B22,7,10
+;
+B $6B68,160 Turn sign (32x40)
+B $6C08,90 Turn sign (24x30)
+B $6C62,40 Turn sign (16x20)
+B $6C8A,32 TBD 16x16
+B $6CAA TBD
+B $6CCA,26 TBD 16x13
+B $6CE4 TBD
+B $6CFE,26 TBD 16x13
+;
+B $6D18 TBD looks like graphics 
 ;
 B $6D82 Width (bytes)
-B $6D83 Flags (TBD, seems to indicate stripy masks)
+B $6D83 Flags
 B $6D84 Height (pixels)
 W $6D85,2 Bitmap
 W $6D87,2 Mask
@@ -163,8 +240,18 @@ B $6DAC,32 Tumbleweed_1 (16x16)
 B $6DCC,22 Tumbleweed_2 (16x11)
 B $6DE2,9 Tumbleweed_3 (8x9)
 B $6DEB,7 Tumbleweed_4 (8x7)
+;
+B $6DF2 Width (bytes)
+B $6DF3 Flags
+B $6DF4 Height (pixels)
+W $6DF5,2 Bitmap
+W $6DF7,2 Mask
+L $6DF2,7,6
 
-@ $7798 label=pre_game_messages<D-2>
+
+
+L $6D82,7,6
+@ $7798 label=pre_game_messages
 b $7798 Pre-game screen messages
 ;
 B $7798,1 flags? attrs?   text is white
