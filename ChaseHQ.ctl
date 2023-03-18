@@ -124,14 +124,45 @@ W $5E34,2 Backbuffer address
 W $5E36,2 Attribute address
 T $5E38,6 "MURDER"
 
-b $5E3E Graphics. All are stored inverted.
-B $638A,160 Perp w/ sunglasses (32x40)
-B $64BC Lamborghini 48x30?
-B $6570 Lamborghini small 40x20?
-B $660B Truck 48x40?
-B $66F5 Truck 40x30?
-B $6804 Car 48x20?
+b $5E3E Graphics. All are stored inverted except noted.
+B $638A,160 Perp w/ sunglasses (32x40). Stored top-down.
+;
+B $643E Width (bytes)
+B $643F Flags (TBD, seems to indicate stripy masks)
+B $6440 Height (pixels)
+W $6441,2 Bitmap
+W $6443,2 Mask
+L $643E,7,18
+;
+B $64BC Lamborghini_1 (48x30)
+B $6570 Lamborghini_2 (40x22)
+B $65DE Lamborghini_3 (24x15)
+B $660B Truck_1 (48x39)
+B $66F5 Truck_2 (40x29)
+B $6786 Truck_3 (24x20)
+B $67C2 Car_1 (48x31)
+B $687C Car_2 (40x22)
+B $68EA Car_3 (24x16)
+B $691A Lamborghini_4 perhaps (24x8)
+B $694A Lamborghini_5 mask (24x8)
+B $697A TBD4
+B $69AA TBD5
+B $69DA TBD6
+B $6A10 TBD7
 B $6B88,32 Turn sign (32x32)
+B $6C70 Smaller turn sign
+;
+B $6D82 Width (bytes)
+B $6D83 Flags (TBD, seems to indicate stripy masks)
+B $6D84 Height (pixels)
+W $6D85,2 Bitmap
+W $6D87,2 Mask
+L $6D82,7,6
+;
+B $6DAC,32 Tumbleweed_1 (16x16)
+B $6DCC,22 Tumbleweed_2 (16x11)
+B $6DE2,9 Tumbleweed_3 (8x9)
+B $6DEB,7 Tumbleweed_4 (8x7)
 
 @ $7798 label=pre_game_messages<D-2>
 b $7798 Pre-game screen messages
@@ -157,11 +188,13 @@ W $77D0,2 Attributes address
 T $77D2,6 "SIGNAL"
 
 b $77D8
-B $7BE9,160 Graphic: Nancy's face (32x40)
+B $78B6,64 8 tiles used for borders on the pregame screen
+
+B $7BE9,160 Graphic: Nancy's face (32x40). Stored top-down.
 B $7C89 unknown
-B $7C9D,160 Graphic: Raymond's face (32x40)
+B $7C9D,160 Graphic: Raymond's face (32x40). Stored top-down.
 B $7D3D unknown
-B $7D52,160 Graphic: Tony's face (32x40)
+B $7D52,160 Graphic: Tony's face (32x40). Stored top-down.
 B $7DF2 unknown
 
 c $8014
