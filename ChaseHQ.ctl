@@ -4,6 +4,16 @@
 ; $F000 is a screen buffer. There are a column spare either side of the screen...
 ;
 
+; AUTHORS
+; -------
+; Code = JOBBEEE aka John O'Brien  https://www.mobygames.com/person/28679/john-obrien/
+; Graphics = BILL aka Bill Harbison
+; Music = JON DUNN aka Jonathan Dunn
+
+; OTHER VERSIONS
+; --------------
+; The Amstrad CPC version is by the same authors.
+
 ; RELATED GAMES
 ; -------------
 ; "WEC Le Mans" - earlier game by the same authors.
@@ -14,28 +24,62 @@
 ; "Burnin' Rubber" (1990) a later Amstrad game by JOBBEEE.
 ; https://www.mobygames.com/game/70894/burnin-rubber/
 
-; OTHER VERSIONS
-; --------------
-; Amstrad CPC version is by the same authors.
-;
-; Code = JOBBEEE aka John O'Brien  https://www.mobygames.com/person/28679/john-obrien/
-; Graphics = BILL aka Bill Harbison
-; Music = Jon Dunn
-;
-; http://reassembler.blogspot.com/2012/06/interview-with-spectrum-legend-bill.html
-
 ; RESEARCH
 ; --------
 ; https://www.mobygames.com/game/9832/chase-hq/
 ;
+; http://reassembler.blogspot.com/2012/06/interview-with-spectrum-legend-bill.html
+;
 ; https://spectrumcomputing.co.uk/entry/903/ZX-Spectrum/Chase_HQ
 ; Known Errors:
 ; Bugfix provided by Russell Marks:
-; When you finish a stage, a hidden bonus is sometimes given randomly. At
+; "When you finish a stage, a hidden bonus is sometimes given randomly. At
 ; address $8b3d, instructions EX AF,AF' and LD B,A are in the wrong order.
 ; Therefore calculation of time bonus is using random value from A' instead of
-; low digit from remaining time. Fixed with POKE 35645,71: POKE 35646,8.
+; low digit from remaining time. Fixed with POKE 35645,71: POKE 35646,8."
 
+; SECRETS
+; -------
+; Redefine keys to "SHOCKED<ENTER>" to activate test/cheat mode.
+
+
+; THINGS TO LOCATE
+; ----------------
+; Considering this is just level 1 in 48K:
+; - input handlers
+; - music data and player
+; - most of car sprites
+; - car smoke sprites
+; - lamp post sprites
+; - tree sprites
+; - car's gravity / jump handling
+; - sound effects
+; - tunnel handling
+; - route/map
+; - road drawing code
+; - road split handling
+; - floating arrow sprite for road split
+; - floating HERE! arrow
+; - road signs
+; - desert road handling
+; - background drawing code (hills in 1st level)
+; - attract mode
+; - text overlay handling
+; - hi score stuff
+; - cheat mode ("SHOCKED")
+; - smash meter overlay handling
+; - redefine keys screen
+; - names of keys
+; - default key defs A/Z K/L
+; - message drawing code (white bar)
+; - turbo sprites/anim
+; - turbo handling
+; - level loading code
+; - level format
+; - helicopter (later level)
+; - flashing light on car
+; - ok creep! auto driving
+; - Chase HQ monitoring system
 
 @ $4000 start
 @ $4000 org
@@ -51,13 +95,33 @@ W $5D3C,2 Points at "EMERGENCY HERE..."
 W $5D3E,2 Points at "IS FLEEING ..."
 W $5D40,2 Points at "VEHICLE IS..."
 
-b $5D45 Messages
+b $5D45 Messages - Nancy
 T $5D45,40 "THIS IS NANCY AT CHASE H.Q. WE'VE GOT AN"
 T $5D6D,40 "EMERGENCY HERE. RALPH THE IDAHO SLASHER,"
 T $5D95,42 "IS FLEEING TOWARDS THE SUBURBS. THE TARGET"
 T $5DBF,46 "VEHICLE IS A WHITE BRITISH SPORTS CAR... OVER."
-T $5DF4,27 "OK! YOU ARE UNDER ARREST ON"
+
+b $5DED Messages - arrest
+B $5DED,1 frame delay until first message?
+B $5DEE,1 frame delay until next message?
+B $5DEF,1 Flags (?)
+B $5DF0,1 Attribute (black)
+W $5DF1,2 Backbuffer address
+W $5DF3,2 Attribute address
+T $5DF5,27 "OK! YOU ARE UNDER ARREST ON"
+;
+B $5E10,1 frame delay until next message?
+B $5E11,1 Flags (?)
+B $5E12,1 Attribute (black)
+W $5E13,2 Backbuffer address
+W $5E15,2 Attribute address
 T $5E17,26 "SUSPICION OF FIRST DEGREE "
+;
+B $5E31,1 frame delay until next message?
+B $5E32,1 Flags (?)
+B $5E33,1 Attribute (black)
+W $5E34,2 Backbuffer address
+W $5E36,2 Attribute address
 T $5E38,6 "MURDER"
 
 b $5E3E Graphics. All are stored inverted.
@@ -69,53 +133,47 @@ B $66F5 Truck 40x30?
 B $6804 Car 48x20?
 B $6B88,32 Turn sign (32x32)
 
-b $779D Pre-game screen messages
-T $779D,28 "CHASE H.Q. MONITORING SYSTEM"
+@ $7798 label=pre_game_messages<D-2>
+b $7798 Pre-game screen messages
+;
+B $7798,1 flags? attrs?   text is white
+W $7799,2 Backbuffer address
+W $779B,2 Attributes address
+T $779D,28 "CHASE H.Q. MONITORING SYSTEM"   text is white
+;
+B $77B9,1 flags? attrs?   text is yellow
+W $77BA,2 Backbuffer address
+W $77BC,2 Attributes address
 T $77BE,4 "TUNE"
+;
+B $77C2,1 flags? attrs?   text is yellow
+W $77C3,2 Backbuffer address
+W $77C5,2 Attributes address
 T $77C7,6 "VOLUME"
+;
+B $77CD,1 flags? attrs?   text is white
+W $77CE,2 Backbuffer address
+W $77D0,2 Attributes address
 T $77D2,6 "SIGNAL"
 
 b $77D8
-t $7812
-b $7816
-t $781D
-b $7820
-t $7825
-b $7828
-t $7829
-b $782D
-t $786E
-b $7871
-t $7947
-b $794A
-t $797F
-b $7987
-t $79D7
-b $79DF
-t $79FF
-b $7A02
-t $7AE5
-b $7AE8
-t $7B22
-b $7B28
-t $7B2A
-
-b $7B2D
 B $7BE9,160 Graphic: Nancy's face (32x40)
+B $7C89 unknown
 B $7C9D,160 Graphic: Raymond's face (32x40)
+B $7D3D unknown
 B $7D52,160 Graphic: Tony's face (32x40)
-
-
-
+B $7DF2 unknown
 
 c $8014
 c $8088
 c $80B9
 c $80C0
-b $8112
-c $814B
+c $814B Tape level loader
 
 b $8169 Mainly tape loading messages
+B $8169,1 flags? attrs?
+W $816A,2 Backbuffer address
+W $816C,2 Attribute address
 T $816E,30 "REWIND TAPE TO START OF SIDE 2"
 T $8191,10 "START TAPE"
 T $81A0,15 "SEARCHING FOR 1"
@@ -129,14 +187,84 @@ c $8204
 c $8258
 
 b $82A6 Attract mode messages
-T $82AC,8 "CHASE HQ"  Note that this is double height in-game
-T $82BA,18 "PRESS GEAR TO PLAY"  this blinks
-T $82D4,20 "PROGRAM      JOBBEEE"  all the rest are red and appear in sequence in
+; set to 0 for double height with a gap(?)
+; set to 1 for no gap at the top
+; set to 2 for single height
+; 3 for dbl
+; 4 for single height inverted colrs
+; 5 for dbl + invt
+; 6 as 5 but with the gap
+B $82A6,1 Flags (double height)
+B $82A7,1 Attribute (black)
+W $82A8,2 Backbuffer address
+W $82AA,2 Attribute address
+T $82AC,8 "CHASE HQ"
+;
+B $82B4,1 Flags (regular)
+B $82B5,1 Attribute (black)
+W $82B6,2 Backbuffer address
+W $82B8,2 Attribute address
+T $82BA,18 "PRESS GEAR TO PLAY"  (this blinks)
+;
+; all the rest are red and appear in sequence
+;
+B $82CC,1 Frame delay until the following messages start being shown (0 = 256)
+B $82CD,1 Frame delay until next message?
+;
+B $82CE,1 Flags (regular)
+B $82CF,1 Attribute (red)
+W $82D0,2 Backbuffer address
+W $82D2,2 Attribute address
+T $82D4,20 "PROGRAM      JOBBEEE"
+;
+B $82E8,1 Frame delay?
+;
+B $82E9,1 Flags (regular)
+B $82EA,1 Attribute (red)
+W $82EB,2 Backbuffer address
+W $82ED,2 Attribute address
 T $82EF,20 "GRAPHICS        BILL"
+;
+B $8303,1 Delay + stop flags?  $28
+;
+B $8304,1 Flags (regular)
+B $8305,1 Attribute (red)
+W $8306,2 Backbuffer address
+W $8308,2 Attribute address
 T $830A,20 "MUSIC       JON DUNN"
+;
+; set to 1 => perp + hero mugshots gets drawn
+; set to 2 => copyrights don't get shown
+; set to 3 => as normal
+; set to 4 => starts doing the transition stuff with random bytes
+;
+B $831E
+B $831F
+B $8320 (Frame delays as #R$82CC)
+;
+B $8322,1 Flags (regular)
+B $8323,1 Attribute (red)
+W $8324,2 Backbuffer address
+W $8326,2 Attribute address
 T $8328,23 "(C) 1989 OCEAN SOFTWARE"
+;
+B $833F Frame delay?
+;
+B $8340,1 Flags (regular)
+B $8341,1 Attribute (red)
+W $8342,2 Backbuffer address
+W $8344,2 Attribute address
 T $8346,26 "(C) 1988 TAITO CORPORATION"
+;
+B $8360 Delay + stop flags?  $28
+;
+B $8361,1 Flags (regular)
+B $8362,1 Attribute (red)
+W $8363,2 Backbuffer address
+W $8365,2 Attribute address
 T $8367,19 "ALL RIGHTS RESERVED"
+
+b $837A unknown
 
 c $83B5
 c $83B8
@@ -161,8 +289,12 @@ c $8860 this clears the flashing lights
 ; flashing lights are 5 attrs wide, 4 high
 
 c $8876
-c $88D5
-c $88E2
+
+@ $88D5 label=clear_game_attrs
+c $88D5 Clears the game screen attributes to zero
+@ $88E2 label=clear_game_screen
+c $88E2 Clears the game screen attributes and the game screen to zero
+
 c $88F2
 c $8903
 b $893C
@@ -176,28 +308,77 @@ c $8A0F
 c $8A36
 c $8A57
 c $8C3A
-b $8C58
 
-b $8C60 End of level messages
-T $8C60,22 "CLEAR BONUS      0,000"
-T $8C7D,22 "TIME BONUS      X 5000"
-T $8C9A,22 "SCORE                 "
+b $8C58 End of level messages
+B $8C5B,1 Attribute (red)
+W $8C5C,2 Backbuffer address
+W $8C5E,2 Attribute address
+T $8C60,22 "CLEAR BONUS      0,000" -- double height
+;
+B $8C78,1 Attribute (red)
+W $8C79,2 Backbuffer address
+W $8C7B,2 Attribute address
+T $8C7D,22 "TIME BONUS      X 5000" -- double height
+;
+B $8C95,1 Attribute (red)
+W $8C96,2 Backbuffer address
+W $8C98,2 Attribute address
+T $8C9A,22 "SCORE                 " -- double height
+;
+B $8CB5,1 Attribute (black)
+W $8CB6,2 Backbuffer address
+W $8CB8,2 Attribute address
 T $8CBA,26 "SIGHTING OF TARGET VEHICLE"
+;
+B $8CD9,1 Attribute (black)
+W $8CDA,2 Backbuffer address
+W $8CDC,2 Attribute address
 T $8CDE,20 "OK! PULL OVER CREEP!"
+;
+B $8CF7,1 Attribute (black)
+W $8CF8,2 Backbuffer address
+W $8CFA,2 Attribute address
 T $8CFC,9 "GAME OVER"
+;
+B $8D0A,1 Attribute (black)
+W $8D0B,2 Backbuffer address
+W $8D0D,2 Attribute address
 T $8D0F,7 "TIME UP"
-T $8D20,8 "CONTINUE"
+;
+B $8D1B,1 Attribute (black)
+W $8D1C,2 Backbuffer address
+W $8D1E,2 Attribute address
+T $8D20,9 "CONTINUE "
+;
+B $8D2B,1 Attribute (black)
+W $8D2C,2 Backbuffer address
+W $8D2E,2 Attribute address
 T $8D30,12 "THIS MISSION"
+;
+B $8D3E,1 Attribute (red)
+W $8D3F,2 Backbuffer address
+W $8D41,2 Attribute address
 T $8D43,16 "PUSH GEAR BUTTON"
+;
+B $8D55,1 Attribute (red)
+W $8D56,2 Backbuffer address
+W $8D58,2 Attribute address
 T $8D5A,22 "BEFORE TIMER REACHES 0"
+;
+B $8D72,1 Attribute (black)
+W $8D73,2 Backbuffer address
+W $8D75,2 Attribute address
 T $8D77,7 "TIME 10"
+;
+B $8D80,1 Attribute (black)
+W $8D81,2 Backbuffer address
+W $8D83,2 Attribute address
 T $8D85,8 "CREDIT  "
 
 c $8D8F
 c $8DD8
 c $8DF9
-c $8E29
-;$8E35 writes attrs to screen
+c $8E29 Spreads attribute bytes from left, filling the attrs.
 
 c $8E42
 c $8E6C Message printing related. Increments HL then loads A,E,D,C,B from where HL points.
@@ -212,8 +393,6 @@ c $901C
 c $9023
 c $904B
 b $9052
-t $9117
-b $9153
 c $916C
 c $9171
 c $924D
@@ -231,17 +410,11 @@ c $9542
 c $9567
 c $956E
 b $9575
-t $9578
-b $957B
-t $9581
-b $9584
 c $9587
 c $95B3
 c $95D0
 c $95D7
 b $95DE
-t $95E1
-b $95E4
 c $95E7
 b $9618
 c $961B
@@ -280,7 +453,7 @@ T $9879 "YOU'RE A MEDIOCRE DRIVER, BROTHER!"
 T $989B,14 "SEE YOU LATER."
 
 w $98A9 Block containing some pointers to the above strings
-W $98AB
+W $98A9
 W $98AB
 W $98AD
 W $98AF
@@ -389,12 +562,21 @@ c $9FB4
 @ $A03D label=double_height_glyph
 c $A03D Plots double-height glyphs. DE->screen HL->font def
 
-s $A0CC
-b $A0CD
-c $A0D6
-c $A112
-c $A11E
+c $A0CC
+B $A0CC
+@ $A0D6 label=keyscan
+C $A0D6 Main keyboard handler.
+C $A112 Outer keyboard loop.
+C $A11E Inner keyboard loop. #REGa = ?
+C $A11F ...B=(A&7)+1, C=5-(A>>3)
+; rotate $FE by B
+; IN that port
+; rotate the result by C
+
+
 b $A139
+
+b $A231 flag set to zero when attributes have been set
 
 b $A27A Font: 8x7 bitmap of symbols(!(),.) then 0-9A-Z
 
@@ -417,8 +599,6 @@ c $AB9A
 c $ABF6
 c $AC3C
 b $ACDB
-t $ACDC
-b $ACE3
 c $AD0D
 c $AD4B
 c $AD51
@@ -524,34 +704,65 @@ b $E858
 c $E90F
 
 b $E9B4 Messages
+;
+B $E9B4,1 flag/attr?
+W $E9B5,2 Screen position 80,96
 T $E9B7,13 "STOP THE TAPE"
+;
 T $E9C7,25 "PRESS ANY KEY TO CONTINUE"
+;
 T $E9E4,11 "CHASE  H.Q."
+;
 T $E9F2,20 "1. SINCLAIR JOYSTICK"
+;
 T $EA09,18 "2. CURSOR JOYSTICK"
+;
 T $EA1E,20 "3. KEMPSTON JOYSTICK"
+;
 T $EA35,11 "4. KEYBOARD"
+;
 T $EA43,14 "5. DEFINE KEYS"
+;
 T $EA55,14 "REDEFINE  KEYS"
+;
 T $EA66,12 "GEAR........"
+;
 T $EA75,12 "ACCELERATE.."
+;
 T $EA84,12 "BRAKE......."
+;
 T $EA93,12 "LEFT........"
+;
 T $EAA2,12 "RIGHT......."
+;
 T $EAB1,12 "QUIT........"
+;
 T $EAC0,12 "PAUSE......."
+;
 T $EACF,12 "TURBO......."
+;
 T $EAE4,4 "TEST"
-T $EAEB,24 "CHASE H.Q.     TEST MODE"  ooh!
+;
+T $EAEB,24 "CHASE H.Q.     TEST MODE"
+;
 T $EB06,10 "IN GAME..."
+;
 T $EB13,29 "PRESS 1....... RESTART LEVEL."
+;
 T $EB33,20 "2....... NEXT LEVEL."
+;
 T $EB4A,20 "3....... END SCREEN."
+;
 T $EB61,22 "4....... EXTRA CREDIT."
+;
 T $EB7B,11 "CHASE  H.Q."
+;
 T $EB89,27 "PLEASE NOTE CONTROL OPTIONS"
+;
 T $EBA7,21 "CANNOT BE REMODIFIED."
+;
 T $EBBF,31 "ARE YOU HAPPY WITH YOUR CHOICE."
+;
 T $EBE1,21 "PRESS YES(Y) OR NO(N)"
 
 c $EBF7
