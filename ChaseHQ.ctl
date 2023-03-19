@@ -295,7 +295,7 @@ B $7D52,160 Graphic: Tony's face (32x40). Stored top-down.
 B $7DF2 unknown
 
 b $8000 temporaries?
-B $8005,4 Score digits as BCD (8 digits)
+B $8005,4 Score digits as BCD (4 bytes / 8 digits)
 
 c $8014
 
@@ -421,9 +421,12 @@ c $85E4
 c $860F
 c $865A
 b $86F6
-c $87DC
 
-c $8860 this clears the flashing lights
+c $87DC
+C $8857 Point #REGhl at left light's attributes
+C $885D Point #REGhl at right light's attributes then FALL THROUGH
+@ $8860 label=clear_lights
+C $8860 Clear the lights' BRIGHT bit
 ; flashing lights are 5 attrs wide, 4 high
 
 c $8876
@@ -682,7 +685,10 @@ c $9AF1
 b $9B68
 c $9B6C
 c $9BA7
+
 c $9BCF
+C $9C70 Set remaining time to 60 (BCD)
+
 c $9CC2
 c $9CD6
 c $9CF8
@@ -691,23 +697,42 @@ t $9D51
 b $9D56
 t $9D5B
 b $9D61
+
 c $9D62
-c $9DF4
+C $9DE6 Point #REGhl at left light's attributes
+C $9DE9 Toggle its brightness
+C $9DEC Point #REGhl at right light's attributes
+C $9DEF Toggle its brightness
+
+@ $9DF4 label=toggle_light_brightness
+c $9DF4 Toggle the light's BRIGHT bit (#REGhl -> attrs)
+C $9DF4 B = 4, C = $40 (BRIGHT bit)
+C $9DF7 Toggle attribute byte on five successive locations
+C $9E0A Move to next attribute row
+C $9E0E Repeat for four rows
 
 @ $9E11 label=plot_scores_etc
 c $9E11
+@ $9E7B label=plot_scores_only
 C $9E7B Point #REGde at speed digits screen position
 C $9EB6 Plot a digit
 C $9EBA Plot a digit
 C $9EBE Plot a digit
 C $9F12 Point #REGde at score digits screen position
 C $9F16 Point #REGde at score (four BCD bytes)
-C $9F19 
+C $9F19 Point #REGhl at score digits (eight bytes)
+C $9F1E C = A = *DE; A >>= 4; if (A == *HL) ...
+C $9F1F Keep for later
+C $9F26 If different than stored then plot
+C $9F2D Examine next digit
+C $9F30 If different than stored then plot
 C $9EC1 Point #REGde at time digits position
+C $9F3B Update new digit
+C $9F3C Done
 C $9F3C Plot a digit
 C $9F45 Plot a digit
-C $9F3F inner loop ?
-C $9F45 outer loop ?
+C $9F3F Next digit (second half of a pair)
+C $9F45 Next digit (next pair)
 
 @ $9F47 label=ledfont_plot
 c $9F47 Plots an LED font digit
@@ -744,11 +769,18 @@ C $A11F ...B=(A&7)+1, C=5-(A>>3)
 
 b $A139
 B $A16E,1 used during attract mode, road gradient/angle or something?
-B $A170 used in plot_scores_etc. set to 3.
+B $A170 used in plot_scores_etc. set to 3 by $9C65.
 W $A171,2 seems to be the horizon level, possibly relative (used during attract mode)
-B $A175,8 score digits - one digit per byte, least significant first
-B $A17C used in plot_scores_etc
-B $A17E used in plot_scores_etc
+;
+B $A175,8 Score digits. One digit per byte, least significant first. This seems to be recording what's on screen so digit plotting can be bypassed.
+@ $A175 label=score_digits
+B $A175,8 Score. Stored as one digit per byte.
+@ $A17E label=time_bcd
+B $A17E,1 Time remaining. Stored as BCD.
+@ $A17F label=time_digits
+B $A17F,2 Time remaining. Stored as one digit per byte.
+@ $A181 label=distance_digits
+B $A181,4 Distance. Stored as one digit per byte.
 B $A231,1 flag set to zero when attributes have been set
 B $A24E used in plot_scores_etc
 
@@ -791,7 +823,14 @@ b $B045
 c $B063
 c $B318
 c $B457
+
 c $B4CC
+C $B4E1 Point #REGhl at left light's attributes
+C $B4E4 Toggle its brightness
+C $B4E7
+C $B4EA
+C $B4ED
+
 c $B4F0
 c $B549
 c $B58E
