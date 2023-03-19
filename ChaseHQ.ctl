@@ -37,16 +37,26 @@
 ; address $8b3d, instructions EX AF,AF' and LD B,A are in the wrong order.
 ; Therefore calculation of time bonus is using random value from A' instead of
 ; low digit from remaining time. Fixed with POKE 35645,71: POKE 35646,8."
+;
+; https://news.ycombinator.com/item?id=8850193
 
 ; SECRETS
 ; -------
 ; Redefine keys to "SHOCKED<ENTER>" to activate test/cheat mode.
 
+; 48K/128K VERSION DIFFERENCES
+; ----------------------------
+; - AY music + sampled speech and effects
+; - Text animations
+; - High score entry
+; - Best Officers (high score) on attract screen
+; - Input device/define keys is retained
 
 ; THINGS TO LOCATE
 ; ----------------
 ; Considering this is just level 1 in 48K:
 ; - input handlers
+; - score, time, speed, distance, gear, stage no., turbo count, credit count
 ; - music data and player
 ; - most of car sprites
 ; - car smoke sprites
@@ -80,6 +90,7 @@
 ; - flashing light on car
 ; - ok creep! auto driving
 ; - Chase HQ monitoring system
+; - picture handling / noise-in-out effect
 
 @ $4000 start
 @ $4000 org
@@ -227,7 +238,7 @@ B $6CCA,26 TBD 16x13
 B $6CE4 TBD
 B $6CFE,26 TBD 16x13
 ;
-B $6D18 TBD looks like graphics 
+B $6D18 TBD looks like graphics
 ;
 B $6D82 Width (bytes)
 B $6D83 Flags
@@ -248,9 +259,8 @@ W $6DF5,2 Bitmap
 W $6DF7,2 Mask
 L $6DF2,7,6
 
+b $76F0 used by plot_scores_etc
 
-
-L $6D82,7,6
 @ $7798 label=pre_game_messages
 b $7798 Pre-game screen messages
 ;
@@ -284,10 +294,17 @@ B $7D3D unknown
 B $7D52,160 Graphic: Tony's face (32x40). Stored top-down.
 B $7DF2 unknown
 
+b $8000 temporaries?
+B $8005,4 Score digits as BCD (8 digits)
+
 c $8014
+
 c $8088
+
 c $80B9
+
 c $80C0
+
 c $814B Tape level loader
 
 b $8169 Mainly tape loading messages
@@ -303,8 +320,9 @@ T $81D2,11 "PRESS  GEAR"
 T $81EC,13 "GIDDY UP BOY!"
 T $81F9,11 "HOLD ON MAN"
 
-c $8204
-c $8258
+c $8204 In-game sound effects
+C $8246 Produces engine sound effect
+C $824E Produces the steering squeak
 
 b $82A6 Attract mode messages
 ; set to 0 for double height with a gap(?)
@@ -424,8 +442,10 @@ c $8960
 b $897C
 c $89D9
 b $89EF
-c $8A0F
-c $8A36
+
+c $8A0F Sound effects - "pitt" and "pff" etc.
+c $8A36 Sound effects - makes the bip-bow time running out effect
+
 c $8A57
 c $8C3A
 
@@ -536,8 +556,8 @@ c $95D0
 c $95D7
 b $95DE
 c $95E7
-b $9618
-c $961B
+c $9618 PRNG - nobble this and only Lambos spawn on the left
+B $9618,3
 s $962E
 
 b $963F In-game messages
@@ -673,8 +693,37 @@ t $9D5B
 b $9D61
 c $9D62
 c $9DF4
+
+@ $9E11 label=plot_scores_etc
 c $9E11
-c $9F47
+C $9E7B Point #REGde at speed digits screen position
+C $9EB6 Plot a digit
+C $9EBA Plot a digit
+C $9EBE Plot a digit
+C $9F12 Point #REGde at score digits screen position
+C $9F16 Point #REGde at score (four BCD bytes)
+C $9F19 
+C $9EC1 Point #REGde at time digits position
+C $9F3C Plot a digit
+C $9F45 Plot a digit
+C $9F3F inner loop ?
+C $9F45 outer loop ?
+
+@ $9F47 label=ledfont_plot
+c $9F47 Plots an LED font digit
+;(A = index, DE -> scr ptr)  vertical would need to be 1, 9, 17, ..
+C $9F48 HL = &ledfont[A * 15]
+C $9F55 save the scr ptr
+C $9F56 save D
+C $9F57 transfer a byte
+C $9F59 next row
+C $9F5A step back
+C $9F5B transfer 7 rows
+C $9F71 restore D
+C $9F73 E += 31
+C $9F77 transfer another 8 rows
+C $9F96 move to next column
+
 c $9F99
 c $9FA3
 c $9FB4
@@ -693,12 +742,24 @@ C $A11F ...B=(A&7)+1, C=5-(A>>3)
 ; IN that port
 ; rotate the result by C
 
-
 b $A139
+B $A16E,1 used during attract mode, road gradient/angle or something?
+B $A170 used in plot_scores_etc. set to 3.
+W $A171,2 seems to be the horizon level, possibly relative (used during attract mode)
+B $A175,8 score digits - one digit per byte, least significant first
+B $A17C used in plot_scores_etc
+B $A17E used in plot_scores_etc
+B $A231,1 flag set to zero when attributes have been set
+B $A24E used in plot_scores_etc
 
-b $A231 flag set to zero when attributes have been set
-
-b $A27A Font: 8x7 bitmap of symbols(!(),.) then 0-9A-Z
+b $A27A Font: 8x7 bitmap
+B $A27A Exclamation mark
+B $A282 Open bracket
+B $A28A Close bracket
+B $A292 Comma
+B $A29A Full stop
+B $A2A2 0..9
+B $A2F2 A-Z
 
 c $A399
 c $A579
@@ -806,6 +867,7 @@ b $DD6A Components of the car graphic or its shadow?. Straight on. Byte pairs of
 b $DE12 Same, but turning.
 b $DEBA Same again, but turning hard.
 
+@ $DF62 label=ledfont
 b $DF62 LED numeric font used for scores
 B $DF62,150 8x15 pixels digits 0..9 only
 
@@ -905,7 +967,11 @@ c $EF22
 c $EF29
 c $EF38
 b $EF5E
-c $F0C6
+
+c $F0C6 White noise generator?
+C $F0C9 loop: Point at random bytes
+C $F0CC Increment first byte by 3, Load it into #REGb
+
 b $F0FE
 
 b $F490 Credits / Score messages
