@@ -295,7 +295,8 @@ B $7D52,160 Graphic: Tony's face (32x40). Stored top-down.
 B $7DF2 unknown
 
 b $8000 temporaries?
-B $8005,4 Score digits as BCD (4 bytes / 8 digits)
+B $8002,4 Score digits as BCD (4 bytes / 8 digits)
+B $8007,1 Current stage number (1...)
 
 c $8014
 
@@ -693,12 +694,39 @@ c $9CC2
 c $9CD6
 c $9CF8
 c $9D2E
-t $9D51
-b $9D56
-t $9D5B
-b $9D61
+
+t $9D51 Text
+@ $9D57 label=hi
+T $9D57 "HI"
+@ $9D59 label=lo
+T $9D59 "LO"
+@ $9D5B label=stage
+T $9D5B "STAGE " message shown in the score area.
+@ $9D61 label=stage_n
+B $9D61 #R$9D61 writes the current score number here in ASCII.
 
 c $9D62
+C $9D62 Check if stage has changed?
+C $9D6B Adding 48 to make it a digit then $80 to terminate the string.
+C $9D6D Update "STAGE N"
+C $9D73 Screen pixel (48,36)
+C $9D76 Point at stage text
+C $9D79 Draw it
+C $9D7C Is the bonus flag set?
+C $9D82 Clear it
+C $9D86 Screen pixel (64,24)
+C $9D89 Clear the area 5*7 bytes
+C $9D9E Draw it
+C $9DB4 42 => BRIGHT + red over black
+C $9DB8 46 => BRIGHT + yellow over black
+C $9DBA Point at attributes (8,3)
+C $9DBD Set them to #REGc
+C $9DC3
+C $9DCD Screen pixel (118,36)
+C $9DD0 "LO"
+C $9DD6 "HI"
+C $9DD9 Draw it
+
 C $9DE6 Point #REGhl at left light's attributes
 C $9DE9 Toggle its brightness
 C $9DEC Point #REGhl at right light's attributes
@@ -750,8 +778,15 @@ C $9F77 transfer another 8 rows
 C $9F96 move to next column
 
 c $9F99
-c $9FA3
-c $9FB4
+
+@ $9FAE label=draw_text
+c $9FA3 Draws a string, bit 7 terminated
+C $9FA6 fetch a byte, mask off the text part
+C $9FAE was bit 7 set?, quit if so, otherwise loop
+
+@ $9FB4 label=draw_char
+c $9FB4 Draws a character
+C $9FEC Point #REGhl at 8x7 font
 
 @ $A03D label=double_height_glyph
 c $A03D Plots double-height glyphs. DE->screen HL->font def
@@ -772,6 +807,7 @@ B $A16E,1 used during attract mode, road gradient/angle or something?
 B $A170 used in plot_scores_etc. set to 3 by $9C65.
 W $A171,2 seems to be the horizon level, possibly relative (used during attract mode)
 ;
+B $A174,1 Low/high gear flag?
 B $A175,8 Score digits. One digit per byte, least significant first. This seems to be recording what's on screen so digit plotting can be bypassed.
 @ $A175 label=score_digits
 B $A175,8 Score. Stored as one digit per byte.
@@ -781,8 +817,17 @@ B $A17E,1 Time remaining. Stored as BCD.
 B $A17F,2 Time remaining. Stored as one digit per byte.
 @ $A181 label=distance_digits
 B $A181,4 Distance. Stored as one digit per byte.
+B $A223,1 Stage number as shown. Stored as ASCII.
+B $A22C,1 Bonus flag (1 triggers the effect)
+B $A22D,1 Counter for bonus effect (goes up to 7?)
+B $A22E,1 ... light toggle flashing related
 B $A231,1 flag set to zero when attributes have been set
+B $A232,1
+B $A233,1
+B $A234,1 cycles 0/1/2/3 as the game runs.
+B $A235,1 ... light toggle flashing related? seems to cycle 0/1 as the game runs.
 B $A24E used in plot_scores_etc
+B $A253,1 Low/high gear flag? or visual state?
 
 b $A27A Font: 8x7 bitmap
 B $A27A Exclamation mark
