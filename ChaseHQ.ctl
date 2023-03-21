@@ -97,8 +97,8 @@
 b $4000 Screen memory
 
 b $5B00 Graphics
-B $5B00,260 Hill backdrop (80x26?)
-B $5C04,260 Another hill backdrop (80x26?) looks similar but pre-shifted
+B $5B00,240 Hill backdrop (80x24) seems to be pre-shifted by #R$C8BE
+B $5C00,240 Hill backdrop (80x24)
 
 b $5D08
 W $5D10,2 -> car_lods
@@ -259,7 +259,7 @@ W $6DF5,2 Bitmap
 W $6DF7,2 Mask
 L $6DF2,7,6
 
-b $76F0 used by plot_scores_etc
+b $76F0 Used by plot_scores_etc
 
 @ $7798 label=pre_game_messages
 b $7798 Pre-game screen messages
@@ -285,7 +285,8 @@ W $77D0,2 Attributes address
 T $77D2,6 "SIGNAL"
 
 b $77D8
-B $78B6,64 8 tiles used for borders on the pregame screen
+B $7860 Seems to be tiles pointed at by car rendering code
+B $78B6,64 8 Tiles used for borders on the pre-game screen
 
 B $7BE9,160 Graphic: Nancy's face (32x40). Stored top-down.
 B $7C89 unknown
@@ -424,6 +425,7 @@ c $865A
 b $86F6
 
 c $87DC
+C $8807 Pre-shift the backdrop image
 C $8857 Point #REGhl at left light's attributes
 C $885D Point #REGhl at right light's attributes then FALL THROUGH
 @ $8860 label=clear_lights
@@ -547,7 +549,10 @@ c $94BB
 c $94C2
 c $94C8
 c $94F2
+
 c $950D
+C $950E Hit while drawing car body
+
 c $9514
 c $951A
 c $9542
@@ -746,6 +751,7 @@ C $9E7B Point #REGde at speed digits screen position
 C $9EB6 Plot a digit
 C $9EBA Plot a digit
 C $9EBE Plot a digit
+C $9F03 Point #REGde at distance digits screen position (136,33)
 C $9F12 Point #REGde at score digits screen position
 C $9F16 Point #REGde at score (four BCD bytes)
 C $9F19 Point #REGhl at score digits (eight bytes)
@@ -781,8 +787,8 @@ c $9F99
 
 @ $9FAE label=draw_text
 c $9FA3 Draws a string, bit 7 terminated
-C $9FA6 fetch a byte, mask off the text part
-C $9FAE was bit 7 set?, quit if so, otherwise loop
+C $9FA6 Fetch a byte, mask off the text part
+C $9FAE Was bit 7 set?, quit if so, otherwise loop
 
 @ $9FB4 label=draw_char
 c $9FB4 Draws a character
@@ -818,16 +824,18 @@ B $A17F,2 Time remaining. Stored as one digit per byte.
 @ $A181 label=distance_digits
 B $A181,4 Distance. Stored as one digit per byte.
 B $A223,1 Stage number as shown. Stored as ASCII.
+B $A22A,1 Used by $B6D6 and others
 B $A22C,1 Bonus flag (1 triggers the effect)
 B $A22D,1 Counter for bonus effect (goes up to 7?)
 B $A22E,1 ... light toggle flashing related
-B $A231,1 flag set to zero when attributes have been set
+B $A231,1 Flag set to zero when attributes have been set
 B $A232,1
 B $A233,1
-B $A234,1 cycles 0/1/2/3 as the game runs.
+B $A234,1 Cycles 0/1/2/3 as the game runs.
 B $A235,1 ... light toggle flashing related? seems to cycle 0/1 as the game runs.
 B $A24E used in plot_scores_etc
 B $A253,1 Low/high gear flag? or visual state?
+B $A256 Distance related perhaps?
 
 b $A27A Font: 8x7 bitmap
 B $A27A Exclamation mark
@@ -878,17 +886,62 @@ C $B4ED
 
 c $B4F0
 c $B549
-c $B58E
+
+c $B58E Draws the car
+C $B5FE Hit while drawing car. loads values then calls $B627
+C $B596 Point HL at ? then add (A * 4)
+C $B605 Hit while drawing car. draws wheels
+C $B610 Draws left side of car
+C $B627 Subroutine
+C $B641 Draws right side of car
+
 c $B648
+C $B6DE,5 Divide by 8
+
 c $B67C
-c $B71C
-c $B723
-c $B729
+
+C $B701 Select a plotter? Could be clipping stuff too.
+C $B708 This multiplies by six - the length of each load-mask-store step in the plotter core.
+C $B70C Add that to #REGix.
+C $B711 Set loop counter for 15 iterations?
+C $B714
+
+@ $B716 label=masked_tile_plotter
+c $B716 Save #REGsp for restoration on exit
+@ $B71C label=masked_tile_plotter_loop
+C $B71F Restore original #REGsp
+@ $B724 label=masked_tile_plotter_entry
+C $B729 Masked tile plotter. The stack points to pairs of bitmap and mask bytes and HL must point to the screen buffer. Uses AND-OR type masking. Proceeds left-right. Doesn't flip the bytes so there must be an alternative for that.
+@ $B729 label=masked_tile_plotter_core_thingy
+C $B729 Fetch a bitmap and mask pair (D,E)
+C $B72A Fetch the screen pixels
+C $B72B AND screen pixels with mask
+C $B72C OR in new pixels
+C $B72D Store back to the screen
+C $B72E Move to next screen pixel
+C $B72F Repeat 8 times
+C $B758 Handle end of row. This must be adjusting the screen pointer.
+
 c $B76C
-c $B78B
-c $B795
-b $B79C
-c $B7A4
+C $B771 Save #REGsp for restoration on exit
+C $B775 Point #REGix at ??? table
+C $B779 Subtract 8 ???
+C $B77C,3 Multiply by 8
+C $B77F Add to IX
+C $B784,2 HEF
+B $B79C
+D $B7A4 Masked tile plotter with flipping
+C $B7A4 Fetch a bitmap and mask pair (B,C)
+C $B7A5 Set flip table index (assuming table is aligned)
+C $B7A6 Fetch the screen pixels
+C $B7A7 AND screen pixels with flipped mask
+C $B7A8 Set flip table index
+C $B7A9 OR in new flipped pixels
+C $B7AA Store back to the screen
+C $B7AB Move to next screen pixel (downwards in memory)
+C $B7AC Repeat 8 times
+C $B7DB Handle end of row. This must be adjusting the screen pointer.
+
 c $B7EF
 b $B828
 c $B848
@@ -916,15 +969,42 @@ c $C58A
 c $C598
 c $C60C
 c $C61D
+
 c $C62E
-
 ;$C635 does the road plotting
-
+C $C7EA,3 Point at first hill backdrop
+C $C7EF,3 Point at second hill backdrop
 
 c $C813
 c $C821
 c $C86E
-c $C8BE
+
+@ $C8BE label=pre_shift_backdrop
+c $C8BE Builds the pre-shifted first hill backdrop
+; Q. How much is it shifting it by?
+C $C8BE Point at second hill backdrop
+C $C8C1 Point at first hill backdrop
+C $C8C4
+C $C8C5
+C $C8C6 Each is 250 bytes long
+C $C8C9 Copy 2nd to first
+C $C8CB
+C $C8CC Jump 10 bytes fwd
+C $C8CF
+C $C8D0
+C $C8D1 pop old DE
+C $C8D2 10 x 24
+C $C8D5
+C $C8D6
+C $C8D7 Nibble swap thing
+C $C8D9
+C $C8DA
+C $C8DB
+C $C8DD
+C $C8DE
+C $C8DF
+C $C8E2
+
 c $C8E3
 c $C93E
 c $C94C
@@ -945,6 +1025,9 @@ c $CBD6
 c $CD3A
 c $CDD6
 b $CDEC
+b $CEDA
+
+b $CF8E
 
 b $D20E Smoke plume. Perhaps 64x64 in total, but includes masks.
 b $DD6A Components of the car graphic or its shadow?. Straight on. Byte pairs of value and mask. three sets of 14 x 8 UDGs.
@@ -959,6 +1042,8 @@ b $DFF8 Mini font used for in-game messages
 B $DFF8,174 8x6 pixels (though the digits are thinner than 8) A-Z + (probably 3 symbols)
 
 b $E1B8
+
+b $E34B poked by $880A
 
 b $E35D (roughly) spiral inward animation mask used for transitions
 b $E3BD circle expanding animation mask used for transitions
