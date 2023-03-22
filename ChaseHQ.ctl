@@ -92,9 +92,15 @@
 ; - Chase HQ monitoring system
 ; - picture handling / noise-in-out effect
 
+; MEMORY MAP
+; ----------
+; ...
+
 @ $4000 start
 @ $4000 org
 b $4000 Screen memory
+B $4000 Screen bitmap
+B $5800 Screen attributes
 
 b $5B00 Graphics
 B $5B00,240 Hill backdrop (80x24) seems to be pre-shifted by #R$C8BE
@@ -144,8 +150,8 @@ T $5E38,6 "MURDER"
 
 b $5E3E Graphics. All are stored inverted except where noted.
 ;
-W $5E41,2 Pointer to tumbleweed LODs table
-W $5E44,2 Pointer to another LOD table
+W $5E41,2 Address of tumbleweed LODs table
+W $5E44,2 Address of another LOD table
 
 ;
 B $638A,160 Perp w/ sunglasses (32x40). Stored top-down.
@@ -787,7 +793,7 @@ c $9F99
 
 @ $9FAE label=draw_text
 c $9FA3 Draws a string, bit 7 terminated
-C $9FA6 Fetch a byte, mask off the text part
+C $9FA6 Load a byte, mask off the text part
 C $9FAE Was bit 7 set?, quit if so, otherwise loop
 
 @ $9FB4 label=draw_char
@@ -922,8 +928,8 @@ C $B71F Restore original #REGsp
 @ $B724 label=masked_tile_plotter_entry
 C $B729 Masked tile plotter. The stack points to pairs of bitmap and mask bytes and HL must point to the screen buffer. Uses AND-OR type masking. Proceeds left-right. Doesn't flip the bytes so there must be an alternative for that.
 @ $B729 label=masked_tile_plotter_core_thingy
-C $B729 Fetch a bitmap and mask pair (D,E)
-C $B72A Fetch the screen pixels
+C $B729 Load a bitmap and mask pair (D,E)
+C $B72A Load the screen pixels
 C $B72B AND screen pixels with mask
 C $B72C OR in new pixels
 C $B72D Store back to the screen
@@ -940,9 +946,9 @@ C $B77F Add to IX
 C $B784,2 HEF
 B $B79C
 D $B7A4 Masked tile plotter with flipping
-C $B7A4 Fetch a bitmap and mask pair (B,C)
+C $B7A4 Load a bitmap and mask pair (B,C)
 C $B7A5 Set flip table index (assuming table is aligned)
-C $B7A6 Fetch the screen pixels
+C $B7A6 Load the screen pixels
 C $B7A7 AND screen pixels with flipped mask
 C $B7A8 Set flip table index
 C $B7A9 OR in new flipped pixels
@@ -1122,43 +1128,43 @@ B $EA52,1 Attribute: Red ink over black
 W $EA53,2 Screen position (72,80)
 T $EA55,14 "REDEFINE  KEYS"
 ;
-B $EA63,1 Attribute: Bright Yellow ink over black + FLASH BIT SET
+B $EA63,1 Attribute: Bright yellow ink over black + Single height bit
 W $EA64,2 Screen position (72,112)
 T $EA66,12 "GEAR........"
 ;
-B $EA72,1 Attribute: Bright Yellow ink over black + FLASH BIT SET
+B $EA72,1 Attribute: Bright yellow ink over black + Single height bit
 W $EA73,2 Screen position (72,120)
 T $EA75,12 "ACCELERATE.."
 ;
-B $EA81,1 Attribute: Bright Yellow ink over black + FLASH BIT SET
+B $EA81,1 Attribute: Bright yellow ink over black + Single height bit
 W $EA82,2 Screen position (72,128)
 T $EA84,12 "BRAKE......."
 ;
-B $EA90,1 Attribute: Bright Yellow ink over black + FLASH BIT SET
+B $EA90,1 Attribute: Bright yellow ink over black + Single height bit
 W $EA91,2 Screen position (72,136)
 T $EA93,12 "LEFT........"
 ;
-B $EA9F,1 Attribute: Bright Yellow ink over black + FLASH BIT SET
+B $EA9F,1 Attribute: Bright yellow ink over black + Single height bit
 W $EAA0,2 Screen position (72,144)
 T $EAA2,12 "RIGHT......."
 ;
-B $EAAE,1 Attribute: Bright Green ink over black + FLASH BIT SET
+B $EAAE,1 Attribute: Bright green ink over black + Single height bit
 W $EAAF,2 Screen position (72,160)
 T $EAB1,12 "QUIT........"
 ;
-B $EABD,1 Attribute: Bright Green ink over black + FLASH BIT SET
+B $EABD,1 Attribute: Bright green ink over black + Single height bit
 W $EABE,2 Screen position (72,168)
 T $EAC0,12 "PAUSE......."
 ;
-B $EACC,1 Attribute: Bright Green ink over black + FLASH BIT SET
+B $EACC,1 Attribute: Bright green ink over black + Single height bit
 W $EACD,2 Screen position (72,176)
 T $EACF,12 "TURBO......."
 ;
 B $EADB,1 Probably a stop marker
 ;
-B $EADC,5 Suspect this is an empty string
+B $EADC,5 Seems to be an empty message structure
 ;
-B $EAE1,1 Attribute: Bright blue over black + FLASH BIT SET
+B $EAE1,1 Attribute: Bright blue over black + Single height bit
 W $EAE2,2 Screen position (0,0)
 T $EAE4,4 "TEST"
 ;
@@ -1166,67 +1172,124 @@ B $EAE8,1 Attribute: Red ink over black
 W $EAE9,2 Screen position (32,72)
 T $EAEB,24 "CHASE H.Q.     TEST MODE"
 ;
-B $EB03,1 Attribute: Bright cyan ink over black AND flash bit is set which must mean something
+B $EB03,1 Attribute: Bright cyan ink over black + Single height bit
 W $EB04,2 Screen position (0,128)
 T $EB06,10 "IN GAME..."
 ;
+B $EB10,1 Attribute: Bright green ink over black + Single height bit
+W $EB11,2 Screen position (8,144)
 T $EB13,29 "PRESS 1....... RESTART LEVEL."
 ;
+B $EB30,1 Attribute: Bright green ink over black + Single height bit
+W $EB31,2 Screen position (56,152)
 T $EB33,20 "2....... NEXT LEVEL."
 ;
+B $EB47,1 Attribute: Bright green ink over black + Single height bit
+W $EB48,2 Screen position (56,160)
 T $EB4A,20 "3....... END SCREEN."
 ;
+B $EB5E,1 Attribute: Bright green ink over black + Single height bit
+W $EB5F,2 Screen position (56,168)
 T $EB61,22 "4....... EXTRA CREDIT."
 ;
+B $EB78,1 Attribute: Red
+W $EB79,2 Screen position (88,80)
 T $EB7B,11 "CHASE  H.Q."
 ;
+B $EB86,1 Attribute: Bright yellow ink over black + Single height bit
+W $EB87,2 Screen position (16,112)
 T $EB89,27 "PLEASE NOTE CONTROL OPTIONS"
 ;
+B $EBA4,1 Attribute: Bright yellow ink over black + Single height bit
+W $EBA5,2 Screen position (40,120)
 T $EBA7,21 "CANNOT BE REMODIFIED."
 ;
+B $EBBC,1 Attribute: Bright cyan ink over black + Single height bit
+W $EBBD,2 Screen position (8,144)
 T $EBBF,31 "ARE YOU HAPPY WITH YOUR CHOICE."
 ;
+B $EBDE,1 Attribute: White
+W $EBDF,2 Screen position (40,160)
 T $EBE1,21 "PRESS YES(Y) OR NO(N)"
 
 c $EBF7
-c $EBFF
 
-@ $EC2C label=draw_char_menu
-c $EC2C Renders a single character. Compare #R$9FB4.
-; A -> character to plot (ASCII)
-; DE' -> screen pointer
-; HL' -> attribute pointer
-C $EC2C Handle spaces
-C $EC32 Advance attribute pointer
-C $EC35 Map character ranges.
-C $EC37 >= 'A' then glyph offset C=(65 - 32 - 18)=15
-C $EC3B >= '0' then glyph offset C=(48 - 32 - 11)=5
-C $EC41 == '!' then glyph offset C=0
-C $EC46 == '(' then glyph offset C=1
-C $EC4B == ')' then glyph offset C=2
-C $EC4F == ',' then glyph offset C=3
-C $EC54 == '.'
-C $EC57 ASCII - 32 - offset in #REGc
+@ $EBFF label=menu_draw_string
+c $EBFF Renders a string.
+R $EBFF I:HL Address of a message structure (byte: attribute byte, word: destination screen address, bytes: top bit set terminated ASCII string)
+  $EBFF Load attribute byte
+  $EC00 Bank the top bit of the attribute byte as the C flag (this is the single height flag)
+  $EC05 Advance
+  $EC06 Load screen address into #REGde
+  $EC0A Stack screen address
+N $EC0B Calculate the attribute address from the screen address
+  $EC0B #REGh = $58 + ((D >> 3) & 3)
+  $EC14 #REGl = E
+  $EC15
+N $EC16 #REGhl' is screen address, #REGde' is attribute address
+  $EC16 Get screen address and preserve old #REGhl
+  $EC17 Preserve regs
+@ $EC19 menu_draw_string_loop
+  $EC19 Mask off the terminator bit
+  $EC1C #REGa = Character to draw
+  $EC1D Draw the character
+  $EC20
+  $EC21 End of string?
+  $EC23 Advance to next char irrespective
+  $EC24 Loop if not
+  $EC26
+  $EC27 Restore regs
+  $EC2A
+  $EC2B Return
+
+@ $EC2C label=menu_draw_char
+c $EC2C Renders a single character. Compare #R$9FB4
+R $EC2C I:A   The character to plot (ASCII)
+R $EC2C I:F'  Carry flag set to draw single height characters
+R $EC2C I:DE' Screen address (UDG aligned)
+R $EC2C I:HL' Attribute address
+  $EC2C Handle spaces
+  $EC32 Advance attribute address
+  $EC35 Map character ranges:
+  $EC37 >= 'A' then glyph offset C=(65-32-18)=15
+  $EC3B >= '0' then glyph offset C=(48-32-11)=5
+  $EC41 == '!' then glyph offset C=0
+  $EC46 == '(' then glyph offset C=1
+  $EC4B == ')' then glyph offset C=2
+  $EC4F == ',' then glyph offset C=3
+  $EC54 Anything else becomes a full stop
+  $EC57 ASCII - 32 - offset in #REGc
 ; C is now an offset
-C $EC59 A = C * 7
-C $EC5F #REGbc = #REGa -- Why the RL?
-C $EC64,3 Point #REGhl at 8x7 font
-C $EC67 Point at glyph
-C $EC6E Jump to easy case? Buffer case?
-@ $EC71 label=double_height
-C $EC71 Fetch a row of glyph
-C $EC72 Put it on the screen
-C $EC73 Move to next scanline
-C $EC74 Put another row
-C $EC76 Undo LDI
-C $EC77 Move to next scanline
-C $EC78 Repeat ...
-C $EC8B Scanline adjust  DE += $F31F
-C $EC92 Repeat ...
-C $ECA8 ...
-@ $ECBA label=single_height
-C $ECBA Plot 8x7 character  HL->character, DE->screen
-C $ECD6,1 Set the screen attribute
+  $EC59 Multiply #REGc by seven - the height of a glyph
+  $EC5F #REGbc = #REGa -- Why the RL?
+  $EC64,3 Point #REGhl at 8x7 font
+  $EC67 Point at glyph
+  $EC6E If the carry flag is set then draw single height characters
+@ $EC71 label=menu_draw_char_double_height
+  $EC71 Load a row of glyph
+  $EC72 Put it on the screen
+  $EC73 Move to next scanline
+  $EC74 Put another row
+  $EC76 Undo LDI
+  $EC77 Move to next scanline
+  $EC78 Repeat ...
+  $EC8B Move to next scanline after boundary (DE += $F81F)
+  $EC92 Repeat ...
+  $ECA8 ...
+  $ECAB Save #REGl
+  $ECAC Set the BRIGHT bit
+  $ECAE,1 Set the screen attribute
+  $ECAF Move to the next attribute row
+  $ECB3 Clear the BRIGHT bit
+  $ECB5,1 Set the screen attribute
+  $ECB6 Restore #REGl
+  $ECB7,1 Advance cursor
+  $ECB9 Return
+@ $ECBA label==menu_draw_char_single_height
+  $ECBA Plot 8x7 character  HL->character, DE->screen
+  $ECD6,1 Set the screen attribute
+  $ECD7,1 Advance cursor
+  $ECD9 Return
 
 @ $ECDA label=clear_screen
 c $ECDA Clears the screen.
