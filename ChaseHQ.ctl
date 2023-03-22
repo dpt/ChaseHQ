@@ -450,7 +450,7 @@ c $89D9
 b $89EF
 
 c $8A0F Sound effects - "pitt" and "pff" etc.
-c $8A36 Sound effects - makes the bip-bow time running out effect
+c $8A36 Sound effects - makes the "bip-bow" time running out effect
 
 c $8A57
 c $8C3A
@@ -833,9 +833,18 @@ B $A232,1
 B $A233,1
 B $A234,1 Cycles 0/1/2/3 as the game runs.
 B $A235,1 ... light toggle flashing related? seems to cycle 0/1 as the game runs.
+B $A240,1 Used by $B8F6, $BBF7
+B $A249,1 Counter used by $BB6E
+B $A24A,1 Used by $B848
 B $A24E used in plot_scores_etc
 B $A253,1 Low/high gear flag? or visual state?
-B $A256 Distance related perhaps?
+B $A258,1 Used by $B8D8
+B $A259,1 Used by $B92B
+B $A256,1 Distance related perhaps?
+B $A25A,1 Used by $B8D2
+B $A25C,1 Used by $B84E
+B $A25D,1 Used by $B85D
+B $A268,1 Used by $BB69 - skips routine if not set
 
 b $A27A Font: 8x7 bitmap
 B $A27A Exclamation mark
@@ -1043,6 +1052,14 @@ B $DFF8,174 8x6 pixels (though the digits are thinner than 8) A-Z + (probably 3 
 
 b $E1B8
 
+b $E2D2
+b $E2D5
+b $E2D9
+b $E2DD
+b $E2E2
+b $E2E7
+b $E2F3
+
 b $E34B poked by $880A
 
 b $E35D (roughly) spiral inward animation mask used for transitions
@@ -1051,51 +1068,106 @@ b $E540 looks like a table of flipped bytes (but not quite)
 
 b $E601
 c $E839
+
 b $E858
+W $E90A,2 -> "STOP THE TAPE" + "PRESS ANY KEY" message set
+
 c $E90F
+C $E928 Point #REGhl at input menu messages
+C $E931 Keyscan for 1, 2, 3, 4, 5
+C $E93A Keyscan for 0, 9, 8, 7, 6
+C $E93D Keyscan for P, O, I, U, Y
+C $E940 Keyscan for ENTER, L, K, J, H
+C $E943 Keyscan for SPACE, SYM SHFT, M, N, B
 
 b $E9B4 Messages
 ;
-B $E9B4,1 flag/attr?
-W $E9B5,2 Screen position 80,96
+B $E9B4,1 Attribute: Green ink over black
+W $E9B5,2 Screen position (80,96)  (why is this screen, not attrs?)
 T $E9B7,13 "STOP THE TAPE"
 ;
+B $E9C4,1 Attribute: Cyan ink over black
+W $E9C5,2 Screen attribute position (4,18)
 T $E9C7,25 "PRESS ANY KEY TO CONTINUE"
 ;
+B $E9E0,1 Stop marker?
+;
+B $E9E1,1 Attribute: Green ink over black
+W $E9E2,2 Screen position (88,80)
 T $E9E4,11 "CHASE  H.Q."
 ;
+B $E9EF,1 Attribute: Cyan ink over black
+W $E9F0,2 Screen position (48,112)
 T $E9F2,20 "1. SINCLAIR JOYSTICK"
 ;
+B $EA06,1 Attribute: Cyan ink over black
+W $EA07,2 Screen position (48,128)
 T $EA09,18 "2. CURSOR JOYSTICK"
 ;
+B $EA1B,1 Attribute: Cyan ink over black
+W $EA1C,2 Screen position (48,144)
 T $EA1E,20 "3. KEMPSTON JOYSTICK"
 ;
+B $EA32,1 Attribute: Cyan ink over black
+W $EA33,2 Screen position (48,160)
 T $EA35,11 "4. KEYBOARD"
 ;
+B $EA40,1 Attribute: Cyan ink over black
+W $EA41,2 Screen position (48,176)
 T $EA43,14 "5. DEFINE KEYS"
 ;
+B $EA51,1 Stop marker?
+;
+B $EA52,1 Attribute: Red ink over black
+W $EA53,2 Screen position (72,80)
 T $EA55,14 "REDEFINE  KEYS"
 ;
+B $EA63,1 Attribute: Bright Yellow ink over black + FLASH BIT SET
+W $EA64,2 Screen position (72,112)
 T $EA66,12 "GEAR........"
 ;
+B $EA72,1 Attribute: Bright Yellow ink over black + FLASH BIT SET
+W $EA73,2 Screen position (72,120)
 T $EA75,12 "ACCELERATE.."
 ;
+B $EA81,1 Attribute: Bright Yellow ink over black + FLASH BIT SET
+W $EA82,2 Screen position (72,128)
 T $EA84,12 "BRAKE......."
 ;
+B $EA90,1 Attribute: Bright Yellow ink over black + FLASH BIT SET
+W $EA91,2 Screen position (72,136)
 T $EA93,12 "LEFT........"
 ;
+B $EA9F,1 Attribute: Bright Yellow ink over black + FLASH BIT SET
+W $EAA0,2 Screen position (72,144)
 T $EAA2,12 "RIGHT......."
 ;
+B $EAAE,1 Attribute: Bright Green ink over black + FLASH BIT SET
+W $EAAF,2 Screen position (72,160)
 T $EAB1,12 "QUIT........"
 ;
+B $EABD,1 Attribute: Bright Green ink over black + FLASH BIT SET
+W $EABE,2 Screen position (72,168)
 T $EAC0,12 "PAUSE......."
 ;
+B $EACC,1 Attribute: Bright Green ink over black + FLASH BIT SET
+W $EACD,2 Screen position (72,176)
 T $EACF,12 "TURBO......."
 ;
+B $EADB,1 Probably a stop marker
+;
+B $EADC,5 Suspect this is an empty string
+;
+B $EAE1,1 Attribute: Bright blue over black + FLASH BIT SET
+W $EAE2,2 Screen position (0,0)
 T $EAE4,4 "TEST"
 ;
+B $EAE8,1 Attribute: Red ink over black
+W $EAE9,2 Screen position (32,72)
 T $EAEB,24 "CHASE H.Q.     TEST MODE"
 ;
+B $EB03,1 Attribute: Bright cyan ink over black AND flash bit is set which must mean something
+W $EB04,2 Screen position (0,128)
 T $EB06,10 "IN GAME..."
 ;
 T $EB13,29 "PRESS 1....... RESTART LEVEL."
@@ -1118,24 +1190,73 @@ T $EBE1,21 "PRESS YES(Y) OR NO(N)"
 
 c $EBF7
 c $EBFF
-c $EC2C
+
+@ $EC2C label=draw_char_menu
+c $EC2C Renders a single character. Compare #R$9FB4.
+; A -> character to plot (ASCII)
+; DE' -> screen pointer
+; HL' -> attribute pointer
+C $EC2C Handle spaces
+C $EC32 Advance attribute pointer
+C $EC35 Map character ranges.
+C $EC37 >= 'A' then glyph offset C=(65 - 32 - 18)=15
+C $EC3B >= '0' then glyph offset C=(48 - 32 - 11)=5
+C $EC41 == '!' then glyph offset C=0
+C $EC46 == '(' then glyph offset C=1
+C $EC4B == ')' then glyph offset C=2
+C $EC4F == ',' then glyph offset C=3
+C $EC54 == '.'
+C $EC57 ASCII - 32 - offset in #REGc
+; C is now an offset
+C $EC59 A = C * 7
+C $EC5F #REGbc = #REGa -- Why the RL?
+C $EC64,3 Point #REGhl at 8x7 font
+C $EC67 Point at glyph
+C $EC6E Jump to easy case? Buffer case?
+@ $EC71 label=double_height
+C $EC71 Fetch a row of glyph
+C $EC72 Put it on the screen
+C $EC73 Move to next scanline
+C $EC74 Put another row
+C $EC76 Undo LDI
+C $EC77 Move to next scanline
+C $EC78 Repeat ...
+C $EC8B Scanline adjust  DE += $F31F
+C $EC92 Repeat ...
+C $ECA8 ...
+@ $ECBA label=single_height
+C $ECBA Plot 8x7 character  HL->character, DE->screen
+C $ECD6,1 Set the screen attribute
 
 @ $ECDA label=clear_screen
 c $ECDA Clears the screen.
 
 c $ECF3
-b $ED4D
-t $EDD6
+
+c $ED4D
+C $ED94,3 -> "B N M ..."
+C $EDBD,3 -> test mode strings
+
+t $EDD6 Names of keys
+
 b $EE26
-t $EE3D
+b $EE2B
+b $EE30
+b $EE3D
 b $EE40
+
 c $EE6E
-c $EE9E
+
+c $EE9E Define keys
+C $EEAD Self modified, cycles 5,3,2,1
+C $EEBE Self modified, cycles $F12x .. $F2xx ish
+
 c $EF19
 c $EF22
 c $EF29
 c $EF38
-b $EF5E
+
+b $EF5E Drum related
 
 c $F0C6 White noise generator?
 C $F0C9 loop: Point at random bytes
