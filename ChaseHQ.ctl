@@ -1,29 +1,46 @@
-; Chase H.Q. by Ocean/Taito. Spectrum 48K version.
+; ChaseHQ.ctl
 ;
-; Strings are top bit set terminated ASCII.
-; $F000 is a screen buffer. There are a column spare either side of the screen...
+; This is a SkoolKit control file to disassemble the ZX Spectrum 48K version of
+; Chase H.Q. by Ocean Software. A home computer version of the arcade game by
+; Taito Corporation.
 ;
-
+; Reverse engineering by David Thomas, 2023.
+;
+; This is intended to document the game when it is in a "pristine" as-loaded
+; state.
+;
+;
 ; AUTHORS
 ; -------
-; Code = JOBBEEE aka John O'Brien  https://www.mobygames.com/person/28679/john-obrien/
-; Graphics = BILL aka Bill Harbison
-; Music = JON DUNN aka Jonathan Dunn
-
+; Code by JOBBEEE aka John O'Brien
+; <https://www.mobygames.com/person/28679/john-obrien/>
+;
+; Graphics by BILL aka Bill Harbison
+; <https://www.mobygames.com/person/31804/bill-harbison/>
+;
+; Music by JON DUNN aka Jonathan Dunn
+; <https://www.mobygames.com/person/31702/jonathan-dunn/>
+;
+;
 ; OTHER VERSIONS
 ; --------------
 ; The Amstrad CPC version is by the same authors.
-
+;
+;
 ; RELATED GAMES
 ; -------------
-; "WEC Le Mans" - earlier game by the same authors.
-; https://www.mobygames.com/game/15167/wec-le-mans-24/
+; "WEC Le Mans" (1988) - An earlier game by the same authors.
+; <https://www.mobygames.com/game/15167/wec-le-mans-24/>
 ;
-; "Batman The Movie" - same authors worked on the driving sequences for that ST/Amiga game.
+; "Batman The Movie" (1989) - The same authors worked on the driving sequences
+; for this Atari ST/Amiga game.
+; <https://www.mobygames.com/game/3848/batman/>
 ;
-; "Burnin' Rubber" (1990) a later Amstrad game by JOBBEEE.
-; https://www.mobygames.com/game/70894/burnin-rubber/
-
+; "Burnin' Rubber" (1990) - A later Amstrad game by JOBBEEE very much like WEC
+; Le Mans.
+; <https://www.mobygames.com/game/70894/burnin-rubber/>
+;
+;
 ; RESEARCH
 ; --------
 ; https://www.mobygames.com/game/9832/chase-hq/
@@ -39,11 +56,13 @@
 ; low digit from remaining time. Fixed with POKE 35645,71: POKE 35646,8."
 ;
 ; https://news.ycombinator.com/item?id=8850193
-
+;
+;
 ; SECRETS
 ; -------
 ; Redefine keys to "SHOCKED<ENTER>" to activate test/cheat mode.
-
+;
+;
 ; 48K/128K VERSION DIFFERENCES
 ; ----------------------------
 ; - AY music + sampled speech and effects
@@ -51,7 +70,20 @@
 ; - High score entry
 ; - Best Officers (high score) on attract screen
 ; - Input device/define keys is retained
-
+;
+;
+; MEMORY MAP
+; ----------
+; ...
+;
+;
+;
+; NOTES
+; -----
+; Strings are top bit set terminated ASCII.
+; $F000 is a screen buffer. There are a column spare either side of the screen...
+;
+;
 ; THINGS TO LOCATE
 ; ----------------
 ; Considering this is just level 1 in 48K:
@@ -91,10 +123,6 @@
 ; - ok creep! auto driving
 ; - Chase HQ monitoring system
 ; - picture handling / noise-in-out effect
-
-; MEMORY MAP
-; ----------
-; ...
 
 @ $4000 start
 @ $4000 org
