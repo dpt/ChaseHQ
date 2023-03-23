@@ -1,22 +1,31 @@
 # Chase H.Q. for the ZX Spectrum
 
-Reverse engineering by David Thomas, 2023.
+Reverse engineering by David Thomas
 
-This is the beginnings of a disassembly of the 48K version of the game. In this repository so far is a [SkoolKit](https://skoolkit.ca/) control file to disassemble the ZX Spectrum 48K version of Chase H.Q. by Ocean Software. This works with the game when it is in a "pristine" as-loaded state.
+Project started: March 2023
+
+![Screenshot](https://spectrumcomputing.co.uk/SCRtoImage.php?SCR=/conv_scr/c/ChaseH.Q..scr&border=0)
+
+This is the beginnings of a disassembly of the 48K ZX Spectrum version of Chase H.Q. by Ocean Software. (The 128K version is better but it has a lot more code to consider so it's easier to start off with the 48K version first).
+
+In this repository is a [SkoolKit](https://skoolkit.ca/) control file which you can use to disassemble the game. This works with the game when it is in a "pristine" as-loaded state. See below for how to make a pristine snapshot.
 
 ## WHY?
 
-To find out how it works.
+To find out how it works (and maybe one day we could make new levels).
 
 ## HOW TO
 
 - Install SkoolKit
+
 e.g. `pip3 install skoolkit`
 
 - Clone the t2s repository:
+
 `git clone https://github.com/skoolkid/t2sfiles/`
 
 - Download and convert the game into a .z80 snapshot:
+
 `tap2sna.py @t2sfiles/t2s/c/chase-hq.t2s`
 
 You'll see:
@@ -55,8 +64,10 @@ Build an asm file like so:
 
 ## HOW TO DISCOVER HOW THE GAME WORKS?
 
-Option (1) run the game in https://colourclash.co.uk/spectrum-analyser/ and look for clues.
-Option (2) stare at the code _really hard_ until it makes sense.
+- Option (1) is to run the game in the interactive disassembler https://colourclash.co.uk/spectrum-analyser/ and look for clues.
+- Option (2) is to stare at the code _really hard_ until it makes sense.
+
+You may have to do both.
 
 ## RELATED
 
