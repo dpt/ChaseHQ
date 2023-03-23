@@ -4,7 +4,7 @@ Reverse engineering by David Thomas
 
 Project started: March 2023
 
-![Screenshot](https://spectrumcomputing.co.uk/SCRtoImage.php?SCR=/conv_scr/c/ChaseH.Q..scr&border=0)
+![Screenshot](ChaseHQ.png)
 
 This is the beginnings of a disassembly of the 48K ZX Spectrum version of Chase H.Q. by Ocean Software. (The 128K version is better but it has a lot more code to consider so it's easier to start off with the 48K version first).
 
