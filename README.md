@@ -64,10 +64,12 @@ Build an asm file like so:
 
 ## HOW TO DISCOVER HOW THE GAME WORKS?
 
-- Option (1) is to run the game in the interactive disassembler https://colourclash.co.uk/spectrum-analyser/ and look for clues.
+- Option (1) is to run the game in the Spectrum Analyser interactive disassembler https://colourclash.co.uk/spectrum-analyser/ and look for clues.
 - Option (2) is to stare at the code _really hard_ until it makes sense.
 
 You may have to do both.
+
+See https://youtu.be/BGVI0TbePsQ for a short video of me running Spectrum Analyser to find out how the game builds the back buffer up.
 
 ## RELATED
 
