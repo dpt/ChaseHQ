@@ -95,11 +95,12 @@
 ; - lamp post sprites
 ; - tree sprites
 ; - car's gravity / jump handling
+; - collision detection
 ; - sound effects
 ; - tunnel handling
 ; - route/map
 ; - road drawing code
-; - road split handling
+; - road split handling (it draws both in one pass)
 ; - floating arrow sprite for road split
 ; - floating HERE! arrow
 ; - road signs
@@ -117,12 +118,14 @@
 ; - turbo sprites/anim
 ; - turbo handling
 ; - level loading code
-; - level format
+; - level format (and which memory regions are altered)
 ; - helicopter (later level)
-; - flashing light on car
+; - flashing light on car (and hand)
 ; - ok creep! auto driving
 ; - Chase HQ monitoring system
 ; - picture handling / noise-in-out effect
+; - car graphic encoding
+; - is attract mode a CPU player or a recording?
 
 @ $4000 start
 @ $4000 org
