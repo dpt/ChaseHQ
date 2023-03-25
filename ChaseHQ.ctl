@@ -592,20 +592,48 @@ c $9171
 c $924D
 c $9252
 c $9278
+
 c $92E1
-c $94BB
-c $94C2
-c $94C8
 
-; This draws the middle section of the hero car when NOT flipped.
-; Used for other cars/objects too. Clips on left or right?
-
-@ $94F2 label=plot_sprite_56px
-c $94F2 Sprite plotter for back buffer, up to 56px wide, 15px high, no flip.
-R $94F2 I:A   0, 1, 2 or 3 to plot 8, 24, 40 or 56 pixels
-R $94F2 I:DE' Byte width of bitmap data (e.g. 3)
-R $94F2 I:HL  Address in back buffer to plot at
-R $94F2 I:HL' Address of bitmap data
+@ $949C label=plot_sprite
+c $949C Sprite plotter for back buffer, up to 64px wide, 15px high, no flip.
+R $949C I:A   Plot (A+1)*8 pixels
+R $949C I:DE' Stride of bitmap data in bytes
+R $949C I:HL  Address in back buffer to plot at
+R $949C I:HL' Address of bitmap data
+  $949C Use plot_sprite if the bottom bit is set (odd widths)
+  $94A5 (~#REGa + 5) is (4 - #REGa) is the number of plot operations to skip
+  $94A8 Multiply #REGa by 5: the length of an individual plot operation
+  $94AC Move result to #REGbc
+  $94AF Add it to #REGix to complete the jump target
+  $94B1 Save #REGsp to restore later (self modify)
+  $94B5 #REGb = 15 rows to draw, #REGc = 16, an increment value used later
+  $94B8 Bank
+  $94B9 Jump into body of loop
+@ $94BB label=ps_even_loop
+  $94BB Bank
+  $94BC Next scanline
+  $94BE Restore #REGsp (self modified)
+  $94C1 Return
+  $94C2 Calculate address of next bitmap scanline
+  $94C3 Put it in #REGsp (so we can use POP for speed)
+  $94C4 Unbank
+  $94C6 Jump table
+  $94C8 Transfer two bitmap bytes (16 pixels) from the "stack" to screen buffer
+  $94CD Transfer another 16 pixels
+  $94D2 Transfer another 16 pixels
+  $94D7 Transfer another 16 pixels
+  $94DB Restore #REGhl
+  $94DC Save H in A then H--
+  $94DE Extract low four bits of row address
+  $94DF If zero we'll need to handle it below, otherwise just loop
+  $94E2 H += 16
+  $94E5 Decrement the high three bits of row address
+  $94E9 No carry, so finish scanline
+  $94EC H -= 16
+  $94ED Loop back to ps_even_loop
+;
+@ $94F2 label=plot_sprite_odd
   $94F2 Increment #REGa for upcoming calculation
   $94F3 Point #REGix at start of plot instructions
   $94F7 (~#REGa + 5) is (4 - #REGa) is the number of plot operations to skip
@@ -616,10 +644,10 @@ R $94F2 I:HL' Address of bitmap data
   $9507 #REGb = 15 rows to draw, #REGc = 16, an increment value used later
   $950A Bank
   $950B Jump into body of loop
-@ $950D label=ps56px_loop
+@ $950D label=ps_odd_loop
   $950D Bank
   $950E Next scanline
-  $9510 Restore SP (self modified)
+  $9510 Restore #REGsp (self modified)
   $9513 Return
   $9514 Calculate address of next bitmap scanline
   $9515 Put it in #REGsp (so we can use POP for speed)
@@ -629,7 +657,7 @@ R $94F2 I:HL' Address of bitmap data
   $951F Transfer another 16 pixels
   $9524 Transfer another 16 pixels
   $9529 Transfer another 8 pixels
-  $952B Restore HL
+  $952B Restore #REGhl
   $952C Save H in A then H--
 D $952E Decrement the screen address
   $952E Extract low four bits of row address
@@ -641,7 +669,7 @@ D $952E Decrement the screen address
   $9539 No carry, so finish scanline
 ; otherwise CCC field was zero
   $953C H -= 16
-  $953F Loop back to ps56px_loop
+  $953F Loop back to ps_odd_loop
 
 c $9542
 c $9567
