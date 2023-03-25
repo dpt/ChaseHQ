@@ -74,14 +74,21 @@
 ;
 ; MEMORY MAP
 ; ----------
-; ...
+; $F000..$FFFF is a 4KB back buffer (once the game's up and running)
 ;
+; An back buffer address of 0b1111BAAACCCXXXXX means:
+; - X = X position byte (0..31)
+; - A = Y position row bits 0..2
+; - B = Y position row bit  3
+; - C = Y position row bits 4..6
+;
+; There's a column spare at either side of the back buffer (same as the main
+; screen). This seems to be to avoid full clipping.
 ;
 ;
 ; NOTES
 ; -----
 ; Strings are top bit set terminated ASCII.
-; $F000 is a screen buffer. There are a column spare either side of the screen...
 ;
 ;
 ; THINGS TO LOCATE
@@ -266,9 +273,9 @@ W $6B25,2 Bitmap
 W $6B27,2 Mask
 L $6B22,7,10
 ;
-B $6B68,160 Turn sign (32x40)
-B $6C08,90 Turn sign (24x30)
-B $6C62,40 Turn sign (16x20)
+B $6B68,160 Turn right sign (32x40)
+B $6C08,90 Turn right sign (24x30)
+B $6C62,40 Turn right sign (16x20)
 B $6C8A,32 TBD 16x16
 B $6CAA TBD
 B $6CCA,26 TBD 16x13
@@ -295,6 +302,10 @@ B $6DF4 Height (pixels)
 W $6DF5,2 Bitmap
 W $6DF7,2 Mask
 L $6DF2,7,6
+;
+;B $7069 is the top part of a streetlamp
+;B $73D4 looks like tree trunk
+B $73B9,10 Part of tree graphic - 16px x 5 rows (?)
 
 b $76F0 Used by plot_scores_etc
 
@@ -585,13 +596,53 @@ c $92E1
 c $94BB
 c $94C2
 c $94C8
-c $94F2
 
-c $950D
-C $950E Hit while drawing car body
+; This draws the middle section of the hero car when NOT flipped.
+; Used for other cars/objects too. Clips on left or right?
 
-c $9514
-c $951A
+@ $94F2 label=plot_sprite_56px
+c $94F2 Sprite plotter for back buffer, up to 56px wide, 15px high, no flip.
+R $94F2 I:A   0, 1, 2 or 3 to plot 8, 24, 40 or 56 pixels
+R $94F2 I:DE' Byte width of bitmap data (e.g. 3)
+R $94F2 I:HL  Address in back buffer to plot at
+R $94F2 I:HL' Address of bitmap data
+  $94F2 Increment #REGa for upcoming calculation
+  $94F3 Point #REGix at start of plot instructions
+  $94F7 (~#REGa + 5) is (4 - #REGa) is the number of plot operations to skip
+  $94FA Multiply #REGa by 5: the length of an individual plot operation
+  $94FE Move result to #REGbc
+  $9501 Add it to #REGix to complete the jump target
+  $9503 Save #REGsp to restore later (self modify)
+  $9507 #REGb = 15 rows to draw, #REGc = 16, an increment value used later
+  $950A Bank
+  $950B Jump into body of loop
+@ $950D label=ps56px_loop
+  $950D Bank
+  $950E Next scanline
+  $9510 Restore SP (self modified)
+  $9513 Return
+  $9514 Calculate address of next bitmap scanline
+  $9515 Put it in #REGsp (so we can use POP for speed)
+  $9516 Unbank
+  $9518 Jump table
+  $951A Transfer two bitmap bytes (16 pixels) from the "stack" to screen buffer
+  $951F Transfer another 16 pixels
+  $9524 Transfer another 16 pixels
+  $9529 Transfer another 8 pixels
+  $952B Restore HL
+  $952C Save H in A then H--
+D $952E Decrement the screen address
+  $952E Extract low four bits of row address
+; A &= 0xF   if nz then do next scanline (dec is fine in this case)
+; else A was 0, so to step back we need to adjust the 'CCC' bits
+  $952F If zero we'll need to handle it below, otherwise just loop
+  $9532 H += 16
+  $9535 Decrement the high three bits of row address
+  $9539 No carry, so finish scanline
+; otherwise CCC field was zero
+  $953C H -= 16
+  $953F Loop back to ps56px_loop
+
 c $9542
 c $9567
 c $956E
@@ -1076,6 +1127,12 @@ b $CEDA
 b $CF8E
 
 b $D20E Smoke plume. Perhaps 64x64 in total, but includes masks.
+
+b $D40D Middle sections of hero car. 9 sets of 40x15? Could be different sizes.
+B $D40D Section 1 - 40x13 px
+B $D44E Section 2
+; further ones follow
+
 b $DD6A Components of the car graphic or its shadow?. Straight on. Byte pairs of value and mask. three sets of 14 x 8 UDGs.
 b $DE12 Same, but turning.
 b $DEBA Same again, but turning hard.
