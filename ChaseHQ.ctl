@@ -351,24 +351,48 @@ c $8014
 
 c $8088
 
-c $80B9
+c $80B9 Tape loading
+  $80B9 Setup to load a block ???
+  $80C0 Routine
+  $814B Subroutine
 
-c $80C0
-
-c $814B Tape level loader
-
-b $8169 Mainly tape loading messages
-B $8169,1 flags? attrs?
-W $816A,2 Backbuffer address
-W $816C,2 Attribute address
-T $816E,30 "REWIND TAPE TO START OF SIDE 2"
-T $8191,10 "START TAPE"
-T $81A0,15 "SEARCHING FOR 1"
-T $81B4,7 "FOUND 1"
-T $81C0,13 "STOP THE TAPE"
-T $81D2,11 "PRESS  GEAR"
-T $81EC,13 "GIDDY UP BOY!"
-T $81F9,11 "HOLD ON MAN"
+t $8169 Mainly tape loading messages
+;
+B $8169,1 ?
+W $816A,2 Screen position (8,64)
+W $816C,2 Screen attribute position (1,8)
+  $816E,30 "REWIND TAPE TO START OF SIDE 2"
+;
+B $818C,1 ?
+W $818D,2 Screen position (88,96)
+W $818F,2 Screen attribute position (11,12)
+  $8191,10 "START TAPE"
+;
+B $819B,1 ?
+W $819C,2 Screen position (72,128)
+W $819E,2 Screen attribute position (9,16)
+  $81A0,15 "SEARCHING FOR 1"
+;
+B $81AF,1 ?
+W $81B0,2 Screen position (104,160)
+W $81B2,2 Screen attribute position (13,20)
+  $81B4,7 "FOUND 1"
+;
+B $81BB,1 ?
+W $81BC,2 Screen position (80,96)
+W $81BE,2 Screen attribute position (10,12)
+  $81C0,13 "STOP THE TAPE"
+;
+B $81CD,1 ?
+W $81CE,2 Screen position (88,128)
+W $81D0,2 Screen attribute position (11,16)
+  $81D2,11 "PRESS  GEAR"
+;
+B $81DD Unknown
+;
+  $81EC,13 "GIDDY UP BOY!"
+;
+  $81F9,11 "HOLD ON MAN"
 
 c $8204 In-game sound effects
 C $8246 Produces engine sound effect
