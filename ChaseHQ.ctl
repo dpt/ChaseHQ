@@ -168,21 +168,21 @@ B $5DED,1 frame delay until first message?
 B $5DEE,1 frame delay until next message?
 B $5DEF,1 Flags (?)
 B $5DF0,1 Attribute (black)
-W $5DF1,2 Backbuffer address
+W $5DF1,2 Back buffer address
 W $5DF3,2 Attribute address
 T $5DF5,27 "OK! YOU ARE UNDER ARREST ON"
 ;
 B $5E10,1 frame delay until next message?
 B $5E11,1 Flags (?)
 B $5E12,1 Attribute (black)
-W $5E13,2 Backbuffer address
+W $5E13,2 Back buffer address
 W $5E15,2 Attribute address
 T $5E17,26 "SUSPICION OF FIRST DEGREE "
 ;
 B $5E31,1 frame delay until next message?
 B $5E32,1 Flags (?)
 B $5E33,1 Attribute (black)
-W $5E34,2 Backbuffer address
+W $5E34,2 Back buffer address
 W $5E36,2 Attribute address
 T $5E38,6 "MURDER"
 
@@ -313,22 +313,22 @@ b $76F0 Used by plot_scores_etc
 b $7798 Pre-game screen messages
 ;
 B $7798,1 flags? attrs?   text is white
-W $7799,2 Backbuffer address
+W $7799,2 Back buffer address
 W $779B,2 Attributes address
 T $779D,28 "CHASE H.Q. MONITORING SYSTEM"   text is white
 ;
 B $77B9,1 flags? attrs?   text is yellow
-W $77BA,2 Backbuffer address
+W $77BA,2 Back buffer address
 W $77BC,2 Attributes address
 T $77BE,4 "TUNE"
 ;
 B $77C2,1 flags? attrs?   text is yellow
-W $77C3,2 Backbuffer address
+W $77C3,2 Back buffer address
 W $77C5,2 Attributes address
 T $77C7,6 "VOLUME"
 ;
 B $77CD,1 flags? attrs?   text is white
-W $77CE,2 Backbuffer address
+W $77CE,2 Back buffer address
 W $77D0,2 Attributes address
 T $77D2,6 "SIGNAL"
 
@@ -384,13 +384,13 @@ b $82A6 Attract mode messages
 ; 6 as 5 but with the gap
 B $82A6,1 Flags (double height)
 B $82A7,1 Attribute (black)
-W $82A8,2 Backbuffer address
+W $82A8,2 Back buffer address
 W $82AA,2 Attribute address
 T $82AC,8 "CHASE HQ"
 ;
 B $82B4,1 Flags (regular)
 B $82B5,1 Attribute (black)
-W $82B6,2 Backbuffer address
+W $82B6,2 Back buffer address
 W $82B8,2 Attribute address
 T $82BA,18 "PRESS GEAR TO PLAY"  (this blinks)
 ;
@@ -401,7 +401,7 @@ B $82CD,1 Frame delay until next message?
 ;
 B $82CE,1 Flags (regular)
 B $82CF,1 Attribute (red)
-W $82D0,2 Backbuffer address
+W $82D0,2 Back buffer address
 W $82D2,2 Attribute address
 T $82D4,20 "PROGRAM      JOBBEEE"
 ;
@@ -409,7 +409,7 @@ B $82E8,1 Frame delay?
 ;
 B $82E9,1 Flags (regular)
 B $82EA,1 Attribute (red)
-W $82EB,2 Backbuffer address
+W $82EB,2 Back buffer address
 W $82ED,2 Attribute address
 T $82EF,20 "GRAPHICS        BILL"
 ;
@@ -417,7 +417,7 @@ B $8303,1 Delay + stop flags?  $28
 ;
 B $8304,1 Flags (regular)
 B $8305,1 Attribute (red)
-W $8306,2 Backbuffer address
+W $8306,2 Back buffer address
 W $8308,2 Attribute address
 T $830A,20 "MUSIC       JON DUNN"
 ;
@@ -432,7 +432,7 @@ B $8320 (Frame delays as #R$82CC)
 ;
 B $8322,1 Flags (regular)
 B $8323,1 Attribute (red)
-W $8324,2 Backbuffer address
+W $8324,2 Back buffer address
 W $8326,2 Attribute address
 T $8328,23 "(C) 1989 OCEAN SOFTWARE"
 ;
@@ -440,7 +440,7 @@ B $833F Frame delay?
 ;
 B $8340,1 Flags (regular)
 B $8341,1 Attribute (red)
-W $8342,2 Backbuffer address
+W $8342,2 Back buffer address
 W $8344,2 Attribute address
 T $8346,26 "(C) 1988 TAITO CORPORATION"
 ;
@@ -448,7 +448,7 @@ B $8360 Delay + stop flags?  $28
 ;
 B $8361,1 Flags (regular)
 B $8362,1 Attribute (red)
-W $8363,2 Backbuffer address
+W $8363,2 Back buffer address
 W $8365,2 Attribute address
 T $8367,19 "ALL RIGHTS RESERVED"
 
@@ -505,67 +505,67 @@ c $8C3A
 
 b $8C58 End of level messages
 B $8C5B,1 Attribute (red)
-W $8C5C,2 Backbuffer address
+W $8C5C,2 Back buffer address
 W $8C5E,2 Attribute address
 T $8C60,22 "CLEAR BONUS      0,000" -- double height
 ;
 B $8C78,1 Attribute (red)
-W $8C79,2 Backbuffer address
+W $8C79,2 Back buffer address
 W $8C7B,2 Attribute address
 T $8C7D,22 "TIME BONUS      X 5000" -- double height
 ;
 B $8C95,1 Attribute (red)
-W $8C96,2 Backbuffer address
+W $8C96,2 Back buffer address
 W $8C98,2 Attribute address
 T $8C9A,22 "SCORE                 " -- double height
 ;
 B $8CB5,1 Attribute (black)
-W $8CB6,2 Backbuffer address
+W $8CB6,2 Back buffer address
 W $8CB8,2 Attribute address
 T $8CBA,26 "SIGHTING OF TARGET VEHICLE"
 ;
 B $8CD9,1 Attribute (black)
-W $8CDA,2 Backbuffer address
+W $8CDA,2 Back buffer address
 W $8CDC,2 Attribute address
 T $8CDE,20 "OK! PULL OVER CREEP!"
 ;
 B $8CF7,1 Attribute (black)
-W $8CF8,2 Backbuffer address
+W $8CF8,2 Back buffer address
 W $8CFA,2 Attribute address
 T $8CFC,9 "GAME OVER"
 ;
 B $8D0A,1 Attribute (black)
-W $8D0B,2 Backbuffer address
+W $8D0B,2 Back buffer address
 W $8D0D,2 Attribute address
 T $8D0F,7 "TIME UP"
 ;
 B $8D1B,1 Attribute (black)
-W $8D1C,2 Backbuffer address
+W $8D1C,2 Back buffer address
 W $8D1E,2 Attribute address
 T $8D20,9 "CONTINUE "
 ;
 B $8D2B,1 Attribute (black)
-W $8D2C,2 Backbuffer address
+W $8D2C,2 Back buffer address
 W $8D2E,2 Attribute address
 T $8D30,12 "THIS MISSION"
 ;
 B $8D3E,1 Attribute (red)
-W $8D3F,2 Backbuffer address
+W $8D3F,2 Back buffer address
 W $8D41,2 Attribute address
 T $8D43,16 "PUSH GEAR BUTTON"
 ;
 B $8D55,1 Attribute (red)
-W $8D56,2 Backbuffer address
+W $8D56,2 Back buffer address
 W $8D58,2 Attribute address
 T $8D5A,22 "BEFORE TIMER REACHES 0"
 ;
 B $8D72,1 Attribute (black)
-W $8D73,2 Backbuffer address
+W $8D73,2 Back buffer address
 W $8D75,2 Attribute address
 T $8D77,7 "TIME 10"
 ;
 B $8D80,1 Attribute (black)
-W $8D81,2 Backbuffer address
+W $8D81,2 Back buffer address
 W $8D83,2 Attribute address
 T $8D85,8 "CREDIT  "
 
