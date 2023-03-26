@@ -948,7 +948,7 @@ C $A11F ...B=(A&7)+1, C=5-(A>>3)
 ; IN that port
 ; rotate the result by C
 
-b $A139
+g $A139
 B $A16E,1 used during attract mode, road gradient/angle or something?
 B $A170 used in plot_scores_etc. set to 3 by $9C65.
 W $A171,2 seems to be the horizon level, possibly relative (used during attract mode)
