@@ -562,8 +562,16 @@ c $8A36 Sound effects - makes the "bip-bow" time running out effect
 
 c $8A57
 c $8C3A
+; Screens:
+; TIME UP - is solo
+; GAME OVER - is solo
+; CONTINUE - THIS MISSION - PUSH GEAR BUTTON - BEFORE TIMER REACHES 0 - TIME  <N> - CREDITS  -- together
 
 b $8C58 End of level messages
+;
+@ $8C58 label=score_messages
+B $8C58 TBD
+;
 B $8C5B,1 Attribute (red)
 W $8C5C,2 Back buffer address
 W $8C5E,2 Attribute address
@@ -579,25 +587,40 @@ W $8C96,2 Back buffer address
 W $8C98,2 Attribute address
 T $8C9A,22 "SCORE                 " -- double height
 ;
+@ $8CB2 label=sighting_message
+B $8CB2 TBD
+;
 B $8CB5,1 Attribute (black)
 W $8CB6,2 Back buffer address
 W $8CB8,2 Attribute address
 T $8CBA,26 "SIGHTING OF TARGET VEHICLE"
+;
+@ $8CD6 label=pull_over_message
+B $8CD6 TBD
 ;
 B $8CD9,1 Attribute (black)
 W $8CDA,2 Back buffer address
 W $8CDC,2 Attribute address
 T $8CDE,20 "OK! PULL OVER CREEP!"
 ;
+@ $8CF4 label=game_over_message
+B $8CF4 TBD
+;
 B $8CF7,1 Attribute (black)
 W $8CF8,2 Back buffer address
 W $8CFA,2 Attribute address
 T $8CFC,9 "GAME OVER"
 ;
+@ $8D07 label=time_up_message
+B $8D07 TBD
+;
 B $8D0A,1 Attribute (black)
 W $8D0B,2 Back buffer address
 W $8D0D,2 Attribute address
 T $8D0F,7 "TIME UP"
+;
+@ $8D18 label=continue_messages
+B $8D18 TBD
 ;
 B $8D1B,1 Attribute (black)
 W $8D1C,2 Back buffer address
