@@ -381,13 +381,16 @@ B $7DF2 unknown
 
 b $8000 temporaries?
 B $8002,4 Score digits as BCD (4 bytes / 8 digits)
-B $8007,1 Current stage number (1...)
+B $8006,1 incremented on reset?
+B $8007,1 Current/wanted? stage number (1...)
 
-c $8014
-
-c $8088
-
-c $80B9 Tape loading
+c $8014 Load a stage?
+  $8014 Get stage number
+  $8017 
+  $801A,2 Exit if they match
+  $8022 Update the level nunber in "SEARCHING FOR <N>"
+  $8088
+N $80B9 Tape loading
   $80B9 Setup to load a block ???
   $80C0 Routine
   $814B Subroutine
@@ -522,7 +525,10 @@ c $83C1
 c $83C4
 c $83C7
 c $83CA
+
 c $83CD
+  $83F5 If $A139 is nonzero this calls $81AA which is the end of a string...
+
 c $8401 Possible main game loop?
 c $852A
 c $858C
@@ -541,9 +547,11 @@ c $87DC
 ; flashing lights are 5 attrs wide, 4 high
 
 c $8876
+  $88B1,3 Call fill_attributes
 
 @ $88D5 label=clear_game_attrs
 c $88D5 Clears the game screen attributes to zero
+
 @ $88E2 label=clear_game_screen
 c $88E2 Clears the game screen attributes and the game screen to zero
 
@@ -561,7 +569,18 @@ c $8A0F Sound effects - "pitt" and "pff" etc.
 c $8A36 Sound effects - makes the "bip-bow" time running out effect
 
 c $8A57
+  $8ABB,3 Call fill_attributes
+  $8B87,3 Point at "CLEAR BONUS - TIME BONUS - SCORE" messages
+
+@ $8C3A label=fully_smashed
 c $8C3A
+  $8C3C TBD = (draw_screen flag) + 1
+  $8C43 Set smash counter to 20
+  $8C48 $A16F = $C0
+  $8C4D,3 Print the "OK! PULL OVER CREEP!" message
+  $8C53
+  $8C56
+
 ; Screens:
 ; TIME UP - is solo
 ; GAME OVER - is solo
@@ -652,28 +671,145 @@ W $8D81,2 Back buffer address
 W $8D83,2 Attribute address
 T $8D85,8 "CREDIT  "
 
-c $8D8F
-c $8DD8
-c $8DF9
-c $8E29 Spreads attribute bytes from left, filling the attrs.
+@ $8D8F label=transition
+c $8D8F Drives transitions.
+  $8D8F Check the flag/counter that fill_attributes resets
+  $8D92 Exit early if its zero
+  $8D94 Decrement it
+  $8D95 If zero, call $8E91 ...
+  $8D9D Call fill_attributes
+  $8DA0 (self modified)
+  $8DB0 Move to next frame? (self modified)
+  $8DB4 Set anim address? (self modify)
+  $8DBD 8 chunks
+@ $8DBF label=transition_loop
+  $8DBF Fetch a byte of anim?
+  $8DC0 Bank
+  $8DC1 Get it into #REGe
+  $8DC2 Preserve H in D (which is safe)
+  $8DC3 Reset ptr
+  $8DC5 Draw a chunk
+  $8DC8 Reset ptr
+  $8DCA Move up (screen-wise) by 8
+  $8DCB
+  $8DCD
+  $8DCE Draw a chunk
+  $8DD1 H = D - 1 -- drop down 1 row
+  $8DD3 Unbank
+  $8DD4 Next byte of anim
+  $8DD5 Loop
+  $8DD7 Return
+;
+@ $8DD8 label=fade_chunk
+  $8DD8 Draws an 8-row chunk of the fade in/out effect.
+;R $8DD8 I:HL Pointer to start address in back buffer.
+;R $8DD8 I:E  Value to OR with the pixels.
+  $8DD8 8 rows
+@ $8DDA label=fade_row_loop
+  $8DDA 6 iterations (of 5 each) = 30 bytes written (~ a scanline)
+@ $8DDC label=fade_column_loop
+  $8DDC OR #REGe into the screen pixels
+  $8DDF Repeat another four times
+  $8DF0 Loop
+  $8DF2 Move to next start address
+  $8DF4 Loop
+  $8DF8 Return
 
-c $8E42
+@ $8DF9 label=setup_transition
+R $8DF9 I:A ?
+c $8DF9 Seems to setup a transition.
+  $8DF9 Set flags from #REGa
+  $8DFA #REGbc = #REGa
+  $8DFD Points to some data TBD
+  $8E00 Jump over if #REGa was +ve
+  $8E03 #REGb = $FF
+  $8E04 Points to some data TBD
+@ $8E07 label=dunno_jump
+  $8E07 Self modify
+  $8E0B Call random
+  $8E0E Mask 0..3
+  $8E10 HL = A * 3 + DE
+  $8E17 
+  $8E18 Self modify
+  $8E1B Load DE from HL
+  $8E1F Set transition animation start address
+  $8E23 4 frames of animation? 4 states?
+  $8E25 
+  $8E28 Return
+
+@ $8E29 label=fill_attributes
+c $8E29 Fills the attribute bytes leftwards from column 1.
+  $8E29 Screen attribute position (1,8)
+  $8E2C Clear #REGb for #REGc to be set in a moment
+  $8E2E 16 rows of attributes
+  $8E30 Destination address
+  $8E32 28 bytes to copy (why isn't this 29?)
+  $8E34 Dest++
+  $8E35 Fill by 'rolling'
+  $8E37 Skip four (32 wide - 28)
+  $8E3B Row counter--
+  $8E3C Loop until it hits zero
+  $8E3E Zero this flag
+  $8E41 Return
+
+@ $8E42 label=sub_8e42
+c $8E42 Subroutine.
+  $8E42 LD HL,$0000   ; self modified by $8E88 only
+  $8E45 LD B,$00      ; self modified by ($8E58 increments it), ($8E8D resets it to 1)
+  $8E47 DJNZ $8E5C    ;
+  $8E49 LD A,$14      ; self modified by $8E4C, $8E51, ($8E84 resets it perhaps)
+  $8E4B DEC A         ;
+  $8E4C LD ($8E4A),A  ; self modify
+  $8E4F RET NZ        ;
+  $8E50 LD A,(HL)     ;
+  $8E51 LD ($8E4A),A  ; self modify
+  $8E54 LD A,($8E46)  ; increment $8E46
+  $8E57 INC A         ; affects TIME UP state if disabled
+  $8E58 LD ($8E46),A  ;
+  $8E5B INC B         ;
+@ $8E5C label=sub_8e42_1
+  $8E5C INC HL        ;
+  $8E5D LD A,(HL)     ;
+  $8E5E AND A         ; test flags
+  $8E5F JR Z,$8E66    ; exit
+  $8E61 CALL $8E6C    ;
+  $8E64 JR $8E47      ;
+  $8E66 DEC HL        ;
+  $8E67 LD A,(HL)     ;
+  $8E68 LD ($A231),A  ;
+  $8E6B Return
+
 c $8E6C Message printing related. Increments HL then loads A,E,D,C,B from where HL points.
-c $8E7E
+
+c $8E7E Message printing related, called for TIME UP, CONTINUE, etc. messages.
+
 c $8E91
+
 c $8EB7
+
 c $8EE7
+
 c $8F13
+
 c $8F47
+
 c $8F5F
+
 c $901C
+
 c $9023
+
 c $904B
 b $9052
+
 c $916C
+
 c $9171
+
 c $924D
+
 c $9252
+
 c $9278
 
 c $92E1
@@ -892,11 +1028,24 @@ c $9B6C
 c $9BA7
 
 c $9BCF
-C $9C70 Set remaining time to 60 (BCD)
+  $9C1B,3 Point at "TIME UP" message
+N $9C57 Resetting mission code.
+  $9C57 Reset $A229
+  $9C5B Reset perp smash flag count thing to zero
+  $9C60 Reset smash counter to zero
+  $9C62 $A16F = $FF
+  $9C67 $A252 = 3
+  $9C6A $A231 = 3 -- Flag set to zero when attributes have been set
+  $9C6D $A170 = 3 -- Used in plot_scores_etc
+  $9C70 Set remaining time to 60 (BCD)
+  $9C7E,3 Point at "CONTINUE THIS MISSION" messages
 
 c $9CC2
+
 c $9CD6
+
 c $9CF8
+
 c $9D2E
 
 t $9D51 Text
@@ -910,31 +1059,31 @@ T $9D5B "STAGE " message shown in the score area.
 B $9D61 #R$9D61 writes the current score number here in ASCII.
 
 c $9D62
-C $9D62 Check if stage has changed?
-C $9D6B Adding 48 to make it a digit then $80 to terminate the string.
-C $9D6D Update "STAGE N"
-C $9D73 Screen pixel (48,36)
-C $9D76 Point at stage text
-C $9D79 Draw it
-C $9D7C Is the bonus flag set?
-C $9D82 Clear it
-C $9D86 Screen pixel (64,24)
-C $9D89 Clear the area 5*7 bytes
-C $9D9E Draw it
-C $9DB4 42 => BRIGHT + red over black
-C $9DB8 46 => BRIGHT + yellow over black
-C $9DBA Point at attributes (8,3)
-C $9DBD Set them to #REGc
-C $9DC3
-C $9DCD Screen pixel (118,36)
-C $9DD0 "LO"
-C $9DD6 "HI"
-C $9DD9 Draw it
+  $9D62 Check if stage has changed?
+  $9D6B Adding 48 to make it a digit then $80 to terminate the string.
+  $9D6D Update "STAGE N"
+  $9D73 Screen pixel (48,36)
+  $9D76 Point at stage text
+  $9D79 Draw it
+  $9D7C Is the bonus flag set?
+  $9D82 Clear it
+  $9D86 Screen pixel (64,24)
+  $9D89 Clear the area 5*7 bytes
+  $9D9E Draw it
+  $9DB4 42 => BRIGHT + red over black
+  $9DB8 46 => BRIGHT + yellow over black
+  $9DBA Point at attributes (8,3)
+  $9DBD Set them to #REGc
+  $9DC3
+  $9DCD Screen pixel (118,36)
+  $9DD0 "LO"
+  $9DD6 "HI"
+  $9DD9 Draw it
 
-C $9DE6 Point #REGhl at left light's attributes
-C $9DE9 Toggle its brightness
-C $9DEC Point #REGhl at right light's attributes
-C $9DEF Toggle its brightness
+  $9DE6 Point #REGhl at left light's attributes
+  $9DE9 Toggle its brightness
+  $9DEC Point #REGhl at right light's attributes
+  $9DEF Toggle its brightness
 
 @ $9DF4 label=toggle_light_brightness
 c $9DF4 Toggle the light's BRIGHT bit (#REGhl -> attrs)
@@ -984,10 +1133,11 @@ c $9F47 Plots an LED font digit
 
 c $9F99
 
-@ $9FAE label=draw_text
-c $9FA3 Draws a string, bit 7 terminated
-C $9FA6 Load a byte, mask off the text part
-C $9FAE Was bit 7 set?, quit if so, otherwise loop
+@ $9FA3 label=draw_string
+c $9FA3 Draws a string
+N $9FA3 The string is terminated by setting the topmost bit of the final character.
+  $9FA6 Load a byte ahd mask off the text part
+  $9FAE Was bit 7 set?, quit if so, otherwise loop
 
 @ $9FB4 label=draw_char
 c $9FB4 Draws a character
@@ -1008,45 +1158,57 @@ B $A0CC
 ; rotate the result by C
 
 g $A139
-B $A16E,1 used during attract mode, road gradient/angle or something?
-B $A170 used in plot_scores_etc. set to 3 by $9C65.
+  $A139,1 This is always zero, yet the code checks it. If it's set then $83F5 uses it to jump to $81AA, which is the end of a string. $8435 tests it too and calls $9945 when it's zero, which it always is. $8AD6 also tries to use it to jump into a string (twice). Could be dead code or 128K version hook?
+  $A13A,1 Current stage number
+  $A13B,1 Used by $8424
+  $A16E,1 used during attract mode, road gradient/angle or something?
+  $A16F,1 Set to $C0 when fully smashed
+  $A170,1 used in plot_scores_etc. set to 3 by $9C65.
 W $A171,2 seems to be the horizon level, possibly relative (used during attract mode)
-;
-B $A174,1 Low/high gear flag?
-B $A175,8 Score digits. One digit per byte, least significant first. This seems to be recording what's on screen so digit plotting can be bypassed.
+  $A174,1 Low/high gear flag?
+  $A175,8 Score digits. One digit per byte, least significant first. This seems to be recording what's on screen so digit plotting can be bypassed.
 @ $A175 label=score_digits
-B $A175,8 Score. Stored as one digit per byte.
+  $A175,8 Score. Stored as one digit per byte.
 @ $A17E label=time_bcd
-B $A17E,1 Time remaining. Stored as BCD.
+  $A17E,1 Time remaining. Stored as BCD.
 @ $A17F label=time_digits
-B $A17F,2 Time remaining. Stored as one digit per byte.
+  $A17F,2 Time remaining. Stored as one digit per byte.
 @ $A181 label=distance_digits
-B $A181,4 Distance. Stored as one digit per byte.
+  $A181,4 Distance. Stored as one digit per byte.
 W $A186,2 Attribute address of horizon. Points to last attribute on the line which shows the ground. (e.g. $59DF)
-B $A220,1 Set to $F8 when the CHQ MONITORING SYSTEM screen is being shown. (draw_screen uses this to skip for some work, just tests for non-zero)
-B $A223,1 Stage number as shown. Stored as ASCII.
-B $A22A,1 Used by $B6D6 and others
-B $A22C,1 Bonus flag (1 triggers the effect)
-B $A22D,1 Counter for bonus effect (goes up to 7?)
-B $A22E,1 ... light toggle flashing related
-B $A230,1 Used by draw_screen
-B $A231,1 Flag set to zero when attributes have been set
-B $A232,1
-B $A233,1
-B $A234,1 Cycles 0/1/2/3 as the game runs.
-B $A235,1 ... light toggle flashing related? seems to cycle 0/1 as the game runs.
-B $A240,1 Used by $B8F6, $BBF7
-B $A249,1 Counter used by $BB6E
-B $A24A,1 Used by $B848
-B $A24E used in plot_scores_etc
-B $A253,1 Low/high gear flag? or visual state?
-B $A258,1 Used by $B8D8
-B $A259,1 Used by $B92B
-B $A256,1 Distance related perhaps?
-B $A25A,1 Used by $B8D2
-B $A25C,1 Used by $B84E
-B $A25D,1 Used by $B85D
-B $A268,1 Used by $BB69 - skips routine if not set
+  $A188,1
+W $A195,2 Set to $190 by fully_smashed
+  $A220,1 Set to $F8 when the CHQ MONITORING SYSTEM screen is being shown. (draw_screen uses this to skip for some work, just tests for non-zero). #R$8014 sets this to the level number.
+  $A223,1 Stage number as shown. Stored as ASCII.
+  $A229,1
+  $A22A,1 Used by $B6D6 and others
+  $A22C,1 Bonus flag (1 triggers the effect)
+  $A22D,1 Counter for bonus effect (goes up to 7?)
+  $A22E,1 ... light toggle flashing related
+  $A22F,1
+  $A230,1 Used by draw_screen
+  $A231,1 Transition control/counter. Set to zero when fill_attributes has run.
+  $A232,1 Set to 2 when the perp is fully smashed, set to 6 when pulled over
+  $A233,1 Smash counter (0..20)
+  $A234,1 Cycles 0/1/2/3 as the game runs.
+  $A235,1 ... light toggle flashing related? seems to cycle 0/1 as the game runs.
+  $A236,1
+  $A240,1 Used by $B8F6, $BBF7
+  $A249,1 Counter used by $BB6E
+  $A24A,1 Used by $B848
+  $A24E used in plot_scores_etc
+  $A250,1
+  $A251,1
+  $A252,1
+  $A253,1 Low/high gear flag? or visual state?
+  $A258,1 Used by $B8D8
+  $A259,1 Used by $B92B
+  $A256,1 Distance related perhaps?
+  $A25A,1 Used by $B8D2
+  $A25C,1 Used by $B84E
+  $A25D,1 Used by $B85D
+  $A268,1 Used by $BB69 - skips routine if not set
+  $A26B,1 Used by $8432
 
 b $A27A Font: 8x7 bitmap
 B $A27A Exclamation mark
@@ -1089,13 +1251,14 @@ c $B318
 c $B457
 
 c $B4CC
-C $B4E1 Point #REGhl at left light's attributes
-C $B4E4 Toggle its brightness
-C $B4E7
-C $B4EA
-C $B4ED
+  $B4E1 Point #REGhl at left light's attributes
+  $B4E4 Toggle its brightness
+  $B4E7,3 Point at "SIGHTING OF TARGET VEHICLE" message
+  $B4EA
+  $B4ED
 
 c $B4F0
+
 c $B549
 
 c $B58E Draws the car
