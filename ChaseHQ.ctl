@@ -431,8 +431,8 @@ B $81DD Unknown
   $81F9,11 "HOLD ON MAN"
 
 c $8204 In-game sound effects
-C $8246 Produces engine sound effect
-C $824E Produces the steering squeak
+  $8246 Produces engine sound effect
+  $824E Produces the steering squeak
 
 b $82A6 Attract mode messages
 ; set to 0 for double height with a gap(?)
@@ -533,11 +533,11 @@ c $865A
 b $86F6
 
 c $87DC
-C $8807 Pre-shift the backdrop image
-C $8857 Point #REGhl at left light's attributes
-C $885D Point #REGhl at right light's attributes then FALL THROUGH
+  $8807 Pre-shift the backdrop image
+  $8857 Point #REGhl at left light's attributes
+  $885D Point #REGhl at right light's attributes then FALL THROUGH
 @ $8860 label=clear_lights
-C $8860 Clear the lights' BRIGHT bit
+  $8860 Clear the lights' BRIGHT bit
 ; flashing lights are 5 attrs wide, 4 high
 
 c $8876
@@ -915,49 +915,49 @@ C $9DEF Toggle its brightness
 
 @ $9DF4 label=toggle_light_brightness
 c $9DF4 Toggle the light's BRIGHT bit (#REGhl -> attrs)
-C $9DF4 B = 4, C = $40 (BRIGHT bit)
-C $9DF7 Toggle attribute byte on five successive locations
-C $9E0A Move to next attribute row
-C $9E0E Repeat for four rows
+  $9DF4 B = 4, C = $40 (BRIGHT bit)
+  $9DF7 Toggle attribute byte on five successive locations
+  $9E0A Move to next attribute row
+  $9E0E Repeat for four rows
 
 @ $9E11 label=plot_scores_etc
 c $9E11
 @ $9E7B label=plot_scores_only
-C $9E7B Point #REGde at speed digits screen position
-C $9EB6 Plot a digit
-C $9EBA Plot a digit
-C $9EBE Plot a digit
-C $9F03 Point #REGde at distance digits screen position (136,33)
-C $9F12 Point #REGde at score digits screen position
-C $9F16 Point #REGde at score (four BCD bytes)
-C $9F19 Point #REGhl at score digits (eight bytes)
-C $9F1E C = A = *DE; A >>= 4; if (A == *HL) ...
-C $9F1F Keep for later
-C $9F26 If different than stored then plot
-C $9F2D Examine next digit
-C $9F30 If different than stored then plot
-C $9EC1 Point #REGde at time digits position
-C $9F3B Update new digit
-C $9F3C Done
-C $9F3C Plot a digit
-C $9F45 Plot a digit
-C $9F3F Next digit (second half of a pair)
-C $9F45 Next digit (next pair)
+  $9E7B Point #REGde at speed digits screen position
+  $9EB6 Plot a digit
+  $9EBA Plot a digit
+  $9EBE Plot a digit
+  $9F03 Point #REGde at distance digits screen position (136,33)
+  $9F12 Point #REGde at score digits screen position
+  $9F16 Point #REGde at score (four BCD bytes)
+  $9F19 Point #REGhl at score digits (eight bytes)
+  $9F1E C = A = *DE; A >>= 4; if (A == *HL) ...
+  $9F1F Keep for later
+  $9F26 If different than stored then plot
+  $9F2D Examine next digit
+  $9F30 If different than stored then plot
+  $9EC1 Point #REGde at time digits position
+  $9F3B Update new digit
+  $9F3C Done
+  $9F3C Plot a digit
+  $9F45 Plot a digit
+  $9F3F Next digit (second half of a pair)
+  $9F45 Next digit (next pair)
 
 @ $9F47 label=ledfont_plot
 c $9F47 Plots an LED font digit
 ;(A = index, DE -> scr ptr)  vertical would need to be 1, 9, 17, ..
-C $9F48 HL = &ledfont[A * 15]
-C $9F55 save the scr ptr
-C $9F56 save D
-C $9F57 transfer a byte
-C $9F59 next row
-C $9F5A step back
-C $9F5B transfer 7 rows
-C $9F71 restore D
-C $9F73 E += 31
-C $9F77 transfer another 8 rows
-C $9F96 move to next column
+  $9F48 HL = &ledfont[A * 15]
+  $9F55 save the scr ptr
+  $9F56 save D
+  $9F57 transfer a byte
+  $9F59 next row
+  $9F5A step back
+  $9F5B transfer 7 rows
+  $9F71 restore D
+  $9F73 E += 31
+  $9F77 transfer another 8 rows
+  $9F96 move to next column
 
 c $9F99
 
@@ -968,7 +968,7 @@ C $9FAE Was bit 7 set?, quit if so, otherwise loop
 
 @ $9FB4 label=draw_char
 c $9FB4 Draws a character
-C $9FEC Point #REGhl at 8x7 font
+  $9FEC Point #REGhl at 8x7 font
 
 @ $A03D label=double_height_glyph
 c $A03D Plots double-height glyphs. DE->screen HL->font def
@@ -976,10 +976,10 @@ c $A03D Plots double-height glyphs. DE->screen HL->font def
 c $A0CC
 B $A0CC
 @ $A0D6 label=keyscan
-C $A0D6 Main keyboard handler.
-C $A112 Outer keyboard loop.
-C $A11E Inner keyboard loop. #REGa = ?
-C $A11F ...B=(A&7)+1, C=5-(A>>3)
+  $A0D6 Main keyboard handler.
+  $A112 Outer keyboard loop.
+  $A11E Inner keyboard loop. #REGa = ?
+  $A11F ...B=(A&7)+1, C=5-(A>>3)
 ; rotate $FE by B
 ; IN that port
 ; rotate the result by C
@@ -1076,59 +1076,60 @@ c $B4F0
 c $B549
 
 c $B58E Draws the car
-C $B5FE Hit while drawing car. loads values then calls $B627
-C $B596 Point HL at ? then add (A * 4)
-C $B605 Hit while drawing car. draws wheels
-C $B610 Draws left side of car
-C $B627 Subroutine
-C $B641 Draws right side of car
+  $B6C4 Read from SUB @ $B5AA 
+  $B5FE Hit while drawing car. loads values then calls $B627
+  $B596 Point HL at ? then add (A * 4)
+  $B605 Hit while drawing car. draws wheels
+  $B610 Draws left side of car
+  $B627 Subroutine
+  $B641 Draws right side of car
 
 c $B648
-C $B6DE,5 Divide by 8
+  $B6DE,5 Divide by 8
 
 c $B67C
-
-C $B701 Select a plotter? Could be clipping stuff too.
-C $B708 This multiplies by six - the length of each load-mask-store step in the plotter core.
-C $B70C Add that to #REGix.
-C $B711 Set loop counter for 15 iterations?
-C $B714
+;
+  $B701 Select a plotter? Could be clipping stuff too.
+  $B708 This multiplies by six - the length of each load-mask-store step in the plotter core.
+  $B70C Add that to #REGix.
+  $B711 Set loop counter for 15 iterations?
+  $B714
 
 @ $B716 label=masked_tile_plotter
 c $B716 Save #REGsp for restoration on exit
 @ $B71C label=masked_tile_plotter_loop
-C $B71F Restore original #REGsp
+  $B71F Restore original #REGsp
 @ $B724 label=masked_tile_plotter_entry
-C $B729 Masked tile plotter. The stack points to pairs of bitmap and mask bytes and HL must point to the screen buffer. Uses AND-OR type masking. Proceeds left-right. Doesn't flip the bytes so there must be an alternative for that.
+  $B729 Masked tile plotter. The stack points to pairs of bitmap and mask bytes and HL must point to the screen buffer. Uses AND-OR type masking. Proceeds left-right. Doesn't flip the bytes so there must be an alternative for that.
 @ $B729 label=masked_tile_plotter_core_thingy
-C $B729 Load a bitmap and mask pair (D,E)
-C $B72A Load the screen pixels
-C $B72B AND screen pixels with mask
-C $B72C OR in new pixels
-C $B72D Store back to the screen
-C $B72E Move to next screen pixel
-C $B72F Repeat 8 times
-C $B758 Handle end of row. This must be adjusting the screen pointer.
+  $B729 Load a bitmap and mask pair (D,E)
+  $B72A Load the screen pixels
+  $B72B AND screen pixels with mask
+  $B72C OR in new pixels
+  $B72D Store back to the screen
+  $B72E Move to next screen pixel
+  $B72F Repeat 8 times
+  $B758 Handle end of row. This must be adjusting the screen pointer.
 
 c $B76C
-C $B771 Save #REGsp for restoration on exit
-C $B775 Point #REGix at ??? table
-C $B779 Subtract 8 ???
-C $B77C,3 Multiply by 8
-C $B77F Add to IX
-C $B784,2 HEF
+  $B771 Save #REGsp for restoration on exit
+  $B775 Point #REGix at ??? table
+  $B779 Subtract 8 ???
+  $B77C,3 Multiply by 8
+  $B77F Add to IX
+  $B784,2 HEF
 B $B79C TBD
 N $B7A4 Masked tile plotter with flipping
-C $B7A4 Load a bitmap and mask pair (B,C)
-C $B7A5 Set flip table index (assuming table is aligned)
-C $B7A6 Load the screen pixels
-C $B7A7 AND screen pixels with flipped mask
-C $B7A8 Set flip table index
-C $B7A9 OR in new flipped pixels
-C $B7AA Store back to the screen
-C $B7AB Move to next screen pixel (downwards in memory)
-C $B7AC Repeat 8 times
-C $B7DB Handle end of row. This must be adjusting the screen pointer.
+  $B7A4 Load a bitmap and mask pair (B,C)
+  $B7A5 Set flip table index (assuming table is aligned)
+  $B7A6 Load the screen pixels
+  $B7A7 AND screen pixels with flipped mask
+  $B7A8 Set flip table index
+  $B7A9 OR in new flipped pixels
+  $B7AA Store back to the screen
+  $B7AB Move to next screen pixel (downwards in memory)
+  $B7AC Repeat 8 times
+  $B7DB Handle end of row. This must be adjusting the screen pointer.
 
 c $B7EF
 b $B828
@@ -1139,8 +1140,8 @@ c $BB69
 
 @ $BC3E label=draw_screen
 c $BC3E Copies the backbuffer at $F000 to the screen.
-C $BC3E Point #REGhl at screen pixel (136,64). This is positioned halfway across so we can PUSH to the screen via SP.
-C $BC42 Point #REGhl' at backbuffer + 1 byte.
+  $BC3E Point #REGhl at screen pixel (136,64). This is positioned halfway across so we can PUSH to the screen via SP.
+  $BC42 Point #REGhl' at backbuffer + 1 byte.
   $BC45 Self modify #REGsp restore instruction
 ;
 ;* Spectrum screen memory has the arrangement:
@@ -1174,52 +1175,52 @@ N $BCC8 This is a similar sequence but only moves 14 bytes (not using IY)
   $BD10 Transfer another 14 bytes (112 pixels)
 ;
   $BD28 Is the back buffer row multiple of 4?
-  $BD2A 
+  $BD2A
 ;
   $BD2D Is the back buffer row multiple of 8?
-  $BD2F 
+  $BD2F
 ;
   $BD31 L -= $F0, H = $F0
-  $BD33 
-  $BD34 
-  $BD35 
+  $BD33
+  $BD34
+  $BD35
 ;
   $BD36 L >= $F0
   $BD39 PE = parity even
 ;
-  $BD3C 
+  $BD3C
   $BD3D Increment the screen address
-  $BD40 
-  $BD41 
+  $BD40
+  $BD41
 ;
   $BD42
 ;
 @ $BD45 label=draw_screen_bd45
-  $BD45 
+  $BD45
   $BD46 Point #REGhl at screen pixel (136,128).
-  $BD49 
+  $BD49
   $BD4A Copy more
 ;
 @ $BD4D label=draw_screen_bd4d
-  $BD4D 
+  $BD4D
   $BD4E
   $BD51 Which one are we modifying here?
-  $BD52 
-  $BD53 
+  $BD52
+  $BD53
   $BD54 Ditto, which?
-  $BD56 
-  $BD57 
+  $BD56
+  $BD57
 ;
 @ $BD5A label=draw_screen_attributes
   $BD5A Don't update the attributes if the level intro screen is being shown
-  $BD60 
+  $BD60
   $BD63 Seems to be related to the horizon level
-  $BD64 
-  $BD65 
-  $BD66 
-  $BD67 
+  $BD64
+  $BD65
+  $BD66
+  $BD67
   $BD68 Jump to exit check if both are zero
-  $BD69 
+  $BD69
   $BD6B E = A * 4
   $BD6E A = $FF if carry set, zero otherwise
   $BD6F D = A
@@ -1275,8 +1276,8 @@ c $C61D
 
 c $C62E
 ;$C635 does the road plotting
-C $C7EA,3 Point at first hill backdrop
-C $C7EF,3 Point at second hill backdrop
+  $C7EA,3 Point at first hill backdrop
+  $C7EF,3 Point at second hill backdrop
 
 c $C813
 c $C821
@@ -1285,28 +1286,28 @@ c $C86E
 @ $C8BE label=pre_shift_backdrop
 c $C8BE Builds the pre-shifted first hill backdrop
 ; Q. How much is it shifting it by?
-C $C8BE Point at second hill backdrop
-C $C8C1 Point at first hill backdrop
-C $C8C4
-C $C8C5
-C $C8C6 Each is 250 bytes long
-C $C8C9 Copy 2nd to first
-C $C8CB
-C $C8CC Jump 10 bytes fwd
-C $C8CF
-C $C8D0
-C $C8D1 pop old DE
-C $C8D2 10 x 24
-C $C8D5
-C $C8D6
-C $C8D7 Nibble swap thing
-C $C8D9
-C $C8DA
-C $C8DB
-C $C8DD
-C $C8DE
-C $C8DF
-C $C8E2
+  $C8BE Point at second hill backdrop
+  $C8C1 Point at first hill backdrop
+  $C8C4
+  $C8C5
+  $C8C6 Each is 250 bytes long
+  $C8C9 Copy 2nd to first
+  $C8CB
+  $C8CC Jump 10 bytes fwd
+  $C8CF
+  $C8D0
+  $C8D1 pop old DE
+  $C8D2 10 x 24
+  $C8D5
+  $C8D6
+  $C8D7 Nibble swap thing
+  $C8D9
+  $C8DA
+  $C8DB
+  $C8DD
+  $C8DE
+  $C8DF
+  $C8E2
 
 c $C8E3
 c $C93E
@@ -1374,12 +1375,12 @@ b $E858
 W $E90A,2 -> "STOP THE TAPE" + "PRESS ANY KEY" message set
 
 c $E90F
-C $E928 Point #REGhl at input menu messages
-C $E931 Keyscan for 1, 2, 3, 4, 5
-C $E93A Keyscan for 0, 9, 8, 7, 6
-C $E93D Keyscan for P, O, I, U, Y
-C $E940 Keyscan for ENTER, L, K, J, H
-C $E943 Keyscan for SPACE, SYM SHFT, M, N, B
+  $E928 Point #REGhl at input menu messages
+  $E931 Keyscan for 1, 2, 3, 4, 5
+  $E93A Keyscan for 0, 9, 8, 7, 6
+  $E93D Keyscan for P, O, I, U, Y
+  $E940 Keyscan for ENTER, L, K, J, H
+  $E943 Keyscan for SPACE, SYM SHFT, M, N, B
 
 b $E9B4 Messages
 ;
@@ -1592,8 +1593,8 @@ c $ECDA Clears the screen.
 c $ECF3
 
 c $ED4D
-C $ED94,3 -> "B N M ..."
-C $EDBD,3 -> test mode strings
+  $ED94,3 -> "B N M ..."
+  $EDBD,3 -> test mode strings
 
 t $EDD6 Names of keys
 
@@ -1606,8 +1607,8 @@ b $EE40
 c $EE6E
 
 c $EE9E Define keys
-C $EEAD Self modified, cycles 5,3,2,1
-C $EEBE Self modified, cycles $F12x .. $F2xx ish
+  $EEAD Self modified, cycles 5,3,2,1
+  $EEBE Self modified, cycles $F12x .. $F2xx ish
 
 c $EF19
 c $EF22
@@ -1617,8 +1618,8 @@ c $EF38
 b $EF5E Drum related
 
 c $F0C6 White noise generator?
-C $F0C9 loop: Point at random bytes
-C $F0CC Increment first byte by 3, Load it into #REGb
+  $F0C9 loop: Point at random bytes
+  $F0CC Increment first byte by 3, Load it into #REGb
 
 b $F0FE
 
