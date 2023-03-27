@@ -1255,7 +1255,16 @@ N $BDA0 Set the smash meter attributes
   $BDBD Restore #REGsp (self modified at start of routine)
   $BDC0 Return
 
-c $BDC1
+@ $BDC1 label=clear_screen_set_attrs
+c $BDC1 Clears screen then sets in-game attributes
+  $BDC1 Call clear_game_screen
+  $BDC4 Clear the game screen pixels to $FF (redoes similar work just done)
+  $BDD1 Clear the game screen attributes to $28 (black over cyan) - first two rows only
+  $BDDD Clear the next three rows to $68 (black over bright cyan)
+  $BDE3 Clear the next 11 rows to the current ground colour
+  $BDEC Clear the edges of the game screen to black on black
+  $BDFA Return
+
 c $BDFB
 c $C0E1
 c $C15B
