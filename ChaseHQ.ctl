@@ -74,7 +74,11 @@
 ;
 ; MEMORY MAP
 ; ----------
-; $F000..$FFFF is a 4KB back buffer (once the game's up and running)
+; "Once running" => once the game's been shifted into its regular running state.
+;
+; $5B00..$5BFF is a pre-shifted version of the backdrop (once running)
+; $5C00..$5CFF is the regular version of the backdrop (once running)
+; $F000..$FFFF is a 4KB back buffer (once running)
 ;
 ; An back buffer address of 0b1111BAAACCCXXXXX means:
 ; - X = X position byte (0..31)
@@ -140,9 +144,41 @@ b $4000 Screen memory
 B $4000 Screen bitmap
 B $5800 Screen attributes
 
-b $5B00 Graphics
-B $5B00,240 Hill backdrop (80x24) seems to be pre-shifted by #R$C8BE
+c $5B00 Could be loader code
+  $5B22 Point #REGhl at $5B7D
+  $5B2B Fetch a word from #REGhl and stack it
+  $5B31 Routine that ...
+  $5B58 Routine that ...
+  $5B4C Game entry point
+  $5B66 Routine that ...
+  $5B67 Move $5C00..$76EF to $C000 onwards
+  $5B75 Routine that loads a word then OUTs $FE with zero, then jumps to that word
+N $5B7D Some sort of instruction stream
+W $5B7D,2 Probable address of routine $5B31
+B $5B7F
+B $5B82,2 Probable address of routine $5B75
+B $5B84
+W $5B87,2 Probable address of routine $5B31
+B $5B89
+W $5B8D,2 Probable address of routine $5B58
+B $5B8F
+W $5B91,2 Probable address of routine $5B66
+W $5B93,2 Probable address of routine $5B31
+B $5B95
+W $5B99,2 Probable address of routine $5B58
+B $5B9B
+W $5B9D,2 Probable address of routine $5B31
+B $5B9F
+W $5BA3,2 Probable address of routine $5B31
+B $5BA5
+B $5BD5 gets IX pointed at it by $5B32
+
+b $5C00 Graphics
+;B $5B00,240 Hill backdrop (80x24) seems to be pre-shifted by #R$C8BE  (overlaps game setup)
 B $5C00,240 Hill backdrop (80x24)
+
+b $5CF0
+W $5CF4,2 Screen attributes used for the ground colour (a pair of matching bytes)
 
 b $5D08
 W $5D10,2 -> car_lods
@@ -683,7 +719,7 @@ R $949C I:HL' Address of bitmap data
   $9529 Transfer another 8 pixels
   $952B Restore #REGhl
   $952C Save H in A then H--
-D $952E Decrement the screen address
+N $952E Decrement the screen address
   $952E Extract low four bits of row address
 ; A &= 0xF   if nz then do next scanline (dec is fine in this case)
 ; else A was 0, so to step back we need to adjust the 'CCC' bits
@@ -963,11 +999,14 @@ B $A17E,1 Time remaining. Stored as BCD.
 B $A17F,2 Time remaining. Stored as one digit per byte.
 @ $A181 label=distance_digits
 B $A181,4 Distance. Stored as one digit per byte.
+W $A186,2 Attribute address of horizon. Points to last attribute on the line which shows the ground. (e.g. $59DF)
+B $A220,1 Set to $F8 when the CHQ MONITORING SYSTEM screen is being shown. (draw_screen uses this to skip for some work, just tests for non-zero)
 B $A223,1 Stage number as shown. Stored as ASCII.
 B $A22A,1 Used by $B6D6 and others
 B $A22C,1 Bonus flag (1 triggers the effect)
 B $A22D,1 Counter for bonus effect (goes up to 7?)
 B $A22E,1 ... light toggle flashing related
+B $A230,1 Used by draw_screen
 B $A231,1 Flag set to zero when attributes have been set
 B $A232,1
 B $A233,1
@@ -1078,8 +1117,8 @@ C $B779 Subtract 8 ???
 C $B77C,3 Multiply by 8
 C $B77F Add to IX
 C $B784,2 HEF
-B $B79C
-D $B7A4 Masked tile plotter with flipping
+B $B79C TBD
+N $B7A4 Masked tile plotter with flipping
 C $B7A4 Load a bitmap and mask pair (B,C)
 C $B7A5 Set flip table index (assuming table is aligned)
 C $B7A6 Load the screen pixels
@@ -1100,8 +1139,120 @@ c $BB69
 
 @ $BC3E label=draw_screen
 c $BC3E Copies the backbuffer at $F000 to the screen.
-C $BC3E Point #REGhl at screen.
-C $BC42 Point #REGhl' at backbuffer.
+C $BC3E Point #REGhl at screen pixel (136,64). This is positioned halfway across so we can PUSH to the screen via SP.
+C $BC42 Point #REGhl' at backbuffer + 1 byte.
+  $BC45 Self modify #REGsp restore instruction
+;
+;* Spectrum screen memory has the arrangement:
+;* 0b010BBLLLRRRCCCCC (B = band, L = line, R = row, C = column) B > R > L > C
+;
+; Stack-wise: PUSH decrements, POP increments
+N $BC49 A sequence that transfers 16 bytes
+  $BC49 Point #REGsp at the back buffer
+  $BC4A Pull in 16 bytes from the back buffer (order: AF' DE BC AF' DE' BC' IX IY), incrementing SP
+  $BC56 Point #REGsp at screen
+  $BC57 Push out 16 bytes to the screen (reversing the order), decrementing SP
+  $BC5E,1 Advance screen pointer
+  $BC5F Continue pushing
+  $BC64 Advance back buffer pointer
+;
+  $BC65 Transfer another 16 bytes (128 pixels)
+  $BC81 Transfer another 16 bytes (128 pixels)
+  $BC9D Transfer another 16 bytes (128 pixels)
+;
+  $BCB9 is the back buffer row a multiple of 4?
+  $BCBB loop if so
+  $BCBE Advance back buffer pointer (backwards) by a half row?
+  $BCC3 Advance screen pointer (backwards) by half a row?
+;
+N $BCC8 This is a similar sequence but only moves 14 bytes (not using IY)
+  $BCC8 Point #REGsp at the back buffer
+  $BCC9 Pull in 16 bytes from the back buffer (order: AF' DE BC AF' DE' BC' IX), incrementing SP
+;
+  $BCE0 Transfer another 14 bytes (112 pixels)
+  $BCF8 Transfer another 14 bytes (112 pixels)
+  $BD10 Transfer another 14 bytes (112 pixels)
+;
+  $BD28 Is the back buffer row multiple of 4?
+  $BD2A 
+;
+  $BD2D Is the back buffer row multiple of 8?
+  $BD2F 
+;
+  $BD31 L -= $F0, H = $F0
+  $BD33 
+  $BD34 
+  $BD35 
+;
+  $BD36 L >= $F0
+  $BD39 PE = parity even
+;
+  $BD3C 
+  $BD3D Increment the screen address
+  $BD40 
+  $BD41 
+;
+  $BD42
+;
+@ $BD45 label=draw_screen_bd45
+  $BD45 
+  $BD46 Point #REGhl at screen pixel (136,128).
+  $BD49 
+  $BD4A Copy more
+;
+@ $BD4D label=draw_screen_bd4d
+  $BD4D 
+  $BD4E
+  $BD51 Which one are we modifying here?
+  $BD52 
+  $BD53 
+  $BD54 Ditto, which?
+  $BD56 
+  $BD57 
+;
+@ $BD5A label=draw_screen_attributes
+  $BD5A Don't update the attributes if the level intro screen is being shown
+  $BD60 
+  $BD63 Seems to be related to the horizon level
+  $BD64 
+  $BD65 
+  $BD66 
+  $BD67 
+  $BD68 Jump to exit check if both are zero
+  $BD69 
+  $BD6B E = A * 4
+  $BD6E A = $FF if carry set, zero otherwise
+  $BD6F D = A
+  $BD70 Fetch the address of the first line of ground attributes (+ 31)
+  $BD73 Set the sky colour screen attributes (always black over bright cyan)
+  $BD76 If A was zero then jump (Z => sky, NZ => ground)
+  $BD78 Load the ground colour screen attributes (varies per level)
+  $BD7C Point #REGsp at the screen attributes (DE = $FFE0 = -32)
+  $BD7E Fill 30 bytes - length of attribute line minus the two blank edges
+  $BD8D
+  $BD8F Move to next line of attributes
+  $BD90 Save the address of the first line of ground attributes (+ 31)
+;
+  $BD93 Exit if $A22E is zero (flashing lights / smash mode)
+;
+  $BD99
+  $BD9C
+  $BD9E Jump if >= 3
+N $BDA0 Set the smash meter attributes
+  $BDA0 Screen attribute (2,11)
+  $BDA3 = 32
+  $BDA6 Black over bright red
+  $BDA8 Set two attrs
+  $BDAC Black over bright magenta
+  $BDAE Set two attrs
+  $BDB2 Black over bright green
+  $BDB4 Set two attrs
+  $BDB8 Black over bright white
+  $BDBA Set two attrs
+;
+@ $BDBD label=draw_screen_exit
+  $BDBD Restore #REGsp (self modified at start of routine)
+  $BDC0 Return
 
 c $BDC1
 c $BDFB
@@ -1113,6 +1264,9 @@ b $C238
 c $C23F
 c $C2E7
 c $C452
+
+; $C551 seems to be part of the stripes rendering
+
 c $C57C
 c $C58A
 c $C598
@@ -1206,7 +1360,8 @@ b $E2E2
 b $E2E7
 b $E2F3
 
-b $E34B poked by $880A
+b $E34B
+B $E34B,3 3 bytes set to 8 by $880A
 
 b $E35D (roughly) spiral inward animation mask used for transitions
 b $E3BD circle expanding animation mask used for transitions
