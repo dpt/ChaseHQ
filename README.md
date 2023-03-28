@@ -1,4 +1,4 @@
-# Chase H.Q. for the ZX Spectrum
+# Pulling apart Chase H.Q. for the ZX Spectrum
 
 Reverse engineering by David Thomas
 
@@ -88,6 +88,8 @@ You may have to do both.
 See https://youtu.be/BGVI0TbePsQ for a short video of me running Spectrum Analyser to find out how the game builds the back buffer up.
 
 ## RELATED
+
+Play Chase H.Q. online: http://torinak.com/qaop#!chasehq
 
 Chat: https://matrix.to/#/#The-Great-Escape_Lobby:gitter.im
 
