@@ -4,7 +4,7 @@ Reverse engineering by David Thomas
 
 Project started: March 2023
 
-![Screenshot](ChaseHQ.png)
+![Using Spectrum Analyser to investigate the game, including turning the screen green](ChaseHQ.png)
 
 This is the beginnings of a disassembly of the ZX Spectrum version of Chase H.Q. by Ocean Software. Initially this is the 48K version. The 128K version is better but it has a lot more code to consider so it's easier to start off with the 48K version first.
 
