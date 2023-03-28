@@ -6,9 +6,9 @@ Project started: March 2023
 
 ![Using Spectrum Analyser to investigate the game, including turning the screen green](ChaseHQ.png)
 
-This is the beginnings of a disassembly of the ZX Spectrum version of Chase H.Q. by Ocean Software. Initially this is the 48K version. The 128K version is better but it has a lot more code to consider so it's easier to start off with the 48K version first.
+This is the beginnings of a disassembly of the ZX Spectrum version of Chase H.Q. by Ocean Software. Initially this is only of the 48K version - and the first level/stage at that. The 128K version is better (loads all the levels at once, has AY music, menu screen animations, ...) but it has a lot more code to consider, so it's easier to start off with 48K stage 1 first.
 
-In this repository is a [SkoolKit](https://skoolkit.ca/) control file which you can use to disassemble the game. This works with the game when it is in a "pristine" just-loaded state. See below for how to make a pristine snapshot.
+In this repository is a [SkoolKit](https://skoolkit.ca/) _control_ file which you can use to disassemble the game. This works with the game when it is in a "pristine" just-loaded state. See below for how to make a pristine snapshot and instructions on how to drive SkoolKit.
 
 ## WHY?
 
