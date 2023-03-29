@@ -1096,7 +1096,35 @@ c $99EC
 
 c $9A55
 
-c $9AAB
+@ $9AAB plot_face
+R $9AAB I:HL Address of face to plot (32x40 bitmap followed by 4x5 attribute bytes)
+R $9AAB I:DE Address of screen location (real screen)
+c $9AAB Plots a face
+  $9AAB Byte length of bitmap - counter
+  $9AAE Save current screen address
+@ $9AAF face_loop
+  $9AAF Save screen address
+  $9AB0 Transfer four bytes
+  $9AB8 Restore source address
+  $9AB9 If #REGbc became zero then proceed to plotting the attributes (PO => BC == 0)
+  $9ABC Move down a scanline
+  $9ABD Loop until we've done 8 lines (we've overflowed into the band bits)
+  $9AC2 Move down a row (8 lines)
+  $9AC6 If carry then loop (overflow is ok)
+  $9AC8 Step back 8 lines (undo overflow)
+  $9ACC Loop
+@ $9ACE plot_face_attrs
+  $9ACE Restore current screen address
+  $9ACF Extract line bits (0..7)
+  $9AD5 Turn it into an attribute address (works for first band only?)
+  $9AD8 Byte length of attributes - counter
+@ $9ADA plot_face_attrs_loop
+  $9ADA Transfer four attributes
+  $9AE2 If #REGbc became zero then return
+  $9AE3 Move down an attribute row
+  $9AE7 If no carry then loop
+  $9AE9 Move down 8 attribute rows
+  $9AEA Loop
 
 c $9AEC
 
