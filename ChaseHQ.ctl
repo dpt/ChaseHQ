@@ -180,12 +180,17 @@ B $5C00,240 Hill backdrop (80x24)
 b $5CF0
 W $5CF4,2 Screen attributes used for the ground colour (a pair of matching bytes)
 
-b $5D08
-W $5D10,2 -> car_lods
-W $5D12,2 -> lambo_lods
-W $5D14,2 -> truck_lods
-W $5D16,2 -> lambo_lods
-W $5D18,2 -> car_lods
+@ $5D0C label=lods_table
+w $5D0C Table of addresses of LODs
+  $5D0C,2 -> some1_lods
+  $5D0E,2 -> some2_lods
+  $5D10,2 -> car_lods
+  $5D12,2 -> lambo_lods
+  $5D14,2 -> truck_lods
+  $5D16,2 -> lambo_lods
+  $5D18,2 -> car_lods
+
+b $5D1A
 
 b $5D3A
 W $5D3A,2 Points at "THIS IS NANCY..."
@@ -226,53 +231,59 @@ b $5E3E Graphics. All are stored inverted except where noted.
 ;
 W $5E41,2 Address of tumbleweed LODs table
 W $5E44,2 Address of another LOD table
-
 ;
-B $638A,160 Perp w/ sunglasses (32x40). Stored top-down.
-B $642A TBD
+B $638A,160,4 Graphic: Perp w/ sunglasses face (32x40). Stored top-down.
+B $642A,20,4 Attribute data for perp.
 ;
-; Flags in these LOD structures: 1 seems to indicate
-; interleaved masks, 2 is probably to flip
+; Flags in these LOD structures:
+; - 1 seems to indicate interleaved masks
+; - 2 is probably to flip
 ;
 @ $643E label=lambo_lods
-B $643E Width (bytes)
-B $643F Flags
-B $6440 Height (pixels)
+B $643E,1 Width (bytes)
+B $643F,1 Flags
+B $6440,1 Height (pixels)
 W $6441,2 Bitmap
 W $6443,2 Mask
 L $643E,7,6
 ;
 @ $6468 label=truck_lods
-B $6468 Width (bytes)
-B $6469 Flags
-B $646A Height (pixels)
+B $6468,1 Width (bytes)
+B $6469,1 Flags
+B $646A,1 Height (pixels)
 W $646B,2 Bitmap
 W $646D,2 Mask
 L $6468,7,6
 ;
 @ $6492 label=car_lods
-B $6492 Width (bytes)
-B $6493 Flags
-B $6494 Height (pixels)
+B $6492,1 Width (bytes)
+B $6493,1 Flags
+B $6494,1 Height (pixels)
 W $6495,2 Bitmap
 W $6497,2 Mask
 L $6492,7,6
 ;
-B $64BC,180 Lamborghini_1 (48x30)
-B $6570,110 Lamborghini_2 (40x22)
-B $65DE,45 Lamborghini_3 (24x15)
-B $660B,234 Truck_1 (48x39)
-B $66F5,145 Truck_2 (40x29)
-B $6786,60 Truck_3 (24x20)
-B $67C2,186 Car_1 (48x31)
-B $687C,110 Car_2 (40x22)
-B $68EA,48 Car_3 (24x16)
-B $691A,24 Lamborghini_4 perhaps (24x8)
-B $694A,24 Lamborghini_5 mask (24x8)
+B $64BC,180,6 Lamborghini_1 (48x30)
+B $6570,110,5 Lamborghini_2 (40x22)
+B $65DE,45,3 Lamborghini_3 (24x15)
+;
+B $660B,234,6 Truck_1 (48x39)
+B $66F5,145,5 Truck_2 (40x29)
+B $6786,60,3 Truck_3 (24x20)
+;
+B $67C2,186,6 Car_1 (48x31)
+B $687C,110,5 Car_2 (40x22)
+B $68EA,48,3 Car_3 (24x16)
+;
+B $691A,24,3 Lamborghini_4 perhaps (24x8)
+B $694A,24,3 Lamborghini_5 mask (24x8)
+;
 B $697A,24 Truck_4/5
 B $69AA,24 Truck_4/5 mask
+;
 B $69DA,27 Car_4/5
 B $6A10,27 Car_4/5 mask
+;
 B $6932 TBD
 B $6962 TBD
 B $6992 TBD
@@ -281,15 +292,24 @@ B $69C2 TBD
 B $69F5 TBD
 B $6A2B mystery block
 ;
-B $6A46 Width (bytes)
-B $6A47 Flags
-B $6A48 Height (pixels)
+@ $6A46 label=some1_lods
+B $6A46,1 Width (bytes)
+B $6A47,1 Flags
+B $6A48,1 Height (pixels)
 W $6A49,2 Bitmap
 W $6A4B,2 Mask
-L $6A46,7,12
+L $6A46,7,6
+;
+@ $6A70 label=some2_lods
+B $6A70,1 Width (bytes)
+B $6A71,1 Flags
+B $6A72,1 Height (pixels)
+W $6A73,2 Bitmap
+W $6A75,2 Mask
+L $6A70,7,6
 ;
 B $6A9A,10 bitmap interleaved
-B $6AA4 TBD
+B $6AA4,1 TBD
 B $6AAE,8 bitmap interleaved
 B $6ABE,8 mask
 B $6ACE,6 bitmap
@@ -302,43 +322,74 @@ B $6AF2,1 bitmap
 B $6AF4,1 mask
 B $6AF5 TBD
 ;
-B $6B22 Width (bytes)
-B $6B23 Flags
-B $6B24 Height (pixels)
+@ $6B22 label=turn_sign_lods
+B $6B22,1 Width (bytes)
+B $6B23,1 Flags
+B $6B24,1 Height (pixels)
 W $6B25,2 Bitmap
 W $6B27,2 Mask
 L $6B22,7,10
 ;
-B $6B68,160 Turn right sign (32x40)
-B $6C08,90 Turn right sign (24x30)
-B $6C62,40 Turn right sign (16x20)
-B $6C8A,32 TBD 16x16
-B $6CAA TBD
-B $6CCA,26 TBD 16x13
+B $6B68,160,4 Turn right sign (32x40)
+B $6C08,90,3 Turn right sign (24x30)
+B $6C62,40,2 Turn right sign (16x20)
+B $6C8A,32,2 Turn right sign (16x16)
+B $6CAA TBD bitmap/mask interleaved
+B $6CCA,26,2 Turn right sign (16x13)
 B $6CE4 TBD
-B $6CFE,26 TBD 16x13
+B $6CFE,26,2 Turn right sign mask (16x13)
 ;
 B $6D18 TBD looks like graphics
 ;
-B $6D82 Width (bytes)
-B $6D83 Flags
-B $6D84 Height (pixels)
+B $6D82,1 Width (bytes)
+B $6D83,1 Flags
+B $6D84,1 Height (pixels)
 W $6D85,2 Bitmap
 W $6D87,2 Mask
 L $6D82,7,6
 ;
-B $6DAC,32 Tumbleweed_1 (16x16)
-B $6DCC,22 Tumbleweed_2 (16x11)
-B $6DE2,9 Tumbleweed_3 (8x9)
-B $6DEB,7 Tumbleweed_4 (8x7)
+B $6DAC,32,2 Tumbleweed_1 (16x16)
+B $6DCC,22,2 Tumbleweed_2 (16x11)
+B $6DE2,9,1 Tumbleweed_3 (8x9)
+B $6DEB,7,1 Tumbleweed_4 (8x7)
 ;
-B $6DF2 Width (bytes)
-B $6DF3 Flags
-B $6DF4 Height (pixels)
+@ $6DF2 label=barrier_lods
+B $6DF2,1 Width (bytes)
+B $6DF3,1 Flags
+B $6DF4,1 Height (pixels)
 W $6DF5,2 Bitmap
 W $6DF7,2 Mask
 L $6DF2,7,6
 ;
+B $6E1C,68,4 Barrier (32x17)
+B $6E60,39,3 Barrier (24x13)
+B $6E87,18,2 Barrier (16x9)
+B $6E99,14,2 Barrier (16x7)
+B $6EA7 TBD
+B $6EB5,14,2 Mask for barrier (16x7)
+
+B $6EC3 TBD
+
+W $6EEB,2 Address of another LOD table
+
+B $6F17,1 Width (bytes)
+B $6F18,1 Flags
+B $6F19,1 Height
+W $6F1A,2 Bitmap
+W $6F1C,2 Mask
+L $6F17,7,10
+
+B $6F5D,32,4 graphic_6eeb (32x8)
+B $6F7D,15,3 graphic_6eeb (24x5)
+B $6F8C,12,3 graphic_6eeb (24x4)
+B $6F98,12,3 graphic_6eeb mask (24x4)
+B $6FA4,8,2 graphic_6eeb (16x4)
+B $6FB4,8,2 graphic_6eeb mask (16x4)
+B $6FC4,6,2 graphic_6eeb (16x3)
+B $6FD0,6,2 graphic_6eeb mask (16x3)
+
+
+
 ;B $7069 is the top part of a streetlamp
 ;B $73D4 looks like tree trunk
 B $73B9,10 Part of tree graphic - 16px x 5 rows (?)
@@ -369,27 +420,36 @@ W $77D0,2 Attributes address
 T $77D2,6 "SIGNAL"
 
 b $77D8
-B $7860 Seems to be tiles pointed at by car rendering code
-B $78B6,64 8 Tiles used for borders on the pre-game screen
-
-B $7BE9,160 Graphic: Nancy's face (32x40). Stored top-down.
-B $7C89 unknown
-B $7C9D,160 Graphic: Raymond's face (32x40). Stored top-down.
-B $7D3D unknown
-B $7D52,160 Graphic: Tony's face (32x40). Stored top-down.
-B $7DF2 unknown
+  $7860 Seems to be tiles pointed at by car rendering code
+  $78B6,64 8 Tiles used for borders on the pre-game screen
+ 
+  $7BE9,160,4 Graphic: Nancy's face (32x40). Stored top-down.
+  $7C89,20,4 Attribute data for above.
+  $7C9D,160,4 Graphic: Raymond's face (32x40). Stored top-down.
+  $7D3D,20,4 Attribute data for above.
+  $7D51,1 TBD
+  $7D52,160,4 Graphic: Tony's face (32x40). Stored top-down.
+  $7DF2,20,4 Attribute data for above.
 
 b $8000 temporaries?
-B $8002,4 Score digits as BCD (4 bytes / 8 digits)
-B $8006,1 incremented on reset?
-B $8007,1 Current/wanted? stage number (1...)
+  $8002,4 Score digits as BCD (4 bytes / 8 digits)
+  $8006,1 incremented on reset?
+  $8007,1 Current/wanted? stage number (1...)
 
 c $8014 Load a stage?
   $8014 Get stage number
   $8017 
   $801A,2 Exit if they match
-  $8022 Update the level nunber in "SEARCHING FOR <N>"
-  $8088
+  $801C Equalise
+  $801D Set $A220 to level no.
+  $8020 Update the level number in "SEARCHING FOR <N>"
+  $8025 Call clear_screen_set_attrs
+  $8028 Call clear_game_attrs
+  $802B Transition type?
+  $802D Call setup_transition
+  $8030 ...
+
+  $8088 subroutine
 N $80B9 Tape loading
   $80B9 Setup to load a block ???
   $80C0 Routine
@@ -397,32 +457,32 @@ N $80B9 Tape loading
 
 t $8169 Mainly tape loading messages
 ;
-B $8169,1 ?
+B $8169,1 attr?
 W $816A,2 Screen position (8,64)
 W $816C,2 Screen attribute position (1,8)
   $816E,30 "REWIND TAPE TO START OF SIDE 2"
 ;
-B $818C,1 ?
+B $818C,1 attr?
 W $818D,2 Screen position (88,96)
 W $818F,2 Screen attribute position (11,12)
   $8191,10 "START TAPE"
 ;
-B $819B,1 ?
+B $819B,1 attr?
 W $819C,2 Screen position (72,128)
 W $819E,2 Screen attribute position (9,16)
   $81A0,15 "SEARCHING FOR 1"
 ;
-B $81AF,1 ?
+B $81AF,1 attr?
 W $81B0,2 Screen position (104,160)
 W $81B2,2 Screen attribute position (13,20)
   $81B4,7 "FOUND 1"
 ;
-B $81BB,1 ?
+B $81BB,1 attr?
 W $81BC,2 Screen position (80,96)
 W $81BE,2 Screen attribute position (10,12)
   $81C0,13 "STOP THE TAPE"
 ;
-B $81CD,1 ?
+B $81CD,1 attr?
 W $81CE,2 Screen position (88,128)
 W $81D0,2 Screen attribute position (11,16)
   $81D2,11 "PRESS  GEAR"
@@ -902,7 +962,15 @@ b $95DE
 c $95E7
 c $9618 PRNG - nobble this and only Lambos spawn on the left
 B $9618,3
-s $962E
+
+g $962E In-game message variables
+W $9630,2 written to by $9959  seems to point into $98A9 table but /after/ the message pointer
+  $9632,1 Seems to be the current index of the message bar
+  $9633,1 zeroed by $995d
+  $9634,5 seems to be the noise used when character pictures 'noise in'. 5 high so this is the height? or a seed?
+  $963C,1 dec'd by $9974  checked by $998F
+  $963D,1 read by $9946, one'd by $9961, set by $99d9
+  $963E,1 read by $9950
 
 b $963F In-game messages
 T $963F,27 "THIS IS NANCY AT CHASE H.Q."
@@ -1017,14 +1085,27 @@ W $9941
 W $9943
 
 c $9945
+  $995D
+
 c $9965
+  $99AA using message bar index
+  $99B6 using message bar index
+
 c $99EC
+  $9A4E updates message bar index
+
 c $9A55
+
 c $9AAB
+
 c $9AEC
+
 c $9AF1
+
 b $9B68
+
 c $9B6C
+
 c $9BA7
 
 c $9BCF
@@ -1840,6 +1921,6 @@ b $FE4E
 b $FE64
 b $FE6A
 b $FE74
-s $FEBE
+b $FEBE
 c $FEFE
 b $FF01
