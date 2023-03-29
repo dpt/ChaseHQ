@@ -181,7 +181,7 @@ b $5CF0
 W $5CF4,2 Screen attributes used for the ground colour (a pair of matching bytes)
 
 @ $5D0C label=lods_table
-w $5D0C Table of addresses of LODs
+w $5D0C Table of addresses of LODs (levels of detail - a set of sprites of various sizes representing the same object).
   $5D0C,2 -> some1_lods
   $5D0E,2 -> some2_lods
   $5D10,2 -> car_lods
@@ -1645,10 +1645,52 @@ b $E3BD circle expanding animation mask used for transitions
 b $E540 looks like a table of flipped bytes (but not quite)
 
 b $E601
-c $E839
 
-b $E858
+c $E839 looks like initialisation code / relocation
+  $E839 POP BC        ; must be the loop counter
+  $E83A Point #REGhl at $e858 table
+@ $E83D label=loopy
+  $E83D PUSH BC       ;
+  $E83E DE = wordat(HL) HL += 2  
+  $E842 Stack DE
+  $E843 DE = wordat(HL) HL += 2  ; dest
+  $E847 BC = wordat(HL) HL += 2  ; count
+  $E84B exchange top of stack and HL. HL is now src
+  $E84C Do copy
+  $E84E Restore base pointer and count
+  $E850 Loop
+  $E852 LD SP,$ED28   ; odd
+  $E855 JP $83CD      ; odd
+;
+@ $E858 label=e858_copy_blocks
+W $E858,2 src ptr
+W $E85A,2 dst ptr
+W $E85C,2 count
+;
+W $E85E,2 src ptr
+W $E860,2 dst ptr
+W $E862,2 count  
+;
+W $E864,2 src ptr
+W $E866,2 dst ptr
+W $E868,2 count  
+;
+W $E86A,2 src ptr
+W $E86C,2 dst ptr
+W $E86E,2 count  
+;
+W $E870,2 src ptr
+W $E872,2 dst ptr
+W $E874,2 count  
+;
+B $E876,24,3
+B $E88E,24,3
+B $E8A6,40,8 looks circular?
+B $E8CE,49,8
+;
+B $E8FF TBD
 W $E90A,2 -> "STOP THE TAPE" + "PRESS ANY KEY" message set
+B $E90C TBD
 
 c $E90F
   $E928 Point #REGhl at input menu messages
@@ -1899,7 +1941,9 @@ c $F0C6 White noise generator?
 
 b $F0FE
 
-b $F490 Credits / Score messages
+c $F220 routine/data copied to $8014 during init? (926 bytes long)
+  $F220 routine
+;b $F490 Credits / Score messages
 T $F497,10 "PRESS GEAR"
 T $F4A8,17 "ENTER FOR OPTIONS"
 T $F4C1,7 "CREDITS"
@@ -1912,7 +1956,7 @@ T $F55A,28 "1ST  56784010  ALL    1  JOB"
 T $F57D,28 "2ND  35678000   4     1  ABC"
 T $F5A0,28 "3RD   4340300   3     2  DEF"
 
-b $F5BC
+b $F5BE
 b $F8D2
 b $FAD3
 b $FE34
