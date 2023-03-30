@@ -170,15 +170,18 @@ B $5B9B
 W $5B9D,2 Probable address of routine $5B31
 B $5B9F
 W $5BA3,2 Probable address of routine $5B31
-B $5BA5
+B $5BA5 TBD
 B $5BD5 gets IX pointed at it by $5B32
 
 b $5C00 Graphics
 ;B $5B00,240 Hill backdrop (80x24) seems to be pre-shifted by #R$C8BE  (overlaps game setup)
 B $5C00,240 Hill backdrop (80x24)
 
-b $5CF0
+b $5CF0 TBD
+  $5CF0 TBD
+W $5CF2,2 Address of face to plot
 W $5CF4,2 Screen attributes used for the ground colour (a pair of matching bytes)
+  $5CF6 TBD
 
 @ $5D0C label=lods_table
 w $5D0C Table of addresses of LODs (levels of detail - a set of sprites of various sizes representing the same object).
@@ -190,13 +193,14 @@ w $5D0C Table of addresses of LODs (levels of detail - a set of sprites of vario
   $5D16,2 -> lambo_lods
   $5D18,2 -> car_lods
 
-b $5D1A
+b $5D1A TBD
 
-b $5D3A
-W $5D3A,2 Points at "THIS IS NANCY..."
-W $5D3C,2 Points at "EMERGENCY HERE..."
-W $5D3E,2 Points at "IS FLEEING ..."
-W $5D40,2 Points at "VEHICLE IS..."
+w $5D3A Pointers to Nancy's message (for Stage 1)
+  $5D3A,2 Points at "THIS IS NANCY..."
+  $5D3C,2 Points at "EMERGENCY HERE..."
+  $5D3E,2 Points at "IS FLEEING ..."
+  $5D40,2 Points at "VEHICLE IS..."
+B $5D42,3 TBD
 
 b $5D45 Messages - Nancy
 T $5D45,40 "THIS IS NANCY AT CHASE H.Q. WE'VE GOT AN"
@@ -204,23 +208,23 @@ T $5D6D,40 "EMERGENCY HERE. RALPH THE IDAHO SLASHER,"
 T $5D95,42 "IS FLEEING TOWARDS THE SUBURBS. THE TARGET"
 T $5DBF,46 "VEHICLE IS A WHITE BRITISH SPORTS CAR... OVER."
 
-b $5DED Messages - arrest
-B $5DED,1 frame delay until first message?
-B $5DEE,1 frame delay until next message?
+b $5DED Messages - Arrest
+B $5DED,1 Frame delay until first message?
+B $5DEE,1 Frame delay until next message?
 B $5DEF,1 Flags (?)
 B $5DF0,1 Attribute (black)
 W $5DF1,2 Back buffer address
 W $5DF3,2 Attribute address
 T $5DF5,27 "OK! YOU ARE UNDER ARREST ON"
 ;
-B $5E10,1 frame delay until next message?
+B $5E10,1 Frame delay until next message?
 B $5E11,1 Flags (?)
 B $5E12,1 Attribute (black)
 W $5E13,2 Back buffer address
 W $5E15,2 Attribute address
 T $5E17,26 "SUSPICION OF FIRST DEGREE "
 ;
-B $5E31,1 frame delay until next message?
+B $5E31,1 Frame delay until next message?
 B $5E32,1 Flags (?)
 B $5E33,1 Attribute (black)
 W $5E34,2 Back buffer address
@@ -228,10 +232,17 @@ W $5E36,2 Attribute address
 T $5E38,6 "MURDER"
 
 b $5E3E Graphics. All are stored inverted except where noted.
-;
+  $5E3E,3 TBD
 W $5E41,2 Address of tumbleweed LODs table
+  $5E43,1 TBD
 W $5E44,2 Address of another LOD table
-;
+  $5E46 TBD these bytes seem to get hit when we're in the tunnel ... the lights?
+  $5E5B hit all the time must be tree/bush defs or LODs
+  $5E91 could be lods
+
+
+
+
 B $638A,160,4 Graphic: Perp w/ sunglasses face (32x40). Stored top-down.
 B $642A,20,4 Attribute data for perp.
 ;
@@ -341,6 +352,7 @@ B $6CFE,26,2 Turn right sign mask (16x13)
 ;
 B $6D18 TBD looks like graphics
 ;
+@ $6D82 label=tumbleweed_lods
 B $6D82,1 Width (bytes)
 B $6D83,1 Flags
 B $6D84,1 Height (pixels)
@@ -977,7 +989,9 @@ B $9618,3 Seed / initial state
   $962D Return
 
 g $962E In-game message variables
-W $9630,2 written to by $9959  seems to point into $98A9 table but /after/ the message pointer
+W $962E,2 Address of the next character of the current message
+@ $9630 label=next_message
+W $9630,2 Address of the _next_ message to show DOUBTING THIS NOW ... pointer to next command?
   $9632,1 Seems to be the current index of the message bar
   $9633,1 zeroed by $995d
   $9634,5 seems to be the noise used when character pictures 'noise in'. 5 high so this is the height? or a seed?
@@ -1017,85 +1031,140 @@ T $9857 "ONE MORE TRY FOR BEING A GOOD BOY!"
 T $9879 "YOU'RE A MEDIOCRE DRIVER, BROTHER!"
 T $989B,14 "SEE YOU LATER."
 
-w $98A9 Block containing some pointers to the above strings
-W $98A9
-W $98AB
-W $98AD
-W $98AF
-W $98B1
-W $98B3
-W $98B5
-W $98B7
-W $98B9
-W $98BB
-W $98BD
-W $98BF
-W $98C1
-W $98C3
-W $98C5 -> "WE READ LOUD AND CLEAR! OVER."
-W $98C7
-W $98C9 -> "ROGER!"
-W $98CB
-W $98CD -> "GOTCHA NANCY BABY!"
-W $98CF
-W $98D1 -> "WHAT ARE YOU DOING MAN!!"
-W $98D3 -> "THE BAD GUYS ARE GOING THE OTHER WAY."
-W $98D5
-W $98D7
-W $98D9
-W $98DB
-W $98DD
-W $98DF
-W $98E1
-W $98E3
-W $98E5
-W $98E7
-W $98E9
-W $98EB
-W $98ED
-W $98EF
-W $98F1
-W $98F3
-W $98F5 -> "PLEASE!"
-W $98F7
-W $98F9 -> "LET'S GET MOVIN' MAN!"
-W $98FB
-W $98FD -> "THIS IS NANCY AT CHASE H.Q."
-W $98FF -> "IF YOU KEEP MESSIN' AROUND LIKE THAT"
-W $9901 -> "YOUR TIME IS GOING TO RUN OUT... OVER."
-W $9903
-W $9905
-W $9907
-W $9909
-W $990B
-W $990D
-W $990F
-W $9911
-W $9913
-W $9915
-W $9917
-W $9919
-W $991B
-W $991D
-W $991F -> "WHOAAAAA!"
-W $9921
-W $9923 -> "GREAT!"
-W $9925
-W $9927 -> "ONE MORE TIME."
-W $9929
-W $992B
-W $992D
-W $992F
-W $9931
-W $9933
-W $9935
-W $9937
-W $9939
-W $993B
-W $993D
-W $993F
-W $9941
-W $9943
+b $98A9 In-game message structures
+;
+  $98A9,0 Pilot ($00)
+W $98AA,2 -> "THIS IS SPECIAL INVESTIGATION AIRBORNE."
+W $98AC,2 -> "THE TARGET VEHICLE HAS TURNED"
+W $98AE,2 -> "LEFT UP AHEAD... OVER."
+  $98B0,1 TBD $FE
+W $98B1,2 -> Tony: "WE READ LOUD AND CLEAR! OVER." <STOP> 
+; 
+  $98B3,0 Pilot ($00)
+W $98B4,2 -> "THIS IS SPECIAL INVESTIGATION AIRBORNE."
+W $98B6,2 -> "THE TARGET VEHICLE HAS TURNED"
+W $98B8,2 -> "RIGHT UP AHEAD... OVER."
+  $98BA,1 TBD $FE
+W $98BB,2 -> Tony: "WE READ LOUD AND CLEAR! OVER." <STOP> 
+;
+  $98BD,1 Three-way random choice ($FC)
+W $98BE,2 -> Tony: "WE READ LOUD AND CLEAR! OVER." <STOP>
+W $98C0,2 -> Raymond: "ROGER!" <STOP>
+W $98C2,2 -> Tony: "GOTCHA NANCY BABY!" <STOP>
+;
+  $98C4,1 Tony ($03)
+W $98C5,2 -> "WE READ LOUD AND CLEAR! OVER."
+  $98C7,1 <STOP>
+;
+  $98C8,1 Raymond ($02)
+W $98C9,2 -> "ROGER!"
+  $98CB,1 <STOP>
+;
+  $98CC,1 Tony ($03)
+W $98CD,2 -> "GOTCHA NANCY BABY!"
+  $98CF,1 <STOP>
+;
+  $98D0,1 Raymond ($02)
+W $98D1,2 -> "WHAT ARE YOU DOING MAN!!"
+W $98D3,2 -> "THE BAD GUYS ARE GOING THE OTHER WAY."
+  $98D5,1 <STOP>
+;
+  $98D6,1 Three-way random choice ($FC)
+W $98D7,2 -> Raymond: "BEAR DOWN." <STOP>
+W $98D9,2 -> Three-way random choice of "OH MAN." / "HARDER!" / "PLEASE!"
+W $98DB,2 -> Raymond: "MORE, PUSH IT MORE!" <STOP>
+;
+  $98DD,1 Raymond ($02)
+W $98DE,2 -> "BEAR DOWN."
+  $98E0,1 <STOP>
+;
+  $98E1,1 Raymond ($02)
+W $98E2,2 -> "MORE, PUSH IT MORE!"
+  $98E4,1 <STOP>
+;
+  $98E5,1 Raymond ($02)
+W $98E6,2 -> "HARDER!"
+  $98E8,1 <STOP>
+;
+  $98E9,1 Raymond ($02)
+W $98EA,2 -> "OH MAN."
+  $98EC,1 <STOP>
+;
+  $98ED,1 Three-way random choice ($FC)
+W $98EE,2 -> Raymond: "OH MAN." <STOP>
+W $98F0,2 -> Raymond: "HARDER!" <STOP>
+W $98F2,2 -> Raymond: "PLEASE!" <STOP>
+;
+  $98F4,1 Raymond ($02)
+W $98F5,2 -> "PLEASE!"
+  $98F7,1 <STOP>
+;
+  $98F8,1 Raymond ($02)
+W $98F9,2 -> "LET'S GET MOVIN' MAN!"
+  $98FB,1 <STOP>
+;
+  $98FC,1 Nancy ($01)
+W $98FD,2 -> "THIS IS NANCY AT CHASE H.Q."
+W $98FF,2 -> "IF YOU KEEP MESSIN' AROUND LIKE THAT"
+W $9901,2 -> "YOUR TIME IS GOING TO RUN OUT... OVER."
+  $9903,1 <STOP>
+;
+  $9904,1 Three-way random choice ($FC)
+W $9905,2 -> Raymond: "OH, NO!" <STOP>
+W $9907,2 -> Raymond: "OUCH!" <STOP>
+W $9909,2 -> Raymond: "YAOOOOOW!" <STOP>
+;
+  $990B,1 Raymond ($02)
+W $990C,2 -> "OH, NO!"
+  $990E,1 <STOP>
+;
+  $990F,1 Raymond ($02)
+W $9910,2 -> "OUCH!"
+  $9912,1 <STOP>
+;
+  $9913,1 Raymond ($02)
+W $9914,2 -> "YAOOOOOW!"
+  $9916,1 <STOP>
+;
+  $9917,1 Three-way random choice ($FC)
+W $9918,2 -> Tony: "WHOAAAAA!" <STOP>
+W $991A,2 -> Tony: "GREAT!" <STOP>
+W $991C,2 -> Raymond: "ONE MORE TIME." <STOP>
+;
+  $991E,1 Tony ($03)
+W $991F,2 -> "WHOAAAAA!"
+  $9921,1 <STOP>
+;
+  $9922,1 Tony ($03)
+W $9923,2 -> "GREAT!"
+  $9925,1 <STOP>
+;
+  $9926,1 Raymond ($02)
+W $9927,2 -> "ONE MORE TIME."
+  $9929,1 <STOP>
+;
+  $992A,1 Three-way random choice ($FC)
+W $992B,2 -> Nancy: "WE THINK YOU PICKED THE WRONG JOB." "BETTER CHECK THE CLASSIFIED ADS."
+W $992D,2 -> Nancy: "ONE MORE TRY FOR BEING A GOOD BOY!"
+W $992F,2 -> Nancy: "YOU'RE A MEDIOCRE DRIVER, BROTHER!" "SEE YOU LATER."
+;
+  $9931,1 Nancy ($01)
+W $9932,2 -> "WE THINK YOU PICKED THE WRONG JOB." <THEN>
+W $9934,2 -> "BETTER CHECK THE CLASSIFIED ADS."  
+  $9936,1 <STOP>
+;
+  $9937,1 Nancy ($01)
+W $9938,2 -> "ONE MORE TRY FOR BEING A GOOD BOY!"
+  $993A,1 <STOP>
+;
+  $993B,1 Nancy ($01)
+W $993C,2 -> "YOU'RE A MEDIOCRE DRIVER, BROTHER!" <THEN>
+W $993E,2 -> "SEE YOU LATER."
+  $9940,1 <STOP>
+;
+  $9941,1 Tony ($03)
+W $9942,2 -> "LET'S GO. MR. DRIVER."
+  $9944,1 <STOP>
 
 c $9945
   $995D
@@ -1104,10 +1173,45 @@ c $9965
   $99AA using message bar index
   $99B6 using message bar index
 
-c $99EC
+
+; message format 
+; <byte> 0/1/2/3 ?/nancy/raymond/tony face
+;        0 => use $5CF2 as face base
+;        $FC => call rnd and use one of three following pointers as an address (repeat)
+
+c $99EC remarks/alerts from nancy etc.
+  $99EC Fetch address of next remark
+@ $99EF label=loop
+  $99EF Read a byte and advance
+  $99F1,2 if (byte != $FC) then jump specified_character
+@ $99F5 label=random_choice
+N $99F6 We have a three-way choice here
+  $99F6,3 Call rng
+  $99FA if A < $55 jump 9a06   33.3% chance
+  $99FE step over a message ptr?
+  $9A00 if A < $AA jump 9a06   66.6% chance
+  $9A04 step over a message ptr?
+@ $9A06 label=load_it
+  $9A06 HL = wordat(HL)
+  $9A0A goto loop
+@ $9A0C specified_character
+  $9A0C Is it zero? A's the index of the face to show
+  $9A0D Preserve HL
+  $9A0E Plot whatever's in $5CF2 if A was zero (doesn't seem to be the noise case, likely dead code), otherwise calculate
+  $9A14 Base of face graphics (points 1 earlier than actual base because we're 1-indexed)
+  $9A17 Length of face graphic (bitmap + attrs = 4*8*5 + 4*5)
+  $9A1A Get face graphic address
+@ $9A1D do_plot
+  $9A1D Set plot address to (176,8)
+  $9A20 Call plot_face
+  $9A23 Restore HL
+@ $9A24 label=message_stuff
+  $9A24 Fetch address of message to start showing
+  $9A28 Save address of next message to show or perhaps the pointer
+;
   $9A4E updates message bar index
 
-c $9A55
+c $9A55 suspect this does the noise
 
 @ $9AAB plot_face
 R $9AAB I:HL Address of face to plot (32x40 bitmap followed by 4x5 attribute bytes)
@@ -1355,7 +1459,11 @@ c $A97E
 c $A9DE
 b $AA38
 c $AAC6
+
 c $AB33
+  $AB52 Point #REGhl at pilot "turn left" messages
+  $AB59 Point #REGhl at pilet "turn right" messages
+
 c $AB9A
 c $ABF6
 c $AC3C
