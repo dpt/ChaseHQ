@@ -960,8 +960,21 @@ c $95D0
 c $95D7
 b $95DE
 c $95E7
-c $9618 PRNG - nobble this and only Lambos spawn on the left
-B $9618,3
+
+@ $9618 rng
+c $9618 Random number generator
+R $9618 O:A Random byte?
+; Disable this and only Lambos spawn on the left. TBD what other effects it has.
+; $F0C6 also modifies these random bytes.
+B $9618,3 Seed / initial state
+  $961B Point at seed / state bytes
+  $961E seed[0] -= $8D
+  $9622 seed[1] += 3
+  $9626 A = seed[0] + seed[1]
+  $9628 Rotate A by 1
+  $9629 Rotate seed[2] by 1
+  $962B seed[2] += A
+  $962D Return
 
 g $962E In-game message variables
 W $9630,2 written to by $9959  seems to point into $98A9 table but /after/ the message pointer
