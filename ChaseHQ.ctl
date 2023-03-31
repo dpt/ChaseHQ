@@ -995,9 +995,9 @@ W $9630,2 Address of the _next_ message to show DOUBTING THIS NOW ... pointer to
   $9632,1 Seems to be the current index of the message bar
   $9633,1 zeroed by $995d
   $9634,5 seems to be the noise used when character pictures 'noise in'. 5 high so this is the height? or a seed?
-  $963C,1 dec'd by $9974  checked by $998F
+  $963C,1 Noise effect counter (4..0)
   $963D,1 read by $9946, one'd by $9961, set by $99d9
-  $963E,1 read by $9950
+  $963E,1 read by $9950, set by $9956
 
 b $963F In-game messages
 T $963F,27 "THIS IS NANCY AT CHASE H.Q."
@@ -1167,16 +1167,26 @@ W $9942,2 -> "LET'S GO. MR. DRIVER."
   $9944,1 <STOP>
 
 c $9945
+  $9959 Set message set pointer
   $995D
 
 c $9965
+  $998C,3 Goto plot_mini_font_1
   $99AA using message bar index
+  $99B3,3 Goto plot_mini_font_1
   $99B6 using message bar index
+  $99C1 End of message
+  $99C5 this tests for $FE -- different terminator?
+@ $99D3 label=end_of_message ?
+  $99D3 Set the noise effect counter to 4
+  $99D8 Set $963D to 3
+  $99DC Exit via clear_message_line
+  $99DF TBD
+  $99E4 Call clear_message_line
 
-
-; message format 
-; <byte> 0/1/2/3 ?/nancy/raymond/tony face
-;        0 => use $5CF2 as face base
+; message format
+; <byte> 0/1/2/3 pilot/nancy/raymond/tony face
+;        0 uses $5CF2 as face base - only used for the chopper pilot?
 ;        $FC => call rnd and use one of three following pointers as an address (repeat)
 
 c $99EC remarks/alerts from nancy etc.
@@ -1207,11 +1217,27 @@ N $99F6 We have a three-way choice here
   $9A23 Restore HL
 @ $9A24 label=message_stuff
   $9A24 Fetch address of message to start showing
-  $9A28 Save address of next message to show or perhaps the pointer
+  $9A28,3 Save address of next message to show or perhaps the pointer
+;
+  $9A30,6 if (A == 0) clear_message_line
 ;
   $9A4E updates message bar index
 
-c $9A55 suspect this does the noise
+c $9A55 Noise in/out effect
+  $9A55 Decrement the noise effect counter
+  $9A59 Jump to $99EC once it's zero
+; This entry point is used by the routine at #R$9965.
+;
+  $9A96 $47 => BRIGHT + white over black
+; This entry point is used by the routine at #R$9965.
+  $9A98 Screen attribute position (22,1)
+  $9A9B 5 rows
+  $9A9D 32 - 3 = row skip
+@ $9AA0 label=9aa0_loop
+  $9AA0 Set four attribute bytes
+  $9AA7 Move to start of next row
+  $9AA8 Loop while rows remain
+  $9AAA Return
 
 @ $9AAB plot_face
 R $9AAB I:HL Address of face to plot (32x40 bitmap followed by 4x5 attribute bytes)
@@ -1243,15 +1269,94 @@ c $9AAB Plots a face
   $9AE9 Move down 8 attribute rows
   $9AEA Loop
 
-c $9AEC
+@ $9AEC label=plot_mini_font_1
+c $9AEC Plot mini font characters
+; $9AEC called constantly to clear? or on flash?
+  $9AEC
+  $9AEF Goto pmf_go
+@ $9AF1 label=plot_mini_font_2
+R $9AF1 I:A Index into string, or $FF
+  $9AF1 values to self modify with
+@ $9AF4 label=pmf_go
+  $9AF4
+  $9AF5 self modify LD C and OR 7 later
+  $9AFD
+  $9AFE If not string terminator, goto regular_char
+N $9B02 String terminator
+  $9B02 $BF / 8?
+  $9B04
+  $9B06
+@ $9B08 label=regular_char
+  $9B08 A = A*5+2
+  $9B0E 8 - $C0 / 8 ??
+  $9B12 divider / rounding?
+  $9B19 Modify jump table - A * 4 - 4 bytes per sequence
+  $9B21 General multiplier by A
+  $9B24 Self modify $9B88 which is a mask
+  $9B27 Get ASCII character
+N $9B28 Turn ASCII into glyph IDs
+  $9B28 LD D,$45      ; likely the screen addr top
+  $9B2A Is it '.'? glyph ID = 26; goto have_glyph_id
+  $9B30 Is it ','? glyph ID = 27; goto have_glyph_id
+  $9B35 Is it '!'? glyph ID = 28; goto have_glyph_id
+  $9B3A Is it ' '? glyph ID = 29; goto have_glyph_id
+  $9B3F Is it '''? glyph ID = 30; goto have_glyph_id
+  $9B44 Is it >= ';'? goto have_ascii
+  $9B48 C += A - 47 -- not convinced this is ever used
+@ $9B4C label=have_glyph_id
+  $9B4C Turn the glyph ID in #REGc into ASCII in #REGa
+@ $9B4F label=have_ascii
+  $9B4F #REGbc = (#REGa - 'A') * 6
+  $9B58 Point #REGhl at minifont
+  $9B60 Self modified earlier
+  $9B63 Self modified earlier
+  $9B66 Jump table (self modified)
+; BC must be the row of font data
+; shift a 16-bit number right by up to 8  or is the rotation important?
+  $9B68
+; HL is the screen pointer here
+  $9B88 This must be self modified
+  $9B8A *scr++ = (*scr AND A) OR B
+  $9B8E *scr-- = C
+  $9B90 Next source byte ?
+N $9B91 Usual scanline stepping magic
+  $9B91 Next row
+  $9B92
+  $9B93
+  $9B95
+  $9B97
+  $9B98
+  $9B9A
+  $9B9B
+  $9B9D
+  $9B9E
+  $9BA0
+  $9BA1 Decrement row counter
+  $9BA3 Loop while rows remain
+  $9BA6 Return
 
-c $9AF1
-
-b $9B68
-
-c $9B6C
-
-c $9BA7
+@ $9BA7 label=clear_message_line
+c $9BA7 Clear the whole message line
+  $9BA7 Point #REGhl at screen coordinate (8,53)
+  $9BAA B = 0  top of LDIR count and byte to wipe memory with
+  $9BAC Clear six rows
+@ $9BAE label=cml_loop
+  $9BAE
+  $9BAF DE = HL + 1
+  $9BB2 29 bytes to clear
+  $9BB4 Preserve HL
+  $9BB5 Zero 29 bytes at DE
+  $9BB8
+  $9BB9 H++
+  $9BBA if (H & 7) goto cml_continue
+  $9BBF L += 32
+  $9BC3 JR C,cml_continue
+  $9BC5 H -= 8
+@ $9BC9 label=cml_continue
+  $9BC9
+  $9BCA Decrement row counter
+  $9BCB Loop while rows remain to clear
+  $9BCE Return
 
 c $9BCF
   $9C1B,3 Point at "TIME UP" message
@@ -1771,10 +1876,11 @@ b $DEBA Same again, but turning hard.
 
 @ $DF62 label=ledfont
 b $DF62 LED numeric font used for scores
-B $DF62,150 8x15 pixels digits 0..9 only
+B $DF62,150,15 8x15 pixels digits 0..9 only
 
+@ $DFF8 label=minifont
 b $DFF8 Mini font used for in-game messages
-B $DFF8,174 8x6 pixels (though the digits are thinner than 8) A-Z + (probably 3 symbols)
+B $DFF8,174,6 8x6 pixels (though the digits are thinner than 8) A-Z + (probably 3 symbols)
 
 b $E1B8
 
