@@ -434,7 +434,7 @@ T $77D2,6 "SIGNAL"
 b $77D8
   $7860 Seems to be tiles pointed at by car rendering code
   $78B6,64 8 Tiles used for borders on the pre-game screen
- 
+
   $7BE9,160,4 Graphic: Nancy's face (32x40). Stored top-down.
   $7C89,20,4 Attribute data for above.
   $7C9D,160,4 Graphic: Raymond's face (32x40). Stored top-down.
@@ -450,7 +450,7 @@ b $8000 temporaries?
 
 c $8014 Load a stage?
   $8014 Get stage number
-  $8017 
+  $8017
   $801A,2 Exit if they match
   $801C Equalise
   $801D Set $A220 to level no.
@@ -801,12 +801,12 @@ c $8DF9 Seems to setup a transition.
   $8E0B Call random
   $8E0E Mask 0..3
   $8E10 HL = A * 3 + DE
-  $8E17 
+  $8E17
   $8E18 Self modify
   $8E1B Load DE from HL
   $8E1F Set transition animation start address
   $8E23 4 frames of animation? 4 states?
-  $8E25 
+  $8E25
   $8E28 Return
 
 @ $8E29 label=fill_attributes
@@ -1038,14 +1038,14 @@ W $98AA,2 -> "THIS IS SPECIAL INVESTIGATION AIRBORNE."
 W $98AC,2 -> "THE TARGET VEHICLE HAS TURNED"
 W $98AE,2 -> "LEFT UP AHEAD... OVER."
   $98B0,1 TBD $FE
-W $98B1,2 -> Tony: "WE READ LOUD AND CLEAR! OVER." <STOP> 
-; 
+W $98B1,2 -> Tony: "WE READ LOUD AND CLEAR! OVER." <STOP>
+;
   $98B3,0 Pilot ($00)
 W $98B4,2 -> "THIS IS SPECIAL INVESTIGATION AIRBORNE."
 W $98B6,2 -> "THE TARGET VEHICLE HAS TURNED"
 W $98B8,2 -> "RIGHT UP AHEAD... OVER."
   $98BA,1 TBD $FE
-W $98BB,2 -> Tony: "WE READ LOUD AND CLEAR! OVER." <STOP> 
+W $98BB,2 -> Tony: "WE READ LOUD AND CLEAR! OVER." <STOP>
 ;
   $98BD,1 Three-way random choice ($FC)
 W $98BE,2 -> Tony: "WE READ LOUD AND CLEAR! OVER." <STOP>
@@ -1149,8 +1149,8 @@ W $992D,2 -> Nancy: "ONE MORE TRY FOR BEING A GOOD BOY!"
 W $992F,2 -> Nancy: "YOU'RE A MEDIOCRE DRIVER, BROTHER!" "SEE YOU LATER."
 ;
   $9931,1 Nancy ($01)
-W $9932,2 -> "WE THINK YOU PICKED THE WRONG JOB." <THEN>
-W $9934,2 -> "BETTER CHECK THE CLASSIFIED ADS."  
+W $9932,2 -> "WE THINK YOU PICKED THE WRONG JOB."
+W $9934,2 -> "BETTER CHECK THE CLASSIFIED ADS."
   $9936,1 <STOP>
 ;
   $9937,1 Nancy ($01)
@@ -1158,7 +1158,7 @@ W $9938,2 -> "ONE MORE TRY FOR BEING A GOOD BOY!"
   $993A,1 <STOP>
 ;
   $993B,1 Nancy ($01)
-W $993C,2 -> "YOU'RE A MEDIOCRE DRIVER, BROTHER!" <THEN>
+W $993C,2 -> "YOU'RE A MEDIOCRE DRIVER, BROTHER!"
 W $993E,2 -> "SEE YOU LATER."
   $9940,1 <STOP>
 ;
@@ -1187,11 +1187,11 @@ c $99EC remarks/alerts from nancy etc.
 @ $99F5 label=random_choice
 N $99F6 We have a three-way choice here
   $99F6,3 Call rng
-  $99FA if A < $55 jump 9a06   33.3% chance
-  $99FE step over a message ptr?
-  $9A00 if A < $AA jump 9a06   66.6% chance
-  $9A04 step over a message ptr?
-@ $9A06 label=load_it
+  $99FA if A < $55 jump load_message_ptr   33.3% chance
+  $99FE Skip first option message
+  $9A00 if A < $AA jump load_message_ptr   66.6% chance
+  $9A04 Skip second option message
+@ $9A06 label=load_message_ptr
   $9A06 HL = wordat(HL)
   $9A0A goto loop
 @ $9A0C specified_character
@@ -1201,7 +1201,7 @@ N $99F6 We have a three-way choice here
   $9A14 Base of face graphics (points 1 earlier than actual base because we're 1-indexed)
   $9A17 Length of face graphic (bitmap + attrs = 4*8*5 + 4*5)
   $9A1A Get face graphic address
-@ $9A1D do_plot
+@ $9A1D label=do_plot
   $9A1D Set plot address to (176,8)
   $9A20 Call plot_face
   $9A23 Restore HL
@@ -1492,7 +1492,7 @@ c $B4F0
 c $B549
 
 c $B58E Draws the car
-  $B6C4 Read from SUB @ $B5AA 
+  $B6C4 Read from SUB @ $B5AA
   $B5FE Hit while drawing car. loads values then calls $B627
   $B596 Point HL at ? then add (A * 4)
   $B605 Hit while drawing car. draws wheels
@@ -1800,7 +1800,7 @@ c $E839 looks like initialisation code / relocation
   $E83A Point #REGhl at $e858 table
 @ $E83D label=loopy
   $E83D PUSH BC       ;
-  $E83E DE = wordat(HL) HL += 2  
+  $E83E DE = wordat(HL) HL += 2
   $E842 Stack DE
   $E843 DE = wordat(HL) HL += 2  ; dest
   $E847 BC = wordat(HL) HL += 2  ; count
@@ -1818,19 +1818,19 @@ W $E85C,2 count
 ;
 W $E85E,2 src ptr
 W $E860,2 dst ptr
-W $E862,2 count  
+W $E862,2 count
 ;
 W $E864,2 src ptr
 W $E866,2 dst ptr
-W $E868,2 count  
+W $E868,2 count
 ;
 W $E86A,2 src ptr
 W $E86C,2 dst ptr
-W $E86E,2 count  
+W $E86E,2 count
 ;
 W $E870,2 src ptr
 W $E872,2 dst ptr
-W $E874,2 count  
+W $E874,2 count
 ;
 B $E876,24,3
 B $E88E,24,3
