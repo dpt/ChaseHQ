@@ -445,11 +445,13 @@ b $77D8
   $7DF2,20,4 Attribute data for above.
 
 b $8000 temporaries?
+  $8000,1 Test mode enable flag (cheat mode)
   $8002,4 Score digits as BCD (4 bytes / 8 digits)
   $8006,1 incremented on reset?
   $8007,1 Current/wanted? stage number (1...)
 
-c $8014 Load a stage?
+@ $8014 label=load_stage
+c $8014 Load a stage
   $8014 Get stage number
   $8017
   $801A,2 Exit if they match
@@ -600,9 +602,19 @@ c $83C7
 c $83CA
 
 c $83CD
+  $83DF A = 0
+  $83E0 $A13C = 0
+  $83E3 Zero $8002..$8006
+  $83EC A = 1
+  $83ED $8007 = 1
+  $83EE A = 2
+  $83EF $A13D = 2
+  $83F2 Call the main loop?
   $83F5 If $A139 is nonzero this calls $81AA which is the end of a string...
+  $83FF Loop
 
-c $8401 Possible main game loop?
+c $8401 Main game loop?
+
 c $852A
 c $858C
 b $85DD
@@ -620,6 +632,7 @@ c $87DC
 ; flashing lights are 5 attrs wide, 4 high
 
 c $8876
+  $8876 Inhibits user input when $A231 is zero
   $88B1,3 Call fill_attributes
 
 @ $88D5 label=clear_game_attrs
@@ -1460,6 +1473,8 @@ c $9BA7 Clear the whole message line
 c $9BCF
   $9BCF TBD
   $9C1B,3 Point at "TIME UP" message
+  $9C50,5 Is fire pressed?
+  $9C55
 N $9C57 Resetting mission code.
   $9C57 Reset $A229
   $9C5B Reset perp smash flag count thing to zero
@@ -1589,20 +1604,75 @@ c $9FB4 Draws a character
 c $A03D Plots double-height glyphs. DE->screen HL->font def
 
 c $A0CC
-B $A0CC
+@ $A0CC label=kempston_flag
+B $A0CC,1 Set to 1 if Kempston joystick is chosen, 0 otherwise
+B $A0CD,8 must be keydefs
+@ $A0D5 label=user_input
+B $A0D5,1 User input: QPBFUDLR - Quit Pause Boost Fire Up Down Left Right. Note that attract mode is driven through this var.
+;
 @ $A0D6 label=keyscan
-  $A0D6 Main keyboard handler.
-  $A112 Outer keyboard loop.
-  $A11E Inner keyboard loop. #REGa = ?
-  $A11F ...B=(A&7)+1, C=5-(A>>3)
-; rotate $FE by B
-; IN that port
-; rotate the result by C
+C $A0D6 Main input handler
+  $A0D6 If not Kempston then goto $A0F3
+  $A0DC Read Kempston joystick port. Returns 000FUDLR active high
+  $A0E0 PUSH AF      ;
+  $A0E1 LD E,$20     ;
+  $A0E3 LD HL,$A0CD  ;
+  $A0E6 CALL $A112   ;
+  $A0E9 RRCA         ;
+  $A0EA RRCA         ;
+  $A0EB RRCA         ;
+  $A0EC AND $E0      ;
+  $A0EE POP DE       ;
+  $A0EF OR D         ;
+  $A0F0 LD E,A       ;
+  $A0F1 JR $A0FB     ;
+;
+@ $A0F3 label=keyscan_keyboard
+  $A0F3 LD E,$01     ;
+  $A0F5 LD HL,$A0CD  ;
+  $A0F8 CALL $A112   ;
+;
+@ $A0FB label=keyscan_common
+  $A0FB AND $03      ;
+  $A0FD CP $03       ;
+  $A0FF LD A,E       ;
+  $A100 JR NZ,$A105  ;
+  $A102 AND $FC      ;
+  $A104 LD E,A       ;
+;
+  $A105 AND $0C      ;
+  $A107 CP $0C       ;
+  $A109 LD A,E       ;
+  $A10A JR NZ,$A10E  ;
+  $A10C AND $F3      ;
+; 
+  $A10E LD ($A0D5),A ;
+  $A111 Return
+; 
+  $A112 LD A,(HL)    ; Outer keyboard loop
+  $A113 INC HL       ;
+  $A114 CALL $A11E   ;
+  $A117 CCF          ; clear carry
+  $A118 RL E         ;
+  $A11A JR NC,$A112  ; loop while top bit set?
+  $A11C LD A,E       ;
+  $A11D Return
+; 
+  $A11E LD C,A       ; Inner keyboard loop.... what's in #REGa?
+  $A11F B=(A&7)+1, C=5-(A>>3)
+  $A12D A = $FE ROR B
+  $A132 IN A,($FE)   ; Port $FE is the AND of all columns/rows? This is the main keyboard access
+; 
+  $A134 C = A ROR C
+  $A138 Return
 
 g $A139
   $A139,1 This is always zero, yet the code checks it. If it's set then $83F5 uses it to jump to $81AA, which is the end of a string. $8435 tests it too and calls $9945 when it's zero, which it always is. $8AD6 also tries to use it to jump into a string (twice). Could be dead code or 128K version hook?
   $A13A,1 Current stage number
-  $A13B,1 Used by $8424
+  $A13B,1 Used by $8425
+  $A13C,1
+  $A13D,1 set to 2 by $83EF. $84F6 checks to see if it's 9. $9C3A checks it's zero. zero when snapshot is loaded. zero when in attract mode. set to 2 when MONITORING SYSTEM screen is on. set to 1 after game finishes -- not always!
+  $A13E TBD
   $A16E,1 used during attract mode, road gradient/angle or something?
   $A16F,1 Set to $C0 when fully smashed
   $A170,1 used in plot_scores_etc. set to 3 by $9C65.
@@ -1692,7 +1762,11 @@ c $ADBE
 c $AECF
 c $AFF1
 b $B045
+
 c $B063
+  $B080 Clear up/down/left/right bits of user input
+  $B0AF Read user input
+
 c $B318
 c $B457
 
@@ -2070,12 +2144,23 @@ W $E90A,2 -> "STOP THE TAPE" + "PRESS ANY KEY" message set
 B $E90C TBD
 
 c $E90F
-  $E928 Point #REGhl at input menu messages
+  $E925 Call clear_screen
+  $E928 Point #REGhl at input menu messages (NUL terminated)
+  $E92B Call menu_draw_strings
   $E931 Keyscan for 1, 2, 3, 4, 5
   $E93A Keyscan for 0, 9, 8, 7, 6
   $E93D Keyscan for P, O, I, U, Y
   $E940 Keyscan for ENTER, L, K, J, H
   $E943 Keyscan for SPACE, SYM SHFT, M, N, B
+  $E95C Address of three bytes to populate $A0CD.. with
+  $E95F Set Kempston flag
+  $E963 Populate $A0CD
+  $E969 Populate $A0D0
+  $E970 Call clear_screen
+  $E973 Address of "control options cannot be remodified" text (NUL terminated)
+  $E976 Call menu_draw_strings
+  $E97D Keyscan
+  $E99C Goto clear_screen
 
 b $E9B4 Messages
 ;
@@ -2203,11 +2288,16 @@ B $EBDE,1 Attribute: White
 W $EBDF,2 Screen position (40,160)
 T $EBE1,21 "PRESS YES(Y) OR NO(N)"
 
-c $EBF7
+@ $EBF7 label=menu_draw_strings
+c $EBF7 Renders strings until it hits a NUL byte
+  $EBF7 Call menu_draw_string
+  $EBFA If the next byte's zero then return
+  $EBFD Otherwise loop
 
 @ $EBFF label=menu_draw_string
 c $EBFF Renders a string.
 R $EBFF I:HL Address of a message structure (byte: attribute byte, word: destination screen address, bytes: top bit set terminated ASCII string)
+R $EBFF O:HL Address of next unconsumed byte
   $EBFF Load attribute byte
   $EC00 Bank the top bit of the attribute byte as the C flag (this is the single height flag)
   $EC05 Advance
@@ -2286,6 +2376,16 @@ R $EC2C I:HL' Attribute address
 c $ECDA Clears the screen.
 
 c $ECF3
+  $ECF3 Call clear_screen
+  $ECF6 Address of "REDEFINE KEYS" strings
+  $ECF9 Call menu_draw_strings
+  $ED23 Test keys are "SHOCKED<ENTER>"
+  $ED32 Set test mode flag
+  $ED37 Call clear_screen
+  $ED3A Address of TEST MODE strings
+  $ED3D,3 Call menu_draw_strings
+  $ED40,3 Call define_keys
+  $ED43 Debounce?
 
 c $ED4D
   $ED94,3 -> "B N M ..."
@@ -2293,14 +2393,16 @@ c $ED4D
 
 t $EDD6 Names of keys
 
-b $EE26
-b $EE2B
-b $EE30
-b $EE3D
+b $EE26 Sinclair joystick input scheme
+b $EE2B Cursor joystick input scheme
+b $EE30 "SHOCKED<ENTER>" ?
+b $EE38 temp input scheme buffer?
+b $EE3D 
 b $EE40
 
 c $EE6E
 
+@ $EE9E label=define_keys
 c $EE9E Define keys
   $EEAD Self modified, cycles 5,3,2,1
   $EEBE Self modified, cycles $F12x .. $F2xx ish
