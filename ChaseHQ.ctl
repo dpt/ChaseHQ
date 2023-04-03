@@ -148,8 +148,8 @@ c $5B00 Could be loader code
   $5B22 Point #REGhl at $5B7D
   $5B2B Fetch a word from #REGhl and stack it
   $5B31 Routine that ...
-  $5B58 Routine that ...
   $5B4C Game entry point
+  $5B58 Routine that ...
   $5B66 Routine that ...
   $5B67 Move $5C00..$76EF to $C000 onwards
   $5B75 Routine that loads a word then OUTs $FE with zero, then jumps to that word
@@ -183,8 +183,8 @@ W $5CF2,2 Address of face to plot
 W $5CF4,2 Screen attributes used for the ground colour (a pair of matching bytes)
   $5CF6 TBD
 
-@ $5D0C label=lods_table
 w $5D0C Table of addresses of LODs (levels of detail - a set of sprites of various sizes representing the same object).
+@ $5D0C label=lods_table
   $5D0C,2 -> some1_lods
   $5D0E,2 -> some2_lods
   $5D10,2 -> car_lods
@@ -1256,7 +1256,7 @@ c $9AAB Plots a face
   $9AC6 If carry then loop (overflow is ok)
   $9AC8 Step back 8 lines (undo overflow)
   $9ACC Loop
-@ $9ACE plot_face_attrs
+@ $9ACE label=plot_face_attrs_bit
   $9ACE Restore current screen address
   $9ACF Extract line bits (0..7)
   $9AD5 Turn it into an attribute address (works for first band only?)
