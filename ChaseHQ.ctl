@@ -179,6 +179,7 @@ B $5C00,240 Hill backdrop (80x24)
 
 b $5CF0 TBD
   $5CF0 TBD
+@ $5CF2 label=custom_face
 W $5CF2,2 Address of face to plot
 W $5CF4,2 Screen attributes used for the ground colour (a pair of matching bytes)
   $5CF6 TBD
@@ -232,13 +233,13 @@ W $5E36,2 Attribute address
 T $5E38,6 "MURDER"
 
 b $5E3E Graphics. All are stored inverted except where noted.
-  $5E3E,3 TBD
+B $5E3E,3 TBD
 W $5E41,2 Address of tumbleweed LODs table
-  $5E43,1 TBD
+B $5E43,1 TBD
 W $5E44,2 Address of another LOD table
-  $5E46 TBD these bytes seem to get hit when we're in the tunnel ... the lights?
-  $5E5B hit all the time must be tree/bush defs or LODs
-  $5E91 could be lods
+B $5E46 TBD these bytes seem to get hit when we're in the tunnel ... the lights?
+B $5E5B hit all the time must be tree/bush defs or LODs
+B $5E91 could be lods
 
 
 
@@ -287,20 +288,17 @@ B $687C,110,5 Car_2 (40x22)
 B $68EA,48,3 Car_3 (24x16)
 ;
 B $691A,24,3 Lamborghini_4 perhaps (24x8)
-B $694A,24,3 Lamborghini_5 mask (24x8)
-;
-B $697A,24 Truck_4/5
-B $69AA,24 Truck_4/5 mask
-;
-B $69DA,27 Car_4/5
-B $6A10,27 Car_4/5 mask
-;
 B $6932 TBD
+B $694A,24,3 Lamborghini_5 mask (24x8)
 B $6962 TBD
+B $697A,24 Truck_4/5
 B $6992 TBD
+B $69AA,24 Truck_4/5 mask
 B $69C2 TBD
 B $69C2 TBD
+B $69DA,27 Car_4/5
 B $69F5 TBD
+B $6A10,27 Car_4/5 mask
 B $6A2B mystery block
 ;
 @ $6A46 label=some1_lods
@@ -396,8 +394,11 @@ B $6F7D,15,3 graphic_6eeb (24x5)
 B $6F8C,12,3 graphic_6eeb (24x4)
 B $6F98,12,3 graphic_6eeb mask (24x4)
 B $6FA4,8,2 graphic_6eeb (16x4)
+B $6FAC,8,8 TBD
 B $6FB4,8,2 graphic_6eeb mask (16x4)
+B $6FBC,8,8 TBD
 B $6FC4,6,2 graphic_6eeb (16x3)
+B $6FCA,6,6 TBD
 B $6FD0,6,2 graphic_6eeb mask (16x3)
 
 
@@ -989,14 +990,21 @@ B $9618,3 Seed / initial state
   $962D Return
 
 g $962E In-game message variables
-W $962E,2 Address of the next character of the current message
+@ $962E label=next_character
+W $962E,2 Address of the next character in the current message
 @ $9630 label=next_message
 W $9630,2 Address of the _next_ message to show DOUBTING THIS NOW ... pointer to next command?
-  $9632,1 Seems to be the current index of the message bar
-  $9633,1 zeroed by $995d
-  $9634,5 seems to be the noise used when character pictures 'noise in'. 5 high so this is the height? or a seed?
+@ $9632 label=message_x
+  $9632,1 Index of next character in the message bar
+@ $9633 label=bleh
+  $9633,1 zeroed by $995d set to 10 by $9a49
+@ $9634 label=noise_bytes
+  $9634,5 Five bytes used for noise when character pictures 'noise in'
+@ $963C label=noise_counter
   $963C,1 Noise effect counter (4..0)
-  $963D,1 read by $9946, one'd by $9961, set by $99d9
+@ $963D label=tbd963d
+  $963D,1 read by $9946, one'd by $9961, set by $99d9  character index?
+@ $963E label=tbd963e
   $963E,1 read by $9950, set by $9956
 
 b $963F In-game messages
@@ -1166,22 +1174,86 @@ W $993E,2 -> "SEE YOU LATER."
 W $9942,2 -> "LET'S GO. MR. DRIVER."
   $9944,1 <STOP>
 
-c $9945
+@ $9945 label=sub9945
+c $9945 TBD
+R $9945 I:A TBD
+  $9945 B = A
+  $9946 LD A,($963D)  ;
+  $9949 If A == 0 jump forward to 9955
+  $994C If A >= 3 jump forward to 9955
+; A is 1 or 2
+  $9950 LD A,($963E)  ;
+  $9953 If A >= B return
+;
+  $9955 $963E = B
   $9959 Set message set pointer
-  $995D
+  $995C $9633 = 0
+  $9960 $963D = 1
+  $9964 Return
 
 c $9965
+  $9965 LD A,($963D)  ; A = tbd963d - 1
+  $9969 JR Z,$99DF    ; if A was zero jump
+  $996B A--
+  $996C JR Z,$998F    ; if A was zero jump to sub998f_do_noise_effect
+  $996E A--
+  $996F JR NZ,$997F   ; if A was NOT zero jump
+; A always zero here
+  $9971 Decrement noise_counter
+  $9975 LD A,(HL)     ; A = noise_counter
+  $9976 JP NZ,$9A5C   ; Jump if noise_counter was non-zero
+  $9979 LD ($963D),A  ; Zero this
+  $997C Call noise_plot_attrs -- clear to black
+;
+  $997F Plot space character
+  $9981 LD A,$AA      ; {$AA ROR 1 becomes $55 becomes $AA and so on
+  $9983 RRCA          ; probably a delay / alternating call
+  $9984 LD ($9982),A  ; }
+  $9987 LD A,$FF      ; ...and then gets overwritten?
+  $9989 JP C,$9AF1    ; jump on $55 -> $AA transitions?
   $998C,3 Goto plot_mini_font_1
-  $99AA using message bar index
+;
+@ $998F label=sub998f_do_noise_effect
+  $998F If noise_counter > 0 call noise_effect
+  $9996 LD A,($9633)  ; If $9633 == 0 jump $99b6
+  $9999 AND A         ;
+  $999A JR Z,$99B6    ;
+  $999C DEC A         ; $9633--
+  $999D LD ($9633),A  ;
+  $99A0 LD B,A        ;
+  $99A1 JR Z,$99BD    ; If A was zero jump sub998f_another_something
+  $99A3 LD HL,($962E) ; Load address of next character
+  $99A6 DEC HL        ; Go back 1
+  $99A7 Load the character for when we call plot_mini_font*
+  $99A8 Clear string terminator bit
+  $99AA message_x - 1
+  $99AE rotate it by B  (B is noise counter) .. wut?
+  $99B0,3 if carry jump plot_mini_font_2
   $99B3,3 Goto plot_mini_font_1
-  $99B6 using message bar index
-  $99C1 End of message
-  $99C5 this tests for $FE -- different terminator?
+;
+@ $99B6 label=sub998f_something
+  $99B6 If message_x != 0 jump $9a30
+;
+@ $99BD label=sub998f_another_something
+  $99BD LD HL,($9630) ; HL = next_message
+  $99C0 LD A,(HL)     ; first char of
+  $99C1 String terminator? jump to end_of_message if so
+  $99C5,2 this tests for $FE -- different terminator?
+  $99C7 JR NZ,$9A24   ; If not $fe goto chatter_message
+; $FE means clear first?
+  $99C9 HL++
+  $99CA next_message = *HL
+  $99D1 JR $99E4      ; goto 99e4_exit
+;
 @ $99D3 label=end_of_message ?
   $99D3 Set the noise effect counter to 4
   $99D8 Set $963D to 3
   $99DC Exit via clear_message_line
-  $99DF TBD
+;
+@ $99DF label=99df_something_else
+  $99DF $963D = 2
+;
+@ $99E4 label=99e4_exit
   $99E4 Call clear_message_line
 
 ; message format
@@ -1189,47 +1261,88 @@ c $9965
 ;        0 uses $5CF2 as face base - only used for the chopper pilot?
 ;        $FC => call rnd and use one of three following pointers as an address (repeat)
 
-c $99EC remarks/alerts from nancy etc.
+@ $99EC label=print_chatter
+c $99EC Shows the alerts and remarks from the game's characters
   $99EC Fetch address of next remark
-@ $99EF label=loop
+@ $99EF label=chatter_loop
   $99EF Read a byte and advance
-  $99F1,2 if (byte != $FC) then jump specified_character
-@ $99F5 label=random_choice
+  $99F1,2 if (byte != $FC) then jump plot_character
+@ $99F5 label=random_chatter
 N $99F6 We have a three-way choice here
-  $99F6,3 Call rng
-  $99FA if A < $55 jump load_message_ptr   33.3% chance
+  $99F6,3 Call rng - returns a random byte
+  $99FA If random value < $55 jump load_message_ptr -- a 33.3% chance
   $99FE Skip first option message
-  $9A00 if A < $AA jump load_message_ptr   66.6% chance
+  $9A00 If random value < $AA jump load_message_ptr -- a 66.6% chance
   $9A04 Skip second option message
 @ $9A06 label=load_message_ptr
-  $9A06 HL = wordat(HL)
-  $9A0A goto loop
-@ $9A0C specified_character
-  $9A0C Is it zero? A's the index of the face to show
-  $9A0D Preserve HL
-  $9A0E Plot whatever's in $5CF2 if A was zero (doesn't seem to be the noise case, likely dead code), otherwise calculate
-  $9A14 Base of face graphics (points 1 earlier than actual base because we're 1-indexed)
+  $9A06 Load the address of the message
+  $9A0A Loop back - it could be another random case
+@ $9A0C label=plot_character
+N $9A0C #REGa is the index of the face to show
+  $9A0C Is it zero? (The definable/pilot character's face)
+  $9A0D Preserve message pointer
+  $9A0E Plot whatever face #R$5CF2 points to, otherwise calculate
+  $9A14 Load base address of face graphics (BUT it's actually earlier than the real base because we're 1-indexed)
   $9A17 Length of face graphic (bitmap + attrs = 4*8*5 + 4*5)
   $9A1A Get face graphic address
 @ $9A1D label=do_plot
   $9A1D Set plot address to (176,8)
   $9A20 Call plot_face
-  $9A23 Restore HL
-@ $9A24 label=message_stuff
+  $9A23 Restore message pointer
+@ $9A24 label=chatter_message
   $9A24 Fetch address of message to start showing
-  $9A28,3 Save address of next message to show or perhaps the pointer
+  $9A28,3 Save address of next message to show (or perhaps the pointer)
+  $9A2B,4 Save next character address
+  $9A2F Cause a clear_message_line and fall through
 ;
   $9A30,6 if (A == 0) clear_message_line
-;
-  $9A4E updates message bar index
+  $9A36 Fetch next_character
+  $9A39 The character itself
+  $9A3A Clear the string terminator bit
+  $9A3C Preserve message_x
+  $9A3D PUSH HL
+  $9A3E Call plot_mini_font_2, with #REGd as ASCII character to plot
+  $9A41 POP HL
+  $9A42 Test string terminator bit
+  $9A44 Move to the next character in the string
+  $9A45 If not terminated then jump over
+  $9A47 $9633 = 10
+  $9A4C Restore message_x
+  $9A4D Increment and store message_x
+  $9A51 Update next_character
+  $9A54 Return
 
+@ $9A55 label=noise_effect
 c $9A55 Noise in/out effect
+R $9A55 I:A Noise effect counter
   $9A55 Decrement the noise effect counter
-  $9A59 Jump to $99EC once it's zero
-; This entry point is used by the routine at #R$9965.
+  $9A59 Jump to print_chatter if it's zero, otherwise fallthrough
+  $9A5C Shift A's bottom bit into carry
+  $9A5D A = 255
+  $9A5F D = 32  -- ASCII character for plot_mini_font*
+  $9A61 If A on input was odd then jump
+  $9A66 else call plot_mini_font_2 and continue at $9a6b
 ;
-  $9A96 $47 => BRIGHT + white over black
-; This entry point is used by the routine at #R$9965.
+  $9A68 Call plot_mini_font_1
+;
+  $9A6B Set plot address to (176,8)
+  $9A6E B,C = 4 columns/bytes, 40 rows
+  $9A72 Preserve row ptr
+  $9A73 Point #REGhl at noise_bytes
+@ $9A76 label=noise_plot_loop
+  $9A76 A = *HL - B -- Subtract row counter (4,3,2,1)
+  $9A78 *HL++ = A
+  $9A7A Rotate A left by 1
+  $9A7B *HL += A
+  $9A7D *DE++ = A -- Store 8 random bits
+  $9A7F Loop while columns remain
+  $9A81 Restore row ptr
+  $9A82 Move to next row
+  $9A83 Usual row movement magic here
+  $9A92 Loop while rows remain
+;
+  $9A96 #REGa = attribute $47 => BRIGHT + white over black
+@ $9A98 label=noise_plot_attrs
   $9A98 Screen attribute position (22,1)
   $9A9B 5 rows
   $9A9D 32 - 3 = row skip
@@ -1271,11 +1384,12 @@ c $9AAB Plots a face
 
 @ $9AEC label=plot_mini_font_1
 c $9AEC Plot mini font characters
+R $9AEC I:D The character to plot (ASCII)
 ; $9AEC called constantly to clear? or on flash?
   $9AEC
   $9AEF Goto pmf_go
 @ $9AF1 label=plot_mini_font_2
-R $9AF1 I:A Index into string, or $FF
+;R $9AF1 I:A Index into string, or $FF
   $9AF1 values to self modify with
 @ $9AF4 label=pmf_go
   $9AF4
@@ -1319,18 +1433,7 @@ N $9B28 Turn ASCII into glyph IDs
   $9B8A *scr++ = (*scr AND A) OR B
   $9B8E *scr-- = C
   $9B90 Next source byte ?
-N $9B91 Usual scanline stepping magic
-  $9B91 Next row
-  $9B92
-  $9B93
-  $9B95
-  $9B97
-  $9B98
-  $9B9A
-  $9B9B
-  $9B9D
-  $9B9E
-  $9BA0
+  $9B91 Move to next scanline
   $9BA1 Decrement row counter
   $9BA3 Loop while rows remain
   $9BA6 Return
@@ -1347,11 +1450,7 @@ c $9BA7 Clear the whole message line
   $9BB4 Preserve HL
   $9BB5 Zero 29 bytes at DE
   $9BB8
-  $9BB9 H++
-  $9BBA if (H & 7) goto cml_continue
-  $9BBF L += 32
-  $9BC3 JR C,cml_continue
-  $9BC5 H -= 8
+  $9BB9 Move to next scanline
 @ $9BC9 label=cml_continue
   $9BC9
   $9BCA Decrement row counter
@@ -1359,6 +1458,7 @@ c $9BA7 Clear the whole message line
   $9BCE Return
 
 c $9BCF
+  $9BCF TBD
   $9C1B,3 Point at "TIME UP" message
 N $9C57 Resetting mission code.
   $9C57 Reset $A229
@@ -1372,6 +1472,17 @@ N $9C57 Resetting mission code.
   $9C7E,3 Point at "CONTINUE THIS MISSION" messages
 
 c $9CC2
+  $9CC2 LD HL,($A24A) ;
+  $9CC5 LD A,L        ;
+  $9CC6 RR H          ;
+  $9CC8 RLA           ;
+  $9CC9 SRL A         ;
+  $9CCB SRL A         ;
+  $9CCD LD E,A        ;
+  $9CCE ADD A,$00     ;
+  $9CD0 DAA           ;
+  $9CD1 LD DE,$0000   ;
+  $9CD4 JR $9D17      ;
 
 c $9CD6
 
@@ -1787,21 +1898,32 @@ c $BDC1 Clears screen then sets in-game attributes
   $BDFA Return
 
 c $BDFB
+
 c $C0E1
+
 c $C15B
 b $C223
+
 c $C22A
 b $C238
+
 c $C23F
+
 c $C2E7
+
 c $C452
+  $C487 Set this to $00 and the landscape goes blank - half the time
 
 ; $C551 seems to be part of the stripes rendering
 
 c $C57C
+
 c $C58A
+
 c $C598
+
 c $C60C
+
 c $C61D
 
 c $C62E
