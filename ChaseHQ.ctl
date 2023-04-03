@@ -1,142 +1,142 @@
-; ChaseHQ.ctl
-;
-; This is a SkoolKit control file to disassemble the ZX Spectrum 48K version of
-; Chase H.Q. by Ocean Software. A home computer version of the arcade game by
-; Taito Corporation.
-;
-; Reverse engineering by David Thomas, 2023.
-;
-; This is intended to document the game when it is in a "pristine" as-loaded
-; state.
-;
-;
-; AUTHORS
-; -------
-; Code by JOBBEEE aka John O'Brien
-; <https://www.mobygames.com/person/28679/john-obrien/>
-;
-; Graphics by BILL aka Bill Harbison
-; <https://www.mobygames.com/person/31804/bill-harbison/>
-;
-; Music by JON DUNN aka Jonathan Dunn
-; <https://www.mobygames.com/person/31702/jonathan-dunn/>
-;
-;
-; OTHER VERSIONS
-; --------------
-; The Amstrad CPC version is by the same authors.
-;
-;
-; RELATED GAMES
-; -------------
-; "WEC Le Mans" (1988) - An earlier game by the same authors.
-; <https://www.mobygames.com/game/15167/wec-le-mans-24/>
-;
-; "Batman The Movie" (1989) - The same authors worked on the driving sequences
-; for this Atari ST/Amiga game.
-; <https://www.mobygames.com/game/3848/batman/>
-;
-; "Burnin' Rubber" (1990) - A later Amstrad game by JOBBEEE very much like WEC
-; Le Mans.
-; <https://www.mobygames.com/game/70894/burnin-rubber/>
-;
-;
-; RESEARCH
-; --------
-; https://www.mobygames.com/game/9832/chase-hq/
-;
-; http://reassembler.blogspot.com/2012/06/interview-with-spectrum-legend-bill.html
-;
-; https://spectrumcomputing.co.uk/entry/903/ZX-Spectrum/Chase_HQ
-; Known Errors:
-; Bugfix provided by Russell Marks:
-; "When you finish a stage, a hidden bonus is sometimes given randomly. At
-; address $8b3d, instructions EX AF,AF' and LD B,A are in the wrong order.
-; Therefore calculation of time bonus is using random value from A' instead of
-; low digit from remaining time. Fixed with POKE 35645,71: POKE 35646,8."
-;
-; https://news.ycombinator.com/item?id=8850193
-;
-;
-; SECRETS
-; -------
-; Redefine keys to "SHOCKED<ENTER>" to activate test/cheat mode.
-;
-;
-; 48K/128K VERSION DIFFERENCES
-; ----------------------------
-; - AY music + sampled speech and effects
-; - Text animations
-; - High score entry
-; - Best Officers (high score) on attract screen
-; - Input device/define keys is retained
-;
-;
-; MEMORY MAP
-; ----------
-; "Once running" => once the game's been shifted into its regular running state.
-;
-; $5B00..$5BFF is a pre-shifted version of the backdrop (once running)
-; $5C00..$5CFF is the regular version of the backdrop (once running)
-; $F000..$FFFF is a 4KB back buffer (once running)
-;
-; An back buffer address of 0b1111BAAACCCXXXXX means:
-; - X = X position byte (0..31)
-; - A = Y position row bits 0..2
-; - B = Y position row bit  3
-; - C = Y position row bits 4..6
-;
-; There's a column spare at either side of the back buffer (same as the main
-; screen). This seems to be to avoid full clipping.
-;
-;
-; NOTES
-; -----
-; Strings are top bit set terminated ASCII.
-;
-;
-; THINGS TO LOCATE
-; ----------------
-; Considering this is just level 1 in 48K:
-; - input handlers
-; - score, time, speed, distance, gear, stage no., turbo count, credit count
-; - music data and player
-; - most of car sprites
-; - car smoke sprites
-; - lamp post sprites
-; - tree sprites
-; - car's gravity / jump handling
-; - collision detection
-; - sound effects
-; - tunnel handling
-; - route/map
-; - road drawing code
-; - road split handling (it draws both in one pass)
-; - floating arrow sprite for road split
-; - floating HERE! arrow
-; - road signs
-; - desert road handling
-; - background drawing code (hills in 1st level)
-; - attract mode
-; - text overlay handling
-; - hi score stuff
-; - cheat mode ("SHOCKED")
-; - smash meter overlay handling
-; - redefine keys screen
-; - names of keys
-; - default key defs A/Z K/L
-; - message drawing code (white bar)
-; - turbo sprites/anim
-; - turbo handling
-; - level loading code
-; - level format (and which memory regions are altered)
-; - helicopter (later level)
-; - flashing light on car (and hand)
-; - ok creep! auto driving
-; - Chase HQ monitoring system
-; - picture handling / noise-in-out effect
-; - car graphic encoding
-; - is attract mode a CPU player or a recording?
+> $4000 ; ChaseHQ.ctl
+> $4000 ;
+> $4000 ; This is a SkoolKit control file to disassemble the ZX Spectrum 48K version of
+> $4000 ; Chase H.Q. by Ocean Software. A home computer version of the arcade game by
+> $4000 ; Taito Corporation.
+> $4000 ;
+> $4000 ; Reverse engineering by David Thomas, 2023.
+> $4000 ;
+> $4000 ; This is intended to document the game when it is in a "pristine" as-loaded
+> $4000 ; state.
+> $4000 ;
+> $4000 ;
+> $4000 ; AUTHORS
+> $4000 ; -------
+> $4000 ; Code by JOBBEEE aka John O'Brien
+> $4000 ; <https://www.mobygames.com/person/28679/john-obrien/>
+> $4000 ;
+> $4000 ; Graphics by BILL aka Bill Harbison
+> $4000 ; <https://www.mobygames.com/person/31804/bill-harbison/>
+> $4000 ;
+> $4000 ; Music by JON DUNN aka Jonathan Dunn
+> $4000 ; <https://www.mobygames.com/person/31702/jonathan-dunn/>
+> $4000 ;
+> $4000 ;
+> $4000 ; OTHER VERSIONS
+> $4000 ; --------------
+> $4000 ; The Amstrad CPC version is by the same authors.
+> $4000 ;
+> $4000 ;
+> $4000 ; RELATED GAMES
+> $4000 ; -------------
+> $4000 ; "WEC Le Mans" (1988) - An earlier game by the same authors.
+> $4000 ; <https://www.mobygames.com/game/15167/wec-le-mans-24/>
+> $4000 ;
+> $4000 ; "Batman The Movie" (1989) - The same authors worked on the driving sequences
+> $4000 ; for this Atari ST/Amiga game.
+> $4000 ; <https://www.mobygames.com/game/3848/batman/>
+> $4000 ;
+> $4000 ; "Burnin' Rubber" (1990) - A later Amstrad game by JOBBEEE very much like WEC
+> $4000 ; Le Mans.
+> $4000 ; <https://www.mobygames.com/game/70894/burnin-rubber/>
+> $4000 ;
+> $4000 ;
+> $4000 ; RESEARCH
+> $4000 ; --------
+> $4000 ; https://www.mobygames.com/game/9832/chase-hq/
+> $4000 ;
+> $4000 ; http://reassembler.blogspot.com/2012/06/interview-with-spectrum-legend-bill.html
+> $4000 ;
+> $4000 ; https://spectrumcomputing.co.uk/entry/903/ZX-Spectrum/Chase_HQ
+> $4000 ; Known Errors:
+> $4000 ; Bugfix provided by Russell Marks:
+> $4000 ; "When you finish a stage, a hidden bonus is sometimes given randomly. At
+> $4000 ; address $8b3d, instructions EX AF,AF' and LD B,A are in the wrong order.
+> $4000 ; Therefore calculation of time bonus is using random value from A' instead of
+> $4000 ; low digit from remaining time. Fixed with POKE 35645,71: POKE 35646,8."
+> $4000 ;
+> $4000 ; https://news.ycombinator.com/item?id=8850193
+> $4000 ;
+> $4000 ;
+> $4000 ; SECRETS
+> $4000 ; -------
+> $4000 ; Redefine keys to "SHOCKED<ENTER>" to activate test/cheat mode.
+> $4000 ;
+> $4000 ;
+> $4000 ; 48K/128K VERSION DIFFERENCES
+> $4000 ; ----------------------------
+> $4000 ; - AY music + sampled speech and effects
+> $4000 ; - Text animations
+> $4000 ; - High score entry
+> $4000 ; - Best Officers (high score) on attract screen
+> $4000 ; - Input device/define keys is retained
+> $4000 ;
+> $4000 ;
+> $4000 ; MEMORY MAP
+> $4000 ; ----------
+> $4000 ; "Once running" => once the game's been shifted into its regular running state.
+> $4000 ;
+> $4000 ; $5B00..$5BFF is a pre-shifted version of the backdrop (once running)
+> $4000 ; $5C00..$5CFF is the regular version of the backdrop (once running)
+> $4000 ; $F000..$FFFF is a 4KB back buffer (once running)
+> $4000 ;
+> $4000 ; An back buffer address of 0b1111BAAACCCXXXXX means:
+> $4000 ; - X = X position byte (0..31)
+> $4000 ; - A = Y position row bits 0..2
+> $4000 ; - B = Y position row bit  3
+> $4000 ; - C = Y position row bits 4..6
+> $4000 ;
+> $4000 ; There's a column spare at either side of the back buffer (same as the main
+> $4000 ; screen). This seems to be to avoid full clipping.
+> $4000 ;
+> $4000 ;
+> $4000 ; NOTES
+> $4000 ; -----
+> $4000 ; Strings are top bit set terminated ASCII.
+> $4000 ;
+> $4000 ;
+> $4000 ; THINGS TO LOCATE
+> $4000 ; ----------------
+> $4000 ; Considering this is just level 1 in 48K:
+> $4000 ; - input handlers
+> $4000 ; - score, time, speed, distance, gear, stage no., turbo count, credit count
+> $4000 ; - music data and player
+> $4000 ; - most of car sprites
+> $4000 ; - car smoke sprites
+> $4000 ; - lamp post sprites
+> $4000 ; - tree sprites
+> $4000 ; - car's gravity / jump handling
+> $4000 ; - collision detection
+> $4000 ; - sound effects
+> $4000 ; - tunnel handling
+> $4000 ; - route/map
+> $4000 ; - road drawing code
+> $4000 ; - road split handling (it draws both in one pass)
+> $4000 ; - floating arrow sprite for road split
+> $4000 ; - floating HERE! arrow
+> $4000 ; - road signs
+> $4000 ; - desert road handling
+> $4000 ; - background drawing code (hills in 1st level)
+> $4000 ; - attract mode
+> $4000 ; - text overlay handling
+> $4000 ; - hi score stuff
+> $4000 ; - cheat mode ("SHOCKED")
+> $4000 ; - smash meter overlay handling
+> $4000 ; - redefine keys screen
+> $4000 ; - names of keys
+> $4000 ; - default key defs A/Z K/L
+> $4000 ; - message drawing code (white bar)
+> $4000 ; - turbo sprites/anim
+> $4000 ; - turbo handling
+> $4000 ; - level loading code
+> $4000 ; - level format (and which memory regions are altered)
+> $4000 ; - helicopter (later level)
+> $4000 ; - flashing light on car (and hand)
+> $4000 ; - ok creep! auto driving
+> $4000 ; - Chase HQ monitoring system
+> $4000 ; - picture handling / noise-in-out effect
+> $4000 ; - car graphic encoding
+> $4000 ; - is attract mode a CPU player or a recording?
 
 @ $4000 start
 @ $4000 org
