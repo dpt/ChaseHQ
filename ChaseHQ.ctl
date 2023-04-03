@@ -1975,13 +1975,9 @@ c $BDFB
 
 c $C0E1
 
-c $C15B
-b $C223
-
-c $C22A
-b $C238
-
-c $C23F
+c $C15B Tunnel entrace/exit drawing code
+  $C221 Jump table (self modified)
+  $C236 Jump table (self modified)
 
 c $C2E7
 
@@ -1994,14 +1990,10 @@ c $C57C
 
 c $C58A
 
-c $C598
-
-c $C60C
-
-c $C61D
-
-c $C62E
-;$C635 does the road plotting
+c $C598 Road plotting
+  $C60A Jump table (self modified)
+  $C61B Jump table (self modified)
+  $C62C Jump table (self modified)
   $C7EA,3 Point at first hill backdrop
   $C7EF,3 Point at second hill backdrop
 
@@ -2036,18 +2028,18 @@ c $C8BE Builds the pre-shifted first hill backdrop
   $C8E2
 
 c $C8E3
+
 c $C93E
+
 c $C94C
+
 c $C95A
-b $CA13
-c $CA17
-b $CA24
-c $CA2A
-b $CA35
-c $CA36
-b $CA46
-c $CA4F
-c $CA57
+  $CA11 Jump table (self modified)
+  $CA22 Jump table (self modified)
+  $CA33 Jump table (self modified)
+  $CA44 Jump table (self modified)
+  $CA55 Jump table (self modified)
+
 b $CBA4
 c $CBC5
 c $CBCE
