@@ -1,0 +1,12 @@
+;
+; SkoolKit ref file for Chase H.Q. by Ocean.
+;
+
+[Game]
+Game=Chase H.Q.
+Release=The incomplete Chase H.Q. disassembly 20230404
+Copyright=&copy; 1989 Ocean Software Ltd.
+
+[PageHeaders]
+GameIndex=The incomplete<>disassembly
+
