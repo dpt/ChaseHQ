@@ -195,6 +195,11 @@ w $5D0C Table of addresses of LODs (levels of detail - a set of sprites of vario
   $5D18,2 -> car_lods
 
 b $5D1A TBD
+B $5D1A,1 loaded by $A813
+B $5D1B,1 loaded by $A6A7
+B $5D1C,1 loaded by $A759
+B $5D1D   pointed at by $841E, $858C
+B $5D2B   pointed at by $F426, $8258
 
 w $5D3A Pointers to Nancy's message (for Stage 1)
   $5D3A,2 Points at "THIS IS NANCY..."
@@ -448,7 +453,7 @@ b $8000 temporaries?
   $8000,1 Test mode enable flag (cheat mode)
   $8002,4 Score digits as BCD (4 bytes / 8 digits)
   $8006,1 incremented on reset?
-  $8007,1 Current/wanted? stage number (1...)
+  $8007,1 Current/wanted? stage number (1...) 6 if end credits
 
 @ $8014 label=load_stage
 c $8014 Load a stage
@@ -614,17 +619,34 @@ c $83CD
   $83FF Loop
 
 c $8401 Main game loop?
+  $8401 Call load_stage
+  $8404 Are we on stage 6 (end credits) jump $841B if not so
+@ $840B label=end_credits
+  $840B Call $5C00 [which is data in earlier stages]
+  $840E Reset (wanted) stage to 1
+  $8413 Call load_stage
 
 c $852A
+  $8556 Set user input
+
 c $858C
 b $85DD
+
 c $85E4
+
 c $860F
+
 c $865A
 b $86F6
 
 c $87DC
-  $8807 Pre-shift the backdrop image
+  $87DD Clear $EE00..$EEFF
+  $87EC A = 0
+  $87ED Copy (47 bytes) at $A13E to $A16D - saved game state
+  $87F8 Zero 207 bytes at $A19D
+  $8807,3 Pre-shift the backdrop image
+  $881E Fill 6 bytes
+  $8824 Self modify $C058
   $8857 Point #REGhl at left light's attributes
   $885D Point #REGhl at right light's attributes then FALL THROUGH
 @ $8860 label=clear_lights
@@ -632,8 +654,14 @@ c $87DC
 ; flashing lights are 5 attrs wide, 4 high
 
 c $8876
-  $8876 Inhibits user input when $A231 is zero
+  $8876,3 Inhibits user input when $A231 isn't 4
+  $8879,3 Address of user_input
+  $8883 AND user_input with user input mask
+  $8888 AND with mask for (Quit+Pause+Turbo), return if none
+  $888B Quit bit set? Goto quit_bit if so
   $88B1,3 Call fill_attributes
+@ $88A9 label=quit_bit
+  $88A9
 
 @ $88D5 label=clear_game_attrs
 c $88D5 Clears the game screen attributes to zero
@@ -662,7 +690,7 @@ c $8A57
 c $8C3A
   $8C3C TBD = (draw_screen flag) + 1
   $8C43 Set smash counter to 20
-  $8C48 $A16F = $C0
+  $8C48 Set user input mask to (Quit+Pause)
   $8C4D,3 Print the "OK! PULL OVER CREEP!" message
   $8C53
   $8C56
@@ -1479,7 +1507,7 @@ N $9C57 Resetting mission code.
   $9C57 Reset $A229
   $9C5B Reset perp smash flag count thing to zero
   $9C60 Reset smash counter to zero
-  $9C62 $A16F = $FF
+  $9C62 Set user input mask to allow everything through
   $9C67 $A252 = 3
   $9C6A $A231 = 3 -- Flag set to zero when attributes have been set
   $9C6D $A170 = 3 -- Used in plot_scores_etc
@@ -1672,9 +1700,10 @@ g $A139
   $A13B,1 Used by $8425
   $A13C,1
   $A13D,1 set to 2 by $83EF. $84F6 checks to see if it's 9. $9C3A checks it's zero. zero when snapshot is loaded. zero when in attract mode. set to 2 when MONITORING SYSTEM screen is on. set to 1 after game finishes -- not always!
-  $A13E TBD
+  $A13E,47 Canned data or Data restored for attract mode?
+  $A16D
   $A16E,1 used during attract mode, road gradient/angle or something?
-  $A16F,1 Set to $C0 when fully smashed
+  $A16F,1 user_input mask, set to $C0 (Quit+Pause) when perp is fully smashed, or $FF otherwise
   $A170,1 used in plot_scores_etc. set to 3 by $9C65.
 W $A171,2 seems to be the horizon level, possibly relative (used during attract mode)
   $A174,1 Low/high gear flag?
@@ -1690,6 +1719,7 @@ W $A171,2 seems to be the horizon level, possibly relative (used during attract 
 W $A186,2 Attribute address of horizon. Points to last attribute on the line which shows the ground. (e.g. $59DF)
   $A188,1
 W $A195,2 Set to $190 by fully_smashed
+  $A19D Memory gets wiped
   $A220,1 Set to $F8 when the CHQ MONITORING SYSTEM screen is being shown. (draw_screen uses this to skip for some work, just tests for non-zero). #R$8014 sets this to the level number.
   $A223,1 Stage number as shown. Stored as ASCII.
   $A229,1
@@ -1705,7 +1735,9 @@ W $A195,2 Set to $190 by fully_smashed
   $A234,1 Cycles 0/1/2/3 as the game runs.
   $A235,1 ... light toggle flashing related? seems to cycle 0/1 as the game runs.
   $A236,1
-  $A240,1 Used by $B8F6, $BBF7
+  $A237,1
+  $A23B,1 loaded by $821d,$8903,$c0ee,$fd21 set by $C102
+W $A240,2 Used by $B8F6, $BBF7, $87E0
   $A249,1 Counter used by $BB6E
   $A24A,1 Used by $B848
   $A24E used in plot_scores_etc
