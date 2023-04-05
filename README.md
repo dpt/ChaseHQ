@@ -22,16 +22,10 @@ To find out how it works (and maybe one day we could make new levels).
 pip3 install skoolkit
 ```
 
-- Clone the t2s repository that can make pristine snapshots from emulator files:
-
-``` sh
-git clone https://github.com/skoolkid/t2sfiles/
-```
-
 - Download and convert the game into a .z80 format snapshot:
 
 ``` sh
-tap2sna.py @t2sfiles/t2s/c/chase-hq.t2s
+make pristine
 ```
 
 You'll see:
@@ -55,13 +49,13 @@ Writing chase-hq.z80
 Build a Skool file like so:
 
 ``` sh
-sna2skool.py --hex -c ChaseHQ.ctl chase-hq.z80 > ChaseHQ.skool  # remove --hex if you want decimal numbers
+make skool
 ```
 
-A Skool file is a high-level assembly listing from which we can generate regular assembly listings, or HTML disassemblies. You can edit the Skool file and turn it back into a control file like so:
+A Skool file is a high-level assembly listing from which we can generate regular assembly listings, or HTML disassemblies. Generated files are put in a directory called 'build' by default. You can edit the Skool file and turn it back into another control file like so:
 
 ``` sh
-skool2ctl.py --hex ChaseHQ.skool > ChaseHQ.tmp.ctl
+make ctl
 ```
 
 This makes it easy to pull your changes back into the main control file by copying and pasting modified chunks across. The bigger and more detailed the control file gets, the better our explanation of the game is!
@@ -69,13 +63,13 @@ This makes it easy to pull your changes back into the main control file by copyi
 Build an assembly listing like so:
 
 ``` sh
-skool2asm.py --hex --create-labels ChaseHQ.skool > ChaseHQ.asm
+make asm
 ```
 
-Build a tap file for loading into emulators or real Spectrums like so:
+Build a tap or z80 file for loading into emulators or real Spectrums like so:
 
 ``` sh
-skool2bin.py ChaseHQ.skool - | bin2tap.py --org 16384 --stack 65530 --start 23372 - ChaseHQ.tap
+make tap  # or z80
 ```
 
 ## HOW TO DETERMINE HOW THE GAME WORKS?
