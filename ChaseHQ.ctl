@@ -510,7 +510,7 @@ W $81CE,2 Screen position (88,128)
 W $81D0,2 Screen attribute position (11,16)
   $81D2,11 "PRESS  GEAR"
 ;
-B $81DD Unknown
+B $81DD Unknown - referenced by $843E
 ;
   $81EC,13 "GIDDY UP BOY!"
 ;
@@ -600,15 +600,15 @@ T $8367,19 "ALL RIGHTS RESERVED"
 
 b $837A unknown
 
-; These are all just thunks.
-c $83B5
-c $83B8
-c $83BB
-c $83BE
-c $83C1
-c $83C4
-c $83C7
-c $83CA
+; These are all just thunks. Possibly hooks for 128K mode sfx.
+c $83B5 just a RET
+c $83B8 sound effects
+c $83BB just a RET
+c $83BE just a RET
+c $83C1 just a RET
+c $83C4 TBD
+c $83C7 just a RET
+c $83CA TBD
 
 c $83CD Bootstrap
 ; This gets hit when a game finishes and we return to the attract mode.
@@ -636,85 +636,73 @@ N $83CD Builds a table of flipped bytes at $EF00.
 c $8401 Main loop
   $8401 Call load_stage
   $8404 Are we on stage 6 (end credits) jump $841B if not so
-@ $840B label=end_credits
-  $840B Call $5C00 [which is data in earlier stages]
+@ $840B label=handle_end_credits
+  $840B Call $5C00 [which is data in earlier stages, must be end credit anim]
   $840E Reset (wanted) stage to 1
   $8413 Call load_stage
   $8418 Set (wanted) stage to 6   [not sure why]
   $841A Return
 @ $841B label=l_841b
-  $841B CALL $858C    ;
+  $841B CALL $858C    ; TBD
   $841E LD HL,$5D1D   ;
-  $8421 CALL $87DC    ;
-  $8424 LD HL,$A13B   ;
-  $8427 LD A,(HL)     ;
-  $8428 DEC A         ;
-  $8429 JR NZ,$842D   ;
-  $842B LD A,$03      ;
-  $842D LD (HL),A     ;
-  $842E ADD A,A       ;
-  $842F ADD A,A       ;
-  $8430 OR $02        ;
-  $8432 LD ($A26B),A  ;
-  $8435 LD A,($A139)  ;
-  $8438 AND A         ;
-  $8439 LD A,$FF      ;
-  $843B LD ($A188),A  ;
+  $8421 Call "Initialisation"
+  $8424 $A13B cycles 3,2,1 then repeats
+  $842E $A26B = (A * 4) OR 2
+  $8435 Is $A139 zero? (used later)
+  $8439 $A188 = $FF
   $843E LD HL,$81DD   ;
-  $8441 CALL Z,$9945  ;
-  $8444 CALL $8903    ;
-  $8447 CALL $A0D6    ;
-  $844A CALL $9BCF    ;
-  $844D CALL $8876    ;
-  $8450 CALL $BDFB    ;
-  $8453 CALL $8A57    ;
-  $8456 CALL $B063    ;
-  $8459 CALL $A7F3    ;
-  $845C CALL $A60E    ;
-  $845F CALL $83B8    ;
-  $8462 CALL $CD3A    ;
-  $8465 CALL $B848    ;
-  $8468 CALL $83B8    ;
-  $846B CALL $B9F4    ;
-  $846E CALL $83B8    ;
-  $8471 CALL $C452    ;
-  $8474 CALL $83B8    ;
-  $8477 CALL $A579    ;
-  $847A CALL $C0E1    ;
-  $847D CALL $AB9A    ;
-  $8480 CALL $AB33    ;
-  $8483 CALL $A955    ;
-  $8486 CALL $83B8    ;
-  $8489 CALL $ADA0    ;
-  $848C CALL $A97E    ;
-  $848F CALL $83B8    ;
-  $8492 CALL $AAC6    ;
-  $8495 CALL $A399    ;
-  $8498 CALL $83B8    ;
-  $849B CALL $8F5F    ;
-  $849E CALL $83B8    ;
-  $84A1 CALL $B318    ;
-  $84A4 CALL $9CC2    ;
-  $84A7 CALL $9D62    ;
-  $84AA CALL $9D2E    ;
-  $84AD CALL $83B8    ;
-  $84B0 CALL $9965    ;
-  $84B3 CALL $8EE7    ;
-  $84B6 CALL $8D8F    ;
-  $84B9 CALL $83B8    ;
-  $84BC CALL $BC3E    ;
-  $84BF CALL $BB69    ;
-  $84C2 LD A,($8000)  ;
-  $84C5 AND A         ;
-  $84C6 JR Z,$84FB    ;
-  $84C8 LD A,$F7      ;
-  $84CA IN A,($FE)    ;
-  $84CC CPL           ;
-  $84CD AND $1F       ;
-  $84CF JR Z,$84FB    ;
+  $8441 message related
+  $8444 TBD
+  $8447 Call keyscan
+  $844A TBD - has TIME UP and missing restart stuff
+  $844D TBD - has quit handling
+  $8450 TBD
+  $8453 TBD - some bonus handling
+  $8456 TBD
+  $8459 TBD
+  $845C TBD
+  $845F <sound>
+  $8462 TBD
+  $8465 TBD
+  $8468 <sound>
+  $846B TBD
+  $846E <sound>
+  $8471 TBD - landscape related
+  $8474 <sound>
+  $8477 TBD
+  $847A TBD
+  $847D TBD
+  $8480 TBD - helicopter related
+  $8483 TBD
+  $8486 <sound>
+  $8489 TBD
+  $848C TBD
+  $848F <sound>
+  $8492 TBD
+  $8495 TBD
+  $8498 <sound>
+  $849B TBD
+  $849E <sound>
+  $84A1 TBD
+  $84A4 TBD - tiny func
+  $84A7 TBD - stage/bonus/LO-HI/flashing lights
+  $84AA TBD - tiny func
+  $84AD <sound>
+  $84B0 TBD - noise effect, message plotting
+  $84B3 TBD - tiny func
+  $84B6 Call transition
+  $84B9 <sound>
+  $84BC Call draw_screen -- copy backbuffer to screen
+  $84BF TBD
+  $84C2 Is test mode enabled?
+  $84C5 If not, goto no_test_mode
+  $84C8 Read keys 1/2/3/4/5
+  $84CC Change to active high
+  $84CD Mask off just keys
+  $84CF If none are set then jump
   $84D1 EX AF,AF'     ;
   $84D2 LD BC,$0804   ;
-  $84D5 CALL $88F2    ;
+  $84D5 TBD
   $84D8 CALL $83BB    ;
   $84DB EX AF,AF'     ;
   $84DC RRA           ;
@@ -733,6 +721,7 @@ c $8401 Main loop
   $84F6 CP $09        ;
   $84F8 JR Z,$84FB    ;
   $84FA INC (HL)      ;
+@ $84FB no_test_mode
   $84FB LD A,($A231)  ;
   $84FE AND A         ;
   $84FF JP NZ,$8444   ;
@@ -788,7 +777,8 @@ c $87DC Initialisation
   $882A Set $A191 to value of lods_table[2]
   $8830 Zero $EE00..$EEFF, and point $A240 at $EE00 [duplicates work from earlier]
 @ $883F label=loop883f
-  $883F 32 iterations  - alter and it affects road setup
+; alter this iterations count and we seem to start later in the level
+  $883F 32 iterations   - affects start position?
   $8841 Preserve BC
   $8842 HL = $A23F
   $8845 Call HUGE function
@@ -821,6 +811,13 @@ c $88D5 Clears the game screen attributes to zero
 c $88E2 Clears the game screen attributes and the game screen to zero
 
 c $88F2
+R $88F2 I:BC e.g. $0704 $0801 $0604
+  $88F2 If $A238 is zero then jump $88FA
+  $88F8 Return if C > $A238
+  $88FA $A237 = B
+  $88FE $A238 = C
+  $8902 Return
+
 c $8903
 b $893C
 t $8958
@@ -1194,9 +1191,9 @@ W $9630,2 Address of the _next_ message to show DOUBTING THIS NOW ... pointer to
   $9634,5 Five bytes used for noise when character pictures 'noise in'
 @ $963C label=noise_counter
   $963C,1 Noise effect counter (4..0)
-@ $963D label=tbd963d
+@ $963D label=TBD963d
   $963D,1 read by $9946, one'd by $9961, set by $99d9  character index?
-@ $963E label=tbd963e
+@ $963E label=TBD963e
   $963E,1 read by $9950, set by $9956
 
 b $963F In-game messages
@@ -1384,7 +1381,7 @@ R $9945 I:A TBD
   $9964 Return
 
 c $9965
-  $9965 LD A,($963D)  ; A = tbd963d - 1
+  $9965 LD A,($963D)  ; A = TBD963d - 1
   $9969 JR Z,$99DF    ; if A was zero jump
   $996B A--
   $996C JR Z,$998F    ; if A was zero jump to sub998f_do_noise_effect
@@ -1848,7 +1845,7 @@ C $A0D6 Main input handler
 g $A139
   $A139,1 This is always zero, yet the code checks it. If it's set then $83F5 uses it to jump to $81AA, which is the end of a string. $8435 tests it too and calls $9945 when it's zero, which it always is. $8AD6 also tries to use it to jump into a string (twice). Could be dead code or 128K version hook?
   $A13A,1 Current stage number
-  $A13B,1 Used by $8425
+  $A13B,1 Used by $8425  -- seems to start at 4 then cycle 3/2/1 with each restart of the game, another random factor?
   $A13C,1
   $A13D,1 set to 2 by $83EF. $84F6 checks to see if it's 9. $9C3A checks it's zero. zero when snapshot is loaded. zero when in attract mode. set to 2 when MONITORING SYSTEM screen is on. set to 1 after game finishes -- not always!
   $A13E,47 Canned data or Data restored for attract mode?
@@ -1868,7 +1865,7 @@ W $A171,2 seems to be the horizon level, possibly relative (used during attract 
 @ $A181 label=distance_digits
   $A181,4 Distance. Stored as one digit per byte.
 W $A186,2 Attribute address of horizon. Points to last attribute on the line which shows the ground. (e.g. $59DF)
-  $A188,1
+  $A188,1 Set by $843B
 W $A191,2 Address of car_lods
 W $A195,2 Set to $190 by fully_smashed
   $A19D Memory gets wiped
@@ -1887,10 +1884,11 @@ W $A195,2 Set to $190 by fully_smashed
   $A234,1 Cycles 0/1/2/3 as the game runs.
   $A235,1 ... light toggle flashing related? seems to cycle 0/1 as the game runs.
   $A236,1
-  $A237,1
+  $A237,1 Used by $88F2
+  $A238,1 Used by $88F2
   $A23B,1 loaded by $821d,$8903,$c0ee,$fd21 set by $C102
-  $A23F,1 numerous references
-W $A240,2 Used by $B8F6, $BBF7, $87E0
+  $A23F,1 numerous references, seems related to level position
+W $A240,2 Used by $B8F6, $BBF7, $87E0  seems to point at $EE00..$EEFF
   $A249,1 Counter used by $BB6E
   $A24A,1 Used by $B848
   $A24E used in plot_scores_etc
@@ -1945,7 +1943,10 @@ c $AD4B
 c $AD51
 c $ADA0
 c $ADBE
+
 c $AECF
+  $AE06
+
 c $AFF1
 b $B045
 
