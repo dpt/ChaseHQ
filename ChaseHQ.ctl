@@ -798,6 +798,7 @@ c $8876
   $8883 AND user_input with user input mask
   $8888 AND with mask for (Quit+Pause+Turbo), return if none
   $888B Quit bit set? Goto quit_bit if so
+  $8897 Return if no turbo boosts left
   $88B1,3 Call fill_attributes
 @ $88A9 label=quit_bit
   $88A9
@@ -1659,7 +1660,7 @@ N $9C57 Resetting mission code.
   $9C62 Set user input mask to allow everything through
   $9C67 $A252 = 3
   $9C6A $A231 = 3 -- Flag set to zero when attributes have been set
-  $9C6D $A170 = 3 -- Used in plot_scores_etc
+  $9C6D turbos = 3
   $9C70 Set remaining time to 60 (BCD)
   $9C7E,3 Point at "CONTINUE THIS MISSION" messages
 
@@ -1728,6 +1729,8 @@ c $9DF4 Toggle the light's BRIGHT bit (#REGhl -> attrs)
 
 @ $9E11 label=plot_scores_etc
 c $9E11
+  $9E11 If no turbos jump to plot_scores_only
+  $9E17 C = number of turbos
 @ $9E7B label=plot_scores_only
   $9E7B Point #REGde at speed digits screen position
   $9EB6 Plot a digit
@@ -1849,12 +1852,14 @@ g $A139
   $A13B,1 Used by $8425  -- seems to start at 4 then cycle 3/2/1 with each restart of the game, another random factor?
   $A13C,1
 @ $A13D label=credits
-  $A13D,1 Number of credits remaining (usually 2 for a new game)
+  $A13D,1 Number of credits remaining (2 for a new game)
   $A13E,47 Canned data or Data restored for attract mode?
   $A16D
+; this might be an idle timer, when it hits zero Raymond cajoles us
   $A16E,1 used during attract mode, road gradient/angle or something?
   $A16F,1 user_input mask, set to $C0 (Quit+Pause) when perp is fully smashed, or $FF otherwise
-  $A170,1 used in plot_scores_etc. set to 3 by $9C65.
+@ $A170 label=turbos
+  $A170,1 Number of turbo boosts remaining (3 for a new game)
 W $A171,2 seems to be the horizon level, possibly relative (used during attract mode)
   $A174,1 Low/high gear flag?
   $A175,8 Score digits. One digit per byte, least significant first. This seems to be recording what's on screen so digit plotting can be bypassed.
@@ -1893,7 +1898,7 @@ W $A195,2 Set to $190 by fully_smashed
 W $A240,2 Used by $B8F6, $BBF7, $87E0  seems to point at $EE00..$EEFF
   $A249,1 Counter used by $BB6E
   $A24A,1 Used by $B848
-  $A24E used in plot_scores_etc
+  $A24E,1 used in plot_scores_etc
   $A250,1
   $A251,1
   $A252,1
@@ -1954,6 +1959,7 @@ b $B045
 
 c $B063
   $B080 Clear up/down/left/right bits of user input
+  $B0A2 Decrement turbo boost count
   $B0AF Read user input
 
 c $B318
