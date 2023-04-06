@@ -78,6 +78,9 @@
 > $4000 ;
 > $4000 ; $5B00..$5BFF is a pre-shifted version of the backdrop (once running)
 > $4000 ; $5C00..$5CFF is the regular version of the backdrop (once running)
+> $4000 ; $ED28        is the stack
+> $4000 ; $EE00..$EEFF is (cleared by $87DD)
+> $4000 ; $EF00..$EFFF is a table of flipped bytes (once running)
 > $4000 ; $F000..$FFFF is a 4KB back buffer (once running)
 > $4000 ;
 > $4000 ; An back buffer address of 0b1111BAAACCCXXXXX means:
@@ -453,7 +456,7 @@ b $8000 temporaries?
   $8000,1 Test mode enable flag (cheat mode)
   $8002,4 Score digits as BCD (4 bytes / 8 digits)
   $8006,1 incremented on reset?
-  $8007,1 Current/wanted? stage number (1...) 6 if end credits
+  $8007,1 Stage number we're loading (1..5 or 6 for end credits)
 
 @ $8014 label=load_stage
 c $8014 Load a stage
@@ -597,6 +600,7 @@ T $8367,19 "ALL RIGHTS RESERVED"
 
 b $837A unknown
 
+; These are all just thunks.
 c $83B5
 c $83B8
 c $83BB
@@ -606,25 +610,149 @@ c $83C4
 c $83C7
 c $83CA
 
-c $83CD
-  $83DF A = 0
-  $83E0 $A13C = 0
+c $83CD Bootstrap
+; This gets hit when a game finishes and we return to the attract mode.
+N $83CD Builds a table of flipped bytes at $EF00.
+  $83CD Point #REGhl at $EF00
+@ $83D0 flip_table_loop
+  $83D0 8 iterations
+  $83D2 #REGa is the index into the table
+@ $83D3 flip_byte_loop
+  $83D3 Shift a bit out of #REGa leftwards and into #REGc rightwards
+  $83D6 Loop for 8 bits
+  $83D8 Write #REGc out and advance
+  $83DA Loop for 256 iterations (when #REGl overflows)
+;
+  $83DC Indirect jump TBD
+;
+  $83DF $A13C = 0
   $83E3 Zero $8002..$8006
-  $83EC A = 1
-  $83ED $8007 = 1
-  $83EE A = 2
-  $83EF $A13D = 2
-  $83F2 Call the main loop?
+  $83EC $8007 = 1 => Load stage 1
+  $83EE $A13D = 2
+  $83F2 Call the main loop
   $83F5 If $A139 is nonzero this calls $81AA which is the end of a string...
   $83FF Loop
 
-c $8401 Main game loop?
+c $8401 Main loop
   $8401 Call load_stage
   $8404 Are we on stage 6 (end credits) jump $841B if not so
 @ $840B label=end_credits
   $840B Call $5C00 [which is data in earlier stages]
   $840E Reset (wanted) stage to 1
   $8413 Call load_stage
+  $8418 Set (wanted) stage to 6   [not sure why]
+  $841A Return
+@ $841B label=l_841b
+  $841B CALL $858C    ;
+  $841E LD HL,$5D1D   ;
+  $8421 CALL $87DC    ;
+  $8424 LD HL,$A13B   ;
+  $8427 LD A,(HL)     ;
+  $8428 DEC A         ;
+  $8429 JR NZ,$842D   ;
+  $842B LD A,$03      ;
+  $842D LD (HL),A     ;
+  $842E ADD A,A       ;
+  $842F ADD A,A       ;
+  $8430 OR $02        ;
+  $8432 LD ($A26B),A  ;
+  $8435 LD A,($A139)  ;
+  $8438 AND A         ;
+  $8439 LD A,$FF      ;
+  $843B LD ($A188),A  ;
+  $843E LD HL,$81DD   ;
+  $8441 CALL Z,$9945  ;
+  $8444 CALL $8903    ;
+  $8447 CALL $A0D6    ;
+  $844A CALL $9BCF    ;
+  $844D CALL $8876    ;
+  $8450 CALL $BDFB    ;
+  $8453 CALL $8A57    ;
+  $8456 CALL $B063    ;
+  $8459 CALL $A7F3    ;
+  $845C CALL $A60E    ;
+  $845F CALL $83B8    ;
+  $8462 CALL $CD3A    ;
+  $8465 CALL $B848    ;
+  $8468 CALL $83B8    ;
+  $846B CALL $B9F4    ;
+  $846E CALL $83B8    ;
+  $8471 CALL $C452    ;
+  $8474 CALL $83B8    ;
+  $8477 CALL $A579    ;
+  $847A CALL $C0E1    ;
+  $847D CALL $AB9A    ;
+  $8480 CALL $AB33    ;
+  $8483 CALL $A955    ;
+  $8486 CALL $83B8    ;
+  $8489 CALL $ADA0    ;
+  $848C CALL $A97E    ;
+  $848F CALL $83B8    ;
+  $8492 CALL $AAC6    ;
+  $8495 CALL $A399    ;
+  $8498 CALL $83B8    ;
+  $849B CALL $8F5F    ;
+  $849E CALL $83B8    ;
+  $84A1 CALL $B318    ;
+  $84A4 CALL $9CC2    ;
+  $84A7 CALL $9D62    ;
+  $84AA CALL $9D2E    ;
+  $84AD CALL $83B8    ;
+  $84B0 CALL $9965    ;
+  $84B3 CALL $8EE7    ;
+  $84B6 CALL $8D8F    ;
+  $84B9 CALL $83B8    ;
+  $84BC CALL $BC3E    ;
+  $84BF CALL $BB69    ;
+  $84C2 LD A,($8000)  ;
+  $84C5 AND A         ;
+  $84C6 JR Z,$84FB    ;
+  $84C8 LD A,$F7      ;
+  $84CA IN A,($FE)    ;
+  $84CC CPL           ;
+  $84CD AND $1F       ;
+  $84CF JR Z,$84FB    ;
+  $84D1 EX AF,AF'     ;
+  $84D2 LD BC,$0804   ;
+  $84D5 CALL $88F2    ;
+  $84D8 CALL $83BB    ;
+  $84DB EX AF,AF'     ;
+  $84DC RRA           ;
+  $84DD JP C,$8401    ;
+  $84E0 LD HL,$8007   ;
+  $84E3 RRA           ;
+  $84E4 JR NC,$84EA   ;
+  $84E6 INC (HL)      ;
+  $84E7 JP $8401      ;
+  $84EA RRA           ;
+  $84EB JR NC,$84F2   ;
+  $84ED LD (HL),$06   ;
+  $84EF JP $8401      ;
+  $84F2 LD HL,$A13D   ;
+  $84F5 LD A,(HL)     ;
+  $84F6 CP $09        ;
+  $84F8 JR Z,$84FB    ;
+  $84FA INC (HL)      ;
+  $84FB LD A,($A231)  ;
+  $84FE AND A         ;
+  $84FF JP NZ,$8444   ;
+  $8502 LD HL,$A26B   ;
+  $8505 SRL (HL)      ;
+  $8507 JR NC,$8512   ;
+  $8509 LD A,(HL)     ;
+  $850A LD (HL),$00   ;
+  $850C CALL $83C7    ;
+  $850F JP $8444      ;
+  $8512 LD A,($A26A)  ;
+  $8515 AND A         ;
+  $8516 JP Z,$8444    ;
+  $8519 DEC A         ;
+  $851A JP NZ,$873C   ;
+  $851D LD A,$02      ;
+  $851F LD ($A26A),A  ;
+  $8522 LD A,$08      ;
+  $8524 CALL $8DF9    ;
+  $8527 JP $8444      ;
 
 c $852A
   $8556 Set user input
@@ -639,14 +767,37 @@ c $860F
 c $865A
 b $86F6
 
-c $87DC
-  $87DD Clear $EE00..$EEFF
+c $87DC Initialisation
+  $87DD Zero $EE00..$EEFF, and point $A240 at $EE00
   $87EC A = 0
   $87ED Copy (47 bytes) at $A13E to $A16D - saved game state
   $87F8 Zero 207 bytes at $A19D
   $8807,3 Pre-shift the backdrop image
-  $881E Fill 6 bytes
-  $8824 Self modify $C058
+  $880A $E34B = 8
+; These self modified instructions change from NOPs to PUSHes when we're
+; drawing the tunnel. This will just be a reset though.
+; #REGa being zero here is a latent bug. I can't see any explicit reset.
+  $8810 $E34C = 0
+  $8812 $E34D = 0
+  $8813 $8F82 = NOP (instruction)
+  $8818 $8F83 = NOP (instruction)
+  $881A $8F84 = NOP (instruction)
+  $881B NOP 6 bytes [of instructions] at $8FA4
+  $8824 Self modify "LD (HL),xx" at $C058 xx = 0
+  $8827 Self modify "LD A,xx" at $B063 xx = 0
+  $882A Set $A191 to value of lods_table[2]
+  $8830 Zero $EE00..$EEFF, and point $A240 at $EE00 [duplicates work from earlier]
+@ $883F label=loop883f
+  $883F 32 iterations  - alter and it affects road setup
+  $8841 Preserve BC
+  $8842 HL = $A23F
+  $8845 Call HUGE function
+  $8848 Restore BC
+  $8849 Loop
+  $884B $A254 = 0
+  $884F Transition type?
+  $8851 Call setup_transition
+  $8854 Call clear_screen_set_attrs
   $8857 Point #REGhl at left light's attributes
   $885D Point #REGhl at right light's attributes then FALL THROUGH
 @ $8860 label=clear_lights
@@ -1718,6 +1869,7 @@ W $A171,2 seems to be the horizon level, possibly relative (used during attract 
   $A181,4 Distance. Stored as one digit per byte.
 W $A186,2 Attribute address of horizon. Points to last attribute on the line which shows the ground. (e.g. $59DF)
   $A188,1
+W $A191,2 Address of car_lods
 W $A195,2 Set to $190 by fully_smashed
   $A19D Memory gets wiped
   $A220,1 Set to $F8 when the CHQ MONITORING SYSTEM screen is being shown. (draw_screen uses this to skip for some work, just tests for non-zero). #R$8014 sets this to the level number.
@@ -1737,6 +1889,7 @@ W $A195,2 Set to $190 by fully_smashed
   $A236,1
   $A237,1
   $A23B,1 loaded by $821d,$8903,$c0ee,$fd21 set by $C102
+  $A23F,1 numerous references
 W $A240,2 Used by $B8F6, $BBF7, $87E0
   $A249,1 Counter used by $BB6E
   $A24A,1 Used by $B848
@@ -1745,6 +1898,7 @@ W $A240,2 Used by $B8F6, $BBF7, $87E0
   $A251,1
   $A252,1
   $A253,1 Low/high gear flag? or visual state?
+  $A254,1 Cleared by $884B
   $A258,1 Used by $B8D8
   $A259,1 Used by $B92B
   $A256,1 Distance related perhaps?
@@ -2134,8 +2288,8 @@ c $E839 looks like initialisation code / relocation
   $E84C Do copy
   $E84E Restore base pointer and count
   $E850 Loop
-  $E852 LD SP,$ED28   ; odd
-  $E855 JP $83CD      ; odd
+  $E852 Set up the stack
+  $E855 Start the game
 ;
 @ $E858 label=e858_copy_blocks
 W $E858,2 src ptr
