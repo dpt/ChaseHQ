@@ -456,6 +456,7 @@ b $8000 temporaries?
   $8000,1 Test mode enable flag (cheat mode)
   $8002,4 Score digits as BCD (4 bytes / 8 digits)
   $8006,1 incremented on reset?
+@ $8007 label=stage_number
   $8007,1 Stage number we're loading (1..5 or 6 for end credits)
 
 @ $8014 label=load_stage
@@ -628,7 +629,7 @@ N $83CD Builds a table of flipped bytes at $EF00.
   $83DF $A13C = 0
   $83E3 Zero $8002..$8006
   $83EC $8007 = 1 => Load stage 1
-  $83EE $A13D = 2
+  $83EE credits = 2
   $83F2 Call the main loop
   $83F5 If $A139 is nonzero this calls $81AA which is the end of a string...
   $83FF Loop
@@ -703,24 +704,21 @@ c $8401 Main loop
   $84D1 EX AF,AF'     ;
   $84D2 LD BC,$0804   ;
   $84D5 TBD
-  $84D8 CALL $83BB    ;
+  $84D8 <128k hook?>
   $84DB EX AF,AF'     ;
-  $84DC RRA           ;
-  $84DD JP C,$8401    ;
-  $84E0 LD HL,$8007   ;
-  $84E3 RRA           ;
-  $84E4 JR NC,$84EA   ;
-  $84E6 INC (HL)      ;
-  $84E7 JP $8401      ;
-  $84EA RRA           ;
-  $84EB JR NC,$84F2   ;
-  $84ED LD (HL),$06   ;
-  $84EF JP $8401      ;
-  $84F2 LD HL,$A13D   ;
-  $84F5 LD A,(HL)     ;
-  $84F6 CP $09        ;
-  $84F8 JR Z,$84FB    ;
-  $84FA INC (HL)      ;
+  $84DC Is bit 0 set? (key 1 to restart the level)
+  $84DD Restart level if so
+  $84E0 HL = &stage_number
+  $84E3 Is bit 1 set? (key 2 to load the next level)
+  $84E4 Jump if NOT
+  $84E6 stage_number++
+  $84E7 Exit via load_stage
+  $84EA Is bit 2 set? (key 3 to load the end screen)
+  $84EB Jump if NOT
+  $84ED stage_number = 6
+  $84EF Exit via load_stage
+; (key 4 or 5 for an extra credit)
+  $84F2 Increment credits unless maxed out at 9
 @ $84FB no_test_mode
   $84FB LD A,($A231)  ;
   $84FE AND A         ;
@@ -1649,6 +1647,9 @@ c $9BA7 Clear the whole message line
 c $9BCF
   $9BCF TBD
   $9C1B,3 Point at "TIME UP" message
+  $9C3B Jump if no credits remain
+  $9C3E Decrement credits
+  $9C3F Turn it into ASCII and poke it into the "CREDIT x" string
   $9C50,5 Is fire pressed?
   $9C55
 N $9C57 Resetting mission code.
@@ -1847,7 +1848,8 @@ g $A139
   $A13A,1 Current stage number
   $A13B,1 Used by $8425  -- seems to start at 4 then cycle 3/2/1 with each restart of the game, another random factor?
   $A13C,1
-  $A13D,1 set to 2 by $83EF. $84F6 checks to see if it's 9. $9C3A checks it's zero. zero when snapshot is loaded. zero when in attract mode. set to 2 when MONITORING SYSTEM screen is on. set to 1 after game finishes -- not always!
+@ $A13D label=credits
+  $A13D,1 Number of credits remaining (usually 2 for a new game)
   $A13E,47 Canned data or Data restored for attract mode?
   $A16D
   $A16E,1 used during attract mode, road gradient/angle or something?
