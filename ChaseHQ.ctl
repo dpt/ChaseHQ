@@ -2003,7 +2003,9 @@ c $B4F0
 
 c $B549
 
+@ $B58E label=draw_car
 c $B58E Draws the car
+  $B5B7 Point #REGhl at car definitions
   $B6C4 Read from SUB @ $B5AA
   $B5FE Hit while drawing car. loads values then calls $B627
   $B596 Point HL at ? then add (A * 4)
@@ -2286,16 +2288,54 @@ R $CDD6 I:C Multiplier (number to multiply by)
   $CDEB Return
 
 b $CDEC
-b $CEDA
+
+b $CEDA This must be the car draw instructions. 9 of them. 20 bytes per entry.
+B $CEDA TBD
+B $CEDB,1 14 rows
+W $CEDC,2 Address of middle graphic part
+B $CEDE,1 TBD
+B $CEDF,1 rows
+W $CEE0,2 -> TBD
+B $CEE2,1 TBD
+B $CEE3,1 rows
+W $CEE4,2 -> TBD
+B $CEE6,1 TBD
+B $CEE7,1 rows
+W $CEE8,2 -> TBD
+B $CEEA,1 TBD
+B $CEEB,1 rows
+W $CEEC,2 -> TBD
+L $CEDA,20,9
 
 b $CF8E
+B $CF8E,1 TBD
+B $CF8F,1 rows
+W $CF90,2 -> data
+L $CF8E,4,3
+;
+W $CF9E,2 -> data
+W $CFA4,2 -> data
+W $CFAA,2 -> data
+W $CFB0,2 -> data
 
-b $D20E Smoke plume. Perhaps 64x64 in total, but includes masks.
+b $D20D Turbo smoke plume. 32x16 per frame. 4 frames. mask-bitmap arrangement.
+B $D20D
+B $D28D
+B $D30D
+B $D38D
 
-b $D40D Middle sections of hero car. 9 sets of 40x15? Could be different sizes.
-B $D40D Section 1 - 40x13 px
-B $D44E Section 2
-; further ones follow
+b $D40D Middle sections of hero car. 9 sets
+B $D40D,,5 Car middle 1 - 40x14px
+B $D453,,5 Car middle 2 - 40x17px
+B $D4A8,,5 Car middle 3 - 40x16px
+B $D4F8,,5 Car middle 4 - 40x14px
+B $D53E,,5 Car middle 5 - 40x17px
+B $D593,,5 Car middle 6 - 40x15px
+B $D5DE,,5 Car middle 7 - 40x14px
+B $D624,,5 Car middle 8 - 40x16px
+B $D674,,5 Car middle 9 - 40x16px
+;
+B $D6C4 chunks of car parts, looks 10 bytes wide
 
 b $DD6A Components of the car graphic or its shadow?. Straight on. Byte pairs of value and mask. three sets of 14 x 8 UDGs.
 b $DE12 Same, but turning.
