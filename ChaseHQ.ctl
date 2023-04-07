@@ -2267,7 +2267,24 @@ c $CBC5
 c $CBCE
 c $CBD6
 c $CD3A
-c $CDD6
+
+; Fixed point 5.3? or 3.5?
+c $CDD6 Multiplier
+R $CDD6 I:A Multiplicand (value to multiply)
+R $CDD6 I:C Multiplier (number to multiply by)
+  $CDD6 3 iterations (something limited to 8?)
+  $CDD8 Copy of value to destroy
+  $CDD9 Initialise total
+@ $CDDA label=mult_loop
+  $CDDA Shift the most significant bit out
+  $CDDC If the bit was set then total += multiplier
+@ $CDDF label=mult_continue
+  $CDDF total <<= 1
+  $CDE0 While iterations remain, goto mult_loop
+  $CDE2 Undo final shift
+  $CDE3 Divide by 8 with rounding?
+  $CDEB Return
+
 b $CDEC
 b $CEDA
 
