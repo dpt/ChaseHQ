@@ -1,0 +1,10 @@
+Set the ground colour
+POKE 23796,attr:POKE 23797,attr
+e.g. 96 for green
+
+Infinite turbos
+POKE 45221,0
+
+Alter time per level
+POKE 40049,<seconds in BCD>  # doesn't work!
+
