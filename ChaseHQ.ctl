@@ -415,7 +415,8 @@ B $6FD0,6,2 graphic_6eeb mask (16x3)
 ;B $73D4 looks like tree trunk
 B $73B9,10 Part of tree graphic - 16px x 5 rows (?)
 
-b $76F0 Used by plot_scores_etc
+b $76F0 Turbo icons
+B $76F0,168,4 Three frames 16x14 each, looks like a mask-bitmap-mask-bitmap arrangement
 
 @ $7798 label=pre_game_messages
 b $7798 Pre-game screen messages
@@ -1363,8 +1364,9 @@ W $9942,2 -> "LET'S GO. MR. DRIVER."
   $9944,1 <STOP>
 
 @ $9945 label=sub9945
-c $9945 TBD
+c $9945 Chatter routine
 R $9945 I:A TBD
+R $9945 I:HL Address of message set
   $9945 B = A
   $9946 LD A,($963D)  ;
   $9949 If A == 0 jump forward to 9955
@@ -1645,14 +1647,26 @@ c $9BA7 Clear the whole message line
   $9BCB Loop while rows remain to clear
   $9BCE Return
 
-c $9BCF
+c $9BCF tick
   $9BCF TBD
+  $9BF9 Decrement the 1/16th sec counter
+  $9BFB Return if not zero
+  $9BFC Reset time_sixteenths to 15
+  $9BFE Decrement time_bcd
+  $9C04 Return if <> 15s remain
+  $9C07 Nancy berating us running out of time message
+  $9C0A Exit via sub9945
+  $9C0D Is time_bcd zero? Jump to time_up if so
+  $9C11 Zero $A229
+  $9C15 user_input_mask = $FF
+  $9C19 Loop back to $9BF9
+@ $9C1B label=time_up
   $9C1B,3 Point at "TIME UP" message
   $9C3B Jump if no credits remain
   $9C3E Decrement credits
   $9C3F Turn it into ASCII and poke it into the "CREDIT x" string
   $9C50,5 Is fire pressed?
-  $9C55
+  $9C55 Jump if not (?)
 N $9C57 Resetting mission code.
   $9C57 Reset $A229
   $9C5B Reset perp smash flag count thing to zero
@@ -1661,8 +1675,10 @@ N $9C57 Resetting mission code.
   $9C67 $A252 = 3
   $9C6A $A231 = 3 -- Flag set to zero when attributes have been set
   $9C6D turbos = 3
-  $9C70 Set remaining time to 60 (BCD)
-  $9C7E,3 Point at "CONTINUE THIS MISSION" messages
+  $9C70 Set remaining time to 60 (BCD) [doesn't affect stuff if altered?!]
+@ $9C7E label=print_continue
+  $9C7E,3 Print "CONTINUE THIS MISSION" messages
+  $9C84 <self modified>
 
 c $9CC2
   $9CC2 LD HL,($A24A) ;
@@ -1727,10 +1743,16 @@ c $9DF4 Toggle the light's BRIGHT bit (#REGhl -> attrs)
   $9E0A Move to next attribute row
   $9E0E Repeat for four rows
 
-@ $9E11 label=plot_scores_etc
+@ $9E11 label=plot_turbos_scores_etc
 c $9E11
   $9E11 If no turbos jump to plot_scores_only
   $9E17 C = number of turbos
+  $9E1C Base of turbo sprites
+  $9E2E 56 bytes per sprite
+  $9E31 Must be a sprite index
+  $9E32 Find frame
+  $9E35 
+  $9E3E Base of turbo sprites
 @ $9E7B label=plot_scores_only
   $9E7B Point #REGde at speed digits screen position
   $9EB6 Plot a digit
@@ -1857,6 +1879,7 @@ g $A139
   $A16D
 ; this might be an idle timer, when it hits zero Raymond cajoles us
   $A16E,1 used during attract mode, road gradient/angle or something?
+@ $A16F label=user_input_mask
   $A16F,1 user_input mask, set to $C0 (Quit+Pause) when perp is fully smashed, or $FF otherwise
 @ $A170 label=turbos
   $A170,1 Number of turbo boosts remaining (3 for a new game)
@@ -1865,6 +1888,8 @@ W $A171,2 seems to be the horizon level, possibly relative (used during attract 
   $A175,8 Score digits. One digit per byte, least significant first. This seems to be recording what's on screen so digit plotting can be bypassed.
 @ $A175 label=score_digits
   $A175,8 Score. Stored as one digit per byte.
+@ $A17D label=time_sixteenths
+  $A17D,1 Seems to be a 1/16ths second counter. Counts from $F to $0. $A17E is decremented when it hits zero.
 @ $A17E label=time_bcd
   $A17E,1 Time remaining. Stored as BCD.
 @ $A17F label=time_digits
@@ -1878,7 +1903,7 @@ W $A195,2 Set to $190 by fully_smashed
   $A19D Memory gets wiped
   $A220,1 Set to $F8 when the CHQ MONITORING SYSTEM screen is being shown. (draw_screen uses this to skip for some work, just tests for non-zero). #R$8014 sets this to the level number.
   $A223,1 Stage number as shown. Stored as ASCII.
-  $A229,1
+  $A229,1 <Timing related?>
   $A22A,1 Used by $B6D6 and others
   $A22C,1 Bonus flag (1 triggers the effect)
   $A22D,1 Counter for bonus effect (goes up to 7?)
@@ -1960,12 +1985,14 @@ b $B045
 c $B063
   $B080 Clear up/down/left/right bits of user input
   $B0A2 Decrement turbo boost count
+  $B0A9 TBD
   $B0AF Read user input
 
 c $B318
 c $B457
 
 c $B4CC
+  $B4D8 time_sixteenths/$A17D = 15, time_bcd/$A17E = $60
   $B4E1 Point #REGhl at left light's attributes
   $B4E4 Toggle its brightness
   $B4E7,3 Point at "SIGHTING OF TARGET VEHICLE" message
