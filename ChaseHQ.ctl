@@ -79,7 +79,7 @@
 > $4000 ; $5B00..$5BFF is a pre-shifted version of the backdrop (once running)
 > $4000 ; $5C00..$5CFF is the regular version of the backdrop (once running)
 > $4000 ; $ED28        is the stack
-> $4000 ; $EE00..$EEFF is (cleared by $87DD)
+> $4000 ; $EE00..$EEFF is (cleared by $87DD) a cyclic road buffer of some sort
 > $4000 ; $EF00..$EFFF is a table of flipped bytes (once running)
 > $4000 ; $F000..$FFFF is a 4KB back buffer (once running)
 > $4000 ;
@@ -140,6 +140,7 @@
 > $4000 ; - picture handling / noise-in-out effect
 > $4000 ; - car graphic encoding
 > $4000 ; - is attract mode a CPU player or a recording?
+> $4000 ; - exact scoring rules
 
 @ $4000 start
 @ $4000 org
@@ -686,11 +687,11 @@ c $8401 Main loop
   $849B TBD
   $849E <sound>
   $84A1 TBD
-  $84A4 TBD - tiny func
-  $84A7 TBD - stage/bonus/LO-HI/flashing lights
-  $84AA TBD - tiny func
+  $84A4 Call speed_score
+  $84A7 stage/bonus/LO-HI/flashing lights
+  $84AA Call overtake_bonus
   $84AD <sound>
-  $84B0 TBD - noise effect, message plotting
+  $84B0 noise effect, message plotting
   $84B3 TBD - tiny func
   $84B6 Call transition
   $84B9 <sound>
@@ -1676,22 +1677,55 @@ N $9C57 Resetting mission code.
   $9C7E,3 Print "CONTINUE THIS MISSION" messages
   $9C84 <self modified>
 
-c $9CC2
-  $9CC2 LD HL,($A24A) ;
-  $9CC5 LD A,L        ;
-  $9CC6 RR H          ;
-  $9CC8 RLA           ;
-  $9CC9 SRL A         ;
-  $9CCB SRL A         ;
-  $9CCD LD E,A        ;
-  $9CCE ADD A,$00     ;
-  $9CD0 DAA           ;
-  $9CD1 LD DE,$0000   ;
-  $9CD4 JR $9D17      ;
+@ $9CC2 label=speed_score
+c $9CC2 Increments score in proportion to current speed
+  $9CC2 Fetch current speed into #REGhl
+  $9CC5 Speed low byte
+  $9CC6 H >>= 1 but pointless?
+  $9CC8 A <<= 1
+  $9CC9 A >>= 2
+  $9CCD Pointless?
+  $9CD0 BCD correction
+  $9CD1 DE = 0
+  $9CD4 Exit via increment_score
 
 c $9CD6
-
-c $9CF8
+  $9CD6 B=A
+  $9CD7 "HI"
+  $9CDA C=255
+  $9CDC A=B
+  $9CDD Call j_9cfc
+  $9CE0 terminate string?
+  $9CE2 A=B
+  $9CE3
+  $9CE6 A=E
+  $9CE7
+  $9CEA A=E
+  $9CEB
+  $9CEE A=D
+  $9CEF
+  $9CF2 A=D
+  $9CF3
+  $9CF6
+@ $9CF8 label=j_9cf8
+  $9CF8 A ROR 4
+@ $9CFC label=j_9cfc
+  $9CFC A &= 15
+  $9CFE if A is not zero goto 9D07
+  $9D00 top bit set?
+  $9D02 jump if so
+  $9D04 where's the matching PUSH? or are we just discarding the RET addr?
+  $9D05 jump 9d0e
+@ $9D07 label=j_9d07
+  $9D07 C = 0
+  $9D09 A += 48
+  $9D0B HL--
+  $9D0C *HL = A
+  $9D0D Return
+  $9D0E Self modify the LD HL at $9D9B
+  $9D11 Set the bonus_flag
+  $9D16 A = B
+; fallthrough
 
 @ $9D17 label=increment_score
 c $9D17 Increments the score by (D,E,A).
@@ -1705,7 +1739,7 @@ R $9D17 I:D High byte of increment
   $9D1E A = E + *HL + carry
   $9D20 BCD correct A
   $9D21 *HL++ = A
-  $9D23 A = D + *HL + carry 
+  $9D23 A = D + *HL + carry
   $9D25 BCD correct A
   $9D26 *HL++ = A
   $9D28 A = 0 + *HL + carry
@@ -1713,7 +1747,26 @@ R $9D17 I:D High byte of increment
   $9D2C *HL = A
   $9D2D Return
 
-c $9D2E
+@ $9D2E label=overtake_bonus
+c $9D2E Calculate overtake bonus
+R $9D2E I:A Iterations (prob number of overtakes?)
+  $9D2E If $A22B is zero then return
+  $9D33 B = A -- iterations
+  $9D34 Point #REGhl at overtake_bonus
+@ $9D37 label=overtake_loop
+  $9D37 A = *HL + 2  [increment bonus by 2 up to a max of 128]
+  $9D3A BCD correction
+  $9D3B If A >= 128 then A = 128  [80 actual points?]
+  $9D41 *HL = A
+  $9D42 Bank
+  $9D43 E = A -- turn score into 00nn00
+  $9D44 A = 0
+  $9D45 D = 0
+  $9D46 CALL $9CD6
+  $9D49 Unbank
+  $9D4A B--, goto overtake_loop
+  $9D4C $A22B = 0
+  $9D50 Return
 
 t $9D51 Text
 @ $9D57 label=hi
@@ -1767,10 +1820,14 @@ c $9E11
   $9E2E 56 bytes per sprite
   $9E31 Must be a sprite index
   $9E32 Find frame
-  $9E35 
+  $9E35
   $9E3E Base of turbo sprites
+  $9E44 must be the sp trick
+  $9E4E plots turbos
 @ $9E7B label=plot_scores_only
   $9E7B Point #REGde at speed digits screen position
+  $9E7F #REGde = speed
+  $9E83 TBD
   $9EB6 Plot a digit
   $9EBA Plot a digit
   $9EBE Plot a digit
@@ -1888,7 +1945,8 @@ g $A139
   $A139,1 This is always zero, yet the code checks it. If it's set then $83F5 uses it to jump to $81AA, which is the end of a string. $8435 tests it too and calls $9945 when it's zero, which it always is. $8AD6 also tries to use it to jump into a string (twice). Could be dead code or 128K version hook?
   $A13A,1 Current stage number
   $A13B,1 Used by $8425  -- seems to start at 4 then cycle 3/2/1 with each restart of the game, another random factor?
-  $A13C,1
+@ $A13D label=overtake_bonus
+  $A13C,1 Overtake combo bonus counter. BCD. This increases by 2 for each overtake and is reset on a crash.
 @ $A13D label=credits
   $A13D,1 Number of credits remaining (2 for a new game)
   $A13E,47 Canned data or Data restored for attract mode?
@@ -1921,6 +1979,8 @@ W $A195,2 Set to $190 by fully_smashed
   $A223,1 Stage number as shown. Stored as ASCII.
   $A229,1 <Timing related?>
   $A22A,1 Used by $B6D6 and others
+  $A22B,1 Used by $9D2E and others. Stops overtake bonus working.
+@ $A22C label=bonus_flag
   $A22C,1 Bonus flag (1 triggers the effect)
   $A22D,1 Counter for bonus effect (goes up to 7?)
   $A22E,1 ... light toggle flashing related
@@ -1935,13 +1995,17 @@ W $A195,2 Set to $190 by fully_smashed
   $A237,1 Used by $88F2
   $A238,1 Used by $88F2
   $A23B,1 loaded by $821d,$8903,$c0ee,$fd21 set by $C102
+  $A23E,1 written by $B322
   $A23F,1 numerous references, seems related to level position
 W $A240,2 Used by $B8F6, $BBF7, $87E0  seems to point at $EE00..$EEFF
+  $A248,1 Used by $C452
   $A249,1 Counter used by $BB6E
-  $A24A,1 Used by $B848
+@ $A24A label=speed
+W $A24A,2 Speed (max when in lo gear =~ $E6 hi gear =~ $168 turbo =~ $1FF)
+  $A24D,1 written by $B32A
   $A24E,1 used in plot_scores_etc
-  $A250,1
-  $A251,1
+  $A250,1 Turn severity (0/1/2)
+  $A251,1 Some sort of flip flag used for car rendering (observed 0/1)
   $A252,1
   $A253,1 Low/high gear flag? or visual state?
   $A254,1 Cleared by $884B
@@ -1993,7 +2057,8 @@ c $ADA0
 c $ADBE
 
 c $AECF
-  $AE06
+  $AE1B Increment overtake_bonus
+  $AE1F REturn
 
 c $AFF1
 b $B045
@@ -2003,8 +2068,12 @@ c $B063
   $B0A2 Decrement turbo boost count
   $B0A9 TBD
   $B0AF Read user input
+  $B1EC Cap speed to $1FF
 
 c $B318
+  $B318 If speed > 0 jump $B325
+  $B31F TBD...
+
 c $B457
 
 c $B4CC
@@ -2021,14 +2090,88 @@ c $B549
 
 @ $B58E label=draw_car
 c $B58E Draws the car
-  $B5B7 Point #REGhl at car definitions
-  $B6C4 Read from SUB @ $B5AA
-  $B5FE Hit while drawing car. loads values then calls $B627
-  $B596 Point HL at ? then add (A * 4)
-  $B605 Hit while drawing car. draws wheels
-  $B610 Draws left side of car
-  $B627 Subroutine
+R $B58E I:A TBD
+  $B58E If #REGa is zero then $A251 = A
+  $B594 C=A
+  $B595 PUSH BC
+  $B596 Point #REGhl at ? then add (#REGa * 4)
+  $B59F Point #REGde at the car tiles [needs a proper label]
+  $B5A2 C=7
+  $B5A4 Call sub_b627
+  $B5A7 POP BC
+  $B5A8 117 - (self modified value $B5AB)
+  $B5AC D=A
+  $B5AD A=C+B+(self modified value $B5B0)
+  $B5B1 If A >= 9 A -= 9
+  $B5B7,3 Point #REGhl at car definitions[A] (entries are 20 bytes wide)
+  $B5C4 PUSH DE
+  $B5C5 A=*$A22A + *HL
+  $B5C9 A=0-A
+  $B5CB A+=D  (aka A=D-A)
+  $B5CC E=A
+  $B5CD A = A & $0F
+  $B5CF A += $F0
+  $B5D1 D=A
+  $B5D2 A=E
+  $B5D3 A &= $70
+  $B5D5 A = A*2
+  $B5D6 A += $0D
+  $B5D8 E=A
+  $B5D9 HL++
+  $B5DA B=*HL++
+  $B5DC A=*HL++
+  $B5DE PUSH HL
+  $B5DF PUSH DE
+  $B5E0 H=*HL
+  $B5E1 L=A
+  $B5E2 A=5
+  $B5E4 E=A
+  $B5E5 D=0
+  $B5E7 EXX
+  $B5E8 POP HL
+  $B5E9 EX AF,AF'
+  $B5EA IF $A251 jump to draw_car_perhaps_flipped
+  $B5F0 EX AF,AF'
+  $B5F1 Call plot_sprite -- #REGa is (how many pixels to plot - 1) / 8
+  $B5F4 Goto draw_car_cont
+@ $B5F6 label=draw_car_perhaps_flipped
+  $B5F6 EX AF,AF'
+  $B5F7 L--
+  $B5F8 CALL $9542
+@ $B5FB label=draw_car_cont
+  $B5FB POP HL
+  $B5FC POP DE
+  $B5FD HL++
+  $B5FE E=$68 C=$05 (width) CALL $B627  draws the top (windscreen)
+  $B605 E=$68 C=$05 (width) CALL $B627  draws the bottom (wheels)
+  $B60C Check flip flag
+  $B612 unflipped
+  $B616 flipped
+  $B618 Draws left side of car
+; fallthrough
+; C = <something> e.g. 7
+; E = <something> e.g. $68
+@ $B627 label=sub_b627
+  $B627 A=D
+  $B628 PUSH DE
+  $B629 D=A - *HL++
+  $B62C B=*HL++
+  $B62E A=*HL++
+  $B630 PUSH HL
+  $B631 H=*HL
+  $B632 L=A
+  $B633 PUSH BC
+  $B634 EXX
+  $B635 POP BC
+  $B636 A=*$A251
+  $B639 B=A
+  $B63A E=C
+  $B63B C--
+  $B63C If A==0 C=A
+  $B640 EXX
   $B641 Draws right side of car
+  $B6C4 Read from SUB @ $B5AA
+  $B647 Return
 
 c $B648
   $B6DE,5 Divide by 8
@@ -2058,12 +2201,16 @@ c $B716 Save #REGsp for restoration on exit
   $B758 Handle end of row. This must be adjusting the screen pointer.
 
 c $B76C
+  $B76C #REGde = #REGa
+  $B76F #REGhl += #REGde
+  $B770
   $B771 Save #REGsp for restoration on exit
-  $B775 Point #REGix at ??? table
+  $B775 Point #REGix at mystery table
   $B779 Subtract 8 ???
   $B77C,3 Multiply by 8
   $B77F Add to IX
-  $B784,2 HEF
+  $B784,2 H = $EF
+  $B794 Return
 B $B79C TBD
 N $B7A4 Masked tile plotter with flipping
   $B7A4 Load a bitmap and mask pair (B,C)
@@ -2078,7 +2225,41 @@ N $B7A4 Masked tile plotter with flipping
   $B7DB Handle end of row. This must be adjusting the screen pointer.
 
 c $B7EF
-b $B828
+  $B7EF self modify $B71F - exit of masked_tile_plotter
+  $B7F3 IX = &masked_tile_plotter_core_thingy (jump table)
+  $B7F7 A = 8 - A
+  $B7FA IX += A * 6
+  $B803 B = $0F
+  $B805
+  $B806 D = 0
+  $B808
+  $B809
+  $B80A H = D
+  $B80B L = D
+  $B80C A = B
+  $B80D B = 5
+  $B80F A--
+  $B810 RLA
+  $B811 RLA
+@ $B812 label=j_b812
+  $B812 RLA
+  $B813 JR NC,j_b816
+  $B815 HL += DE
+@ $B816 label=j_b816
+  $B816 HL += HL
+  $B817 DJNZ j_b812
+  $B819 RLA
+  $B81A JR NC,$B81D
+  $B81C HL += DE
+  $B81D
+  $B81E HL += BC
+  $B81F
+  $B820 D--
+  $B821 E = -E
+  $B825 JP masked_tile_plotter_entry
+
+b $B828 breaks/crashes road rendering if messed with
+
 c $B848
 c $B8D2
 c $B9F4
@@ -2214,6 +2395,7 @@ c $BDC1 Clears screen then sets in-game attributes
 c $BDFB
 
 c $C0E1
+  $C07A,3 Duplicate instruction
 
 c $C15B Tunnel entrace/exit drawing code
   $C221 Jump table (self modified)
@@ -2222,13 +2404,51 @@ c $C15B Tunnel entrace/exit drawing code
 c $C2E7
 
 c $C452
-  $C487 Set this to $00 and the landscape goes blank - half the time
+  $C452 Self modify #REGsp restore instruction
+  $C457 $A248 = 0
+  $C45A Self modify 'LD A' at $C160 to be zero (tunnel drawing code)
+  $C45D Self modify 'LD A' at $C88F to be zero
+  $C460 Self modify 'LD A' at $C6D8 to be 3
+  $C465 #REGiy = $E301
+  $C469 C = $60 - IY[0]
+  $C46F A = *$A240 + $40
+  $C474 IX = $EE00 + A
+  $C479 B = A
+  $C47C $C6B3 = A & 1
+  $C47F RR B twice
+  $C483 HL = $D010
+  $C486 A = $D0
+  $C487 B = $55 -- Set this to $00 and the landscape goes blank - half the time
+  $C489 If B carried out earlier then jump
+  $C48B HL = $0030
+  $C48E B = $00
+  $C48F Self modify XOR at $C6D3 to be zero
+  $C492 A = $00
+  $C493 Self modify ADD A at $C677
+  $C496 A = $30
+  $C497 Self modify ADD A at $C651 to be $30
+  $C49A A = $31
+  $C49B Self modify ADD A at $C698 to be $31
+  $C49E HL = $C534
+  $C4A1 Self modify JP Z at $C4B2 to be $C534
+  $C4A4 L = $FF
+  $C4A6 DE = $0100
+  $C4A9 A = B
+  $C4AA Self modify ADD A at $C6BC to be zero?
 
 ; $C551 seems to be part of the stripes rendering
 
-c $C57C
+c $C57C smells like scanline/buffer pointer movement
+  $C57C E -= 32
+  $C580 jump if it went -ve
+  $C583 D += 16
+  $C587 jump
 
-c $C58A
+c $C58A ditto
+  $C58A E -= 32
+  $C58E jump if it went -ve
+  $C591 D += 16
+  $C595 jump
 
 c $C598 Road plotting
   $C60A Jump table (self modified)
@@ -2333,6 +2553,8 @@ W $CF9E,2 -> data
 W $CFA4,2 -> data
 W $CFAA,2 -> data
 W $CFB0,2 -> data
+
+b $D010
 
 b $D20D Turbo smoke plume. 32x16 per frame. 4 frames. mask-bitmap arrangement.
 B $D20D
