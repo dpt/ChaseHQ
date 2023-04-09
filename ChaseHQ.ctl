@@ -455,7 +455,7 @@ b $77D8
 
 b $8000 temporaries?
   $8000,1 Test mode enable flag (cheat mode)
-  $8002,4 Score digits as BCD (4 bytes / 8 digits)
+  $8002,4 Score digits as BCD (4 bytes / 8 digits, little endian)
   $8006,1 incremented on reset?
 @ $8007 label=stage_number
   $8007,1 Stage number we're loading (1..5 or 6 for end credits)
@@ -632,7 +632,7 @@ N $83CD Builds a table of flipped bytes at $EF00.
   $83EC $8007 = 1 => Load stage 1
   $83EE credits = 2
   $83F2 Call the main loop
-  $83F5 If $A139 is nonzero this calls $81AA which is the end of a string...
+  $83F5 If $A139 is non-zero this calls $81AA which is the end of a string...
   $83FF Loop
 
 c $8401 Main loop
@@ -832,6 +832,8 @@ c $8A36 Sound effects - makes the "bip-bow" time running out effect
 
 c $8A57
   $8ABB,3 Call fill_attributes
+  $8B06 Set score
+  $8B10,3 Call increment_score
   $8B87,3 Point at "CLEAR BONUS - TIME BONUS - SCORE" messages
 
 @ $8C3A label=fully_smashed
@@ -1077,12 +1079,13 @@ c $9278
 c $92E1
 
 @ $949C label=plot_sprite
-c $949C Sprite plotter for back buffer, up to 64px wide, 15px high, no flip.
+c $949C Sprite plotter for back buffer, up to 64px wide, 15px high, no mask, no flip.
 R $949C I:A   Plot (A+1)*8 pixels
 R $949C I:DE' Stride of bitmap data in bytes
 R $949C I:HL  Address in back buffer to plot at
 R $949C I:HL' Address of bitmap data
-  $949C Use plot_sprite if the bottom bit is set (odd widths)
+  $949C Use plot_sprite_odd if the bottom bit is set (odd widths)
+  $94A1 #REGix = Base of jump table
   $94A5 (~#REGa + 5) is (4 - #REGa) is the number of plot operations to skip
   $94A8 Multiply #REGa by 5: the length of an individual plot operation
   $94AC Move result to #REGbc
@@ -1697,6 +1700,26 @@ c $9CD6
 
 c $9CF8
 
+@ $9D17 label=increment_score
+c $9D17 Increments the score by (D,E,A).
+R $9D17 I:A Low byte of increment
+R $9D17 I:E Middle byte of increment
+R $9D17 I:D High byte of increment
+  $9D17 HL = &score_digits_as_BCD
+  $9D1A A += *HL
+  $9D1B BCD correct A
+  $9D1C *HL++ = A
+  $9D1E A = E + *HL + carry
+  $9D20 BCD correct A
+  $9D21 *HL++ = A
+  $9D23 A = D + *HL + carry 
+  $9D25 BCD correct A
+  $9D26 *HL++ = A
+  $9D28 A = 0 + *HL + carry
+  $9D2B BCD correct A
+  $9D2C *HL = A
+  $9D2D Return
+
 c $9D2E
 
 t $9D51 Text
@@ -1847,10 +1870,10 @@ C $A0D6 Main input handler
   $A109 LD A,E       ;
   $A10A JR NZ,$A10E  ;
   $A10C AND $F3      ;
-; 
+;
   $A10E LD ($A0D5),A ;
   $A111 Return
-; 
+;
   $A112 LD A,(HL)    ; Outer keyboard loop
   $A113 INC HL       ;
   $A114 CALL $A11E   ;
@@ -1859,12 +1882,12 @@ C $A0D6 Main input handler
   $A11A JR NC,$A112  ; loop while top bit set?
   $A11C LD A,E       ;
   $A11D Return
-; 
+;
   $A11E LD C,A       ; Inner keyboard loop.... what's in #REGa?
   $A11F B=(A&7)+1, C=5-(A>>3)
   $A12D A = $FE ROR B
   $A132 IN A,($FE)   ; Port $FE is the AND of all columns/rows? This is the main keyboard access
-; 
+;
   $A134 C = A ROR C
   $A138 Return
 
@@ -2021,7 +2044,7 @@ c $B67C
 ;
   $B701 Select a plotter? Could be clipping stuff too.
   $B708 This multiplies by six - the length of each load-mask-store step in the plotter core.
-  $B70C Add that to #REGix.
+  $B70C Add that to #REGix
   $B711 Set loop counter for 15 iterations?
   $B714
 
@@ -2668,7 +2691,7 @@ b $EE26 Sinclair joystick input scheme
 b $EE2B Cursor joystick input scheme
 b $EE30 "SHOCKED<ENTER>" ?
 b $EE38 temp input scheme buffer?
-b $EE3D 
+b $EE3D
 b $EE40
 
 c $EE6E
