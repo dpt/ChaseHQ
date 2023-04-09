@@ -1155,16 +1155,9 @@ N $952E Decrement the screen address
   $953C H -= 16
   $953F Loop back to ps_odd_loop
 
-c $9542
-c $9567
-c $956E
-b $9575
-c $9587
-c $95B3
-c $95D0
-c $95D7
-b $95DE
-c $95E7
+@ $9542 label=plot_sprite_flip
+c $9542 Sprite plotter for back buffer, with flipping
+  $9542 TBD
 
 @ $9618 rng
 c $9618 Random number generator
