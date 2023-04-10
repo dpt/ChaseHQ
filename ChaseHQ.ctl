@@ -524,13 +524,6 @@ c $8204 In-game sound effects
   $824E Produces the steering squeak
 
 b $82A6 Attract mode messages
-; set to 0 for double height with a gap(?)
-; set to 1 for no gap at the top
-; set to 2 for single height
-; 3 for dbl
-; 4 for single height inverted colrs
-; 5 for dbl + invt
-; 6 as 5 but with the gap
 B $82A6,1 Flags (double height)
 B $82A7,1 Attribute (black)
 W $82A8,2 Back buffer address
@@ -729,7 +722,7 @@ N $84C8 Test mode handling
   $8502 LD HL,$A26B   ;
   $8505 SRL (HL)      ;
   $8507 JR NC,$8512   ;
-  $8509 LD A,(HL)     ;
+  $8509 A = *HL
   $850A LD (HL),$00   ;
   $850C CALL $83C7    ;
   $850F JP $8444      ;
@@ -1024,28 +1017,42 @@ c $8E42 Subroutine.
   $8E45 LD B,$00      ; self modified by ($8E58 increments it), ($8E8D resets it to 1)
   $8E47 DJNZ $8E5C    ;
   $8E49 LD A,$14      ; self modified by $8E4C, $8E51, ($8E84 resets it perhaps)
-  $8E4B DEC A         ;
+  $8E4B A--
   $8E4C LD ($8E4A),A  ; self modify
-  $8E4F RET NZ        ;
-  $8E50 LD A,(HL)     ;
+  $8E4F Return if non-zero
+  $8E50 A = *HL
   $8E51 LD ($8E4A),A  ; self modify
-  $8E54 LD A,($8E46)  ; increment $8E46
-  $8E57 INC A         ; affects TIME UP state if disabled
-  $8E58 LD ($8E46),A  ;
-  $8E5B INC B         ;
+  $8E54 increment $8E46, affects TIME UP state if disabled
+  $8E5B B++
 @ $8E5C label=sub_8e42_1
-  $8E5C INC HL        ;
-  $8E5D LD A,(HL)     ;
+  $8E5C HL++
+  $8E5D A = *HL
   $8E5E AND A         ; test flags
   $8E5F JR Z,$8E66    ; exit
   $8E61 CALL $8E6C    ;
   $8E64 JR $8E47      ;
   $8E66 DEC HL        ;
-  $8E67 LD A,(HL)     ;
+  $8E67 A = *HL
   $8E68 LD ($A231),A  ;
   $8E6B Return
 
 c $8E6C Message printing related. Increments HL then loads A,E,D,C,B from where HL points.
+  $8E6C EX AF,AF'     ;
+  $8E6D Preserve ?
+  $8E6E HL++
+  $8E6F A = *HL
+  $8E70 HL++
+  $8E71 E = *HL
+  $8E72 HL++
+  $8E73 D = *HL
+  $8E74 HL++
+  $8E75 C = *HL
+  $8E76 HL++
+  $8E77 B = *HL
+  $8E78 HL++
+  $8E79 CALL $9F99    ;
+  $8E7C POP BC        ;
+  $8E7D Return
 
 c $8E7E Message printing related, called for TIME UP, CONTINUE, etc. messages.
 
@@ -1433,7 +1440,7 @@ c $9965
   $996F JR NZ,$997F   ; if A was NOT zero jump
 ; A always zero here
   $9971 Decrement noise_counter
-  $9975 LD A,(HL)     ; A = noise_counter
+  $9975 A = *HL A = noise_counter
   $9976 JP NZ,$9A5C   ; Jump if noise_counter was non-zero
   $9979 LD ($963D),A  ; Zero this
   $997C Call noise_plot_attrs -- clear to black
@@ -1469,7 +1476,7 @@ c $9965
 ;
 @ $99BD label=sub998f_another_something
   $99BD LD HL,($9630) ; HL = next_message
-  $99C0 LD A,(HL)     ; first char of
+  $99C0 A = *HL first char of
   $99C1 String terminator? jump to end_of_message if so
   $99C5,2 this tests for $FE -- different terminator?
   $99C7 JR NZ,$9A24   ; If not $fe goto chatter_message
@@ -1650,9 +1657,9 @@ N $9B28 Turn ASCII into glyph IDs
   $9B3F Is it '''? glyph ID = 30; goto have_glyph_id
   $9B44 Is it >= ';'? goto have_ascii
   $9B48 C += A - 47 -- not convinced this is ever used
-@ $9B4C label=have_glyph_id
+@ $9B4C label=pmf_have_glyph_id
   $9B4C Turn the glyph ID in #REGc into ASCII in #REGa
-@ $9B4F label=have_ascii
+@ $9B4F label=pmf_have_ascii
   $9B4F #REGbc = (#REGa - 'A') * 6
   $9B58 Point #REGhl at minifont
   $9B60 Self modified earlier
@@ -1909,20 +1916,213 @@ c $9F47 Plots an LED font digit
   $9F77 transfer another 8 rows
   $9F96 move to next column
 
-c $9F99
+c $9F99 Another draw string entry point?
+  $9F99 PUSH BC       ;
+  $9F9A EXX           ;
+  $9F9B POP HL        ;
+  $9F9C LD DE,$0020   ;
+  $9F9F LD C,A        ;
+  $9FA0 EXX           ;
+  $9FA1 JR $9FA6      ;
 
 @ $9FA3 label=draw_string
 c $9FA3 Draws a string
+  $9FA3 A' = 1  Set drawing type (single height, plots to real screen)
 N $9FA3 The string is terminated by setting the topmost bit of the final character.
-  $9FA6 Load a byte ahd mask off the text part
+@ $9FA6 label=draw_string_entry
+  $9FA6 Load a byte and mask off the text part
   $9FAE Was bit 7 set?, quit if so, otherwise loop
 
-@ $9FB4 label=draw_char
-c $9FB4 Draws a character
-  $9FEC Point #REGhl at 8x7 font
+; 0 for double height with a gap(?)
+; 1 for no gap at the top
+; 2 for single height
+; 3 for dbl
+; 4 for single height inverted colrs
+; 5 for dbl + invt
+; 6 as 5 but with the gap
 
+@ $9FB4 label=draw_char
+c $9FB4 Draws a character (to buffer or screen?)
+R $9FB4 I:A  Character to draw (ASCII)
+R $9FB4 I:A' Rendering type (double height, invert, etc.)
+R $9FB4 I:HL ...
+R $9FB4 I:DE Screen address
+R $9FB4 O:HL ...
+R $9FB4 O:DE Screen address moved to next column
+  $9FB4 If it's not a space character, goto dc_not_space
+N $9FB8 It's a space
+  $9FB8 Move screen address to the next column
+  $9FB9 
+  $9FBA <move something else that's banked>
+  $9FBB 
+  $9FBC Return
+;
+@ $9FBD label=dc_not_space
+N $9FBD Map ASCII to glyph IDs
+  $9FBD C = 18          ; offset?
+  $9FBF CP 33         ; '!' not sure...
+  $9FC1 JR NC,dc_have_ascii ; if A >=  goto have_ascii
+  $9FC3 C = 11          ; offset?
+  $9FC5 CP 16
+  $9FC7 JR NC,dc_have_ascii
+  $9FC9 C = 0
+  $9FCB A--
+  $9FCC JR Z,dc_have_gid
+  $9FCE C++
+  $9FCF A -= 7
+  $9FD1 JR Z,dc_have_gid
+  $9FD3 C++
+  $9FD4 A--
+  $9FD5 JR Z,dc_have_gid
+  $9FD7 C++
+  $9FD8 A -= 3
+  $9FDA JR Z,dc_have_gid
+  $9FDC C++
+  $9FDD JR dc_have_gid
+;
+@ $9FDF label=dc_have_ascii
+  $9FDF C = A - C       ; ASCII -> gid, C must be an offset
+@ $9FE1 label=dc_have_gid
+  $9FE1 A = C * 7
+  $9FE9 Add in the carry
+  $9FEB C = A
+  $9FEC,3 Point #REGhl at 8x7 font
+  $9FEF Point to glyph data
+  $9FF0 Get type in #REGc (passed in #REGa' on entry)
+  $9FF3 If 1 then jump $A0AD
+  $9FF7 If 2 then jump $A083
+  $9FFC If 3 then jump $A03D -- double height
+  $9FFF If 4 then jump $A031 -- single height inverted
+  $A002 If 5 then jump $A023 -- double height + inverted
+N $A004 Otherwise it's type 6
+  $A004 PUSH DE
+  $A005 B = 4
+@ $A007 label=loop1
+; double height
+  $A007 A = *HL
+  $A008 *DE = A
+  $A009 Move to next row
+  $A00A *DE = A
+  $A00B Move to next row
+  $A00C Move to next glyph row
+  $A00D While iterations remain, goto loop1
+  $A00F D -= 8
+  $A013 E += 32
+  $A017 B = 3
+@ $A019 label=loop2
+; double height too
+  $A019 A = *HL
+  $A01A *DE = A
+  $A01B Move to next row
+  $A01C *DE = A
+  $A01D Move to next row
+  $A01E Move to next glyph row
+  $A01F While iterations remain, goto loop2
+  $A021 JR $A074
+;
+  $A023 PUSH DE
+  $A024 B = 7
+@ $A026 label=loop3
+; double height + inverted
+  $A026 A = ~*HL
+  $A028 *DE = A
+  $A029 Move to next row
+  $A02A *DE = A
+  $A02B Move to next row
+  $A02C Move to next glyph row
+  $A02D While iterations remain, goto loop3
+  $A02F JR $A074
+;
+  $A031 PUSH DE
+  $A032 B = 7
+@ $A034 label=loop4
+; single height inverted
+  $A034 *DE = ~*HL
+  $A037 Move to next glyph row
+  $A038 Move to next row
+  $A039 While iterations remain, goto loop4
+  $A03B JR $A0A4
+;
 @ $A03D label=double_height_glyph
-c $A03D Plots double-height glyphs. DE->screen HL->font def
+c $A03D Plots double-height glyphs. DE->screen HL->glyph def
+  $A03D PUSH DE
+  $A03E *DE = 0
+  $A040 D++
+  $A041 *DE = *HL
+  $A043 D++ -- next row
+  $A044 LDI
+  $A046 E--
+  $A047 D++
+  $A048 Repeat six times
+  $A072 A = 0
+  $A073 *DE = A
+;
+@ $A074 label=j_a074
+  $A074 POP DE
+  $A075 E++
+  $A076 EXX
+  $A077 PUSH HL
+  $A078 *HL |= C
+  $A07B HL += DE
+  $A07C *HL |= C
+  $A07F POP HL
+  $A080 L++
+  $A081 EXX
+  $A082 Return
+;
+  $A083 PUSH DE
+  $A084 A = 0
+  $A085 *DE = A
+  $A086 D++
+  $A087 LDI
+  $A089 E--
+  $A08A D++
+  $A08B LDI
+  $A08D E--
+  $A08E D++
+  $A08F LDI
+  $A091 E--
+  $A092 D++
+  $A093 LDI
+  $A095 E--
+  $A096 D++
+  $A097 LDI
+  $A099 E--
+  $A09A D++
+  $A09B LDI
+  $A09D E--
+  $A09E D++
+  $A09F LDI
+  $A0A1 E--
+  $A0A2 D++
+  $A0A3 *DE = A
+;
+@ $A0A4 label=j_a0a4
+  $A0A4 POP DE
+  $A0A5 E++
+  $A0A6 EXX
+  $A0A7 *HL |= C
+  $A0AA L++
+  $A0AB EXX
+  $A0AC Return
+;
+; this routine plots to the real screen
+  $A0AD Save screen pointer
+  $A0AE 7 iterations/rows
+@ $A0B0 label=dc_loop_a0b0
+  $A0B0 Transfer a byte
+  $A0B2 Move to next scanline (Y0++)
+  $A0B3 Move to next row of glyph data
+  $A0B4 Did we rollover?
+  $A0B7 If no rollover goto loop
+  $A0B9 Undo rollover
+  $A0BD Y3++
+  $A0C1 If no rollover goto loop
+  $A0C3 There was rollover, so move it to Y6
+  $A0C7 Loop until we've done 7 lines
+  $A0C9 Restore screen pointer
+  $A0CA Move to next column
+  $A0CB Return
 
 c $A0CC
 @ $A0CC label=kempston_flag
