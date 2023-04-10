@@ -2066,13 +2066,13 @@ W $A24A,2 Speed (max when in lo gear =~ $E6 hi gear =~ $168 turbo =~ $1FF)
   $A26B,1 Used by $8432
 
 b $A27A Font: 8x7 bitmap
-B $A27A Exclamation mark
-B $A282 Open bracket
-B $A28A Close bracket
-B $A292 Comma
-B $A29A Full stop
-B $A2A2 0..9
-B $A2F2 A-Z
+B $A27A,,7 Exclamation mark
+B $A281,,7 Open bracket
+B $A288,,7 Close bracket
+B $A28F,,7 Comma
+B $A296,,7 Full stop
+B $A29D,,7 0..9
+B $A2E3,,7 A-Z
 
 c $A399
 c $A579
