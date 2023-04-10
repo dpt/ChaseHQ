@@ -181,10 +181,11 @@ b $5C00 Graphics
 ;B $5B00,240 Hill backdrop (80x24) seems to be pre-shifted by #R$C8BE  (overlaps game setup)
 B $5C00,240 Hill backdrop (80x24)
 
-b $5CF0 TBD
-  $5CF0 TBD
-@ $5CF2 label=custom_face
-W $5CF2,2 Address of face to plot
+b $5CF0 (More) per-level data
+@ $5CF0 label=perp_mugshot_attributes
+W $5CF0,2 Address of perp's mugshot attributes
+@ $5CF2 label=perp_mugshot_bitmap
+W $5CF2,2 Address of perp's mugshot bitmap
 W $5CF4,2 Screen attributes used for the ground colour (a pair of matching bytes)
   $5CF6 TBD
 
@@ -450,9 +451,8 @@ b $77D8
   $7C89,20,4 Attribute data for above.
   $7C9D,160,4 Graphic: Raymond's face (32x40). Stored top-down.
   $7D3D,20,4 Attribute data for above.
-  $7D51,1 TBD
-  $7D52,160,4 Graphic: Tony's face (32x40). Stored top-down.
-  $7DF2,20,4 Attribute data for above.
+  $7D51,160,4 Graphic: Tony's face (32x40). Stored top-down.
+  $7DF1,20,4 Attribute data for above.
 
 b $8000 temporaries?
   $8000,1 Test mode enable flag (cheat mode)
@@ -699,6 +699,7 @@ c $8401 Main loop
   $84BF TBD
   $84C2 Is test mode enabled?
   $84C5 If not, goto no_test_mode
+N $84C8 Test mode handling
   $84C8 Read keys 1/2/3/4/5
   $84CC Change to active high
   $84CD Mask off just keys
@@ -721,7 +722,7 @@ c $8401 Main loop
   $84EF Exit via load_stage
 ; (key 4 or 5 for an extra credit)
   $84F2 Increment credits unless maxed out at 9
-@ $84FB no_test_mode
+@ $84FB label=no_test_mode
   $84FB LD A,($A231)  ;
   $84FE AND A         ;
   $84FF JP NZ,$8444   ;
@@ -941,7 +942,7 @@ c $8D8F Drives transitions.
   $8D8F Check the flag/counter that fill_attributes resets
   $8D92 Exit early if its zero
   $8D94 Decrement it
-  $8D95 If zero, call $8E91 ...
+  $8D95 If zero, call draw_mugshots
   $8D9D Call fill_attributes
   $8DA0 (self modified)
   $8DB0 Move to next frame? (self modified)
@@ -1048,9 +1049,51 @@ c $8E6C Message printing related. Increments HL then loads A,E,D,C,B from where 
 
 c $8E7E Message printing related, called for TIME UP, CONTINUE, etc. messages.
 
-c $8E91
+; This gets hit when the perp is pulled over (transition_control == 1)
+@ $8E91 label=draw_mugshots
+c $8E91 Copies the mugshots onto the screen when perp is caught
+  $8E91 -> Perp's mugshot attributes
+  $8E94 Final byte of bitmap (back buffer)
+  $8E97 Screen position (40,104)
+  $8E9A Call draw_mugshot
+  $8E9D -> Tony mugshot attributes
+  $8EA0 Final byte of bitmap (back buffer)
+  $8EA3 Screen position (160,104)
+  $8EA6 Call draw_mugshot
+  $8EA9 -> Raymond mugshot attributes
+  $8EAC Final byte of bitmap (back buffer)
+  $8EAF Screen position (200,104)
+  $8EB2 Call draw_mugshot
+  $8EB5 Exit via sub_8e42
 
-c $8EB7
+@ $8EB7 label=draw_mugshot
+c $8EB7 Draws a mugshot
+R $8EB7 I:BC Screen position (used for attributes)
+R $8EB7 I:DE Address of last byte of bitmap data to be written (in back buffer)
+R $8EB7 I:HL Address of mugshot attributes (screen)
+  $8EB7 Preserve screen position
+  $8EB8 Preserve address of mugshot attributes
+  $8EB9 Move back a byte to point at end of bitmap data (we assume that the bitmap data precedes the attribute bytes)
+  $8EBA Size of mugshot data (32x40 bitmap)
+@ $8EBD label=dm_loop
+  $8EBD Save #REGe
+  $8EBE Transfer four bytes (#REGde, #REGhl and #REGbc are decremented by 4)
+  $8EC6 Restore #REGe
+  $8EC7 If #REGbc becomes zero then proceed to dm_plot_attrs
+N $8ECA Move to next scanline
+  $8ECA
+  $8ECB Decrements Y by 1
+  $8ECC Check "xxxxBAAA" fields
+  $8ECE If no rollover goto dm_loop
+N $8ED1 BAAA is zero
+  $8ED1 Put the 1 back that DEC D would have taken
+  $8ED5 Decrements Y by 16
+  $8ED9 If no rollover goto dm_loop
+  $8EDC Decrements Y by 128 (would put us outside the back buffer)
+  $8EE0 Goto dm_loop
+@ $8EE3 label=dm_plot_attrs
+  $8EE3 Restore address of mugshot attributes
+  $8EE4 Exit via plot_face_attrs_bit
 
 c $8EE7
 
@@ -1078,6 +1121,9 @@ c $9252
 c $9278
 
 c $92E1
+  $93D6,3 Exit via plot_sprite
+  $93DC,3 Exit via plot_sprite_flipped
+  $93E8,4 #REGix = Base of jump table
 
 @ $949C label=plot_sprite
 c $949C Sprite plotter for back buffer, up to 64px wide, 15px high, no mask, no flip.
@@ -1156,7 +1202,7 @@ N $952E Decrement the screen address
   $953C H -= 16
   $953F Loop back to ps_odd_loop
 
-@ $9542 label=plot_sprite_flip
+@ $9542 label=plot_sprite_flipped
 c $9542 Sprite plotter for back buffer, with flipping
   $9542 TBD
 
@@ -1986,7 +2032,8 @@ W $A195,2 Set to $190 by fully_smashed
   $A22E,1 ... light toggle flashing related
   $A22F,1
   $A230,1 Used by draw_screen
-  $A231,1 Transition control/counter. Set to zero when fill_attributes has run.
+@ $A231 label=transition_control
+  $A231,1 Transition control/counter. Set to zero when fill_attributes has run. Set to 4 while transitioning. Also 2 sometimes. Set to 1 when the perp has been caught and we're drawing mugshots.
   $A232,1 Set to 2 when the perp is fully smashed, set to 6 when pulled over
   $A233,1 Smash counter (0..20)
   $A234,1 Cycles 0/1/2/3 as the game runs.
@@ -2137,7 +2184,7 @@ R $B58E I:A TBD
 @ $B5F6 label=draw_car_perhaps_flipped
   $B5F6 EX AF,AF'
   $B5F7 L--
-  $B5F8 CALL $9542
+  $B5F8 Call plot_sprite_flipped
 @ $B5FB label=draw_car_cont
   $B5FB POP HL
   $B5FC POP DE
