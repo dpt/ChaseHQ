@@ -1949,7 +1949,7 @@ R $9FB4 I:HL ...
 R $9FB4 I:DE Screen address
 R $9FB4 O:HL ...
 R $9FB4 O:DE Screen address moved to next column
-  $9FB4 If it's not a space character, goto dc_not_space
+  $9FB4 If it's not a space character, goto dc_not_space with #REGa reduced
 N $9FB8 It's a space
   $9FB8 Move screen address to the next column
   $9FB9 
@@ -1959,29 +1959,23 @@ N $9FB8 It's a space
 ;
 @ $9FBD label=dc_not_space
 N $9FBD Map ASCII to glyph IDs
-  $9FBD C = 18          ; offset?
-  $9FBF CP 33         ; '!' not sure...
-  $9FC1 JR NC,dc_have_ascii ; if A >=  goto have_ascii
-  $9FC3 C = 11          ; offset?
-  $9FC5 CP 16
-  $9FC7 JR NC,dc_have_ascii
-  $9FC9 C = 0
-  $9FCB A--
-  $9FCC JR Z,dc_have_gid
-  $9FCE C++
-  $9FCF A -= 7
-  $9FD1 JR Z,dc_have_gid
-  $9FD3 C++
-  $9FD4 A--
-  $9FD5 JR Z,dc_have_gid
-  $9FD7 C++
-  $9FD8 A -= 3
-  $9FDA JR Z,dc_have_gid
-  $9FDC C++
-  $9FDD JR dc_have_gid
+  $9FBD Offset = 18
+  $9FBF Jump if 'A' or above
+  $9FC3 Offset = 11
+  $9FC5 Jump if '0' or above
+  $9FC9 Offset = 0
+  $9FCB Jump if '!'
+  $9FCE Offset = 1
+  $9FCF Jump if '('
+  $9FD3 Offset = 2
+  $9FD4 Jump if ')'
+  $9FD7 Offset = 3
+  $9FD8 Jump if ','
+  $9FDC Offset = 4
+  $9FDD Anything else is '.'
 ;
 @ $9FDF label=dc_have_ascii
-  $9FDF C = A - C       ; ASCII -> gid, C must be an offset
+  $9FDF Convert ASCII to glyph ID. #REGc = #REGa - Offset
 @ $9FE1 label=dc_have_gid
   $9FE1 A = C * 7
   $9FE9 Add in the carry
@@ -2179,6 +2173,7 @@ C $A0D6 Main input handler
   $A11C LD A,E       ;
   $A11D Return
 ;
+@ $A11E label=keyscan_inner
   $A11E LD C,A       ; Inner keyboard loop.... what's in #REGa?
   $A11F B=(A&7)+1, C=5-(A>>3)
   $A12D A = $FE ROR B
