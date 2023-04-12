@@ -512,12 +512,26 @@ B $81CD,1 attr?
 W $81CE,2 Screen position (88,128)
 W $81D0,2 Screen attribute position (11,16)
   $81D2,11 "PRESS  GEAR"
+
+@ $81DD label=start_chatter
+b $81DD Start of game chatter
+B $81DD,1 Three-way random choice ($FC)
 ;
-B $81DD Unknown - referenced by $843E
+W $81DE,2 -> Tony: "GIDDY UP BOY!" <STOP>
+W $81E0,2 -> Tony: "HOLD ON MAN" <STOP>
+W $81E2,2 -> Tony: "LET'S GO. MR. DRIVER." <STOP>
 ;
-  $81EC,13 "GIDDY UP BOY!"
+B $81E4,1 Tony ($03)
+W $81E5,2 -> "GIDDY UP BOY!"
+B $81E7,1 <STOP>
 ;
-  $81F9,11 "HOLD ON MAN"
+B $81E8,1 Tony ($03)
+W $81E9,2 -> "HOLD ON MAN"
+B $81EB,1 <STOP>
+;
+T $81EC,13 "GIDDY UP BOY!"
+;
+T $81F9,11 "HOLD ON MAN"
 
 c $8204 In-game sound effects
   $8246 Produces engine sound effect
@@ -1386,6 +1400,7 @@ W $991F,2 -> "WHOAAAAA!"
 W $9923,2 -> "GREAT!"
   $9925,1 <STOP>
 ;
+@ $9926 label=raymond_says_one_more_time
   $9926,1 Raymond ($02)
 W $9927,2 -> "ONE MORE TIME."
   $9929,1 <STOP>
