@@ -6,13 +6,13 @@ Project started: March 2023
 
 ![Using Spectrum Analyser to investigate the game, including turning the screen green](ChaseHQ.png)
 
-This is the beginnings of a disassembly of the ZX Spectrum version of Chase H.Q. by Ocean Software. Initially this is only of the 48K version - and the first level/stage at that. The 128K version is better (loads all the levels at once, has AY music, menu screen animations, ...) but it has a lot more code to consider, so it's easier to start off with 48K stage 1 first.
+This is the beginnings of a disassembly of the [ZX Spectrum version of Chase H.Q. by Ocean Software](https://spectrumcomputing.co.uk/entry/903/ZX-Spectrum/Chase_HQ). Initially this is only of the 48K version - and the first level/stage at that. The 128K version is better (loads all the levels at once, has AY music, menu screen animations, ...) but it has a lot more code to consider, so it's easier to start off with 48K stage 1 first.
 
-In this repository is a [SkoolKit](https://skoolkit.ca/) _control_ file which you can use to disassemble the game. This works with the game when it is in a "pristine" just-loaded state. See below for how to make a pristine snapshot and instructions on how to drive SkoolKit.
+In this repository is a [SkoolKit](https://skoolkit.ca/) _control_ file which you can use to disassemble the game. This works with the game when it is in a "pristine" just-loaded state. See below for how to make a pristine snapshot and instructions on how to drive SkoolKit. I've provided a Makefile to automate most of the required steps.
 
 ## WHY?
 
-To find out how it works (and maybe one day we could make new levels).
+To find out how it works! (and maybe one day we could make new levels...)
 
 ## HOW TO
 
@@ -80,6 +80,22 @@ make tap  # or z80
 You may have to do both.
 
 See https://youtu.be/BGVI0TbePsQ for a short video of me running Spectrum Analyser to find out how the game builds the back buffer up.
+
+## POKES
+
+If you're not interested in the disassembly itself then a nice byproduct is POKEs to make the game easier, harder, or just different:
+
+Infinite Credits
+POKE 39998,166
+
+Infinite Time
+POKE 39937,0
+
+1 Hit To Capture
+POKE 46351,62
+
+Infinite Turbos
+POKE 45221,0
 
 ## RELATED
 
