@@ -1702,7 +1702,7 @@ c $9BCF tick
   $9BF9 Decrement the 1/16th sec counter
   $9BFB Return if not zero
   $9BFC Reset time_sixteenths to 15
-  $9BFE Decrement time_bcd
+  $9BFE Decrement time_bcd [POKE $9C01 for Infinite time]
   $9C04 Return if <> 15s remain
   $9C07 Nancy berating us running out of time message
   $9C0A Exit via sub9945
@@ -1713,7 +1713,7 @@ c $9BCF tick
 @ $9C1B label=time_up
   $9C1B,3 Point at "TIME UP" message
   $9C3B Jump if no credits remain
-  $9C3E Decrement credits
+  $9C3E Decrement credits [POKE $9C3E for Infinite credits]
   $9C3F Turn it into ASCII and poke it into the "CREDIT x" string
   $9C50,5 Is fire pressed?
   $9C55 Jump if not (?)
@@ -2309,7 +2309,7 @@ b $B045
 
 c $B063
   $B080 Clear up/down/left/right bits of user input
-  $B0A2 Decrement turbo boost count
+  $B0A2 Decrement turbo boost count [POKE $B0A5 for Infinite turbos]
   $B0A9 TBD
   $B0AF Read user input
   $B1EC Cap speed to $1FF
@@ -2329,6 +2329,7 @@ c $B4CC
   $B4ED
 
 c $B4F0
+  $B50F [POKE $B50F for Single hit capture]
 
 c $B549
 
