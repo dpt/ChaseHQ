@@ -1963,23 +1963,25 @@ N $9FBD Map ASCII to glyph IDs
   $9FBF Jump if 'A' or above
   $9FC3 Offset = 11
   $9FC5 Jump if '0' or above
-  $9FC9 Offset = 0
+  $9FC9 Glyph ID = 0
   $9FCB Jump if '!'
-  $9FCE Offset = 1
+  $9FCE Glyph ID = 1
   $9FCF Jump if '('
-  $9FD3 Offset = 2
+  $9FD3 Glyph ID = 2
   $9FD4 Jump if ')'
-  $9FD7 Offset = 3
+  $9FD7 Glyph ID = 3
   $9FD8 Jump if ','
-  $9FDC Offset = 4
+  $9FDC Glyph ID = 4
   $9FDD Anything else is '.'
 ;
-@ $9FDF label=dc_have_ascii
-  $9FDF Convert ASCII to glyph ID. #REGc = #REGa - Offset
-@ $9FE1 label=dc_have_gid
-  $9FE1 A = C * 7
+N $9FDF #REGa is an ASCII character - 32
+@ $9FDF label=dc_have_range
+  $9FDF Convert (ASCII - 32) to glyph ID. #REGc = #REGa - Offset
+@ $9FE1 label=dc_have_single
+N $9FE1 #REGc is a glyph ID
+  $9FE1 Multiply the glyph ID by 7
   $9FE9 Add in the carry
-  $9FEB C = A
+  $9FEB #REGbc is now the byte offset
   $9FEC,3 Point #REGhl at 8x7 font
   $9FEF Point to glyph data
   $9FF0 Get type in #REGc (passed in #REGa' on entry)
