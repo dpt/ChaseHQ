@@ -1107,26 +1107,83 @@ R $8EB7 I:HL Address of mugshot attributes (screen)
   $8EC6 Restore #REGe
   $8EC7 If #REGbc becomes zero then proceed to dm_plot_attrs
 N $8ECA Move to next scanline
-  $8ECA
-  $8ECB Decrements Y by 1
-  $8ECC Check "xxxxBAAA" fields
-  $8ECE If no rollover goto dm_loop
-N $8ED1 BAAA is zero
-  $8ED1 Put the 1 back that DEC D would have taken
-  $8ED5 Decrements Y by 16
-  $8ED9 If no rollover goto dm_loop
-  $8EDC Decrements Y by 128 (would put us outside the back buffer)
-  $8EE0 Goto dm_loop
+  $8ECA Save for checking in a moment
+  $8ECB Move to next scanline (visually upwards)
+  $8ECC Would it have rolled over into the top nibble?
+  $8ECE No - continue
+N $8ED1 It rolled over
+  $8ED1 Put back the bit stolen by rollover
+  $8ED5 Move to next chunk of 16 scanlines
+  $8ED9 Continue if it didn't roll over
+  $8EDC Otherwise move to the next chunk of 128 scanlines (would put us outside the back buffer)
+  $8EE0 Loop
 @ $8EE3 label=dm_plot_attrs
   $8EE3 Restore address of mugshot attributes
   $8EE4 Exit via plot_face_attrs_bit
 
-c $8EE7
-  $8EFD,3 Get smash_counter
-
-c $8F13
-
-c $8F47
+@ $8EE7 label=smash_bar_etc
+c $8EE7 Smash bar etc.
+  $8EE7 Return if the perp has not yet been sighted
+  $8EEC Return if $A230 is >= 3
+  $8EF2 Back buffer address of bottom of bar
+  $8EF5 #REGd = 15 = mask, #REGe = 16 = row stride
+N $8EF8 Draws bottom two rows
+  $8EF8 2 rows
+  $8EFA Call draw_smash_bar_solid_bit
+  $8EFD Get smash_counter
+  $8F00 Jump straight to drawing solid if it's zero (whole bar solid)
+  $8F03 Set iterations in #REGc for call
+  $8F04 Preserve smash_counter
+  $8F05 Call draw_smash_bar_segment
+  $8F08 Restore smash_counter
+@ $8F09 label=draw_smash_bar_solid_top
+  $8F09 Iterations = smash_counter
+  $8F0A B = ~(A * 3) + 63 = amount of solid rows to draw
+  $8F10 Call draw_smash_bar_solid_bit
+;
+@ $8F13 label=draw_smash_bar_segment
+  $8F13 Set 8 pixels to "X......X"
+  $8F15 Save for checking in a moment
+  $8F16 Move to next scanline
+  $8F17 Would it have rolled over into the top nibble?
+  $8F18 No - continue
+N $8F1B It rolled over
+  $8F1B Put back the bit stolen by rollover
+  $8F1E Move to next chunk of 16 scanlines
+  $8F22 Continue if it didn't roll over
+  $8F25 Otherwise move to the next chunk of 128 scanlines (would put us outside the back buffer)
+@ $8F28 label=draw_smash_bar_segment2
+  $8F28 Set 8 pixels to "X......X"
+  $8F2A Save for checking in a moment
+  $8F2B Move to next scanline
+  $8F2C Would it have rolled over into the top nibble?
+  $8F2D No - continue
+N $8F2D It rolled over
+  $8F30 Put back the bit stolen by rollover
+  $8F33 Move to next chunk of 16 scanlines
+  $8F37 Continue if it didn't roll over
+  $8F3A Otherwise move to the next chunk of 128 scanlines (would put us outside the back buffer)
+@ $8F3D label=draw_smash_bar_segment_cont
+  $8F3D 1 row
+  $8F3F Call draw_smash_bar_solid_bit
+  $8F42 Loop while iterations remain
+  $8F46 Return
+;
+@ $8F47 label=draw_smash_bar_solid_bit
+  $8F47 Set 8 pixels to solid black
+N $8F49 Move to next scanline
+  $8F49 Save for checking in a moment
+  $8F4A Move to next scanline (visually upwards)
+  $8F4B Would it have rolled over into the top nibble?
+  $8F4C No - continue
+N $8F4F It rolled over
+  $8F4F Put back the bit stolen by rollover
+  $8F52 Move to next chunk of 16 scanlines
+  $8F56 Continue if it didn't roll over
+  $8F59 Otherwise move to the next chunk of 128 scanlines (would put us outside the back buffer)
+@ $8F5C label=draw_smash_bar_cont
+  $8F5C Loop while iterations remain
+  $8F5E Return
 
 c $8F5F
 
@@ -2250,9 +2307,14 @@ W $A195,2 Set to $190 by fully_smashed
 @ $A22C label=bonus_flag
   $A22C,1 Bonus flag (1 triggers the effect)
 ;
+@ $A22D label=bonus_counter
   $A22D,1 Counter for bonus effect (goes up to 7?)
-  $A22E,1 ... light toggle flashing related
+;
+@ $A22E label=sighted_flag
+  $A22E,1 Set to 1 when the perp has been sighted. Enables flashing lights and the smash bar.
+;
   $A22F,1 Set to 2 by fully_smashed
+;
   $A230,1 Used by draw_screen
 ;
 @ $A231 label=transition_control
@@ -2670,7 +2732,7 @@ N $BCC8 This is a similar sequence but only moves 14 bytes (not using IY)
   $BD8F Move to next line of attributes
   $BD90 Save the address of the first line of ground attributes (+ 31)
 ;
-  $BD93 Exit if $A22E is zero (flashing lights / smash mode)
+  $BD93 Exit if sighted_flag is zero (flashing lights / smash mode)
 ;
   $BD99
   $BD9C
