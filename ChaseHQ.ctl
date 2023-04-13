@@ -844,15 +844,20 @@ c $8A57
   $8B06 Set score
   $8B10,3 Call increment_score
   $8B87,3 Point at "CLEAR BONUS - TIME BONUS - SCORE" messages
+;
+@ $8C35 label=j_8c35
+  $8C35 $A195 = DE
+  $8C39 Return
 
 @ $8C3A label=fully_smashed
-c $8C3A
-  $8C3C TBD = (draw_screen flag) + 1
-  $8C43 Set smash counter to 20
+c $8C3A Fully smashed
+  $8C3A draw_screen flag = 1
+  $8C3F $A22F = 2
+  $8C43 Set smash_counter to 20
   $8C48 Set user input mask to (Quit+Pause)
-  $8C4D,3 Print the "OK! PULL OVER CREEP!" message
+  $8C4D Print the "OK! PULL OVER CREEP!" message
   $8C53
-  $8C56
+  $8C56 Exit via $8C35
 
 ; Screens:
 ; TIME UP - is solo
@@ -1117,6 +1122,7 @@ N $8ED1 BAAA is zero
   $8EE4 Exit via plot_face_attrs_bit
 
 c $8EE7
+  $8EFD,3 Get smash_counter
 
 c $8F13
 
@@ -1129,7 +1135,9 @@ c $901C
 c $9023
 
 c $904B
-b $9052
+
+; unclear if/how this routine gets entered
+c $9052
 
 c $916C
 
@@ -1428,7 +1436,7 @@ W $993E,2 -> "SEE YOU LATER."
 W $9942,2 -> "LET'S GO. MR. DRIVER."
   $9944,1 <STOP>
 
-@ $9945 label=sub9945
+@ $9945 label=chatter
 c $9945 Chatter routine
 R $9945 I:A TBD
 R $9945 I:HL Address of message set
@@ -1720,7 +1728,7 @@ c $9BCF tick
   $9BFE Decrement time_bcd [POKE $9C01 for Infinite time]
   $9C04 Return if <> 15s remain
   $9C07 Nancy berating us running out of time message
-  $9C0A Exit via sub9945
+  $9C0A Exit via chatter
   $9C0D Is time_bcd zero? Jump to time_up if so
   $9C11 Zero $A229
   $9C15 user_input_mask = $FF
@@ -1734,8 +1742,8 @@ c $9BCF tick
   $9C55 Jump if not (?)
 N $9C57 Resetting mission code.
   $9C57 Reset $A229
-  $9C5B Reset perp smash flag count thing to zero
-  $9C60 Reset smash counter to zero
+  $9C5B Reset smash_factor to zero
+  $9C60 Reset smash_counter to zero
   $9C62 Set user input mask to allow everything through
   $9C67 $A252 = 3
   $9C6A $A231 = 3 -- Flag set to zero when attributes have been set
@@ -1967,9 +1975,9 @@ R $9FB4 O:DE Screen address moved to next column
   $9FB4 If it's not a space character, goto dc_not_space with #REGa reduced
 N $9FB8 It's a space
   $9FB8 Move screen address to the next column
-  $9FB9 
+  $9FB9
   $9FBA <move something else that's banked>
-  $9FBB 
+  $9FBB
   $9FBC Return
 ;
 @ $9FBD label=dc_not_space
@@ -2200,7 +2208,7 @@ C $A0D6 Main input handler
   $A138 Return
 
 g $A139
-  $A139,1 This is always zero, yet the code checks it. If it's set then $83F5 uses it to jump to $81AA, which is the end of a string. $8435 tests it too and calls $9945 when it's zero, which it always is. $8AD6 also tries to use it to jump into a string (twice). Could be dead code or 128K version hook?
+  $A139,1 This is always zero, yet the code checks it. If it's set then $83F5 uses it to jump to $81AA, which is the end of a string. $8435 tests it too and calls <chatter> when it's zero, which it always is. $8AD6 also tries to use it to jump into a string (twice). Could be dead code or 128K version hook?
   $A13A,1 Current stage number
   $A13B,1 Used by $8425  -- seems to start at 4 then cycle 3/2/1 with each restart of the game, another random factor?
 @ $A13D label=overtake_bonus
@@ -2238,16 +2246,24 @@ W $A195,2 Set to $190 by fully_smashed
   $A229,1 <Timing related?>
   $A22A,1 Used by $B6D6 and others
   $A22B,1 Used by $9D2E and others. Stops overtake bonus working.
+;
 @ $A22C label=bonus_flag
   $A22C,1 Bonus flag (1 triggers the effect)
+;
   $A22D,1 Counter for bonus effect (goes up to 7?)
   $A22E,1 ... light toggle flashing related
-  $A22F,1
+  $A22F,1 Set to 2 by fully_smashed
   $A230,1 Used by draw_screen
+;
 @ $A231 label=transition_control
   $A231,1 Transition control/counter. Set to zero when fill_attributes has run. Set to 4 while transitioning. Also 2 sometimes. Set to 1 when the perp has been caught and we're drawing mugshots.
-  $A232,1 Set to 2 when the perp is fully smashed, set to 6 when pulled over
+;
+@ $A232 label=smash_factor
+  $A232,1 Set to 0..6 if (0..3, 4..6, 7..10, 11..13, 14..16, 17+) smashes
+;
+@ $A233 label=smash_counter
   $A233,1 Smash counter (0..20)
+;
   $A234,1 Cycles 0/1/2/3 as the game runs.
   $A235,1 ... light toggle flashing related? seems to cycle 0/1 as the game runs.
   $A236,1
@@ -2259,8 +2275,10 @@ W $A195,2 Set to $190 by fully_smashed
 W $A240,2 Used by $B8F6, $BBF7, $87E0  seems to point at $EE00..$EEFF
   $A248,1 Used by $C452
   $A249,1 Counter used by $BB6E
+;
 @ $A24A label=speed
 W $A24A,2 Speed (max when in lo gear =~ $E6 hi gear =~ $168 turbo =~ $1FF)
+;
   $A24D,1 written by $B32A
   $A24E,1 used in plot_scores_etc
   $A250,1 Turn severity (0/1/2)
@@ -2317,7 +2335,12 @@ c $ADBE
 
 c $AECF
   $AE1B Increment overtake_bonus
-  $AE1F REturn
+  $AE1F Return
+;
+  $AF7E,3 Get smash_factor
+  $AF91,3 HL -> $CDEC
+  $AF9E,3 Get smash_factor
+  $AFCF,3 Get smash_factor
 
 c $AFF1
 b $B045
@@ -2343,8 +2366,34 @@ c $B4CC
   $B4EA
   $B4ED
 
-c $B4F0
-  $B50F [POKE $B50F for Single hit capture]
+@ $B4F0 smash
+c $B4F0 Smash handling
+  $B4F0 Cycle #REGa one step through 0..3 each time the routine is entered
+  $B4F8 *$B55C = $CE33 + #REGa * 6
+  $B506 $B54A = 9
+  $B50B Load and increment smash_counter
+  $B50F 20 hits? [POKE $B50F for Single hit capture]
+  $B511 Exit via fully_smashed if so
+  $B514 19 hits?
+  $B516 Goto j_b522 if not
+N $B518 We have 19 hits
+  $B518
+  $B519 A = 10
+  $B51B HL = raymond_says_one_more_time
+  $B51E Call chatter
+  $B521
+@ $B522 label=j_b522
+  $B522 Set smash_counter to #REGa
+  $B525 Set smash_factor to zero if smash_counter is zero
+  $B52A Set smash_factor to 1 if smash_counter < 4
+  $B52F Set smash_factor to 2 if smash_counter < 7
+  $B534 Set smash_factor to 3 if smash_counter < 11
+  $B539 Set smash_factor to 4 if smash_counter < 14
+  $B53E Set smash_factor to 5 if smash_counter < 17
+  $B543 Otherwise set smash_factor to 6
+@ $B544 label=set_smash_factor
+  $B544 Set smash_factor to #REGc
+  $B548 Return
 
 c $B549
 
@@ -2784,6 +2833,16 @@ R $CDD6 I:C Multiplier (number to multiply by)
   $CDEB Return
 
 b $CDEC
+
+b $CE33
+W $CE33,24,6
+  $CE4B,19
+  $CE5E,19
+  $CE71,19
+  $CE84,19
+  $CE97,19
+
+b $CEAA  ref'd by $B578
 
 b $CEDA This must be the car draw instructions. 9 of them. 20 bytes per entry.
 B $CEDA TBD
