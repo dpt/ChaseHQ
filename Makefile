@@ -67,13 +67,13 @@ $(ASM): $(SKOOL)
 z80: $(Z80)
 
 $(Z80): $(SKOOL)
-	skool2bin.py $< - | bin2sna.py --org 16384 --stack 65535 --start 61795 - $@
+	skool2bin.py $< - | bin2sna.py --org 16384 --stack 23550 --start 23372 - $@
 
 .PHONY: tap
 tap: $(TAP)
 
 $(TAP): $(SKOOL)
-	skool2bin.py $< - | bin2tap.py --org 16384 --stack 65535 --start 61795 - $@
+	skool2bin.py $< - | bin2tap.py --org 16384 --stack 23550 --start 23372 - $@
 
 .PHONY: ctl
 ctl: $(GENERATED_CTL)
