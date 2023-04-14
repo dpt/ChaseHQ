@@ -255,8 +255,8 @@ B $5E43,1 TBD
 W $5E44,2 Address of another LOD table
 B $5E46 TBD these bytes seem to get hit when we're in the tunnel ... the lights?
 B $5E5B hit all the time must be tree/bush defs or LODs
-W $5E7D,2 -> TBD
-W $5E81,2 -> TBD
+W $5E7D,2 -> car_lods
+W $5E81,2 -> -> turn_sign_lods
 B $5E91 could be lods
 
 
@@ -305,19 +305,12 @@ B $67C2,186,6 Car_1 (48x31)
 B $687C,110,5 Car_2 (40x22)
 B $68EA,48,3 Car_3 (24x16)
 ;
-B $691A,24,3 Lamborghini_4 perhaps (24x8)
-B $6932 TBD
-B $694A,24,3 Lamborghini_5 mask (24x8)
-B $6962 TBD
-B $697A,24 Truck_4/5
-B $6992 TBD
-B $69AA,24 Truck_4/5 mask
-B $69C2 TBD
-B $69C2 TBD
-B $69DA,27 Car_4/5
-B $69F5 TBD
-B $6A10,27 Car_4/5 mask
-B $6A2B mystery block
+B $691A,48,6 Lamborghini_4 interleaved (24x2x8)
+B $694A,48,6 Lamborghini_5 "mask" interleaved (24x2x8)
+B $697A,48,4 Truck_4/5 interleaved (16x2x12)
+B $69AA,48,4 Truck_4/5 "mask" interleaved (16x2x12)
+B $69DA,54,6 Car_4/5 interleaved (24x2x9)
+B $6A10,54,6 Car_4/5 "mask" interleaved (24x2x9)
 ;
 @ $6A46 label=stones_lods
 B $6A46,1 Width (bytes)
@@ -350,7 +343,8 @@ B $6AF0,2,2 Stones mask interleaved (8x2x1)
 B $6AF2,2 Dust bitmap interleaved (8x2)
 B $6AF4,2 Dust mask interleaved (8x2)
 ;
-B $6AF6 TBD
+W $6AF6,2 -> turn_sign_lods
+B $6AF8 TBD
 ;
 @ $6B22 label=turn_sign_lods
 B $6B22,1 Width (bytes)
