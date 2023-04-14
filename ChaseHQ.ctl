@@ -182,18 +182,23 @@ b $5C00 Graphics
 B $5C00,240 Hill backdrop (80x24)
 
 b $5CF0 (More) per-level data
+;
 @ $5CF0 label=perp_mugshot_attributes
 W $5CF0,2 Address of perp's mugshot attributes
 @ $5CF2 label=perp_mugshot_bitmap
 W $5CF2,2 Address of perp's mugshot bitmap
+;
+@ $5CF4 label=ground_colour
 W $5CF4,2 Screen attributes used for the ground colour (a pair of matching bytes)
-  $5CF6 TBD
+;
+W $5CF6,18,2 TBD - likely addresses used by $AC1F
+  $5D08 TBD
 
 w $5D0C Table of addresses of LODs (levels of detail - a set of sprites of various sizes representing the same object).
 @ $5D0C label=lods_table
-  $5D0C,2 -> some1_lods
-  $5D0E,2 -> some2_lods
-  $5D10,2 -> car_lods
+  $5D0C,2 -> stones_lods
+  $5D0E,2 -> dust_lods
+  $5D10,2 -> car_lods (perp's car)
   $5D12,2 -> lambo_lods
   $5D14,2 -> truck_lods
   $5D16,2 -> lambo_lods
@@ -311,7 +316,7 @@ B $69F5 TBD
 B $6A10,27 Car_4/5 mask
 B $6A2B mystery block
 ;
-@ $6A46 label=some1_lods
+@ $6A46 label=stones_lods
 B $6A46,1 Width (bytes)
 B $6A47,1 Flags
 B $6A48,1 Height (pixels)
@@ -319,7 +324,7 @@ W $6A49,2 Bitmap
 W $6A4B,2 Mask
 L $6A46,7,6
 ;
-@ $6A70 label=some2_lods
+@ $6A70 label=dust_lods
 B $6A70,1 Width (bytes)
 B $6A71,1 Flags
 B $6A72,1 Height (pixels)
@@ -768,7 +773,7 @@ c $87DC Initialisation
   $87DD Zero $EE00..$EEFF, and point $A240 at $EE00
   $87EC A = 0
   $87ED Copy (47 bytes) at $A13E to $A16D - saved game state
-  $87F8 Zero 207 bytes at $A19D
+  $87F8 Zero 208 bytes at $A19D
   $8807,3 Pre-shift the backdrop image
   $880A $E34B = 8
 ; These self modified instructions change from NOPs to PUSHes when we're
@@ -1880,7 +1885,7 @@ R $9D17 I:D High byte of increment
   $9D2C *HL = A
   $9D2D Return
 
-@ $9D2E label=overtake_bonus
+@ $9D2E label=calc_overtake_bonus
 c $9D2E Calculate overtake bonus
 R $9D2E I:A Iterations (prob number of overtakes?)
   $9D2E If $A22B is zero then return
@@ -2268,7 +2273,7 @@ g $A139
   $A139,1 This is always zero, yet the code checks it. If it's set then $83F5 uses it to jump to $81AA, which is the end of a string. $8435 tests it too and calls <chatter> when it's zero, which it always is. $8AD6 also tries to use it to jump into a string (twice). Could be dead code or 128K version hook?
   $A13A,1 Current stage number
   $A13B,1 Used by $8425  -- seems to start at 4 then cycle 3/2/1 with each restart of the game, another random factor?
-@ $A13D label=overtake_bonus
+@ $A13C label=overtake_bonus
   $A13C,1 Overtake combo bonus counter. BCD. This increases by 2 for each overtake and is reset on a crash.
 @ $A13D label=credits
   $A13D,1 Number of credits remaining (2 for a new game)
