@@ -248,12 +248,15 @@ W $5E36,2 Attribute address
 T $5E38,6 "MURDER"
 
 b $5E3E Graphics. All are stored inverted except where noted.
-B $5E3E,3 TBD
+B $5E3E,2 TBD
+B $5E40,1 TBD
 W $5E41,2 Address of tumbleweed LODs table
 B $5E43,1 TBD
 W $5E44,2 Address of another LOD table
 B $5E46 TBD these bytes seem to get hit when we're in the tunnel ... the lights?
 B $5E5B hit all the time must be tree/bush defs or LODs
+W $5E7D,2 -> TBD
+W $5E81,2 -> TBD
 B $5E91 could be lods
 
 
@@ -664,7 +667,7 @@ c $8401 Main loop
   $8424 $A13B cycles 3,2,1 then repeats
   $842E $A26B = (A * 4) OR 2
   $8435 Is $A139 zero? (used later)
-  $8439 $A188 = $FF
+  $8439 $A188 = $FF  I suspect this keeps the perp spawned
   $843E LD HL,$81DD   ;
   $8441 message related
   $8444 TBD
@@ -787,7 +790,7 @@ c $87DC Initialisation
   $881B NOP 6 bytes [of instructions] at $8FA4
   $8824 Self modify "LD (HL),xx" at $C058 xx = 0
   $8827 Self modify "LD A,xx" at $B063 xx = 0
-  $882A Set $A191 to value of lods_table[2]
+  $882A Set $A191 to value of lods_table[2] (seems to be the perp's car)
   $8830 Zero $EE00..$EEFF, and point $A240 at $EE00 [duplicates work from earlier]
 @ $883F label=loop883f
 ; alter this iterations count and we seem to start later in the level
@@ -1191,23 +1194,21 @@ N $8F4F It rolled over
   $8F5E Return
 
 c $8F5F
-
-c $901C
+  $900B Push return address onto stack
+  $901C <return>
 
 c $9023
-
-c $904B
+  $903A Push return address onto stack
+  $904B <return>
 
 ; unclear if/how this routine gets entered
 c $9052
 
 c $916C
-
-c $9171
+  $9171
 
 c $924D
-
-c $9252
+  $9252
 
 c $9278
 
@@ -1215,6 +1216,7 @@ c $92E1
   $93D6,3 Exit via plot_sprite
   $93DC,3 Exit via plot_sprite_flipped
   $93E8,4 #REGix = Base of jump table
+  $9496 E = -E
 
 @ $949C label=plot_sprite
 c $949C Sprite plotter for back buffer, up to 64px wide, 15px high, no mask, no flip.
@@ -2299,10 +2301,19 @@ W $A171,2 seems to be the horizon level, possibly relative (used during attract 
 @ $A181 label=distance_digits
   $A181,4 Distance. Stored as one digit per byte.
 W $A186,2 Attribute address of horizon. Points to last attribute on the line which shows the ground. (e.g. $59DF)
-  $A188,1 Set by $843B
+;
+  $A188,1 Set by $843B. Groups of 20 bytes. This area looks like a table of spawned vehicles or objects.
+  $A189,1 looks distance related
 W $A191,2 Address of car_lods
 W $A195,2 Set to $190 by fully_smashed
-  $A19D Memory gets wiped
+  $A19C,20
+  $A1B0,20
+  $A1C4,20
+  $A1D8,20
+  $A1EC,20
+  $A200 TBD
+;$A19D+ Memory gets wiped
+;
   $A220,1 Set to $F8 when the CHQ MONITORING SYSTEM screen is being shown. (draw_screen uses this to skip for some work, just tests for non-zero). #R$8014 sets this to the level number.
   $A223,1 Stage number as shown. Stored as ASCII.
   $A229,1 <Timing related?>
@@ -2372,18 +2383,31 @@ B $A29D,,7 0..9
 B $A2E3,,7 A-Z
 
 c $A399
+
 c $A579
+
 c $A60E
+
 b $A623
+
 c $A637
+
 b $A7E7
+
 c $A7F3
+
 c $A89C
+
 c $A8CD
+
 c $A955
+
 c $A97E
+
 c $A9DE
+
 b $AA38
+
 c $AAC6
 
 c $AB33
@@ -2391,13 +2415,51 @@ c $AB33
   $AB59 Point #REGhl at pilet "turn right" messages
 
 c $AB9A
-c $ABF6
+
+@ $ABF6 label=perhaps_spawn_obj
+c $ABF6 Feels like a 'spawn a car' routine or hazards?
+R $ABF6 I:B $20/$46/$56/$50/$B4
+R $ABF6 I:DE always seems to be 3
+  $ABF6
+  $ABF7 B = 6
+  $ABF9 LD HL,$A188  table of spawned vehicles/objs?
+  $ABFC DE = 20      could be a stride?
+@ $ABFF label=j_abff
+  $ABFF RLC (HL)     possibly a quick test for flag, if flag is 0 or $FF ?
+  $AC01 Jump to j_ac08 if it didn't carry
+  $AC03 HL += DE     move to next slot
+  $AC04 Loop while (B)
+  $AC06
+  $AC07 Return
+;
+@ $AC08 label=j_ac08
+  $AC08 IX = HL
+  $AC0B Zero the 20 bytes at #REGhl
+  $AC15
+  $AC16 LD HL,$AC3C  - behaviour or render routine perhaps?
+  $AC19 IX[12] = H
+  $AC1C IX[11] = L
+  $AC1F HL = *$5CF6 + DE
+  $AC23 IX[8] = *HL++
+  $AC28 IX[9] = *HL++
+  $AC2D IX[10] = *HL
+  $AC31 IX[5] = B
+  $AC34 IX[1] = C
+  $AC37 IX[0] = $FF   - slot is active
+  $AC3B Return
+
 c $AC3C
+
 b $ACDB
+
 c $AD0D
+
 c $AD4B
+
 c $AD51
+
 c $ADA0
+
 c $ADBE
 
 c $AECF
@@ -2410,6 +2472,7 @@ c $AECF
   $AFCF,3 Get smash_factor
 
 c $AFF1
+
 b $B045
 
 c $B063
