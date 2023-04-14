@@ -263,7 +263,7 @@ B $638A,160,4 Graphic: Perp w/ sunglasses face (32x40). Stored top-down.
 B $642A,20,4 Attribute data for perp.
 ;
 ; Flags in these LOD structures:
-; - 1 seems to indicate interleaved masks
+; - 1 seems to indicate interleaved masks? not so sure now. Think it might be pre-shifted bitmaps.
 ; - 2 is probably to flip
 ;
 @ $643E label=lambo_lods
@@ -332,19 +332,22 @@ W $6A73,2 Bitmap
 W $6A75,2 Mask
 L $6A70,7,6
 ;
-B $6A9A,10 bitmap interleaved
-B $6AA4,1 TBD
-B $6AAE,8 bitmap interleaved
-B $6ABE,8 mask
-B $6ACE,6 bitmap
-B $6ADA,6 mask
-B $6AE6,2 bitmap
-B $6AEA,2 mask
-B $6AEE,1 bitmap
-B $6AF0,1 mask
-B $6AF2,1 bitmap
-B $6AF4,1 mask
-B $6AF5 TBD
+; TODO: Having bitmap/mask doesn't make sense if it's got embedded masks, so what's going on there? Are they actually pre-shifted sprites?
+;
+B $6A9A,20,4 Stones bitmap interleaved (16x2x5)
+B $6AAE,16,4 Stones bitmap interleaved (16x2x4)
+B $6ABE,16,4 Stones mask interleaved (16x2x4)
+B $6ACE,12,4 Stones bitmap interleaved (16x2x3)
+B $6ADA,12,4 Stones mask interleaved (16x2x3)
+B $6AE6,4,2 Stones bitmap interleaved (8x2x2)
+B $6AEA,4,2 Stones mask interleaved (8x2x2)
+B $6AEE,2,2 Stones bitmap interleaved (8x2x1)
+B $6AF0,2,2 Stones mask interleaved (8x2x1)
+;
+B $6AF2,2 Dust bitmap interleaved (8x2)
+B $6AF4,2 Dust mask interleaved (8x2)
+;
+B $6AF6 TBD
 ;
 @ $6B22 label=turn_sign_lods
 B $6B22,1 Width (bytes)
@@ -357,13 +360,12 @@ L $6B22,7,10
 B $6B68,160,4 Turn right sign (32x40)
 B $6C08,90,3 Turn right sign (24x30)
 B $6C62,40,2 Turn right sign (16x20)
-B $6C8A,32,2 Turn right sign (16x16)
-B $6CAA TBD bitmap/mask interleaved
-B $6CCA,26,2 Turn right sign (16x13)
-B $6CE4 TBD
-B $6CFE,26,2 Turn right sign mask (16x13)
+B $6C8A,64,4 Turn right sign interleaved (16x2x16)
+B $6CCA,52,2 Turn right sign interleaved (16x2x13)
+B $6CFE,52,2 Turn right sign interleaved "mask" (16x2x13)
 ;
-B $6D18 TBD looks like graphics
+B $6D32,,4 TBD another interleaved turn right sign (16x10)
+B $6D5A,,4 TBD and another, looks pre-rotated
 ;
 @ $6D82 label=tumbleweed_lods
 B $6D82,1 Width (bytes)
@@ -389,12 +391,10 @@ L $6DF2,7,6
 B $6E1C,68,4 Barrier (32x17)
 B $6E60,39,3 Barrier (24x13)
 B $6E87,18,2 Barrier (16x9)
-B $6E99,14,2 Barrier (16x7)
-B $6EA7 TBD
-B $6EB5,14,2 Mask for barrier (16x7)
+B $6E99,28,4 Barrier interleaved (16x2x7)
+B $6EB5,28,4 Mask for barrier interleaved (16x2x7)
 
-B $6EC3 TBD
-
+B $6ED1 TBD
 W $6EEB,2 Address of another LOD table
 
 B $6F17,1 Width (bytes)
