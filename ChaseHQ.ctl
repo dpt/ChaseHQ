@@ -57,6 +57,8 @@
 > $4000 ;
 > $4000 ; https://news.ycombinator.com/item?id=8850193
 > $4000 ;
+> $4000 ; http://www.extentofthejam.com/pseudo/
+> $4000 ;
 > $4000 ;
 > $4000 ; SECRETS
 > $4000 ; -------
@@ -66,8 +68,8 @@
 > $4000 ; 48K/128K VERSION DIFFERENCES
 > $4000 ; ----------------------------
 > $4000 ; - AY music + sampled speech and effects
-> $4000 ; - Text animations
 > $4000 ; - High score entry
+> $4000 ; - Logo animation > music plays > attract mode  (48K just does attract mode)
 > $4000 ; - Best Officers (high score) on attract screen
 > $4000 ; - Input device/define keys is retained
 > $4000 ;
@@ -536,13 +538,41 @@ T $81EC,13 "GIDDY UP BOY!"
 ;
 T $81F9,11 "HOLD ON MAN"
 
-c $8204 In-game sound effects
-  $8246 Produces engine sound effect
-  $824E Produces the steering squeak
+c $8204 In-game sound effects / attract mode text
+  $8204 Get speed value
+  $8207 ...
+  $8226 Self modify iterations
+  $822A Self modify delay loop
+  $8231 Self modify delay loop
+  $823A Self modified
+  $8243 Iterations
+  $8245 Produces engine sound effect??
+  $8248,4 Delay
+  $824C Produces the steering squeak??
+  $8250,4 Delay
+  $8254,3 Loop until iterations is zero
 
-  $8268 Call keyscan
+c $8258 Attract mode keyscan / cpu driver / text
+  $8268,3 Call keyscan
   $826B Return if fire was pressed
-  $8276 Interesting rotating nibble? This is used when in attract mode but not in-game AFAICT. 50/50 chance generator?
+  $826E,3 Call cpu_driver
+  $8271 HL = attract mode messages "CHASE HQ" "PRESS GEAR TO PLAY" ...
+  $8274 Number of messages?
+  $8276 Causes blinking of "PRESS GEAR TO PLAY"
+  $827C
+  $827E nmessages++
+  $827F Load flags
+  $8280 Call <message printing related>
+  $8283 Loop while B > 0
+  $8285 Attribute related
+  $828B,7 Blinking on/off self modified pattern
+  $8292 LD HL,$82CC   ;
+  $8295 JR NZ,$829A   ;
+  $8297 LD HL,$8320   ;
+  $829A CALL $8E7E    ;
+  $829D CALL $8D8F    ;
+  $82A0 CALL $BC3E    ;
+  $82A3 JP $8268      ;
 
 b $82A6 Attract mode messages
 B $82A6,1 Flags (double height)
@@ -615,17 +645,16 @@ W $8363,2 Back buffer address
 W $8365,2 Attribute address
 T $8367,19 "ALL RIGHTS RESERVED"
 
-b $837A unknown
+b $837A Unknown
 
-; These are all just thunks. Possibly hooks for 128K mode sfx.
-c $83B5 just a RET
-c $83B8 sound effects
-c $83BB just a RET
-c $83BE just a RET
-c $83C1 just a RET
-c $83C4 TBD
-c $83C7 just a RET
-c $83CA TBD
+c $83B5 Only a RET - suspected 128K hook
+c $83B8 Sound effects - suspected 128K hook
+c $83BB Likely silence audio - suspected 128K hook
+c $83BE Only a RET - suspected 128K hook
+c $83C1 Likely the boost sfx - suspected 128K hook
+c $83C4 Calls sound effects routine - suspected 128K hook
+c $83C7 Only a RET - suspected 128K hook
+c $83CA Calls attract mode driver routine - suspected 128K hook
 
 c $83CD Bootstrap
 ; This gets hit when a game finishes and we return to the attract mode.
@@ -640,7 +669,7 @@ N $83CD Builds a table of flipped bytes at $EF00.
   $83D8 Write #REGc out and advance
   $83DA Loop for 256 iterations (when #REGl overflows)
 ;
-  $83DC Indirect jump TBD
+  $83DC Indirect call to attract mode driver routine
 ;
   $83DF $A13C = 0
   $83E3 Zero $8002..$8006
@@ -721,7 +750,7 @@ N $84C8 Test mode handling
   $84D1 EX AF,AF'     ;
   $84D2 LD BC,$0804   ;
   $84D5 TBD
-  $84D8 <128k hook?>
+  $84D8 Silence audio
   $84DB EX AF,AF'     ;
   $84DC Is bit 0 set? (key 1 to restart the level)
   $84DD Restart level if so
@@ -747,6 +776,7 @@ N $84C8 Test mode handling
   $850A LD (HL),$00   ;
   $850C CALL $83C7    ;
   $850F JP $8444      ;
+;
   $8512 LD A,($A26A)  ;
   $8515 AND A         ;
   $8516 JP Z,$8444    ;
@@ -843,16 +873,42 @@ c $87DC Initialisation
   $8860 Clear the lights' BRIGHT bit
 ; flashing lights are 5 attrs wide, 4 high
 
-c $8876
-  $8876,3 Inhibits user input when $A231 isn't 4
-  $8879,3 Address of user_input
+@ $8876 label=check_user_input
+c $8876 User input checking
+  $8876 Load transition_control
+  $8879 Address of user_input
+  $887C Ignore the user's input unless transition_control is set to 4
+  $8880 Clear user_input
+  $8882 Return
+;
   $8883 AND user_input with user input mask
   $8888 AND with mask for (Quit+Pause+Turbo), return if none
-  $888B Quit bit set? Goto quit_bit if so
-  $8897 Return if no turbo boosts left
-  $88B1,3 Call fill_attributes
-@ $88A9 label=quit_bit
-  $88A9
+  $888B Quit bit set? Goto quit_key if so
+  $888E Pause bit set? Goto pause_key if so
+N $8891 Turbo was pressed
+  $8891 Address of boost timer
+  $8894 Return if a turbo boost is in effect
+  $8897 Return if no turbo boosts are left
+  $889C Set 60 ticks of boost
+  $889E HL -> Random choice of (WHOAAAAA! / GREAT! / ONE MORE TIME.)
+  $88A1 TBD
+  $88A3 Call chatter
+  $88A6 Exit via $83C1 -- likely the boost sfx
+;
+@ $88A9 label=quit_key
+  $88A9 If $A26A != 0 then return
+  $88AE Call clear_chatter
+  $88B1 Call fill_attributes
+  $88B4 user_input_mask = 0  -- A is zero from fill_attributes
+  $88B8 $A26A = 1
+  $88BB Return
+;
+@ $88BC label=pause_key
+  $88BC Silence audio (128k hook)
+  $88BF Call keyscan while PAUSE is pressed
+  $88C6 Call keyscan until keys are pressed
+  $88CD Call keyscan until keys are released (debounce)
+  $88D4 Return
 
 @ $88D5 label=clear_game_attrs
 c $88D5 Clears the game screen attributes to zero
@@ -1597,7 +1653,7 @@ c $9965
 @ $99BD label=sub998f_another_something
   $99BD LD HL,($9630) ; HL = next_message
   $99C0 A = *HL first char of
-  $99C1 String terminator? jump to end_of_message if so
+  $99C1 String terminator? jump to clear_chatter if so
   $99C5,2 this tests for $FE -- different terminator?
   $99C7 JR NZ,$9A24   ; If not $fe goto chatter_message
 ; $FE means clear first?
@@ -1605,7 +1661,7 @@ c $9965
   $99CA next_message = *HL
   $99D1 JR $99E4      ; goto 99e4_exit
 ;
-@ $99D3 label=end_of_message ?
+@ $99D3 label=clear_chatter
   $99D3 Set the noise effect counter to 4
   $99D8 Set $963D to 3
   $99DC Exit via clear_message_line
@@ -1828,7 +1884,7 @@ c $9BCF tick
   $9C0A Exit via chatter
   $9C0D Is time_bcd zero? Jump to time_up if so
   $9C11 Zero $A229
-  $9C15 user_input_mask = $FF
+  $9C15 user_input_mask = $FF (allow all keys)
   $9C19 Loop back to $9BF9
 @ $9C1B label=time_up
   $9C1B,3 Point at "TIME UP" message
@@ -2317,10 +2373,13 @@ g $A139
   $A16D
 ; this might be an idle timer, when it hits zero Raymond cajoles us
   $A16E,1 used during attract mode, road gradient/angle or something?
+;
 @ $A16F label=user_input_mask
   $A16F,1 user_input mask, set to $C0 (Quit+Pause) when perp is fully smashed, or $FF otherwise
+;
 @ $A170 label=turbos
   $A170,1 Number of turbo boosts remaining (3 for a new game)
+;
 W $A171,2 seems to be the horizon level, possibly relative (used during attract mode)
   $A174,1 Low/high gear flag?
   $A175,8 Score digits. One digit per byte, least significant first. This seems to be recording what's on screen so digit plotting can be bypassed.
@@ -2392,7 +2451,10 @@ W $A240,2 Used by $B8F6, $BBF7, $87E0  seems to point at $EE00..$EEFF
 W $A24A,2 Speed (max when in lo gear =~ $E6 hi gear =~ $168 turbo =~ $1FF)
 ;
   $A24D,1 written by $B32A
-  $A24E,1 used in plot_scores_etc
+;
+@ $A24E label=boost
+  $A24E,1 Turbo boost time remaining (60..0)
+;
   $A250,1 Turn severity (0/1/2)
   $A251,1 Some sort of flip flag used for car rendering (observed 0/1)
   $A252,1
@@ -2405,8 +2467,11 @@ W $A24A,2 Speed (max when in lo gear =~ $E6 hi gear =~ $168 turbo =~ $1FF)
   $A25C,1 Used by $B84E
   $A25D,1 Used by $B85D
   $A268,1 Used by $BB69 - skips routine if not set
+  $A26A,1 Used by quit_key - quit in progress flag?
   $A26B,1 Used by $8432
-W $A26C,2 Road position of car. $105 is the centre (left = $1E2...$03A = right)
+;
+@ $A26C label=road_pos
+W $A26C,2 Road position of car. Left..Right = $1E2...$03A, $105 is centre.
 
 b $A27A Font: 8x7 bitmap
 B $A27A,,7 Exclamation mark
