@@ -647,14 +647,14 @@ T $8367,19 "ALL RIGHTS RESERVED"
 
 b $837A Unknown
 
-c $83B5 Only a RET - suspected 128K hook
-c $83B8 Sound effects - suspected 128K hook
-c $83BB Likely silence audio - suspected 128K hook
-c $83BE Only a RET - suspected 128K hook
-c $83C1 Likely the boost sfx - suspected 128K hook
-c $83C4 Calls sound effects routine - suspected 128K hook
-c $83C7 Only a RET - suspected 128K hook
-c $83CA Calls attract mode driver routine - suspected 128K hook
+c $83B5 Only a RET (probably a 128K hook)
+c $83B8 Sound effect (probably a 128K hook)
+c $83BB Likely silence audio (probably a 128K hook)
+c $83BE Only a RET (probably a 128K hook)
+c $83C1 Likely the turbo boost sound effect (probably a 128K hook)
+c $83C4 Calls sound effects routine (probably a 128K hook)
+c $83C7 Only a RET (probably a 128K hook)
+c $83CA Calls attract mode driver routine (probably a 128K hook)
 
 c $83CD Bootstrap
 ; This gets hit when a game finishes and we return to the attract mode.
@@ -893,7 +893,7 @@ N $8891 Turbo was pressed
   $889E HL -> Random choice of (WHOAAAAA! / GREAT! / ONE MORE TIME.)
   $88A1 TBD
   $88A3 Call chatter
-  $88A6 Exit via $83C1 -- likely the boost sfx
+  $88A6 Exit via $83C1 -- likely the boost sound effect
 ;
 @ $88A9 label=quit_key
   $88A9 If $A26A != 0 then return
@@ -916,25 +916,138 @@ c $88D5 Clears the game screen attributes to zero
 @ $88E2 label=clear_game_screen
 c $88E2 Clears the game screen attributes and the game screen to zero
 
-c $88F2
+@ $88F2 label=sfx_related
+c $88F2 Sound effect related
 R $88F2 I:BC e.g. $0704 $0801 $0604
-  $88F2 If $A238 is zero then jump $88FA
-  $88F8 Return if C > $A238
+  $88F2 If $A238 is zero then goto $88FA
+  $88F8 Return if $A238 < C
   $88FA $A237 = B
   $88FE $A238 = C
   $8902 Return
 
-c $8903
-b $893C
-t $8958
-b $895B
-c $8960
-b $897C
-c $89D9
-b $89EF
+c $8903 Sound effect driver
+  $8903 If $A23B != 0 goto $8916
+  $8909 *$A23D |= *$A23C
+  $8910 Counters?
+  $8913 CALL NZ, sfx_related
+;
+  $8916 Call sound effect routine (128K hook)
+  $8919 Call sound effect routine (128K hook)
+  $891C Call another 128K hook fn
+  $891F If $A237 == 0 return
+  $8924 #REGe = $A237 * 4
+  $8927 $A237 = 0
+  $892B $A238 = 0
+  $892E Make #REGde full offset
+  $892F #REGhl -> Base of table, but 4 bytes earlier
+  $8932 Point at array element
+  $8933 Load argument value into #REGde
+  $8937 Load address of routine into #REGhl
+  $893B Exit via routine at #REGhl
+N $893C Pairs of words: (argument, address of sound effect routine)
+W $893C Argument in #REGde for sound effect routine
+W $893E Sound effect routine $8A0F - "pitt" and "pfff" and gear noise too?
+W $8940 Argument in #REGde for sound effect routine: D = delay of 8
+W $8942 Sound effect routine $89D9
+W $8944 Argument in #REGde for sound effect routine
+W $8946 Sound effect routine $8960 - crash
+W $8948 Argument in #REGde for sound effect routine
+W $894A Sound effect routine $8960 - crash
+W $894C Argument in #REGde for sound effect routine
+W $894E Sound effect routine $89D9
+W $8950 Argument in #REGde for sound effect routine
+W $8952 Sound effect routine $8A17
+W $8954 Argument in #REGde for sound effect routine - "tit-tit" used when cornering
+W $8956 Sound effect routine $8A17
+W $8958 Argument in #REGde for sound effect routine - time running out high "bip"
+W $895A Sound effect routine $8A36 - "bip-bow"
+W $895C Argument in #REGde for sound effect routine - time running out low "bow"
+W $895E Sound effect routine $8A36 - "bip-bow"
 
-c $8A0F Sound effects - "pitt" and "pff" etc.
-c $8A36 Sound effects - makes the "bip-bow" time running out effect
+@ $8960 label=sfx8960
+c $8960 Sound effect - crash
+R $8960 I:D Inner loop count
+  $8960 #REGhl -> Effect data table
+  $8963 Length of table is 93
+@ $8965 label=sfx8960_loop_outer
+  $8965 Set inner loop counter
+@ $8966 label=sfx8960_loop_inner
+  $8966 #REGa = 16
+  $8968 Top bit set of this byte?
+  $896A Don't clear the EAR bit
+  $896C Otherwise clear the EAR bit
+  $896E Output
+  $8970 Rotate the effect data
+  $8972 Delay
+  $8974 Loop while #REGb
+  $8976 Move to the next byte of effect data
+  $8977 Loop while #REGc
+  $897B Return
+B $897C Effect data table
+
+@ $89D9 label=sfx89d9
+c $89D9 Sound effect - not sure
+R $89D9 I:D Delay value
+  $89D9 Length of table is 32
+  $89DB #REGhl -> Effect data table
+  $89DE Zero output byte
+@ $89DF label=sfx89d9_loop
+  $89DF B = *HL
+  $89E0 Output to 
+  $89E2 Delay for 'D' iterations
+  $89E6 Loop for 'B' iterations
+  $89E8 Wiggle the EAR bit
+  $89EA Move to the next byte of effect data
+  $89EB Loop while #REGc
+  $89EE Return
+B $89EF Effect data table
+
+@ $8A0F label=sfx8a0f
+c $8A0F Sound effect - "pitt" and "pfff"
+R $8A0F I:D Affects delay loops
+R $8A0F I:E Inner loop count
+  $8A0F Half duty cycle
+  $8A11 Return if 1
+;
+@ $8A17 label=sfx8a0f_loop_outer
+  $8A17 Set inner loop counter
+@ $8A18 label=sfx8a0f_loop_inner
+  $8A18 Call rng
+  $8A1B #REGa &= 16
+  $8A1D If zero goto sfx8a0f_continue
+  $8A1F Delay loop of (24 - #REGd) iterations
+  $8A25 #REGa = 24 set EAR and MIC bits <not sure of the effect>
+  $8A27 Output
+  $8A29 Delay loop of #REGd iterations
+  $8A2C Output
+@ $8A2F label=sfx8a0f_continue
+  $8A2F Loop while #REGc
+  $8A32 Loop while #REGd
+  $8A35 Return
+
+; a zero in bit 3 activates the MIC output, whilst a one in bit 4 activates the
+; EAR output and the internal speaker. However, the EAR and MIC sockets are
+; connected only by resistors, so activating one activates the other; the EAR is
+; generally used for output as it produces a louder sound. 
+
+@ $8A36 label=sfx8a36
+c $8A36 Sound effect - "bip-bow"
+R $8A36 I:D Delay at start
+R $8A36 I:E Same as D
+  $8A36 C = 20
+  $8A38 Inner loop counter. H is decremented and restored from L each loop.
+@ $8A3B label=sfx8a36_loop
+  $8A3B Delay loop of D iterations
+  $8A3E D = E
+  $8A3F Delay loop of (24 - C) iterations
+  $8A45 A = 24 set EAR and MIC bits <not sure of the effect>
+  $8A47 Output A
+  $8A49 Delay loop of C iterations
+  $8A4C Output 0
+  $8A4F Loop while H
+  $8A52 H = L
+  $8A53 Loop while C
+  $8A56 Return
 
 c $8A57
   $8ABB,3 Call fill_attributes
@@ -1388,7 +1501,7 @@ N $952E Decrement the screen address
 c $9542 Sprite plotter for back buffer, with flipping
   $9542 TBD
 
-@ $9618 rng
+@ $9618 label=rng
 c $9618 Random number generator
 R $9618 O:A Random byte?
 ; Disable this and only Lambos spawn on the left. TBD what other effects it has.
@@ -2441,6 +2554,8 @@ W $A195,2 Set to $190 by fully_smashed
   $A237,1 Used by $88F2
   $A238,1 Used by $88F2
   $A23B,1 loaded by $821d,$8903,$c0ee,$fd21 set by $C102
+  $A23C,1 Used by $8909
+  $A23D,1
   $A23E,1 written by $B322
   $A23F,1 numerous references, seems related to level position
 W $A240,2 Used by $B8F6, $BBF7, $87E0  seems to point at $EE00..$EEFF
