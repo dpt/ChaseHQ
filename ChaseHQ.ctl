@@ -139,8 +139,9 @@
 > $4000 ; - Chase HQ monitoring system
 > $4000 ; - picture handling / noise-in-out effect
 > $4000 ; - car graphic encoding
-> $4000 ; - is attract mode a CPU player or a recording?
+> $4000 ; - is attract mode a CPU player or a recording? how does it loop?
 > $4000 ; - exact scoring rules
+> $4000 ; - overhead tunnel type drawing
 
 @ $4000 start
 @ $4000 org
@@ -259,8 +260,7 @@ W $5E7D,2 -> car_lods
 W $5E81,2 -> -> turn_sign_lods
 B $5E91 could be lods
 
-
-
+B $60A5,60,2 (16x30?) looks lampposty but can't yet see it used in my tests
 
 B $638A,160,4 Graphic: Perp w/ sunglasses face (32x40). Stored top-down.
 B $642A,20,4 Attribute data for perp.
@@ -447,7 +447,8 @@ T $77D2,6 "SIGNAL"
 
 b $77D8
   $7860 Seems to be tiles pointed at by car rendering code
-  $78B6,64 8 Tiles used for borders on the pre-game screen
+
+  $78B6,64 8 Tiles used to draw the pre-game screen
 
   $7BE9,160,4 Graphic: Nancy's face (32x40). Stored top-down.
   $7C89,20,4 Attribute data for above.
@@ -538,6 +539,10 @@ T $81F9,11 "HOLD ON MAN"
 c $8204 In-game sound effects
   $8246 Produces engine sound effect
   $824E Produces the steering squeak
+
+  $8268 Call keyscan
+  $826B Return if fire was pressed
+  $8276 Interesting rotating nibble? This is used when in attract mode but not in-game AFAICT. 50/50 chance generator?
 
 b $82A6 Attract mode messages
 B $82A6,1 Flags (double height)
@@ -753,8 +758,42 @@ N $84C8 Test mode handling
   $8524 CALL $8DF9    ;
   $8527 JP $8444      ;
 
-c $852A
-  $8556 Set user input
+@ $852A label=cpu_driver
+c $852A CPU driver
+  $852A Get road position
+  $852D Subtract centre value. Carry flag will be set if we're on the right hand side of the road
+  $8534 Set input ACCELERATE + RIGHT
+  $8536 Jump cd_check_speed if we're on the left
+  $8538 Subtract "ideal road position"? value. Carry will be set if we're on the right of it.
+  $853D Set input ACCELERATE + LEFT
+  $853F Jump cd_check_speed if we're on the right
+  $8541 Set input ACCELERATE
+@ $8543 label=cd_check_speed
+  $8543 C = A
+  $8544 Calculate speed - 150
+  $854C Load gear
+  $854F Set gear to low if speed < 150, otherwise high
+  $8551 JR NZ,$8555   ;
+  $8553 Set input GEAR
+@ $8555 label=cd_set_input
+  $8555 Set user input
+  $8559 CALL $BDFB    ; this lot must run a chunk of attract mode funcs
+  $855C CALL $A7F3    ;
+  $855F CALL $A60E    ;
+  $8562 CALL $CD3A    ;
+  $8565 CALL $B848    ;
+  $8568 CALL $B9F4    ;
+  $856B CALL $C452    ; landscape related
+  $856E CALL $A579    ;
+  $8571 CALL $C0E1    ;
+  $8574 CALL $AB9A    ;
+  $8577 CALL $A955    ;
+  $857A CALL $A97E    ;
+  $857D CALL $ADA0    ;
+  $8580 CALL $B063    ;
+  $8583 CALL $A399    ;
+  $8586 CALL $8F5F    ;
+  $8589 JP $B318      ;
 
 c $858C
 b $85DD
@@ -2210,6 +2249,7 @@ B $A0D5,1 User input: QPBFUDLR - Quit Pause Boost Fire Up Down Left Right. Note 
 ;
 @ $A0D6 label=keyscan
 C $A0D6 Main input handler
+R $A0D6 O:A User input byte (as $A0D5)
   $A0D6 If not Kempston then goto $A0F3
   $A0DC Read Kempston joystick port. Returns 000FUDLR active high
   $A0E0 PUSH AF      ;
@@ -2366,6 +2406,7 @@ W $A24A,2 Speed (max when in lo gear =~ $E6 hi gear =~ $168 turbo =~ $1FF)
   $A25D,1 Used by $B85D
   $A268,1 Used by $BB69 - skips routine if not set
   $A26B,1 Used by $8432
+W $A26C,2 Road position of car. $105 is the centre (left = $1E2...$03A = right)
 
 b $A27A Font: 8x7 bitmap
 B $A27A,,7 Exclamation mark
