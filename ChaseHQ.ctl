@@ -211,15 +211,22 @@ b $5D1A TBD
 B $5D1A,1 loaded by $A813
 B $5D1B,1 loaded by $A6A7
 B $5D1C,1 loaded by $A759
-B $5D1D   pointed at by $841E, $858C
-B $5D2B   pointed at by $F426, $8258
 
-w $5D3A Pointers to Nancy's message (for Stage 1)
-  $5D3A,2 Points at "THIS IS NANCY..."
-  $5D3C,2 Points at "EMERGENCY HERE..."
-  $5D3E,2 Points at "IS FLEEING ..."
-  $5D40,2 Points at "VEHICLE IS..."
-B $5D42,3 TBD
+w $5D1D label=setup_game_data
+  $5D1D,2 road_pos
+;
+w $5D2B label=attract_data
+  $5D2B,2 road_pos
+
+b $5D39 Nancy's report
+B $5D39 Nancy ($01)
+W $5D3A Pointers to Nancy's message (for Stage 1)
+W $5D3A,2 Points at "THIS IS NANCY..."
+W $5D3C,2 Points at "EMERGENCY HERE..."
+W $5D3E,2 Points at "IS FLEEING ..."
+W $5D40,2 Points at "VEHICLE IS..."
+B $5D42,1 TBD $FE (pause?)
+W $5D43,2 -> Random choice of ("WE READ..." / "ROGER!" / "GOTCHA...")
 
 b $5D45 Messages - Nancy
 T $5D45,40 "THIS IS NANCY AT CHASE H.Q. WE'VE GOT AN"
@@ -538,21 +545,42 @@ T $81EC,13 "GIDDY UP BOY!"
 ;
 T $81F9,11 "HOLD ON MAN"
 
-c $8204 In-game sound effects / attract mode text
+@ $8204 label=engine_sfx_setup
+c $8204 Generates engine noise
   $8204 Get speed value
-  $8207 ...
-  $8226 Self modify iterations
-  $822A Self modify delay loop
-  $8231 Self modify delay loop
-  $823A Self modified
-  $8243 Iterations
-  $8245 Produces engine sound effect??
-  $8248,4 Delay
-  $824C Produces the steering squeak??
-  $8250,4 Delay
+  $8207 A = speed / 2
+  $820B A = ~A
+  $820C A /= 4
+  $8210 A |= 1
+  $8212 L = A
+  $8213 H = 3
+  $8215 If in high gear goto $821D
+  $821B L >>= 1
+  $821D If $A23B == 0 goto $8225
+  $8223 H = 1
+  $8225 A = L
+  $8225 Self modify iterations -- L
+  $8229 Self modify delay loop -- H
+  $822D Self modify delay loop -- (5 - A)
+@ $8234 label=engine_sfx_play
+  $8234 If $A230 >= 3 then return
+  $823A Self modifying counter produces 0,1,2
+  $8242 Return if nonzero
+N $8243 This produces the engine sound effect.
+  $8243 <Self modified> iterations
+  $8245 Output 0
+  $8248,4 Delay for B cycles (self modified above)
+  $824C Output EAR + MIC
+  $8250,4 Delay for B cycles (self modified above)
   $8254,3 Loop until iterations is zero
+  $8257 Return
 
-c $8258 Attract mode keyscan / cpu driver / text
+@ $8258 label=attract_mode
+c $8258 Attract mode -- keyscan / cpu driver / text
+  $8258 HL -> $5D2B
+  $825B Call setup_game
+  $825E Reset credits/copyright message blinker to show credits
+  $8262 Set speed to $190
   $8268,3 Call keyscan
   $826B Return if fire was pressed
   $826E,3 Call cpu_driver
@@ -565,14 +593,15 @@ c $8258 Attract mode keyscan / cpu driver / text
   $8280 Call <message printing related>
   $8283 Loop while B > 0
   $8285 Attribute related
+N $828B Alternate between credits and copyright messages.
   $828B,7 Blinking on/off self modified pattern
-  $8292 LD HL,$82CC   ;
-  $8295 JR NZ,$829A   ;
-  $8297 LD HL,$8320   ;
-  $829A CALL $8E7E    ;
-  $829D CALL $8D8F    ;
-  $82A0 CALL $BC3E    ;
-  $82A3 JP $8268      ;
+  $8292 #REGhl -> credits_messages
+  $8295 Skip next LD HL based on blink above
+  $8297 #REGhl -> copyright_messages
+  $829A Call <message printing related>
+  $829D Call transition
+  $82A0 Call draw_screen
+  $82A3 Loop
 
 b $82A6 Attract mode messages
 B $82A6,1 Flags (double height)
@@ -589,6 +618,7 @@ T $82BA,18 "PRESS GEAR TO PLAY"  (this blinks)
 ;
 ; all the rest are red and appear in sequence
 ;
+@ $82CC label=credits_messages
 B $82CC,1 Frame delay until the following messages start being shown (0 = 256)
 B $82CD,1 Frame delay until next message?
 ;
@@ -621,6 +651,8 @@ T $830A,20 "MUSIC       JON DUNN"
 ;
 B $831E
 B $831F
+;
+@ $8320 label=copyright_messages
 B $8320 (Frame delays as #R$82CC)
 ;
 B $8322,1 Flags (regular)
@@ -645,16 +677,16 @@ W $8363,2 Back buffer address
 W $8365,2 Attribute address
 T $8367,19 "ALL RIGHTS RESERVED"
 
-b $837A Unknown
+b $837A Unknown - mostly NUL bytes
 
 c $83B5 Only a RET (probably a 128K hook)
-c $83B8 Sound effect (probably a 128K hook)
-c $83BB Likely silence audio (probably a 128K hook)
+c $83B8 Call engine_sfx_play routine (probably a 128K hook)
+c $83BB Likely silences audio (probably a 128K hook)
 c $83BE Only a RET (probably a 128K hook)
 c $83C1 Likely the turbo boost sound effect (probably a 128K hook)
-c $83C4 Calls sound effects routine (probably a 128K hook)
+c $83C4 Calls engine_sfx_setup routine (probably a 128K hook)
 c $83C7 Only a RET (probably a 128K hook)
-c $83CA Calls attract mode driver routine (probably a 128K hook)
+c $83CA Call attract_mode routine (probably a 128K hook)
 
 c $83CD Bootstrap
 ; This gets hit when a game finishes and we return to the attract mode.
@@ -691,7 +723,7 @@ c $8401 Main loop
 @ $841B label=l_841b
   $841B CALL $858C    ; TBD
   $841E LD HL,$5D1D   ;
-  $8421 Call "Initialisation"
+  $8421 Call setup_game
   $8424 $A13B cycles 3,2,1 then repeats
   $842E $A26B = (A * 4) OR 2
   $8435 Is $A139 zero? (used later)
@@ -835,11 +867,16 @@ c $860F
 c $865A
 b $86F6
 
-c $87DC Initialisation
+@ $87DC label=setup_game
+c $87DC Sets up the game or the level?
+R $87DC I:HL Address of 14 bytes of data to be copied to $A26C+
+  $87DC Preserve data pointer
   $87DD Zero $EE00..$EEFF, and point $A240 at $EE00
   $87EC A = 0
   $87ED Copy (47 bytes) at $A13E to $A16D - saved game state
   $87F8 Zero 208 bytes at $A19D
+  $8801,1 Restore data pointer
+  $8802 Copy the 14 bytes passed in to $A26C
   $8807,3 Pre-shift the backdrop image
   $880A $E34B = 8
 ; These self modified instructions change from NOPs to PUSHes when we're
@@ -931,9 +968,9 @@ c $8903 Sound effect driver
   $8910 Counters?
   $8913 CALL NZ, sfx_related
 ;
-  $8916 Call sound effect routine (128K hook)
-  $8919 Call sound effect routine (128K hook)
-  $891C Call another 128K hook fn
+  $8916 Call engine sound effect routine (via 128K hook)
+  $8919 Call sound effect routine (via 128K hook)
+  $891C Call another routine (via 128K hook)
   $891F If $A237 == 0 return
   $8924 #REGe = $A237 * 4
   $8927 $A237 = 0
@@ -993,7 +1030,7 @@ R $89D9 I:D Delay value
   $89DE Zero output byte
 @ $89DF label=sfx89d9_loop
   $89DF B = *HL
-  $89E0 Output to 
+  $89E0 Output to
   $89E2 Delay for 'D' iterations
   $89E6 Loop for 'B' iterations
   $89E8 Wiggle the EAR bit
@@ -1028,7 +1065,7 @@ R $8A0F I:E Inner loop count
 ; a zero in bit 3 activates the MIC output, whilst a one in bit 4 activates the
 ; EAR output and the internal speaker. However, the EAR and MIC sockets are
 ; connected only by resistors, so activating one activates the other; the EAR is
-; generally used for output as it produces a louder sound. 
+; generally used for output as it produces a louder sound.
 
 @ $8A36 label=sfx8a36
 c $8A36 Sound effect - "bip-bow"
@@ -2563,7 +2600,7 @@ W $A240,2 Used by $B8F6, $BBF7, $87E0  seems to point at $EE00..$EEFF
   $A249,1 Counter used by $BB6E
 ;
 @ $A24A label=speed
-W $A24A,2 Speed (max when in lo gear =~ $E6 hi gear =~ $168 turbo =~ $1FF)
+W $A24A,2 Speed (0..511). Max when in lo gear =~ $E6, hi gear =~ $168, turbo =~ $1FF.
 ;
   $A24D,1 written by $B32A
 ;
@@ -2573,7 +2610,10 @@ W $A24A,2 Speed (max when in lo gear =~ $E6 hi gear =~ $168 turbo =~ $1FF)
   $A250,1 Turn severity (0/1/2)
   $A251,1 Some sort of flip flag used for car rendering (observed 0/1)
   $A252,1
-  $A253,1 Low/high gear flag? or visual state?
+;
+@ $A253 label=gear
+  $A253,1 0 => Low gear, 1 => High gear
+;
   $A254,1 Cleared by $884B
   $A258,1 Used by $B8D8
   $A259,1 Used by $B92B
