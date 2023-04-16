@@ -267,9 +267,32 @@ B $5E46 TBD these bytes seem to get hit when we're in the tunnel ... the lights?
 B $5E5B hit all the time must be tree/bush defs or LODs
 W $5E7D,2 -> car_lods
 W $5E81,2 -> -> turn_sign_lods
-B $5E91 could be lods
-
-B $60A5,60,2 (16x30?) looks lampposty but can't yet see it used in my tests
+B $5E91 TBD
+;
+b $5EC3 Initial map segment
+B $5EC3 Ref'd from setup_game_data
+B $5EE3 Ref'd from setup_game_data
+B $5F0E Ref'd from setup_game_data
+B $5F77 Ref'd from setup_game_data
+B $5F29 Ref'd from setup_game_data
+B $5F1C Ref'd from setup_game_data
+;
+b $6088 APPROX?! map segment - bumpy road then tunnel
+B $6088
+B $60A3
+B $60E6
+B $60EF
+B $6109
+B $6144
+;
+;B $60A5,60,2 (16x30?) looks lampposty but can't yet see it used in my tests
+;
+B $61D3 Ref'd from attract_data
+B $6208 Ref'd from attract_data
+B $625C Ref'd from attract_data
+B $6313 Ref'd from attract_data
+B $6293 Ref'd from attract_data
+B $6276 Ref'd from attract_data
 
 B $638A,160,4 Graphic: Perp w/ sunglasses face (32x40). Stored top-down.
 B $642A,20,4 Attribute data for perp.
@@ -2627,6 +2650,13 @@ W $A24A,2 Speed (0..511). Max when in lo gear =~ $E6, hi gear =~ $168, turbo =~ 
 ;
 @ $A26C label=road_pos
 W $A26C,2 Road position of car. Left..Right = $1E2...$03A, $105 is centre.
+;
+W $A26E,2 Distance in to map, increases when car moves fwd  $5EC6 for example
+W $A270,2
+W $A272,2
+W $A274,2
+W $A276,2
+W $A278,2
 
 b $A27A Font: 8x7 bitmap
 B $A27A,,7 Exclamation mark
@@ -3291,15 +3321,28 @@ B $DF62,150,15 8x15 pixels digits 0..9 only
 b $DFF8 Mini font used for in-game messages
 B $DFF8,174,6 8x6 pixels (though the digits are thinner than 8) A-Z + (probably 3 symbols)
 
-b $E1B8
+b $E0A6 TBD
 
-b $E2D2
-b $E2D5
-b $E2D9
-b $E2DD
-b $E2E2
-b $E2E7
-b $E2F3
+b $E2AA Data for perp escape scene
+B $E2AA Ref'd from perp escape scene
+B $E2AF Ref'd from perp escape scene
+B $E2B5 Ref'd from perp escape scene
+
+b $E2D2 Used after road split
+B $E2D2
+B $E2D5
+B $E2D9
+B $E2DD
+B $E2E2
+B $E2E7
+B $E2F3
+
+b $E2B8 APPROX! Split road
+B $E2B8 Ref'd by split road
+B $E2C1 Ref'd by split road
+B $E2C7 Ref'd by split road
+B $E2CC Ref'd by split road
+B $E2DC Ref'd by split road
 
 b $E34B
 B $E34B,3 3 bytes set to 8 by $880A
