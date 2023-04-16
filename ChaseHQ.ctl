@@ -1,4 +1,6 @@
-> $4000 ; ChaseHQ.ctl
+; ChaseHQ.ctl
+
+> $4000 ; ChaseHQ.skool
 > $4000 ;
 > $4000 ; This is a SkoolKit control file to disassemble the ZX Spectrum 48K version of
 > $4000 ; Chase H.Q. by Ocean Software. A home computer version of the arcade game by
@@ -144,9 +146,13 @@
 > $4000 ; - is attract mode a CPU player or a recording? how does it loop?
 > $4000 ; - exact scoring rules
 > $4000 ; - overhead tunnel type drawing
+> $4000 ;
 
-@ $4000 start
 @ $4000 org
+@ $4000 set-warnings=1
+@ $4000 start
+@ $4000 writer=:ChaseHQ.ChaseHQAsmWriter
+
 b $4000 Screen memory
 B $4000 Screen bitmap
 B $5800 Screen attributes
@@ -279,13 +285,11 @@ B $5F1C Ref'd from setup_game_data
 ;
 b $6088 APPROX?! map segment - bumpy road then tunnel
 B $6088
-B $60A3
+B $60A3 Looks like the graphic data for a lamppost but I suspect it's a height related data for the bumpy road
 B $60E6
 B $60EF
 B $6109
 B $6144
-;
-;B $60A5,60,2 (16x30?) looks lampposty but can't yet see it used in my tests
 ;
 B $61D3 Ref'd from attract_data
 B $6208 Ref'd from attract_data
@@ -445,11 +449,24 @@ B $6FC4,6,2 graphic_6eeb (16x3)
 B $6FCA,6,6 TBD
 B $6FD0,6,2 graphic_6eeb mask (16x3)
 
-
-
 ;B $7069 is the top part of a streetlamp
 ;B $73D4 looks like tree trunk
 B $73B9,10 Part of tree graphic - 16px x 5 rows (?)
+
+; more tree/bush
+B $754E,24,6 mtp 24x4?
+B $7566,18,6 mtp 24x3?
+B $7578,24,6 mtp 24x3?
+B $75B2,30,6 mtp 24x5? 24x1?
+B $75D0,12,6 mtp 24x2?
+B $75DC,18,6 mtp 24x3? 24x1?
+B $75EE,6,6 mtp 24x1?
+B $75F4,30,6 mtp 24x5?
+B $7612,12,6 mtp 24x2?
+B $761E,18,6 mtp 24x2? 24x3?
+B $7630,6,6 mtp 24x1?
+
+u $7636
 
 b $76F0 Turbo icons
 B $76F0,168,4 Three frames 16x14 each, looks like a mask-bitmap-mask-bitmap arrangement
@@ -2909,7 +2926,11 @@ c $B67C
   $B714
 
 @ $B716 label=masked_tile_plotter
-c $B716 Save #REGsp for restoration on exit
+c $B716 Masked tile plotter
+R $B716 I:BC B is rows, C could be byte width
+R $B716 I:DE ... 
+R $B716 I:HL -> data to plot
+  $B716 Save #REGsp for restoration on exit
 @ $B71C label=masked_tile_plotter_loop
   $B71F Restore original #REGsp
 @ $B724 label=masked_tile_plotter_entry
@@ -2921,7 +2942,7 @@ c $B716 Save #REGsp for restoration on exit
   $B72C OR in new pixels
   $B72D Store back to the screen
   $B72E Move to next screen pixel
-  $B72F Repeat 8 times
+  $B72F <Repeat 8 times>
   $B758 Handle end of row. This must be adjusting the screen pointer.
 
 c $B76C
@@ -3140,13 +3161,14 @@ c $C452
   $C479 B = A
   $C47C $C6B3 = A & 1
   $C47F RR B twice
-  $C483 HL = $D010
+  $C483 HL = $D010  doubtful that this is a pointer
   $C486 A = $D0
   $C487 B = $55 -- Set this to $00 and the landscape goes blank - half the time
   $C489 If B carried out earlier then jump
   $C48B HL = $0030
   $C48E B = $00
-  $C48F Self modify XOR at $C6D3 to be zero
+@ $C48F label=j_c48f
+  $C48F Self modify XOR at $C6D3 to be zero [OR $D0 -- check other code again]
   $C492 A = $00
   $C493 Self modify ADD A at $C677
   $C496 A = $30
@@ -3283,18 +3305,52 @@ B $CF8F,1 rows
 W $CF90,2 -> data
 L $CF8E,4,3
 ;
-W $CF9E,2 -> data
-W $CFA4,2 -> data
-W $CFAA,2 -> data
-W $CFB0,2 -> data
+W $CF9E,2 -> Turbo smoke plume data frame 1
+W $CFA4,2 -> Turbo smoke plume data frame 2
+W $CFAA,2 -> Turbo smoke plume data frame 3
+W $CFB0,2 -> Turbo smoke plume data frame 4
+;
+B $CFB2,,3 TBD groups of 3 bytes
 
-b $D010
+B $D027,1 7 rows high
+B $D028,1 1 byte wide
+W $D029,2 -> Cherry light
+;
+B $D02B,1 14 rows high
+B $D02C,1 3 bytes wide
+W $D02D,2 -> Flashing cherry light
+;
+B $D02F,1 20 rows high
+B $D030,1 3 bytes wide
+W $D031,2 -> Crash/spark data
+;
+B $D033,1 4 rows high
+B $D034,1 2 bytes wide
+W $D035,2 -> Graphic data (can't tell)
+;
+B $D037,1 9 rows high
+B $D038,1 2 bytes wide
+W $D039,2 -> Debris
+;
+B $D03B,1 12 rows high
+B $D03C,1 1 bytes wide
+W $D03D,2 -> More debris (perhaps)
+;
+; Sometimes plotted as 24x28 though...
+B $D03F,126,6 Arrow graphic (24x21 pixels interleaved) #HTML[#CALL:graphic($D03F)]
+B $D0BD "HERE!" graphic [not 100% sure if there's other stuff here]
+B $D0E7,14,2 Cherry light (sits on roof of car) (8x7 pixels interleaved)
+B $D0F5,84,6 Flashing cherry light (24x14 pixels interleaved)
+B $D149,120,6 Crash/spark (24x20 pixels interleaved)
+B $D1C1,16,4 Graphic (16x4 pixels)
+B $D1D1,36,4 Debris (16x9 pixels)
+B $D1F5,24,2 More debris (8x12 pixels)
 
 b $D20D Turbo smoke plume. 32x16 per frame. 4 frames. mask-bitmap arrangement.
-B $D20D
-B $D28D
-B $D30D
-B $D38D
+B $D20D Turbo smoke plume data frame 1
+B $D28D Turbo smoke plume data frame 2
+B $D30D Turbo smoke plume data frame 3
+B $D38D Turbo smoke plume data frame 4
 
 b $D40D Middle sections of hero car. 9 sets
 B $D40D,,5 Car middle 1 - 40x14px
@@ -3309,9 +3365,12 @@ B $D674,,5 Car middle 9 - 40x16px
 ;
 B $D6C4 chunks of car parts, looks 10 bytes wide
 
-b $DD6A Components of the car graphic or its shadow?. Straight on. Byte pairs of value and mask. three sets of 14 x 8 UDGs.
-b $DE12 Same, but turning.
-b $DEBA Same again, but turning hard.
+B $DB4C,80,10 (saw being plotted by masked_tile_plotter 40x8 pixels)
+
+b $DD6A Car shadow. 28x12 pixels interleaved (mask then value).
+B $DD6A Straight on
+B $DE12 Same, but turning
+B $DEBA Same again, but turning hard
 
 @ $DF62 label=ledfont
 b $DF62 LED numeric font used for scores
@@ -3322,6 +3381,13 @@ b $DFF8 Mini font used for in-game messages
 B $DFF8,174,6 8x6 pixels (though the digits are thinner than 8) A-Z + (probably 3 symbols)
 
 b $E0A6 TBD
+;
+; The arrow is used for road turn indicator AND used for "HERE!".
+; This is just the arrow.
+B $E1E5,1 3 bytes wide
+B $E1E6,1 21 rows high
+W $E1E7,2 -> Arrow
+;
 
 b $E2AA Data for perp escape scene
 B $E2AA Ref'd from perp escape scene
