@@ -200,8 +200,15 @@ W $5CF2,2 Address of perp's mugshot bitmap
 @ $5CF4 label=ground_colour
 W $5CF4,2 Screen attributes used for the ground colour (a pair of matching bytes)
 ;
-W $5CF6,18,2 TBD - likely addresses used by $AC1F
-  $5D08 TBD
+;W $5CF6,18,2 TBD - likely addresses used by $AC1F
+W $5CF6,2 TBD
+W $5CF8,2 Loaded by $900F. Point to array of 7 byte entries.
+W $5CFA,2 TBD
+W $5CFC,2 TBD
+W $5CFE,2 <turn sign lods>
+W $5D00,2 TBD
+W $5D02,2 TBD
+W $5D04,2 -> Nancy's report
 
 w $5D0C Table of addresses of LODs (levels of detail - a set of sprites of various sizes representing the same object).
 @ $5D0C label=lods_table
@@ -263,17 +270,103 @@ W $5E34,2 Back buffer address
 W $5E36,2 Attribute address
 T $5E38,6 "MURDER"
 
-b $5E3E Graphics. All are stored inverted except where noted.
-B $5E3E,2 TBD
-B $5E40,1 TBD
-W $5E41,2 Address of tumbleweed LODs table
-B $5E43,1 TBD
-W $5E44,2 Address of another LOD table
-B $5E46 TBD these bytes seem to get hit when we're in the tunnel ... the lights?
-B $5E5B hit all the time must be tree/bush defs or LODs
-W $5E7D,2 -> car_lods
+b $5E3E Graphics definitions
+; All are stored inverted except where noted.
+W $5E41,2 Address of tumbleweed_lods table
+W $5E44,2 Address of barrier_lods table
+
+; Entry 0 does not look plausible.
+;
+N $5E49 Entry 1
+W $5E49,2 Arg for routine passed in DE
+W $5E4B,2 -> Routine at $9252
+B $5E4D,3 TBD
+;
+N $5E50 Entry 2 (empty?)
+W $5E50,2 No arg?
+W $5E52,2 No routine?
+B $5E54,3 TBD
+;
+N $5E57 Entry 3
+W $5E57,2 Arg for routine passed in DE
+W $5E59,2 -> Routine at $9171
+B $5E5B,3 TBD - remaining bytes of this entry
+;
+N $5E5E Entry 4
+W $5E5E,2 Arg for routine passed in DE
+W $5E60,2 -> Routine at $9171. Loaded into HL at $9017 then jumped to.
+B $5E62,3 TBD - remaining bytes of this entry
+;
+N $5E65 Entry 5
+W $5E65,2 Arg for routine passed in DE
+W $5E67,2 -> Routine at $9171
+B $5E69,3 TBD - remaining bytes of this entry
+;
+N $5E6C Entry 6
+W $5E6C,2 Arg for routine passed in DE
+W $5E6E,2 -> Routine at $9171
+B $5E70,3 TBD - remaining bytes of this entry
+;
+N $5E73 Entry 7
+W $5E73,2 Arg for routine passed in DE
+W $5E75,2 -> Routine at $9171
+B $5E77,3 TBD - remaining bytes of this entry
+;
+N $5E7A Entry 8
+W $5E7A,2 Arg for routine passed in DE
+W $5E7C,2 Routine?
+;W $5E7D,2 -> car_lods could be coincidence?
+B $5E7E,3 TBD - remaining bytes of this entry
+;
+N $5E81 Entry 9 (turn sign)
 W $5E81,2 -> -> turn_sign_lods
-B $5E91 TBD
+W $5E83,2 -> Routine at $92E1
+B $5E85,3 TBD
+;
+N $5E88 Entry 10
+W $5E88,2 Arg
+W $5E8A,2 -> Routine at $924D
+B $5E8C,3 TBD
+;
+N $5E8F Entry 11
+W $5E8F,2 No arg?
+W $5E91,2 No routine?
+B $5E93,3 TBD
+;
+N $5E96 Entry 12
+W $5E96,2 Arg
+W $5E98,2 -> Routine at $916C
+B $5E9A,3 TBD
+;
+N $5E9D Entry 13
+W $5E9D,2 Arg
+W $5E9F,2 -> Routine at $916C
+B $5EA1,3 TBD
+;
+N $5EA4 Entry 14
+W $5EA4,2 Arg
+W $5EA6,2 -> Routine at $916C
+B $5EA8,3 TBD
+;
+N $5EAB Entry 15
+W $5EAB,2 Arg
+W $5EAD,2 -> Routine at $916C
+B $5EAF,3 TBD
+;
+N $5EB2 Entry 16
+W $5EB2,2 Arg
+W $5EB4,2 -> Routine at $916C
+B $5EB6,3 TBD
+;
+N $5EB9 Entry 17
+W $5EB9,2 Arg
+W $5EBB,2 -> Routine at $9278
+B $5EBD,3 TBD
+;
+N $5EC0 Entry 18 (turn sign)
+W $5EC0,2 Arg
+;
+; either there's overlap here or something is 1-indexed
 ;
 b $5EC3 Initial map segment
 B $5EC3 Ref'd from setup_game_data
@@ -382,6 +475,8 @@ B $6AF4,2 Dust mask interleaved (8x2)
 W $6AF6,2 -> turn_sign_lods
 B $6AF8 TBD
 ;
+B $6B0C Ref'd by graphic entry 8 and 17
+;
 @ $6B22 label=turn_sign_lods
 B $6B22,1 Width (bytes)
 B $6B23,1 Flags
@@ -427,8 +522,9 @@ B $6E87,18,2 Barrier (16x9)
 B $6E99,28,4 Barrier interleaved (16x2x7)
 B $6EB5,28,4 Mask for barrier interleaved (16x2x7)
 
-B $6ED1 TBD
+b $6ED1 Ref'd by graphic entry 6
 W $6EEB,2 Address of another LOD table
+B $6EDE Ref'd by graphic entry 15
 
 B $6F17,1 Width (bytes)
 B $6F18,1 Flags
@@ -449,22 +545,32 @@ B $6FC4,6,2 graphic_6eeb (16x3)
 B $6FCA,6,6 TBD
 B $6FD0,6,2 graphic_6eeb mask (16x3)
 
+b $6FDC Ref'd by graphic entry 7
+b $6FE6 Ref'd by graphic entry 16
+b $70F6 Ref'd by graphic entry 4 and 13
+b $7106 Ref'd by graphic entry 5 and 14
+
 ;B $7069 is the top part of a streetlamp
 ;B $73D4 looks like tree trunk
 B $73B9,10 Part of tree graphic - 16px x 5 rows (?)
 
-; more tree/bush
-B $754E,24,6 mtp 24x4?
-B $7566,18,6 mtp 24x3?
-B $7578,24,6 mtp 24x3?
-B $75B2,30,6 mtp 24x5? 24x1?
-B $75D0,12,6 mtp 24x2?
-B $75DC,18,6 mtp 24x3? 24x1?
-B $75EE,6,6 mtp 24x1?
-B $75F4,30,6 mtp 24x5?
-B $7612,12,6 mtp 24x2?
-B $761E,18,6 mtp 24x2? 24x3?
-B $7630,6,6 mtp 24x1?
+; more tree/bush graphics
+B $74AE,120,12 Graphic 48x10 pixels [top of tree?]
+;B $74B0,120,12 saw hit but can't explain
+B $7526,40,8 Graphic 32x5 pixels
+B $754E,24,6 Graphic 24x4 pixels
+B $7566,18,6 Graphic 24x3 pixels
+B $7578,18,6 Graphic 24x3 pixels
+B $758A,24,4 Graphic 16x6 pixels
+B $75A2,16,4 Graphic 16x4 pixels
+B $75B2,30,6 Graphic 24x5 pixels (also used as 24x1 24x2)
+B $75D0,12,6 Graphic 24x2 pixels
+B $75DC,18,6 Graphic 24x3 pixels (also used as 24x1 24x2)
+B $75EE,6,6 Graphic 24x1 pixels
+B $75F4,30,6 Graphic 24x5 pixels (also used as 24x1)
+B $7612,12,6 Graphic 24x2 pixels
+B $761E,18,6 Graphic 24x3 pixels (also used as 24x2)
+B $7630,6,6 Graphic 24x1 pixels
 
 u $7636
 
@@ -505,6 +611,8 @@ b $77D8
   $7D3D,20,4 Attribute data for above.
   $7D51,160,4 Graphic: Tony's face (32x40). Stored top-down.
   $7DF1,20,4 Attribute data for above.
+
+b $7E05 Ref'd by graphic entry 3 and 12
 
 b $8000 temporaries?
   $8000,1 Test mode enable flag (cheat mode)
@@ -1473,6 +1581,7 @@ N $8F4F It rolled over
   $8F5E Return
 
 c $8F5F
+  $9003 DE = E * 7
   $900B Push return address onto stack
   $901C <return>
 
@@ -1491,8 +1600,10 @@ c $924D
 
 c $9278
 
-c $92E1
+c $92E1 Drives the sprite plotters  WHAT CALLS THIS PROB $901B
+  $93D3,3 Exit via plot_masked_sprite
   $93D6,3 Exit via plot_sprite
+  $93D9,3 Exit via plot_masked_sprite_flipped
   $93DC,3 Exit via plot_sprite_flipped
   $93E8,4 #REGix = Base of jump table
   $9496 E = -E
@@ -1575,7 +1686,7 @@ N $952E Decrement the screen address
   $953F Loop back to ps_odd_loop
 
 @ $9542 label=plot_sprite_flipped
-c $9542 Sprite plotter for back buffer, with flipping
+c $9542 Sprite plotter for back buffer, which flips
   $9542 TBD
 
 @ $9618 label=rng
@@ -2925,27 +3036,28 @@ c $B67C
   $B711 Set loop counter for 15 iterations?
   $B714
 
-@ $B716 label=masked_tile_plotter
-c $B716 Masked tile plotter
-R $B716 I:BC B is rows, C could be byte width
-R $B716 I:DE ... 
-R $B716 I:HL -> data to plot
+@ $B716 label=plot_masked_sprite
+c $B716 Masked sprite plotter
+D $B716 This plots a lot of the game's masked graphics.
+D $B716 The stack points to pairs of bitmap and mask bytes and HL must point to the screen buffer. Uses AND-OR type masking. Proceeds left-right. Doesn't flip the bytes so there must be an alternative for that.
+R $B716 I:B  Rows
+R $B716 I:DE Stride (e.g. 10 for 40px wide)
+R $B716 I:HL Address of data to plot
   $B716 Save #REGsp for restoration on exit
-@ $B71C label=masked_tile_plotter_loop
+@ $B71C label=plot_masked_sprite_loop
   $B71F Restore original #REGsp
-@ $B724 label=masked_tile_plotter_entry
-  $B729 Masked tile plotter. The stack points to pairs of bitmap and mask bytes and HL must point to the screen buffer. Uses AND-OR type masking. Proceeds left-right. Doesn't flip the bytes so there must be an alternative for that.
-@ $B729 label=masked_tile_plotter_core_thingy
-  $B729 Load a bitmap and mask pair (D,E)
-  $B72A Load the screen pixels
-  $B72B AND screen pixels with mask
-  $B72C OR in new pixels
-  $B72D Store back to the screen
+@ $B724 label=plot_masked_sprite_entry
+  $B724,1 Point #REGhl at the graphic data
+@ $B729 label=plot_masked_sprite_core_thingy
+  $B729 Load a bitmap and mask pair (#REGd,#REGe)
+  $B72A Load the screen pixels and AND with mask
+  $B72C OR in new pixels and store back to screen
   $B72E Move to next screen pixel
   $B72F <Repeat 8 times>
   $B758 Handle end of row. This must be adjusting the screen pointer.
 
-c $B76C
+@ $B76C label=plot_masked_sprite_flipped
+c $B76C Masked sprite plotter which flips
   $B76C #REGde = #REGa
   $B76F #REGhl += #REGde
   $B770
@@ -2956,8 +3068,8 @@ c $B76C
   $B77F Add to IX
   $B784,2 H = $EF
   $B794 Return
+;
 B $B79C TBD
-N $B7A4 Masked tile plotter with flipping
   $B7A4 Load a bitmap and mask pair (B,C)
   $B7A5 Set flip table index (assuming table is aligned)
   $B7A6 Load the screen pixels
@@ -2970,8 +3082,8 @@ N $B7A4 Masked tile plotter with flipping
   $B7DB Handle end of row. This must be adjusting the screen pointer.
 
 c $B7EF
-  $B7EF self modify $B71F - exit of masked_tile_plotter
-  $B7F3 IX = &masked_tile_plotter_core_thingy (jump table)
+  $B7EF self modify $B71F - exit of plot_masked_sprite
+  $B7F3 IX = &plot_masked_sprite_core_thingy (jump table)
   $B7F7 A = 8 - A
   $B7FA IX += A * 6
   $B803 B = $0F
@@ -3001,7 +3113,7 @@ c $B7EF
   $B81F
   $B820 D--
   $B821 E = -E
-  $B825 JP masked_tile_plotter_entry
+  $B825 JP plot_masked_sprite_entry
 
 b $B828 breaks/crashes road rendering if messed with
 
@@ -3336,11 +3448,11 @@ B $D03B,1 12 rows high
 B $D03C,1 1 bytes wide
 W $D03D,2 -> More debris (perhaps)
 ;
-; Sometimes plotted as 24x28 though...
+; Sometimes plotted as 24x28 when it's "HERE! + Arrow"
 B $D03F,126,6 Arrow graphic (24x21 pixels interleaved) #HTML[#CALL:graphic($D03F)]
 B $D0BD "HERE!" graphic [not 100% sure if there's other stuff here]
-B $D0E7,14,2 Cherry light (sits on roof of car) (8x7 pixels interleaved)
-B $D0F5,84,6 Flashing cherry light (24x14 pixels interleaved)
+B $D0E7,14,2 Cherry light (sits on roof of car) 8x7 pixels interleaved
+B $D0F5,84,6 Illuminated cherry light 24x14 pixels interleaved
 B $D149,120,6 Crash/spark (24x20 pixels interleaved)
 B $D1C1,16,4 Graphic (16x4 pixels)
 B $D1D1,36,4 Debris (16x9 pixels)
@@ -3353,21 +3465,30 @@ B $D30D Turbo smoke plume data frame 3
 B $D38D Turbo smoke plume data frame 4
 
 b $D40D Middle sections of hero car. 9 sets
-B $D40D,,5 Car middle 1 - 40x14px
-B $D453,,5 Car middle 2 - 40x17px
-B $D4A8,,5 Car middle 3 - 40x16px
-B $D4F8,,5 Car middle 4 - 40x14px
-B $D53E,,5 Car middle 5 - 40x17px
-B $D593,,5 Car middle 6 - 40x15px
-B $D5DE,,5 Car middle 7 - 40x14px
-B $D624,,5 Car middle 8 - 40x16px
-B $D674,,5 Car middle 9 - 40x16px
+B $D40D,70,5 Graphic 40x14 pixels [Car middle 1]
+B $D453,85,5 Graphic 40x17 pixels [Car middle 2]
+B $D4A8,80,5 Graphic 40x16 pixels [Car middle 3]
+B $D4F8,70,5 Graphic 40x14 pixels [Car middle 4]
+B $D53E,85,5 Graphic 40x17 pixels [Car middle 5]
+B $D593,75,5 Graphic 40x15 pixels [Car middle 6]
+B $D5DE,70,5 Graphic 40x14 pixels [Car middle 7]
+B $D624,80,5 Graphic 40x16 pixels [Car middle 8]
+B $D674,80,5 Graphic 40x16 pixels [Car middle 9]
 ;
-B $D6C4 chunks of car parts, looks 10 bytes wide
+B $D6C4,90,10 Graphic 40x9 pixels interleaved [top of car]
+B $D71E,60,10 Graphic 40x6 pixels interleaved [bottom of car]
 
-B $DB4C,80,10 (saw being plotted by masked_tile_plotter 40x8 pixels)
+B $D75A,28,2 Graphic 8x14 pixels interleaved
+B $D776,28,2 Graphic 8x14 pixels interleaved
 
-b $DD6A Car shadow. 28x12 pixels interleaved (mask then value).
+B $DB4C,80,10 Graphic TBD 40x8 pixels interleaved
+B $DB9C,60,10 Graphic TBD 40x6 pixels interleaved
+B $DBD8,26,2 Graphic TBD 8x13 pixels interleaved
+B $DBF2,28,2 Graphic TBD 8x14 pixels interleaved
+
+B $DC0E TBD
+
+b $DD6A Car shadow. All are 28x12 pixels interleaved (mask then value).
 B $DD6A Straight on
 B $DE12 Same, but turning
 B $DEBA Same again, but turning hard
@@ -3378,16 +3499,20 @@ B $DF62,150,15 8x15 pixels digits 0..9 only
 
 @ $DFF8 label=minifont
 b $DFF8 Mini font used for in-game messages
-B $DFF8,174,6 8x6 pixels (though the digits are thinner than 8) A-Z + (probably 3 symbols)
+B $DFF8,186,6 8x6 pixels (though the digits are thinner than 8) A-Z + (probably 3 symbols)
 
-b $E0A6 TBD
+b $E0B2 Graphics defns
+B $E0B2,,7 <Byte width, Flags, Height, Ptr, Ptr>
+B $E1DF,,5 <Byte width, Flags, Height, Ptr>
 ;
 ; The arrow is used for road turn indicator AND used for "HERE!".
 ; This is just the arrow.
-B $E1E5,1 3 bytes wide
-B $E1E6,1 21 rows high
-W $E1E7,2 -> Arrow
+;B $E1E5,1 3 bytes wide
+;B $E1E6,1 21 rows high
+;W $E1E7,2 -> Arrow
 ;
+
+b $E1E9 Ref'd by graphic entry 1 and 10
 
 b $E2AA Data for perp escape scene
 B $E2AA Ref'd from perp escape scene
