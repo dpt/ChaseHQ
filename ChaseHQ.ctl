@@ -209,6 +209,7 @@ W $5CFE,2 <turn sign lods>
 W $5D00,2 TBD
 W $5D02,2 TBD
 W $5D04,2 -> Nancy's report
+W $5D06,2 -> Arrest messages
 
 w $5D0C Table of addresses of LODs (levels of detail - a set of sprites of various sizes representing the same object).
 @ $5D0C label=lods_table
@@ -250,30 +251,39 @@ T $5DBF,46 "VEHICLE IS A WHITE BRITISH SPORTS CAR... OVER."
 b $5DED Messages - Arrest
 B $5DED,1 Frame delay until first message?
 B $5DEE,1 Frame delay until next message?
+;
 B $5DEF,1 Flags (?)
 B $5DF0,1 Attribute (black)
 W $5DF1,2 Back buffer address
 W $5DF3,2 Attribute address
 T $5DF5,27 "OK! YOU ARE UNDER ARREST ON"
-;
 B $5E10,1 Frame delay until next message?
+;
 B $5E11,1 Flags (?)
 B $5E12,1 Attribute (black)
 W $5E13,2 Back buffer address
 W $5E15,2 Attribute address
 T $5E17,26 "SUSPICION OF FIRST DEGREE "
-;
 B $5E31,1 Frame delay until next message?
+;
 B $5E32,1 Flags (?)
 B $5E33,1 Attribute (black)
 W $5E34,2 Back buffer address
 W $5E36,2 Attribute address
 T $5E38,6 "MURDER"
+B $5E3E,1 Frame delay until next message?
 
-b $5E3E Graphics definitions
-; All are stored inverted except where noted.
+b $5E3F Graphics or object? definitions
+D $5E3F All are stored inverted except where noted.
+B $5E3F Pointed to by $5CFA
+;
+b $5E40 Pointed to by $5CF6
+B $5E40,1
 W $5E41,2 Address of tumbleweed_lods table
+B $5E43,1
 W $5E44,2 Address of barrier_lods table
+;
+
 
 ; Entry 0 does not look plausible.
 ;
@@ -2696,15 +2706,20 @@ W $A171,2 seems to be the horizon level, possibly relative (used during attract 
   $A181,4 Distance. Stored as one digit per byte.
 W $A186,2 Attribute address of horizon. Points to last attribute on the line which shows the ground. (e.g. $59DF)
 ;
-  $A188,1 Set by $843B. Groups of 20 bytes. This area looks like a table of spawned vehicles or objects.
-  $A189,1 looks distance related
-W $A191,2 Address of car_lods
-W $A195,2 Set to $190 by fully_smashed
-  $A19C,20
-  $A1B0,20
-  $A1C4,20
-  $A1D8,20
-  $A1EC,20
+@ $A188 label=hazards
+  $A188,120,20 Set by $843B. Groups of 20 bytes. This area looks like a table of spawned vehicles or objects.
+; +0 is a used flag, either $00 or $FF
+; +1 looks distance related
+; +5 TBD
+; +8 gets copied from the hazards table
+; +9 address of e.g. car_lods
+; +13 set to $190 by fully_smashed (likely a horizontal position)
+;  $A19C,20
+;  $A1B0,20
+;  $A1C4,20
+;  $A1D8,20
+;  $A1EC,20
+;
   $A200 TBD
 ;$A19D+ Memory gets wiped
 ;
@@ -2829,41 +2844,108 @@ c $AB33
 
 c $AB9A
 
-@ $ABF6 label=perhaps_spawn_obj
-c $ABF6 Feels like a 'spawn a car' routine or hazards?
-R $ABF6 I:B $20/$46/$56/$50/$B4
-R $ABF6 I:DE always seems to be 3
-  $ABF6
-  $ABF7 B = 6
-  $ABF9 LD HL,$A188  table of spawned vehicles/objs?
-  $ABFC DE = 20      could be a stride?
-@ $ABFF label=j_abff
-  $ABFF RLC (HL)     possibly a quick test for flag, if flag is 0 or $FF ?
-  $AC01 Jump to j_ac08 if it didn't carry
-  $AC03 HL += DE     move to next slot
-  $AC04 Loop while (B)
-  $AC06
+@ $ABF6 label=spawn_hazards
+c $ABF6 Spawns hazards in the road, like barriers and tumbleweeds.
+R $ABF6 I:B Stored at entry+5  e.g. $20/$46/$56/$50/$B4
+R $ABF6 I:C Stored at entry+1  e.g. $13
+R $ABF6 I:DE Is an offset into a hazards data table (0 => tumbleweed, 3 => barrier)
+  $ABF6 Bank entry registers
+  $ABF7 6 iterations
+  $ABF9 Point #REGhl at hazards table
+  $ABFC Stride of 20 bytes
+@ $ABFF label=sh_loop
+  $ABFF Check the flag byte to see if the entry is used (it's either $00 if empty, or $FF if used, so rotating it in place is not a problem)
+  $AC01 Jump to sh_found_spare if it didn't carry
+  $AC03 Move to the next entry
+  $AC04 Loop while iterations remain
+  $AC06 TBD
   $AC07 Return
 ;
-@ $AC08 label=j_ac08
-  $AC08 IX = HL
-  $AC0B Zero the 20 bytes at #REGhl
-  $AC15
-  $AC16 LD HL,$AC3C  - behaviour or render routine perhaps?
-  $AC19 IX[12] = H
-  $AC1C IX[11] = L
-  $AC1F HL = *$5CF6 + DE
-  $AC23 IX[8] = *HL++
-  $AC28 IX[9] = *HL++
-  $AC2D IX[10] = *HL
-  $AC31 IX[5] = B
-  $AC34 IX[1] = C
-  $AC37 IX[0] = $FF   - slot is active
+@ $AC08 label=sh_found_spare
+N $AC08 #REGhl points to the unused entry
+  $AC08 #REGix = #REGhl
+  $AC0B Zero 20 bytes at #REGhl
+  $AC15 Restore entry registers
+  $AC16 wordat(IX + 11) = Address of $AC3C routine
+  $AC1F Point #REGhl at the hazards data table entry (*$5CF6 -> $5E40 + 3)
+  $AC23 Copy flag TBD
+  $AC28 Copy lod address (e.g. tumbleweed_lods)
+  $AC31 IX[5] = B TBD
+  $AC34 IX[1] = C TBD
+  $AC37 Mark the entry as used
   $AC3B Return
 
-c $AC3C
+@ $AC3C label=hazard_hit
+c $AC3C Collision with hazard
+  $AC3C A = IX[15]
+  $AC3F If A goto ac92
+  $AC42 A = IX[7]
+  $AC45 If A == 0 return
+  $AC47 DE = speed
+  $AC4B If A < 0 DE = 280
+  $AC51 BC = DE
+  $AC53 HL = $AD03
+  $AC56 A = D
+  $AC57 E ROL 1   doubling speed?
+  $AC59 A ROL 1
+  $AC5A A &= 3
+  $AC5C RR D
+  $AC5E D = 0
+  $AC60 A = A + D + carry
+  $AC61 A *= 2
+  $AC62 E = A   it's an offset
+  $AC63 HL += DE
+  $AC64 A = *HL
+  $AC65 IX[17] = A
+  $AC68 HL++
+  $AC69 A = *HL   something weird happening here in debugger
+  $AC6A IX[18] = A
+  $AC6D SLA C
+  $AC6F RL B
+  $AC71 A = B
+  $AC72 If A >= 2 BC = 350
+  $AC79 IX[13] = C
+  $AC7C IX[7]++
+  $AC7F JR Z,$AC84
+  $AC81 IX[14] = B
+  $AC84 IX[1]++
+  $AC87 BC = $0503
+  $AC8A Call sfx_related
+  $AC8D A = 2
+  $AC8F IX[15] = A
+  $AC92 A--
+  $AC93 If A == 0 return
+  $AC94 HL = $ACDB
+  $AC97 BC = IX[17]
+  $AC9C HL += BC
+  $AC9D A = *HL
+  $AC9E IX[16] = A
+  $ACA1 IX[17]++
+  $ACA4 H = IX[14]
+  $ACA7 L = IX[13]
+  $ACAA DE = HL
+  $ACAC SRL D
+  $ACAE RR E
+  $ACB0 SRL E
+  $ACB2 SRL E
+  $ACB4 SRL E
+  $ACB6 SRL E
+  $ACB8 SBC HL,DE
+  $ACBA IX[14] = H
+  $ACBD IX[13] = L
+  $ACC0 A = IX[19]
+  $ACC3 A ^= 1
+  $ACC5 IX[19] = A
+  $ACC8 IX[18]--
+  $ACCB RET NZ
+  $ACCC IX[13] = 0
+  $ACCD IX[14] = 0
+  $ACD3 IX[19] = 1
+  $ACD7 IX[15] = 1
+  $ACDA Return
 
 b $ACDB
+B $AD03 Used above
 
 c $AD0D
 
