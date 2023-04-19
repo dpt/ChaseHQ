@@ -888,7 +888,7 @@ c $8401 Main loop
   $8439 $A188 = $FF  I suspect this keeps the perp spawned
   $843E LD HL,$81DD   ;
   $8441 message related
-  $8444 TBD
+  $8444 Call drive_sfx
   $8447 Call keyscan
   $844A TBD - has TIME UP and missing restart stuff
   $844D TBD - has quit handling
@@ -1015,7 +1015,7 @@ c $852A CPU driver
   $8586 CALL $8F5F    ;
   $8589 JP $B318      ;
 
-c $858C
+c $858C Probably the "CHASE HQ MONITORING SYSTEM" pre-game screen
 b $85DD
 
 c $85E4
@@ -1111,20 +1111,21 @@ c $88D5 Clears the game screen attributes to zero
 @ $88E2 label=clear_game_screen
 c $88E2 Clears the game screen attributes and the game screen to zero
 
-@ $88F2 label=sfx_related
-c $88F2 Sound effect related
+@ $88F2 label=start_sfx
+c $88F2 Starts a sound effect
 R $88F2 I:BC e.g. $0704 $0801 $0604
-  $88F2 If $A238 is zero then goto $88FA
+  $88F2 If $A238 is zero then goto sfx_related_assign
   $88F8 Return if $A238 < C
-  $88FA $A237 = B
-  $88FE $A238 = C
+@ $88FA label=sfx_related_assign
+  $88FA wordat($A237) = BC
   $8902 Return
 
-c $8903 Sound effect driver
+@ $8903 label=drive_sfx
+c $8903 Drives sound effects
   $8903 If $A23B != 0 goto $8916
   $8909 *$A23D |= *$A23C
   $8910 Counters?
-  $8913 CALL NZ, sfx_related
+  $8913 CALL NZ, start_sfx
 ;
   $8916 Call engine sound effect routine (via 128K hook)
   $8919 Call sound effect routine (via 128K hook)
@@ -2356,14 +2357,16 @@ c $9DF4 Toggle the light's BRIGHT bit (#REGhl -> attrs)
 c $9E11
   $9E11 If no turbos jump to plot_scores_only
   $9E17 C = number of turbos
+  $9E18 Read boost time remaining & set flags
   $9E1C Base of turbo sprites
+  $9E1F Skip turbo sprite address calculation if possible
   $9E2E 56 bytes per sprite
   $9E31 Must be a sprite index
   $9E32 Find frame
   $9E35
   $9E3E Base of turbo sprites
   $9E44 must be the sp trick
-  $9E4E plots turbos
+  $9E4E Plots turbos
 @ $9E7B label=plot_scores_only
   $9E7B Point #REGde at speed digits screen position
   $9E7F #REGde = speed
@@ -2371,22 +2374,28 @@ c $9E11
   $9EB6 Plot a digit
   $9EBA Plot a digit
   $9EBE Plot a digit
-  $9F03 Point #REGde at distance digits screen position (136,33)
-  $9F12 Point #REGde at score digits screen position
-  $9F16 Point #REGde at score (four BCD bytes)
-  $9F19 Point #REGhl at score digits (eight bytes)
-  $9F1E C = A = *DE; A >>= 4; if (A == *HL) ...
+  $9EC1,3 Point #REGde at time digits screen position
+  $9ED0,3 Point #REGde at distance digits (two BCD bytes)
+  $9EF1 
+  $9F03,3 Point #REGde at distance digits screen position (136,33)
+  $9F07,3 Point #REGde at distance digits (two BCD bytes)
+  $9F0A,3 Point #REGhl at distance_digits + 3
+  $9F12,3 Point #REGde at score digits screen position
+  $9F16,3 Point #REGde at score (four BCD bytes)
+  $9F19,3 Point #REGhl at score digits (eight bytes)
+N $9F1E Does the plotting.
+  $9F1E Read a pair of source digits (BCD)
   $9F1F Keep for later
+  $9F20 Unpack a BCD digit
   $9F26 If different than stored then plot
   $9F2D Examine next digit
   $9F30 If different than stored then plot
-  $9EC1 Point #REGde at time digits position
   $9F3B Update new digit
   $9F3C Done
   $9F3C Plot a digit
-  $9F45 Plot a digit
   $9F3F Next digit (second half of a pair)
   $9F45 Next digit (next pair)
+  $9F45 Plot a digit
 
 @ $9F47 label=ledfont_plot
 c $9F47 Plots an LED font digit
@@ -2707,13 +2716,18 @@ W $A171,2 seems to be the horizon level, possibly relative (used during attract 
 W $A186,2 Attribute address of horizon. Points to last attribute on the line which shows the ground. (e.g. $59DF)
 ;
 @ $A188 label=hazards
-  $A188,120,20 Set by $843B. Groups of 20 bytes. This area looks like a table of spawned vehicles or objects.
+  $A188,120 Set by $843B. Groups of 20 bytes. This area looks like a table of spawned vehicles or objects.
 ; +0 is a used flag, either $00 or $FF
 ; +1 looks distance related
 ; +5 TBD
-; +8 gets copied from the hazards table
-; +9 address of e.g. car_lods
-; +13 set to $190 by fully_smashed (likely a horizontal position)
+; +7 byte  TBD used by hazard_hit
+; +8 byte  gets copied from the hazards table
+; +9 word  address of e.g. car_lods
+; +13 word  set to $190 by fully_smashed (likely a horizontal position)
+; +15 byte  TBD used by hazard_hit, counter which gets set to 2 then reduced
+; +17 byte  TBD used by hazard_hit, indexes table $ACDB
+; +18 byte  TBD used by hazard_hit
+; +19 byte  TBD used by hazard_hit
 ;  $A19C,20
 ;  $A1B0,20
 ;  $A1C4,20
@@ -2723,10 +2737,28 @@ W $A186,2 Attribute address of horizon. Points to last attribute on the line whi
   $A200 TBD
 ;$A19D+ Memory gets wiped
 ;
-  $A220,1 Set to $F8 when the CHQ MONITORING SYSTEM screen is being shown. (draw_screen uses this to skip for some work, just tests for non-zero). #R$8014 sets this to the level number.
+  $A220,1 #R$8014 sets this to the level number that it's going to load [but I don't see it using it again]. #R$858C sets it to $F8. #R$BC3E uses it to avoid some work.
+;
+  $A221,1 $ABCE, $AD0D reads  I don't yet see what writes it.
+;
+  $A222,1 $8F9A reads  $ADA0, $AE83, $AF41 writes
+;
   $A223,1 Stage number as shown. Stored as ASCII.
+;
+  $A224,1 $AAC6, $AB33 reads  $AB96, $C013 writes
+;
+  $A225,1 $A7F7, $A8D3 reads  $C01A writes
+;
+  $A226,1 $BA91 reads  $C026 writes
+;
+  $A227,1 $8FCE reads  $C021 writes
+;
+  $A228,1 $B421 reads  $B4C8 writes
+;
   $A229,1 <Timing related?>
+;
   $A22A,1 Used by $B6D6 and others
+;
   $A22B,1 Used by $9D2E and others. Stops overtake bonus working.
 ;
 @ $A22C label=bonus_flag
@@ -2752,38 +2784,79 @@ W $A186,2 Attribute address of horizon. Points to last attribute on the line whi
   $A233,1 Smash counter (0..20)
 ;
   $A234,1 Cycles 0/1/2/3 as the game runs.
+;
   $A235,1 ... light toggle flashing related? seems to cycle 0/1 as the game runs.
+;
   $A236,1
+;
+N $A237 These seem to get altered even when no sound is being produced.
+@ $A237 label=sfx_0
   $A237,1 Used by $88F2
+@ $A238 label=sfx_1
   $A238,1 Used by $88F2
-  $A23B,1 loaded by $821d,$8903,$c0ee,$fd21 set by $C102
-  $A23C,1 Used by $8909
-  $A23D,1
-  $A23E,1 written by $B322
+;
+  $A239,1 Used by $F265
+;
+  $A23A,1 Used by $F2F6
+;
+  $A23B,1 loaded by $821d, drive_sfx, $c0ee, $fd21 set by $C102
+;
+  $A23C,1 $8909, $BE28 reads  $A3FA, $BDFF, $BE2C writes
+;
+  $A23D,1 $BE33 reads  $890F, $A3D2, $BDFC, $BE37 writes
+;
+  $A23E,1 $B104, $B40C reads  $A3FD, $A52A, $B07D, $B322, $B404, $B443 writes
+;
   $A23F,1 numerous references, seems related to level position
+;
 W $A240,2 Used by $B8F6, $BBF7, $87E0  seems to point at $EE00..$EEFF
-  $A248,1 Used by $C452
-  $A249,1 Counter used by $BB6E
+;
+  $A242,1 $BE3E reads  $BC17, $BE7D writes
+;
+  $A243,1 $BE90 reads  $BC1A, $BECF writes
+;
+  $A244,1 $BF9E reads  $BC1D, $BFDD writes
+;
+  $A245,1 $BF55 reads  $BC20, $BF94 writes
+;
+  $A246,1 $BFE7 reads  $BC23, $C055 writes
+;
+  $A247,1 $BEDB reads  $BC26, $BF15, $BF29 writes
+;
+  $A248,1 $A955 reads  $C457, $C526 writes
+;
+  $A249,1 $A539, $B988, $BAE0, $BB6E reads  $BA89, $BC2C writes
 ;
 @ $A24A label=speed
 W $A24A,2 Speed (0..511). Max when in lo gear =~ $E6, hi gear =~ $168, turbo =~ $1FF.
 ;
-  $A24D,1 written by $B32A
+  $A24C,1 $B1B7 reads  $B1E4 writes
+;
+  $A24D,1 $B3B4, $B432 reads  $B2E5, $B314, $B32A writes
 ;
 @ $A24E label=boost
   $A24E,1 Turbo boost time remaining (60..0)
 ;
+  $A24F,1 $8BDF, $B070, $B0D4, $B3BA writes ... but no readers?
+;
   $A250,1 Turn severity (0/1/2)
+;
   $A251,1 Some sort of flip flag used for car rendering (observed 0/1)
-  $A252,1
+;
+  $A252,1 TBD
 ;
 @ $A253 label=gear
   $A253,1 0 => Low gear, 1 => High gear
 ;
   $A254,1 Cleared by $884B
+;
+@ $A255 label=distance_bcd
+  $A255,2 $9F1E reads  $9EF1 writes
+;
+  $A257,1 ...
+;
   $A258,1 Used by $B8D8
   $A259,1 Used by $B92B
-  $A256,1 Distance related perhaps?
   $A25A,1 Used by $B8D2
   $A25C,1 Used by $B84E
   $A25D,1 Used by $B85D
@@ -2840,7 +2913,7 @@ c $AAC6
 
 c $AB33
   $AB52 Point #REGhl at pilot "turn left" messages
-  $AB59 Point #REGhl at pilet "turn right" messages
+  $AB59 Point #REGhl at pilot "turn right" messages
 
 c $AB9A
 
@@ -2876,80 +2949,62 @@ N $AC08 #REGhl points to the unused entry
   $AC3B Return
 
 @ $AC3C label=hazard_hit
-c $AC3C Collision with hazard
-  $AC3C A = IX[15]
-  $AC3F If A goto ac92
-  $AC42 A = IX[7]
-  $AC45 If A == 0 return
-  $AC47 DE = speed
-  $AC4B If A < 0 DE = 280
-  $AC51 BC = DE
-  $AC53 HL = $AD03
-  $AC56 A = D
-  $AC57 E ROL 1   doubling speed?
-  $AC59 A ROL 1
-  $AC5A A &= 3
-  $AC5C RR D
+c $AC3C Test for collision with hazard
+R $AC3C I:IX Address of hazard structure ($A188+)
+  $AC3C IX[15] appears to be a delay of some sort
+  $AC3F If IX[15] != 0 then goto hh_ac92
+  $AC42 If IX[7] == 0 then return
+N $AC47 If we arrive here then a hit has occurred.
+  $AC47 Load speed
+  $AC4B If IX[7] < 0 then #REGde = 280
+  $AC51 #REGbc = #REGde
+  $AC53 Point #REGhl at $AD03 table
+N $AC56 This must be mapping the speed into the 5-entry array.
+  $AC56 A = D     top part of speed
+  $AC57 E ROL 1   double speed
+  $AC59 A ROL 1   
+  $AC5A A &= 3    mask top part to 3  (for ref. turbo speed = $1FF)
+  $AC5C RR D      halve D to carry?
   $AC5E D = 0
-  $AC60 A = A + D + carry
-  $AC61 A *= 2
-  $AC62 E = A   it's an offset
+  $AC60 A = (A + D + carry) * 2  scale for element size of 2
+  $AC62 E = A   it's an offset in $AD03
   $AC63 HL += DE
-  $AC64 A = *HL
-  $AC65 IX[17] = A
-  $AC68 HL++
-  $AC69 A = *HL   something weird happening here in debugger
-  $AC6A IX[18] = A
-  $AC6D SLA C
-  $AC6F RL B
-  $AC71 A = B
-  $AC72 If A >= 2 BC = 350
-  $AC79 IX[13] = C
-  $AC7C IX[7]++
-  $AC7F JR Z,$AC84
-  $AC81 IX[14] = B
-  $AC84 IX[1]++
-  $AC87 BC = $0503
-  $AC8A Call sfx_related
-  $AC8D A = 2
-  $AC8F IX[15] = A
+  $AC64 Copy (two bytes?) to IX+17 from table
+  $AC6D double BC?  adjusted speed retained from earlier
+  $AC71 If B >= 2 BC = 350  so this is if we hit the object very fast it gets put on the left?
+  $AC79 Set bottom byte of horizontal position
+  $AC7C Increment IX[7]
+  $AC7F JR Z,$AC84   if B is zero then don't store it
+  $AC81 Set top byte of horizontal position
+  $AC84 Increment IX[1]
+  $AC87 Call start_sfx with BC = $0503
+  $AC8D A = 2        [set this to 1 and it drives off like a car]
+  $AC8F Set IX[15] to 2
+@ $AC92 label=hh_ac92
   $AC92 A--
   $AC93 If A == 0 return
-  $AC94 HL = $ACDB
-  $AC97 BC = IX[17]
-  $AC9C HL += BC
-  $AC9D A = *HL
-  $AC9E IX[16] = A
-  $ACA1 IX[17]++
-  $ACA4 H = IX[14]
-  $ACA7 L = IX[13]
-  $ACAA DE = HL
-  $ACAC SRL D
-  $ACAE RR E
-  $ACB0 SRL E
-  $ACB2 SRL E
-  $ACB4 SRL E
-  $ACB6 SRL E
-  $ACB8 SBC HL,DE
-  $ACBA IX[14] = H
-  $ACBD IX[13] = L
-  $ACC0 A = IX[19]
-  $ACC3 A ^= 1
-  $ACC5 IX[19] = A
-  $ACC8 IX[18]--
-  $ACCB RET NZ
-  $ACCC IX[13] = 0
-  $ACCD IX[14] = 0
-  $ACD3 IX[19] = 1
-  $ACD7 IX[15] = 1
+  $AC94 IX[16] = $ACDB[IX[17]]
+  $ACA1 Increment IX[17]
+  $ACA4 Load horizontal position into #REGhl
+  $ACAA #REGde = #REGhl
+  $ACAC Divide horizontal position by 2?
+  $ACB0 Then by 16 once it's 8 bits
+  $ACB8 Then subtract from the previous position
+  $ACBA Set horizontal position
+  $ACC0 Toggle the bottom bit of IX[19]
+  $ACC8 Decrement IX[18]
+  $ACCB If IX[19] != 0 then return
+  $ACCC Zero the horizontal position
+  $ACD3 Set IX[19] to 1
+  $ACD7 Set IX[15] to 1
   $ACDA Return
 
 b $ACDB
-B $AD03 Used above
+W $AD03 Used above
 
 c $AD0D
 
-c $AD4B
+c $AD4A A ==B
 
 c $AD51
 
@@ -2972,6 +3027,7 @@ b $B045
 
 c $B063
   $B080 Clear up/down/left/right bits of user input
+  $B098 Read boost time remaining
   $B0A2 Decrement turbo boost count [POKE $B0A5 for Infinite turbos]
   $B0A9 TBD
   $B0AF Read user input
