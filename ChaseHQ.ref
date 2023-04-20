@@ -2,6 +2,13 @@
 ; SkoolKit ref file for Chase H.Q. by Ocean.
 ;
 
+[Config]
+HtmlWriterClass=:ChaseHQ.ChaseHQHtmlWriter
+GameDir=build/ChaseHQ
+
+[Paths]
+CodeFiles={address:04X}.html
+
 [Game]
 Game=Chase H.Q.
 Release=The incomplete Chase H.Q. disassembly 20230404

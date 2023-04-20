@@ -11,6 +11,7 @@
 > $4000 ; This is intended to document the game when it is in a "pristine" as-loaded
 > $4000 ; state.
 > $4000 ;
+> $4000 ; POTATO #CALL:timestamp() POTATO
 > $4000 ;
 > $4000 ; AUTHORS
 > $4000 ; -------
