@@ -2354,19 +2354,46 @@ c $9DF4 Toggle the light's BRIGHT bit (#REGhl -> attrs)
   $9E0E Repeat for four rows
 
 @ $9E11 label=plot_turbos_scores_etc
-c $9E11
+c $9E11 Plots the turbo sprites and updates scores
   $9E11 If no turbos jump to plot_scores_only
   $9E17 C = number of turbos
   $9E18 Read boost time remaining & set flags
   $9E1C Base of turbo sprites
   $9E1F Skip turbo sprite address calculation if possible
+  $9E21 Turbo sprite frame number. Self modified by $9E29
+  $9E24 Wrap around at 3
+  $9E29 Self modify
   $9E2E 56 bytes per sprite
-  $9E31 Must be a sprite index
-  $9E32 Find frame
-  $9E35
-  $9E3E Base of turbo sprites
-  $9E44 must be the sp trick
-  $9E4E Plots turbos
+  $9E31 Find the turbo sprite frame data
+@ $9E35 label=xxx
+  $9E35 Self modify $9E44 to load #REGsp with address of frame
+  $9E38 Self modify $9E79 to restore #REGsp once drawing is done
+  $9E3C Low byte of back buffer draw address
+N $9E3E Draw a turbo frame.
+@ $9E3E label=plot_turbo_loop_outer
+  $9E3E,3 Base of turbo sprites
+  $9E41 Temporarily decrement number of turbos
+  $9E42 Use zeroth frame until we're drawing the final turbo
+  $9E44 #REGsp is pointed at data (self modified)
+  $9E47 Restore number of turbos
+  $9E48 Back buffer pos
+  $9E4B Preserve
+  $9E4C Height of frame
+N $9E4E Draw a scanline of turbo frame.
+@ $9E4E label=plot_turbo_loop
+  $9E4E Pop some frame data off the stack (E = mask, D = bitmap)
+  $9E4F Screen = (Screen AND Mask) OR Bitmap
+  $9E53 Advance screen pointer
+  $9E54 (Repeat)
+  $9E59 Step back
+  $9E5A Move up a row (standard pattern)
+@ $9E70 label=plot_turbo_continue
+  $9E70 Loop until out of rows
+  $9E72 Restore back buffer draw address
+  $9E73 Move to next position
+  $9E75 Decrement number of turbos
+  $9E76 Loop until zero
+  $9E78 Restore #REGsp
 @ $9E7B label=plot_scores_only
   $9E7B Point #REGde at speed digits screen position
   $9E7F #REGde = speed
@@ -2376,7 +2403,7 @@ c $9E11
   $9EBE Plot a digit
   $9EC1,3 Point #REGde at time digits screen position
   $9ED0,3 Point #REGde at distance digits (two BCD bytes)
-  $9EF1 
+  $9EF1
   $9F03,3 Point #REGde at distance digits screen position (136,33)
   $9F07,3 Point #REGde at distance digits (two BCD bytes)
   $9F0A,3 Point #REGhl at distance_digits + 3
@@ -2962,7 +2989,7 @@ N $AC47 If we arrive here then a hit has occurred.
 N $AC56 This must be mapping the speed into the 5-entry array.
   $AC56 A = D     top part of speed
   $AC57 E ROL 1   double speed
-  $AC59 A ROL 1   
+  $AC59 A ROL 1
   $AC5A A &= 3    mask top part to 3  (for ref. turbo speed = $1FF)
   $AC5C RR D      halve D to carry?
   $AC5E D = 0
