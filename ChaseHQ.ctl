@@ -2540,19 +2540,24 @@ N $9F1E Plots scoreboard digits (#REGde -> BCD) only if different than recorded 
   $9F45 Jump back to handle hext digit (next whole pair)
 
 @ $9F47 label=ledfont_plot
-c $9F47 Plots an LED font digit
-;(A = index, DE -> scr ptr)  vertical would need to be 1, 9, 17, ..
-  $9F48 HL = &ledfont[A * 15]
-  $9F55 save the scr ptr
-  $9F56 save D
-  $9F57 transfer a byte
-  $9F59 next row
-  $9F5A step back
-  $9F5B transfer 7 rows
-  $9F71 restore D
-  $9F73 E += 31
-  $9F77 transfer another 8 rows
-  $9F96 move to next column
+c $9F47 Plots an 8x15 LED font digit
+D $9F47 This appears to be set up to work for Y coordinates of 1, 9, 17, ...
+R $9F47 I:A  Glyph ID (0..9)
+R $9F47 I:DE Address of (real) screen location
+  $9F47 Bank
+  $9F48 #REGhl = &ledfont[glyphID * 15]
+  $9F55 Save the screen address
+  $9F56 Save #REGd
+  $9F57 Transfer a byte
+  $9F59 Next row down
+  $9F5A Undo LDI's increment
+  $9F5B Transfer six more rows
+  $9F71 Restore #REGd and move to an even line
+  $9F73 Move to the next screen row (group of 8)
+  $9F77 Transfer eight more rows
+  $9F96 Move to next column
+  $9F97 Bank
+  $9F98 Return
 
 c $9F99 Another draw string entry point?
   $9F99 PUSH BC       ;
