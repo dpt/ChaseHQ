@@ -627,7 +627,10 @@ b $7E05 Ref'd by graphic entry 3 and 12
 
 b $8000 temporaries?
   $8000,1 Test mode enable flag (cheat mode)
+;
+@ $8002 label=score_bcd
   $8002,4 Score digits as BCD (4 bytes / 8 digits, little endian)
+;
   $8006,1 incremented on reset?
 @ $8007 label=stage_number
   $8007,1 Stage number we're loading (1..5 or 6 for end credits)
@@ -1248,6 +1251,7 @@ R $8A36 I:E Same as D
 
 c $8A57
   $8ABB,3 Call fill_attributes
+  $8ACD,2 transition_control byte
   $8B06 Set score
   $8B10,3 Call increment_score
   $8B87,3 Point at "CLEAR BONUS - TIME BONUS - SCORE" messages
@@ -1439,7 +1443,7 @@ c $8E29 Fills the attribute bytes leftwards from column 1.
 
 @ $8E42 label=sub_8e42
 c $8E42 Subroutine.
-  $8E42 LD HL,$0000   ; self modified by $8E88 only
+  $8E42 Address of current message thing (frame delay, flags, attrs, bufaddr, attraddr, string)
   $8E45 LD B,$00      ; self modified by ($8E58 increments it), ($8E8D resets it to 1)
   $8E47 DJNZ $8E5C    ;
   $8E49 LD A,$14      ; self modified by $8E4C, $8E51, ($8E84 resets it perhaps)
@@ -1462,25 +1466,31 @@ c $8E42 Subroutine.
   $8E68 LD ($A231),A  ;
   $8E6B Return
 
-c $8E6C Message printing related. Increments HL then loads A,E,D,C,B from where HL points.
-  $8E6C EX AF,AF'     ;
-  $8E6D Preserve ?
-  $8E6E HL++
-  $8E6F A = *HL
-  $8E70 HL++
-  $8E71 E = *HL
-  $8E72 HL++
-  $8E73 D = *HL
-  $8E74 HL++
-  $8E75 C = *HL
-  $8E76 HL++
-  $8E77 B = *HL
-  $8E78 HL++
-  $8E79 CALL $9F99    ;
-  $8E7C POP BC        ;
+@ $8E6C label=print_message
+c $8E6C Message printing related
+R $8E6C I:A  Flags byte
+R $8E6C I:HL -> as yet unnamed message structure
+  $8E6C Preserve/bank flags byte in #REGa
+  $8E6D Preserve #REGbc
+  $8E6E Skip flags byte
+  $8E6F Load attribute byte into #REGa
+  $8E71 Load back buffer address into #REGde
+  $8E75 Load attribute address into #REGbc
+N $8E79 #REGhl now points at the string.
+  $8E79 Call alt draw_string entry point
+  $8E7C Restore #REGbc
   $8E7D Return
 
-c $8E7E Message printing related, called for TIME UP, CONTINUE, etc. messages.
+@ $8E7E label=message_printing_related
+c $8E7E Message printing related, called for TIME UP, CONTINUE, etc. messages
+R $8E7E I:HL -> something  e.g. -> credits_messages
+  $8E7E A = 2
+@ $8E80 label=j_8e80
+  $8E80 transition_control = A
+  $8E83 Modify 'LD A' at $8E49 with frame delay
+  $8E87 Modify 'LD HL' at $8E42 to be message struct e.g. $82CD
+  $8E8B Modify 'LD B' at $8E45 to be ?
+  $8E90 Return
 
 ; This gets hit when the perp is pulled over (transition_control == 1)
 @ $8E91 label=draw_mugshots
@@ -2274,7 +2284,7 @@ c $9D17 Increments the score by (D,E,A).
 R $9D17 I:A Low byte of increment
 R $9D17 I:E Middle byte of increment
 R $9D17 I:D High byte of increment
-  $9D17 HL = &score_digits_as_BCD
+  $9D17 HL = &score_bcd
   $9D1A A += *HL
   $9D1B BCD correct A
   $9D1C *HL++ = A
@@ -2354,103 +2364,222 @@ c $9DF4 Toggle the light's BRIGHT bit (#REGhl -> attrs)
   $9E0A Move to next attribute row
   $9E0E Repeat for four rows
 
-@ $9E11 label=plot_turbos_scores_etc
-c $9E11 Plots the turbo sprites and updates scores
-  $9E11 If no turbos jump to plot_scores_only
-  $9E17 C = number of turbos
-  $9E18 Read boost time remaining & set flags
-  $9E1C Base of turbo sprites
-  $9E1F Skip turbo sprite address calculation if possible
-  $9E21 Turbo sprite frame number. Self modified by $9E29
-  $9E24 Wrap around at 3
-  $9E29 Self modify
-  $9E2E 56 bytes per sprite
-  $9E31 Find the turbo sprite frame data
-@ $9E35 label=xxx
+@ $9E11 label=plot_turbos_and_scores
+c $9E11 Draws the turbo sprites and updates the displayed scores.
+  $9E11 If no turbo boosts remain jump to plot_scores_only
+  $9E17 Preserve number of turbo boosts in #REGc
+  $9E18 Read boost time remaining and set flags
+  $9E1C Point #REGhl at base of turbo sprites
+  $9E1F Avoid frame increment and address calculation if possible
+  $9E21 Get frame number (0, 1 or 2)
+  $9E29 Self modify frame number
+  $9E2C Avoid frame address calculation if possible
+  $9E2E 56 bytes per frame
+  $9E31 Calculate the frame address
+@ $9E35 label=plot_turbo_setup
   $9E35 Self modify $9E44 to load #REGsp with address of frame
   $9E38 Self modify $9E79 to restore #REGsp once drawing is done
   $9E3C Low byte of back buffer draw address
-N $9E3E Draw a turbo frame.
-@ $9E3E label=plot_turbo_loop_outer
-  $9E3E,3 Base of turbo sprites
-  $9E41 Temporarily decrement number of turbos
-  $9E42 Use zeroth frame until we're drawing the final turbo
-  $9E44 #REGsp is pointed at data (self modified)
+;
+N $9E3E Draw a whole frame of turbo sprite.
+N $9E3E Note that the frame data is stored in memory inverted (bottom first), so we draw the bottom row first and then proceed upwards.
+@ $9E3E label=plot_turbo_loops
+  $9E3E,3 Base address of frames
+  $9E41 Temporarily decrement the number of turbos remaining to draw
+  $9E42 All but the final turbo sprite use the zeroth frame
+  $9E44 #REGsp is pointed at frame data (self modified)
   $9E47 Restore number of turbos
-  $9E48 Back buffer pos
-  $9E4B Preserve
+  $9E48 Form back buffer position
+  $9E4B Preserve partial back buffer position
   $9E4C Height of frame
-N $9E4E Draw a scanline of turbo frame.
-@ $9E4E label=plot_turbo_loop
-  $9E4E Pop some frame data off the stack (E = mask, D = bitmap)
-  $9E4F Screen = (Screen AND Mask) OR Bitmap
-  $9E53 Advance screen pointer
+;
+N $9E4E Draw a scanline of frame.
+@ $9E4E label=plot_turbo_scanline
+  $9E4E Pop some frame data off the stack (E is mask data, D is bitmap data)
+  $9E4F Write to screen: Screen = (Screen AND Mask) OR Bitmap
+  $9E53 Advance screen address to next column
   $9E54 (Repeat)
   $9E59 Step back
   $9E5A Move up a row (standard pattern)
 @ $9E70 label=plot_turbo_continue
   $9E70 Loop until out of rows
   $9E72 Restore back buffer draw address
-  $9E73 Move to next position
+  $9E73 Advance screen address to next turbo position
   $9E75 Decrement number of turbos
-  $9E76 Loop until zero
+  $9E76 Loop until none are left
   $9E78 Restore #REGsp
-@ $9E7B label=plot_scores_only
-  $9E7B Point #REGde at speed digits screen position
-  $9E7F #REGde = speed
-  $9E83 TBD
-  $9EB6 Plot a digit
-  $9EBA Plot a digit
-  $9EBE Plot a digit
-  $9EC1,3 Point #REGde at time digits screen position
-  $9ED0,3 Point #REGde at distance digits (two BCD bytes)
-  $9EF1
+@ $9E7B label=plot_speed_only
+  $9E7B Point #REGde at speed digits screen position (144, 9)
+  $9E7F Load speed into #REGde
+  $9E7E Bank
+;
+N $9E83 Scale internal speed (0..511) to displayed speed by multiplying by 82 then discarding the bottom two digits.
+  $9E83 Initialise counter
+  $9E86 Do 7 digits / iterations
+  $9E88 Multiplier of 82 (a percentage: speed * multiplier / 100 = displayed speed)
+  $9E8A Shift one bit out
+  $9E8B Jump if not adding
+  $9E8D Add
+@ $9E8E label=plot_speed_multiply_loop
+  $9E8E Double
+  $9E8F Loop
+;
+N $9E91 Count 10,000s.
+  $9E91 10000
+  $9E94 Initialise #REGd and #REGe counters to -1
+  $9E97 ?Clear carry flag?
+@ $9E98 label=plot_speed_10000s_loop
+  $9E98 Increment counter
+  $9E99 Decrease total by 10,000
+  $9E9B Loop until #REGhl goes negative
+  $9E9D Correct for overshoot
+  $9E9E ?Clear carry flag?
+;
+N $9E9F Count 1,000s.
+  $9E9F 1000
+@ $9EA2 label=plot_speed_1000s_loop
+  $9EA2 Increment counter
+  $9EA3 Decrease total by 1,000
+  $9EA5 Loop until total goes negative
+  $9EA7 Correct for overshoot
+;
+N $9EA8 Count 100s.
+  $9EA8 Initialise counter (to zero not -1 as in previous cases)
+  $9EA9 100
+@ $9EAC label=plot_speed_100s_loop
+  $9EAC Increment counter
+  $9EAD Decrease total by 100
+  $9EAF Loop until total goes negative
+  $9EB1 Correct for starting early
+;
+N $9EB2 Plot speed digits.
+N $9EB2 We divide by 100 here by throwing away the bottom two digits.
+  $9EB2 Stack 100s counter
+  $9EB3 Stack 1,000s counter
+  $9EB5 Get 10,000s counter
+  $9EB6 Plot a digit for 10,000s
+  $9EBA Plot a digit for 1,000s
+  $9EBE Plot a digit for 100s
+;
+N $9EC1 Time.
+  $9EC1,3 Point #REGde at time digits screen position (120, 9)
+  $9EC4 Bank
+  $9EC5 Point #REGde at time_bcd (one BCD byte)
+  $9EC8 Point #REGhl at time_digits + 1
+  $9ECB One pair of digits
+  $9ECD Call plot_led_digits
+;
+N $9ED0 Distance.
+  $9ED0,3 Point #REGde at distance_bcd + 1 (the second of two BCD bytes)
+  $9ED3 L = Distance byte from first 'hazard' (the perp)
+  $9ED7 H = 17th byte from first hazard (not sure yet how they relate)
+;
+N $9EDB Count 1000s (no loop here - it's not required)
+  $9EDB 1,000
+  $9EDE Decrease total by 1,000
+  $9EE0 BCD "10"
+  $9EE2 Jump if distance >= 1,000
+  $9EE4 Otherwise correct for overshoot
+  $9EE5 BCD "00"
+;
+N $9EE6 Count 100s
+  $9EE6 100
+@ $9EE9 label=plot_scores_distance_100s_loop
+  $9EE9 Increment counter
+  $9EEA Decrease total by 100
+  $9EEC Loop until total goes negative
+  $9EEF Correct for overshoot
+  $9EF0 Correct for starting early
+  $9EF1 distance_bcd[1] = counter
+;
+N $9EF2 Count 10s
+  $9EF2 10 (#REGb's already zero)
+  $9EF4 ?Clear carry flag?
+  $9EF5 #REGa = $F0 (BCD)
+@ $9EF7 label=plot_scores_distance_10s_loop
+  $9EF7 Increment counter
+  $9EF9 ?Clear carry flag?
+  $9EFA Decrease total by 10
+  $9EFC Loop until total goes negative
+  $9EFF Correct for overshoot
+  $9F00 OR in the remainder
+  $9F01 distance_bcd[0] = #REGa
   $9F03,3 Point #REGde at distance digits screen position (136,33)
-  $9F07,3 Point #REGde at distance digits (two BCD bytes)
+  $9F06 Bank
+  $9F07,3 Point #REGde at distance_bcd + 1 (two BCD bytes)
   $9F0A,3 Point #REGhl at distance_digits + 3
+  $9F0D Two pairs of digits (4 digits)
+  $9F0F Call plot_led_digits
   $9F12,3 Point #REGde at score digits screen position
+  $9F15 Bank
   $9F16,3 Point #REGde at score (four BCD bytes)
   $9F19,3 Point #REGhl at score digits (eight bytes)
-N $9F1E Does the plotting.
-  $9F1E Read a pair of source digits (BCD)
-  $9F1F Keep for later
+  $9F1C B = 4
+;
+N $9F1E Plots scoreboard digits (#REGde -> BCD) only if different than recorded values (#REGhl -> byte per digit). #REGb is the count.
+@ $9F1E label=plot_led_digits
+  $9F1E Read a pair of digits (BCD)
+  $9F1F Save digits for later
   $9F20 Unpack a BCD digit
   $9F26 If different than stored then plot
+  $9F29 Move screen position
+;
+@ $9F2C label=pld_next_half
+  $9F2C Move to next recorded value
   $9F2D Examine next digit
   $9F30 If different than stored then plot
-  $9F3B Update new digit
+  $9F33 Move screen position
+;
+@ $9F36 label=pld_next_whole
+  $9F36 Move to next recorded value
+  $9F37 Move to next digits
+  $9F38 Loop until B is zero
+  $9F3A Return
+;
+@ $9F3B label=pld_plot_1st
+  $9F3B Update drawn digit
   $9F3C Done
-  $9F3C Plot a digit
-  $9F3F Next digit (second half of a pair)
-  $9F45 Next digit (next pair)
-  $9F45 Plot a digit
+  $9F3C Plot the digit
+  $9F3F Jump back to handle next digit (second half of a pair)
+;
+@ $9F41 label=pld_plot_2nd
+  $9F41 Update drawn digit
+  $9F42 Plot the digit
+  $9F45 Jump back to handle hext digit (next whole pair)
 
 @ $9F47 label=ledfont_plot
-c $9F47 Plots an LED font digit
-;(A = index, DE -> scr ptr)  vertical would need to be 1, 9, 17, ..
-  $9F48 HL = &ledfont[A * 15]
-  $9F55 save the scr ptr
-  $9F56 save D
-  $9F57 transfer a byte
-  $9F59 next row
-  $9F5A step back
-  $9F5B transfer 7 rows
-  $9F71 restore D
-  $9F73 E += 31
-  $9F77 transfer another 8 rows
-  $9F96 move to next column
+c $9F47 Plots an 8x15 LED font digit
+D $9F47 This appears to be set up to work for Y coordinates of 1, 9, 17, ...
+R $9F47 I:A  Glyph ID (0..9)
+R $9F47 I:DE Address of (real) screen location
+  $9F47 Bank
+  $9F48 #REGhl = &ledfont[glyphID * 15]
+  $9F55 Save the screen address
+  $9F56 Save #REGd
+  $9F57 Transfer a byte
+  $9F59 Next row down
+  $9F5A Undo LDI's increment
+  $9F5B Transfer six more rows
+  $9F71 Restore #REGd and move to an even line
+  $9F73 Move to the next screen row (group of 8)
+  $9F77 Transfer eight more rows
+  $9F96 Move to next column
+  $9F97 Bank
+  $9F98 Return
 
 c $9F99 Another draw string entry point?
-  $9F99 PUSH BC       ;
-  $9F9A EXX           ;
-  $9F9B POP HL        ;
-  $9F9C LD DE,$0020   ;
-  $9F9F LD C,A        ;
-  $9FA0 EXX           ;
-  $9FA1 JR $9FA6      ;
-
+  $9F99
+  $9F9A Bank
+  $9F9B HL' = BC   so BC is ptr to text
+  $9F9C DE = 32
+  $9F9F C = A
+  $9FA0 Bank
+  $9FA1 goto draw_string_entry
+;
 @ $9FA3 label=draw_string
-c $9FA3 Draws a string
+; DE -> screen address
+; HL -> string
+  $9FA3 Draws a string
   $9FA3 A' = 1  Set drawing type (single height, plots to real screen)
 N $9FA3 The string is terminated by setting the topmost bit of the final character.
 @ $9FA6 label=draw_string_entry
@@ -2732,25 +2861,25 @@ W $A171,2 seems to be the horizon level, possibly relative (used during attract 
   $A174,1 Low/high gear flag?
   $A175,8 Score digits. One digit per byte, least significant first. This seems to be recording what's on screen so digit plotting can be bypassed.
 @ $A175 label=score_digits
-  $A175,8 Score. Stored as one digit per byte.
+  $A175,8 Score as displayed. Stored as one digit per byte. Least significant digit first.
 @ $A17D label=time_sixteenths
   $A17D,1 Seems to be a 1/16ths second counter. Counts from $F to $0. $A17E is decremented when it hits zero.
 @ $A17E label=time_bcd
   $A17E,1 Time remaining. Stored as BCD.
 @ $A17F label=time_digits
-  $A17F,2 Time remaining. Stored as one digit per byte.
+  $A17F,2 Time remaining as displayed. Stored as one digit per byte.
 @ $A181 label=distance_digits
-  $A181,4 Distance. Stored as one digit per byte.
+  $A181,4 Distance as displayed. Stored as one digit per byte.
 W $A186,2 Attribute address of horizon. Points to last attribute on the line which shows the ground. (e.g. $59DF)
 ;
 @ $A188 label=hazards
-  $A188,120 Set by $843B. Groups of 20 bytes. This area looks like a table of spawned vehicles or objects.
-; +0 is a used flag, either $00 or $FF
-; +1 looks distance related
-; +5 TBD
-; +7 byte  TBD used by hazard_hit
-; +8 byte  gets copied from the hazards table
-; +9 word  address of e.g. car_lods
+  $A188,120 Set by $843B. Groups of 20 bytes. This area looks like a table of spawned vehicles or objects. The first entry is the perp.
+;  +0 is a used flag, either $00 or $FF
+;  +1 looks distance related
+;  +5 TBD
+;  +7 byte  TBD used by hazard_hit
+;  +8 byte  gets copied from the hazards table
+;  +9 word  address of e.g. car_lods
 ; +13 word  set to $190 by fully_smashed (likely a horizontal position)
 ; +15 byte  TBD used by hazard_hit, counter which gets set to 2 then reduced
 ; +17 byte  TBD used by hazard_hit, indexes table $ACDB
@@ -2879,7 +3008,7 @@ W $A24A,2 Speed (0..511). Max when in lo gear =~ $E6, hi gear =~ $168, turbo =~ 
   $A254,1 Cleared by $884B
 ;
 @ $A255 label=distance_bcd
-  $A255,2 $9F1E reads  $9EF1 writes
+  $A255,2 Distance as BCD (2 bytes / 4 digits, little endian)
 ;
   $A257,1 ...
 ;
