@@ -1250,6 +1250,7 @@ R $8A36 I:E Same as D
 
 c $8A57
   $8ABB,3 Call fill_attributes
+  $8ACD,2 transition_control byte
   $8B06 Set score
   $8B10,3 Call increment_score
   $8B87,3 Point at "CLEAR BONUS - TIME BONUS - SCORE" messages
@@ -1441,7 +1442,7 @@ c $8E29 Fills the attribute bytes leftwards from column 1.
 
 @ $8E42 label=sub_8e42
 c $8E42 Subroutine.
-  $8E42 LD HL,$0000   ; self modified by $8E88 only
+  $8E42 Address of current message thing (frame delay, flags, attrs, bufaddr, attraddr, string)
   $8E45 LD B,$00      ; self modified by ($8E58 increments it), ($8E8D resets it to 1)
   $8E47 DJNZ $8E5C    ;
   $8E49 LD A,$14      ; self modified by $8E4C, $8E51, ($8E84 resets it perhaps)
@@ -1464,25 +1465,31 @@ c $8E42 Subroutine.
   $8E68 LD ($A231),A  ;
   $8E6B Return
 
-c $8E6C Message printing related. Increments HL then loads A,E,D,C,B from where HL points.
-  $8E6C EX AF,AF'     ;
-  $8E6D Preserve ?
-  $8E6E HL++
-  $8E6F A = *HL
-  $8E70 HL++
-  $8E71 E = *HL
-  $8E72 HL++
-  $8E73 D = *HL
-  $8E74 HL++
-  $8E75 C = *HL
-  $8E76 HL++
-  $8E77 B = *HL
-  $8E78 HL++
-  $8E79 CALL $9F99    ;
-  $8E7C POP BC        ;
+@ $8E6C label=print_message
+c $8E6C Message printing related
+R $8E6C I:A  Flags byte
+R $8E6C I:HL -> as yet unnamed message structure
+  $8E6C Preserve/bank flags byte in #REGa
+  $8E6D Preserve #REGbc
+  $8E6E Skip flags byte
+  $8E6F Load attribute byte into #REGa
+  $8E71 Load back buffer address into #REGde
+  $8E75 Load attribute address into #REGbc
+N $8E79 #REGhl now points at the string.
+  $8E79 Call alt draw_string entry point
+  $8E7C Restore #REGbc
   $8E7D Return
 
-c $8E7E Message printing related, called for TIME UP, CONTINUE, etc. messages.
+@ $8E7E label=message_printing_related
+c $8E7E Message printing related, called for TIME UP, CONTINUE, etc. messages
+R $8E7E I:HL -> something  e.g. -> credits_messages
+  $8E7E A = 2
+@ $8E80 label=j_8e80
+  $8E80 transition_control = A
+  $8E83 Modify 'LD A' at $8E49 with frame delay
+  $8E87 Modify 'LD HL' at $8E42 to be message struct e.g. $82CD
+  $8E8B Modify 'LD B' at $8E45 to be ?
+  $8E90 Return
 
 ; This gets hit when the perp is pulled over (transition_control == 1)
 @ $8E91 label=draw_mugshots
@@ -2560,16 +2567,18 @@ R $9F47 I:DE Address of (real) screen location
   $9F98 Return
 
 c $9F99 Another draw string entry point?
-  $9F99 PUSH BC       ;
-  $9F9A EXX           ;
-  $9F9B POP HL        ;
-  $9F9C LD DE,$0020   ;
-  $9F9F LD C,A        ;
-  $9FA0 EXX           ;
-  $9FA1 JR $9FA6      ;
-
+  $9F99
+  $9F9A Bank
+  $9F9B HL' = BC   so BC is ptr to text
+  $9F9C DE = 32
+  $9F9F C = A
+  $9FA0 Bank
+  $9FA1 goto draw_string_entry
+;
 @ $9FA3 label=draw_string
-c $9FA3 Draws a string
+; DE -> screen address
+; HL -> string
+  $9FA3 Draws a string
   $9FA3 A' = 1  Set drawing type (single height, plots to real screen)
 N $9FA3 The string is terminated by setting the topmost bit of the final character.
 @ $9FA6 label=draw_string_entry
