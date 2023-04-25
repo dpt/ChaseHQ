@@ -186,8 +186,9 @@ B $5BA5 TBD
 B $5BD5 gets IX pointed at it by $5B32
 
 b $5C00 Graphics
-;B $5B00,240 Hill backdrop (80x24) seems to be pre-shifted by #R$C8BE  (overlaps game setup)
-B $5C00,240 Hill backdrop (80x24)
+D $5C00 #HTML[#CALL:graphic($5C00,80,24,0,1)]
+;B $5B00,240 Hill backdrop (80x24) seems to be pre-shifted by #R$C8BE (overlaps game setup)
+B $5C00,240 Hill backdrop (80x24) inverted
 
 b $5CF0 (More) per-level data
 ;
@@ -400,11 +401,15 @@ B $6313 Ref'd from attract_data
 B $6293 Ref'd from attract_data
 B $6276 Ref'd from attract_data
 
-B $638A,160,4 Graphic: Perp w/ sunglasses face (32x40). Stored top-down.
+b $638A Perp's face
+D $638A #HTML[#CALL:face($638A)]
+B $638A,160,4 Graphic: Perp w/ sunglasses face (32x40). Stored top-down. #HTML[#CALL:graphic($638A,32,40,0,0)]
 B $642A,20,4 Attribute data for perp.
+
+b $643E LODs
 ;
 ; Flags in these LOD structures:
-; - 1 seems to indicate interleaved masks? not so sure now. Think it might be pre-shifted bitmaps.
+; - 1 seems to indicate pre-shifted bitmaps
 ; - 2 is probably to flip
 ;
 @ $643E label=lambo_lods
@@ -412,7 +417,7 @@ B $643E,1 Width (bytes)
 B $643F,1 Flags
 B $6440,1 Height (pixels)
 W $6441,2 Bitmap
-W $6443,2 Mask
+W $6443,2 Shifted bitmap
 L $643E,7,6
 ;
 @ $6468 label=truck_lods
@@ -420,7 +425,7 @@ B $6468,1 Width (bytes)
 B $6469,1 Flags
 B $646A,1 Height (pixels)
 W $646B,2 Bitmap
-W $646D,2 Mask
+W $646D,2 Shifted bitmap
 L $6468,7,6
 ;
 @ $6492 label=car_lods
@@ -428,35 +433,35 @@ B $6492,1 Width (bytes)
 B $6493,1 Flags
 B $6494,1 Height (pixels)
 W $6495,2 Bitmap
-W $6497,2 Mask
+W $6497,2 Shifted bitmap
 L $6492,7,6
 ;
-B $64BC,180,6 Lamborghini_1 (48x30) #HTML[#CALL:graphic($64BC,48,30,0)]
-B $6570,110,5 Lamborghini_2 (40x22) #HTML[#CALL:graphic($6570,40,22,0)]
-B $65DE,45,3 Lamborghini_3 (24x15) #HTML[#CALL:graphic($65DE,24,15,0)]
+B $64BC,180,6 Lamborghini_1 (48x30) #HTML[#CALL:graphic($64BC,48,30,0,1)]
+B $6570,110,5 Lamborghini_2 (40x22) #HTML[#CALL:graphic($6570,40,22,0,1)]
+B $65DE,45,3 Lamborghini_3 (24x15) #HTML[#CALL:graphic($65DE,24,15,0,1)]
 ;
-B $660B,234,6 Truck_1 (48x39) #HTML[#CALL:graphic($660B,48,39,0)]
-B $66F5,145,5 Truck_2 (40x29) #HTML[#CALL:graphic($66F5,40,29,0)]
-B $6786,60,3 Truck_3 (24x20) #HTML[#CALL:graphic($6786,24,20,0)]
+B $660B,234,6 Truck_1 (48x39) #HTML[#CALL:graphic($660B,48,39,0,1)]
+B $66F5,145,5 Truck_2 (40x29) #HTML[#CALL:graphic($66F5,40,29,0,1)]
+B $6786,60,3 Truck_3 (24x20) #HTML[#CALL:graphic($6786,24,20,0,1)]
 ;
-B $67C2,186,6 Car_1 (48x31) #HTML[#CALL:graphic($67C2,48,31,0)]
-B $687C,110,5 Car_2 (40x22) #HTML[#CALL:graphic($687C,40,22,0)]
-B $68EA,48,3 Car_3 (24x16) #HTML[#CALL:graphic($68EA,24,16,0)]
+B $67C2,186,6 Car_1 (48x31) #HTML[#CALL:graphic($67C2,48,31,0,1)]
+B $687C,110,5 Car_2 (40x22) #HTML[#CALL:graphic($687C,40,22,0,1)]
+B $68EA,48,3 Car_3 (24x16) #HTML[#CALL:graphic($68EA,24,16,0,1)]
 ;
-B $691A,48,6 Lamborghini_4 interleaved (24x8) #HTML[#CALL:graphic($691A,24,8,1)]
-B $694A,48,6 Lamborghini_5 pre-shifted interleaved (24x8) #HTML[#CALL:graphic($694A,24,8,1)]
+B $691A,48,6 Lamborghini_4 (24x8) masked #HTML[#CALL:graphic($691A,24,8,1,1)]
+B $694A,48,6 Lamborghini_5 (24x8) pre-shifted masked #HTML[#CALL:graphic($694A,24,8,1,1)]
 
-B $697A,48,4 Truck_4/5 interleaved (16x12) #HTML[#CALL:graphic($697A,16,12,1)]
-B $69AA,48,4 Truck_4/5 pre-shifted interleaved (16x12) #HTML[#CALL:graphic($69AA,16,12,1)]
-B $69DA,54,6 Car_4/5 interleaved (24x9) #HTML[#CALL:graphic($69DA,24,9,1)]
-B $6A10,54,6 Car_4/5 pre-shifted interleaved (24x9) #HTML[#CALL:graphic($6A10,24,9,1)]
+B $697A,48,4 Truck_4/5 (16x12) masked #HTML[#CALL:graphic($697A,16,12,1,1)]
+B $69AA,48,4 Truck_4/5 (16x12) pre-shifted masked #HTML[#CALL:graphic($69AA,16,12,1,1)]
+B $69DA,54,6 Car_4/5 (24x9) masked #HTML[#CALL:graphic($69DA,24,9,1,1)]
+B $6A10,54,6 Car_4/5 (24x9) pre-shifted masked #HTML[#CALL:graphic($6A10,24,9,1,1)]
 ;
 @ $6A46 label=stones_lods
 B $6A46,1 Width (bytes)
 B $6A47,1 Flags
 B $6A48,1 Height (pixels)
 W $6A49,2 Bitmap
-W $6A4B,2 Mask
+W $6A4B,2 Shifted bitmap
 L $6A46,7,6
 ;
 @ $6A70 label=dust_lods
@@ -464,23 +469,21 @@ B $6A70,1 Width (bytes)
 B $6A71,1 Flags
 B $6A72,1 Height (pixels)
 W $6A73,2 Bitmap
-W $6A75,2 Mask
+W $6A75,2 Shifted bitmap
 L $6A70,7,6
 ;
-; TODO: Having bitmap/mask doesn't make sense if it's got embedded masks, so what's going on there? Are they actually pre-shifted sprites?
+B $6A9A,20,4 Stones (16x5) masked #HTML[#CALL:graphic($6A9A,16,5,1,1)]
+B $6AAE,16,4 Stones (16x4) masked #HTML[#CALL:graphic($6AAE,16,4,1,1)]
+B $6ABE,16,4 Stones (16x4) pre-shifted masked #HTML[#CALL:graphic($6ABE,16,4,1,1)]
+B $6ACE,12,4 Stones (16x3) masked #HTML[#CALL:graphic($6ACE,16,3,1,1)]
+B $6ADA,12,4 Stones (16x3) pre-shifted masked #HTML[#CALL:graphic($6ADA,16,3,1,1)]
+B $6AE6,4,2 Stones (8x2) masked #HTML[#CALL:graphic($6AE6,8,2,1,1)]
+B $6AEA,4,2 Stones (8x2) pre-shifted masked #HTML[#CALL:graphic($6AEA,8,2,1,1)]
+B $6AEE,2,2 Stones (8x1) masked #HTML[#CALL:graphic($6AEE,8,1,1,1)]
+B $6AF0,2,2 Stones (8x1) pre-shifted masked #HTML[#CALL:graphic($6AF0,8,1,1,1)]
 ;
-B $6A9A,20,4 Stones bitmap interleaved (16x2x5)
-B $6AAE,16,4 Stones bitmap interleaved (16x2x4)
-B $6ABE,16,4 Stones mask interleaved (16x2x4)
-B $6ACE,12,4 Stones bitmap interleaved (16x2x3)
-B $6ADA,12,4 Stones mask interleaved (16x2x3)
-B $6AE6,4,2 Stones bitmap interleaved (8x2x2)
-B $6AEA,4,2 Stones mask interleaved (8x2x2)
-B $6AEE,2,2 Stones bitmap interleaved (8x2x1)
-B $6AF0,2,2 Stones mask interleaved (8x2x1)
-;
-B $6AF2,2 Dust bitmap interleaved (8x2)
-B $6AF4,2 Dust mask interleaved (8x2)
+B $6AF2,2 Dust (8x1) masked #HTML[#CALL:graphic($6AF2,8,1,1,1)]
+B $6AF4,2 Dust (8x1) pre-shifted masked #HTML[#CALL:graphic($6AF4,8,1,1,1)]
 ;
 W $6AF6,2 -> turn_sign_lods
 B $6AF8 TBD
@@ -492,45 +495,45 @@ B $6B22,1 Width (bytes)
 B $6B23,1 Flags
 B $6B24,1 Height (pixels)
 W $6B25,2 Bitmap
-W $6B27,2 Mask
+W $6B27,2 Shifted bitmap
 L $6B22,7,10
 ;
-B $6B68,160,4 Turn right sign (32x40)
-B $6C08,90,3 Turn right sign (24x30)
-B $6C62,40,2 Turn right sign (16x20)
-B $6C8A,64,4 Turn right sign interleaved (16x2x16)
-B $6CCA,52,2 Turn right sign interleaved (16x2x13)
-B $6CFE,52,2 Turn right sign interleaved "mask" (16x2x13)
+B $6B68,160,4 Turn right sign (32x40) #HTML[#CALL:graphic($6B68,32,40,0,1)]
+B $6C08,90,3 Turn right sign (24x30) #HTML[#CALL:graphic($6C08,24,30,0,1)]
+B $6C62,40,2 Turn right sign (16x20) #HTML[#CALL:graphic($6C62,16,20,0,1)]
+B $6C8A,64,4 Turn right sign (16x16) masked #HTML[#CALL:graphic($6C8A,16,16,1,1)]
+B $6CCA,52,2 Turn right sign (16x13) masked #HTML[#CALL:graphic($6CCA,16,13,1,1)]
+B $6CFE,52,2 Turn right sign (16x13) masked pre-shifted #HTML[#CALL:graphic($6CFE,16,13,1,1)]
 ;
-B $6D32,,4 TBD another interleaved turn right sign (16x10)
-B $6D5A,,4 TBD and another, looks pre-rotated
+B $6D32,,4 Turn right sign (16x10) masked #HTML[#CALL:graphic($6D32,16,10,1,1)]
+B $6D5A,,4 Turn right sign (16x10) masked pre-shifted #HTML[#CALL:graphic($6D5A,16,10,1,1)]
 ;
 @ $6D82 label=tumbleweed_lods
 B $6D82,1 Width (bytes)
 B $6D83,1 Flags
 B $6D84,1 Height (pixels)
 W $6D85,2 Bitmap
-W $6D87,2 Mask
+W $6D87,2 Shifted bitmap
 L $6D82,7,6
 ;
-B $6DAC,32,2 Tumbleweed_1 (16x16)
-B $6DCC,22,2 Tumbleweed_2 (16x11)
-B $6DE2,9,1 Tumbleweed_3 (8x9)
-B $6DEB,7,1 Tumbleweed_4 (8x7)
+B $6DAC,32,2 Tumbleweed_1 (16x16) #HTML[#CALL:graphic($6DAC,16,16,0,1)]
+B $6DCC,22,2 Tumbleweed_2 (16x11) #HTML[#CALL:graphic($6DCC,16,11,0,1)]
+B $6DE2,9,1 Tumbleweed_3 (8x9) #HTML[#CALL:graphic($6DE2,8,9,0,1)]
+B $6DEB,7,1 Tumbleweed_4 (8x7) #HTML[#CALL:graphic($6DEB,8,7,0,1)]
 ;
 @ $6DF2 label=barrier_lods
 B $6DF2,1 Width (bytes)
 B $6DF3,1 Flags
 B $6DF4,1 Height (pixels)
 W $6DF5,2 Bitmap
-W $6DF7,2 Mask
+W $6DF7,2 Shifted bitmap
 L $6DF2,7,6
 ;
-B $6E1C,68,4 Barrier (32x17)
-B $6E60,39,3 Barrier (24x13)
-B $6E87,18,2 Barrier (16x9)
-B $6E99,28,4 Barrier interleaved (16x2x7)
-B $6EB5,28,4 Mask for barrier interleaved (16x2x7)
+B $6E1C,68,4 Barrier (32x17) #HTML[#CALL:graphic($6E1C,32,17,0,1)]
+B $6E60,39,3 Barrier (24x13) #HTML[#CALL:graphic($6E60,24,13,0,1)]
+B $6E87,18,2 Barrier (16x9) #HTML[#CALL:graphic($6E87,16,9,0,1)]
+B $6E99,28,4 Barrier (16x7) masked pre-shifted #HTML[#CALL:graphic($6E99,16,7,1,1)]
+B $6EB5,28,4 Barrier (16x7) masked pre-shifted #HTML[#CALL:graphic($6EB5,16,7,1,1)]
 
 b $6ED1 Ref'd by graphic entry 6
 W $6EEB,2 Address of another LOD table
@@ -540,52 +543,72 @@ B $6F17,1 Width (bytes)
 B $6F18,1 Flags
 B $6F19,1 Height
 W $6F1A,2 Bitmap
-W $6F1C,2 Mask
+W $6F1C,2 Shifted bitmap
 L $6F17,7,10
 
-B $6F5D,32,4 graphic_6eeb (32x8)
-B $6F7D,15,3 graphic_6eeb (24x5)
-B $6F8C,12,3 graphic_6eeb (24x4)
-B $6F98,12,3 graphic_6eeb mask (24x4)
-B $6FA4,8,2 graphic_6eeb (16x4)
-B $6FAC,8,8 TBD
-B $6FB4,8,2 graphic_6eeb mask (16x4)
-B $6FBC,8,8 TBD
-B $6FC4,6,2 graphic_6eeb (16x3)
-B $6FCA,6,6 TBD
-B $6FD0,6,2 graphic_6eeb mask (16x3)
+B $6F5D,32,4 Street lamp top (32x8) #HTML[#CALL:graphic($6F5D,32,8,0,1)]
+B $6F7D,15,3 Street lamp top (24x5) #HTML[#CALL:graphic($6F7D,24,5,0,1)]
+B $6F8C,12,3 Street lamp top (24x4) #HTML[#CALL:graphic($6F8C,24,4,0,1)]
+B $6F98,12,3 Street lamp top (24x4) pre-shifted #HTML[#CALL:graphic($6F98,24,4,0,1)]
+B $6FA4,16,2 Street lamp top (16x4) #HTML[#CALL:graphic($6FA4,16,4,1,1)]
+B $6FB4,16,2 Street lamp top (16x4) pre-shifted #HTML[#CALL:graphic($6FB4,16,4,1,1)]
+B $6FC4,12,2 Street lamp top (16x3) #HTML[#CALL:graphic($6FC4,16,3,1,1)]
+B $6FD0,12,2 Street lamp top (16x3) pre-shifted #HTML[#CALL:graphic($6FD0,16,3,1,1)]
 
 b $6FDC Ref'd by graphic entry 7
 b $6FE6 Ref'd by graphic entry 16
+;B $7069 is the top part of a streetlamp
+
 b $70F6 Ref'd by graphic entry 4 and 13
 b $7106 Ref'd by graphic entry 5 and 14
 
-;B $7069 is the top part of a streetlamp
-;B $73D4 looks like tree trunk
-B $73B9,10 Part of tree graphic - 16px x 5 rows (?)
+B $717E,1 Width (bytes)
+B $717F,1 Flags
+B $7180,1 Height
+W $7181,2 -> graphic data
+W $7183,2 -> graphic data
+L $717E,7,25
 
 ; more tree/bush graphics
-B $74AE,120,12 Graphic 48x10 pixels [top of tree?]
+B $722D Tree middle (64x16) #HTML[#CALL:graphic($722D,64,16,0,1)]
+B $72AD Tree bottom (64x5) #HTML[#CALL:graphic($72AD,64,5,0,1)]
+B $72D5 Tree trunk (16x8) #HTML[#CALL:graphic($72D5,16,8,0,1)]
+B $72E5 Tree shadow (64x5) #HTML[#CALL:graphic($72E5,64,5,0,1)]
+B $730D Tree middle (48x12) #HTML[#CALL:graphic($730D,48,12,0,1)]
+B $7355 Tree bottom (48x4) #HTML[#CALL:graphic($7355,48,4,0,1)]
+B $736D Tree shadow (48x4) #HTML[#CALL:graphic($736D,48,4,0,1)]
+B $7385 Tree middle (32x8) #HTML[#CALL:graphic($7385,32,8,0,1)]
+B $73A5 Tree bottom (32x3) #HTML[#CALL:graphic($73A5,32,3,0,1)]
+B $73B1 Tree shadow (16x2) #HTML[#CALL:graphic($73B1,16,2,0,1)]
+B $73B9 Tree middle (24x7) #HTML[#CALL:graphic($73B9,24,7,0,1)]
+B $73CE Tree bottom (24x2) #HTML[#CALL:graphic($73CE,24,2,0,1)]
+B $73D4 Tree trunk (8x4) #HTML[#CALL:graphic($73D4,8,4,0,1)]
+B $73D8 Tree shadow (24x2) #HTML[#CALL:graphic($73D8,24,2,0,1)]
+B $73DE Tree top (64x13) masked #HTML[#CALL:graphic($73DE,64,13,1,1)]
+B $74AE,120,12 Tree top (48x10) masked #HTML[#CALL:graphic($74AE,48,10,1,1)]
 ;B $74B0,120,12 saw hit but can't explain
-B $7526,40,8 Graphic 32x5 pixels
-B $754E,24,6 Graphic 24x4 pixels
-B $7566,18,6 Graphic 24x3 pixels
-B $7578,18,6 Graphic 24x3 pixels
-B $758A,24,4 Graphic 16x6 pixels
-B $75A2,16,4 Graphic 16x4 pixels
-B $75B2,30,6 Graphic 24x5 pixels (also used as 24x1 24x2)
-B $75D0,12,6 Graphic 24x2 pixels
-B $75DC,18,6 Graphic 24x3 pixels (also used as 24x1 24x2)
-B $75EE,6,6 Graphic 24x1 pixels
-B $75F4,30,6 Graphic 24x5 pixels (also used as 24x1)
-B $7612,12,6 Graphic 24x2 pixels
-B $761E,18,6 Graphic 24x3 pixels (also used as 24x2)
-B $7630,6,6 Graphic 24x1 pixels
+B $7526,40,8 Tree top (32x5) masked #HTML[#CALL:graphic($7526,32,5,1,1)]
+B $754E,24,6 Tree top (24x4) masked #HTML[#CALL:graphic($754E,24,4,1,1)]
+B $7566,18,6 Tree top (24x3) masked #HTML[#CALL:graphic($7566,24,3,1,1)]
+B $7578,18,6 Tree top (24x3) pre-shifted masked #HTML[#CALL:graphic($7578,24,3,1,1)]
+B $758A,24,4 Trre trunk (16x6) masked #HTML[#CALL:graphic($758A,16,6,1,1)]
+B $75A2,16,4 Tree trunk (16x4) masked #HTML[#CALL:graphic($75A2,16,4,1,1)]
+B $75B2,30,6 Tree middle (24x5) masked #HTML[#CALL:graphic($75B2,24,5,1,1)] (also used as 24x1 24x2)
+B $75D0,12,6 Tree bottom (24x2) masked #HTML[#CALL:graphic($75D0,24,2,1,1)]
+B $75DC,18,6 Tree trunk (24x3) masked #HTML[#CALL:graphic($75DC,24,3,1,1)] (also used as 24x1 24x2)
+B $75EE,6,6 Tree shadow (24x1) masked #HTML[#CALL:graphic($75EE,24,1,1,1)]
+B $75F4,30,6 Tree middle (24x5) pre-shifted masked #HTML[#CALL:graphic($75F4,24,5,1,1)] (also used as 24x1)
+B $7612,12,6 Tree bottom (24x2) masked #HTML[#CALL:graphic($7612,24,2,1,1)]
+B $761E,18,6 Tree trunk (24x3) masked #HTML[#CALL:graphic($761E,24,3,1,1)] (also used as 24x2)
+B $7630,6,6 Tree shadow (24x1) masked #HTML[#CALL:graphic($7630,24,1,1,1)]
 
 u $7636
 
 b $76F0 Turbo icons
-B $76F0,168,4 Three frames 16x14 each, looks like a mask-bitmap-mask-bitmap arrangement
+D $76F0 #HTML[#CALL:anim($76F0,16,14,1,1,3)]
+B $76F0,,4 Frame 1 (16x14) #HTML[#CALL:graphic($76F0,16,14,1,1)]
+B $7728,,4 Frame 2 (16x14) #HTML[#CALL:graphic($7728,16,14,1,1)]
+B $7760,,4 Frame 3 (16x14) #HTML[#CALL:graphic($7760,16,14,1,1)]
 
 @ $7798 label=pre_game_messages
 b $7798 Pre-game screen messages
@@ -613,14 +636,15 @@ T $77D2,6 "SIGNAL"
 b $77D8
   $7860 Seems to be tiles pointed at by car rendering code
 
-  $78B6,64 8 Tiles used to draw the pre-game screen
+  $78B6,344,8 Tiles used to draw the pre-game screen #HTML[#CALL:graphic($78B6,8,43*8,0,0)]
 
-  $7BE9,160,4 Graphic: Nancy's face (32x40). Stored top-down.
-  $7C89,20,4 Attribute data for above.
-  $7C9D,160,4 Graphic: Raymond's face (32x40). Stored top-down.
-  $7D3D,20,4 Attribute data for above.
-  $7D51,160,4 Graphic: Tony's face (32x40). Stored top-down.
-  $7DF1,20,4 Attribute data for above.
+b $7BE9 Graphics: Faces
+B $7BE9,160,4 Nancy's face (32x40). Stored top-down. #HTML[#CALL:face($7BE9)]
+B $7C89,20,4 Attribute data for above.
+B $7C9D,160,4 Raymond's face (32x40). Stored top-down. #HTML[#CALL:face($7C9D)]
+B $7D3D,20,4 Attribute data for above.
+B $7D51,160,4 Tony's face (32x40). Stored top-down. #HTML[#CALL:face($7D51)]
+B $7DF1,20,4 Attribute data for above.
 
 b $7E05 Ref'd by graphic entry 3 and 12
 
@@ -3743,14 +3767,14 @@ B $D03C,1 1 bytes wide
 W $D03D,2 -> More debris (perhaps)
 ;
 ; Sometimes plotted as 24x28 when it's "HERE! + Arrow"
-B $D03F,126,6 Arrow graphic (24x21 pixels interleaved) #HTML[#CALL:graphic($D03F,24,21,1)]
-B $D0BD,42,6 "HERE!" graphic (24x7 pixels interleaved) #HTML[#CALL:graphic($D0BD,24,7,1)]
-B $D0E7,14,2 Cherry light (sits on roof of car) 8x7 pixels interleaved #HTML[#CALL:graphic($D0E7,8,7,1)]
-B $D0F5,84,6 Illuminated cherry light 24x14 pixels interleaved #HTML[#CALL:graphic($D0F5,24,14,1)]
-B $D149,120,6 Crash/spark (24x20 pixels interleaved) #HTML[#CALL:graphic($D149,24,20,1)]
-B $D1C1,16,4 Graphic (16x4 pixels) #HTML[#CALL:graphic($D1C1,16,4,1)] LOOKS WRONG
-B $D1D1,36,4 Debris (16x9 pixels) #HTML[#CALL:graphic($D1D1,16,9,1)] LOOKS WRONG
-B $D1F5,24,2 More debris (8x12 pixels) #HTML[#CALL:graphic($D1F5,8,12,1)] LOOKS WRONG
+B $D03F,126,6 Arrow graphic (24x21 pixels masked) #HTML[#CALL:graphic($D03F,24,21,1,1)]
+B $D0BD,42,6 "HERE!" graphic (24x7 pixels masked) #HTML[#CALL:graphic($D0BD,24,7,1,1)]
+B $D0E7,14,2 Cherry light (sits on roof of car) 8x7 pixels masked #HTML[#CALL:graphic($D0E7,8,7,1,1)]
+B $D0F5,84,6 Illuminated cherry light 24x14 pixels masked #HTML[#CALL:graphic($D0F5,24,14,1,1)]
+B $D149,120,6 Crash/spark (24x20 pixels masked) #HTML[#CALL:graphic($D149,24,20,1,1)]
+B $D1C1,16,4 Graphic (16x4 pixels) #HTML[#CALL:graphic($D1C1,16,4,1,1)] LOOKS WRONG
+B $D1D1,36,4 Debris (16x9 pixels) #HTML[#CALL:graphic($D1D1,16,9,1,1)] LOOKS WRONG
+B $D1F5,24,2 More debris (8x12 pixels) #HTML[#CALL:graphic($D1F5,8,12,1,1)] LOOKS WRONG
 
 b $D20D Turbo smoke plume. 32x16 per frame. 4 frames. mask-bitmap arrangement.
 B $D20D Turbo smoke plume data frame 1
@@ -3769,20 +3793,20 @@ B $D5DE,70,5 Graphic 40x14 pixels [Car middle 7]
 B $D624,80,5 Graphic 40x16 pixels [Car middle 8]
 B $D674,80,5 Graphic 40x16 pixels [Car middle 9]
 ;
-B $D6C4,90,10 Graphic 40x9 pixels interleaved [top of car]
-B $D71E,60,10 Graphic 40x6 pixels interleaved [bottom of car]
+B $D6C4,90,10 Graphic 40x9 pixels masked [top of car]
+B $D71E,60,10 Graphic 40x6 pixels masked [bottom of car]
 
-B $D75A,28,2 Graphic 8x14 pixels interleaved
-B $D776,28,2 Graphic 8x14 pixels interleaved
+B $D75A,28,2 Graphic 8x14 pixels masked
+B $D776,28,2 Graphic 8x14 pixels masked
 
-B $DB4C,80,10 Graphic TBD 40x8 pixels interleaved
-B $DB9C,60,10 Graphic TBD 40x6 pixels interleaved
-B $DBD8,26,2 Graphic TBD 8x13 pixels interleaved
-B $DBF2,28,2 Graphic TBD 8x14 pixels interleaved
+B $DB4C,80,10 Graphic TBD 40x8 pixels masked
+B $DB9C,60,10 Graphic TBD 40x6 pixels masked
+B $DBD8,26,2 Graphic TBD 8x13 pixels masked
+B $DBF2,28,2 Graphic TBD 8x14 pixels masked
 
 B $DC0E TBD
 
-b $DD6A Car shadow. All are 28x12 pixels interleaved (mask then value).
+b $DD6A Car shadow. All are 28x12 pixels, mask then value.
 B $DD6A Straight on
 B $DE12 Same, but turning
 B $DEBA Same again, but turning hard
