@@ -11,7 +11,8 @@ CTL=$(GAME).ctl
 ASM=$(BUILD)/$(GAME).asm
 BIN=$(BUILD)/$(GAME).bin
 PRISTINEZ80=$(BUILD)/$(GAME).pristine.z80
-SKOOL=$(BUILD)/$(GAME).skool
+SKOOL=$(GAME).skool
+REF=$(GAME).ref
 TAP=$(BUILD)/$(GAME).tap
 Z80=$(BUILD)/$(GAME).z80
 GENERATED_CTL=$(BUILD)/$(GAME).ctl
@@ -54,7 +55,7 @@ $(SKOOL): $(PRISTINEZ80) $(CTL)
 
 .PHONY: disasm
 disasm: $(SKOOL)
-	skool2html.py $(OPTIONS) --asm-labels --rebuild-images --output-dir $(BUILD) $(SKOOL) $(GAME).ref
+	skool2html.py $(OPTIONS) --asm-labels --rebuild-images --output-dir $(BUILD) $(SKOOL) $(REF)
 
 .PHONY: asm
 asm: $(ASM)
