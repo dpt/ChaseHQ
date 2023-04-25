@@ -11,8 +11,6 @@
 > $4000 ; This is intended to document the game when it is in a "pristine" as-loaded
 > $4000 ; state.
 > $4000 ;
-> $4000 ; POTATO #CALL:timestamp() POTATO
-> $4000 ;
 > $4000 ; AUTHORS
 > $4000 ; -------
 > $4000 ; Code by JOBBEEE aka John O'Brien
@@ -433,24 +431,25 @@ W $6495,2 Bitmap
 W $6497,2 Mask
 L $6492,7,6
 ;
-B $64BC,180,6 Lamborghini_1 (48x30)
-B $6570,110,5 Lamborghini_2 (40x22)
-B $65DE,45,3 Lamborghini_3 (24x15)
+B $64BC,180,6 Lamborghini_1 (48x30) #HTML[#CALL:graphic($64BC,48,30,0)]
+B $6570,110,5 Lamborghini_2 (40x22) #HTML[#CALL:graphic($6570,40,22,0)]
+B $65DE,45,3 Lamborghini_3 (24x15) #HTML[#CALL:graphic($65DE,24,15,0)]
 ;
-B $660B,234,6 Truck_1 (48x39)
-B $66F5,145,5 Truck_2 (40x29)
-B $6786,60,3 Truck_3 (24x20)
+B $660B,234,6 Truck_1 (48x39) #HTML[#CALL:graphic($660B,48,39,0)]
+B $66F5,145,5 Truck_2 (40x29) #HTML[#CALL:graphic($66F5,40,29,0)]
+B $6786,60,3 Truck_3 (24x20) #HTML[#CALL:graphic($6786,24,20,0)]
 ;
-B $67C2,186,6 Car_1 (48x31)
-B $687C,110,5 Car_2 (40x22)
-B $68EA,48,3 Car_3 (24x16)
+B $67C2,186,6 Car_1 (48x31) #HTML[#CALL:graphic($67C2,48,31,0)]
+B $687C,110,5 Car_2 (40x22) #HTML[#CALL:graphic($687C,40,22,0)]
+B $68EA,48,3 Car_3 (24x16) #HTML[#CALL:graphic($68EA,24,16,0)]
 ;
-B $691A,48,6 Lamborghini_4 interleaved (24x2x8)
-B $694A,48,6 Lamborghini_5 "mask" interleaved (24x2x8)
-B $697A,48,4 Truck_4/5 interleaved (16x2x12)
-B $69AA,48,4 Truck_4/5 "mask" interleaved (16x2x12)
-B $69DA,54,6 Car_4/5 interleaved (24x2x9)
-B $6A10,54,6 Car_4/5 "mask" interleaved (24x2x9)
+B $691A,48,6 Lamborghini_4 interleaved (24x8) #HTML[#CALL:graphic($691A,24,8,1)]
+B $694A,48,6 Lamborghini_5 pre-shifted interleaved (24x8) #HTML[#CALL:graphic($694A,24,8,1)]
+
+B $697A,48,4 Truck_4/5 interleaved (16x12) #HTML[#CALL:graphic($697A,16,12,1)]
+B $69AA,48,4 Truck_4/5 pre-shifted interleaved (16x12) #HTML[#CALL:graphic($69AA,16,12,1)]
+B $69DA,54,6 Car_4/5 interleaved (24x9) #HTML[#CALL:graphic($69DA,24,9,1)]
+B $6A10,54,6 Car_4/5 pre-shifted interleaved (24x9) #HTML[#CALL:graphic($6A10,24,9,1)]
 ;
 @ $6A46 label=stones_lods
 B $6A46,1 Width (bytes)
@@ -3549,7 +3548,7 @@ c $BDFB
 c $C0E1
   $C07A,3 Duplicate instruction
 
-c $C15B Tunnel entrace/exit drawing code
+c $C15B Tunnel entrance/exit drawing code
   $C221 Jump table (self modified)
   $C236 Jump table (self modified)
 
@@ -3744,14 +3743,14 @@ B $D03C,1 1 bytes wide
 W $D03D,2 -> More debris (perhaps)
 ;
 ; Sometimes plotted as 24x28 when it's "HERE! + Arrow"
-B $D03F,126,6 Arrow graphic (24x21 pixels interleaved) #HTML[#CALL:graphic($D03F)]
-B $D0BD "HERE!" graphic [not 100% sure if there's other stuff here]
-B $D0E7,14,2 Cherry light (sits on roof of car) 8x7 pixels interleaved
-B $D0F5,84,6 Illuminated cherry light 24x14 pixels interleaved
-B $D149,120,6 Crash/spark (24x20 pixels interleaved)
-B $D1C1,16,4 Graphic (16x4 pixels)
-B $D1D1,36,4 Debris (16x9 pixels)
-B $D1F5,24,2 More debris (8x12 pixels)
+B $D03F,126,6 Arrow graphic (24x21 pixels interleaved) #HTML[#CALL:graphic($D03F,24,21,1)]
+B $D0BD,42,6 "HERE!" graphic (24x7 pixels interleaved) #HTML[#CALL:graphic($D0BD,24,7,1)]
+B $D0E7,14,2 Cherry light (sits on roof of car) 8x7 pixels interleaved #HTML[#CALL:graphic($D0E7,8,7,1)]
+B $D0F5,84,6 Illuminated cherry light 24x14 pixels interleaved #HTML[#CALL:graphic($D0F5,24,14,1)]
+B $D149,120,6 Crash/spark (24x20 pixels interleaved) #HTML[#CALL:graphic($D149,24,20,1)]
+B $D1C1,16,4 Graphic (16x4 pixels) #HTML[#CALL:graphic($D1C1,16,4,1)] LOOKS WRONG
+B $D1D1,36,4 Debris (16x9 pixels) #HTML[#CALL:graphic($D1D1,16,9,1)] LOOKS WRONG
+B $D1F5,24,2 More debris (8x12 pixels) #HTML[#CALL:graphic($D1F5,8,12,1)] LOOKS WRONG
 
 b $D20D Turbo smoke plume. 32x16 per frame. 4 frames. mask-bitmap arrangement.
 B $D20D Turbo smoke plume data frame 1
