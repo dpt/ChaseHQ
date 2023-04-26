@@ -4,7 +4,7 @@
 
 [Config]
 HtmlWriterClass=:ChaseHQ.ChaseHQHtmlWriter
-GameDir=build/ChaseHQ
+GameDir=ChaseHQ
 
 [Paths]
 CodeFiles={address:04X}.html
