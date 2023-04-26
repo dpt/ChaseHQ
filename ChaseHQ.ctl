@@ -188,9 +188,9 @@ B $5BD5 gets IX pointed at it by $5B32
 b $5C00 Graphics
 D $5C00 #HTML[#CALL:graphic($5C00,80,24,0,1)]
 ;B $5B00,240 Hill backdrop (80x24) seems to be pre-shifted by #R$C8BE (overlaps game setup)
-B $5C00,240 Hill backdrop (80x24) inverted
+B $5C00,240 Hill backdrop (80x24) inverted. Varies per level
 
-b $5CF0 (More) per-level data
+b $5CF0 Per-level data
 ;
 @ $5CF0 label=perp_mugshot_attributes
 W $5CF0,2 Address of perp's mugshot attributes
@@ -201,13 +201,14 @@ W $5CF2,2 Address of perp's mugshot bitmap
 W $5CF4,2 Screen attributes used for the ground colour (a pair of matching bytes)
 ;
 ;W $5CF6,18,2 TBD - likely addresses used by $AC1F
+; This has various per-level data pointers but it's not consistent.
 W $5CF6,2 TBD
-W $5CF8,2 Loaded by $900F. Point to array of 7 byte entries.
+W $5CF8,2 Loaded by $900F. Points to an array of 7 byte entries.
 W $5CFA,2 TBD
-W $5CFC,2 TBD
-W $5CFE,2 <turn sign lods>
-W $5D00,2 TBD
-W $5D02,2 TBD
+W $5CFC,2 -> "Entry 3"
+W $5CFE,2 <turn sign lods> inconsistent...
+W $5D00,2 -> "Entry 9 (turn sign)"
+W $5D02,2 -> "Entry 12"
 W $5D04,2 -> Nancy's report
 W $5D06,2 -> Arrest messages
 
@@ -284,102 +285,102 @@ B $5E43,1
 W $5E44,2 Address of barrier_lods table
 ;
 
-
 ; Entry 0 does not look plausible.
 ;
-N $5E49 Entry 1
+N $5E46 Entry 1
+B $5E46,3 TBD
 W $5E49,2 Arg for routine passed in DE
 W $5E4B,2 -> Routine at $9252
-B $5E4D,3 TBD
 ;
-N $5E50 Entry 2 (empty?)
-W $5E50,2 No arg?
-W $5E52,2 No routine?
+N $5E4D Entry 2 (empty)
+B $5E4D,3
+W $5E50,2
+W $5E52,2
+;
+N $5E54 Entry 3
 B $5E54,3 TBD
-;
-N $5E57 Entry 3
 W $5E57,2 Arg for routine passed in DE
 W $5E59,2 -> Routine at $9171
-B $5E5B,3 TBD - remaining bytes of this entry
 ;
-N $5E5E Entry 4
+N $5E5B Entry 4
+B $5E5B,3 TBD - remaining bytes of this entry
 W $5E5E,2 Arg for routine passed in DE
 W $5E60,2 -> Routine at $9171. Loaded into HL at $9017 then jumped to.
-B $5E62,3 TBD - remaining bytes of this entry
 ;
-N $5E65 Entry 5
+N $5E62 Entry 5
+B $5E62,3 TBD - remaining bytes of this entry
 W $5E65,2 Arg for routine passed in DE
 W $5E67,2 -> Routine at $9171
-B $5E69,3 TBD - remaining bytes of this entry
 ;
-N $5E6C Entry 6
+N $5E69 Entry 6
+B $5E69,3 TBD - remaining bytes of this entry
 W $5E6C,2 Arg for routine passed in DE
 W $5E6E,2 -> Routine at $9171
-B $5E70,3 TBD - remaining bytes of this entry
 ;
-N $5E73 Entry 7
+N $5E70 Entry 7
+B $5E70,3 TBD - remaining bytes of this entry
 W $5E73,2 Arg for routine passed in DE
 W $5E75,2 -> Routine at $9171
-B $5E77,3 TBD - remaining bytes of this entry
 ;
-N $5E7A Entry 8
+N $5E77 Entry 8
+B $5E77,3 TBD - remaining bytes of this entry
 W $5E7A,2 Arg for routine passed in DE
 W $5E7C,2 Routine?
 ;W $5E7D,2 -> car_lods could be coincidence?
-B $5E7E,3 TBD - remaining bytes of this entry
 ;
-N $5E81 Entry 9 (turn sign)
+N $5E7E Entry 9 (turn sign)
+B $5E7E,3 TBD - remaining bytes of this entry
 W $5E81,2 -> -> turn_sign_lods
 W $5E83,2 -> Routine at $92E1
-B $5E85,3 TBD
 ;
-N $5E88 Entry 10
+N $5E85 Entry 10
+B $5E85,3 TBD
 W $5E88,2 Arg
 W $5E8A,2 -> Routine at $924D
-B $5E8C,3 TBD
 ;
-N $5E8F Entry 11
-W $5E8F,2 No arg?
-W $5E91,2 No routine?
+N $5E8C Entry 11 (empty)
+B $5E8C,3
+W $5E8F,2
+W $5E91,2
+;
+N $5E93 Entry 12
 B $5E93,3 TBD
-;
-N $5E96 Entry 12
 W $5E96,2 Arg
 W $5E98,2 -> Routine at $916C
-B $5E9A,3 TBD
 ;
-N $5E9D Entry 13
+N $5E9A Entry 13
+B $5E9A,3 TBD
 W $5E9D,2 Arg
 W $5E9F,2 -> Routine at $916C
-B $5EA1,3 TBD
 ;
-N $5EA4 Entry 14
+N $5EA1 Entry 14
+B $5EA1,3 TBD
 W $5EA4,2 Arg
 W $5EA6,2 -> Routine at $916C
-B $5EA8,3 TBD
 ;
-N $5EAB Entry 15
+N $5EA8 Entry 15
+B $5EA8,3 TBD
 W $5EAB,2 Arg
 W $5EAD,2 -> Routine at $916C
-B $5EAF,3 TBD
 ;
-N $5EB2 Entry 16
+N $5EAF Entry 16
+B $5EAF,3 TBD
 W $5EB2,2 Arg
 W $5EB4,2 -> Routine at $916C
-B $5EB6,3 TBD
 ;
-N $5EB9 Entry 17
+N $5EB6 Entry 17
+B $5EB6,3 TBD
 W $5EB9,2 Arg
 W $5EBB,2 -> Routine at $9278
+;
+N $5EBD Entry 18 (turn sign)
 B $5EBD,3 TBD
-;
-N $5EC0 Entry 18 (turn sign)
 W $5EC0,2 Arg
+W $5EC2,2 -> Routine at $9278
 ;
-; either there's overlap here or something is 1-indexed
-;
-b $5EC3 Initial map segment
-B $5EC3 Ref'd from setup_game_data
+; $5EC3 is referenced so perhaps we're dealing with 1-indexed data here. $60 seems to be a terminator?
+b $5EC4 Initial map segment
+B $5EC4 Ref'd from setup_game_data
 B $5EE3 Ref'd from setup_game_data
 B $5F0E Ref'd from setup_game_data
 B $5F77 Ref'd from setup_game_data
@@ -388,7 +389,7 @@ B $5F1C Ref'd from setup_game_data
 ;
 b $6088 APPROX?! map segment - bumpy road then tunnel
 B $6088
-B $60A3 Looks like the graphic data for a lamppost but I suspect it's a height related data for the bumpy road
+B $60A3 Looks like the graphic data for a lamppost but I suspect it's a height(?) related data for the bumpy road
 B $60E6
 B $60EF
 B $6109
@@ -671,44 +672,47 @@ c $8014 Load a stage
   $802B Transition type?
   $802D Call setup_transition
   $8030 ...
-
-  $8088 subroutine
+  $8092 Point #REGhl at tape_messsages
+  $8095 ...
+;
+  $8088 Subroutine
 N $80B9 Tape loading
   $80B9 Setup to load a block ???
   $80C0 Routine
   $814B Subroutine
-
-t $8169 Mainly tape loading messages
+;
+@ $8169 label=tape_messsages
+D $8169 Tape loading messages
 ;
 B $8169,1 attr?
 W $816A,2 Screen position (8,64)
 W $816C,2 Screen attribute position (1,8)
-  $816E,30 "REWIND TAPE TO START OF SIDE 2"
+T $816E,30 "REWIND TAPE TO START OF SIDE 2"
 ;
 B $818C,1 attr?
 W $818D,2 Screen position (88,96)
 W $818F,2 Screen attribute position (11,12)
-  $8191,10 "START TAPE"
+T $8191,10 "START TAPE"
 ;
 B $819B,1 attr?
 W $819C,2 Screen position (72,128)
 W $819E,2 Screen attribute position (9,16)
-  $81A0,15 "SEARCHING FOR 1"
+T $81A0,15 "SEARCHING FOR 1"
 ;
 B $81AF,1 attr?
 W $81B0,2 Screen position (104,160)
 W $81B2,2 Screen attribute position (13,20)
-  $81B4,7 "FOUND 1"
+T $81B4,7 "FOUND 1"
 ;
 B $81BB,1 attr?
 W $81BC,2 Screen position (80,96)
 W $81BE,2 Screen attribute position (10,12)
-  $81C0,13 "STOP THE TAPE"
+T $81C0,13 "STOP THE TAPE"
 ;
 B $81CD,1 attr?
 W $81CE,2 Screen position (88,128)
 W $81D0,2 Screen attribute position (11,16)
-  $81D2,11 "PRESS  GEAR"
+T $81D2,11 "PRESS  GEAR"
 
 @ $81DD label=start_chatter
 b $81DD Start of game chatter
@@ -787,8 +791,8 @@ N $828B Alternate between credits and copyright messages.
   $829D Call transition
   $82A0 Call draw_screen
   $82A3 Loop
-
-b $82A6 Attract mode messages
+;
+@ $82A6 label=attract_messages
 B $82A6,1 Flags (double height)
 B $82A7,1 Attribute (black)
 W $82A8,2 Back buffer address
@@ -1007,6 +1011,7 @@ N $84C8 Test mode handling
 
 @ $852A label=cpu_driver
 c $852A CPU driver
+D $852A This runs the game loop while driving the car.
   $852A Get road position
   $852D Subtract centre value. Carry flag will be set if we're on the right hand side of the road
   $8534 Set input ACCELERATE + RIGHT
@@ -1050,7 +1055,10 @@ c $85E4
 c $860F
 
 c $865A
-b $86F6
+
+c $86F6 18 byte chunks of this gets copied to $C82D by $C808
+
+c $873C
 
 @ $87DC label=setup_game
 c $87DC Sets up the game or the level?
@@ -1223,6 +1231,7 @@ R $89D9 I:D Delay value
   $89EA Move to the next byte of effect data
   $89EB Loop while #REGc
   $89EE Return
+@ $89EF label=sfx_data
 B $89EF Effect data table
 
 @ $8A0F label=sfx8a0f
@@ -1632,6 +1641,7 @@ c $8F5F
 
 c $9023
   $903A Push return address onto stack
+  $903E
   $904B <return>
 
 ; unclear if/how this routine gets entered
@@ -2062,9 +2072,9 @@ N $9A0C #REGa is the index of the face to show
   $9A39 The character itself
   $9A3A Clear the string terminator bit
   $9A3C Preserve message_x
-  $9A3D PUSH HL
+  $9A3D
   $9A3E Call plot_mini_font_2, with #REGd as ASCII character to plot
-  $9A41 POP HL
+  $9A41
   $9A42 Test string terminator bit
   $9A44 Move to the next character in the string
   $9A45 If not terminated then jump over
@@ -2717,7 +2727,7 @@ N $A004 Otherwise it's type 6
 ;
 @ $A03D label=double_height_glyph
 c $A03D Plots double-height glyphs. DE->screen HL->glyph def
-  $A03D PUSH DE
+  $A03D
   $A03E *DE = 0
   $A040 D++
   $A041 *DE = *HL
@@ -2730,19 +2740,19 @@ c $A03D Plots double-height glyphs. DE->screen HL->glyph def
   $A073 *DE = A
 ;
 @ $A074 label=j_a074
-  $A074 POP DE
+  $A074
   $A075 E++
-  $A076 EXX
-  $A077 PUSH HL
+  $A076
+  $A077
   $A078 *HL |= C
   $A07B HL += DE
   $A07C *HL |= C
-  $A07F POP HL
+  $A07F
   $A080 L++
-  $A081 EXX
+  $A081
   $A082 Return
 ;
-  $A083 PUSH DE
+  $A083
   $A084 A = 0
   $A085 *DE = A
   $A086 D++
@@ -2770,12 +2780,12 @@ c $A03D Plots double-height glyphs. DE->screen HL->glyph def
   $A0A3 *DE = A
 ;
 @ $A0A4 label=j_a0a4
-  $A0A4 POP DE
+  $A0A4
   $A0A5 E++
-  $A0A6 EXX
+  $A0A6
   $A0A7 *HL |= C
   $A0AA L++
-  $A0AB EXX
+  $A0AB
   $A0AC Return
 ;
 ; this routine plots to the real screen
@@ -3263,18 +3273,18 @@ c $B58E Draws the car
 R $B58E I:A TBD
   $B58E If #REGa is zero then $A251 = A
   $B594 C=A
-  $B595 PUSH BC
+  $B595
   $B596 Point #REGhl at ? then add (#REGa * 4)
   $B59F Point #REGde at the car tiles [needs a proper label]
   $B5A2 C=7
   $B5A4 Call sub_b627
-  $B5A7 POP BC
+  $B5A7
   $B5A8 117 - (self modified value $B5AB)
   $B5AC D=A
   $B5AD A=C+B+(self modified value $B5B0)
   $B5B1 If A >= 9 A -= 9
   $B5B7,3 Point #REGhl at car definitions[A] (entries are 20 bytes wide)
-  $B5C4 PUSH DE
+  $B5C4
   $B5C5 A=*$A22A + *HL
   $B5C9 A=0-A
   $B5CB A+=D  (aka A=D-A)
@@ -3290,27 +3300,27 @@ R $B58E I:A TBD
   $B5D9 HL++
   $B5DA B=*HL++
   $B5DC A=*HL++
-  $B5DE PUSH HL
-  $B5DF PUSH DE
+  $B5DE
+  $B5DF
   $B5E0 H=*HL
   $B5E1 L=A
   $B5E2 A=5
   $B5E4 E=A
   $B5E5 D=0
-  $B5E7 EXX
-  $B5E8 POP HL
-  $B5E9 EX AF,AF'
+  $B5E7
+  $B5E8
+  $B5E9
   $B5EA IF $A251 jump to draw_car_perhaps_flipped
-  $B5F0 EX AF,AF'
+  $B5F0
   $B5F1 Call plot_sprite -- #REGa is (how many pixels to plot - 1) / 8
   $B5F4 Goto draw_car_cont
 @ $B5F6 label=draw_car_perhaps_flipped
-  $B5F6 EX AF,AF'
+  $B5F6
   $B5F7 L--
   $B5F8 Call plot_sprite_flipped
 @ $B5FB label=draw_car_cont
-  $B5FB POP HL
-  $B5FC POP DE
+  $B5FB
+  $B5FC
   $B5FD HL++
   $B5FE E=$68 C=$05 (width) CALL $B627  draws the top (windscreen)
   $B605 E=$68 C=$05 (width) CALL $B627  draws the bottom (wheels)
@@ -3323,22 +3333,22 @@ R $B58E I:A TBD
 ; E = <something> e.g. $68
 @ $B627 label=sub_b627
   $B627 A=D
-  $B628 PUSH DE
+  $B628
   $B629 D=A - *HL++
   $B62C B=*HL++
   $B62E A=*HL++
-  $B630 PUSH HL
+  $B630
   $B631 H=*HL
   $B632 L=A
-  $B633 PUSH BC
-  $B634 EXX
-  $B635 POP BC
+  $B633
+  $B634
+  $B635
   $B636 A=*$A251
   $B639 B=A
   $B63A E=C
   $B63B C--
   $B63C If A==0 C=A
-  $B640 EXX
+  $B640
   $B641 Draws right side of car
   $B6C4 Read from SUB @ $B5AA
   $B647 Return
