@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Chase H.Q.: Routine at A955</title>
+<meta charset="utf-8" />
+<link rel="stylesheet" type="text/css" href="../skoolkit.css" />
+</head>
+<body class="Asm-c">
+<table class="header">
+<tr>
+<td class="logo"><a href="../index.html">Chase H.Q.</a></td>
+<td class="page-header">Routines</td>
+</tr>
+</table>
+<table class="asm-navigation">
+<tr>
+<td class="prev">
+Prev: <a href="A8CD.html">A8CD</a>
+</td>
+<td class="up">Up: <a href="../maps/all.html#43349">Map</a></td>
+<td class="next">
+Next: <a href="A97E.html">A97E</a>
+</td>
+</tr>
+</table>
+<div class="description">A955: Routine at A955</div>
+<table class="disassembly">
+<tr>
+<td class="routine-comment" colspan="5">
+<div class="details">
+<div class="paragraph">
+Used by the routines at <a href="8401.html">8401</a> and <a href="852A.html">cpu_driver</a>.
+</div>
+</div>
+</td>
+</tr>
+<tr>
+<td class="address-2"><span id="43349"></span>A955</td>
+<td class="instruction">LD A,($A248)</td>
+<td class="comment-0" rowspan="1"></td>
+</tr>
+<tr>
+<td class="address-1"><span id="43352"></span>A958</td>
+<td class="instruction">AND A</td>
+<td class="comment-0" rowspan="1"></td>
+</tr>
+<tr>
+<td class="address-1"><span id="43353"></span>A959</td>
+<td class="instruction">RET Z</td>
+<td class="comment-0" rowspan="1"></td>
+</tr>
+<tr>
+<td class="address-1"><span id="43354"></span>A95A</td>
+<td class="instruction">LD A,($A254)</td>
+<td class="comment-0" rowspan="1"></td>
+</tr>
+<tr>
+<td class="address-1"><span id="43357"></span>A95D</td>
+<td class="instruction">AND A</td>
+<td class="comment-0" rowspan="1"></td>
+</tr>
+<tr>
+<td class="address-1"><span id="43358"></span>A95E</td>
+<td class="instruction">RET Z</td>
+<td class="comment-0" rowspan="1"></td>
+</tr>
+<tr>
+<td class="address-1"><span id="43359"></span>A95F</td>
+<td class="instruction">LD DE,$ED28</td>
+<td class="comment-0" rowspan="1"></td>
+</tr>
+<tr>
+<td class="address-1"><span id="43362"></span>A962</td>
+<td class="instruction">CALL <a href="9618.html#38427">rng_0</a></td>
+<td class="comment-0" rowspan="1"></td>
+</tr>
+<tr>
+<td class="address-1"><span id="43365"></span>A965</td>
+<td class="instruction">AND A</td>
+<td class="comment-0" rowspan="1"></td>
+</tr>
+<tr>
+<td class="address-1"><span id="43366"></span>A966</td>
+<td class="instruction">LD A,$01</td>
+<td class="comment-0" rowspan="1"></td>
+</tr>
+<tr>
+<td class="address-1"><span id="43368"></span>A968</td>
+<td class="instruction">JP P,$A96C</td>
+<td class="comment-0" rowspan="1"></td>
+</tr>
+<tr>
+<td class="address-1"><span id="43371"></span>A96B</td>
+<td class="instruction">INC A</td>
+<td class="comment-0" rowspan="1"></td>
+</tr>
+<tr>
+<td class="address-2"><span id="43372"></span>A96C</td>
+<td class="instruction">LD (DE),A</td>
+<td class="comment-0" rowspan="1"></td>
+</tr>
+<tr>
+<td class="address-1"><span id="43373"></span>A96D</td>
+<td class="instruction">CALL <a href="9618.html#38427">rng_0</a></td>
+<td class="comment-0" rowspan="1"></td>
+</tr>
+<tr>
+<td class="address-1"><span id="43376"></span>A970</td>
+<td class="instruction">INC DE</td>
+<td class="comment-0" rowspan="1"></td>
+</tr>
+<tr>
+<td class="address-1"><span id="43377"></span>A971</td>
+<td class="instruction">LD (DE),A</td>
+<td class="comment-0" rowspan="1"></td>
+</tr>
+<tr>
+<td class="address-1"><span id="43378"></span>A972</td>
+<td class="instruction">LD A,$01</td>
+<td class="comment-0" rowspan="1"></td>
+</tr>
+<tr>
+<td class="address-1"><span id="43380"></span>A974</td>
+<td class="instruction">LD ($A97F),A</td>
+<td class="comment-0" rowspan="1"></td>
+</tr>
+<tr>
+<td class="address-1"><span id="43383"></span>A977</td>
+<td class="instruction">LD ($C0BC),A</td>
+<td class="comment-0" rowspan="1"></td>
+</tr>
+<tr>
+<td class="address-1"><span id="43386"></span>A97A</td>
+<td class="instruction">LD ($A9DF),A</td>
+<td class="comment-0" rowspan="1"></td>
+</tr>
+<tr>
+<td class="address-1"><span id="43389"></span>A97D</td>
+<td class="instruction">RET</td>
+<td class="comment-0" rowspan="1"></td>
+</tr>
+</table>
+<table class="asm-navigation">
+<tr>
+<td class="prev">
+Prev: <a href="A8CD.html">A8CD</a>
+</td>
+<td class="up">Up: <a href="../maps/all.html#43349">Map</a></td>
+<td class="next">
+Next: <a href="A97E.html">A97E</a>
+</td>
+</tr>
+</table>
+<footer>
+<div class="release">The incomplete Chase H.Q. disassembly 20230426</div>
+<div class="copyright">&copy; 1989 Ocean Software Ltd.</div>
+<div class="created">Created using <a href="https://skoolkit.ca">SkoolKit</a> 8.9.</div>
+</footer>
+</body>
+</html>

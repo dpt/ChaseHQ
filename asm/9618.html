@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Chase H.Q.: Routine at 9618</title>
+<meta charset="utf-8" />
+<link rel="stylesheet" type="text/css" href="../skoolkit.css" />
+</head>
+<body class="Asm-c">
+<table class="header">
+<tr>
+<td class="logo"><a href="../index.html">Chase H.Q.</a></td>
+<td class="page-header">Routines</td>
+</tr>
+</table>
+<table class="asm-navigation">
+<tr>
+<td class="prev">
+Prev: <a href="9542.html">9542</a>
+</td>
+<td class="up">Up: <a href="../maps/all.html#38424">Map</a></td>
+<td class="next">
+Next: <a href="962E.html">962E</a>
+</td>
+</tr>
+</table>
+<div class="description">9618: Random number generator</div>
+<table class="disassembly">
+<tr>
+<td class="routine-comment" colspan="5">
+<div class="details">
+</div>
+<table class="output">
+<tr class="asm-output-header">
+<th colspan="2">Output</th>
+</tr>
+<tr>
+<td class="register">A</td>
+<td class="register-desc">Random byte?</td>
+</tr>
+</table>
+</td>
+</tr>
+<tr>
+<td class="asm-label">rng</td>
+<td class="address-2"><span id="38424"></span>9618</td>
+<td class="instruction">DEFB $7B,$2D,$E9</td>
+<td class="comment-1" rowspan="1">Seed / initial state</td>
+</tr>
+<tr>
+<td class="routine-comment" colspan="5">
+<span id="38427"></span>
+<div class="comments">
+<div class="paragraph">
+This entry point is used by the routines at <a href="860F.html">860F</a>, <a href="8A0F.html">sfx8a0f</a>, <a href="8DF9.html">setup_transition</a>, <a href="99EC.html">print_chatter</a>, <a href="A637.html">A637</a>, <a href="A7F3.html">A7F3</a> and <a href="A955.html">A955</a>.
+</div>
+</div>
+</td>
+</tr>
+<tr>
+<td class="asm-label">rng_0</td>
+<td class="address-2"><span id="38427"></span>961B</td>
+<td class="instruction">LD HL,$9618</td>
+<td class="comment-1" rowspan="1">Point at seed / state bytes</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="38430"></span>961E</td>
+<td class="instruction">LD A,(HL)</td>
+<td class="comment-1" rowspan="3">seed[0] -= $8D</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="38431"></span>961F</td>
+<td class="instruction">SUB $8D</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="38433"></span>9621</td>
+<td class="instruction">LD (HL),A</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="38434"></span>9622</td>
+<td class="instruction">INC HL</td>
+<td class="comment-1" rowspan="4">seed[1] += 3</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="38435"></span>9623</td>
+<td class="instruction">INC (HL)</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="38436"></span>9624</td>
+<td class="instruction">INC (HL)</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="38437"></span>9625</td>
+<td class="instruction">INC (HL)</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="38438"></span>9626</td>
+<td class="instruction">ADD A,(HL)</td>
+<td class="comment-1" rowspan="2">A = seed[0] + seed[1]</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="38439"></span>9627</td>
+<td class="instruction">INC HL</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="38440"></span>9628</td>
+<td class="instruction">RRCA</td>
+<td class="comment-1" rowspan="1">Rotate A by 1</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="38441"></span>9629</td>
+<td class="instruction">RRC (HL)</td>
+<td class="comment-1" rowspan="1">Rotate seed[2] by 1</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="38443"></span>962B</td>
+<td class="instruction">ADD A,(HL)</td>
+<td class="comment-1" rowspan="2">seed[2] += A</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="38444"></span>962C</td>
+<td class="instruction">LD (HL),A</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="38445"></span>962D</td>
+<td class="instruction">RET</td>
+<td class="comment-1" rowspan="1">Return</td>
+</tr>
+</table>
+<table class="asm-navigation">
+<tr>
+<td class="prev">
+Prev: <a href="9542.html">9542</a>
+</td>
+<td class="up">Up: <a href="../maps/all.html#38424">Map</a></td>
+<td class="next">
+Next: <a href="962E.html">962E</a>
+</td>
+</tr>
+</table>
+<footer>
+<div class="release">The incomplete Chase H.Q. disassembly 20230426</div>
+<div class="copyright">&copy; 1989 Ocean Software Ltd.</div>
+<div class="created">Created using <a href="https://skoolkit.ca">SkoolKit</a> 8.9.</div>
+</footer>
+</body>
+</html>

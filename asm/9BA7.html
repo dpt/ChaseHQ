@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Chase H.Q.: Routine at 9BA7</title>
+<meta charset="utf-8" />
+<link rel="stylesheet" type="text/css" href="../skoolkit.css" />
+</head>
+<body class="Asm-c">
+<table class="header">
+<tr>
+<td class="logo"><a href="../index.html">Chase H.Q.</a></td>
+<td class="page-header">Routines</td>
+</tr>
+</table>
+<table class="asm-navigation">
+<tr>
+<td class="prev">
+Prev: <a href="9AEC.html">9AEC</a>
+</td>
+<td class="up">Up: <a href="../maps/all.html#39847">Map</a></td>
+<td class="next">
+Next: <a href="9BCF.html">9BCF</a>
+</td>
+</tr>
+</table>
+<div class="description">9BA7: Clear the whole message line</div>
+<table class="disassembly">
+<tr>
+<td class="routine-comment" colspan="5">
+<div class="details">
+<div class="paragraph">
+Used by the routines at <a href="9965.html">9965</a> and <a href="99EC.html">print_chatter</a>.
+</div>
+</div>
+</td>
+</tr>
+<tr>
+<td class="asm-label">clear_message_line</td>
+<td class="address-2"><span id="39847"></span>9BA7</td>
+<td class="instruction">LD HL,$45C1</td>
+<td class="comment-1" rowspan="1">Point <span class="register">HL</span> at screen coordinate (8,53)</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="39850"></span>9BAA</td>
+<td class="instruction">LD B,$00</td>
+<td class="comment-1" rowspan="1">B = 0  top of LDIR count and byte to wipe memory with</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="39852"></span>9BAC</td>
+<td class="instruction">LD A,$06</td>
+<td class="comment-1" rowspan="1">Clear six rows</td>
+</tr>
+<tr>
+<td class="asm-label">cml_loop</td>
+<td class="address-2"><span id="39854"></span>9BAE</td>
+<td class="instruction">EX AF,AF'</td>
+<td class="comment-1" rowspan="1"></td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="39855"></span>9BAF</td>
+<td class="instruction">LD D,H</td>
+<td class="comment-1" rowspan="3">DE = HL + 1</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="39856"></span>9BB0</td>
+<td class="instruction">LD E,L</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="39857"></span>9BB1</td>
+<td class="instruction">INC E</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="39858"></span>9BB2</td>
+<td class="instruction">LD C,$1D</td>
+<td class="comment-1" rowspan="1">29 bytes to clear</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="39860"></span>9BB4</td>
+<td class="instruction">PUSH HL</td>
+<td class="comment-1" rowspan="1">Preserve HL</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="39861"></span>9BB5</td>
+<td class="instruction">LD (HL),B</td>
+<td class="comment-1" rowspan="2">Zero 29 bytes at DE</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="39862"></span>9BB6</td>
+<td class="instruction">LDIR</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="39864"></span>9BB8</td>
+<td class="instruction">POP HL</td>
+<td class="comment-1" rowspan="1"></td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="39865"></span>9BB9</td>
+<td class="instruction">INC H</td>
+<td class="comment-1" rowspan="11">Move to next scanline</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="39866"></span>9BBA</td>
+<td class="instruction">LD A,H</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="39867"></span>9BBB</td>
+<td class="instruction">AND $07</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="39869"></span>9BBD</td>
+<td class="instruction">JR NZ,<a href="9BA7.html#39881">cml_continue</a></td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="39871"></span>9BBF</td>
+<td class="instruction">LD A,L</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="39872"></span>9BC0</td>
+<td class="instruction">ADD A,$20</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="39874"></span>9BC2</td>
+<td class="instruction">LD L,A</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="39875"></span>9BC3</td>
+<td class="instruction">JR C,<a href="9BA7.html#39881">cml_continue</a></td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="39877"></span>9BC5</td>
+<td class="instruction">LD A,H</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="39878"></span>9BC6</td>
+<td class="instruction">SUB $08</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="39880"></span>9BC8</td>
+<td class="instruction">LD H,A</td>
+</tr>
+<tr>
+<td class="asm-label">cml_continue</td>
+<td class="address-2"><span id="39881"></span>9BC9</td>
+<td class="instruction">EX AF,AF'</td>
+<td class="comment-1" rowspan="1"></td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="39882"></span>9BCA</td>
+<td class="instruction">DEC A</td>
+<td class="comment-1" rowspan="1">Decrement row counter</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="39883"></span>9BCB</td>
+<td class="instruction">JP NZ,<a href="9BA7.html#39854">cml_loop</a></td>
+<td class="comment-1" rowspan="1">Loop while rows remain to clear</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="39886"></span>9BCE</td>
+<td class="instruction">RET</td>
+<td class="comment-1" rowspan="1">Return</td>
+</tr>
+</table>
+<table class="asm-navigation">
+<tr>
+<td class="prev">
+Prev: <a href="9AEC.html">9AEC</a>
+</td>
+<td class="up">Up: <a href="../maps/all.html#39847">Map</a></td>
+<td class="next">
+Next: <a href="9BCF.html">9BCF</a>
+</td>
+</tr>
+</table>
+<footer>
+<div class="release">The incomplete Chase H.Q. disassembly 20230426</div>
+<div class="copyright">&copy; 1989 Ocean Software Ltd.</div>
+<div class="created">Created using <a href="https://skoolkit.ca">SkoolKit</a> 8.9.</div>
+</footer>
+</body>
+</html>

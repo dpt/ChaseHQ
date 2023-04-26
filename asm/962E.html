@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Chase H.Q.: Game status buffer entry at 962E</title>
+<meta charset="utf-8" />
+<link rel="stylesheet" type="text/css" href="../skoolkit.css" />
+</head>
+<body class="Asm-g">
+<table class="header">
+<tr>
+<td class="logo"><a href="../index.html">Chase H.Q.</a></td>
+<td class="page-header">Game status buffer</td>
+</tr>
+</table>
+<table class="asm-navigation">
+<tr>
+<td class="prev">
+Prev: <a href="9618.html">9618</a>
+</td>
+<td class="up">Up: <a href="../maps/all.html#38446">Map</a></td>
+<td class="next">
+Next: <a href="963F.html">963F</a>
+</td>
+</tr>
+</table>
+<div class="description">962E: In-game message variables</div>
+<table class="disassembly">
+<tr>
+<td class="routine-comment" colspan="5">
+<div class="details">
+</div>
+</td>
+</tr>
+<tr>
+<td class="asm-label">next_character</td>
+<td class="address-1"><span id="38446"></span>962E</td>
+<td class="instruction">DEFW $0000</td>
+<td class="comment-1" rowspan="1">Address of the next character in the current message</td>
+</tr>
+<tr>
+<td class="asm-label">next_message</td>
+<td class="address-1"><span id="38448"></span>9630</td>
+<td class="instruction">DEFW $0000</td>
+<td class="comment-1" rowspan="1">Address of the _next_ message to show DOUBTING THIS NOW ... pointer to next command?</td>
+</tr>
+<tr>
+<td class="asm-label">message_x</td>
+<td class="address-1"><span id="38450"></span>9632</td>
+<td class="instruction">DEFB $00</td>
+<td class="comment-1" rowspan="1">Index of next character in the message bar</td>
+</tr>
+<tr>
+<td class="asm-label">bleh</td>
+<td class="address-1"><span id="38451"></span>9633</td>
+<td class="instruction">DEFB $00</td>
+<td class="comment-1" rowspan="1">zeroed by $995d set to 10 by $9a49</td>
+</tr>
+<tr>
+<td class="asm-label">noise_bytes</td>
+<td class="address-1"><span id="38452"></span>9634</td>
+<td class="instruction">DEFB $00,$00,$00,$00,$00</td>
+<td class="comment-1" rowspan="1">Five bytes used for noise when character pictures 'noise in'</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="38457"></span>9639</td>
+<td class="instruction">DEFB $00,$00,$00</td>
+<td class="comment-1" rowspan="1"></td>
+</tr>
+<tr>
+<td class="asm-label">noise_counter</td>
+<td class="address-1"><span id="38460"></span>963C</td>
+<td class="instruction">DEFB $00</td>
+<td class="comment-1" rowspan="1">Noise effect counter (4..0)</td>
+</tr>
+<tr>
+<td class="asm-label">TBD963d</td>
+<td class="address-1"><span id="38461"></span>963D</td>
+<td class="instruction">DEFB $00</td>
+<td class="comment-1" rowspan="1">read by $9946, one'd by $9961, set by $99d9 character index?</td>
+</tr>
+<tr>
+<td class="asm-label">TBD963e</td>
+<td class="address-1"><span id="38462"></span>963E</td>
+<td class="instruction">DEFB $00</td>
+<td class="comment-1" rowspan="1">read by $9950, set by $9956</td>
+</tr>
+</table>
+<table class="asm-navigation">
+<tr>
+<td class="prev">
+Prev: <a href="9618.html">9618</a>
+</td>
+<td class="up">Up: <a href="../maps/all.html#38446">Map</a></td>
+<td class="next">
+Next: <a href="963F.html">963F</a>
+</td>
+</tr>
+</table>
+<footer>
+<div class="release">The incomplete Chase H.Q. disassembly 20230426</div>
+<div class="copyright">&copy; 1989 Ocean Software Ltd.</div>
+<div class="created">Created using <a href="https://skoolkit.ca">SkoolKit</a> 8.9.</div>
+</footer>
+</body>
+</html>

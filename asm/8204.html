@@ -1,0 +1,336 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Chase H.Q.: Routine at 8204</title>
+<meta charset="utf-8" />
+<link rel="stylesheet" type="text/css" href="../skoolkit.css" />
+</head>
+<body class="Asm-c">
+<table class="header">
+<tr>
+<td class="logo"><a href="../index.html">Chase H.Q.</a></td>
+<td class="page-header">Routines</td>
+</tr>
+</table>
+<table class="asm-navigation">
+<tr>
+<td class="prev">
+Prev: <a href="81DD.html">81DD</a>
+</td>
+<td class="up">Up: <a href="../maps/all.html#33284">Map</a></td>
+<td class="next">
+Next: <a href="8258.html">8258</a>
+</td>
+</tr>
+</table>
+<div class="description">8204: Generates engine noise</div>
+<table class="disassembly">
+<tr>
+<td class="routine-comment" colspan="5">
+<div class="details">
+<div class="paragraph">
+Used by the routine at <a href="83C4.html">83C4</a>.
+</div>
+</div>
+</td>
+</tr>
+<tr>
+<td class="asm-label">engine_sfx_setup</td>
+<td class="address-2"><span id="33284"></span>8204</td>
+<td class="instruction">LD HL,($A24A)</td>
+<td class="comment-1" rowspan="1">Get speed value</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="33287"></span>8207</td>
+<td class="instruction">RR H</td>
+<td class="comment-1" rowspan="1">A = speed / 2</td>
+</tr>
+<tr>
+<td class="routine-comment" colspan="5">
+<span id="33289"></span>
+<div class="comments">
+<div class="paragraph">
+This entry point is used by the routine at <a href="F220.html">F220</a>.
+</div>
+</div>
+</td>
+</tr>
+<tr>
+<td class="asm-label">engine_sfx_setup_0</td>
+<td class="address-2"><span id="33289"></span>8209</td>
+<td class="instruction">LD A,L</td>
+<td class="comment-1" rowspan="1"></td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="33290"></span>820A</td>
+<td class="instruction">RRA</td>
+<td class="comment-1" rowspan="1">}</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="33291"></span>820B</td>
+<td class="instruction">CPL</td>
+<td class="comment-1" rowspan="1">A = ~A</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="33292"></span>820C</td>
+<td class="instruction">SRL A</td>
+<td class="comment-1" rowspan="2">A /= 4</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="33294"></span>820E</td>
+<td class="instruction">SRL A</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="33296"></span>8210</td>
+<td class="instruction">OR $01</td>
+<td class="comment-1" rowspan="1">A |= 1</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="33298"></span>8212</td>
+<td class="instruction">LD L,A</td>
+<td class="comment-1" rowspan="1">L = A</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="33299"></span>8213</td>
+<td class="instruction">LD H,$03</td>
+<td class="comment-1" rowspan="1">H = 3</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="33301"></span>8215</td>
+<td class="instruction">LD A,($A253)</td>
+<td class="comment-1" rowspan="3">If in high gear goto $821D</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="33304"></span>8218</td>
+<td class="instruction">AND A</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="33305"></span>8219</td>
+<td class="instruction">JR NZ,<a href="8204.html#33309">engine_sfx_setup_1</a></td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="33307"></span>821B</td>
+<td class="instruction">SRL L</td>
+<td class="comment-1" rowspan="1">L &gt;&gt;= 1</td>
+</tr>
+<tr>
+<td class="asm-label">engine_sfx_setup_1</td>
+<td class="address-2"><span id="33309"></span>821D</td>
+<td class="instruction">LD A,($A23B)</td>
+<td class="comment-1" rowspan="3">If $A23B == 0 goto $8225</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="33312"></span>8220</td>
+<td class="instruction">AND A</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="33313"></span>8221</td>
+<td class="instruction">JR Z,<a href="8204.html#33317">engine_sfx_setup_2</a></td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="33315"></span>8223</td>
+<td class="instruction">LD H,$01</td>
+<td class="comment-1" rowspan="1">H = 1</td>
+</tr>
+<tr>
+<td class="asm-label">engine_sfx_setup_2</td>
+<td class="address-2"><span id="33317"></span>8225</td>
+<td class="instruction">LD A,L</td>
+<td class="comment-1" rowspan="2">Self modify iterations -- L</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="33318"></span>8226</td>
+<td class="instruction">LD ($8244),A</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="33321"></span>8229</td>
+<td class="instruction">LD A,H</td>
+<td class="comment-1" rowspan="2">Self modify delay loop -- H</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="33322"></span>822A</td>
+<td class="instruction">LD ($8249),A</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="33325"></span>822D</td>
+<td class="instruction">NEG</td>
+<td class="comment-1" rowspan="3">Self modify delay loop -- (5 - A)</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="33327"></span>822F</td>
+<td class="instruction">ADD A,$05</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="33329"></span>8231</td>
+<td class="instruction">LD ($8251),A</td>
+</tr>
+<tr>
+<td class="routine-comment" colspan="5">
+<span id="33332"></span>
+<div class="comments">
+<div class="paragraph">
+This entry point is used by the routine at <a href="83B8.html">83B8</a>.
+</div>
+</div>
+</td>
+</tr>
+<tr>
+<td class="asm-label">engine_sfx_play</td>
+<td class="address-2"><span id="33332"></span>8234</td>
+<td class="instruction">LD A,($A230)</td>
+<td class="comment-1" rowspan="3">If $A230 &gt;= 3 then return</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="33335"></span>8237</td>
+<td class="instruction">CP $03</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="33337"></span>8239</td>
+<td class="instruction">RET NC</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="33338"></span>823A</td>
+<td class="instruction">LD A,$00</td>
+<td class="comment-1" rowspan="4">Self modifying counter produces 0,1,2</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="33340"></span>823C</td>
+<td class="instruction">INC A</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="33341"></span>823D</td>
+<td class="instruction">AND $03</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="33343"></span>823F</td>
+<td class="instruction">LD ($823B),A</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="33346"></span>8242</td>
+<td class="instruction">RET NZ</td>
+<td class="comment-1" rowspan="1">Return if nonzero</td>
+</tr>
+<tr>
+<td class="routine-comment" colspan="5">
+<span id="33347"></span>
+<div class="comments">
+<div class="paragraph">
+This produces the engine sound effect.
+</div>
+</div>
+</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="33347"></span>8243</td>
+<td class="instruction">LD C,$03</td>
+<td class="comment-1" rowspan="1">&lt;Self modified&gt; iterations</td>
+</tr>
+<tr>
+<td class="asm-label">engine_sfx_setup_3</td>
+<td class="address-2"><span id="33349"></span>8245</td>
+<td class="instruction">XOR A</td>
+<td class="comment-1" rowspan="2">Output 0</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="33350"></span>8246</td>
+<td class="instruction">OUT ($FE),A</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="33352"></span>8248</td>
+<td class="instruction">LD B,$00</td>
+<td class="comment-1" rowspan="2">Delay for B cycles (self modified above)</td>
+</tr>
+<tr>
+<td class="asm-label">engine_sfx_setup_4</td>
+<td class="address-2"><span id="33354"></span>824A</td>
+<td class="instruction">DJNZ <a href="8204.html#33354">engine_sfx_setup_4</a></td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="33356"></span>824C</td>
+<td class="instruction">LD A,$18</td>
+<td class="comment-1" rowspan="2">Output EAR + MIC</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="33358"></span>824E</td>
+<td class="instruction">OUT ($FE),A</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="33360"></span>8250</td>
+<td class="instruction">LD B,$00</td>
+<td class="comment-1" rowspan="2">Delay for B cycles (self modified above)</td>
+</tr>
+<tr>
+<td class="asm-label">engine_sfx_setup_5</td>
+<td class="address-2"><span id="33362"></span>8252</td>
+<td class="instruction">DJNZ <a href="8204.html#33362">engine_sfx_setup_5</a></td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="33364"></span>8254</td>
+<td class="instruction">DEC C</td>
+<td class="comment-1" rowspan="2">Loop until iterations is zero</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="33365"></span>8255</td>
+<td class="instruction">JR NZ,<a href="8204.html#33349">engine_sfx_setup_3</a></td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="33367"></span>8257</td>
+<td class="instruction">RET</td>
+<td class="comment-1" rowspan="1">Return</td>
+</tr>
+</table>
+<table class="asm-navigation">
+<tr>
+<td class="prev">
+Prev: <a href="81DD.html">81DD</a>
+</td>
+<td class="up">Up: <a href="../maps/all.html#33284">Map</a></td>
+<td class="next">
+Next: <a href="8258.html">8258</a>
+</td>
+</tr>
+</table>
+<footer>
+<div class="release">The incomplete Chase H.Q. disassembly 20230426</div>
+<div class="copyright">&copy; 1989 Ocean Software Ltd.</div>
+<div class="created">Created using <a href="https://skoolkit.ca">SkoolKit</a> 8.9.</div>
+</footer>
+</body>
+</html>

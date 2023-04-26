@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Chase H.Q.: Routine at 8DF9</title>
+<meta charset="utf-8" />
+<link rel="stylesheet" type="text/css" href="../skoolkit.css" />
+</head>
+<body class="Asm-c">
+<table class="header">
+<tr>
+<td class="logo"><a href="../index.html">Chase H.Q.</a></td>
+<td class="page-header">Routines</td>
+</tr>
+</table>
+<table class="asm-navigation">
+<tr>
+<td class="prev">
+Prev: <a href="8D8F.html">8D8F</a>
+</td>
+<td class="up">Up: <a href="../maps/all.html#36345">Map</a></td>
+<td class="next">
+Next: <a href="8E29.html">8E29</a>
+</td>
+</tr>
+</table>
+<div class="description">8DF9: Seems to setup a transition.</div>
+<table class="disassembly">
+<tr>
+<td class="routine-comment" colspan="5">
+<div class="details">
+<div class="paragraph">
+Used by the routines at <a href="8014.html">load_stage</a>, <a href="8401.html">8401</a>, <a href="858C.html">858C</a>, <a href="873C.html">873C</a>, <a href="87DC.html">setup_game</a>, <a href="8A57.html">8A57</a> and <a href="F220.html">F220</a>.
+</div>
+</div>
+<table class="input">
+<tr class="asm-input-header">
+<th colspan="2">Input</th>
+</tr>
+<tr>
+<td class="register">A</td>
+<td class="register-desc">?</td>
+</tr>
+</table>
+</td>
+</tr>
+<tr>
+<td class="asm-label">setup_transition</td>
+<td class="address-2"><span id="36345"></span>8DF9</td>
+<td class="instruction">AND A</td>
+<td class="comment-1" rowspan="1">Set flags from <span class="register">A</span></td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="36346"></span>8DFA</td>
+<td class="instruction">LD C,A</td>
+<td class="comment-1" rowspan="2"><span class="register">BC</span> = <span class="register">A</span></td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="36347"></span>8DFB</td>
+<td class="instruction">LD B,$00</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="36349"></span>8DFD</td>
+<td class="instruction">LD DE,$EC00</td>
+<td class="comment-1" rowspan="1">Points to some data TBD</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="36352"></span>8E00</td>
+<td class="instruction">JP P,<a href="8DF9.html#36359">dunno_jump</a></td>
+<td class="comment-1" rowspan="1">Jump over if <span class="register">A</span> was +ve</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="36355"></span>8E03</td>
+<td class="instruction">DEC B</td>
+<td class="comment-1" rowspan="1"><span class="register">B</span> = $FF</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="36356"></span>8E04</td>
+<td class="instruction">LD DE,$EC0C</td>
+<td class="comment-1" rowspan="1">Points to some data TBD</td>
+</tr>
+<tr>
+<td class="asm-label">dunno_jump</td>
+<td class="address-2"><span id="36359"></span>8E07</td>
+<td class="instruction">LD ($8DB1),BC</td>
+<td class="comment-1" rowspan="1">Self modify</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="36363"></span>8E0B</td>
+<td class="instruction">CALL <a href="9618.html#38427">rng_0</a></td>
+<td class="comment-1" rowspan="1">Call random</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="36366"></span>8E0E</td>
+<td class="instruction">AND $03</td>
+<td class="comment-1" rowspan="1">Mask 0..3</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="36368"></span>8E10</td>
+<td class="instruction">LD L,A</td>
+<td class="comment-1" rowspan="6">HL = A * 3 + DE</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="36369"></span>8E11</td>
+<td class="instruction">RLCA</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="36370"></span>8E12</td>
+<td class="instruction">ADD A,L</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="36371"></span>8E13</td>
+<td class="instruction">LD L,A</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="36372"></span>8E14</td>
+<td class="instruction">LD H,$00</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="36374"></span>8E16</td>
+<td class="instruction">ADD HL,DE</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="36375"></span>8E17</td>
+<td class="instruction">LD A,(HL)</td>
+<td class="comment-1" rowspan="1"></td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="36376"></span>8E18</td>
+<td class="instruction">LD ($8DA1),A</td>
+<td class="comment-1" rowspan="1">Self modify</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="36379"></span>8E1B</td>
+<td class="instruction">INC HL</td>
+<td class="comment-1" rowspan="4">Load DE from HL</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="36380"></span>8E1C</td>
+<td class="instruction">LD E,(HL)</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="36381"></span>8E1D</td>
+<td class="instruction">INC HL</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="36382"></span>8E1E</td>
+<td class="instruction">LD D,(HL)</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="36383"></span>8E1F</td>
+<td class="instruction">LD ($8DBB),DE</td>
+<td class="comment-1" rowspan="1">Set transition animation start address</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="36387"></span>8E23</td>
+<td class="instruction">LD A,$04</td>
+<td class="comment-1" rowspan="1">4 frames of animation? 4 states?</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="36389"></span>8E25</td>
+<td class="instruction">LD ($A231),A</td>
+<td class="comment-1" rowspan="1"></td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="36392"></span>8E28</td>
+<td class="instruction">RET</td>
+<td class="comment-1" rowspan="1">Return</td>
+</tr>
+</table>
+<table class="asm-navigation">
+<tr>
+<td class="prev">
+Prev: <a href="8D8F.html">8D8F</a>
+</td>
+<td class="up">Up: <a href="../maps/all.html#36345">Map</a></td>
+<td class="next">
+Next: <a href="8E29.html">8E29</a>
+</td>
+</tr>
+</table>
+<footer>
+<div class="release">The incomplete Chase H.Q. disassembly 20230426</div>
+<div class="copyright">&copy; 1989 Ocean Software Ltd.</div>
+<div class="created">Created using <a href="https://skoolkit.ca">SkoolKit</a> 8.9.</div>
+</footer>
+</body>
+</html>

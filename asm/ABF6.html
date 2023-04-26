@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Chase H.Q.: Routine at ABF6</title>
+<meta charset="utf-8" />
+<link rel="stylesheet" type="text/css" href="../skoolkit.css" />
+</head>
+<body class="Asm-c">
+<table class="header">
+<tr>
+<td class="logo"><a href="../index.html">Chase H.Q.</a></td>
+<td class="page-header">Routines</td>
+</tr>
+</table>
+<table class="asm-navigation">
+<tr>
+<td class="prev">
+Prev: <a href="AB9A.html">AB9A</a>
+</td>
+<td class="up">Up: <a href="../maps/all.html#44022">Map</a></td>
+<td class="next">
+Next: <a href="AC3C.html">AC3C</a>
+</td>
+</tr>
+</table>
+<div class="description">ABF6: Spawns hazards in the road, like barriers and tumbleweeds.</div>
+<table class="disassembly">
+<tr>
+<td class="routine-comment" colspan="5">
+<div class="details">
+<div class="paragraph">
+Used by the routine at <a href="AB9A.html">AB9A</a>.
+</div>
+</div>
+<table class="input">
+<tr class="asm-input-header">
+<th colspan="2">Input</th>
+</tr>
+<tr>
+<td class="register">B</td>
+<td class="register-desc">Stored at entry+5  e.g. $20/$46/$56/$50/$B4</td>
+</tr>
+<tr>
+<td class="register">C</td>
+<td class="register-desc">Stored at entry+1  e.g. $13</td>
+</tr>
+<tr>
+<td class="register">DE</td>
+<td class="register-desc">Is an offset into a hazards data table (0 =&gt; tumbleweed, 3 =&gt; barrier)</td>
+</tr>
+</table>
+</td>
+</tr>
+<tr>
+<td class="asm-label">spawn_hazards</td>
+<td class="address-2"><span id="44022"></span>ABF6</td>
+<td class="instruction">EXX</td>
+<td class="comment-1" rowspan="1">Bank entry registers</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="44023"></span>ABF7</td>
+<td class="instruction">LD B,$06</td>
+<td class="comment-1" rowspan="1">6 iterations</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="44025"></span>ABF9</td>
+<td class="instruction">LD HL,$A188</td>
+<td class="comment-1" rowspan="1">Point <span class="register">HL</span> at hazards table</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="44028"></span>ABFC</td>
+<td class="instruction">LD DE,$0014</td>
+<td class="comment-1" rowspan="1">Stride of 20 bytes</td>
+</tr>
+<tr>
+<td class="asm-label">sh_loop</td>
+<td class="address-2"><span id="44031"></span>ABFF</td>
+<td class="instruction">RLC (HL)</td>
+<td class="comment-1" rowspan="1">Check the flag byte to see if the entry is used (it's either $00 if empty, or $FF if used, so rotating it in place is not a problem)</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="44033"></span>AC01</td>
+<td class="instruction">JR NC,<a href="ABF6.html#44040">sh_found_spare</a></td>
+<td class="comment-1" rowspan="1">Jump to sh_found_spare if it didn't carry</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="44035"></span>AC03</td>
+<td class="instruction">ADD HL,DE</td>
+<td class="comment-1" rowspan="1">Move to the next entry</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="44036"></span>AC04</td>
+<td class="instruction">DJNZ <a href="ABF6.html#44031">sh_loop</a></td>
+<td class="comment-1" rowspan="1">Loop while iterations remain</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="44038"></span>AC06</td>
+<td class="instruction">POP HL</td>
+<td class="comment-1" rowspan="1">TBD</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="44039"></span>AC07</td>
+<td class="instruction">RET</td>
+<td class="comment-1" rowspan="1">Return</td>
+</tr>
+<tr>
+<td class="routine-comment" colspan="5">
+<span id="44040"></span>
+<div class="comments">
+<div class="paragraph">
+<span class="register">HL</span> points to the unused entry
+</div>
+</div>
+</td>
+</tr>
+<tr>
+<td class="asm-label">sh_found_spare</td>
+<td class="address-2"><span id="44040"></span>AC08</td>
+<td class="instruction">PUSH HL</td>
+<td class="comment-1" rowspan="2"><span class="register">IX</span> = <span class="register">HL</span></td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="44041"></span>AC09</td>
+<td class="instruction">POP IX</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="44043"></span>AC0B</td>
+<td class="instruction">LD BC,$0013</td>
+<td class="comment-1" rowspan="6">Zero 20 bytes at <span class="register">HL</span></td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="44046"></span>AC0E</td>
+<td class="instruction">LD D,H</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="44047"></span>AC0F</td>
+<td class="instruction">LD E,L</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="44048"></span>AC10</td>
+<td class="instruction">INC DE</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="44049"></span>AC11</td>
+<td class="instruction">LD (HL),$00</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="44051"></span>AC13</td>
+<td class="instruction">LDIR</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="44053"></span>AC15</td>
+<td class="instruction">EXX</td>
+<td class="comment-1" rowspan="1">Restore entry registers</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="44054"></span>AC16</td>
+<td class="instruction">LD HL,$AC3C</td>
+<td class="comment-1" rowspan="3">wordat(IX + 11) = Address of $AC3C routine</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="44057"></span>AC19</td>
+<td class="instruction">LD (IX+$0C),H</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="44060"></span>AC1C</td>
+<td class="instruction">LD (IX+$0B),L</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="44063"></span>AC1F</td>
+<td class="instruction">LD HL,($5CF6)</td>
+<td class="comment-1" rowspan="2">Point <span class="register">HL</span> at the hazards data table entry (*$5CF6 -&gt; $5E40 + 3)</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="44066"></span>AC22</td>
+<td class="instruction">ADD HL,DE</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="44067"></span>AC23</td>
+<td class="instruction">LD A,(HL)</td>
+<td class="comment-1" rowspan="3">Copy flag TBD</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="44068"></span>AC24</td>
+<td class="instruction">LD (IX+$08),A</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="44071"></span>AC27</td>
+<td class="instruction">INC HL</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="44072"></span>AC28</td>
+<td class="instruction">LD A,(HL)</td>
+<td class="comment-1" rowspan="5">Copy lod address (e.g. tumbleweed_lods)</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="44073"></span>AC29</td>
+<td class="instruction">LD (IX+$09),A</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="44076"></span>AC2C</td>
+<td class="instruction">INC HL</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="44077"></span>AC2D</td>
+<td class="instruction">LD A,(HL)</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="44078"></span>AC2E</td>
+<td class="instruction">LD (IX+$0A),A</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="44081"></span>AC31</td>
+<td class="instruction">LD (IX+$05),B</td>
+<td class="comment-1" rowspan="1">IX[5] = B TBD</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="44084"></span>AC34</td>
+<td class="instruction">LD (IX+$01),C</td>
+<td class="comment-1" rowspan="1">IX[1] = C TBD</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="44087"></span>AC37</td>
+<td class="instruction">LD (IX+$00),$FF</td>
+<td class="comment-1" rowspan="1">Mark the entry as used</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="44091"></span>AC3B</td>
+<td class="instruction">RET</td>
+<td class="comment-1" rowspan="1">Return</td>
+</tr>
+</table>
+<table class="asm-navigation">
+<tr>
+<td class="prev">
+Prev: <a href="AB9A.html">AB9A</a>
+</td>
+<td class="up">Up: <a href="../maps/all.html#44022">Map</a></td>
+<td class="next">
+Next: <a href="AC3C.html">AC3C</a>
+</td>
+</tr>
+</table>
+<footer>
+<div class="release">The incomplete Chase H.Q. disassembly 20230426</div>
+<div class="copyright">&copy; 1989 Ocean Software Ltd.</div>
+<div class="created">Created using <a href="https://skoolkit.ca">SkoolKit</a> 8.9.</div>
+</footer>
+</body>
+</html>

@@ -1,0 +1,1186 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Chase H.Q.: Routine at 8014</title>
+<meta charset="utf-8" />
+<link rel="stylesheet" type="text/css" href="../skoolkit.css" />
+</head>
+<body class="Asm-c">
+<table class="header">
+<tr>
+<td class="logo"><a href="../index.html">Chase H.Q.</a></td>
+<td class="page-header">Routines</td>
+</tr>
+</table>
+<table class="asm-navigation">
+<tr>
+<td class="prev">
+Prev: <a href="8000.html">8000</a>
+</td>
+<td class="up">Up: <a href="../maps/all.html#32788">Map</a></td>
+<td class="next">
+Next: <a href="81DD.html">81DD</a>
+</td>
+</tr>
+</table>
+<div class="description">8014: Load a stage</div>
+<table class="disassembly">
+<tr>
+<td class="routine-comment" colspan="5">
+<div class="details">
+<div class="paragraph">
+Used by the routine at <a href="8401.html">8401</a>.
+</div>
+</div>
+</td>
+</tr>
+<tr>
+<td class="asm-label">load_stage</td>
+<td class="address-2"><span id="32788"></span>8014</td>
+<td class="instruction">LD A,($8007)</td>
+<td class="comment-1" rowspan="1">Get stage number</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="32791"></span>8017</td>
+<td class="instruction">LD HL,$A13A</td>
+<td class="comment-1" rowspan="1"></td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="32794"></span>801A</td>
+<td class="instruction">CP (HL)</td>
+<td class="comment-1" rowspan="2">Exit if they match</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="32795"></span>801B</td>
+<td class="instruction">RET Z</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="32796"></span>801C</td>
+<td class="instruction">LD (HL),A</td>
+<td class="comment-1" rowspan="1">Equalise</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="32797"></span>801D</td>
+<td class="instruction">LD ($A220),A</td>
+<td class="comment-1" rowspan="1">Set $A220 to level no.</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="32800"></span>8020</td>
+<td class="instruction">ADD A,$B0</td>
+<td class="comment-1" rowspan="2">Update the level number in "SEARCHING FOR &lt;N&gt;"</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="32802"></span>8022</td>
+<td class="instruction">LD ($81AE),A</td>
+</tr>
+<tr>
+<td class="asm-label">load_stage_0</td>
+<td class="address-2"><span id="32805"></span>8025</td>
+<td class="instruction">CALL <a href="BDC1.html">clear_screen_set_attrs</a></td>
+<td class="comment-1" rowspan="1">Call clear_screen_set_attrs</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="32808"></span>8028</td>
+<td class="instruction">CALL <a href="88D5.html">clear_game_attrs</a></td>
+<td class="comment-1" rowspan="1">Call clear_game_attrs</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="32811"></span>802B</td>
+<td class="instruction">LD A,$F8</td>
+<td class="comment-1" rowspan="1">Transition type?</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="32813"></span>802D</td>
+<td class="instruction">CALL <a href="8DF9.html">setup_transition</a></td>
+<td class="comment-1" rowspan="1">Call setup_transition</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="32816"></span>8030</td>
+<td class="instruction">LD B,$02</td>
+<td class="comment-1" rowspan="39">..</td>
+</tr>
+<tr>
+<td class="asm-label">load_stage_1</td>
+<td class="address-2"><span id="32818"></span>8032</td>
+<td class="instruction">CALL <a href="8014.html#32904">load_stage_5</a></td>
+</tr>
+<tr>
+<td class="asm-label">load_stage_2</td>
+<td class="address-2"><span id="32821"></span>8035</td>
+<td class="instruction">LD IX,$A19C</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="32825"></span>8039</td>
+<td class="instruction">LD DE,$0002</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="32828"></span>803C</td>
+<td class="instruction">CALL <a href="8014.html#32960">load_stage_13</a></td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="32831"></span>803F</td>
+<td class="instruction">JR NC,<a href="8014.html#32821">load_stage_2</a></td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="32833"></span>8041</td>
+<td class="instruction">LD HL,$A19C</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="32836"></span>8044</td>
+<td class="instruction">LD A,(HL)</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="32837"></span>8045</td>
+<td class="instruction">INC HL</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="32838"></span>8046</td>
+<td class="instruction">CP (HL)</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="32839"></span>8047</td>
+<td class="instruction">JR NZ,<a href="8014.html#32821">load_stage_2</a></td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="32841"></span>8049</td>
+<td class="instruction">ADD A,$B0</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="32843"></span>804B</td>
+<td class="instruction">LD ($81BA),A</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="32846"></span>804E</td>
+<td class="instruction">LD B,$03</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="32848"></span>8050</td>
+<td class="instruction">LD A,($8007)</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="32851"></span>8053</td>
+<td class="instruction">CP (HL)</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="32852"></span>8054</td>
+<td class="instruction">JR NZ,<a href="8014.html#32818">load_stage_1</a></td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="32854"></span>8056</td>
+<td class="instruction">CALL <a href="8014.html#32904">load_stage_5</a></td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="32857"></span>8059</td>
+<td class="instruction">CALL <a href="8014.html#32953">load_stage_12</a></td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="32860"></span>805C</td>
+<td class="instruction">JR NC,<a href="8014.html#32805">load_stage_0</a></td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="32862"></span>805E</td>
+<td class="instruction">XOR A</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="32863"></span>805F</td>
+<td class="instruction">OUT ($FE),A</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="32865"></span>8061</td>
+<td class="instruction">CALL <a href="BDC1.html">clear_screen_set_attrs</a></td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="32868"></span>8064</td>
+<td class="instruction">CALL <a href="88D5.html">clear_game_attrs</a></td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="32871"></span>8067</td>
+<td class="instruction">LD HL,$81BB</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="32874"></span>806A</td>
+<td class="instruction">LD B,$02</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="32876"></span>806C</td>
+<td class="instruction">CALL <a href="8014.html#32920">load_stage_7</a></td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="32879"></span>806F</td>
+<td class="instruction">PUSH HL</td>
+</tr>
+<tr>
+<td class="asm-label">load_stage_3</td>
+<td class="address-2"><span id="32880"></span>8070</td>
+<td class="instruction">CALL <a href="A0CC.html#41174">keyscan</a></td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="32883"></span>8073</td>
+<td class="instruction">AND $10</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="32885"></span>8075</td>
+<td class="instruction">JR Z,<a href="8014.html#32880">load_stage_3</a></td>
+</tr>
+<tr>
+<td class="asm-label">load_stage_4</td>
+<td class="address-2"><span id="32887"></span>8077</td>
+<td class="instruction">CALL <a href="A0CC.html#41174">keyscan</a></td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="32890"></span>807A</td>
+<td class="instruction">AND $10</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="32892"></span>807C</td>
+<td class="instruction">JR NZ,<a href="8014.html#32887">load_stage_4</a></td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="32894"></span>807E</td>
+<td class="instruction">LD A,$08</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="32896"></span>8080</td>
+<td class="instruction">CALL <a href="8DF9.html">setup_transition</a></td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="32899"></span>8083</td>
+<td class="instruction">POP HL</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="32900"></span>8084</td>
+<td class="instruction">LD B,$02</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="32902"></span>8086</td>
+<td class="instruction">JR <a href="8014.html#32920">load_stage_7</a></td>
+</tr>
+<tr>
+<td class="asm-label">load_stage_5</td>
+<td class="address-2"><span id="32904"></span>8088</td>
+<td class="instruction">LD HL,$818C</td>
+<td class="comment-1" rowspan="5">Subroutine</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="32907"></span>808B</td>
+<td class="instruction">LD A,($8007)</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="32910"></span>808E</td>
+<td class="instruction">DEC A</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="32911"></span>808F</td>
+<td class="instruction">JR NZ,<a href="8014.html#32917">load_stage_6</a></td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="32913"></span>8091</td>
+<td class="instruction">INC B</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="32914"></span>8092</td>
+<td class="instruction">LD HL,$8169</td>
+<td class="comment-1" rowspan="1">Point <span class="register">HL</span> at tape_messsages</td>
+</tr>
+<tr>
+<td class="asm-label">load_stage_6</td>
+<td class="address-2"><span id="32917"></span>8095</td>
+<td class="instruction">CALL <a href="8014.html#32920">load_stage_7</a></td>
+<td class="comment-1" rowspan="5">..</td>
+</tr>
+<tr>
+<td class="asm-label">load_stage_7</td>
+<td class="address-2"><span id="32920"></span>8098</td>
+<td class="instruction">PUSH BC</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="32921"></span>8099</td>
+<td class="instruction">PUSH HL</td>
+</tr>
+<tr>
+<td class="asm-label">load_stage_8</td>
+<td class="address-2"><span id="32922"></span>809A</td>
+<td class="instruction">LD A,$05</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="32924"></span>809C</td>
+<td class="instruction">DEC HL</td>
+</tr>
+<tr>
+<td class="routine-comment" colspan="5">
+<span id="32925"></span>
+<div class="comments">
+<div class="paragraph">
+This entry point is used by the routine at <a href="F220.html">F220</a>.
+</div>
+</div>
+</td>
+</tr>
+<tr>
+<td class="asm-label">load_stage_9</td>
+<td class="address-2"><span id="32925"></span>809D</td>
+<td class="instruction">CALL <a href="8E6C.html">print_message</a></td>
+<td class="comment-1" rowspan="1"></td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="32928"></span>80A0</td>
+<td class="instruction">DJNZ <a href="8014.html#32922">load_stage_8</a></td>
+<td class="comment-1" rowspan="1"></td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="32930"></span>80A2</td>
+<td class="instruction">CALL <a href="8D8F.html">transition</a></td>
+<td class="comment-1" rowspan="1"></td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="32933"></span>80A5</td>
+<td class="instruction">CALL <a href="BC3E.html">draw_screen</a></td>
+<td class="comment-1" rowspan="1"></td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="32936"></span>80A8</td>
+<td class="instruction">POP HL</td>
+<td class="comment-1" rowspan="1"></td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="32937"></span>80A9</td>
+<td class="instruction">POP BC</td>
+<td class="comment-1" rowspan="1"></td>
+</tr>
+<tr>
+<td class="routine-comment" colspan="5">
+<span id="32938"></span>
+<div class="comments">
+<div class="paragraph">
+This entry point is used by the routine at <a href="F220.html">F220</a>.
+</div>
+</div>
+</td>
+</tr>
+<tr>
+<td class="asm-label">load_stage_10</td>
+<td class="address-2"><span id="32938"></span>80AA</td>
+<td class="instruction">LD A,($A231)</td>
+<td class="comment-1" rowspan="1"></td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="32941"></span>80AD</td>
+<td class="instruction">AND A</td>
+<td class="comment-1" rowspan="1"></td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="32942"></span>80AE</td>
+<td class="instruction">RET Z</td>
+<td class="comment-1" rowspan="1"></td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="32943"></span>80AF</td>
+<td class="instruction">LD DE,$0A00</td>
+<td class="comment-1" rowspan="1"></td>
+</tr>
+<tr>
+<td class="asm-label">load_stage_11</td>
+<td class="address-2"><span id="32946"></span>80B2</td>
+<td class="instruction">DEC DE</td>
+<td class="comment-1" rowspan="1"></td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="32947"></span>80B3</td>
+<td class="instruction">LD A,D</td>
+<td class="comment-1" rowspan="1"></td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="32948"></span>80B4</td>
+<td class="instruction">OR E</td>
+<td class="comment-1" rowspan="1"></td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="32949"></span>80B5</td>
+<td class="instruction">JR NZ,<a href="8014.html#32946">load_stage_11</a></td>
+<td class="comment-1" rowspan="1"></td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="32951"></span>80B7</td>
+<td class="instruction">JR <a href="8014.html#32920">load_stage_7</a></td>
+<td class="comment-1" rowspan="1">}</td>
+</tr>
+<tr>
+<td class="routine-comment" colspan="5">
+<span id="32953"></span>
+<div class="comments">
+<div class="paragraph">
+Tape loading
+</div>
+</div>
+</td>
+</tr>
+<tr>
+<td class="asm-label">load_stage_12</td>
+<td class="address-2"><span id="32953"></span>80B9</td>
+<td class="instruction">LD IX,$5C00</td>
+<td class="comment-1" rowspan="2">Setup to load a block ???</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="32957"></span>80BD</td>
+<td class="instruction">LD DE,$1AF0</td>
+</tr>
+<tr>
+<td class="routine-comment" colspan="5">
+<span id="32960"></span>
+<div class="comments">
+<div class="paragraph">
+This entry point is used by the routine at <a href="5B00.html">5B00</a>.
+</div>
+</div>
+</td>
+</tr>
+<tr>
+<td class="asm-label">load_stage_13</td>
+<td class="address-2"><span id="32960"></span>80C0</td>
+<td class="instruction">INC D</td>
+<td class="comment-1" rowspan="83">Routine</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="32961"></span>80C1</td>
+<td class="instruction">LD A,$98</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="32963"></span>80C3</td>
+<td class="instruction">SCF</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="32964"></span>80C4</td>
+<td class="instruction">EX AF,AF'</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="32965"></span>80C5</td>
+<td class="instruction">DEC D</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="32966"></span>80C6</td>
+<td class="instruction">DI</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="32967"></span>80C7</td>
+<td class="instruction">LD A,$08</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="32969"></span>80C9</td>
+<td class="instruction">OUT ($FE),A</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="32971"></span>80CB</td>
+<td class="instruction">IN A,($FE)</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="32973"></span>80CD</td>
+<td class="instruction">RRA</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="32974"></span>80CE</td>
+<td class="instruction">AND $20</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="32976"></span>80D0</td>
+<td class="instruction">OR $02</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="32978"></span>80D2</td>
+<td class="instruction">LD C,A</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="32979"></span>80D3</td>
+<td class="instruction">CP A</td>
+</tr>
+<tr>
+<td class="asm-label">load_stage_14</td>
+<td class="address-2"><span id="32980"></span>80D4</td>
+<td class="instruction">RET NZ</td>
+</tr>
+<tr>
+<td class="asm-label">load_stage_15</td>
+<td class="address-2"><span id="32981"></span>80D5</td>
+<td class="instruction">CALL <a href="8014.html#33099">load_stage_27</a></td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="32984"></span>80D8</td>
+<td class="instruction">JR NC,<a href="8014.html#32980">load_stage_14</a></td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="32986"></span>80DA</td>
+<td class="instruction">LD HL,$0415</td>
+</tr>
+<tr>
+<td class="asm-label">load_stage_16</td>
+<td class="address-2"><span id="32989"></span>80DD</td>
+<td class="instruction">DJNZ <a href="8014.html#32989">load_stage_16</a></td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="32991"></span>80DF</td>
+<td class="instruction">DEC HL</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="32992"></span>80E0</td>
+<td class="instruction">LD A,H</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="32993"></span>80E1</td>
+<td class="instruction">OR L</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="32994"></span>80E2</td>
+<td class="instruction">JR NZ,<a href="8014.html#32989">load_stage_16</a></td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="32996"></span>80E4</td>
+<td class="instruction">CALL <a href="8014.html#33095">load_stage_26</a></td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="32999"></span>80E7</td>
+<td class="instruction">JR NC,<a href="8014.html#32980">load_stage_14</a></td>
+</tr>
+<tr>
+<td class="asm-label">load_stage_17</td>
+<td class="address-2"><span id="33001"></span>80E9</td>
+<td class="instruction">LD B,$9C</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="33003"></span>80EB</td>
+<td class="instruction">CALL <a href="8014.html#33095">load_stage_26</a></td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="33006"></span>80EE</td>
+<td class="instruction">JR NC,<a href="8014.html#32980">load_stage_14</a></td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="33008"></span>80F0</td>
+<td class="instruction">LD A,$C6</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="33010"></span>80F2</td>
+<td class="instruction">CP B</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="33011"></span>80F3</td>
+<td class="instruction">JR NC,<a href="8014.html#32981">load_stage_15</a></td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="33013"></span>80F5</td>
+<td class="instruction">INC H</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="33014"></span>80F6</td>
+<td class="instruction">JR NZ,<a href="8014.html#33001">load_stage_17</a></td>
+</tr>
+<tr>
+<td class="asm-label">load_stage_18</td>
+<td class="address-2"><span id="33016"></span>80F8</td>
+<td class="instruction">LD B,$C9</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="33018"></span>80FA</td>
+<td class="instruction">CALL <a href="8014.html#33099">load_stage_27</a></td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="33021"></span>80FD</td>
+<td class="instruction">JR NC,<a href="8014.html#32980">load_stage_14</a></td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="33023"></span>80FF</td>
+<td class="instruction">LD A,B</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="33024"></span>8100</td>
+<td class="instruction">CP $D4</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="33026"></span>8102</td>
+<td class="instruction">JR NC,<a href="8014.html#33016">load_stage_18</a></td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="33028"></span>8104</td>
+<td class="instruction">CALL <a href="8014.html#33099">load_stage_27</a></td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="33031"></span>8107</td>
+<td class="instruction">RET NC</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="33032"></span>8108</td>
+<td class="instruction">LD A,C</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="33033"></span>8109</td>
+<td class="instruction">XOR $03</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="33035"></span>810B</td>
+<td class="instruction">LD C,A</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="33036"></span>810C</td>
+<td class="instruction">LD H,$00</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="33038"></span>810E</td>
+<td class="instruction">LD B,$B0</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="33040"></span>8110</td>
+<td class="instruction">JR <a href="8014.html#33068">load_stage_24</a></td>
+</tr>
+<tr>
+<td class="asm-label">load_stage_19</td>
+<td class="address-2"><span id="33042"></span>8112</td>
+<td class="instruction">EX AF,AF'</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="33043"></span>8113</td>
+<td class="instruction">JR NZ,<a href="8014.html#33052">load_stage_21</a></td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="33045"></span>8115</td>
+<td class="instruction">JR NZ,<a href="8014.html#33047">load_stage_20</a></td>
+</tr>
+<tr>
+<td class="asm-label">load_stage_20</td>
+<td class="address-2"><span id="33047"></span>8117</td>
+<td class="instruction">LD (IX+$00),L</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="33050"></span>811A</td>
+<td class="instruction">JR <a href="8014.html#33062">load_stage_22</a></td>
+</tr>
+<tr>
+<td class="asm-label">load_stage_21</td>
+<td class="address-2"><span id="33052"></span>811C</td>
+<td class="instruction">RL C</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="33054"></span>811E</td>
+<td class="instruction">XOR L</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="33055"></span>811F</td>
+<td class="instruction">RET NZ</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="33056"></span>8120</td>
+<td class="instruction">LD A,C</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="33057"></span>8121</td>
+<td class="instruction">RRA</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="33058"></span>8122</td>
+<td class="instruction">LD C,A</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="33059"></span>8123</td>
+<td class="instruction">INC DE</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="33060"></span>8124</td>
+<td class="instruction">JR <a href="8014.html#33064">load_stage_23</a></td>
+</tr>
+<tr>
+<td class="asm-label">load_stage_22</td>
+<td class="address-2"><span id="33062"></span>8126</td>
+<td class="instruction">INC IX</td>
+</tr>
+<tr>
+<td class="asm-label">load_stage_23</td>
+<td class="address-2"><span id="33064"></span>8128</td>
+<td class="instruction">DEC DE</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="33065"></span>8129</td>
+<td class="instruction">EX AF,AF'</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="33066"></span>812A</td>
+<td class="instruction">LD B,$B2</td>
+</tr>
+<tr>
+<td class="asm-label">load_stage_24</td>
+<td class="address-2"><span id="33068"></span>812C</td>
+<td class="instruction">LD L,$01</td>
+</tr>
+<tr>
+<td class="asm-label">load_stage_25</td>
+<td class="address-2"><span id="33070"></span>812E</td>
+<td class="instruction">CALL <a href="8014.html#33095">load_stage_26</a></td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="33073"></span>8131</td>
+<td class="instruction">RET NC</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="33074"></span>8132</td>
+<td class="instruction">LD A,$C8</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="33076"></span>8134</td>
+<td class="instruction">CP B</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="33077"></span>8135</td>
+<td class="instruction">RL L</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="33079"></span>8137</td>
+<td class="instruction">LD B,$B0</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="33081"></span>8139</td>
+<td class="instruction">JP NC,<a href="8014.html#33070">load_stage_25</a></td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="33084"></span>813C</td>
+<td class="instruction">LD A,H</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="33085"></span>813D</td>
+<td class="instruction">XOR L</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="33086"></span>813E</td>
+<td class="instruction">LD H,A</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="33087"></span>813F</td>
+<td class="instruction">LD A,D</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="33088"></span>8140</td>
+<td class="instruction">OR E</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="33089"></span>8141</td>
+<td class="instruction">JR NZ,<a href="8014.html#33042">load_stage_19</a></td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="33091"></span>8143</td>
+<td class="instruction">LD A,H</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="33092"></span>8144</td>
+<td class="instruction">CP $01</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="33094"></span>8146</td>
+<td class="instruction">RET</td>
+</tr>
+<tr>
+<td class="asm-label">load_stage_26</td>
+<td class="address-2"><span id="33095"></span>8147</td>
+<td class="instruction">CALL <a href="8014.html#33099">load_stage_27</a></td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="33098"></span>814A</td>
+<td class="instruction">RET NC</td>
+</tr>
+<tr>
+<td class="asm-label">load_stage_27</td>
+<td class="address-2"><span id="33099"></span>814B</td>
+<td class="instruction">LD A,$16</td>
+<td class="comment-1" rowspan="21">Subroutine</td>
+</tr>
+<tr>
+<td class="asm-label">load_stage_28</td>
+<td class="address-2"><span id="33101"></span>814D</td>
+<td class="instruction">DEC A</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="33102"></span>814E</td>
+<td class="instruction">JR NZ,<a href="8014.html#33101">load_stage_28</a></td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="33104"></span>8150</td>
+<td class="instruction">AND A</td>
+</tr>
+<tr>
+<td class="asm-label">load_stage_29</td>
+<td class="address-2"><span id="33105"></span>8151</td>
+<td class="instruction">INC B</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="33106"></span>8152</td>
+<td class="instruction">RET Z</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="33107"></span>8153</td>
+<td class="instruction">LD A,$7F</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="33109"></span>8155</td>
+<td class="instruction">IN A,($FE)</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="33111"></span>8157</td>
+<td class="instruction">RRA</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="33112"></span>8158</td>
+<td class="instruction">RET Z</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="33113"></span>8159</td>
+<td class="instruction">XOR C</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="33114"></span>815A</td>
+<td class="instruction">AND $20</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="33116"></span>815C</td>
+<td class="instruction">JR Z,<a href="8014.html#33105">load_stage_29</a></td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="33118"></span>815E</td>
+<td class="instruction">LD A,C</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="33119"></span>815F</td>
+<td class="instruction">CPL</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="33120"></span>8160</td>
+<td class="instruction">LD C,A</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="33121"></span>8161</td>
+<td class="instruction">AND $02</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="33123"></span>8163</td>
+<td class="instruction">OR $08</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="33125"></span>8165</td>
+<td class="instruction">OUT ($FE),A</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="33127"></span>8167</td>
+<td class="instruction">SCF</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="33128"></span>8168</td>
+<td class="instruction">RET</td>
+</tr>
+<tr>
+<td class="asm-label">tape_messsages</td>
+<td class="address-1"><span id="33129"></span>8169</td>
+<td class="instruction">DEFB $70</td>
+<td class="comment-1" rowspan="1">attr?</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="33130"></span>816A</td>
+<td class="instruction">DEFW $F001</td>
+<td class="comment-1" rowspan="1">Screen position (8,64)</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="33132"></span>816C</td>
+<td class="instruction">DEFW $5901</td>
+<td class="comment-1" rowspan="1">Screen attribute position (1,8)</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="33134"></span>816E</td>
+<td class="instruction">DEFM "REWIND TAPE TO START OF SIDE ",$B2</td>
+<td class="comment-1" rowspan="1">"REWIND TAPE TO START OF SIDE 2"</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="33164"></span>818C</td>
+<td class="instruction">DEFB $68</td>
+<td class="comment-1" rowspan="1">attr?</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="33165"></span>818D</td>
+<td class="instruction">DEFW $F04B</td>
+<td class="comment-1" rowspan="1">Screen position (88,96)</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="33167"></span>818F</td>
+<td class="instruction">DEFW $598B</td>
+<td class="comment-1" rowspan="1">Screen attribute position (11,12)</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="33169"></span>8191</td>
+<td class="instruction">DEFM "START TAP",$C5</td>
+<td class="comment-1" rowspan="1">"START TAPE"</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="33179"></span>819B</td>
+<td class="instruction">DEFB $68</td>
+<td class="comment-1" rowspan="1">attr?</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="33180"></span>819C</td>
+<td class="instruction">DEFW $F089</td>
+<td class="comment-1" rowspan="1">Screen position (72,128)</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="33182"></span>819E</td>
+<td class="instruction">DEFW $5A09</td>
+<td class="comment-1" rowspan="1">Screen attribute position (9,16)</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="33184"></span>81A0</td>
+<td class="instruction">DEFM "SEARCHING FOR ",$B1</td>
+<td class="comment-1" rowspan="1">"SEARCHING FOR 1"</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="33199"></span>81AF</td>
+<td class="instruction">DEFB $68</td>
+<td class="comment-1" rowspan="1">attr?</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="33200"></span>81B0</td>
+<td class="instruction">DEFW <a href="F0C6.html#61645">$F0CD</a></td>
+<td class="comment-1" rowspan="1">Screen position (104,160)</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="33202"></span>81B2</td>
+<td class="instruction">DEFW $5A8D</td>
+<td class="comment-1" rowspan="1">Screen attribute position (13,20)</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="33204"></span>81B4</td>
+<td class="instruction">DEFM "FOUND ",$B1</td>
+<td class="comment-1" rowspan="1">"FOUND 1"</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="33211"></span>81BB</td>
+<td class="instruction">DEFB $70</td>
+<td class="comment-1" rowspan="1">attr?</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="33212"></span>81BC</td>
+<td class="instruction">DEFW $F04A</td>
+<td class="comment-1" rowspan="1">Screen position (80,96)</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="33214"></span>81BE</td>
+<td class="instruction">DEFW $598A</td>
+<td class="comment-1" rowspan="1">Screen attribute position (10,12)</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="33216"></span>81C0</td>
+<td class="instruction">DEFM "STOP THE TAP",$C5</td>
+<td class="comment-1" rowspan="1">"STOP THE TAPE"</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="33229"></span>81CD</td>
+<td class="instruction">DEFB $60</td>
+<td class="comment-1" rowspan="1">attr?</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="33230"></span>81CE</td>
+<td class="instruction">DEFW $F08B</td>
+<td class="comment-1" rowspan="1">Screen position (88,128)</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="33232"></span>81D0</td>
+<td class="instruction">DEFW $5A0B</td>
+<td class="comment-1" rowspan="1">Screen attribute position (11,16)</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="33234"></span>81D2</td>
+<td class="instruction">DEFM "PRESS  GEA",$D2</td>
+<td class="comment-1" rowspan="1">"PRESS  GEAR"</td>
+</tr>
+</table>
+<table class="asm-navigation">
+<tr>
+<td class="prev">
+Prev: <a href="8000.html">8000</a>
+</td>
+<td class="up">Up: <a href="../maps/all.html#32788">Map</a></td>
+<td class="next">
+Next: <a href="81DD.html">81DD</a>
+</td>
+</tr>
+</table>
+<footer>
+<div class="release">The incomplete Chase H.Q. disassembly 20230426</div>
+<div class="copyright">&copy; 1989 Ocean Software Ltd.</div>
+<div class="created">Created using <a href="https://skoolkit.ca">SkoolKit</a> 8.9.</div>
+</footer>
+</body>
+</html>

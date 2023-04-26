@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Chase H.Q.: Routine at 9CC2</title>
+<meta charset="utf-8" />
+<link rel="stylesheet" type="text/css" href="../skoolkit.css" />
+</head>
+<body class="Asm-c">
+<table class="header">
+<tr>
+<td class="logo"><a href="../index.html">Chase H.Q.</a></td>
+<td class="page-header">Routines</td>
+</tr>
+</table>
+<table class="asm-navigation">
+<tr>
+<td class="prev">
+Prev: <a href="9BCF.html">9BCF</a>
+</td>
+<td class="up">Up: <a href="../maps/all.html#40130">Map</a></td>
+<td class="next">
+Next: <a href="9CD6.html">9CD6</a>
+</td>
+</tr>
+</table>
+<div class="description">9CC2: Increments score in proportion to current speed</div>
+<table class="disassembly">
+<tr>
+<td class="routine-comment" colspan="5">
+<div class="details">
+<div class="paragraph">
+Used by the routine at <a href="8401.html">8401</a>.
+</div>
+</div>
+</td>
+</tr>
+<tr>
+<td class="asm-label">speed_score</td>
+<td class="address-2"><span id="40130"></span>9CC2</td>
+<td class="instruction">LD HL,($A24A)</td>
+<td class="comment-1" rowspan="1">Fetch current speed into <span class="register">HL</span></td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="40133"></span>9CC5</td>
+<td class="instruction">LD A,L</td>
+<td class="comment-1" rowspan="1">Speed low byte</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="40134"></span>9CC6</td>
+<td class="instruction">RR H</td>
+<td class="comment-1" rowspan="1">H &gt;&gt;= 1 but pointless?</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="40136"></span>9CC8</td>
+<td class="instruction">RLA</td>
+<td class="comment-1" rowspan="1">A &lt;&lt;= 1</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="40137"></span>9CC9</td>
+<td class="instruction">SRL A</td>
+<td class="comment-1" rowspan="2">A &gt;&gt;= 2</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="40139"></span>9CCB</td>
+<td class="instruction">SRL A</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="40141"></span>9CCD</td>
+<td class="instruction">LD E,A</td>
+<td class="comment-1" rowspan="2">Pointless?</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="40142"></span>9CCE</td>
+<td class="instruction">ADD A,$00</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="40144"></span>9CD0</td>
+<td class="instruction">DAA</td>
+<td class="comment-1" rowspan="1">BCD correction</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="40145"></span>9CD1</td>
+<td class="instruction">LD DE,$0000</td>
+<td class="comment-1" rowspan="1">DE = 0</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="40148"></span>9CD4</td>
+<td class="instruction">JR <a href="9D17.html">increment_score</a></td>
+<td class="comment-1" rowspan="1">Exit via increment_score</td>
+</tr>
+</table>
+<table class="asm-navigation">
+<tr>
+<td class="prev">
+Prev: <a href="9BCF.html">9BCF</a>
+</td>
+<td class="up">Up: <a href="../maps/all.html#40130">Map</a></td>
+<td class="next">
+Next: <a href="9CD6.html">9CD6</a>
+</td>
+</tr>
+</table>
+<footer>
+<div class="release">The incomplete Chase H.Q. disassembly 20230426</div>
+<div class="copyright">&copy; 1989 Ocean Software Ltd.</div>
+<div class="created">Created using <a href="https://skoolkit.ca">SkoolKit</a> 8.9.</div>
+</footer>
+</body>
+</html>

@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Chase H.Q.: Routine at 8A0F</title>
+<meta charset="utf-8" />
+<link rel="stylesheet" type="text/css" href="../skoolkit.css" />
+</head>
+<body class="Asm-c">
+<table class="header">
+<tr>
+<td class="logo"><a href="../index.html">Chase H.Q.</a></td>
+<td class="page-header">Routines</td>
+</tr>
+</table>
+<table class="asm-navigation">
+<tr>
+<td class="prev">
+Prev: <a href="89D9.html">89D9</a>
+</td>
+<td class="up">Up: <a href="../maps/all.html#35343">Map</a></td>
+<td class="next">
+Next: <a href="8A36.html">8A36</a>
+</td>
+</tr>
+</table>
+<div class="description">8A0F: Sound effect - "pitt" and "pfff"</div>
+<table class="disassembly">
+<tr>
+<td class="routine-comment" colspan="5">
+<div class="details">
+</div>
+<table class="input">
+<tr class="asm-input-header">
+<th colspan="2">Input</th>
+</tr>
+<tr>
+<td class="register">D</td>
+<td class="register-desc">Affects delay loops</td>
+</tr>
+<tr>
+<td class="register">E</td>
+<td class="register-desc">Inner loop count</td>
+</tr>
+</table>
+</td>
+</tr>
+<tr>
+<td class="asm-label">sfx8a0f</td>
+<td class="address-2"><span id="35343"></span>8A0F</td>
+<td class="instruction">LD A,$00</td>
+<td class="comment-1" rowspan="1">Half duty cycle</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="35345"></span>8A11</td>
+<td class="instruction">XOR $01</td>
+<td class="comment-1" rowspan="3">Return if 1</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="35347"></span>8A13</td>
+<td class="instruction">LD ($8A10),A</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="35350"></span>8A16</td>
+<td class="instruction">RET NZ</td>
+</tr>
+<tr>
+<td class="asm-label">sfx8a0f_loop_outer</td>
+<td class="address-2"><span id="35351"></span>8A17</td>
+<td class="instruction">LD C,E</td>
+<td class="comment-1" rowspan="1">Set inner loop counter</td>
+</tr>
+<tr>
+<td class="asm-label">sfx8a0f_loop_inner</td>
+<td class="address-2"><span id="35352"></span>8A18</td>
+<td class="instruction">CALL <a href="9618.html#38427">rng_0</a></td>
+<td class="comment-1" rowspan="1">Call rng</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="35355"></span>8A1B</td>
+<td class="instruction">AND $10</td>
+<td class="comment-1" rowspan="1"><span class="register">A</span> &amp;= 16</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="35357"></span>8A1D</td>
+<td class="instruction">JR Z,<a href="8A0F.html#35375">sfx8a0f_continue</a></td>
+<td class="comment-1" rowspan="1">If zero goto sfx8a0f_continue</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="35359"></span>8A1F</td>
+<td class="instruction">LD A,$18</td>
+<td class="comment-1" rowspan="4">Delay loop of (24 - <span class="register">D</span>) iterations</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="35361"></span>8A21</td>
+<td class="instruction">SUB D</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="35362"></span>8A22</td>
+<td class="instruction">LD B,A</td>
+</tr>
+<tr>
+<td class="asm-label">sfx8a0f_0</td>
+<td class="address-2"><span id="35363"></span>8A23</td>
+<td class="instruction">DJNZ <a href="8A0F.html#35363">sfx8a0f_0</a></td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="35365"></span>8A25</td>
+<td class="instruction">LD A,$18</td>
+<td class="comment-1" rowspan="1"><span class="register">A</span> = 24 set EAR and MIC bits &lt;not sure of the effect&gt;</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="35367"></span>8A27</td>
+<td class="instruction">OUT ($FE),A</td>
+<td class="comment-1" rowspan="1">Output</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="35369"></span>8A29</td>
+<td class="instruction">LD B,D</td>
+<td class="comment-1" rowspan="2">Delay loop of <span class="register">D</span> iterations</td>
+</tr>
+<tr>
+<td class="asm-label">sfx8a0f_1</td>
+<td class="address-2"><span id="35370"></span>8A2A</td>
+<td class="instruction">DJNZ <a href="8A0F.html#35370">sfx8a0f_1</a></td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="35372"></span>8A2C</td>
+<td class="instruction">XOR A</td>
+<td class="comment-1" rowspan="2">Output</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="35373"></span>8A2D</td>
+<td class="instruction">OUT ($FE),A</td>
+</tr>
+<tr>
+<td class="asm-label">sfx8a0f_continue</td>
+<td class="address-2"><span id="35375"></span>8A2F</td>
+<td class="instruction">DEC C</td>
+<td class="comment-1" rowspan="2">Loop while <span class="register">C</span></td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="35376"></span>8A30</td>
+<td class="instruction">JR NZ,<a href="8A0F.html#35352">sfx8a0f_loop_inner</a></td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="35378"></span>8A32</td>
+<td class="instruction">DEC D</td>
+<td class="comment-1" rowspan="2">Loop while <span class="register">D</span></td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="35379"></span>8A33</td>
+<td class="instruction">JR NZ,<a href="8A0F.html#35351">sfx8a0f_loop_outer</a></td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="35381"></span>8A35</td>
+<td class="instruction">RET</td>
+<td class="comment-1" rowspan="1">Return</td>
+</tr>
+</table>
+<table class="asm-navigation">
+<tr>
+<td class="prev">
+Prev: <a href="89D9.html">89D9</a>
+</td>
+<td class="up">Up: <a href="../maps/all.html#35343">Map</a></td>
+<td class="next">
+Next: <a href="8A36.html">8A36</a>
+</td>
+</tr>
+</table>
+<footer>
+<div class="release">The incomplete Chase H.Q. disassembly 20230426</div>
+<div class="copyright">&copy; 1989 Ocean Software Ltd.</div>
+<div class="created">Created using <a href="https://skoolkit.ca">SkoolKit</a> 8.9.</div>
+</footer>
+</body>
+</html>

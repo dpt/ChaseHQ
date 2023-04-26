@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Chase H.Q.: Routine at 8E91</title>
+<meta charset="utf-8" />
+<link rel="stylesheet" type="text/css" href="../skoolkit.css" />
+</head>
+<body class="Asm-c">
+<table class="header">
+<tr>
+<td class="logo"><a href="../index.html">Chase H.Q.</a></td>
+<td class="page-header">Routines</td>
+</tr>
+</table>
+<table class="asm-navigation">
+<tr>
+<td class="prev">
+Prev: <a href="8E7E.html">8E7E</a>
+</td>
+<td class="up">Up: <a href="../maps/all.html#36497">Map</a></td>
+<td class="next">
+Next: <a href="8EB7.html">8EB7</a>
+</td>
+</tr>
+</table>
+<div class="description">8E91: Copies the mugshots onto the screen when perp is caught</div>
+<table class="disassembly">
+<tr>
+<td class="routine-comment" colspan="5">
+<div class="details">
+<div class="paragraph">
+Used by the routine at <a href="8D8F.html">transition</a>.
+</div>
+</div>
+</td>
+</tr>
+<tr>
+<td class="asm-label">draw_mugshots</td>
+<td class="address-2"><span id="36497"></span>8E91</td>
+<td class="instruction">LD HL,($5CF0)</td>
+<td class="comment-1" rowspan="1">-&gt; Perp's mugshot attributes</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="36500"></span>8E94</td>
+<td class="instruction">LD DE,$FF88</td>
+<td class="comment-1" rowspan="1">Final byte of bitmap (back buffer)</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="36503"></span>8E97</td>
+<td class="instruction">LD BC,$48A5</td>
+<td class="comment-1" rowspan="1">Screen position (40,104)</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="36506"></span>8E9A</td>
+<td class="instruction">CALL <a href="8EB7.html">draw_mugshot</a></td>
+<td class="comment-1" rowspan="1">Call draw_mugshot</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="36509"></span>8E9D</td>
+<td class="instruction">LD HL,$7DF1</td>
+<td class="comment-1" rowspan="1">-&gt; Tony mugshot attributes</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="36512"></span>8EA0</td>
+<td class="instruction">LD DE,$FF97</td>
+<td class="comment-1" rowspan="1">Final byte of bitmap (back buffer)</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="36515"></span>8EA3</td>
+<td class="instruction">LD BC,$48B4</td>
+<td class="comment-1" rowspan="1">Screen position (160,104)</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="36518"></span>8EA6</td>
+<td class="instruction">CALL <a href="8EB7.html">draw_mugshot</a></td>
+<td class="comment-1" rowspan="1">Call draw_mugshot</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="36521"></span>8EA9</td>
+<td class="instruction">LD HL,$7D3D</td>
+<td class="comment-1" rowspan="1">-&gt; Raymond mugshot attributes</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="36524"></span>8EAC</td>
+<td class="instruction">LD DE,$FF9C</td>
+<td class="comment-1" rowspan="1">Final byte of bitmap (back buffer)</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="36527"></span>8EAF</td>
+<td class="instruction">LD BC,$48B9</td>
+<td class="comment-1" rowspan="1">Screen position (200,104)</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="36530"></span>8EB2</td>
+<td class="instruction">CALL <a href="8EB7.html">draw_mugshot</a></td>
+<td class="comment-1" rowspan="1">Call draw_mugshot</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="36533"></span>8EB5</td>
+<td class="instruction">JR <a href="8E42.html">sub_8e42</a></td>
+<td class="comment-1" rowspan="1">Exit via sub_8e42</td>
+</tr>
+</table>
+<table class="asm-navigation">
+<tr>
+<td class="prev">
+Prev: <a href="8E7E.html">8E7E</a>
+</td>
+<td class="up">Up: <a href="../maps/all.html#36497">Map</a></td>
+<td class="next">
+Next: <a href="8EB7.html">8EB7</a>
+</td>
+</tr>
+</table>
+<footer>
+<div class="release">The incomplete Chase H.Q. disassembly 20230426</div>
+<div class="copyright">&copy; 1989 Ocean Software Ltd.</div>
+<div class="created">Created using <a href="https://skoolkit.ca">SkoolKit</a> 8.9.</div>
+</footer>
+</body>
+</html>

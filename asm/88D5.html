@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Chase H.Q.: Routine at 88D5</title>
+<meta charset="utf-8" />
+<link rel="stylesheet" type="text/css" href="../skoolkit.css" />
+</head>
+<body class="Asm-c">
+<table class="header">
+<tr>
+<td class="logo"><a href="../index.html">Chase H.Q.</a></td>
+<td class="page-header">Routines</td>
+</tr>
+</table>
+<table class="asm-navigation">
+<tr>
+<td class="prev">
+Prev: <a href="8876.html">8876</a>
+</td>
+<td class="up">Up: <a href="../maps/all.html#35029">Map</a></td>
+<td class="next">
+Next: <a href="88E2.html">88E2</a>
+</td>
+</tr>
+</table>
+<div class="description">88D5: Clears the game screen attributes to zero</div>
+<table class="disassembly">
+<tr>
+<td class="routine-comment" colspan="5">
+<div class="details">
+<div class="paragraph">
+Used by the routines at <a href="8014.html">load_stage</a> and <a href="88E2.html">clear_game_screen</a>.
+</div>
+</div>
+</td>
+</tr>
+<tr>
+<td class="asm-label">clear_game_attrs</td>
+<td class="address-2"><span id="35029"></span>88D5</td>
+<td class="instruction">LD HL,$5900</td>
+<td class="comment-0" rowspan="1"></td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="35032"></span>88D8</td>
+<td class="instruction">LD DE,$5901</td>
+<td class="comment-0" rowspan="1"></td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="35035"></span>88DB</td>
+<td class="instruction">LD BC,$01FF</td>
+<td class="comment-0" rowspan="1"></td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="35038"></span>88DE</td>
+<td class="instruction">LD (HL),L</td>
+<td class="comment-0" rowspan="1"></td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="35039"></span>88DF</td>
+<td class="instruction">LDIR</td>
+<td class="comment-0" rowspan="1"></td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="35041"></span>88E1</td>
+<td class="instruction">RET</td>
+<td class="comment-0" rowspan="1"></td>
+</tr>
+</table>
+<table class="asm-navigation">
+<tr>
+<td class="prev">
+Prev: <a href="8876.html">8876</a>
+</td>
+<td class="up">Up: <a href="../maps/all.html#35029">Map</a></td>
+<td class="next">
+Next: <a href="88E2.html">88E2</a>
+</td>
+</tr>
+</table>
+<footer>
+<div class="release">The incomplete Chase H.Q. disassembly 20230426</div>
+<div class="copyright">&copy; 1989 Ocean Software Ltd.</div>
+<div class="created">Created using <a href="https://skoolkit.ca">SkoolKit</a> 8.9.</div>
+</footer>
+</body>
+</html>

@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Chase H.Q.: Routine at BDC1</title>
+<meta charset="utf-8" />
+<link rel="stylesheet" type="text/css" href="../skoolkit.css" />
+</head>
+<body class="Asm-c">
+<table class="header">
+<tr>
+<td class="logo"><a href="../index.html">Chase H.Q.</a></td>
+<td class="page-header">Routines</td>
+</tr>
+</table>
+<table class="asm-navigation">
+<tr>
+<td class="prev">
+Prev: <a href="BC3E.html">BC3E</a>
+</td>
+<td class="up">Up: <a href="../maps/all.html#48577">Map</a></td>
+<td class="next">
+Next: <a href="BDFB.html">BDFB</a>
+</td>
+</tr>
+</table>
+<div class="description">BDC1: Clears screen then sets in-game attributes</div>
+<table class="disassembly">
+<tr>
+<td class="routine-comment" colspan="5">
+<div class="details">
+<div class="paragraph">
+Used by the routines at <a href="8014.html">load_stage</a>, <a href="858C.html">858C</a> and <a href="87DC.html">setup_game</a>.
+</div>
+</div>
+</td>
+</tr>
+<tr>
+<td class="asm-label">clear_screen_set_attrs</td>
+<td class="address-2"><span id="48577"></span>BDC1</td>
+<td class="instruction">CALL <a href="88E2.html">clear_game_screen</a></td>
+<td class="comment-1" rowspan="1">Call clear_game_screen</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="48580"></span>BDC4</td>
+<td class="instruction">LD HL,$4800</td>
+<td class="comment-1" rowspan="5">Clear the game screen pixels to $FF (redoes similar work just done)</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="48583"></span>BDC7</td>
+<td class="instruction">LD DE,$4801</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="48586"></span>BDCA</td>
+<td class="instruction">LD BC,$0FFF</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="48589"></span>BDCD</td>
+<td class="instruction">LD (HL),$FF</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="48591"></span>BDCF</td>
+<td class="instruction">LDIR</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="48593"></span>BDD1</td>
+<td class="instruction">LD HL,$5900</td>
+<td class="comment-1" rowspan="5">Clear the game screen attributes to $28 (black over cyan) - first two rows only</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="48596"></span>BDD4</td>
+<td class="instruction">LD DE,$5901</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="48599"></span>BDD7</td>
+<td class="instruction">LD (HL),$28</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="48601"></span>BDD9</td>
+<td class="instruction">LD C,$40</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="48603"></span>BDDB</td>
+<td class="instruction">LDIR</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="48605"></span>BDDD</td>
+<td class="instruction">LD (HL),$68</td>
+<td class="comment-1" rowspan="3">Clear the next three rows to $68 (black over bright cyan)</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="48607"></span>BDDF</td>
+<td class="instruction">LD C,$60</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="48609"></span>BDE1</td>
+<td class="instruction">LDIR</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="48611"></span>BDE3</td>
+<td class="instruction">LD A,($5CF4)</td>
+<td class="comment-1" rowspan="4">Clear the next 11 rows to the current ground colour</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="48614"></span>BDE6</td>
+<td class="instruction">LD (HL),A</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="48615"></span>BDE7</td>
+<td class="instruction">LD BC,$015F</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="48618"></span>BDEA</td>
+<td class="instruction">LDIR</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="48620"></span>BDEC</td>
+<td class="instruction">LD HL,$5900</td>
+<td class="comment-1" rowspan="8">Clear the edges of the game screen to black on black</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="48623"></span>BDEF</td>
+<td class="instruction">LD DE,$001F</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="48626"></span>BDF2</td>
+<td class="instruction">LD B,$10</td>
+</tr>
+<tr>
+<td class="asm-label">clear_screen_set_attrs_0</td>
+<td class="address-2"><span id="48628"></span>BDF4</td>
+<td class="instruction">LD (HL),D</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="48629"></span>BDF5</td>
+<td class="instruction">ADD HL,DE</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="48630"></span>BDF6</td>
+<td class="instruction">LD (HL),D</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="48631"></span>BDF7</td>
+<td class="instruction">INC HL</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="48632"></span>BDF8</td>
+<td class="instruction">DJNZ <a href="BDC1.html#48628">clear_screen_set_attrs_0</a></td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="48634"></span>BDFA</td>
+<td class="instruction">RET</td>
+<td class="comment-1" rowspan="1">Return</td>
+</tr>
+</table>
+<table class="asm-navigation">
+<tr>
+<td class="prev">
+Prev: <a href="BC3E.html">BC3E</a>
+</td>
+<td class="up">Up: <a href="../maps/all.html#48577">Map</a></td>
+<td class="next">
+Next: <a href="BDFB.html">BDFB</a>
+</td>
+</tr>
+</table>
+<footer>
+<div class="release">The incomplete Chase H.Q. disassembly 20230426</div>
+<div class="copyright">&copy; 1989 Ocean Software Ltd.</div>
+<div class="created">Created using <a href="https://skoolkit.ca">SkoolKit</a> 8.9.</div>
+</footer>
+</body>
+</html>

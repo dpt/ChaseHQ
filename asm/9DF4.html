@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Chase H.Q.: Routine at 9DF4</title>
+<meta charset="utf-8" />
+<link rel="stylesheet" type="text/css" href="../skoolkit.css" />
+</head>
+<body class="Asm-c">
+<table class="header">
+<tr>
+<td class="logo"><a href="../index.html">Chase H.Q.</a></td>
+<td class="page-header">Routines</td>
+</tr>
+</table>
+<table class="asm-navigation">
+<tr>
+<td class="prev">
+Prev: <a href="9D62.html">9D62</a>
+</td>
+<td class="up">Up: <a href="../maps/all.html#40436">Map</a></td>
+<td class="next">
+Next: <a href="9E11.html">9E11</a>
+</td>
+</tr>
+</table>
+<div class="description">9DF4: Toggle the light's BRIGHT bit (<span class="register">HL</span> -&gt; attrs)</div>
+<table class="disassembly">
+<tr>
+<td class="routine-comment" colspan="5">
+<div class="details">
+<div class="paragraph">
+Used by the routines at <a href="9D62.html">9D62</a> and <a href="B4CC.html">B4CC</a>.
+</div>
+</div>
+</td>
+</tr>
+<tr>
+<td class="asm-label">toggle_light_brightness</td>
+<td class="address-2"><span id="40436"></span>9DF4</td>
+<td class="instruction">LD BC,$0440</td>
+<td class="comment-1" rowspan="1">B = 4, C = $40 (BRIGHT bit)</td>
+</tr>
+<tr>
+<td class="asm-label">toggle_light_brightness_0</td>
+<td class="address-2"><span id="40439"></span>9DF7</td>
+<td class="instruction">LD A,(HL)</td>
+<td class="comment-1" rowspan="19">Toggle attribute byte on five successive locations</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="40440"></span>9DF8</td>
+<td class="instruction">XOR C</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="40441"></span>9DF9</td>
+<td class="instruction">LD (HL),A</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="40442"></span>9DFA</td>
+<td class="instruction">INC L</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="40443"></span>9DFB</td>
+<td class="instruction">LD A,(HL)</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="40444"></span>9DFC</td>
+<td class="instruction">XOR C</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="40445"></span>9DFD</td>
+<td class="instruction">LD (HL),A</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="40446"></span>9DFE</td>
+<td class="instruction">INC L</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="40447"></span>9DFF</td>
+<td class="instruction">LD A,(HL)</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="40448"></span>9E00</td>
+<td class="instruction">XOR C</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="40449"></span>9E01</td>
+<td class="instruction">LD (HL),A</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="40450"></span>9E02</td>
+<td class="instruction">INC L</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="40451"></span>9E03</td>
+<td class="instruction">LD A,(HL)</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="40452"></span>9E04</td>
+<td class="instruction">XOR C</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="40453"></span>9E05</td>
+<td class="instruction">LD (HL),A</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="40454"></span>9E06</td>
+<td class="instruction">INC L</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="40455"></span>9E07</td>
+<td class="instruction">LD A,(HL)</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="40456"></span>9E08</td>
+<td class="instruction">XOR C</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="40457"></span>9E09</td>
+<td class="instruction">LD (HL),A</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="40458"></span>9E0A</td>
+<td class="instruction">LD A,L</td>
+<td class="comment-1" rowspan="3">Move to next attribute row</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="40459"></span>9E0B</td>
+<td class="instruction">ADD A,$1C</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="40461"></span>9E0D</td>
+<td class="instruction">LD L,A</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="40462"></span>9E0E</td>
+<td class="instruction">DJNZ <a href="9DF4.html#40439">toggle_light_brightness_0</a></td>
+<td class="comment-1" rowspan="2">Repeat for four rows</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="40464"></span>9E10</td>
+<td class="instruction">RET</td>
+</tr>
+</table>
+<table class="asm-navigation">
+<tr>
+<td class="prev">
+Prev: <a href="9D62.html">9D62</a>
+</td>
+<td class="up">Up: <a href="../maps/all.html#40436">Map</a></td>
+<td class="next">
+Next: <a href="9E11.html">9E11</a>
+</td>
+</tr>
+</table>
+<footer>
+<div class="release">The incomplete Chase H.Q. disassembly 20230426</div>
+<div class="copyright">&copy; 1989 Ocean Software Ltd.</div>
+<div class="created">Created using <a href="https://skoolkit.ca">SkoolKit</a> 8.9.</div>
+</footer>
+</body>
+</html>

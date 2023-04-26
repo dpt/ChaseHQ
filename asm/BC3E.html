@@ -1,0 +1,1631 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Chase H.Q.: Routine at BC3E</title>
+<meta charset="utf-8" />
+<link rel="stylesheet" type="text/css" href="../skoolkit.css" />
+</head>
+<body class="Asm-c">
+<table class="header">
+<tr>
+<td class="logo"><a href="../index.html">Chase H.Q.</a></td>
+<td class="page-header">Routines</td>
+</tr>
+</table>
+<table class="asm-navigation">
+<tr>
+<td class="prev">
+Prev: <a href="BB69.html">BB69</a>
+</td>
+<td class="up">Up: <a href="../maps/all.html#48190">Map</a></td>
+<td class="next">
+Next: <a href="BDC1.html">BDC1</a>
+</td>
+</tr>
+</table>
+<div class="description">BC3E: Copies the backbuffer at $F000 to the screen.</div>
+<table class="disassembly">
+<tr>
+<td class="routine-comment" colspan="5">
+<div class="details">
+<div class="paragraph">
+Used by the routines at <a href="8014.html">load_stage</a>, <a href="8258.html">attract_mode</a>, <a href="8401.html">8401</a>, <a href="858C.html">858C</a>, <a href="873C.html">873C</a> and <a href="F220.html">F220</a>.
+</div>
+</div>
+</td>
+</tr>
+<tr>
+<td class="asm-label">draw_screen</td>
+<td class="address-2"><span id="48190"></span>BC3E</td>
+<td class="instruction">LD HL,$4811</td>
+<td class="comment-1" rowspan="2">Point <span class="register">HL</span> at screen pixel (136,64). This is positioned halfway across so we can PUSH to the screen via SP.</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="48193"></span>BC41</td>
+<td class="instruction">EXX</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="48194"></span>BC42</td>
+<td class="instruction">LD HL,$F001</td>
+<td class="comment-1" rowspan="1">Point <span class="register">HL'</span> at backbuffer + 1 byte.</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="48197"></span>BC45</td>
+<td class="instruction">LD ($BDBE),SP</td>
+<td class="comment-1" rowspan="1">Self modify <span class="register">SP</span> restore instruction</td>
+</tr>
+<tr>
+<td class="routine-comment" colspan="5">
+<span id="48201"></span>
+<div class="comments">
+<div class="paragraph">
+A sequence that transfers 16 bytes
+</div>
+</div>
+</td>
+</tr>
+<tr>
+<td class="asm-label">draw_screen_0</td>
+<td class="address-2"><span id="48201"></span>BC49</td>
+<td class="instruction">LD SP,HL</td>
+<td class="comment-1" rowspan="1">Point <span class="register">SP</span> at the back buffer</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="48202"></span>BC4A</td>
+<td class="instruction">POP AF</td>
+<td class="comment-1" rowspan="10">Pull in 16 bytes from the back buffer (order: AF' DE BC AF' DE' BC' IX IY), incrementing SP</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="48203"></span>BC4B</td>
+<td class="instruction">EX AF,AF'</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="48204"></span>BC4C</td>
+<td class="instruction">POP DE</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="48205"></span>BC4D</td>
+<td class="instruction">POP BC</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="48206"></span>BC4E</td>
+<td class="instruction">EXX</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="48207"></span>BC4F</td>
+<td class="instruction">POP AF</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="48208"></span>BC50</td>
+<td class="instruction">POP DE</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="48209"></span>BC51</td>
+<td class="instruction">POP BC</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="48210"></span>BC52</td>
+<td class="instruction">POP IX</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="48212"></span>BC54</td>
+<td class="instruction">POP IY</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="48214"></span>BC56</td>
+<td class="instruction">LD SP,HL</td>
+<td class="comment-1" rowspan="1">Point <span class="register">SP</span> at screen</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="48215"></span>BC57</td>
+<td class="instruction">PUSH IY</td>
+<td class="comment-1" rowspan="5">Push out 16 bytes to the screen (reversing the order), decrementing SP</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="48217"></span>BC59</td>
+<td class="instruction">PUSH IX</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="48219"></span>BC5B</td>
+<td class="instruction">PUSH BC</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="48220"></span>BC5C</td>
+<td class="instruction">PUSH DE</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="48221"></span>BC5D</td>
+<td class="instruction">PUSH AF</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="48222"></span>BC5E</td>
+<td class="instruction">INC H</td>
+<td class="comment-1" rowspan="1">Advance screen pointer</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="48223"></span>BC5F</td>
+<td class="instruction">EXX</td>
+<td class="comment-1" rowspan="5">Continue pushing</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="48224"></span>BC60</td>
+<td class="instruction">PUSH BC</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="48225"></span>BC61</td>
+<td class="instruction">PUSH DE</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="48226"></span>BC62</td>
+<td class="instruction">EX AF,AF'</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="48227"></span>BC63</td>
+<td class="instruction">PUSH AF</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="48228"></span>BC64</td>
+<td class="instruction">INC H</td>
+<td class="comment-1" rowspan="1">Advance back buffer pointer</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="48229"></span>BC65</td>
+<td class="instruction">LD SP,HL</td>
+<td class="comment-1" rowspan="24">Transfer another 16 bytes (128 pixels)</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="48230"></span>BC66</td>
+<td class="instruction">POP AF</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="48231"></span>BC67</td>
+<td class="instruction">EX AF,AF'</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="48232"></span>BC68</td>
+<td class="instruction">POP DE</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="48233"></span>BC69</td>
+<td class="instruction">POP BC</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="48234"></span>BC6A</td>
+<td class="instruction">EXX</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="48235"></span>BC6B</td>
+<td class="instruction">POP AF</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="48236"></span>BC6C</td>
+<td class="instruction">POP DE</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="48237"></span>BC6D</td>
+<td class="instruction">POP BC</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="48238"></span>BC6E</td>
+<td class="instruction">POP IX</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="48240"></span>BC70</td>
+<td class="instruction">POP IY</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="48242"></span>BC72</td>
+<td class="instruction">LD SP,HL</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="48243"></span>BC73</td>
+<td class="instruction">PUSH IY</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="48245"></span>BC75</td>
+<td class="instruction">PUSH IX</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="48247"></span>BC77</td>
+<td class="instruction">PUSH BC</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="48248"></span>BC78</td>
+<td class="instruction">PUSH DE</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="48249"></span>BC79</td>
+<td class="instruction">PUSH AF</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="48250"></span>BC7A</td>
+<td class="instruction">INC H</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="48251"></span>BC7B</td>
+<td class="instruction">EXX</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="48252"></span>BC7C</td>
+<td class="instruction">PUSH BC</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="48253"></span>BC7D</td>
+<td class="instruction">PUSH DE</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="48254"></span>BC7E</td>
+<td class="instruction">EX AF,AF'</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="48255"></span>BC7F</td>
+<td class="instruction">PUSH AF</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="48256"></span>BC80</td>
+<td class="instruction">INC H</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="48257"></span>BC81</td>
+<td class="instruction">LD SP,HL</td>
+<td class="comment-1" rowspan="24">Transfer another 16 bytes (128 pixels)</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="48258"></span>BC82</td>
+<td class="instruction">POP AF</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="48259"></span>BC83</td>
+<td class="instruction">EX AF,AF'</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="48260"></span>BC84</td>
+<td class="instruction">POP DE</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="48261"></span>BC85</td>
+<td class="instruction">POP BC</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="48262"></span>BC86</td>
+<td class="instruction">EXX</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="48263"></span>BC87</td>
+<td class="instruction">POP AF</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="48264"></span>BC88</td>
+<td class="instruction">POP DE</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="48265"></span>BC89</td>
+<td class="instruction">POP BC</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="48266"></span>BC8A</td>
+<td class="instruction">POP IX</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="48268"></span>BC8C</td>
+<td class="instruction">POP IY</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="48270"></span>BC8E</td>
+<td class="instruction">LD SP,HL</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="48271"></span>BC8F</td>
+<td class="instruction">PUSH IY</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="48273"></span>BC91</td>
+<td class="instruction">PUSH IX</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="48275"></span>BC93</td>
+<td class="instruction">PUSH BC</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="48276"></span>BC94</td>
+<td class="instruction">PUSH DE</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="48277"></span>BC95</td>
+<td class="instruction">PUSH AF</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="48278"></span>BC96</td>
+<td class="instruction">INC H</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="48279"></span>BC97</td>
+<td class="instruction">EXX</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="48280"></span>BC98</td>
+<td class="instruction">PUSH BC</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="48281"></span>BC99</td>
+<td class="instruction">PUSH DE</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="48282"></span>BC9A</td>
+<td class="instruction">EX AF,AF'</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="48283"></span>BC9B</td>
+<td class="instruction">PUSH AF</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="48284"></span>BC9C</td>
+<td class="instruction">INC H</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="48285"></span>BC9D</td>
+<td class="instruction">LD SP,HL</td>
+<td class="comment-1" rowspan="24">Transfer another 16 bytes (128 pixels)</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="48286"></span>BC9E</td>
+<td class="instruction">POP AF</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="48287"></span>BC9F</td>
+<td class="instruction">EX AF,AF'</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="48288"></span>BCA0</td>
+<td class="instruction">POP DE</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="48289"></span>BCA1</td>
+<td class="instruction">POP BC</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="48290"></span>BCA2</td>
+<td class="instruction">EXX</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="48291"></span>BCA3</td>
+<td class="instruction">POP AF</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="48292"></span>BCA4</td>
+<td class="instruction">POP DE</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="48293"></span>BCA5</td>
+<td class="instruction">POP BC</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="48294"></span>BCA6</td>
+<td class="instruction">POP IX</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="48296"></span>BCA8</td>
+<td class="instruction">POP IY</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="48298"></span>BCAA</td>
+<td class="instruction">LD SP,HL</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="48299"></span>BCAB</td>
+<td class="instruction">PUSH IY</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="48301"></span>BCAD</td>
+<td class="instruction">PUSH IX</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="48303"></span>BCAF</td>
+<td class="instruction">PUSH BC</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="48304"></span>BCB0</td>
+<td class="instruction">PUSH DE</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="48305"></span>BCB1</td>
+<td class="instruction">PUSH AF</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="48306"></span>BCB2</td>
+<td class="instruction">INC H</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="48307"></span>BCB3</td>
+<td class="instruction">EXX</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="48308"></span>BCB4</td>
+<td class="instruction">PUSH BC</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="48309"></span>BCB5</td>
+<td class="instruction">PUSH DE</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="48310"></span>BCB6</td>
+<td class="instruction">EX AF,AF'</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="48311"></span>BCB7</td>
+<td class="instruction">PUSH AF</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="48312"></span>BCB8</td>
+<td class="instruction">INC H</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="48313"></span>BCB9</td>
+<td class="instruction">BIT 2,H</td>
+<td class="comment-1" rowspan="1">is the back buffer row a multiple of 4?</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="48315"></span>BCBB</td>
+<td class="instruction">JP NZ,<a href="BC3E.html#48201">draw_screen_0</a></td>
+<td class="comment-1" rowspan="1">loop if so</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="48318"></span>BCBE</td>
+<td class="instruction">LD DE,$F810</td>
+<td class="comment-1" rowspan="3">Advance back buffer pointer (backwards) by a half row?</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="48321"></span>BCC1</td>
+<td class="instruction">ADD HL,DE</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="48322"></span>BCC2</td>
+<td class="instruction">EXX</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="48323"></span>BCC3</td>
+<td class="instruction">LD DE,$F80E</td>
+<td class="comment-1" rowspan="3">Advance screen pointer (backwards) by half a row?</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="48326"></span>BCC6</td>
+<td class="instruction">ADD HL,DE</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="48327"></span>BCC7</td>
+<td class="instruction">EXX</td>
+</tr>
+<tr>
+<td class="routine-comment" colspan="5">
+<span id="48328"></span>
+<div class="comments">
+<div class="paragraph">
+This is a similar sequence but only moves 14 bytes (not using IY)
+</div>
+</div>
+</td>
+</tr>
+<tr>
+<td class="asm-label">draw_screen_1</td>
+<td class="address-2"><span id="48328"></span>BCC8</td>
+<td class="instruction">LD SP,HL</td>
+<td class="comment-1" rowspan="1">Point <span class="register">SP</span> at the back buffer</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="48329"></span>BCC9</td>
+<td class="instruction">POP AF</td>
+<td class="comment-1" rowspan="21">Pull in 16 bytes from the back buffer (order: AF' DE BC AF' DE' BC' IX), incrementing SP</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="48330"></span>BCCA</td>
+<td class="instruction">EX AF,AF'</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="48331"></span>BCCB</td>
+<td class="instruction">POP DE</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="48332"></span>BCCC</td>
+<td class="instruction">POP BC</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="48333"></span>BCCD</td>
+<td class="instruction">EXX</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="48334"></span>BCCE</td>
+<td class="instruction">POP AF</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="48335"></span>BCCF</td>
+<td class="instruction">POP DE</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="48336"></span>BCD0</td>
+<td class="instruction">POP BC</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="48337"></span>BCD1</td>
+<td class="instruction">POP IX</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="48339"></span>BCD3</td>
+<td class="instruction">LD SP,HL</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="48340"></span>BCD4</td>
+<td class="instruction">PUSH IX</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="48342"></span>BCD6</td>
+<td class="instruction">PUSH BC</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="48343"></span>BCD7</td>
+<td class="instruction">PUSH DE</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="48344"></span>BCD8</td>
+<td class="instruction">PUSH AF</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="48345"></span>BCD9</td>
+<td class="instruction">INC H</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="48346"></span>BCDA</td>
+<td class="instruction">EXX</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="48347"></span>BCDB</td>
+<td class="instruction">PUSH BC</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="48348"></span>BCDC</td>
+<td class="instruction">PUSH DE</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="48349"></span>BCDD</td>
+<td class="instruction">EX AF,AF'</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="48350"></span>BCDE</td>
+<td class="instruction">PUSH AF</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="48351"></span>BCDF</td>
+<td class="instruction">INC H</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="48352"></span>BCE0</td>
+<td class="instruction">LD SP,HL</td>
+<td class="comment-1" rowspan="22">Transfer another 14 bytes (112 pixels)</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="48353"></span>BCE1</td>
+<td class="instruction">POP AF</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="48354"></span>BCE2</td>
+<td class="instruction">EX AF,AF'</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="48355"></span>BCE3</td>
+<td class="instruction">POP DE</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="48356"></span>BCE4</td>
+<td class="instruction">POP BC</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="48357"></span>BCE5</td>
+<td class="instruction">EXX</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="48358"></span>BCE6</td>
+<td class="instruction">POP AF</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="48359"></span>BCE7</td>
+<td class="instruction">POP DE</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="48360"></span>BCE8</td>
+<td class="instruction">POP BC</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="48361"></span>BCE9</td>
+<td class="instruction">POP IX</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="48363"></span>BCEB</td>
+<td class="instruction">LD SP,HL</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="48364"></span>BCEC</td>
+<td class="instruction">PUSH IX</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="48366"></span>BCEE</td>
+<td class="instruction">PUSH BC</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="48367"></span>BCEF</td>
+<td class="instruction">PUSH DE</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="48368"></span>BCF0</td>
+<td class="instruction">PUSH AF</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="48369"></span>BCF1</td>
+<td class="instruction">INC H</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="48370"></span>BCF2</td>
+<td class="instruction">EXX</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="48371"></span>BCF3</td>
+<td class="instruction">PUSH BC</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="48372"></span>BCF4</td>
+<td class="instruction">PUSH DE</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="48373"></span>BCF5</td>
+<td class="instruction">EX AF,AF'</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="48374"></span>BCF6</td>
+<td class="instruction">PUSH AF</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="48375"></span>BCF7</td>
+<td class="instruction">INC H</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="48376"></span>BCF8</td>
+<td class="instruction">LD SP,HL</td>
+<td class="comment-1" rowspan="22">Transfer another 14 bytes (112 pixels)</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="48377"></span>BCF9</td>
+<td class="instruction">POP AF</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="48378"></span>BCFA</td>
+<td class="instruction">EX AF,AF'</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="48379"></span>BCFB</td>
+<td class="instruction">POP DE</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="48380"></span>BCFC</td>
+<td class="instruction">POP BC</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="48381"></span>BCFD</td>
+<td class="instruction">EXX</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="48382"></span>BCFE</td>
+<td class="instruction">POP AF</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="48383"></span>BCFF</td>
+<td class="instruction">POP DE</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="48384"></span>BD00</td>
+<td class="instruction">POP BC</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="48385"></span>BD01</td>
+<td class="instruction">POP IX</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="48387"></span>BD03</td>
+<td class="instruction">LD SP,HL</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="48388"></span>BD04</td>
+<td class="instruction">PUSH IX</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="48390"></span>BD06</td>
+<td class="instruction">PUSH BC</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="48391"></span>BD07</td>
+<td class="instruction">PUSH DE</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="48392"></span>BD08</td>
+<td class="instruction">PUSH AF</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="48393"></span>BD09</td>
+<td class="instruction">INC H</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="48394"></span>BD0A</td>
+<td class="instruction">EXX</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="48395"></span>BD0B</td>
+<td class="instruction">PUSH BC</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="48396"></span>BD0C</td>
+<td class="instruction">PUSH DE</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="48397"></span>BD0D</td>
+<td class="instruction">EX AF,AF'</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="48398"></span>BD0E</td>
+<td class="instruction">PUSH AF</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="48399"></span>BD0F</td>
+<td class="instruction">INC H</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="48400"></span>BD10</td>
+<td class="instruction">LD SP,HL</td>
+<td class="comment-1" rowspan="22">Transfer another 14 bytes (112 pixels)</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="48401"></span>BD11</td>
+<td class="instruction">POP AF</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="48402"></span>BD12</td>
+<td class="instruction">EX AF,AF'</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="48403"></span>BD13</td>
+<td class="instruction">POP DE</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="48404"></span>BD14</td>
+<td class="instruction">POP BC</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="48405"></span>BD15</td>
+<td class="instruction">EXX</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="48406"></span>BD16</td>
+<td class="instruction">POP AF</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="48407"></span>BD17</td>
+<td class="instruction">POP DE</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="48408"></span>BD18</td>
+<td class="instruction">POP BC</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="48409"></span>BD19</td>
+<td class="instruction">POP IX</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="48411"></span>BD1B</td>
+<td class="instruction">LD SP,HL</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="48412"></span>BD1C</td>
+<td class="instruction">PUSH IX</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="48414"></span>BD1E</td>
+<td class="instruction">PUSH BC</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="48415"></span>BD1F</td>
+<td class="instruction">PUSH DE</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="48416"></span>BD20</td>
+<td class="instruction">PUSH AF</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="48417"></span>BD21</td>
+<td class="instruction">INC H</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="48418"></span>BD22</td>
+<td class="instruction">EXX</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="48419"></span>BD23</td>
+<td class="instruction">PUSH BC</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="48420"></span>BD24</td>
+<td class="instruction">PUSH DE</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="48421"></span>BD25</td>
+<td class="instruction">EX AF,AF'</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="48422"></span>BD26</td>
+<td class="instruction">PUSH AF</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="48423"></span>BD27</td>
+<td class="instruction">INC H</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="48424"></span>BD28</td>
+<td class="instruction">BIT 2,H</td>
+<td class="comment-1" rowspan="1">Is the back buffer row multiple of 4?</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="48426"></span>BD2A</td>
+<td class="instruction">JP NZ,<a href="BC3E.html#48328">draw_screen_1</a></td>
+<td class="comment-1" rowspan="1"></td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="48429"></span>BD2D</td>
+<td class="instruction">BIT 3,H</td>
+<td class="comment-1" rowspan="1">Is the back buffer row multiple of 8?</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="48431"></span>BD2F</td>
+<td class="instruction">JR NZ,<a href="BC3E.html#48461">draw_screen_bd4d</a></td>
+<td class="comment-1" rowspan="1"></td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="48433"></span>BD31</td>
+<td class="instruction">LD H,$F0</td>
+<td class="comment-1" rowspan="1">L -= $F0, H = $F0</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="48435"></span>BD33</td>
+<td class="instruction">LD A,L</td>
+<td class="comment-1" rowspan="1"></td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="48436"></span>BD34</td>
+<td class="instruction">SUB H</td>
+<td class="comment-1" rowspan="1"></td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="48437"></span>BD35</td>
+<td class="instruction">LD L,A</td>
+<td class="comment-1" rowspan="1"></td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="48438"></span>BD36</td>
+<td class="instruction">JP NC,<a href="BC3E.html#48474">draw_screen_attributes</a></td>
+<td class="comment-1" rowspan="1">L &gt;= $F0</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="48441"></span>BD39</td>
+<td class="instruction">JP PE,<a href="BC3E.html#48453">draw_screen_bd45</a></td>
+<td class="comment-1" rowspan="1">PE = parity even</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="48444"></span>BD3C</td>
+<td class="instruction">EXX</td>
+<td class="comment-1" rowspan="1"></td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="48445"></span>BD3D</td>
+<td class="instruction">LD DE,$F812</td>
+<td class="comment-1" rowspan="1">Increment the screen address</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="48448"></span>BD40</td>
+<td class="instruction">ADD HL,DE</td>
+<td class="comment-1" rowspan="1"></td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="48449"></span>BD41</td>
+<td class="instruction">EXX</td>
+<td class="comment-1" rowspan="1"></td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="48450"></span>BD42</td>
+<td class="instruction">JP <a href="BC3E.html#48201">draw_screen_0</a></td>
+<td class="comment-1" rowspan="1"></td>
+</tr>
+<tr>
+<td class="asm-label">draw_screen_bd45</td>
+<td class="address-2"><span id="48453"></span>BD45</td>
+<td class="instruction">EXX</td>
+<td class="comment-1" rowspan="1"></td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="48454"></span>BD46</td>
+<td class="instruction">LD HL,$5011</td>
+<td class="comment-1" rowspan="1">Point <span class="register">HL</span> at screen pixel (136,128).</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="48457"></span>BD49</td>
+<td class="instruction">EXX</td>
+<td class="comment-1" rowspan="1"></td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="48458"></span>BD4A</td>
+<td class="instruction">JP <a href="BC3E.html#48201">draw_screen_0</a></td>
+<td class="comment-1" rowspan="1">Copy more</td>
+</tr>
+<tr>
+<td class="asm-label">draw_screen_bd4d</td>
+<td class="address-2"><span id="48461"></span>BD4D</td>
+<td class="instruction">EXX</td>
+<td class="comment-1" rowspan="1"></td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="48462"></span>BD4E</td>
+<td class="instruction">LD DE,$F812</td>
+<td class="comment-1" rowspan="1"></td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="48465"></span>BD51</td>
+<td class="instruction">ADD HL,DE</td>
+<td class="comment-1" rowspan="1">Which one are we modifying here?</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="48466"></span>BD52</td>
+<td class="instruction">EXX</td>
+<td class="comment-1" rowspan="1"></td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="48467"></span>BD53</td>
+<td class="instruction">LD A,L</td>
+<td class="comment-1" rowspan="1"></td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="48468"></span>BD54</td>
+<td class="instruction">SUB $10</td>
+<td class="comment-1" rowspan="1">Ditto, which?</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="48470"></span>BD56</td>
+<td class="instruction">LD L,A</td>
+<td class="comment-1" rowspan="1"></td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="48471"></span>BD57</td>
+<td class="instruction">JP <a href="BC3E.html#48201">draw_screen_0</a></td>
+<td class="comment-1" rowspan="1"></td>
+</tr>
+<tr>
+<td class="asm-label">draw_screen_attributes</td>
+<td class="address-2"><span id="48474"></span>BD5A</td>
+<td class="instruction">LD A,($A220)</td>
+<td class="comment-1" rowspan="3">Don't update the attributes if the level intro screen is being shown</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="48477"></span>BD5D</td>
+<td class="instruction">AND A</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="48478"></span>BD5E</td>
+<td class="instruction">JR NZ,<a href="BC3E.html#48573">draw_screen_exit</a></td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="48480"></span>BD60</td>
+<td class="instruction">LD HL,$E34C</td>
+<td class="comment-1" rowspan="1"></td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="48483"></span>BD63</td>
+<td class="instruction">LD A,(HL)</td>
+<td class="comment-1" rowspan="1">Seems to be related to the horizon level</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="48484"></span>BD64</td>
+<td class="instruction">INC L</td>
+<td class="comment-1" rowspan="1"></td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="48485"></span>BD65</td>
+<td class="instruction">LD E,(HL)</td>
+<td class="comment-1" rowspan="1"></td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="48486"></span>BD66</td>
+<td class="instruction">LD (HL),A</td>
+<td class="comment-1" rowspan="1"></td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="48487"></span>BD67</td>
+<td class="instruction">LD A,E</td>
+<td class="comment-1" rowspan="1"></td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="48488"></span>BD68</td>
+<td class="instruction">OR A</td>
+<td class="comment-1" rowspan="1">Jump to exit check if both are zero</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="48489"></span>BD69</td>
+<td class="instruction">JR Z,<a href="BC3E.html#48531">draw_screen_4</a></td>
+<td class="comment-1" rowspan="1"></td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="48491"></span>BD6B</td>
+<td class="instruction">ADD A,A</td>
+<td class="comment-1" rowspan="3">E = A * 4</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="48492"></span>BD6C</td>
+<td class="instruction">ADD A,A</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="48493"></span>BD6D</td>
+<td class="instruction">LD E,A</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="48494"></span>BD6E</td>
+<td class="instruction">SBC A,A</td>
+<td class="comment-1" rowspan="1">A = $FF if carry set, zero otherwise</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="48495"></span>BD6F</td>
+<td class="instruction">LD D,A</td>
+<td class="comment-1" rowspan="1">D = A</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="48496"></span>BD70</td>
+<td class="instruction">LD HL,($A186)</td>
+<td class="comment-1" rowspan="1">Fetch the address of the first line of ground attributes (+ 31)</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="48499"></span>BD73</td>
+<td class="instruction">LD BC,$6868</td>
+<td class="comment-1" rowspan="1">Set the sky colour screen attributes (always black over bright cyan)</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="48502"></span>BD76</td>
+<td class="instruction">JR Z,<a href="BC3E.html#48509">draw_screen_2</a></td>
+<td class="comment-1" rowspan="1">If A was zero then jump (Z =&gt; sky, NZ =&gt; ground)</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="48504"></span>BD78</td>
+<td class="instruction">LD BC,($5CF4)</td>
+<td class="comment-1" rowspan="1">Load the ground colour screen attributes (varies per level)</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="48508"></span>BD7C</td>
+<td class="instruction">ADD HL,DE</td>
+<td class="comment-1" rowspan="2">Point <span class="register">SP</span> at the screen attributes (DE = $FFE0 = -32)</td>
+</tr>
+<tr>
+<td class="asm-label">draw_screen_2</td>
+<td class="address-2"><span id="48509"></span>BD7D</td>
+<td class="instruction">LD SP,HL</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="48510"></span>BD7E</td>
+<td class="instruction">PUSH BC</td>
+<td class="comment-1" rowspan="15">Fill 30 bytes - length of attribute line minus the two blank edges</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="48511"></span>BD7F</td>
+<td class="instruction">PUSH BC</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="48512"></span>BD80</td>
+<td class="instruction">PUSH BC</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="48513"></span>BD81</td>
+<td class="instruction">PUSH BC</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="48514"></span>BD82</td>
+<td class="instruction">PUSH BC</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="48515"></span>BD83</td>
+<td class="instruction">PUSH BC</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="48516"></span>BD84</td>
+<td class="instruction">PUSH BC</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="48517"></span>BD85</td>
+<td class="instruction">PUSH BC</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="48518"></span>BD86</td>
+<td class="instruction">PUSH BC</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="48519"></span>BD87</td>
+<td class="instruction">PUSH BC</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="48520"></span>BD88</td>
+<td class="instruction">PUSH BC</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="48521"></span>BD89</td>
+<td class="instruction">PUSH BC</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="48522"></span>BD8A</td>
+<td class="instruction">PUSH BC</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="48523"></span>BD8B</td>
+<td class="instruction">PUSH BC</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="48524"></span>BD8C</td>
+<td class="instruction">PUSH BC</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="48525"></span>BD8D</td>
+<td class="instruction">JR NZ,<a href="BC3E.html#48528">draw_screen_3</a></td>
+<td class="comment-1" rowspan="1"></td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="48527"></span>BD8F</td>
+<td class="instruction">ADD HL,DE</td>
+<td class="comment-1" rowspan="1">Move to next line of attributes</td>
+</tr>
+<tr>
+<td class="asm-label">draw_screen_3</td>
+<td class="address-2"><span id="48528"></span>BD90</td>
+<td class="instruction">LD ($A186),HL</td>
+<td class="comment-1" rowspan="1">Save the address of the first line of ground attributes (+ 31)</td>
+</tr>
+<tr>
+<td class="asm-label">draw_screen_4</td>
+<td class="address-2"><span id="48531"></span>BD93</td>
+<td class="instruction">LD A,($A22E)</td>
+<td class="comment-1" rowspan="3">Exit if sighted_flag is zero (flashing lights / smash mode)</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="48534"></span>BD96</td>
+<td class="instruction">AND A</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="48535"></span>BD97</td>
+<td class="instruction">JR Z,<a href="BC3E.html#48573">draw_screen_exit</a></td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="48537"></span>BD99</td>
+<td class="instruction">LD A,($A230)</td>
+<td class="comment-1" rowspan="1"></td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="48540"></span>BD9C</td>
+<td class="instruction">CP $03</td>
+<td class="comment-1" rowspan="1"></td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="48542"></span>BD9E</td>
+<td class="instruction">JR NC,<a href="BC3E.html#48573">draw_screen_exit</a></td>
+<td class="comment-1" rowspan="1">Jump if &gt;= 3</td>
+</tr>
+<tr>
+<td class="routine-comment" colspan="5">
+<span id="48544"></span>
+<div class="comments">
+<div class="paragraph">
+Set the smash meter attributes
+</div>
+</div>
+</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="48544"></span>BDA0</td>
+<td class="instruction">LD HL,$5962</td>
+<td class="comment-1" rowspan="1">Screen attribute (2,11)</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="48547"></span>BDA3</td>
+<td class="instruction">LD DE,$0020</td>
+<td class="comment-1" rowspan="1">= 32</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="48550"></span>BDA6</td>
+<td class="instruction">LD C,$50</td>
+<td class="comment-1" rowspan="1">Black over bright red</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="48552"></span>BDA8</td>
+<td class="instruction">LD (HL),C</td>
+<td class="comment-1" rowspan="4">Set two attrs</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="48553"></span>BDA9</td>
+<td class="instruction">ADD HL,DE</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="48554"></span>BDAA</td>
+<td class="instruction">LD (HL),C</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="48555"></span>BDAB</td>
+<td class="instruction">ADD HL,DE</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="48556"></span>BDAC</td>
+<td class="instruction">LD C,$58</td>
+<td class="comment-1" rowspan="1">Black over bright magenta</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="48558"></span>BDAE</td>
+<td class="instruction">LD (HL),C</td>
+<td class="comment-1" rowspan="4">Set two attrs</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="48559"></span>BDAF</td>
+<td class="instruction">ADD HL,DE</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="48560"></span>BDB0</td>
+<td class="instruction">LD (HL),C</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="48561"></span>BDB1</td>
+<td class="instruction">ADD HL,DE</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="48562"></span>BDB2</td>
+<td class="instruction">LD C,$60</td>
+<td class="comment-1" rowspan="1">Black over bright green</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="48564"></span>BDB4</td>
+<td class="instruction">LD (HL),C</td>
+<td class="comment-1" rowspan="4">Set two attrs</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="48565"></span>BDB5</td>
+<td class="instruction">ADD HL,DE</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="48566"></span>BDB6</td>
+<td class="instruction">LD (HL),C</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="48567"></span>BDB7</td>
+<td class="instruction">ADD HL,DE</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="48568"></span>BDB8</td>
+<td class="instruction">LD C,$78</td>
+<td class="comment-1" rowspan="1">Black over bright white</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="48570"></span>BDBA</td>
+<td class="instruction">LD (HL),C</td>
+<td class="comment-1" rowspan="3">Set two attrs</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="48571"></span>BDBB</td>
+<td class="instruction">ADD HL,DE</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="48572"></span>BDBC</td>
+<td class="instruction">LD (HL),C</td>
+</tr>
+<tr>
+<td class="asm-label">draw_screen_exit</td>
+<td class="address-2"><span id="48573"></span>BDBD</td>
+<td class="instruction">LD SP,$0000</td>
+<td class="comment-1" rowspan="1">Restore <span class="register">SP</span> (self modified at start of routine)</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="48576"></span>BDC0</td>
+<td class="instruction">RET</td>
+<td class="comment-1" rowspan="1">Return</td>
+</tr>
+</table>
+<table class="asm-navigation">
+<tr>
+<td class="prev">
+Prev: <a href="BB69.html">BB69</a>
+</td>
+<td class="up">Up: <a href="../maps/all.html#48190">Map</a></td>
+<td class="next">
+Next: <a href="BDC1.html">BDC1</a>
+</td>
+</tr>
+</table>
+<footer>
+<div class="release">The incomplete Chase H.Q. disassembly 20230426</div>
+<div class="copyright">&copy; 1989 Ocean Software Ltd.</div>
+<div class="created">Created using <a href="https://skoolkit.ca">SkoolKit</a> 8.9.</div>
+</footer>
+</body>
+</html>

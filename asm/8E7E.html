@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Chase H.Q.: Routine at 8E7E</title>
+<meta charset="utf-8" />
+<link rel="stylesheet" type="text/css" href="../skoolkit.css" />
+</head>
+<body class="Asm-c">
+<table class="header">
+<tr>
+<td class="logo"><a href="../index.html">Chase H.Q.</a></td>
+<td class="page-header">Routines</td>
+</tr>
+</table>
+<table class="asm-navigation">
+<tr>
+<td class="prev">
+Prev: <a href="8E6C.html">8E6C</a>
+</td>
+<td class="up">Up: <a href="../maps/all.html#36478">Map</a></td>
+<td class="next">
+Next: <a href="8E91.html">8E91</a>
+</td>
+</tr>
+</table>
+<div class="description">8E7E: Message printing related, called for TIME UP, CONTINUE, etc. messages</div>
+<table class="disassembly">
+<tr>
+<td class="routine-comment" colspan="5">
+<div class="details">
+<div class="paragraph">
+Used by the routines at <a href="8258.html">attract_mode</a>, <a href="873C.html">873C</a>, <a href="8A57.html">8A57</a>, <a href="8C3A.html">fully_smashed</a>, <a href="9BCF.html">9BCF</a>, <a href="B4CC.html">B4CC</a> and <a href="F220.html">F220</a>.
+</div>
+</div>
+<table class="input">
+<tr class="asm-input-header">
+<th colspan="2">Input</th>
+</tr>
+<tr>
+<td class="register">HL</td>
+<td class="register-desc">-&gt; something  e.g. -&gt; credits_messages</td>
+</tr>
+</table>
+</td>
+</tr>
+<tr>
+<td class="asm-label">message_printing_related</td>
+<td class="address-2"><span id="36478"></span>8E7E</td>
+<td class="instruction">LD A,$02</td>
+<td class="comment-1" rowspan="1">A = 2</td>
+</tr>
+<tr>
+<td class="routine-comment" colspan="5">
+<span id="36480"></span>
+<div class="comments">
+<div class="paragraph">
+This entry point is used by the routine at <a href="8A57.html">8A57</a>.
+</div>
+</div>
+</td>
+</tr>
+<tr>
+<td class="asm-label">j_8e80</td>
+<td class="address-2"><span id="36480"></span>8E80</td>
+<td class="instruction">LD ($A231),A</td>
+<td class="comment-1" rowspan="1">transition_control = A</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="36483"></span>8E83</td>
+<td class="instruction">LD A,(HL)</td>
+<td class="comment-1" rowspan="2">Modify 'LD A' at $8E49 with frame delay</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="36484"></span>8E84</td>
+<td class="instruction">LD ($8E4A),A</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="36487"></span>8E87</td>
+<td class="instruction">INC HL</td>
+<td class="comment-1" rowspan="2">Modify 'LD HL' at $8E42 to be message struct e.g. $82CD</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="36488"></span>8E88</td>
+<td class="instruction">LD ($8E43),HL</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="36491"></span>8E8B</td>
+<td class="instruction">LD A,$01</td>
+<td class="comment-1" rowspan="2">Modify 'LD B' at $8E45 to be ?</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="36493"></span>8E8D</td>
+<td class="instruction">LD ($8E46),A</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="36496"></span>8E90</td>
+<td class="instruction">RET</td>
+<td class="comment-1" rowspan="1">Return</td>
+</tr>
+</table>
+<table class="asm-navigation">
+<tr>
+<td class="prev">
+Prev: <a href="8E6C.html">8E6C</a>
+</td>
+<td class="up">Up: <a href="../maps/all.html#36478">Map</a></td>
+<td class="next">
+Next: <a href="8E91.html">8E91</a>
+</td>
+</tr>
+</table>
+<footer>
+<div class="release">The incomplete Chase H.Q. disassembly 20230426</div>
+<div class="copyright">&copy; 1989 Ocean Software Ltd.</div>
+<div class="created">Created using <a href="https://skoolkit.ca">SkoolKit</a> 8.9.</div>
+</footer>
+</body>
+</html>

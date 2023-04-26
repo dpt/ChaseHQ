@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Chase H.Q.: Routine at 8960</title>
+<meta charset="utf-8" />
+<link rel="stylesheet" type="text/css" href="../skoolkit.css" />
+</head>
+<body class="Asm-c">
+<table class="header">
+<tr>
+<td class="logo"><a href="../index.html">Chase H.Q.</a></td>
+<td class="page-header">Routines</td>
+</tr>
+</table>
+<table class="asm-navigation">
+<tr>
+<td class="prev">
+Prev: <a href="8903.html">8903</a>
+</td>
+<td class="up">Up: <a href="../maps/all.html#35168">Map</a></td>
+<td class="next">
+Next: <a href="89D9.html">89D9</a>
+</td>
+</tr>
+</table>
+<div class="description">8960: Sound effect - crash</div>
+<table class="disassembly">
+<tr>
+<td class="routine-comment" colspan="5">
+<div class="details">
+</div>
+<table class="input">
+<tr class="asm-input-header">
+<th colspan="2">Input</th>
+</tr>
+<tr>
+<td class="register">D</td>
+<td class="register-desc">Inner loop count</td>
+</tr>
+</table>
+</td>
+</tr>
+<tr>
+<td class="asm-label">sfx8960</td>
+<td class="address-2"><span id="35168"></span>8960</td>
+<td class="instruction">LD HL,$897C</td>
+<td class="comment-1" rowspan="1"><span class="register">HL</span> -&gt; Effect data table</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="35171"></span>8963</td>
+<td class="instruction">LD C,$5D</td>
+<td class="comment-1" rowspan="1">Length of table is 93</td>
+</tr>
+<tr>
+<td class="asm-label">sfx8960_loop_outer</td>
+<td class="address-2"><span id="35173"></span>8965</td>
+<td class="instruction">LD B,D</td>
+<td class="comment-1" rowspan="1">Set inner loop counter</td>
+</tr>
+<tr>
+<td class="asm-label">sfx8960_loop_inner</td>
+<td class="address-2"><span id="35174"></span>8966</td>
+<td class="instruction">LD A,$10</td>
+<td class="comment-1" rowspan="1"><span class="register">A</span> = 16</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="35176"></span>8968</td>
+<td class="instruction">BIT 7,(HL)</td>
+<td class="comment-1" rowspan="1">Top bit set of this byte?</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="35178"></span>896A</td>
+<td class="instruction">JR NZ,<a href="8960.html#35182">sfx8960_0</a></td>
+<td class="comment-1" rowspan="1">Don't clear the EAR bit</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="35180"></span>896C</td>
+<td class="instruction">RES 4,A</td>
+<td class="comment-1" rowspan="1">Otherwise clear the EAR bit</td>
+</tr>
+<tr>
+<td class="asm-label">sfx8960_0</td>
+<td class="address-2"><span id="35182"></span>896E</td>
+<td class="instruction">OUT ($FE),A</td>
+<td class="comment-1" rowspan="1">Output</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="35184"></span>8970</td>
+<td class="instruction">RLC (HL)</td>
+<td class="comment-1" rowspan="1">Rotate the effect data</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="35186"></span>8972</td>
+<td class="instruction">NOP</td>
+<td class="comment-1" rowspan="2">Delay</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="35187"></span>8973</td>
+<td class="instruction">NOP</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="35188"></span>8974</td>
+<td class="instruction">DJNZ <a href="8960.html#35174">sfx8960_loop_inner</a></td>
+<td class="comment-1" rowspan="1">Loop while <span class="register">B</span></td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="35190"></span>8976</td>
+<td class="instruction">INC HL</td>
+<td class="comment-1" rowspan="1">Move to the next byte of effect data</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="35191"></span>8977</td>
+<td class="instruction">DEC C</td>
+<td class="comment-1" rowspan="2">Loop while <span class="register">C</span></td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="35192"></span>8978</td>
+<td class="instruction">JP NZ,<a href="8960.html#35173">sfx8960_loop_outer</a></td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="35195"></span>897B</td>
+<td class="instruction">RET</td>
+<td class="comment-1" rowspan="1">Return</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="35196"></span>897C</td>
+<td class="instruction">DEFB $FF,$00,$00,$00,$0F,$FF,$FF,$FF</td>
+<td class="comment-1" rowspan="12">Effect data table</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="35204"></span>8984</td>
+<td class="instruction">DEFB $EF,$FF,$FF,$FF,$BE,$36,$10,$00</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="35212"></span>898C</td>
+<td class="instruction">DEFB $00,$00,$00,$00,$00,$00,$00,$00</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="35220"></span>8994</td>
+<td class="instruction">DEFB $00,$FF,$FF,$FF,$FF,$FF,$FF,$FF</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="35228"></span>899C</td>
+<td class="instruction">DEFB $FF,$FF,$FF,$FF,$FF,$F8,$78,$80</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="35236"></span>89A4</td>
+<td class="instruction">DEFB $00,$00,$00,$00,$00,$00,$00,$00</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="35244"></span>89AC</td>
+<td class="instruction">DEFB $00,$C0,$E1,$FF,$FF,$FF,$FF,$FF</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="35252"></span>89B4</td>
+<td class="instruction">DEFB $FF,$FF,$FF,$FF,$FF,$BE,$F3,$9E</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="35260"></span>89BC</td>
+<td class="instruction">DEFB $70,$C0,$00,$00,$00,$00,$00,$00</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="35268"></span>89C4</td>
+<td class="instruction">DEFB $01,$9E,$FF,$3F,$FF,$FF,$FF,$FF</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="35276"></span>89CC</td>
+<td class="instruction">DEFB $FF,$FF,$FF,$FF,$FF,$FB,$FF,$3F</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="35284"></span>89D4</td>
+<td class="instruction">DEFB $38,$F0,$03,$80,$00</td>
+</tr>
+</table>
+<table class="asm-navigation">
+<tr>
+<td class="prev">
+Prev: <a href="8903.html">8903</a>
+</td>
+<td class="up">Up: <a href="../maps/all.html#35168">Map</a></td>
+<td class="next">
+Next: <a href="89D9.html">89D9</a>
+</td>
+</tr>
+</table>
+<footer>
+<div class="release">The incomplete Chase H.Q. disassembly 20230426</div>
+<div class="copyright">&copy; 1989 Ocean Software Ltd.</div>
+<div class="created">Created using <a href="https://skoolkit.ca">SkoolKit</a> 8.9.</div>
+</footer>
+</body>
+</html>

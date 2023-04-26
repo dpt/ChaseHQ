@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Chase H.Q.: Routine at 9CD6</title>
+<meta charset="utf-8" />
+<link rel="stylesheet" type="text/css" href="../skoolkit.css" />
+</head>
+<body class="Asm-c">
+<table class="header">
+<tr>
+<td class="logo"><a href="../index.html">Chase H.Q.</a></td>
+<td class="page-header">Routines</td>
+</tr>
+</table>
+<table class="asm-navigation">
+<tr>
+<td class="prev">
+Prev: <a href="9CC2.html">9CC2</a>
+</td>
+<td class="up">Up: <a href="../maps/all.html#40150">Map</a></td>
+<td class="next">
+Next: <a href="9D17.html">9D17</a>
+</td>
+</tr>
+</table>
+<div class="description">9CD6: Routine at 9CD6</div>
+<table class="disassembly">
+<tr>
+<td class="routine-comment" colspan="5">
+<div class="details">
+<div class="paragraph">
+Used by the routines at <a href="9D2E.html">calc_overtake_bonus</a>, <a href="A637.html">A637</a> and <a href="B9F4.html">B9F4</a>.
+</div>
+</div>
+</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-2"><span id="40150"></span>9CD6</td>
+<td class="instruction">LD B,A</td>
+<td class="comment-1" rowspan="1">B=A</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="40151"></span>9CD7</td>
+<td class="instruction">LD HL,$9D57</td>
+<td class="comment-1" rowspan="1">"HI"</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="40154"></span>9CDA</td>
+<td class="instruction">LD C,$FF</td>
+<td class="comment-1" rowspan="1">C=255</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="40156"></span>9CDC</td>
+<td class="instruction">LD A,B</td>
+<td class="comment-1" rowspan="1">A=B</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="40157"></span>9CDD</td>
+<td class="instruction">CALL <a href="9CD6.html#40188">j_9cfc</a></td>
+<td class="comment-1" rowspan="1">Call j_9cfc</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="40160"></span>9CE0</td>
+<td class="instruction">SET 7,(HL)</td>
+<td class="comment-1" rowspan="1">terminate string?</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="40162"></span>9CE2</td>
+<td class="instruction">LD A,B</td>
+<td class="comment-1" rowspan="1">A=B</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="40163"></span>9CE3</td>
+<td class="instruction">CALL <a href="9CD6.html#40184">j_9cf8</a></td>
+<td class="comment-1" rowspan="1"></td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="40166"></span>9CE6</td>
+<td class="instruction">LD A,E</td>
+<td class="comment-1" rowspan="1">A=E</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="40167"></span>9CE7</td>
+<td class="instruction">CALL <a href="9CD6.html#40188">j_9cfc</a></td>
+<td class="comment-1" rowspan="1"></td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="40170"></span>9CEA</td>
+<td class="instruction">LD A,E</td>
+<td class="comment-1" rowspan="1">A=E</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="40171"></span>9CEB</td>
+<td class="instruction">CALL <a href="9CD6.html#40184">j_9cf8</a></td>
+<td class="comment-1" rowspan="1"></td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="40174"></span>9CEE</td>
+<td class="instruction">LD A,D</td>
+<td class="comment-1" rowspan="1">A=D</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="40175"></span>9CEF</td>
+<td class="instruction">CALL <a href="9CD6.html#40188">j_9cfc</a></td>
+<td class="comment-1" rowspan="1"></td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="40178"></span>9CF2</td>
+<td class="instruction">LD A,D</td>
+<td class="comment-1" rowspan="1">A=D</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="40179"></span>9CF3</td>
+<td class="instruction">CALL <a href="9CD6.html#40184">j_9cf8</a></td>
+<td class="comment-1" rowspan="1"></td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="40182"></span>9CF6</td>
+<td class="instruction">JR $9D0E</td>
+<td class="comment-1" rowspan="1"></td>
+</tr>
+<tr>
+<td class="asm-label">j_9cf8</td>
+<td class="address-2"><span id="40184"></span>9CF8</td>
+<td class="instruction">RRA</td>
+<td class="comment-1" rowspan="4">A ROR 4</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="40185"></span>9CF9</td>
+<td class="instruction">RRA</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="40186"></span>9CFA</td>
+<td class="instruction">RRA</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="40187"></span>9CFB</td>
+<td class="instruction">RRA</td>
+</tr>
+<tr>
+<td class="asm-label">j_9cfc</td>
+<td class="address-2"><span id="40188"></span>9CFC</td>
+<td class="instruction">AND $0F</td>
+<td class="comment-1" rowspan="1">A &amp;= 15</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="40190"></span>9CFE</td>
+<td class="instruction">JR NZ,<a href="9CD6.html#40199">j_9d07</a></td>
+<td class="comment-1" rowspan="1">if A is not zero goto 9D07</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="40192"></span>9D00</td>
+<td class="instruction">RLC C</td>
+<td class="comment-1" rowspan="1">top bit set?</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="40194"></span>9D02</td>
+<td class="instruction">JR C,$9D09</td>
+<td class="comment-1" rowspan="1">jump if so</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="40196"></span>9D04</td>
+<td class="instruction">POP AF</td>
+<td class="comment-1" rowspan="1">where's the matching PUSH? or are we just discarding the RET addr?</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="40197"></span>9D05</td>
+<td class="instruction">JR $9D0E</td>
+<td class="comment-1" rowspan="1">jump 9d0e</td>
+</tr>
+<tr>
+<td class="asm-label">j_9d07</td>
+<td class="address-2"><span id="40199"></span>9D07</td>
+<td class="instruction">LD C,$00</td>
+<td class="comment-1" rowspan="1">C = 0</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-2"><span id="40201"></span>9D09</td>
+<td class="instruction">ADD A,$30</td>
+<td class="comment-1" rowspan="1">A += 48</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="40203"></span>9D0B</td>
+<td class="instruction">DEC HL</td>
+<td class="comment-1" rowspan="1">HL--</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="40204"></span>9D0C</td>
+<td class="instruction">LD (HL),A</td>
+<td class="comment-1" rowspan="1">*HL = A</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="40205"></span>9D0D</td>
+<td class="instruction">RET</td>
+<td class="comment-1" rowspan="1">Return</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-2"><span id="40206"></span>9D0E</td>
+<td class="instruction">LD ($9D9C),HL</td>
+<td class="comment-1" rowspan="1">Self modify the LD HL at $9D9B</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="40209"></span>9D11</td>
+<td class="instruction">LD A,$01</td>
+<td class="comment-1" rowspan="2">Set the bonus_flag</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="40211"></span>9D13</td>
+<td class="instruction">LD ($A22C),A</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="40214"></span>9D16</td>
+<td class="instruction">LD A,B</td>
+<td class="comment-1" rowspan="1">A = B</td>
+</tr>
+</table>
+<table class="asm-navigation">
+<tr>
+<td class="prev">
+Prev: <a href="9CC2.html">9CC2</a>
+</td>
+<td class="up">Up: <a href="../maps/all.html#40150">Map</a></td>
+<td class="next">
+Next: <a href="9D17.html">9D17</a>
+</td>
+</tr>
+</table>
+<footer>
+<div class="release">The incomplete Chase H.Q. disassembly 20230426</div>
+<div class="copyright">&copy; 1989 Ocean Software Ltd.</div>
+<div class="created">Created using <a href="https://skoolkit.ca">SkoolKit</a> 8.9.</div>
+</footer>
+</body>
+</html>

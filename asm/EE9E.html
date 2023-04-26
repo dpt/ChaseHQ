@@ -1,0 +1,389 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Chase H.Q.: Routine at EE9E</title>
+<meta charset="utf-8" />
+<link rel="stylesheet" type="text/css" href="../skoolkit.css" />
+</head>
+<body class="Asm-c">
+<table class="header">
+<tr>
+<td class="logo"><a href="../index.html">Chase H.Q.</a></td>
+<td class="page-header">Routines</td>
+</tr>
+</table>
+<table class="asm-navigation">
+<tr>
+<td class="prev">
+Prev: <a href="EE6E.html">EE6E</a>
+</td>
+<td class="up">Up: <a href="../maps/all.html#61086">Map</a></td>
+<td class="next">
+Next: <a href="EF19.html">EF19</a>
+</td>
+</tr>
+</table>
+<div class="description">EE9E: Define keys</div>
+<table class="disassembly">
+<tr>
+<td class="routine-comment" colspan="5">
+<div class="details">
+<div class="paragraph">
+Used by the routines at <a href="E90F.html">E90F</a>, <a href="ECF3.html">ECF3</a> and <a href="ED4D.html">ED4D</a>.
+</div>
+</div>
+</td>
+</tr>
+<tr>
+<td class="asm-label">define_keys</td>
+<td class="address-2"><span id="61086"></span>EE9E</td>
+<td class="instruction">XOR A</td>
+<td class="comment-1" rowspan="1"></td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="61087"></span>EE9F</td>
+<td class="instruction">LD ($EF14),A</td>
+<td class="comment-1" rowspan="1"></td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="61090"></span>EEA2</td>
+<td class="instruction">LD A,$00</td>
+<td class="comment-1" rowspan="1"></td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="61092"></span>EEA4</td>
+<td class="instruction">AND A</td>
+<td class="comment-1" rowspan="1"></td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="61093"></span>EEA5</td>
+<td class="instruction">JR NZ,<a href="EE9E.html#61101">define_keys_0</a></td>
+<td class="comment-1" rowspan="1"></td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="61095"></span>EEA7</td>
+<td class="instruction">INC A</td>
+<td class="comment-1" rowspan="1"></td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="61096"></span>EEA8</td>
+<td class="instruction">LD ($EEA3),A</td>
+<td class="comment-1" rowspan="1"></td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="61099"></span>EEAB</td>
+<td class="instruction">JR <a href="EE9E.html#61129">define_keys_3</a></td>
+<td class="comment-1" rowspan="1"></td>
+</tr>
+<tr>
+<td class="asm-label">define_keys_0</td>
+<td class="address-2"><span id="61101"></span>EEAD</td>
+<td class="instruction">LD A,$00</td>
+<td class="comment-1" rowspan="7">Self modified, cycles 5,3,2,1</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="61103"></span>EEAF</td>
+<td class="instruction">DEC A</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="61104"></span>EEB0</td>
+<td class="instruction">JP Z,<a href="EE9E.html#61113">define_keys_1</a></td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="61107"></span>EEB3</td>
+<td class="instruction">LD ($EEAE),A</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="61110"></span>EEB6</td>
+<td class="instruction">JP <a href="EE9E.html#61184">define_keys_6</a></td>
+</tr>
+<tr>
+<td class="asm-label">define_keys_1</td>
+<td class="address-2"><span id="61113"></span>EEB9</td>
+<td class="instruction">LD A,$00</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="61115"></span>EEBB</td>
+<td class="instruction">LD ($EEAE),A</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="61118"></span>EEBE</td>
+<td class="instruction">LD HL,$0000</td>
+<td class="comment-1" rowspan="43">Self modified, cycles $F12x .. $F2xx ish</td>
+</tr>
+<tr>
+<td class="asm-label">define_keys_2</td>
+<td class="address-2"><span id="61121"></span>EEC1</td>
+<td class="instruction">LD A,(HL)</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="61122"></span>EEC2</td>
+<td class="instruction">DEC A</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="61123"></span>EEC3</td>
+<td class="instruction">JP NZ,<a href="EE9E.html#61138">define_keys_4</a></td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="61126"></span>EEC6</td>
+<td class="instruction">CALL <a href="EE6E.html">$EE6E</a></td>
+</tr>
+<tr>
+<td class="asm-label">define_keys_3</td>
+<td class="address-2"><span id="61129"></span>EEC9</td>
+<td class="instruction">LD HL,$0000</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="61132"></span>EECC</td>
+<td class="instruction">LD ($EEBF),HL</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="61135"></span>EECF</td>
+<td class="instruction">JP <a href="EE9E.html#61121">define_keys_2</a></td>
+</tr>
+<tr>
+<td class="asm-label">define_keys_4</td>
+<td class="address-2"><span id="61138"></span>EED2</td>
+<td class="instruction">INC HL</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="61139"></span>EED3</td>
+<td class="instruction">LD ($EEBF),HL</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="61142"></span>EED6</td>
+<td class="instruction">INC A</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="61143"></span>EED7</td>
+<td class="instruction">BIT 7,A</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="61145"></span>EED9</td>
+<td class="instruction">JR Z,<a href="EE9E.html#61159">define_keys_5</a></td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="61147"></span>EEDB</td>
+<td class="instruction">AND $7F</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="61149"></span>EEDD</td>
+<td class="instruction">EX AF,AF'</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="61150"></span>EEDE</td>
+<td class="instruction">LD A,$01</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="61152"></span>EEE0</td>
+<td class="instruction">LD ($EEAE),A</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="61155"></span>EEE3</td>
+<td class="instruction">LD ($EF01),A</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="61158"></span>EEE6</td>
+<td class="instruction">EX AF,AF'</td>
+</tr>
+<tr>
+<td class="asm-label">define_keys_5</td>
+<td class="address-2"><span id="61159"></span>EEE7</td>
+<td class="instruction">LD D,A</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="61160"></span>EEE8</td>
+<td class="instruction">AND $07</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="61162"></span>EEEA</td>
+<td class="instruction">JR Z,<a href="EE9E.html#61184">define_keys_6</a></td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="61164"></span>EEEC</td>
+<td class="instruction">LD B,A</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="61165"></span>EEED</td>
+<td class="instruction">LD A,D</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="61166"></span>EEEE</td>
+<td class="instruction">SRL A</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="61168"></span>EEF0</td>
+<td class="instruction">SRL A</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="61170"></span>EEF2</td>
+<td class="instruction">SRL A</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="61172"></span>EEF4</td>
+<td class="instruction">DEC B</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="61173"></span>EEF5</td>
+<td class="instruction">JP Z,<a href="EF22.html">$EF22</a></td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="61176"></span>EEF8</td>
+<td class="instruction">DEC B</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="61177"></span>EEF9</td>
+<td class="instruction">JP Z,<a href="EF29.html">$EF29</a></td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="61180"></span>EEFC</td>
+<td class="instruction">DEC B</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="61181"></span>EEFD</td>
+<td class="instruction">JP Z,<a href="F0C6.html">$F0C6</a></td>
+</tr>
+<tr>
+<td class="asm-label">define_keys_6</td>
+<td class="address-2"><span id="61184"></span>EF00</td>
+<td class="instruction">LD A,$00</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="61186"></span>EF02</td>
+<td class="instruction">AND A</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="61187"></span>EF03</td>
+<td class="instruction">JR Z,<a href="EE9E.html#61197">define_keys_7</a></td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="61189"></span>EF05</td>
+<td class="instruction">LD HL,$EEAE</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="61192"></span>EF08</td>
+<td class="instruction">DEC (HL)</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="61193"></span>EF09</td>
+<td class="instruction">LD HL,$EF01</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="61196"></span>EF0C</td>
+<td class="instruction">DEC (HL)</td>
+</tr>
+<tr>
+<td class="asm-label">define_keys_7</td>
+<td class="address-2"><span id="61197"></span>EF0D</td>
+<td class="instruction">LD A,$00</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="61199"></span>EF0F</td>
+<td class="instruction">DEC A</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="61200"></span>EF10</td>
+<td class="instruction">JP Z,<a href="EF38.html">$EF38</a></td>
+</tr>
+<tr>
+<td class="routine-comment" colspan="5">
+<span id="61203"></span>
+<div class="comments">
+<div class="paragraph">
+This entry point is used by the routines at <a href="EF38.html">EF38</a> and <a href="F0C6.html">F0C6</a>.
+</div>
+</div>
+</td>
+</tr>
+<tr>
+<td class="asm-label">define_keys_8</td>
+<td class="address-2"><span id="61203"></span>EF13</td>
+<td class="instruction">LD A,$00</td>
+<td class="comment-1" rowspan="1"></td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="61205"></span>EF15</td>
+<td class="instruction">AND A</td>
+<td class="comment-1" rowspan="1"></td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="61206"></span>EF16</td>
+<td class="instruction">JR Z,<a href="EE9E.html#61203">define_keys_8</a></td>
+<td class="comment-1" rowspan="1"></td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="61208"></span>EF18</td>
+<td class="instruction">RET</td>
+<td class="comment-1" rowspan="1">}</td>
+</tr>
+</table>
+<table class="asm-navigation">
+<tr>
+<td class="prev">
+Prev: <a href="EE6E.html">EE6E</a>
+</td>
+<td class="up">Up: <a href="../maps/all.html#61086">Map</a></td>
+<td class="next">
+Next: <a href="EF19.html">EF19</a>
+</td>
+</tr>
+</table>
+<footer>
+<div class="release">The incomplete Chase H.Q. disassembly 20230426</div>
+<div class="copyright">&copy; 1989 Ocean Software Ltd.</div>
+<div class="created">Created using <a href="https://skoolkit.ca">SkoolKit</a> 8.9.</div>
+</footer>
+</body>
+</html>

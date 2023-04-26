@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Chase H.Q.: Routine at C57C</title>
+<meta charset="utf-8" />
+<link rel="stylesheet" type="text/css" href="../skoolkit.css" />
+</head>
+<body class="Asm-c">
+<table class="header">
+<tr>
+<td class="logo"><a href="../index.html">Chase H.Q.</a></td>
+<td class="page-header">Routines</td>
+</tr>
+</table>
+<table class="asm-navigation">
+<tr>
+<td class="prev">
+Prev: <a href="C452.html">C452</a>
+</td>
+<td class="up">Up: <a href="../maps/all.html#50556">Map</a></td>
+<td class="next">
+Next: <a href="C58A.html">C58A</a>
+</td>
+</tr>
+</table>
+<div class="description">C57C: smells like scanline/buffer pointer movement</div>
+<table class="disassembly">
+<tr>
+<td class="routine-comment" colspan="5">
+<div class="details">
+<div class="paragraph">
+Used by the routine at <a href="C598.html">C598</a>.
+</div>
+</div>
+</td>
+</tr>
+<tr>
+<td class="address-2"><span id="50556"></span>C57C</td>
+<td class="instruction">LD A,E</td>
+<td class="comment-1" rowspan="3">E -= 32</td>
+</tr>
+<tr>
+<td class="address-1"><span id="50557"></span>C57D</td>
+<td class="instruction">SUB $20</td>
+</tr>
+<tr>
+<td class="address-1"><span id="50559"></span>C57F</td>
+<td class="instruction">LD E,A</td>
+</tr>
+<tr>
+<td class="address-1"><span id="50560"></span>C580</td>
+<td class="instruction">JP C,<a href="C598.html#50599">$C5A7</a></td>
+<td class="comment-1" rowspan="1">jump if it went -ve</td>
+</tr>
+<tr>
+<td class="address-1"><span id="50563"></span>C583</td>
+<td class="instruction">LD A,D</td>
+<td class="comment-1" rowspan="3">D += 16</td>
+</tr>
+<tr>
+<td class="address-1"><span id="50564"></span>C584</td>
+<td class="instruction">ADD A,$10</td>
+</tr>
+<tr>
+<td class="address-1"><span id="50566"></span>C586</td>
+<td class="instruction">LD D,A</td>
+</tr>
+<tr>
+<td class="address-1"><span id="50567"></span>C587</td>
+<td class="instruction">JP <a href="C598.html#50599">$C5A7</a></td>
+<td class="comment-1" rowspan="1">jump</td>
+</tr>
+</table>
+<table class="asm-navigation">
+<tr>
+<td class="prev">
+Prev: <a href="C452.html">C452</a>
+</td>
+<td class="up">Up: <a href="../maps/all.html#50556">Map</a></td>
+<td class="next">
+Next: <a href="C58A.html">C58A</a>
+</td>
+</tr>
+</table>
+<footer>
+<div class="release">The incomplete Chase H.Q. disassembly 20230426</div>
+<div class="copyright">&copy; 1989 Ocean Software Ltd.</div>
+<div class="created">Created using <a href="https://skoolkit.ca">SkoolKit</a> 8.9.</div>
+</footer>
+</body>
+</html>

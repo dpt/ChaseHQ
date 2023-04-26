@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Chase H.Q.: Routine at B4CC</title>
+<meta charset="utf-8" />
+<link rel="stylesheet" type="text/css" href="../skoolkit.css" />
+</head>
+<body class="Asm-c">
+<table class="header">
+<tr>
+<td class="logo"><a href="../index.html">Chase H.Q.</a></td>
+<td class="page-header">Routines</td>
+</tr>
+</table>
+<table class="asm-navigation">
+<tr>
+<td class="prev">
+Prev: <a href="B457.html">B457</a>
+</td>
+<td class="up">Up: <a href="../maps/all.html#46284">Map</a></td>
+<td class="next">
+Next: <a href="B4F0.html">B4F0</a>
+</td>
+</tr>
+</table>
+<div class="description">B4CC: Routine at B4CC</div>
+<table class="disassembly">
+<tr>
+<td class="routine-comment" colspan="5">
+<div class="details">
+<div class="paragraph">
+Used by the routine at <a href="A637.html">A637</a>.
+</div>
+</div>
+</td>
+</tr>
+<tr>
+<td class="address-2"><span id="46284"></span>B4CC</td>
+<td class="instruction">XOR A</td>
+<td class="comment-1" rowspan="1"></td>
+</tr>
+<tr>
+<td class="address-1"><span id="46285"></span>B4CD</td>
+<td class="instruction">LD ($B477),A</td>
+<td class="comment-1" rowspan="1"></td>
+</tr>
+<tr>
+<td class="address-1"><span id="46288"></span>B4D0</td>
+<td class="instruction">INC A</td>
+<td class="comment-1" rowspan="1"></td>
+</tr>
+<tr>
+<td class="address-1"><span id="46289"></span>B4D1</td>
+<td class="instruction">LD ($A22F),A</td>
+<td class="comment-1" rowspan="1"></td>
+</tr>
+<tr>
+<td class="address-1"><span id="46292"></span>B4D4</td>
+<td class="instruction">LD ($A22E),A</td>
+<td class="comment-1" rowspan="1"></td>
+</tr>
+<tr>
+<td class="address-1"><span id="46295"></span>B4D7</td>
+<td class="instruction">INC A</td>
+<td class="comment-1" rowspan="1"></td>
+</tr>
+<tr>
+<td class="address-1"><span id="46296"></span>B4D8</td>
+<td class="instruction">LD ($B479),A</td>
+<td class="comment-1" rowspan="3">time_sixteenths/$A17D = 15, time_bcd/$A17E = $60</td>
+</tr>
+<tr>
+<td class="address-1"><span id="46299"></span>B4DB</td>
+<td class="instruction">LD HL,$600F</td>
+</tr>
+<tr>
+<td class="address-1"><span id="46302"></span>B4DE</td>
+<td class="instruction">LD ($A17D),HL</td>
+</tr>
+<tr>
+<td class="address-1"><span id="46305"></span>B4E1</td>
+<td class="instruction">LD HL,$5820</td>
+<td class="comment-1" rowspan="1">Point <span class="register">HL</span> at left light's attributes</td>
+</tr>
+<tr>
+<td class="address-1"><span id="46308"></span>B4E4</td>
+<td class="instruction">CALL <a href="9DF4.html">toggle_light_brightness</a></td>
+<td class="comment-1" rowspan="1">Toggle its brightness</td>
+</tr>
+<tr>
+<td class="address-1"><span id="46311"></span>B4E7</td>
+<td class="instruction">LD HL,$8CB2</td>
+<td class="comment-1" rowspan="1">Point at "SIGHTING OF TARGET VEHICLE" message</td>
+</tr>
+<tr>
+<td class="address-1"><span id="46314"></span>B4EA</td>
+<td class="instruction">CALL <a href="8E7E.html">message_printing_related</a></td>
+<td class="comment-1" rowspan="1"></td>
+</tr>
+<tr>
+<td class="address-1"><span id="46317"></span>B4ED</td>
+<td class="instruction">JP <a href="83B5.html">$83B5</a></td>
+<td class="comment-1" rowspan="1"></td>
+</tr>
+</table>
+<table class="asm-navigation">
+<tr>
+<td class="prev">
+Prev: <a href="B457.html">B457</a>
+</td>
+<td class="up">Up: <a href="../maps/all.html#46284">Map</a></td>
+<td class="next">
+Next: <a href="B4F0.html">B4F0</a>
+</td>
+</tr>
+</table>
+<footer>
+<div class="release">The incomplete Chase H.Q. disassembly 20230426</div>
+<div class="copyright">&copy; 1989 Ocean Software Ltd.</div>
+<div class="created">Created using <a href="https://skoolkit.ca">SkoolKit</a> 8.9.</div>
+</footer>
+</body>
+</html>

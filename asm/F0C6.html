@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Chase H.Q.: Routine at F0C6</title>
+<meta charset="utf-8" />
+<link rel="stylesheet" type="text/css" href="../skoolkit.css" />
+</head>
+<body class="Asm-c">
+<table class="header">
+<tr>
+<td class="logo"><a href="../index.html">Chase H.Q.</a></td>
+<td class="page-header">Routines</td>
+</tr>
+</table>
+<table class="asm-navigation">
+<tr>
+<td class="prev">
+Prev: <a href="EF5E.html">EF5E</a>
+</td>
+<td class="up">Up: <a href="../maps/all.html#61638">Map</a></td>
+<td class="next">
+Next: <a href="F0FE.html">F0FE</a>
+</td>
+</tr>
+</table>
+<div class="description">F0C6: White noise generator?</div>
+<table class="disassembly">
+<tr>
+<td class="routine-comment" colspan="5">
+<div class="details">
+<div class="paragraph">
+Used by the routine at <a href="EE9E.html">define_keys</a>.
+</div>
+</div>
+</td>
+</tr>
+<tr>
+<td class="address-2"><span id="61638"></span>F0C6</td>
+<td class="instruction">LD E,A</td>
+<td class="comment-1" rowspan="1"></td>
+</tr>
+<tr>
+<td class="address-2"><span id="61639"></span>F0C7</td>
+<td class="instruction">LD D,$32</td>
+<td class="comment-1" rowspan="1"></td>
+</tr>
+<tr>
+<td class="address-2"><span id="61641"></span>F0C9</td>
+<td class="instruction">LD HL,$9618</td>
+<td class="comment-1" rowspan="1">loop: Point at random bytes</td>
+</tr>
+<tr>
+<td class="address-1"><span id="61644"></span>F0CC</td>
+<td class="instruction">INC (HL)</td>
+<td class="comment-1" rowspan="34">Increment first byte by 3, Load it into <span class="register">B</span></td>
+</tr>
+<tr>
+<td class="address-1"><span id="61645"></span>F0CD</td>
+<td class="instruction">INC (HL)</td>
+</tr>
+<tr>
+<td class="address-1"><span id="61646"></span>F0CE</td>
+<td class="instruction">INC (HL)</td>
+</tr>
+<tr>
+<td class="address-1"><span id="61647"></span>F0CF</td>
+<td class="instruction">LD B,(HL)</td>
+</tr>
+<tr>
+<td class="address-1"><span id="61648"></span>F0D0</td>
+<td class="instruction">INC HL</td>
+</tr>
+<tr>
+<td class="address-1"><span id="61649"></span>F0D1</td>
+<td class="instruction">LD A,(HL)</td>
+</tr>
+<tr>
+<td class="address-1"><span id="61650"></span>F0D2</td>
+<td class="instruction">SUB $8D</td>
+</tr>
+<tr>
+<td class="address-1"><span id="61652"></span>F0D4</td>
+<td class="instruction">LD (HL),A</td>
+</tr>
+<tr>
+<td class="address-1"><span id="61653"></span>F0D5</td>
+<td class="instruction">ADD A,B</td>
+</tr>
+<tr>
+<td class="address-1"><span id="61654"></span>F0D6</td>
+<td class="instruction">INC HL</td>
+</tr>
+<tr>
+<td class="address-1"><span id="61655"></span>F0D7</td>
+<td class="instruction">RLCA</td>
+</tr>
+<tr>
+<td class="address-1"><span id="61656"></span>F0D8</td>
+<td class="instruction">RRC (HL)</td>
+</tr>
+<tr>
+<td class="address-1"><span id="61658"></span>F0DA</td>
+<td class="instruction">ADD A,(HL)</td>
+</tr>
+<tr>
+<td class="address-1"><span id="61659"></span>F0DB</td>
+<td class="instruction">LD (HL),A</td>
+</tr>
+<tr>
+<td class="address-1"><span id="61660"></span>F0DC</td>
+<td class="instruction">AND $10</td>
+</tr>
+<tr>
+<td class="address-1"><span id="61662"></span>F0DE</td>
+<td class="instruction">JR Z,$F0F0</td>
+</tr>
+<tr>
+<td class="address-1"><span id="61664"></span>F0E0</td>
+<td class="instruction">LD A,$18</td>
+</tr>
+<tr>
+<td class="address-1"><span id="61666"></span>F0E2</td>
+<td class="instruction">SUB E</td>
+</tr>
+<tr>
+<td class="address-1"><span id="61667"></span>F0E3</td>
+<td class="instruction">LD B,A</td>
+</tr>
+<tr>
+<td class="address-2"><span id="61668"></span>F0E4</td>
+<td class="instruction">DJNZ $F0E4</td>
+</tr>
+<tr>
+<td class="address-1"><span id="61670"></span>F0E6</td>
+<td class="instruction">LD A,$18</td>
+</tr>
+<tr>
+<td class="address-1"><span id="61672"></span>F0E8</td>
+<td class="instruction">OUT ($FE),A</td>
+</tr>
+<tr>
+<td class="address-1"><span id="61674"></span>F0EA</td>
+<td class="instruction">LD B,E</td>
+</tr>
+<tr>
+<td class="address-2"><span id="61675"></span>F0EB</td>
+<td class="instruction">DJNZ $F0EB</td>
+</tr>
+<tr>
+<td class="address-1"><span id="61677"></span>F0ED</td>
+<td class="instruction">XOR A</td>
+</tr>
+<tr>
+<td class="address-1"><span id="61678"></span>F0EE</td>
+<td class="instruction">OUT ($FE),A</td>
+</tr>
+<tr>
+<td class="address-2"><span id="61680"></span>F0F0</td>
+<td class="instruction">DEC D</td>
+</tr>
+<tr>
+<td class="address-1"><span id="61681"></span>F0F1</td>
+<td class="instruction">JR NZ,$F0C9</td>
+</tr>
+<tr>
+<td class="address-1"><span id="61683"></span>F0F3</td>
+<td class="instruction">LD A,($EF14)</td>
+</tr>
+<tr>
+<td class="address-1"><span id="61686"></span>F0F6</td>
+<td class="instruction">AND A</td>
+</tr>
+<tr>
+<td class="address-1"><span id="61687"></span>F0F7</td>
+<td class="instruction">RET C</td>
+</tr>
+<tr>
+<td class="address-1"><span id="61688"></span>F0F8</td>
+<td class="instruction">DEC E</td>
+</tr>
+<tr>
+<td class="address-1"><span id="61689"></span>F0F9</td>
+<td class="instruction">JR NZ,$F0C7</td>
+</tr>
+<tr>
+<td class="address-1"><span id="61691"></span>F0FB</td>
+<td class="instruction">JP <a href="EE9E.html#61203">define_keys_8</a></td>
+</tr>
+</table>
+<table class="asm-navigation">
+<tr>
+<td class="prev">
+Prev: <a href="EF5E.html">EF5E</a>
+</td>
+<td class="up">Up: <a href="../maps/all.html#61638">Map</a></td>
+<td class="next">
+Next: <a href="F0FE.html">F0FE</a>
+</td>
+</tr>
+</table>
+<footer>
+<div class="release">The incomplete Chase H.Q. disassembly 20230426</div>
+<div class="copyright">&copy; 1989 Ocean Software Ltd.</div>
+<div class="created">Created using <a href="https://skoolkit.ca">SkoolKit</a> 8.9.</div>
+</footer>
+</body>
+</html>

@@ -1,0 +1,438 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Chase H.Q.: Routine at 9965</title>
+<meta charset="utf-8" />
+<link rel="stylesheet" type="text/css" href="../skoolkit.css" />
+</head>
+<body class="Asm-c">
+<table class="header">
+<tr>
+<td class="logo"><a href="../index.html">Chase H.Q.</a></td>
+<td class="page-header">Routines</td>
+</tr>
+</table>
+<table class="asm-navigation">
+<tr>
+<td class="prev">
+Prev: <a href="9945.html">9945</a>
+</td>
+<td class="up">Up: <a href="../maps/all.html#39269">Map</a></td>
+<td class="next">
+Next: <a href="99EC.html">99EC</a>
+</td>
+</tr>
+</table>
+<div class="description">9965: Routine at 9965</div>
+<table class="disassembly">
+<tr>
+<td class="routine-comment" colspan="5">
+<div class="details">
+<div class="paragraph">
+Used by the routines at <a href="8401.html">8401</a>, <a href="858C.html">858C</a> and <a href="873C.html">873C</a>.
+</div>
+</div>
+</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-2"><span id="39269"></span>9965</td>
+<td class="instruction">LD A,($963D)</td>
+<td class="comment-1" rowspan="2">LD A,($963D)  ; A = TBD963d - 1</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="39272"></span>9968</td>
+<td class="instruction">DEC A</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="39273"></span>9969</td>
+<td class="instruction">JR Z,<a href="9965.html#39391">99df_something_else</a></td>
+<td class="comment-1" rowspan="1">JR Z,$99DF    ; if A was zero jump</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="39275"></span>996B</td>
+<td class="instruction">DEC A</td>
+<td class="comment-1" rowspan="1">A--</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="39276"></span>996C</td>
+<td class="instruction">JR Z,<a href="9965.html#39311">sub998f_do_noise_effect</a></td>
+<td class="comment-1" rowspan="1">JR Z,$998F    ; if A was zero jump to sub998f_do_noise_effect</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="39278"></span>996E</td>
+<td class="instruction">DEC A</td>
+<td class="comment-1" rowspan="1">A--</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="39279"></span>996F</td>
+<td class="instruction">JR NZ,$997F</td>
+<td class="comment-1" rowspan="1">JR NZ,$997F   ; if A was NOT zero jump</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="39281"></span>9971</td>
+<td class="instruction">LD HL,$963C</td>
+<td class="comment-1" rowspan="2">Decrement noise_counter</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="39284"></span>9974</td>
+<td class="instruction">DEC (HL)</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="39285"></span>9975</td>
+<td class="instruction">LD A,(HL)</td>
+<td class="comment-1" rowspan="1">A = *HL A = noise_counter</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="39286"></span>9976</td>
+<td class="instruction">JP NZ,<a href="9A55.html#39516">noise_effect_0</a></td>
+<td class="comment-1" rowspan="1">JP NZ,$9A5C   ; Jump if noise_counter was non-zero</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="39289"></span>9979</td>
+<td class="instruction">LD ($963D),A</td>
+<td class="comment-1" rowspan="1">LD ($963D),A  ; Zero this</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="39292"></span>997C</td>
+<td class="instruction">CALL <a href="9A55.html#39576">noise_plot_attrs</a></td>
+<td class="comment-1" rowspan="1">Call noise_plot_attrs -- clear to black</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-2"><span id="39295"></span>997F</td>
+<td class="instruction">LD D,$20</td>
+<td class="comment-1" rowspan="1">Plot space character</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="39297"></span>9981</td>
+<td class="instruction">LD A,$AA</td>
+<td class="comment-1" rowspan="1">LD A,$AA      ; {$AA ROR 1 becomes $55 becomes $AA and so on</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="39299"></span>9983</td>
+<td class="instruction">RRCA</td>
+<td class="comment-1" rowspan="1">RRCA          ; probably a delay / alternating call</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="39300"></span>9984</td>
+<td class="instruction">LD ($9982),A</td>
+<td class="comment-1" rowspan="1">LD ($9982),A  ; }</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="39303"></span>9987</td>
+<td class="instruction">LD A,$FF</td>
+<td class="comment-1" rowspan="1">LD A,$FF      ; ...and then gets overwritten?</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="39305"></span>9989</td>
+<td class="instruction">JP C,<a href="9AEC.html#39665">plot_mini_font_2</a></td>
+<td class="comment-1" rowspan="1">JP C,$9AF1    ; jump on $55 -&gt; $AA transitions?</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="39308"></span>998C</td>
+<td class="instruction">JP <a href="9AEC.html">plot_mini_font_1</a></td>
+<td class="comment-1" rowspan="1">Goto plot_mini_font_1</td>
+</tr>
+<tr>
+<td class="asm-label">sub998f_do_noise_effect</td>
+<td class="address-2"><span id="39311"></span>998F</td>
+<td class="instruction">LD A,($963C)</td>
+<td class="comment-1" rowspan="3">If noise_counter &gt; 0 call noise_effect</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="39314"></span>9992</td>
+<td class="instruction">AND A</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="39315"></span>9993</td>
+<td class="instruction">JP NZ,<a href="9A55.html">noise_effect</a></td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="39318"></span>9996</td>
+<td class="instruction">LD A,($9633)</td>
+<td class="comment-1" rowspan="1">LD A,($9633)  ; If $9633 == 0 jump $99b6</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="39321"></span>9999</td>
+<td class="instruction">AND A</td>
+<td class="comment-1" rowspan="1">AND A         ;</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="39322"></span>999A</td>
+<td class="instruction">JR Z,<a href="9965.html#39350">sub998f_something</a></td>
+<td class="comment-1" rowspan="1">JR Z,$99B6    ;</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="39324"></span>999C</td>
+<td class="instruction">DEC A</td>
+<td class="comment-1" rowspan="1">DEC A         ; $9633--</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="39325"></span>999D</td>
+<td class="instruction">LD ($9633),A</td>
+<td class="comment-1" rowspan="1">LD ($9633),A  ;</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="39328"></span>99A0</td>
+<td class="instruction">LD B,A</td>
+<td class="comment-1" rowspan="1">LD B,A        ;</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="39329"></span>99A1</td>
+<td class="instruction">JR Z,<a href="9965.html#39357">sub998f_another_something</a></td>
+<td class="comment-1" rowspan="1">JR Z,$99BD    ; If A was zero jump sub998f_another_something</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="39331"></span>99A3</td>
+<td class="instruction">LD HL,($962E)</td>
+<td class="comment-1" rowspan="1">LD HL,($962E) ; Load address of next character</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="39334"></span>99A6</td>
+<td class="instruction">DEC HL</td>
+<td class="comment-1" rowspan="1">DEC HL        ; Go back 1</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="39335"></span>99A7</td>
+<td class="instruction">LD D,(HL)</td>
+<td class="comment-1" rowspan="1">Load the character for when we call plot_mini_font*</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="39336"></span>99A8</td>
+<td class="instruction">RES 7,D</td>
+<td class="comment-1" rowspan="1">Clear string terminator bit</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="39338"></span>99AA</td>
+<td class="instruction">LD A,($9632)</td>
+<td class="comment-1" rowspan="2">message_x - 1</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="39341"></span>99AD</td>
+<td class="instruction">DEC A</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="39342"></span>99AE</td>
+<td class="instruction">RR B</td>
+<td class="comment-1" rowspan="1">rotate it by B  (B is noise counter) .. wut?</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="39344"></span>99B0</td>
+<td class="instruction">JP C,<a href="9AEC.html#39665">plot_mini_font_2</a></td>
+<td class="comment-1" rowspan="1">if carry jump plot_mini_font_2</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="39347"></span>99B3</td>
+<td class="instruction">JP <a href="9AEC.html">plot_mini_font_1</a></td>
+<td class="comment-1" rowspan="1">Goto plot_mini_font_1</td>
+</tr>
+<tr>
+<td class="asm-label">sub998f_something</td>
+<td class="address-2"><span id="39350"></span>99B6</td>
+<td class="instruction">LD A,($9632)</td>
+<td class="comment-1" rowspan="3">If message_x != 0 jump $9a30</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="39353"></span>99B9</td>
+<td class="instruction">AND A</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="39354"></span>99BA</td>
+<td class="instruction">JP NZ,<a href="99EC.html#39472">print_chatter_1</a></td>
+</tr>
+<tr>
+<td class="asm-label">sub998f_another_something</td>
+<td class="address-2"><span id="39357"></span>99BD</td>
+<td class="instruction">LD HL,($9630)</td>
+<td class="comment-1" rowspan="1">LD HL,($9630) ; HL = next_message</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="39360"></span>99C0</td>
+<td class="instruction">LD A,(HL)</td>
+<td class="comment-1" rowspan="1">A = *HL first char of</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="39361"></span>99C1</td>
+<td class="instruction">CP $FF</td>
+<td class="comment-1" rowspan="2">String terminator? jump to clear_chatter if so</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="39363"></span>99C3</td>
+<td class="instruction">JR Z,<a href="9965.html#39379">clear_chatter</a></td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="39365"></span>99C5</td>
+<td class="instruction">CP $FE</td>
+<td class="comment-1" rowspan="1">this tests for $FE -- different terminator?</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="39367"></span>99C7</td>
+<td class="instruction">JR NZ,<a href="99EC.html#39460">chatter_message</a></td>
+<td class="comment-1" rowspan="1">JR NZ,$9A24   ; If not $fe goto chatter_message</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="39369"></span>99C9</td>
+<td class="instruction">INC HL</td>
+<td class="comment-1" rowspan="1">HL++</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="39370"></span>99CA</td>
+<td class="instruction">LD A,(HL)</td>
+<td class="comment-1" rowspan="5">next_message = *HL</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="39371"></span>99CB</td>
+<td class="instruction">INC HL</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="39372"></span>99CC</td>
+<td class="instruction">LD H,(HL)</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="39373"></span>99CD</td>
+<td class="instruction">LD L,A</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="39374"></span>99CE</td>
+<td class="instruction">LD ($9630),HL</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="39377"></span>99D1</td>
+<td class="instruction">JR <a href="9965.html#39396">99e4_exit</a></td>
+<td class="comment-1" rowspan="1">JR $99E4      ; goto 99e4_exit</td>
+</tr>
+<tr>
+<td class="routine-comment" colspan="5">
+<span id="39379"></span>
+<div class="comments">
+<div class="paragraph">
+This entry point is used by the routines at <a href="858C.html">858C</a> and <a href="8876.html">check_user_input</a>.
+</div>
+</div>
+</td>
+</tr>
+<tr>
+<td class="asm-label">clear_chatter</td>
+<td class="address-2"><span id="39379"></span>99D3</td>
+<td class="instruction">LD A,$04</td>
+<td class="comment-1" rowspan="2">Set the noise effect counter to 4</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="39381"></span>99D5</td>
+<td class="instruction">LD ($963C),A</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="39384"></span>99D8</td>
+<td class="instruction">DEC A</td>
+<td class="comment-1" rowspan="2">Set $963D to 3</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="39385"></span>99D9</td>
+<td class="instruction">LD ($963D),A</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="39388"></span>99DC</td>
+<td class="instruction">JP <a href="9BA7.html">clear_message_line</a></td>
+<td class="comment-1" rowspan="1">Exit via clear_message_line</td>
+</tr>
+<tr>
+<td class="asm-label">99df_something_else</td>
+<td class="address-2"><span id="39391"></span>99DF</td>
+<td class="instruction">LD A,$02</td>
+<td class="comment-1" rowspan="2">$963D = 2</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="39393"></span>99E1</td>
+<td class="instruction">LD ($963D),A</td>
+</tr>
+<tr>
+<td class="asm-label">99e4_exit</td>
+<td class="address-2"><span id="39396"></span>99E4</td>
+<td class="instruction">CALL <a href="9BA7.html">clear_message_line</a></td>
+<td class="comment-1" rowspan="3">Call clear_message_line</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="39399"></span>99E7</td>
+<td class="instruction">LD A,$04</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="39401"></span>99E9</td>
+<td class="instruction">JP <a href="9A55.html">noise_effect</a></td>
+</tr>
+</table>
+<table class="asm-navigation">
+<tr>
+<td class="prev">
+Prev: <a href="9945.html">9945</a>
+</td>
+<td class="up">Up: <a href="../maps/all.html#39269">Map</a></td>
+<td class="next">
+Next: <a href="99EC.html">99EC</a>
+</td>
+</tr>
+</table>
+<footer>
+<div class="release">The incomplete Chase H.Q. disassembly 20230426</div>
+<div class="copyright">&copy; 1989 Ocean Software Ltd.</div>
+<div class="created">Created using <a href="https://skoolkit.ca">SkoolKit</a> 8.9.</div>
+</footer>
+</body>
+</html>

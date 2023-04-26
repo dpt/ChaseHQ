@@ -1,0 +1,505 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Chase H.Q.: Routine at AC3C</title>
+<meta charset="utf-8" />
+<link rel="stylesheet" type="text/css" href="../skoolkit.css" />
+</head>
+<body class="Asm-c">
+<table class="header">
+<tr>
+<td class="logo"><a href="../index.html">Chase H.Q.</a></td>
+<td class="page-header">Routines</td>
+</tr>
+</table>
+<table class="asm-navigation">
+<tr>
+<td class="prev">
+Prev: <a href="ABF6.html">ABF6</a>
+</td>
+<td class="up">Up: <a href="../maps/all.html#44092">Map</a></td>
+<td class="next">
+Next: <a href="ACDB.html">ACDB</a>
+</td>
+</tr>
+</table>
+<div class="description">AC3C: Test for collision with hazard</div>
+<table class="disassembly">
+<tr>
+<td class="routine-comment" colspan="5">
+<div class="details">
+</div>
+<table class="input">
+<tr class="asm-input-header">
+<th colspan="2">Input</th>
+</tr>
+<tr>
+<td class="register">IX</td>
+<td class="register-desc">Address of hazard structure ($A188+)</td>
+</tr>
+</table>
+</td>
+</tr>
+<tr>
+<td class="asm-label">hazard_hit</td>
+<td class="address-2"><span id="44092"></span>AC3C</td>
+<td class="instruction">LD A,(IX+$0F)</td>
+<td class="comment-1" rowspan="1">IX[15] appears to be a delay of some sort</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="44095"></span>AC3F</td>
+<td class="instruction">AND A</td>
+<td class="comment-1" rowspan="2">If IX[15] != 0 then goto hh_ac92</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="44096"></span>AC40</td>
+<td class="instruction">JR NZ,<a href="AC3C.html#44178">hh_ac92</a></td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="44098"></span>AC42</td>
+<td class="instruction">LD A,(IX+$07)</td>
+<td class="comment-1" rowspan="3">If IX[7] == 0 then return</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="44101"></span>AC45</td>
+<td class="instruction">AND A</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="44102"></span>AC46</td>
+<td class="instruction">RET Z</td>
+</tr>
+<tr>
+<td class="routine-comment" colspan="5">
+<span id="44103"></span>
+<div class="comments">
+<div class="paragraph">
+If we arrive here then a hit has occurred.
+</div>
+</div>
+</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="44103"></span>AC47</td>
+<td class="instruction">LD DE,($A24A)</td>
+<td class="comment-1" rowspan="1">Load speed</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="44107"></span>AC4B</td>
+<td class="instruction">JP P,<a href="AC3C.html#44113">hazard_hit_0</a></td>
+<td class="comment-1" rowspan="2">If IX[7] &lt; 0 then <span class="register">DE</span> = 280</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="44110"></span>AC4E</td>
+<td class="instruction">LD DE,$0118</td>
+</tr>
+<tr>
+<td class="asm-label">hazard_hit_0</td>
+<td class="address-2"><span id="44113"></span>AC51</td>
+<td class="instruction">LD B,D</td>
+<td class="comment-1" rowspan="2"><span class="register">BC</span> = <span class="register">DE</span></td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="44114"></span>AC52</td>
+<td class="instruction">LD C,E</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="44115"></span>AC53</td>
+<td class="instruction">LD HL,$AD03</td>
+<td class="comment-1" rowspan="1">Point <span class="register">HL</span> at $AD03 table</td>
+</tr>
+<tr>
+<td class="routine-comment" colspan="5">
+<span id="44118"></span>
+<div class="comments">
+<div class="paragraph">
+This must be mapping the speed into the 5-entry array.
+</div>
+</div>
+</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="44118"></span>AC56</td>
+<td class="instruction">LD A,D</td>
+<td class="comment-1" rowspan="1">A = D     top part of speed</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="44119"></span>AC57</td>
+<td class="instruction">RL E</td>
+<td class="comment-1" rowspan="1">E ROL 1   double speed</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="44121"></span>AC59</td>
+<td class="instruction">RLA</td>
+<td class="comment-1" rowspan="1">A ROL 1</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="44122"></span>AC5A</td>
+<td class="instruction">AND $03</td>
+<td class="comment-1" rowspan="1">A &amp;= 3    mask top part to 3  (for ref. turbo speed = $1FF)</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="44124"></span>AC5C</td>
+<td class="instruction">RR D</td>
+<td class="comment-1" rowspan="1">RR D      halve D to carry?</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="44126"></span>AC5E</td>
+<td class="instruction">LD D,$00</td>
+<td class="comment-1" rowspan="1">D = 0</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="44128"></span>AC60</td>
+<td class="instruction">ADC A,D</td>
+<td class="comment-1" rowspan="2">A = (A + D + carry) * 2  scale for element size of 2</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="44129"></span>AC61</td>
+<td class="instruction">ADD A,A</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="44130"></span>AC62</td>
+<td class="instruction">LD E,A</td>
+<td class="comment-1" rowspan="1">E = A   it's an offset in $AD03</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="44131"></span>AC63</td>
+<td class="instruction">ADD HL,DE</td>
+<td class="comment-1" rowspan="1">HL += DE</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="44132"></span>AC64</td>
+<td class="instruction">LD A,(HL)</td>
+<td class="comment-1" rowspan="5">Copy (two bytes?) to IX+17 from table</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="44133"></span>AC65</td>
+<td class="instruction">LD (IX+$11),A</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="44136"></span>AC68</td>
+<td class="instruction">INC HL</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="44137"></span>AC69</td>
+<td class="instruction">LD A,(HL)</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="44138"></span>AC6A</td>
+<td class="instruction">LD (IX+$12),A</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="44141"></span>AC6D</td>
+<td class="instruction">SLA C</td>
+<td class="comment-1" rowspan="2">double BC?  adjusted speed retained from earlier</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="44143"></span>AC6F</td>
+<td class="instruction">RL B</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="44145"></span>AC71</td>
+<td class="instruction">LD A,B</td>
+<td class="comment-1" rowspan="4">If B &gt;= 2 BC = 350  so this is if we hit the object very fast it gets put on the left?</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="44146"></span>AC72</td>
+<td class="instruction">CP $02</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="44148"></span>AC74</td>
+<td class="instruction">JR C,<a href="AC3C.html#44153">hazard_hit_1</a></td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="44150"></span>AC76</td>
+<td class="instruction">LD BC,$015E</td>
+</tr>
+<tr>
+<td class="asm-label">hazard_hit_1</td>
+<td class="address-2"><span id="44153"></span>AC79</td>
+<td class="instruction">LD (IX+$0D),C</td>
+<td class="comment-1" rowspan="1">Set bottom byte of horizontal position</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="44156"></span>AC7C</td>
+<td class="instruction">INC (IX+$07)</td>
+<td class="comment-1" rowspan="1">Increment IX[7]</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="44159"></span>AC7F</td>
+<td class="instruction">JR Z,<a href="AC3C.html#44164">hazard_hit_2</a></td>
+<td class="comment-1" rowspan="1">JR Z,$AC84   if B is zero then don't store it</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="44161"></span>AC81</td>
+<td class="instruction">LD (IX+$0E),B</td>
+<td class="comment-1" rowspan="1">Set top byte of horizontal position</td>
+</tr>
+<tr>
+<td class="asm-label">hazard_hit_2</td>
+<td class="address-2"><span id="44164"></span>AC84</td>
+<td class="instruction">INC (IX+$01)</td>
+<td class="comment-1" rowspan="1">Increment IX[1]</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="44167"></span>AC87</td>
+<td class="instruction">LD BC,$0503</td>
+<td class="comment-1" rowspan="2">Call start_sfx with BC = $0503</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="44170"></span>AC8A</td>
+<td class="instruction">CALL <a href="88F2.html">start_sfx</a></td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="44173"></span>AC8D</td>
+<td class="instruction">LD A,$02</td>
+<td class="comment-1" rowspan="1">A = 2        [set this to 1 and it drives off like a car]</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="44175"></span>AC8F</td>
+<td class="instruction">LD (IX+$0F),A</td>
+<td class="comment-1" rowspan="1">Set IX[15] to 2</td>
+</tr>
+<tr>
+<td class="asm-label">hh_ac92</td>
+<td class="address-2"><span id="44178"></span>AC92</td>
+<td class="instruction">DEC A</td>
+<td class="comment-1" rowspan="1">A--</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="44179"></span>AC93</td>
+<td class="instruction">RET Z</td>
+<td class="comment-1" rowspan="1">If A == 0 return</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="44180"></span>AC94</td>
+<td class="instruction">LD HL,$ACDB</td>
+<td class="comment-1" rowspan="6">IX[16] = $ACDB[IX[17]]</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="44183"></span>AC97</td>
+<td class="instruction">LD C,(IX+$11)</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="44186"></span>AC9A</td>
+<td class="instruction">LD B,$00</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="44188"></span>AC9C</td>
+<td class="instruction">ADD HL,BC</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="44189"></span>AC9D</td>
+<td class="instruction">LD A,(HL)</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="44190"></span>AC9E</td>
+<td class="instruction">LD (IX+$10),A</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="44193"></span>ACA1</td>
+<td class="instruction">INC (IX+$11)</td>
+<td class="comment-1" rowspan="1">Increment IX[17]</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="44196"></span>ACA4</td>
+<td class="instruction">LD H,(IX+$0E)</td>
+<td class="comment-1" rowspan="2">Load horizontal position into <span class="register">HL</span></td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="44199"></span>ACA7</td>
+<td class="instruction">LD L,(IX+$0D)</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="44202"></span>ACAA</td>
+<td class="instruction">LD D,H</td>
+<td class="comment-1" rowspan="2"><span class="register">DE</span> = <span class="register">HL</span></td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="44203"></span>ACAB</td>
+<td class="instruction">LD E,L</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="44204"></span>ACAC</td>
+<td class="instruction">SRL D</td>
+<td class="comment-1" rowspan="2">Divide horizontal position by 2?</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="44206"></span>ACAE</td>
+<td class="instruction">RR E</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="44208"></span>ACB0</td>
+<td class="instruction">SRL E</td>
+<td class="comment-1" rowspan="4">Then by 16 once it's 8 bits</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="44210"></span>ACB2</td>
+<td class="instruction">SRL E</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="44212"></span>ACB4</td>
+<td class="instruction">SRL E</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="44214"></span>ACB6</td>
+<td class="instruction">SRL E</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="44216"></span>ACB8</td>
+<td class="instruction">SBC HL,DE</td>
+<td class="comment-1" rowspan="1">Then subtract from the previous position</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="44218"></span>ACBA</td>
+<td class="instruction">LD (IX+$0E),H</td>
+<td class="comment-1" rowspan="2">Set horizontal position</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="44221"></span>ACBD</td>
+<td class="instruction">LD (IX+$0D),L</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="44224"></span>ACC0</td>
+<td class="instruction">LD A,(IX+$13)</td>
+<td class="comment-1" rowspan="3">Toggle the bottom bit of IX[19]</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="44227"></span>ACC3</td>
+<td class="instruction">XOR $01</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="44229"></span>ACC5</td>
+<td class="instruction">LD (IX+$13),A</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="44232"></span>ACC8</td>
+<td class="instruction">DEC (IX+$12)</td>
+<td class="comment-1" rowspan="1">Decrement IX[18]</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="44235"></span>ACCB</td>
+<td class="instruction">RET NZ</td>
+<td class="comment-1" rowspan="1">If IX[19] != 0 then return</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="44236"></span>ACCC</td>
+<td class="instruction">XOR A</td>
+<td class="comment-1" rowspan="3">Zero the horizontal position</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="44237"></span>ACCD</td>
+<td class="instruction">LD (IX+$0D),A</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="44240"></span>ACD0</td>
+<td class="instruction">LD (IX+$0E),A</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="44243"></span>ACD3</td>
+<td class="instruction">INC A</td>
+<td class="comment-1" rowspan="2">Set IX[19] to 1</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="44244"></span>ACD4</td>
+<td class="instruction">LD (IX+$13),A</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="44247"></span>ACD7</td>
+<td class="instruction">LD (IX+$0F),A</td>
+<td class="comment-1" rowspan="1">Set IX[15] to 1</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="44250"></span>ACDA</td>
+<td class="instruction">RET</td>
+<td class="comment-1" rowspan="1">Return</td>
+</tr>
+</table>
+<table class="asm-navigation">
+<tr>
+<td class="prev">
+Prev: <a href="ABF6.html">ABF6</a>
+</td>
+<td class="up">Up: <a href="../maps/all.html#44092">Map</a></td>
+<td class="next">
+Next: <a href="ACDB.html">ACDB</a>
+</td>
+</tr>
+</table>
+<footer>
+<div class="release">The incomplete Chase H.Q. disassembly 20230426</div>
+<div class="copyright">&copy; 1989 Ocean Software Ltd.</div>
+<div class="created">Created using <a href="https://skoolkit.ca">SkoolKit</a> 8.9.</div>
+</footer>
+</body>
+</html>

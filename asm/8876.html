@@ -1,0 +1,338 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Chase H.Q.: Routine at 8876</title>
+<meta charset="utf-8" />
+<link rel="stylesheet" type="text/css" href="../skoolkit.css" />
+</head>
+<body class="Asm-c">
+<table class="header">
+<tr>
+<td class="logo"><a href="../index.html">Chase H.Q.</a></td>
+<td class="page-header">Routines</td>
+</tr>
+</table>
+<table class="asm-navigation">
+<tr>
+<td class="prev">
+Prev: <a href="87DC.html">87DC</a>
+</td>
+<td class="up">Up: <a href="../maps/all.html#34934">Map</a></td>
+<td class="next">
+Next: <a href="88D5.html">88D5</a>
+</td>
+</tr>
+</table>
+<div class="description">8876: User input checking</div>
+<table class="disassembly">
+<tr>
+<td class="routine-comment" colspan="5">
+<div class="details">
+<div class="paragraph">
+Used by the routine at <a href="8401.html">8401</a>.
+</div>
+</div>
+</td>
+</tr>
+<tr>
+<td class="asm-label">check_user_input</td>
+<td class="address-2"><span id="34934"></span>8876</td>
+<td class="instruction">LD A,($A231)</td>
+<td class="comment-1" rowspan="1">Load transition_control</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="34937"></span>8879</td>
+<td class="instruction">LD HL,$A0D5</td>
+<td class="comment-1" rowspan="1">Address of user_input</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="34940"></span>887C</td>
+<td class="instruction">CP $04</td>
+<td class="comment-1" rowspan="2">Ignore the user's input unless transition_control is set to 4</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="34942"></span>887E</td>
+<td class="instruction">JR NZ,<a href="8876.html#34947">check_user_input_0</a></td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="34944"></span>8880</td>
+<td class="instruction">LD (HL),$00</td>
+<td class="comment-1" rowspan="1">Clear user_input</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="34946"></span>8882</td>
+<td class="instruction">RET</td>
+<td class="comment-1" rowspan="1">Return</td>
+</tr>
+<tr>
+<td class="asm-label">check_user_input_0</td>
+<td class="address-2"><span id="34947"></span>8883</td>
+<td class="instruction">LD A,($A16F)</td>
+<td class="comment-1" rowspan="3">AND user_input with user input mask</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="34950"></span>8886</td>
+<td class="instruction">AND (HL)</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="34951"></span>8887</td>
+<td class="instruction">LD (HL),A</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="34952"></span>8888</td>
+<td class="instruction">AND $E0</td>
+<td class="comment-1" rowspan="2">AND with mask for (Quit+Pause+Turbo), return if none</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="34954"></span>888A</td>
+<td class="instruction">RET Z</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="34955"></span>888B</td>
+<td class="instruction">RLA</td>
+<td class="comment-1" rowspan="2">Quit bit set? Goto quit_key if so</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="34956"></span>888C</td>
+<td class="instruction">JR C,<a href="8876.html#34985">quit_key</a></td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="34958"></span>888E</td>
+<td class="instruction">RLA</td>
+<td class="comment-1" rowspan="2">Pause bit set? Goto pause_key if so</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="34959"></span>888F</td>
+<td class="instruction">JR C,<a href="8876.html#35004">pause_key</a></td>
+</tr>
+<tr>
+<td class="routine-comment" colspan="5">
+<span id="34961"></span>
+<div class="comments">
+<div class="paragraph">
+Turbo was pressed
+</div>
+</div>
+</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="34961"></span>8891</td>
+<td class="instruction">LD HL,$A24E</td>
+<td class="comment-1" rowspan="1">Address of boost timer</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="34964"></span>8894</td>
+<td class="instruction">LD A,(HL)</td>
+<td class="comment-1" rowspan="3">Return if a turbo boost is in effect</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="34965"></span>8895</td>
+<td class="instruction">AND A</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="34966"></span>8896</td>
+<td class="instruction">RET NZ</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="34967"></span>8897</td>
+<td class="instruction">LD A,($A170)</td>
+<td class="comment-1" rowspan="3">Return if no turbo boosts are left</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="34970"></span>889A</td>
+<td class="instruction">AND A</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="34971"></span>889B</td>
+<td class="instruction">RET Z</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="34972"></span>889C</td>
+<td class="instruction">LD (HL),$3C</td>
+<td class="comment-1" rowspan="1">Set 60 ticks of boost</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="34974"></span>889E</td>
+<td class="instruction">LD HL,$9917</td>
+<td class="comment-1" rowspan="1">HL -&gt; Random choice of (WHOAAAAA! / GREAT! / ONE MORE TIME.)</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="34977"></span>88A1</td>
+<td class="instruction">LD A,$02</td>
+<td class="comment-1" rowspan="1">TBD</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="34979"></span>88A3</td>
+<td class="instruction">CALL <a href="9945.html">chatter</a></td>
+<td class="comment-1" rowspan="1">Call chatter</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="34982"></span>88A6</td>
+<td class="instruction">JP <a href="83C1.html">$83C1</a></td>
+<td class="comment-1" rowspan="1">Exit via $83C1 -- likely the boost sound effect</td>
+</tr>
+<tr>
+<td class="routine-comment" colspan="5">
+<span id="34985"></span>
+<div class="comments">
+<div class="paragraph">
+This entry point is used by the routine at <a href="9BCF.html">9BCF</a>.
+</div>
+</div>
+</td>
+</tr>
+<tr>
+<td class="asm-label">quit_key</td>
+<td class="address-2"><span id="34985"></span>88A9</td>
+<td class="instruction">LD A,($A26A)</td>
+<td class="comment-1" rowspan="3">If $A26A != 0 then return</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="34988"></span>88AC</td>
+<td class="instruction">AND A</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="34989"></span>88AD</td>
+<td class="instruction">RET NZ</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="34990"></span>88AE</td>
+<td class="instruction">CALL <a href="9965.html#39379">clear_chatter</a></td>
+<td class="comment-1" rowspan="1">Call clear_chatter</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="34993"></span>88B1</td>
+<td class="instruction">CALL <a href="8E29.html">fill_attributes</a></td>
+<td class="comment-1" rowspan="1">Call fill_attributes</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="34996"></span>88B4</td>
+<td class="instruction">LD ($A16F),A</td>
+<td class="comment-1" rowspan="2">user_input_mask = 0  -- A is zero from fill_attributes</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="34999"></span>88B7</td>
+<td class="instruction">INC A</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="35000"></span>88B8</td>
+<td class="instruction">LD ($A26A),A</td>
+<td class="comment-1" rowspan="1">$A26A = 1</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="35003"></span>88BB</td>
+<td class="instruction">RET</td>
+<td class="comment-1" rowspan="1">Return</td>
+</tr>
+<tr>
+<td class="asm-label">pause_key</td>
+<td class="address-2"><span id="35004"></span>88BC</td>
+<td class="instruction">CALL <a href="83BB.html">$83BB</a></td>
+<td class="comment-1" rowspan="1">Silence audio (128k hook)</td>
+</tr>
+<tr>
+<td class="asm-label">check_user_input_1</td>
+<td class="address-2"><span id="35007"></span>88BF</td>
+<td class="instruction">CALL <a href="A0CC.html#41174">keyscan</a></td>
+<td class="comment-1" rowspan="3">Call keyscan while PAUSE is pressed</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="35010"></span>88C2</td>
+<td class="instruction">AND $40</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="35012"></span>88C4</td>
+<td class="instruction">JR NZ,<a href="8876.html#35007">check_user_input_1</a></td>
+</tr>
+<tr>
+<td class="asm-label">check_user_input_2</td>
+<td class="address-2"><span id="35014"></span>88C6</td>
+<td class="instruction">CALL <a href="A0CC.html#41174">keyscan</a></td>
+<td class="comment-1" rowspan="3">Call keyscan until keys are pressed</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="35017"></span>88C9</td>
+<td class="instruction">AND $7F</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="35019"></span>88CB</td>
+<td class="instruction">JR Z,<a href="8876.html#35014">check_user_input_2</a></td>
+</tr>
+<tr>
+<td class="asm-label">check_user_input_3</td>
+<td class="address-2"><span id="35021"></span>88CD</td>
+<td class="instruction">CALL <a href="A0CC.html#41174">keyscan</a></td>
+<td class="comment-1" rowspan="3">Call keyscan until keys are released (debounce)</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="35024"></span>88D0</td>
+<td class="instruction">AND $7F</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="35026"></span>88D2</td>
+<td class="instruction">JR NZ,<a href="8876.html#35021">check_user_input_3</a></td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="35028"></span>88D4</td>
+<td class="instruction">RET</td>
+<td class="comment-1" rowspan="1">Return</td>
+</tr>
+</table>
+<table class="asm-navigation">
+<tr>
+<td class="prev">
+Prev: <a href="87DC.html">87DC</a>
+</td>
+<td class="up">Up: <a href="../maps/all.html#34934">Map</a></td>
+<td class="next">
+Next: <a href="88D5.html">88D5</a>
+</td>
+</tr>
+</table>
+<footer>
+<div class="release">The incomplete Chase H.Q. disassembly 20230426</div>
+<div class="copyright">&copy; 1989 Ocean Software Ltd.</div>
+<div class="created">Created using <a href="https://skoolkit.ca">SkoolKit</a> 8.9.</div>
+</footer>
+</body>
+</html>

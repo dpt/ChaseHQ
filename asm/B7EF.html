@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Chase H.Q.: Routine at B7EF</title>
+<meta charset="utf-8" />
+<link rel="stylesheet" type="text/css" href="../skoolkit.css" />
+</head>
+<body class="Asm-c">
+<table class="header">
+<tr>
+<td class="logo"><a href="../index.html">Chase H.Q.</a></td>
+<td class="page-header">Routines</td>
+</tr>
+</table>
+<table class="asm-navigation">
+<tr>
+<td class="prev">
+Prev: <a href="B76C.html">B76C</a>
+</td>
+<td class="up">Up: <a href="../maps/all.html#47087">Map</a></td>
+<td class="next">
+Next: <a href="B828.html">B828</a>
+</td>
+</tr>
+</table>
+<div class="description">B7EF: Routine at B7EF</div>
+<table class="disassembly">
+<tr>
+<td class="routine-comment" colspan="5">
+<div class="details">
+<div class="paragraph">
+Used by the routine at <a href="92E1.html">92E1</a>.
+</div>
+</div>
+</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-2"><span id="47087"></span>B7EF</td>
+<td class="instruction">LD ($B720),SP</td>
+<td class="comment-1" rowspan="1">self modify $B71F - exit of plot_masked_sprite</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="47091"></span>B7F3</td>
+<td class="instruction">LD IX,$B729</td>
+<td class="comment-1" rowspan="1">IX = &amp;plot_masked_sprite_core_thingy (jump table)</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="47095"></span>B7F7</td>
+<td class="instruction">CPL</td>
+<td class="comment-1" rowspan="2">A = 8 - A</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="47096"></span>B7F8</td>
+<td class="instruction">ADD A,$09</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="47098"></span>B7FA</td>
+<td class="instruction">RLCA</td>
+<td class="comment-1" rowspan="7">IX += A * 6</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="47099"></span>B7FB</td>
+<td class="instruction">LD C,A</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="47100"></span>B7FC</td>
+<td class="instruction">RLCA</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="47101"></span>B7FD</td>
+<td class="instruction">ADD A,C</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="47102"></span>B7FE</td>
+<td class="instruction">LD C,A</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="47103"></span>B7FF</td>
+<td class="instruction">LD B,$00</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="47105"></span>B801</td>
+<td class="instruction">ADD IX,BC</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="47107"></span>B803</td>
+<td class="instruction">LD B,$0F</td>
+<td class="comment-1" rowspan="1">B = $0F</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="47109"></span>B805</td>
+<td class="instruction">EXX</td>
+<td class="comment-1" rowspan="1"></td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="47110"></span>B806</td>
+<td class="instruction">LD D,$00</td>
+<td class="comment-1" rowspan="1">D = 0</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="47112"></span>B808</td>
+<td class="instruction">PUSH BC</td>
+<td class="comment-1" rowspan="1"></td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="47113"></span>B809</td>
+<td class="instruction">PUSH HL</td>
+<td class="comment-1" rowspan="1"></td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="47114"></span>B80A</td>
+<td class="instruction">LD H,D</td>
+<td class="comment-1" rowspan="1">H = D</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="47115"></span>B80B</td>
+<td class="instruction">LD L,D</td>
+<td class="comment-1" rowspan="1">L = D</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="47116"></span>B80C</td>
+<td class="instruction">LD A,B</td>
+<td class="comment-1" rowspan="1">A = B</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="47117"></span>B80D</td>
+<td class="instruction">LD B,$05</td>
+<td class="comment-1" rowspan="1">B = 5</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="47119"></span>B80F</td>
+<td class="instruction">DEC A</td>
+<td class="comment-1" rowspan="1">A--</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="47120"></span>B810</td>
+<td class="instruction">RLA</td>
+<td class="comment-1" rowspan="1">RLA</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="47121"></span>B811</td>
+<td class="instruction">RLA</td>
+<td class="comment-1" rowspan="1">RLA</td>
+</tr>
+<tr>
+<td class="asm-label">j_b812</td>
+<td class="address-2"><span id="47122"></span>B812</td>
+<td class="instruction">RLA</td>
+<td class="comment-1" rowspan="1">RLA</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="47123"></span>B813</td>
+<td class="instruction">JR NC,<a href="B7EF.html#47126">j_b816</a></td>
+<td class="comment-1" rowspan="1">JR NC,j_b816</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="47125"></span>B815</td>
+<td class="instruction">ADD HL,DE</td>
+<td class="comment-1" rowspan="1">HL += DE</td>
+</tr>
+<tr>
+<td class="asm-label">j_b816</td>
+<td class="address-2"><span id="47126"></span>B816</td>
+<td class="instruction">ADD HL,HL</td>
+<td class="comment-1" rowspan="1">HL += HL</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="47127"></span>B817</td>
+<td class="instruction">DJNZ <a href="B7EF.html#47122">j_b812</a></td>
+<td class="comment-1" rowspan="1">DJNZ j_b812</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="47129"></span>B819</td>
+<td class="instruction">RLA</td>
+<td class="comment-1" rowspan="1">RLA</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="47130"></span>B81A</td>
+<td class="instruction">JR NC,$B81D</td>
+<td class="comment-1" rowspan="1">JR NC,$B81D</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="47132"></span>B81C</td>
+<td class="instruction">ADD HL,DE</td>
+<td class="comment-1" rowspan="1">HL += DE</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-2"><span id="47133"></span>B81D</td>
+<td class="instruction">POP BC</td>
+<td class="comment-1" rowspan="1"></td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="47134"></span>B81E</td>
+<td class="instruction">ADD HL,BC</td>
+<td class="comment-1" rowspan="1">HL += BC</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="47135"></span>B81F</td>
+<td class="instruction">POP BC</td>
+<td class="comment-1" rowspan="1"></td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="47136"></span>B820</td>
+<td class="instruction">DEC D</td>
+<td class="comment-1" rowspan="1">D--</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="47137"></span>B821</td>
+<td class="instruction">LD A,E</td>
+<td class="comment-1" rowspan="3">E = -E</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="47138"></span>B822</td>
+<td class="instruction">NEG</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="47140"></span>B824</td>
+<td class="instruction">LD E,A</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="47141"></span>B825</td>
+<td class="instruction">JP <a href="B716.html#46884">plot_masked_sprite_entry</a></td>
+<td class="comment-1" rowspan="1">JP plot_masked_sprite_entry</td>
+</tr>
+</table>
+<table class="asm-navigation">
+<tr>
+<td class="prev">
+Prev: <a href="B76C.html">B76C</a>
+</td>
+<td class="up">Up: <a href="../maps/all.html#47087">Map</a></td>
+<td class="next">
+Next: <a href="B828.html">B828</a>
+</td>
+</tr>
+</table>
+<footer>
+<div class="release">The incomplete Chase H.Q. disassembly 20230426</div>
+<div class="copyright">&copy; 1989 Ocean Software Ltd.</div>
+<div class="created">Created using <a href="https://skoolkit.ca">SkoolKit</a> 8.9.</div>
+</footer>
+</body>
+</html>

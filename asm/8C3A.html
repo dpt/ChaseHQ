@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Chase H.Q.: Routine at 8C3A</title>
+<meta charset="utf-8" />
+<link rel="stylesheet" type="text/css" href="../skoolkit.css" />
+</head>
+<body class="Asm-c">
+<table class="header">
+<tr>
+<td class="logo"><a href="../index.html">Chase H.Q.</a></td>
+<td class="page-header">Routines</td>
+</tr>
+</table>
+<table class="asm-navigation">
+<tr>
+<td class="prev">
+Prev: <a href="8A57.html">8A57</a>
+</td>
+<td class="up">Up: <a href="../maps/all.html#35898">Map</a></td>
+<td class="next">
+Next: <a href="8C58.html">8C58</a>
+</td>
+</tr>
+</table>
+<div class="description">8C3A: Fully smashed</div>
+<table class="disassembly">
+<tr>
+<td class="routine-comment" colspan="5">
+<div class="details">
+<div class="paragraph">
+Used by the routine at <a href="B4F0.html">B4F0</a>.
+</div>
+</div>
+</td>
+</tr>
+<tr>
+<td class="asm-label">fully_smashed</td>
+<td class="address-2"><span id="35898"></span>8C3A</td>
+<td class="instruction">LD A,$01</td>
+<td class="comment-1" rowspan="2">draw_screen flag = 1</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="35900"></span>8C3C</td>
+<td class="instruction">LD ($A230),A</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="35903"></span>8C3F</td>
+<td class="instruction">INC A</td>
+<td class="comment-1" rowspan="2">$A22F = 2</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="35904"></span>8C40</td>
+<td class="instruction">LD ($A22F),A</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="35907"></span>8C43</td>
+<td class="instruction">LD A,$14</td>
+<td class="comment-1" rowspan="2">Set smash_counter to 20</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="35909"></span>8C45</td>
+<td class="instruction">LD ($A233),A</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="35912"></span>8C48</td>
+<td class="instruction">LD A,$C0</td>
+<td class="comment-1" rowspan="2">Set user input mask to (Quit+Pause)</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="35914"></span>8C4A</td>
+<td class="instruction">LD ($A16F),A</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="35917"></span>8C4D</td>
+<td class="instruction">LD HL,$8CD6</td>
+<td class="comment-1" rowspan="2">Print the "OK! PULL OVER CREEP!" message</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="35920"></span>8C50</td>
+<td class="instruction">CALL <a href="8E7E.html">message_printing_related</a></td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="35923"></span>8C53</td>
+<td class="instruction">LD DE,$0190</td>
+<td class="comment-1" rowspan="1"></td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="35926"></span>8C56</td>
+<td class="instruction">JR <a href="8A57.html#35893">j_8c35</a></td>
+<td class="comment-1" rowspan="1">Exit via $8C35</td>
+</tr>
+</table>
+<table class="asm-navigation">
+<tr>
+<td class="prev">
+Prev: <a href="8A57.html">8A57</a>
+</td>
+<td class="up">Up: <a href="../maps/all.html#35898">Map</a></td>
+<td class="next">
+Next: <a href="8C58.html">8C58</a>
+</td>
+</tr>
+</table>
+<footer>
+<div class="release">The incomplete Chase H.Q. disassembly 20230426</div>
+<div class="copyright">&copy; 1989 Ocean Software Ltd.</div>
+<div class="created">Created using <a href="https://skoolkit.ca">SkoolKit</a> 8.9.</div>
+</footer>
+</body>
+</html>

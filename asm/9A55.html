@@ -1,0 +1,379 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Chase H.Q.: Routine at 9A55</title>
+<meta charset="utf-8" />
+<link rel="stylesheet" type="text/css" href="../skoolkit.css" />
+</head>
+<body class="Asm-c">
+<table class="header">
+<tr>
+<td class="logo"><a href="../index.html">Chase H.Q.</a></td>
+<td class="page-header">Routines</td>
+</tr>
+</table>
+<table class="asm-navigation">
+<tr>
+<td class="prev">
+Prev: <a href="99EC.html">99EC</a>
+</td>
+<td class="up">Up: <a href="../maps/all.html#39509">Map</a></td>
+<td class="next">
+Next: <a href="9AAB.html">9AAB</a>
+</td>
+</tr>
+</table>
+<div class="description">9A55: Noise in/out effect</div>
+<table class="disassembly">
+<tr>
+<td class="routine-comment" colspan="5">
+<div class="details">
+<div class="paragraph">
+Used by the routine at <a href="9965.html">9965</a>.
+</div>
+</div>
+<table class="input">
+<tr class="asm-input-header">
+<th colspan="2">Input</th>
+</tr>
+<tr>
+<td class="register">A</td>
+<td class="register-desc">Noise effect counter</td>
+</tr>
+</table>
+</td>
+</tr>
+<tr>
+<td class="asm-label">noise_effect</td>
+<td class="address-2"><span id="39509"></span>9A55</td>
+<td class="instruction">DEC A</td>
+<td class="comment-1" rowspan="2">Decrement the noise effect counter</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="39510"></span>9A56</td>
+<td class="instruction">LD ($963C),A</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="39513"></span>9A59</td>
+<td class="instruction">JP Z,<a href="99EC.html">print_chatter</a></td>
+<td class="comment-1" rowspan="1">Jump to print_chatter if it's zero, otherwise fallthrough</td>
+</tr>
+<tr>
+<td class="routine-comment" colspan="5">
+<span id="39516"></span>
+<div class="comments">
+<div class="paragraph">
+This entry point is used by the routine at <a href="9965.html">9965</a>.
+</div>
+</div>
+</td>
+</tr>
+<tr>
+<td class="asm-label">noise_effect_0</td>
+<td class="address-2"><span id="39516"></span>9A5C</td>
+<td class="instruction">RRA</td>
+<td class="comment-1" rowspan="1">Shift A's bottom bit into carry</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="39517"></span>9A5D</td>
+<td class="instruction">LD A,$FF</td>
+<td class="comment-1" rowspan="1">A = 255</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="39519"></span>9A5F</td>
+<td class="instruction">LD D,$20</td>
+<td class="comment-1" rowspan="1">D = 32  -- ASCII character for plot_mini_font*</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="39521"></span>9A61</td>
+<td class="instruction">JR C,<a href="9A55.html#39528">noise_effect_1</a></td>
+<td class="comment-1" rowspan="2">If A on input was odd then jump</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="39523"></span>9A63</td>
+<td class="instruction">CALL <a href="9AEC.html#39665">plot_mini_font_2</a></td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="39526"></span>9A66</td>
+<td class="instruction">JR <a href="9A55.html#39531">noise_effect_2</a></td>
+<td class="comment-1" rowspan="1">else call plot_mini_font_2 and continue at $9a6b</td>
+</tr>
+<tr>
+<td class="asm-label">noise_effect_1</td>
+<td class="address-2"><span id="39528"></span>9A68</td>
+<td class="instruction">CALL <a href="9AEC.html">plot_mini_font_1</a></td>
+<td class="comment-1" rowspan="1">Call plot_mini_font_1</td>
+</tr>
+<tr>
+<td class="asm-label">noise_effect_2</td>
+<td class="address-2"><span id="39531"></span>9A6B</td>
+<td class="instruction">LD DE,$4036</td>
+<td class="comment-1" rowspan="1">Set plot address to (176,8)</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="39534"></span>9A6E</td>
+<td class="instruction">LD C,$28</td>
+<td class="comment-1" rowspan="2">B,C = 4 columns/bytes, 40 rows</td>
+</tr>
+<tr>
+<td class="asm-label">noise_effect_3</td>
+<td class="address-2"><span id="39536"></span>9A70</td>
+<td class="instruction">LD B,$04</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="39538"></span>9A72</td>
+<td class="instruction">PUSH DE</td>
+<td class="comment-1" rowspan="1">Preserve row ptr</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="39539"></span>9A73</td>
+<td class="instruction">LD HL,$9634</td>
+<td class="comment-1" rowspan="1">Point <span class="register">HL</span> at noise_bytes</td>
+</tr>
+<tr>
+<td class="asm-label">noise_plot_loop</td>
+<td class="address-2"><span id="39542"></span>9A76</td>
+<td class="instruction">LD A,(HL)</td>
+<td class="comment-1" rowspan="2">A = *HL - B -- Subtract row counter (4,3,2,1)</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="39543"></span>9A77</td>
+<td class="instruction">SUB B</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="39544"></span>9A78</td>
+<td class="instruction">LD (HL),A</td>
+<td class="comment-1" rowspan="2">*HL++ = A</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="39545"></span>9A79</td>
+<td class="instruction">INC HL</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="39546"></span>9A7A</td>
+<td class="instruction">RLCA</td>
+<td class="comment-1" rowspan="1">Rotate A left by 1</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="39547"></span>9A7B</td>
+<td class="instruction">ADD A,(HL)</td>
+<td class="comment-1" rowspan="2">*HL += A</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="39548"></span>9A7C</td>
+<td class="instruction">LD (HL),A</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="39549"></span>9A7D</td>
+<td class="instruction">LD (DE),A</td>
+<td class="comment-1" rowspan="2">*DE++ = A -- Store 8 random bits</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="39550"></span>9A7E</td>
+<td class="instruction">INC E</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="39551"></span>9A7F</td>
+<td class="instruction">DJNZ <a href="9A55.html#39542">noise_plot_loop</a></td>
+<td class="comment-1" rowspan="1">Loop while columns remain</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="39553"></span>9A81</td>
+<td class="instruction">POP DE</td>
+<td class="comment-1" rowspan="1">Restore row ptr</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="39554"></span>9A82</td>
+<td class="instruction">INC D</td>
+<td class="comment-1" rowspan="1">Move to next row</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="39555"></span>9A83</td>
+<td class="instruction">LD A,D</td>
+<td class="comment-1" rowspan="10">Usual row movement magic here</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="39556"></span>9A84</td>
+<td class="instruction">AND $07</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="39558"></span>9A86</td>
+<td class="instruction">JR NZ,<a href="9A55.html#39570">noise_effect_4</a></td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="39560"></span>9A88</td>
+<td class="instruction">LD A,E</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="39561"></span>9A89</td>
+<td class="instruction">ADD A,$20</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="39563"></span>9A8B</td>
+<td class="instruction">LD E,A</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="39564"></span>9A8C</td>
+<td class="instruction">JR C,<a href="9A55.html#39570">noise_effect_4</a></td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="39566"></span>9A8E</td>
+<td class="instruction">LD A,D</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="39567"></span>9A8F</td>
+<td class="instruction">SUB $08</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="39569"></span>9A91</td>
+<td class="instruction">LD D,A</td>
+</tr>
+<tr>
+<td class="asm-label">noise_effect_4</td>
+<td class="address-2"><span id="39570"></span>9A92</td>
+<td class="instruction">DEC C</td>
+<td class="comment-1" rowspan="2">Loop while rows remain</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="39571"></span>9A93</td>
+<td class="instruction">JP NZ,<a href="9A55.html#39536">noise_effect_3</a></td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="39574"></span>9A96</td>
+<td class="instruction">LD A,$47</td>
+<td class="comment-1" rowspan="1"><span class="register">A</span> = attribute $47 =&gt; BRIGHT + white over black</td>
+</tr>
+<tr>
+<td class="routine-comment" colspan="5">
+<span id="39576"></span>
+<div class="comments">
+<div class="paragraph">
+This entry point is used by the routine at <a href="9965.html">9965</a>.
+</div>
+</div>
+</td>
+</tr>
+<tr>
+<td class="asm-label">noise_plot_attrs</td>
+<td class="address-2"><span id="39576"></span>9A98</td>
+<td class="instruction">LD HL,$5836</td>
+<td class="comment-1" rowspan="1">Screen attribute position (22,1)</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="39579"></span>9A9B</td>
+<td class="instruction">LD B,$05</td>
+<td class="comment-1" rowspan="1">5 rows</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="39581"></span>9A9D</td>
+<td class="instruction">LD DE,$001D</td>
+<td class="comment-1" rowspan="1">32 - 3 = row skip</td>
+</tr>
+<tr>
+<td class="asm-label">9aa0_loop</td>
+<td class="address-2"><span id="39584"></span>9AA0</td>
+<td class="instruction">LD (HL),A</td>
+<td class="comment-1" rowspan="7">Set four attribute bytes</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="39585"></span>9AA1</td>
+<td class="instruction">INC L</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="39586"></span>9AA2</td>
+<td class="instruction">LD (HL),A</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="39587"></span>9AA3</td>
+<td class="instruction">INC L</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="39588"></span>9AA4</td>
+<td class="instruction">LD (HL),A</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="39589"></span>9AA5</td>
+<td class="instruction">INC L</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="39590"></span>9AA6</td>
+<td class="instruction">LD (HL),A</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="39591"></span>9AA7</td>
+<td class="instruction">ADD HL,DE</td>
+<td class="comment-1" rowspan="1">Move to start of next row</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="39592"></span>9AA8</td>
+<td class="instruction">DJNZ <a href="9A55.html#39584">9aa0_loop</a></td>
+<td class="comment-1" rowspan="1">Loop while rows remain</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="39594"></span>9AAA</td>
+<td class="instruction">RET</td>
+<td class="comment-1" rowspan="1">Return</td>
+</tr>
+</table>
+<table class="asm-navigation">
+<tr>
+<td class="prev">
+Prev: <a href="99EC.html">99EC</a>
+</td>
+<td class="up">Up: <a href="../maps/all.html#39509">Map</a></td>
+<td class="next">
+Next: <a href="9AAB.html">9AAB</a>
+</td>
+</tr>
+</table>
+<footer>
+<div class="release">The incomplete Chase H.Q. disassembly 20230426</div>
+<div class="copyright">&copy; 1989 Ocean Software Ltd.</div>
+<div class="created">Created using <a href="https://skoolkit.ca">SkoolKit</a> 8.9.</div>
+</footer>
+</body>
+</html>

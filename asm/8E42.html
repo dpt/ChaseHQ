@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Chase H.Q.: Routine at 8E42</title>
+<meta charset="utf-8" />
+<link rel="stylesheet" type="text/css" href="../skoolkit.css" />
+</head>
+<body class="Asm-c">
+<table class="header">
+<tr>
+<td class="logo"><a href="../index.html">Chase H.Q.</a></td>
+<td class="page-header">Routines</td>
+</tr>
+</table>
+<table class="asm-navigation">
+<tr>
+<td class="prev">
+Prev: <a href="8E29.html">8E29</a>
+</td>
+<td class="up">Up: <a href="../maps/all.html#36418">Map</a></td>
+<td class="next">
+Next: <a href="8E6C.html">8E6C</a>
+</td>
+</tr>
+</table>
+<div class="description">8E42: Subroutine.</div>
+<table class="disassembly">
+<tr>
+<td class="routine-comment" colspan="5">
+<div class="details">
+<div class="paragraph">
+Used by the routines at <a href="8D8F.html">transition</a> and <a href="8E91.html">draw_mugshots</a>.
+</div>
+</div>
+</td>
+</tr>
+<tr>
+<td class="asm-label">sub_8e42</td>
+<td class="address-2"><span id="36418"></span>8E42</td>
+<td class="instruction">LD HL,$0000</td>
+<td class="comment-1" rowspan="1">Address of current message thing (frame delay, flags, attrs, bufaddr, attraddr, string)</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="36421"></span>8E45</td>
+<td class="instruction">LD B,$00</td>
+<td class="comment-1" rowspan="1">LD B,$00      ; self modified by ($8E58 increments it), ($8E8D resets it to 1)</td>
+</tr>
+<tr>
+<td class="asm-label">sub_8e42_0</td>
+<td class="address-2"><span id="36423"></span>8E47</td>
+<td class="instruction">DJNZ <a href="8E42.html#36444">sub_8e42_1</a></td>
+<td class="comment-1" rowspan="1">DJNZ $8E5C    ;</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="36425"></span>8E49</td>
+<td class="instruction">LD A,$14</td>
+<td class="comment-1" rowspan="1">LD A,$14      ; self modified by $8E4C, $8E51, ($8E84 resets it perhaps)</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="36427"></span>8E4B</td>
+<td class="instruction">DEC A</td>
+<td class="comment-1" rowspan="1">A--</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="36428"></span>8E4C</td>
+<td class="instruction">LD ($8E4A),A</td>
+<td class="comment-1" rowspan="1">LD ($8E4A),A  ; self modify</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="36431"></span>8E4F</td>
+<td class="instruction">RET NZ</td>
+<td class="comment-1" rowspan="1">Return if non-zero</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="36432"></span>8E50</td>
+<td class="instruction">LD A,(HL)</td>
+<td class="comment-1" rowspan="1">A = *HL</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="36433"></span>8E51</td>
+<td class="instruction">LD ($8E4A),A</td>
+<td class="comment-1" rowspan="1">LD ($8E4A),A  ; self modify</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="36436"></span>8E54</td>
+<td class="instruction">LD A,($8E46)</td>
+<td class="comment-1" rowspan="3">increment $8E46, affects TIME UP state if disabled</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="36439"></span>8E57</td>
+<td class="instruction">INC A</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="36440"></span>8E58</td>
+<td class="instruction">LD ($8E46),A</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="36443"></span>8E5B</td>
+<td class="instruction">INC B</td>
+<td class="comment-1" rowspan="1">B++</td>
+</tr>
+<tr>
+<td class="asm-label">sub_8e42_1</td>
+<td class="address-2"><span id="36444"></span>8E5C</td>
+<td class="instruction">INC HL</td>
+<td class="comment-1" rowspan="1">HL++</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="36445"></span>8E5D</td>
+<td class="instruction">LD A,(HL)</td>
+<td class="comment-1" rowspan="1">A = *HL</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="36446"></span>8E5E</td>
+<td class="instruction">AND A</td>
+<td class="comment-1" rowspan="1">AND A         ; test flags</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="36447"></span>8E5F</td>
+<td class="instruction">JR Z,<a href="8E42.html#36454">sub_8e42_1</a></td>
+<td class="comment-1" rowspan="1">JR Z,$8E66    ; exit</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="36449"></span>8E61</td>
+<td class="instruction">CALL <a href="8E6C.html">print_message</a></td>
+<td class="comment-1" rowspan="1">CALL $8E6C    ;</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="36452"></span>8E64</td>
+<td class="instruction">JR <a href="8E42.html#36423">sub_8e42_0</a></td>
+<td class="comment-1" rowspan="1">JR $8E47      ;</td>
+</tr>
+<tr>
+<td class="asm-label">sub_8e42_1</td>
+<td class="address-2"><span id="36454"></span>8E66</td>
+<td class="instruction">DEC HL</td>
+<td class="comment-1" rowspan="1">DEC HL        ;</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="36455"></span>8E67</td>
+<td class="instruction">LD A,(HL)</td>
+<td class="comment-1" rowspan="1">A = *HL</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="36456"></span>8E68</td>
+<td class="instruction">LD ($A231),A</td>
+<td class="comment-1" rowspan="1">LD ($A231),A  ;</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="36459"></span>8E6B</td>
+<td class="instruction">RET</td>
+<td class="comment-1" rowspan="1">Return</td>
+</tr>
+</table>
+<table class="asm-navigation">
+<tr>
+<td class="prev">
+Prev: <a href="8E29.html">8E29</a>
+</td>
+<td class="up">Up: <a href="../maps/all.html#36418">Map</a></td>
+<td class="next">
+Next: <a href="8E6C.html">8E6C</a>
+</td>
+</tr>
+</table>
+<footer>
+<div class="release">The incomplete Chase H.Q. disassembly 20230426</div>
+<div class="copyright">&copy; 1989 Ocean Software Ltd.</div>
+<div class="created">Created using <a href="https://skoolkit.ca">SkoolKit</a> 8.9.</div>
+</footer>
+</body>
+</html>

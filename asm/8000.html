@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Chase H.Q.: Data at 8000</title>
+<meta charset="utf-8" />
+<link rel="stylesheet" type="text/css" href="../skoolkit.css" />
+</head>
+<body class="Asm-b">
+<table class="header">
+<tr>
+<td class="logo"><a href="../index.html">Chase H.Q.</a></td>
+<td class="page-header">Data</td>
+</tr>
+</table>
+<table class="asm-navigation">
+<tr>
+<td class="prev">
+Prev: <a href="7E05.html">7E05</a>
+</td>
+<td class="up">Up: <a href="../maps/all.html#32768">Map</a></td>
+<td class="next">
+Next: <a href="8014.html">8014</a>
+</td>
+</tr>
+</table>
+<div class="description">8000: temporaries?</div>
+<table class="disassembly">
+<tr>
+<td class="routine-comment" colspan="5">
+<div class="details">
+</div>
+</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="32768"></span>8000</td>
+<td class="instruction">DEFB $00</td>
+<td class="comment-1" rowspan="1">Test mode enable flag (cheat mode)</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="32769"></span>8001</td>
+<td class="instruction">DEFB $00</td>
+<td class="comment-1" rowspan="1"></td>
+</tr>
+<tr>
+<td class="asm-label">score_bcd</td>
+<td class="address-1"><span id="32770"></span>8002</td>
+<td class="instruction">DEFB $00,$00,$00,$00</td>
+<td class="comment-1" rowspan="1">Score digits as BCD (4 bytes / 8 digits, little endian)</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="32774"></span>8006</td>
+<td class="instruction">DEFB $00</td>
+<td class="comment-1" rowspan="1">incremented on reset?</td>
+</tr>
+<tr>
+<td class="asm-label">stage_number</td>
+<td class="address-1"><span id="32775"></span>8007</td>
+<td class="instruction">DEFB $01</td>
+<td class="comment-1" rowspan="1">Stage number we're loading (1..5 or 6 for end credits)</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="32776"></span>8008</td>
+<td class="instruction">DEFB $CC,$A0,$4E,$83,$7A,$A2,$C3,$D6</td>
+<td class="comment-1" rowspan="1"></td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="32784"></span>8010</td>
+<td class="instruction">DEFB $A0,$C3,$79,$9C</td>
+<td class="comment-1" rowspan="1"></td>
+</tr>
+</table>
+<table class="asm-navigation">
+<tr>
+<td class="prev">
+Prev: <a href="7E05.html">7E05</a>
+</td>
+<td class="up">Up: <a href="../maps/all.html#32768">Map</a></td>
+<td class="next">
+Next: <a href="8014.html">8014</a>
+</td>
+</tr>
+</table>
+<footer>
+<div class="release">The incomplete Chase H.Q. disassembly 20230426</div>
+<div class="copyright">&copy; 1989 Ocean Software Ltd.</div>
+<div class="created">Created using <a href="https://skoolkit.ca">SkoolKit</a> 8.9.</div>
+</footer>
+</body>
+</html>

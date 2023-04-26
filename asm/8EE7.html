@@ -1,0 +1,533 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Chase H.Q.: Routine at 8EE7</title>
+<meta charset="utf-8" />
+<link rel="stylesheet" type="text/css" href="../skoolkit.css" />
+</head>
+<body class="Asm-c">
+<table class="header">
+<tr>
+<td class="logo"><a href="../index.html">Chase H.Q.</a></td>
+<td class="page-header">Routines</td>
+</tr>
+</table>
+<table class="asm-navigation">
+<tr>
+<td class="prev">
+Prev: <a href="8EB7.html">8EB7</a>
+</td>
+<td class="up">Up: <a href="../maps/all.html#36583">Map</a></td>
+<td class="next">
+Next: <a href="8F5F.html">8F5F</a>
+</td>
+</tr>
+</table>
+<div class="description">8EE7: Smash bar etc.</div>
+<table class="disassembly">
+<tr>
+<td class="routine-comment" colspan="5">
+<div class="details">
+<div class="paragraph">
+Used by the routine at <a href="8401.html">8401</a>.
+</div>
+</div>
+</td>
+</tr>
+<tr>
+<td class="asm-label">smash_bar_etc</td>
+<td class="address-2"><span id="36583"></span>8EE7</td>
+<td class="instruction">LD A,($A22E)</td>
+<td class="comment-1" rowspan="3">Return if the perp has not yet been sighted</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="36586"></span>8EEA</td>
+<td class="instruction">AND A</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="36587"></span>8EEB</td>
+<td class="instruction">RET Z</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="36588"></span>8EEC</td>
+<td class="instruction">LD A,($A230)</td>
+<td class="comment-1" rowspan="3">Return if $A230 is &gt;= 3</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="36591"></span>8EEF</td>
+<td class="instruction">CP $03</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="36593"></span>8EF1</td>
+<td class="instruction">RET NC</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="36594"></span>8EF2</td>
+<td class="instruction">LD HL,$F7A2</td>
+<td class="comment-1" rowspan="1">Back buffer address of bottom of bar</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="36597"></span>8EF5</td>
+<td class="instruction">LD DE,$0F10</td>
+<td class="comment-1" rowspan="1"><span class="register">D</span> = 15 = mask, <span class="register">E</span> = 16 = row stride</td>
+</tr>
+<tr>
+<td class="routine-comment" colspan="5">
+<span id="36600"></span>
+<div class="comments">
+<div class="paragraph">
+Draws bottom two rows
+</div>
+</div>
+</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="36600"></span>8EF8</td>
+<td class="instruction">LD B,$02</td>
+<td class="comment-1" rowspan="1">2 rows</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="36602"></span>8EFA</td>
+<td class="instruction">CALL <a href="8EE7.html#36679">draw_smash_bar_solid_bit</a></td>
+<td class="comment-1" rowspan="1">Call draw_smash_bar_solid_bit</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="36605"></span>8EFD</td>
+<td class="instruction">LD A,($A233)</td>
+<td class="comment-1" rowspan="1">Get smash_counter</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="36608"></span>8F00</td>
+<td class="instruction">AND A</td>
+<td class="comment-1" rowspan="2">Jump straight to drawing solid if it's zero (whole bar solid)</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="36609"></span>8F01</td>
+<td class="instruction">JR Z,<a href="8EE7.html#36617">draw_smash_bar_solid_top</a></td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="36611"></span>8F03</td>
+<td class="instruction">LD C,A</td>
+<td class="comment-1" rowspan="1">Set iterations in <span class="register">C</span> for call</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="36612"></span>8F04</td>
+<td class="instruction">EX AF,AF'</td>
+<td class="comment-1" rowspan="1">Preserve smash_counter</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="36613"></span>8F05</td>
+<td class="instruction">CALL <a href="8EE7.html#36627">draw_smash_bar_segment</a></td>
+<td class="comment-1" rowspan="1">Call draw_smash_bar_segment</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="36616"></span>8F08</td>
+<td class="instruction">EX AF,AF'</td>
+<td class="comment-1" rowspan="1">Restore smash_counter</td>
+</tr>
+<tr>
+<td class="asm-label">draw_smash_bar_solid_top</td>
+<td class="address-2"><span id="36617"></span>8F09</td>
+<td class="instruction">LD C,A</td>
+<td class="comment-1" rowspan="1">Iterations = smash_counter</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="36618"></span>8F0A</td>
+<td class="instruction">ADD A,A</td>
+<td class="comment-1" rowspan="5">B = ~(A * 3) + 63 = amount of solid rows to draw</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="36619"></span>8F0B</td>
+<td class="instruction">ADD A,C</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="36620"></span>8F0C</td>
+<td class="instruction">CPL</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="36621"></span>8F0D</td>
+<td class="instruction">ADD A,$3F</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="36623"></span>8F0F</td>
+<td class="instruction">LD B,A</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="36624"></span>8F10</td>
+<td class="instruction">JP <a href="8EE7.html#36679">draw_smash_bar_solid_bit</a></td>
+<td class="comment-1" rowspan="1">Call draw_smash_bar_solid_bit</td>
+</tr>
+<tr>
+<td class="asm-label">draw_smash_bar_segment</td>
+<td class="address-2"><span id="36627"></span>8F13</td>
+<td class="instruction">LD (HL),$81</td>
+<td class="comment-1" rowspan="1">Set 8 pixels to "X......X"</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="36629"></span>8F15</td>
+<td class="instruction">LD A,H</td>
+<td class="comment-1" rowspan="1">Save for checking in a moment</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="36630"></span>8F16</td>
+<td class="instruction">DEC H</td>
+<td class="comment-1" rowspan="1">Move to next scanline</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="36631"></span>8F17</td>
+<td class="instruction">AND D</td>
+<td class="comment-1" rowspan="1">Would it have rolled over into the top nibble?</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="36632"></span>8F18</td>
+<td class="instruction">JP NZ,<a href="8EE7.html#36648">draw_smash_bar_segment2</a></td>
+<td class="comment-1" rowspan="1">No - continue</td>
+</tr>
+<tr>
+<td class="routine-comment" colspan="5">
+<span id="36635"></span>
+<div class="comments">
+<div class="paragraph">
+It rolled over
+</div>
+</div>
+</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="36635"></span>8F1B</td>
+<td class="instruction">LD A,H</td>
+<td class="comment-1" rowspan="3">Put back the bit stolen by rollover</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="36636"></span>8F1C</td>
+<td class="instruction">ADD A,E</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="36637"></span>8F1D</td>
+<td class="instruction">LD H,A</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="36638"></span>8F1E</td>
+<td class="instruction">LD A,L</td>
+<td class="comment-1" rowspan="3">Move to next chunk of 16 scanlines</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="36639"></span>8F1F</td>
+<td class="instruction">SUB $20</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="36641"></span>8F21</td>
+<td class="instruction">LD L,A</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="36642"></span>8F22</td>
+<td class="instruction">JP NC,<a href="8EE7.html#36648">draw_smash_bar_segment2</a></td>
+<td class="comment-1" rowspan="1">Continue if it didn't roll over</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="36645"></span>8F25</td>
+<td class="instruction">LD A,H</td>
+<td class="comment-1" rowspan="3">Otherwise move to the next chunk of 128 scanlines (would put us outside the back buffer)</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="36646"></span>8F26</td>
+<td class="instruction">SUB E</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="36647"></span>8F27</td>
+<td class="instruction">LD H,A</td>
+</tr>
+<tr>
+<td class="asm-label">draw_smash_bar_segment2</td>
+<td class="address-2"><span id="36648"></span>8F28</td>
+<td class="instruction">LD (HL),$81</td>
+<td class="comment-1" rowspan="1">Set 8 pixels to "X......X"</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="36650"></span>8F2A</td>
+<td class="instruction">LD A,H</td>
+<td class="comment-1" rowspan="1">Save for checking in a moment</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="36651"></span>8F2B</td>
+<td class="instruction">DEC H</td>
+<td class="comment-1" rowspan="1">Move to next scanline</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="36652"></span>8F2C</td>
+<td class="instruction">AND D</td>
+<td class="comment-1" rowspan="1">Would it have rolled over into the top nibble?</td>
+</tr>
+<tr>
+<td class="routine-comment" colspan="5">
+<span id="36653"></span>
+<div class="comments">
+<div class="paragraph">
+It rolled over
+</div>
+</div>
+</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="36653"></span>8F2D</td>
+<td class="instruction">JP NZ,<a href="8EE7.html#36669">draw_smash_bar_segment_cont</a></td>
+<td class="comment-1" rowspan="1">No - continue</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="36656"></span>8F30</td>
+<td class="instruction">LD A,H</td>
+<td class="comment-1" rowspan="3">Put back the bit stolen by rollover</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="36657"></span>8F31</td>
+<td class="instruction">ADD A,E</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="36658"></span>8F32</td>
+<td class="instruction">LD H,A</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="36659"></span>8F33</td>
+<td class="instruction">LD A,L</td>
+<td class="comment-1" rowspan="3">Move to next chunk of 16 scanlines</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="36660"></span>8F34</td>
+<td class="instruction">SUB $20</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="36662"></span>8F36</td>
+<td class="instruction">LD L,A</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="36663"></span>8F37</td>
+<td class="instruction">JP NC,<a href="8EE7.html#36669">draw_smash_bar_segment_cont</a></td>
+<td class="comment-1" rowspan="1">Continue if it didn't roll over</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="36666"></span>8F3A</td>
+<td class="instruction">LD A,H</td>
+<td class="comment-1" rowspan="3">Otherwise move to the next chunk of 128 scanlines (would put us outside the back buffer)</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="36667"></span>8F3B</td>
+<td class="instruction">SUB E</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="36668"></span>8F3C</td>
+<td class="instruction">LD H,A</td>
+</tr>
+<tr>
+<td class="asm-label">draw_smash_bar_segment_cont</td>
+<td class="address-2"><span id="36669"></span>8F3D</td>
+<td class="instruction">LD B,$01</td>
+<td class="comment-1" rowspan="1">1 row</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="36671"></span>8F3F</td>
+<td class="instruction">CALL <a href="8EE7.html#36679">draw_smash_bar_solid_bit</a></td>
+<td class="comment-1" rowspan="1">Call draw_smash_bar_solid_bit</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="36674"></span>8F42</td>
+<td class="instruction">DEC C</td>
+<td class="comment-1" rowspan="2">Loop while iterations remain</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="36675"></span>8F43</td>
+<td class="instruction">JP NZ,<a href="8EE7.html#36627">draw_smash_bar_segment</a></td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="36678"></span>8F46</td>
+<td class="instruction">RET</td>
+<td class="comment-1" rowspan="1">Return</td>
+</tr>
+<tr>
+<td class="asm-label">draw_smash_bar_solid_bit</td>
+<td class="address-2"><span id="36679"></span>8F47</td>
+<td class="instruction">LD (HL),$FF</td>
+<td class="comment-1" rowspan="1">Set 8 pixels to solid black</td>
+</tr>
+<tr>
+<td class="routine-comment" colspan="5">
+<span id="36681"></span>
+<div class="comments">
+<div class="paragraph">
+Move to next scanline
+</div>
+</div>
+</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="36681"></span>8F49</td>
+<td class="instruction">LD A,H</td>
+<td class="comment-1" rowspan="1">Save for checking in a moment</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="36682"></span>8F4A</td>
+<td class="instruction">DEC H</td>
+<td class="comment-1" rowspan="1">Move to next scanline (visually upwards)</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="36683"></span>8F4B</td>
+<td class="instruction">AND D</td>
+<td class="comment-1" rowspan="1">Would it have rolled over into the top nibble?</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="36684"></span>8F4C</td>
+<td class="instruction">JP NZ,<a href="8EE7.html#36700">draw_smash_bar_cont</a></td>
+<td class="comment-1" rowspan="1">No - continue</td>
+</tr>
+<tr>
+<td class="routine-comment" colspan="5">
+<span id="36687"></span>
+<div class="comments">
+<div class="paragraph">
+It rolled over
+</div>
+</div>
+</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="36687"></span>8F4F</td>
+<td class="instruction">LD A,H</td>
+<td class="comment-1" rowspan="3">Put back the bit stolen by rollover</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="36688"></span>8F50</td>
+<td class="instruction">ADD A,E</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="36689"></span>8F51</td>
+<td class="instruction">LD H,A</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="36690"></span>8F52</td>
+<td class="instruction">LD A,L</td>
+<td class="comment-1" rowspan="3">Move to next chunk of 16 scanlines</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="36691"></span>8F53</td>
+<td class="instruction">SUB $20</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="36693"></span>8F55</td>
+<td class="instruction">LD L,A</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="36694"></span>8F56</td>
+<td class="instruction">JP NC,<a href="8EE7.html#36700">draw_smash_bar_cont</a></td>
+<td class="comment-1" rowspan="1">Continue if it didn't roll over</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="36697"></span>8F59</td>
+<td class="instruction">LD A,H</td>
+<td class="comment-1" rowspan="3">Otherwise move to the next chunk of 128 scanlines (would put us outside the back buffer)</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="36698"></span>8F5A</td>
+<td class="instruction">SUB E</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="36699"></span>8F5B</td>
+<td class="instruction">LD H,A</td>
+</tr>
+<tr>
+<td class="asm-label">draw_smash_bar_cont</td>
+<td class="address-2"><span id="36700"></span>8F5C</td>
+<td class="instruction">DJNZ <a href="8EE7.html#36679">draw_smash_bar_solid_bit</a></td>
+<td class="comment-1" rowspan="1">Loop while iterations remain</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="36702"></span>8F5E</td>
+<td class="instruction">RET</td>
+<td class="comment-1" rowspan="1">Return</td>
+</tr>
+</table>
+<table class="asm-navigation">
+<tr>
+<td class="prev">
+Prev: <a href="8EB7.html">8EB7</a>
+</td>
+<td class="up">Up: <a href="../maps/all.html#36583">Map</a></td>
+<td class="next">
+Next: <a href="8F5F.html">8F5F</a>
+</td>
+</tr>
+</table>
+<footer>
+<div class="release">The incomplete Chase H.Q. disassembly 20230426</div>
+<div class="copyright">&copy; 1989 Ocean Software Ltd.</div>
+<div class="created">Created using <a href="https://skoolkit.ca">SkoolKit</a> 8.9.</div>
+</footer>
+</body>
+</html>

@@ -1,0 +1,330 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Chase H.Q.: Routine at B4F0</title>
+<meta charset="utf-8" />
+<link rel="stylesheet" type="text/css" href="../skoolkit.css" />
+</head>
+<body class="Asm-c">
+<table class="header">
+<tr>
+<td class="logo"><a href="../index.html">Chase H.Q.</a></td>
+<td class="page-header">Routines</td>
+</tr>
+</table>
+<table class="asm-navigation">
+<tr>
+<td class="prev">
+Prev: <a href="B4CC.html">B4CC</a>
+</td>
+<td class="up">Up: <a href="../maps/all.html#46320">Map</a></td>
+<td class="next">
+Next: <a href="B549.html">B549</a>
+</td>
+</tr>
+</table>
+<div class="description">B4F0: Smash handling</div>
+<table class="disassembly">
+<tr>
+<td class="routine-comment" colspan="5">
+<div class="details">
+</div>
+</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-2"><span id="46320"></span>B4F0</td>
+<td class="instruction">LD A,$00</td>
+<td class="comment-1" rowspan="4">Cycle <span class="register">A</span> one step through 0..3 each time the routine is entered</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="46322"></span>B4F2</td>
+<td class="instruction">INC A</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="46323"></span>B4F3</td>
+<td class="instruction">AND $03</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="46325"></span>B4F5</td>
+<td class="instruction">LD ($B4F1),A</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="46328"></span>B4F8</td>
+<td class="instruction">RLCA</td>
+<td class="comment-1" rowspan="9">*$B55C = $CE33 + <span class="register">A</span> * 6</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="46329"></span>B4F9</td>
+<td class="instruction">LD C,A</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="46330"></span>B4FA</td>
+<td class="instruction">RLCA</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="46331"></span>B4FB</td>
+<td class="instruction">ADD A,C</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="46332"></span>B4FC</td>
+<td class="instruction">LD C,A</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="46333"></span>B4FD</td>
+<td class="instruction">LD HL,$CE33</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="46336"></span>B500</td>
+<td class="instruction">LD B,$00</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="46338"></span>B502</td>
+<td class="instruction">ADD HL,BC</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="46339"></span>B503</td>
+<td class="instruction">LD ($B55C),HL</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="46342"></span>B506</td>
+<td class="instruction">LD A,$09</td>
+<td class="comment-1" rowspan="2">$B54A = 9</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="46344"></span>B508</td>
+<td class="instruction">LD ($B54A),A</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="46347"></span>B50B</td>
+<td class="instruction">LD A,($A233)</td>
+<td class="comment-1" rowspan="2">Load and increment smash_counter</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="46350"></span>B50E</td>
+<td class="instruction">INC A</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="46351"></span>B50F</td>
+<td class="instruction">CP $14</td>
+<td class="comment-1" rowspan="1">20 hits? [POKE $B50F for Single hit capture]</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="46353"></span>B511</td>
+<td class="instruction">JP NC,<a href="8C3A.html">fully_smashed</a></td>
+<td class="comment-1" rowspan="1">Exit via fully_smashed if so</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="46356"></span>B514</td>
+<td class="instruction">CP $13</td>
+<td class="comment-1" rowspan="1">19 hits?</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="46358"></span>B516</td>
+<td class="instruction">JR NZ,<a href="B4F0.html#46370">j_b522</a></td>
+<td class="comment-1" rowspan="1">Goto j_b522 if not</td>
+</tr>
+<tr>
+<td class="routine-comment" colspan="5">
+<span id="46360"></span>
+<div class="comments">
+<div class="paragraph">
+We have 19 hits
+</div>
+</div>
+</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="46360"></span>B518</td>
+<td class="instruction">PUSH AF</td>
+<td class="comment-1" rowspan="1"></td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="46361"></span>B519</td>
+<td class="instruction">LD A,$0A</td>
+<td class="comment-1" rowspan="1">A = 10</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="46363"></span>B51B</td>
+<td class="instruction">LD HL,$9926</td>
+<td class="comment-1" rowspan="1">HL = raymond_says_one_more_time</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="46366"></span>B51E</td>
+<td class="instruction">CALL <a href="9945.html">chatter</a></td>
+<td class="comment-1" rowspan="1">Call chatter</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="46369"></span>B521</td>
+<td class="instruction">POP AF</td>
+<td class="comment-1" rowspan="1"></td>
+</tr>
+<tr>
+<td class="asm-label">j_b522</td>
+<td class="address-2"><span id="46370"></span>B522</td>
+<td class="instruction">LD ($A233),A</td>
+<td class="comment-1" rowspan="1">Set smash_counter to <span class="register">A</span></td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="46373"></span>B525</td>
+<td class="instruction">LD C,$00</td>
+<td class="comment-1" rowspan="3">Set smash_factor to zero if smash_counter is zero</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="46375"></span>B527</td>
+<td class="instruction">AND A</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="46376"></span>B528</td>
+<td class="instruction">JR Z,<a href="B4F0.html#46404">set_smash_factor</a></td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="46378"></span>B52A</td>
+<td class="instruction">INC C</td>
+<td class="comment-1" rowspan="3">Set smash_factor to 1 if smash_counter &lt; 4</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="46379"></span>B52B</td>
+<td class="instruction">CP $04</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="46381"></span>B52D</td>
+<td class="instruction">JR C,<a href="B4F0.html#46404">set_smash_factor</a></td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="46383"></span>B52F</td>
+<td class="instruction">INC C</td>
+<td class="comment-1" rowspan="3">Set smash_factor to 2 if smash_counter &lt; 7</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="46384"></span>B530</td>
+<td class="instruction">CP $07</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="46386"></span>B532</td>
+<td class="instruction">JR C,<a href="B4F0.html#46404">set_smash_factor</a></td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="46388"></span>B534</td>
+<td class="instruction">INC C</td>
+<td class="comment-1" rowspan="3">Set smash_factor to 3 if smash_counter &lt; 11</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="46389"></span>B535</td>
+<td class="instruction">CP $0B</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="46391"></span>B537</td>
+<td class="instruction">JR C,<a href="B4F0.html#46404">set_smash_factor</a></td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="46393"></span>B539</td>
+<td class="instruction">INC C</td>
+<td class="comment-1" rowspan="3">Set smash_factor to 4 if smash_counter &lt; 14</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="46394"></span>B53A</td>
+<td class="instruction">CP $0E</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="46396"></span>B53C</td>
+<td class="instruction">JR C,<a href="B4F0.html#46404">set_smash_factor</a></td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="46398"></span>B53E</td>
+<td class="instruction">INC C</td>
+<td class="comment-1" rowspan="3">Set smash_factor to 5 if smash_counter &lt; 17</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="46399"></span>B53F</td>
+<td class="instruction">CP $11</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="46401"></span>B541</td>
+<td class="instruction">JR C,<a href="B4F0.html#46404">set_smash_factor</a></td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="46403"></span>B543</td>
+<td class="instruction">INC C</td>
+<td class="comment-1" rowspan="1">Otherwise set smash_factor to 6</td>
+</tr>
+<tr>
+<td class="asm-label">set_smash_factor</td>
+<td class="address-2"><span id="46404"></span>B544</td>
+<td class="instruction">LD A,C</td>
+<td class="comment-1" rowspan="2">Set smash_factor to <span class="register">C</span></td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="46405"></span>B545</td>
+<td class="instruction">LD ($A232),A</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="46408"></span>B548</td>
+<td class="instruction">RET</td>
+<td class="comment-1" rowspan="1">Return</td>
+</tr>
+</table>
+<table class="asm-navigation">
+<tr>
+<td class="prev">
+Prev: <a href="B4CC.html">B4CC</a>
+</td>
+<td class="up">Up: <a href="../maps/all.html#46320">Map</a></td>
+<td class="next">
+Next: <a href="B549.html">B549</a>
+</td>
+</tr>
+</table>
+<footer>
+<div class="release">The incomplete Chase H.Q. disassembly 20230426</div>
+<div class="copyright">&copy; 1989 Ocean Software Ltd.</div>
+<div class="created">Created using <a href="https://skoolkit.ca">SkoolKit</a> 8.9.</div>
+</footer>
+</body>
+</html>

@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Chase H.Q.: Routine at 9F99</title>
+<meta charset="utf-8" />
+<link rel="stylesheet" type="text/css" href="../skoolkit.css" />
+</head>
+<body class="Asm-c">
+<table class="header">
+<tr>
+<td class="logo"><a href="../index.html">Chase H.Q.</a></td>
+<td class="page-header">Routines</td>
+</tr>
+</table>
+<table class="asm-navigation">
+<tr>
+<td class="prev">
+Prev: <a href="9F47.html">9F47</a>
+</td>
+<td class="up">Up: <a href="../maps/all.html#40857">Map</a></td>
+<td class="next">
+Next: <a href="9FB4.html">9FB4</a>
+</td>
+</tr>
+</table>
+<div class="description">9F99: Another draw string entry point?</div>
+<table class="disassembly">
+<tr>
+<td class="routine-comment" colspan="5">
+<div class="details">
+<div class="paragraph">
+Used by the routine at <a href="8E6C.html">print_message</a>.
+</div>
+</div>
+</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-2"><span id="40857"></span>9F99</td>
+<td class="instruction">PUSH BC</td>
+<td class="comment-1" rowspan="1"></td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="40858"></span>9F9A</td>
+<td class="instruction">EXX</td>
+<td class="comment-1" rowspan="1">Bank</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="40859"></span>9F9B</td>
+<td class="instruction">POP HL</td>
+<td class="comment-1" rowspan="1">HL' = BC   so BC is ptr to text</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="40860"></span>9F9C</td>
+<td class="instruction">LD DE,$0020</td>
+<td class="comment-1" rowspan="1">DE = 32</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="40863"></span>9F9F</td>
+<td class="instruction">LD C,A</td>
+<td class="comment-1" rowspan="1">C = A</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="40864"></span>9FA0</td>
+<td class="instruction">EXX</td>
+<td class="comment-1" rowspan="1">Bank</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="40865"></span>9FA1</td>
+<td class="instruction">JR <a href="9F99.html#40870">draw_string_entry</a></td>
+<td class="comment-1" rowspan="1">goto draw_string_entry</td>
+</tr>
+<tr>
+<td class="routine-comment" colspan="5">
+<span id="40867"></span>
+<div class="comments">
+<div class="paragraph">
+The string is terminated by setting the topmost bit of the final character.
+</div>
+</div>
+</td>
+</tr>
+<tr>
+<td class="asm-label">draw_string</td>
+<td class="address-2"><span id="40867"></span>9FA3</td>
+<td class="instruction">LD A,$01</td>
+<td class="comment-1" rowspan="2">A' = 1  Set drawing type (single height, plots to real screen)</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="40869"></span>9FA5</td>
+<td class="instruction">EX AF,AF'</td>
+</tr>
+<tr>
+<td class="asm-label">draw_string_entry</td>
+<td class="address-2"><span id="40870"></span>9FA6</td>
+<td class="instruction">LD A,(HL)</td>
+<td class="comment-1" rowspan="5">Load a byte and mask off the text part</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="40871"></span>9FA7</td>
+<td class="instruction">AND $7F</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="40873"></span>9FA9</td>
+<td class="instruction">PUSH HL</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="40874"></span>9FAA</td>
+<td class="instruction">CALL <a href="9FB4.html">draw_char</a></td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="40877"></span>9FAD</td>
+<td class="instruction">POP HL</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="40878"></span>9FAE</td>
+<td class="instruction">BIT 7,(HL)</td>
+<td class="comment-1" rowspan="4">Was bit 7 set?, quit if so, otherwise loop</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="40880"></span>9FB0</td>
+<td class="instruction">INC HL</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="40881"></span>9FB1</td>
+<td class="instruction">RET NZ</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="40882"></span>9FB2</td>
+<td class="instruction">JR <a href="9F99.html#40870">draw_string_entry</a></td>
+</tr>
+</table>
+<table class="asm-navigation">
+<tr>
+<td class="prev">
+Prev: <a href="9F47.html">9F47</a>
+</td>
+<td class="up">Up: <a href="../maps/all.html#40857">Map</a></td>
+<td class="next">
+Next: <a href="9FB4.html">9FB4</a>
+</td>
+</tr>
+</table>
+<footer>
+<div class="release">The incomplete Chase H.Q. disassembly 20230426</div>
+<div class="copyright">&copy; 1989 Ocean Software Ltd.</div>
+<div class="created">Created using <a href="https://skoolkit.ca">SkoolKit</a> 8.9.</div>
+</footer>
+</body>
+</html>

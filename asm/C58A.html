@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Chase H.Q.: Routine at C58A</title>
+<meta charset="utf-8" />
+<link rel="stylesheet" type="text/css" href="../skoolkit.css" />
+</head>
+<body class="Asm-c">
+<table class="header">
+<tr>
+<td class="logo"><a href="../index.html">Chase H.Q.</a></td>
+<td class="page-header">Routines</td>
+</tr>
+</table>
+<table class="asm-navigation">
+<tr>
+<td class="prev">
+Prev: <a href="C57C.html">C57C</a>
+</td>
+<td class="up">Up: <a href="../maps/all.html#50570">Map</a></td>
+<td class="next">
+Next: <a href="C598.html">C598</a>
+</td>
+</tr>
+</table>
+<div class="description">C58A: ditto</div>
+<table class="disassembly">
+<tr>
+<td class="routine-comment" colspan="5">
+<div class="details">
+<div class="paragraph">
+Used by the routine at <a href="C452.html">C452</a>.
+</div>
+</div>
+</td>
+</tr>
+<tr>
+<td class="address-2"><span id="50570"></span>C58A</td>
+<td class="instruction">LD A,E</td>
+<td class="comment-1" rowspan="3">E -= 32</td>
+</tr>
+<tr>
+<td class="address-1"><span id="50571"></span>C58B</td>
+<td class="instruction">SUB $20</td>
+</tr>
+<tr>
+<td class="address-1"><span id="50573"></span>C58D</td>
+<td class="instruction">LD E,A</td>
+</tr>
+<tr>
+<td class="address-1"><span id="50574"></span>C58E</td>
+<td class="instruction">JP C,<a href="C452.html#50533">$C565</a></td>
+<td class="comment-1" rowspan="1">jump if it went -ve</td>
+</tr>
+<tr>
+<td class="address-1"><span id="50577"></span>C591</td>
+<td class="instruction">LD A,D</td>
+<td class="comment-1" rowspan="3">D += 16</td>
+</tr>
+<tr>
+<td class="address-1"><span id="50578"></span>C592</td>
+<td class="instruction">ADD A,$10</td>
+</tr>
+<tr>
+<td class="address-1"><span id="50580"></span>C594</td>
+<td class="instruction">LD D,A</td>
+</tr>
+<tr>
+<td class="address-1"><span id="50581"></span>C595</td>
+<td class="instruction">JP <a href="C452.html#50533">$C565</a></td>
+<td class="comment-1" rowspan="1">jump</td>
+</tr>
+</table>
+<table class="asm-navigation">
+<tr>
+<td class="prev">
+Prev: <a href="C57C.html">C57C</a>
+</td>
+<td class="up">Up: <a href="../maps/all.html#50570">Map</a></td>
+<td class="next">
+Next: <a href="C598.html">C598</a>
+</td>
+</tr>
+</table>
+<footer>
+<div class="release">The incomplete Chase H.Q. disassembly 20230426</div>
+<div class="copyright">&copy; 1989 Ocean Software Ltd.</div>
+<div class="created">Created using <a href="https://skoolkit.ca">SkoolKit</a> 8.9.</div>
+</footer>
+</body>
+</html>

@@ -1,0 +1,1212 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Chase H.Q.: Routine at 9E11</title>
+<meta charset="utf-8" />
+<link rel="stylesheet" type="text/css" href="../skoolkit.css" />
+</head>
+<body class="Asm-c">
+<table class="header">
+<tr>
+<td class="logo"><a href="../index.html">Chase H.Q.</a></td>
+<td class="page-header">Routines</td>
+</tr>
+</table>
+<table class="asm-navigation">
+<tr>
+<td class="prev">
+Prev: <a href="9DF4.html">9DF4</a>
+</td>
+<td class="up">Up: <a href="../maps/all.html#40465">Map</a></td>
+<td class="next">
+Next: <a href="9F47.html">9F47</a>
+</td>
+</tr>
+</table>
+<div class="description">9E11: Draws the turbo sprites and updates the displayed scores.</div>
+<table class="disassembly">
+<tr>
+<td class="routine-comment" colspan="5">
+<div class="details">
+<div class="paragraph">
+Used by the routine at <a href="9D62.html">9D62</a>.
+</div>
+</div>
+</td>
+</tr>
+<tr>
+<td class="asm-label">plot_turbos_and_scores</td>
+<td class="address-2"><span id="40465"></span>9E11</td>
+<td class="instruction">LD A,($A170)</td>
+<td class="comment-1" rowspan="3">If no turbo boosts remain jump to plot_scores_only</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="40468"></span>9E14</td>
+<td class="instruction">AND A</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="40469"></span>9E15</td>
+<td class="instruction">JR Z,<a href="9E11.html#40571">plot_speed_only</a></td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="40471"></span>9E17</td>
+<td class="instruction">LD C,A</td>
+<td class="comment-1" rowspan="1">Preserve number of turbo boosts in <span class="register">C</span></td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="40472"></span>9E18</td>
+<td class="instruction">LD A,($A24E)</td>
+<td class="comment-1" rowspan="2">Read boost time remaining and set flags</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="40475"></span>9E1B</td>
+<td class="instruction">AND A</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="40476"></span>9E1C</td>
+<td class="instruction">LD HL,$76F0</td>
+<td class="comment-1" rowspan="1">Point <span class="register">HL</span> at base of turbo sprites</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="40479"></span>9E1F</td>
+<td class="instruction">JR Z,<a href="9E11.html#40501">plot_turbo_setup</a></td>
+<td class="comment-1" rowspan="1">Avoid frame increment and address calculation if possible</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="40481"></span>9E21</td>
+<td class="instruction">LD A,$00</td>
+<td class="comment-1" rowspan="5">Get frame number (0, 1 or 2)</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="40483"></span>9E23</td>
+<td class="instruction">INC A</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="40484"></span>9E24</td>
+<td class="instruction">CP $03</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="40486"></span>9E26</td>
+<td class="instruction">JR NZ,<a href="9E11.html#40489">plot_turbos_and_scores_0</a></td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="40488"></span>9E28</td>
+<td class="instruction">XOR A</td>
+</tr>
+<tr>
+<td class="asm-label">plot_turbos_and_scores_0</td>
+<td class="address-2"><span id="40489"></span>9E29</td>
+<td class="instruction">LD ($9E22),A</td>
+<td class="comment-1" rowspan="1">Self modify frame number</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="40492"></span>9E2C</td>
+<td class="instruction">JR Z,<a href="9E11.html#40501">plot_turbo_setup</a></td>
+<td class="comment-1" rowspan="1">Avoid frame address calculation if possible</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="40494"></span>9E2E</td>
+<td class="instruction">LD DE,$0038</td>
+<td class="comment-1" rowspan="1">56 bytes per frame</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="40497"></span>9E31</td>
+<td class="instruction">LD B,A</td>
+<td class="comment-1" rowspan="3">Calculate the frame address</td>
+</tr>
+<tr>
+<td class="asm-label">plot_turbos_and_scores_1</td>
+<td class="address-2"><span id="40498"></span>9E32</td>
+<td class="instruction">ADD HL,DE</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="40499"></span>9E33</td>
+<td class="instruction">DJNZ <a href="9E11.html#40498">plot_turbos_and_scores_1</a></td>
+</tr>
+<tr>
+<td class="asm-label">plot_turbo_setup</td>
+<td class="address-2"><span id="40501"></span>9E35</td>
+<td class="instruction">LD ($9E45),HL</td>
+<td class="comment-1" rowspan="1">Self modify $9E44 to load <span class="register">SP</span> with address of frame</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="40504"></span>9E38</td>
+<td class="instruction">LD ($9E79),SP</td>
+<td class="comment-1" rowspan="1">Self modify $9E79 to restore <span class="register">SP</span> once drawing is done</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="40508"></span>9E3C</td>
+<td class="instruction">LD A,$E1</td>
+<td class="comment-1" rowspan="1">Low byte of back buffer draw address</td>
+</tr>
+<tr>
+<td class="routine-comment" colspan="5">
+<span id="40510"></span>
+<div class="comments">
+<div class="paragraph">
+Draw a whole frame of turbo sprite.
+</div>
+<div class="paragraph">
+Note that the frame data is stored in memory inverted (bottom first), so we draw the bottom row first and then proceed upwards.
+</div>
+</div>
+</td>
+</tr>
+<tr>
+<td class="asm-label">plot_turbo_loops</td>
+<td class="address-2"><span id="40510"></span>9E3E</td>
+<td class="instruction">LD SP,$76F0</td>
+<td class="comment-1" rowspan="1">Base address of frames</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="40513"></span>9E41</td>
+<td class="instruction">DEC C</td>
+<td class="comment-1" rowspan="1">Temporarily decrement the number of turbos remaining to draw</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="40514"></span>9E42</td>
+<td class="instruction">JR NZ,<a href="9E11.html#40519">plot_turbos_and_scores_2</a></td>
+<td class="comment-1" rowspan="1">All but the final turbo sprite use the zeroth frame</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="40516"></span>9E44</td>
+<td class="instruction">LD SP,$0000</td>
+<td class="comment-1" rowspan="1"><span class="register">SP</span> is pointed at frame data (self modified)</td>
+</tr>
+<tr>
+<td class="asm-label">plot_turbos_and_scores_2</td>
+<td class="address-2"><span id="40519"></span>9E47</td>
+<td class="instruction">INC C</td>
+<td class="comment-1" rowspan="1">Restore number of turbos</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="40520"></span>9E48</td>
+<td class="instruction">LD H,$FE</td>
+<td class="comment-1" rowspan="2">Form back buffer position</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="40522"></span>9E4A</td>
+<td class="instruction">LD L,A</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="40523"></span>9E4B</td>
+<td class="instruction">EX AF,AF'</td>
+<td class="comment-1" rowspan="1">Preserve partial back buffer position</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="40524"></span>9E4C</td>
+<td class="instruction">LD B,$0E</td>
+<td class="comment-1" rowspan="1">Height of frame</td>
+</tr>
+<tr>
+<td class="routine-comment" colspan="5">
+<span id="40526"></span>
+<div class="comments">
+<div class="paragraph">
+Draw a scanline of frame.
+</div>
+</div>
+</td>
+</tr>
+<tr>
+<td class="asm-label">plot_turbo_scanline</td>
+<td class="address-2"><span id="40526"></span>9E4E</td>
+<td class="instruction">POP DE</td>
+<td class="comment-1" rowspan="1">Pop some frame data off the stack (E is mask data, D is bitmap data)</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="40527"></span>9E4F</td>
+<td class="instruction">LD A,(HL)</td>
+<td class="comment-1" rowspan="4">Write to screen: Screen = (Screen AND Mask) OR Bitmap</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="40528"></span>9E50</td>
+<td class="instruction">AND E</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="40529"></span>9E51</td>
+<td class="instruction">OR D</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="40530"></span>9E52</td>
+<td class="instruction">LD (HL),A</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="40531"></span>9E53</td>
+<td class="instruction">INC L</td>
+<td class="comment-1" rowspan="1">Advance screen address to next column</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="40532"></span>9E54</td>
+<td class="instruction">POP DE</td>
+<td class="comment-1" rowspan="5">(Repeat)</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="40533"></span>9E55</td>
+<td class="instruction">LD A,(HL)</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="40534"></span>9E56</td>
+<td class="instruction">AND E</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="40535"></span>9E57</td>
+<td class="instruction">OR D</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="40536"></span>9E58</td>
+<td class="instruction">LD (HL),A</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="40537"></span>9E59</td>
+<td class="instruction">DEC L</td>
+<td class="comment-1" rowspan="1">Step back</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="40538"></span>9E5A</td>
+<td class="instruction">LD A,H</td>
+<td class="comment-1" rowspan="14">Move up a row (standard pattern)</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="40539"></span>9E5B</td>
+<td class="instruction">DEC H</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="40540"></span>9E5C</td>
+<td class="instruction">AND $0F</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="40542"></span>9E5E</td>
+<td class="instruction">JP NZ,<a href="9E11.html#40560">plot_turbo_continue</a></td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="40545"></span>9E61</td>
+<td class="instruction">LD A,H</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="40546"></span>9E62</td>
+<td class="instruction">ADD A,$10</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="40548"></span>9E64</td>
+<td class="instruction">LD H,A</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="40549"></span>9E65</td>
+<td class="instruction">LD A,L</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="40550"></span>9E66</td>
+<td class="instruction">SUB $20</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="40552"></span>9E68</td>
+<td class="instruction">LD L,A</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="40553"></span>9E69</td>
+<td class="instruction">JP NC,<a href="9E11.html#40560">plot_turbo_continue</a></td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="40556"></span>9E6C</td>
+<td class="instruction">LD A,H</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="40557"></span>9E6D</td>
+<td class="instruction">SUB $10</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="40559"></span>9E6F</td>
+<td class="instruction">LD H,A</td>
+</tr>
+<tr>
+<td class="asm-label">plot_turbo_continue</td>
+<td class="address-2"><span id="40560"></span>9E70</td>
+<td class="instruction">DJNZ <a href="9E11.html#40526">plot_turbo_scanline</a></td>
+<td class="comment-1" rowspan="1">Loop until out of rows</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="40562"></span>9E72</td>
+<td class="instruction">EX AF,AF'</td>
+<td class="comment-1" rowspan="1">Restore back buffer draw address</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="40563"></span>9E73</td>
+<td class="instruction">ADD A,$02</td>
+<td class="comment-1" rowspan="1">Advance screen address to next turbo position</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="40565"></span>9E75</td>
+<td class="instruction">DEC C</td>
+<td class="comment-1" rowspan="1">Decrement number of turbos</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="40566"></span>9E76</td>
+<td class="instruction">JR NZ,<a href="9E11.html#40510">plot_turbo_loops</a></td>
+<td class="comment-1" rowspan="1">Loop until none are left</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="40568"></span>9E78</td>
+<td class="instruction">LD SP,$0000</td>
+<td class="comment-1" rowspan="1">Restore <span class="register">SP</span></td>
+</tr>
+<tr>
+<td class="asm-label">plot_speed_only</td>
+<td class="address-2"><span id="40571"></span>9E7B</td>
+<td class="instruction">LD DE,$4132</td>
+<td class="comment-1" rowspan="1">Point <span class="register">DE</span> at speed digits screen position (144, 9)</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="40574"></span>9E7E</td>
+<td class="instruction">EXX</td>
+<td class="comment-1" rowspan="1">Bank</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="40575"></span>9E7F</td>
+<td class="instruction">LD DE,($A24A)</td>
+<td class="comment-1" rowspan="1">Load speed into <span class="register">DE</span></td>
+</tr>
+<tr>
+<td class="routine-comment" colspan="5">
+<span id="40579"></span>
+<div class="comments">
+<div class="paragraph">
+Scale internal speed (0..511) to displayed speed by multiplying by 82 then discarding the bottom two digits.
+</div>
+</div>
+</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="40579"></span>9E83</td>
+<td class="instruction">LD HL,$0000</td>
+<td class="comment-1" rowspan="1">Initialise counter</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="40582"></span>9E86</td>
+<td class="instruction">LD B,$07</td>
+<td class="comment-1" rowspan="1">Do 7 digits / iterations</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="40584"></span>9E88</td>
+<td class="instruction">LD A,$52</td>
+<td class="comment-1" rowspan="1">Multiplier of 82 (a percentage: speed * multiplier / 100 = displayed speed)</td>
+</tr>
+<tr>
+<td class="asm-label">plot_turbos_and_scores_3</td>
+<td class="address-2"><span id="40586"></span>9E8A</td>
+<td class="instruction">RLA</td>
+<td class="comment-1" rowspan="1">Shift one bit out</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="40587"></span>9E8B</td>
+<td class="instruction">JR NC,<a href="9E11.html#40590">plot_speed_multiply_loop</a></td>
+<td class="comment-1" rowspan="1">Jump if not adding</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="40589"></span>9E8D</td>
+<td class="instruction">ADD HL,DE</td>
+<td class="comment-1" rowspan="1">Add</td>
+</tr>
+<tr>
+<td class="asm-label">plot_speed_multiply_loop</td>
+<td class="address-2"><span id="40590"></span>9E8E</td>
+<td class="instruction">ADD HL,HL</td>
+<td class="comment-1" rowspan="1">Double</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="40591"></span>9E8F</td>
+<td class="instruction">DJNZ <a href="9E11.html#40586">plot_turbos_and_scores_3</a></td>
+<td class="comment-1" rowspan="1">Loop</td>
+</tr>
+<tr>
+<td class="routine-comment" colspan="5">
+<span id="40593"></span>
+<div class="comments">
+<div class="paragraph">
+Count 10,000s.
+</div>
+</div>
+</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="40593"></span>9E91</td>
+<td class="instruction">LD BC,$2710</td>
+<td class="comment-1" rowspan="1">10000</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="40596"></span>9E94</td>
+<td class="instruction">LD DE,$FFFF</td>
+<td class="comment-1" rowspan="1">Initialise <span class="register">D</span> and <span class="register">E</span> counters to -1</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="40599"></span>9E97</td>
+<td class="instruction">XOR A</td>
+<td class="comment-1" rowspan="1">?Clear carry flag?</td>
+</tr>
+<tr>
+<td class="asm-label">plot_speed_10000s_loop</td>
+<td class="address-2"><span id="40600"></span>9E98</td>
+<td class="instruction">INC D</td>
+<td class="comment-1" rowspan="1">Increment counter</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="40601"></span>9E99</td>
+<td class="instruction">SBC HL,BC</td>
+<td class="comment-1" rowspan="1">Decrease total by 10,000</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="40603"></span>9E9B</td>
+<td class="instruction">JR NC,<a href="9E11.html#40600">plot_speed_10000s_loop</a></td>
+<td class="comment-1" rowspan="1">Loop until <span class="register">HL</span> goes negative</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="40605"></span>9E9D</td>
+<td class="instruction">ADD HL,BC</td>
+<td class="comment-1" rowspan="1">Correct for overshoot</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="40606"></span>9E9E</td>
+<td class="instruction">AND A</td>
+<td class="comment-1" rowspan="1">?Clear carry flag?</td>
+</tr>
+<tr>
+<td class="routine-comment" colspan="5">
+<span id="40607"></span>
+<div class="comments">
+<div class="paragraph">
+Count 1,000s.
+</div>
+</div>
+</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="40607"></span>9E9F</td>
+<td class="instruction">LD BC,$03E8</td>
+<td class="comment-1" rowspan="1">1000</td>
+</tr>
+<tr>
+<td class="asm-label">plot_speed_1000s_loop</td>
+<td class="address-2"><span id="40610"></span>9EA2</td>
+<td class="instruction">INC E</td>
+<td class="comment-1" rowspan="1">Increment counter</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="40611"></span>9EA3</td>
+<td class="instruction">SBC HL,BC</td>
+<td class="comment-1" rowspan="1">Decrease total by 1,000</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="40613"></span>9EA5</td>
+<td class="instruction">JR NC,<a href="9E11.html#40610">plot_speed_1000s_loop</a></td>
+<td class="comment-1" rowspan="1">Loop until total goes negative</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="40615"></span>9EA7</td>
+<td class="instruction">ADD HL,BC</td>
+<td class="comment-1" rowspan="1">Correct for overshoot</td>
+</tr>
+<tr>
+<td class="routine-comment" colspan="5">
+<span id="40616"></span>
+<div class="comments">
+<div class="paragraph">
+Count 100s.
+</div>
+</div>
+</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="40616"></span>9EA8</td>
+<td class="instruction">XOR A</td>
+<td class="comment-1" rowspan="1">Initialise counter (to zero not -1 as in previous cases)</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="40617"></span>9EA9</td>
+<td class="instruction">LD BC,$0064</td>
+<td class="comment-1" rowspan="1">100</td>
+</tr>
+<tr>
+<td class="asm-label">plot_speed_100s_loop</td>
+<td class="address-2"><span id="40620"></span>9EAC</td>
+<td class="instruction">INC A</td>
+<td class="comment-1" rowspan="1">Increment counter</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="40621"></span>9EAD</td>
+<td class="instruction">SBC HL,BC</td>
+<td class="comment-1" rowspan="1">Decrease total by 100</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="40623"></span>9EAF</td>
+<td class="instruction">JR NC,<a href="9E11.html#40620">plot_speed_100s_loop</a></td>
+<td class="comment-1" rowspan="1">Loop until total goes negative</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="40625"></span>9EB1</td>
+<td class="instruction">DEC A</td>
+<td class="comment-1" rowspan="1">Correct for starting early</td>
+</tr>
+<tr>
+<td class="routine-comment" colspan="5">
+<span id="40626"></span>
+<div class="comments">
+<div class="paragraph">
+Plot speed digits.
+</div>
+<div class="paragraph">
+We divide by 100 here by throwing away the bottom two digits.
+</div>
+</div>
+</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="40626"></span>9EB2</td>
+<td class="instruction">PUSH AF</td>
+<td class="comment-1" rowspan="1">Stack 100s counter</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="40627"></span>9EB3</td>
+<td class="instruction">LD A,E</td>
+<td class="comment-1" rowspan="2">Stack 1,000s counter</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="40628"></span>9EB4</td>
+<td class="instruction">PUSH AF</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="40629"></span>9EB5</td>
+<td class="instruction">LD A,D</td>
+<td class="comment-1" rowspan="1">Get 10,000s counter</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="40630"></span>9EB6</td>
+<td class="instruction">CALL <a href="9F47.html">ledfont_plot</a></td>
+<td class="comment-1" rowspan="2">Plot a digit for 10,000s</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="40633"></span>9EB9</td>
+<td class="instruction">POP AF</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="40634"></span>9EBA</td>
+<td class="instruction">CALL <a href="9F47.html">ledfont_plot</a></td>
+<td class="comment-1" rowspan="2">Plot a digit for 1,000s</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="40637"></span>9EBD</td>
+<td class="instruction">POP AF</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="40638"></span>9EBE</td>
+<td class="instruction">CALL <a href="9F47.html">ledfont_plot</a></td>
+<td class="comment-1" rowspan="1">Plot a digit for 100s</td>
+</tr>
+<tr>
+<td class="routine-comment" colspan="5">
+<span id="40641"></span>
+<div class="comments">
+<div class="paragraph">
+Time.
+</div>
+</div>
+</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="40641"></span>9EC1</td>
+<td class="instruction">LD DE,$412F</td>
+<td class="comment-1" rowspan="1">Point <span class="register">DE</span> at time digits screen position (120, 9)</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="40644"></span>9EC4</td>
+<td class="instruction">EXX</td>
+<td class="comment-1" rowspan="1">Bank</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="40645"></span>9EC5</td>
+<td class="instruction">LD DE,$A17E</td>
+<td class="comment-1" rowspan="1">Point <span class="register">DE</span> at time_bcd (one BCD byte)</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="40648"></span>9EC8</td>
+<td class="instruction">LD HL,$A180</td>
+<td class="comment-1" rowspan="1">Point <span class="register">HL</span> at time_digits + 1</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="40651"></span>9ECB</td>
+<td class="instruction">LD B,$01</td>
+<td class="comment-1" rowspan="1">One pair of digits</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="40653"></span>9ECD</td>
+<td class="instruction">CALL <a href="9E11.html#40734">plot_led_digits</a></td>
+<td class="comment-1" rowspan="1">Call plot_led_digits</td>
+</tr>
+<tr>
+<td class="routine-comment" colspan="5">
+<span id="40656"></span>
+<div class="comments">
+<div class="paragraph">
+Distance.
+</div>
+</div>
+</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="40656"></span>9ED0</td>
+<td class="instruction">LD DE,$A256</td>
+<td class="comment-1" rowspan="1">Point <span class="register">DE</span> at distance_bcd + 1 (the second of two BCD bytes)</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="40659"></span>9ED3</td>
+<td class="instruction">LD A,($A189)</td>
+<td class="comment-1" rowspan="2">L = Distance byte from first 'hazard' (the perp)</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="40662"></span>9ED6</td>
+<td class="instruction">LD L,A</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="40663"></span>9ED7</td>
+<td class="instruction">LD A,($A199)</td>
+<td class="comment-1" rowspan="2">H = 17th byte from first hazard (not sure yet how they relate)</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="40666"></span>9EDA</td>
+<td class="instruction">LD H,A</td>
+</tr>
+<tr>
+<td class="routine-comment" colspan="5">
+<span id="40667"></span>
+<div class="comments">
+<div class="paragraph">
+Count 1000s (no loop here - it's not required)
+</div>
+</div>
+</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="40667"></span>9EDB</td>
+<td class="instruction">LD BC,$03E8</td>
+<td class="comment-1" rowspan="1">1,000</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="40670"></span>9EDE</td>
+<td class="instruction">SBC HL,BC</td>
+<td class="comment-1" rowspan="1">Decrease total by 1,000</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="40672"></span>9EE0</td>
+<td class="instruction">LD A,$10</td>
+<td class="comment-1" rowspan="1">BCD "10"</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="40674"></span>9EE2</td>
+<td class="instruction">JR NC,<a href="9E11.html#40678">plot_turbos_and_scores_4</a></td>
+<td class="comment-1" rowspan="1">Jump if distance &gt;= 1,000</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="40676"></span>9EE4</td>
+<td class="instruction">ADD HL,BC</td>
+<td class="comment-1" rowspan="1">Otherwise correct for overshoot</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="40677"></span>9EE5</td>
+<td class="instruction">XOR A</td>
+<td class="comment-1" rowspan="1">BCD "00"</td>
+</tr>
+<tr>
+<td class="routine-comment" colspan="5">
+<span id="40678"></span>
+<div class="comments">
+<div class="paragraph">
+Count 100s
+</div>
+</div>
+</td>
+</tr>
+<tr>
+<td class="asm-label">plot_turbos_and_scores_4</td>
+<td class="address-2"><span id="40678"></span>9EE6</td>
+<td class="instruction">LD BC,$0064</td>
+<td class="comment-1" rowspan="1">100</td>
+</tr>
+<tr>
+<td class="asm-label">plot_scores_distance_100s_loop</td>
+<td class="address-2"><span id="40681"></span>9EE9</td>
+<td class="instruction">INC A</td>
+<td class="comment-1" rowspan="1">Increment counter</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="40682"></span>9EEA</td>
+<td class="instruction">SBC HL,BC</td>
+<td class="comment-1" rowspan="1">Decrease total by 100</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="40684"></span>9EEC</td>
+<td class="instruction">JP NC,<a href="9E11.html#40681">plot_scores_distance_100s_loop</a></td>
+<td class="comment-1" rowspan="1">Loop until total goes negative</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="40687"></span>9EEF</td>
+<td class="instruction">ADD HL,BC</td>
+<td class="comment-1" rowspan="1">Correct for overshoot</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="40688"></span>9EF0</td>
+<td class="instruction">DEC A</td>
+<td class="comment-1" rowspan="1">Correct for starting early</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="40689"></span>9EF1</td>
+<td class="instruction">LD (DE),A</td>
+<td class="comment-1" rowspan="1">distance_bcd[1] = counter</td>
+</tr>
+<tr>
+<td class="routine-comment" colspan="5">
+<span id="40690"></span>
+<div class="comments">
+<div class="paragraph">
+Count 10s
+</div>
+</div>
+</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="40690"></span>9EF2</td>
+<td class="instruction">LD C,$0A</td>
+<td class="comment-1" rowspan="1">10 (<span class="register">B'</span>s already zero)</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="40692"></span>9EF4</td>
+<td class="instruction">AND A</td>
+<td class="comment-1" rowspan="1">?Clear carry flag?</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="40693"></span>9EF5</td>
+<td class="instruction">LD A,$F0</td>
+<td class="comment-1" rowspan="1"><span class="register">A</span> = $F0 (BCD)</td>
+</tr>
+<tr>
+<td class="asm-label">plot_scores_distance_10s_loop</td>
+<td class="address-2"><span id="40695"></span>9EF7</td>
+<td class="instruction">ADD A,$10</td>
+<td class="comment-1" rowspan="1">Increment counter</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="40697"></span>9EF9</td>
+<td class="instruction">AND A</td>
+<td class="comment-1" rowspan="1">?Clear carry flag?</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="40698"></span>9EFA</td>
+<td class="instruction">SBC HL,BC</td>
+<td class="comment-1" rowspan="1">Decrease total by 10</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="40700"></span>9EFC</td>
+<td class="instruction">JP NC,<a href="9E11.html#40695">plot_scores_distance_10s_loop</a></td>
+<td class="comment-1" rowspan="1">Loop until total goes negative</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="40703"></span>9EFF</td>
+<td class="instruction">ADD HL,BC</td>
+<td class="comment-1" rowspan="1">Correct for overshoot</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="40704"></span>9F00</td>
+<td class="instruction">OR L</td>
+<td class="comment-1" rowspan="1">OR in the remainder</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="40705"></span>9F01</td>
+<td class="instruction">DEC DE</td>
+<td class="comment-1" rowspan="2">distance_bcd[0] = <span class="register">A</span></td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="40706"></span>9F02</td>
+<td class="instruction">LD (DE),A</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="40707"></span>9F03</td>
+<td class="instruction">LD DE,$4191</td>
+<td class="comment-1" rowspan="1">Point <span class="register">DE</span> at distance digits screen position (136,33)</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="40710"></span>9F06</td>
+<td class="instruction">EXX</td>
+<td class="comment-1" rowspan="1">Bank</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="40711"></span>9F07</td>
+<td class="instruction">LD DE,$A256</td>
+<td class="comment-1" rowspan="1">Point <span class="register">DE</span> at distance_bcd + 1 (two BCD bytes)</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="40714"></span>9F0A</td>
+<td class="instruction">LD HL,$A184</td>
+<td class="comment-1" rowspan="1">Point <span class="register">HL</span> at distance_digits + 3</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="40717"></span>9F0D</td>
+<td class="instruction">LD B,$02</td>
+<td class="comment-1" rowspan="1">Two pairs of digits (4 digits)</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="40719"></span>9F0F</td>
+<td class="instruction">CALL <a href="9E11.html#40734">plot_led_digits</a></td>
+<td class="comment-1" rowspan="1">Call plot_led_digits</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="40722"></span>9F12</td>
+<td class="instruction">LD DE,$4126</td>
+<td class="comment-1" rowspan="1">Point <span class="register">DE</span> at score digits screen position</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="40725"></span>9F15</td>
+<td class="instruction">EXX</td>
+<td class="comment-1" rowspan="1">Bank</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="40726"></span>9F16</td>
+<td class="instruction">LD DE,$8005</td>
+<td class="comment-1" rowspan="1">Point <span class="register">DE</span> at score (four BCD bytes)</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="40729"></span>9F19</td>
+<td class="instruction">LD HL,$A17C</td>
+<td class="comment-1" rowspan="1">Point <span class="register">HL</span> at score digits (eight bytes)</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="40732"></span>9F1C</td>
+<td class="instruction">LD B,$04</td>
+<td class="comment-1" rowspan="1">B = 4</td>
+</tr>
+<tr>
+<td class="routine-comment" colspan="5">
+<span id="40734"></span>
+<div class="comments">
+<div class="paragraph">
+Plots scoreboard digits (<span class="register">DE</span> -&gt; BCD) only if different than recorded values (<span class="register">HL</span> -&gt; byte per digit). <span class="register">B</span> is the count.
+</div>
+</div>
+</td>
+</tr>
+<tr>
+<td class="asm-label">plot_led_digits</td>
+<td class="address-2"><span id="40734"></span>9F1E</td>
+<td class="instruction">LD A,(DE)</td>
+<td class="comment-1" rowspan="1">Read a pair of digits (BCD)</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="40735"></span>9F1F</td>
+<td class="instruction">LD C,A</td>
+<td class="comment-1" rowspan="1">Save digits for later</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="40736"></span>9F20</td>
+<td class="instruction">RRCA</td>
+<td class="comment-1" rowspan="5">Unpack a BCD digit</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="40737"></span>9F21</td>
+<td class="instruction">RRCA</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="40738"></span>9F22</td>
+<td class="instruction">RRCA</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="40739"></span>9F23</td>
+<td class="instruction">RRCA</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="40740"></span>9F24</td>
+<td class="instruction">AND $0F</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="40742"></span>9F26</td>
+<td class="instruction">CP (HL)</td>
+<td class="comment-1" rowspan="2">If different than stored then plot</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="40743"></span>9F27</td>
+<td class="instruction">JR NZ,<a href="9E11.html#40763">pld_plot_1st</a></td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="40745"></span>9F29</td>
+<td class="instruction">EXX</td>
+<td class="comment-1" rowspan="3">Move screen position</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="40746"></span>9F2A</td>
+<td class="instruction">INC E</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="40747"></span>9F2B</td>
+<td class="instruction">EXX</td>
+</tr>
+<tr>
+<td class="asm-label">pld_next_half</td>
+<td class="address-2"><span id="40748"></span>9F2C</td>
+<td class="instruction">DEC HL</td>
+<td class="comment-1" rowspan="1">Move to next recorded value</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="40749"></span>9F2D</td>
+<td class="instruction">LD A,C</td>
+<td class="comment-1" rowspan="2">Examine next digit</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="40750"></span>9F2E</td>
+<td class="instruction">AND $0F</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="40752"></span>9F30</td>
+<td class="instruction">CP (HL)</td>
+<td class="comment-1" rowspan="2">If different than stored then plot</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="40753"></span>9F31</td>
+<td class="instruction">JR NZ,<a href="9E11.html#40769">pld_plot_2nd</a></td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="40755"></span>9F33</td>
+<td class="instruction">EXX</td>
+<td class="comment-1" rowspan="3">Move screen position</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="40756"></span>9F34</td>
+<td class="instruction">INC E</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="40757"></span>9F35</td>
+<td class="instruction">EXX</td>
+</tr>
+<tr>
+<td class="asm-label">pld_next_whole</td>
+<td class="address-2"><span id="40758"></span>9F36</td>
+<td class="instruction">DEC HL</td>
+<td class="comment-1" rowspan="1">Move to next recorded value</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="40759"></span>9F37</td>
+<td class="instruction">DEC DE</td>
+<td class="comment-1" rowspan="1">Move to next digits</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="40760"></span>9F38</td>
+<td class="instruction">DJNZ <a href="9E11.html#40734">plot_led_digits</a></td>
+<td class="comment-1" rowspan="1">Loop until B is zero</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="40762"></span>9F3A</td>
+<td class="instruction">RET</td>
+<td class="comment-1" rowspan="1">Return</td>
+</tr>
+<tr>
+<td class="asm-label">pld_plot_1st</td>
+<td class="address-2"><span id="40763"></span>9F3B</td>
+<td class="instruction">LD (HL),A</td>
+<td class="comment-1" rowspan="1">Update drawn digit</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="40764"></span>9F3C</td>
+<td class="instruction">CALL <a href="9F47.html">ledfont_plot</a></td>
+<td class="comment-1" rowspan="1">Plot the digit</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="40767"></span>9F3F</td>
+<td class="instruction">JR <a href="9E11.html#40748">pld_next_half</a></td>
+<td class="comment-1" rowspan="1">Jump back to handle next digit (second half of a pair)</td>
+</tr>
+<tr>
+<td class="asm-label">pld_plot_2nd</td>
+<td class="address-2"><span id="40769"></span>9F41</td>
+<td class="instruction">LD (HL),A</td>
+<td class="comment-1" rowspan="1">Update drawn digit</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="40770"></span>9F42</td>
+<td class="instruction">CALL <a href="9F47.html">ledfont_plot</a></td>
+<td class="comment-1" rowspan="1">Plot the digit</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="40773"></span>9F45</td>
+<td class="instruction">JR <a href="9E11.html#40758">pld_next_whole</a></td>
+<td class="comment-1" rowspan="1">Jump back to handle hext digit (next whole pair)</td>
+</tr>
+</table>
+<table class="asm-navigation">
+<tr>
+<td class="prev">
+Prev: <a href="9DF4.html">9DF4</a>
+</td>
+<td class="up">Up: <a href="../maps/all.html#40465">Map</a></td>
+<td class="next">
+Next: <a href="9F47.html">9F47</a>
+</td>
+</tr>
+</table>
+<footer>
+<div class="release">The incomplete Chase H.Q. disassembly 20230426</div>
+<div class="copyright">&copy; 1989 Ocean Software Ltd.</div>
+<div class="created">Created using <a href="https://skoolkit.ca">SkoolKit</a> 8.9.</div>
+</footer>
+</body>
+</html>

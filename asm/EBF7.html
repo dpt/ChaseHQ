@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Chase H.Q.: Routine at EBF7</title>
+<meta charset="utf-8" />
+<link rel="stylesheet" type="text/css" href="../skoolkit.css" />
+</head>
+<body class="Asm-c">
+<table class="header">
+<tr>
+<td class="logo"><a href="../index.html">Chase H.Q.</a></td>
+<td class="page-header">Routines</td>
+</tr>
+</table>
+<table class="asm-navigation">
+<tr>
+<td class="prev">
+Prev: <a href="E9B4.html">E9B4</a>
+</td>
+<td class="up">Up: <a href="../maps/all.html#60407">Map</a></td>
+<td class="next">
+Next: <a href="EBFF.html">EBFF</a>
+</td>
+</tr>
+</table>
+<div class="description">EBF7: Renders strings until it hits a NUL byte</div>
+<table class="disassembly">
+<tr>
+<td class="routine-comment" colspan="5">
+<div class="details">
+<div class="paragraph">
+Used by the routines at <a href="E90F.html">E90F</a> and <a href="ECF3.html">ECF3</a>.
+</div>
+</div>
+</td>
+</tr>
+<tr>
+<td class="asm-label">menu_draw_strings</td>
+<td class="address-2"><span id="60407"></span>EBF7</td>
+<td class="instruction">CALL <a href="EBFF.html">menu_draw_string</a></td>
+<td class="comment-1" rowspan="1">Call menu_draw_string</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="60410"></span>EBFA</td>
+<td class="instruction">LD A,(HL)</td>
+<td class="comment-1" rowspan="3">If the next byte's zero then return</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="60411"></span>EBFB</td>
+<td class="instruction">AND A</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="60412"></span>EBFC</td>
+<td class="instruction">RET Z</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="60413"></span>EBFD</td>
+<td class="instruction">JR <a href="EBF7.html#60407">menu_draw_strings</a></td>
+<td class="comment-1" rowspan="1">Otherwise loop</td>
+</tr>
+</table>
+<table class="asm-navigation">
+<tr>
+<td class="prev">
+Prev: <a href="E9B4.html">E9B4</a>
+</td>
+<td class="up">Up: <a href="../maps/all.html#60407">Map</a></td>
+<td class="next">
+Next: <a href="EBFF.html">EBFF</a>
+</td>
+</tr>
+</table>
+<footer>
+<div class="release">The incomplete Chase H.Q. disassembly 20230426</div>
+<div class="copyright">&copy; 1989 Ocean Software Ltd.</div>
+<div class="created">Created using <a href="https://skoolkit.ca">SkoolKit</a> 8.9.</div>
+</footer>
+</body>
+</html>

@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Chase H.Q.: Routine at CDD6</title>
+<meta charset="utf-8" />
+<link rel="stylesheet" type="text/css" href="../skoolkit.css" />
+</head>
+<body class="Asm-c">
+<table class="header">
+<tr>
+<td class="logo"><a href="../index.html">Chase H.Q.</a></td>
+<td class="page-header">Routines</td>
+</tr>
+</table>
+<table class="asm-navigation">
+<tr>
+<td class="prev">
+Prev: <a href="CD3A.html">CD3A</a>
+</td>
+<td class="up">Up: <a href="../maps/all.html#52694">Map</a></td>
+<td class="next">
+Next: <a href="CDEC.html">CDEC</a>
+</td>
+</tr>
+</table>
+<div class="description">CDD6: Multiplier</div>
+<table class="disassembly">
+<tr>
+<td class="routine-comment" colspan="5">
+<div class="details">
+<div class="paragraph">
+Used by the routines at <a href="CBD6.html">CBD6</a> and <a href="CD3A.html">CD3A</a>.
+</div>
+</div>
+<table class="input">
+<tr class="asm-input-header">
+<th colspan="2">Input</th>
+</tr>
+<tr>
+<td class="register">A</td>
+<td class="register-desc">Multiplicand (value to multiply)</td>
+</tr>
+<tr>
+<td class="register">C</td>
+<td class="register-desc">Multiplier (number to multiply by)</td>
+</tr>
+</table>
+</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-2"><span id="52694"></span>CDD6</td>
+<td class="instruction">LD B,$03</td>
+<td class="comment-1" rowspan="1">3 iterations (something limited to 8?)</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="52696"></span>CDD8</td>
+<td class="instruction">LD E,A</td>
+<td class="comment-1" rowspan="1">Copy of value to destroy</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="52697"></span>CDD9</td>
+<td class="instruction">XOR A</td>
+<td class="comment-1" rowspan="1">Initialise total</td>
+</tr>
+<tr>
+<td class="asm-label">mult_loop</td>
+<td class="address-2"><span id="52698"></span>CDDA</td>
+<td class="instruction">RL E</td>
+<td class="comment-1" rowspan="1">Shift the most significant bit out</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="52700"></span>CDDC</td>
+<td class="instruction">JR NC,<a href="CDD6.html#52703">mult_continue</a></td>
+<td class="comment-1" rowspan="2">If the bit was set then total += multiplier</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="52702"></span>CDDE</td>
+<td class="instruction">ADD A,C</td>
+</tr>
+<tr>
+<td class="asm-label">mult_continue</td>
+<td class="address-2"><span id="52703"></span>CDDF</td>
+<td class="instruction">ADD A,A</td>
+<td class="comment-1" rowspan="1">total &lt;&lt;= 1</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="52704"></span>CDE0</td>
+<td class="instruction">DJNZ <a href="CDD6.html#52698">mult_loop</a></td>
+<td class="comment-1" rowspan="1">While iterations remain, goto mult_loop</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="52706"></span>CDE2</td>
+<td class="instruction">RRA</td>
+<td class="comment-1" rowspan="1">Undo final shift</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="52707"></span>CDE3</td>
+<td class="instruction">SRA A</td>
+<td class="comment-1" rowspan="4">Divide by 8 with rounding?</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="52709"></span>CDE5</td>
+<td class="instruction">SRA A</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="52711"></span>CDE7</td>
+<td class="instruction">SRA A</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="52713"></span>CDE9</td>
+<td class="instruction">ADC A,$00</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="52715"></span>CDEB</td>
+<td class="instruction">RET</td>
+<td class="comment-1" rowspan="1">Return</td>
+</tr>
+</table>
+<table class="asm-navigation">
+<tr>
+<td class="prev">
+Prev: <a href="CD3A.html">CD3A</a>
+</td>
+<td class="up">Up: <a href="../maps/all.html#52694">Map</a></td>
+<td class="next">
+Next: <a href="CDEC.html">CDEC</a>
+</td>
+</tr>
+</table>
+<footer>
+<div class="release">The incomplete Chase H.Q. disassembly 20230426</div>
+<div class="copyright">&copy; 1989 Ocean Software Ltd.</div>
+<div class="created">Created using <a href="https://skoolkit.ca">SkoolKit</a> 8.9.</div>
+</footer>
+</body>
+</html>

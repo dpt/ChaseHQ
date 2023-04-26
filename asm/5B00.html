@@ -1,0 +1,514 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Chase H.Q.: Routine at 5B00</title>
+<meta charset="utf-8" />
+<link rel="stylesheet" type="text/css" href="../skoolkit.css" />
+</head>
+<body class="Asm-c">
+<table class="header">
+<tr>
+<td class="logo"><a href="../index.html">Chase H.Q.</a></td>
+<td class="page-header">Routines</td>
+</tr>
+</table>
+<table class="asm-navigation">
+<tr>
+<td class="prev">
+Prev: <a href="4000.html">4000</a>
+</td>
+<td class="up">Up: <a href="../maps/all.html#23296">Map</a></td>
+<td class="next">
+Next: <a href="5C00.html">5C00</a>
+</td>
+</tr>
+</table>
+<div class="description">5B00: Could be loader code</div>
+<table class="disassembly">
+<tr>
+<td class="routine-comment" colspan="5">
+<div class="details">
+</div>
+</td>
+</tr>
+<tr>
+<td class="address-2"><span id="23296"></span>5B00</td>
+<td class="instruction">DI</td>
+<td class="comment-1" rowspan="1"></td>
+</tr>
+<tr>
+<td class="address-1"><span id="23297"></span>5B01</td>
+<td class="instruction">LD SP,$5C00</td>
+<td class="comment-1" rowspan="1"></td>
+</tr>
+<tr>
+<td class="address-1"><span id="23300"></span>5B04</td>
+<td class="instruction">LD HL,$A50F</td>
+<td class="comment-1" rowspan="1"></td>
+</tr>
+<tr>
+<td class="address-1"><span id="23303"></span>5B07</td>
+<td class="instruction">LD DE,$BFFF</td>
+<td class="comment-1" rowspan="1"></td>
+</tr>
+<tr>
+<td class="address-1"><span id="23306"></span>5B0A</td>
+<td class="instruction">LD BC,$4910</td>
+<td class="comment-1" rowspan="1"></td>
+</tr>
+<tr>
+<td class="address-1"><span id="23309"></span>5B0D</td>
+<td class="instruction">LDDR</td>
+<td class="comment-1" rowspan="1"></td>
+</tr>
+<tr>
+<td class="address-1"><span id="23311"></span>5B0F</td>
+<td class="instruction">LD HL,$FFF0</td>
+<td class="comment-1" rowspan="1"></td>
+</tr>
+<tr>
+<td class="address-1"><span id="23314"></span>5B12</td>
+<td class="instruction">LD E,(HL)</td>
+<td class="comment-1" rowspan="1"></td>
+</tr>
+<tr>
+<td class="address-1"><span id="23315"></span>5B13</td>
+<td class="instruction">LD A,$01</td>
+<td class="comment-1" rowspan="1"></td>
+</tr>
+<tr>
+<td class="address-1"><span id="23317"></span>5B15</td>
+<td class="instruction">LD BC,$7FFD</td>
+<td class="comment-1" rowspan="1"></td>
+</tr>
+<tr>
+<td class="address-1"><span id="23320"></span>5B18</td>
+<td class="instruction">OUT (C),A</td>
+<td class="comment-1" rowspan="1"></td>
+</tr>
+<tr>
+<td class="address-1"><span id="23322"></span>5B1A</td>
+<td class="instruction">LD A,E</td>
+<td class="comment-1" rowspan="1"></td>
+</tr>
+<tr>
+<td class="address-1"><span id="23323"></span>5B1B</td>
+<td class="instruction">ADD A,C</td>
+<td class="comment-1" rowspan="1"></td>
+</tr>
+<tr>
+<td class="address-1"><span id="23324"></span>5B1C</td>
+<td class="instruction">LD (HL),A</td>
+<td class="comment-1" rowspan="1"></td>
+</tr>
+<tr>
+<td class="address-1"><span id="23325"></span>5B1D</td>
+<td class="instruction">XOR A</td>
+<td class="comment-1" rowspan="1"></td>
+</tr>
+<tr>
+<td class="address-1"><span id="23326"></span>5B1E</td>
+<td class="instruction">OUT (C),A</td>
+<td class="comment-1" rowspan="1"></td>
+</tr>
+<tr>
+<td class="address-1"><span id="23328"></span>5B20</td>
+<td class="instruction">LD A,(HL)</td>
+<td class="comment-1" rowspan="1"></td>
+</tr>
+<tr>
+<td class="address-1"><span id="23329"></span>5B21</td>
+<td class="instruction">LD (HL),E</td>
+<td class="comment-1" rowspan="1"></td>
+</tr>
+<tr>
+<td class="address-1"><span id="23330"></span>5B22</td>
+<td class="instruction">LD HL,$5B7D</td>
+<td class="comment-1" rowspan="4">Point <span class="register">HL</span> at $5B7D</td>
+</tr>
+<tr>
+<td class="address-1"><span id="23333"></span>5B25</td>
+<td class="instruction">CP E</td>
+</tr>
+<tr>
+<td class="address-1"><span id="23334"></span>5B26</td>
+<td class="instruction">JR NZ,$5B2B</td>
+</tr>
+<tr>
+<td class="address-1"><span id="23336"></span>5B28</td>
+<td class="instruction">LD HL,$5B87</td>
+</tr>
+<tr>
+<td class="address-2"><span id="23339"></span>5B2B</td>
+<td class="instruction">LD E,(HL)</td>
+<td class="comment-1" rowspan="6">Fetch a word from <span class="register">HL</span> and stack it</td>
+</tr>
+<tr>
+<td class="address-1"><span id="23340"></span>5B2C</td>
+<td class="instruction">INC HL</td>
+</tr>
+<tr>
+<td class="address-1"><span id="23341"></span>5B2D</td>
+<td class="instruction">LD D,(HL)</td>
+</tr>
+<tr>
+<td class="address-1"><span id="23342"></span>5B2E</td>
+<td class="instruction">INC HL</td>
+</tr>
+<tr>
+<td class="address-1"><span id="23343"></span>5B2F</td>
+<td class="instruction">PUSH DE</td>
+</tr>
+<tr>
+<td class="address-1"><span id="23344"></span>5B30</td>
+<td class="instruction">RET</td>
+</tr>
+<tr>
+<td class="address-1"><span id="23345"></span>5B31</td>
+<td class="instruction">PUSH HL</td>
+<td class="comment-1" rowspan="17">Routine that ...</td>
+</tr>
+<tr>
+<td class="address-1"><span id="23346"></span>5B32</td>
+<td class="instruction">LD IX,$5BD5</td>
+</tr>
+<tr>
+<td class="address-1"><span id="23350"></span>5B36</td>
+<td class="instruction">LD DE,$0002</td>
+</tr>
+<tr>
+<td class="address-1"><span id="23353"></span>5B39</td>
+<td class="instruction">CALL $5B4F</td>
+</tr>
+<tr>
+<td class="address-1"><span id="23356"></span>5B3C</td>
+<td class="instruction">POP HL</td>
+</tr>
+<tr>
+<td class="address-1"><span id="23357"></span>5B3D</td>
+<td class="instruction">LD E,(HL)</td>
+</tr>
+<tr>
+<td class="address-1"><span id="23358"></span>5B3E</td>
+<td class="instruction">INC HL</td>
+</tr>
+<tr>
+<td class="address-1"><span id="23359"></span>5B3F</td>
+<td class="instruction">LD D,(HL)</td>
+</tr>
+<tr>
+<td class="address-1"><span id="23360"></span>5B40</td>
+<td class="instruction">INC HL</td>
+</tr>
+<tr>
+<td class="address-1"><span id="23361"></span>5B41</td>
+<td class="instruction">PUSH DE</td>
+</tr>
+<tr>
+<td class="address-1"><span id="23362"></span>5B42</td>
+<td class="instruction">POP IX</td>
+</tr>
+<tr>
+<td class="address-1"><span id="23364"></span>5B44</td>
+<td class="instruction">LD E,(HL)</td>
+</tr>
+<tr>
+<td class="address-1"><span id="23365"></span>5B45</td>
+<td class="instruction">INC HL</td>
+</tr>
+<tr>
+<td class="address-1"><span id="23366"></span>5B46</td>
+<td class="instruction">LD D,(HL)</td>
+</tr>
+<tr>
+<td class="address-1"><span id="23367"></span>5B47</td>
+<td class="instruction">INC HL</td>
+</tr>
+<tr>
+<td class="address-1"><span id="23368"></span>5B48</td>
+<td class="instruction">PUSH HL</td>
+</tr>
+<tr>
+<td class="address-1"><span id="23369"></span>5B49</td>
+<td class="instruction">CALL $5B4F</td>
+</tr>
+<tr>
+<td class="address-1"><span id="23372"></span>5B4C</td>
+<td class="instruction">POP HL</td>
+<td class="comment-1" rowspan="7">Game entry point</td>
+</tr>
+<tr>
+<td class="address-1"><span id="23373"></span>5B4D</td>
+<td class="instruction">JR $5B2B</td>
+</tr>
+<tr>
+<td class="address-2"><span id="23375"></span>5B4F</td>
+<td class="instruction">CALL <a href="8014.html#32960">load_stage_13</a></td>
+</tr>
+<tr>
+<td class="address-1"><span id="23378"></span>5B52</td>
+<td class="instruction">RET C</td>
+</tr>
+<tr>
+<td class="address-2"><span id="23379"></span>5B53</td>
+<td class="instruction">OUT ($FE),A</td>
+</tr>
+<tr>
+<td class="address-1"><span id="23381"></span>5B55</td>
+<td class="instruction">INC A</td>
+</tr>
+<tr>
+<td class="address-1"><span id="23382"></span>5B56</td>
+<td class="instruction">JR $5B53</td>
+</tr>
+<tr>
+<td class="address-1"><span id="23384"></span>5B58</td>
+<td class="instruction">LD A,$80</td>
+<td class="comment-1" rowspan="8">Routine that ...</td>
+</tr>
+<tr>
+<td class="address-1"><span id="23386"></span>5B5A</td>
+<td class="instruction">LD I,A</td>
+</tr>
+<tr>
+<td class="address-1"><span id="23388"></span>5B5C</td>
+<td class="instruction">LD A,(HL)</td>
+</tr>
+<tr>
+<td class="address-1"><span id="23389"></span>5B5D</td>
+<td class="instruction">INC HL</td>
+</tr>
+<tr>
+<td class="address-1"><span id="23390"></span>5B5E</td>
+<td class="instruction">INC HL</td>
+</tr>
+<tr>
+<td class="address-1"><span id="23391"></span>5B5F</td>
+<td class="instruction">LD BC,$7FFD</td>
+</tr>
+<tr>
+<td class="address-1"><span id="23394"></span>5B62</td>
+<td class="instruction">OUT (C),A</td>
+</tr>
+<tr>
+<td class="address-1"><span id="23396"></span>5B64</td>
+<td class="instruction">JR $5B2B</td>
+</tr>
+<tr>
+<td class="address-1"><span id="23398"></span>5B66</td>
+<td class="instruction">PUSH HL</td>
+<td class="comment-1" rowspan="1">Routine that ...</td>
+</tr>
+<tr>
+<td class="address-1"><span id="23399"></span>5B67</td>
+<td class="instruction">LD HL,$5C00</td>
+<td class="comment-1" rowspan="6">Move $5C00..$76EF to $C000 onwards</td>
+</tr>
+<tr>
+<td class="address-1"><span id="23402"></span>5B6A</td>
+<td class="instruction">LD DE,$C000</td>
+</tr>
+<tr>
+<td class="address-1"><span id="23405"></span>5B6D</td>
+<td class="instruction">LD BC,$1AF0</td>
+</tr>
+<tr>
+<td class="address-1"><span id="23408"></span>5B70</td>
+<td class="instruction">LDIR</td>
+</tr>
+<tr>
+<td class="address-1"><span id="23410"></span>5B72</td>
+<td class="instruction">POP HL</td>
+</tr>
+<tr>
+<td class="address-1"><span id="23411"></span>5B73</td>
+<td class="instruction">JR $5B2B</td>
+</tr>
+<tr>
+<td class="address-1"><span id="23413"></span>5B75</td>
+<td class="instruction">LD A,(HL)</td>
+<td class="comment-1" rowspan="7">Routine that loads a word then OUTs $FE with zero, then jumps to that word</td>
+</tr>
+<tr>
+<td class="address-1"><span id="23414"></span>5B76</td>
+<td class="instruction">INC HL</td>
+</tr>
+<tr>
+<td class="address-1"><span id="23415"></span>5B77</td>
+<td class="instruction">LD H,(HL)</td>
+</tr>
+<tr>
+<td class="address-1"><span id="23416"></span>5B78</td>
+<td class="instruction">LD L,A</td>
+</tr>
+<tr>
+<td class="address-1"><span id="23417"></span>5B79</td>
+<td class="instruction">XOR A</td>
+</tr>
+<tr>
+<td class="address-1"><span id="23418"></span>5B7A</td>
+<td class="instruction">OUT ($FE),A</td>
+</tr>
+<tr>
+<td class="address-1"><span id="23420"></span>5B7C</td>
+<td class="instruction">JP (HL)</td>
+</tr>
+<tr>
+<td class="routine-comment" colspan="5">
+<span id="23421"></span>
+<div class="comments">
+<div class="paragraph">
+Some sort of instruction stream
+</div>
+</div>
+</td>
+</tr>
+<tr>
+<td class="address-1"><span id="23421"></span>5B7D</td>
+<td class="instruction">DEFW $5B31</td>
+<td class="comment-1" rowspan="1">Probable address of routine $5B31</td>
+</tr>
+<tr>
+<td class="address-1"><span id="23423"></span>5B7F</td>
+<td class="instruction">DEFB $00,$5C,$F0</td>
+<td class="comment-1" rowspan="1"></td>
+</tr>
+<tr>
+<td class="address-1"><span id="23426"></span>5B82</td>
+<td class="instruction">DEFB $1A,$75</td>
+<td class="comment-1" rowspan="1">Probable address of routine $5B75</td>
+</tr>
+<tr>
+<td class="address-1"><span id="23428"></span>5B84</td>
+<td class="instruction">DEFB $5B,$10,$E8</td>
+<td class="comment-1" rowspan="1"></td>
+</tr>
+<tr>
+<td class="address-1"><span id="23431"></span>5B87</td>
+<td class="instruction">DEFW $5B31</td>
+<td class="comment-1" rowspan="1">Probable address of routine $5B31</td>
+</tr>
+<tr>
+<td class="address-1"><span id="23433"></span>5B89</td>
+<td class="instruction">DEFB $00,$5C,$F0,$1A</td>
+<td class="comment-1" rowspan="1"></td>
+</tr>
+<tr>
+<td class="address-1"><span id="23437"></span>5B8D</td>
+<td class="instruction">DEFW $5B58</td>
+<td class="comment-1" rowspan="1">Probable address of routine $5B58</td>
+</tr>
+<tr>
+<td class="address-1"><span id="23439"></span>5B8F</td>
+<td class="instruction">DEFB $01,$00</td>
+<td class="comment-1" rowspan="1"></td>
+</tr>
+<tr>
+<td class="address-1"><span id="23441"></span>5B91</td>
+<td class="instruction">DEFW $5B66</td>
+<td class="comment-1" rowspan="1">Probable address of routine $5B66</td>
+</tr>
+<tr>
+<td class="address-1"><span id="23443"></span>5B93</td>
+<td class="instruction">DEFW $5B31</td>
+<td class="comment-1" rowspan="1">Probable address of routine $5B31</td>
+</tr>
+<tr>
+<td class="address-1"><span id="23445"></span>5B95</td>
+<td class="instruction">DEFB $00,$E0,$F0,$1A</td>
+<td class="comment-1" rowspan="1"></td>
+</tr>
+<tr>
+<td class="address-1"><span id="23449"></span>5B99</td>
+<td class="instruction">DEFW $5B58</td>
+<td class="comment-1" rowspan="1">Probable address of routine $5B58</td>
+</tr>
+<tr>
+<td class="address-1"><span id="23451"></span>5B9B</td>
+<td class="instruction">DEFB $06,$00</td>
+<td class="comment-1" rowspan="1"></td>
+</tr>
+<tr>
+<td class="address-1"><span id="23453"></span>5B9D</td>
+<td class="instruction">DEFW $5B31</td>
+<td class="comment-1" rowspan="1">Probable address of routine $5B31</td>
+</tr>
+<tr>
+<td class="address-1"><span id="23455"></span>5B9F</td>
+<td class="instruction">DEFB $00,$C0,$F0,$1A</td>
+<td class="comment-1" rowspan="1"></td>
+</tr>
+<tr>
+<td class="address-1"><span id="23459"></span>5BA3</td>
+<td class="instruction">DEFW $5B31</td>
+<td class="comment-1" rowspan="1">Probable address of routine $5B31</td>
+</tr>
+<tr>
+<td class="address-1"><span id="23461"></span>5BA5</td>
+<td class="instruction">DEFB $00,$E0,$F0,$1A,$58,$5B,$07,$00</td>
+<td class="comment-1" rowspan="6">TBD</td>
+</tr>
+<tr>
+<td class="address-1"><span id="23469"></span>5BAD</td>
+<td class="instruction">DEFB $31,$5B,$00,$C0,$F0,$1A,$31,$5B</td>
+</tr>
+<tr>
+<td class="address-1"><span id="23477"></span>5BB5</td>
+<td class="instruction">DEFB $00,$E0,$F0,$1A,$58,$5B,$03,$00</td>
+</tr>
+<tr>
+<td class="address-1"><span id="23485"></span>5BBD</td>
+<td class="instruction">DEFB $3D,$5B,$00,$C0,$00,$40,$58,$5B</td>
+</tr>
+<tr>
+<td class="address-1"><span id="23493"></span>5BC5</td>
+<td class="instruction">DEFB $04,$00,$3D,$5B,$00,$C0,$00,$40</td>
+</tr>
+<tr>
+<td class="address-1"><span id="23501"></span>5BCD</td>
+<td class="instruction">DEFB $58,$5B,$00,$00,$75,$5B,$16,$E8</td>
+</tr>
+<tr>
+<td class="address-1"><span id="23509"></span>5BD5</td>
+<td class="instruction">DEFB $01,$01,$00,$00,$00,$00,$00,$00</td>
+<td class="comment-1" rowspan="6">gets IX pointed at it by $5B32</td>
+</tr>
+<tr>
+<td class="address-1"><span id="23517"></span>5BDD</td>
+<td class="instruction">DEFB $00,$00,$00,$00,$00,$00,$00,$00</td>
+</tr>
+<tr>
+<td class="address-1"><span id="23525"></span>5BE5</td>
+<td class="instruction">DEFB $00,$00,$00,$00,$00,$00,$00,$00</td>
+</tr>
+<tr>
+<td class="address-1"><span id="23533"></span>5BED</td>
+<td class="instruction">DEFB $00,$00,$00,$00,$00,$00,$00,$00</td>
+</tr>
+<tr>
+<td class="address-1"><span id="23541"></span>5BF5</td>
+<td class="instruction">DEFB $00,$4A,$81,$31,$81,$52,$5B,$4C</td>
+</tr>
+<tr>
+<td class="address-1"><span id="23549"></span>5BFD</td>
+<td class="instruction">DEFB $5B,$83,$5B</td>
+</tr>
+</table>
+<table class="asm-navigation">
+<tr>
+<td class="prev">
+Prev: <a href="4000.html">4000</a>
+</td>
+<td class="up">Up: <a href="../maps/all.html#23296">Map</a></td>
+<td class="next">
+Next: <a href="5C00.html">5C00</a>
+</td>
+</tr>
+</table>
+<footer>
+<div class="release">The incomplete Chase H.Q. disassembly 20230426</div>
+<div class="copyright">&copy; 1989 Ocean Software Ltd.</div>
+<div class="created">Created using <a href="https://skoolkit.ca">SkoolKit</a> 8.9.</div>
+</footer>
+</body>
+</html>

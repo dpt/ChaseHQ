@@ -1,0 +1,442 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Chase H.Q.: Routine at 99EC</title>
+<meta charset="utf-8" />
+<link rel="stylesheet" type="text/css" href="../skoolkit.css" />
+</head>
+<body class="Asm-c">
+<table class="header">
+<tr>
+<td class="logo"><a href="../index.html">Chase H.Q.</a></td>
+<td class="page-header">Routines</td>
+</tr>
+</table>
+<table class="asm-navigation">
+<tr>
+<td class="prev">
+Prev: <a href="9965.html">9965</a>
+</td>
+<td class="up">Up: <a href="../maps/all.html#39404">Map</a></td>
+<td class="next">
+Next: <a href="9A55.html">9A55</a>
+</td>
+</tr>
+</table>
+<div class="description">99EC: Shows the alerts and remarks from the game's characters</div>
+<table class="disassembly">
+<tr>
+<td class="routine-comment" colspan="5">
+<div class="details">
+<div class="paragraph">
+Used by the routine at <a href="9A55.html">noise_effect</a>.
+</div>
+</div>
+</td>
+</tr>
+<tr>
+<td class="asm-label">print_chatter</td>
+<td class="address-2"><span id="39404"></span>99EC</td>
+<td class="instruction">LD HL,($9630)</td>
+<td class="comment-1" rowspan="1">Fetch address of next remark</td>
+</tr>
+<tr>
+<td class="asm-label">chatter_loop</td>
+<td class="address-2"><span id="39407"></span>99EF</td>
+<td class="instruction">LD A,(HL)</td>
+<td class="comment-1" rowspan="2">Read a byte and advance</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="39408"></span>99F0</td>
+<td class="instruction">INC HL</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="39409"></span>99F1</td>
+<td class="instruction">CP $FC</td>
+<td class="comment-1" rowspan="1">if (byte != $FC) then jump plot_character</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="39411"></span>99F3</td>
+<td class="instruction">JR NZ,<a href="99EC.html#39436">plot_character</a></td>
+<td class="comment-1" rowspan="1"></td>
+</tr>
+<tr>
+<td class="asm-label">random_chatter</td>
+<td class="address-1"><span id="39413"></span>99F5</td>
+<td class="instruction">PUSH HL</td>
+<td class="comment-1" rowspan="1"></td>
+</tr>
+<tr>
+<td class="routine-comment" colspan="5">
+<span id="39414"></span>
+<div class="comments">
+<div class="paragraph">
+We have a three-way choice here
+</div>
+</div>
+</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="39414"></span>99F6</td>
+<td class="instruction">CALL <a href="9618.html#38427">rng_0</a></td>
+<td class="comment-1" rowspan="1">Call rng - returns a random byte</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="39417"></span>99F9</td>
+<td class="instruction">POP HL</td>
+<td class="comment-1" rowspan="1"></td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="39418"></span>99FA</td>
+<td class="instruction">CP $55</td>
+<td class="comment-1" rowspan="2">If random value &lt; $55 jump load_message_ptr -- a 33.3% chance</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="39420"></span>99FC</td>
+<td class="instruction">JR C,<a href="99EC.html#39430">load_message_ptr</a></td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="39422"></span>99FE</td>
+<td class="instruction">INC HL</td>
+<td class="comment-1" rowspan="2">Skip first option message</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="39423"></span>99FF</td>
+<td class="instruction">INC HL</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="39424"></span>9A00</td>
+<td class="instruction">CP $AA</td>
+<td class="comment-1" rowspan="2">If random value &lt; $AA jump load_message_ptr -- a 66.6% chance</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="39426"></span>9A02</td>
+<td class="instruction">JR C,<a href="99EC.html#39430">load_message_ptr</a></td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="39428"></span>9A04</td>
+<td class="instruction">INC HL</td>
+<td class="comment-1" rowspan="2">Skip second option message</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="39429"></span>9A05</td>
+<td class="instruction">INC HL</td>
+</tr>
+<tr>
+<td class="asm-label">load_message_ptr</td>
+<td class="address-2"><span id="39430"></span>9A06</td>
+<td class="instruction">LD A,(HL)</td>
+<td class="comment-1" rowspan="4">Load the address of the message</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="39431"></span>9A07</td>
+<td class="instruction">INC HL</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="39432"></span>9A08</td>
+<td class="instruction">LD H,(HL)</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="39433"></span>9A09</td>
+<td class="instruction">LD L,A</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="39434"></span>9A0A</td>
+<td class="instruction">JR <a href="99EC.html#39407">chatter_loop</a></td>
+<td class="comment-1" rowspan="1">Loop back - it could be another random case</td>
+</tr>
+<tr>
+<td class="routine-comment" colspan="5">
+<span id="39436"></span>
+<div class="comments">
+<div class="paragraph">
+<span class="register">A</span> is the index of the face to show
+</div>
+</div>
+</td>
+</tr>
+<tr>
+<td class="asm-label">plot_character</td>
+<td class="address-2"><span id="39436"></span>9A0C</td>
+<td class="instruction">AND A</td>
+<td class="comment-1" rowspan="1">Is it zero? (The definable/pilot character's face)</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="39437"></span>9A0D</td>
+<td class="instruction">PUSH HL</td>
+<td class="comment-1" rowspan="1">Preserve message pointer</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="39438"></span>9A0E</td>
+<td class="instruction">LD HL,($5CF2)</td>
+<td class="comment-1" rowspan="3">Plot whatever face <a href="5CF0.html#23794">perp_mugshot_bitmap</a> points to, otherwise calculate</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="39441"></span>9A11</td>
+<td class="instruction">JR Z,<a href="99EC.html#39453">do_plot</a></td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="39443"></span>9A13</td>
+<td class="instruction">LD B,A</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="39444"></span>9A14</td>
+<td class="instruction">LD HL,$7B35</td>
+<td class="comment-1" rowspan="1">Load base address of face graphics (BUT it's actually earlier than the real base because we're 1-indexed)</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="39447"></span>9A17</td>
+<td class="instruction">LD DE,$00B4</td>
+<td class="comment-1" rowspan="1">Length of face graphic (bitmap + attrs = 4*8*5 + 4*5)</td>
+</tr>
+<tr>
+<td class="asm-label">print_chatter_0</td>
+<td class="address-2"><span id="39450"></span>9A1A</td>
+<td class="instruction">ADD HL,DE</td>
+<td class="comment-1" rowspan="2">Get face graphic address</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="39451"></span>9A1B</td>
+<td class="instruction">DJNZ <a href="99EC.html#39450">print_chatter_0</a></td>
+</tr>
+<tr>
+<td class="asm-label">do_plot</td>
+<td class="address-2"><span id="39453"></span>9A1D</td>
+<td class="instruction">LD DE,$4036</td>
+<td class="comment-1" rowspan="1">Set plot address to (176,8)</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="39456"></span>9A20</td>
+<td class="instruction">CALL <a href="9AAB.html">$9AAB</a></td>
+<td class="comment-1" rowspan="1">Call plot_face</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="39459"></span>9A23</td>
+<td class="instruction">POP HL</td>
+<td class="comment-1" rowspan="1">Restore message pointer</td>
+</tr>
+<tr>
+<td class="routine-comment" colspan="5">
+<span id="39460"></span>
+<div class="comments">
+<div class="paragraph">
+This entry point is used by the routine at <a href="9965.html">9965</a>.
+</div>
+</div>
+</td>
+</tr>
+<tr>
+<td class="asm-label">chatter_message</td>
+<td class="address-2"><span id="39460"></span>9A24</td>
+<td class="instruction">LD E,(HL)</td>
+<td class="comment-1" rowspan="4">Fetch address of message to start showing</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="39461"></span>9A25</td>
+<td class="instruction">INC HL</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="39462"></span>9A26</td>
+<td class="instruction">LD D,(HL)</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="39463"></span>9A27</td>
+<td class="instruction">INC HL</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="39464"></span>9A28</td>
+<td class="instruction">LD ($9630),HL</td>
+<td class="comment-1" rowspan="1">Save address of next message to show (or perhaps the pointer)</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="39467"></span>9A2B</td>
+<td class="instruction">LD ($962E),DE</td>
+<td class="comment-1" rowspan="1">Save next character address</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="39471"></span>9A2F</td>
+<td class="instruction">XOR A</td>
+<td class="comment-1" rowspan="1">Cause a clear_message_line and fall through</td>
+</tr>
+<tr>
+<td class="routine-comment" colspan="5">
+<span id="39472"></span>
+<div class="comments">
+<div class="paragraph">
+This entry point is used by the routine at <a href="9965.html">9965</a>.
+</div>
+</div>
+</td>
+</tr>
+<tr>
+<td class="asm-label">print_chatter_1</td>
+<td class="address-2"><span id="39472"></span>9A30</td>
+<td class="instruction">PUSH AF</td>
+<td class="comment-1" rowspan="4">if (A == 0) clear_message_line</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="39473"></span>9A31</td>
+<td class="instruction">AND A</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="39474"></span>9A32</td>
+<td class="instruction">CALL Z,<a href="9BA7.html">clear_message_line</a></td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="39477"></span>9A35</td>
+<td class="instruction">POP AF</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="39478"></span>9A36</td>
+<td class="instruction">LD HL,($962E)</td>
+<td class="comment-1" rowspan="1">Fetch next_character</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="39481"></span>9A39</td>
+<td class="instruction">LD D,(HL)</td>
+<td class="comment-1" rowspan="1">The character itself</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="39482"></span>9A3A</td>
+<td class="instruction">RES 7,D</td>
+<td class="comment-1" rowspan="1">Clear the string terminator bit</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="39484"></span>9A3C</td>
+<td class="instruction">PUSH AF</td>
+<td class="comment-1" rowspan="1">Preserve message_x</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="39485"></span>9A3D</td>
+<td class="instruction">PUSH HL</td>
+<td class="comment-1" rowspan="1"></td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="39486"></span>9A3E</td>
+<td class="instruction">CALL <a href="9AEC.html#39665">plot_mini_font_2</a></td>
+<td class="comment-1" rowspan="1">Call plot_mini_font_2, with <span class="register">D</span> as ASCII character to plot</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="39489"></span>9A41</td>
+<td class="instruction">POP HL</td>
+<td class="comment-1" rowspan="1"></td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="39490"></span>9A42</td>
+<td class="instruction">BIT 7,(HL)</td>
+<td class="comment-1" rowspan="1">Test string terminator bit</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="39492"></span>9A44</td>
+<td class="instruction">INC HL</td>
+<td class="comment-1" rowspan="1">Move to the next character in the string</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="39493"></span>9A45</td>
+<td class="instruction">JR Z,<a href="99EC.html#39500">print_chatter_2</a></td>
+<td class="comment-1" rowspan="1">If not terminated then jump over</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="39495"></span>9A47</td>
+<td class="instruction">LD A,$0A</td>
+<td class="comment-1" rowspan="2">$9633 = 10</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="39497"></span>9A49</td>
+<td class="instruction">LD ($9633),A</td>
+</tr>
+<tr>
+<td class="asm-label">print_chatter_2</td>
+<td class="address-2"><span id="39500"></span>9A4C</td>
+<td class="instruction">POP AF</td>
+<td class="comment-1" rowspan="1">Restore message_x</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="39501"></span>9A4D</td>
+<td class="instruction">INC A</td>
+<td class="comment-1" rowspan="2">Increment and store message_x</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="39502"></span>9A4E</td>
+<td class="instruction">LD ($9632),A</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="39505"></span>9A51</td>
+<td class="instruction">LD ($962E),HL</td>
+<td class="comment-1" rowspan="1">Update next_character</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="39508"></span>9A54</td>
+<td class="instruction">RET</td>
+<td class="comment-1" rowspan="1">Return</td>
+</tr>
+</table>
+<table class="asm-navigation">
+<tr>
+<td class="prev">
+Prev: <a href="9965.html">9965</a>
+</td>
+<td class="up">Up: <a href="../maps/all.html#39404">Map</a></td>
+<td class="next">
+Next: <a href="9A55.html">9A55</a>
+</td>
+</tr>
+</table>
+<footer>
+<div class="release">The incomplete Chase H.Q. disassembly 20230426</div>
+<div class="copyright">&copy; 1989 Ocean Software Ltd.</div>
+<div class="created">Created using <a href="https://skoolkit.ca">SkoolKit</a> 8.9.</div>
+</footer>
+</body>
+</html>

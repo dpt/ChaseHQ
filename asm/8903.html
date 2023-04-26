@@ -1,0 +1,350 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Chase H.Q.: Routine at 8903</title>
+<meta charset="utf-8" />
+<link rel="stylesheet" type="text/css" href="../skoolkit.css" />
+</head>
+<body class="Asm-c">
+<table class="header">
+<tr>
+<td class="logo"><a href="../index.html">Chase H.Q.</a></td>
+<td class="page-header">Routines</td>
+</tr>
+</table>
+<table class="asm-navigation">
+<tr>
+<td class="prev">
+Prev: <a href="88F2.html">88F2</a>
+</td>
+<td class="up">Up: <a href="../maps/all.html#35075">Map</a></td>
+<td class="next">
+Next: <a href="8960.html">8960</a>
+</td>
+</tr>
+</table>
+<div class="description">8903: Drives sound effects</div>
+<table class="disassembly">
+<tr>
+<td class="routine-comment" colspan="5">
+<div class="details">
+<div class="paragraph">
+Used by the routine at <a href="8401.html">8401</a>.
+</div>
+</div>
+</td>
+</tr>
+<tr>
+<td class="asm-label">drive_sfx</td>
+<td class="address-2"><span id="35075"></span>8903</td>
+<td class="instruction">LD A,($A23B)</td>
+<td class="comment-1" rowspan="3">If $A23B != 0 goto $8916</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="35078"></span>8906</td>
+<td class="instruction">AND A</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="35079"></span>8907</td>
+<td class="instruction">JR NZ,<a href="8903.html#35094">drive_sfx_0</a></td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="35081"></span>8909</td>
+<td class="instruction">LD A,($A23C)</td>
+<td class="comment-1" rowspan="3">*$A23D |= *$A23C</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="35084"></span>890C</td>
+<td class="instruction">LD HL,$A23D</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="35087"></span>890F</td>
+<td class="instruction">OR (HL)</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="35088"></span>8910</td>
+<td class="instruction">LD BC,$0704</td>
+<td class="comment-1" rowspan="1">Counters?</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="35091"></span>8913</td>
+<td class="instruction">CALL NZ,<a href="88F2.html">start_sfx</a></td>
+<td class="comment-1" rowspan="1">CALL NZ, start_sfx</td>
+</tr>
+<tr>
+<td class="asm-label">drive_sfx_0</td>
+<td class="address-2"><span id="35094"></span>8916</td>
+<td class="instruction">CALL <a href="83C4.html">$83C4</a></td>
+<td class="comment-1" rowspan="1">Call engine sound effect routine (via 128K hook)</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="35097"></span>8919</td>
+<td class="instruction">CALL <a href="83B8.html">$83B8</a></td>
+<td class="comment-1" rowspan="1">Call sound effect routine (via 128K hook)</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="35100"></span>891C</td>
+<td class="instruction">CALL <a href="83BE.html">$83BE</a></td>
+<td class="comment-1" rowspan="1">Call another routine (via 128K hook)</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="35103"></span>891F</td>
+<td class="instruction">LD A,($A237)</td>
+<td class="comment-1" rowspan="3">If $A237 == 0 return</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="35106"></span>8922</td>
+<td class="instruction">AND A</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="35107"></span>8923</td>
+<td class="instruction">RET Z</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="35108"></span>8924</td>
+<td class="instruction">RLCA</td>
+<td class="comment-1" rowspan="3"><span class="register">E</span> = $A237 * 4</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="35109"></span>8925</td>
+<td class="instruction">RLCA</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="35110"></span>8926</td>
+<td class="instruction">LD E,A</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="35111"></span>8927</td>
+<td class="instruction">XOR A</td>
+<td class="comment-1" rowspan="2">$A237 = 0</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="35112"></span>8928</td>
+<td class="instruction">LD ($A237),A</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="35115"></span>892B</td>
+<td class="instruction">LD ($A238),A</td>
+<td class="comment-1" rowspan="1">$A238 = 0</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="35118"></span>892E</td>
+<td class="instruction">LD D,A</td>
+<td class="comment-1" rowspan="1">Make <span class="register">DE</span> full offset</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="35119"></span>892F</td>
+<td class="instruction">LD HL,$8938</td>
+<td class="comment-1" rowspan="1"><span class="register">HL</span> -&gt; Base of table, but 4 bytes earlier</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="35122"></span>8932</td>
+<td class="instruction">ADD HL,DE</td>
+<td class="comment-1" rowspan="1">Point at array element</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="35123"></span>8933</td>
+<td class="instruction">LD D,(HL)</td>
+<td class="comment-1" rowspan="4">Load argument value into <span class="register">DE</span></td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="35124"></span>8934</td>
+<td class="instruction">INC HL</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="35125"></span>8935</td>
+<td class="instruction">LD E,(HL)</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="35126"></span>8936</td>
+<td class="instruction">INC HL</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="35127"></span>8937</td>
+<td class="instruction">LD A,(HL)</td>
+<td class="comment-1" rowspan="4">Load address of routine into <span class="register">HL</span></td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="35128"></span>8938</td>
+<td class="instruction">INC HL</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="35129"></span>8939</td>
+<td class="instruction">LD H,(HL)</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="35130"></span>893A</td>
+<td class="instruction">LD L,A</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="35131"></span>893B</td>
+<td class="instruction">JP (HL)</td>
+<td class="comment-1" rowspan="1">Exit via routine at <span class="register">HL</span></td>
+</tr>
+<tr>
+<td class="routine-comment" colspan="5">
+<span id="35132"></span>
+<div class="comments">
+<div class="paragraph">
+Pairs of words: (argument, address of sound effect routine)
+</div>
+</div>
+</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="35132"></span>893C</td>
+<td class="instruction">DEFW $0164</td>
+<td class="comment-1" rowspan="1">Argument in <span class="register">DE</span> for sound effect routine</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="35134"></span>893E</td>
+<td class="instruction">DEFW <a href="8A0F.html">sfx8a0f</a></td>
+<td class="comment-1" rowspan="1">Sound effect routine $8A0F - "pitt" and "pfff" and gear noise too?</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="35136"></span>8940</td>
+<td class="instruction">DEFW $0008</td>
+<td class="comment-1" rowspan="1">Argument in <span class="register">DE</span> for sound effect routine: D = delay of 8</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="35138"></span>8942</td>
+<td class="instruction">DEFW <a href="89D9.html">sfx89d9</a></td>
+<td class="comment-1" rowspan="1">Sound effect routine $89D9</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="35140"></span>8944</td>
+<td class="instruction">DEFW $0008</td>
+<td class="comment-1" rowspan="1">Argument in <span class="register">DE</span> for sound effect routine</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="35142"></span>8946</td>
+<td class="instruction">DEFW <a href="8960.html">sfx8960</a></td>
+<td class="comment-1" rowspan="1">Sound effect routine $8960 - crash</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="35144"></span>8948</td>
+<td class="instruction">DEFW $000C</td>
+<td class="comment-1" rowspan="1">Argument in <span class="register">DE</span> for sound effect routine</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="35146"></span>894A</td>
+<td class="instruction">DEFW <a href="8960.html">sfx8960</a></td>
+<td class="comment-1" rowspan="1">Sound effect routine $8960 - crash</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="35148"></span>894C</td>
+<td class="instruction">DEFW $0003</td>
+<td class="comment-1" rowspan="1">Argument in <span class="register">DE</span> for sound effect routine</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="35150"></span>894E</td>
+<td class="instruction">DEFW <a href="89D9.html">sfx89d9</a></td>
+<td class="comment-1" rowspan="1">Sound effect routine $89D9</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="35152"></span>8950</td>
+<td class="instruction">DEFW $041A</td>
+<td class="comment-1" rowspan="1">Argument in <span class="register">DE</span> for sound effect routine</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="35154"></span>8952</td>
+<td class="instruction">DEFW <a href="8A0F.html#35351">sfx8a0f_loop_outer</a></td>
+<td class="comment-1" rowspan="1">Sound effect routine $8A17</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="35156"></span>8954</td>
+<td class="instruction">DEFW $7804</td>
+<td class="comment-1" rowspan="1">Argument in <span class="register">DE</span> for sound effect routine - "tit-tit" used when cornering</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="35158"></span>8956</td>
+<td class="instruction">DEFW <a href="8A0F.html#35351">sfx8a0f_loop_outer</a></td>
+<td class="comment-1" rowspan="1">Sound effect routine $8A17</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="35160"></span>8958</td>
+<td class="instruction">DEFW <a href="77D8.html#30840">$7878</a></td>
+<td class="comment-1" rowspan="1">Argument in <span class="register">DE</span> for sound effect routine - time running out high "bip"</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="35162"></span>895A</td>
+<td class="instruction">DEFW <a href="8A36.html">sfx8a36</a></td>
+<td class="comment-1" rowspan="1">Sound effect routine $8A36 - "bip-bow"</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="35164"></span>895C</td>
+<td class="instruction">DEFW $C8C8</td>
+<td class="comment-1" rowspan="1">Argument in <span class="register">DE</span> for sound effect routine - time running out low "bow"</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="35166"></span>895E</td>
+<td class="instruction">DEFW <a href="8A36.html">sfx8a36</a></td>
+<td class="comment-1" rowspan="1">Sound effect routine $8A36 - "bip-bow"</td>
+</tr>
+</table>
+<table class="asm-navigation">
+<tr>
+<td class="prev">
+Prev: <a href="88F2.html">88F2</a>
+</td>
+<td class="up">Up: <a href="../maps/all.html#35075">Map</a></td>
+<td class="next">
+Next: <a href="8960.html">8960</a>
+</td>
+</tr>
+</table>
+<footer>
+<div class="release">The incomplete Chase H.Q. disassembly 20230426</div>
+<div class="copyright">&copy; 1989 Ocean Software Ltd.</div>
+<div class="created">Created using <a href="https://skoolkit.ca">SkoolKit</a> 8.9.</div>
+</footer>
+</body>
+</html>

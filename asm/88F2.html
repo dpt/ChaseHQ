@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Chase H.Q.: Routine at 88F2</title>
+<meta charset="utf-8" />
+<link rel="stylesheet" type="text/css" href="../skoolkit.css" />
+</head>
+<body class="Asm-c">
+<table class="header">
+<tr>
+<td class="logo"><a href="../index.html">Chase H.Q.</a></td>
+<td class="page-header">Routines</td>
+</tr>
+</table>
+<table class="asm-navigation">
+<tr>
+<td class="prev">
+Prev: <a href="88E2.html">88E2</a>
+</td>
+<td class="up">Up: <a href="../maps/all.html#35058">Map</a></td>
+<td class="next">
+Next: <a href="8903.html">8903</a>
+</td>
+</tr>
+</table>
+<div class="description">88F2: Starts a sound effect</div>
+<table class="disassembly">
+<tr>
+<td class="routine-comment" colspan="5">
+<div class="details">
+<div class="paragraph">
+Used by the routines at <a href="8401.html">8401</a>, <a href="8903.html">drive_sfx</a>, <a href="9BCF.html">9BCF</a>, <a href="A399.html">A399</a>, <a href="A637.html">A637</a>, <a href="A8CD.html">A8CD</a>, <a href="AC3C.html">hazard_hit</a>, <a href="B063.html">B063</a> and <a href="B318.html">B318</a>.
+</div>
+</div>
+<table class="input">
+<tr class="asm-input-header">
+<th colspan="2">Input</th>
+</tr>
+<tr>
+<td class="register">BC</td>
+<td class="register-desc">e.g. $0704 $0801 $0604</td>
+</tr>
+</table>
+</td>
+</tr>
+<tr>
+<td class="asm-label">start_sfx</td>
+<td class="address-2"><span id="35058"></span>88F2</td>
+<td class="instruction">LD A,($A238)</td>
+<td class="comment-1" rowspan="3">If $A238 is zero then goto sfx_related_assign</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="35061"></span>88F5</td>
+<td class="instruction">AND A</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="35062"></span>88F6</td>
+<td class="instruction">JR Z,<a href="88F2.html#35066">sfx_related_assign</a></td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="35064"></span>88F8</td>
+<td class="instruction">CP C</td>
+<td class="comment-1" rowspan="2">Return if $A238 &lt; C</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="35065"></span>88F9</td>
+<td class="instruction">RET C</td>
+</tr>
+<tr>
+<td class="asm-label">sfx_related_assign</td>
+<td class="address-2"><span id="35066"></span>88FA</td>
+<td class="instruction">LD A,B</td>
+<td class="comment-1" rowspan="4">wordat($A237) = BC</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="35067"></span>88FB</td>
+<td class="instruction">LD ($A237),A</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="35070"></span>88FE</td>
+<td class="instruction">LD A,C</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="35071"></span>88FF</td>
+<td class="instruction">LD ($A238),A</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="35074"></span>8902</td>
+<td class="instruction">RET</td>
+<td class="comment-1" rowspan="1">Return</td>
+</tr>
+</table>
+<table class="asm-navigation">
+<tr>
+<td class="prev">
+Prev: <a href="88E2.html">88E2</a>
+</td>
+<td class="up">Up: <a href="../maps/all.html#35058">Map</a></td>
+<td class="next">
+Next: <a href="8903.html">8903</a>
+</td>
+</tr>
+</table>
+<footer>
+<div class="release">The incomplete Chase H.Q. disassembly 20230426</div>
+<div class="copyright">&copy; 1989 Ocean Software Ltd.</div>
+<div class="created">Created using <a href="https://skoolkit.ca">SkoolKit</a> 8.9.</div>
+</footer>
+</body>
+</html>

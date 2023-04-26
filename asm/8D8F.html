@@ -1,0 +1,428 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Chase H.Q.: Routine at 8D8F</title>
+<meta charset="utf-8" />
+<link rel="stylesheet" type="text/css" href="../skoolkit.css" />
+</head>
+<body class="Asm-c">
+<table class="header">
+<tr>
+<td class="logo"><a href="../index.html">Chase H.Q.</a></td>
+<td class="page-header">Routines</td>
+</tr>
+</table>
+<table class="asm-navigation">
+<tr>
+<td class="prev">
+Prev: <a href="8C58.html">8C58</a>
+</td>
+<td class="up">Up: <a href="../maps/all.html#36239">Map</a></td>
+<td class="next">
+Next: <a href="8DF9.html">8DF9</a>
+</td>
+</tr>
+</table>
+<div class="description">8D8F: Drives transitions.</div>
+<table class="disassembly">
+<tr>
+<td class="routine-comment" colspan="5">
+<div class="details">
+<div class="paragraph">
+Used by the routines at <a href="8014.html">load_stage</a>, <a href="8258.html">attract_mode</a>, <a href="8401.html">8401</a>, <a href="858C.html">858C</a>, <a href="873C.html">873C</a> and <a href="F220.html">F220</a>.
+</div>
+</div>
+</td>
+</tr>
+<tr>
+<td class="asm-label">transition</td>
+<td class="address-2"><span id="36239"></span>8D8F</td>
+<td class="instruction">LD A,($A231)</td>
+<td class="comment-1" rowspan="1">Check the flag/counter that fill_attributes resets</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="36242"></span>8D92</td>
+<td class="instruction">AND A</td>
+<td class="comment-1" rowspan="2">Exit early if its zero</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="36243"></span>8D93</td>
+<td class="instruction">RET Z</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="36244"></span>8D94</td>
+<td class="instruction">DEC A</td>
+<td class="comment-1" rowspan="1">Decrement it</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="36245"></span>8D95</td>
+<td class="instruction">JP Z,<a href="8E91.html">draw_mugshots</a></td>
+<td class="comment-1" rowspan="4">If zero, call draw_mugshots</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="36248"></span>8D98</td>
+<td class="instruction">DEC A</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="36249"></span>8D99</td>
+<td class="instruction">JP Z,<a href="8E42.html">sub_8e42</a></td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="36252"></span>8D9C</td>
+<td class="instruction">DEC A</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="36253"></span>8D9D</td>
+<td class="instruction">JP Z,<a href="8E29.html">fill_attributes</a></td>
+<td class="comment-1" rowspan="1">Call fill_attributes</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="36256"></span>8DA0</td>
+<td class="instruction">LD A,$00</td>
+<td class="comment-1" rowspan="7">(self modified)</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="36258"></span>8DA2</td>
+<td class="instruction">DEC A</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="36259"></span>8DA3</td>
+<td class="instruction">LD ($8DA1),A</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="36262"></span>8DA6</td>
+<td class="instruction">JR NZ,<a href="8D8F.html#36269">transition_0</a></td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="36264"></span>8DA8</td>
+<td class="instruction">LD ($A231),A</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="36267"></span>8DAB</td>
+<td class="instruction">JR <a href="8D8F.html#36279">transition_1</a></td>
+</tr>
+<tr>
+<td class="asm-label">transition_0</td>
+<td class="address-2"><span id="36269"></span>8DAD</td>
+<td class="instruction">LD HL,($8DBB)</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="36272"></span>8DB0</td>
+<td class="instruction">LD DE,$0008</td>
+<td class="comment-1" rowspan="2">Move to next frame? (self modified)</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="36275"></span>8DB3</td>
+<td class="instruction">ADD HL,DE</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="36276"></span>8DB4</td>
+<td class="instruction">LD ($8DBB),HL</td>
+<td class="comment-1" rowspan="4">Set anim address? (self modify)</td>
+</tr>
+<tr>
+<td class="asm-label">transition_1</td>
+<td class="address-2"><span id="36279"></span>8DB7</td>
+<td class="instruction">LD H,$FF</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="36281"></span>8DB9</td>
+<td class="instruction">EXX</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="36282"></span>8DBA</td>
+<td class="instruction">LD HL,$0000</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="36285"></span>8DBD</td>
+<td class="instruction">LD B,$08</td>
+<td class="comment-1" rowspan="1">8 chunks</td>
+</tr>
+<tr>
+<td class="asm-label">transition_loop</td>
+<td class="address-2"><span id="36287"></span>8DBF</td>
+<td class="instruction">LD A,(HL)</td>
+<td class="comment-1" rowspan="1">Fetch a byte of anim?</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="36288"></span>8DC0</td>
+<td class="instruction">EXX</td>
+<td class="comment-1" rowspan="1">Bank</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="36289"></span>8DC1</td>
+<td class="instruction">LD E,A</td>
+<td class="comment-1" rowspan="1">Get it into <span class="register">E</span></td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="36290"></span>8DC2</td>
+<td class="instruction">LD D,H</td>
+<td class="comment-1" rowspan="1">Preserve H in D (which is safe)</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="36291"></span>8DC3</td>
+<td class="instruction">LD L,$FE</td>
+<td class="comment-1" rowspan="1">Reset ptr</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="36293"></span>8DC5</td>
+<td class="instruction">CALL <a href="8D8F.html#36312">fade_chunk</a></td>
+<td class="comment-1" rowspan="1">Draw a chunk</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="36296"></span>8DC8</td>
+<td class="instruction">LD L,$FE</td>
+<td class="comment-1" rowspan="1">Reset ptr</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="36298"></span>8DCA</td>
+<td class="instruction">LD A,H</td>
+<td class="comment-1" rowspan="1">Move up (screen-wise) by 8</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="36299"></span>8DCB</td>
+<td class="instruction">SUB $08</td>
+<td class="comment-1" rowspan="1"></td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="36301"></span>8DCD</td>
+<td class="instruction">LD H,A</td>
+<td class="comment-1" rowspan="1"></td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="36302"></span>8DCE</td>
+<td class="instruction">CALL <a href="8D8F.html#36312">fade_chunk</a></td>
+<td class="comment-1" rowspan="1">Draw a chunk</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="36305"></span>8DD1</td>
+<td class="instruction">DEC D</td>
+<td class="comment-1" rowspan="2">H = D - 1 -- drop down 1 row</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="36306"></span>8DD2</td>
+<td class="instruction">LD H,D</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="36307"></span>8DD3</td>
+<td class="instruction">EXX</td>
+<td class="comment-1" rowspan="1">Unbank</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="36308"></span>8DD4</td>
+<td class="instruction">INC HL</td>
+<td class="comment-1" rowspan="1">Next byte of anim</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="36309"></span>8DD5</td>
+<td class="instruction">DJNZ <a href="8D8F.html#36287">transition_loop</a></td>
+<td class="comment-1" rowspan="1">Loop</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="36311"></span>8DD7</td>
+<td class="instruction">RET</td>
+<td class="comment-1" rowspan="1">Return</td>
+</tr>
+<tr>
+<td class="asm-label">fade_chunk</td>
+<td class="address-2"><span id="36312"></span>8DD8</td>
+<td class="instruction">LD C,$08</td>
+<td class="comment-1" rowspan="1">8 rows</td>
+</tr>
+<tr>
+<td class="asm-label">fade_row_loop</td>
+<td class="address-2"><span id="36314"></span>8DDA</td>
+<td class="instruction">LD B,$06</td>
+<td class="comment-1" rowspan="1">6 iterations (of 5 each) = 30 bytes written (~ a scanline)</td>
+</tr>
+<tr>
+<td class="asm-label">fade_column_loop</td>
+<td class="address-2"><span id="36316"></span>8DDC</td>
+<td class="instruction">LD A,(HL)</td>
+<td class="comment-1" rowspan="3">OR <span class="register">E</span> into the screen pixels</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="36317"></span>8DDD</td>
+<td class="instruction">OR E</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="36318"></span>8DDE</td>
+<td class="instruction">LD (HL),A</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="36319"></span>8DDF</td>
+<td class="instruction">DEC L</td>
+<td class="comment-1" rowspan="17">Repeat another four times</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="36320"></span>8DE0</td>
+<td class="instruction">LD A,(HL)</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="36321"></span>8DE1</td>
+<td class="instruction">OR E</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="36322"></span>8DE2</td>
+<td class="instruction">LD (HL),A</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="36323"></span>8DE3</td>
+<td class="instruction">DEC L</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="36324"></span>8DE4</td>
+<td class="instruction">LD A,(HL)</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="36325"></span>8DE5</td>
+<td class="instruction">OR E</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="36326"></span>8DE6</td>
+<td class="instruction">LD (HL),A</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="36327"></span>8DE7</td>
+<td class="instruction">DEC L</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="36328"></span>8DE8</td>
+<td class="instruction">LD A,(HL)</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="36329"></span>8DE9</td>
+<td class="instruction">OR E</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="36330"></span>8DEA</td>
+<td class="instruction">LD (HL),A</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="36331"></span>8DEB</td>
+<td class="instruction">DEC L</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="36332"></span>8DEC</td>
+<td class="instruction">LD A,(HL)</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="36333"></span>8DED</td>
+<td class="instruction">OR E</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="36334"></span>8DEE</td>
+<td class="instruction">LD (HL),A</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="36335"></span>8DEF</td>
+<td class="instruction">DEC L</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="36336"></span>8DF0</td>
+<td class="instruction">DJNZ <a href="8D8F.html#36316">fade_column_loop</a></td>
+<td class="comment-1" rowspan="1">Loop</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="36338"></span>8DF2</td>
+<td class="instruction">DEC L</td>
+<td class="comment-1" rowspan="2">Move to next start address</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="36339"></span>8DF3</td>
+<td class="instruction">DEC L</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="36340"></span>8DF4</td>
+<td class="instruction">DEC C</td>
+<td class="comment-1" rowspan="2">Loop</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="36341"></span>8DF5</td>
+<td class="instruction">JP NZ,<a href="8D8F.html#36314">fade_row_loop</a></td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="36344"></span>8DF8</td>
+<td class="instruction">RET</td>
+<td class="comment-1" rowspan="1">Return</td>
+</tr>
+</table>
+<table class="asm-navigation">
+<tr>
+<td class="prev">
+Prev: <a href="8C58.html">8C58</a>
+</td>
+<td class="up">Up: <a href="../maps/all.html#36239">Map</a></td>
+<td class="next">
+Next: <a href="8DF9.html">8DF9</a>
+</td>
+</tr>
+</table>
+<footer>
+<div class="release">The incomplete Chase H.Q. disassembly 20230426</div>
+<div class="copyright">&copy; 1989 Ocean Software Ltd.</div>
+<div class="created">Created using <a href="https://skoolkit.ca">SkoolKit</a> 8.9.</div>
+</footer>
+</body>
+</html>
