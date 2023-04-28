@@ -2909,10 +2909,11 @@ W $A186,2 Attribute address of horizon. Points to last attribute on the line whi
   $A188,120 Set by $843B. Groups of 20 bytes. This area looks like a table of spawned vehicles or objects. The first entry is the perp.
 ;  +0 is a used flag, either $00 or $FF
 ;  +1 looks distance related
-;  +5 TBD
+;  +2/3/4/5/6 TBD
 ;  +7 byte  TBD used by hazard_hit
 ;  +8 byte  gets copied from the hazards table
 ;  +9 word  address of e.g. car_lods
+; +11 word  address of routine
 ; +13 word  set to $190 by fully_smashed (likely a horizontal position)
 ; +15 byte  TBD used by hazard_hit, counter which gets set to 2 then reduced
 ; +17 byte  TBD used by hazard_hit, indexes table $ACDB
@@ -2973,11 +2974,12 @@ W $A186,2 Attribute address of horizon. Points to last attribute on the line whi
 @ $A233 label=smash_counter
   $A233,1 Smash counter (0..20)
 ;
-  $A234,1 Cycles 0/1/2/3 as the game runs.
-;
-  $A235,1 ... light toggle flashing related? seems to cycle 0/1 as the game runs.
-;
-  $A236,1
+@ $A234 label=counter_A
+  $A234,1 Cycles 0-1-2-3 as the game runs (used to animate turbo smoke CHECK)
+@ $A235 label=counter_B
+  $A235,1 Cycles 0-1 as the game runs (used to toggle flash the red/blue lights)
+@ $A236 label=counter_C
+  $A236,1 Cycles 0-1-2-3 as the game runs - at half rate
 ;
 N $A237 These seem to get altered even when no sound is being produced.
 @ $A237 label=sfx_0
@@ -3065,6 +3067,7 @@ W $A276,2
 W $A278,2
 
 b $A27A Font: 8x7 bitmap
+D $A27A #HTML[#CALL:graphic($A27A,8,41*7,0,0)]
 B $A27A,,7 Exclamation mark
 B $A281,,7 Open bracket
 B $A288,,7 Close bracket
@@ -3077,9 +3080,21 @@ c $A399
 
 c $A579
 
-c $A60E
+@ $A60E label=cycle_counters
+c $A60E Counters
+  $A60E Cycle $A234 0-1-2-3
+  $A616 Cycle $A235 0-1
+  $A61B Return if it's zero
+  $A61C Cycle $A236 0-1-2-3 at half rate
+  $A622 Return
 
-b $A623
+@ $A623 label=hazard_template
+b $A623 Hazard template?
+D $A623 $A845 copies these 20 bytes to hazards array.
+B $A623,1 Used flag
+W $A62C,2
+W $A62E,2 Routine at $A8CD
+W $A630,2
 
 c $A637
 
@@ -3089,7 +3104,7 @@ c $A7F3
 
 c $A89C
 
-c $A8CD
+c $A8CD Hazard handler routine
 
 c $A955
 
@@ -3097,7 +3112,8 @@ c $A97E
 
 c $A9DE
 
-b $AA38
+c $AA38
+D $AA38 $AB89 self modifies $8FA4 to call this.
 
 c $AAC6
 
@@ -3188,21 +3204,17 @@ N $AC56 This must be mapping the speed into the 5-entry array.
   $ACD3 Set IX[19] to 1
   $ACD7 Set IX[15] to 1
   $ACDA Return
-
-b $ACDB
-W $AD03 Used above
+;
+B $ACDB $AC94 uses this
+W $AD03 $AC53 uses this
 
 c $AD0D
-
-c $AD4A A ==B
 
 c $AD51
 
 c $ADA0
 
 c $ADBE
-
-c $AECF
   $AE1B Increment overtake_bonus
   $AE1F Return
 ;
@@ -3211,9 +3223,7 @@ c $AECF
   $AF9E,3 Get smash_factor
   $AFCF,3 Get smash_factor
 
-c $AFF1
-
-b $B045
+b $B045 Used by $B968
 
 c $B063
   $B080 Clear up/down/left/right bits of user input
@@ -3350,13 +3360,13 @@ R $B58E I:A TBD
   $B63C If A==0 C=A
   $B640
   $B641 Draws right side of car
-  $B6C4 Read from SUB @ $B5AA
+  $B6C4,3 Read from SUB @ $B5AA
   $B647 Return
 
 c $B648
-  $B6DE,5 Divide by 8
 
 c $B67C
+  $B6DE,5 Divide by 8
 ;
   $B701 Select a plotter? Could be clipping stuff too.
   $B708 This multiplies by six - the length of each load-mask-store step in the plotter core.
@@ -3637,9 +3647,9 @@ c $C58A ditto
   $C595 jump
 
 c $C598 Road plotting
-  $C60A Jump table (self modified)
-  $C61B Jump table (self modified)
-  $C62C Jump table (self modified)
+  $C60A,2 Jump table (self modified)
+  $C61B,2 Jump table (self modified)
+  $C62C,2 Jump table (self modified)
   $C7EA,3 Point at first hill backdrop
   $C7EF,3 Point at second hill backdrop
 
@@ -3686,10 +3696,14 @@ c $C95A
   $CA44 Jump table (self modified)
   $CA55 Jump table (self modified)
 
-b $CBA4
+c $CBA4
+
 c $CBC5
+
 c $CBCE
+
 c $CBD6
+
 c $CD3A
 
 ; Fixed point 5.3? or 3.5?
@@ -3711,7 +3725,7 @@ R $CDD6 I:C Multiplier (number to multiply by)
 
 b $CDEC
 
-b $CE33
+b $CE33 Used by $B4FD
 W $CE33,24,6
   $CE4B,19
   $CE5E,19
@@ -3719,32 +3733,36 @@ W $CE33,24,6
   $CE84,19
   $CE97,19
 
-b $CEAA  ref'd by $B578
+b $CEAA Used by $B578
 
-b $CEDA This must be the car draw instructions. 9 of them. 20 bytes per entry.
+@ $CEDA label=hero_car_refs
+b $CEDA Hero car drawing instructions
+D $CEDA 9 of them. 20 bytes per entry.
 B $CEDA TBD
-B $CEDB,1 14 rows
-W $CEDC,2 Address of middle graphic part
+B $CEDB,1 rows
+W $CEDC,2 -> middle graphic
 B $CEDE,1 TBD
 B $CEDF,1 rows
-W $CEE0,2 -> TBD
+W $CEE0,2 -> top graphic
 B $CEE2,1 TBD
 B $CEE3,1 rows
-W $CEE4,2 -> TBD
+W $CEE4,2 -> bottom graphic
 B $CEE6,1 TBD
 B $CEE7,1 rows
-W $CEE8,2 -> TBD
+W $CEE8,2 -> left graphic
 B $CEEA,1 TBD
 B $CEEB,1 rows
-W $CEEC,2 -> TBD
+W $CEEC,2 -> right graphic
 L $CEDA,20,9
 
-b $CF8E
+@ $CF8E label=hero_car_shadow
+b $CF8E Hero car adornments (shadow, smoke?)
 B $CF8E,1 TBD
 B $CF8F,1 rows
 W $CF90,2 -> data
 L $CF8E,4,3
 ;
+@ $CF9E label=hero_car_smoke
 W $CF9E,2 -> Turbo smoke plume data frame 1
 W $CFA4,2 -> Turbo smoke plume data frame 2
 W $CFAA,2 -> Turbo smoke plume data frame 3
@@ -3786,40 +3804,134 @@ B $D1C1,16,4 Graphic (16x4 pixels) #HTML[#CALL:graphic($D1C1,16,4,1,1)] LOOKS WR
 B $D1D1,36,4 Debris (16x9 pixels) #HTML[#CALL:graphic($D1D1,16,9,1,1)] LOOKS WRONG
 B $D1F5,24,2 More debris (8x12 pixels) #HTML[#CALL:graphic($D1F5,8,12,1,1)] LOOKS WRONG
 
-b $D20D Turbo smoke plume. 32x16 per frame. 4 frames. mask-bitmap arrangement.
-B $D20D Turbo smoke plume data frame 1
-B $D28D Turbo smoke plume data frame 2
-B $D30D Turbo smoke plume data frame 3
-B $D38D Turbo smoke plume data frame 4
+b $D20D Turbo smoke plume animation
+D $D20D (32x16) masked per frame. 4 frames.
+D $D20D #HTML[#CALL:anim($D20D,32,16,1,1,4)]
+B $D20D Turbo smoke plume data frame 1 #HTML[#CALL:graphic($D20D,32,16,1,1)]
+B $D28D Turbo smoke plume data frame 2 #HTML[#CALL:graphic($D28D,32,16,1,1)]
+B $D30D Turbo smoke plume data frame 3 #HTML[#CALL:graphic($D30D,32,16,1,1)]
+B $D38D Turbo smoke plume data frame 4 #HTML[#CALL:graphic($D38D,32,16,1,1)]
 
-b $D40D Middle sections of hero car. 9 sets
-B $D40D,70,5 Graphic 40x14 pixels [Car middle 1]
-B $D453,85,5 Graphic 40x17 pixels [Car middle 2]
-B $D4A8,80,5 Graphic 40x16 pixels [Car middle 3]
-B $D4F8,70,5 Graphic 40x14 pixels [Car middle 4]
-B $D53E,85,5 Graphic 40x17 pixels [Car middle 5]
-B $D593,75,5 Graphic 40x15 pixels [Car middle 6]
-B $D5DE,70,5 Graphic 40x14 pixels [Car middle 7]
-B $D624,80,5 Graphic 40x16 pixels [Car middle 8]
-B $D674,80,5 Graphic 40x16 pixels [Car middle 9]
+b $D40D Hero car graphics
+D $D40D 9 sets
 ;
-B $D6C4,90,10 Graphic 40x9 pixels masked [top of car]
-B $D71E,60,10 Graphic 40x6 pixels masked [bottom of car]
-
-B $D75A,28,2 Graphic 8x14 pixels masked
-B $D776,28,2 Graphic 8x14 pixels masked
-
-B $DB4C,80,10 Graphic TBD 40x8 pixels masked
-B $DB9C,60,10 Graphic TBD 40x6 pixels masked
-B $DBD8,26,2 Graphic TBD 8x13 pixels masked
-B $DBF2,28,2 Graphic TBD 8x14 pixels masked
-
-B $DC0E TBD
-
-b $DD6A Car shadow. All are 28x12 pixels, mask then value.
-B $DD6A Straight on
-B $DE12 Same, but turning
-B $DEBA Same again, but turning hard
+N $D40D Centre parts
+N $D40D #HTML[#CALL:graphic($D40D,40,14,0,1)] Straight
+B $D40D,70,5 40x14 pixels, non-masked, inverted
+N $D453 #HTML[#CALL:graphic($D453,40,17,0,1)] Straight + Turn right
+B $D453,85,5 40x17 pixels, non-masked, inverted
+N $D4A8 #HTML[#CALL:graphic($D4A8,40,16,0,1)] Straight + Turn right hard
+B $D4A8,80,5 40x16 pixels, non-masked, inverted
+N $D4F8 #HTML[#CALL:graphic($D4F8,40,14,0,1)] Up
+B $D4F8,70,5 40x14 pixels, non-masked, inverted
+N $D53E #HTML[#CALL:graphic($D53E,40,17,0,1)] Up + Turn right
+B $D53E,85,5 40x17 pixels, non-masked, inverted
+N $D593 #HTML[#CALL:graphic($D593,40,15,0,1)] Up + Turn right hard
+B $D593,75,5 40x15 pixels, non-masked, inverted
+N $D5DE #HTML[#CALL:graphic($D5DE,40,14,0,1)] Down
+B $D5DE,70,5 40x14 pixels, non-masked, inverted
+N $D624 #HTML[#CALL:graphic($D624,40,16,0,1)] Down + Turn right
+B $D624,80,5 40x16 pixels, non-masked, inverted
+N $D674 #HTML[#CALL:graphic($D674,40,16,0,1)] Down + Turn right hard
+B $D674,80,5 40x16 pixels, non-masked, inverted
+;
+N $D6C4 Straight parts
+N $D6C4 #HTML[#CALL:graphic($D6C4,40,9,1,1)]
+B $D6C4,90,10  40x9 pixels masked [top of car]
+N $D71E #HTML[#CALL:graphic($D71E,40,6,1,1)]
+B $D71E,60,10  40x6 pixels masked [bottom of car]
+N $D75A #HTML[#CALL:graphic($D75A,8,14,1,1)]
+B $D75A,28,2   8x14 pixels masked [left of car]
+N $D776 #HTML[#CALL:graphic($D776,8,14,1,1)]
+B $D776,28,2   8x14 pixels masked [right of car]
+;
+N $D792 Straight + Turn right parts
+N $D792 #HTML[#CALL:graphic($D792,40,8,1,1)]
+B $D792,80,10  40x9 pixels masked [top of car]
+N $D7E2 #HTML[#CALL:graphic($D7E2,40,4,1,1)]
+B $D7E2,40,10  40x6 pixels masked [bottom of car]
+N $D80A  #HTML[#CALL:graphic($D80A,8,13,1,1)]
+B $D80A,26,2   8x13 pixels masked [left of car]
+N $D824  #HTML[#CALL:graphic($D824,8,13,1,1)]
+B $D824,26,2   8x13 pixels masked [right of car]
+;
+N $D83E Straight + Turn right hard parts
+N $D83E #HTML[#CALL:graphic($D83E,40,9,1,1)]
+B $D83E,90,10  40x9 pixels masked [top of car]
+N $D898 #HTML[#CALL:graphic($D898,40,4,1,1)]
+B $D898,40,10  40x4 pixels masked [bottom of car]
+N $D8C0  #HTML[#CALL:graphic($D8C0,8,12,1,1)]
+B $D8C0,24,2   8x12 pixels masked [left of car]
+N $D8D8  #HTML[#CALL:graphic($D8D8,8,15,1,1)]
+B $D8D8,30,2   8x15 pixels masked [right of car]
+;
+N $D8F6 Up parts
+N $D8F6 #HTML[#CALL:graphic($D8F6,40,10,1,1)]
+B $D8F6,100,10 40x10 pixels masked [top of car]
+N $D95A #HTML[#CALL:graphic($D95A,40,6,1,1)]
+B $D95A,60,10  40x6 pixels masked [bottom of car]
+N $D996  #HTML[#CALL:graphic($D996,8,13,1,1)]
+B $D996,26,2   8x13 pixels masked [left of car]
+N $D9B0  #HTML[#CALL:graphic($D9B0,8,14,1,1)]
+B $D9B0,28,2   8x14 pixels masked [right of car]
+;
+N $D9CC Up + Turn right parts
+N $D9CC #HTML[#CALL:graphic($D9CC,40,9,1,1)]
+B $D9CC,90,10  40x9 pixels masked [top of car]
+N $DA26 #HTML[#CALL:graphic($DA26,40,4,1,1)]
+B $DA26,40,10  40x4 pixels masked [bottom of car]
+N $DA4E  #HTML[#CALL:graphic($DA4E,8,12,1,1)]
+B $DA4E,24,2   8x12 pixels masked [left of car]
+N $DA66  #HTML[#CALL:graphic($DA66,8,14,1,1)]
+B $DA66,28,2   8x14 pixels masked [right of car]
+;
+N $DA82 Up + Turn right hard parts
+N $DA82 #HTML[#CALL:graphic($DA82,40,9,1,1)]
+B $DA82,90,10  40x9 pixels masked [top of car]
+N $DADC #HTML[#CALL:graphic($DADC,40,6,1,1)]
+B $DADC,60,10  40x6 pixels masked [bottom of car]
+N $DB18  #HTML[#CALL:graphic($DB18,8,11,1,1)]
+B $DB18,22,2   8x11 pixels masked [left of car]
+N $DB2E  #HTML[#CALL:graphic($DB2E,8,15,1,1)]
+B $DB2E,30,2   8x15 pixels masked [right of car]
+;
+N $DB4C Down parts
+N $DB4C #HTML[#CALL:graphic($DB4C,40,8,1,1)]
+B $DB4C,80,10  40x8 pixels masked [top of car]
+N $DB9C #HTML[#CALL:graphic($DB9C,40,6,1,1)]
+B $DB9C,60,10  40x6 pixels masked [bottom of car]
+N $DBD8  #HTML[#CALL:graphic($DBD8,8,13,1,1)]
+B $DBD8,26,2   8x13 pixels masked [left of car]
+N $DBF2  #HTML[#CALL:graphic($DBF2,8,14,1,1)]
+B $DBF2,28,2   8x14 pixels masked [right of car]
+;
+N $DC0E Down + Turn right parts
+N $DC0E #HTML[#CALL:graphic($DC0E,40,8,1,1)]
+B $DC0E,80,10  40x8 pixels masked [top of car]
+N $DC5E #HTML[#CALL:graphic($DC5E,40,4,1,1)]
+B $DC5E,40,10  40x4 pixels masked [bottom of car]
+N $DC86  #HTML[#CALL:graphic($DC86,8,13,1,1)]
+B $DC86,26,2   8x13 pixels masked [left of car]
+N $DCA0  #HTML[#CALL:graphic($DCA0,8,13,1,1)]
+B $DCA0,26,2   8x13 pixels masked [right of car]
+;
+N $DCBA Down + Turn right hard parts
+N $DCBA #HTML[#CALL:graphic($DCBA,40,8,1,1)]
+B $DCBA,80,10  40x8 pixels masked [top of car]
+N $DD0A #HTML[#CALL:graphic($DD0A,40,4,1,1)]
+B $DD0A,40,10  40x4 pixels masked [bottom of car]
+N $DD32  #HTML[#CALL:graphic($DD32,8,13,1,1)]
+B $DD32,26,2   8x13 pixels masked [left of car]
+N $DD4C  #HTML[#CALL:graphic($DD4C,8,15,1,1)]
+B $DD4C,30,2   8x15 pixels masked [right of car]
+;
+N $DD6A Shadow parts
+N $DD6A #HTML[#CALL:graphic($DD6A,56,12,1,1)]
+B $DD6A,168,14 Shadow 56x12 pixels masked - straight on
+N $DE12 #HTML[#CALL:graphic($DE12,56,12,1,1)]
+B $DE12,168,14 Shadow 56x12 pixels masked - same, but turning
+N $DEBA #HTML[#CALL:graphic($DEBA,56,12,1,1)]
+B $DEBA,168,14 Shadow 56x12 pixels masked - same again, but turning hard
 
 @ $DF62 label=ledfont
 b $DF62 LED numeric font used for scores
