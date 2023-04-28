@@ -67,7 +67,7 @@ class ChaseHQHtmlWriter(HtmlWriter, ChaseHQWriter):
         tattrbase = attrbase
         for f in range(nframes):
             (udg_array, tdatabase, tattrbase) = self._decode(cwd, tdatabase, tattrbase, width, height, interleaved, invert)
-            y = len(udg_array) * 8 - height
+            y = len(udg_array) * 8 - height if invert else 0
             frame = Frame(udg_array, scale=scale, mask=mask_type, y=y*scale, width=width*scale, height=height*scale)
             frames.append(frame)
         if nframes == 1:
