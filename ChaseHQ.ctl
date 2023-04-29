@@ -675,6 +675,9 @@ c $8014 Load a stage
   $8095 ...
 ;
   $8088 Subroutine
+  $809D,3 Call print_message
+  $80A2,3 Call transition
+  $80A5,3 Call draw_screen
 N $80B9 Tape loading
   $80B9 Setup to load a block ???
   $80C0 Routine
@@ -778,7 +781,7 @@ c $8258 Attract mode -- keyscan / cpu driver / text
   $827C
   $827E nmessages++
   $827F Load flags
-  $8280 Call message_printing_related
+  $8280 Call print_message
   $8283 Loop while B > 0
   $8285 Attribute related
 N $828B Alternate between credits and copyright messages.
@@ -911,6 +914,7 @@ N $83CD Builds a table of flipped bytes at $EF00.
   $83F5 If $A139 is non-zero this calls $81AA which is the end of a string...
   $83FF Loop
 
+@ $8401 label=main_loop
 c $8401 Main loop
   $8401 Call load_stage
   $8404 Are we on stage 6 (end credits) jump $841B if not so
@@ -921,15 +925,16 @@ c $8401 Main loop
   $8418 Set (wanted) stage to 6   [not sure why]
   $841A Return
 @ $841B label=l_841b
-  $841B CALL $858C    ; TBD
-  $841E LD HL,$5D1D   ;
+  $841B
+  $841E
   $8421 Call setup_game
   $8424 $A13B cycles 3,2,1 then repeats
   $842E $A26B = (A * 4) OR 2
   $8435 Is $A139 zero? (used later)
   $8439 $A188 = $FF  I suspect this keeps the perp spawned
-  $843E LD HL,$81DD   ;
+  $843E
   $8441 Call chatter
+@ $8444 label=main_loop_loop
   $8444 Call drive_sfx
   $8447 Call keyscan
   $844A Call tick
@@ -979,11 +984,11 @@ N $84C8 Test mode handling
   $84CC Change to active high
   $84CD Mask off just keys
   $84CF If none are set then jump
-  $84D1 EX AF,AF'     ;
-  $84D2 LD BC,$0804   ;
-  $84D5 TBD
+  $84D1
+  $84D2
+  $84D5
   $84D8 Call silence_audio_hook
-  $84DB EX AF,AF'     ;
+  $84DB
   $84DC Is bit 0 set? (key 1 to restart the level)
   $84DD Restart level if so
   $84E0 HL = &stage_number
@@ -998,27 +1003,27 @@ N $84C8 Test mode handling
 ; (key 4 or 5 for an extra credit)
   $84F2 Increment credits unless maxed out at 9
 @ $84FB label=no_test_mode
-  $84FB LD A,($A231)  ;
-  $84FE AND A         ;
-  $84FF JP NZ,$8444   ;
-  $8502 LD HL,$A26B   ;
-  $8505 SRL (HL)      ;
-  $8507 JR NC,$8512   ;
-  $8509 A = *HL
-  $850A LD (HL),$00   ;
-  $850C CALL $83C7    ;
-  $850F JP $8444      ;
+  $84FB
+  $84FE
+  $84FF
+  $8502
+  $8505
+  $8507
+  $8509
+  $850A
+  $850C Call hooked function (likely sfx)
+  $850F Loop
 ;
-  $8512 LD A,($A26A)  ;
-  $8515 AND A         ;
-  $8516 JP Z,$8444    ;
-  $8519 DEC A         ;
-  $851A JP NZ,$873C   ;
-  $851D LD A,$02      ;
-  $851F LD ($A26A),A  ;
-  $8522 LD A,$08      ;
-  $8524 CALL $8DF9    ;
-  $8527 JP $8444      ;
+  $8512
+  $8515
+  $8516
+  $8519
+  $851A
+  $851D
+  $851F
+  $8522
+  $8524 Call setup_transition
+  $8527 Loop
 
 @ $852A label=cpu_driver
 c $852A CPU driver
@@ -1036,7 +1041,7 @@ D $852A This runs the game loop while driving the car.
   $8544 Calculate speed - 150
   $854C Load gear
   $854F Set gear to low if speed < 150, otherwise high
-  $8551 JR NZ,$8555   ;
+  $8551
   $8553 Set input GEAR
 @ $8555 label=cd_set_input
   $8555 Set user input
@@ -1590,30 +1595,32 @@ c $8E29 Fills the attribute bytes leftwards from column 1.
 @ $8E42 label=sub_8e42
 c $8E42 Subroutine.
   $8E42 Address of current message thing (frame delay, flags, attrs, bufaddr, attraddr, string)
-  $8E45 LD B,$00      ; self modified by ($8E58 increments it), ($8E8D resets it to 1)
-  $8E47 DJNZ $8E5C    ;
-  $8E49 LD A,$14      ; self modified by $8E4C, $8E51, ($8E84 resets it perhaps)
-  $8E4B A--
-  $8E4C LD ($8E4A),A  ; self modify
+  $8E45 B = 0 -- self modified by ($8E58 increments it), ($8E8D resets it to 1)
+;
+@ $8E47 label=sub_8e47_loop
+  $8E47 sub_8e42_1
+  $8E49 A = 20 -- self modified by $8E4C, $8E51, ($8E84 resets it perhaps)
+  $8E4B A-- 
+  $8E4C self modify $8E49
   $8E4F Return if non-zero
+;
   $8E50 A = *HL
-  $8E51 LD ($8E4A),A  ; self modify
+  $8E51 self modify $8E49
   $8E54 increment $8E46, affects TIME UP state if disabled
   $8E5B B++
+;
 @ $8E5C label=sub_8e42_1
   $8E5C HL++
   $8E5D A = *HL
-  $8E5E AND A         ; test flags
-  $8E5F JR Z,$8E66    ; exit
-  $8E61 CALL $8E6C    ;
-  $8E64 JR $8E47      ;
-  $8E66 DEC HL        ;
-  $8E67 A = *HL
-  $8E68 LD ($A231),A  ;
+  $8E5E test flags
+  $8E5F jump if zero
+  $8E61 Call print_message
+  $8E64 Loop?
+  $8E66 transition_control = HL[-1]
   $8E6B Return
 
 @ $8E6C label=print_message
-c $8E6C Message printing related
+c $8E6C Print a message
 R $8E6C I:A  Flags byte
 R $8E6C I:HL -> as yet unnamed message structure
   $8E6C Preserve/bank flags byte in #REGa
@@ -2065,11 +2072,11 @@ c $9945 Chatter routine
 R $9945 I:A TBD
 R $9945 I:HL Address of message set
   $9945 B = A
-  $9946 LD A,($963D)  ;
+  $9946
   $9949 If A == 0 jump forward to 9955
   $994C If A >= 3 jump forward to 9955
 ; A is 1 or 2
-  $9950 LD A,($963E)  ;
+  $9950
   $9953 If A >= B return
 ;
   $9955 $963E = B
@@ -2080,38 +2087,38 @@ R $9945 I:HL Address of message set
 
 @ $9965 label=main_loop_26
 c $9965 Noise effect, Message plotting
-  $9965 LD A,($963D)  ; A = TBD963d - 1
-  $9969 JR Z,$99DF    ; if A was zero jump
+  $9965 A = TBD963d - 1
+  $9969 if A was zero jump
   $996B A--
-  $996C JR Z,$998F    ; if A was zero jump to sub998f_do_noise_effect
+  $996C if A was zero jump to sub998f_do_noise_effect
   $996E A--
-  $996F JR NZ,$997F   ; if A was NOT zero jump
+  $996F if A was NOT zero jump
 ; A always zero here
   $9971 Decrement noise_counter
   $9975 A = *HL A = noise_counter
-  $9976 JP NZ,$9A5C   ; Jump if noise_counter was non-zero
-  $9979 LD ($963D),A  ; Zero this
+  $9976 Jump if noise_counter was non-zero
+  $9979 Zero this
   $997C Call noise_plot_attrs -- clear to black
 ;
   $997F Plot space character
-  $9981 LD A,$AA      ; {$AA ROR 1 becomes $55 becomes $AA and so on
-  $9983 RRCA          ; probably a delay / alternating call
-  $9984 LD ($9982),A  ; }
-  $9987 LD A,$FF      ; ...and then gets overwritten?
-  $9989 JP C,$9AF1    ; jump on $55 -> $AA transitions?
+  $9981 {$AA ROR 1 becomes $55 becomes $AA and so on
+  $9983 probably a delay / alternating call
+  $9984 }
+  $9987 ...and then gets overwritten?
+  $9989 jump on $55 -> $AA transitions?
   $998C,3 Goto plot_mini_font_1
 ;
 @ $998F label=sub998f_do_noise_effect
   $998F If noise_counter > 0 call noise_effect
-  $9996 LD A,($9633)  ; If $9633 == 0 jump $99b6
-  $9999 AND A         ;
-  $999A JR Z,$99B6    ;
-  $999C DEC A         ; $9633--
-  $999D LD ($9633),A  ;
-  $99A0 LD B,A        ;
-  $99A1 JR Z,$99BD    ; If A was zero jump sub998f_another_something
-  $99A3 LD HL,($962E) ; Load address of next character
-  $99A6 DEC HL        ; Go back 1
+  $9996 If $9633 == 0 jump $99b6
+  $9999 
+  $999A 
+  $999C $9633--
+  $999D 
+  $99A0 
+  $99A1 If A was zero jump sub998f_another_something
+  $99A3 Load address of next character
+  $99A6 Go back 1
   $99A7 Load the character for when we call plot_mini_font*
   $99A8 Clear string terminator bit
   $99AA message_x - 1
@@ -2123,15 +2130,15 @@ c $9965 Noise effect, Message plotting
   $99B6 If message_x != 0 jump $9a30
 ;
 @ $99BD label=sub998f_another_something
-  $99BD LD HL,($9630) ; HL = next_message
+  $99BD HL = next_message
   $99C0 A = *HL first char of
   $99C1 String terminator? jump to clear_chatter if so
   $99C5,2 this tests for $FE -- different terminator?
-  $99C7 JR NZ,$9A24   ; If not $fe goto chatter_message
+  $99C7 If not $fe goto chatter_message
 ; $FE means clear first?
-  $99C9 HL++
+  $99C9
   $99CA next_message = *HL
-  $99D1 JR $99E4      ; goto 99e4_exit
+  $99D1 goto 99e4_exit
 ;
 @ $99D3 label=clear_chatter
   $99D3 Set the noise effect counter to 4
@@ -2297,7 +2304,7 @@ N $9B02 String terminator
   $9B24 Self modify $9B88 which is a mask
   $9B27 Get ASCII character
 N $9B28 Turn ASCII into glyph IDs
-  $9B28 LD D,$45      ; likely the screen addr top
+  $9B28 likely the screen addr top
   $9B2A Is it '.'? glyph ID = 26; goto have_glyph_id
   $9B30 Is it ','? glyph ID = 27; goto have_glyph_id
   $9B35 Is it '!'? glyph ID = 28; goto have_glyph_id
@@ -2937,55 +2944,55 @@ C $A0D6 Main input handler
 R $A0D6 O:A User input byte (as $A0D5)
   $A0D6 If not Kempston then goto $A0F3
   $A0DC Read Kempston joystick port. Returns 000FUDLR active high
-  $A0E0 PUSH AF      ;
-  $A0E1 LD E,$20     ;
-  $A0E3 LD HL,$A0CD  ;
-  $A0E6 CALL $A112   ;
-  $A0E9 RRCA         ;
-  $A0EA RRCA         ;
-  $A0EB RRCA         ;
-  $A0EC AND $E0      ;
-  $A0EE POP DE       ;
-  $A0EF OR D         ;
-  $A0F0 LD E,A       ;
-  $A0F1 JR $A0FB     ;
+  $A0E0
+  $A0E1
+  $A0E3
+  $A0E6
+  $A0E9
+  $A0EA
+  $A0EB
+  $A0EC
+  $A0EE
+  $A0EF
+  $A0F0
+  $A0F1
 ;
 @ $A0F3 label=keyscan_keyboard
-  $A0F3 LD E,$01     ;
-  $A0F5 LD HL,$A0CD  ;
-  $A0F8 CALL $A112   ;
+  $A0F3
+  $A0F5
+  $A0F8
 ;
 @ $A0FB label=keyscan_common
-  $A0FB AND $03      ;
-  $A0FD CP $03       ;
-  $A0FF LD A,E       ;
-  $A100 JR NZ,$A105  ;
-  $A102 AND $FC      ;
-  $A104 LD E,A       ;
+  $A0FB
+  $A0FD
+  $A0FF
+  $A100
+  $A102
+  $A104
 ;
-  $A105 AND $0C      ;
-  $A107 CP $0C       ;
-  $A109 LD A,E       ;
-  $A10A JR NZ,$A10E  ;
-  $A10C AND $F3      ;
+  $A105
+  $A107
+  $A109
+  $A10A
+  $A10C
 ;
-  $A10E LD ($A0D5),A ;
+  $A10E
   $A111 Return
 ;
-  $A112 LD A,(HL)    ; Outer keyboard loop
-  $A113 INC HL       ;
-  $A114 CALL $A11E   ;
-  $A117 CCF          ; clear carry
-  $A118 RL E         ;
-  $A11A JR NC,$A112  ; loop while top bit set?
-  $A11C LD A,E       ;
+  $A112 Outer keyboard loop
+  $A113 
+  $A114 
+  $A117 clear carry
+  $A118 
+  $A11A loop while top bit set?
+  $A11C 
   $A11D Return
 ;
 @ $A11E label=keyscan_inner
-  $A11E LD C,A       ; Inner keyboard loop.... what's in #REGa?
+  $A11E Inner keyboard loop.... what's in #REGa?
   $A11F B=(A&7)+1, C=5-(A>>3)
   $A12D A = $FE ROR B
-  $A132 IN A,($FE)   ; Port $FE is the AND of all columns/rows? This is the main keyboard access
+  $A132 Port $FE is the AND of all columns/rows? This is the main keyboard access
 ;
   $A134 C = A ROR C
   $A138 Return
@@ -4125,14 +4132,14 @@ b $E540 looks like a table of flipped bytes (but not quite)
 b $E601
 
 c $E839 looks like initialisation code / relocation
-  $E839 POP BC        ; must be the loop counter
+  $E839 must be the loop counter
   $E83A Point #REGhl at $e858 table
 @ $E83D label=loopy
   $E83D PUSH BC       ;
   $E83E DE = wordat(HL) HL += 2
   $E842 Stack DE
-  $E843 DE = wordat(HL) HL += 2  ; dest
-  $E847 BC = wordat(HL) HL += 2  ; count
+  $E843 DE = wordat(HL) HL += 2 -- dest
+  $E847 BC = wordat(HL) HL += 2 -- count
   $E84B exchange top of stack and HL. HL is now src
   $E84C Do copy
   $E84E Restore base pointer and count
@@ -4448,8 +4455,12 @@ c $F0C6 White noise generator?
 b $F0FE
 
 c $F220 routine/data copied to $8014 during init? (926 bytes long)
+  $F2B2,3 Exit via (if P) print_message
   $F3A5,3 Call silence_audio_hook
+  $F460,3 Call print_message
   $F485,3 Call message_printing_related
+  $F488,3 Call transition
+  $F48B,3 Call draw_screen
 
 b $F491 Credits / Score messages
 T $F497,10 "PRESS GEAR"
