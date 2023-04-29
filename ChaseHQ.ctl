@@ -153,9 +153,8 @@
 @ $4000 writer=:ChaseHQ.ChaseHQAsmWriter
 
 b $4000 Screen memory
-B $4000 Screen bitmap
-B $5800 Screen attributes
-
+B $4000,6144,8 Screen bitmap
+B $5800,768,8 Screen attributes
 c $5B00 Could be loader code
   $5B22 Point #REGhl at $5B7D
   $5B2B Fetch a word from #REGhl and stack it
@@ -779,7 +778,7 @@ c $8258 Attract mode -- keyscan / cpu driver / text
   $827C
   $827E nmessages++
   $827F Load flags
-  $8280 Call <message printing related>
+  $8280 Call message_printing_related
   $8283 Loop while B > 0
   $8285 Attribute related
 N $828B Alternate between credits and copyright messages.
@@ -787,7 +786,7 @@ N $828B Alternate between credits and copyright messages.
   $8292 #REGhl -> credits_messages
   $8295 Skip next LD HL based on blink above
   $8297 #REGhl -> copyright_messages
-  $829A Call <message printing related>
+  $829A Call message_printing_related
   $829D Call transition
   $82A0 Call draw_screen
   $82A3 Loop
@@ -868,14 +867,28 @@ T $8367,19 "ALL RIGHTS RESERVED"
 
 b $837A Unknown - mostly NUL bytes
 
-c $83B5 Only a RET (probably a 128K hook)
-c $83B8 Call engine_sfx_play routine (probably a 128K hook)
-c $83BB Likely silences audio (probably a 128K hook)
-c $83BE Only a RET (probably a 128K hook)
-c $83C1 Likely the turbo boost sound effect (probably a 128K hook)
-c $83C4 Calls engine_sfx_setup routine (probably a 128K hook)
-c $83C7 Only a RET (probably a 128K hook)
-c $83CA Call attract_mode routine (probably a 128K hook)
+; Likely 128K hooks
+
+c $83B5 Only a RET
+
+@ $83B8 label=engine_sfx_play_hook
+c $83B8 Call engine_sfx_play
+
+@ $83BB label=silence_audio_hook
+c $83BB Likely silences audio in 128K mode
+
+c $83BE Only a RET
+
+@ $83C1 label=turbo_sfx_play_hook
+c $83C1 Likely the turbo boost sound effect
+
+@ $83C4 label=engine_sfx_setup_hook
+c $83C4 Call engine_sfx_setup
+
+c $83C7 Only a RET
+
+@ $83CA label=attract_mode_hook
+c $83CA Call attract_mode
 
 c $83CD Bootstrap
 ; This gets hit when a game finishes and we return to the attract mode.
@@ -889,9 +902,7 @@ N $83CD Builds a table of flipped bytes at $EF00.
   $83D6 Loop for 8 bits
   $83D8 Write #REGc out and advance
   $83DA Loop for 256 iterations (when #REGl overflows)
-;
-  $83DC Indirect call to attract mode driver routine
-;
+  $83DC Call attract_mode_hook
   $83DF $A13C = 0
   $83E3 Zero $8002..$8006
   $83EC $8007 = 1 => Load stage 1
@@ -918,49 +929,49 @@ c $8401 Main loop
   $8435 Is $A139 zero? (used later)
   $8439 $A188 = $FF  I suspect this keeps the perp spawned
   $843E LD HL,$81DD   ;
-  $8441 message related
+  $8441 Call chatter
   $8444 Call drive_sfx
   $8447 Call keyscan
-  $844A TBD - has TIME UP and missing restart stuff
-  $844D TBD - has quit handling
-  $8450 TBD
-  $8453 TBD - some bonus handling
-  $8456 TBD
-  $8459 TBD
-  $845C TBD
-  $845F <sound>
-  $8462 TBD
-  $8465 TBD
-  $8468 <sound>
-  $846B TBD
-  $846E <sound>
-  $8471 TBD - landscape related
-  $8474 <sound>
-  $8477 TBD
-  $847A TBD
-  $847D TBD
-  $8480 TBD - helicopter related
-  $8483 TBD
-  $8486 <sound>
-  $8489 TBD
-  $848C TBD
-  $848F <sound>
-  $8492 TBD
-  $8495 TBD
-  $8498 <sound>
-  $849B TBD
-  $849E <sound>
-  $84A1 TBD
+  $844A Call tick
+  $844D Call check_user_input
+  $8450 Call main_loop_6
+  $8453 Call main_loop_7
+  $8456 Call main_loop_8
+  $8459 Call main_loop_9
+  $845C Call cycle_counters
+  $845F Call engine_sfx_play_hook
+  $8462 Call main_loop_10
+  $8465 Call main_loop_11
+  $8468 Call engine_sfx_play_hook
+  $846B Call main_loop_12
+  $846E Call engine_sfx_play_hook
+  $8471 Call main_loop_13
+  $8474 Call engine_sfx_play_hook
+  $8477 Call main_loop_14
+  $847A Call main_loop_15
+  $847D Call main_loop_16
+  $8480 Call main_loop_17
+  $8483 Call main_loop_18
+  $8486 Call engine_sfx_play_hook
+  $8489 Call main_loop_19
+  $848C Call main_loop_20
+  $848F Call engine_sfx_play_hook
+  $8492 Call main_loop_21
+  $8495 Call main_loop_22
+  $8498 Call engine_sfx_play_hook
+  $849B Call main_loop_23
+  $849E Call engine_sfx_play_hook
+  $84A1 Call main_loop_24
   $84A4 Call speed_score
-  $84A7 stage/bonus/LO-HI/flashing lights
+  $84A7 Call main_loop_25
   $84AA Call overtake_bonus
-  $84AD <sound>
-  $84B0 noise effect, message plotting
-  $84B3 TBD - tiny func
+  $84AD Call engine_sfx_play_hook
+  $84B0 Call main_loop_26
+  $84B3 Call smash_bar_etc
   $84B6 Call transition
-  $84B9 <sound>
-  $84BC Call draw_screen -- copy backbuffer to screen
-  $84BF TBD
+  $84B9 Call engine_sfx_play_hook
+  $84BC Call draw_screen
+  $84BF Call main_loop_27
   $84C2 Is test mode enabled?
   $84C5 If not, goto no_test_mode
 N $84C8 Test mode handling
@@ -971,7 +982,7 @@ N $84C8 Test mode handling
   $84D1 EX AF,AF'     ;
   $84D2 LD BC,$0804   ;
   $84D5 TBD
-  $84D8 Silence audio
+  $84D8 Call silence_audio_hook
   $84DB EX AF,AF'     ;
   $84DC Is bit 0 set? (key 1 to restart the level)
   $84DD Restart level if so
@@ -1029,25 +1040,60 @@ D $852A This runs the game loop while driving the car.
   $8553 Set input GEAR
 @ $8555 label=cd_set_input
   $8555 Set user input
-  $8559 CALL $BDFB    ; this lot must run a chunk of attract mode funcs
-  $855C CALL $A7F3    ;
-  $855F CALL $A60E    ;
-  $8562 CALL $CD3A    ;
-  $8565 CALL $B848    ;
-  $8568 CALL $B9F4    ;
-  $856B CALL $C452    ; landscape related
-  $856E CALL $A579    ;
-  $8571 CALL $C0E1    ;
-  $8574 CALL $AB9A    ;
-  $8577 CALL $A955    ;
-  $857A CALL $A97E    ;
-  $857D CALL $ADA0    ;
-  $8580 CALL $B063    ;
-  $8583 CALL $A399    ;
-  $8586 CALL $8F5F    ;
-  $8589 JP $B318      ;
+  $8559 Call main_loop_6
+  $855C Call main_loop_9
+  $855F Call cycle_counters
+  $8562 Call main_loop_10
+  $8565 Call main_loop_11
+  $8568 Call main_loop_12
+  $856B Call main_loop_13
+  $856E Call main_loop_14
+  $8571 Call main_loop_15
+  $8574 Call main_loop_16
+  $8577 Call main_loop_18
+  $857A Call main_loop_20
+  $857D Call main_loop_19
+  $8580 Call main_loop_8
+  $8583 Call main_loop_22
+  $8586 Call main_loop_23
+  $8589 Exit via main_loop_24
 
 c $858C Probably the "CHASE HQ MONITORING SYSTEM" pre-game screen
+  $858C
+  $858F Call setup_game
+  $8592
+  $8594
+  $8597 Call setup_transition
+  $859A Call clear_screen_set_attrs
+  $859D
+  $859E
+  $85A1
+  $85A2
+  $85A5 Call chatter
+@ $85A8 loop_85a8
+  $85A8
+  $85AB Call main_loop_26
+  $85AE
+  $85B1
+  $85B4 Call transition
+  $85B7 Call draw_screen
+  $85BA
+  $85BD
+  $85BE
+  $85C0
+  $85C3
+  $85C4
+  $85C5
+  $85C7
+  $85C9 Call keyscan
+  $85CC
+  $85CE
+  $85D0 Call clear_chatter
+  $85D3
+  $85D6
+  $85D8 If no carry call setup_transition
+  $85DB Loop
+
 b $85DD
 
 c $85E4
@@ -1058,7 +1104,70 @@ c $865A
 
 c $86F6 18 byte chunks of this gets copied to $C82D by $C808
 
-c $873C
+@ $873C label=escape_scene
+c $873C Escape scene
+  $873C Call silence_audio_hook
+  $873F
+  $8742 Call setup_game
+  $8745
+  $8748
+  $874B
+  $874E
+  $8751
+  $8754
+  $8756
+  $8759
+  $875C
+  $875E
+  $8761
+  $8764 Call chatter
+@ $8767 label=8767_loop
+  $8767
+  $876A
+  $876D
+  $876F Call NZ message_printing_related
+  $8772 Call main_loop_6
+  $8775 Call main_loop_10
+  $8778 Call main_loop_11
+  $877B Call main_loop_12
+  $877E Call main_loop_13
+  $8781 Call main_loop_14
+  $8784 Call main_loop_15
+  $8787 Call main_loop_16
+  $878A Call main_loop_19
+  $878D Call main_loop_23
+  $8790 Call main_loop_25
+  $8793 Call main_loop_26
+  $8796 Call transition
+  $8799 Call draw_screen
+  $879C
+  $879F
+  $87A0
+  $87A2
+  $87A5
+  $87A7
+  $87A9
+  $87AC
+  $87AE
+  $87B0
+  $87B2
+  $87B5
+  $87B8
+  $87BB
+  $87BE
+  $87C1
+  $87C4
+  $87C5
+  $87C7
+  $87CA
+  $87CB
+  $87CD
+  $87D0
+  $87D1
+  $87D2
+  $87D4
+  $87D6 Call NZ setup_transition
+  $87D9 Loop
 
 @ $87DC label=setup_game
 c $87DC Sets up the game or the level?
@@ -1100,7 +1209,8 @@ R $87DC I:HL Address of 14 bytes of data to be copied to $A26C+
   $8857 Point #REGhl at left light's attributes
   $885D Point #REGhl at right light's attributes then FALL THROUGH
 @ $8860 label=clear_lights
-  $8860 Clear the lights' BRIGHT bit
+  $8860,2 Clear the lights' BRIGHT bit
+  $8870,3 Call silence_audio_hook
 ; flashing lights are 5 attrs wide, 4 high
 
 @ $8876 label=check_user_input
@@ -1123,7 +1233,7 @@ N $8891 Turbo was pressed
   $889E HL -> Random choice of (WHOAAAAA! / GREAT! / ONE MORE TIME.)
   $88A1 TBD
   $88A3 Call chatter
-  $88A6 Exit via $83C1 -- likely the boost sound effect
+  $88A6 Exit via turbo_sfx_play_hook
 ;
 @ $88A9 label=quit_key
   $88A9 If $A26A != 0 then return
@@ -1134,7 +1244,7 @@ N $8891 Turbo was pressed
   $88BB Return
 ;
 @ $88BC label=pause_key
-  $88BC Silence audio (128k hook)
+  $88BC Call silence_audio_hook
   $88BF Call keyscan while PAUSE is pressed
   $88C6 Call keyscan until keys are pressed
   $88CD Call keyscan until keys are released (debounce)
@@ -1162,9 +1272,9 @@ c $8903 Drives sound effects
   $8910 Counters?
   $8913 CALL NZ, start_sfx
 ;
-  $8916 Call engine sound effect routine (via 128K hook)
-  $8919 Call sound effect routine (via 128K hook)
-  $891C Call another routine (via 128K hook)
+  $8916 Call engine_sfx_setup_hook
+  $8919 Call engine_sfx_play_hook
+  $891C Call another hooked routine
   $891F If $A237 == 0 return
   $8924 #REGe = $A237 * 4
   $8927 $A237 = 0
@@ -1281,12 +1391,15 @@ R $8A36 I:E Same as D
   $8A53 Loop while C
   $8A56 Return
 
+@ $8A57 label=main_loop_7
 c $8A57
+  $8A74,3 Call silence_audio_hook
   $8ABB,3 Call fill_attributes
   $8ACD,2 transition_control byte
   $8B06 Set score
   $8B10,3 Call increment_score
   $8B87,3 Point at "CLEAR BONUS - TIME BONUS - SCORE" messages
+  $8B8A,3 Call message_printing_related
 ;
 @ $8C35 label=j_8c35
   $8C35 $A195 = DE
@@ -1299,6 +1412,7 @@ c $8C3A Fully smashed
   $8C43 Set smash_counter to 20
   $8C48 Set user input mask to (Quit+Pause)
   $8C4D Print the "OK! PULL OVER CREEP!" message
+  $8C50 Call message_printing_related
   $8C53
   $8C56 Exit via $8C35
 
@@ -1634,6 +1748,7 @@ N $8F4F It rolled over
   $8F5C Loop while iterations remain
   $8F5E Return
 
+@ $8F5F label=main_loop_23
 c $8F5F
   $9003 DE = E * 7
   $900B Push return address onto stack
@@ -1963,7 +2078,8 @@ R $9945 I:HL Address of message set
   $9960 $963D = 1
   $9964 Return
 
-c $9965
+@ $9965 label=main_loop_26
+c $9965 Noise effect, Message plotting
   $9965 LD A,($963D)  ; A = TBD963d - 1
   $9969 JR Z,$99DF    ; if A was zero jump
   $996B A--
@@ -2244,6 +2360,7 @@ c $9BCF tick
   $9C19 Loop back to $9BF9
 @ $9C1B label=time_up
   $9C1B,3 Point at "TIME UP" message
+  $9C1E,3 Call message_printing_related
   $9C3B Jump if no credits remain
   $9C3E Decrement credits [POKE $9C3E for Infinite credits]
   $9C3F Turn it into ASCII and poke it into the "CREDIT x" string
@@ -2260,6 +2377,7 @@ N $9C57 Resetting mission code.
   $9C70 Set remaining time to 60 (BCD) [doesn't affect stuff if altered?!]
 @ $9C7E label=print_continue
   $9C7E,3 Print "CONTINUE THIS MISSION" messages
+  $9C81,3 Call message_printing_related
   $9C84 <self modified>
 
 @ $9CC2 label=speed_score
@@ -2363,7 +2481,8 @@ T $9D5B "STAGE " message shown in the score area.
 @ $9D61 label=stage_n
 B $9D61 #R$9D61 writes the current score number here in ASCII.
 
-c $9D62
+@ $9D62 label=main_loop_25
+c $9D62 stage/bonus/LO-HI/flashing lights
   $9D62 Check if stage has changed?
   $9D6B Adding 48 to make it a digit then $80 to terminate the string.
   $9D6D Update "STAGE N"
@@ -3076,8 +3195,10 @@ B $A296,,7 Full stop
 B $A29D,,7 0..9
 B $A2E3,,7 A-Z
 
+@ $A399 label=main_loop_22
 c $A399
 
+@ $A579 label=main_loop_14
 c $A579
 
 @ $A60E label=cycle_counters
@@ -3100,14 +3221,17 @@ c $A637
 
 b $A7E7
 
+@ $A7F3 label=main_loop_9
 c $A7F3
 
 c $A89C
 
 c $A8CD Hazard handler routine
 
+@ $A955 label=main_loop_18
 c $A955
 
+@ $A97E label=main_loop_20
 c $A97E
 
 c $A9DE
@@ -3115,12 +3239,15 @@ c $A9DE
 c $AA38
 D $AA38 $AB89 self modifies $8FA4 to call this.
 
+@ $AAC6 label=main_loop_21
 c $AAC6
 
-c $AB33
+@ $AB33 label=main_loop_17
+c $AB33 Helicopter related
   $AB52 Point #REGhl at pilot "turn left" messages
   $AB59 Point #REGhl at pilot "turn right" messages
 
+@ $AB9A label=main_loop_16
 c $AB9A
 
 @ $ABF6 label=spawn_hazards
@@ -3212,6 +3339,7 @@ c $AD0D
 
 c $AD51
 
+@ $ADA0 label=main_loop_19
 c $ADA0
 
 c $ADBE
@@ -3225,6 +3353,7 @@ c $ADBE
 
 b $B045 Used by $B968
 
+@ $B063 label=main_loop_8
 c $B063
   $B080 Clear up/down/left/right bits of user input
   $B098 Read boost time remaining
@@ -3233,6 +3362,7 @@ c $B063
   $B0AF Read user input
   $B1EC Cap speed to $1FF
 
+@ $B318 label=main_loop_24
 c $B318
   $B318 If speed > 0 jump $B325
   $B31F TBD...
@@ -3244,8 +3374,8 @@ c $B4CC
   $B4E1 Point #REGhl at left light's attributes
   $B4E4 Toggle its brightness
   $B4E7,3 Point at "SIGHTING OF TARGET VEHICLE" message
-  $B4EA
-  $B4ED
+  $B4EA,3 Call message_printing_related
+  $B4ED Exit via hooked routine (likely sfx, siren?)
 
 @ $B4F0 smash
 c $B4F0 Smash handling
@@ -3455,9 +3585,15 @@ c $B7EF
 
 b $B828 breaks/crashes road rendering if messed with
 
+@ $B848 label=main_loop_11
 c $B848
+
 c $B8D2
+
+@ $B9F4 label=main_loop_12
 c $B9F4
+
+@ $BB69 label=main_loop_27
 c $BB69
 
 @ $BC3E label=draw_screen
@@ -3587,8 +3723,10 @@ c $BDC1 Clears screen then sets in-game attributes
   $BDEC Clear the edges of the game screen to black on black
   $BDFA Return
 
+@ $BDFB label=main_loop_6
 c $BDFB
 
+@ $C0E1 label=main_loop_15
 c $C0E1
   $C07A,3 Duplicate instruction
 
@@ -3598,7 +3736,8 @@ c $C15B Tunnel entrance/exit drawing code
 
 c $C2E7
 
-c $C452
+@ $C452 label=main_loop_13
+c $C452 Landscape related
   $C452 Self modify #REGsp restore instruction
   $C457 $A248 = 0
   $C45A Self modify 'LD A' at $C160 to be zero (tunnel drawing code)
@@ -3704,6 +3843,7 @@ c $CBCE
 
 c $CBD6
 
+@ $CD3A label=main_loop_10
 c $CD3A
 
 ; Fixed point 5.3? or 3.5?
@@ -4308,8 +4448,10 @@ c $F0C6 White noise generator?
 b $F0FE
 
 c $F220 routine/data copied to $8014 during init? (926 bytes long)
-  $F220 routine
-;b $F490 Credits / Score messages
+  $F3A5,3 Call silence_audio_hook
+  $F485,3 Call message_printing_related
+
+b $F491 Credits / Score messages
 T $F497,10 "PRESS GEAR"
 T $F4A8,17 "ENTER FOR OPTIONS"
 T $F4C1,7 "CREDITS"
