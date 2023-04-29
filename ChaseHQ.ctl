@@ -423,7 +423,7 @@ B $643E,1 Width (bytes)
 B $643F,1 Flags
 B $6440,1 Height (pixels)
 W $6441,2 Bitmap
-W $6443,2 Shifted bitmap
+W $6443,2 Pre-shifted bitmap
 L $643E,7,6
 ;
 @ $6468 label=truck_lods
@@ -432,7 +432,7 @@ B $6468,1 Width (bytes)
 B $6469,1 Flags
 B $646A,1 Height (pixels)
 W $646B,2 Bitmap
-W $646D,2 Shifted bitmap
+W $646D,2 Pre-shifted bitmap
 L $6468,7,6
 ;
 @ $6492 label=car_lods
@@ -441,7 +441,7 @@ B $6492,1 Width (bytes)
 B $6493,1 Flags
 B $6494,1 Height (pixels)
 W $6495,2 Bitmap
-W $6497,2 Shifted bitmap
+W $6497,2 Pre-shifted bitmap
 L $6492,7,6
 ;
 N $64BC Lamborghini_1 (48x30)
@@ -510,7 +510,7 @@ B $6A46,1 Width (bytes)
 B $6A47,1 Flags
 B $6A48,1 Height (pixels)
 W $6A49,2 Bitmap
-W $6A4B,2 Shifted bitmap
+W $6A4B,2 Pre-shifted bitmap
 L $6A46,7,6
 ;
 @ $6A70 label=dust_lods
@@ -519,7 +519,7 @@ B $6A70,1 Width (bytes)
 B $6A71,1 Flags
 B $6A72,1 Height (pixels)
 W $6A73,2 Bitmap
-W $6A75,2 Shifted bitmap
+W $6A75,2 Pre-shifted bitmap
 L $6A70,7,6
 ;
 N $6A9A Stones (16x5)
@@ -577,7 +577,7 @@ B $6B22,1 Width (bytes)
 B $6B23,1 Flags
 B $6B24,1 Height (pixels)
 W $6B25,2 Bitmap
-W $6B27,2 Shifted bitmap
+W $6B27,2 Pre-shifted bitmap
 L $6B22,7,10
 ;
 N $6B68 Turn right sign (32x40)
@@ -619,7 +619,7 @@ B $6D82,1 Width (bytes)
 B $6D83,1 Flags
 B $6D84,1 Height (pixels)
 W $6D85,2 Bitmap
-W $6D87,2 Shifted bitmap
+W $6D87,2 Pre-shifted bitmap
 L $6D82,7,6
 ;
 N $6DAC Tumbleweed_1 (16x16)
@@ -645,7 +645,7 @@ B $6DF2,1 Width (bytes)
 B $6DF3,1 Flags
 B $6DF4,1 Height (pixels)
 W $6DF5,2 Bitmap
-W $6DF7,2 Shifted bitmap
+W $6DF7,2 Pre-shifted bitmap
 L $6DF2,7,6
 ;
 N $6E1C Barrier (32x17)
@@ -668,74 +668,232 @@ N $6EB5 Barrier (16x7) pre-shifted
 N $6EB5 #HTML[#CALL:graphic($6EB5,16,7,1,1)]
 B $6EB5,28,4 Masked data
 ;
-;
-
-b $6ED1 Ref'd by graphic entry 6
+B $6ED1
+N $6ED1 Ref'd by graphic entry 6
+W $6EDB,2 Ptr?
+N $6EDE Ref'd by graphic entry 15
+W $6EE8,2 Ptr?
 W $6EEB,2 Address of another LOD table
-B $6EDE Ref'd by graphic entry 15
-
+W $6F01,2 Address of another LOD table
+  $6F03,20 TBD
+;
+@ $6F17 label=streetlamp_lods
+N $6F17 LOD
 B $6F17,1 Width (bytes)
 B $6F18,1 Flags
 B $6F19,1 Height
 W $6F1A,2 Bitmap
-W $6F1C,2 Shifted bitmap
-L $6F17,7,10
-
-B $6F5D,32,4 Street lamp top (32x8) #HTML[#CALL:graphic($6F5D,32,8,0,1)]
-B $6F7D,15,3 Street lamp top (24x5) #HTML[#CALL:graphic($6F7D,24,5,0,1)]
-B $6F8C,12,3 Street lamp top (24x4) #HTML[#CALL:graphic($6F8C,24,4,0,1)]
-B $6F98,12,3 Street lamp top (24x4) pre-shifted #HTML[#CALL:graphic($6F98,24,4,0,1)]
-B $6FA4,16,2 Street lamp top (16x4) #HTML[#CALL:graphic($6FA4,16,4,1,1)]
-B $6FB4,16,2 Street lamp top (16x4) pre-shifted #HTML[#CALL:graphic($6FB4,16,4,1,1)]
-B $6FC4,12,2 Street lamp top (16x3) #HTML[#CALL:graphic($6FC4,16,3,1,1)]
-B $6FD0,12,2 Street lamp top (16x3) pre-shifted #HTML[#CALL:graphic($6FD0,16,3,1,1)]
-
-b $6FDC Ref'd by graphic entry 7
-b $6FE6 Ref'd by graphic entry 16
+W $6F1C,2 Pre-shifted bitmap
+L $6F17,7,5
+;
+@ $6F3A label=streetlamp_flipped_lods
+N $6F3A LOD
+B $6F3A,1 Width (bytes)
+B $6F3B,1 Flags
+B $6F3C,1 Height
+W $6F3D,2 Bitmap
+W $6F3F,2 Pre-shifted bitmap
+L $6F3A,7,5
+;
+N $6F5D Street lamp top (32x8) 
+N $6F5D #HTML[#CALL:graphic($6F5D,32,8,0,1)]
+B $6F7D,15,3
+;
+N $6F7D Street lamp top (24x5) 
+N $6F7D #HTML[#CALL:graphic($6F7D,24,5,0,1)]
+B $6F8C,12,3
+;
+N $6F8C Street lamp top (24x4) 
+N $6F8C #HTML[#CALL:graphic($6F8C,24,4,0,1)]
+B $6F98,12,3
+;
+N $6F98 Street lamp top (24x4) pre-shifted 
+N $6F98 #HTML[#CALL:graphic($6F98,24,4,0,1)]
+B $6FA4,16,2
+;
+N $6FA4 Street lamp top (16x4) 
+N $6FA4 #HTML[#CALL:graphic($6FA4,16,4,1,1)]
+B $6FB4,16,2 Masked data
+;
+N $6FB4 Street lamp top (16x4) pre-shifted 
+N $6FB4 #HTML[#CALL:graphic($6FB4,16,4,1,1)]
+B $6FC4,12,2 Masked data
+;
+N $6FC4 Street lamp top (16x3) 
+N $6FC4 #HTML[#CALL:graphic($6FC4,16,3,1,1)]
+B $6FD0,12,2 Masked data
+;
+N $6FD0 Street lamp top (16x3) pre-shifted 
+N $6FD0 #HTML[#CALL:graphic($6FD0,16,3,1,1)]
+B $6F5D,32,4 Masked data
+;
+;
+N $6FDC Ref'd by graphic entry 7
+N $6FE6 Ref'd by graphic entry 16
 ;B $7069 is the top part of a streetlamp
-
-b $70F6 Ref'd by graphic entry 4 and 13
-b $7106 Ref'd by graphic entry 5 and 14
-
+N $70F6 Ref'd by graphic entry 4 and 13
+N $7106 Ref'd by graphic entry 5 and 14
+;
+@ $717E label=tree_lods
+N $717E LOD
 B $717E,1 Width (bytes)
 B $717F,1 Flags
 B $7180,1 Height
-W $7181,2 -> graphic data
-W $7183,2 -> graphic data
+W $7181,2 Bitmap
+W $7183,2 Pre-shifted bitmap
 L $717E,7,25
-
-; more tree/bush graphics
-B $722D Tree middle (64x16) #HTML[#CALL:graphic($722D,64,16,0,1)]
-B $72AD Tree bottom (64x5) #HTML[#CALL:graphic($72AD,64,5,0,1)]
-B $72D5 Tree trunk (16x8) #HTML[#CALL:graphic($72D5,16,8,0,1)]
-B $72E5 Tree shadow (64x5) #HTML[#CALL:graphic($72E5,64,5,0,1)]
-B $730D Tree middle (48x12) #HTML[#CALL:graphic($730D,48,12,0,1)]
-B $7355 Tree bottom (48x4) #HTML[#CALL:graphic($7355,48,4,0,1)]
-B $736D Tree shadow (48x4) #HTML[#CALL:graphic($736D,48,4,0,1)]
-B $7385 Tree middle (32x8) #HTML[#CALL:graphic($7385,32,8,0,1)]
-B $73A5 Tree bottom (32x3) #HTML[#CALL:graphic($73A5,32,3,0,1)]
-B $73B1 Tree shadow (16x2) #HTML[#CALL:graphic($73B1,16,2,0,1)]
-B $73B9 Tree middle (24x7) #HTML[#CALL:graphic($73B9,24,7,0,1)]
-B $73CE Tree bottom (24x2) #HTML[#CALL:graphic($73CE,24,2,0,1)]
-B $73D4 Tree trunk (8x4) #HTML[#CALL:graphic($73D4,8,4,0,1)]
-B $73D8 Tree shadow (24x2) #HTML[#CALL:graphic($73D8,24,2,0,1)]
-B $73DE Tree top (64x13) masked #HTML[#CALL:graphic($73DE,64,13,1,1)]
-B $74AE,120,12 Tree top (48x10) masked #HTML[#CALL:graphic($74AE,48,10,1,1)]
-;B $74B0,120,12 saw hit but can't explain
-B $7526,40,8 Tree top (32x5) masked #HTML[#CALL:graphic($7526,32,5,1,1)]
-B $754E,24,6 Tree top (24x4) masked #HTML[#CALL:graphic($754E,24,4,1,1)]
-B $7566,18,6 Tree top (24x3) masked #HTML[#CALL:graphic($7566,24,3,1,1)]
-B $7578,18,6 Tree top (24x3) pre-shifted masked #HTML[#CALL:graphic($7578,24,3,1,1)]
-B $758A,24,4 Trre trunk (16x6) masked #HTML[#CALL:graphic($758A,16,6,1,1)]
-B $75A2,16,4 Tree trunk (16x4) masked #HTML[#CALL:graphic($75A2,16,4,1,1)]
-B $75B2,30,6 Tree middle (24x5) masked #HTML[#CALL:graphic($75B2,24,5,1,1)] (also used as 24x1 24x2)
-B $75D0,12,6 Tree bottom (24x2) masked #HTML[#CALL:graphic($75D0,24,2,1,1)]
-B $75DC,18,6 Tree trunk (24x3) masked #HTML[#CALL:graphic($75DC,24,3,1,1)] (also used as 24x1 24x2)
-B $75EE,6,6 Tree shadow (24x1) masked #HTML[#CALL:graphic($75EE,24,1,1,1)]
-B $75F4,30,6 Tree middle (24x5) pre-shifted masked #HTML[#CALL:graphic($75F4,24,5,1,1)] (also used as 24x1)
-B $7612,12,6 Tree bottom (24x2) masked #HTML[#CALL:graphic($7612,24,2,1,1)]
-B $761E,18,6 Tree trunk (24x3) masked #HTML[#CALL:graphic($761E,24,3,1,1)] (also used as 24x2)
-B $7630,6,6 Tree shadow (24x1) masked #HTML[#CALL:graphic($7630,24,1,1,1)]
+;
+@ $722D label=bitmap_tree_middle_64x16
+N $722D Tree middle (64x16) 
+N $722D #HTML[#CALL:graphic($722D,64,16,0,1)]
+B $722D 
+;
+@ $72AD label=bitmap_tree_bottom_64x5
+N $72AD Tree bottom (64x5) 
+N $72AD #HTML[#CALL:graphic($72AD,64,5,0,1)]
+B $72AD 
+;
+@ $72D5 label=bitmap_tree_trunk_16x8
+N $72D5 Tree trunk (16x8) 
+N $72D5 #HTML[#CALL:graphic($72D5,16,8,0,1)]
+B $72D5 
+;
+@ $72E5 label=bitmap_tree_shadow_64x5
+N $72E5 Tree shadow (64x5) 
+N $72E5 #HTML[#CALL:graphic($72E5,64,5,0,1)]
+B $72E5 
+;
+@ $730D label=bitmap_tree_middle_48x12
+N $730D Tree middle (48x12) 
+N $730D #HTML[#CALL:graphic($730D,48,12,0,1)]
+B $730D 
+;
+@ $7355 label=bitmap_tree_bottom_48x4
+N $7355 Tree bottom (48x4) 
+N $7355 #HTML[#CALL:graphic($7355,48,4,0,1)]
+B $7355 
+;
+@ $736D label=bitmap_tree_shadow_48x4
+N $736D Tree shadow (48x4) 
+N $736D #HTML[#CALL:graphic($736D,48,4,0,1)]
+B $736D 
+;
+@ $7385 label=bitmap_tree_middle_32x8
+N $7385 Tree middle (32x8) 
+N $7385 #HTML[#CALL:graphic($7385,32,8,0,1)]
+B $7385 
+;
+@ $73A5 label=bitmap_tree_bottom_32x3
+N $73A5 Tree bottom (32x3) 
+N $73A5 #HTML[#CALL:graphic($73A5,32,3,0,1)]
+B $73A5 
+;
+@ $73B1 label=bitmap_tree_shadow_16x2
+N $73B1 Tree shadow (16x2) 
+N $73B1 #HTML[#CALL:graphic($73B1,16,2,0,1)]
+B $73B1 
+;
+@ $73B9 label=bitmap_tree_middle_24x7
+N $73B9 Tree middle (24x7) 
+N $73B9 #HTML[#CALL:graphic($73B9,24,7,0,1)]
+B $73B9 
+;
+@ $73CE label=bitmap_tree_bottom_24x2
+N $73CE Tree bottom (24x2) 
+N $73CE #HTML[#CALL:graphic($73CE,24,2,0,1)]
+B $73CE 
+;
+@ $73D4 label=bitmap_tree_trunk_8x4
+N $73D4 Tree trunk (8x4) 
+N $73D4 #HTML[#CALL:graphic($73D4,8,4,0,1)]
+B $73D4 
+;
+@ $73D8 label=bitmap_tree_shadow_24x2
+N $73D8 Tree shadow (24x2) 
+N $73D8 #HTML[#CALL:graphic($73D8,24,2,0,1)]
+B $73D8 
+;
+@ $73DE label=bitmap_tree_top_64x13
+N $73DE Tree top (64x13)
+N $73DE #HTML[#CALL:graphic($73DE,64,13,1,1)]
+B $73DE  Masked data
+;
+@ $74AE label=bitmap_tree_top_48x10
+N $74AE Tree top (48x10)
+N $74AE #HTML[#CALL:graphic($74AE,48,10,1,1)]
+B $74AE,120,12 Masked data
+;
+@ $7526 label=bitmap_tree_top_32x5
+N $7526 Tree top (32x5)
+N $7526 #HTML[#CALL:graphic($7526,32,5,1,1)]
+B $7526,40,8 Masked data
+;
+@ $754E label=bitmap_tree_top_24x4
+N $754E Tree top (24x4)
+N $754E #HTML[#CALL:graphic($754E,24,4,1,1)]
+B $754E,24,6 Masked data
+;
+@ $7566 label=bitmap_tree_top_24x3
+N $7566 Tree top (24x3)
+N $7566 #HTML[#CALL:graphic($7566,24,3,1,1)]
+B $7566,18,6 Masked data
+;
+@ $7578 label=bitmap_tree_top_24x3s
+N $7578 Tree top (24x3) pre-shifted
+N $7578 #HTML[#CALL:graphic($7578,24,3,1,1)]
+B $7578,18,6 Masked data
+;
+@ $758A label=bitmap_tree_trunk_16x6
+N $758A Tree trunk (16x6)
+N $758A #HTML[#CALL:graphic($758A,16,6,1,1)]
+B $758A,24,4 Masked data
+;
+@ $75A2 label=bitmap_tree_trunk_16x4
+N $75A2 Tree trunk (16x4)
+N $75A2 #HTML[#CALL:graphic($75A2,16,4,1,1)]
+B $75A2,16,4 Masked data
+;
+@ $75B2 label=bitmap_tree_middle_24x5
+N $75B2 Tree middle (24x5)
+N $75B2 #HTML[#CALL:graphic($75B2,24,5,1,1)]
+B $75B2,30,6 Masked data
+;
+; Naming collision here...
+@ $75D0 label=bitmap_tree_bottom_24x2_another
+N $75D0 Tree bottom (24x2)
+N $75D0 #HTML[#CALL:graphic($75D0,24,2,1,1)]
+B $75D0,12,6 Masked data
+;
+@ $75DC label=bitmap_tree_trunk_24x3
+N $75DC Tree trunk (24x3)
+N $75DC #HTML[#CALL:graphic($75DC,24,3,1,1)]
+B $75DC,18,6 Masked data
+;
+@ $75EE label=bitmap_tree_shadow_24x1
+N $75EE Tree shadow (24x1)
+N $75EE #HTML[#CALL:graphic($75EE,24,1,1,1)]
+B $75EE,6,6 Masked data
+;
+@ $75F4 label=bitmap_tree_middle_24x5s
+N $75F4 Tree middle (24x5) pre-shifted
+N $75F4 #HTML[#CALL:graphic($75F4,24,5,1,1)]
+B $75F4,30,6 Masked data
+;
+@ $7612 label=bitmap_tree_bottom_24x2s
+N $7612 Tree bottom (24x2) pre-shifted
+N $7612 #HTML[#CALL:graphic($7612,24,2,1,1)]
+B $7612,12,6 Masked data
+;
+@ $761E label=bitmap_tree_trunk_24x3s
+N $761E Tree trunk (24x3) pre-shifted
+N $761E #HTML[#CALL:graphic($761E,24,3,1,1)]
+B $761E,18,6 Masked data
+;
+@ $7630 label=bitmap_tree_shadow_24x1s
+N $7630 Tree shadow (24x1) pre-shifted
+N $7630 #HTML[#CALL:graphic($7630,24,1,1,1)]
+B $7630,6,6 Masked data
+;
 
 u $7636
 
