@@ -227,7 +227,7 @@ B $5D1B,1 loaded by $A6A7
 B $5D1C,1 loaded by $A759
 
 @ $5D1D label=setup_game_data
-w $5D1D 
+w $5D1D
 W $5D1D,2 road_pos
 ;
 @ $5D2B label=attract_data
@@ -404,17 +404,21 @@ B $6293 Ref'd from attract_data
 B $6276 Ref'd from attract_data
 
 b $638A Perp's face
-D $638A #HTML[#CALL:face($638A)]
-B $638A,160,4 Graphic: Perp w/ sunglasses face (32x40). Stored top-down. #HTML[#CALL:graphic($638A,32,40,0,0)]
-B $642A,20,4 Attribute data for perp.
+N $638A Bitmap data for perp w/ sunglasses (32x40). Stored top-down.
+N $638A #HTML[#CALL:face($638A)]
+B $638A,160,4
+N $642A Attribute data for perp w/ sunglasses (4x5). Stored top-down.
+B $642A,20,4
 
 b $643E LODs
+D $643E LOD = level of detail. These structures collect together the variously sized versions of the same game object.
 ;
 ; Flags in these LOD structures:
 ; - 1 seems to indicate pre-shifted bitmaps
 ; - 2 is probably to flip
 ;
 @ $643E label=lambo_lods
+N $643E LOD
 B $643E,1 Width (bytes)
 B $643F,1 Flags
 B $6440,1 Height (pixels)
@@ -423,6 +427,7 @@ W $6443,2 Shifted bitmap
 L $643E,7,6
 ;
 @ $6468 label=truck_lods
+N $6468 LOD
 B $6468,1 Width (bytes)
 B $6469,1 Flags
 B $646A,1 Height (pixels)
@@ -431,6 +436,7 @@ W $646D,2 Shifted bitmap
 L $6468,7,6
 ;
 @ $6492 label=car_lods
+N $6492 LOD
 B $6492,1 Width (bytes)
 B $6493,1 Flags
 B $6494,1 Height (pixels)
@@ -438,27 +444,68 @@ W $6495,2 Bitmap
 W $6497,2 Shifted bitmap
 L $6492,7,6
 ;
-B $64BC,180,6 Lamborghini_1 (48x30) #HTML[#CALL:graphic($64BC,48,30,0,1)]
-B $6570,110,5 Lamborghini_2 (40x22) #HTML[#CALL:graphic($6570,40,22,0,1)]
-B $65DE,45,3 Lamborghini_3 (24x15) #HTML[#CALL:graphic($65DE,24,15,0,1)]
+N $64BC Lamborghini_1 (48x30)
+N $64BC #HTML[#CALL:graphic($64BC,48,30,0,1)]
+B $64BC,180,6
 ;
-B $660B,234,6 Truck_1 (48x39) #HTML[#CALL:graphic($660B,48,39,0,1)]
-B $66F5,145,5 Truck_2 (40x29) #HTML[#CALL:graphic($66F5,40,29,0,1)]
-B $6786,60,3 Truck_3 (24x20) #HTML[#CALL:graphic($6786,24,20,0,1)]
+N $6570 Lamborghini_2 (40x22)
+N $6570 #HTML[#CALL:graphic($6570,40,22,0,1)]
+B $6570,110,5
 ;
-B $67C2,186,6 Car_1 (48x31) #HTML[#CALL:graphic($67C2,48,31,0,1)]
-B $687C,110,5 Car_2 (40x22) #HTML[#CALL:graphic($687C,40,22,0,1)]
-B $68EA,48,3 Car_3 (24x16) #HTML[#CALL:graphic($68EA,24,16,0,1)]
+N $65DE Lamborghini_3 (24x15)
+N $65DE #HTML[#CALL:graphic($65DE,24,15,0,1)]
+B $65DE,45,3
 ;
-B $691A,48,6 Lamborghini_4 (24x8) masked #HTML[#CALL:graphic($691A,24,8,1,1)]
-B $694A,48,6 Lamborghini_5 (24x8) pre-shifted masked #HTML[#CALL:graphic($694A,24,8,1,1)]
-
-B $697A,48,4 Truck_4/5 (16x12) masked #HTML[#CALL:graphic($697A,16,12,1,1)]
-B $69AA,48,4 Truck_4/5 (16x12) pre-shifted masked #HTML[#CALL:graphic($69AA,16,12,1,1)]
-B $69DA,54,6 Car_4/5 (24x9) masked #HTML[#CALL:graphic($69DA,24,9,1,1)]
-B $6A10,54,6 Car_4/5 (24x9) pre-shifted masked #HTML[#CALL:graphic($6A10,24,9,1,1)]
+N $660B Truck_1 (48x39)
+N $660B #HTML[#CALL:graphic($660B,48,39,0,1)]
+B $660B,234,6
+;
+N $66F5 Truck_2 (40x29)
+N $66F5 #HTML[#CALL:graphic($66F5,40,29,0,1)]
+B $66F5,145,5
+;
+N $6786 Truck_3 (24x20)
+N $6786 #HTML[#CALL:graphic($6786,24,20,0,1)]
+B $6786,60,3
+;
+N $67C2 Car_1 (48x31)
+N $67C2 #HTML[#CALL:graphic($67C2,48,31,0,1)]
+B $67C2,186,6
+;
+N $687C Car_2 (40x22)
+N $687C #HTML[#CALL:graphic($687C,40,22,0,1)]
+B $687C,110,5
+;
+N $68EA Car_3 (24x16)
+N $68EA #HTML[#CALL:graphic($68EA,24,16,0,1)]
+B $68EA,48,3
+;
+N $691A Lamborghini_4 (24x8)
+N $691A #HTML[#CALL:graphic($691A,24,8,1,1)]
+B $691A,48,6 Masked data
+;
+N $694A Lamborghini_5 (24x8) pre-shifted
+N $694A #HTML[#CALL:graphic($694A,24,8,1,1)]
+B $694A,48,6 Masked data
+;
+N $697A Truck_4/5 (16x12)
+N $697A #HTML[#CALL:graphic($697A,16,12,1,1)]
+B $697A,48,4 Masked data
+;
+N $69AA Truck_4/5 (16x12) pre-shifted
+N $69AA #HTML[#CALL:graphic($69AA,16,12,1,1)]
+B $69AA,48,4 Masked data
+;
+N $69DA Car_4/5 (24x9)
+N $69DA #HTML[#CALL:graphic($69DA,24,9,1,1)]
+B $69DA,54,6 Masked data
+;
+N $6A10 Car_4/5 (24x9) pre-shifted
+N $6A10 #HTML[#CALL:graphic($6A10,24,9,1,1)]
+B $6A10,54,6 Masked data
 ;
 @ $6A46 label=stones_lods
+N $6A46 LOD
 B $6A46,1 Width (bytes)
 B $6A47,1 Flags
 B $6A48,1 Height (pixels)
@@ -467,6 +514,7 @@ W $6A4B,2 Shifted bitmap
 L $6A46,7,6
 ;
 @ $6A70 label=dust_lods
+N $6A70 LOD
 B $6A70,1 Width (bytes)
 B $6A71,1 Flags
 B $6A72,1 Height (pixels)
@@ -474,25 +522,57 @@ W $6A73,2 Bitmap
 W $6A75,2 Shifted bitmap
 L $6A70,7,6
 ;
-B $6A9A,20,4 Stones (16x5) masked #HTML[#CALL:graphic($6A9A,16,5,1,1)]
-B $6AAE,16,4 Stones (16x4) masked #HTML[#CALL:graphic($6AAE,16,4,1,1)]
-B $6ABE,16,4 Stones (16x4) pre-shifted masked #HTML[#CALL:graphic($6ABE,16,4,1,1)]
-B $6ACE,12,4 Stones (16x3) masked #HTML[#CALL:graphic($6ACE,16,3,1,1)]
-B $6ADA,12,4 Stones (16x3) pre-shifted masked #HTML[#CALL:graphic($6ADA,16,3,1,1)]
-B $6AE6,4,2 Stones (8x2) masked #HTML[#CALL:graphic($6AE6,8,2,1,1)]
-B $6AEA,4,2 Stones (8x2) pre-shifted masked #HTML[#CALL:graphic($6AEA,8,2,1,1)]
-B $6AEE,2,2 Stones (8x1) masked #HTML[#CALL:graphic($6AEE,8,1,1,1)]
-B $6AF0,2,2 Stones (8x1) pre-shifted masked #HTML[#CALL:graphic($6AF0,8,1,1,1)]
+N $6A9A Stones (16x5)
+N $6A9A #HTML[#CALL:graphic($6A9A,16,5,1,1)]
+B $6A9A,20,4 Masked data
 ;
-B $6AF2,2 Dust (8x1) masked #HTML[#CALL:graphic($6AF2,8,1,1,1)]
-B $6AF4,2 Dust (8x1) pre-shifted masked #HTML[#CALL:graphic($6AF4,8,1,1,1)]
+N $6AAE Stones (16x4)
+N $6AAE #HTML[#CALL:graphic($6AAE,16,4,1,1)]
+B $6AAE,16,4 Masked data
+;
+N $6ABE Stones (16x4) pre-shifted
+N $6ABE #HTML[#CALL:graphic($6ABE,16,4,1,1)]
+B $6ABE,16,4 Masked data
+;
+N $6ACE Stones (16x3)
+N $6ACE #HTML[#CALL:graphic($6ACE,16,3,1,1)]
+B $6ACE,12,4 Masked data
+;
+N $6ADA Stones (16x3) pre-shifted
+N $6ADA #HTML[#CALL:graphic($6ADA,16,3,1,1)]
+B $6ADA,12,4 Masked data
+;
+N $6AE6 Stones (8x2)
+N $6AE6 #HTML[#CALL:graphic($6AE6,8,2,1,1)]
+B $6AE6,4,2 Masked data
+;
+N $6AEA Stones (8x2) pre-shifted
+N $6AEA #HTML[#CALL:graphic($6AEA,8,2,1,1)]
+B $6AEA,4,2 Masked data
+;
+N $6AEE Stones (8x1)
+N $6AEE #HTML[#CALL:graphic($6AEE,8,1,1,1)]
+B $6AEE,2,2 Masked data
+;
+N $6AF0 Stones (8x1) pre-shifted
+N $6AF0 #HTML[#CALL:graphic($6AF0,8,1,1,1)]
+B $6AF0,2,2 Masked data
+;
+N $6AF2 Dust (8x1)
+N $6AF2 #HTML[#CALL:graphic($6AF2,8,1,1,1)]
+B $6AF2,2 Masked data
+;
+N $6AF4 Dust (8x1) pre-shifted
+N $6AF4 #HTML[#CALL:graphic($6AF4,8,1,1,1)]
+B $6AF4,2 Masked data
 ;
 W $6AF6,2 -> turn_sign_lods
-B $6AF8 TBD
-;
-B $6B0C Ref'd by graphic entry 8 and 17
+B $6AF8
+N $6B0C Ref'd by graphic entry 8 and 17
+W $6B0C,2 -> turn_sign_lods
 ;
 @ $6B22 label=turn_sign_lods
+N $6B22 LOD
 B $6B22,1 Width (bytes)
 B $6B23,1 Flags
 B $6B24,1 Height (pixels)
@@ -500,17 +580,41 @@ W $6B25,2 Bitmap
 W $6B27,2 Shifted bitmap
 L $6B22,7,10
 ;
-B $6B68,160,4 Turn right sign (32x40) #HTML[#CALL:graphic($6B68,32,40,0,1)]
-B $6C08,90,3 Turn right sign (24x30) #HTML[#CALL:graphic($6C08,24,30,0,1)]
-B $6C62,40,2 Turn right sign (16x20) #HTML[#CALL:graphic($6C62,16,20,0,1)]
-B $6C8A,64,4 Turn right sign (16x16) masked #HTML[#CALL:graphic($6C8A,16,16,1,1)]
-B $6CCA,52,2 Turn right sign (16x13) masked #HTML[#CALL:graphic($6CCA,16,13,1,1)]
-B $6CFE,52,2 Turn right sign (16x13) masked pre-shifted #HTML[#CALL:graphic($6CFE,16,13,1,1)]
+N $6B68 Turn right sign (32x40)
+N $6B68 #HTML[#CALL:graphic($6B68,32,40,0,1)]
+B $6B68,160,4
 ;
-B $6D32,,4 Turn right sign (16x10) masked #HTML[#CALL:graphic($6D32,16,10,1,1)]
-B $6D5A,,4 Turn right sign (16x10) masked pre-shifted #HTML[#CALL:graphic($6D5A,16,10,1,1)]
+N $6C08 Turn right sign (24x30)
+N $6C08 #HTML[#CALL:graphic($6C08,24,30,0,1)]
+B $6C08,90,3
+;
+N $6C62 Turn right sign (16x20)
+N $6C62 #HTML[#CALL:graphic($6C62,16,20,0,1)]
+B $6C62,40,2
+;
+N $6C8A Turn right sign (16x16)
+N $6C8A #HTML[#CALL:graphic($6C8A,16,16,1,1)]
+B $6C8A,64,4 Masked data
+;
+N $6CCA Turn right sign (16x13)
+N $6CCA #HTML[#CALL:graphic($6CCA,16,13,1,1)]
+B $6CCA,52,2 Masked data
+;
+N $6CFE Turn right sign (16x13) pre-shifted
+N $6CFE #HTML[#CALL:graphic($6CFE,16,13,1,1)]
+B $6CFE,52,2 Masked data
+;
+N $6D32 Turn right sign (16x10)
+N $6D32 #HTML[#CALL:graphic($6D32,16,10,1,1)]
+B $6D32,,4 Masked data
+;
+N $6D5A Turn right sign (16x10) pre-shifted
+N $6D5A #HTML[#CALL:graphic($6D5A,16,10,1,1)]
+B $6D5A,,4 Masked data
+;
 ;
 @ $6D82 label=tumbleweed_lods
+N $6D82 LOD
 B $6D82,1 Width (bytes)
 B $6D83,1 Flags
 B $6D84,1 Height (pixels)
@@ -518,12 +622,25 @@ W $6D85,2 Bitmap
 W $6D87,2 Shifted bitmap
 L $6D82,7,6
 ;
-B $6DAC,32,2 Tumbleweed_1 (16x16) #HTML[#CALL:graphic($6DAC,16,16,0,1)]
-B $6DCC,22,2 Tumbleweed_2 (16x11) #HTML[#CALL:graphic($6DCC,16,11,0,1)]
-B $6DE2,9,1 Tumbleweed_3 (8x9) #HTML[#CALL:graphic($6DE2,8,9,0,1)]
-B $6DEB,7,1 Tumbleweed_4 (8x7) #HTML[#CALL:graphic($6DEB,8,7,0,1)]
+N $6DAC Tumbleweed_1 (16x16)
+N $6DAC #HTML[#CALL:graphic($6DAC,16,16,0,1)]
+B $6DAC,32,2
+;
+N $6DCC Tumbleweed_2 (16x11)
+N $6DCC #HTML[#CALL:graphic($6DCC,16,11,0,1)]
+B $6DCC,22,2
+;
+N $6DE2 Tumbleweed_3 (8x9)
+N $6DE2 #HTML[#CALL:graphic($6DE2,8,9,0,1)]
+B $6DE2,9,1
+;
+N $6DEB Tumbleweed_4 (8x7)
+N $6DEB #HTML[#CALL:graphic($6DEB,8,7,0,1)]
+B $6DEB,7,1
+;
 ;
 @ $6DF2 label=barrier_lods
+N $6DF2 LOD
 B $6DF2,1 Width (bytes)
 B $6DF3,1 Flags
 B $6DF4,1 Height (pixels)
@@ -531,11 +648,27 @@ W $6DF5,2 Bitmap
 W $6DF7,2 Shifted bitmap
 L $6DF2,7,6
 ;
-B $6E1C,68,4 Barrier (32x17) #HTML[#CALL:graphic($6E1C,32,17,0,1)]
-B $6E60,39,3 Barrier (24x13) #HTML[#CALL:graphic($6E60,24,13,0,1)]
-B $6E87,18,2 Barrier (16x9) #HTML[#CALL:graphic($6E87,16,9,0,1)]
-B $6E99,28,4 Barrier (16x7) masked pre-shifted #HTML[#CALL:graphic($6E99,16,7,1,1)]
-B $6EB5,28,4 Barrier (16x7) masked pre-shifted #HTML[#CALL:graphic($6EB5,16,7,1,1)]
+N $6E1C Barrier (32x17)
+N $6E1C #HTML[#CALL:graphic($6E1C,32,17,0,1)]
+B $6E1C,68,4
+;
+N $6E60 Barrier (24x13)
+N $6E60 #HTML[#CALL:graphic($6E60,24,13,0,1)]
+B $6E60,39,3
+;
+N $6E87 Barrier (16x9)
+N $6E87 #HTML[#CALL:graphic($6E87,16,9,0,1)]
+B $6E87,18,2
+;
+N $6E99 Barrier (16x7) pre-shifted
+N $6E99 #HTML[#CALL:graphic($6E99,16,7,1,1)]
+B $6E99,28,4 Masked data
+;
+N $6EB5 Barrier (16x7) pre-shifted
+N $6EB5 #HTML[#CALL:graphic($6EB5,16,7,1,1)]
+B $6EB5,28,4 Masked data
+;
+;
 
 b $6ED1 Ref'd by graphic entry 6
 W $6EEB,2 Address of another LOD table
@@ -1602,7 +1735,7 @@ c $8E42 Subroutine.
 @ $8E47 label=sub_8e47_loop
   $8E47 sub_8e42_1
   $8E49 A = 20 -- self modified by $8E4C, $8E51, ($8E84 resets it perhaps)
-  $8E4B A-- 
+  $8E4B A--
   $8E4C self modify $8E49
   $8E4F Return if non-zero
 ;
@@ -2113,11 +2246,11 @@ c $9965 Noise effect, Message plotting
 @ $998F label=sub998f_do_noise_effect
   $998F If noise_counter > 0 call noise_effect
   $9996 If $9633 == 0 jump $99b6
-  $9999 
-  $999A 
+  $9999
+  $999A
   $999C $9633--
-  $999D 
-  $99A0 
+  $999D
+  $99A0
   $99A1 If A was zero jump sub998f_another_something
   $99A3 Load address of next character
   $99A6 Go back 1
@@ -2982,12 +3115,12 @@ R $A0D6 O:A User input byte (as $A0D5)
   $A111 Return
 ;
   $A112 Outer keyboard loop
-  $A113 
-  $A114 
+  $A113
+  $A114
   $A117 clear carry
-  $A118 
+  $A118
   $A11A loop while top bit set?
-  $A11C 
+  $A11C
   $A11D Return
 ;
 @ $A11E label=keyscan_inner
