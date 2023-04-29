@@ -221,16 +221,18 @@ w $5D0C Table of addresses of LODs (levels of detail - a set of sprites of vario
   $5D16,2 -> lambo_lods
   $5D18,2 -> car_lods
 
-b $5D1A TBD
+b $5D1A
 B $5D1A,1 loaded by $A813
 B $5D1B,1 loaded by $A6A7
 B $5D1C,1 loaded by $A759
 
-w $5D1D label=setup_game_data
-  $5D1D,2 road_pos
+@ $5D1D label=setup_game_data
+w $5D1D 
+W $5D1D,2 road_pos
 ;
-w $5D2B label=attract_data
-  $5D2B,2 road_pos
+@ $5D2B label=attract_data
+w $5D2B
+W $5D2B,2 road_pos
 
 b $5D39 Nancy's report
 B $5D39 Nancy ($01)
