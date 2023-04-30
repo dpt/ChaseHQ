@@ -960,14 +960,21 @@ B $7DF1,20,4 Attribute data for above
 b $7E05 Ref'd by graphic entry 3 and 12
 
 b $8000 temporaries?
+;
+@ $8000 label=test_mode_flag
   $8000,1 Test mode enable flag (cheat mode)
+;
+  $8001,1 TBD
 ;
 @ $8002 label=score_bcd
   $8002,4 Score digits as BCD (4 bytes / 8 digits, little endian)
 ;
-  $8006,1 incremented on reset?
+  $8006,1 Incremented on reset?
+;
 @ $8007 label=stage_number
   $8007,1 Stage number we're loading (1..5 or 6 for end credits)
+;
+  $8008,12 TBD
 
 @ $8014 label=load_stage
 c $8014 Load a stage
@@ -1050,7 +1057,8 @@ T $81F9,11 "HOLD ON MAN"
 @ $8204 label=engine_sfx_setup
 c $8204 Generates engine noise
   $8204 Get speed value
-  $8207 A = speed / 2
+  $8207,2 A = speed / 2 (top half)
+  $8209 A = speed / 2 (bottom half)
   $820B A = ~A
   $820C A /= 4
   $8210 A |= 1
@@ -1065,7 +1073,7 @@ c $8204 Generates engine noise
   $8229 Self modify delay loop -- H
   $822D Self modify delay loop -- (5 - A)
 @ $8234 label=engine_sfx_play
-  $8234 If $A230 >= 3 then return
+  $8234 Return if $A230 is >= 3
   $823A Self modifying counter produces 0,1,2
   $8242 Return if nonzero
 N $8243 This produces the engine sound effect.
@@ -1181,37 +1189,41 @@ T $8367,19 "ALL RIGHTS RESERVED"
 
 b $837A Unknown - mostly NUL bytes
 
-; Likely 128K hooks
-
-c $83B5 Only a RET
-
+c $83B5 Hooks for 128K functions
+N $83B5 Some of these unknowns will be for the 128K sampled speech.
+;
+@ $83B5 label=unknown_hook_1
+  $83B5 Only a RET
+;
 @ $83B8 label=engine_sfx_play_hook
-c $83B8 Call engine_sfx_play
-
+  $83B8 Call engine_sfx_play
+;
 @ $83BB label=silence_audio_hook
-c $83BB Likely silences audio in 128K mode
-
-c $83BE Only a RET
-
+  $83BB Likely silences audio in 128K mode
+;
+@ $83BE label=unknown_hook_2
+  $83BE Only a RET
+;
 @ $83C1 label=turbo_sfx_play_hook
-c $83C1 Likely the turbo boost sound effect
-
+  $83C1 Likely the turbo boost sound effect
+;
 @ $83C4 label=engine_sfx_setup_hook
-c $83C4 Call engine_sfx_setup
-
-c $83C7 Only a RET
-
+  $83C4 Call engine_sfx_setup
+;
+@ $83C7 label=unknown_hook_3
+  $83C7 Only a RET
+;
 @ $83CA label=attract_mode_hook
-c $83CA Call attract_mode
+  $83CA Call attract_mode
 
 c $83CD Bootstrap
 ; This gets hit when a game finishes and we return to the attract mode.
 N $83CD Builds a table of flipped bytes at $EF00.
   $83CD Point #REGhl at $EF00
-@ $83D0 flip_table_loop
+@ $83D0 label=flip_table_loop
   $83D0 8 iterations
   $83D2 #REGa is the index into the table
-@ $83D3 flip_byte_loop
+@ $83D3 label=flip_byte_loop
   $83D3 Shift a bit out of #REGa leftwards and into #REGc rightwards
   $83D6 Loop for 8 bits
   $83D8 Write #REGc out and advance
@@ -1290,6 +1302,8 @@ c $8401 Main loop
   $84BF Call main_loop_27
   $84C2 Is test mode enabled?
   $84C5 If not, goto no_test_mode
+;
+@ $84C8 label=handle_test_mode
 N $84C8 Test mode handling
   $84C8 Read keys 1/2/3/4/5
   $84CC Change to active high
@@ -1311,6 +1325,7 @@ N $84C8 Test mode handling
   $84EB Jump if NOT
   $84ED stage_number = 6
   $84EF Exit via load_stage
+;
 ; (key 4 or 5 for an extra credit)
   $84F2 Increment credits unless maxed out at 9
 @ $84FB label=no_test_mode
@@ -1348,7 +1363,7 @@ D $852A This runs the game loop while driving the car.
   $853F Jump cd_check_speed if we're on the right
   $8541 Set input ACCELERATE
 @ $8543 label=cd_check_speed
-  $8543 C = A
+  $8543 Move input into #REGc for the moment
   $8544 Calculate speed - 150
   $854C Load gear
   $854F Set gear to low if speed < 150, otherwise high
@@ -2000,7 +2015,7 @@ N $8ED1 It rolled over
   $8EE0 Loop
 @ $8EE3 label=dm_plot_attrs
   $8EE3 Restore address of mugshot attributes
-  $8EE4 Exit via plot_face_attrs_bit
+  $8EE4 Exit via pf_attrs_bit
 
 @ $8EE7 label=smash_bar_etc
 c $8EE7 Smash bar etc.
@@ -2242,8 +2257,9 @@ T $9857 "ONE MORE TRY FOR BEING A GOOD BOY!"
 T $9879 "YOU'RE A MEDIOCRE DRIVER, BROTHER!"
 T $989B,14 "SEE YOU LATER."
 
-b $98A9 In-game message structures
+b $98A9 In-game chatter structures
 ;
+@ $98A9 label=pilot_turn_left_chatter
   $98A9,0 Pilot ($00)
 W $98AA,2 -> "THIS IS SPECIAL INVESTIGATION AIRBORNE."
 W $98AC,2 -> "THE TARGET VEHICLE HAS TURNED"
@@ -2251,6 +2267,7 @@ W $98AE,2 -> "LEFT UP AHEAD... OVER."
   $98B0,1 TBD $FE
 W $98B1,2 -> Tony: "WE READ LOUD AND CLEAR! OVER." <STOP>
 ;
+@ $98B3 label=pilot_turn_right_chatter
   $98B3,0 Pilot ($00)
 W $98B4,2 -> "THIS IS SPECIAL INVESTIGATION AIRBORNE."
 W $98B6,2 -> "THE TARGET VEHICLE HAS TURNED"
@@ -2258,6 +2275,7 @@ W $98B8,2 -> "RIGHT UP AHEAD... OVER."
   $98BA,1 TBD $FE
 W $98BB,2 -> Tony: "WE READ LOUD AND CLEAR! OVER." <STOP>
 ;
+@ $98BD label=acknowledge_chatter
   $98BD,1 Three-way random choice ($FC)
 W $98BE,2 -> Tony: "WE READ LOUD AND CLEAR! OVER." <STOP>
 W $98C0,2 -> Raymond: "ROGER!" <STOP>
@@ -2280,6 +2298,7 @@ W $98D1,2 -> "WHAT ARE YOU DOING MAN!!"
 W $98D3,2 -> "THE BAD GUYS ARE GOING THE OTHER WAY."
   $98D5,1 <STOP>
 ;
+@ $98D6 label=smash_chatter
   $98D6,1 Three-way random choice ($FC)
 W $98D7,2 -> Raymond: "BEAR DOWN." <STOP>
 W $98D9,2 -> Three-way random choice of "OH MAN." / "HARDER!" / "PLEASE!"
@@ -2310,16 +2329,19 @@ W $98F2,2 -> Raymond: "PLEASE!" <STOP>
 W $98F5,2 -> "PLEASE!"
   $98F7,1 <STOP>
 ;
+@ $98F8 label=get_moving_chatter
   $98F8,1 Raymond ($02)
 W $98F9,2 -> "LET'S GET MOVIN' MAN!"
   $98FB,1 <STOP>
 ;
+@ $98FC label=time_running_out_chatter
   $98FC,1 Nancy ($01)
 W $98FD,2 -> "THIS IS NANCY AT CHASE H.Q."
 W $98FF,2 -> "IF YOU KEEP MESSIN' AROUND LIKE THAT"
 W $9901,2 -> "YOUR TIME IS GOING TO RUN OUT... OVER."
   $9903,1 <STOP>
 ;
+@ $9904 label=ouch_chatter
   $9904,1 Three-way random choice ($FC)
 W $9905,2 -> Raymond: "OH, NO!" <STOP>
 W $9907,2 -> Raymond: "OUCH!" <STOP>
@@ -2337,6 +2359,7 @@ W $9910,2 -> "OUCH!"
 W $9914,2 -> "YAOOOOOW!"
   $9916,1 <STOP>
 ;
+@ $9917 label=turbo_chatter
   $9917,1 Three-way random choice ($FC)
 W $9918,2 -> Tony: "WHOAAAAA!" <STOP>
 W $991A,2 -> Tony: "GREAT!" <STOP>
@@ -2355,6 +2378,7 @@ W $9923,2 -> "GREAT!"
 W $9927,2 -> "ONE MORE TIME."
   $9929,1 <STOP>
 ;
+@ $992A label=failed_chatter
   $992A,1 Three-way random choice ($FC)
 W $992B,2 -> Nancy: "WE THINK YOU PICKED THE WRONG JOB." "BETTER CHECK THE CLASSIFIED ADS."
 W $992D,2 -> Nancy: "ONE MORE TRY FOR BEING A GOOD BOY!"
@@ -2374,6 +2398,7 @@ W $993C,2 -> "YOU'RE A MEDIOCRE DRIVER, BROTHER!"
 W $993E,2 -> "SEE YOU LATER."
   $9940,1 <STOP>
 ;
+@ $9941 label=lets_go_chatter
   $9941,1 Tony ($03)
 W $9942,2 -> "LET'S GO. MR. DRIVER."
   $9944,1 <STOP>
@@ -2558,13 +2583,13 @@ R $9A55 I:A Noise effect counter
   $9AA8 Loop while rows remain
   $9AAA Return
 
-@ $9AAB plot_face
+@ $9AAB label=plot_face
 R $9AAB I:HL Address of face to plot (32x40 bitmap followed by 4x5 attribute bytes)
 R $9AAB I:DE Address of screen location (real screen)
 c $9AAB Plots a face
   $9AAB Byte length of bitmap - counter
   $9AAE Save current screen address
-@ $9AAF face_loop
+@ $9AAF label=pf_loop
   $9AAF Save screen address
   $9AB0 Transfer four bytes
   $9AB8 Restore source address
@@ -2575,12 +2600,12 @@ c $9AAB Plots a face
   $9AC6 If carry then loop (overflow is ok)
   $9AC8 Step back 8 lines (undo overflow)
   $9ACC Loop
-@ $9ACE label=plot_face_attrs_bit
+@ $9ACE label=pf_attrs_bit
   $9ACE Restore current screen address
   $9ACF Extract line bits (0..7)
   $9AD5 Turn it into an attribute address (works for first band only?)
   $9AD8 Byte length of attributes - counter
-@ $9ADA plot_face_attrs_loop
+@ $9ADA label=pf_attrs_loop
   $9ADA Transfer four attributes
   $9AE2 If #REGbc became zero then return
   $9AE3 Move down an attribute row
@@ -2601,12 +2626,12 @@ R $9AEC I:D The character to plot (ASCII)
   $9AF4
   $9AF5 self modify LD C and OR 7 later
   $9AFD
-  $9AFE If not string terminator, goto regular_char
+  $9AFE If not string terminator, goto pmf_regular_char
 N $9B02 String terminator
   $9B02 $BF / 8?
   $9B04
   $9B06
-@ $9B08 label=regular_char
+@ $9B08 label=rpmf_egular_char
   $9B08 A = A*5+2
   $9B0E 8 - $C0 / 8 ??
   $9B12 divider / rounding?
@@ -2663,7 +2688,8 @@ c $9BA7 Clear the whole message line
   $9BCB Loop while rows remain to clear
   $9BCE Return
 
-c $9BCF tick
+@ $9BCF label=tick
+c $9BCF Game timer
   $9BCF TBD
   $9BF9 Decrement the 1/16th sec counter
   $9BFB Return if not zero
@@ -2676,7 +2702,7 @@ c $9BCF tick
   $9C11 Zero $A229
   $9C15 user_input_mask = $FF (allow all keys)
   $9C19 Loop back to $9BF9
-@ $9C1B label=time_up
+@ $9C1B label=tick_time_up
   $9C1B,3 Point at "TIME UP" message
   $9C1E,3 Call message_printing_related
   $9C3B Jump if no credits remain
@@ -2693,7 +2719,7 @@ N $9C57 Resetting mission code.
   $9C6A $A231 = 3 -- Flag set to zero when attributes have been set
   $9C6D turbos = 3
   $9C70 Set remaining time to 60 (BCD) [doesn't affect stuff if altered?!]
-@ $9C7E label=print_continue
+@ $9C7E label=tick_print_continue
   $9C7E,3 Print "CONTINUE THIS MISSION" messages
   $9C81,3 Call message_printing_related
   $9C84 <self modified>
@@ -3695,7 +3721,7 @@ c $B4CC
   $B4EA,3 Call message_printing_related
   $B4ED Exit via hooked routine (likely sfx, siren?)
 
-@ $B4F0 smash
+@ $B4F0 label=smash
 c $B4F0 Smash handling
   $B4F0 Cycle #REGa one step through 0..3 each time the routine is entered
   $B4F8 *$B55C = $CE33 + #REGa * 6
@@ -4655,7 +4681,7 @@ N $EC0B Calculate the attribute address from the screen address
 N $EC16 #REGhl' is screen address, #REGde' is attribute address
   $EC16 Get screen address and preserve old #REGhl
   $EC17 Preserve regs
-@ $EC19 menu_draw_string_loop
+@ $EC19 label=menu_draw_string_loop
   $EC19 Mask off the terminator bit
   $EC1C #REGa = Character to draw
   $EC1D Draw the character
