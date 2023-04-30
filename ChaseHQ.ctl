@@ -77,14 +77,16 @@
 > $4000 ;
 > $4000 ; MEMORY MAP
 > $4000 ; ----------
-> $4000 ; "Once running" => once the game's been shifted into its regular running state.
+> $4000 ; The memory map changes once the game's been shifted into its regular
+> $4000 ; running state.
 > $4000 ;
-> $4000 ; $5B00..$5BFF is a pre-shifted version of the backdrop (once running)
-> $4000 ; $5C00..$5CFF is the regular version of the backdrop (once running)
+> $4000 ; $5B00..$5BFF is a pre-shifted version of the backdrop
+> $4000 ; $5C00..$5CFF is the regular version of the backdrop
+> $4000 ; $8DBB (word) is the address of the current transition animation
 > $4000 ; $ED28        is the stack
 > $4000 ; $EE00..$EEFF is (cleared by $87DD) a cyclic road buffer of some sort
-> $4000 ; $EF00..$EFFF is a table of flipped bytes (once running)
-> $4000 ; $F000..$FFFF is a 4KB back buffer (once running)
+> $4000 ; $EF00..$EFFF is a table of flipped bytes
+> $4000 ; $F000..$FFFF is a 4KB back buffer
 > $4000 ;
 > $4000 ; An back buffer address of 0b1111BAAACCCXXXXX means:
 > $4000 ; - X = X position byte (0..31)
@@ -695,35 +697,35 @@ W $6F3D,2 Bitmap
 W $6F3F,2 Pre-shifted bitmap
 L $6F3A,7,5
 ;
-N $6F5D Street lamp top (32x8) 
+N $6F5D Street lamp top (32x8)
 N $6F5D #HTML[#CALL:graphic($6F5D,32,8,0,1)]
 B $6F7D,15,3
 ;
-N $6F7D Street lamp top (24x5) 
+N $6F7D Street lamp top (24x5)
 N $6F7D #HTML[#CALL:graphic($6F7D,24,5,0,1)]
 B $6F8C,12,3
 ;
-N $6F8C Street lamp top (24x4) 
+N $6F8C Street lamp top (24x4)
 N $6F8C #HTML[#CALL:graphic($6F8C,24,4,0,1)]
 B $6F98,12,3
 ;
-N $6F98 Street lamp top (24x4) pre-shifted 
+N $6F98 Street lamp top (24x4) pre-shifted
 N $6F98 #HTML[#CALL:graphic($6F98,24,4,0,1)]
 B $6FA4,16,2
 ;
-N $6FA4 Street lamp top (16x4) 
+N $6FA4 Street lamp top (16x4)
 N $6FA4 #HTML[#CALL:graphic($6FA4,16,4,1,1)]
 B $6FB4,16,2 Masked bitmap data
 ;
-N $6FB4 Street lamp top (16x4) pre-shifted 
+N $6FB4 Street lamp top (16x4) pre-shifted
 N $6FB4 #HTML[#CALL:graphic($6FB4,16,4,1,1)]
 B $6FC4,12,2 Masked bitmap data
 ;
-N $6FC4 Street lamp top (16x3) 
+N $6FC4 Street lamp top (16x3)
 N $6FC4 #HTML[#CALL:graphic($6FC4,16,3,1,1)]
 B $6FD0,12,2 Masked bitmap data
 ;
-N $6FD0 Street lamp top (16x3) pre-shifted 
+N $6FD0 Street lamp top (16x3) pre-shifted
 N $6FD0 #HTML[#CALL:graphic($6FD0,16,3,1,1)]
 B $6F5D,32,4 Masked bitmap data
 ;
@@ -744,74 +746,74 @@ W $7183,2 Pre-shifted bitmap
 L $717E,7,25
 ;
 @ $722D label=bitmap_tree_middle_64x16
-N $722D Tree middle (64x16) 
+N $722D Tree middle (64x16)
 N $722D #HTML[#CALL:graphic($722D,64,16,0,1)]
-B $722D 
+B $722D
 ;
 @ $72AD label=bitmap_tree_bottom_64x5
-N $72AD Tree bottom (64x5) 
+N $72AD Tree bottom (64x5)
 N $72AD #HTML[#CALL:graphic($72AD,64,5,0,1)]
-B $72AD 
+B $72AD
 ;
 @ $72D5 label=bitmap_tree_trunk_16x8
-N $72D5 Tree trunk (16x8) 
+N $72D5 Tree trunk (16x8)
 N $72D5 #HTML[#CALL:graphic($72D5,16,8,0,1)]
-B $72D5 
+B $72D5
 ;
 @ $72E5 label=bitmap_tree_shadow_64x5
-N $72E5 Tree shadow (64x5) 
+N $72E5 Tree shadow (64x5)
 N $72E5 #HTML[#CALL:graphic($72E5,64,5,0,1)]
-B $72E5 
+B $72E5
 ;
 @ $730D label=bitmap_tree_middle_48x12
-N $730D Tree middle (48x12) 
+N $730D Tree middle (48x12)
 N $730D #HTML[#CALL:graphic($730D,48,12,0,1)]
-B $730D 
+B $730D
 ;
 @ $7355 label=bitmap_tree_bottom_48x4
-N $7355 Tree bottom (48x4) 
+N $7355 Tree bottom (48x4)
 N $7355 #HTML[#CALL:graphic($7355,48,4,0,1)]
-B $7355 
+B $7355
 ;
 @ $736D label=bitmap_tree_shadow_48x4
-N $736D Tree shadow (48x4) 
+N $736D Tree shadow (48x4)
 N $736D #HTML[#CALL:graphic($736D,48,4,0,1)]
-B $736D 
+B $736D
 ;
 @ $7385 label=bitmap_tree_middle_32x8
-N $7385 Tree middle (32x8) 
+N $7385 Tree middle (32x8)
 N $7385 #HTML[#CALL:graphic($7385,32,8,0,1)]
-B $7385 
+B $7385
 ;
 @ $73A5 label=bitmap_tree_bottom_32x3
-N $73A5 Tree bottom (32x3) 
+N $73A5 Tree bottom (32x3)
 N $73A5 #HTML[#CALL:graphic($73A5,32,3,0,1)]
-B $73A5 
+B $73A5
 ;
 @ $73B1 label=bitmap_tree_shadow_16x2
-N $73B1 Tree shadow (16x2) 
+N $73B1 Tree shadow (16x2)
 N $73B1 #HTML[#CALL:graphic($73B1,16,2,0,1)]
-B $73B1 
+B $73B1
 ;
 @ $73B9 label=bitmap_tree_middle_24x7
-N $73B9 Tree middle (24x7) 
+N $73B9 Tree middle (24x7)
 N $73B9 #HTML[#CALL:graphic($73B9,24,7,0,1)]
-B $73B9 
+B $73B9
 ;
 @ $73CE label=bitmap_tree_bottom_24x2
-N $73CE Tree bottom (24x2) 
+N $73CE Tree bottom (24x2)
 N $73CE #HTML[#CALL:graphic($73CE,24,2,0,1)]
-B $73CE 
+B $73CE
 ;
 @ $73D4 label=bitmap_tree_trunk_8x4
-N $73D4 Tree trunk (8x4) 
+N $73D4 Tree trunk (8x4)
 N $73D4 #HTML[#CALL:graphic($73D4,8,4,0,1)]
-B $73D4 
+B $73D4
 ;
 @ $73D8 label=bitmap_tree_shadow_24x2
-N $73D8 Tree shadow (24x2) 
+N $73D8 Tree shadow (24x2)
 N $73D8 #HTML[#CALL:graphic($73D8,24,2,0,1)]
-B $73D8 
+B $73D8
 ;
 @ $73DE label=bitmap_tree_top_64x13
 N $73DE Tree top (64x13)
@@ -971,7 +973,7 @@ b $8000 temporaries?
 ;
   $8006,1 Incremented on reset?
 ;
-@ $8007 label=stage_number
+@ $8007 label=wanted_stage_number
   $8007,1 Stage number we're loading (1..5 or 6 for end credits)
 ;
   $8008,12 TBD
@@ -1316,14 +1318,14 @@ N $84C8 Test mode handling
   $84DB
   $84DC Is bit 0 set? (key 1 to restart the level)
   $84DD Restart level if so
-  $84E0 HL = &stage_number
+  $84E0 HL = &wanted_stage_number
   $84E3 Is bit 1 set? (key 2 to load the next level)
   $84E4 Jump if NOT
-  $84E6 stage_number++
+  $84E6 wanted_stage_number++
   $84E7 Exit via load_stage
   $84EA Is bit 2 set? (key 3 to load the end screen)
   $84EB Jump if NOT
-  $84ED stage_number = 6
+  $84ED wanted_stage_number = 6
   $84EF Exit via load_stage
 ;
 ; (key 4 or 5 for an extra credit)
@@ -2192,12 +2194,13 @@ N $952E Decrement the screen address
 c $9542 Sprite plotter for back buffer, which flips
   $9542 TBD
 
-@ $9618 label=rng
 c $9618 Random number generator
 R $9618 O:A Random byte?
 ; Disable this and only Lambos spawn on the left. TBD what other effects it has.
 ; $F0C6 also modifies these random bytes.
+@ $9618 label=rng_seed
 B $9618,3 Seed / initial state
+@ $961B label=rng
   $961B Point at seed / state bytes
   $961E seed[0] -= $8D
   $9622 seed[1] += 3
@@ -2800,7 +2803,7 @@ R $9D2E I:A Iterations (prob number of overtakes?)
   $9D2E If $A22B is zero then return
   $9D33 B = A -- iterations
   $9D34 Point #REGhl at overtake_bonus
-@ $9D37 label=overtake_loop
+@ $9D37 label=cob_overtake_loop
   $9D37 A = *HL + 2  [increment bonus by 2 up to a max of 128]
   $9D3A BCD correction
   $9D3B If A >= 128 then A = 128  [80 actual points?]
@@ -2811,11 +2814,13 @@ R $9D2E I:A Iterations (prob number of overtakes?)
   $9D45 D = 0
   $9D46 CALL $9CD6
   $9D49 Unbank
-  $9D4A B--, goto overtake_loop
+  $9D4A B--, goto cob_overtake_loop
   $9D4C $A22B = 0
   $9D50 Return
 
-t $9D51 Text
+c $9D51 Update scoreboard and flashing lights
+;
+B $9D51
 @ $9D57 label=hi
 T $9D57 "HI"
 @ $9D59 label=lo
@@ -2824,9 +2829,8 @@ T $9D59 "LO"
 T $9D5B "STAGE " message shown in the score area.
 @ $9D61 label=stage_n
 B $9D61 #R$9D61 writes the current score number here in ASCII.
-
-@ $9D62 label=main_loop_25
-c $9D62 stage/bonus/LO-HI/flashing lights
+;
+@ $9D62 label=update_scoreboard
   $9D62 Check if stage has changed?
   $9D6B Adding 48 to make it a digit then $80 to terminate the string.
   $9D6D Update "STAGE N"
@@ -2872,14 +2876,14 @@ c $9E11 Draws the turbo sprites and updates the displayed scores.
   $9E2C Avoid frame address calculation if possible
   $9E2E 56 bytes per frame
   $9E31 Calculate the frame address
-@ $9E35 label=plot_turbo_setup
+@ $9E35 label=ptas_turbo_setup
   $9E35 Self modify $9E44 to load #REGsp with address of frame
   $9E38 Self modify $9E79 to restore #REGsp once drawing is done
   $9E3C Low byte of back buffer draw address
 ;
 N $9E3E Draw a whole frame of turbo sprite.
 N $9E3E Note that the frame data is stored in memory inverted (bottom first), so we draw the bottom row first and then proceed upwards.
-@ $9E3E label=plot_turbo_loops
+@ $9E3E label=ptas_turbo_loops
   $9E3E,3 Base address of frames
   $9E41 Temporarily decrement the number of turbos remaining to draw
   $9E42 All but the final turbo sprite use the zeroth frame
@@ -2890,7 +2894,7 @@ N $9E3E Note that the frame data is stored in memory inverted (bottom first), so
   $9E4C Height of frame
 ;
 N $9E4E Draw a scanline of frame.
-@ $9E4E label=plot_turbo_scanline
+@ $9E4E label=ptas_turbo_scanline
   $9E4E Pop some frame data off the stack (E is mask data, D is bitmap data)
   $9E4F Write to screen: Screen = (Screen AND Mask) OR Bitmap
   $9E53 Advance screen address to next column
@@ -2916,7 +2920,7 @@ N $9E83 Scale internal speed (0..511) to displayed speed by multiplying by 82 th
   $9E8A Shift one bit out
   $9E8B Jump if not adding
   $9E8D Add
-@ $9E8E label=plot_speed_multiply_loop
+@ $9E8E label=ptas_speed_multiply_loop
   $9E8E Double
   $9E8F Loop
 ;
@@ -2924,7 +2928,7 @@ N $9E91 Count 10,000s.
   $9E91 10000
   $9E94 Initialise #REGd and #REGe counters to -1
   $9E97 ?Clear carry flag?
-@ $9E98 label=plot_speed_10000s_loop
+@ $9E98 label=ptas_speed_10000s_loop
   $9E98 Increment counter
   $9E99 Decrease total by 10,000
   $9E9B Loop until #REGhl goes negative
@@ -2942,7 +2946,7 @@ N $9E9F Count 1,000s.
 N $9EA8 Count 100s.
   $9EA8 Initialise counter (to zero not -1 as in previous cases)
   $9EA9 100
-@ $9EAC label=plot_speed_100s_loop
+@ $9EAC label=ptas_speed_100s_loop
   $9EAC Increment counter
   $9EAD Decrease total by 100
   $9EAF Loop until total goes negative
@@ -2980,7 +2984,7 @@ N $9EDB Count 1000s (no loop here - it's not required)
 ;
 N $9EE6 Count 100s
   $9EE6 100
-@ $9EE9 label=plot_scores_distance_100s_loop
+@ $9EE9 label=ptas_scores_distance_100s_loop
   $9EE9 Increment counter
   $9EEA Decrease total by 100
   $9EEC Loop until total goes negative
@@ -2992,7 +2996,7 @@ N $9EF2 Count 10s
   $9EF2 10 (#REGb's already zero)
   $9EF4 ?Clear carry flag?
   $9EF5 #REGa = $F0 (BCD)
-@ $9EF7 label=plot_scores_distance_10s_loop
+@ $9EF7 label=ptas_scores_distance_10s_loop
   $9EF7 Increment counter
   $9EF9 ?Clear carry flag?
   $9EFA Decrease total by 10
@@ -3005,7 +3009,7 @@ N $9EF2 Count 10s
   $9F07,3 Point #REGde at distance_bcd + 1 (two BCD bytes)
   $9F0A,3 Point #REGhl at distance_digits + 3
   $9F0D Two pairs of digits (4 digits)
-  $9F0F Call plot_led_digits
+  $9F0F Call ptas_led_digits
   $9F12,3 Point #REGde at score digits screen position
   $9F15 Bank
   $9F16,3 Point #REGde at score (four BCD bytes)
@@ -3013,32 +3017,32 @@ N $9EF2 Count 10s
   $9F1C B = 4
 ;
 N $9F1E Plots scoreboard digits (#REGde -> BCD) only if different than recorded values (#REGhl -> byte per digit). #REGb is the count.
-@ $9F1E label=plot_led_digits
+@ $9F1E label=ptas_led_digits
   $9F1E Read a pair of digits (BCD)
   $9F1F Save digits for later
   $9F20 Unpack a BCD digit
   $9F26 If different than stored then plot
   $9F29 Move screen position
 ;
-@ $9F2C label=pld_next_half
+@ $9F2C label=ptas_led_next_half
   $9F2C Move to next recorded value
   $9F2D Examine next digit
   $9F30 If different than stored then plot
   $9F33 Move screen position
 ;
-@ $9F36 label=pld_next_whole
+@ $9F36 label=ptas_led_next_whole
   $9F36 Move to next recorded value
   $9F37 Move to next digits
   $9F38 Loop until B is zero
   $9F3A Return
 ;
-@ $9F3B label=pld_plot_1st
+@ $9F3B label=ptas_led_plot_1st
   $9F3B Update drawn digit
   $9F3C Done
   $9F3C Plot the digit
   $9F3F Jump back to handle next digit (second half of a pair)
 ;
-@ $9F41 label=pld_plot_2nd
+@ $9F41 label=ptas_led_plot_2nd
   $9F41 Update drawn digit
   $9F42 Plot the digit
   $9F45 Jump back to handle hext digit (next whole pair)
@@ -3140,9 +3144,9 @@ N $9FE1 #REGc is a glyph ID
   $9FFF If 4 then jump $A031 -- single height inverted
   $A002 If 5 then jump $A023 -- double height + inverted
 N $A004 Otherwise it's type 6
-  $A004 PUSH DE
+  $A004
   $A005 B = 4
-@ $A007 label=loop1
+@ $A007 label=dc_loop1
 ; double height
   $A007 A = *HL
   $A008 *DE = A
@@ -3154,7 +3158,7 @@ N $A004 Otherwise it's type 6
   $A00F D -= 8
   $A013 E += 32
   $A017 B = 3
-@ $A019 label=loop2
+@ $A019 label=dc_loop2
 ; double height too
   $A019 A = *HL
   $A01A *DE = A
@@ -3165,9 +3169,9 @@ N $A004 Otherwise it's type 6
   $A01F While iterations remain, goto loop2
   $A021 JR $A074
 ;
-  $A023 PUSH DE
+  $A023
   $A024 B = 7
-@ $A026 label=loop3
+@ $A026 label=dc_loop3
 ; double height + inverted
   $A026 A = ~*HL
   $A028 *DE = A
@@ -3178,9 +3182,9 @@ N $A004 Otherwise it's type 6
   $A02D While iterations remain, goto loop3
   $A02F JR $A074
 ;
-  $A031 PUSH DE
+  $A031
   $A032 B = 7
-@ $A034 label=loop4
+@ $A034 label=dc_loop4
 ; single height inverted
   $A034 *DE = ~*HL
   $A037 Move to next glyph row
@@ -3188,8 +3192,8 @@ N $A004 Otherwise it's type 6
   $A039 While iterations remain, goto loop4
   $A03B JR $A0A4
 ;
-@ $A03D label=double_height_glyph
-c $A03D Plots double-height glyphs. DE->screen HL->glyph def
+@ $A03D label=dc_double_height_glyph
+N $A03D Plots double-height glyphs. DE->screen HL->glyph def
   $A03D
   $A03E *DE = 0
   $A040 D++
@@ -3202,7 +3206,7 @@ c $A03D Plots double-height glyphs. DE->screen HL->glyph def
   $A072 A = 0
   $A073 *DE = A
 ;
-@ $A074 label=j_a074
+@ $A074 label=dc_a074
   $A074
   $A075 E++
   $A076
@@ -3242,7 +3246,7 @@ c $A03D Plots double-height glyphs. DE->screen HL->glyph def
   $A0A2 D++
   $A0A3 *DE = A
 ;
-@ $A0A4 label=j_a0a4
+@ $A0A4 label=dc_a0a4
   $A0A4
   $A0A5 E++
   $A0A6
@@ -3269,9 +3273,10 @@ c $A03D Plots double-height glyphs. DE->screen HL->glyph def
   $A0CA Move to next column
   $A0CB Return
 
-c $A0CC
+c $A0CC Keyscan
 @ $A0CC label=kempston_flag
 B $A0CC,1 Set to 1 if Kempston joystick is chosen, 0 otherwise
+@ $A0CD label=keydefs_probably
 B $A0CD,8 must be keydefs
 @ $A0D5 label=user_input
 B $A0D5,1 User input: QPBFUDLR - Quit Pause Boost Fire Up Down Left Right. Note that attract mode is driven through this var.
@@ -3294,12 +3299,12 @@ R $A0D6 O:A User input byte (as $A0D5)
   $A0F0
   $A0F1
 ;
-@ $A0F3 label=keyscan_keyboard
+@ $A0F3 label=ks_keyboard
   $A0F3
   $A0F5
   $A0F8
 ;
-@ $A0FB label=keyscan_common
+@ $A0FB label=ks_common
   $A0FB
   $A0FD
   $A0FF
@@ -3336,10 +3341,14 @@ R $A0D6 O:A User input byte (as $A0D5)
 
 g $A139
   $A139,1 This is always zero, yet the code checks it. If it's set then $83F5 uses it to jump to $81AA, which is the end of a string. $8435 tests it too and calls <chatter> when it's zero, which it always is. $8AD6 also tries to use it to jump into a string (twice). Could be dead code or 128K version hook?
+;
+@ $A13A label=current_stage_number
   $A13A,1 Current stage number
   $A13B,1 Used by $8425  -- seems to start at 4 then cycle 3/2/1 with each restart of the game, another random factor?
+;
 @ $A13C label=overtake_bonus
   $A13C,1 Overtake combo bonus counter. BCD. This increases by 2 for each overtake and is reset on a crash.
+;
 @ $A13D label=credits
   $A13D,1 Number of credits remaining (2 for a new game)
   $A13E,47 Canned data or Data restored for attract mode?
@@ -3356,16 +3365,23 @@ g $A139
 W $A171,2 seems to be the horizon level, possibly relative (used during attract mode)
   $A174,1 Low/high gear flag?
   $A175,8 Score digits. One digit per byte, least significant first. This seems to be recording what's on screen so digit plotting can be bypassed.
+;
 @ $A175 label=score_digits
   $A175,8 Score as displayed. Stored as one digit per byte. Least significant digit first.
+;
 @ $A17D label=time_sixteenths
   $A17D,1 Seems to be a 1/16ths second counter. Counts from $F to $0. $A17E is decremented when it hits zero.
+;
 @ $A17E label=time_bcd
   $A17E,1 Time remaining. Stored as BCD.
+;
 @ $A17F label=time_digits
   $A17F,2 Time remaining as displayed. Stored as one digit per byte.
+;
 @ $A181 label=distance_digits
   $A181,4 Distance as displayed. Stored as one digit per byte.
+;
+@ $A186 label=horizon_attribute
 W $A186,2 Attribute address of horizon. Points to last attribute on the line which shows the ground. (e.g. $59DF)
 ;
 @ $A188 label=hazards
@@ -3573,7 +3589,18 @@ c $A89C
 c $A8CD Hazard handler routine
 
 @ $A955 label=main_loop_18
-c $A955
+c $A955 TBD
+  $A955 If $A248 == 0 Return
+  $A95A If $A254 == 0 Return
+  $A95F Point #REGde at the stack
+  $A962 Call rng
+  $A965 Stack 1 if it's +ve or zero, or 2 if it's -ve
+  $A96D Call rng
+  $A970 Stack that random byte
+  $A972 Self modify 'LD A' at $A97E to load 1
+  $A977 Self modify 'LD A' at $COBB to load 1
+  $A97A Self modify 'LD A' at $A9DE to load 1
+  $A97D Return
 
 @ $A97E label=main_loop_20
 c $A97E
@@ -3591,13 +3618,13 @@ c $AB33 Helicopter related
   $AB52 Point #REGhl at pilot "turn left" messages
   $AB59 Point #REGhl at pilot "turn right" messages
 
-@ $AB9A label=main_loop_16
+@ $AB9A label=spawn_hazards
 c $AB9A
-
-@ $ABF6 label=spawn_hazards
-c $ABF6 Spawns hazards in the road, like barriers and tumbleweeds.
-R $ABF6 I:B Stored at entry+5  e.g. $20/$46/$56/$50/$B4
-R $ABF6 I:C Stored at entry+1  e.g. $13
+;
+@ $ABF6 label=sh_spawn
+N $ABF6 Spawns hazards in the road, like barriers and tumbleweeds.
+N $ABF6 I:B Stored at entry+5  e.g. $20/$46/$56/$50/$B4
+N $ABF6 I:C Stored at entry+1  e.g. $13
 R $ABF6 I:DE Is an offset into a hazards data table (0 => tumbleweed, 3 => barrier)
   $ABF6 Bank entry registers
   $ABF7 6 iterations
@@ -3685,10 +3712,23 @@ c $AD51
 
 @ $ADA0 label=main_loop_19
 c $ADA0
-
-c $ADBE
+  $ADA0 A = 0
+  $ADA1 $A222 = 0
+  $ADA4 IY = $E3xx
+  $ADA7 IX = &hazards[0]
+  $ADAB DE = 20
+  $ADAE B = 6
+@ $ADB0 label=ml19_loop
+  $ADB0 If the hazard is active ...
+  $ADB4 Bank
+  $ADB5 Call $ADBE
+  $ADB8 Unbank
+  $ADB9 Move to next hazard
+  $ADBB Loop while #REGb
+  $ADBD,1 Return
+;
   $AE1B Increment overtake_bonus
-  $AE1F Return
+  $AE1F,1 Return
 ;
   $AF7E,3 Get smash_factor
   $AF91,3 HL -> $CDEC
@@ -3711,8 +3751,6 @@ c $B318
   $B318 If speed > 0 jump $B325
   $B31F TBD...
 
-c $B457
-
 c $B4CC
   $B4D8 time_sixteenths/$A17D = 15, time_bcd/$A17E = $60
   $B4E1 Point #REGhl at left light's attributes
@@ -3730,14 +3768,14 @@ c $B4F0 Smash handling
   $B50F 20 hits? [POKE $B50F for Single hit capture]
   $B511 Exit via fully_smashed if so
   $B514 19 hits?
-  $B516 Goto j_b522 if not
+  $B516 Goto smash_b522 if not
 N $B518 We have 19 hits
   $B518
   $B519 A = 10
   $B51B HL = raymond_says_one_more_time
   $B51E Call chatter
   $B521
-@ $B522 label=j_b522
+@ $B522 label=smash_b522
   $B522 Set smash_counter to #REGa
   $B525 Set smash_factor to zero if smash_counter is zero
   $B52A Set smash_factor to 1 if smash_counter < 4
@@ -4208,6 +4246,7 @@ R $CDD6 I:C Multiplier (number to multiply by)
   $CDEB Return
 
 b $CDEC
+D $CDEC $AF91 uses this.
 
 b $CE33 Used by $B4FD
 W $CE33,24,6
@@ -4238,9 +4277,9 @@ B $CEEA,1 TBD
 B $CEEB,1 rows
 W $CEEC,2 -> right graphic
 L $CEDA,20,9
-
+;
 @ $CF8E label=hero_car_shadow
-b $CF8E Hero car adornments (shadow, smoke?)
+N $CF8E Hero car adornments (shadow, smoke?)
 B $CF8E,1 TBD
 B $CF8F,1 rows
 W $CF90,2 -> data
@@ -4252,8 +4291,10 @@ W $CFA4,2 -> Turbo smoke plume data frame 2
 W $CFAA,2 -> Turbo smoke plume data frame 3
 W $CFB0,2 -> Turbo smoke plume data frame 4
 ;
-B $CFB2,,3 TBD groups of 3 bytes
-
+@ $CFB2 label=unknown_cfb2
+B $CFB2,,3 TBD groups of 3 bytes ref'd by $B6A6
+;
+@ $D027 label=car_adornments
 B $D027,1 7 rows high
 B $D028,1 1 byte wide
 W $D029,2 -> Cherry light
@@ -4279,151 +4320,297 @@ B $D03C,1 1 bytes wide
 W $D03D,2 -> More debris (perhaps)
 ;
 ; Sometimes plotted as 24x28 when it's "HERE! + Arrow"
-B $D03F,126,6 Arrow graphic (24x21 pixels masked) #HTML[#CALL:graphic($D03F,24,21,1,1)]
-B $D0BD,42,6 "HERE!" graphic (24x7 pixels masked) #HTML[#CALL:graphic($D0BD,24,7,1,1)]
-B $D0E7,14,2 Cherry light (sits on roof of car) 8x7 pixels masked #HTML[#CALL:graphic($D0E7,8,7,1,1)]
-B $D0F5,84,6 Illuminated cherry light 24x14 pixels masked #HTML[#CALL:graphic($D0F5,24,14,1,1)]
-B $D149,120,6 Crash/spark (24x20 pixels masked) #HTML[#CALL:graphic($D149,24,20,1,1)]
-B $D1C1,16,4 Graphic (16x4 pixels) #HTML[#CALL:graphic($D1C1,16,4,1,1)] LOOKS WRONG
-B $D1D1,36,4 Debris (16x9 pixels) #HTML[#CALL:graphic($D1D1,16,9,1,1)] LOOKS WRONG
-B $D1F5,24,2 More debris (8x12 pixels) #HTML[#CALL:graphic($D1F5,8,12,1,1)] LOOKS WRONG
-
-b $D20D Turbo smoke plume animation
-D $D20D (32x16) masked per frame. 4 frames.
-D $D20D #HTML[#CALL:anim($D20D,32,16,1,1,4)]
-B $D20D Turbo smoke plume data frame 1 #HTML[#CALL:graphic($D20D,32,16,1,1)]
-B $D28D Turbo smoke plume data frame 2 #HTML[#CALL:graphic($D28D,32,16,1,1)]
-B $D30D Turbo smoke plume data frame 3 #HTML[#CALL:graphic($D30D,32,16,1,1)]
-B $D38D Turbo smoke plume data frame 4 #HTML[#CALL:graphic($D38D,32,16,1,1)]
-
-b $D40D Hero car graphics
-D $D40D 9 sets
+N $D03F Arrow graphic (24x21)
+N $D03F #HTML[#CALL:graphic($D03F,24,21,1,1)]
+B $D03F,126,6 Masked bitmap data
 ;
+N $D0BD "HERE!" graphic (24x7)
+N $D0BD #HTML[#CALL:graphic($D0BD,24,7,1,1)]
+B $D0BD,42,6 Masked bitmap data
+;
+N $D0E7 Cherry light (sits on roof of car) (8x7)
+N $D0E7 #HTML[#CALL:graphic($D0E7,8,7,1,1)]
+B $D0E7,14,2 Masked bitmap data
+;
+N $D0F5 Illuminated cherry light (24x14)
+N $D0F5 #HTML[#CALL:graphic($D0F5,24,14,1,1)]
+B $D0F5,84,6 Masked bitmap data
+;
+N $D149 Crash/spark (24x20)
+N $D149 #HTML[#CALL:graphic($D149,24,20,1,1)]
+B $D149,120,6 Masked bitmap data
+;
+N $D1C1 Graphic (16x4)
+N $D1C1 #HTML[#CALL:graphic($D1C1,16,4,1,1)] LOOKS WRONG
+B $D1C1,16,4 Masked bitmap data
+;
+N $D1D1 Debris (16x9)
+N $D1D1 #HTML[#CALL:graphic($D1D1,16,9,1,1)] LOOKS WRONG
+B $D1D1,36,4 Masked bitmap data
+;
+N $D1F5 More debris (8x12)
+N $D1F5 #HTML[#CALL:graphic($D1F5,8,12,1,1)] LOOKS WRONG
+B $D1F5,24,2 Masked bitmap data
+;
+;
+N $D20D Turbo smoke plume animation
+N $D20D (32x16) masked per frame. 4 frames.
+N $D20D #HTML[#CALL:anim($D20D,32,16,1,1,4)]
+;
+N $D20D Turbo smoke plume data frame 1
+N $D20D #HTML[#CALL:graphic($D20D,32,16,1,1)]
+B $D20D Masked bitmap data
+;
+N $D28D Turbo smoke plume data frame 2
+N $D28D #HTML[#CALL:graphic($D28D,32,16,1,1)]
+B $D28D Masked bitmap data
+;
+N $D30D Turbo smoke plume data frame 3
+N $D30D #HTML[#CALL:graphic($D30D,32,16,1,1)]
+B $D30D Masked bitmap data
+;
+N $D38D Turbo smoke plume data frame 4
+N $D38D #HTML[#CALL:graphic($D38D,32,16,1,1)]
+B $D38D Masked bitmap data
+;
+;
+N $D40D Hero car graphics
+N $D40D 9 sets
 N $D40D Centre parts
-N $D40D #HTML[#CALL:graphic($D40D,40,14,0,1)] Straight
-B $D40D,70,5 40x14 pixels, non-masked, inverted
-N $D453 #HTML[#CALL:graphic($D453,40,17,0,1)] Straight + Turn right
-B $D453,85,5 40x17 pixels, non-masked, inverted
-N $D4A8 #HTML[#CALL:graphic($D4A8,40,16,0,1)] Straight + Turn right hard
-B $D4A8,80,5 40x16 pixels, non-masked, inverted
-N $D4F8 #HTML[#CALL:graphic($D4F8,40,14,0,1)] Up
-B $D4F8,70,5 40x14 pixels, non-masked, inverted
-N $D53E #HTML[#CALL:graphic($D53E,40,17,0,1)] Up + Turn right
-B $D53E,85,5 40x17 pixels, non-masked, inverted
-N $D593 #HTML[#CALL:graphic($D593,40,15,0,1)] Up + Turn right hard
-B $D593,75,5 40x15 pixels, non-masked, inverted
-N $D5DE #HTML[#CALL:graphic($D5DE,40,14,0,1)] Down
-B $D5DE,70,5 40x14 pixels, non-masked, inverted
-N $D624 #HTML[#CALL:graphic($D624,40,16,0,1)] Down + Turn right
-B $D624,80,5 40x16 pixels, non-masked, inverted
-N $D674 #HTML[#CALL:graphic($D674,40,16,0,1)] Down + Turn right hard
-B $D674,80,5 40x16 pixels, non-masked, inverted
+;
+N $D40D Straight (40x14)
+N $D40D #HTML[#CALL:graphic($D40D,40,14,0,1)]
+B $D40D,70,5 Non-masked, inverted bitmap data
+;
+N $D453 Straight + Turn right (40x17)
+N $D453 #HTML[#CALL:graphic($D453,40,17,0,1)]
+B $D453,85,5 Non-masked, inverted bitmap data
+;
+N $D4A8 Straight + Turn right hard (40x16)
+N $D4A8 #HTML[#CALL:graphic($D4A8,40,16,0,1)]
+B $D4A8,80,5 Non-masked, inverted bitmap data
+;
+N $D4F8 Up (40x14)
+N $D4F8 #HTML[#CALL:graphic($D4F8,40,14,0,1)]
+B $D4F8,70,5 Non-masked, inverted bitmap data
+;
+N $D53E Up + Turn right (40x17)
+N $D53E #HTML[#CALL:graphic($D53E,40,17,0,1)]
+B $D53E,85,5 Non-masked, inverted bitmap data
+;
+N $D593 Up + Turn right hard (40x15)
+N $D593 #HTML[#CALL:graphic($D593,40,15,0,1)]
+B $D593,75,5 Non-masked, inverted bitmap data
+;
+N $D5DE Down (40x14)
+N $D5DE #HTML[#CALL:graphic($D5DE,40,14,0,1)]
+B $D5DE,70,5 Non-masked, inverted bitmap data
+;
+N $D624 Down + Turn right (40x16)
+N $D624 #HTML[#CALL:graphic($D624,40,16,0,1)]
+B $D624,80,5 Non-masked, inverted bitmap data
+;
+N $D674 Down + Turn right hard (40x16)
+N $D674 #HTML[#CALL:graphic($D674,40,16,0,1)]
+B $D674,80,5 Non-masked, inverted bitmap data
+;
 ;
 N $D6C4 Straight parts
+;
+N $D6C4 Top of car (40x9)
 N $D6C4 #HTML[#CALL:graphic($D6C4,40,9,1,1)]
-B $D6C4,90,10  40x9 pixels masked [top of car]
+B $D6C4,90,10 Masked, inverted bitmap data
+;
+N $D71E Bottom of car (40x6)
 N $D71E #HTML[#CALL:graphic($D71E,40,6,1,1)]
-B $D71E,60,10  40x6 pixels masked [bottom of car]
+B $D71E,60,10 Masked, inverted bitmap data
+;
+N $D75A Left of car (8x14)
 N $D75A #HTML[#CALL:graphic($D75A,8,14,1,1)]
-B $D75A,28,2   8x14 pixels masked [left of car]
+B $D75A,28,2 Masked, inverted bitmap data
+;
+N $D776 Right of car (8x14)
 N $D776 #HTML[#CALL:graphic($D776,8,14,1,1)]
-B $D776,28,2   8x14 pixels masked [right of car]
+B $D776,28,2 Masked, inverted bitmap data
+;
 ;
 N $D792 Straight + Turn right parts
+;
+N $D792 Top of car (40x9)
 N $D792 #HTML[#CALL:graphic($D792,40,8,1,1)]
-B $D792,80,10  40x9 pixels masked [top of car]
+B $D792,80,10 Masked, inverted bitmap data
+;
+N $D7E2 Bottom of car (40x6)
 N $D7E2 #HTML[#CALL:graphic($D7E2,40,4,1,1)]
-B $D7E2,40,10  40x6 pixels masked [bottom of car]
-N $D80A  #HTML[#CALL:graphic($D80A,8,13,1,1)]
-B $D80A,26,2   8x13 pixels masked [left of car]
-N $D824  #HTML[#CALL:graphic($D824,8,13,1,1)]
-B $D824,26,2   8x13 pixels masked [right of car]
+B $D7E2,40,10 Masked, inverted bitmap data
+;
+N $D80A Left of car (8x13)
+N $D80A #HTML[#CALL:graphic($D80A,8,13,1,1)]
+B $D80A,26,2 Masked, inverted bitmap data
+;
+N $D824 Right of car (8x13)
+N $D824 #HTML[#CALL:graphic($D824,8,13,1,1)]
+B $D824,26,2 Masked, inverted bitmap data
+;
 ;
 N $D83E Straight + Turn right hard parts
+;
+N $D83E Top of car (40x9)
 N $D83E #HTML[#CALL:graphic($D83E,40,9,1,1)]
-B $D83E,90,10  40x9 pixels masked [top of car]
+B $D83E,90,10 Masked, inverted bitmap data
+;
+N $D898 Bottom of car (40x4)
 N $D898 #HTML[#CALL:graphic($D898,40,4,1,1)]
-B $D898,40,10  40x4 pixels masked [bottom of car]
-N $D8C0  #HTML[#CALL:graphic($D8C0,8,12,1,1)]
-B $D8C0,24,2   8x12 pixels masked [left of car]
-N $D8D8  #HTML[#CALL:graphic($D8D8,8,15,1,1)]
-B $D8D8,30,2   8x15 pixels masked [right of car]
+B $D898,40,10 Masked, inverted bitmap data
+;
+N $D8C0 Left of car (8x12)
+N $D8C0 #HTML[#CALL:graphic($D8C0,8,12,1,1)]
+B $D8C0,24,2 Masked, inverted bitmap data
+;
+N $D8D8 Right of car (8x15)
+N $D8D8 #HTML[#CALL:graphic($D8D8,8,15,1,1)]
+B $D8D8,30,2 Masked, inverted bitmap data
+;
 ;
 N $D8F6 Up parts
+;
+N $D8F6 Top of car (40x10)
 N $D8F6 #HTML[#CALL:graphic($D8F6,40,10,1,1)]
-B $D8F6,100,10 40x10 pixels masked [top of car]
+B $D8F6,100,10 Masked, inverted bitmap data
+;
+N $D95A Bottom of car (40x6)
 N $D95A #HTML[#CALL:graphic($D95A,40,6,1,1)]
-B $D95A,60,10  40x6 pixels masked [bottom of car]
-N $D996  #HTML[#CALL:graphic($D996,8,13,1,1)]
-B $D996,26,2   8x13 pixels masked [left of car]
-N $D9B0  #HTML[#CALL:graphic($D9B0,8,14,1,1)]
-B $D9B0,28,2   8x14 pixels masked [right of car]
+B $D95A,60,10 Masked, inverted bitmap data
+;
+N $D996 Left of car (8x13)
+N $D996 #HTML[#CALL:graphic($D996,8,13,1,1)]
+B $D996,26,2 Masked, inverted bitmap data
+;
+N $D9B0 Right of car (8x14)
+N $D9B0 #HTML[#CALL:graphic($D9B0,8,14,1,1)]
+B $D9B0,28,2 Masked, inverted bitmap data
+;
 ;
 N $D9CC Up + Turn right parts
+;
+N $D9CC Top of car (40x9)
 N $D9CC #HTML[#CALL:graphic($D9CC,40,9,1,1)]
-B $D9CC,90,10  40x9 pixels masked [top of car]
+B $D9CC,90,10 Masked, inverted bitmap data
+;
+N $DA26 Bottom of car (40x4)
 N $DA26 #HTML[#CALL:graphic($DA26,40,4,1,1)]
-B $DA26,40,10  40x4 pixels masked [bottom of car]
-N $DA4E  #HTML[#CALL:graphic($DA4E,8,12,1,1)]
-B $DA4E,24,2   8x12 pixels masked [left of car]
-N $DA66  #HTML[#CALL:graphic($DA66,8,14,1,1)]
-B $DA66,28,2   8x14 pixels masked [right of car]
+B $DA26,40,10 Masked, inverted bitmap data
+;
+N $DA4E Left of car (8x12)
+N $DA4E #HTML[#CALL:graphic($DA4E,8,12,1,1)]
+B $DA4E,24,2 Masked, inverted bitmap data
+;
+N $DA66 Right of car (8x14)
+N $DA66 #HTML[#CALL:graphic($DA66,8,14,1,1)]
+B $DA66,28,2 Masked, inverted bitmap data
+;
 ;
 N $DA82 Up + Turn right hard parts
+;
+N $DA82 Top of car (40x9)
 N $DA82 #HTML[#CALL:graphic($DA82,40,9,1,1)]
-B $DA82,90,10  40x9 pixels masked [top of car]
+B $DA82,90,10 Masked, inverted bitmap data
+;
+N $DADC Bottom of car (40x6)
 N $DADC #HTML[#CALL:graphic($DADC,40,6,1,1)]
-B $DADC,60,10  40x6 pixels masked [bottom of car]
-N $DB18  #HTML[#CALL:graphic($DB18,8,11,1,1)]
-B $DB18,22,2   8x11 pixels masked [left of car]
-N $DB2E  #HTML[#CALL:graphic($DB2E,8,15,1,1)]
-B $DB2E,30,2   8x15 pixels masked [right of car]
+B $DADC,60,10 Masked, inverted bitmap data
+;
+N $DB18 Left of car (8x11)
+N $DB18 #HTML[#CALL:graphic($DB18,8,11,1,1)]
+B $DB18,22,2 Masked, inverted bitmap data
+;
+N $DB2E Right of car (8x15)
+N $DB2E #HTML[#CALL:graphic($DB2E,8,15,1,1)]
+B $DB2E,30,2 Masked, inverted bitmap data
+;
 ;
 N $DB4C Down parts
+;
+N $DB4C Top of car (40x8)
 N $DB4C #HTML[#CALL:graphic($DB4C,40,8,1,1)]
-B $DB4C,80,10  40x8 pixels masked [top of car]
+B $DB4C,80,10 Masked, inverted bitmap data
+;
+N $DB9C Bottom of car (40x6)
 N $DB9C #HTML[#CALL:graphic($DB9C,40,6,1,1)]
-B $DB9C,60,10  40x6 pixels masked [bottom of car]
-N $DBD8  #HTML[#CALL:graphic($DBD8,8,13,1,1)]
-B $DBD8,26,2   8x13 pixels masked [left of car]
-N $DBF2  #HTML[#CALL:graphic($DBF2,8,14,1,1)]
-B $DBF2,28,2   8x14 pixels masked [right of car]
+B $DB9C,60,10 Masked, inverted bitmap data
+;
+N $DBD8 Left of car (8x13)
+N $DBD8 #HTML[#CALL:graphic($DBD8,8,13,1,1)]
+B $DBD8,26,2 Masked, inverted bitmap data
+;
+N $DBF2 Right of car (8x14)
+N $DBF2 #HTML[#CALL:graphic($DBF2,8,14,1,1)]
+B $DBF2,28,2 Masked, inverted bitmap data
+;
 ;
 N $DC0E Down + Turn right parts
+;
+N $DC0E Top of car (40x8)
 N $DC0E #HTML[#CALL:graphic($DC0E,40,8,1,1)]
-B $DC0E,80,10  40x8 pixels masked [top of car]
+B $DC0E,80,10 Masked, inverted bitmap data
+;
+N $DC5E Bottom of car (40x4)
 N $DC5E #HTML[#CALL:graphic($DC5E,40,4,1,1)]
-B $DC5E,40,10  40x4 pixels masked [bottom of car]
-N $DC86  #HTML[#CALL:graphic($DC86,8,13,1,1)]
-B $DC86,26,2   8x13 pixels masked [left of car]
-N $DCA0  #HTML[#CALL:graphic($DCA0,8,13,1,1)]
-B $DCA0,26,2   8x13 pixels masked [right of car]
+B $DC5E,40,10 Masked, inverted bitmap data
+;
+N $DC86 Left of car (8x13)
+N $DC86 #HTML[#CALL:graphic($DC86,8,13,1,1)]
+B $DC86,26,2 Masked, inverted bitmap data
+;
+N $DCA0 Right of car (8x13)
+N $DCA0 #HTML[#CALL:graphic($DCA0,8,13,1,1)]
+B $DCA0,26,2 Masked, inverted bitmap data
+;
 ;
 N $DCBA Down + Turn right hard parts
+;
+N $DCBA Top of car (40x8)
 N $DCBA #HTML[#CALL:graphic($DCBA,40,8,1,1)]
-B $DCBA,80,10  40x8 pixels masked [top of car]
+B $DCBA,80,10 Masked, inverted bitmap data
+;
+N $DD0A Bottom of car (40x4)
 N $DD0A #HTML[#CALL:graphic($DD0A,40,4,1,1)]
-B $DD0A,40,10  40x4 pixels masked [bottom of car]
-N $DD32  #HTML[#CALL:graphic($DD32,8,13,1,1)]
-B $DD32,26,2   8x13 pixels masked [left of car]
-N $DD4C  #HTML[#CALL:graphic($DD4C,8,15,1,1)]
-B $DD4C,30,2   8x15 pixels masked [right of car]
+B $DD0A,40,10 Masked, inverted bitmap data
+;
+N $DD32 Left of car (8x13)
+N $DD32 #HTML[#CALL:graphic($DD32,8,13,1,1)]
+B $DD32,26,2 Masked, inverted bitmap data
+;
+N $DD4C Right of car (8x15)
+N $DD4C #HTML[#CALL:graphic($DD4C,8,15,1,1)]
+B $DD4C,30,2 Masked, inverted bitmap data
+;
 ;
 N $DD6A Shadow parts
+;
+N $DD6A Shadow + Straight (56x12)
 N $DD6A #HTML[#CALL:graphic($DD6A,56,12,1,1)]
-B $DD6A,168,14 Shadow 56x12 pixels masked - straight on
+B $DD6A,168,14 Masked, inverted bitmap data
+;
+N $DE12 Shadow + Turn right (56x12)
 N $DE12 #HTML[#CALL:graphic($DE12,56,12,1,1)]
-B $DE12,168,14 Shadow 56x12 pixels masked - same, but turning
+B $DE12,168,14 Masked, inverted bitmap data
+;
+N $DEBA Shadow + Turn right hard (56x12)
 N $DEBA #HTML[#CALL:graphic($DEBA,56,12,1,1)]
-B $DEBA,168,14 Shadow 56x12 pixels masked - same again, but turning hard
+B $DEBA,168,14 Masked, inverted bitmap data
 
 @ $DF62 label=ledfont
-b $DF62 LED numeric font used for scores
-B $DF62,150,15 8x15 pixels digits 0..9 only
+b $DF62 LED style numeric font used for scores
+D $DF62 8x15 pixels, digits 0..9 only
+D $DF62 #HTML[#CALL:graphic($DF62,8,10*15,0,0)]
+B $DF62,150,15
 
 @ $DFF8 label=minifont
 b $DFF8 Mini font used for in-game messages
-B $DFF8,186,6 8x6 pixels (though the digits are thinner than 8) A-Z + (probably 3 symbols)
+D $DFF8 8x6 pixels, though the digits are thinner than 8, A-Z + five symbols.
+D $DFF8 #HTML[#CALL:graphic($DFF8,8,31*6,0,0)]
+B $DFF8,186,6
 
 b $E0B2 Graphics defns
 B $E0B2,,7 <Byte width, Flags, Height, Ptr, Ptr>
@@ -4462,9 +4649,18 @@ B $E2DC Ref'd by split road
 b $E34B
 B $E34B,3 3 bytes set to 8 by $880A
 
-b $E35D (roughly) spiral inward animation mask used for transitions
-b $E3BD circle expanding animation mask used for transitions
-b $E540 looks like a table of flipped bytes (but not quite)
+b $E364 Transition masks
+N $E364 Spiral inward animation mask (8x8, 11 frames)
+N $E364 #HTML[#CALL:anim($E364,8,8,0,0,11)]
+N $E364 #HTML[#CALL:graphic($E364,8,11*8,0,0)]
+B $E364,88,8
+;
+N $E3BC Circle expanding animation mask (8x8, 7 frames)
+N $E3BC #HTML[#CALL:anim($E3BC,8,8,0,0,7)]
+N $E3BC #HTML[#CALL:graphic($E3BC,8,7*8,0,0)]
+B $E3BC,56,8
+
+c $E540 Looks like a table of flipped bytes (but not quite)
 
 b $E601
 
@@ -4507,10 +4703,18 @@ W $E874,2 count
 ;
 B $E876,24,3
 B $E88E,24,3
-B $E8A6,40,8 looks circular?
-B $E8CE,49,8
 ;
-B $E8FF TBD
+N $E8A6 Square zoom in animation mask (8x8, 5 frames)
+N $E8A6 #HTML[#CALL:anim($E8A6,8,8,0,0,5)]
+N $E8A6 #HTML[#CALL:graphic($E8A6,8,5*8,0,0)]
+B $E8A6,40,8
+;
+N $E8CE Diamond zoom in animation mask (8x8, 6 frames)
+N $E8CE #HTML[#CALL:anim($E8CE,8,8,0,0,6)]
+N $E8CE #HTML[#CALL:graphic($E8CE,8,6*8,0,0)]
+B $E8CE,48,8
+;
+B $E8FE TBD
 W $E90A,2 -> "STOP THE TAPE" + "PRESS ANY KEY" message set
 B $E90C TBD
 
