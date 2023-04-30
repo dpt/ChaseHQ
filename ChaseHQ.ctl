@@ -482,27 +482,27 @@ B $68EA,48,3
 ;
 N $691A Lamborghini_4 (24x8)
 N $691A #HTML[#CALL:graphic($691A,24,8,1,1)]
-B $691A,48,6 Masked data
+B $691A,48,6 Masked bitmap data
 ;
 N $694A Lamborghini_5 (24x8) pre-shifted
 N $694A #HTML[#CALL:graphic($694A,24,8,1,1)]
-B $694A,48,6 Masked data
+B $694A,48,6 Masked bitmap data
 ;
 N $697A Truck_4/5 (16x12)
 N $697A #HTML[#CALL:graphic($697A,16,12,1,1)]
-B $697A,48,4 Masked data
+B $697A,48,4 Masked bitmap data
 ;
 N $69AA Truck_4/5 (16x12) pre-shifted
 N $69AA #HTML[#CALL:graphic($69AA,16,12,1,1)]
-B $69AA,48,4 Masked data
+B $69AA,48,4 Masked bitmap data
 ;
 N $69DA Car_4/5 (24x9)
 N $69DA #HTML[#CALL:graphic($69DA,24,9,1,1)]
-B $69DA,54,6 Masked data
+B $69DA,54,6 Masked bitmap data
 ;
 N $6A10 Car_4/5 (24x9) pre-shifted
 N $6A10 #HTML[#CALL:graphic($6A10,24,9,1,1)]
-B $6A10,54,6 Masked data
+B $6A10,54,6 Masked bitmap data
 ;
 @ $6A46 label=stones_lods
 N $6A46 LOD
@@ -524,47 +524,47 @@ L $6A70,7,6
 ;
 N $6A9A Stones (16x5)
 N $6A9A #HTML[#CALL:graphic($6A9A,16,5,1,1)]
-B $6A9A,20,4 Masked data
+B $6A9A,20,4 Masked bitmap data
 ;
 N $6AAE Stones (16x4)
 N $6AAE #HTML[#CALL:graphic($6AAE,16,4,1,1)]
-B $6AAE,16,4 Masked data
+B $6AAE,16,4 Masked bitmap data
 ;
 N $6ABE Stones (16x4) pre-shifted
 N $6ABE #HTML[#CALL:graphic($6ABE,16,4,1,1)]
-B $6ABE,16,4 Masked data
+B $6ABE,16,4 Masked bitmap data
 ;
 N $6ACE Stones (16x3)
 N $6ACE #HTML[#CALL:graphic($6ACE,16,3,1,1)]
-B $6ACE,12,4 Masked data
+B $6ACE,12,4 Masked bitmap data
 ;
 N $6ADA Stones (16x3) pre-shifted
 N $6ADA #HTML[#CALL:graphic($6ADA,16,3,1,1)]
-B $6ADA,12,4 Masked data
+B $6ADA,12,4 Masked bitmap data
 ;
 N $6AE6 Stones (8x2)
 N $6AE6 #HTML[#CALL:graphic($6AE6,8,2,1,1)]
-B $6AE6,4,2 Masked data
+B $6AE6,4,2 Masked bitmap data
 ;
 N $6AEA Stones (8x2) pre-shifted
 N $6AEA #HTML[#CALL:graphic($6AEA,8,2,1,1)]
-B $6AEA,4,2 Masked data
+B $6AEA,4,2 Masked bitmap data
 ;
 N $6AEE Stones (8x1)
 N $6AEE #HTML[#CALL:graphic($6AEE,8,1,1,1)]
-B $6AEE,2,2 Masked data
+B $6AEE,2,2 Masked bitmap data
 ;
 N $6AF0 Stones (8x1) pre-shifted
 N $6AF0 #HTML[#CALL:graphic($6AF0,8,1,1,1)]
-B $6AF0,2,2 Masked data
+B $6AF0,2,2 Masked bitmap data
 ;
 N $6AF2 Dust (8x1)
 N $6AF2 #HTML[#CALL:graphic($6AF2,8,1,1,1)]
-B $6AF2,2 Masked data
+B $6AF2,2 Masked bitmap data
 ;
 N $6AF4 Dust (8x1) pre-shifted
 N $6AF4 #HTML[#CALL:graphic($6AF4,8,1,1,1)]
-B $6AF4,2 Masked data
+B $6AF4,2 Masked bitmap data
 ;
 W $6AF6,2 -> turn_sign_lods
 B $6AF8
@@ -594,23 +594,23 @@ B $6C62,40,2
 ;
 N $6C8A Turn right sign (16x16)
 N $6C8A #HTML[#CALL:graphic($6C8A,16,16,1,1)]
-B $6C8A,64,4 Masked data
+B $6C8A,64,4 Masked bitmap data
 ;
 N $6CCA Turn right sign (16x13)
 N $6CCA #HTML[#CALL:graphic($6CCA,16,13,1,1)]
-B $6CCA,52,2 Masked data
+B $6CCA,52,2 Masked bitmap data
 ;
 N $6CFE Turn right sign (16x13) pre-shifted
 N $6CFE #HTML[#CALL:graphic($6CFE,16,13,1,1)]
-B $6CFE,52,2 Masked data
+B $6CFE,52,2 Masked bitmap data
 ;
 N $6D32 Turn right sign (16x10)
 N $6D32 #HTML[#CALL:graphic($6D32,16,10,1,1)]
-B $6D32,,4 Masked data
+B $6D32,,4 Masked bitmap data
 ;
 N $6D5A Turn right sign (16x10) pre-shifted
 N $6D5A #HTML[#CALL:graphic($6D5A,16,10,1,1)]
-B $6D5A,,4 Masked data
+B $6D5A,,4 Masked bitmap data
 ;
 ;
 @ $6D82 label=tumbleweed_lods
@@ -662,11 +662,11 @@ B $6E87,18,2
 ;
 N $6E99 Barrier (16x7) pre-shifted
 N $6E99 #HTML[#CALL:graphic($6E99,16,7,1,1)]
-B $6E99,28,4 Masked data
+B $6E99,28,4 Masked bitmap data
 ;
 N $6EB5 Barrier (16x7) pre-shifted
 N $6EB5 #HTML[#CALL:graphic($6EB5,16,7,1,1)]
-B $6EB5,28,4 Masked data
+B $6EB5,28,4 Masked bitmap data
 ;
 B $6ED1
 N $6ED1 Ref'd by graphic entry 6
@@ -713,19 +713,19 @@ B $6FA4,16,2
 ;
 N $6FA4 Street lamp top (16x4) 
 N $6FA4 #HTML[#CALL:graphic($6FA4,16,4,1,1)]
-B $6FB4,16,2 Masked data
+B $6FB4,16,2 Masked bitmap data
 ;
 N $6FB4 Street lamp top (16x4) pre-shifted 
 N $6FB4 #HTML[#CALL:graphic($6FB4,16,4,1,1)]
-B $6FC4,12,2 Masked data
+B $6FC4,12,2 Masked bitmap data
 ;
 N $6FC4 Street lamp top (16x3) 
 N $6FC4 #HTML[#CALL:graphic($6FC4,16,3,1,1)]
-B $6FD0,12,2 Masked data
+B $6FD0,12,2 Masked bitmap data
 ;
 N $6FD0 Street lamp top (16x3) pre-shifted 
 N $6FD0 #HTML[#CALL:graphic($6FD0,16,3,1,1)]
-B $6F5D,32,4 Masked data
+B $6F5D,32,4 Masked bitmap data
 ;
 ;
 N $6FDC Ref'd by graphic entry 7
@@ -816,92 +816,101 @@ B $73D8
 @ $73DE label=bitmap_tree_top_64x13
 N $73DE Tree top (64x13)
 N $73DE #HTML[#CALL:graphic($73DE,64,13,1,1)]
-B $73DE  Masked data
+B $73DE  Masked bitmap data
 ;
 @ $74AE label=bitmap_tree_top_48x10
 N $74AE Tree top (48x10)
 N $74AE #HTML[#CALL:graphic($74AE,48,10,1,1)]
-B $74AE,120,12 Masked data
+B $74AE,120,12 Masked bitmap data
 ;
 @ $7526 label=bitmap_tree_top_32x5
 N $7526 Tree top (32x5)
 N $7526 #HTML[#CALL:graphic($7526,32,5,1,1)]
-B $7526,40,8 Masked data
+B $7526,40,8 Masked bitmap data
 ;
 @ $754E label=bitmap_tree_top_24x4
 N $754E Tree top (24x4)
 N $754E #HTML[#CALL:graphic($754E,24,4,1,1)]
-B $754E,24,6 Masked data
+B $754E,24,6 Masked bitmap data
 ;
 @ $7566 label=bitmap_tree_top_24x3
 N $7566 Tree top (24x3)
 N $7566 #HTML[#CALL:graphic($7566,24,3,1,1)]
-B $7566,18,6 Masked data
+B $7566,18,6 Masked bitmap data
 ;
 @ $7578 label=bitmap_tree_top_24x3s
 N $7578 Tree top (24x3) pre-shifted
 N $7578 #HTML[#CALL:graphic($7578,24,3,1,1)]
-B $7578,18,6 Masked data
+B $7578,18,6 Masked bitmap data
 ;
 @ $758A label=bitmap_tree_trunk_16x6
 N $758A Tree trunk (16x6)
 N $758A #HTML[#CALL:graphic($758A,16,6,1,1)]
-B $758A,24,4 Masked data
+B $758A,24,4 Masked bitmap data
 ;
 @ $75A2 label=bitmap_tree_trunk_16x4
 N $75A2 Tree trunk (16x4)
 N $75A2 #HTML[#CALL:graphic($75A2,16,4,1,1)]
-B $75A2,16,4 Masked data
+B $75A2,16,4 Masked bitmap data
 ;
 @ $75B2 label=bitmap_tree_middle_24x5
 N $75B2 Tree middle (24x5)
 N $75B2 #HTML[#CALL:graphic($75B2,24,5,1,1)]
-B $75B2,30,6 Masked data
+B $75B2,30,6 Masked bitmap data
 ;
 ; Naming collision here...
 @ $75D0 label=bitmap_tree_bottom_24x2_another
 N $75D0 Tree bottom (24x2)
 N $75D0 #HTML[#CALL:graphic($75D0,24,2,1,1)]
-B $75D0,12,6 Masked data
+B $75D0,12,6 Masked bitmap data
 ;
 @ $75DC label=bitmap_tree_trunk_24x3
 N $75DC Tree trunk (24x3)
 N $75DC #HTML[#CALL:graphic($75DC,24,3,1,1)]
-B $75DC,18,6 Masked data
+B $75DC,18,6 Masked bitmap data
 ;
 @ $75EE label=bitmap_tree_shadow_24x1
 N $75EE Tree shadow (24x1)
 N $75EE #HTML[#CALL:graphic($75EE,24,1,1,1)]
-B $75EE,6,6 Masked data
+B $75EE,6,6 Masked bitmap data
 ;
 @ $75F4 label=bitmap_tree_middle_24x5s
 N $75F4 Tree middle (24x5) pre-shifted
 N $75F4 #HTML[#CALL:graphic($75F4,24,5,1,1)]
-B $75F4,30,6 Masked data
+B $75F4,30,6 Masked bitmap data
 ;
 @ $7612 label=bitmap_tree_bottom_24x2s
 N $7612 Tree bottom (24x2) pre-shifted
 N $7612 #HTML[#CALL:graphic($7612,24,2,1,1)]
-B $7612,12,6 Masked data
+B $7612,12,6 Masked bitmap data
 ;
 @ $761E label=bitmap_tree_trunk_24x3s
 N $761E Tree trunk (24x3) pre-shifted
 N $761E #HTML[#CALL:graphic($761E,24,3,1,1)]
-B $761E,18,6 Masked data
+B $761E,18,6 Masked bitmap data
 ;
 @ $7630 label=bitmap_tree_shadow_24x1s
 N $7630 Tree shadow (24x1) pre-shifted
 N $7630 #HTML[#CALL:graphic($7630,24,1,1,1)]
-B $7630,6,6 Masked data
+B $7630,6,6 Masked bitmap data
 ;
 
 u $7636
 
 b $76F0 Turbo icons
 D $76F0 #HTML[#CALL:anim($76F0,16,14,1,1,3)]
-B $76F0,,4 Frame 1 (16x14) #HTML[#CALL:graphic($76F0,16,14,1,1)]
-B $7728,,4 Frame 2 (16x14) #HTML[#CALL:graphic($7728,16,14,1,1)]
-B $7760,,4 Frame 3 (16x14) #HTML[#CALL:graphic($7760,16,14,1,1)]
+;
+N $76F0 Frame 1 (16x14)
+N $76F0 #HTML[#CALL:graphic($76F0,16,14,1,1)]
+B $76F0,,4 Masked bitmap data
+;
+N $7728 Frame 2 (16x14)
+N $7728 #HTML[#CALL:graphic($7728,16,14,1,1)]
+B $7728,,4 Masked bitmap data
+;
+N $7760 Frame 3 (16x14)
+N $7760 #HTML[#CALL:graphic($7760,16,14,1,1)]
+B $7760,,4 Masked bitmap data
 
 @ $7798 label=pre_game_messages
 b $7798 Pre-game screen messages
@@ -932,12 +941,21 @@ b $77D8
   $78B6,344,8 Tiles used to draw the pre-game screen #HTML[#CALL:graphic($78B6,8,43*8,0,0)]
 
 b $7BE9 Graphics: Faces
-B $7BE9,160,4 Nancy's face (32x40). Stored top-down. #HTML[#CALL:face($7BE9)]
-B $7C89,20,4 Attribute data for above.
-B $7C9D,160,4 Raymond's face (32x40). Stored top-down. #HTML[#CALL:face($7C9D)]
-B $7D3D,20,4 Attribute data for above.
-B $7D51,160,4 Tony's face (32x40). Stored top-down. #HTML[#CALL:face($7D51)]
-B $7DF1,20,4 Attribute data for above.
+;
+N $7BE9 Nancy's face (32x40)
+N $7BE9 #HTML[#CALL:face($7BE9)]
+B $7BE9,160,4 Bitmap data, top-down format
+B $7C89,20,4 Attribute data for above
+;
+N $7C9D Raymond's face (32x40)
+N $7C9D #HTML[#CALL:face($7C9D)]
+B $7C9D,160,4 Bitmap data, top-down format
+B $7D3D,20,4 Attribute data for above
+;
+N $7D51 Tony's face (32x40)
+N $7D51 #HTML[#CALL:face($7D51)]
+B $7D51,160,4 Bitmap data, top-down format
+B $7DF1,20,4 Attribute data for above
 
 b $7E05 Ref'd by graphic entry 3 and 12
 
