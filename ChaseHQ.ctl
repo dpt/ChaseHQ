@@ -381,29 +381,283 @@ B $5EBD,3 TBD
 W $5EC0,2 Arg
 W $5EC2,2 -> Routine at $9278
 ;
-; $5EC3 is referenced so perhaps we're dealing with 1-indexed data here. $60 seems to be a terminator?
+; $5EC3 is referenced so perhaps we're dealing with 1-indexed data here.
 b $5EC4 Initial map segment
-B $5EC4 Ref'd from setup_game_data
-B $5EE3 Ref'd from setup_game_data
-B $5F0E Ref'd from setup_game_data
-B $5F77 Ref'd from setup_game_data
-B $5F29 Ref'd from setup_game_data
-B $5F1C Ref'd from setup_game_data
 ;
-b $6088 APPROX?! map segment - bumpy road then tunnel
-B $6088
-B $60A3 Looks like the graphic data for a lamppost but I suspect it's a height(?) related data for the bumpy road
-B $60E6
-B $60EF
-B $6109
-B $6144
+;b $6088 APPROX?! map segment - bumpy road then tunnel
+;B $6088
+;B $60A3 Looks like the graphic data for a lamppost but I suspect it's a height(?) related data for the bumpy road
+;B $60E6
+;B $60EF
+;B $6109
+;B $6144
 ;
-B $61D3 Ref'd from attract_data
-B $6208 Ref'd from attract_data
-B $625C Ref'd from attract_data
-B $6313 Ref'd from attract_data
-B $6293 Ref'd from attract_data
-B $6276 Ref'd from attract_data
+;B $61D3 Ref'd from attract_data
+;B $6208 Ref'd from attract_data
+;B $625C Ref'd from attract_data
+;B $6276 Ref'd from attract_data
+;B $6293 Ref'd from attract_data
+;B $6313 Ref'd from attract_data
+;
+; $5FE2 is likely a word (as are other zero values)
+;
+N $5EC4 Start stretch
+;
+N $5EC4 Start stretch, curvature
+B $5EC4,2 Straight x2
+B $5EC6,1 Left
+B $5EC7,1 TBD
+B $5EC8,1 TBD
+B $5EC9,1 TBD
+B $5ECA,5 Straight x5
+B $5ECF,1 TBD
+B $5ED0,1 Left
+B $5ED1,1 TBD
+B $5ED2,1 TBD
+B $5ED3,1 TBD
+B $5ED4,1 TBD
+B $5ED5,1 Straight
+B $5ED6,1 TBD
+B $5ED7,1 Left
+B $5ED8,1 TBD
+B $5ED9,1 Right
+B $5EDA,1 TBD
+B $5EDB,1 TBD
+B $5EDC,1 Straight
+B $5EDD,1 TBD
+B $5EDE,1 Escape
+B $5EDF,1 2 => Fork
+W $5EE0,2 Address of left fork data
+W $5EE2,2 Address of right fork data
+;
+N $5EE4 Start stretch, height
+B $5EE4,5 Level ground x 5
+B $5EE9,1 TBD
+B $5EEA,1 TBD
+B $5EEB,1 TBD
+B $5EEC,1 TBD
+B $5EED,1 TBD
+B $5EEE,1 TBD
+B $5EEF,1 TBD
+B $5EF0,1 TBD
+B $5EF1,1 TBD
+B $5EF2,1 TBD
+B $5EF3,1 TBD
+B $5EF4,1 TBD
+B $5EF5,1 TBD
+B $5EF6,1 TBD
+B $5EF7,1 TBD
+B $5EF8,1 TBD
+B $5EF9,1 TBD
+B $5EFA,1 TBD
+B $5EFB,1 TBD
+B $5EFC,1 TBD
+B $5EFD,1 TBD
+B $5EFE,1 TBD
+B $5EFF,1 TBD
+B $5F00,1 TBD
+B $5F01,7 Level ground x 7
+B $5F08,1 TBD
+B $5F09,1 Escape
+B $5F0A,1 2 => Fork
+W $5F0B,2 Address of left fork data
+W $5F0D,2 Address of right fork data
+;
+N $5F0F Start stretch, data 3
+B $5F0F TBD
+B $5F10 TBD
+B $5F11 TBD
+B $5F12 TBD
+B $5F13 TBD
+B $5F14 TBD
+B $5F15 TBD
+B $5F16 TBD
+B $5F17,1 Escape
+B $5F18,1 2 => Fork
+W $5F19,2 Address of left fork data
+W $5F1B,2 Address of right fork data
+;
+N $5F1D Start stretch, data 4
+B $5F1D TBD
+B $5F1E TBD
+B $5F1F TBD
+B $5F20 TBD
+B $5F21 TBD
+B $5F22 TBD
+B $5F23 TBD
+B $5F24,1 Escape
+B $5F25,1 2 => Fork
+W $5F26,2 Address of left fork data
+W $5F28,2 Address of right fork data
+;
+N $5F2A Start stretch, left hand objects
+B $5F2A,,1 .
+B $5F72,1 Escape
+B $5F73,1 2 => Fork
+W $5F74,2 Address of left fork data
+W $5F76,2 Address of right fork data
+;
+N $5F78 Start stretch, right hand objects
+B $5F78,,1 .
+B $5FCC,1 Escape
+B $5FCD,1 2 => Fork
+W $5FCE,2 Address of left fork data
+W $5FD0,2 Address of right fork data
+;
+;
+N $5FD2 Left fork
+;
+N $5FD2 Left fork, curvature
+B $5FD2 .
+B $5FE2 Escape
+B $5FE3 0 => Continue at <address>
+W $5FE4,2 Address
+;
+N $5FE6 Left fork, height
+B $5FE6 .
+B $5FFF Escape
+B $6000 0 => Continue at <address>
+W $6001,2 Address
+;
+N $6003 Left fork, data 3
+B $6003 .
+B $6005 Escape
+B $6006 0 => Continue at <address>
+W $6007,2 Address
+;
+N $6009 Left fork, data 4
+B $6009 .
+B $600D Escape
+B $600E 0 => Continue at <address>
+W $600F,2 Address [Loaded by $C04A]
+;
+N $6011 Left fork, left hand objects
+B $6011,,1 .
+B $604E Escape
+B $604F 0 => Continue at <address>
+W $6050,2 Address
+;
+N $6052 Left fork, right hand objects
+B $6052,,1 .
+B $6084 Escape
+B $6085 0 => Continue at <address>
+W $6086,2 Address
+;
+;
+N $6088 Right fork (dirt track), curvature
+B $6088,1 Straight
+B $6089,1 TBD
+B $608A,1 Left
+B $608B,1 TBD
+B $608C,1 Hard left
+B $608D,1 Hard left
+B $608E,1 TBD
+B $608F,1 TBD
+B $6090,1 Straight
+B $6091,1 TBD
+B $6092,1 TBD
+B $6093,1 TBD
+B $6094,1 TBD
+B $6095,1 TBD
+B $6096,1 Hard left
+B $6097,1 TBD
+B $6098,1 Super hard left
+B $6099,1 TBD
+B $609A,1 TBD
+B $609B,1 TBD
+B $609C,1 TBD
+B $609D,1 Straight
+B $609E,1 TBD
+B $609F,1 Escape
+B $60A0,1 0 => Continue at <address>
+W $60A1,2 Address
+;
+N $60A3 Right fork, height
+B $60A3,1 Level ground
+B $60A4,,1 .
+B $60E1 Escape
+B $60E2 0 => Continue at <address>
+W $60E3,2 Address
+;
+N $60E5 Right fork, data 3
+B $60E5 .
+W $60ED,2 Address
+;
+N $60EF Right fork, data 4
+B $60EF .
+W $6107,2 Address [Loaded by $C04A]
+;
+N $6109 Right fork, left hand objects
+B $6109,,1 .
+W $6141,2 Address
+;
+N $6143 Right fork, right hand objects
+B $6143,,1 .
+W $6171,2 Address
+;
+;
+N $6173 Tunnel section, road curvature
+B $6173 .
+B $6185,1 Escape
+B $6186,1 0 => Continue at <address>
+W $6187,2 -> Loop section
+;
+N $6189 Tunnel section, height
+B $6189 .
+W $61A3,2
+;
+N $61A5 Tunnel section, data 3
+B $61A5 .
+W $61B7,2
+;
+N $61B9 Tunnel section, data 4
+B $61B9 .
+W $61BC,2 Loaded by $C04A
+;
+N $61BE Tunnel section, left hand objects
+B $61BE .
+W $61C7,2
+;
+N $61C9 Tunnel section, right hand objects
+B $61C9 .
+W $61D2,2
+;
+;
+N $61D4 Loop section, road curvature
+B $61D4 .
+B $6205,1 Escape
+B $6206,1 0 => Continue at <address>
+W $6207,2 Loop
+;
+N $6209 Loop section, height
+B $6209 .
+B $6259,1 Escape
+B $625A,1 0 => Continue at <address>
+W $625B,2 Loop
+;
+N $625D Loop section, data 3
+B $625D .
+B $6273,1 Escape
+B $6274,1 0 => Continue at <address>
+W $6275,2 Loop
+;
+N $6277 Loop section, data 4
+B $6277 .
+B $6290,1 Escape
+B $6291,1 0 => Continue at <address>
+W $6292,2 Loop [Loaded by $C04A]
+;
+N $6294 Loop section, left hand objects
+B $6294,,1 .
+B $6310,1 Escape
+B $6311,1 0 => Continue at <address>
+W $6312,2 Loop
+;
+N $6314 Loop section, right hand objects
+B $6314,,1 .
+B $6386,1 Escape
+B $6387,1 0 => Continue at <address>
+W $6388,2 Loop
 
 b $638A Perp's face
 N $638A Bitmap data for perp w/ sunglasses (32x40). Stored top-down.
@@ -3538,12 +3792,12 @@ W $A24A,2 Speed (0..511). Max when in lo gear =~ $E6, hi gear =~ $168, turbo =~ 
 @ $A26C label=road_pos
 W $A26C,2 Road position of car. Left..Right = $1E2...$03A, $105 is centre.
 ;
-W $A26E,2 Distance in to map, increases when car moves fwd  $5EC6 for example
-W $A270,2
-W $A272,2
-W $A274,2
-W $A276,2
-W $A278,2
+W $A26E,2 Address of next curve data byte, increases when car moves fwd $5EC6 for example
+W $A270,2 Address of next height data byte
+W $A272,2 Address of next ? data_3 byte
+W $A274,2 Address of next right-hand object byte
+W $A276,2 Address of next left-hand object byte
+W $A278,2 Address of next ? data_4 byte
 
 b $A27A Font: 8x7 bitmap
 D $A27A #HTML[#CALL:graphic($A27A,8,41*7,0,0)]
@@ -4106,11 +4360,435 @@ c $BDC1 Clears screen then sets in-game attributes
   $BDFA Return
 
 @ $BDFB label=main_loop_6
-c $BDFB
+c $BDFB Huge function
+  $BDFB ($A23D) = 0  -- state var
+  $BDFF ($A23C) = 0  -- state var
+  $BE02 ($A254) = 0  -- state var
+  $BE05 HL = $A23F
+  $BE08 DE = speed
+  $BE0C A = Bottom byte of speed
+  $BE0D If speed < 255 then jump
+  $BE11 Preserve
+  $BE13 Call subfunction $BE1F  -- processing something twice as much when at high speed?
+  $BE16 Restore
+;
+@ $BE18 label=j_be18
+  $BE18 $A23F += bottom byte of speed in A
+  $BE1A A = 0 doesn't seem self modified
+  $BE1C Goto $C0D9 if no carry
+;
+@ $BE1F label=j_be1f
+  $BE1F A = *$A240 + 1
+  $BE22 *$A240 = A
+  $BE23 HL = $EE00 | (A + 95)  -- index $EE00, the cyclic road buffer thing
+  $BE28 *$A23C |= *HL
+  $BE2F L += 32
+  $BE33 *$A23D |= *HL
+  $BE3A L -= 96
+  $BE3E A = *$A242 - 16
+  $BE43 Goto j_be7d if no carry
+  $BE45 DE = *$A26E + 1  -- 'distance into map data' var (at $5EC4 etc.)
+  $BE4A A = *DE  -- reads a map curvature byte
+  $BE4B Set flags
+  $BE4C Goto j_be77 if non-zero
+  $BE4E -- seems to get hit here for the road split
+  $BE4F HL++  -- samples = $5EDE (initial) E2C8 (road split) E2E1 609F 6185 E2AB (escape scene) 6205 (attract mode)
+  $BE50 A = *HL++
+  $BE52 Goto j_be71 if A is zero
+  $BE55 A--
+  $BE56 Goto j_be6c if A is now zero (value == 1)
+  $BE58 C = *HL++  [load BC from HL macro]
+  $BE5A B = *HL++
+  $BE5C Self modify 'LD HL,$xxxx' at $BB94 to load value in BC
+  $BE60 A = *HL++  [load HL from HL macro]
+  $BE62 H = *HL
+  $BE63 L = A
+  $BE64 Self modify 'LD HL,$xxxx' at $BBC1 to load value in HL
+  $BE67 HL = $E2C6  -- points to/into split road data block
+  $BE6A Goto j_be75
+;
+@ $BE6C label=j_be6c
+  $BE6C HL = <something> -- Self modified by $BBCC
+  $BE6F Goto j_be75
+;
+@ $BE71 label=j_be71
+  $BE71 A = *HL++  [load HL from HL macro]
+  $BE73 H = *HL
+  $BE74 L = A
+;
+@ $BE75 label=j_be75
+  $BE75 EX DE,HL
+  $BE76 A = *DE
+;
+@ $BE77 label=j_be77
+  $BE77 ($A26E) = DE -- update the 'distance into map data' var
+  $BE7B A -= 16
+;
+@ $BE7D label=j_be7d
+  $BE7D *$A242 = A
+  $BE80 A &= 15
+  $BE82 Goto j_be8a if (A & (1<<3)) is zero
+  $BE86 A &= 7
+  $BE88 A = -A
+;
+@ $BE8A label=j_be8a
+  $BE8A *HL = A * 2  -- Sampled HL: $EEA9
+  $BE8C L += 32
+  $BE90 A = *$A243 - 16
+  $BE95 Goto j_becf if no carry
+  $BE97 DE = *$A270 + 1
+  $BE9C A = *DE
+  $BE9D Set flags
+  $BE9E Goto j_bec9 if non-zero
+  $BEA0 EX DE,HL
+  $BEA1 HL++
+  $BEA2 A = *HL++
+  $BEA4 Set flags
+  $BEA5 Goto j_bec3 if zero
+  $BEA7 A--
+  $BEA8 Goto j_bebe if zero
+  $BEAA C = *HL++
+  $BEAC B = *HL++
+  $BEAE Self modify 'LD DE' at $BB97 to load BC
+  $BEB2 A = *HL++
+  $BEB4 H = *HL
+  $BEB5 L = A
+  $BEB6 Self modify 'LD DE' at $BBC4 to load HL
+  $BEB9 HL = $E2CC
+  $BEBC Goto j_bec7
+;
+@ $BEBE label=j_bebe
+  $BEBE HL = <something>  -- Self modified by $BBCF
+  $BEC1 Goto j_bec7
+;
+@ $BEC3 label=j_bec3
+  $BEC3 A = *HL++
+  $BEC5 H = *HL
+  $BEC6 L = A
+;
+@ $BEC7 label=j_bec7
+  $BEC7 EX DE,HL
+  $BEC8 A = *DE
+;
+@ $BEC9 label=j_bec9
+  $BEC9 *$A270 = DE
+  $BECD A -= 16
+;
+@ $BECF label=j_becf
+  $BECF *$A243 = A
+  $BED2 A = (A & 15) - 8
+  $BED6 *HL = A  -- Sampled HL: $EEC9
+  $BED7 L += 32
+  $BEDB A = *$A247 - 1
+  $BEE0 Goto j_bf29 if no carry
+  $BEE2 DE = *$A272 + 1
+  $BEE7 A = *DE  -- reads a map (table 3) byte
+  $BEE8 Set flags
+  $BEE9 Goto j_bf14 if non-zero
+  $BEEB EX DE,HL
+  $BEEC HL++
+  $BEED A = *HL++
+  $BEEF Set flags
+  $BEF0 Goto j_bf0e if zero
+  $BEF2 A--
+  $BEF3 Goto j_bf09 if zero (value == 1)
+  $BEF5 C = *HL++
+  $BEF7 B = *HL++
+  $BEF9 Self modify $BB9A 'LD BC,$xxxx'
+  $BEFD A = *HL++
+  $BEFF H = *HL
+  $BF00 L = A
+  $BF01 LD ($BBC8),HL
+  $BF04 LD HL,$E2D1
+  $BF07 JR $BF12
+;
+  $BF09 LD HL,$0000
+  $BF0C JR $BF12
+;
+  $BF0E A = *HL++
+  $BF10 H = *HL
+  $BF11 L = A
+;
+  $BF12 EX DE,HL
+  $BF13 A = *DE
+;
+@ $BF14 label=j_bf14
+  $BF14 A--
+  $BF15 LD ($A247),A
+  $BF18 DE++
+  $BF19 LD ($A272),DE
+  $BF1D *HL = *DE & $F7
+  $BF21 A = *DE & $FB
+  $BF24 LD ($BF2D),A    ; Self modify $BF2C 'LD A,$xx'
+  $BF27 JR $BF3A
+;
+@ $BF29 label=j_BF29
+  $BF29 LD ($A247),A
+  $BF2C LD A,$00
+  $BF2E C = A & $0C
+  $BF31 JR Z,$BF39
+  $BF33 A = C & $F3
+  $BF36 LD ($BF2D),A
+;
+@ $BF39 label=j_BF39
+  $BF39 *HL = C  -- Sampled HL: $EEE9
+;
+@ $BF3A label=j_BF3A
+  $BF3A L += 32
+  $BF3E A = *$A185 - 1
+  $BF42 JR Z,$BF55
+  $BF44 C = 0  -- seems not self modified
+  $BF46 *HL = C
+  $BF47 A = L + 32
+  $BF4A L = A
+  $BF4B *HL = C
+  $BF4C A += 32
+  $BF4E L = A
+  $BF4F *HL = C
+  $BF50 A = 1
+  $BF52 JP $C05C
+;
+@ $BF55 label=j_BF55
+  $BF55 A = *$A245 - 16
+  $BF5A Goto j_bf94 if no carry
+  $BF5C DE = *$A274 + 1
+  $BF61 A = *DE
+  $BF62 Set flags
+  $BF63 Goto j_bf8e if non-zero
+  $BF65 EX DE,HL
+  $BF66 HL++
+  $BF67 A = *HL++
+  $BF69 Set flags
+  $BF6A Goto j_bf88 if zero
+  $BF6C A--
+  $BF6D Goto j_bf83 if now zero (value == 1)
+  $BF6F C = *HL++
+  $BF71 B = *HL++
+  $BF73 LD ($BB8E),BC   ; Set modify $BB8D 'LD DE,$0000'
+  $BF77 A = *HL++
+  $BF79 H = *HL
+  $BF7A L = A
+  $BF7B LD ($BBBB),HL
+  $BF7E HL = $E2C1
+  $BF81 Goto j_bf8c
+;
+@ $BF83 label=j_bf83
+  $BF83 HL = 0
+  $BF86 Goto j_bf8c
+;
+@ $BF88 label=j_bf88
+  $BF88 A = *HL++
+  $BF8A H = *HL
+  $BF8B L = A
+;
+@ $BF8C label=j_bf8c
+  $BF8C EX DE,HL
+  $BF8D A = *DE
+;
+@ $BF8E label=j_bf8e
+  $BF8E *$A274 = DE
+  $BF92 A -= 16
+;
+@ $BF94 label=j_bf94
+  $BF94 *$A245 = A
+  $BF97 A &= $0F
+  $BF99 *HL = A
+  $BF9A L += 32
+  $BF9E A = *$A244 - 16  -- reads a map height byte
+  $BFA3 Goto j_bfdd if no carry
+  $BFA5 DE = *$A276 + 1
+  $BFAA A = *DE
+  $BFAB Set flags
+  $BFAC Goto j_bfd7 if non-zero
+  $BFAE EX DE,HL
+  $BFAF HL++
+  $BFB0 A = *HL++
+  $BFB2 Set flags
+  $BFB3 Goto j_bfd1 if zero
+  $BFB5 A--
+  $BFB6 Goto j_bfcc if zero
+  $BFB8 C = *HL++
+  $BFBA B = *HL++
+  $BFBC Self modify 'LD BC' at $BB90
+  $BFC0 A = *HL++
+  $BFC2 H = *HL
+  $BFC3 L = A
+  $BFC4 Self modify 'LD BC' at $BBBD
+  $BFC7 HL = $E2C0
+  $BFCA Goto j_bfd5
+;
+@ $BFCC label=j_bfcc
+  $BFCC HL = 0  -- seems legit, not self modified
+  $BFCF Goto j_bfd5
+;
+@ $BFD1 label=j_bfd1
+  $BFD1 A = *HL++
+  $BFD3 H = *HL
+  $BFD4 L = A
+;
+@ $BFD5 label=j_bfd5
+  $BFD5 EX DE,HL
+  $BFD6 A = *DE
+;
+@ $BFD7 label=j_bfd7
+  $BFD7 *$A276 = DE
+  $BFDB A -= 16
+;
+@ $BFDD label=j_bfdd
+  $BFDD *$A244 = A
+  $BFE0 A &= 15
+  $BFE2 *HL = A
+  $BFE3 L += 32
+  $BFE7 A = *$A246 - 1
+  $BFEC Goto j_c055 if no carry
+  $BFEE DE = *$A278 + 1
+;
+@ $BFF3 label=j_bff3
+  $BFF3 A = *DE
+  $BFF4 Set flags
+  $BFF5 Goto j_c050 if non-zero
+  $BFF7 EX DE,HL
+  $BFF8 HL++
+  $BFF9 A = *HL++
+  $BFFB Set flags
+  $BFFC Goto j_c04a if zero
+  $BFFE A--
+  $BFFF Goto j_c045 if now zero (i.e. value == 1)
+  $C001 A--
+  $C002 Goto j_c031 if now zero (i.e. value == 2)
+  $C004 A--
+  $C005 Goto j_c02c if A < 7 (i.e. value < 10)
+  $C009 Goto j_c01f if A < 10 (i.e. value < 13)
+  $C00D Goto j_c018 if A < 12 (i.e. value < 15)
+  $C011 A -= 11
+  $C013 *$A224 = A
+  $C016 Goto j_c029
+;
+@ $C018 label=j_c018
+  $C018 A -= 10
+  $C01A *$A225 = A
+  $C01D Goto j_c029
+;
+@ $C01F label=j_c01f
+  $C01F A -= 7
+  $C021 *$A227 = A
+  $C024 Goto j_c029 if zero
+  $C026 *$A226 = A
+;
+@ $C029 label=j_c029
+  $C029 EX DE,HL
+  $C02A Goto j_bff3
+;
+@ $C02C label=j_c02c
+  $C02C Self modify "LD (HL),xx" at $C058 xx = A
+  $C02F Goto j_c04e
+;
+@ $C031 label=j_c031
+  $C031 C = *HL++  -- Sampled HL: $5F26 (road split)
+  $C033 B = *HL++
+  $C035 Self modify 'LD HL' at $BB8A
+  $C039 A = *HL++  -- Sampled HL: $5F28
+  $C03B H = *HL
+  $C03C L = A
+  $C03D Self modify 'LD HL,$xxxx' at $BBB7
+  $C040 HL = $E2B8
+  $C043 Goto j_c04e
+;
+@ $C045 label=j_c045
+  $C045 HL = 0
+  $C048 JR $C04E
+;
+@ $C04A label=j_c04a
+  $C04A A = *HL++  -- Sampled HL: $6292 $6107 $61BC $600F
+  $C04C H = *HL
+  $C04D L = A
+;
+@ $C04E label=j_c04e
+  $C04E EX DE,HL
+  $C04F A = *DE
+;
+@ $C050 label=j_c050
+  $C050 *$A278 = DE
+  $C054 A--
+;
+@ $C055 label=j_c055
+  $C055 *$A246 = A
+  $C058 *HL = 0
+  $C05A A = 2
+;
+@ $C05C label=j_c05c
+  $C05C *$A185 = A
+  $C05F Call $B8D2
+  $C062 IX = &hazards
+  $C066 DE = 20  -- array entry stride
+  $C069 B = 6, C = 0
+;
+@ $C06C label=j_c06c
+  $C06C RLC (IX)  -- test the used flag
+  $C070 JR C,$C080  -- jump if used
+;
+@ $C072 label=j_c072_continue
+  $C072 IX += DE
+  $C074 Loop while #REGb
+  $C076 A = C  -- A = 0?
+  $C077 HL = $A22B
+  $C07A HL = $A22B  -- duplicate instruction
+  $C07D *HL = A
+  $C07E Goto j_c0bb
+;
+@ $C080 label=j_c080
+  $C080 A = IX[15] + 1
+  $C084 Goto j_c096 if zero
+  $C086 IX[1]--
+  $C089 Goto j_c072_continue if non-zero
+  $C08C IX[0] = 0  -- mark the hazard entry unused
+  $C090 RLA  -- testing top bit of A
+  $C091 Goto j_c072_continue if no carry
+  $C093 C++
+  $C094 Goto j_c072_continue
+;
+@ $C096 label=j_c096
+  $C096 A = IX[1] - 1
+  $C09B IX[1] = A
+  $C09E Goto j_c0b2 if carry
+  $C0A0 Goto j_c072_continue if non-zero
+  $C0A2 A = IX[17]
+  $C0A5 Set flags
+  $C0A6 Goto j_c072_continue if non-zero
+  $C0A8 IX[1] = 1
+  $C0AC IX[4] = 255
+  $C0B0 Goto j_c072_continue
+;
+@ $C0B2 label=j_c0b2
+  $C0B2 IX[17]--
+  $C0B9 Goto j_c072_continue
+;
+@ $C0BB label=j_c0bb
+  $C0BB A = xx  -- Self modified by $A977 + $A9A0 only
+  $C0BD Set flags
+  $C0BE Goto j_c0d7 if zero
+  $C0C1 HL = $ED73  -- This must be a buffer pointer at this point
+  $C0C4 DE = $ED77
+  $C0C7 BC = 38
+;
+@ $C0CA label=j_c0ca
+  $C0CA HL -= 2
+  $C0CC DE -= 2
+  $C0CE *DE-- = *HL--; BC--
+  $C0D0 *DE-- = *HL--; BC--
+  $C0D2 Goto j_c0ca if PE  PE => B became zero
+  $C0D5 HL++
+  $C0D6 *HL = B
+;
+@ $C0D7 label=j_c0d7
+  $C0D7 A = 1
+;
+@ $C0D9 label=j_c0d9
+  $C0D9 *$A254 += A
+  $C0DE Exit via $AD0D
 
 @ $C0E1 label=main_loop_15
 c $C0E1
-  $C07A,3 Duplicate instruction
 
 c $C15B Tunnel entrance/exit drawing code
   $C221 Jump table (self modified)
@@ -4625,26 +5303,170 @@ B $E1DF,,5 <Byte width, Flags, Height, Ptr>
 
 b $E1E9 Ref'd by graphic entry 1 and 10
 
+; it's helpful to look at this as it's the simplest section of road in the game.
+; change $E2B4 to $55 (from $35) and the barriers are much earlier on the road. (tunnel is later!)
+; change it to $00 and I get a double road, no perp car and other wrongness
+; 1 => the tunnel's there straight away
+; 2 => same
+; $0F => tunnel's a short distance away
+; so it's a distance or length which affects how distant the tunnel is, or end of road
+; $FF => tunnel is a huge distance away
+
+; $E2B5 is $81
+; 0 => road is four lanes wide               ||||
+; 1 => road is two lanes wide of three  e.g. ||__
+; 2 => road is two lanes wide of three  e.g. _||_
+; 3 => road is two lanes wide of four   e.g. __||
+; 4, 8, 16, 32, 64, $80, $84 => as for 0
+; 5 => as for 1
+; 6 => as for 2
+; 7 => as for 3
+; $81 => three lanes wide as expected        |||_
+; $82 => three lanes of four                 _|||
+; $83 => two lane? but then it extends off to the right
+; $FF => two roads, no car etc.
+; $C1 => three lanes wide, but no markings
+; $C2 => as for 2, but no markings
+; $E1 => mad effect again
+
+; $E2B6 is $FF
+; 0 => mad double lane effect
+; 1,2 => tunnel has no walls and four lanes inside it
+; $F0 => seems ok
+; $0F => ok but scanline glitch on horizon
+; ... length of tunnel?
+
+; $E2B7 is $45
+; 0 => no tunnel appears
+
+; $E2B8 is $0C
+; can't see any diff when i meddle this value
+;
+; ...
+;
+; $E2AA (earlier) is $F0 only
+; $F1 => road curves to right, tunnel lights are drawn everywhere
+; $F2 => crash
+; $F3 => road curves to right and bollards are drawn a-la road split
+; $F4 => road curves to right, trees everywhere (then a crash)
+; $F5 => road curves, bushes everywhere (no crash)
+; $F6 => road curves, streetlamps everywhere (then a crash)
+; $F7 => road curves, pylons everywhere (and rendering reflections?)
+; $F8 => road STRAIGHT, turn left signs eveywhere
+; $F9 => road curves LEFT, turn RIGHT signs everywhere
+; $FA,$FB,$FC,$FE,$FF => crash
+; $FD => road curves LEFT, three lanes, trees everywhere, in road
+;
+; ...seems to affect more than it should
+;
+; $5EC4 (first byte of map)
+;   $00 is an escape byte
+;   $02 curves right
+;   $0F as for $EF
+;   $E0 looks the same
+;   $E2 curves right
+;   $E8 straight
+;   $E9 slight left, $EA, $EB more intense curves
+;   $EF extreme curve LEFT
+;   $F0 is straight
+;   $F1..$F3 curve right ($F4 or greater will mess up)
+;   $F8 seems straight
+;   $F9..$FB curve left ($FC or greater will mess up_
+; this implies that there's a curvature value in the state and that the commands are relative to it, but then other tests don't show that...2
+;
+; most regular reads are by BE4A
+
+; could $FF be terminators?
+; end two words seem to always be preceded by an $Fx byte yet FF and Fx bytes are found elsewhere in the data
+; this doesn't hold for the initial map segment data.
+
+; $5EE4 sets road height for this segment
+; $F8 -> $F0, road ascends very high (impractically so)
+;        $F7, raised slightly
+;        $F9, lowered slightly
+;        $FF, road descends
+;        $FD, descending
+;        $F3, ascending - steep
+
+; $5F0F
+; $1E -> $00, crazyness
+
+; $625D this map data chunk (chunk 3) seems to need 0,0,0 not 0,0 for escapes OR it's using words, not bytes as its quantum
+
+; left hand objects
+; as for rt hand objs with notes
+; $22, $2B, $2C crashes the game
+; $26 lamp post faces right, $2f crashes the game
+; $2D gives no object
+
+; right hand objects
+; you get two objects drawn per byte - two stripes of road are one byte
+; $20 => no object
+; $01, $21, $2A => tunnel light
+; $22,$2B => crashes the game
+; $23,$2C => barrier poles (in road, off road) I can't crash into the off-road ones
+; $24,$2D => tree (off road, in road)
+; $25,$2E => bush (off road, in road)
+; $26,$2F => lamp post (facing left, facing right & in road)
+; $07,$27 => telegraph pole
+; $28 => left bend sign
+; $29 => right bend sign
+;
+; $1x, $2x, £3x, $4x, .. $Fx - no visible difference
+
 b $E2AA Data for perp escape scene
-B $E2AA Ref'd from perp escape scene
-B $E2AF Ref'd from perp escape scene
-B $E2B5 Ref'd from perp escape scene
-
-b $E2D2 Used after road split
-B $E2D2
-B $E2D5
-B $E2D9
-B $E2DD
-B $E2E2
-B $E2E7
-B $E2F3
-
-b $E2B8 APPROX! Split road
-B $E2B8 Ref'd by split road
-B $E2C1 Ref'd by split road
-B $E2C7 Ref'd by split road
-B $E2CC Ref'd by split road
-B $E2DC Ref'd by split road
+N $E2AA Perp escape scene, curvature
+B $E2AA,1 Straight
+B $E2AB,1 Escape
+B $E2AC,1 0 => Continue at <address>
+W $E2AD,2 Loop
+;
+N $E2AF Perp escape scene, height
+B $E2AF,1 Level ground
+B $E2B0,1 Escape
+B $E2B1,1 0 => Continue at <address>
+W $E2B2,2 Loop
+;
+N $E2B4 Perp escape scene, data 3
+B $E2B4,1 Length byte ?
+B $E2B5,1 Lanes byte ?
+B $E2B6,1 TBD
+B $E2B7,1 TBD
+B $E2B8,1 TBD
+B $E2B9,1 TBD
+B $E2BA,1 TBD
+B $E2BB,1 TBD
+B $E2BC,1 Escape
+B $E2BD,1 0 => Continue at <address>
+W $E2BE,2 Loop (partial)
+;
+N $E2C0 Perp escape scene, data 4
+B $E2C0,1 TBD
+B $E2C1,1 TBD
+B $E2C2,1 Escape
+B $E2C3,1 0 => Continue at <address>
+W $E2C4,2 Loop (partial)
+;
+N $E2C6 Perp escape scene, left hand objects (not 100% sure)
+B $E2C6,1 TBD
+B $E2C7,1 TBD
+B $E2C8,1 Escape
+B $E2C9,1 0 => Continue at <address>
+W $E2CA,2 Loop (partial)
+;
+N $E2CC Perp escape scene, right hand objects (not 100% sure)
+B $E2CC,1 TBD
+B $E2CD,1 Escape
+B $E2CE,1 0 => Continue at <address>
+W $E2CF,2 Loop
+;
+B $E2D2 Ref'd by $BBEF  --  Used after road split
+B $E2D5 Ref'd by $BB7E, $BBA5
+B $E2D9 Ref'd by $BB78, $BBAB
+B $E2DD Ref'd by $BBE3
+B $E2E2 Ref'd by $BBE9
+B $E2E7 Ref'd by $BB84
+B $E2F3 Ref'd by $BBB1
 
 b $E34B
 B $E34B,3 3 bytes set to 8 by $880A
