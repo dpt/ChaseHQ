@@ -231,10 +231,24 @@ B $5D1C,1 loaded by $A759
 @ $5D1D label=setup_game_data
 w $5D1D
 W $5D1D,2 road_pos
+N $5D1F These all point a byte earlier than the real data start point.
+W $5D1F,2 -> Start stretch, curvature
+W $5D21,2 -> Start stretch, height
+W $5D23,2 -> Start stretch, data_3
+W $5D25,2 -> Start stretch, data_6
+W $5D27,2 -> Start stretch, data_5
+W $5D29,2 -> Start stretch, data_4
 ;
 @ $5D2B label=attract_data
 w $5D2B
 W $5D2B,2 road_pos
+N $5D2D These all point a byte earlier than the real data start point.
+W $5D2D,2 -> Loop section, curvature
+W $5D2F,2 -> Loop section, height
+W $5D31,2 -> Loop section, data_3
+W $5D33,2 -> Loop section, data_6
+W $5D35,2 -> Loop section, data_5
+W $5D37,2 -> Loop section, data_4
 
 b $5D39 Nancy's report
 B $5D39 Nancy ($01)
@@ -463,7 +477,7 @@ B $5F0A,1 2 => Fork
 W $5F0B,2 Address of left fork data
 W $5F0D,2 Address of right fork data
 ;
-N $5F0F Start stretch, data 3
+N $5F0F Start stretch, data_3
 B $5F0F TBD
 B $5F10 TBD
 B $5F11 TBD
@@ -477,7 +491,7 @@ B $5F18,1 2 => Fork
 W $5F19,2 Address of left fork data
 W $5F1B,2 Address of right fork data
 ;
-N $5F1D Start stretch, data 4
+N $5F1D Start stretch, data_4
 B $5F1D TBD
 B $5F1E TBD
 B $5F1F TBD
@@ -519,13 +533,13 @@ B $5FFF Escape
 B $6000 0 => Continue at <address>
 W $6001,2 Address
 ;
-N $6003 Left fork, data 3
+N $6003 Left fork, data_3
 B $6003 .
 B $6005 Escape
 B $6006 0 => Continue at <address>
 W $6007,2 Address
 ;
-N $6009 Left fork, data 4
+N $6009 Left fork, data_4
 B $6009 .
 B $600D Escape
 B $600E 0 => Continue at <address>
@@ -579,11 +593,11 @@ B $60E1 Escape
 B $60E2 0 => Continue at <address>
 W $60E3,2 Address
 ;
-N $60E5 Right fork, data 3
+N $60E5 Right fork, data_3
 B $60E5 .
 W $60ED,2 Address
 ;
-N $60EF Right fork, data 4
+N $60EF Right fork, data_4
 B $60EF .
 W $6107,2 Address [Loaded by $C04A]
 ;
@@ -596,7 +610,7 @@ B $6143,,1 .
 W $6171,2 Address
 ;
 ;
-N $6173 Tunnel section, road curvature
+N $6173 Tunnel section, curvature
 B $6173 .
 B $6185,1 Escape
 B $6186,1 0 => Continue at <address>
@@ -606,11 +620,11 @@ N $6189 Tunnel section, height
 B $6189 .
 W $61A3,2
 ;
-N $61A5 Tunnel section, data 3
+N $61A5 Tunnel section, data_3
 B $61A5 .
 W $61B7,2
 ;
-N $61B9 Tunnel section, data 4
+N $61B9 Tunnel section, data_4
 B $61B9 .
 W $61BC,2 Loaded by $C04A
 ;
@@ -623,7 +637,7 @@ B $61C9 .
 W $61D2,2
 ;
 ;
-N $61D4 Loop section, road curvature
+N $61D4 Loop section, curvature
 B $61D4 .
 B $6205,1 Escape
 B $6206,1 0 => Continue at <address>
@@ -635,13 +649,13 @@ B $6259,1 Escape
 B $625A,1 0 => Continue at <address>
 W $625B,2 Loop
 ;
-N $625D Loop section, data 3
+N $625D Loop section, data_3
 B $625D .
 B $6273,1 Escape
 B $6274,1 0 => Continue at <address>
 W $6275,2 Loop
 ;
-N $6277 Loop section, data 4
+N $6277 Loop section, data_4
 B $6277 .
 B $6290,1 Escape
 B $6291,1 0 => Continue at <address>
@@ -1343,7 +1357,7 @@ N $8243 This produces the engine sound effect.
 
 @ $8258 label=attract_mode
 c $8258 Attract mode -- keyscan / cpu driver / text
-  $8258 HL -> $5D2B
+  $8258 HL -> attract_data
   $825B Call setup_game
   $825E Reset credits/copyright message blinker to show credits
   $8262 Set speed to $190
@@ -5427,7 +5441,7 @@ B $E2B0,1 Escape
 B $E2B1,1 0 => Continue at <address>
 W $E2B2,2 Loop
 ;
-N $E2B4 Perp escape scene, data 3
+N $E2B4 Perp escape scene, data_3
 B $E2B4,1 Length byte ?
 B $E2B5,1 Lanes byte ?
 B $E2B6,1 TBD
@@ -5440,7 +5454,7 @@ B $E2BC,1 Escape
 B $E2BD,1 0 => Continue at <address>
 W $E2BE,2 Loop (partial)
 ;
-N $E2C0 Perp escape scene, data 4
+N $E2C0 Perp escape scene, data_4
 B $E2C0,1 TBD
 B $E2C1,1 TBD
 B $E2C2,1 Escape
