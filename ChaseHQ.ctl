@@ -235,8 +235,8 @@ N $5D1F These all point a byte earlier than the real data start point.
 W $5D1F,2 -> Start stretch, curvature
 W $5D21,2 -> Start stretch, height
 W $5D23,2 -> Start stretch, data_3
-W $5D25,2 -> Start stretch, data_6
-W $5D27,2 -> Start stretch, data_5
+W $5D25,2 -> Start stretch, right-side objects
+W $5D27,2 -> Start stretch, left-side objects
 W $5D29,2 -> Start stretch, data_4
 ;
 @ $5D2B label=attract_data
@@ -246,8 +246,8 @@ N $5D2D These all point a byte earlier than the real data start point.
 W $5D2D,2 -> Loop section, curvature
 W $5D2F,2 -> Loop section, height
 W $5D31,2 -> Loop section, data_3
-W $5D33,2 -> Loop section, data_6
-W $5D35,2 -> Loop section, data_5
+W $5D33,2 -> Loop section, right-side objects
+W $5D35,2 -> Loop section, left-side objects
 W $5D37,2 -> Loop section, data_4
 
 b $5D39 Nancy's report
@@ -504,14 +504,14 @@ B $5F25,1 2 => Fork
 W $5F26,2 Address of left fork data
 W $5F28,2 Address of right fork data
 ;
-N $5F2A Start stretch, left hand objects
+N $5F2A Start stretch, left-side objects
 B $5F2A,,1 .
 B $5F72,1 Escape
 B $5F73,1 2 => Fork
 W $5F74,2 Address of left fork data
 W $5F76,2 Address of right fork data
 ;
-N $5F78 Start stretch, right hand objects
+N $5F78 Start stretch, right-side objects
 B $5F78,,1 .
 B $5FCC,1 Escape
 B $5FCD,1 2 => Fork
@@ -545,13 +545,13 @@ B $600D Escape
 B $600E 0 => Continue at <address>
 W $600F,2 Address [Loaded by $C04A]
 ;
-N $6011 Left fork, left hand objects
+N $6011 Left fork, left-side objects
 B $6011,,1 .
 B $604E Escape
 B $604F 0 => Continue at <address>
 W $6050,2 Address
 ;
-N $6052 Left fork, right hand objects
+N $6052 Left fork, right-side objects
 B $6052,,1 .
 B $6084 Escape
 B $6085 0 => Continue at <address>
@@ -601,11 +601,11 @@ N $60EF Right fork, data_4
 B $60EF .
 W $6107,2 Address [Loaded by $C04A]
 ;
-N $6109 Right fork, left hand objects
+N $6109 Right fork, left-side objects
 B $6109,,1 .
 W $6141,2 Address
 ;
-N $6143 Right fork, right hand objects
+N $6143 Right fork, right-side objects
 B $6143,,1 .
 W $6171,2 Address
 ;
@@ -628,11 +628,11 @@ N $61B9 Tunnel section, data_4
 B $61B9 .
 W $61BC,2 Loaded by $C04A
 ;
-N $61BE Tunnel section, left hand objects
+N $61BE Tunnel section, left-side objects
 B $61BE .
 W $61C7,2
 ;
-N $61C9 Tunnel section, right hand objects
+N $61C9 Tunnel section, right-side objects
 B $61C9 .
 W $61D2,2
 ;
@@ -661,13 +661,13 @@ B $6290,1 Escape
 B $6291,1 0 => Continue at <address>
 W $6292,2 Loop [Loaded by $C04A]
 ;
-N $6294 Loop section, left hand objects
+N $6294 Loop section, left-side objects
 B $6294,,1 .
 B $6310,1 Escape
 B $6311,1 0 => Continue at <address>
 W $6312,2 Loop
 ;
-N $6314 Loop section, right hand objects
+N $6314 Loop section, right-side objects
 B $6314,,1 .
 B $6386,1 Escape
 B $6387,1 0 => Continue at <address>
@@ -3809,8 +3809,8 @@ W $A26C,2 Road position of car. Left..Right = $1E2...$03A, $105 is centre.
 W $A26E,2 Address of next curve data byte, increases when car moves fwd $5EC6 for example
 W $A270,2 Address of next height data byte
 W $A272,2 Address of next ? data_3 byte
-W $A274,2 Address of next right-hand object byte
-W $A276,2 Address of next left-hand object byte
+W $A274,2 Address of next right-side object byte
+W $A276,2 Address of next left-side object byte
 W $A278,2 Address of next ? data_4 byte
 
 b $A27A Font: 8x7 bitmap
@@ -5407,26 +5407,22 @@ b $E1E9 Ref'd by graphic entry 1 and 10
 
 ; $625D this map data chunk (chunk 3) seems to need 0,0,0 not 0,0 for escapes OR it's using words, not bytes as its quantum
 
-; left hand objects
-; as for rt hand objs with notes
-; $22, $2B, $2C crashes the game
-; $26 lamp post faces right, $2f crashes the game
-; $2D gives no object
-
-; right hand objects
-; you get two objects drawn per byte - two stripes of road are one byte
-; $20 => no object
-; $01, $21, $2A => tunnel light
-; $22,$2B => crashes the game
-; $23,$2C => barrier poles (in road, off road) I can't crash into the off-road ones
-; $24,$2D => tree (off road, in road)
-; $25,$2E => bush (off road, in road)
-; $26,$2F => lamp post (facing left, facing right & in road)
-; $07,$27 => telegraph pole
-; $28 => left bend sign
-; $29 => right bend sign
+; Road-side Objects (trees, signs, ...)
+; -----------------
+; Stage 1.
+; Top nibble is not yet understood.
+; You get two objects drawn per byte - two stripes of road are one byte.
+; Any other values seem unpredictable (objects in road, or crashes).
 ;
-; $1x, $2x, £3x, $4x, .. $Fx - no visible difference
+; $x0 => no object (where x > 0)
+; $x1 => tunnel light
+; $x3 => barrier poles
+; $x4 => tree
+; $x5 => bush
+; $x6 => lamp post (will flip to match side)
+; $x7 => telegraph pole
+; $x8 => left bend sign
+; $x9 => right bend sign
 
 b $E2AA Data for perp escape scene
 N $E2AA Perp escape scene, curvature
@@ -5461,14 +5457,14 @@ B $E2C2,1 Escape
 B $E2C3,1 0 => Continue at <address>
 W $E2C4,2 Loop (partial)
 ;
-N $E2C6 Perp escape scene, left hand objects (not 100% sure)
+N $E2C6 Perp escape scene, left-side objects (not 100% sure)
 B $E2C6,1 TBD
 B $E2C7,1 TBD
 B $E2C8,1 Escape
 B $E2C9,1 0 => Continue at <address>
 W $E2CA,2 Loop (partial)
 ;
-N $E2CC Perp escape scene, right hand objects (not 100% sure)
+N $E2CC Perp escape scene, right-side objects (not 100% sure)
 B $E2CC,1 TBD
 B $E2CD,1 Escape
 B $E2CE,1 0 => Continue at <address>
