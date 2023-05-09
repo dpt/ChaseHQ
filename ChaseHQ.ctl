@@ -234,10 +234,10 @@ W $5D1D,2 road_pos
 N $5D1F These all point a byte earlier than the real data start point.
 W $5D1F,2 -> Start stretch, curvature
 W $5D21,2 -> Start stretch, height
-W $5D23,2 -> Start stretch, data_3
+W $5D23,2 -> Start stretch, lanes
 W $5D25,2 -> Start stretch, right-side objects
 W $5D27,2 -> Start stretch, left-side objects
-W $5D29,2 -> Start stretch, data_4
+W $5D29,2 -> Start stretch, hazards
 ;
 @ $5D2B label=attract_data
 w $5D2B
@@ -245,10 +245,10 @@ W $5D2B,2 road_pos
 N $5D2D These all point a byte earlier than the real data start point.
 W $5D2D,2 -> Loop section, curvature
 W $5D2F,2 -> Loop section, height
-W $5D31,2 -> Loop section, data_3
+W $5D31,2 -> Loop section, lanes
 W $5D33,2 -> Loop section, right-side objects
 W $5D35,2 -> Loop section, left-side objects
-W $5D37,2 -> Loop section, data_4
+W $5D37,2 -> Loop section, hazards
 
 b $5D39 Nancy's report
 B $5D39 Nancy ($01)
@@ -420,25 +420,19 @@ N $5EC4 Start stretch
 N $5EC4 Start stretch, curvature
 B $5EC4,2 Straight x2
 B $5EC6,1 Left
-B $5EC7,1 TBD
-B $5EC8,1 TBD
-B $5EC9,1 TBD
+B $5EC7,,1
 B $5ECA,5 Straight x5
-B $5ECF,1 TBD
+B $5ECF,,1
 B $5ED0,1 Left
-B $5ED1,1 TBD
-B $5ED2,1 TBD
-B $5ED3,1 TBD
-B $5ED4,1 TBD
+B $5ED1,,1
 B $5ED5,1 Straight
-B $5ED6,1 TBD
+B $5ED6,,1
 B $5ED7,1 Left
-B $5ED8,1 TBD
+B $5ED8,,1
 B $5ED9,1 Right
-B $5EDA,1 TBD
-B $5EDB,1 TBD
+B $5EDA,,1
 B $5EDC,1 Straight
-B $5EDD,1 TBD
+B $5EDD,,1
 B $5EDE,1 Escape
 B $5EDF,1 2 => Fork
 W $5EE0,2 Address of left fork data
@@ -446,73 +440,44 @@ W $5EE2,2 Address of right fork data
 ;
 N $5EE4 Start stretch, height
 B $5EE4,5 Level ground x 5
-B $5EE9,1 TBD
-B $5EEA,1 TBD
-B $5EEB,1 TBD
-B $5EEC,1 TBD
-B $5EED,1 TBD
-B $5EEE,1 TBD
-B $5EEF,1 TBD
-B $5EF0,1 TBD
-B $5EF1,1 TBD
-B $5EF2,1 TBD
-B $5EF3,1 TBD
-B $5EF4,1 TBD
-B $5EF5,1 TBD
-B $5EF6,1 TBD
-B $5EF7,1 TBD
-B $5EF8,1 TBD
-B $5EF9,1 TBD
-B $5EFA,1 TBD
-B $5EFB,1 TBD
-B $5EFC,1 TBD
-B $5EFD,1 TBD
-B $5EFE,1 TBD
-B $5EFF,1 TBD
-B $5F00,1 TBD
+B $5EE9,,1
 B $5F01,7 Level ground x 7
-B $5F08,1 TBD
+B $5F08,,1
 B $5F09,1 Escape
 B $5F0A,1 2 => Fork
 W $5F0B,2 Address of left fork data
 W $5F0D,2 Address of right fork data
 ;
-N $5F0F Start stretch, data_3
-B $5F0F TBD
-B $5F10 TBD
-B $5F11 TBD
-B $5F12 TBD
-B $5F13 TBD
-B $5F14 TBD
-B $5F15 TBD
-B $5F16 TBD
+N $5F0F Start stretch, lanes
+B $5F0F Count
+B $5F10 TBD - three lanes
+B $5F11 Count
+B $5F12 TBD - widening
+B $5F13 Count
+B $5F14 TBD - four lanes
+B $5F15 Count
+B $5F16 TBD - four lanes
 B $5F17,1 Escape
 B $5F18,1 2 => Fork
 W $5F19,2 Address of left fork data
 W $5F1B,2 Address of right fork data
 ;
-N $5F1D Start stretch, data_4
-B $5F1D TBD
-B $5F1E TBD
-B $5F1F TBD
-B $5F20 TBD
-B $5F21 TBD
-B $5F22 TBD
-B $5F23 TBD
+N $5F1D Start stretch, hazards
+B $5F1D,,1
 B $5F24,1 Escape
 B $5F25,1 2 => Fork
 W $5F26,2 Address of left fork data
 W $5F28,2 Address of right fork data
 ;
 N $5F2A Start stretch, left-side objects
-B $5F2A,,1 .
+B $5F2A,,1
 B $5F72,1 Escape
 B $5F73,1 2 => Fork
 W $5F74,2 Address of left fork data
 W $5F76,2 Address of right fork data
 ;
 N $5F78 Start stretch, right-side objects
-B $5F78,,1 .
+B $5F78,,1
 B $5FCC,1 Escape
 B $5FCD,1 2 => Fork
 W $5FCE,2 Address of left fork data
@@ -522,37 +487,37 @@ W $5FD0,2 Address of right fork data
 N $5FD2 Left fork
 ;
 N $5FD2 Left fork, curvature
-B $5FD2 .
-B $5FE2 Escape
-B $5FE3 0 => Continue at <address>
+B $5FD2,,1
+B $5FE2,1 Escape
+B $5FE3,1 0 => Continue at <address>
 W $5FE4,2 Address
 ;
 N $5FE6 Left fork, height
-B $5FE6 .
-B $5FFF Escape
-B $6000 0 => Continue at <address>
+B $5FE6,,1
+B $5FFF,1 Escape
+B $6000,1 0 => Continue at <address>
 W $6001,2 Address
 ;
-N $6003 Left fork, data_3
-B $6003 .
-B $6005 Escape
-B $6006 0 => Continue at <address>
+N $6003 Left fork, lanes
+B $6003,,1
+B $6005,1 Escape
+B $6006,1 0 => Continue at <address>
 W $6007,2 Address
 ;
-N $6009 Left fork, data_4
-B $6009 .
-B $600D Escape
+N $6009 Left fork, hazards
+B $6009,,1
+B $600D,1 Escape
 B $600E 0 => Continue at <address>
 W $600F,2 Address [Loaded by $C04A]
 ;
 N $6011 Left fork, left-side objects
-B $6011,,1 .
+B $6011,,1
 B $604E Escape
 B $604F 0 => Continue at <address>
 W $6050,2 Address
 ;
 N $6052 Left fork, right-side objects
-B $6052,,1 .
+B $6052,,1
 B $6084 Escape
 B $6085 0 => Continue at <address>
 W $6086,2 Address
@@ -560,115 +525,109 @@ W $6086,2 Address
 ;
 N $6088 Right fork (dirt track), curvature
 B $6088,1 Straight
-B $6089,1 TBD
+B $6089,,1
 B $608A,1 Left
-B $608B,1 TBD
+B $608B,,1
 B $608C,1 Hard left
 B $608D,1 Hard left
-B $608E,1 TBD
-B $608F,1 TBD
+B $608E,,1
 B $6090,1 Straight
-B $6091,1 TBD
-B $6092,1 TBD
-B $6093,1 TBD
-B $6094,1 TBD
-B $6095,1 TBD
+B $6091,,1
 B $6096,1 Hard left
-B $6097,1 TBD
+B $6097,,1
 B $6098,1 Super hard left
-B $6099,1 TBD
-B $609A,1 TBD
-B $609B,1 TBD
-B $609C,1 TBD
+B $6099,,1
 B $609D,1 Straight
-B $609E,1 TBD
+B $609E,,1
 B $609F,1 Escape
 B $60A0,1 0 => Continue at <address>
 W $60A1,2 Address
 ;
-N $60A3 Right fork, height
+N $60A3 Right fork (dirt track), height
 B $60A3,1 Level ground
-B $60A4,,1 .
+B $60A4,,1
 B $60E1 Escape
 B $60E2 0 => Continue at <address>
 W $60E3,2 Address
 ;
-N $60E5 Right fork, data_3
-B $60E5 .
+N $60E5 Right fork (dirt track), lanes
+B $60E5,,1
 W $60ED,2 Address
 ;
-N $60EF Right fork, data_4
-B $60EF .
+N $60EF Right fork (dirt track), hazards
+B $60EF,,1 [Read by $C04F]
 W $6107,2 Address [Loaded by $C04A]
 ;
-N $6109 Right fork, left-side objects
-B $6109,,1 .
+N $6109 Right fork (dirt track), left-side objects
+B $6109,,1
 W $6141,2 Address
 ;
-N $6143 Right fork, right-side objects
-B $6143,,1 .
+N $6143 Right fork (dirt track), right-side objects
+B $6143,,1
 W $6171,2 Address
 ;
 ;
 N $6173 Tunnel section, curvature
-B $6173 .
+B $6173,,1
 B $6185,1 Escape
 B $6186,1 0 => Continue at <address>
 W $6187,2 -> Loop section
 ;
 N $6189 Tunnel section, height
-B $6189 .
+B $6189,,1
 W $61A3,2
 ;
-N $61A5 Tunnel section, data_3
-B $61A5 .
+N $61A5 Tunnel section, lanes
+B $61A5,,1
 W $61B7,2
 ;
-N $61B9 Tunnel section, data_4
-B $61B9 .
+N $61B9 Tunnel section, hazards
+B $61B9,,1
+B $61BA,1 Escape
+B $61BB,1 0 => Continue at <address>
 W $61BC,2 Loaded by $C04A
 ;
 N $61BE Tunnel section, left-side objects
-B $61BE .
+B $61BE,,1
 W $61C7,2
 ;
 N $61C9 Tunnel section, right-side objects
-B $61C9 .
+B $61C9,,1
 W $61D2,2
 ;
 ;
 N $61D4 Loop section, curvature
-B $61D4 .
+B $61D4,,1
 B $6205,1 Escape
 B $6206,1 0 => Continue at <address>
 W $6207,2 Loop
 ;
 N $6209 Loop section, height
-B $6209 .
+B $6209,,1
 B $6259,1 Escape
 B $625A,1 0 => Continue at <address>
 W $625B,2 Loop
 ;
-N $625D Loop section, data_3
-B $625D .
+N $625D Loop section, lanes
+B $625D,,1
 B $6273,1 Escape
 B $6274,1 0 => Continue at <address>
 W $6275,2 Loop
 ;
-N $6277 Loop section, data_4
-B $6277 .
+N $6277 Loop section, hazards
+B $6277,,1
 B $6290,1 Escape
 B $6291,1 0 => Continue at <address>
 W $6292,2 Loop [Loaded by $C04A]
 ;
 N $6294 Loop section, left-side objects
-B $6294,,1 .
+B $6294,,1
 B $6310,1 Escape
 B $6311,1 0 => Continue at <address>
 W $6312,2 Loop
 ;
 N $6314 Loop section, right-side objects
-B $6314,,1 .
+B $6314,,1
 B $6386,1 Escape
 B $6387,1 0 => Continue at <address>
 W $6388,2 Loop
@@ -3758,7 +3717,7 @@ W $A240,2 Used by $B8F6, $BBF7, $87E0  seems to point at $EE00..$EEFF
 ;
   $A245,1 $BF55 reads  $BC20, $BF94 writes
 ;
-  $A246,1 $BFE7 reads  $BC23, $C055 writes
+  $A246,1 $BFE7 reads  $BC23, $C055 writes   -- Current hazards byte (minus one)
 ;
   $A247,1 $BEDB reads  $BC26, $BF15, $BF29 writes
 ;
@@ -3808,10 +3767,10 @@ W $A26C,2 Road position of car. Left..Right = $1E2...$03A, $105 is centre.
 ;
 W $A26E,2 Address of next curve data byte, increases when car moves fwd $5EC6 for example
 W $A270,2 Address of next height data byte
-W $A272,2 Address of next ? data_3 byte
+W $A272,2 Address of next lanes byte
 W $A274,2 Address of next right-side object byte
 W $A276,2 Address of next left-side object byte
-W $A278,2 Address of next ? data_4 byte
+W $A278,2 Address of next hazards byte
 
 b $A27A Font: 8x7 bitmap
 D $A27A #HTML[#CALL:graphic($A27A,8,41*7,0,0)]
@@ -4719,10 +4678,10 @@ c $BDFB Huge function
 ;
 @ $C04E label=j_c04e
   $C04E EX DE,HL
-  $C04F A = *DE
+  $C04F A = *DE   -- Read lane objects byte
 ;
 @ $C050 label=j_c050
-  $C050 *$A278 = DE
+  $C050 *$A278 = DE  -- Update lane objects ptr
   $C054 A--
 ;
 @ $C055 label=j_c055
@@ -5405,7 +5364,49 @@ b $E1E9 Ref'd by graphic entry 1 and 10
 ; $5F0F
 ; $1E -> $00, crazyness
 
-; $625D this map data chunk (chunk 3) seems to need 0,0,0 not 0,0 for escapes OR it's using words, not bytes as its quantum
+; $625D this map data chunk (chunk 3) is the lanes/road width
+; seems to need 0,0,0 not 0,0 for escapes OR it's using words, not bytes as its quantum
+; $FE $9E => three lanes
+; $xx $yy xx alters the period, so seems like runlength <count><type>
+; game data seems to avoid runlengths > 254
+; $xx $01 => two lanes
+; $xx $00 => four lanes
+; $xx $02 => two lanes
+; $xx $00 $xx $01 => four/two alternating every stripe
+; $xx $00 $xx $00 => four lanes
+; $xx $01 $xx $00 => four/two alternating but objects end up in the road (might just be a phase thing)
+; $01 $02 $01 $01 => two lanes, but shifting each segment
+; so the byte could be a left side subtracting value
+; $01 $03 $01 $01 => two lanes, shifting each segment, no overlap
+; $01 $03 $01 $03 => two lanes on the right hand sidea
+; $01 $06 => diagonal appears
+; $01 $00 $10 $06 => four lanes down to 2 (left side slopes in)
+;  ||
+; /||
+; |||T
+; $01 $00 $10 $07 => four lanes down to 2 (left side slopes in)
+;   ||
+;  /||
+; T|||
+; $10 $07 $01 $00
+; $xx 21 => two lanes
+; $xx 4x => tunnel (seems to persist and/or flicker off)
+; $xx 81 => three lanes
+; $xx C1 => four lanes + stones are enabled (from then onwards?)
+; $xx C3 => two lanes + stones
+; $xx 04, 08, 10, 20, C0, 80, 0C, E0, F0 => nothing obvious
+; $xx ff => madness, then crashing
+
+; lane objects's affects objects on the road
+; $5F1D $93 -> $01 made the "turn right" arrow appear
+; $5F1E  00 ->  01 made the arrow appear too late and cars appeared on dirt track
+; so those two could be a 16-bit counter?
+; $5F1F  0E ->  01 puts two barriers where the turn right arrow normally appears
+; could be an object ID?
+; 0D, 0C => right facing arrow
+; 08 => arrow + 5 barriers on the right periodically
+
+
 
 ; Road-side Objects (trees, signs, ...)
 ; -----------------
@@ -5437,7 +5438,7 @@ B $E2B0,1 Escape
 B $E2B1,1 0 => Continue at <address>
 W $E2B2,2 Loop
 ;
-N $E2B4 Perp escape scene, data_3
+N $E2B4 Perp escape scene, lanes
 B $E2B4,1 Length byte ?
 B $E2B5,1 Lanes byte ?
 B $E2B6,1 TBD
@@ -5450,7 +5451,7 @@ B $E2BC,1 Escape
 B $E2BD,1 0 => Continue at <address>
 W $E2BE,2 Loop (partial)
 ;
-N $E2C0 Perp escape scene, data_4
+N $E2C0 Perp escape scene, lane objects
 B $E2C0,1 TBD
 B $E2C1,1 TBD
 B $E2C2,1 Escape
