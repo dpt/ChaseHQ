@@ -84,7 +84,7 @@
 > $4000 ; $5C00..$5CFF is the regular version of the backdrop
 > $4000 ; $8DBB (word) is the address of the current transition animation
 > $4000 ; $ED28        is the stack
-> $4000 ; $EE00..$EEFF is (cleared by $87DD) a cyclic road buffer of some sort
+> $4000 ; $EE00..$EEFF is (cleared by $87DD) a cyclic road buffer of some sort [perhaps split in two or more sections]
 > $4000 ; $EF00..$EFFF is a table of flipped bytes
 > $4000 ; $F000..$FFFF is a 4KB back buffer
 > $4000 ;
@@ -158,14 +158,14 @@ b $4000 Screen memory
 B $4000,6144,8 Screen bitmap
 B $5800,768,8 Screen attributes
 c $5B00 Could be loader code
-  $5B22 Point #REGhl at $5B7D
-  $5B2B Fetch a word from #REGhl and stack it
-  $5B31 Routine that ...
-  $5B4C Game entry point
-  $5B58 Routine that ...
-  $5B66 Routine that ...
-  $5B67 Move $5C00..$76EF to $C000 onwards
-  $5B75 Routine that loads a word then OUTs $FE with zero, then jumps to that word
+C $5B22 Point #REGhl at $5B7D
+C $5B2B Fetch a word from #REGhl and stack it
+C $5B31 Routine that ...
+C $5B4C Game entry point
+C $5B58 Routine that ...
+C $5B66 Routine that ...
+C $5B67 Move $5C00..$76EF to $C000 onwards
+C $5B75 Routine that loads a word then OUTs $FE with zero, then jumps to that word
 N $5B7D Some sort of instruction stream
 W $5B7D,2 Probable address of routine $5B31
 B $5B7F
@@ -433,8 +433,7 @@ B $5ED9,1 Right
 B $5EDA,,1
 B $5EDC,1 Straight
 B $5EDD,,1
-B $5EDE,1 Escape
-B $5EDF,1 2 => Fork
+B $5EDE,2 Escape, Command 2 (Road Fork)
 W $5EE0,2 Address of left fork data
 W $5EE2,2 Address of right fork data
 ;
@@ -443,8 +442,7 @@ B $5EE4,5 Level ground x 5
 B $5EE9,,1
 B $5F01,7 Level ground x 7
 B $5F08,,1
-B $5F09,1 Escape
-B $5F0A,1 2 => Fork
+B $5F09,2 Escape, Command 2 (Road Fork)
 W $5F0B,2 Address of left fork data
 W $5F0D,2 Address of right fork data
 ;
@@ -457,29 +455,29 @@ B $5F13 Count
 B $5F14 TBD - four lanes
 B $5F15 Count
 B $5F16 TBD - four lanes
-B $5F17,1 Escape
-B $5F18,1 2 => Fork
+B $5F17,2 Escape, Command 2 (Road Fork)
 W $5F19,2 Address of left fork data
 W $5F1B,2 Address of right fork data
 ;
 N $5F1D Start stretch, hazards
-B $5F1D,,1
-B $5F24,1 Escape
-B $5F25,1 2 => Fork
+B $5F1D,1 Wait for 147
+B $5F1E,2 Escape, Command 14 (Disable Car Spawning)
+B $5F20,1 Wait for 12
+B $5F21,2 Escape, Command 12 (Set Floating Arrow to Right)
+B $5F23,1 Wait for 1
+B $5F24,2 Escape, Command 2 (Road Fork)
 W $5F26,2 Address of left fork data
 W $5F28,2 Address of right fork data
 ;
 N $5F2A Start stretch, left-side objects
 B $5F2A,,1
-B $5F72,1 Escape
-B $5F73,1 2 => Fork
+B $5F72,2 Escape, Command 2 (Road Fork)
 W $5F74,2 Address of left fork data
 W $5F76,2 Address of right fork data
 ;
 N $5F78 Start stretch, right-side objects
 B $5F78,,1
-B $5FCC,1 Escape
-B $5FCD,1 2 => Fork
+B $5FCC,2 Escape, Command 2 (Road Fork)
 W $5FCE,2 Address of left fork data
 W $5FD0,2 Address of right fork data
 ;
@@ -488,38 +486,34 @@ N $5FD2 Left fork
 ;
 N $5FD2 Left fork, curvature
 B $5FD2,,1
-B $5FE2,1 Escape
-B $5FE3,1 0 => Continue at <address>
+B $5FE2,2 Escape, Command 0 (Continue at <Address>)
 W $5FE4,2 Address
 ;
 N $5FE6 Left fork, height
 B $5FE6,,1
-B $5FFF,1 Escape
-B $6000,1 0 => Continue at <address>
+B $5FFF,2 Escape, Command 0 (Continue at <Address>)
 W $6001,2 Address
 ;
 N $6003 Left fork, lanes
 B $6003,,1
-B $6005,1 Escape
-B $6006,1 0 => Continue at <address>
+B $6005,2 Escape, Command 0 (Continue at <Address>)
 W $6007,2 Address
 ;
 N $6009 Left fork, hazards
-B $6009,,1
-B $600D,1 Escape
-B $600E 0 => Continue at <address>
+B $6009,1 Wait for 10
+B $600A,2 Escape, Command 13 (Enable Car Spawning)
+B $600C,1 Wait for 95
+B $600D,2 Escape, Command 0 (Continue at <Address>)
 W $600F,2 Address [Loaded by $C04A]
 ;
 N $6011 Left fork, left-side objects
 B $6011,,1
-B $604E Escape
-B $604F 0 => Continue at <address>
+B $604E,2 Escape, Command 0 (Continue at <Address>)
 W $6050,2 Address
 ;
 N $6052 Left fork, right-side objects
 B $6052,,1
-B $6084 Escape
-B $6085 0 => Continue at <address>
+B $6084,2 Escape, Command 0 (Continue at <Address>)
 W $6086,2 Address
 ;
 ;
@@ -555,8 +549,23 @@ B $60E5,,1
 W $60ED,2 Address
 ;
 N $60EF Right fork (dirt track), hazards
-B $60EF,,1 [Read by $C04F]
-W $6107,2 Address [Loaded by $C04A]
+B $60EF,1 Wait for 10
+B $60F0,2 Escape, Command 9 (Put Barriers on Both Sides)
+B $60F2,1 Wait for 1
+B $60F3,2 Escape, Command 6 (Put Tumbleweeds on Both Sides)
+B $60F5,1 Wait for 41
+B $60F6,2 Escape, Command 9 (Put Barriers on Both Sides)
+B $60F8,1 Wait for 4
+B $60F9,2 Escape, Command 6 (Put Tumbleweeds on Both Sides)
+B $60FB,1 Wait for 42
+B $60FC,2 Escape, Command 9 (Put Barriers on Both Sides)
+B $60FE,1 Wait for 2
+B $60FF,2 Escape, Command 3 (Disable Hazards)
+B $6101,1 Wait for 1
+B $6102,2 Escape, Command 13 (Enable Car Spawning)
+B $6104,1 Wait for 4
+B $6105,2 Escape, Command 0 (Continue at <Address>)
+W $6107,2 Address
 ;
 N $6109 Right fork (dirt track), left-side objects
 B $6109,,1
@@ -569,8 +578,7 @@ W $6171,2 Address
 ;
 N $6173 Tunnel section, curvature
 B $6173,,1
-B $6185,1 Escape
-B $6186,1 0 => Continue at <address>
+B $6185,2 Escape, Command 0 (Continue at <Address>)
 W $6187,2 -> Loop section
 ;
 N $6189 Tunnel section, height
@@ -582,9 +590,8 @@ B $61A5,,1
 W $61B7,2
 ;
 N $61B9 Tunnel section, hazards
-B $61B9,,1
-B $61BA,1 Escape
-B $61BB,1 0 => Continue at <address>
+B $61B9,1 Wait for 95
+B $61BA,2 Escape, Command 0 (Continue at <Address>)
 W $61BC,2 Loaded by $C04A
 ;
 N $61BE Tunnel section, left-side objects
@@ -598,38 +605,48 @@ W $61D2,2
 ;
 N $61D4 Loop section, curvature
 B $61D4,,1
-B $6205,1 Escape
-B $6206,1 0 => Continue at <address>
+B $6205,2 Escape, Command 0 (Continue at <Address>)
 W $6207,2 Loop
 ;
 N $6209 Loop section, height
 B $6209,,1
-B $6259,1 Escape
-B $625A,1 0 => Continue at <address>
+B $6259,2 Escape, Command 0 (Continue at <Address>)
 W $625B,2 Loop
 ;
 N $625D Loop section, lanes
 B $625D,,1
-B $6273,1 Escape
-B $6274,1 0 => Continue at <address>
+B $6273,2 Escape, Command 0 (Continue at <Address>)
 W $6275,2 Loop
 ;
 N $6277 Loop section, hazards
-B $6277,,1
-B $6290,1 Escape
-B $6291,1 0 => Continue at <address>
+B $6277,1 Wait for 42
+B $6278,2 Escape, Command 7 (Barriers on Left)
+B $627A,1 Wait for 2
+B $627B,2 Escape, Command 3 (Hazards off)
+B $627D,1 Wait for 4
+B $627E,2 Escape, Command 7 (Barriers on Left)
+B $6280,1 Wait for 2
+B $6281,2 Escape, Command 3 (Hazards off)
+B $6283,1 Wait for 28
+B $6284,2 Escape, Command 8 (Barriers on Right)
+B $6286,1 Wait for 2
+B $6287,2 Escape, Command 3 (Hazards off)
+B $6289,1 Wait for 99
+B $628A,1 Escape, Command 8 (Barriers on Right)
+B $628C,1 Wait for 1
+B $628D,1 Escape, Command 3 (Hazards off)
+B $628F,1 Wait for 30
+B $6290,2 Escape, Command 0 (Continue at <Address>)
 W $6292,2 Loop [Loaded by $C04A]
 ;
 N $6294 Loop section, left-side objects
 B $6294,,1
-B $6310,1 Escape
-B $6311,1 0 => Continue at <address>
+B $6310,2 Escape, Command 0 (Continue at <Address>)
 W $6312,2 Loop
 ;
 N $6314 Loop section, right-side objects
 B $6314,,1
-B $6386,1 Escape
-B $6387,1 0 => Continue at <address>
+B $6386,2 Escape, Command 0 (Continue at <Address>)
 W $6388,2 Loop
 
 b $638A Perp's face
@@ -1491,7 +1508,7 @@ c $8401 Main loop
   $8447 Call keyscan
   $844A Call tick
   $844D Call check_user_input
-  $8450 Call main_loop_6
+  $8450 Call read_map
   $8453 Call main_loop_7
   $8456 Call main_loop_8
   $8459 Call main_loop_9
@@ -1600,7 +1617,7 @@ D $852A This runs the game loop while driving the car.
   $8553 Set input GEAR
 @ $8555 label=cd_set_input
   $8555 Set user input
-  $8559 Call main_loop_6
+  $8559 Call read_map
   $855C Call main_loop_9
   $855F Call cycle_counters
   $8562 Call main_loop_10
@@ -1686,7 +1703,7 @@ c $873C Escape scene
   $876A
   $876D
   $876F Call NZ message_printing_related
-  $8772 Call main_loop_6
+  $8772 Call read_map
   $8775 Call main_loop_10
   $8778 Call main_loop_11
   $877B Call main_loop_12
@@ -2312,6 +2329,7 @@ N $8F4F It rolled over
 
 @ $8F5F label=main_loop_23
 c $8F5F
+  $8FCE,5 Return if floating_arrow is zero
   $9003 DE = E * 7
   $900B Push return address onto stack
   $901C <return>
@@ -3608,6 +3626,9 @@ W $A171,2 seems to be the horizon level, possibly relative (used during attract 
 @ $A181 label=distance_digits
   $A181,4 Distance as displayed. Stored as one digit per byte.
 ;
+@ $A185 label=a185
+  $A185,1 Used by read_map when handling the hazards section
+;
 @ $A186 label=horizon_attribute
 W $A186,2 Attribute address of horizon. Points to last attribute on the line which shows the ground. (e.g. $59DF)
 ;
@@ -3642,13 +3663,16 @@ W $A186,2 Attribute address of horizon. Points to last attribute on the line whi
 ;
   $A223,1 Stage number as shown. Stored as ASCII.
 ;
-  $A224,1 $AAC6, $AB33 reads  $AB96, $C013 writes
+  $A224,1 Hazards related. $AAC6, $AB33 reads  $AB96, $C013 writes
 ;
-  $A225,1 $A7F7, $A8D3 reads  $C01A writes
+@ $A225 label=stop_car_spawning
+  $A225,1 Inhibits cars from spawning.
 ;
-  $A226,1 $BA91 reads  $C026 writes
+@ $A226 label=correct_fork
+  $A226,1 Holds the correct direction to take at forks (1 => left, 2 => right).
 ;
-  $A227,1 $8FCE reads  $C021 writes
+@ $A227 label=floating_arrow
+  $A227,1 Shows the floating left/right arrow (0 => off, 1 => left, 2 => right).
 ;
   $A228,1 $B421 reads  $B4C8 writes
 ;
@@ -3669,7 +3693,7 @@ W $A186,2 Attribute address of horizon. Points to last attribute on the line whi
 ;
   $A22F,1 Set to 2 by fully_smashed
 ;
-  $A230,1 Used by draw_screen
+  $A230,1 Used by draw_screen. Seems to inhibit car spawning too.
 ;
 @ $A231 label=transition_control
   $A231,1 Transition control/counter. Set to zero when fill_attributes has run. Set to 4 while transitioning. Also 2 sometimes. Set to 1 when the perp has been caught and we're drawing mugshots.
@@ -3707,23 +3731,30 @@ N $A237 These seem to get altered even when no sound is being produced.
 ;
   $A23F,1 numerous references, seems related to level position
 ;
+; seems to 'rotate' the whole buffer
 W $A240,2 Used by $B8F6, $BBF7, $87E0  seems to point at $EE00..$EEFF
 ;
-  $A242,1 $BE3E reads  $BC17, $BE7D writes
+@ $A242 label=curvature_byte
+  $A242,1 Current curvature byte (minus 16) [$BE3E reads $BC17,$BE7D writes]
 ;
-  $A243,1 $BE90 reads  $BC1A, $BECF writes
+@ $A243 label=height_byte
+  $A243,1 Current height byte (minus 16) [$BE90 reads $BC1A,$BECF writes]
 ;
-  $A244,1 $BF9E reads  $BC1D, $BFDD writes
+@ $A244 label=leftside_byte
+  $A244,1 [$BF9E reads $BC1D,$BFDD writes]
 ;
-  $A245,1 $BF55 reads  $BC20, $BF94 writes
+@ $A245 label=rightside_byte
+  $A245,1 Current rightside byte [$BF55 reads $BC20,$BF94 writes]
 ;
-  $A246,1 $BFE7 reads  $BC23, $C055 writes   -- Current hazards byte (minus one)
+@ $A246 label=hazards_byte
+  $A246,1 Current hazards byte (minus one) [$BFE7 reads $BC23,$C055 writes]
 ;
-  $A247,1 $BEDB reads  $BC26, $BF15, $BF29 writes
+@ $A247 label=lanes_counter_byte
+  $A247,1 [$BEDB reads $BC26,$BF15,$BF29 writes]
 ;
-  $A248,1 $A955 reads  $C457, $C526 writes
+  $A248,1 [$A955 reads $C457,$C526 writes]
 ;
-  $A249,1 $A539, $B988, $BAE0, $BB6E reads  $BA89, $BC2C writes
+  $A249,1 [$A539,$B988,$BAE0,$BB6E reads $BA89,$BC2C writes]
 ;
 @ $A24A label=speed
 W $A24A,2 Speed (0..511). Max when in lo gear =~ $E6, hi gear =~ $168, turbo =~ $1FF.
@@ -3765,12 +3796,18 @@ W $A24A,2 Speed (0..511). Max when in lo gear =~ $E6, hi gear =~ $168, turbo =~ 
 @ $A26C label=road_pos
 W $A26C,2 Road position of car. Left..Right = $1E2...$03A, $105 is centre.
 ;
-W $A26E,2 Address of next curve data byte, increases when car moves fwd $5EC6 for example
-W $A270,2 Address of next height data byte
-W $A272,2 Address of next lanes byte
-W $A274,2 Address of next right-side object byte
-W $A276,2 Address of next left-side object byte
-W $A278,2 Address of next hazards byte
+@ $A26E label=road_curvature_ptr
+W $A26E,2 Address of the previous curvature data byte
+@ $A270 label=road_height_ptr
+W $A270,2 Address of the previous height data byte
+@ $A272 label=road_lanes_ptr
+W $A272,2 Address of the previous lane data byte
+@ $A274 label=road_rightside_ptr
+W $A274,2 Address of the previous right object data byte
+@ $A276 label=road_leftside_ptr
+W $A276,2 Address of the previous left object data byte
+@ $A278 label=road_hazard_ptr
+W $A278,2 Address of the previous hazard object data byte
 
 b $A27A Font: 8x7 bitmap
 D $A27A #HTML[#CALL:graphic($A27A,8,41*7,0,0)]
@@ -3810,10 +3847,12 @@ b $A7E7
 
 @ $A7F3 label=main_loop_9
 c $A7F3
+  $A7F7 Don't spawn any cars if this flag is set
 
 c $A89C
 
 c $A8CD Hazard handler routine
+  $A8D3 Check 'don't spawn cars' flag
 
 @ $A955 label=main_loop_18
 c $A955 TBD
@@ -4204,6 +4243,8 @@ c $B9F4
 
 @ $BB69 label=main_loop_27
 c $BB69
+  $BB94 Self modified by $BE5C to be the left route's curvature data
+  $BBC1 Self modified by $BE62 to be the right route's curvature data
 
 @ $BC3E label=draw_screen
 c $BC3E Copies the backbuffer at $F000 to the screen.
@@ -4332,8 +4373,8 @@ c $BDC1 Clears screen then sets in-game attributes
   $BDEC Clear the edges of the game screen to black on black
   $BDFA Return
 
-@ $BDFB label=main_loop_6
-c $BDFB Huge function
+@ $BDFB label=read_map
+c $BDFB Map reader
   $BDFB ($A23D) = 0  -- state var
   $BDFF ($A23C) = 0  -- state var
   $BE02 ($A254) = 0  -- state var
@@ -4348,348 +4389,349 @@ c $BDFB Huge function
 @ $BE18 label=j_be18
   $BE18 $A23F += bottom byte of speed in A
   $BE1A A = 0 doesn't seem self modified
-  $BE1C Goto $C0D9 if no carry
+  $BE1C Goto j_c0d9 if no carry
 ;
 @ $BE1F label=j_be1f
-  $BE1F A = *$A240 + 1
+  $BE1F A = *$A240 + 1  -- Accessing A240 as a byte here
   $BE22 *$A240 = A
   $BE23 HL = $EE00 | (A + 95)  -- index $EE00, the cyclic road buffer thing
   $BE28 *$A23C |= *HL
   $BE2F L += 32
   $BE33 *$A23D |= *HL
   $BE3A L -= 96
-  $BE3E A = *$A242 - 16
-  $BE43 Goto j_be7d if no carry
-  $BE45 DE = *$A26E + 1  -- 'distance into map data' var (at $5EC4 etc.)
-  $BE4A A = *DE  -- reads a map curvature byte
+;
+N $BE3E -- CURVATURE --
+  $BE3E A = curvature_byte - 16
+  $BE43 Goto rm_save_curvature_byte if no carry
+;
+  $BE45 Read and increment address of curvature data
+  $BE4A Read a curvature byte
   $BE4B Set flags
-  $BE4C Goto j_be77 if non-zero
-  $BE4E -- seems to get hit here for the road split
-  $BE4F HL++  -- samples = $5EDE (initial) E2C8 (road split) E2E1 609F 6185 E2AB (escape scene) 6205 (attract mode)
-  $BE50 A = *HL++
-  $BE52 Goto j_be71 if A is zero
-  $BE55 A--
-  $BE56 Goto j_be6c if A is now zero (value == 1)
-  $BE58 C = *HL++  [load BC from HL macro]
-  $BE5A B = *HL++
-  $BE5C Self modify 'LD HL,$xxxx' at $BB94 to load value in BC
-  $BE60 A = *HL++  [load HL from HL macro]
-  $BE62 H = *HL
-  $BE63 L = A
-  $BE64 Self modify 'LD HL,$xxxx' at $BBC1 to load value in HL
-  $BE67 HL = $E2C6  -- points to/into split road data block
-  $BE6A Goto j_be75
+  $BE4C Goto rm_curvature_regular_byte if non-zero
 ;
-@ $BE6C label=j_be6c
-  $BE6C HL = <something> -- Self modified by $BBCC
-  $BE6F Goto j_be75
+@ $BE4E label=rm_curvature_escape_byte
+N $BE4E Handle curvature escape byte.
+  $BE4E #REGhl is now address of escape byte
+  $BE4F Increment, read command byte, increment again
+  $BE52 Goto rm_curvature_jump_command if command byte is zero
+  $BE55 Goto rm_curvature_one_command if command byte is one
 ;
-@ $BE71 label=j_be71
-  $BE71 A = *HL++  [load HL from HL macro]
-  $BE73 H = *HL
-  $BE74 L = A
+N $BE58 Otherwise it must be a road split command (byte == 2).
+  $BE58 Load address of left route's curvature data
+  $BE5C Self modify 'LD HL,$xxxx' at $BB94 to load the address
+  $BE60 Load address of right route's curvature data
+  $BE64 Self modify 'LD HL,$xxxx' at $BBC1 to load the address
+  $BE67 HL = $E2C6 -> road split left curvature data
+  $BE6A Goto rm_read_curvature
 ;
-@ $BE75 label=j_be75
-  $BE75 EX DE,HL
-  $BE76 A = *DE
+@ $BE6C label=rm_curvature_one_command
+N $BE6C Handle a command byte of one: TBD.
+  $BE6C HL = <map curvature address> -- Self modified by $BBCC
+  $BE6F Goto rm_read_curvature
 ;
-@ $BE77 label=j_be77
-  $BE77 ($A26E) = DE -- update the 'distance into map data' var
+@ $BE71 label=rm_curvature_jump_command
+N $BE71 Handle a command byte of zero: jump to the address given in next two bytes.
+  $BE71 HL = wordat(HL)
+;
+@ $BE75 label=rm_read_curvature
+  $BE75 #REGde is now map curvature address
+  $BE76 Read a curvature byte (regular, not an escape)
+;
+@ $BE77 label=rm_curvature_regular_byte
+  $BE77 road_curvature_ptr = #REGde
   $BE7B A -= 16
 ;
-@ $BE7D label=j_be7d
-  $BE7D *$A242 = A
-  $BE80 A &= 15
-  $BE82 Goto j_be8a if (A & (1<<3)) is zero
-  $BE86 A &= 7
-  $BE88 A = -A
+@ $BE7D label=rm_save_curvature_byte
+  $BE7D curvature_byte = A  -- Save original byte
+  $BE80 A &= 15  -- Mask off direction bits
+  $BE82 Goto rm_set_curvature if (A & (1<<3)) is zero   -- bit 3 => left (so jump if right)
+  $BE86 A = -(A & 7)  -- Left direction becomes -ve
 ;
-@ $BE8A label=j_be8a
-  $BE8A *HL = A * 2  -- Sampled HL: $EEA9
+@ $BE8A label=rm_set_curvature
+N $BE8A Write the direction into the cyclic road buffer.
+  $BE8A *HL = A * 2  -- Sampled HL: $EEA9 [in cyclic road buffer]
   $BE8C L += 32
-  $BE90 A = *$A243 - 16
-  $BE95 Goto j_becf if no carry
-  $BE97 DE = *$A270 + 1
-  $BE9C A = *DE
+;
+N $BE90 -- HEIGHT --
+  $BE90 A = height_byte - 16
+  $BE95 Goto rm_save_height_byte if no carry
+;
+  $BE97 Read and increment address of height data
+  $BE9C Read a height byte
   $BE9D Set flags
-  $BE9E Goto j_bec9 if non-zero
-  $BEA0 EX DE,HL
-  $BEA1 HL++
-  $BEA2 A = *HL++
-  $BEA4 Set flags
-  $BEA5 Goto j_bec3 if zero
-  $BEA7 A--
-  $BEA8 Goto j_bebe if zero
-  $BEAA C = *HL++
-  $BEAC B = *HL++
-  $BEAE Self modify 'LD DE' at $BB97 to load BC
-  $BEB2 A = *HL++
-  $BEB4 H = *HL
-  $BEB5 L = A
-  $BEB6 Self modify 'LD DE' at $BBC4 to load HL
-  $BEB9 HL = $E2CC
-  $BEBC Goto j_bec7
+  $BE9E Goto rm_height_regular_byte if non-zero
 ;
-@ $BEBE label=j_bebe
+N $BEA0 Handle height escape byte.
+  $BEA0 #REGhl is now address of escape byte
+  $BEA1 Increment, read command byte, increment again
+  $BEA4 Goto rm_height_jump_command if command byte is zero
+  $BEA8 Goto rm_height_one_command if command byte is one
+;
+N $BEAA Otherwise it must be a road split command (byte == 2).
+  $BEAA Load address of left route's height data
+  $BEAE Self modify 'LD DE,$xxxx' at $BB97 to load the address
+  $BEB2 Load address of right route's height data
+  $BEB6 Self modify 'LD DE,$xxxx' at $BBC4 to load the address
+  $BEB9 HL = $E2CC -> road split height data
+  $BEBC Goto rm_read_height
+;
+@ $BEBE label=rm_height_one_command
   $BEBE HL = <something>  -- Self modified by $BBCF
-  $BEC1 Goto j_bec7
+  $BEC1 Goto rm_read_height
 ;
-@ $BEC3 label=j_bec3
-  $BEC3 A = *HL++
-  $BEC5 H = *HL
-  $BEC6 L = A
+@ $BEC3 label=rm_height_jump_command
+  $BEC3 HL = wordat(HL)
 ;
-@ $BEC7 label=j_bec7
-  $BEC7 EX DE,HL
-  $BEC8 A = *DE
+@ $BEC7 label=rm_read_height
+  $BEC7 #REGde is now height address
+  $BEC8 Read a height byte (regular, not an escape)
 ;
-@ $BEC9 label=j_bec9
-  $BEC9 *$A270 = DE
+@ $BEC9 label=rm_height_regular_byte
+  $BEC9 road_height_ptr = #REGde    -- update pointer
   $BECD A -= 16
 ;
-@ $BECF label=j_becf
-  $BECF *$A243 = A
-  $BED2 A = (A & 15) - 8
-  $BED6 *HL = A  -- Sampled HL: $EEC9
+@ $BECF label=rm_save_height_byte
+  $BECF height_byte = A  -- Save original byte
+  $BED2 *HL = (A & 15) - 8  -- Sampled HL: $EEC9 [in cyclic road buffer]
   $BED7 L += 32
-  $BEDB A = *$A247 - 1
-  $BEE0 Goto j_bf29 if no carry
-  $BEE2 DE = *$A272 + 1
-  $BEE7 A = *DE  -- reads a map (table 3) byte
+;
+N $BEDB -- LANES --
+N $BEDB Lanes bytes are counted (like RLE).
+  $BEDB Decrement the lanes counter
+  $BEE0 Goto rm_lanes_count_resume if non-zero
+;
+N $BEE2 Lanes counter hit zero, so reload.
+  $BEE2 Read and increment address of lanes data
+  $BEE7 Read a lanes byte
   $BEE8 Set flags
-  $BEE9 Goto j_bf14 if non-zero
-  $BEEB EX DE,HL
-  $BEEC HL++
-  $BEED A = *HL++
-  $BEEF Set flags
-  $BEF0 Goto j_bf0e if zero
-  $BEF2 A--
-  $BEF3 Goto j_bf09 if zero (value == 1)
-  $BEF5 C = *HL++
-  $BEF7 B = *HL++
-  $BEF9 Self modify $BB9A 'LD BC,$xxxx'
-  $BEFD A = *HL++
-  $BEFF H = *HL
-  $BF00 L = A
-  $BF01 LD ($BBC8),HL
-  $BF04 LD HL,$E2D1
-  $BF07 JR $BF12
+  $BEE9 Goto rm_lanes_regular_byte if non-zero
 ;
-  $BF09 LD HL,$0000
-  $BF0C JR $BF12
+N $BEEB Handle lanes escape byte.
+  $BEEB #REGhl is now address of escape byte
+  $BEEC Increment, read command byte, increment again
+  $BEEF Goto rm_lanes_jump_command if command byte is zero
+  $BEF2 Goto rm_lanes_one_command if command byte is one
 ;
-  $BF0E A = *HL++
-  $BF10 H = *HL
-  $BF11 L = A
+N $BEF5 Otherwise it must be a road split command (byte == 2).
+  $BEF5 Load address of left route's lanes data
+  $BEF9 Self modify 'LD BC,$xxxx' at $BB9A to load the address
+  $BEFD Load address of right route's height data
+  $BF01 Self modify 'LD BC,$xxxx' at $BBC7 to load the address
+  $BF04 HL = $E2D1 -> road split lanes data
+  $BF07 Goto rm_read_lanes
 ;
-  $BF12 EX DE,HL
-  $BF13 A = *DE
+@ $BF09 label=rm_lanes_one_command
+  $BF09 HL = $0000  -- This looks setup for it as others, but doesn't seem to be self modified.
+  $BF0C Goto rm_read_lanes
 ;
-@ $BF14 label=j_bf14
-  $BF14 A--
-  $BF15 LD ($A247),A
-  $BF18 DE++
-  $BF19 LD ($A272),DE
-  $BF1D *HL = *DE & $F7
+@ $BF0E label=rm_lanes_jump_command
+  $BF0E HL = wordat(HL)
+;
+@ $BF12 label=rm_read_lanes
+  $BF12 #REGde is now lanes address
+  $BF13 Read a lanes byte (regular, not an escape)
+;
+@ $BF14 label=rm_lanes_regular_byte
+  $BF14 lanes_counter_byte = (lanes byte) - 1
+  $BF18 road_lanes_ptr = ++DE
+  $BF1D *HL = *DE & $F7  -- HL points into cyclic road buffer? Sampled HL = $EE60
   $BF21 A = *DE & $FB
-  $BF24 LD ($BF2D),A    ; Self modify $BF2C 'LD A,$xx'
-  $BF27 JR $BF3A
+  $BF24 Self modify 'LD A,$xx' at $BF2C
+  $BF27 Goto rm_lanes_done
 ;
-@ $BF29 label=j_BF29
-  $BF29 LD ($A247),A
-  $BF2C LD A,$00
-  $BF2E C = A & $0C
-  $BF31 JR Z,$BF39
+N $BF29 Resume updating lanes data.
+@ $BF29 label=rm_lanes_count_resume
+  $BF29 Store decremented lanes counter
+  $BF2C A = <self modified value>  -- Self modified above AND below
+  $BF2E C = A  -- Save temporarily
+  $BF2F Goto rm_lanes_bf39 if (A & $0C) is zero
+;
+N $BF33 (bottom two bits significant)
   $BF33 A = C & $F3
-  $BF36 LD ($BF2D),A
+  $BF36 Self modify 'LD A,$xx' at $BF2C
 ;
-@ $BF39 label=j_BF39
+@ $BF39 label=rm_lanes_bf39
   $BF39 *HL = C  -- Sampled HL: $EEE9
 ;
-@ $BF3A label=j_BF3A
+@ $BF3A label=rm_lanes_done
   $BF3A L += 32
-  $BF3E A = *$A185 - 1
-  $BF42 JR Z,$BF55
-  $BF44 C = 0  -- seems not self modified
-  $BF46 *HL = C
+;
+N $BF3E -- RIGHT-SIDE OBJECTS --
+  $BF3E Decrement the rightside counter
+  $BF42 Goto $BF55 if zero
+;
+N $BF44 Empty space inbetween objects.
+  $BF44 *HL = 0
   $BF47 A = L + 32
   $BF4A L = A
-  $BF4B *HL = C
+  $BF4B *HL = 0
   $BF4C A += 32
   $BF4E L = A
-  $BF4F *HL = C
+  $BF4F *HL = 0
   $BF50 A = 1
-  $BF52 JP $C05C
+  $BF52 Goto rm_all_hazards
 ;
+N $BF55 ???
 @ $BF55 label=j_BF55
-  $BF55 A = *$A245 - 16
-  $BF5A Goto j_bf94 if no carry
-  $BF5C DE = *$A274 + 1
-  $BF61 A = *DE
+  $BF55 A = rightside_byte - 16
+  $BF5A Goto rm_rightside_count_resume if no carry
+;
+N $BF5C Rightside counter hit zero, so reload.
+  $BF5C Read and increment address of rightside data
+  $BF61 Read a rightside byte
   $BF62 Set flags
-  $BF63 Goto j_bf8e if non-zero
-  $BF65 EX DE,HL
-  $BF66 HL++
-  $BF67 A = *HL++
-  $BF69 Set flags
-  $BF6A Goto j_bf88 if zero
-  $BF6C A--
-  $BF6D Goto j_bf83 if now zero (value == 1)
-  $BF6F C = *HL++
-  $BF71 B = *HL++
-  $BF73 LD ($BB8E),BC   ; Set modify $BB8D 'LD DE,$0000'
-  $BF77 A = *HL++
-  $BF79 H = *HL
-  $BF7A L = A
-  $BF7B LD ($BBBB),HL
-  $BF7E HL = $E2C1
-  $BF81 Goto j_bf8c
+  $BF63 Goto rm_rightside_regular_byte if non-zero
 ;
-@ $BF83 label=j_bf83
-  $BF83 HL = 0
-  $BF86 Goto j_bf8c
+N $BF65 Handle rightside escape byte.
+  $BF65 #REGhl is now address of escape byte
+  $BF66 Increment, read command byte, increment again
+  $BF69 Goto rm_rightside_jump_command if command byte is zero
+  $BF6C Goto rm_rightside_one_command if command byte is one
 ;
-@ $BF88 label=j_bf88
-  $BF88 A = *HL++
-  $BF8A H = *HL
-  $BF8B L = A
+N $BF6F Otherwise it must be a road split command (byte == 2).
+  $BF6F Load address of left route's rightside data
+  $BF73 Set modify 'LD DE,$xxxx' at $BB8D to load the address
+  $BF77 Load address of right route's rightside data
+  $BF7B Self modify 'LD DE,$xxxx' at $BBBA to load the address
+  $BF7E HL = $E2C1  [overlapping use of data TBD]
+  $BF81 Goto rm_read_rightside
 ;
-@ $BF8C label=j_bf8c
-  $BF8C EX DE,HL
-  $BF8D A = *DE
+@ $BF83 label=rm_rightside_one_command
+  $BF83 HL = $0000  -- This looks setup for it as others, but doesn't seem to be self modified.
+  $BF86 Goto rm_read_rightside
 ;
-@ $BF8E label=j_bf8e
-  $BF8E *$A274 = DE
+@ $BF88 label=rm_rightside_jump_command
+  $BF88 HL = wordat(HL)
+;
+@ $BF8C label=rm_read_rightside
+  $BF8C #REGde is now lanes address
+  $BF8D Read a rightside byte (regular, not an escape)
+;
+@ $BF8E label=rm_rightside_regular_byte
+  $BF8E road_rightside_ptr = DE
   $BF92 A -= 16
 ;
-@ $BF94 label=j_bf94
-  $BF94 *$A245 = A
-  $BF97 A &= $0F
-  $BF99 *HL = A
+@ $BF94 label=rm_rightside_count_resume
+  $BF94 rightside_byte = A  -- Store decremented rightside counter
+  $BF97 *HL = A & $0F  -- Write to cyclic road buffer
   $BF9A L += 32
-  $BF9E A = *$A244 - 16  -- reads a map height byte
-  $BFA3 Goto j_bfdd if no carry
-  $BFA5 DE = *$A276 + 1
-  $BFAA A = *DE
+;
+N $BF9E -- LEFT-SIDE OBJECTS --
+  $BF9E A = *$A244 - 16
+  $BFA3 Goto rm_leftside_count_resume if no carry
+  $BFA5 DE = road_leftside_ptr + 1
+  $BFAA Read a lanes byte
   $BFAB Set flags
-  $BFAC Goto j_bfd7 if non-zero
-  $BFAE EX DE,HL
-  $BFAF HL++
-  $BFB0 A = *HL++
-  $BFB2 Set flags
-  $BFB3 Goto j_bfd1 if zero
-  $BFB5 A--
-  $BFB6 Goto j_bfcc if zero
-  $BFB8 C = *HL++
-  $BFBA B = *HL++
-  $BFBC Self modify 'LD BC' at $BB90
-  $BFC0 A = *HL++
-  $BFC2 H = *HL
-  $BFC3 L = A
-  $BFC4 Self modify 'LD BC' at $BBBD
-  $BFC7 HL = $E2C0
-  $BFCA Goto j_bfd5
+  $BFAC Goto rm_leftside_regular_byte if non-zero
 ;
-@ $BFCC label=j_bfcc
-  $BFCC HL = 0  -- seems legit, not self modified
-  $BFCF Goto j_bfd5
+N $BFAE Handle leftside escape byte.
+  $BFAE #REGhl is now address of escape byte
+  $BFAF Increment, read command byte, increment again
+  $BFB2 Goto rm_leftside_jump_command if command byte is zero
+  $BFB5 Goto rm_leftside_one_command if command byte is one
 ;
-@ $BFD1 label=j_bfd1
-  $BFD1 A = *HL++
-  $BFD3 H = *HL
-  $BFD4 L = A
+N $BFB8 Otherwise it must be a road split command (byte == 2).
+  $BFB8 Load address of left route's leftside data
+  $BFBC Self modify 'LD BC,$xxxx' at $BB90
+  $BFC0 Load address of right route's leftside data
+  $BFC4 Self modify 'LD BC,$xxxx' at $BBBD
+  $BFC7 HL = $E2C0  [overlapping use of data TBD]
+  $BFCA Goto rm_read_leftside
 ;
-@ $BFD5 label=j_bfd5
-  $BFD5 EX DE,HL
-  $BFD6 A = *DE
+@ $BFCC label=rm_leftside_one_command
+  $BFCC HL = $0000  -- This looks setup for it as others, but doesn't seem to be self modified.
+  $BFCF Goto rm_read_leftside
 ;
-@ $BFD7 label=j_bfd7
-  $BFD7 *$A276 = DE
+@ $BFD1 label=rm_leftside_jump_command
+  $BFD1 HL = wordat(HL)
+;
+@ $BFD5 label=rm_read_leftside
+  $BFD5 #REGde is now lanes address
+  $BFD6 Read a leftside byte (regular, not an escape)
+;
+@ $BFD7 label=rm_leftside_regular_byte
+  $BFD7 road_leftside_ptr = DE
   $BFDB A -= 16
 ;
-@ $BFDD label=j_bfdd
-  $BFDD *$A244 = A
-  $BFE0 A &= 15
-  $BFE2 *HL = A
+@ $BFDD label=rm_leftside_count_resume
+  $BFDD leftside_byte = A  -- Store decremented leftside counter
+  $BFE0 *HL = A & $0F  -- Write to cyclic road buffer
   $BFE3 L += 32
-  $BFE7 A = *$A246 - 1
-  $BFEC Goto j_c055 if no carry
-  $BFEE DE = *$A278 + 1
 ;
-@ $BFF3 label=j_bff3
-  $BFF3 A = *DE
+N $BFE7 -- HAZARDS --
+  $BFE7 A = hazards_byte - 1  [it's a counter]
+  $BFEC Goto rm_no_hazards if no carry
+  $BFEE DE = road_hazard_ptr + 1
+;
+@ $BFF3 label=rm_restart_hazards_read
+  $BFF3 Read a hazards byte
   $BFF4 Set flags
-  $BFF5 Goto j_c050 if non-zero
-  $BFF7 EX DE,HL
-  $BFF8 HL++
-  $BFF9 A = *HL++
+  $BFF5 Goto rm_hazards_regular_byte if non-zero
+;
+N $BFF7 Handle hazards escape byte.
+  $BFF7 #REGhl is now address of escape byte
+  $BFF8 Increment, read command byte, increment again
   $BFFB Set flags
-  $BFFC Goto j_c04a if zero
-  $BFFE A--
-  $BFFF Goto j_c045 if now zero (i.e. value == 1)
-  $C001 A--
-  $C002 Goto j_c031 if now zero (i.e. value == 2)
-  $C004 A--
-  $C005 Goto j_c02c if A < 7 (i.e. value < 10)
-  $C009 Goto j_c01f if A < 10 (i.e. value < 13)
-  $C00D Goto j_c018 if A < 12 (i.e. value < 15)
-  $C011 A -= 11
-  $C013 *$A224 = A
-  $C016 Goto j_c029
+  $BFFC Goto rm_hazards_jump_command if command byte is zero
+  $BFFF Goto rm_hazards_one_command if command byte is one
+  $C001 Goto rm_hazards_road_fork_command if command byte is two
+  $C005 Goto rm_hazards_set_hazard_command if command byte is < 10  -- 3..9
+  $C009 Goto rm_hazards_set_fork_command if command byte is < 13    -- 10..12
+  $C00D Goto rm_hazards_spawning_command if command byte is < 15    -- 13..14
+  $C011 *$A224 = A - 11  -- Otherwise  [helicopter related]
+  $C016 Goto rm_do_restart
 ;
-@ $C018 label=j_c018
-  $C018 A -= 10
-  $C01A *$A225 = A
-  $C01D Goto j_c029
+N $C018 Handle car spawning commands (13/14 = enable/disable car spawning).
+@ $C018 label=rm_hazards_spawning_command
+  $C018 stop_car_spawning = A - 10
+  $C01D Goto rm_do_restart
 ;
-@ $C01F label=j_c01f
-  $C01F A -= 7
-  $C021 *$A227 = A
-  $C024 Goto j_c029 if zero
-  $C026 *$A226 = A
+N $C01F Handle floating arrow commands (10/11/12 = off/left/right).
+@ $C01F label=rm_hazards_set_fork_command
+  $C01F floating_arrow = A - 7
+  $C024 Goto rm_do_restart if zero
+  $C026 correct_fork = A
 ;
-@ $C029 label=j_c029
+@ $C029 label=rm_do_restart
   $C029 EX DE,HL
-  $C02A Goto j_bff3
+  $C02A Goto rm_restart_hazards_read
 ;
-@ $C02C label=j_c02c
-  $C02C Self modify "LD (HL),xx" at $C058 xx = A
-  $C02F Goto j_c04e
+; This needs more analysis since the visible results don't match the map data.
+N $C02C Handle hazard commands (3 = off, 4/5/6 = tumbleweeds left/right/both, 7/8/9 => barriers)
+N $C02C When on left it uses lane 1, on right it uses lane 4, both it uses lane 2 and 3.
+@ $C02C label=rm_hazards_set_hazard_command
+  $C02C Self modify "LD (HL),$xx" at $C058 to load A
+  $C02F Goto rm_read_hazards
 ;
-@ $C031 label=j_c031
-  $C031 C = *HL++  -- Sampled HL: $5F26 (road split)
-  $C033 B = *HL++
-  $C035 Self modify 'LD HL' at $BB8A
-  $C039 A = *HL++  -- Sampled HL: $5F28
-  $C03B H = *HL
-  $C03C L = A
+@ $C031 label=rm_hazards_road_fork_command
+  $C031 Load address of left route's hazards data  -- Sampled HL: $5F26 (road split)
+  $C035 Self modify 'LD HL,$xxxx' at $BB8A
+  $C039 Load address of right route's hazards data
   $C03D Self modify 'LD HL,$xxxx' at $BBB7
   $C040 HL = $E2B8
-  $C043 Goto j_c04e
+  $C043 Goto rm_read_hazards
 ;
-@ $C045 label=j_c045
+@ $C045 label=rm_hazards_one_command
   $C045 HL = 0
-  $C048 JR $C04E
+  $C048 Goto rm_read_hazards
 ;
-@ $C04A label=j_c04a
-  $C04A A = *HL++  -- Sampled HL: $6292 $6107 $61BC $600F
-  $C04C H = *HL
-  $C04D L = A
+@ $C04A label=rm_hazards_jump_command
+  $C04A HL = wordat(HL)  [Sampled HL: $6292 $6107 $61BC $600F]
 ;
-@ $C04E label=j_c04e
-  $C04E EX DE,HL
-  $C04F A = *DE   -- Read lane objects byte
+@ $C04E label=rm_read_hazards
+  $C04E #REGde is now hazards address
+  $C04F Read a hazards byte (regular, not an escape)
 ;
-@ $C050 label=j_c050
-  $C050 *$A278 = DE  -- Update lane objects ptr
+@ $C050 label=rm_hazards_regular_byte
+  $C050 road_hazard_ptr = DE  -- Update hazard objects ptr
   $C054 A--
 ;
-@ $C055 label=j_c055
-  $C055 *$A246 = A
-  $C058 *HL = 0
+@ $C055 label=rm_no_hazards
+  $C055 hazards_byte = A   -- Update hazards byte
+  $C058 *HL = 0  [cyclic road buffer]
   $C05A A = 2
 ;
-@ $C05C label=j_c05c
+@ $C05C label=rm_all_hazards
   $C05C *$A185 = A
   $C05F Call $B8D2
   $C062 IX = &hazards
@@ -5265,7 +5307,7 @@ B $DFF8,186,6
 
 b $E0B2 Graphics defns
 B $E0B2,,7 <Byte width, Flags, Height, Ptr, Ptr>
-B $E1DF,,5 <Byte width, Flags, Height, Ptr>
+B $E1DF,,5 <Byte width, Flags, Height, Ptr>  [floating arrow defns]
 ;
 ; The arrow is used for road turn indicator AND used for "HERE!".
 ; This is just the arrow.
@@ -5451,30 +5493,32 @@ B $E2BC,1 Escape
 B $E2BD,1 0 => Continue at <address>
 W $E2BE,2 Loop (partial)
 ;
-N $E2C0 Perp escape scene, lane objects
+N $E2C0 Perp escape scene, lane objects [not sure now, could be right curve road]
 B $E2C0,1 TBD
 B $E2C1,1 TBD
 B $E2C2,1 Escape
 B $E2C3,1 0 => Continue at <address>
 W $E2C4,2 Loop (partial)
 ;
-N $E2C6 Perp escape scene, left-side objects (not 100% sure)
+N $E2C6 Road split, curvature
 B $E2C6,1 TBD
-B $E2C7,1 TBD
+B $E2C7,1 Curve left (67%)
 B $E2C8,1 Escape
 B $E2C9,1 0 => Continue at <address>
 W $E2CA,2 Loop (partial)
 ;
-N $E2CC Perp escape scene, right-side objects (not 100% sure)
+N $E2CC Road split, height
 B $E2CC,1 TBD
 B $E2CD,1 Escape
 B $E2CE,1 0 => Continue at <address>
 W $E2CF,2 Loop
 ;
+B $E2D1 road split lane data TBD
 B $E2D2 Ref'd by $BBEF  --  Used after road split
 B $E2D5 Ref'd by $BB7E, $BBA5
 B $E2D9 Ref'd by $BB78, $BBAB
 B $E2DD Ref'd by $BBE3
+B $E2E1 Curvature escape byte
 B $E2E2 Ref'd by $BBE9
 B $E2E7 Ref'd by $BB84
 B $E2F3 Ref'd by $BBB1
