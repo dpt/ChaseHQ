@@ -533,15 +533,13 @@ B $6098,1 Super hard left
 B $6099,,1
 B $609D,1 Straight
 B $609E,,1
-B $609F,1 Escape
-B $60A0,1 0 => Continue at <address>
+B $609F,2 Escape, Command 0 (Continue at <Address>)
 W $60A1,2 Address
 ;
 N $60A3 Right fork (dirt track), height
 B $60A3,1 Level ground
 B $60A4,,1
-B $60E1 Escape
-B $60E2 0 => Continue at <address>
+B $60E1,2 Escape, Command 0 (Continue at <Address>)
 W $60E3,2 Address
 ;
 N $60E5 Right fork (dirt track), lanes
@@ -632,9 +630,9 @@ B $6284,2 Escape, Command 8 (Barriers on Right)
 B $6286,1 Wait for 2
 B $6287,2 Escape, Command 3 (Hazards off)
 B $6289,1 Wait for 99
-B $628A,1 Escape, Command 8 (Barriers on Right)
+B $628A,2 Escape, Command 8 (Barriers on Right)
 B $628C,1 Wait for 1
-B $628D,1 Escape, Command 3 (Hazards off)
+B $628D,2 Escape, Command 3 (Hazards off)
 B $628F,1 Wait for 30
 B $6290,2 Escape, Command 0 (Continue at <Address>)
 W $6292,2 Loop [Loaded by $C04A]
@@ -2964,7 +2962,7 @@ N $9C57 Resetting mission code.
   $9C60 Reset smash_counter to zero
   $9C62 Set user input mask to allow everything through
   $9C67 $A252 = 3
-  $9C6A $A231 = 3 -- Flag set to zero when attributes have been set
+  $9C6A transition_control = 3 -- Flag set to zero when attributes have been set
   $9C6D turbos = 3
   $9C70 Set remaining time to 60 (BCD) [doesn't affect stuff if altered?!]
 @ $9C7E label=tick_print_continue
@@ -4738,67 +4736,67 @@ N $C02C When on left it uses lane 1, on right it uses lane 4, both it uses lane 
   $C066 DE = 20  -- array entry stride
   $C069 B = 6, C = 0
 ;
-@ $C06C label=j_c06c
+@ $C06C label=rm_c06c
   $C06C RLC (IX)  -- test the used flag
   $C070 JR C,$C080  -- jump if used
 ;
-@ $C072 label=j_c072_continue
+@ $C072 label=rm_c072_continue
   $C072 IX += DE
   $C074 Loop while #REGb
   $C076 A = C  -- A = 0?
   $C077 HL = $A22B
   $C07A HL = $A22B  -- duplicate instruction
   $C07D *HL = A
-  $C07E Goto j_c0bb
+  $C07E Goto rm_c0bb
 ;
-@ $C080 label=j_c080
+@ $C080 label=rm_c080
   $C080 A = IX[15] + 1
-  $C084 Goto j_c096 if zero
+  $C084 Goto rm_c096 if zero
   $C086 IX[1]--
-  $C089 Goto j_c072_continue if non-zero
+  $C089 Goto rm_c072_continue if non-zero
   $C08C IX[0] = 0  -- mark the hazard entry unused
   $C090 RLA  -- testing top bit of A
-  $C091 Goto j_c072_continue if no carry
+  $C091 Goto rm_c072_continue if no carry
   $C093 C++
-  $C094 Goto j_c072_continue
+  $C094 Goto rm_c072_continue
 ;
-@ $C096 label=j_c096
+@ $C096 label=rm_c096
   $C096 A = IX[1] - 1
   $C09B IX[1] = A
-  $C09E Goto j_c0b2 if carry
-  $C0A0 Goto j_c072_continue if non-zero
+  $C09E Goto rm_c0b2 if carry
+  $C0A0 Goto rm_c072_continue if non-zero
   $C0A2 A = IX[17]
   $C0A5 Set flags
-  $C0A6 Goto j_c072_continue if non-zero
+  $C0A6 Goto rm_c072_continue if non-zero
   $C0A8 IX[1] = 1
   $C0AC IX[4] = 255
-  $C0B0 Goto j_c072_continue
+  $C0B0 Goto rm_c072_continue
 ;
-@ $C0B2 label=j_c0b2
+@ $C0B2 label=rm_c0b2
   $C0B2 IX[17]--
-  $C0B9 Goto j_c072_continue
+  $C0B9 Goto rm_c072_continue
 ;
-@ $C0BB label=j_c0bb
+@ $C0BB label=rm_c0bb
   $C0BB A = xx  -- Self modified by $A977 + $A9A0 only
   $C0BD Set flags
-  $C0BE Goto j_c0d7 if zero
+  $C0BE Goto rm_c0d7 if zero
   $C0C1 HL = $ED73  -- This must be a buffer pointer at this point
   $C0C4 DE = $ED77
   $C0C7 BC = 38
 ;
-@ $C0CA label=j_c0ca
+@ $C0CA label=rm_c0ca
   $C0CA HL -= 2
   $C0CC DE -= 2
   $C0CE *DE-- = *HL--; BC--
   $C0D0 *DE-- = *HL--; BC--
-  $C0D2 Goto j_c0ca if PE  PE => B became zero
+  $C0D2 Goto rm_c0ca if PE  PE => B became zero
   $C0D5 HL++
   $C0D6 *HL = B
 ;
-@ $C0D7 label=j_c0d7
+@ $C0D7 label=rm_c0d7
   $C0D7 A = 1
 ;
-@ $C0D9 label=j_c0d9
+@ $C0D9 label=rm_c0d9
   $C0D9 *$A254 += A
   $C0DE Exit via $AD0D
 
@@ -5470,14 +5468,12 @@ b $E1E9 Ref'd by graphic entry 1 and 10
 b $E2AA Data for perp escape scene
 N $E2AA Perp escape scene, curvature
 B $E2AA,1 Straight
-B $E2AB,1 Escape
-B $E2AC,1 0 => Continue at <address>
+B $E2AB,2 Escape, Command 0 (Continue at <Address>)
 W $E2AD,2 Loop
 ;
 N $E2AF Perp escape scene, height
 B $E2AF,1 Level ground
-B $E2B0,1 Escape
-B $E2B1,1 0 => Continue at <address>
+B $E2B0,2 Escape, Command 0 (Continue at <Address>)
 W $E2B2,2 Loop
 ;
 N $E2B4 Perp escape scene, lanes
@@ -5489,28 +5485,24 @@ B $E2B8,1 TBD
 B $E2B9,1 TBD
 B $E2BA,1 TBD
 B $E2BB,1 TBD
-B $E2BC,1 Escape
-B $E2BD,1 0 => Continue at <address>
+B $E2BC,2 Escape, Command 0 (Continue at <Address>)
 W $E2BE,2 Loop (partial)
 ;
 N $E2C0 Perp escape scene, lane objects [not sure now, could be right curve road]
 B $E2C0,1 TBD
 B $E2C1,1 TBD
-B $E2C2,1 Escape
-B $E2C3,1 0 => Continue at <address>
+B $E2C2,2 Escape, Command 0 (Continue at <Address>)
 W $E2C4,2 Loop (partial)
 ;
 N $E2C6 Road split, curvature
 B $E2C6,1 TBD
 B $E2C7,1 Curve left (67%)
-B $E2C8,1 Escape
-B $E2C9,1 0 => Continue at <address>
+B $E2C8,2 Escape, Command 0 (Continue at <Address>)
 W $E2CA,2 Loop (partial)
 ;
 N $E2CC Road split, height
 B $E2CC,1 TBD
-B $E2CD,1 Escape
-B $E2CE,1 0 => Continue at <address>
+B $E2CD,2 Escape, Command 0 (Continue at <Address>)
 W $E2CF,2 Loop
 ;
 B $E2D1 road split lane data TBD
