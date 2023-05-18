@@ -23,96 +23,101 @@ Next: <a href="A623.html">A623</a>
 </td>
 </tr>
 </table>
-<div class="description">A60E: Routine at A60E</div>
+<div class="description">A60E: Counters</div>
 <table class="disassembly">
 <tr>
 <td class="routine-comment" colspan="5">
 <div class="details">
 <div class="paragraph">
-Used by the routines at <a href="8401.html">8401</a> and <a href="852A.html">cpu_driver</a>.
+Used by the routines at <a href="8401.html">main_loop</a> and <a href="852A.html">cpu_driver</a>.
 </div>
 </div>
 </td>
 </tr>
 <tr>
+<td class="asm-label">cycle_counters</td>
 <td class="address-2"><span id="42510"></span>A60E</td>
 <td class="instruction">LD HL,$A234</td>
-<td class="comment-0" rowspan="1"></td>
+<td class="comment-1" rowspan="5">Cycle $A234 0-1-2-3</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="42513"></span>A611</td>
 <td class="instruction">LD A,(HL)</td>
-<td class="comment-0" rowspan="1"></td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="42514"></span>A612</td>
 <td class="instruction">INC A</td>
-<td class="comment-0" rowspan="1"></td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="42515"></span>A613</td>
 <td class="instruction">AND $03</td>
-<td class="comment-0" rowspan="1"></td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="42517"></span>A615</td>
 <td class="instruction">LD (HL),A</td>
-<td class="comment-0" rowspan="1"></td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="42518"></span>A616</td>
 <td class="instruction">INC HL</td>
-<td class="comment-0" rowspan="1"></td>
+<td class="comment-1" rowspan="4">Cycle $A235 0-1</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="42519"></span>A617</td>
 <td class="instruction">LD A,(HL)</td>
-<td class="comment-0" rowspan="1"></td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="42520"></span>A618</td>
 <td class="instruction">XOR $01</td>
-<td class="comment-0" rowspan="1"></td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="42522"></span>A61A</td>
 <td class="instruction">LD (HL),A</td>
-<td class="comment-0" rowspan="1"></td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="42523"></span>A61B</td>
 <td class="instruction">RET Z</td>
-<td class="comment-0" rowspan="1"></td>
+<td class="comment-1" rowspan="1">Return if it's zero</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="42524"></span>A61C</td>
 <td class="instruction">INC HL</td>
-<td class="comment-0" rowspan="1"></td>
+<td class="comment-1" rowspan="5">Cycle $A236 0-1-2-3 at half rate</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="42525"></span>A61D</td>
 <td class="instruction">LD A,(HL)</td>
-<td class="comment-0" rowspan="1"></td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="42526"></span>A61E</td>
 <td class="instruction">INC A</td>
-<td class="comment-0" rowspan="1"></td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="42527"></span>A61F</td>
 <td class="instruction">AND $03</td>
-<td class="comment-0" rowspan="1"></td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="42529"></span>A621</td>
 <td class="instruction">LD (HL),A</td>
-<td class="comment-0" rowspan="1"></td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="42530"></span>A622</td>
 <td class="instruction">RET</td>
-<td class="comment-0" rowspan="1"></td>
+<td class="comment-1" rowspan="1">Return</td>
 </tr>
 </table>
 <table class="asm-navigation">
@@ -127,7 +132,7 @@ Next: <a href="A623.html">A623</a>
 </tr>
 </table>
 <footer>
-<div class="release">The incomplete Chase H.Q. disassembly 20230426</div>
+<div class="release">The incomplete Chase H.Q. disassembly 20230518</div>
 <div class="copyright">&copy; 1989 Ocean Software Ltd.</div>
 <div class="created">Created using <a href="https://skoolkit.ca">SkoolKit</a> 8.9.</div>
 </footer>

@@ -23,28 +23,52 @@ Next: <a href="A637.html">A637</a>
 </td>
 </tr>
 </table>
-<div class="description">A623: Data block at A623</div>
+<div class="description">A623: Hazard template?</div>
 <table class="disassembly">
 <tr>
 <td class="routine-comment" colspan="5">
 <div class="details">
+<div class="paragraph">
+$A845 copies these 20 bytes to hazards array.
+</div>
 </div>
 </td>
 </tr>
 <tr>
+<td class="asm-label">hazard_template</td>
 <td class="address-1"><span id="42531"></span>A623</td>
-<td class="instruction">DEFB $FF,$15,$00,$00,$00,$00,$00,$00</td>
-<td class="comment-0" rowspan="1"></td>
+<td class="instruction">DEFB $FF</td>
+<td class="comment-1" rowspan="1">Used flag</td>
 </tr>
 <tr>
-<td class="address-1"><span id="42539"></span>A62B</td>
-<td class="instruction">DEFB $28,$00,$00,$CD,$A8,$00,$00,$80</td>
-<td class="comment-0" rowspan="1"></td>
+<td class="asm-label"></td>
+<td class="address-1"><span id="42532"></span>A624</td>
+<td class="instruction">DEFB $15,$00,$00,$00,$00,$00,$00,$28</td>
+<td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
-<td class="address-1"><span id="42547"></span>A633</td>
-<td class="instruction">DEFB $00,$00,$00,$00</td>
-<td class="comment-0" rowspan="1"></td>
+<td class="asm-label"></td>
+<td class="address-1"><span id="42540"></span>A62C</td>
+<td class="instruction">DEFW $0000</td>
+<td class="comment-1" rowspan="1"></td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="42542"></span>A62E</td>
+<td class="instruction">DEFW <a href="A8CD.html">$A8CD</a></td>
+<td class="comment-1" rowspan="1">Routine at $A8CD</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="42544"></span>A630</td>
+<td class="instruction">DEFW $0000</td>
+<td class="comment-1" rowspan="1"></td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="42546"></span>A632</td>
+<td class="instruction">DEFB $80,$00,$00,$00,$00</td>
+<td class="comment-1" rowspan="1"></td>
 </tr>
 </table>
 <table class="asm-navigation">
@@ -59,7 +83,7 @@ Next: <a href="A637.html">A637</a>
 </tr>
 </table>
 <footer>
-<div class="release">The incomplete Chase H.Q. disassembly 20230426</div>
+<div class="release">The incomplete Chase H.Q. disassembly 20230518</div>
 <div class="copyright">&copy; 1989 Ocean Software Ltd.</div>
 <div class="created">Created using <a href="https://skoolkit.ca">SkoolKit</a> 8.9.</div>
 </footer>

@@ -29,7 +29,7 @@ Next: <a href="9D51.html">9D51</a>
 <td class="routine-comment" colspan="5">
 <div class="details">
 <div class="paragraph">
-Used by the routine at <a href="8401.html">8401</a>.
+Used by the routine at <a href="8401.html">main_loop</a>.
 </div>
 </div>
 <table class="input">
@@ -72,7 +72,7 @@ Used by the routine at <a href="8401.html">8401</a>.
 <td class="comment-1" rowspan="1">Point <span class="register">HL</span> at overtake_bonus</td>
 </tr>
 <tr>
-<td class="asm-label">overtake_loop</td>
+<td class="asm-label">cob_overtake_loop</td>
 <td class="address-2"><span id="40247"></span>9D37</td>
 <td class="instruction">LD A,(HL)</td>
 <td class="comment-1" rowspan="2">A = *HL + 2  [increment bonus by 2 up to a max of 128]</td>
@@ -149,8 +149,8 @@ Used by the routine at <a href="8401.html">8401</a>.
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="40266"></span>9D4A</td>
-<td class="instruction">DJNZ <a href="9D2E.html#40247">overtake_loop</a></td>
-<td class="comment-1" rowspan="1">B--, goto overtake_loop</td>
+<td class="instruction">DJNZ <a href="9D2E.html#40247">cob_overtake_loop</a></td>
+<td class="comment-1" rowspan="1">B--, goto cob_overtake_loop</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -182,7 +182,7 @@ Next: <a href="9D51.html">9D51</a>
 </tr>
 </table>
 <footer>
-<div class="release">The incomplete Chase H.Q. disassembly 20230426</div>
+<div class="release">The incomplete Chase H.Q. disassembly 20230518</div>
 <div class="copyright">&copy; 1989 Ocean Software Ltd.</div>
 <div class="created">Created using <a href="https://skoolkit.ca">SkoolKit</a> 8.9.</div>
 </footer>

@@ -48,7 +48,7 @@ Used by the routine at <a href="99EC.html">print_chatter</a>.
 </td>
 </tr>
 <tr>
-<td class="asm-label"></td>
+<td class="asm-label">plot_face</td>
 <td class="address-2"><span id="39595"></span>9AAB</td>
 <td class="instruction">LD BC,$00A0</td>
 <td class="comment-1" rowspan="1">Byte length of bitmap - counter</td>
@@ -60,7 +60,7 @@ Used by the routine at <a href="99EC.html">print_chatter</a>.
 <td class="comment-1" rowspan="1">Save current screen address</td>
 </tr>
 <tr>
-<td class="asm-label"></td>
+<td class="asm-label">pf_loop</td>
 <td class="address-2"><span id="39599"></span>9AAF</td>
 <td class="instruction">PUSH DE</td>
 <td class="comment-1" rowspan="1">Save screen address</td>
@@ -95,7 +95,7 @@ Used by the routine at <a href="99EC.html">print_chatter</a>.
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="39609"></span>9AB9</td>
-<td class="instruction">JP PO,<a href="9AAB.html#39630">plot_face_attrs_bit</a></td>
+<td class="instruction">JP PO,<a href="9AAB.html#39630">pf_attrs_bit</a></td>
 <td class="comment-1" rowspan="1">If <span class="register">BC</span> became zero then proceed to plotting the attributes (PO =&gt; BC == 0)</td>
 </tr>
 <tr>
@@ -118,7 +118,7 @@ Used by the routine at <a href="99EC.html">print_chatter</a>.
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="39616"></span>9AC0</td>
-<td class="instruction">JR NZ,$9AAF</td>
+<td class="instruction">JR NZ,<a href="9AAB.html#39599">pf_loop</a></td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -139,7 +139,7 @@ Used by the routine at <a href="99EC.html">print_chatter</a>.
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="39622"></span>9AC6</td>
-<td class="instruction">JR C,$9AAF</td>
+<td class="instruction">JR C,<a href="9AAB.html#39599">pf_loop</a></td>
 <td class="comment-1" rowspan="1">If carry then loop (overflow is ok)</td>
 </tr>
 <tr>
@@ -161,7 +161,7 @@ Used by the routine at <a href="99EC.html">print_chatter</a>.
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="39628"></span>9ACC</td>
-<td class="instruction">JR $9AAF</td>
+<td class="instruction">JR <a href="9AAB.html#39599">pf_loop</a></td>
 <td class="comment-1" rowspan="1">Loop</td>
 </tr>
 <tr>
@@ -175,7 +175,7 @@ This entry point is used by the routine at <a href="8EB7.html">draw_mugshot</a>.
 </td>
 </tr>
 <tr>
-<td class="asm-label">plot_face_attrs_bit</td>
+<td class="asm-label">pf_attrs_bit</td>
 <td class="address-2"><span id="39630"></span>9ACE</td>
 <td class="instruction">POP DE</td>
 <td class="comment-1" rowspan="1">Restore current screen address</td>
@@ -224,7 +224,7 @@ This entry point is used by the routine at <a href="8EB7.html">draw_mugshot</a>.
 <td class="comment-1" rowspan="1">Byte length of attributes - counter</td>
 </tr>
 <tr>
-<td class="asm-label"></td>
+<td class="asm-label">pf_attrs_loop</td>
 <td class="address-2"><span id="39642"></span>9ADA</td>
 <td class="instruction">LDI</td>
 <td class="comment-1" rowspan="4">Transfer four attributes</td>
@@ -269,7 +269,7 @@ This entry point is used by the routine at <a href="8EB7.html">draw_mugshot</a>.
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="39655"></span>9AE7</td>
-<td class="instruction">JR NC,$9ADA</td>
+<td class="instruction">JR NC,<a href="9AAB.html#39642">pf_attrs_loop</a></td>
 <td class="comment-1" rowspan="1">If no carry then loop</td>
 </tr>
 <tr>
@@ -281,7 +281,7 @@ This entry point is used by the routine at <a href="8EB7.html">draw_mugshot</a>.
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="39658"></span>9AEA</td>
-<td class="instruction">JR $9ADA</td>
+<td class="instruction">JR <a href="9AAB.html#39642">pf_attrs_loop</a></td>
 <td class="comment-1" rowspan="1">Loop</td>
 </tr>
 </table>
@@ -297,7 +297,7 @@ Next: <a href="9AEC.html">9AEC</a>
 </tr>
 </table>
 <footer>
-<div class="release">The incomplete Chase H.Q. disassembly 20230426</div>
+<div class="release">The incomplete Chase H.Q. disassembly 20230518</div>
 <div class="copyright">&copy; 1989 Ocean Software Ltd.</div>
 <div class="created">Created using <a href="https://skoolkit.ca">SkoolKit</a> 8.9.</div>
 </footer>

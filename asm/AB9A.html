@@ -19,7 +19,7 @@ Prev: <a href="AB33.html">AB33</a>
 </td>
 <td class="up">Up: <a href="../maps/all.html#43930">Map</a></td>
 <td class="next">
-Next: <a href="ABF6.html">ABF6</a>
+Next: <a href="AC3C.html">AC3C</a>
 </td>
 </tr>
 </table>
@@ -29,270 +29,549 @@ Next: <a href="ABF6.html">ABF6</a>
 <td class="routine-comment" colspan="5">
 <div class="details">
 <div class="paragraph">
-Used by the routines at <a href="8401.html">8401</a>, <a href="852A.html">cpu_driver</a> and <a href="873C.html">873C</a>.
+Used by the routines at <a href="8401.html">main_loop</a>, <a href="852A.html">cpu_driver</a> and <a href="873C.html">escape_scene</a>.
 </div>
 </div>
 </td>
 </tr>
 <tr>
+<td class="asm-label">spawn_hazards</td>
 <td class="address-2"><span id="43930"></span>AB9A</td>
 <td class="instruction">LD A,($A254)</td>
-<td class="comment-0" rowspan="1"></td>
+<td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="43933"></span>AB9D</td>
 <td class="instruction">AND A</td>
-<td class="comment-0" rowspan="1"></td>
+<td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="43934"></span>AB9E</td>
 <td class="instruction">RET Z</td>
-<td class="comment-0" rowspan="1"></td>
+<td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="43935"></span>AB9F</td>
 <td class="instruction">CPL</td>
-<td class="comment-0" rowspan="1"></td>
+<td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="43936"></span>ABA0</td>
 <td class="instruction">ADD A,$15</td>
-<td class="comment-0" rowspan="1"></td>
+<td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="43938"></span>ABA2</td>
 <td class="instruction">LD C,A</td>
-<td class="comment-0" rowspan="1"></td>
+<td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="43939"></span>ABA3</td>
 <td class="instruction">LD A,($A240)</td>
-<td class="comment-0" rowspan="1"></td>
+<td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="43942"></span>ABA6</td>
 <td class="instruction">ADD A,$A0</td>
-<td class="comment-0" rowspan="1"></td>
+<td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="43944"></span>ABA8</td>
 <td class="instruction">ADD A,C</td>
-<td class="comment-0" rowspan="1"></td>
+<td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="43945"></span>ABA9</td>
 <td class="instruction">LD L,A</td>
-<td class="comment-0" rowspan="1"></td>
+<td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="43946"></span>ABAA</td>
 <td class="instruction">LD H,$EE</td>
-<td class="comment-0" rowspan="1"></td>
+<td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="43948"></span>ABAC</td>
 <td class="instruction">LD A,(HL)</td>
-<td class="comment-0" rowspan="1"></td>
+<td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="43949"></span>ABAD</td>
 <td class="instruction">AND A</td>
-<td class="comment-0" rowspan="1"></td>
+<td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="43950"></span>ABAE</td>
 <td class="instruction">RET Z</td>
-<td class="comment-0" rowspan="1"></td>
+<td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="43951"></span>ABAF</td>
 <td class="instruction">CP $04</td>
-<td class="comment-0" rowspan="1"></td>
+<td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="43953"></span>ABB1</td>
 <td class="instruction">LD DE,$0000</td>
-<td class="comment-0" rowspan="1"></td>
+<td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="43956"></span>ABB4</td>
-<td class="instruction">JR C,$ABB9</td>
-<td class="comment-0" rowspan="1"></td>
+<td class="instruction">JR C,<a href="AB9A.html#43961">spawn_hazards_0</a></td>
+<td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="43958"></span>ABB6</td>
 <td class="instruction">LD E,$03</td>
-<td class="comment-0" rowspan="1"></td>
+<td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="43960"></span>ABB8</td>
 <td class="instruction">SUB E</td>
-<td class="comment-0" rowspan="1"></td>
+<td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
+<td class="asm-label">spawn_hazards_0</td>
 <td class="address-2"><span id="43961"></span>ABB9</td>
 <td class="instruction">LD B,$32</td>
-<td class="comment-0" rowspan="1"></td>
+<td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="43963"></span>ABBB</td>
 <td class="instruction">DEC A</td>
-<td class="comment-0" rowspan="1"></td>
+<td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="43964"></span>ABBC</td>
-<td class="instruction">JR Z,$ABF2</td>
-<td class="comment-0" rowspan="1"></td>
+<td class="instruction">JR Z,<a href="AB9A.html#44018">spawn_hazards_3</a></td>
+<td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="43966"></span>ABBE</td>
 <td class="instruction">LD B,$DC</td>
-<td class="comment-0" rowspan="1"></td>
+<td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="43968"></span>ABC0</td>
 <td class="instruction">DEC A</td>
-<td class="comment-0" rowspan="1"></td>
+<td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="43969"></span>ABC1</td>
-<td class="instruction">JR Z,$ABF2</td>
-<td class="comment-0" rowspan="1"></td>
+<td class="instruction">JR Z,<a href="AB9A.html#44018">spawn_hazards_3</a></td>
+<td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="43971"></span>ABC3</td>
 <td class="instruction">INC L</td>
-<td class="comment-0" rowspan="1"></td>
+<td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="43972"></span>ABC4</td>
 <td class="instruction">INC L</td>
-<td class="comment-0" rowspan="1"></td>
+<td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="43973"></span>ABC5</td>
 <td class="instruction">LD (HL),D</td>
-<td class="comment-0" rowspan="1"></td>
+<td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="43974"></span>ABC6</td>
 <td class="instruction">INC L</td>
-<td class="comment-0" rowspan="1"></td>
+<td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="43975"></span>ABC7</td>
 <td class="instruction">INC L</td>
-<td class="comment-0" rowspan="1"></td>
+<td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="43976"></span>ABC8</td>
 <td class="instruction">LD (HL),D</td>
-<td class="comment-0" rowspan="1"></td>
+<td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="43977"></span>ABC9</td>
 <td class="instruction">LD A,E</td>
-<td class="comment-0" rowspan="1"></td>
+<td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="43978"></span>ABCA</td>
 <td class="instruction">CP $03</td>
-<td class="comment-0" rowspan="1"></td>
+<td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="43980"></span>ABCC</td>
-<td class="instruction">JR NZ,$ABEB</td>
-<td class="comment-0" rowspan="1"></td>
+<td class="instruction">JR NZ,<a href="AB9A.html#44011">spawn_hazards_2</a></td>
+<td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="43982"></span>ABCE</td>
 <td class="instruction">LD A,($A221)</td>
-<td class="comment-0" rowspan="1"></td>
+<td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="43985"></span>ABD1</td>
 <td class="instruction">AND A</td>
-<td class="comment-0" rowspan="1"></td>
+<td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="43986"></span>ABD2</td>
-<td class="instruction">JR Z,$ABE2</td>
-<td class="comment-0" rowspan="1"></td>
+<td class="instruction">JR Z,<a href="AB9A.html#44002">spawn_hazards_1</a></td>
+<td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="43988"></span>ABD4</td>
 <td class="instruction">LD B,$20</td>
-<td class="comment-0" rowspan="1"></td>
+<td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="43990"></span>ABD6</td>
-<td class="instruction">CALL <a href="ABF6.html">spawn_hazards</a></td>
-<td class="comment-0" rowspan="1"></td>
+<td class="instruction">CALL <a href="AB9A.html#44022">sh_spawn</a></td>
+<td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="43993"></span>ABD9</td>
 <td class="instruction">LD B,$56</td>
-<td class="comment-0" rowspan="1"></td>
+<td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="43995"></span>ABDB</td>
-<td class="instruction">CALL <a href="ABF6.html">spawn_hazards</a></td>
-<td class="comment-0" rowspan="1"></td>
+<td class="instruction">CALL <a href="AB9A.html#44022">sh_spawn</a></td>
+<td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="43998"></span>ABDE</td>
 <td class="instruction">LD B,$8C</td>
-<td class="comment-0" rowspan="1"></td>
+<td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="44000"></span>ABE0</td>
-<td class="instruction">JR $ABF2</td>
-<td class="comment-0" rowspan="1"></td>
+<td class="instruction">JR <a href="AB9A.html#44018">spawn_hazards_3</a></td>
+<td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
+<td class="asm-label">spawn_hazards_1</td>
 <td class="address-2"><span id="44002"></span>ABE2</td>
 <td class="instruction">LD B,$50</td>
-<td class="comment-0" rowspan="1"></td>
+<td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="44004"></span>ABE4</td>
-<td class="instruction">CALL <a href="ABF6.html">spawn_hazards</a></td>
-<td class="comment-0" rowspan="1"></td>
+<td class="instruction">CALL <a href="AB9A.html#44022">sh_spawn</a></td>
+<td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="44007"></span>ABE7</td>
 <td class="instruction">LD B,$A0</td>
-<td class="comment-0" rowspan="1"></td>
+<td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="44009"></span>ABE9</td>
-<td class="instruction">JR $ABF2</td>
-<td class="comment-0" rowspan="1"></td>
+<td class="instruction">JR <a href="AB9A.html#44018">spawn_hazards_3</a></td>
+<td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
+<td class="asm-label">spawn_hazards_2</td>
 <td class="address-2"><span id="44011"></span>ABEB</td>
 <td class="instruction">LD B,$46</td>
-<td class="comment-0" rowspan="1"></td>
+<td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="44013"></span>ABED</td>
-<td class="instruction">CALL <a href="ABF6.html">spawn_hazards</a></td>
-<td class="comment-0" rowspan="1"></td>
+<td class="instruction">CALL <a href="AB9A.html#44022">sh_spawn</a></td>
+<td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="44016"></span>ABF0</td>
 <td class="instruction">LD B,$B4</td>
-<td class="comment-0" rowspan="1"></td>
+<td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
+<td class="asm-label">spawn_hazards_3</td>
 <td class="address-2"><span id="44018"></span>ABF2</td>
-<td class="instruction">CALL <a href="ABF6.html">spawn_hazards</a></td>
-<td class="comment-0" rowspan="1"></td>
+<td class="instruction">CALL <a href="AB9A.html#44022">sh_spawn</a></td>
+<td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="44021"></span>ABF5</td>
 <td class="instruction">RET</td>
-<td class="comment-0" rowspan="1"></td>
+<td class="comment-1" rowspan="1"></td>
+</tr>
+<tr>
+<td class="routine-comment" colspan="5">
+<span id="44022"></span>
+<div class="comments">
+<div class="paragraph">
+Spawns hazards in the road, like barriers and tumbleweeds.
+</div>
+<div class="paragraph">
+I:B Stored at entry+5  e.g. $20/$46/$56/$50/$B4
+</div>
+<div class="paragraph">
+I:C Stored at entry+1  e.g. $13
+</div>
+</div>
+</td>
+</tr>
+<tr>
+<td class="asm-label">sh_spawn</td>
+<td class="address-2"><span id="44022"></span>ABF6</td>
+<td class="instruction">EXX</td>
+<td class="comment-1" rowspan="1">Bank entry registers</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="44023"></span>ABF7</td>
+<td class="instruction">LD B,$06</td>
+<td class="comment-1" rowspan="1">6 iterations</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="44025"></span>ABF9</td>
+<td class="instruction">LD HL,$A188</td>
+<td class="comment-1" rowspan="1">Point <span class="register">HL</span> at hazards table</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="44028"></span>ABFC</td>
+<td class="instruction">LD DE,$0014</td>
+<td class="comment-1" rowspan="1">Stride of 20 bytes</td>
+</tr>
+<tr>
+<td class="asm-label">sh_loop</td>
+<td class="address-2"><span id="44031"></span>ABFF</td>
+<td class="instruction">RLC (HL)</td>
+<td class="comment-1" rowspan="1">Check the flag byte to see if the entry is used (it's either $00 if empty, or $FF if used, so rotating it in place is not a problem)</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="44033"></span>AC01</td>
+<td class="instruction">JR NC,<a href="AB9A.html#44040">sh_found_spare</a></td>
+<td class="comment-1" rowspan="1">Jump to sh_found_spare if it didn't carry</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="44035"></span>AC03</td>
+<td class="instruction">ADD HL,DE</td>
+<td class="comment-1" rowspan="1">Move to the next entry</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="44036"></span>AC04</td>
+<td class="instruction">DJNZ <a href="AB9A.html#44031">sh_loop</a></td>
+<td class="comment-1" rowspan="1">Loop while iterations remain</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="44038"></span>AC06</td>
+<td class="instruction">POP HL</td>
+<td class="comment-1" rowspan="1">TBD</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="44039"></span>AC07</td>
+<td class="instruction">RET</td>
+<td class="comment-1" rowspan="1">Return</td>
+</tr>
+<tr>
+<td class="routine-comment" colspan="5">
+<span id="44040"></span>
+<div class="comments">
+<div class="paragraph">
+<span class="register">HL</span> points to the unused entry
+</div>
+</div>
+</td>
+</tr>
+<tr>
+<td class="asm-label">sh_found_spare</td>
+<td class="address-2"><span id="44040"></span>AC08</td>
+<td class="instruction">PUSH HL</td>
+<td class="comment-1" rowspan="2"><span class="register">IX</span> = <span class="register">HL</span></td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="44041"></span>AC09</td>
+<td class="instruction">POP IX</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="44043"></span>AC0B</td>
+<td class="instruction">LD BC,$0013</td>
+<td class="comment-1" rowspan="6">Zero 20 bytes at <span class="register">HL</span></td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="44046"></span>AC0E</td>
+<td class="instruction">LD D,H</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="44047"></span>AC0F</td>
+<td class="instruction">LD E,L</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="44048"></span>AC10</td>
+<td class="instruction">INC DE</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="44049"></span>AC11</td>
+<td class="instruction">LD (HL),$00</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="44051"></span>AC13</td>
+<td class="instruction">LDIR</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="44053"></span>AC15</td>
+<td class="instruction">EXX</td>
+<td class="comment-1" rowspan="1">Restore entry registers</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="44054"></span>AC16</td>
+<td class="instruction">LD HL,$AC3C</td>
+<td class="comment-1" rowspan="3">wordat(IX + 11) = Address of $AC3C routine</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="44057"></span>AC19</td>
+<td class="instruction">LD (IX+$0C),H</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="44060"></span>AC1C</td>
+<td class="instruction">LD (IX+$0B),L</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="44063"></span>AC1F</td>
+<td class="instruction">LD HL,($5CF6)</td>
+<td class="comment-1" rowspan="2">Point <span class="register">HL</span> at the hazards data table entry (*$5CF6 -&gt; $5E40 + 3)</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="44066"></span>AC22</td>
+<td class="instruction">ADD HL,DE</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="44067"></span>AC23</td>
+<td class="instruction">LD A,(HL)</td>
+<td class="comment-1" rowspan="3">Copy flag TBD</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="44068"></span>AC24</td>
+<td class="instruction">LD (IX+$08),A</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="44071"></span>AC27</td>
+<td class="instruction">INC HL</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="44072"></span>AC28</td>
+<td class="instruction">LD A,(HL)</td>
+<td class="comment-1" rowspan="5">Copy lod address (e.g. tumbleweed_lods)</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="44073"></span>AC29</td>
+<td class="instruction">LD (IX+$09),A</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="44076"></span>AC2C</td>
+<td class="instruction">INC HL</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="44077"></span>AC2D</td>
+<td class="instruction">LD A,(HL)</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="44078"></span>AC2E</td>
+<td class="instruction">LD (IX+$0A),A</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="44081"></span>AC31</td>
+<td class="instruction">LD (IX+$05),B</td>
+<td class="comment-1" rowspan="1">IX[5] = B TBD</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="44084"></span>AC34</td>
+<td class="instruction">LD (IX+$01),C</td>
+<td class="comment-1" rowspan="1">IX[1] = C TBD</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="44087"></span>AC37</td>
+<td class="instruction">LD (IX+$00),$FF</td>
+<td class="comment-1" rowspan="1">Mark the entry as used</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="44091"></span>AC3B</td>
+<td class="instruction">RET</td>
+<td class="comment-1" rowspan="1">Return</td>
 </tr>
 </table>
 <table class="asm-navigation">
@@ -302,12 +581,12 @@ Prev: <a href="AB33.html">AB33</a>
 </td>
 <td class="up">Up: <a href="../maps/all.html#43930">Map</a></td>
 <td class="next">
-Next: <a href="ABF6.html">ABF6</a>
+Next: <a href="AC3C.html">AC3C</a>
 </td>
 </tr>
 </table>
 <footer>
-<div class="release">The incomplete Chase H.Q. disassembly 20230426</div>
+<div class="release">The incomplete Chase H.Q. disassembly 20230518</div>
 <div class="copyright">&copy; 1989 Ocean Software Ltd.</div>
 <div class="created">Created using <a href="https://skoolkit.ca">SkoolKit</a> 8.9.</div>
 </footer>

@@ -23,19 +23,19 @@ Next: <a href="C57C.html">C57C</a>
 </td>
 </tr>
 </table>
-<div class="description">C452: Routine at C452</div>
+<div class="description">C452: Landscape related</div>
 <table class="disassembly">
 <tr>
 <td class="routine-comment" colspan="5">
 <div class="details">
 <div class="paragraph">
-Used by the routines at <a href="8401.html">8401</a>, <a href="852A.html">cpu_driver</a> and <a href="873C.html">873C</a>.
+Used by the routines at <a href="8401.html">main_loop</a>, <a href="852A.html">cpu_driver</a> and <a href="873C.html">escape_scene</a>.
 </div>
 </div>
 </td>
 </tr>
 <tr>
-<td class="asm-label"></td>
+<td class="asm-label">main_loop_13</td>
 <td class="address-2"><span id="50258"></span>C452</td>
 <td class="instruction">LD ($C8A4),SP</td>
 <td class="comment-1" rowspan="2">Self modify <span class="register">SP</span> restore instruction</td>
@@ -271,7 +271,7 @@ This entry point is used by the routine at <a href="C598.html">C598</a>.
 </td>
 </tr>
 <tr>
-<td class="asm-label"></td>
+<td class="asm-label">main_loop_13_0</td>
 <td class="address-2"><span id="50349"></span>C4AD</td>
 <td class="instruction">LD A,(IX+$00)</td>
 <td class="comment-1" rowspan="1"></td>
@@ -285,7 +285,7 @@ This entry point is used by the routine at <a href="C598.html">C598</a>.
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="50354"></span>C4B2</td>
-<td class="instruction">JP Z,$C534</td>
+<td class="instruction">JP Z,<a href="C452.html#50484">main_loop_13_9</a></td>
 <td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
@@ -339,13 +339,13 @@ This entry point is used by the routine at <a href="C598.html">C598</a>.
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="50374"></span>C4C6</td>
-<td class="instruction">JR NZ,$C4E2</td>
+<td class="instruction">JR NZ,<a href="C452.html#50402">main_loop_13_3</a></td>
 <td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="50376"></span>C4C8</td>
-<td class="instruction">JR NC,$C4D1</td>
+<td class="instruction">JR NC,<a href="C452.html#50385">main_loop_13_1</a></td>
 <td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
@@ -363,11 +363,11 @@ This entry point is used by the routine at <a href="C598.html">C598</a>.
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="50382"></span>C4CE</td>
-<td class="instruction">JP $C4D5</td>
+<td class="instruction">JP <a href="C452.html#50389">main_loop_13_2</a></td>
 <td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
-<td class="asm-label"></td>
+<td class="asm-label">main_loop_13_1</td>
 <td class="address-2"><span id="50385"></span>C4D1</td>
 <td class="instruction">ADD A,$02</td>
 <td class="comment-1" rowspan="1"></td>
@@ -379,7 +379,7 @@ This entry point is used by the routine at <a href="C598.html">C598</a>.
 <td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
-<td class="asm-label"></td>
+<td class="asm-label">main_loop_13_2</td>
 <td class="address-2"><span id="50389"></span>C4D5</td>
 <td class="instruction">LD ($C5DA),A</td>
 <td class="comment-1" rowspan="1"></td>
@@ -409,9 +409,9 @@ This entry point is used by the routine at <a href="C598.html">C598</a>.
 <td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
-<td class="asm-label"></td>
+<td class="asm-label">main_loop_13_3</td>
 <td class="address-2"><span id="50402"></span>C4E2</td>
-<td class="instruction">JR C,$C519</td>
+<td class="instruction">JR C,<a href="C452.html#50457">main_loop_13_7</a></td>
 <td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
@@ -435,7 +435,7 @@ This entry point is used by the routine at <a href="C598.html">C598</a>.
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="50410"></span>C4EA</td>
-<td class="instruction">JR NZ,$C4F0</td>
+<td class="instruction">JR NZ,<a href="C452.html#50416">main_loop_13_4</a></td>
 <td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
@@ -447,11 +447,11 @@ This entry point is used by the routine at <a href="C598.html">C598</a>.
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="50414"></span>C4EE</td>
-<td class="instruction">JR Z,$C502</td>
+<td class="instruction">JR Z,<a href="C452.html#50434">main_loop_13_6</a></td>
 <td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
-<td class="asm-label"></td>
+<td class="asm-label">main_loop_13_4</td>
 <td class="address-2"><span id="50416"></span>C4F0</td>
 <td class="instruction">LD A,IYl</td>
 <td class="comment-1" rowspan="1"></td>
@@ -483,7 +483,7 @@ This entry point is used by the routine at <a href="C598.html">C598</a>.
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="50426"></span>C4FA</td>
-<td class="instruction">JR Z,$C4FF</td>
+<td class="instruction">JR Z,<a href="C452.html#50431">main_loop_13_5</a></td>
 <td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
@@ -505,13 +505,13 @@ This entry point is used by the routine at <a href="C598.html">C598</a>.
 <td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
-<td class="asm-label"></td>
+<td class="asm-label">main_loop_13_5</td>
 <td class="address-2"><span id="50431"></span>C4FF</td>
 <td class="instruction">LD ($C161),A</td>
 <td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
-<td class="asm-label"></td>
+<td class="asm-label">main_loop_13_6</td>
 <td class="address-2"><span id="50434"></span>C502</td>
 <td class="instruction">LD A,H</td>
 <td class="comment-1" rowspan="1"></td>
@@ -573,11 +573,11 @@ This entry point is used by the routine at <a href="C598.html">C598</a>.
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="50454"></span>C516</td>
-<td class="instruction">JP $C551</td>
+<td class="instruction">JP <a href="C452.html#50513">main_loop_13_11</a></td>
 <td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
-<td class="asm-label"></td>
+<td class="asm-label">main_loop_13_7</td>
 <td class="address-2"><span id="50457"></span>C519</td>
 <td class="instruction">BIT 6,L</td>
 <td class="comment-1" rowspan="1"></td>
@@ -609,7 +609,7 @@ This entry point is used by the routine at <a href="C598.html">C598</a>.
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="50467"></span>C523</td>
-<td class="instruction">JR NZ,$C526</td>
+<td class="instruction">JR NZ,<a href="C452.html#50470">main_loop_13_8</a></td>
 <td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
@@ -619,7 +619,7 @@ This entry point is used by the routine at <a href="C598.html">C598</a>.
 <td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
-<td class="asm-label"></td>
+<td class="asm-label">main_loop_13_8</td>
 <td class="address-2"><span id="50470"></span>C526</td>
 <td class="instruction">LD ($A248),A</td>
 <td class="comment-1" rowspan="1"></td>
@@ -645,11 +645,11 @@ This entry point is used by the routine at <a href="C598.html">C598</a>.
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="50481"></span>C531</td>
-<td class="instruction">JP $C54D</td>
+<td class="instruction">JP <a href="C452.html#50509">main_loop_13_10</a></td>
 <td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
-<td class="asm-label"></td>
+<td class="asm-label">main_loop_13_9</td>
 <td class="address-2"><span id="50484"></span>C534</td>
 <td class="instruction">EXX</td>
 <td class="comment-1" rowspan="1"></td>
@@ -719,7 +719,7 @@ This entry point is used by the routine at <a href="C2E7.html">C2E7</a>.
 </td>
 </tr>
 <tr>
-<td class="asm-label"></td>
+<td class="asm-label">main_loop_13_10</td>
 <td class="address-2"><span id="50509"></span>C54D</td>
 <td class="instruction">LD ($C4B3),HL</td>
 <td class="comment-1" rowspan="1"></td>
@@ -731,7 +731,7 @@ This entry point is used by the routine at <a href="C2E7.html">C2E7</a>.
 <td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
-<td class="asm-label"></td>
+<td class="asm-label">main_loop_13_11</td>
 <td class="address-2"><span id="50513"></span>C551</td>
 <td class="instruction">LD A,B</td>
 <td class="comment-1" rowspan="1"></td>
@@ -813,7 +813,7 @@ This entry point is used by the routine at <a href="C58A.html">C58A</a>.
 </td>
 </tr>
 <tr>
-<td class="asm-label"></td>
+<td class="asm-label">main_loop_13_12</td>
 <td class="address-2"><span id="50533"></span>C565</td>
 <td class="instruction">LD ($C56D),DE</td>
 <td class="comment-1" rowspan="1"></td>
@@ -897,7 +897,7 @@ Next: <a href="C57C.html">C57C</a>
 </tr>
 </table>
 <footer>
-<div class="release">The incomplete Chase H.Q. disassembly 20230426</div>
+<div class="release">The incomplete Chase H.Q. disassembly 20230518</div>
 <div class="copyright">&copy; 1989 Ocean Software Ltd.</div>
 <div class="created">Created using <a href="https://skoolkit.ca">SkoolKit</a> 8.9.</div>
 </footer>

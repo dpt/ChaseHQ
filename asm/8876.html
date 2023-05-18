@@ -29,7 +29,7 @@ Next: <a href="88D5.html">88D5</a>
 <td class="routine-comment" colspan="5">
 <div class="details">
 <div class="paragraph">
-Used by the routine at <a href="8401.html">8401</a>.
+Used by the routine at <a href="8401.html">main_loop</a>.
 </div>
 </div>
 </td>
@@ -193,15 +193,15 @@ Turbo was pressed
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="34982"></span>88A6</td>
-<td class="instruction">JP <a href="83C1.html">$83C1</a></td>
-<td class="comment-1" rowspan="1">Exit via $83C1 -- likely the boost sound effect</td>
+<td class="instruction">JP <a href="83B5.html#33729">turbo_sfx_play_hook</a></td>
+<td class="comment-1" rowspan="1">Exit via turbo_sfx_play_hook</td>
 </tr>
 <tr>
 <td class="routine-comment" colspan="5">
 <span id="34985"></span>
 <div class="comments">
 <div class="paragraph">
-This entry point is used by the routine at <a href="9BCF.html">9BCF</a>.
+This entry point is used by the routine at <a href="9BCF.html">tick</a>.
 </div>
 </div>
 </td>
@@ -260,8 +260,8 @@ This entry point is used by the routine at <a href="9BCF.html">9BCF</a>.
 <tr>
 <td class="asm-label">pause_key</td>
 <td class="address-2"><span id="35004"></span>88BC</td>
-<td class="instruction">CALL <a href="83BB.html">$83BB</a></td>
-<td class="comment-1" rowspan="1">Silence audio (128k hook)</td>
+<td class="instruction">CALL <a href="83B5.html#33723">silence_audio_hook</a></td>
+<td class="comment-1" rowspan="1">Call silence_audio_hook</td>
 </tr>
 <tr>
 <td class="asm-label">check_user_input_1</td>
@@ -330,7 +330,7 @@ Next: <a href="88D5.html">88D5</a>
 </tr>
 </table>
 <footer>
-<div class="release">The incomplete Chase H.Q. disassembly 20230426</div>
+<div class="release">The incomplete Chase H.Q. disassembly 20230518</div>
 <div class="copyright">&copy; 1989 Ocean Software Ltd.</div>
 <div class="created">Created using <a href="https://skoolkit.ca">SkoolKit</a> 8.9.</div>
 </footer>

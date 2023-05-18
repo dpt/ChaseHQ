@@ -23,7 +23,7 @@ Next: <a href="5D39.html">5D39</a>
 </td>
 </tr>
 </table>
-<div class="description">5D2B: label=attract_data</div>
+<div class="description">5D2B: Data block at 5D2B</div>
 <table class="disassembly">
 <tr>
 <td class="routine-comment" colspan="5">
@@ -32,39 +32,56 @@ Next: <a href="5D39.html">5D39</a>
 </td>
 </tr>
 <tr>
+<td class="asm-label">attract_data</td>
 <td class="address-1"><span id="23851"></span>5D2B</td>
 <td class="instruction">DEFW $00EA</td>
 <td class="comment-1" rowspan="1">road_pos</td>
 </tr>
 <tr>
+<td class="routine-comment" colspan="5">
+<span id="23853"></span>
+<div class="comments">
+<div class="paragraph">
+These all point a byte earlier than the real data start point.
+</div>
+</div>
+</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="23853"></span>5D2D</td>
-<td class="instruction">DEFW <a href="6088.html#25043">$61D3</a></td>
-<td class="comment-1" rowspan="1"></td>
+<td class="instruction">DEFW $61D3</td>
+<td class="comment-1" rowspan="1">-&gt; Loop section, curvature</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="23855"></span>5D2F</td>
-<td class="instruction">DEFW <a href="6088.html#25096">$6208</a></td>
-<td class="comment-1" rowspan="1"></td>
+<td class="instruction">DEFW $6208</td>
+<td class="comment-1" rowspan="1">-&gt; Loop section, height</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="23857"></span>5D31</td>
-<td class="instruction">DEFW <a href="6088.html#25180">$625C</a></td>
-<td class="comment-1" rowspan="1"></td>
+<td class="instruction">DEFW $625C</td>
+<td class="comment-1" rowspan="1">-&gt; Loop section, lanes</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="23859"></span>5D33</td>
-<td class="instruction">DEFW <a href="6088.html#25363">$6313</a></td>
-<td class="comment-1" rowspan="1"></td>
+<td class="instruction">DEFW $6313</td>
+<td class="comment-1" rowspan="1">-&gt; Loop section, right-side objects</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="23861"></span>5D35</td>
-<td class="instruction">DEFW <a href="6088.html#25235">$6293</a></td>
-<td class="comment-1" rowspan="1"></td>
+<td class="instruction">DEFW $6293</td>
+<td class="comment-1" rowspan="1">-&gt; Loop section, left-side objects</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="23863"></span>5D37</td>
-<td class="instruction">DEFW <a href="6088.html#25206">$6276</a></td>
-<td class="comment-1" rowspan="1"></td>
+<td class="instruction">DEFW $6276</td>
+<td class="comment-1" rowspan="1">-&gt; Loop section, hazards</td>
 </tr>
 </table>
 <table class="asm-navigation">
@@ -79,7 +96,7 @@ Next: <a href="5D39.html">5D39</a>
 </tr>
 </table>
 <footer>
-<div class="release">The incomplete Chase H.Q. disassembly 20230426</div>
+<div class="release">The incomplete Chase H.Q. disassembly 20230518</div>
 <div class="copyright">&copy; 1989 Ocean Software Ltd.</div>
 <div class="created">Created using <a href="https://skoolkit.ca">SkoolKit</a> 8.9.</div>
 </footer>

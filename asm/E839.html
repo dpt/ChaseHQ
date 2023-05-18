@@ -35,7 +35,7 @@ Next: <a href="E90F.html">E90F</a>
 <td class="asm-label"></td>
 <td class="address-2"><span id="59449"></span>E839</td>
 <td class="instruction">POP BC</td>
-<td class="comment-1" rowspan="1">POP BC        ; must be the loop counter</td>
+<td class="comment-1" rowspan="1">must be the loop counter</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -80,7 +80,7 @@ Next: <a href="E90F.html">E90F</a>
 <td class="asm-label"></td>
 <td class="address-1"><span id="59459"></span>E843</td>
 <td class="instruction">LD E,(HL)</td>
-<td class="comment-1" rowspan="4">DE = wordat(HL) HL += 2  ; dest</td>
+<td class="comment-1" rowspan="4">DE = wordat(HL) HL += 2 -- dest</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -101,7 +101,7 @@ Next: <a href="E90F.html">E90F</a>
 <td class="asm-label"></td>
 <td class="address-1"><span id="59463"></span>E847</td>
 <td class="instruction">LD C,(HL)</td>
-<td class="comment-1" rowspan="4">BC = wordat(HL) HL += 2  ; count</td>
+<td class="comment-1" rowspan="4">BC = wordat(HL) HL += 2 -- count</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -240,7 +240,7 @@ Next: <a href="E90F.html">E90F</a>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="59506"></span>E872</td>
-<td class="instruction">DEFW <a href="83B5.html">$83B5</a></td>
+<td class="instruction">DEFW <a href="83B5.html">unknown_hook_1</a></td>
 <td class="comment-1" rowspan="1">dst ptr</td>
 </tr>
 <tr>
@@ -346,30 +346,66 @@ Next: <a href="E90F.html">E90F</a>
 <td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
+<td class="routine-comment" colspan="5">
+<span id="59558"></span>
+<div class="comments">
+<div class="paragraph">
+Square zoom in animation mask (8x8, 5 frames)
+</div>
+<div class="paragraph">
+<img alt="anim-e8a6" src="../images/scr/anim-e8a6.png" />
+</div>
+<div class="paragraph">
+<img alt="graphic-e8a6" src="../images/scr/graphic-e8a6.png" />
+</div>
+</div>
+</td>
+</tr>
+<tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="59558"></span>E8A6</td>
 <td class="instruction">DEFB $00,$00,$00,$10,$00,$00,$00,$00</td>
-<td class="comment-1" rowspan="5">looks circular?</td>
+<td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="59566"></span>E8AE</td>
 <td class="instruction">DEFB $00,$00,$00,$18,$18,$00,$00,$00</td>
+<td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="59574"></span>E8B6</td>
 <td class="instruction">DEFB $00,$00,$3C,$3C,$3C,$3C,$00,$00</td>
+<td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="59582"></span>E8BE</td>
 <td class="instruction">DEFB $00,$7E,$7E,$7E,$7E,$7E,$7E,$00</td>
+<td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="59590"></span>E8C6</td>
 <td class="instruction">DEFB $FF,$FF,$FF,$FF,$FF,$FF,$FF,$FF</td>
+<td class="comment-1" rowspan="1"></td>
+</tr>
+<tr>
+<td class="routine-comment" colspan="5">
+<span id="59598"></span>
+<div class="comments">
+<div class="paragraph">
+Diamond zoom in animation mask (8x8, 6 frames)
+</div>
+<div class="paragraph">
+<img alt="anim-e8ce" src="../images/scr/anim-e8ce.png" />
+</div>
+<div class="paragraph">
+<img alt="graphic-e8ce" src="../images/scr/graphic-e8ce.png" />
+</div>
+</div>
+</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -410,19 +446,13 @@ Next: <a href="E90F.html">E90F</a>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="59646"></span>E8FE</td>
-<td class="instruction">DEFB $CD</td>
-<td class="comment-1" rowspan="1"></td>
-</tr>
-<tr>
-<td class="asm-label"></td>
-<td class="address-1"><span id="59647"></span>E8FF</td>
-<td class="instruction">DEFB $40,$EE,$CD,$5E,$EE,$FB,$76,$CD</td>
+<td class="instruction">DEFB $CD,$40,$EE,$CD,$5E,$EE,$FB,$76</td>
 <td class="comment-1" rowspan="2">TBD</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
-<td class="address-1"><span id="59655"></span>E907</td>
-<td class="instruction">DEFB $DA,$EC,$21</td>
+<td class="address-1"><span id="59654"></span>E906</td>
+<td class="instruction">DEFB $CD,$DA,$EC,$21</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -449,7 +479,7 @@ Next: <a href="E90F.html">E90F</a>
 </tr>
 </table>
 <footer>
-<div class="release">The incomplete Chase H.Q. disassembly 20230426</div>
+<div class="release">The incomplete Chase H.Q. disassembly 20230518</div>
 <div class="copyright">&copy; 1989 Ocean Software Ltd.</div>
 <div class="created">Created using <a href="https://skoolkit.ca">SkoolKit</a> 8.9.</div>
 </footer>

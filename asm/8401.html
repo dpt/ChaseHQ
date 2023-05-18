@@ -29,13 +29,13 @@ Next: <a href="852A.html">852A</a>
 <td class="routine-comment" colspan="5">
 <div class="details">
 <div class="paragraph">
-Used by the routines at <a href="83CD.html">83CD</a> and <a href="8A57.html">8A57</a>.
+Used by the routines at <a href="83CD.html">83CD</a> and <a href="8A57.html">handle_perp_caught</a>.
 </div>
 </div>
 </td>
 </tr>
 <tr>
-<td class="asm-label"></td>
+<td class="asm-label">main_loop</td>
 <td class="address-2"><span id="33793"></span>8401</td>
 <td class="instruction">CALL <a href="8014.html">load_stage</a></td>
 <td class="comment-1" rowspan="1">Call load_stage</td>
@@ -105,13 +105,13 @@ Used by the routines at <a href="83CD.html">83CD</a> and <a href="8A57.html">8A5
 <td class="asm-label">l_841b</td>
 <td class="address-2"><span id="33819"></span>841B</td>
 <td class="instruction">CALL <a href="858C.html">$858C</a></td>
-<td class="comment-1" rowspan="1">CALL $858C    ; TBD</td>
+<td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="33822"></span>841E</td>
 <td class="instruction">LD HL,$5D1D</td>
-<td class="comment-1" rowspan="1">LD HL,$5D1D   ;</td>
+<td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -138,7 +138,7 @@ Used by the routines at <a href="83CD.html">83CD</a> and <a href="8A57.html">8A5
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="33833"></span>8429</td>
-<td class="instruction">JR NZ,$842D</td>
+<td class="instruction">JR NZ,<a href="8401.html#33837">main_loop_0</a></td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -146,7 +146,7 @@ Used by the routines at <a href="83CD.html">83CD</a> and <a href="8A57.html">8A5
 <td class="instruction">LD A,$03</td>
 </tr>
 <tr>
-<td class="asm-label"></td>
+<td class="asm-label">main_loop_0</td>
 <td class="address-2"><span id="33837"></span>842D</td>
 <td class="instruction">LD (HL),A</td>
 </tr>
@@ -197,16 +197,16 @@ Used by the routines at <a href="83CD.html">83CD</a> and <a href="8A57.html">8A5
 <td class="asm-label"></td>
 <td class="address-1"><span id="33854"></span>843E</td>
 <td class="instruction">LD HL,$81DD</td>
-<td class="comment-1" rowspan="1">LD HL,$81DD   ;</td>
+<td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="33857"></span>8441</td>
 <td class="instruction">CALL Z,<a href="9945.html">chatter</a></td>
-<td class="comment-1" rowspan="1">message related</td>
+<td class="comment-1" rowspan="1">Call chatter</td>
 </tr>
 <tr>
-<td class="asm-label"></td>
+<td class="asm-label">main_loop_loop</td>
 <td class="address-2"><span id="33860"></span>8444</td>
 <td class="instruction">CALL <a href="8903.html">drive_sfx</a></td>
 <td class="comment-1" rowspan="1">Call drive_sfx</td>
@@ -220,182 +220,182 @@ Used by the routines at <a href="83CD.html">83CD</a> and <a href="8A57.html">8A5
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="33866"></span>844A</td>
-<td class="instruction">CALL <a href="9BCF.html">$9BCF</a></td>
-<td class="comment-1" rowspan="1">TBD - has TIME UP and missing restart stuff</td>
+<td class="instruction">CALL <a href="9BCF.html">tick</a></td>
+<td class="comment-1" rowspan="1">Call tick</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="33869"></span>844D</td>
 <td class="instruction">CALL <a href="8876.html">check_user_input</a></td>
-<td class="comment-1" rowspan="1">TBD - has quit handling</td>
+<td class="comment-1" rowspan="1">Call check_user_input</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="33872"></span>8450</td>
-<td class="instruction">CALL <a href="BDFB.html">$BDFB</a></td>
-<td class="comment-1" rowspan="1">TBD</td>
+<td class="instruction">CALL <a href="BDFB.html">read_map</a></td>
+<td class="comment-1" rowspan="1">Call read_map</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="33875"></span>8453</td>
-<td class="instruction">CALL <a href="8A57.html">$8A57</a></td>
-<td class="comment-1" rowspan="1">TBD - some bonus handling</td>
+<td class="instruction">CALL <a href="8A57.html">handle_perp_caught</a></td>
+<td class="comment-1" rowspan="1">Call handle_perp_caught</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="33878"></span>8456</td>
-<td class="instruction">CALL <a href="B063.html">$B063</a></td>
-<td class="comment-1" rowspan="1">TBD</td>
+<td class="instruction">CALL <a href="B063.html">main_loop_8</a></td>
+<td class="comment-1" rowspan="1">Call main_loop_8</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="33881"></span>8459</td>
-<td class="instruction">CALL <a href="A7F3.html">$A7F3</a></td>
-<td class="comment-1" rowspan="1">TBD</td>
+<td class="instruction">CALL <a href="A7F3.html">main_loop_9</a></td>
+<td class="comment-1" rowspan="1">Call main_loop_9</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="33884"></span>845C</td>
-<td class="instruction">CALL <a href="A60E.html">$A60E</a></td>
-<td class="comment-1" rowspan="1">TBD</td>
+<td class="instruction">CALL <a href="A60E.html">cycle_counters</a></td>
+<td class="comment-1" rowspan="1">Call cycle_counters</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="33887"></span>845F</td>
-<td class="instruction">CALL <a href="83B8.html">$83B8</a></td>
-<td class="comment-1" rowspan="1">&lt;sound&gt;</td>
+<td class="instruction">CALL <a href="83B5.html#33720">engine_sfx_play_hook</a></td>
+<td class="comment-1" rowspan="1">Call engine_sfx_play_hook</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="33890"></span>8462</td>
-<td class="instruction">CALL <a href="CD3A.html">$CD3A</a></td>
-<td class="comment-1" rowspan="1">TBD</td>
+<td class="instruction">CALL <a href="CD3A.html">main_loop_10</a></td>
+<td class="comment-1" rowspan="1">Call main_loop_10</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="33893"></span>8465</td>
-<td class="instruction">CALL <a href="B848.html">$B848</a></td>
-<td class="comment-1" rowspan="1">TBD</td>
+<td class="instruction">CALL <a href="B848.html">main_loop_11</a></td>
+<td class="comment-1" rowspan="1">Call main_loop_11</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="33896"></span>8468</td>
-<td class="instruction">CALL <a href="83B8.html">$83B8</a></td>
-<td class="comment-1" rowspan="1">&lt;sound&gt;</td>
+<td class="instruction">CALL <a href="83B5.html#33720">engine_sfx_play_hook</a></td>
+<td class="comment-1" rowspan="1">Call engine_sfx_play_hook</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="33899"></span>846B</td>
-<td class="instruction">CALL <a href="B9F4.html">$B9F4</a></td>
-<td class="comment-1" rowspan="1">TBD</td>
+<td class="instruction">CALL <a href="B9F4.html">main_loop_12</a></td>
+<td class="comment-1" rowspan="1">Call main_loop_12</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="33902"></span>846E</td>
-<td class="instruction">CALL <a href="83B8.html">$83B8</a></td>
-<td class="comment-1" rowspan="1">&lt;sound&gt;</td>
+<td class="instruction">CALL <a href="83B5.html#33720">engine_sfx_play_hook</a></td>
+<td class="comment-1" rowspan="1">Call engine_sfx_play_hook</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="33905"></span>8471</td>
-<td class="instruction">CALL <a href="C452.html">$C452</a></td>
-<td class="comment-1" rowspan="1">TBD - landscape related</td>
+<td class="instruction">CALL <a href="C452.html">main_loop_13</a></td>
+<td class="comment-1" rowspan="1">Call main_loop_13</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="33908"></span>8474</td>
-<td class="instruction">CALL <a href="83B8.html">$83B8</a></td>
-<td class="comment-1" rowspan="1">&lt;sound&gt;</td>
+<td class="instruction">CALL <a href="83B5.html#33720">engine_sfx_play_hook</a></td>
+<td class="comment-1" rowspan="1">Call engine_sfx_play_hook</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="33911"></span>8477</td>
-<td class="instruction">CALL <a href="A579.html">$A579</a></td>
-<td class="comment-1" rowspan="1">TBD</td>
+<td class="instruction">CALL <a href="A579.html">main_loop_14</a></td>
+<td class="comment-1" rowspan="1">Call main_loop_14</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="33914"></span>847A</td>
-<td class="instruction">CALL <a href="C0E1.html">$C0E1</a></td>
-<td class="comment-1" rowspan="1">TBD</td>
+<td class="instruction">CALL <a href="C0E1.html">main_loop_15</a></td>
+<td class="comment-1" rowspan="1">Call main_loop_15</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="33917"></span>847D</td>
-<td class="instruction">CALL <a href="AB9A.html">$AB9A</a></td>
-<td class="comment-1" rowspan="1">TBD</td>
+<td class="instruction">CALL <a href="AB9A.html">spawn_hazards</a></td>
+<td class="comment-1" rowspan="1">Call main_loop_16</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="33920"></span>8480</td>
-<td class="instruction">CALL <a href="AB33.html">$AB33</a></td>
-<td class="comment-1" rowspan="1">TBD - helicopter related</td>
+<td class="instruction">CALL <a href="AB33.html">main_loop_17</a></td>
+<td class="comment-1" rowspan="1">Call main_loop_17</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="33923"></span>8483</td>
-<td class="instruction">CALL <a href="A955.html">$A955</a></td>
-<td class="comment-1" rowspan="1">TBD</td>
+<td class="instruction">CALL <a href="A955.html">main_loop_18</a></td>
+<td class="comment-1" rowspan="1">Call main_loop_18</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="33926"></span>8486</td>
-<td class="instruction">CALL <a href="83B8.html">$83B8</a></td>
-<td class="comment-1" rowspan="1">&lt;sound&gt;</td>
+<td class="instruction">CALL <a href="83B5.html#33720">engine_sfx_play_hook</a></td>
+<td class="comment-1" rowspan="1">Call engine_sfx_play_hook</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="33929"></span>8489</td>
-<td class="instruction">CALL <a href="ADA0.html">$ADA0</a></td>
-<td class="comment-1" rowspan="1">TBD</td>
+<td class="instruction">CALL <a href="ADA0.html">main_loop_19</a></td>
+<td class="comment-1" rowspan="1">Call main_loop_19</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="33932"></span>848C</td>
-<td class="instruction">CALL <a href="A97E.html">$A97E</a></td>
-<td class="comment-1" rowspan="1">TBD</td>
+<td class="instruction">CALL <a href="A97E.html">main_loop_20</a></td>
+<td class="comment-1" rowspan="1">Call main_loop_20</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="33935"></span>848F</td>
-<td class="instruction">CALL <a href="83B8.html">$83B8</a></td>
-<td class="comment-1" rowspan="1">&lt;sound&gt;</td>
+<td class="instruction">CALL <a href="83B5.html#33720">engine_sfx_play_hook</a></td>
+<td class="comment-1" rowspan="1">Call engine_sfx_play_hook</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="33938"></span>8492</td>
-<td class="instruction">CALL <a href="AAC6.html">$AAC6</a></td>
-<td class="comment-1" rowspan="1">TBD</td>
+<td class="instruction">CALL <a href="AAC6.html">main_loop_21</a></td>
+<td class="comment-1" rowspan="1">Call main_loop_21</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="33941"></span>8495</td>
-<td class="instruction">CALL <a href="A399.html">$A399</a></td>
-<td class="comment-1" rowspan="1">TBD</td>
+<td class="instruction">CALL <a href="A399.html">main_loop_22</a></td>
+<td class="comment-1" rowspan="1">Call main_loop_22</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="33944"></span>8498</td>
-<td class="instruction">CALL <a href="83B8.html">$83B8</a></td>
-<td class="comment-1" rowspan="1">&lt;sound&gt;</td>
+<td class="instruction">CALL <a href="83B5.html#33720">engine_sfx_play_hook</a></td>
+<td class="comment-1" rowspan="1">Call engine_sfx_play_hook</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="33947"></span>849B</td>
-<td class="instruction">CALL <a href="8F5F.html">$8F5F</a></td>
-<td class="comment-1" rowspan="1">TBD</td>
+<td class="instruction">CALL <a href="8F5F.html">main_loop_23</a></td>
+<td class="comment-1" rowspan="1">Call main_loop_23</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="33950"></span>849E</td>
-<td class="instruction">CALL <a href="83B8.html">$83B8</a></td>
-<td class="comment-1" rowspan="1">&lt;sound&gt;</td>
+<td class="instruction">CALL <a href="83B5.html#33720">engine_sfx_play_hook</a></td>
+<td class="comment-1" rowspan="1">Call engine_sfx_play_hook</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="33953"></span>84A1</td>
-<td class="instruction">CALL <a href="B318.html">$B318</a></td>
-<td class="comment-1" rowspan="1">TBD</td>
+<td class="instruction">CALL <a href="B318.html">main_loop_24</a></td>
+<td class="comment-1" rowspan="1">Call main_loop_24</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -406,8 +406,8 @@ Used by the routines at <a href="83CD.html">83CD</a> and <a href="8A57.html">8A5
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="33959"></span>84A7</td>
-<td class="instruction">CALL <a href="9D62.html">$9D62</a></td>
-<td class="comment-1" rowspan="1">stage/bonus/LO-HI/flashing lights</td>
+<td class="instruction">CALL <a href="9D51.html#40290">update_scoreboard</a></td>
+<td class="comment-1" rowspan="1">Call main_loop_25</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -418,20 +418,20 @@ Used by the routines at <a href="83CD.html">83CD</a> and <a href="8A57.html">8A5
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="33965"></span>84AD</td>
-<td class="instruction">CALL <a href="83B8.html">$83B8</a></td>
-<td class="comment-1" rowspan="1">&lt;sound&gt;</td>
+<td class="instruction">CALL <a href="83B5.html#33720">engine_sfx_play_hook</a></td>
+<td class="comment-1" rowspan="1">Call engine_sfx_play_hook</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="33968"></span>84B0</td>
-<td class="instruction">CALL <a href="9965.html">$9965</a></td>
-<td class="comment-1" rowspan="1">noise effect, message plotting</td>
+<td class="instruction">CALL <a href="9965.html">main_loop_26</a></td>
+<td class="comment-1" rowspan="1">Call main_loop_26</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="33971"></span>84B3</td>
 <td class="instruction">CALL <a href="8EE7.html">smash_bar_etc</a></td>
-<td class="comment-1" rowspan="1">TBD - tiny func</td>
+<td class="comment-1" rowspan="1">Call smash_bar_etc</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -442,20 +442,20 @@ Used by the routines at <a href="83CD.html">83CD</a> and <a href="8A57.html">8A5
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="33977"></span>84B9</td>
-<td class="instruction">CALL <a href="83B8.html">$83B8</a></td>
-<td class="comment-1" rowspan="1">&lt;sound&gt;</td>
+<td class="instruction">CALL <a href="83B5.html#33720">engine_sfx_play_hook</a></td>
+<td class="comment-1" rowspan="1">Call engine_sfx_play_hook</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="33980"></span>84BC</td>
 <td class="instruction">CALL <a href="BC3E.html">draw_screen</a></td>
-<td class="comment-1" rowspan="1">Call draw_screen -- copy backbuffer to screen</td>
+<td class="comment-1" rowspan="1">Call draw_screen</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="33983"></span>84BF</td>
-<td class="instruction">CALL <a href="BB69.html">$BB69</a></td>
-<td class="comment-1" rowspan="1">TBD</td>
+<td class="instruction">CALL <a href="BB69.html">main_loop_27</a></td>
+<td class="comment-1" rowspan="1">Call main_loop_27</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -485,7 +485,7 @@ Test mode handling
 </td>
 </tr>
 <tr>
-<td class="asm-label"></td>
+<td class="asm-label">handle_test_mode</td>
 <td class="address-1"><span id="33992"></span>84C8</td>
 <td class="instruction">LD A,$F7</td>
 <td class="comment-1" rowspan="2">Read keys 1/2/3/4/5</td>
@@ -517,31 +517,31 @@ Test mode handling
 <td class="asm-label"></td>
 <td class="address-1"><span id="34001"></span>84D1</td>
 <td class="instruction">EX AF,AF'</td>
-<td class="comment-1" rowspan="1">EX AF,AF'     ;</td>
+<td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="34002"></span>84D2</td>
 <td class="instruction">LD BC,$0804</td>
-<td class="comment-1" rowspan="1">LD BC,$0804   ;</td>
+<td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="34005"></span>84D5</td>
 <td class="instruction">CALL <a href="88F2.html">start_sfx</a></td>
-<td class="comment-1" rowspan="1">TBD</td>
+<td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="34008"></span>84D8</td>
-<td class="instruction">CALL <a href="83BB.html">$83BB</a></td>
-<td class="comment-1" rowspan="1">Silence audio</td>
+<td class="instruction">CALL <a href="83B5.html#33723">silence_audio_hook</a></td>
+<td class="comment-1" rowspan="1">Call silence_audio_hook</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="34011"></span>84DB</td>
 <td class="instruction">EX AF,AF'</td>
-<td class="comment-1" rowspan="1">EX AF,AF'     ;</td>
+<td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -552,14 +552,14 @@ Test mode handling
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="34013"></span>84DD</td>
-<td class="instruction">JP C,$8401</td>
+<td class="instruction">JP C,<a href="8401.html#33793">main_loop</a></td>
 <td class="comment-1" rowspan="1">Restart level if so</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="34016"></span>84E0</td>
 <td class="instruction">LD HL,$8007</td>
-<td class="comment-1" rowspan="1">HL = &amp;stage_number</td>
+<td class="comment-1" rowspan="1">HL = &amp;wanted_stage_number</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -570,23 +570,23 @@ Test mode handling
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="34020"></span>84E4</td>
-<td class="instruction">JR NC,$84EA</td>
+<td class="instruction">JR NC,<a href="8401.html#34026">main_loop_1</a></td>
 <td class="comment-1" rowspan="1">Jump if NOT</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="34022"></span>84E6</td>
 <td class="instruction">INC (HL)</td>
-<td class="comment-1" rowspan="1">stage_number++</td>
+<td class="comment-1" rowspan="1">wanted_stage_number++</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="34023"></span>84E7</td>
-<td class="instruction">JP $8401</td>
+<td class="instruction">JP <a href="8401.html#33793">main_loop</a></td>
 <td class="comment-1" rowspan="1">Exit via load_stage</td>
 </tr>
 <tr>
-<td class="asm-label"></td>
+<td class="asm-label">main_loop_1</td>
 <td class="address-2"><span id="34026"></span>84EA</td>
 <td class="instruction">RRA</td>
 <td class="comment-1" rowspan="1">Is bit 2 set? (key 3 to load the end screen)</td>
@@ -594,23 +594,23 @@ Test mode handling
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="34027"></span>84EB</td>
-<td class="instruction">JR NC,$84F2</td>
+<td class="instruction">JR NC,<a href="8401.html#34034">main_loop_2</a></td>
 <td class="comment-1" rowspan="1">Jump if NOT</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="34029"></span>84ED</td>
 <td class="instruction">LD (HL),$06</td>
-<td class="comment-1" rowspan="1">stage_number = 6</td>
+<td class="comment-1" rowspan="1">wanted_stage_number = 6</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="34031"></span>84EF</td>
-<td class="instruction">JP $8401</td>
+<td class="instruction">JP <a href="8401.html#33793">main_loop</a></td>
 <td class="comment-1" rowspan="1">Exit via load_stage</td>
 </tr>
 <tr>
-<td class="asm-label"></td>
+<td class="asm-label">main_loop_2</td>
 <td class="address-2"><span id="34034"></span>84F2</td>
 <td class="instruction">LD HL,$A13D</td>
 <td class="comment-1" rowspan="5">Increment credits unless maxed out at 9</td>
@@ -639,121 +639,121 @@ Test mode handling
 <td class="asm-label">no_test_mode</td>
 <td class="address-2"><span id="34043"></span>84FB</td>
 <td class="instruction">LD A,($A231)</td>
-<td class="comment-1" rowspan="1">LD A,($A231)  ;</td>
+<td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="34046"></span>84FE</td>
 <td class="instruction">AND A</td>
-<td class="comment-1" rowspan="1">AND A         ;</td>
+<td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="34047"></span>84FF</td>
-<td class="instruction">JP NZ,$8444</td>
-<td class="comment-1" rowspan="1">JP NZ,$8444   ;</td>
+<td class="instruction">JP NZ,<a href="8401.html#33860">main_loop_loop</a></td>
+<td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="34050"></span>8502</td>
 <td class="instruction">LD HL,$A26B</td>
-<td class="comment-1" rowspan="1">LD HL,$A26B   ;</td>
+<td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="34053"></span>8505</td>
 <td class="instruction">SRL (HL)</td>
-<td class="comment-1" rowspan="1">SRL (HL)      ;</td>
+<td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="34055"></span>8507</td>
-<td class="instruction">JR NC,$8512</td>
-<td class="comment-1" rowspan="1">JR NC,$8512   ;</td>
+<td class="instruction">JR NC,<a href="8401.html#34066">main_loop_3</a></td>
+<td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="34057"></span>8509</td>
 <td class="instruction">LD A,(HL)</td>
-<td class="comment-1" rowspan="1">A = *HL</td>
+<td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="34058"></span>850A</td>
 <td class="instruction">LD (HL),$00</td>
-<td class="comment-1" rowspan="1">LD (HL),$00   ;</td>
+<td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="34060"></span>850C</td>
-<td class="instruction">CALL <a href="83C7.html">$83C7</a></td>
-<td class="comment-1" rowspan="1">CALL $83C7    ;</td>
+<td class="instruction">CALL <a href="83B5.html#33735">unknown_hook_3</a></td>
+<td class="comment-1" rowspan="1">Call hooked function (likely sfx)</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="34063"></span>850F</td>
-<td class="instruction">JP $8444</td>
-<td class="comment-1" rowspan="1">JP $8444      ;</td>
+<td class="instruction">JP <a href="8401.html#33860">main_loop_loop</a></td>
+<td class="comment-1" rowspan="1">Loop</td>
 </tr>
 <tr>
-<td class="asm-label"></td>
+<td class="asm-label">main_loop_3</td>
 <td class="address-2"><span id="34066"></span>8512</td>
 <td class="instruction">LD A,($A26A)</td>
-<td class="comment-1" rowspan="1">LD A,($A26A)  ;</td>
+<td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="34069"></span>8515</td>
 <td class="instruction">AND A</td>
-<td class="comment-1" rowspan="1">AND A         ;</td>
+<td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="34070"></span>8516</td>
-<td class="instruction">JP Z,$8444</td>
-<td class="comment-1" rowspan="1">JP Z,$8444    ;</td>
+<td class="instruction">JP Z,<a href="8401.html#33860">main_loop_loop</a></td>
+<td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="34073"></span>8519</td>
 <td class="instruction">DEC A</td>
-<td class="comment-1" rowspan="1">DEC A         ;</td>
+<td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="34074"></span>851A</td>
-<td class="instruction">JP NZ,<a href="873C.html">$873C</a></td>
-<td class="comment-1" rowspan="1">JP NZ,$873C   ;</td>
+<td class="instruction">JP NZ,<a href="873C.html">escape_scene</a></td>
+<td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="34077"></span>851D</td>
 <td class="instruction">LD A,$02</td>
-<td class="comment-1" rowspan="1">LD A,$02      ;</td>
+<td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="34079"></span>851F</td>
 <td class="instruction">LD ($A26A),A</td>
-<td class="comment-1" rowspan="1">LD ($A26A),A  ;</td>
+<td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="34082"></span>8522</td>
 <td class="instruction">LD A,$08</td>
-<td class="comment-1" rowspan="1">LD A,$08      ;</td>
+<td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="34084"></span>8524</td>
 <td class="instruction">CALL <a href="8DF9.html">setup_transition</a></td>
-<td class="comment-1" rowspan="1">CALL $8DF9    ;</td>
+<td class="comment-1" rowspan="1">Call setup_transition</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="34087"></span>8527</td>
-<td class="instruction">JP $8444</td>
-<td class="comment-1" rowspan="1">JP $8444      ;</td>
+<td class="instruction">JP <a href="8401.html#33860">main_loop_loop</a></td>
+<td class="comment-1" rowspan="1">Loop</td>
 </tr>
 </table>
 <table class="asm-navigation">
@@ -768,7 +768,7 @@ Next: <a href="852A.html">852A</a>
 </tr>
 </table>
 <footer>
-<div class="release">The incomplete Chase H.Q. disassembly 20230426</div>
+<div class="release">The incomplete Chase H.Q. disassembly 20230518</div>
 <div class="copyright">&copy; 1989 Ocean Software Ltd.</div>
 <div class="created">Created using <a href="https://skoolkit.ca">SkoolKit</a> 8.9.</div>
 </footer>

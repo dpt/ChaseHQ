@@ -29,7 +29,7 @@ Next: <a href="8258.html">8258</a>
 <td class="routine-comment" colspan="5">
 <div class="details">
 <div class="paragraph">
-Used by the routine at <a href="83C4.html">83C4</a>.
+Used by the routine at <a href="83B5.html">unknown_hook_1</a>.
 </div>
 </div>
 </td>
@@ -44,7 +44,7 @@ Used by the routine at <a href="83C4.html">83C4</a>.
 <td class="asm-label"></td>
 <td class="address-1"><span id="33287"></span>8207</td>
 <td class="instruction">RR H</td>
-<td class="comment-1" rowspan="1">A = speed / 2</td>
+<td class="comment-1" rowspan="1">A = speed / 2 (top half)</td>
 </tr>
 <tr>
 <td class="routine-comment" colspan="5">
@@ -60,13 +60,12 @@ This entry point is used by the routine at <a href="F220.html">F220</a>.
 <td class="asm-label">engine_sfx_setup_0</td>
 <td class="address-2"><span id="33289"></span>8209</td>
 <td class="instruction">LD A,L</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="2">A = speed / 2 (bottom half)</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="33290"></span>820A</td>
 <td class="instruction">RRA</td>
-<td class="comment-1" rowspan="1">}</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -190,7 +189,7 @@ This entry point is used by the routine at <a href="F220.html">F220</a>.
 <span id="33332"></span>
 <div class="comments">
 <div class="paragraph">
-This entry point is used by the routine at <a href="83B8.html">83B8</a>.
+This entry point is used by the routine at <a href="83B5.html">unknown_hook_1</a>.
 </div>
 </div>
 </td>
@@ -199,7 +198,7 @@ This entry point is used by the routine at <a href="83B8.html">83B8</a>.
 <td class="asm-label">engine_sfx_play</td>
 <td class="address-2"><span id="33332"></span>8234</td>
 <td class="instruction">LD A,($A230)</td>
-<td class="comment-1" rowspan="3">If $A230 &gt;= 3 then return</td>
+<td class="comment-1" rowspan="3">Return if perp_caught_stage is &gt;= 3 (when car stops)</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -328,7 +327,7 @@ Next: <a href="8258.html">8258</a>
 </tr>
 </table>
 <footer>
-<div class="release">The incomplete Chase H.Q. disassembly 20230426</div>
+<div class="release">The incomplete Chase H.Q. disassembly 20230518</div>
 <div class="copyright">&copy; 1989 Ocean Software Ltd.</div>
 <div class="created">Created using <a href="https://skoolkit.ca">SkoolKit</a> 8.9.</div>
 </footer>

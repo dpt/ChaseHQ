@@ -106,7 +106,7 @@ This runs the game loop while driving the car.
 <td class="asm-label">cd_check_speed</td>
 <td class="address-2"><span id="34115"></span>8543</td>
 <td class="instruction">LD C,A</td>
-<td class="comment-1" rowspan="1">C = A</td>
+<td class="comment-1" rowspan="1">Move input into <span class="register">C</span> for the moment</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -140,7 +140,7 @@ This runs the game loop while driving the car.
 <td class="asm-label"></td>
 <td class="address-1"><span id="34129"></span>8551</td>
 <td class="instruction">JR NZ,<a href="852A.html#34133">cd_set_input</a></td>
-<td class="comment-1" rowspan="1">JR NZ,$8555   ;</td>
+<td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -162,104 +162,104 @@ This runs the game loop while driving the car.
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="34137"></span>8559</td>
-<td class="instruction">CALL <a href="BDFB.html">$BDFB</a></td>
-<td class="comment-1" rowspan="1">CALL $BDFB    ; this lot must run a chunk of attract mode funcs</td>
+<td class="instruction">CALL <a href="BDFB.html">read_map</a></td>
+<td class="comment-1" rowspan="1">Call read_map</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="34140"></span>855C</td>
-<td class="instruction">CALL <a href="A7F3.html">$A7F3</a></td>
-<td class="comment-1" rowspan="1">CALL $A7F3    ;</td>
+<td class="instruction">CALL <a href="A7F3.html">main_loop_9</a></td>
+<td class="comment-1" rowspan="1">Call main_loop_9</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="34143"></span>855F</td>
-<td class="instruction">CALL <a href="A60E.html">$A60E</a></td>
-<td class="comment-1" rowspan="1">CALL $A60E    ;</td>
+<td class="instruction">CALL <a href="A60E.html">cycle_counters</a></td>
+<td class="comment-1" rowspan="1">Call cycle_counters</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="34146"></span>8562</td>
-<td class="instruction">CALL <a href="CD3A.html">$CD3A</a></td>
-<td class="comment-1" rowspan="1">CALL $CD3A    ;</td>
+<td class="instruction">CALL <a href="CD3A.html">main_loop_10</a></td>
+<td class="comment-1" rowspan="1">Call main_loop_10</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="34149"></span>8565</td>
-<td class="instruction">CALL <a href="B848.html">$B848</a></td>
-<td class="comment-1" rowspan="1">CALL $B848    ;</td>
+<td class="instruction">CALL <a href="B848.html">main_loop_11</a></td>
+<td class="comment-1" rowspan="1">Call main_loop_11</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="34152"></span>8568</td>
-<td class="instruction">CALL <a href="B9F4.html">$B9F4</a></td>
-<td class="comment-1" rowspan="1">CALL $B9F4    ;</td>
+<td class="instruction">CALL <a href="B9F4.html">main_loop_12</a></td>
+<td class="comment-1" rowspan="1">Call main_loop_12</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="34155"></span>856B</td>
-<td class="instruction">CALL <a href="C452.html">$C452</a></td>
-<td class="comment-1" rowspan="1">CALL $C452    ; landscape related</td>
+<td class="instruction">CALL <a href="C452.html">main_loop_13</a></td>
+<td class="comment-1" rowspan="1">Call main_loop_13</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="34158"></span>856E</td>
-<td class="instruction">CALL <a href="A579.html">$A579</a></td>
-<td class="comment-1" rowspan="1">CALL $A579    ;</td>
+<td class="instruction">CALL <a href="A579.html">main_loop_14</a></td>
+<td class="comment-1" rowspan="1">Call main_loop_14</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="34161"></span>8571</td>
-<td class="instruction">CALL <a href="C0E1.html">$C0E1</a></td>
-<td class="comment-1" rowspan="1">CALL $C0E1    ;</td>
+<td class="instruction">CALL <a href="C0E1.html">main_loop_15</a></td>
+<td class="comment-1" rowspan="1">Call main_loop_15</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="34164"></span>8574</td>
-<td class="instruction">CALL <a href="AB9A.html">$AB9A</a></td>
-<td class="comment-1" rowspan="1">CALL $AB9A    ;</td>
+<td class="instruction">CALL <a href="AB9A.html">spawn_hazards</a></td>
+<td class="comment-1" rowspan="1">Call main_loop_16</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="34167"></span>8577</td>
-<td class="instruction">CALL <a href="A955.html">$A955</a></td>
-<td class="comment-1" rowspan="1">CALL $A955    ;</td>
+<td class="instruction">CALL <a href="A955.html">main_loop_18</a></td>
+<td class="comment-1" rowspan="1">Call main_loop_18</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="34170"></span>857A</td>
-<td class="instruction">CALL <a href="A97E.html">$A97E</a></td>
-<td class="comment-1" rowspan="1">CALL $A97E    ;</td>
+<td class="instruction">CALL <a href="A97E.html">main_loop_20</a></td>
+<td class="comment-1" rowspan="1">Call main_loop_20</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="34173"></span>857D</td>
-<td class="instruction">CALL <a href="ADA0.html">$ADA0</a></td>
-<td class="comment-1" rowspan="1">CALL $ADA0    ;</td>
+<td class="instruction">CALL <a href="ADA0.html">main_loop_19</a></td>
+<td class="comment-1" rowspan="1">Call main_loop_19</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="34176"></span>8580</td>
-<td class="instruction">CALL <a href="B063.html">$B063</a></td>
-<td class="comment-1" rowspan="1">CALL $B063    ;</td>
+<td class="instruction">CALL <a href="B063.html">main_loop_8</a></td>
+<td class="comment-1" rowspan="1">Call main_loop_8</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="34179"></span>8583</td>
-<td class="instruction">CALL <a href="A399.html">$A399</a></td>
-<td class="comment-1" rowspan="1">CALL $A399    ;</td>
+<td class="instruction">CALL <a href="A399.html">main_loop_22</a></td>
+<td class="comment-1" rowspan="1">Call main_loop_22</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="34182"></span>8586</td>
-<td class="instruction">CALL <a href="8F5F.html">$8F5F</a></td>
-<td class="comment-1" rowspan="1">CALL $8F5F    ;</td>
+<td class="instruction">CALL <a href="8F5F.html">main_loop_23</a></td>
+<td class="comment-1" rowspan="1">Call main_loop_23</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="34185"></span>8589</td>
-<td class="instruction">JP <a href="B318.html">$B318</a></td>
-<td class="comment-1" rowspan="1">JP $B318      ;</td>
+<td class="instruction">JP <a href="B318.html">main_loop_24</a></td>
+<td class="comment-1" rowspan="1">Exit via main_loop_24</td>
 </tr>
 </table>
 <table class="asm-navigation">
@@ -274,7 +274,7 @@ Next: <a href="858C.html">858C</a>
 </tr>
 </table>
 <footer>
-<div class="release">The incomplete Chase H.Q. disassembly 20230426</div>
+<div class="release">The incomplete Chase H.Q. disassembly 20230518</div>
 <div class="copyright">&copy; 1989 Ocean Software Ltd.</div>
 <div class="created">Created using <a href="https://skoolkit.ca">SkoolKit</a> 8.9.</div>
 </footer>

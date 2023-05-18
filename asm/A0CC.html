@@ -15,7 +15,7 @@
 <table class="asm-navigation">
 <tr>
 <td class="prev">
-Prev: <a href="A03D.html">A03D</a>
+Prev: <a href="9FB4.html">9FB4</a>
 </td>
 <td class="up">Up: <a href="../maps/all.html#41164">Map</a></td>
 <td class="next">
@@ -23,7 +23,7 @@ Next: <a href="A139.html">A139</a>
 </td>
 </tr>
 </table>
-<div class="description">A0CC: Routine at A0CC</div>
+<div class="description">A0CC: Keyscan</div>
 <table class="disassembly">
 <tr>
 <td class="routine-comment" colspan="5">
@@ -38,7 +38,7 @@ Next: <a href="A139.html">A139</a>
 <td class="comment-1" rowspan="1">Set to 1 if Kempston joystick is chosen, 0 otherwise</td>
 </tr>
 <tr>
-<td class="asm-label"></td>
+<td class="asm-label">keydefs_probably</td>
 <td class="address-1"><span id="41165"></span>A0CD</td>
 <td class="instruction">DEFB $25,$22,$20,$23,$1B,$13,$03,$0B</td>
 <td class="comment-1" rowspan="1">must be keydefs</td>
@@ -54,7 +54,7 @@ Next: <a href="A139.html">A139</a>
 <span id="41174"></span>
 <div class="comments">
 <div class="paragraph">
-This entry point is used by the routines at <a href="8014.html">load_stage</a>, <a href="8258.html">attract_mode</a>, <a href="8401.html">8401</a>, <a href="858C.html">858C</a>, <a href="8876.html">check_user_input</a> and <a href="F220.html">F220</a>.
+This entry point is used by the routines at <a href="8014.html">load_stage</a>, <a href="8258.html">attract_mode</a>, <a href="8401.html">main_loop</a>, <a href="858C.html">858C</a>, <a href="8876.html">check_user_input</a> and <a href="F220.html">F220</a>.
 </div>
 </div>
 </td>
@@ -73,7 +73,7 @@ This entry point is used by the routines at <a href="8014.html">load_stage</a>, 
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="41178"></span>A0DA</td>
-<td class="instruction">JR Z,<a href="A0CC.html#41203">keyscan_keyboard</a></td>
+<td class="instruction">JR Z,<a href="A0CC.html#41203">ks_keyboard</a></td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -90,163 +90,163 @@ This entry point is used by the routines at <a href="8014.html">load_stage</a>, 
 <td class="asm-label"></td>
 <td class="address-1"><span id="41184"></span>A0E0</td>
 <td class="instruction">PUSH AF</td>
-<td class="comment-1" rowspan="1">PUSH AF      ;</td>
+<td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="41185"></span>A0E1</td>
 <td class="instruction">LD E,$20</td>
-<td class="comment-1" rowspan="1">LD E,$20     ;</td>
+<td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="41187"></span>A0E3</td>
 <td class="instruction">LD HL,$A0CD</td>
-<td class="comment-1" rowspan="1">LD HL,$A0CD  ;</td>
+<td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="41190"></span>A0E6</td>
 <td class="instruction">CALL <a href="A0CC.html#41234">kempston_flag_2</a></td>
-<td class="comment-1" rowspan="1">CALL $A112   ;</td>
+<td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="41193"></span>A0E9</td>
 <td class="instruction">RRCA</td>
-<td class="comment-1" rowspan="1">RRCA         ;</td>
+<td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="41194"></span>A0EA</td>
 <td class="instruction">RRCA</td>
-<td class="comment-1" rowspan="1">RRCA         ;</td>
+<td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="41195"></span>A0EB</td>
 <td class="instruction">RRCA</td>
-<td class="comment-1" rowspan="1">RRCA         ;</td>
+<td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="41196"></span>A0EC</td>
 <td class="instruction">AND $E0</td>
-<td class="comment-1" rowspan="1">AND $E0      ;</td>
+<td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="41198"></span>A0EE</td>
 <td class="instruction">POP DE</td>
-<td class="comment-1" rowspan="1">POP DE       ;</td>
+<td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="41199"></span>A0EF</td>
 <td class="instruction">OR D</td>
-<td class="comment-1" rowspan="1">OR D         ;</td>
+<td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="41200"></span>A0F0</td>
 <td class="instruction">LD E,A</td>
-<td class="comment-1" rowspan="1">LD E,A       ;</td>
+<td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="41201"></span>A0F1</td>
-<td class="instruction">JR <a href="A0CC.html#41211">keyscan_common</a></td>
-<td class="comment-1" rowspan="1">JR $A0FB     ;</td>
+<td class="instruction">JR <a href="A0CC.html#41211">ks_common</a></td>
+<td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
-<td class="asm-label">keyscan_keyboard</td>
+<td class="asm-label">ks_keyboard</td>
 <td class="address-2"><span id="41203"></span>A0F3</td>
 <td class="instruction">LD E,$01</td>
-<td class="comment-1" rowspan="1">LD E,$01     ;</td>
+<td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="41205"></span>A0F5</td>
 <td class="instruction">LD HL,$A0CD</td>
-<td class="comment-1" rowspan="1">LD HL,$A0CD  ;</td>
+<td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="41208"></span>A0F8</td>
 <td class="instruction">CALL <a href="A0CC.html#41234">kempston_flag_2</a></td>
-<td class="comment-1" rowspan="1">CALL $A112   ;</td>
+<td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
-<td class="asm-label">keyscan_common</td>
+<td class="asm-label">ks_common</td>
 <td class="address-2"><span id="41211"></span>A0FB</td>
 <td class="instruction">AND $03</td>
-<td class="comment-1" rowspan="1">AND $03      ;</td>
+<td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="41213"></span>A0FD</td>
 <td class="instruction">CP $03</td>
-<td class="comment-1" rowspan="1">CP $03       ;</td>
+<td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="41215"></span>A0FF</td>
 <td class="instruction">LD A,E</td>
-<td class="comment-1" rowspan="1">LD A,E       ;</td>
+<td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="41216"></span>A100</td>
 <td class="instruction">JR NZ,<a href="A0CC.html#41221">kempston_flag_0</a></td>
-<td class="comment-1" rowspan="1">JR NZ,$A105  ;</td>
+<td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="41218"></span>A102</td>
 <td class="instruction">AND $FC</td>
-<td class="comment-1" rowspan="1">AND $FC      ;</td>
+<td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="41220"></span>A104</td>
 <td class="instruction">LD E,A</td>
-<td class="comment-1" rowspan="1">LD E,A       ;</td>
+<td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
 <td class="asm-label">kempston_flag_0</td>
 <td class="address-2"><span id="41221"></span>A105</td>
 <td class="instruction">AND $0C</td>
-<td class="comment-1" rowspan="1">AND $0C      ;</td>
+<td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="41223"></span>A107</td>
 <td class="instruction">CP $0C</td>
-<td class="comment-1" rowspan="1">CP $0C       ;</td>
+<td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="41225"></span>A109</td>
 <td class="instruction">LD A,E</td>
-<td class="comment-1" rowspan="1">LD A,E       ;</td>
+<td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="41226"></span>A10A</td>
 <td class="instruction">JR NZ,<a href="A0CC.html#41230">kempston_flag_1</a></td>
-<td class="comment-1" rowspan="1">JR NZ,$A10E  ;</td>
+<td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="41228"></span>A10C</td>
 <td class="instruction">AND $F3</td>
-<td class="comment-1" rowspan="1">AND $F3      ;</td>
+<td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
 <td class="asm-label">kempston_flag_1</td>
 <td class="address-2"><span id="41230"></span>A10E</td>
 <td class="instruction">LD ($A0D5),A</td>
-<td class="comment-1" rowspan="1">LD ($A0D5),A ;</td>
+<td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -258,43 +258,43 @@ This entry point is used by the routines at <a href="8014.html">load_stage</a>, 
 <td class="asm-label">kempston_flag_2</td>
 <td class="address-2"><span id="41234"></span>A112</td>
 <td class="instruction">LD A,(HL)</td>
-<td class="comment-1" rowspan="1">LD A,(HL)    ; Outer keyboard loop</td>
+<td class="comment-1" rowspan="1">Outer keyboard loop</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="41235"></span>A113</td>
 <td class="instruction">INC HL</td>
-<td class="comment-1" rowspan="1">INC HL       ;</td>
+<td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="41236"></span>A114</td>
 <td class="instruction">CALL <a href="A0CC.html#41246">keyscan_inner</a></td>
-<td class="comment-1" rowspan="1">CALL $A11E   ;</td>
+<td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="41239"></span>A117</td>
 <td class="instruction">CCF</td>
-<td class="comment-1" rowspan="1">CCF          ; clear carry</td>
+<td class="comment-1" rowspan="1">clear carry</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="41240"></span>A118</td>
 <td class="instruction">RL E</td>
-<td class="comment-1" rowspan="1">RL E         ;</td>
+<td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="41242"></span>A11A</td>
 <td class="instruction">JR NC,<a href="A0CC.html#41234">kempston_flag_2</a></td>
-<td class="comment-1" rowspan="1">JR NC,$A112  ; loop while top bit set?</td>
+<td class="comment-1" rowspan="1">loop while top bit set?</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="41244"></span>A11C</td>
 <td class="instruction">LD A,E</td>
-<td class="comment-1" rowspan="1">LD A,E       ;</td>
+<td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -306,7 +306,7 @@ This entry point is used by the routines at <a href="8014.html">load_stage</a>, 
 <td class="asm-label">keyscan_inner</td>
 <td class="address-2"><span id="41246"></span>A11E</td>
 <td class="instruction">LD C,A</td>
-<td class="comment-1" rowspan="1">LD C,A       ; Inner keyboard loop.... what's in <span class="register">A</span>?</td>
+<td class="comment-1" rowspan="1">Inner keyboard loop.... what's in <span class="register">A</span>?</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -374,7 +374,7 @@ This entry point is used by the routines at <a href="8014.html">load_stage</a>, 
 <td class="asm-label"></td>
 <td class="address-1"><span id="41266"></span>A132</td>
 <td class="instruction">IN A,($FE)</td>
-<td class="comment-1" rowspan="1">IN A,($FE)   ; Port $FE is the AND of all columns/rows? This is the main keyboard access</td>
+<td class="comment-1" rowspan="1">Port $FE is the AND of all columns/rows? This is the main keyboard access</td>
 </tr>
 <tr>
 <td class="asm-label">kempston_flag_4</td>
@@ -402,7 +402,7 @@ This entry point is used by the routines at <a href="8014.html">load_stage</a>, 
 <table class="asm-navigation">
 <tr>
 <td class="prev">
-Prev: <a href="A03D.html">A03D</a>
+Prev: <a href="9FB4.html">9FB4</a>
 </td>
 <td class="up">Up: <a href="../maps/all.html#41164">Map</a></td>
 <td class="next">
@@ -411,7 +411,7 @@ Next: <a href="A139.html">A139</a>
 </tr>
 </table>
 <footer>
-<div class="release">The incomplete Chase H.Q. disassembly 20230426</div>
+<div class="release">The incomplete Chase H.Q. disassembly 20230518</div>
 <div class="copyright">&copy; 1989 Ocean Software Ltd.</div>
 <div class="created">Created using <a href="https://skoolkit.ca">SkoolKit</a> 8.9.</div>
 </footer>

@@ -29,7 +29,7 @@ Next: <a href="9F47.html">9F47</a>
 <td class="routine-comment" colspan="5">
 <div class="details">
 <div class="paragraph">
-Used by the routine at <a href="9D62.html">9D62</a>.
+Used by the routine at <a href="9D51.html">9D51</a>.
 </div>
 </div>
 </td>
@@ -76,7 +76,7 @@ Used by the routine at <a href="9D62.html">9D62</a>.
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="40479"></span>9E1F</td>
-<td class="instruction">JR Z,<a href="9E11.html#40501">plot_turbo_setup</a></td>
+<td class="instruction">JR Z,<a href="9E11.html#40501">ptas_turbo_setup</a></td>
 <td class="comment-1" rowspan="1">Avoid frame increment and address calculation if possible</td>
 </tr>
 <tr>
@@ -114,7 +114,7 @@ Used by the routine at <a href="9D62.html">9D62</a>.
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="40492"></span>9E2C</td>
-<td class="instruction">JR Z,<a href="9E11.html#40501">plot_turbo_setup</a></td>
+<td class="instruction">JR Z,<a href="9E11.html#40501">ptas_turbo_setup</a></td>
 <td class="comment-1" rowspan="1">Avoid frame address calculation if possible</td>
 </tr>
 <tr>
@@ -140,7 +140,7 @@ Used by the routine at <a href="9D62.html">9D62</a>.
 <td class="instruction">DJNZ <a href="9E11.html#40498">plot_turbos_and_scores_1</a></td>
 </tr>
 <tr>
-<td class="asm-label">plot_turbo_setup</td>
+<td class="asm-label">ptas_turbo_setup</td>
 <td class="address-2"><span id="40501"></span>9E35</td>
 <td class="instruction">LD ($9E45),HL</td>
 <td class="comment-1" rowspan="1">Self modify $9E44 to load <span class="register">SP</span> with address of frame</td>
@@ -171,7 +171,7 @@ Note that the frame data is stored in memory inverted (bottom first), so we draw
 </td>
 </tr>
 <tr>
-<td class="asm-label">plot_turbo_loops</td>
+<td class="asm-label">ptas_turbo_loops</td>
 <td class="address-2"><span id="40510"></span>9E3E</td>
 <td class="instruction">LD SP,$76F0</td>
 <td class="comment-1" rowspan="1">Base address of frames</td>
@@ -234,7 +234,7 @@ Draw a scanline of frame.
 </td>
 </tr>
 <tr>
-<td class="asm-label">plot_turbo_scanline</td>
+<td class="asm-label">ptas_turbo_scanline</td>
 <td class="address-2"><span id="40526"></span>9E4E</td>
 <td class="instruction">POP DE</td>
 <td class="comment-1" rowspan="1">Pop some frame data off the stack (E is mask data, D is bitmap data)</td>
@@ -372,7 +372,7 @@ Draw a scanline of frame.
 <tr>
 <td class="asm-label">plot_turbo_continue</td>
 <td class="address-2"><span id="40560"></span>9E70</td>
-<td class="instruction">DJNZ <a href="9E11.html#40526">plot_turbo_scanline</a></td>
+<td class="instruction">DJNZ <a href="9E11.html#40526">ptas_turbo_scanline</a></td>
 <td class="comment-1" rowspan="1">Loop until out of rows</td>
 </tr>
 <tr>
@@ -396,7 +396,7 @@ Draw a scanline of frame.
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="40566"></span>9E76</td>
-<td class="instruction">JR NZ,<a href="9E11.html#40510">plot_turbo_loops</a></td>
+<td class="instruction">JR NZ,<a href="9E11.html#40510">ptas_turbo_loops</a></td>
 <td class="comment-1" rowspan="1">Loop until none are left</td>
 </tr>
 <tr>
@@ -460,7 +460,7 @@ Scale internal speed (0..511) to displayed speed by multiplying by 82 then disca
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="40587"></span>9E8B</td>
-<td class="instruction">JR NC,<a href="9E11.html#40590">plot_speed_multiply_loop</a></td>
+<td class="instruction">JR NC,<a href="9E11.html#40590">ptas_speed_multiply_loop</a></td>
 <td class="comment-1" rowspan="1">Jump if not adding</td>
 </tr>
 <tr>
@@ -470,7 +470,7 @@ Scale internal speed (0..511) to displayed speed by multiplying by 82 then disca
 <td class="comment-1" rowspan="1">Add</td>
 </tr>
 <tr>
-<td class="asm-label">plot_speed_multiply_loop</td>
+<td class="asm-label">ptas_speed_multiply_loop</td>
 <td class="address-2"><span id="40590"></span>9E8E</td>
 <td class="instruction">ADD HL,HL</td>
 <td class="comment-1" rowspan="1">Double</td>
@@ -510,7 +510,7 @@ Count 10,000s.
 <td class="comment-1" rowspan="1">?Clear carry flag?</td>
 </tr>
 <tr>
-<td class="asm-label">plot_speed_10000s_loop</td>
+<td class="asm-label">ptas_speed_10000s_loop</td>
 <td class="address-2"><span id="40600"></span>9E98</td>
 <td class="instruction">INC D</td>
 <td class="comment-1" rowspan="1">Increment counter</td>
@@ -524,7 +524,7 @@ Count 10,000s.
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="40603"></span>9E9B</td>
-<td class="instruction">JR NC,<a href="9E11.html#40600">plot_speed_10000s_loop</a></td>
+<td class="instruction">JR NC,<a href="9E11.html#40600">ptas_speed_10000s_loop</a></td>
 <td class="comment-1" rowspan="1">Loop until <span class="register">HL</span> goes negative</td>
 </tr>
 <tr>
@@ -602,7 +602,7 @@ Count 100s.
 <td class="comment-1" rowspan="1">100</td>
 </tr>
 <tr>
-<td class="asm-label">plot_speed_100s_loop</td>
+<td class="asm-label">ptas_speed_100s_loop</td>
 <td class="address-2"><span id="40620"></span>9EAC</td>
 <td class="instruction">INC A</td>
 <td class="comment-1" rowspan="1">Increment counter</td>
@@ -616,7 +616,7 @@ Count 100s.
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="40623"></span>9EAF</td>
-<td class="instruction">JR NC,<a href="9E11.html#40620">plot_speed_100s_loop</a></td>
+<td class="instruction">JR NC,<a href="9E11.html#40620">ptas_speed_100s_loop</a></td>
 <td class="comment-1" rowspan="1">Loop until total goes negative</td>
 </tr>
 <tr>
@@ -732,7 +732,7 @@ Time.
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="40653"></span>9ECD</td>
-<td class="instruction">CALL <a href="9E11.html#40734">plot_led_digits</a></td>
+<td class="instruction">CALL <a href="9E11.html#40734">ptas_led_digits</a></td>
 <td class="comment-1" rowspan="1">Call plot_led_digits</td>
 </tr>
 <tr>
@@ -836,7 +836,7 @@ Count 100s
 <td class="comment-1" rowspan="1">100</td>
 </tr>
 <tr>
-<td class="asm-label">plot_scores_distance_100s_loop</td>
+<td class="asm-label">ptas_scores_distance_100s_loop</td>
 <td class="address-2"><span id="40681"></span>9EE9</td>
 <td class="instruction">INC A</td>
 <td class="comment-1" rowspan="1">Increment counter</td>
@@ -850,7 +850,7 @@ Count 100s
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="40684"></span>9EEC</td>
-<td class="instruction">JP NC,<a href="9E11.html#40681">plot_scores_distance_100s_loop</a></td>
+<td class="instruction">JP NC,<a href="9E11.html#40681">ptas_scores_distance_100s_loop</a></td>
 <td class="comment-1" rowspan="1">Loop until total goes negative</td>
 </tr>
 <tr>
@@ -900,7 +900,7 @@ Count 10s
 <td class="comment-1" rowspan="1"><span class="register">A</span> = $F0 (BCD)</td>
 </tr>
 <tr>
-<td class="asm-label">plot_scores_distance_10s_loop</td>
+<td class="asm-label">ptas_scores_distance_10s_loop</td>
 <td class="address-2"><span id="40695"></span>9EF7</td>
 <td class="instruction">ADD A,$10</td>
 <td class="comment-1" rowspan="1">Increment counter</td>
@@ -920,7 +920,7 @@ Count 10s
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="40700"></span>9EFC</td>
-<td class="instruction">JP NC,<a href="9E11.html#40695">plot_scores_distance_10s_loop</a></td>
+<td class="instruction">JP NC,<a href="9E11.html#40695">ptas_scores_distance_10s_loop</a></td>
 <td class="comment-1" rowspan="1">Loop until total goes negative</td>
 </tr>
 <tr>
@@ -979,8 +979,8 @@ Count 10s
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="40719"></span>9F0F</td>
-<td class="instruction">CALL <a href="9E11.html#40734">plot_led_digits</a></td>
-<td class="comment-1" rowspan="1">Call plot_led_digits</td>
+<td class="instruction">CALL <a href="9E11.html#40734">ptas_led_digits</a></td>
+<td class="comment-1" rowspan="1">Call ptas_led_digits</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -1023,7 +1023,7 @@ Plots scoreboard digits (<span class="register">DE</span> -&gt; BCD) only if dif
 </td>
 </tr>
 <tr>
-<td class="asm-label">plot_led_digits</td>
+<td class="asm-label">ptas_led_digits</td>
 <td class="address-2"><span id="40734"></span>9F1E</td>
 <td class="instruction">LD A,(DE)</td>
 <td class="comment-1" rowspan="1">Read a pair of digits (BCD)</td>
@@ -1069,7 +1069,7 @@ Plots scoreboard digits (<span class="register">DE</span> -&gt; BCD) only if dif
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="40743"></span>9F27</td>
-<td class="instruction">JR NZ,<a href="9E11.html#40763">pld_plot_1st</a></td>
+<td class="instruction">JR NZ,<a href="9E11.html#40763">ptas_led_plot_1st</a></td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -1088,7 +1088,7 @@ Plots scoreboard digits (<span class="register">DE</span> -&gt; BCD) only if dif
 <td class="instruction">EXX</td>
 </tr>
 <tr>
-<td class="asm-label">pld_next_half</td>
+<td class="asm-label">ptas_led_next_half</td>
 <td class="address-2"><span id="40748"></span>9F2C</td>
 <td class="instruction">DEC HL</td>
 <td class="comment-1" rowspan="1">Move to next recorded value</td>
@@ -1113,7 +1113,7 @@ Plots scoreboard digits (<span class="register">DE</span> -&gt; BCD) only if dif
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="40753"></span>9F31</td>
-<td class="instruction">JR NZ,<a href="9E11.html#40769">pld_plot_2nd</a></td>
+<td class="instruction">JR NZ,<a href="9E11.html#40769">ptas_led_plot_2nd</a></td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -1132,7 +1132,7 @@ Plots scoreboard digits (<span class="register">DE</span> -&gt; BCD) only if dif
 <td class="instruction">EXX</td>
 </tr>
 <tr>
-<td class="asm-label">pld_next_whole</td>
+<td class="asm-label">ptas_led_next_whole</td>
 <td class="address-2"><span id="40758"></span>9F36</td>
 <td class="instruction">DEC HL</td>
 <td class="comment-1" rowspan="1">Move to next recorded value</td>
@@ -1146,7 +1146,7 @@ Plots scoreboard digits (<span class="register">DE</span> -&gt; BCD) only if dif
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="40760"></span>9F38</td>
-<td class="instruction">DJNZ <a href="9E11.html#40734">plot_led_digits</a></td>
+<td class="instruction">DJNZ <a href="9E11.html#40734">ptas_led_digits</a></td>
 <td class="comment-1" rowspan="1">Loop until B is zero</td>
 </tr>
 <tr>
@@ -1156,7 +1156,7 @@ Plots scoreboard digits (<span class="register">DE</span> -&gt; BCD) only if dif
 <td class="comment-1" rowspan="1">Return</td>
 </tr>
 <tr>
-<td class="asm-label">pld_plot_1st</td>
+<td class="asm-label">ptas_led_plot_1st</td>
 <td class="address-2"><span id="40763"></span>9F3B</td>
 <td class="instruction">LD (HL),A</td>
 <td class="comment-1" rowspan="1">Update drawn digit</td>
@@ -1170,11 +1170,11 @@ Plots scoreboard digits (<span class="register">DE</span> -&gt; BCD) only if dif
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="40767"></span>9F3F</td>
-<td class="instruction">JR <a href="9E11.html#40748">pld_next_half</a></td>
+<td class="instruction">JR <a href="9E11.html#40748">ptas_led_next_half</a></td>
 <td class="comment-1" rowspan="1">Jump back to handle next digit (second half of a pair)</td>
 </tr>
 <tr>
-<td class="asm-label">pld_plot_2nd</td>
+<td class="asm-label">ptas_led_plot_2nd</td>
 <td class="address-2"><span id="40769"></span>9F41</td>
 <td class="instruction">LD (HL),A</td>
 <td class="comment-1" rowspan="1">Update drawn digit</td>
@@ -1188,7 +1188,7 @@ Plots scoreboard digits (<span class="register">DE</span> -&gt; BCD) only if dif
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="40773"></span>9F45</td>
-<td class="instruction">JR <a href="9E11.html#40758">pld_next_whole</a></td>
+<td class="instruction">JR <a href="9E11.html#40758">ptas_led_next_whole</a></td>
 <td class="comment-1" rowspan="1">Jump back to handle hext digit (next whole pair)</td>
 </tr>
 </table>
@@ -1204,7 +1204,7 @@ Next: <a href="9F47.html">9F47</a>
 </tr>
 </table>
 <footer>
-<div class="release">The incomplete Chase H.Q. disassembly 20230426</div>
+<div class="release">The incomplete Chase H.Q. disassembly 20230518</div>
 <div class="copyright">&copy; 1989 Ocean Software Ltd.</div>
 <div class="created">Created using <a href="https://skoolkit.ca">SkoolKit</a> 8.9.</div>
 </footer>

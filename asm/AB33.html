@@ -23,232 +23,281 @@ Next: <a href="AB9A.html">AB9A</a>
 </td>
 </tr>
 </table>
-<div class="description">AB33: Routine at AB33</div>
+<div class="description">AB33: Helicopter related</div>
 <table class="disassembly">
 <tr>
 <td class="routine-comment" colspan="5">
 <div class="details">
 <div class="paragraph">
-Used by the routine at <a href="8401.html">8401</a>.
+Used by the routine at <a href="8401.html">main_loop</a>.
 </div>
 </div>
 </td>
 </tr>
 <tr>
+<td class="asm-label">main_loop_17</td>
 <td class="address-2"><span id="43827"></span>AB33</td>
 <td class="instruction">LD A,($A224)</td>
 <td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="43830"></span>AB36</td>
 <td class="instruction">AND A</td>
 <td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="43831"></span>AB37</td>
 <td class="instruction">RET Z</td>
 <td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="43832"></span>AB38</td>
 <td class="instruction">DEC A</td>
 <td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="43833"></span>AB39</td>
-<td class="instruction">JR Z,$AB4A</td>
+<td class="instruction">JR Z,<a href="AB33.html#43850">main_loop_17_0</a></td>
 <td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="43835"></span>AB3B</td>
 <td class="instruction">DEC A</td>
 <td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="43836"></span>AB3C</td>
-<td class="instruction">JR NZ,$AB51</td>
+<td class="instruction">JR NZ,<a href="AB33.html#43857">main_loop_17_1</a></td>
 <td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="43838"></span>AB3E</td>
 <td class="instruction">LD A,($AA96)</td>
 <td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="43841"></span>AB41</td>
 <td class="instruction">AND A</td>
 <td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="43842"></span>AB42</td>
 <td class="instruction">RET Z</td>
 <td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="43843"></span>AB43</td>
 <td class="instruction">XOR A</td>
 <td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="43844"></span>AB44</td>
 <td class="instruction">LD D,A</td>
 <td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="43845"></span>AB45</td>
 <td class="instruction">LD E,A</td>
 <td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="43846"></span>AB46</td>
 <td class="instruction">EX AF,AF'</td>
 <td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="43847"></span>AB47</td>
 <td class="instruction">XOR A</td>
 <td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="43848"></span>AB48</td>
-<td class="instruction">JR $AB8E</td>
+<td class="instruction">JR <a href="AB33.html#43918">main_loop_17_4</a></td>
 <td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
+<td class="asm-label">main_loop_17_0</td>
 <td class="address-2"><span id="43850"></span>AB4A</td>
 <td class="instruction">LD HL,$FFC8</td>
 <td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="43853"></span>AB4D</td>
 <td class="instruction">LD A,$02</td>
 <td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="43855"></span>AB4F</td>
-<td class="instruction">JR $AB85</td>
+<td class="instruction">JR <a href="AB33.html#43909">main_loop_17_3</a></td>
 <td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
+<td class="asm-label">main_loop_17_1</td>
 <td class="address-2"><span id="43857"></span>AB51</td>
 <td class="instruction">DEC A</td>
 <td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="43858"></span>AB52</td>
 <td class="instruction">LD HL,$98A9</td>
 <td class="comment-1" rowspan="4">Point <span class="register">HL</span> at pilot "turn left" messages</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="43861"></span>AB55</td>
-<td class="instruction">JR Z,$AB5C</td>
+<td class="instruction">JR Z,<a href="AB33.html#43868">main_loop_17_2</a></td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="43863"></span>AB57</td>
 <td class="instruction">DEC A</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="43864"></span>AB58</td>
 <td class="instruction">RET NZ</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="43865"></span>AB59</td>
 <td class="instruction">LD HL,$98B3</td>
 <td class="comment-1" rowspan="25">Point <span class="register">HL</span> at pilot "turn right" messages</td>
 </tr>
 <tr>
+<td class="asm-label">main_loop_17_2</td>
 <td class="address-2"><span id="43868"></span>AB5C</td>
 <td class="instruction">LD DE,($A26C)</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="43872"></span>AB60</td>
 <td class="instruction">LD ($AAF7),DE</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="43876"></span>AB64</td>
 <td class="instruction">LD DE,$FFE8</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="43879"></span>AB67</td>
 <td class="instruction">LD ($AA95),DE</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="43883"></span>AB6B</td>
 <td class="instruction">XOR A</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="43884"></span>AB6C</td>
 <td class="instruction">LD ($AAD8),A</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="43887"></span>AB6F</td>
 <td class="instruction">LD ($AAE9),A</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="43890"></span>AB72</td>
 <td class="instruction">INC A</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="43891"></span>AB73</td>
 <td class="instruction">LD ($AAE0),A</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="43894"></span>AB76</td>
 <td class="instruction">LD A,$0F</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="43896"></span>AB78</td>
 <td class="instruction">CALL <a href="9945.html">chatter</a></td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="43899"></span>AB7B</td>
 <td class="instruction">LD HL,$0070</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="43902"></span>AB7E</td>
 <td class="instruction">LD A,$85</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="43904"></span>AB80</td>
 <td class="instruction">LD ($AACC),A</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="43907"></span>AB83</td>
 <td class="instruction">LD A,$05</td>
 </tr>
 <tr>
+<td class="asm-label">main_loop_17_3</td>
 <td class="address-2"><span id="43909"></span>AB85</td>
 <td class="instruction">EX AF,AF'</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="43910"></span>AB86</td>
 <td class="instruction">LD ($AB07),HL</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="43913"></span>AB89</td>
 <td class="instruction">LD DE,$AA38</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="43916"></span>AB8C</td>
 <td class="instruction">LD A,$CD</td>
 </tr>
 <tr>
+<td class="asm-label">main_loop_17_4</td>
 <td class="address-2"><span id="43918"></span>AB8E</td>
 <td class="instruction">LD ($8FA4),A</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="43921"></span>AB91</td>
 <td class="instruction">LD ($8FA5),DE</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="43925"></span>AB95</td>
 <td class="instruction">EX AF,AF'</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="43926"></span>AB96</td>
 <td class="instruction">LD ($A224),A</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="43929"></span>AB99</td>
 <td class="instruction">RET</td>
 </tr>
@@ -265,7 +314,7 @@ Next: <a href="AB9A.html">AB9A</a>
 </tr>
 </table>
 <footer>
-<div class="release">The incomplete Chase H.Q. disassembly 20230426</div>
+<div class="release">The incomplete Chase H.Q. disassembly 20230518</div>
 <div class="copyright">&copy; 1989 Ocean Software Ltd.</div>
 <div class="created">Created using <a href="https://skoolkit.ca">SkoolKit</a> 8.9.</div>
 </footer>

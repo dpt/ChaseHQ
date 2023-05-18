@@ -23,22 +23,22 @@ Next: <a href="9CC2.html">9CC2</a>
 </td>
 </tr>
 </table>
-<div class="description">9BCF: tick</div>
+<div class="description">9BCF: Game timer</div>
 <table class="disassembly">
 <tr>
 <td class="routine-comment" colspan="5">
 <div class="details">
 <div class="paragraph">
-Used by the routine at <a href="8401.html">8401</a>.
+Used by the routine at <a href="8401.html">main_loop</a>.
 </div>
 </div>
 </td>
 </tr>
 <tr>
-<td class="asm-label"></td>
+<td class="asm-label">tick</td>
 <td class="address-2"><span id="39887"></span>9BCF</td>
 <td class="instruction">LD A,($A230)</td>
-<td class="comment-1" rowspan="24">TBD</td>
+<td class="comment-1" rowspan="2">Return if perp_caught_stage &gt; 0</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -49,6 +49,7 @@ Used by the routine at <a href="8401.html">8401</a>.
 <td class="asm-label"></td>
 <td class="address-1"><span id="39891"></span>9BD3</td>
 <td class="instruction">RET NZ</td>
+<td class="comment-1" rowspan="22">TBD</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -83,7 +84,7 @@ Used by the routine at <a href="8401.html">8401</a>.
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="39905"></span>9BE1</td>
-<td class="instruction">JR Z,$9C0D</td>
+<td class="instruction">JR Z,<a href="9BCF.html#39949">tick_1</a></td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -93,7 +94,7 @@ Used by the routine at <a href="8401.html">8401</a>.
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="39908"></span>9BE4</td>
-<td class="instruction">JR Z,$9C31</td>
+<td class="instruction">JR Z,<a href="9BCF.html#39985">tick_2</a></td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -103,7 +104,7 @@ Used by the routine at <a href="8401.html">8401</a>.
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="39911"></span>9BE7</td>
-<td class="instruction">JR Z,$9C50</td>
+<td class="instruction">JR Z,<a href="9BCF.html#40016">tick_3</a></td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -128,7 +129,7 @@ Used by the routine at <a href="8401.html">8401</a>.
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="39917"></span>9BED</td>
-<td class="instruction">JR NZ,$9BF9</td>
+<td class="instruction">JR NZ,<a href="9BCF.html#39929">tick_0</a></td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -156,7 +157,7 @@ Used by the routine at <a href="8401.html">8401</a>.
 <td class="instruction">RET</td>
 </tr>
 <tr>
-<td class="asm-label"></td>
+<td class="asm-label">tick_0</td>
 <td class="address-2"><span id="39929"></span>9BF9</td>
 <td class="instruction">DEC HL</td>
 <td class="comment-1" rowspan="2">Decrement the 1/16th sec counter</td>
@@ -228,7 +229,7 @@ Used by the routine at <a href="8401.html">8401</a>.
 <td class="comment-1" rowspan="1">Exit via chatter</td>
 </tr>
 <tr>
-<td class="asm-label"></td>
+<td class="asm-label">tick_1</td>
 <td class="address-2"><span id="39949"></span>9C0D</td>
 <td class="instruction">LD A,(HL)</td>
 <td class="comment-1" rowspan="3">Is time_bcd zero? Jump to time_up if so</td>
@@ -241,7 +242,7 @@ Used by the routine at <a href="8401.html">8401</a>.
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="39951"></span>9C0F</td>
-<td class="instruction">JR Z,<a href="9BCF.html#39963">time_up</a></td>
+<td class="instruction">JR Z,<a href="9BCF.html#39963">tick_time_up</a></td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -268,11 +269,11 @@ Used by the routine at <a href="8401.html">8401</a>.
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="39961"></span>9C19</td>
-<td class="instruction">JR $9BF9</td>
+<td class="instruction">JR <a href="9BCF.html#39929">tick_0</a></td>
 <td class="comment-1" rowspan="1">Loop back to $9BF9</td>
 </tr>
 <tr>
-<td class="asm-label">time_up</td>
+<td class="asm-label">tick_time_up</td>
 <td class="address-2"><span id="39963"></span>9C1B</td>
 <td class="instruction">LD HL,$8D07</td>
 <td class="comment-1" rowspan="1">Point at "TIME UP" message</td>
@@ -281,7 +282,7 @@ Used by the routine at <a href="8401.html">8401</a>.
 <td class="asm-label"></td>
 <td class="address-1"><span id="39966"></span>9C1E</td>
 <td class="instruction">CALL <a href="8E7E.html">message_printing_related</a></td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="1">Call message_printing_related</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -328,11 +329,11 @@ Used by the routine at <a href="8401.html">8401</a>.
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="39982"></span>9C2E</td>
-<td class="instruction">JP <a href="83C7.html">$83C7</a></td>
+<td class="instruction">JP <a href="83B5.html#33735">unknown_hook_3</a></td>
 <td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
-<td class="asm-label"></td>
+<td class="asm-label">tick_2</td>
 <td class="address-2"><span id="39985"></span>9C31</td>
 <td class="instruction">LD A,($A231)</td>
 <td class="comment-1" rowspan="1"></td>
@@ -416,7 +417,7 @@ Used by the routine at <a href="8401.html">8401</a>.
 <td class="instruction">RET</td>
 </tr>
 <tr>
-<td class="asm-label"></td>
+<td class="asm-label">tick_3</td>
 <td class="address-2"><span id="40016"></span>9C50</td>
 <td class="instruction">LD HL,$A0D5</td>
 <td class="comment-1" rowspan="2">Is fire pressed?</td>
@@ -429,7 +430,7 @@ Used by the routine at <a href="8401.html">8401</a>.
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="40021"></span>9C55</td>
-<td class="instruction">JR Z,<a href="9BCF.html#40062">print_continue</a></td>
+<td class="instruction">JR Z,<a href="9BCF.html#40062">tick_print_continue</a></td>
 <td class="comment-1" rowspan="1">Jump if not (?)</td>
 </tr>
 <tr>
@@ -501,7 +502,7 @@ Resetting mission code.
 <td class="asm-label"></td>
 <td class="address-1"><span id="40042"></span>9C6A</td>
 <td class="instruction">LD ($A231),A</td>
-<td class="comment-1" rowspan="1">$A231 = 3 -- Flag set to zero when attributes have been set</td>
+<td class="comment-1" rowspan="1">transition_control = 3 -- Flag set to zero when attributes have been set</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -541,7 +542,7 @@ This entry point is used by the routines at <a href="858C.html">858C</a> and <a 
 </td>
 </tr>
 <tr>
-<td class="asm-label"></td>
+<td class="asm-label">tick_4</td>
 <td class="address-2"><span id="40057"></span>9C79</td>
 <td class="instruction">LD A,$05</td>
 <td class="comment-1" rowspan="1"></td>
@@ -549,11 +550,11 @@ This entry point is used by the routines at <a href="858C.html">858C</a> and <a 
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="40059"></span>9C7B</td>
-<td class="instruction">JP <a href="83C7.html">$83C7</a></td>
+<td class="instruction">JP <a href="83B5.html#33735">unknown_hook_3</a></td>
 <td class="comment-1" rowspan="1">}</td>
 </tr>
 <tr>
-<td class="asm-label">print_continue</td>
+<td class="asm-label">tick_print_continue</td>
 <td class="address-2"><span id="40062"></span>9C7E</td>
 <td class="instruction">LD HL,$8D18</td>
 <td class="comment-1" rowspan="1">Print "CONTINUE THIS MISSION" messages</td>
@@ -562,7 +563,7 @@ This entry point is used by the routines at <a href="858C.html">858C</a> and <a 
 <td class="asm-label"></td>
 <td class="address-1"><span id="40065"></span>9C81</td>
 <td class="instruction">CALL <a href="8E7E.html">message_printing_related</a></td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="1">Call message_printing_related</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -578,7 +579,7 @@ This entry point is used by the routines at <a href="858C.html">858C</a> and <a 
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="40072"></span>9C88</td>
-<td class="instruction">JR NZ,$9CA5</td>
+<td class="instruction">JR NZ,<a href="9BCF.html#40101">tick_6</a></td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -608,7 +609,7 @@ This entry point is used by the routines at <a href="858C.html">858C</a> and <a 
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="40082"></span>9C92</td>
-<td class="instruction">JR NC,$9C95</td>
+<td class="instruction">JR NC,<a href="9BCF.html#40085">tick_5</a></td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -616,7 +617,7 @@ This entry point is used by the routines at <a href="858C.html">858C</a> and <a 
 <td class="instruction">INC B</td>
 </tr>
 <tr>
-<td class="asm-label"></td>
+<td class="asm-label">tick_5</td>
 <td class="address-2"><span id="40085"></span>9C95</td>
 <td class="instruction">CALL <a href="88F2.html">start_sfx</a></td>
 </tr>
@@ -633,7 +634,7 @@ This entry point is used by the routines at <a href="858C.html">858C</a> and <a 
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="40090"></span>9C9A</td>
-<td class="instruction">JR NZ,$9CA5</td>
+<td class="instruction">JR NZ,<a href="9BCF.html#40101">tick_6</a></td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -656,7 +657,7 @@ This entry point is used by the routines at <a href="858C.html">858C</a> and <a 
 <td class="instruction">LD ($A229),A</td>
 </tr>
 <tr>
-<td class="asm-label"></td>
+<td class="asm-label">tick_6</td>
 <td class="address-2"><span id="40101"></span>9CA5</td>
 <td class="instruction">LD ($9C85),HL</td>
 </tr>
@@ -683,7 +684,7 @@ This entry point is used by the routines at <a href="858C.html">858C</a> and <a 
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="40112"></span>9CB0</td>
-<td class="instruction">JR NZ,$9CB8</td>
+<td class="instruction">JR NZ,<a href="9BCF.html#40120">tick_7</a></td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -698,10 +699,10 @@ This entry point is used by the routines at <a href="858C.html">858C</a> and <a 
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="40118"></span>9CB6</td>
-<td class="instruction">JR $9CBB</td>
+<td class="instruction">JR <a href="9BCF.html#40123">tick_8</a></td>
 </tr>
 <tr>
-<td class="asm-label"></td>
+<td class="asm-label">tick_7</td>
 <td class="address-2"><span id="40120"></span>9CB8</td>
 <td class="instruction">LD L,A</td>
 </tr>
@@ -711,7 +712,7 @@ This entry point is used by the routines at <a href="858C.html">858C</a> and <a 
 <td class="instruction">LD A,$20</td>
 </tr>
 <tr>
-<td class="asm-label"></td>
+<td class="asm-label">tick_8</td>
 <td class="address-2"><span id="40123"></span>9CBB</td>
 <td class="instruction">LD (DE),A</td>
 </tr>
@@ -753,7 +754,7 @@ Next: <a href="9CC2.html">9CC2</a>
 </tr>
 </table>
 <footer>
-<div class="release">The incomplete Chase H.Q. disassembly 20230426</div>
+<div class="release">The incomplete Chase H.Q. disassembly 20230518</div>
 <div class="copyright">&copy; 1989 Ocean Software Ltd.</div>
 <div class="created">Created using <a href="https://skoolkit.ca">SkoolKit</a> 8.9.</div>
 </footer>

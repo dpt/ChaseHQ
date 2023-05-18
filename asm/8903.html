@@ -29,7 +29,7 @@ Next: <a href="8960.html">8960</a>
 <td class="routine-comment" colspan="5">
 <div class="details">
 <div class="paragraph">
-Used by the routine at <a href="8401.html">8401</a>.
+Used by the routine at <a href="8401.html">main_loop</a>.
 </div>
 </div>
 </td>
@@ -81,20 +81,20 @@ Used by the routine at <a href="8401.html">8401</a>.
 <tr>
 <td class="asm-label">drive_sfx_0</td>
 <td class="address-2"><span id="35094"></span>8916</td>
-<td class="instruction">CALL <a href="83C4.html">$83C4</a></td>
-<td class="comment-1" rowspan="1">Call engine sound effect routine (via 128K hook)</td>
+<td class="instruction">CALL <a href="83B5.html#33732">engine_sfx_setup_hook</a></td>
+<td class="comment-1" rowspan="1">Call engine_sfx_setup_hook</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="35097"></span>8919</td>
-<td class="instruction">CALL <a href="83B8.html">$83B8</a></td>
-<td class="comment-1" rowspan="1">Call sound effect routine (via 128K hook)</td>
+<td class="instruction">CALL <a href="83B5.html#33720">engine_sfx_play_hook</a></td>
+<td class="comment-1" rowspan="1">Call engine_sfx_play_hook</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="35100"></span>891C</td>
-<td class="instruction">CALL <a href="83BE.html">$83BE</a></td>
-<td class="comment-1" rowspan="1">Call another routine (via 128K hook)</td>
+<td class="instruction">CALL <a href="83B5.html#33726">unknown_hook_2</a></td>
+<td class="comment-1" rowspan="1">Call another hooked routine</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -342,7 +342,7 @@ Next: <a href="8960.html">8960</a>
 </tr>
 </table>
 <footer>
-<div class="release">The incomplete Chase H.Q. disassembly 20230426</div>
+<div class="release">The incomplete Chase H.Q. disassembly 20230518</div>
 <div class="copyright">&copy; 1989 Ocean Software Ltd.</div>
 <div class="created">Created using <a href="https://skoolkit.ca">SkoolKit</a> 8.9.</div>
 </footer>

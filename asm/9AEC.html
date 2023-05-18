@@ -29,7 +29,7 @@ Next: <a href="9BA7.html">9BA7</a>
 <td class="routine-comment" colspan="5">
 <div class="details">
 <div class="paragraph">
-Used by the routines at <a href="9965.html">9965</a> and <a href="9A55.html">noise_effect</a>.
+Used by the routines at <a href="9965.html">main_loop_26</a> and <a href="9A55.html">noise_effect</a>.
 </div>
 </div>
 <table class="input">
@@ -60,7 +60,7 @@ Used by the routines at <a href="9965.html">9965</a> and <a href="9A55.html">noi
 <span id="39665"></span>
 <div class="comments">
 <div class="paragraph">
-This entry point is used by the routines at <a href="9965.html">9965</a>, <a href="99EC.html">print_chatter</a> and <a href="9A55.html">noise_effect</a>.
+This entry point is used by the routines at <a href="9965.html">main_loop_26</a>, <a href="99EC.html">print_chatter</a> and <a href="9A55.html">noise_effect</a>.
 </div>
 </div>
 </td>
@@ -108,12 +108,12 @@ This entry point is used by the routines at <a href="9965.html">9965</a>, <a hre
 <td class="asm-label"></td>
 <td class="address-1"><span id="39678"></span>9AFE</td>
 <td class="instruction">CP $FF</td>
-<td class="comment-1" rowspan="2">If not string terminator, goto regular_char</td>
+<td class="comment-1" rowspan="2">If not string terminator, goto pmf_regular_char</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="39680"></span>9B00</td>
-<td class="instruction">JR NZ,<a href="9AEC.html#39688">regular_char</a></td>
+<td class="instruction">JR NZ,<a href="9AEC.html#39688">rpmf_egular_char</a></td>
 </tr>
 <tr>
 <td class="routine-comment" colspan="5">
@@ -144,7 +144,7 @@ String terminator
 <td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
-<td class="asm-label">regular_char</td>
+<td class="asm-label">rpmf_egular_char</td>
 <td class="address-2"><span id="39688"></span>9B08</td>
 <td class="instruction">LD E,A</td>
 <td class="comment-1" rowspan="5">A = A*5+2</td>
@@ -264,7 +264,7 @@ Turn ASCII into glyph IDs
 <td class="asm-label"></td>
 <td class="address-1"><span id="39720"></span>9B28</td>
 <td class="instruction">LD D,$45</td>
-<td class="comment-1" rowspan="1">LD D,$45      ; likely the screen addr top</td>
+<td class="comment-1" rowspan="1">likely the screen addr top</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -706,7 +706,7 @@ Next: <a href="9BA7.html">9BA7</a>
 </tr>
 </table>
 <footer>
-<div class="release">The incomplete Chase H.Q. disassembly 20230426</div>
+<div class="release">The incomplete Chase H.Q. disassembly 20230518</div>
 <div class="copyright">&copy; 1989 Ocean Software Ltd.</div>
 <div class="created">Created using <a href="https://skoolkit.ca">SkoolKit</a> 8.9.</div>
 </footer>

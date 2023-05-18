@@ -29,7 +29,7 @@ Next: <a href="8C58.html">8C58</a>
 <td class="routine-comment" colspan="5">
 <div class="details">
 <div class="paragraph">
-Used by the routine at <a href="B4F0.html">B4F0</a>.
+Used by the routine at <a href="B4F0.html">smash</a>.
 </div>
 </div>
 </td>
@@ -38,7 +38,7 @@ Used by the routine at <a href="B4F0.html">B4F0</a>.
 <td class="asm-label">fully_smashed</td>
 <td class="address-2"><span id="35898"></span>8C3A</td>
 <td class="instruction">LD A,$01</td>
-<td class="comment-1" rowspan="2">draw_screen flag = 1</td>
+<td class="comment-1" rowspan="2">Set perp_caught_stage to 1 - starts the pull over sequence</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -82,24 +82,25 @@ Used by the routine at <a href="B4F0.html">B4F0</a>.
 <td class="asm-label"></td>
 <td class="address-1"><span id="35917"></span>8C4D</td>
 <td class="instruction">LD HL,$8CD6</td>
-<td class="comment-1" rowspan="2">Print the "OK! PULL OVER CREEP!" message</td>
+<td class="comment-1" rowspan="1">Print the "OK! PULL OVER CREEP!" message</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="35920"></span>8C50</td>
 <td class="instruction">CALL <a href="8E7E.html">message_printing_related</a></td>
+<td class="comment-1" rowspan="1">Call message_printing_related</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="35923"></span>8C53</td>
 <td class="instruction">LD DE,$0190</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="1"><span class="register">DE</span> = $190</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="35926"></span>8C56</td>
-<td class="instruction">JR <a href="8A57.html#35893">j_8c35</a></td>
-<td class="comment-1" rowspan="1">Exit via $8C35</td>
+<td class="instruction">JR <a href="8A57.html#35893">hpc_set_perp_pos</a></td>
+<td class="comment-1" rowspan="1">Exit via hpc_set_perp_pos</td>
 </tr>
 </table>
 <table class="asm-navigation">
@@ -114,7 +115,7 @@ Next: <a href="8C58.html">8C58</a>
 </tr>
 </table>
 <footer>
-<div class="release">The incomplete Chase H.Q. disassembly 20230426</div>
+<div class="release">The incomplete Chase H.Q. disassembly 20230518</div>
 <div class="copyright">&copy; 1989 Ocean Software Ltd.</div>
 <div class="created">Created using <a href="https://skoolkit.ca">SkoolKit</a> 8.9.</div>
 </footer>

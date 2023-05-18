@@ -23,7 +23,7 @@ Next: <a href="5D2B.html">5D2B</a>
 </td>
 </tr>
 </table>
-<div class="description">5D1D: label=setup_game_data</div>
+<div class="description">5D1D: Data block at 5D1D</div>
 <table class="disassembly">
 <tr>
 <td class="routine-comment" colspan="5">
@@ -32,39 +32,56 @@ Next: <a href="5D2B.html">5D2B</a>
 </td>
 </tr>
 <tr>
+<td class="asm-label">setup_game_data</td>
 <td class="address-1"><span id="23837"></span>5D1D</td>
 <td class="instruction">DEFW $00EA</td>
 <td class="comment-1" rowspan="1">road_pos</td>
 </tr>
 <tr>
+<td class="routine-comment" colspan="5">
+<span id="23839"></span>
+<div class="comments">
+<div class="paragraph">
+These all point a byte earlier than the real data start point.
+</div>
+</div>
+</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="23839"></span>5D1F</td>
-<td class="instruction">DEFW <a href="5EC3.html">$5EC3</a></td>
-<td class="comment-1" rowspan="1"></td>
+<td class="instruction">DEFW $5EC3</td>
+<td class="comment-1" rowspan="1">-&gt; Start stretch, curvature</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="23841"></span>5D21</td>
-<td class="instruction">DEFW <a href="5EC3.html#24291">$5EE3</a></td>
-<td class="comment-1" rowspan="1"></td>
+<td class="instruction">DEFW $5EE3</td>
+<td class="comment-1" rowspan="1">-&gt; Start stretch, height</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="23843"></span>5D23</td>
-<td class="instruction">DEFW <a href="5EC3.html#24334">$5F0E</a></td>
-<td class="comment-1" rowspan="1"></td>
+<td class="instruction">DEFW $5F0E</td>
+<td class="comment-1" rowspan="1">-&gt; Start stretch, lanes</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="23845"></span>5D25</td>
-<td class="instruction">DEFW <a href="5EC3.html#24439">$5F77</a></td>
-<td class="comment-1" rowspan="1"></td>
+<td class="instruction">DEFW $5F77</td>
+<td class="comment-1" rowspan="1">-&gt; Start stretch, right-side objects</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="23847"></span>5D27</td>
-<td class="instruction">DEFW <a href="5EC3.html#24361">$5F29</a></td>
-<td class="comment-1" rowspan="1"></td>
+<td class="instruction">DEFW $5F29</td>
+<td class="comment-1" rowspan="1">-&gt; Start stretch, left-side objects</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="23849"></span>5D29</td>
-<td class="instruction">DEFW <a href="5EC3.html#24348">$5F1C</a></td>
-<td class="comment-1" rowspan="1"></td>
+<td class="instruction">DEFW $5F1C</td>
+<td class="comment-1" rowspan="1">-&gt; Start stretch, hazards</td>
 </tr>
 </table>
 <table class="asm-navigation">
@@ -79,7 +96,7 @@ Next: <a href="5D2B.html">5D2B</a>
 </tr>
 </table>
 <footer>
-<div class="release">The incomplete Chase H.Q. disassembly 20230426</div>
+<div class="release">The incomplete Chase H.Q. disassembly 20230518</div>
 <div class="copyright">&copy; 1989 Ocean Software Ltd.</div>
 <div class="created">Created using <a href="https://skoolkit.ca">SkoolKit</a> 8.9.</div>
 </footer>

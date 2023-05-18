@@ -29,7 +29,7 @@ Next: <a href="8876.html">8876</a>
 <td class="routine-comment" colspan="5">
 <div class="details">
 <div class="paragraph">
-Used by the routines at <a href="8258.html">attract_mode</a>, <a href="8401.html">8401</a>, <a href="858C.html">858C</a>, <a href="873C.html">873C</a> and <a href="F220.html">F220</a>.
+Used by the routines at <a href="8258.html">attract_mode</a>, <a href="8401.html">main_loop</a>, <a href="858C.html">858C</a>, <a href="873C.html">escape_scene</a> and <a href="F220.html">F220</a>.
 </div>
 </div>
 <table class="input">
@@ -338,7 +338,7 @@ Used by the routines at <a href="8258.html">attract_mode</a>, <a href="8401.html
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="34885"></span>8845</td>
-<td class="instruction">CALL <a href="BDFB.html#48671">$BE1F</a></td>
+<td class="instruction">CALL <a href="BDFB.html#48671">j_be1f</a></td>
 <td class="comment-1" rowspan="1">Call HUGE function</td>
 </tr>
 <tr>
@@ -403,62 +403,73 @@ Used by the routines at <a href="8258.html">attract_mode</a>, <a href="8401.html
 <td class="asm-label">clear_lights</td>
 <td class="address-2"><span id="34912"></span>8860</td>
 <td class="instruction">LD C,$04</td>
-<td class="comment-1" rowspan="12">Clear the lights' BRIGHT bit</td>
+<td class="comment-1" rowspan="1">Clear the lights' BRIGHT bit</td>
 </tr>
 <tr>
 <td class="asm-label">setup_game_2</td>
 <td class="address-2"><span id="34914"></span>8862</td>
 <td class="instruction">LD B,$05</td>
+<td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
 <td class="asm-label">setup_game_3</td>
 <td class="address-2"><span id="34916"></span>8864</td>
 <td class="instruction">RES 6,(HL)</td>
+<td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="34918"></span>8866</td>
 <td class="instruction">INC L</td>
+<td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="34919"></span>8867</td>
 <td class="instruction">DJNZ <a href="87DC.html#34916">setup_game_3</a></td>
+<td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="34921"></span>8869</td>
 <td class="instruction">LD A,L</td>
+<td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="34922"></span>886A</td>
 <td class="instruction">ADD A,$1B</td>
+<td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="34924"></span>886C</td>
 <td class="instruction">LD L,A</td>
+<td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="34925"></span>886D</td>
 <td class="instruction">DEC C</td>
+<td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="34926"></span>886E</td>
 <td class="instruction">JR NZ,<a href="87DC.html#34914">setup_game_2</a></td>
+<td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="34928"></span>8870</td>
-<td class="instruction">CALL <a href="83BB.html">$83BB</a></td>
+<td class="instruction">CALL <a href="83B5.html#33723">silence_audio_hook</a></td>
+<td class="comment-1" rowspan="1">Call silence_audio_hook</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="34931"></span>8873</td>
-<td class="instruction">JP <a href="9D62.html">$9D62</a></td>
+<td class="instruction">JP <a href="9D51.html#40290">update_scoreboard</a></td>
+<td class="comment-1" rowspan="1"></td>
 </tr>
 </table>
 <table class="asm-navigation">
@@ -473,7 +484,7 @@ Next: <a href="8876.html">8876</a>
 </tr>
 </table>
 <footer>
-<div class="release">The incomplete Chase H.Q. disassembly 20230426</div>
+<div class="release">The incomplete Chase H.Q. disassembly 20230518</div>
 <div class="copyright">&copy; 1989 Ocean Software Ltd.</div>
 <div class="created">Created using <a href="https://skoolkit.ca">SkoolKit</a> 8.9.</div>
 </footer>

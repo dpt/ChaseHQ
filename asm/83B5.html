@@ -19,11 +19,11 @@ Prev: <a href="837A.html">837A</a>
 </td>
 <td class="up">Up: <a href="../maps/all.html#33717">Map</a></td>
 <td class="next">
-Next: <a href="83B8.html">83B8</a>
+Next: <a href="83CD.html">83CD</a>
 </td>
 </tr>
 </table>
-<div class="description">83B5: Only a RET (probably a 128K hook)</div>
+<div class="description">83B5: Hooks for 128K functions</div>
 <table class="disassembly">
 <tr>
 <td class="routine-comment" colspan="5">
@@ -35,9 +35,132 @@ Used by the routine at <a href="B4CC.html">B4CC</a>.
 </td>
 </tr>
 <tr>
+<td class="routine-comment" colspan="5">
+<span id="33717"></span>
+<div class="comments">
+<div class="paragraph">
+Some of these unknowns will be for the 128K sampled speech.
+</div>
+</div>
+</td>
+</tr>
+<tr>
+<td class="asm-label">unknown_hook_1</td>
 <td class="address-2"><span id="33717"></span>83B5</td>
 <td class="instruction">JP <a href="8A36.html#35414">sfx8a36_2</a></td>
-<td class="comment-0" rowspan="1"></td>
+<td class="comment-1" rowspan="1">Only a RET</td>
+</tr>
+<tr>
+<td class="routine-comment" colspan="5">
+<span id="33720"></span>
+<div class="comments">
+<div class="paragraph">
+This entry point is used by the routines at <a href="8401.html">main_loop</a> and <a href="8903.html">drive_sfx</a>.
+</div>
+</div>
+</td>
+</tr>
+<tr>
+<td class="asm-label">engine_sfx_play_hook</td>
+<td class="address-2"><span id="33720"></span>83B8</td>
+<td class="instruction">JP <a href="8204.html#33332">engine_sfx_play</a></td>
+<td class="comment-1" rowspan="1">Call engine_sfx_play</td>
+</tr>
+<tr>
+<td class="routine-comment" colspan="5">
+<span id="33723"></span>
+<div class="comments">
+<div class="paragraph">
+This entry point is used by the routines at <a href="8401.html">main_loop</a>, <a href="873C.html">escape_scene</a>, <a href="87DC.html">setup_game</a>, <a href="8876.html">check_user_input</a>, <a href="8A57.html">handle_perp_caught</a> and <a href="F220.html">F220</a>.
+</div>
+</div>
+</td>
+</tr>
+<tr>
+<td class="asm-label">silence_audio_hook</td>
+<td class="address-2"><span id="33723"></span>83BB</td>
+<td class="instruction">JP <a href="8A36.html#35414">sfx8a36_2</a></td>
+<td class="comment-1" rowspan="1">Likely silences audio in 128K mode</td>
+</tr>
+<tr>
+<td class="routine-comment" colspan="5">
+<span id="33726"></span>
+<div class="comments">
+<div class="paragraph">
+This entry point is used by the routine at <a href="8903.html">drive_sfx</a>.
+</div>
+</div>
+</td>
+</tr>
+<tr>
+<td class="asm-label">unknown_hook_2</td>
+<td class="address-2"><span id="33726"></span>83BE</td>
+<td class="instruction">JP <a href="8A36.html#35414">sfx8a36_2</a></td>
+<td class="comment-1" rowspan="1">Only a RET</td>
+</tr>
+<tr>
+<td class="routine-comment" colspan="5">
+<span id="33729"></span>
+<div class="comments">
+<div class="paragraph">
+This entry point is used by the routine at <a href="8876.html">check_user_input</a>.
+</div>
+</div>
+</td>
+</tr>
+<tr>
+<td class="asm-label">turbo_sfx_play_hook</td>
+<td class="address-2"><span id="33729"></span>83C1</td>
+<td class="instruction">JP <a href="8A36.html#35414">sfx8a36_2</a></td>
+<td class="comment-1" rowspan="1">Likely the turbo boost sound effect</td>
+</tr>
+<tr>
+<td class="routine-comment" colspan="5">
+<span id="33732"></span>
+<div class="comments">
+<div class="paragraph">
+This entry point is used by the routine at <a href="8903.html">drive_sfx</a>.
+</div>
+</div>
+</td>
+</tr>
+<tr>
+<td class="asm-label">engine_sfx_setup_hook</td>
+<td class="address-2"><span id="33732"></span>83C4</td>
+<td class="instruction">JP <a href="8204.html">engine_sfx_setup</a></td>
+<td class="comment-1" rowspan="1">Call engine_sfx_setup</td>
+</tr>
+<tr>
+<td class="routine-comment" colspan="5">
+<span id="33735"></span>
+<div class="comments">
+<div class="paragraph">
+This entry point is used by the routines at <a href="8401.html">main_loop</a> and <a href="9BCF.html">tick</a>.
+</div>
+</div>
+</td>
+</tr>
+<tr>
+<td class="asm-label">unknown_hook_3</td>
+<td class="address-2"><span id="33735"></span>83C7</td>
+<td class="instruction">JP <a href="8A36.html#35414">sfx8a36_2</a></td>
+<td class="comment-1" rowspan="1">Only a RET</td>
+</tr>
+<tr>
+<td class="routine-comment" colspan="5">
+<span id="33738"></span>
+<div class="comments">
+<div class="paragraph">
+This entry point is used by the routine at <a href="83CD.html">83CD</a>.
+</div>
+</div>
+</td>
+</tr>
+<tr>
+<td class="asm-label">attract_mode_hook</td>
+<td class="address-2"><span id="33738"></span>83CA</td>
+<td class="instruction">JP <a href="8258.html">attract_mode</a></td>
+<td class="comment-1" rowspan="1">Call attract_mode</td>
 </tr>
 </table>
 <table class="asm-navigation">
@@ -47,12 +170,12 @@ Prev: <a href="837A.html">837A</a>
 </td>
 <td class="up">Up: <a href="../maps/all.html#33717">Map</a></td>
 <td class="next">
-Next: <a href="83B8.html">83B8</a>
+Next: <a href="83CD.html">83CD</a>
 </td>
 </tr>
 </table>
 <footer>
-<div class="release">The incomplete Chase H.Q. disassembly 20230426</div>
+<div class="release">The incomplete Chase H.Q. disassembly 20230518</div>
 <div class="copyright">&copy; 1989 Ocean Software Ltd.</div>
 <div class="created">Created using <a href="https://skoolkit.ca">SkoolKit</a> 8.9.</div>
 </footer>

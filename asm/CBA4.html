@@ -1,15 +1,15 @@
 <!DOCTYPE html>
 <html>
 <head>
-<title>Chase H.Q.: Data at CBA4</title>
+<title>Chase H.Q.: Routine at CBA4</title>
 <meta charset="utf-8" />
 <link rel="stylesheet" type="text/css" href="../skoolkit.css" />
 </head>
-<body class="Asm-b">
+<body class="Asm-c">
 <table class="header">
 <tr>
 <td class="logo"><a href="../index.html">Chase H.Q.</a></td>
-<td class="page-header">Data</td>
+<td class="page-header">Routines</td>
 </tr>
 </table>
 <table class="asm-navigation">
@@ -23,7 +23,7 @@ Next: <a href="CBC5.html">CBC5</a>
 </td>
 </tr>
 </table>
-<div class="description">CBA4: Data block at CBA4</div>
+<div class="description">CBA4: Routine at CBA4</div>
 <table class="disassembly">
 <tr>
 <td class="routine-comment" colspan="5">
@@ -32,28 +32,83 @@ Next: <a href="CBC5.html">CBC5</a>
 </td>
 </tr>
 <tr>
-<td class="address-1"><span id="52132"></span>CBA4</td>
-<td class="instruction">DEFB $4F,$FD,$7E,$00,$FD,$23,$DD,$2C</td>
+<td class="address-2"><span id="52132"></span>CBA4</td>
+<td class="instruction">LD C,A</td>
+<td class="comment-0" rowspan="1"></td>
+</tr>
+<tr>
+<td class="address-1"><span id="52133"></span>CBA5</td>
+<td class="instruction">LD A,(IY+$00)</td>
+<td class="comment-0" rowspan="1"></td>
+</tr>
+<tr>
+<td class="address-1"><span id="52136"></span>CBA8</td>
+<td class="instruction">INC IY</td>
+<td class="comment-0" rowspan="1"></td>
+</tr>
+<tr>
+<td class="address-1"><span id="52138"></span>CBAA</td>
+<td class="instruction">INC IXl</td>
 <td class="comment-0" rowspan="1"></td>
 </tr>
 <tr>
 <td class="address-1"><span id="52140"></span>CBAC</td>
-<td class="instruction">DEFB $FD,$96,$00,$FE,$E0,$D2,$B9,$CB</td>
+<td class="instruction">SUB (IY+$00)</td>
+<td class="comment-0" rowspan="1"></td>
+</tr>
+<tr>
+<td class="address-1"><span id="52143"></span>CBAF</td>
+<td class="instruction">CP $E0</td>
+<td class="comment-0" rowspan="1"></td>
+</tr>
+<tr>
+<td class="address-1"><span id="52145"></span>CBB1</td>
+<td class="instruction">JP NC,$CBB9</td>
 <td class="comment-0" rowspan="1"></td>
 </tr>
 <tr>
 <td class="address-1"><span id="52148"></span>CBB4</td>
-<td class="instruction">DEFB $FE,$50,$D2,$9A,$C7,$2D,$2D,$81</td>
+<td class="instruction">CP $50</td>
+<td class="comment-0" rowspan="1"></td>
+</tr>
+<tr>
+<td class="address-1"><span id="52150"></span>CBB6</td>
+<td class="instruction">JP NC,<a href="C598.html#51098">$C79A</a></td>
+<td class="comment-0" rowspan="1"></td>
+</tr>
+<tr>
+<td class="address-2"><span id="52153"></span>CBB9</td>
+<td class="instruction">DEC L</td>
+<td class="comment-0" rowspan="1"></td>
+</tr>
+<tr>
+<td class="address-1"><span id="52154"></span>CBBA</td>
+<td class="instruction">DEC L</td>
+<td class="comment-0" rowspan="1"></td>
+</tr>
+<tr>
+<td class="address-1"><span id="52155"></span>CBBB</td>
+<td class="instruction">ADD A,C</td>
 <td class="comment-0" rowspan="1"></td>
 </tr>
 <tr>
 <td class="address-1"><span id="52156"></span>CBBC</td>
-<td class="instruction">DEFB $28,$E6,$FA,$A4,$CB,$4F,$C3,$15</td>
+<td class="instruction">JR Z,$CBA4</td>
 <td class="comment-0" rowspan="1"></td>
 </tr>
 <tr>
-<td class="address-1"><span id="52164"></span>CBC4</td>
-<td class="instruction">DEFB $C9</td>
+<td class="address-1"><span id="52158"></span>CBBE</td>
+<td class="instruction">JP M,$CBA4</td>
+<td class="comment-0" rowspan="1"></td>
+</tr>
+<tr>
+<td class="address-1"><span id="52161"></span>CBC1</td>
+<td class="instruction">LD C,A</td>
+<td class="comment-0" rowspan="1"></td>
+</tr>
+<tr>
+<td class="address-1"><span id="52162"></span>CBC2</td>
+<td class="instruction">JP <a href="C8E3.html#51477">$C915</a></td>
 <td class="comment-0" rowspan="1"></td>
 </tr>
 </table>
@@ -69,7 +124,7 @@ Next: <a href="CBC5.html">CBC5</a>
 </tr>
 </table>
 <footer>
-<div class="release">The incomplete Chase H.Q. disassembly 20230426</div>
+<div class="release">The incomplete Chase H.Q. disassembly 20230518</div>
 <div class="copyright">&copy; 1989 Ocean Software Ltd.</div>
 <div class="created">Created using <a href="https://skoolkit.ca">SkoolKit</a> 8.9.</div>
 </footer>

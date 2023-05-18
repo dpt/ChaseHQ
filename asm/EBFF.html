@@ -193,7 +193,7 @@ Calculate the attribute address from the screen address
 <td class="instruction">PUSH BC</td>
 </tr>
 <tr>
-<td class="asm-label">menu_draw_string_0</td>
+<td class="asm-label">menu_draw_string_loop</td>
 <td class="address-2"><span id="60441"></span>EC19</td>
 <td class="instruction">LD A,(HL)</td>
 <td class="comment-1" rowspan="2">Mask off the terminator bit</td>
@@ -236,7 +236,7 @@ Calculate the attribute address from the screen address
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="60452"></span>EC24</td>
-<td class="instruction">JR Z,<a href="EBFF.html#60441">menu_draw_string_0</a></td>
+<td class="instruction">JR Z,<a href="EBFF.html#60441">menu_draw_string_loop</a></td>
 <td class="comment-1" rowspan="1">Loop if not</td>
 </tr>
 <tr>
@@ -286,7 +286,7 @@ Next: <a href="EC2C.html">EC2C</a>
 </tr>
 </table>
 <footer>
-<div class="release">The incomplete Chase H.Q. disassembly 20230426</div>
+<div class="release">The incomplete Chase H.Q. disassembly 20230518</div>
 <div class="copyright">&copy; 1989 Ocean Software Ltd.</div>
 <div class="created">Created using <a href="https://skoolkit.ca">SkoolKit</a> 8.9.</div>
 </footer>

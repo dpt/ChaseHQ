@@ -15,11 +15,11 @@
 <table class="asm-navigation">
 <tr>
 <td class="prev">
-Prev: <a href="ACDB.html">ACDB</a>
+Prev: <a href="AC3C.html">AC3C</a>
 </td>
 <td class="up">Up: <a href="../maps/all.html#44301">Map</a></td>
 <td class="next">
-Next: <a href="AD4A.html">AD4A</a>
+Next: <a href="AD51.html">AD51</a>
 </td>
 </tr>
 </table>
@@ -29,7 +29,7 @@ Next: <a href="AD4A.html">AD4A</a>
 <td class="routine-comment" colspan="5">
 <div class="details">
 <div class="paragraph">
-Used by the routine at <a href="BDFB.html">BDFB</a>.
+Used by the routine at <a href="BDFB.html">read_map</a>.
 </div>
 </div>
 </td>
@@ -65,23 +65,13 @@ Used by the routine at <a href="BDFB.html">BDFB</a>.
 <td class="comment-0" rowspan="1"></td>
 </tr>
 <tr>
-<td class="routine-comment" colspan="5">
-<span id="44315"></span>
-<div class="comments">
-<div class="paragraph">
-This entry point is used by the routine at <a href="AD4A.html">AD4A</a>.
-</div>
-</div>
-</td>
-</tr>
-<tr>
 <td class="address-2"><span id="44315"></span>AD1B</td>
 <td class="instruction">RLC (IX+$00)</td>
 <td class="comment-0" rowspan="1"></td>
 </tr>
 <tr>
 <td class="address-1"><span id="44319"></span>AD1F</td>
-<td class="instruction">JR NC,<a href="AD4A.html#44364">$AD4C</a></td>
+<td class="instruction">JR NC,$AD4C</td>
 <td class="comment-0" rowspan="1"></td>
 </tr>
 <tr>
@@ -194,20 +184,45 @@ This entry point is used by the routine at <a href="AD4A.html">AD4A</a>.
 <td class="instruction">LD H,(IX+$0C)</td>
 <td class="comment-0" rowspan="1"></td>
 </tr>
+<tr>
+<td class="address-1"><span id="44362"></span>AD4A</td>
+<td class="instruction">JP (HL)</td>
+<td class="comment-0" rowspan="1"></td>
+</tr>
+<tr>
+<td class="address-1"><span id="44363"></span>AD4B</td>
+<td class="instruction">EXX</td>
+<td class="comment-0" rowspan="1"></td>
+</tr>
+<tr>
+<td class="address-2"><span id="44364"></span>AD4C</td>
+<td class="instruction">ADD IX,DE</td>
+<td class="comment-0" rowspan="1"></td>
+</tr>
+<tr>
+<td class="address-1"><span id="44366"></span>AD4E</td>
+<td class="instruction">DJNZ $AD1B</td>
+<td class="comment-0" rowspan="1"></td>
+</tr>
+<tr>
+<td class="address-1"><span id="44368"></span>AD50</td>
+<td class="instruction">RET</td>
+<td class="comment-0" rowspan="1"></td>
+</tr>
 </table>
 <table class="asm-navigation">
 <tr>
 <td class="prev">
-Prev: <a href="ACDB.html">ACDB</a>
+Prev: <a href="AC3C.html">AC3C</a>
 </td>
 <td class="up">Up: <a href="../maps/all.html#44301">Map</a></td>
 <td class="next">
-Next: <a href="AD4A.html">AD4A</a>
+Next: <a href="AD51.html">AD51</a>
 </td>
 </tr>
 </table>
 <footer>
-<div class="release">The incomplete Chase H.Q. disassembly 20230426</div>
+<div class="release">The incomplete Chase H.Q. disassembly 20230518</div>
 <div class="copyright">&copy; 1989 Ocean Software Ltd.</div>
 <div class="created">Created using <a href="https://skoolkit.ca">SkoolKit</a> 8.9.</div>
 </footer>
