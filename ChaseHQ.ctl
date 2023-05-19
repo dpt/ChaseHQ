@@ -1508,7 +1508,7 @@ c $8401 Main loop
   $844D Call check_user_input
   $8450 Call read_map
   $8453 Call handle_perp_caught
-  $8456 Call main_loop_8
+  $8456 Call move_hero_car
   $8459 Call main_loop_9
   $845C Call cycle_counters
   $845F Call engine_sfx_play_hook
@@ -1628,7 +1628,7 @@ D $852A This runs the game loop while driving the car.
   $8577 Call main_loop_18
   $857A Call main_loop_20
   $857D Call main_loop_19
-  $8580 Call main_loop_8
+  $8580 Call move_hero_car
   $8583 Call main_loop_22
   $8586 Call main_loop_23
   $8589 Exit via main_loop_24
@@ -1765,8 +1765,8 @@ R $87DC I:HL Address of 14 bytes of data to be copied to $A26C+
   $8818 $8F83 = NOP (instruction)
   $881A $8F84 = NOP (instruction)
   $881B NOP 6 bytes [of instructions] at $8FA4
-  $8824 Self modify "LD (HL),xx" at $C058 xx = 0
-  $8827 Self modify "LD A,xx" at $B063 xx = 0
+  $8824 Self modify "LD (HL),x" at $C058 to x = 0
+  $8827 Self modify "LD A,x" at $B063 to x = 0  car jump height
   $882A Set $A191 to value of lods_table[2] (seems to be the perp's car)
   $8830 Zero $EE00..$EEFF, and point $A240 at $EE00 [duplicates work from earlier]
 @ $883F label=loop883f
@@ -2153,7 +2153,7 @@ N $8AEA Calculate clear bonus.
   $8BD3 *$A18C = 0  -- hazards[0].something
   $8BD6 *$A189 = 1  -- hazards[0].<distance related>
   $8BDA perp_caught_stage = 2
-  $8BDE *$A24F = 3
+  $8BDE smoke = 3
   $8BE2 Goto hpc_set_perp_pos
 ;
   $8BE5 A = *$A189  -- hazards[0].<distance related>
@@ -3811,13 +3811,16 @@ g $A139
 ;
 @ $A13D label=credits
   $A13D,1 Number of credits remaining (2 for a new game)
+;
   $A13E,47 Canned data or Data restored for attract mode?
+;
   $A16D
-; this might be an idle timer, when it hits zero Raymond cajoles us
-  $A16E,1 used during attract mode, road gradient/angle or something?
+;
+@ $A16E label=idle_timer
+  $A16E,1 Idle timer. Counts down from 100. Recommences whenever the hero car is stopped. When it hits zero Raymond will say "LET'S GET MOVIN' MAN!" and it will be reset to 100.
 ;
 @ $A16F label=user_input_mask
-  $A16F,1 user_input mask, set to $C0 (Quit+Pause) when perp is fully smashed, or $FF otherwise
+  $A16F,1 User input mask, set to $C0 (Quit+Pause) when perp is fully smashed, or $FF otherwise
 ;
 @ $A170 label=turbos
   $A170,1 Number of turbo boosts remaining (3 for a new game)
@@ -3947,7 +3950,8 @@ N $A237 These seem to get altered even when no sound is being produced.
 ;
   $A23D,1 $BE33 reads  $890F, $A3D2, $BDFC, $BE37 writes
 ;
-  $A23E,1 $B104, $B40C reads  $A3FD, $A52A, $B07D, $B322, $B404, $B443 writes
+@ $A23E label=off_road
+  $A23E,1 0 => Fully on-road, 1 => One wheel off-road, 2 => Both wheels off-road [samples: $B104, $B40C reads  $A3FD, $A52A, $B07D, $B322, $B404, $B443 writes]
 ;
   $A23F,1 numerous references, seems related to level position
 ;
@@ -3981,12 +3985,14 @@ W $A24A,2 Speed (0..511). Max when in lo gear =~ $E6, hi gear =~ $168, turbo =~ 
 ;
   $A24C,1 $B1B7 reads  $B1E4 writes
 ;
-  $A24D,1 $B3B4, $B432 reads  $B2E5, $B314, $B32A writes
+@ $A24D label=cornering
+  $A24D,1 Likely a cornering force flag. Used to trigger smoke. $B3B4, $B432 reads  $B2E5, $B314, $B32A writes
 ;
 @ $A24E label=boost
   $A24E,1 Turbo boost time remaining (60..0)
 ;
-  $A24F,1 $8BDF, $B070, $B0D4, $B3BA writes ... but no readers?
+@ $A24F label=smoke
+  $A24F,1 Smoke time remaining. This is set to 4 on low-to-high gear changes and to 3 when the hero car lands after a jump. This isn't set for turbo boosts however.
 ;
   $A250,1 Turn severity (0/1/2)
 ;
@@ -4009,6 +4015,11 @@ W $A24A,2 Speed (0..511). Max when in lo gear =~ $E6, hi gear =~ $168, turbo =~ 
   $A25A,1 Used by $B8D2
   $A25C,1 Used by $B84E
   $A25D,1 Used by $B85D
+W $A25F,2 Used by $B29A
+  $A261,1 Used by $B297
+  $A263,1 Used by $B2AE
+  $A264,1 Used by $B2B2 -- together might be a 16-bit qty
+
   $A268,1 Used by $BB69 - skips routine if not set
   $A26A,1 Used by quit_key - quit in progress flag?
   $A26B,1 Used by $8432
@@ -4041,6 +4052,8 @@ B $A2E3,,7 A-Z
 
 @ $A399 label=main_loop_22
 c $A399
+  $A3FD,3 off_road = A
+  $A52A,3 off_road = A
 
 @ $A579 label=main_loop_14
 c $A579
@@ -4226,23 +4239,418 @@ c $ADA0
   $AF9E,3 Get smash_factor
   $AFCF,3 Get smash_factor
 
-b $B045 Used by $B968
+@ $B045 label=jump_table
+w $B045 Hero car jump table
+D $B045 Values used to make the car move vertically (by self modifying #R$B58E). Used by $B968.
+W $B045 Main table (vertical delta describing an arc, TBD)
+W $B057 Sub-table (another byte pair) [suspect this really starts two bytes later]
 
-@ $B063 label=main_loop_8
-c $B063
+@ $B063 label=move_hero_car
+c $B063 Hero car jumps; gear changing; off road checks; speed adjustment
+  $B063 Load jump counter. Self modified by $8827 and $B965. Highest is 8.
+  $B065 Goto mhc_not_jumping if the jump counter is zero
+;
+@ $B068 label=mhc_jumping
+N $B068 Hero car is jumping.
+  $B068 Decrement the jump counter in (self modified) $B063
+  $B06C Goto $B079 if we're still jumping
+;
+@ $B06E label=mhc_landed
+N $B06E Hero car has landed.
+  $B06E smoke = 3
+  $B073 Thump sfx as the car lands
+  $B076 Call start_sfx
+;
+@ $B079 label=mhc_midair
+N $B079 Hero car is in mid-air.
+  $B079 Point #REGhl at entry in jump table -- Self modified by $B96C and $B092
+  $B07C off_road = 0
   $B080 Clear up/down/left/right bits of user input
-  $B098 Read boost time remaining
+  $B088 $B5B0 = *HL++       -- Self modified value in draw_car
+  $B08D A = *$B5AB + *HL++  -- Self modified value in draw_car   vertical shift?
+  $B092 Update HL load above, $B079
+;
+@ $B095 label=mhc_not_jumping
+  $B095 *$B5AB = A
+  $B098 Address of boost timer
+  $B09B Jump if a turbo boost is not in effect
+  $B09F Decrement boost timer
+  $B0A0 Jump if boost timer is non-zero
   $B0A2 Decrement turbo boost count [POKE $B0A5 for Infinite turbos]
-  $B0A9 TBD
+;
+@ $B0A9 label=mhc_smoke
+  $B0A9 HL now -> smoke
+  $B0AA Jump if smoke is zero
+  $B0AE Decrement smoke
+;
+N $B0AF Handle gear changes.
   $B0AF Read user input
+  $B0B2 C = A
+  $B0B3 Read the LD A at $B325
+  $B0B6 Jump if zero
+  $B0B9 C = C & $10, i.e. Fire/Gear
+;
+  $B0BD A = C
+  $B0BE
+  $B0BF Test it again? [Strange to re-test it?]
+  $B0C1 Address of gear flag
+  $B0C4 A = *$A252
+  $B0C7 jump if fire/gear is unset
+  $B0C9 jump if A252 is set
+  $B0CC Toggle gear flag
+  $B0D0 A = 4
+  $B0D2 Jump if low gear?
+  $B0D4 smoke = A
+;
+  $B0D7 Decement A  [why write it as a SUB 1?]
+  $B0D9 JR C,$B0DE    -- jump if +ve?
+  $B0DB $A252 = A
+;
+  $B0DE Read current gear flag
+  $B0DF Bank it
+  $B0E0 Read current speed
+  $B0E3 Stack it
+  $B0E4 HL -= 120
+  $B0E9 Jump if speed >= 120
   $B0EB Jump if perp_caught_stage > 0
+;
+N $B0F1 Handle idle timer.
+  $B0F1 Address of idle timer
+  $B0F4 Decrement idle timer
+  $B0F5 Jump if non-zero
+  $B0F7 Reset idle timer to 100
+  $B0F9 A = 10
+  $B0FB HL = get_moving_chatter
+  $B0FE Call chatter
+;
+  $B101 Pop speed
+  $B102 DE = HL
+  $B104 Load the off-road flag
+  $B107 Jump if zero
+N $B10A Handle off-road (it can be 1 or 2).
+  $B10A BC = 120  -- factor for off-road == 1
+  $B10D Jump if off-road was one
+  $B110 BC = 110  -- factor for off-road == 2
+;
+  $B113 Clear carry?
+  $B114 HL -= BC      -- 16-bit sub just for testing
+  $B116 HL = DE
+  $B118 Jump if HL < BC (result of subtraction)
+  $B11A A = L
+  $B11B H >>= 1     9 bit rotate right through carry
+  $B11D A <<= 4     9 bit rotate left through carry
+  $B121 A = -((A & $0F) | 1)
+  $B127 BC = $FF00 | A
+  $B12A JP $B19A
+;
+  $B12D A = boost (time remaining)
+  $B130 Test then bank the flags
+  $B131 Bank
+  $B132 Check previously banked A
+  $B133 JR NZ,$B16E   --
+  $B135 BC = 470
+  $B138 Unbank boost + flags
+  $B139 Uses banked flags
+  $B13B BC = 230
+;
+  $B13E HL -= BC
+  $B140 JP NC,$B15A
+  $B143 A = L
+  $B144 A = ~A
+  $B145 C = A
+  $B146 A = H
+  $B147 A = ~A
+  $B148 B = A
+  $B149 BC++
+  $B14A A = C
+  $B14B SRL B
+  $B14D RRA
+  $B14E SRL B
+  $B150 RRA
+  $B151 RRA
+  $B152 RRA
+  $B153 AND $3F
+  $B155 OR $01
+  $B157 LD C,A
+  $B158 JR $B19A
+;
+  $B15A LD A,L
+  $B15B SRL H
+  $B15D RRA
+  $B15E SRL H
+  $B160 RRA
+  $B161 RRA
+  $B162 RRA
+  $B163 A = -((A & $1F) | 1)
+  $B169 BC = $FF00 | A
+  $B16C JR $B19A
+;
+  $B16E BC = 220
+  $B171 HL -= BC
+  $B173 HL = DE
+  $B175 JR NC,$B18E  from result of calc
+  $B177 BC = 470
+  $B17A EX AF,AF'
+  $B17B JR NZ,$B13E
+  $B17D A = E
+  $B17E B = D
+  $B17F SRL B
+  $B181 RRA
+  $B182 SRL B
+  $B184 RRA
+  $B185 RRA
+  $B186 RRA
+  $B187 C = (A | 1) & $1F
+  $B18C JR $B19A
+;
+  $B18E BC = 695
+  $B191 EX AF,AF'
+  $B192 JR NZ,$B13E
+  $B194 BC = 360
+  $B197 JP $B13E
+;
+  $B19A Get stacked #REGaf
+  $B19C Test bit 2?
+  $B19F JR NC,$B1A6
+  $B1A1 LD BC,$FFEC
+  $B1A4 JR $B1AC
+;
+  $B1A6 RRA
+  $B1A7 JR C,$B1AC
+  $B1A9 LD BC,$FFF6
+;
+  $B1AC HL = DE
+  $B1AE Clear carry?
+  $B1AF HL += BC
+  $B1B1 JP P,$B1B7
+  $B1B4 HL = $0000
+;
+  $B1B7 A = *$A24C - 1
+  $B1BC JR NC,$B1E4
+  $B1BE LD A,($B5B0)
+  $B1C1 Set flags
+  $B1C2 JR Z,$B1E4
+  $B1C4 C = A
+  $B1C5 A = H
+  $B1C6 A |= L
+  $B1C7 JR Z,$B1E4
+  $B1C9 A = (C - 5) | 1
+  $B1CE C = A
+  $B1CF B = 0
+  $B1D1 JP P,$B1D5
+  $B1D4 B--
+;
+  $B1D5 DE = HL
+  $B1D7 HL += BC
+  $B1D8 BC = 695
+  $B1DB PUSH HL
+  $B1DC HL -= BC
+  $B1DE POP HL
+  $B1DF JR C,$B1E2
+  $B1E1 EX DE,HL
+;
+  $B1E2 A = 3
+;
+  $B1E4 LD ($A24C),A
+  $B1E7 A = H
+  $B1E8 CP $02
+  $B1EA JR C,$B1EF
   $B1EC Cap speed to $1FF
+;
+  $B1EF Set speed to #REGhl
+  $B1F2 POP HL
+  $B1F3 LD A,($A263)
+  $B1F6 B = A
+  $B1F7 LD A,($A264)
+  $B1FA C = A
+  $B1FB A = *$B064  -- Jump counter [self modified]
+  $B1FE Set flags
+  $B1FF JP NZ,$B253
+  $B202 RR H
+  $B204 JR C,$B21A
+  $B206 RR H
+  $B208 JR C,$B22C
+  $B20A A = C - 9
+  $B20D JR NC,$B210
+  $B20F A = 0
+;
+  $B210 C = A
+  $B211 A = B - 9
+  $B214 JR NC,$B217
+  $B216 A = 0
+;
+  $B217 B = A
+  $B218 JR $B23C
+;
+  $B21A A = B + 4
+  $B21D Jump if A >= 36
+  $B222 B = A
+;
+  $B223 C -= B
+  $B226 JR NC,$B23C
+  $B228 C = 0
+  $B22A JR $B23C
+;
+  $B22C A = C + 4
+  $B22F C = $24
+  $B231 CP C
+  $B232 JR NC,$B235
+  $B234 C = A
+;
+  $B235 B -= C
+  $B238 JR NC,$B23C
+  $B23A B = 0
+;
+  $B23C HL = speed
+  $B23F A = L
+  $B240 RR H
+  $B242 RRA
+  $B243 SRL A
+  $B245 SRL A
+  $B247 L = A
+  $B248 SRL L
+  $B24A A += L
+  $B24B CP B
+  $B24C JR NC,$B24F
+  $B24E B = A
+;
+  $B24F CP C
+  $B250 JR NC,$B253
+  $B252 C = A
+;
+  $B253 PUSH BC
+  $B254 BC = $0000
+  $B257 E = B
+  $B258 LD A,($A25C)
+  $B25B Set flags
+  $B25C JP Z,$B29A
+  $B25F JP P,$B265
+  $B262 E++
+  $B263 A = -A
+;
+  $B265 HL = $B827
+  $B268 C = A
+  $B269 HL += BC
+  $B26A LD A,($A261)
+  $B26D C = A
+  $B26E EX AF,AF'
+  $B26F LD A,($A23F)
+  $B272 A -= C
+  $B273 Set flags
+  $B274 JR Z,$B29A
+  $B276 C = *HL
+;
+  $B277 A -= C
+  $B278 JR C,$B280
+  $B27A B++
+  $B27B EX AF,AF'
+  $B27C A += C
+  $B27D EX AF,AF'
+  $B27E JR $B277
+;
+  $B280 A = B
+  $B281 Set flags
+  $B282 JR Z,$B295
+  $B284 HL = $A262
+  $B287 A += *HL
+  $B288 *HL = A
+  $B289 A = B * 3
+  $B28C B = 0
+  $B28E RR E
+  $B290 JR NC,$B295
+  $B292 B--
+  $B293 A = -A
+;
+  $B295 C = A
+  $B296 EX AF,AF'
+  $B297 LD ($A261),A
+;
+  $B29A LD HL,($A25F)
+  $B29D HL += BC
+  $B29E DE = $0000
+  $B2A1 $A25F = DE
+  $B2A5 A = *$B326  -- Read self modified op in main_loop_24
+  $B2A8 Set flags
+  $B2A9 JR Z,$B2AD
+  $B2AB EX DE,HL
+  $B2AC D = H
+;
+  $B2AD POP BC
+  $B2AE LD ($A263),B
+  $B2B2 LD ($A264),C
+  $B2B6 A -= B
+  $B2B7 JP P,$B2BB
+  $B2BA D--
+;
+  $B2BB E = A
+  $B2BC SRA E
+  $B2BE HL += DE
+  $B2BF Set flags
+  $B2C0 JR Z,$B2E5
+  $B2C2 JP P,$B2C7
+  $B2C5 A = -A
+;
+  $B2C7 CP 17
+  $B2C9 A = 0
+  $B2CB JR C,$B2E5
+  $B2CD BIT 7,H
+  $B2CF JR Z,$B2DB
+  $B2D1 BIT 7,D
+  $B2D3 JR NZ,$B2E5
+  $B2D5 BIT 7,H
+  $B2D7 JR Z,$B2E5
+  $B2D9 JR $B2E3
+;
+  $B2DB BIT 7,D
+  $B2DD JR Z,$B2E5
+  $B2DF BIT 7,H
+  $B2E1 JR NZ,$B2E5
+;
+  $B2E3 A = 1
+;
+; HL must be a delta for road_pos here
+  $B2E5 cornering = A
+  $B2E8 BC = road_pos
+  $B2EC HL += BC
+  $B2ED road_pos = HL
+  $B2F0 D = 1
+  $B2F2 A = E
+  $B2F3 Set flags [why are some ORs and some ANDs?]
+  $B2F4 JP P,$B2FA
+  $B2F7 D--
+  $B2F8 A = -A
+;
+  $B2FA CP 12
+  $B2FC B = 2
+  $B2FE JR NC,$B306
+  $B300 B--
+  $B301 CP 6
+  $B303 JR NC,$B306
+  $B305 B--
+;
+  $B306 A = B
+  $B307 LD ($A250),A
+  $B30A A = D
+  $B30B LD ($A251),A
+  $B30E A = *$B064  -- Jump counter [self modified]
+  $B311 Set flags
+  $B312 Return if zero
+  $B313 cornering = 0
+  $B317 Return
 
 @ $B318 label=main_loop_24
 c $B318
   $B318 If speed > 0 jump $B325
   $B31F TBD...
+  $B322,3 off_road = A
+  $B32A,3 cornering = A
+  $B3B4 A = cornering | smoke
+  $B3BB Call start_sfx with cornering noise
   $B3C1 Jump if perp_caught_stage > 0
+  $B404,3 off_road = A
+  $B40C,3 A = off_road
+  $B432,7 Jump if cornering
+  $B443,3 A = off_road
   $B44D,3 Call draw_smoke  (seems to be the right side)
   $B454,3 Exit via draw_smoke
 
@@ -4373,7 +4781,7 @@ R $B58E I:A TBD
 @ $B648 label=draw_smoke
 c $B648 Draw the hero car's smoke
   $B648 #REGhl = &hero_car_smoke[A]  A is 0..3
-  $B653 A = *$B064 -- jump time counter
+  $B653 A = *$B064 -- jump counter
   $B656 Set flags
   $B657 Return if non-zero -- don't draw smoke if jumping
 ;
@@ -4499,6 +4907,13 @@ b $B828 breaks/crashes road rendering if messed with
 c $B848
 
 c $B8D2
+  $B93E,3 Load jump counter
+  $B95A HL = $B057 + A*2  looks early.. might be 1-indexed? [sampled A: 3,2,4]
+  $B962 E = *HL++  offset into B045
+  $B964,1 Load new jump value [sampled: $B060]
+  $B965,3 Set jump counter
+  $B968 HL = $B045 + E  points into jump values table
+  $B96C Self modify $B079
 
 @ $B9F4 label=main_loop_12
 c $B9F4
