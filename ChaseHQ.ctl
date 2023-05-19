@@ -1203,7 +1203,7 @@ B $7DF1,20,4 Attribute data for above
 
 b $7E05 Ref'd by graphic entry 3 and 12
 
-b $8000 temporaries?
+g $8000 temporaries?
 ;
 @ $8000 label=test_mode_flag
   $8000,1 Test mode enable flag (cheat mode)
@@ -1753,7 +1753,7 @@ R $87DC I:HL Address of 14 bytes of data to be copied to $A26C+
   $87ED Copy (47 bytes) at $A13E to $A16D - saved game state
   $87F8 Zero 208 bytes at $A19D
   $8801,1 Restore data pointer
-  $8802 Copy the 14 bytes passed in to $A26C
+  $8802 Copy the 14 bytes passed in to $A26C (road_pos, road_curvature_ptr, etc.)
   $8807,3 Pre-shift the backdrop image
   $880A $E34B = 8
 ; These self modified instructions change from NOPs to PUSHes when we're
@@ -2153,7 +2153,7 @@ N $8AEA Calculate clear bonus.
   $8BD3 *$A18C = 0  -- hazards[0].something
   $8BD6 *$A189 = 1  -- hazards[0].<distance related>
   $8BDA perp_caught_stage = 2
-  $8BDE *$A24F = 3  -- written but never read?
+  $8BDE *$A24F = 3
   $8BE2 Goto hpc_set_perp_pos
 ;
   $8BE5 A = *$A189  -- hazards[0].<distance related>
@@ -4243,6 +4243,8 @@ c $B318
   $B318 If speed > 0 jump $B325
   $B31F TBD...
   $B3C1 Jump if perp_caught_stage > 0
+  $B44D,3 Call draw_smoke  (seems to be the right side)
+  $B454,3 Exit via draw_smoke
 
 c $B4CC
   $B4D8 time_sixteenths/$A17D = 15, time_bcd/$A17E = $60
@@ -4368,7 +4370,40 @@ R $B58E I:A TBD
   $B6C4,3 Read from SUB @ $B5AA
   $B647 Return
 
-c $B648
+@ $B648 label=draw_smoke
+c $B648 Draw the hero car's smoke
+  $B648 #REGhl = &hero_car_smoke[A]  A is 0..3
+  $B653 A = *$B064 -- jump time counter
+  $B656 Set flags
+  $B657 Return if non-zero -- don't draw smoke if jumping
+;
+  $B658 C = *HL++  -- these must be size and position
+  $B65A B = *HL++
+  $B65C D = *HL++
+  $B65E E = *HL++
+  $B660 A = *HL++  -- frame pointer
+  $B662 H = *HL
+  $B663 L = A
+  $B664
+  $B665 Bank
+  $B666
+  $B667
+  $B668 B = A
+  $B669 E = C
+  $B66A C--
+  $B66B Set flags
+  $B66C Goto $B673 if non-zero
+  $B66E C = A
+  $B66F Unbank
+  $B670 A = E
+  $B671 Goto $B675
+;
+  $B673 Unbank
+  $B674 A = D
+;
+  $B675 E = A + 127 -- horizontal position
+  $B678 D = 119  -- vertical position
+  $B67A Exit via $B6D6
 
 c $B67C
   $B6DE,5 Divide by 8
@@ -5203,10 +5238,18 @@ B $CF8F,1 rows
 W $CF90,2 -> data
 L $CF8E,4,3
 ;
-@ $CF9E label=hero_car_smoke
+@ $CF9A label=hero_car_smoke
+W $CF9A,2
+W $CF9C,2
 W $CF9E,2 -> Turbo smoke plume data frame 1
+W $CFA0,2
+W $CFA2,2
 W $CFA4,2 -> Turbo smoke plume data frame 2
+W $CFA6,2
+W $CFA8,2
 W $CFAA,2 -> Turbo smoke plume data frame 3
+W $CFAC,2
+W $CFAE,2
 W $CFB0,2 -> Turbo smoke plume data frame 4
 ;
 @ $CFB2 label=unknown_cfb2
