@@ -1798,8 +1798,8 @@ c $8876 User input checking
 ;
   $8883 AND user_input with user input mask
   $8888 AND with mask for (Quit+Pause+Turbo), return if none
-  $888B Quit bit set? Goto quit_key if so
-  $888E Pause bit set? Goto pause_key if so
+  $888B Quit bit set? Jump to quit_key if so
+  $888E Pause bit set? Jump to pause_key if so
 N $8891 Turbo was pressed
   $8891 Address of boost timer
   $8894 Return if a turbo boost is in effect
@@ -1970,35 +1970,35 @@ R $8A36 I:E Same as D
 c $8A57 Handle perp caught.
 D $8A57 This handles slowing cars down to a stop and calculating and displaying the bonus score when the perp has been caught.
   $8A57 Return if perp_caught_stage is zero
-  $8A5C Goto hpc_stage1 if it's one
-  $8A60 Goto hpc_stage2 if it's two
-  $8A63 Goto hpc_stage3 if it's three
-  $8A66 Goto hpc_stage4 if it's four
+  $8A5C Jump to hpc_stage1 if it's one
+  $8A60 Jump to hpc_stage2 if it's two
+  $8A63 Jump to hpc_stage3 if it's three
+  $8A66 Jump to hpc_stage4 if it's four
   $8A69 Bank
   $8A6A Return if transition_control != 0
   $8A6F Unbank
-  $8A70 Goto hpc_stage5 if perp_caught_stage is five
+  $8A70 Jump to hpc_stage5 if perp_caught_stage is five
 ;
 N $8A73 Otherwise all of the caught stages are complete and we can move on to the next stage.
   $8A73 TBD -- Where's the PUSH?
   $8A74 Call silence_audio_hook
   $8A77 Increment wanted_stage_number
-  $8A7B Goto main_loop
+  $8A7B Jump to main_loop
 ;
 @ $8A7E label=hpc_stage5
   $8A7E perp_caught_stage = 6
   $8A83 A = 8 -- transition type
-  $8A85 Goto setup_transition
+  $8A85 Jump to setup_transition
 ;
 @ $8A88 label=hpc_stage2
   $8A88 A = *$A22A
-  $8A8B Goto $8AB2 if A >= 16
+  $8A8B Jump to $8AB2 if A >= 16
   $8A8F $A22A = A + 4
   $8A94 HL = road_pos + 12
   $8A9B
   $8A9C HL -= $126
   $8AA1
-  $8AA2 Goto $8AA5 if HL < $126  -- Suspect this is driving the car to stop the perp
+  $8AA2 Jump to $8AA5 if HL < $126  -- Suspect this is driving the car to stop the perp
   $8AA4
 ;
   $8AA5 road_pos = HL
@@ -2019,7 +2019,7 @@ N $8A73 Otherwise all of the caught stages are complete and we can move on to th
   $8AC5 perp_caught_stage = 4
   $8ACA HL = *$5D06   -- arrest messages
   $8ACD A = 1         -- transition_control byte
-  $8ACF Goto j_8e80   -- inside message_printing_related
+  $8ACF Jump to j_8e80   -- inside message_printing_related
 ;
 @ $8AD2 label=hpc_stage4
   $8AD2 If *$A139 != 0 call $8193  -- strange code calling into a string
@@ -2032,7 +2032,7 @@ N $8AEA Calculate clear bonus.
   $8AEC D = wanted_stage_number
   $8AF0 L = D + '0'
   $8AF2 A = *$8006
-  $8AF5 Goto hpc_8b03 if zero
+  $8AF5 Jump to hpc_8b03 if zero
   $8AF8 D <<= 4? or make BCD?
   $8B00 H = L
   $8B01 L = ' '
@@ -2133,7 +2133,7 @@ N $8AEA Calculate clear bonus.
   $8BA8 HL -= DE
   $8BAA Unstack read_pos
   $8BAB A = 9
-  $8BAD Goto $8BBA if HL >= DE
+  $8BAD Jump to $8BBA if HL >= DE
   $8BAF
   $8BB2 HL -= DE
   $8BB4 A = 10
@@ -2154,7 +2154,7 @@ N $8AEA Calculate clear bonus.
   $8BD6 *$A189 = 1  -- hazards[0].<distance related>
   $8BDA perp_caught_stage = 2
   $8BDE smoke = 3
-  $8BE2 Goto hpc_set_perp_pos
+  $8BE2 Jump to hpc_set_perp_pos
 ;
   $8BE5 A = *$A189  -- hazards[0].<distance related>
   $8BE8
@@ -2188,7 +2188,7 @@ N $8AEA Calculate clear bonus.
 ;
   $8C1D user_input = C
   $8C21 A195 is horz position of perp car
-  $8C24 Goto hpc_set_perp_pos if HL <= $46
+  $8C24 Jump to hpc_set_perp_pos if HL <= $46
   $8C2F HL -= 5
   $8C34
 ;
@@ -2904,7 +2904,7 @@ c $9965 Noise effect, Message plotting
   $9984 }
   $9987 ...and then gets overwritten?
   $9989 jump on $55 -> $AA transitions?
-  $998C,3 Goto plot_mini_font_1
+  $998C,3 Jump to plot_mini_font_1
 ;
 @ $998F label=sub998f_do_noise_effect
   $998F If noise_counter > 0 call noise_effect
@@ -2922,7 +2922,7 @@ c $9965 Noise effect, Message plotting
   $99AA message_x - 1
   $99AE rotate it by B  (B is noise counter) .. wut?
   $99B0,3 if carry jump plot_mini_font_2
-  $99B3,3 Goto plot_mini_font_1
+  $99B3,3 Jump to plot_mini_font_1
 ;
 @ $99B6 label=sub998f_something
   $99B6 If message_x != 0 jump $9a30
@@ -3080,7 +3080,7 @@ c $9AEC Plot mini font characters
 R $9AEC I:D The character to plot (ASCII)
 ; $9AEC called constantly to clear? or on flash?
   $9AEC
-  $9AEF Goto pmf_go
+  $9AEF Jump to pmf_go
 @ $9AF1 label=plot_mini_font_2
 ;R $9AF1 I:A Index into string, or $FF
   $9AF1 values to self modify with
@@ -4248,12 +4248,12 @@ W $B057 Sub-table (another byte pair) [suspect this really starts two bytes late
 @ $B063 label=move_hero_car
 c $B063 Hero car jumps; gear changing; off road checks; speed adjustment
   $B063 Load jump counter. Self modified by $8827 and $B965. Highest is 8.
-  $B065 Goto mhc_not_jumping if the jump counter is zero
+  $B065 Jump to mhc_not_jumping if the jump counter is zero
 ;
 @ $B068 label=mhc_jumping
 N $B068 Hero car is jumping.
   $B068 Decrement the jump counter in (self modified) $B063
-  $B06C Goto $B079 if we're still jumping
+  $B06C Jump to $B079 if we're still jumping
 ;
 @ $B06E label=mhc_landed
 N $B06E Hero car has landed.
@@ -4671,7 +4671,7 @@ c $B4F0 Smash handling
   $B50F 20 hits? [POKE $B50F for Single hit capture]
   $B511 Exit via fully_smashed if so
   $B514 19 hits?
-  $B516 Goto smash_b522 if not
+  $B516 Jump to smash_b522 if not
 N $B518 We have 19 hits
   $B518
   $B519 A = 10
@@ -4738,7 +4738,7 @@ R $B58E I:A TBD
   $B5EA IF $A251 jump to draw_car_perhaps_flipped
   $B5F0
   $B5F1 Call plot_sprite -- #REGa is (how many pixels to plot - 1) / 8
-  $B5F4 Goto draw_car_cont
+  $B5F4 Jump to draw_car_cont
 @ $B5F6 label=draw_car_perhaps_flipped
   $B5F6
   $B5F7 L--
@@ -4800,11 +4800,11 @@ c $B648 Draw the hero car's smoke
   $B669 E = C
   $B66A C--
   $B66B Set flags
-  $B66C Goto $B673 if non-zero
+  $B66C Jump to $B673 if non-zero
   $B66E C = A
   $B66F Unbank
   $B670 A = E
-  $B671 Goto $B675
+  $B671 Jump to $B675
 ;
   $B673 Unbank
   $B674 A = D
@@ -5064,7 +5064,7 @@ c $BDFB Map reader
 @ $BE18 label=j_be18
   $BE18 $A23F += bottom byte of speed in A
   $BE1A A = 0 doesn't seem self modified
-  $BE1C Goto j_c0d9 if no carry
+  $BE1C Jump to j_c0d9 if no carry
 ;
 @ $BE1F label=j_be1f
   $BE1F A = *$A240 + 1  -- Accessing A240 as a byte here
@@ -5077,19 +5077,19 @@ c $BDFB Map reader
 ;
 N $BE3E -- CURVATURE --
   $BE3E A = curvature_byte - 16
-  $BE43 Goto rm_save_curvature_byte if no carry
+  $BE43 Jump to rm_save_curvature_byte if no carry
 ;
   $BE45 Read and increment address of curvature data
   $BE4A Read a curvature byte
   $BE4B Set flags
-  $BE4C Goto rm_curvature_regular_byte if non-zero
+  $BE4C Jump to rm_curvature_regular_byte if non-zero
 ;
 @ $BE4E label=rm_curvature_escape_byte
 N $BE4E Handle curvature escape byte.
   $BE4E #REGhl is now address of escape byte
   $BE4F Increment, read command byte, increment again
-  $BE52 Goto rm_curvature_jump_command if command byte is zero
-  $BE55 Goto rm_curvature_one_command if command byte is one
+  $BE52 Jump to rm_curvature_jump_command if command byte is zero
+  $BE55 Jump to rm_curvature_one_command if command byte is one
 ;
 N $BE58 Otherwise it must be a road split command (byte == 2).
   $BE58 Load address of left route's curvature data
@@ -5097,12 +5097,12 @@ N $BE58 Otherwise it must be a road split command (byte == 2).
   $BE60 Load address of right route's curvature data
   $BE64 Self modify 'LD HL,$xxxx' at $BBC1 to load the address
   $BE67 HL = $E2C6 -> road split left curvature data
-  $BE6A Goto rm_read_curvature
+  $BE6A Jump to rm_read_curvature
 ;
 @ $BE6C label=rm_curvature_one_command
 N $BE6C Handle a command byte of one: TBD.
   $BE6C HL = <map curvature address> -- Self modified by $BBCC
-  $BE6F Goto rm_read_curvature
+  $BE6F Jump to rm_read_curvature
 ;
 @ $BE71 label=rm_curvature_jump_command
 N $BE71 Handle a command byte of zero: jump to the address given in next two bytes.
@@ -5119,7 +5119,7 @@ N $BE71 Handle a command byte of zero: jump to the address given in next two byt
 @ $BE7D label=rm_save_curvature_byte
   $BE7D curvature_byte = A  -- Save original byte
   $BE80 A &= 15  -- Mask off direction bits
-  $BE82 Goto rm_set_curvature if (A & (1<<3)) is zero   -- bit 3 => left (so jump if right)
+  $BE82 Jump to rm_set_curvature if (A & (1<<3)) is zero   -- bit 3 => left (so jump if right)
   $BE86 A = -(A & 7)  -- Left direction becomes -ve
 ;
 @ $BE8A label=rm_set_curvature
@@ -5129,18 +5129,18 @@ N $BE8A Write the direction into the cyclic road buffer.
 ;
 N $BE90 -- HEIGHT --
   $BE90 A = height_byte - 16
-  $BE95 Goto rm_save_height_byte if no carry
+  $BE95 Jump to rm_save_height_byte if no carry
 ;
   $BE97 Read and increment address of height data
   $BE9C Read a height byte
   $BE9D Set flags
-  $BE9E Goto rm_height_regular_byte if non-zero
+  $BE9E Jump to rm_height_regular_byte if non-zero
 ;
 N $BEA0 Handle height escape byte.
   $BEA0 #REGhl is now address of escape byte
   $BEA1 Increment, read command byte, increment again
-  $BEA4 Goto rm_height_jump_command if command byte is zero
-  $BEA8 Goto rm_height_one_command if command byte is one
+  $BEA4 Jump to rm_height_jump_command if command byte is zero
+  $BEA8 Jump to rm_height_one_command if command byte is one
 ;
 N $BEAA Otherwise it must be a road split command (byte == 2).
   $BEAA Load address of left route's height data
@@ -5148,11 +5148,11 @@ N $BEAA Otherwise it must be a road split command (byte == 2).
   $BEB2 Load address of right route's height data
   $BEB6 Self modify 'LD DE,$xxxx' at $BBC4 to load the address
   $BEB9 HL = $E2CC -> road split height data
-  $BEBC Goto rm_read_height
+  $BEBC Jump to rm_read_height
 ;
 @ $BEBE label=rm_height_one_command
   $BEBE HL = <something>  -- Self modified by $BBCF
-  $BEC1 Goto rm_read_height
+  $BEC1 Jump to rm_read_height
 ;
 @ $BEC3 label=rm_height_jump_command
   $BEC3 HL = wordat(HL)
@@ -5173,19 +5173,19 @@ N $BEAA Otherwise it must be a road split command (byte == 2).
 N $BEDB -- LANES --
 N $BEDB Lanes bytes are counted (like RLE).
   $BEDB Decrement the lanes counter
-  $BEE0 Goto rm_lanes_count_resume if non-zero
+  $BEE0 Jump to rm_lanes_count_resume if non-zero
 ;
 N $BEE2 Lanes counter hit zero, so reload.
   $BEE2 Read and increment address of lanes data
   $BEE7 Read a lanes byte
   $BEE8 Set flags
-  $BEE9 Goto rm_lanes_regular_byte if non-zero
+  $BEE9 Jump to rm_lanes_regular_byte if non-zero
 ;
 N $BEEB Handle lanes escape byte.
   $BEEB #REGhl is now address of escape byte
   $BEEC Increment, read command byte, increment again
-  $BEEF Goto rm_lanes_jump_command if command byte is zero
-  $BEF2 Goto rm_lanes_one_command if command byte is one
+  $BEEF Jump to rm_lanes_jump_command if command byte is zero
+  $BEF2 Jump to rm_lanes_one_command if command byte is one
 ;
 N $BEF5 Otherwise it must be a road split command (byte == 2).
   $BEF5 Load address of left route's lanes data
@@ -5193,11 +5193,11 @@ N $BEF5 Otherwise it must be a road split command (byte == 2).
   $BEFD Load address of right route's height data
   $BF01 Self modify 'LD BC,$xxxx' at $BBC7 to load the address
   $BF04 HL = $E2D1 -> road split lanes data
-  $BF07 Goto rm_read_lanes
+  $BF07 Jump to rm_read_lanes
 ;
 @ $BF09 label=rm_lanes_one_command
   $BF09 HL = $0000  -- This looks setup for it as others, but doesn't seem to be self modified.
-  $BF0C Goto rm_read_lanes
+  $BF0C Jump to rm_read_lanes
 ;
 @ $BF0E label=rm_lanes_jump_command
   $BF0E HL = wordat(HL)
@@ -5212,14 +5212,14 @@ N $BEF5 Otherwise it must be a road split command (byte == 2).
   $BF1D *HL = *DE & $F7  -- HL points into cyclic road buffer? Sampled HL = $EE60
   $BF21 A = *DE & $FB
   $BF24 Self modify 'LD A,$xx' at $BF2C
-  $BF27 Goto rm_lanes_done
+  $BF27 Jump to rm_lanes_done
 ;
 N $BF29 Resume updating lanes data.
 @ $BF29 label=rm_lanes_count_resume
   $BF29 Store decremented lanes counter
   $BF2C A = <self modified value>  -- Self modified above AND below
   $BF2E C = A  -- Save temporarily
-  $BF2F Goto rm_lanes_bf39 if (A & $0C) is zero
+  $BF2F Jump to rm_lanes_bf39 if (A & $0C) is zero
 ;
 N $BF33 (bottom two bits significant)
   $BF33 A = C & $F3
@@ -5233,7 +5233,7 @@ N $BF33 (bottom two bits significant)
 ;
 N $BF3E -- RIGHT-SIDE OBJECTS --
   $BF3E Decrement the rightside counter
-  $BF42 Goto $BF55 if zero
+  $BF42 Jump to $BF55 if zero
 ;
 N $BF44 Empty space inbetween objects.
   $BF44 *HL = 0
@@ -5244,24 +5244,24 @@ N $BF44 Empty space inbetween objects.
   $BF4E L = A
   $BF4F *HL = 0
   $BF50 A = 1
-  $BF52 Goto rm_all_hazards
+  $BF52 Jump to rm_all_hazards
 ;
 N $BF55 ???
 @ $BF55 label=j_BF55
   $BF55 A = rightside_byte - 16
-  $BF5A Goto rm_rightside_count_resume if no carry
+  $BF5A Jump to rm_rightside_count_resume if no carry
 ;
 N $BF5C Rightside counter hit zero, so reload.
   $BF5C Read and increment address of rightside data
   $BF61 Read a rightside byte
   $BF62 Set flags
-  $BF63 Goto rm_rightside_regular_byte if non-zero
+  $BF63 Jump to rm_rightside_regular_byte if non-zero
 ;
 N $BF65 Handle rightside escape byte.
   $BF65 #REGhl is now address of escape byte
   $BF66 Increment, read command byte, increment again
-  $BF69 Goto rm_rightside_jump_command if command byte is zero
-  $BF6C Goto rm_rightside_one_command if command byte is one
+  $BF69 Jump to rm_rightside_jump_command if command byte is zero
+  $BF6C Jump to rm_rightside_one_command if command byte is one
 ;
 N $BF6F Otherwise it must be a road split command (byte == 2).
   $BF6F Load address of left route's rightside data
@@ -5269,11 +5269,11 @@ N $BF6F Otherwise it must be a road split command (byte == 2).
   $BF77 Load address of right route's rightside data
   $BF7B Self modify 'LD DE,$xxxx' at $BBBA to load the address
   $BF7E HL = $E2C1  [overlapping use of data TBD]
-  $BF81 Goto rm_read_rightside
+  $BF81 Jump to rm_read_rightside
 ;
 @ $BF83 label=rm_rightside_one_command
   $BF83 HL = $0000  -- This looks setup for it as others, but doesn't seem to be self modified.
-  $BF86 Goto rm_read_rightside
+  $BF86 Jump to rm_read_rightside
 ;
 @ $BF88 label=rm_rightside_jump_command
   $BF88 HL = wordat(HL)
@@ -5293,17 +5293,17 @@ N $BF6F Otherwise it must be a road split command (byte == 2).
 ;
 N $BF9E -- LEFT-SIDE OBJECTS --
   $BF9E A = *$A244 - 16
-  $BFA3 Goto rm_leftside_count_resume if no carry
+  $BFA3 Jump to rm_leftside_count_resume if no carry
   $BFA5 DE = road_leftside_ptr + 1
   $BFAA Read a lanes byte
   $BFAB Set flags
-  $BFAC Goto rm_leftside_regular_byte if non-zero
+  $BFAC Jump to rm_leftside_regular_byte if non-zero
 ;
 N $BFAE Handle leftside escape byte.
   $BFAE #REGhl is now address of escape byte
   $BFAF Increment, read command byte, increment again
-  $BFB2 Goto rm_leftside_jump_command if command byte is zero
-  $BFB5 Goto rm_leftside_one_command if command byte is one
+  $BFB2 Jump to rm_leftside_jump_command if command byte is zero
+  $BFB5 Jump to rm_leftside_one_command if command byte is one
 ;
 N $BFB8 Otherwise it must be a road split command (byte == 2).
   $BFB8 Load address of left route's leftside data
@@ -5311,11 +5311,11 @@ N $BFB8 Otherwise it must be a road split command (byte == 2).
   $BFC0 Load address of right route's leftside data
   $BFC4 Self modify 'LD BC,$xxxx' at $BBBD
   $BFC7 HL = $E2C0  [overlapping use of data TBD]
-  $BFCA Goto rm_read_leftside
+  $BFCA Jump to rm_read_leftside
 ;
 @ $BFCC label=rm_leftside_one_command
   $BFCC HL = $0000  -- This looks setup for it as others, but doesn't seem to be self modified.
-  $BFCF Goto rm_read_leftside
+  $BFCF Jump to rm_read_leftside
 ;
 @ $BFD1 label=rm_leftside_jump_command
   $BFD1 HL = wordat(HL)
@@ -5335,48 +5335,48 @@ N $BFB8 Otherwise it must be a road split command (byte == 2).
 ;
 N $BFE7 -- HAZARDS --
   $BFE7 A = hazards_byte - 1  [it's a counter]
-  $BFEC Goto rm_no_hazards if no carry
+  $BFEC Jump to rm_no_hazards if no carry
   $BFEE DE = road_hazard_ptr + 1
 ;
 @ $BFF3 label=rm_restart_hazards_read
   $BFF3 Read a hazards byte
   $BFF4 Set flags
-  $BFF5 Goto rm_hazards_regular_byte if non-zero
+  $BFF5 Jump to rm_hazards_regular_byte if non-zero
 ;
 N $BFF7 Handle hazards escape byte.
   $BFF7 #REGhl is now address of escape byte
   $BFF8 Increment, read command byte, increment again
   $BFFB Set flags
-  $BFFC Goto rm_hazards_jump_command if command byte is zero
-  $BFFF Goto rm_hazards_one_command if command byte is one
-  $C001 Goto rm_hazards_road_fork_command if command byte is two
-  $C005 Goto rm_hazards_set_hazard_command if command byte is < 10  -- 3..9
-  $C009 Goto rm_hazards_set_fork_command if command byte is < 13    -- 10..12
-  $C00D Goto rm_hazards_spawning_command if command byte is < 15    -- 13..14
+  $BFFC Jump to rm_hazards_jump_command if command byte is zero
+  $BFFF Jump to rm_hazards_one_command if command byte is one
+  $C001 Jump to rm_hazards_road_fork_command if command byte is two
+  $C005 Jump to rm_hazards_set_hazard_command if command byte is < 10  -- 3..9
+  $C009 Jump to rm_hazards_set_fork_command if command byte is < 13    -- 10..12
+  $C00D Jump to rm_hazards_spawning_command if command byte is < 15    -- 13..14
   $C011 *$A224 = A - 11  -- Otherwise  [helicopter related]
-  $C016 Goto rm_do_restart
+  $C016 Jump to rm_do_restart
 ;
 N $C018 Handle car spawning commands (13/14 = enable/disable car spawning).
 @ $C018 label=rm_hazards_spawning_command
   $C018 stop_car_spawning = A - 10
-  $C01D Goto rm_do_restart
+  $C01D Jump to rm_do_restart
 ;
 N $C01F Handle floating arrow commands (10/11/12 = off/left/right).
 @ $C01F label=rm_hazards_set_fork_command
   $C01F floating_arrow = A - 7
-  $C024 Goto rm_do_restart if zero
+  $C024 Jump to rm_do_restart if zero
   $C026 correct_fork = A
 ;
 @ $C029 label=rm_do_restart
   $C029 EX DE,HL
-  $C02A Goto rm_restart_hazards_read
+  $C02A Jump to rm_restart_hazards_read
 ;
 ; This needs more analysis since the visible results don't match the map data.
 N $C02C Handle hazard commands (3 = off, 4/5/6 = tumbleweeds left/right/both, 7/8/9 => barriers)
 N $C02C When on left it uses lane 1, on right it uses lane 4, both it uses lane 2 and 3.
 @ $C02C label=rm_hazards_set_hazard_command
   $C02C Self modify "LD (HL),$xx" at $C058 to load A
-  $C02F Goto rm_read_hazards
+  $C02F Jump to rm_read_hazards
 ;
 @ $C031 label=rm_hazards_road_fork_command
   $C031 Load address of left route's hazards data  -- Sampled HL: $5F26 (road split)
@@ -5384,11 +5384,11 @@ N $C02C When on left it uses lane 1, on right it uses lane 4, both it uses lane 
   $C039 Load address of right route's hazards data
   $C03D Self modify 'LD HL,$xxxx' at $BBB7
   $C040 HL = $E2B8
-  $C043 Goto rm_read_hazards
+  $C043 Jump to rm_read_hazards
 ;
 @ $C045 label=rm_hazards_one_command
   $C045 HL = 0
-  $C048 Goto rm_read_hazards
+  $C048 Jump to rm_read_hazards
 ;
 @ $C04A label=rm_hazards_jump_command
   $C04A HL = wordat(HL)  [Sampled HL: $6292 $6107 $61BC $600F]
@@ -5424,39 +5424,39 @@ N $C02C When on left it uses lane 1, on right it uses lane 4, both it uses lane 
   $C077 HL = $A22B
   $C07A HL = $A22B  -- duplicate instruction
   $C07D *HL = A
-  $C07E Goto rm_c0bb
+  $C07E Jump to rm_c0bb
 ;
 @ $C080 label=rm_c080
   $C080 A = IX[15] + 1
-  $C084 Goto rm_c096 if zero
+  $C084 Jump to rm_c096 if zero
   $C086 IX[1]--
-  $C089 Goto rm_c072_continue if non-zero
+  $C089 Jump to rm_c072_continue if non-zero
   $C08C IX[0] = 0  -- mark the hazard entry unused
   $C090 RLA  -- testing top bit of A
-  $C091 Goto rm_c072_continue if no carry
+  $C091 Jump to rm_c072_continue if no carry
   $C093 C++
-  $C094 Goto rm_c072_continue
+  $C094 Jump to rm_c072_continue
 ;
 @ $C096 label=rm_c096
   $C096 A = IX[1] - 1
   $C09B IX[1] = A
-  $C09E Goto rm_c0b2 if carry
-  $C0A0 Goto rm_c072_continue if non-zero
+  $C09E Jump to rm_c0b2 if carry
+  $C0A0 Jump to rm_c072_continue if non-zero
   $C0A2 A = IX[17]
   $C0A5 Set flags
-  $C0A6 Goto rm_c072_continue if non-zero
+  $C0A6 Jump to rm_c072_continue if non-zero
   $C0A8 IX[1] = 1
   $C0AC IX[4] = 255
-  $C0B0 Goto rm_c072_continue
+  $C0B0 Jump to rm_c072_continue
 ;
 @ $C0B2 label=rm_c0b2
   $C0B2 IX[17]--
-  $C0B9 Goto rm_c072_continue
+  $C0B9 Jump to rm_c072_continue
 ;
 @ $C0BB label=rm_c0bb
   $C0BB A = xx  -- Self modified by $A977 + $A9A0 only
   $C0BD Set flags
-  $C0BE Goto rm_c0d7 if zero
+  $C0BE Jump to rm_c0d7 if zero
   $C0C1 HL = $ED73  -- This must be a buffer pointer at this point
   $C0C4 DE = $ED77
   $C0C7 BC = 38
@@ -5466,7 +5466,7 @@ N $C02C When on left it uses lane 1, on right it uses lane 4, both it uses lane 
   $C0CC DE -= 2
   $C0CE *DE-- = *HL--; BC--
   $C0D0 *DE-- = *HL--; BC--
-  $C0D2 Goto rm_c0ca if PE  PE => B became zero
+  $C0D2 Jump to rm_c0ca if PE  PE => B became zero
   $C0D5 HL++
   $C0D6 *HL = B
 ;
@@ -6289,7 +6289,7 @@ c $E90F
   $E973 Address of "control options cannot be remodified" text (NUL terminated)
   $E976 Call menu_draw_strings
   $E97D Keyscan
-  $E99C Goto clear_screen
+  $E99C Jump to clear_screen
 
 b $E9B4 Messages
 ;
