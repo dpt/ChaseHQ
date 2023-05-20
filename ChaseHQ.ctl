@@ -1649,7 +1649,7 @@ c $858C Probably the "CHASE HQ MONITORING SYSTEM" pre-game screen
   $85A8
   $85AB Call main_loop_26
   $85AE Call reveal_perp_car
-  $85B1
+  $85B1 Call animate_meters
   $85B4 Call transition
   $85B7 Call draw_screen
   $85BA
@@ -1679,7 +1679,7 @@ N $85EA The perp's car is revealed from the bottom-up.
   $85EA Load (self modified) height counter
   $85EC Increment it
   $85ED Max height is 50
-; 
+;
   $85F2 Update height counter
   $85F5 Load address of perp's car LOD
   $85F8 Read lod.width_bytes
@@ -1691,7 +1691,56 @@ N $85EA The perp's car is revealed from the bottom-up.
   $8609 Address in back buffer to plot at
   $860C Exit via plot_sprite
 
-c $860F
+@ $860F label=animate_meters
+c $860F Animate the signal meters.
+N $860F Update the first meter.
+  $860F Call rng
+  $8612 Set flags
+  $8613 Self modified counter
+N $8615 Use sign of the random value to enlarge or reduce the apparent meter level.
+  $8615 Jump to enlarge case if random value is positive
+  $8618 Decrement counter [Why use SUB here?]
+  $861A Jump if >= 0
+;
+  $861C Increment counter [Why use ADD here?]
+  $861E Jump if < 8
+  $8622 Decrement counter (max out at 7)
+; 
+  $8623 Self modify counter in $8613
+  $8626 Screen attribute (23,16)
+  $8629 Call am_set_attrs
+;
+N $862C Update the second meter. Repeats the above.
+  $862C Call rng
+  $862F Set flags
+  $8630 Self modified counter
+N $8632 Use sign of the random value to enlarge or reduce the apparent meter level.
+  $8632 Jump to enlarge case if random value is positive
+  $8635 Decrement counter [Why use SUB here?]
+  $8637 Jump if >= 0
+; 
+  $8639 Increment counter [Why use ADD here?]
+  $863B Jump if < 8
+  $863F Decrement counter (max out at 7)
+; 
+  $8640 Self modify counter in $8630
+  $8643 Screen attribute (23,18)
+; 
+@ $8646 label=am_set_attrs
+N $8646 The signal meter bar is seven segments wide. Fill the left hand portion with our chosen amount of green segments and the right hand side with the complement of red segments.
+  $8646 Set flags from counter in #REGa
+  $8647 Jump if zero
+  $8649 Copy counter to loop counter
+  $864A Set attribute byte to black ink over green
+  $864D Loop while #REGb
+; 
+@ $864F label=am_set_right_attrs
+  $864F A = 7 - A
+  $8652 Return if zero
+  $8653 Copy counter to loop counter
+  $8654 Set attribute byte to black ink over red
+  $8657 Loop while #REGb
+  $8659 Return
 
 c $865A
 
