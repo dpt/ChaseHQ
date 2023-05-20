@@ -1648,7 +1648,7 @@ c $858C Probably the "CHASE HQ MONITORING SYSTEM" pre-game screen
 @ $85A8 loop_85a8
   $85A8
   $85AB Call main_loop_26
-  $85AE
+  $85AE Call reveal_perp_car
   $85B1
   $85B4 Call transition
   $85B7 Call draw_screen
@@ -1671,7 +1671,25 @@ c $858C Probably the "CHASE HQ MONITORING SYSTEM" pre-game screen
 
 b $85DD
 
-c $85E4
+@ $85E4 label=reveal_perp_car
+c $85E4 Reveals the perp's car on the pre-game screen.
+  $85E4 Return if wanted_stage_number is 5 (the perp's car is hidden on the pre-game screen for that stage)
+;
+N $85EA The perp's car is revealed from the bottom-up.
+  $85EA Load (self modified) height counter
+  $85EC Increment it
+  $85ED Max height is 50
+; 
+  $85F2 Update height counter
+  $85F5 Load address of perp's car LOD
+  $85F8 Read lod.width_bytes
+  $85FB Read lod.height
+  $85FE If height counter < lod.height, B = height counter
+  $8602 Load address of bitmap data
+  $8607 Stride of bitmap data in bytes (D is still zero)
+  $8608 Bank for plot_sprite entry
+  $8609 Address in back buffer to plot at
+  $860C Exit via plot_sprite
 
 c $860F
 
