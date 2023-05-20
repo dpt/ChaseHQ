@@ -12,7 +12,7 @@ CodeFiles={address:04X}.html
 [Game]
 Game=Chase H.Q.
 Release=The incomplete Chase H.Q. disassembly 20230518
-Copyright=&copy; 1989 Ocean Software Ltd.
+Copyright=&copy; 1988 Taito Corporation &copy; 1989 Ocean Software Ltd. (Chase H.Q.) © 2023 David Thomas (this disassembly)
 
 [PageHeaders]
 GameIndex=The incomplete<>disassembly
