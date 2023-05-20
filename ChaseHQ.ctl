@@ -4071,6 +4071,9 @@ B $A2E3,,7 A-Z
 @ $A399 label=main_loop_22
 c $A399
   $A3FD,3 off_road = A
+  $A4B8,3 HL = &<crashed flag>
+  $A4BC,1 [why inc then dec?]
+  $A4BE,2 Set crashed flag
   $A52A,3 off_road = A
 
 @ $A579 label=main_loop_14
@@ -4103,17 +4106,55 @@ c $A7F3
   $A7F3 A = perp_caught_stage
   $A7F7 Don't spawn any cars if this flag is set
 
-c $A89C
+c $A89C [must be mapping map bytes to something]
+D $A89C This affects car spawning positions. Return $0101 and cars only appear in the leftmost lane. $0102 (1st and 2nd, mainly 2nd). $0104 first three lanes. $0304 - third and fourth lanes.
+; so it's probably (left lane, right lane)
+; rightmost cars seem faster...
+R $A89C I:C  Buffer offset
+R $A89C O:BC TBD
+; byte in buffer => return value
+; 0      => $0104
+; C1 set => $0104
+; 41 set => $0103
+; 81..FF => $0204
+; 80     => $0103
+; 0?     => $0102
+; ?      => $0304
+  $A89C A = [current buffer offset] + 66 + C   (wrapping around)
+  $A8A2 A = $EE00[A]
+  $A8A6 Set flags
+  $A8A7 BC = $0104
+  $A8AA Return if zero
+  $A8AB E = A  preserve
+  $A8AC A &= $C1
+  $A8AE CP $C1
+  $A8B0 Return if zero
+  $A8B1 CP $41
+  $A8B3 BC = $0103
+  $A8B6 Return if zero
+  $A8B7 A = (E & $82) << 1
+  $A8BB Jump to $A8C5 if didn't carry
+; C set => top bit was set
+  $A8BD BC = $0204
+  $A8C0 Return if non-zero
+  $A8C1 BC = $0103
+  $A8C4 Return
+;
+  $A8C5 BC = $0102
+  $A8C8 Return if zero
+  $A8C9 BC = $0304
+  $A8CC Return
 
 c $A8CD Hazard handler routine
   $A8CD Return if perp_caught_stage > 0
   $A8D3 Check 'don't spawn cars' flag
   $A8D9 TBD
+  $A930,5 Return if crashed flag set
 
 @ $A955 label=main_loop_18
 c $A955 TBD
-  $A955 If $A248 == 0 Return
-  $A95A If $A254 == 0 Return
+  $A955 Return if $A248 is zero
+  $A95A Return if $A254 is zero
   $A95F Point #REGde at the stack
   $A962 Call rng
   $A965 Stack 1 if it's +ve or zero, or 2 if it's -ve
@@ -4281,11 +4322,11 @@ N $B06E Hero car has landed.
 ;
 @ $B079 label=mhc_midair
 N $B079 Hero car is in mid-air.
-  $B079 Point #REGhl at entry in jump table -- Self modified by $B96C and $B092
+  $B079 Point #REGhl at entry in jump table. Self modified by $B96C and $B092
   $B07C off_road = 0
-  $B080 Clear up/down/left/right bits of user input
-  $B088 $B5B0 = *HL++       -- Self modified value in draw_car
-  $B08D A = *$B5AB + *HL++  -- Self modified value in draw_car   vertical shift?
+  $B080 Clear up/down/left/right bits of user input (can't turn in mid-air etc.)
+  $B088 $B5B0 = *HL++      -- Self modified value in draw_car
+  $B08D A = *$B5AB + *HL++ -- Self modified value in draw_car - vertical shift?
   $B092 Update HL load above, $B079
 ;
 @ $B095 label=mhc_not_jumping
@@ -4294,17 +4335,18 @@ N $B079 Hero car is in mid-air.
   $B09B Jump if a turbo boost is not in effect
   $B09F Decrement boost timer
   $B0A0 Jump if boost timer is non-zero
-  $B0A2 Decrement turbo boost count [POKE $B0A5 for Infinite turbos]
+  $B0A2 Decrement turbo boost count [POKE $B0A5,0 for Infinite turbos]
 ;
 @ $B0A9 label=mhc_smoke
-  $B0A9 HL now -> smoke
+N $B0A9 Handle smoke effect.
+  $B0A9 #REGhl now points at smoke
   $B0AA Jump if smoke is zero
   $B0AE Decrement smoke
 ;
 N $B0AF Handle gear changes.
   $B0AF Read user input
   $B0B2 C = A
-  $B0B3 Read the LD A at $B325
+  $B0B3 Read from the LD A at $B325 (crash flag)
   $B0B6 Jump if zero
   $B0B9 C = C & $10, i.e. Fire/Gear
 ;
@@ -4661,7 +4703,9 @@ c $B318
   $B318 If speed > 0 jump $B325
   $B31F TBD...
   $B322,3 off_road = A
+  $B325,2 [this seems to be a crashed flag]
   $B32A,3 cornering = A
+  $B349,4 Clear crashed flag
   $B3B4 A = cornering | smoke
   $B3BB Call start_sfx with cornering noise
   $B3C1 Jump if perp_caught_stage > 0
