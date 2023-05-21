@@ -1545,7 +1545,7 @@ N $841B Run the main game loop.
   $84A7 Call main_loop_25
   $84AA Call overtake_bonus
   $84AD Call engine_sfx_play_hook
-  $84B0 Call main_loop_26
+  $84B0 Call drive_chatter
   $84B3 Call smash_bar_etc
   $84B6 Call transition
   $84B9 Call engine_sfx_play_hook
@@ -1651,23 +1651,21 @@ c $858C Pre-game radio screen ("CHASE HQ MONITORING SYSTEM")
   $85A1 A = $FF (TBD)
   $85A2 Load Nancy's report for this level
   $85A5 Call chatter
-@ $85A8 loop_85a8
+@ $85A8 label=rps_loop
   $85A8 Call draw_pregame
-  $85AB Call main_loop_26
+  $85AB Call drive_chatter
   $85AE Call reveal_perp_car
   $85B1 Call animate_meters
   $85B4 Call transition
   $85B7 Call draw_screen
   $85BA Loop if transition_control is non-zero
-  $85C0
-  $85C3
-  $85C4
-  $85C5
-  $85C7
+  $85C0 Return if $963D is zero
+  $85C5 Jump to rps_xxx if $963D >= 3
   $85C9 Call keyscan
   $85CC Loop until fire is hit
   $85D0 Call clear_chatter
   $85D3
+@ $85D6 label=rps_xxx
   $85D6
   $85D8 If no carry call setup_transition
   $85DB Loop
@@ -1847,30 +1845,41 @@ N $86A3 Plot a tile.
   $86F3 Loop while B
   $86F5 Return
 
-c $86F6 18 byte chunks of this gets copied to $C82D by $C808
+b $86F6 18 byte chunks of this gets copied to $C82D by $C808
+;
+@ $871A label=escape_scene_data
+N $871A 14 bytes of setup_game data used by escape_scene. Map ptr are all a byte earlier than their actual start data.
+W $871A,2 road_pos
+W $871C,2 road_curvature_ptr
+W $871E,2 road_height_ptr
+W $8720,2 road_lanes_ptr
+W $8722,2 road_rightside_ptr (note: reuse of road curvature data)
+W $8724,2 road_leftside_ptr (note: reuse of road curvature data)
+W $8726,2 road_hazard_ptr
+;
+N $8728 20 bytes copied to hazards[0]
+B $8728,1 Used flag
+B $8729,8 TBD
+W $8731,2 TBD
+W $8733,2 Routine at $ADF9 (it's just a RET)
+W $8735,2 TBD
+B $8737,5 TBD
 
 @ $873C label=escape_scene
 c $873C Escape scene
   $873C Call silence_audio_hook
-  $873F
+  $873F Address of escape_scene_data
   $8742 Call setup_game
-  $8745
-  $8748
-  $874B
-  $874E
-  $8751
-  $8754
-  $8756
-  $8759
-  $875C
-  $875E
-  $8761
+  $8745 Set speed to $FA [speed of the camera]
+  $874B Initialise hazards[0] (the perp)
+  $8756 Set $A191 to value of lods_table[2] (the perp's car)
+  $875C This stops $AD0D from running
+  $8761 Address of failed_chatter ("wrong job" / "one more try" / "mediocre driver")
   $8764 Call chatter
-@ $8767 label=8767_loop
-  $8767
-  $876A
-  $876D
-  $876F Call NZ message_printing_related
+@ $8767 label=es_loop
+N $8767 Print "GAME OVER" once the transition has completed.
+  $8767 Address of game_over_message
+  $876A If transition_control != 4 Call message_printing_related
   $8772 Call read_map
   $8775 Call main_loop_10
   $8778 Call main_loop_11
@@ -1882,34 +1891,20 @@ c $873C Escape scene
   $878A Call main_loop_19
   $878D Call main_loop_23
   $8790 Call main_loop_25
-  $8793 Call main_loop_26
+  $8793 Call drive_chatter
   $8796 Call transition
   $8799 Call draw_screen
-  $879C
-  $879F
-  $87A0
-  $87A2
-  $87A5
-  $87A7
-  $87A9
-  $87AC
-  $87AE
-  $87B0
-  $87B2
-  $87B5
-  $87B8
-  $87BB
-  $87BE
-  $87C1
-  $87C4
-  $87C5
-  $87C7
-  $87CA
-  $87CB
-  $87CD
-  $87D0
-  $87D1
-  $87D2
+  $879C Jump to es_loop unless the tunnel has appeared
+  $87A2 reading from tunnel code [15 when tunnel is small, 6 when fills screen]
+  $87A5 loop if tunnel code value >= 7
+  $87A9 $A189 is hazards 2nd byte
+  $87AC Jump if it != 5
+  $87B0 Activate three hazards? [i.e. the three barriers]
+  $87BB Set speed to zero [speed of camera]
+  $87C1 Loop while the perp is still active in the hazards
+  $87C7 Loop while chatter is still happening?
+  $87CD Return if transition_control is zero
+  $87D2 If transition_control is 4
   $87D4
   $87D6 Call NZ setup_transition
   $87D9 Loop
@@ -1937,7 +1932,7 @@ R $87DC I:HL Address of 14 bytes of data to be copied to $A26C+
   $881B NOP 6 bytes [of instructions] at $8FA4
   $8824 Self modify "LD (HL),x" at $C058 to x = 0
   $8827 Self modify "LD A,x" at $B063 to x = 0  car jump height
-  $882A Set $A191 to value of lods_table[2] (seems to be the perp's car)
+  $882A Set $A191 to value of lods_table[2] (the perp's car)
   $8830 Zero $EE00..$EEFF, and point $A240 at $EE00 [duplicates work from earlier]
 @ $883F label=loop883f
 ; alter this iterations count and we seem to start later in the level
@@ -3053,7 +3048,7 @@ R $9945 I:HL Address of message set
   $9960 $963D = 1
   $9964 Return
 
-@ $9965 label=main_loop_26
+@ $9965 label=drive_chatter
 c $9965 Noise effect, Message plotting
   $9965 A = TBD963d - 1
   $9969 if A was zero jump
@@ -6364,7 +6359,10 @@ b $E1E9 Ref'd by graphic entry 1 and 10
 ; $x8 => left bend sign
 ; $x9 => right bend sign
 
-b $E2AA Data for perp escape scene
+b $E2A4 Data for perp escape scene
+;
+N $E2A4 Perp escape scene, hazards
+;
 N $E2AA Perp escape scene, curvature
 B $E2AA,1 Straight
 B $E2AB,2 Escape, Command 0 (Continue at <Address>)
@@ -6403,8 +6401,8 @@ N $E2CC Road split, height
 B $E2CC,1 TBD
 B $E2CD,2 Escape, Command 0 (Continue at <Address>)
 W $E2CF,2 Loop
-;
-B $E2D1 road split lane data TBD
+
+b $E2D1 road split lane data TBD
 B $E2D2 Ref'd by $BBEF  --  Used after road split
 B $E2D5 Ref'd by $BB7E, $BBA5
 B $E2D9 Ref'd by $BB78, $BBAB
