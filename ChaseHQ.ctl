@@ -1179,8 +1179,11 @@ W $77CE,2 Back buffer address
 W $77D0,2 Attributes address
 T $77D2,6 "SIGNAL"
 
-b $77D8
+b $77D8 Data for pre-game screen.
+  $77D8 Commands to draw the pre-game screen. RLE'd tile references etc.
+  $7798 .
   $7860 Seems to be tiles pointed at by car rendering code
+  $78A7 .
 
   $78B6,344,8 Tiles used to draw the pre-game screen #HTML[#CALL:graphic($78B6,8,43*8,0,0)]
 
@@ -1485,15 +1488,19 @@ N $83CD Builds a table of flipped bytes at $EF00.
 c $8401 Main loop
   $8401 Call load_stage
   $8404 Are we on stage 6 (end credits) jump $841B if not so
-@ $840B label=handle_end_credits
+;
+N $840B Run the end credits.
+@ $840B label=ml_run_end_credits
   $840B Call $5C00 [which is data in earlier stages, must be end credit anim]
   $840E Reset (wanted) stage to 1
   $8413 Call load_stage
   $8418 Set (wanted) stage to 6   [not sure why]
   $841A Return
-@ $841B label=l_841b
-  $841B
-  $841E
+;
+N $841B Run the main game loop.
+@ $841B label=ml_not_credits
+  $841B Call run_pregame_screen
+  $841E Address of setup_game_data
   $8421 Call setup_game
   $8424 $A13B cycles 3,2,1 then repeats
   $842E $A26B = (A * 4) OR 2
@@ -1633,36 +1640,32 @@ D $852A This runs the game loop while driving the car.
   $8586 Call main_loop_23
   $8589 Exit via main_loop_24
 
-c $858C Probably the "CHASE HQ MONITORING SYSTEM" pre-game screen
-  $858C
+@ $858C label=run_pregame_screen
+c $858C Pre-game radio screen ("CHASE HQ MONITORING SYSTEM")
+  $858C Address of setup_game_data
   $858F Call setup_game
-  $8592
-  $8594
+  $8592 Set $A220 to $F8  (TBD)
   $8597 Call setup_transition
   $859A Call clear_screen_set_attrs
-  $859D
-  $859E
-  $85A1
-  $85A2
+  $859D Reset car revealing height counter in #R$85E4
+  $85A1 A = $FF (TBD)
+  $85A2 Load Nancy's report for this level
   $85A5 Call chatter
 @ $85A8 loop_85a8
-  $85A8
+  $85A8 Call draw_pregame
   $85AB Call main_loop_26
   $85AE Call reveal_perp_car
   $85B1 Call animate_meters
   $85B4 Call transition
   $85B7 Call draw_screen
-  $85BA
-  $85BD
-  $85BE
+  $85BA Loop if transition_control is non-zero
   $85C0
   $85C3
   $85C4
   $85C5
   $85C7
   $85C9 Call keyscan
-  $85CC
-  $85CE
+  $85CC Loop until fire is hit
   $85D0 Call clear_chatter
   $85D3
   $85D6
@@ -1705,7 +1708,7 @@ N $8615 Use sign of the random value to enlarge or reduce the apparent meter lev
   $861C Increment counter [Why use ADD here?]
   $861E Jump if < 8
   $8622 Decrement counter (max out at 7)
-; 
+;
   $8623 Self modify counter in $8613
   $8626 Screen attribute (23,16)
   $8629 Call am_set_attrs
@@ -1718,14 +1721,14 @@ N $8632 Use sign of the random value to enlarge or reduce the apparent meter lev
   $8632 Jump to enlarge case if random value is positive
   $8635 Decrement counter [Why use SUB here?]
   $8637 Jump if >= 0
-; 
+;
   $8639 Increment counter [Why use ADD here?]
   $863B Jump if < 8
   $863F Decrement counter (max out at 7)
-; 
+;
   $8640 Self modify counter in $8630
   $8643 Screen attribute (23,18)
-; 
+;
 @ $8646 label=am_set_attrs
 N $8646 The signal meter bar is seven segments wide. Fill the left hand portion with our chosen amount of green segments and the right hand side with the complement of red segments.
   $8646 Set flags from counter in #REGa
@@ -1733,7 +1736,7 @@ N $8646 The signal meter bar is seven segments wide. Fill the left hand portion 
   $8649 Copy counter to loop counter
   $864A Set attribute byte to black ink over green
   $864D Loop while #REGb
-; 
+;
 @ $864F label=am_set_right_attrs
   $864F A = 7 - A
   $8652 Return if zero
@@ -1742,7 +1745,107 @@ N $8646 The signal meter bar is seven segments wide. Fill the left hand portion 
   $8657 Loop while #REGb
   $8659 Return
 
-c $865A
+@ $865A label=draw_pregame
+c $865A Draw the pre-game screen.
+  $865A Address of data
+;
+@ $865D label=dp_loop
+  $865D A = *HL
+  $865E Set flags
+  $865F Jump to rendering messages only, if zero
+  $8662 HL++
+  $8663 Jump if < $D0
+  $8667 Jump if < $E0  -- $D0..DF
+  $866B Jump if >= $F0
+;
+N $866F Otherwise handle $E0..$EF. This just seems to set a value.
+  $866F A -= $E0
+  $8671 Self modify $86C8 with A
+  $8674 Loop
+;
+N $8676 Handle $D0..DF.
+  $8676 A -= $D0
+  $8678 Self modify $86C2 with A * 8
+  $867E Loop
+;
+N $8680 Handle $F0..FF.
+  $8680 D = A
+  $8681 E = *HL++
+  $8683 Loop
+;
+N $8685 Handle $00..$CF.
+  $8685
+  $8687 B = 1    single tile?
+  $8689 Jump if >= $1F
+  $868B B = A    run of tiles?
+  $868C A = *HL++
+;
+N $868E Handle $1F..?
+  $868E
+  $868F A -= $1F   A is now a tile index
+  $8691 multiply by 8 - size of tile
+  $8692
+  $8693 why the different rotates?
+  $8694
+  $8695 BC = A
+  $8698 RL B   shift in carry flag?
+  $869A Address of base of tiles
+  $869D Point at tile we need
+  $869E
+  $869F
+;
+N $86A0 label=loop_86a0
+  $86A0
+  $86A1
+  $86A2
+N $86A3 Plot a tile.
+  $86A3 B = 8
+  $86A5 *HL = *DE++
+  $86A8 H++
+  $86A9 Loop
+;
+  $86AB
+  $86AC D = (B << 2) & $20
+  $86B2 E = (C & $1F) + D
+  $86B7 A = (C & $E0) << 1
+  $86BB D = $59
+  $86BD
+  $86BF D++
+;
+  $86C0 A += E
+  $86C1 E = A
+  $86C2 A = xx   Self modified
+  $86C4 Set flags
+  $86C5 Jump if zero
+  $86C7 *DE = A
+;
+  $86C8 A = xx   Self modified
+  $86CA A--
+  $86CB Jump if zero
+  $86CD A = H & $0F
+  $86D0 Jump if non-zero
+  $86D2 H -= $10
+  $86D6 L += $20
+  $86DA
+;
+  $86DC HL = BC
+  $86DE L++
+;
+  $86DF
+  $86E0
+  $86E1 Loop loop_86a0 while B
+  $86E3
+  $86E4
+  $86E5 Loop
+;
+  $86E8 4 messages to print
+  $86EA Address of pre_game_messages
+;
+  $86ED Flags TBD
+  $86EF HL-- TBD
+  $86F0 Call print_message
+  $86F3 Loop while B
+  $86F5 Return
 
 c $86F6 18 byte chunks of this gets copied to $C82D by $C808
 
