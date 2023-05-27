@@ -147,6 +147,7 @@
 > $4000 ; - is attract mode a CPU player or a recording? how does it loop?
 > $4000 ; - exact scoring rules
 > $4000 ; - overhead tunnel type drawing
+> $4000 ; - background music/drums on menu screen
 > $4000 ;
 
 @ $4000 org
@@ -5806,6 +5807,7 @@ c $CBD6
 c $CD3A
 
 ; Fixed point 5.3? or 3.5?
+@ $CDD6 label=multiply
 c $CDD6 Multiplier
 R $CDD6 I:A Multiplicand (value to multiply)
 R $CDD6 I:C Multiplier (number to multiply by)
@@ -6199,6 +6201,7 @@ B $DFF8,186,6
 
 b $E0B2 Graphics defns
 B $E0B2,,7 <Byte width, Flags, Height, Ptr, Ptr>
+@ $E1DF label=floating_arrow_defns
 B $E1DF,,5 <Byte width, Flags, Height, Ptr>  [floating arrow defns]
 ;
 ; The arrow is used for road turn indicator AND used for "HERE!".
@@ -6715,8 +6718,12 @@ R $EC2C I:HL' Attribute address
 
 @ $ECDA label=clear_screen
 c $ECDA Clears the screen.
+  $ECDA Wipe bottom 2/3rds of attributes
+  $ECE6 Wipe bottom 2/3rds of pixels
+  $ECF2 Return
 
-c $ECF3
+@ $ECF3 label=redefine_keys
+c $ECF3 Redefine keys screen.
   $ECF3 Call clear_screen
   $ECF6 Address of "REDEFINE KEYS" strings
   $ECF9 Call menu_draw_strings
@@ -6738,28 +6745,213 @@ b $EE26 Sinclair joystick input scheme
 b $EE2B Cursor joystick input scheme
 b $EE30 "SHOCKED<ENTER>" ?
 b $EE38 temp input scheme buffer?
-b $EE3D
-b $EE40
+b $EE3D TBD
+b $EE40 TBD
 
+@ $EE6E label=sub_EE6E
 c $EE6E
+  $EE6E Self modified by $EE7E
+  $EE70 A--
+  $EE71 Self modify $EE6E
+  $EE74 Return if non-zero  -- so it's a delay?
+;
+  $EE75 Self modified by $EE83 [sampled: F10C, F10E, F102, F104, F106, F108, F10A, ]
+;
+@ $EE78 label=j_ee78
+  $EE78 A = *HL++  
+  $EE7A Jump to $EE98 if it's $FF
+  $EE7E Self modify $EE6E
+  $EE81 C = *HL++
+  $EE83 Self modify $EE75
+  $EE86 B = 0
+  $EE88 Address of music data
+  $EE8B HL += BC
+  $EE8C A = *HL++
+  $EE8E Self modify $EEB9
+  $EE91 Self modify $EEAD
+  $EE94 Self modify $EEC9
+  $EE97 Return
+;
+  $EE98 HL = wordat(HL); HL++
+  $EE9C Goto j_ee78
 
 @ $EE9E label=define_keys
-c $EE9E Define keys
-  $EEAD Self modified, cycles 5,3,2,1
-  $EEBE Self modified, cycles $F12x .. $F2xx ish
+c $EE9E Loads of self modifying hopping around...
+  $EE9E Enable wait/spinlock at $EF13
+  $EEA2 Self modified by $EEA8
+  $EEA4 Set flags
+  $EEA5 Jump to $EEAD if non-zero
+  $EEA7 A++
+  $EEA8 Self modify $EEA2
+  $EEAB Jump to dk_eec9
+;
+  $EEAD LD A,$00      Self modified by $EEBB, cycles 5,3,2,1
+  $EEAF A--
+  $EEB0 Jump to dk_eeb9 if zero
+  $EEB3 LD ($EEAE),A  Self modified by $EE8E
+  $EEB6 Jump to dk_ef00
+;
+@ $EEB9 label=dk_eeb9
+  $EEB9 LD A,$00      Self modified by $EE8E
+  $EEBB LD ($EEAE),A  Self modify 'LD A' @ $EEAD
+  $EEBE LD HL,$0000   Self modified, cycles $F12x .. $F2xx ish
+;
+@ $EEC1 label=dk_eec1
+  $EEC1 A = *HL - 1
+  $EEC3 Jump to dk_eed2 if non-zero
+  $EEC6 Call sub_EE6E
+;
+@ $EEC9 label=dk_eec9
+  $EEC9 HL = xxxx     Self modified by $EE94
+  $EECC *$EEBF = HL
+  $EECF Goto dk_eec1
+;
+@ $EED2 label=dk_eed2
+  $EED2 HL++
+  $EED3 *$EEBF = HL
+  $EED6 A++
+  $EED7 BIT 7,A    >= 128?
+  $EED9 JR Z,$EEE7
+; otherwise a control bit?
+  $EEDB A &= $7F   note
+  $EEDD
+  $EEDE *$EEAE = 1  Self modify 'LD A' @ $EEAD
+  $EEE3 *$EF01 = 1  Self modify 'LD A' @ $EF00
+  $EEE6
+;
+  $EEE7 D = A
+  $EEE8 A &= 7
+  $EEEA Jump to dk_ef00 if zero
+  $EEEC B = A   the 'note'
+  $EEED A = D   prob D >> 3
+  $EEEE SRL A
+  $EEF0 SRL A
+  $EEF2 SRL A
+  $EEF4 B--
+  $EEF5 Jump to playdrum_2 if zero
+  $EEF8 B--
+  $EEF9 Jump to playdrum_1 if zero
+  $EEFC B--
+  $EEFD Jump to $F0C6 if zero
+;
+@ $EF00 label=dk_ef00
+  $EF00 LD A,$00   Self modified by $EEE3, $EF09
+  $EF02 Set flags
+  $EF03 Jump to dk_ef0d if zero
+  $EF05 Self modify 'LD A' @ $EEAD
+  $EF08 (*HL)--
+  $EF09 Self modify 'LD A' @ $EF00
+  $EF0C (*HL)--
+;
+@ $EF0D label=dk_ef0d
+  $EF0D Self modified by $EF33
+  $EF0F A--
+  $EF10 Jump to playdrum_go if zero
+;
+@ $EF13 label=dk_wait
+  $EF13 Wait/spinlock.  Self modified
+  $EF18 Return
 
-c $EF19
-c $EF22
-c $EF29
-c $EF38
+c $EF19 How does this get entered?
+  $EF19 Preserve registers
+  $EF1A $EF14 = $FF  Unlock the wait/spinlock. -- Self modify $EF13
+  $EF1F Restore registers
+  $EF20 Enable interrupts
+  $EF21 Return
 
-b $EF5E Drum related
+c $EF22 Drum sample player.
+R $EF22 I:B Speed value?
+@ $EF22 label=playdrum_2
+  $EF22 Address of drum 2 data
+  $EF25 Sample bytes remaining = 108
+  $EF27 Jump to playdrum_start
+;
+@ $EF29 label=playdrum_1
+  $EF29 Address of drum 1 data
+  $EF2C Sample bytes remaining = 252
+;
+@ $EF2E label=playdrum_start
+  $EF2E Self modify 'LD B' @ $EF39 to be A  -- speed value passed in?
+  $EF31 Self modify 'LD A' @ $EF0D to be 1  -- set to 1 while playing?
+  $EF36 Jump to playdrum_go
+;
+  $EF38
+@ $EF39 label=playdrum_go
+  $EF39 Self modified by $EF2E (sampled: 8, 3, 1)
+@ $EF3B label=playdrum_loop
+  $EF3B Output flag
+  $EF3D Delay?
+  $EF3E Test a bit
+  $EF40 Don't reset output if sample bit set
+  $EF42 Reset flag if bit was zero
+  $EF44 Output it
+  $EF46 Rotate sample byte in-place
+  $EF48 Loop to playdrum_loop while #REGb
+  $EF4A Move to next sample byte
+  $EF4B Decrement sample bytes remaining
+  $EF4C Jump to playdrum_end_of_sample if no bytes remain
+  $EF4E Read A from 'LD A' @ $EF13  -- wait/spinlock
+  $EF51 Set flags
+  $EF52 Jump to playdrum_go if zero
+  $EF55
+  $EF56 Return
+;
+@ $EF57 label=playdrum_end_of_sample
+  $EF57 Self modify 'LD A' @ $EF0D to be 0  -- set to 0 when playing stops?
+  $EF5B Jump to dk_playdrum_finished
+;
+@ $EF5E label=drum1
+B $EF5E Drum 1 sample/data
+;
+@ $F05A label=drum2
+B $F05A Drum 2 sample/data
 
 c $F0C6 White noise generator?
-  $F0C9 loop: Point at random bytes
-  $F0CC Increment first byte by 3, Load it into #REGb
+  $F0C6 E = A  Outer-outer counter
+;
+@ $F0C7 label=noise_outer_loop
+  $F0C7 D = 50  Outer counter
+;
+@ $F0C9 label=noise_loop
+  $F0C9 Point at rng_seed / state bytes
+  $F0CC rng_seed[0] += 3  Increment first byte of seed by 3
+  $F0CF Load it into #REGb
+  $F0D0 HL++
+  $F0D1 rng_seed[1] -= 141   Note that this is different order to rng/$961B
+  $F0D5 A = rng_seed[0] + rng_seed[1]
+  $F0D6 HL++
+  $F0D7 Rotate A by 1
+  $F0D8 Rotate rng_seed[2] by 1
+  $F0DA A += *HL
+  $F0DB *HL = A
+  $F0DC A &= 16
+  $F0DE Jump to $F0F0 if zero
+  $F0E0 B = 24 - E
+;
+  $F0E4 Delay loop
+  $F0E6 A = 24   EAR + MIC ?
+  $F0E8 Output
+  $F0EA B = E
+;
+  $F0EB Delay loop
+  $F0ED A = 0
+  $F0EE Output
+;
+  $F0F0 Decrement outer counter
+  $F0F1 Jump to noise_loop if non-zero
+;
+  $F0F3 Read A from 'LD A' @ $EF13  -- spinlock/wait
+  $F0F6 Set flags
+  $F0F7 Return if carry set
+;
+  $F0F8 Decrement outer-outer counter
+  $F0F9 Jump to noise_outer_loop if non-zero
+;
+  $F0FB Jump to dk_wait
 
-b $F0FE
+b $F0FE Music data
+W $F102,14,2 Patterns (offset, repetitions?)
+B $F111 Music
 
 c $F220 routine/data copied to $8014 during init? (926 bytes long)
   $F2B2,3 Exit via (if P) print_message
