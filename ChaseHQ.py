@@ -168,17 +168,91 @@ class ChaseHQWriter:
                     lasttype = type_
 
     def map_lanes(self, cwd, base):
-        lanesmap = {0x00: "Four lanes    [||||] {00}",
-                    0x45: "Tunnel start         {45}",
-                    0x59: "Tunnel cont/end?     {59}",
-                    0x81: "Three lanes   [|||_] {81}",
-                    0x82: "Three lanes   [_|||] {82}",
-                    0x8E: "Narrowing 4-3 [/|||] {8E}",
-                    0x9E: "Widening 3-4  [\|||] {9E}",
-                    0xAD: "Widening 3-4  [|||/] {AD}",
-                    0xBD: "Narrowing 4-3 [|||\] {BD}",
-                    0xC1: "Dirt track           {C1}"}
+        lanesmap = {0x00: "Four lanes      [||||] {00}",
+                    0x45: "Tunnel start           {45}",
+                    0x59: "Tunnel cont/end?       {59}",
+                    0x81: "Three lanes     [|||_] {81}",
+                    0x82: "Three lanes     [_|||] {82}",
+                    0x8E: "Narrowing 4-3 L [/|||] {8E}",
+                    0x9E: "Widening 3-4 L  [\|||] {9E}",
+                    0xAD: "Widening 3-4 R  [|||/] {AD}",
+                    0xBD: "Narrowing 4-3 R [|||\] {BD}",
+                    0xC1: "Dirt track             {C1}"}
         return self.decode_count_rle(cwd, base, "lanes", lanesmap, showlength=True, follow=True)
+
+    def decode_hazards(self, cwd, base, typename, names, showlength, follow):
+        output = "Start of %s data at $%X (bytes)<br/>" % (typename, base)
+        count = 0
+        totallength = 0
+        basep = base
+        while 1:
+            b = self.snapshot[basep]
+            basep = basep + 1
+            if b == 0: # Escape
+                if count > 0:
+                    output += "- Wait for %d<br/>" % (count)
+                    totallength += count
+                b = self.snapshot[basep]
+                basep = basep + 1
+                if b == 0: # Jump
+                    loopdest = self.snapshot[basep + 0] + self.snapshot[basep + 1] * 256
+                    if loopdest == base:
+                        output += "- Loop<br/>"
+                        if showlength:
+                            output += "+ Total length = %d<br/>" % (totallength)
+                    else:
+                        output += "- Jump to $%X<br/>" % (loopdest)
+                        if showlength:
+                            output += "+ Total length = %d<br/>" % (totallength)
+                        if follow:
+                            output += "<strong>Jump</strong><br/>"
+                            output += self.decode_hazards(cwd, loopdest, typename, names, showlength, follow)
+                elif b == 1: # TBD
+                    output += "- TBD<br/>"
+                elif b == 2: # Split
+                    leftdest  = self.snapshot[basep + 0] + self.snapshot[basep + 1] * 256
+                    rightdest = self.snapshot[basep + 2] + self.snapshot[basep + 3] * 256
+                    output += "- Split to; left = $%X, right = $%X<br/>" % (leftdest, rightdest)
+                    if showlength:
+                        output += "+ Total length = %d<br/>" % (totallength)
+                    if follow:
+                        output += "<strong>Left</strong><br/>"
+                        output += self.decode_hazards(cwd, leftdest, typename, names, showlength, follow)
+                        output += "<strong>Right</strong><br/>"
+                        output += self.decode_hazards(cwd, rightdest, typename, names, showlength, follow)
+                elif b == 3: # TBD Stop Spawning Barriers?
+                    output += "Stop Spawning Barriers 3?<br/>"
+                elif b == 6: # TBD Stop Spawning Barriers?
+                    output += "Stop Spawning Barriers 6?<br/>"
+                elif b == 7: # Start Spawning Barriers Left
+                    output += "Start Spawning Barriers Left<br/>"
+                elif b == 8: # Start Spawning Barriers Right
+                    output += "Start Spawning Barriers Right<br/>"
+                elif b == 9: # Start Spawning Two Barriers
+                    output += "Start Spawning Two Barriers<br/>"
+                elif b == 10: # Set Floating Arrow Off
+                    output += "- Set Floating Arrow Off<br/>"
+                elif b == 11: # Set Floating Arrow to Left
+                    output += "- Set Floating Arrow to Left<br/>"
+                elif b == 12: # Set Floating Arrow to Right
+                    output += "- Set Floating Arrow to Right<br/>"
+                elif b == 13: # Enable Car Spawning
+                    output += "- Enable Car Spawning<br/>"
+                elif b == 14: # Disable Car Spawning
+                    output += "- Disable Car Spawning<br/>"
+                else:
+                    output += "- Unknown command %X<br/>" % (b)
+                if b <= 2:
+                    return output
+            else:
+                count = b
+                output += "- Wait for %d<br/>" % (count)
+                totallength += count
+                count = 0
+
+    def map_hazards(self, cwd, base):
+        hmap = {0x00: "xxx"}
+        return self.decode_hazards(cwd, base, "hazards", hmap, showlength=True, follow=True)
 
 class ChaseHQHtmlWriter(HtmlWriter, ChaseHQWriter):
     def init(self):

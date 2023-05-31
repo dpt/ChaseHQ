@@ -17,3 +17,39 @@ Copyright=&copy; 1988 Taito Corporation &copy; 1989 Ocean Software Ltd. (Chase H
 [PageHeaders]
 GameIndex=The incomplete<>disassembly
 
+[Index]
+Game
+MemoryMaps
+Graphics
+DataTables
+Reference
+
+[Index:Game:Game]
+Map
+
+[Links]
+Map=[Road map] (the road map)
+
+[Page:Map]
+PageContent=#INCLUDE(PageContent:Map)
+
+[PageContent:Map]
+<h3>Stage 1 Map</h3>
+
+<ul>
+<li>Curvature</li>
+<li>Height</li>
+<li>Lanes</li>
+</ul>
+
+<h4>Start stretch, curvature</h4>
+#CALL:map_curvature($5EC4)
+
+<h4>Start stretch, height</h4>
+#CALL:map_height($5EE4)
+
+<h4>Start stretch, lanes</h4>
+#CALL:map_lanes($5F0F)
+
+<h4>Start stretch, hazards</h4>
+#CALL:map_hazards($5F1D)
