@@ -401,49 +401,14 @@ b $5EC4 Initial map segment
 ;
 N $5EC4 Start stretch
 ;
-N $5EC4 #CALL:map_curvature($5EC4)
 N $5EC4 Start stretch, curvature
-B $5EC4,2 Straight for 30
-B $5EC6,2 Left for 29
-B $5EC8,2 Right for 20
-B $5ECA,5 Straight for 75
-B $5ECF,1 Strong left for 14
-B $5ED0,2 Left for 16
-B $5ED2,3 Right for 31
-B $5ED5,2 Straight for 24
-B $5ED7,1 Left
-B $5ED8,,1
-B $5ED9,1 Right
-B $5EDA,,1
-B $5EDC,1 Straight
-B $5EDD,,1
-B $5EDE,2 Escape, Command 2 (Road Fork)
-W $5EE0,2 Address of left fork data
-W $5EE2,2 Address of right fork data
+B $5EC4 Data
 ;
-N $5EE4 #CALL:map_height($5EE4)
 N $5EE4 Start stretch, height
-B $5EE4,5 Level ground x 5
-B $5EE9,,1
-B $5F01,7 Level ground x 7
-B $5F08,,1
-B $5F09,2 Escape, Command 2 (Road Fork)
-W $5F0B,2 Address of left fork data
-W $5F0D,2 Address of right fork data
+B $5EE4 Data
 ;
-N $5F0F #CALL:map_lanes($5F0F)
 N $5F0F Start stretch, lanes
-B $5F0F Count
-B $5F10 TBD - three lanes
-B $5F11 Count
-B $5F12 TBD - widening
-B $5F13 Count
-B $5F14 TBD - four lanes
-B $5F15 Count
-B $5F16 TBD - four lanes
-B $5F17,2 Escape, Command 2 (Road Fork)
-W $5F19,2 Address of left fork data
-W $5F1B,2 Address of right fork data
+B $5F0F Data
 ;
 N $5F1D Start stretch, hazards
 B $5F1D,1 Wait for 147
@@ -1516,13 +1481,13 @@ N $841B Run the main game loop.
   $8477 Call main_loop_14
   $847A Call main_loop_15
   $847D Call main_loop_16
-  $8480 Call main_loop_17
+  $8480 Call helicopter
   $8483 Call main_loop_18
   $8486 Call engine_sfx_play_hook
   $8489 Call main_loop_19
   $848C Call main_loop_20
   $848F Call engine_sfx_play_hook
-  $8492 Call main_loop_21
+  $8492 Call move_helicopter
   $8495 Call main_loop_22
   $8498 Call engine_sfx_play_hook
   $849B Call main_loop_23
@@ -4158,7 +4123,8 @@ W $A186,2 Attribute address of horizon. Points to last attribute on the line whi
 ;
   $A223,1 Stage number as shown. Stored as ASCII.
 ;
-  $A224,1 Hazards related. $AAC6, $AB33 reads  $AB96, $C013 writes
+@ $A224 label=helicopter_control
+  $A224,1 Set to 1 -> helicopter moves out to the left, gets set to zero. Set to 3/4 -> Helicopter moves in from left, gets set to five. $AAC6, $AB33 reads  $AB96, $C013 writes
 ;
 @ $A225 label=stop_car_spawning
   $A225,1 Inhibits cars from spawning.
@@ -4229,7 +4195,7 @@ N $A237 These seem to get altered even when no sound is being produced.
   $A23F,1 numerous references, seems related to level position
 ;
 @ $A240 label=road_buffer_offset
-W $A240,2 Current byte offset into the road buffer at $EE00..$EEFF. Used by $B8F6, $BBF7, $87E0.
+W $A240,2 Current offset (in bytes) into the road buffer at $EE00..$EEFF. Much of the code treats this as a byte. Used by $B8F6, $BBF7, $87E0.
 ;
 @ $A242 label=curvature_byte
   $A242,1 Current curvature byte (minus 16) [$BE3E reads $BC17,$BE7D writes]
@@ -4425,20 +4391,303 @@ c $A955 TBD
   $A97D Return
 
 @ $A97E label=main_loop_20
-c $A97E
+c $A97E TBD
+  $A97E A = <...>  -- Self modified by $A974
+  $A980 Return if #REGa is zero
+  $A982 #REGiy = $E361
+  $A988 BC = $1400
+  $A98B HL = $ED28    -- stack
+;
+@ $A98E label=ml20_loop1
+  $A98E A = *HL
+  $A98F Set flags
+  $A990 HL++
+  $A991 Jump to A9A7 if non-zero
+  $A993 HL += 3
+@ $A996 label=ml20_loop1_continue
+  $A996 IY--
+  $A998 Loop to ml20_loop1 while B
+  $A99A A = C
+  $A99B Set flags
+  $A99C Return if non-zero
+  $A99D Self modify LD A @ $A97E
+  $A9A0 Self modify LD A @ $C0BB
+  $A9A3 Self modify LD A @ $A9DE
+  $A9A6 Return
+;
+  $A9A7 A = *HL++
+  $A9A9 C++
+  $A9AA
+  $A9AB Bank A
+  $A9AC L = ~(IY[1] * 2)
+  $A9B2 H = $E8
+  $A9B4 D = *HL
+  $A9B5 L--
+  $A9B6 E = *HL
+  $A9B7 H = $EC
+  $A9B9 A = *HL
+  $A9BA L++
+  $A9BB H = *HL
+  $A9BC L = A
+  $A9BD Set flags
+  $A9BE
+  $A9BF HL -= DE
+  $A9C1
+  $A9C2 HL = $0000
+  $A9C5 Unbank A
+N $A9C6 Multiplier.
+  $A9C6 B = 8
+@ $A9C8 label=ml20_loop2
+  $A9C8
+  $A9C9 If carry HL += DE
+  $A9CC HL <<= 1
+  $A9CD Loop to ml20_loop2 while B
+  $A9CF A = H
+  $A9D0
+  $A9D1 C = A
+  $A9D2
+  $A9D3 HL += BC
+  $A9D4
+  $A9D5
+  $A9D6
+  $A9D7 DE = wordat(HL); HL += 2
+  $A9DB Jump to ml20_loop1_continue
 
-c $A9DE
+@ $A9DE label=sub_A9DE
+c $A9DE dust/stones
+  $A9DE A = <...>  Self modified by $A97A, $A9A3
+  $A9E0 Set flags
+  $A9E1 Return if zero
+;
+  $A9E2 HL = $ED28    -- stack
+  $A9E5 A = *HL; HL += 2
+  $A9E8 Set flags
+  $A9E9 Jump to A9F1 if non-zero
+  $A9EB HL += 2
+  $A9ED Self modify 'LD HL' at $A9E2 to load HL
+  $A9F0 Return
+;
+; If A is zero - use stones, otherwise use dust
+  $A9F1 DE = lods_table[0] (stones_lods)
+  $A9F5 A--
+  $A9F6 If non-zero DE = lods_table[1] (dust_lods)
+  $A9FC C = *HL++
+  $A9FE A = *HL
+  $A9FF
+  $AA00 HL++
+  $AA01 Self modify 'LD HL' at $A9E2 to load HL
+  $AA04 A = 0
+  $AA05 Self modify 'LD D' at $933D to load zero
+  $AA08 H = A
+  $AA09 A = B
+  $AA0A A--
+  $AA0B If A >= 11 A = 10
+  $AA11 A >>= 1
+  $AA13 L = A * 7
+  $AA19 HL += DE
+  $AA1A E = *HL * 8
+  $AA21
+  $AA22 Set flags
+  $AA23 A = C
+  $AA24 C = $00
+  $AA26 JP M,$AA33
+  $AA29 Return if non-zero
+  $AA2C Jump to $9303 if A >= 128
+  $AA2F A += E
+  $AA30 JP $929A
+;
+  $AA33 A += E
+  $AA34 Return if no carry
+  $AA35 JP $929A
 
+@ $AA38 label=sub_AA38
 c $AA38
 D $AA38 $AB89 self modifies $8FA4 to call this.
+  $AA38 A = B
+  $AA39 Return if A != 3
+  $AA3C A = IY[$4F] - IY[$4E]
+  $AA42 D = 0
+  $AA44 H = D -- ie HL = 0
+  $AA45 L = D
+  $AA46 E = A
+  $AA47 A = *$A23F
+; multiplier
+  $AA4A B = 8
+  $AA4C AND $E0
+@ $AA4E label = subAA38_loop1
+  $AA4E RLA
+  $AA4F If carry HL += DE
+  $AA52 HL <<= 1
+  $AA53 Loop $AA4E while B
+  $AA55 A = H
+  $AA56 RRA
+  $AA57 Self modify 'LD A' at $AA8C
+  $AA5A A = <...> -- Self modified by $AAEE
+  $AA5C A -= IY[$4E]
+  $AA5F Self modify 'ADD A' at $AA76
+  $AA62 B = 5  iterations
+  $AA64 A = counter_A & 1  -- counter used for turbo smoke
+  $AA69 HL = *$5D08  -- set to zero for stage 1...
+  $AA6C JR Z,$AA71  If A was set
+  $AA6E HL = *$5D0A
+;
+@ $AA71 label=loop_aa71
+  $AA71 DE = wordat(HL); HL += 2
+  $AA75 A = *DE
+  $AA76 A += <...> -- Self modified by $AA5F
+  $AA78 DE++
+  $AA79 Preserve IY, HL, BC
+  $AA7D Call sub_AA94
+  $AA80 Restore IY, HL, BC
+  $AA84 Loop loop_aa71 while B
+  $AA86 DE = wordat(HL); HL++
+  $AA89 A = 0
+  $AA8A Preserve IY
+  $AA8C A = <...> -- Self modified by $AA57
+  $AA8E Call sub_AA94
+  $AA91 Restore IY
+  $AA93 Return
+;
+@ $AA94 label=sub_AA94
+  $AA94 BC = <...> -- Self modified by $AB00, $AB2F + others
+  $AA97 A = -A
+  $AA99 Self modify the 'LD D' at $933D to load A
+  $AA9C HL = *DE++
+  $AAA1 Set flags
+  $AAA2 JP P,$AAA6
+  $AAA5 H--
+;
+  $AAA6 HL += BC
+  $AAA7
+  $AAA8 B = *HL
+  $AAA9 B <<= 3
+  $AAAF A = D
+  $AAB0 Set flags
+  $AAB1 A = E
+  $AAB2 C = 0
+  $AAB4 JP M,$AAC1
+  $AAB7 Return if non-zero
+  $AAB8 Jump to $9309 if A >= 128
+  $AABD A += B
+  $AABE Jump to $929A
+;
+  $AAC1 A += B
+  $AAC2 Return if no carry
+  $AAC3 Jump to $929A
 
-@ $AAC6 label=main_loop_21
+@ $AAC6 label=move_helicopter
 c $AAC6
+  $AAC6 Return if helicopter_control is zero
+;
+  $AACB A = <...>  -- Self modified by $AAD3 below
+  $AACD Jump to $AAD6 if A == 97
+  $AAD1 A -= 2
+  $AAD3 Self modify $AACB above
+;
+  $AAD6 C = A
+  $AAD7 A = <...>  -- Self modified below
+  $AAD9 A = (A + 1) & 3
+  $AADC Self modify $AAD7 above
+  $AADF A = <...> -- Self modified by $AAE5 below
+  $AAE1 JR NZ,$AAE8  what are we testing here?
+  $AAE3 A = -A
+  $AAE5 Self modify $AADF above
+;
+  $AAE8 A += <...>  -- Increment by old amount -- Self modified below
+  $AAEA Self modify above with new value of A
+  $AAED A += C
+  $AAEE Self modify 'LD A' @ $AA5A
+  $AAF1 HL = road_pos
+  $AAF4 DE = HL
+  $AAF6 BC = <...>  -- Self modified by $AAFC below, $AB60  -- prev road pos?
+  $AAF9 Set flags
+  $AAFA HL -= BC
+  $AAFC Self modify 'LD BC' above to load DE
+  $AB00 Load DE from 'LD BC' @ $AA94
+  $AB04 HL += DE
+  $AB05 Preserve HL
+  $AB06 DE = $0070
+  $AB09 B = 0
+  $AB0B Set flags
+  $AB0C HL -= DE
+  $AB0E Restore HL
+  $AB0F JR Z,$AB2F
+  $AB11 A = 8
+  $AB13 Preserve AF
+  $AB14 JP M,$AB1A
+  $AB17 B--
+  $AB18 A = -A
+;
+  $AB1A C = A
+  $AB1B HL += BC
+  $AB1C Preserve HL
+  $AB1D Set flags
+  $AB1E HL -= DE
+  $AB20 Restore HL
+  $AB21 JP M,$AB2A
+  $AB24 Restore AF
+  $AB25 JP P,$AB2F
+  $AB28 JR $AB2E
+;
+  $AB2A Restore AF
+  $AB2B JP M,$AB2F
+;
+  $AB2E
+;
+  $AB2F ($AA95) = HL
+  $AB32 Return
 
-@ $AB33 label=main_loop_17
-c $AB33 Helicopter related
+@ $AB33 label=helicopter
+c $AB33 Helicopter.
+  $AB33 Return if helicopter_control is zero
+  $AB38 Jump to hc_1 if helicopter_control is one
+  $AB3B Jump to hc_pick_direction if helicopter_control >= 3
+N $AB3E Otherwise helicopter_control is 2.
+  $AB3E Read from 'LD BC' at $AA94
+  $AB41 Set flags
+  $AB42 Return if zero
+  $AB43 A = 0  -- NOP
+  $AB44 DE = 0  -- NOPs
+  $AB46
+  $AB47 A = 0
+  $AB48 Jump to hc_3
+;
+@ $AB4A label=hc_1
+  $AB4A HL = $FFC8
+  $AB4D New value for helicopter_control is 2
+  $AB4F Jump to hc_2
+;
+@ $AB51 label=hc_pick_direction
+  $AB51 A--
   $AB52 Point #REGhl at pilot "turn left" messages
-  $AB59 Point #REGhl at pilot "turn right" messages
+  $AB55 Jump to hc_chatter if A now zero (helicopter_control == 3)
+  $AB57 A--
+  $AB58 Return if A now non-zero
+  $AB59 Point #REGhl at pilot "turn right" messages (helicopter_control == 4)
+;
+@ $AB5C label=hc_chatter
+  $AB5C Self modify 'LD BC' @ $AAF6 to load road_pos
+  $AB64 Self modify 'LD BC' @ $AA94 to load $FFE8
+  $AB6B Self modify 'LD A' @ $AAD7 to load zero
+  $AB6F Self modify 'ADD A' @ $AAE8 to load zero
+  $AB72 Self modify 'LD A' @ $AADF to load one
+  $AB76 A = 15
+  $AB78 Call chatter
+  $AB7B HL = $0070
+  $AB7E Self modify 'LD A' at $AACB to load $85
+  $AB83 New value for helicopter_control is 5
+;
+@ $AB85 label=hc_2
+  $AB85 Preserve AF
+  $AB86 Self modify 'LD DE' at $AB06 to load $0070, or $FFC8
+  $AB89 Address of sub_AA38
+  $AB8C Opcode for CALL
+;
+@ $AB8E label=hc_3
+  $AB8E Self modify $8FA4 to be CALL sub_AA38, or NOPs
+  $AB95 Restore AF
+  $AB96 helicopter_control = A
+  $AB99 Return
 
 @ $AB9A label=spawn_hazards
 c $AB9A
@@ -5744,10 +5993,10 @@ N $BFF7 Handle hazards escape byte.
   $BFFC Jump to rm_hazards_jump_command if command byte is zero
   $BFFF Jump to rm_hazards_one_command if command byte is one
   $C001 Jump to rm_hazards_road_fork_command if command byte is two
-  $C005 Jump to rm_hazards_set_hazard_command if command byte is < 10  -- 3..9
-  $C009 Jump to rm_hazards_set_fork_command if command byte is < 13    -- 10..12
-  $C00D Jump to rm_hazards_spawning_command if command byte is < 15    -- 13..14
-  $C011 *$A224 = A - 11  -- Otherwise  [helicopter related]
+  $C005 Jump to rm_hazards_set_hazard_command if command byte is < 10 -- 3..9
+  $C009 Jump to rm_hazards_set_arrow_command if command byte is < 13 -- 10..12
+  $C00D Jump to rm_hazards_spawning_command if command byte is < 15 -- 13..14
+  $C011 Otherwise helicopter_control = A - 11
   $C016 Jump to rm_do_restart
 ;
 N $C018 Handle car spawning commands (13/14 = enable/disable car spawning).
@@ -5756,7 +6005,7 @@ N $C018 Handle car spawning commands (13/14 = enable/disable car spawning).
   $C01D Jump to rm_do_restart
 ;
 N $C01F Handle floating arrow commands (10/11/12 = off/left/right).
-@ $C01F label=rm_hazards_set_fork_command
+@ $C01F label=rm_hazards_set_arrow_command
   $C01F floating_arrow = A - 7
   $C024 Jump to rm_do_restart if zero
   $C026 correct_fork = A
@@ -5769,7 +6018,7 @@ N $C01F Handle floating arrow commands (10/11/12 = off/left/right).
 N $C02C Handle hazard commands (3 = off, 4/5/6 = tumbleweeds left/right/both, 7/8/9 => barriers)
 N $C02C When on left it uses lane 1, on right it uses lane 4, both it uses lane 2 and 3.
 @ $C02C label=rm_hazards_set_hazard_command
-  $C02C Self modify "LD (HL),$xx" at $C058 to load A
+  $C02C Self modify "LD (HL),$xx" at $C058 to load A  [which is command_no-3]
   $C02F Jump to rm_read_hazards
 ;
 @ $C031 label=rm_hazards_road_fork_command
@@ -7171,7 +7420,7 @@ c $EE6E
   $EE75 Self modified by $EE83 [sampled: F10C, F10E, F102, F104, F106, F108, F10A, ]
 ;
 @ $EE78 label=j_ee78
-  $EE78 A = *HL++  
+  $EE78 A = *HL++
   $EE7A Jump to $EE98 if it's $FF
   $EE7E Self modify $EE6E
   $EE81 C = *HL++
