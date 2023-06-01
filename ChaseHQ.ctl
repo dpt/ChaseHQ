@@ -83,6 +83,7 @@
 > $4000 ; $5B00..$5BFF is a pre-shifted version of the backdrop
 > $4000 ; $5C00..$5CFF is the regular version of the backdrop
 > $4000 ; $8DBB (word) is the address of the current transition animation
+> $4000 ; $EA30..$EAFE (words) is ? [there's a load of words here]
 > $4000 ; $ED28        is the stack
 > $4000 ; $EE00..$EEFF is the road buffer. holds data unpacked from maps. it's cyclic. fixed sections for each datum. cleared by $87DD.
 > $4000 ; $EF00..$EFFF is a table of flipped bytes
@@ -209,6 +210,8 @@ W $5CF8,2 Loaded by $900F. Points to an array of 7 byte entries.
 W $5CFA,2 TBD
 W $5CFC,2 -> "Entry 3"
 W $5CFE,2 <turn sign lods> inconsistent...
+;
+@ $5D00 label=data_5d00
 W $5D00,2 -> "Entry 9 (turn sign)"
 W $5D02,2 -> "Entry 12"
 W $5D04,2 -> Nancy's report
@@ -1468,7 +1471,7 @@ N $841B Run the main game loop.
   $8450 Call read_map
   $8453 Call handle_perp_caught
   $8456 Call move_hero_car
-  $8459 Call main_loop_9
+  $8459 Call spawn_cars
   $845C Call cycle_counters
   $845F Call engine_sfx_play_hook
   $8462 Call main_loop_10
@@ -1488,7 +1491,7 @@ N $841B Run the main game loop.
   $848C Call main_loop_20
   $848F Call engine_sfx_play_hook
   $8492 Call move_helicopter
-  $8495 Call main_loop_22
+  $8495 Call check_collisions
   $8498 Call engine_sfx_play_hook
   $849B Call main_loop_23
   $849E Call engine_sfx_play_hook
@@ -1575,7 +1578,7 @@ D $852A This runs the game loop while driving the car.
 @ $8555 label=cd_set_input
   $8555 Set user input
   $8559 Call read_map
-  $855C Call main_loop_9
+  $855C Call spawn_cars
   $855F Call cycle_counters
   $8562 Call main_loop_10
   $8565 Call main_loop_11
@@ -1588,7 +1591,7 @@ D $852A This runs the game loop while driving the car.
   $857A Call main_loop_20
   $857D Call main_loop_19
   $8580 Call move_hero_car
-  $8583 Call main_loop_22
+  $8583 Call check_collisions
   $8586 Call main_loop_23
   $8589 Exit via main_loop_24
 
@@ -2752,16 +2755,13 @@ c $8F5F
   $900E
   $900F LD HL,($5CF8)
   $9012 HL += DE
-  $9013 E = *HL++
-  $9015 D = *HL++
-  $9017 A = *HL++
-  $9019 H = *HL
-  $901A L = A
-  $901B JP (HL)
+  $9013 DE = wordat(HL); HL += 2
+  $9017 HL = wordat(HL); HL += 1
+  $901B Jump to HL
   $901C
   $901D
   $901E
-  $9020 JP $8FB2
+  $9020 Jump to $8FB2
 
 c $9023
   $9023 E = A
@@ -4098,7 +4098,7 @@ W $A186,2 Attribute address of horizon. Points to last attribute on the line whi
 ;  +2/3/4/5/6 TBD
 ;  +7 byte  TBD used by hazard_hit
 ;  +8 byte  gets copied from the hazards table
-;  +9 word  address of e.g. car_lods
+;  +9 word  address of e.g. car lod
 ; +11 word  address of routine
 ; +13 word  set to $190 by fully_smashed (likely a horizontal position)
 ; +15 byte  TBD used by hazard_hit, counter which gets set to 2 then reduced
@@ -4259,7 +4259,8 @@ W $A25F,2 Used by $B29A
   $A261,1 Used by $B297
   $A263,1 Used by $B2AE
   $A264,1 Used by $B2B2 -- together might be a 16-bit qty
-  $A265,1 Used by $BC2C
+  $A265,1 Used by $BC2C -- seems to get set to $60 when in split road mode
+  $A266,1 Used by $A3A6 -- counts down (from ?) as split road approaches
   $A267,1 Used by $BC39 -- as 16-bit
   $A268,1 Used by $BB69 - skips routine if not set
   $A269,1 Used by $BC29
@@ -4292,14 +4293,251 @@ B $A296,,7 Full stop
 B $A29D,,7 0..9
 B $A2E3,,7 A-Z
 
-@ $A399 label=main_loop_22
-c $A399
-  $A3FD,3 off_road = A
-  $A4B8,3 HL = &<crashed flag>
-  $A4BC,1 [why inc then dec?]
-  $A4BE,2 Set crashed flag
-  $A52A,3 off_road = A
-  $A539,6 Jump to $A55C if the right fork was taken
+@ $A399 label=check_collisions
+c $A399 Checks for collisions.
+  $A399 HL = $0048
+  $A39C DE = $01D8
+  $A39F EXX
+  $A3A0 A = *$A265  -- fairly sure this is a split road flag
+  $A3A3 Set flags
+  $A3A4 Jump to cc_at_split if zero
+  $A3A6 A = *$A266  -- counts down as split approaches
+  $A3A9 Set flags
+  $A3AA Jump to cc_not_split if zero
+  $A3AD A--
+  $A3AE Return if zero  [can't collide immediately before split?]
+;
+@ $A3AF label=cc_at_split
+N $A3AF Check left hand side of car.
+  $A3AF HL = *$EAFE
+  $A3B2 A = H  (0 or 255)
+  $A3B3 Set flags
+  $A3B4 JR NZ,$A3D1
+  $A3B6 Jump to $A3D1 if HL < $40
+  $A3BF Jump to $A3D5 if HL < $6A
+  $A3C7 HL -= $85
+  $A3CB A++  -- A == 1 => partially off-road
+  $A3CC Jump to cc_split_set if A was 255
+  $A3CE A++  -- A == 2 => fully off-road
+  $A3CF Jump to cc_split_set
+;
+  $A3D1 *$A23D = 0
+;
+N $A3D5 Check right hand side of car.
+  $A3D5 HL = *$EAFC
+  $A3D8 A = H
+  $A3D9 Set flags
+  $A3DA A = 0
+  $A3DC JR NZ,$A3FA
+  $A3DE Jump to $A3FA if HL >= $BE
+  $A3E7 Jump to $A3FD if HL >= $8E
+  $A3F0 HL -= $7C
+  $A3F4 A++  -- A == 1 => partially off-road
+  $A3F5 Jump to cc_split_set if no carry
+  $A3F7 A++  -- A == 2 => fully off-road
+  $A3F8 Jump to cc_split_set
+;
+  $A3FA *$A23C = A
+;
+@ $A3FD label=cc_split_set
+  $A3FD off_road = A  -- 0/1/2 => on-road/one wheel off-road/both wheels off-road
+  $A400 Set flags
+  $A401 C = $00
+  $A403 JR Z,$A43B   -- not off road?
+  $A405 L = road_buffer_offset + 64
+  $A40B HL = $EE00 | L
+  $A40D A = *HL
+  $A40E BIT 6,A
+  $A410 JR Z,$A43B
+  $A412 RLA
+  $A413 JR C,$A43B
+  $A415 BIT 3,A
+  $A417 A = road_pos.hi
+  $A41A JR Z,$A426
+  $A41C C = A
+  $A41D A = 20
+  $A41F EX AF,AF'
+  $A420 A = C & 1
+  $A423 JP $A4B8
+;
+  $A426 HL = $00D1
+  $A429 DE = $0195
+  $A42C EXX
+  $A42D Set flags
+  $A42E C = 1
+  $A430 JR Z,$A433
+  $A432 C++
+;
+@ $A433 label=cc_hit_tunnel_wall
+  $A433 PUSH BC
+  $A434 BC = $0604
+  $A437 Call start_sfx
+  $A43A POP BC
+;
+  $A43B A = C
+  $A43C ($B3DC) = A
+  $A43F EXX
+  $A440 ($B396) = HL
+  $A443 ($B3A4) = DE
+  $A447 Set flags
+  $A448 Return if non-zero
+  $A449 A = road_buffer_offset + 96
+  $A44E L = A
+  $A44F EX AF,AF'
+  $A450 H = $EE
+  $A452 A = road_buffer_offset
+  $A455 RLA
+  $A456 A = *HL
+  $A457 JR NC,$A45A
+  $A459 L++
+;
+  $A45A A |= *HL
+  $A45B JR Z,$A480
+  $A45D HL = $5CFA[A * 7]
+  $A469 C = *HL++
+  $A46B E = *HL++
+  $A46D A = *HL
+  $A46E D = B
+  $A46F HL = *$EAFC
+  $A472 PUSH HL
+  $A473 HL -= BC
+  $A475 POP HL
+  $A476 JR NC,$A480
+  $A478 HL -= DE
+  $A47A JR C,$A480
+  $A47C EX AF,AF'
+  $A47D A = 0
+  $A47E JR $A4B0
+;
+  $A480 EX AF,AF'
+  $A481 A += 32
+  $A483 HL = $EE00 | A
+  $A486 A = road_buffer_offset
+  $A489 RLA
+  $A48A A = *HL
+  $A48B JR NC,$A48E
+  $A48D L++
+;
+  $A48E A |= *HL
+  $A48F Return if zero
+;
+  $A490 HL = $5D00[A * 7]
+  $A49C C = *HL++
+  $A49E E = *HL++
+  $A4A0 A = *HL
+  $A4A1 D = B  must be zero?
+  $A4A2 HL = *$EAFE
+  $A4A5 PUSH HL
+  $A4A6 HL -= BC
+  $A4A8 POP HL
+  $A4A9 Return if carry
+  $A4AA HL -= DE
+  $A4AC Return if no carry
+  $A4AD EX AF,AF'
+  $A4AE A = $01
+;
+@ $A4B0 label=cc_hit_scenery
+  $A4B0 PUSH AF
+  $A4B1 BC = $0403      -- arrive here if drive into scenery, e.g. a tree
+  $A4B4 Call start_sfx
+  $A4B7 POP AF
+; This entry point is used by the routines at #R$A637 and #R$A8CD.
+  $A4B8 HL = &<crashed flag>
+  $A4BB [why inc then dec?]
+  $A4BD RET NZ
+  $A4BE Set crashed flag
+  $A4C0 *$B36F = A++
+  $A4C4 *$B38E = A
+  $A4C9 *$B385 = 5
+  $A4CC HL = speed
+  $A4CF Preserve HL
+  $A4D0 SRL H
+  $A4D2 A = L
+  $A4D3 RR A
+  $A4D5 A = (A << 3) + 16
+  $A4DD L = 24
+  $A4DF CP L
+  $A4E0 JR C,$A4E3
+  $A4E2 L = A
+;
+  $A4E3 *$B357 = HL
+  $A4E6 EX AF,AF'
+  $A4E7 HL = A
+  $A4EA POP DE
+  $A4EB PUSH HL
+  $A4EC HL -= DE
+  $A4EE POP HL
+  $A4EF JR C,$A4F2
+  $A4F1 EX DE,HL
+;
+  $A4F2 Self modify 'LD BC' at $B32E to load HL
+  $A4F5 Return
+;
+@ $A4F6 label=cc_not_split
+  $A4F6 HL = *$E8FE
+  $A4F9 A = H  (0 or 255)
+  $A4FA Set flags
+  $A4FB JR NZ,$A510   -- A isn't zero
+  $A4FD Jump to $A510 if HL < $6A
+  $A508 HL -= $85
+  $A50A A++  -- A == 1 => partially off-road
+  $A50B Jump to cc_not_split_set if HL < $85
+  $A50D A++  -- A == 2 => fully off-road
+  $A50E Jump to cc_not_split_set
+;
+  $A510 HL = *$EDFC
+  $A513 A = H
+  $A514 Set flags
+  $A515 A = 0
+  $A517 JR NZ,cc_not_split_set
+  $A519 Jump to cc_not_split_set if HL >= $8E
+  $A522 HL -= $7C
+  $A526 A++  -- A == 1 => partially off-road
+  $A527 Jump to cc_not_split_set if HL >= $7C
+  $A529 A++  -- A == 2 => fully off-road
+;
+@ $A52A label=cc_not_split_set
+  $A52A off_road = A
+  $A52D A = 0
+  $A52E *$B3DC = A
+  $A531 EXX
+  $A532 *$B396 = HL
+  $A535 *$B3A4 = DE
+  $A539 Jump to $A55C if the right fork was taken
+  $A53F HL = *$5CFC
+  $A542 C = *HL++
+  $A544 E = *HL++
+  $A546 A = *HL
+  $A547 B = $00
+  $A549 D = B
+  $A54A HL = *$EAFE
+  $A54D PUSH HL
+  $A54E HL -= BC
+  $A550 POP HL
+  $A551 Return if no carry
+  $A552 HL -= DE
+  $A554 Return if carry
+  $A555 A = $8C
+  $A557 EX AF,AF'
+  $A558 A = 0
+  $A559 Jump to $A4B0
+;
+  $A55C HL = *$5D02
+  $A55F C = *HL++
+  $A561 E = *HL++
+  $A563 B = 0
+  $A565 D = B
+  $A566 HL = *$EAFC
+  $A569 PUSH HL
+  $A56A HL -= BC
+  $A56C POP HL
+  $A56D Return if carry
+  $A56E HL -= DE
+  $A570 Return if no carry
+  $A571 A = $8C
+  $A573 EX AF,AF'
+  $A574 A = $01
+  $A576 JP $A4B0
 
 @ $A579 label=main_loop_14
 c $A579
@@ -4326,14 +4564,85 @@ c $A637
 
 b $A7E7
 
-@ $A7F3 label=main_loop_9
-c $A7F3
-  $A7F3 A = perp_caught_stage
-  $A7F7 Don't spawn any cars if this flag is set
+@ $A7F3 label=spawn_cars
+c $A7F3 Spawns cars
+  $A7F3 Return if perp_caught_stage or stop_car_spawning flags are set
+  $A7FC A = *$A254
+  $A7FF Return if $A254 is zero
+  $A801 A = <...> - A  Self modified below
+  $A805 Self modify above
+  $A808 Return if ?
+  $A809 Call rng
+  $A80C C = A & 15
+  $A80F A = sighted_flag
+  $A812 Set flags
+  $A813 LD A,($5D1A)
+  $A816 Jump to $A81A if sighted_flag was zero
+  $A818 A += 25
+;
+  $A81A A += C
+  $A81B LD ($A804),A  Self modify above
+  $A81E BC = $0500
+  $A821 IX = &hazards[1]
+  $A825 DE = 20  stride of hazards
+;
+; looking for an empty slot?
+@ $A828 label=sc_loop
+  $A828 If the hazard is not active jump to sc_fill_in
+  $A82E A = IX[15]
+  $A831 RLA
+  $A832 JP NC,$A837
+  $A835 RL C
+;
+  $A837 IX += DE
+  $A839 Loop to sc_loop while B
+  $A83B Return
+;
+@ $A83C label=sc_fill_in
+  $A83C BIT 2,C
+  $A83E RET NZ
+  $A83F DE = IX
+  $A842 BC = 20
+  $A845 Point #REGhl at hazard_template
+  $A848 Copy hazard_template
+  $A84A Buffer offset of 20 for get_spawn_lanes
+  $A84C Call get_spawn_lanes  -- Gets car spawning positions (B = min, C = max?)
+  $A84F Call rng
+  $A852 A = (A & 3) + B
+  $A855 If A >= C A = C
+;
+  $A859 IX[17] = A
+  $A85C IX[18] = A
+  $A85F A = $A7E6[A]
+  $A867 IX[5] = A
+  $A86A A = sighted_flag
+  $A86D Set flags
+  $A86E A = 4
+  $A870 JR Z,$A873
+  $A872 A <<= 1
+;
+  $A873 HL += A
+  $A875 IX[13] = *HL
+  $A879 Call rng
+  $A87C C = A & 6
+  $A87F A = sighted_flag
+  $A882 Set flags
+  $A883 JR Z,$A88C
+  $A885 A = 6
+  $A887 CP C
+  $A888 JR NZ,$A88C
+  $A88A C--
+;
+; perp not sighted
+  $A88C B = 0
+  $A88E HL = &lods_table[3] (first of the generic car lods)
+  $A891 HL += BC
+  $A892 wordat(IX+9) = HL
+  $A89B Return
 
-c $A89C [must be mapping map bytes to something]
-D $A89C This affects car spawning positions. Return $0101 and cars only appear in the leftmost lane. $0102 (1st and 2nd, mainly 2nd). $0104 first three lanes. $0304 - third and fourth lanes.
-; so it's probably (left lane, right lane)
+@ $A89C label=get_spawn_lanes
+c $A89C Returns lanes that cars can spawn in.
+D $A89C Return $0101 and cars only appear in the leftmost lane. $0102 (1st and 2nd, mainly 2nd). $0104 first three lanes. $0304 - third and fourth lanes.
 ; rightmost cars seem faster...
 R $A89C I:C  Buffer offset
 R $A89C O:BC TBD
@@ -4370,11 +4679,64 @@ R $A89C O:BC TBD
   $A8C9 BC = $0304
   $A8CC Return
 
-c $A8CD Hazard handler routine
+@ $A8CD label=hazard_handler_a8cd
+c $A8CD Hazard handler routine? Triggered at road split
   $A8CD Return if perp_caught_stage > 0
-  $A8D3 Check 'don't spawn cars' flag
-  $A8D9 TBD
-  $A930,5 Return if crashed flag set
+  $A8D3 Check stop_car_spawning flag
+;
+  $A8D9 IX[14] = $01  -- horizontal position
+  $A8DD IX[13] = $FF
+;
+  $A8E1 C = IX[1]  -- buffer offset
+  $A8E4 Call get_spawn_lanes
+  $A8E7 A = IX[17]
+  $A8EA If A < B IX[18] = B
+  $A8F0 If A > C IX[18] = C
+;
+  $A8F8 A = IX[18]
+  $A8FB Jump to $A926 if A == IX[17]
+  $A900 RL B
+  $A902 HL = $A7E6   -> $A7E7 data block
+  $A905 C = A
+  $A906 A += L
+  $A907 L = A
+  $A908 A = IX[5]
+  $A90B RR B
+  $A90D JR NC,$A91A
+  $A90F A -= 5
+  $A911 CP *HL
+  $A912 JR NC,$A923
+  $A914 A = *HL
+  $A915 IX[17] = C
+  $A918 Jump to $A923
+;
+  $A91A A += 5
+  $A91C CP *HL
+  $A91D JR C,$A923
+  $A91F A = *HL
+  $A920 IX[17] = C
+;
+  $A923 IX[5] = A
+;
+  $A926 A = IX[7]
+  $A929 Set flags
+  $A92A Return if zero
+  $A92B Preserve AF
+  $A92C IX[7] = 0
+  $A930 Return if crashed flag set
+  $A935 IX[0] = A
+  $A938 overtake_bonus = A
+  $A93B A = $96
+  $A93D Restore AF
+  $A93E Jump if A < 3
+  $A942 A -= 3
+;
+  $A944 CALL $A4B8
+  $A947 HL = ouch_chatter
+  $A94A A = 3
+  $A94C Call chatter
+  $A94F BC = $0302
+  $A952 Call start_sfx
 
 @ $A955 label=main_loop_18
 c $A955 TBD
@@ -4490,15 +4852,15 @@ c $A9DE dust/stones
   $AA22 Set flags
   $AA23 A = C
   $AA24 C = $00
-  $AA26 JP M,$AA33
+  $AA26 Jump to $AA33 if negative
   $AA29 Return if non-zero
   $AA2C Jump to $9303 if A >= 128
   $AA2F A += E
-  $AA30 JP $929A
+  $AA30 Jump to $929A
 ;
   $AA33 A += E
   $AA34 Return if no carry
-  $AA35 JP $929A
+  $AA35 Jump to $929A
 
 @ $AA38 label=sub_AA38
 c $AA38
@@ -4513,7 +4875,7 @@ D $AA38 $AB89 self modifies $8FA4 to call this.
   $AA47 A = *$A23F
 ; multiplier
   $AA4A B = 8
-  $AA4C AND $E0
+  $AA4C A &= $E0
 @ $AA4E label = subAA38_loop1
   $AA4E RLA
   $AA4F If carry HL += DE
@@ -5137,7 +5499,7 @@ N $B10A Handle off-road (it can be 1 or 2).
   $B29D HL += BC
   $B29E DE = $0000
   $B2A1 $A25F = DE
-  $B2A5 A = *$B326  -- Read self modified op in main_loop_24
+  $B2A5 A = *$B326  -- Read self modified op in main_loop_24 -- crashed flag
   $B2A8 Set flags
   $B2A9 JR Z,$B2AD
   $B2AB EX DE,HL
@@ -6138,7 +6500,7 @@ c $C452 Landscape related
   $C460 Self modify 'LD A' at $C6D8 to be 3
   $C465 #REGiy = $E301
   $C469 C = $60 - IY[0]
-  $C46F A = *$A240 + $40
+  $C46F A = road_buffer_offset + $40
   $C474 IX = $EE00 + A
   $C479 B = A
   $C47C $C6B3 = A & 1
@@ -6239,7 +6601,7 @@ c $CBD6
 @ $CD3A label=main_loop_10
 c $CD3A
   $CD3A IY = $EExx
-  $CD3D A = *$A240 + $20   -- current map base + 32, which data is this? [check map unpack]
+  $CD3D A = road_buffer_offset + $20   -- current map base + 32, which data is this? [check map unpack]
   $CD42 IYl = A
   $CD44 C = *IY   multiplier
   $CD47 A = *$A23F & $E0
