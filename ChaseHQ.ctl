@@ -84,6 +84,7 @@
 > $4000 ; $5C00..$5CFF is the regular version of the backdrop
 > $4000 ; $8DBB (word) is the address of the current transition animation
 > $4000 ; $EA30..$EAFE (words) is ? [there's a load of words here]
+> $4000 ; $EB00        is ?
 > $4000 ; $ED28        is the stack
 > $4000 ; $EE00..$EEFF is the road buffer. holds data unpacked from maps. it's cyclic. fixed sections for each datum. cleared by $87DD.
 > $4000 ; $EF00..$EFFF is a table of flipped bytes
@@ -1971,7 +1972,7 @@ c $8903 Drives sound effects
   $8919 Call engine_sfx_play_hook
   $891C Call another hooked routine
   $891F If $A237 == 0 return
-  $8924 #REGe = $A237 * 4
+  $8924 #REGe = $A237 * 4 -- stride of table
   $8927 $A237 = 0
   $892B $A238 = 0
   $892E Make #REGde full offset
@@ -3391,28 +3392,58 @@ c $9BA7 Clear the whole message line
 @ $9BCF label=tick
 c $9BCF Game timer
   $9BCF Return if perp_caught_stage > 0
-  $9BD3 TBD
+  $9BD4 Return if transition_control == 4 -- don't tick while transitions are running
+  $9BDA Point #REGhl at time_bcd
+  $9BDD Jump to $9C0D if time_up_state was 1 - out of time
+  $9BE3 Jump to $9C31 if time_up_state was 2 - show "TIME UP" message
+  $9BE6 Jump to $9C50 if time_up_state was 3 - show "CONTINUE" message & run countdown
+  $9BE9 Return if it was 4 - countdown elapsed
+;
+N $9BEB Otherwise it's zero?
+  $9BEB A = time_bcd
+  $9BEC Set flags
+  $9BED Jump to tick_time_remaining if non-zero
+;
+N $9BEF Out of time.
+  $9BEF time_up_state = 1
+  $9BF3 user_input_mask = $93 (allow Quit, Fire, Left, Right) [Q: Why left and right?]
+  $9BF8 Return
+;
+@ $9BF9 label=tick_time_remaining
   $9BF9 Decrement the 1/16th sec counter
   $9BFB Return if not zero
+;
   $9BFC Reset time_sixteenths to 15
   $9BFE Decrement time_bcd [POKE $9C01 for Infinite time]
   $9C04 Return if <> 15s remain
   $9C07 Nancy berating us running out of time message
   $9C0A Exit via chatter
+;
   $9C0D Is time_bcd zero? Jump to time_up if so
-  $9C11 Zero $A229
+  $9C11 time_up_state = 0
   $9C15 user_input_mask = $FF (allow all keys)
   $9C19 Loop back to $9BF9
 @ $9C1B label=tick_time_up
   $9C1B,3 Point at "TIME UP" message
   $9C1E,3 Call message_printing_related
-  $9C3B Jump if no credits remain
+  $9C21 Return if speed > 0
+  $9C27 time_up_state = 2
+  $9C2C A = 4
+  $9C2E Exit via unknown_hook_3
+  $9C31 Return if transition_control is non-zero
+  $9C36 Exit via quit_key if no credits remain
   $9C3E Decrement credits [POKE $9C3E for Infinite credits]
   $9C3F Turn it into ASCII and poke it into the "CREDIT x" string
+  $9C44 time_up_state = 3
+  $9C49 HL = $0115
+  $9C4C Self modify 'LD HL' at $9C84 to load HL
+  $9C4F Return
+;
   $9C50,5 Is fire pressed?
   $9C55 Jump if not (?)
+;
 N $9C57 Resetting mission code.
-  $9C57 Reset $A229
+  $9C57 Reset time_up_state to zero
   $9C5B Reset smash_factor to zero
   $9C60 Reset smash_counter to zero
   $9C62 Set user input mask to allow everything through
@@ -3424,6 +3455,42 @@ N $9C57 Resetting mission code.
   $9C7E,3 Print "CONTINUE THIS MISSION" messages
   $9C81,3 Call message_printing_related
   $9C84 <self modified>
+  $9C87 H--
+  $9C88 JR NZ,$9CA5
+  $9C8A H = 6
+  $9C8C L--
+  $9C8D A = L
+  $9C8E RRA
+  $9C8F BC = $0801  -- 8 => bip
+  $9C92 JR NC,$9C95
+  $9C94 B++  -- 9 => bow
+;
+  $9C95 Call start_sfx
+  $9C98 A = L
+  $9C99 Set flags
+  $9C9A JR NZ,$9CA5
+  $9C9C A++
+  $9C9D *$A26A = A
+  $9CA0 time_up_state = 4
+;
+  $9CA5 Self modify 'LD HL' at $9C84 to load HL
+  $9CA8 A = L
+  $9CA9 SRL A
+  $9CAB DE = $8D7C
+  $9CAE CP 10
+  $9CB0 JR NZ,$9CB8
+  $9CB2 A = $31
+  $9CB4 L = $00
+  $9CB6 JR $9CBB
+;
+  $9CB8 L = A
+  $9CB9 A = $20
+;
+  $9CBB *DE = A
+  $9CBC A = L + $B0
+  $9CBF DE++
+  $9CC0 *DE = A
+  $9CC1 Return
 
 @ $9CC2 label=speed_score
 c $9CC2 Increments score in proportion to current speed
@@ -4137,7 +4204,8 @@ W $A186,2 Attribute address of horizon. Points to last attribute on the line whi
 ;
   $A228,1 $B421 reads  $B4C8 writes
 ;
-  $A229,1 <Timing related?>
+@ $A229 label=time_up_state
+  $A229,1 1 => out of time, 2 => "TIME UP" message is printed; 3 => "CONTINUE THIS MISSION" message is printed and a countdown runs; 4 => countdown elapsed; 0 otherwise
 ;
   $A22A,1 Used by $B6D6 and others
 ;
@@ -4259,8 +4327,8 @@ W $A25F,2 Used by $B29A
   $A261,1 Used by $B297
   $A263,1 Used by $B2AE
   $A264,1 Used by $B2B2 -- together might be a 16-bit qty
-  $A265,1 Used by $BC2C -- seems to get set to $60 when in split road mode
-  $A266,1 Used by $A3A6 -- counts down (from ?) as split road approaches
+  $A265,1 Used by $BC2C -- set to $60 when the split road becomes visible, zero otherwise
+  $A266,1 Used by $A3A6 -- counts down (from 16?) when the split road approaches, zero when the split actually starts
   $A267,1 Used by $BC39 -- as 16-bit
   $A268,1 Used by $BB69 - skips routine if not set
   $A269,1 Used by $BC29
@@ -4407,7 +4475,7 @@ N $A3D5 Check right hand side of car.
   $A47A JR C,$A480
   $A47C EX AF,AF'
   $A47D A = 0
-  $A47E JR $A4B0
+  $A47E Jump to cc_hit_scenery
 ;
   $A480 EX AF,AF'
   $A481 A += 32
@@ -4441,7 +4509,7 @@ N $A3D5 Check right hand side of car.
   $A4B1 BC = $0403      -- arrive here if drive into scenery, e.g. a tree
   $A4B4 Call start_sfx
   $A4B7 POP AF
-; This entry point is used by the routines at #R$A637 and #R$A8CD.
+;
   $A4B8 HL = &<crashed flag>
   $A4BB [why inc then dec?]
   $A4BD RET NZ
@@ -4461,20 +4529,20 @@ N $A3D5 Check right hand side of car.
   $A4E2 L = A
 ;
   $A4E3 *$B357 = HL
-  $A4E6 EX AF,AF'
+  $A4E6
   $A4E7 HL = A
   $A4EA POP DE
   $A4EB PUSH HL
   $A4EC HL -= DE
   $A4EE POP HL
   $A4EF JR C,$A4F2
-  $A4F1 EX DE,HL
+  $A4F1
 ;
   $A4F2 Self modify 'LD BC' at $B32E to load HL
   $A4F5 Return
 ;
 @ $A4F6 label=cc_not_split
-  $A4F6 HL = *$E8FE
+  $A4F6 HL = *$E8FE  [mystery var]
   $A4F9 A = H  (0 or 255)
   $A4FA Set flags
   $A4FB JR NZ,$A510   -- A isn't zero
@@ -4500,7 +4568,7 @@ N $A3D5 Check right hand side of car.
   $A52A off_road = A
   $A52D A = 0
   $A52E *$B3DC = A
-  $A531 EXX
+  $A531
   $A532 *$B396 = HL
   $A535 *$B3A4 = DE
   $A539 Jump to $A55C if the right fork was taken
@@ -4508,19 +4576,15 @@ N $A3D5 Check right hand side of car.
   $A542 C = *HL++
   $A544 E = *HL++
   $A546 A = *HL
-  $A547 B = $00
+  $A547 B = 0
   $A549 D = B
   $A54A HL = *$EAFE
-  $A54D PUSH HL
-  $A54E HL -= BC
-  $A550 POP HL
-  $A551 Return if no carry
-  $A552 HL -= DE
-  $A554 Return if carry
+  $A54D Return if HL >= BC
+  $A552 Return if HL < DE
   $A555 A = $8C
-  $A557 EX AF,AF'
+  $A557
   $A558 A = 0
-  $A559 Jump to $A4B0
+  $A559 Jump to cc_hit_scenery
 ;
   $A55C HL = *$5D02
   $A55F C = *HL++
@@ -4528,19 +4592,106 @@ N $A3D5 Check right hand side of car.
   $A563 B = 0
   $A565 D = B
   $A566 HL = *$EAFC
-  $A569 PUSH HL
-  $A56A HL -= BC
-  $A56C POP HL
-  $A56D Return if carry
-  $A56E HL -= DE
-  $A570 Return if no carry
+  $A569 Return if HL < BC
+  $A56E Return if HL >= DE
   $A571 A = $8C
-  $A573 EX AF,AF'
-  $A574 A = $01
-  $A576 JP $A4B0
+  $A573
+  $A574 A = 1
+  $A576 Jump to cc_hit_scenery
 
 @ $A579 label=main_loop_14
 c $A579
+  $A579 HL = $E34F  -- somewhere in data block $E34B
+  $A57C B = 21  -- iterations
+  $A57E A = 0
+@ $A57F label=ml14_loop1
+  $A57F A += *HL
+  $A580 *HL++ = A
+  $A582 Loop ml14_loop1 while B
+  $A584 Self modify 'LD SP' at $A60A to restore SP
+  $A588 SP = $EB00
+  $A58B DE = $EE00 | (road_buffer_offset + 64)
+  $A593 IY = $E34F
+  $A597 B = 21
+  $A599 A = ($A265)  -- split road flag
+  $A59C Set flags
+  $A59D Jump to ml14_loop2 if zero [not in road split]
+  $A5A0 A = ($A266)  -- split road countdown
+  $A5A3 Set flags
+  $A5A4 JR Z,$A5EB   [not about to road split]
+  $A5A6 B = A
+;
+@ $A5A7 label=ml14_loop2
+  $A5A7 A = *DE
+  $A5A8
+  $A5A9 E = A
+  $A5AA A = ~(IY[0] * 2)
+  $A5AF L = A
+  $A5B0 A = E & 3
+  $A5B3 JR NZ,$A5BF
+  $A5B5 H = $E8
+  $A5B7 B = *HL
+  $A5B8 L--
+  $A5B9 C = *HL
+  $A5BA PUSH BC
+;
+  $A5BB H = $EC
+  $A5BD Jump to ml14_a5da
+;
+  $A5BF H = A + $E7
+  $A5C2 B = *HL
+  $A5C3 L--
+  $A5C4 C = *HL
+  $A5C5 PUSH BC
+  $A5C6 RL E
+  $A5C8 BIT 7,E
+  $A5CA JP Z,$A5D3
+  $A5CD JR C,$A5BB
+  $A5CF A = 3
+  $A5D1 JR $A5D8
+;
+  $A5D3 A = 3
+  $A5D5 JR C,$A5D8
+  $A5D7 A--
+;
+  $A5D8 H += A
+;
+@ $A5DA label=ml14_a5da
+  $A5DA C = *HL
+  $A5DB L++
+  $A5DC B = *HL
+  $A5DD PUSH BC
+  $A5DE
+  $A5DF IY++
+  $A5E1 E++
+  $A5E2 Loop to ml14_loop2 while B
+  $A5E4 A = *$A266  -- split road countdown
+  $A5E7 Set flags
+  $A5E8 Jump to ml14_return if zero
+;
+  $A5EB A = ~*$A266 + 22
+  $A5F1 Jump to ml14_return if zero
+  $A5F3 B = A
+  $A5F4 H = $EB
+;
+@ $A5F6 label=ml14_loop3
+  $A5F6 L = ~(IY[0] * 2)
+  $A5FC H--
+  $A5FD D = *HL
+  $A5FE L--
+  $A5FF E = *HL
+  $A600 PUSH DE
+  $A601 H++
+  $A602 E = *HL
+  $A603 L++
+  $A604 D = *HL
+  $A605 PUSH DE
+  $A606 IY++
+  $A608 Loop ml14_loop3 while B
+;
+@ $A60A label=ml14_return
+  $A60A Restore stack pointer -- Self modified above on entry
+  $A60D Return
 
 @ $A60E label=cycle_counters
 c $A60E Counters
@@ -4558,9 +4709,230 @@ W $A62C,2
 W $A62E,2 Routine at $A8CD
 W $A630,2
 
-c $A637
+@ $A637 label=smash_handler
+c $A637 Smash handling.
+D $A637 This gets called whenever the perp is within sight of the hero car.
   $A637 Return if perp_caught_stage > 0
-  $A63C TBD
+  $A63C Call $B4CC if sighted_flag is zero
+  $A643 A = IX[7]
+  $A646 Set flags
+  $A647 JR Z,$A650
+  $A649 JP P,$A78A
+  $A64C IX[7]++
+  $A64F Return if non-zero
+;
+  $A650 Preserve IY
+  $A652 C = IX[1]
+  $A655 B = 5  iterations
+  $A657 IY = &hazards[1]
+  $A65B DE = 20  stride of hazards
+@ $A65E label=loop_a65e
+  $A65E If the hazard is active then jump to $A66C
+  $A664 Move to next hazard
+  $A666 Loop while #REGb
+  $A668 Restore IY
+  $A66A Jump to $A68F
+;
+  $A66C A = IY[15]
+  $A66F RLA
+  $A670 JP NC,$A664
+  $A673 A = IY[1] - C
+  $A677 JP NC,$A67E
+  $A67A A += 2
+  $A67C JR $A680
+;
+  $A67E A -= 3
+;
+  $A680 JR NC,$A664
+  $A682 A = IY[17]
+  $A685 CP IX[18]
+  $A688 JP NZ,$A664
+  $A68B POP IY
+  $A68D JR $A6D8
+;
+  $A68F A = 0
+  $A691 Set flags
+  $A692 JR NZ,$A6F6
+  $A694 A = IX[1]
+  $A697 CP 7
+  $A699 JR NC,$A6F6
+  $A69B A = 20  self modified below
+  $A69D A--
+  $A69E JR NZ,$A6AB
+  $A6A0 C++
+  $A6A1 Call rng
+  $A6A4 AND $1F
+  $A6A6 C = A
+  $A6A7 A = ($5D1B) + C
+;
+  $A6AB *$A69C = A  -- Self modify LD A at $A69B
+  $A6AE HL = road_pos
+  $A6B1 DE = $A4
+  $A6B4 HL -= DE
+  $A6B6 BC = $0404
+  $A6B9 Jump to $A6CF if road_pos < $A4
+  $A6BB E = $46
+  $A6BD B--
+  $A6BE HL -= DE   not restored so includes prev subtraction
+  $A6C0 JR C,$A6CF
+  $A6C2 B--
+  $A6C3 C--
+  $A6C4 HL -= DE
+  $A6C6 JR C,$A6CF
+  $A6C8 B--
+  $A6C9 C--
+  $A6CA HL -= DE
+  $A6CC JR C,$A6CF
+  $A6CE C--
+;
+  $A6CF A = IX[18]
+  $A6D2 CP C
+  $A6D3 JR Z,$A6D8
+  $A6D5 CP B
+  $A6D6 JR NZ,$A6F6
+;
+  $A6D8 C = IX[18]
+  $A6DB Call rng
+  $A6DE C++
+  $A6DF Set flags
+  $A6E0 JP P,$A6E5
+  $A6E3 C -= 2
+;
+  $A6E5 A = C
+  $A6E6 Set flags
+  $A6E7 C = 2
+  $A6E9 JP Z,$A6F2
+  $A6EC CP 5
+  $A6EE JR C,$A6F3
+  $A6F0 C = $FE
+;
+  $A6F2 A += C
+;
+  $A6F3 IX[18] = A
+;
+  $A6F6 C = IX[1]
+  $A6F9 Call get_spawn_lanes
+  $A6FC A = IX[18]
+  $A6FF CP B
+  $A700 JR NC,$A707
+  $A702 A += 2
+  $A704 IX[18] = A
+;
+  $A707 CP C
+  $A708 Jump to $A711 if A <= C
+  $A70C A -= 2
+  $A70E IX[18] = A
+;
+  $A711 A = IX[18]
+  $A714 HL = $A7E6  -> $A7E7 data block
+  $A717 A += L
+  $A718 L = A
+  $A719 A = IX[5]
+  $A71C CP *HL
+  $A71D C = 1
+  $A71F JR Z,$A735
+  $A721 JR C,$A72E
+  $A723 A -= 10
+  $A725 JR C,$A72A
+  $A727 CP *HL
+  $A728 JR NC,$A737
+;
+  $A72A C--
+  $A72B A = *HL
+  $A72C JR $A737
+;
+  $A72E A += 10
+  $A730 JR C,$A735
+  $A732 CP *HL
+  $A733 JR C,$A737
+;
+  $A735 C--
+  $A736 A = *HL
+;
+  $A737 IX[5] = A
+  $A73A Self modify 'LD A' at $A68F to load C
+  $A73E A = 0
+  $A740 Set flags
+  $A741 DE = $1E
+  $A744 HL = $E6
+  $A747 JR NZ,$A762
+  $A749 A = <...>  -- Self modified below
+  $A74B A--
+  $A74C Self modify 'LD A' at $A749 to load A
+  $A74F JR NZ,$A776
+  $A751 Preserve HL
+  $A752 Call rng
+  $A755 Restore HL
+  $A756 C = A & 15  mask random value
+  $A759 A = ($5D1C) + C   value in $5D1A data block
+  $A75D Self modify 'LD A' at $A749 to load A
+  $A760 A = 10
+;
+  $A762 A--
+  $A763 ($A73F) = A
+  $A766 JR Z,$A776
+  $A768 A = IX[1]
+  $A76B CP 13
+  $A76D JR NC,$A776
+  $A76F B = ~A + 14 -- iterations
+@ $A773 label=loop_a773
+  $A773 HL += DE
+  $A774 Loop to loop_a773 while B
+;
+  $A776 A = IX[1] - 6
+  $A77B JR NC,$A783
+  $A77D A = (A + 5) * 8
+  $A782 HL += DE
+;
+  $A783 wordat(IX + 13) = HL
+  $A789 Return
+;
+  $A78A IX[7] = $FC
+  $A78E CP 3
+  $A790 PUSH AF
+  $A791 JR C,$A795
+  $A793 A -= 3
+;
+  $A795
+  $A796 A = boost
+  $A799 Set flags
+  $A79A A = $C8
+  $A79C JR Z,$A7A0
+  $A79E A = $E6
+;
+  $A7A0
+  $A7A1 CALL $A4B8
+  $A7A4 Read HL from LD BC at $B32E
+  $A7A7 HL += 40
+  $A7AB ($B32F) = HL
+  $A7AE D = 0
+  $A7B0
+  $A7B1 HL = $B4F0
+  $A7B4
+  $A7B5 JR NC,$A7BE
+  $A7B7 CP 2
+  $A7B9 JR Z,$A7BE
+  $A7BB
+  $A7BC D = 4
+;
+  $A7BE D = wanted_stage_number + D
+  $A7C3 E = 0
+  $A7C5 A = *$8006
+  $A7C8 Set flags
+  $A7C9 JR Z,$A7D2
+  $A7CB A = D
+  $A7CC D = E
+  $A7CD A <<= 4  prob
+  $A7D1 E = A
+;
+  $A7D2 A = 0
+  $A7D3 CALL $9CD6
+  $A7D6 A = 5
+  $A7D8 Self modify 'LD A' at $A73E to load A
+  $A7DB Point #REGhl at smash_chatter ("BEAR DOWN" / "OH MAN" / etc.)
+  $A7DE Call chatter
+  $A7E1 BC = $0301
+  $A7E4 Exit via start_sfx
 
 b $A7E7
 
