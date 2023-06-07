@@ -2886,11 +2886,10 @@ c $9052
   $9100 POP AF
   $9101 L = A
   $9102 H = (A & $0F) + $F0
-  $9107 A = L
-  $9108 A = (A & $70) * 2 + C
-  $910C L = A
+  $9107 L = (L & $70) * 2 + C
   $910D JR $9113
 ;
+@ $910F label=continue_910f
   $910F DE++
   $9110 DJNZ $9113
   $9112 Return
@@ -2901,22 +2900,18 @@ c $9052
   $9115 JR $9115  Self modified
   $9117 *HL++ = A  -- 28 times
   $9151 *HL = A
-  $9152 L = C
-  $9153 A = H
-  $9154 H--
-  $9155 A &= $0F
-  $9157 JP NZ,$910F
-  $915A A = H
-  $915B A += $10
-  $915D H = A
-  $915E A = L
-  $915F A -= $20
-  $9161 L = A
-  $9162 JP NC,$910F
-  $9165 A = H
-  $9166 A -= $10
-  $9168 H = A
-  $9169 JP $910F
+  $9152 L = C  -- restore
+N $9153 Move to next scanline
+  $9153 Save for checking in a moment
+  $9154 Move to next scanline (visually upwards)
+  $9155 Would it have rolled over into the top nibble?
+  $9157 No - continue
+N $915A It rolled over
+  $915A Put back the bit stolen by rollover
+  $915E Move to next chunk of 16 scanlines
+  $9162 Continue if it didn't roll over
+  $9165 Otherwise move to the next chunk of 128 scanlines (would put us outside the back buffer)
+  $9169 Loop
 
 c $916C
   $916C HL = $9293
@@ -2924,72 +2919,56 @@ c $916C
 ;
   $9171 HL = $92FC    -- entry point
 ;
-  $9174 ($91CE) = HL
-  $9177 ($9244) = HL
+  $9174 *$91CE = HL
+  $9177 *$9244 = HL
   $917A A = *$A23F & $E0
-  $917F L = A
-  $9180 RRC L
-  $9182 RRC L
-  $9184 A -= L
+  $917F A -= A >> 2
   $9185 RRC L
   $9187 RRC L
-  $9189 A -= L
-  $918A A += B
-  $918B L = A
-  $918C H = $E6
+  $9189 L = A - L + B
+  $918C H = $E6   ; $E6xx data
   $918E A = *HL
-  $918F ($91DC) = A
+  $918F *$91DC = A
   $9192 EX DE,HL
   $9193 A = B
-  $9194 CP $0A
+  $9194 CP 10
   $9196 JR C,$919A
-  $9198 A = $0A
+  $9198 A = 10
 ;
   $919A RLCA
   $919B A--
   $919C E = A
-  $919D D = $00
+  $919D D = 0
   $919F C = D
-  $91A0 ($91BB) = DE
+  $91A0 *$91BB = DE
 ;
-  $91A4 A = C
-  $91A5 NEG
-  $91A7 ($933E) = A
-  $91AA B = *HL
-  $91AB B--
+  $91A4 A = -C
+  $91A7 *$933E = A
+  $91AA B = *HL - 1
   $91AC RET Z
   $91AD HL++
-  $91AE E = *HL
-  $91AF HL++
-  $91B0 D = *HL
-  $91B1 HL++
+  $91AE DE = wordat(HL); HL += 2
   $91B2 PUSH HL
   $91B3 PUSH IX
   $91B5 PUSH BC
   $91B6 EX DE,HL
-  $91B7 E = *HL
-  $91B8 HL++
-  $91B9 D = *HL
-  $91BA BC = $0000
+  $91B7 DE = wordat(HL); HL++
+  $91BA BC = $0000   -- must be SM
   $91BD HL += BC
-  $91BE A = *HL
-  $91BF HL++
-  $91C0 L = *HL
-  $91C1 H = $00
+  $91BE A = *HL++
+  $91C0 HL = *HL
   $91C3 HL += DE
   $91C4 POP BC
   $91C5 B--
   $91C6 JR NZ,$91DA
   $91C8 B = *HL
-  $91C9 HL--
-  $91CA HL--
+  $91C9 HL -= 2
   $91CB PUSH BC
   $91CC B = A
   $91CD CALL $9293
 ;
   $91D0 POP BC
-  $91D1 A = C
-  $91D2 A += B
+  $91D1 A = C + B
   $91D3 C = A
   $91D4 POP IX
   $91D6 POP HL
@@ -3014,8 +2993,7 @@ c $916C
   $91F2 A += A
   $91F3 JR $921F
 ;
-  $91F5 SRL A
-  $91F7 SRL A
+  $91F5 A >>= 2
   $91F9 JR $921F
 ;
   $91FB SRL A
@@ -3026,15 +3004,12 @@ c $916C
 ;
   $9203 SRL A
   $9205 B = A
-  $9206 SRL B
-  $9208 SRL B
+  $9206 B >>= 2
   $920A A -= B
   $920B JR $921F
 ;
   $920D B = A
-  $920E SRL B
-  $9210 SRL B
-  $9212 SRL B
+  $920E B >>= 3
   $9214 A += B
   $9215 JR $921F
 ;
@@ -3049,31 +3024,27 @@ c $916C
   $9220 JR Z,$9224
   $9222 JR NC,$9226
 ;
-  $9224 A = $01
+  $9224 A = 1
 ;
   $9226 B = A
   $9227 PUSH BC
-  $9228 A = IY[$35]
-  $922B A++
-  $922C A -= C
-  $922D A -= B
+  $9228 A = IY[$35] + 1 - C - B
   $922E JR NC,$9232
   $9230 A += B
   $9238 HL--
   $9231 B = A
 ;
   $9232 A = B
-  $9233 ($9405) = A
+  $9233 *$9405 = A
   $9236 A = *HL
   $9237 HL -= 2
-  $9239 ($9416) = A
+  $9239 *$9416 = A
   $923C A = $02
-  $923E ($93C1) = A
+  $923E *$93C1 = A
   $9241 EX AF,AF'
   $9242 B = A
   $9243 CALL $9293
-  $9246 XOR A
-  $9247 ($93C1) = A
+  $9246 *$93C1 = 0
   $924A JP $91D0
 
 c $924D
@@ -3150,8 +3121,7 @@ c $9278
   $92C3 RRA
   $92C4 B = A
   $92C5 A += E - 33
-  $92C8 Return if carry
-  $92C9 Return if zero
+  $92C8 Return if carry or zero
   $92CA D = A
   $92CB C = E - A
   $92CF A = D
@@ -3175,9 +3145,7 @@ c $92E1 Drives the sprite plotters  WHAT CALLS THIS PROB $901B
 ;
   $92EC EX DE,HL
   $92ED DE = wordat(HL); HL++
-  $92F0 A <<= 1
-  $92F1 A--
-  $92F2 HL += A
+  $92F0 HL += A * 2 - 1
   $92F6 B = *HL++
   $92F8 HL = *HL + DE
   $92FC A = IX[0]
@@ -3196,7 +3164,7 @@ c $92E1 Drives the sprite plotters  WHAT CALLS THIS PROB $901B
   $930C C = $00
 ;
   $930E A = (A & $FC) >> 2
-  $9312 ($9396) = A
+  $9312 *$9396 = A
   $9315 A >>= 1
   $9316 B = A
   $9317 E = *HL
@@ -3411,11 +3379,11 @@ c $92E1 Drives the sprite plotters  WHAT CALLS THIS PROB $901B
 
 @ $949C label=plot_sprite
 c $949C Sprite plotter for back buffer, up to 64px wide, 15px high, no mask, no flip.
-R $949C I:A   Plot (A+1)*8 pixels
+R $949C I:A   Plot (#REGa + 1) * 8 pixels
 R $949C I:DE' Stride of bitmap data in bytes
 R $949C I:HL  Address in back buffer to plot at
 R $949C I:HL' Address of bitmap data
-  $949C Use plot_sprite_odd if the bottom bit is set (odd widths)
+  $949C Use ps_odd if the bottom bit is set (odd widths)
   $94A1 #REGix = Base of jump table
   $94A5 (~#REGa + 5) is (4 - #REGa) is the number of plot operations to skip
   $94A8 Multiply #REGa by 5: the length of an individual plot operation
@@ -3427,10 +3395,14 @@ R $949C I:HL' Address of bitmap data
   $94B9 Jump into body of loop
 @ $94BB label=ps_even_loop
   $94BB Bank
+@ $94BC label=ps_even_continue
   $94BC Next scanline
   $94BE Restore #REGsp (self modified)
   $94C1 Return
+;
+@ $94C2 label=ps_even_next
   $94C2 Calculate address of next bitmap scanline
+@ $94C3 label=ps_even_body
   $94C3 Put it in #REGsp (so we can use POP for speed)
   $94C4 Unbank
   $94C6 Jump table
@@ -3448,7 +3420,7 @@ R $949C I:HL' Address of bitmap data
   $94EC H -= 16
   $94ED Loop back to ps_even_loop
 ;
-@ $94F2 label=plot_sprite_odd
+@ $94F2 label=ps_odd
   $94F2 Increment #REGa for upcoming calculation
   $94F3 Point #REGix at start of plot instructions
   $94F7 (~#REGa + 5) is (4 - #REGa) is the number of plot operations to skip
@@ -3461,10 +3433,14 @@ R $949C I:HL' Address of bitmap data
   $950B Jump into body of loop
 @ $950D label=ps_odd_loop
   $950D Bank
+@ $950E label=ps_odd_continue
   $950E Next scanline
   $9510 Restore #REGsp (self modified)
   $9513 Return
+;
+@ $9514 label=ps_odd_next
   $9514 Calculate address of next bitmap scanline
+@ $9515 label=ps_odd_body
   $9515 Put it in #REGsp (so we can use POP for speed)
   $9516 Unbank
   $9518 Jump table
@@ -3474,7 +3450,7 @@ R $949C I:HL' Address of bitmap data
   $9529 Transfer another 8 pixels
   $952B Restore #REGhl
   $952C Save H in A then H--
-N $952E Decrement the screen address
+N $952E Decrement the screen address.
   $952E Extract low four bits of row address
 ; A &= 0xF   if nz then do next scanline (dec is fine in this case)
 ; else A was 0, so to step back we need to adjust the 'CCC' bits
@@ -3487,8 +3463,109 @@ N $952E Decrement the screen address
   $953F Loop back to ps_odd_loop
 
 @ $9542 label=plot_sprite_flipped
-c $9542 Sprite plotter for back buffer, which flips
-  $9542 TBD
+c $9542 Sprite plotter for back buffer, up to 64px wide, 15px high, no mask, flips.
+R $9542 I:A   Plot (#REGa + 1) * 8 pixels
+R $9542 I:DE' Stride of bitmap data in bytes
+R $9542 I:HL  Address in back buffer to plot at
+R $9542 I:HL' Address of bitmap data
+  $9542 Advance the back buffer pointer to the end of the first line, so we can draw in reverse
+  $9546 Use psf_odd if the bottom bit is set (odd widths)
+  $954B Save #REGsp to restore later (self modify)
+  $954F #REGix = Base of jump table
+  $9553 (~#REGa + 5) is (4 - #REGa) is the number of plot operations to skip
+  $9556 Multiply #REGa by 9: the length of an individual plot operation
+  $955B Move result to #REGbc
+  $955E Add it to #REGix to complete the jump target
+  $9560 Point #REGde at table of flipped bytes at $EF00
+  $9562 Bank
+  $9563 TBD
+  $9565 Jump into body of loop
+;
+@ $9567 label=psf_even_continue
+  $9567 Bank
+  $9568 Next scanline
+  $956A Restore #REGsp (self modified)
+  $956D Return
+;
+@ $956E label=psf_even_next
+  $956E Calculate address of next bitmap scanline
+;
+@ $956F label=psf_even_body
+  $956F Put it in #REGsp (so we can use POP for speed)
+  $9570 Unbank
+  $9571 TBD [check elsewhere too]
+  $9572 TBD
+  $9573 Jump table
+  $9575 Transfer two bitmap bytes (16 pixels) from the "stack" to screen buffer with flipping
+  $9576 Set flip table address
+  $9577 Flip byte and write to screen
+  $9579 Advance backwards
+  $957A Set flip table address
+  $957B Flip byte and write to screen
+  $957D Advance backwards
+  $957E Transfer another 16 pixels
+  $9587 Transfer another 16 pixels
+  $9590 Transfer another 16 pixels
+  $9598 TBD
+  $9599 Restore #REGhl
+  $959A Save H in A then H--
+  $959C Extract low four bits of row address
+  $959E If zero we'll need to handle it below, otherwise just loop
+  $95A1 H += 16
+  $95A5 Decrement the high three bits of row address
+  $95A9 No carry, so finish scanline
+  $95AC H -= 16
+  $95B0 Loop back to psf_even_continue
+;
+@ $95B3 label=psf_odd
+  $95B3 Increment #REGa for upcoming calculation
+  $95B4 Save #REGsp to restore later (self modify) [in a different position to others]
+  $95B8 Point #REGix at start of plot instructions
+  $95BC (~#REGa + 5) is (4 - #REGa) is the number of plot operations to skip
+  $95BF Multiply #REGa by 9: the length of an individual plot operation
+  $95C4 Move result to #REGbc
+  $95C7 Add it to #REGix to complete the jump target
+  $95C9 Point #REGde at table of flipped bytes at $EF00
+  $95CB Bank
+  $95CC TBD
+  $95CE Jump into body of loop
+;
+@ $95D0 label=psf_odd_continue
+  $95D0 Bank
+  $95D1 Next scanline
+  $95D3 Restore #REGsp (self modified)
+  $95D6 Return
+;
+@ $95D7 label=psf_odd_next
+  $95D7 Calculate address of next bitmap scanline
+;
+@ $95D8 label=psf_odd_body
+  $95D8 Put it in #REGsp (so we can use POP for speed)
+  $95D9 Unbank
+  $95DA TBD
+  $95DB TBD
+  $95DC Jump table
+  $95DE Transfer two bitmap bytes (16 pixels) from the "stack" to screen buffer with flipping
+  $95DF Set flip table address
+  $95E0 Flip byte and write to screen
+  $95E2 Advance backwards
+  $95E3 Set flip table address
+  $95E4 Flip byte and write to screen
+  $95E6 Advance backwards
+  $95E7 Transfer another 16 pixels
+  $95F0 Transfer another 16 pixels
+  $95F9 Transfer another 8 pixels
+  $95FD TBD
+  $95FE Restore #REGhl
+  $95FF Save H in A then H--
+N $9601 Decrement the screen address.
+  $9601 Extract low four bits of row address
+  $9603 If zero we'll need to handle it below, otherwise just loop
+  $9606 H += 16
+  $960A Decrement the high three bits of row address
+  $960E No carry, so finish scanline
+  $9611 H -= 16
+  $9615 Loop back to psf_odd_continue
 
 c $9618 Random number generator
 R $9618 O:A Random byte?
