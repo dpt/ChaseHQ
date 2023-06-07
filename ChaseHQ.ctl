@@ -618,7 +618,7 @@ D $643E LOD = level of detail. These structures collect together the variously s
 ; - 2 is probably to flip
 ;
 @ $643E label=lambo_lods
-N $643E LOD
+N $643E Lamborghini LOD
 B $643E,1 Width (bytes)
 B $643F,1 Flags
 B $6440,1 Height (pixels)
@@ -627,7 +627,7 @@ W $6443,2 Pre-shifted bitmap
 L $643E,7,6
 ;
 @ $6468 label=truck_lods
-N $6468 LOD
+N $6468 Truck LOD
 B $6468,1 Width (bytes)
 B $6469,1 Flags
 B $646A,1 Height (pixels)
@@ -636,7 +636,7 @@ W $646D,2 Pre-shifted bitmap
 L $6468,7,6
 ;
 @ $6492 label=car_lods
-N $6492 LOD
+N $6492 Car LOD
 B $6492,1 Width (bytes)
 B $6493,1 Flags
 B $6494,1 Height (pixels)
@@ -646,39 +646,39 @@ L $6492,7,6
 ;
 N $64BC Lamborghini_1 (48x30)
 N $64BC #HTML[#CALL:graphic($64BC,48,30,0,1)]
-B $64BC,180,6
+B $64BC,180,6 Bitmap data
 ;
 N $6570 Lamborghini_2 (40x22)
 N $6570 #HTML[#CALL:graphic($6570,40,22,0,1)]
-B $6570,110,5
+B $6570,110,5 Bitmap data
 ;
 N $65DE Lamborghini_3 (24x15)
 N $65DE #HTML[#CALL:graphic($65DE,24,15,0,1)]
-B $65DE,45,3
+B $65DE,45,3 Bitmap data
 ;
 N $660B Truck_1 (48x39)
 N $660B #HTML[#CALL:graphic($660B,48,39,0,1)]
-B $660B,234,6
+B $660B,234,6 Bitmap data
 ;
 N $66F5 Truck_2 (40x29)
 N $66F5 #HTML[#CALL:graphic($66F5,40,29,0,1)]
-B $66F5,145,5
+B $66F5,145,5 Bitmap data
 ;
 N $6786 Truck_3 (24x20)
 N $6786 #HTML[#CALL:graphic($6786,24,20,0,1)]
-B $6786,60,3
+B $6786,60,3 Bitmap data
 ;
 N $67C2 Car_1 (48x31)
 N $67C2 #HTML[#CALL:graphic($67C2,48,31,0,1)]
-B $67C2,186,6
+B $67C2,186,6 Bitmap data
 ;
 N $687C Car_2 (40x22)
 N $687C #HTML[#CALL:graphic($687C,40,22,0,1)]
-B $687C,110,5
+B $687C,110,5 Bitmap data
 ;
 N $68EA Car_3 (24x16)
 N $68EA #HTML[#CALL:graphic($68EA,24,16,0,1)]
-B $68EA,48,3
+B $68EA,48,3 Bitmap data
 ;
 N $691A Lamborghini_4 (24x8)
 N $691A #HTML[#CALL:graphic($691A,24,8,1,1)]
@@ -705,7 +705,7 @@ N $6A10 #HTML[#CALL:graphic($6A10,24,9,1,1)]
 B $6A10,54,6 Masked bitmap data
 ;
 @ $6A46 label=stones_lods
-N $6A46 LOD
+N $6A46 Stones LOD
 B $6A46,1 Width (bytes)
 B $6A47,1 Flags
 B $6A48,1 Height (pixels)
@@ -714,7 +714,7 @@ W $6A4B,2 Pre-shifted bitmap
 L $6A46,7,6
 ;
 @ $6A70 label=dust_lods
-N $6A70 LOD
+N $6A70 Dust LOD
 B $6A70,1 Width (bytes)
 B $6A71,1 Flags
 B $6A72,1 Height (pixels)
@@ -767,12 +767,14 @@ N $6AF4 #HTML[#CALL:graphic($6AF4,8,1,1,1)]
 B $6AF4,2 Masked bitmap data
 ;
 W $6AF6,2 -> turn_sign_lods
-B $6AF8
+B $6AF8 TBD -- Read by $928D and $92F6
 N $6B0C Ref'd by graphic entry 8 and 17
 W $6B0C,2 -> turn_sign_lods
 ;
 @ $6B22 label=turn_sign_lods
-N $6B22 LOD
+B $6B0E TBD
+;
+N $6B22 Turn sign LOD
 B $6B22,1 Width (bytes)
 B $6B23,1 Flags
 B $6B24,1 Height (pixels)
@@ -2135,7 +2137,7 @@ N $8A73 Otherwise all of the caught stages are complete and we can move on to th
 @ $8ABE label=hpc_stage3
   $8ABE Self modified by $8AB8
   $8AC0 A--
-  $8AC1 LD ($8ABF),A  ;  Self modify $8ABE
+  $8AC1 Self modify 'LD A' at $8ABE to load A
   $8AC4 Return if A != 0
   $8AC5 perp_caught_stage = 4
   $8ACA HL = *$5D06   -- arrest messages
@@ -2166,7 +2168,7 @@ N $8AEA Calculate clear bonus.
   $8B16 Set A in "TIME BONUS   A  X 5000"
   $8B19 C = A
   $8B1A A <<= 4?
-  $8B1E A &= $0F
+  $8B1E A &= $F
   $8B20
   $8B22 A = ' '
   $8B24
@@ -2184,8 +2186,7 @@ N $8AEA Calculate clear bonus.
 ;
   $8B34
   $8B35 Set A in "TIME BONUS   A  X 5000"
-  $8B38 A = C
-  $8B39 A &= $0F
+  $8B38 A = C & 15
   $8B3B
   $8B3D
   $8B3E B = A -- iterations
@@ -2205,7 +2206,7 @@ N $8AEA Calculate clear bonus.
 ;
 @ $8B57 label=hpc_loop_3
   $8B57 A = *DE    -- fetch digits
-  $8B58 A = (A << 4) & $F   -- extract first digit
+  $8B58 A = (A << 4) & 15   -- extract first digit
   $8B5E
   $8B60
   $8B62
@@ -2216,7 +2217,7 @@ N $8AEA Calculate clear bonus.
   $8B6A A += '0'
 ;
   $8B6C *HL++ = A
-  $8B6E A = *DE & $0F
+  $8B6E A = *DE & 15
   $8B71
   $8B73
   $8B75
@@ -2291,12 +2292,9 @@ N $8AEA Calculate clear bonus.
   $8BFA
   $8BFB HL = speed
   $8BFE
-  $8BFF HL -= DE
-  $8C01 If HL < DE jump
+  $8BFF Jump if HL < DE
   $8C03 Clear Up, i.e. stop accelerating
-  $8C05 DE = 50
-  $8C08 HL -= DE
-  $8C0A If HL < DE jump
+  $8C05 Jump if HL < 50
   $8C0C Set Down bit, i.e. brake
 ;
   $8C0E
@@ -2730,7 +2728,7 @@ c $8F5F
   $8FE0 D = $30
   $8FE2 C = *HL++
   $8FE4 B = *HL
-  $8FE5 SRL B
+  $8FE5 B >>= 1
   $8FE7
   $8FE8
   $8FE9
@@ -2791,24 +2789,625 @@ c $9023
   $904D
   $904F Loop?
 
-; unclear if/how this routine gets entered
+; It's unclear if/how this routine gets entered.
 c $9052
+  $9052 PUSH IX
+  $9054 PUSH DE
+  $9055 PUSH BC
+  $9056 A = IX[1]
+  $9059 Set flags
+  $905A CALL Z,$916C
+  $905D POP BC
+  $905E POP HL
+  $905F POP IX
+  $9061 HL++
+  $9062 DE = wordat(HL); HL++
+  $9065 DE += 2
+  $9067 A = *$A23F & $E0
+  $906C L = A
+  $906D RRC L
+  $906F RRC L
+  $9071 A -= L
+  $9072 RRC L
+  $9074 RRC L
+  $9076 A -= L
+  $9077 A += B
+  $9078 L = A
+  $9079 H = $E6
+  $907B A = IY[0] - IY[$35]
+  $9081 C = A
+  $9082 A = *HL
+  $9083 L = A
+  $9084 SRL A
+  $9086 A += L
+  $9087 A -= C
+  $9088 *$90F2 = A
+  $908B A = B
+  $908C A--
+  $908D CP $09
+  $908F JR C,$9093
+  $9091 A = $09
+;
+  $9093 B = A
+  $9094 A += A
+  $9095 HL = A
+  $9098 HL += DE
+  $9099 C = *HL
+  $909A A = B
+  $909B L = (A * 2) + B + 20
+  $90A0 H = 0
+  $90A2 HL += DE
+  $90A3 D = 1
+  $90A5 A = IX[1]
+  $90A8 Set flags
+  $90A9 JP M,$90C4
+  $90AC RET NZ
+  $90AD A = IX[0] + $18 - C
+  $90B3 JR C,$90C4
+  $90B5 A -= 8
+  $90B7 JR C,$90C4
+  $90B9 CP 8
+  $90BB JR C,$90C4
+  $90BD A >>= 3
+  $90C3 D = A
+;
+  $90C4 IX--
+  $90C6 IX--
+  $90C8 E = $1F
+  $90CA A = IX[1]
+  $90CD Set flags
+  $90CE RET M
+  $90CF JR NZ,$90E4
+  $90D1 A = IX[0] + C
+  $90D5 JR C,$90E4
+  $90D7 JR Z,$90E4
+  $90D9 CP $F7
+  $90DB JR NC,$90E4
+  $90DD A >>= 3
+  $90E3 E = A
+;
+  $90E4 C = D
+  $90E5 A = E * 2 - C
+  $90E8 A = ~A + $3D
+  $90EB *$9116 = A   -- Self modify jump table target
+  $90EE A = IY[$35]
+  $90F1 A -= $00     SM?
+  $90F3 RET M
+  $90F4 PUSH AF
+  $90F5 A++
+  $90F6 B = *HL
+  $90F7 A -= B
+  $90F8 JR NC,$90FC
+  $90FA A += B
+  $90FB B = A
+;
+  $90FC HL++
+  $90FD DE = wordat(HL); HL++
+  $9100 POP AF
+  $9101 L = A
+  $9102 H = (A & $0F) + $F0
+  $9107 A = L
+  $9108 A = (A & $70) * 2 + C
+  $910C L = A
+  $910D JR $9113
+;
+  $910F DE++
+  $9110 DJNZ $9113
+  $9112 Return
+;
+  $9113 A = *DE
+  $9114 C = L
+;
+  $9115 JR $9115  Self modified
+  $9117 *HL++ = A  -- 28 times
+  $9151 *HL = A
+  $9152 L = C
+  $9153 A = H
+  $9154 H--
+  $9155 A &= $0F
+  $9157 JP NZ,$910F
+  $915A A = H
+  $915B A += $10
+  $915D H = A
+  $915E A = L
+  $915F A -= $20
+  $9161 L = A
+  $9162 JP NC,$910F
+  $9165 A = H
+  $9166 A -= $10
+  $9168 H = A
+  $9169 JP $910F
 
 c $916C
-  $9171
+  $916C HL = $9293
+  $916F JR $9174
+;
+  $9171 HL = $92FC    -- entry point
+;
+  $9174 ($91CE) = HL
+  $9177 ($9244) = HL
+  $917A A = *$A23F & $E0
+  $917F L = A
+  $9180 RRC L
+  $9182 RRC L
+  $9184 A -= L
+  $9185 RRC L
+  $9187 RRC L
+  $9189 A -= L
+  $918A A += B
+  $918B L = A
+  $918C H = $E6
+  $918E A = *HL
+  $918F ($91DC) = A
+  $9192 EX DE,HL
+  $9193 A = B
+  $9194 CP $0A
+  $9196 JR C,$919A
+  $9198 A = $0A
+;
+  $919A RLCA
+  $919B A--
+  $919C E = A
+  $919D D = $00
+  $919F C = D
+  $91A0 ($91BB) = DE
+;
+  $91A4 A = C
+  $91A5 NEG
+  $91A7 ($933E) = A
+  $91AA B = *HL
+  $91AB B--
+  $91AC RET Z
+  $91AD HL++
+  $91AE E = *HL
+  $91AF HL++
+  $91B0 D = *HL
+  $91B1 HL++
+  $91B2 PUSH HL
+  $91B3 PUSH IX
+  $91B5 PUSH BC
+  $91B6 EX DE,HL
+  $91B7 E = *HL
+  $91B8 HL++
+  $91B9 D = *HL
+  $91BA BC = $0000
+  $91BD HL += BC
+  $91BE A = *HL
+  $91BF HL++
+  $91C0 L = *HL
+  $91C1 H = $00
+  $91C3 HL += DE
+  $91C4 POP BC
+  $91C5 B--
+  $91C6 JR NZ,$91DA
+  $91C8 B = *HL
+  $91C9 HL--
+  $91CA HL--
+  $91CB PUSH BC
+  $91CC B = A
+  $91CD CALL $9293
+;
+  $91D0 POP BC
+  $91D1 A = C
+  $91D2 A += B
+  $91D3 C = A
+  $91D4 POP IX
+  $91D6 POP HL
+  $91D7 JP $91A4
+;
+  $91DA EX AF,AF'
+  $91DB A = $00
+  $91DD B--
+  $91DE JR Z,$921B
+  $91E0 B--
+  $91E1 JR Z,$9217
+  $91E3 B--
+  $91E4 JR Z,$920D
+  $91E6 B--
+  $91E7 JR Z,$9203
+  $91E9 B--
+  $91EA JR Z,$91FB
+  $91EC B--
+  $91ED JR Z,$91F5
+  $91EF B--
+  $91F0 JR Z,$921F
+  $91F2 A += A
+  $91F3 JR $921F
+;
+  $91F5 SRL A
+  $91F7 SRL A
+  $91F9 JR $921F
+;
+  $91FB SRL A
+  $91FD B = A
+  $91FE SRL B
+  $9200 A += B
+  $9201 JR $921F
+;
+  $9203 SRL A
+  $9205 B = A
+  $9206 SRL B
+  $9208 SRL B
+  $920A A -= B
+  $920B JR $921F
+;
+  $920D B = A
+  $920E SRL B
+  $9210 SRL B
+  $9212 SRL B
+  $9214 A += B
+  $9215 JR $921F
+;
+  $9217 SRL A
+  $9219 JR $921F
+;
+  $921B B = A
+  $921C SRL B
+  $921E A += B
+;
+  $921F A -= C
+  $9220 JR Z,$9224
+  $9222 JR NC,$9226
+;
+  $9224 A = $01
+;
+  $9226 B = A
+  $9227 PUSH BC
+  $9228 A = IY[$35]
+  $922B A++
+  $922C A -= C
+  $922D A -= B
+  $922E JR NC,$9232
+  $9230 A += B
+  $9238 HL--
+  $9231 B = A
+;
+  $9232 A = B
+  $9233 ($9405) = A
+  $9236 A = *HL
+  $9237 HL -= 2
+  $9239 ($9416) = A
+  $923C A = $02
+  $923E ($93C1) = A
+  $9241 EX AF,AF'
+  $9242 B = A
+  $9243 CALL $9293
+  $9246 XOR A
+  $9247 ($93C1) = A
+  $924A JP $91D0
 
 c $924D
-  $9252
+R $924D R:B ?
+  $924D HL = $9279
+  $9250 JR $9255
+;
+  $9252 HL = $92E2   graphic 1 uses this entry
+;
+  $9255 A = B
+  $9256 CP 16
+  $9258 Return if A >= 16
+  $9259 PUSH HL
+  $925A A = (*$A23F) & $E0
+  $925F L = A
+  $9260 L >>= 2
+  $9264 A -= L
+  $9265 L >>= 2
+  $9269 A -= L
+  $926A A += B
+  $926B L = A
+  $926C H = $E6    ; $E6xx data
+  $926E A = *HL
+  $926F A = (A >> 2) - A
+  $9277 Return
 
+@ $9278 label=sub_9278
+R $9278 I:B ?
+R $9278 I:IX ?
 c $9278
+  $9278 *$933E = 0
+  $927C A = B
+  $927D CP 10
+  $927F Jump to $9283 if A < 10
+  $9281 A = 10  -- so it's a max() operator
+;
+  $9283 EX DE,HL
+  $9284 DE = wordat(HL); HL++
+  $9287 RLCA
+  $9288 A--
+  $9289 HL += A
+  $928D B = *HL++   -- this reads 6AF8
+  $928F L = *HL
+  $9290 H = 0
+  $9292 HL += DE
+;
+  $9293 A = IX[0] + 16 - B
+  $9299 Return if carry
+;
+  $929A CP 8
+  $929C Return if carry
+  $929D C = 0
+  $929F E = *HL
+  $92A0 RLC E  likely E << 3
+  $92A2 RLC E
+  $92A4 RLC E
+  $92A6 A -= E
+  $92A7 JR C,$92BB
+  $92A9 CP 8
+  $92AB JR NC,$930E   Jump if A >= 8
+  $92AD E = *HL
+  $92AE RRCA
+  $92AF RRCA
+  $92B0 *$9396 = A
+  $92B3 A = E - 1
+  $92B5 BC = $0101
+  $92B8 JP $92D2
+;
+  $92BB E = *HL
+  $92BC A &= $FC
+  $92BE RRCA
+  $92BF RRCA
+  $92C0 *$9396 = A
+  $92C3 RRA
+  $92C4 B = A
+  $92C5 A += E - 33
+  $92C8 Return if carry
+  $92C9 Return if zero
+  $92CA D = A
+  $92CB C = E - A
+  $92CF A = D
+  $92D0 B = 1
+;
+  $92D2 HL++
+  $92D3 D = *HL >> 1
+  $92D6 JP Z,$9333
+  $92D9 B--
+  $92DA A++
+  $92DB C = 0
+  $92DD EX AF,AF'
+  $92DE JP $932B
 
 c $92E1 Drives the sprite plotters  WHAT CALLS THIS PROB $901B
-  $93D3,3 Exit via plot_masked_sprite
-  $93D6,3 Exit via plot_sprite
-  $93D9,3 Exit via plot_masked_sprite_flipped
-  $93DC,3 Exit via plot_sprite_flipped
-  $93E8,4 #REGix = Base of jump table
+  $92E1 *$933E = 0
+  $92E5 A = B
+  $92E6 CP 10
+  $92E8 JR C,$92EC
+  $92EA A = 10
+;
+  $92EC EX DE,HL
+  $92ED DE = wordat(HL); HL++
+  $92F0 A <<= 1
+  $92F1 A--
+  $92F2 HL += A
+  $92F6 B = *HL++
+  $92F8 HL = *HL + DE
+  $92FC A = IX[0]
+  $92FF BIT 7,B
+  $9301 JR Z,$9306
+  $9303 A += B
+  $9304 JR $9308
+;
+  $9306 A += B
+  $9307 Return if carry
+;
+  $9308 Return if zero
+;
+  $9309 CP $F7
+  $930B Return if not carry
+  $930C C = $00
+;
+  $930E A = (A & $FC) >> 2
+  $9312 ($9396) = A
+  $9315 A >>= 1
+  $9316 B = A
+  $9317 E = *HL
+  $9318 A = ~A + 32  -- (31 - A)
+  $931B CP E
+  $931C JR C,$931F
+  $931E A = E
+;
+  $931F HL++
+  $9320 D = *HL >> 1
+  $9323 JP Z,$9333
+  $9326 C = A
+  $9327 EX AF,AF'
+  $9328 C = E - C
+;
+  $932B *$9396 = ~(*$9396)
+  $9332 EX AF,AF'
+;
+  $9333 JR NC,$933B
+  $9335 EX AF,AF'
+  $9336 SLA C
+  $9338 SLA E
+  $933A EX AF,AF'
+;
+  $933B EX AF,AF'
+  $933C HL++
+;
+  $933D D = $00
+  $933F A = IY[0] - IY[$35]
+  $9345 JR NZ,$9359
+;
+  $9347 A = IY[$35] + D
+  $934B RET M
+  $934C PUSH AF
+  $934D A++
+  $934E D = *HL
+  $934F A -= D
+  $9350 JR C,$9353
+  $9352 A = 0
+;
+  $9353 A += D
+  $9354 HL++
+  $9355 D = 1
+  $9357 JR $9390
+;
+  $9359 BIT 7,D
+  $935B JR NZ,$9361
+  $935D A -= D
+  $935E JP $9362
+;
+  $9361 A += D
+;
+  $9362 D = A
+  $9363 JP Z,$9347
+  $9366 JP M,$9347
+  $9369 A = IY[$35]
+  $936C PUSH AF
+  $936D A = *HL - 1 - D
+  $9370 JP NC,$938D
+  $9373 POP AF
+  $9374 A = *$93C1
+  $9377 Set flags
+  $9378 Return if zero
+  $9379 A = *$933E
+  $937C D = *HL
+  $937D A -= D
+  $937E RET P
+  $937F *$933E = A
+  $9382 A = *$9405 - D
+  $9386 Return if carry or zero
+  $9388 *$9405 = A
+  $938B JR $933D
+;
+  $938D A++
+  $938E D++
+  $938F HL++
+;
+  $9390 PUSH BC
+  $9391 PUSH DE
+  $9392 D = A
+  $9393 B = $00
+  $9395 A = $00
+  $9397 RRA
+  $9398 JR NC,$939C
+  $939A HL += 2
+;
+  $939C HL = wordat(HL) + BC
+  $93A1 *$9413 = HL
+  $93A4 C = E
+  $93A5 POP AF
+  $93A6 A--
+  $93A7 JR Z,$93AE
+;
+  $93A9 HL += BC
+  $93AA A--
+  $93AB JP NZ,$93A9
+;
+  $93AE B = D
+  $93AF D = $00
+  $93B1 EXX
+  $93B2 POP BC
+  $93B3 POP AF
+  $93B4 D = A
+  $93B5 H = (A & $0F) + $F0
+  $93BA A = D
+  $93BB L = (A & $70) * 2 + B
+  $93C0 A = <...> -- Self modified by various
+  $93C2 Set flags
+  $93C3 JP Z,$93D0
+  $93C6 A--
+  $93C7 JR NZ,$93DF
+  $93C9 EX AF,AF'
+  $93CA JP C,$B7EF
+  $93CD JP $9479
+;
+  $93D0 EX AF,AF'
+  $93D1 JR NZ,$93D9
+  $93D3 JP C,$B701    -- prob plot_sprite_flipped
+  $93D6 Exit via plot_sprite
+;
+  $93D9 Exit via plot_masked_sprite_flipped
+  $93DC Exit via plot_sprite_flipped
+;
+  $93DF EX AF,AF'
+  $93E0 JP C,$9436
+  $93E3 A >>= 1
+  $93E5 JP C,$9420
+  $93E8 #REGix = Base of jump table
+  $93EC (~#REGa + 5) is (4 - #REGa)
+  $93EF IX += A * 5
+  $93F8 BC = $94B1
+;
+  $93FB *$9410 = BC
+  $93FF *$941E = BC
+  $9403 EXX
+;
+  $9404 A = 0 - B
+  $9407 JR Z,$941A
+  $9409 JR C,$941A
+  $940B *$9405 = A
+  $940E EXX
+  $940F CALL $94B1
+  $9412 HL = <...>  Self modified by $93A1
+  $9415 B = <...>   Self modified by $9239
+  $9417 JP $9404
+;
+  $941A A += B
+  $941B B = A
+  $941C EXX
+  $941D JP $94B1
+;
+@ $9420 label=plot_sprite_xxx_odd
+  $9420 Increment #REGa for upcoming calculation
+  $9421 Point #REGix at start of plot instructions
+  $9425 (~#REGa + 5) is (4 - #REGa) is the number of plot operations to skip
+  $9428 Multiply #REGa by 5: the length of an individual plot operation
+  $942B Move result to #REGbc
+  $942F Add it to #REGix to complete the jump target
+  $9431 BC = $9503
+  $9434 JR $93FB
+;
+  $9436 IX = $B729
+  $943A (~#REGa + 9) is (8 - #REGa)
+  $943D IX += A * 6
+  $9446 *$946D = *$9413  -- Self modify LD HL at $946C to load ?
+  $944E *$9470 = *$9416
+  $9454 *$9460 = *$9405
+  $945A B = $0F
+  $945C EXX
+  $945D D = $00
+;
+  $945F A = 0 - B
+  $9462 JR C,$9474
+  $9464 JR Z,$9474
+  $9466 *$9460 = A
+  $9469 Call plot_masked_sprite
+  $946C HL = <...>  -- Self modified by $9446
+  $946F B = $00
+  $9471 JP $945F
+;
+  $9474 B += A
+  $9476 Exit via plot_masked_sprite
+;
+  $9479 EX AF,AF'
+  $947A EXX
+  $947B D = $00
+  $947D PUSH BC
+  $947E PUSH HL
+  $947F H = D
+  $9480 L = D
+  $9481 A = B
+  $9482 B = 5
+  $9484 A--
+  $9485 A <<= 2
+; multiplier
+@ $9487 label=loop_9487
+  $9487 A <<= 1
+  $9488 If carried out then HL += DE
+  $948B HL += HL
+  $948C Loop to loop_9487 while #REGb
+  $948E RLA
+  $948F JR NC,$9492
+  $9491 HL += DE
+;
+  $9492 POP BC
+  $9493 HL += BC
+  $9494 POP BC
+  $9495 D--
   $9496 E = -E
+  $949A EXX
+  $949B EX AF,AF'   -- fall through
 
 @ $949C label=plot_sprite
 c $949C Sprite plotter for back buffer, up to 64px wide, 15px high, no mask, no flip.
@@ -3475,7 +4074,7 @@ N $9C57 Resetting mission code.
 ;
   $9CA5 Self modify 'LD HL' at $9C84 to load HL
   $9CA8 A = L
-  $9CA9 SRL A
+  $9CA9 A >>= 1
   $9CAB DE = $8D7C
   $9CAE CP 10
   $9CB0 JR NZ,$9CB8
@@ -4302,9 +4901,11 @@ W $A24A,2 Speed (0..511). Max when in lo gear =~ $E6, hi gear =~ $168, turbo =~ 
 @ $A24F label=smoke
   $A24F,1 Smoke time remaining. This is set to 4 on low-to-high gear changes and to 3 when the hero car lands after a jump. This isn't set for turbo boosts however.
 ;
-  $A250,1 Turn severity (0/1/2)
+@ $A250 label=turn_speed
+  $A250,1 Turn speed (0/1/2) ignoring direction
 ;
-  $A251,1 Some sort of flip flag used for car rendering (observed 0/1)
+@ $A251 label=flip
+  $A251,1 1 => Horizontally flip the hero car, 0 => Don't
 ;
   $A252,1 TBD
 ;
@@ -4519,7 +5120,7 @@ N $A3D5 Check right hand side of car.
   $A4C9 *$B385 = 5
   $A4CC HL = speed
   $A4CF Preserve HL
-  $A4D0 SRL H
+  $A4D0 H >>= 1
   $A4D2 A = L
   $A4D3 RR A
   $A4D5 A = (A << 3) + 16
@@ -5597,15 +6198,15 @@ N $B0AF Handle gear changes.
   $B0BF Test it again? [Strange to re-test it?]
   $B0C1 Address of gear flag
   $B0C4 A = *$A252
-  $B0C7 jump if fire/gear is unset
-  $B0C9 jump if A252 is set
+  $B0C7 Jump if fire/gear is unset
+  $B0C9 Jump if A252 is set
   $B0CC Toggle gear flag
   $B0D0 A = 4
   $B0D2 Jump if low gear?
   $B0D4 smoke = A
 ;
   $B0D7 Decement A  [why write it as a SUB 1?]
-  $B0D9 JR C,$B0DE    -- jump if +ve?
+  $B0D9 JR C,$B0DE  -- jump if +ve?
   $B0DB $A252 = A
 ;
   $B0DE Read current gear flag
@@ -5635,12 +6236,12 @@ N $B10A Handle off-road (it can be 1 or 2).
   $B110 BC = 110  -- factor for off-road == 2
 ;
   $B113 Clear carry?
-  $B114 HL -= BC      -- 16-bit sub just for testing
+  $B114 HL -= BC  -- 16-bit sub just for testing
   $B116 HL = DE
   $B118 Jump if HL < BC (result of subtraction)
   $B11A A = L
-  $B11B H >>= 1     9 bit rotate right through carry
-  $B11D A <<= 4     9 bit rotate left through carry
+  $B11B H >>= 1  -- 9 bit rotate right through carry
+  $B11D A <<= 4  -- 9 bit rotate left through carry
   $B121 A = -((A & $0F) | 1)
   $B127 BC = $FF00 | A
   $B12A JP $B19A
@@ -5649,7 +6250,7 @@ N $B10A Handle off-road (it can be 1 or 2).
   $B130 Test then bank the flags
   $B131 Bank
   $B132 Check previously banked A
-  $B133 JR NZ,$B16E   --
+  $B133 JR NZ,$B16E
   $B135 BC = 470
   $B138 Unbank boost + flags
   $B139 Uses banked flags
@@ -5657,29 +6258,23 @@ N $B10A Handle off-road (it can be 1 or 2).
 ;
   $B13E HL -= BC
   $B140 JP NC,$B15A
-  $B143 A = L
-  $B144 A = ~A
-  $B145 C = A
-  $B146 A = H
-  $B147 A = ~A
-  $B148 B = A
+  $B143 C = ~L
+  $B146 B = ~H
   $B149 BC++
   $B14A A = C
-  $B14B SRL B
+  $B14B B >>= 1
   $B14D RRA
-  $B14E SRL B
+  $B14E B >>= 1
   $B150 RRA
   $B151 RRA
   $B152 RRA
-  $B153 AND $3F
-  $B155 OR $01
-  $B157 LD C,A
+  $B153 C = (A & $3F) | 1
   $B158 JR $B19A
 ;
-  $B15A LD A,L
-  $B15B SRL H
+  $B15A A = L
+  $B15B H >>= 1
   $B15D RRA
-  $B15E SRL H
+  $B15E H >>= 1
   $B160 RRA
   $B161 RRA
   $B162 RRA
@@ -5688,17 +6283,17 @@ N $B10A Handle off-road (it can be 1 or 2).
   $B16C JR $B19A
 ;
   $B16E BC = 220
-  $B171 HL -= BC
+  $B171 HL -= BC  -- for flags
   $B173 HL = DE
-  $B175 JR NC,$B18E  from result of calc
+  $B175 JR NC,$B18E  -- from result of calc
   $B177 BC = 470
   $B17A EX AF,AF'
   $B17B JR NZ,$B13E
   $B17D A = E
   $B17E B = D
-  $B17F SRL B
+  $B17F B >>= 1
   $B181 RRA
-  $B182 SRL B
+  $B182 B >>= 1
   $B184 RRA
   $B185 RRA
   $B186 RRA
@@ -5714,12 +6309,12 @@ N $B10A Handle off-road (it can be 1 or 2).
   $B19A Get stacked #REGaf
   $B19C Test bit 2?
   $B19F JR NC,$B1A6
-  $B1A1 LD BC,$FFEC
+  $B1A1 BC = $FFEC
   $B1A4 JR $B1AC
 ;
   $B1A6 RRA
   $B1A7 JR C,$B1AC
-  $B1A9 LD BC,$FFF6
+  $B1A9 BC = $FFF6
 ;
   $B1AC HL = DE
   $B1AE Clear carry?
@@ -5729,7 +6324,7 @@ N $B10A Handle off-road (it can be 1 or 2).
 ;
   $B1B7 A = *$A24C - 1
   $B1BC JR NC,$B1E4
-  $B1BE LD A,($B5B0)
+  $B1BE A = $B5B0
   $B1C1 Set flags
   $B1C2 JR Z,$B1E4
   $B1C4 C = A
@@ -5753,17 +6348,17 @@ N $B10A Handle off-road (it can be 1 or 2).
 ;
   $B1E2 A = 3
 ;
-  $B1E4 LD ($A24C),A
+  $B1E4 *$A24C = A
   $B1E7 A = H
-  $B1E8 CP $02
+  $B1E8 CP 2
   $B1EA JR C,$B1EF
   $B1EC Cap speed to $1FF
 ;
   $B1EF Set speed to #REGhl
   $B1F2 POP HL
-  $B1F3 LD A,($A263)
+  $B1F3 A = *$A263
   $B1F6 B = A
-  $B1F7 LD A,($A264)
+  $B1F7 A = *$A264
   $B1FA C = A
   $B1FB A = *$B064  -- Jump counter [self modified]
   $B1FE Set flags
@@ -5807,10 +6402,10 @@ N $B10A Handle off-road (it can be 1 or 2).
   $B23F A = L
   $B240 RR H
   $B242 RRA
-  $B243 SRL A
-  $B245 SRL A
+  $B243 A >>= 1
+  $B245 A >>= 1
   $B247 L = A
-  $B248 SRL L
+  $B248 L >>= 1
   $B24A A += L
   $B24B CP B
   $B24C JR NC,$B24F
@@ -5823,7 +6418,7 @@ N $B10A Handle off-road (it can be 1 or 2).
   $B253 PUSH BC
   $B254 BC = $0000
   $B257 E = B
-  $B258 LD A,($A25C)
+  $B258 A = *$A25C
   $B25B Set flags
   $B25C JP Z,$B29A
   $B25F JP P,$B265
@@ -5833,11 +6428,10 @@ N $B10A Handle off-road (it can be 1 or 2).
   $B265 HL = $B827
   $B268 C = A
   $B269 HL += BC
-  $B26A LD A,($A261)
+  $B26A A = *$A261
   $B26D C = A
   $B26E EX AF,AF'
-  $B26F LD A,($A23F)
-  $B272 A -= C
+  $B26F A = *$A23F - C
   $B273 Set flags
   $B274 JR Z,$B29A
   $B276 C = *HL
@@ -5865,10 +6459,9 @@ N $B10A Handle off-road (it can be 1 or 2).
 ;
   $B295 C = A
   $B296 EX AF,AF'
-  $B297 LD ($A261),A
+  $B297 *$A261 = A
 ;
-  $B29A LD HL,($A25F)
-  $B29D HL += BC
+  $B29A HL = *$A25F + BC
   $B29E DE = $0000
   $B2A1 $A25F = DE
   $B2A5 A = *$B326  -- Read self modified op in main_loop_24 -- crashed flag
@@ -5878,8 +6471,8 @@ N $B10A Handle off-road (it can be 1 or 2).
   $B2AC D = H
 ;
   $B2AD POP BC
-  $B2AE LD ($A263),B
-  $B2B2 LD ($A264),C
+  $B2AE *$A263 = B
+  $B2B2 *$A264 = C
   $B2B6 A -= B
   $B2B7 JP P,$B2BB
   $B2BA D--
@@ -5931,9 +6524,9 @@ N $B10A Handle off-road (it can be 1 or 2).
   $B305 B--
 ;
   $B306 A = B
-  $B307 LD ($A250),A
+  $B307 turn_speed = A
   $B30A A = D
-  $B30B LD ($A251),A
+  $B30B flip = A
   $B30E A = *$B064  -- Jump counter [self modified]
   $B311 Set flags
   $B312 Return if zero
@@ -5943,27 +6536,244 @@ N $B10A Handle off-road (it can be 1 or 2).
 @ $B318 label=main_loop_24
 c $B318
   $B318 If speed > 0 jump $B325
-  $B31F TBD...
-  $B322,3 off_road = A
-  $B325,2 [this seems to be a crashed flag]
-  $B32A,3 cornering = A
-  $B349,4 Clear crashed flag
+  $B31F Self modify 'LD A' at $B3DB to load A
+  $B322 off_road = A
+;
+  $B325 [this seems to be a crashed flag]
+  $B327 Set flags
+  $B328 JR Z,$B392
+  $B32A cornering = A
+  $B32D PUSH HL
+  $B32E BC = <...>
+  $B331 HL -= BC
+  $B333 POP HL
+  $B334 Jump to $B349 if HL < BC
+  $B336 D = H
+  $B337 A = L
+  $B338 D >>= 1
+  $B33A RR A
+  $B33C A >>= 1
+  $B33E OR 3
+  $B340 E = A
+  $B341 HL -= DE
+  $B343 JR Z,$B349   equal
+  $B345 A = 2
+  $B347 JR NC,$B350   HL > DE
+;
+  $B349 Clear crashed flag
+  $B34D A++
+  $B34E JR $B353
+;
+  $B350 ($A24A) = HL
+;
+  $B353 turn_speed = A
+  $B356 HL = $0000
+  $B359 D = H
+  $B35A E = L
+  $B35B D >>= 1
+  $B35D RR E
+  $B35F E >>= 1
+  $B361 E >>= 1
+  $B363 E >>= 1
+  $B365 HL -= DE
+  $B367 ($B357) = HL
+  $B36A EX DE,HL
+  $B36B HL = road_pos
+  $B36E C = 0
+  $B370 A = C
+  $B371 AND 1
+  $B373 flip = A
+  $B376 C--
+  $B377 JR Z,$B37F
+  $B379 C--
+  $B37A JR Z,$B381
+  $B37C HL += DE
+  $B37D JR $B381
+;
+  $B37F HL -= DE
+;
+  $B381 road_pos = HL
+  $B384 A = $00
+  $B386 Set flags
+  $B387 JR Z,$B38F
+  $B389 A--
+  $B38A ($B385) = A
+  $B38D A = $00
+;
+  $B38F ($B3DC) = A
+;
+  $B392 HL = road_pos
+  $B395 DE = $0048
+  $B398 A = H
+  $B399 Set flags
+  $B39A JP M,$B3B0
+  $B39D JR NZ,$B3A3
+  $B39F A = L
+  $B3A0 A -= E
+  $B3A1 JR C,$B3B0
+;
+  $B3A3 DE = $01D8
+  $B3A6 A = H
+  $B3A7 CP D
+  $B3A8 JR C,$B3B1
+  $B3AA JR NZ,$B3B0
+  $B3AC A = L
+  $B3AD A -= E
+  $B3AE JR C,$B3B1
+;
+  $B3B0 EX DE,HL
+;
+  $B3B1 road_pos = HL
   $B3B4 A = cornering | smoke
   $B3BB Call start_sfx with cornering noise
   $B3C1 Jump if perp_caught_stage > 0
-  $B404,3 off_road = A
-  $B40C,3 A = off_road
-  $B432,7 Jump if cornering
-  $B443,3 A = off_road
-  $B44D,3 Call draw_smoke  (seems to be the right side)
-  $B454,3 Exit via draw_smoke
+  $B3C7 A--
+  $B3C8 JR Z,$B3D8
+  $B3CA CP $02
+  $B3CC JR C,$B3D0
+  $B3CE A = $02
+;
+  $B3D0 turn_speed = A
+  $B3D3 flip = 1
+;
+  $B3D8 CALL $B549
+  $B3DB A = $00
+  $B3DD Set flags
+  $B3DE JR Z,$B407
+  $B3E0 C = A
+  $B3E1 RLCA
+  $B3E2 A += C + $18
+  $B3E5 C = A
+  $B3E6 A = turn_speed
+  $B3E9 CP 2
+  $B3EB JR C,$B3F5
+  $B3ED A = flip
+  $B3F0 Set flags
+  $B3F1 JR Z,$B3F4
+  $B3F3 C++
+;
+  $B3F4 C++
+;
+  $B3F5 EXX
+  $B3F6 B = counter_A & 1
+  $B3FC RLCA
+  $B3FD C = A
+  $B3FE EXX
+  $B3FF A = C
+  $B400 CALL $B69E
+  $B403 off_road = 0
+;
+  $B407 CALL $B457
+  $B40A B = $00
+  $B40C A = off_road
+  $B40F A--
+  $B410 JR NZ,$B41B
+  $B412 B = (counter_C & 1) * 3
+;
+  $B41B A = turn_speed
+  $B41E CALL $B58E
+  $B421 A = *$A228
+  $B424 Set flags
+  $B425 JR Z,$B42E
+  $B427 A = 0
+  $B428 BC = $0102
+  $B42B CALL $B67C
+;
+  $B42E B = counter_A
+  $B432 Jump if cornering
+  $B439 A = counter_C
+  $B43C B = A
+  $B43D HL++
+  $B43E A = *HL++
+  $B440 A |= *HL
+  $B441 JR NZ,$B449
+  $B443 A = off_road
+  $B446 Return if not fully off-road
+;
+  $B449 A = 0
+  $B44A EX AF,AF'
+  $B44B A = B
+  $B44C PUSH AF
+  $B44D Call draw_smoke  (seems to be the right side)
+  $B450 A = $01
+  $B452 EX AF,AF'
+  $B453 POP AF
+  $B454 Exit via draw_smoke
+;
+  $B457 A = *$A22F
+  $B45A Set flags
+  $B45B Return if zero
+  $B45C A--
+  $B45D JR Z,$B476
+  $B45F EXX
+  $B460 B = A
+  $B461 C = 0
+  $B463 EXX
+  $B464 A = turn_speed
+  $B467 CP 2
+  $B469 A = $24
+  $B46B JP NZ,$B69E
+  $B46E A = flip + $25
+  $B473 Exit via $B69E
+;
+  $B476 C = 0
+  $B478 A = 0
+  $B47A A--
+  $B47B *$B479 = A
+  $B47E JR NZ,$B493
+  $B480 B = 2
+  $B482 C++
+  $B483 A = C
+  $B484 CP 4
+  $B486 JR NC,$B48F
+  $B488 A++
+  $B489 C = A
+  $B48A CP 2
+  $B48C JR NZ,$B48F
+  $B48E B++
+;
+  $B48F A = B
+  $B490 Self modify 'LD A' at $B478 to load A
+;
+  $B493 A = C
+  $B494 *$B477 = A
+  $B497 CP 7
+  $B499 JR C,$B4A0
+  $B49B *$A22F = 0
+  $B49F Return
+;
+  $B4A0 A = turn_speed
+  $B4A3 CP 2
+  $B4A5 A = 6
+  $B4A7 JR NZ,$B4B3
+  $B4A9 A = (A << 3) - flip + 13
+;
+  $B4B3 A += C
+  $B4B4 PUSH AF
+  $B4B5 CALL $B699
+  $B4B8 POP AF
+  $B4B9 C = A
+  $B4BA A = *$B477
+  $B4BD Jump to $B4C6 if A >= 4
+  $B4C1 C++
+  $B4C2 A = C
+  $B4C3 Exit via $B699
+;
+  $B4C6 *$A228 = 1
+  $B4CB Return
 
 c $B4CC
-  $B4D8 time_sixteenths/$A17D = 15, time_bcd/$A17E = $60
+  $B4CC *$B477 = 0
+  $B4D1 *$A22F = 1
+  $B4D4 *$A22E = 1
+  $B4D7 INC A         ;
+  $B4D8 LD ($B479),A  ;
+  $B4DB LD HL,$600F   ; {time_sixteenths/$A17D = 15, time_bcd/$A17E = $60
+  $B4DE LD ($A17D),HL ; }
   $B4E1 Point #REGhl at left light's attributes
   $B4E4 Toggle its brightness
-  $B4E7,3 Point at "SIGHTING OF TARGET VEHICLE" message
-  $B4EA,3 Call message_printing_related
+  $B4E7 Point at "SIGHTING OF TARGET VEHICLE" message
+  $B4EA Call message_printing_related
   $B4ED Exit via hooked routine (likely sfx, siren?)
 
 @ $B4F0 label=smash
@@ -6000,7 +6810,7 @@ c $B549
 @ $B58E label=draw_car
 c $B58E Draws the car
 R $B58E I:A TBD
-  $B58E If #REGa is zero then $A251 = A
+  $B58E If #REGa is zero then flip = A
   $B594 C=A
   $B595
   $B596 Point #REGhl at ? then add (#REGa * 4)
@@ -6039,7 +6849,7 @@ R $B58E I:A TBD
   $B5E7
   $B5E8
   $B5E9
-  $B5EA IF $A251 jump to draw_car_perhaps_flipped
+  $B5EA If flip jump to draw_car_perhaps_flipped
   $B5F0
   $B5F1 Call plot_sprite -- #REGa is (how many pixels to plot - 1) / 8
   $B5F4 Jump to draw_car_cont
@@ -6060,6 +6870,12 @@ R $B58E I:A TBD
 ; fallthrough
 ; C = <something> e.g. 7
 ; E = <something> e.g. $68
+  $B61B C = 1
+  $B61D A = flip
+  $B620 Set flags
+  $B621 E = $60
+  $B623 Jump if flipped
+  $B625 E = $90
 @ $B627 label=sub_b627
   $B627 A=D
   $B628
@@ -6072,7 +6888,7 @@ R $B58E I:A TBD
   $B633
   $B634
   $B635
-  $B636 A=*$A251
+  $B636 A=flip
   $B639 B=A
   $B63A E=C
   $B63B C--
@@ -6117,14 +6933,83 @@ c $B648 Draw the hero car's smoke
   $B678 D = 119  -- vertical position
   $B67A Exit via $B6D6
 
+@ $B67C label=sub_b67c
 c $B67C
-  $B6DE,5 Divide by 8
+R $B67C I:A ?
+R $B67C I:B ? (gets compared to turn_speed) e.g. 1
+R $B67C I:C ? (used wrt flipping)           e.g. 2
+  $B67C A += counter_C & 1
+  $B683 Bank A
+  $B684 Jump to $B698 if turn_speed < B
+  $B68A A = flip
+  $B68D Set flags
+  $B68E A = 0
+  $B690 Jump to sub_b67c_no_flip if flip is zero
+  $B692 A += C
 ;
-  $B701 Select a plotter? Could be clipping stuff too.
+@ $B693 label=sub_b67c_no_flip
+  $B693 A += C
+  $B694 C = A
+  $B695 EX AF,AF'
+  $B696 A += C
+  $B697 EX AF,AF'
+;
+  $B698 EX AF,AF'
+;
+  $B699 EXX
+  $B69A BC = 0   -- not self modified
+  $B69D EXX
+;
+  $B69E E = $80
+  $B6A0 BC = A * 3
+  $B6A6 HL = $CFB2 + BC  -> unknown_cfb2
+  $B6AA D = *HL++ + $79
+  $B6AF E = *HL++ + E
+  $B6B3 C = *HL  -- B is still zero
+  $B6B4 HL = &car_adornments + BC
+  $B6B8 B = *HL++  -- height
+  $B6BA C = *HL++  -- byte width
+  $B6BC HL = wordat(HL); HL++   -- masked bitmap data
+  $B6C0 A = C
+  $B6C1 EXX
+  $B6C2 E = A  -- bank byte width in E'
+  $B6C3 EXX
+  $B6C4 Read from SUB @ $B5AA
+  $B6C7 D -= A
+  $B6CB A = *$B5B0 -- Self modified value in draw_car
+  $B6CE A >>= 1
+  $B6D0 Jump to $B6D6 if zero
+  $B6D4 D += A - 2
+;
+  $B6D6 D = -(*$A22A) + D
+;
+  $B6DD A = E
+  $B6DE Divide by 8
+  $B6E3 E = A
+  $B6E4 A = D
+  $B6E5
+  $B6E6 D = (D & $0F) + $F0
+  $B6EC
+  $B6ED E += (A & $70) * 2
+  $B6F2 PUSH DE
+  $B6F3 E = C  -- byte width
+  $B6F4 E <<= 1
+  $B6F6 EXX
+  $B6F7 POP HL
+  $B6F8 A = E
+  $B6F9 B >>= 1
+  $B6FB EX AF,AF'  -- unclear why, is this EX'ing AF to get the carry flag?
+  $B6FC HL += BC
+  $B6FD EX AF,AF'
+  $B6FE JP C,$B770
+;
+  $B701 IX = plot_masked_sprite_core_thingy
+  $B705 A = ~A + 9
   $B708 This multiplies by six - the length of each load-mask-store step in the plotter core.
   $B70C Add that to #REGix
-  $B711 Set loop counter for 15 iterations?
-  $B714
+  $B711 B = 15 -- Set loop counter for 15 iterations?
+  $B713 EXX
+  $B714 D = 0 -- fall through
 
 @ $B716 label=plot_masked_sprite
 c $B716 Masked sprite plotter
@@ -6994,8 +7879,7 @@ c $CD3A
 ;
 @ $CD69 label=ml10_loop
   $CD69
-  $CD6A E = *HL
-  $CD6B SLA E
+  $CD6A E = *HL << 1
   $CD6D
   $CD6E D = $00
   $CD70 L = D
@@ -7153,7 +8037,7 @@ W $CFAE,2
 W $CFB0,2 -> Turbo smoke plume data frame 4
 ;
 @ $CFB2 label=unknown_cfb2
-B $CFB2,,3 TBD groups of 3 bytes ref'd by $B6A6
+B $CFB2,,3 TBD groups of 3 bytes ref'd by $B6A6.  3rd byte is index into car_adornments.
 ;
 @ $D027 label=car_adornments
 B $D027,1 7 rows high
@@ -8092,9 +8976,9 @@ c $ED6D
   $ED97 D = 0
   $ED99 B = A & 7
   $ED9C A *= 5
-  $EDA0 SRL B
-  $EDA2 SRL B
-  $EDA4 SRL B
+  $EDA0 B >>= 1
+  $EDA2 B >>= 1
+  $EDA4 B >>= 1
   $EDA6 A += B
   $EDA7 A += A
   $EDA8 E = A
@@ -8219,10 +9103,8 @@ c $EE9E Loads of self modifying hopping around...
   $EEE8 A &= 7
   $EEEA Jump to dk_ef00 if zero
   $EEEC B = A   the 'note'
-  $EEED A = D   prob D >> 3
-  $EEEE SRL A
-  $EEF0 SRL A
-  $EEF2 SRL A
+  $EEED A = D
+  $EEEE A >>= 3
   $EEF4 B--
   $EEF5 Jump to playdrum_2 if zero
   $EEF8 B--
