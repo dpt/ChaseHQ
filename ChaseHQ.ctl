@@ -399,209 +399,46 @@ N $5EBD Entry 18 (turn sign)
 B $5EBD,3 TBD
 W $5EC0,2 Arg
 W $5EC2,2 -> Routine at $9278
-;
+
 ; $5EC3 is referenced so perhaps we're dealing with 1-indexed data here.
 b $5EC4 Initial map segment
 ;
 N $5EC4 Start stretch
-;
 N $5EC4 Start stretch, curvature
-B $5EC4 Data
-;
 N $5EE4 Start stretch, height
-B $5EE4 Data
-;
 N $5F0F Start stretch, lanes
-B $5F0F Data
-;
 N $5F1D Start stretch, hazards
-B $5F1D,1 Wait for 147
-B $5F1E,2 Escape, Command 14 (Disable Car Spawning)
-B $5F20,1 Wait for 12
-B $5F21,2 Escape, Command 12 (Set Floating Arrow to Right)
-B $5F23,1 Wait for 1
-B $5F24,2 Escape, Command 2 (Road Fork)
-W $5F26,2 Address of left fork data
-W $5F28,2 Address of right fork data
-;
 N $5F2A Start stretch, left-side objects
-B $5F2A,,1
-B $5F72,2 Escape, Command 2 (Road Fork)
-W $5F74,2 Address of left fork data
-W $5F76,2 Address of right fork data
-;
 N $5F78 Start stretch, right-side objects
-B $5F78,,1
-B $5FCC,2 Escape, Command 2 (Road Fork)
-W $5FCE,2 Address of left fork data
-W $5FD0,2 Address of right fork data
-;
 ;
 N $5FD2 Left fork
-;
 N $5FD2 Left fork, curvature
-B $5FD2,,1
-B $5FE2,2 Escape, Command 0 (Continue at <Address>)
-W $5FE4,2 Address
-;
 N $5FE6 Left fork, height
-B $5FE6,,1
-B $5FFF,2 Escape, Command 0 (Continue at <Address>)
-W $6001,2 Address
-;
 N $6003 Left fork, lanes
-B $6003,,1
-B $6005,2 Escape, Command 0 (Continue at <Address>)
-W $6007,2 Address
-;
 N $6009 Left fork, hazards
-B $6009,1 Wait for 10
-B $600A,2 Escape, Command 13 (Enable Car Spawning)
-B $600C,1 Wait for 95
-B $600D,2 Escape, Command 0 (Continue at <Address>)
-W $600F,2 Address [Loaded by $C04A]
-;
 N $6011 Left fork, left-side objects
-B $6011,,1
-B $604E,2 Escape, Command 0 (Continue at <Address>)
-W $6050,2 Address
-;
 N $6052 Left fork, right-side objects
-B $6052,,1
-B $6084,2 Escape, Command 0 (Continue at <Address>)
-W $6086,2 Address
-;
 ;
 N $6088 Right fork (dirt track), curvature
-B $6088,,1 Straight for 15 + 8
-B $608A,,1 Left for 15 + 2
-B $608C,,1 Hard left for 15 + 15 + 11
-B $608F,,1 Left for 6
-B $6090,,1 Straight for 15 + 5
-B $6092,,1 Right for 7
-B $6093,,1 Hard right for 11
-B $6094,,1 Right for 4
-B $6095,,1 Left for 4
-B $6096,,1 Hard left for 15 + 4
-B $6098,,1 Super hard left for 15
-B $6099,,1 Hard left for 8
-B $609A,,1 Hard right for 9
-B $609B,,1 Super hard right for 7
-B $609C,,1 Right for 2
-B $609D,,1 Straight for 15 + 2
-B $609F,2 Escape, Command 0 (Continue at <Address>)
-W $60A1,2 Address
-;
 N $60A3 Right fork (dirt track), height
-B $60A3,1 Level ground
-B $60A4,,1
-B $60E1,2 Escape, Command 0 (Continue at <Address>)
-W $60E3,2 Address
-;
 N $60E5 Right fork (dirt track), lanes
-B $60E5,,1
-W $60ED,2 Address
-;
 N $60EF Right fork (dirt track), hazards
-B $60EF,1 Wait for 10
-B $60F0,2 Escape, Command 9 (Put Barriers on Both Sides)
-B $60F2,1 Wait for 1
-B $60F3,2 Escape, Command 6 (Put Tumbleweeds on Both Sides)
-B $60F5,1 Wait for 41
-B $60F6,2 Escape, Command 9 (Put Barriers on Both Sides)
-B $60F8,1 Wait for 4
-B $60F9,2 Escape, Command 6 (Put Tumbleweeds on Both Sides)
-B $60FB,1 Wait for 42
-B $60FC,2 Escape, Command 9 (Put Barriers on Both Sides)
-B $60FE,1 Wait for 2
-B $60FF,2 Escape, Command 3 (Disable Hazards)
-B $6101,1 Wait for 1
-B $6102,2 Escape, Command 13 (Enable Car Spawning)
-B $6104,1 Wait for 4
-B $6105,2 Escape, Command 0 (Continue at <Address>)
-W $6107,2 Address
-;
 N $6109 Right fork (dirt track), left-side objects
-B $6109,,1
-W $6141,2 Address
-;
 N $6143 Right fork (dirt track), right-side objects
-B $6143,,1
-W $6171,2 Address
-;
 ;
 N $6173 Tunnel section, curvature
-B $6173,,1
-B $6185,2 Escape, Command 0 (Continue at <Address>)
-W $6187,2 -> Loop section
-;
 N $6189 Tunnel section, height
-B $6189,,1
-W $61A3,2
-;
 N $61A5 Tunnel section, lanes
-B $61A5,,1
-W $61B7,2
-;
 N $61B9 Tunnel section, hazards
-B $61B9,1 Wait for 95
-B $61BA,2 Escape, Command 0 (Continue at <Address>)
-W $61BC,2 Loaded by $C04A
-;
 N $61BE Tunnel section, left-side objects
-B $61BE,,1
-W $61C7,2
-;
 N $61C9 Tunnel section, right-side objects
-B $61C9,,1
-W $61D2,2
-;
 ;
 N $61D4 Loop section, curvature
-B $61D4,,1
-B $6205,2 Escape, Command 0 (Continue at <Address>)
-W $6207,2 Loop
-;
 N $6209 Loop section, height
-B $6209,,1
-B $6259,2 Escape, Command 0 (Continue at <Address>)
-W $625B,2 Loop
-;
 N $625D Loop section, lanes
-B $625D,,1
-B $6273,2 Escape, Command 0 (Continue at <Address>)
-W $6275,2 Loop
-;
 N $6277 Loop section, hazards
-B $6277,1 Wait for 42
-B $6278,2 Escape, Command 7 (Barriers on Left)
-B $627A,1 Wait for 2
-B $627B,2 Escape, Command 3 (Hazards off)
-B $627D,1 Wait for 4
-B $627E,2 Escape, Command 7 (Barriers on Left)
-B $6280,1 Wait for 2
-B $6281,2 Escape, Command 3 (Hazards off)
-B $6283,1 Wait for 28
-B $6284,2 Escape, Command 8 (Barriers on Right)
-B $6286,1 Wait for 2
-B $6287,2 Escape, Command 3 (Hazards off)
-B $6289,1 Wait for 99
-B $628A,2 Escape, Command 8 (Barriers on Right)
-B $628C,1 Wait for 1
-B $628D,2 Escape, Command 3 (Hazards off)
-B $628F,1 Wait for 30
-B $6290,2 Escape, Command 0 (Continue at <Address>)
-W $6292,2 Loop [Loaded by $C04A]
-;
 N $6294 Loop section, left-side objects
-B $6294,,1
-B $6310,2 Escape, Command 0 (Continue at <Address>)
-W $6312,2 Loop
-;
 N $6314 Loop section, right-side objects
-B $6314,,1
-B $6386,2 Escape, Command 0 (Continue at <Address>)
-W $6388,2 Loop
 
 b $638A Perp's face
 N $638A Bitmap data for perp w/ sunglasses (32x40). Stored top-down.
