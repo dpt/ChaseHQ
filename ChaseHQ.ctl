@@ -85,7 +85,7 @@
 > $4000 ; $8DBB (word) is the address of the current transition animation
 > $4000 ; $EA30..$EAFE (words) is ? [there's a load of words here]
 > $4000 ; $EB00        is ?
-> $4000 ; $ED28        is the stack
+> $4000 ; $ED28        is the stack (growing downwards)
 > $4000 ; $EE00..$EEFF is the road buffer. holds data unpacked from maps. it's cyclic. fixed sections for each datum. cleared by $87DD.
 > $4000 ; $EF00..$EFFF is a table of flipped bytes
 > $4000 ; $F000..$FFFF is a 4KB back buffer
@@ -208,7 +208,7 @@ W $5CF4,2 Screen attributes used for the ground colour (a pair of matching bytes
 ; This has various per-level data pointers but it's not consistent.
 W $5CF6,2 TBD
 W $5CF8,2 Loaded by $900F. Points to an array of 7 byte entries.
-W $5CFA,2 TBD
+W $5CFA,2 Address of graphic/object definitions.
 W $5CFC,2 -> "Entry 3"
 W $5CFE,2 <turn sign lods> inconsistent...
 ;
@@ -2447,7 +2447,7 @@ c $8D8F Drives transitions.
 ;
 @ $8DD8 label=fade_chunk
   $8DD8 Draws an 8-row chunk of the fade in/out effect.
-;R $8DD8 I:HL Pointer to start address in back buffer.
+;R $8DD8 I:HL Start address in back buffer.
 ;R $8DD8 I:E  Value to OR with the pixels.
   $8DD8 8 rows
 @ $8DDA label=fade_row_loop
@@ -3295,7 +3295,7 @@ c $92E1 Drives the sprite plotters  WHAT CALLS THIS PROB $901B
   $93E8 #REGix = Base of jump table
   $93EC (~#REGa + 5) is (4 - #REGa)
   $93EF IX += A * 5
-  $93F8 BC = $94B1
+  $93F8 BC = &plot_sprite_entry
 ;
   $93FB *$9410 = BC
   $93FF *$941E = BC
@@ -3306,7 +3306,7 @@ c $92E1 Drives the sprite plotters  WHAT CALLS THIS PROB $901B
   $9409 JR C,$941A
   $940B *$9405 = A
   $940E EXX
-  $940F CALL $94B1
+  $940F Call plot_sprite_entry
   $9412 HL = <...>  Self modified by $93A1
   $9415 B = <...>   Self modified by $9239
   $9417 JP $9404
@@ -3314,7 +3314,7 @@ c $92E1 Drives the sprite plotters  WHAT CALLS THIS PROB $901B
   $941A A += B
   $941B B = A
   $941C EXX
-  $941D JP $94B1
+  $941D Exit via plot_sprite_entry
 ;
 @ $9420 label=plot_sprite_xxx_odd
   $9420 Increment #REGa for upcoming calculation
@@ -3389,6 +3389,8 @@ R $949C I:HL' Address of bitmap data
   $94A8 Multiply #REGa by 5: the length of an individual plot operation
   $94AC Move result to #REGbc
   $94AF Add it to #REGix to complete the jump target
+;
+@ $94B1 label=plot_sprite_entry
   $94B1 Save #REGsp to restore later (self modify)
   $94B5 #REGb = 15 rows to draw, #REGc = 16, an increment value used later
   $94B8 Bank
@@ -5792,7 +5794,7 @@ c $A8CD Hazard handler routine? Triggered at road split
 c $A955 TBD
   $A955 Return if $A248 is zero
   $A95A Return if $A254 is zero
-  $A95F Point #REGde at the stack
+  $A95F Point #REGhl at something above the stack
   $A962 Call rng
   $A965 Stack 1 if it's +ve or zero, or 2 if it's -ve
   $A96D Call rng
@@ -5808,12 +5810,11 @@ c $A97E TBD
   $A980 Return if #REGa is zero
   $A982 #REGiy = $E361
   $A988 BC = $1400
-  $A98B HL = $ED28    -- stack
-;
+  $A98B Point #REGhl at something above the stack
+N $A98E Scan through whatever-it-is for a non-zero byte. Move 4 bytes per iteration.
 @ $A98E label=ml20_loop1
-  $A98E A = *HL
+  $A98E A = *HL++
   $A98F Set flags
-  $A990 HL++
   $A991 Jump to A9A7 if non-zero
   $A993 HL += 3
 @ $A996 label=ml20_loop1_continue
