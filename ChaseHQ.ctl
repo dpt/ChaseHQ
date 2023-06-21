@@ -2526,8 +2526,8 @@ c $8F5F
   $8F99
   $8F9A LD A,($A222)
   $8F9D Set flags
-  $8F9E CALL NZ,$AECF
-  $8FA1 CALL $A9DE
+  $8F9E
+  $8FA1
   $8FA4 Self modified
   $8FA5 Self modified
   $8FA6 Self modified
@@ -2628,15 +2628,15 @@ c $9023
 
 ; It's unclear if/how this routine gets entered.
 c $9052
-  $9052 PUSH IX
-  $9054 PUSH DE
-  $9055 PUSH BC
+  $9052
+  $9054
+  $9055
   $9056 A = IX[1]
   $9059 Set flags
-  $905A CALL Z,$916C
-  $905D POP BC
-  $905E POP HL
-  $905F POP IX
+  $905A
+  $905D
+  $905E
+  $905F
   $9061 HL++
   $9062 DE = wordat(HL); HL++
   $9065 DE += 2
@@ -2659,47 +2659,41 @@ c $9052
   $9086 A += L
   $9087 A -= C
   $9088 *$90F2 = A
-  $908B A = B
-  $908C A--
+  $908B A = B - 1
   $908D CP $09
   $908F JR C,$9093
   $9091 A = $09
 ;
   $9093 B = A
-  $9094 A += A
-  $9095 HL = A
-  $9098 HL += DE
+  $9094 HL = A * 2 + DE
   $9099 C = *HL
   $909A A = B
-  $909B L = (A * 2) + B + 20
-  $90A0 H = 0
-  $90A2 HL += DE
+  $909B HL = ((A * 2) + B + 20) + DE
   $90A3 D = 1
   $90A5 A = IX[1]
   $90A8 Set flags
   $90A9 JP M,$90C4
-  $90AC RET NZ
+  $90AC
   $90AD A = IX[0] + $18 - C
-  $90B3 JR C,$90C4
+  $90B3
   $90B5 A -= 8
-  $90B7 JR C,$90C4
+  $90B7
   $90B9 CP 8
-  $90BB JR C,$90C4
+  $90BB
   $90BD A >>= 3
   $90C3 D = A
 ;
-  $90C4 IX--
-  $90C6 IX--
+  $90C4 IX -= 2
   $90C8 E = $1F
   $90CA A = IX[1]
   $90CD Set flags
-  $90CE RET M
-  $90CF JR NZ,$90E4
+  $90CE
+  $90CF
   $90D1 A = IX[0] + C
-  $90D5 JR C,$90E4
-  $90D7 JR Z,$90E4
-  $90D9 CP $F7
-  $90DB JR NC,$90E4
+  $90D5
+  $90D7
+  $90D9
+  $90DB
   $90DD A >>= 3
   $90E3 E = A
 ;
@@ -2709,8 +2703,8 @@ c $9052
   $90EB *$9116 = A   -- Self modify jump table target
   $90EE A = IY[$35]
   $90F1 A -= $00     SM?
-  $90F3 RET M
-  $90F4 PUSH AF
+  $90F3
+  $90F4
   $90F5 A++
   $90F6 B = *HL
   $90F7 A -= B
@@ -2720,7 +2714,7 @@ c $9052
 ;
   $90FC HL++
   $90FD DE = wordat(HL); HL++
-  $9100 POP AF
+  $9100
   $9101 L = A
   $9102 H = (A & $0F) + $F0
   $9107 L = (L & $70) * 2 + C
@@ -2728,7 +2722,7 @@ c $9052
 ;
 @ $910F label=continue_910f
   $910F DE++
-  $9110 DJNZ $9113
+  $9110
   $9112 Return
 ;
   $9113 A = *DE
@@ -2911,6 +2905,7 @@ R $924D R:B ?
 @ $9278 label=sub_9278
 R $9278 I:B ?
 R $9278 I:IX ?
+R $9278 I:DE Address of arg, e.g. $6B0C
 c $9278
   $9278 *$933E = 0
   $927C A = B
@@ -2919,20 +2914,14 @@ c $9278
   $9281 A = 10  -- so it's a max() operator
 ;
   $9283 EX DE,HL
-  $9284 DE = wordat(HL); HL++
-  $9287 RLCA
-  $9288 A--
-  $9289 HL += A
+  $9284 DE = wordat(HL); HL++   -- loads address of turn_sign_lods
+  $9287 HL += A * 2 - 1   -- index the table
   $928D B = *HL++   -- this reads 6AF8
-  $928F L = *HL
-  $9290 H = 0
+  $928F HL = *HL   -- read as byte
   $9292 HL += DE
-;
   $9293 A = IX[0] + 16 - B
-  $9299 Return if carry
-;
-  $929A CP 8
-  $929C Return if carry
+  $9299 Return if carry (if IX[0] + 16 < B)
+  $929A Return if A < 8
   $929D C = 0
   $929F E = *HL
   $92A0 RLC E  likely E << 3
@@ -2940,8 +2929,7 @@ c $9278
   $92A4 RLC E
   $92A6 A -= E
   $92A7 JR C,$92BB
-  $92A9 CP 8
-  $92AB JR NC,$930E   Jump if A >= 8
+  $92A9 Jump if A >= 8
   $92AD E = *HL
   $92AE RRCA
   $92AF RRCA
