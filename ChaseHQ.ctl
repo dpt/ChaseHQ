@@ -1317,29 +1317,136 @@ B $8008,12,8,4 TBD
 c $8014 Load a stage
 D $8014 Used by the routine at #R$8401.
 @ $8014 label=load_stage
-C $8014,3 Get stage number
+C $8014,3 Load wanted_stage_number
+C $8017,3 Point #REGhl at current_stage_number
 C $801A,2 Exit if they match
-C $801C,1 Equalise
-C $801D,3 Set $A220 to level no.
+C $801C,1 current_stage_number = wanted_stage_number
+C $801D,3 Set $A220 to wanted level no.
 C $8020,5 Update the level number in "SEARCHING FOR <N>"
 C $8025,3 Call clear_screen_set_attrs
 C $8028,3 Call clear_game_attrs
 C $802B,2 Transition type?
 C $802D,3 Call setup_transition
-C $8030,88 ...
-C $8088,10 Subroutine
+C $8032,3 Call TBD subroutine
+C $8035,4 IX = &hazards[1]
+C $803C,3 Call TBD subroutine
+C $803F,2 loop while failed perhaps?
+C $8041,3 #REGhl = &hazards[1]
+C $8044,1 Load used flag [doesn't add up - this is a level number?]
+C $8046,1 equal to <distance related>?
+C $8047,2 jump if not
+C $8049,2 #REGa += (48 + 128) (make it ASCII and terminate it)
+C $804B,3 Set x in "FOUND x"
+C $8050,3 #REGa = wanted_stage_number
+C $8053,1 equal?
+C $8054,2 not the wanted stage
+C $8056,3 Call TBD subroutine
+C $8059,3 Call tape loading subroutine
+N $805E Success - must have loaded the correct level data.
+C $805E,1 A = 0
+C $805F,2 Set border?
+C $8061,3 Call clear_screen_set_attrs
+C $8064,3 Call clear_game_attrs
+C $8067,3 HL -> "STOP THE TAPE" message structure
+C $806C,3 Call sub_8098
+C $806F,1 Preserve ?
+N $8070 Wait for a keypress - debounce.
+C $8070,3 Call keyscan
+C $8075,2 Loop while key not pressed
+C $8077,3 Call keyscan
+C $807C,2 Loop while key pressed
+C $8080,3 Call setup_transition
+C $8083,1 Restore ?
+C $8084,2 B = 2
+C $8086,2 Exit via sub_8098
+@ $8088 label=sub_8088
+C $8088,3 Point #REGhl at "START TAPE" message structure
+C $808B,4 A = wanted_stage_number - 1
+C $808F,2 Jump if > 0
 C $8092,3 Point #REGhl at tape_messsages
-C $8095,8 ...
+@ $8095 label=sub_8095
+C $8095,3 why call adjacent instr? to exec this func twice?
+@ $8098 label=sub_8098
+C $8098,1 preserve counter
+C $8099,1 preserve message pointer
+@ $809A label=sub_809A
+C $809A,2 flags byte for print_message
+C $809C,1 why dec here?
 N $809D This entry point is used by the routine at #R$F220.
+@ $809D label=sub_809D
 C $809D,3 Call print_message
+C $80A0,2 printing a whole set by looping?
 C $80A2,3 Call transition
 C $80A5,3 Call draw_screen
+C $80A8,1 restore message pointer
+C $80A9,1 restore counter
 N $80AA This entry point is used by the routine at #R$F220.
+C $80AA,3 A = transition_control
+C $80AD,2 Return if zero
+C $80AF,8 Delay loop
+C $80B7,2 Loop
 N $80B9 Tape loading
 C $80B9,7 Setup to load a block ???
 N $80C0 This entry point is used by the routine at #R$5B00.
-C $80C0,139 Routine
-C $814B,30 Subroutine
+@ $80C0 label=sub_80c0
+C $80C0,1 D++
+C $80C1,2 A = 152
+C $80C3,1 set carry?
+C $80C4,1 bank
+C $80C5,1 D--
+C $80C6,1 disable interrupts
+C $80C7,2 set MIC bit (deactivates MIC)
+C $80C9,2 output
+C $80CB,2 input
+C $80CD,1 why shift?
+C $80CE,2 check EAR input bit 6
+C $80D0,2 set border?
+C $80D3,1 A == A ?
+C $80D5,3 Call sub_814b
+C $80DA,3 Delay time
+C $80DD,2 Delay for B iterations -- is B not initialised?
+C $80DF,1 HL--
+C $80E0,4 Loop while HL > 0
+C $80E4,3 Call sub_8147
+C $80E9,2 B = 156
+C $80EB,3 Call sub_8147
+C $80F0,2 A = 198
+C $80F8,2 B = 201
+C $80FA,3 Call sub_814b
+C $8100,2 212
+C $8104,3 Call sub_814b
+C $8108,4 A = C ^= 3
+C $810E,2 B = 176
+C $8113,2 wuuuut?
+C $811E,1 A ^= L
+C $8120,3 RR C and copy to A?
+C $8123,1 DE++
+C $812A,2 B = 178
+C $812E,3 Call sub_8147
+C $8132,2 A = 200
+C $8137,2 B = 176
+C $813C,2 A = H ^ L
+C $813E,1 save A
+C $813F,4 Loop while DE > 0
+C $8143,1 restore A
+C $8144,2 is it 1?
+C $8146,1 Return (with flags?)
+@ $8147 label=sub_8147
+@ $814B label=sub_814b
+C $814B,5 Delay loop of 22 iterations
+C $8150,1 clear carry flag
+C $8151,1 what's in B?
+C $8152,1 return if zero
+C $8153,2 %01111111
+C $8155,2 read from port
+C $8159,1 A ^= C
+C $815A,2 check EAR input bit 6
+C $815C,2 loop if zero
+C $815E,3 A = C = ~C
+C $8163,2 set MIC bit (deactivate MIC)
+C $8165,2 output
+C $8167,1 set carry
+C $8168,1 Return
 @ $8169 label=tape_messsages
 B $8169,1,1 attr?
 W $816A,2,2 Screen position (8,64)
@@ -4192,7 +4299,7 @@ C $A0DC,4 Read Kempston joystick port. Returns 000FUDLR active high
 @ $A0FB label=ks_common
 C $A111,1 Return
 C $A112,1 Outer keyboard loop
-C $A117,1 clear carry
+C $A117,1 invert carry
 C $A11A,2 loop while top bit set?
 C $A11D,1 Return
 @ $A11E label=keyscan_inner
@@ -4237,6 +4344,7 @@ B $A181,4,4 Distance as displayed. Stored as one digit per byte.
 B $A185,1,1 If set causes no objects or hazards to be emitted.
 @ $A186 label=horizon_attribute
 W $A186,2,2 Attribute address of horizon. Points to last attribute on the line which shows the ground. (e.g. $59DF)
+N $A188 +0 is a used flag, either $00 or $FF +1 looks distance related +2/3/4/5/6 TBD +7 byte  TBD used by hazard_hit +8 byte  gets copied from the hazards table +9 word  address of e.g. car lod +11 word  address of routine +13 word  set to $190 by fully_smashed (likely a horizontal position) +15 byte  TBD used by hazard_hit, counter which gets set to 2 then reduced +17 byte  TBD used by hazard_hit, indexes table $ACDB +18 byte  TBD used by hazard_hit +19 byte  TBD used by hazard_hit
 @ $A188 label=hazards
 B $A188,120,8 Set by $843B. Groups of 20 bytes. This area looks like a table of spawned vehicles or objects. The first entry is the perp.
 B $A200,32,8 TBD
