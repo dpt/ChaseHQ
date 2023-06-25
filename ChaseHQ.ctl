@@ -2598,7 +2598,6 @@ C $8F87,5 A = road_buffer_offset + $73
 C $8F8C,3 HL = $EE00 | A
 C $8F8F,4 IX = $EAB0
 C $8F93,3 BC = $1420
-C $8F9A,3 LD A,($A222)
 C $8F9D,1 Set flags
 C $8FA4,1 Self modified
 C $8FA5,1 Self modified
@@ -2608,7 +2607,6 @@ C $8FA8,1 Self modified
 C $8FA9,1 Self modified
 C $8FAE,1 A = *HL
 C $8FAF,1 Set flags
-C $8FB0,2 JR NZ,$8FF8
 C $8FB2,4 IX += 2
 C $8FB6,3 L += C
 C $8FB9,1 A = *HL
@@ -2626,7 +2624,6 @@ C $8FCE,5 Return if floating_arrow is zero
 C $8FD3,3 HL = &floating_arrow_defns[0]
 C $8FD6,2 E = $78
 C $8FD8,1 A--
-C $8FD9,2 JR Z,$8FE0
 C $8FDB,3 HL = &floating_arrow_defns[1]
 C $8FDE,2 E = $80
 C $8FE0,2 D = $30
@@ -2644,10 +2641,8 @@ C $8FF5,3 Exit via $B6DD
 C $8FF8,1 E = A
 C $8FF9,3 A = IX[1]
 C $8FFC,1 Set flags
-C $8FFD,2 JR NZ,$8FB2
 C $9003,8 DE = E * 7
 C $900B,3 Push return address onto stack
-C $900F,3 LD HL,($5CF8)
 C $9012,1 HL += DE
 C $9013,4 DE = wordat(HL); HL += 2
 C $9017,4 HL = wordat(HL); HL += 1
@@ -2659,17 +2654,15 @@ C $9023,1 E = A
 C $9024,4 Jump if A == 2
 C $9028,3 A = IX[1]
 C $902B,1 Set flags
-C $902C,2 JR NZ,$8FBD
 C $9032,8 DE = E * 7
 C $903A,4 Set return address
-C $903E,3 LD HL,($5CFE)  turn sign lods
+C $903E,3 turn sign lods
 C $9041,1 HL += DE
 C $9042,2 E = *HL++
 C $9044,2 D = *HL++
 C $9046,2 A = *HL++
 C $9048,1 H = *HL
 C $9049,1 L = A
-C $904A,1 JP (HL)
 @ $904B label=return_904B
 C $904F,3 Loop?
 c $9052 Routine at 9052
@@ -2680,11 +2673,7 @@ C $9062,3 DE = wordat(HL); HL++
 C $9065,2 DE += 2
 C $9067,5 A = *$A23F & $E0
 C $906C,1 L = A
-C $906D,2 RRC L
-C $906F,2 RRC L
 C $9071,1 A -= L
-C $9072,2 RRC L
-C $9074,2 RRC L
 C $9076,1 A -= L
 C $9077,1 A += B
 C $9078,1 L = A
@@ -2699,7 +2688,6 @@ C $9087,1 A -= C
 C $9088,3 *$90F2 = A
 C $908B,2 A = B - 1
 C $908D,2 CP $09
-C $908F,2 JR C,$9093
 C $9091,2 A = $09
 C $9093,1 B = A
 C $9094,5 HL = A * 2 + DE
@@ -2709,7 +2697,6 @@ C $909B,8 HL = ((A * 2) + B + 20) + DE
 C $90A3,2 D = 1
 C $90A5,3 A = IX[1]
 C $90A8,1 Set flags
-C $90A9,3 JP M,$90C4
 C $90AD,6 A = IX[0] + $18 - C
 C $90B5,2 A -= 8
 C $90B9,2 CP 8
@@ -2731,7 +2718,6 @@ C $90F1,2 A -= $00     SM?
 C $90F5,1 A++
 C $90F6,1 B = *HL
 C $90F7,1 A -= B
-C $90F8,2 JR NC,$90FC
 C $90FA,1 A += B
 C $90FB,1 B = A
 C $90FC,1 HL++
@@ -2739,13 +2725,12 @@ C $90FD,3 DE = wordat(HL); HL++
 C $9101,1 L = A
 C $9102,5 H = (A & $0F) + $F0
 C $9107,6 L = (L & $70) * 2 + C
-C $910D,2 JR $9113
 @ $910F label=continue_910f
 C $910F,1 DE++
 C $9112,1 Return
 C $9113,1 A = *DE
 C $9114,1 C = L
-C $9115,2 JR $9115  Self modified
+C $9115,2 Self modified
 C $9117,58 *HL++ = A  -- 28 times
 C $9151,1 *HL = A
 C $9152,1 L = C  -- restore
@@ -2763,24 +2748,18 @@ C $9169,3 Loop
 c $916C Routine at 916C
 D $916C Used by the routine at #R$9052.
 C $916C,3 HL = $9293
-C $916F,2 JR $9174
 C $9171,3 HL = $92FC    -- entry point
 C $9174,3 *$91CE = HL
 C $9177,3 *$9244 = HL
 C $917A,5 A = *$A23F & $E0
 C $917F,6 A -= A >> 2
-C $9185,2 RRC L
-C $9187,2 RRC L
 C $9189,3 L = A - L + B
 C $918C,2 H = $E6   ; $E6xx data
 C $918E,1 A = *HL
 C $918F,3 *$91DC = A
-C $9192,1 EX DE,HL
 C $9193,1 A = B
 C $9194,2 CP 10
-C $9196,2 JR C,$919A
 C $9198,2 A = 10
-C $919A,1 RLCA
 C $919B,1 A--
 C $919C,1 E = A
 C $919D,2 D = 0
@@ -2789,80 +2768,44 @@ C $91A0,4 *$91BB = DE
 C $91A4,3 A = -C
 C $91A7,3 *$933E = A
 C $91AA,2 B = *HL - 1
-C $91AC,1 RET Z
 C $91AD,1 HL++
 C $91AE,4 DE = wordat(HL); HL += 2
-C $91B2,1 PUSH HL
-C $91B3,2 PUSH IX
-C $91B5,1 PUSH BC
-C $91B6,1 EX DE,HL
 C $91B7,3 DE = wordat(HL); HL++
-C $91BA,3 BC = $0000   -- must be SM
+C $91BA,3 must be SM
 C $91BD,1 HL += BC
 C $91BE,2 A = *HL++
 C $91C0,3 HL = *HL
 C $91C3,1 HL += DE
-C $91C4,1 POP BC
 C $91C5,1 B--
-C $91C6,2 JR NZ,$91DA
 C $91C8,1 B = *HL
 C $91C9,2 HL -= 2
-C $91CB,1 PUSH BC
 C $91CC,1 B = A
-C $91CD,3 CALL $9293
-C $91D0,1 POP BC
 C $91D1,2 A = C + B
 C $91D3,1 C = A
-C $91D4,2 POP IX
-C $91D6,1 POP HL
-C $91D7,3 JP $91A4
-C $91DA,1 EX AF,AF'
 C $91DB,2 A = $00
 C $91DD,1 B--
-C $91DE,2 JR Z,$921B
 C $91E0,1 B--
-C $91E1,2 JR Z,$9217
 C $91E3,1 B--
-C $91E4,2 JR Z,$920D
 C $91E6,1 B--
-C $91E7,2 JR Z,$9203
 C $91E9,1 B--
-C $91EA,2 JR Z,$91FB
 C $91EC,1 B--
-C $91ED,2 JR Z,$91F5
 C $91EF,1 B--
-C $91F0,2 JR Z,$921F
 C $91F2,1 A += A
-C $91F3,2 JR $921F
 C $91F5,4 A >>= 2
-C $91F9,2 JR $921F
-C $91FB,2 SRL A
 C $91FD,1 B = A
-C $91FE,2 SRL B
 C $9200,1 A += B
-C $9201,2 JR $921F
-C $9203,2 SRL A
 C $9205,1 B = A
 C $9206,4 B >>= 2
 C $920A,1 A -= B
-C $920B,2 JR $921F
 C $920D,1 B = A
 C $920E,6 B >>= 3
 C $9214,1 A += B
-C $9215,2 JR $921F
-C $9217,2 SRL A
-C $9219,2 JR $921F
 C $921B,1 B = A
-C $921C,2 SRL B
 C $921E,1 A += B
 C $921F,1 A -= C
-C $9220,2 JR Z,$9224
-C $9222,2 JR NC,$9226
 C $9224,2 A = 1
 C $9226,1 B = A
-C $9227,1 PUSH BC
 C $9228,6 A = IY[$35] + 1 - C - B
-C $922E,2 JR NC,$9232
 C $9230,1 A += B
 C $9231,1 B = A
 C $9232,1 A = B
@@ -2873,20 +2816,15 @@ C $9238,1 HL--
 C $9239,3 *$9416 = A
 C $923C,2 A = $02
 C $923E,3 *$93C1 = A
-C $9241,1 EX AF,AF'
 C $9242,1 B = A
-C $9243,3 CALL $9293
 C $9246,4 *$93C1 = 0
-C $924A,3 JP $91D0
 c $924D Routine at 924D
 R $924D R:B ?
 C $924D,3 HL = $9279
-C $9250,2 JR $9255
 C $9252,3 HL = $92E2   graphic 1 uses this entry
 C $9255,1 A = B
 C $9256,2 CP 16
 C $9258,1 Return if A >= 16
-C $9259,1 PUSH HL
 C $925A,5 A = (*$A23F) & $E0
 C $925F,1 L = A
 C $9260,4 L >>= 2
@@ -2909,7 +2847,6 @@ C $927C,1 A = B
 C $927D,2 CP 10
 C $927F,2 Jump to $9283 if A < 10
 C $9281,2 A = 10  -- so it's a max() operator
-C $9283,1 EX DE,HL
 C $9284,3 DE = wordat(HL); HL++   -- loads address of turn_sign_lods
 C $9287,6 HL += A * 2 - 1   -- index the table
 C $928D,2 B = *HL++   -- this reads 6AF8
@@ -2922,25 +2859,16 @@ N $929A This entry point is used by the routines at #R$A9DE, #R$AA38 and #R$ADA0
 C $929A,3 Return if A < 8
 C $929D,2 C = 0
 C $929F,1 E = *HL
-C $92A0,2 RLC E  likely E << 3
-C $92A2,2 RLC E
-C $92A4,2 RLC E
+C $92A0,6 likely E << 3
 C $92A6,1 A -= E
-C $92A7,2 JR C,$92BB
 C $92A9,4 Jump if A >= 8
 C $92AD,1 E = *HL
-C $92AE,1 RRCA
-C $92AF,1 RRCA
 C $92B0,3 *$9396 = A
 C $92B3,2 A = E - 1
 C $92B5,3 BC = $0101
-C $92B8,3 JP $92D2
 C $92BB,1 E = *HL
 C $92BC,2 A &= $FC
-C $92BE,1 RRCA
-C $92BF,1 RRCA
 C $92C0,3 *$9396 = A
-C $92C3,1 RRA
 C $92C4,1 B = A
 C $92C5,3 A += E - 33
 C $92C8,2 Return if carry or zero
@@ -2950,35 +2878,25 @@ C $92CF,1 A = D
 C $92D0,2 B = 1
 C $92D2,1 HL++
 C $92D3,3 D = *HL >> 1
-C $92D6,3 JP Z,$9333
 C $92D9,1 B--
 C $92DA,1 A++
 C $92DB,2 C = 0
-C $92DD,1 EX AF,AF'
-C $92DE,3 JP $932B
 c $92E1 Drives the sprite plotters  WHAT CALLS THIS PROB $901B
 C $92E1,4 *$933E = 0
 C $92E5,1 A = B
 C $92E6,2 CP 10
-C $92E8,2 JR C,$92EC
 C $92EA,2 A = 10
-C $92EC,1 EX DE,HL
 C $92ED,3 DE = wordat(HL); HL++
 C $92F0,6 HL += A * 2 - 1
 C $92F6,2 B = *HL++
 C $92F8,4 HL = *HL + DE
 C $92FC,3 A = IX[0]
-C $92FF,2 BIT 7,B
-C $9301,2 JR Z,$9306
 C $9303,1 A += B
-C $9304,2 JR $9308
 C $9306,1 A += B
 C $9307,1 Return if carry
 C $9308,1 Return if zero
 N $9309 This entry point is used by the routines at #R$A9DE, #R$AA38 and #R$ADA0.
-C $9309,2 CP $F7
 C $930B,1 Return if not carry
-C $930C,2 C = $00
 N $930E This entry point is used by the routine at #R$9278.
 C $930E,4 A = (A & $FC) >> 2
 C $9312,3 *$9396 = A
@@ -2986,132 +2904,80 @@ C $9315,1 A >>= 1
 C $9316,1 B = A
 C $9317,1 E = *HL
 C $9318,3 A = ~A + 32  -- (31 - A)
-C $931B,1 CP E
-C $931C,2 JR C,$931F
 C $931E,1 A = E
 C $931F,1 HL++
 C $9320,3 D = *HL >> 1
-C $9323,3 JP Z,$9333
 C $9326,1 C = A
-C $9327,1 EX AF,AF'
 C $9328,3 C = E - C
 N $932B This entry point is used by the routine at #R$9278.
 C $932B,7 *$9396 = ~(*$9396)
-C $9332,1 EX AF,AF'
 N $9333 This entry point is used by the routine at #R$9278.
-C $9333,2 JR NC,$933B
-C $9335,1 EX AF,AF'
-C $9336,2 SLA C
-C $9338,2 SLA E
-C $933A,1 EX AF,AF'
-C $933B,1 EX AF,AF'
 C $933C,1 HL++
 C $933D,2 D = $00
 C $933F,6 A = IY[0] - IY[$35]
-C $9345,2 JR NZ,$9359
 C $9347,4 A = IY[$35] + D
-C $934B,1 RET M
-C $934C,1 PUSH AF
 C $934D,1 A++
 C $934E,1 D = *HL
 C $934F,1 A -= D
-C $9350,2 JR C,$9353
 C $9352,1 A = 0
 C $9353,1 A += D
 C $9354,1 HL++
 C $9355,2 D = 1
-C $9357,2 JR $9390
-C $9359,2 BIT 7,D
-C $935B,2 JR NZ,$9361
 C $935D,1 A -= D
-C $935E,3 JP $9362
 C $9361,1 A += D
 C $9362,1 D = A
-C $9363,3 JP Z,$9347
-C $9366,3 JP M,$9347
 C $9369,3 A = IY[$35]
-C $936C,1 PUSH AF
 C $936D,3 A = *HL - 1 - D
-C $9370,3 JP NC,$938D
-C $9373,1 POP AF
 C $9374,3 A = *$93C1
 C $9377,1 Set flags
 C $9378,1 Return if zero
 C $9379,3 A = *$933E
 C $937C,1 D = *HL
 C $937D,1 A -= D
-C $937E,1 RET P
 C $937F,3 *$933E = A
 C $9382,4 A = *$9405 - D
 C $9386,2 Return if carry or zero
 C $9388,3 *$9405 = A
-C $938B,2 JR $933D
 C $938D,1 A++
 C $938E,1 D++
 C $938F,1 HL++
-C $9390,1 PUSH BC
-C $9391,1 PUSH DE
 C $9392,1 D = A
 C $9393,2 B = $00
 C $9395,2 A = $00
-C $9397,1 RRA
-C $9398,2 JR NC,$939C
 C $939A,2 HL += 2
 C $939C,5 HL = wordat(HL) + BC
 C $93A1,3 *$9413 = HL
 C $93A4,1 C = E
-C $93A5,1 POP AF
 C $93A6,1 A--
-C $93A7,2 JR Z,$93AE
 C $93A9,1 HL += BC
 C $93AA,1 A--
-C $93AB,3 JP NZ,$93A9
 C $93AE,1 B = D
 C $93AF,2 D = $00
-C $93B1,1 EXX
-C $93B2,1 POP BC
-C $93B3,1 POP AF
 C $93B4,1 D = A
 C $93B5,5 H = (A & $0F) + $F0
 C $93BA,1 A = D
 C $93BB,5 L = (A & $70) * 2 + B
 C $93C0,2 A = <...> -- Self modified by various
 C $93C2,1 Set flags
-C $93C3,3 JP Z,$93D0
 C $93C6,1 A--
-C $93C7,2 JR NZ,$93DF
-C $93C9,1 EX AF,AF'
-C $93CA,3 JP C,$B7EF
-C $93CD,3 JP $9479
-C $93D0,1 EX AF,AF'
-C $93D1,2 JR NZ,$93D9
-C $93D3,3 JP C,$B701    -- prob plot_sprite_flipped
+C $93D3,3 prob plot_sprite_flipped
 C $93D6,3 Exit via plot_sprite
 C $93D9,3 Exit via plot_masked_sprite_flipped
 C $93DC,3 Exit via plot_sprite_flipped
-C $93DF,1 EX AF,AF'
-C $93E0,3 JP C,$9436
 C $93E3,2 A >>= 1
-C $93E5,3 JP C,$9420
 C $93E8,4 #REGix = Base of jump table
 C $93EC,3 (~#REGa + 5) is (4 - #REGa)
 C $93EF,9 IX += A * 5
 C $93F8,3 BC = &plot_sprite_entry
 C $93FB,4 *$9410 = BC
 C $93FF,4 *$941E = BC
-C $9403,1 EXX
 C $9404,3 A = 0 - B
-C $9407,2 JR Z,$941A
-C $9409,2 JR C,$941A
 C $940B,3 *$9405 = A
-C $940E,1 EXX
 C $940F,3 Call plot_sprite_entry
 C $9412,3 HL = <...>  Self modified by $93A1
 C $9415,2 B = <...>   Self modified by $9239
-C $9417,3 JP $9404
 C $941A,1 A += B
 C $941B,1 B = A
-C $941C,1 EXX
 C $941D,3 Exit via plot_sprite_entry
 @ $9420 label=plot_sprite_xxx_odd
 C $9420,1 Increment #REGa for upcoming calculation
@@ -3121,7 +2987,6 @@ C $9428,3 Multiply #REGa by 5: the length of an individual plot operation
 C $942B,4 Move result to #REGbc
 C $942F,2 Add it to #REGix to complete the jump target
 C $9431,3 BC = $9503
-C $9434,2 JR $93FB
 C $9436,4 IX = $B729
 C $943A,3 (~#REGa + 9) is (8 - #REGa)
 C $943D,9 IX += A * 6
@@ -3129,23 +2994,15 @@ C $9446,8 *$946D = *$9413  -- Self modify LD HL at $946C to load ?
 C $944E,6 *$9470 = *$9416
 C $9454,6 *$9460 = *$9405
 C $945A,2 B = $0F
-C $945C,1 EXX
 C $945D,2 D = $00
 C $945F,3 A = 0 - B
-C $9462,2 JR C,$9474
-C $9464,2 JR Z,$9474
 C $9466,3 *$9460 = A
 C $9469,3 Call plot_masked_sprite
 C $946C,3 HL = <...>  -- Self modified by $9446
 C $946F,2 B = $00
-C $9471,3 JP $945F
 C $9474,2 B += A
 C $9476,3 Exit via plot_masked_sprite
-C $9479,1 EX AF,AF'
-C $947A,1 EXX
 C $947B,2 D = $00
-C $947D,1 PUSH BC
-C $947E,1 PUSH HL
 C $947F,1 H = D
 C $9480,1 L = D
 C $9481,1 A = B
@@ -3157,16 +3014,11 @@ C $9487,1 A <<= 1
 C $9488,3 If carried out then HL += DE
 C $948B,1 HL += HL
 C $948C,2 Loop to loop_9487 while #REGb
-C $948E,1 RLA
-C $948F,2 JR NC,$9492
 C $9491,1 HL += DE
-C $9492,1 POP BC
 C $9493,1 HL += BC
-C $9494,1 POP BC
 C $9495,1 D--
 C $9496,4 E = -E
-C $949A,1 EXX
-C $949B,1 EX AF,AF'   -- fall through
+C $949B,1 fall through
 c $949C Sprite plotter for back buffer, up to 64px wide, 15px high, no mask, no flip.
 D $949C Used by the routines at #R$85E4, #R$92E1 and #R$B58E.
 R $949C I:A Plot (#REGa + 1) * 8 pixels
@@ -3837,18 +3689,14 @@ C $9C7E,3 Print "CONTINUE THIS MISSION" messages
 C $9C81,3 Call message_printing_related
 C $9C84,3 <self modified>
 C $9C87,1 H--
-C $9C88,2 JR NZ,$9CA5
 C $9C8A,2 H = 6
 C $9C8C,1 L--
 C $9C8D,1 A = L
-C $9C8E,1 RRA
 C $9C8F,3 BC = $0801  -- 8 => bip
-C $9C92,2 JR NC,$9C95
 C $9C94,1 B++  -- 9 => bow
 C $9C95,3 Call start_sfx
 C $9C98,1 A = L
 C $9C99,1 Set flags
-C $9C9A,2 JR NZ,$9CA5
 C $9C9C,1 A++
 C $9C9D,3 *$A26A = A
 C $9CA0,5 time_up_state = 4
@@ -3857,10 +3705,8 @@ C $9CA8,1 A = L
 C $9CA9,2 A >>= 1
 C $9CAB,3 DE = $8D7C
 C $9CAE,2 CP 10
-C $9CB0,2 JR NZ,$9CB8
 C $9CB2,2 A = $31
 C $9CB4,2 L = $00
-C $9CB6,2 JR $9CBB
 C $9CB8,1 L = A
 C $9CB9,2 A = $20
 C $9CBB,1 *DE = A
@@ -4259,7 +4105,6 @@ C $A01C,1 *DE = A
 C $A01D,1 Move to next row
 C $A01E,1 Move to next glyph row
 C $A01F,2 While iterations remain, goto loop2
-C $A021,2 JR $A074
 C $A024,2 B = 7
 @ $A026 label=dc_loop3
 C $A026,2 A = ~*HL
@@ -4269,21 +4114,18 @@ C $A02A,1 *DE = A
 C $A02B,1 Move to next row
 C $A02C,1 Move to next glyph row
 C $A02D,2 While iterations remain, goto loop3
-C $A02F,2 JR $A074
 C $A032,2 B = 7
 @ $A034 label=dc_loop4
 C $A034,3 *DE = ~*HL
 C $A037,1 Move to next glyph row
 C $A038,1 Move to next row
 C $A039,2 While iterations remain, goto loop4
-C $A03B,2 JR $A0A4
 N $A03D Plots double-height glyphs. DE->screen HL->glyph def
 @ $A03D label=dc_double_height_glyph
 C $A03E,2 *DE = 0
 C $A040,1 D++
 C $A041,2 *DE = *HL
 C $A043,1 D++ -- next row
-C $A044,2 LDI
 C $A046,1 E--
 C $A047,1 D++
 C $A048,42 Repeat six times
@@ -4299,25 +4141,18 @@ C $A082,1 Return
 C $A084,1 A = 0
 C $A085,1 *DE = A
 C $A086,1 D++
-C $A087,2 LDI
 C $A089,1 E--
 C $A08A,1 D++
-C $A08B,2 LDI
 C $A08D,1 E--
 C $A08E,1 D++
-C $A08F,2 LDI
 C $A091,1 E--
 C $A092,1 D++
-C $A093,2 LDI
 C $A095,1 E--
 C $A096,1 D++
-C $A097,2 LDI
 C $A099,1 E--
 C $A09A,1 D++
-C $A09B,2 LDI
 C $A09D,1 E--
 C $A09E,1 D++
-C $A09F,2 LDI
 C $A0A1,1 E--
 C $A0A2,1 D++
 C $A0A3,1 *DE = A
@@ -4540,7 +4375,6 @@ D $A399 Used by the routines at #R$8401 and #R$852A.
 @ $A399 label=check_collisions
 C $A399,3 HL = $0048
 C $A39C,3 DE = $01D8
-C $A39F,1 EXX
 C $A3A0,3 A = *$A265  -- fairly sure this is a split road flag
 C $A3A3,1 Set flags
 C $A3A4,2 Jump to cc_at_split if zero
@@ -4554,7 +4388,6 @@ N $A3AF Check left hand side of car.
 C $A3AF,3 HL = *$EAFE
 C $A3B2,1 A = H  (0 or 255)
 C $A3B3,1 Set flags
-C $A3B4,2 JR NZ,$A3D1
 C $A3B6,9 Jump to $A3D1 if HL < $40
 C $A3BF,8 Jump to $A3D5 if HL < $6A
 C $A3C7,4 HL -= $85
@@ -4568,7 +4401,6 @@ C $A3D5,3 HL = *$EAFC
 C $A3D8,1 A = H
 C $A3D9,1 Set flags
 C $A3DA,2 A = 0
-C $A3DC,2 JR NZ,$A3FA
 C $A3DE,9 Jump to $A3FA if HL >= $BE
 C $A3E7,9 Jump to $A3FD if HL >= $8E
 C $A3F0,4 HL -= $7C
@@ -4581,74 +4413,49 @@ C $A3FA,3 *$A23C = A
 C $A3FD,3 off_road = A  -- 0/1/2 => on-road/one wheel off-road/both wheels off-road
 C $A400,1 Set flags
 C $A401,2 C = $00
-C $A403,2 JR Z,$A43B   -- not off road?
+C $A403,2 not off road?
 C $A405,6 L = road_buffer_offset + 64
 C $A40B,2 HL = $EE00 | L
 C $A40D,1 A = *HL
-C $A40E,2 BIT 6,A
-C $A410,2 JR Z,$A43B
-C $A412,1 RLA
-C $A413,2 JR C,$A43B
-C $A415,2 BIT 3,A
 C $A417,3 A = road_pos.hi
-C $A41A,2 JR Z,$A426
 C $A41C,1 C = A
 C $A41D,2 A = 20
-C $A41F,1 EX AF,AF'
 C $A420,3 A = C & 1
-C $A423,3 JP $A4B8
 C $A426,3 HL = $00D1
 C $A429,3 DE = $0195
-C $A42C,1 EXX
 C $A42D,1 Set flags
 C $A42E,2 C = 1
-C $A430,2 JR Z,$A433
 C $A432,1 C++
 @ $A433 label=cc_hit_tunnel_wall
-C $A433,1 PUSH BC
 C $A434,3 BC = $0604
 C $A437,3 Call start_sfx
-C $A43A,1 POP BC
 C $A43B,1 A = C
 C $A43C,3 ($B3DC) = A
-C $A43F,1 EXX
 C $A440,3 ($B396) = HL
 C $A443,4 ($B3A4) = DE
 C $A447,1 Set flags
 C $A448,1 Return if non-zero
 C $A449,5 A = road_buffer_offset + 96
 C $A44E,1 L = A
-C $A44F,1 EX AF,AF'
 C $A450,2 H = $EE
 C $A452,3 A = road_buffer_offset
-C $A455,1 RLA
 C $A456,1 A = *HL
-C $A457,2 JR NC,$A45A
 C $A459,1 L++
 C $A45A,1 A |= *HL
-C $A45B,2 JR Z,$A480
 C $A45D,12 HL = $5CFA[A * 7]
 C $A469,2 C = *HL++
 C $A46B,2 E = *HL++
 C $A46D,1 A = *HL
 C $A46E,1 D = B
 C $A46F,3 HL = *$EAFC
-C $A472,1 PUSH HL
 C $A473,2 HL -= BC
-C $A475,1 POP HL
-C $A476,2 JR NC,$A480
 C $A478,2 HL -= DE
-C $A47A,2 JR C,$A480
-C $A47C,1 EX AF,AF'
 C $A47D,1 A = 0
 C $A47E,2 Jump to cc_hit_scenery
-C $A480,1 EX AF,AF'
 C $A481,2 A += 32
 C $A483,3 HL = $EE00 | A
 C $A486,3 A = road_buffer_offset
-C $A489,1 RLA
 C $A48A,1 A = *HL
-C $A48B,2 JR NC,$A48E
 C $A48D,1 L++
 C $A48E,1 A |= *HL
 C $A48F,1 Return if zero
@@ -4658,23 +4465,17 @@ C $A49E,2 E = *HL++
 C $A4A0,1 A = *HL
 C $A4A1,1 D = B  must be zero?
 C $A4A2,3 HL = *$EAFE
-C $A4A5,1 PUSH HL
 C $A4A6,2 HL -= BC
-C $A4A8,1 POP HL
 C $A4A9,1 Return if carry
 C $A4AA,2 HL -= DE
 C $A4AC,1 Return if no carry
-C $A4AD,1 EX AF,AF'
 C $A4AE,2 A = $01
 @ $A4B0 label=cc_hit_scenery
-C $A4B0,1 PUSH AF
 C $A4B1,3 BC = $0403      -- arrive here if drive into scenery, e.g. a tree
 C $A4B4,3 Call start_sfx
-C $A4B7,1 POP AF
 N $A4B8 This entry point is used by the routines at #R$A637 and #R$A8CD.
 C $A4B8,3 HL = &<crashed flag>
 C $A4BB,2 [why inc then dec?]
-C $A4BD,1 RET NZ
 C $A4BE,2 Set crashed flag
 C $A4C0,4 *$B36F = A++
 C $A4C4,5 *$B38E = A
@@ -4683,26 +4484,19 @@ C $A4CC,3 HL = speed
 C $A4CF,1 Preserve HL
 C $A4D0,2 H >>= 1
 C $A4D2,1 A = L
-C $A4D3,2 RR A
 C $A4D5,8 A = (A << 3) + 16
 C $A4DD,2 L = 24
-C $A4DF,1 CP L
-C $A4E0,2 JR C,$A4E3
 C $A4E2,1 L = A
 C $A4E3,3 *$B357 = HL
 C $A4E7,3 HL = A
-C $A4EA,1 POP DE
-C $A4EB,1 PUSH HL
 C $A4EC,2 HL -= DE
-C $A4EE,1 POP HL
-C $A4EF,2 JR C,$A4F2
 C $A4F2,3 Self modify 'LD BC' at $B32E to load HL
 C $A4F5,1 Return
 @ $A4F6 label=cc_not_split
 C $A4F6,3 HL = *$E8FE  [mystery var]
 C $A4F9,1 A = H  (0 or 255)
 C $A4FA,1 Set flags
-C $A4FB,2 JR NZ,$A510   -- A isn't zero
+C $A4FB,2 A isn't zero
 C $A4FD,11 Jump to $A510 if HL < $6A
 C $A508,2 HL -= $85
 C $A50A,1 A++  -- A == 1 => partially off-road
@@ -4769,7 +4563,7 @@ C $A59C,1 Set flags
 C $A59D,3 Jump to ml14_loop2 if zero [not in road split]
 C $A5A0,3 A = ($A266)  -- split road countdown
 C $A5A3,1 Set flags
-C $A5A4,2 JR Z,$A5EB   [not about to road split]
+C $A5A4,2 [not about to road split]
 C $A5A6,1 B = A
 @ $A5A7 label=ml14_loop2
 C $A5A7,1 A = *DE
@@ -4777,34 +4571,24 @@ C $A5A9,1 E = A
 C $A5AA,5 A = ~(IY[0] * 2)
 C $A5AF,1 L = A
 C $A5B0,3 A = E & 3
-C $A5B3,2 JR NZ,$A5BF
 C $A5B5,2 H = $E8
 C $A5B7,1 B = *HL
 C $A5B8,1 L--
 C $A5B9,1 C = *HL
-C $A5BA,1 PUSH BC
 C $A5BB,2 H = $EC
 C $A5BD,2 Jump to ml14_a5da
 C $A5BF,3 H = A + $E7
 C $A5C2,1 B = *HL
 C $A5C3,1 L--
 C $A5C4,1 C = *HL
-C $A5C5,1 PUSH BC
-C $A5C6,2 RL E
-C $A5C8,2 BIT 7,E
-C $A5CA,3 JP Z,$A5D3
-C $A5CD,2 JR C,$A5BB
 C $A5CF,2 A = 3
-C $A5D1,2 JR $A5D8
 C $A5D3,2 A = 3
-C $A5D5,2 JR C,$A5D8
 C $A5D7,1 A--
 C $A5D8,2 H += A
 @ $A5DA label=ml14_a5da
 C $A5DA,1 C = *HL
 C $A5DB,1 L++
 C $A5DC,1 B = *HL
-C $A5DD,1 PUSH BC
 C $A5DF,2 IY++
 C $A5E1,1 E++
 C $A5E2,2 Loop to ml14_loop2 while B
@@ -4821,12 +4605,10 @@ C $A5FC,1 H--
 C $A5FD,1 D = *HL
 C $A5FE,1 L--
 C $A5FF,1 E = *HL
-C $A600,1 PUSH DE
 C $A601,1 H++
 C $A602,1 E = *HL
 C $A603,1 L++
 C $A604,1 D = *HL
-C $A605,1 PUSH DE
 C $A606,2 IY++
 C $A608,2 Loop ml14_loop3 while B
 @ $A60A label=ml14_return
@@ -4856,8 +4638,6 @@ C $A637,5 Return if perp_caught_stage > 0
 C $A63C,7 Call $B4CC if sighted_flag is zero
 C $A643,3 A = IX[7]
 C $A646,1 Set flags
-C $A647,2 JR Z,$A650
-C $A649,3 JP P,$A78A
 C $A64C,3 IX[7]++
 C $A64F,1 Return if non-zero
 C $A650,2 Preserve IY
@@ -4872,31 +4652,19 @@ C $A666,2 Loop while #REGb
 C $A668,2 Restore IY
 C $A66A,2 Jump to $A68F
 C $A66C,3 A = IY[15]
-C $A66F,1 RLA
-C $A670,3 JP NC,$A664
 C $A673,4 A = IY[1] - C
-C $A677,3 JP NC,$A67E
 C $A67A,2 A += 2
-C $A67C,2 JR $A680
 C $A67E,2 A -= 3
-C $A680,2 JR NC,$A664
 C $A682,3 A = IY[17]
 C $A685,3 CP IX[18]
-C $A688,3 JP NZ,$A664
-C $A68B,2 POP IY
-C $A68D,2 JR $A6D8
 C $A68F,2 A = 0
 C $A691,1 Set flags
-C $A692,2 JR NZ,$A6F6
 C $A694,3 A = IX[1]
 C $A697,2 CP 7
-C $A699,2 JR NC,$A6F6
 C $A69B,2 A = 20  self modified below
 C $A69D,1 A--
-C $A69E,2 JR NZ,$A6AB
 C $A6A0,1 C++
 C $A6A1,3 Call rng
-C $A6A4,2 AND $1F
 C $A6A6,1 C = A
 C $A6A7,4 A = ($5D1B) + C
 C $A6AB,3 *$A69C = A  -- Self modify LD A at $A69B
@@ -4908,44 +4676,30 @@ C $A6B9,2 Jump to $A6CF if road_pos < $A4
 C $A6BB,2 E = $46
 C $A6BD,1 B--
 C $A6BE,2 HL -= DE   not restored so includes prev subtraction
-C $A6C0,2 JR C,$A6CF
 C $A6C2,1 B--
 C $A6C3,1 C--
 C $A6C4,2 HL -= DE
-C $A6C6,2 JR C,$A6CF
 C $A6C8,1 B--
 C $A6C9,1 C--
 C $A6CA,2 HL -= DE
-C $A6CC,2 JR C,$A6CF
 C $A6CE,1 C--
 C $A6CF,3 A = IX[18]
-C $A6D2,1 CP C
-C $A6D3,2 JR Z,$A6D8
-C $A6D5,1 CP B
-C $A6D6,2 JR NZ,$A6F6
 C $A6D8,3 C = IX[18]
 C $A6DB,3 Call rng
 C $A6DE,1 C++
 C $A6DF,1 Set flags
-C $A6E0,3 JP P,$A6E5
 C $A6E3,2 C -= 2
 C $A6E5,1 A = C
 C $A6E6,1 Set flags
 C $A6E7,2 C = 2
-C $A6E9,3 JP Z,$A6F2
-C $A6EC,2 CP 5
-C $A6EE,2 JR C,$A6F3
 C $A6F0,2 C = $FE
 C $A6F2,1 A += C
 C $A6F3,3 IX[18] = A
 C $A6F6,3 C = IX[1]
 C $A6F9,3 Call get_spawn_lanes
 C $A6FC,3 A = IX[18]
-C $A6FF,1 CP B
-C $A700,2 JR NC,$A707
 C $A702,2 A += 2
 C $A704,3 IX[18] = A
-C $A707,1 CP C
 C $A708,4 Jump to $A711 if A <= C
 C $A70C,2 A -= 2
 C $A70E,3 IX[18] = A
@@ -4956,19 +4710,12 @@ C $A718,1 L = A
 C $A719,3 A = IX[5]
 C $A71C,1 CP *HL
 C $A71D,2 C = 1
-C $A71F,2 JR Z,$A735
-C $A721,2 JR C,$A72E
 C $A723,2 A -= 10
-C $A725,2 JR C,$A72A
 C $A727,1 CP *HL
-C $A728,2 JR NC,$A737
 C $A72A,1 C--
 C $A72B,1 A = *HL
-C $A72C,2 JR $A737
 C $A72E,2 A += 10
-C $A730,2 JR C,$A735
 C $A732,1 CP *HL
-C $A733,2 JR C,$A737
 C $A735,1 C--
 C $A736,1 A = *HL
 C $A737,3 IX[5] = A
@@ -4977,11 +4724,9 @@ C $A73E,2 A = 0
 C $A740,1 Set flags
 C $A741,3 DE = $1E
 C $A744,3 HL = $E6
-C $A747,2 JR NZ,$A762
 C $A749,2 A = <...>  -- Self modified below
 C $A74B,1 A--
 C $A74C,3 Self modify 'LD A' at $A749 to load A
-C $A74F,2 JR NZ,$A776
 C $A751,1 Preserve HL
 C $A752,3 Call rng
 C $A755,1 Restore HL
@@ -4991,51 +4736,38 @@ C $A75D,3 Self modify 'LD A' at $A749 to load A
 C $A760,2 A = 10
 C $A762,1 A--
 C $A763,3 ($A73F) = A
-C $A766,2 JR Z,$A776
 C $A768,3 A = IX[1]
 C $A76B,2 CP 13
-C $A76D,2 JR NC,$A776
 C $A76F,4 B = ~A + 14 -- iterations
 @ $A773 label=loop_a773
 C $A773,1 HL += DE
 C $A774,2 Loop to loop_a773 while B
 C $A776,5 A = IX[1] - 6
-C $A77B,2 JR NC,$A783
 C $A77D,5 A = (A + 5) * 8
 C $A782,1 HL += DE
 C $A783,6 wordat(IX + 13) = HL
 C $A789,1 Return
 C $A78A,4 IX[7] = $FC
-C $A78E,2 CP 3
-C $A790,1 PUSH AF
-C $A791,2 JR C,$A795
 C $A793,2 A -= 3
 C $A796,3 A = boost
 C $A799,1 Set flags
 C $A79A,2 A = $C8
-C $A79C,2 JR Z,$A7A0
 C $A79E,2 A = $E6
-C $A7A1,3 CALL $A4B8
 C $A7A4,3 Read HL from LD BC at $B32E
 C $A7A7,4 HL += 40
 C $A7AB,3 ($B32F) = HL
 C $A7AE,2 D = 0
 C $A7B1,3 HL = $B4F0
-C $A7B5,2 JR NC,$A7BE
-C $A7B7,2 CP 2
-C $A7B9,2 JR Z,$A7BE
 C $A7BC,2 D = 4
 C $A7BE,5 D = wanted_stage_number + D
 C $A7C3,2 E = 0
 C $A7C5,3 A = *$8006
 C $A7C8,1 Set flags
-C $A7C9,2 JR Z,$A7D2
 C $A7CB,1 A = D
 C $A7CC,1 D = E
 C $A7CD,4 A <<= 4  prob
 C $A7D1,1 E = A
 C $A7D2,1 A = 0
-C $A7D3,3 CALL $9CD6
 C $A7D6,2 A = 5
 C $A7D8,3 Self modify 'LD A' at $A73E to load A
 C $A7DB,3 Point #REGhl at smash_chatter ("BEAR DOWN" / "OH MAN" / etc.)
@@ -5057,26 +4789,20 @@ C $A809,3 Call rng
 C $A80C,3 C = A & 15
 C $A80F,3 A = sighted_flag
 C $A812,1 Set flags
-C $A813,3 LD A,($5D1A)
 C $A816,2 Jump to $A81A if sighted_flag was zero
 C $A818,2 A += 25
 C $A81A,1 A += C
-C $A81B,3 LD ($A804),A  Self modify above
+C $A81B,3 Self modify above
 C $A81E,3 BC = $0500
 C $A821,4 IX = &hazards[1]
 C $A825,3 DE = 20  stride of hazards
 @ $A828 label=sc_loop
 C $A828,6 If the hazard is not active jump to sc_fill_in
 C $A82E,3 A = IX[15]
-C $A831,1 RLA
-C $A832,3 JP NC,$A837
-C $A835,2 RL C
 C $A837,2 IX += DE
 C $A839,2 Loop to sc_loop while B
 C $A83B,1 Return
 @ $A83C label=sc_fill_in
-C $A83C,2 BIT 2,C
-C $A83E,1 RET NZ
 C $A83F,3 DE = IX
 C $A842,3 BC = 20
 C $A845,3 Point #REGhl at hazard_template
@@ -5093,7 +4819,6 @@ C $A867,3 IX[5] = A
 C $A86A,3 A = sighted_flag
 C $A86D,1 Set flags
 C $A86E,2 A = 4
-C $A870,2 JR Z,$A873
 C $A872,1 A <<= 1
 C $A873,2 HL += A
 C $A875,4 IX[13] = *HL
@@ -5101,10 +4826,7 @@ C $A879,3 Call rng
 C $A87C,3 C = A & 6
 C $A87F,3 A = sighted_flag
 C $A882,1 Set flags
-C $A883,2 JR Z,$A88C
 C $A885,2 A = 6
-C $A887,1 CP C
-C $A888,2 JR NZ,$A88C
 C $A88A,2 C--
 C $A88C,2 B = 0
 C $A88E,3 HL = &lods_table[3] (first of the generic car lods)
@@ -5157,17 +4879,13 @@ C $A905,1 C = A
 C $A906,1 A += L
 C $A907,1 L = A
 C $A908,3 A = IX[5]
-C $A90B,2 RR B
-C $A90D,2 JR NC,$A91A
 C $A90F,2 A -= 5
 C $A911,1 CP *HL
-C $A912,2 JR NC,$A923
 C $A914,1 A = *HL
 C $A915,3 IX[17] = C
 C $A918,2 Jump to $A923
 C $A91A,2 A += 5
 C $A91C,1 CP *HL
-C $A91D,2 JR C,$A923
 C $A91F,1 A = *HL
 C $A920,3 IX[17] = C
 C $A923,3 IX[5] = A
@@ -5183,7 +4901,6 @@ C $A93B,2 A = $96
 C $A93D,1 Restore AF
 C $A93E,4 Jump if A < 3
 C $A942,2 A -= 3
-C $A944,3 CALL $A4B8
 C $A947,3 HL = ouch_chatter
 C $A94A,2 A = 3
 C $A94C,3 Call chatter
@@ -5315,7 +5032,6 @@ C $AA4F,3 If carry HL += DE
 C $AA52,1 HL <<= 1
 C $AA53,2 Loop $AA4E while B
 C $AA55,1 A = H
-C $AA56,1 RRA
 C $AA57,3 Self modify 'LD A' at $AA8C
 C $AA5A,2 A = <...> -- Self modified by $AAEE
 C $AA5C,3 A -= IY[$4E]
@@ -5323,7 +5039,7 @@ C $AA5F,3 Self modify 'ADD A' at $AA76
 C $AA62,2 B = 5  iterations
 C $AA64,5 A = counter_A & 1  -- counter used for turbo smoke
 C $AA69,3 HL = *$5D08  -- set to zero for stage 1...
-C $AA6C,2 JR Z,$AA71  If A was set
+C $AA6C,2 If A was set
 C $AA6E,3 HL = *$5D0A
 @ $AA71 label=loop_aa71
 C $AA71,4 DE = wordat(HL); HL += 2
@@ -5347,7 +5063,6 @@ C $AA97,2 A = -A
 C $AA99,3 Self modify the 'LD D' at $933D to load A
 C $AA9C,5 HL = *DE++
 C $AAA1,1 Set flags
-C $AAA2,3 JP P,$AAA6
 C $AAA5,1 H--
 C $AAA6,1 HL += BC
 C $AAA8,1 B = *HL
@@ -5356,7 +5071,6 @@ C $AAAF,1 A = D
 C $AAB0,1 Set flags
 C $AAB1,1 A = E
 C $AAB2,2 C = 0
-C $AAB4,3 JP M,$AAC1
 C $AAB7,1 Return if non-zero
 C $AAB8,5 Jump to $9309 if A >= 128
 C $AABD,1 A += B
@@ -5377,7 +5091,7 @@ C $AAD7,2 A = <...>  -- Self modified below
 C $AAD9,3 A = (A + 1) & 3
 C $AADC,3 Self modify $AAD7 above
 C $AADF,2 A = <...> -- Self modified by $AAE5 below
-C $AAE1,2 JR NZ,$AAE8  what are we testing here?
+C $AAE1,2 what are we testing here?
 C $AAE3,2 A = -A
 C $AAE5,3 Self modify $AADF above
 C $AAE8,2 A += <...>  -- Increment by old amount -- Self modified below
@@ -5398,10 +5112,8 @@ C $AB09,2 B = 0
 C $AB0B,1 Set flags
 C $AB0C,2 HL -= DE
 C $AB0E,1 Restore HL
-C $AB0F,2 JR Z,$AB2F
 C $AB11,2 A = 8
 C $AB13,1 Preserve AF
-C $AB14,3 JP M,$AB1A
 C $AB17,1 B--
 C $AB18,2 A = -A
 C $AB1A,1 C = A
@@ -5410,12 +5122,8 @@ C $AB1C,1 Preserve HL
 C $AB1D,1 Set flags
 C $AB1E,2 HL -= DE
 C $AB20,1 Restore HL
-C $AB21,3 JP M,$AB2A
 C $AB24,1 Restore AF
-C $AB25,3 JP P,$AB2F
-C $AB28,2 JR $AB2E
 C $AB2A,1 Restore AF
-C $AB2B,3 JP M,$AB2F
 C $AB2F,3 ($AA95) = HL
 C $AB32,1 Return
 c $AB33 Helicopter.
@@ -5521,7 +5229,7 @@ C $AC6D,4 double BC?  adjusted speed retained from earlier
 C $AC71,8 If B >= 2 BC = 350  so this is if we hit the object very fast it gets put on the left?
 C $AC79,3 Set bottom byte of horizontal position
 C $AC7C,3 Increment IX[7]
-C $AC7F,2 JR Z,$AC84   if B is zero then don't store it
+C $AC7F,2 if B is zero then don't store it
 C $AC81,3 Set top byte of horizontal position
 C $AC84,3 Increment IX[1]
 C $AC87,6 Call start_sfx with BC = $0503
@@ -5631,7 +5339,7 @@ C $B0D0,2 A = 4
 C $B0D2,2 Jump if low gear?
 C $B0D4,3 smoke = A
 C $B0D7,2 Decement A  [why write it as a SUB 1?]
-C $B0D9,2 JR C,$B0DE  -- jump if +ve?
+C $B0D9,2 jump if +ve?
 C $B0DB,3 $A252 = A
 C $B0DE,1 Read current gear flag
 C $B0DF,1 Bank it
@@ -5665,162 +5373,101 @@ C $B11B,2 H >>= 1  -- 9 bit rotate right through carry
 C $B11D,4 A <<= 4  -- 9 bit rotate left through carry
 C $B121,6 A = -((A & $0F) | 1)
 C $B127,3 BC = $FF00 | A
-C $B12A,3 JP $B19A
 C $B12D,3 A = boost (time remaining)
 C $B130,1 Test then bank the flags
 C $B131,1 Bank
 C $B132,1 Check previously banked A
-C $B133,2 JR NZ,$B16E
 C $B135,3 BC = 470
 C $B138,1 Unbank boost + flags
 C $B139,2 Uses banked flags
 C $B13B,3 BC = 230
 C $B13E,2 HL -= BC
-C $B140,3 JP NC,$B15A
 C $B143,3 C = ~L
 C $B146,3 B = ~H
 C $B149,1 BC++
 C $B14A,1 A = C
 C $B14B,2 B >>= 1
-C $B14D,1 RRA
 C $B14E,2 B >>= 1
-C $B150,1 RRA
-C $B151,1 RRA
-C $B152,1 RRA
 C $B153,5 C = (A & $3F) | 1
-C $B158,2 JR $B19A
 C $B15A,1 A = L
 C $B15B,2 H >>= 1
-C $B15D,1 RRA
 C $B15E,2 H >>= 1
-C $B160,1 RRA
-C $B161,1 RRA
-C $B162,1 RRA
 C $B163,6 A = -((A & $1F) | 1)
 C $B169,3 BC = $FF00 | A
-C $B16C,2 JR $B19A
 C $B16E,3 BC = 220
 C $B171,2 HL -= BC  -- for flags
 C $B173,2 HL = DE
-C $B175,2 JR NC,$B18E  -- from result of calc
+C $B175,2 from result of calc
 C $B177,3 BC = 470
-C $B17A,1 EX AF,AF'
-C $B17B,2 JR NZ,$B13E
 C $B17D,1 A = E
 C $B17E,1 B = D
 C $B17F,2 B >>= 1
-C $B181,1 RRA
 C $B182,2 B >>= 1
-C $B184,1 RRA
-C $B185,1 RRA
-C $B186,1 RRA
 C $B187,5 C = (A | 1) & $1F
-C $B18C,2 JR $B19A
 C $B18E,3 BC = 695
-C $B191,1 EX AF,AF'
-C $B192,2 JR NZ,$B13E
 C $B194,3 BC = 360
-C $B197,3 JP $B13E
 C $B19A,2 Get stacked #REGaf
 C $B19C,3 Test bit 2?
-C $B19F,2 JR NC,$B1A6
 C $B1A1,3 BC = $FFEC
-C $B1A4,2 JR $B1AC
-C $B1A6,1 RRA
-C $B1A7,2 JR C,$B1AC
-C $B1A9,3 BC = $FFF6
 C $B1AC,2 HL = DE
 C $B1AE,1 Clear carry?
 C $B1AF,2 HL += BC
-C $B1B1,3 JP P,$B1B7
 C $B1B4,3 HL = $0000
 C $B1B7,5 A = *$A24C - 1
-C $B1BC,2 JR NC,$B1E4
 C $B1BE,3 A = $B5B0
 C $B1C1,1 Set flags
-C $B1C2,2 JR Z,$B1E4
 C $B1C4,1 C = A
 C $B1C5,1 A = H
 C $B1C6,1 A |= L
-C $B1C7,2 JR Z,$B1E4
 C $B1C9,5 A = (C - 5) | 1
 C $B1CE,1 C = A
 C $B1CF,2 B = 0
-C $B1D1,3 JP P,$B1D5
 C $B1D4,1 B--
 C $B1D5,2 DE = HL
 C $B1D7,1 HL += BC
 C $B1D8,3 BC = 695
-C $B1DB,1 PUSH HL
 C $B1DC,2 HL -= BC
-C $B1DE,1 POP HL
-C $B1DF,2 JR C,$B1E2
-C $B1E1,1 EX DE,HL
 C $B1E2,2 A = 3
 C $B1E4,3 *$A24C = A
 C $B1E7,1 A = H
 C $B1E8,2 CP 2
-C $B1EA,2 JR C,$B1EF
 C $B1EC,3 Cap speed to $1FF
 C $B1EF,3 Set speed to #REGhl
-C $B1F2,1 POP HL
 C $B1F3,3 A = *$A263
 C $B1F6,1 B = A
 C $B1F7,3 A = *$A264
 C $B1FA,1 C = A
 C $B1FB,3 A = *$B064  -- Jump counter [self modified]
 C $B1FE,1 Set flags
-C $B1FF,3 JP NZ,$B253
-C $B202,2 RR H
-C $B204,2 JR C,$B21A
-C $B206,2 RR H
-C $B208,2 JR C,$B22C
 C $B20A,3 A = C - 9
-C $B20D,2 JR NC,$B210
 C $B20F,1 A = 0
 C $B210,1 C = A
 C $B211,3 A = B - 9
-C $B214,2 JR NC,$B217
 C $B216,1 A = 0
 C $B217,1 B = A
-C $B218,2 JR $B23C
 C $B21A,3 A = B + 4
 C $B21D,5 Jump if A >= 36
 C $B222,1 B = A
 C $B223,3 C -= B
-C $B226,2 JR NC,$B23C
 C $B228,2 C = 0
-C $B22A,2 JR $B23C
 C $B22C,3 A = C + 4
 C $B22F,2 C = $24
-C $B231,1 CP C
-C $B232,2 JR NC,$B235
 C $B234,1 C = A
 C $B235,3 B -= C
-C $B238,2 JR NC,$B23C
 C $B23A,2 B = 0
 C $B23C,3 HL = speed
 C $B23F,1 A = L
-C $B240,2 RR H
-C $B242,1 RRA
 C $B243,2 A >>= 1
 C $B245,2 A >>= 1
 C $B247,1 L = A
 C $B248,2 L >>= 1
 C $B24A,1 A += L
-C $B24B,1 CP B
-C $B24C,2 JR NC,$B24F
 C $B24E,1 B = A
-C $B24F,1 CP C
-C $B250,2 JR NC,$B253
 C $B252,1 C = A
-C $B253,1 PUSH BC
 C $B254,3 BC = $0000
 C $B257,1 E = B
 C $B258,3 A = *$A25C
 C $B25B,1 Set flags
-C $B25C,3 JP Z,$B29A
-C $B25F,3 JP P,$B265
 C $B262,1 E++
 C $B263,2 A = -A
 C $B265,3 HL = $B827
@@ -5828,68 +5475,39 @@ C $B268,1 C = A
 C $B269,1 HL += BC
 C $B26A,3 A = *$A261
 C $B26D,1 C = A
-C $B26E,1 EX AF,AF'
 C $B26F,4 A = *$A23F - C
 C $B273,1 Set flags
-C $B274,2 JR Z,$B29A
 C $B276,1 C = *HL
 C $B277,1 A -= C
-C $B278,2 JR C,$B280
 C $B27A,1 B++
-C $B27B,1 EX AF,AF'
 C $B27C,1 A += C
-C $B27D,1 EX AF,AF'
-C $B27E,2 JR $B277
 C $B280,1 A = B
 C $B281,1 Set flags
-C $B282,2 JR Z,$B295
 C $B284,3 HL = $A262
 C $B287,1 A += *HL
 C $B288,1 *HL = A
 C $B289,3 A = B * 3
 C $B28C,2 B = 0
-C $B28E,2 RR E
-C $B290,2 JR NC,$B295
 C $B292,1 B--
 C $B293,2 A = -A
 C $B295,1 C = A
-C $B296,1 EX AF,AF'
 C $B297,3 *$A261 = A
 C $B29A,4 HL = *$A25F + BC
 C $B29E,3 DE = $0000
 C $B2A1,4 $A25F = DE
 C $B2A5,3 A = *$B326  -- Read self modified op in main_loop_24 -- crashed flag
 C $B2A8,1 Set flags
-C $B2A9,2 JR Z,$B2AD
-C $B2AB,1 EX DE,HL
 C $B2AC,1 D = H
-C $B2AD,1 POP BC
 C $B2AE,4 *$A263 = B
 C $B2B2,4 *$A264 = C
 C $B2B6,1 A -= B
-C $B2B7,3 JP P,$B2BB
 C $B2BA,1 D--
 C $B2BB,1 E = A
-C $B2BC,2 SRA E
 C $B2BE,1 HL += DE
 C $B2BF,1 Set flags
-C $B2C0,2 JR Z,$B2E5
-C $B2C2,3 JP P,$B2C7
 C $B2C5,2 A = -A
 C $B2C7,2 CP 17
 C $B2C9,2 A = 0
-C $B2CB,2 JR C,$B2E5
-C $B2CD,2 BIT 7,H
-C $B2CF,2 JR Z,$B2DB
-C $B2D1,2 BIT 7,D
-C $B2D3,2 JR NZ,$B2E5
-C $B2D5,2 BIT 7,H
-C $B2D7,2 JR Z,$B2E5
-C $B2D9,2 JR $B2E3
-C $B2DB,2 BIT 7,D
-C $B2DD,2 JR Z,$B2E5
-C $B2DF,2 BIT 7,H
-C $B2E1,2 JR NZ,$B2E5
 C $B2E3,2 A = 1
 C $B2E5,3 cornering = A
 C $B2E8,4 BC = road_pos
@@ -5898,15 +5516,12 @@ C $B2ED,3 road_pos = HL
 C $B2F0,2 D = 1
 C $B2F2,1 A = E
 C $B2F3,1 Set flags [why are some ORs and some ANDs?]
-C $B2F4,3 JP P,$B2FA
 C $B2F7,1 D--
 C $B2F8,2 A = -A
 C $B2FA,2 CP 12
 C $B2FC,2 B = 2
-C $B2FE,2 JR NC,$B306
 C $B300,1 B--
 C $B301,2 CP 6
-C $B303,2 JR NC,$B306
 C $B305,1 B--
 C $B306,1 A = B
 C $B307,3 turn_speed = A
@@ -5925,27 +5540,22 @@ C $B31F,3 Self modify 'LD A' at $B3DB to load A
 C $B322,3 off_road = A
 C $B325,2 [this seems to be a crashed flag]
 C $B327,1 Set flags
-C $B328,2 JR Z,$B392
 C $B32A,3 cornering = A
-C $B32D,1 PUSH HL
 C $B32E,3 BC = <...>
 C $B331,2 HL -= BC
-C $B333,1 POP HL
 C $B334,2 Jump to $B349 if HL < BC
 C $B336,1 D = H
 C $B337,1 A = L
 C $B338,2 D >>= 1
-C $B33A,2 RR A
 C $B33C,2 A >>= 1
 C $B33E,2 OR 3
 C $B340,1 E = A
 C $B341,2 HL -= DE
-C $B343,2 JR Z,$B349   equal
+C $B343,2 equal
 C $B345,2 A = 2
-C $B347,2 JR NC,$B350   HL > DE
+C $B347,2 HL > DE
 C $B349,4 Clear crashed flag
 C $B34D,1 A++
-C $B34E,2 JR $B353
 C $B350,3 ($A24A) = HL
 C $B353,3 turn_speed = A
 C $B356,3 HL = $0000
@@ -5958,23 +5568,18 @@ C $B361,2 E >>= 1
 C $B363,2 E >>= 1
 C $B365,2 HL -= DE
 C $B367,3 ($B357) = HL
-C $B36A,1 EX DE,HL
 C $B36B,3 HL = road_pos
 C $B36E,2 C = 0
 C $B370,1 A = C
 C $B371,2 AND 1
 C $B373,3 flip = A
 C $B376,1 C--
-C $B377,2 JR Z,$B37F
 C $B379,1 C--
-C $B37A,2 JR Z,$B381
 C $B37C,1 HL += DE
-C $B37D,2 JR $B381
 C $B37F,2 HL -= DE
 C $B381,3 road_pos = HL
 C $B384,2 A = $00
 C $B386,1 Set flags
-C $B387,2 JR Z,$B38F
 C $B389,1 A--
 C $B38A,3 ($B385) = A
 C $B38D,2 A = $00
@@ -5983,69 +5588,45 @@ C $B392,3 HL = road_pos
 C $B395,3 DE = $0048
 C $B398,1 A = H
 C $B399,1 Set flags
-C $B39A,3 JP M,$B3B0
-C $B39D,2 JR NZ,$B3A3
 C $B39F,1 A = L
 C $B3A0,1 A -= E
-C $B3A1,2 JR C,$B3B0
 C $B3A3,3 DE = $01D8
 C $B3A6,1 A = H
-C $B3A7,1 CP D
-C $B3A8,2 JR C,$B3B1
-C $B3AA,2 JR NZ,$B3B0
 C $B3AC,1 A = L
 C $B3AD,1 A -= E
-C $B3AE,2 JR C,$B3B1
-C $B3B0,1 EX DE,HL
 C $B3B1,3 road_pos = HL
 C $B3B4,7 A = cornering | smoke
 C $B3BB,6 Call start_sfx with cornering noise
 C $B3C1,6 Jump if perp_caught_stage > 0
 C $B3C7,1 A--
-C $B3C8,2 JR Z,$B3D8
 C $B3CA,2 CP $02
-C $B3CC,2 JR C,$B3D0
 C $B3CE,2 A = $02
 C $B3D0,3 turn_speed = A
 C $B3D3,5 flip = 1
-C $B3D8,3 CALL $B549
 C $B3DB,2 A = $00
 C $B3DD,1 Set flags
-C $B3DE,2 JR Z,$B407
 C $B3E0,1 C = A
-C $B3E1,1 RLCA
 C $B3E2,3 A += C + $18
 C $B3E5,1 C = A
 C $B3E6,3 A = turn_speed
 C $B3E9,2 CP 2
-C $B3EB,2 JR C,$B3F5
 C $B3ED,3 A = flip
 C $B3F0,1 Set flags
-C $B3F1,2 JR Z,$B3F4
 C $B3F3,1 C++
 C $B3F4,1 C++
-C $B3F5,1 EXX
 C $B3F6,6 B = counter_A & 1
-C $B3FC,1 RLCA
 C $B3FD,1 C = A
-C $B3FE,1 EXX
 C $B3FF,1 A = C
-C $B400,3 CALL $B69E
 C $B403,4 off_road = 0
-C $B407,3 CALL $B457
 C $B40A,2 B = $00
 C $B40C,3 A = off_road
 C $B40F,1 A--
-C $B410,2 JR NZ,$B41B
 C $B412,9 B = (counter_C & 1) * 3
 C $B41B,3 A = turn_speed
-C $B41E,3 CALL $B58E
 C $B421,3 A = *$A228
 C $B424,1 Set flags
-C $B425,2 JR Z,$B42E
 C $B427,1 A = 0
 C $B428,3 BC = $0102
-C $B42B,3 CALL $B67C
 C $B42E,4 B = counter_A
 C $B432,7 Jump if cornering
 C $B439,3 A = counter_C
@@ -6053,65 +5634,48 @@ C $B43C,1 B = A
 C $B43D,1 HL++
 C $B43E,2 A = *HL++
 C $B440,1 A |= *HL
-C $B441,2 JR NZ,$B449
 C $B443,3 A = off_road
 C $B446,3 Return if not fully off-road
 C $B449,1 A = 0
-C $B44A,1 EX AF,AF'
 C $B44B,1 A = B
-C $B44C,1 PUSH AF
 C $B44D,3 Call draw_smoke  (seems to be the right side)
 C $B450,2 A = $01
-C $B452,1 EX AF,AF'
-C $B453,1 POP AF
 C $B454,3 Exit via draw_smoke
 C $B457,3 A = *$A22F
 C $B45A,1 Set flags
 C $B45B,1 Return if zero
 C $B45C,1 A--
-C $B45D,2 JR Z,$B476
-C $B45F,1 EXX
 C $B460,1 B = A
 C $B461,2 C = 0
-C $B463,1 EXX
 C $B464,3 A = turn_speed
 C $B467,2 CP 2
 C $B469,2 A = $24
-C $B46B,3 JP NZ,$B69E
 C $B46E,5 A = flip + $25
 C $B473,3 Exit via $B69E
 C $B476,2 C = 0
 C $B478,2 A = 0
 C $B47A,1 A--
 C $B47B,3 *$B479 = A
-C $B47E,2 JR NZ,$B493
 C $B480,2 B = 2
 C $B482,1 C++
 C $B483,1 A = C
 C $B484,2 CP 4
-C $B486,2 JR NC,$B48F
 C $B488,1 A++
 C $B489,1 C = A
 C $B48A,2 CP 2
-C $B48C,2 JR NZ,$B48F
 C $B48E,1 B++
 C $B48F,1 A = B
 C $B490,3 Self modify 'LD A' at $B478 to load A
 C $B493,1 A = C
 C $B494,3 *$B477 = A
 C $B497,2 CP 7
-C $B499,2 JR C,$B4A0
 C $B49B,4 *$A22F = 0
 C $B49F,1 Return
 C $B4A0,3 A = turn_speed
 C $B4A3,2 CP 2
 C $B4A5,2 A = 6
-C $B4A7,2 JR NZ,$B4B3
 C $B4A9,10 A = (A << 3) - flip + 13
 C $B4B3,1 A += C
-C $B4B4,1 PUSH AF
-C $B4B5,3 CALL $B699
-C $B4B8,1 POP AF
 C $B4B9,1 C = A
 C $B4BA,3 A = *$B477
 C $B4BD,4 Jump to $B4C6 if A >= 4
@@ -6125,10 +5689,8 @@ D $B4CC Used by the routine at #R$A637.
 C $B4CC,5 *$B477 = 0
 C $B4D1,3 *$A22F = 1
 C $B4D4,3 *$A22E = 1
-C $B4D7,1 INC A         ;
-C $B4D8,3 LD ($B479),A  ;
-C $B4DB,3 LD HL,$600F   ; {time_sixteenths/$A17D = 15, time_bcd/$A17E = $60
-C $B4DE,3 LD ($A17D),HL ; }
+C $B4D7,1 A++
+C $B4DB,6 time_sixteenths/$A17D = 15, time_bcd/$A17E = $60
 C $B4E1,3 Point #REGhl at left light's attributes
 C $B4E4,3 Toggle its brightness
 C $B4E7,3 Point at "SIGHTING OF TARGET VEHICLE" message
@@ -6277,14 +5839,9 @@ C $B692,1 A += C
 @ $B693 label=sub_b67c_no_flip
 C $B693,1 A += C
 C $B694,1 C = A
-C $B695,1 EX AF,AF'
 C $B696,1 A += C
-C $B697,1 EX AF,AF'
-C $B698,1 EX AF,AF'
 N $B699 This entry point is used by the routine at #R$B318.
-C $B699,1 EXX
 C $B69A,3 BC = 0   -- not self modified
-C $B69D,1 EXX
 N $B69E This entry point is used by the routine at #R$B318.
 C $B69E,2 E = $80
 C $B6A0,6 BC = A * 3
@@ -6297,9 +5854,7 @@ C $B6B8,2 B = *HL++  -- height
 C $B6BA,2 C = *HL++  -- byte width
 C $B6BC,4 HL = wordat(HL); HL++   -- masked bitmap data
 C $B6C0,1 A = C
-C $B6C1,1 EXX
 C $B6C2,1 E = A  -- bank byte width in E'
-C $B6C3,1 EXX
 C $B6C4,3 Read from SUB @ $B5AA
 C $B6C7,4 D -= A
 C $B6CB,3 A = *$B5B0 -- Self modified value in draw_car
@@ -6315,24 +5870,18 @@ C $B6E3,1 E = A
 C $B6E4,1 A = D
 C $B6E6,6 D = (D & $0F) + $F0
 C $B6ED,5 E += (A & $70) * 2
-C $B6F2,1 PUSH DE
 C $B6F3,1 E = C  -- byte width
 C $B6F4,2 E <<= 1
-C $B6F6,1 EXX
-C $B6F7,1 POP HL
 C $B6F8,1 A = E
 C $B6F9,2 B >>= 1
-C $B6FB,1 EX AF,AF'  -- unclear why, is this EX'ing AF to get the carry flag?
+C $B6FB,1 unclear why, is this EX'ing AF to get the carry flag?
 C $B6FC,1 HL += BC
-C $B6FD,1 EX AF,AF'
-C $B6FE,3 JP C,$B770
 N $B701 This entry point is used by the routine at #R$92E1.
 C $B701,4 IX = plot_masked_sprite_core_thingy
 C $B705,3 A = ~A + 9
 C $B708,4 This multiplies by six - the length of each load-mask-store step in the plotter core.
 C $B70C,5 Add that to #REGix
 C $B711,2 B = 15 -- Set loop counter for 15 iterations?
-C $B713,1 EXX
 C $B714,2 D = 0 -- fall through
 c $B716 Masked sprite plotter
 D $B716 This plots a lot of the game's masked graphics.
@@ -6391,22 +5940,18 @@ C $B80B,1 L = D
 C $B80C,1 A = B
 C $B80D,2 B = 5
 C $B80F,1 A--
-C $B810,1 RLA
-C $B811,1 RLA
 @ $B812 label=j_b812
-C $B812,1 RLA
 C $B813,2 JR NC,j_b816
 C $B815,1 HL += DE
 @ $B816 label=j_b816
 C $B816,1 HL += HL
 C $B817,2 DJNZ j_b812
 C $B819,1 RLA
-C $B81A,2 JR NC,$B81D
 C $B81C,1 HL += DE
 C $B81E,1 HL += BC
 C $B820,1 D--
 C $B821,4 E = -E
-C $B825,3 JP plot_masked_sprite_entry
+C $B825,3 Exit via plot_masked_sprite_entry
 b $B828 breaks/crashes road rendering if messed with
 B $B828,32,8
 c $B848 Routine at B848
@@ -6833,7 +6378,6 @@ C $C01F,5 floating_arrow = A - 7
 C $C024,2 Jump to rm_do_restart if zero
 C $C026,3 correct_fork = A
 @ $C029 label=rm_do_restart
-C $C029,1 EX DE,HL
 C $C02A,2 Jump to rm_restart_hazards_read
 N $C02C Handle hazard commands (3 = off, 4/5/6 = tumbleweeds left/right/both, 7/8/9 => barriers)
 N $C02C When on left it uses lane 1, on right it uses lane 4, both it uses lane 2 and 3.
@@ -6869,8 +6413,8 @@ C $C062,4 IX = &hazards
 C $C066,3 DE = 20  -- array entry stride
 C $C069,3 B = 6, C = 0
 @ $C06C label=rm_c06c
-C $C06C,4 RLC (IX)  -- test the used flag
-C $C070,2 JR C,$C080  -- jump if used
+C $C06C,4 test the used flag
+C $C070,2 jump if used
 @ $C072 label=rm_c072_continue
 C $C072,2 IX += DE
 C $C074,2 Loop while #REGb
@@ -6992,10 +6536,9 @@ N $C62E This entry point is used by the routine at #R$C452.
 N $C79A This entry point is used by the routines at #R$CBA4 and #R$CBC5.
 C $C7EA,3 Point at first hill backdrop
 C $C7EF,3 Point at second hill backdrop
-c $C813 Routine at C813
-D $C813 Used by the routine at #R$C821.
-c $C821 Routine at C821
-D $C821 Used by the routine at #R$C86E.
+C $C813,4 E -= 32
+C $C817,3 Jump if E < 32
+C $C81A,4 D -= 16
 N $C824 This entry point is used by the routine at #R$C598.
 N $C82A This entry point is used by the routine at #R$C813.
 c $C86E Routine at C86E
@@ -7013,21 +6556,44 @@ C $C8D2,3 10 x 24
 C $C8D7,2 Nibble swap thing
 c $C8E3 Routine at C8E3
 D $C8E3 Used by the routine at #R$C452.
+C $C8E4,3 Read 'LD A' at $C6D8
+C $C8E7,3 Self modify 'LD A' at $CB65
 N $C915 This entry point is used by the routines at #R$CBA4 and #R$CBC5.
 N $C929 This entry point is used by the routine at #R$C94C.
-c $C93E Routine at C93E
-D $C93E Used by the routine at #R$C95A.
-c $C94C Routine at C94C
-D $C94C Used by the routine at #R$C8E3.
-c $C95A Routine at C95A
-D $C95A Used by the routine at #R$C8E3.
-N $C969 This entry point is used by the routine at #R$C93E.
+C $C93E,4 E -= 32
+C $C942,3 Jump if E < 32
+C $C945,4 D -= 16
+C $C94C,4 E -= 32
+C $C950,3 Jump if E < 32
+C $C953,4 D -= 16
+C $C95B,6 Self modify 'JP NZ' at $CB31 to be $C963
+C $C963,1 A = D
+C $C964,1 D--
+C $C965,2 A &= $0F
+C $C969,4 Self modify 'LD DE' at $CA00 to load current DE
+C $C9B2,1 D = A
+C $C9B3,3 A = ~(A - E) + B
+C $C9B6,3 Self modify jump table target
+C $C9B9,1 H++
+C $C9BA,1 A = *HL
+C $C9BB,1 Set flags
+C $C9C9,3 A = HL[-1]
+C $C9CC,1 A &= C
+C $C9CD,3 A >>= 3
+C $C9D8,1 E = A
+C $C9D9,1 A -= D
+C $C9DA,1 A = ~A
+C $C9DB,1 A += B
+C $C9DF,1 H += 2
+C $C9E1,1 A = *HL
 C $CA11,17 Jump table (self modified)
 C $CA22,17 Jump table (self modified)
 C $CA33,17 Jump table (self modified)
 C $CA44,17 Jump table (self modified)
 C $CA55,2 Jump table (self modified)
 N $CA57 This entry point is used by the routine at #R$C8E3.
+C $CA66,1 B = E
+C $CA67,1 C--
 C $CBA1,3 }
 c $CBA4 Routine at CBA4
 c $CBC5 Routine at CBC5
@@ -7037,6 +6603,9 @@ D $CBCE Used by the routine at #R$B9F4.
 c $CBD6 Routine at CBD6
 D $CBD6 Used by the routine at #R$B9F4.
 N $CBDC This entry point is used by the routine at #R$CBCE.
+C $CCF4,3 Restore original SP (must be self modified)
+C $CCF7,1 Return
+C $CCFB,1 A = 0
 N $CD08 This entry point is used by the routine at #R$F220.
 c $CD3A Routine at CD3A
 D $CD3A Used by the routines at #R$8401, #R$852A and #R$873C.
@@ -7067,8 +6636,6 @@ C $CD71,1 H = L
 C $CD72,1 A = C
 C $CD73,3 A += *IY
 C $CD76,1 C = A
-C $CD77,2 JR Z,$CDAA
-C $CD79,3 JP P,$CD84
 C $CD7C,1 A = E
 C $CD7D,1 E--
 C $CD7E,2 A = -A
@@ -7076,31 +6643,24 @@ C $CD80,1 E = A
 C $CD81,1 A = C
 C $CD82,2 A = -A
 C $CD84,2 A <<= 2
-C $CD86,2 JR NC,$CD8B
 C $CD88,2 HL = DE
 C $CD8A,1 HL *= 2
 C $CD8B,1 A <<= 1
-C $CD8C,2 JR NC,$CD8F
 C $CD8E,1 HL += DE
 C $CD8F,1 HL <<= 1
 C $CD90,1 A <<= 1
-C $CD91,2 JR NC,$CD94
 C $CD93,1 HL += DE
 C $CD94,1 HL <<= 1
 C $CD95,1 A <<= 1
-C $CD96,2 JR NC,$CD99
 C $CD98,1 HL += DE
 C $CD99,1 HL <<= 1
 C $CD9A,1 A <<= 1
-C $CD9B,2 JR NC,$CD9E
 C $CD9D,1 HL += DE
 C $CD9E,1 HL <<= 1
 C $CD9F,1 A <<= 1
-C $CDA0,2 JR NC,$CDA3
 C $CDA2,1 HL += DE
 C $CDA3,1 HL <<= 1
 C $CDA4,1 A <<= 1
-C $CDA5,2 JR NC,$CDA8
 C $CDA7,1 HL += DE
 C $CDA8,1 HL <<= 1
 C $CDA9,1 A = H
@@ -7112,13 +6672,8 @@ C $CDB0,2 IYl++
 C $CDB2,2 Loop to ml10_loop
 C $CDB4,2 A = $A0
 C $CDB6,1 *DE = A
-C $CDB7,3 LD HL,$E336
-C $CDBA,3 LD DE,$E301
-C $CDBD,3 LD BC,$1560
 @ $CDC0 ml10_loop2
 C $CDC0,1 A = *DE
-C $CDC1,1 CP C
-C $CDC2,3 JP P,$CDC6
 C $CDC5,1 C = A
 C $CDC6,1 *HL = C
 C $CDC7,1 L++
@@ -7613,7 +7168,6 @@ c $E839 looks like initialisation code / relocation
 C $E839,1 must be the loop counter
 C $E83A,3 Point #REGhl at $e858 table
 @ $E83D label=loopy
-C $E83D,1 PUSH BC       ;
 C $E83E,4 DE = wordat(HL) HL += 2
 C $E842,1 Stack DE
 C $E843,4 DE = wordat(HL) HL += 2 -- dest
@@ -7855,18 +7409,13 @@ D $ECF3 Used by the routine at #R$E90F.
 C $ECF3,3 Call clear_screen
 C $ECF6,3 Address of "REDEFINE KEYS" strings
 C $ECF9,3 Call menu_draw_strings
-C $ECFC,3 LD DE,$48D6
-C $ECFF,3 LD BC,$0801
 @ $ED02 label=rdk_loop_1
 C $ED02,3 Preserve registers
 C $ED05,3 Call define_keys
 C $ED08,3 Restore registers
 N $ED0B Debounce?
 C $ED0B,1 A = 0
-C $ED0C,2 IN A,($FE)
 C $ED0E,3 A = ~A & $1F
-C $ED11,2 JR NZ,$ED02
-C $ED13,3 CALL $ED6D
 C $ED16,1 C++
 C $ED17,1 HL++
 C $ED18,2 Loop rdk_loop_1 while B
@@ -7896,71 +7445,49 @@ N $ED43 Debounce?
 C $ED4B,2 Loop
 c $ED4D Routine at ED4D
 D $ED4D Used by the routine at #R$ED6D.
-C $ED4D,3 LD DE,$FF2F
-C $ED50,3 LD BC,$FEFE
-C $ED53,2 IN A,(C)
 C $ED55,3 A = ~A & $1F
 C $ED58,2 Jump to $ED66 if zero
 C $ED5A,1 D++
-C $ED5B,1 RET NZ
 C $ED5C,1 H = A
 C $ED5D,1 A = E
 C $ED5E,2 A -= 8
 C $ED60,2 H >>= 1
-C $ED62,2 JR NC,$ED5E
-C $ED64,1 RET NZ
 C $ED65,1 D = A
 C $ED66,1 E--
-C $ED67,2 RLC B
-C $ED69,2 JR C,$ED53
-C $ED6B,1 CP A     - compare A to itself then exit?
+C $ED6B,1 Compare A to itself then exit?
 C $ED6C,1 Return
 c $ED6D Routine at ED6D
 D $ED6D Used by the routine at #R$ECF3.
 C $ED6F,3 Call define_keys
-C $ED72,3 CALL $ED4D
-C $ED75,2 JR NZ,$ED6F
 C $ED77,1 D++
-C $ED78,2 JR Z,$ED6F
 C $ED7A,1 D--
 C $ED7B,1 A = D
-C $ED7E,3 LD HL,$EE38
 C $ED81,1 B = C
 C $ED82,1 B--
-C $ED83,2 JR Z,$ED8B
-C $ED85,1 CP (HL)
-C $ED86,2 JR Z,$ED6F
 C $ED88,1 HL++
-C $ED89,2 DJNZ $ED85
-C $ED8D,3 LD HL,$EE37  last byte of 'shocked'
+C $ED8D,3 Last byte of 'shocked'
 C $ED90,2 B = 0
 C $ED92,1 HL += BC
 C $ED93,1 *HL = A
-C $ED94,3 HL = $EDD6   ; -> "B N M ..."
+C $ED94,3 -> "B N M ..."
 C $ED97,2 D = 0
 C $ED99,3 B = A & 7
 C $ED9C,4 A *= 5
-C $EDA0,2 B >>= 1
-C $EDA2,2 B >>= 1
-C $EDA4,2 B >>= 1
+C $EDA0,6 B >>= 3
 C $EDA6,1 A += B
 C $EDA7,1 A += A
 C $EDA8,1 E = A
 C $EDA9,1 HL += DE
-C $EDAE,4 LD ($EADD),DE
 C $EDB2,1 A = *HL
-C $EDB3,3 LD ($EADF),A
 C $EDB6,1 HL++
 C $EDB7,1 A = *HL
-C $EDB8,2 SET 7,A       Terminate the string
-C $EDBA,3 LD ($EAE0),A  Write new character
-C $EDBD,3 LD HL,$EADC   -> test mode strings
-C $EDC0,3 CALL $EBFF
-C $EDC4,3 CALL $EDCC
+C $EDB8,2 Terminate the string
+C $EDBA,3 Write new character
+C $EDBD,3 -> test mode strings
+C $EDC0,3 Call menu_draw_strings
 C $EDC8,1 A = B
 C $EDC9,3 Return if A != 4
 C $EDCC,4 E += $20
-C $EDD0,1 RET NC
 C $EDD1,4 D += 8
 C $EDD5,1 Return
 t $EDD6 Names of keys
@@ -8019,15 +7546,15 @@ C $EEA5,2 Jump to $EEAD if non-zero
 C $EEA7,1 A++
 C $EEA8,3 Self modify $EEA2
 C $EEAB,2 Jump to dk_eec9
-C $EEAD,2 LD A,$00      Self modified by $EEBB, cycles 5,3,2,1
+C $EEAD,2 Self modified by $EEBB, cycles 5,3,2,1
 C $EEAF,1 A--
 C $EEB0,3 Jump to dk_eeb9 if zero
-C $EEB3,3 LD ($EEAE),A  Self modified by $EE8E
+C $EEB3,3 Self modified by $EE8E
 C $EEB6,3 Jump to dk_ef00
 @ $EEB9 label=dk_eeb9
-C $EEB9,2 LD A,$00      Self modified by $EE8E
-C $EEBB,3 LD ($EEAE),A  Self modify 'LD A' @ $EEAD
-C $EEBE,3 LD HL,$0000   Self modified, cycles $F12x .. $F2xx ish
+C $EEB9,2 Self modified by $EE8E
+C $EEBB,3 Self modify 'LD A' @ $EEAD
+C $EEBE,3 Self modified, cycles $F12x .. $F2xx ish
 @ $EEC1 label=dk_eec1
 C $EEC1,2 A = *HL - 1
 C $EEC3,3 Jump to dk_eed2 if non-zero
@@ -8040,11 +7567,10 @@ C $EECF,3 Goto dk_eec1
 C $EED2,1 HL++
 C $EED3,3 *$EEBF = HL
 C $EED6,1 A++
-C $EED7,2 BIT 7,A    >= 128?
-C $EED9,2 JR Z,$EEE7
+C $EED7,2 >= 128?
 C $EEDB,2 A &= $7F   note
-C $EEDE,5 *$EEAE = 1  Self modify 'LD A' @ $EEAD
-C $EEE3,3 *$EF01 = 1  Self modify 'LD A' @ $EF00
+C $EEDE,5 Self modify 'LD A' @ $EEAD
+C $EEE3,3 Self modify 'LD A' @ $EF00
 C $EEE7,1 D = A
 C $EEE8,2 A &= 7
 C $EEEA,2 Jump to dk_ef00 if zero
@@ -8058,7 +7584,7 @@ C $EEF9,3 Jump to playdrum_1 if zero
 C $EEFC,1 B--
 C $EEFD,3 Jump to $F0C6 if zero
 @ $EF00 label=dk_ef00
-C $EF00,2 LD A,$00   Self modified by $EEE3, $EF09
+C $EF00,2 Self modified by $EEE3, $EF09
 C $EF02,1 Set flags
 C $EF03,2 Jump to dk_ef0d if zero
 C $EF05,3 Self modify 'LD A' @ $EEAD
@@ -8075,7 +7601,7 @@ C $EF13,5 Wait/spinlock.  Self modified
 C $EF18,1 Return
 c $EF19 How does this get entered?
 C $EF19,1 Preserve registers
-C $EF1A,5 $EF14 = $FF  Unlock the wait/spinlock. -- Self modify $EF13
+C $EF1A,5 Unlock the wait/spinlock. -- Self modify $EF13
 C $EF1F,1 Restore registers
 C $EF20,1 Enable interrupts
 C $EF21,1 Return
