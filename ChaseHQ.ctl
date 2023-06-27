@@ -1686,7 +1686,7 @@ C $846E,3 Call engine_sfx_play_hook
 C $8471,3 Call main_loop_13
 C $8474,3 Call engine_sfx_play_hook
 C $8477,3 Call main_loop_14
-C $847A,3 Call main_loop_15
+C $847A,3 Call tunnel
 C $847D,3 Call main_loop_16
 C $8480,3 Call helicopter
 C $8483,3 Call main_loop_18
@@ -1763,7 +1763,7 @@ C $8565,3 Call main_loop_11
 C $8568,3 Call main_loop_12
 C $856B,3 Call main_loop_13
 C $856E,3 Call main_loop_14
-C $8571,3 Call main_loop_15
+C $8571,3 Call tunnel
 C $8574,3 Call main_loop_16
 C $8577,3 Call main_loop_18
 C $857A,3 Call main_loop_20
@@ -1976,7 +1976,7 @@ C $8778,3 Call main_loop_11
 C $877B,3 Call main_loop_12
 C $877E,3 Call main_loop_13
 C $8781,3 Call main_loop_14
-C $8784,3 Call main_loop_15
+C $8784,3 Call tunnel
 C $8787,3 Call main_loop_16
 C $878A,3 Call main_loop_19
 C $878D,3 Call main_loop_23
@@ -1995,7 +1995,7 @@ C $87C1,6 Loop while the perp is still active in the hazards
 C $87C7,6 Loop while chatter is still happening?
 C $87CD,5 Return if transition_control is zero
 C $87D2,2 If transition_control is 4
-C $87D6,3 Call NZ setup_transition
+C $87D6,3 Call setup_transition if non-zero
 C $87D9,3 Loop
 c $87DC Sets up the game or the level?
 D $87DC Used by the routines at #R$8258, #R$8401, #R$858C, #R$873C and #R$F220.
@@ -2091,7 +2091,7 @@ D $8903 Used by the routine at #R$8401.
 C $8903,6 If $A23B != 0 goto $8916
 C $8909,7 *$A23D |= *$A23C
 C $8910,3 Counters?
-C $8913,3 CALL NZ, start_sfx
+C $8913,3 Call start_sfx if non-zero
 C $8916,3 Call engine_sfx_setup_hook
 C $8919,3 Call engine_sfx_play_hook
 C $891C,3 Call another hooked routine
@@ -4376,7 +4376,8 @@ B $A237,1,1 Used by $88F2
 B $A238,1,1 Used by $88F2
 B $A239,1,1 Used by $F265
 B $A23A,1,1 Used by $F2F6
-B $A23B,1,1 loaded by $821d, drive_sfx, $c0ee, $fd21 set by $C102
+@ $A23B label=tunnel_sfx
+B $A23B,1,1 Set to 5 when we're in a tunnel. Used to modulate sfx.
 B $A23C,1,1 $8909, $BE28 reads  $A3FA, $BDFF, $BE2C writes
 B $A23D,1,1 $BE33 reads  $890F, $A3D2, $BDFC, $BE37 writes
 @ $A23E label=off_road
@@ -6554,7 +6555,45 @@ C $C0D9,5 *$A254 += A
 C $C0DE,3 Exit via $AD0D
 c $C0E1 Routine at C0E1
 D $C0E1 Used by the routines at #R$8401, #R$852A and #R$873C.
-@ $C0E1 label=main_loop_15
+@ $C0E1 label=tunnel
+C $C0E1,3 Read 'LD A' at $C160 (tunnel drawing code)
+C $C0E4,1 Set flags
+C $C0E5,3 Read 'LD A' at $C88F (TBD)
+C $C0E8,2 Jump if tunnel has appeared
+N $C0EA Tunnel hasn't appeared.
+C $C0EA,1 Set flags
+C $C0ED,4 tunnel_sfx = 0
+C $C0F1,2 #REGhl = 0
+C $C0F3,3 $8F82 = NOP (instruction)
+C $C0F6,3 $8F83 & $8F84 = NOP (instruction)
+C $C0F9,3 $8FA7 = NOP (instruction)
+C $C0FC,3 $8FA8 & $8FA9 = NOP (instruction)
+C $C0FF,1 Return
+N $C100 Tunnel has appeared.
+C $C100,5 tunnel_sfx = 5  -- this quietens noises when in the tunnel
+C $C105,3 somewhere in road height data table
+C $C108,6 #REGbc = wordat(HL); #REGhl -= 4
+C $C10E,1 Bank
+C $C10F,3 somewhere in road height data table
+C $C112,6 #REGde = wordat(HL); #REGhl -= 4
+@ $C118 label=tunnel_loop
+C $C118,1 Bank
+C $C119,3 #REGde = wordat(HL); #REGhl--
+C $C11C,1 Stack #REGde
+C $C11D,3 #REGhl -= 3
+C $C121,2 #REGhl -= #REGbc
+C $C123,1 Unstack
+C $C124,2 Jump if #REGhl < #REGbc
+C $C127,1 Bank
+C $C128,6 #REGbc = wordat(HL); #REGhl -= 4
+C $C12F,2 #REGhl -= #REGbc
+C $C131,2 Jump if #REGhl < BC
+C $C134,2 #REGde = #REGbc
+C $C136,1 A--
+C $C137,2 Loop to tunnel_loop
+C $C139,3 A = 9 - A
+C $C13C,3 [15 when tunnel is small, 6 when fills screen]
+C $C15A,1 Return
 c $C15B Tunnel entrance/exit drawing code
 C $C221,21 Jump table (self modified)
 C $C236,177 Jump table (self modified)
