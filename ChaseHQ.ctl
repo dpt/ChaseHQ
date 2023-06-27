@@ -81,7 +81,7 @@
 > $4000 ; $5B00..$5BFF is a pre-shifted version of the backdrop
 > $4000 ; $5C00..$5CFF is the regular version of the backdrop
 > $4000 ; $8DBB (word) is the address of the current transition animation
-> $4000 ; $EA30..$EAFE (words) is ? [there's a load of words here]
+> $4000 ; $EA30..$EAFE (words) is 104 words related to road drawing
 > $4000 ; $EB00        is ?
 > $4000 ; $ED28        is the stack (growing downwards)
 > $4000 ; $EE00..$EEFF is the road buffer. holds data unpacked from maps. it's cyclic. fixed sections for each datum. cleared by $87DD.
@@ -182,7 +182,7 @@ B $5B9B,2,2
 W $5B9D,2,2 Probable address of routine $5B31
 B $5B9F,4,4
 W $5BA3,2,2 Probable address of routine $5B31
-B $5BA5,48,8 TBD
+B $5BA5,48,8
 B $5BD5,43,8*5,3 gets IX pointed at it by $5B32
 b $5C00 Graphics
 D $5C00 #HTML[#CALL:graphic($5C00,80,24,0,1)]
@@ -194,7 +194,7 @@ W $5CF0,2,2 Address of perp's mugshot attributes
 W $5CF2,2,2 Address of perp's mugshot bitmap
 @ $5CF4 label=ground_colour
 W $5CF4,2,2 Screen attributes used for the ground colour (a pair of matching bytes)
-W $5CF6,2,2 TBD
+W $5CF6,2,2
 W $5CF8,2,2 Loaded by $900F. Points to an array of 7 byte entries.
 W $5CFA,2,2 Address of graphic/object definitions.
 W $5CFC,2,2 -> "Entry 3"
@@ -244,7 +244,7 @@ W $5D3A,2,2 Points at "THIS IS NANCY..."
 W $5D3C,2,2 Points at "EMERGENCY HERE..."
 W $5D3E,2,2 Points at "IS FLEEING ..."
 W $5D40,2,2 Points at "VEHICLE IS..."
-B $5D42,1,1 TBD $FE (pause?)
+B $5D42,1,1 (pause?)
 W $5D43,2,2 -> Random choice of ("WE READ..." / "ROGER!" / "GOTCHA...")
 b $5D45 Messages - Nancy
 T $5D45,40,39:n1 "THIS IS NANCY AT CHASE H.Q. WE'VE GOT AN"
@@ -281,73 +281,73 @@ W $5E41,2,2 Address of tumbleweed_lods table
 B $5E43,1,1
 W $5E44,2,2 Address of barrier_lods table
 N $5E46 Entry 1
-B $5E46,3,3 TBD
+B $5E46,3,3
 W $5E49,2,2 Arg for routine passed in DE
 W $5E4B,2,2 -> Routine at $9252
 N $5E4D Entry 2 (empty)
 B $5E4D,3,3
 W $5E50,4,2
 N $5E54 Entry 3
-B $5E54,3,3 TBD
+B $5E54,3,3
 W $5E57,2,2 Arg for routine passed in DE
 W $5E59,2,2 -> Routine at $9171
 N $5E5B Entry 4
-B $5E5B,3,3 TBD - remaining bytes of this entry
+B $5E5B,3,3 remaining bytes of this entry
 W $5E5E,2,2 Arg for routine passed in DE
 W $5E60,2,2 -> Routine at $9171. Loaded into HL at $9017 then jumped to.
 N $5E62 Entry 5
-B $5E62,3,3 TBD - remaining bytes of this entry
+B $5E62,3,3 remaining bytes of this entry
 W $5E65,2,2 Arg for routine passed in DE
 W $5E67,2,2 -> Routine at $9171
 N $5E69 Entry 6
-B $5E69,3,3 TBD - remaining bytes of this entry
+B $5E69,3,3 remaining bytes of this entry
 W $5E6C,2,2 Arg for routine passed in DE
 W $5E6E,2,2 -> Routine at $9171
 N $5E70 Entry 7
-B $5E70,3,3 TBD - remaining bytes of this entry
+B $5E70,3,3 remaining bytes of this entry
 W $5E73,2,2 Arg for routine passed in DE
 W $5E75,2,2 -> Routine at $9171
 N $5E77 Entry 8
-B $5E77,3,3 TBD - remaining bytes of this entry
+B $5E77,3,3 remaining bytes of this entry
 W $5E7A,2,2 Arg for routine passed in DE
 W $5E7C,2,2 Routine?
 N $5E7E Entry 9 (turn sign)
-B $5E7E,3,3 TBD - remaining bytes of this entry
+B $5E7E,3,3 remaining bytes of this entry
 W $5E81,2,2 -> -> turn_sign_lods
 W $5E83,2,2 -> Routine at $92E1
 N $5E85 Entry 10
-B $5E85,3,3 TBD
+B $5E85,3,3
 W $5E88,2,2 Arg
 W $5E8A,2,2 -> Routine at $924D
 N $5E8C Entry 11 (empty)
 B $5E8C,3,3
 W $5E8F,4,2
 N $5E93 Entry 12
-B $5E93,3,3 TBD
+B $5E93,3,3
 W $5E96,2,2 Arg
 W $5E98,2,2 -> Routine at $916C
 N $5E9A Entry 13
-B $5E9A,3,3 TBD
+B $5E9A,3,3
 W $5E9D,2,2 Arg
 W $5E9F,2,2 -> Routine at $916C
 N $5EA1 Entry 14
-B $5EA1,3,3 TBD
+B $5EA1,3,3
 W $5EA4,2,2 Arg
 W $5EA6,2,2 -> Routine at $916C
 N $5EA8 Entry 15
-B $5EA8,3,3 TBD
+B $5EA8,3,3
 W $5EAB,2,2 Arg
 W $5EAD,2,2 -> Routine at $916C
 N $5EAF Entry 16
-B $5EAF,3,3 TBD
+B $5EAF,3,3
 W $5EB2,2,2 Arg
 W $5EB4,2,2 -> Routine at $916C
 N $5EB6 Entry 17
-B $5EB6,3,3 TBD
+B $5EB6,3,3
 W $5EB9,2,2 Arg
 W $5EBB,2,2 -> Routine at $9278
 N $5EBD Entry 18 (turn sign)
-B $5EBD,3,3 TBD
+B $5EBD,3,3
 W $5EC0,2,2 Arg
 W $5EC2,2,2 -> Routine at $9278
 b $5EC4 Initial map segment
@@ -685,10 +685,10 @@ N $6AF4 Dust (8x1) pre-shifted
 N $6AF4 #HTML[#CALL:graphic($6AF4,8,1,1,1)]
 B $6AF4,2,2 Masked bitmap data
 W $6AF6,2,2 -> turn_sign_lods
-B $6AF8,20,8*2,4 TBD -- Read by $928D and $92F6
+B $6AF8,20,8*2,4 Read by $928D and $92F6
 N $6B0C Ref'd by graphic entry 8 and 17
 W $6B0C,2,2 -> turn_sign_lods
-B $6B0E,20,8*2,4 TBD
+B $6B0E,20,8*2,4
 N $6B22 Turn sign LOD
 @ $6B22 label=turn_sign_lods
 B $6B22,1,1 Width (bytes)
@@ -886,7 +886,7 @@ B $6EEA,1,1
 W $6EEB,2,2 Address of another LOD table
 B $6EED,20,8*2,4
 W $6F01,2,2 Address of another LOD table
-B $6F03,20,8*2,4 TBD
+B $6F03,20,8*2,4
 N $6F17 LOD
 @ $6F17 label=streetlamp_lods
 B $6F17,1,1 Width (bytes)
@@ -1307,13 +1307,13 @@ B $7E05,507,8*63,3
 g $8000 temporaries?
 @ $8000 label=test_mode_flag
 B $8000,1,1 Test mode enable flag (cheat mode)
-B $8001,1,1 TBD
+B $8001,1,1
 @ $8002 label=score_bcd
 B $8002,4,4 Score digits as BCD (4 bytes / 8 digits, little endian)
 B $8006,1,1 Incremented on reset?
 @ $8007 label=wanted_stage_number
 B $8007,1,1 Stage number we're loading (1..5 or 6 for end credits)
-B $8008,12,8,4 TBD
+B $8008,12,8,4
 c $8014 Load a stage
 D $8014 Used by the routine at #R$8401.
 @ $8014 label=load_stage
@@ -1898,7 +1898,7 @@ C $868F,2 A -= $1F   A is now a tile index
 C $8691,1 multiply by 8 - size of tile
 C $8693,1 why the different rotates?
 C $8695,3 BC = A
-C $8698,2 RL B   shift in carry flag?
+C $8698,2 shift in carry flag?
 C $869A,3 Address of base of tiles
 C $869D,1 Point at tile we need
 N $86A0 label=loop_86a0
@@ -1932,7 +1932,7 @@ C $86E5,3 Loop
 C $86E8,2 4 messages to print
 C $86EA,3 Address of pre_game_messages
 C $86ED,2 Flags TBD
-C $86EF,1 HL-- TBD
+C $86EF,1 HL--
 C $86F0,3 Call print_message
 C $86F3,2 Loop while B
 C $86F5,1 Return
@@ -1949,11 +1949,11 @@ W $8724,2,2 road_leftside_ptr (note: reuse of road curvature data)
 W $8726,2,2 road_hazard_ptr
 N $8728 20 bytes copied to hazards[0]
 B $8728,1,1 Used flag
-B $8729,8,8 TBD
-W $8731,2,2 TBD
+B $8729,8,8
+W $8731,2,2
 W $8733,2,2 Routine at $ADF9 (it's just a RET)
-W $8735,2,2 TBD
-B $8737,5,5 TBD
+W $8735,2,2
+B $8737,5,5
 c $873C Escape scene
 D $873C Used by the routine at #R$8401.
 @ $873C label=escape_scene
@@ -2054,7 +2054,6 @@ C $8894,3 Return if a turbo boost is in effect
 C $8897,5 Return if no turbo boosts are left
 C $889C,2 Set 60 ticks of boost
 C $889E,3 HL -> Random choice of (WHOAAAAA! / GREAT! / ONE MORE TIME.)
-C $88A1,2 TBD
 C $88A3,3 Call chatter
 C $88A6,3 Exit via turbo_sfx_play_hook
 N $88A9 This entry point is used by the routine at #R$9BCF.
@@ -2215,7 +2214,7 @@ C $8A6A,5 Return if transition_control != 0
 C $8A6F,1 Unbank
 C $8A70,3 Jump to hpc_stage5 if perp_caught_stage is five
 N $8A73 Otherwise all of the caught stages are complete and we can move on to the next stage.
-C $8A73,1 TBD -- Where's the PUSH?
+C $8A73,1 [Where's the PUSH?]
 C $8A74,3 Call silence_audio_hook
 C $8A77,4 Increment wanted_stage_number
 C $8A7B,3 Jump to main_loop
@@ -2375,7 +2374,7 @@ C $8C53,3 #REGde = $190
 C $8C56,2 Exit via hpc_set_perp_pos
 b $8C58 End of level messages
 @ $8C58 label=score_messages
-B $8C58,3,3 TBD
+B $8C58,3,3
 B $8C5B,1,1 Attribute (red)
 W $8C5C,2,2 Back buffer address
 W $8C5E,2,2 Attribute address
@@ -2390,37 +2389,32 @@ B $8C95,1,1 Attribute (red)
 W $8C96,2,2 Back buffer address
 W $8C98,2,2 Attribute address
 T $8C9A,22,21:n1 "SCORE                 " -- double height
-B $8CB0,2,2
 @ $8CB2 label=sighting_message
-B $8CB2,3,3 TBD
+B $8CB0,5,2,3
 B $8CB5,1,1 Attribute (black)
 W $8CB6,2,2 Back buffer address
 W $8CB8,2,2 Attribute address
 T $8CBA,26,25:n1 "SIGHTING OF TARGET VEHICLE"
-B $8CD4,2,2
 @ $8CD6 label=pull_over_message
-B $8CD6,3,3 TBD
+B $8CD4,5,2,3
 B $8CD9,1,1 Attribute (black)
 W $8CDA,2,2 Back buffer address
 W $8CDC,2,2 Attribute address
 T $8CDE,20,19:n1 "OK! PULL OVER CREEP!"
-B $8CF2,2,2
 @ $8CF4 label=game_over_message
-B $8CF4,3,3 TBD
+B $8CF2,5,2,3
 B $8CF7,1,1 Attribute (black)
 W $8CF8,2,2 Back buffer address
 W $8CFA,2,2 Attribute address
 T $8CFC,9,8:n1 "GAME OVER"
-B $8D05,2,2
 @ $8D07 label=time_up_message
-B $8D07,3,3 TBD
+B $8D05,5,2,3
 B $8D0A,1,1 Attribute (black)
 W $8D0B,2,2 Back buffer address
 W $8D0D,2,2 Attribute address
 T $8D0F,7,6:n1 "TIME UP"
-B $8D16,2,2
 @ $8D18 label=continue_messages
-B $8D18,3,3 TBD
+B $8D16,5,2,3
 B $8D1B,1,1 Attribute (black)
 W $8D1C,2,2 Back buffer address
 W $8D1E,2,2 Attribute address
@@ -2794,7 +2788,6 @@ C $9086,1 A += L
 C $9087,1 A -= C
 C $9088,3 *$90F2 = A
 C $908B,2 A = B - 1
-C $908D,2 CP $09
 C $9091,2 A = $09
 C $9093,1 B = A
 C $9094,5 HL = A * 2 + DE
@@ -2806,7 +2799,6 @@ C $90A5,3 A = IX[1]
 C $90A8,1 Set flags
 C $90AD,6 A = IX[0] + $18 - C
 C $90B5,2 A -= 8
-C $90B9,2 CP 8
 C $90BD,6 A >>= 3
 C $90C3,1 D = A
 C $90C4,4 IX -= 2
@@ -3224,7 +3216,6 @@ C $955B,3 Move result to #REGbc
 C $955E,2 Add it to #REGix to complete the jump target
 C $9560,2 Point #REGde at table of flipped bytes at $EF00
 C $9562,1 Bank
-C $9563,2 TBD
 C $9565,2 Jump into body of loop
 @ $9567 label=psf_even_continue
 C $9567,1 Bank
@@ -3236,8 +3227,7 @@ C $956E,1 Calculate address of next bitmap scanline
 @ $956F label=psf_even_body
 C $956F,1 Put it in #REGsp (so we can use POP for speed)
 C $9570,1 Unbank
-C $9571,1 TBD [check elsewhere too]
-C $9572,1 TBD
+C $9571,1 [check elsewhere too]
 C $9573,2 Jump table
 C $9575,1 Transfer two bitmap bytes (16 pixels) from the "stack" to screen buffer with flipping
 C $9576,1 Set flip table address
@@ -3249,7 +3239,6 @@ C $957D,1 Advance backwards
 C $957E,9 Transfer another 16 pixels
 C $9587,9 Transfer another 16 pixels
 C $9590,8 Transfer another 16 pixels
-C $9598,1 TBD
 C $9599,1 Restore #REGhl
 C $959A,2 Save H in A then H--
 C $959C,2 Extract low four bits of row address
@@ -3269,7 +3258,6 @@ C $95C4,3 Move result to #REGbc
 C $95C7,2 Add it to #REGix to complete the jump target
 C $95C9,2 Point #REGde at table of flipped bytes at $EF00
 C $95CB,1 Bank
-C $95CC,2 TBD
 C $95CE,2 Jump into body of loop
 @ $95D0 label=psf_odd_continue
 C $95D0,1 Bank
@@ -3281,8 +3269,6 @@ C $95D7,1 Calculate address of next bitmap scanline
 @ $95D8 label=psf_odd_body
 C $95D8,1 Put it in #REGsp (so we can use POP for speed)
 C $95D9,1 Unbank
-C $95DA,1 TBD
-C $95DB,1 TBD
 C $95DC,2 Jump table
 C $95DE,1 Transfer two bitmap bytes (16 pixels) from the "stack" to screen buffer with flipping
 C $95DF,1 Set flip table address
@@ -3294,7 +3280,6 @@ C $95E6,1 Advance backwards
 C $95E7,9 Transfer another 16 pixels
 C $95F0,9 Transfer another 16 pixels
 C $95F9,4 Transfer another 8 pixels
-C $95FD,1 TBD
 C $95FE,1 Restore #REGhl
 C $95FF,2 Save H in A then H--
 N $9601 Decrement the screen address.
@@ -3374,14 +3359,14 @@ B $98A9,1,1 Pilot ($00)
 W $98AA,2,2 -> "THIS IS SPECIAL INVESTIGATION AIRBORNE."
 W $98AC,2,2 -> "THE TARGET VEHICLE HAS TURNED"
 W $98AE,2,2 -> "LEFT UP AHEAD... OVER."
-B $98B0,1,1 TBD $FE
+B $98B0,1,1
 W $98B1,2,2 -> Tony: "WE READ LOUD AND CLEAR! OVER." <STOP>
 @ $98B3 label=pilot_turn_right_chatter
 B $98B3,1,1 Pilot ($00)
 W $98B4,2,2 -> "THIS IS SPECIAL INVESTIGATION AIRBORNE."
 W $98B6,2,2 -> "THE TARGET VEHICLE HAS TURNED"
 W $98B8,2,2 -> "RIGHT UP AHEAD... OVER."
-B $98BA,1,1 TBD $FE
+B $98BA,1,1
 W $98BB,2,2 -> Tony: "WE READ LOUD AND CLEAR! OVER." <STOP>
 @ $98BD label=acknowledge_chatter
 B $98BD,1,1 Three-way random choice ($FC)
@@ -3854,7 +3839,6 @@ C $9CFE,2 if A is not zero goto 9D07
 C $9D00,2 top bit set?
 C $9D02,2 jump if so
 C $9D04,1 where's the matching PUSH? or are we just discarding the RET addr?
-C $9D05,2 jump 9d0e
 @ $9D07 label=j_9d07
 C $9D07,2 C = 0
 C $9D09,2 A += 48
@@ -3900,7 +3884,6 @@ C $9D42,1 Bank
 C $9D43,1 E = A -- turn score into 00nn00
 C $9D44,1 A = 0
 C $9D45,1 D = 0
-C $9D46,3 CALL $9CD6
 C $9D49,1 Unbank
 C $9D4A,2 B--, goto cob_overtake_loop
 C $9D4C,4 $A22B = 0
@@ -4347,7 +4330,7 @@ W $A186,2,2 Attribute address of horizon. Points to last attribute on the line w
 N $A188 +0 is a used flag, either $00 or $FF +1 looks distance related +2/3/4/5/6 TBD +7 byte  TBD used by hazard_hit +8 byte  gets copied from the hazards table +9 word  address of e.g. car lod +11 word  address of routine +13 word  set to $190 by fully_smashed (likely a horizontal position) +15 byte  TBD used by hazard_hit, counter which gets set to 2 then reduced +17 byte  TBD used by hazard_hit, indexes table $ACDB +18 byte  TBD used by hazard_hit +19 byte  TBD used by hazard_hit
 @ $A188 label=hazards
 B $A188,120,8 Set by $843B. Groups of 20 bytes. This area looks like a table of spawned vehicles or objects. The first entry is the perp.
-B $A200,32,8 TBD
+B $A200,32,8
 B $A220,1,1 #R$8014 sets this to the level number that it's going to load [but I don't see it using it again]. #R$858C sets it to $F8. #R$BC3E uses it to avoid some work.
 B $A221,1,1 $ABCE, $AD0D reads  I don't yet see what writes it.
 B $A222,1,1 $8F9A reads  $ADA0, $AE83, $AF41 writes
@@ -4429,7 +4412,7 @@ B $A24F,1,1 Smoke time remaining. This is set to 4 on low-to-high gear changes a
 B $A250,1,1 Turn speed (0/1/2) ignoring direction
 @ $A251 label=flip
 B $A251,1,1 1 => Horizontally flip the hero car, 0 => Don't
-B $A252,1,1 TBD
+B $A252,1,1
 @ $A253 label=gear
 B $A253,1,1 0 => Low gear, 1 => High gear
 B $A254,1,1 Cleared by $884B
@@ -4981,7 +4964,6 @@ C $A8EA,6 If A < B IX[18] = B
 C $A8F0,8 If A > C IX[18] = C
 C $A8F8,3 A = IX[18]
 C $A8FB,5 Jump to $A926 if A == IX[17]
-C $A900,2 RL B
 C $A902,3 HL = $A7E6   -> $A7E7 data block
 C $A905,1 C = A
 C $A906,1 A += L
@@ -5014,8 +4996,7 @@ C $A94A,2 A = 3
 C $A94C,3 Call chatter
 C $A94F,3 BC = $0302
 C $A952,3 Call start_sfx
-c $A955 TBD
-D $A955 Used by the routines at #R$8401 and #R$852A.
+c $A955 Used by the routines at #R$8401 and #R$852A.
 @ $A955 label=main_loop_18
 C $A955,5 Return if $A248 is zero
 C $A95A,5 Return if $A254 is zero
@@ -5028,8 +5009,7 @@ C $A972,5 Self modify 'LD A' at $A97E to load 1
 C $A977,3 Self modify 'LD A' at $COBB to load 1
 C $A97A,3 Self modify 'LD A' at $A9DE to load 1
 C $A97D,1 Return
-c $A97E TBD
-D $A97E Used by the routines at #R$8401 and #R$852A.
+c $A97E Used by the routines at #R$8401 and #R$852A.
 @ $A97E label=main_loop_20
 C $A97E,2 A = <...>  -- Self modified by $A974
 C $A980,2 Return if #REGa is zero
@@ -5135,7 +5115,6 @@ C $AA47,3 A = *$A23F
 C $AA4A,2 B = 8
 C $AA4C,2 A &= $E0
 @ $AA4E label = subAA38_loop1
-C $AA4E,1 RLA
 C $AA4F,3 If carry HL += DE
 C $AA52,1 HL <<= 1
 C $AA53,2 Loop $AA4E while B
@@ -5296,7 +5275,6 @@ C $ABFF,2 Check the flag byte to see if the entry is used (it's either $00 if em
 C $AC01,2 Jump to sh_found_spare if it didn't carry
 C $AC03,1 Move to the next entry
 C $AC04,2 Loop while iterations remain
-C $AC06,1 TBD
 C $AC07,1 Return
 N $AC08 #REGhl points to the unused entry
 @ $AC08 label=sh_found_spare
@@ -6024,7 +6002,7 @@ C $B77C,3 Multiply by 8
 C $B77F,5 Add to IX
 C $B784,2 H = $EF
 C $B794,8 Return
-B $B79C,8,8 TBD
+B $B79C,8,8
 C $B7A4,1 Load a bitmap and mask pair (B,C)
 C $B7A5,1 Set flip table index (assuming table is aligned)
 C $B7A6,1 Load the screen pixels
@@ -6054,7 +6032,6 @@ C $B815,1 HL += DE
 @ $B816 label=j_b816
 C $B816,1 HL += HL
 C $B817,2 DJNZ j_b812
-C $B819,1 RLA
 C $B81C,1 HL += DE
 C $B81E,1 HL += BC
 C $B820,1 D--
@@ -6537,7 +6514,7 @@ C $C084,2 Jump to rm_c096 if zero
 C $C086,3 IX[1]--
 C $C089,3 Jump to rm_c072_continue if non-zero
 C $C08C,4 IX[0] = 0  -- mark the hazard entry unused
-C $C090,1 RLA  -- testing top bit of A
+C $C090,1 testing top bit of A
 C $C091,2 Jump to rm_c072_continue if no carry
 C $C093,1 C++
 C $C094,2 Jump to rm_c072_continue
@@ -6821,152 +6798,152 @@ B $CEAA,48,8
 b $CEDA Hero car drawing instructions
 D $CEDA 9 of them. 20 bytes per entry.
 @ $CEDA label=hero_car_refs
-B $CEDA,1,1 TBD
+B $CEDA,1,1
 B $CEDB,1,1 rows
 W $CEDC,2,2 -> middle graphic
-B $CEDE,1,1 TBD
+B $CEDE,1,1
 B $CEDF,1,1 rows
 W $CEE0,2,2 -> top graphic
-B $CEE2,1,1 TBD
+B $CEE2,1,1
 B $CEE3,1,1 rows
 W $CEE4,2,2 -> bottom graphic
-B $CEE6,1,1 TBD
+B $CEE6,1,1
 B $CEE7,1,1 rows
 W $CEE8,2,2 -> left graphic
-B $CEEA,1,1 TBD
+B $CEEA,1,1
 B $CEEB,1,1 rows
 W $CEEC,2,2 -> right graphic
-B $CEEE,1,1 TBD
+B $CEEE,1,1
 B $CEEF,1,1 rows
 W $CEF0,2,2 -> middle graphic
-B $CEF2,1,1 TBD
+B $CEF2,1,1
 B $CEF3,1,1 rows
 W $CEF4,2,2 -> top graphic
-B $CEF6,1,1 TBD
+B $CEF6,1,1
 B $CEF7,1,1 rows
 W $CEF8,2,2 -> bottom graphic
-B $CEFA,1,1 TBD
+B $CEFA,1,1
 B $CEFB,1,1 rows
 W $CEFC,2,2 -> left graphic
-B $CEFE,1,1 TBD
+B $CEFE,1,1
 B $CEFF,1,1 rows
 W $CF00,2,2 -> right graphic
-B $CF02,1,1 TBD
+B $CF02,1,1
 B $CF03,1,1 rows
 W $CF04,2,2 -> middle graphic
-B $CF06,1,1 TBD
+B $CF06,1,1
 B $CF07,1,1 rows
 W $CF08,2,2 -> top graphic
-B $CF0A,1,1 TBD
+B $CF0A,1,1
 B $CF0B,1,1 rows
 W $CF0C,2,2 -> bottom graphic
-B $CF0E,1,1 TBD
+B $CF0E,1,1
 B $CF0F,1,1 rows
 W $CF10,2,2 -> left graphic
-B $CF12,1,1 TBD
+B $CF12,1,1
 B $CF13,1,1 rows
 W $CF14,2,2 -> right graphic
-B $CF16,1,1 TBD
+B $CF16,1,1
 B $CF17,1,1 rows
 W $CF18,2,2 -> middle graphic
-B $CF1A,1,1 TBD
+B $CF1A,1,1
 B $CF1B,1,1 rows
 W $CF1C,2,2 -> top graphic
-B $CF1E,1,1 TBD
+B $CF1E,1,1
 B $CF1F,1,1 rows
 W $CF20,2,2 -> bottom graphic
-B $CF22,1,1 TBD
+B $CF22,1,1
 B $CF23,1,1 rows
 W $CF24,2,2 -> left graphic
-B $CF26,1,1 TBD
+B $CF26,1,1
 B $CF27,1,1 rows
 W $CF28,2,2 -> right graphic
-B $CF2A,1,1 TBD
+B $CF2A,1,1
 B $CF2B,1,1 rows
 W $CF2C,2,2 -> middle graphic
-B $CF2E,1,1 TBD
+B $CF2E,1,1
 B $CF2F,1,1 rows
 W $CF30,2,2 -> top graphic
-B $CF32,1,1 TBD
+B $CF32,1,1
 B $CF33,1,1 rows
 W $CF34,2,2 -> bottom graphic
-B $CF36,1,1 TBD
+B $CF36,1,1
 B $CF37,1,1 rows
 W $CF38,2,2 -> left graphic
-B $CF3A,1,1 TBD
+B $CF3A,1,1
 B $CF3B,1,1 rows
 W $CF3C,2,2 -> right graphic
-B $CF3E,1,1 TBD
+B $CF3E,1,1
 B $CF3F,1,1 rows
 W $CF40,2,2 -> middle graphic
-B $CF42,1,1 TBD
+B $CF42,1,1
 B $CF43,1,1 rows
 W $CF44,2,2 -> top graphic
-B $CF46,1,1 TBD
+B $CF46,1,1
 B $CF47,1,1 rows
 W $CF48,2,2 -> bottom graphic
-B $CF4A,1,1 TBD
+B $CF4A,1,1
 B $CF4B,1,1 rows
 W $CF4C,2,2 -> left graphic
-B $CF4E,1,1 TBD
+B $CF4E,1,1
 B $CF4F,1,1 rows
 W $CF50,2,2 -> right graphic
-B $CF52,1,1 TBD
+B $CF52,1,1
 B $CF53,1,1 rows
 W $CF54,2,2 -> middle graphic
-B $CF56,1,1 TBD
+B $CF56,1,1
 B $CF57,1,1 rows
 W $CF58,2,2 -> top graphic
-B $CF5A,1,1 TBD
+B $CF5A,1,1
 B $CF5B,1,1 rows
 W $CF5C,2,2 -> bottom graphic
-B $CF5E,1,1 TBD
+B $CF5E,1,1
 B $CF5F,1,1 rows
 W $CF60,2,2 -> left graphic
-B $CF62,1,1 TBD
+B $CF62,1,1
 B $CF63,1,1 rows
 W $CF64,2,2 -> right graphic
-B $CF66,1,1 TBD
+B $CF66,1,1
 B $CF67,1,1 rows
 W $CF68,2,2 -> middle graphic
-B $CF6A,1,1 TBD
+B $CF6A,1,1
 B $CF6B,1,1 rows
 W $CF6C,2,2 -> top graphic
-B $CF6E,1,1 TBD
+B $CF6E,1,1
 B $CF6F,1,1 rows
 W $CF70,2,2 -> bottom graphic
-B $CF72,1,1 TBD
+B $CF72,1,1
 B $CF73,1,1 rows
 W $CF74,2,2 -> left graphic
-B $CF76,1,1 TBD
+B $CF76,1,1
 B $CF77,1,1 rows
 W $CF78,2,2 -> right graphic
-B $CF7A,1,1 TBD
+B $CF7A,1,1
 B $CF7B,1,1 rows
 W $CF7C,2,2 -> middle graphic
-B $CF7E,1,1 TBD
+B $CF7E,1,1
 B $CF7F,1,1 rows
 W $CF80,2,2 -> top graphic
-B $CF82,1,1 TBD
+B $CF82,1,1
 B $CF83,1,1 rows
 W $CF84,2,2 -> bottom graphic
-B $CF86,1,1 TBD
+B $CF86,1,1
 B $CF87,1,1 rows
 W $CF88,2,2 -> left graphic
-B $CF8A,1,1 TBD
+B $CF8A,1,1
 B $CF8B,1,1 rows
 W $CF8C,2,2 -> right graphic
 N $CF8E Hero car adornments (shadow, smoke?)
 @ $CF8E label=hero_car_shadow
-B $CF8E,1,1 TBD
+B $CF8E,1,1
 B $CF8F,1,1 rows
 W $CF90,2,2 -> data
 N $CF92 Hero car adornments (shadow, smoke?)
-B $CF92,1,1 TBD
+B $CF92,1,1
 B $CF93,1,1 rows
 W $CF94,2,2 -> data
 N $CF96 Hero car adornments (shadow, smoke?)
-B $CF96,1,1 TBD
+B $CF96,1,1
 B $CF97,1,1 rows
 W $CF98,2,2 -> data
 @ $CF9A label=hero_car_smoke
@@ -7225,26 +7202,20 @@ W $E2B2,2,2 Loop
 N $E2B4 Perp escape scene, lanes
 B $E2B4,1,1 Length byte ?
 B $E2B5,1,1 Lanes byte ?
-B $E2B6,1,1 TBD
-B $E2B7,1,1 TBD
-B $E2B8,1,1 TBD
-B $E2B9,1,1 TBD
-B $E2BA,1,1 TBD
-B $E2BB,1,1 TBD
+B $E2B6,6,1
 B $E2BC,2,2 Escape, Command 0 (Continue at <Address>)
 W $E2BE,2,2 Loop (partial)
 N $E2C0 Perp escape scene, lane objects [not sure now, could be right curve road]
-B $E2C0,1,1 TBD
-B $E2C1,1,1 TBD
+B $E2C0,2,1
 B $E2C2,2,2 Escape, Command 0 (Continue at <Address>)
 W $E2C4,2,2 Loop (partial)
 N $E2C6 Road split, curvature
-B $E2C6,1,1 TBD
+B $E2C6,1,1
 B $E2C7,1,1 Curve left (67%)
 B $E2C8,2,2 Escape, Command 0 (Continue at <Address>)
 W $E2CA,2,2 Loop (partial)
 N $E2CC Road split, height
-B $E2CC,1,1 TBD
+B $E2CC,1,1
 B $E2CD,2,2 Escape, Command 0 (Continue at <Address>)
 W $E2CF,2,2 Loop
 b $E2D1 Road split data
@@ -7310,10 +7281,9 @@ B $E8A6,40,8
 N $E8CE Diamond zoom in animation mask (8x8, 6 frames)
 N $E8CE #HTML[#CALL:anim($E8CE,8,8,0,0,6)]
 N $E8CE #HTML[#CALL:graphic($E8CE,8,6*8,0,0)]
-B $E8CE,48,8
-B $E8FE,12,8,4 TBD
+B $E8CE,60,8*7,4
 W $E90A,2,2 -> "STOP THE TAPE" + "PRESS ANY KEY" message set
-B $E90C,3,3 TBD
+B $E90C,3,3
 c $E90F Routine at E90F
 C $E925,3 Call clear_screen
 C $E928,3 Point #REGhl at input menu messages (NUL terminated)
@@ -7616,9 +7586,9 @@ b $EE30 "SHOCKED<ENTER>" ?
 B $EE30,8,8
 b $EE38 temp input scheme buffer?
 B $EE38,5,5
-b $EE3D TBD
+b $EE3D
 B $EE3D,3,3
-b $EE40 TBD
+b $EE40
 B $EE40,46,8*5,6
 c $EE6E Routine at EE6E
 D $EE6E Used by the routine at #R$EE9E.
