@@ -81,6 +81,9 @@
 > $4000 ; $5B00..$5BFF is a pre-shifted version of the backdrop
 > $4000 ; $5C00..$5CFF is the regular version of the backdrop
 > $4000 ; $8DBB (word) is the address of the current transition animation
+> $4000 ; $E500        is ?
+> $4000 ; $E600..$E7FF is road drawing data
+> $4000 ; $E900        is a table
 > $4000 ; $EA30..$EAFE (words) is 104 words related to road drawing
 > $4000 ; $EB00        is ?
 > $4000 ; $ED28        is the stack (growing downwards)
@@ -2023,11 +2026,11 @@ C $8830,15 Zero $EE00..$EEFF, and reset road_buffer_offset to $EE00 [duplicates 
 @ $883F label=loop883f
 C $883F,2 32 iterations   - affects start position?
 C $8841,1 Preserve BC
-C $8842,3 HL = $A23F
+C $8842,3 Address of fast_counter
 C $8845,3 Call HUGE function
 C $8848,1 Restore BC
 C $8849,2 Loop
-C $884B,4 $A254 = 0
+C $884B,4 $A254 = 0  -- clear spawning flag
 C $884F,2 Transition type?
 C $8851,3 Call setup_transition
 C $8854,3 Call clear_screen_set_attrs
@@ -2230,9 +2233,9 @@ C $8A94,7 HL = road_pos + 12
 C $8A9C,5 HL -= $126
 C $8AA2,2 Jump to $8AA5 if HL < $126  -- Suspect this is driving the car to stop the perp
 C $8AA5,3 road_pos = HL
-C $8AA8,5 A = *$A23F + $20
+C $8AA8,5 A = fast_counter + 32
 C $8AAD,1 Return if carry
-C $8AAE,3 $A23F = A
+C $8AAE,3 fast_counter = A
 C $8AB1,1 Return
 C $8AB2,5 perp_caught_stage = 3
 C $8AB7,4 $8ABF = 4
@@ -2699,6 +2702,7 @@ C $8F87,5 A = road_buffer_offset + $73
 C $8F8C,3 HL = $EE00 | A
 C $8F8F,4 IX = $EAB0
 C $8F93,3 BC = $1420
+C $8F96,4 Preserve IX, HL, BC
 C $8F9D,1 Set flags
 C $8FA4,1 Self modified
 C $8FA5,1 Self modified
@@ -2706,6 +2710,7 @@ C $8FA6,1 Self modified
 C $8FA7,1 Self modified
 C $8FA8,1 Self modified
 C $8FA9,1 Self modified
+C $8FAA,4 Restore IX, HL, BC
 C $8FAE,1 A = *HL
 C $8FAF,1 Set flags
 C $8FB2,4 IX += 2
@@ -2755,6 +2760,7 @@ C $9023,1 E = A
 C $9024,4 Jump if A == 2
 C $9028,3 A = IX[1]
 C $902B,1 Set flags
+C $902E,4 Preserve IX, HL, BC
 C $9032,8 DE = E * 7
 C $903A,4 Set return address
 C $903E,3 turn sign lods
@@ -2765,14 +2771,18 @@ C $9046,2 A = *HL++
 C $9048,1 H = *HL
 C $9049,1 L = A
 @ $904B label=return_904B
+C $904B,4 Restore IX, HL, BC
 C $904F,3 Loop?
-c $9052 Routine at 9052
+c $9052 Routine at 9052 - gets hit on stage 3 when drawing the overhead structure graphics. sampled IX=$EAB2 DE=$6F26 HL=$9052 BC=$1420 (when in stage3!)
+@ $9052 label=draw_overhead
+C $9052,4 Preserve
 C $9056,3 A = IX[1]
 C $9059,1 Set flags
+C $905D,4 Restore (restore DE to HL)
 C $9061,1 HL++
 C $9062,3 DE = wordat(HL); HL++
 C $9065,2 DE += 2
-C $9067,5 A = *$A23F & $E0
+C $9067,5 A = fast_counter & $E0
 C $906C,1 L = A
 C $9071,1 A -= L
 C $9076,1 A -= L
@@ -2850,7 +2860,7 @@ C $916C,3 HL = $9293
 C $9171,3 HL = $92FC    -- entry point
 C $9174,3 *$91CE = HL
 C $9177,3 *$9244 = HL
-C $917A,5 A = *$A23F & $E0
+C $917A,5 A = fast_counter & $E0
 C $917F,6 A -= A >> 2
 C $9189,3 L = A - L + B
 C $918C,2 H = $E6   ; $E6xx data
@@ -2924,7 +2934,7 @@ C $9252,3 HL = $92E2   graphic 1 uses this entry
 C $9255,1 A = B
 C $9256,2 CP 16
 C $9258,1 Return if A >= 16
-C $925A,5 A = (*$A23F) & $E0
+C $925A,5 A = fast_counter & $E0
 C $925F,1 L = A
 C $9260,4 L >>= 2
 C $9264,1 A -= L
@@ -4327,7 +4337,7 @@ B $A181,4,4 Distance as displayed. Stored as one digit per byte.
 B $A185,1,1 If set causes no objects or hazards to be emitted.
 @ $A186 label=horizon_attribute
 W $A186,2,2 Attribute address of horizon. Points to last attribute on the line which shows the ground. (e.g. $59DF)
-N $A188 +0 is a used flag, either $00 or $FF +1 looks distance related +2/3/4/5/6 TBD +7 byte  TBD used by hazard_hit +8 byte  gets copied from the hazards table +9 word  address of e.g. car lod +11 word  address of routine +13 word  set to $190 by fully_smashed (likely a horizontal position) +15 byte  TBD used by hazard_hit, counter which gets set to 2 then reduced +17 byte  TBD used by hazard_hit, indexes table $ACDB +18 byte  TBD used by hazard_hit +19 byte  TBD used by hazard_hit
+N $A188 +0 is a used flag, either $00 or $FF +1 looks distance related +2/3/4/5/6 TBD +7 byte  TBD used by hazard_hit +8 byte  gets copied from the hazards table +9 word  address of e.g. car lod +11 word  address of routine +13 word  set to $190 by fully_smashed (likely a horizontal position) +15 byte  TBD used by hazard_hit, counter which gets set to 2 then reduced +17 byte  TBD used by hazard_hit, indexes table $ACDB +18 byte  TBD used by hazard_hit +19 byte TBD used by hazard_hit
 @ $A188 label=hazards
 B $A188,120,8 Set by $843B. Groups of 20 bytes. This area looks like a table of spawned vehicles or objects. The first entry is the perp.
 B $A200,32,8
@@ -4382,7 +4392,8 @@ B $A23C,1,1 $8909, $BE28 reads  $A3FA, $BDFF, $BE2C writes
 B $A23D,1,1 $BE33 reads  $890F, $A3D2, $BDFC, $BE37 writes
 @ $A23E label=off_road
 B $A23E,1,1 0 => Fully on-road, 1 => One wheel off-road, 2 => Both wheels off-road [samples: $B104, $B40C reads  $A3FD, $A52A, $B07D, $B322, $B404, $B443 writes]
-B $A23F,1,1 numerous references, seems related to level position
+@ $A23F label=fast_counter
+B $A23F,1,1 this seems to be a very fast counter related to level position
 @ $A240 label=road_buffer_offset
 W $A240,2,2 Current offset (in bytes) into the road buffer at $EE00..$EEFF. Much of the code treats this as a byte. Used by $B8F6, $BBF7, $87E0.
 @ $A242 label=curvature_byte
@@ -4416,7 +4427,8 @@ B $A251,1,1 1 => Horizontally flip the hero car, 0 => Don't
 B $A252,1,1
 @ $A253 label=gear
 B $A253,1,1 0 => Low gear, 1 => High gear
-B $A254,1,1 Cleared by $884B
+@ $A254 label=another_spawning_flag
+B $A254,1,1 Cleared by $884B   suspected spawning flag (different to flag $A225)
 @ $A255 label=distance_bcd
 B $A255,2,2 Distance as BCD (2 bytes / 4 digits, little endian)
 B $A257,1,1 ...
@@ -4872,7 +4884,7 @@ c $A7F3 Spawns cars
 D $A7F3 Used by the routines at #R$8401 and #R$852A.
 @ $A7F3 label=spawn_cars
 C $A7F3,9 Return if perp_caught_stage or stop_car_spawning flags are set
-C $A7FC,3 A = *$A254
+C $A7FC,3 A = *$A254  -- spawning flag
 C $A7FF,2 Return if $A254 is zero
 C $A801,4 A = <...> - A  Self modified below
 C $A805,3 Self modify above
@@ -4998,6 +5010,7 @@ C $A94C,3 Call chatter
 C $A94F,3 BC = $0302
 C $A952,3 Call start_sfx
 c $A955 Used by the routines at #R$8401 and #R$852A.
+D $A955 Used by the routines at #R$8401 and #R$852A.
 @ $A955 label=main_loop_18
 C $A955,5 Return if $A248 is zero
 C $A95A,5 Return if $A254 is zero
@@ -5011,6 +5024,7 @@ C $A977,3 Self modify 'LD A' at $COBB to load 1
 C $A97A,3 Self modify 'LD A' at $A9DE to load 1
 C $A97D,1 Return
 c $A97E Used by the routines at #R$8401 and #R$852A.
+D $A97E Used by the routines at #R$8401 and #R$852A.
 @ $A97E label=main_loop_20
 C $A97E,2 A = <...>  -- Self modified by $A974
 C $A980,2 Return if #REGa is zero
@@ -5112,7 +5126,7 @@ C $AA42,2 D = 0
 C $AA44,1 H = D -- ie HL = 0
 C $AA45,1 L = D
 C $AA46,1 E = A
-C $AA47,3 A = *$A23F
+C $AA47,3 A = fast_counter
 C $AA4A,2 B = 8
 C $AA4C,2 A &= $E0
 @ $AA4E label = subAA38_loop1
@@ -5263,6 +5277,8 @@ C $AB99,1 Return
 c $AB9A Routine at AB9A
 D $AB9A Used by the routines at #R$8401, #R$852A and #R$873C.
 @ $AB9A label=spawn_hazards
+C $AB9A,3 Spawning flag
+C $AB9E,1 Return if zero
 N $ABF6 Spawns hazards in the road, like barriers and tumbleweeds.
 N $ABF6 I:B Stored at entry+5  e.g. $20/$46/$56/$50/$B4
 N $ABF6 I:C Stored at entry+1  e.g. $13
@@ -5346,6 +5362,7 @@ c $AD0D Routine at AD0D
 D $AD0D Used by the routine at #R$BDFB.
 c $AD51 Routine at AD51
 D $AD51 Used by the routines at #R$AD0D and #R$ADA0.
+C $AD71,3 A = fast_counter
 c $ADA0 Routine at ADA0
 D $ADA0 Used by the routines at #R$8401, #R$852A and #R$873C.
 @ $ADA0 label=main_loop_19
@@ -5363,6 +5380,7 @@ C $ADB8,1 Unbank
 C $ADB9,2 Move to next hazard
 C $ADBB,2 Loop while #REGb
 C $ADBD,1 Return
+C $AE03,3 A = fast_counter
 C $AE1B,4 Increment overtake_bonus
 C $AE1F,1 Return
 N $AECF This entry point is used by the routine at #R$8F5F.
@@ -5562,7 +5580,7 @@ C $B268,1 C = A
 C $B269,1 HL += BC
 C $B26A,3 A = *$A261
 C $B26D,1 C = A
-C $B26F,4 A = *$A23F - C
+C $B26F,4 A = fast_counter - C
 C $B273,1 Set flags
 C $B276,1 C = *HL
 C $B277,1 A -= C
@@ -6043,6 +6061,7 @@ B $B828,32,8
 c $B848 Routine at B848
 D $B848 Used by the routines at #R$8401, #R$852A and #R$873C.
 @ $B848 label=main_loop_11
+C $B8A1,3 A = fast_counter
 c $B8D2 Routine at B8D2
 D $B8D2 Used by the routine at #R$BDFB.
 C $B93E,3 Load jump counter
@@ -6051,15 +6070,94 @@ C $B962,2 E = *HL++  offset into B045
 C $B964,1 Load new jump value [sampled: $B060]
 C $B965,3 Set jump counter
 C $B968,4 HL = $B045 + E  points into jump values table
-C $B96C,28 Self modify $B079
+C $B96C,28 Self modify $B079 {Form road_buffer_offset }
 C $B988,5 Check fork_taken
 C $B98D,2 Jump if left fork was taken
+C $B9EC,1 A = 0
+C $B9ED,3 $A261 = 0
+C $B9F0,3 $A262 = 0
+C $B9F3,1 Return
 c $B9F4 Routine at B9F4
 D $B9F4 Used by the routines at #R$8401, #R$852A and #R$873C.
 @ $B9F4 label=main_loop_12
+C $B9F4,3 A = road_buffer_offset [as byte]
+C $B9F7,2 A += 64 -- is lanes data
+C $B9F9,3 DE = $EE00 | A
+C $B9FC,3 B=20, C=$E1 -- counter, mask
+C $B9FF,2 Counter/Index
+N $BA01 Suspect this is counting the distance to road split.
+C $BA01,1 Load a lanes byte
+C $BA02,5 Jump if (byte & $E1) == $E1
+C $BA07,1 Advance to next lanes byte (wrapping around)
+C $BA08,1 Increment counter
+C $BA09,2 Loop while B
+N $BA0B No road split found?
+C $BA0B,3 [road is still rendered if this is NOPped, but road is in wrong position]
+C $BA0E,4 Self modify return path
+C $BA12,3 must be data
+C $BA17,3 Self modify $BA35 to load $EA30
+C $BA1A,3 Self modify $BA3F to load $EB30
+C $BA1D,3 Self modify $BA44 to load $E930
+C $BA23,3 Self modify $BA27 to load ($E800 | A)
+C $BA26,1 Bank
+C $BA27,4 Self modified
+C $BA32,2 BC = HL
+C $BA38,2 DE = BC
+C $BA47,2 A += 2
+C $BA49,1 Unbank
+C $BA4A,3 Loop while A > 0 ?
+@ $BA4D label=ml12_exit
+C $BA4D,3 Restore original SP
+C $BA50,1 Return
+N $BA51 Handle road split.
+C $BA52,3 Set split road countdown
+C $BA57,5 Set split road visible
+C $BA5D,3 A = ~A + $69
+C $BA64,3 A = *DE & 4
+C $BA6F,2 A = -A
+C $BA74,4 Get road position
+C $BA78,2 A = 1
+C $BA7A,1 D--
+C $BA81,1 A = E
+C $BA86,2 Jump if E < 12
+C $BA88,1 A--
 C $BA89,3 Set fork_taken to #REGa
+C $BA8C,1 A++
 C $BA8E,3 Address of correct_fork
+C $BA91,1 Match?
+C $BA92,3 -> Tony: "LET'S GO. MR. DRIVER." <STOP>
+C $BA95,2 Jump if correct fork was taken
+C $BA99,3 A195 is horz position of perp car
+C $BA9C,5 A = wanted_stage_number + 4
+C $BAA1,1 D = A
+C $BAA2,1 A = 0
+C $BAA3,1 E = A
+C $BAA7,3 -> Raymond: "WHAT ARE YOU DOING MAN!!" / "THE BAD GUYS ARE GOING THE OTHER WAY." <STOP>
+C $BAAC,3 Call chatter
+C $BAB0,3 Spawning flag
+C $BAB4,2 Jump if zero
+C $BAB6,1 C = A
+C $BAB7,3 A = <mystery>
+C $BABA,1 A += C
+C $BABB,1 C = A
+C $BABC,2 A -= 2
+C $BAC0,1 C = A
+C $BAC1,3 DE = 16
+C $BAC4,1 HL += DE
+C $BAD0,3 A = fast_counter
+C $BAD3,4 A ROR 4
+C $BAD7,2 A &= $0F
+C $BAD9,2 A -= 16
+C $BADB,3 DE = $FF00 | A
+C $BADE,1 HL += DE
 C $BAE0,6 Jump if fork_taken was 1 (right fork taken)
+N $BAE6 Left fork was taken.
+C $BAEA,3 Get road position
+C $BAEF,3 Set road position
+N $BAF7 Right fork was taken.
+C $BAFB,3 Get road position
+C $BB01,3 Set road position
+C $BB08,3 Get road position
 c $BB69 Setup for road handling perhaps split related
 D $BB69 Used by the routine at #R$8401.
 @ $BB69 label=main_loop_27
@@ -6205,8 +6303,8 @@ D $BDFB Used by the routines at #R$8401, #R$852A and #R$873C.
 @ $BDFB label=read_map
 C $BDFB,4 ($A23D) = 0  -- state var TBD
 C $BDFF,3 ($A23C) = 0  -- state var TBD
-C $BE02,3 ($A254) = 0  -- state var TBD
-C $BE05,3 HL = $A23F
+C $BE02,3 ($A254) = 0  -- spawning flag
+C $BE05,3 HL = Address of fast_counter
 C $BE08,4 DE = speed
 C $BE0C,1 A = Bottom byte of speed
 C $BE0D,4 If speed < 255 then jump
@@ -6214,7 +6312,7 @@ C $BE11,2 Preserve
 C $BE13,3 Call subfunction $BE1F  -- processing something twice as much when at high speed?
 C $BE16,2 Restore
 @ $BE18 label=j_be18
-C $BE18,2 $A23F += bottom byte of speed in A
+C $BE18,2 fast_counter += bottom byte of speed in A
 C $BE1A,2 A = 0 doesn't seem self modified
 C $BE1C,3 Jump to j_c0d9 if no carry
 N $BE1F This entry point is used by the routine at #R$87DC.
@@ -6551,7 +6649,7 @@ C $C0D6,1 *HL = B
 @ $C0D7 label=rm_c0d7
 C $C0D7,2 A = 1
 @ $C0D9 label=rm_c0d9
-C $C0D9,5 *$A254 += A
+C $C0D9,5 *$A254 += A  -- spawning flag
 C $C0DE,3 Exit via $AD0D
 c $C0E1 Routine at C0E1
 D $C0E1 Used by the routines at #R$8401, #R$852A and #R$873C.
@@ -6595,10 +6693,13 @@ C $C139,3 A = 9 - A
 C $C13C,3 [15 when tunnel is small, 6 when fills screen]
 C $C15A,1 Return
 c $C15B Tunnel entrance/exit drawing code
+C $C1E6,3 A = fast_counter
 C $C221,21 Jump table (self modified)
 C $C236,177 Jump table (self modified)
 c $C2E7 Routine at C2E7
 D $C2E7 Used by the routine at #R$C452.
+C $C33D,3 A = fast_counter
+C $C3B5,3 A = fast_counter
 c $C452 Landscape related
 D $C452 Used by the routines at #R$8401, #R$852A and #R$873C.
 @ $C452 label=main_loop_13
@@ -6663,6 +6764,7 @@ C $C7EF,3 Point at second hill backdrop
 C $C813,4 E -= 32
 C $C817,3 Jump if E < 32
 C $C81A,4 D -= 16
+N $C821 This entry point is used by the routine at #R$C86E.
 N $C824 This entry point is used by the routine at #R$C598.
 N $C82A This entry point is used by the routine at #R$C813.
 c $C86E Routine at C86E
@@ -6682,6 +6784,8 @@ c $C8E3 Routine at C8E3
 D $C8E3 Used by the routine at #R$C452.
 C $C8E4,3 Read 'LD A' at $C6D8
 C $C8E7,3 Self modify 'LD A' at $CB65
+C $C905,3 Self modify "ADD A,x" at $CADC
+C $C90C,3 Self modify "ADD A,x" at $CABB
 N $C915 This entry point is used by the routines at #R$CBA4 and #R$CBC5.
 N $C929 This entry point is used by the routine at #R$C94C.
 C $C93E,4 E -= 32
@@ -6695,6 +6799,9 @@ C $C963,1 A = D
 C $C964,1 D--
 C $C965,2 A &= $0F
 C $C969,4 Self modify 'LD DE' at $CA00 to load current DE
+C $C970,3 B = 16, C = $F8 (mask)
+C $C973,2 HL = $E8xx
+C $C977,3 (A & mask) == 0
 C $C9B2,1 D = A
 C $C9B3,3 A = ~(A - E) + B
 C $C9B6,3 Self modify jump table target
@@ -6718,47 +6825,306 @@ C $CA55,2 Jump table (self modified)
 N $CA57 This entry point is used by the routine at #R$C8E3.
 C $CA66,1 B = E
 C $CA67,1 C--
+C $CA68,2 H = $E4
+C $CA6A,1 Bank/unbank
+C $CA6B,2 H = $E8
+C $CA6D,1 A = *HL
+C $CA6E,1 Set flags
+C $CA6F,2 Jump if non-zero
+C $CA71,3 A = HL[-1]
+C $CA74,1 Bank/unbank
+C $CA75,1 E = A
+C $CA76,2 A &= 7
+C $CA78,2 A = A ROL 2
+C $CA7A,2 A += <self modified>
+C $CA7C,1 L = A
+C $CA7D,1 A = E
+C $CA7E,3 A = A (rotate right through carry) 3
+C $CA81,3 A = (A & 31) + B
+C $CA84,1 E = A
+C $CA85,1 A = *DE
+C $CA86,1 A = A & *HL
+C $CA87,1 L++
+C $CA88,1 A |= *HL
+C $CA89,1 *DE = A
+C $CA8A,2 L += 2
+C $CA8C,1 E++
+C $CA8D,2 *DE++ = *HL++, BC--
+C $CA8F,1 Bank/unbank
+N $CA90 Similar chunk to above
+C $CA90,1 H++
+C $CA91,1 A = *HL
+C $CA92,1 Set flags
+C $CA93,2 Jump if non-zero
+C $CA95,3 A = HL[-1]
+C $CA98,1 Bank/unbank
+C $CA99,1 E = A
+C $CA9A,2 A &= 7
+C $CA9C,1 A = A ROL 1
+C $CA9D,2 A += <self modified>
+C $CA9F,1 L = A
+C $CAA0,1 A = E
+C $CAA1,3 A = A (rotate right through carry) 3
+C $CAA4,3 A = (A & 31) + B
+C $CAA7,1 E = A
+C $CAA8,2 *DE++ = *HL++, BC--
+C $CAAA,1 A = *HL
+C $CAAB,1 *DE = A
+C $CAAC,1 Bank/unbank
+N $CAAD Similar chunk again to above... different rotates
+C $CAAD,1 H++
+C $CAAE,1 A = *HL
+C $CAAF,1 Set flags
+C $CAB0,2 Jump if non-zero
+C $CAB2,3 A = HL[-1]
+C $CAB5,1 Bank/unbank
+C $CAB6,1 E = A
+C $CAB7,2 A &= 7
+C $CAB9,2 A = A ROL 2
+C $CABB,2 A += <self modified>
+C $CABD,1 L = A
+C $CABE,1 A = E
+C $CABF,3 A = A (rotate right through carry) 3
+C $CAC2,3 A = (A & 31) + B
+C $CAC5,1 E = A
+C $CAC6,2 *DE++ = *HL++, BC--
+C $CAC8,2 A = *DE & *HL
+C $CACA,1 L++
+C $CACB,1 A |= *HL
+C $CACC,1 *DE = A
+C $CACD,1 Bank/unbank
+N $CACE Similar chunk again
+C $CACE,1 H++
+C $CACF,1 A = *HL
+C $CAD0,1 Set flags
+C $CAD1,2 Jump if non-zero
+C $CAD3,3 A = HL[-1]
+C $CAD6,1 Bank/unbank
+C $CAD7,1 E = A
+C $CAD8,2 A &= 7
+C $CADA,2 A = A ROL 2
+C $CADC,2 A += <self modified>
+C $CADE,1 L = A
+C $CADF,1 A = E
+C $CAE0,3 A = A (rotate right through carry) 3
+C $CAE3,3 A = (A & 31) + B
+C $CAE6,1 E = A
+C $CAE7,2 A = *DE & *HL
+C $CAE9,1 L++
+C $CAEA,1 A |= *HL
+C $CAEB,1 *DE = A
+C $CAEC,2 L += 2
+C $CAEE,1 E++
+C $CAEF,2 *DE++ = *HL++, BC--
+C $CAF1,1 Bank/unbank
+N $CAF2 Similar chunk again
+C $CB48,8 Self modify "LD A,x" at $CA7A
+C $CB50,3 Self modify "ADD A,x" at $CADC
+C $CB53,1 A++
+C $CB57,3 Self modify "ADD A,x" at $CABB
+C $CB5A,8 Self modify "LD A,x" at $CA9D [nested self modification - INCEPTION ACHIEVED]
+C $CB6E,10 Self modify "XOR x" at $CB5D
+C $CB79,10 self modified chunk Jump if zero
+C $CB83,8 Self modify "LD A,x" at $CA7A
 C $CBA1,3 }
 c $CBA4 Routine at CBA4
 c $CBC5 Routine at CBC5
 D $CBC5 Used by the routine at #R$C95A.
-c $CBCE Routine at CBCE
+C $CBC8,3 Jump if A < 80
+c $CBCE Routine at CBCE - road drawing stuff
 D $CBCE Used by the routine at #R$B9F4.
-c $CBD6 Routine at CBD6
-D $CBD6 Used by the routine at #R$B9F4.
+C $CBCE,3 Load two high bytes ($EExx table offset, $ECxx table offset)
+C $CBD1,3 $ED $44 => NEG instr for $CC21 & $CC22
+N $CBD6 This entry point is used by the routine at #R$B9F4.
+C $CBD6,3 Load two high bytes ($ED00 table offset, $E900 table offset)
+C $CBD9,3 Pair of NOPs for $CC21 & $CC22
 N $CBDC This entry point is used by the routine at #R$CBCE.
+C $CBDC,4 Write instructions in #REGde to $CC21 & $CC22
+C $CBE0,4 Self modify 'LD HL' at $CC70 to load ($ED00 + H)
+C $CBE4,4 Self modify 'LD HL' at $CCA5 to load ($E900 + L)
+C $CBE8,3 Load road_buffer_offset
+C $CBEB,1 Read road buffer byte
+C $CBEC,3 A = fast_counter
+C $CBEF,2 take top three bits
+C $CBF2,5 A -= (B >> 2)
+C $CBF7,5 A -= (B >> 4)
+C $CBFC,10 #REGiy = $E600 + A + $B0
+C $CC06,3 Call multiply (A = multiplier, C = multiplicand)
+C $CC09,6 A = (128 - A) & $FE
+C $CC0F,5 IX = $E500 + A  -- distance shift table
+C $CC14,3 not a pointer, separate values
+C $CC17,2 20 iterations
+C $CC19,1 Bank
+C $CC1A,4 Get road position
+C $CC1F,1 Unbank
+C $CC20,1 Read road buffer byte
+C $CC21,2 Self modified above - Set to NOP or NEG
+C $CC23,1 Advance road buffer pointer (wrapping)
+C $CC24,1 Bank
+C $CC2C,3 Reads from the $E540 table (distance shift table)
+N $CC2F Subtract DE from table entry, result in BC.
+C $CC2F,1 A -= E
+C $CC30,1 C = A
+C $CC31,3 high byte
+C $CC34,1 A -= D
+C $CC35,1 B = A
+C $CC36,3 IY seems to point to $E6xx..E7xx
+N $CC3B This is a multiplier of HL (distance shift value computed above) by A (value from $E600+).
+C $CC3B,1 shift left
+C $CC3C,2 top bit not set
+C $CC3E,2 HL = BC  copy of distance shift value
+C $CC40,1 shift result left. HL seems to be zeroed above, so this is confusing
+C $CC41,1 shift topmost bit out
+C $CC42,2 jump if top bit not set
+C $CC44,1 otherwise HL += BC
+C $CC45,5 repeat
+C $CC4A,5 repeat
+C $CC4F,5 repeat
+C $CC54,5 repeat
+C $CC59,1 A = H
+C $CC5A,2 L <<= 1
+C $CC5C,2 H = 0
+C $CC5E,1 A += H + carry
+C $CC5F,1 L = A
+C $CC60,1 A <<= 1
+C $CC61,2 jump if top bit not set
+C $CC63,1 H--
+C $CC64,1 A >>= 1
+C $CC67,1 Unbank
+C $CC68,2 *DE++ = A
+C $CC6A,2 Loop back to read buffer byte bit
+C $CC6F,1 Bank
+C $CC73,3 subroutine
+C $CC76,3 A = fast_counter
+C $CC79,2 take top three bits
+C $CC7B,11 same pattern as above
+C $CC88,3 HL = $E700 | A
+C $CC8B,2 Jump if A+$60 had no carry
+C $CC8D,1 Add carry otherwise
+C $CC8E,3 [points to presumed lanes data in pristine memory map but must be something else]
+C $CC91,2 B = 20
+C $CC93,3 *DE += *HL
+C $CC96,1 HL++
+C $CC97,1 E++
+C $CC98,2 Loop while B
+C $CC9A,7 HL = road position - 295
+C $CCA1,1 swap
+C $CCA2,2 B = 0
+C $CCA4,1 Unbank
+C $CCA5,3 table?
+C $CCA8,4 table?
+C $CCAC,2 B = 21
+C $CCAE,4 Save #REGsp to restore later (self modify)
+C $CCB2,1 Put address in #REGsp (so we can use POP for speed)
+C $CCB3,1 Bank
+C $CCB4,3 A = B - 2
+C $CCB7,3 A += *IY
+C $CCBA,2 IY++
+C $CCBC,3 A -= *IY
+C $CCC2,2 A += 2
+C $CCC4,3 IY[$4E] = A
+C $CCC7,1 A -= B
+C $CCC8,1 C = A
+C $CCC9,1 B = A
+C $CCCA,3 L = IY[$1F]
+C $CCCD,2 test bit 7 of L
+C $CCCF,2 jump if ?
+C $CCD1,4 L = -L
+C $CCD5,1 A = B
+C $CCD6,1 A < L ?
+C $CCD7,2 A = <DEC DE>
+C $CCD9,2 jump if A < L
+C $CCDE,1 A < L ?
+C $CCDF,2 A = <INC DE>
+C $CCE1,2 jump if A < L
+C $CCE3,3 Self modify instruction below
+C $CCE6,1 A = B
+C $CCE7,1 A >>= 1
+C $CCE8,1 A += L
+C $CCE9,1 A < C ?
+C $CCEA,2 jump if A < C
+C $CCEC,1 A -= C
+C $CCED,1 Self modified: INC DE or DEC DE
+C $CCEF,2 Loop while B
+C $CCF1,1 Unbank
+C $CCF2,2 Outer loop?
 C $CCF4,3 Restore original SP (must be self modified)
 C $CCF7,1 Return
+C $CCF8,3 Self modify instruction below
 C $CCFB,1 A = 0
+C $CCFC,1 Self modified: INC DE or DEC DE
+C $CCFD,1 A += C
+C $CCFE,2 jump if overflow
+C $CD00,1 A < L ?
+C $CD01,2 jump if A < L
+C $CD03,1 A -= L
+C $CD05,2 Loop while B
+C $CD07,1 Bank
 N $CD08 This entry point is used by the routine at #R$F220.
+C $CD08,2 Outer loop?
+C $CD0A,2 Exit
+C $CD0C,4 IY[$4E] = 1
+C $CD10,1 A++
+C $CD13,1 A++
+C $CD14,1 B = A
+C $CD15,3 A = IY[$1F]
+C $CD18,1 L = A
+C $CD19,1 A <<= 1
+C $CD1A,1 A = A - A - carry
+C $CD1B,1 H = A
+C $CD1C,1 HL += DE
+C $CD1D,1 swap
+C $CD1E,1 push
+C $CD1F,1 Unbank
+C $CD20,1 B--
+C $CD21,3 Outer loop?
+C $CD24,3 Exit
+C $CD27,1 B = A
+C $CD28,3 A = IY[$1F]
+C $CD2B,1 L = A
+C $CD2C,1 A <<= 1
+C $CD2D,1 A = A - A - carry
+C $CD2E,1 H = A
+C $CD2F,1 HL += DE
+C $CD30,1 swap
+C $CD31,1 push
+C $CD32,1 Bank
+C $CD33,1 B--
+C $CD34,3 Outer loop?
+C $CD37,3 Exit
 c $CD3A Routine at CD3A
-D $CD3A Used by the routines at #R$8401, #R$852A and #R$873C.
+D $CD3A Used by the routines at #R$8401, #R$852A and #R$873C. Point #REGiy at the road buffer height data.
 @ $CD3A label=main_loop_10
-C $CD3A,3 IY = $EExx
-C $CD3D,5 A = road_buffer_offset + $20   -- current map base + 32, which data is this? [check map unpack]
-C $CD42,2 IYl = A
-C $CD44,3 C = *IY   multiplier
-C $CD47,5 A = *$A23F & $E0
+C $CD3A,3 Set #REGiy high byte to road buffer memory region ($EExx)
+C $CD3D,3 Load road_buffer_offset into #REGa
+C $CD40,2 Add 32 so it's the height data offset
+C $CD42,2 #REGiy is now the road buffer height data pointer
+C $CD44,3 Read a height byte into #REGc
+C $CD47,5 A = fast_counter & $E0
 C $CD4C,1 L = A
 C $CD4D,1 B = A
-C $CD4E,4 L >>= 2
+N $CD4E Reduces A by 31.25% ... unsure why that figure.
+C $CD4E,4 Divide A by 4 and subtract
 C $CD52,1 A -= L
-C $CD53,4 L >>= 2
+C $CD53,4 Divide A by 16 and subtract
 C $CD57,1 A -= L
 C $CD58,4 HL = $E600 | (A + 1)
-C $CD5C,1 A = B   multiplicand
-C $CD5D,3 Call multiply
+C $CD5C,1 A = B  multiplicand
+C $CD5D,3 Call multiply (A = multiplier, C = multiplicand)
 C $CD60,2 A = -A
 C $CD62,1 C = A
+C $CD63,1 Bank
 C $CD64,2 B = $15
 C $CD66,3 DE = $E301
 @ $CD69 label=ml10_loop
+C $CD69,1 Unbank
 C $CD6A,3 E = *HL << 1
-C $CD6E,2 D = $00
-C $CD70,1 L = D
-C $CD71,1 H = L
-C $CD72,1 A = C
-C $CD73,3 A += *IY
+C $CD6D,1 Preserve HL
+C $CD6E,2 D = 0
+C $CD70,1 L = 0
+C $CD71,1 H = 0
+C $CD72,1 A = C  C is multiply result from above
+C $CD73,3 A += *IY   height byte
 C $CD76,1 C = A
 C $CD7C,1 A = E
 C $CD7D,1 E--
@@ -6788,15 +7154,18 @@ C $CDA4,1 A <<= 1
 C $CDA7,1 HL += DE
 C $CDA8,1 HL <<= 1
 C $CDA9,1 A = H
+@ $CDAA label=ml10_continue
+C $CDAA,1 Restore HL
 C $CDAB,1 A += *HL
 C $CDAC,1 L++
+C $CDAD,1 Bank
 C $CDAE,1 *DE = A
 C $CDAF,1 E++
 C $CDB0,2 IYl++
 C $CDB2,2 Loop to ml10_loop
 C $CDB4,2 A = $A0
 C $CDB6,1 *DE = A
-@ $CDC0 ml10_loop2
+@ $CDC0 label=ml10_loop2
 C $CDC0,1 A = *DE
 C $CDC5,1 C = A
 C $CDC6,1 *HL = C
@@ -6810,21 +7179,21 @@ C $CDD3,1 L++
 C $CDD4,1 *HL = A
 C $CDD5,1 Return
 c $CDD6 Multiplier
-D $CDD6 Used by the routines at #R$CBD6 and #R$CD3A.
-R $CDD6 I:A Multiplicand (value to multiply)
-R $CDD6 I:C Multiplier (number to multiply by)
+D $CDD6 Multiplies #REGc by the top three bits of #REGa then divides by 8 with rounding, on exit.
+R $CDD6 Used by the routines at #R$CBD6 and #R$CD3A.
+N $CDD6 I:A Multiplier (number to multiply by)  e.g. $A0, $E7, $20, $C0, $E6 I:C Multiplicand (value to multiply)    e.g. $05, $02, $05, $03, $FE O:A Result                              e.g. $03, $02, $01, $02, $FE
 @ $CDD6 label=multiply
-C $CDD6,2 3 iterations (something limited to 8?)
-C $CDD8,1 Copy of value to destroy
+C $CDD6,2 3 iterations only
+C $CDD8,1 Copy of multiplier to destroy
 C $CDD9,1 Initialise total
 @ $CDDA label=mult_loop
-C $CDDA,2 Shift the most significant bit out
-C $CDDC,3 If the bit was set then total += multiplier
+C $CDDA,2 Shift the most significant bit out of multiplier
+C $CDDC,3 If the MSB was set then total += multiplicand
 @ $CDDF label=mult_continue
 C $CDDF,1 total <<= 1
 C $CDE0,2 While iterations remain, goto mult_loop
 C $CDE2,1 Undo final shift
-C $CDE3,8 Divide by 8 with rounding?
+C $CDE3,8 Divide by 8 with rounding
 C $CDEB,1 Return
 b $CDEC Data block at CDEC
 D $CDEC $AF91 uses this.
@@ -7279,10 +7648,12 @@ N $E3BC Circle expanding animation mask (8x8, 7 frames)
 N $E3BC #HTML[#CALL:anim($E3BC,8,8,0,0,7)]
 N $E3BC #HTML[#CALL:graphic($E3BC,8,7*8,0,0)]
 B $E3BC,388,8*48,4
-c $E540 Looks like a table of flipped bytes (but not quite)
-b $E601 Data block at E601
-B $E601,568,8
-c $E839 looks like initialisation code / relocation
+w $E540 A table of 96 words being 10^x or similar function. Distance horizontal shift? Field of view table? It affects the horizontal position of the road.
+W $E540,192,2
+b $E600 Data block at E600. Seems to be 24 groups of 22 bytes.
+B $E600,528,22
+c $E810 looks like initialisation code / relocation
+C $E813,3 Call clear_game_attrs
 C $E839,1 must be the loop counter
 C $E83A,3 Point #REGhl at $e858 table
 @ $E83D label=loopy
@@ -7625,9 +7996,9 @@ b $EE30 "SHOCKED<ENTER>" ?
 B $EE30,8,8
 b $EE38 temp input scheme buffer?
 B $EE38,5,5
-b $EE3D
+b $EE3D Data block at EE3D
 B $EE3D,3,3
-b $EE40
+b $EE40 Data block at EE40
 B $EE40,46,8*5,6
 c $EE6E Routine at EE6E
 D $EE6E Used by the routine at #R$EE9E.

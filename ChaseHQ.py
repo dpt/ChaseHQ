@@ -221,15 +221,15 @@ class ChaseHQWriter:
                         output += "<strong>Right</strong><br/>"
                         output += self.decode_hazards(cwd, rightdest, typename, names, showlength, follow)
                 elif b == 3: # TBD Stop Spawning Barriers?
-                    output += "Stop Spawning Barriers 3?<br/>"
+                    output += "- Stop Spawning Barriers 3?<br/>"
                 elif b == 6: # TBD Stop Spawning Barriers?
-                    output += "Stop Spawning Barriers 6?<br/>"
+                    output += "- Stop Spawning Barriers 6?<br/>"
                 elif b == 7: # Start Spawning Barriers Left
-                    output += "Start Spawning Barriers Left<br/>"
+                    output += "- Start Spawning Barriers Left<br/>"
                 elif b == 8: # Start Spawning Barriers Right
-                    output += "Start Spawning Barriers Right<br/>"
+                    output += "- Start Spawning Barriers Right<br/>"
                 elif b == 9: # Start Spawning Two Barriers
-                    output += "Start Spawning Two Barriers<br/>"
+                    output += "- Start Spawning Two Barriers<br/>"
                 elif b == 10: # Set Floating Arrow Off
                     output += "- Set Floating Arrow Off<br/>"
                 elif b == 11: # Set Floating Arrow to Left
