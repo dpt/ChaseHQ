@@ -189,7 +189,7 @@ B $5BA5,48,8
 B $5BD5,43,8*5,3 gets IX pointed at it by $5B32
 b $5C00 Graphics
 D $5C00 #HTML[#CALL:graphic($5C00,80,24,0,1)]
-B $5C00,240,8 Hill backdrop (80x24) inverted. Varies per level
+B $5C00,240,8 Horizon backdrop (80x24) inverted. Varies per level
 b $5CF0 Per-level data
 @ $5CF0 label=perp_mugshot_attributes
 W $5CF0,2,2 Address of perp's mugshot attributes
@@ -1939,7 +1939,8 @@ C $86EF,1 HL--
 C $86F0,3 Call print_message
 C $86F3,2 Loop while B
 C $86F5,1 Return
-b $86F6 18 byte chunks of this gets copied to $C82D by $C808
+b $86F6 18 byte chunks of this 36-byte table get copied to $C82D by $C808 2C = INC, 00 = NOP, ED+A0 = LDI
+@ $86F6 label=backdrop_shift_instrs
 B $86F6,36,8*4,4
 N $871A 14 bytes of setup_game data used by escape_scene. Map ptr are all a byte earlier than their actual start data.
 @ $871A label=escape_scene_data
@@ -6801,9 +6802,9 @@ C $C1C5,1 L--
 C $C1C6,1 A--
 C $C1C7,1 C = A
 C $C1C8,1 A = D
-C $C1C9,3 Self modify 'JR x' at $C221
+C $C1C9,3 Self modify 'JR x' at $C221 -- jump table target
 C $C1CC,1 A = E
-C $C1CD,3 Self modify 'JR x' at $C236
+C $C1CD,3 Self modify 'JR x' at $C236 -- jump table target
 C $C1D0,3 A = IY[$35]
 C $C1D3,1 B = A
 C $C1D4,5 H = (A & 15) + $F0
@@ -7253,7 +7254,7 @@ C $C58A,4 E -= 32
 C $C58E,3 Jump if it went -ve
 C $C591,4 D += 16
 C $C595,3 jump
-c $C598 Road plotting
+c $C598 Road and backdrop plotting
 D $C598 Used by the routine at #R$C452.
 C $C598,1 Bank
 C $C599,6 Self modify 'JP NZ,x' at $C6AD to be $C5A1
@@ -7308,9 +7309,11 @@ C $C5F9,3 DE = <self modified>
 C $C5FC,4 L = E + 31
 C $C600,1 H = D
 C $C601,1 Put it in #REGsp (so we can use PUSH for speed)
+C $C602,1 Bank
 C $C603,1 A <<= 1
 C $C604,1 H = A
 C $C605,1 L = A
+C $C606,1 Unbank
 C $C607,3 BC = 0
 C $C60A,2 Jump table (self modified)
 C $C61B,2 Jump table (self modified)
@@ -7331,40 +7334,57 @@ C $C64D,2 A &= 7
 C $C64F,2 A <<= 2
 C $C651,2 A += <self modifed>
 C $C653,1 L = A
-C $C654,1 A = E
-C $C658,4 E = (A & 31) + B
-C $C65C,1 A = *DE
-N $C65D AND-OR masking here
-C $C65D,1 A &= *HL
+C $C654,8 E = ((E >> 3) & 31) + B
+N $C65C AND-OR masking here.
+C $C65C,2 A = *DE & *HL
 C $C65E,1 L++
-C $C65F,1 A |= *HL
-C $C660,1 *DE = A
+C $C65F,2 *DE = A | *HL
 C $C661,2 L += 2
 C $C663,1 E++
 C $C664,2 *DE++ = *HL++, BC--
 C $C666,1 Bank/unbank
-C $C667,1 B++
-C $C668,2 Jump if zero
+C $C667,1 B++  -- counter?
+C $C668,2 Jump if zero  -- exit?
 C $C66A,1 H++
 C $C66B,1 A = *HL
 C $C66C,1 Set flags
 C $C66D,2 Jump if non-zero
 C $C66F,3 A = HL[-1]
 C $C672,1 Bank/unbank
-C $C673,1 E = A
-C $C674,2 A &= 7
-C $C676,1 A <<= 1
-C $C677,2 A += <self modified>
-C $C679,1 L = A
-C $C67A,1 A = E
-C $C67E,2 A &= 31
-N $C6A5 AND-OR masking here
+C $C673,1 E = A  -- save A
+C $C674,6 L = ((A & 7) << 1) + <self modified>
+C $C67A,8 E = ((E >> 3) & 31) + B
+C $C682,2 *DE++ = *HL++, BC--
+C $C684,1 A = *HL
+C $C685,1 *DE = A
+C $C686,1 Bank/unbank
+C $C687,3 Jump  -- looks like a loop
+C $C68A,2 H = <self modified>
+C $C68C,1 A = *HL
+C $C68D,1 L--
+C $C68E,1 Set flags
+C $C68F,2 Jump if non-zero
+C $C691,1 A = *HL
+C $C692,1 Bank/unbank
+C $C693,1 E = A  -- save A
+C $C694,7 L = ((A & 7) << 2) + <self modified>   -- as above but * 4
+C $C69B,8 E = ((E >> 3) & 31) + B
+C $C6A3,2 *DE++ = *HL++, BC--
+N $C6A5 AND-OR masking here. This affects road lines when altered.
+C $C6A5,2 A = *DE & *HL
+C $C6A7,1 L++
+C $C6A8,2 *DE = A | *HL
+C $C6AA,1 Bank/unbank
+C $C6AB,1 L--
+C $C6AC,1 C--
 C $C6AD,3 Jump to <self modified> if non-zero
+C $C6B0,1 Swap
+C $C6B1,1 B = A
 C $C6B2,2 A = <self modified>
 C $C6B4,2 A ^= 1
 C $C6B6,3 Self modify above
-C $C6BC,2 A = <self modified>
-C $C6BE,2 A ^= 0x55
+C $C6B9,3 Jump if non-zero
+C $C6BC,4 A = <self modified> ^ 0x55
 C $C6C0,3 Self modify above
 C $C6C3,1 B = A
 C $C6C4,8 Toggle bit 5 of x in 'ADD A,x' at $C651
@@ -7385,28 +7405,214 @@ C $C6EF,1 Set flags
 C $C6F0,2 Jump if zero
 C $C6F2,1 A = C
 C $C6F3,3 Self modify 'ADD A,x' at $C677
+C $C6F6,3 Read 'ADD A,x' at $C651
+C $C6F9,2 A += 64
+C $C6FB,3 Self modify 'ADD A,x' at $C651
+C $C6FE,5 Self modify 'LD A,x' at $C6D8 to be 5
+C $C703,3 A = IY[0]
+C $C706,2 IY++
+C $C708,2 IX.low++
+C $C70A,3 A -= IY[0]
+C $C70D,2 Jump if zero
+C $C70F,3 Jump if positive
+C $C712,3 Jump
+C $C715,2 L -= 2
+C $C717,3 C = IX[0]
+C $C71A,2 Bit 6 of C set?
+C $C71C,3 Jump if clear
+C $C71F,2 Bit 7 of C set?
+C $C721,3 Jump if set
+C $C724,2 B = 255
+C $C726,2 Bit 2 of C set?
+C $C728,2 A = 1
+C $C72A,2 Jump if clear
+C $C72C,2 A = IY.low
+C $C72E,3 Self modify 'CP x' at $C15D  [15 when tunnel is small, 6 when fills screen]
+C $C731,2 A = 1
+C $C733,1 B++
+C $C734,2 Bit 4 of C set?
+C $C736,1 C = A
+C $C737,2 Jump if clear
+C $C739,1 B--
+C $C73A,1 A++
+C $C73B,1 C--
+C $C73C,3 Self modify 'LD A,x' at $C160
+C $C73F,1 A = C
+C $C740,3 Self modify 'LD A,x' at $C88F
+C $C743,3 Jump
+N $C746 Variation:
+C $C746,3 C = IX[0]
+C $C749,2 Bit 6 of C set?
+C $C74B,3 Jump if clear
+C $C74E,2 Bit 7 of C set?
+C $C750,3 Jump if set
+C $C753,1 Swap
+C $C754,2 B = 255
+C $C756,2 Bit 2 of C set?
+C $C758,2 A = 1
+C $C75A,2 Jump if clear
+C $C75C,2 A = IY.low
+C $C75E,3 Self modify 'CP x' at $C15D  [15 when tunnel is small, 6 when fills screen]
+C $C761,2 A = 1
+C $C763,1 B++
+C $C764,2 Bit 4 of C set?
+C $C766,1 C = A
+C $C767,2 Jump if clear
+C $C769,1 B--
+C $C76A,1 A++
+C $C76B,1 C--
+C $C76C,3 Self modify 'LD A,x' at $C160
+C $C76F,1 A = C
+C $C770,3 Self modify 'LD A,x' at $C88F
+C $C773,1 Swap
+C $C774,1 C = A
+C $C775,3 A = IY[0]
+C $C778,2 IY++
+C $C77A,2 IX.low++
+C $C77C,3 A -= IY[0]
+C $C77F,2 Compare to $E0
+C $C781,3 Jump if A >= $E0
+C $C784,2 Compare to $50
+C $C786,2 Jump if A >= $50
+C $C788,2 L -= 2
+C $C78A,1 A += C
+C $C78B,5 Jump if zero or negative
+C $C790,1 C = A
+C $C791,3 Jump
+C $C794,1 C = A
+C $C795,2 Compare to $50
+C $C797,3 Jump if A < $50
 N $C79A This entry point is used by the routines at #R$CBA4 and #R$CBC5.
-C $C7EA,3 Point at first hill backdrop
+C $C79A,1 E++
+C $C79B,3 Address of x in 'LD A,x' at $C160
+C $C79E,3 Read 'LD A,x' at $C88F (TBD)
+C $C7A1,1 A |= *HL
+C $C7A2,1 A >>= 1
+C $C7A3,3 Jump if carry
+C $C7A6,1 A = D
+C $C7A7,2 A &= 15
+C $C7A9,1 C = A
+C $C7AA,1 A = E
+C $C7AB,2 A >>= 1
+C $C7AD,1 A += C
+C $C7AE,1 A = ~A
+C $C7AF,2 A += $80
+C $C7B1,1 B = A
+C $C7B2,3 HL = <Horizon level value?>
+C $C7B5,2 C = 24
+C $C7B7,1 A = H
+C $C7B8,1 Set flags
+C $C7B9,3 Jump if negative
+C $C7BC,2 Jump if non-zero
+C $C7BE,1 A = L
+C $C7BF,1 A -= B
+C $C7C0,2 Jump if A was >= B
+C $C7C2,1 A += C
+C $C7C3,3 Jump if no carry
+C $C7C6,3 Jump if zero
+C $C7C9,1 C = A
+C $C7CA,1 A = C
+C $C7CB,3 Self modify xx in 'LD BC,$xxyy' at $C80A
+C $C7CE,1 A += B
+C $C7CF,3 Jump if positive
+C $C7D2,2 A -= 127
+C $C7D4,2 A = -A
+C $C7D6,1 A += C
+C $C7D7,3 Self modify xx in 'LD BC,$xxyy' at $C80A
+C $C7DA,1 C = A
+C $C7DB,4 A = 24 - C
+C $C7DF,1 A <<= 1
+C $C7E0,1 C = A
+C $C7E1,2 A <<= 2
+C $C7E3,1 A += C
+C $C7E4,1 C = A
+C $C7E5,2 B = 0
+C $C7E7,2 A = <self modified>  -- horizon shift value (ranges 0..19)
+C $C7E9,1 A >>= 1  -- deciding whether to use the shifted or non shifted backdrop
+C $C7EA,3 Point at first hill backdrop (shifted version)
+C $C7ED,2 Jump if no carry
 C $C7EF,3 Point at second hill backdrop
+C $C7F2,1 HL += BC
+C $C7F3,1 Bank/unbank
+C $C7F4,4 A = 18 - A * 2
+C $C7F8,3 Self modify 'JR x' at $C86C -- jump table target
+C $C7FB,3 DE = A
+C $C7FE,3 Address of backdrop_shift_instrs
+C $C801,1 HL += DE
+C $C802,3 BC = 18
+C $C805,3 Address in instruction stream
+C $C808,2 Copy
+C $C80A,3 BC = $<self modified>0A
+C $C80D,1 Bank/unbank
+C $C80E,1 A = L
+C $C80F,1 Swap
+C $C810,3 Jump
+N $C813 Scanline advance pattern.
 C $C813,4 E -= 32
 C $C817,3 Jump if E < 32
 C $C81A,4 D -= 16
-N $C821 This entry point is used by the routine at #R$C86E.
-N $C824 This entry point is used by the routine at #R$C598.
+C $C821,1 Bank/unbank
+C $C822,1 Swap
+C $C823,1 E = A
+C $C824,1 A = D
+C $C825,1 D--
+C $C826,2 A &= 15
+C $C828,2 Jump if zero
 N $C82A This entry point is used by the routine at #R$C813.
-c $C86E Routine at C86E
+C $C82A,1 A = E
+C $C82B,1 Swap
+C $C82C,1 L = A
+C $C82D,18 18 instructions/lines filled in by earlier code
+C $C86C,2 Self modified - jump table
+C $C881,1 A += C
+C $C882,2 Loop?
+C $C884,1 Bank/unbank
+C $C885,1 Swap
+C $C886,1 E = A
 N $C887 This entry point is used by the routine at #R$C598.
-c $C8BE Builds the pre-shifted first hill backdrop
-D $C8BE Used by the routine at #R$87DC.
+C $C887,1 Swap
+C $C888,4 L += $1E
+C $C88C,3 Fill value for blank sky
+C $C88F,2 A = <self modified>
+C $C891,1 Set flags
+C $C892,3 Jump if zero
+C $C895,1 DE--  -- $0000 -> $FFFF ?
+C $C896,2 C = 15
+C $C898,1 A = H
+C $C899,1 H--
+C $C89A,1 A &= C
+C $C89B,2 Jump if non-zero  -- draw blank scanline
+C $C89D,4 L -= 32
+C $C8A1,2 Jump if no carry
+C $C8A3,3 Restore #REGsp (self modified)
+C $C8A6,1 Return
+C $C8A7,4 H += 16
+N $C8AB Writes #REGde to #REGhl 15 times.
+C $C8AB,1 Put it in #REGsp (so we can use PUSH for speed)
+C $C8AC,15 Write 30 bytes
+C $C8BB,3 Loop
+c $C8BE Builds a pre-shifted version of the backdrop horizon image
+D $C8BE 80x24 pixels = 240 bytes
+R $C8BE Used by the routine at #R$87DC.
 @ $C8BE label=pre_shift_backdrop
-C $C8BE,3 Point at second hill backdrop
-C $C8C1,3 Point at first hill backdrop
-C $C8C6,3 Each is 250 bytes long
-C $C8C9,2 Copy 2nd to first
-C $C8CC,3 Jump 10 bytes fwd
-C $C8D1,1 pop old DE
-C $C8D2,3 10 x 24
-C $C8D7,2 Nibble swap thing
+C $C8BE,3 Point at source image
+C $C8C1,3 Point at destination image (to be shifted)
+C $C8C4,2 Preserve addresses
+C $C8C6,5 Copy whole source image to destination
+C $C8CB,1 Restore source address
+C $C8CC,5 DE = Source address + 9
+C $C8D1,1 Pop destination address
+C $C8D2,3 Load counters for 10 bytes per row, 24 rows
+C $C8D5,1 Preserve counters
+C $C8D6,1 A = *DE
+C $C8D7,2 Rotate nibbles from A to *HL
+C $C8D9,1 Advance destination address
+C $C8DA,1 Advance source address
+C $C8DB,2 Loop while rowbytes remain
+C $C8DD,1 Restore counters
+C $C8DE,1 Decrement row counter
+C $C8DF,3 Loop while rows remain
+C $C8E2,1 Return
 c $C8E3 Split road plotting
 D $C8E3 Used by the routine at #R$C452.
 C $C8E3,1 Bank
@@ -7486,7 +7692,7 @@ C $C992,1 A--
 C $C993,1 E = A
 C $C994,1 A = ~A
 C $C995,1 A += B
-C $C996,3 Self modify 'JR x' at $CA55 -- jump table target address
+C $C996,3 Self modify 'JR x' at $CA55 -- jump table target
 C $C999,2 H++
 C $C99B,1 A = *HL
 C $C99C,1 Set flags
@@ -7523,7 +7729,7 @@ C $C9D8,1 E = A
 C $C9D9,1 A -= D
 C $C9DA,1 A = ~A
 C $C9DB,1 A += B
-C $C9DC,3 Self modify 'JR x' at $CA33 -- jump table target address
+C $C9DC,3 Self modify 'JR x' at $CA33 -- jump table target
 C $C9DF,2 H += 2
 C $C9E1,1 A = *HL
 C $C9E2,1 Set flags
@@ -7537,10 +7743,10 @@ C $C9F0,2 A = HL[-1]
 C $C9F2,1 A &= C  -- C is the mask $F8 here
 C $C9F3,3 A >>= 3
 C $C9F6,1 A >>= 1
-C $C9F7,3 Self modify 'JR x' at $CA11 -- jump table target address
+C $C9F7,3 Self modify 'JR x' at $CA11 -- jump table target
 C $C9FA,1 A -= E
 C $C9FB,2 A = ~A + B
-C $C9FD,3 Self modify 'JR x' at $CA22 -- jump table target address
+C $C9FD,3 Self modify 'JR x' at $CA22 -- jump table target
 C $CA00,3 Self modified
 C $CA03,3 A = E + 31
 C $CA06,1 L = A
