@@ -8054,10 +8054,10 @@ C $CCCF,2 jump if ?
 C $CCD1,4 L = -L
 C $CCD5,1 A = B
 C $CCD6,1 A < L ?
-C $CCD7,2 A = <DEC DE>
+C $CCD7,2 Opcode for DEC DE
 C $CCD9,2 jump if A < L
 C $CCDE,1 A < L ?
-C $CCDF,2 A = <INC DE>
+C $CCDF,2 Opcode for INC DE
 C $CCE1,2 jump if A < L
 C $CCE3,3 Self modify instruction below
 C $CCE6,1 A = B
