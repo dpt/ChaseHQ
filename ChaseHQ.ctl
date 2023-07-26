@@ -1682,7 +1682,7 @@ C $8459,3 Call spawn_cars
 C $845C,3 Call cycle_counters
 C $845F,3 Call engine_sfx_play_hook
 C $8462,3 Call main_loop_10
-C $8465,3 Call main_loop_11
+C $8465,3 Call scroll_horizon
 C $8468,3 Call engine_sfx_play_hook
 C $846B,3 Call main_loop_12
 C $846E,3 Call engine_sfx_play_hook
@@ -1762,7 +1762,7 @@ C $8559,3 Call read_map
 C $855C,3 Call spawn_cars
 C $855F,3 Call cycle_counters
 C $8562,3 Call main_loop_10
-C $8565,3 Call main_loop_11
+C $8565,3 Call scroll_horizon
 C $8568,3 Call main_loop_12
 C $856B,3 Call main_loop_13
 C $856E,3 Call main_loop_14
@@ -1976,7 +1976,7 @@ C $8767,3 Address of game_over_message
 C $876A,8 If transition_control != 4 Call message_printing_related
 C $8772,3 Call read_map
 C $8775,3 Call main_loop_10
-C $8778,3 Call main_loop_11
+C $8778,3 Call scroll_horizon
 C $877B,3 Call main_loop_12
 C $877E,3 Call main_loop_13
 C $8781,3 Call main_loop_14
@@ -4438,6 +4438,8 @@ B $A258,1,1 Used by $B8D8
 B $A259,1,1 Used by $B92B
 B $A25A,1,1 Used by $B8D2
 B $A25B,1,1
+N $A25C Horizon horizontal scrolling (+ve for left, -ve for right). Seems to be multiples of two. Values seen: FA FC FE 00 02 04 06
+@ $A25C label=horizon_scroll
 B $A25C,1,1 Used by $B84E
 B $A25D,1,1 Used by $B85D
 B $A25E,1,1
@@ -5620,21 +5622,28 @@ C $B24E,1 B = A
 C $B252,1 C = A
 C $B254,3 BC = $0000
 C $B257,1 E = B
-C $B258,3 A = *$A25C
+C $B258,3 A = horizon_scroll (e.g. $FA..$06 in multiples of two)
 C $B25B,1 Set flags
+C $B25C,3 Jump if zero
+C $B25F,3 Jump if positive
+N $B262 Negative scroll => scroll horizon right.
 C $B262,1 E++
 C $B263,2 A = -A
-C $B265,3 HL = $B827
-C $B268,1 C = A
+N $B265 Positive scroll => scroll horizon left.
+C $B265,3 HL -> 32-byte table at $B828
+C $B268,1 C = A  -- B is zero at this point
 C $B269,1 HL += BC
 C $B26A,3 A = *$A261
 C $B26D,1 C = A
 C $B26F,4 A = fast_counter - C
 C $B273,1 Set flags
+C $B274,2 Jump if zero
 C $B276,1 C = *HL
 C $B277,1 A -= C
+C $B278,2 Jump if carry
 C $B27A,1 B++
 C $B27C,1 A += C
+C $B27E,2 Jump
 C $B280,1 A = B
 C $B281,1 Set flags
 C $B284,3 HL = $A262
@@ -5646,6 +5655,7 @@ C $B292,1 B--
 C $B293,2 A = -A
 C $B295,1 C = A
 C $B297,3 *$A261 = A
+N $B29A No scroll required?
 C $B29A,4 HL = *$A25F + BC
 C $B29E,3 DE = $0000
 C $B2A1,4 $A25F = DE
@@ -5659,6 +5669,8 @@ C $B2BA,1 D--
 C $B2BB,1 E = A
 C $B2BE,1 HL += DE
 C $B2BF,1 Set flags
+C $B2C0,2 Jump if zero
+C $B2C2,3 Jump if positive
 C $B2C5,2 A = -A
 C $B2C7,2 CP 17
 C $B2C9,2 A = 0
@@ -5670,6 +5682,7 @@ C $B2ED,3 road_pos = HL
 C $B2F0,2 D = 1
 C $B2F2,1 A = E
 C $B2F3,1 Set flags [why are some ORs and some ANDs?]
+C $B2F4,3 Jump if positive
 C $B2F7,1 D--
 C $B2F8,2 A = -A
 C $B2FA,2 CP 12
@@ -6105,23 +6118,206 @@ C $B81E,1 HL += BC
 C $B820,1 D--
 C $B821,4 E = -E
 C $B825,3 Exit via plot_masked_sprite_entry
-b $B828 breaks/crashes road rendering if messed with
-B $B828,32,8
+b $B828 Horizon image related. breaks/crashes road rendering if messed with
+W $B828,32,8
 c $B848 Routine at B848
 D $B848 Used by the routines at #R$8401, #R$852A and #R$873C.
-@ $B848 label=main_loop_11
-C $B8A1,3 A = fast_counter
+@ $B848 label=scroll_horizon
+C $B848,6 Return if speed is zero
+C $B84E,3 A = ?
+C $B851,1 Set flags
+C $B852,2 Jump if zero
+C $B854,1 Bank
+C $B855,2 RR H -- shift out carry?
+C $B857,1 A <<= 1
+C $B858,1 A <<= 1
+C $B859,1 A <<= 1
+C $B85A,2 A &= 6
+C $B85C,6 C = ? + C
+C $B862,2 B = 0
+C $B864,3 16 word table at $B828
+C $B867,1 HL += BC
+C $B868,3 BC = wordat(HL)
+C $B86B,3 HL = ?
+C $B86E,1 *HL--
+C $B86F,2 Jump if non-zero
+C $B871,1 *HL = B
+C $B872,1 Bank
+C $B873,1 A = C
+C $B874,3 Jump if positive
+C $B877,2 A = -A
+C $B879,3 Address of operand in 'LD A,x' at $C7E7
+C $B87C,1 A += *HL
+C $B87D,3 Jump if positive
+C $B880,2 A += 20
+C $B882,4 Jump if A < 20
+C $B886,2 A -= 20
+C $B888,1 *HL = A
+C $B889,1 A = 0
+C $B88A,1 B = 0
+C $B88B,1 E = 0
+C $B88C,1 Bank
+C $B88D,5 Return if $A258 is zero
+C $B892,3 Jump if positive
+C $B895,3 E = -(E + 1)
+C $B898,3 32-byte table at $B828
+C $B89B,1 C = A
+C $B89C,1 HL += BC
+C $B89D,3 A = ?
+C $B8A0,1 C = A
+C $B8A1,4 A = fast_counter - C
+C $B8A5,1 Set flags
+C $B8A6,1 Return if non-zero
+C $B8A7,1 C = *HL
+C $B8A8,1 A -= C
+C $B8A9,2 Jump if carry
+C $B8AB,1 B++
+C $B8AC,1 Bank
+C $B8AD,1 A += C
+C $B8AE,1 Bank
+C $B8AF,2 Jump
+C $B8B1,1 A = B
+C $B8B2,1 Set flags
+C $B8B3,1 Return if zero
+C $B8B4,3 HL = ?
+C $B8B7,1 A += *HL
+C $B8B8,1 *HL = A
+C $B8B9,1 A = B
+C $B8BC,2 B = 0
+C $B8BE,2 Jump if no carry
+C $B8C0,1 B--
+C $B8C1,2 A = -A
+C $B8C3,3 HL = <horizon level related>
+C $B8C6,1 C = A
+C $B8C7,1 HL += BC
+C $B8C8,3 write it back
+C $B8CB,1 Bank
+C $B8CC,5 *$A25B += A
+C $B8D1,1 Return
 c $B8D2 Routine at B8D2
 D $B8D2 Used by the routine at #R$BDFB.
+C $B8D2,3 A = $A25A
+C $B8D5,3 BC = A
+C $B8D8,3 A = $A258
+C $B8DB,1 Set flags
+C $B8DC,3 Jump if positive
+C $B8DF,2 A = -A
+C $B8E1,1 C++
+C $B8E2,1 B--
+C $B8E3,2 Jump if zero
+C $B8E5,2 9-bit rotate right through carry
+C $B8E7,2 B = 0
+C $B8E9,2 Jump if no carry
+C $B8EB,2 A = -A
+C $B8ED,1 B--
+C $B8EE,3 HL = <horizon level>
+C $B8F1,1 C = A
+C $B8F2,1 HL += BC
+C $B8F3,3 <horizon level> = HL
+C $B8F6,3 A = road_buffer_offset [as byte]
+C $B8F9,2 A += 34 -- is height??? data
+C $B8FB,3 HL = $EE00 + A
+C $B8FE,1 A = 0
+C $B8FF,3 $A25B = 0
+C $B902,3 $A25A = 0
+C $B905,1 A = *HL
+C $B908,3 Jump if positive
+C $B90B,1 A++
+C $B90C,3 $A258 = A
+C $B90F,2 L -= 2
+C $B911,1 A = *HL
+C $B912,1 C = A
+C $B913,1 Set flags
+C $B914,2 B = 0
+C $B916,2 Jump if zero
+C $B918,2 B = 6
+C $B91A,3 Jump if positive
+C $B91D,2 A = -A
+C $B91F,2 B = 3
+C $B921,4 Jump if A >= 3
+C $B925,2 B = 0
+C $B927,1 A = B
+C $B928,3 Self modify 'ADD A,x' at $B5AF
+C $B92B,3 HL = <?>
+C $B92E,1 A = *HL
+C $B92F,1 Set flags
+C $B930,3 Jump if positive
+C $B933,2 Test bit 7
+C $B935,2 Jump if non-zero
+C $B937,4 A = -A - 2
+C $B93B,2 Jump if carry
+C $B93D,1 B = A
 C $B93E,3 Load jump counter
+C $B941,1 Set flags
+C $B942,2 Jump if non-zero
+C $B944,4 DE = speed
+C $B948,2 9-bit rotate right via carry
+C $B94A,1 A = E
+C $B94B,1 9-bit rotate left via carry
+C $B94D,6 D = ~(A & 3) + 4
+C $B953,2 A = B - D
+C $B955,4 Jump if <=
+C $B959,1 Preserve HL
 C $B95A,8 HL = $B057 + A*2  looks early.. might be 1-indexed? [sampled A: 3,2,4]
 C $B962,2 E = *HL++  offset into B045
 C $B964,1 Load new jump value [sampled: $B060]
 C $B965,3 Set jump counter
 C $B968,4 HL = $B045 + E  points into jump values table
-C $B96C,28 Self modify $B079 {Form road_buffer_offset }
+C $B96C,3 Self modify $B079
+C $B96F,1 Restore HL
+C $B970,1 *HL = C
+C $B971,3 A = ?
+C $B975,3 A = road_buffer_offset
+C $B978,3 HL = $EE00 + A
+C $B97B,3 -- split road flag
+C $B97E,1 Set flags
+C $B97F,1 A = *HL
+C $B980,2 Jump if zero
+C $B982,3 A = $A269
+C $B985,1 Set flags
+C $B986,2 Jump if zero
 C $B988,5 Check fork_taken
 C $B98D,2 Jump if left fork was taken
+C $B98F,2 A = -A
+C $B991,3 ? = A
+C $B994,1 Set flags
+C $B995,1 E = A
+C $B996,2 Jump if zero
+C $B998,2 E = 1
+C $B99A,3 Jump if positive
+C $B99F,2 A = -A
+C $B9A1,1 D = A
+C $B9A2,2 A *= 4
+C $B9A4,3 $A25D = A
+C $B9A7,1 B = A
+C $B9A8,3 A = $A25E
+C $B9AB,1 Set flags
+C $B9AC,2 Jump if non-zero
+C $B9AE,3 Get speed value
+C $B9B1,1 A = L
+C $B9B2,2 A = speed / 2 (top half)
+C $B9B7,2 A &= 6
+C $B9B9,1 A = B
+C $B9BA,3 BC = A
+C $B9BD,3 HL -> table of 16 words
+C $B9C0,1 HL += BC
+C $B9C1,1 A = *HL
+C $B9C8,3 BC = A
+C $B9CC,1 Set flags
+C $B9CD,3 Jump if positive
+C $B9D0,2 A = -A
+C $B9D2,1 C++
+C $B9D3,1 A -= B
+C $B9D4,4 Jump if <=
+C $B9D8,1 B = A
+C $B9D9,2 A *= 4
+C $B9DD,1 A += B
+C $B9E0,2 B = 0
+C $B9E2,2 Jump if no carry
+C $B9E4,1 B--
+C $B9E5,2 A = -A
+C $B9E7,1 C = A
+C $B9E8,4 $A25F = BC
 C $B9EC,1 A = 0
 C $B9ED,3 $A261 = 0
 C $B9F0,3 $A262 = 0
