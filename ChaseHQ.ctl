@@ -1967,7 +1967,7 @@ C $8742,3 Call setup_game
 C $8745,6 Set speed to $FA [speed of the camera]
 C $874B,11 Initialise hazards[0] (the perp)
 C $8756,6 Set $A191 to value of lods_table[2] (the perp's car)
-C $875C,5 This stops $AD0D from running
+C $875C,5 This stops $AD0D from running (collision detection?)
 C $8761,3 Address of failed_chatter ("wrong job" / "one more try" / "mediocre driver")
 C $8764,3 Call chatter
 N $8767 Print "GAME OVER" once the transition has completed.
@@ -2355,7 +2355,7 @@ C $8C0C,2 Set Down bit, i.e. brake
 C $8C0F,3 DE = 150
 C $8C12,2 HL -= DE
 C $8C14,3 A = gear
-C $8C17,2 -- why this op?
+C $8C17,2 -- must be removing carry from calc above?
 C $8C1B,2 Set Fire
 C $8C1D,4 user_input = C
 C $8C21,3 A195 is horz position of perp car
@@ -2705,6 +2705,8 @@ C $8F8F,4 IX = $EAB0
 C $8F93,3 BC = $1420
 C $8F96,4 Preserve IX, HL, BC
 C $8F9D,1 Set flags
+C $8F9E,3 Call if non-zero
+C $8FA1,3 Call
 C $8FA4,1 Self modified
 C $8FA5,1 Self modified
 C $8FA6,1 Self modified
@@ -2876,10 +2878,11 @@ C $919D,2 D = 0
 C $919F,1 C = D
 C $91A0,4 *$91BB = DE
 C $91A4,3 A = -C
-C $91A7,3 *$933E = A
+C $91A7,3 Self modify 'LD D,x' at $933D to load A
 C $91AA,2 B = *HL - 1
 C $91AD,1 HL++
 C $91AE,4 DE = wordat(HL); HL += 2
+C $91B2,4 Preserve HL, IX, BC
 C $91B7,3 DE = wordat(HL); HL++
 C $91BA,3 must be SM
 C $91BD,1 HL += BC
@@ -2925,9 +2928,9 @@ C $9237,1 HL -= 2
 C $9238,1 HL--
 C $9239,3 *$9416 = A
 C $923C,2 A = $02
-C $923E,3 *$93C1 = A
+C $923E,3 Self modify 'LD A,x' at $93C0 to load A
 C $9242,1 B = A
-C $9246,4 *$93C1 = 0
+C $9246,4 Self modify 'LD A,x' at $93C0 to load 0
 c $924D Routine at 924D
 R $924D R:B ?
 C $924D,3 HL = $9279
@@ -2952,7 +2955,7 @@ R $9278 I:B ?
 R $9278 I:IX ?
 R $9278 I:DE Address of arg, e.g. $6B0C
 @ $9278 label=sub_9278
-C $9278,4 *$933E = 0
+C $9278,4 Self modify 'LD D,x' at $933D to load 0
 C $927C,1 A = B
 C $927D,2 CP 10
 C $927F,2 Jump to $9283 if A < 10
@@ -2992,7 +2995,7 @@ C $92D9,1 B--
 C $92DA,1 A++
 C $92DB,2 C = 0
 c $92E1 Drives the sprite plotters  WHAT CALLS THIS PROB $901B
-C $92E1,4 *$933E = 0
+C $92E1,4 Self modify 'LD D,x' at $933D to load 0
 C $92E5,1 A = B
 C $92E6,2 CP 10
 C $92EA,2 A = 10
@@ -3023,7 +3026,7 @@ N $932B This entry point is used by the routine at #R$9278.
 C $932B,7 *$9396 = ~(*$9396)
 N $9333 This entry point is used by the routine at #R$9278.
 C $933C,1 HL++
-C $933D,2 D = $00
+C $933D,2 D = <self modified>
 C $933F,6 A = IY[0] - IY[$35]
 C $9347,4 A = IY[$35] + D
 C $934D,1 A++
@@ -3038,16 +3041,19 @@ C $9361,1 A += D
 C $9362,1 D = A
 C $9369,3 A = IY[$35]
 C $936D,3 A = *HL - 1 - D
-C $9374,3 A = *$93C1
+C $9370,3 Jump if no carry
+C $9374,3 Read A from 'LD A,x' at $93C0 below
 C $9377,1 Set flags
 C $9378,1 Return if zero
-C $9379,3 A = *$933E
+C $9379,3 Read A from 'LD D,x' at $933D above
 C $937C,1 D = *HL
 C $937D,1 A -= D
+C $937E,1 Return if positive
 C $937F,3 *$933E = A
 C $9382,4 A = *$9405 - D
 C $9386,2 Return if carry or zero
 C $9388,3 *$9405 = A
+C $938B,2 Loop?
 C $938D,1 A++
 C $938E,1 D++
 C $938F,1 HL++
@@ -3067,7 +3073,7 @@ C $93B4,1 D = A
 C $93B5,5 H = (A & $0F) + $F0
 C $93BA,1 A = D
 C $93BB,5 L = (A & $70) * 2 + B
-C $93C0,2 A = <...> -- Self modified by various
+C $93C0,2 A = <self modified>
 C $93C2,1 Set flags
 C $93C6,1 A--
 C $93D3,3 prob plot_sprite_flipped
@@ -3856,8 +3862,8 @@ C $9D09,2 A += 48
 C $9D0B,1 HL--
 C $9D0C,1 *HL = A
 C $9D0D,1 Return
-C $9D0E,3 Self modify the LD HL at $9D9B
-C $9D11,5 Set the bonus_flag
+C $9D0E,3 Self modify 'LD HL,xxxx' at $9D9B  -- bonus score pointer
+C $9D11,5 Set the trigger_bonus_flag
 C $9D16,1 A = B
 c $9D17 Increments the score by (D,E,A).
 D $9D17 Used by the routines at #R$8A57 and #R$9CC2.
@@ -3911,25 +3917,59 @@ T $9D5B,6,6 "STAGE " message shown in the score area.
 B $9D61,1,1 #R$9D61 writes the current score number here in ASCII.
 N $9D62 This entry point is used by the routines at #R$8401, #R$873C and #R$87DC.
 @ $9D62 label=update_scoreboard
-C $9D62,9 Check if stage has changed?
-C $9D6B,2 Adding 48 to make it a digit then $80 to terminate the string.
-C $9D6D,6 Update "STAGE N"
+C $9D62,3 Check if stage has changed  -- perhaps reset to zero by stage loads?
+C $9D65,3 Avoid work if previously updated
+C $9D68,3 Load <wanted_stage_number>
+C $9D6B,2 Add 48 to make it a digit then $80 to terminate the string
+C $9D6D,6 Overwrite the N in "STAGE N"
 C $9D73,3 Screen pixel (48,36)
 C $9D76,3 Point at stage text
 C $9D79,3 Draw it
-C $9D7C,6 Is the bonus flag set?
+@ $9D7C label=us_bonus_start
+C $9D7C,3 Load <trigger_bonus_flag>
+C $9D7F,3 If it's zero jump to attribute setting
 C $9D82,4 Clear it
 C $9D86,3 Screen pixel (64,24)
-C $9D89,21 Clear the area 5*7 bytes
-C $9D9E,22 Draw it
-C $9DB4,4 42 => BRIGHT + red over black
-C $9DB8,2 46 => BRIGHT + yellow over black
+N $9D89 Clear the area - 5x7 bytes
+C $9D89,2 7 iterations
+C $9D8B,2 DE = HL
+C $9D8D,1 Preserve column
+C $9D8E,9 Update five bytes
+C $9D97,1 Restore column
+C $9D98,1 Advance row
+C $9D99,2 Loop
+C $9D9B,3 HL = <self modified>  -- load address of score digits
+C $9D9E,3 Draw it
+C $9DA1,2 Set bonus counter to 8
+C $9DA3,2 Jump
+@ $9DA5 label=us_bonus_countdown
+C $9DA5,3 A = <bonus_counter>
+C $9DA8,3 Jump if counter is zero
+C $9DAB,1 Decrement the bonus counter
+@ $9DAC label=us_bonus_set_counter
+C $9DAC,3 <bonus_counter> = A
+C $9DAF,3 Shift out LSB to carry
+C $9DB2,2 Jump if #REGc is zero, using zero for attributes
+C $9DB4,2 42 => BRIGHT + red over black
+C $9DB6,2 Jump if odd
+C $9DB8,2 Otherwise 46 => BRIGHT + yellow over black
 C $9DBA,3 Point at attributes (8,3)
-C $9DBD,6 Set them to #REGc
+C $9DBD,6 Set them all to #REGc
+@ $9DC3 label=us_gear
+C $9DC3,3 Point HL at <displayed_gear>
+C $9DC6,4 Compare to <gear>
+C $9DCA,2 Avoid work if they're equal
+C $9DCC,1 Update <displayed_gear>
 C $9DCD,3 Screen pixel (118,36)
-C $9DD0,6 "LO"
-C $9DD6,3 "HI"
-C $9DD9,13 Draw it
+C $9DD0,3 Point HL at "LO"
+C $9DD3,1 Low gear?
+C $9DD4,2 Jump to draw string if so
+C $9DD6,3 Point HL at "HI"
+C $9DD9,3 Draw string
+@ $9DDC label=us_lights
+C $9DDC,4 C = <sighted_flag>
+C $9DE0,3 A = <counter_B>
+C $9DE3,3 If (<sighted> AND <counter_B>) is zero jump to plot_turbos_and_scores
 C $9DE6,3 Point #REGhl at left light's attributes
 C $9DE9,3 Toggle its brightness
 C $9DEC,3 Point #REGhl at right light's attributes
@@ -4320,9 +4360,11 @@ B $A16E,1,1 Idle timer. Counts down from 100. Recommences whenever the hero car 
 B $A16F,1,1 User input mask, set to $C0 (Quit+Pause) when perp is fully smashed, or $FF otherwise
 @ $A170 label=turbos
 B $A170,1,1 Number of turbo boosts remaining (3 for a new game)
+@ $A171 label=horizon_level
 W $A171,2,2 seems to be the horizon level, possibly relative (used during attract mode)
 @ $A173 label=mystery_A173
 B $A173,1,1 This is decremented by $8BC6 but nothing else seems to read it.
+@ $A174 label=displayed_gear
 B $A174,1,1 Low/high gear flag?
 @ $A175 label=score_digits
 B $A175,8,8 Score digits. One digit per byte, least significant first. This seems to be recording what's on screen so digit plotting can be bypassed.
@@ -4344,9 +4386,10 @@ B $A188,120,8 Set by $843B. Groups of 20 bytes. This area looks like a table of 
 B $A200,32,8
 B $A220,1,1 #R$8014 sets this to the level number that it's going to load [but I don't see it using it again]. #R$858C sets it to $F8. #R$BC3E uses it to avoid some work.
 N $A221 Affects collision detection on the left hand side.
-B $A221,1,1 $ABCE, $AD0D reads  I don't yet see what writes it.
+B $A221,1,1 $ABCE, $AD0D reads
 B $A222,1,1 $8F9A reads  $ADA0, $AE83, $AF41 writes
-B $A223,1,1 Stage number as shown. Stored as ASCII.
+@ $A223 label=displayed_stage
+B $A223,1,1 Stage number as shown on the scoreboard. Stored as ASCII.
 @ $A224 label=helicopter_control
 B $A224,1,1 Set to 1 -> helicopter moves out to the left, gets set to zero. Set to 3/4 -> Helicopter moves in from left, gets set to five. $AAC6, $AB33 reads  $AB96, $C013 writes
 @ $A225 label=stop_car_spawning
@@ -4357,13 +4400,13 @@ B $A226,1,1 Holds the correct direction to take at forks (1 => left, 2 => right)
 B $A227,1,1 Shows the floating left/right arrow (0 => off, 1 => left, 2 => right).
 B $A228,1,1 $B421 reads  $B4C8 writes
 @ $A229 label=time_up_state
-B $A229,1,1 1 => out of time, 2 => "TIME UP" message is printed; 3 => "CONTINUE THIS MISSION" message is printed and a countdown runs; 4 => countdown elapsed; 0 otherwise
+B $A229,1,1 1 => out of time, 2 => "TIME UP" message is printed; 3 => "CONTINUE THIS MISSION" message is printed and a countdown runs 4 => countdown elapsed; 0 otherwise
 B $A22A,1,1 Used by $B6D6 and others
 B $A22B,1,1 Used by $9D2E and others. Stops overtake bonus working.
-@ $A22C label=bonus_flag
+@ $A22C label=trigger_bonus_flag
 B $A22C,1,1 Bonus flag (1 triggers the effect)
 @ $A22D label=bonus_counter
-B $A22D,1,1 Counter for bonus effect (goes up to 7?)
+B $A22D,1,1 Counter for bonus flash effect (counts 8..0)
 @ $A22E label=sighted_flag
 B $A22E,1,1 Set to 1 when the perp has been sighted. Enables flashing lights and the smash bar.
 B $A22F,1,1 Set to 2 by fully_smashed
@@ -4903,7 +4946,7 @@ C $A81A,1 A += C
 C $A81B,3 Self modify above
 C $A81E,3 BC = $0500
 C $A821,4 IX = &hazards[1]
-C $A825,3 DE = 20  stride of hazards
+C $A825,3 DE = 20  -- stride of hazards
 @ $A828 label=sc_loop
 C $A828,6 If the hazard is not active jump to sc_fill_in
 C $A82E,3 A = IX[15]
@@ -5090,7 +5133,7 @@ C $A9E5,3 A = *HL; HL += 2
 C $A9E8,1 Set flags
 C $A9E9,2 Jump to A9F1 if non-zero
 C $A9EB,2 HL += 2
-C $A9ED,3 Self modify 'LD HL' at $A9E2 to load HL
+C $A9ED,3 Self modify 'LD HL,x' at $A9E2 to load HL
 C $A9F0,1 Return
 C $A9F1,4 DE = lods_table[0] (stones_lods)
 C $A9F5,1 A--
@@ -5098,9 +5141,9 @@ C $A9F6,6 If non-zero DE = lods_table[1] (dust_lods)
 C $A9FC,2 C = *HL++
 C $A9FE,1 A = *HL
 C $AA00,1 HL++
-C $AA01,3 Self modify 'LD HL' at $A9E2 to load HL
+C $AA01,3 Self modify 'LD HL,x' at $A9E2 to load HL
 C $AA04,1 A = 0
-C $AA05,3 Self modify 'LD D' at $933D to load zero
+C $AA05,3 Self modify 'LD D,x' at $933D to load zero
 C $AA08,1 H = A
 C $AA09,1 A = B
 C $AA0A,1 A--
@@ -5166,7 +5209,7 @@ C $AA93,1 Return
 @ $AA94 label=sub_AA94
 C $AA94,3 BC = <...> -- Self modified by $AB00, $AB2F + others
 C $AA97,2 A = -A
-C $AA99,3 Self modify the 'LD D' at $933D to load A
+C $AA99,3 Self modify 'LD D,x' at $933D to load A
 C $AA9C,5 HL = *DE++
 C $AAA1,1 Set flags
 C $AAA5,1 H--
@@ -5311,7 +5354,7 @@ C $ABC8,1 *HL = D
 C $ABC9,1 A = E
 C $ABCA,2 Is it 3?
 C $ABCC,2 Jump if non-zero
-C $ABCE,3 unknown purpose flag
+C $ABCE,3 (inhibit collision detection) flag
 C $ABD1,1 Set flags
 C $ABD2,2 Jump if zero
 N $ABD4 Flag was set.
@@ -5411,9 +5454,72 @@ B $ACDB,40,8 $AC94 uses this
 W $AD03,10,2 $AC53 uses this
 c $AD0D Routine at AD0D
 D $AD0D Used by the routine at #R$BDFB.
+C $AD0D,5 Return if (suspected) "inhibit collision detection" flag set
+C $AD12,4 IX = &hazards[0]
+C $AD16,3 DE = 20  -- stride of hazards
+C $AD19,2 B = 6
+C $AD1B,6 If the hazard is not active continue to next one
+C $AD21,1 Bank
+C $AD22,3 Address of ad0d_unbank_continue
+C $AD25,1 Push  -- this makes RETs below jump to ad0d_unbank_continue
+C $AD26,4 A = IX[15] + 1
+C $AD2A,2 Jump if non-zero
+C $AD2C,3 A = IX[17]
+C $AD2F,1 Set flags
+C $AD30,1 UNBANK_CONTINUE if non-zero
+C $AD31,3 A = IX[1]  -- distance related
+C $AD34,3 UNBANK_CONTINUE if >= 20
+C $AD37,2 D = 0  -- not SM
+C $AD39,3 Call ? below
+C $AD3C,1 A = D
+C $AD3D,1 Set flags
+C $AD3E,1 UNBANK_CONTINUE if zero
+C $AD3F,4 A = IX[15] + 1
+C $AD43,1 UNBANK_CONTINUE if zero
+C $AD44,6 HL = wordat(IX + 11)  -- presumably the hit handler
+C $AD4A,1 Jump to it (then return to the next instr)
+@ $AD4B label=ad0d_unbank_continue
+C $AD4B,1 Unbank
+@ $AD4C label=ad0d_continue
+C $AD4C,2 Move to next hazard
+C $AD4E,2 Loop
+C $AD50,1 Return
 c $AD51 Routine at AD51
 D $AD51 Used by the routines at #R$AD0D and #R$ADA0.
+R $AD51 I:IX Address of a hazard structure
+R $AD51 O:D Return value
+C $AD51,5 Return if IX[7] is non-zero
+C $AD56,6 HL = wordat(IX + 2)
+C $AD5C,3 Return if top byte of HL was set
+C $AD5F,4 A = IX[15] + 1 and set flags
+C $AD63,3 A = IX[1]
+C $AD66,2 C = 3
+C $AD68,2 Jump if A /was/ non-zero
+C $AD6A,2 C = 2
+C $AD6C,2 Return if A >= C
+C $AD6E,2 E = 4
+C $AD70,1 A--
 C $AD71,3 A = fast_counter
+C $AD74,2 Jump if A /was/ non0zero
+C $AD76,1 Set flags
+C $AD77,3 Jump if positive
+C $AD7A,2 E = 1
+C $AD7C,2 Jump
+C $AD7E,1 Set flags
+C $AD7F,1 Return if positive
+C $AD80,1 A = L
+C $AD81,2 A &= $F8
+C $AD83,3 Return if A >= $90
+C $AD86,3 A += IX[8]
+C $AD89,3 Return if A <= $70
+C $AD8C,3 A -= IX[8]
+C $AD8F,4 Jump if A < $68
+C $AD93,1 E--
+C $AD94,4 Jump if A < $78
+C $AD98,2 E += 2
+C $AD9A,3 IX[7] = E
+C $AD9D,2 D = 1
+C $AD9F,1 Return
 c $ADA0 Routine at ADA0
 D $ADA0 Used by the routines at #R$8401, #R$852A and #R$873C.
 @ $ADA0 label=main_loop_19
@@ -5431,14 +5537,205 @@ C $ADB8,1 Unbank
 C $ADB9,2 Move to next hazard
 C $ADBB,2 Loop while #REGb
 C $ADBD,1 Return
-C $AE03,3 A = fast_counter
+C $ADBE,3 C = IX[14]
+C $ADC1,3 A = IX[4]
+C $ADC4,3 A -= IX[13]
+C $ADC7,3 IX[4] = A
+C $ADCA,2 Jump if no carry
+C $ADCC,1 C++
+C $ADCD,5 C += IX[1]
+C $ADD2,4 A = IX[15] + 1
+C $ADD6,2 Jump if non-zero
+C $ADD8,3 A = IX[17]
+C $ADDB,2 Jump if no carry (from earlier)
+C $ADDD,1 A++
+C $ADDE,4 Jump if A < 4
+C $ADE2,1 A--
+C $ADE3,2 C = $FF
+C $ADE5,3 IX[17] = A
+C $ADE8,1 Set flags
+C $ADE9,1 A = C
+C $ADEA,2 Jump if zero
+C $ADEC,3 IX[1] = A
+C $ADEF,1 Return
+C $ADF0,1 A = C
+C $ADF1,4 Jump if A < 23
+C $ADF5,4 IX[0] = 0  -- hazard slot now spare
+C $ADF9,1 Return
+C $ADFA,3 IX[1] = A
+C $ADFD,3 Jump if A >= 20
+C $AE00,1 A--
+C $AE01,2 Jump if non-zero
+C $AE03,6 A = ~(fast_counter & $E0)
+C $AE09,5 Jump if A >= IX[4]
+C $AE0E,4 B = IX[15] + 1
+C $AE12,2 Jump if zero
+C $AE14,4 IX[0] = 0  -- hazard slot now spare
+C $AE1A,1 Return if no carry
 C $AE1B,4 Increment overtake_bonus
 C $AE1F,1 Return
+C $AE20,3 IX[4] = A
+C $AE23,1 A = 0
+C $AE24,2 A += $4E
+C $AE26,2 IY.low = A
+C $AE28,3 A = IY[1]
+C $AE2B,1 C = A
+C $AE2C,3 A -= IY[0]
+C $AE2F,2 D = 0
+C $AE31,2 HL = 0
+C $AE33,1 E = A
+N $AE34 Multiplier. DE = multiplier. A = multiplicand.
+C $AE34,3 A = IX[4]
+C $AE37,2 B = 8
+C $AE39,1 Test top bit
+C $AE3A,3 If it carried out then add
+C $AE3D,1 Double
+C $AE3E,2 Loop
+C $AE40,1 A = H
+C $AE42,3 IX[6] = A
+C $AE45,2 A = -A
+C $AE47,1 A += C
+C $AE48,1 A <<= 1
+C $AE49,1 A = ~A
+C $AE4A,3 HL = $E800 + A
+C $AE4D,1 D = *HL
+C $AE4E,1 HL--
+C $AE4F,1 E = *HL
+C $AE50,2 H = $EC
+C $AE52,1 A = *HL
+C $AE53,1 L++
+C $AE54,1 H = *HL
+C $AE55,1 L = A
+C $AE56,1 Set flags
+C $AE57,4 Self modify 'LD HL,xxxx' at $AE70
+C $AE5B,2 HL -= DE
+C $AE5D,1 Swap
+C $AE5E,3 HL = 0
+C $AE61,3 A = IX[5]
+N $AE64 Another multiplier.
+C $AE64,2 B = 8
+C $AE66,1 A <<= 1
+C $AE67,3 If it carried out then add
+C $AE6A,1 Double
+C $AE6B,2 Loop
+C $AE6D,1 A = H
+C $AE6F,1 C = A
+C $AE70,4 HL = <self modified> + BC
+C $AE74,6 wordat(IX + 2) = HL
+C $AE7A,3 Call ?
+C $AE7D,3 D = IX[1]
+C $AE80,3 E = IX[4]
+C $AE83,3 HL = $A222
+C $AE86,1 A = *HL
+C $AE87,1 (*HL)++
+C $AE88,3 HL -> table
+C $AE8B,1 Set flags
+C $AE8C,2 Jump if zero
+C $AE8E,1 Iterations
+N $AE8F Loop starts
+C $AE8F,1 A = D
+C $AE90,1 Compare to *HL
+C $AE91,1 L++
+C $AE92,2 Jump if A < *HL
+C $AE94,2 Jump if A != *HL
+C $AE96,1 A = E
+C $AE97,1 Compare to *HL
+C $AE98,2 Jump if A < *HL
+C $AE9A,3 L += 3
+C $AE9D,2 Loop
+C $AE9F,4 wordat(HL) = DE; HL += 2
+C $AEA3,3 DE = IX
+C $AEA6,3 wordat(HL) = DE; HL++
+C $AEA9,2 Jump
+C $AEAB,1 Preserve DE
+C $AEAC,3 A = B * 4
+C $AEAF,3 BC = A
+C $AEB2,3 A += 2 + L
+C $AEB5,1 E = A
+C $AEB6,2 A -= 4
+C $AEB8,1 L = A
+C $AEB9,1 D = H
+C $AEBA,2 *DE = *HL; DE--; HL--; BC--
+C $AEBD,3 DE = IX
+C $AEC0,4 wordat(HL) = DE; HL -= 2
+C $AEC4,1 Restore DE
+C $AEC5,1 *HL = E
+C $AEC6,1 L--
+C $AEC7,1 *HL = D
+C $AEC8,6 HL = wordat(IX + 11)
+C $AECE,1 Jump there
 N $AECF This entry point is used by the routine at #R$8F5F.
+C $AECF,3 HL = <self modified>
+C $AED2,1 A = B
+C $AED3,2 Return if A != *HL
+C $AED5,1 A--
+C $AED6,4 Jump if A < 11
+C $AEDA,2 A = 10
+C $AEDC,2 A >>= 1
+C $AEDE,3 Self modify 'LD A,x' at $AFFB
+C $AEE1,1 E = A
+C $AEE2,3 A <<= 3
+C $AEE5,1 A -= E
+C $AEE6,3 DE = A
+C $AEE9,2 L += 2
+C $AEEB,8 IX = wordat(HL); HL += 2
+C $AEF3,3 Preserve HL, BC, DE
+C $AEF6,6 HL = wordat(IX + 9)
+C $AEFC,1 HL += DE
+C $AEFD,1 E = *HL
+C $AEFE,6 E <<= 3 ?
+C $AF04,6 A = IX[6] - IX[16]
+C $AF0A,3 Self modify 'LD D,x' at $933D to load A
+C $AF0D,3 A = IX[19]
+C $AF10,3 Self modify 'LD A,x' at $93C0 to load A
+C $AF13,4 A = IX[15] + 1
+C $AF17,2 Jump if zero
+C $AF19,3 A = IX[3]
+C $AF1C,1 Set flags
+C $AF1D,3 A = IX[2]
+C $AF20,3 Jump if negative
+C $AF23,3 Jump if non-zero
+C $AF26,5 Jump if A >= 128
+C $AF2B,1 A += E
+C $AF2C,3 Jump
+C $AF2F,1 A += E
+C $AF30,2 Jump if no carry
+C $AF3D,4 Self modify 'LD A,x' at $93C0 to load 0
+C $AF41,3 HL = $A222
+C $AF44,1 (*HL)--
+C $AF45,1 Restore HL
+C $AF46,1 Return if zero
+C $AF47,1 A = *HL
+C $AF48,4 Jump if A == B
+C $AF4C,3 Self modify 'LD HL' at $AECF to load HL
+C $AF4F,1 Return
+C $AF50,3 A = IX[3]
+C $AF53,3 Self modify 'LD A,x' at $B029 to load A
+C $AF56,1 Set flags
+C $AF57,3 A = IX[2]
+C $AF5A,3 Self modify 'LD A,x' at $B02C to load A
+C $AF5D,3 Jump if negative
+C $AF60,3 Jump if non-zero
+C $AF63,5 Jump if A >= 128
+C $AF68,1 A = E
+C $AF69,3 Jump
+C $AF6C,1 A = E
+C $AF6D,2 -- checking result of test at $AF56?
+C $AF72,3 Jump
+C $AF78,3 Read A from 'LD D,x' at $933D
+C $AF7B,3 Self modify 'LD A,x' at $B023
 C $AF7E,3 Get smash_factor
+C $AF81,4 Jump if A >= 5
+C $AF85,3 A = x in 'LD A,x' at $AFFB
 C $AF91,3 HL -> $CDEC
 C $AF9E,3 Get smash_factor
+C $AFAA,3 A = x in 'LD A,x' at $AFFB
 C $AFCF,3 Get smash_factor
+C $AFFB,2 A = <self modified>
+C $B023,2 A = <self modified>
+C $B029,2 A = <self modified>
+C $B02C,2 A = <self modified>
+C $B044,1 Return
 w $B045 Hero car jump table
 D $B045 Values used to make the car move vertically (by self modifying #R$B58E). Used by $B968.
 @ $B045 label=jump_table
@@ -5672,8 +5969,15 @@ C $B2BF,1 Set flags
 C $B2C0,2 Jump if zero
 C $B2C2,3 Jump if positive
 C $B2C5,2 A = -A
-C $B2C7,2 CP 17
-C $B2C9,2 A = 0
+C $B2C7,2 Compare
+C $B2C9,2 A = 0  -- not self modified
+C $B2CB,2 Jump if A < 17
+C $B2CD,4 Jump if H bit 7 clear
+C $B2D1,4 Jump if D bit 7 set
+C $B2D5,4 Jump if H bit 7 clear  -- bug? already tested above
+C $B2D9,2 Jump
+C $B2DB,4 Jump if D bit 7 clear
+C $B2DF,4 Jump if H bit 7 set
 C $B2E3,2 A = 1
 C $B2E5,3 cornering = A
 C $B2E8,4 BC = road_pos
@@ -6187,7 +6491,7 @@ C $B8BC,2 B = 0
 C $B8BE,2 Jump if no carry
 C $B8C0,1 B--
 C $B8C1,2 A = -A
-C $B8C3,3 HL = <horizon level related>
+C $B8C3,3 HL = horizon_level
 C $B8C6,1 C = A
 C $B8C7,1 HL += BC
 C $B8C8,3 write it back
@@ -6210,10 +6514,10 @@ C $B8E7,2 B = 0
 C $B8E9,2 Jump if no carry
 C $B8EB,2 A = -A
 C $B8ED,1 B--
-C $B8EE,3 HL = <horizon level>
+C $B8EE,3 HL = horizon_level
 C $B8F1,1 C = A
 C $B8F2,1 HL += BC
-C $B8F3,3 <horizon level> = HL
+C $B8F3,3 horizon_level = HL
 C $B8F6,3 A = road_buffer_offset [as byte]
 C $B8F9,2 A += 34 -- is height??? data
 C $B8FB,3 HL = $EE00 + A
@@ -7694,7 +7998,7 @@ C $C7AD,1 A += C
 C $C7AE,1 A = ~A
 C $C7AF,2 A += $80
 C $C7B1,1 B = A
-C $C7B2,3 HL = <Horizon level value?>
+C $C7B2,3 HL = horizon_level
 C $C7B5,2 C = 24
 C $C7B7,1 A = H
 C $C7B8,1 Set flags
@@ -9394,6 +9698,7 @@ B $F110,1,1
 B $F111,271,8*33,7 Music
 c $F220 routine/data copied to $8014 during init? (926 bytes long)
 C $F2B2,3 Exit via (if P) print_message
+C $F2BF,6 Jump if in low gear
 C $F3A5,3 Call silence_audio_hook
 C $F460,3 Call print_message
 C $F485,3 Call message_printing_related
