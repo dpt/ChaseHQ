@@ -54,9 +54,9 @@
 > $4000 ; Therefore calculation of time bonus is using random value from A' instead of
 > $4000 ; low digit from remaining time. Fixed with POKE 35645,71: POKE 35646,8."
 > $4000 ;
-> $4000 ; https://news.ycombinator.com/item?id=8850193
+> $4000 ; https://news.ycombinator.com/item?id=8850193 (discussion about the game loader)
 > $4000 ;
-> $4000 ; http://www.extentofthejam.com/pseudo/
+> $4000 ; http://www.extentofthejam.com/pseudo/ (Lou's Pseudo 3D page)
 > $4000 ;
 > $4000 ;
 > $4000 ; SECRETS
@@ -68,7 +68,7 @@
 > $4000 ; ----------------------------
 > $4000 ; - AY music + sampled speech and effects
 > $4000 ; - High score entry
-> $4000 ; - Logo animation > music plays > attract mode  (48K just does attract mode)
+> $4000 ; - Logo animation > music plays > attract mode (48K version just does attract mode)
 > $4000 ; - Best Officers (high score) on attract screen
 > $4000 ; - Input device/define keys is retained
 > $4000 ;
@@ -76,7 +76,7 @@
 > $4000 ; MEMORY MAP
 > $4000 ; ----------
 > $4000 ; The memory map changes once the game's been shifted into its regular
-> $4000 ; running state.
+> $4000 ; running state:
 > $4000 ;
 > $4000 ; $5B00..$5BFF is a pre-shifted version of the backdrop
 > $4000 ; $5C00..$5CFF is the regular version of the backdrop
@@ -91,7 +91,7 @@
 > $4000 ; $EF00..$EFFF is a table of flipped bytes
 > $4000 ; $F000..$FFFF is a 4KB back buffer
 > $4000 ;
-> $4000 ; An back buffer address of 0b1111BAAACCCXXXXX means:
+> $4000 ; A back buffer address of 0b1111BAAACCCXXXXX means:
 > $4000 ; - X = X position byte (0..31)
 > $4000 ; - A = Y position row bits 0..2
 > $4000 ; - B = Y position row bit  3
@@ -109,48 +109,49 @@
 > $4000 ; THINGS TO LOCATE
 > $4000 ; ----------------
 > $4000 ; Considering this is just level 1 in 48K:
-> $4000 ; - input handlers
-> $4000 ; - score, time, speed, distance, gear, stage no., turbo count, credit count
-> $4000 ; - music data and player
-> $4000 ; - most of car sprites
-> $4000 ; - car smoke sprites
-> $4000 ; - lamp post sprites
-> $4000 ; - tree sprites
-> $4000 ; - car's gravity / jump handling
-> $4000 ; - collision detection
-> $4000 ; - sound effects
-> $4000 ; - tunnel handling
-> $4000 ; - route/map
-> $4000 ; - road drawing code
-> $4000 ; - road split handling (it draws both in one pass)
-> $4000 ; - floating arrow sprite for road split
-> $4000 ; - floating HERE! arrow
-> $4000 ; - road signs
-> $4000 ; - desert road handling
-> $4000 ; - background drawing code (hills in 1st level)
-> $4000 ; - attract mode
-> $4000 ; - text overlay handling
-> $4000 ; - hi score stuff
-> $4000 ; - cheat mode ("SHOCKED")
-> $4000 ; - smash meter overlay handling
-> $4000 ; - redefine keys screen
-> $4000 ; - names of keys
-> $4000 ; - default key defs A/Z K/L
-> $4000 ; - message drawing code (white bar)
-> $4000 ; - turbo sprites/anim
-> $4000 ; - turbo handling
-> $4000 ; - level loading code
-> $4000 ; - level format (and which memory regions are altered)
-> $4000 ; - helicopter (later level)
-> $4000 ; - flashing light on car (and hand)
-> $4000 ; - ok creep! auto driving
+> $4000 ;
+> $4000 ; - Input handlers
+> $4000 ; - Score, time, speed, distance, gear, stage no., turbo count and credit count
+> $4000 ; - Music data and player
+> $4000 ; - Most of car sprites
+> $4000 ; - Car smoke sprites
+> $4000 ; - Lamp post sprites
+> $4000 ; - Tree sprites
+> $4000 ; - Car's gravity / jump handling
+> $4000 ; - Collision detection
+> $4000 ; - Sound effects
+> $4000 ; - Tunnel handling
+> $4000 ; - Route/map
+> $4000 ; - Road drawing code
+> $4000 ; - Road split handling (it draws both in one pass)
+> $4000 ; - Floating arrow sprite for road split
+> $4000 ; - Floating HERE! arrow
+> $4000 ; - Road signs
+> $4000 ; - Desert road handling
+> $4000 ; - Background drawing code (hills in 1st level)
+> $4000 ; - Attract mode
+> $4000 ; - Text overlay handling
+> $4000 ; - Hi score stuff
+> $4000 ; - Cheat mode ("SHOCKED")
+> $4000 ; - Smash meter overlay handling
+> $4000 ; - Redefine keys screen
+> $4000 ; - Names of keys
+> $4000 ; - Default key defs A/Z K/L
+> $4000 ; - Message drawing code (white bar)
+> $4000 ; - Turbo sprites/anim
+> $4000 ; - Turbo handling
+> $4000 ; - Level loading code
+> $4000 ; - Level format (and which memory regions are altered)
+> $4000 ; - Helicopter (later levels)
+> $4000 ; - Flashing light on car (and hand)
+> $4000 ; - Ok creep! auto driving
 > $4000 ; - Chase HQ monitoring system
-> $4000 ; - picture handling / noise-in-out effect
-> $4000 ; - car graphic encoding
-> $4000 ; - is attract mode a CPU player or a recording? how does it loop?
-> $4000 ; - exact scoring rules
-> $4000 ; - overhead tunnel type drawing
-> $4000 ; - background music/drums on menu screen
+> $4000 ; - Picture handling / noise-in-out effect
+> $4000 ; - Car graphic encoding
+> $4000 ; - Is attract mode a CPU player or a recording? How does it loop?
+> $4000 ; - Exact scoring rules
+> $4000 ; - Overhead tunnel type drawing
+> $4000 ; - Background music/drums on menu screen
 > $4000 ;
 @ $4000 org
 @ $4000 set-warnings=1
@@ -160,12 +161,21 @@ b $4000 Screen memory
 B $4000,6144,8 Screen bitmap
 B $5800,768,8 Screen attributes
 c $5B00 Could be loader code
+C $5B0F,3 HL = $FFF0
+C $5B12,1 E = *HL
+C $5B13,7 128K: Map RAM page 1 to $C000; Map normal screen; Map ROM 0
+C $5B1A,2 A = E + C
+C $5B1C,1 *HL = A
+C $5B1D,3 128K: Map RAM page 0 to $C000; Map normal screen; Map ROM 0
+C $5B20,1 A = *HL
+C $5B21,1 *HL = E
 C $5B22,9 Point #REGhl at $5B7D
 C $5B2B,6 Fetch a word from #REGhl and stack it
-C $5B31,27 Routine that ...
 C $5B4C,12 Game entry point
-C $5B58,14 Routine that ...
-C $5B66,1 Routine that ...
+C $5B5A,2 Set Interrupt Control Vector Register
+C $5B5C,1 Load 128K paging flags byte
+C $5B5D,2 HL += 2
+C $5B5F,5 128K: Set paging register
 C $5B67,14 Move $5C00..$76EF to $C000 onwards
 C $5B75,8 Routine that loads a word then OUTs $FE with zero, then jumps to that word
 N $5B7D Some sort of instruction stream
@@ -1355,9 +1365,9 @@ C $806C,3 Call sub_8098
 C $806F,1 Preserve ?
 N $8070 Wait for a keypress - debounce.
 C $8070,3 Call keyscan
-C $8075,2 Loop while key not pressed
+C $8073,4 Loop while key not pressed
 C $8077,3 Call keyscan
-C $807C,2 Loop while key pressed
+C $807A,4 Loop while key pressed
 C $8080,3 Call setup_transition
 C $8083,1 Restore ?
 C $8084,2 B = 2
@@ -1501,9 +1511,9 @@ C $820C,4 A /= 4
 C $8210,2 A |= 1
 C $8212,1 L = A
 C $8213,2 H = 3
-C $8215,6 If in high gear goto $821D
+C $8215,6 Jump if in high gear
 C $821B,2 L >>= 1
-C $821D,6 If $A23B == 0 goto $8225
+C $821D,6 Jump if tunnel_sfx == 0
 C $8223,2 H = 1
 C $8225,4 Self modify iterations -- L
 C $8229,4 Self modify delay loop -- H
@@ -2092,7 +2102,7 @@ C $8902,1 Return
 c $8903 Drives sound effects
 D $8903 Used by the routine at #R$8401.
 @ $8903 label=drive_sfx
-C $8903,6 If $A23B != 0 goto $8916
+C $8903,6 Jump if tunnel_sfx
 C $8909,7 *$A23D |= *$A23C
 C $8910,3 Counters?
 C $8913,3 Call start_sfx if non-zero
@@ -2699,7 +2709,8 @@ C $8F82,1 Self modified
 C $8F83,1 Self modified
 C $8F84,1 Self modified
 C $8F85,2 IY--
-C $8F87,5 A = road_buffer_offset + $73
+C $8F87,3 Load road_buffer_offset into #REGa
+C $8F8A,2 Add 115 so it's the right side objects data offset + 19
 C $8F8C,3 HL = $EE00 | A
 C $8F8F,4 IX = $EAB0
 C $8F93,3 BC = $1420
@@ -4383,7 +4394,13 @@ W $A186,2,2 Attribute address of horizon. Points to last attribute on the line w
 N $A188 +0 is a used flag, either $00 or $FF +1 looks distance related +2/3/4/5/6 TBD +7 byte  TBD used by hazard_hit +8 byte  gets copied from the hazards table +9 word  address of e.g. car lod +11 word  address of routine +13 word  set to $190 by fully_smashed (likely a horizontal position) +15 byte  TBD used by hazard_hit, counter which gets set to 2 then reduced +17 byte  TBD used by hazard_hit, indexes table $ACDB +18 byte  TBD used by hazard_hit +19 byte TBD used by hazard_hit
 @ $A188 label=hazards
 B $A188,120,8 Set by $843B. Groups of 20 bytes. This area looks like a table of spawned vehicles or objects. The first entry is the perp.
-B $A200,32,8
+B $A200,23,8*2,7
+W $A217,2,2 perhaps an engine tone value [128K AY]
+B $A219,1,1 [128K AY]
+B $A21A,1,1 [128K AY]
+B $A21B,2,2
+B $A21D,1,1 perhaps sound related [128K AY]
+B $A21E,2,2
 B $A220,1,1 #R$8014 sets this to the level number that it's going to load [but I don't see it using it again]. #R$858C sets it to $F8. #R$BC3E uses it to avoid some work.
 N $A221 Affects collision detection on the left hand side.
 B $A221,1,1 $ABCE, $AD0D reads
@@ -4429,8 +4446,8 @@ N $A237 These seem to get altered even when no sound is being produced.
 B $A237,1,1 Used by $88F2
 @ $A238 label=sfx_1
 B $A238,1,1 Used by $88F2
-B $A239,1,1 Used by $F265
-B $A23A,1,1 Used by $F2F6
+B $A239,1,1 Used by $F265 [128K]
+B $A23A,1,1 Used by $F2F6 [128K]
 @ $A23B label=tunnel_sfx
 B $A23B,1,1 Set to 5 when we're in a tunnel. Used to modulate sfx.
 B $A23C,1,1 $8909, $BE28 reads  $A3FA, $BDFF, $BE2C writes
@@ -4565,10 +4582,17 @@ C $A3FD,3 off_road = A  -- 0/1/2 => on-road/one wheel off-road/both wheels off-r
 C $A400,1 Set flags
 C $A401,2 C = $00
 C $A403,2 not off road?
-C $A405,6 L = road_buffer_offset + 64
-C $A40B,2 HL = $EE00 | L
+C $A405,3 Load road_buffer_offset into #REGa
+C $A408,2 Add 64 so it's the lanes data offset
+C $A40A,3 HL = $EE00 | L
 C $A40D,1 A = *HL
+C $A40E,2 Test bit 6  -- tunnel bits perhaps?
+C $A410,2 Jump if clear
+C $A412,1 Test bit 7
+C $A413,2 Jump if set
+C $A415,2 Test bit 3 (was bit 2 before RLA)
 C $A417,3 A = road_pos.hi
+C $A41A,2 Jump if clear
 C $A41C,1 C = A
 C $A41D,2 A = 20
 C $A420,3 A = C & 1
@@ -4586,10 +4610,12 @@ C $A440,3 ($B396) = HL
 C $A443,4 ($B3A4) = DE
 C $A447,1 Set flags
 C $A448,1 Return if non-zero
-C $A449,5 A = road_buffer_offset + 96
+C $A449,3 Load road_buffer_offset into #REGa
+C $A44C,2 Add 96 so it's the right side objects data offset
 C $A44E,1 L = A
 C $A450,2 H = $EE
-C $A452,3 A = road_buffer_offset
+C $A452,3 Load road_buffer_offset into #REGa
+C $A455,1 Doubling?
 C $A456,1 A = *HL
 C $A459,1 L++
 C $A45A,1 A |= *HL
@@ -4605,7 +4631,8 @@ C $A47D,1 A = 0
 C $A47E,2 Jump to cc_hit_scenery
 C $A481,2 A += 32
 C $A483,3 HL = $EE00 | A
-C $A486,3 A = road_buffer_offset
+C $A486,3 Load road_buffer_offset into #REGa
+C $A489,1 Doubling?
 C $A48A,1 A = *HL
 C $A48D,1 L++
 C $A48E,1 A |= *HL
@@ -4706,7 +4733,10 @@ C $A580,2 *HL++ = A
 C $A582,2 Loop ml14_loop1 while B
 C $A584,4 Self modify 'LD SP' at $A60A to restore SP
 C $A588,3 SP = $EB00
-C $A58B,8 DE = $EE00 | (road_buffer_offset + 64)
+C $A58B,2 D = $EE
+C $A58D,3 Load road_buffer_offset into #REGa
+C $A590,2 Add 64 so it's the lanes data offset
+C $A592,1 E = calculated offset
 C $A593,4 IY = $E34F
 C $A597,2 B = 21
 C $A599,3 A = ($A265)  -- split road flag
@@ -5329,7 +5359,8 @@ C $AB9D,1 Set flags
 C $AB9E,1 Return if zero
 C $AB9F,3 A = ~A + 21
 C $ABA2,1 C = A
-C $ABA3,5 A = road_buffer_offset + 32 * 5 -- must be hazards
+C $ABA3,3 Load road_buffer_offset into #REGa
+C $ABA6,2 Add 160 so it's the hazards data offset
 C $ABA8,1 A += C
 C $ABA9,1 L = A
 C $ABAA,2 H = $EE
@@ -6518,8 +6549,8 @@ C $B8EE,3 HL = horizon_level
 C $B8F1,1 C = A
 C $B8F2,1 HL += BC
 C $B8F3,3 horizon_level = HL
-C $B8F6,3 A = road_buffer_offset [as byte]
-C $B8F9,2 A += 34 -- is height??? data
+C $B8F6,3 Load road_buffer_offset into #REGa
+C $B8F9,2 Add (32+2) so it's the height data
 C $B8FB,3 HL = $EE00 + A
 C $B8FE,1 A = 0
 C $B8FF,3 $A25B = 0
@@ -6571,8 +6602,8 @@ C $B96C,3 Self modify $B079
 C $B96F,1 Restore HL
 C $B970,1 *HL = C
 C $B971,3 A = ?
-C $B975,3 A = road_buffer_offset
-C $B978,3 HL = $EE00 + A
+C $B975,3 Load road_buffer_offset into #REGa
+C $B978,3 HL = $EE00 + A  -- curvature data
 C $B97B,3 -- split road flag
 C $B97E,1 Set flags
 C $B97F,1 A = *HL
@@ -6629,8 +6660,8 @@ C $B9F3,1 Return
 c $B9F4 Routine at B9F4
 D $B9F4 Used by the routines at #R$8401, #R$852A and #R$873C.
 @ $B9F4 label=main_loop_12
-C $B9F4,3 A = road_buffer_offset [as byte]
-C $B9F7,2 A += 64 -- is lanes data
+C $B9F4,3 Load road_buffer_offset into #REGa [as byte]
+C $B9F7,2 Add 64 so it's the lanes data offset
 C $B9F9,3 DE = $EE00 | A
 C $B9FC,3 B=20, C=$E1 -- counter, mask
 C $B9FF,2 Counter/Index
@@ -6749,8 +6780,8 @@ C $BBE3,6 road_curvature_ptr = $E2DD
 C $BBE9,6 road_height_ptr    = $E2E2
 C $BBEF,6 road_hazard_ptr    = $E2D2
 C $BBF6,1 C = A
-C $BBF7,3 A = road_buffer_offset [as byte]
-C $BBFA,3 HL = $EE00 | A  [unsure why the code does this when $A240 seems to be the right value]
+C $BBF7,3 Load road_buffer_offset into #REGa [as byte]
+C $BBFA,3 HL = $EE00 | A   -- curvature data [unsure why the code does this when $A240 seems to be the right value]
 C $BBFD,6 Set the 32 bytes at #REGhl to #REGd
 C $BC03,9 Set the 32 bytes at #REGhl + 64 to #REGe
 C $BC0C,9 Zero the 32 bytes at #REGhl + 64 + #REGc
@@ -6866,9 +6897,8 @@ C $BE1A,2 A = 0 doesn't seem self modified
 C $BE1C,3 Jump to j_c0d9 if no carry
 N $BE1F This entry point is used by the routine at #R$87DC.
 @ $BE1F label=rm_cycle_buffer_offset
-C $BE1F,3 A = road_buffer_offset + 1  [Accessing road_buffer_offset as a byte here]
-C $BE22,1 road_buffer_offset = A      [Again, as a byte]
-C $BE23,5 HL = $EE00 | (A + 95)  -- index $EE00, the cyclic road buffer thing
+C $BE1F,4 Increment road_buffer_offset
+C $BE23,5 HL = $EE00 | (A + 95)  -- final byte of lanes data? or compensating for previous increment?
 C $BE28,7 *$A23C |= *HL
 C $BE2F,4 L += 32    -- offset 128
 C $BE33,7 *$A23D |= *HL
@@ -7622,7 +7652,8 @@ C $C45D,3 Self modify 'LD A,x' at $C88F to be zero
 C $C460,5 Self modify 'LD A,x' at $C6D8 to be 3
 C $C465,4 #REGiy = $E301
 C $C469,6 C = $60 - IY[0]
-C $C46F,5 A = road_buffer_offset + $40
+C $C46F,3 Load road_buffer_offset into #REGa
+C $C472,2 Add 64 so it's the lanes data offset
 C $C474,5 IX = $EE00 + A
 C $C479,3 B = A
 C $C47C,3 $C6B3 = A & 1
@@ -8464,8 +8495,8 @@ N $CBDC This entry point is used by the routine at #R$CBCE.
 C $CBDC,4 Write instructions in #REGde to $CC21 & $CC22
 C $CBE0,4 Self modify 'LD HL' at $CC70 to load ($ED00 + H)
 C $CBE4,4 Self modify 'LD HL' at $CCA5 to load ($E900 + L)
-C $CBE8,3 Load road_buffer_offset
-C $CBEB,1 Read road buffer byte
+C $CBE8,3 Load road_buffer_offset into #REGhl
+C $CBEB,1 Read a curvature data byte
 C $CBEC,3 A = fast_counter
 C $CBEF,2 take top three bits
 C $CBF2,5 A -= (B >> 2)
@@ -8582,7 +8613,6 @@ C $CD01,2 jump if A < L
 C $CD03,1 A -= L
 C $CD05,2 Loop while B
 C $CD07,1 Bank
-N $CD08 This entry point is used by the routine at #R$F220.
 C $CD08,2 Outer loop?
 C $CD0A,2 Exit
 C $CD0C,4 IY[$4E] = 1
@@ -9174,8 +9204,19 @@ w $E540 A table of 96 words being 10^x or similar function. Distance horizontal 
 W $E540,192,2
 b $E600 Data block at E600. Seems to be 24 groups of 22 bytes.
 B $E600,528,22
-c $E810 looks like initialisation code / relocation
-C $E813,3 Call clear_game_attrs
+c $E810 looks like initialisation code / relocation perhaps 128K stuff
+C $E810,1 A = 0
+C $E811,2 B = 3
+C $E816,3 Call clear_game_attrs  -- how is this code entered?
+C $E819,2 A = 1
+C $E81B,2 B = 5
+C $E81D,3 -- suspect this is a 128K mode flag
+C $E820,3 SP = 0  -- put stack at end of RAM?
+C $E823,1 Save B
+C $E824,3 Address of data block
+C $E827,3 Copy to the screen
+C $E82A,3 2K long
+C $E82D,2 Copy
 C $E839,1 must be the loop counter
 C $E83A,3 Point #REGhl at $e858 table
 @ $E83D label=loopy
@@ -9224,7 +9265,8 @@ C $E931,9 Keyscan for 1, 2, 3, 4, 5
 C $E93A,3 Keyscan for 0, 9, 8, 7, 6
 C $E93D,3 Keyscan for P, O, I, U, Y
 C $E940,3 Keyscan for ENTER, L, K, J, H
-C $E943,25 Keyscan for SPACE, SYM SHFT, M, N, B
+C $E943,3 Keyscan for SPACE, SYM SHFT, M, N, B
+C $E950,11 Copy 5 bytes at $EE2B to $EE38   -- cursor joystick input scheme
 C $E95C,3 Address of three bytes to populate $A0CD.. with
 C $E95F,4 Set Kempston flag
 C $E963,6 Populate $A0CD
@@ -9424,8 +9466,10 @@ C $ED02,3 Preserve registers
 C $ED05,3 Call define_keys
 C $ED08,3 Restore registers
 N $ED0B Debounce?
-C $ED0B,1 A = 0
-C $ED0E,3 A = ~A & $1F
+C $ED0B,3 Read port $00FE
+C $ED0E,1 Complement the value returned to change it from active-low to active-high
+C $ED0F,2 Discard any non-key flags
+C $ED11,2 Jump if any keys are pressed
 C $ED16,1 C++
 C $ED17,1 HL++
 C $ED18,2 Loop rdk_loop_1 while B
@@ -9444,7 +9488,7 @@ C $ED2B,1 A = *DE
 C $ED2C,1 CP *HL
 C $ED2D,1 HL++
 C $ED2E,1 DE++
-C $ED2F,1 Return if non-zero
+C $ED2F,1 Return if non-zero -- no match
 C $ED30,2 Loop rdk_loop_3 while B
 C $ED32,5 Set test mode flag
 C $ED37,3 Call clear_screen
@@ -9452,26 +9496,48 @@ C $ED3A,3 Address of TEST MODE strings
 C $ED3D,3 Call menu_draw_strings
 C $ED40,3 Call define_keys
 N $ED43 Debounce?
+C $ED43,3 Read port $00FE
+C $ED46,1 Complement the value returned to change it from active-low to active-high
+C $ED47,2 Discard any non-key flags
+C $ED49,2 Loop while no keys were pressed
 C $ED4B,2 Loop
-c $ED4D Routine at ED4D
+c $ED4D Keyscan
 D $ED4D Used by the routine at #R$ED6D.
-C $ED55,3 A = ~A & $1F
-C $ED58,2 Jump to $ED66 if zero
-C $ED5A,1 D++
-C $ED5C,1 H = A
-C $ED5D,1 A = E
-C $ED5E,2 A -= 8
-C $ED60,2 H >>= 1
-C $ED65,1 D = A
-C $ED66,1 E--
-C $ED6B,1 Compare A to itself then exit?
-C $ED6C,1 Return
+R $ED4D want some examples here
+N $ED4D O:D Key half-row number in bits 0..2, key in bits 3+  [or is it inverted?] or $FF if no keys pressed O:F Z clear if keys are pressed 47 = 00101111 = kkkkkrrr (k = key is 5, r = row is 7)
+@ $ED4D label=keyscan_all
+C $ED4D,3 #REGd = flag/counter? (255 to start), #REGe = initial key and row counters (47 to start)
+C $ED50,3 Set #REGb to $FE (initial keyboard half-row selector) and #REGc to $FE (keyboard port number)
+N $ED53 Start loop.
+@ $ED53 label=ka_loop
+C $ED53,2 Read port $<BC>
+C $ED55,1 Complement the value returned to change it from active-low to active-high
+C $ED56,2 Discard any non-key flags
+C $ED58,2 Jump to next iteration if no keys were pressed
+N $ED5A Keys were pressed.
+C $ED5A,1 ?If #REGd's 255 here we're okay. anything else causes an exit
+C $ED5B,1 Return if #REGd is non-zero
+C $ED5C,1 Copy key flags to #REGh
+C $ED5D,1 Copy key and row counters to #REGa
+C $ED5E,2 Decrement key counter bitfield in #REGa
+C $ED60,2 Shift a key bit out of #REGh into the carry flag
+C $ED62,2 Loop until we hit a set bit (at least one must be set since the zero case is handled earlier)
+C $ED64,1 Return if additional bits are set
+C $ED65,1 Set return value in #REGd
+C $ED66,1 Decrement #REGe
+C $ED67,2 Rotate the half-row selector ($FE -> $FD -> $FB -> .. -> $7F)
+C $ED69,2 ...loop until the zero bit shifts out (eight iterations)
+C $ED6B,2 Set Z
 c $ED6D Routine at ED6D
 D $ED6D Used by the routine at #R$ECF3.
+C $ED6D,2 Preserve #REGde, #REGbc
 C $ED6F,3 Call define_keys
-C $ED77,1 D++
+C $ED72,3 Call keyscan_all
+C $ED75,2 ?Loop while keys are pressed
+C $ED77,3 ?No keys were pressed
 C $ED7A,1 D--
 C $ED7B,1 A = D
+C $ED7C,2 Retrieve #REGbc
 C $ED81,1 B = C
 C $ED82,1 B--
 C $ED88,1 HL++
@@ -9696,19 +9762,129 @@ B $F0FE,4,4
 W $F102,14,2 Patterns (offset, repetitions?)
 B $F110,1,1
 B $F111,271,8*33,7 Music
-c $F220 routine/data copied to $8014 during init? (926 bytes long)
-C $F2B2,3 Exit via (if P) print_message
+c $F220 128K mode routines and data relocated to $8014/load_stage onwards during init (926 bytes long).
+@ $F220 label=load_stage_128k
+C $F220,3 Load wanted_stage_number
+C $F223,3 Address of current_stage_number
+C $F226,2 Return if the stage is already loaded
+C $F228,1 wanted_stage_number = current_stage_number
+N $F229 Copy the stage data from the correct bank and address to $5C00..$76EF.
+C $F229,8 Point #REGhl at stage_data_locations[current_stage_number]
+C $F231,1 Load paging flags byte
+C $F232,1 HL++
+C $F233,2 #REGhl = Source data address
+C $F235,5 128K: Page in required bank
+C $F23A,3 Destination $5C00..$76EF (from the horizon backdrop to just before the turbo icons)
+C $F23D,3 Bytes to copy (worst case)
+C $F240,2 Copy
+C $F242,3 Jump to (relocated) f414_128k
+N $F245 Pairs of (top byte of source data address, paging flags).
+@ $F245 label=stage_data_locations
+W $F245,2,2 Level 1. Source = 0xC000, Paging = bank 1
+W $F247,2,2 Level 2. Source = 0xE000, Paging = bank 1
+W $F249,2,2 Level 3. Source = 0xC000, Paging = bank 6
+W $F24B,2,2 Level 4. Source = 0xE000, Paging = bank 6
+W $F24D,2,2 Level 5. Source = 0xC000, Paging = bank 7
+W $F24F,2,2 Level 6. Source = 0xE000, Paging = bank 7
+N $F251 $8045 once relocated. What calls this?
+@ $F251 label=f251_128k
+C $F251,2 looks plausible
+C $F253,3 stack values?
+C $F265,3 -- state var
+C $F268,1 Return
+@ $F269 label=f269_128k
+C $F269,3 -- state var
+C $F26C,2 Return if zero
+C $F271,6 jump on 50-50 alternating pattern? -- could be flipping between string sets?
+C $F277,2 A -= 3
+C $F279,4 Jump if A >= $5A
+C $F27D,2 Jump
+@ $F27F label=f27f_128k
+C $F27F,2 A += 3
+C $F281,4 Jump if A < $8C
+@ $F285 label=f285_128k
+@ $F28B label=f28b_128k
+C $F2A2,3 Address of sound register value
+C $F2A5,8 Select AY-3-8912 sound chip register 11: envelope fine duration
+C $F2AD,4 Write to the register from (HL), then decrement B and HL
+C $F2B1,1 A--
+C $F2B2,3 Exit via (if P) print_message  -- or loop, dest needs checking
+C $F2B5,1 Return
+@ $F2B6 label=f2b6_128k
+C $F2B6,3 Get speed value
+C $F2B9,2 A = speed / 2 (top half)
+C $F2BB,2 A = speed / 2 (bottom half)
+C $F2BD,2 L = ~A
 C $F2BF,6 Jump if in low gear
+C $F2D1,3 A = tunnel_sfx
+C $F2D4,1 Set flags
+C $F2D5,3 -- base tone value?
+C $F2DA,2 Jump if tunnel_sfx was zero
+C $F2DC,3 -- base tone value?
+C $F2E1,1 -- speed value + base tone?
+C $F2E2,3 store HL
+C $F2E5,3 store A
+C $F2E8,8 $A21A &= $3B
+C $F2F0,1 Return
+@ $F2F1 label=f2f0_128k
+@ $F2FA label=f2f9_128k
+C $F2FA,6 Jump if $A23A is zero
+C $F300,1 A--
+C $F301,1 Return if zero
+C $F302,3 Address of ?
+C $F305,1 Decrement in-place
+C $F306,2 Jump if zero
+C $F308,6 HL = *HL + 10
+C $F30E,3 assign suspected engine tone value
+C $F311,8 $A21A &= $1B
+C $F319,5 $A21D = 13
+C $F31E,1 Return
+@ $F31F label=f31f_128k
+C $F31F,8 $A21A |= 36
+C $F327,4 $A23A = 0
+C $F32B,3 Jump
+B $F32E,24,8 Likely junk
+C $F348,5 128K: Set paging register to ...
 C $F3A5,3 Call silence_audio_hook
+@ $F3E2 label=f3e2_128k
+@ $F414 label=f414_128k
+C $F414,6 128K: Set paging register to default
+C $F41A,1 Return
+@ $F41B label=f41b_128k
+C $F426,3 Call setup_game
+C $F429,5 var or self modify or ..?
+C $F42E,6 Set speed to $190
+@ $F434 label=f434_128k_loop
+C $F434,3 Call cpu_driver
+C $F440,3 Call keyscan
+C $F443,5 Loop while key pressed
+C $F44B,4 Read port $BFFE -- ENTER, L, K, J, H
+C $F44F,1 Complement the value returned to change it from to active-high
+C $F450,1 ?Shift out lsb
+C $F454,2 ?Jump if ENTER was pressed
+C $F459,1 -- why load A then shift? self modified?
 C $F460,3 Call print_message
+C $F463,6 If transition_control != 0 jump
+C $F469,2 -- smells like self modified
+C $F46F,1 A--
+C $F470,3 self modifying?
+C $F476,2 Transition type?
+C $F478,3 Call setup_transition
+@ $F47D label=f47d_128k
+C $F47D,3 -- must be messages ptr below ($8208+165 means ?)
+C $F482,3 -- must be messages ptr below ($8208+263 means ?)
+@ $F485 label=f485_128k
 C $F485,3 Call message_printing_related
+@ $F488 label=f488_128k
 C $F488,3 Call transition
 C $F48B,3 Call draw_screen
+C $F48E,3 Loop to f434_128k_loop
 b $F491 Credits / Score messages
+@ $F491 label=press_gear_messages
 B $F491,6,6
-T $F497,10,10 "PRESS GEAR"
+T $F497,10,10 "PRESS GEAR" (blinks)
 B $F4A1,7,7
-T $F4A8,17,16:n1 "ENTER FOR OPTIONS"
+T $F4A8,17,16:n1 "ENTER FOR OPTIONS"  -- is this seen?
 B $F4B9,8,8
 T $F4C1,7,6:n1 "CREDITS"
 B $F4C8,7,7
@@ -9728,26 +9904,8 @@ T $F57D,28,27:n1 "2ND  35678000   4     1  ABC"
 B $F599,7,7
 T $F5A0,28,27:n1 "3RD   4340300   3     2  DEF"
 B $F5BC,2,2
-b $F5BE Data block at F5BE
-B $F5BE,788,8*98,4
-b $F8D2 Data block at F8D2
-B $F8D2,513,8*64,1
-b $FAD3 Data block at FAD3
-B $FAD3,865,8*108,1
-b $FE34 Data block at FE34
-B $FE34,22,8*2,6
-b $FE4A Data block at FE4A
-B $FE4A,4,4
-b $FE4E Data block at FE4E
-B $FE4E,22,8*2,6
-b $FE64 Data block at FE64
-B $FE64,6,6
-b $FE6A Data block at FE6A
-B $FE6A,10,8,2
-b $FE74 Data block at FE74
-B $FE74,74,8*9,2
-b $FEBE Data block at FEBE
-B $FEBE,64,8
-c $FEFE Routine at FEFE
-b $FF01 Data block at FF01
-B $FF01,255,8*31,7
+b $F5BE Status panel initial image
+@ $F5BE label=status_panel
+B $F5BE,2048,32
+b $FDBE Data block at FDBE
+B $FDBE,578,8*72,2
