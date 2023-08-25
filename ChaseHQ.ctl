@@ -79,7 +79,8 @@
 > $4000 ; running state:
 > $4000 ;
 > $4000 ; $5B00..$5BFF is a pre-shifted version of the backdrop
-> $4000 ; $5C00..$5CFF is the regular version of the backdrop
+> $4000 ; $5C00..$76EF is the level data:
+> $4000 ; - $5C00..$5CFF is the regular version of the backdrop
 > $4000 ; $8DBB (word) is the address of the current transition animation
 > $4000 ; $E500        is ?
 > $4000 ; $E600..$E7FF is road drawing data
@@ -99,6 +100,18 @@
 > $4000 ;
 > $4000 ; There's a column spare at either side of the back buffer (same as the main
 > $4000 ; screen). This seems to be to avoid full clipping.
+> $4000 ;
+> $4000 ;
+> $4000 ; 128K MEMORY MAP
+> $4000 ; ---------------
+> $4000 ; Level data has a worst-case size of $1AF0 bytes.
+> $4000 ;
+> $4000 ; Bank 1 @ $C000..$DAEF is level 1's data
+> $4000 ; Bank 1 @ $E000..$FAEF is level 2's data
+> $4000 ; Bank 6 @ $C000..$DAEF is level 3's data
+> $4000 ; Bank 6 @ $E000..$FAEF is level 4's data
+> $4000 ; Bank 7 @ $C000..$DAEF is level 5's data
+> $4000 ; Bank 7 @ $E000..$FAEF is level 6's data
 > $4000 ;
 > $4000 ;
 > $4000 ; NOTES
@@ -176,7 +189,7 @@ C $5B5A,2 Set Interrupt Control Vector Register
 C $5B5C,1 Load 128K paging flags byte
 C $5B5D,2 HL += 2
 C $5B5F,5 128K: Set paging register
-C $5B67,14 Move $5C00..$76EF to $C000 onwards
+C $5B67,14 Move $5C00..$76EF to $C000 onwards  -- are we swapping out the level?
 C $5B75,8 Routine that loads a word then OUTs $FE with zero, then jumps to that word
 N $5B7D Some sort of instruction stream
 W $5B7D,2,2 Probable address of routine $5B31
@@ -1265,7 +1278,7 @@ N $7630 Tree shadow (24x1) pre-shifted
 N $7630 #HTML[#CALL:graphic($7630,24,1,1,1)]
 @ $7630 label=bitmap_tree_shadow_24x1s
 B $7630,6,6 Masked bitmap data
-u $7636 Unused
+u $7636 Unused by this level.
 B $7636,186,8*23,2
 b $76F0 Turbo icons
 D $76F0 #HTML[#CALL:anim($76F0,16,14,1,1,3)]
@@ -1656,7 +1669,7 @@ C $83E3,9 Zero $8002..$8006
 C $83EC,2 $8007 = 1 => Load stage 1
 C $83EE,4 credits = 2
 C $83F2,3 Call the main loop
-C $83F5,10 If $A139 is non-zero this calls $81AA which is the end of a string...
+C $83F5,10 Call relocated f3b6_128k if $A139 is non-zero [128K]
 C $83FF,2 Loop
 c $8401 Main loop
 D $8401 Used by the routines at #R$83CD and #R$8A57.
@@ -1677,9 +1690,9 @@ C $841E,3 Address of setup_game_data
 C $8421,3 Call setup_game
 C $8424,10 $A13B cycles 3,2,1 then repeats
 C $842E,7 $A26B = (A * 4) OR 2
-C $8435,4 Is $A139 zero? (used later)
-C $8439,5 $A188 = $FF  I suspect this keeps the perp spawned
-C $8441,3 Call chatter
+C $8435,4 Is $A139 zero? (used later) [128K]
+C $8439,5 $A188 = $FF -- I suspect this keeps the perp spawned
+C $8441,3 Call chatter if $A139 was zero
 @ $8444 label=main_loop_loop
 C $8444,3 Call drive_sfx
 C $8447,3 Call keyscan
@@ -2261,9 +2274,9 @@ C $8ACA,3 HL = *$5D06   -- arrest messages
 C $8ACD,2 A = 1         -- transition_control byte
 C $8ACF,3 Jump to j_8e80   -- inside message_printing_related
 @ $8AD2 label=hpc_stage4
-C $8AD2,7 If *$A139 != 0 call $8193  -- strange code calling into a string
+C $8AD2,7 Call relocated f39f_128k if $A139 is non-zero [128K]
 C $8AD9,5 Return if transition_control != 0
-C $8ADE,7 If *$A139 != 0 call $8193  -- strange code again
+C $8ADE,7 Call relocated f39f_128k if $A139 is non-zero [128K]
 C $8AE5,5 perp_caught_stage = 5
 N $8AEA Calculate clear bonus.
 C $8AEA,2 '0'
@@ -2541,10 +2554,10 @@ C $8E45,2 B = 0 -- self modified by ($8E58 increments it), ($8E8D resets it to 1
 C $8E47,2 sub_8e42_1
 C $8E49,2 A = 20 -- self modified by $8E4C, $8E51, ($8E84 resets it perhaps)
 C $8E4B,1 A--
-C $8E4C,3 self modify $8E49
+C $8E4C,3 Self modify $8E49
 C $8E4F,1 Return if non-zero
 C $8E50,1 A = *HL
-C $8E51,3 self modify $8E49
+C $8E51,3 Self modify $8E49
 C $8E54,7 increment $8E46, affects TIME UP state if disabled
 C $8E5B,1 B++
 @ $8E5C label=sub_8e42_1
@@ -4355,7 +4368,7 @@ C $A132,2 Port $FE is the AND of all columns/rows? This is the main keyboard acc
 C $A134,4 C = A ROR C
 C $A138,1 Return
 g $A139 Game status buffer entry at A139
-B $A139,1,1 This is always zero, yet the code checks it. If it's set then $83F5 uses it to jump to $81AA, which is the end of a string. $8435 tests it too and calls <chatter> when it's zero, which it always is. $8AD6 also tries to use it to jump into a string (twice). Could be dead code or 128K version hook?
+B $A139,1,1 Likely to be a 128K mode flag. [128K] If it's set then $83F5 uses it to jump to $81AA. $8435 tests it too and calls <chatter> when it's zero.
 @ $A13A label=current_stage_number
 B $A13A,1,1 Current stage number
 B $A13B,1,1 Used by $8425  -- seems to start at 4 then cycle 3/2/1 with each restart of the game, another random factor?
@@ -4394,13 +4407,20 @@ W $A186,2,2 Attribute address of horizon. Points to last attribute on the line w
 N $A188 +0 is a used flag, either $00 or $FF +1 looks distance related +2/3/4/5/6 TBD +7 byte  TBD used by hazard_hit +8 byte  gets copied from the hazards table +9 word  address of e.g. car lod +11 word  address of routine +13 word  set to $190 by fully_smashed (likely a horizontal position) +15 byte  TBD used by hazard_hit, counter which gets set to 2 then reduced +17 byte  TBD used by hazard_hit, indexes table $ACDB +18 byte  TBD used by hazard_hit +19 byte TBD used by hazard_hit
 @ $A188 label=hazards
 B $A188,120,8 Set by $843B. Groups of 20 bytes. This area looks like a table of spawned vehicles or objects. The first entry is the perp.
-B $A200,23,8*2,7
-W $A217,2,2 perhaps an engine tone value [128K AY]
-B $A219,1,1 [128K AY]
-B $A21A,1,1 [128K AY]
-B $A21B,2,2
-B $A21D,1,1 perhaps sound related [128K AY]
-B $A21E,2,2
+N $A200 Unknown
+B $A200,19,8*2,3
+N $A213 AY registers 0..11 [128K]
+W $A213,2,2 0,1: Channel A pitch (fine,course=lo,hi)
+W $A215,2,2 2,3: Channel B pitch
+W $A217,2,2 4,5: Channel C pitch - used for engine tone?
+B $A219,1,1 6: Noise pitch
+B $A21A,1,1 7: Mixer
+B $A21B,1,1 8: Channel A volume
+B $A21C,1,1 9: Channel B volume
+B $A21D,1,1 10: Channel C volume
+B $A21E,1,1 11: Envelope fine duration
+N $A21F End of AY registers
+B $A21F,1,1
 B $A220,1,1 #R$8014 sets this to the level number that it's going to load [but I don't see it using it again]. #R$858C sets it to $F8. #R$BC3E uses it to avoid some work.
 N $A221 Affects collision detection on the left hand side.
 B $A221,1,1 $ABCE, $AD0D reads
@@ -7527,6 +7547,7 @@ C $C37A,1 H--
 C $C37B,3 Jump
 C $C37E,1 Bank/unbank
 C $C37F,2 Compare to 2
+N $C381 This entry point is used by the routine at #R$E8CE.
 C $C381,3 Jump if A >= 2
 C $C384,1 Bank/unbank
 C $C385,2 Compare to 4
@@ -9205,8 +9226,10 @@ W $E540,192,2
 b $E600 Data block at E600. Seems to be 24 groups of 22 bytes.
 B $E600,528,22
 c $E810 looks like initialisation code / relocation perhaps 128K stuff
+@ $E810 label=e810_entrypt
 C $E810,1 A = 0
 C $E811,2 B = 3
+@ $E816 label=e816_entrypt
 C $E816,3 Call clear_game_attrs  -- how is this code entered?
 C $E819,2 A = 1
 C $E81B,2 B = 5
@@ -9251,16 +9274,24 @@ N $E8A6 Square zoom in animation mask (8x8, 5 frames)
 N $E8A6 #HTML[#CALL:anim($E8A6,8,8,0,0,5)]
 N $E8A6 #HTML[#CALL:graphic($E8A6,8,5*8,0,0)]
 B $E8A6,40,8
+c $E8CE Routine at E8CE
 N $E8CE Diamond zoom in animation mask (8x8, 6 frames)
 N $E8CE #HTML[#CALL:anim($E8CE,8,8,0,0,6)]
 N $E8CE #HTML[#CALL:graphic($E8CE,8,6*8,0,0)]
-B $E8CE,60,8*7,4
-W $E90A,2,2 -> "STOP THE TAPE" + "PRESS ANY KEY" message set
-B $E90C,3,3
+N $E8FE This entry point is used by the routine at #R$E810.
+@ $E8FE label=e8fe_mystery
+C $E901,3 music reset perhaps?
+C $E904,1 Enable interrupts
+C $E905,1 Wait for next interrupt
+C $E909,3 -> "STOP THE TAPE" + "PRESS ANY KEY" message set
+C $E90C,3 Call menu_draw_strings
 c $E90F Routine at E90F
+C $E90F,3 Call define_keys
+C $E91A,3 Call define_keys
 C $E925,3 Call clear_screen
 C $E928,3 Point #REGhl at input menu messages (NUL terminated)
-C $E92B,6 Call menu_draw_strings
+C $E92B,3 Call menu_draw_strings
+C $E92E,3 Call define_keys
 C $E931,9 Keyscan for 1, 2, 3, 4, 5
 C $E93A,3 Keyscan for 0, 9, 8, 7, 6
 C $E93D,3 Keyscan for P, O, I, U, Y
@@ -9273,9 +9304,10 @@ C $E963,6 Populate $A0CD
 C $E969,7 Populate $A0D0
 C $E970,3 Call clear_screen
 C $E973,3 Address of "control options cannot be remodified" text (NUL terminated)
-C $E976,7 Call menu_draw_strings
-C $E97D,31 Keyscan
-C $E99C,24 Jump to clear_screen
+C $E976,3 Call menu_draw_strings
+C $E979,3 Call define_keys
+C $E97D,31 Keyscan Call define_keys
+C $E99C,24 Jump to clear_screen Call define_keys
 b $E9B4 Messages
 B $E9B4,1,1 Attribute: Green ink over black
 W $E9B5,2,2 Screen position (80,96) (why is this screen, not attrs?)
@@ -9455,7 +9487,7 @@ D $ECDA Used by the routines at #R$E90F and #R$ECF3.
 C $ECDA,12 Wipe bottom 2/3rds of attributes
 C $ECE6,12 Wipe bottom 2/3rds of pixels
 C $ECF2,1 Return
-c $ECF3 Redefine keys screen.
+c $ECF3 Runs the redefine keys screen.
 D $ECF3 Used by the routine at #R$E90F.
 @ $ECF3 label=redefine_keys
 C $ECF3,3 Call clear_screen
@@ -9584,10 +9616,34 @@ b $EE30 "SHOCKED<ENTER>" ?
 B $EE30,8,8
 b $EE38 temp input scheme buffer?
 B $EE38,5,5
-b $EE3D Data block at EE3D
+b $EE3D Bytes copied to $A0CD
 B $EE3D,3,3
-b $EE40 Data block at EE40
-B $EE40,46,8*5,6
+c $EE40 Interrupt setup.
+D $EE40 Used by the routine at #R$E8CE.
+@ $EE40 label=setup_interrupts
+C $EE40,1 Disable interrupts
+C $EE41,3 HL = $FD00
+C $EE44,1 A = $FD
+N $EE45 Set the 128 words at $FD00 to $FEFE.
+C $EE45,2 B = 0 -- 256 iterations, or 255?
+C $EE47,2 C = $FE
+C $EE49,2 *HL++ = C
+C $EE4B,2 Loop
+C $EE4D,1 Store final $FE
+C $EE4E,2 Set interrupt vector base to $FD00
+C $EE50,2 Set interrupt mode 2
+N $EE52 Set $FEFE to be "JP $EF19".
+C $EE52,5 $FEFE = $C3  -- opcode for JP
+C $EE57,6 $FEFF = $EF19
+C $EE5D,1 Return
+c $EE5E Routine at $EE5E  -- suspect a music reset routine
+D $EE5E Used by the routine at #R$E8CE.
+C $EE5E,1 A = 0
+C $EE5F,3 Self modify 'LD A,x' at $EF0D  -- clear drum flag?
+C $EE62,3 Self modify 'LD A,x' at $EF00  -- in define_keys
+C $EE65,3 Self modify 'LD A,x' at $EEA2  -- in define_keys
+C $EE68,3 -> music data
+C $EE6B,3 Jump to j_ee78
 c $EE6E Routine at EE6E
 D $EE6E Used by the routine at #R$EE9E.
 @ $EE6E label=sub_EE6E
@@ -9596,6 +9652,7 @@ C $EE70,1 A--
 C $EE71,3 Self modify $EE6E
 C $EE74,1 Return if non-zero  -- so it's a delay?
 C $EE75,3 Self modified by $EE83 [sampled: F10C, F10E, F102, F104, F106, F108, F10A, ]
+N $EE78 This entry point is used by the routine at #R$EE40.
 @ $EE78 label=j_ee78
 C $EE78,2 A = *HL++
 C $EE7A,4 Jump to $EE98 if it's $FF
@@ -9612,7 +9669,7 @@ C $EE94,3 Self modify $EEC9
 C $EE97,1 Return
 C $EE98,4 HL = wordat(HL); HL++
 C $EE9C,2 Goto j_ee78
-c $EE9E Loads of self modifying hopping around...
+c $EE9E Loads of self modifying hopping around... likely to need a better name.
 D $EE9E Used by the routines at #R$E90F, #R$ECF3 and #R$ED6D.
 @ $EE9E label=define_keys
 C $EE9E,4 Enable wait/spinlock at $EF13
@@ -9675,9 +9732,9 @@ N $EF13 This entry point is used by the routines at #R$EF22 and #R$F0C6.
 @ $EF13 label=dk_wait
 C $EF13,5 Wait/spinlock.  Self modified
 C $EF18,1 Return
-c $EF19 How does this get entered?
+c $EF19 How does this get entered? $EE40 builds a JP $EF19 that's interrupt driven.
 C $EF19,1 Preserve registers
-C $EF1A,5 Unlock the wait/spinlock. -- Self modify $EF13
+C $EF1A,5 Unlock the wait/spinlock  -- Self modify 'LD A,x' at $EF13
 C $EF1F,1 Restore registers
 C $EF20,1 Enable interrupts
 C $EF21,1 Return
@@ -9772,43 +9829,59 @@ N $F229 Copy the stage data from the correct bank and address to $5C00..$76EF.
 C $F229,8 Point #REGhl at stage_data_locations[current_stage_number]
 C $F231,1 Load paging flags byte
 C $F232,1 HL++
-C $F233,2 #REGhl = Source data address
+C $F233,2 #REGhl = Source data address (#REGb is zero)
 C $F235,5 128K: Page in required bank
 C $F23A,3 Destination $5C00..$76EF (from the horizon backdrop to just before the turbo icons)
 C $F23D,3 Bytes to copy (worst case)
 C $F240,2 Copy
-C $F242,3 Jump to (relocated) f414_128k
+C $F242,3 Jump to relocated f414_128k
 N $F245 Pairs of (top byte of source data address, paging flags).
 @ $F245 label=stage_data_locations
-W $F245,2,2 Level 1. Source = 0xC000, Paging = bank 1
-W $F247,2,2 Level 2. Source = 0xE000, Paging = bank 1
-W $F249,2,2 Level 3. Source = 0xC000, Paging = bank 6
-W $F24B,2,2 Level 4. Source = 0xE000, Paging = bank 6
-W $F24D,2,2 Level 5. Source = 0xC000, Paging = bank 7
-W $F24F,2,2 Level 6. Source = 0xE000, Paging = bank 7
+W $F245,2,2 Level 1. Source = $C000, Paging = bank 1
+W $F247,2,2 Level 2. Source = $E000, Paging = bank 1
+W $F249,2,2 Level 3. Source = $C000, Paging = bank 6
+W $F24B,2,2 Level 4. Source = $E000, Paging = bank 6
+W $F24D,2,2 Level 5. Source = $C000, Paging = bank 7
+W $F24F,2,2 Level 6. Source = $E000, Paging = bank 7
 N $F251 $8045 once relocated. What calls this?
 @ $F251 label=f251_128k
-C $F251,2 looks plausible
-C $F253,3 stack values?
-C $F265,3 -- state var
+C $F251,5 Store $8C to channel A fine pitch
+C $F256,5 Store 14 to channel A volume (4-bit)
+C $F25B,5 Store 12 to channel B volume
+C $F260,5 Self modify 'LD A,x' at $F271 (in this position)
+C $F265,3 -- state sfx var
 C $F268,1 Return
 @ $F269 label=f269_128k
-C $F269,3 -- state var
+C $F269,3 -- state sfx var (initialised to $AA above)
 C $F26C,2 Return if zero
+C $F26E,3 Load channel A fine pitch
 C $F271,6 jump on 50-50 alternating pattern? -- could be flipping between string sets?
+N $F277 Decreasing case
 C $F277,2 A -= 3
 C $F279,4 Jump if A >= $5A
 C $F27D,2 Jump
+N $F27F Increasing case
 @ $F27F label=f27f_128k
 C $F27F,2 A += 3
 C $F281,4 Jump if A < $8C
+N $F285 Arrive here if A is outside of $5A..$8B
 @ $F285 label=f285_128k
+C $F286,4 Store B (rotating pattern)
+N $F28B Arrive here if A is $5A..$8B
 @ $F28B label=f28b_128k
-C $F2A2,3 Address of sound register value
+C $F28B,3 Update channel A fine pitch
+C $F28E,5 and store 4 less to channel B fine pitch
+C $F293,8 Set mixer to enable tone A & B
+C $F29B,2 Jump
+@ $F29D label=f29d_128k
+C $F29D,5 Initialise mixer to $3F (all noise and tone off)
+N $F2A2 writing the full register set?
+C $F2A2,3 Address of sound register value(s) -- other values must be earlier
+@ $F2A9 label=f2a9_128k_loop
 C $F2A5,8 Select AY-3-8912 sound chip register 11: envelope fine duration
 C $F2AD,4 Write to the register from (HL), then decrement B and HL
-C $F2B1,1 A--
-C $F2B2,3 Exit via (if P) print_message  -- or loop, dest needs checking
+C $F2B1,1 Next register down
+C $F2B2,3 Loop to $F2A9 while +ve
 C $F2B5,1 Return
 @ $F2B6 label=f2b6_128k
 C $F2B6,3 Get speed value
@@ -9821,36 +9894,135 @@ C $F2D4,1 Set flags
 C $F2D5,3 -- base tone value?
 C $F2DA,2 Jump if tunnel_sfx was zero
 C $F2DC,3 -- base tone value?
+C $F2DF,2 Volume = 12
 C $F2E1,1 -- speed value + base tone?
-C $F2E2,3 store HL
-C $F2E5,3 store A
-C $F2E8,8 $A21A &= $3B
+C $F2E2,3 Set channel C pitch (both fine and course)
+C $F2E5,3 Set channel C volume
+C $F2E8,8 Set mixer to enable tone C
 C $F2F0,1 Return
-@ $F2F1 label=f2f0_128k
+@ $F2F1 label=f2f1_128k__reset_noise_pitch
+C $F2F1,5 Set noise pitch (5-bit) [$3C is > 5-bit...]
+C $F2F6,3 Copy of it?
+C $F2F9,1 Return
 @ $F2FA label=f2f9_128k
-C $F2FA,6 Jump if $A23A is zero
-C $F300,1 A--
+C $F2FA,6 Jump if $A23A [copy of noise pitch] is zero
+C $F300,1 Decrement noise pitch
 C $F301,1 Return if zero
-C $F302,3 Address of ?
+C $F302,3 Address of noise pitch register soft copy
 C $F305,1 Decrement in-place
 C $F306,2 Jump if zero
-C $F308,6 HL = *HL + 10
-C $F30E,3 assign suspected engine tone value
-C $F311,8 $A21A &= $1B
-C $F319,5 $A21D = 13
+C $F308,6 Increment noise pitch register soft copy by 10
+C $F30E,3 Set channel C pitch (both fine and course)
+C $F311,8 Set mixer to enable tone C and noise C
+C $F319,5 Set channel C volume to 13
 C $F31E,1 Return
 @ $F31F label=f31f_128k
-C $F31F,8 $A21A |= 36
-C $F327,4 $A23A = 0
-C $F32B,3 Jump
-B $F32E,24,8 Likely junk
-C $F348,5 128K: Set paging register to ...
+C $F31F,8 Set mixer to disable tone C and noise C
+C $F327,4 [copy of noise pitch] = 0
+C $F32B,3 Exit via f2b6_128k
+@ $F32E label=f32e_128k_table
+W $F32E,2,2
+W $F330,2,2 address?
+W $F332,2,2
+W $F334,2,2 address?
+W $F336,2,2
+W $F338,2,2 address?
+W $F33A,2,2
+W $F33C,2,2 address?
+W $F33E,2,2
+W $F340,2,2 address?
+W $F342,2,2
+W $F344,2,2 address?
+C $F346,7 128K: Map RAM page 4 to $C000; Map normal screen; Map ROM 0
+C $F356,9 HL = $F32A + A*4  -- i.e. it's 1-indexed f32e_128k_table
+C $F35F,4 DE = wordat(HL); HL += 2
+C $F363,4 HL = wordat(HL)
+@ $F367 label=f367_128k
+C $F367,2 C = 2  -- iterations
+C $F369,1 A = *HL
+C $F36A,4 A = A ROR 4
+@ $F36E label=f36e_loop
+C $F36E,2 A &= 15
+C $F372,1 B = H which is $FF
+C $F373,1 A = D which is 8
+C $F374,2 C is $FD
+C $F376,1 B = L which is $BF
+C $F377,1 A = value loaded above
+C $F378,2 OUT
+C $F37B,1 8 -> 9 etc.
+C $F37C,1 B = $FF
+C $F37D,2 C is $FD
+C $F37F,1 B = L which is $BF
+C $F380,1 A = value loaded above
+C $F384,1 9 -> 10 etc.
+C $F385,1 B = $FF
+C $F386,2 C is $FD
+C $F388,1 B = L which is $BF
+C $F389,1 A = value loaded above
+C $F38D,4 Perhaps a delay loop
+C $F393,2 Loop f36e_loop
+C $F395,1 HL++
+C $F396,1 DE--
+C $F397,5 Jump to f367_128k if DE > 0  -- so DE's a counter
+C $F39C,3 Jump to relocated f414_128k
+@ $F39F label=f39f_128k
+C $F39F,3 -- frame delay?
+C $F3A2,3 Return if A < 42
 C $F3A5,3 Call silence_audio_hook
+C $F3A8,4 $A239 = 0 -- state sfx var
+C $F3AC,1 A = 1
+C $F3AD,3 Load <copy of noise pitch>
+C $F3B0,3 Self modify $8E49
+@ $F3B6 label=f3b6_128k
+C $F3B3,6 Self modify 'CALL xxxx' at $81C5 ($F3D1 here - below)
+C $F3B9,14 Copy 4096 bytes from $B000 to $F000 (preserving registers for later)
+C $F3C7,4 Self modify 'LD SP,xxxx' at $81CD ($F3D9 here - below)
+C $F3CB,3 new sp
+C $F3CE,3 Call relocated f3e2_128k
+C $F3D1,3 Self modified by $F3B3
+C $F3D4,1 Preserve ?
+C $F3D5,3 Call relocated f3e2_128k
+C $F3D8,1 Restore ?
+C $F3D9,3 Restore SP - self modified by $F3C7 above
+C $F3DC,3 Copy 4096 bytes from $B000 to $F000
+C $F3DF,2 Copy
+C $F3E1,1 Return
 @ $F3E2 label=f3e2_128k
+C $F3E2,3 HL = $C000
+C $F3E5,2 4 iterations
+C $F3E7,1 E = 0
+@ $F3E8 label=f3e8_loop
+C $F3E8,1 Preserve iterations
+C $F3E9,2 DE = $B000
+C $F3EB,3 4096 bytes
+C $F3EE,2 Preserve
+C $F3F0,2 Copy
+C $F3F2,2 A = 3
+C $F3F4,3 Jump into engine_sfx_setup with engine speed setup
+C $F3F7,4 Retrieve from stack
+C $F3FB,2 DE = $B000
+@ $F3FD label=f3fd_loop
+C $F3FD,1 A = *DE
+C $F3FE,2 Transfer a byte
+C $F400,3 HL[-1] = A
+C $F403,3 Loop if (parity even) to f3fd_loop
+C $F406,3 Call relocated f414_128k
+C $F409,2 Restore
+C $F40B,2 HL = $B000
+C $F40D,2 Copy
+C $F40F,1 H = D
+C $F410,1 Restore iterations
+C $F411,2 Loop to f3e8_loop
+C $F413,1 Return
 @ $F414 label=f414_128k
 C $F414,6 128K: Set paging register to default
 C $F41A,1 Return
+N $F41B This is like attract_mode.
 @ $F41B label=f41b_128k
+C $F41B,3 HL = $C000
+C $F41E,3 Call relocated f3b6_128k
+C $F421,2 Return if A is zero
+C $F423,3 HL -> attract_data
 C $F426,3 Call setup_game
 C $F429,5 var or self modify or ..?
 C $F42E,6 Set speed to $190
