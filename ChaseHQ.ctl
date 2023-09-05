@@ -1333,7 +1333,8 @@ B $7E05,507,8*63,3
 g $8000 temporaries?
 @ $8000 label=test_mode_flag
 B $8000,1,1 Test mode enable flag (cheat mode)
-B $8001,1,1
+@ $8001 label=attract_cycle
+B $8001,1,1 [128K] Attract mode message cycle. Used by $F437. When zero shows the "ENTER FOR OPTIONS" message.
 @ $8002 label=score_bcd
 B $8002,4,4 Score digits as BCD (4 bytes / 8 digits, little endian)
 B $8006,1,1 Incremented on reset?
@@ -3816,7 +3817,8 @@ C $9C6A,3 transition_control = 3 -- Flag set to zero when attributes have been s
 C $9C6D,3 turbos = 3
 C $9C70,9 Set remaining time to 60 (BCD) [doesn't affect stuff if altered?!]
 N $9C79 This entry point is used by the routines at #R$858C and #R$F220.
-C $9C7B,3 }
+C $9C79,2 A = 5
+C $9C7B,3 Exit via unknown_hook_3
 @ $9C7E label=tick_print_continue
 C $9C7E,3 Print "CONTINUE THIS MISSION" messages
 C $9C81,3 Call message_printing_related
@@ -10028,8 +10030,15 @@ C $F429,5 var or self modify or ..?
 C $F42E,6 Set speed to $190
 @ $F434 label=f434_128k_loop
 C $F434,3 Call cpu_driver
+C $F437,3 Load attract_cycle
+C $F43A,1 Set flags
+C $F43B,3 -> enter_for_options_messages
+C $F43E,2 Jump to f44b_key_check
 C $F440,3 Call keyscan
-C $F443,5 Loop while key pressed
+C $F443,2 Was FIRE pressed?
+C $F445,3 Jump if so
+C $F448,3 -> press_gear_messages
+@ $F44B label=f44b_key_check
 C $F44B,4 Read port $BFFE -- ENTER, L, K, J, H
 C $F44F,1 Complement the value returned to change it from to active-high
 C $F450,1 ?Shift out lsb
@@ -10051,12 +10060,13 @@ C $F485,3 Call message_printing_related
 C $F488,3 Call transition
 C $F48B,3 Call draw_screen
 C $F48E,3 Loop to f434_128k_loop
-b $F491 Credits / Score messages
+b $F491 Credits / Score messages show in attract mode
 @ $F491 label=press_gear_messages
 B $F491,6,6
-T $F497,10,10 "PRESS GEAR" (blinks)
-B $F4A1,7,7
-T $F4A8,17,16:n1 "ENTER FOR OPTIONS"  -- is this seen?
+T $F497,11,10:n1 "PRESS GEAR" (blinks)
+@ $F4A2 label=enter_for_options_messages
+B $F4A2,6,6
+T $F4A8,17,16:n1 "ENTER FOR OPTIONS" (blinks)
 B $F4B9,8,8
 T $F4C1,7,6:n1 "CREDITS"
 B $F4C8,7,7
@@ -10068,6 +10078,7 @@ T $F505,20,19:n1 "MUSIC       JON DUNN"
 B $F519,10,8,2
 T $F523,13,12:n1 "BEST OFFICERS"
 B $F530,7,7
+N $F537 scores and names are updated somewhere
 T $F537,28,27:n1 "RANK  SCORE  STAGE PLAY NAME"
 B $F553,7,7
 T $F55A,28,27:n1 "1ST  56784010  ALL    1  JOB"
