@@ -10,6 +10,8 @@ This is the beginnings of a disassembly of the [ZX Spectrum version of Chase H.Q
 
 In this repository is a [SkoolKit](https://skoolkit.ca/) _control_ file which you can use to disassemble the game. This works with the game when it is in a "pristine" just-loaded state. See below for how to make a pristine snapshot and instructions on how to drive SkoolKit. I've provided a Makefile to automate most of the required steps.
 
+The current disassembly is [here](https://dpt.github.io/ChaseHQ/).
+
 ## WHY?
 
 To find out how it works! (and maybe one day we could make new levels...)
