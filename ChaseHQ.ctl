@@ -3853,13 +3853,15 @@ c $9CC2 Increments score in proportion to current speed
 D $9CC2 Used by the routine at #R$8401.
 @ $9CC2 label=speed_score
 C $9CC2,3 Fetch current speed into #REGhl
+N $9CC5 This code makes little sense.
 C $9CC5,1 Speed low byte
-C $9CC6,2 H >>= 1 but pointless?
-C $9CC8,1 A <<= 1
-C $9CC9,4 A >>= 2
-C $9CCD,3 Pointless?
+C $9CC6,2 Bottom bit of #REGh moves to carry (#REGh now unused)
+C $9CC8,1 Merge carry into LSB of speed (wrong end?)
+C $9CC9,4 Divide by four
+C $9CCD,1 Needless move
+C $9CCE,2 Add carry in, perhaps for rounding?
 C $9CD0,1 BCD correction
-C $9CD1,3 DE = 0
+C $9CD1,3 Zero high part of score increment
 C $9CD4,2 Exit via increment_score
 c $9CD6 Routine at 9CD6
 D $9CD6 Used by the routines at #R$9D2E, #R$A637 and #R$B9F4.
