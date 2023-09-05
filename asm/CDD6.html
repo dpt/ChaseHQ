@@ -29,7 +29,7 @@ Next: <a href="CDEC.html">CDEC</a>
 <td class="routine-comment" colspan="5">
 <div class="details">
 <div class="paragraph">
-Used by the routines at <a href="CBD6.html">CBD6</a> and <a href="CD3A.html">main_loop_10</a>.
+Multiplies <span class="register">C</span> by the top three bits of <span class="register">A</span> then divides by 8 with rounding, on exit.
 </div>
 </div>
 <table class="input">
@@ -37,27 +37,33 @@ Used by the routines at <a href="CBD6.html">CBD6</a> and <a href="CD3A.html">mai
 <th colspan="2">Input</th>
 </tr>
 <tr>
-<td class="register">A</td>
-<td class="register-desc">Multiplicand (value to multiply)</td>
-</tr>
-<tr>
-<td class="register">C</td>
-<td class="register-desc">Multiplier (number to multiply by)</td>
+<td class="register">Used</td>
+<td class="register-desc">by the routines at <a href="CBCE.html#52182">CBD6</a> and <a href="CD3A.html">main_loop_10</a>.</td>
 </tr>
 </table>
 </td>
 </tr>
 <tr>
-<td class="asm-label"></td>
+<td class="routine-comment" colspan="5">
+<span id="52694"></span>
+<div class="comments">
+<div class="paragraph">
+I:A Multiplier (number to multiply by)  e.g. $A0, $E7, $20, $C0, $E6 I:C Multiplicand (value to multiply)    e.g. $05, $02, $05, $03, $FE O:A Result e.g. $03, $02, $01, $02, $FE
+</div>
+</div>
+</td>
+</tr>
+<tr>
+<td class="asm-label">multiply</td>
 <td class="address-2"><span id="52694"></span>CDD6</td>
 <td class="instruction">LD B,$03</td>
-<td class="comment-1" rowspan="1">3 iterations (something limited to 8?)</td>
+<td class="comment-1" rowspan="1">3 iterations only</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="52696"></span>CDD8</td>
 <td class="instruction">LD E,A</td>
-<td class="comment-1" rowspan="1">Copy of value to destroy</td>
+<td class="comment-1" rowspan="1">Copy of multiplier to destroy</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -69,13 +75,13 @@ Used by the routines at <a href="CBD6.html">CBD6</a> and <a href="CD3A.html">mai
 <td class="asm-label">mult_loop</td>
 <td class="address-2"><span id="52698"></span>CDDA</td>
 <td class="instruction">RL E</td>
-<td class="comment-1" rowspan="1">Shift the most significant bit out</td>
+<td class="comment-1" rowspan="1">Shift the most significant bit out of multiplier</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="52700"></span>CDDC</td>
 <td class="instruction">JR NC,<a href="CDD6.html#52703">mult_continue</a></td>
-<td class="comment-1" rowspan="2">If the bit was set then total += multiplier</td>
+<td class="comment-1" rowspan="2">If the MSB was set then total += multiplicand</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -104,7 +110,7 @@ Used by the routines at <a href="CBD6.html">CBD6</a> and <a href="CD3A.html">mai
 <td class="asm-label"></td>
 <td class="address-1"><span id="52707"></span>CDE3</td>
 <td class="instruction">SRA A</td>
-<td class="comment-1" rowspan="4">Divide by 8 with rounding?</td>
+<td class="comment-1" rowspan="4">Divide by 8 with rounding</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -141,7 +147,7 @@ Next: <a href="CDEC.html">CDEC</a>
 </table>
 <footer>
 <div class="release">The incomplete Chase H.Q. disassembly 20230518</div>
-<div class="copyright">&copy; 1989 Ocean Software Ltd.</div>
+<div class="copyright">&copy; 1988 Taito Corporation &copy; 1989 Ocean Software Ltd. (Chase H.Q.) © 2023 David Thomas (this disassembly)</div>
 <div class="created">Created using <a href="https://skoolkit.ca">SkoolKit</a> 8.9.</div>
 </footer>
 </body>

@@ -29,13 +29,13 @@ Next: <a href="99EC.html">99EC</a>
 <td class="routine-comment" colspan="5">
 <div class="details">
 <div class="paragraph">
-Used by the routines at <a href="8401.html">main_loop</a>, <a href="858C.html">858C</a> and <a href="873C.html">escape_scene</a>.
+Used by the routines at <a href="8401.html">main_loop</a>, <a href="858C.html">run_pregame_screen</a> and <a href="873C.html">escape_scene</a>.
 </div>
 </div>
 </td>
 </tr>
 <tr>
-<td class="asm-label">main_loop_26</td>
+<td class="asm-label">drive_chatter</td>
 <td class="address-2"><span id="39269"></span>9965</td>
 <td class="instruction">LD A,($963D)</td>
 <td class="comment-1" rowspan="2">A = TBD963d - 1</td>
@@ -72,7 +72,7 @@ Used by the routines at <a href="8401.html">main_loop</a>, <a href="858C.html">8
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="39279"></span>996F</td>
-<td class="instruction">JR NZ,<a href="9965.html#39295">main_loop_26_0</a></td>
+<td class="instruction">JR NZ,<a href="9965.html#39295">drive_chatter_0</a></td>
 <td class="comment-1" rowspan="1">if A was NOT zero jump</td>
 </tr>
 <tr>
@@ -111,7 +111,7 @@ Used by the routines at <a href="8401.html">main_loop</a>, <a href="858C.html">8
 <td class="comment-1" rowspan="1">Call noise_plot_attrs -- clear to black</td>
 </tr>
 <tr>
-<td class="asm-label">main_loop_26_0</td>
+<td class="asm-label">drive_chatter_0</td>
 <td class="address-2"><span id="39295"></span>997F</td>
 <td class="instruction">LD D,$20</td>
 <td class="comment-1" rowspan="1">Plot space character</td>
@@ -150,7 +150,7 @@ Used by the routines at <a href="8401.html">main_loop</a>, <a href="858C.html">8
 <td class="asm-label"></td>
 <td class="address-1"><span id="39308"></span>998C</td>
 <td class="instruction">JP <a href="9AEC.html">plot_mini_font_1</a></td>
-<td class="comment-1" rowspan="1">Goto plot_mini_font_1</td>
+<td class="comment-1" rowspan="1">Jump to plot_mini_font_1</td>
 </tr>
 <tr>
 <td class="asm-label">sub998f_do_noise_effect</td>
@@ -261,7 +261,7 @@ Used by the routines at <a href="8401.html">main_loop</a>, <a href="858C.html">8
 <td class="asm-label"></td>
 <td class="address-1"><span id="39347"></span>99B3</td>
 <td class="instruction">JP <a href="9AEC.html">plot_mini_font_1</a></td>
-<td class="comment-1" rowspan="1">Goto plot_mini_font_1</td>
+<td class="comment-1" rowspan="1">Jump to plot_mini_font_1</td>
 </tr>
 <tr>
 <td class="asm-label">sub998f_something</td>
@@ -357,7 +357,7 @@ Used by the routines at <a href="8401.html">main_loop</a>, <a href="858C.html">8
 <span id="39379"></span>
 <div class="comments">
 <div class="paragraph">
-This entry point is used by the routines at <a href="858C.html">858C</a> and <a href="8876.html">check_user_input</a>.
+This entry point is used by the routines at <a href="858C.html">run_pregame_screen</a> and <a href="8876.html">check_user_input</a>.
 </div>
 </div>
 </td>
@@ -431,7 +431,7 @@ Next: <a href="99EC.html">99EC</a>
 </table>
 <footer>
 <div class="release">The incomplete Chase H.Q. disassembly 20230518</div>
-<div class="copyright">&copy; 1989 Ocean Software Ltd.</div>
+<div class="copyright">&copy; 1988 Taito Corporation &copy; 1989 Ocean Software Ltd. (Chase H.Q.) © 2023 David Thomas (this disassembly)</div>
 <div class="created">Created using <a href="https://skoolkit.ca">SkoolKit</a> 8.9.</div>
 </footer>
 </body>

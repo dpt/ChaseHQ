@@ -23,7 +23,7 @@ Next: <a href="AB9A.html">AB9A</a>
 </td>
 </tr>
 </table>
-<div class="description">AB33: Helicopter related</div>
+<div class="description">AB33: Helicopter.</div>
 <table class="disassembly">
 <tr>
 <td class="routine-comment" colspan="5">
@@ -35,82 +35,87 @@ Used by the routine at <a href="8401.html">main_loop</a>.
 </td>
 </tr>
 <tr>
-<td class="asm-label">main_loop_17</td>
+<td class="asm-label">helicopter</td>
 <td class="address-2"><span id="43827"></span>AB33</td>
 <td class="instruction">LD A,($A224)</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="3">Return if helicopter_control is zero</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="43830"></span>AB36</td>
 <td class="instruction">AND A</td>
-<td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="43831"></span>AB37</td>
 <td class="instruction">RET Z</td>
-<td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="43832"></span>AB38</td>
 <td class="instruction">DEC A</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="2">Jump to hc_1 if helicopter_control is one</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="43833"></span>AB39</td>
-<td class="instruction">JR Z,<a href="AB33.html#43850">main_loop_17_0</a></td>
-<td class="comment-1" rowspan="1"></td>
+<td class="instruction">JR Z,<a href="AB33.html#43850">hc_1</a></td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="43835"></span>AB3B</td>
 <td class="instruction">DEC A</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="2">Jump to hc_pick_direction if helicopter_control &gt;= 3</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="43836"></span>AB3C</td>
-<td class="instruction">JR NZ,<a href="AB33.html#43857">main_loop_17_1</a></td>
-<td class="comment-1" rowspan="1"></td>
+<td class="instruction">JR NZ,<a href="AB33.html#43857">hc_pick_direction</a></td>
+</tr>
+<tr>
+<td class="routine-comment" colspan="5">
+<span id="43838"></span>
+<div class="comments">
+<div class="paragraph">
+Otherwise helicopter_control is 2.
+</div>
+</div>
+</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="43838"></span>AB3E</td>
 <td class="instruction">LD A,($AA96)</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="1">Read from 'LD BC' at $AA94</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="43841"></span>AB41</td>
 <td class="instruction">AND A</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="1">Set flags</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="43842"></span>AB42</td>
 <td class="instruction">RET Z</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="1">Return if zero</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="43843"></span>AB43</td>
 <td class="instruction">XOR A</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="1">A = 0  -- NOP</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="43844"></span>AB44</td>
 <td class="instruction">LD D,A</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="2">DE = 0  -- NOPs</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="43845"></span>AB45</td>
 <td class="instruction">LD E,A</td>
-<td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -122,69 +127,73 @@ Used by the routine at <a href="8401.html">main_loop</a>.
 <td class="asm-label"></td>
 <td class="address-1"><span id="43847"></span>AB47</td>
 <td class="instruction">XOR A</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="1">A = 0</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="43848"></span>AB48</td>
-<td class="instruction">JR <a href="AB33.html#43918">main_loop_17_4</a></td>
-<td class="comment-1" rowspan="1"></td>
+<td class="instruction">JR <a href="AB33.html#43918">hc_3</a></td>
+<td class="comment-1" rowspan="1">Jump to hc_3</td>
 </tr>
 <tr>
-<td class="asm-label">main_loop_17_0</td>
+<td class="asm-label">hc_1</td>
 <td class="address-2"><span id="43850"></span>AB4A</td>
 <td class="instruction">LD HL,$FFC8</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="1">HL = $FFC8</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="43853"></span>AB4D</td>
 <td class="instruction">LD A,$02</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="1">New value for helicopter_control is 2</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="43855"></span>AB4F</td>
-<td class="instruction">JR <a href="AB33.html#43909">main_loop_17_3</a></td>
-<td class="comment-1" rowspan="1"></td>
+<td class="instruction">JR <a href="AB33.html#43909">hc_2</a></td>
+<td class="comment-1" rowspan="1">Jump to hc_2</td>
 </tr>
 <tr>
-<td class="asm-label">main_loop_17_1</td>
+<td class="asm-label">hc_pick_direction</td>
 <td class="address-2"><span id="43857"></span>AB51</td>
 <td class="instruction">DEC A</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="1">A--</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="43858"></span>AB52</td>
 <td class="instruction">LD HL,$98A9</td>
-<td class="comment-1" rowspan="4">Point <span class="register">HL</span> at pilot "turn left" messages</td>
+<td class="comment-1" rowspan="1">Point <span class="register">HL</span> at pilot "turn left" messages</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="43861"></span>AB55</td>
-<td class="instruction">JR Z,<a href="AB33.html#43868">main_loop_17_2</a></td>
+<td class="instruction">JR Z,<a href="AB33.html#43868">hc_chatter</a></td>
+<td class="comment-1" rowspan="1">Jump to hc_chatter if A now zero (helicopter_control == 3)</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="43863"></span>AB57</td>
 <td class="instruction">DEC A</td>
+<td class="comment-1" rowspan="1">A--</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="43864"></span>AB58</td>
 <td class="instruction">RET NZ</td>
+<td class="comment-1" rowspan="1">Return if A now non-zero</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="43865"></span>AB59</td>
 <td class="instruction">LD HL,$98B3</td>
-<td class="comment-1" rowspan="25">Point <span class="register">HL</span> at pilot "turn right" messages</td>
+<td class="comment-1" rowspan="1">Point <span class="register">HL</span> at pilot "turn right" messages (helicopter_control == 4)</td>
 </tr>
 <tr>
-<td class="asm-label">main_loop_17_2</td>
+<td class="asm-label">hc_chatter</td>
 <td class="address-2"><span id="43868"></span>AB5C</td>
 <td class="instruction">LD DE,($A26C)</td>
+<td class="comment-1" rowspan="2">Self modify 'LD BC' @ $AAF6 to load road_pos</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -195,6 +204,7 @@ Used by the routine at <a href="8401.html">main_loop</a>.
 <td class="asm-label"></td>
 <td class="address-1"><span id="43876"></span>AB64</td>
 <td class="instruction">LD DE,$FFE8</td>
+<td class="comment-1" rowspan="2">Self modify 'LD BC' @ $AA94 to load $FFE8</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -205,6 +215,7 @@ Used by the routine at <a href="8401.html">main_loop</a>.
 <td class="asm-label"></td>
 <td class="address-1"><span id="43883"></span>AB6B</td>
 <td class="instruction">XOR A</td>
+<td class="comment-1" rowspan="2">Self modify 'LD A' @ $AAD7 to load zero</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -215,11 +226,13 @@ Used by the routine at <a href="8401.html">main_loop</a>.
 <td class="asm-label"></td>
 <td class="address-1"><span id="43887"></span>AB6F</td>
 <td class="instruction">LD ($AAE9),A</td>
+<td class="comment-1" rowspan="1">Self modify 'ADD A' @ $AAE8 to load zero</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="43890"></span>AB72</td>
 <td class="instruction">INC A</td>
+<td class="comment-1" rowspan="2">Self modify 'LD A' @ $AADF to load one</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -230,21 +243,25 @@ Used by the routine at <a href="8401.html">main_loop</a>.
 <td class="asm-label"></td>
 <td class="address-1"><span id="43894"></span>AB76</td>
 <td class="instruction">LD A,$0F</td>
+<td class="comment-1" rowspan="1">A = 15</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="43896"></span>AB78</td>
 <td class="instruction">CALL <a href="9945.html">chatter</a></td>
+<td class="comment-1" rowspan="1">Call chatter</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="43899"></span>AB7B</td>
 <td class="instruction">LD HL,$0070</td>
+<td class="comment-1" rowspan="1">HL = $0070</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="43902"></span>AB7E</td>
 <td class="instruction">LD A,$85</td>
+<td class="comment-1" rowspan="2">Self modify 'LD A' at $AACB to load $85</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -255,31 +272,37 @@ Used by the routine at <a href="8401.html">main_loop</a>.
 <td class="asm-label"></td>
 <td class="address-1"><span id="43907"></span>AB83</td>
 <td class="instruction">LD A,$05</td>
+<td class="comment-1" rowspan="1">New value for helicopter_control is 5</td>
 </tr>
 <tr>
-<td class="asm-label">main_loop_17_3</td>
+<td class="asm-label">hc_2</td>
 <td class="address-2"><span id="43909"></span>AB85</td>
 <td class="instruction">EX AF,AF'</td>
+<td class="comment-1" rowspan="1">Preserve AF</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="43910"></span>AB86</td>
 <td class="instruction">LD ($AB07),HL</td>
+<td class="comment-1" rowspan="1">Self modify 'LD DE' at $AB06 to load $0070, or $FFC8</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="43913"></span>AB89</td>
 <td class="instruction">LD DE,$AA38</td>
+<td class="comment-1" rowspan="1">Address of sub_AA38</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="43916"></span>AB8C</td>
 <td class="instruction">LD A,$CD</td>
+<td class="comment-1" rowspan="1">Opcode for CALL</td>
 </tr>
 <tr>
-<td class="asm-label">main_loop_17_4</td>
+<td class="asm-label">hc_3</td>
 <td class="address-2"><span id="43918"></span>AB8E</td>
 <td class="instruction">LD ($8FA4),A</td>
+<td class="comment-1" rowspan="2">Self modify $8FA4 to be CALL sub_AA38, or NOPs</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -290,16 +313,19 @@ Used by the routine at <a href="8401.html">main_loop</a>.
 <td class="asm-label"></td>
 <td class="address-1"><span id="43925"></span>AB95</td>
 <td class="instruction">EX AF,AF'</td>
+<td class="comment-1" rowspan="1">Restore AF</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="43926"></span>AB96</td>
 <td class="instruction">LD ($A224),A</td>
+<td class="comment-1" rowspan="1">helicopter_control = A</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="43929"></span>AB99</td>
 <td class="instruction">RET</td>
+<td class="comment-1" rowspan="1">Return</td>
 </tr>
 </table>
 <table class="asm-navigation">
@@ -315,7 +341,7 @@ Next: <a href="AB9A.html">AB9A</a>
 </table>
 <footer>
 <div class="release">The incomplete Chase H.Q. disassembly 20230518</div>
-<div class="copyright">&copy; 1989 Ocean Software Ltd.</div>
+<div class="copyright">&copy; 1988 Taito Corporation &copy; 1989 Ocean Software Ltd. (Chase H.Q.) © 2023 David Thomas (this disassembly)</div>
 <div class="created">Created using <a href="https://skoolkit.ca">SkoolKit</a> 8.9.</div>
 </footer>
 </body>

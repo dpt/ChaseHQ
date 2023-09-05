@@ -47,7 +47,7 @@ Used by the routine at <a href="B318.html">main_loop_24</a>.
 <td class="asm-label">draw_car</td>
 <td class="address-2"><span id="46478"></span>B58E</td>
 <td class="instruction">AND A</td>
-<td class="comment-1" rowspan="3">If <span class="register">A</span> is zero then $A251 = A</td>
+<td class="comment-1" rowspan="3">If <span class="register">A</span> is zero then flip = A</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -410,7 +410,7 @@ Used by the routine at <a href="B318.html">main_loop_24</a>.
 <td class="asm-label"></td>
 <td class="address-1"><span id="46570"></span>B5EA</td>
 <td class="instruction">LD A,($A251)</td>
-<td class="comment-1" rowspan="3">IF $A251 jump to draw_car_perhaps_flipped</td>
+<td class="comment-1" rowspan="3">If flip jump to draw_car_perhaps_flipped</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -438,7 +438,7 @@ Used by the routine at <a href="B318.html">main_loop_24</a>.
 <td class="asm-label"></td>
 <td class="address-1"><span id="46580"></span>B5F4</td>
 <td class="instruction">JR <a href="B58E.html#46587">draw_car_cont</a></td>
-<td class="comment-1" rowspan="1">Goto draw_car_cont</td>
+<td class="comment-1" rowspan="1">Jump to draw_car_cont</td>
 </tr>
 <tr>
 <td class="asm-label">draw_car_perhaps_flipped</td>
@@ -545,37 +545,43 @@ Used by the routine at <a href="B318.html">main_loop_24</a>.
 <td class="asm-label">draw_car_2</td>
 <td class="address-2"><span id="46616"></span>B618</td>
 <td class="instruction">CALL <a href="B58E.html#46631">sub_b627</a></td>
-<td class="comment-1" rowspan="7">Draws left side of car</td>
+<td class="comment-1" rowspan="1">Draws left side of car</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="46619"></span>B61B</td>
 <td class="instruction">LD C,$01</td>
+<td class="comment-1" rowspan="1">C = 1</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="46621"></span>B61D</td>
 <td class="instruction">LD A,($A251)</td>
+<td class="comment-1" rowspan="1">A = flip</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="46624"></span>B620</td>
 <td class="instruction">AND A</td>
+<td class="comment-1" rowspan="1">Set flags</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="46625"></span>B621</td>
 <td class="instruction">LD E,$60</td>
+<td class="comment-1" rowspan="1">E = $60</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="46627"></span>B623</td>
 <td class="instruction">JR NZ,<a href="B58E.html#46631">sub_b627</a></td>
+<td class="comment-1" rowspan="1">Jump if flipped</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="46629"></span>B625</td>
 <td class="instruction">LD E,$90</td>
+<td class="comment-1" rowspan="1">E = $90</td>
 </tr>
 <tr>
 <td class="asm-label">sub_b627</td>
@@ -667,7 +673,7 @@ Used by the routine at <a href="B318.html">main_loop_24</a>.
 <td class="asm-label"></td>
 <td class="address-1"><span id="46646"></span>B636</td>
 <td class="instruction">LD A,($A251)</td>
-<td class="comment-1" rowspan="1">A=*$A251</td>
+<td class="comment-1" rowspan="1">A=flip</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -712,7 +718,7 @@ Used by the routine at <a href="B318.html">main_loop_24</a>.
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="46657"></span>B641</td>
-<td class="instruction">CALL <a href="B67C.html#46806">$B6D6</a></td>
+<td class="instruction">CALL <a href="B67C.html#46806">sub_b67c_3</a></td>
 <td class="comment-1" rowspan="4">Draws right side of car</td>
 </tr>
 <tr>
@@ -750,7 +756,7 @@ Next: <a href="B648.html">B648</a>
 </table>
 <footer>
 <div class="release">The incomplete Chase H.Q. disassembly 20230518</div>
-<div class="copyright">&copy; 1989 Ocean Software Ltd.</div>
+<div class="copyright">&copy; 1988 Taito Corporation &copy; 1989 Ocean Software Ltd. (Chase H.Q.) © 2023 David Thomas (this disassembly)</div>
 <div class="created">Created using <a href="https://skoolkit.ca">SkoolKit</a> 8.9.</div>
 </footer>
 </body>

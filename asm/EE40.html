@@ -1,15 +1,15 @@
 <!DOCTYPE html>
 <html>
 <head>
-<title>Chase H.Q.: Data at EE40</title>
+<title>Chase H.Q.: Routine at EE40</title>
 <meta charset="utf-8" />
 <link rel="stylesheet" type="text/css" href="../skoolkit.css" />
 </head>
-<body class="Asm-b">
+<body class="Asm-c">
 <table class="header">
 <tr>
 <td class="logo"><a href="../index.html">Chase H.Q.</a></td>
-<td class="page-header">Data</td>
+<td class="page-header">Routines</td>
 </tr>
 </table>
 <table class="asm-navigation">
@@ -19,47 +19,133 @@ Prev: <a href="EE3D.html">EE3D</a>
 </td>
 <td class="up">Up: <a href="../maps/all.html#60992">Map</a></td>
 <td class="next">
-Next: <a href="EE6E.html">EE6E</a>
+Next: <a href="EE5E.html">EE5E</a>
 </td>
 </tr>
 </table>
-<div class="description">EE40: Data block at EE40</div>
+<div class="description">EE40: Interrupt setup.</div>
 <table class="disassembly">
 <tr>
 <td class="routine-comment" colspan="5">
 <div class="details">
+<div class="paragraph">
+Used by the routine at <a href="E8CE.html">E8CE</a>.
+</div>
 </div>
 </td>
 </tr>
 <tr>
-<td class="address-1"><span id="60992"></span>EE40</td>
-<td class="instruction">DEFB $F3,$21,$00,$FD,$7C,$06,$00,$0E</td>
-<td class="comment-0" rowspan="1"></td>
+<td class="asm-label">setup_interrupts</td>
+<td class="address-2"><span id="60992"></span>EE40</td>
+<td class="instruction">DI</td>
+<td class="comment-1" rowspan="1">Disable interrupts</td>
 </tr>
 <tr>
-<td class="address-1"><span id="61000"></span>EE48</td>
-<td class="instruction">DEFB $FE,$71,$23,$10,$FC,$71,$ED,$47</td>
-<td class="comment-0" rowspan="1"></td>
+<td class="asm-label"></td>
+<td class="address-1"><span id="60993"></span>EE41</td>
+<td class="instruction">LD HL,$FD00</td>
+<td class="comment-1" rowspan="1">HL = $FD00</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="60996"></span>EE44</td>
+<td class="instruction">LD A,H</td>
+<td class="comment-1" rowspan="1">A = $FD</td>
+</tr>
+<tr>
+<td class="routine-comment" colspan="5">
+<span id="60997"></span>
+<div class="comments">
+<div class="paragraph">
+Set the 128 words at $FD00 to $FEFE.
+</div>
+</div>
+</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="60997"></span>EE45</td>
+<td class="instruction">LD B,$00</td>
+<td class="comment-1" rowspan="1">B = 0 -- 256 iterations, or 255?</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="60999"></span>EE47</td>
+<td class="instruction">LD C,$FE</td>
+<td class="comment-1" rowspan="1">C = $FE</td>
+</tr>
+<tr>
+<td class="asm-label">setup_interrupts_0</td>
+<td class="address-2"><span id="61001"></span>EE49</td>
+<td class="instruction">LD (HL),C</td>
+<td class="comment-1" rowspan="2">*HL++ = C</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="61002"></span>EE4A</td>
+<td class="instruction">INC HL</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="61003"></span>EE4B</td>
+<td class="instruction">DJNZ <a href="EE40.html#61001">setup_interrupts_0</a></td>
+<td class="comment-1" rowspan="1">Loop</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="61005"></span>EE4D</td>
+<td class="instruction">LD (HL),C</td>
+<td class="comment-1" rowspan="1">Store final $FE</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="61006"></span>EE4E</td>
+<td class="instruction">LD I,A</td>
+<td class="comment-1" rowspan="1">Set interrupt vector base to $FD00</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="61008"></span>EE50</td>
-<td class="instruction">DEFB $ED,$5E,$3E,$C3,$32,$FE,$FE,$21</td>
-<td class="comment-0" rowspan="1"></td>
+<td class="instruction">IM 2</td>
+<td class="comment-1" rowspan="1">Set interrupt mode 2</td>
 </tr>
 <tr>
-<td class="address-1"><span id="61016"></span>EE58</td>
-<td class="instruction">DEFB $19,$EF,$22,$FF,$FE,$C9,$AF,$32</td>
-<td class="comment-0" rowspan="1"></td>
+<td class="routine-comment" colspan="5">
+<span id="61010"></span>
+<div class="comments">
+<div class="paragraph">
+Set $FEFE to be "JP $EF19".
+</div>
+</div>
+</td>
 </tr>
 <tr>
-<td class="address-1"><span id="61024"></span>EE60</td>
-<td class="instruction">DEFB $0E,$EF,$32,$01,$EF,$32,$A3,$EE</td>
-<td class="comment-0" rowspan="1"></td>
+<td class="asm-label"></td>
+<td class="address-1"><span id="61010"></span>EE52</td>
+<td class="instruction">LD A,$C3</td>
+<td class="comment-1" rowspan="2">$FEFE = $C3  -- opcode for JP</td>
 </tr>
 <tr>
-<td class="address-1"><span id="61032"></span>EE68</td>
-<td class="instruction">DEFB $21,$FE,$F0,$C3,$78,$EE</td>
-<td class="comment-0" rowspan="1"></td>
+<td class="asm-label"></td>
+<td class="address-1"><span id="61012"></span>EE54</td>
+<td class="instruction">LD ($FEFE),A</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="61015"></span>EE57</td>
+<td class="instruction">LD HL,$EF19</td>
+<td class="comment-1" rowspan="2">$FEFF = $EF19</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="61018"></span>EE5A</td>
+<td class="instruction">LD ($FEFF),HL</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="61021"></span>EE5D</td>
+<td class="instruction">RET</td>
+<td class="comment-1" rowspan="1">Return</td>
 </tr>
 </table>
 <table class="asm-navigation">
@@ -69,13 +155,13 @@ Prev: <a href="EE3D.html">EE3D</a>
 </td>
 <td class="up">Up: <a href="../maps/all.html#60992">Map</a></td>
 <td class="next">
-Next: <a href="EE6E.html">EE6E</a>
+Next: <a href="EE5E.html">EE5E</a>
 </td>
 </tr>
 </table>
 <footer>
 <div class="release">The incomplete Chase H.Q. disassembly 20230518</div>
-<div class="copyright">&copy; 1989 Ocean Software Ltd.</div>
+<div class="copyright">&copy; 1988 Taito Corporation &copy; 1989 Ocean Software Ltd. (Chase H.Q.) © 2023 David Thomas (this disassembly)</div>
 <div class="created">Created using <a href="https://skoolkit.ca">SkoolKit</a> 8.9.</div>
 </footer>
 </body>

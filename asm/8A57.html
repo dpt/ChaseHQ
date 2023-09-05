@@ -54,7 +54,7 @@ This handles slowing cars down to a stop and calculating and displaying the bonu
 <td class="asm-label"></td>
 <td class="address-1"><span id="35420"></span>8A5C</td>
 <td class="instruction">DEC A</td>
-<td class="comment-1" rowspan="2">Goto hpc_stage1 if it's one</td>
+<td class="comment-1" rowspan="2">Jump to hpc_stage1 if it's one</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -65,7 +65,7 @@ This handles slowing cars down to a stop and calculating and displaying the bonu
 <td class="asm-label"></td>
 <td class="address-1"><span id="35424"></span>8A60</td>
 <td class="instruction">DEC A</td>
-<td class="comment-1" rowspan="2">Goto hpc_stage2 if it's two</td>
+<td class="comment-1" rowspan="2">Jump to hpc_stage2 if it's two</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -76,7 +76,7 @@ This handles slowing cars down to a stop and calculating and displaying the bonu
 <td class="asm-label"></td>
 <td class="address-1"><span id="35427"></span>8A63</td>
 <td class="instruction">DEC A</td>
-<td class="comment-1" rowspan="2">Goto hpc_stage3 if it's three</td>
+<td class="comment-1" rowspan="2">Jump to hpc_stage3 if it's three</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -87,7 +87,7 @@ This handles slowing cars down to a stop and calculating and displaying the bonu
 <td class="asm-label"></td>
 <td class="address-1"><span id="35430"></span>8A66</td>
 <td class="instruction">DEC A</td>
-<td class="comment-1" rowspan="2">Goto hpc_stage4 if it's four</td>
+<td class="comment-1" rowspan="2">Jump to hpc_stage4 if it's four</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -126,7 +126,7 @@ This handles slowing cars down to a stop and calculating and displaying the bonu
 <td class="asm-label"></td>
 <td class="address-1"><span id="35440"></span>8A70</td>
 <td class="instruction">DEC A</td>
-<td class="comment-1" rowspan="2">Goto hpc_stage5 if perp_caught_stage is five</td>
+<td class="comment-1" rowspan="2">Jump to hpc_stage5 if perp_caught_stage is five</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -147,7 +147,7 @@ Otherwise all of the caught stages are complete and we can move on to the next s
 <td class="asm-label"></td>
 <td class="address-1"><span id="35443"></span>8A73</td>
 <td class="instruction">POP HL</td>
-<td class="comment-1" rowspan="1">TBD -- Where's the PUSH?</td>
+<td class="comment-1" rowspan="1">[Where's the PUSH?]</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -170,7 +170,7 @@ Otherwise all of the caught stages are complete and we can move on to the next s
 <td class="asm-label"></td>
 <td class="address-1"><span id="35451"></span>8A7B</td>
 <td class="instruction">JP <a href="8401.html">main_loop</a></td>
-<td class="comment-1" rowspan="1">Goto main_loop</td>
+<td class="comment-1" rowspan="1">Jump to main_loop</td>
 </tr>
 <tr>
 <td class="asm-label">hpc_stage5</td>
@@ -193,7 +193,7 @@ Otherwise all of the caught stages are complete and we can move on to the next s
 <td class="asm-label"></td>
 <td class="address-1"><span id="35461"></span>8A85</td>
 <td class="instruction">JP <a href="8DF9.html">setup_transition</a></td>
-<td class="comment-1" rowspan="1">Goto setup_transition</td>
+<td class="comment-1" rowspan="1">Jump to setup_transition</td>
 </tr>
 <tr>
 <td class="asm-label">hpc_stage2</td>
@@ -205,7 +205,7 @@ Otherwise all of the caught stages are complete and we can move on to the next s
 <td class="asm-label"></td>
 <td class="address-1"><span id="35467"></span>8A8B</td>
 <td class="instruction">CP $10</td>
-<td class="comment-1" rowspan="2">Goto $8AB2 if A &gt;= 16</td>
+<td class="comment-1" rowspan="2">Jump to $8AB2 if A &gt;= 16</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -266,7 +266,7 @@ Otherwise all of the caught stages are complete and we can move on to the next s
 <td class="asm-label"></td>
 <td class="address-1"><span id="35490"></span>8AA2</td>
 <td class="instruction">JR C,<a href="8A57.html#35493">handle_perp_caught_0</a></td>
-<td class="comment-1" rowspan="1">Goto $8AA5 if HL &lt; $126  -- Suspect this is driving the car to stop the perp</td>
+<td class="comment-1" rowspan="1">Jump to $8AA5 if HL &lt; $126  -- Suspect this is driving the car to stop the perp</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -284,7 +284,7 @@ Otherwise all of the caught stages are complete and we can move on to the next s
 <td class="asm-label"></td>
 <td class="address-1"><span id="35496"></span>8AA8</td>
 <td class="instruction">LD A,($A23F)</td>
-<td class="comment-1" rowspan="2">A = *$A23F + $20</td>
+<td class="comment-1" rowspan="2">A = fast_counter + 32</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -301,7 +301,7 @@ Otherwise all of the caught stages are complete and we can move on to the next s
 <td class="asm-label"></td>
 <td class="address-1"><span id="35502"></span>8AAE</td>
 <td class="instruction">LD ($A23F),A</td>
-<td class="comment-1" rowspan="1">$A23F = A</td>
+<td class="comment-1" rowspan="1">fast_counter = A</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -353,7 +353,7 @@ Otherwise all of the caught stages are complete and we can move on to the next s
 <td class="asm-label"></td>
 <td class="address-1"><span id="35521"></span>8AC1</td>
 <td class="instruction">LD ($8ABF),A</td>
-<td class="comment-1" rowspan="1">LD ($8ABF),A  ;  Self modify $8ABE</td>
+<td class="comment-1" rowspan="1">Self modify 'LD A' at $8ABE to load A</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -388,13 +388,13 @@ Otherwise all of the caught stages are complete and we can move on to the next s
 <td class="asm-label"></td>
 <td class="address-1"><span id="35535"></span>8ACF</td>
 <td class="instruction">JP <a href="8E7E.html#36480">j_8e80</a></td>
-<td class="comment-1" rowspan="1">Goto j_8e80   -- inside message_printing_related</td>
+<td class="comment-1" rowspan="1">Jump to j_8e80   -- inside message_printing_related</td>
 </tr>
 <tr>
 <td class="asm-label">hpc_stage4</td>
 <td class="address-2"><span id="35538"></span>8AD2</td>
 <td class="instruction">LD A,($A139)</td>
-<td class="comment-1" rowspan="3">If *$A139 != 0 call $8193  -- strange code calling into a string</td>
+<td class="comment-1" rowspan="3">Call relocated f39f_128k if $A139 is non-zero [128K]</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -426,7 +426,7 @@ Otherwise all of the caught stages are complete and we can move on to the next s
 <td class="asm-label"></td>
 <td class="address-1"><span id="35550"></span>8ADE</td>
 <td class="instruction">LD A,($A139)</td>
-<td class="comment-1" rowspan="3">If *$A139 != 0 call $8193  -- strange code again</td>
+<td class="comment-1" rowspan="3">Call relocated f39f_128k if $A139 is non-zero [128K]</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -497,7 +497,7 @@ Calculate clear bonus.
 <td class="asm-label"></td>
 <td class="address-1"><span id="35573"></span>8AF5</td>
 <td class="instruction">AND A</td>
-<td class="comment-1" rowspan="2">Goto hpc_8b03 if zero</td>
+<td class="comment-1" rowspan="2">Jump to hpc_8b03 if zero</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -623,7 +623,7 @@ Calculate clear bonus.
 <td class="asm-label"></td>
 <td class="address-1"><span id="35614"></span>8B1E</td>
 <td class="instruction">AND $0F</td>
-<td class="comment-1" rowspan="1">A &amp;= $0F</td>
+<td class="comment-1" rowspan="1">A &amp;= $F</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -707,13 +707,12 @@ Calculate clear bonus.
 <td class="asm-label"></td>
 <td class="address-1"><span id="35640"></span>8B38</td>
 <td class="instruction">LD A,C</td>
-<td class="comment-1" rowspan="1">A = C</td>
+<td class="comment-1" rowspan="2">A = C &amp; 15</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="35641"></span>8B39</td>
 <td class="instruction">AND $0F</td>
-<td class="comment-1" rowspan="1">A &amp;= $0F</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -803,7 +802,7 @@ Calculate clear bonus.
 <td class="asm-label"></td>
 <td class="address-1"><span id="35672"></span>8B58</td>
 <td class="instruction">RLCA</td>
-<td class="comment-1" rowspan="5">A = (A &lt;&lt; 4) &amp; $F   -- extract first digit</td>
+<td class="comment-1" rowspan="5">A = (A &lt;&lt; 4) &amp; 15   -- extract first digit</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -882,7 +881,7 @@ Calculate clear bonus.
 <td class="asm-label"></td>
 <td class="address-1"><span id="35694"></span>8B6E</td>
 <td class="instruction">LD A,(DE)</td>
-<td class="comment-1" rowspan="2">A = *DE &amp; $0F</td>
+<td class="comment-1" rowspan="2">A = *DE &amp; 15</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -1083,7 +1082,7 @@ Calculate clear bonus.
 <td class="asm-label"></td>
 <td class="address-1"><span id="35757"></span>8BAD</td>
 <td class="instruction">JR NC,<a href="8A57.html#35770">handle_perp_caught_11</a></td>
-<td class="comment-1" rowspan="1">Goto $8BBA if HL &gt;= DE</td>
+<td class="comment-1" rowspan="1">Jump to $8BBA if HL &gt;= DE</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -1222,7 +1221,7 @@ Calculate clear bonus.
 <td class="asm-label"></td>
 <td class="address-1"><span id="35806"></span>8BDE</td>
 <td class="instruction">INC A</td>
-<td class="comment-1" rowspan="2">*$A24F = 3  -- written but never read?</td>
+<td class="comment-1" rowspan="2">smoke = 3</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -1233,7 +1232,7 @@ Calculate clear bonus.
 <td class="asm-label"></td>
 <td class="address-1"><span id="35810"></span>8BE2</td>
 <td class="instruction">JP <a href="8A57.html#35893">hpc_set_perp_pos</a></td>
-<td class="comment-1" rowspan="1">Goto hpc_set_perp_pos</td>
+<td class="comment-1" rowspan="1">Jump to hpc_set_perp_pos</td>
 </tr>
 <tr>
 <td class="asm-label">handle_perp_caught_12</td>
@@ -1316,13 +1315,12 @@ Calculate clear bonus.
 <td class="asm-label"></td>
 <td class="address-1"><span id="35839"></span>8BFF</td>
 <td class="instruction">SBC HL,DE</td>
-<td class="comment-1" rowspan="1">HL -= DE</td>
+<td class="comment-1" rowspan="2">Jump if HL &lt; DE</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="35841"></span>8C01</td>
 <td class="instruction">JR C,<a href="8A57.html#35854">handle_perp_caught_15</a></td>
-<td class="comment-1" rowspan="1">If HL &lt; DE jump</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -1334,19 +1332,17 @@ Calculate clear bonus.
 <td class="asm-label"></td>
 <td class="address-1"><span id="35845"></span>8C05</td>
 <td class="instruction">LD DE,$0032</td>
-<td class="comment-1" rowspan="1">DE = 50</td>
+<td class="comment-1" rowspan="3">Jump if HL &lt; 50</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="35848"></span>8C08</td>
 <td class="instruction">SBC HL,DE</td>
-<td class="comment-1" rowspan="1">HL -= DE</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="35850"></span>8C0A</td>
 <td class="instruction">JR C,<a href="8A57.html#35854">handle_perp_caught_15</a></td>
-<td class="comment-1" rowspan="1">If HL &lt; DE jump</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -1382,7 +1378,7 @@ Calculate clear bonus.
 <td class="asm-label"></td>
 <td class="address-1"><span id="35863"></span>8C17</td>
 <td class="instruction">SBC A,$00</td>
-<td class="comment-1" rowspan="1">-- why this op?</td>
+<td class="comment-1" rowspan="1">-- must be removing carry from calc above?</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -1417,7 +1413,7 @@ Calculate clear bonus.
 <td class="asm-label"></td>
 <td class="address-1"><span id="35876"></span>8C24</td>
 <td class="instruction">PUSH HL</td>
-<td class="comment-1" rowspan="6">Goto hpc_set_perp_pos if HL &lt;= $46</td>
+<td class="comment-1" rowspan="6">Jump to hpc_set_perp_pos if HL &lt;= $46</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -1497,7 +1493,7 @@ Next: <a href="8C3A.html">8C3A</a>
 </table>
 <footer>
 <div class="release">The incomplete Chase H.Q. disassembly 20230518</div>
-<div class="copyright">&copy; 1989 Ocean Software Ltd.</div>
+<div class="copyright">&copy; 1988 Taito Corporation &copy; 1989 Ocean Software Ltd. (Chase H.Q.) © 2023 David Thomas (this disassembly)</div>
 <div class="created">Created using <a href="https://skoolkit.ca">SkoolKit</a> 8.9.</div>
 </footer>
 </body>

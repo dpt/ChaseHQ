@@ -15,7 +15,7 @@
 <table class="asm-navigation">
 <tr>
 <td class="prev">
-Prev: <a href="C95A.html">C95A</a>
+Prev: <a href="C8E3.html">C8E3</a>
 </td>
 <td class="up">Up: <a href="../maps/all.html#52132">Map</a></td>
 <td class="next">
@@ -34,88 +34,84 @@ Next: <a href="CBC5.html">CBC5</a>
 <tr>
 <td class="address-2"><span id="52132"></span>CBA4</td>
 <td class="instruction">LD C,A</td>
-<td class="comment-0" rowspan="1"></td>
+<td class="comment-1" rowspan="1">C = A</td>
 </tr>
 <tr>
 <td class="address-1"><span id="52133"></span>CBA5</td>
 <td class="instruction">LD A,(IY+$00)</td>
-<td class="comment-0" rowspan="1"></td>
+<td class="comment-1" rowspan="1">A = IY[0]</td>
 </tr>
 <tr>
 <td class="address-1"><span id="52136"></span>CBA8</td>
 <td class="instruction">INC IY</td>
-<td class="comment-0" rowspan="1"></td>
+<td class="comment-1" rowspan="1">IY++</td>
 </tr>
 <tr>
 <td class="address-1"><span id="52138"></span>CBAA</td>
 <td class="instruction">INC IXl</td>
-<td class="comment-0" rowspan="1"></td>
+<td class="comment-1" rowspan="1">IX.low++</td>
 </tr>
 <tr>
 <td class="address-1"><span id="52140"></span>CBAC</td>
 <td class="instruction">SUB (IY+$00)</td>
-<td class="comment-0" rowspan="1"></td>
+<td class="comment-1" rowspan="1">A -= IY[0]</td>
 </tr>
 <tr>
 <td class="address-1"><span id="52143"></span>CBAF</td>
 <td class="instruction">CP $E0</td>
-<td class="comment-0" rowspan="1"></td>
+<td class="comment-1" rowspan="2">Jump if &gt;= 240</td>
 </tr>
 <tr>
 <td class="address-1"><span id="52145"></span>CBB1</td>
 <td class="instruction">JP NC,$CBB9</td>
-<td class="comment-0" rowspan="1"></td>
 </tr>
 <tr>
 <td class="address-1"><span id="52148"></span>CBB4</td>
 <td class="instruction">CP $50</td>
-<td class="comment-0" rowspan="1"></td>
+<td class="comment-1" rowspan="2">Jump if &gt;= 80</td>
 </tr>
 <tr>
 <td class="address-1"><span id="52150"></span>CBB6</td>
 <td class="instruction">JP NC,<a href="C598.html#51098">$C79A</a></td>
-<td class="comment-0" rowspan="1"></td>
 </tr>
 <tr>
 <td class="address-2"><span id="52153"></span>CBB9</td>
 <td class="instruction">DEC L</td>
-<td class="comment-0" rowspan="1"></td>
+<td class="comment-1" rowspan="2">L -= 2</td>
 </tr>
 <tr>
 <td class="address-1"><span id="52154"></span>CBBA</td>
 <td class="instruction">DEC L</td>
-<td class="comment-0" rowspan="1"></td>
 </tr>
 <tr>
 <td class="address-1"><span id="52155"></span>CBBB</td>
 <td class="instruction">ADD A,C</td>
-<td class="comment-0" rowspan="1"></td>
+<td class="comment-1" rowspan="1">A += C</td>
 </tr>
 <tr>
 <td class="address-1"><span id="52156"></span>CBBC</td>
 <td class="instruction">JR Z,$CBA4</td>
-<td class="comment-0" rowspan="1"></td>
+<td class="comment-1" rowspan="2">Jump if zero or negative</td>
 </tr>
 <tr>
 <td class="address-1"><span id="52158"></span>CBBE</td>
 <td class="instruction">JP M,$CBA4</td>
-<td class="comment-0" rowspan="1"></td>
 </tr>
 <tr>
 <td class="address-1"><span id="52161"></span>CBC1</td>
 <td class="instruction">LD C,A</td>
-<td class="comment-0" rowspan="1"></td>
+<td class="comment-1" rowspan="1">C = A</td>
 </tr>
 <tr>
 <td class="address-1"><span id="52162"></span>CBC2</td>
 <td class="instruction">JP <a href="C8E3.html#51477">$C915</a></td>
-<td class="comment-0" rowspan="1"></td>
+<td class="comment-1" rowspan="1">Exit via $C915</td>
 </tr>
 </table>
 <table class="asm-navigation">
 <tr>
 <td class="prev">
-Prev: <a href="C95A.html">C95A</a>
+Prev: <a href="C8E3.html">C8E3</a>
 </td>
 <td class="up">Up: <a href="../maps/all.html#52132">Map</a></td>
 <td class="next">
@@ -125,7 +121,7 @@ Next: <a href="CBC5.html">CBC5</a>
 </table>
 <footer>
 <div class="release">The incomplete Chase H.Q. disassembly 20230518</div>
-<div class="copyright">&copy; 1989 Ocean Software Ltd.</div>
+<div class="copyright">&copy; 1988 Taito Corporation &copy; 1989 Ocean Software Ltd. (Chase H.Q.) © 2023 David Thomas (this disassembly)</div>
 <div class="created">Created using <a href="https://skoolkit.ca">SkoolKit</a> 8.9.</div>
 </footer>
 </body>

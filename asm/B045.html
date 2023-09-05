@@ -5,7 +5,7 @@
 <meta charset="utf-8" />
 <link rel="stylesheet" type="text/css" href="../skoolkit.css" />
 </head>
-<body class="Asm-b">
+<body class="Asm-w">
 <table class="header">
 <tr>
 <td class="logo"><a href="../index.html">Chase H.Q.</a></td>
@@ -23,33 +23,93 @@ Next: <a href="B063.html">B063</a>
 </td>
 </tr>
 </table>
-<div class="description">B045: Used by $B968</div>
+<div class="description">B045: Hero car jump table</div>
 <table class="disassembly">
 <tr>
 <td class="routine-comment" colspan="5">
 <div class="details">
+<div class="paragraph">
+Values used to make the car move vertically (by self modifying <a href="B58E.html">draw_car</a>). Used by $B968.
+</div>
 </div>
 </td>
 </tr>
 <tr>
+<td class="asm-label">jump_table</td>
 <td class="address-1"><span id="45125"></span>B045</td>
-<td class="instruction">DEFB $03,$0D,$03,$0A,$03,$07,$03,$04</td>
-<td class="comment-0" rowspan="1"></td>
+<td class="instruction">DEFW $0D03</td>
+<td class="comment-1" rowspan="9">Main table (vertical delta describing an arc, TBD)</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="45127"></span>B047</td>
+<td class="instruction">DEFW $0A03</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="45129"></span>B049</td>
+<td class="instruction">DEFW $0703</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="45131"></span>B04B</td>
+<td class="instruction">DEFW $0403</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="45133"></span>B04D</td>
-<td class="instruction">DEFB $00,$02,$00,$FE,$06,$FC,$06,$F9</td>
-<td class="comment-0" rowspan="1"></td>
+<td class="instruction">DEFW $0200</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="45135"></span>B04F</td>
+<td class="instruction">DEFW $FE00</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="45137"></span>B051</td>
+<td class="instruction">DEFW $FC06</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="45139"></span>B053</td>
+<td class="instruction">DEFW $F906</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="45141"></span>B055</td>
-<td class="instruction">DEFB $06,$F6,$06,$F3,$08,$02,$06,$04</td>
-<td class="comment-0" rowspan="1"></td>
+<td class="instruction">DEFW $F606</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="45143"></span>B057</td>
+<td class="instruction">DEFW <a href="F220.html#62214">$F306</a></td>
+<td class="comment-1" rowspan="6">Sub-table (another byte pair) [suspect this really starts two bytes later]</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="45145"></span>B059</td>
+<td class="instruction">DEFW $0208</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="45147"></span>B05B</td>
+<td class="instruction">DEFW $0406</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="45149"></span>B05D</td>
-<td class="instruction">DEFB $04,$06,$02,$08,$00,$0A</td>
-<td class="comment-0" rowspan="1"></td>
+<td class="instruction">DEFW $0604</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="45151"></span>B05F</td>
+<td class="instruction">DEFW $0802</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="45153"></span>B061</td>
+<td class="instruction">DEFW $0A00</td>
 </tr>
 </table>
 <table class="asm-navigation">
@@ -65,7 +125,7 @@ Next: <a href="B063.html">B063</a>
 </table>
 <footer>
 <div class="release">The incomplete Chase H.Q. disassembly 20230518</div>
-<div class="copyright">&copy; 1989 Ocean Software Ltd.</div>
+<div class="copyright">&copy; 1988 Taito Corporation &copy; 1989 Ocean Software Ltd. (Chase H.Q.) © 2023 David Thomas (this disassembly)</div>
 <div class="created">Created using <a href="https://skoolkit.ca">SkoolKit</a> 8.9.</div>
 </footer>
 </body>

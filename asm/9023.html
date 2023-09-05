@@ -35,165 +35,187 @@ Used by the routine at <a href="8F5F.html">main_loop_23</a>.
 </td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-2"><span id="36899"></span>9023</td>
 <td class="instruction">LD E,A</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="1">E = A</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="36900"></span>9024</td>
 <td class="instruction">CP $02</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="2">Jump if A == 2</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="36902"></span>9026</td>
 <td class="instruction">JR Z,$902E</td>
-<td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="36904"></span>9028</td>
 <td class="instruction">LD A,(IX+$01)</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="1">A = IX[1]</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="36907"></span>902B</td>
 <td class="instruction">AND A</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="1">Set flags</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="36908"></span>902C</td>
 <td class="instruction">JR NZ,<a href="8F5F.html#36797">main_loop_23_3</a></td>
 <td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-2"><span id="36910"></span>902E</td>
 <td class="instruction">PUSH IX</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="3">Preserve IX, HL, BC</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="36912"></span>9030</td>
 <td class="instruction">PUSH HL</td>
-<td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="36913"></span>9031</td>
 <td class="instruction">PUSH BC</td>
-<td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="36914"></span>9032</td>
 <td class="instruction">LD A,E</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="7">DE = E * 7</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="36915"></span>9033</td>
 <td class="instruction">ADD A,A</td>
-<td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="36916"></span>9034</td>
 <td class="instruction">ADD A,A</td>
-<td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="36917"></span>9035</td>
 <td class="instruction">ADD A,A</td>
-<td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="36918"></span>9036</td>
 <td class="instruction">SUB E</td>
-<td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="36919"></span>9037</td>
 <td class="instruction">LD E,A</td>
-<td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="36920"></span>9038</td>
 <td class="instruction">LD D,$00</td>
-<td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="36922"></span>903A</td>
 <td class="instruction">LD HL,$904B</td>
-<td class="comment-1" rowspan="2">Push return address onto stack</td>
+<td class="comment-1" rowspan="2">Set return address</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="36925"></span>903D</td>
 <td class="instruction">PUSH HL</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="36926"></span>903E</td>
 <td class="instruction">LD HL,($5CFE)</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="1">turn sign lods</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="36929"></span>9041</td>
 <td class="instruction">ADD HL,DE</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="1">HL += DE</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="36930"></span>9042</td>
 <td class="instruction">LD E,(HL)</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="2">E = *HL++</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="36931"></span>9043</td>
 <td class="instruction">INC HL</td>
-<td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="36932"></span>9044</td>
 <td class="instruction">LD D,(HL)</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="2">D = *HL++</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="36933"></span>9045</td>
 <td class="instruction">INC HL</td>
-<td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="36934"></span>9046</td>
 <td class="instruction">LD A,(HL)</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="2">A = *HL++</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="36935"></span>9047</td>
 <td class="instruction">INC HL</td>
-<td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="36936"></span>9048</td>
 <td class="instruction">LD H,(HL)</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="1">H = *HL</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="36937"></span>9049</td>
 <td class="instruction">LD L,A</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="1">L = A</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="36938"></span>904A</td>
 <td class="instruction">JP (HL)</td>
 <td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
+<td class="asm-label">return_904B</td>
 <td class="address-1"><span id="36939"></span>904B</td>
 <td class="instruction">POP BC</td>
-<td class="comment-1" rowspan="4">&lt;return&gt;</td>
+<td class="comment-1" rowspan="3">Restore IX, HL, BC</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="36940"></span>904C</td>
 <td class="instruction">POP HL</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="36941"></span>904D</td>
 <td class="instruction">POP IX</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="36943"></span>904F</td>
 <td class="instruction">JP <a href="8F5F.html#36797">main_loop_23_3</a></td>
+<td class="comment-1" rowspan="1">Loop?</td>
 </tr>
 </table>
 <table class="asm-navigation">
@@ -209,7 +231,7 @@ Next: <a href="9052.html">9052</a>
 </table>
 <footer>
 <div class="release">The incomplete Chase H.Q. disassembly 20230518</div>
-<div class="copyright">&copy; 1989 Ocean Software Ltd.</div>
+<div class="copyright">&copy; 1988 Taito Corporation &copy; 1989 Ocean Software Ltd. (Chase H.Q.) © 2023 David Thomas (this disassembly)</div>
 <div class="created">Created using <a href="https://skoolkit.ca">SkoolKit</a> 8.9.</div>
 </footer>
 </body>

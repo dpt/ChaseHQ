@@ -161,7 +161,7 @@
 <td class="map-byte">216</td>
 <td class="map-b"><span id="30680"></span><a href="../asm/77D8.html">77D8</a></td>
 <td class="map-b-desc">
-<div class="map-entry-title-10"><a class="map-entry-title" href="../asm/77D8.html">Data block at 77D8</a></div>
+<div class="map-entry-title-10"><a class="map-entry-title" href="../asm/77D8.html">Data for pre-game screen.</a></div>
 </td>
 </tr>
 <tr>
@@ -178,14 +178,6 @@
 <td class="map-b"><span id="32261"></span><a href="../asm/7E05.html">7E05</a></td>
 <td class="map-b-desc">
 <div class="map-entry-title-10"><a class="map-entry-title" href="../asm/7E05.html">Ref'd by graphic entry 3 and 12</a></div>
-</td>
-</tr>
-<tr>
-<td class="map-page">128</td>
-<td class="map-byte">0</td>
-<td class="map-b"><span id="32768"></span><a href="../asm/8000.html">8000</a></td>
-<td class="map-b-desc">
-<div class="map-entry-title-10"><a class="map-entry-title" href="../asm/8000.html">temporaries?</a></div>
 </td>
 </tr>
 <tr>
@@ -210,6 +202,14 @@
 <td class="map-b"><span id="34269"></span><a href="../asm/85DD.html">85DD</a></td>
 <td class="map-b-desc">
 <div class="map-entry-title-10"><a class="map-entry-title" href="../asm/85DD.html">Data block at 85DD</a></div>
+</td>
+</tr>
+<tr>
+<td class="map-page">134</td>
+<td class="map-byte">246</td>
+<td class="map-b"><span id="34550"></span><a href="../asm/86F6.html">86F6</a></td>
+<td class="map-b-desc">
+<div class="map-entry-title-10"><a class="map-entry-title" href="../asm/86F6.html">18 byte chunks of this 36-byte table get copied to $C82D by $C808 2C = INC, 00 = NOP, ED+A0 = LDI</a></div>
 </td>
 </tr>
 <tr>
@@ -263,9 +263,9 @@
 <tr>
 <td class="map-page">176</td>
 <td class="map-byte">69</td>
-<td class="map-b"><span id="45125"></span><a href="../asm/B045.html">B045</a></td>
-<td class="map-b-desc">
-<div class="map-entry-title-10"><a class="map-entry-title" href="../asm/B045.html">Used by $B968</a></div>
+<td class="map-w"><span id="45125"></span><a href="../asm/B045.html">B045</a></td>
+<td class="map-w-desc">
+<div class="map-entry-title-10"><a class="map-entry-title" href="../asm/B045.html">Hero car jump table</a></div>
 </td>
 </tr>
 <tr>
@@ -273,7 +273,7 @@
 <td class="map-byte">40</td>
 <td class="map-b"><span id="47144"></span><a href="../asm/B828.html">B828</a></td>
 <td class="map-b-desc">
-<div class="map-entry-title-10"><a class="map-entry-title" href="../asm/B828.html">breaks/crashes road rendering if messed with</a></div>
+<div class="map-entry-title-10"><a class="map-entry-title" href="../asm/B828.html">Horizon image related. breaks/crashes road rendering if messed with</a></div>
 </td>
 </tr>
 <tr>
@@ -342,10 +342,18 @@
 </tr>
 <tr>
 <td class="map-page">226</td>
-<td class="map-byte">170</td>
-<td class="map-b"><span id="58026"></span><a href="../asm/E2AA.html">E2AA</a></td>
+<td class="map-byte">164</td>
+<td class="map-b"><span id="58020"></span><a href="../asm/E2A4.html">E2A4</a></td>
 <td class="map-b-desc">
-<div class="map-entry-title-10"><a class="map-entry-title" href="../asm/E2AA.html">Data for perp escape scene</a></div>
+<div class="map-entry-title-10"><a class="map-entry-title" href="../asm/E2A4.html">Data for perp escape scene</a></div>
+</td>
+</tr>
+<tr>
+<td class="map-page">226</td>
+<td class="map-byte">209</td>
+<td class="map-b"><span id="58065"></span><a href="../asm/E2D1.html">E2D1</a></td>
+<td class="map-b-desc">
+<div class="map-entry-title-10"><a class="map-entry-title" href="../asm/E2D1.html">Road split data</a></div>
 </td>
 </tr>
 <tr>
@@ -365,11 +373,19 @@
 </td>
 </tr>
 <tr>
+<td class="map-page">229</td>
+<td class="map-byte">64</td>
+<td class="map-w"><span id="58688"></span><a href="../asm/E540.html">E540</a></td>
+<td class="map-w-desc">
+<div class="map-entry-title-10"><a class="map-entry-title" href="../asm/E540.html">A table of 96 words being 10^x or similar function. Distance horizontal shift? Field of view table? It affects the horizontal position of the road.</a></div>
+</td>
+</tr>
+<tr>
 <td class="map-page">230</td>
-<td class="map-byte">1</td>
-<td class="map-b"><span id="58881"></span><a href="../asm/E601.html">E601</a></td>
+<td class="map-byte">0</td>
+<td class="map-b"><span id="58880"></span><a href="../asm/E600.html">E600</a></td>
 <td class="map-b-desc">
-<div class="map-entry-title-10"><a class="map-entry-title" href="../asm/E601.html">Data block at E601</a></div>
+<div class="map-entry-title-10"><a class="map-entry-title" href="../asm/E600.html">Data block at E600. Seems to be 24 groups of 22 bytes.</a></div>
 </td>
 </tr>
 <tr>
@@ -417,23 +433,7 @@
 <td class="map-byte">61</td>
 <td class="map-b"><span id="60989"></span><a href="../asm/EE3D.html">EE3D</a></td>
 <td class="map-b-desc">
-<div class="map-entry-title-10"><a class="map-entry-title" href="../asm/EE3D.html">Data block at EE3D</a></div>
-</td>
-</tr>
-<tr>
-<td class="map-page">238</td>
-<td class="map-byte">64</td>
-<td class="map-b"><span id="60992"></span><a href="../asm/EE40.html">EE40</a></td>
-<td class="map-b-desc">
-<div class="map-entry-title-10"><a class="map-entry-title" href="../asm/EE40.html">Data block at EE40</a></div>
-</td>
-</tr>
-<tr>
-<td class="map-page">239</td>
-<td class="map-byte">94</td>
-<td class="map-b"><span id="61278"></span><a href="../asm/EF5E.html">EF5E</a></td>
-<td class="map-b-desc">
-<div class="map-entry-title-10"><a class="map-entry-title" href="../asm/EF5E.html">Drum related</a></div>
+<div class="map-entry-title-10"><a class="map-entry-title" href="../asm/EE3D.html">Bytes copied to $A0CD</a></div>
 </td>
 </tr>
 <tr>
@@ -441,7 +441,7 @@
 <td class="map-byte">254</td>
 <td class="map-b"><span id="61694"></span><a href="../asm/F0FE.html">F0FE</a></td>
 <td class="map-b-desc">
-<div class="map-entry-title-10"><a class="map-entry-title" href="../asm/F0FE.html">Data block at F0FE</a></div>
+<div class="map-entry-title-10"><a class="map-entry-title" href="../asm/F0FE.html">Music data</a></div>
 </td>
 </tr>
 <tr>
@@ -449,7 +449,7 @@
 <td class="map-byte">145</td>
 <td class="map-b"><span id="62609"></span><a href="../asm/F491.html">F491</a></td>
 <td class="map-b-desc">
-<div class="map-entry-title-10"><a class="map-entry-title" href="../asm/F491.html">Credits / Score messages</a></div>
+<div class="map-entry-title-10"><a class="map-entry-title" href="../asm/F491.html">Credits / Score messages show in attract mode</a></div>
 </td>
 </tr>
 <tr>
@@ -457,93 +457,21 @@
 <td class="map-byte">190</td>
 <td class="map-b"><span id="62910"></span><a href="../asm/F5BE.html">F5BE</a></td>
 <td class="map-b-desc">
-<div class="map-entry-title-10"><a class="map-entry-title" href="../asm/F5BE.html">Data block at F5BE</a></div>
+<div class="map-entry-title-10"><a class="map-entry-title" href="../asm/F5BE.html">Status panel initial image</a></div>
 </td>
 </tr>
 <tr>
-<td class="map-page">248</td>
-<td class="map-byte">210</td>
-<td class="map-b"><span id="63698"></span><a href="../asm/F8D2.html">F8D2</a></td>
-<td class="map-b-desc">
-<div class="map-entry-title-10"><a class="map-entry-title" href="../asm/F8D2.html">Data block at F8D2</a></div>
-</td>
-</tr>
-<tr>
-<td class="map-page">250</td>
-<td class="map-byte">211</td>
-<td class="map-b"><span id="64211"></span><a href="../asm/FAD3.html">FAD3</a></td>
-<td class="map-b-desc">
-<div class="map-entry-title-10"><a class="map-entry-title" href="../asm/FAD3.html">Data block at FAD3</a></div>
-</td>
-</tr>
-<tr>
-<td class="map-page">254</td>
-<td class="map-byte">52</td>
-<td class="map-b"><span id="65076"></span><a href="../asm/FE34.html">FE34</a></td>
-<td class="map-b-desc">
-<div class="map-entry-title-10"><a class="map-entry-title" href="../asm/FE34.html">Data block at FE34</a></div>
-</td>
-</tr>
-<tr>
-<td class="map-page">254</td>
-<td class="map-byte">74</td>
-<td class="map-b"><span id="65098"></span><a href="../asm/FE4A.html">FE4A</a></td>
-<td class="map-b-desc">
-<div class="map-entry-title-10"><a class="map-entry-title" href="../asm/FE4A.html">Data block at FE4A</a></div>
-</td>
-</tr>
-<tr>
-<td class="map-page">254</td>
-<td class="map-byte">78</td>
-<td class="map-b"><span id="65102"></span><a href="../asm/FE4E.html">FE4E</a></td>
-<td class="map-b-desc">
-<div class="map-entry-title-10"><a class="map-entry-title" href="../asm/FE4E.html">Data block at FE4E</a></div>
-</td>
-</tr>
-<tr>
-<td class="map-page">254</td>
-<td class="map-byte">100</td>
-<td class="map-b"><span id="65124"></span><a href="../asm/FE64.html">FE64</a></td>
-<td class="map-b-desc">
-<div class="map-entry-title-10"><a class="map-entry-title" href="../asm/FE64.html">Data block at FE64</a></div>
-</td>
-</tr>
-<tr>
-<td class="map-page">254</td>
-<td class="map-byte">106</td>
-<td class="map-b"><span id="65130"></span><a href="../asm/FE6A.html">FE6A</a></td>
-<td class="map-b-desc">
-<div class="map-entry-title-10"><a class="map-entry-title" href="../asm/FE6A.html">Data block at FE6A</a></div>
-</td>
-</tr>
-<tr>
-<td class="map-page">254</td>
-<td class="map-byte">116</td>
-<td class="map-b"><span id="65140"></span><a href="../asm/FE74.html">FE74</a></td>
-<td class="map-b-desc">
-<div class="map-entry-title-10"><a class="map-entry-title" href="../asm/FE74.html">Data block at FE74</a></div>
-</td>
-</tr>
-<tr>
-<td class="map-page">254</td>
+<td class="map-page">253</td>
 <td class="map-byte">190</td>
-<td class="map-b"><span id="65214"></span><a href="../asm/FEBE.html">FEBE</a></td>
+<td class="map-b"><span id="64958"></span><a href="../asm/FDBE.html">FDBE</a></td>
 <td class="map-b-desc">
-<div class="map-entry-title-10"><a class="map-entry-title" href="../asm/FEBE.html">Data block at FEBE</a></div>
-</td>
-</tr>
-<tr>
-<td class="map-page">255</td>
-<td class="map-byte">1</td>
-<td class="map-b"><span id="65281"></span><a href="../asm/FF01.html">FF01</a></td>
-<td class="map-b-desc">
-<div class="map-entry-title-10"><a class="map-entry-title" href="../asm/FF01.html">Data block at FF01</a></div>
+<div class="map-entry-title-10"><a class="map-entry-title" href="../asm/FDBE.html">Data block at FDBE</a></div>
 </td>
 </tr>
 </table>
 <footer>
 <div class="release">The incomplete Chase H.Q. disassembly 20230518</div>
-<div class="copyright">&copy; 1989 Ocean Software Ltd.</div>
+<div class="copyright">&copy; 1988 Taito Corporation &copy; 1989 Ocean Software Ltd. (Chase H.Q.) © 2023 David Thomas (this disassembly)</div>
 <div class="created">Created using <a href="https://skoolkit.ca">SkoolKit</a> 8.9.</div>
 </footer>
 </body>

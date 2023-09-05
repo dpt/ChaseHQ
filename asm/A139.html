@@ -35,7 +35,7 @@ Next: <a href="A27A.html">A27A</a>
 <td class="asm-label"></td>
 <td class="address-1"><span id="41273"></span>A139</td>
 <td class="instruction">DEFB $00</td>
-<td class="comment-1" rowspan="1">This is always zero, yet the code checks it. If it's set then $83F5 uses it to jump to $81AA, which is the end of a string. $8435 tests it too and calls &lt;chatter&gt; when it's zero, which it always is. $8AD6 also tries to use it to jump into a string (twice). Could be dead code or 128K version hook?</td>
+<td class="comment-1" rowspan="1">Likely to be a 128K mode flag. [128K] If it's set then $83F5 uses it to jump to $81AA. $8435 tests it too and calls &lt;chatter&gt; when it's zero.</td>
 </tr>
 <tr>
 <td class="asm-label">current_stage_number</td>
@@ -96,19 +96,19 @@ Next: <a href="A27A.html">A27A</a>
 <td class="asm-label"></td>
 <td class="address-1"><span id="41325"></span>A16D</td>
 <td class="instruction">DEFB $00</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="1">Used by $BC36</td>
 </tr>
 <tr>
-<td class="asm-label"></td>
+<td class="asm-label">idle_timer</td>
 <td class="address-1"><span id="41326"></span>A16E</td>
 <td class="instruction">DEFB $00</td>
-<td class="comment-1" rowspan="1">used during attract mode, road gradient/angle or something?</td>
+<td class="comment-1" rowspan="1">Idle timer. Counts down from 100. Recommences whenever the hero car is stopped. When it hits zero Raymond will say "LET'S GET MOVIN' MAN!" and it will be reset to 100.</td>
 </tr>
 <tr>
 <td class="asm-label">user_input_mask</td>
 <td class="address-1"><span id="41327"></span>A16F</td>
 <td class="instruction">DEFB $00</td>
-<td class="comment-1" rowspan="1">user_input mask, set to $C0 (Quit+Pause) when perp is fully smashed, or $FF otherwise</td>
+<td class="comment-1" rowspan="1">User input mask, set to $C0 (Quit+Pause) when perp is fully smashed, or $FF otherwise</td>
 </tr>
 <tr>
 <td class="asm-label">turbos</td>
@@ -117,7 +117,7 @@ Next: <a href="A27A.html">A27A</a>
 <td class="comment-1" rowspan="1">Number of turbo boosts remaining (3 for a new game)</td>
 </tr>
 <tr>
-<td class="asm-label"></td>
+<td class="asm-label">horizon_level</td>
 <td class="address-1"><span id="41329"></span>A171</td>
 <td class="instruction">DEFW $0000</td>
 <td class="comment-1" rowspan="1">seems to be the horizon level, possibly relative (used during attract mode)</td>
@@ -129,7 +129,7 @@ Next: <a href="A27A.html">A27A</a>
 <td class="comment-1" rowspan="1">This is decremented by $8BC6 but nothing else seems to read it.</td>
 </tr>
 <tr>
-<td class="asm-label"></td>
+<td class="asm-label">displayed_gear</td>
 <td class="address-1"><span id="41332"></span>A174</td>
 <td class="instruction">DEFB $00</td>
 <td class="comment-1" rowspan="1">Low/high gear flag?</td>
@@ -165,16 +165,26 @@ Next: <a href="A27A.html">A27A</a>
 <td class="comment-1" rowspan="1">Distance as displayed. Stored as one digit per byte.</td>
 </tr>
 <tr>
-<td class="asm-label">a185</td>
+<td class="asm-label">no_objects_counter</td>
 <td class="address-1"><span id="41349"></span>A185</td>
 <td class="instruction">DEFB $00</td>
-<td class="comment-1" rowspan="1">Used by read_map when handling the hazards section</td>
+<td class="comment-1" rowspan="1">If set causes no objects or hazards to be emitted.</td>
 </tr>
 <tr>
 <td class="asm-label">horizon_attribute</td>
 <td class="address-1"><span id="41350"></span>A186</td>
 <td class="instruction">DEFW $0000</td>
 <td class="comment-1" rowspan="1">Attribute address of horizon. Points to last attribute on the line which shows the ground. (e.g. $59DF)</td>
+</tr>
+<tr>
+<td class="routine-comment" colspan="5">
+<span id="41352"></span>
+<div class="comments">
+<div class="paragraph">
++0 is a used flag, either $00 or $FF +1 looks distance related +2/3/4/5/6 TBD +7 byte  TBD used by hazard_hit +8 byte  gets copied from the hazards table +9 word  address of e.g. car lod +11 word  address of routine +13 word  set to $190 by fully_smashed (likely a horizontal position) +15 byte  TBD used by hazard_hit, counter which gets set to 2 then reduced +17 byte  TBD used by hazard_hit, indexes table $ACDB +18 byte  TBD used by hazard_hit +19 byte TBD used by hazard_hit
+</div>
+</div>
+</td>
 </tr>
 <tr>
 <td class="asm-label">hazards</td>
@@ -253,37 +263,134 @@ Next: <a href="A27A.html">A27A</a>
 <td class="instruction">DEFB $00,$00,$00,$00,$00,$00,$00,$00</td>
 </tr>
 <tr>
+<td class="routine-comment" colspan="5">
+<span id="41472"></span>
+<div class="comments">
+<div class="paragraph">
+Unknown
+</div>
+</div>
+</td>
+</tr>
+<tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="41472"></span>A200</td>
 <td class="instruction">DEFB $00,$00,$00,$00,$00,$00,$00,$00</td>
-<td class="comment-1" rowspan="4">TBD</td>
+<td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="41480"></span>A208</td>
 <td class="instruction">DEFB $00,$00,$00,$00,$00,$00,$00,$00</td>
+<td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="41488"></span>A210</td>
-<td class="instruction">DEFB $00,$00,$00,$00,$00,$00,$00,$00</td>
+<td class="instruction">DEFB $00,$00,$00</td>
+<td class="comment-1" rowspan="1"></td>
+</tr>
+<tr>
+<td class="routine-comment" colspan="5">
+<span id="41491"></span>
+<div class="comments">
+<div class="paragraph">
+AY registers 0..11 [128K]
+</div>
+</div>
+</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
-<td class="address-1"><span id="41496"></span>A218</td>
-<td class="instruction">DEFB $00,$00,$00,$00,$00,$00,$00,$00</td>
+<td class="address-1"><span id="41491"></span>A213</td>
+<td class="instruction">DEFW $0000</td>
+<td class="comment-1" rowspan="1">0,1: Channel A pitch (fine,course=lo,hi)</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="41493"></span>A215</td>
+<td class="instruction">DEFW $0000</td>
+<td class="comment-1" rowspan="1">2,3: Channel B pitch</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="41495"></span>A217</td>
+<td class="instruction">DEFW $0000</td>
+<td class="comment-1" rowspan="1">4,5: Channel C pitch - used for engine tone?</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="41497"></span>A219</td>
+<td class="instruction">DEFB $00</td>
+<td class="comment-1" rowspan="1">6: Noise pitch</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="41498"></span>A21A</td>
+<td class="instruction">DEFB $00</td>
+<td class="comment-1" rowspan="1">7: Mixer</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="41499"></span>A21B</td>
+<td class="instruction">DEFB $00</td>
+<td class="comment-1" rowspan="1">8: Channel A volume</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="41500"></span>A21C</td>
+<td class="instruction">DEFB $00</td>
+<td class="comment-1" rowspan="1">9: Channel B volume</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="41501"></span>A21D</td>
+<td class="instruction">DEFB $00</td>
+<td class="comment-1" rowspan="1">10: Channel C volume</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="41502"></span>A21E</td>
+<td class="instruction">DEFB $00</td>
+<td class="comment-1" rowspan="1">11: Envelope fine duration</td>
+</tr>
+<tr>
+<td class="routine-comment" colspan="5">
+<span id="41503"></span>
+<div class="comments">
+<div class="paragraph">
+End of AY registers
+</div>
+</div>
+</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="41503"></span>A21F</td>
+<td class="instruction">DEFB $00</td>
+<td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="41504"></span>A220</td>
 <td class="instruction">DEFB $00</td>
-<td class="comment-1" rowspan="1"><a href="8014.html">load_stage</a> sets this to the level number that it's going to load [but I don't see it using it again]. <a href="858C.html">858C</a> sets it to $F8. <a href="BC3E.html">draw_screen</a> uses it to avoid some work.</td>
+<td class="comment-1" rowspan="1"><a href="8014.html">load_stage</a> sets this to the level number that it's going to load [but I don't see it using it again]. <a href="858C.html">run_pregame_screen</a> sets it to $F8. <a href="BC3E.html">draw_screen</a> uses it to avoid some work.</td>
+</tr>
+<tr>
+<td class="routine-comment" colspan="5">
+<span id="41505"></span>
+<div class="comments">
+<div class="paragraph">
+Affects collision detection on the left hand side.
+</div>
+</div>
+</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="41505"></span>A221</td>
 <td class="instruction">DEFB $00</td>
-<td class="comment-1" rowspan="1">$ABCE, $AD0D reads  I don't yet see what writes it.</td>
+<td class="comment-1" rowspan="1">$ABCE, $AD0D reads</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -292,16 +399,16 @@ Next: <a href="A27A.html">A27A</a>
 <td class="comment-1" rowspan="1">$8F9A reads  $ADA0, $AE83, $AF41 writes</td>
 </tr>
 <tr>
-<td class="asm-label"></td>
+<td class="asm-label">displayed_stage</td>
 <td class="address-1"><span id="41507"></span>A223</td>
 <td class="instruction">DEFB $00</td>
-<td class="comment-1" rowspan="1">Stage number as shown. Stored as ASCII.</td>
+<td class="comment-1" rowspan="1">Stage number as shown on the scoreboard. Stored as ASCII.</td>
 </tr>
 <tr>
-<td class="asm-label"></td>
+<td class="asm-label">helicopter_control</td>
 <td class="address-1"><span id="41508"></span>A224</td>
 <td class="instruction">DEFB $00</td>
-<td class="comment-1" rowspan="1">Hazards related. $AAC6, $AB33 reads  $AB96, $C013 writes</td>
+<td class="comment-1" rowspan="1">Set to 1 -&gt; helicopter moves out to the left, gets set to zero. Set to 3/4 -&gt; Helicopter moves in from left, gets set to five. $AAC6, $AB33 reads  $AB96, $C013 writes</td>
 </tr>
 <tr>
 <td class="asm-label">stop_car_spawning</td>
@@ -328,10 +435,10 @@ Next: <a href="A27A.html">A27A</a>
 <td class="comment-1" rowspan="1">$B421 reads  $B4C8 writes</td>
 </tr>
 <tr>
-<td class="asm-label"></td>
+<td class="asm-label">time_up_state</td>
 <td class="address-1"><span id="41513"></span>A229</td>
 <td class="instruction">DEFB $00</td>
-<td class="comment-1" rowspan="1">&lt;Timing related?&gt;</td>
+<td class="comment-1" rowspan="1">1 =&gt; out of time, 2 =&gt; "TIME UP" message is printed; 3 =&gt; "CONTINUE THIS MISSION" message is printed and a countdown runs 4 =&gt; countdown elapsed; 0 otherwise</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -346,7 +453,7 @@ Next: <a href="A27A.html">A27A</a>
 <td class="comment-1" rowspan="1">Used by $9D2E and others. Stops overtake bonus working.</td>
 </tr>
 <tr>
-<td class="asm-label">bonus_flag</td>
+<td class="asm-label">trigger_bonus_flag</td>
 <td class="address-1"><span id="41516"></span>A22C</td>
 <td class="instruction">DEFB $00</td>
 <td class="comment-1" rowspan="1">Bonus flag (1 triggers the effect)</td>
@@ -355,7 +462,7 @@ Next: <a href="A27A.html">A27A</a>
 <td class="asm-label">bonus_counter</td>
 <td class="address-1"><span id="41517"></span>A22D</td>
 <td class="instruction">DEFB $00</td>
-<td class="comment-1" rowspan="1">Counter for bonus effect (goes up to 7?)</td>
+<td class="comment-1" rowspan="1">Counter for bonus flash effect (counts 8..0)</td>
 </tr>
 <tr>
 <td class="asm-label">sighted_flag</td>
@@ -437,19 +544,19 @@ These seem to get altered even when no sound is being produced.
 <td class="asm-label"></td>
 <td class="address-1"><span id="41529"></span>A239</td>
 <td class="instruction">DEFB $00</td>
-<td class="comment-1" rowspan="1">Used by $F265</td>
+<td class="comment-1" rowspan="1">Used by $F265 [128K]</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="41530"></span>A23A</td>
 <td class="instruction">DEFB $00</td>
-<td class="comment-1" rowspan="1">Used by $F2F6</td>
+<td class="comment-1" rowspan="1">Used by $F2F6 [128K]</td>
 </tr>
 <tr>
-<td class="asm-label"></td>
+<td class="asm-label">tunnel_sfx</td>
 <td class="address-1"><span id="41531"></span>A23B</td>
 <td class="instruction">DEFB $00</td>
-<td class="comment-1" rowspan="1">loaded by $821d, drive_sfx, $c0ee, $fd21 set by $C102</td>
+<td class="comment-1" rowspan="1">Set to 5 when we're in a tunnel. Used to modulate sfx.</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -464,22 +571,22 @@ These seem to get altered even when no sound is being produced.
 <td class="comment-1" rowspan="1">$BE33 reads  $890F, $A3D2, $BDFC, $BE37 writes</td>
 </tr>
 <tr>
-<td class="asm-label"></td>
+<td class="asm-label">off_road</td>
 <td class="address-1"><span id="41534"></span>A23E</td>
 <td class="instruction">DEFB $00</td>
-<td class="comment-1" rowspan="1">$B104, $B40C reads  $A3FD, $A52A, $B07D, $B322, $B404, $B443 writes</td>
+<td class="comment-1" rowspan="1">0 =&gt; Fully on-road, 1 =&gt; One wheel off-road, 2 =&gt; Both wheels off-road [samples: $B104, $B40C reads  $A3FD, $A52A, $B07D, $B322, $B404, $B443 writes]</td>
 </tr>
 <tr>
-<td class="asm-label"></td>
+<td class="asm-label">fast_counter</td>
 <td class="address-1"><span id="41535"></span>A23F</td>
 <td class="instruction">DEFB $00</td>
-<td class="comment-1" rowspan="1">numerous references, seems related to level position</td>
+<td class="comment-1" rowspan="1">this seems to be a very fast counter related to level position</td>
 </tr>
 <tr>
-<td class="asm-label"></td>
+<td class="asm-label">road_buffer_offset</td>
 <td class="address-1"><span id="41536"></span>A240</td>
 <td class="instruction">DEFW $0000</td>
-<td class="comment-1" rowspan="1">Used by $B8F6, $BBF7, $87E0 seems to point at $EE00..$EEFF</td>
+<td class="comment-1" rowspan="1">Current offset (in bytes) into the road buffer at $EE00..$EEFF. Much of the code treats this as a byte. Used by $B8F6, $BBF7, $87E0.</td>
 </tr>
 <tr>
 <td class="asm-label">curvature_byte</td>
@@ -524,10 +631,10 @@ These seem to get altered even when no sound is being produced.
 <td class="comment-1" rowspan="1">[$A955 reads $C457,$C526 writes]</td>
 </tr>
 <tr>
-<td class="asm-label"></td>
+<td class="asm-label">fork_taken</td>
 <td class="address-1"><span id="41545"></span>A249</td>
 <td class="instruction">DEFB $00</td>
-<td class="comment-1" rowspan="1">[$A539,$B988,$BAE0,$BB6E reads $BA89,$BC2C writes]</td>
+<td class="comment-1" rowspan="1">Set to 0 if no fork, or the left fork was taken, or 1 if the right fork was taken. [$A539,$B988,$BAE0,$BB6E reads $BA89,$BC2C writes]</td>
 </tr>
 <tr>
 <td class="asm-label">speed</td>
@@ -542,10 +649,10 @@ These seem to get altered even when no sound is being produced.
 <td class="comment-1" rowspan="1">$B1B7 reads  $B1E4 writes</td>
 </tr>
 <tr>
-<td class="asm-label"></td>
+<td class="asm-label">cornering</td>
 <td class="address-1"><span id="41549"></span>A24D</td>
 <td class="instruction">DEFB $00</td>
-<td class="comment-1" rowspan="1">$B3B4, $B432 reads  $B2E5, $B314, $B32A writes</td>
+<td class="comment-1" rowspan="1">Likely a cornering force flag. Used to trigger smoke. $B3B4, $B432 reads  $B2E5, $B314, $B32A writes</td>
 </tr>
 <tr>
 <td class="asm-label">boost</td>
@@ -554,28 +661,28 @@ These seem to get altered even when no sound is being produced.
 <td class="comment-1" rowspan="1">Turbo boost time remaining (60..0)</td>
 </tr>
 <tr>
-<td class="asm-label"></td>
+<td class="asm-label">smoke</td>
 <td class="address-1"><span id="41551"></span>A24F</td>
 <td class="instruction">DEFB $00</td>
-<td class="comment-1" rowspan="1">$8BDF, $B070, $B0D4, $B3BA writes ... but no readers?</td>
+<td class="comment-1" rowspan="1">Smoke time remaining. This is set to 4 on low-to-high gear changes and to 3 when the hero car lands after a jump. This isn't set for turbo boosts however.</td>
 </tr>
 <tr>
-<td class="asm-label"></td>
+<td class="asm-label">turn_speed</td>
 <td class="address-1"><span id="41552"></span>A250</td>
 <td class="instruction">DEFB $00</td>
-<td class="comment-1" rowspan="1">Turn severity (0/1/2)</td>
+<td class="comment-1" rowspan="1">Turn speed (0/1/2) ignoring direction</td>
 </tr>
 <tr>
-<td class="asm-label"></td>
+<td class="asm-label">flip</td>
 <td class="address-1"><span id="41553"></span>A251</td>
 <td class="instruction">DEFB $00</td>
-<td class="comment-1" rowspan="1">Some sort of flip flag used for car rendering (observed 0/1)</td>
+<td class="comment-1" rowspan="1">1 =&gt; Horizontally flip the hero car, 0 =&gt; Don't</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="41554"></span>A252</td>
 <td class="instruction">DEFB $00</td>
-<td class="comment-1" rowspan="1">TBD</td>
+<td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
 <td class="asm-label">gear</td>
@@ -584,10 +691,10 @@ These seem to get altered even when no sound is being produced.
 <td class="comment-1" rowspan="1">0 =&gt; Low gear, 1 =&gt; High gear</td>
 </tr>
 <tr>
-<td class="asm-label"></td>
+<td class="asm-label">another_spawning_flag</td>
 <td class="address-1"><span id="41556"></span>A254</td>
 <td class="instruction">DEFB $00</td>
-<td class="comment-1" rowspan="1">Cleared by $884B</td>
+<td class="comment-1" rowspan="1">Cleared by $884B   suspected spawning flag (different to flag $A225)</td>
 </tr>
 <tr>
 <td class="asm-label">distance_bcd</td>
@@ -626,7 +733,17 @@ These seem to get altered even when no sound is being produced.
 <td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
-<td class="asm-label"></td>
+<td class="routine-comment" colspan="5">
+<span id="41564"></span>
+<div class="comments">
+<div class="paragraph">
+Horizon horizontal scrolling (+ve for left, -ve for right). Seems to be multiples of two. Values seen: FA FC FE 00 02 04 06
+</div>
+</div>
+</td>
+</tr>
+<tr>
+<td class="asm-label">horizon_scroll</td>
 <td class="address-1"><span id="41564"></span>A25C</td>
 <td class="instruction">DEFB $00</td>
 <td class="comment-1" rowspan="1">Used by $B84E</td>
@@ -640,14 +757,56 @@ These seem to get altered even when no sound is being produced.
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="41566"></span>A25E</td>
-<td class="instruction">DEFB $00,$00,$00,$00,$00,$00,$00,$00</td>
+<td class="instruction">DEFB $00</td>
 <td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
 <td class="asm-label"></td>
-<td class="address-1"><span id="41574"></span>A266</td>
-<td class="instruction">DEFB $00,$00</td>
+<td class="address-1"><span id="41567"></span>A25F</td>
+<td class="instruction">DEFW $0000</td>
+<td class="comment-1" rowspan="1">Used by $B29A</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="41569"></span>A261</td>
+<td class="instruction">DEFB $00</td>
+<td class="comment-1" rowspan="1">Used by $B297</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="41570"></span>A262</td>
+<td class="instruction">DEFB $00</td>
 <td class="comment-1" rowspan="1"></td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="41571"></span>A263</td>
+<td class="instruction">DEFB $00</td>
+<td class="comment-1" rowspan="1">Used by $B2AE</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="41572"></span>A264</td>
+<td class="instruction">DEFB $00</td>
+<td class="comment-1" rowspan="1">Used by $B2B2 -- together might be a 16-bit qty</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="41573"></span>A265</td>
+<td class="instruction">DEFB $00</td>
+<td class="comment-1" rowspan="1">Used by $BC2C -- set to $60 when the split road becomes visible, zero otherwise</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="41574"></span>A266</td>
+<td class="instruction">DEFB $00</td>
+<td class="comment-1" rowspan="1">Used by $A3A6 -- counts down (from 16?) when the split road approaches, zero when the split actually starts</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="41575"></span>A267</td>
+<td class="instruction">DEFB $00</td>
+<td class="comment-1" rowspan="1">Used by $BC39 -- as 16-bit</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -659,7 +818,7 @@ These seem to get altered even when no sound is being produced.
 <td class="asm-label"></td>
 <td class="address-1"><span id="41577"></span>A269</td>
 <td class="instruction">DEFB $00</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="1">Used by $BC29</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -729,7 +888,7 @@ Next: <a href="A27A.html">A27A</a>
 </table>
 <footer>
 <div class="release">The incomplete Chase H.Q. disassembly 20230518</div>
-<div class="copyright">&copy; 1989 Ocean Software Ltd.</div>
+<div class="copyright">&copy; 1988 Taito Corporation &copy; 1989 Ocean Software Ltd. (Chase H.Q.) © 2023 David Thomas (this disassembly)</div>
 <div class="created">Created using <a href="https://skoolkit.ca">SkoolKit</a> 8.9.</div>
 </footer>
 </body>

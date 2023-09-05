@@ -38,7 +38,7 @@ Used by the routine at <a href="8401.html">main_loop</a>.
 <td class="asm-label">drive_sfx</td>
 <td class="address-2"><span id="35075"></span>8903</td>
 <td class="instruction">LD A,($A23B)</td>
-<td class="comment-1" rowspan="3">If $A23B != 0 goto $8916</td>
+<td class="comment-1" rowspan="3">Jump if tunnel_sfx</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -76,7 +76,7 @@ Used by the routine at <a href="8401.html">main_loop</a>.
 <td class="asm-label"></td>
 <td class="address-1"><span id="35091"></span>8913</td>
 <td class="instruction">CALL NZ,<a href="88F2.html">start_sfx</a></td>
-<td class="comment-1" rowspan="1">CALL NZ, start_sfx</td>
+<td class="comment-1" rowspan="1">Call start_sfx if non-zero</td>
 </tr>
 <tr>
 <td class="asm-label">drive_sfx_0</td>
@@ -116,7 +116,7 @@ Used by the routine at <a href="8401.html">main_loop</a>.
 <td class="asm-label"></td>
 <td class="address-1"><span id="35108"></span>8924</td>
 <td class="instruction">RLCA</td>
-<td class="comment-1" rowspan="3"><span class="register">E</span> = $A237 * 4</td>
+<td class="comment-1" rowspan="3"><span class="register">E</span> = $A237 * 4 -- stride of table</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -343,7 +343,7 @@ Next: <a href="8960.html">8960</a>
 </table>
 <footer>
 <div class="release">The incomplete Chase H.Q. disassembly 20230518</div>
-<div class="copyright">&copy; 1989 Ocean Software Ltd.</div>
+<div class="copyright">&copy; 1988 Taito Corporation &copy; 1989 Ocean Software Ltd. (Chase H.Q.) © 2023 David Thomas (this disassembly)</div>
 <div class="created">Created using <a href="https://skoolkit.ca">SkoolKit</a> 8.9.</div>
 </footer>
 </body>

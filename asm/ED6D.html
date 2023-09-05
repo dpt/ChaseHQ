@@ -1,0 +1,376 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Chase H.Q.: Routine at ED6D</title>
+<meta charset="utf-8" />
+<link rel="stylesheet" type="text/css" href="../skoolkit.css" />
+</head>
+<body class="Asm-c">
+<table class="header">
+<tr>
+<td class="logo"><a href="../index.html">Chase H.Q.</a></td>
+<td class="page-header">Routines</td>
+</tr>
+</table>
+<table class="asm-navigation">
+<tr>
+<td class="prev">
+Prev: <a href="ED4D.html">ED4D</a>
+</td>
+<td class="up">Up: <a href="../maps/all.html#60781">Map</a></td>
+<td class="next">
+Next: <a href="EDD6.html">EDD6</a>
+</td>
+</tr>
+</table>
+<div class="description">ED6D: Routine at ED6D</div>
+<table class="disassembly">
+<tr>
+<td class="routine-comment" colspan="5">
+<div class="details">
+<div class="paragraph">
+Used by the routine at <a href="ECF3.html">redefine_keys</a>.
+</div>
+</div>
+</td>
+</tr>
+<tr>
+<td class="address-2"><span id="60781"></span>ED6D</td>
+<td class="instruction">PUSH DE</td>
+<td class="comment-1" rowspan="2">Preserve <span class="register">DE</span>, <span class="register">BC</span></td>
+</tr>
+<tr>
+<td class="address-1"><span id="60782"></span>ED6E</td>
+<td class="instruction">PUSH BC</td>
+</tr>
+<tr>
+<td class="address-2"><span id="60783"></span>ED6F</td>
+<td class="instruction">CALL <a href="EE9E.html">define_keys</a></td>
+<td class="comment-1" rowspan="1">Call define_keys</td>
+</tr>
+<tr>
+<td class="address-1"><span id="60786"></span>ED72</td>
+<td class="instruction">CALL <a href="ED4D.html">keyscan_all</a></td>
+<td class="comment-1" rowspan="1">Call keyscan_all</td>
+</tr>
+<tr>
+<td class="address-1"><span id="60789"></span>ED75</td>
+<td class="instruction">JR NZ,$ED6F</td>
+<td class="comment-1" rowspan="1">?Loop while keys are pressed</td>
+</tr>
+<tr>
+<td class="address-1"><span id="60791"></span>ED77</td>
+<td class="instruction">INC D</td>
+<td class="comment-1" rowspan="2">?No keys were pressed</td>
+</tr>
+<tr>
+<td class="address-1"><span id="60792"></span>ED78</td>
+<td class="instruction">JR Z,$ED6F</td>
+</tr>
+<tr>
+<td class="address-1"><span id="60794"></span>ED7A</td>
+<td class="instruction">DEC D</td>
+<td class="comment-1" rowspan="1">D--</td>
+</tr>
+<tr>
+<td class="address-1"><span id="60795"></span>ED7B</td>
+<td class="instruction">LD A,D</td>
+<td class="comment-1" rowspan="1">A = D</td>
+</tr>
+<tr>
+<td class="address-1"><span id="60796"></span>ED7C</td>
+<td class="instruction">POP BC</td>
+<td class="comment-1" rowspan="2">Retrieve <span class="register">BC</span></td>
+</tr>
+<tr>
+<td class="address-1"><span id="60797"></span>ED7D</td>
+<td class="instruction">PUSH BC</td>
+</tr>
+<tr>
+<td class="address-1"><span id="60798"></span>ED7E</td>
+<td class="instruction">LD HL,$EE38</td>
+<td class="comment-1" rowspan="1"></td>
+</tr>
+<tr>
+<td class="address-1"><span id="60801"></span>ED81</td>
+<td class="instruction">LD B,C</td>
+<td class="comment-1" rowspan="1">B = C</td>
+</tr>
+<tr>
+<td class="address-1"><span id="60802"></span>ED82</td>
+<td class="instruction">DEC B</td>
+<td class="comment-1" rowspan="1">B--</td>
+</tr>
+<tr>
+<td class="address-1"><span id="60803"></span>ED83</td>
+<td class="instruction">JR Z,$ED8B</td>
+<td class="comment-1" rowspan="1"></td>
+</tr>
+<tr>
+<td class="address-2"><span id="60805"></span>ED85</td>
+<td class="instruction">CP (HL)</td>
+<td class="comment-1" rowspan="1"></td>
+</tr>
+<tr>
+<td class="address-1"><span id="60806"></span>ED86</td>
+<td class="instruction">JR Z,$ED6F</td>
+<td class="comment-1" rowspan="1"></td>
+</tr>
+<tr>
+<td class="address-1"><span id="60808"></span>ED88</td>
+<td class="instruction">INC HL</td>
+<td class="comment-1" rowspan="1">HL++</td>
+</tr>
+<tr>
+<td class="address-1"><span id="60809"></span>ED89</td>
+<td class="instruction">DJNZ $ED85</td>
+<td class="comment-1" rowspan="1"></td>
+</tr>
+<tr>
+<td class="address-2"><span id="60811"></span>ED8B</td>
+<td class="instruction">POP BC</td>
+<td class="comment-1" rowspan="1"></td>
+</tr>
+<tr>
+<td class="address-1"><span id="60812"></span>ED8C</td>
+<td class="instruction">PUSH BC</td>
+<td class="comment-1" rowspan="1"></td>
+</tr>
+<tr>
+<td class="address-1"><span id="60813"></span>ED8D</td>
+<td class="instruction">LD HL,$EE37</td>
+<td class="comment-1" rowspan="1">Last byte of 'shocked'</td>
+</tr>
+<tr>
+<td class="address-1"><span id="60816"></span>ED90</td>
+<td class="instruction">LD B,$00</td>
+<td class="comment-1" rowspan="1">B = 0</td>
+</tr>
+<tr>
+<td class="address-1"><span id="60818"></span>ED92</td>
+<td class="instruction">ADD HL,BC</td>
+<td class="comment-1" rowspan="1">HL += BC</td>
+</tr>
+<tr>
+<td class="address-1"><span id="60819"></span>ED93</td>
+<td class="instruction">LD (HL),A</td>
+<td class="comment-1" rowspan="1">*HL = A</td>
+</tr>
+<tr>
+<td class="address-1"><span id="60820"></span>ED94</td>
+<td class="instruction">LD HL,$EDD6</td>
+<td class="comment-1" rowspan="1">-&gt; "B N M ..."</td>
+</tr>
+<tr>
+<td class="address-1"><span id="60823"></span>ED97</td>
+<td class="instruction">LD D,$00</td>
+<td class="comment-1" rowspan="1">D = 0</td>
+</tr>
+<tr>
+<td class="address-1"><span id="60825"></span>ED99</td>
+<td class="instruction">LD B,A</td>
+<td class="comment-1" rowspan="2">B = A &amp; 7</td>
+</tr>
+<tr>
+<td class="address-1"><span id="60826"></span>ED9A</td>
+<td class="instruction">AND $07</td>
+</tr>
+<tr>
+<td class="address-1"><span id="60828"></span>ED9C</td>
+<td class="instruction">LD C,A</td>
+<td class="comment-1" rowspan="4">A *= 5</td>
+</tr>
+<tr>
+<td class="address-1"><span id="60829"></span>ED9D</td>
+<td class="instruction">ADD A,A</td>
+</tr>
+<tr>
+<td class="address-1"><span id="60830"></span>ED9E</td>
+<td class="instruction">ADD A,A</td>
+</tr>
+<tr>
+<td class="address-1"><span id="60831"></span>ED9F</td>
+<td class="instruction">ADD A,C</td>
+</tr>
+<tr>
+<td class="address-1"><span id="60832"></span>EDA0</td>
+<td class="instruction">SRL B</td>
+<td class="comment-1" rowspan="3">B &gt;&gt;= 3</td>
+</tr>
+<tr>
+<td class="address-1"><span id="60834"></span>EDA2</td>
+<td class="instruction">SRL B</td>
+</tr>
+<tr>
+<td class="address-1"><span id="60836"></span>EDA4</td>
+<td class="instruction">SRL B</td>
+</tr>
+<tr>
+<td class="address-1"><span id="60838"></span>EDA6</td>
+<td class="instruction">ADD A,B</td>
+<td class="comment-1" rowspan="1">A += B</td>
+</tr>
+<tr>
+<td class="address-1"><span id="60839"></span>EDA7</td>
+<td class="instruction">ADD A,A</td>
+<td class="comment-1" rowspan="1">A += A</td>
+</tr>
+<tr>
+<td class="address-1"><span id="60840"></span>EDA8</td>
+<td class="instruction">LD E,A</td>
+<td class="comment-1" rowspan="1">E = A</td>
+</tr>
+<tr>
+<td class="address-1"><span id="60841"></span>EDA9</td>
+<td class="instruction">ADD HL,DE</td>
+<td class="comment-1" rowspan="1">HL += DE</td>
+</tr>
+<tr>
+<td class="address-1"><span id="60842"></span>EDAA</td>
+<td class="instruction">POP BC</td>
+<td class="comment-1" rowspan="1"></td>
+</tr>
+<tr>
+<td class="address-1"><span id="60843"></span>EDAB</td>
+<td class="instruction">POP DE</td>
+<td class="comment-1" rowspan="1"></td>
+</tr>
+<tr>
+<td class="address-1"><span id="60844"></span>EDAC</td>
+<td class="instruction">PUSH BC</td>
+<td class="comment-1" rowspan="1"></td>
+</tr>
+<tr>
+<td class="address-1"><span id="60845"></span>EDAD</td>
+<td class="instruction">PUSH DE</td>
+<td class="comment-1" rowspan="1"></td>
+</tr>
+<tr>
+<td class="address-1"><span id="60846"></span>EDAE</td>
+<td class="instruction">LD ($EADD),DE</td>
+<td class="comment-1" rowspan="1"></td>
+</tr>
+<tr>
+<td class="address-1"><span id="60850"></span>EDB2</td>
+<td class="instruction">LD A,(HL)</td>
+<td class="comment-1" rowspan="1">A = *HL</td>
+</tr>
+<tr>
+<td class="address-1"><span id="60851"></span>EDB3</td>
+<td class="instruction">LD ($EADF),A</td>
+<td class="comment-1" rowspan="1"></td>
+</tr>
+<tr>
+<td class="address-1"><span id="60854"></span>EDB6</td>
+<td class="instruction">INC HL</td>
+<td class="comment-1" rowspan="1">HL++</td>
+</tr>
+<tr>
+<td class="address-1"><span id="60855"></span>EDB7</td>
+<td class="instruction">LD A,(HL)</td>
+<td class="comment-1" rowspan="1">A = *HL</td>
+</tr>
+<tr>
+<td class="address-1"><span id="60856"></span>EDB8</td>
+<td class="instruction">SET 7,A</td>
+<td class="comment-1" rowspan="1">Terminate the string</td>
+</tr>
+<tr>
+<td class="address-1"><span id="60858"></span>EDBA</td>
+<td class="instruction">LD ($EAE0),A</td>
+<td class="comment-1" rowspan="1">Write new character</td>
+</tr>
+<tr>
+<td class="address-1"><span id="60861"></span>EDBD</td>
+<td class="instruction">LD HL,$EADC</td>
+<td class="comment-1" rowspan="1">-&gt; test mode strings</td>
+</tr>
+<tr>
+<td class="address-1"><span id="60864"></span>EDC0</td>
+<td class="instruction">CALL <a href="EBFF.html">menu_draw_string</a></td>
+<td class="comment-1" rowspan="1">Call menu_draw_strings</td>
+</tr>
+<tr>
+<td class="address-1"><span id="60867"></span>EDC3</td>
+<td class="instruction">POP DE</td>
+<td class="comment-1" rowspan="1"></td>
+</tr>
+<tr>
+<td class="address-1"><span id="60868"></span>EDC4</td>
+<td class="instruction">CALL $EDCC</td>
+<td class="comment-1" rowspan="1"></td>
+</tr>
+<tr>
+<td class="address-1"><span id="60871"></span>EDC7</td>
+<td class="instruction">POP BC</td>
+<td class="comment-1" rowspan="1"></td>
+</tr>
+<tr>
+<td class="address-1"><span id="60872"></span>EDC8</td>
+<td class="instruction">LD A,B</td>
+<td class="comment-1" rowspan="1">A = B</td>
+</tr>
+<tr>
+<td class="address-1"><span id="60873"></span>EDC9</td>
+<td class="instruction">CP $04</td>
+<td class="comment-1" rowspan="2">Return if A != 4</td>
+</tr>
+<tr>
+<td class="address-1"><span id="60875"></span>EDCB</td>
+<td class="instruction">RET NZ</td>
+</tr>
+<tr>
+<td class="address-2"><span id="60876"></span>EDCC</td>
+<td class="instruction">LD A,E</td>
+<td class="comment-1" rowspan="3">E += $20</td>
+</tr>
+<tr>
+<td class="address-1"><span id="60877"></span>EDCD</td>
+<td class="instruction">ADD A,$20</td>
+</tr>
+<tr>
+<td class="address-1"><span id="60879"></span>EDCF</td>
+<td class="instruction">LD E,A</td>
+</tr>
+<tr>
+<td class="address-1"><span id="60880"></span>EDD0</td>
+<td class="instruction">RET NC</td>
+<td class="comment-1" rowspan="1"></td>
+</tr>
+<tr>
+<td class="address-1"><span id="60881"></span>EDD1</td>
+<td class="instruction">LD A,D</td>
+<td class="comment-1" rowspan="3">D += 8</td>
+</tr>
+<tr>
+<td class="address-1"><span id="60882"></span>EDD2</td>
+<td class="instruction">ADD A,$08</td>
+</tr>
+<tr>
+<td class="address-1"><span id="60884"></span>EDD4</td>
+<td class="instruction">LD D,A</td>
+</tr>
+<tr>
+<td class="address-1"><span id="60885"></span>EDD5</td>
+<td class="instruction">RET</td>
+<td class="comment-1" rowspan="1">Return</td>
+</tr>
+</table>
+<table class="asm-navigation">
+<tr>
+<td class="prev">
+Prev: <a href="ED4D.html">ED4D</a>
+</td>
+<td class="up">Up: <a href="../maps/all.html#60781">Map</a></td>
+<td class="next">
+Next: <a href="EDD6.html">EDD6</a>
+</td>
+</tr>
+</table>
+<footer>
+<div class="release">The incomplete Chase H.Q. disassembly 20230518</div>
+<div class="copyright">&copy; 1988 Taito Corporation &copy; 1989 Ocean Software Ltd. (Chase H.Q.) © 2023 David Thomas (this disassembly)</div>
+<div class="created">Created using <a href="https://skoolkit.ca">SkoolKit</a> 8.9.</div>
+</footer>
+</body>
+</html>

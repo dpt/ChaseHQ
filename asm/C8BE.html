@@ -15,7 +15,7 @@
 <table class="asm-navigation">
 <tr>
 <td class="prev">
-Prev: <a href="C86E.html">C86E</a>
+Prev: <a href="C598.html">C598</a>
 </td>
 <td class="up">Up: <a href="../maps/all.html#51390">Map</a></td>
 <td class="next">
@@ -23,154 +23,159 @@ Next: <a href="C8E3.html">C8E3</a>
 </td>
 </tr>
 </table>
-<div class="description">C8BE: Builds the pre-shifted first hill backdrop</div>
+<div class="description">C8BE: Builds a pre-shifted version of the backdrop horizon image</div>
 <table class="disassembly">
 <tr>
 <td class="routine-comment" colspan="5">
 <div class="details">
 <div class="paragraph">
-Used by the routine at <a href="87DC.html">setup_game</a>.
+80x24 pixels = 240 bytes
 </div>
 </div>
+<table class="input">
+<tr class="asm-input-header">
+<th colspan="2">Input</th>
+</tr>
+<tr>
+<td class="register">Used</td>
+<td class="register-desc">by the routine at <a href="87DC.html">setup_game</a>.</td>
+</tr>
+</table>
 </td>
 </tr>
 <tr>
 <td class="asm-label">pre_shift_backdrop</td>
 <td class="address-2"><span id="51390"></span>C8BE</td>
 <td class="instruction">LD HL,$5C00</td>
-<td class="comment-1" rowspan="1">Point at second hill backdrop</td>
+<td class="comment-1" rowspan="1">Point at source image</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="51393"></span>C8C1</td>
 <td class="instruction">LD DE,$5B00</td>
-<td class="comment-1" rowspan="1">Point at first hill backdrop</td>
+<td class="comment-1" rowspan="1">Point at destination image (to be shifted)</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="51396"></span>C8C4</td>
 <td class="instruction">PUSH DE</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="2">Preserve addresses</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="51397"></span>C8C5</td>
 <td class="instruction">PUSH HL</td>
-<td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="51398"></span>C8C6</td>
 <td class="instruction">LD BC,$00F0</td>
-<td class="comment-1" rowspan="1">Each is 250 bytes long</td>
+<td class="comment-1" rowspan="2">Copy whole source image to destination</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="51401"></span>C8C9</td>
 <td class="instruction">LDIR</td>
-<td class="comment-1" rowspan="1">Copy 2nd to first</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="51403"></span>C8CB</td>
 <td class="instruction">POP HL</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="1">Restore source address</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="51404"></span>C8CC</td>
 <td class="instruction">LD DE,$0009</td>
-<td class="comment-1" rowspan="1">Jump 10 bytes fwd</td>
+<td class="comment-1" rowspan="3">DE = Source address + 9</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="51407"></span>C8CF</td>
 <td class="instruction">ADD HL,DE</td>
-<td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="51408"></span>C8D0</td>
 <td class="instruction">EX DE,HL</td>
-<td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="51409"></span>C8D1</td>
 <td class="instruction">POP HL</td>
-<td class="comment-1" rowspan="1">pop old DE</td>
+<td class="comment-1" rowspan="1">Pop destination address</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="51410"></span>C8D2</td>
 <td class="instruction">LD BC,$0A18</td>
-<td class="comment-1" rowspan="1">10 x 24</td>
+<td class="comment-1" rowspan="1">Load counters for 10 bytes per row, 24 rows</td>
 </tr>
 <tr>
 <td class="asm-label">pre_shift_backdrop_0</td>
 <td class="address-2"><span id="51413"></span>C8D5</td>
 <td class="instruction">PUSH BC</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="1">Preserve counters</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="51414"></span>C8D6</td>
 <td class="instruction">LD A,(DE)</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="1">A = *DE</td>
 </tr>
 <tr>
 <td class="asm-label">pre_shift_backdrop_1</td>
 <td class="address-2"><span id="51415"></span>C8D7</td>
 <td class="instruction">RRD</td>
-<td class="comment-1" rowspan="1">Nibble swap thing</td>
+<td class="comment-1" rowspan="1">Rotate nibbles from A to *HL</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="51417"></span>C8D9</td>
 <td class="instruction">INC L</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="1">Advance destination address</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="51418"></span>C8DA</td>
 <td class="instruction">INC E</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="1">Advance source address</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="51419"></span>C8DB</td>
 <td class="instruction">DJNZ <a href="C8BE.html#51415">pre_shift_backdrop_1</a></td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="1">Loop while rowbytes remain</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="51421"></span>C8DD</td>
 <td class="instruction">POP BC</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="1">Restore counters</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="51422"></span>C8DE</td>
 <td class="instruction">DEC C</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="1">Decrement row counter</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="51423"></span>C8DF</td>
 <td class="instruction">JP NZ,<a href="C8BE.html#51413">pre_shift_backdrop_0</a></td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="1">Loop while rows remain</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="51426"></span>C8E2</td>
 <td class="instruction">RET</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="1">Return</td>
 </tr>
 </table>
 <table class="asm-navigation">
 <tr>
 <td class="prev">
-Prev: <a href="C86E.html">C86E</a>
+Prev: <a href="C598.html">C598</a>
 </td>
 <td class="up">Up: <a href="../maps/all.html#51390">Map</a></td>
 <td class="next">
@@ -180,7 +185,7 @@ Next: <a href="C8E3.html">C8E3</a>
 </table>
 <footer>
 <div class="release">The incomplete Chase H.Q. disassembly 20230518</div>
-<div class="copyright">&copy; 1989 Ocean Software Ltd.</div>
+<div class="copyright">&copy; 1988 Taito Corporation &copy; 1989 Ocean Software Ltd. (Chase H.Q.) © 2023 David Thomas (this disassembly)</div>
 <div class="created">Created using <a href="https://skoolkit.ca">SkoolKit</a> 8.9.</div>
 </footer>
 </body>

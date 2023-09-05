@@ -29,7 +29,7 @@ Next: <a href="9D17.html">9D17</a>
 <td class="routine-comment" colspan="5">
 <div class="details">
 <div class="paragraph">
-Used by the routines at <a href="9D2E.html">calc_overtake_bonus</a>, <a href="A637.html">A637</a> and <a href="B9F4.html">main_loop_12</a>.
+Used by the routines at <a href="9D2E.html">calc_overtake_bonus</a>, <a href="A637.html">smash_handler</a> and <a href="B9F4.html">main_loop_12</a>.
 </div>
 </div>
 </td>
@@ -191,7 +191,7 @@ Used by the routines at <a href="9D2E.html">calc_overtake_bonus</a>, <a href="A6
 <td class="asm-label"></td>
 <td class="address-1"><span id="40197"></span>9D05</td>
 <td class="instruction">JR $9D0E</td>
-<td class="comment-1" rowspan="1">jump 9d0e</td>
+<td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
 <td class="asm-label">j_9d07</td>
@@ -227,13 +227,13 @@ Used by the routines at <a href="9D2E.html">calc_overtake_bonus</a>, <a href="A6
 <td class="asm-label"></td>
 <td class="address-2"><span id="40206"></span>9D0E</td>
 <td class="instruction">LD ($9D9C),HL</td>
-<td class="comment-1" rowspan="1">Self modify the LD HL at $9D9B</td>
+<td class="comment-1" rowspan="1">Self modify 'LD HL,xxxx' at $9D9B  -- bonus score pointer</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="40209"></span>9D11</td>
 <td class="instruction">LD A,$01</td>
-<td class="comment-1" rowspan="2">Set the bonus_flag</td>
+<td class="comment-1" rowspan="2">Set the trigger_bonus_flag</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -260,7 +260,7 @@ Next: <a href="9D17.html">9D17</a>
 </table>
 <footer>
 <div class="release">The incomplete Chase H.Q. disassembly 20230518</div>
-<div class="copyright">&copy; 1989 Ocean Software Ltd.</div>
+<div class="copyright">&copy; 1988 Taito Corporation &copy; 1989 Ocean Software Ltd. (Chase H.Q.) © 2023 David Thomas (this disassembly)</div>
 <div class="created">Created using <a href="https://skoolkit.ca">SkoolKit</a> 8.9.</div>
 </footer>
 </body>

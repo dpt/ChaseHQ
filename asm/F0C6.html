@@ -15,7 +15,7 @@
 <table class="asm-navigation">
 <tr>
 <td class="prev">
-Prev: <a href="EF5E.html">EF5E</a>
+Prev: <a href="EF22.html">EF22</a>
 </td>
 <td class="up">Up: <a href="../maps/all.html#61638">Map</a></td>
 <td class="next">
@@ -35,162 +35,226 @@ Used by the routine at <a href="EE9E.html">define_keys</a>.
 </td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-2"><span id="61638"></span>F0C6</td>
 <td class="instruction">LD E,A</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="1">E = A  Outer-outer counter</td>
 </tr>
 <tr>
+<td class="asm-label">noise_outer_loop</td>
 <td class="address-2"><span id="61639"></span>F0C7</td>
 <td class="instruction">LD D,$32</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="1">D = 50  Outer counter</td>
 </tr>
 <tr>
+<td class="asm-label">noise_loop</td>
 <td class="address-2"><span id="61641"></span>F0C9</td>
 <td class="instruction">LD HL,$9618</td>
-<td class="comment-1" rowspan="1">loop: Point at random bytes</td>
+<td class="comment-1" rowspan="1">Point at rng_seed / state bytes</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="61644"></span>F0CC</td>
 <td class="instruction">INC (HL)</td>
-<td class="comment-1" rowspan="34">Increment first byte by 3, Load it into <span class="register">B</span></td>
+<td class="comment-1" rowspan="3">rng_seed[0] += 3  Increment first byte of seed by 3</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="61645"></span>F0CD</td>
 <td class="instruction">INC (HL)</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="61646"></span>F0CE</td>
 <td class="instruction">INC (HL)</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="61647"></span>F0CF</td>
 <td class="instruction">LD B,(HL)</td>
+<td class="comment-1" rowspan="1">Load it into <span class="register">B</span></td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="61648"></span>F0D0</td>
 <td class="instruction">INC HL</td>
+<td class="comment-1" rowspan="1">HL++</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="61649"></span>F0D1</td>
 <td class="instruction">LD A,(HL)</td>
+<td class="comment-1" rowspan="3">rng_seed[1] -= 141   Note that this is different order to rng/$961B</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="61650"></span>F0D2</td>
 <td class="instruction">SUB $8D</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="61652"></span>F0D4</td>
 <td class="instruction">LD (HL),A</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="61653"></span>F0D5</td>
 <td class="instruction">ADD A,B</td>
+<td class="comment-1" rowspan="1">A = rng_seed[0] + rng_seed[1]</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="61654"></span>F0D6</td>
 <td class="instruction">INC HL</td>
+<td class="comment-1" rowspan="1">HL++</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="61655"></span>F0D7</td>
 <td class="instruction">RLCA</td>
+<td class="comment-1" rowspan="1">Rotate A by 1</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="61656"></span>F0D8</td>
 <td class="instruction">RRC (HL)</td>
+<td class="comment-1" rowspan="1">Rotate rng_seed[2] by 1</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="61658"></span>F0DA</td>
 <td class="instruction">ADD A,(HL)</td>
+<td class="comment-1" rowspan="1">A += *HL</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="61659"></span>F0DB</td>
 <td class="instruction">LD (HL),A</td>
+<td class="comment-1" rowspan="1">*HL = A</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="61660"></span>F0DC</td>
 <td class="instruction">AND $10</td>
+<td class="comment-1" rowspan="1">A &amp;= 16</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="61662"></span>F0DE</td>
 <td class="instruction">JR Z,$F0F0</td>
+<td class="comment-1" rowspan="1">Jump to $F0F0 if zero</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="61664"></span>F0E0</td>
 <td class="instruction">LD A,$18</td>
+<td class="comment-1" rowspan="3">B = 24 - E</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="61666"></span>F0E2</td>
 <td class="instruction">SUB E</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="61667"></span>F0E3</td>
 <td class="instruction">LD B,A</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-2"><span id="61668"></span>F0E4</td>
 <td class="instruction">DJNZ $F0E4</td>
+<td class="comment-1" rowspan="1">Delay loop</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="61670"></span>F0E6</td>
 <td class="instruction">LD A,$18</td>
+<td class="comment-1" rowspan="1">A = 24   EAR + MIC ?</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="61672"></span>F0E8</td>
 <td class="instruction">OUT ($FE),A</td>
+<td class="comment-1" rowspan="1">Output</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="61674"></span>F0EA</td>
 <td class="instruction">LD B,E</td>
+<td class="comment-1" rowspan="1">B = E</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-2"><span id="61675"></span>F0EB</td>
 <td class="instruction">DJNZ $F0EB</td>
+<td class="comment-1" rowspan="1">Delay loop</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="61677"></span>F0ED</td>
 <td class="instruction">XOR A</td>
+<td class="comment-1" rowspan="1">A = 0</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="61678"></span>F0EE</td>
 <td class="instruction">OUT ($FE),A</td>
+<td class="comment-1" rowspan="1">Output</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-2"><span id="61680"></span>F0F0</td>
 <td class="instruction">DEC D</td>
+<td class="comment-1" rowspan="1">Decrement outer counter</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="61681"></span>F0F1</td>
-<td class="instruction">JR NZ,$F0C9</td>
+<td class="instruction">JR NZ,<a href="F0C6.html#61641">noise_loop</a></td>
+<td class="comment-1" rowspan="1">Jump to noise_loop if non-zero</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="61683"></span>F0F3</td>
 <td class="instruction">LD A,($EF14)</td>
+<td class="comment-1" rowspan="1">Read A from 'LD A' @ $EF13  -- spinlock/wait</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="61686"></span>F0F6</td>
 <td class="instruction">AND A</td>
+<td class="comment-1" rowspan="1">Set flags</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="61687"></span>F0F7</td>
 <td class="instruction">RET C</td>
+<td class="comment-1" rowspan="1">Return if carry set</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="61688"></span>F0F8</td>
 <td class="instruction">DEC E</td>
+<td class="comment-1" rowspan="1">Decrement outer-outer counter</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="61689"></span>F0F9</td>
-<td class="instruction">JR NZ,$F0C7</td>
+<td class="instruction">JR NZ,<a href="F0C6.html#61639">noise_outer_loop</a></td>
+<td class="comment-1" rowspan="1">Jump to noise_outer_loop if non-zero</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="61691"></span>F0FB</td>
-<td class="instruction">JP <a href="EE9E.html#61203">define_keys_8</a></td>
+<td class="instruction">JP <a href="EE9E.html#61203">dk_wait</a></td>
+<td class="comment-1" rowspan="1">Jump to dk_wait</td>
 </tr>
 </table>
 <table class="asm-navigation">
 <tr>
 <td class="prev">
-Prev: <a href="EF5E.html">EF5E</a>
+Prev: <a href="EF22.html">EF22</a>
 </td>
 <td class="up">Up: <a href="../maps/all.html#61638">Map</a></td>
 <td class="next">
@@ -200,7 +264,7 @@ Next: <a href="F0FE.html">F0FE</a>
 </table>
 <footer>
 <div class="release">The incomplete Chase H.Q. disassembly 20230518</div>
-<div class="copyright">&copy; 1989 Ocean Software Ltd.</div>
+<div class="copyright">&copy; 1988 Taito Corporation &copy; 1989 Ocean Software Ltd. (Chase H.Q.) © 2023 David Thomas (this disassembly)</div>
 <div class="created">Created using <a href="https://skoolkit.ca">SkoolKit</a> 8.9.</div>
 </footer>
 </body>

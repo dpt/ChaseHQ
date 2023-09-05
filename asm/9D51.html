@@ -75,34 +75,36 @@ This entry point is used by the routines at <a href="8401.html">main_loop</a>, <
 <td class="asm-label">update_scoreboard</td>
 <td class="address-2"><span id="40290"></span>9D62</td>
 <td class="instruction">LD A,($A223)</td>
-<td class="comment-1" rowspan="4">Check if stage has changed?</td>
+<td class="comment-1" rowspan="1">Check if stage has changed  -- perhaps reset to zero by stage loads?</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="40293"></span>9D65</td>
 <td class="instruction">AND A</td>
+<td class="comment-1" rowspan="2">Avoid work if previously updated</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="40294"></span>9D66</td>
-<td class="instruction">JR NZ,$9D7C</td>
+<td class="instruction">JR NZ,<a href="9D51.html#40316">us_bonus_start</a></td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="40296"></span>9D68</td>
 <td class="instruction">LD A,($8007)</td>
+<td class="comment-1" rowspan="1">Load &lt;wanted_stage_number&gt;</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="40299"></span>9D6B</td>
 <td class="instruction">ADD A,$B0</td>
-<td class="comment-1" rowspan="1">Adding 48 to make it a digit then $80 to terminate the string.</td>
+<td class="comment-1" rowspan="1">Add 48 to make it a digit then $80 to terminate the string</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="40301"></span>9D6D</td>
 <td class="instruction">LD ($9D61),A</td>
-<td class="comment-1" rowspan="2">Update "STAGE N"</td>
+<td class="comment-1" rowspan="2">Overwrite the N in "STAGE N"</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -128,20 +130,21 @@ This entry point is used by the routines at <a href="8401.html">main_loop</a>, <
 <td class="comment-1" rowspan="1">Draw it</td>
 </tr>
 <tr>
-<td class="asm-label"></td>
+<td class="asm-label">us_bonus_start</td>
 <td class="address-2"><span id="40316"></span>9D7C</td>
 <td class="instruction">LD A,($A22C)</td>
-<td class="comment-1" rowspan="3">Is the bonus flag set?</td>
+<td class="comment-1" rowspan="1">Load &lt;trigger_bonus_flag&gt;</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="40319"></span>9D7F</td>
 <td class="instruction">AND A</td>
+<td class="comment-1" rowspan="2">If it's zero jump to attribute setting</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="40320"></span>9D80</td>
-<td class="instruction">JR Z,$9DA5</td>
+<td class="instruction">JR Z,<a href="9D51.html#40357">us_bonus_countdown</a></td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -161,15 +164,26 @@ This entry point is used by the routines at <a href="8401.html">main_loop</a>, <
 <td class="comment-1" rowspan="1">Screen pixel (64,24)</td>
 </tr>
 <tr>
+<td class="routine-comment" colspan="5">
+<span id="40329"></span>
+<div class="comments">
+<div class="paragraph">
+Clear the area - 5x7 bytes
+</div>
+</div>
+</td>
+</tr>
+<tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="40329"></span>9D89</td>
 <td class="instruction">LD B,$07</td>
-<td class="comment-1" rowspan="17">Clear the area 5*7 bytes</td>
+<td class="comment-1" rowspan="1">7 iterations</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="40331"></span>9D8B</td>
 <td class="instruction">LD D,H</td>
+<td class="comment-1" rowspan="2">DE = HL</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -180,11 +194,13 @@ This entry point is used by the routines at <a href="8401.html">main_loop</a>, <
 <td class="asm-label"></td>
 <td class="address-2"><span id="40333"></span>9D8D</td>
 <td class="instruction">LD C,L</td>
+<td class="comment-1" rowspan="1">Preserve column</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="40334"></span>9D8E</td>
 <td class="instruction">LD (HL),A</td>
+<td class="comment-1" rowspan="9">Update five bytes</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -230,67 +246,78 @@ This entry point is used by the routines at <a href="8401.html">main_loop</a>, <
 <td class="asm-label"></td>
 <td class="address-1"><span id="40343"></span>9D97</td>
 <td class="instruction">LD L,C</td>
+<td class="comment-1" rowspan="1">Restore column</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="40344"></span>9D98</td>
 <td class="instruction">INC H</td>
+<td class="comment-1" rowspan="1">Advance row</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="40345"></span>9D99</td>
 <td class="instruction">DJNZ $9D8D</td>
+<td class="comment-1" rowspan="1">Loop</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="40347"></span>9D9B</td>
 <td class="instruction">LD HL,$0000</td>
+<td class="comment-1" rowspan="1">HL = &lt;self modified&gt;  -- load address of score digits</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="40350"></span>9D9E</td>
 <td class="instruction">CALL <a href="9F99.html#40867">draw_string</a></td>
-<td class="comment-1" rowspan="11">Draw it</td>
+<td class="comment-1" rowspan="1">Draw it</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="40353"></span>9DA1</td>
 <td class="instruction">LD A,$08</td>
+<td class="comment-1" rowspan="1">Set bonus counter to 8</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="40355"></span>9DA3</td>
-<td class="instruction">JR $9DAC</td>
+<td class="instruction">JR <a href="9D51.html#40364">us_bonus_set_counter</a></td>
+<td class="comment-1" rowspan="1">Jump</td>
 </tr>
 <tr>
-<td class="asm-label"></td>
+<td class="asm-label">us_bonus_countdown</td>
 <td class="address-2"><span id="40357"></span>9DA5</td>
 <td class="instruction">LD A,($A22D)</td>
+<td class="comment-1" rowspan="1">A = &lt;bonus_counter&gt;</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="40360"></span>9DA8</td>
 <td class="instruction">AND A</td>
+<td class="comment-1" rowspan="2">Jump if counter is zero</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="40361"></span>9DA9</td>
-<td class="instruction">JR Z,$9DC3</td>
+<td class="instruction">JR Z,<a href="9D51.html#40387">us_gear</a></td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="40363"></span>9DAB</td>
 <td class="instruction">DEC A</td>
+<td class="comment-1" rowspan="1">Decrement the bonus counter</td>
 </tr>
 <tr>
-<td class="asm-label"></td>
+<td class="asm-label">us_bonus_set_counter</td>
 <td class="address-2"><span id="40364"></span>9DAC</td>
 <td class="instruction">LD ($A22D),A</td>
+<td class="comment-1" rowspan="1">&lt;bonus_counter&gt; = A</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="40367"></span>9DAF</td>
 <td class="instruction">SRL A</td>
+<td class="comment-1" rowspan="2">Shift out LSB to carry</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -301,23 +328,25 @@ This entry point is used by the routines at <a href="8401.html">main_loop</a>, <
 <td class="asm-label"></td>
 <td class="address-1"><span id="40370"></span>9DB2</td>
 <td class="instruction">JR Z,$9DBA</td>
+<td class="comment-1" rowspan="1">Jump if <span class="register">C</span> is zero, using zero for attributes</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="40372"></span>9DB4</td>
 <td class="instruction">LD C,$42</td>
-<td class="comment-1" rowspan="2">42 =&gt; BRIGHT + red over black</td>
+<td class="comment-1" rowspan="1">42 =&gt; BRIGHT + red over black</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="40374"></span>9DB6</td>
 <td class="instruction">JR C,$9DBA</td>
+<td class="comment-1" rowspan="1">Jump if odd</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="40376"></span>9DB8</td>
 <td class="instruction">LD C,$46</td>
-<td class="comment-1" rowspan="1">46 =&gt; BRIGHT + yellow over black</td>
+<td class="comment-1" rowspan="1">Otherwise 46 =&gt; BRIGHT + yellow over black</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -329,7 +358,7 @@ This entry point is used by the routines at <a href="8401.html">main_loop</a>, <
 <td class="asm-label"></td>
 <td class="address-1"><span id="40381"></span>9DBD</td>
 <td class="instruction">LD B,$05</td>
-<td class="comment-1" rowspan="4">Set them to <span class="register">C</span></td>
+<td class="comment-1" rowspan="4">Set them all to <span class="register">C</span></td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -347,34 +376,33 @@ This entry point is used by the routines at <a href="8401.html">main_loop</a>, <
 <td class="instruction">DJNZ $9DBF</td>
 </tr>
 <tr>
-<td class="asm-label"></td>
+<td class="asm-label">us_gear</td>
 <td class="address-2"><span id="40387"></span>9DC3</td>
 <td class="instruction">LD HL,$A174</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="1">Point HL at &lt;displayed_gear&gt;</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="40390"></span>9DC6</td>
 <td class="instruction">LD A,($A253)</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="2">Compare to &lt;gear&gt;</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="40393"></span>9DC9</td>
 <td class="instruction">CP (HL)</td>
-<td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="40394"></span>9DCA</td>
-<td class="instruction">JR Z,$9DDC</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="instruction">JR Z,<a href="9D51.html#40412">us_lights</a></td>
+<td class="comment-1" rowspan="1">Avoid work if they're equal</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="40396"></span>9DCC</td>
 <td class="instruction">LD (HL),A</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="1">Update &lt;displayed_gear&gt;</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -386,34 +414,37 @@ This entry point is used by the routines at <a href="8401.html">main_loop</a>, <
 <td class="asm-label"></td>
 <td class="address-1"><span id="40400"></span>9DD0</td>
 <td class="instruction">LD HL,$9D59</td>
-<td class="comment-1" rowspan="3">"LO"</td>
+<td class="comment-1" rowspan="1">Point HL at "LO"</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="40403"></span>9DD3</td>
 <td class="instruction">AND A</td>
+<td class="comment-1" rowspan="1">Low gear?</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="40404"></span>9DD4</td>
 <td class="instruction">JR Z,$9DD9</td>
+<td class="comment-1" rowspan="1">Jump to draw string if so</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="40406"></span>9DD6</td>
 <td class="instruction">LD HL,$9D57</td>
-<td class="comment-1" rowspan="1">"HI"</td>
+<td class="comment-1" rowspan="1">Point HL at "HI"</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-2"><span id="40409"></span>9DD9</td>
 <td class="instruction">CALL <a href="9F99.html#40867">draw_string</a></td>
-<td class="comment-1" rowspan="6">Draw it</td>
+<td class="comment-1" rowspan="1">Draw string</td>
 </tr>
 <tr>
-<td class="asm-label"></td>
+<td class="asm-label">us_lights</td>
 <td class="address-2"><span id="40412"></span>9DDC</td>
 <td class="instruction">LD A,($A22E)</td>
+<td class="comment-1" rowspan="2">C = &lt;sighted_flag&gt;</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -424,11 +455,13 @@ This entry point is used by the routines at <a href="8401.html">main_loop</a>, <
 <td class="asm-label"></td>
 <td class="address-1"><span id="40416"></span>9DE0</td>
 <td class="instruction">LD A,($A235)</td>
+<td class="comment-1" rowspan="1">A = &lt;counter_B&gt;</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="40419"></span>9DE3</td>
 <td class="instruction">AND C</td>
+<td class="comment-1" rowspan="2">If (&lt;sighted&gt; AND &lt;counter_B&gt;) is zero jump to plot_turbos_and_scores</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -478,7 +511,7 @@ Next: <a href="9DF4.html">9DF4</a>
 </table>
 <footer>
 <div class="release">The incomplete Chase H.Q. disassembly 20230518</div>
-<div class="copyright">&copy; 1989 Ocean Software Ltd.</div>
+<div class="copyright">&copy; 1988 Taito Corporation &copy; 1989 Ocean Software Ltd. (Chase H.Q.) © 2023 David Thomas (this disassembly)</div>
 <div class="created">Created using <a href="https://skoolkit.ca">SkoolKit</a> 8.9.</div>
 </footer>
 </body>

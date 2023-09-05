@@ -23,7 +23,7 @@ Next: <a href="BC3E.html">BC3E</a>
 </td>
 </tr>
 </table>
-<div class="description">BB69: Routine at BB69</div>
+<div class="description">BB69: Setup for road handling perhaps split related</div>
 <table class="disassembly">
 <tr>
 <td class="routine-comment" colspan="5">
@@ -38,43 +38,50 @@ Used by the routine at <a href="8401.html">main_loop</a>.
 <td class="asm-label">main_loop_27</td>
 <td class="address-2"><span id="47977"></span>BB69</td>
 <td class="instruction">LD A,($A268)</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="3">Return if $A268 is zero</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="47980"></span>BB6C</td>
 <td class="instruction">AND A</td>
-<td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="47981"></span>BB6D</td>
 <td class="instruction">RET Z</td>
-<td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="47982"></span>BB6E</td>
 <td class="instruction">LD A,($A249)</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="2">A = fork_taken - 1</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="47985"></span>BB71</td>
 <td class="instruction">DEC A</td>
-<td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="47986"></span>BB72</td>
 <td class="instruction">JR Z,<a href="BB69.html#48033">main_loop_27_0</a></td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="1">Jump if A is zero (right fork taken)</td>
+</tr>
+<tr>
+<td class="routine-comment" colspan="5">
+<span id="47988"></span>
+<div class="comments">
+<div class="paragraph">
+Set up left route.
+</div>
+</div>
+</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="47988"></span>BB74</td>
 <td class="instruction">LD DE,$FC01</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="1">DE = $FC01  (super super hard left?, 1?)</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -92,49 +99,47 @@ Used by the routine at <a href="8401.html">main_loop</a>.
 <td class="asm-label"></td>
 <td class="address-1"><span id="47995"></span>BB7B</td>
 <td class="instruction">LD ($A276),HL</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="1">road_leftside_ptr  = $E2D9</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="47998"></span>BB7E</td>
 <td class="instruction">LD HL,$E2D5</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="2">road_rightside_ptr = $E2D5</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="48001"></span>BB81</td>
 <td class="instruction">LD ($A274),HL</td>
-<td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="48004"></span>BB84</td>
 <td class="instruction">LD HL,$E2E7</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="2">road_lanes_ptr     = $E2E7</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="48007"></span>BB87</td>
 <td class="instruction">LD ($A272),HL</td>
-<td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="48010"></span>BB8A</td>
 <td class="instruction">LD HL,$0000</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="1">Self modified by $C035 to be the left route's hazards data</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="48013"></span>BB8D</td>
 <td class="instruction">LD DE,$0000</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="1">Self modified by $BF73 to be the left route's rightside data</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="48016"></span>BB90</td>
 <td class="instruction">LD BC,$0000</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="1">Self modified by $BFBC to be the left route's leftside data</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -146,42 +151,59 @@ Used by the routine at <a href="8401.html">main_loop</a>.
 <td class="asm-label"></td>
 <td class="address-1"><span id="48020"></span>BB94</td>
 <td class="instruction">LD HL,$0000</td>
-<td class="comment-1" rowspan="17">Self modified by $BE5C to be the left route's curvature data</td>
+<td class="comment-1" rowspan="1">Self modified by $BE5C to be the left route's curvature data</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="48023"></span>BB97</td>
 <td class="instruction">LD DE,$0000</td>
+<td class="comment-1" rowspan="1">Self modified by $BEAE to be the left route's height data</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="48026"></span>BB9A</td>
 <td class="instruction">LD BC,$0000</td>
+<td class="comment-1" rowspan="1">Self modified by $BEF9 to be the left route's lanes data</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="48029"></span>BB9D</td>
 <td class="instruction">LD A,$40</td>
+<td class="comment-1" rowspan="1">A = 64   offset into road buffer</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="48031"></span>BB9F</td>
-<td class="instruction">JR <a href="BB69.html#48076">main_loop_27_1</a></td>
+<td class="instruction">JR <a href="BB69.html#48076">ml27_bbcc</a></td>
+<td class="comment-1" rowspan="1">Jump to ml27_bbcc</td>
+</tr>
+<tr>
+<td class="routine-comment" colspan="5">
+<span id="48033"></span>
+<div class="comments">
+<div class="paragraph">
+Set up right route.
+</div>
+</div>
+</td>
 </tr>
 <tr>
 <td class="asm-label">main_loop_27_0</td>
 <td class="address-2"><span id="48033"></span>BBA1</td>
 <td class="instruction">LD DE,$0403</td>
+<td class="comment-1" rowspan="1">DE = $0403 (super super hard right?, 3?)</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="48036"></span>BBA4</td>
 <td class="instruction">PUSH DE</td>
+<td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="48037"></span>BBA5</td>
 <td class="instruction">LD HL,$E2D5</td>
+<td class="comment-1" rowspan="2">road_leftside_ptr  = $E2D5</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -192,6 +214,7 @@ Used by the routine at <a href="8401.html">main_loop</a>.
 <td class="asm-label"></td>
 <td class="address-1"><span id="48043"></span>BBAB</td>
 <td class="instruction">LD HL,$E2D9</td>
+<td class="comment-1" rowspan="2">road_rightside_ptr = $E2D9</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -202,6 +225,7 @@ Used by the routine at <a href="8401.html">main_loop</a>.
 <td class="asm-label"></td>
 <td class="address-1"><span id="48049"></span>BBB1</td>
 <td class="instruction">LD HL,$E2F3</td>
+<td class="comment-1" rowspan="2">road_lanes_ptr     = $E2F3</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -212,82 +236,97 @@ Used by the routine at <a href="8401.html">main_loop</a>.
 <td class="asm-label"></td>
 <td class="address-1"><span id="48055"></span>BBB7</td>
 <td class="instruction">LD HL,$0000</td>
+<td class="comment-1" rowspan="1">Self modified by $C03D to be the right route's hazards data</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="48058"></span>BBBA</td>
 <td class="instruction">LD DE,$0000</td>
+<td class="comment-1" rowspan="1">Self modified by $BF73 to be the right route's rightside data</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="48061"></span>BBBD</td>
 <td class="instruction">LD BC,$0000</td>
+<td class="comment-1" rowspan="1">Self modified by $BFC4 to be the right route's leftside data</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="48064"></span>BBC0</td>
 <td class="instruction">EXX</td>
+<td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="48065"></span>BBC1</td>
 <td class="instruction">LD HL,$0000</td>
-<td class="comment-1" rowspan="55">Self modified by $BE62 to be the right route's curvature data</td>
+<td class="comment-1" rowspan="1">Self modified by $BE62 to be the right route's curvature data</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="48068"></span>BBC4</td>
 <td class="instruction">LD DE,$0000</td>
+<td class="comment-1" rowspan="1">Self modified by $BEB6 to be the right route's height data</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="48071"></span>BBC7</td>
 <td class="instruction">LD BC,$0000</td>
+<td class="comment-1" rowspan="1">Self modified by $BF01 to be the right route's lanes data</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="48074"></span>BBCA</td>
 <td class="instruction">LD A,$20</td>
+<td class="comment-1" rowspan="1">A = 32   offset into road buffer</td>
 </tr>
 <tr>
-<td class="asm-label">main_loop_27_1</td>
+<td class="asm-label">ml27_bbcc</td>
 <td class="address-2"><span id="48076"></span>BBCC</td>
 <td class="instruction">LD ($BE6D),HL</td>
+<td class="comment-1" rowspan="1">Self modify rm_curvature_one_command handler</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="48079"></span>BBCF</td>
 <td class="instruction">LD ($BEBF),DE</td>
+<td class="comment-1" rowspan="1">Self modify rm_height_one_command handler</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="48083"></span>BBD3</td>
 <td class="instruction">LD ($BF0A),BC</td>
+<td class="comment-1" rowspan="1">Self modify rm_lanes_one_command handler</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="48087"></span>BBD7</td>
 <td class="instruction">EXX</td>
+<td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="48088"></span>BBD8</td>
 <td class="instruction">LD ($BFCD),BC</td>
+<td class="comment-1" rowspan="1">Self modify rm_leftside_one_command handler</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="48092"></span>BBDC</td>
 <td class="instruction">LD ($BF84),DE</td>
+<td class="comment-1" rowspan="1">Self modify rm_rightside_one_command handler</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="48096"></span>BBE0</td>
 <td class="instruction">LD ($C046),HL</td>
+<td class="comment-1" rowspan="1">Self modify rm_hazards_one_command handler</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="48099"></span>BBE3</td>
 <td class="instruction">LD HL,$E2DD</td>
+<td class="comment-1" rowspan="2">road_curvature_ptr = $E2DD</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -298,6 +337,7 @@ Used by the routine at <a href="8401.html">main_loop</a>.
 <td class="asm-label"></td>
 <td class="address-1"><span id="48105"></span>BBE9</td>
 <td class="instruction">LD HL,$E2E2</td>
+<td class="comment-1" rowspan="2">road_height_ptr    = $E2E2</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -308,6 +348,7 @@ Used by the routine at <a href="8401.html">main_loop</a>.
 <td class="asm-label"></td>
 <td class="address-1"><span id="48111"></span>BBEF</td>
 <td class="instruction">LD HL,$E2D2</td>
+<td class="comment-1" rowspan="2">road_hazard_ptr    = $E2D2</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -318,21 +359,25 @@ Used by the routine at <a href="8401.html">main_loop</a>.
 <td class="asm-label"></td>
 <td class="address-1"><span id="48117"></span>BBF5</td>
 <td class="instruction">POP DE</td>
+<td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="48118"></span>BBF6</td>
 <td class="instruction">LD C,A</td>
+<td class="comment-1" rowspan="1">C = A</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="48119"></span>BBF7</td>
 <td class="instruction">LD A,($A240)</td>
+<td class="comment-1" rowspan="1">Load road_buffer_offset into <span class="register">A</span> [as byte]</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="48122"></span>BBFA</td>
 <td class="instruction">LD L,A</td>
+<td class="comment-1" rowspan="2">HL = $EE00 | A   -- curvature data [unsure why the code does this when $A240 seems to be the right value]</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -343,9 +388,10 @@ Used by the routine at <a href="8401.html">main_loop</a>.
 <td class="asm-label"></td>
 <td class="address-1"><span id="48125"></span>BBFD</td>
 <td class="instruction">LD B,$20</td>
+<td class="comment-1" rowspan="4">Set the 32 bytes at <span class="register">HL</span> to <span class="register">D</span></td>
 </tr>
 <tr>
-<td class="asm-label">main_loop_27_2</td>
+<td class="asm-label">main_loop_27_1</td>
 <td class="address-2"><span id="48127"></span>BBFF</td>
 <td class="instruction">LD (HL),D</td>
 </tr>
@@ -357,12 +403,13 @@ Used by the routine at <a href="8401.html">main_loop</a>.
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="48129"></span>BC01</td>
-<td class="instruction">DJNZ <a href="BB69.html#48127">main_loop_27_2</a></td>
+<td class="instruction">DJNZ <a href="BB69.html#48127">main_loop_27_1</a></td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="48131"></span>BC03</td>
 <td class="instruction">ADD A,$40</td>
+<td class="comment-1" rowspan="6">Set the 32 bytes at <span class="register">HL</span> + 64 to <span class="register">E</span></td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -375,7 +422,7 @@ Used by the routine at <a href="8401.html">main_loop</a>.
 <td class="instruction">LD B,$20</td>
 </tr>
 <tr>
-<td class="asm-label">main_loop_27_3</td>
+<td class="asm-label">main_loop_27_2</td>
 <td class="address-2"><span id="48136"></span>BC08</td>
 <td class="instruction">LD (HL),E</td>
 </tr>
@@ -387,12 +434,13 @@ Used by the routine at <a href="8401.html">main_loop</a>.
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="48138"></span>BC0A</td>
-<td class="instruction">DJNZ <a href="BB69.html#48136">main_loop_27_3</a></td>
+<td class="instruction">DJNZ <a href="BB69.html#48136">main_loop_27_2</a></td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="48140"></span>BC0C</td>
 <td class="instruction">ADD A,C</td>
+<td class="comment-1" rowspan="7">Zero the 32 bytes at <span class="register">HL</span> + 64 + <span class="register">C</span></td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -410,7 +458,7 @@ Used by the routine at <a href="8401.html">main_loop</a>.
 <td class="instruction">LD B,$20</td>
 </tr>
 <tr>
-<td class="asm-label">main_loop_27_4</td>
+<td class="asm-label">main_loop_27_3</td>
 <td class="address-2"><span id="48145"></span>BC11</td>
 <td class="instruction">LD (HL),E</td>
 </tr>
@@ -422,12 +470,13 @@ Used by the routine at <a href="8401.html">main_loop</a>.
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="48147"></span>BC13</td>
-<td class="instruction">DJNZ <a href="BB69.html#48145">main_loop_27_4</a></td>
+<td class="instruction">DJNZ <a href="BB69.html#48145">main_loop_27_3</a></td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="48149"></span>BC15</td>
 <td class="instruction">XOR A</td>
+<td class="comment-1" rowspan="3">curvature_byte     = 0</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -443,46 +492,55 @@ Used by the routine at <a href="8401.html">main_loop</a>.
 <td class="asm-label"></td>
 <td class="address-1"><span id="48154"></span>BC1A</td>
 <td class="instruction">LD ($A243),A</td>
+<td class="comment-1" rowspan="1">height_byte        = 0</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="48157"></span>BC1D</td>
 <td class="instruction">LD ($A244),A</td>
+<td class="comment-1" rowspan="1">leftside_byte      = 0</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="48160"></span>BC20</td>
 <td class="instruction">LD ($A245),A</td>
+<td class="comment-1" rowspan="1">rightside_byte     = 0</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="48163"></span>BC23</td>
 <td class="instruction">LD ($A246),A</td>
+<td class="comment-1" rowspan="1">hazards_byte       = 0</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="48166"></span>BC26</td>
 <td class="instruction">LD ($A247),A</td>
+<td class="comment-1" rowspan="1">lanes_counter_byte = 0</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="48169"></span>BC29</td>
 <td class="instruction">LD ($A269),A</td>
+<td class="comment-1" rowspan="1">$A269              = 0</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="48172"></span>BC2C</td>
 <td class="instruction">LD ($A249),A</td>
+<td class="comment-1" rowspan="1">fork_taken         = 0</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="48175"></span>BC2F</td>
 <td class="instruction">LD ($A265),A</td>
+<td class="comment-1" rowspan="1">$A265              = 0</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="48178"></span>BC32</td>
 <td class="instruction">INC A</td>
+<td class="comment-1" rowspan="2">no_objects_counter = 1</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -493,16 +551,19 @@ Used by the routine at <a href="8401.html">main_loop</a>.
 <td class="asm-label"></td>
 <td class="address-1"><span id="48182"></span>BC36</td>
 <td class="instruction">LD ($A16D),A</td>
+<td class="comment-1" rowspan="1">$A16D              = 1</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="48185"></span>BC39</td>
 <td class="instruction">LD ($A267),BC</td>
+<td class="comment-1" rowspan="1">$A267              = 0  [B &amp; C are zero here]</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="48189"></span>BC3D</td>
 <td class="instruction">RET</td>
+<td class="comment-1" rowspan="1">Return</td>
 </tr>
 </table>
 <table class="asm-navigation">
@@ -518,7 +579,7 @@ Next: <a href="BC3E.html">BC3E</a>
 </table>
 <footer>
 <div class="release">The incomplete Chase H.Q. disassembly 20230518</div>
-<div class="copyright">&copy; 1989 Ocean Software Ltd.</div>
+<div class="copyright">&copy; 1988 Taito Corporation &copy; 1989 Ocean Software Ltd. (Chase H.Q.) © 2023 David Thomas (this disassembly)</div>
 <div class="created">Created using <a href="https://skoolkit.ca">SkoolKit</a> 8.9.</div>
 </footer>
 </body>

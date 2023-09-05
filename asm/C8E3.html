@@ -19,11 +19,11 @@ Prev: <a href="C8BE.html">C8BE</a>
 </td>
 <td class="up">Up: <a href="../maps/all.html#51427">Map</a></td>
 <td class="next">
-Next: <a href="C93E.html">C93E</a>
+Next: <a href="CBA4.html">CBA4</a>
 </td>
 </tr>
 </table>
-<div class="description">C8E3: Routine at C8E3</div>
+<div class="description">C8E3: Split road plotting</div>
 <table class="disassembly">
 <tr>
 <td class="routine-comment" colspan="5">
@@ -37,92 +37,102 @@ Used by the routine at <a href="C452.html">main_loop_13</a>.
 <tr>
 <td class="address-2"><span id="51427"></span>C8E3</td>
 <td class="instruction">EXX</td>
-<td class="comment-0" rowspan="1"></td>
+<td class="comment-1" rowspan="1">Bank</td>
+</tr>
+<tr>
+<td class="routine-comment" colspan="5">
+<span id="51428"></span>
+<div class="comments">
+<div class="paragraph">
+Reset/Update a load of self modified locations.
+</div>
+</div>
+</td>
 </tr>
 <tr>
 <td class="address-1"><span id="51428"></span>C8E4</td>
 <td class="instruction">LD A,($C6D9)</td>
-<td class="comment-0" rowspan="1"></td>
+<td class="comment-1" rowspan="1">Read 'LD A,x' at $C6D8</td>
 </tr>
 <tr>
 <td class="address-1"><span id="51431"></span>C8E7</td>
 <td class="instruction">LD ($CB66),A</td>
-<td class="comment-0" rowspan="1"></td>
+<td class="comment-1" rowspan="1">Self modify 'LD A,x' at $CB65</td>
 </tr>
 <tr>
 <td class="address-1"><span id="51434"></span>C8EA</td>
 <td class="instruction">LD A,($C6B3)</td>
-<td class="comment-0" rowspan="1"></td>
+<td class="comment-1" rowspan="1">Read 'LD A,x' at $C6B2</td>
 </tr>
 <tr>
 <td class="address-1"><span id="51437"></span>C8ED</td>
 <td class="instruction">LD ($CB37),A</td>
-<td class="comment-0" rowspan="1"></td>
+<td class="comment-1" rowspan="1">Self modify 'LD A,x' at $CB36</td>
 </tr>
 <tr>
 <td class="address-1"><span id="51440"></span>C8F0</td>
 <td class="instruction">LD A,($C6D4)</td>
-<td class="comment-0" rowspan="1"></td>
+<td class="comment-1" rowspan="1">Read 'XOR x' at $C6D3</td>
 </tr>
 <tr>
 <td class="address-1"><span id="51443"></span>C8F3</td>
 <td class="instruction">LD ($CB5E),A</td>
-<td class="comment-0" rowspan="1"></td>
+<td class="comment-1" rowspan="1">Self modify 'XOR x' at $CB5D</td>
 </tr>
 <tr>
 <td class="address-1"><span id="51446"></span>C8F6</td>
 <td class="instruction">LD A,($C678)</td>
-<td class="comment-0" rowspan="1"></td>
+<td class="comment-1" rowspan="1">Read 'ADD A,x' at $C677</td>
 </tr>
 <tr>
 <td class="address-1"><span id="51449"></span>C8F9</td>
 <td class="instruction">LD ($CA9E),A</td>
-<td class="comment-0" rowspan="1"></td>
+<td class="comment-1" rowspan="1">Self modify 'ADD A,x' at $CA9D</td>
 </tr>
 <tr>
 <td class="address-1"><span id="51452"></span>C8FC</td>
 <td class="instruction">LD ($CB00),A</td>
-<td class="comment-0" rowspan="1"></td>
+<td class="comment-1" rowspan="1">Self modify 'ADD A,x' at $CAFF</td>
 </tr>
 <tr>
 <td class="address-1"><span id="51455"></span>C8FF</td>
 <td class="instruction">LD A,($C652)</td>
-<td class="comment-0" rowspan="1"></td>
+<td class="comment-1" rowspan="1">Read 'ADD A,x' at $C651</td>
 </tr>
 <tr>
 <td class="address-1"><span id="51458"></span>C902</td>
 <td class="instruction">LD ($CA7B),A</td>
-<td class="comment-0" rowspan="1"></td>
+<td class="comment-1" rowspan="1">Self modify 'ADD A,x' at $CA7A</td>
 </tr>
 <tr>
 <td class="address-1"><span id="51461"></span>C905</td>
 <td class="instruction">LD ($CADD),A</td>
-<td class="comment-0" rowspan="1"></td>
+<td class="comment-1" rowspan="1">Self modify 'ADD A,x' at $CADC</td>
 </tr>
 <tr>
 <td class="address-1"><span id="51464"></span>C908</td>
 <td class="instruction">INC A</td>
-<td class="comment-0" rowspan="1"></td>
+<td class="comment-1" rowspan="1">A++</td>
 </tr>
 <tr>
 <td class="address-1"><span id="51465"></span>C909</td>
 <td class="instruction">LD ($CB1D),A</td>
-<td class="comment-0" rowspan="1"></td>
+<td class="comment-1" rowspan="1">Self modify 'ADD A,x' at $CB1C</td>
 </tr>
 <tr>
 <td class="address-1"><span id="51468"></span>C90C</td>
 <td class="instruction">LD ($CABC),A</td>
-<td class="comment-0" rowspan="1"></td>
+<td class="comment-1" rowspan="1">Self modify 'ADD A,x' at $CABB</td>
 </tr>
 <tr>
 <td class="address-1"><span id="51471"></span>C90F</td>
 <td class="instruction">LD A,($C6BD)</td>
-<td class="comment-0" rowspan="1"></td>
+<td class="comment-1" rowspan="1">Read 'LD A,x' at $C6BC</td>
 </tr>
 <tr>
 <td class="address-1"><span id="51474"></span>C912</td>
 <td class="instruction">LD ($CB41),A</td>
-<td class="comment-0" rowspan="1"></td>
+<td class="comment-1" rowspan="1">Self modify 'LD A,x' at $CB40</td>
 </tr>
 <tr>
 <td class="routine-comment" colspan="5">
@@ -137,69 +147,66 @@ This entry point is used by the routines at <a href="CBA4.html">CBA4</a> and <a 
 <tr>
 <td class="address-2"><span id="51477"></span>C915</td>
 <td class="instruction">LD A,B</td>
-<td class="comment-0" rowspan="1"></td>
+<td class="comment-1" rowspan="1">A = B</td>
 </tr>
 <tr>
 <td class="address-1"><span id="51478"></span>C916</td>
 <td class="instruction">AND A</td>
-<td class="comment-0" rowspan="1"></td>
+<td class="comment-1" rowspan="1">Set flags</td>
 </tr>
 <tr>
 <td class="address-1"><span id="51479"></span>C917</td>
-<td class="instruction">JP NZ,<a href="C95A.html">$C95A</a></td>
-<td class="comment-0" rowspan="1"></td>
+<td class="instruction">JP NZ,$C95A</td>
+<td class="comment-1" rowspan="1">Jump if non-zero</td>
 </tr>
 <tr>
 <td class="address-1"><span id="51482"></span>C91A</td>
 <td class="instruction">EXX</td>
-<td class="comment-0" rowspan="1"></td>
+<td class="comment-1" rowspan="1">Unbank</td>
 </tr>
 <tr>
 <td class="address-1"><span id="51483"></span>C91B</td>
 <td class="instruction">LD HL,$C923</td>
-<td class="comment-0" rowspan="1"></td>
+<td class="comment-1" rowspan="2">Self modify 'JP NZ' at $CB31 to be $C923</td>
 </tr>
 <tr>
 <td class="address-1"><span id="51486"></span>C91E</td>
 <td class="instruction">LD ($CB32),HL</td>
-<td class="comment-0" rowspan="1"></td>
 </tr>
 <tr>
 <td class="address-1"><span id="51489"></span>C921</td>
 <td class="instruction">EXX</td>
-<td class="comment-0" rowspan="1"></td>
+<td class="comment-1" rowspan="1">Bank</td>
 </tr>
 <tr>
 <td class="address-1"><span id="51490"></span>C922</td>
 <td class="instruction">EX AF,AF'</td>
-<td class="comment-0" rowspan="1"></td>
+<td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
 <td class="address-1"><span id="51491"></span>C923</td>
 <td class="instruction">LD A,D</td>
-<td class="comment-0" rowspan="1"></td>
+<td class="comment-1" rowspan="3">A = (D - 1) &amp; 15</td>
 </tr>
 <tr>
 <td class="address-1"><span id="51492"></span>C924</td>
 <td class="instruction">DEC D</td>
-<td class="comment-0" rowspan="1"></td>
 </tr>
 <tr>
 <td class="address-1"><span id="51493"></span>C925</td>
 <td class="instruction">AND $0F</td>
-<td class="comment-0" rowspan="1"></td>
 </tr>
 <tr>
 <td class="address-1"><span id="51495"></span>C927</td>
-<td class="instruction">JR Z,<a href="C94C.html">$C94C</a></td>
-<td class="comment-0" rowspan="1"></td>
+<td class="instruction">JR Z,$C94C</td>
+<td class="comment-1" rowspan="1">Jump if zero</td>
 </tr>
 <tr>
 <td class="routine-comment" colspan="5">
 <span id="51497"></span>
 <div class="comments">
 <div class="paragraph">
-This entry point is used by the routine at <a href="C94C.html">C94C</a>.
+This entry point is used by the routine at <a href="C8E3.html#51532">C94C</a>.
 </div>
 </div>
 </td>
@@ -207,57 +214,2207 @@ This entry point is used by the routine at <a href="C94C.html">C94C</a>.
 <tr>
 <td class="address-2"><span id="51497"></span>C929</td>
 <td class="instruction">LD ($C92F),DE</td>
-<td class="comment-0" rowspan="1"></td>
+<td class="comment-1" rowspan="1">Self modify 'LD DE,x' at $C92E (just below)</td>
 </tr>
 <tr>
 <td class="address-1"><span id="51501"></span>C92D</td>
 <td class="instruction">EXX</td>
-<td class="comment-0" rowspan="1"></td>
+<td class="comment-1" rowspan="1">Unbank</td>
+</tr>
+<tr>
+<td class="routine-comment" colspan="5">
+<span id="51502"></span>
+<div class="comments">
+<div class="paragraph">
+Calculate address of next bitmap scanline ??
+</div>
+</div>
+</td>
 </tr>
 <tr>
 <td class="address-1"><span id="51502"></span>C92E</td>
 <td class="instruction">LD DE,$0000</td>
-<td class="comment-0" rowspan="1"></td>
+<td class="comment-1" rowspan="1">DE = &lt;self modified&gt;</td>
 </tr>
 <tr>
 <td class="address-1"><span id="51505"></span>C931</td>
 <td class="instruction">LD A,E</td>
-<td class="comment-0" rowspan="1"></td>
+<td class="comment-1" rowspan="3">L = E + 31</td>
 </tr>
 <tr>
 <td class="address-1"><span id="51506"></span>C932</td>
 <td class="instruction">ADD A,$1F</td>
-<td class="comment-0" rowspan="1"></td>
 </tr>
 <tr>
 <td class="address-1"><span id="51508"></span>C934</td>
 <td class="instruction">LD L,A</td>
-<td class="comment-0" rowspan="1"></td>
 </tr>
 <tr>
 <td class="address-1"><span id="51509"></span>C935</td>
 <td class="instruction">LD H,D</td>
-<td class="comment-0" rowspan="1"></td>
+<td class="comment-1" rowspan="1">H = D</td>
 </tr>
 <tr>
 <td class="address-1"><span id="51510"></span>C936</td>
 <td class="instruction">LD SP,HL</td>
-<td class="comment-0" rowspan="1"></td>
+<td class="comment-1" rowspan="1">Put it in <span class="register">SP</span> (so we can use POP for speed)</td>
 </tr>
 <tr>
 <td class="address-1"><span id="51511"></span>C937</td>
 <td class="instruction">LD HL,$0000</td>
-<td class="comment-0" rowspan="1"></td>
+<td class="comment-1" rowspan="1">HL = 0  [not self modified apparently]</td>
 </tr>
 <tr>
 <td class="address-1"><span id="51514"></span>C93A</td>
 <td class="instruction">LD C,L</td>
-<td class="comment-0" rowspan="1"></td>
+<td class="comment-1" rowspan="1">C = L</td>
 </tr>
 <tr>
 <td class="address-1"><span id="51515"></span>C93B</td>
-<td class="instruction">JP <a href="C95A.html#51799">$CA57</a></td>
-<td class="comment-0" rowspan="1"></td>
+<td class="instruction">JP $CA57</td>
+<td class="comment-1" rowspan="1">Jump into a sequence of 15 PUSH HLs</td>
+</tr>
+<tr>
+<td class="routine-comment" colspan="5">
+<span id="51518"></span>
+<div class="comments">
+<div class="paragraph">
+Smells line scanline counting foo.
+</div>
+</div>
+</td>
+</tr>
+<tr>
+<td class="address-2"><span id="51518"></span>C93E</td>
+<td class="instruction">LD A,E</td>
+<td class="comment-1" rowspan="3">E -= 32</td>
+</tr>
+<tr>
+<td class="address-1"><span id="51519"></span>C93F</td>
+<td class="instruction">SUB $20</td>
+</tr>
+<tr>
+<td class="address-1"><span id="51521"></span>C941</td>
+<td class="instruction">LD E,A</td>
+</tr>
+<tr>
+<td class="address-1"><span id="51522"></span>C942</td>
+<td class="instruction">JP C,$C969</td>
+<td class="comment-1" rowspan="1">Jump if E &lt; 32</td>
+</tr>
+<tr>
+<td class="address-1"><span id="51525"></span>C945</td>
+<td class="instruction">LD A,D</td>
+<td class="comment-1" rowspan="3">D -= 16</td>
+</tr>
+<tr>
+<td class="address-1"><span id="51526"></span>C946</td>
+<td class="instruction">ADD A,$10</td>
+</tr>
+<tr>
+<td class="address-1"><span id="51528"></span>C948</td>
+<td class="instruction">LD D,A</td>
+</tr>
+<tr>
+<td class="address-1"><span id="51529"></span>C949</td>
+<td class="instruction">JP $C969</td>
+<td class="comment-1" rowspan="1"></td>
+</tr>
+<tr>
+<td class="routine-comment" colspan="5">
+<span id="51532"></span>
+<div class="comments">
+<div class="paragraph">
+Smells line scanline counting foo.
+</div>
+</div>
+</td>
+</tr>
+<tr>
+<td class="address-2"><span id="51532"></span>C94C</td>
+<td class="instruction">LD A,E</td>
+<td class="comment-1" rowspan="3">E -= 32</td>
+</tr>
+<tr>
+<td class="address-1"><span id="51533"></span>C94D</td>
+<td class="instruction">SUB $20</td>
+</tr>
+<tr>
+<td class="address-1"><span id="51535"></span>C94F</td>
+<td class="instruction">LD E,A</td>
+</tr>
+<tr>
+<td class="address-1"><span id="51536"></span>C950</td>
+<td class="instruction">JP C,$C929</td>
+<td class="comment-1" rowspan="1">Jump if E &lt; 32</td>
+</tr>
+<tr>
+<td class="address-1"><span id="51539"></span>C953</td>
+<td class="instruction">LD A,D</td>
+<td class="comment-1" rowspan="3">D -= 16</td>
+</tr>
+<tr>
+<td class="address-1"><span id="51540"></span>C954</td>
+<td class="instruction">ADD A,$10</td>
+</tr>
+<tr>
+<td class="address-1"><span id="51542"></span>C956</td>
+<td class="instruction">LD D,A</td>
+</tr>
+<tr>
+<td class="address-1"><span id="51543"></span>C957</td>
+<td class="instruction">JP $C929</td>
+<td class="comment-1" rowspan="1"></td>
+</tr>
+<tr>
+<td class="address-2"><span id="51546"></span>C95A</td>
+<td class="instruction">EXX</td>
+<td class="comment-1" rowspan="1">Unbank</td>
+</tr>
+<tr>
+<td class="address-1"><span id="51547"></span>C95B</td>
+<td class="instruction">LD HL,$C963</td>
+<td class="comment-1" rowspan="2">Self modify 'JP NZ,x' at $CB31 to be $C963</td>
+</tr>
+<tr>
+<td class="address-1"><span id="51550"></span>C95E</td>
+<td class="instruction">LD ($CB32),HL</td>
+</tr>
+<tr>
+<td class="address-1"><span id="51553"></span>C961</td>
+<td class="instruction">EXX</td>
+<td class="comment-1" rowspan="1"></td>
+</tr>
+<tr>
+<td class="address-1"><span id="51554"></span>C962</td>
+<td class="instruction">EX AF,AF'</td>
+<td class="comment-1" rowspan="1"></td>
+</tr>
+<tr>
+<td class="address-1"><span id="51555"></span>C963</td>
+<td class="instruction">LD A,D</td>
+<td class="comment-1" rowspan="1">A = D</td>
+</tr>
+<tr>
+<td class="address-1"><span id="51556"></span>C964</td>
+<td class="instruction">DEC D</td>
+<td class="comment-1" rowspan="1">D--</td>
+</tr>
+<tr>
+<td class="address-1"><span id="51557"></span>C965</td>
+<td class="instruction">AND $0F</td>
+<td class="comment-1" rowspan="1">A &amp;= $0F</td>
+</tr>
+<tr>
+<td class="address-1"><span id="51559"></span>C967</td>
+<td class="instruction">JR Z,$C93E</td>
+<td class="comment-1" rowspan="1">Jump if zero</td>
+</tr>
+<tr>
+<td class="address-2"><span id="51561"></span>C969</td>
+<td class="instruction">LD ($CA01),DE</td>
+<td class="comment-1" rowspan="1">Self modify 'LD DE,x' at $CA00 to load current DE</td>
+</tr>
+<tr>
+<td class="address-1"><span id="51565"></span>C96D</td>
+<td class="instruction">LD A,L</td>
+<td class="comment-1" rowspan="1">A = L</td>
+</tr>
+<tr>
+<td class="address-1"><span id="51566"></span>C96E</td>
+<td class="instruction">EXX</td>
+<td class="comment-1" rowspan="1">Bank/unbank</td>
+</tr>
+<tr>
+<td class="address-1"><span id="51567"></span>C96F</td>
+<td class="instruction">LD L,A</td>
+<td class="comment-1" rowspan="1">L = A</td>
+</tr>
+<tr>
+<td class="address-1"><span id="51568"></span>C970</td>
+<td class="instruction">LD BC,$10F8</td>
+<td class="comment-1" rowspan="1">B = 16, C = $F8 (mask)</td>
+</tr>
+<tr>
+<td class="address-1"><span id="51571"></span>C973</td>
+<td class="instruction">LD H,$E8</td>
+<td class="comment-1" rowspan="1">HL = $E8xx</td>
+</tr>
+<tr>
+<td class="address-1"><span id="51573"></span>C975</td>
+<td class="instruction">LD A,(HL)</td>
+<td class="comment-1" rowspan="1">A = *HL</td>
+</tr>
+<tr>
+<td class="address-1"><span id="51574"></span>C976</td>
+<td class="instruction">AND A</td>
+<td class="comment-1" rowspan="1">Set flags</td>
+</tr>
+<tr>
+<td class="address-1"><span id="51575"></span>C977</td>
+<td class="instruction">JP Z,$C984</td>
+<td class="comment-1" rowspan="1">Jump if zero</td>
+</tr>
+<tr>
+<td class="address-1"><span id="51578"></span>C97A</td>
+<td class="instruction">LD A,$00</td>
+<td class="comment-1" rowspan="1">A = 0 (not self modified)</td>
+</tr>
+<tr>
+<td class="address-1"><span id="51580"></span>C97C</td>
+<td class="instruction">JP M,$C993</td>
+<td class="comment-1" rowspan="1">Jump if negative</td>
+</tr>
+<tr>
+<td class="address-1"><span id="51583"></span>C97F</td>
+<td class="instruction">LD A,$0F</td>
+<td class="comment-1" rowspan="1">A = 15</td>
+</tr>
+<tr>
+<td class="address-1"><span id="51585"></span>C981</td>
+<td class="instruction">JP $C993</td>
+<td class="comment-1" rowspan="1">Jump</td>
+</tr>
+<tr>
+<td class="routine-comment" colspan="5">
+<span id="51588"></span>
+<div class="comments">
+<div class="paragraph">
+Variation 1?
+</div>
+</div>
+</td>
+</tr>
+<tr>
+<td class="address-2"><span id="51588"></span>C984</td>
+<td class="instruction">DEC L</td>
+<td class="comment-1" rowspan="3">A = HL[-1]</td>
+</tr>
+<tr>
+<td class="address-1"><span id="51589"></span>C985</td>
+<td class="instruction">LD A,(HL)</td>
+</tr>
+<tr>
+<td class="address-1"><span id="51590"></span>C986</td>
+<td class="instruction">INC L</td>
+</tr>
+<tr>
+<td class="address-1"><span id="51591"></span>C987</td>
+<td class="instruction">AND C</td>
+<td class="comment-1" rowspan="1">A &amp;= C  -- C is the mask $F8 here</td>
+</tr>
+<tr>
+<td class="address-1"><span id="51592"></span>C988</td>
+<td class="instruction">RRCA</td>
+<td class="comment-1" rowspan="3">A &gt;&gt;= 3</td>
+</tr>
+<tr>
+<td class="address-1"><span id="51593"></span>C989</td>
+<td class="instruction">RRCA</td>
+</tr>
+<tr>
+<td class="address-1"><span id="51594"></span>C98A</td>
+<td class="instruction">RRCA</td>
+</tr>
+<tr>
+<td class="address-1"><span id="51595"></span>C98B</td>
+<td class="instruction">RRA</td>
+<td class="comment-1" rowspan="1">A &gt;&gt;= 1</td>
+</tr>
+<tr>
+<td class="address-1"><span id="51596"></span>C98C</td>
+<td class="instruction">ADC A,$00</td>
+<td class="comment-1" rowspan="1">Add carry</td>
+</tr>
+<tr>
+<td class="address-1"><span id="51598"></span>C98E</td>
+<td class="instruction">CP B</td>
+<td class="comment-1" rowspan="2">Jump if A &lt; B</td>
+</tr>
+<tr>
+<td class="address-1"><span id="51599"></span>C98F</td>
+<td class="instruction">JP C,$C993</td>
+</tr>
+<tr>
+<td class="address-1"><span id="51602"></span>C992</td>
+<td class="instruction">DEC A</td>
+<td class="comment-1" rowspan="1">A--</td>
+</tr>
+<tr>
+<td class="address-2"><span id="51603"></span>C993</td>
+<td class="instruction">LD E,A</td>
+<td class="comment-1" rowspan="1">E = A</td>
+</tr>
+<tr>
+<td class="address-1"><span id="51604"></span>C994</td>
+<td class="instruction">CPL</td>
+<td class="comment-1" rowspan="1">A = ~A</td>
+</tr>
+<tr>
+<td class="address-1"><span id="51605"></span>C995</td>
+<td class="instruction">ADD A,B</td>
+<td class="comment-1" rowspan="1">A += B</td>
+</tr>
+<tr>
+<td class="address-1"><span id="51606"></span>C996</td>
+<td class="instruction">LD ($CA56),A</td>
+<td class="comment-1" rowspan="1">Self modify 'JR x' at $CA55 -- jump table target</td>
+</tr>
+<tr>
+<td class="address-1"><span id="51609"></span>C999</td>
+<td class="instruction">INC H</td>
+<td class="comment-1" rowspan="2">H++</td>
+</tr>
+<tr>
+<td class="address-1"><span id="51610"></span>C99A</td>
+<td class="instruction">INC H</td>
+</tr>
+<tr>
+<td class="address-1"><span id="51611"></span>C99B</td>
+<td class="instruction">LD A,(HL)</td>
+<td class="comment-1" rowspan="1">A = *HL</td>
+</tr>
+<tr>
+<td class="address-1"><span id="51612"></span>C99C</td>
+<td class="instruction">AND A</td>
+<td class="comment-1" rowspan="1">Set flags</td>
+</tr>
+<tr>
+<td class="address-1"><span id="51613"></span>C99D</td>
+<td class="instruction">JP Z,$C9AA</td>
+<td class="comment-1" rowspan="1">Jump if zero</td>
+</tr>
+<tr>
+<td class="address-1"><span id="51616"></span>C9A0</td>
+<td class="instruction">LD A,$00</td>
+<td class="comment-1" rowspan="1">A = 0 (not self modified)</td>
+</tr>
+<tr>
+<td class="address-1"><span id="51618"></span>C9A2</td>
+<td class="instruction">JP M,$C9B2</td>
+<td class="comment-1" rowspan="1">Jump if negative</td>
+</tr>
+<tr>
+<td class="address-1"><span id="51621"></span>C9A5</td>
+<td class="instruction">LD A,$0F</td>
+<td class="comment-1" rowspan="1">A = 15</td>
+</tr>
+<tr>
+<td class="address-1"><span id="51623"></span>C9A7</td>
+<td class="instruction">JP $C9B2</td>
+<td class="comment-1" rowspan="1">Jump</td>
+</tr>
+<tr>
+<td class="routine-comment" colspan="5">
+<span id="51626"></span>
+<div class="comments">
+<div class="paragraph">
+Variation 2?
+</div>
+</div>
+</td>
+</tr>
+<tr>
+<td class="address-2"><span id="51626"></span>C9AA</td>
+<td class="instruction">DEC L</td>
+<td class="comment-1" rowspan="3">A = HL[-1]</td>
+</tr>
+<tr>
+<td class="address-1"><span id="51627"></span>C9AB</td>
+<td class="instruction">LD A,(HL)</td>
+</tr>
+<tr>
+<td class="address-1"><span id="51628"></span>C9AC</td>
+<td class="instruction">INC L</td>
+</tr>
+<tr>
+<td class="address-1"><span id="51629"></span>C9AD</td>
+<td class="instruction">AND C</td>
+<td class="comment-1" rowspan="1">A &amp;= C  -- C is the mask $F8 here</td>
+</tr>
+<tr>
+<td class="address-1"><span id="51630"></span>C9AE</td>
+<td class="instruction">RRCA</td>
+<td class="comment-1" rowspan="3">A &gt;&gt;= 3</td>
+</tr>
+<tr>
+<td class="address-1"><span id="51631"></span>C9AF</td>
+<td class="instruction">RRCA</td>
+</tr>
+<tr>
+<td class="address-1"><span id="51632"></span>C9B0</td>
+<td class="instruction">RRCA</td>
+</tr>
+<tr>
+<td class="address-1"><span id="51633"></span>C9B1</td>
+<td class="instruction">RRA</td>
+<td class="comment-1" rowspan="1">A &gt;&gt;= 1</td>
+</tr>
+<tr>
+<td class="address-2"><span id="51634"></span>C9B2</td>
+<td class="instruction">LD D,A</td>
+<td class="comment-1" rowspan="1">D = A</td>
+</tr>
+<tr>
+<td class="address-1"><span id="51635"></span>C9B3</td>
+<td class="instruction">SUB E</td>
+<td class="comment-1" rowspan="3">A = ~(A - E) + B</td>
+</tr>
+<tr>
+<td class="address-1"><span id="51636"></span>C9B4</td>
+<td class="instruction">CPL</td>
+</tr>
+<tr>
+<td class="address-1"><span id="51637"></span>C9B5</td>
+<td class="instruction">ADD A,B</td>
+</tr>
+<tr>
+<td class="address-1"><span id="51638"></span>C9B6</td>
+<td class="instruction">LD ($CA45),A</td>
+<td class="comment-1" rowspan="1">Self modify jump table target</td>
+</tr>
+<tr>
+<td class="address-1"><span id="51641"></span>C9B9</td>
+<td class="instruction">INC H</td>
+<td class="comment-1" rowspan="1">H++</td>
+</tr>
+<tr>
+<td class="address-1"><span id="51642"></span>C9BA</td>
+<td class="instruction">LD A,(HL)</td>
+<td class="comment-1" rowspan="1">A = *HL</td>
+</tr>
+<tr>
+<td class="address-1"><span id="51643"></span>C9BB</td>
+<td class="instruction">AND A</td>
+<td class="comment-1" rowspan="1">Set flags</td>
+</tr>
+<tr>
+<td class="address-1"><span id="51644"></span>C9BC</td>
+<td class="instruction">JP Z,$C9C9</td>
+<td class="comment-1" rowspan="1">Jump if zero</td>
+</tr>
+<tr>
+<td class="address-1"><span id="51647"></span>C9BF</td>
+<td class="instruction">LD A,$00</td>
+<td class="comment-1" rowspan="1">A = 0 (not self modified)</td>
+</tr>
+<tr>
+<td class="address-1"><span id="51649"></span>C9C1</td>
+<td class="instruction">JP M,$C9D8</td>
+<td class="comment-1" rowspan="1">Jump if negative</td>
+</tr>
+<tr>
+<td class="address-1"><span id="51652"></span>C9C4</td>
+<td class="instruction">LD A,$0F</td>
+<td class="comment-1" rowspan="1">A = 15</td>
+</tr>
+<tr>
+<td class="address-1"><span id="51654"></span>C9C6</td>
+<td class="instruction">JP $C9D8</td>
+<td class="comment-1" rowspan="1">Jump</td>
+</tr>
+<tr>
+<td class="routine-comment" colspan="5">
+<span id="51657"></span>
+<div class="comments">
+<div class="paragraph">
+Variation 3?
+</div>
+</div>
+</td>
+</tr>
+<tr>
+<td class="address-2"><span id="51657"></span>C9C9</td>
+<td class="instruction">DEC L</td>
+<td class="comment-1" rowspan="3">A = HL[-1]</td>
+</tr>
+<tr>
+<td class="address-1"><span id="51658"></span>C9CA</td>
+<td class="instruction">LD A,(HL)</td>
+</tr>
+<tr>
+<td class="address-1"><span id="51659"></span>C9CB</td>
+<td class="instruction">INC L</td>
+</tr>
+<tr>
+<td class="address-1"><span id="51660"></span>C9CC</td>
+<td class="instruction">AND C</td>
+<td class="comment-1" rowspan="1">A &amp;= C  -- C is the mask $F8 here</td>
+</tr>
+<tr>
+<td class="address-1"><span id="51661"></span>C9CD</td>
+<td class="instruction">RRCA</td>
+<td class="comment-1" rowspan="3">A &gt;&gt;= 3</td>
+</tr>
+<tr>
+<td class="address-1"><span id="51662"></span>C9CE</td>
+<td class="instruction">RRCA</td>
+</tr>
+<tr>
+<td class="address-1"><span id="51663"></span>C9CF</td>
+<td class="instruction">RRCA</td>
+</tr>
+<tr>
+<td class="address-1"><span id="51664"></span>C9D0</td>
+<td class="instruction">RRA</td>
+<td class="comment-1" rowspan="1">A &gt;&gt;= 1</td>
+</tr>
+<tr>
+<td class="address-1"><span id="51665"></span>C9D1</td>
+<td class="instruction">ADC A,$00</td>
+<td class="comment-1" rowspan="1">Add carry</td>
+</tr>
+<tr>
+<td class="address-1"><span id="51667"></span>C9D3</td>
+<td class="instruction">CP B</td>
+<td class="comment-1" rowspan="2">Jump if A &lt; B</td>
+</tr>
+<tr>
+<td class="address-1"><span id="51668"></span>C9D4</td>
+<td class="instruction">JP C,$C9D8</td>
+</tr>
+<tr>
+<td class="address-1"><span id="51671"></span>C9D7</td>
+<td class="instruction">DEC A</td>
+<td class="comment-1" rowspan="1">A--</td>
+</tr>
+<tr>
+<td class="address-2"><span id="51672"></span>C9D8</td>
+<td class="instruction">LD E,A</td>
+<td class="comment-1" rowspan="1">E = A</td>
+</tr>
+<tr>
+<td class="address-1"><span id="51673"></span>C9D9</td>
+<td class="instruction">SUB D</td>
+<td class="comment-1" rowspan="1">A -= D</td>
+</tr>
+<tr>
+<td class="address-1"><span id="51674"></span>C9DA</td>
+<td class="instruction">CPL</td>
+<td class="comment-1" rowspan="1">A = ~A</td>
+</tr>
+<tr>
+<td class="address-1"><span id="51675"></span>C9DB</td>
+<td class="instruction">ADD A,B</td>
+<td class="comment-1" rowspan="1">A += B</td>
+</tr>
+<tr>
+<td class="address-1"><span id="51676"></span>C9DC</td>
+<td class="instruction">LD ($CA34),A</td>
+<td class="comment-1" rowspan="1">Self modify 'JR x' at $CA33 -- jump table target</td>
+</tr>
+<tr>
+<td class="address-1"><span id="51679"></span>C9DF</td>
+<td class="instruction">INC H</td>
+<td class="comment-1" rowspan="2">H += 2</td>
+</tr>
+<tr>
+<td class="address-1"><span id="51680"></span>C9E0</td>
+<td class="instruction">INC H</td>
+</tr>
+<tr>
+<td class="address-1"><span id="51681"></span>C9E1</td>
+<td class="instruction">LD A,(HL)</td>
+<td class="comment-1" rowspan="1">A = *HL</td>
+</tr>
+<tr>
+<td class="address-1"><span id="51682"></span>C9E2</td>
+<td class="instruction">AND A</td>
+<td class="comment-1" rowspan="1">Set flags</td>
+</tr>
+<tr>
+<td class="address-1"><span id="51683"></span>C9E3</td>
+<td class="instruction">JP Z,$C9F0</td>
+<td class="comment-1" rowspan="1">Jump if zero</td>
+</tr>
+<tr>
+<td class="address-1"><span id="51686"></span>C9E6</td>
+<td class="instruction">LD A,$00</td>
+<td class="comment-1" rowspan="1">A = 0 (not self modified)</td>
+</tr>
+<tr>
+<td class="address-1"><span id="51688"></span>C9E8</td>
+<td class="instruction">JP M,$C9F7</td>
+<td class="comment-1" rowspan="1">Jump if negative</td>
+</tr>
+<tr>
+<td class="address-1"><span id="51691"></span>C9EB</td>
+<td class="instruction">LD A,$0F</td>
+<td class="comment-1" rowspan="1">A = 15</td>
+</tr>
+<tr>
+<td class="address-1"><span id="51693"></span>C9ED</td>
+<td class="instruction">JP $C9F7</td>
+<td class="comment-1" rowspan="1">Jump</td>
+</tr>
+<tr>
+<td class="routine-comment" colspan="5">
+<span id="51696"></span>
+<div class="comments">
+<div class="paragraph">
+Different chunk
+</div>
+</div>
+</td>
+</tr>
+<tr>
+<td class="address-2"><span id="51696"></span>C9F0</td>
+<td class="instruction">DEC L</td>
+<td class="comment-1" rowspan="2">A = HL[-1]</td>
+</tr>
+<tr>
+<td class="address-1"><span id="51697"></span>C9F1</td>
+<td class="instruction">LD A,(HL)</td>
+</tr>
+<tr>
+<td class="address-1"><span id="51698"></span>C9F2</td>
+<td class="instruction">AND C</td>
+<td class="comment-1" rowspan="1">A &amp;= C  -- C is the mask $F8 here</td>
+</tr>
+<tr>
+<td class="address-1"><span id="51699"></span>C9F3</td>
+<td class="instruction">RRCA</td>
+<td class="comment-1" rowspan="3">A &gt;&gt;= 3</td>
+</tr>
+<tr>
+<td class="address-1"><span id="51700"></span>C9F4</td>
+<td class="instruction">RRCA</td>
+</tr>
+<tr>
+<td class="address-1"><span id="51701"></span>C9F5</td>
+<td class="instruction">RRCA</td>
+</tr>
+<tr>
+<td class="address-1"><span id="51702"></span>C9F6</td>
+<td class="instruction">RRA</td>
+<td class="comment-1" rowspan="1">A &gt;&gt;= 1</td>
+</tr>
+<tr>
+<td class="address-2"><span id="51703"></span>C9F7</td>
+<td class="instruction">LD ($CA12),A</td>
+<td class="comment-1" rowspan="1">Self modify 'JR x' at $CA11 -- jump table target</td>
+</tr>
+<tr>
+<td class="address-1"><span id="51706"></span>C9FA</td>
+<td class="instruction">SUB E</td>
+<td class="comment-1" rowspan="1">A -= E</td>
+</tr>
+<tr>
+<td class="address-1"><span id="51707"></span>C9FB</td>
+<td class="instruction">CPL</td>
+<td class="comment-1" rowspan="2">A = ~A + B</td>
+</tr>
+<tr>
+<td class="address-1"><span id="51708"></span>C9FC</td>
+<td class="instruction">ADD A,B</td>
+</tr>
+<tr>
+<td class="address-1"><span id="51709"></span>C9FD</td>
+<td class="instruction">LD ($CA23),A</td>
+<td class="comment-1" rowspan="1">Self modify 'JR x' at $CA22 -- jump table target</td>
+</tr>
+<tr>
+<td class="address-1"><span id="51712"></span>CA00</td>
+<td class="instruction">LD DE,$0000</td>
+<td class="comment-1" rowspan="1">Self modified</td>
+</tr>
+<tr>
+<td class="address-1"><span id="51715"></span>CA03</td>
+<td class="instruction">LD A,E</td>
+<td class="comment-1" rowspan="2">A = E + 31</td>
+</tr>
+<tr>
+<td class="address-1"><span id="51716"></span>CA04</td>
+<td class="instruction">ADD A,$1F</td>
+</tr>
+<tr>
+<td class="address-1"><span id="51718"></span>CA06</td>
+<td class="instruction">LD L,A</td>
+<td class="comment-1" rowspan="1">L = A</td>
+</tr>
+<tr>
+<td class="address-1"><span id="51719"></span>CA07</td>
+<td class="instruction">LD H,D</td>
+<td class="comment-1" rowspan="1">H = D</td>
+</tr>
+<tr>
+<td class="address-1"><span id="51720"></span>CA08</td>
+<td class="instruction">LD SP,HL</td>
+<td class="comment-1" rowspan="1">Put it in <span class="register">SP</span> (so we can use POP for speed)</td>
+</tr>
+<tr>
+<td class="address-1"><span id="51721"></span>CA09</td>
+<td class="instruction">EX AF,AF'</td>
+<td class="comment-1" rowspan="1">Bank A</td>
+</tr>
+<tr>
+<td class="address-1"><span id="51722"></span>CA0A</td>
+<td class="instruction">RLCA</td>
+<td class="comment-1" rowspan="1">A &lt;&lt;= 1  -- Rotate the road shading pattern (0x55 &lt;-&gt; 0xAA)</td>
+</tr>
+<tr>
+<td class="address-1"><span id="51723"></span>CA0B</td>
+<td class="instruction">LD H,A</td>
+<td class="comment-1" rowspan="1">H = A   -- Prepare pattern for storing</td>
+</tr>
+<tr>
+<td class="address-1"><span id="51724"></span>CA0C</td>
+<td class="instruction">LD L,A</td>
+<td class="comment-1" rowspan="1">L = A</td>
+</tr>
+<tr>
+<td class="address-1"><span id="51725"></span>CA0D</td>
+<td class="instruction">EX AF,AF'</td>
+<td class="comment-1" rowspan="1">Unbank A</td>
+</tr>
+<tr>
+<td class="routine-comment" colspan="5">
+<span id="51726"></span>
+<div class="comments">
+<div class="paragraph">
+This BC filling the blank parts of the road when drawing the split road.
+</div>
+</div>
+</td>
+</tr>
+<tr>
+<td class="address-1"><span id="51726"></span>CA0E</td>
+<td class="instruction">LD BC,$0000</td>
+<td class="comment-1" rowspan="1">BC = 0 [doesn't seem self modified]</td>
+</tr>
+<tr>
+<td class="address-2"><span id="51729"></span>CA11</td>
+<td class="instruction">JR $CA11</td>
+<td class="comment-1" rowspan="16">Jump table (self modified) Write 16 pixels</td>
+</tr>
+<tr>
+<td class="address-1"><span id="51731"></span>CA13</td>
+<td class="instruction">PUSH HL</td>
+</tr>
+<tr>
+<td class="address-1"><span id="51732"></span>CA14</td>
+<td class="instruction">PUSH HL</td>
+</tr>
+<tr>
+<td class="address-1"><span id="51733"></span>CA15</td>
+<td class="instruction">PUSH HL</td>
+</tr>
+<tr>
+<td class="address-1"><span id="51734"></span>CA16</td>
+<td class="instruction">PUSH HL</td>
+</tr>
+<tr>
+<td class="address-1"><span id="51735"></span>CA17</td>
+<td class="instruction">PUSH HL</td>
+</tr>
+<tr>
+<td class="address-1"><span id="51736"></span>CA18</td>
+<td class="instruction">PUSH HL</td>
+</tr>
+<tr>
+<td class="address-1"><span id="51737"></span>CA19</td>
+<td class="instruction">PUSH HL</td>
+</tr>
+<tr>
+<td class="address-1"><span id="51738"></span>CA1A</td>
+<td class="instruction">PUSH HL</td>
+</tr>
+<tr>
+<td class="address-1"><span id="51739"></span>CA1B</td>
+<td class="instruction">PUSH HL</td>
+</tr>
+<tr>
+<td class="address-1"><span id="51740"></span>CA1C</td>
+<td class="instruction">PUSH HL</td>
+</tr>
+<tr>
+<td class="address-1"><span id="51741"></span>CA1D</td>
+<td class="instruction">PUSH HL</td>
+</tr>
+<tr>
+<td class="address-1"><span id="51742"></span>CA1E</td>
+<td class="instruction">PUSH HL</td>
+</tr>
+<tr>
+<td class="address-1"><span id="51743"></span>CA1F</td>
+<td class="instruction">PUSH HL</td>
+</tr>
+<tr>
+<td class="address-1"><span id="51744"></span>CA20</td>
+<td class="instruction">PUSH HL</td>
+</tr>
+<tr>
+<td class="address-1"><span id="51745"></span>CA21</td>
+<td class="instruction">PUSH HL</td>
+</tr>
+<tr>
+<td class="address-2"><span id="51746"></span>CA22</td>
+<td class="instruction">JR $CA22</td>
+<td class="comment-1" rowspan="16">Jump table (self modified)</td>
+</tr>
+<tr>
+<td class="address-1"><span id="51748"></span>CA24</td>
+<td class="instruction">PUSH BC</td>
+</tr>
+<tr>
+<td class="address-1"><span id="51749"></span>CA25</td>
+<td class="instruction">PUSH BC</td>
+</tr>
+<tr>
+<td class="address-1"><span id="51750"></span>CA26</td>
+<td class="instruction">PUSH BC</td>
+</tr>
+<tr>
+<td class="address-1"><span id="51751"></span>CA27</td>
+<td class="instruction">PUSH BC</td>
+</tr>
+<tr>
+<td class="address-1"><span id="51752"></span>CA28</td>
+<td class="instruction">PUSH BC</td>
+</tr>
+<tr>
+<td class="address-1"><span id="51753"></span>CA29</td>
+<td class="instruction">PUSH BC</td>
+</tr>
+<tr>
+<td class="address-1"><span id="51754"></span>CA2A</td>
+<td class="instruction">PUSH BC</td>
+</tr>
+<tr>
+<td class="address-1"><span id="51755"></span>CA2B</td>
+<td class="instruction">PUSH BC</td>
+</tr>
+<tr>
+<td class="address-1"><span id="51756"></span>CA2C</td>
+<td class="instruction">PUSH BC</td>
+</tr>
+<tr>
+<td class="address-1"><span id="51757"></span>CA2D</td>
+<td class="instruction">PUSH BC</td>
+</tr>
+<tr>
+<td class="address-1"><span id="51758"></span>CA2E</td>
+<td class="instruction">PUSH BC</td>
+</tr>
+<tr>
+<td class="address-1"><span id="51759"></span>CA2F</td>
+<td class="instruction">PUSH BC</td>
+</tr>
+<tr>
+<td class="address-1"><span id="51760"></span>CA30</td>
+<td class="instruction">PUSH BC</td>
+</tr>
+<tr>
+<td class="address-1"><span id="51761"></span>CA31</td>
+<td class="instruction">PUSH BC</td>
+</tr>
+<tr>
+<td class="address-1"><span id="51762"></span>CA32</td>
+<td class="instruction">PUSH BC</td>
+</tr>
+<tr>
+<td class="address-2"><span id="51763"></span>CA33</td>
+<td class="instruction">JR $CA33</td>
+<td class="comment-1" rowspan="16">Jump table (self modified)</td>
+</tr>
+<tr>
+<td class="address-1"><span id="51765"></span>CA35</td>
+<td class="instruction">PUSH HL</td>
+</tr>
+<tr>
+<td class="address-1"><span id="51766"></span>CA36</td>
+<td class="instruction">PUSH HL</td>
+</tr>
+<tr>
+<td class="address-1"><span id="51767"></span>CA37</td>
+<td class="instruction">PUSH HL</td>
+</tr>
+<tr>
+<td class="address-1"><span id="51768"></span>CA38</td>
+<td class="instruction">PUSH HL</td>
+</tr>
+<tr>
+<td class="address-1"><span id="51769"></span>CA39</td>
+<td class="instruction">PUSH HL</td>
+</tr>
+<tr>
+<td class="address-1"><span id="51770"></span>CA3A</td>
+<td class="instruction">PUSH HL</td>
+</tr>
+<tr>
+<td class="address-1"><span id="51771"></span>CA3B</td>
+<td class="instruction">PUSH HL</td>
+</tr>
+<tr>
+<td class="address-1"><span id="51772"></span>CA3C</td>
+<td class="instruction">PUSH HL</td>
+</tr>
+<tr>
+<td class="address-1"><span id="51773"></span>CA3D</td>
+<td class="instruction">PUSH HL</td>
+</tr>
+<tr>
+<td class="address-1"><span id="51774"></span>CA3E</td>
+<td class="instruction">PUSH HL</td>
+</tr>
+<tr>
+<td class="address-1"><span id="51775"></span>CA3F</td>
+<td class="instruction">PUSH HL</td>
+</tr>
+<tr>
+<td class="address-1"><span id="51776"></span>CA40</td>
+<td class="instruction">PUSH HL</td>
+</tr>
+<tr>
+<td class="address-1"><span id="51777"></span>CA41</td>
+<td class="instruction">PUSH HL</td>
+</tr>
+<tr>
+<td class="address-1"><span id="51778"></span>CA42</td>
+<td class="instruction">PUSH HL</td>
+</tr>
+<tr>
+<td class="address-1"><span id="51779"></span>CA43</td>
+<td class="instruction">PUSH HL</td>
+</tr>
+<tr>
+<td class="address-2"><span id="51780"></span>CA44</td>
+<td class="instruction">JR $CA44</td>
+<td class="comment-1" rowspan="16">Jump table (self modified)</td>
+</tr>
+<tr>
+<td class="address-1"><span id="51782"></span>CA46</td>
+<td class="instruction">PUSH BC</td>
+</tr>
+<tr>
+<td class="address-1"><span id="51783"></span>CA47</td>
+<td class="instruction">PUSH BC</td>
+</tr>
+<tr>
+<td class="address-1"><span id="51784"></span>CA48</td>
+<td class="instruction">PUSH BC</td>
+</tr>
+<tr>
+<td class="address-1"><span id="51785"></span>CA49</td>
+<td class="instruction">PUSH BC</td>
+</tr>
+<tr>
+<td class="address-1"><span id="51786"></span>CA4A</td>
+<td class="instruction">PUSH BC</td>
+</tr>
+<tr>
+<td class="address-1"><span id="51787"></span>CA4B</td>
+<td class="instruction">PUSH BC</td>
+</tr>
+<tr>
+<td class="address-1"><span id="51788"></span>CA4C</td>
+<td class="instruction">PUSH BC</td>
+</tr>
+<tr>
+<td class="address-1"><span id="51789"></span>CA4D</td>
+<td class="instruction">PUSH BC</td>
+</tr>
+<tr>
+<td class="address-1"><span id="51790"></span>CA4E</td>
+<td class="instruction">PUSH BC</td>
+</tr>
+<tr>
+<td class="address-1"><span id="51791"></span>CA4F</td>
+<td class="instruction">PUSH BC</td>
+</tr>
+<tr>
+<td class="address-1"><span id="51792"></span>CA50</td>
+<td class="instruction">PUSH BC</td>
+</tr>
+<tr>
+<td class="address-1"><span id="51793"></span>CA51</td>
+<td class="instruction">PUSH BC</td>
+</tr>
+<tr>
+<td class="address-1"><span id="51794"></span>CA52</td>
+<td class="instruction">PUSH BC</td>
+</tr>
+<tr>
+<td class="address-1"><span id="51795"></span>CA53</td>
+<td class="instruction">PUSH BC</td>
+</tr>
+<tr>
+<td class="address-1"><span id="51796"></span>CA54</td>
+<td class="instruction">PUSH BC</td>
+</tr>
+<tr>
+<td class="address-2"><span id="51797"></span>CA55</td>
+<td class="instruction">JR $CA55</td>
+<td class="comment-1" rowspan="1">Jump table (self modified)</td>
+</tr>
+<tr>
+<td class="address-2"><span id="51799"></span>CA57</td>
+<td class="instruction">PUSH HL</td>
+<td class="comment-1" rowspan="1"></td>
+</tr>
+<tr>
+<td class="address-1"><span id="51800"></span>CA58</td>
+<td class="instruction">PUSH HL</td>
+<td class="comment-1" rowspan="1"></td>
+</tr>
+<tr>
+<td class="address-1"><span id="51801"></span>CA59</td>
+<td class="instruction">PUSH HL</td>
+<td class="comment-1" rowspan="1"></td>
+</tr>
+<tr>
+<td class="address-1"><span id="51802"></span>CA5A</td>
+<td class="instruction">PUSH HL</td>
+<td class="comment-1" rowspan="1"></td>
+</tr>
+<tr>
+<td class="address-1"><span id="51803"></span>CA5B</td>
+<td class="instruction">PUSH HL</td>
+<td class="comment-1" rowspan="1"></td>
+</tr>
+<tr>
+<td class="address-1"><span id="51804"></span>CA5C</td>
+<td class="instruction">PUSH HL</td>
+<td class="comment-1" rowspan="1"></td>
+</tr>
+<tr>
+<td class="address-1"><span id="51805"></span>CA5D</td>
+<td class="instruction">PUSH HL</td>
+<td class="comment-1" rowspan="1"></td>
+</tr>
+<tr>
+<td class="address-1"><span id="51806"></span>CA5E</td>
+<td class="instruction">PUSH HL</td>
+<td class="comment-1" rowspan="1"></td>
+</tr>
+<tr>
+<td class="address-1"><span id="51807"></span>CA5F</td>
+<td class="instruction">PUSH HL</td>
+<td class="comment-1" rowspan="1"></td>
+</tr>
+<tr>
+<td class="address-1"><span id="51808"></span>CA60</td>
+<td class="instruction">PUSH HL</td>
+<td class="comment-1" rowspan="1"></td>
+</tr>
+<tr>
+<td class="address-1"><span id="51809"></span>CA61</td>
+<td class="instruction">PUSH HL</td>
+<td class="comment-1" rowspan="1"></td>
+</tr>
+<tr>
+<td class="address-1"><span id="51810"></span>CA62</td>
+<td class="instruction">PUSH HL</td>
+<td class="comment-1" rowspan="1"></td>
+</tr>
+<tr>
+<td class="address-1"><span id="51811"></span>CA63</td>
+<td class="instruction">PUSH HL</td>
+<td class="comment-1" rowspan="1"></td>
+</tr>
+<tr>
+<td class="address-1"><span id="51812"></span>CA64</td>
+<td class="instruction">PUSH HL</td>
+<td class="comment-1" rowspan="1"></td>
+</tr>
+<tr>
+<td class="address-1"><span id="51813"></span>CA65</td>
+<td class="instruction">PUSH HL</td>
+<td class="comment-1" rowspan="1"></td>
+</tr>
+<tr>
+<td class="address-1"><span id="51814"></span>CA66</td>
+<td class="instruction">LD B,E</td>
+<td class="comment-1" rowspan="1">B = E</td>
+</tr>
+<tr>
+<td class="address-1"><span id="51815"></span>CA67</td>
+<td class="instruction">DEC C</td>
+<td class="comment-1" rowspan="1">C--</td>
+</tr>
+<tr>
+<td class="address-1"><span id="51816"></span>CA68</td>
+<td class="instruction">LD H,$E4</td>
+<td class="comment-1" rowspan="1">H = $E4</td>
+</tr>
+<tr>
+<td class="address-1"><span id="51818"></span>CA6A</td>
+<td class="instruction">EXX</td>
+<td class="comment-1" rowspan="1">Bank/unbank</td>
+</tr>
+<tr>
+<td class="address-1"><span id="51819"></span>CA6B</td>
+<td class="instruction">LD H,$E8</td>
+<td class="comment-1" rowspan="1">H = $E8</td>
+</tr>
+<tr>
+<td class="address-1"><span id="51821"></span>CA6D</td>
+<td class="instruction">LD A,(HL)</td>
+<td class="comment-1" rowspan="1">A = *HL</td>
+</tr>
+<tr>
+<td class="address-1"><span id="51822"></span>CA6E</td>
+<td class="instruction">AND A</td>
+<td class="comment-1" rowspan="1">Set flags</td>
+</tr>
+<tr>
+<td class="address-1"><span id="51823"></span>CA6F</td>
+<td class="instruction">JR NZ,$CA90</td>
+<td class="comment-1" rowspan="1">Jump if non-zero</td>
+</tr>
+<tr>
+<td class="address-1"><span id="51825"></span>CA71</td>
+<td class="instruction">DEC L</td>
+<td class="comment-1" rowspan="3">A = HL[-1]</td>
+</tr>
+<tr>
+<td class="address-1"><span id="51826"></span>CA72</td>
+<td class="instruction">LD A,(HL)</td>
+</tr>
+<tr>
+<td class="address-1"><span id="51827"></span>CA73</td>
+<td class="instruction">INC L</td>
+</tr>
+<tr>
+<td class="address-1"><span id="51828"></span>CA74</td>
+<td class="instruction">EXX</td>
+<td class="comment-1" rowspan="1">Bank/unbank</td>
+</tr>
+<tr>
+<td class="address-1"><span id="51829"></span>CA75</td>
+<td class="instruction">LD E,A</td>
+<td class="comment-1" rowspan="1">E = A</td>
+</tr>
+<tr>
+<td class="address-1"><span id="51830"></span>CA76</td>
+<td class="instruction">AND $07</td>
+<td class="comment-1" rowspan="1">A &amp;= 7</td>
+</tr>
+<tr>
+<td class="address-1"><span id="51832"></span>CA78</td>
+<td class="instruction">RLCA</td>
+<td class="comment-1" rowspan="2">A = A ROL 2</td>
+</tr>
+<tr>
+<td class="address-1"><span id="51833"></span>CA79</td>
+<td class="instruction">RLCA</td>
+</tr>
+<tr>
+<td class="address-1"><span id="51834"></span>CA7A</td>
+<td class="instruction">ADD A,$00</td>
+<td class="comment-1" rowspan="1">A += &lt;self modified&gt;</td>
+</tr>
+<tr>
+<td class="address-1"><span id="51836"></span>CA7C</td>
+<td class="instruction">LD L,A</td>
+<td class="comment-1" rowspan="1">L = A</td>
+</tr>
+<tr>
+<td class="address-1"><span id="51837"></span>CA7D</td>
+<td class="instruction">LD A,E</td>
+<td class="comment-1" rowspan="1">A = E</td>
+</tr>
+<tr>
+<td class="address-1"><span id="51838"></span>CA7E</td>
+<td class="instruction">RRA</td>
+<td class="comment-1" rowspan="3">A = A (rotate right through carry) 3</td>
+</tr>
+<tr>
+<td class="address-1"><span id="51839"></span>CA7F</td>
+<td class="instruction">RRA</td>
+</tr>
+<tr>
+<td class="address-1"><span id="51840"></span>CA80</td>
+<td class="instruction">RRA</td>
+</tr>
+<tr>
+<td class="address-1"><span id="51841"></span>CA81</td>
+<td class="instruction">AND $1F</td>
+<td class="comment-1" rowspan="2">A = (A &amp; 31) + B</td>
+</tr>
+<tr>
+<td class="address-1"><span id="51843"></span>CA83</td>
+<td class="instruction">ADD A,B</td>
+</tr>
+<tr>
+<td class="address-1"><span id="51844"></span>CA84</td>
+<td class="instruction">LD E,A</td>
+<td class="comment-1" rowspan="1">E = A</td>
+</tr>
+<tr>
+<td class="address-1"><span id="51845"></span>CA85</td>
+<td class="instruction">LD A,(DE)</td>
+<td class="comment-1" rowspan="1">A = *DE</td>
+</tr>
+<tr>
+<td class="address-1"><span id="51846"></span>CA86</td>
+<td class="instruction">AND (HL)</td>
+<td class="comment-1" rowspan="1">A = A &amp; *HL</td>
+</tr>
+<tr>
+<td class="address-1"><span id="51847"></span>CA87</td>
+<td class="instruction">INC L</td>
+<td class="comment-1" rowspan="1">L++</td>
+</tr>
+<tr>
+<td class="address-1"><span id="51848"></span>CA88</td>
+<td class="instruction">OR (HL)</td>
+<td class="comment-1" rowspan="1">A |= *HL</td>
+</tr>
+<tr>
+<td class="address-1"><span id="51849"></span>CA89</td>
+<td class="instruction">LD (DE),A</td>
+<td class="comment-1" rowspan="1">*DE = A</td>
+</tr>
+<tr>
+<td class="address-1"><span id="51850"></span>CA8A</td>
+<td class="instruction">INC L</td>
+<td class="comment-1" rowspan="2">L += 2</td>
+</tr>
+<tr>
+<td class="address-1"><span id="51851"></span>CA8B</td>
+<td class="instruction">INC L</td>
+</tr>
+<tr>
+<td class="address-1"><span id="51852"></span>CA8C</td>
+<td class="instruction">INC E</td>
+<td class="comment-1" rowspan="1">E++</td>
+</tr>
+<tr>
+<td class="address-1"><span id="51853"></span>CA8D</td>
+<td class="instruction">LDI</td>
+<td class="comment-1" rowspan="1">*DE++ = *HL++, BC--</td>
+</tr>
+<tr>
+<td class="address-1"><span id="51855"></span>CA8F</td>
+<td class="instruction">EXX</td>
+<td class="comment-1" rowspan="1">Bank/unbank</td>
+</tr>
+<tr>
+<td class="routine-comment" colspan="5">
+<span id="51856"></span>
+<div class="comments">
+<div class="paragraph">
+Similar chunk to above
+</div>
+</div>
+</td>
+</tr>
+<tr>
+<td class="address-2"><span id="51856"></span>CA90</td>
+<td class="instruction">INC H</td>
+<td class="comment-1" rowspan="1">H++</td>
+</tr>
+<tr>
+<td class="address-1"><span id="51857"></span>CA91</td>
+<td class="instruction">LD A,(HL)</td>
+<td class="comment-1" rowspan="1">A = *HL</td>
+</tr>
+<tr>
+<td class="address-1"><span id="51858"></span>CA92</td>
+<td class="instruction">AND A</td>
+<td class="comment-1" rowspan="1">Set flags</td>
+</tr>
+<tr>
+<td class="address-1"><span id="51859"></span>CA93</td>
+<td class="instruction">JR NZ,$CAAD</td>
+<td class="comment-1" rowspan="1">Jump if non-zero</td>
+</tr>
+<tr>
+<td class="address-1"><span id="51861"></span>CA95</td>
+<td class="instruction">DEC L</td>
+<td class="comment-1" rowspan="3">A = HL[-1]</td>
+</tr>
+<tr>
+<td class="address-1"><span id="51862"></span>CA96</td>
+<td class="instruction">LD A,(HL)</td>
+</tr>
+<tr>
+<td class="address-1"><span id="51863"></span>CA97</td>
+<td class="instruction">INC L</td>
+</tr>
+<tr>
+<td class="address-1"><span id="51864"></span>CA98</td>
+<td class="instruction">EXX</td>
+<td class="comment-1" rowspan="1">Bank/unbank</td>
+</tr>
+<tr>
+<td class="address-1"><span id="51865"></span>CA99</td>
+<td class="instruction">LD E,A</td>
+<td class="comment-1" rowspan="1">E = A</td>
+</tr>
+<tr>
+<td class="address-1"><span id="51866"></span>CA9A</td>
+<td class="instruction">AND $07</td>
+<td class="comment-1" rowspan="1">A &amp;= 7</td>
+</tr>
+<tr>
+<td class="address-1"><span id="51868"></span>CA9C</td>
+<td class="instruction">RLCA</td>
+<td class="comment-1" rowspan="1">A = A ROL 1</td>
+</tr>
+<tr>
+<td class="address-1"><span id="51869"></span>CA9D</td>
+<td class="instruction">ADD A,$00</td>
+<td class="comment-1" rowspan="1">A += &lt;self modified&gt;</td>
+</tr>
+<tr>
+<td class="address-1"><span id="51871"></span>CA9F</td>
+<td class="instruction">LD L,A</td>
+<td class="comment-1" rowspan="1">L = A</td>
+</tr>
+<tr>
+<td class="address-1"><span id="51872"></span>CAA0</td>
+<td class="instruction">LD A,E</td>
+<td class="comment-1" rowspan="1">A = E</td>
+</tr>
+<tr>
+<td class="address-1"><span id="51873"></span>CAA1</td>
+<td class="instruction">RRA</td>
+<td class="comment-1" rowspan="3">A = A (rotate right through carry) 3</td>
+</tr>
+<tr>
+<td class="address-1"><span id="51874"></span>CAA2</td>
+<td class="instruction">RRA</td>
+</tr>
+<tr>
+<td class="address-1"><span id="51875"></span>CAA3</td>
+<td class="instruction">RRA</td>
+</tr>
+<tr>
+<td class="address-1"><span id="51876"></span>CAA4</td>
+<td class="instruction">AND $1F</td>
+<td class="comment-1" rowspan="2">A = (A &amp; 31) + B</td>
+</tr>
+<tr>
+<td class="address-1"><span id="51878"></span>CAA6</td>
+<td class="instruction">ADD A,B</td>
+</tr>
+<tr>
+<td class="address-1"><span id="51879"></span>CAA7</td>
+<td class="instruction">LD E,A</td>
+<td class="comment-1" rowspan="1">E = A</td>
+</tr>
+<tr>
+<td class="address-1"><span id="51880"></span>CAA8</td>
+<td class="instruction">LDI</td>
+<td class="comment-1" rowspan="1">*DE++ = *HL++, BC--</td>
+</tr>
+<tr>
+<td class="address-1"><span id="51882"></span>CAAA</td>
+<td class="instruction">LD A,(HL)</td>
+<td class="comment-1" rowspan="1">A = *HL</td>
+</tr>
+<tr>
+<td class="address-1"><span id="51883"></span>CAAB</td>
+<td class="instruction">LD (DE),A</td>
+<td class="comment-1" rowspan="1">*DE = A</td>
+</tr>
+<tr>
+<td class="address-1"><span id="51884"></span>CAAC</td>
+<td class="instruction">EXX</td>
+<td class="comment-1" rowspan="1">Bank/unbank</td>
+</tr>
+<tr>
+<td class="routine-comment" colspan="5">
+<span id="51885"></span>
+<div class="comments">
+<div class="paragraph">
+Similar chunk again to above... different rotates
+</div>
+</div>
+</td>
+</tr>
+<tr>
+<td class="address-2"><span id="51885"></span>CAAD</td>
+<td class="instruction">INC H</td>
+<td class="comment-1" rowspan="1">H++</td>
+</tr>
+<tr>
+<td class="address-1"><span id="51886"></span>CAAE</td>
+<td class="instruction">LD A,(HL)</td>
+<td class="comment-1" rowspan="1">A = *HL</td>
+</tr>
+<tr>
+<td class="address-1"><span id="51887"></span>CAAF</td>
+<td class="instruction">AND A</td>
+<td class="comment-1" rowspan="1">Set flags</td>
+</tr>
+<tr>
+<td class="address-1"><span id="51888"></span>CAB0</td>
+<td class="instruction">JR NZ,$CACE</td>
+<td class="comment-1" rowspan="1">Jump if non-zero</td>
+</tr>
+<tr>
+<td class="address-1"><span id="51890"></span>CAB2</td>
+<td class="instruction">DEC L</td>
+<td class="comment-1" rowspan="3">A = HL[-1]</td>
+</tr>
+<tr>
+<td class="address-1"><span id="51891"></span>CAB3</td>
+<td class="instruction">LD A,(HL)</td>
+</tr>
+<tr>
+<td class="address-1"><span id="51892"></span>CAB4</td>
+<td class="instruction">INC L</td>
+</tr>
+<tr>
+<td class="address-1"><span id="51893"></span>CAB5</td>
+<td class="instruction">EXX</td>
+<td class="comment-1" rowspan="1">Bank/unbank</td>
+</tr>
+<tr>
+<td class="address-1"><span id="51894"></span>CAB6</td>
+<td class="instruction">LD E,A</td>
+<td class="comment-1" rowspan="1">E = A</td>
+</tr>
+<tr>
+<td class="address-1"><span id="51895"></span>CAB7</td>
+<td class="instruction">AND $07</td>
+<td class="comment-1" rowspan="1">A &amp;= 7</td>
+</tr>
+<tr>
+<td class="address-1"><span id="51897"></span>CAB9</td>
+<td class="instruction">RLCA</td>
+<td class="comment-1" rowspan="2">A = A ROL 2</td>
+</tr>
+<tr>
+<td class="address-1"><span id="51898"></span>CABA</td>
+<td class="instruction">RLCA</td>
+</tr>
+<tr>
+<td class="address-1"><span id="51899"></span>CABB</td>
+<td class="instruction">ADD A,$11</td>
+<td class="comment-1" rowspan="1">A += &lt;self modified&gt;</td>
+</tr>
+<tr>
+<td class="address-1"><span id="51901"></span>CABD</td>
+<td class="instruction">LD L,A</td>
+<td class="comment-1" rowspan="1">L = A</td>
+</tr>
+<tr>
+<td class="address-1"><span id="51902"></span>CABE</td>
+<td class="instruction">LD A,E</td>
+<td class="comment-1" rowspan="1">A = E</td>
+</tr>
+<tr>
+<td class="address-1"><span id="51903"></span>CABF</td>
+<td class="instruction">RRA</td>
+<td class="comment-1" rowspan="3">A = A (rotate right through carry) 3</td>
+</tr>
+<tr>
+<td class="address-1"><span id="51904"></span>CAC0</td>
+<td class="instruction">RRA</td>
+</tr>
+<tr>
+<td class="address-1"><span id="51905"></span>CAC1</td>
+<td class="instruction">RRA</td>
+</tr>
+<tr>
+<td class="address-1"><span id="51906"></span>CAC2</td>
+<td class="instruction">AND $1F</td>
+<td class="comment-1" rowspan="2">A = (A &amp; 31) + B</td>
+</tr>
+<tr>
+<td class="address-1"><span id="51908"></span>CAC4</td>
+<td class="instruction">ADD A,B</td>
+</tr>
+<tr>
+<td class="address-1"><span id="51909"></span>CAC5</td>
+<td class="instruction">LD E,A</td>
+<td class="comment-1" rowspan="1">E = A</td>
+</tr>
+<tr>
+<td class="address-1"><span id="51910"></span>CAC6</td>
+<td class="instruction">LDI</td>
+<td class="comment-1" rowspan="1">*DE++ = *HL++, BC--</td>
+</tr>
+<tr>
+<td class="address-1"><span id="51912"></span>CAC8</td>
+<td class="instruction">LD A,(DE)</td>
+<td class="comment-1" rowspan="2">A = *DE &amp; *HL</td>
+</tr>
+<tr>
+<td class="address-1"><span id="51913"></span>CAC9</td>
+<td class="instruction">AND (HL)</td>
+</tr>
+<tr>
+<td class="address-1"><span id="51914"></span>CACA</td>
+<td class="instruction">INC L</td>
+<td class="comment-1" rowspan="1">L++</td>
+</tr>
+<tr>
+<td class="address-1"><span id="51915"></span>CACB</td>
+<td class="instruction">OR (HL)</td>
+<td class="comment-1" rowspan="1">A |= *HL</td>
+</tr>
+<tr>
+<td class="address-1"><span id="51916"></span>CACC</td>
+<td class="instruction">LD (DE),A</td>
+<td class="comment-1" rowspan="1">*DE = A</td>
+</tr>
+<tr>
+<td class="address-1"><span id="51917"></span>CACD</td>
+<td class="instruction">EXX</td>
+<td class="comment-1" rowspan="1">Bank/unbank</td>
+</tr>
+<tr>
+<td class="routine-comment" colspan="5">
+<span id="51918"></span>
+<div class="comments">
+<div class="paragraph">
+Similar chunk again
+</div>
+</div>
+</td>
+</tr>
+<tr>
+<td class="address-2"><span id="51918"></span>CACE</td>
+<td class="instruction">INC H</td>
+<td class="comment-1" rowspan="1">H++</td>
+</tr>
+<tr>
+<td class="address-1"><span id="51919"></span>CACF</td>
+<td class="instruction">LD A,(HL)</td>
+<td class="comment-1" rowspan="1">A = *HL</td>
+</tr>
+<tr>
+<td class="address-1"><span id="51920"></span>CAD0</td>
+<td class="instruction">AND A</td>
+<td class="comment-1" rowspan="1">Set flags</td>
+</tr>
+<tr>
+<td class="address-1"><span id="51921"></span>CAD1</td>
+<td class="instruction">JR NZ,$CAF2</td>
+<td class="comment-1" rowspan="1">Jump if non-zero</td>
+</tr>
+<tr>
+<td class="address-1"><span id="51923"></span>CAD3</td>
+<td class="instruction">DEC L</td>
+<td class="comment-1" rowspan="3">A = HL[-1]</td>
+</tr>
+<tr>
+<td class="address-1"><span id="51924"></span>CAD4</td>
+<td class="instruction">LD A,(HL)</td>
+</tr>
+<tr>
+<td class="address-1"><span id="51925"></span>CAD5</td>
+<td class="instruction">INC L</td>
+</tr>
+<tr>
+<td class="address-1"><span id="51926"></span>CAD6</td>
+<td class="instruction">EXX</td>
+<td class="comment-1" rowspan="1">Bank/unbank</td>
+</tr>
+<tr>
+<td class="address-1"><span id="51927"></span>CAD7</td>
+<td class="instruction">LD E,A</td>
+<td class="comment-1" rowspan="1">E = A</td>
+</tr>
+<tr>
+<td class="address-1"><span id="51928"></span>CAD8</td>
+<td class="instruction">AND $07</td>
+<td class="comment-1" rowspan="1">A &amp;= 7</td>
+</tr>
+<tr>
+<td class="address-1"><span id="51930"></span>CADA</td>
+<td class="instruction">RLCA</td>
+<td class="comment-1" rowspan="2">A = A ROL 2</td>
+</tr>
+<tr>
+<td class="address-1"><span id="51931"></span>CADB</td>
+<td class="instruction">RLCA</td>
+</tr>
+<tr>
+<td class="address-1"><span id="51932"></span>CADC</td>
+<td class="instruction">ADD A,$00</td>
+<td class="comment-1" rowspan="1">A += &lt;self modified&gt;</td>
+</tr>
+<tr>
+<td class="address-1"><span id="51934"></span>CADE</td>
+<td class="instruction">LD L,A</td>
+<td class="comment-1" rowspan="1">L = A</td>
+</tr>
+<tr>
+<td class="address-1"><span id="51935"></span>CADF</td>
+<td class="instruction">LD A,E</td>
+<td class="comment-1" rowspan="1">A = E</td>
+</tr>
+<tr>
+<td class="address-1"><span id="51936"></span>CAE0</td>
+<td class="instruction">RRA</td>
+<td class="comment-1" rowspan="3">A = A (rotate right through carry) 3</td>
+</tr>
+<tr>
+<td class="address-1"><span id="51937"></span>CAE1</td>
+<td class="instruction">RRA</td>
+</tr>
+<tr>
+<td class="address-1"><span id="51938"></span>CAE2</td>
+<td class="instruction">RRA</td>
+</tr>
+<tr>
+<td class="address-1"><span id="51939"></span>CAE3</td>
+<td class="instruction">AND $1F</td>
+<td class="comment-1" rowspan="2">A = (A &amp; 31) + B</td>
+</tr>
+<tr>
+<td class="address-1"><span id="51941"></span>CAE5</td>
+<td class="instruction">ADD A,B</td>
+</tr>
+<tr>
+<td class="address-1"><span id="51942"></span>CAE6</td>
+<td class="instruction">LD E,A</td>
+<td class="comment-1" rowspan="1">E = A</td>
+</tr>
+<tr>
+<td class="address-1"><span id="51943"></span>CAE7</td>
+<td class="instruction">LD A,(DE)</td>
+<td class="comment-1" rowspan="2">A = *DE &amp; *HL</td>
+</tr>
+<tr>
+<td class="address-1"><span id="51944"></span>CAE8</td>
+<td class="instruction">AND (HL)</td>
+</tr>
+<tr>
+<td class="address-1"><span id="51945"></span>CAE9</td>
+<td class="instruction">INC L</td>
+<td class="comment-1" rowspan="1">L++</td>
+</tr>
+<tr>
+<td class="address-1"><span id="51946"></span>CAEA</td>
+<td class="instruction">OR (HL)</td>
+<td class="comment-1" rowspan="1">A |= *HL</td>
+</tr>
+<tr>
+<td class="address-1"><span id="51947"></span>CAEB</td>
+<td class="instruction">LD (DE),A</td>
+<td class="comment-1" rowspan="1">*DE = A</td>
+</tr>
+<tr>
+<td class="address-1"><span id="51948"></span>CAEC</td>
+<td class="instruction">INC L</td>
+<td class="comment-1" rowspan="2">L += 2</td>
+</tr>
+<tr>
+<td class="address-1"><span id="51949"></span>CAED</td>
+<td class="instruction">INC L</td>
+</tr>
+<tr>
+<td class="address-1"><span id="51950"></span>CAEE</td>
+<td class="instruction">INC E</td>
+<td class="comment-1" rowspan="1">E++</td>
+</tr>
+<tr>
+<td class="address-1"><span id="51951"></span>CAEF</td>
+<td class="instruction">LDI</td>
+<td class="comment-1" rowspan="1">*DE++ = *HL++, BC--</td>
+</tr>
+<tr>
+<td class="address-1"><span id="51953"></span>CAF1</td>
+<td class="instruction">EXX</td>
+<td class="comment-1" rowspan="1">Bank/unbank</td>
+</tr>
+<tr>
+<td class="routine-comment" colspan="5">
+<span id="51954"></span>
+<div class="comments">
+<div class="paragraph">
+Similar chunk again
+</div>
+</div>
+</td>
+</tr>
+<tr>
+<td class="address-2"><span id="51954"></span>CAF2</td>
+<td class="instruction">INC H</td>
+<td class="comment-1" rowspan="1">H++</td>
+</tr>
+<tr>
+<td class="address-1"><span id="51955"></span>CAF3</td>
+<td class="instruction">LD A,(HL)</td>
+<td class="comment-1" rowspan="1">A = *HL</td>
+</tr>
+<tr>
+<td class="address-1"><span id="51956"></span>CAF4</td>
+<td class="instruction">AND A</td>
+<td class="comment-1" rowspan="1">Set flags</td>
+</tr>
+<tr>
+<td class="address-1"><span id="51957"></span>CAF5</td>
+<td class="instruction">JR NZ,$CB0F</td>
+<td class="comment-1" rowspan="1">Jump if non-zero</td>
+</tr>
+<tr>
+<td class="address-1"><span id="51959"></span>CAF7</td>
+<td class="instruction">DEC L</td>
+<td class="comment-1" rowspan="3">A = HL[-1]</td>
+</tr>
+<tr>
+<td class="address-1"><span id="51960"></span>CAF8</td>
+<td class="instruction">LD A,(HL)</td>
+</tr>
+<tr>
+<td class="address-1"><span id="51961"></span>CAF9</td>
+<td class="instruction">INC L</td>
+</tr>
+<tr>
+<td class="address-1"><span id="51962"></span>CAFA</td>
+<td class="instruction">EXX</td>
+<td class="comment-1" rowspan="1">Bank/unbank</td>
+</tr>
+<tr>
+<td class="address-1"><span id="51963"></span>CAFB</td>
+<td class="instruction">LD E,A</td>
+<td class="comment-1" rowspan="1">E = A</td>
+</tr>
+<tr>
+<td class="address-1"><span id="51964"></span>CAFC</td>
+<td class="instruction">AND $07</td>
+<td class="comment-1" rowspan="1">A &amp;= 7</td>
+</tr>
+<tr>
+<td class="address-1"><span id="51966"></span>CAFE</td>
+<td class="instruction">RLCA</td>
+<td class="comment-1" rowspan="1">A = A ROL 1</td>
+</tr>
+<tr>
+<td class="address-1"><span id="51967"></span>CAFF</td>
+<td class="instruction">ADD A,$00</td>
+<td class="comment-1" rowspan="1">A += &lt;self modified&gt;</td>
+</tr>
+<tr>
+<td class="address-1"><span id="51969"></span>CB01</td>
+<td class="instruction">LD L,A</td>
+<td class="comment-1" rowspan="1">L = A</td>
+</tr>
+<tr>
+<td class="address-1"><span id="51970"></span>CB02</td>
+<td class="instruction">LD A,E</td>
+<td class="comment-1" rowspan="1">A = E</td>
+</tr>
+<tr>
+<td class="address-1"><span id="51971"></span>CB03</td>
+<td class="instruction">RRA</td>
+<td class="comment-1" rowspan="3">A &gt;&gt;= 3</td>
+</tr>
+<tr>
+<td class="address-1"><span id="51972"></span>CB04</td>
+<td class="instruction">RRA</td>
+</tr>
+<tr>
+<td class="address-1"><span id="51973"></span>CB05</td>
+<td class="instruction">RRA</td>
+</tr>
+<tr>
+<td class="address-1"><span id="51974"></span>CB06</td>
+<td class="instruction">AND $1F</td>
+<td class="comment-1" rowspan="1">A &amp;= $1F</td>
+</tr>
+<tr>
+<td class="address-1"><span id="51976"></span>CB08</td>
+<td class="instruction">ADD A,B</td>
+<td class="comment-1" rowspan="1">A += B</td>
+</tr>
+<tr>
+<td class="address-1"><span id="51977"></span>CB09</td>
+<td class="instruction">LD E,A</td>
+<td class="comment-1" rowspan="1">E = A</td>
+</tr>
+<tr>
+<td class="address-1"><span id="51978"></span>CB0A</td>
+<td class="instruction">LDI</td>
+<td class="comment-1" rowspan="1"></td>
+</tr>
+<tr>
+<td class="address-1"><span id="51980"></span>CB0C</td>
+<td class="instruction">LD A,(HL)</td>
+<td class="comment-1" rowspan="1">A = *HL</td>
+</tr>
+<tr>
+<td class="address-1"><span id="51981"></span>CB0D</td>
+<td class="instruction">LD (DE),A</td>
+<td class="comment-1" rowspan="1">*DE = A</td>
+</tr>
+<tr>
+<td class="address-1"><span id="51982"></span>CB0E</td>
+<td class="instruction">EXX</td>
+<td class="comment-1" rowspan="1">Bank/unbank</td>
+</tr>
+<tr>
+<td class="address-2"><span id="51983"></span>CB0F</td>
+<td class="instruction">INC H</td>
+<td class="comment-1" rowspan="3">A = HL[-1]</td>
+</tr>
+<tr>
+<td class="address-1"><span id="51984"></span>CB10</td>
+<td class="instruction">LD A,(HL)</td>
+</tr>
+<tr>
+<td class="address-1"><span id="51985"></span>CB11</td>
+<td class="instruction">DEC L</td>
+</tr>
+<tr>
+<td class="address-1"><span id="51986"></span>CB12</td>
+<td class="instruction">AND A</td>
+<td class="comment-1" rowspan="1">Set flags</td>
+</tr>
+<tr>
+<td class="address-1"><span id="51987"></span>CB13</td>
+<td class="instruction">JR NZ,$CB2F</td>
+<td class="comment-1" rowspan="1">Jump if non-zero</td>
+</tr>
+<tr>
+<td class="address-1"><span id="51989"></span>CB15</td>
+<td class="instruction">LD A,(HL)</td>
+<td class="comment-1" rowspan="1">A = *HL</td>
+</tr>
+<tr>
+<td class="address-1"><span id="51990"></span>CB16</td>
+<td class="instruction">EXX</td>
+<td class="comment-1" rowspan="1">Bank/unbank</td>
+</tr>
+<tr>
+<td class="address-1"><span id="51991"></span>CB17</td>
+<td class="instruction">LD E,A</td>
+<td class="comment-1" rowspan="1">E = A</td>
+</tr>
+<tr>
+<td class="address-1"><span id="51992"></span>CB18</td>
+<td class="instruction">AND $07</td>
+<td class="comment-1" rowspan="1">A &amp;= 7</td>
+</tr>
+<tr>
+<td class="address-1"><span id="51994"></span>CB1A</td>
+<td class="instruction">RLCA</td>
+<td class="comment-1" rowspan="2">A &lt;&lt;= 2</td>
+</tr>
+<tr>
+<td class="address-1"><span id="51995"></span>CB1B</td>
+<td class="instruction">RLCA</td>
+</tr>
+<tr>
+<td class="address-1"><span id="51996"></span>CB1C</td>
+<td class="instruction">ADD A,$11</td>
+<td class="comment-1" rowspan="1">A += 17</td>
+</tr>
+<tr>
+<td class="address-1"><span id="51998"></span>CB1E</td>
+<td class="instruction">LD L,A</td>
+<td class="comment-1" rowspan="1">L = A</td>
+</tr>
+<tr>
+<td class="address-1"><span id="51999"></span>CB1F</td>
+<td class="instruction">LD A,E</td>
+<td class="comment-1" rowspan="1">A = E</td>
+</tr>
+<tr>
+<td class="address-1"><span id="52000"></span>CB20</td>
+<td class="instruction">RRA</td>
+<td class="comment-1" rowspan="3">A = A (rotate right through carry) 3</td>
+</tr>
+<tr>
+<td class="address-1"><span id="52001"></span>CB21</td>
+<td class="instruction">RRA</td>
+</tr>
+<tr>
+<td class="address-1"><span id="52002"></span>CB22</td>
+<td class="instruction">RRA</td>
+</tr>
+<tr>
+<td class="address-1"><span id="52003"></span>CB23</td>
+<td class="instruction">AND $1F</td>
+<td class="comment-1" rowspan="2">A = (A &amp; 31) + B</td>
+</tr>
+<tr>
+<td class="address-1"><span id="52005"></span>CB25</td>
+<td class="instruction">ADD A,B</td>
+</tr>
+<tr>
+<td class="address-1"><span id="52006"></span>CB26</td>
+<td class="instruction">LD E,A</td>
+<td class="comment-1" rowspan="1">E = A</td>
+</tr>
+<tr>
+<td class="address-1"><span id="52007"></span>CB27</td>
+<td class="instruction">LDI</td>
+<td class="comment-1" rowspan="1">*DE++ = *HL++, BC--</td>
+</tr>
+<tr>
+<td class="address-1"><span id="52009"></span>CB29</td>
+<td class="instruction">LD A,(DE)</td>
+<td class="comment-1" rowspan="1">A = *DE</td>
+</tr>
+<tr>
+<td class="address-1"><span id="52010"></span>CB2A</td>
+<td class="instruction">AND (HL)</td>
+<td class="comment-1" rowspan="1">A &amp;= *HL    [AND-OR masking?]</td>
+</tr>
+<tr>
+<td class="address-1"><span id="52011"></span>CB2B</td>
+<td class="instruction">INC L</td>
+<td class="comment-1" rowspan="1">L++</td>
+</tr>
+<tr>
+<td class="address-1"><span id="52012"></span>CB2C</td>
+<td class="instruction">OR (HL)</td>
+<td class="comment-1" rowspan="1">A |= *HL</td>
+</tr>
+<tr>
+<td class="address-1"><span id="52013"></span>CB2D</td>
+<td class="instruction">LD (DE),A</td>
+<td class="comment-1" rowspan="1">*DE = A</td>
+</tr>
+<tr>
+<td class="address-1"><span id="52014"></span>CB2E</td>
+<td class="instruction">EXX</td>
+<td class="comment-1" rowspan="1">Bank/unbank</td>
+</tr>
+<tr>
+<td class="address-2"><span id="52015"></span>CB2F</td>
+<td class="instruction">DEC L</td>
+<td class="comment-1" rowspan="1">L--</td>
+</tr>
+<tr>
+<td class="address-1"><span id="52016"></span>CB30</td>
+<td class="instruction">DEC C</td>
+<td class="comment-1" rowspan="1">C--</td>
+</tr>
+<tr>
+<td class="address-1"><span id="52017"></span>CB31</td>
+<td class="instruction">JP NZ,$0000</td>
+<td class="comment-1" rowspan="1">Jump if non-zero to &lt;self modified&gt;</td>
+</tr>
+<tr>
+<td class="address-1"><span id="52020"></span>CB34</td>
+<td class="instruction">EX AF,AF'</td>
+<td class="comment-1" rowspan="1"></td>
+</tr>
+<tr>
+<td class="address-1"><span id="52021"></span>CB35</td>
+<td class="instruction">LD B,A</td>
+<td class="comment-1" rowspan="1">B = A</td>
+</tr>
+<tr>
+<td class="address-2"><span id="52022"></span>CB36</td>
+<td class="instruction">LD A,$00</td>
+<td class="comment-1" rowspan="1">A = &lt;self modified&gt;</td>
+</tr>
+<tr>
+<td class="address-1"><span id="52024"></span>CB38</td>
+<td class="instruction">XOR $01</td>
+<td class="comment-1" rowspan="1">Toggle bit 0</td>
+</tr>
+<tr>
+<td class="address-1"><span id="52026"></span>CB3A</td>
+<td class="instruction">LD ($CB37),A</td>
+<td class="comment-1" rowspan="1">Self modify 'LD A,x' at $CB36 (just above)</td>
+</tr>
+<tr>
+<td class="address-1"><span id="52029"></span>CB3D</td>
+<td class="instruction">JP NZ,$CB65</td>
+<td class="comment-1" rowspan="1">Jump if non-zero</td>
+</tr>
+<tr>
+<td class="address-1"><span id="52032"></span>CB40</td>
+<td class="instruction">LD A,$00</td>
+<td class="comment-1" rowspan="1">A = &lt;self modified&gt;</td>
+</tr>
+<tr>
+<td class="address-1"><span id="52034"></span>CB42</td>
+<td class="instruction">XOR $55</td>
+<td class="comment-1" rowspan="1">Toggle every other bit</td>
+</tr>
+<tr>
+<td class="address-1"><span id="52036"></span>CB44</td>
+<td class="instruction">LD ($CB41),A</td>
+<td class="comment-1" rowspan="1">Self modify 'LD A,x' at $CB40 (just above)</td>
+</tr>
+<tr>
+<td class="address-1"><span id="52039"></span>CB47</td>
+<td class="instruction">LD B,A</td>
+<td class="comment-1" rowspan="1">B = A</td>
+</tr>
+<tr>
+<td class="address-1"><span id="52040"></span>CB48</td>
+<td class="instruction">LD A,($CA7B)</td>
+<td class="comment-1" rowspan="3">Self modify 'LD A,x' at $CA7A</td>
+</tr>
+<tr>
+<td class="address-1"><span id="52043"></span>CB4B</td>
+<td class="instruction">XOR $20</td>
+</tr>
+<tr>
+<td class="address-1"><span id="52045"></span>CB4D</td>
+<td class="instruction">LD ($CA7B),A</td>
+</tr>
+<tr>
+<td class="address-1"><span id="52048"></span>CB50</td>
+<td class="instruction">LD ($CADD),A</td>
+<td class="comment-1" rowspan="1">Self modify 'ADD A,x' at $CADC</td>
+</tr>
+<tr>
+<td class="address-1"><span id="52051"></span>CB53</td>
+<td class="instruction">INC A</td>
+<td class="comment-1" rowspan="1">A++</td>
+</tr>
+<tr>
+<td class="address-1"><span id="52052"></span>CB54</td>
+<td class="instruction">LD ($CB1D),A</td>
+<td class="comment-1" rowspan="1">Self modify 'ADD A,x' at $CB1C</td>
+</tr>
+<tr>
+<td class="address-1"><span id="52055"></span>CB57</td>
+<td class="instruction">LD ($CABC),A</td>
+<td class="comment-1" rowspan="1">Self modify 'ADD A,x' at $CABB</td>
+</tr>
+<tr>
+<td class="address-1"><span id="52058"></span>CB5A</td>
+<td class="instruction">LD A,($CA9E)</td>
+<td class="comment-1" rowspan="1">Read 'LD A,x' at $CA9D</td>
+</tr>
+<tr>
+<td class="address-1"><span id="52061"></span>CB5D</td>
+<td class="instruction">XOR $00</td>
+<td class="comment-1" rowspan="1">[nested self modification - INCEPTION ACHIEVED]</td>
+</tr>
+<tr>
+<td class="address-1"><span id="52063"></span>CB5F</td>
+<td class="instruction">LD ($CA9E),A</td>
+<td class="comment-1" rowspan="1">Self modify 'LD A,x' at $CA9D</td>
+</tr>
+<tr>
+<td class="address-1"><span id="52066"></span>CB62</td>
+<td class="instruction">LD ($CB00),A</td>
+<td class="comment-1" rowspan="1">Self modify 'ADD A,x' at $CAFF</td>
+</tr>
+<tr>
+<td class="address-2"><span id="52069"></span>CB65</td>
+<td class="instruction">LD A,$00</td>
+<td class="comment-1" rowspan="2">A = &lt;self modified&gt; - 1</td>
+</tr>
+<tr>
+<td class="address-1"><span id="52071"></span>CB67</td>
+<td class="instruction">DEC A</td>
+</tr>
+<tr>
+<td class="address-1"><span id="52072"></span>CB68</td>
+<td class="instruction">LD ($CB66),A</td>
+<td class="comment-1" rowspan="1">Self modify 'LD A,x' at $CB65</td>
+</tr>
+<tr>
+<td class="address-1"><span id="52075"></span>CB6B</td>
+<td class="instruction">JP NZ,$CB90</td>
+<td class="comment-1" rowspan="1"></td>
+</tr>
+<tr>
+<td class="address-1"><span id="52078"></span>CB6E</td>
+<td class="instruction">LD A,($CB5E)</td>
+<td class="comment-1" rowspan="4">Self modify 'XOR x' at $CB5D</td>
+</tr>
+<tr>
+<td class="address-1"><span id="52081"></span>CB71</td>
+<td class="instruction">ADD A,$10</td>
+</tr>
+<tr>
+<td class="address-1"><span id="52083"></span>CB73</td>
+<td class="instruction">JR C,$CB90</td>
+</tr>
+<tr>
+<td class="address-1"><span id="52085"></span>CB75</td>
+<td class="instruction">LD ($CB5E),A</td>
+</tr>
+<tr>
+<td class="address-1"><span id="52088"></span>CB78</td>
+<td class="instruction">LD C,A</td>
+<td class="comment-1" rowspan="1">C = A</td>
+</tr>
+<tr>
+<td class="address-1"><span id="52089"></span>CB79</td>
+<td class="instruction">LD A,($CA9E)</td>
+<td class="comment-1" rowspan="5">self modified chunk Set flags Jump if zero A = C</td>
+</tr>
+<tr>
+<td class="address-1"><span id="52092"></span>CB7C</td>
+<td class="instruction">AND A</td>
+</tr>
+<tr>
+<td class="address-1"><span id="52093"></span>CB7D</td>
+<td class="instruction">JR Z,$CB83</td>
+</tr>
+<tr>
+<td class="address-1"><span id="52095"></span>CB7F</td>
+<td class="instruction">LD A,C</td>
+</tr>
+<tr>
+<td class="address-1"><span id="52096"></span>CB80</td>
+<td class="instruction">LD ($CA9E),A</td>
+</tr>
+<tr>
+<td class="address-2"><span id="52099"></span>CB83</td>
+<td class="instruction">LD A,($CA7B)</td>
+<td class="comment-1" rowspan="3">Self modify 'LD A,x' at $CA7A</td>
+</tr>
+<tr>
+<td class="address-1"><span id="52102"></span>CB86</td>
+<td class="instruction">ADD A,$40</td>
+</tr>
+<tr>
+<td class="address-1"><span id="52104"></span>CB88</td>
+<td class="instruction">LD ($CA7B),A</td>
+</tr>
+<tr>
+<td class="address-1"><span id="52107"></span>CB8B</td>
+<td class="instruction">LD A,$05</td>
+<td class="comment-1" rowspan="2">Self modify 'LD A,x' at $CB65 to load 5</td>
+</tr>
+<tr>
+<td class="address-1"><span id="52109"></span>CB8D</td>
+<td class="instruction">LD ($CB66),A</td>
+</tr>
+<tr>
+<td class="address-2"><span id="52112"></span>CB90</td>
+<td class="instruction">LD A,(IY+$00)</td>
+<td class="comment-1" rowspan="1">A = IY[0]</td>
+</tr>
+<tr>
+<td class="address-1"><span id="52115"></span>CB93</td>
+<td class="instruction">INC IY</td>
+<td class="comment-1" rowspan="1">IY++</td>
+</tr>
+<tr>
+<td class="address-1"><span id="52117"></span>CB95</td>
+<td class="instruction">INC IXl</td>
+<td class="comment-1" rowspan="1">IX.low++</td>
+</tr>
+<tr>
+<td class="address-1"><span id="52119"></span>CB97</td>
+<td class="instruction">SUB (IY+$00)</td>
+<td class="comment-1" rowspan="1">A -= IY[0]</td>
+</tr>
+<tr>
+<td class="address-1"><span id="52122"></span>CB9A</td>
+<td class="instruction">JR Z,$CB9F</td>
+<td class="comment-1" rowspan="1">Jump if zero</td>
+</tr>
+<tr>
+<td class="address-1"><span id="52124"></span>CB9C</td>
+<td class="instruction">JP P,<a href="CBC5.html">$CBC5</a></td>
+<td class="comment-1" rowspan="1">Jump if positive</td>
+</tr>
+<tr>
+<td class="address-2"><span id="52127"></span>CB9F</td>
+<td class="instruction">DEC L</td>
+<td class="comment-1" rowspan="2">L -= 2</td>
+</tr>
+<tr>
+<td class="address-1"><span id="52128"></span>CBA0</td>
+<td class="instruction">DEC L</td>
+</tr>
+<tr>
+<td class="address-1"><span id="52129"></span>CBA1</td>
+<td class="instruction">JP $CB36</td>
+<td class="comment-1" rowspan="1">Loop</td>
 </tr>
 </table>
 <table class="asm-navigation">
@@ -267,13 +2424,13 @@ Prev: <a href="C8BE.html">C8BE</a>
 </td>
 <td class="up">Up: <a href="../maps/all.html#51427">Map</a></td>
 <td class="next">
-Next: <a href="C93E.html">C93E</a>
+Next: <a href="CBA4.html">CBA4</a>
 </td>
 </tr>
 </table>
 <footer>
 <div class="release">The incomplete Chase H.Q. disassembly 20230518</div>
-<div class="copyright">&copy; 1989 Ocean Software Ltd.</div>
+<div class="copyright">&copy; 1988 Taito Corporation &copy; 1989 Ocean Software Ltd. (Chase H.Q.) © 2023 David Thomas (this disassembly)</div>
 <div class="created">Created using <a href="https://skoolkit.ca">SkoolKit</a> 8.9.</div>
 </footer>
 </body>

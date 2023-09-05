@@ -38,7 +38,7 @@ Used by the routines at <a href="8401.html">main_loop</a>, <a href="852A.html">c
 <td class="asm-label">read_map</td>
 <td class="address-2"><span id="48635"></span>BDFB</td>
 <td class="instruction">XOR A</td>
-<td class="comment-1" rowspan="2">($A23D) = 0  -- state var</td>
+<td class="comment-1" rowspan="2">($A23D) = 0  -- state var TBD</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -49,19 +49,19 @@ Used by the routines at <a href="8401.html">main_loop</a>, <a href="852A.html">c
 <td class="asm-label"></td>
 <td class="address-1"><span id="48639"></span>BDFF</td>
 <td class="instruction">LD ($A23C),A</td>
-<td class="comment-1" rowspan="1">($A23C) = 0  -- state var</td>
+<td class="comment-1" rowspan="1">($A23C) = 0  -- state var TBD</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="48642"></span>BE02</td>
 <td class="instruction">LD ($A254),A</td>
-<td class="comment-1" rowspan="1">($A254) = 0  -- state var</td>
+<td class="comment-1" rowspan="1">($A254) = 0  -- spawning flag</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="48645"></span>BE05</td>
 <td class="instruction">LD HL,$A23F</td>
-<td class="comment-1" rowspan="1">HL = $A23F</td>
+<td class="comment-1" rowspan="1">HL = Address of fast_counter</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -100,7 +100,7 @@ Used by the routines at <a href="8401.html">main_loop</a>, <a href="852A.html">c
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="48659"></span>BE13</td>
-<td class="instruction">CALL <a href="BDFB.html#48671">j_be1f</a></td>
+<td class="instruction">CALL <a href="BDFB.html#48671">rm_cycle_buffer_offset</a></td>
 <td class="comment-1" rowspan="1">Call subfunction $BE1F  -- processing something twice as much when at high speed?</td>
 </tr>
 <tr>
@@ -118,7 +118,7 @@ Used by the routines at <a href="8401.html">main_loop</a>, <a href="852A.html">c
 <td class="asm-label">j_be18</td>
 <td class="address-2"><span id="48664"></span>BE18</td>
 <td class="instruction">ADD A,(HL)</td>
-<td class="comment-1" rowspan="2">$A23F += bottom byte of speed in A</td>
+<td class="comment-1" rowspan="2">fast_counter += bottom byte of speed in A</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -135,7 +135,7 @@ Used by the routines at <a href="8401.html">main_loop</a>, <a href="852A.html">c
 <td class="asm-label"></td>
 <td class="address-1"><span id="48668"></span>BE1C</td>
 <td class="instruction">JP NC,<a href="BDFB.html#49369">rm_c0d9</a></td>
-<td class="comment-1" rowspan="1">Goto j_c0d9 if no carry</td>
+<td class="comment-1" rowspan="1">Jump to j_c0d9 if no carry</td>
 </tr>
 <tr>
 <td class="routine-comment" colspan="5">
@@ -148,10 +148,10 @@ This entry point is used by the routine at <a href="87DC.html">setup_game</a>.
 </td>
 </tr>
 <tr>
-<td class="asm-label">j_be1f</td>
+<td class="asm-label">rm_cycle_buffer_offset</td>
 <td class="address-2"><span id="48671"></span>BE1F</td>
 <td class="instruction">INC HL</td>
-<td class="comment-1" rowspan="3">A = *$A240 + 1  -- Accessing A240 as a byte here</td>
+<td class="comment-1" rowspan="4">Increment road_buffer_offset</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -167,13 +167,12 @@ This entry point is used by the routine at <a href="87DC.html">setup_game</a>.
 <td class="asm-label"></td>
 <td class="address-1"><span id="48674"></span>BE22</td>
 <td class="instruction">LD (HL),A</td>
-<td class="comment-1" rowspan="1">*$A240 = A</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="48675"></span>BE23</td>
 <td class="instruction">ADD A,$5F</td>
-<td class="comment-1" rowspan="3">HL = $EE00 | (A + 95)  -- index $EE00, the cyclic road buffer thing</td>
+<td class="comment-1" rowspan="3">HL = $EE00 | (A + 95)  -- final byte of lanes data? or compensating for previous increment?</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -205,7 +204,7 @@ This entry point is used by the routine at <a href="87DC.html">setup_game</a>.
 <td class="asm-label"></td>
 <td class="address-1"><span id="48687"></span>BE2F</td>
 <td class="instruction">LD A,L</td>
-<td class="comment-1" rowspan="3">L += 32</td>
+<td class="comment-1" rowspan="3">L += 32    -- offset 128</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -237,7 +236,7 @@ This entry point is used by the routine at <a href="87DC.html">setup_game</a>.
 <td class="asm-label"></td>
 <td class="address-1"><span id="48698"></span>BE3A</td>
 <td class="instruction">LD A,L</td>
-<td class="comment-1" rowspan="3">L -= 96</td>
+<td class="comment-1" rowspan="3">L -= 96    -- offset 32</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -255,6 +254,9 @@ This entry point is used by the routine at <a href="87DC.html">setup_game</a>.
 <div class="comments">
 <div class="paragraph">
 -- CURVATURE --
+</div>
+<div class="paragraph">
+The top nibble of each byte is a counter. The bottom nibble is curvature data.
 </div>
 </div>
 </td>
@@ -274,7 +276,17 @@ This entry point is used by the routine at <a href="87DC.html">setup_game</a>.
 <td class="asm-label"></td>
 <td class="address-1"><span id="48707"></span>BE43</td>
 <td class="instruction">JR NC,<a href="BDFB.html#48765">rm_save_curvature_byte</a></td>
-<td class="comment-1" rowspan="1">Goto rm_save_curvature_byte if no carry</td>
+<td class="comment-1" rowspan="1">Jump to rm_save_curvature_byte if curvature_byte &gt;= 16</td>
+</tr>
+<tr>
+<td class="routine-comment" colspan="5">
+<span id="48709"></span>
+<div class="comments">
+<div class="paragraph">
+Load a new curvature byte.
+</div>
+</div>
+</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -303,7 +315,7 @@ This entry point is used by the routine at <a href="87DC.html">setup_game</a>.
 <td class="asm-label"></td>
 <td class="address-1"><span id="48716"></span>BE4C</td>
 <td class="instruction">JR NZ,<a href="BDFB.html#48759">rm_curvature_regular_byte</a></td>
-<td class="comment-1" rowspan="1">Goto rm_curvature_regular_byte if non-zero</td>
+<td class="comment-1" rowspan="1">Jump to rm_curvature_regular_byte if non-zero</td>
 </tr>
 <tr>
 <td class="routine-comment" colspan="5">
@@ -341,7 +353,7 @@ Handle curvature escape byte.
 <td class="asm-label"></td>
 <td class="address-1"><span id="48722"></span>BE52</td>
 <td class="instruction">AND A</td>
-<td class="comment-1" rowspan="2">Goto rm_curvature_jump_command if command byte is zero</td>
+<td class="comment-1" rowspan="2">Jump to rm_curvature_jump_command if command byte is zero</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -352,7 +364,7 @@ Handle curvature escape byte.
 <td class="asm-label"></td>
 <td class="address-1"><span id="48725"></span>BE55</td>
 <td class="instruction">DEC A</td>
-<td class="comment-1" rowspan="2">Goto rm_curvature_one_command if command byte is one</td>
+<td class="comment-1" rowspan="2">Jump to rm_curvature_one_command if command byte is one</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -433,7 +445,7 @@ Otherwise it must be a road split command (byte == 2).
 <td class="asm-label"></td>
 <td class="address-1"><span id="48746"></span>BE6A</td>
 <td class="instruction">JR <a href="BDFB.html#48757">rm_read_curvature</a></td>
-<td class="comment-1" rowspan="1">Goto rm_read_curvature</td>
+<td class="comment-1" rowspan="1">Jump to rm_read_curvature</td>
 </tr>
 <tr>
 <td class="routine-comment" colspan="5">
@@ -455,7 +467,7 @@ Handle a command byte of one: TBD.
 <td class="asm-label"></td>
 <td class="address-1"><span id="48751"></span>BE6F</td>
 <td class="instruction">JR <a href="BDFB.html#48757">rm_read_curvature</a></td>
-<td class="comment-1" rowspan="1">Goto rm_read_curvature</td>
+<td class="comment-1" rowspan="1">Jump to rm_read_curvature</td>
 </tr>
 <tr>
 <td class="routine-comment" colspan="5">
@@ -510,25 +522,25 @@ Handle a command byte of zero: jump to the address given in next two bytes.
 <td class="asm-label"></td>
 <td class="address-1"><span id="48763"></span>BE7B</td>
 <td class="instruction">SUB $10</td>
-<td class="comment-1" rowspan="1">A -= 16</td>
+<td class="comment-1" rowspan="1">A -= 16  -- decrement counter in top nibble</td>
 </tr>
 <tr>
 <td class="asm-label">rm_save_curvature_byte</td>
 <td class="address-2"><span id="48765"></span>BE7D</td>
 <td class="instruction">LD ($A242),A</td>
-<td class="comment-1" rowspan="1">curvature_byte = A  -- Save original byte</td>
+<td class="comment-1" rowspan="1">curvature_byte = A</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="48768"></span>BE80</td>
 <td class="instruction">AND $0F</td>
-<td class="comment-1" rowspan="1">A &amp;= 15  -- Mask off direction bits</td>
+<td class="comment-1" rowspan="1">Mask off direction bits</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="48770"></span>BE82</td>
 <td class="instruction">BIT 3,A</td>
-<td class="comment-1" rowspan="2">Goto rm_set_curvature if (A &amp; (1&lt;&lt;3)) is zero   -- bit 3 =&gt; left (so jump if right)</td>
+<td class="comment-1" rowspan="2">Jump to rm_set_curvature if (A &amp; (1&lt;&lt;3)) is zero   -- bit 3 =&gt; left (so jump if right)</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -590,6 +602,9 @@ Write the direction into the cyclic road buffer.
 <div class="paragraph">
 -- HEIGHT --
 </div>
+<div class="paragraph">
+The top nibble of each byte is a counter. The bottom nibble is height data.
+</div>
 </div>
 </td>
 </tr>
@@ -608,7 +623,7 @@ Write the direction into the cyclic road buffer.
 <td class="asm-label"></td>
 <td class="address-1"><span id="48789"></span>BE95</td>
 <td class="instruction">JR NC,<a href="BDFB.html#48847">rm_save_height_byte</a></td>
-<td class="comment-1" rowspan="1">Goto rm_save_height_byte if no carry</td>
+<td class="comment-1" rowspan="1">Jump to rm_save_height_byte if height_byte &gt;= 16</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -637,7 +652,7 @@ Write the direction into the cyclic road buffer.
 <td class="asm-label"></td>
 <td class="address-1"><span id="48798"></span>BE9E</td>
 <td class="instruction">JR NZ,<a href="BDFB.html#48841">rm_height_regular_byte</a></td>
-<td class="comment-1" rowspan="1">Goto rm_height_regular_byte if non-zero</td>
+<td class="comment-1" rowspan="1">Jump to rm_height_regular_byte if non-zero</td>
 </tr>
 <tr>
 <td class="routine-comment" colspan="5">
@@ -675,7 +690,7 @@ Handle height escape byte.
 <td class="asm-label"></td>
 <td class="address-1"><span id="48804"></span>BEA4</td>
 <td class="instruction">AND A</td>
-<td class="comment-1" rowspan="3">Goto rm_height_jump_command if command byte is zero</td>
+<td class="comment-1" rowspan="3">Jump to rm_height_jump_command if command byte is zero</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -691,7 +706,7 @@ Handle height escape byte.
 <td class="asm-label"></td>
 <td class="address-1"><span id="48808"></span>BEA8</td>
 <td class="instruction">JR Z,<a href="BDFB.html#48830">rm_height_one_command</a></td>
-<td class="comment-1" rowspan="1">Goto rm_height_one_command if command byte is one</td>
+<td class="comment-1" rowspan="1">Jump to rm_height_one_command if command byte is one</td>
 </tr>
 <tr>
 <td class="routine-comment" colspan="5">
@@ -767,7 +782,7 @@ Otherwise it must be a road split command (byte == 2).
 <td class="asm-label"></td>
 <td class="address-1"><span id="48828"></span>BEBC</td>
 <td class="instruction">JR <a href="BDFB.html#48839">rm_read_height</a></td>
-<td class="comment-1" rowspan="1">Goto rm_read_height</td>
+<td class="comment-1" rowspan="1">Jump to rm_read_height</td>
 </tr>
 <tr>
 <td class="asm-label">rm_height_one_command</td>
@@ -779,7 +794,7 @@ Otherwise it must be a road split command (byte == 2).
 <td class="asm-label"></td>
 <td class="address-1"><span id="48833"></span>BEC1</td>
 <td class="instruction">JR <a href="BDFB.html#48839">rm_read_height</a></td>
-<td class="comment-1" rowspan="1">Goto rm_read_height</td>
+<td class="comment-1" rowspan="1">Jump to rm_read_height</td>
 </tr>
 <tr>
 <td class="asm-label">rm_height_jump_command</td>
@@ -818,19 +833,19 @@ Otherwise it must be a road split command (byte == 2).
 <td class="asm-label">rm_height_regular_byte</td>
 <td class="address-2"><span id="48841"></span>BEC9</td>
 <td class="instruction">LD ($A270),DE</td>
-<td class="comment-1" rowspan="1">road_height_ptr = <span class="register">DE</span>    -- update pointer</td>
+<td class="comment-1" rowspan="1">road_height_ptr = <span class="register">DE</span></td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="48845"></span>BECD</td>
 <td class="instruction">SUB $10</td>
-<td class="comment-1" rowspan="1">A -= 16</td>
+<td class="comment-1" rowspan="1">A -= 16  -- decrement counter in top nibble</td>
 </tr>
 <tr>
 <td class="asm-label">rm_save_height_byte</td>
 <td class="address-2"><span id="48847"></span>BECF</td>
 <td class="instruction">LD ($A243),A</td>
-<td class="comment-1" rowspan="1">height_byte = A  -- Save original byte</td>
+<td class="comment-1" rowspan="1">height_byte = A</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -892,7 +907,7 @@ Lanes bytes are counted (like RLE).
 <td class="asm-label"></td>
 <td class="address-1"><span id="48864"></span>BEE0</td>
 <td class="instruction">JR NC,<a href="BDFB.html#48937">rm_lanes_count_resume</a></td>
-<td class="comment-1" rowspan="1">Goto rm_lanes_count_resume if non-zero</td>
+<td class="comment-1" rowspan="1">Jump to rm_lanes_count_resume if non-zero</td>
 </tr>
 <tr>
 <td class="routine-comment" colspan="5">
@@ -931,7 +946,7 @@ Lanes counter hit zero, so reload.
 <td class="asm-label"></td>
 <td class="address-1"><span id="48873"></span>BEE9</td>
 <td class="instruction">JR NZ,<a href="BDFB.html#48916">rm_lanes_regular_byte</a></td>
-<td class="comment-1" rowspan="1">Goto rm_lanes_regular_byte if non-zero</td>
+<td class="comment-1" rowspan="1">Jump to rm_lanes_regular_byte if non-zero</td>
 </tr>
 <tr>
 <td class="routine-comment" colspan="5">
@@ -969,7 +984,7 @@ Handle lanes escape byte.
 <td class="asm-label"></td>
 <td class="address-1"><span id="48879"></span>BEEF</td>
 <td class="instruction">AND A</td>
-<td class="comment-1" rowspan="2">Goto rm_lanes_jump_command if command byte is zero</td>
+<td class="comment-1" rowspan="2">Jump to rm_lanes_jump_command if command byte is zero</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -980,7 +995,7 @@ Handle lanes escape byte.
 <td class="asm-label"></td>
 <td class="address-1"><span id="48882"></span>BEF2</td>
 <td class="instruction">DEC A</td>
-<td class="comment-1" rowspan="2">Goto rm_lanes_one_command if command byte is one</td>
+<td class="comment-1" rowspan="2">Jump to rm_lanes_one_command if command byte is one</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -1061,7 +1076,7 @@ Otherwise it must be a road split command (byte == 2).
 <td class="asm-label"></td>
 <td class="address-1"><span id="48903"></span>BF07</td>
 <td class="instruction">JR <a href="BDFB.html#48914">rm_read_lanes</a></td>
-<td class="comment-1" rowspan="1">Goto rm_read_lanes</td>
+<td class="comment-1" rowspan="1">Jump to rm_read_lanes</td>
 </tr>
 <tr>
 <td class="asm-label">rm_lanes_one_command</td>
@@ -1073,7 +1088,7 @@ Otherwise it must be a road split command (byte == 2).
 <td class="asm-label"></td>
 <td class="address-1"><span id="48908"></span>BF0C</td>
 <td class="instruction">JR <a href="BDFB.html#48914">rm_read_lanes</a></td>
-<td class="comment-1" rowspan="1">Goto rm_read_lanes</td>
+<td class="comment-1" rowspan="1">Jump to rm_read_lanes</td>
 </tr>
 <tr>
 <td class="asm-label">rm_lanes_jump_command</td>
@@ -1167,7 +1182,7 @@ Otherwise it must be a road split command (byte == 2).
 <td class="asm-label"></td>
 <td class="address-1"><span id="48935"></span>BF27</td>
 <td class="instruction">JR <a href="BDFB.html#48954">rm_lanes_done</a></td>
-<td class="comment-1" rowspan="1">Goto rm_lanes_done</td>
+<td class="comment-1" rowspan="1">Jump to rm_lanes_done</td>
 </tr>
 <tr>
 <td class="routine-comment" colspan="5">
@@ -1201,7 +1216,7 @@ Resume updating lanes data.
 <td class="asm-label"></td>
 <td class="address-1"><span id="48943"></span>BF2F</td>
 <td class="instruction">AND $0C</td>
-<td class="comment-1" rowspan="2">Goto rm_lanes_bf39 if (A &amp; $0C) is zero</td>
+<td class="comment-1" rowspan="2">Jump to rm_lanes_bf39 if (A &amp; $0C) is zero</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -1262,7 +1277,7 @@ Resume updating lanes data.
 <span id="48958"></span>
 <div class="comments">
 <div class="paragraph">
--- RIGHT-SIDE OBJECTS --
+-- SKIPPING ALL OBJECTS AND HAZARDS --
 </div>
 </div>
 </td>
@@ -1271,7 +1286,7 @@ Resume updating lanes data.
 <td class="asm-label"></td>
 <td class="address-1"><span id="48958"></span>BF3E</td>
 <td class="instruction">LD A,($A185)</td>
-<td class="comment-1" rowspan="2">Decrement the rightside counter</td>
+<td class="comment-1" rowspan="2">Decrement no_objects_counter</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -1281,15 +1296,15 @@ Resume updating lanes data.
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="48962"></span>BF42</td>
-<td class="instruction">JR Z,<a href="BDFB.html#48981">j_BF55</a></td>
-<td class="comment-1" rowspan="1">Goto $BF55 if zero</td>
+<td class="instruction">JR Z,<a href="BDFB.html#48981">rm_rightside</a></td>
+<td class="comment-1" rowspan="1">Jump to rm_rightside if it's zero</td>
 </tr>
 <tr>
 <td class="routine-comment" colspan="5">
 <span id="48964"></span>
 <div class="comments">
 <div class="paragraph">
-Empty space inbetween objects.
+Clear the right side, left side and hazards
 </div>
 </div>
 </td>
@@ -1298,7 +1313,7 @@ Empty space inbetween objects.
 <td class="asm-label"></td>
 <td class="address-1"><span id="48964"></span>BF44</td>
 <td class="instruction">LD C,$00</td>
-<td class="comment-1" rowspan="2">*HL = 0</td>
+<td class="comment-1" rowspan="5">HL[ 0] = 0</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -1309,7 +1324,6 @@ Empty space inbetween objects.
 <td class="asm-label"></td>
 <td class="address-1"><span id="48967"></span>BF47</td>
 <td class="instruction">LD A,L</td>
-<td class="comment-1" rowspan="2">A = L + 32</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -1320,56 +1334,56 @@ Empty space inbetween objects.
 <td class="asm-label"></td>
 <td class="address-1"><span id="48970"></span>BF4A</td>
 <td class="instruction">LD L,A</td>
-<td class="comment-1" rowspan="1">L = A</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="48971"></span>BF4B</td>
 <td class="instruction">LD (HL),C</td>
-<td class="comment-1" rowspan="1">*HL = 0</td>
+<td class="comment-1" rowspan="3">HL[32] = 0</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="48972"></span>BF4C</td>
 <td class="instruction">ADD A,$20</td>
-<td class="comment-1" rowspan="1">A += 32</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="48974"></span>BF4E</td>
 <td class="instruction">LD L,A</td>
-<td class="comment-1" rowspan="1">L = A</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="48975"></span>BF4F</td>
 <td class="instruction">LD (HL),C</td>
-<td class="comment-1" rowspan="1">*HL = 0</td>
+<td class="comment-1" rowspan="1">HL[64] = 0</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="48976"></span>BF50</td>
 <td class="instruction">LD A,$01</td>
-<td class="comment-1" rowspan="1">A = 1</td>
+<td class="comment-1" rowspan="1">Reset no_objects_counter to 1</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="48978"></span>BF52</td>
 <td class="instruction">JP <a href="BDFB.html#49244">rm_all_hazards</a></td>
-<td class="comment-1" rowspan="1">Goto rm_all_hazards</td>
+<td class="comment-1" rowspan="1">Jump to rm_all_hazards</td>
 </tr>
 <tr>
 <td class="routine-comment" colspan="5">
 <span id="48981"></span>
 <div class="comments">
 <div class="paragraph">
-???
+-- RIGHT-SIDE OBJECTS --
+</div>
+<div class="paragraph">
+The top nibble of each byte is a counter. The bottom nibble is rightside data.
 </div>
 </div>
 </td>
 </tr>
 <tr>
-<td class="asm-label">j_BF55</td>
+<td class="asm-label">rm_rightside</td>
 <td class="address-2"><span id="48981"></span>BF55</td>
 <td class="instruction">LD A,($A245)</td>
 <td class="comment-1" rowspan="2">A = rightside_byte - 16</td>
@@ -1383,7 +1397,7 @@ Empty space inbetween objects.
 <td class="asm-label"></td>
 <td class="address-1"><span id="48986"></span>BF5A</td>
 <td class="instruction">JR NC,<a href="BDFB.html#49044">rm_rightside_count_resume</a></td>
-<td class="comment-1" rowspan="1">Goto rm_rightside_count_resume if no carry</td>
+<td class="comment-1" rowspan="1">Jump to rm_rightside_count_resume if rightside_byte &gt;= 16</td>
 </tr>
 <tr>
 <td class="routine-comment" colspan="5">
@@ -1422,7 +1436,7 @@ Rightside counter hit zero, so reload.
 <td class="asm-label"></td>
 <td class="address-1"><span id="48995"></span>BF63</td>
 <td class="instruction">JR NZ,<a href="BDFB.html#49038">rm_rightside_regular_byte</a></td>
-<td class="comment-1" rowspan="1">Goto rm_rightside_regular_byte if non-zero</td>
+<td class="comment-1" rowspan="1">Jump to rm_rightside_regular_byte if non-zero</td>
 </tr>
 <tr>
 <td class="routine-comment" colspan="5">
@@ -1460,7 +1474,7 @@ Handle rightside escape byte.
 <td class="asm-label"></td>
 <td class="address-1"><span id="49001"></span>BF69</td>
 <td class="instruction">AND A</td>
-<td class="comment-1" rowspan="2">Goto rm_rightside_jump_command if command byte is zero</td>
+<td class="comment-1" rowspan="2">Jump to rm_rightside_jump_command if command byte is zero</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -1471,7 +1485,7 @@ Handle rightside escape byte.
 <td class="asm-label"></td>
 <td class="address-1"><span id="49004"></span>BF6C</td>
 <td class="instruction">DEC A</td>
-<td class="comment-1" rowspan="2">Goto rm_rightside_one_command if command byte is one</td>
+<td class="comment-1" rowspan="2">Jump to rm_rightside_one_command if command byte is one</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -1552,7 +1566,7 @@ Otherwise it must be a road split command (byte == 2).
 <td class="asm-label"></td>
 <td class="address-1"><span id="49025"></span>BF81</td>
 <td class="instruction">JR <a href="BDFB.html#49036">rm_read_rightside</a></td>
-<td class="comment-1" rowspan="1">Goto rm_read_rightside</td>
+<td class="comment-1" rowspan="1">Jump to rm_read_rightside</td>
 </tr>
 <tr>
 <td class="asm-label">rm_rightside_one_command</td>
@@ -1564,7 +1578,7 @@ Otherwise it must be a road split command (byte == 2).
 <td class="asm-label"></td>
 <td class="address-1"><span id="49030"></span>BF86</td>
 <td class="instruction">JR <a href="BDFB.html#49036">rm_read_rightside</a></td>
-<td class="comment-1" rowspan="1">Goto rm_read_rightside</td>
+<td class="comment-1" rowspan="1">Jump to rm_read_rightside</td>
 </tr>
 <tr>
 <td class="asm-label">rm_rightside_jump_command</td>
@@ -1658,7 +1672,7 @@ Otherwise it must be a road split command (byte == 2).
 <td class="asm-label"></td>
 <td class="address-1"><span id="49054"></span>BF9E</td>
 <td class="instruction">LD A,($A244)</td>
-<td class="comment-1" rowspan="2">A = *$A244 - 16</td>
+<td class="comment-1" rowspan="2">A = leftside_byte - 16</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -1669,7 +1683,7 @@ Otherwise it must be a road split command (byte == 2).
 <td class="asm-label"></td>
 <td class="address-1"><span id="49059"></span>BFA3</td>
 <td class="instruction">JR NC,<a href="BDFB.html#49117">rm_leftside_count_resume</a></td>
-<td class="comment-1" rowspan="1">Goto rm_leftside_count_resume if no carry</td>
+<td class="comment-1" rowspan="1">Jump to rm_leftside_count_resume if leftside_byte &gt;= 16</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -1698,7 +1712,7 @@ Otherwise it must be a road split command (byte == 2).
 <td class="asm-label"></td>
 <td class="address-1"><span id="49068"></span>BFAC</td>
 <td class="instruction">JR NZ,<a href="BDFB.html#49111">rm_leftside_regular_byte</a></td>
-<td class="comment-1" rowspan="1">Goto rm_leftside_regular_byte if non-zero</td>
+<td class="comment-1" rowspan="1">Jump to rm_leftside_regular_byte if non-zero</td>
 </tr>
 <tr>
 <td class="routine-comment" colspan="5">
@@ -1736,7 +1750,7 @@ Handle leftside escape byte.
 <td class="asm-label"></td>
 <td class="address-1"><span id="49074"></span>BFB2</td>
 <td class="instruction">AND A</td>
-<td class="comment-1" rowspan="2">Goto rm_leftside_jump_command if command byte is zero</td>
+<td class="comment-1" rowspan="2">Jump to rm_leftside_jump_command if command byte is zero</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -1747,7 +1761,7 @@ Handle leftside escape byte.
 <td class="asm-label"></td>
 <td class="address-1"><span id="49077"></span>BFB5</td>
 <td class="instruction">DEC A</td>
-<td class="comment-1" rowspan="2">Goto rm_leftside_one_command if command byte is one</td>
+<td class="comment-1" rowspan="2">Jump to rm_leftside_one_command if command byte is one</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -1828,7 +1842,7 @@ Otherwise it must be a road split command (byte == 2).
 <td class="asm-label"></td>
 <td class="address-1"><span id="49098"></span>BFCA</td>
 <td class="instruction">JR <a href="BDFB.html#49109">rm_read_leftside</a></td>
-<td class="comment-1" rowspan="1">Goto rm_read_leftside</td>
+<td class="comment-1" rowspan="1">Jump to rm_read_leftside</td>
 </tr>
 <tr>
 <td class="asm-label">rm_leftside_one_command</td>
@@ -1840,7 +1854,7 @@ Otherwise it must be a road split command (byte == 2).
 <td class="asm-label"></td>
 <td class="address-1"><span id="49103"></span>BFCF</td>
 <td class="instruction">JR <a href="BDFB.html#49109">rm_read_leftside</a></td>
-<td class="comment-1" rowspan="1">Goto rm_read_leftside</td>
+<td class="comment-1" rowspan="1">Jump to rm_read_leftside</td>
 </tr>
 <tr>
 <td class="asm-label">rm_leftside_jump_command</td>
@@ -1945,7 +1959,7 @@ Otherwise it must be a road split command (byte == 2).
 <td class="asm-label"></td>
 <td class="address-1"><span id="49132"></span>BFEC</td>
 <td class="instruction">JR NC,<a href="BDFB.html#49237">rm_no_hazards</a></td>
-<td class="comment-1" rowspan="1">Goto rm_no_hazards if no carry</td>
+<td class="comment-1" rowspan="1">Jump to rm_no_hazards if no carry</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -1974,7 +1988,7 @@ Otherwise it must be a road split command (byte == 2).
 <td class="asm-label"></td>
 <td class="address-1"><span id="49141"></span>BFF5</td>
 <td class="instruction">JR NZ,<a href="BDFB.html#49232">rm_hazards_regular_byte</a></td>
-<td class="comment-1" rowspan="1">Goto rm_hazards_regular_byte if non-zero</td>
+<td class="comment-1" rowspan="1">Jump to rm_hazards_regular_byte if non-zero</td>
 </tr>
 <tr>
 <td class="routine-comment" colspan="5">
@@ -2018,7 +2032,7 @@ Handle hazards escape byte.
 <td class="asm-label"></td>
 <td class="address-1"><span id="49148"></span>BFFC</td>
 <td class="instruction">JR Z,<a href="BDFB.html#49226">rm_hazards_jump_command</a></td>
-<td class="comment-1" rowspan="2">Goto rm_hazards_jump_command if command byte is zero</td>
+<td class="comment-1" rowspan="2">Jump to rm_hazards_jump_command if command byte is zero</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -2029,13 +2043,13 @@ Handle hazards escape byte.
 <td class="asm-label"></td>
 <td class="address-1"><span id="49151"></span>BFFF</td>
 <td class="instruction">JR Z,<a href="BDFB.html#49221">rm_hazards_one_command</a></td>
-<td class="comment-1" rowspan="1">Goto rm_hazards_one_command if command byte is one</td>
+<td class="comment-1" rowspan="1">Jump to rm_hazards_one_command if command byte is one</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="49153"></span>C001</td>
 <td class="instruction">DEC A</td>
-<td class="comment-1" rowspan="3">Goto rm_hazards_road_fork_command if command byte is two</td>
+<td class="comment-1" rowspan="3">Jump to rm_hazards_road_fork_command if command byte is two</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -2051,7 +2065,7 @@ Handle hazards escape byte.
 <td class="asm-label"></td>
 <td class="address-1"><span id="49157"></span>C005</td>
 <td class="instruction">CP $07</td>
-<td class="comment-1" rowspan="2">Goto rm_hazards_set_hazard_command if command byte is &lt; 10  -- 3..9</td>
+<td class="comment-1" rowspan="2">Jump to rm_hazards_set_hazard_command if command byte is &lt; 10 -- 3..9</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -2062,18 +2076,18 @@ Handle hazards escape byte.
 <td class="asm-label"></td>
 <td class="address-1"><span id="49161"></span>C009</td>
 <td class="instruction">CP $0A</td>
-<td class="comment-1" rowspan="2">Goto rm_hazards_set_fork_command if command byte is &lt; 13    -- 10..12</td>
+<td class="comment-1" rowspan="2">Jump to rm_hazards_set_arrow_command if command byte is &lt; 13 -- 10..12</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="49163"></span>C00B</td>
-<td class="instruction">JR C,<a href="BDFB.html#49183">rm_hazards_set_fork_command</a></td>
+<td class="instruction">JR C,<a href="BDFB.html#49183">rm_hazards_set_arrow_command</a></td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="49165"></span>C00D</td>
 <td class="instruction">CP $0C</td>
-<td class="comment-1" rowspan="2">Goto rm_hazards_spawning_command if command byte is &lt; 15    -- 13..14</td>
+<td class="comment-1" rowspan="2">Jump to rm_hazards_spawning_command if command byte is &lt; 15 -- 13..14</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -2084,7 +2098,7 @@ Handle hazards escape byte.
 <td class="asm-label"></td>
 <td class="address-1"><span id="49169"></span>C011</td>
 <td class="instruction">SUB $0B</td>
-<td class="comment-1" rowspan="2">*$A224 = A - 11  -- Otherwise  [helicopter related]</td>
+<td class="comment-1" rowspan="2">Otherwise helicopter_control = A - 11</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -2095,7 +2109,7 @@ Handle hazards escape byte.
 <td class="asm-label"></td>
 <td class="address-1"><span id="49174"></span>C016</td>
 <td class="instruction">JR <a href="BDFB.html#49193">rm_do_restart</a></td>
-<td class="comment-1" rowspan="1">Goto rm_do_restart</td>
+<td class="comment-1" rowspan="1">Jump to rm_do_restart</td>
 </tr>
 <tr>
 <td class="routine-comment" colspan="5">
@@ -2122,7 +2136,7 @@ Handle car spawning commands (13/14 = enable/disable car spawning).
 <td class="asm-label"></td>
 <td class="address-1"><span id="49181"></span>C01D</td>
 <td class="instruction">JR <a href="BDFB.html#49193">rm_do_restart</a></td>
-<td class="comment-1" rowspan="1">Goto rm_do_restart</td>
+<td class="comment-1" rowspan="1">Jump to rm_do_restart</td>
 </tr>
 <tr>
 <td class="routine-comment" colspan="5">
@@ -2135,7 +2149,7 @@ Handle floating arrow commands (10/11/12 = off/left/right).
 </td>
 </tr>
 <tr>
-<td class="asm-label">rm_hazards_set_fork_command</td>
+<td class="asm-label">rm_hazards_set_arrow_command</td>
 <td class="address-2"><span id="49183"></span>C01F</td>
 <td class="instruction">SUB $07</td>
 <td class="comment-1" rowspan="2">floating_arrow = A - 7</td>
@@ -2149,7 +2163,7 @@ Handle floating arrow commands (10/11/12 = off/left/right).
 <td class="asm-label"></td>
 <td class="address-1"><span id="49188"></span>C024</td>
 <td class="instruction">JR Z,<a href="BDFB.html#49193">rm_do_restart</a></td>
-<td class="comment-1" rowspan="1">Goto rm_do_restart if zero</td>
+<td class="comment-1" rowspan="1">Jump to rm_do_restart if zero</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -2161,13 +2175,13 @@ Handle floating arrow commands (10/11/12 = off/left/right).
 <td class="asm-label">rm_do_restart</td>
 <td class="address-2"><span id="49193"></span>C029</td>
 <td class="instruction">EX DE,HL</td>
-<td class="comment-1" rowspan="1">EX DE,HL</td>
+<td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="49194"></span>C02A</td>
 <td class="instruction">JR <a href="BDFB.html#49139">rm_restart_hazards_read</a></td>
-<td class="comment-1" rowspan="1">Goto rm_restart_hazards_read</td>
+<td class="comment-1" rowspan="1">Jump to rm_restart_hazards_read</td>
 </tr>
 <tr>
 <td class="routine-comment" colspan="5">
@@ -2186,13 +2200,13 @@ When on left it uses lane 1, on right it uses lane 4, both it uses lane 2 and 3.
 <td class="asm-label">rm_hazards_set_hazard_command</td>
 <td class="address-2"><span id="49196"></span>C02C</td>
 <td class="instruction">LD ($C059),A</td>
-<td class="comment-1" rowspan="1">Self modify "LD (HL),$xx" at $C058 to load A</td>
+<td class="comment-1" rowspan="1">Self modify "LD (HL),$xx" at $C058 to load A  [which is command_no-3]</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="49199"></span>C02F</td>
 <td class="instruction">JR <a href="BDFB.html#49230">rm_read_hazards</a></td>
-<td class="comment-1" rowspan="1">Goto rm_read_hazards</td>
+<td class="comment-1" rowspan="1">Jump to rm_read_hazards</td>
 </tr>
 <tr>
 <td class="asm-label">rm_hazards_road_fork_command</td>
@@ -2258,7 +2272,7 @@ When on left it uses lane 1, on right it uses lane 4, both it uses lane 2 and 3.
 <td class="asm-label"></td>
 <td class="address-1"><span id="49219"></span>C043</td>
 <td class="instruction">JR <a href="BDFB.html#49230">rm_read_hazards</a></td>
-<td class="comment-1" rowspan="1">Goto rm_read_hazards</td>
+<td class="comment-1" rowspan="1">Jump to rm_read_hazards</td>
 </tr>
 <tr>
 <td class="asm-label">rm_hazards_one_command</td>
@@ -2270,7 +2284,7 @@ When on left it uses lane 1, on right it uses lane 4, both it uses lane 2 and 3.
 <td class="asm-label"></td>
 <td class="address-1"><span id="49224"></span>C048</td>
 <td class="instruction">JR <a href="BDFB.html#49230">rm_read_hazards</a></td>
-<td class="comment-1" rowspan="1">Goto rm_read_hazards</td>
+<td class="comment-1" rowspan="1">Jump to rm_read_hazards</td>
 </tr>
 <tr>
 <td class="asm-label">rm_hazards_jump_command</td>
@@ -2339,7 +2353,7 @@ When on left it uses lane 1, on right it uses lane 4, both it uses lane 2 and 3.
 <td class="asm-label">rm_all_hazards</td>
 <td class="address-2"><span id="49244"></span>C05C</td>
 <td class="instruction">LD ($A185),A</td>
-<td class="comment-1" rowspan="1">*$A185 = A</td>
+<td class="comment-1" rowspan="1">Set no_objects_counter to <span class="register">A</span></td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -2369,13 +2383,13 @@ When on left it uses lane 1, on right it uses lane 4, both it uses lane 2 and 3.
 <td class="asm-label">rm_c06c</td>
 <td class="address-2"><span id="49260"></span>C06C</td>
 <td class="instruction">RLC (IX+$00)</td>
-<td class="comment-1" rowspan="1">RLC (IX)  -- test the used flag</td>
+<td class="comment-1" rowspan="1">test the used flag</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="49264"></span>C070</td>
 <td class="instruction">JR C,<a href="BDFB.html#49280">rm_c080</a></td>
-<td class="comment-1" rowspan="1">JR C,$C080  -- jump if used</td>
+<td class="comment-1" rowspan="1">jump if used</td>
 </tr>
 <tr>
 <td class="asm-label">rm_c072_continue</td>
@@ -2417,7 +2431,7 @@ When on left it uses lane 1, on right it uses lane 4, both it uses lane 2 and 3.
 <td class="asm-label"></td>
 <td class="address-1"><span id="49278"></span>C07E</td>
 <td class="instruction">JR <a href="BDFB.html#49339">rm_c0bb</a></td>
-<td class="comment-1" rowspan="1">Goto rm_c0bb</td>
+<td class="comment-1" rowspan="1">Jump to rm_c0bb</td>
 </tr>
 <tr>
 <td class="asm-label">rm_c080</td>
@@ -2434,7 +2448,7 @@ When on left it uses lane 1, on right it uses lane 4, both it uses lane 2 and 3.
 <td class="asm-label"></td>
 <td class="address-1"><span id="49284"></span>C084</td>
 <td class="instruction">JR Z,<a href="BDFB.html#49302">rm_c096</a></td>
-<td class="comment-1" rowspan="1">Goto rm_c096 if zero</td>
+<td class="comment-1" rowspan="1">Jump to rm_c096 if zero</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -2446,7 +2460,7 @@ When on left it uses lane 1, on right it uses lane 4, both it uses lane 2 and 3.
 <td class="asm-label"></td>
 <td class="address-1"><span id="49289"></span>C089</td>
 <td class="instruction">JP NZ,<a href="BDFB.html#49266">rm_c072_continue</a></td>
-<td class="comment-1" rowspan="1">Goto rm_c072_continue if non-zero</td>
+<td class="comment-1" rowspan="1">Jump to rm_c072_continue if non-zero</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -2458,13 +2472,13 @@ When on left it uses lane 1, on right it uses lane 4, both it uses lane 2 and 3.
 <td class="asm-label"></td>
 <td class="address-1"><span id="49296"></span>C090</td>
 <td class="instruction">RLA</td>
-<td class="comment-1" rowspan="1">RLA  -- testing top bit of A</td>
+<td class="comment-1" rowspan="1">testing top bit of A</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="49297"></span>C091</td>
 <td class="instruction">JR NC,<a href="BDFB.html#49266">rm_c072_continue</a></td>
-<td class="comment-1" rowspan="1">Goto rm_c072_continue if no carry</td>
+<td class="comment-1" rowspan="1">Jump to rm_c072_continue if no carry</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -2476,7 +2490,7 @@ When on left it uses lane 1, on right it uses lane 4, both it uses lane 2 and 3.
 <td class="asm-label"></td>
 <td class="address-1"><span id="49300"></span>C094</td>
 <td class="instruction">JR <a href="BDFB.html#49266">rm_c072_continue</a></td>
-<td class="comment-1" rowspan="1">Goto rm_c072_continue</td>
+<td class="comment-1" rowspan="1">Jump to rm_c072_continue</td>
 </tr>
 <tr>
 <td class="asm-label">rm_c096</td>
@@ -2499,13 +2513,13 @@ When on left it uses lane 1, on right it uses lane 4, both it uses lane 2 and 3.
 <td class="asm-label"></td>
 <td class="address-1"><span id="49310"></span>C09E</td>
 <td class="instruction">JR C,<a href="BDFB.html#49330">rm_c0b2</a></td>
-<td class="comment-1" rowspan="1">Goto rm_c0b2 if carry</td>
+<td class="comment-1" rowspan="1">Jump to rm_c0b2 if carry</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="49312"></span>C0A0</td>
 <td class="instruction">JR NZ,<a href="BDFB.html#49266">rm_c072_continue</a></td>
-<td class="comment-1" rowspan="1">Goto rm_c072_continue if non-zero</td>
+<td class="comment-1" rowspan="1">Jump to rm_c072_continue if non-zero</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -2523,7 +2537,7 @@ When on left it uses lane 1, on right it uses lane 4, both it uses lane 2 and 3.
 <td class="asm-label"></td>
 <td class="address-1"><span id="49318"></span>C0A6</td>
 <td class="instruction">JR NZ,<a href="BDFB.html#49266">rm_c072_continue</a></td>
-<td class="comment-1" rowspan="1">Goto rm_c072_continue if non-zero</td>
+<td class="comment-1" rowspan="1">Jump to rm_c072_continue if non-zero</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -2541,7 +2555,7 @@ When on left it uses lane 1, on right it uses lane 4, both it uses lane 2 and 3.
 <td class="asm-label"></td>
 <td class="address-1"><span id="49328"></span>C0B0</td>
 <td class="instruction">JR <a href="BDFB.html#49266">rm_c072_continue</a></td>
-<td class="comment-1" rowspan="1">Goto rm_c072_continue</td>
+<td class="comment-1" rowspan="1">Jump to rm_c072_continue</td>
 </tr>
 <tr>
 <td class="asm-label">rm_c0b2</td>
@@ -2563,7 +2577,7 @@ When on left it uses lane 1, on right it uses lane 4, both it uses lane 2 and 3.
 <td class="asm-label"></td>
 <td class="address-1"><span id="49337"></span>C0B9</td>
 <td class="instruction">JR <a href="BDFB.html#49266">rm_c072_continue</a></td>
-<td class="comment-1" rowspan="1">Goto rm_c072_continue</td>
+<td class="comment-1" rowspan="1">Jump to rm_c072_continue</td>
 </tr>
 <tr>
 <td class="asm-label">rm_c0bb</td>
@@ -2581,7 +2595,7 @@ When on left it uses lane 1, on right it uses lane 4, both it uses lane 2 and 3.
 <td class="asm-label"></td>
 <td class="address-1"><span id="49342"></span>C0BE</td>
 <td class="instruction">JP Z,<a href="BDFB.html#49367">rm_c0d7</a></td>
-<td class="comment-1" rowspan="1">Goto rm_c0d7 if zero</td>
+<td class="comment-1" rowspan="1">Jump to rm_c0d7 if zero</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -2639,7 +2653,7 @@ When on left it uses lane 1, on right it uses lane 4, both it uses lane 2 and 3.
 <td class="asm-label"></td>
 <td class="address-1"><span id="49362"></span>C0D2</td>
 <td class="instruction">JP PE,<a href="BDFB.html#49354">rm_c0ca</a></td>
-<td class="comment-1" rowspan="1">Goto rm_c0ca if PE  PE =&gt; B became zero</td>
+<td class="comment-1" rowspan="1">Jump to rm_c0ca if PE  PE =&gt; B became zero</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -2663,7 +2677,7 @@ When on left it uses lane 1, on right it uses lane 4, both it uses lane 2 and 3.
 <td class="asm-label">rm_c0d9</td>
 <td class="address-2"><span id="49369"></span>C0D9</td>
 <td class="instruction">LD HL,$A254</td>
-<td class="comment-1" rowspan="3">*$A254 += A</td>
+<td class="comment-1" rowspan="3">*$A254 += A  -- spawning flag</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -2695,7 +2709,7 @@ Next: <a href="C0E1.html">C0E1</a>
 </table>
 <footer>
 <div class="release">The incomplete Chase H.Q. disassembly 20230518</div>
-<div class="copyright">&copy; 1989 Ocean Software Ltd.</div>
+<div class="copyright">&copy; 1988 Taito Corporation &copy; 1989 Ocean Software Ltd. (Chase H.Q.) © 2023 David Thomas (this disassembly)</div>
 <div class="created">Created using <a href="https://skoolkit.ca">SkoolKit</a> 8.9.</div>
 </footer>
 </body>

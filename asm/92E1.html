@@ -32,166 +32,187 @@ Next: <a href="949C.html">949C</a>
 </td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-2"><span id="37601"></span>92E1</td>
 <td class="instruction">XOR A</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="2">Self modify 'LD D,x' at $933D to load 0</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="37602"></span>92E2</td>
 <td class="instruction">LD ($933E),A</td>
-<td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="37605"></span>92E5</td>
 <td class="instruction">LD A,B</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="1">A = B</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="37606"></span>92E6</td>
 <td class="instruction">CP $0A</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="1">CP 10</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="37608"></span>92E8</td>
 <td class="instruction">JR C,$92EC</td>
 <td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="37610"></span>92EA</td>
 <td class="instruction">LD A,$0A</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="1">A = 10</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-2"><span id="37612"></span>92EC</td>
 <td class="instruction">EX DE,HL</td>
 <td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="37613"></span>92ED</td>
 <td class="instruction">LD E,(HL)</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="3">DE = wordat(HL); HL++</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="37614"></span>92EE</td>
 <td class="instruction">INC HL</td>
-<td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="37615"></span>92EF</td>
 <td class="instruction">LD D,(HL)</td>
-<td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="37616"></span>92F0</td>
 <td class="instruction">RLCA</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="5">HL += A * 2 - 1</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="37617"></span>92F1</td>
 <td class="instruction">DEC A</td>
-<td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="37618"></span>92F2</td>
 <td class="instruction">LD C,A</td>
-<td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="37619"></span>92F3</td>
 <td class="instruction">LD B,$00</td>
-<td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="37621"></span>92F5</td>
 <td class="instruction">ADD HL,BC</td>
-<td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="37622"></span>92F6</td>
 <td class="instruction">LD B,(HL)</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="2">B = *HL++</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="37623"></span>92F7</td>
 <td class="instruction">INC HL</td>
-<td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="37624"></span>92F8</td>
 <td class="instruction">LD L,(HL)</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="3">HL = *HL + DE</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="37625"></span>92F9</td>
 <td class="instruction">LD H,$00</td>
-<td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="37627"></span>92FB</td>
 <td class="instruction">ADD HL,DE</td>
-<td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="37628"></span>92FC</td>
 <td class="instruction">LD A,(IX+$00)</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="1">A = IX[0]</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="37631"></span>92FF</td>
 <td class="instruction">BIT 7,B</td>
 <td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="37633"></span>9301</td>
 <td class="instruction">JR Z,$9306</td>
 <td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="37635"></span>9303</td>
 <td class="instruction">ADD A,B</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="1">A += B</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="37636"></span>9304</td>
 <td class="instruction">JR $9308</td>
 <td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-2"><span id="37638"></span>9306</td>
 <td class="instruction">ADD A,B</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="1">A += B</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="37639"></span>9307</td>
 <td class="instruction">RET C</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="1">Return if carry</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-2"><span id="37640"></span>9308</td>
 <td class="instruction">RET Z</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="1">Return if zero</td>
 </tr>
 <tr>
 <td class="routine-comment" colspan="5">
 <span id="37641"></span>
 <div class="comments">
 <div class="paragraph">
-This entry point is used by the routines at <a href="A9DE.html">A9DE</a>, <a href="AA38.html">AA38</a> and <a href="ADA0.html">main_loop_19</a>.
+This entry point is used by the routines at <a href="A9DE.html">sub_A9DE</a>, <a href="AA38.html">sub_AA38</a> and <a href="ADA0.html">main_loop_19</a>.
 </div>
 </div>
 </td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-2"><span id="37641"></span>9309</td>
 <td class="instruction">CP $F7</td>
 <td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="37643"></span>930B</td>
 <td class="instruction">RET NC</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="1">Return if not carry</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="37644"></span>930C</td>
 <td class="instruction">LD C,$00</td>
 <td class="comment-1" rowspan="1"></td>
@@ -201,142 +222,159 @@ This entry point is used by the routines at <a href="A9DE.html">A9DE</a>, <a hre
 <span id="37646"></span>
 <div class="comments">
 <div class="paragraph">
-This entry point is used by the routine at <a href="9278.html">9278</a>.
+This entry point is used by the routine at <a href="9278.html">sub_9278</a>.
 </div>
 </div>
 </td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-2"><span id="37646"></span>930E</td>
 <td class="instruction">AND $FC</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="3">A = (A &amp; $FC) &gt;&gt; 2</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="37648"></span>9310</td>
 <td class="instruction">RRCA</td>
-<td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="37649"></span>9311</td>
 <td class="instruction">RRCA</td>
-<td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="37650"></span>9312</td>
 <td class="instruction">LD ($9396),A</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="1">*$9396 = A</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="37653"></span>9315</td>
 <td class="instruction">RRA</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="1">A &gt;&gt;= 1</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="37654"></span>9316</td>
 <td class="instruction">LD B,A</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="1">B = A</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="37655"></span>9317</td>
 <td class="instruction">LD E,(HL)</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="1">E = *HL</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="37656"></span>9318</td>
 <td class="instruction">CPL</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="2">A = ~A + 32  -- (31 - A)</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="37657"></span>9319</td>
 <td class="instruction">ADD A,$20</td>
-<td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="37659"></span>931B</td>
 <td class="instruction">CP E</td>
 <td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="37660"></span>931C</td>
 <td class="instruction">JR C,$931F</td>
 <td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="37662"></span>931E</td>
 <td class="instruction">LD A,E</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="1">A = E</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-2"><span id="37663"></span>931F</td>
 <td class="instruction">INC HL</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="1">HL++</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="37664"></span>9320</td>
 <td class="instruction">LD D,(HL)</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="2">D = *HL &gt;&gt; 1</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="37665"></span>9321</td>
 <td class="instruction">SRL D</td>
-<td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="37667"></span>9323</td>
 <td class="instruction">JP Z,$9333</td>
 <td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="37670"></span>9326</td>
 <td class="instruction">LD C,A</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="1">C = A</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="37671"></span>9327</td>
 <td class="instruction">EX AF,AF'</td>
 <td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="37672"></span>9328</td>
 <td class="instruction">LD A,E</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="3">C = E - C</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="37673"></span>9329</td>
 <td class="instruction">SUB C</td>
-<td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="37674"></span>932A</td>
 <td class="instruction">LD C,A</td>
-<td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
 <td class="routine-comment" colspan="5">
 <span id="37675"></span>
 <div class="comments">
 <div class="paragraph">
-This entry point is used by the routine at <a href="9278.html">9278</a>.
+This entry point is used by the routine at <a href="9278.html">sub_9278</a>.
 </div>
 </div>
 </td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-2"><span id="37675"></span>932B</td>
 <td class="instruction">LD A,($9396)</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="3">*$9396 = ~(*$9396)</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="37678"></span>932E</td>
 <td class="instruction">CPL</td>
-<td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="37679"></span>932F</td>
 <td class="instruction">LD ($9396),A</td>
-<td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="37682"></span>9332</td>
 <td class="instruction">EX AF,AF'</td>
 <td class="comment-1" rowspan="1"></td>
@@ -346,1061 +384,1231 @@ This entry point is used by the routine at <a href="9278.html">9278</a>.
 <span id="37683"></span>
 <div class="comments">
 <div class="paragraph">
-This entry point is used by the routine at <a href="9278.html">9278</a>.
+This entry point is used by the routine at <a href="9278.html">sub_9278</a>.
 </div>
 </div>
 </td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-2"><span id="37683"></span>9333</td>
 <td class="instruction">JR NC,$933B</td>
 <td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="37685"></span>9335</td>
 <td class="instruction">EX AF,AF'</td>
 <td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="37686"></span>9336</td>
 <td class="instruction">SLA C</td>
 <td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="37688"></span>9338</td>
 <td class="instruction">SLA E</td>
 <td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="37690"></span>933A</td>
 <td class="instruction">EX AF,AF'</td>
 <td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-2"><span id="37691"></span>933B</td>
 <td class="instruction">EX AF,AF'</td>
 <td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="37692"></span>933C</td>
 <td class="instruction">INC HL</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="1">HL++</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-2"><span id="37693"></span>933D</td>
 <td class="instruction">LD D,$00</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="1">D = &lt;self modified&gt;</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="37695"></span>933F</td>
 <td class="instruction">LD A,(IY+$00)</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="2">A = IY[0] - IY[$35]</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="37698"></span>9342</td>
 <td class="instruction">SUB (IY+$35)</td>
-<td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="37701"></span>9345</td>
 <td class="instruction">JR NZ,$9359</td>
 <td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-2"><span id="37703"></span>9347</td>
 <td class="instruction">LD A,(IY+$35)</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="2">A = IY[$35] + D</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="37706"></span>934A</td>
 <td class="instruction">ADD A,D</td>
-<td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="37707"></span>934B</td>
 <td class="instruction">RET M</td>
 <td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="37708"></span>934C</td>
 <td class="instruction">PUSH AF</td>
 <td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="37709"></span>934D</td>
 <td class="instruction">INC A</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="1">A++</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="37710"></span>934E</td>
 <td class="instruction">LD D,(HL)</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="1">D = *HL</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="37711"></span>934F</td>
 <td class="instruction">SUB D</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="1">A -= D</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="37712"></span>9350</td>
 <td class="instruction">JR C,$9353</td>
 <td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="37714"></span>9352</td>
 <td class="instruction">XOR A</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="1">A = 0</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-2"><span id="37715"></span>9353</td>
 <td class="instruction">ADD A,D</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="1">A += D</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="37716"></span>9354</td>
 <td class="instruction">INC HL</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="1">HL++</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="37717"></span>9355</td>
 <td class="instruction">LD D,$01</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="1">D = 1</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="37719"></span>9357</td>
 <td class="instruction">JR $9390</td>
 <td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-2"><span id="37721"></span>9359</td>
 <td class="instruction">BIT 7,D</td>
 <td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="37723"></span>935B</td>
 <td class="instruction">JR NZ,$9361</td>
 <td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="37725"></span>935D</td>
 <td class="instruction">SUB D</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="1">A -= D</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="37726"></span>935E</td>
 <td class="instruction">JP $9362</td>
 <td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-2"><span id="37729"></span>9361</td>
 <td class="instruction">ADD A,D</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="1">A += D</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-2"><span id="37730"></span>9362</td>
 <td class="instruction">LD D,A</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="1">D = A</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="37731"></span>9363</td>
 <td class="instruction">JP Z,$9347</td>
 <td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="37734"></span>9366</td>
 <td class="instruction">JP M,$9347</td>
 <td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="37737"></span>9369</td>
 <td class="instruction">LD A,(IY+$35)</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="1">A = IY[$35]</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="37740"></span>936C</td>
 <td class="instruction">PUSH AF</td>
 <td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="37741"></span>936D</td>
 <td class="instruction">LD A,(HL)</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="3">A = *HL - 1 - D</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="37742"></span>936E</td>
 <td class="instruction">DEC A</td>
-<td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="37743"></span>936F</td>
 <td class="instruction">SUB D</td>
-<td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="37744"></span>9370</td>
 <td class="instruction">JP NC,$938D</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="1">Jump if no carry</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="37747"></span>9373</td>
 <td class="instruction">POP AF</td>
 <td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="37748"></span>9374</td>
 <td class="instruction">LD A,($93C1)</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="1">Read A from 'LD A,x' at $93C0 below</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="37751"></span>9377</td>
 <td class="instruction">AND A</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="1">Set flags</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="37752"></span>9378</td>
 <td class="instruction">RET Z</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="1">Return if zero</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="37753"></span>9379</td>
 <td class="instruction">LD A,($933E)</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="1">Read A from 'LD D,x' at $933D above</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="37756"></span>937C</td>
 <td class="instruction">LD D,(HL)</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="1">D = *HL</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="37757"></span>937D</td>
 <td class="instruction">SUB D</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="1">A -= D</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="37758"></span>937E</td>
 <td class="instruction">RET P</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="1">Return if positive</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="37759"></span>937F</td>
 <td class="instruction">LD ($933E),A</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="1">*$933E = A</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="37762"></span>9382</td>
 <td class="instruction">LD A,($9405)</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="2">A = *$9405 - D</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="37765"></span>9385</td>
 <td class="instruction">SUB D</td>
-<td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="37766"></span>9386</td>
 <td class="instruction">RET C</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="2">Return if carry or zero</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="37767"></span>9387</td>
 <td class="instruction">RET Z</td>
-<td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="37768"></span>9388</td>
 <td class="instruction">LD ($9405),A</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="1">*$9405 = A</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="37771"></span>938B</td>
 <td class="instruction">JR $933D</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="1">Loop?</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-2"><span id="37773"></span>938D</td>
 <td class="instruction">INC A</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="1">A++</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="37774"></span>938E</td>
 <td class="instruction">INC D</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="1">D++</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="37775"></span>938F</td>
 <td class="instruction">INC HL</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="1">HL++</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-2"><span id="37776"></span>9390</td>
 <td class="instruction">PUSH BC</td>
 <td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="37777"></span>9391</td>
 <td class="instruction">PUSH DE</td>
 <td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="37778"></span>9392</td>
 <td class="instruction">LD D,A</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="1">D = A</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="37779"></span>9393</td>
 <td class="instruction">LD B,$00</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="1">B = $00</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="37781"></span>9395</td>
 <td class="instruction">LD A,$00</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="1">A = $00</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="37783"></span>9397</td>
 <td class="instruction">RRA</td>
 <td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="37784"></span>9398</td>
 <td class="instruction">JR NC,$939C</td>
 <td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="37786"></span>939A</td>
 <td class="instruction">INC HL</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="2">HL += 2</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="37787"></span>939B</td>
 <td class="instruction">INC HL</td>
-<td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-2"><span id="37788"></span>939C</td>
 <td class="instruction">LD A,(HL)</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="5">HL = wordat(HL) + BC</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="37789"></span>939D</td>
 <td class="instruction">INC HL</td>
-<td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="37790"></span>939E</td>
 <td class="instruction">LD H,(HL)</td>
-<td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="37791"></span>939F</td>
 <td class="instruction">LD L,A</td>
-<td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="37792"></span>93A0</td>
 <td class="instruction">ADD HL,BC</td>
-<td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="37793"></span>93A1</td>
 <td class="instruction">LD ($9413),HL</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="1">*$9413 = HL</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="37796"></span>93A4</td>
 <td class="instruction">LD C,E</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="1">C = E</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="37797"></span>93A5</td>
 <td class="instruction">POP AF</td>
 <td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="37798"></span>93A6</td>
 <td class="instruction">DEC A</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="1">A--</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="37799"></span>93A7</td>
 <td class="instruction">JR Z,$93AE</td>
 <td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-2"><span id="37801"></span>93A9</td>
 <td class="instruction">ADD HL,BC</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="1">HL += BC</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="37802"></span>93AA</td>
 <td class="instruction">DEC A</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="1">A--</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="37803"></span>93AB</td>
 <td class="instruction">JP NZ,$93A9</td>
 <td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-2"><span id="37806"></span>93AE</td>
 <td class="instruction">LD B,D</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="1">B = D</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="37807"></span>93AF</td>
 <td class="instruction">LD D,$00</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="1">D = $00</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="37809"></span>93B1</td>
 <td class="instruction">EXX</td>
 <td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="37810"></span>93B2</td>
 <td class="instruction">POP BC</td>
 <td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="37811"></span>93B3</td>
 <td class="instruction">POP AF</td>
 <td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="37812"></span>93B4</td>
 <td class="instruction">LD D,A</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="1">D = A</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="37813"></span>93B5</td>
 <td class="instruction">AND $0F</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="3">H = (A &amp; $0F) + $F0</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="37815"></span>93B7</td>
 <td class="instruction">ADD A,$F0</td>
-<td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="37817"></span>93B9</td>
 <td class="instruction">LD H,A</td>
-<td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="37818"></span>93BA</td>
 <td class="instruction">LD A,D</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="1">A = D</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="37819"></span>93BB</td>
 <td class="instruction">AND $70</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="4">L = (A &amp; $70) * 2 + B</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="37821"></span>93BD</td>
 <td class="instruction">ADD A,A</td>
-<td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="37822"></span>93BE</td>
 <td class="instruction">ADD A,B</td>
-<td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="37823"></span>93BF</td>
 <td class="instruction">LD L,A</td>
-<td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="37824"></span>93C0</td>
 <td class="instruction">LD A,$00</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="1">A = &lt;self modified&gt;</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="37826"></span>93C2</td>
 <td class="instruction">AND A</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="1">Set flags</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="37827"></span>93C3</td>
 <td class="instruction">JP Z,$93D0</td>
 <td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="37830"></span>93C6</td>
 <td class="instruction">DEC A</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="1">A--</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="37831"></span>93C7</td>
 <td class="instruction">JR NZ,$93DF</td>
 <td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="37833"></span>93C9</td>
 <td class="instruction">EX AF,AF'</td>
 <td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="37834"></span>93CA</td>
 <td class="instruction">JP C,<a href="B7EF.html">$B7EF</a></td>
 <td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="37837"></span>93CD</td>
 <td class="instruction">JP $9479</td>
 <td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-2"><span id="37840"></span>93D0</td>
 <td class="instruction">EX AF,AF'</td>
 <td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="37841"></span>93D1</td>
 <td class="instruction">JR NZ,$93D9</td>
 <td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="37843"></span>93D3</td>
-<td class="instruction">JP C,<a href="B67C.html#46849">$B701</a></td>
-<td class="comment-1" rowspan="1">Exit via plot_masked_sprite</td>
+<td class="instruction">JP C,<a href="B67C.html#46849">sub_b67c_5</a></td>
+<td class="comment-1" rowspan="1">prob plot_sprite_flipped</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="37846"></span>93D6</td>
 <td class="instruction">JP <a href="949C.html">plot_sprite</a></td>
 <td class="comment-1" rowspan="1">Exit via plot_sprite</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-2"><span id="37849"></span>93D9</td>
 <td class="instruction">JP C,<a href="B76C.html">plot_masked_sprite_flipped</a></td>
 <td class="comment-1" rowspan="1">Exit via plot_masked_sprite_flipped</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="37852"></span>93DC</td>
 <td class="instruction">JP <a href="9542.html">plot_sprite_flipped</a></td>
 <td class="comment-1" rowspan="1">Exit via plot_sprite_flipped</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-2"><span id="37855"></span>93DF</td>
 <td class="instruction">EX AF,AF'</td>
 <td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="37856"></span>93E0</td>
 <td class="instruction">JP C,$9436</td>
 <td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="37859"></span>93E3</td>
 <td class="instruction">SRL A</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="1">A &gt;&gt;= 1</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="37861"></span>93E5</td>
-<td class="instruction">JP C,$9420</td>
+<td class="instruction">JP C,<a href="92E1.html#37920">plot_sprite_xxx_odd</a></td>
 <td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="37864"></span>93E8</td>
 <td class="instruction">LD IX,$94C8</td>
 <td class="comment-1" rowspan="1"><span class="register">IX</span> = Base of jump table</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="37868"></span>93EC</td>
 <td class="instruction">CPL</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="2">(~<span class="register">A</span> + 5) is (4 - <span class="register">A</span>)</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="37869"></span>93ED</td>
 <td class="instruction">ADD A,$05</td>
-<td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="37871"></span>93EF</td>
 <td class="instruction">LD C,A</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="7">IX += A * 5</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="37872"></span>93F0</td>
 <td class="instruction">RLCA</td>
-<td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="37873"></span>93F1</td>
 <td class="instruction">RLCA</td>
-<td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="37874"></span>93F2</td>
 <td class="instruction">ADD A,C</td>
-<td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="37875"></span>93F3</td>
 <td class="instruction">LD C,A</td>
-<td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="37876"></span>93F4</td>
 <td class="instruction">LD B,$00</td>
-<td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="37878"></span>93F6</td>
 <td class="instruction">ADD IX,BC</td>
-<td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="37880"></span>93F8</td>
 <td class="instruction">LD BC,$94B1</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="1">BC = &amp;plot_sprite_entry</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-2"><span id="37883"></span>93FB</td>
 <td class="instruction">LD ($9410),BC</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="1">*$9410 = BC</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="37887"></span>93FF</td>
 <td class="instruction">LD ($941E),BC</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="1">*$941E = BC</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="37891"></span>9403</td>
 <td class="instruction">EXX</td>
 <td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-2"><span id="37892"></span>9404</td>
 <td class="instruction">LD A,$00</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="2">A = 0 - B</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="37894"></span>9406</td>
 <td class="instruction">SUB B</td>
-<td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="37895"></span>9407</td>
 <td class="instruction">JR Z,$941A</td>
 <td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="37897"></span>9409</td>
 <td class="instruction">JR C,$941A</td>
 <td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="37899"></span>940B</td>
 <td class="instruction">LD ($9405),A</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="1">*$9405 = A</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="37902"></span>940E</td>
 <td class="instruction">EXX</td>
 <td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="37903"></span>940F</td>
-<td class="instruction">CALL <a href="949C.html#38065">plot_sprite_0</a></td>
-<td class="comment-1" rowspan="1"></td>
+<td class="instruction">CALL <a href="949C.html#38065">plot_sprite_entry</a></td>
+<td class="comment-1" rowspan="1">Call plot_sprite_entry</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="37906"></span>9412</td>
 <td class="instruction">LD HL,$0000</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="1">HL = &lt;...&gt;  Self modified by $93A1</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="37909"></span>9415</td>
 <td class="instruction">LD B,$00</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="1">B = &lt;...&gt;   Self modified by $9239</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="37911"></span>9417</td>
 <td class="instruction">JP $9404</td>
 <td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-2"><span id="37914"></span>941A</td>
 <td class="instruction">ADD A,B</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="1">A += B</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="37915"></span>941B</td>
 <td class="instruction">LD B,A</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="1">B = A</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="37916"></span>941C</td>
 <td class="instruction">EXX</td>
 <td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="37917"></span>941D</td>
-<td class="instruction">JP <a href="949C.html#38065">plot_sprite_0</a></td>
-<td class="comment-1" rowspan="1"></td>
+<td class="instruction">JP <a href="949C.html#38065">plot_sprite_entry</a></td>
+<td class="comment-1" rowspan="1">Exit via plot_sprite_entry</td>
 </tr>
 <tr>
+<td class="asm-label">plot_sprite_xxx_odd</td>
 <td class="address-2"><span id="37920"></span>9420</td>
 <td class="instruction">INC A</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="1">Increment <span class="register">A</span> for upcoming calculation</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="37921"></span>9421</td>
 <td class="instruction">LD IX,$951A</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="1">Point <span class="register">IX</span> at start of plot instructions</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="37925"></span>9425</td>
 <td class="instruction">CPL</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="2">(~<span class="register">A</span> + 5) is (4 - <span class="register">A</span>) is the number of plot operations to skip</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="37926"></span>9426</td>
 <td class="instruction">ADD A,$05</td>
-<td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="37928"></span>9428</td>
 <td class="instruction">LD C,A</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="3">Multiply <span class="register">A</span> by 5: the length of an individual plot operation</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="37929"></span>9429</td>
 <td class="instruction">RLCA</td>
-<td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="37930"></span>942A</td>
 <td class="instruction">RLCA</td>
-<td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="37931"></span>942B</td>
 <td class="instruction">ADD A,C</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="3">Move result to <span class="register">BC</span></td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="37932"></span>942C</td>
 <td class="instruction">LD C,A</td>
-<td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="37933"></span>942D</td>
 <td class="instruction">LD B,$00</td>
-<td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="37935"></span>942F</td>
 <td class="instruction">ADD IX,BC</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="1">Add it to <span class="register">IX</span> to complete the jump target</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="37937"></span>9431</td>
 <td class="instruction">LD BC,$9503</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="1">BC = $9503</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="37940"></span>9434</td>
 <td class="instruction">JR $93FB</td>
 <td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-2"><span id="37942"></span>9436</td>
 <td class="instruction">LD IX,$B729</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="1">IX = $B729</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="37946"></span>943A</td>
 <td class="instruction">CPL</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="2">(~<span class="register">A</span> + 9) is (8 - <span class="register">A</span>)</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="37947"></span>943B</td>
 <td class="instruction">ADD A,$09</td>
-<td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="37949"></span>943D</td>
 <td class="instruction">RLCA</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="7">IX += A * 6</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="37950"></span>943E</td>
 <td class="instruction">LD C,A</td>
-<td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="37951"></span>943F</td>
 <td class="instruction">RLCA</td>
-<td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="37952"></span>9440</td>
 <td class="instruction">ADD A,C</td>
-<td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="37953"></span>9441</td>
 <td class="instruction">LD C,A</td>
-<td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="37954"></span>9442</td>
 <td class="instruction">LD B,$00</td>
-<td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="37956"></span>9444</td>
 <td class="instruction">ADD IX,BC</td>
-<td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="37958"></span>9446</td>
 <td class="instruction">LD BC,($9413)</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="2">*$946D = *$9413  -- Self modify LD HL at $946C to load ?</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="37962"></span>944A</td>
 <td class="instruction">LD ($946D),BC</td>
-<td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="37966"></span>944E</td>
 <td class="instruction">LD A,($9416)</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="2">*$9470 = *$9416</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="37969"></span>9451</td>
 <td class="instruction">LD ($9470),A</td>
-<td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="37972"></span>9454</td>
 <td class="instruction">LD A,($9405)</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="2">*$9460 = *$9405</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="37975"></span>9457</td>
 <td class="instruction">LD ($9460),A</td>
-<td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="37978"></span>945A</td>
 <td class="instruction">LD B,$0F</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="1">B = $0F</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="37980"></span>945C</td>
 <td class="instruction">EXX</td>
 <td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="37981"></span>945D</td>
 <td class="instruction">LD D,$00</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="1">D = $00</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-2"><span id="37983"></span>945F</td>
 <td class="instruction">LD A,$00</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="2">A = 0 - B</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="37985"></span>9461</td>
 <td class="instruction">SUB B</td>
-<td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="37986"></span>9462</td>
 <td class="instruction">JR C,$9474</td>
 <td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="37988"></span>9464</td>
 <td class="instruction">JR Z,$9474</td>
 <td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="37990"></span>9466</td>
 <td class="instruction">LD ($9460),A</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="1">*$9460 = A</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="37993"></span>9469</td>
 <td class="instruction">CALL <a href="B716.html">plot_masked_sprite</a></td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="1">Call plot_masked_sprite</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="37996"></span>946C</td>
 <td class="instruction">LD HL,$0000</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="1">HL = &lt;...&gt;  -- Self modified by $9446</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="37999"></span>946F</td>
 <td class="instruction">LD B,$00</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="1">B = $00</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="38001"></span>9471</td>
 <td class="instruction">JP $945F</td>
 <td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-2"><span id="38004"></span>9474</td>
 <td class="instruction">ADD A,B</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="2">B += A</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="38005"></span>9475</td>
 <td class="instruction">LD B,A</td>
-<td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="38006"></span>9476</td>
 <td class="instruction">JP <a href="B716.html">plot_masked_sprite</a></td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="1">Exit via plot_masked_sprite</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-2"><span id="38009"></span>9479</td>
 <td class="instruction">EX AF,AF'</td>
 <td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="38010"></span>947A</td>
 <td class="instruction">EXX</td>
 <td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="38011"></span>947B</td>
 <td class="instruction">LD D,$00</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="1">D = $00</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="38013"></span>947D</td>
 <td class="instruction">PUSH BC</td>
 <td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="38014"></span>947E</td>
 <td class="instruction">PUSH HL</td>
 <td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="38015"></span>947F</td>
 <td class="instruction">LD H,D</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="1">H = D</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="38016"></span>9480</td>
 <td class="instruction">LD L,D</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="1">L = D</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="38017"></span>9481</td>
 <td class="instruction">LD A,B</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="1">A = B</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="38018"></span>9482</td>
 <td class="instruction">LD B,$05</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="1">B = 5</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="38020"></span>9484</td>
 <td class="instruction">DEC A</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="1">A--</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="38021"></span>9485</td>
 <td class="instruction">RLA</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="2">A &lt;&lt;= 2</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="38022"></span>9486</td>
 <td class="instruction">RLA</td>
-<td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
+<td class="asm-label">loop_9487</td>
 <td class="address-2"><span id="38023"></span>9487</td>
 <td class="instruction">RLA</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="1">A &lt;&lt;= 1</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="38024"></span>9488</td>
 <td class="instruction">JR NC,$948B</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="2">If carried out then HL += DE</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="38026"></span>948A</td>
 <td class="instruction">ADD HL,DE</td>
-<td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-2"><span id="38027"></span>948B</td>
 <td class="instruction">ADD HL,HL</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="1">HL += HL</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="38028"></span>948C</td>
-<td class="instruction">DJNZ $9487</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="instruction">DJNZ <a href="92E1.html#38023">loop_9487</a></td>
+<td class="comment-1" rowspan="1">Loop to loop_9487 while <span class="register">B</span></td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="38030"></span>948E</td>
 <td class="instruction">RLA</td>
 <td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="38031"></span>948F</td>
 <td class="instruction">JR NC,$9492</td>
 <td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="38033"></span>9491</td>
 <td class="instruction">ADD HL,DE</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="1">HL += DE</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-2"><span id="38034"></span>9492</td>
 <td class="instruction">POP BC</td>
 <td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="38035"></span>9493</td>
 <td class="instruction">ADD HL,BC</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="1">HL += BC</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="38036"></span>9494</td>
 <td class="instruction">POP BC</td>
 <td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="38037"></span>9495</td>
 <td class="instruction">DEC D</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="1">D--</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="38038"></span>9496</td>
 <td class="instruction">LD A,E</td>
-<td class="comment-1" rowspan="5">E = -E</td>
+<td class="comment-1" rowspan="3">E = -E</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="38039"></span>9497</td>
 <td class="instruction">NEG</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="38041"></span>9499</td>
 <td class="instruction">LD E,A</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="38042"></span>949A</td>
 <td class="instruction">EXX</td>
+<td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="38043"></span>949B</td>
 <td class="instruction">EX AF,AF'</td>
+<td class="comment-1" rowspan="1">fall through</td>
 </tr>
 </table>
 <table class="asm-navigation">
@@ -1416,7 +1624,7 @@ Next: <a href="949C.html">949C</a>
 </table>
 <footer>
 <div class="release">The incomplete Chase H.Q. disassembly 20230518</div>
-<div class="copyright">&copy; 1989 Ocean Software Ltd.</div>
+<div class="copyright">&copy; 1988 Taito Corporation &copy; 1989 Ocean Software Ltd. (Chase H.Q.) © 2023 David Thomas (this disassembly)</div>
 <div class="created">Created using <a href="https://skoolkit.ca">SkoolKit</a> 8.9.</div>
 </footer>
 </body>

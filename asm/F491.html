@@ -23,7 +23,7 @@ Next: <a href="F5BE.html">F5BE</a>
 </td>
 </tr>
 </table>
-<div class="description">F491: Credits / Score messages</div>
+<div class="description">F491: Credits / Score messages show in attract mode</div>
 <table class="disassembly">
 <tr>
 <td class="routine-comment" colspan="5">
@@ -32,121 +32,155 @@ Next: <a href="F5BE.html">F5BE</a>
 </td>
 </tr>
 <tr>
+<td class="asm-label">press_gear_messages</td>
 <td class="address-1"><span id="62609"></span>F491</td>
 <td class="instruction">DEFB $02,$00,$4B,$F8,$AB,$59</td>
 <td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="62615"></span>F497</td>
-<td class="instruction">DEFM "PRESS  GEA"</td>
-<td class="comment-1" rowspan="1">"PRESS GEAR"</td>
+<td class="instruction">DEFM "PRESS  GEA",$D2</td>
+<td class="comment-1" rowspan="1">"PRESS GEAR" (blinks)</td>
 </tr>
 <tr>
-<td class="address-1"><span id="62625"></span>F4A1</td>
-<td class="instruction">DEFB $D2,$02,$00,$48,$F8,$A8,$59</td>
+<td class="asm-label">enter_for_options_messages</td>
+<td class="address-1"><span id="62626"></span>F4A2</td>
+<td class="instruction">DEFB $02,$00,$48,$F8,$A8,$59</td>
 <td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="62632"></span>F4A8</td>
 <td class="instruction">DEFM "ENTER FOR OPTION",$D3</td>
-<td class="comment-1" rowspan="1">"ENTER FOR OPTIONS"</td>
+<td class="comment-1" rowspan="1">"ENTER FOR OPTIONS" (blinks)</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="62649"></span>F4B9</td>
 <td class="instruction">DEFB $0A,$08,$03,$00,$2D,$F0,$4D,$59</td>
 <td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="62657"></span>F4C1</td>
 <td class="instruction">DEFM "CREDIT",$D3</td>
 <td class="comment-1" rowspan="1">"CREDITS"</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="62664"></span>F4C8</td>
 <td class="instruction">DEFB $08,$02,$02,$86,$F0,$06,$5A</td>
 <td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="62671"></span>F4CF</td>
 <td class="instruction">DEFM "PROGRAM      JOBBEE",$C5</td>
 <td class="comment-1" rowspan="1">"PROGRAM      JOBBEEE"</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="62691"></span>F4E3</td>
 <td class="instruction">DEFB $08,$02,$02,$A6,$F0,$46,$5A</td>
 <td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="62698"></span>F4EA</td>
 <td class="instruction">DEFM "GRAPHICS        BIL",$CC</td>
 <td class="comment-1" rowspan="1">"GRAPHICS        BILL"</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="62718"></span>F4FE</td>
 <td class="instruction">DEFB $50,$02,$02,$C6,$F0,$86,$5A</td>
 <td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="62725"></span>F505</td>
 <td class="instruction">DEFM "MUSIC       JON DUN",$CE</td>
 <td class="comment-1" rowspan="1">"MUSIC       JON DUNN"</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="62745"></span>F519</td>
 <td class="instruction">DEFB $03,$00,$0A,$08,$03,$00,$2A,$F0</td>
 <td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="62753"></span>F521</td>
 <td class="instruction">DEFB $4A,$59</td>
 <td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="62755"></span>F523</td>
 <td class="instruction">DEFM "BEST OFFICER",$D3</td>
 <td class="comment-1" rowspan="1">"BEST OFFICERS"</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="62768"></span>F530</td>
 <td class="instruction">DEFB $08,$02,$02,$82,$F0,$02,$5A</td>
 <td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
+<td class="routine-comment" colspan="5">
+<span id="62775"></span>
+<div class="comments">
+<div class="paragraph">
+scores and names are updated somewhere
+</div>
+</div>
+</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="62775"></span>F537</td>
 <td class="instruction">DEFM "RANK  SCORE  STAGE PLAY NAM",$C5</td>
 <td class="comment-1" rowspan="1">"RANK  SCORE  STAGE PLAY NAME"</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="62803"></span>F553</td>
 <td class="instruction">DEFB $08,$02,$02,$A2,$F0,$42,$5A</td>
 <td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="62810"></span>F55A</td>
 <td class="instruction">DEFM "1ST  56784010  ALL    1  JO",$C2</td>
 <td class="comment-1" rowspan="1">"1ST  56784010  ALL    1  JOB"</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="62838"></span>F576</td>
 <td class="instruction">DEFB $08,$02,$02,$C2,$F0,$82,$5A</td>
 <td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="62845"></span>F57D</td>
 <td class="instruction">DEFM "2ND  35678000   4     1  AB",$C3</td>
 <td class="comment-1" rowspan="1">"2ND  35678000   4     1  ABC"</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="62873"></span>F599</td>
 <td class="instruction">DEFB $50,$02,$02,$E2,$F0,$C2,$5A</td>
 <td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="62880"></span>F5A0</td>
 <td class="instruction">DEFM "3RD   4340300   3     2  DE",$C6</td>
 <td class="comment-1" rowspan="1">"3RD   4340300   3     2  DEF"</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="62908"></span>F5BC</td>
 <td class="instruction">DEFB $03,$00</td>
 <td class="comment-1" rowspan="1"></td>
@@ -165,7 +199,7 @@ Next: <a href="F5BE.html">F5BE</a>
 </table>
 <footer>
 <div class="release">The incomplete Chase H.Q. disassembly 20230518</div>
-<div class="copyright">&copy; 1989 Ocean Software Ltd.</div>
+<div class="copyright">&copy; 1988 Taito Corporation &copy; 1989 Ocean Software Ltd. (Chase H.Q.) © 2023 David Thomas (this disassembly)</div>
 <div class="created">Created using <a href="https://skoolkit.ca">SkoolKit</a> 8.9.</div>
 </footer>
 </body>

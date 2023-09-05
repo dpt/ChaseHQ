@@ -23,7 +23,7 @@ Next: <a href="F491.html">F491</a>
 </td>
 </tr>
 </table>
-<div class="description">F220: routine/data copied to $8014 during init? (926 bytes long)</div>
+<div class="description">F220: 128K mode routines and data relocated to $8014/load_stage onwards during init (926 bytes long).</div>
 <table class="disassembly">
 <tr>
 <td class="routine-comment" colspan="5">
@@ -32,1654 +32,1944 @@ Next: <a href="F491.html">F491</a>
 </td>
 </tr>
 <tr>
+<td class="asm-label">load_stage_128k</td>
 <td class="address-2"><span id="61984"></span>F220</td>
 <td class="instruction">LD A,($8007)</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="1">Load wanted_stage_number</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="61987"></span>F223</td>
 <td class="instruction">LD HL,$A13A</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="1">Address of current_stage_number</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="61990"></span>F226</td>
 <td class="instruction">CP (HL)</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="2">Return if the stage is already loaded</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="61991"></span>F227</td>
 <td class="instruction">RET Z</td>
-<td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="61992"></span>F228</td>
 <td class="instruction">LD (HL),A</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="1">wanted_stage_number = current_stage_number</td>
 </tr>
 <tr>
+<td class="routine-comment" colspan="5">
+<span id="61993"></span>
+<div class="comments">
+<div class="paragraph">
+Copy the stage data from the correct bank and address to $5C00..$76EF.
+</div>
+</div>
+</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="61993"></span>F229</td>
 <td class="instruction">ADD A,A</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="5">Point <span class="register">HL</span> at stage_data_locations[current_stage_number]</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="61994"></span>F22A</td>
 <td class="instruction">LD B,$00</td>
-<td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="61996"></span>F22C</td>
 <td class="instruction">LD C,A</td>
-<td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="61997"></span>F22D</td>
 <td class="instruction">LD HL,$8037</td>
-<td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="62000"></span>F230</td>
 <td class="instruction">ADD HL,BC</td>
-<td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="62001"></span>F231</td>
 <td class="instruction">LD A,(HL)</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="1">Load paging flags byte</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="62002"></span>F232</td>
 <td class="instruction">INC HL</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="1">HL++</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="62003"></span>F233</td>
 <td class="instruction">LD H,(HL)</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="2"><span class="register">HL</span> = Source data address (<span class="register">B</span> is zero)</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="62004"></span>F234</td>
 <td class="instruction">LD L,B</td>
-<td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="62005"></span>F235</td>
 <td class="instruction">LD BC,$7FFD</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="2">128K: Page in required bank</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="62008"></span>F238</td>
 <td class="instruction">OUT (C),A</td>
-<td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="62010"></span>F23A</td>
 <td class="instruction">LD DE,$5C00</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="1">Destination $5C00..$76EF (from the horizon backdrop to just before the turbo icons)</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="62013"></span>F23D</td>
 <td class="instruction">LD BC,$1AF0</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="1">Bytes to copy (worst case)</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="62016"></span>F240</td>
 <td class="instruction">LDIR</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="1">Copy</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="62018"></span>F242</td>
 <td class="instruction">JP $8208</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="1">Jump to relocated f414_128k</td>
 </tr>
 <tr>
+<td class="routine-comment" colspan="5">
+<span id="62021"></span>
+<div class="comments">
+<div class="paragraph">
+Pairs of (top byte of source data address, paging flags).
+</div>
+</div>
+</td>
+</tr>
+<tr>
+<td class="asm-label">stage_data_locations</td>
 <td class="address-1"><span id="62021"></span>F245</td>
-<td class="instruction">LD BC,$01C0</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="instruction">DEFW <a href="BDFB.html#49153">$C001</a></td>
+<td class="comment-1" rowspan="1">Level 1. Source = $C000, Paging = bank 1</td>
 </tr>
 <tr>
-<td class="address-1"><span id="62024"></span>F248</td>
-<td class="instruction">RET PO</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="asm-label"></td>
+<td class="address-1"><span id="62023"></span>F247</td>
+<td class="instruction">DEFW $E001</td>
+<td class="comment-1" rowspan="1">Level 2. Source = $E000, Paging = bank 1</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="62025"></span>F249</td>
-<td class="instruction">LD B,$C0</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="instruction">DEFW $C006</td>
+<td class="comment-1" rowspan="1">Level 3. Source = $C000, Paging = bank 6</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="62027"></span>F24B</td>
-<td class="instruction">LD B,$E0</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="instruction">DEFW $E006</td>
+<td class="comment-1" rowspan="1">Level 4. Source = $E000, Paging = bank 6</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="62029"></span>F24D</td>
-<td class="instruction">RLCA</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="instruction">DEFW <a href="BDFB.html#49159">$C007</a></td>
+<td class="comment-1" rowspan="1">Level 5. Source = $C000, Paging = bank 7</td>
 </tr>
 <tr>
-<td class="address-1"><span id="62030"></span>F24E</td>
-<td class="instruction">RET NZ</td>
-<td class="comment-1" rowspan="1"></td>
-</tr>
-<tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="62031"></span>F24F</td>
-<td class="instruction">RLCA</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="instruction">DEFW $E007</td>
+<td class="comment-1" rowspan="1">Level 6. Source = $E000, Paging = bank 7</td>
 </tr>
 <tr>
-<td class="address-1"><span id="62032"></span>F250</td>
-<td class="instruction">RET PO</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="routine-comment" colspan="5">
+<span id="62033"></span>
+<div class="comments">
+<div class="paragraph">
+$8045 once relocated. What calls this?
+</div>
+</div>
+</td>
 </tr>
 <tr>
+<td class="asm-label">f251_128k</td>
 <td class="address-1"><span id="62033"></span>F251</td>
 <td class="instruction">LD A,$8C</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="2">Store $8C to channel A fine pitch</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="62035"></span>F253</td>
 <td class="instruction">LD ($A213),A</td>
-<td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="62038"></span>F256</td>
 <td class="instruction">LD A,$0E</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="2">Store 14 to channel A volume (4-bit)</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="62040"></span>F258</td>
 <td class="instruction">LD ($A21B),A</td>
-<td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="62043"></span>F25B</td>
 <td class="instruction">SUB $02</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="2">Store 12 to channel B volume</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="62045"></span>F25D</td>
 <td class="instruction">LD ($A21C),A</td>
-<td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="62048"></span>F260</td>
 <td class="instruction">LD A,$AA</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="2">Self modify 'LD A,x' at $F271 (in this position)</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="62050"></span>F262</td>
 <td class="instruction">LD ($8066),A</td>
-<td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="62053"></span>F265</td>
 <td class="instruction">LD ($A239),A</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="1">-- state sfx var</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="62056"></span>F268</td>
 <td class="instruction">RET</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="1">Return</td>
 </tr>
 <tr>
+<td class="asm-label">f269_128k</td>
 <td class="address-1"><span id="62057"></span>F269</td>
 <td class="instruction">LD A,($A239)</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="1">-- state sfx var (initialised to $AA above)</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="62060"></span>F26C</td>
 <td class="instruction">AND A</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="2">Return if zero</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="62061"></span>F26D</td>
 <td class="instruction">RET Z</td>
-<td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="62062"></span>F26E</td>
 <td class="instruction">LD A,($A213)</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="1">Load channel A fine pitch</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="62065"></span>F271</td>
 <td class="instruction">LD B,$AA</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="3">jump on 50-50 alternating pattern? -- could be flipping between string sets?</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="62067"></span>F273</td>
 <td class="instruction">RLC B</td>
-<td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="62069"></span>F275</td>
-<td class="instruction">JR C,$F27F</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="instruction">JR C,<a href="F220.html#62079">f27f_128k</a></td>
 </tr>
 <tr>
+<td class="routine-comment" colspan="5">
+<span id="62071"></span>
+<div class="comments">
+<div class="paragraph">
+Decreasing case
+</div>
+</div>
+</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="62071"></span>F277</td>
 <td class="instruction">SUB $03</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="1">A -= 3</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="62073"></span>F279</td>
 <td class="instruction">CP $5A</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="2">Jump if A &gt;= $5A</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="62075"></span>F27B</td>
-<td class="instruction">JR NC,$F28B</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="instruction">JR NC,<a href="F220.html#62091">f28b_128k</a></td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="62077"></span>F27D</td>
-<td class="instruction">JR $F285</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="instruction">JR <a href="F220.html#62085">f285_128k</a></td>
+<td class="comment-1" rowspan="1">Jump</td>
 </tr>
 <tr>
+<td class="routine-comment" colspan="5">
+<span id="62079"></span>
+<div class="comments">
+<div class="paragraph">
+Increasing case
+</div>
+</div>
+</td>
+</tr>
+<tr>
+<td class="asm-label">f27f_128k</td>
 <td class="address-2"><span id="62079"></span>F27F</td>
 <td class="instruction">ADD A,$03</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="1">A += 3</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="62081"></span>F281</td>
 <td class="instruction">CP $8C</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="2">Jump if A &lt; $8C</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="62083"></span>F283</td>
-<td class="instruction">JR C,$F28B</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="instruction">JR C,<a href="F220.html#62091">f28b_128k</a></td>
 </tr>
 <tr>
+<td class="routine-comment" colspan="5">
+<span id="62085"></span>
+<div class="comments">
+<div class="paragraph">
+Arrive here if A is outside of $5A..$8B
+</div>
+</div>
+</td>
+</tr>
+<tr>
+<td class="asm-label">f285_128k</td>
 <td class="address-2"><span id="62085"></span>F285</td>
 <td class="instruction">EX AF,AF'</td>
 <td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="62086"></span>F286</td>
 <td class="instruction">LD A,B</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="2">Store B (rotating pattern)</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="62087"></span>F287</td>
 <td class="instruction">LD ($8066),A</td>
-<td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="62090"></span>F28A</td>
 <td class="instruction">EX AF,AF'</td>
 <td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
+<td class="routine-comment" colspan="5">
+<span id="62091"></span>
+<div class="comments">
+<div class="paragraph">
+Arrive here if A is $5A..$8B
+</div>
+</div>
+</td>
+</tr>
+<tr>
+<td class="asm-label">f28b_128k</td>
 <td class="address-2"><span id="62091"></span>F28B</td>
 <td class="instruction">LD ($A213),A</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="1">Update channel A fine pitch</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="62094"></span>F28E</td>
 <td class="instruction">SUB $04</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="2">and store 4 less to channel B fine pitch</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="62096"></span>F290</td>
 <td class="instruction">LD ($A215),A</td>
-<td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="62099"></span>F293</td>
 <td class="instruction">LD A,($A21A)</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="3">Set mixer to enable tone A &amp; B</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="62102"></span>F296</td>
 <td class="instruction">AND $3C</td>
-<td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="62104"></span>F298</td>
 <td class="instruction">LD ($A21A),A</td>
-<td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="62107"></span>F29B</td>
-<td class="instruction">JR $F2A2</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="instruction">JR <a href="F220.html#62114">load_stage_128k_0</a></td>
+<td class="comment-1" rowspan="1">Jump</td>
 </tr>
 <tr>
+<td class="asm-label">f29d_128k</td>
 <td class="address-1"><span id="62109"></span>F29D</td>
 <td class="instruction">LD A,$3F</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="2">Initialise mixer to $3F (all noise and tone off)</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="62111"></span>F29F</td>
 <td class="instruction">LD ($A21A),A</td>
-<td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
+<td class="routine-comment" colspan="5">
+<span id="62114"></span>
+<div class="comments">
+<div class="paragraph">
+writing the full register set?
+</div>
+</div>
+</td>
+</tr>
+<tr>
+<td class="asm-label">load_stage_128k_0</td>
 <td class="address-2"><span id="62114"></span>F2A2</td>
 <td class="instruction">LD HL,$A21E</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="1">Address of sound register value(s) -- other values must be earlier</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="62117"></span>F2A5</td>
 <td class="instruction">LD A,$0B</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="4">Select AY-3-8912 sound chip register 11: envelope fine duration</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="62119"></span>F2A7</td>
 <td class="instruction">LD C,$FD</td>
-<td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
+<td class="asm-label">f2a9_128k_loop</td>
 <td class="address-1"><span id="62121"></span>F2A9</td>
 <td class="instruction">LD B,$FF</td>
-<td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="62123"></span>F2AB</td>
 <td class="instruction">OUT (C),A</td>
-<td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="62125"></span>F2AD</td>
 <td class="instruction">LD B,$BF</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="2">Write to the register from (HL), then decrement B and HL</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="62127"></span>F2AF</td>
 <td class="instruction">OUTD</td>
-<td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="62129"></span>F2B1</td>
 <td class="instruction">DEC A</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="1">Next register down</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="62130"></span>F2B2</td>
-<td class="instruction">JP P,<a href="8014.html#32925">load_stage_9</a></td>
-<td class="comment-1" rowspan="1">Exit via (if P) print_message</td>
+<td class="instruction">JP P,<a href="8014.html#32925">sub_809D</a></td>
+<td class="comment-1" rowspan="1">Loop to $F2A9 while +ve</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="62133"></span>F2B5</td>
 <td class="instruction">RET</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="1">Return</td>
 </tr>
 <tr>
+<td class="asm-label">f2b6_128k</td>
 <td class="address-2"><span id="62134"></span>F2B6</td>
 <td class="instruction">LD HL,($A24A)</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="1">Get speed value</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="62137"></span>F2B9</td>
 <td class="instruction">RR H</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="1">A = speed / 2 (top half)</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="62139"></span>F2BB</td>
 <td class="instruction">LD A,L</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="2">A = speed / 2 (bottom half)</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="62140"></span>F2BC</td>
 <td class="instruction">RRA</td>
-<td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="62141"></span>F2BD</td>
 <td class="instruction">CPL</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="2">L = ~A</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="62142"></span>F2BE</td>
 <td class="instruction">LD L,A</td>
-<td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="62143"></span>F2BF</td>
 <td class="instruction">LD A,($A253)</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="3">Jump if in low gear</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="62146"></span>F2C2</td>
 <td class="instruction">AND A</td>
-<td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="62147"></span>F2C3</td>
-<td class="instruction">JR Z,$F2C9</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="instruction">JR Z,<a href="F220.html#62153">load_stage_128k_1</a></td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="62149"></span>F2C5</td>
 <td class="instruction">SLA L</td>
 <td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="62151"></span>F2C7</td>
 <td class="instruction">RL H</td>
 <td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
+<td class="asm-label">load_stage_128k_1</td>
 <td class="address-2"><span id="62153"></span>F2C9</td>
 <td class="instruction">SLA L</td>
 <td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="62155"></span>F2CB</td>
 <td class="instruction">RL H</td>
 <td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="62157"></span>F2CD</td>
 <td class="instruction">SLA L</td>
 <td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="62159"></span>F2CF</td>
 <td class="instruction">RL H</td>
 <td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="62161"></span>F2D1</td>
 <td class="instruction">LD A,($A23B)</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="1">A = tunnel_sfx</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="62164"></span>F2D4</td>
 <td class="instruction">AND A</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="1">Set flags</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="62165"></span>F2D5</td>
 <td class="instruction">LD DE,$0190</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="1">-- base tone value?</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="62168"></span>F2D8</td>
 <td class="instruction">LD A,$0F</td>
 <td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="62170"></span>F2DA</td>
-<td class="instruction">JR Z,$F2E1</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="instruction">JR Z,<a href="F220.html#62177">load_stage_128k_2</a></td>
+<td class="comment-1" rowspan="1">Jump if tunnel_sfx was zero</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="62172"></span>F2DC</td>
 <td class="instruction">LD DE,$0258</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="1">-- base tone value?</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="62175"></span>F2DF</td>
 <td class="instruction">LD A,$0C</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="1">Volume = 12</td>
 </tr>
 <tr>
+<td class="asm-label">load_stage_128k_2</td>
 <td class="address-2"><span id="62177"></span>F2E1</td>
 <td class="instruction">ADD HL,DE</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="1">-- speed value + base tone?</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="62178"></span>F2E2</td>
 <td class="instruction">LD ($A217),HL</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="1">Set channel C pitch (both fine and course)</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="62181"></span>F2E5</td>
 <td class="instruction">LD ($A21D),A</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="1">Set channel C volume</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="62184"></span>F2E8</td>
 <td class="instruction">LD A,($A21A)</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="3">Set mixer to enable tone C</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="62187"></span>F2EB</td>
 <td class="instruction">AND $3B</td>
-<td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="62189"></span>F2ED</td>
 <td class="instruction">LD ($A21A),A</td>
-<td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="62192"></span>F2F0</td>
 <td class="instruction">RET</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="1">Return</td>
 </tr>
 <tr>
+<td class="asm-label">f2f1_128k__reset_noise_pitch</td>
 <td class="address-1"><span id="62193"></span>F2F1</td>
 <td class="instruction">LD A,$3C</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="2">Set noise pitch (5-bit) [$3C is &gt; 5-bit...]</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="62195"></span>F2F3</td>
 <td class="instruction">LD ($A219),A</td>
-<td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="62198"></span>F2F6</td>
 <td class="instruction">LD ($A23A),A</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="1">Copy of it?</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="62201"></span>F2F9</td>
 <td class="instruction">RET</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="1">Return</td>
 </tr>
 <tr>
+<td class="asm-label">f2f9_128k</td>
 <td class="address-1"><span id="62202"></span>F2FA</td>
 <td class="instruction">LD A,($A23A)</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="3">Jump if $A23A [copy of noise pitch] is zero</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="62205"></span>F2FD</td>
 <td class="instruction">AND A</td>
-<td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="62206"></span>F2FE</td>
-<td class="instruction">JR Z,$F2B6</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="instruction">JR Z,<a href="F220.html#62134">f2b6_128k</a></td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="62208"></span>F300</td>
 <td class="instruction">DEC A</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="1">Decrement noise pitch</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="62209"></span>F301</td>
 <td class="instruction">RET Z</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="1">Return if zero</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="62210"></span>F302</td>
 <td class="instruction">LD HL,$A219</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="1">Address of noise pitch register soft copy</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="62213"></span>F305</td>
 <td class="instruction">DEC (HL)</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="1">Decrement in-place</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="62214"></span>F306</td>
-<td class="instruction">JR Z,$F31F</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="instruction">JR Z,<a href="F220.html#62239">f31f_128k</a></td>
+<td class="comment-1" rowspan="1">Jump if zero</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="62216"></span>F308</td>
 <td class="instruction">LD A,(HL)</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="4">Increment noise pitch register soft copy by 10</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="62217"></span>F309</td>
 <td class="instruction">ADD A,$0A</td>
-<td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="62219"></span>F30B</td>
 <td class="instruction">LD L,A</td>
-<td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="62220"></span>F30C</td>
 <td class="instruction">LD H,$00</td>
-<td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="62222"></span>F30E</td>
 <td class="instruction">LD ($A217),HL</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="1">Set channel C pitch (both fine and course)</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="62225"></span>F311</td>
 <td class="instruction">LD A,($A21A)</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="3">Set mixer to enable tone C and noise C</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="62228"></span>F314</td>
 <td class="instruction">AND $1B</td>
-<td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="62230"></span>F316</td>
 <td class="instruction">LD ($A21A),A</td>
-<td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="62233"></span>F319</td>
 <td class="instruction">LD A,$0D</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="2">Set channel C volume to 13</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="62235"></span>F31B</td>
 <td class="instruction">LD ($A21D),A</td>
-<td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="62238"></span>F31E</td>
 <td class="instruction">RET</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="1">Return</td>
 </tr>
 <tr>
+<td class="asm-label">f31f_128k</td>
 <td class="address-2"><span id="62239"></span>F31F</td>
 <td class="instruction">LD A,($A21A)</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="3">Set mixer to disable tone C and noise C</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="62242"></span>F322</td>
 <td class="instruction">OR $24</td>
-<td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="62244"></span>F324</td>
 <td class="instruction">LD ($A21A),A</td>
-<td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="62247"></span>F327</td>
 <td class="instruction">XOR A</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="2">[copy of noise pitch] = 0</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="62248"></span>F328</td>
 <td class="instruction">LD ($A23A),A</td>
-<td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="62251"></span>F32B</td>
-<td class="instruction">JP <a href="8014.html#32938">load_stage_10</a></td>
-<td class="comment-1" rowspan="1"></td>
+<td class="instruction">JP <a href="8014.html#32938">load_stage_5</a></td>
+<td class="comment-1" rowspan="1">Exit via f2b6_128k</td>
 </tr>
 <tr>
+<td class="asm-label">f32e_128k_table</td>
 <td class="address-1"><span id="62254"></span>F32E</td>
-<td class="instruction">ADC A,H</td>
+<td class="instruction">DEFW $0A8C</td>
 <td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
-<td class="address-1"><span id="62255"></span>F32F</td>
-<td class="instruction">LD A,(BC)</td>
-<td class="comment-1" rowspan="1"></td>
-</tr>
-<tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="62256"></span>F330</td>
-<td class="instruction">NOP</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="instruction">DEFW $C000</td>
+<td class="comment-1" rowspan="1">address?</td>
 </tr>
 <tr>
-<td class="address-1"><span id="62257"></span>F331</td>
-<td class="instruction">RET NZ</td>
-<td class="comment-1" rowspan="1"></td>
-</tr>
-<tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="62258"></span>F332</td>
-<td class="instruction">AND $14</td>
+<td class="instruction">DEFW $14E6</td>
 <td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="62260"></span>F334</td>
-<td class="instruction">ADC A,H</td>
+<td class="instruction">DEFW <a href="C8E3.html#51852">$CA8C</a></td>
+<td class="comment-1" rowspan="1">address?</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="62262"></span>F336</td>
+<td class="instruction">DEFW $0A5A</td>
 <td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
-<td class="address-1"><span id="62261"></span>F335</td>
-<td class="instruction">JP Z,$0A5A</td>
-<td class="comment-1" rowspan="1"></td>
-</tr>
-<tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="62264"></span>F338</td>
-<td class="instruction">LD (HL),D</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="instruction">DEFW $DF72</td>
+<td class="comment-1" rowspan="1">address?</td>
 </tr>
 <tr>
-<td class="address-1"><span id="62265"></span>F339</td>
-<td class="instruction">RST $18</td>
-<td class="comment-1" rowspan="1"></td>
-</tr>
-<tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="62266"></span>F33A</td>
-<td class="instruction">CP (HL)</td>
+<td class="instruction">DEFW $0ABE</td>
 <td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
-<td class="address-1"><span id="62267"></span>F33B</td>
-<td class="instruction">LD A,(BC)</td>
-<td class="comment-1" rowspan="1"></td>
-</tr>
-<tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="62268"></span>F33C</td>
-<td class="instruction">CALL Z,$DCE9</td>
+<td class="instruction">DEFW $E9CC</td>
+<td class="comment-1" rowspan="1">address?</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="62270"></span>F33E</td>
+<td class="instruction">DEFW $0ADC</td>
 <td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
-<td class="address-1"><span id="62271"></span>F33F</td>
-<td class="instruction">LD A,(BC)</td>
-<td class="comment-1" rowspan="1"></td>
-</tr>
-<tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="62272"></span>F340</td>
-<td class="instruction">ADC A,D</td>
+<td class="instruction">DEFW $F48A</td>
+<td class="comment-1" rowspan="1">address?</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="62274"></span>F342</td>
+<td class="instruction">DEFW <a href="CBCE.html#52488">$CD08</a></td>
 <td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
-<td class="address-1"><span id="62273"></span>F341</td>
-<td class="instruction">CALL P,<a href="CBD6.html#52488">$CD08</a></td>
-<td class="comment-1" rowspan="1"></td>
-</tr>
-<tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="62276"></span>F344</td>
-<td class="instruction">SUB C</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="instruction">DEFW <a href="8014.html#32913">$8091</a></td>
+<td class="comment-1" rowspan="1">address?</td>
 </tr>
 <tr>
-<td class="address-1"><span id="62277"></span>F345</td>
-<td class="instruction">ADD A,B</td>
-<td class="comment-1" rowspan="1"></td>
-</tr>
-<tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="62278"></span>F346</td>
 <td class="instruction">LD A,$04</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="3">128K: Map RAM page 4 to $C000; Map normal screen; Map ROM 0</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="62280"></span>F348</td>
 <td class="instruction">LD BC,$7FFD</td>
-<td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="62283"></span>F34B</td>
 <td class="instruction">OUT (C),A</td>
-<td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="62285"></span>F34D</td>
 <td class="instruction">LD C,$FD</td>
 <td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="62287"></span>F34F</td>
 <td class="instruction">LD HL,$FFBF</td>
 <td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="62290"></span>F352</td>
 <td class="instruction">LD D,$08</td>
 <td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="62292"></span>F354</td>
 <td class="instruction">EXX</td>
 <td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="62293"></span>F355</td>
 <td class="instruction">EX AF,AF'</td>
 <td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="62294"></span>F356</td>
 <td class="instruction">ADD A,A</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="6">HL = $F32A + A*4  -- i.e. it's 1-indexed f32e_128k_table</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="62295"></span>F357</td>
 <td class="instruction">ADD A,A</td>
-<td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="62296"></span>F358</td>
 <td class="instruction">LD HL,$811E</td>
-<td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="62299"></span>F35B</td>
 <td class="instruction">LD C,A</td>
-<td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="62300"></span>F35C</td>
 <td class="instruction">LD B,$00</td>
-<td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="62302"></span>F35E</td>
 <td class="instruction">ADD HL,BC</td>
-<td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="62303"></span>F35F</td>
 <td class="instruction">LD E,(HL)</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="4">DE = wordat(HL); HL += 2</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="62304"></span>F360</td>
 <td class="instruction">INC HL</td>
-<td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="62305"></span>F361</td>
 <td class="instruction">LD D,(HL)</td>
-<td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="62306"></span>F362</td>
 <td class="instruction">INC HL</td>
-<td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="62307"></span>F363</td>
 <td class="instruction">LD A,(HL)</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="4">HL = wordat(HL)</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="62308"></span>F364</td>
 <td class="instruction">INC HL</td>
-<td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="62309"></span>F365</td>
 <td class="instruction">LD H,(HL)</td>
-<td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="62310"></span>F366</td>
 <td class="instruction">LD L,A</td>
-<td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
+<td class="asm-label">f367_128k</td>
 <td class="address-1"><span id="62311"></span>F367</td>
 <td class="instruction">LD C,$02</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="1">C = 2  -- iterations</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="62313"></span>F369</td>
 <td class="instruction">LD A,(HL)</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="1">A = *HL</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="62314"></span>F36A</td>
 <td class="instruction">RRA</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="4">A = A ROR 4</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="62315"></span>F36B</td>
 <td class="instruction">RRA</td>
-<td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="62316"></span>F36C</td>
 <td class="instruction">RRA</td>
-<td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="62317"></span>F36D</td>
 <td class="instruction">RRA</td>
-<td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
+<td class="asm-label">f36e_loop</td>
 <td class="address-2"><span id="62318"></span>F36E</td>
 <td class="instruction">AND $0F</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="1">A &amp;= 15</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="62320"></span>F370</td>
 <td class="instruction">EX AF,AF'</td>
 <td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="62321"></span>F371</td>
 <td class="instruction">EXX</td>
 <td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="62322"></span>F372</td>
 <td class="instruction">LD B,H</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="1">B = H which is $FF</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="62323"></span>F373</td>
 <td class="instruction">LD A,D</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="1">A = D which is 8</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="62324"></span>F374</td>
 <td class="instruction">OUT (C),A</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="1">C is $FD</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="62326"></span>F376</td>
 <td class="instruction">LD B,L</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="1">B = L which is $BF</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="62327"></span>F377</td>
 <td class="instruction">EX AF,AF'</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="1">A = value loaded above</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="62328"></span>F378</td>
 <td class="instruction">OUT (C),A</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="1">OUT</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="62330"></span>F37A</td>
 <td class="instruction">EX AF,AF'</td>
 <td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="62331"></span>F37B</td>
 <td class="instruction">INC A</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="1">8 -&gt; 9 etc.</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="62332"></span>F37C</td>
 <td class="instruction">LD B,H</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="1">B = $FF</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="62333"></span>F37D</td>
 <td class="instruction">OUT (C),A</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="1">C is $FD</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="62335"></span>F37F</td>
 <td class="instruction">LD B,L</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="1">B = L which is $BF</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="62336"></span>F380</td>
 <td class="instruction">EX AF,AF'</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="1">A = value loaded above</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="62337"></span>F381</td>
 <td class="instruction">OUT (C),A</td>
 <td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="62339"></span>F383</td>
 <td class="instruction">EX AF,AF'</td>
 <td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="62340"></span>F384</td>
 <td class="instruction">INC A</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="1">9 -&gt; 10 etc.</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="62341"></span>F385</td>
 <td class="instruction">LD B,H</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="1">B = $FF</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="62342"></span>F386</td>
 <td class="instruction">OUT (C),A</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="1">C is $FD</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="62344"></span>F388</td>
 <td class="instruction">LD B,L</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="1">B = L which is $BF</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="62345"></span>F389</td>
 <td class="instruction">EX AF,AF'</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="1">A = value loaded above</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="62346"></span>F38A</td>
 <td class="instruction">OUT (C),A</td>
 <td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="62348"></span>F38C</td>
 <td class="instruction">EXX</td>
 <td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="62349"></span>F38D</td>
 <td class="instruction">LD B,$13</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="2">Perhaps a delay loop</td>
 </tr>
 <tr>
+<td class="asm-label">load_stage_128k_3</td>
 <td class="address-2"><span id="62351"></span>F38F</td>
-<td class="instruction">DJNZ $F38F</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="instruction">DJNZ <a href="F220.html#62351">load_stage_128k_3</a></td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="62353"></span>F391</td>
 <td class="instruction">LD A,(HL)</td>
 <td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="62354"></span>F392</td>
 <td class="instruction">DEC C</td>
 <td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="62355"></span>F393</td>
-<td class="instruction">JR NZ,$F36E</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="instruction">JR NZ,<a href="F220.html#62318">f36e_loop</a></td>
+<td class="comment-1" rowspan="1">Loop f36e_loop</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="62357"></span>F395</td>
 <td class="instruction">INC HL</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="1">HL++</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="62358"></span>F396</td>
 <td class="instruction">DEC DE</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="1">DE--</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="62359"></span>F397</td>
 <td class="instruction">LD A,D</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="3">Jump to f367_128k if DE &gt; 0  -- so DE's a counter</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="62360"></span>F398</td>
 <td class="instruction">OR E</td>
-<td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="62361"></span>F399</td>
 <td class="instruction">JP NZ,$815B</td>
-<td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="62364"></span>F39C</td>
 <td class="instruction">JP $8208</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="1">Jump to relocated f414_128k</td>
 </tr>
 <tr>
+<td class="asm-label">f39f_128k</td>
 <td class="address-1"><span id="62367"></span>F39F</td>
 <td class="instruction">LD A,($8E4A)</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="1">-- frame delay?</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="62370"></span>F3A2</td>
 <td class="instruction">CP $2A</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="2">Return if A &lt; 42</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="62372"></span>F3A4</td>
 <td class="instruction">RET C</td>
-<td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="62373"></span>F3A5</td>
 <td class="instruction">CALL <a href="83B5.html#33723">silence_audio_hook</a></td>
 <td class="comment-1" rowspan="1">Call silence_audio_hook</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="62376"></span>F3A8</td>
 <td class="instruction">XOR A</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="2">$A239 = 0 -- state sfx var</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="62377"></span>F3A9</td>
 <td class="instruction">LD ($A239),A</td>
-<td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="62380"></span>F3AC</td>
 <td class="instruction">INC A</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="1">A = 1</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="62381"></span>F3AD</td>
 <td class="instruction">LD ($A23A),A</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="1">Load &lt;copy of noise pitch&gt;</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="62384"></span>F3B0</td>
 <td class="instruction">LD ($8E4A),A</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="1">Self modify $8E49</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="62387"></span>F3B3</td>
 <td class="instruction">LD HL,$C006</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="2">Self modify 'CALL xxxx' at $81C5 ($F3D1 here - below)</td>
 </tr>
 <tr>
+<td class="asm-label">f3b6_128k</td>
 <td class="address-1"><span id="62390"></span>F3B6</td>
 <td class="instruction">LD ($81C6),HL</td>
-<td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="62393"></span>F3B9</td>
 <td class="instruction">LD HL,$B000</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="7">Copy 4096 bytes from $B000 to $F000 (preserving registers for later)</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="62396"></span>F3BC</td>
 <td class="instruction">LD DE,$F000</td>
-<td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="62399"></span>F3BF</td>
 <td class="instruction">LD BC,$1000</td>
-<td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="62402"></span>F3C2</td>
 <td class="instruction">PUSH HL</td>
-<td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="62403"></span>F3C3</td>
 <td class="instruction">PUSH DE</td>
-<td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="62404"></span>F3C4</td>
 <td class="instruction">PUSH BC</td>
-<td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="62405"></span>F3C5</td>
 <td class="instruction">LDIR</td>
-<td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="62407"></span>F3C7</td>
 <td class="instruction">LD ($81CE),SP</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="1">Self modify 'LD SP,xxxx' at $81CD ($F3D9 here - below)</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="62411"></span>F3CB</td>
 <td class="instruction">LD SP,$A214</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="1">new sp</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="62414"></span>F3CE</td>
 <td class="instruction">CALL $81D6</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="1">Call relocated f3e2_128k</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="62417"></span>F3D1</td>
 <td class="instruction">CALL $0000</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="1">Self modified by $F3B3</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="62420"></span>F3D4</td>
 <td class="instruction">PUSH AF</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="1">Preserve ?</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="62421"></span>F3D5</td>
 <td class="instruction">CALL $81D6</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="1">Call relocated f3e2_128k</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="62424"></span>F3D8</td>
 <td class="instruction">POP AF</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="1">Restore ?</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="62425"></span>F3D9</td>
 <td class="instruction">LD SP,$0000</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="1">Restore SP - self modified by $F3C7 above</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="62428"></span>F3DC</td>
 <td class="instruction">POP BC</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="3">Copy 4096 bytes from $B000 to $F000</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="62429"></span>F3DD</td>
 <td class="instruction">POP HL</td>
-<td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="62430"></span>F3DE</td>
 <td class="instruction">POP DE</td>
-<td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="62431"></span>F3DF</td>
 <td class="instruction">LDIR</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="1">Copy</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="62433"></span>F3E1</td>
 <td class="instruction">RET</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="1">Return</td>
 </tr>
 <tr>
+<td class="asm-label">f3e2_128k</td>
 <td class="address-1"><span id="62434"></span>F3E2</td>
 <td class="instruction">LD HL,$C000</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="1">HL = $C000</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="62437"></span>F3E5</td>
 <td class="instruction">LD B,$04</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="1">4 iterations</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="62439"></span>F3E7</td>
 <td class="instruction">LD E,L</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="1">E = 0</td>
 </tr>
 <tr>
+<td class="asm-label">f3e8_loop</td>
 <td class="address-2"><span id="62440"></span>F3E8</td>
 <td class="instruction">PUSH BC</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="1">Preserve iterations</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="62441"></span>F3E9</td>
 <td class="instruction">LD D,$B0</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="1">DE = $B000</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="62443"></span>F3EB</td>
 <td class="instruction">LD BC,$1000</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="1">4096 bytes</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="62446"></span>F3EE</td>
 <td class="instruction">PUSH BC</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="2">Preserve</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="62447"></span>F3EF</td>
 <td class="instruction">PUSH HL</td>
-<td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="62448"></span>F3F0</td>
 <td class="instruction">LDIR</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="1">Copy</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="62450"></span>F3F2</td>
 <td class="instruction">LD A,$03</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="1">A = 3</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="62452"></span>F3F4</td>
 <td class="instruction">CALL <a href="8204.html#33289">engine_sfx_setup_0</a></td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="1">Jump into engine_sfx_setup with engine speed setup</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="62455"></span>F3F7</td>
 <td class="instruction">POP HL</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="4">Retrieve from stack</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="62456"></span>F3F8</td>
 <td class="instruction">POP BC</td>
-<td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="62457"></span>F3F9</td>
 <td class="instruction">PUSH BC</td>
-<td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="62458"></span>F3FA</td>
 <td class="instruction">PUSH HL</td>
-<td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="62459"></span>F3FB</td>
 <td class="instruction">LD D,$B0</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="1">DE = $B000</td>
 </tr>
 <tr>
+<td class="asm-label">f3fd_loop</td>
 <td class="address-1"><span id="62461"></span>F3FD</td>
 <td class="instruction">LD A,(DE)</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="1">A = *DE</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="62462"></span>F3FE</td>
 <td class="instruction">LDI</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="1">Transfer a byte</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="62464"></span>F400</td>
 <td class="instruction">DEC HL</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="3">HL[-1] = A</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="62465"></span>F401</td>
 <td class="instruction">LD (HL),A</td>
-<td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="62466"></span>F402</td>
 <td class="instruction">INC HL</td>
-<td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="62467"></span>F403</td>
 <td class="instruction">JP PE,$81F1</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="1">Loop if (parity even) to f3fd_loop</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="62470"></span>F406</td>
 <td class="instruction">CALL $8208</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="1">Call relocated f414_128k</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="62473"></span>F409</td>
 <td class="instruction">POP DE</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="2">Restore</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="62474"></span>F40A</td>
 <td class="instruction">POP BC</td>
-<td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="62475"></span>F40B</td>
 <td class="instruction">LD H,$B0</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="1">HL = $B000</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="62477"></span>F40D</td>
 <td class="instruction">LDIR</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="1">Copy</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="62479"></span>F40F</td>
 <td class="instruction">LD H,D</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="1">H = D</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="62480"></span>F410</td>
 <td class="instruction">POP BC</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="1">Restore iterations</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="62481"></span>F411</td>
-<td class="instruction">DJNZ $F3E8</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="instruction">DJNZ <a href="F220.html#62440">f3e8_loop</a></td>
+<td class="comment-1" rowspan="1">Loop to f3e8_loop</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="62483"></span>F413</td>
 <td class="instruction">RET</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="1">Return</td>
 </tr>
 <tr>
+<td class="asm-label">f414_128k</td>
 <td class="address-1"><span id="62484"></span>F414</td>
 <td class="instruction">XOR A</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="3">128K: Set paging register to default</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="62485"></span>F415</td>
 <td class="instruction">LD BC,$7FFD</td>
-<td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="62488"></span>F418</td>
 <td class="instruction">OUT (C),A</td>
-<td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="62490"></span>F41A</td>
 <td class="instruction">RET</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="1">Return</td>
 </tr>
 <tr>
+<td class="routine-comment" colspan="5">
+<span id="62491"></span>
+<div class="comments">
+<div class="paragraph">
+This is like attract_mode.
+</div>
+</div>
+</td>
+</tr>
+<tr>
+<td class="asm-label">f41b_128k</td>
 <td class="address-1"><span id="62491"></span>F41B</td>
 <td class="instruction">LD HL,$C000</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="1">HL = $C000</td>
 </tr>
 <tr>
+<td class="asm-label">load_stage_128k_4</td>
 <td class="address-2"><span id="62494"></span>F41E</td>
 <td class="instruction">CALL $81AA</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="1">Call relocated f3b6_128k</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="62497"></span>F421</td>
 <td class="instruction">AND A</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="2">Return if A is zero</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="62498"></span>F422</td>
 <td class="instruction">RET Z</td>
-<td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="62499"></span>F423</td>
 <td class="instruction">LD HL,$5D2B</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="1">HL -&gt; attract_data</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="62502"></span>F426</td>
 <td class="instruction">CALL <a href="87DC.html">setup_game</a></td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="1">Call setup_game</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="62505"></span>F429</td>
 <td class="instruction">LD A,$02</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="2">var or self modify or ..?</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="62507"></span>F42B</td>
 <td class="instruction">LD ($825E),A</td>
-<td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="62510"></span>F42E</td>
 <td class="instruction">LD HL,$0190</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="2">Set speed to $190</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="62513"></span>F431</td>
 <td class="instruction">LD ($A24A),HL</td>
-<td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
+<td class="asm-label">f434_128k_loop</td>
 <td class="address-1"><span id="62516"></span>F434</td>
 <td class="instruction">CALL <a href="852A.html">cpu_driver</a></td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="1">Call cpu_driver</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="62519"></span>F437</td>
 <td class="instruction">LD A,($8001)</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="1">Load attract_cycle</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="62522"></span>F43A</td>
 <td class="instruction">AND A</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="1">Set flags</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="62523"></span>F43B</td>
 <td class="instruction">LD DE,$8296</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="1">-&gt; enter_for_options_messages</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="62526"></span>F43E</td>
-<td class="instruction">JR Z,$F44B</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="instruction">JR Z,<a href="F220.html#62539">f44b_key_check</a></td>
+<td class="comment-1" rowspan="1">Jump to f44b_key_check</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="62528"></span>F440</td>
 <td class="instruction">CALL <a href="A0CC.html#41174">keyscan</a></td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="1">Call keyscan</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="62531"></span>F443</td>
 <td class="instruction">AND $10</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="1">Was FIRE pressed?</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="62533"></span>F445</td>
-<td class="instruction">JP NZ,<a href="9BCF.html#40057">tick_4</a></td>
-<td class="comment-1" rowspan="1"></td>
+<td class="instruction">JP NZ,<a href="9BCF.html#40057">tick_3</a></td>
+<td class="comment-1" rowspan="1">Jump if so</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="62536"></span>F448</td>
 <td class="instruction">LD DE,$8285</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="1">-&gt; press_gear_messages</td>
 </tr>
 <tr>
+<td class="asm-label">f44b_key_check</td>
 <td class="address-2"><span id="62539"></span>F44B</td>
 <td class="instruction">LD A,$BF</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="2">Read port $BFFE -- ENTER, L, K, J, H</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="62541"></span>F44D</td>
 <td class="instruction">IN A,($FE)</td>
-<td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="62543"></span>F44F</td>
 <td class="instruction">CPL</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="1">Complement the value returned to change it from to active-high</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="62544"></span>F450</td>
 <td class="instruction">RRA</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="1">?Shift out lsb</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="62545"></span>F451</td>
 <td class="instruction">LD HL,$C009</td>
 <td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="62548"></span>F454</td>
-<td class="instruction">JR C,$F41E</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="instruction">JR C,<a href="F220.html#62494">load_stage_128k_4</a></td>
+<td class="comment-1" rowspan="1">?Jump if ENTER was pressed</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="62550"></span>F456</td>
 <td class="instruction">EX DE,HL</td>
 <td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="62551"></span>F457</td>
 <td class="instruction">LD A,$F0</td>
 <td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="62553"></span>F459</td>
 <td class="instruction">RRCA</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="1">-- why load A then shift? self modified?</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="62554"></span>F45A</td>
 <td class="instruction">LD ($824C),A</td>
 <td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="62557"></span>F45D</td>
-<td class="instruction">JR NC,$F463</td>
+<td class="instruction">JR NC,<a href="F220.html#62563">load_stage_128k_5</a></td>
 <td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="62559"></span>F45F</td>
 <td class="instruction">LD A,(HL)</td>
 <td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="62560"></span>F460</td>
 <td class="instruction">CALL <a href="8E6C.html">print_message</a></td>
 <td class="comment-1" rowspan="1">Call print_message</td>
 </tr>
 <tr>
+<td class="asm-label">load_stage_128k_5</td>
 <td class="address-2"><span id="62563"></span>F463</td>
 <td class="instruction">LD A,($A231)</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="3">If transition_control != 0 jump</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="62566"></span>F466</td>
 <td class="instruction">AND A</td>
-<td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="62567"></span>F467</td>
-<td class="instruction">JR NZ,$F488</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="instruction">JR NZ,<a href="F220.html#62600">f488_128k</a></td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="62569"></span>F469</td>
 <td class="instruction">LD A,$00</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="1">-- smells like self modified</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="62571"></span>F46B</td>
 <td class="instruction">AND A</td>
 <td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="62572"></span>F46C</td>
 <td class="instruction">JP M,$820F</td>
 <td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="62575"></span>F46F</td>
 <td class="instruction">DEC A</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="1">A--</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="62576"></span>F470</td>
 <td class="instruction">LD ($825E),A</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="1">self modifying?</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="62579"></span>F473</td>
 <td class="instruction">JP P,<a href="8258.html#33393">attract_mode_1</a></td>
 <td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="62582"></span>F476</td>
 <td class="instruction">LD A,$08</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="1">Transition type?</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="62584"></span>F478</td>
 <td class="instruction">CALL <a href="8DF9.html">setup_transition</a></td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="1">Call setup_transition</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="62587"></span>F47B</td>
-<td class="instruction">JR $F488</td>
+<td class="instruction">JR <a href="F220.html#62600">f488_128k</a></td>
 <td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
+<td class="asm-label">f47d_128k</td>
 <td class="address-1"><span id="62589"></span>F47D</td>
 <td class="instruction">LD HL,$82AD</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="1">-- must be messages ptr below ($8208+165 means ?)</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="62592"></span>F480</td>
-<td class="instruction">JR NZ,$F485</td>
+<td class="instruction">JR NZ,<a href="F220.html#62597">f485_128k</a></td>
 <td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="62594"></span>F482</td>
 <td class="instruction">LD HL,$830F</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="1">-- must be messages ptr below ($8208+263 means ?)</td>
 </tr>
 <tr>
+<td class="asm-label">f485_128k</td>
 <td class="address-2"><span id="62597"></span>F485</td>
 <td class="instruction">CALL <a href="8E7E.html">message_printing_related</a></td>
 <td class="comment-1" rowspan="1">Call message_printing_related</td>
 </tr>
 <tr>
+<td class="asm-label">f488_128k</td>
 <td class="address-2"><span id="62600"></span>F488</td>
 <td class="instruction">CALL <a href="8D8F.html">transition</a></td>
 <td class="comment-1" rowspan="1">Call transition</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="62603"></span>F48B</td>
 <td class="instruction">CALL <a href="BC3E.html">draw_screen</a></td>
 <td class="comment-1" rowspan="1">Call draw_screen</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="62606"></span>F48E</td>
 <td class="instruction">JP $8228</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="1">Loop to f434_128k_loop</td>
 </tr>
 </table>
 <table class="asm-navigation">
@@ -1695,7 +1985,7 @@ Next: <a href="F491.html">F491</a>
 </table>
 <footer>
 <div class="release">The incomplete Chase H.Q. disassembly 20230518</div>
-<div class="copyright">&copy; 1989 Ocean Software Ltd.</div>
+<div class="copyright">&copy; 1988 Taito Corporation &copy; 1989 Ocean Software Ltd. (Chase H.Q.) © 2023 David Thomas (this disassembly)</div>
 <div class="created">Created using <a href="https://skoolkit.ca">SkoolKit</a> 8.9.</div>
 </footer>
 </body>

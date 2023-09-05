@@ -23,151 +23,175 @@ Next: <a href="860F.html">860F</a>
 </td>
 </tr>
 </table>
-<div class="description">85E4: Routine at 85E4</div>
+<div class="description">85E4: Reveals the perp's car on the pre-game screen.</div>
 <table class="disassembly">
 <tr>
 <td class="routine-comment" colspan="5">
 <div class="details">
 <div class="paragraph">
-Used by the routine at <a href="858C.html">858C</a>.
+Used by the routine at <a href="858C.html">run_pregame_screen</a>.
 </div>
 </div>
 </td>
 </tr>
 <tr>
+<td class="asm-label">reveal_perp_car</td>
 <td class="address-2"><span id="34276"></span>85E4</td>
 <td class="instruction">LD A,($8007)</td>
-<td class="comment-0" rowspan="1"></td>
+<td class="comment-1" rowspan="3">Return if wanted_stage_number is 5 (the perp's car is hidden on the pre-game screen for that stage)</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="34279"></span>85E7</td>
 <td class="instruction">CP $05</td>
-<td class="comment-0" rowspan="1"></td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="34281"></span>85E9</td>
 <td class="instruction">RET Z</td>
-<td class="comment-0" rowspan="1"></td>
 </tr>
 <tr>
+<td class="routine-comment" colspan="5">
+<span id="34282"></span>
+<div class="comments">
+<div class="paragraph">
+The perp's car is revealed from the bottom-up.
+</div>
+</div>
+</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="34282"></span>85EA</td>
 <td class="instruction">LD A,$00</td>
-<td class="comment-0" rowspan="1"></td>
+<td class="comment-1" rowspan="1">Load (self modified) height counter</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="34284"></span>85EC</td>
 <td class="instruction">INC A</td>
-<td class="comment-0" rowspan="1"></td>
+<td class="comment-1" rowspan="1">Increment it</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="34285"></span>85ED</td>
 <td class="instruction">CP $32</td>
-<td class="comment-0" rowspan="1"></td>
+<td class="comment-1" rowspan="3">Max height is 50</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="34287"></span>85EF</td>
-<td class="instruction">JR C,$85F2</td>
-<td class="comment-0" rowspan="1"></td>
+<td class="instruction">JR C,<a href="85E4.html#34290">reveal_perp_car_0</a></td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="34289"></span>85F1</td>
 <td class="instruction">DEC A</td>
-<td class="comment-0" rowspan="1"></td>
 </tr>
 <tr>
+<td class="asm-label">reveal_perp_car_0</td>
 <td class="address-2"><span id="34290"></span>85F2</td>
 <td class="instruction">LD ($85EB),A</td>
-<td class="comment-0" rowspan="1"></td>
+<td class="comment-1" rowspan="1">Update height counter</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="34293"></span>85F5</td>
 <td class="instruction">LD HL,($5D10)</td>
-<td class="comment-0" rowspan="1"></td>
+<td class="comment-1" rowspan="1">Load address of perp's car LOD</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="34296"></span>85F8</td>
 <td class="instruction">LD D,$00</td>
-<td class="comment-0" rowspan="1"></td>
+<td class="comment-1" rowspan="2">Read lod.width_bytes</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="34298"></span>85FA</td>
 <td class="instruction">LD E,(HL)</td>
-<td class="comment-0" rowspan="1"></td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="34299"></span>85FB</td>
 <td class="instruction">INC HL</td>
-<td class="comment-0" rowspan="1"></td>
+<td class="comment-1" rowspan="3">Read lod.height</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="34300"></span>85FC</td>
 <td class="instruction">INC HL</td>
-<td class="comment-0" rowspan="1"></td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="34301"></span>85FD</td>
 <td class="instruction">LD B,(HL)</td>
-<td class="comment-0" rowspan="1"></td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="34302"></span>85FE</td>
 <td class="instruction">CP B</td>
-<td class="comment-0" rowspan="1"></td>
+<td class="comment-1" rowspan="3">If height counter &lt; lod.height, B = height counter</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="34303"></span>85FF</td>
-<td class="instruction">JR NC,$8602</td>
-<td class="comment-0" rowspan="1"></td>
+<td class="instruction">JR NC,<a href="85E4.html#34306">reveal_perp_car_1</a></td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="34305"></span>8601</td>
 <td class="instruction">LD B,A</td>
-<td class="comment-0" rowspan="1"></td>
 </tr>
 <tr>
+<td class="asm-label">reveal_perp_car_1</td>
 <td class="address-2"><span id="34306"></span>8602</td>
 <td class="instruction">INC HL</td>
-<td class="comment-0" rowspan="1"></td>
+<td class="comment-1" rowspan="5">Load address of bitmap data</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="34307"></span>8603</td>
 <td class="instruction">LD A,(HL)</td>
-<td class="comment-0" rowspan="1"></td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="34308"></span>8604</td>
 <td class="instruction">INC HL</td>
-<td class="comment-0" rowspan="1"></td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="34309"></span>8605</td>
 <td class="instruction">LD H,(HL)</td>
-<td class="comment-0" rowspan="1"></td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="34310"></span>8606</td>
 <td class="instruction">LD L,A</td>
-<td class="comment-0" rowspan="1"></td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="34311"></span>8607</td>
 <td class="instruction">LD A,E</td>
-<td class="comment-0" rowspan="1"></td>
+<td class="comment-1" rowspan="1">Stride of bitmap data in bytes (D is still zero)</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="34312"></span>8608</td>
 <td class="instruction">EXX</td>
-<td class="comment-0" rowspan="1"></td>
+<td class="comment-1" rowspan="1">Bank for plot_sprite entry</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="34313"></span>8609</td>
 <td class="instruction">LD HL,$F4CD</td>
-<td class="comment-0" rowspan="1"></td>
+<td class="comment-1" rowspan="1">Address in back buffer to plot at</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="34316"></span>860C</td>
 <td class="instruction">JP <a href="949C.html">plot_sprite</a></td>
-<td class="comment-0" rowspan="1"></td>
+<td class="comment-1" rowspan="1">Exit via plot_sprite</td>
 </tr>
 </table>
 <table class="asm-navigation">
@@ -183,7 +207,7 @@ Next: <a href="860F.html">860F</a>
 </table>
 <footer>
 <div class="release">The incomplete Chase H.Q. disassembly 20230518</div>
-<div class="copyright">&copy; 1989 Ocean Software Ltd.</div>
+<div class="copyright">&copy; 1988 Taito Corporation &copy; 1989 Ocean Software Ltd. (Chase H.Q.) © 2023 David Thomas (this disassembly)</div>
 <div class="created">Created using <a href="https://skoolkit.ca">SkoolKit</a> 8.9.</div>
 </footer>
 </body>

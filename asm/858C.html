@@ -23,7 +23,7 @@ Next: <a href="85DD.html">85DD</a>
 </td>
 </tr>
 </table>
-<div class="description">858C: Probably the "CHASE HQ MONITORING SYSTEM" pre-game screen</div>
+<div class="description">858C: Pre-game radio screen ("CHASE HQ MONITORING SYSTEM")</div>
 <table class="disassembly">
 <tr>
 <td class="routine-comment" colspan="5">
@@ -35,168 +35,193 @@ Used by the routine at <a href="8401.html">main_loop</a>.
 </td>
 </tr>
 <tr>
+<td class="asm-label">run_pregame_screen</td>
 <td class="address-2"><span id="34188"></span>858C</td>
 <td class="instruction">LD HL,$5D1D</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="1">Address of setup_game_data</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="34191"></span>858F</td>
 <td class="instruction">CALL <a href="87DC.html">setup_game</a></td>
 <td class="comment-1" rowspan="1">Call setup_game</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="34194"></span>8592</td>
 <td class="instruction">LD A,$F8</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="2">Set $A220 to $F8  (TBD)</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="34196"></span>8594</td>
 <td class="instruction">LD ($A220),A</td>
-<td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="34199"></span>8597</td>
 <td class="instruction">CALL <a href="8DF9.html">setup_transition</a></td>
 <td class="comment-1" rowspan="1">Call setup_transition</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="34202"></span>859A</td>
 <td class="instruction">CALL <a href="BDC1.html">clear_screen_set_attrs</a></td>
 <td class="comment-1" rowspan="1">Call clear_screen_set_attrs</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="34205"></span>859D</td>
 <td class="instruction">XOR A</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="2">Reset car revealing height counter in <a href="85E4.html">reveal_perp_car</a></td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="34206"></span>859E</td>
 <td class="instruction">LD ($85EB),A</td>
-<td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="34209"></span>85A1</td>
 <td class="instruction">DEC A</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="1">A = $FF (TBD)</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="34210"></span>85A2</td>
 <td class="instruction">LD HL,($5D04)</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="1">Load Nancy's report for this level</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="34213"></span>85A5</td>
 <td class="instruction">CALL <a href="9945.html">chatter</a></td>
 <td class="comment-1" rowspan="1">Call chatter</td>
 </tr>
 <tr>
+<td class="asm-label">rps_loop</td>
 <td class="address-2"><span id="34216"></span>85A8</td>
-<td class="instruction">CALL <a href="865A.html">$865A</a></td>
-<td class="comment-1" rowspan="1"></td>
+<td class="instruction">CALL <a href="865A.html">draw_pregame</a></td>
+<td class="comment-1" rowspan="1">Call draw_pregame</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="34219"></span>85AB</td>
-<td class="instruction">CALL <a href="9965.html">main_loop_26</a></td>
-<td class="comment-1" rowspan="1">Call main_loop_26</td>
+<td class="instruction">CALL <a href="9965.html">drive_chatter</a></td>
+<td class="comment-1" rowspan="1">Call drive_chatter</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="34222"></span>85AE</td>
-<td class="instruction">CALL <a href="85E4.html">$85E4</a></td>
-<td class="comment-1" rowspan="1"></td>
+<td class="instruction">CALL <a href="85E4.html">reveal_perp_car</a></td>
+<td class="comment-1" rowspan="1">Call reveal_perp_car</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="34225"></span>85B1</td>
-<td class="instruction">CALL <a href="860F.html">$860F</a></td>
-<td class="comment-1" rowspan="1"></td>
+<td class="instruction">CALL <a href="860F.html">animate_meters</a></td>
+<td class="comment-1" rowspan="1">Call animate_meters</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="34228"></span>85B4</td>
 <td class="instruction">CALL <a href="8D8F.html">transition</a></td>
 <td class="comment-1" rowspan="1">Call transition</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="34231"></span>85B7</td>
 <td class="instruction">CALL <a href="BC3E.html">draw_screen</a></td>
 <td class="comment-1" rowspan="1">Call draw_screen</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="34234"></span>85BA</td>
 <td class="instruction">LD A,($A231)</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="3">Loop if transition_control is non-zero</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="34237"></span>85BD</td>
 <td class="instruction">AND A</td>
-<td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="34238"></span>85BE</td>
-<td class="instruction">JR NZ,$85A8</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="instruction">JR NZ,<a href="858C.html#34216">rps_loop</a></td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="34240"></span>85C0</td>
 <td class="instruction">LD A,($963D)</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="3">Return if $963D is zero</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="34243"></span>85C3</td>
 <td class="instruction">AND A</td>
-<td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="34244"></span>85C4</td>
 <td class="instruction">RET Z</td>
-<td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="34245"></span>85C5</td>
 <td class="instruction">CP $03</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="2">Jump to rps_xxx if $963D &gt;= 3</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="34247"></span>85C7</td>
-<td class="instruction">JR NC,$85D6</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="instruction">JR NC,<a href="858C.html#34262">rps_xxx</a></td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="34249"></span>85C9</td>
 <td class="instruction">CALL <a href="A0CC.html#41174">keyscan</a></td>
 <td class="comment-1" rowspan="1">Call keyscan</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="34252"></span>85CC</td>
 <td class="instruction">AND $10</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="2">Loop until fire is hit</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="34254"></span>85CE</td>
-<td class="instruction">JR Z,$85A8</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="instruction">JR Z,<a href="858C.html#34216">rps_loop</a></td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="34256"></span>85D0</td>
 <td class="instruction">CALL <a href="9965.html#39379">clear_chatter</a></td>
 <td class="comment-1" rowspan="1">Call clear_chatter</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="34259"></span>85D3</td>
-<td class="instruction">JP <a href="9BCF.html#40057">tick_4</a></td>
+<td class="instruction">JP <a href="9BCF.html#40057">tick_3</a></td>
 <td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
+<td class="asm-label">rps_xxx</td>
 <td class="address-2"><span id="34262"></span>85D6</td>
 <td class="instruction">LD A,$08</td>
 <td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="34264"></span>85D8</td>
 <td class="instruction">CALL NC,<a href="8DF9.html">setup_transition</a></td>
 <td class="comment-1" rowspan="1">If no carry call setup_transition</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="34267"></span>85DB</td>
-<td class="instruction">JR $85A8</td>
+<td class="instruction">JR <a href="858C.html#34216">rps_loop</a></td>
 <td class="comment-1" rowspan="1">Loop</td>
 </tr>
 </table>
@@ -213,7 +238,7 @@ Next: <a href="85DD.html">85DD</a>
 </table>
 <footer>
 <div class="release">The incomplete Chase H.Q. disassembly 20230518</div>
-<div class="copyright">&copy; 1989 Ocean Software Ltd.</div>
+<div class="copyright">&copy; 1988 Taito Corporation &copy; 1989 Ocean Software Ltd. (Chase H.Q.) © 2023 David Thomas (this disassembly)</div>
 <div class="created">Created using <a href="https://skoolkit.ca">SkoolKit</a> 8.9.</div>
 </footer>
 </body>

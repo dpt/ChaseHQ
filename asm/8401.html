@@ -54,10 +54,20 @@ Used by the routines at <a href="83CD.html">83CD</a> and <a href="8A57.html">han
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="33801"></span>8409</td>
-<td class="instruction">JR NZ,<a href="8401.html#33819">l_841b</a></td>
+<td class="instruction">JR NZ,<a href="8401.html#33819">ml_not_credits</a></td>
 </tr>
 <tr>
-<td class="asm-label">handle_end_credits</td>
+<td class="routine-comment" colspan="5">
+<span id="33803"></span>
+<div class="comments">
+<div class="paragraph">
+Run the end credits.
+</div>
+</div>
+</td>
+</tr>
+<tr>
+<td class="asm-label">ml_run_end_credits</td>
 <td class="address-1"><span id="33803"></span>840B</td>
 <td class="instruction">CALL $5C00</td>
 <td class="comment-1" rowspan="1">Call $5C00 [which is data in earlier stages, must be end credit anim]</td>
@@ -102,16 +112,26 @@ Used by the routines at <a href="83CD.html">83CD</a> and <a href="8A57.html">han
 <td class="comment-1" rowspan="1">Return</td>
 </tr>
 <tr>
-<td class="asm-label">l_841b</td>
+<td class="routine-comment" colspan="5">
+<span id="33819"></span>
+<div class="comments">
+<div class="paragraph">
+Run the main game loop.
+</div>
+</div>
+</td>
+</tr>
+<tr>
+<td class="asm-label">ml_not_credits</td>
 <td class="address-2"><span id="33819"></span>841B</td>
-<td class="instruction">CALL <a href="858C.html">$858C</a></td>
-<td class="comment-1" rowspan="1"></td>
+<td class="instruction">CALL <a href="858C.html">run_pregame_screen</a></td>
+<td class="comment-1" rowspan="1">Call run_pregame_screen</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="33822"></span>841E</td>
 <td class="instruction">LD HL,$5D1D</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="1">Address of setup_game_data</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -175,7 +195,7 @@ Used by the routines at <a href="83CD.html">83CD</a> and <a href="8A57.html">han
 <td class="asm-label"></td>
 <td class="address-1"><span id="33845"></span>8435</td>
 <td class="instruction">LD A,($A139)</td>
-<td class="comment-1" rowspan="2">Is $A139 zero? (used later)</td>
+<td class="comment-1" rowspan="2">Is $A139 zero? (used later) [128K]</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -186,7 +206,7 @@ Used by the routines at <a href="83CD.html">83CD</a> and <a href="8A57.html">han
 <td class="asm-label"></td>
 <td class="address-1"><span id="33849"></span>8439</td>
 <td class="instruction">LD A,$FF</td>
-<td class="comment-1" rowspan="2">$A188 = $FF  I suspect this keeps the perp spawned</td>
+<td class="comment-1" rowspan="2">$A188 = $FF -- I suspect this keeps the perp spawned</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -203,7 +223,7 @@ Used by the routines at <a href="83CD.html">83CD</a> and <a href="8A57.html">han
 <td class="asm-label"></td>
 <td class="address-1"><span id="33857"></span>8441</td>
 <td class="instruction">CALL Z,<a href="9945.html">chatter</a></td>
-<td class="comment-1" rowspan="1">Call chatter</td>
+<td class="comment-1" rowspan="1">Call chatter if $A139 was zero</td>
 </tr>
 <tr>
 <td class="asm-label">main_loop_loop</td>
@@ -244,14 +264,14 @@ Used by the routines at <a href="83CD.html">83CD</a> and <a href="8A57.html">han
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="33878"></span>8456</td>
-<td class="instruction">CALL <a href="B063.html">main_loop_8</a></td>
-<td class="comment-1" rowspan="1">Call main_loop_8</td>
+<td class="instruction">CALL <a href="B063.html">move_hero_car</a></td>
+<td class="comment-1" rowspan="1">Call move_hero_car</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="33881"></span>8459</td>
-<td class="instruction">CALL <a href="A7F3.html">main_loop_9</a></td>
-<td class="comment-1" rowspan="1">Call main_loop_9</td>
+<td class="instruction">CALL <a href="A7F3.html">spawn_cars</a></td>
+<td class="comment-1" rowspan="1">Call spawn_cars</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -274,8 +294,8 @@ Used by the routines at <a href="83CD.html">83CD</a> and <a href="8A57.html">han
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="33893"></span>8465</td>
-<td class="instruction">CALL <a href="B848.html">main_loop_11</a></td>
-<td class="comment-1" rowspan="1">Call main_loop_11</td>
+<td class="instruction">CALL <a href="B848.html">scroll_horizon</a></td>
+<td class="comment-1" rowspan="1">Call scroll_horizon</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -316,8 +336,8 @@ Used by the routines at <a href="83CD.html">83CD</a> and <a href="8A57.html">han
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="33914"></span>847A</td>
-<td class="instruction">CALL <a href="C0E1.html">main_loop_15</a></td>
-<td class="comment-1" rowspan="1">Call main_loop_15</td>
+<td class="instruction">CALL <a href="C0E1.html">tunnel_setup</a></td>
+<td class="comment-1" rowspan="1">Call tunnel_setup</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -328,8 +348,8 @@ Used by the routines at <a href="83CD.html">83CD</a> and <a href="8A57.html">han
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="33920"></span>8480</td>
-<td class="instruction">CALL <a href="AB33.html">main_loop_17</a></td>
-<td class="comment-1" rowspan="1">Call main_loop_17</td>
+<td class="instruction">CALL <a href="AB33.html">helicopter</a></td>
+<td class="comment-1" rowspan="1">Call helicopter</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -364,14 +384,14 @@ Used by the routines at <a href="83CD.html">83CD</a> and <a href="8A57.html">han
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="33938"></span>8492</td>
-<td class="instruction">CALL <a href="AAC6.html">main_loop_21</a></td>
-<td class="comment-1" rowspan="1">Call main_loop_21</td>
+<td class="instruction">CALL <a href="AAC6.html">move_helicopter</a></td>
+<td class="comment-1" rowspan="1">Call move_helicopter</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="33941"></span>8495</td>
-<td class="instruction">CALL <a href="A399.html">main_loop_22</a></td>
-<td class="comment-1" rowspan="1">Call main_loop_22</td>
+<td class="instruction">CALL <a href="A399.html">check_collisions</a></td>
+<td class="comment-1" rowspan="1">Call check_collisions</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -424,8 +444,8 @@ Used by the routines at <a href="83CD.html">83CD</a> and <a href="8A57.html">han
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="33968"></span>84B0</td>
-<td class="instruction">CALL <a href="9965.html">main_loop_26</a></td>
-<td class="comment-1" rowspan="1">Call main_loop_26</td>
+<td class="instruction">CALL <a href="9965.html">drive_chatter</a></td>
+<td class="comment-1" rowspan="1">Call drive_chatter</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -769,7 +789,7 @@ Next: <a href="852A.html">852A</a>
 </table>
 <footer>
 <div class="release">The incomplete Chase H.Q. disassembly 20230518</div>
-<div class="copyright">&copy; 1989 Ocean Software Ltd.</div>
+<div class="copyright">&copy; 1988 Taito Corporation &copy; 1989 Ocean Software Ltd. (Chase H.Q.) © 2023 David Thomas (this disassembly)</div>
 <div class="created">Created using <a href="https://skoolkit.ca">SkoolKit</a> 8.9.</div>
 </footer>
 </body>

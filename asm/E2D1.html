@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Chase H.Q.: Data at E2D1</title>
+<meta charset="utf-8" />
+<link rel="stylesheet" type="text/css" href="../skoolkit.css" />
+</head>
+<body class="Asm-b">
+<table class="header">
+<tr>
+<td class="logo"><a href="../index.html">Chase H.Q.</a></td>
+<td class="page-header">Data</td>
+</tr>
+</table>
+<table class="asm-navigation">
+<tr>
+<td class="prev">
+Prev: <a href="E2A4.html">E2A4</a>
+</td>
+<td class="up">Up: <a href="../maps/all.html#58065">Map</a></td>
+<td class="next">
+Next: <a href="E34B.html">E34B</a>
+</td>
+</tr>
+</table>
+<div class="description">E2D1: Road split data</div>
+<table class="disassembly">
+<tr>
+<td class="routine-comment" colspan="5">
+<div class="details">
+</div>
+</td>
+</tr>
+<tr>
+<td class="address-1"><span id="58065"></span>E2D1</td>
+<td class="instruction">DEFB $FF</td>
+<td class="comment-1" rowspan="1"></td>
+</tr>
+<tr>
+<td class="address-1"><span id="58066"></span>E2D2</td>
+<td class="instruction">DEFB $ED,$12,$00</td>
+<td class="comment-1" rowspan="1">Ref'd by $BBEF  --  Used after road split</td>
+</tr>
+<tr>
+<td class="address-1"><span id="58069"></span>E2D5</td>
+<td class="instruction">DEFB $01,$53,$D0,$00</td>
+<td class="comment-1" rowspan="1">rightside data  [flips around depending on who's accessing it]</td>
+</tr>
+<tr>
+<td class="address-1"><span id="58073"></span>E2D9</td>
+<td class="instruction">DEFB $01,$50,$D0,$00</td>
+<td class="comment-1" rowspan="1">leftside data   [flips]</td>
+</tr>
+<tr>
+<td class="address-1"><span id="58077"></span>E2DD</td>
+<td class="instruction">DEFB $01,$F0,$F0,$60</td>
+<td class="comment-1" rowspan="1">Ref'd by $BBE3</td>
+</tr>
+<tr>
+<td class="address-1"><span id="58081"></span>E2E1</td>
+<td class="instruction">DEFB $00</td>
+<td class="comment-1" rowspan="1">Curvature escape byte</td>
+</tr>
+<tr>
+<td class="address-1"><span id="58082"></span>E2E2</td>
+<td class="instruction">DEFB $01,$F8,$F8,$68,$00</td>
+<td class="comment-1" rowspan="1">Ref'd by $BBE9</td>
+</tr>
+<tr>
+<td class="address-1"><span id="58087"></span>E2E7</td>
+<td class="instruction">DEFB $01,$0A,$01,$02,$2D,$0A,$81,$02</td>
+<td class="comment-1" rowspan="2">lanes data</td>
+</tr>
+<tr>
+<td class="address-1"><span id="58095"></span>E2EF</td>
+<td class="instruction">DEFB $AD,$0C,$00,$00</td>
+</tr>
+<tr>
+<td class="address-1"><span id="58099"></span>E2F3</td>
+<td class="instruction">DEFB $01,$0A,$03,$02,$1F,$0A,$82,$02</td>
+<td class="comment-1" rowspan="11">lanes data</td>
+</tr>
+<tr>
+<td class="address-1"><span id="58107"></span>E2FB</td>
+<td class="instruction">DEFB $9E,$0C,$00,$00,$01,$60,$00,$00</td>
+</tr>
+<tr>
+<td class="address-1"><span id="58115"></span>E303</td>
+<td class="instruction">DEFB $00,$00,$00,$00,$00,$00,$00,$00</td>
+</tr>
+<tr>
+<td class="address-1"><span id="58123"></span>E30B</td>
+<td class="instruction">DEFB $00,$00,$00,$00,$00,$00,$00,$00</td>
+</tr>
+<tr>
+<td class="address-1"><span id="58131"></span>E313</td>
+<td class="instruction">DEFB $00,$00,$00,$00,$00,$00,$00,$00</td>
+</tr>
+<tr>
+<td class="address-1"><span id="58139"></span>E31B</td>
+<td class="instruction">DEFB $00,$00,$00,$00,$00,$00,$00,$00</td>
+</tr>
+<tr>
+<td class="address-1"><span id="58147"></span>E323</td>
+<td class="instruction">DEFB $00,$00,$00,$00,$00,$00,$00,$00</td>
+</tr>
+<tr>
+<td class="address-1"><span id="58155"></span>E32B</td>
+<td class="instruction">DEFB $00,$00,$00,$00,$00,$00,$00,$00</td>
+</tr>
+<tr>
+<td class="address-1"><span id="58163"></span>E333</td>
+<td class="instruction">DEFB $00,$00,$00,$00,$00,$00,$00,$00</td>
+</tr>
+<tr>
+<td class="address-1"><span id="58171"></span>E33B</td>
+<td class="instruction">DEFB $00,$00,$00,$00,$00,$00,$00,$00</td>
+</tr>
+<tr>
+<td class="address-1"><span id="58179"></span>E343</td>
+<td class="instruction">DEFB $00,$00,$00,$00,$00,$00,$00,$00</td>
+</tr>
+</table>
+<table class="asm-navigation">
+<tr>
+<td class="prev">
+Prev: <a href="E2A4.html">E2A4</a>
+</td>
+<td class="up">Up: <a href="../maps/all.html#58065">Map</a></td>
+<td class="next">
+Next: <a href="E34B.html">E34B</a>
+</td>
+</tr>
+</table>
+<footer>
+<div class="release">The incomplete Chase H.Q. disassembly 20230518</div>
+<div class="copyright">&copy; 1988 Taito Corporation &copy; 1989 Ocean Software Ltd. (Chase H.Q.) © 2023 David Thomas (this disassembly)</div>
+<div class="created">Created using <a href="https://skoolkit.ca">SkoolKit</a> 8.9.</div>
+</footer>
+</body>
+</html>

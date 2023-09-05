@@ -23,7 +23,7 @@ Next: <a href="9618.html">9618</a>
 </td>
 </tr>
 </table>
-<div class="description">9542: Sprite plotter for back buffer, which flips</div>
+<div class="description">9542: Sprite plotter for back buffer, up to 64px wide, 15px high, no mask, flips.</div>
 <table class="disassembly">
 <tr>
 <td class="routine-comment" colspan="5">
@@ -32,13 +32,34 @@ Next: <a href="9618.html">9618</a>
 Used by the routines at <a href="92E1.html">92E1</a> and <a href="B58E.html">draw_car</a>.
 </div>
 </div>
+<table class="input">
+<tr class="asm-input-header">
+<th colspan="2">Input</th>
+</tr>
+<tr>
+<td class="register">A</td>
+<td class="register-desc">Plot (<span class="register">A</span> + 1) * 8 pixels</td>
+</tr>
+<tr>
+<td class="register">DE'</td>
+<td class="register-desc">Stride of bitmap data in bytes</td>
+</tr>
+<tr>
+<td class="register">HL</td>
+<td class="register-desc">Address in back buffer to plot at</td>
+</tr>
+<tr>
+<td class="register">HL'</td>
+<td class="register-desc">Address of bitmap data</td>
+</tr>
+</table>
 </td>
 </tr>
 <tr>
 <td class="asm-label">plot_sprite_flipped</td>
 <td class="address-2"><span id="38210"></span>9542</td>
 <td class="instruction">LD D,$00</td>
-<td class="comment-1" rowspan="158">TBD</td>
+<td class="comment-1" rowspan="3">Advance the back buffer pointer to the end of the first line, so we can draw in reverse</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -54,26 +75,30 @@ Used by the routines at <a href="92E1.html">92E1</a> and <a href="B58E.html">dra
 <td class="asm-label"></td>
 <td class="address-1"><span id="38214"></span>9546</td>
 <td class="instruction">SRL A</td>
+<td class="comment-1" rowspan="2">Use psf_odd if the bottom bit is set (odd widths)</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="38216"></span>9548</td>
-<td class="instruction">JP C,<a href="9542.html#38323">plot_sprite_flipped_3</a></td>
+<td class="instruction">JP C,<a href="9542.html#38323">psf_odd</a></td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="38219"></span>954B</td>
 <td class="instruction">LD ($956B),SP</td>
+<td class="comment-1" rowspan="1">Save <span class="register">SP</span> to restore later (self modify)</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="38223"></span>954F</td>
 <td class="instruction">LD IX,$9575</td>
+<td class="comment-1" rowspan="1"><span class="register">IX</span> = Base of jump table</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="38227"></span>9553</td>
 <td class="instruction">CPL</td>
+<td class="comment-1" rowspan="2">(~<span class="register">A</span> + 5) is (4 - <span class="register">A</span>) is the number of plot operations to skip</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -84,6 +109,7 @@ Used by the routines at <a href="92E1.html">92E1</a> and <a href="B58E.html">dra
 <td class="asm-label"></td>
 <td class="address-1"><span id="38230"></span>9556</td>
 <td class="instruction">LD C,A</td>
+<td class="comment-1" rowspan="5">Multiply <span class="register">A</span> by 9: the length of an individual plot operation</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -109,6 +135,7 @@ Used by the routines at <a href="92E1.html">92E1</a> and <a href="B58E.html">dra
 <td class="asm-label"></td>
 <td class="address-1"><span id="38235"></span>955B</td>
 <td class="instruction">LD C,A</td>
+<td class="comment-1" rowspan="2">Move result to <span class="register">BC</span></td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -119,91 +146,109 @@ Used by the routines at <a href="92E1.html">92E1</a> and <a href="B58E.html">dra
 <td class="asm-label"></td>
 <td class="address-1"><span id="38238"></span>955E</td>
 <td class="instruction">ADD IX,BC</td>
+<td class="comment-1" rowspan="1">Add it to <span class="register">IX</span> to complete the jump target</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="38240"></span>9560</td>
 <td class="instruction">LD D,$EF</td>
+<td class="comment-1" rowspan="1">Point <span class="register">DE</span> at table of flipped bytes at $EF00</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="38242"></span>9562</td>
 <td class="instruction">EXX</td>
+<td class="comment-1" rowspan="1">Bank</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="38243"></span>9563</td>
 <td class="instruction">LD D,$00</td>
+<td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="38245"></span>9565</td>
-<td class="instruction">JR <a href="9542.html#38255">plot_sprite_flipped_2</a></td>
+<td class="instruction">JR <a href="9542.html#38255">psf_even_body</a></td>
+<td class="comment-1" rowspan="1">Jump into body of loop</td>
 </tr>
 <tr>
-<td class="asm-label">plot_sprite_flipped_0</td>
+<td class="asm-label">psf_even_continue</td>
 <td class="address-2"><span id="38247"></span>9567</td>
 <td class="instruction">EXX</td>
+<td class="comment-1" rowspan="1">Bank</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="38248"></span>9568</td>
-<td class="instruction">DJNZ <a href="9542.html#38254">plot_sprite_flipped_1</a></td>
+<td class="instruction">DJNZ <a href="9542.html#38254">psf_even_next</a></td>
+<td class="comment-1" rowspan="1">Next scanline</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="38250"></span>956A</td>
 <td class="instruction">LD SP,$0000</td>
+<td class="comment-1" rowspan="1">Restore <span class="register">SP</span> (self modified)</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="38253"></span>956D</td>
 <td class="instruction">RET</td>
+<td class="comment-1" rowspan="1">Return</td>
 </tr>
 <tr>
-<td class="asm-label">plot_sprite_flipped_1</td>
+<td class="asm-label">psf_even_next</td>
 <td class="address-2"><span id="38254"></span>956E</td>
 <td class="instruction">ADD HL,DE</td>
+<td class="comment-1" rowspan="1">Calculate address of next bitmap scanline</td>
 </tr>
 <tr>
-<td class="asm-label">plot_sprite_flipped_2</td>
+<td class="asm-label">psf_even_body</td>
 <td class="address-2"><span id="38255"></span>956F</td>
 <td class="instruction">LD SP,HL</td>
+<td class="comment-1" rowspan="1">Put it in <span class="register">SP</span> (so we can use POP for speed)</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="38256"></span>9570</td>
 <td class="instruction">EXX</td>
+<td class="comment-1" rowspan="1">Unbank</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="38257"></span>9571</td>
 <td class="instruction">LD A,L</td>
+<td class="comment-1" rowspan="1">[check elsewhere too]</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="38258"></span>9572</td>
 <td class="instruction">EX AF,AF'</td>
+<td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="38259"></span>9573</td>
 <td class="instruction">JP (IX)</td>
+<td class="comment-1" rowspan="1">Jump table</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="38261"></span>9575</td>
 <td class="instruction">POP BC</td>
+<td class="comment-1" rowspan="1">Transfer two bitmap bytes (16 pixels) from the "stack" to screen buffer with flipping</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="38262"></span>9576</td>
 <td class="instruction">LD E,C</td>
+<td class="comment-1" rowspan="1">Set flip table address</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="38263"></span>9577</td>
 <td class="instruction">LD A,(DE)</td>
+<td class="comment-1" rowspan="2">Flip byte and write to screen</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -214,16 +259,19 @@ Used by the routines at <a href="92E1.html">92E1</a> and <a href="B58E.html">dra
 <td class="asm-label"></td>
 <td class="address-1"><span id="38265"></span>9579</td>
 <td class="instruction">DEC L</td>
+<td class="comment-1" rowspan="1">Advance backwards</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="38266"></span>957A</td>
 <td class="instruction">LD E,B</td>
+<td class="comment-1" rowspan="1">Set flip table address</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="38267"></span>957B</td>
 <td class="instruction">LD A,(DE)</td>
+<td class="comment-1" rowspan="2">Flip byte and write to screen</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -234,11 +282,13 @@ Used by the routines at <a href="92E1.html">92E1</a> and <a href="B58E.html">dra
 <td class="asm-label"></td>
 <td class="address-1"><span id="38269"></span>957D</td>
 <td class="instruction">DEC L</td>
+<td class="comment-1" rowspan="1">Advance backwards</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="38270"></span>957E</td>
 <td class="instruction">POP BC</td>
+<td class="comment-1" rowspan="9">Transfer another 16 pixels</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -284,6 +334,7 @@ Used by the routines at <a href="92E1.html">92E1</a> and <a href="B58E.html">dra
 <td class="asm-label"></td>
 <td class="address-1"><span id="38279"></span>9587</td>
 <td class="instruction">POP BC</td>
+<td class="comment-1" rowspan="9">Transfer another 16 pixels</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -329,6 +380,7 @@ Used by the routines at <a href="92E1.html">92E1</a> and <a href="B58E.html">dra
 <td class="asm-label"></td>
 <td class="address-1"><span id="38288"></span>9590</td>
 <td class="instruction">POP BC</td>
+<td class="comment-1" rowspan="8">Transfer another 16 pixels</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -369,16 +421,19 @@ Used by the routines at <a href="92E1.html">92E1</a> and <a href="B58E.html">dra
 <td class="asm-label"></td>
 <td class="address-1"><span id="38296"></span>9598</td>
 <td class="instruction">EX AF,AF'</td>
+<td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="38297"></span>9599</td>
 <td class="instruction">LD L,A</td>
+<td class="comment-1" rowspan="1">Restore <span class="register">HL</span></td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="38298"></span>959A</td>
 <td class="instruction">LD A,H</td>
+<td class="comment-1" rowspan="2">Save H in A then H--</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -389,16 +444,19 @@ Used by the routines at <a href="92E1.html">92E1</a> and <a href="B58E.html">dra
 <td class="asm-label"></td>
 <td class="address-1"><span id="38300"></span>959C</td>
 <td class="instruction">AND $0F</td>
+<td class="comment-1" rowspan="1">Extract low four bits of row address</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="38302"></span>959E</td>
-<td class="instruction">JP NZ,<a href="9542.html#38247">plot_sprite_flipped_0</a></td>
+<td class="instruction">JP NZ,<a href="9542.html#38247">psf_even_continue</a></td>
+<td class="comment-1" rowspan="1">If zero we'll need to handle it below, otherwise just loop</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="38305"></span>95A1</td>
 <td class="instruction">LD A,H</td>
+<td class="comment-1" rowspan="3">H += 16</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -414,6 +472,7 @@ Used by the routines at <a href="92E1.html">92E1</a> and <a href="B58E.html">dra
 <td class="asm-label"></td>
 <td class="address-1"><span id="38309"></span>95A5</td>
 <td class="instruction">LD A,L</td>
+<td class="comment-1" rowspan="3">Decrement the high three bits of row address</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -428,12 +487,14 @@ Used by the routines at <a href="92E1.html">92E1</a> and <a href="B58E.html">dra
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="38313"></span>95A9</td>
-<td class="instruction">JP NC,<a href="9542.html#38247">plot_sprite_flipped_0</a></td>
+<td class="instruction">JP NC,<a href="9542.html#38247">psf_even_continue</a></td>
+<td class="comment-1" rowspan="1">No carry, so finish scanline</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="38316"></span>95AC</td>
 <td class="instruction">LD A,H</td>
+<td class="comment-1" rowspan="3">H -= 16</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -448,27 +509,32 @@ Used by the routines at <a href="92E1.html">92E1</a> and <a href="B58E.html">dra
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="38320"></span>95B0</td>
-<td class="instruction">JP <a href="9542.html#38247">plot_sprite_flipped_0</a></td>
+<td class="instruction">JP <a href="9542.html#38247">psf_even_continue</a></td>
+<td class="comment-1" rowspan="1">Loop back to psf_even_continue</td>
 </tr>
 <tr>
-<td class="asm-label">plot_sprite_flipped_3</td>
+<td class="asm-label">psf_odd</td>
 <td class="address-2"><span id="38323"></span>95B3</td>
 <td class="instruction">INC A</td>
+<td class="comment-1" rowspan="1">Increment <span class="register">A</span> for upcoming calculation</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="38324"></span>95B4</td>
 <td class="instruction">LD ($95D4),SP</td>
+<td class="comment-1" rowspan="1">Save <span class="register">SP</span> to restore later (self modify) [in a different position to others]</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="38328"></span>95B8</td>
 <td class="instruction">LD IX,$95DE</td>
+<td class="comment-1" rowspan="1">Point <span class="register">IX</span> at start of plot instructions</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="38332"></span>95BC</td>
 <td class="instruction">CPL</td>
+<td class="comment-1" rowspan="2">(~<span class="register">A</span> + 5) is (4 - <span class="register">A</span>) is the number of plot operations to skip</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -479,6 +545,7 @@ Used by the routines at <a href="92E1.html">92E1</a> and <a href="B58E.html">dra
 <td class="asm-label"></td>
 <td class="address-1"><span id="38335"></span>95BF</td>
 <td class="instruction">LD C,A</td>
+<td class="comment-1" rowspan="5">Multiply <span class="register">A</span> by 9: the length of an individual plot operation</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -504,6 +571,7 @@ Used by the routines at <a href="92E1.html">92E1</a> and <a href="B58E.html">dra
 <td class="asm-label"></td>
 <td class="address-1"><span id="38340"></span>95C4</td>
 <td class="instruction">LD C,A</td>
+<td class="comment-1" rowspan="2">Move result to <span class="register">BC</span></td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -514,91 +582,109 @@ Used by the routines at <a href="92E1.html">92E1</a> and <a href="B58E.html">dra
 <td class="asm-label"></td>
 <td class="address-1"><span id="38343"></span>95C7</td>
 <td class="instruction">ADD IX,BC</td>
+<td class="comment-1" rowspan="1">Add it to <span class="register">IX</span> to complete the jump target</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="38345"></span>95C9</td>
 <td class="instruction">LD D,$EF</td>
+<td class="comment-1" rowspan="1">Point <span class="register">DE</span> at table of flipped bytes at $EF00</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="38347"></span>95CB</td>
 <td class="instruction">EXX</td>
+<td class="comment-1" rowspan="1">Bank</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="38348"></span>95CC</td>
 <td class="instruction">LD D,$00</td>
+<td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="38350"></span>95CE</td>
-<td class="instruction">JR <a href="9542.html#38360">plot_sprite_flipped_6</a></td>
+<td class="instruction">JR <a href="9542.html#38360">psf_odd_body</a></td>
+<td class="comment-1" rowspan="1">Jump into body of loop</td>
 </tr>
 <tr>
-<td class="asm-label">plot_sprite_flipped_4</td>
+<td class="asm-label">psf_odd_continue</td>
 <td class="address-2"><span id="38352"></span>95D0</td>
 <td class="instruction">EXX</td>
+<td class="comment-1" rowspan="1">Bank</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="38353"></span>95D1</td>
-<td class="instruction">DJNZ <a href="9542.html#38359">plot_sprite_flipped_5</a></td>
+<td class="instruction">DJNZ <a href="9542.html#38359">psf_odd_next</a></td>
+<td class="comment-1" rowspan="1">Next scanline</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="38355"></span>95D3</td>
 <td class="instruction">LD SP,$0000</td>
+<td class="comment-1" rowspan="1">Restore <span class="register">SP</span> (self modified)</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="38358"></span>95D6</td>
 <td class="instruction">RET</td>
+<td class="comment-1" rowspan="1">Return</td>
 </tr>
 <tr>
-<td class="asm-label">plot_sprite_flipped_5</td>
+<td class="asm-label">psf_odd_next</td>
 <td class="address-2"><span id="38359"></span>95D7</td>
 <td class="instruction">ADD HL,DE</td>
+<td class="comment-1" rowspan="1">Calculate address of next bitmap scanline</td>
 </tr>
 <tr>
-<td class="asm-label">plot_sprite_flipped_6</td>
+<td class="asm-label">psf_odd_body</td>
 <td class="address-2"><span id="38360"></span>95D8</td>
 <td class="instruction">LD SP,HL</td>
+<td class="comment-1" rowspan="1">Put it in <span class="register">SP</span> (so we can use POP for speed)</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="38361"></span>95D9</td>
 <td class="instruction">EXX</td>
+<td class="comment-1" rowspan="1">Unbank</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="38362"></span>95DA</td>
 <td class="instruction">LD A,L</td>
+<td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="38363"></span>95DB</td>
 <td class="instruction">EX AF,AF'</td>
+<td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="38364"></span>95DC</td>
 <td class="instruction">JP (IX)</td>
+<td class="comment-1" rowspan="1">Jump table</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="38366"></span>95DE</td>
 <td class="instruction">POP BC</td>
+<td class="comment-1" rowspan="1">Transfer two bitmap bytes (16 pixels) from the "stack" to screen buffer with flipping</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="38367"></span>95DF</td>
 <td class="instruction">LD E,C</td>
+<td class="comment-1" rowspan="1">Set flip table address</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="38368"></span>95E0</td>
 <td class="instruction">LD A,(DE)</td>
+<td class="comment-1" rowspan="2">Flip byte and write to screen</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -609,16 +695,19 @@ Used by the routines at <a href="92E1.html">92E1</a> and <a href="B58E.html">dra
 <td class="asm-label"></td>
 <td class="address-1"><span id="38370"></span>95E2</td>
 <td class="instruction">DEC L</td>
+<td class="comment-1" rowspan="1">Advance backwards</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="38371"></span>95E3</td>
 <td class="instruction">LD E,B</td>
+<td class="comment-1" rowspan="1">Set flip table address</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="38372"></span>95E4</td>
 <td class="instruction">LD A,(DE)</td>
+<td class="comment-1" rowspan="2">Flip byte and write to screen</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -629,11 +718,13 @@ Used by the routines at <a href="92E1.html">92E1</a> and <a href="B58E.html">dra
 <td class="asm-label"></td>
 <td class="address-1"><span id="38374"></span>95E6</td>
 <td class="instruction">DEC L</td>
+<td class="comment-1" rowspan="1">Advance backwards</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="38375"></span>95E7</td>
 <td class="instruction">POP BC</td>
+<td class="comment-1" rowspan="9">Transfer another 16 pixels</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -679,6 +770,7 @@ Used by the routines at <a href="92E1.html">92E1</a> and <a href="B58E.html">dra
 <td class="asm-label"></td>
 <td class="address-1"><span id="38384"></span>95F0</td>
 <td class="instruction">POP BC</td>
+<td class="comment-1" rowspan="9">Transfer another 16 pixels</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -724,6 +816,7 @@ Used by the routines at <a href="92E1.html">92E1</a> and <a href="B58E.html">dra
 <td class="asm-label"></td>
 <td class="address-1"><span id="38393"></span>95F9</td>
 <td class="instruction">POP BC</td>
+<td class="comment-1" rowspan="4">Transfer another 8 pixels</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -744,16 +837,19 @@ Used by the routines at <a href="92E1.html">92E1</a> and <a href="B58E.html">dra
 <td class="asm-label"></td>
 <td class="address-1"><span id="38397"></span>95FD</td>
 <td class="instruction">EX AF,AF'</td>
+<td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="38398"></span>95FE</td>
 <td class="instruction">LD L,A</td>
+<td class="comment-1" rowspan="1">Restore <span class="register">HL</span></td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="38399"></span>95FF</td>
 <td class="instruction">LD A,H</td>
+<td class="comment-1" rowspan="2">Save H in A then H--</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -761,19 +857,32 @@ Used by the routines at <a href="92E1.html">92E1</a> and <a href="B58E.html">dra
 <td class="instruction">DEC H</td>
 </tr>
 <tr>
+<td class="routine-comment" colspan="5">
+<span id="38401"></span>
+<div class="comments">
+<div class="paragraph">
+Decrement the screen address.
+</div>
+</div>
+</td>
+</tr>
+<tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="38401"></span>9601</td>
 <td class="instruction">AND $0F</td>
+<td class="comment-1" rowspan="1">Extract low four bits of row address</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="38403"></span>9603</td>
-<td class="instruction">JP NZ,<a href="9542.html#38352">plot_sprite_flipped_4</a></td>
+<td class="instruction">JP NZ,<a href="9542.html#38352">psf_odd_continue</a></td>
+<td class="comment-1" rowspan="1">If zero we'll need to handle it below, otherwise just loop</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="38406"></span>9606</td>
 <td class="instruction">LD A,H</td>
+<td class="comment-1" rowspan="3">H += 16</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -789,6 +898,7 @@ Used by the routines at <a href="92E1.html">92E1</a> and <a href="B58E.html">dra
 <td class="asm-label"></td>
 <td class="address-1"><span id="38410"></span>960A</td>
 <td class="instruction">LD A,L</td>
+<td class="comment-1" rowspan="3">Decrement the high three bits of row address</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -803,12 +913,14 @@ Used by the routines at <a href="92E1.html">92E1</a> and <a href="B58E.html">dra
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="38414"></span>960E</td>
-<td class="instruction">JP NC,<a href="9542.html#38352">plot_sprite_flipped_4</a></td>
+<td class="instruction">JP NC,<a href="9542.html#38352">psf_odd_continue</a></td>
+<td class="comment-1" rowspan="1">No carry, so finish scanline</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="38417"></span>9611</td>
 <td class="instruction">LD A,H</td>
+<td class="comment-1" rowspan="3">H -= 16</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -823,7 +935,8 @@ Used by the routines at <a href="92E1.html">92E1</a> and <a href="B58E.html">dra
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="38421"></span>9615</td>
-<td class="instruction">JP <a href="9542.html#38352">plot_sprite_flipped_4</a></td>
+<td class="instruction">JP <a href="9542.html#38352">psf_odd_continue</a></td>
+<td class="comment-1" rowspan="1">Loop back to psf_odd_continue</td>
 </tr>
 </table>
 <table class="asm-navigation">
@@ -839,7 +952,7 @@ Next: <a href="9618.html">9618</a>
 </table>
 <footer>
 <div class="release">The incomplete Chase H.Q. disassembly 20230518</div>
-<div class="copyright">&copy; 1989 Ocean Software Ltd.</div>
+<div class="copyright">&copy; 1988 Taito Corporation &copy; 1989 Ocean Software Ltd. (Chase H.Q.) © 2023 David Thomas (this disassembly)</div>
 <div class="created">Created using <a href="https://skoolkit.ca">SkoolKit</a> 8.9.</div>
 </footer>
 </body>

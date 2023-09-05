@@ -38,313 +38,320 @@ Used by the routines at <a href="8401.html">main_loop</a>, <a href="852A.html">c
 <td class="asm-label">spawn_hazards</td>
 <td class="address-2"><span id="43930"></span>AB9A</td>
 <td class="instruction">LD A,($A254)</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="1">Spawning flag</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="43933"></span>AB9D</td>
 <td class="instruction">AND A</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="1">Set flags</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="43934"></span>AB9E</td>
 <td class="instruction">RET Z</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="1">Return if zero</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="43935"></span>AB9F</td>
 <td class="instruction">CPL</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="2">A = ~A + 21</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="43936"></span>ABA0</td>
 <td class="instruction">ADD A,$15</td>
-<td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="43938"></span>ABA2</td>
 <td class="instruction">LD C,A</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="1">C = A</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="43939"></span>ABA3</td>
 <td class="instruction">LD A,($A240)</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="1">Load road_buffer_offset into <span class="register">A</span></td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="43942"></span>ABA6</td>
 <td class="instruction">ADD A,$A0</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="1">Add 160 so it's the hazards data offset</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="43944"></span>ABA8</td>
 <td class="instruction">ADD A,C</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="1">A += C</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="43945"></span>ABA9</td>
 <td class="instruction">LD L,A</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="1">L = A</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="43946"></span>ABAA</td>
 <td class="instruction">LD H,$EE</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="1">H = $EE</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="43948"></span>ABAC</td>
 <td class="instruction">LD A,(HL)</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="1">A = *HL   -- load the hazard byte</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="43949"></span>ABAD</td>
 <td class="instruction">AND A</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="1">Set flags</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="43950"></span>ABAE</td>
 <td class="instruction">RET Z</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="1">Return if zero</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="43951"></span>ABAF</td>
 <td class="instruction">CP $04</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="1">Is it 4?</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="43953"></span>ABB1</td>
 <td class="instruction">LD DE,$0000</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="1">DE = 0</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="43956"></span>ABB4</td>
 <td class="instruction">JR C,<a href="AB9A.html#43961">spawn_hazards_0</a></td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="1">Jump if &lt; 4   -- stop spawning barriers etc? jump/split too?</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="43958"></span>ABB6</td>
 <td class="instruction">LD E,$03</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="1">E = 3</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="43960"></span>ABB8</td>
 <td class="instruction">SUB E</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="1">A -= E</td>
 </tr>
 <tr>
 <td class="asm-label">spawn_hazards_0</td>
 <td class="address-2"><span id="43961"></span>ABB9</td>
 <td class="instruction">LD B,$32</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="1">B = 50</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="43963"></span>ABBB</td>
 <td class="instruction">DEC A</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="1">A--</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="43964"></span>ABBC</td>
 <td class="instruction">JR Z,<a href="AB9A.html#44018">spawn_hazards_3</a></td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="1">Jump if zero  [A == 1]</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="43966"></span>ABBE</td>
 <td class="instruction">LD B,$DC</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="1">B = $DC</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="43968"></span>ABC0</td>
 <td class="instruction">DEC A</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="1">A--</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="43969"></span>ABC1</td>
 <td class="instruction">JR Z,<a href="AB9A.html#44018">spawn_hazards_3</a></td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="1">Jump if zero  [A == 2]</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="43971"></span>ABC3</td>
 <td class="instruction">INC L</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="2">L += 2</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="43972"></span>ABC4</td>
 <td class="instruction">INC L</td>
-<td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="43973"></span>ABC5</td>
 <td class="instruction">LD (HL),D</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="1">*HL = D</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="43974"></span>ABC6</td>
 <td class="instruction">INC L</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="2">L += 2</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="43975"></span>ABC7</td>
 <td class="instruction">INC L</td>
-<td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="43976"></span>ABC8</td>
 <td class="instruction">LD (HL),D</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="1">*HL = D</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="43977"></span>ABC9</td>
 <td class="instruction">LD A,E</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="1">A = E</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="43978"></span>ABCA</td>
 <td class="instruction">CP $03</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="1">Is it 3?</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="43980"></span>ABCC</td>
 <td class="instruction">JR NZ,<a href="AB9A.html#44011">spawn_hazards_2</a></td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="1">Jump if non-zero</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="43982"></span>ABCE</td>
 <td class="instruction">LD A,($A221)</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="1">(inhibit collision detection) flag</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="43985"></span>ABD1</td>
 <td class="instruction">AND A</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="1">Set flags</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="43986"></span>ABD2</td>
 <td class="instruction">JR Z,<a href="AB9A.html#44002">spawn_hazards_1</a></td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="1">Jump if zero</td>
+</tr>
+<tr>
+<td class="routine-comment" colspan="5">
+<span id="43988"></span>
+<div class="comments">
+<div class="paragraph">
+Flag was set.
+</div>
+</div>
+</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="43988"></span>ABD4</td>
 <td class="instruction">LD B,$20</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="1">B = 32</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="43990"></span>ABD6</td>
 <td class="instruction">CALL <a href="AB9A.html#44022">sh_spawn</a></td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="1">Call sh_spawn</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="43993"></span>ABD9</td>
 <td class="instruction">LD B,$56</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="1">B = 86</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="43995"></span>ABDB</td>
 <td class="instruction">CALL <a href="AB9A.html#44022">sh_spawn</a></td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="1">Call sh_spawn</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="43998"></span>ABDE</td>
 <td class="instruction">LD B,$8C</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="1">B = 140</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="44000"></span>ABE0</td>
 <td class="instruction">JR <a href="AB9A.html#44018">spawn_hazards_3</a></td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="1">Calls sh_spawn then returns</td>
 </tr>
 <tr>
 <td class="asm-label">spawn_hazards_1</td>
 <td class="address-2"><span id="44002"></span>ABE2</td>
 <td class="instruction">LD B,$50</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="1">B = 80</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="44004"></span>ABE4</td>
 <td class="instruction">CALL <a href="AB9A.html#44022">sh_spawn</a></td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="1">Call sh_spawn</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="44007"></span>ABE7</td>
 <td class="instruction">LD B,$A0</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="1">B = 160</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="44009"></span>ABE9</td>
 <td class="instruction">JR <a href="AB9A.html#44018">spawn_hazards_3</a></td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="1">Calls sh_spawn then returns</td>
 </tr>
 <tr>
 <td class="asm-label">spawn_hazards_2</td>
 <td class="address-2"><span id="44011"></span>ABEB</td>
 <td class="instruction">LD B,$46</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="1">B = 70</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="44013"></span>ABED</td>
 <td class="instruction">CALL <a href="AB9A.html#44022">sh_spawn</a></td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="1">Call sh_spawn</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="44016"></span>ABF0</td>
 <td class="instruction">LD B,$B4</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="1">B = 180</td>
 </tr>
 <tr>
 <td class="asm-label">spawn_hazards_3</td>
 <td class="address-2"><span id="44018"></span>ABF2</td>
 <td class="instruction">CALL <a href="AB9A.html#44022">sh_spawn</a></td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="1">Call sh_spawn</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="44021"></span>ABF5</td>
 <td class="instruction">RET</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="1">Return</td>
 </tr>
 <tr>
 <td class="routine-comment" colspan="5">
@@ -414,7 +421,7 @@ I:C Stored at entry+1  e.g. $13
 <td class="asm-label"></td>
 <td class="address-1"><span id="44038"></span>AC06</td>
 <td class="instruction">POP HL</td>
-<td class="comment-1" rowspan="1">TBD</td>
+<td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -553,7 +560,7 @@ I:C Stored at entry+1  e.g. $13
 <td class="asm-label"></td>
 <td class="address-1"><span id="44081"></span>AC31</td>
 <td class="instruction">LD (IX+$05),B</td>
-<td class="comment-1" rowspan="1">IX[5] = B TBD</td>
+<td class="comment-1" rowspan="1">IX[5] = B TBD -- passed in</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -587,7 +594,7 @@ Next: <a href="AC3C.html">AC3C</a>
 </table>
 <footer>
 <div class="release">The incomplete Chase H.Q. disassembly 20230518</div>
-<div class="copyright">&copy; 1989 Ocean Software Ltd.</div>
+<div class="copyright">&copy; 1988 Taito Corporation &copy; 1989 Ocean Software Ltd. (Chase H.Q.) © 2023 David Thomas (this disassembly)</div>
 <div class="created">Created using <a href="https://skoolkit.ca">SkoolKit</a> 8.9.</div>
 </footer>
 </body>

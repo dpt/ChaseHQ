@@ -15,7 +15,7 @@
 <table class="asm-navigation">
 <tr>
 <td class="prev">
-Prev: <a href="EE40.html">EE40</a>
+Prev: <a href="EE5E.html">EE5E</a>
 </td>
 <td class="up">Up: <a href="../maps/all.html#61038">Map</a></td>
 <td class="next">
@@ -35,145 +35,175 @@ Used by the routine at <a href="EE9E.html">define_keys</a>.
 </td>
 </tr>
 <tr>
+<td class="asm-label">sub_EE6E</td>
 <td class="address-2"><span id="61038"></span>EE6E</td>
 <td class="instruction">LD A,$00</td>
-<td class="comment-0" rowspan="1"></td>
+<td class="comment-1" rowspan="1">Self modified by $EE7E</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="61040"></span>EE70</td>
 <td class="instruction">DEC A</td>
-<td class="comment-0" rowspan="1"></td>
+<td class="comment-1" rowspan="1">A--</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="61041"></span>EE71</td>
 <td class="instruction">LD ($EE6F),A</td>
-<td class="comment-0" rowspan="1"></td>
+<td class="comment-1" rowspan="1">Self modify $EE6E</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="61044"></span>EE74</td>
 <td class="instruction">RET NZ</td>
-<td class="comment-0" rowspan="1"></td>
+<td class="comment-1" rowspan="1">Return if non-zero  -- so it's a delay?</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="61045"></span>EE75</td>
 <td class="instruction">LD HL,$0000</td>
-<td class="comment-0" rowspan="1"></td>
+<td class="comment-1" rowspan="1">Self modified by $EE83 [sampled: F10C, F10E, F102, F104, F106, F108, F10A, ]</td>
 </tr>
 <tr>
+<td class="routine-comment" colspan="5">
+<span id="61048"></span>
+<div class="comments">
+<div class="paragraph">
+This entry point is used by the routine at <a href="EE40.html">setup_interrupts</a>.
+</div>
+</div>
+</td>
+</tr>
+<tr>
+<td class="asm-label">j_ee78</td>
 <td class="address-2"><span id="61048"></span>EE78</td>
 <td class="instruction">LD A,(HL)</td>
-<td class="comment-0" rowspan="1"></td>
+<td class="comment-1" rowspan="2">A = *HL++</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="61049"></span>EE79</td>
 <td class="instruction">INC HL</td>
-<td class="comment-0" rowspan="1"></td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="61050"></span>EE7A</td>
 <td class="instruction">CP $FF</td>
-<td class="comment-0" rowspan="1"></td>
+<td class="comment-1" rowspan="2">Jump to $EE98 if it's $FF</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="61052"></span>EE7C</td>
-<td class="instruction">JR Z,$EE98</td>
-<td class="comment-0" rowspan="1"></td>
+<td class="instruction">JR Z,<a href="EE6E.html#61080">sub_EE6E_0</a></td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="61054"></span>EE7E</td>
 <td class="instruction">LD ($EE6F),A</td>
-<td class="comment-0" rowspan="1"></td>
+<td class="comment-1" rowspan="1">Self modify $EE6E</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="61057"></span>EE81</td>
 <td class="instruction">LD C,(HL)</td>
-<td class="comment-0" rowspan="1"></td>
+<td class="comment-1" rowspan="2">C = *HL++</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="61058"></span>EE82</td>
 <td class="instruction">INC HL</td>
-<td class="comment-0" rowspan="1"></td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="61059"></span>EE83</td>
 <td class="instruction">LD ($EE76),HL</td>
-<td class="comment-0" rowspan="1"></td>
+<td class="comment-1" rowspan="1">Self modify $EE75</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="61062"></span>EE86</td>
 <td class="instruction">LD B,$00</td>
-<td class="comment-0" rowspan="1"></td>
+<td class="comment-1" rowspan="1">B = 0</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="61064"></span>EE88</td>
 <td class="instruction">LD HL,$F111</td>
-<td class="comment-0" rowspan="1"></td>
+<td class="comment-1" rowspan="1">Address of music data</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="61067"></span>EE8B</td>
 <td class="instruction">ADD HL,BC</td>
-<td class="comment-0" rowspan="1"></td>
+<td class="comment-1" rowspan="1">HL += BC</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="61068"></span>EE8C</td>
 <td class="instruction">LD A,(HL)</td>
-<td class="comment-0" rowspan="1"></td>
+<td class="comment-1" rowspan="2">A = *HL++</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="61069"></span>EE8D</td>
 <td class="instruction">INC HL</td>
-<td class="comment-0" rowspan="1"></td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="61070"></span>EE8E</td>
 <td class="instruction">LD ($EEBA),A</td>
-<td class="comment-0" rowspan="1"></td>
+<td class="comment-1" rowspan="1">Self modify $EEB9</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="61073"></span>EE91</td>
 <td class="instruction">LD ($EEAE),A</td>
-<td class="comment-0" rowspan="1"></td>
+<td class="comment-1" rowspan="1">Self modify $EEAD</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="61076"></span>EE94</td>
 <td class="instruction">LD ($EECA),HL</td>
-<td class="comment-0" rowspan="1"></td>
+<td class="comment-1" rowspan="1">Self modify $EEC9</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="61079"></span>EE97</td>
 <td class="instruction">RET</td>
-<td class="comment-0" rowspan="1"></td>
+<td class="comment-1" rowspan="1">Return</td>
 </tr>
 <tr>
+<td class="asm-label">sub_EE6E_0</td>
 <td class="address-2"><span id="61080"></span>EE98</td>
 <td class="instruction">LD A,(HL)</td>
-<td class="comment-0" rowspan="1"></td>
+<td class="comment-1" rowspan="4">HL = wordat(HL); HL++</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="61081"></span>EE99</td>
 <td class="instruction">INC HL</td>
-<td class="comment-0" rowspan="1"></td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="61082"></span>EE9A</td>
 <td class="instruction">LD H,(HL)</td>
-<td class="comment-0" rowspan="1"></td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="61083"></span>EE9B</td>
 <td class="instruction">LD L,A</td>
-<td class="comment-0" rowspan="1"></td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="61084"></span>EE9C</td>
-<td class="instruction">JR $EE78</td>
-<td class="comment-0" rowspan="1"></td>
+<td class="instruction">JR <a href="EE6E.html#61048">j_ee78</a></td>
+<td class="comment-1" rowspan="1">Goto j_ee78</td>
 </tr>
 </table>
 <table class="asm-navigation">
 <tr>
 <td class="prev">
-Prev: <a href="EE40.html">EE40</a>
+Prev: <a href="EE5E.html">EE5E</a>
 </td>
 <td class="up">Up: <a href="../maps/all.html#61038">Map</a></td>
 <td class="next">
@@ -183,7 +213,7 @@ Next: <a href="EE9E.html">EE9E</a>
 </table>
 <footer>
 <div class="release">The incomplete Chase H.Q. disassembly 20230518</div>
-<div class="copyright">&copy; 1989 Ocean Software Ltd.</div>
+<div class="copyright">&copy; 1988 Taito Corporation &copy; 1989 Ocean Software Ltd. (Chase H.Q.) © 2023 David Thomas (this disassembly)</div>
 <div class="created">Created using <a href="https://skoolkit.ca">SkoolKit</a> 8.9.</div>
 </footer>
 </body>

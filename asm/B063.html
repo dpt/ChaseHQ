@@ -23,7 +23,7 @@ Next: <a href="B318.html">B318</a>
 </td>
 </tr>
 </table>
-<div class="description">B063: Routine at B063</div>
+<div class="description">B063: Hero car jumps; gear changing; off road checks; speed adjustment</div>
 <table class="disassembly">
 <tr>
 <td class="routine-comment" colspan="5">
@@ -35,88 +35,114 @@ Used by the routines at <a href="8401.html">main_loop</a> and <a href="852A.html
 </td>
 </tr>
 <tr>
-<td class="asm-label">main_loop_8</td>
+<td class="asm-label">move_hero_car</td>
 <td class="address-2"><span id="45155"></span>B063</td>
 <td class="instruction">LD A,$00</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="1">Load jump counter. Self modified by $8827 and $B965. Highest is 8.</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="45157"></span>B065</td>
 <td class="instruction">AND A</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="2">Jump to mhc_not_jumping if the jump counter is zero</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="45158"></span>B066</td>
-<td class="instruction">JR Z,<a href="B063.html#45205">main_loop_8_1</a></td>
-<td class="comment-1" rowspan="1"></td>
+<td class="instruction">JR Z,<a href="B063.html#45205">mhc_not_jumping</a></td>
 </tr>
 <tr>
-<td class="asm-label"></td>
+<td class="routine-comment" colspan="5">
+<span id="45160"></span>
+<div class="comments">
+<div class="paragraph">
+Hero car is jumping.
+</div>
+</div>
+</td>
+</tr>
+<tr>
+<td class="asm-label">mhc_jumping</td>
 <td class="address-1"><span id="45160"></span>B068</td>
 <td class="instruction">DEC A</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="2">Decrement the jump counter in (self modified) $B063</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="45161"></span>B069</td>
 <td class="instruction">LD ($B064),A</td>
-<td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="45164"></span>B06C</td>
-<td class="instruction">JR NZ,<a href="B063.html#45177">main_loop_8_0</a></td>
-<td class="comment-1" rowspan="1"></td>
+<td class="instruction">JR NZ,<a href="B063.html#45177">mhc_midair</a></td>
+<td class="comment-1" rowspan="1">Jump to $B079 if we're still jumping</td>
 </tr>
 <tr>
-<td class="asm-label"></td>
+<td class="routine-comment" colspan="5">
+<span id="45166"></span>
+<div class="comments">
+<div class="paragraph">
+Hero car has landed.
+</div>
+</div>
+</td>
+</tr>
+<tr>
+<td class="asm-label">mhc_landed</td>
 <td class="address-1"><span id="45166"></span>B06E</td>
 <td class="instruction">LD A,$03</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="2">smoke = 3</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="45168"></span>B070</td>
 <td class="instruction">LD ($A24F),A</td>
-<td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="45171"></span>B073</td>
 <td class="instruction">LD BC,$0203</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="1">Thump sfx as the car lands</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="45174"></span>B076</td>
 <td class="instruction">CALL <a href="88F2.html">start_sfx</a></td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="1">Call start_sfx</td>
 </tr>
 <tr>
-<td class="asm-label">main_loop_8_0</td>
+<td class="routine-comment" colspan="5">
+<span id="45177"></span>
+<div class="comments">
+<div class="paragraph">
+Hero car is in mid-air.
+</div>
+</div>
+</td>
+</tr>
+<tr>
+<td class="asm-label">mhc_midair</td>
 <td class="address-2"><span id="45177"></span>B079</td>
 <td class="instruction">LD HL,$0000</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="1">Point <span class="register">HL</span> at entry in jump table. Self modified by $B96C and $B092</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="45180"></span>B07C</td>
 <td class="instruction">XOR A</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="2">off_road = 0</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="45181"></span>B07D</td>
 <td class="instruction">LD ($A23E),A</td>
-<td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="45184"></span>B080</td>
 <td class="instruction">LD A,($A0D5)</td>
-<td class="comment-1" rowspan="11">Clear up/down/left/right bits of user input</td>
+<td class="comment-1" rowspan="3">Clear up/down/left/right bits of user input (can't turn in mid-air etc.)</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -132,6 +158,7 @@ Used by the routines at <a href="8401.html">main_loop</a> and <a href="852A.html
 <td class="asm-label"></td>
 <td class="address-1"><span id="45192"></span>B088</td>
 <td class="instruction">LD A,(HL)</td>
+<td class="comment-1" rowspan="3">$B5B0 = *HL++      -- Self modified value in draw_car</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -147,6 +174,7 @@ Used by the routines at <a href="8401.html">main_loop</a> and <a href="852A.html
 <td class="asm-label"></td>
 <td class="address-1"><span id="45197"></span>B08D</td>
 <td class="instruction">LD A,($B5AB)</td>
+<td class="comment-1" rowspan="3">A = *$B5AB + *HL++ -- Self modified value in draw_car - vertical shift?</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -162,22 +190,25 @@ Used by the routines at <a href="8401.html">main_loop</a> and <a href="852A.html
 <td class="asm-label"></td>
 <td class="address-1"><span id="45202"></span>B092</td>
 <td class="instruction">LD ($B07A),HL</td>
+<td class="comment-1" rowspan="1">Update HL load above, $B079</td>
 </tr>
 <tr>
-<td class="asm-label">main_loop_8_1</td>
+<td class="asm-label">mhc_not_jumping</td>
 <td class="address-2"><span id="45205"></span>B095</td>
 <td class="instruction">LD ($B5AB),A</td>
+<td class="comment-1" rowspan="1">*$B5AB = A</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="45208"></span>B098</td>
 <td class="instruction">LD HL,$A24E</td>
-<td class="comment-1" rowspan="6">Read boost time remaining</td>
+<td class="comment-1" rowspan="1">Address of boost timer</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="45211"></span>B09B</td>
 <td class="instruction">LD A,(HL)</td>
+<td class="comment-1" rowspan="3">Jump if a turbo boost is not in effect</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -187,23 +218,25 @@ Used by the routines at <a href="8401.html">main_loop</a> and <a href="852A.html
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="45213"></span>B09D</td>
-<td class="instruction">JR Z,<a href="B063.html#45225">main_loop_8_2</a></td>
+<td class="instruction">JR Z,<a href="B063.html#45225">mhc_smoke</a></td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="45215"></span>B09F</td>
 <td class="instruction">DEC (HL)</td>
+<td class="comment-1" rowspan="1">Decrement boost timer</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="45216"></span>B0A0</td>
-<td class="instruction">JR NZ,<a href="B063.html#45225">main_loop_8_2</a></td>
+<td class="instruction">JR NZ,<a href="B063.html#45225">mhc_smoke</a></td>
+<td class="comment-1" rowspan="1">Jump if boost timer is non-zero</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="45218"></span>B0A2</td>
 <td class="instruction">LD A,($A170)</td>
-<td class="comment-1" rowspan="3">Decrement turbo boost count [POKE $B0A5 for Infinite turbos]</td>
+<td class="comment-1" rowspan="3">Decrement turbo boost count [POKE $B0A5,0 for Infinite turbos]</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -216,15 +249,26 @@ Used by the routines at <a href="8401.html">main_loop</a> and <a href="852A.html
 <td class="instruction">LD ($A170),A</td>
 </tr>
 <tr>
-<td class="asm-label">main_loop_8_2</td>
+<td class="routine-comment" colspan="5">
+<span id="45225"></span>
+<div class="comments">
+<div class="paragraph">
+Handle smoke effect.
+</div>
+</div>
+</td>
+</tr>
+<tr>
+<td class="asm-label">mhc_smoke</td>
 <td class="address-2"><span id="45225"></span>B0A9</td>
 <td class="instruction">INC HL</td>
-<td class="comment-1" rowspan="5">TBD</td>
+<td class="comment-1" rowspan="1"><span class="register">HL</span> now points at smoke</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="45226"></span>B0AA</td>
 <td class="instruction">LD A,(HL)</td>
+<td class="comment-1" rowspan="3">Jump if smoke is zero</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -234,43 +278,58 @@ Used by the routines at <a href="8401.html">main_loop</a> and <a href="852A.html
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="45228"></span>B0AC</td>
-<td class="instruction">JR Z,<a href="B063.html#45231">main_loop_8_3</a></td>
+<td class="instruction">JR Z,<a href="B063.html#45231">move_hero_car_0</a></td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="45230"></span>B0AE</td>
 <td class="instruction">DEC (HL)</td>
+<td class="comment-1" rowspan="1">Decrement smoke</td>
 </tr>
 <tr>
-<td class="asm-label">main_loop_8_3</td>
+<td class="routine-comment" colspan="5">
+<span id="45231"></span>
+<div class="comments">
+<div class="paragraph">
+Handle gear changes.
+</div>
+</div>
+</td>
+</tr>
+<tr>
+<td class="asm-label">move_hero_car_0</td>
 <td class="address-2"><span id="45231"></span>B0AF</td>
 <td class="instruction">LD A,($A0D5)</td>
-<td class="comment-1" rowspan="32">Read user input</td>
+<td class="comment-1" rowspan="1">Read user input</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="45234"></span>B0B2</td>
 <td class="instruction">LD C,A</td>
+<td class="comment-1" rowspan="1">C = A</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="45235"></span>B0B3</td>
 <td class="instruction">LD A,($B326)</td>
+<td class="comment-1" rowspan="1">Read from the LD A at $B325 (crash flag)</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="45238"></span>B0B6</td>
 <td class="instruction">AND A</td>
+<td class="comment-1" rowspan="2">Jump if zero</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="45239"></span>B0B7</td>
-<td class="instruction">JR Z,<a href="B063.html#45245">main_loop_8_4</a></td>
+<td class="instruction">JR Z,<a href="B063.html#45245">move_hero_car_1</a></td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="45241"></span>B0B9</td>
 <td class="instruction">LD A,C</td>
+<td class="comment-1" rowspan="3">C = C &amp; $10, i.e. Fire/Gear</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -283,49 +342,57 @@ Used by the routines at <a href="8401.html">main_loop</a> and <a href="852A.html
 <td class="instruction">LD C,A</td>
 </tr>
 <tr>
-<td class="asm-label">main_loop_8_4</td>
+<td class="asm-label">move_hero_car_1</td>
 <td class="address-2"><span id="45245"></span>B0BD</td>
 <td class="instruction">LD A,C</td>
+<td class="comment-1" rowspan="1">A = C</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="45246"></span>B0BE</td>
 <td class="instruction">PUSH AF</td>
+<td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="45247"></span>B0BF</td>
 <td class="instruction">BIT 4,A</td>
+<td class="comment-1" rowspan="1">Test it again? [Strange to re-test it?]</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="45249"></span>B0C1</td>
 <td class="instruction">LD HL,$A253</td>
+<td class="comment-1" rowspan="1">Address of gear flag</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="45252"></span>B0C4</td>
 <td class="instruction">LD A,($A252)</td>
+<td class="comment-1" rowspan="1">A = *$A252</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="45255"></span>B0C7</td>
-<td class="instruction">JR Z,<a href="B063.html#45271">main_loop_8_5</a></td>
+<td class="instruction">JR Z,<a href="B063.html#45271">move_hero_car_2</a></td>
+<td class="comment-1" rowspan="1">Jump if fire/gear is unset</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="45257"></span>B0C9</td>
 <td class="instruction">AND A</td>
+<td class="comment-1" rowspan="2">Jump if A252 is set</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="45258"></span>B0CA</td>
-<td class="instruction">JR NZ,<a href="B063.html#45271">main_loop_8_5</a></td>
+<td class="instruction">JR NZ,<a href="B063.html#45271">move_hero_car_2</a></td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="45260"></span>B0CC</td>
 <td class="instruction">LD A,(HL)</td>
+<td class="comment-1" rowspan="3">Toggle gear flag</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -341,56 +408,67 @@ Used by the routines at <a href="8401.html">main_loop</a> and <a href="852A.html
 <td class="asm-label"></td>
 <td class="address-1"><span id="45264"></span>B0D0</td>
 <td class="instruction">LD A,$04</td>
+<td class="comment-1" rowspan="1">A = 4</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="45266"></span>B0D2</td>
-<td class="instruction">JR Z,<a href="B063.html#45271">main_loop_8_5</a></td>
+<td class="instruction">JR Z,<a href="B063.html#45271">move_hero_car_2</a></td>
+<td class="comment-1" rowspan="1">Jump if low gear?</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="45268"></span>B0D4</td>
 <td class="instruction">LD ($A24F),A</td>
+<td class="comment-1" rowspan="1">smoke = A</td>
 </tr>
 <tr>
-<td class="asm-label">main_loop_8_5</td>
+<td class="asm-label">move_hero_car_2</td>
 <td class="address-2"><span id="45271"></span>B0D7</td>
 <td class="instruction">SUB $01</td>
+<td class="comment-1" rowspan="1">Decement A  [why write it as a SUB 1?]</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="45273"></span>B0D9</td>
-<td class="instruction">JR C,<a href="B063.html#45278">main_loop_8_6</a></td>
+<td class="instruction">JR C,<a href="B063.html#45278">move_hero_car_3</a></td>
+<td class="comment-1" rowspan="1">jump if +ve?</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="45275"></span>B0DB</td>
 <td class="instruction">LD ($A252),A</td>
+<td class="comment-1" rowspan="1">$A252 = A</td>
 </tr>
 <tr>
-<td class="asm-label">main_loop_8_6</td>
+<td class="asm-label">move_hero_car_3</td>
 <td class="address-2"><span id="45278"></span>B0DE</td>
 <td class="instruction">LD A,(HL)</td>
+<td class="comment-1" rowspan="1">Read current gear flag</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="45279"></span>B0DF</td>
 <td class="instruction">EX AF,AF'</td>
+<td class="comment-1" rowspan="1">Bank it</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="45280"></span>B0E0</td>
 <td class="instruction">LD HL,($A24A)</td>
+<td class="comment-1" rowspan="1">Read current speed</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="45283"></span>B0E3</td>
 <td class="instruction">PUSH HL</td>
+<td class="comment-1" rowspan="1">Stack it</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="45284"></span>B0E4</td>
 <td class="instruction">LD DE,$0078</td>
+<td class="comment-1" rowspan="2">HL -= 120</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -400,13 +478,14 @@ Used by the routines at <a href="8401.html">main_loop</a> and <a href="852A.html
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="45289"></span>B0E9</td>
-<td class="instruction">JR NC,<a href="B063.html#45313">main_loop_8_7</a></td>
+<td class="instruction">JR NC,<a href="B063.html#45313">move_hero_car_4</a></td>
+<td class="comment-1" rowspan="1">Jump if speed &gt;= 120</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="45291"></span>B0EB</td>
 <td class="instruction">LD A,($A230)</td>
-<td class="comment-1" rowspan="152">Jump if perp_caught_stage &gt; 0</td>
+<td class="comment-1" rowspan="3">Jump if perp_caught_stage &gt; 0</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -416,52 +495,71 @@ Used by the routines at <a href="8401.html">main_loop</a> and <a href="852A.html
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="45295"></span>B0EF</td>
-<td class="instruction">JR NZ,<a href="B063.html#45313">main_loop_8_7</a></td>
+<td class="instruction">JR NZ,<a href="B063.html#45313">move_hero_car_4</a></td>
+</tr>
+<tr>
+<td class="routine-comment" colspan="5">
+<span id="45297"></span>
+<div class="comments">
+<div class="paragraph">
+Handle idle timer.
+</div>
+</div>
+</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="45297"></span>B0F1</td>
 <td class="instruction">LD HL,$A16E</td>
+<td class="comment-1" rowspan="1">Address of idle timer</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="45300"></span>B0F4</td>
 <td class="instruction">DEC (HL)</td>
+<td class="comment-1" rowspan="1">Decrement idle timer</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="45301"></span>B0F5</td>
-<td class="instruction">JR NZ,<a href="B063.html#45313">main_loop_8_7</a></td>
+<td class="instruction">JR NZ,<a href="B063.html#45313">move_hero_car_4</a></td>
+<td class="comment-1" rowspan="1">Jump if non-zero</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="45303"></span>B0F7</td>
 <td class="instruction">LD (HL),$64</td>
+<td class="comment-1" rowspan="1">Reset idle timer to 100</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="45305"></span>B0F9</td>
 <td class="instruction">LD A,$0A</td>
+<td class="comment-1" rowspan="1">A = 10</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="45307"></span>B0FB</td>
 <td class="instruction">LD HL,$98F8</td>
+<td class="comment-1" rowspan="1">HL = get_moving_chatter</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="45310"></span>B0FE</td>
 <td class="instruction">CALL <a href="9945.html">chatter</a></td>
+<td class="comment-1" rowspan="1">Call chatter</td>
 </tr>
 <tr>
-<td class="asm-label">main_loop_8_7</td>
+<td class="asm-label">move_hero_car_4</td>
 <td class="address-2"><span id="45313"></span>B101</td>
 <td class="instruction">POP HL</td>
+<td class="comment-1" rowspan="1">Pop speed</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="45314"></span>B102</td>
 <td class="instruction">LD D,H</td>
+<td class="comment-1" rowspan="2">DE = HL</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -472,51 +570,69 @@ Used by the routines at <a href="8401.html">main_loop</a> and <a href="852A.html
 <td class="asm-label"></td>
 <td class="address-1"><span id="45316"></span>B104</td>
 <td class="instruction">LD A,($A23E)</td>
+<td class="comment-1" rowspan="1">Load the off-road flag</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="45319"></span>B107</td>
 <td class="instruction">AND A</td>
+<td class="comment-1" rowspan="2">Jump if zero</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="45320"></span>B108</td>
-<td class="instruction">JR Z,<a href="B063.html#45357">main_loop_8_9</a></td>
+<td class="instruction">JR Z,<a href="B063.html#45357">move_hero_car_6</a></td>
+</tr>
+<tr>
+<td class="routine-comment" colspan="5">
+<span id="45322"></span>
+<div class="comments">
+<div class="paragraph">
+Handle off-road (it can be 1 or 2).
+</div>
+</div>
+</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="45322"></span>B10A</td>
 <td class="instruction">LD BC,$0078</td>
+<td class="comment-1" rowspan="1">BC = 120  -- factor for off-road == 1</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="45325"></span>B10D</td>
 <td class="instruction">DEC A</td>
+<td class="comment-1" rowspan="2">Jump if off-road was one</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="45326"></span>B10E</td>
-<td class="instruction">JR Z,<a href="B063.html#45331">main_loop_8_8</a></td>
+<td class="instruction">JR Z,<a href="B063.html#45331">move_hero_car_5</a></td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="45328"></span>B110</td>
 <td class="instruction">LD BC,$006E</td>
+<td class="comment-1" rowspan="1">BC = 110  -- factor for off-road == 2</td>
 </tr>
 <tr>
-<td class="asm-label">main_loop_8_8</td>
+<td class="asm-label">move_hero_car_5</td>
 <td class="address-2"><span id="45331"></span>B113</td>
 <td class="instruction">AND A</td>
+<td class="comment-1" rowspan="1">Clear carry?</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="45332"></span>B114</td>
 <td class="instruction">SBC HL,BC</td>
+<td class="comment-1" rowspan="1">HL -= BC  -- 16-bit sub just for testing</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="45334"></span>B116</td>
 <td class="instruction">LD H,D</td>
+<td class="comment-1" rowspan="2">HL = DE</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -526,22 +642,26 @@ Used by the routines at <a href="8401.html">main_loop</a> and <a href="852A.html
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="45336"></span>B118</td>
-<td class="instruction">JR C,<a href="B063.html#45357">main_loop_8_9</a></td>
+<td class="instruction">JR C,<a href="B063.html#45357">move_hero_car_6</a></td>
+<td class="comment-1" rowspan="1">Jump if HL &lt; BC (result of subtraction)</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="45338"></span>B11A</td>
 <td class="instruction">LD A,L</td>
+<td class="comment-1" rowspan="1">A = L</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="45339"></span>B11B</td>
 <td class="instruction">RR H</td>
+<td class="comment-1" rowspan="1">H &gt;&gt;= 1  -- 9 bit rotate right through carry</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="45341"></span>B11D</td>
 <td class="instruction">RLA</td>
+<td class="comment-1" rowspan="4">A &lt;&lt;= 4  -- 9 bit rotate left through carry</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -562,6 +682,7 @@ Used by the routines at <a href="8401.html">main_loop</a> and <a href="852A.html
 <td class="asm-label"></td>
 <td class="address-1"><span id="45345"></span>B121</td>
 <td class="instruction">AND $0F</td>
+<td class="comment-1" rowspan="3">A = -((A &amp; $0F) | 1)</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -577,6 +698,7 @@ Used by the routines at <a href="8401.html">main_loop</a> and <a href="852A.html
 <td class="asm-label"></td>
 <td class="address-1"><span id="45351"></span>B127</td>
 <td class="instruction">LD C,A</td>
+<td class="comment-1" rowspan="2">BC = $FF00 | A</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -586,67 +708,80 @@ Used by the routines at <a href="8401.html">main_loop</a> and <a href="852A.html
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="45354"></span>B12A</td>
-<td class="instruction">JP <a href="B063.html#45466">main_loop_8_14</a></td>
+<td class="instruction">JP <a href="B063.html#45466">move_hero_car_11</a></td>
+<td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
-<td class="asm-label">main_loop_8_9</td>
+<td class="asm-label">move_hero_car_6</td>
 <td class="address-2"><span id="45357"></span>B12D</td>
 <td class="instruction">LD A,($A24E)</td>
+<td class="comment-1" rowspan="1">A = boost (time remaining)</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="45360"></span>B130</td>
 <td class="instruction">AND A</td>
+<td class="comment-1" rowspan="1">Test then bank the flags</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="45361"></span>B131</td>
 <td class="instruction">EX AF,AF'</td>
+<td class="comment-1" rowspan="1">Bank</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="45362"></span>B132</td>
 <td class="instruction">AND A</td>
+<td class="comment-1" rowspan="1">Check previously banked A</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="45363"></span>B133</td>
-<td class="instruction">JR NZ,<a href="B063.html#45422">main_loop_8_12</a></td>
+<td class="instruction">JR NZ,<a href="B063.html#45422">move_hero_car_9</a></td>
+<td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="45365"></span>B135</td>
 <td class="instruction">LD BC,$01D6</td>
+<td class="comment-1" rowspan="1">BC = 470</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="45368"></span>B138</td>
 <td class="instruction">EX AF,AF'</td>
+<td class="comment-1" rowspan="1">Unbank boost + flags</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="45369"></span>B139</td>
-<td class="instruction">JR NZ,<a href="B063.html#45374">main_loop_8_10</a></td>
+<td class="instruction">JR NZ,<a href="B063.html#45374">move_hero_car_7</a></td>
+<td class="comment-1" rowspan="1">Uses banked flags</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="45371"></span>B13B</td>
 <td class="instruction">LD BC,$00E6</td>
+<td class="comment-1" rowspan="1">BC = 230</td>
 </tr>
 <tr>
-<td class="asm-label">main_loop_8_10</td>
+<td class="asm-label">move_hero_car_7</td>
 <td class="address-2"><span id="45374"></span>B13E</td>
 <td class="instruction">SBC HL,BC</td>
+<td class="comment-1" rowspan="1">HL -= BC</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="45376"></span>B140</td>
-<td class="instruction">JP NC,<a href="B063.html#45402">main_loop_8_11</a></td>
+<td class="instruction">JP NC,<a href="B063.html#45402">move_hero_car_8</a></td>
+<td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="45379"></span>B143</td>
 <td class="instruction">LD A,L</td>
+<td class="comment-1" rowspan="3">C = ~L</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -662,6 +797,7 @@ Used by the routines at <a href="8401.html">main_loop</a> and <a href="852A.html
 <td class="asm-label"></td>
 <td class="address-1"><span id="45382"></span>B146</td>
 <td class="instruction">LD A,H</td>
+<td class="comment-1" rowspan="3">B = ~H</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -677,46 +813,55 @@ Used by the routines at <a href="8401.html">main_loop</a> and <a href="852A.html
 <td class="asm-label"></td>
 <td class="address-1"><span id="45385"></span>B149</td>
 <td class="instruction">INC BC</td>
+<td class="comment-1" rowspan="1">BC++</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="45386"></span>B14A</td>
 <td class="instruction">LD A,C</td>
+<td class="comment-1" rowspan="1">A = C</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="45387"></span>B14B</td>
 <td class="instruction">SRL B</td>
+<td class="comment-1" rowspan="1">B &gt;&gt;= 1</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="45389"></span>B14D</td>
 <td class="instruction">RRA</td>
+<td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="45390"></span>B14E</td>
 <td class="instruction">SRL B</td>
+<td class="comment-1" rowspan="1">B &gt;&gt;= 1</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="45392"></span>B150</td>
 <td class="instruction">RRA</td>
+<td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="45393"></span>B151</td>
 <td class="instruction">RRA</td>
+<td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="45394"></span>B152</td>
 <td class="instruction">RRA</td>
+<td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="45395"></span>B153</td>
 <td class="instruction">AND $3F</td>
+<td class="comment-1" rowspan="3">C = (A &amp; $3F) | 1</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -731,47 +876,56 @@ Used by the routines at <a href="8401.html">main_loop</a> and <a href="852A.html
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="45400"></span>B158</td>
-<td class="instruction">JR <a href="B063.html#45466">main_loop_8_14</a></td>
+<td class="instruction">JR <a href="B063.html#45466">move_hero_car_11</a></td>
+<td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
-<td class="asm-label">main_loop_8_11</td>
+<td class="asm-label">move_hero_car_8</td>
 <td class="address-2"><span id="45402"></span>B15A</td>
 <td class="instruction">LD A,L</td>
+<td class="comment-1" rowspan="1">A = L</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="45403"></span>B15B</td>
 <td class="instruction">SRL H</td>
+<td class="comment-1" rowspan="1">H &gt;&gt;= 1</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="45405"></span>B15D</td>
 <td class="instruction">RRA</td>
+<td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="45406"></span>B15E</td>
 <td class="instruction">SRL H</td>
+<td class="comment-1" rowspan="1">H &gt;&gt;= 1</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="45408"></span>B160</td>
 <td class="instruction">RRA</td>
+<td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="45409"></span>B161</td>
 <td class="instruction">RRA</td>
+<td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="45410"></span>B162</td>
 <td class="instruction">RRA</td>
+<td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="45411"></span>B163</td>
 <td class="instruction">AND $1F</td>
+<td class="comment-1" rowspan="3">A = -((A &amp; $1F) | 1)</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -787,6 +941,7 @@ Used by the routines at <a href="8401.html">main_loop</a> and <a href="852A.html
 <td class="asm-label"></td>
 <td class="address-1"><span id="45417"></span>B169</td>
 <td class="instruction">LD C,A</td>
+<td class="comment-1" rowspan="2">BC = $FF00 | A</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -796,22 +951,26 @@ Used by the routines at <a href="8401.html">main_loop</a> and <a href="852A.html
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="45420"></span>B16C</td>
-<td class="instruction">JR <a href="B063.html#45466">main_loop_8_14</a></td>
+<td class="instruction">JR <a href="B063.html#45466">move_hero_car_11</a></td>
+<td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
-<td class="asm-label">main_loop_8_12</td>
+<td class="asm-label">move_hero_car_9</td>
 <td class="address-2"><span id="45422"></span>B16E</td>
 <td class="instruction">LD BC,$00DC</td>
+<td class="comment-1" rowspan="1">BC = 220</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="45425"></span>B171</td>
 <td class="instruction">SBC HL,BC</td>
+<td class="comment-1" rowspan="1">HL -= BC  -- for flags</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="45427"></span>B173</td>
 <td class="instruction">LD H,D</td>
+<td class="comment-1" rowspan="2">HL = DE</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -821,67 +980,80 @@ Used by the routines at <a href="8401.html">main_loop</a> and <a href="852A.html
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="45429"></span>B175</td>
-<td class="instruction">JR NC,<a href="B063.html#45454">main_loop_8_13</a></td>
+<td class="instruction">JR NC,<a href="B063.html#45454">move_hero_car_10</a></td>
+<td class="comment-1" rowspan="1">from result of calc</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="45431"></span>B177</td>
 <td class="instruction">LD BC,$01D6</td>
+<td class="comment-1" rowspan="1">BC = 470</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="45434"></span>B17A</td>
 <td class="instruction">EX AF,AF'</td>
+<td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="45435"></span>B17B</td>
-<td class="instruction">JR NZ,<a href="B063.html#45374">main_loop_8_10</a></td>
+<td class="instruction">JR NZ,<a href="B063.html#45374">move_hero_car_7</a></td>
+<td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="45437"></span>B17D</td>
 <td class="instruction">LD A,E</td>
+<td class="comment-1" rowspan="1">A = E</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="45438"></span>B17E</td>
 <td class="instruction">LD B,D</td>
+<td class="comment-1" rowspan="1">B = D</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="45439"></span>B17F</td>
 <td class="instruction">SRL B</td>
+<td class="comment-1" rowspan="1">B &gt;&gt;= 1</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="45441"></span>B181</td>
 <td class="instruction">RRA</td>
+<td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="45442"></span>B182</td>
 <td class="instruction">SRL B</td>
+<td class="comment-1" rowspan="1">B &gt;&gt;= 1</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="45444"></span>B184</td>
 <td class="instruction">RRA</td>
+<td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="45445"></span>B185</td>
 <td class="instruction">RRA</td>
+<td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="45446"></span>B186</td>
 <td class="instruction">RRA</td>
+<td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="45447"></span>B187</td>
 <td class="instruction">OR $01</td>
+<td class="comment-1" rowspan="3">C = (A | 1) &amp; $1F</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -896,37 +1068,44 @@ Used by the routines at <a href="8401.html">main_loop</a> and <a href="852A.html
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="45452"></span>B18C</td>
-<td class="instruction">JR <a href="B063.html#45466">main_loop_8_14</a></td>
+<td class="instruction">JR <a href="B063.html#45466">move_hero_car_11</a></td>
+<td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
-<td class="asm-label">main_loop_8_13</td>
+<td class="asm-label">move_hero_car_10</td>
 <td class="address-2"><span id="45454"></span>B18E</td>
 <td class="instruction">LD BC,$02B7</td>
+<td class="comment-1" rowspan="1">BC = 695</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="45457"></span>B191</td>
 <td class="instruction">EX AF,AF'</td>
+<td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="45458"></span>B192</td>
-<td class="instruction">JR NZ,<a href="B063.html#45374">main_loop_8_10</a></td>
+<td class="instruction">JR NZ,<a href="B063.html#45374">move_hero_car_7</a></td>
+<td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="45460"></span>B194</td>
 <td class="instruction">LD BC,$0168</td>
+<td class="comment-1" rowspan="1">BC = 360</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="45463"></span>B197</td>
-<td class="instruction">JP <a href="B063.html#45374">main_loop_8_10</a></td>
+<td class="instruction">JP <a href="B063.html#45374">move_hero_car_7</a></td>
+<td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
-<td class="asm-label">main_loop_8_14</td>
+<td class="asm-label">move_hero_car_11</td>
 <td class="address-2"><span id="45466"></span>B19A</td>
 <td class="instruction">POP AF</td>
+<td class="comment-1" rowspan="2">Get stacked <span class="register">AF</span></td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -937,6 +1116,7 @@ Used by the routines at <a href="8401.html">main_loop</a> and <a href="852A.html
 <td class="asm-label"></td>
 <td class="address-1"><span id="45468"></span>B19C</td>
 <td class="instruction">RRA</td>
+<td class="comment-1" rowspan="3">Test bit 2?</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -951,37 +1131,44 @@ Used by the routines at <a href="8401.html">main_loop</a> and <a href="852A.html
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="45471"></span>B19F</td>
-<td class="instruction">JR NC,<a href="B063.html#45478">main_loop_8_15</a></td>
+<td class="instruction">JR NC,<a href="B063.html#45478">move_hero_car_12</a></td>
+<td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="45473"></span>B1A1</td>
 <td class="instruction">LD BC,$FFEC</td>
+<td class="comment-1" rowspan="1">BC = $FFEC</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="45476"></span>B1A4</td>
-<td class="instruction">JR <a href="B063.html#45484">main_loop_8_16</a></td>
+<td class="instruction">JR <a href="B063.html#45484">move_hero_car_13</a></td>
+<td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
-<td class="asm-label">main_loop_8_15</td>
+<td class="asm-label">move_hero_car_12</td>
 <td class="address-2"><span id="45478"></span>B1A6</td>
 <td class="instruction">RRA</td>
+<td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="45479"></span>B1A7</td>
-<td class="instruction">JR C,<a href="B063.html#45484">main_loop_8_16</a></td>
+<td class="instruction">JR C,<a href="B063.html#45484">move_hero_car_13</a></td>
+<td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="45481"></span>B1A9</td>
 <td class="instruction">LD BC,$FFF6</td>
+<td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
-<td class="asm-label">main_loop_8_16</td>
+<td class="asm-label">move_hero_car_13</td>
 <td class="address-2"><span id="45484"></span>B1AC</td>
 <td class="instruction">LD H,D</td>
+<td class="comment-1" rowspan="2">HL = DE</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -992,26 +1179,31 @@ Used by the routines at <a href="8401.html">main_loop</a> and <a href="852A.html
 <td class="asm-label"></td>
 <td class="address-1"><span id="45486"></span>B1AE</td>
 <td class="instruction">AND A</td>
+<td class="comment-1" rowspan="1">Clear carry?</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="45487"></span>B1AF</td>
 <td class="instruction">ADC HL,BC</td>
+<td class="comment-1" rowspan="1">HL += BC</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="45489"></span>B1B1</td>
-<td class="instruction">JP P,<a href="B063.html#45495">main_loop_8_17</a></td>
+<td class="instruction">JP P,<a href="B063.html#45495">move_hero_car_14</a></td>
+<td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="45492"></span>B1B4</td>
 <td class="instruction">LD HL,$0000</td>
+<td class="comment-1" rowspan="1">HL = $0000</td>
 </tr>
 <tr>
-<td class="asm-label">main_loop_8_17</td>
+<td class="asm-label">move_hero_car_14</td>
 <td class="address-2"><span id="45495"></span>B1B7</td>
 <td class="instruction">LD A,($A24C)</td>
+<td class="comment-1" rowspan="2">A = *$A24C - 1</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -1021,47 +1213,56 @@ Used by the routines at <a href="8401.html">main_loop</a> and <a href="852A.html
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="45500"></span>B1BC</td>
-<td class="instruction">JR NC,<a href="B063.html#45540">main_loop_8_20</a></td>
+<td class="instruction">JR NC,<a href="B063.html#45540">move_hero_car_17</a></td>
+<td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="45502"></span>B1BE</td>
 <td class="instruction">LD A,($B5B0)</td>
+<td class="comment-1" rowspan="1">A = $B5B0</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="45505"></span>B1C1</td>
 <td class="instruction">AND A</td>
+<td class="comment-1" rowspan="1">Set flags</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="45506"></span>B1C2</td>
-<td class="instruction">JR Z,<a href="B063.html#45540">main_loop_8_20</a></td>
+<td class="instruction">JR Z,<a href="B063.html#45540">move_hero_car_17</a></td>
+<td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="45508"></span>B1C4</td>
 <td class="instruction">LD C,A</td>
+<td class="comment-1" rowspan="1">C = A</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="45509"></span>B1C5</td>
 <td class="instruction">LD A,H</td>
+<td class="comment-1" rowspan="1">A = H</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="45510"></span>B1C6</td>
 <td class="instruction">OR L</td>
+<td class="comment-1" rowspan="1">A |= L</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="45511"></span>B1C7</td>
-<td class="instruction">JR Z,<a href="B063.html#45540">main_loop_8_20</a></td>
+<td class="instruction">JR Z,<a href="B063.html#45540">move_hero_car_17</a></td>
+<td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="45513"></span>B1C9</td>
 <td class="instruction">LD A,C</td>
+<td class="comment-1" rowspan="3">A = (C - 5) | 1</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -1077,26 +1278,31 @@ Used by the routines at <a href="8401.html">main_loop</a> and <a href="852A.html
 <td class="asm-label"></td>
 <td class="address-1"><span id="45518"></span>B1CE</td>
 <td class="instruction">LD C,A</td>
+<td class="comment-1" rowspan="1">C = A</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="45519"></span>B1CF</td>
 <td class="instruction">LD B,$00</td>
+<td class="comment-1" rowspan="1">B = 0</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="45521"></span>B1D1</td>
-<td class="instruction">JP P,<a href="B063.html#45525">main_loop_8_18</a></td>
+<td class="instruction">JP P,<a href="B063.html#45525">move_hero_car_15</a></td>
+<td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="45524"></span>B1D4</td>
 <td class="instruction">DEC B</td>
+<td class="comment-1" rowspan="1">B--</td>
 </tr>
 <tr>
-<td class="asm-label">main_loop_8_18</td>
+<td class="asm-label">move_hero_car_15</td>
 <td class="address-2"><span id="45525"></span>B1D5</td>
 <td class="instruction">LD D,H</td>
+<td class="comment-1" rowspan="2">DE = HL</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -1107,137 +1313,163 @@ Used by the routines at <a href="8401.html">main_loop</a> and <a href="852A.html
 <td class="asm-label"></td>
 <td class="address-1"><span id="45527"></span>B1D7</td>
 <td class="instruction">ADD HL,BC</td>
+<td class="comment-1" rowspan="1">HL += BC</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="45528"></span>B1D8</td>
 <td class="instruction">LD BC,$02B7</td>
+<td class="comment-1" rowspan="1">BC = 695</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="45531"></span>B1DB</td>
 <td class="instruction">PUSH HL</td>
+<td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="45532"></span>B1DC</td>
 <td class="instruction">SBC HL,BC</td>
+<td class="comment-1" rowspan="1">HL -= BC</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="45534"></span>B1DE</td>
 <td class="instruction">POP HL</td>
+<td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="45535"></span>B1DF</td>
-<td class="instruction">JR C,<a href="B063.html#45538">main_loop_8_19</a></td>
+<td class="instruction">JR C,<a href="B063.html#45538">move_hero_car_16</a></td>
+<td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="45537"></span>B1E1</td>
 <td class="instruction">EX DE,HL</td>
+<td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
-<td class="asm-label">main_loop_8_19</td>
+<td class="asm-label">move_hero_car_16</td>
 <td class="address-2"><span id="45538"></span>B1E2</td>
 <td class="instruction">LD A,$03</td>
+<td class="comment-1" rowspan="1">A = 3</td>
 </tr>
 <tr>
-<td class="asm-label">main_loop_8_20</td>
+<td class="asm-label">move_hero_car_17</td>
 <td class="address-2"><span id="45540"></span>B1E4</td>
 <td class="instruction">LD ($A24C),A</td>
+<td class="comment-1" rowspan="1">*$A24C = A</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="45543"></span>B1E7</td>
 <td class="instruction">LD A,H</td>
+<td class="comment-1" rowspan="1">A = H</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="45544"></span>B1E8</td>
 <td class="instruction">CP $02</td>
+<td class="comment-1" rowspan="1">CP 2</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="45546"></span>B1EA</td>
-<td class="instruction">JR C,<a href="B063.html#45551">main_loop_8_21</a></td>
+<td class="instruction">JR C,<a href="B063.html#45551">move_hero_car_18</a></td>
+<td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="45548"></span>B1EC</td>
 <td class="instruction">LD HL,$01FF</td>
-<td class="comment-1" rowspan="173">Cap speed to $1FF</td>
+<td class="comment-1" rowspan="1">Cap speed to $1FF</td>
 </tr>
 <tr>
-<td class="asm-label">main_loop_8_21</td>
+<td class="asm-label">move_hero_car_18</td>
 <td class="address-2"><span id="45551"></span>B1EF</td>
 <td class="instruction">LD ($A24A),HL</td>
+<td class="comment-1" rowspan="1">Set speed to <span class="register">HL</span></td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="45554"></span>B1F2</td>
 <td class="instruction">POP HL</td>
+<td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="45555"></span>B1F3</td>
 <td class="instruction">LD A,($A263)</td>
+<td class="comment-1" rowspan="1">A = *$A263</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="45558"></span>B1F6</td>
 <td class="instruction">LD B,A</td>
+<td class="comment-1" rowspan="1">B = A</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="45559"></span>B1F7</td>
 <td class="instruction">LD A,($A264)</td>
+<td class="comment-1" rowspan="1">A = *$A264</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="45562"></span>B1FA</td>
 <td class="instruction">LD C,A</td>
+<td class="comment-1" rowspan="1">C = A</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="45563"></span>B1FB</td>
 <td class="instruction">LD A,($B064)</td>
+<td class="comment-1" rowspan="1">A = *$B064  -- Jump counter [self modified]</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="45566"></span>B1FE</td>
 <td class="instruction">AND A</td>
+<td class="comment-1" rowspan="1">Set flags</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="45567"></span>B1FF</td>
-<td class="instruction">JP NZ,<a href="B063.html#45651">main_loop_8_30</a></td>
+<td class="instruction">JP NZ,<a href="B063.html#45651">move_hero_car_27</a></td>
+<td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="45570"></span>B202</td>
 <td class="instruction">RR H</td>
+<td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="45572"></span>B204</td>
-<td class="instruction">JR C,<a href="B063.html#45594">main_loop_8_24</a></td>
+<td class="instruction">JR C,<a href="B063.html#45594">move_hero_car_21</a></td>
+<td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="45574"></span>B206</td>
 <td class="instruction">RR H</td>
+<td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="45576"></span>B208</td>
-<td class="instruction">JR C,<a href="B063.html#45612">main_loop_8_26</a></td>
+<td class="instruction">JR C,<a href="B063.html#45612">move_hero_car_23</a></td>
+<td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="45578"></span>B20A</td>
 <td class="instruction">LD A,C</td>
+<td class="comment-1" rowspan="2">A = C - 9</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -1247,22 +1479,26 @@ Used by the routines at <a href="8401.html">main_loop</a> and <a href="852A.html
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="45581"></span>B20D</td>
-<td class="instruction">JR NC,<a href="B063.html#45584">main_loop_8_22</a></td>
+<td class="instruction">JR NC,<a href="B063.html#45584">move_hero_car_19</a></td>
+<td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="45583"></span>B20F</td>
 <td class="instruction">XOR A</td>
+<td class="comment-1" rowspan="1">A = 0</td>
 </tr>
 <tr>
-<td class="asm-label">main_loop_8_22</td>
+<td class="asm-label">move_hero_car_19</td>
 <td class="address-2"><span id="45584"></span>B210</td>
 <td class="instruction">LD C,A</td>
+<td class="comment-1" rowspan="1">C = A</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="45585"></span>B211</td>
 <td class="instruction">LD A,B</td>
+<td class="comment-1" rowspan="2">A = B - 9</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -1272,27 +1508,32 @@ Used by the routines at <a href="8401.html">main_loop</a> and <a href="852A.html
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="45588"></span>B214</td>
-<td class="instruction">JR NC,<a href="B063.html#45591">main_loop_8_23</a></td>
+<td class="instruction">JR NC,<a href="B063.html#45591">move_hero_car_20</a></td>
+<td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="45590"></span>B216</td>
 <td class="instruction">XOR A</td>
+<td class="comment-1" rowspan="1">A = 0</td>
 </tr>
 <tr>
-<td class="asm-label">main_loop_8_23</td>
+<td class="asm-label">move_hero_car_20</td>
 <td class="address-2"><span id="45591"></span>B217</td>
 <td class="instruction">LD B,A</td>
+<td class="comment-1" rowspan="1">B = A</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="45592"></span>B218</td>
-<td class="instruction">JR <a href="B063.html#45628">main_loop_8_28</a></td>
+<td class="instruction">JR <a href="B063.html#45628">move_hero_car_25</a></td>
+<td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
-<td class="asm-label">main_loop_8_24</td>
+<td class="asm-label">move_hero_car_21</td>
 <td class="address-2"><span id="45594"></span>B21A</td>
 <td class="instruction">LD A,B</td>
+<td class="comment-1" rowspan="2">A = B + 4</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -1303,6 +1544,7 @@ Used by the routines at <a href="8401.html">main_loop</a> and <a href="852A.html
 <td class="asm-label"></td>
 <td class="address-1"><span id="45597"></span>B21D</td>
 <td class="instruction">LD B,$24</td>
+<td class="comment-1" rowspan="3">Jump if A &gt;= 36</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -1312,17 +1554,19 @@ Used by the routines at <a href="8401.html">main_loop</a> and <a href="852A.html
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="45600"></span>B220</td>
-<td class="instruction">JR NC,<a href="B063.html#45603">main_loop_8_25</a></td>
+<td class="instruction">JR NC,<a href="B063.html#45603">move_hero_car_22</a></td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="45602"></span>B222</td>
 <td class="instruction">LD B,A</td>
+<td class="comment-1" rowspan="1">B = A</td>
 </tr>
 <tr>
-<td class="asm-label">main_loop_8_25</td>
+<td class="asm-label">move_hero_car_22</td>
 <td class="address-2"><span id="45603"></span>B223</td>
 <td class="instruction">LD A,C</td>
+<td class="comment-1" rowspan="3">C -= B</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -1337,22 +1581,26 @@ Used by the routines at <a href="8401.html">main_loop</a> and <a href="852A.html
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="45606"></span>B226</td>
-<td class="instruction">JR NC,<a href="B063.html#45628">main_loop_8_28</a></td>
+<td class="instruction">JR NC,<a href="B063.html#45628">move_hero_car_25</a></td>
+<td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="45608"></span>B228</td>
 <td class="instruction">LD C,$00</td>
+<td class="comment-1" rowspan="1">C = 0</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="45610"></span>B22A</td>
-<td class="instruction">JR <a href="B063.html#45628">main_loop_8_28</a></td>
+<td class="instruction">JR <a href="B063.html#45628">move_hero_car_25</a></td>
+<td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
-<td class="asm-label">main_loop_8_26</td>
+<td class="asm-label">move_hero_car_23</td>
 <td class="address-2"><span id="45612"></span>B22C</td>
 <td class="instruction">LD A,C</td>
+<td class="comment-1" rowspan="2">A = C + 4</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -1363,26 +1611,31 @@ Used by the routines at <a href="8401.html">main_loop</a> and <a href="852A.html
 <td class="asm-label"></td>
 <td class="address-1"><span id="45615"></span>B22F</td>
 <td class="instruction">LD C,$24</td>
+<td class="comment-1" rowspan="1">C = $24</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="45617"></span>B231</td>
 <td class="instruction">CP C</td>
+<td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="45618"></span>B232</td>
-<td class="instruction">JR NC,<a href="B063.html#45621">main_loop_8_27</a></td>
+<td class="instruction">JR NC,<a href="B063.html#45621">move_hero_car_24</a></td>
+<td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="45620"></span>B234</td>
 <td class="instruction">LD C,A</td>
+<td class="comment-1" rowspan="1">C = A</td>
 </tr>
 <tr>
-<td class="asm-label">main_loop_8_27</td>
+<td class="asm-label">move_hero_car_24</td>
 <td class="address-2"><span id="45621"></span>B235</td>
 <td class="instruction">LD A,B</td>
+<td class="comment-1" rowspan="3">B -= C</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -1397,167 +1650,220 @@ Used by the routines at <a href="8401.html">main_loop</a> and <a href="852A.html
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="45624"></span>B238</td>
-<td class="instruction">JR NC,<a href="B063.html#45628">main_loop_8_28</a></td>
+<td class="instruction">JR NC,<a href="B063.html#45628">move_hero_car_25</a></td>
+<td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="45626"></span>B23A</td>
 <td class="instruction">LD B,$00</td>
+<td class="comment-1" rowspan="1">B = 0</td>
 </tr>
 <tr>
-<td class="asm-label">main_loop_8_28</td>
+<td class="asm-label">move_hero_car_25</td>
 <td class="address-2"><span id="45628"></span>B23C</td>
 <td class="instruction">LD HL,($A24A)</td>
+<td class="comment-1" rowspan="1">HL = speed</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="45631"></span>B23F</td>
 <td class="instruction">LD A,L</td>
+<td class="comment-1" rowspan="1">A = L</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="45632"></span>B240</td>
 <td class="instruction">RR H</td>
+<td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="45634"></span>B242</td>
 <td class="instruction">RRA</td>
+<td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="45635"></span>B243</td>
 <td class="instruction">SRL A</td>
+<td class="comment-1" rowspan="1">A &gt;&gt;= 1</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="45637"></span>B245</td>
 <td class="instruction">SRL A</td>
+<td class="comment-1" rowspan="1">A &gt;&gt;= 1</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="45639"></span>B247</td>
 <td class="instruction">LD L,A</td>
+<td class="comment-1" rowspan="1">L = A</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="45640"></span>B248</td>
 <td class="instruction">SRL L</td>
+<td class="comment-1" rowspan="1">L &gt;&gt;= 1</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="45642"></span>B24A</td>
 <td class="instruction">ADD A,L</td>
+<td class="comment-1" rowspan="1">A += L</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="45643"></span>B24B</td>
 <td class="instruction">CP B</td>
+<td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="45644"></span>B24C</td>
-<td class="instruction">JR NC,<a href="B063.html#45647">main_loop_8_29</a></td>
+<td class="instruction">JR NC,<a href="B063.html#45647">move_hero_car_26</a></td>
+<td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="45646"></span>B24E</td>
 <td class="instruction">LD B,A</td>
+<td class="comment-1" rowspan="1">B = A</td>
 </tr>
 <tr>
-<td class="asm-label">main_loop_8_29</td>
+<td class="asm-label">move_hero_car_26</td>
 <td class="address-2"><span id="45647"></span>B24F</td>
 <td class="instruction">CP C</td>
+<td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="45648"></span>B250</td>
-<td class="instruction">JR NC,<a href="B063.html#45651">main_loop_8_30</a></td>
+<td class="instruction">JR NC,<a href="B063.html#45651">move_hero_car_27</a></td>
+<td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="45650"></span>B252</td>
 <td class="instruction">LD C,A</td>
+<td class="comment-1" rowspan="1">C = A</td>
 </tr>
 <tr>
-<td class="asm-label">main_loop_8_30</td>
+<td class="asm-label">move_hero_car_27</td>
 <td class="address-2"><span id="45651"></span>B253</td>
 <td class="instruction">PUSH BC</td>
+<td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="45652"></span>B254</td>
 <td class="instruction">LD BC,$0000</td>
+<td class="comment-1" rowspan="1">BC = $0000</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="45655"></span>B257</td>
 <td class="instruction">LD E,B</td>
+<td class="comment-1" rowspan="1">E = B</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="45656"></span>B258</td>
 <td class="instruction">LD A,($A25C)</td>
+<td class="comment-1" rowspan="1">A = horizon_scroll (e.g. $FA..$06 in multiples of two)</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="45659"></span>B25B</td>
 <td class="instruction">OR A</td>
+<td class="comment-1" rowspan="1">Set flags</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="45660"></span>B25C</td>
-<td class="instruction">JP Z,<a href="B063.html#45722">main_loop_8_35</a></td>
+<td class="instruction">JP Z,<a href="B063.html#45722">move_hero_car_32</a></td>
+<td class="comment-1" rowspan="1">Jump if zero</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="45663"></span>B25F</td>
-<td class="instruction">JP P,<a href="B063.html#45669">main_loop_8_31</a></td>
+<td class="instruction">JP P,<a href="B063.html#45669">move_hero_car_28</a></td>
+<td class="comment-1" rowspan="1">Jump if positive</td>
+</tr>
+<tr>
+<td class="routine-comment" colspan="5">
+<span id="45666"></span>
+<div class="comments">
+<div class="paragraph">
+Negative scroll =&gt; scroll horizon right.
+</div>
+</div>
+</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="45666"></span>B262</td>
 <td class="instruction">INC E</td>
+<td class="comment-1" rowspan="1">E++</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="45667"></span>B263</td>
 <td class="instruction">NEG</td>
+<td class="comment-1" rowspan="1">A = -A</td>
 </tr>
 <tr>
-<td class="asm-label">main_loop_8_31</td>
+<td class="routine-comment" colspan="5">
+<span id="45669"></span>
+<div class="comments">
+<div class="paragraph">
+Positive scroll =&gt; scroll horizon left.
+</div>
+</div>
+</td>
+</tr>
+<tr>
+<td class="asm-label">move_hero_car_28</td>
 <td class="address-2"><span id="45669"></span>B265</td>
 <td class="instruction">LD HL,$B827</td>
+<td class="comment-1" rowspan="1">HL -&gt; 32-byte table at $B828</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="45672"></span>B268</td>
 <td class="instruction">LD C,A</td>
+<td class="comment-1" rowspan="1">C = A  -- B is zero at this point</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="45673"></span>B269</td>
 <td class="instruction">ADD HL,BC</td>
+<td class="comment-1" rowspan="1">HL += BC</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="45674"></span>B26A</td>
 <td class="instruction">LD A,($A261)</td>
+<td class="comment-1" rowspan="1">A = *$A261</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="45677"></span>B26D</td>
 <td class="instruction">LD C,A</td>
+<td class="comment-1" rowspan="1">C = A</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="45678"></span>B26E</td>
 <td class="instruction">EX AF,AF'</td>
+<td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="45679"></span>B26F</td>
 <td class="instruction">LD A,($A23F)</td>
+<td class="comment-1" rowspan="2">A = fast_counter - C</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -1568,86 +1874,103 @@ Used by the routines at <a href="8401.html">main_loop</a> and <a href="852A.html
 <td class="asm-label"></td>
 <td class="address-1"><span id="45683"></span>B273</td>
 <td class="instruction">AND A</td>
+<td class="comment-1" rowspan="1">Set flags</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="45684"></span>B274</td>
-<td class="instruction">JR Z,<a href="B063.html#45722">main_loop_8_35</a></td>
+<td class="instruction">JR Z,<a href="B063.html#45722">move_hero_car_32</a></td>
+<td class="comment-1" rowspan="1">Jump if zero</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="45686"></span>B276</td>
 <td class="instruction">LD C,(HL)</td>
+<td class="comment-1" rowspan="1">C = *HL</td>
 </tr>
 <tr>
-<td class="asm-label">main_loop_8_32</td>
+<td class="asm-label">move_hero_car_29</td>
 <td class="address-2"><span id="45687"></span>B277</td>
 <td class="instruction">SUB C</td>
+<td class="comment-1" rowspan="1">A -= C</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="45688"></span>B278</td>
-<td class="instruction">JR C,<a href="B063.html#45696">main_loop_8_33</a></td>
+<td class="instruction">JR C,<a href="B063.html#45696">move_hero_car_30</a></td>
+<td class="comment-1" rowspan="1">Jump if carry</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="45690"></span>B27A</td>
 <td class="instruction">INC B</td>
+<td class="comment-1" rowspan="1">B++</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="45691"></span>B27B</td>
 <td class="instruction">EX AF,AF'</td>
+<td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="45692"></span>B27C</td>
 <td class="instruction">ADD A,C</td>
+<td class="comment-1" rowspan="1">A += C</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="45693"></span>B27D</td>
 <td class="instruction">EX AF,AF'</td>
+<td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="45694"></span>B27E</td>
-<td class="instruction">JR <a href="B063.html#45687">main_loop_8_32</a></td>
+<td class="instruction">JR <a href="B063.html#45687">move_hero_car_29</a></td>
+<td class="comment-1" rowspan="1">Jump</td>
 </tr>
 <tr>
-<td class="asm-label">main_loop_8_33</td>
+<td class="asm-label">move_hero_car_30</td>
 <td class="address-2"><span id="45696"></span>B280</td>
 <td class="instruction">LD A,B</td>
+<td class="comment-1" rowspan="1">A = B</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="45697"></span>B281</td>
 <td class="instruction">AND A</td>
+<td class="comment-1" rowspan="1">Set flags</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="45698"></span>B282</td>
-<td class="instruction">JR Z,<a href="B063.html#45717">main_loop_8_34</a></td>
+<td class="instruction">JR Z,<a href="B063.html#45717">move_hero_car_31</a></td>
+<td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="45700"></span>B284</td>
 <td class="instruction">LD HL,$A262</td>
+<td class="comment-1" rowspan="1">HL = $A262</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="45703"></span>B287</td>
 <td class="instruction">ADD A,(HL)</td>
+<td class="comment-1" rowspan="1">A += *HL</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="45704"></span>B288</td>
 <td class="instruction">LD (HL),A</td>
+<td class="comment-1" rowspan="1">*HL = A</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="45705"></span>B289</td>
 <td class="instruction">LD A,B</td>
+<td class="comment-1" rowspan="3">A = B * 3</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -1663,46 +1986,65 @@ Used by the routines at <a href="8401.html">main_loop</a> and <a href="852A.html
 <td class="asm-label"></td>
 <td class="address-1"><span id="45708"></span>B28C</td>
 <td class="instruction">LD B,$00</td>
+<td class="comment-1" rowspan="1">B = 0</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="45710"></span>B28E</td>
 <td class="instruction">RR E</td>
+<td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="45712"></span>B290</td>
-<td class="instruction">JR NC,<a href="B063.html#45717">main_loop_8_34</a></td>
+<td class="instruction">JR NC,<a href="B063.html#45717">move_hero_car_31</a></td>
+<td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="45714"></span>B292</td>
 <td class="instruction">DEC B</td>
+<td class="comment-1" rowspan="1">B--</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="45715"></span>B293</td>
 <td class="instruction">NEG</td>
+<td class="comment-1" rowspan="1">A = -A</td>
 </tr>
 <tr>
-<td class="asm-label">main_loop_8_34</td>
+<td class="asm-label">move_hero_car_31</td>
 <td class="address-2"><span id="45717"></span>B295</td>
 <td class="instruction">LD C,A</td>
+<td class="comment-1" rowspan="1">C = A</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="45718"></span>B296</td>
 <td class="instruction">EX AF,AF'</td>
+<td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="45719"></span>B297</td>
 <td class="instruction">LD ($A261),A</td>
+<td class="comment-1" rowspan="1">*$A261 = A</td>
 </tr>
 <tr>
-<td class="asm-label">main_loop_8_35</td>
+<td class="routine-comment" colspan="5">
+<span id="45722"></span>
+<div class="comments">
+<div class="paragraph">
+No scroll required?
+</div>
+</div>
+</td>
+</tr>
+<tr>
+<td class="asm-label">move_hero_car_32</td>
 <td class="address-2"><span id="45722"></span>B29A</td>
 <td class="instruction">LD HL,($A25F)</td>
+<td class="comment-1" rowspan="2">HL = *$A25F + BC</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -1713,46 +2055,55 @@ Used by the routines at <a href="8401.html">main_loop</a> and <a href="852A.html
 <td class="asm-label"></td>
 <td class="address-1"><span id="45726"></span>B29E</td>
 <td class="instruction">LD DE,$0000</td>
+<td class="comment-1" rowspan="1">DE = $0000</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="45729"></span>B2A1</td>
 <td class="instruction">LD ($A25F),DE</td>
+<td class="comment-1" rowspan="1">$A25F = DE</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="45733"></span>B2A5</td>
 <td class="instruction">LD A,($B326)</td>
+<td class="comment-1" rowspan="1">A = *$B326  -- Read self modified op in main_loop_24 -- crashed flag</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="45736"></span>B2A8</td>
 <td class="instruction">AND A</td>
+<td class="comment-1" rowspan="1">Set flags</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="45737"></span>B2A9</td>
-<td class="instruction">JR Z,<a href="B063.html#45741">main_loop_8_36</a></td>
+<td class="instruction">JR Z,<a href="B063.html#45741">move_hero_car_33</a></td>
+<td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="45739"></span>B2AB</td>
 <td class="instruction">EX DE,HL</td>
+<td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="45740"></span>B2AC</td>
 <td class="instruction">LD D,H</td>
+<td class="comment-1" rowspan="1">D = H</td>
 </tr>
 <tr>
-<td class="asm-label">main_loop_8_36</td>
+<td class="asm-label">move_hero_car_33</td>
 <td class="address-2"><span id="45741"></span>B2AD</td>
 <td class="instruction">POP BC</td>
+<td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="45742"></span>B2AE</td>
 <td class="instruction">LD A,B</td>
+<td class="comment-1" rowspan="2">*$A263 = B</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -1763,6 +2114,7 @@ Used by the routines at <a href="8401.html">main_loop</a> and <a href="852A.html
 <td class="asm-label"></td>
 <td class="address-1"><span id="45746"></span>B2B2</td>
 <td class="instruction">LD A,C</td>
+<td class="comment-1" rowspan="2">*$A264 = C</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -1773,251 +2125,296 @@ Used by the routines at <a href="8401.html">main_loop</a> and <a href="852A.html
 <td class="asm-label"></td>
 <td class="address-1"><span id="45750"></span>B2B6</td>
 <td class="instruction">SUB B</td>
+<td class="comment-1" rowspan="1">A -= B</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="45751"></span>B2B7</td>
-<td class="instruction">JP P,<a href="B063.html#45755">main_loop_8_37</a></td>
+<td class="instruction">JP P,<a href="B063.html#45755">move_hero_car_34</a></td>
+<td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="45754"></span>B2BA</td>
 <td class="instruction">DEC D</td>
+<td class="comment-1" rowspan="1">D--</td>
 </tr>
 <tr>
-<td class="asm-label">main_loop_8_37</td>
+<td class="asm-label">move_hero_car_34</td>
 <td class="address-2"><span id="45755"></span>B2BB</td>
 <td class="instruction">LD E,A</td>
+<td class="comment-1" rowspan="1">E = A</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="45756"></span>B2BC</td>
 <td class="instruction">SRA E</td>
+<td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="45758"></span>B2BE</td>
 <td class="instruction">ADD HL,DE</td>
+<td class="comment-1" rowspan="1">HL += DE</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="45759"></span>B2BF</td>
 <td class="instruction">OR A</td>
+<td class="comment-1" rowspan="1">Set flags</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="45760"></span>B2C0</td>
-<td class="instruction">JR Z,<a href="B063.html#45797">main_loop_8_41</a></td>
+<td class="instruction">JR Z,<a href="B063.html#45797">move_hero_car_38</a></td>
+<td class="comment-1" rowspan="1">Jump if zero</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="45762"></span>B2C2</td>
-<td class="instruction">JP P,<a href="B063.html#45767">main_loop_8_38</a></td>
+<td class="instruction">JP P,<a href="B063.html#45767">move_hero_car_35</a></td>
+<td class="comment-1" rowspan="1">Jump if positive</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="45765"></span>B2C5</td>
 <td class="instruction">NEG</td>
+<td class="comment-1" rowspan="1">A = -A</td>
 </tr>
 <tr>
-<td class="asm-label">main_loop_8_38</td>
+<td class="asm-label">move_hero_car_35</td>
 <td class="address-2"><span id="45767"></span>B2C7</td>
 <td class="instruction">CP $11</td>
+<td class="comment-1" rowspan="1">Compare</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="45769"></span>B2C9</td>
 <td class="instruction">LD A,$00</td>
+<td class="comment-1" rowspan="1">A = 0  -- not self modified</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="45771"></span>B2CB</td>
-<td class="instruction">JR C,<a href="B063.html#45797">main_loop_8_41</a></td>
+<td class="instruction">JR C,<a href="B063.html#45797">move_hero_car_38</a></td>
+<td class="comment-1" rowspan="1">Jump if A &lt; 17</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="45773"></span>B2CD</td>
 <td class="instruction">BIT 7,H</td>
+<td class="comment-1" rowspan="2">Jump if H bit 7 clear</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="45775"></span>B2CF</td>
-<td class="instruction">JR Z,<a href="B063.html#45787">main_loop_8_39</a></td>
+<td class="instruction">JR Z,<a href="B063.html#45787">move_hero_car_36</a></td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="45777"></span>B2D1</td>
 <td class="instruction">BIT 7,D</td>
+<td class="comment-1" rowspan="2">Jump if D bit 7 set</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="45779"></span>B2D3</td>
-<td class="instruction">JR NZ,<a href="B063.html#45797">main_loop_8_41</a></td>
+<td class="instruction">JR NZ,<a href="B063.html#45797">move_hero_car_38</a></td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="45781"></span>B2D5</td>
 <td class="instruction">BIT 7,H</td>
+<td class="comment-1" rowspan="2">Jump if H bit 7 clear  -- bug? already tested above</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="45783"></span>B2D7</td>
-<td class="instruction">JR Z,<a href="B063.html#45797">main_loop_8_41</a></td>
+<td class="instruction">JR Z,<a href="B063.html#45797">move_hero_car_38</a></td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="45785"></span>B2D9</td>
-<td class="instruction">JR <a href="B063.html#45795">main_loop_8_40</a></td>
+<td class="instruction">JR <a href="B063.html#45795">move_hero_car_37</a></td>
+<td class="comment-1" rowspan="1">Jump</td>
 </tr>
 <tr>
-<td class="asm-label">main_loop_8_39</td>
+<td class="asm-label">move_hero_car_36</td>
 <td class="address-2"><span id="45787"></span>B2DB</td>
 <td class="instruction">BIT 7,D</td>
+<td class="comment-1" rowspan="2">Jump if D bit 7 clear</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="45789"></span>B2DD</td>
-<td class="instruction">JR Z,<a href="B063.html#45797">main_loop_8_41</a></td>
+<td class="instruction">JR Z,<a href="B063.html#45797">move_hero_car_38</a></td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="45791"></span>B2DF</td>
 <td class="instruction">BIT 7,H</td>
+<td class="comment-1" rowspan="2">Jump if H bit 7 set</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="45793"></span>B2E1</td>
-<td class="instruction">JR NZ,<a href="B063.html#45797">main_loop_8_41</a></td>
+<td class="instruction">JR NZ,<a href="B063.html#45797">move_hero_car_38</a></td>
 </tr>
 <tr>
-<td class="asm-label">main_loop_8_40</td>
+<td class="asm-label">move_hero_car_37</td>
 <td class="address-2"><span id="45795"></span>B2E3</td>
 <td class="instruction">LD A,$01</td>
+<td class="comment-1" rowspan="1">A = 1</td>
 </tr>
 <tr>
-<td class="asm-label">main_loop_8_41</td>
+<td class="asm-label">move_hero_car_38</td>
 <td class="address-2"><span id="45797"></span>B2E5</td>
 <td class="instruction">LD ($A24D),A</td>
+<td class="comment-1" rowspan="1">cornering = A</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="45800"></span>B2E8</td>
 <td class="instruction">LD BC,($A26C)</td>
+<td class="comment-1" rowspan="1">BC = road_pos</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="45804"></span>B2EC</td>
 <td class="instruction">ADD HL,BC</td>
+<td class="comment-1" rowspan="1">HL += BC</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="45805"></span>B2ED</td>
 <td class="instruction">LD ($A26C),HL</td>
+<td class="comment-1" rowspan="1">road_pos = HL</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="45808"></span>B2F0</td>
 <td class="instruction">LD D,$01</td>
+<td class="comment-1" rowspan="1">D = 1</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="45810"></span>B2F2</td>
 <td class="instruction">LD A,E</td>
+<td class="comment-1" rowspan="1">A = E</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="45811"></span>B2F3</td>
 <td class="instruction">OR A</td>
+<td class="comment-1" rowspan="1">Set flags [why are some ORs and some ANDs?]</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="45812"></span>B2F4</td>
-<td class="instruction">JP P,<a href="B063.html#45818">main_loop_8_42</a></td>
+<td class="instruction">JP P,<a href="B063.html#45818">move_hero_car_39</a></td>
+<td class="comment-1" rowspan="1">Jump if positive</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="45815"></span>B2F7</td>
 <td class="instruction">DEC D</td>
+<td class="comment-1" rowspan="1">D--</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="45816"></span>B2F8</td>
 <td class="instruction">NEG</td>
+<td class="comment-1" rowspan="1">A = -A</td>
 </tr>
 <tr>
-<td class="asm-label">main_loop_8_42</td>
+<td class="asm-label">move_hero_car_39</td>
 <td class="address-2"><span id="45818"></span>B2FA</td>
 <td class="instruction">CP $0C</td>
+<td class="comment-1" rowspan="1">CP 12</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="45820"></span>B2FC</td>
 <td class="instruction">LD B,$02</td>
+<td class="comment-1" rowspan="1">B = 2</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="45822"></span>B2FE</td>
-<td class="instruction">JR NC,<a href="B063.html#45830">main_loop_8_43</a></td>
+<td class="instruction">JR NC,<a href="B063.html#45830">move_hero_car_40</a></td>
+<td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="45824"></span>B300</td>
 <td class="instruction">DEC B</td>
+<td class="comment-1" rowspan="1">B--</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="45825"></span>B301</td>
 <td class="instruction">CP $06</td>
+<td class="comment-1" rowspan="1">CP 6</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="45827"></span>B303</td>
-<td class="instruction">JR NC,<a href="B063.html#45830">main_loop_8_43</a></td>
+<td class="instruction">JR NC,<a href="B063.html#45830">move_hero_car_40</a></td>
+<td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="45829"></span>B305</td>
 <td class="instruction">DEC B</td>
+<td class="comment-1" rowspan="1">B--</td>
 </tr>
 <tr>
-<td class="asm-label">main_loop_8_43</td>
+<td class="asm-label">move_hero_car_40</td>
 <td class="address-2"><span id="45830"></span>B306</td>
 <td class="instruction">LD A,B</td>
+<td class="comment-1" rowspan="1">A = B</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="45831"></span>B307</td>
 <td class="instruction">LD ($A250),A</td>
+<td class="comment-1" rowspan="1">turn_speed = A</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="45834"></span>B30A</td>
 <td class="instruction">LD A,D</td>
+<td class="comment-1" rowspan="1">A = D</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="45835"></span>B30B</td>
 <td class="instruction">LD ($A251),A</td>
+<td class="comment-1" rowspan="1">flip = A</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="45838"></span>B30E</td>
 <td class="instruction">LD A,($B064)</td>
+<td class="comment-1" rowspan="1">A = *$B064  -- Jump counter [self modified]</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="45841"></span>B311</td>
 <td class="instruction">AND A</td>
+<td class="comment-1" rowspan="1">Set flags</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="45842"></span>B312</td>
 <td class="instruction">RET Z</td>
+<td class="comment-1" rowspan="1">Return if zero</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="45843"></span>B313</td>
 <td class="instruction">XOR A</td>
+<td class="comment-1" rowspan="2">cornering = 0</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -2028,6 +2425,7 @@ Used by the routines at <a href="8401.html">main_loop</a> and <a href="852A.html
 <td class="asm-label"></td>
 <td class="address-1"><span id="45847"></span>B317</td>
 <td class="instruction">RET</td>
+<td class="comment-1" rowspan="1">Return</td>
 </tr>
 </table>
 <table class="asm-navigation">
@@ -2043,7 +2441,7 @@ Next: <a href="B318.html">B318</a>
 </table>
 <footer>
 <div class="release">The incomplete Chase H.Q. disassembly 20230518</div>
-<div class="copyright">&copy; 1989 Ocean Software Ltd.</div>
+<div class="copyright">&copy; 1988 Taito Corporation &copy; 1989 Ocean Software Ltd. (Chase H.Q.) © 2023 David Thomas (this disassembly)</div>
 <div class="created">Created using <a href="https://skoolkit.ca">SkoolKit</a> 8.9.</div>
 </footer>
 </body>

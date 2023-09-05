@@ -55,19 +55,19 @@ Used by the routines at <a href="8401.html">main_loop</a>, <a href="852A.html">c
 <td class="asm-label"></td>
 <td class="address-1"><span id="50266"></span>C45A</td>
 <td class="instruction">LD ($C161),A</td>
-<td class="comment-1" rowspan="1">Self modify 'LD A' at $C160 to be zero (tunnel drawing code)</td>
+<td class="comment-1" rowspan="1">Self modify 'LD A,x' at $C160 to be zero (tunnel drawing code)</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="50269"></span>C45D</td>
 <td class="instruction">LD ($C890),A</td>
-<td class="comment-1" rowspan="1">Self modify 'LD A' at $C88F to be zero</td>
+<td class="comment-1" rowspan="1">Self modify 'LD A,x' at $C88F to be zero</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="50272"></span>C460</td>
 <td class="instruction">LD A,$03</td>
-<td class="comment-1" rowspan="2">Self modify 'LD A' at $C6D8 to be 3</td>
+<td class="comment-1" rowspan="2">Self modify 'LD A,x' at $C6D8 to be 3</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -100,12 +100,13 @@ Used by the routines at <a href="8401.html">main_loop</a>, <a href="852A.html">c
 <td class="asm-label"></td>
 <td class="address-1"><span id="50287"></span>C46F</td>
 <td class="instruction">LD A,($A240)</td>
-<td class="comment-1" rowspan="2">A = *$A240 + $40</td>
+<td class="comment-1" rowspan="1">Load road_buffer_offset into <span class="register">A</span></td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="50290"></span>C472</td>
 <td class="instruction">ADD A,$40</td>
+<td class="comment-1" rowspan="1">Add 64 so it's the lanes data offset</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -162,7 +163,7 @@ Used by the routines at <a href="8401.html">main_loop</a>, <a href="852A.html">c
 <td class="asm-label"></td>
 <td class="address-1"><span id="50311"></span>C487</td>
 <td class="instruction">LD B,$55</td>
-<td class="comment-1" rowspan="1">B = $55 -- Set this to $00 and the landscape goes blank - half the time</td>
+<td class="comment-1" rowspan="1">B = $55 -- Set this to $00 and the landscape goes blank - but only half the time</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -186,7 +187,7 @@ Used by the routines at <a href="8401.html">main_loop</a>, <a href="852A.html">c
 <td class="asm-label">j_c48f</td>
 <td class="address-2"><span id="50319"></span>C48F</td>
 <td class="instruction">LD ($C6D4),A</td>
-<td class="comment-1" rowspan="1">Self modify XOR at $C6D3 to be zero [OR $D0 -- check other code again]</td>
+<td class="comment-1" rowspan="1">Self modify 'XOR x' at $C6D3 to be zero [OR $D0 -- check other code again]</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -198,7 +199,7 @@ Used by the routines at <a href="8401.html">main_loop</a>, <a href="852A.html">c
 <td class="asm-label"></td>
 <td class="address-1"><span id="50323"></span>C493</td>
 <td class="instruction">LD ($C678),A</td>
-<td class="comment-1" rowspan="1">Self modify ADD A at $C677</td>
+<td class="comment-1" rowspan="1">Self modify 'ADD A,x' at $C677</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -210,7 +211,7 @@ Used by the routines at <a href="8401.html">main_loop</a>, <a href="852A.html">c
 <td class="asm-label"></td>
 <td class="address-1"><span id="50327"></span>C497</td>
 <td class="instruction">LD ($C652),A</td>
-<td class="comment-1" rowspan="1">Self modify ADD A at $C651 to be $30</td>
+<td class="comment-1" rowspan="1">Self modify 'ADD A,x' at $C651 to be $30</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -222,7 +223,7 @@ Used by the routines at <a href="8401.html">main_loop</a>, <a href="852A.html">c
 <td class="asm-label"></td>
 <td class="address-1"><span id="50331"></span>C49B</td>
 <td class="instruction">LD ($C699),A</td>
-<td class="comment-1" rowspan="1">Self modify ADD A at $C698 to be $31</td>
+<td class="comment-1" rowspan="1">Self modify 'ADD A,x' at $C698 to be $31</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -234,7 +235,7 @@ Used by the routines at <a href="8401.html">main_loop</a>, <a href="852A.html">c
 <td class="asm-label"></td>
 <td class="address-1"><span id="50337"></span>C4A1</td>
 <td class="instruction">LD ($C4B3),HL</td>
-<td class="comment-1" rowspan="1">Self modify JP Z at $C4B2 to be $C534</td>
+<td class="comment-1" rowspan="1">Self modify 'JP Z,x' at $C4B2 to be $C534</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -258,7 +259,7 @@ Used by the routines at <a href="8401.html">main_loop</a>, <a href="852A.html">c
 <td class="asm-label"></td>
 <td class="address-1"><span id="50346"></span>C4AA</td>
 <td class="instruction">LD ($C6BD),A</td>
-<td class="comment-1" rowspan="1">Self modify ADD A at $C6BC to be zero?</td>
+<td class="comment-1" rowspan="1">Self modify 'LD A,x' at $C6BC to be zero?</td>
 </tr>
 <tr>
 <td class="routine-comment" colspan="5">
@@ -274,73 +275,72 @@ This entry point is used by the routine at <a href="C598.html">C598</a>.
 <td class="asm-label">main_loop_13_0</td>
 <td class="address-2"><span id="50349"></span>C4AD</td>
 <td class="instruction">LD A,(IX+$00)</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="2">A = IX[0] &amp; 3</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="50352"></span>C4B0</td>
 <td class="instruction">AND $03</td>
-<td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="50354"></span>C4B2</td>
 <td class="instruction">JP Z,<a href="C452.html#50484">main_loop_13_9</a></td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="1">Jump to &lt;self modified&gt; if zero</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="50357"></span>C4B5</td>
 <td class="instruction">EXX</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="1">Bank</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="50358"></span>C4B6</td>
 <td class="instruction">LD L,(IX+$00)</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="1">L = IX[0] -- sampled IX=$EEFD $EEFE $EEFF $EE00 .. etc.</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="50361"></span>C4B9</td>
 <td class="instruction">ADD A,$E7</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="1">A += $E7</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="50363"></span>C4BB</td>
 <td class="instruction">LD ($C643),A</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="1">Self modify 'LD H,x' at $C642</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="50366"></span>C4BE</td>
 <td class="instruction">LD ($C5B4),A</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="1">Self modify 'LD H,x' at $C5B3</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="50369"></span>C4C1</td>
 <td class="instruction">LD H,A</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="1">H = A</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="50370"></span>C4C2</td>
 <td class="instruction">SLA L</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="1">L &lt;&lt;= 1</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="50372"></span>C4C4</td>
 <td class="instruction">BIT 7,L</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="1">New bit 7 set?</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="50374"></span>C4C6</td>
 <td class="instruction">JR NZ,<a href="C452.html#50402">main_loop_13_3</a></td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="1">Jump if set  -- Split road plotting path</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -352,289 +352,289 @@ This entry point is used by the routine at <a href="C598.html">C598</a>.
 <td class="asm-label"></td>
 <td class="address-1"><span id="50378"></span>C4CA</td>
 <td class="instruction">ADD A,$03</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="1">A &amp;= 3</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="50380"></span>C4CC</td>
 <td class="instruction">LD C,$FD</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="1">C = $FD</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="50382"></span>C4CE</td>
 <td class="instruction">JP <a href="C452.html#50389">main_loop_13_2</a></td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="1">Jump</td>
 </tr>
 <tr>
 <td class="asm-label">main_loop_13_1</td>
 <td class="address-2"><span id="50385"></span>C4D1</td>
 <td class="instruction">ADD A,$02</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="1">A += 2</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="50387"></span>C4D3</td>
 <td class="instruction">LD C,$FE</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="1">C = $FE</td>
 </tr>
 <tr>
 <td class="asm-label">main_loop_13_2</td>
 <td class="address-2"><span id="50389"></span>C4D5</td>
 <td class="instruction">LD ($C5DA),A</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="1">Self modify 'LD H,x' at $C5D9</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="50392"></span>C4D8</td>
 <td class="instruction">LD ($C68B),A</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="1">Self modify 'LD H,x' at $C68A</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="50395"></span>C4DB</td>
 <td class="instruction">LD A,C</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="1">A = C</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="50396"></span>C4DC</td>
 <td class="instruction">LD ($C5AD),A</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="1">Self modify 'LD B,x' at $C5AC</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="50399"></span>C4DF</td>
 <td class="instruction">JP <a href="C2E7.html">$C2E7</a></td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="1">Jump</td>
 </tr>
 <tr>
 <td class="asm-label">main_loop_13_3</td>
 <td class="address-2"><span id="50402"></span>C4E2</td>
 <td class="instruction">JR C,<a href="C452.html#50457">main_loop_13_7</a></td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="1">-- Split road plotting path</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="50404"></span>C4E4</td>
 <td class="instruction">LD C,$FF</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="1">C = $FF</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="50406"></span>C4E6</td>
 <td class="instruction">LD H,$01</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="1">H = $01</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="50408"></span>C4E8</td>
 <td class="instruction">BIT 4,L</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="1">Bit 4 set?</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="50410"></span>C4EA</td>
 <td class="instruction">JR NZ,<a href="C452.html#50416">main_loop_13_4</a></td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="1">Jump if set</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="50412"></span>C4EC</td>
 <td class="instruction">BIT 3,L</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="1">Bit 3 set?</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="50414"></span>C4EE</td>
 <td class="instruction">JR Z,<a href="C452.html#50434">main_loop_13_6</a></td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="1">Jump if clear</td>
 </tr>
 <tr>
 <td class="asm-label">main_loop_13_4</td>
 <td class="address-2"><span id="50416"></span>C4F0</td>
 <td class="instruction">LD A,IYl</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="1">A = IY.low</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="50418"></span>C4F2</td>
 <td class="instruction">LD ($C15E),A</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="1">Self modify 'CP x' at $C15D</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="50421"></span>C4F5</td>
 <td class="instruction">LD A,$01</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="1">A = 1</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="50423"></span>C4F7</td>
 <td class="instruction">INC C</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="1">C++</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="50424"></span>C4F8</td>
 <td class="instruction">BIT 5,L</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="1">Bit 5 set?</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="50426"></span>C4FA</td>
 <td class="instruction">JR Z,<a href="C452.html#50431">main_loop_13_5</a></td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="1">Jump if clear</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="50428"></span>C4FC</td>
 <td class="instruction">DEC C</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="1">C--</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="50429"></span>C4FD</td>
 <td class="instruction">INC A</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="1">A++</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="50430"></span>C4FE</td>
 <td class="instruction">DEC H</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="1">H--</td>
 </tr>
 <tr>
 <td class="asm-label">main_loop_13_5</td>
 <td class="address-2"><span id="50431"></span>C4FF</td>
 <td class="instruction">LD ($C161),A</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="1">Self modify 'LD A,x' at $C160</td>
 </tr>
 <tr>
 <td class="asm-label">main_loop_13_6</td>
 <td class="address-2"><span id="50434"></span>C502</td>
 <td class="instruction">LD A,H</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="1">A = H</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="50435"></span>C503</td>
 <td class="instruction">LD ($C890),A</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="1">Self modify 'LD A,x' at $C88F</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="50438"></span>C506</td>
 <td class="instruction">LD A,$EB</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="1">A = $EB</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="50440"></span>C508</td>
 <td class="instruction">LD ($C5DA),A</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="1">Self modify 'LD H,x' at $C5D9</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="50443"></span>C50B</td>
 <td class="instruction">LD ($C68B),A</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="1">Self modify 'LD H,x' at $C68A</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="50446"></span>C50E</td>
 <td class="instruction">LD A,$FF</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="1">A = $FF</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="50448"></span>C510</td>
 <td class="instruction">LD ($C5AD),A</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="1">Self modify 'LD B,x' at $C5AC</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="50451"></span>C513</td>
 <td class="instruction">LD A,C</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="1">A = C</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="50452"></span>C514</td>
 <td class="instruction">EXX</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="1">Bank/unbank</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="50453"></span>C515</td>
 <td class="instruction">LD B,A</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="1">B = A</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="50454"></span>C516</td>
 <td class="instruction">JP <a href="C452.html#50513">main_loop_13_11</a></td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="1">Jump</td>
 </tr>
 <tr>
 <td class="asm-label">main_loop_13_7</td>
 <td class="address-2"><span id="50457"></span>C519</td>
 <td class="instruction">BIT 6,L</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="1">Bit 6 set?</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="50459"></span>C51B</td>
 <td class="instruction">JP NZ,<a href="C8E3.html">$C8E3</a></td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="1">Jump if set -- Split road plotting path</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="50462"></span>C51E</td>
 <td class="instruction">LD A,L</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="1">A = L</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="50463"></span>C51F</td>
 <td class="instruction">AND $18</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="1">A &amp;= 24</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="50465"></span>C521</td>
 <td class="instruction">LD A,$00</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="1">A = 0</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="50467"></span>C523</td>
 <td class="instruction">JR NZ,<a href="C452.html#50470">main_loop_13_8</a></td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="1">Jump if non-zero</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="50469"></span>C525</td>
 <td class="instruction">INC A</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="1">A++</td>
 </tr>
 <tr>
 <td class="asm-label">main_loop_13_8</td>
 <td class="address-2"><span id="50470"></span>C526</td>
 <td class="instruction">LD ($A248),A</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="1">byte after lanes counter byte</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="50473"></span>C529</td>
 <td class="instruction">LD A,$FF</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="1">A = $FF</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="50475"></span>C52B</td>
 <td class="instruction">LD ($C5AD),A</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="1">Self modify 'LD B,x' at $C5AC</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -646,61 +646,61 @@ This entry point is used by the routine at <a href="C598.html">C598</a>.
 <td class="asm-label"></td>
 <td class="address-1"><span id="50481"></span>C531</td>
 <td class="instruction">JP <a href="C452.html#50509">main_loop_13_10</a></td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="1">Jump forward</td>
 </tr>
 <tr>
 <td class="asm-label">main_loop_13_9</td>
 <td class="address-2"><span id="50484"></span>C534</td>
 <td class="instruction">EXX</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="1">Bank/unbank</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="50485"></span>C535</td>
 <td class="instruction">LD A,$E8</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="1">A = $E8</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="50487"></span>C537</td>
 <td class="instruction">LD ($C643),A</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="1">Self modify 'LD H,x' at $C642</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="50490"></span>C53A</td>
 <td class="instruction">LD ($C5B4),A</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="1">Self modify 'LD H,x' at $C5B3</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="50493"></span>C53D</td>
 <td class="instruction">ADD A,$04</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="1">A += 4</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="50495"></span>C53F</td>
 <td class="instruction">LD ($C68B),A</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="1">Self modify 'LD H,x' at $C68A</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="50498"></span>C542</td>
 <td class="instruction">LD ($C5DA),A</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="1">Self modify 'LD H,x' at $C5D9</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="50501"></span>C545</td>
 <td class="instruction">LD A,$FC</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="1">A = $FC</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="50503"></span>C547</td>
 <td class="instruction">LD ($C5AD),A</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="1">Self modify 'LD B,x' at $C5AC</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -722,55 +722,54 @@ This entry point is used by the routine at <a href="C2E7.html">C2E7</a>.
 <td class="asm-label">main_loop_13_10</td>
 <td class="address-2"><span id="50509"></span>C54D</td>
 <td class="instruction">LD ($C4B3),HL</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="1">Self modify 'JP Z,x' at $C4B2</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="50512"></span>C550</td>
 <td class="instruction">EXX</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="1">Bank/unbank</td>
 </tr>
 <tr>
 <td class="asm-label">main_loop_13_11</td>
 <td class="address-2"><span id="50513"></span>C551</td>
 <td class="instruction">LD A,B</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="1">A = B</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="50514"></span>C552</td>
 <td class="instruction">AND A</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="1">Set flags</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="50515"></span>C553</td>
 <td class="instruction">JP NZ,<a href="C598.html">$C598</a></td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="1">Jump if non-zero</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="50518"></span>C556</td>
 <td class="instruction">EXX</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="1">Bank/unbank</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="50519"></span>C557</td>
 <td class="instruction">LD HL,$C55F</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="2">Self modify 'JP NZ,x' at $C6AD to be $C55F</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="50522"></span>C55A</td>
 <td class="instruction">LD ($C6AE),HL</td>
-<td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="50525"></span>C55D</td>
 <td class="instruction">EXX</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="1">Bank/unbank</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -782,25 +781,25 @@ This entry point is used by the routine at <a href="C2E7.html">C2E7</a>.
 <td class="asm-label"></td>
 <td class="address-1"><span id="50527"></span>C55F</td>
 <td class="instruction">LD A,D</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="1">A = D</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="50528"></span>C560</td>
 <td class="instruction">DEC D</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="1">D--</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="50529"></span>C561</td>
 <td class="instruction">AND $0F</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="1">A &amp;= 15</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="50531"></span>C563</td>
 <td class="instruction">JR Z,<a href="C58A.html">$C58A</a></td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="1">Jump if zero</td>
 </tr>
 <tr>
 <td class="routine-comment" colspan="5">
@@ -816,73 +815,81 @@ This entry point is used by the routine at <a href="C58A.html">C58A</a>.
 <td class="asm-label">main_loop_13_12</td>
 <td class="address-2"><span id="50533"></span>C565</td>
 <td class="instruction">LD ($C56D),DE</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="1">Self modify 'LD DE,x' at $C56C (below)</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="50537"></span>C569</td>
 <td class="instruction">LD B,$FF</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="1">B = $FF</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="50539"></span>C56B</td>
 <td class="instruction">EXX</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="1">Bank/unbank</td>
+</tr>
+<tr>
+<td class="routine-comment" colspan="5">
+<span id="50540"></span>
+<div class="comments">
+<div class="paragraph">
+Calculate address of next bitmap scanline ??
+</div>
+</div>
+</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="50540"></span>C56C</td>
 <td class="instruction">LD DE,$0000</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="1">DE = &lt;self modified&gt;</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="50543"></span>C56F</td>
 <td class="instruction">LD A,E</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="3">L = E + 31</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="50544"></span>C570</td>
 <td class="instruction">ADD A,$1F</td>
-<td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="50546"></span>C572</td>
 <td class="instruction">LD L,A</td>
-<td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="50547"></span>C573</td>
 <td class="instruction">LD H,D</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="1">H = D</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="50548"></span>C574</td>
 <td class="instruction">LD SP,HL</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="1">Put it in <span class="register">SP</span> (so we can use PUSH for speed)</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="50549"></span>C575</td>
 <td class="instruction">LD HL,$0000</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="1">HL = 0  [not self modified apparently]</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="50552"></span>C578</td>
 <td class="instruction">LD C,L</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="1">C = L</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="50553"></span>C579</td>
 <td class="instruction">JP <a href="C598.html#50734">$C62E</a></td>
-<td class="comment-1" rowspan="1">}</td>
+<td class="comment-1" rowspan="1">Jump into a sequence of 15 PUSH HLs</td>
 </tr>
 </table>
 <table class="asm-navigation">
@@ -898,7 +905,7 @@ Next: <a href="C57C.html">C57C</a>
 </table>
 <footer>
 <div class="release">The incomplete Chase H.Q. disassembly 20230518</div>
-<div class="copyright">&copy; 1989 Ocean Software Ltd.</div>
+<div class="copyright">&copy; 1988 Taito Corporation &copy; 1989 Ocean Software Ltd. (Chase H.Q.) © 2023 David Thomas (this disassembly)</div>
 <div class="created">Created using <a href="https://skoolkit.ca">SkoolKit</a> 8.9.</div>
 </footer>
 </body>

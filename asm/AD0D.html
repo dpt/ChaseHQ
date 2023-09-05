@@ -35,179 +35,207 @@ Used by the routine at <a href="BDFB.html">read_map</a>.
 </td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-2"><span id="44301"></span>AD0D</td>
 <td class="instruction">LD A,($A221)</td>
-<td class="comment-0" rowspan="1"></td>
+<td class="comment-1" rowspan="3">Return if (suspected) "inhibit collision detection" flag set</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="44304"></span>AD10</td>
 <td class="instruction">AND A</td>
-<td class="comment-0" rowspan="1"></td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="44305"></span>AD11</td>
 <td class="instruction">RET NZ</td>
-<td class="comment-0" rowspan="1"></td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="44306"></span>AD12</td>
 <td class="instruction">LD IX,$A188</td>
-<td class="comment-0" rowspan="1"></td>
+<td class="comment-1" rowspan="1">IX = &amp;hazards[0]</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="44310"></span>AD16</td>
 <td class="instruction">LD DE,$0014</td>
-<td class="comment-0" rowspan="1"></td>
+<td class="comment-1" rowspan="1">DE = 20  -- stride of hazards</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="44313"></span>AD19</td>
 <td class="instruction">LD B,$06</td>
-<td class="comment-0" rowspan="1"></td>
+<td class="comment-1" rowspan="1">B = 6</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-2"><span id="44315"></span>AD1B</td>
 <td class="instruction">RLC (IX+$00)</td>
-<td class="comment-0" rowspan="1"></td>
+<td class="comment-1" rowspan="2">If the hazard is not active continue to next one</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="44319"></span>AD1F</td>
-<td class="instruction">JR NC,$AD4C</td>
-<td class="comment-0" rowspan="1"></td>
+<td class="instruction">JR NC,<a href="AD0D.html#44364">ad0d_continue</a></td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="44321"></span>AD21</td>
 <td class="instruction">EXX</td>
-<td class="comment-0" rowspan="1"></td>
+<td class="comment-1" rowspan="1">Bank</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="44322"></span>AD22</td>
 <td class="instruction">LD HL,$AD4B</td>
-<td class="comment-0" rowspan="1"></td>
+<td class="comment-1" rowspan="1">Address of ad0d_unbank_continue</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="44325"></span>AD25</td>
 <td class="instruction">PUSH HL</td>
-<td class="comment-0" rowspan="1"></td>
+<td class="comment-1" rowspan="1">Push  -- this makes RETs below jump to ad0d_unbank_continue</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="44326"></span>AD26</td>
 <td class="instruction">LD A,(IX+$0F)</td>
-<td class="comment-0" rowspan="1"></td>
+<td class="comment-1" rowspan="2">A = IX[15] + 1</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="44329"></span>AD29</td>
 <td class="instruction">INC A</td>
-<td class="comment-0" rowspan="1"></td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="44330"></span>AD2A</td>
 <td class="instruction">JR NZ,$AD31</td>
-<td class="comment-0" rowspan="1"></td>
+<td class="comment-1" rowspan="1">Jump if non-zero</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="44332"></span>AD2C</td>
 <td class="instruction">LD A,(IX+$11)</td>
-<td class="comment-0" rowspan="1"></td>
+<td class="comment-1" rowspan="1">A = IX[17]</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="44335"></span>AD2F</td>
 <td class="instruction">AND A</td>
-<td class="comment-0" rowspan="1"></td>
+<td class="comment-1" rowspan="1">Set flags</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="44336"></span>AD30</td>
 <td class="instruction">RET NZ</td>
-<td class="comment-0" rowspan="1"></td>
+<td class="comment-1" rowspan="1">UNBANK_CONTINUE if non-zero</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-2"><span id="44337"></span>AD31</td>
 <td class="instruction">LD A,(IX+$01)</td>
-<td class="comment-0" rowspan="1"></td>
+<td class="comment-1" rowspan="1">A = IX[1]  -- distance related</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="44340"></span>AD34</td>
 <td class="instruction">CP $14</td>
-<td class="comment-0" rowspan="1"></td>
+<td class="comment-1" rowspan="2">UNBANK_CONTINUE if &gt;= 20</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="44342"></span>AD36</td>
 <td class="instruction">RET NC</td>
-<td class="comment-0" rowspan="1"></td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="44343"></span>AD37</td>
 <td class="instruction">LD D,$00</td>
-<td class="comment-0" rowspan="1"></td>
+<td class="comment-1" rowspan="1">D = 0  -- not SM</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="44345"></span>AD39</td>
 <td class="instruction">CALL <a href="AD51.html">$AD51</a></td>
-<td class="comment-0" rowspan="1"></td>
+<td class="comment-1" rowspan="1">Call ? below</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="44348"></span>AD3C</td>
 <td class="instruction">LD A,D</td>
-<td class="comment-0" rowspan="1"></td>
+<td class="comment-1" rowspan="1">A = D</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="44349"></span>AD3D</td>
 <td class="instruction">AND A</td>
-<td class="comment-0" rowspan="1"></td>
+<td class="comment-1" rowspan="1">Set flags</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="44350"></span>AD3E</td>
 <td class="instruction">RET Z</td>
-<td class="comment-0" rowspan="1"></td>
+<td class="comment-1" rowspan="1">UNBANK_CONTINUE if zero</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="44351"></span>AD3F</td>
 <td class="instruction">LD A,(IX+$0F)</td>
-<td class="comment-0" rowspan="1"></td>
+<td class="comment-1" rowspan="2">A = IX[15] + 1</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="44354"></span>AD42</td>
 <td class="instruction">INC A</td>
-<td class="comment-0" rowspan="1"></td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="44355"></span>AD43</td>
 <td class="instruction">RET Z</td>
-<td class="comment-0" rowspan="1"></td>
+<td class="comment-1" rowspan="1">UNBANK_CONTINUE if zero</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="44356"></span>AD44</td>
 <td class="instruction">LD L,(IX+$0B)</td>
-<td class="comment-0" rowspan="1"></td>
+<td class="comment-1" rowspan="2">HL = wordat(IX + 11)  -- presumably the hit handler</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="44359"></span>AD47</td>
 <td class="instruction">LD H,(IX+$0C)</td>
-<td class="comment-0" rowspan="1"></td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="44362"></span>AD4A</td>
 <td class="instruction">JP (HL)</td>
-<td class="comment-0" rowspan="1"></td>
+<td class="comment-1" rowspan="1">Jump to it (then return to the next instr)</td>
 </tr>
 <tr>
+<td class="asm-label">ad0d_unbank_continue</td>
 <td class="address-1"><span id="44363"></span>AD4B</td>
 <td class="instruction">EXX</td>
-<td class="comment-0" rowspan="1"></td>
+<td class="comment-1" rowspan="1">Unbank</td>
 </tr>
 <tr>
+<td class="asm-label">ad0d_continue</td>
 <td class="address-2"><span id="44364"></span>AD4C</td>
 <td class="instruction">ADD IX,DE</td>
-<td class="comment-0" rowspan="1"></td>
+<td class="comment-1" rowspan="1">Move to next hazard</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="44366"></span>AD4E</td>
 <td class="instruction">DJNZ $AD1B</td>
-<td class="comment-0" rowspan="1"></td>
+<td class="comment-1" rowspan="1">Loop</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="44368"></span>AD50</td>
 <td class="instruction">RET</td>
-<td class="comment-0" rowspan="1"></td>
+<td class="comment-1" rowspan="1">Return</td>
 </tr>
 </table>
 <table class="asm-navigation">
@@ -223,7 +251,7 @@ Next: <a href="AD51.html">AD51</a>
 </table>
 <footer>
 <div class="release">The incomplete Chase H.Q. disassembly 20230518</div>
-<div class="copyright">&copy; 1989 Ocean Software Ltd.</div>
+<div class="copyright">&copy; 1988 Taito Corporation &copy; 1989 Ocean Software Ltd. (Chase H.Q.) © 2023 David Thomas (this disassembly)</div>
 <div class="created">Created using <a href="https://skoolkit.ca">SkoolKit</a> 8.9.</div>
 </footer>
 </body>

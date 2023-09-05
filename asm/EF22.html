@@ -19,11 +19,11 @@ Prev: <a href="EF19.html">EF19</a>
 </td>
 <td class="up">Up: <a href="../maps/all.html#61218">Map</a></td>
 <td class="next">
-Next: <a href="EF29.html">EF29</a>
+Next: <a href="F0C6.html">F0C6</a>
 </td>
 </tr>
 </table>
-<div class="description">EF22: Routine at EF22</div>
+<div class="description">EF22: Drum sample player.</div>
 <table class="disassembly">
 <tr>
 <td class="routine-comment" colspan="5">
@@ -32,22 +32,446 @@ Next: <a href="EF29.html">EF29</a>
 Used by the routine at <a href="EE9E.html">define_keys</a>.
 </div>
 </div>
+<table class="input">
+<tr class="asm-input-header">
+<th colspan="2">Input</th>
+</tr>
+<tr>
+<td class="register">B</td>
+<td class="register-desc">Speed value?</td>
+</tr>
+</table>
 </td>
 </tr>
 <tr>
+<td class="asm-label">playdrum_2</td>
 <td class="address-2"><span id="61218"></span>EF22</td>
 <td class="instruction">LD HL,$F05A</td>
-<td class="comment-0" rowspan="1"></td>
+<td class="comment-1" rowspan="1">Address of drum 2 data</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="61221"></span>EF25</td>
 <td class="instruction">LD D,$6C</td>
-<td class="comment-0" rowspan="1"></td>
+<td class="comment-1" rowspan="1">Sample bytes remaining = 108</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="61223"></span>EF27</td>
-<td class="instruction">JR <a href="EF29.html#61230">$EF2E</a></td>
-<td class="comment-0" rowspan="1"></td>
+<td class="instruction">JR <a href="EF22.html#61230">playdrum_start</a></td>
+<td class="comment-1" rowspan="1">Jump to playdrum_start</td>
+</tr>
+<tr>
+<td class="routine-comment" colspan="5">
+<span id="61225"></span>
+<div class="comments">
+<div class="paragraph">
+This entry point is used by the routine at <a href="EE9E.html">define_keys</a>.
+</div>
+</div>
+</td>
+</tr>
+<tr>
+<td class="asm-label">playdrum_1</td>
+<td class="address-2"><span id="61225"></span>EF29</td>
+<td class="instruction">LD HL,$EF5E</td>
+<td class="comment-1" rowspan="1">Address of drum 1 data</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="61228"></span>EF2C</td>
+<td class="instruction">LD D,$FC</td>
+<td class="comment-1" rowspan="1">Sample bytes remaining = 252</td>
+</tr>
+<tr>
+<td class="asm-label">playdrum_start</td>
+<td class="address-2"><span id="61230"></span>EF2E</td>
+<td class="instruction">LD ($EF3A),A</td>
+<td class="comment-1" rowspan="1">Self modify 'LD B' @ $EF39 to be A  -- speed value passed in?</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="61233"></span>EF31</td>
+<td class="instruction">LD A,$01</td>
+<td class="comment-1" rowspan="2">Self modify 'LD A' @ $EF0D to be 1  -- set to 1 while playing?</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="61235"></span>EF33</td>
+<td class="instruction">LD ($EF0E),A</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="61238"></span>EF36</td>
+<td class="instruction">JR <a href="EF22.html#61241">playdrum_go</a></td>
+<td class="comment-1" rowspan="1">Jump to playdrum_go</td>
+</tr>
+<tr>
+<td class="routine-comment" colspan="5">
+<span id="61240"></span>
+<div class="comments">
+<div class="paragraph">
+This entry point is used by the routine at <a href="EE9E.html">define_keys</a>.
+</div>
+</div>
+</td>
+</tr>
+<tr>
+<td class="asm-label">playdrum_2_0</td>
+<td class="address-2"><span id="61240"></span>EF38</td>
+<td class="instruction">EXX</td>
+<td class="comment-1" rowspan="1"></td>
+</tr>
+<tr>
+<td class="asm-label">playdrum_go</td>
+<td class="address-2"><span id="61241"></span>EF39</td>
+<td class="instruction">LD B,$08</td>
+<td class="comment-1" rowspan="1">Self modified by $EF2E (sampled: 8, 3, 1)</td>
+</tr>
+<tr>
+<td class="asm-label">playdrum_loop</td>
+<td class="address-2"><span id="61243"></span>EF3B</td>
+<td class="instruction">LD A,$10</td>
+<td class="comment-1" rowspan="1">Output flag</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="61245"></span>EF3D</td>
+<td class="instruction">NOP</td>
+<td class="comment-1" rowspan="1">Delay?</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="61246"></span>EF3E</td>
+<td class="instruction">BIT 7,(HL)</td>
+<td class="comment-1" rowspan="1">Test a bit</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="61248"></span>EF40</td>
+<td class="instruction">JR NZ,<a href="EF22.html#61252">playdrum_2_1</a></td>
+<td class="comment-1" rowspan="1">Don't reset output if sample bit set</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="61250"></span>EF42</td>
+<td class="instruction">RES 4,A</td>
+<td class="comment-1" rowspan="1">Reset flag if bit was zero</td>
+</tr>
+<tr>
+<td class="asm-label">playdrum_2_1</td>
+<td class="address-2"><span id="61252"></span>EF44</td>
+<td class="instruction">OUT ($FE),A</td>
+<td class="comment-1" rowspan="1">Output it</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="61254"></span>EF46</td>
+<td class="instruction">RLC (HL)</td>
+<td class="comment-1" rowspan="1">Rotate sample byte in-place</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="61256"></span>EF48</td>
+<td class="instruction">DJNZ <a href="EF22.html#61243">playdrum_loop</a></td>
+<td class="comment-1" rowspan="1">Loop to playdrum_loop while <span class="register">B</span></td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="61258"></span>EF4A</td>
+<td class="instruction">INC HL</td>
+<td class="comment-1" rowspan="1">Move to next sample byte</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="61259"></span>EF4B</td>
+<td class="instruction">DEC D</td>
+<td class="comment-1" rowspan="1">Decrement sample bytes remaining</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="61260"></span>EF4C</td>
+<td class="instruction">JR Z,<a href="EF22.html#61271">playdrum_end_of_sample</a></td>
+<td class="comment-1" rowspan="1">Jump to playdrum_end_of_sample if no bytes remain</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="61262"></span>EF4E</td>
+<td class="instruction">LD A,($EF14)</td>
+<td class="comment-1" rowspan="1">Read A from 'LD A' @ $EF13  -- wait/spinlock</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="61265"></span>EF51</td>
+<td class="instruction">AND A</td>
+<td class="comment-1" rowspan="1">Set flags</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="61266"></span>EF52</td>
+<td class="instruction">JP Z,<a href="EF22.html#61241">playdrum_go</a></td>
+<td class="comment-1" rowspan="1">Jump to playdrum_go if zero</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="61269"></span>EF55</td>
+<td class="instruction">EXX</td>
+<td class="comment-1" rowspan="1"></td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="61270"></span>EF56</td>
+<td class="instruction">RET</td>
+<td class="comment-1" rowspan="1">Return</td>
+</tr>
+<tr>
+<td class="asm-label">playdrum_end_of_sample</td>
+<td class="address-2"><span id="61271"></span>EF57</td>
+<td class="instruction">XOR A</td>
+<td class="comment-1" rowspan="2">Self modify 'LD A' @ $EF0D to be 0  -- set to 0 when playing stops?</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="61272"></span>EF58</td>
+<td class="instruction">LD ($EF0E),A</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="61275"></span>EF5B</td>
+<td class="instruction">JP <a href="EE9E.html#61203">dk_wait</a></td>
+<td class="comment-1" rowspan="1">Jump to dk_playdrum_finished</td>
+</tr>
+<tr>
+<td class="asm-label">drum1</td>
+<td class="address-1"><span id="61278"></span>EF5E</td>
+<td class="instruction">DEFB $FF,$00,$00,$00,$0F,$FF,$FF,$FF</td>
+<td class="comment-1" rowspan="32">Drum 1 sample/data</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="61286"></span>EF66</td>
+<td class="instruction">DEFB $EF,$FF,$FF,$FF,$BE,$36,$10,$00</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="61294"></span>EF6E</td>
+<td class="instruction">DEFB $00,$00,$00,$00,$00,$00,$00,$00</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="61302"></span>EF76</td>
+<td class="instruction">DEFB $00,$FF,$FF,$FF,$FF,$FF,$FF,$FF</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="61310"></span>EF7E</td>
+<td class="instruction">DEFB $FF,$FF,$FF,$FF,$FF,$F8,$78,$80</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="61318"></span>EF86</td>
+<td class="instruction">DEFB $00,$00,$00,$00,$00,$00,$00,$00</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="61326"></span>EF8E</td>
+<td class="instruction">DEFB $00,$C0,$E1,$FF,$FF,$FF,$FF,$FF</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="61334"></span>EF96</td>
+<td class="instruction">DEFB $FF,$FF,$FF,$FF,$FF,$BE,$F3,$9E</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="61342"></span>EF9E</td>
+<td class="instruction">DEFB $70,$C0,$00,$00,$00,$00,$00,$00</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="61350"></span>EFA6</td>
+<td class="instruction">DEFB $01,$9E,$FF,$3F,$FF,$FF,$FF,$FF</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="61358"></span>EFAE</td>
+<td class="instruction">DEFB $FF,$FF,$FF,$FF,$FF,$FB,$FF,$3F</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="61366"></span>EFB6</td>
+<td class="instruction">DEFB $38,$F0,$03,$80,$00,$00,$00,$00</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="61374"></span>EFBE</td>
+<td class="instruction">DEFB $00,$00,$C6,$DB,$9D,$FF,$FF,$FF</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="61382"></span>EFC6</td>
+<td class="instruction">DEFB $FF,$FF,$FF,$FF,$FF,$FF,$FF,$FF</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="61390"></span>EFCE</td>
+<td class="instruction">DEFB $FF,$FE,$07,$70,$60,$00,$00,$00</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="61398"></span>EFD6</td>
+<td class="instruction">DEFB $01,$00,$00,$08,$80,$77,$DF,$FF</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="61406"></span>EFDE</td>
+<td class="instruction">DEFB $FF,$FF,$FF,$FF,$FF,$FF,$FF,$FF</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="61414"></span>EFE6</td>
+<td class="instruction">DEFB $FE,$FF,$F8,$A3,$CE,$1C,$64,$02</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="61422"></span>EFEE</td>
+<td class="instruction">DEFB $20,$00,$0E,$00,$00,$3F,$18,$8F</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="61430"></span>EFF6</td>
+<td class="instruction">DEFB $9F,$FF,$FF,$DF,$FF,$FF,$FF,$FF</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="61438"></span>EFFE</td>
+<td class="instruction">DEFB $FF,$EF,$FF,$FF,$EF,$FF,$3F,$FC</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="61446"></span>F006</td>
+<td class="instruction">DEFB $9C,$38,$CE,$00,$03,$00,$00,$00</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="61454"></span>F00E</td>
+<td class="instruction">DEFB $C4,$7F,$01,$FF,$FF,$FF,$FF,$FF</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="61462"></span>F016</td>
+<td class="instruction">DEFB $FF,$FF,$FF,$FF,$FF,$FF,$FF,$FF</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="61470"></span>F01E</td>
+<td class="instruction">DEFB $3E,$40,$98,$10,$C0,$1F,$80,$00</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="61478"></span>F026</td>
+<td class="instruction">DEFB $FF,$00,$1F,$FF,$7F,$FF,$FF,$FF</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="61486"></span>F02E</td>
+<td class="instruction">DEFB $FF,$FF,$FF,$FF,$FF,$FF,$B8,$77</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="61494"></span>F036</td>
+<td class="instruction">DEFB $7E,$FC,$FE,$7F,$E7,$6F,$DE,$FF</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="61502"></span>F03E</td>
+<td class="instruction">DEFB $FE,$07,$F9,$FF,$3B,$3F,$3F,$FE</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="61510"></span>F046</td>
+<td class="instruction">DEFB $DF,$FF,$FF,$EF,$FF,$FF,$FF,$FF</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="61518"></span>F04E</td>
+<td class="instruction">DEFB $FF,$FF,$03,$FE,$FF,$33,$A7,$FF</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="61526"></span>F056</td>
+<td class="instruction">DEFB $9F,$FF,$EF,$00</td>
+</tr>
+<tr>
+<td class="asm-label">drum2</td>
+<td class="address-1"><span id="61530"></span>F05A</td>
+<td class="instruction">DEFB $FF,$FF,$FF,$FF,$FF,$F3,$F8,$30</td>
+<td class="comment-1" rowspan="14">Drum 2 sample/data</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="61538"></span>F062</td>
+<td class="instruction">DEFB $FF,$DE,$00,$FF,$81,$FF,$FF,$FF</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="61546"></span>F06A</td>
+<td class="instruction">DEFB $FF,$FF,$FF,$FF,$FF,$F4,$3B,$80</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="61554"></span>F072</td>
+<td class="instruction">DEFB $00,$00,$00,$00,$00,$3C,$00,$00</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="61562"></span>F07A</td>
+<td class="instruction">DEFB $00,$00,$1B,$FF,$FF,$FF,$FF,$FF</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="61570"></span>F082</td>
+<td class="instruction">DEFB $FF,$FF,$FF,$FF,$FF,$FF,$FF,$FF</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="61578"></span>F08A</td>
+<td class="instruction">DEFB $FF,$FF,$FF,$FF,$FF,$FF,$FF,$FF</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="61586"></span>F092</td>
+<td class="instruction">DEFB $FF,$FF,$E0,$00,$00,$00,$00,$00</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="61594"></span>F09A</td>
+<td class="instruction">DEFB $00,$00,$00,$00,$00,$00,$00,$00</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="61602"></span>F0A2</td>
+<td class="instruction">DEFB $00,$00,$00,$00,$7F,$FF,$FF,$FF</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="61610"></span>F0AA</td>
+<td class="instruction">DEFB $FF,$FF,$FF,$FF,$FF,$FF,$FF,$FF</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="61618"></span>F0B2</td>
+<td class="instruction">DEFB $FF,$FF,$FF,$FF,$FF,$FF,$FF,$FF</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="61626"></span>F0BA</td>
+<td class="instruction">DEFB $FF,$FF,$FF,$FF,$FF,$FF,$FF,$FF</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="61634"></span>F0C2</td>
+<td class="instruction">DEFB $FF,$FD,$7E,$00</td>
 </tr>
 </table>
 <table class="asm-navigation">
@@ -57,13 +481,13 @@ Prev: <a href="EF19.html">EF19</a>
 </td>
 <td class="up">Up: <a href="../maps/all.html#61218">Map</a></td>
 <td class="next">
-Next: <a href="EF29.html">EF29</a>
+Next: <a href="F0C6.html">F0C6</a>
 </td>
 </tr>
 </table>
 <footer>
 <div class="release">The incomplete Chase H.Q. disassembly 20230518</div>
-<div class="copyright">&copy; 1989 Ocean Software Ltd.</div>
+<div class="copyright">&copy; 1988 Taito Corporation &copy; 1989 Ocean Software Ltd. (Chase H.Q.) © 2023 David Thomas (this disassembly)</div>
 <div class="created">Created using <a href="https://skoolkit.ca">SkoolKit</a> 8.9.</div>
 </footer>
 </body>

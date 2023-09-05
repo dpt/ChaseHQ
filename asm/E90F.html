@@ -15,7 +15,7 @@
 <table class="asm-navigation">
 <tr>
 <td class="prev">
-Prev: <a href="E839.html">E839</a>
+Prev: <a href="E8CE.html">E8CE</a>
 </td>
 <td class="up">Up: <a href="../maps/all.html#59663">Map</a></td>
 <td class="next">
@@ -34,7 +34,7 @@ Next: <a href="E9B4.html">E9B4</a>
 <tr>
 <td class="address-2"><span id="59663"></span>E90F</td>
 <td class="instruction">CALL <a href="EE9E.html">define_keys</a></td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="1">Call define_keys</td>
 </tr>
 <tr>
 <td class="address-1"><span id="59666"></span>E912</td>
@@ -64,7 +64,7 @@ Next: <a href="E9B4.html">E9B4</a>
 <tr>
 <td class="address-2"><span id="59674"></span>E91A</td>
 <td class="instruction">CALL <a href="EE9E.html">define_keys</a></td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="1">Call define_keys</td>
 </tr>
 <tr>
 <td class="address-1"><span id="59677"></span>E91D</td>
@@ -104,11 +104,12 @@ Next: <a href="E9B4.html">E9B4</a>
 <tr>
 <td class="address-1"><span id="59691"></span>E92B</td>
 <td class="instruction">CALL <a href="EBF7.html">menu_draw_strings</a></td>
-<td class="comment-1" rowspan="2">Call menu_draw_strings</td>
+<td class="comment-1" rowspan="1">Call menu_draw_strings</td>
 </tr>
 <tr>
 <td class="address-2"><span id="59694"></span>E92E</td>
 <td class="instruction">CALL <a href="EE9E.html">define_keys</a></td>
+<td class="comment-1" rowspan="1">Call define_keys</td>
 </tr>
 <tr>
 <td class="address-1"><span id="59697"></span>E931</td>
@@ -161,7 +162,7 @@ Next: <a href="E9B4.html">E9B4</a>
 <tr>
 <td class="address-1"><span id="59715"></span>E943</td>
 <td class="instruction">RRA</td>
-<td class="comment-1" rowspan="11">Keyscan for SPACE, SYM SHFT, M, N, B</td>
+<td class="comment-1" rowspan="2">Keyscan for SPACE, SYM SHFT, M, N, B</td>
 </tr>
 <tr>
 <td class="address-1"><span id="59716"></span>E944</td>
@@ -169,23 +170,28 @@ Next: <a href="E9B4.html">E9B4</a>
 </tr>
 <tr>
 <td class="address-1"><span id="59718"></span>E946</td>
-<td class="instruction">CALL <a href="ECF3.html">$ECF3</a></td>
+<td class="instruction">CALL <a href="ECF3.html">redefine_keys</a></td>
+<td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
 <td class="address-1"><span id="59721"></span>E949</td>
 <td class="instruction">JR $E925</td>
+<td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
 <td class="address-2"><span id="59723"></span>E94B</td>
 <td class="instruction">LD HL,$EE26</td>
+<td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
 <td class="address-1"><span id="59726"></span>E94E</td>
 <td class="instruction">JR $E953</td>
+<td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
 <td class="address-2"><span id="59728"></span>E950</td>
 <td class="instruction">LD HL,$EE2B</td>
+<td class="comment-1" rowspan="4">Copy 5 bytes at $EE2B to $EE38   -- cursor joystick input scheme</td>
 </tr>
 <tr>
 <td class="address-2"><span id="59731"></span>E953</td>
@@ -202,6 +208,7 @@ Next: <a href="E9B4.html">E9B4</a>
 <tr>
 <td class="address-2"><span id="59739"></span>E95B</td>
 <td class="instruction">XOR A</td>
+<td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
 <td class="address-2"><span id="59740"></span>E95C</td>
@@ -256,20 +263,22 @@ Next: <a href="E9B4.html">E9B4</a>
 <tr>
 <td class="address-1"><span id="59766"></span>E976</td>
 <td class="instruction">CALL <a href="EBF7.html">menu_draw_strings</a></td>
-<td class="comment-1" rowspan="3">Call menu_draw_strings</td>
+<td class="comment-1" rowspan="1">Call menu_draw_strings</td>
 </tr>
 <tr>
 <td class="address-2"><span id="59769"></span>E979</td>
 <td class="instruction">CALL <a href="EE9E.html">define_keys</a></td>
+<td class="comment-1" rowspan="1">Call define_keys</td>
 </tr>
 <tr>
 <td class="address-1"><span id="59772"></span>E97C</td>
 <td class="instruction">XOR A</td>
+<td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
 <td class="address-1"><span id="59773"></span>E97D</td>
 <td class="instruction">IN A,($FE)</td>
-<td class="comment-1" rowspan="17">Keyscan</td>
+<td class="comment-1" rowspan="17">Keyscan Call define_keys</td>
 </tr>
 <tr>
 <td class="address-1"><span id="59775"></span>E97F</td>
@@ -338,7 +347,7 @@ Next: <a href="E9B4.html">E9B4</a>
 <tr>
 <td class="address-1"><span id="59804"></span>E99C</td>
 <td class="instruction">JP <a href="ECDA.html">clear_screen</a></td>
-<td class="comment-1" rowspan="13">Goto clear_screen</td>
+<td class="comment-1" rowspan="13">Jump to clear_screen Call define_keys</td>
 </tr>
 <tr>
 <td class="address-2"><span id="59807"></span>E99F</td>
@@ -392,7 +401,7 @@ Next: <a href="E9B4.html">E9B4</a>
 <table class="asm-navigation">
 <tr>
 <td class="prev">
-Prev: <a href="E839.html">E839</a>
+Prev: <a href="E8CE.html">E8CE</a>
 </td>
 <td class="up">Up: <a href="../maps/all.html#59663">Map</a></td>
 <td class="next">
@@ -402,7 +411,7 @@ Next: <a href="E9B4.html">E9B4</a>
 </table>
 <footer>
 <div class="release">The incomplete Chase H.Q. disassembly 20230518</div>
-<div class="copyright">&copy; 1989 Ocean Software Ltd.</div>
+<div class="copyright">&copy; 1988 Taito Corporation &copy; 1989 Ocean Software Ltd. (Chase H.Q.) © 2023 David Thomas (this disassembly)</div>
 <div class="created">Created using <a href="https://skoolkit.ca">SkoolKit</a> 8.9.</div>
 </footer>
 </body>

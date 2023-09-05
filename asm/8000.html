@@ -1,15 +1,15 @@
 <!DOCTYPE html>
 <html>
 <head>
-<title>Chase H.Q.: Data at 8000</title>
+<title>Chase H.Q.: Game status buffer entry at 8000</title>
 <meta charset="utf-8" />
 <link rel="stylesheet" type="text/css" href="../skoolkit.css" />
 </head>
-<body class="Asm-b">
+<body class="Asm-g">
 <table class="header">
 <tr>
 <td class="logo"><a href="../index.html">Chase H.Q.</a></td>
-<td class="page-header">Data</td>
+<td class="page-header">Game status buffer</td>
 </tr>
 </table>
 <table class="asm-navigation">
@@ -38,10 +38,10 @@ Next: <a href="8014.html">8014</a>
 <td class="comment-1" rowspan="1">Test mode enable flag (cheat mode)</td>
 </tr>
 <tr>
-<td class="asm-label"></td>
+<td class="asm-label">attract_cycle</td>
 <td class="address-1"><span id="32769"></span>8001</td>
 <td class="instruction">DEFB $00</td>
-<td class="comment-1" rowspan="1">TBD</td>
+<td class="comment-1" rowspan="1">[128K] Attract mode message cycle. Used by $F437. When zero shows the "ENTER FOR OPTIONS" message.</td>
 </tr>
 <tr>
 <td class="asm-label">score_bcd</td>
@@ -65,12 +65,13 @@ Next: <a href="8014.html">8014</a>
 <td class="asm-label"></td>
 <td class="address-1"><span id="32776"></span>8008</td>
 <td class="instruction">DEFB $CC,$A0,$4E,$83,$7A,$A2,$C3,$D6</td>
-<td class="comment-1" rowspan="2">TBD</td>
+<td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="32784"></span>8010</td>
 <td class="instruction">DEFB $A0,$C3,$79,$9C</td>
+<td class="comment-1" rowspan="1"></td>
 </tr>
 </table>
 <table class="asm-navigation">
@@ -86,7 +87,7 @@ Next: <a href="8014.html">8014</a>
 </table>
 <footer>
 <div class="release">The incomplete Chase H.Q. disassembly 20230518</div>
-<div class="copyright">&copy; 1989 Ocean Software Ltd.</div>
+<div class="copyright">&copy; 1988 Taito Corporation &copy; 1989 Ocean Software Ltd. (Chase H.Q.) © 2023 David Thomas (this disassembly)</div>
 <div class="created">Created using <a href="https://skoolkit.ca">SkoolKit</a> 8.9.</div>
 </footer>
 </body>

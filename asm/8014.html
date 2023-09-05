@@ -38,13 +38,13 @@ Used by the routine at <a href="8401.html">main_loop</a>.
 <td class="asm-label">load_stage</td>
 <td class="address-2"><span id="32788"></span>8014</td>
 <td class="instruction">LD A,($8007)</td>
-<td class="comment-1" rowspan="1">Get stage number</td>
+<td class="comment-1" rowspan="1">Load wanted_stage_number</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="32791"></span>8017</td>
 <td class="instruction">LD HL,$A13A</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="1">Point <span class="register">HL</span> at current_stage_number</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -61,13 +61,13 @@ Used by the routine at <a href="8401.html">main_loop</a>.
 <td class="asm-label"></td>
 <td class="address-1"><span id="32796"></span>801C</td>
 <td class="instruction">LD (HL),A</td>
-<td class="comment-1" rowspan="1">Equalise</td>
+<td class="comment-1" rowspan="1">current_stage_number = wanted_stage_number</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="32797"></span>801D</td>
 <td class="instruction">LD ($A220),A</td>
-<td class="comment-1" rowspan="1">Set $A220 to level no.</td>
+<td class="comment-1" rowspan="1">Set $A220 to wanted level no.</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -108,152 +108,201 @@ Used by the routine at <a href="8401.html">main_loop</a>.
 <td class="asm-label"></td>
 <td class="address-1"><span id="32816"></span>8030</td>
 <td class="instruction">LD B,$02</td>
-<td class="comment-1" rowspan="39">..</td>
+<td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
 <td class="asm-label">load_stage_1</td>
 <td class="address-2"><span id="32818"></span>8032</td>
-<td class="instruction">CALL <a href="8014.html#32904">load_stage_5</a></td>
+<td class="instruction">CALL <a href="8014.html#32904">sub_8088</a></td>
+<td class="comment-1" rowspan="1">Call TBD subroutine</td>
 </tr>
 <tr>
 <td class="asm-label">load_stage_2</td>
 <td class="address-2"><span id="32821"></span>8035</td>
 <td class="instruction">LD IX,$A19C</td>
+<td class="comment-1" rowspan="1">IX = &amp;hazards[1]</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="32825"></span>8039</td>
 <td class="instruction">LD DE,$0002</td>
+<td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="32828"></span>803C</td>
-<td class="instruction">CALL <a href="8014.html#32960">load_stage_13</a></td>
+<td class="instruction">CALL <a href="8014.html#32960">sub_80c0</a></td>
+<td class="comment-1" rowspan="1">Call TBD subroutine</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="32831"></span>803F</td>
 <td class="instruction">JR NC,<a href="8014.html#32821">load_stage_2</a></td>
+<td class="comment-1" rowspan="1">loop while failed perhaps?</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="32833"></span>8041</td>
 <td class="instruction">LD HL,$A19C</td>
+<td class="comment-1" rowspan="1"><span class="register">HL</span> = &amp;hazards[1]</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="32836"></span>8044</td>
 <td class="instruction">LD A,(HL)</td>
+<td class="comment-1" rowspan="1">Load used flag [doesn't add up - this is a level number?]</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="32837"></span>8045</td>
 <td class="instruction">INC HL</td>
+<td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="32838"></span>8046</td>
 <td class="instruction">CP (HL)</td>
+<td class="comment-1" rowspan="1">equal to &lt;distance related&gt;?</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="32839"></span>8047</td>
 <td class="instruction">JR NZ,<a href="8014.html#32821">load_stage_2</a></td>
+<td class="comment-1" rowspan="1">jump if not</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="32841"></span>8049</td>
 <td class="instruction">ADD A,$B0</td>
+<td class="comment-1" rowspan="1"><span class="register">A</span> += (48 + 128) (make it ASCII and terminate it)</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="32843"></span>804B</td>
 <td class="instruction">LD ($81BA),A</td>
+<td class="comment-1" rowspan="1">Set x in "FOUND x"</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="32846"></span>804E</td>
 <td class="instruction">LD B,$03</td>
+<td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="32848"></span>8050</td>
 <td class="instruction">LD A,($8007)</td>
+<td class="comment-1" rowspan="1"><span class="register">A</span> = wanted_stage_number</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="32851"></span>8053</td>
 <td class="instruction">CP (HL)</td>
+<td class="comment-1" rowspan="1">equal?</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="32852"></span>8054</td>
 <td class="instruction">JR NZ,<a href="8014.html#32818">load_stage_1</a></td>
+<td class="comment-1" rowspan="1">not the wanted stage</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="32854"></span>8056</td>
-<td class="instruction">CALL <a href="8014.html#32904">load_stage_5</a></td>
+<td class="instruction">CALL <a href="8014.html#32904">sub_8088</a></td>
+<td class="comment-1" rowspan="1">Call TBD subroutine</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="32857"></span>8059</td>
-<td class="instruction">CALL <a href="8014.html#32953">load_stage_12</a></td>
+<td class="instruction">CALL <a href="8014.html#32953">load_stage_7</a></td>
+<td class="comment-1" rowspan="1">Call tape loading subroutine</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="32860"></span>805C</td>
 <td class="instruction">JR NC,<a href="8014.html#32805">load_stage_0</a></td>
+<td class="comment-1" rowspan="1"></td>
+</tr>
+<tr>
+<td class="routine-comment" colspan="5">
+<span id="32862"></span>
+<div class="comments">
+<div class="paragraph">
+Success - must have loaded the correct level data.
+</div>
+</div>
+</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="32862"></span>805E</td>
 <td class="instruction">XOR A</td>
+<td class="comment-1" rowspan="1">A = 0</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="32863"></span>805F</td>
 <td class="instruction">OUT ($FE),A</td>
+<td class="comment-1" rowspan="1">Set border?</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="32865"></span>8061</td>
 <td class="instruction">CALL <a href="BDC1.html">clear_screen_set_attrs</a></td>
+<td class="comment-1" rowspan="1">Call clear_screen_set_attrs</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="32868"></span>8064</td>
 <td class="instruction">CALL <a href="88D5.html">clear_game_attrs</a></td>
+<td class="comment-1" rowspan="1">Call clear_game_attrs</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="32871"></span>8067</td>
 <td class="instruction">LD HL,$81BB</td>
+<td class="comment-1" rowspan="1">HL -&gt; "STOP THE TAPE" message structure</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="32874"></span>806A</td>
 <td class="instruction">LD B,$02</td>
+<td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="32876"></span>806C</td>
-<td class="instruction">CALL <a href="8014.html#32920">load_stage_7</a></td>
+<td class="instruction">CALL <a href="8014.html#32920">sub_8098</a></td>
+<td class="comment-1" rowspan="1">Call sub_8098</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="32879"></span>806F</td>
 <td class="instruction">PUSH HL</td>
+<td class="comment-1" rowspan="1">Preserve ?</td>
+</tr>
+<tr>
+<td class="routine-comment" colspan="5">
+<span id="32880"></span>
+<div class="comments">
+<div class="paragraph">
+Wait for a keypress - debounce.
+</div>
+</div>
+</td>
 </tr>
 <tr>
 <td class="asm-label">load_stage_3</td>
 <td class="address-2"><span id="32880"></span>8070</td>
 <td class="instruction">CALL <a href="A0CC.html#41174">keyscan</a></td>
+<td class="comment-1" rowspan="1">Call keyscan</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="32883"></span>8073</td>
 <td class="instruction">AND $10</td>
+<td class="comment-1" rowspan="2">Loop while key not pressed</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -264,11 +313,13 @@ Used by the routine at <a href="8401.html">main_loop</a>.
 <td class="asm-label">load_stage_4</td>
 <td class="address-2"><span id="32887"></span>8077</td>
 <td class="instruction">CALL <a href="A0CC.html#41174">keyscan</a></td>
+<td class="comment-1" rowspan="1">Call keyscan</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="32890"></span>807A</td>
 <td class="instruction">AND $10</td>
+<td class="comment-1" rowspan="2">Loop while key pressed</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -279,37 +330,43 @@ Used by the routine at <a href="8401.html">main_loop</a>.
 <td class="asm-label"></td>
 <td class="address-1"><span id="32894"></span>807E</td>
 <td class="instruction">LD A,$08</td>
+<td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="32896"></span>8080</td>
 <td class="instruction">CALL <a href="8DF9.html">setup_transition</a></td>
+<td class="comment-1" rowspan="1">Call setup_transition</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="32899"></span>8083</td>
 <td class="instruction">POP HL</td>
+<td class="comment-1" rowspan="1">Restore ?</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="32900"></span>8084</td>
 <td class="instruction">LD B,$02</td>
+<td class="comment-1" rowspan="1">B = 2</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="32902"></span>8086</td>
-<td class="instruction">JR <a href="8014.html#32920">load_stage_7</a></td>
+<td class="instruction">JR <a href="8014.html#32920">sub_8098</a></td>
+<td class="comment-1" rowspan="1">Exit via sub_8098</td>
 </tr>
 <tr>
-<td class="asm-label">load_stage_5</td>
+<td class="asm-label">sub_8088</td>
 <td class="address-2"><span id="32904"></span>8088</td>
 <td class="instruction">LD HL,$818C</td>
-<td class="comment-1" rowspan="5">Subroutine</td>
+<td class="comment-1" rowspan="1">Point <span class="register">HL</span> at "START TAPE" message structure</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="32907"></span>808B</td>
 <td class="instruction">LD A,($8007)</td>
+<td class="comment-1" rowspan="2">A = wanted_stage_number - 1</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -319,12 +376,14 @@ Used by the routine at <a href="8401.html">main_loop</a>.
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="32911"></span>808F</td>
-<td class="instruction">JR NZ,<a href="8014.html#32917">load_stage_6</a></td>
+<td class="instruction">JR NZ,<a href="8014.html#32917">sub_8095</a></td>
+<td class="comment-1" rowspan="1">Jump if &gt; 0</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="32913"></span>8091</td>
 <td class="instruction">INC B</td>
+<td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -333,43 +392,47 @@ Used by the routine at <a href="8401.html">main_loop</a>.
 <td class="comment-1" rowspan="1">Point <span class="register">HL</span> at tape_messsages</td>
 </tr>
 <tr>
-<td class="asm-label">load_stage_6</td>
+<td class="asm-label">sub_8095</td>
 <td class="address-2"><span id="32917"></span>8095</td>
-<td class="instruction">CALL <a href="8014.html#32920">load_stage_7</a></td>
-<td class="comment-1" rowspan="5">..</td>
+<td class="instruction">CALL <a href="8014.html#32920">sub_8098</a></td>
+<td class="comment-1" rowspan="1">why call adjacent instr? to exec this func twice?</td>
 </tr>
 <tr>
-<td class="asm-label">load_stage_7</td>
+<td class="asm-label">sub_8098</td>
 <td class="address-2"><span id="32920"></span>8098</td>
 <td class="instruction">PUSH BC</td>
+<td class="comment-1" rowspan="1">preserve counter</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="32921"></span>8099</td>
 <td class="instruction">PUSH HL</td>
+<td class="comment-1" rowspan="1">preserve message pointer</td>
 </tr>
 <tr>
-<td class="asm-label">load_stage_8</td>
+<td class="asm-label">sub_809A</td>
 <td class="address-2"><span id="32922"></span>809A</td>
 <td class="instruction">LD A,$05</td>
+<td class="comment-1" rowspan="1">flags byte for print_message</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="32924"></span>809C</td>
 <td class="instruction">DEC HL</td>
+<td class="comment-1" rowspan="1">why dec here?</td>
 </tr>
 <tr>
 <td class="routine-comment" colspan="5">
 <span id="32925"></span>
 <div class="comments">
 <div class="paragraph">
-This entry point is used by the routine at <a href="F220.html">F220</a>.
+This entry point is used by the routine at <a href="F220.html">load_stage_128k</a>.
 </div>
 </div>
 </td>
 </tr>
 <tr>
-<td class="asm-label">load_stage_9</td>
+<td class="asm-label">sub_809D</td>
 <td class="address-2"><span id="32925"></span>809D</td>
 <td class="instruction">CALL <a href="8E6C.html">print_message</a></td>
 <td class="comment-1" rowspan="1">Call print_message</td>
@@ -377,8 +440,8 @@ This entry point is used by the routine at <a href="F220.html">F220</a>.
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="32928"></span>80A0</td>
-<td class="instruction">DJNZ <a href="8014.html#32922">load_stage_8</a></td>
-<td class="comment-1" rowspan="1"></td>
+<td class="instruction">DJNZ <a href="8014.html#32922">sub_809A</a></td>
+<td class="comment-1" rowspan="1">printing a whole set by looping?</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -396,77 +459,72 @@ This entry point is used by the routine at <a href="F220.html">F220</a>.
 <td class="asm-label"></td>
 <td class="address-1"><span id="32936"></span>80A8</td>
 <td class="instruction">POP HL</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="1">restore message pointer</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="32937"></span>80A9</td>
 <td class="instruction">POP BC</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="1">restore counter</td>
 </tr>
 <tr>
 <td class="routine-comment" colspan="5">
 <span id="32938"></span>
 <div class="comments">
 <div class="paragraph">
-This entry point is used by the routine at <a href="F220.html">F220</a>.
+This entry point is used by the routine at <a href="F220.html">load_stage_128k</a>.
 </div>
 </div>
 </td>
 </tr>
 <tr>
-<td class="asm-label">load_stage_10</td>
+<td class="asm-label">load_stage_5</td>
 <td class="address-2"><span id="32938"></span>80AA</td>
 <td class="instruction">LD A,($A231)</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="1">A = transition_control</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="32941"></span>80AD</td>
 <td class="instruction">AND A</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="2">Return if zero</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="32942"></span>80AE</td>
 <td class="instruction">RET Z</td>
-<td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="32943"></span>80AF</td>
 <td class="instruction">LD DE,$0A00</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="5">Delay loop</td>
 </tr>
 <tr>
-<td class="asm-label">load_stage_11</td>
+<td class="asm-label">load_stage_6</td>
 <td class="address-2"><span id="32946"></span>80B2</td>
 <td class="instruction">DEC DE</td>
-<td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="32947"></span>80B3</td>
 <td class="instruction">LD A,D</td>
-<td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="32948"></span>80B4</td>
 <td class="instruction">OR E</td>
-<td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="32949"></span>80B5</td>
-<td class="instruction">JR NZ,<a href="8014.html#32946">load_stage_11</a></td>
-<td class="comment-1" rowspan="1"></td>
+<td class="instruction">JR NZ,<a href="8014.html#32946">load_stage_6</a></td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="32951"></span>80B7</td>
-<td class="instruction">JR <a href="8014.html#32920">load_stage_7</a></td>
-<td class="comment-1" rowspan="1"></td>
+<td class="instruction">JR <a href="8014.html#32920">sub_8098</a></td>
+<td class="comment-1" rowspan="1">Loop</td>
 </tr>
 <tr>
 <td class="routine-comment" colspan="5">
@@ -479,7 +537,7 @@ Tape loading
 </td>
 </tr>
 <tr>
-<td class="asm-label">load_stage_12</td>
+<td class="asm-label">load_stage_7</td>
 <td class="address-2"><span id="32953"></span>80B9</td>
 <td class="instruction">LD IX,$5C00</td>
 <td class="comment-1" rowspan="2">Setup to load a block ???</td>
@@ -500,110 +558,130 @@ This entry point is used by the routine at <a href="5B00.html">5B00</a>.
 </td>
 </tr>
 <tr>
-<td class="asm-label">load_stage_13</td>
+<td class="asm-label">sub_80c0</td>
 <td class="address-2"><span id="32960"></span>80C0</td>
 <td class="instruction">INC D</td>
-<td class="comment-1" rowspan="83">Routine</td>
+<td class="comment-1" rowspan="1">D++</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="32961"></span>80C1</td>
 <td class="instruction">LD A,$98</td>
+<td class="comment-1" rowspan="1">A = 152</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="32963"></span>80C3</td>
 <td class="instruction">SCF</td>
+<td class="comment-1" rowspan="1">set carry?</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="32964"></span>80C4</td>
 <td class="instruction">EX AF,AF'</td>
+<td class="comment-1" rowspan="1">bank</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="32965"></span>80C5</td>
 <td class="instruction">DEC D</td>
+<td class="comment-1" rowspan="1">D--</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="32966"></span>80C6</td>
 <td class="instruction">DI</td>
+<td class="comment-1" rowspan="1">disable interrupts</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="32967"></span>80C7</td>
 <td class="instruction">LD A,$08</td>
+<td class="comment-1" rowspan="1">set MIC bit (deactivates MIC)</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="32969"></span>80C9</td>
 <td class="instruction">OUT ($FE),A</td>
+<td class="comment-1" rowspan="1">output</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="32971"></span>80CB</td>
 <td class="instruction">IN A,($FE)</td>
+<td class="comment-1" rowspan="1">input</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="32973"></span>80CD</td>
 <td class="instruction">RRA</td>
+<td class="comment-1" rowspan="1">why shift?</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="32974"></span>80CE</td>
 <td class="instruction">AND $20</td>
+<td class="comment-1" rowspan="1">check EAR input bit 6</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="32976"></span>80D0</td>
 <td class="instruction">OR $02</td>
+<td class="comment-1" rowspan="1">set border?</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="32978"></span>80D2</td>
 <td class="instruction">LD C,A</td>
+<td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="32979"></span>80D3</td>
 <td class="instruction">CP A</td>
+<td class="comment-1" rowspan="1">A == A ?</td>
 </tr>
 <tr>
-<td class="asm-label">load_stage_14</td>
+<td class="asm-label">load_stage_8</td>
 <td class="address-2"><span id="32980"></span>80D4</td>
 <td class="instruction">RET NZ</td>
+<td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
-<td class="asm-label">load_stage_15</td>
+<td class="asm-label">load_stage_9</td>
 <td class="address-2"><span id="32981"></span>80D5</td>
-<td class="instruction">CALL <a href="8014.html#33099">load_stage_27</a></td>
+<td class="instruction">CALL <a href="8014.html#33099">sub_814b</a></td>
+<td class="comment-1" rowspan="1">Call sub_814b</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="32984"></span>80D8</td>
-<td class="instruction">JR NC,<a href="8014.html#32980">load_stage_14</a></td>
+<td class="instruction">JR NC,<a href="8014.html#32980">load_stage_8</a></td>
+<td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="32986"></span>80DA</td>
 <td class="instruction">LD HL,$0415</td>
+<td class="comment-1" rowspan="1">Delay time</td>
 </tr>
 <tr>
-<td class="asm-label">load_stage_16</td>
+<td class="asm-label">load_stage_10</td>
 <td class="address-2"><span id="32989"></span>80DD</td>
-<td class="instruction">DJNZ <a href="8014.html#32989">load_stage_16</a></td>
+<td class="instruction">DJNZ <a href="8014.html#32989">load_stage_10</a></td>
+<td class="comment-1" rowspan="1">Delay for B iterations -- is B not initialised?</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="32991"></span>80DF</td>
 <td class="instruction">DEC HL</td>
+<td class="comment-1" rowspan="1">HL--</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="32992"></span>80E0</td>
 <td class="instruction">LD A,H</td>
+<td class="comment-1" rowspan="3">Loop while HL &gt; 0</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -613,102 +691,121 @@ This entry point is used by the routine at <a href="5B00.html">5B00</a>.
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="32994"></span>80E2</td>
-<td class="instruction">JR NZ,<a href="8014.html#32989">load_stage_16</a></td>
+<td class="instruction">JR NZ,<a href="8014.html#32989">load_stage_10</a></td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="32996"></span>80E4</td>
-<td class="instruction">CALL <a href="8014.html#33095">load_stage_26</a></td>
+<td class="instruction">CALL <a href="8014.html#33095">sub_8147</a></td>
+<td class="comment-1" rowspan="1">Call sub_8147</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="32999"></span>80E7</td>
-<td class="instruction">JR NC,<a href="8014.html#32980">load_stage_14</a></td>
+<td class="instruction">JR NC,<a href="8014.html#32980">load_stage_8</a></td>
+<td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
-<td class="asm-label">load_stage_17</td>
+<td class="asm-label">load_stage_11</td>
 <td class="address-2"><span id="33001"></span>80E9</td>
 <td class="instruction">LD B,$9C</td>
+<td class="comment-1" rowspan="1">B = 156</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="33003"></span>80EB</td>
-<td class="instruction">CALL <a href="8014.html#33095">load_stage_26</a></td>
+<td class="instruction">CALL <a href="8014.html#33095">sub_8147</a></td>
+<td class="comment-1" rowspan="1">Call sub_8147</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="33006"></span>80EE</td>
-<td class="instruction">JR NC,<a href="8014.html#32980">load_stage_14</a></td>
+<td class="instruction">JR NC,<a href="8014.html#32980">load_stage_8</a></td>
+<td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="33008"></span>80F0</td>
 <td class="instruction">LD A,$C6</td>
+<td class="comment-1" rowspan="1">A = 198</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="33010"></span>80F2</td>
 <td class="instruction">CP B</td>
+<td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="33011"></span>80F3</td>
-<td class="instruction">JR NC,<a href="8014.html#32981">load_stage_15</a></td>
+<td class="instruction">JR NC,<a href="8014.html#32981">load_stage_9</a></td>
+<td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="33013"></span>80F5</td>
 <td class="instruction">INC H</td>
+<td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="33014"></span>80F6</td>
-<td class="instruction">JR NZ,<a href="8014.html#33001">load_stage_17</a></td>
+<td class="instruction">JR NZ,<a href="8014.html#33001">load_stage_11</a></td>
+<td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
-<td class="asm-label">load_stage_18</td>
+<td class="asm-label">load_stage_12</td>
 <td class="address-2"><span id="33016"></span>80F8</td>
 <td class="instruction">LD B,$C9</td>
+<td class="comment-1" rowspan="1">B = 201</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="33018"></span>80FA</td>
-<td class="instruction">CALL <a href="8014.html#33099">load_stage_27</a></td>
+<td class="instruction">CALL <a href="8014.html#33099">sub_814b</a></td>
+<td class="comment-1" rowspan="1">Call sub_814b</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="33021"></span>80FD</td>
-<td class="instruction">JR NC,<a href="8014.html#32980">load_stage_14</a></td>
+<td class="instruction">JR NC,<a href="8014.html#32980">load_stage_8</a></td>
+<td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="33023"></span>80FF</td>
 <td class="instruction">LD A,B</td>
+<td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="33024"></span>8100</td>
 <td class="instruction">CP $D4</td>
+<td class="comment-1" rowspan="1">212</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="33026"></span>8102</td>
-<td class="instruction">JR NC,<a href="8014.html#33016">load_stage_18</a></td>
+<td class="instruction">JR NC,<a href="8014.html#33016">load_stage_12</a></td>
+<td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="33028"></span>8104</td>
-<td class="instruction">CALL <a href="8014.html#33099">load_stage_27</a></td>
+<td class="instruction">CALL <a href="8014.html#33099">sub_814b</a></td>
+<td class="comment-1" rowspan="1">Call sub_814b</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="33031"></span>8107</td>
 <td class="instruction">RET NC</td>
+<td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="33032"></span>8108</td>
 <td class="instruction">LD A,C</td>
+<td class="comment-1" rowspan="3">A = C ^= 3</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -724,61 +821,73 @@ This entry point is used by the routine at <a href="5B00.html">5B00</a>.
 <td class="asm-label"></td>
 <td class="address-1"><span id="33036"></span>810C</td>
 <td class="instruction">LD H,$00</td>
+<td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="33038"></span>810E</td>
 <td class="instruction">LD B,$B0</td>
+<td class="comment-1" rowspan="1">B = 176</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="33040"></span>8110</td>
-<td class="instruction">JR <a href="8014.html#33068">load_stage_24</a></td>
+<td class="instruction">JR <a href="8014.html#33068">load_stage_18</a></td>
+<td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
-<td class="asm-label">load_stage_19</td>
+<td class="asm-label">load_stage_13</td>
 <td class="address-2"><span id="33042"></span>8112</td>
 <td class="instruction">EX AF,AF'</td>
+<td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="33043"></span>8113</td>
-<td class="instruction">JR NZ,<a href="8014.html#33052">load_stage_21</a></td>
+<td class="instruction">JR NZ,<a href="8014.html#33052">load_stage_15</a></td>
+<td class="comment-1" rowspan="1">wuuuut?</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="33045"></span>8115</td>
-<td class="instruction">JR NZ,<a href="8014.html#33047">load_stage_20</a></td>
+<td class="instruction">JR NZ,<a href="8014.html#33047">load_stage_14</a></td>
+<td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
-<td class="asm-label">load_stage_20</td>
+<td class="asm-label">load_stage_14</td>
 <td class="address-2"><span id="33047"></span>8117</td>
 <td class="instruction">LD (IX+$00),L</td>
+<td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="33050"></span>811A</td>
-<td class="instruction">JR <a href="8014.html#33062">load_stage_22</a></td>
+<td class="instruction">JR <a href="8014.html#33062">load_stage_16</a></td>
+<td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
-<td class="asm-label">load_stage_21</td>
+<td class="asm-label">load_stage_15</td>
 <td class="address-2"><span id="33052"></span>811C</td>
 <td class="instruction">RL C</td>
+<td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="33054"></span>811E</td>
 <td class="instruction">XOR L</td>
+<td class="comment-1" rowspan="1">A ^= L</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="33055"></span>811F</td>
 <td class="instruction">RET NZ</td>
+<td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="33056"></span>8120</td>
 <td class="instruction">LD A,C</td>
+<td class="comment-1" rowspan="3">RR C and copy to A?</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -794,76 +903,91 @@ This entry point is used by the routine at <a href="5B00.html">5B00</a>.
 <td class="asm-label"></td>
 <td class="address-1"><span id="33059"></span>8123</td>
 <td class="instruction">INC DE</td>
+<td class="comment-1" rowspan="1">DE++</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="33060"></span>8124</td>
-<td class="instruction">JR <a href="8014.html#33064">load_stage_23</a></td>
+<td class="instruction">JR <a href="8014.html#33064">load_stage_17</a></td>
+<td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
-<td class="asm-label">load_stage_22</td>
+<td class="asm-label">load_stage_16</td>
 <td class="address-2"><span id="33062"></span>8126</td>
 <td class="instruction">INC IX</td>
+<td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
-<td class="asm-label">load_stage_23</td>
+<td class="asm-label">load_stage_17</td>
 <td class="address-2"><span id="33064"></span>8128</td>
 <td class="instruction">DEC DE</td>
+<td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="33065"></span>8129</td>
 <td class="instruction">EX AF,AF'</td>
+<td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="33066"></span>812A</td>
 <td class="instruction">LD B,$B2</td>
+<td class="comment-1" rowspan="1">B = 178</td>
 </tr>
 <tr>
-<td class="asm-label">load_stage_24</td>
+<td class="asm-label">load_stage_18</td>
 <td class="address-2"><span id="33068"></span>812C</td>
 <td class="instruction">LD L,$01</td>
+<td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
-<td class="asm-label">load_stage_25</td>
+<td class="asm-label">load_stage_19</td>
 <td class="address-2"><span id="33070"></span>812E</td>
-<td class="instruction">CALL <a href="8014.html#33095">load_stage_26</a></td>
+<td class="instruction">CALL <a href="8014.html#33095">sub_8147</a></td>
+<td class="comment-1" rowspan="1">Call sub_8147</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="33073"></span>8131</td>
 <td class="instruction">RET NC</td>
+<td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="33074"></span>8132</td>
 <td class="instruction">LD A,$C8</td>
+<td class="comment-1" rowspan="1">A = 200</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="33076"></span>8134</td>
 <td class="instruction">CP B</td>
+<td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="33077"></span>8135</td>
 <td class="instruction">RL L</td>
+<td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="33079"></span>8137</td>
 <td class="instruction">LD B,$B0</td>
+<td class="comment-1" rowspan="1">B = 176</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="33081"></span>8139</td>
-<td class="instruction">JP NC,<a href="8014.html#33070">load_stage_25</a></td>
+<td class="instruction">JP NC,<a href="8014.html#33070">load_stage_19</a></td>
+<td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="33084"></span>813C</td>
 <td class="instruction">LD A,H</td>
+<td class="comment-1" rowspan="2">A = H ^ L</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -874,11 +998,13 @@ This entry point is used by the routine at <a href="5B00.html">5B00</a>.
 <td class="asm-label"></td>
 <td class="address-1"><span id="33086"></span>813E</td>
 <td class="instruction">LD H,A</td>
+<td class="comment-1" rowspan="1">save A</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="33087"></span>813F</td>
 <td class="instruction">LD A,D</td>
+<td class="comment-1" rowspan="3">Loop while DE &gt; 0</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -888,103 +1014,119 @@ This entry point is used by the routine at <a href="5B00.html">5B00</a>.
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="33089"></span>8141</td>
-<td class="instruction">JR NZ,<a href="8014.html#33042">load_stage_19</a></td>
+<td class="instruction">JR NZ,<a href="8014.html#33042">load_stage_13</a></td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="33091"></span>8143</td>
 <td class="instruction">LD A,H</td>
+<td class="comment-1" rowspan="1">restore A</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="33092"></span>8144</td>
 <td class="instruction">CP $01</td>
+<td class="comment-1" rowspan="1">is it 1?</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="33094"></span>8146</td>
 <td class="instruction">RET</td>
+<td class="comment-1" rowspan="1">Return (with flags?)</td>
 </tr>
 <tr>
-<td class="asm-label">load_stage_26</td>
+<td class="asm-label">sub_8147</td>
 <td class="address-2"><span id="33095"></span>8147</td>
-<td class="instruction">CALL <a href="8014.html#33099">load_stage_27</a></td>
+<td class="instruction">CALL <a href="8014.html#33099">sub_814b</a></td>
+<td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="33098"></span>814A</td>
 <td class="instruction">RET NC</td>
+<td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
-<td class="asm-label">load_stage_27</td>
+<td class="asm-label">sub_814b</td>
 <td class="address-2"><span id="33099"></span>814B</td>
 <td class="instruction">LD A,$16</td>
-<td class="comment-1" rowspan="21">Subroutine</td>
+<td class="comment-1" rowspan="3">Delay loop of 22 iterations</td>
 </tr>
 <tr>
-<td class="asm-label">load_stage_28</td>
+<td class="asm-label">load_stage_20</td>
 <td class="address-2"><span id="33101"></span>814D</td>
 <td class="instruction">DEC A</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="33102"></span>814E</td>
-<td class="instruction">JR NZ,<a href="8014.html#33101">load_stage_28</a></td>
+<td class="instruction">JR NZ,<a href="8014.html#33101">load_stage_20</a></td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="33104"></span>8150</td>
 <td class="instruction">AND A</td>
+<td class="comment-1" rowspan="1">clear carry flag</td>
 </tr>
 <tr>
-<td class="asm-label">load_stage_29</td>
+<td class="asm-label">load_stage_21</td>
 <td class="address-2"><span id="33105"></span>8151</td>
 <td class="instruction">INC B</td>
+<td class="comment-1" rowspan="1">what's in B?</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="33106"></span>8152</td>
 <td class="instruction">RET Z</td>
+<td class="comment-1" rowspan="1">return if zero</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="33107"></span>8153</td>
 <td class="instruction">LD A,$7F</td>
+<td class="comment-1" rowspan="1">%01111111</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="33109"></span>8155</td>
 <td class="instruction">IN A,($FE)</td>
+<td class="comment-1" rowspan="1">read from port</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="33111"></span>8157</td>
 <td class="instruction">RRA</td>
+<td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="33112"></span>8158</td>
 <td class="instruction">RET Z</td>
+<td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="33113"></span>8159</td>
 <td class="instruction">XOR C</td>
+<td class="comment-1" rowspan="1">A ^= C</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="33114"></span>815A</td>
 <td class="instruction">AND $20</td>
+<td class="comment-1" rowspan="1">check EAR input bit 6</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="33116"></span>815C</td>
-<td class="instruction">JR Z,<a href="8014.html#33105">load_stage_29</a></td>
+<td class="instruction">JR Z,<a href="8014.html#33105">load_stage_21</a></td>
+<td class="comment-1" rowspan="1">loop if zero</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="33118"></span>815E</td>
 <td class="instruction">LD A,C</td>
+<td class="comment-1" rowspan="3">A = C = ~C</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -1000,26 +1142,31 @@ This entry point is used by the routine at <a href="5B00.html">5B00</a>.
 <td class="asm-label"></td>
 <td class="address-1"><span id="33121"></span>8161</td>
 <td class="instruction">AND $02</td>
+<td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="33123"></span>8163</td>
 <td class="instruction">OR $08</td>
+<td class="comment-1" rowspan="1">set MIC bit (deactivate MIC)</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="33125"></span>8165</td>
 <td class="instruction">OUT ($FE),A</td>
+<td class="comment-1" rowspan="1">output</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="33127"></span>8167</td>
 <td class="instruction">SCF</td>
+<td class="comment-1" rowspan="1">set carry</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="33128"></span>8168</td>
 <td class="instruction">RET</td>
+<td class="comment-1" rowspan="1">Return</td>
 </tr>
 <tr>
 <td class="asm-label">tape_messsages</td>
@@ -1179,7 +1326,7 @@ Next: <a href="81DD.html">81DD</a>
 </table>
 <footer>
 <div class="release">The incomplete Chase H.Q. disassembly 20230518</div>
-<div class="copyright">&copy; 1989 Ocean Software Ltd.</div>
+<div class="copyright">&copy; 1988 Taito Corporation &copy; 1989 Ocean Software Ltd. (Chase H.Q.) © 2023 David Thomas (this disassembly)</div>
 <div class="created">Created using <a href="https://skoolkit.ca">SkoolKit</a> 8.9.</div>
 </footer>
 </body>

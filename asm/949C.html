@@ -29,7 +29,7 @@ Next: <a href="9542.html">9542</a>
 <td class="routine-comment" colspan="5">
 <div class="details">
 <div class="paragraph">
-Used by the routines at <a href="85E4.html">85E4</a>, <a href="92E1.html">92E1</a> and <a href="B58E.html">draw_car</a>.
+Used by the routines at <a href="85E4.html">reveal_perp_car</a>, <a href="92E1.html">92E1</a> and <a href="B58E.html">draw_car</a>.
 </div>
 </div>
 <table class="input">
@@ -38,7 +38,7 @@ Used by the routines at <a href="85E4.html">85E4</a>, <a href="92E1.html">92E1</
 </tr>
 <tr>
 <td class="register">A</td>
-<td class="register-desc">Plot (A+1)*8 pixels</td>
+<td class="register-desc">Plot (<span class="register">A</span> + 1) * 8 pixels</td>
 </tr>
 <tr>
 <td class="register">DE'</td>
@@ -59,12 +59,12 @@ Used by the routines at <a href="85E4.html">85E4</a>, <a href="92E1.html">92E1</
 <td class="asm-label">plot_sprite</td>
 <td class="address-2"><span id="38044"></span>949C</td>
 <td class="instruction">SRL A</td>
-<td class="comment-1" rowspan="2">Use plot_sprite_odd if the bottom bit is set (odd widths)</td>
+<td class="comment-1" rowspan="2">Use ps_odd if the bottom bit is set (odd widths)</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="38046"></span>949E</td>
-<td class="instruction">JP C,<a href="949C.html#38130">plot_sprite_odd</a></td>
+<td class="instruction">JP C,<a href="949C.html#38130">ps_odd</a></td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -132,7 +132,7 @@ This entry point is used by the routine at <a href="92E1.html">92E1</a>.
 </td>
 </tr>
 <tr>
-<td class="asm-label">plot_sprite_0</td>
+<td class="asm-label">plot_sprite_entry</td>
 <td class="address-2"><span id="38065"></span>94B1</td>
 <td class="instruction">LD ($94BF),SP</td>
 <td class="comment-1" rowspan="1">Save <span class="register">SP</span> to restore later (self modify)</td>
@@ -152,7 +152,7 @@ This entry point is used by the routine at <a href="92E1.html">92E1</a>.
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="38073"></span>94B9</td>
-<td class="instruction">JR <a href="949C.html#38083">plot_sprite_2</a></td>
+<td class="instruction">JR <a href="949C.html#38083">ps_even_body</a></td>
 <td class="comment-1" rowspan="1">Jump into body of loop</td>
 </tr>
 <tr>
@@ -162,9 +162,9 @@ This entry point is used by the routine at <a href="92E1.html">92E1</a>.
 <td class="comment-1" rowspan="1">Bank</td>
 </tr>
 <tr>
-<td class="asm-label"></td>
+<td class="asm-label">ps_even_continue</td>
 <td class="address-1"><span id="38076"></span>94BC</td>
-<td class="instruction">DJNZ <a href="949C.html#38082">plot_sprite_1</a></td>
+<td class="instruction">DJNZ <a href="949C.html#38082">ps_even_next</a></td>
 <td class="comment-1" rowspan="1">Next scanline</td>
 </tr>
 <tr>
@@ -180,13 +180,13 @@ This entry point is used by the routine at <a href="92E1.html">92E1</a>.
 <td class="comment-1" rowspan="1">Return</td>
 </tr>
 <tr>
-<td class="asm-label">plot_sprite_1</td>
+<td class="asm-label">ps_even_next</td>
 <td class="address-2"><span id="38082"></span>94C2</td>
 <td class="instruction">ADD HL,DE</td>
 <td class="comment-1" rowspan="1">Calculate address of next bitmap scanline</td>
 </tr>
 <tr>
-<td class="asm-label">plot_sprite_2</td>
+<td class="asm-label">ps_even_body</td>
 <td class="address-2"><span id="38083"></span>94C3</td>
 <td class="instruction">LD SP,HL</td>
 <td class="comment-1" rowspan="1">Put it in <span class="register">SP</span> (so we can use POP for speed)</td>
@@ -397,7 +397,7 @@ This entry point is used by the routine at <a href="92E1.html">92E1</a>.
 <td class="instruction">JP <a href="949C.html#38075">ps_even_loop</a></td>
 </tr>
 <tr>
-<td class="asm-label">plot_sprite_odd</td>
+<td class="asm-label">ps_odd</td>
 <td class="address-2"><span id="38130"></span>94F2</td>
 <td class="instruction">INC A</td>
 <td class="comment-1" rowspan="1">Increment <span class="register">A</span> for upcoming calculation</td>
@@ -478,7 +478,7 @@ This entry point is used by the routine at <a href="92E1.html">92E1</a>.
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="38155"></span>950B</td>
-<td class="instruction">JR <a href="949C.html#38165">plot_sprite_4</a></td>
+<td class="instruction">JR <a href="949C.html#38165">ps_odd_body</a></td>
 <td class="comment-1" rowspan="1">Jump into body of loop</td>
 </tr>
 <tr>
@@ -488,9 +488,9 @@ This entry point is used by the routine at <a href="92E1.html">92E1</a>.
 <td class="comment-1" rowspan="1">Bank</td>
 </tr>
 <tr>
-<td class="asm-label"></td>
+<td class="asm-label">ps_odd_continue</td>
 <td class="address-1"><span id="38158"></span>950E</td>
-<td class="instruction">DJNZ <a href="949C.html#38164">plot_sprite_3</a></td>
+<td class="instruction">DJNZ <a href="949C.html#38164">ps_odd_next</a></td>
 <td class="comment-1" rowspan="1">Next scanline</td>
 </tr>
 <tr>
@@ -506,13 +506,13 @@ This entry point is used by the routine at <a href="92E1.html">92E1</a>.
 <td class="comment-1" rowspan="1">Return</td>
 </tr>
 <tr>
-<td class="asm-label">plot_sprite_3</td>
+<td class="asm-label">ps_odd_next</td>
 <td class="address-2"><span id="38164"></span>9514</td>
 <td class="instruction">ADD HL,DE</td>
 <td class="comment-1" rowspan="1">Calculate address of next bitmap scanline</td>
 </tr>
 <tr>
-<td class="asm-label">plot_sprite_4</td>
+<td class="asm-label">ps_odd_body</td>
 <td class="address-2"><span id="38165"></span>9515</td>
 <td class="instruction">LD SP,HL</td>
 <td class="comment-1" rowspan="1">Put it in <span class="register">SP</span> (so we can use POP for speed)</td>
@@ -645,7 +645,7 @@ This entry point is used by the routine at <a href="92E1.html">92E1</a>.
 <span id="38190"></span>
 <div class="comments">
 <div class="paragraph">
-Decrement the screen address
+Decrement the screen address.
 </div>
 </div>
 </td>
@@ -736,7 +736,7 @@ Next: <a href="9542.html">9542</a>
 </table>
 <footer>
 <div class="release">The incomplete Chase H.Q. disassembly 20230518</div>
-<div class="copyright">&copy; 1989 Ocean Software Ltd.</div>
+<div class="copyright">&copy; 1988 Taito Corporation &copy; 1989 Ocean Software Ltd. (Chase H.Q.) © 2023 David Thomas (this disassembly)</div>
 <div class="created">Created using <a href="https://skoolkit.ca">SkoolKit</a> 8.9.</div>
 </footer>
 </body>

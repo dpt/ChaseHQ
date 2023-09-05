@@ -23,7 +23,7 @@ Next: <a href="ED4D.html">ED4D</a>
 </td>
 </tr>
 </table>
-<div class="description">ECF3: Routine at ECF3</div>
+<div class="description">ECF3: Runs the redefine keys screen.</div>
 <table class="disassembly">
 <tr>
 <td class="routine-comment" colspan="5">
@@ -35,202 +35,309 @@ Used by the routine at <a href="E90F.html">E90F</a>.
 </td>
 </tr>
 <tr>
+<td class="asm-label">redefine_keys</td>
 <td class="address-2"><span id="60659"></span>ECF3</td>
 <td class="instruction">CALL <a href="ECDA.html">clear_screen</a></td>
 <td class="comment-1" rowspan="1">Call clear_screen</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="60662"></span>ECF6</td>
 <td class="instruction">LD HL,$EA52</td>
 <td class="comment-1" rowspan="1">Address of "REDEFINE KEYS" strings</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="60665"></span>ECF9</td>
 <td class="instruction">CALL <a href="EBF7.html">menu_draw_strings</a></td>
-<td class="comment-1" rowspan="24">Call menu_draw_strings</td>
+<td class="comment-1" rowspan="1">Call menu_draw_strings</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="60668"></span>ECFC</td>
 <td class="instruction">LD DE,$48D6</td>
+<td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="60671"></span>ECFF</td>
 <td class="instruction">LD BC,$0801</td>
+<td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
+<td class="asm-label">rdk_loop_1</td>
 <td class="address-2"><span id="60674"></span>ED02</td>
 <td class="instruction">PUSH HL</td>
+<td class="comment-1" rowspan="3">Preserve registers</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="60675"></span>ED03</td>
 <td class="instruction">PUSH DE</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="60676"></span>ED04</td>
 <td class="instruction">PUSH BC</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="60677"></span>ED05</td>
 <td class="instruction">CALL <a href="EE9E.html">define_keys</a></td>
+<td class="comment-1" rowspan="1">Call define_keys</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="60680"></span>ED08</td>
 <td class="instruction">POP BC</td>
+<td class="comment-1" rowspan="3">Restore registers</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="60681"></span>ED09</td>
 <td class="instruction">POP DE</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="60682"></span>ED0A</td>
 <td class="instruction">POP HL</td>
 </tr>
 <tr>
-<td class="address-1"><span id="60683"></span>ED0B</td>
-<td class="instruction">XOR A</td>
+<td class="routine-comment" colspan="5">
+<span id="60683"></span>
+<div class="comments">
+<div class="paragraph">
+Debounce?
+</div>
+</div>
+</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="60683"></span>ED0B</td>
+<td class="instruction">XOR A</td>
+<td class="comment-1" rowspan="2">Read port $00FE</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="60684"></span>ED0C</td>
 <td class="instruction">IN A,($FE)</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="60686"></span>ED0E</td>
 <td class="instruction">CPL</td>
+<td class="comment-1" rowspan="1">Complement the value returned to change it from active-low to active-high</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="60687"></span>ED0F</td>
 <td class="instruction">AND $1F</td>
+<td class="comment-1" rowspan="1">Discard any non-key flags</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="60689"></span>ED11</td>
-<td class="instruction">JR NZ,$ED02</td>
+<td class="instruction">JR NZ,<a href="ECF3.html#60674">rdk_loop_1</a></td>
+<td class="comment-1" rowspan="1">Jump if any keys are pressed</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="60691"></span>ED13</td>
-<td class="instruction">CALL <a href="ED4D.html#60781">$ED6D</a></td>
+<td class="instruction">CALL <a href="ED6D.html">$ED6D</a></td>
+<td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="60694"></span>ED16</td>
 <td class="instruction">INC C</td>
+<td class="comment-1" rowspan="1">C++</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="60695"></span>ED17</td>
 <td class="instruction">INC HL</td>
+<td class="comment-1" rowspan="1">HL++</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="60696"></span>ED18</td>
-<td class="instruction">DJNZ $ED02</td>
+<td class="instruction">DJNZ <a href="ECF3.html#60674">rdk_loop_1</a></td>
+<td class="comment-1" rowspan="1">Loop rdk_loop_1 while B</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="60698"></span>ED1A</td>
 <td class="instruction">LD B,$14</td>
+<td class="comment-1" rowspan="1">B = 20</td>
 </tr>
 <tr>
+<td class="asm-label">rdk_loop_2</td>
 <td class="address-2"><span id="60700"></span>ED1C</td>
 <td class="instruction">PUSH BC</td>
+<td class="comment-1" rowspan="1">Preserve</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="60701"></span>ED1D</td>
 <td class="instruction">CALL <a href="EE9E.html">define_keys</a></td>
+<td class="comment-1" rowspan="1">Call define_keys</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="60704"></span>ED20</td>
 <td class="instruction">POP BC</td>
+<td class="comment-1" rowspan="1">Restore</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="60705"></span>ED21</td>
-<td class="instruction">DJNZ $ED1C</td>
+<td class="instruction">DJNZ <a href="ECF3.html#60700">rdk_loop_2</a></td>
+<td class="comment-1" rowspan="1">Loop rdk_loop_2 while B</td>
 </tr>
 <tr>
+<td class="routine-comment" colspan="5">
+<span id="60707"></span>
+<div class="comments">
+<div class="paragraph">
+Test keys are "SHOCKED&lt;ENTER&gt;".
+</div>
+</div>
+</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="60707"></span>ED23</td>
 <td class="instruction">LD B,$08</td>
-<td class="comment-1" rowspan="9">Test keys are "SHOCKED&lt;ENTER&gt;"</td>
+<td class="comment-1" rowspan="1">B = 8</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="60709"></span>ED25</td>
 <td class="instruction">LD DE,$EE30</td>
+<td class="comment-1" rowspan="1">DE -&gt; shocked bytes</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="60712"></span>ED28</td>
 <td class="instruction">LD HL,$EE38</td>
+<td class="comment-1" rowspan="1">HL -&gt; $EE38</td>
 </tr>
 <tr>
+<td class="asm-label">rdk_loop_3</td>
 <td class="address-2"><span id="60715"></span>ED2B</td>
 <td class="instruction">LD A,(DE)</td>
+<td class="comment-1" rowspan="1">A = *DE</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="60716"></span>ED2C</td>
 <td class="instruction">CP (HL)</td>
+<td class="comment-1" rowspan="1">CP *HL</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="60717"></span>ED2D</td>
 <td class="instruction">INC HL</td>
+<td class="comment-1" rowspan="1">HL++</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="60718"></span>ED2E</td>
 <td class="instruction">INC DE</td>
+<td class="comment-1" rowspan="1">DE++</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="60719"></span>ED2F</td>
 <td class="instruction">RET NZ</td>
+<td class="comment-1" rowspan="1">Return if non-zero -- no match</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="60720"></span>ED30</td>
-<td class="instruction">DJNZ $ED2B</td>
+<td class="instruction">DJNZ <a href="ECF3.html#60715">rdk_loop_3</a></td>
+<td class="comment-1" rowspan="1">Loop rdk_loop_3 while B</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="60722"></span>ED32</td>
 <td class="instruction">LD A,$01</td>
 <td class="comment-1" rowspan="2">Set test mode flag</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="60724"></span>ED34</td>
 <td class="instruction">LD ($8000),A</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="60727"></span>ED37</td>
 <td class="instruction">CALL <a href="ECDA.html">clear_screen</a></td>
 <td class="comment-1" rowspan="1">Call clear_screen</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="60730"></span>ED3A</td>
 <td class="instruction">LD HL,$EAE1</td>
 <td class="comment-1" rowspan="1">Address of TEST MODE strings</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="60733"></span>ED3D</td>
 <td class="instruction">CALL <a href="EBF7.html">menu_draw_strings</a></td>
 <td class="comment-1" rowspan="1">Call menu_draw_strings</td>
 </tr>
 <tr>
+<td class="asm-label">redefine_keys_0</td>
 <td class="address-2"><span id="60736"></span>ED40</td>
 <td class="instruction">CALL <a href="EE9E.html">define_keys</a></td>
 <td class="comment-1" rowspan="1">Call define_keys</td>
 </tr>
 <tr>
-<td class="address-1"><span id="60739"></span>ED43</td>
-<td class="instruction">XOR A</td>
-<td class="comment-1" rowspan="6">Debounce?</td>
+<td class="routine-comment" colspan="5">
+<span id="60739"></span>
+<div class="comments">
+<div class="paragraph">
+Debounce?
+</div>
+</div>
+</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="60739"></span>ED43</td>
+<td class="instruction">XOR A</td>
+<td class="comment-1" rowspan="2">Read port $00FE</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="60740"></span>ED44</td>
 <td class="instruction">IN A,($FE)</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="60742"></span>ED46</td>
 <td class="instruction">CPL</td>
+<td class="comment-1" rowspan="1">Complement the value returned to change it from active-low to active-high</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="60743"></span>ED47</td>
 <td class="instruction">AND $1F</td>
+<td class="comment-1" rowspan="1">Discard any non-key flags</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="60745"></span>ED49</td>
-<td class="instruction">JR Z,$ED40</td>
+<td class="instruction">JR Z,<a href="ECF3.html#60736">redefine_keys_0</a></td>
+<td class="comment-1" rowspan="1">Loop while no keys were pressed</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="60747"></span>ED4B</td>
-<td class="instruction">JR $ECF3</td>
+<td class="instruction">JR <a href="ECF3.html#60659">redefine_keys</a></td>
+<td class="comment-1" rowspan="1">Loop</td>
 </tr>
 </table>
 <table class="asm-navigation">
@@ -246,7 +353,7 @@ Next: <a href="ED4D.html">ED4D</a>
 </table>
 <footer>
 <div class="release">The incomplete Chase H.Q. disassembly 20230518</div>
-<div class="copyright">&copy; 1989 Ocean Software Ltd.</div>
+<div class="copyright">&copy; 1988 Taito Corporation &copy; 1989 Ocean Software Ltd. (Chase H.Q.) © 2023 David Thomas (this disassembly)</div>
 <div class="created">Created using <a href="https://skoolkit.ca">SkoolKit</a> 8.9.</div>
 </footer>
 </body>

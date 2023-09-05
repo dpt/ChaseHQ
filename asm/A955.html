@@ -23,7 +23,7 @@ Next: <a href="A97E.html">A97E</a>
 </td>
 </tr>
 </table>
-<div class="description">A955: TBD</div>
+<div class="description">A955: Used by the routines at <a href="8401.html">main_loop</a> and <a href="852A.html">cpu_driver</a>.</div>
 <table class="disassembly">
 <tr>
 <td class="routine-comment" colspan="5">
@@ -38,7 +38,7 @@ Used by the routines at <a href="8401.html">main_loop</a> and <a href="852A.html
 <td class="asm-label">main_loop_18</td>
 <td class="address-2"><span id="43349"></span>A955</td>
 <td class="instruction">LD A,($A248)</td>
-<td class="comment-1" rowspan="3">If $A248 == 0 Return</td>
+<td class="comment-1" rowspan="3">Return if $A248 is zero</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -54,7 +54,7 @@ Used by the routines at <a href="8401.html">main_loop</a> and <a href="852A.html
 <td class="asm-label"></td>
 <td class="address-1"><span id="43354"></span>A95A</td>
 <td class="instruction">LD A,($A254)</td>
-<td class="comment-1" rowspan="3">If $A254 == 0 Return</td>
+<td class="comment-1" rowspan="3">Return if $A254 is zero</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -70,7 +70,7 @@ Used by the routines at <a href="8401.html">main_loop</a> and <a href="852A.html
 <td class="asm-label"></td>
 <td class="address-1"><span id="43359"></span>A95F</td>
 <td class="instruction">LD DE,$ED28</td>
-<td class="comment-1" rowspan="1">Point <span class="register">DE</span> at the stack</td>
+<td class="comment-1" rowspan="1">Point <span class="register">HL</span> at something above the stack</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -164,7 +164,7 @@ Next: <a href="A97E.html">A97E</a>
 </table>
 <footer>
 <div class="release">The incomplete Chase H.Q. disassembly 20230518</div>
-<div class="copyright">&copy; 1989 Ocean Software Ltd.</div>
+<div class="copyright">&copy; 1988 Taito Corporation &copy; 1989 Ocean Software Ltd. (Chase H.Q.) © 2023 David Thomas (this disassembly)</div>
 <div class="created">Created using <a href="https://skoolkit.ca">SkoolKit</a> 8.9.</div>
 </footer>
 </body>

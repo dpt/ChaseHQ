@@ -1,15 +1,15 @@
 <!DOCTYPE html>
 <html>
 <head>
-<title>Chase H.Q.: Routine at E540</title>
+<title>Chase H.Q.: Data at E540</title>
 <meta charset="utf-8" />
 <link rel="stylesheet" type="text/css" href="../skoolkit.css" />
 </head>
-<body class="Asm-c">
+<body class="Asm-w">
 <table class="header">
 <tr>
 <td class="logo"><a href="../index.html">Chase H.Q.</a></td>
-<td class="page-header">Routines</td>
+<td class="page-header">Data</td>
 </tr>
 </table>
 <table class="asm-navigation">
@@ -19,11 +19,11 @@ Prev: <a href="E364.html">E364</a>
 </td>
 <td class="up">Up: <a href="../maps/all.html#58688">Map</a></td>
 <td class="next">
-Next: <a href="E601.html">E601</a>
+Next: <a href="E600.html">E600</a>
 </td>
 </tr>
 </table>
-<div class="description">E540: Looks like a table of flipped bytes (but not quite)</div>
+<div class="description">E540: A table of 96 words being 10^x or similar function. Distance horizontal shift? Field of view table? It affects the horizontal position of the road.</div>
 <table class="disassembly">
 <tr>
 <td class="routine-comment" colspan="5">
@@ -32,778 +32,483 @@ Next: <a href="E601.html">E601</a>
 </td>
 </tr>
 <tr>
-<td class="address-2"><span id="58688"></span>E540</td>
-<td class="instruction">NOP</td>
-<td class="comment-0" rowspan="1"></td>
-</tr>
-<tr>
-<td class="address-1"><span id="58689"></span>E541</td>
-<td class="instruction">NOP</td>
+<td class="address-1"><span id="58688"></span>E540</td>
+<td class="instruction">DEFW $0000</td>
 <td class="comment-0" rowspan="1"></td>
 </tr>
 <tr>
 <td class="address-1"><span id="58690"></span>E542</td>
-<td class="instruction">LD B,$00</td>
+<td class="instruction">DEFW $0006</td>
 <td class="comment-0" rowspan="1"></td>
 </tr>
 <tr>
 <td class="address-1"><span id="58692"></span>E544</td>
-<td class="instruction">INC C</td>
-<td class="comment-0" rowspan="1"></td>
-</tr>
-<tr>
-<td class="address-1"><span id="58693"></span>E545</td>
-<td class="instruction">NOP</td>
+<td class="instruction">DEFW $000C</td>
 <td class="comment-0" rowspan="1"></td>
 </tr>
 <tr>
 <td class="address-1"><span id="58694"></span>E546</td>
-<td class="instruction">LD (DE),A</td>
-<td class="comment-0" rowspan="1"></td>
-</tr>
-<tr>
-<td class="address-1"><span id="58695"></span>E547</td>
-<td class="instruction">NOP</td>
+<td class="instruction">DEFW $0012</td>
 <td class="comment-0" rowspan="1"></td>
 </tr>
 <tr>
 <td class="address-1"><span id="58696"></span>E548</td>
-<td class="instruction">RLA</td>
-<td class="comment-0" rowspan="1"></td>
-</tr>
-<tr>
-<td class="address-1"><span id="58697"></span>E549</td>
-<td class="instruction">NOP</td>
+<td class="instruction">DEFW $0017</td>
 <td class="comment-0" rowspan="1"></td>
 </tr>
 <tr>
 <td class="address-1"><span id="58698"></span>E54A</td>
-<td class="instruction">INC E</td>
-<td class="comment-0" rowspan="1"></td>
-</tr>
-<tr>
-<td class="address-1"><span id="58699"></span>E54B</td>
-<td class="instruction">NOP</td>
+<td class="instruction">DEFW $001C</td>
 <td class="comment-0" rowspan="1"></td>
 </tr>
 <tr>
 <td class="address-1"><span id="58700"></span>E54C</td>
-<td class="instruction">LD HL,$2600</td>
+<td class="instruction">DEFW $0021</td>
 <td class="comment-0" rowspan="1"></td>
 </tr>
 <tr>
-<td class="address-1"><span id="58703"></span>E54F</td>
-<td class="instruction">NOP</td>
+<td class="address-1"><span id="58702"></span>E54E</td>
+<td class="instruction">DEFW $0026</td>
 <td class="comment-0" rowspan="1"></td>
 </tr>
 <tr>
 <td class="address-1"><span id="58704"></span>E550</td>
-<td class="instruction">LD HL,($2F00)</td>
+<td class="instruction">DEFW $002A</td>
 <td class="comment-0" rowspan="1"></td>
 </tr>
 <tr>
-<td class="address-1"><span id="58707"></span>E553</td>
-<td class="instruction">NOP</td>
+<td class="address-1"><span id="58706"></span>E552</td>
+<td class="instruction">DEFW $002F</td>
 <td class="comment-0" rowspan="1"></td>
 </tr>
 <tr>
 <td class="address-1"><span id="58708"></span>E554</td>
-<td class="instruction">INC SP</td>
-<td class="comment-0" rowspan="1"></td>
-</tr>
-<tr>
-<td class="address-1"><span id="58709"></span>E555</td>
-<td class="instruction">NOP</td>
+<td class="instruction">DEFW $0033</td>
 <td class="comment-0" rowspan="1"></td>
 </tr>
 <tr>
 <td class="address-1"><span id="58710"></span>E556</td>
-<td class="instruction">SCF</td>
-<td class="comment-0" rowspan="1"></td>
-</tr>
-<tr>
-<td class="address-1"><span id="58711"></span>E557</td>
-<td class="instruction">NOP</td>
+<td class="instruction">DEFW $0037</td>
 <td class="comment-0" rowspan="1"></td>
 </tr>
 <tr>
 <td class="address-1"><span id="58712"></span>E558</td>
-<td class="instruction">INC A</td>
-<td class="comment-0" rowspan="1"></td>
-</tr>
-<tr>
-<td class="address-1"><span id="58713"></span>E559</td>
-<td class="instruction">NOP</td>
+<td class="instruction">DEFW $003C</td>
 <td class="comment-0" rowspan="1"></td>
 </tr>
 <tr>
 <td class="address-1"><span id="58714"></span>E55A</td>
-<td class="instruction">LD B,B</td>
-<td class="comment-0" rowspan="1"></td>
-</tr>
-<tr>
-<td class="address-1"><span id="58715"></span>E55B</td>
-<td class="instruction">NOP</td>
+<td class="instruction">DEFW $0040</td>
 <td class="comment-0" rowspan="1"></td>
 </tr>
 <tr>
 <td class="address-1"><span id="58716"></span>E55C</td>
-<td class="instruction">LD B,E</td>
-<td class="comment-0" rowspan="1"></td>
-</tr>
-<tr>
-<td class="address-1"><span id="58717"></span>E55D</td>
-<td class="instruction">NOP</td>
+<td class="instruction">DEFW $0043</td>
 <td class="comment-0" rowspan="1"></td>
 </tr>
 <tr>
 <td class="address-1"><span id="58718"></span>E55E</td>
-<td class="instruction">LD B,A</td>
-<td class="comment-0" rowspan="1"></td>
-</tr>
-<tr>
-<td class="address-1"><span id="58719"></span>E55F</td>
-<td class="instruction">NOP</td>
+<td class="instruction">DEFW $0047</td>
 <td class="comment-0" rowspan="1"></td>
 </tr>
 <tr>
 <td class="address-1"><span id="58720"></span>E560</td>
-<td class="instruction">LD C,E</td>
-<td class="comment-0" rowspan="1"></td>
-</tr>
-<tr>
-<td class="address-1"><span id="58721"></span>E561</td>
-<td class="instruction">NOP</td>
+<td class="instruction">DEFW $004B</td>
 <td class="comment-0" rowspan="1"></td>
 </tr>
 <tr>
 <td class="address-1"><span id="58722"></span>E562</td>
-<td class="instruction">LD C,A</td>
-<td class="comment-0" rowspan="1"></td>
-</tr>
-<tr>
-<td class="address-1"><span id="58723"></span>E563</td>
-<td class="instruction">NOP</td>
+<td class="instruction">DEFW $004F</td>
 <td class="comment-0" rowspan="1"></td>
 </tr>
 <tr>
 <td class="address-1"><span id="58724"></span>E564</td>
-<td class="instruction">LD D,D</td>
-<td class="comment-0" rowspan="1"></td>
-</tr>
-<tr>
-<td class="address-1"><span id="58725"></span>E565</td>
-<td class="instruction">NOP</td>
+<td class="instruction">DEFW $0052</td>
 <td class="comment-0" rowspan="1"></td>
 </tr>
 <tr>
 <td class="address-1"><span id="58726"></span>E566</td>
-<td class="instruction">LD D,(HL)</td>
-<td class="comment-0" rowspan="1"></td>
-</tr>
-<tr>
-<td class="address-1"><span id="58727"></span>E567</td>
-<td class="instruction">NOP</td>
+<td class="instruction">DEFW $0056</td>
 <td class="comment-0" rowspan="1"></td>
 </tr>
 <tr>
 <td class="address-1"><span id="58728"></span>E568</td>
-<td class="instruction">LD E,C</td>
-<td class="comment-0" rowspan="1"></td>
-</tr>
-<tr>
-<td class="address-1"><span id="58729"></span>E569</td>
-<td class="instruction">NOP</td>
+<td class="instruction">DEFW $0059</td>
 <td class="comment-0" rowspan="1"></td>
 </tr>
 <tr>
 <td class="address-1"><span id="58730"></span>E56A</td>
-<td class="instruction">LD E,L</td>
-<td class="comment-0" rowspan="1"></td>
-</tr>
-<tr>
-<td class="address-1"><span id="58731"></span>E56B</td>
-<td class="instruction">NOP</td>
+<td class="instruction">DEFW $005D</td>
 <td class="comment-0" rowspan="1"></td>
 </tr>
 <tr>
 <td class="address-1"><span id="58732"></span>E56C</td>
-<td class="instruction">LD H,B</td>
-<td class="comment-0" rowspan="1"></td>
-</tr>
-<tr>
-<td class="address-1"><span id="58733"></span>E56D</td>
-<td class="instruction">NOP</td>
+<td class="instruction">DEFW $0060</td>
 <td class="comment-0" rowspan="1"></td>
 </tr>
 <tr>
 <td class="address-1"><span id="58734"></span>E56E</td>
-<td class="instruction">LD H,E</td>
-<td class="comment-0" rowspan="1"></td>
-</tr>
-<tr>
-<td class="address-1"><span id="58735"></span>E56F</td>
-<td class="instruction">NOP</td>
+<td class="instruction">DEFW $0063</td>
 <td class="comment-0" rowspan="1"></td>
 </tr>
 <tr>
 <td class="address-1"><span id="58736"></span>E570</td>
-<td class="instruction">LD H,A</td>
-<td class="comment-0" rowspan="1"></td>
-</tr>
-<tr>
-<td class="address-1"><span id="58737"></span>E571</td>
-<td class="instruction">NOP</td>
+<td class="instruction">DEFW $0067</td>
 <td class="comment-0" rowspan="1"></td>
 </tr>
 <tr>
 <td class="address-1"><span id="58738"></span>E572</td>
-<td class="instruction">LD L,D</td>
-<td class="comment-0" rowspan="1"></td>
-</tr>
-<tr>
-<td class="address-1"><span id="58739"></span>E573</td>
-<td class="instruction">NOP</td>
+<td class="instruction">DEFW $006A</td>
 <td class="comment-0" rowspan="1"></td>
 </tr>
 <tr>
 <td class="address-1"><span id="58740"></span>E574</td>
-<td class="instruction">LD L,L</td>
-<td class="comment-0" rowspan="1"></td>
-</tr>
-<tr>
-<td class="address-1"><span id="58741"></span>E575</td>
-<td class="instruction">NOP</td>
+<td class="instruction">DEFW $006D</td>
 <td class="comment-0" rowspan="1"></td>
 </tr>
 <tr>
 <td class="address-1"><span id="58742"></span>E576</td>
-<td class="instruction">LD (HL),B</td>
-<td class="comment-0" rowspan="1"></td>
-</tr>
-<tr>
-<td class="address-1"><span id="58743"></span>E577</td>
-<td class="instruction">NOP</td>
+<td class="instruction">DEFW $0070</td>
 <td class="comment-0" rowspan="1"></td>
 </tr>
 <tr>
 <td class="address-1"><span id="58744"></span>E578</td>
-<td class="instruction">LD (HL),E</td>
-<td class="comment-0" rowspan="1"></td>
-</tr>
-<tr>
-<td class="address-1"><span id="58745"></span>E579</td>
-<td class="instruction">NOP</td>
+<td class="instruction">DEFW $0073</td>
 <td class="comment-0" rowspan="1"></td>
 </tr>
 <tr>
 <td class="address-1"><span id="58746"></span>E57A</td>
-<td class="instruction">LD (HL),A</td>
-<td class="comment-0" rowspan="1"></td>
-</tr>
-<tr>
-<td class="address-1"><span id="58747"></span>E57B</td>
-<td class="instruction">NOP</td>
+<td class="instruction">DEFW $0077</td>
 <td class="comment-0" rowspan="1"></td>
 </tr>
 <tr>
 <td class="address-1"><span id="58748"></span>E57C</td>
-<td class="instruction">LD A,D</td>
-<td class="comment-0" rowspan="1"></td>
-</tr>
-<tr>
-<td class="address-1"><span id="58749"></span>E57D</td>
-<td class="instruction">NOP</td>
+<td class="instruction">DEFW $007A</td>
 <td class="comment-0" rowspan="1"></td>
 </tr>
 <tr>
 <td class="address-1"><span id="58750"></span>E57E</td>
-<td class="instruction">LD A,L</td>
-<td class="comment-0" rowspan="1"></td>
-</tr>
-<tr>
-<td class="address-1"><span id="58751"></span>E57F</td>
-<td class="instruction">NOP</td>
+<td class="instruction">DEFW $007D</td>
 <td class="comment-0" rowspan="1"></td>
 </tr>
 <tr>
 <td class="address-1"><span id="58752"></span>E580</td>
-<td class="instruction">ADD A,B</td>
-<td class="comment-0" rowspan="1"></td>
-</tr>
-<tr>
-<td class="address-1"><span id="58753"></span>E581</td>
-<td class="instruction">NOP</td>
+<td class="instruction">DEFW $0080</td>
 <td class="comment-0" rowspan="1"></td>
 </tr>
 <tr>
 <td class="address-1"><span id="58754"></span>E582</td>
-<td class="instruction">ADD A,E</td>
-<td class="comment-0" rowspan="1"></td>
-</tr>
-<tr>
-<td class="address-1"><span id="58755"></span>E583</td>
-<td class="instruction">NOP</td>
+<td class="instruction">DEFW $0083</td>
 <td class="comment-0" rowspan="1"></td>
 </tr>
 <tr>
 <td class="address-1"><span id="58756"></span>E584</td>
-<td class="instruction">ADD A,(HL)</td>
-<td class="comment-0" rowspan="1"></td>
-</tr>
-<tr>
-<td class="address-1"><span id="58757"></span>E585</td>
-<td class="instruction">NOP</td>
+<td class="instruction">DEFW $0086</td>
 <td class="comment-0" rowspan="1"></td>
 </tr>
 <tr>
 <td class="address-1"><span id="58758"></span>E586</td>
-<td class="instruction">ADC A,C</td>
-<td class="comment-0" rowspan="1"></td>
-</tr>
-<tr>
-<td class="address-1"><span id="58759"></span>E587</td>
-<td class="instruction">NOP</td>
+<td class="instruction">DEFW $0089</td>
 <td class="comment-0" rowspan="1"></td>
 </tr>
 <tr>
 <td class="address-1"><span id="58760"></span>E588</td>
-<td class="instruction">ADC A,L</td>
-<td class="comment-0" rowspan="1"></td>
-</tr>
-<tr>
-<td class="address-1"><span id="58761"></span>E589</td>
-<td class="instruction">NOP</td>
+<td class="instruction">DEFW $008D</td>
 <td class="comment-0" rowspan="1"></td>
 </tr>
 <tr>
 <td class="address-1"><span id="58762"></span>E58A</td>
-<td class="instruction">SUB B</td>
-<td class="comment-0" rowspan="1"></td>
-</tr>
-<tr>
-<td class="address-1"><span id="58763"></span>E58B</td>
-<td class="instruction">NOP</td>
+<td class="instruction">DEFW $0090</td>
 <td class="comment-0" rowspan="1"></td>
 </tr>
 <tr>
 <td class="address-1"><span id="58764"></span>E58C</td>
-<td class="instruction">SUB E</td>
-<td class="comment-0" rowspan="1"></td>
-</tr>
-<tr>
-<td class="address-1"><span id="58765"></span>E58D</td>
-<td class="instruction">NOP</td>
+<td class="instruction">DEFW $0093</td>
 <td class="comment-0" rowspan="1"></td>
 </tr>
 <tr>
 <td class="address-1"><span id="58766"></span>E58E</td>
-<td class="instruction">SUB (HL)</td>
-<td class="comment-0" rowspan="1"></td>
-</tr>
-<tr>
-<td class="address-1"><span id="58767"></span>E58F</td>
-<td class="instruction">NOP</td>
+<td class="instruction">DEFW $0096</td>
 <td class="comment-0" rowspan="1"></td>
 </tr>
 <tr>
 <td class="address-1"><span id="58768"></span>E590</td>
-<td class="instruction">SBC A,C</td>
-<td class="comment-0" rowspan="1"></td>
-</tr>
-<tr>
-<td class="address-1"><span id="58769"></span>E591</td>
-<td class="instruction">NOP</td>
+<td class="instruction">DEFW $0099</td>
 <td class="comment-0" rowspan="1"></td>
 </tr>
 <tr>
 <td class="address-1"><span id="58770"></span>E592</td>
-<td class="instruction">SBC A,L</td>
-<td class="comment-0" rowspan="1"></td>
-</tr>
-<tr>
-<td class="address-1"><span id="58771"></span>E593</td>
-<td class="instruction">NOP</td>
+<td class="instruction">DEFW $009D</td>
 <td class="comment-0" rowspan="1"></td>
 </tr>
 <tr>
 <td class="address-1"><span id="58772"></span>E594</td>
-<td class="instruction">AND B</td>
-<td class="comment-0" rowspan="1"></td>
-</tr>
-<tr>
-<td class="address-1"><span id="58773"></span>E595</td>
-<td class="instruction">NOP</td>
+<td class="instruction">DEFW $00A0</td>
 <td class="comment-0" rowspan="1"></td>
 </tr>
 <tr>
 <td class="address-1"><span id="58774"></span>E596</td>
-<td class="instruction">AND E</td>
-<td class="comment-0" rowspan="1"></td>
-</tr>
-<tr>
-<td class="address-1"><span id="58775"></span>E597</td>
-<td class="instruction">NOP</td>
+<td class="instruction">DEFW $00A3</td>
 <td class="comment-0" rowspan="1"></td>
 </tr>
 <tr>
 <td class="address-1"><span id="58776"></span>E598</td>
-<td class="instruction">AND A</td>
-<td class="comment-0" rowspan="1"></td>
-</tr>
-<tr>
-<td class="address-1"><span id="58777"></span>E599</td>
-<td class="instruction">NOP</td>
+<td class="instruction">DEFW $00A7</td>
 <td class="comment-0" rowspan="1"></td>
 </tr>
 <tr>
 <td class="address-1"><span id="58778"></span>E59A</td>
-<td class="instruction">XOR D</td>
-<td class="comment-0" rowspan="1"></td>
-</tr>
-<tr>
-<td class="address-1"><span id="58779"></span>E59B</td>
-<td class="instruction">NOP</td>
+<td class="instruction">DEFW $00AA</td>
 <td class="comment-0" rowspan="1"></td>
 </tr>
 <tr>
 <td class="address-1"><span id="58780"></span>E59C</td>
-<td class="instruction">XOR (HL)</td>
-<td class="comment-0" rowspan="1"></td>
-</tr>
-<tr>
-<td class="address-1"><span id="58781"></span>E59D</td>
-<td class="instruction">NOP</td>
+<td class="instruction">DEFW $00AE</td>
 <td class="comment-0" rowspan="1"></td>
 </tr>
 <tr>
 <td class="address-1"><span id="58782"></span>E59E</td>
-<td class="instruction">OR C</td>
-<td class="comment-0" rowspan="1"></td>
-</tr>
-<tr>
-<td class="address-1"><span id="58783"></span>E59F</td>
-<td class="instruction">NOP</td>
+<td class="instruction">DEFW $00B1</td>
 <td class="comment-0" rowspan="1"></td>
 </tr>
 <tr>
 <td class="address-1"><span id="58784"></span>E5A0</td>
-<td class="instruction">OR L</td>
-<td class="comment-0" rowspan="1"></td>
-</tr>
-<tr>
-<td class="address-1"><span id="58785"></span>E5A1</td>
-<td class="instruction">NOP</td>
+<td class="instruction">DEFW $00B5</td>
 <td class="comment-0" rowspan="1"></td>
 </tr>
 <tr>
 <td class="address-1"><span id="58786"></span>E5A2</td>
-<td class="instruction">CP C</td>
-<td class="comment-0" rowspan="1"></td>
-</tr>
-<tr>
-<td class="address-1"><span id="58787"></span>E5A3</td>
-<td class="instruction">NOP</td>
+<td class="instruction">DEFW $00B9</td>
 <td class="comment-0" rowspan="1"></td>
 </tr>
 <tr>
 <td class="address-1"><span id="58788"></span>E5A4</td>
-<td class="instruction">CP L</td>
-<td class="comment-0" rowspan="1"></td>
-</tr>
-<tr>
-<td class="address-1"><span id="58789"></span>E5A5</td>
-<td class="instruction">NOP</td>
+<td class="instruction">DEFW $00BD</td>
 <td class="comment-0" rowspan="1"></td>
 </tr>
 <tr>
 <td class="address-1"><span id="58790"></span>E5A6</td>
-<td class="instruction">RET NZ</td>
-<td class="comment-0" rowspan="1"></td>
-</tr>
-<tr>
-<td class="address-1"><span id="58791"></span>E5A7</td>
-<td class="instruction">NOP</td>
+<td class="instruction">DEFW $00C0</td>
 <td class="comment-0" rowspan="1"></td>
 </tr>
 <tr>
 <td class="address-1"><span id="58792"></span>E5A8</td>
-<td class="instruction">CALL NZ,$C900</td>
+<td class="instruction">DEFW $00C4</td>
 <td class="comment-0" rowspan="1"></td>
 </tr>
 <tr>
-<td class="address-1"><span id="58795"></span>E5AB</td>
-<td class="instruction">NOP</td>
+<td class="address-1"><span id="58794"></span>E5AA</td>
+<td class="instruction">DEFW $00C9</td>
 <td class="comment-0" rowspan="1"></td>
 </tr>
 <tr>
 <td class="address-1"><span id="58796"></span>E5AC</td>
-<td class="instruction">CALL $D100</td>
+<td class="instruction">DEFW $00CD</td>
 <td class="comment-0" rowspan="1"></td>
 </tr>
 <tr>
-<td class="address-1"><span id="58799"></span>E5AF</td>
-<td class="instruction">NOP</td>
+<td class="address-1"><span id="58798"></span>E5AE</td>
+<td class="instruction">DEFW $00D1</td>
 <td class="comment-0" rowspan="1"></td>
 </tr>
 <tr>
 <td class="address-1"><span id="58800"></span>E5B0</td>
-<td class="instruction">SUB $00</td>
+<td class="instruction">DEFW $00D6</td>
 <td class="comment-0" rowspan="1"></td>
 </tr>
 <tr>
 <td class="address-1"><span id="58802"></span>E5B2</td>
-<td class="instruction">JP C,$DF00</td>
+<td class="instruction">DEFW $00DA</td>
 <td class="comment-0" rowspan="1"></td>
 </tr>
 <tr>
-<td class="address-1"><span id="58805"></span>E5B5</td>
-<td class="instruction">NOP</td>
+<td class="address-1"><span id="58804"></span>E5B4</td>
+<td class="instruction">DEFW $00DF</td>
 <td class="comment-0" rowspan="1"></td>
 </tr>
 <tr>
 <td class="address-1"><span id="58806"></span>E5B6</td>
-<td class="instruction">CALL PO,$E900</td>
+<td class="instruction">DEFW $00E4</td>
 <td class="comment-0" rowspan="1"></td>
 </tr>
 <tr>
-<td class="address-1"><span id="58809"></span>E5B9</td>
-<td class="instruction">NOP</td>
+<td class="address-1"><span id="58808"></span>E5B8</td>
+<td class="instruction">DEFW $00E9</td>
 <td class="comment-0" rowspan="1"></td>
 </tr>
 <tr>
 <td class="address-1"><span id="58810"></span>E5BA</td>
-<td class="instruction">XOR $00</td>
+<td class="instruction">DEFW $00EE</td>
 <td class="comment-0" rowspan="1"></td>
 </tr>
 <tr>
 <td class="address-1"><span id="58812"></span>E5BC</td>
-<td class="instruction">CALL P,$FA00</td>
+<td class="instruction">DEFW $00F4</td>
 <td class="comment-0" rowspan="1"></td>
 </tr>
 <tr>
-<td class="address-1"><span id="58815"></span>E5BF</td>
-<td class="instruction">NOP</td>
+<td class="address-1"><span id="58814"></span>E5BE</td>
+<td class="instruction">DEFW $00FA</td>
 <td class="comment-0" rowspan="1"></td>
 </tr>
 <tr>
 <td class="address-1"><span id="58816"></span>E5C0</td>
-<td class="instruction">NOP</td>
+<td class="instruction">DEFW $0100</td>
 <td class="comment-0" rowspan="1"></td>
 </tr>
 <tr>
-<td class="address-1"><span id="58817"></span>E5C1</td>
-<td class="instruction">LD BC,$0106</td>
+<td class="address-1"><span id="58818"></span>E5C2</td>
+<td class="instruction">DEFW $0106</td>
 <td class="comment-0" rowspan="1"></td>
 </tr>
 <tr>
 <td class="address-1"><span id="58820"></span>E5C4</td>
-<td class="instruction">DEC C</td>
+<td class="instruction">DEFW $010D</td>
 <td class="comment-0" rowspan="1"></td>
 </tr>
 <tr>
-<td class="address-1"><span id="58821"></span>E5C5</td>
-<td class="instruction">LD BC,$0114</td>
+<td class="address-1"><span id="58822"></span>E5C6</td>
+<td class="instruction">DEFW $0114</td>
 <td class="comment-0" rowspan="1"></td>
 </tr>
 <tr>
 <td class="address-1"><span id="58824"></span>E5C8</td>
-<td class="instruction">INC E</td>
+<td class="instruction">DEFW $011C</td>
 <td class="comment-0" rowspan="1"></td>
 </tr>
 <tr>
-<td class="address-1"><span id="58825"></span>E5C9</td>
-<td class="instruction">LD BC,$0124</td>
+<td class="address-1"><span id="58826"></span>E5CA</td>
+<td class="instruction">DEFW $0124</td>
 <td class="comment-0" rowspan="1"></td>
 </tr>
 <tr>
 <td class="address-1"><span id="58828"></span>E5CC</td>
-<td class="instruction">DEC L</td>
+<td class="instruction">DEFW $012D</td>
 <td class="comment-0" rowspan="1"></td>
 </tr>
 <tr>
-<td class="address-1"><span id="58829"></span>E5CD</td>
-<td class="instruction">LD BC,$0136</td>
+<td class="address-1"><span id="58830"></span>E5CE</td>
+<td class="instruction">DEFW $0136</td>
 <td class="comment-0" rowspan="1"></td>
 </tr>
 <tr>
 <td class="address-1"><span id="58832"></span>E5D0</td>
-<td class="instruction">LD B,B</td>
+<td class="instruction">DEFW $0140</td>
 <td class="comment-0" rowspan="1"></td>
 </tr>
 <tr>
-<td class="address-1"><span id="58833"></span>E5D1</td>
-<td class="instruction">LD BC,$014A</td>
+<td class="address-1"><span id="58834"></span>E5D2</td>
+<td class="instruction">DEFW $014A</td>
 <td class="comment-0" rowspan="1"></td>
 </tr>
 <tr>
 <td class="address-1"><span id="58836"></span>E5D4</td>
-<td class="instruction">LD D,(HL)</td>
+<td class="instruction">DEFW $0156</td>
 <td class="comment-0" rowspan="1"></td>
 </tr>
 <tr>
-<td class="address-1"><span id="58837"></span>E5D5</td>
-<td class="instruction">LD BC,$0162</td>
+<td class="address-1"><span id="58838"></span>E5D6</td>
+<td class="instruction">DEFW $0162</td>
 <td class="comment-0" rowspan="1"></td>
 </tr>
 <tr>
 <td class="address-1"><span id="58840"></span>E5D8</td>
-<td class="instruction">LD L,A</td>
+<td class="instruction">DEFW $016F</td>
 <td class="comment-0" rowspan="1"></td>
 </tr>
 <tr>
-<td class="address-1"><span id="58841"></span>E5D9</td>
-<td class="instruction">LD BC,$017E</td>
+<td class="address-1"><span id="58842"></span>E5DA</td>
+<td class="instruction">DEFW $017E</td>
 <td class="comment-0" rowspan="1"></td>
 </tr>
 <tr>
 <td class="address-1"><span id="58844"></span>E5DC</td>
-<td class="instruction">ADC A,A</td>
+<td class="instruction">DEFW $018F</td>
 <td class="comment-0" rowspan="1"></td>
 </tr>
 <tr>
-<td class="address-1"><span id="58845"></span>E5DD</td>
-<td class="instruction">LD BC,$01A1</td>
+<td class="address-1"><span id="58846"></span>E5DE</td>
+<td class="instruction">DEFW $01A1</td>
 <td class="comment-0" rowspan="1"></td>
 </tr>
 <tr>
 <td class="address-1"><span id="58848"></span>E5E0</td>
-<td class="instruction">OR L</td>
+<td class="instruction">DEFW $01B5</td>
 <td class="comment-0" rowspan="1"></td>
 </tr>
 <tr>
-<td class="address-1"><span id="58849"></span>E5E1</td>
-<td class="instruction">LD BC,$01CC</td>
+<td class="address-1"><span id="58850"></span>E5E2</td>
+<td class="instruction">DEFW $01CC</td>
 <td class="comment-0" rowspan="1"></td>
 </tr>
 <tr>
 <td class="address-1"><span id="58852"></span>E5E4</td>
-<td class="instruction">AND $01</td>
+<td class="instruction">DEFW $01E6</td>
 <td class="comment-0" rowspan="1"></td>
 </tr>
 <tr>
 <td class="address-1"><span id="58854"></span>E5E6</td>
-<td class="instruction">INC BC</td>
-<td class="comment-0" rowspan="1"></td>
-</tr>
-<tr>
-<td class="address-1"><span id="58855"></span>E5E7</td>
-<td class="instruction">LD (BC),A</td>
+<td class="instruction">DEFW $0203</td>
 <td class="comment-0" rowspan="1"></td>
 </tr>
 <tr>
 <td class="address-1"><span id="58856"></span>E5E8</td>
-<td class="instruction">LD H,$02</td>
+<td class="instruction">DEFW $0226</td>
 <td class="comment-0" rowspan="1"></td>
 </tr>
 <tr>
 <td class="address-1"><span id="58858"></span>E5EA</td>
-<td class="instruction">LD C,A</td>
-<td class="comment-0" rowspan="1"></td>
-</tr>
-<tr>
-<td class="address-1"><span id="58859"></span>E5EB</td>
-<td class="instruction">LD (BC),A</td>
+<td class="instruction">DEFW $024F</td>
 <td class="comment-0" rowspan="1"></td>
 </tr>
 <tr>
 <td class="address-1"><span id="58860"></span>E5EC</td>
-<td class="instruction">LD A,A</td>
-<td class="comment-0" rowspan="1"></td>
-</tr>
-<tr>
-<td class="address-1"><span id="58861"></span>E5ED</td>
-<td class="instruction">LD (BC),A</td>
+<td class="instruction">DEFW $027F</td>
 <td class="comment-0" rowspan="1"></td>
 </tr>
 <tr>
 <td class="address-1"><span id="58862"></span>E5EE</td>
-<td class="instruction">CP D</td>
-<td class="comment-0" rowspan="1"></td>
-</tr>
-<tr>
-<td class="address-1"><span id="58863"></span>E5EF</td>
-<td class="instruction">LD (BC),A</td>
+<td class="instruction">DEFW $02BA</td>
 <td class="comment-0" rowspan="1"></td>
 </tr>
 <tr>
 <td class="address-1"><span id="58864"></span>E5F0</td>
-<td class="instruction">INC BC</td>
-<td class="comment-0" rowspan="1"></td>
-</tr>
-<tr>
-<td class="address-1"><span id="58865"></span>E5F1</td>
-<td class="instruction">INC BC</td>
+<td class="instruction">DEFW $0303</td>
 <td class="comment-0" rowspan="1"></td>
 </tr>
 <tr>
 <td class="address-1"><span id="58866"></span>E5F2</td>
-<td class="instruction">LD H,D</td>
-<td class="comment-0" rowspan="1"></td>
-</tr>
-<tr>
-<td class="address-1"><span id="58867"></span>E5F3</td>
-<td class="instruction">INC BC</td>
+<td class="instruction">DEFW $0362</td>
 <td class="comment-0" rowspan="1"></td>
 </tr>
 <tr>
 <td class="address-1"><span id="58868"></span>E5F4</td>
-<td class="instruction">RST $18</td>
-<td class="comment-0" rowspan="1"></td>
-</tr>
-<tr>
-<td class="address-1"><span id="58869"></span>E5F5</td>
-<td class="instruction">INC BC</td>
+<td class="instruction">DEFW $03DF</td>
 <td class="comment-0" rowspan="1"></td>
 </tr>
 <tr>
 <td class="address-1"><span id="58870"></span>E5F6</td>
-<td class="instruction">ADC A,(HL)</td>
-<td class="comment-0" rowspan="1"></td>
-</tr>
-<tr>
-<td class="address-1"><span id="58871"></span>E5F7</td>
-<td class="instruction">INC B</td>
+<td class="instruction">DEFW $048E</td>
 <td class="comment-0" rowspan="1"></td>
 </tr>
 <tr>
 <td class="address-1"><span id="58872"></span>E5F8</td>
-<td class="instruction">SUB H</td>
-<td class="comment-0" rowspan="1"></td>
-</tr>
-<tr>
-<td class="address-1"><span id="58873"></span>E5F9</td>
-<td class="instruction">DEC B</td>
+<td class="instruction">DEFW $0594</td>
 <td class="comment-0" rowspan="1"></td>
 </tr>
 <tr>
 <td class="address-1"><span id="58874"></span>E5FA</td>
-<td class="instruction">LD B,A</td>
-<td class="comment-0" rowspan="1"></td>
-</tr>
-<tr>
-<td class="address-1"><span id="58875"></span>E5FB</td>
-<td class="instruction">RLCA</td>
+<td class="instruction">DEFW $0747</td>
 <td class="comment-0" rowspan="1"></td>
 </tr>
 <tr>
 <td class="address-1"><span id="58876"></span>E5FC</td>
-<td class="instruction">XOR L</td>
-<td class="comment-0" rowspan="1"></td>
-</tr>
-<tr>
-<td class="address-1"><span id="58877"></span>E5FD</td>
-<td class="instruction">LD A,(BC)</td>
+<td class="instruction">DEFW $0AAD</td>
 <td class="comment-0" rowspan="1"></td>
 </tr>
 <tr>
 <td class="address-1"><span id="58878"></span>E5FE</td>
-<td class="instruction">SBC A,$14</td>
-<td class="comment-0" rowspan="1"></td>
-</tr>
-<tr>
-<td class="address-1"><span id="58880"></span>E600</td>
-<td class="instruction">LD H,B</td>
+<td class="instruction">DEFW $14DE</td>
 <td class="comment-0" rowspan="1"></td>
 </tr>
 </table>
@@ -814,13 +519,13 @@ Prev: <a href="E364.html">E364</a>
 </td>
 <td class="up">Up: <a href="../maps/all.html#58688">Map</a></td>
 <td class="next">
-Next: <a href="E601.html">E601</a>
+Next: <a href="E600.html">E600</a>
 </td>
 </tr>
 </table>
 <footer>
 <div class="release">The incomplete Chase H.Q. disassembly 20230518</div>
-<div class="copyright">&copy; 1989 Ocean Software Ltd.</div>
+<div class="copyright">&copy; 1988 Taito Corporation &copy; 1989 Ocean Software Ltd. (Chase H.Q.) © 2023 David Thomas (this disassembly)</div>
 <div class="created">Created using <a href="https://skoolkit.ca">SkoolKit</a> 8.9.</div>
 </footer>
 </body>

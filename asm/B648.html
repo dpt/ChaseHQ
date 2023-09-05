@@ -23,7 +23,7 @@ Next: <a href="B67C.html">B67C</a>
 </td>
 </tr>
 </table>
-<div class="description">B648: Routine at B648</div>
+<div class="description">B648: Draw the hero car's smoke</div>
 <table class="disassembly">
 <tr>
 <td class="routine-comment" colspan="5">
@@ -35,214 +35,243 @@ Used by the routine at <a href="B318.html">main_loop_24</a>.
 </td>
 </tr>
 <tr>
+<td class="asm-label">draw_smoke</td>
 <td class="address-2"><span id="46664"></span>B648</td>
 <td class="instruction">RLCA</td>
-<td class="comment-0" rowspan="1"></td>
+<td class="comment-1" rowspan="8"><span class="register">HL</span> = &amp;hero_car_smoke[A]  A is 0..3</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="46665"></span>B649</td>
 <td class="instruction">LD C,A</td>
-<td class="comment-0" rowspan="1"></td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="46666"></span>B64A</td>
 <td class="instruction">RLCA</td>
-<td class="comment-0" rowspan="1"></td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="46667"></span>B64B</td>
 <td class="instruction">ADD A,C</td>
-<td class="comment-0" rowspan="1"></td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="46668"></span>B64C</td>
 <td class="instruction">LD C,A</td>
-<td class="comment-0" rowspan="1"></td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="46669"></span>B64D</td>
 <td class="instruction">LD B,$00</td>
-<td class="comment-0" rowspan="1"></td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="46671"></span>B64F</td>
 <td class="instruction">LD HL,$CF9A</td>
-<td class="comment-0" rowspan="1"></td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="46674"></span>B652</td>
 <td class="instruction">ADD HL,BC</td>
-<td class="comment-0" rowspan="1"></td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="46675"></span>B653</td>
 <td class="instruction">LD A,($B064)</td>
-<td class="comment-0" rowspan="1"></td>
+<td class="comment-1" rowspan="1">A = *$B064 -- jump counter</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="46678"></span>B656</td>
 <td class="instruction">AND A</td>
-<td class="comment-0" rowspan="1"></td>
+<td class="comment-1" rowspan="1">Set flags</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="46679"></span>B657</td>
 <td class="instruction">RET NZ</td>
-<td class="comment-0" rowspan="1"></td>
+<td class="comment-1" rowspan="1">Return if non-zero -- don't draw smoke if jumping</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="46680"></span>B658</td>
 <td class="instruction">LD C,(HL)</td>
-<td class="comment-0" rowspan="1"></td>
+<td class="comment-1" rowspan="2">C = *HL++  -- these must be size and position</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="46681"></span>B659</td>
 <td class="instruction">INC HL</td>
-<td class="comment-0" rowspan="1"></td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="46682"></span>B65A</td>
 <td class="instruction">LD B,(HL)</td>
-<td class="comment-0" rowspan="1"></td>
+<td class="comment-1" rowspan="2">B = *HL++</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="46683"></span>B65B</td>
 <td class="instruction">INC HL</td>
-<td class="comment-0" rowspan="1"></td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="46684"></span>B65C</td>
 <td class="instruction">LD D,(HL)</td>
-<td class="comment-0" rowspan="1"></td>
+<td class="comment-1" rowspan="2">D = *HL++</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="46685"></span>B65D</td>
 <td class="instruction">INC HL</td>
-<td class="comment-0" rowspan="1"></td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="46686"></span>B65E</td>
 <td class="instruction">LD E,(HL)</td>
-<td class="comment-0" rowspan="1"></td>
+<td class="comment-1" rowspan="2">E = *HL++</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="46687"></span>B65F</td>
 <td class="instruction">INC HL</td>
-<td class="comment-0" rowspan="1"></td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="46688"></span>B660</td>
 <td class="instruction">LD A,(HL)</td>
-<td class="comment-0" rowspan="1"></td>
+<td class="comment-1" rowspan="2">A = *HL++  -- frame pointer</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="46689"></span>B661</td>
 <td class="instruction">INC HL</td>
-<td class="comment-0" rowspan="1"></td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="46690"></span>B662</td>
 <td class="instruction">LD H,(HL)</td>
-<td class="comment-0" rowspan="1"></td>
+<td class="comment-1" rowspan="1">H = *HL</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="46691"></span>B663</td>
 <td class="instruction">LD L,A</td>
-<td class="comment-0" rowspan="1"></td>
+<td class="comment-1" rowspan="1">L = A</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="46692"></span>B664</td>
 <td class="instruction">PUSH BC</td>
-<td class="comment-0" rowspan="1"></td>
+<td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="46693"></span>B665</td>
 <td class="instruction">EXX</td>
-<td class="comment-0" rowspan="1"></td>
+<td class="comment-1" rowspan="1">Bank</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="46694"></span>B666</td>
 <td class="instruction">EX AF,AF'</td>
-<td class="comment-0" rowspan="1"></td>
+<td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="46695"></span>B667</td>
 <td class="instruction">POP BC</td>
-<td class="comment-0" rowspan="1"></td>
+<td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="46696"></span>B668</td>
 <td class="instruction">LD B,A</td>
-<td class="comment-0" rowspan="1"></td>
+<td class="comment-1" rowspan="1">B = A</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="46697"></span>B669</td>
 <td class="instruction">LD E,C</td>
-<td class="comment-0" rowspan="1"></td>
+<td class="comment-1" rowspan="1">E = C</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="46698"></span>B66A</td>
 <td class="instruction">DEC C</td>
-<td class="comment-0" rowspan="1"></td>
+<td class="comment-1" rowspan="1">C--</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="46699"></span>B66B</td>
 <td class="instruction">AND A</td>
-<td class="comment-0" rowspan="1"></td>
+<td class="comment-1" rowspan="1">Set flags</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="46700"></span>B66C</td>
-<td class="instruction">JR NZ,$B673</td>
-<td class="comment-0" rowspan="1"></td>
+<td class="instruction">JR NZ,<a href="B648.html#46707">draw_smoke_0</a></td>
+<td class="comment-1" rowspan="1">Jump to $B673 if non-zero</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="46702"></span>B66E</td>
 <td class="instruction">LD C,A</td>
-<td class="comment-0" rowspan="1"></td>
+<td class="comment-1" rowspan="1">C = A</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="46703"></span>B66F</td>
 <td class="instruction">EXX</td>
-<td class="comment-0" rowspan="1"></td>
+<td class="comment-1" rowspan="1">Unbank</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="46704"></span>B670</td>
 <td class="instruction">LD A,E</td>
-<td class="comment-0" rowspan="1"></td>
+<td class="comment-1" rowspan="1">A = E</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="46705"></span>B671</td>
-<td class="instruction">JR $B675</td>
-<td class="comment-0" rowspan="1"></td>
+<td class="instruction">JR <a href="B648.html#46709">draw_smoke_1</a></td>
+<td class="comment-1" rowspan="1">Jump to $B675</td>
 </tr>
 <tr>
+<td class="asm-label">draw_smoke_0</td>
 <td class="address-2"><span id="46707"></span>B673</td>
 <td class="instruction">EXX</td>
-<td class="comment-0" rowspan="1"></td>
+<td class="comment-1" rowspan="1">Unbank</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="46708"></span>B674</td>
 <td class="instruction">LD A,D</td>
-<td class="comment-0" rowspan="1"></td>
+<td class="comment-1" rowspan="1">A = D</td>
 </tr>
 <tr>
+<td class="asm-label">draw_smoke_1</td>
 <td class="address-2"><span id="46709"></span>B675</td>
 <td class="instruction">ADD A,$7F</td>
-<td class="comment-0" rowspan="1"></td>
+<td class="comment-1" rowspan="2">E = A + 127 -- horizontal position</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="46711"></span>B677</td>
 <td class="instruction">LD E,A</td>
-<td class="comment-0" rowspan="1"></td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="46712"></span>B678</td>
 <td class="instruction">LD D,$77</td>
-<td class="comment-0" rowspan="1"></td>
+<td class="comment-1" rowspan="1">D = 119  -- vertical position</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="46714"></span>B67A</td>
-<td class="instruction">JR <a href="B67C.html#46806">$B6D6</a></td>
-<td class="comment-0" rowspan="1"></td>
+<td class="instruction">JR <a href="B67C.html#46806">sub_b67c_3</a></td>
+<td class="comment-1" rowspan="1">Exit via $B6D6</td>
 </tr>
 </table>
 <table class="asm-navigation">
@@ -258,7 +287,7 @@ Next: <a href="B67C.html">B67C</a>
 </table>
 <footer>
 <div class="release">The incomplete Chase H.Q. disassembly 20230518</div>
-<div class="copyright">&copy; 1989 Ocean Software Ltd.</div>
+<div class="copyright">&copy; 1988 Taito Corporation &copy; 1989 Ocean Software Ltd. (Chase H.Q.) © 2023 David Thomas (this disassembly)</div>
 <div class="created">Created using <a href="https://skoolkit.ca">SkoolKit</a> 8.9.</div>
 </footer>
 </body>
