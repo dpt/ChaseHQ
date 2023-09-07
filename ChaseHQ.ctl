@@ -87,6 +87,7 @@
 > $4000 ; $E900        is a table
 > $4000 ; $EA30..$EAFE (words) is 104 words related to road drawing
 > $4000 ; $EB00        is ?
+> $4000 ; $EC00        is ?
 > $4000 ; $ED28        is the stack (growing downwards)
 > $4000 ; $EE00..$EEFF is the road buffer. holds data unpacked from maps. it's cyclic. fixed sections for each datum. cleared by $87DD.
 > $4000 ; $EF00..$EFFF is a table of flipped bytes
@@ -1360,6 +1361,7 @@ C $803C,3 Call TBD subroutine
 C $803F,2 loop while failed perhaps?
 C $8041,3 #REGhl = &hazards[1]
 C $8044,1 Load used flag [doesn't add up - this is a level number?]
+N $8045 This entry point is used by the routine at #R$E810.
 C $8046,1 equal to <distance related>?
 C $8047,2 jump if not
 C $8049,2 #REGa += (48 + 128) (make it ASCII and terminate it)
@@ -1390,6 +1392,7 @@ C $8086,2 Exit via sub_8098
 C $8088,3 Point #REGhl at "START TAPE" message structure
 C $808B,4 A = wanted_stage_number - 1
 C $808F,2 Jump if > 0
+N $8091 This entry point is used by the routine at #R$E810.
 C $8092,3 Point #REGhl at tape_messsages
 @ $8095 label=sub_8095
 C $8095,3 why call adjacent instr? to exec this func twice?
@@ -1437,6 +1440,7 @@ C $80E0,4 Loop while HL > 0
 C $80E4,3 Call sub_8147
 C $80E9,2 B = 156
 C $80EB,3 Call sub_8147
+N $80EE This entry point is used by the routine at #R$E810.
 C $80F0,2 A = 198
 C $80F8,2 B = 201
 C $80FA,3 Call sub_814b
@@ -3863,36 +3867,48 @@ C $9CCE,2 Add carry in, perhaps for rounding?
 C $9CD0,1 BCD correction
 C $9CD1,3 Zero high part of score increment
 C $9CD4,2 Exit via increment_score
-c $9CD6 Routine at 9CD6
-D $9CD6 Used by the routines at #R$9D2E, #R$A637 and #R$B9F4.
-C $9CD6,1 B=A
-C $9CD7,3 "HI"
-C $9CDA,2 C=255
-C $9CDC,1 A=B
-C $9CDD,3 Call j_9cfc
-C $9CE0,2 terminate string?
-C $9CE2,1 A=B
-C $9CE6,1 A=E
-C $9CEA,1 A=E
-C $9CEE,1 A=D
-C $9CF2,1 A=D
-@ $9CF8 label=j_9cf8
-C $9CF8,4 A ROR 4
-@ $9CFC label=j_9cfc
-C $9CFC,2 A &= 15
-C $9CFE,2 if A is not zero goto 9D07
-C $9D00,2 top bit set?
-C $9D02,2 jump if so
-C $9D04,1 where's the matching PUSH? or are we just discarding the RET addr?
-@ $9D07 label=j_9d07
-C $9D07,2 C = 0
-C $9D09,2 A += 48
-C $9D0B,1 HL--
-C $9D0C,1 *HL = A
+c $9CD6 Add a bonus.
+D $9CD6 The bonus value is passed as five BCD digits in #REGde and #REGa like: 0bDDDDddddEEEEeeeeAAAAxxxxx, where x is not used.
+R $9CD6 The bonus value must have a single sequence of zeroes, e.g. "55000" is okay, but "50500" is not.
+N $9CD6 Used by the routines at #R$9D2E, #R$A637 and #R$B9F4. I:A Low nibble of bonus I:DE High four nibbles of bonus
+@ $9CD6 label=bonus
+C $9CD6,1 Preserve #REGa
+C $9CD7,3 -> Byte after bonus digits buffer
+C $9CDA,2 Flag, set to $FF while digits are zero
+C $9CDC,1 Needless move
+C $9CDD,3 Call bonus_digit  -- final digit first
+C $9CE0,2 Top-bit terminate the bonus string
+C $9CE2,1 Load lowest digit
+C $9CE3,3 Call bonus_high_nibble
+C $9CE6,1 Load middle digits
+C $9CE7,3 Call bonus_digit
+C $9CEA,1 Load middle digits
+C $9CEB,3 Call bonus_high_nibble
+C $9CEE,1 Load high digits
+C $9CEF,3 Call bonus_digit
+C $9CF2,1 Load high digits
+C $9CF3,3 Call bonus_high_nibble
+C $9CF6,2 Exit via bonus_exit
+@ $9CF8 label=bonus_high_nibble
+C $9CF8,4 Shift the high digit down
+@ $9CFC label=bonus_digit
+C $9CFC,2 Mask off low nibble
+C $9CFE,2 If #REGa is not zero goto bonus_non_zero
+N $9D00 Digit is zero.
+C $9D00,4 Jump if the flag in #REGc is set
+N $9D04 We saw a non-zero-to-zero transition, so terminate.
+C $9D04,1 Discard return address
+C $9D05,2 Exit via bonus_exit
+@ $9D07 label=bonus_non_zero
+C $9D07,2 Set flag to zero now we've seen a non-zero digit
+@ $9D09 label=bonus_store
+C $9D09,2 Turn digit to ASCII
+C $9D0B,2 Write digit out in reverse
 C $9D0D,1 Return
+@ $9D0E label=bonus_exit
 C $9D0E,3 Self modify 'LD HL,xxxx' at $9D9B  -- bonus score pointer
 C $9D11,5 Set the trigger_bonus_flag
-C $9D16,1 A = B
+C $9D16,1 A = B, then fall into increment_score with the bonus preserved
 c $9D17 Increments the score by (D,E,A).
 D $9D17 Used by the routines at #R$8A57 and #R$9CC2.
 R $9D17 I:A Low byte of increment
@@ -3914,35 +3930,40 @@ C $9D2B,1 BCD correct A
 C $9D2C,1 *HL = A
 C $9D2D,1 Return
 c $9D2E Calculate overtake bonus
-D $9D2E Used by the routine at #R$8401.
-R $9D2E I:A Iterations (prob number of overtakes?)
+D $9D2E Bonus is 200 for each overtaken car, reset on crashes.
+R $9D2E Used by the routine at #R$8401.
+N $9D2E I:A Iterations (number of sequential overtakes to consider)
 @ $9D2E label=calc_overtake_bonus
 C $9D2E,5 If $A22B is zero then return
-C $9D33,1 B = A -- iterations
+C $9D33,1 B = A -- iterations / no. of overtakes
 C $9D34,3 Point #REGhl at overtake_bonus
+N $9D37 Increment bonus by 2 up to a max of 128.
 @ $9D37 label=cob_overtake_loop
-C $9D37,3 A = *HL + 2  [increment bonus by 2 up to a max of 128]
+C $9D37,3 A = *HL + 2
 C $9D3A,1 BCD correction
-C $9D3B,6 If A >= 128 then A = 128  [80 actual points?]
+C $9D3B,6 If A >= 128 then A = 128  [80 in BCD]
 C $9D41,1 *HL = A
 C $9D42,1 Bank
-C $9D43,1 E = A -- turn score into 00nn00
-C $9D44,1 A = 0
-C $9D45,1 D = 0
+N $9D43 Set bonus to N * 100.
+C $9D43,1 Set middle digits
+C $9D44,1 Clear low digit
+C $9D45,1 Clear top two digits
+C $9D46,3 Call bonus
 C $9D49,1 Unbank
-C $9D4A,2 B--, goto cob_overtake_loop
+C $9D4A,2 Loop while #REGb > 0
 C $9D4C,4 $A22B = 0
 C $9D50,1 Return
-c $9D51 Update scoreboard and flashing lights
-B $9D51,6,6
+t $9D51 Update scoreboard and flashing lights
+@ $9D51 label=bonus
+B $9D51,6,6 Bonus digits buffer
 @ $9D57 label=hi
-T $9D57,2,1:n1 "HI"
+T $9D57,2,1:n1 "HI" gear string
 @ $9D59 label=lo
-T $9D59,2,1:n1 "LO"
+T $9D59,2,1:n1 "LO" gear string
 @ $9D5B label=stage
-T $9D5B,6,6 "STAGE " message shown in the score area.
+T $9D5B,6,6 "STAGE n" message shown in the score area
 @ $9D61 label=stage_n
-B $9D61,1,1 #R$9D61 writes the current score number here in ASCII.
+B $9D61,1,1 #R$9D61 writes the current stage number here in ASCII.
 N $9D62 This entry point is used by the routines at #R$8401, #R$873C and #R$87DC.
 @ $9D62 label=update_scoreboard
 C $9D62,3 Check if stage has changed  -- perhaps reset to zero by stage loads?
@@ -4968,11 +4989,12 @@ C $A7BE,5 D = wanted_stage_number + D
 C $A7C3,2 E = 0
 C $A7C5,3 A = *$8006
 C $A7C8,1 Set flags
-C $A7CB,1 A = D
-C $A7CC,1 D = E
-C $A7CD,4 A <<= 4  prob
-C $A7D1,1 E = A
-C $A7D2,1 A = 0
+C $A7CB,1 Middle digit(s) of bonus
+C $A7CC,1 Set top two digits of bonus
+C $A7CD,4 Move middle digit into position
+C $A7D1,1 Set middle digits of bonus
+C $A7D2,1 Clear low digits of bonus
+C $A7D3,3 Call bonus
 C $A7D6,2 A = 5
 C $A7D8,3 Self modify 'LD A' at $A73E to load A
 C $A7DB,3 Point #REGhl at smash_chatter ("BEAR DOWN" / "OH MAN" / etc.)
@@ -5099,8 +5121,9 @@ C $A92A,1 Return if zero
 C $A92B,1 Preserve AF
 C $A92C,4 IX[7] = 0
 C $A930,5 Return if crashed flag set
-C $A935,3 IX[0] = A
-C $A938,3 overtake_bonus = A
+N $A935 #REGa is zero.
+C $A935,3 IX[0] = 0
+C $A938,3 overtake_bonus = 0
 C $A93B,2 A = $96
 C $A93D,1 Restore AF
 C $A93E,4 Jump if A < 3
@@ -6731,11 +6754,14 @@ C $BA8E,3 Address of correct_fork
 C $BA91,1 Match?
 C $BA92,3 -> Tony: "LET'S GO. MR. DRIVER." <STOP>
 C $BA95,2 Jump if correct fork was taken
+N $BA97 Incorrect fork was taken.
 C $BA99,3 A195 is horz position of perp car
+N $BA9C Add a bonus of (40,000 + 10,000 * level number) for going the wrong way...?
 C $BA9C,5 A = wanted_stage_number + 4
-C $BAA1,1 D = A
-C $BAA2,1 A = 0
-C $BAA3,1 E = A
+C $BAA1,1 Set top digits
+C $BAA2,1 Clear low digit
+C $BAA3,1 Clear middle digits
+C $BAA4,3 Call bonus
 C $BAA7,3 -> Raymond: "WHAT ARE YOU DOING MAN!!" / "THE BAD GUYS ARE GOING THE OTHER WAY." <STOP>
 C $BAAC,3 Call chatter
 C $BAB0,3 Spawning flag
@@ -9261,22 +9287,32 @@ C $E855,3 Start the game
 W $E858,2,2 src ptr
 W $E85A,2,2 dst ptr
 W $E85C,2,2 count
-W $E85E,2,2 src ptr
+W $E85E,2,2 src ptr - square_zoom_in_mask
 W $E860,2,2 dst ptr
-W $E862,2,2 count
+W $E862,2,2 count - 40 bytes
 W $E864,2,2 src ptr
 W $E866,2,2 dst ptr
-W $E868,2,2 count
-W $E86A,2,2 src ptr
+W $E868,2,2 count - 48 bytes
+W $E86A,2,2 src ptr - load_stage_128k onwards
 W $E86C,2,2 dst ptr
-W $E86E,2,2 count
+W $E86E,2,2 count - 926 bytes
 W $E870,2,2 src ptr
-W $E872,2,2 dst ptr
-W $E874,2,2 count
-B $E876,48,3
+W $E872,2,2 dst ptr - 128k hooks
+W $E874,2,2 count - 24 bytes (3 bytes * 8 hooks)
+@ $E876 label=128k_mode_hooks
+C $E876,3 Becomes unknown_hook_1
+C $E879,3 Becomes engine_sfx_play_hook
+C $E87C,3 Becomes silence_audio_hook
+C $E87F,3 Becomes unknown_hook_2
+C $E882,3 Becomes turbo_sfx_play_hook
+C $E885,3 Becomes engine_sfx_setup_hook
+C $E888,3 Becomes unknown_hook_3
+C $E88B,3 Becomes attract_mode_hook
+B $E88E,24,3 Copied to $EC00
 N $E8A6 Square zoom in animation mask (8x8, 5 frames)
 N $E8A6 #HTML[#CALL:anim($E8A6,8,8,0,0,5)]
 N $E8A6 #HTML[#CALL:graphic($E8A6,8,5*8,0,0)]
+@ $E8A6 label=square_zoom_in_mask
 B $E8A6,40,8
 c $E8CE Routine at E8CE
 N $E8CE Diamond zoom in animation mask (8x8, 6 frames)
@@ -9847,15 +9883,15 @@ W $F249,2,2 Level 3. Source = $C000, Paging = bank 6
 W $F24B,2,2 Level 4. Source = $E000, Paging = bank 6
 W $F24D,2,2 Level 5. Source = $C000, Paging = bank 7
 W $F24F,2,2 Level 6. Source = $E000, Paging = bank 7
-N $F251 $8045 once relocated. What calls this?
-@ $F251 label=f251_128k
+N $F251 $8045 once relocated.
+@ $F251 label=unknown_hook_1_128k
 C $F251,5 Store $8C to channel A fine pitch
 C $F256,5 Store 14 to channel A volume (4-bit)
 C $F25B,5 Store 12 to channel B volume
 C $F260,5 Self modify 'LD A,x' at $F271 (in this position)
 C $F265,3 -- state sfx var
 C $F268,1 Return
-@ $F269 label=f269_128k
+@ $F269 label=engine_sfx_play_hook_128k
 C $F269,3 -- state sfx var (initialised to $AA above)
 C $F26C,2 Return if zero
 C $F26E,3 Load channel A fine pitch
@@ -9877,9 +9913,10 @@ C $F28B,3 Update channel A fine pitch
 C $F28E,5 and store 4 less to channel B fine pitch
 C $F293,8 Set mixer to enable tone A & B
 C $F29B,2 Jump
-@ $F29D label=f29d_128k
+@ $F29D label=silence_audio_hook_128k
 C $F29D,5 Initialise mixer to $3F (all noise and tone off)
 N $F2A2 writing the full register set?
+@ $F2A2 label=unknown_hook_2_128k
 C $F2A2,3 Address of sound register value(s) -- other values must be earlier
 @ $F2A9 label=f2a9_128k_loop
 C $F2A5,8 Select AY-3-8912 sound chip register 11: envelope fine duration
@@ -9904,11 +9941,11 @@ C $F2E2,3 Set channel C pitch (both fine and course)
 C $F2E5,3 Set channel C volume
 C $F2E8,8 Set mixer to enable tone C
 C $F2F0,1 Return
-@ $F2F1 label=f2f1_128k__reset_noise_pitch
+@ $F2F1 label=turbo_sfx_play_hook_128k
 C $F2F1,5 Set noise pitch (5-bit) [$3C is > 5-bit...]
 C $F2F6,3 Copy of it?
 C $F2F9,1 Return
-@ $F2FA label=f2f9_128k
+@ $F2FA label=engine_sfx_setup_hook_128k
 C $F2FA,6 Jump if $A23A [copy of noise pitch] is zero
 C $F300,1 Decrement noise pitch
 C $F301,1 Return if zero
@@ -9924,6 +9961,7 @@ C $F31E,1 Return
 C $F31F,8 Set mixer to disable tone C and noise C
 C $F327,4 [copy of noise pitch] = 0
 C $F32B,3 Exit via f2b6_128k
+N $F32E Relocated to $8122
 @ $F32E label=f32e_128k_table
 W $F32E,2,2
 W $F330,2,2 address?
@@ -9935,9 +9973,9 @@ W $F33A,2,2
 W $F33C,2,2 address?
 W $F33E,2,2
 W $F340,2,2 address?
-W $F342,2,2
-W $F344,2,2 address?
-C $F346,7 128K: Map RAM page 4 to $C000; Map normal screen; Map ROM 0
+@ $F342 label=unknown_hook_3_128k
+C $F343,3 Call silence_audio_hook_128k
+C $F346,2 128K: Map RAM page 4 to $C000; Map normal screen; Map ROM 0
 C $F356,9 HL = $F32A + A*4  -- i.e. it's 1-indexed f32e_128k_table
 C $F35F,4 DE = wordat(HL); HL += 2
 C $F363,4 HL = wordat(HL)
@@ -10021,8 +10059,7 @@ C $F413,1 Return
 @ $F414 label=f414_128k
 C $F414,6 128K: Set paging register to default
 C $F41A,1 Return
-N $F41B This is like attract_mode.
-@ $F41B label=f41b_128k
+@ $F41B label=attract_mode_hook_128k
 C $F41B,3 HL = $C000
 C $F41E,3 Call relocated f3b6_128k
 C $F421,2 Return if A is zero
