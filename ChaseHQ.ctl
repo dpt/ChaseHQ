@@ -4,26 +4,27 @@
 > $4000 ; Chase H.Q. by Ocean Software. A home computer version of the arcade game by
 > $4000 ; Taito Corporation.
 > $4000 ;
-> $4000 ; Reverse engineering by David Thomas, 2023.
-> $4000 ;
 > $4000 ; This is intended to document the game when it is in a "pristine" as-loaded
 > $4000 ; state.
 > $4000 ;
+> $4000 ; Reverse engineering by David Thomas, 2023.
+> $4000 ;
+> $4000 ;
 > $4000 ; AUTHORS
 > $4000 ; -------
-> $4000 ; Code by JOBBEEE aka John O'Brien
+> $4000 ; Code by John O'Brien aka JOBBEEE
 > $4000 ; <https://www.mobygames.com/person/28679/john-obrien/>
 > $4000 ;
-> $4000 ; Graphics by BILL aka Bill Harbison
+> $4000 ; Graphics by Bill Harbison aka BILL aka Harbonaut
 > $4000 ; <https://www.mobygames.com/person/31804/bill-harbison/>
 > $4000 ;
-> $4000 ; Music by JON DUNN aka Jonathan Dunn
+> $4000 ; Music by Jonathan Dunn aka JON DUNN
 > $4000 ; <https://www.mobygames.com/person/31702/jonathan-dunn/>
 > $4000 ;
 > $4000 ;
-> $4000 ; OTHER VERSIONS
-> $4000 ; --------------
-> $4000 ; The Amstrad CPC version is by the same authors.
+> $4000 ; RELATED PORTS
+> $4000 ; -------------
+> $4000 ; The Amstrad CPC version is by the same authors and was produced after.
 > $4000 ;
 > $4000 ;
 > $4000 ; RELATED GAMES
@@ -32,11 +33,11 @@
 > $4000 ; <https://www.mobygames.com/game/15167/wec-le-mans-24/>
 > $4000 ;
 > $4000 ; "Batman The Movie" (1989) - The same authors worked on the driving sequences
-> $4000 ; for this Atari ST/Amiga game.
+> $4000 ; for the Atari ST and Amiga versions of this game.
 > $4000 ; <https://www.mobygames.com/game/3848/batman/>
 > $4000 ;
-> $4000 ; "Burnin' Rubber" (1990) - A later Amstrad game by JOBBEEE very much like WEC
-> $4000 ; Le Mans.
+> $4000 ; "Burnin' Rubber" (1990) - A later Amstrad game by John O'Brien very much like
+> $4000 ; WEC Le Mans.
 > $4000 ; <https://www.mobygames.com/game/70894/burnin-rubber/>
 > $4000 ;
 > $4000 ;
@@ -44,15 +45,17 @@
 > $4000 ; --------
 > $4000 ; https://www.mobygames.com/game/9832/chase-hq/
 > $4000 ;
-> $4000 ; http://reassembler.blogspot.com/2012/06/interview-with-spectrum-legend-bill.html
-> $4000 ;
 > $4000 ; https://spectrumcomputing.co.uk/entry/903/ZX-Spectrum/Chase_HQ
 > $4000 ; Known Errors:
 > $4000 ; Bugfix provided by Russell Marks:
 > $4000 ; "When you finish a stage, a hidden bonus is sometimes given randomly. At
-> $4000 ; address $8b3d, instructions EX AF,AF' and LD B,A are in the wrong order.
-> $4000 ; Therefore calculation of time bonus is using random value from A' instead of
-> $4000 ; low digit from remaining time. Fixed with POKE 35645,71: POKE 35646,8."
+> $4000 ;  address $8b3d, instructions EX AF,AF' and LD B,A are in the wrong order.
+> $4000 ;  Therefore calculation of time bonus is using random value from A' instead of
+> $4000 ;  low digit from remaining time. Fixed with POKE 35645,71: POKE 35646,8."
+> $4000 ;
+> $4000 ; https://en.wikipedia.org/wiki/Chase_H.Q.
+> $4000 ;
+> $4000 ; http://reassembler.blogspot.com/2012/06/interview-with-spectrum-legend-bill.html
 > $4000 ;
 > $4000 ; https://news.ycombinator.com/item?id=8850193 (discussion about the game loader)
 > $4000 ;
@@ -66,6 +69,7 @@
 > $4000 ;
 > $4000 ; 48K/128K VERSION DIFFERENCES
 > $4000 ; ----------------------------
+> $4000 ; - 48K is a multiloader
 > $4000 ; - AY music + sampled speech and effects
 > $4000 ; - High score entry
 > $4000 ; - Logo animation > music plays > attract mode (48K version just does attract mode)
