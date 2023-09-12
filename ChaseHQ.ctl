@@ -179,41 +179,96 @@ b $4000 Screen memory
 B $4000,6144,8 Screen bitmap
 B $5800,768,8 Screen attributes
 c $5B00 Could be loader code
-C $5B0F,3 HL = $FFF0
-C $5B12,1 E = *HL
-C $5B13,7 128K: Map RAM page 1 to $C000; Map normal screen; Map ROM 0
-C $5B1A,2 A = E + C
-C $5B1C,1 *HL = A
-C $5B1D,3 128K: Map RAM page 0 to $C000; Map normal screen; Map ROM 0
-C $5B20,1 A = *HL
-C $5B21,1 *HL = E
-C $5B22,9 Point #REGhl at $5B7D
-C $5B2B,6 Fetch a word from #REGhl and stack it
-C $5B4C,12 Game entry point
+@ $5B00 label=start
+C $5B00,1 Disable interrupts
+C $5B01,3 Set stack pointer
+C $5B04,3 Source (end of)
+C $5B07,3 Destination (end of)
+C $5B0A,3 Bytes
+C $5B0D,2 Copy
+N $5B0F Probe for 128K.
+C $5B0F,4 #REGe = *$FFF0
+C $5B13,7 128K: Map RAM page 1 to $C000, normal screen, ROM 0
+C $5B1A,3 *$FFF0 = #REGe + $FD  -- $FD being a handy non-zero value?
+C $5B1D,3 128K: Map RAM page 0 to $C000, normal screen, ROM 0
+C $5B20,1 A = *$FFF0  -- fetch possibly changed byte
+C $5B21,1 *$FFF0 = #REGe  -- restore original byte
+C $5B22,3 Point #REGhl at relocs_48k
+C $5B25,3 Jump if they didn't match  -- why is this the 48K route?
+@ $5B28 label=mode_128k
+C $5B28,3 Point #REGhl at relocs_128k
+@ $5B2B label=loader
+C $5B2B,5 Fetch a word from #REGhl and stack it
+C $5B30,1 Call it
+@ $5B31 label=loader_load
+C $5B31,1 Preserve instruction pointer
+C $5B39,3 Call loader_5b4f
+C $5B3C,1 Restore
+@ $5B3D label=loader_5b3d
+C $5B3D,7 IX = wordat(HL); HL += 2
+C $5B44,4 HL = wordat(HL)
+C $5B48,1 Preserve HL
+C $5B49,3 Call loader_5b4f
+C $5B4C,1 Game entry point
+C $5B4D,2 Process next entry
+@ $5B4F label=loader_5b4f
+C $5B4F,3 Call tape_load_b
+C $5B52,1 Return if no errors?
+C $5B53,5 Infinite loop border cycling for tape loading error?
+@ $5B58 label=loader_set_page
+C $5B58,2 Page in RAM where interrupt vector lives
 C $5B5A,2 Set Interrupt Control Vector Register
 C $5B5C,1 Load 128K paging flags byte
-C $5B5D,2 HL += 2
+C $5B5D,2 Second byte is unused
 C $5B5F,5 128K: Set paging register
-C $5B67,14 Move $5C00..$76EF to $C000 onwards  -- are we swapping out the level?
-C $5B75,8 Routine that loads a word then OUTs $FE with zero, then jumps to that word
-N $5B7D Some sort of instruction stream
-W $5B7D,2,2 Probable address of routine $5B31
-B $5B7F,3,3
-B $5B82,2,2 Probable address of routine $5B75
-B $5B84,3,3
-W $5B87,2,2 Probable address of routine $5B31
-B $5B89,4,4
-W $5B8D,2,2 Probable address of routine $5B58
-B $5B8F,2,2
-W $5B91,2,2 Probable address of routine $5B66
-W $5B93,2,2 Probable address of routine $5B31
-B $5B95,4,4
-W $5B99,2,2 Probable address of routine $5B58
-B $5B9B,2,2
-W $5B9D,2,2 Probable address of routine $5B31
-B $5B9F,4,4
-W $5BA3,2,2 Probable address of routine $5B31
-B $5BA5,48,8
+C $5B64,2 Process next entry
+@ $5B66 label=loader_copy
+C $5B66,1 Preserve instruction pointer
+C $5B67,11 Move $5C00..$76EF to $C000 onwards  -- are we swapping out the level?
+C $5B72,1 Restore instruction pointer
+C $5B73,2 Process next entry
+@ $5B75 label=loader_done
+C $5B75,7 Routine that loads a word then OUTs $FE with zero, then jumps to that word
+C $5B7C,1 Exit via entrypoint just read
+N $5B7D Loading instructions.
+@ $5B7D label=relocs_48k
+W $5B7D,2,2 loader_load
+W $5B7F,4,4 stage 1
+W $5B83,2,2 loader_done
+W $5B85,2,2 entrypt_48k
+@ $5B87 label=relocs_128k
+W $5B87,2,2 loader_load
+W $5B89,4,4 load $1AF0 bytes to $5C00
+W $5B8D,2,2 loader_set_page
+B $5B8F,2,2 page 1 (second byte is unused)
+W $5B91,2,2 loader_copy
+W $5B93,2,2 loader_load
+W $5B95,4,4 stage 2
+W $5B99,2,2 loader_set_page
+B $5B9B,2,2 page 6
+W $5B9D,2,2 loader_load
+W $5B9F,4,4 stage 3
+W $5BA3,2,2 loader_load
+W $5BA5,4,4 stage 4
+W $5BA9,2,2 loader_set_page
+B $5BAB,2,2 page 7
+W $5BAD,2,2 loader_load
+W $5BAF,4,4 stage 5
+W $5BB3,2,2 loader_load
+W $5BB5,4,4 stage 6
+W $5BB9,2,2 loader_set_page
+B $5BBB,2,2 page 3
+W $5BBD,2,2 loader_5b3d
+W $5BBF,4,4
+W $5BC3,2,2 loader_set_page
+B $5BC5,2,2 page 4
+W $5BC7,2,2 loader_5b3d
+W $5BC9,4,4
+W $5BCD,2,2 loader_set_page
+B $5BCF,2,2 page 0
+W $5BD1,2,2 loader_done
+W $5BD3,2,2 entrypt_128k
+@ $5BD5 label=data_5bd5
 B $5BD5,43,8*5,3 gets IX pointed at it by $5B32
 b $5C00 Graphics
 D $5C00 #HTML[#CALL:graphic($5C00,80,24,0,1)]
@@ -1361,7 +1416,7 @@ C $802B,2 Transition type?
 C $802D,3 Call setup_transition
 C $8032,3 Call TBD subroutine
 C $8035,4 IX = &hazards[1]
-C $803C,3 Call TBD subroutine
+C $803C,3 Call tape_load_b subroutine
 C $803F,2 loop while failed perhaps?
 C $8041,3 #REGhl = &hazards[1]
 C $8044,1 Load used flag [doesn't add up - this is a level number?]
@@ -1374,7 +1429,7 @@ C $8050,3 #REGa = wanted_stage_number
 C $8053,1 equal?
 C $8054,2 not the wanted stage
 C $8056,3 Call TBD subroutine
-C $8059,3 Call tape loading subroutine
+C $8059,3 Call tape_load
 N $805E Success - must have loaded the correct level data.
 C $805E,1 A = 0
 C $805F,2 Set border?
@@ -1419,21 +1474,22 @@ C $80AA,3 A = transition_control
 C $80AD,2 Return if zero
 C $80AF,8 Delay loop
 C $80B7,2 Loop
-N $80B9 Tape loading
-C $80B9,7 Setup to load a block ???
-N $80C0 This entry point is used by the routine at #R$5B00.
-@ $80C0 label=sub_80c0
+N $80B9 Tape loading.
+@ $80B9 label=tape_load
+C $80B9,7 Setup to load a block at $5C00 of length $1AF0
+N $80C0 This entry point is used by the routine at #R$5B00. IX = address DE = bytes
+@ $80C0 label=tape_load_b
 C $80C0,1 D++
 C $80C1,2 A = 152
-C $80C3,1 set carry?
+C $80C3,1 Set carry flag
 C $80C4,1 bank
-C $80C5,1 D--
-C $80C6,1 disable interrupts
-C $80C7,2 set MIC bit (deactivates MIC)
+C $80C5,1 D--  -- weird inc then dec
+C $80C6,1 Disable interrupts
+C $80C7,2 Set MIC bit (deactivates MIC)
 C $80C9,2 output
 C $80CB,2 input
 C $80CD,1 why shift?
-C $80CE,2 check EAR input bit 6
+C $80CE,2 Check EAR input bit 6
 C $80D0,2 set border?
 C $80D3,1 A == A ?
 C $80D5,3 Call sub_814b
@@ -9259,11 +9315,11 @@ w $E540 A table of 96 words being 10^x or similar function. Distance horizontal 
 W $E540,192,2
 b $E600 Data block at E600. Seems to be 24 groups of 22 bytes.
 B $E600,528,22
-c $E810 looks like initialisation code / relocation perhaps 128K stuff
-@ $E810 label=e810_entrypt
-C $E810,1 A = 0
+c $E810 Called once the memory map has been setup.
+@ $E810 label=entrypt_48k
+C $E810,1 A = 0  -- set 48K mode
 C $E811,2 B = 3
-@ $E816 label=e816_entrypt
+@ $E816 label=entrypt_128k
 C $E816,3 Call clear_game_attrs  -- how is this code entered?
 C $E819,2 A = 1
 C $E81B,2 B = 5
@@ -9297,7 +9353,7 @@ W $E862,2,2 count - 40 bytes
 W $E864,2,2 src ptr
 W $E866,2,2 dst ptr
 W $E868,2,2 count - 48 bytes
-W $E86A,2,2 src ptr - load_stage_128k onwards
+W $E86A,2,2 src ptr - page_in_stage_128k onwards
 W $E86C,2,2 dst ptr
 W $E86E,2,2 count - 926 bytes
 W $E870,2,2 src ptr
@@ -9864,7 +9920,7 @@ W $F102,14,2 Patterns (offset, repetitions?)
 B $F110,1,1
 B $F111,271,8*33,7 Music
 c $F220 128K mode routines and data relocated to $8014/load_stage onwards during init (926 bytes long).
-@ $F220 label=load_stage_128k
+@ $F220 label=page_in_stage_128k
 C $F220,3 Load wanted_stage_number
 C $F223,3 Address of current_stage_number
 C $F226,2 Return if the stage is already loaded
