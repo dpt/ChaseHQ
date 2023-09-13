@@ -1719,6 +1719,7 @@ C $83CA,3 Call attract_mode
 c $83CD Bootstrap
 D $83CD Used by the routine at #R$E839.
 N $83CD Builds a table of flipped bytes at $EF00.
+@ $83CD label=bootstrap
 C $83CD,3 Point #REGhl at $EF00
 @ $83D0 label=flip_table_loop
 C $83D0,2 8 iterations
@@ -9319,47 +9320,37 @@ B $E600,528,22
 c $E810 Called once the memory map has been setup.
 @ $E810 label=entrypt_48k
 C $E810,1 Set 128K flag to zero (48K mode)
-C $E811,2 B = 3  -- iterations [of ?]
+C $E811,2 3 relocations to do
 @ $E816 label=entrypt_128k
 C $E816,3 Call clear_game_attrs
 C $E819,2 Set 128K flag to one (128K mode)
-C $E81B,2 B = 5  -- iterations
+C $E81B,2 5 relocations to do
 C $E81D,3 Store 128K mode flag
 C $E820,3 Put stack at end of RAM
 C $E823,1 Preserve count in B
 C $E824,11 Copy status panel initial pixels to the top of the screen
 C $E82F,6 Copy status panel initial attributes to the top of the attribute file
-C $E835,4 Call e8fe_mystery if in 128K mode  [prob STOP TAPE / PRESS KEY -- does it return?]
+C $E835,4 Call stop_the_tape if in 128K mode  [prob STOP TAPE / PRESS KEY -- does it return?]
 C $E839,1 Restore B
-C $E83A,3 Point #REGhl at e858_copy_blocks
-@ $E83D label=loopy
+C $E83A,3 Point #REGhl at relocations
+@ $E83D label=relocate_loop
 C $E83D,1 Preserve B
-C $E83E,4 DE = wordat(HL) HL += 2
-C $E842,1 Stack DE
-C $E843,4 DE = wordat(HL) HL += 2 -- dest
-C $E847,4 BC = wordat(HL) HL += 2 -- count
-C $E84B,1 exchange top of stack and HL. HL is now src
-C $E84C,2 Do copy
+C $E83E,4 DE = wordat(HL); HL += 2
+C $E842,1 Stack source pointer
+C $E843,4 DE = wordat(HL); HL += 2 -- Destination pointer
+C $E847,4 BC = wordat(HL); HL += 2 -- Count
+C $E84B,1 Exchange top of stack and HL. HL is now source pointer
+C $E84C,2 Copy
 C $E84E,2 Restore base pointer and count
 C $E850,2 Loop while B
 C $E852,3 Set up the stack
-C $E855,3 Start the game
-@ $E858 label=e858_copy_blocks
-W $E858,2,2 src ptr
-W $E85A,2,2 dst ptr
-W $E85C,2,2 count
-W $E85E,2,2 src ptr - square_zoom_in_mask
-W $E860,2,2 dst ptr
-W $E862,2,2 count - 40 bytes
-W $E864,2,2 src ptr
-W $E866,2,2 dst ptr
-W $E868,2,2 count - 48 bytes
-W $E86A,2,2 src ptr - page_in_stage_128k onwards
-W $E86C,2,2 dst ptr
-W $E86E,2,2 count - 926 bytes
-W $E870,2,2 src ptr
-W $E872,2,2 dst ptr - 128k hooks
-W $E874,2,2 count - 24 bytes (3 bytes * 8 hooks)
+C $E855,3 Exit via bootstrap  -- start the game
+@ $E858 label=relocations
+W $E858,6,2 Copy 24 bytes from data_e88e to $EC00
+W $E85E,6,2 Copy 40 bytes from square_zoom_in_mask to $EB00
+W $E864,6,2 Copy 48 bytes from diamond_zoom_in_mask to $EA00
+W $E86A,6,2 Copy 926 bytes from page_in_stage_128k onwards to $8014 [128K]
+W $E870,6,2 Copy 24 bytes (3 bytes * 8 hooks) from 128k_mode_hooks to hooks at $83B5 [128K]
 @ $E876 label=128k_mode_hooks
 C $E876,3 Becomes unknown_hook_1
 C $E879,3 Becomes engine_sfx_play_hook
@@ -9369,6 +9360,7 @@ C $E882,3 Becomes turbo_sfx_play_hook
 C $E885,3 Becomes engine_sfx_setup_hook
 C $E888,3 Becomes unknown_hook_3
 C $E88B,3 Becomes attract_mode_hook
+@ $E88E label=data_e88e
 B $E88E,24,3 Copied to $EC00
 N $E8A6 Square zoom in animation mask (8x8, 5 frames)
 N $E8A6 #HTML[#CALL:anim($E8A6,8,8,0,0,5)]
@@ -9378,13 +9370,16 @@ B $E8A6,40,8
 N $E8CE Diamond zoom in animation mask (8x8, 6 frames)
 N $E8CE #HTML[#CALL:anim($E8CE,8,8,0,0,6)]
 N $E8CE #HTML[#CALL:graphic($E8CE,8,6*8,0,0)]
+@ $E8CE label=diamond_zoom_in_mask
 B $E8CE,48,8
 c $E8FE Routine at E8FE
 D $E8FE Used by the routine at #R$E810.
-@ $E8FE label=e8fe_mystery
-C $E901,3 music reset perhaps?
+@ $E8FE label=stop_the_tape
+C $E8FE,3 Call setup_interrupts
+C $E901,3 Call music_reset
 C $E904,1 Enable interrupts
 C $E905,1 Wait for next interrupt
+C $E906,3 Call clear_screen
 C $E909,3 -> "STOP THE TAPE" + "PRESS ANY KEY" message set
 C $E90C,3 Call menu_draw_strings
 @ $E90F label=wait_for_keypress
@@ -9745,6 +9740,7 @@ C $EE57,6 $FEFF = $EF19
 C $EE5D,1 Return
 c $EE5E Routine at $EE5E  -- suspect a music reset routine
 D $EE5E Used by the routine at #R$E8CE.
+@ $EE5E label=music_reset
 C $EE5E,1 A = 0
 C $EE5F,3 Self modify 'LD A,x' at $EF0D  -- clear drum flag?
 C $EE62,3 Self modify 'LD A,x' at $EF00  -- in define_keys
