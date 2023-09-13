@@ -1734,7 +1734,7 @@ C $83E3,9 Zero $8002..$8006
 C $83EC,2 $8007 = 1 => Load stage 1
 C $83EE,4 credits = 2
 C $83F2,3 Call the main loop
-C $83F5,10 Call relocated f3b6_128k if $A139 is non-zero [128K]
+C $83F5,10 Call relocated f3b6_128k if in 128K mode
 C $83FF,2 Loop
 c $8401 Main loop
 D $8401 Used by the routines at #R$83CD and #R$8A57.
@@ -1755,9 +1755,9 @@ C $841E,3 Address of setup_game_data
 C $8421,3 Call setup_game
 C $8424,10 $A13B cycles 3,2,1 then repeats
 C $842E,7 $A26B = (A * 4) OR 2
-C $8435,4 Is $A139 zero? (used later) [128K]
+C $8435,4 Test 128K mode flag
 C $8439,5 $A188 = $FF -- I suspect this keeps the perp spawned
-C $8441,3 Call chatter if $A139 was zero
+C $8441,3 Call chatter if not in 128K mode
 @ $8444 label=main_loop_loop
 C $8444,3 Call drive_sfx
 C $8447,3 Call keyscan
@@ -2339,9 +2339,9 @@ C $8ACA,3 HL = *$5D06   -- arrest messages
 C $8ACD,2 A = 1         -- transition_control byte
 C $8ACF,3 Jump to j_8e80   -- inside message_printing_related
 @ $8AD2 label=hpc_stage4
-C $8AD2,7 Call relocated f39f_128k if $A139 is non-zero [128K]
+C $8AD2,7 Call relocated f39f_128k if in 128K mode
 C $8AD9,5 Return if transition_control != 0
-C $8ADE,7 Call relocated f39f_128k if $A139 is non-zero [128K]
+C $8ADE,7 Call relocated f39f_128k if in 128K mode
 C $8AE5,5 perp_caught_stage = 5
 N $8AEA Calculate clear bonus.
 C $8AEA,2 '0'
@@ -4453,7 +4453,8 @@ C $A132,2 Port $FE is the AND of all columns/rows? This is the main keyboard acc
 C $A134,4 C = A ROR C
 C $A138,1 Return
 g $A139 Game status buffer entry at A139
-B $A139,1,1 Likely to be a 128K mode flag. [128K] If it's set then $83F5 uses it to jump to $81AA. $8435 tests it too and calls <chatter> when it's zero.
+@ $A139 label=mode_128k
+B $A139,1,1 0/1 => 48K/128K mode
 @ $A13A label=current_stage_number
 B $A13A,1,1 Current stage number
 B $A13B,1,1 Used by $8425  -- seems to start at 4 then cycle 3/2/1 with each restart of the game, another random factor?
@@ -4489,7 +4490,7 @@ B $A181,4,4 Distance as displayed. Stored as one digit per byte.
 B $A185,1,1 If set causes no objects or hazards to be emitted.
 @ $A186 label=horizon_attribute
 W $A186,2,2 Attribute address of horizon. Points to last attribute on the line which shows the ground. (e.g. $59DF)
-N $A188 +0 is a used flag, either $00 or $FF +1 looks distance related +2/3/4/5/6 TBD +7 byte  TBD used by hazard_hit +8 byte  gets copied from the hazards table +9 word  address of e.g. car lod +11 word  address of routine +13 word  set to $190 by fully_smashed (likely a horizontal position) +15 byte  TBD used by hazard_hit, counter which gets set to 2 then reduced +17 byte  TBD used by hazard_hit, indexes table $ACDB +18 byte  TBD used by hazard_hit +19 byte TBD used by hazard_hit
+N $A188 +0 is a used flag, either $00 or $FF +1 looks distance related +2/3/4/5/6 TBD +7 byte  TBD used by hazard_hit +8 byte  gets copied from the hazards table +9 word  address of e.g. car lod +11 word  address of routine +13 word  set to $190 by fully_smashed (likely a horizontal position) +15 byte TBD used by hazard_hit, counter which gets set to 2 then reduced +17 byte  TBD used by hazard_hit, indexes table $ACDB +18 byte  TBD used by hazard_hit +19 byte TBD used by hazard_hit
 @ $A188 label=hazards
 B $A188,120,8 Set by $843B. Groups of 20 bytes. This area looks like a table of spawned vehicles or objects. The first entry is the perp.
 N $A200 Unknown
@@ -9317,22 +9318,22 @@ b $E600 Data block at E600. Seems to be 24 groups of 22 bytes.
 B $E600,528,22
 c $E810 Called once the memory map has been setup.
 @ $E810 label=entrypt_48k
-C $E810,1 A = 0  -- set 48K mode
-C $E811,2 B = 3
+C $E810,1 Set 128K flag to zero (48K mode)
+C $E811,2 B = 3  -- iterations [of ?]
 @ $E816 label=entrypt_128k
-C $E816,3 Call clear_game_attrs  -- how is this code entered?
-C $E819,2 A = 1
-C $E81B,2 B = 5
-C $E81D,3 -- suspect this is a 128K mode flag
-C $E820,3 SP = 0  -- put stack at end of RAM?
-C $E823,1 Save B
-C $E824,3 Address of data block
-C $E827,3 Copy to the screen
-C $E82A,3 2K long
-C $E82D,2 Copy
-C $E839,1 must be the loop counter
-C $E83A,3 Point #REGhl at $e858 table
+C $E816,3 Call clear_game_attrs
+C $E819,2 Set 128K flag to one (128K mode)
+C $E81B,2 B = 5  -- iterations
+C $E81D,3 Store 128K mode flag
+C $E820,3 Put stack at end of RAM
+C $E823,1 Preserve count in B
+C $E824,11 Copy status panel initial pixels to the top of the screen
+C $E82F,6 Copy status panel initial attributes to the top of the attribute file
+C $E835,4 Call e8fe_mystery if in 128K mode  [prob STOP TAPE / PRESS KEY -- does it return?]
+C $E839,1 Restore B
+C $E83A,3 Point #REGhl at e858_copy_blocks
 @ $E83D label=loopy
+C $E83D,1 Preserve B
 C $E83E,4 DE = wordat(HL) HL += 2
 C $E842,1 Stack DE
 C $E843,4 DE = wordat(HL) HL += 2 -- dest
@@ -9340,7 +9341,7 @@ C $E847,4 BC = wordat(HL) HL += 2 -- count
 C $E84B,1 exchange top of stack and HL. HL is now src
 C $E84C,2 Do copy
 C $E84E,2 Restore base pointer and count
-C $E850,2 Loop
+C $E850,2 Loop while B
 C $E852,3 Set up the stack
 C $E855,3 Start the game
 @ $E858 label=e858_copy_blocks
@@ -9374,20 +9375,26 @@ N $E8A6 #HTML[#CALL:anim($E8A6,8,8,0,0,5)]
 N $E8A6 #HTML[#CALL:graphic($E8A6,8,5*8,0,0)]
 @ $E8A6 label=square_zoom_in_mask
 B $E8A6,40,8
-c $E8CE Routine at E8CE
 N $E8CE Diamond zoom in animation mask (8x8, 6 frames)
 N $E8CE #HTML[#CALL:anim($E8CE,8,8,0,0,6)]
 N $E8CE #HTML[#CALL:graphic($E8CE,8,6*8,0,0)]
-N $E8FE This entry point is used by the routine at #R$E810.
+B $E8CE,48,8
+c $E8FE Routine at E8FE
+D $E8FE Used by the routine at #R$E810.
 @ $E8FE label=e8fe_mystery
 C $E901,3 music reset perhaps?
 C $E904,1 Enable interrupts
 C $E905,1 Wait for next interrupt
 C $E909,3 -> "STOP THE TAPE" + "PRESS ANY KEY" message set
 C $E90C,3 Call menu_draw_strings
-c $E90F Routine at E90F
+@ $E90F label=wait_for_keypress
 C $E90F,3 Call define_keys
+C $E912,6 Was a key pressed?
+C $E918,2 Loop if not
+N $E91A Debounce.
 C $E91A,3 Call define_keys
+C $E91D,6 Was a key pressed?
+C $E923,2 Loop if it was
 C $E925,3 Call clear_screen
 C $E928,3 Point #REGhl at input menu messages (NUL terminated)
 C $E92B,3 Call menu_draw_strings
@@ -10189,5 +10196,8 @@ B $F5BC,2,2
 b $F5BE Status panel initial image
 @ $F5BE label=status_panel
 B $F5BE,2048,32
-b $FDBE Data block at FDBE
-B $FDBE,578,8*72,2
+b $FDBE Status panel initial attributes
+@ $FDBE label=status_panel_attrs
+B $FDBE,256,8
+u $FEBE Unused
+B $FEBE,322,8*40,2
