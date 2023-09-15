@@ -89,8 +89,9 @@
 > $4000 ; $E500        is ?
 > $4000 ; $E600..$E7FF is road drawing data
 > $4000 ; $E900        is a table
+> $4000 ; $EA00..$EA2F is the diamond zoom-in mask
 > $4000 ; $EA30..$EAFE (words) is 104 words related to road drawing
-> $4000 ; $EB00        is ?
+> $4000 ; $EB00..$EB27 is the square zoom-in mask
 > $4000 ; $EC00        is ?
 > $4000 ; $ED28        is the stack (growing downwards)
 > $4000 ; $EE00..$EEFF is the road buffer. holds data unpacked from maps. it's cyclic. fixed sections for each datum. cleared by $87DD.
@@ -195,7 +196,7 @@ C $5B20,1 A = *$FFF0  -- fetch possibly changed byte
 C $5B21,1 *$FFF0 = #REGe  -- restore original byte
 C $5B22,3 Point #REGhl at relocs_48k
 C $5B25,3 Jump if they didn't match  -- why is this the 48K route?
-@ $5B28 label=mode_128k
+@ $5B28 label=mode_is_128k
 C $5B28,3 Point #REGhl at relocs_128k
 @ $5B2B label=loader
 C $5B2B,5 Fetch a word from #REGhl and stack it
@@ -1374,7 +1375,14 @@ B $77D8,136,8 Commands to draw the pre-game screen. RLE'd tile references etc.
 B $7860,71,8*8,7 Seems to be tiles pointed at by car rendering code
 B $78A7,15,8,7 .
 B $78B6,344,8 Tiles used to draw the pre-game screen #HTML[#CALL:graphic($78B6,8,43*8,0,0)]
-B $7A0E,475,8*59,3
+B $7A0E,1,1
+B $7A0F,52,8*6,4 16x13 pixels, masked #HTML[#CALL:graphic($7A0F,16,13,1,0)]
+B $7A43,44,8*5,4 16x11 pixels, masked #HTML[#CALL:graphic($7A43,16,11,1,0)]
+B $7A6F,36,8*4,4 16x9 pixels, masked  #HTML[#CALL:graphic($7A6F,16,9,1,0)]
+B $7A93,14,8,6 8x7 pixels, masked     #HTML[#CALL:graphic($7A93,8,7,1,0)]
+B $7AA1,10,8,2 8x5 pixels, masked     #HTML[#CALL:graphic($7AA1,8,5,1,0)]
+B $7AAB,6,6 8x3 pixels, masked        #HTML[#CALL:graphic($7AAB,8,3,1,0)]
+B $7AB1,312,1,8*38,7 more graphics?
 b $7BE9 Graphics: Faces
 N $7BE9 Nancy's face (32x40)
 N $7BE9 #HTML[#CALL:face($7BE9)]
@@ -1783,7 +1791,7 @@ C $847D,3 Call main_loop_16
 C $8480,3 Call helicopter
 C $8483,3 Call main_loop_18
 C $8486,3 Call engine_sfx_play_hook
-C $8489,3 Call main_loop_19
+C $8489,3 Call draw_hazards
 C $848C,3 Call main_loop_20
 C $848F,3 Call engine_sfx_play_hook
 C $8492,3 Call move_helicopter
@@ -1859,7 +1867,7 @@ C $8571,3 Call tunnel_setup
 C $8574,3 Call main_loop_16
 C $8577,3 Call main_loop_18
 C $857A,3 Call main_loop_20
-C $857D,3 Call main_loop_19
+C $857D,3 Call draw_hazards
 C $8580,3 Call move_hero_car
 C $8583,3 Call check_collisions
 C $8586,3 Call main_loop_23
@@ -2071,7 +2079,7 @@ C $877E,3 Call main_loop_13
 C $8781,3 Call main_loop_14
 C $8784,3 Call tunnel_setup
 C $8787,3 Call main_loop_16
-C $878A,3 Call main_loop_19
+C $878A,3 Call draw_hazards
 C $878D,3 Call main_loop_23
 C $8790,3 Call main_loop_25
 C $8793,3 Call drive_chatter
@@ -4014,9 +4022,9 @@ C $9D49,1 Unbank
 C $9D4A,2 Loop while #REGb > 0
 C $9D4C,4 $A22B = 0
 C $9D50,1 Return
-t $9D51 Update scoreboard and flashing lights
-@ $9D51 label=bonus
-B $9D51,6,6 Bonus digits buffer
+c $9D51 Update scoreboard and flashing lights
+@ $9D51 label=bonus_string
+T $9D51,6,5:n1 Bonus digits buffer
 @ $9D57 label=hi
 T $9D57,2,1:n1 "HI" gear string
 @ $9D59 label=lo
@@ -5164,9 +5172,9 @@ C $A8F8,3 A = IX[18]
 C $A8FB,5 Jump to $A926 if A == IX[17]
 C $A902,3 HL = $A7E6   -> $A7E7 data block
 C $A905,1 C = A
-C $A906,1 A += L
-C $A907,1 L = A
+C $A906,2 L += A
 C $A908,3 A = IX[5]
+C $A90B,2 test bottom bit?
 C $A90F,2 A -= 5
 C $A911,1 CP *HL
 C $A914,1 A = *HL
@@ -5286,7 +5294,7 @@ C $AA05,3 Self modify 'LD D,x' at $933D to load zero
 C $AA08,1 H = A
 C $AA09,1 A = B
 C $AA0A,1 A--
-C $AA0B,6 If A >= 11 A = 10
+C $AA0B,6 If A > 10 A = 10
 C $AA11,2 A >>= 1
 C $AA13,6 L = A * 7
 C $AA19,1 HL += DE
@@ -5295,8 +5303,8 @@ C $AA22,1 Set flags
 C $AA23,1 A = C
 C $AA24,2 C = $00
 C $AA26,3 Jump to $AA33 if negative
-C $AA29,3 Return if non-zero
-C $AA2C,3 Jump to $9303 if A >= 128
+C $AA29,1 Return if non-zero
+C $AA2A,5 Jump to $9303 if A >= 128
 C $AA2F,1 A += E
 C $AA30,3 Jump to $929A
 C $AA33,1 A += E
@@ -5660,16 +5668,17 @@ C $AD98,2 E += 2
 C $AD9A,3 IX[7] = E
 C $AD9D,2 D = 1
 C $AD9F,1 Return
-c $ADA0 Routine at ADA0
-D $ADA0 Used by the routines at #R$8401, #R$852A and #R$873C.
-@ $ADA0 label=main_loop_19
+c $ADA0 Draws all hazards.
+D $ADA0 This includes all cars, barriers, tumbleweeds, etc.
+R $ADA0 Used by the routines at #R$8401, #R$852A and #R$873C.
+@ $ADA0 label=draw_hazards
 C $ADA0,1 A = 0
 C $ADA1,3 $A222 = 0
 C $ADA4,3 IY = $E3xx
 C $ADA7,4 IX = &hazards[0]
 C $ADAB,3 DE = 20
 C $ADAE,2 B = 6
-@ $ADB0 label=ml19_loop
+@ $ADB0 label=dh_loop
 C $ADB0,4 If the hazard is active ...
 C $ADB4,1 Bank
 C $ADB5,3 Call $ADBE
@@ -5677,6 +5686,7 @@ C $ADB8,1 Unbank
 C $ADB9,2 Move to next hazard
 C $ADBB,2 Loop while #REGb
 C $ADBD,1 Return
+@ $ADBE label=draw_one_hazard
 C $ADBE,3 C = IX[14]
 C $ADC1,3 A = IX[4]
 C $ADC4,3 A -= IX[13]
@@ -5867,14 +5877,85 @@ C $AF7B,3 Self modify 'LD A,x' at $B023
 C $AF7E,3 Get smash_factor
 C $AF81,4 Jump if A >= 5
 C $AF85,3 A = x in 'LD A,x' at $AFFB
-C $AF91,3 HL -> $CDEC
+C $AF88,5 Jump if A >= 4
+C $AF8D,1 Double A
+C $AF8E,3 BC = A
+C $AF91,4 HL = $CDEC + BC
+N $AF95 I see this getting hit only when in smash mode.
+C $AF95,3 BC = wordat(HL)
 C $AF9E,3 Get smash_factor
+C $AFA1,4 Jump if it's < 4
+C $AFA5,4 A = (A - 4) * 4 ?
+C $AFA9,1 Bank
 C $AFAA,3 A = x in 'LD A,x' at $AFFB
+C $AFAD,1 *= 2
+C $AFAE,3 DE = A
+C $AFB1,4 HL = $CE00 + DE  -- table?
+C $AFB5,3 BC = wordat(HL); HL++
+C $AFB8,1 Unbank
+C $AFB9,1 E = A
+C $AFBA,3 another table?
+C $AFBD,5 Load counter_C AND 1
+C $AFC2,1 A <<= 1?
+C $AFC3,1 A += E
+C $AFC4,1 E = A
+C $AFC5,1 HL += DE
+C $AFC6,4 HL = wordat(HL)
+C $AFCA,2 Retrieve DE from stack
 C $AFCF,3 Get smash_factor
+C $AFD2,4 Jump if zero
+C $AFD6,1 A--
+C $AFD7,2 Jump if zero
+C $AFD9,1 A--
+C $AFDA,2 Jump if zero
+C $AFDC,3 table?
+C $AFDF,3 Call aff1
+C $AFE5,3 Call aff1
+C $AFEB,3 Call aff1
+C $AFF1,2 A = *HL - 1
+C $AFF3,3 Jump if +ve
+C $AFF6,2 A = 5  -- it became zero, reset to 5
+C $AFF8,1 *HL = A
+C $AFF9,1 E = A
+C $AFFA,1 HL++
 C $AFFB,2 A = <self modified>
-C $B023,2 A = <self modified>
+C $AFFD,1 C = A
+C $AFFE,1 D = A
+C $AFFF,1 A += E
+C $B000,3 Return if A >= 6
+C $B003,1 E = A
+C $B004,1 A -= D
+C $B005,1 D = A
+C $B006,2 C <<= 1
+C $B008,2 B = 0
+C $B00A,1 HL += BC
+C $B00B,1 A = *HL
+C $B00C,1 A -= D
+C $B00D,1 B = A
+C $B00E,1 HL++
+C $B00F,1 C = *HL
+N $B010 #REGe = smoke animation index Select the frame.
+C $B010,8 DE = E * 7
+C $B018,3 Point #REGhl at smoke_defns
+N $B01B Similar code to $AA19.
+C $B01B,1 HL += DE
+C $B01C,7 E = *HL * 8  -- turn byte width to pixel width
+C $B023,3 A = <self modified> + B
+C $B026,3 Self modify 'LD D,x' at $933D to load A
 C $B029,2 A = <self modified>
+C $B02B,1 Set flags
 C $B02C,2 A = <self modified>
+C $B02E,3 Jump to $B03D if negative
+C $B031,1 Return if non-zero
+C $B032,1 A += C
+C $B033,1 Return if carry
+C $B034,5 Jump to $9309 if A >= 128
+C $B039,1 A += E  -- pixel width
+C $B03A,3 Jump to $929A
+C $B03D,1 A += C
+C $B03E,2 Loop? if carry
+C $B040,1 A += E  -- pixel width
+C $B041,3 Jump to $929A if carry
 C $B044,1 Return
 w $B045 Hero car jump table
 D $B045 Values used to make the car move vertically (by self modifying #R$B58E). Used by $B968.
@@ -9255,8 +9336,13 @@ D $DFF8 8x6 pixels, though the digits are thinner than 8, A-Z + five symbols.
 D $DFF8 #HTML[#CALL:graphic($DFF8,8,31*6,0,0)]
 @ $DFF8 label=minifont
 B $DFF8,186,6
-b $E0B2 Graphics defns
-B $E0B2,301,7 <Byte width, Flags, Height, Ptr, Ptr>
+b $E0B2 Graphics defns <Byte width, Flags, Height, Ptr, Ptr>
+B $E0B2,252,7
+@ $E1AE label=smoke_defns
+B $E1AE,7,7 Smoke graphics (drawn over perp's car when smashed)
+B $E1B5,35,7
+@ $E1D8 label=floating_arrow_big_defn
+B $E1D8,7,7 Arrow graphic (incl. HERE!)
 @ $E1DF label=floating_arrow_defns
 B $E1DF,10,5 <Byte width, Flags, Height, Ptr> [floating arrow defns]
 b $E1E9 Ref'd by graphic entry 1 and 10
@@ -9349,8 +9435,8 @@ C $E855,3 Exit via bootstrap  -- start the game
 W $E858,6,2 Copy 24 bytes from data_e88e to $EC00
 W $E85E,6,2 Copy 40 bytes from square_zoom_in_mask to $EB00
 W $E864,6,2 Copy 48 bytes from diamond_zoom_in_mask to $EA00
-W $E86A,6,2 Copy 926 bytes from page_in_stage_128k onwards to $8014 [128K]
-W $E870,6,2 Copy 24 bytes (3 bytes * 8 hooks) from 128k_mode_hooks to hooks at $83B5 [128K]
+W $E86A,6,2 Copy 926 bytes from page_in_stage_128k onwards to $8014 [128K only]
+W $E870,6,2 Copy 24 bytes (3 bytes * 8 hooks) from 128k_mode_hooks to hooks at $83B5 [128K only]
 @ $E876 label=128k_mode_hooks
 C $E876,3 Becomes unknown_hook_1
 C $E879,3 Becomes engine_sfx_play_hook
