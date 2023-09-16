@@ -1634,7 +1634,7 @@ C $8276,6 Causes blinking of "PRESS GEAR TO PLAY"
 C $827E,1 nmessages++
 C $827F,1 Load flags
 C $8280,3 Call print_message
-C $8283,2 Loop while B > 0
+C $8283,2 Loop while #REGb > 0
 C $8285,6 Attribute related
 N $828B Alternate between credits and copyright messages.
 C $828B,7 Blinking on/off self modified pattern
@@ -1956,13 +1956,13 @@ C $8646,1 Set flags from counter in #REGa
 C $8647,2 Jump if zero
 C $8649,1 Copy counter to loop counter
 C $864A,3 Set attribute byte to black ink over green
-C $864D,2 Loop while #REGb
+C $864D,2 Loop while #REGb > 0
 @ $864F label=am_set_right_attrs
 C $864F,3 A = 7 - A
 C $8652,1 Return if zero
 C $8653,1 Copy counter to loop counter
 C $8654,3 Set attribute byte to black ink over red
-C $8657,2 Loop while #REGb
+C $8657,2 Loop while #REGb > 0
 C $8659,1 Return
 c $865A Draw the pre-game screen.
 D $865A Used by the routine at #R$858C.
@@ -2034,7 +2034,7 @@ C $86EA,3 Address of pre_game_messages
 C $86ED,2 Flags TBD
 C $86EF,1 HL--
 C $86F0,3 Call print_message
-C $86F3,2 Loop while B
+C $86F3,2 Loop while #REGb > 0
 C $86F5,1 Return
 b $86F6 18 byte chunks of this 36-byte table get copied to $C82D by $C808 2C = INC, 00 = NOP, ED+A0 = LDI
 @ $86F6 label=backdrop_shift_instrs
@@ -2240,9 +2240,9 @@ C $896C,2 Otherwise clear the EAR bit
 C $896E,2 Output
 C $8970,2 Rotate the effect data
 C $8972,2 Delay
-C $8974,2 Loop while #REGb
+C $8974,2 Loop while #REGb > 0
 C $8976,1 Move to the next byte of effect data
-C $8977,4 Loop while #REGc
+C $8977,4 Loop while #REGc > 0
 C $897B,1 Return
 B $897C,93,8*11,5 Effect data table
 c $89D9 Sound effect - not sure
@@ -2258,7 +2258,7 @@ C $89E2,4 Delay for 'D' iterations
 C $89E6,2 Loop for 'B' iterations
 C $89E8,2 Wiggle the EAR bit
 C $89EA,1 Move to the next byte of effect data
-C $89EB,3 Loop while #REGc
+C $89EB,3 Loop while #REGc > 0
 C $89EE,1 Return
 @ $89EF label=sfx_data
 B $89EF,32,8 Effect data table
@@ -2280,8 +2280,8 @@ C $8A27,2 Output
 C $8A29,3 Delay loop of #REGd iterations
 C $8A2C,3 Output
 @ $8A2F label=sfx8a0f_continue
-C $8A2F,3 Loop while #REGc
-C $8A32,3 Loop while #REGd
+C $8A2F,3 Loop while #REGc > 0
+C $8A32,3 Loop while #REGd > 0
 C $8A35,1 Return
 c $8A36 Sound effect - "bip-bow"
 R $8A36 I:D Delay at start
@@ -2297,9 +2297,9 @@ C $8A45,2 A = 24 set EAR and MIC bits <not sure of the effect>
 C $8A47,2 Output A
 C $8A49,3 Delay loop of C iterations
 C $8A4C,3 Output 0
-C $8A4F,3 Loop while H
+C $8A4F,3 Loop while #REGh > 0
 C $8A52,1 H = L
-C $8A53,3 Loop while C
+C $8A53,3 Loop while #REGc > 0
 N $8A56 This entry point is used by the routine at #R$83B5.
 C $8A56,1 Return
 c $8A57 Handle perp caught.
@@ -2377,7 +2377,7 @@ C $8B2B,3 DE = $0500
 @ $8B2E label=hpc_increment_score_loop_1
 C $8B2E,1 A = 0
 C $8B2F,3 Call increment_score
-C $8B32,2 Loop while B
+C $8B32,2 Loop while #REGb > 0
 C $8B35,3 Set A in "TIME BONUS   A  X 5000"
 C $8B38,3 A = C & 15
 C $8B3E,1 B = A -- iterations
@@ -2385,7 +2385,7 @@ C $8B3F,3 DE = $0050
 @ $8B42 label=hpc_increment_score_loop_2
 C $8B42,1 A = 0
 C $8B43,3 Call increment_score
-C $8B46,2 Loop while B
+C $8B46,2 Loop while #REGb > 0
 C $8B49,2 A += '0'
 C $8B4B,3 Set A in "TIME BONUS   xA X 5000"
 C $8B51,3 Point DE at last digit of score_bcd (big end)
@@ -2443,7 +2443,7 @@ C $8BEF,3 A = ~A + $F
 C $8BF2,3 DE = 20
 C $8BF5,1 B = A  -- iterations
 C $8BF6,2 HL -= DE
-C $8BF8,2 Loop while B
+C $8BF8,2 Loop while #REGb > 0
 C $8BFB,3 HL = speed
 C $8BFF,4 Jump if HL < DE
 C $8C03,2 Clear Up, i.e. stop accelerating
@@ -2783,9 +2783,10 @@ D $8F5F Used by the routines at #R$8401, #R$852A and #R$873C.
 C $8F5F,3 Point #REGde at the stack
 C $8F62,3 Self modify 'LD HL' at $A9E2 to load the stack address
 C $8F65,6 Self modify 'LD HL' at $AECF to load $E900
+N $8F6B Add 32 to the first 21 entries of tables $E301 and $E336. If meddled with this affects the height of elements.
 C $8F6B,3 HL = $E301
 C $8F6E,3 DE = $E336
-C $8F71,3 BC = $1520
+C $8F71,3 B = 21 iterations, C = 32 (added to table entries)
 C $8F74,3 *HL += C
 C $8F77,3 *DE += C
 C $8F7A,1 E++
@@ -4003,7 +4004,7 @@ D $9D2E Bonus is 200 for each overtaken car, reset on crashes.
 R $9D2E Used by the routine at #R$8401.
 N $9D2E I:A Iterations (number of sequential overtakes to consider)
 @ $9D2E label=calc_overtake_bonus
-C $9D2E,5 If $A22B is zero then return
+C $9D2E,5 If allow_overtake_bonus is zero then return
 C $9D33,1 B = A -- iterations / no. of overtakes
 C $9D34,3 Point #REGhl at overtake_bonus
 N $9D37 Increment bonus by 2 up to a max of 128.
@@ -4020,7 +4021,7 @@ C $9D45,1 Clear top two digits
 C $9D46,3 Call bonus
 C $9D49,1 Unbank
 C $9D4A,2 Loop while #REGb > 0
-C $9D4C,4 $A22B = 0
+C $9D4C,4 Clear allow_overtake_bonus
 C $9D50,1 Return
 c $9D51 Update scoreboard and flashing lights
 @ $9D51 label=bonus_string
@@ -4471,7 +4472,40 @@ B $A13B,1,1 Used by $8425  -- seems to start at 4 then cycle 3/2/1 with each res
 B $A13C,1,1 Overtake combo bonus counter. BCD. This increases by 2 for each overtake and is reset on a crash.
 @ $A13D label=credits
 B $A13D,1,1 Number of credits remaining (2 for a new game)
-B $A13E,47,8*5,7 Canned data or Data restored for attract mode?
+N $A13E Data copied to $A16D+.
+@ $A13E label=saved_game_state
+B $A13E,1,1 Copied to var_a16d
+B $A13F,1,1 Copied to idle_timer
+B $A140,1,1 Copied to user_input_mask
+B $A141,1,1 Copied to turbos
+W $A142,2,2 Copied to horizon_level
+B $A144,1,1 Copied to var_A173
+B $A145,1,1 Copied to displayed_gear
+B $A146,8,8 Copied to score_digits
+B $A14E,1,1 Copied to time_sixteenths
+B $A14F,1,1 Copied to time_bcd
+B $A14F,2,2 Copied to time_digits
+B $A151,4,4 Copied to distance_digits
+B $A156,1,1 Copied to no_objects_counter
+W $A157,2,2 Copied to horizon_attribute
+B $A159,1,1 Copied to hazards[0].0
+B $A15A,1,1 Copied to hazards[0].1
+B $A15B,1,1 Copied to hazards[0].2
+B $A15C,1,1 Copied to hazards[0].3
+B $A15D,1,1 Copied to hazards[0].4
+B $A15E,1,1 Copied to hazards[0].5
+B $A15F,1,1 Copied to hazards[0].6
+B $A160,1,1 Copied to hazards[0].7
+B $A161,1,1 Copied to hazards[0].8
+W $A162,2,2 Copied to hazards[0].9 (car LOD)
+W $A164,2,2 Copied to hazards[0].11 (== smash_handler)
+W $A166,2,2 Copied to hazards[0].13 (horz pos)
+B $A168,1,1 Copied to hazards[0].15
+B $A169,1,1 Copied to hazards[0].16
+B $A16A,1,1 Copied to hazards[0].17
+B $A16B,1,1 Copied to hazards[0].18
+B $A16C,1,1 Copied to hazards[0].19
+@ $A16D label=var_a16d
 B $A16D,1,1 Used by $BC36
 @ $A16E label=idle_timer
 B $A16E,1,1 Idle timer. Counts down from 100. Recommences whenever the hero car is stopped. When it hits zero Raymond will say "LET'S GET MOVIN' MAN!" and it will be reset to 100.
@@ -4481,10 +4515,10 @@ B $A16F,1,1 User input mask, set to $C0 (Quit+Pause) when perp is fully smashed,
 B $A170,1,1 Number of turbo boosts remaining (3 for a new game)
 @ $A171 label=horizon_level
 W $A171,2,2 seems to be the horizon level, possibly relative (used during attract mode)
-@ $A173 label=mystery_A173
+@ $A173 label=var_A173
 B $A173,1,1 This is decremented by $8BC6 but nothing else seems to read it.
 @ $A174 label=displayed_gear
-B $A174,1,1 Low/high gear flag?
+B $A174,1,1 Low/high gear flag.
 @ $A175 label=score_digits
 B $A175,8,8 Score digits. One digit per byte, least significant first. This seems to be recording what's on screen so digit plotting can be bypassed.
 @ $A17D label=time_sixteenths
@@ -4499,7 +4533,7 @@ B $A181,4,4 Distance as displayed. Stored as one digit per byte.
 B $A185,1,1 If set causes no objects or hazards to be emitted.
 @ $A186 label=horizon_attribute
 W $A186,2,2 Attribute address of horizon. Points to last attribute on the line which shows the ground. (e.g. $59DF)
-N $A188 +0 is a used flag, either $00 or $FF +1 looks distance related +2/3/4/5/6 TBD +7 byte  TBD used by hazard_hit +8 byte  gets copied from the hazards table +9 word  address of e.g. car lod +11 word  address of routine +13 word  set to $190 by fully_smashed (likely a horizontal position) +15 byte TBD used by hazard_hit, counter which gets set to 2 then reduced +17 byte  TBD used by hazard_hit, indexes table $ACDB +18 byte  TBD used by hazard_hit +19 byte TBD used by hazard_hit
+N $A188 Hazard structure layout: +0 is $FF if this hazard is used, $00 otherwise +1 looks distance related +2 TBD +3 TBD +4 TBD +5 TBD +6 TBD +7 byte TBD used by hazard_hit +8 byte gets copied from the hazards table +9 word address of e.g. car LOD +11 word address of routine +13 word set to $190 by fully_smashed (likely a horizontal position) +15 byte TBD used by hazard_hit, counter which gets set to 2 then reduced +16 byte TBD +17 byte TBD used by hazard_hit, indexes table $ACDB +18 byte TBD used by hazard_hit +19 byte TBD used by hazard_hit
 @ $A188 label=hazards
 B $A188,120,8 Set by $843B. Groups of 20 bytes. This area looks like a table of spawned vehicles or objects. The first entry is the perp.
 N $A200 Unknown
@@ -4534,7 +4568,8 @@ B $A228,1,1 $B421 reads  $B4C8 writes
 @ $A229 label=time_up_state
 B $A229,1,1 1 => out of time, 2 => "TIME UP" message is printed; 3 => "CONTINUE THIS MISSION" message is printed and a countdown runs 4 => countdown elapsed; 0 otherwise
 B $A22A,1,1 Used by $B6D6 and others
-B $A22B,1,1 Used by $9D2E and others. Stops overtake bonus working.
+@ $A22B label=allow_overtake_bonus
+B $A22B,1,1 Enables overtake bonus. Used by $9D2E and others.
 @ $A22C label=trigger_bonus_flag
 B $A22C,1,1 Bonus flag (1 triggers the effect)
 @ $A22D label=bonus_counter
@@ -5672,81 +5707,75 @@ c $ADA0 Draws all hazards.
 D $ADA0 This includes all cars, barriers, tumbleweeds, etc.
 R $ADA0 Used by the routines at #R$8401, #R$852A and #R$873C.
 @ $ADA0 label=draw_hazards
-C $ADA0,1 A = 0
-C $ADA1,3 $A222 = 0
+C $ADA0,4 $A222 = 0
 C $ADA4,3 IY = $E3xx
 C $ADA7,4 IX = &hazards[0]
-C $ADAB,3 DE = 20
-C $ADAE,2 B = 6
+C $ADAB,3 Stride of hazards entry in bytes
+C $ADAE,2 6 iterations
 @ $ADB0 label=dh_loop
-C $ADB0,4 If the hazard is active ...
+C $ADB0,4 Set carry if the hazard is active
 C $ADB4,1 Bank
-C $ADB5,3 Call $ADBE
+C $ADB5,3 Call dh_draw_one_hazard if hazard active
 C $ADB8,1 Unbank
-C $ADB9,2 Move to next hazard
-C $ADBB,2 Loop while #REGb
+C $ADB9,2 Advance to next hazard
+C $ADBB,2 Loop while iterations remain -- #REGb > 0
 C $ADBD,1 Return
-@ $ADBE label=draw_one_hazard
-C $ADBE,3 C = IX[14]
-C $ADC1,3 A = IX[4]
-C $ADC4,3 A -= IX[13]
-C $ADC7,3 IX[4] = A
-C $ADCA,2 Jump if no carry
-C $ADCC,1 C++
-C $ADCD,5 C += IX[1]
-C $ADD2,4 A = IX[15] + 1
-C $ADD6,2 Jump if non-zero
-C $ADD8,3 A = IX[17]
+@ $ADBE label=dh_draw_one_hazard
+C $ADBE,3 C = IX[14]  -- top byte of horz position?
+C $ADC1,9 IX[4] -= IX[13]  -- (TBD -= (bottom byte of horz position?))
+C $ADCA,3 If IX[4] was < IX[13] Then C++
+C $ADCD,5 C += IX[1]  -- distance related?
+C $ADD2,4 A = IX[15] + 1  -- counter?
+C $ADD6,2 Jump to dh_adf0 if non-zero
+C $ADD8,3 A = IX[17]  -- byte that indexes $ACDB
 C $ADDB,2 Jump if no carry (from earlier)
-C $ADDD,1 A++
-C $ADDE,4 Jump if A < 4
+C $ADDD,5 Jump if ++A < 4
 C $ADE2,1 A--
-C $ADE3,2 C = $FF
+C $ADE3,2 C = $FF  -- gets put in distance related field
 C $ADE5,3 IX[17] = A
 C $ADE8,1 Set flags
 C $ADE9,1 A = C
 C $ADEA,2 Jump if zero
-C $ADEC,3 IX[1] = A
+C $ADEC,3 IX[1] = A  -- update distance?
 C $ADEF,1 Return
+@ $ADF0 label=dh_adf0
 C $ADF0,1 A = C
-C $ADF1,4 Jump if A < 23
+C $ADF1,4 Jump if A < 23  -- still visible?
+N $ADF5 Wipe the hazard because it's gone?
 C $ADF5,4 IX[0] = 0  -- hazard slot now spare
 C $ADF9,1 Return
-C $ADFA,3 IX[1] = A
-C $ADFD,3 Jump if A >= 20
+C $ADFA,3 IX[1] = A  -- distance related
+C $ADFD,3 Return if A >= 20
 C $AE00,1 A--
 C $AE01,2 Jump if non-zero
 C $AE03,6 A = ~(fast_counter & $E0)
 C $AE09,5 Jump if A >= IX[4]
 C $AE0E,4 B = IX[15] + 1
 C $AE12,2 Jump if zero
+N $AE14 Wipe the hazard because car overtaken?
 C $AE14,4 IX[0] = 0  -- hazard slot now spare
 C $AE1A,1 Return if no carry
-C $AE1B,4 Increment overtake_bonus
+C $AE1B,4 Increment allow_overtake_bonus
 C $AE1F,1 Return
 C $AE20,3 IX[4] = A
 C $AE23,1 A = 0
 C $AE24,2 A += $4E
-C $AE26,2 IY.low = A
+N $AE26 $E300..$E316 is regularly accessed. $E300 is always $60, $E316 is always $A0
+C $AE26,2 IY.low = A  -- i.e. $E300 | A
 C $AE28,3 A = IY[1]
 C $AE2B,1 C = A
-C $AE2C,3 A -= IY[0]
-C $AE2F,2 D = 0
-C $AE31,2 HL = 0
-C $AE33,1 E = A
-N $AE34 Multiplier. DE = multiplier. A = multiplicand.
+C $AE2C,3 A -= IY[0]  -- A is now the delta between adjacent elements
+N $AE2F Multiplier. DE = multiplier. A = multiplicand. HL = result.
+C $AE2F,5 DE = A; HL = 0
 C $AE34,3 A = IX[4]
-C $AE37,2 B = 8
+C $AE37,2 B = 8  -- iterations of multiply loop
 C $AE39,1 Test top bit
 C $AE3A,3 If it carried out then add
 C $AE3D,1 Double
 C $AE3E,2 Loop
-C $AE40,1 A = H
+C $AE40,1 A = H  -- high part of result
 C $AE42,3 IX[6] = A
-C $AE45,2 A = -A
-C $AE47,1 A += C
-C $AE48,1 A <<= 1
-C $AE49,1 A = ~A
+C $AE45,5 A = ~((C - A) << 1)
 C $AE4A,3 HL = $E800 + A
 C $AE4D,1 D = *HL
 C $AE4E,1 HL--
@@ -6860,7 +6889,7 @@ C $BA01,1 Load a lanes byte
 C $BA02,5 Jump if (byte & $E1) == $E1
 C $BA07,1 Advance to next lanes byte (wrapping around)
 C $BA08,1 Increment counter
-C $BA09,2 Loop while B
+C $BA09,2 Loop while #REGb
 N $BA0B No road split found?
 C $BA0B,3 [road is still rendered if this is NOPped, but road is in wrong position]
 C $BA0E,4 Self modify return path
@@ -7375,8 +7404,8 @@ C $C070,2 jump if used
 C $C072,2 IX += DE
 C $C074,2 Loop while #REGb
 C $C076,1 A = C  -- A = 0?
-C $C077,3 HL = $A22B
-C $C07A,3 HL = $A22B  -- duplicate instruction
+C $C077,3 HL = &allow_overtake_bonus
+C $C07A,3 HL = &allow_overtake_bonus  -- duplicate instruction
 C $C07D,1 *HL = A
 C $C07E,2 Jump to rm_c0bb
 @ $C080 label=rm_c080
@@ -8860,6 +8889,7 @@ C $CD5D,3 Call multiply (A = multiplier, C = multiplicand)
 C $CD60,2 A = -A
 C $CD62,1 C = A
 C $CD63,1 Bank
+N $CD64 This builds the table at $E301.
 C $CD64,2 B = $15
 C $CD66,3 DE = $E301
 @ $CD69 label=ml10_loop
@@ -8905,7 +8935,7 @@ C $CDAA,1 Restore HL
 C $CDAB,1 A += *HL
 C $CDAC,1 L++
 C $CDAD,1 Bank
-C $CDAE,1 *DE = A
+C $CDAE,1 *DE = A  -- writes to the table at $E3xx
 C $CDAF,1 E++
 C $CDB0,2 IYl++
 C $CDB2,2 Loop to ml10_loop
