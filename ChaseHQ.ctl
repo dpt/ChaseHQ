@@ -114,6 +114,7 @@
 > $4000 ;
 > $4000 ; Bank 1 @ $C000..$DAEF is level 1's data
 > $4000 ; Bank 1 @ $E000..$FAEF is level 2's data
+> $4000 ; Bank 4 @ $C000..$FF66 is sampled speech
 > $4000 ; Bank 6 @ $C000..$DAEF is level 3's data
 > $4000 ; Bank 6 @ $E000..$FAEF is level 4's data
 > $4000 ; Bank 7 @ $C000..$DAEF is level 5's data
@@ -1719,7 +1720,7 @@ N $83C4 This entry point is used by the routine at #R$8903.
 @ $83C4 label=engine_sfx_setup_hook
 C $83C4,3 Call engine_sfx_setup
 N $83C7 This entry point is used by the routines at #R$8401 and #R$9BCF.
-@ $83C7 label=unknown_hook_3
+@ $83C7 label=play_speech
 C $83C7,3 Only a RET
 N $83CA This entry point is used by the routine at #R$83CD.
 @ $83CA label=attract_mode_hook
@@ -1762,12 +1763,13 @@ N $841B Run the main game loop.
 C $841B,3 Call run_pregame_screen
 C $841E,3 Address of setup_game_data
 C $8421,3 Call setup_game
-C $8424,10 $A13B cycles 3,2,1 then repeats
-C $842E,7 $A26B = (A * 4) OR 2
+C $8424,10 Cycle start_random 3,2,1 then repeat
+N $842E Choose a random startup sample.
+C $842E,7 start_speech = (A * 4) OR 2
 C $8435,4 Test 128K mode flag
 C $8439,5 $A188 = $FF -- I suspect this keeps the perp spawned
 C $8441,3 Call chatter if not in 128K mode
-@ $8444 label=main_loop_loop
+@ $8444 label=ml_loop
 C $8444,3 Call drive_sfx
 C $8447,3 Call keyscan
 C $844A,3 Call tick
@@ -1811,7 +1813,7 @@ C $84B9,3 Call engine_sfx_play_hook
 C $84BC,3 Call draw_screen
 C $84BF,3 Call main_loop_27
 C $84C2,3 Is test mode enabled?
-C $84C5,3 If not, goto no_test_mode
+C $84C5,3 If not, goto not_test_mode
 N $84C8 Test mode handling
 @ $84C8 label=handle_test_mode
 C $84C8,4 Read keys 1/2/3/4/5
@@ -1831,9 +1833,22 @@ C $84EB,2 Jump if NOT
 C $84ED,2 wanted_stage_number = 6
 C $84EF,3 Exit via load_stage
 C $84F2,9 Increment credits unless maxed out at 9
-@ $84FB label=no_test_mode
-C $850C,3 Call hooked function (likely sfx)
-C $850F,3 Loop
+@ $84FB label=not_test_mode
+C $84FB,3 A = transition_control
+C $84FE,4 Jump to ml_loop if non-zero
+C $8502,3 Address of start_speech
+C $8505,2 Shift the counter right
+C $8507,2 Jump if no carry
+C $8509,1 Load it
+C $850A,2 Zero it
+C $850C,3 Call play_speech
+C $850F,3 Loop to ml_loop
+C $8512,3 A = quit_state
+C $8515,4 Jump to ml_loop if not quitting
+N $8519 Quit in progress.
+C $8519,1 Decrement quit state
+C $851A,3 Jump to escape_scene if non-zero
+C $851D,5 quit_state = 2
 C $8524,3 Call setup_transition
 C $8527,3 Loop
 c $852A CPU driver
@@ -1897,6 +1912,7 @@ C $85C5,4 Jump to rps_xxx if $963D >= 3
 C $85C9,3 Call keyscan
 C $85CC,4 Loop until fire is hit
 C $85D0,3 Call clear_chatter
+C $85D3,3 Exit via play_start_noise
 @ $85D6 label=rps_xxx
 C $85D8,3 If no carry call setup_transition
 C $85DB,2 Loop
@@ -2159,11 +2175,11 @@ C $88A3,3 Call chatter
 C $88A6,3 Exit via turbo_sfx_play_hook
 N $88A9 This entry point is used by the routine at #R$9BCF.
 @ $88A9 label=quit_key
-C $88A9,5 If $A26A != 0 then return
+C $88A9,5 If quit_state != 0 then return (quit in progress)
 C $88AE,3 Call clear_chatter
 C $88B1,3 Call fill_attributes
 C $88B4,4 user_input_mask = 0  -- A is zero from fill_attributes
-C $88B8,3 $A26A = 1
+C $88B8,3 quit_state = 1  -- start quitting
 C $88BB,1 Return
 @ $88BC label=pause_key
 C $88BC,3 Call silence_audio_hook
@@ -3869,8 +3885,8 @@ C $9C1B,3 Point at "TIME UP" message
 C $9C1E,3 Call message_printing_related
 C $9C21,6 Return if speed > 0
 C $9C27,5 time_up_state = 2
-C $9C2C,2 A = 4
-C $9C2E,3 Exit via unknown_hook_3
+C $9C2C,2 Index of "Your time's up" speech sample
+C $9C2E,3 Exit via play_speech
 C $9C31,5 Return if transition_control is non-zero
 C $9C36,8 Exit via quit_key if no credits remain
 C $9C3E,1 Decrement credits [POKE $9C3E for Infinite credits]
@@ -3891,8 +3907,9 @@ C $9C6A,3 transition_control = 3 -- Flag set to zero when attributes have been s
 C $9C6D,3 turbos = 3
 C $9C70,9 Set remaining time to 60 (BCD) [doesn't affect stuff if altered?!]
 N $9C79 This entry point is used by the routines at #R$858C and #R$F220.
-C $9C79,2 A = 5
-C $9C7B,3 Exit via unknown_hook_3
+@ $9C79 label=play_start_noise
+C $9C79,2 Index of start noise sample
+C $9C7B,3 Exit via play_speech
 @ $9C7E label=tick_print_continue
 C $9C7E,3 Print "CONTINUE THIS MISSION" messages
 C $9C81,3 Call message_printing_related
@@ -3907,7 +3924,7 @@ C $9C95,3 Call start_sfx
 C $9C98,1 A = L
 C $9C99,1 Set flags
 C $9C9C,1 A++
-C $9C9D,3 *$A26A = A
+C $9C9D,3 quit_state = A
 C $9CA0,5 time_up_state = 4
 C $9CA5,3 Self modify 'LD HL' at $9C84 to load HL
 C $9CA8,1 A = L
@@ -4467,6 +4484,7 @@ g $A139 Game status buffer entry at A139
 B $A139,1,1 0/1 => 48K/128K mode
 @ $A13A label=current_stage_number
 B $A13A,1,1 Current stage number
+@ $A13B label=start_random
 B $A13B,1,1 Used by $8425  -- seems to start at 4 then cycle 3/2/1 with each restart of the game, another random factor?
 @ $A13C label=overtake_bonus
 B $A13C,1,1 Overtake combo bonus counter. BCD. This increases by 2 for each overtake and is reset on a crash.
@@ -4663,8 +4681,10 @@ B $A266,1,1 Used by $A3A6 -- counts down (from 16?) when the split road approach
 B $A267,1,1 Used by $BC39 -- as 16-bit
 B $A268,1,1 Used by $BB69 - skips routine if not set
 B $A269,1,1 Used by $BC29
-B $A26A,1,1 Used by quit_key - quit in progress flag?
-B $A26B,1,1 Used by $8432
+@ $A26A label=quit_state
+B $A26A,1,1 0 if not quitting, or 1/2 depending on quit state
+@ $A26B label=start_speech
+B $A26B,1,1 Used by $8432 - index of speech sample to play
 @ $A26C label=road_pos
 W $A26C,2,2 Road position of car. Left..Right = $1E2...$03A, $105 is centre.
 @ $A26E label=road_curvature_ptr
@@ -9474,7 +9494,7 @@ C $E87C,3 Becomes silence_audio_hook
 C $E87F,3 Becomes unknown_hook_2
 C $E882,3 Becomes turbo_sfx_play_hook
 C $E885,3 Becomes engine_sfx_setup_hook
-C $E888,3 Becomes unknown_hook_3
+C $E888,3 Becomes play_speech
 C $E88B,3 Becomes attract_mode_hook
 @ $E88E label=data_e88e
 B $E88E,24,3 Copied to $EC00
@@ -10140,24 +10160,30 @@ C $F31E,1 Return
 C $F31F,8 Set mixer to disable tone C and noise C
 C $F327,4 [copy of noise pitch] = 0
 C $F32B,3 Exit via f2b6_128k
-N $F32E Relocated to $8122
-@ $F32E label=f32e_128k_table
-W $F32E,2,2
-W $F330,2,2 address?
-W $F332,2,2
-W $F334,2,2 address?
-W $F336,2,2
-W $F338,2,2 address?
-W $F33A,2,2
-W $F33C,2,2 address?
-W $F33E,2,2
-W $F340,2,2 address?
-@ $F342 label=unknown_hook_3_128k
+N $F32E Relocated to $8122 "Giddy up boy!"
+@ $F32E label=speech_samples_table
+W $F32E,2,2 length
+W $F330,2,2 address
+N $F332 "Let's go Mr. Driver!"
+W $F332,2,2 length
+W $F334,2,2 address
+N $F336 "Hold on man!"
+W $F336,2,2 length
+W $F338,2,2 address
+N $F33A "Your time's up"
+W $F33A,2,2 length
+W $F33C,2,2 address
+N $F33E Start noise
+W $F33E,2,2 length
+W $F340,2,2 address
+@ $F342 label=play_speech_128k
+C $F342,1 Input index (sample index 1..5)
 C $F343,3 Call silence_audio_hook_128k
 C $F346,2 128K: Map RAM page 4 to $C000; Map normal screen; Map ROM 0
-C $F356,9 HL = $F32A + A*4  -- i.e. it's 1-indexed f32e_128k_table
-C $F35F,4 DE = wordat(HL); HL += 2
-C $F363,4 HL = wordat(HL)
+C $F355,1 Input index
+C $F356,9 HL = $F32A + A*4  -- i.e. it's 1-indexed speech_samples_table
+C $F35F,4 DE = wordat(HL); HL += 2  -- read length
+C $F363,4 HL = wordat(HL)  -- read address
 @ $F367 label=f367_128k
 C $F367,2 C = 2  -- iterations
 C $F369,1 A = *HL
@@ -10254,7 +10280,7 @@ C $F43B,3 -> enter_for_options_messages
 C $F43E,2 Jump to f44b_key_check
 C $F440,3 Call keyscan
 C $F443,2 Was FIRE pressed?
-C $F445,3 Jump if so
+C $F445,3 Jump to play_start_noise if so
 C $F448,3 -> press_gear_messages
 @ $F44B label=f44b_key_check
 C $F44B,4 Read port $BFFE -- ENTER, L, K, J, H
