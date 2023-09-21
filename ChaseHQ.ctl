@@ -183,6 +183,7 @@
 @ $4000 start
 @ $4000 writer=:ChaseHQ.ChaseHQAsmWriter
 b $4000 Screen memory
+D $4000 #UDGTABLE { #SCR(loading) | This is the loading screen. } TABLE#
 B $4000,6144,8 Screen bitmap
 B $5800,768,8 Screen attributes
 c $5B00 Could be loader code
