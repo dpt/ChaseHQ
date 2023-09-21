@@ -1,11 +1,10 @@
 > $4000 ; ChaseHQ.skool
 > $4000 ;
-> $4000 ; This is a SkoolKit control file to disassemble the ZX Spectrum 48K version of
-> $4000 ; Chase H.Q. by Ocean Software. A home computer version of the arcade game by
-> $4000 ; Taito Corporation.
+> $4000 ; This is a SkoolKit control file that disassembles the ZX Spectrum 48K version
+> $4000 ; of Chase H.Q. by Ocean Software. A home computer version of the arcade game
+> $4000 ; by Taito Corporation.
 > $4000 ;
-> $4000 ; This is intended to document the game when it is in a "pristine" as-loaded
-> $4000 ; state.
+> $4000 ; This documents the game when it is in a "pristine" as-loaded state.
 > $4000 ;
 > $4000 ; Reverse engineering by David Thomas, 2023.
 > $4000 ;
@@ -24,20 +23,26 @@
 > $4000 ;
 > $4000 ; RELATED PORTS
 > $4000 ; -------------
-> $4000 ; The Amstrad CPC version is by the same authors and was produced after.
+> $4000 ; The Amstrad CPC version is by the same authors and was produced after this
+> $4000 ; Spectrum version.
 > $4000 ;
 > $4000 ;
 > $4000 ; RELATED GAMES
 > $4000 ; -------------
-> $4000 ; "WEC Le Mans" (1988) - An earlier game by the same authors.
+> $4000 ; "WEC Le Mans" (Imagine, 1989)
+> $4000 ; [Lamb/Mullins/Dunn/Harbison/Morrall]
+> $4000 ; - Shares a composer and an artist with ZX Chase HQ.
 > $4000 ; <https://www.mobygames.com/game/15167/wec-le-mans-24/>
 > $4000 ;
-> $4000 ; "Batman The Movie" (1989) - The same authors worked on the driving sequences
-> $4000 ; for the Atari ST and Amiga versions of this game.
+> $4000 ; "Batman: The Movie" (Ocean Software, 1989)
+> $4000 ; [Lamb/O'Brien/Shortt/Drake/Harbison/Palmer/Hemphill/Dunn/Cannon]
+> $4000 ; - ZX Chase HQ's authors worked on the driving sequences for the Atari ST and
+> $4000 ;   Amiga versions of this game.
 > $4000 ; <https://www.mobygames.com/game/3848/batman/>
 > $4000 ;
-> $4000 ; "Burnin' Rubber" (1990) - A later Amstrad game by John O'Brien very much like
-> $4000 ; WEC Le Mans.
+> $4000 ; "Burnin' Rubber" (Ocean Software, 1990)
+> $4000 ; [O'Brien/Hemphill/Dunn]
+> $4000 ; - A later Amstrad game by John O'Brien very much like WEC Le Mans.
 > $4000 ; <https://www.mobygames.com/game/70894/burnin-rubber/>
 > $4000 ;
 > $4000 ;
