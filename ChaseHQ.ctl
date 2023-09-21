@@ -1699,32 +1699,31 @@ W $8365,2,2 Attribute address
 T $8367,19,18:n1 "ALL RIGHTS RESERVED"
 b $837A Unknown - mostly NUL bytes
 B $837A,59,8*7,3
-c $83B5 Hooks for 128K functions
+c $83B5 Hooks for functions that vary between 48K and 128K modes.
 D $83B5 Used by the routine at #R$B4CC.
-N $83B5 Some of these unknowns will be for the 128K sampled speech.
-@ $83B5 label=unknown_hook_1
-C $83B5,3 Only a RET
+@ $83B5 label=start_siren_hook
+C $83B5,3 No-op when in 48K mode -- likely siren
 N $83B8 This entry point is used by the routines at #R$8401 and #R$8903.
 @ $83B8 label=engine_sfx_play_hook
-C $83B8,3 Call engine_sfx_play
+C $83B8,3 Call engine_sfx_play when in 48K mode
 N $83BB This entry point is used by the routines at #R$8401, #R$873C, #R$87DC, #R$8876, #R$8A57 and #R$F220.
 @ $83BB label=silence_audio_hook
-C $83BB,3 Likely silences audio in 128K mode
+C $83BB,3 No-op when in 48K mode
 N $83BE This entry point is used by the routine at #R$8903.
-@ $83BE label=unknown_hook_2
-C $83BE,3 Only a RET
+@ $83BE label=write_registers_hook
+C $83BE,3 No-op when in 48K mode
 N $83C1 This entry point is used by the routine at #R$8876.
 @ $83C1 label=turbo_sfx_play_hook
-C $83C1,3 Likely the turbo boost sound effect
+C $83C1,3 No-op when in 48K mode
 N $83C4 This entry point is used by the routine at #R$8903.
 @ $83C4 label=engine_sfx_setup_hook
-C $83C4,3 Call engine_sfx_setup
+C $83C4,3 Call engine_sfx_setup when in 48K mode
 N $83C7 This entry point is used by the routines at #R$8401 and #R$9BCF.
-@ $83C7 label=play_speech
-C $83C7,3 Only a RET
+@ $83C7 label=play_speech_hook
+C $83C7,3 No-op when in 48K mode
 N $83CA This entry point is used by the routine at #R$83CD.
 @ $83CA label=attract_mode_hook
-C $83CA,3 Call attract_mode
+C $83CA,3 Call attract_mode when in 48K mode
 c $83CD Bootstrap
 D $83CD Used by the routine at #R$E839.
 N $83CD Builds a table of flipped bytes at $EF00.
@@ -1841,7 +1840,7 @@ C $8505,2 Shift the counter right
 C $8507,2 Jump if no carry
 C $8509,1 Load it
 C $850A,2 Zero it
-C $850C,3 Call play_speech
+C $850C,3 Call play_speech_hook
 C $850F,3 Loop to ml_loop
 C $8512,3 A = quit_state
 C $8515,4 Jump to ml_loop if not quitting
@@ -2211,7 +2210,7 @@ C $8910,3 Counters?
 C $8913,3 Call start_sfx if non-zero
 C $8916,3 Call engine_sfx_setup_hook
 C $8919,3 Call engine_sfx_play_hook
-C $891C,3 Call another hooked routine
+C $891C,3 Call write_registers_hook
 C $891F,5 If $A237 == 0 return
 C $8924,3 #REGe = $A237 * 4 -- stride of table
 C $8927,4 $A237 = 0
@@ -3886,7 +3885,7 @@ C $9C1E,3 Call message_printing_related
 C $9C21,6 Return if speed > 0
 C $9C27,5 time_up_state = 2
 C $9C2C,2 Index of "Your time's up" speech sample
-C $9C2E,3 Exit via play_speech
+C $9C2E,3 Exit via play_speech_hook
 C $9C31,5 Return if transition_control is non-zero
 C $9C36,8 Exit via quit_key if no credits remain
 C $9C3E,1 Decrement credits [POKE $9C3E for Infinite credits]
@@ -3909,7 +3908,7 @@ C $9C70,9 Set remaining time to 60 (BCD) [doesn't affect stuff if altered?!]
 N $9C79 This entry point is used by the routines at #R$858C and #R$F220.
 @ $9C79 label=play_start_noise
 C $9C79,2 Index of start noise sample
-C $9C7B,3 Exit via play_speech
+C $9C7B,3 Exit via play_speech_hook
 @ $9C7E label=tick_print_continue
 C $9C7E,3 Print "CONTINUE THIS MISSION" messages
 C $9C81,3 Call message_printing_related
@@ -4501,9 +4500,10 @@ B $A144,1,1 Copied to var_A173
 B $A145,1,1 Copied to displayed_gear
 B $A146,8,8 Copied to score_digits
 B $A14E,1,1 Copied to time_sixteenths
-B $A14F,1,1 Copied to time_bcd
-B $A14F,2,2 Copied to time_digits
+B $A14F,1,1 Copied to time_digits
+B $A150,1,1
 B $A151,4,4 Copied to distance_digits
+B $A155,1,1
 B $A156,1,1 Copied to no_objects_counter
 W $A157,2,2 Copied to horizon_attribute
 B $A159,1,1 Copied to hazards[0].0
@@ -4614,7 +4614,7 @@ N $A237 These seem to get altered even when no sound is being produced.
 B $A237,1,1 Used by $88F2
 @ $A238 label=sfx_1
 B $A238,1,1 Used by $88F2
-B $A239,1,1 Used by $F265 [128K]
+B $A239,1,1 Used by $F265 [128K]  Siren related.
 B $A23A,1,1 Used by $F2F6 [128K]
 @ $A23B label=tunnel_sfx
 B $A23B,1,1 Set to 5 when we're in a tunnel. Used to modulate sfx.
@@ -6425,8 +6425,9 @@ C $B4C2,1 A = C
 C $B4C3,3 Exit via $B699
 C $B4C6,5 *$A228 = 1
 C $B4CB,1 Return
-c $B4CC Routine at B4CC
+c $B4CC Perp sighted
 D $B4CC Used by the routine at #R$A637.
+@ $B4CC label=perp_sighted
 C $B4CC,5 *$B477 = 0
 C $B4D1,3 *$A22F = 1
 C $B4D4,3 *$A22E = 1
@@ -6436,7 +6437,7 @@ C $B4E1,3 Point #REGhl at left light's attributes
 C $B4E4,3 Toggle its brightness
 C $B4E7,3 Point at "SIGHTING OF TARGET VEHICLE" message
 C $B4EA,3 Call message_printing_related
-C $B4ED,3 Exit via hooked routine (likely sfx, siren?)
+C $B4ED,3 Exit via start_siren_hook
 c $B4F0 Smash handling
 @ $B4F0 label=smash
 C $B4F0,8 Cycle #REGa one step through 0..3 each time the routine is entered
@@ -9488,13 +9489,13 @@ W $E864,6,2 Copy 48 bytes from diamond_zoom_in_mask to $EA00
 W $E86A,6,2 Copy 926 bytes from page_in_stage_128k onwards to $8014 [128K only]
 W $E870,6,2 Copy 24 bytes (3 bytes * 8 hooks) from 128k_mode_hooks to hooks at $83B5 [128K only]
 @ $E876 label=128k_mode_hooks
-C $E876,3 Becomes unknown_hook_1
+C $E876,3 Becomes start_siren_hook
 C $E879,3 Becomes engine_sfx_play_hook
 C $E87C,3 Becomes silence_audio_hook
-C $E87F,3 Becomes unknown_hook_2
+C $E87F,3 Becomes write_registers_hook
 C $E882,3 Becomes turbo_sfx_play_hook
 C $E885,3 Becomes engine_sfx_setup_hook
-C $E888,3 Becomes play_speech
+C $E888,3 Becomes play_speech_hook
 C $E88B,3 Becomes attract_mode_hook
 @ $E88E label=data_e88e
 B $E88E,24,3 Copied to $EC00
@@ -10073,7 +10074,7 @@ C $F235,5 128K: Page in required bank
 C $F23A,3 Destination $5C00..$76EF (from the horizon backdrop to just before the turbo icons)
 C $F23D,3 Bytes to copy (worst case)
 C $F240,2 Copy
-C $F242,3 Jump to relocated f414_128k
+C $F242,3 Exit via relocated reset_paging_128k
 N $F245 Pairs of (top byte of source data address, paging flags).
 @ $F245 label=stage_data_locations
 W $F245,2,2 Level 1. Source = $C000, Paging = bank 1
@@ -10083,7 +10084,7 @@ W $F24B,2,2 Level 4. Source = $E000, Paging = bank 6
 W $F24D,2,2 Level 5. Source = $C000, Paging = bank 7
 W $F24F,2,2 Level 6. Source = $E000, Paging = bank 7
 N $F251 $8045 once relocated.
-@ $F251 label=unknown_hook_1_128k
+@ $F251 label=start_siren_hook_128k
 C $F251,5 Store $8C to channel A fine pitch
 C $F256,5 Store 14 to channel A volume (4-bit)
 C $F25B,5 Store 12 to channel B volume
@@ -10115,9 +10116,9 @@ C $F29B,2 Jump
 @ $F29D label=silence_audio_hook_128k
 C $F29D,5 Initialise mixer to $3F (all noise and tone off)
 N $F2A2 writing the full register set?
-@ $F2A2 label=unknown_hook_2_128k
+@ $F2A2 label=write_registers_hook_128k
 C $F2A2,3 Address of sound register value(s) -- other values must be earlier
-@ $F2A9 label=f2a9_128k_loop
+@ $F2A9 label=write_registers_hook_loop
 C $F2A5,8 Select AY-3-8912 sound chip register 11: envelope fine duration
 C $F2AD,4 Write to the register from (HL), then decrement B and HL
 C $F2B1,1 Next register down
@@ -10160,7 +10161,7 @@ C $F31E,1 Return
 C $F31F,8 Set mixer to disable tone C and noise C
 C $F327,4 [copy of noise pitch] = 0
 C $F32B,3 Exit via f2b6_128k
-N $F32E Relocated to $8122 "Giddy up boy!"
+N $F32E Relocated to $8122. "Giddy up boy!"
 @ $F32E label=speech_samples_table
 W $F32E,2,2 length
 W $F330,2,2 address
@@ -10177,42 +10178,48 @@ N $F33E Start noise
 W $F33E,2,2 length
 W $F340,2,2 address
 @ $F342 label=play_speech_128k
-C $F342,1 Input index (sample index 1..5)
+C $F342,1 Bank input index (sample indices are 1..5)
 C $F343,3 Call silence_audio_hook_128k
-C $F346,2 128K: Map RAM page 4 to $C000; Map normal screen; Map ROM 0
-C $F355,1 Input index
+C $F346,7 128K: Map RAM page 4 to $C000; Map normal screen; Map ROM 0
+C $F355,1 Unbank input index
 C $F356,9 HL = $F32A + A*4  -- i.e. it's 1-indexed speech_samples_table
 C $F35F,4 DE = wordat(HL); HL += 2  -- read length
 C $F363,4 HL = wordat(HL)  -- read address
-@ $F367 label=f367_128k
-C $F367,2 C = 2  -- iterations
-C $F369,1 A = *HL
+@ $F367 label=plsp_f367_128k
+C $F367,2 C = 2  -- iterations (two nibbles)
+C $F369,1 A = *HL  -- read a sample (or two?)
 C $F36A,4 A = A ROR 4
-@ $F36E label=f36e_loop
+@ $F36E label=plsp_f36e_loop
 C $F36E,2 A &= 15
 C $F372,1 B = H which is $FF
-C $F373,1 A = D which is 8
+C $F373,1 A = D which is 8  -- register 8: Channel A volume
 C $F374,2 C is $FD
 C $F376,1 B = L which is $BF
 C $F377,1 A = value loaded above
-C $F378,2 OUT
-C $F37B,1 8 -> 9 etc.
+C $F378,2 Write to register
+C $F37A,1 Bank it again
+C $F37B,1 8 -> 9  -- register 9: Channel B volume
 C $F37C,1 B = $FF
 C $F37D,2 C is $FD
 C $F37F,1 B = L which is $BF
 C $F380,1 A = value loaded above
-C $F384,1 9 -> 10 etc.
+C $F381,2 Write to register
+C $F383,1 Bank it again
+C $F384,1 9 -> 10  -- register 9: Channel C volume
 C $F385,1 B = $FF
 C $F386,2 C is $FD
 C $F388,1 B = L which is $BF
 C $F389,1 A = value loaded above
-C $F38D,4 Perhaps a delay loop
-C $F393,2 Loop f36e_loop
-C $F395,1 HL++
-C $F396,1 DE--
-C $F397,5 Jump to f367_128k if DE > 0  -- so DE's a counter
-C $F39C,3 Jump to relocated f414_128k
-@ $F39F label=f39f_128k
+C $F38A,2 Write to register
+C $F38D,4 Delay loop (lower value => higher frequency)
+C $F391,1 Load next nibble (same byte, but next nibble)
+C $F392,1 Decrement nibble counter
+C $F393,2 Loop plsp_f36e_loop
+C $F395,1 Advance to next byte of sample data
+C $F396,1 Decrement sample data counter
+C $F397,5 Loop to plsp_f367_128k while sample data remains
+C $F39C,3 Exit via relocated reset_paging_128k
+@ $F39F label=plsp_f39f_128k
 C $F39F,3 -- frame delay?
 C $F3A2,3 Return if A < 42
 C $F3A5,3 Call silence_audio_hook
@@ -10220,7 +10227,7 @@ C $F3A8,4 $A239 = 0 -- state sfx var
 C $F3AC,1 A = 1
 C $F3AD,3 Load <copy of noise pitch>
 C $F3B0,3 Self modify $8E49
-@ $F3B6 label=f3b6_128k
+@ $F3B6 label=plsp_f3b6_128k
 C $F3B3,6 Self modify 'CALL xxxx' at $81C5 ($F3D1 here - below)
 C $F3B9,14 Copy 4096 bytes from $B000 to $F000 (preserving registers for later)
 C $F3C7,4 Self modify 'LD SP,xxxx' at $81CD ($F3D9 here - below)
@@ -10253,7 +10260,7 @@ C $F3FD,1 A = *DE
 C $F3FE,2 Transfer a byte
 C $F400,3 HL[-1] = A
 C $F403,3 Loop if (parity even) to f3fd_loop
-C $F406,3 Call relocated f414_128k
+C $F406,3 Call relocated reset_paging_128k
 C $F409,2 Restore
 C $F40B,2 HL = $B000
 C $F40D,2 Copy
@@ -10261,7 +10268,7 @@ C $F40F,1 H = D
 C $F410,1 Restore iterations
 C $F411,2 Loop to f3e8_loop
 C $F413,1 Return
-@ $F414 label=f414_128k
+@ $F414 label=reset_paging_128k
 C $F414,6 128K: Set paging register to default
 C $F41A,1 Return
 @ $F41B label=attract_mode_hook_128k
