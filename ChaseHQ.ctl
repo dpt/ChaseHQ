@@ -186,23 +186,23 @@ b $4000 Screen memory
 D $4000 #UDGTABLE { #SCR(loading) | This is the loading screen. } TABLE#
 B $4000,6144,8 Screen bitmap
 B $5800,768,8 Screen attributes
-c $5B00 Could be loader code
+c $5B00 The game has loaded.
+D $5B00 The game starts here.
 @ $5B00 label=start
 C $5B00,1 Disable interrupts
 C $5B01,3 Set stack pointer
-C $5B04,3 Source (end of)
-C $5B07,3 Destination (end of)
-C $5B0A,3 Bytes
-C $5B0D,2 Copy
-N $5B0F Probe for 128K.
-C $5B0F,4 #REGe = *$FFF0
-C $5B13,7 128K: Map RAM page 1 to $C000, normal screen, ROM 0
-C $5B1A,3 *$FFF0 = #REGe + $FD  -- $FD being a handy non-zero value?
-C $5B1D,3 128K: Map RAM page 0 to $C000, normal screen, ROM 0
-C $5B20,1 A = *$FFF0  -- fetch possibly changed byte
-C $5B21,1 *$FFF0 = #REGe  -- restore original byte
+C $5B04,11 Copy $4910 bytes from $5C00+ to $76F0+ (copying backwards to avoid overlap)
+N $5B0F Probe for 128K. Assuming page 0 is mapped in to start with. We copy a byte from page 0, modify it, then store it after attempting a bank change to page 1. If the change is still present after restoring page 0 then it's a 48K machine.
+C $5B0F,4 Read the byte at $FFF0 into #REGe
+N $5B13 Store a modified byte into page 1.
+C $5B13,7 Attempt to map RAM page 1 to $C000
+C $5B1A,2 Increment the read byte by $FD (being a handy non-zero value)
+C $5B1C,1 Store it
+C $5B1D,3 Attempt to map RAM page 0 to $C000
+C $5B20,1 Fetch potentially changed byte
+C $5B21,1 Restore original byte
 C $5B22,3 Point #REGhl at relocs_48k
-C $5B25,3 Jump if they didn't match  -- why is this the 48K route?
+C $5B25,3 If byte was modified no paging took place, so this is a 48K machine. Jump with relocs_48k setup.
 @ $5B28 label=mode_is_128k
 C $5B28,3 Point #REGhl at relocs_128k
 @ $5B2B label=loader
