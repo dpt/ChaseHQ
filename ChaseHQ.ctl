@@ -117,13 +117,14 @@
 > $4000 ; ---------------
 > $4000 ; Level data has a worst-case size of $1AF0 bytes.
 > $4000 ;
-> $4000 ; Bank 1 @ $C000..$DAEF is level 1's data
-> $4000 ; Bank 1 @ $E000..$FAEF is level 2's data
+> $4000 ; Bank 1 @ $C000..$DAEF is stage 1's data
+> $4000 ; Bank 1 @ $E000..$FAEF is stage 2's data
+> $4000 ; Bank 3 @ $C000..$FFFF? is title screen
 > $4000 ; Bank 4 @ $C000..$FF66 is sampled speech
-> $4000 ; Bank 6 @ $C000..$DAEF is level 3's data
-> $4000 ; Bank 6 @ $E000..$FAEF is level 4's data
-> $4000 ; Bank 7 @ $C000..$DAEF is level 5's data
-> $4000 ; Bank 7 @ $E000..$FAEF is level 6's data
+> $4000 ; Bank 6 @ $C000..$DAEF is stage 3's data
+> $4000 ; Bank 6 @ $E000..$FAEF is stage 4's data
+> $4000 ; Bank 7 @ $C000..$DAEF is stage 5's data
+> $4000 ; Bank 7 @ $E000..$FAEF is the end screen
 > $4000 ;
 > $4000 ;
 > $4000 ; NOTES
@@ -186,94 +187,110 @@ b $4000 Screen memory
 D $4000 #UDGTABLE { #SCR(loading) | This is the loading screen. } TABLE#
 B $4000,6144,8 Screen bitmap
 B $5800,768,8 Screen attributes
-c $5B00 The game has loaded.
+c $5B00 The game has loaded
 D $5B00 The game starts here.
 @ $5B00 label=start
 C $5B00,1 Disable interrupts
 C $5B01,3 Set stack pointer
-C $5B04,11 Copy $4910 bytes from $5C00+ to $76F0+ (copying backwards to avoid overlap)
-N $5B0F Probe for 128K. Assuming page 0 is mapped in to start with. We copy a byte from page 0, modify it, then store it after attempting a bank change to page 1. If the change is still present after restoring page 0 then it's a 48K machine.
+N $5B04 Copy $4910 bytes from $5C00+ to $76F0+ (copying backwards to avoid overlap).
+C $5B04,3 Final source byte
+C $5B07,3 Final destination byte
+C $5B0A,3 Count
+C $5B0D,2 Copy
+N $5B0F Detect 128K machines.
+N $5B0F Assuming bank 0 is mapped in to start with, we copy a byte from bank 0.
 C $5B0F,4 Read the byte at $FFF0 into #REGe
-N $5B13 Store a modified byte into page 1.
-C $5B13,7 Attempt to map RAM page 1 to $C000
+N $5B13 Now we modify it, then store it back after attempting to page in bank 1.
+C $5B13,7 Attempt to map RAM bank 1 to $C000
 C $5B1A,2 Increment the read byte by $FD (being a handy non-zero value)
 C $5B1C,1 Store it
-C $5B1D,3 Attempt to map RAM page 0 to $C000
+N $5B1D If the modified byte remains present after restoring bank 0 then it's a 48K machine.
+C $5B1D,3 Attempt to map RAM bank 0 to $C000
 C $5B20,1 Fetch potentially changed byte
 C $5B21,1 Restore original byte
-C $5B22,3 Point #REGhl at relocs_48k
-C $5B25,3 If byte was modified no paging took place, so this is a 48K machine. Jump with relocs_48k setup.
+C $5B22,3 Point #REGhl at loader_commands_48K
+N $5B25 If byte was modified no paging took place, so this is a 48K machine.
+C $5B25,3 If modified, jump to loader with loader_commands_48K setup
 @ $5B28 label=mode_is_128k
-C $5B28,3 Point #REGhl at relocs_128k
+C $5B28,3 Otherwise point #REGhl at loader_commands_128K
+N $5B2B Loader accepts a command list and uses it to load the game into memory. The 48K command list at #R$5B7D loads stage 1, then starts the game. The 128K command list at #R$5B87 loads stages while paging in the appropriate banks, then starts the game.
 @ $5B2B label=loader
-C $5B2B,5 Fetch a word from #REGhl and stack it
-C $5B30,1 Call it
+C $5B2B,4 Load a handler address from #REGhl
+C $5B2F,2 Call the handler
+N $5B31 Loader handler that loads a stage.
 @ $5B31 label=loader_load
-C $5B31,1 Preserve instruction pointer
-C $5B39,3 Call loader_5b4f
-C $5B3C,1 Restore
-@ $5B3D label=loader_5b3d
-C $5B3D,7 IX = wordat(HL); HL += 2
-C $5B44,4 HL = wordat(HL)
-C $5B48,1 Preserve HL
-C $5B49,3 Call loader_5b4f
-C $5B4C,1 Game entry point
+C $5B31,1 Preserve command list address
+C $5B32,4 Address
+C $5B36,3 Count
+C $5B39,3 Call loader_load_chunk
+C $5B3C,1 Restore command list address
+@ $5B3D label=loader_load_headerless
+C $5B3D,7 Load address into #REGix
+C $5B44,4 Load count into #REGde
+C $5B48,1 Preserve command list address
+C $5B49,3 Call loader_load_chunk
+C $5B4C,1 Restore command list address
 C $5B4D,2 Process next entry
-@ $5B4F label=loader_5b4f
+N $5B4F Subroutine that loads #REGde bytes to address #REGix.
+@ $5B4F label=loader_load_chunk
 C $5B4F,3 Call tape_load_b
-C $5B52,1 Return if no errors?
-C $5B53,5 Infinite loop border cycling for tape loading error?
-@ $5B58 label=loader_set_page
+C $5B52,1 Return if no errors
+N $5B53 Infinitely cycle through border colours if the tape loading errored.
+N $5B58 Loader handler that pages in the specified RAM bank.
+@ $5B58 label=loader_set_bank
 C $5B58,2 Page in RAM where interrupt vector lives
 C $5B5A,2 Set Interrupt Control Vector Register
 C $5B5C,1 Load 128K paging flags byte
 C $5B5D,2 Second byte is unused
 C $5B5F,5 128K: Set paging register
 C $5B64,2 Process next entry
+N $5B66 Loader handler that copies data around.
 @ $5B66 label=loader_copy
-C $5B66,1 Preserve instruction pointer
+C $5B66,1 Preserve command list address
 C $5B67,11 Move $5C00..$76EF to $C000 onwards  -- are we swapping out the level?
-C $5B72,1 Restore instruction pointer
+C $5B72,1 Restore command list address
 C $5B73,2 Process next entry
+N $5B75 Loader handler that starts the game.
 @ $5B75 label=loader_done
 C $5B75,7 Routine that loads a word then OUTs $FE with zero, then jumps to that word
 C $5B7C,1 Exit via entrypoint just read
-N $5B7D Loading instructions.
-@ $5B7D label=relocs_48k
+N $5B7D Loader commands for 48K mode.
+@ $5B7D label=loader_commands_48K
 W $5B7D,2,2 loader_load
-W $5B7F,4,4 stage 1
+W $5B7F,4,4 Stage 1: at $5C00 load $1AF0 bytes
 W $5B83,2,2 loader_done
 W $5B85,2,2 entrypt_48k
-@ $5B87 label=relocs_128k
+N $5B87 Loader commands for 128K mode.
+@ $5B87 label=loader_commands_128K
 W $5B87,2,2 loader_load
-W $5B89,4,4 load $1AF0 bytes to $5C00
-W $5B8D,2,2 loader_set_page
-B $5B8F,2,2 page 1 (second byte is unused)
+W $5B89,4,4 Stage 1: at $5C00 load $1AF0 bytes
+W $5B8D,2,2 loader_set_bank
+B $5B8F,2,2 Bank 1 (second byte is unused here)
 W $5B91,2,2 loader_copy
 W $5B93,2,2 loader_load
-W $5B95,4,4 stage 2
-W $5B99,2,2 loader_set_page
-B $5B9B,2,2 page 6
+W $5B95,4,4 Stage 2: at $E000 load $1AF0 bytes
+W $5B99,2,2 loader_set_bank
+B $5B9B,2,2 Bank 6
 W $5B9D,2,2 loader_load
-W $5B9F,4,4 stage 3
+W $5B9F,4,4 Stage 3: at $C000 load $1AF0 bytes
 W $5BA3,2,2 loader_load
-W $5BA5,4,4 stage 4
-W $5BA9,2,2 loader_set_page
-B $5BAB,2,2 page 7
+W $5BA5,4,4 Stage 4: at $E000 load $1AF0 bytes
+W $5BA9,2,2 loader_set_bank
+B $5BAB,2,2 Bank 7
 W $5BAD,2,2 loader_load
-W $5BAF,4,4 stage 5
+W $5BAF,4,4 Stage 5: at $C000 load $1AF0 bytes
 W $5BB3,2,2 loader_load
-W $5BB5,4,4 stage 6
-W $5BB9,2,2 loader_set_page
-B $5BBB,2,2 page 3
-W $5BBD,2,2 loader_5b3d
-W $5BBF,4,4
-W $5BC3,2,2 loader_set_page
-B $5BC5,2,2 page 4
-W $5BC7,2,2 loader_5b3d
-W $5BC9,4,4
-W $5BCD,2,2 loader_set_page
-B $5BCF,2,2 page 0
+W $5BB5,4,4 End screen: at $E000 load $1AF0 bytes
+W $5BB9,2,2 loader_set_bank
+B $5BBB,2,2 Bank 3
+W $5BBD,2,2 loader_load_headerless
+W $5BBF,4,4 Title screen: at $C000 load $4000 bytes
+W $5BC3,2,2 loader_set_bank
+B $5BC5,2,2 Bank 4
+W $5BC7,2,2 loader_load_headerless
+W $5BC9,4,4 Sampled speech: at $C000 load $4000 bytes
+W $5BCD,2,2 loader_set_bank
+B $5BCF,2,2 Bank 0
 W $5BD1,2,2 loader_done
 W $5BD3,2,2 entrypt_128k
 @ $5BD5 label=data_5bd5
@@ -1414,7 +1431,7 @@ B $8001,1,1 [128K] Attract mode message cycle. Used by $F437. When zero shows th
 B $8002,4,4 Score digits as BCD (4 bytes / 8 digits, little endian)
 B $8006,1,1 Incremented on reset?
 @ $8007 label=wanted_stage_number
-B $8007,1,1 Stage number we're loading (1..5 or 6 for end credits)
+B $8007,1,1 Stage number we're loading (1..5 or 6 for the end screen)
 B $8008,12,8,4
 c $8014 Load a stage
 D $8014 Used by the routine at #R$8401.
@@ -1532,27 +1549,27 @@ C $812E,3 Call sub_8147
 C $8132,2 A = 200
 C $8137,2 B = 176
 C $813C,2 A = H ^ L
-C $813E,1 save A
+C $813E,1 Save A
 C $813F,4 Loop while DE > 0
-C $8143,1 restore A
-C $8144,2 is it 1?
+C $8143,1 Restore A
+C $8144,2 Is it 1?
 C $8146,1 Return (with flags?)
 @ $8147 label=sub_8147
 @ $814B label=sub_814b
 C $814B,5 Delay loop of 22 iterations
-C $8150,1 clear carry flag
+C $8150,1 Clear carry flag
 C $8151,1 what's in B?
-C $8152,1 return if zero
+C $8152,1 Return if zero (failure)
 C $8153,2 %01111111
-C $8155,2 read from port
+C $8155,2 Read from port
 C $8159,1 A ^= C
 C $815A,2 check EAR input bit 6
 C $815C,2 loop if zero
 C $815E,3 A = C = ~C
-C $8163,2 set MIC bit (deactivate MIC)
-C $8165,2 output
-C $8167,1 set carry
-C $8168,1 Return
+C $8163,2 Set MIC bit (deactivate MIC)
+C $8165,2 Output
+C $8167,1 Set carry
+C $8168,1 Return (success)
 @ $8169 label=tape_messsages
 B $8169,1,1 attr?
 W $816A,2,2 Screen position (8,64)
@@ -1755,10 +1772,10 @@ c $8401 Main loop
 D $8401 Used by the routines at #R$83CD and #R$8A57.
 @ $8401 label=main_loop
 C $8401,3 Call load_stage
-C $8404,7 Are we on stage 6 (end credits) jump $841B if not so
-N $840B Run the end credits.
-@ $840B label=ml_run_end_credits
-C $840B,3 Call $5C00 [which is data in earlier stages, must be end credit anim]
+C $8404,7 Are we on the end screen (stage 6)? Jump $841B if not so
+N $840B Run the end screen.
+@ $840B label=ml_run_end_screen
+C $840B,3 Call $5C00 [which is data in earlier stages, must be end screen anim]
 C $840E,5 Reset (wanted) stage to 1
 C $8413,5 Call load_stage
 C $8418,2 Set (wanted) stage to 6   [not sure why]
@@ -10186,7 +10203,7 @@ W $F340,2,2 address
 @ $F342 label=play_speech_128k
 C $F342,1 Bank input index (sample indices are 1..5)
 C $F343,3 Call silence_audio_hook_128k
-C $F346,7 128K: Map RAM page 4 to $C000; Map normal screen; Map ROM 0
+C $F346,7 128K: Map RAM bank 4 to $C000; Map normal screen; Map ROM 0
 C $F355,1 Unbank input index
 C $F356,9 HL = $F32A + A*4  -- i.e. it's 1-indexed speech_samples_table
 C $F35F,4 DE = wordat(HL); HL += 2  -- read length
