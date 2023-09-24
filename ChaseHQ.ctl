@@ -233,9 +233,10 @@ C $5B4C,1 Restore command list address
 C $5B4D,2 Process next entry
 N $5B4F Subroutine that loads #REGde bytes to address #REGix.
 @ $5B4F label=loader_load_chunk
-C $5B4F,3 Call tape_load_b
+C $5B4F,3 Call tape_load
 C $5B52,1 Return if no errors
-N $5B53 Infinitely cycle through border colours if the tape loading errored.
+N $5B53 Infinitely cycle through border colours if a tape loading error occurred.
+@ $5B53 label=loader_load_failed
 N $5B58 Loader handler that pages in the specified RAM bank.
 @ $5B58 label=loader_set_bank
 C $5B58,2 Page in RAM where interrupt vector lives
@@ -247,12 +248,13 @@ C $5B64,2 Process next entry
 N $5B66 Loader handler that copies data around.
 @ $5B66 label=loader_copy
 C $5B66,1 Preserve command list address
-C $5B67,11 Move $5C00..$76EF to $C000 onwards  -- are we swapping out the level?
+C $5B67,11 Move $5C00..$76EF to $C000 onwards
 C $5B72,1 Restore command list address
 C $5B73,2 Process next entry
 N $5B75 Loader handler that starts the game.
 @ $5B75 label=loader_done
-C $5B75,7 Routine that loads a word then OUTs $FE with zero, then jumps to that word
+C $5B75,4 Load entrypoint address from #REGhl
+C $5B79,3 Set border to black
 C $5B7C,1 Exit via entrypoint just read
 N $5B7D Loader commands for 48K mode.
 @ $5B7D label=loader_commands_48K
@@ -293,8 +295,10 @@ W $5BCD,2,2 loader_set_bank
 B $5BCF,2,2 Bank 0
 W $5BD1,2,2 loader_done
 W $5BD3,2,2 entrypt_128k
-@ $5BD5 label=data_5bd5
-B $5BD5,43,8*5,3 gets IX pointed at it by $5B32
+@ $5BD5 label=loader_scratch
+B $5BD5,2,2 #R$5B31 loads two bytes to here.  -- unsure what uses them
+u $5BD7 Unused
+B $5BD7,41,8*5,1
 b $5C00 Graphics
 D $5C00 #HTML[#CALL:graphic($5C00,80,24,0,1)]
 B $5C00,240,8 Horizon backdrop (80x24) inverted. Varies per level
@@ -1448,7 +1452,7 @@ C $802B,2 Transition type?
 C $802D,3 Call setup_transition
 C $8032,3 Call TBD subroutine
 C $8035,4 IX = &hazards[1]
-C $803C,3 Call tape_load_b subroutine
+C $803C,3 Call tape_load subroutine
 C $803F,2 loop while failed perhaps?
 C $8041,3 #REGhl = &hazards[1]
 C $8044,1 Load used flag [doesn't add up - this is a level number?]
@@ -1461,10 +1465,9 @@ C $8050,3 #REGa = wanted_stage_number
 C $8053,1 equal?
 C $8054,2 not the wanted stage
 C $8056,3 Call TBD subroutine
-C $8059,3 Call tape_load
+C $8059,3 Call tape_load_5C00
 N $805E Success - must have loaded the correct level data.
-C $805E,1 A = 0
-C $805F,2 Set border?
+C $805E,3 Set border to black
 C $8061,3 Call clear_screen_set_attrs
 C $8064,3 Call clear_game_attrs
 C $8067,3 HL -> "STOP THE TAPE" message structure
@@ -1506,11 +1509,12 @@ C $80AA,3 A = transition_control
 C $80AD,2 Return if zero
 C $80AF,8 Delay loop
 C $80B7,2 Loop
-N $80B9 Tape loading.
-@ $80B9 label=tape_load
+c $80B9 Tape loading.
+D $80B9 Used by the routine at #R$8014.
+@ $80B9 label=tape_load_5C00
 C $80B9,7 Setup to load a block at $5C00 of length $1AF0
 N $80C0 This entry point is used by the routine at #R$5B00. IX = address DE = bytes
-@ $80C0 label=tape_load_b
+@ $80C0 label=tape_load
 C $80C0,1 D++
 C $80C1,2 A = 152
 C $80C3,1 Set carry flag
@@ -9568,8 +9572,11 @@ C $E970,3 Call clear_screen
 C $E973,3 Address of "control options cannot be remodified" text (NUL terminated)
 C $E976,3 Call menu_draw_strings
 C $E979,3 Call define_keys
-C $E97D,31 Keyscan Call define_keys
-C $E99C,24 Jump to clear_screen Call define_keys
+C $E97D,7 Keyscan
+C $E984,3 Call define_keys
+C $E989,7 Keyscan
+C $E99C,3 Jump to clear_screen
+C $E9AA,3 Call define_keys
 b $E9B4 Messages
 B $E9B4,1,1 Attribute: Green ink over black
 W $E9B5,2,2 Screen position (80,96) (why is this screen, not attrs?)
