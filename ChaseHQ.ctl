@@ -309,7 +309,8 @@ W $5CF0,2,2 Address of perp's mugshot attributes
 W $5CF2,2,2 Address of perp's mugshot bitmap
 @ $5CF4 label=ground_colour
 W $5CF4,2,2 Screen attributes used for the ground colour (a pair of matching bytes)
-W $5CF6,2,2
+@ $5CF6 label=tumbleweeds_etc
+W $5CF6,2,2 Points to table of LODs for tumbleweeds, barriers
 W $5CF8,2,2 Loaded by $900F. Points to an array of 7 byte entries.
 W $5CFA,2,2 Address of graphic/object definitions.
 W $5CFC,2,2 -> "Entry 3"
@@ -391,12 +392,12 @@ b $5E3F Graphics or object? definitions
 D $5E3F All are stored inverted except where noted.
 B $5E3F,1,1 Pointed to by $5CFA
 b $5E40 Pointed to by $5CF6
-B $5E40,1,1
+B $5E40,1,1 ?
 W $5E41,2,2 Address of tumbleweed_lods table
-B $5E43,1,1
+B $5E43,1,1 ?
 W $5E44,2,2 Address of barrier_lods table
 N $5E46 Entry 1
-B $5E46,3,3
+B $5E46,3,3 Unclear if anything uses these bytes
 W $5E49,2,2 Arg for routine passed in DE
 W $5E4B,2,2 -> Routine at $9252
 N $5E4D Entry 2 (empty)
@@ -407,27 +408,27 @@ B $5E54,3,3
 W $5E57,2,2 Arg for routine passed in DE
 W $5E59,2,2 -> Routine at $9171
 N $5E5B Entry 4
-B $5E5B,3,3 remaining bytes of this entry
+B $5E5B,3,3
 W $5E5E,2,2 Arg for routine passed in DE
 W $5E60,2,2 -> Routine at $9171. Loaded into HL at $9017 then jumped to.
 N $5E62 Entry 5
-B $5E62,3,3 remaining bytes of this entry
+B $5E62,3,3
 W $5E65,2,2 Arg for routine passed in DE
 W $5E67,2,2 -> Routine at $9171
 N $5E69 Entry 6
-B $5E69,3,3 remaining bytes of this entry
+B $5E69,3,3
 W $5E6C,2,2 Arg for routine passed in DE
 W $5E6E,2,2 -> Routine at $9171
 N $5E70 Entry 7
-B $5E70,3,3 remaining bytes of this entry
+B $5E70,3,3
 W $5E73,2,2 Arg for routine passed in DE
 W $5E75,2,2 -> Routine at $9171
 N $5E77 Entry 8
-B $5E77,3,3 remaining bytes of this entry
+B $5E77,3,3
 W $5E7A,2,2 Arg for routine passed in DE
 W $5E7C,2,2 Routine?
 N $5E7E Entry 9 (turn sign)
-B $5E7E,3,3 remaining bytes of this entry
+B $5E7E,3,3
 W $5E81,2,2 -> -> turn_sign_lods
 W $5E83,2,2 -> Routine at $92E1
 N $5E85 Entry 10
@@ -801,7 +802,7 @@ N $6AF4 #HTML[#CALL:graphic($6AF4,8,1,1,1)]
 B $6AF4,2,2 Masked bitmap data
 W $6AF6,2,2 -> turn_sign_lods
 B $6AF8,20,8*2,4 Read by $928D and $92F6
-N $6B0C Ref'd by graphic entry 8 and 17
+N $6B0C Referenced by graphic entry 8 and 17
 W $6B0C,2,2 -> turn_sign_lods
 B $6B0E,20,8*2,4
 N $6B22 Turn sign LOD
@@ -990,11 +991,11 @@ B $6E99,28,4 Masked bitmap data
 N $6EB5 Barrier (16x7) pre-shifted
 N $6EB5 #HTML[#CALL:graphic($6EB5,16,7,1,1)]
 B $6EB5,28,4 Masked bitmap data
-N $6ED1 Ref'd by graphic entry 6
+N $6ED1 Referenced by graphic entry 6
 B $6ED1,10,8,2
 W $6EDB,2,2 Ptr?
 B $6EDD,1,1
-N $6EDE Ref'd by graphic entry 15
+N $6EDE Referenced by graphic entry 15
 B $6EDE,10,8,2
 W $6EE8,2,2 Ptr?
 B $6EEA,1,1
@@ -1088,14 +1089,55 @@ B $6FC4,12,2 Masked bitmap data
 N $6FD0 Street lamp top (16x3) pre-shifted
 N $6FD0 #HTML[#CALL:graphic($6FD0,16,3,1,1)]
 B $6FD0,12,2 Masked bitmap data
-N $6FDC Ref'd by graphic entry 7
-B $6FDC,10,8,2
-N $6FE6 Ref'd by graphic entry 16
-B $6FE6,272,8
-N $70F6 Ref'd by graphic entry 4 and 13
-B $70F6,16,8
-N $7106 Ref'd by graphic entry 5 and 14
-B $7106,120,8
+N $6FDC Referenced by graphic entry 7
+B $6FDC,1,1
+W $6FDD,2,2
+B $6FDF,1,1
+W $6FE0,2,2
+B $6FE2,1,1
+W $6FE3,2,2
+B $6FE5,1,1
+N $6FE6 Referenced by graphic entry 16
+B $6FE6,1,1
+W $6FE7,2,2
+B $6FE9,1,1
+W $6FEA,2,2
+B $6FEC,1,1
+W $6FED,2,2
+B $6FEF,1,1
+W $6FF0,2,2
+B $6FF2,260,8*32,4 TBD
+N $70F6 Referenced by graphic entry 4 and 13 These seem to start and end with a number/count.
+B $70F6,1,1
+W $70F7,2,2
+B $70F9,1,1
+W $70FA,2,2
+B $70FC,1,1
+W $70FD,2,2
+B $70FF,1,1
+W $7100,2,2
+B $7102,1,1
+W $7103,2,2
+B $7105,1,1
+N $7106 Referenced by graphic entry 5 and 14 7106 Affects heights of things when meddled with.
+B $7106,1,1
+W $7107,2,2 below ptr to tree_lods
+B $7109,1,1
+W $710A,2,2
+B $710C,1,1
+C $710D,2
+B $710F,1,1
+N $7110 feels like a break here
+W $7110,2,2 -> tree_lods
+B $7112,20,4,8
+W $7126,2,2 -> tree_lods
+B $7128,20,6,8,6
+W $713C,2,2 -> tree_lods
+B $713E,20,8*2,4
+W $7152,2,2 -> tree_lods
+B $7154,20,2,8*2,2
+W $7168,2,2 -> tree_lods
+B $716A,20,4,8
 N $717E LOD
 @ $717E label=tree_lods
 B $717E,1,1 Width (bytes)
@@ -1181,7 +1223,7 @@ B $71DA,1,1 Flags
 B $71DB,1,1 Height
 W $71DC,2,2 Bitmap
 W $71DE,2,2 Pre-shifted bitmap
-N $71E0 LOD
+N $71E0 LOD - Tree top (64x13)
 B $71E0,1,1 Width (bytes)
 B $71E1,1,1 Flags
 B $71E2,1,1 Height
@@ -1424,9 +1466,39 @@ N $7D51 Tony's face (32x40)
 N $7D51 #HTML[#CALL:face($7D51)]
 B $7D51,160,4 Bitmap data, top-down format
 B $7DF1,20,4 Attribute data for above
-b $7E05 Ref'd by graphic entry 3 and 12
-B $7E05,507,8*63,3
-g $8000 temporaries?
+b $7E05 Referenced by graphic entry 3 and 12
+B $7E05,1,1
+W $7E06,2,2 ptr?
+B $7E08,1,1
+W $7E09,2,2 ptr?
+B $7E0B,1,1
+@ $7E0C label=gfx_7e0c
+W $7E0C,2,2 ptr?
+B $7E0E,20,8*2,4
+@ $7E22 label=gfx_7e22
+W $7E22,2,2 ptr?
+B $7E24,20,8*2,4
+W $7E38,2,2 ptr?
+B $7E3A,20,8*2,4
+W $7E4E,2,2 ptr?
+B $7E50,20,8*2,4
+W $7E64,2,2 ptr?
+B $7E66,20,8*2,4
+W $7E7A,2,2 ptr?
+B $7E7C,20,8*2,4
+W $7E90,2,2 ptr?
+B $7E92,20,8*2,4
+W $7EA6,2,2 ptr?
+B $7EA8,20,8*2,4
+@ $7EBC label=gfx_7ebc
+B $7EBC,8,8 bodies of lamp posts?
+B $7EC4,90,8*11,2
+@ $7F1E label=gfx_7f13
+B $7F1E,6,6 tops of lamp posts?
+B $7F24,105,8*13,1
+u $7F8D Unused
+B $7F8D,115,8*14,3
+g $8000
 @ $8000 label=test_mode_flag
 B $8000,1,1 Test mode enable flag (cheat mode)
 @ $8001 label=attract_cycle
@@ -2900,20 +2972,22 @@ C $901B,1 Jump to HL
 C $9020,3 Jump to $8FB2
 c $9023 Routine at 9023
 D $9023 Used by the routine at #R$8F5F.
-C $9023,1 E = A
+R $9023 I:A ?
+C $9023,1 E = A  -- sampled = 5 (only)
 C $9024,4 Jump if A == 2
-C $9028,3 A = IX[1]
+N $9028 A != 2
+C $9028,3 A = IX[1]  -- sampled $EAEE area
 C $902B,1 Set flags
+C $902C,2 Loop?
 C $902E,4 Preserve IX, HL, BC
 C $9032,8 DE = E * 7
 C $903A,4 Set return address
 C $903E,3 turn sign lods
 C $9041,1 HL += DE
-C $9042,2 E = *HL++
-C $9044,2 D = *HL++
-C $9046,2 A = *HL++
-C $9048,1 H = *HL
-C $9049,1 L = A
+N $9042 sampled HL = $5EA4 (only) which is "Entry 14"
+C $9042,4 DE = wordat(HL); HL += 2  -- arg for routine
+C $9046,4 HL = wordat(HL)  -- address of routine
+C $904A,1 CALL 916C 9171 924D 9252 92E1 ETC.  -- with B as ?
 @ $904B label=return_904B
 C $904B,4 Restore IX, HL, BC
 C $904F,3 Loop?
@@ -3000,14 +3074,18 @@ C $9165,4 Otherwise move to the next chunk of 128 scanlines (would put us outsid
 C $9169,3 Loop
 c $916C Routine at 916C
 D $916C Used by the routine at #R$9052.
-C $916C,3 HL = $9293
-C $9171,3 HL = $92FC    -- entry point
-C $9174,3 *$91CE = HL
-C $9177,3 *$9244 = HL
+R $916C I:B ?
+@ $916C label=sub_916C
+C $916C,3 HL = $9293  -- callback address
+@ $9171 label=sub_9171
+C $9171,3 HL = $92FC  -- callback address
+C $9174,3 Self modify CALL at $91CD to call #REGhl
+C $9177,3 Self modify CALL at $9243 to call #REGhl
 C $917A,5 A = fast_counter & $E0
-C $917F,6 A -= A >> 2
-C $9189,3 L = A - L + B
-C $918C,2 H = $E6   ; $E6xx data
+N $917F Reduces A by 31.25%
+C $917F,6 A -= A >> 2  [nothing will rotate out due to AND $E0]
+C $9189,2 L = A - L + B
+C $918B,3 #REGhl = $E600 + #REGl
 C $918E,1 A = *HL
 C $918F,3 *$91DC = A
 C $9193,1 A = B
@@ -3034,6 +3112,7 @@ C $91C5,1 B--
 C $91C8,1 B = *HL
 C $91C9,2 HL -= 2
 C $91CC,1 B = A
+C $91CD,3 Call <self modified>
 C $91D1,2 A = C + B
 C $91D3,1 C = A
 C $91DB,2 A = $00
@@ -3069,28 +3148,31 @@ C $9237,1 HL -= 2
 C $9238,1 HL--
 C $9239,3 *$9416 = A
 C $923C,2 A = $02
-C $923E,3 Self modify 'LD A,x' at $93C0 to load A
+C $923E,3 Self modify 'LD A,x' at $93C0 to load 2
 C $9242,1 B = A
+C $9243,3 Call <self modified>
 C $9246,4 Self modify 'LD A,x' at $93C0 to load 0
+C $924A,3 Loop?
 c $924D Routine at 924D
-R $924D R:B ?
+R $924D R:B Offset added to $E6xx address. Routine skipped if it's >= 16.
 C $924D,3 HL = $9279
 C $9252,3 HL = $92E2   graphic 1 uses this entry
 C $9255,1 A = B
-C $9256,2 CP 16
-C $9258,1 Return if A >= 16
+C $9256,3 Return if A >= 16
+C $9259,1 Push return address
 C $925A,5 A = fast_counter & $E0
+N $925F Reduces A by 31.25%
 C $925F,1 L = A
 C $9260,4 L >>= 2
 C $9264,1 A -= L
 C $9265,4 L >>= 2
 C $9269,1 A -= L
-C $926A,1 A += B
+C $926A,1 A += B   -- B was passed in
 C $926B,1 L = A
-C $926C,2 H = $E6    ; $E6xx data
+C $926C,2 H = $E6    -- $E6xx data
 C $926E,1 A = *HL
-C $926F,8 A = (A >> 2) - A
-C $9277,1 Return
+C $926F,8 A = (A>>2) - A
+C $9277,1 Return via earlier PUSH
 c $9278 Routine at 9278
 R $9278 I:B ?
 R $9278 I:IX ?
@@ -4650,7 +4732,7 @@ B $A23D,1,1 $BE33 reads  $890F, $A3D2, $BDFC, $BE37 writes
 @ $A23E label=off_road
 B $A23E,1,1 0 => Fully on-road, 1 => One wheel off-road, 2 => Both wheels off-road [samples: $B104, $B40C reads  $A3FD, $A52A, $B07D, $B322, $B404, $B443 writes]
 @ $A23F label=fast_counter
-B $A23F,1,1 this seems to be a very fast counter related to level position
+B $A23F,1,1 This is a very fast counter related to level position. Typically the top three bits are masked off and used to index other tables.
 @ $A240 label=road_buffer_offset
 W $A240,2,2 Current offset (in bytes) into the road buffer at $EE00..$EEFF. Much of the code treats this as a byte. Used by $B8F6, $BBF7, $87E0.
 @ $A242 label=curvature_byte
@@ -4956,6 +5038,7 @@ C $A5B9,1 C = *HL
 C $A5BB,2 H = $EC
 C $A5BD,2 Jump to ml14_a5da
 C $A5BF,3 H = A + $E7
+N $A5C2 Sampled HL = E869 E865 E863 E861
 C $A5C2,1 B = *HL
 C $A5C3,1 L--
 C $A5C4,1 C = *HL
@@ -5881,7 +5964,7 @@ C $AEB5,1 E = A
 C $AEB6,2 A -= 4
 C $AEB8,1 L = A
 C $AEB9,1 D = H
-C $AEBA,2 *DE = *HL; DE--; HL--; BC--
+C $AEBA,2 Do *HL-- = *DE-- until BC == 0
 C $AEBD,3 DE = IX
 C $AEC0,4 wordat(HL) = DE; HL -= 2
 C $AEC4,1 Restore DE
@@ -8768,11 +8851,12 @@ C $CBE0,4 Self modify 'LD HL' at $CC70 to load ($ED00 + H)
 C $CBE4,4 Self modify 'LD HL' at $CCA5 to load ($E900 + L)
 C $CBE8,3 Load road_buffer_offset into #REGhl
 C $CBEB,1 Read a curvature data byte
-C $CBEC,3 A = fast_counter
-C $CBEF,2 take top three bits
-C $CBF2,5 A -= (B >> 2)
-C $CBF7,5 A -= (B >> 4)
-C $CBFC,10 #REGiy = $E600 + A + $B0
+N $CBEC There's similar code at #R$CD47.
+C $CBEC,5 A = fast_counter & $E0  -- top three bits
+N $CBF2 Reduces A by 31.25% ... unsure why that figure.
+C $CBF2,5 Divide A by 4 and subtract
+C $CBF7,5 Divide A by 16 and subtract
+C $CBFC,10 #REGiy = data_e6b0[#REGa]
 C $CC06,3 Call multiply (A = multiplier, C = multiplicand)
 C $CC09,6 A = (128 - A) & $FE
 C $CC0F,5 IX = $E500 + A  -- distance shift table
@@ -8792,6 +8876,7 @@ C $CC30,1 C = A
 C $CC31,3 high byte
 C $CC34,1 A -= D
 C $CC35,1 B = A
+N $CC36 Sampled IY = E71E E71F E720 ..
 C $CC36,3 IY seems to point to $E6xx..E7xx
 N $CC3B This is a multiplier of HL (distance shift value computed above) by A (value from $E600+).
 C $CC3B,1 shift left
@@ -8827,7 +8912,9 @@ C $CC8B,2 Jump if A+$60 had no carry
 C $CC8D,1 Add carry otherwise
 C $CC8E,3 [points to presumed lanes data in pristine memory map but must be something else]
 C $CC91,2 B = 20
-C $CC93,3 *DE += *HL
+C $CC93,1 *DE += *HL
+N $CC94 This reads from $E760+ in sequence.
+C $CC95,1 }
 C $CC96,1 HL++
 C $CC97,1 E++
 C $CC98,2 Loop while B
@@ -8923,14 +9010,12 @@ C $CD3D,3 Load road_buffer_offset into #REGa
 C $CD40,2 Add 32 so it's the height data offset
 C $CD42,2 #REGiy is now the road buffer height data pointer
 C $CD44,3 Read a height byte into #REGc
-C $CD47,5 A = fast_counter & $E0
+C $CD47,5 A = fast_counter & $E0  -- top three bits
 C $CD4C,1 L = A
 C $CD4D,1 B = A
 N $CD4E Reduces A by 31.25% ... unsure why that figure.
-C $CD4E,4 Divide A by 4 and subtract
-C $CD52,1 A -= L
-C $CD53,4 Divide A by 16 and subtract
-C $CD57,1 A -= L
+C $CD4E,5 Divide A by 4 and subtract
+C $CD53,5 Divide A by 16 and subtract
 C $CD58,4 HL = $E600 | (A + 1)
 C $CD5C,1 A = B  multiplicand
 C $CD5D,3 Call multiply (A = multiplier, C = multiplicand)
@@ -9004,8 +9089,9 @@ C $CDD4,1 *HL = A
 C $CDD5,1 Return
 c $CDD6 Multiplier
 D $CDD6 Multiplies #REGc by the top three bits of #REGa then divides by 8 with rounding, on exit.
-R $CDD6 Used by the routines at #R$CBD6 and #R$CD3A.
-N $CDD6 I:A Multiplier (number to multiply by)  e.g. $A0, $E7, $20, $C0, $E6 I:C Multiplicand (value to multiply)    e.g. $05, $02, $05, $03, $FE O:A Result e.g. $03, $02, $01, $02, $FE
+D $CDD6 Used by the routines at #R$CBD6 and #R$CD3A.
+R $CDD6 I:A Multiplier (number to multiply by)  e.g. $A0, $E7, $20, $C0, $E6
+R $CDD6 I:C Multiplicand (value to multiply)    e.g. $05, $02, $05, $03, $FE O:A Result e.g. $03, $02, $01, $02, $FE
 @ $CDD6 label=multiply
 C $CDD6,2 3 iterations only
 C $CDD8,1 Copy of multiplier to destroy
@@ -9423,7 +9509,7 @@ B $E1B5,35,7
 B $E1D8,7,7 Arrow graphic (incl. HERE!)
 @ $E1DF label=floating_arrow_defns
 B $E1DF,10,5 <Byte width, Flags, Height, Ptr> [floating arrow defns]
-b $E1E9 Ref'd by graphic entry 1 and 10
+b $E1E9 Referenced by graphic entry 1 and 10
 B $E1E9,187,8*23,3
 b $E2A4 Data for perp escape scene
 N $E2A4 Perp escape scene, hazards
@@ -9457,12 +9543,12 @@ B $E2CD,2,2 Escape, Command 0 (Continue at <Address>)
 W $E2CF,2,2 Loop
 b $E2D1 Road split data
 B $E2D1,1,1
-B $E2D2,3,3 Ref'd by $BBEF  --  Used after road split
+B $E2D2,3,3 Referenced by $BBEF  --  Used after road split
 B $E2D5,4,4 rightside data  [flips around depending on who's accessing it]
 B $E2D9,4,4 leftside data   [flips]
-B $E2DD,4,4 Ref'd by $BBE3
+B $E2DD,4,4 Referenced by $BBE3
 B $E2E1,1,1 Curvature escape byte
-B $E2E2,5,5 Ref'd by $BBE9
+B $E2E2,5,5 Referenced by $BBE9
 B $E2E7,12,8,4 lanes data
 B $E2F3,88,8 lanes data
 b $E34B Data block at E34B
@@ -9479,7 +9565,10 @@ N $E3BC #HTML[#CALL:graphic($E3BC,8,7*8,0,0)]
 B $E3BC,388,8*48,4
 w $E540 A table of 96 words being 10^x or similar function. Distance horizontal shift? Field of view table? It affects the horizontal position of the road.
 W $E540,192,2
-b $E600 Data block at E600. Seems to be 24 groups of 22 bytes.
+b $E600 Data block at E600. Seems to be 3x8 groups of 22 bytes. Clearly it's a set of scaling tables. Perhaps drives the stretching of stretchy graphics.
+@ $E600 label=data_e600
+@ $E6B0 label=data_e6b0
+@ $E760 label=data_e760
 B $E600,528,22
 c $E810 Called once the memory map has been setup.
 @ $E810 label=entrypt_48k
