@@ -650,48 +650,63 @@ W $64B8,2,2 Bitmap
 W $64BA,2,2 Pre-shifted bitmap
 N $64BC Lamborghini_1 (48x30)
 N $64BC #HTML[#CALL:graphic($64BC,48,30,0,1)]
+@ $64BC label=lamborghini_1
 B $64BC,180,6 Bitmap data
 N $6570 Lamborghini_2 (40x22)
 N $6570 #HTML[#CALL:graphic($6570,40,22,0,1)]
+@ $6570 label=lamborghini_2
 B $6570,110,5 Bitmap data
 N $65DE Lamborghini_3 (24x15)
 N $65DE #HTML[#CALL:graphic($65DE,24,15,0,1)]
+@ $65DE label=lamborghini_3
 B $65DE,45,3 Bitmap data
 N $660B Truck_1 (48x39)
 N $660B #HTML[#CALL:graphic($660B,48,39,0,1)]
+@ $660B label=truck_1
 B $660B,234,6 Bitmap data
 N $66F5 Truck_2 (40x29)
 N $66F5 #HTML[#CALL:graphic($66F5,40,29,0,1)]
+@ $66F5 label=truck_2
 B $66F5,145,5 Bitmap data
 N $6786 Truck_3 (24x20)
 N $6786 #HTML[#CALL:graphic($6786,24,20,0,1)]
+@ $6786 label=truck_3
 B $6786,60,3 Bitmap data
 N $67C2 Car_1 (48x31)
 N $67C2 #HTML[#CALL:graphic($67C2,48,31,0,1)]
+@ $67C2 label=car_1
 B $67C2,186,6 Bitmap data
 N $687C Car_2 (40x22)
 N $687C #HTML[#CALL:graphic($687C,40,22,0,1)]
+@ $687C label=car_2
 B $687C,110,5 Bitmap data
 N $68EA Car_3 (24x16)
 N $68EA #HTML[#CALL:graphic($68EA,24,16,0,1)]
+@ $68EA label=car_3
 B $68EA,48,3 Bitmap data
 N $691A Lamborghini_4 (24x8)
 N $691A #HTML[#CALL:graphic($691A,24,8,1,1)]
+@ $691A label=lamborghini_4
 B $691A,48,6 Masked bitmap data
-N $694A Lamborghini_5 (24x8) pre-shifted
+N $694A Lamborghini_4 (24x8) pre-shifted
 N $694A #HTML[#CALL:graphic($694A,24,8,1,1)]
+@ $694A label=lamborghini_4s
 B $694A,48,6 Masked bitmap data
 N $697A Truck_4/5 (16x12)
 N $697A #HTML[#CALL:graphic($697A,16,12,1,1)]
+@ $697A label=truck_4
 B $697A,48,4 Masked bitmap data
 N $69AA Truck_4/5 (16x12) pre-shifted
 N $69AA #HTML[#CALL:graphic($69AA,16,12,1,1)]
+@ $69AA label=truck_4s
 B $69AA,48,4 Masked bitmap data
 N $69DA Car_4/5 (24x9)
 N $69DA #HTML[#CALL:graphic($69DA,24,9,1,1)]
+@ $69DA label=car_4
 B $69DA,54,6 Masked bitmap data
 N $6A10 Car_4/5 (24x9) pre-shifted
 N $6A10 #HTML[#CALL:graphic($6A10,24,9,1,1)]
+@ $6A10 label=car_4s
 B $6A10,54,6 Masked bitmap data
 N $6A46 Stones LOD
 @ $6A46 label=stones_lods
@@ -769,37 +784,49 @@ W $6A96,2,2 Bitmap
 W $6A98,2,2 Pre-shifted bitmap
 N $6A9A Stones (16x5)
 N $6A9A #HTML[#CALL:graphic($6A9A,16,5,1,1)]
+@ $6A9A label=stones_1
 B $6A9A,20,4 Masked bitmap data
 N $6AAE Stones (16x4)
 N $6AAE #HTML[#CALL:graphic($6AAE,16,4,1,1)]
+@ $6AAE label=stones_2
 B $6AAE,16,4 Masked bitmap data
 N $6ABE Stones (16x4) pre-shifted
 N $6ABE #HTML[#CALL:graphic($6ABE,16,4,1,1)]
+@ $6ABE label=stones_2s
 B $6ABE,16,4 Masked bitmap data
 N $6ACE Stones (16x3)
 N $6ACE #HTML[#CALL:graphic($6ACE,16,3,1,1)]
+@ $6ACE label=stones_3
 B $6ACE,12,4 Masked bitmap data
 N $6ADA Stones (16x3) pre-shifted
 N $6ADA #HTML[#CALL:graphic($6ADA,16,3,1,1)]
+@ $6ADA label=stones_3s
 B $6ADA,12,4 Masked bitmap data
 N $6AE6 Stones (8x2)
 N $6AE6 #HTML[#CALL:graphic($6AE6,8,2,1,1)]
+@ $6AE6 label=stones_4
 B $6AE6,4,2 Masked bitmap data
 N $6AEA Stones (8x2) pre-shifted
 N $6AEA #HTML[#CALL:graphic($6AEA,8,2,1,1)]
+@ $6AEA label=stones_4s
 B $6AEA,4,2 Masked bitmap data
 N $6AEE Stones (8x1)
 N $6AEE #HTML[#CALL:graphic($6AEE,8,1,1,1)]
+@ $6AEE label=stones_5
 B $6AEE,2,2 Masked bitmap data
 N $6AF0 Stones (8x1) pre-shifted
 N $6AF0 #HTML[#CALL:graphic($6AF0,8,1,1,1)]
+@ $6AF0 label=stones_5s
 B $6AF0,2,2 Masked bitmap data
 N $6AF2 Dust (8x1)
 N $6AF2 #HTML[#CALL:graphic($6AF2,8,1,1,1)]
+@ $6AF2 label=dust_1
 B $6AF2,2,2 Masked bitmap data
 N $6AF4 Dust (8x1) pre-shifted
 N $6AF4 #HTML[#CALL:graphic($6AF4,8,1,1,1)]
+@ $6AF4 label=dust_1s
 B $6AF4,2,2 Masked bitmap data
+@ $6AF6 label=unknown_6af6
 W $6AF6,2,2 -> turn_sign_lods
 B $6AF8,20,8*2,4 Read by $928D and $92F6
 N $6B0C Referenced by graphic entry 8 and 17
@@ -868,27 +895,35 @@ W $6B64,2,2 Bitmap
 W $6B66,2,2 Pre-shifted bitmap
 N $6B68 Turn right sign (32x40)
 N $6B68 #HTML[#CALL:graphic($6B68,32,40,0,1)]
-B $6B68,160,4
+@ $6B68 label=turnsign_1
+B $6B68,160,4 Bitmap data
 N $6C08 Turn right sign (24x30)
 N $6C08 #HTML[#CALL:graphic($6C08,24,30,0,1)]
-B $6C08,90,3
+@ $6C08 label=turnsign_2
+B $6C08,90,3 Bitmap data
 N $6C62 Turn right sign (16x20)
 N $6C62 #HTML[#CALL:graphic($6C62,16,20,0,1)]
-B $6C62,40,2
+@ $6C62 label=turnsign_3
+B $6C62,40,2 Bitmap data
 N $6C8A Turn right sign (16x16)
 N $6C8A #HTML[#CALL:graphic($6C8A,16,16,1,1)]
+@ $6C8A label=turnsign_4
 B $6C8A,64,4 Masked bitmap data
 N $6CCA Turn right sign (16x13)
 N $6CCA #HTML[#CALL:graphic($6CCA,16,13,1,1)]
+@ $6CCA label=turnsign_5
 B $6CCA,52,2 Masked bitmap data
 N $6CFE Turn right sign (16x13) pre-shifted
 N $6CFE #HTML[#CALL:graphic($6CFE,16,13,1,1)]
+@ $6CFE label=turnsign_5s
 B $6CFE,52,2 Masked bitmap data
 N $6D32 Turn right sign (16x10)
 N $6D32 #HTML[#CALL:graphic($6D32,16,10,1,1)]
+@ $6D32 label=turnsign_6
 B $6D32,40,4 Masked bitmap data
 N $6D5A Turn right sign (16x10) pre-shifted
 N $6D5A #HTML[#CALL:graphic($6D5A,16,10,1,1)]
+@ $6D5A label=turnsign_6s
 B $6D5A,40,4 Masked bitmap data
 N $6D82 LOD
 @ $6D82 label=tumbleweed_lods
@@ -929,16 +964,20 @@ W $6DA8,2,2 Bitmap
 W $6DAA,2,2 Pre-shifted bitmap
 N $6DAC Tumbleweed_1 (16x16)
 N $6DAC #HTML[#CALL:graphic($6DAC,16,16,0,1)]
-B $6DAC,32,2
+@ $6DAC label=tumbleweed_1
+B $6DAC,32,2 Bitmap data
 N $6DCC Tumbleweed_2 (16x11)
 N $6DCC #HTML[#CALL:graphic($6DCC,16,11,0,1)]
-B $6DCC,22,2
+@ $6DCC label=tumbleweed_2
+B $6DCC,22,2 Bitmap data
 N $6DE2 Tumbleweed_3 (8x9)
 N $6DE2 #HTML[#CALL:graphic($6DE2,8,9,0,1)]
-B $6DE2,9,1
+@ $6DE2 label=tumbleweed_3
+B $6DE2,9,1 Bitmap data
 N $6DEB Tumbleweed_4 (8x7)
 N $6DEB #HTML[#CALL:graphic($6DEB,8,7,0,1)]
-B $6DEB,7,1
+@ $6DEB label=tumbleweed_4
+B $6DEB,7,1 Bitmap data
 N $6DF2 LOD
 @ $6DF2 label=barrier_lods
 B $6DF2,1,1 Width (bytes)
@@ -978,18 +1017,23 @@ W $6E18,2,2 Bitmap
 W $6E1A,2,2 Pre-shifted bitmap
 N $6E1C Barrier (32x17)
 N $6E1C #HTML[#CALL:graphic($6E1C,32,17,0,1)]
-B $6E1C,68,4
+@ $6E1C label=barrier_1
+B $6E1C,68,4 Bitmap data
 N $6E60 Barrier (24x13)
 N $6E60 #HTML[#CALL:graphic($6E60,24,13,0,1)]
-B $6E60,39,3
+@ $6E60 label=barrier_2
+B $6E60,39,3 Bitmap data
 N $6E87 Barrier (16x9)
 N $6E87 #HTML[#CALL:graphic($6E87,16,9,0,1)]
-B $6E87,18,2
-N $6E99 Barrier (16x7) pre-shifted
+@ $6E87 label=barrier_3
+B $6E87,18,2 Bitmap data
+N $6E99 Barrier (16x7)
 N $6E99 #HTML[#CALL:graphic($6E99,16,7,1,1)]
+@ $6E99 label=barrier_4
 B $6E99,28,4 Masked bitmap data
 N $6EB5 Barrier (16x7) pre-shifted
 N $6EB5 #HTML[#CALL:graphic($6EB5,16,7,1,1)]
+@ $6EB5 label=barrier_4s
 B $6EB5,28,4 Masked bitmap data
 N $6ED1 Referenced by graphic entry 6
 B $6ED1,10,8,2
@@ -999,8 +1043,10 @@ N $6EDE Referenced by graphic entry 15
 B $6EDE,10,8,2
 W $6EE8,2,2 Ptr?
 B $6EEA,1,1
+@ $6EEB label=streetlamp_6eeb
 W $6EEB,2,2 Address of another LOD table
 B $6EED,20,8*2,4
+@ $6F01 label=streetlamp_6f01
 W $6F01,2,2 Address of another LOD table
 B $6F03,20,8*2,4
 N $6F17 LOD
@@ -1067,27 +1113,35 @@ W $6F59,2,2 Bitmap
 W $6F5B,2,2 Pre-shifted bitmap
 N $6F5D Street lamp top (32x8)
 N $6F5D #HTML[#CALL:graphic($6F5D,32,8,0,1)]
-B $6F5D,32,4 Masked bitmap data
+@ $6F5D label=streetlamptop_1
+B $6F5D,32,4 Bitmap data
 N $6F7D Street lamp top (24x5)
 N $6F7D #HTML[#CALL:graphic($6F7D,24,5,0,1)]
-B $6F7D,15,3
+@ $6F7D label=streetlamptop_2
+B $6F7D,15,3 Bitmap data
 N $6F8C Street lamp top (24x4)
 N $6F8C #HTML[#CALL:graphic($6F8C,24,4,0,1)]
-B $6F8C,12,3
+@ $6F8C label=streetlamptop_3
+B $6F8C,12,3 Bitmap data
 N $6F98 Street lamp top (24x4) pre-shifted
 N $6F98 #HTML[#CALL:graphic($6F98,24,4,0,1)]
-B $6F98,12,3
+@ $6F98 label=streetlamptop_3s
+B $6F98,12,3 Bitmap data
 N $6FA4 Street lamp top (16x4)
 N $6FA4 #HTML[#CALL:graphic($6FA4,16,4,1,1)]
-B $6FA4,16,2
+@ $6FA4 label=streetlamptop_4
+B $6FA4,16,2 Masked bitmap data
 N $6FB4 Street lamp top (16x4) pre-shifted
 N $6FB4 #HTML[#CALL:graphic($6FB4,16,4,1,1)]
+@ $6FB4 label=streetlamptop_4s
 B $6FB4,16,2 Masked bitmap data
 N $6FC4 Street lamp top (16x3)
 N $6FC4 #HTML[#CALL:graphic($6FC4,16,3,1,1)]
+@ $6FC4 label=streetlamptop_5
 B $6FC4,12,2 Masked bitmap data
 N $6FD0 Street lamp top (16x3) pre-shifted
 N $6FD0 #HTML[#CALL:graphic($6FD0,16,3,1,1)]
+@ $6FD0 label=streetlamptop_5s
 B $6FD0,12,2 Masked bitmap data
 N $6FDC Referenced by graphic entry 7
 B $6FDC,1,1
@@ -1105,9 +1159,79 @@ W $6FEA,2,2
 B $6FEC,1,1
 W $6FED,2,2
 B $6FEF,1,1
-W $6FF0,2,2
-B $6FF2,260,8*32,4 TBD
-N $70F6 Referenced by graphic entry 4 and 13 These seem to start and end with a number/count.
+@ $6FF0 label=gfx_6ff0
+W $6FF0,2,2 LOD ptr?
+B $6FF2,20,8*2,4
+@ $7006 label=gfx_7006
+W $7006,2,2
+B $7008,20,8*2,4
+@ $701C label=gfx_telegraphpoletop_lods
+B $701C,1,1 Width (bytes)
+B $701D,1,1 Flags
+B $701E,1,1 Height
+W $701F,2,2 Bitmap
+W $7021,2,2 Pre-shifted bitmap
+B $7023,1,1 Width (bytes)
+B $7024,1,1 Flags
+B $7025,1,1 Height
+W $7026,2,2 Bitmap
+W $7028,2,2 Pre-shifted bitmap
+B $702A,1,1 Width (bytes)
+B $702B,1,1 Flags
+B $702C,1,1 Height
+W $702D,2,2 Bitmap
+W $702F,2,2 Pre-shifted bitmap
+B $7031,1,1 Width (bytes)
+B $7032,1,1 Flags
+B $7033,1,1 Height
+W $7034,2,2 Bitmap
+W $7036,2,2 Pre-shifted bitmap
+B $7038,1,1 Width (bytes)
+B $7039,1,1 Flags
+B $703A,1,1 Height
+W $703B,2,2 Bitmap
+W $703D,2,2 Pre-shifted bitmap
+N $703F Top of telegraph pole (24x13)
+N $703F #HTML[#CALL:graphic($703F,24,13,0,1)]
+@ $703F label=telegraphpoletop_1
+B $703F,8,8 Bitmap data
+B $7047,31,8*3,7
+N $7066 Top of telegraph pole (24x10)
+N $7066 #HTML[#CALL:graphic($7066,24,10,0,1)]
+@ $7066 label=telegraphpoletop_2
+B $7066,8,8 Bitmap data
+B $706E,22,8*2,6
+N $7084 Top of telegraph pole (24x7)
+N $7084 #HTML[#CALL:graphic($7084,24,7,0,1)]
+@ $7084 label=telegraphpoletop_3
+B $7084,8,8 Bitmap data
+B $708C,13,8,5
+N $7099 Top of telegraph pole (24x7) pre-shifted
+N $7099 #HTML[#CALL:graphic($7099,24,7,0,1)]
+@ $7099 label=telegraphpoletop_3s
+B $7099,8,8 Bitmap data
+B $70A1,13,8,5
+N $70AE Top of telegraph pole (16x5) masked
+N $70AE #HTML[#CALL:graphic($70AE,16,5,1,1)]
+@ $70AE label=telegraphpoletop_4
+B $70AE,8,8 Masked bitmap data
+B $70B6,12,8,4
+N $70C2 Top of telegraph pole (16x5) pre-shifted and masked
+N $70C2 #HTML[#CALL:graphic($70C2,16,5,1,1)]
+@ $70C2 label=telegraphpoletop_4s
+B $70C2,8,8 Masked bitmap data
+B $70CA,12,8,4
+N $70D6 Top of telegraph pole (16x4)
+N $70D6 #HTML[#CALL:graphic($70D6,16,4,1,1)]
+@ $70D6 label=telegraphpoletop_5
+B $70D6,8,8 Masked bitmap data
+B $70DE,8,8
+N $70E6 Top of telegraph pole (16x4) pre-shifted and masked
+N $70E6 #HTML[#CALL:graphic($70E6,16,4,1,1)]
+@ $70E6 label=telegraphpoletop_5s
+B $70E6,8,8 Masked bitmap data
+B $70EE,8,8
+N $70F6 Referenced by graphic entry 4 and 13. These seem to start and end with a number/count.
 B $70F6,1,1
 W $70F7,2,2
 B $70F9,1,1
@@ -1119,25 +1243,29 @@ W $7100,2,2
 B $7102,1,1
 W $7103,2,2
 B $7105,1,1
-N $7106 Referenced by graphic entry 5 and 14 7106 Affects heights of things when meddled with.
+N $7106 Referenced by graphic entry 5 and 14. Affects heights of things when meddled with.
 B $7106,1,1
 W $7107,2,2 below ptr to tree_lods
 B $7109,1,1
 W $710A,2,2
 B $710C,1,1
-C $710D,2
+W $710D,2,2
 B $710F,1,1
-N $7110 feels like a break here
+@ $7110 label=gfx_7110
 W $7110,2,2 -> tree_lods
-B $7112,20,4,8
+B $7112,20,8*2,4
+@ $7126 label=gfx_7126
 W $7126,2,2 -> tree_lods
-B $7128,20,6,8,6
+B $7128,20,8*2,4
+@ $713C label=gfx_713c
 W $713C,2,2 -> tree_lods
 B $713E,20,8*2,4
+@ $7152 label=gfx_7152
 W $7152,2,2 -> tree_lods
-B $7154,20,2,8*2,2
+B $7154,20,8*2,4
+@ $7168 label=gfx_7168
 W $7168,2,2 -> tree_lods
-B $716A,20,4,8
+B $716A,20,8*2,4
 N $717E LOD
 @ $717E label=tree_lods
 B $717E,1,1 Width (bytes)
@@ -1478,16 +1606,20 @@ B $7E0E,20,8*2,4
 @ $7E22 label=gfx_7e22
 W $7E22,2,2 ptr?
 B $7E24,20,8*2,4
+@ $7E38 label=gfx_7e38
 W $7E38,2,2 ptr?
 B $7E3A,20,8*2,4
+@ $7E4E label=gfx_7e4e
 W $7E4E,2,2 ptr?
 B $7E50,20,8*2,4
 W $7E64,2,2 ptr?
 B $7E66,20,8*2,4
 W $7E7A,2,2 ptr?
 B $7E7C,20,8*2,4
+@ $7E90 label=gfx_7e90
 W $7E90,2,2 ptr?
 B $7E92,20,8*2,4
+@ $7EA6 label=gfx_7ea6
 W $7EA6,2,2 ptr?
 B $7EA8,20,8*2,4
 @ $7EBC label=gfx_7ebc
@@ -1498,7 +1630,7 @@ B $7F1E,6,6 tops of lamp posts?
 B $7F24,105,8*13,1
 u $7F8D Unused
 B $7F8D,115,8*14,3
-g $8000
+g $8000 Game status buffer entry at 8000
 @ $8000 label=test_mode_flag
 B $8000,1,1 Test mode enable flag (cheat mode)
 @ $8001 label=attract_cycle
