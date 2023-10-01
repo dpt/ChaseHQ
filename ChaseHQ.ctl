@@ -391,8 +391,7 @@ B $5E3E,1,1 Frame delay until next message?
 b $5E3F Graphics or object? definitions
 D $5E3F All are stored inverted except where noted.
 B $5E3F,1,1 Pointed to by $5CFA
-b $5E40 Pointed to by $5CF6
-B $5E40,1,1 ?
+B $5E40,1,1 Pointed to by $5CF6
 W $5E41,2,2 Address of tumbleweed_lods table
 B $5E43,1,1 ?
 W $5E44,2,2 Address of barrier_lods table
@@ -826,10 +825,11 @@ N $6AF4 Dust (8x1) pre-shifted
 N $6AF4 #HTML[#CALL:graphic($6AF4,8,1,1,1)]
 @ $6AF4 label=dust_1s
 B $6AF4,2,2 Masked bitmap data
-@ $6AF6 label=unknown_6af6
+@ $6AF6 label=gfx_6af6
 W $6AF6,2,2 -> turn_sign_lods
 B $6AF8,20,8*2,4 Read by $928D and $92F6
 N $6B0C Referenced by graphic entry 8 and 17
+@ $6B0C label=gfx_6b0c
 W $6B0C,2,2 -> turn_sign_lods
 B $6B0E,20,8*2,4
 N $6B22 Turn sign LOD
@@ -1036,10 +1036,12 @@ N $6EB5 #HTML[#CALL:graphic($6EB5,16,7,1,1)]
 @ $6EB5 label=barrier_4s
 B $6EB5,28,4 Masked bitmap data
 N $6ED1 Referenced by graphic entry 6
+@ $6ED1 label=gfx_6ed1
 B $6ED1,10,8,2
 W $6EDB,2,2 Ptr?
 B $6EDD,1,1
 N $6EDE Referenced by graphic entry 15
+@ $6EDE label=gfx_6ede
 B $6EDE,10,8,2
 W $6EE8,2,2 Ptr?
 B $6EEA,1,1
@@ -1144,6 +1146,7 @@ N $6FD0 #HTML[#CALL:graphic($6FD0,16,3,1,1)]
 @ $6FD0 label=streetlamptop_5s
 B $6FD0,12,2 Masked bitmap data
 N $6FDC Referenced by graphic entry 7
+@ $6FDC label=gfx_6fdc
 B $6FDC,1,1
 W $6FDD,2,2
 B $6FDF,1,1
@@ -1152,6 +1155,7 @@ B $6FE2,1,1
 W $6FE3,2,2
 B $6FE5,1,1
 N $6FE6 Referenced by graphic entry 16
+@ $6FE6 label=gfx_6fe6
 B $6FE6,1,1
 W $6FE7,2,2
 B $6FE9,1,1
@@ -1232,6 +1236,7 @@ N $70E6 #HTML[#CALL:graphic($70E6,16,4,1,1)]
 B $70E6,8,8 Masked bitmap data
 B $70EE,8,8
 N $70F6 Referenced by graphic entry 4 and 13. These seem to start and end with a number/count.
+@ $70F6 label=gfx_70f6
 B $70F6,1,1
 W $70F7,2,2
 B $70F9,1,1
@@ -1244,6 +1249,7 @@ B $7102,1,1
 W $7103,2,2
 B $7105,1,1
 N $7106 Referenced by graphic entry 5 and 14. Affects heights of things when meddled with.
+@ $7106 label=gfx_7106
 B $7106,1,1
 W $7107,2,2 below ptr to tree_lods
 B $7109,1,1
@@ -1595,6 +1601,7 @@ N $7D51 #HTML[#CALL:face($7D51)]
 B $7D51,160,4 Bitmap data, top-down format
 B $7DF1,20,4 Attribute data for above
 b $7E05 Referenced by graphic entry 3 and 12
+@ $7E05 label=gfx_7e05
 B $7E05,1,1
 W $7E06,2,2 ptr?
 B $7E08,1,1
@@ -3287,7 +3294,9 @@ C $9246,4 Self modify 'LD A,x' at $93C0 to load 0
 C $924A,3 Loop?
 c $924D Routine at 924D
 R $924D R:B Offset added to $E6xx address. Routine skipped if it's >= 16.
+@ $924D label=sub_924d
 C $924D,3 HL = $9279
+@ $9252 label=sub_9252
 C $9252,3 HL = $92E2   graphic 1 uses this entry
 C $9255,1 A = B
 C $9256,3 Return if A >= 16
@@ -3350,6 +3359,7 @@ C $92D9,1 B--
 C $92DA,1 A++
 C $92DB,2 C = 0
 c $92E1 Drives the sprite plotters  WHAT CALLS THIS PROB $901B
+@ $92E1 label=sub_92e1
 C $92E1,4 Self modify 'LD D,x' at $933D to load 0
 C $92E5,1 A = B
 C $92E6,2 CP 10
@@ -9642,7 +9652,67 @@ B $E1D8,7,7 Arrow graphic (incl. HERE!)
 @ $E1DF label=floating_arrow_defns
 B $E1DF,10,5 <Byte width, Flags, Height, Ptr> [floating arrow defns]
 b $E1E9 Referenced by graphic entry 1 and 10
-B $E1E9,187,8*23,3
+@ $E1E9 label=gfx_e1e9
+W $E1E9,22,2
+@ $E1FF label=tunnellight_lods
+B $E1FF,1,1 Width (bytes)
+B $E200,1,1 Flags
+B $E201,1,1 Height (pixels)
+W $E202,2,2 Bitmap
+W $E204,2,2 Pre-shifted bitmap
+B $E206,1,1 Width (bytes)
+B $E207,1,1 Flags
+B $E208,1,1 Height (pixels)
+W $E209,2,2 Bitmap
+W $E20B,2,2 Pre-shifted bitmap
+B $E20D,1,1 Width (bytes)
+B $E20E,1,1 Flags
+B $E20F,1,1 Height (pixels)
+W $E210,2,2 Bitmap
+W $E212,2,2 Pre-shifted bitmap
+B $E214,1,1 Width (bytes)
+B $E215,1,1 Flags
+B $E216,1,1 Height (pixels)
+W $E217,2,2 Bitmap
+W $E219,2,2 Pre-shifted bitmap
+B $E21B,1,1 Width (bytes)
+B $E21C,1,1 Flags
+B $E21D,1,1 Height (pixels)
+W $E21E,2,2 Bitmap
+W $E220,2,2 Pre-shifted bitmap
+B $E222,1,1 Width (bytes)
+B $E223,1,1 Flags
+B $E224,1,1 Height (pixels)
+W $E225,2,2 Bitmap
+W $E227,2,2 Pre-shifted bitmap
+N $E229 Tunnel light (16x16)
+N $E229 #HTML[#CALL:graphic($E229,16,16,0,1)]
+@ $E229 label=tunnellight_1
+B $E229,32,8 Bitmap data
+N $E249 Tunnel light (16x12)
+N $E249 #HTML[#CALL:graphic($E249,16,12,0,1)]
+@ $E249 label=tunnellight_2
+B $E249,24,8 Bitmap data
+N $E261 #HTML[#CALL:graphic($E261,8,8,0,1)]
+N $E261 Tunnel light (8x8)
+@ $E261 label=tunnellight_3
+B $E261,8,8 Bitmap data
+N $E269 #HTML[#CALL:graphic($E269,8,6,0,1)]
+N $E269 Tunnel light (8x6)
+@ $E269 label=tunnellight_4
+B $E269,6,6 Bitmap data
+N $E26F #HTML[#CALL:graphic($E26F,8,5,0,1)]
+N $E26F Tunnel light (8x5)
+@ $E26F label=tunnellight_5
+B $E26F,5,5 Bitmap data
+N $E274 #HTML[#CALL:graphic($E274,16,6,1,1)]
+N $E274 Tunnel light masked (16x6)
+@ $E274 label=tunnellight_6
+B $E274,24,8 Masked bitmap data
+N $E28C Tunnel light masked shifted (16x6)
+N $E28C #HTML[#CALL:graphic($E28C,16,6,1,1)]
+@ $E28C label=tunnellight_6s
+B $E28C,24,8 Masked bitmap data
 b $E2A4 Data for perp escape scene
 N $E2A4 Perp escape scene, hazards
 B $E2A4,6,6
