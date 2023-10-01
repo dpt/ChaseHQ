@@ -395,34 +395,34 @@ B $5E40,1,1 Pointed to by $5CF6
 W $5E41,2,2 Address of tumbleweed_lods table
 B $5E43,1,1 ?
 W $5E44,2,2 Address of barrier_lods table
-N $5E46 Entry 1
+N $5E46 Entry 1 (tunnel light)
 B $5E46,3,3 Unclear if anything uses these bytes
 W $5E49,2,2 Arg for routine passed in DE
 W $5E4B,2,2 -> Routine at $9252
 N $5E4D Entry 2 (empty)
 B $5E4D,3,3
 W $5E50,4,2
-N $5E54 Entry 3
+N $5E54 Entry 3 (street lamp or telegraph pole?)
 B $5E54,3,3
 W $5E57,2,2 Arg for routine passed in DE
 W $5E59,2,2 -> Routine at $9171
-N $5E5B Entry 4
+N $5E5B Entry 4 (tree, right hand side)
 B $5E5B,3,3
 W $5E5E,2,2 Arg for routine passed in DE
 W $5E60,2,2 -> Routine at $9171. Loaded into HL at $9017 then jumped to.
-N $5E62 Entry 5
+N $5E62 Entry 5 (tree or bush?)
 B $5E62,3,3
 W $5E65,2,2 Arg for routine passed in DE
 W $5E67,2,2 -> Routine at $9171
-N $5E69 Entry 6
+N $5E69 Entry 6 (street lamp or telegraph pole?)
 B $5E69,3,3
 W $5E6C,2,2 Arg for routine passed in DE
 W $5E6E,2,2 -> Routine at $9171
-N $5E70 Entry 7
+N $5E70 Entry 7 (street lamp, no flip?)
 B $5E70,3,3
 W $5E73,2,2 Arg for routine passed in DE
 W $5E75,2,2 -> Routine at $9171
-N $5E77 Entry 8
+N $5E77 Entry 8 (turn sign, no flip)
 B $5E77,3,3
 W $5E7A,2,2 Arg for routine passed in DE
 W $5E7C,2,2 Routine?
@@ -430,34 +430,34 @@ N $5E7E Entry 9 (turn sign)
 B $5E7E,3,3
 W $5E81,2,2 -> -> turn_sign_lods
 W $5E83,2,2 -> Routine at $92E1
-N $5E85 Entry 10
+N $5E85 Entry 10 (tunnel light)
 B $5E85,3,3
 W $5E88,2,2 Arg
 W $5E8A,2,2 -> Routine at $924D
 N $5E8C Entry 11 (empty)
 B $5E8C,3,3
 W $5E8F,4,2
-N $5E93 Entry 12
+N $5E93 Entry 12 (pole?)
 B $5E93,3,3
 W $5E96,2,2 Arg
 W $5E98,2,2 -> Routine at $916C
-N $5E9A Entry 13
+N $5E9A Entry 13 (tree, left hand side)
 B $5E9A,3,3
 W $5E9D,2,2 Arg
 W $5E9F,2,2 -> Routine at $916C
-N $5EA1 Entry 14
+N $5EA1 Entry 14 (tree/bush?)
 B $5EA1,3,3
 W $5EA4,2,2 Arg
 W $5EA6,2,2 -> Routine at $916C
-N $5EA8 Entry 15
+N $5EA8 Entry 15 (street lamp, flipped)
 B $5EA8,3,3
 W $5EAB,2,2 Arg
 W $5EAD,2,2 -> Routine at $916C
-N $5EAF Entry 16
+N $5EAF Entry 16 (telegraph pole)
 B $5EAF,3,3
 W $5EB2,2,2 Arg
 W $5EB4,2,2 -> Routine at $916C
-N $5EB6 Entry 17
+N $5EB6 Entry 17 (turn sign)
 B $5EB6,3,3
 W $5EB9,2,2 Arg
 W $5EBB,2,2 -> Routine at $9278
@@ -826,69 +826,69 @@ N $6AF4 Bitmap: Dust (8x1) pre-shifted
 N $6AF4 #HTML[#CALL:graphic($6AF4,8,1,1,1)]
 @ $6AF4 label=bitmap_dust_1s
 B $6AF4,2,2 Masked bitmap data
-@ $6AF6 label=gfx_6af6
+@ $6AF6 label=turn_sign_6af6
 W $6AF6,2,2 -> turn_sign_lods
 B $6AF8,20,8*2,4 Read by $928D and $92F6
 N $6B0C Referenced by graphic entry 8 and 17
-@ $6B0C label=gfx_6b0c
+@ $6B0C label=turn_sign_6b0c
 W $6B0C,2,2 -> turn_sign_lods
 B $6B0E,20,8*2,4
-N $6B22 Turn sign LOD
+N $6B22 Turn sign LOD 1
 @ $6B22 label=turn_sign_lods
 B $6B22,1,1 Width (bytes)
 B $6B23,1,1 Flags
 B $6B24,1,1 Height (pixels)
 W $6B25,2,2 Bitmap
 W $6B27,2,2 Pre-shifted bitmap
-N $6B29 Turn sign LOD
+N $6B29 Turn sign LOD 2
 B $6B29,1,1 Width (bytes)
 B $6B2A,1,1 Flags
 B $6B2B,1,1 Height (pixels)
 W $6B2C,2,2 Bitmap
 W $6B2E,2,2 Pre-shifted bitmap
-N $6B30 Turn sign LOD
+N $6B30 Turn sign LOD 3
 B $6B30,1,1 Width (bytes)
 B $6B31,1,1 Flags
 B $6B32,1,1 Height (pixels)
 W $6B33,2,2 Bitmap
 W $6B35,2,2 Pre-shifted bitmap
-N $6B37 Turn sign LOD
+N $6B37 Turn sign LOD 4
 B $6B37,1,1 Width (bytes)
 B $6B38,1,1 Flags
 B $6B39,1,1 Height (pixels)
 W $6B3A,2,2 Bitmap
 W $6B3C,2,2 Pre-shifted bitmap
-N $6B3E Turn sign LOD
+N $6B3E Turn sign LOD 5
 B $6B3E,1,1 Width (bytes)
 B $6B3F,1,1 Flags
 B $6B40,1,1 Height (pixels)
 W $6B41,2,2 Bitmap
 W $6B43,2,2 Pre-shifted bitmap
-N $6B45 Turn sign LOD
+N $6B45 Turn sign LOD 1 (flipped)
 B $6B45,1,1 Width (bytes)
 B $6B46,1,1 Flags
 B $6B47,1,1 Height (pixels)
 W $6B48,2,2 Bitmap
 W $6B4A,2,2 Pre-shifted bitmap
-N $6B4C Turn sign LOD
+N $6B4C Turn sign LOD 2 (flipped)
 B $6B4C,1,1 Width (bytes)
 B $6B4D,1,1 Flags
 B $6B4E,1,1 Height (pixels)
 W $6B4F,2,2 Bitmap
 W $6B51,2,2 Pre-shifted bitmap
-N $6B53 Turn sign LOD
+N $6B53 Turn sign LOD 3 (flipped)
 B $6B53,1,1 Width (bytes)
 B $6B54,1,1 Flags
 B $6B55,1,1 Height (pixels)
 W $6B56,2,2 Bitmap
 W $6B58,2,2 Pre-shifted bitmap
-N $6B5A Turn sign LOD
+N $6B5A Turn sign LOD 4 (flipped)
 B $6B5A,1,1 Width (bytes)
 B $6B5B,1,1 Flags
 B $6B5C,1,1 Height (pixels)
 W $6B5D,2,2 Bitmap
 W $6B5F,2,2 Pre-shifted bitmap
-N $6B61 Turn sign LOD
+N $6B61 Turn sign LOD 5 (flipped)
 B $6B61,1,1 Width (bytes)
 B $6B62,1,1 Flags
 B $6B63,1,1 Height (pixels)
@@ -926,189 +926,189 @@ N $6D5A Turn right sign (16x10) pre-shifted
 N $6D5A #HTML[#CALL:graphic($6D5A,16,10,1,1)]
 @ $6D5A label=bitmap_turnsign_6s
 B $6D5A,40,4 Masked bitmap data
-N $6D82 LOD
+N $6D82 Tumbleweed LOD 1
 @ $6D82 label=tumbleweed_lods
 B $6D82,1,1 Width (bytes)
 B $6D83,1,1 Flags
 B $6D84,1,1 Height (pixels)
 W $6D85,2,2 Bitmap
 W $6D87,2,2 Pre-shifted bitmap
-N $6D89 LOD
+N $6D89 Tumbleweed LOD 2
 B $6D89,1,1 Width (bytes)
 B $6D8A,1,1 Flags
 B $6D8B,1,1 Height (pixels)
 W $6D8C,2,2 Bitmap
 W $6D8E,2,2 Pre-shifted bitmap
-N $6D90 LOD
+N $6D90 Tumbleweed LOD 3
 B $6D90,1,1 Width (bytes)
 B $6D91,1,1 Flags
 B $6D92,1,1 Height (pixels)
 W $6D93,2,2 Bitmap
 W $6D95,2,2 Pre-shifted bitmap
-N $6D97 LOD
+N $6D97 Tumbleweed LOD 4
 B $6D97,1,1 Width (bytes)
 B $6D98,1,1 Flags
 B $6D99,1,1 Height (pixels)
 W $6D9A,2,2 Bitmap
 W $6D9C,2,2 Pre-shifted bitmap
-N $6D9E LOD
+N $6D9E Tumbleweed LOD 5
 B $6D9E,1,1 Width (bytes)
 B $6D9F,1,1 Flags
 B $6DA0,1,1 Height (pixels)
 W $6DA1,2,2 Bitmap
 W $6DA3,2,2 Pre-shifted bitmap
-N $6DA5 LOD
+N $6DA5 Tumbleweed LOD 6
 B $6DA5,1,1 Width (bytes)
 B $6DA6,1,1 Flags
 B $6DA7,1,1 Height (pixels)
 W $6DA8,2,2 Bitmap
 W $6DAA,2,2 Pre-shifted bitmap
-N $6DAC Tumbleweed_1 (16x16)
+N $6DAC Bitmap: Tumbleweed_1 (16x16)
 N $6DAC #HTML[#CALL:graphic($6DAC,16,16,0,1)]
 @ $6DAC label=bitmap_tumbleweed_1
 B $6DAC,32,2 Bitmap data
-N $6DCC Tumbleweed_2 (16x11)
+N $6DCC Bitmap: Tumbleweed_2 (16x11)
 N $6DCC #HTML[#CALL:graphic($6DCC,16,11,0,1)]
 @ $6DCC label=bitmap_tumbleweed_2
 B $6DCC,22,2 Bitmap data
-N $6DE2 Tumbleweed_3 (8x9)
+N $6DE2 Bitmap: Tumbleweed_3 (8x9)
 N $6DE2 #HTML[#CALL:graphic($6DE2,8,9,0,1)]
 @ $6DE2 label=bitmap_tumbleweed_3
 B $6DE2,9,1 Bitmap data
-N $6DEB Tumbleweed_4 (8x7)
+N $6DEB Bitmap: Tumbleweed_4 (8x7)
 N $6DEB #HTML[#CALL:graphic($6DEB,8,7,0,1)]
 @ $6DEB label=bitmap_tumbleweed_4
 B $6DEB,7,1 Bitmap data
-N $6DF2 LOD
+N $6DF2 Barrier LOD 1
 @ $6DF2 label=barrier_lods
 B $6DF2,1,1 Width (bytes)
 B $6DF3,1,1 Flags
 B $6DF4,1,1 Height (pixels)
 W $6DF5,2,2 Bitmap
 W $6DF7,2,2 Pre-shifted bitmap
-N $6DF9 LOD
+N $6DF9 Barrier LOD 2
 B $6DF9,1,1 Width (bytes)
 B $6DFA,1,1 Flags
 B $6DFB,1,1 Height (pixels)
 W $6DFC,2,2 Bitmap
 W $6DFE,2,2 Pre-shifted bitmap
-N $6E00 LOD
+N $6E00 Barrier LOD 3
 B $6E00,1,1 Width (bytes)
 B $6E01,1,1 Flags
 B $6E02,1,1 Height (pixels)
 W $6E03,2,2 Bitmap
 W $6E05,2,2 Pre-shifted bitmap
-N $6E07 LOD
+N $6E07 Barrier LOD 4
 B $6E07,1,1 Width (bytes)
 B $6E08,1,1 Flags
 B $6E09,1,1 Height (pixels)
 W $6E0A,2,2 Bitmap
 W $6E0C,2,2 Pre-shifted bitmap
-N $6E0E LOD
+N $6E0E Barrier LOD 5
 B $6E0E,1,1 Width (bytes)
 B $6E0F,1,1 Flags
 B $6E10,1,1 Height (pixels)
 W $6E11,2,2 Bitmap
 W $6E13,2,2 Pre-shifted bitmap
-N $6E15 LOD
+N $6E15 Barrier LOD 6
 B $6E15,1,1 Width (bytes)
 B $6E16,1,1 Flags
 B $6E17,1,1 Height (pixels)
 W $6E18,2,2 Bitmap
 W $6E1A,2,2 Pre-shifted bitmap
-N $6E1C Barrier (32x17)
+N $6E1C Bitmap: Barrier (32x17)
 N $6E1C #HTML[#CALL:graphic($6E1C,32,17,0,1)]
 @ $6E1C label=bitmap_barrier_1
 B $6E1C,68,4 Bitmap data
-N $6E60 Barrier (24x13)
+N $6E60 Bitmap: Barrier (24x13)
 N $6E60 #HTML[#CALL:graphic($6E60,24,13,0,1)]
 @ $6E60 label=bitmap_barrier_2
 B $6E60,39,3 Bitmap data
-N $6E87 Barrier (16x9)
+N $6E87 Bitmap: Barrier (16x9)
 N $6E87 #HTML[#CALL:graphic($6E87,16,9,0,1)]
 @ $6E87 label=bitmap_barrier_3
 B $6E87,18,2 Bitmap data
-N $6E99 Barrier (16x7)
+N $6E99 Bitmap: Barrier (16x7)
 N $6E99 #HTML[#CALL:graphic($6E99,16,7,1,1)]
 @ $6E99 label=bitmap_barrier_4
 B $6E99,28,4 Masked bitmap data
-N $6EB5 Barrier (16x7) pre-shifted
+N $6EB5 Bitmap: Barrier (16x7) pre-shifted
 N $6EB5 #HTML[#CALL:graphic($6EB5,16,7,1,1)]
 @ $6EB5 label=bitmap_barrier_4s
 B $6EB5,28,4 Masked bitmap data
 N $6ED1 Referenced by graphic entry 6
-@ $6ED1 label=gfx_6ed1
+@ $6ED1 label=streetlamp_6ed1
 B $6ED1,10,8,2
 W $6EDB,2,2 Ptr?
 B $6EDD,1,1
 N $6EDE Referenced by graphic entry 15
-@ $6EDE label=gfx_6ede
+@ $6EDE label=streetlamp_flipped_6ede
 B $6EDE,10,8,2
 W $6EE8,2,2 Ptr?
 B $6EEA,1,1
 @ $6EEB label=streetlamp_6eeb
 W $6EEB,2,2 Address of another LOD table
-B $6EED,20,8*2,4
-@ $6F01 label=streetlamp_6f01
+B $6EED,20,2
+@ $6F01 label=streetlamp_flipped_6f01
 W $6F01,2,2 Address of another LOD table
-B $6F03,20,8*2,4
-N $6F17 LOD
+B $6F03,20,2
+N $6F17 Street lamp LOD 1
 @ $6F17 label=streetlamp_lods
 B $6F17,1,1 Width (bytes)
 B $6F18,1,1 Flags
 B $6F19,1,1 Height
 W $6F1A,2,2 Bitmap
 W $6F1C,2,2 Pre-shifted bitmap
-N $6F1E LOD
+N $6F1E Street lamp LOD 2
 B $6F1E,1,1 Width (bytes)
 B $6F1F,1,1 Flags
 B $6F20,1,1 Height
 W $6F21,2,2 Bitmap
 W $6F23,2,2 Pre-shifted bitmap
-N $6F25 LOD
+N $6F25 Street lamp LOD 3
 B $6F25,1,1 Width (bytes)
 B $6F26,1,1 Flags
 B $6F27,1,1 Height
 W $6F28,2,2 Bitmap
 W $6F2A,2,2 Pre-shifted bitmap
-N $6F2C LOD
+N $6F2C Street lamp LOD 4
 B $6F2C,1,1 Width (bytes)
 B $6F2D,1,1 Flags
 B $6F2E,1,1 Height
 W $6F2F,2,2 Bitmap
 W $6F31,2,2 Pre-shifted bitmap
-N $6F33 LOD
+N $6F33 Street lamp LOD 5
 B $6F33,1,1 Width (bytes)
 B $6F34,1,1 Flags
 B $6F35,1,1 Height
 W $6F36,2,2 Bitmap
 W $6F38,2,2 Pre-shifted bitmap
-N $6F3A LOD
+N $6F3A Street lamp LOD 1 (flipped)
 @ $6F3A label=streetlamp_flipped_lods
 B $6F3A,1,1 Width (bytes)
 B $6F3B,1,1 Flags
 B $6F3C,1,1 Height
 W $6F3D,2,2 Bitmap
 W $6F3F,2,2 Pre-shifted bitmap
-N $6F41 LOD
+N $6F41 Street lamp LOD 2 (flipped)
 B $6F41,1,1 Width (bytes)
 B $6F42,1,1 Flags
 B $6F43,1,1 Height
 W $6F44,2,2 Bitmap
 W $6F46,2,2 Pre-shifted bitmap
-N $6F48 LOD
+N $6F48 Street lamp LOD 3 (flipped)
 B $6F48,1,1 Width (bytes)
 B $6F49,1,1 Flags
 B $6F4A,1,1 Height
 W $6F4B,2,2 Bitmap
 W $6F4D,2,2 Pre-shifted bitmap
-N $6F4F LOD
+N $6F4F Street lamp LOD 4 (flipped)
 B $6F4F,1,1 Width (bytes)
 B $6F50,1,1 Flags
 B $6F51,1,1 Height
 W $6F52,2,2 Bitmap
 W $6F54,2,2 Pre-shifted bitmap
-N $6F56 LOD
+N $6F56 Street lamp LOD 5 (flipped)
 B $6F56,1,1 Width (bytes)
 B $6F57,1,1 Flags
 B $6F58,1,1 Height
@@ -1147,7 +1147,7 @@ N $6FD0 #HTML[#CALL:graphic($6FD0,16,3,1,1)]
 @ $6FD0 label=bitmap_streetlamptop_5s
 B $6FD0,12,2 Masked bitmap data
 N $6FDC Referenced by graphic entry 7
-@ $6FDC label=gfx_6fdc
+@ $6FDC label=telegraphpole_6fdc
 B $6FDC,1,1
 W $6FDD,2,2
 B $6FDF,1,1
@@ -1156,7 +1156,7 @@ B $6FE2,1,1
 W $6FE3,2,2
 B $6FE5,1,1
 N $6FE6 Referenced by graphic entry 16
-@ $6FE6 label=gfx_6fe6
+@ $6FE6 label=telegraphpole_6fe6
 B $6FE6,1,1
 W $6FE7,2,2
 B $6FE9,1,1
@@ -1164,13 +1164,13 @@ W $6FEA,2,2
 B $6FEC,1,1
 W $6FED,2,2
 B $6FEF,1,1
-@ $6FF0 label=gfx_6ff0
+@ $6FF0 label=telegraphpoletop_6ff0
 W $6FF0,2,2 LOD ptr?
-B $6FF2,20,8*2,4
-@ $7006 label=gfx_7006
+B $6FF2,20,2
+@ $7006 label=telegraphpoletop_7006
 W $7006,2,2
-B $7008,20,8*2,4
-@ $701C label=gfx_telegraphpoletop_lods
+B $7008,20,2
+@ $701C label=telegraphpoletop_lods
 B $701C,1,1 Width (bytes)
 B $701D,1,1 Flags
 B $701E,1,1 Height
@@ -1237,7 +1237,7 @@ N $70E6 #HTML[#CALL:graphic($70E6,16,4,1,1)]
 B $70E6,8,8 Masked bitmap data
 B $70EE,8,8
 N $70F6 Referenced by graphic entry 4 and 13. These seem to start and end with a number/count.
-@ $70F6 label=gfx_70f6
+@ $70F6 label=tree_70f6
 B $70F6,1,1
 W $70F7,2,2
 B $70F9,1,1
@@ -1260,19 +1260,19 @@ W $710D,2,2
 B $710F,1,1
 @ $7110 label=tree_7110
 W $7110,2,2 -> tree_lods
-B $7112,20,8*2,4
+B $7112,20,2
 @ $7126 label=tree_7126
 W $7126,2,2 -> tree_lods
-B $7128,20,8*2,4
+B $7128,20,2
 @ $713C label=tree_713c
 W $713C,2,2 -> tree_lods
-B $713E,20,8*2,4
+B $713E,20,2
 @ $7152 label=tree_7152
 W $7152,2,2 -> tree_lods
-B $7154,20,8*2,4
+B $7154,20,2
 @ $7168 label=tree_7168
 W $7168,2,2 -> tree_lods
-B $716A,20,8*2,4
+B $716A,20,2
 N $717E LOD
 @ $717E label=tree_lods
 B $717E,1,1 Width (bytes)
