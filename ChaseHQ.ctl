@@ -310,17 +310,18 @@ W $5CF2,2,2 Address of perp's mugshot bitmap
 @ $5CF4 label=ground_colour
 W $5CF4,2,2 Screen attributes used for the ground colour (a pair of matching bytes)
 @ $5CF6 label=tumbleweeds_etc
-W $5CF6,2,2 Points to table of LODs for tumbleweeds, barriers
-W $5CF8,2,2 Loaded by $900F. Points to an array of 7 byte entries.
-W $5CFA,2,2 Address of graphic/object definitions.
-W $5CFC,2,2 -> "Entry 3"
-W $5CFE,2,2 <turn sign lods> inconsistent...
+W $5CF6,2,2 Loaded by $AC1F. Address of table of LODs for tumbleweeds, barriers.
+W $5CF8,2,2 Loaded by $900F. Address of an array of 7 byte entries.
+W $5CFA,2,2 Loaded by $A465. Address of graphic definitions.
+W $5CFC,2,2 Loaded by $A53F. Address of graphics entry 3.
+W $5CFE,2,2 Address of entry 9, but it isn't aligned.
 @ $5D00 label=data_5d00
-W $5D00,2,2 -> "Entry 9 (turn sign)"
-W $5D02,2,2 -> "Entry 12"
-W $5D04,2,2 -> Nancy's report
-W $5D06,2,2 -> Arrest messages
-B $5D08,4,4
+W $5D00,2,2 Loaded by $A490. Address of graphics entry 9.
+W $5D02,2,2 Loaded by $A55C. Address of graphics entry 12.
+W $5D04,2,2 Address of Nancy's perp description.
+W $5D06,2,2 Address of arrest messages.
+W $5D08,2,2 Loaded by $AA69. Helicopter related.
+W $5D0A,2,2 Loaded by $AA6E. Helicopter related.
 w $5D0C Table of addresses of LODs (levels of detail - a set of sprites of various sizes representing the same object).
 @ $5D0C label=lods_table
 W $5D0C,2,2 -> stones_lods
@@ -354,7 +355,7 @@ W $5D31,2,2 -> Loop section, lanes
 W $5D33,2,2 -> Loop section, right-side objects
 W $5D35,2,2 -> Loop section, left-side objects
 W $5D37,2,2 -> Loop section, hazards
-b $5D39 Nancy's report
+b $5D39 Nancy's perp description
 B $5D39,1,1 Nancy ($01)
 W $5D3A,2,2 Points at "THIS IS NANCY..."
 W $5D3C,2,2 Points at "EMERGENCY HERE..."
@@ -388,7 +389,7 @@ W $5E34,2,2 Back buffer address
 W $5E36,2,2 Attribute address
 T $5E38,6,5:n1 "MURDER"
 B $5E3E,1,1 Frame delay until next message?
-b $5E3F Graphics or object? definitions
+b $5E3F Graphics definitions
 D $5E3F All are stored inverted except where noted.
 B $5E3F,1,1 Pointed to by $5CFA
 B $5E40,1,1 Pointed to by $5CF6
@@ -5184,7 +5185,7 @@ C $A48A,1 A = *HL
 C $A48D,1 L++
 C $A48E,1 A |= *HL
 C $A48F,1 Return if zero
-C $A490,12 HL = $5D00[A * 7]
+C $A490,12 HL = (*$5D00)[A * 7]
 C $A49C,2 C = *HL++
 C $A49E,2 E = *HL++
 C $A4A0,1 A = *HL
@@ -5743,9 +5744,9 @@ C $AA30,3 Jump to $929A
 C $AA33,1 A += E
 C $AA34,1 Return if no carry
 C $AA35,3 Jump to $929A
-c $AA38 Routine at AA38
+c $AA38 Helicopter related.
 D $AA38 $AB89 self modifies $8FA4 to call this.
-@ $AA38 label=sub_AA38
+@ $AA38 label=helicopter_stuff
 C $AA38,1 A = B
 C $AA39,3 Return if A != 3
 C $AA3C,6 A = IY[$4F] - IY[$4E]
@@ -5767,7 +5768,8 @@ C $AA5C,3 A -= IY[$4E]
 C $AA5F,3 Self modify 'ADD A' at $AA76
 C $AA62,2 B = 5  iterations
 C $AA64,5 A = counter_A & 1  -- counter used for turbo smoke
-C $AA69,3 HL = *$5D08  -- set to zero for stage 1...
+N $AA69 For stage 1 at least this (would) load #REGhl with 0 or 12.
+C $AA69,3 HL = *$5D08
 C $AA6C,2 If A was set
 C $AA6E,3 HL = *$5D0A
 @ $AA71 label=loop_aa71
@@ -5894,10 +5896,10 @@ C $AB83,2 New value for helicopter_control is 5
 @ $AB85 label=hc_2
 C $AB85,1 Preserve AF
 C $AB86,3 Self modify 'LD DE' at $AB06 to load $0070, or $FFC8
-C $AB89,3 Address of sub_AA38
+C $AB89,3 Address of helicopter_stuff
 C $AB8C,2 Opcode for CALL
 @ $AB8E label=hc_3
-C $AB8E,7 Self modify $8FA4 to be CALL sub_AA38, or NOPs
+C $AB8E,7 Self modify $8FA4 to be CALL helicopter_stuff, or NOPs
 C $AB95,1 Restore AF
 C $AB96,3 helicopter_control = A
 C $AB99,1 Return
