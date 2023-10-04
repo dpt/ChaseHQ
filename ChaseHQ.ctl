@@ -322,19 +322,21 @@ W $5D04,2,2 Address of Nancy's perp description.
 W $5D06,2,2 Address of arrest messages.
 W $5D08,2,2 Loaded by $AA69. Helicopter related.
 W $5D0A,2,2 Loaded by $AA6E. Helicopter related.
-w $5D0C Table of addresses of LODs (levels of detail - a set of sprites of various sizes representing the same object).
+w $5D0C Table of addresses of LODs
+D $5D0C LODs = Levels Of Detail - a set of sprites of various sizes representing the same object.
 @ $5D0C label=lods_table
-W $5D0C,2,2 -> stones_lods
-W $5D0E,2,2 -> dust_lods
-W $5D10,2,2 -> car_lods (perp's car)
-W $5D12,2,2 -> lambo_lods
-W $5D14,2,2 -> truck_lods
-W $5D16,2,2 -> lambo_lods
-W $5D18,2,2 -> car_lods
+W $5D0C,2,2 Address of LODs for stones.
+W $5D0E,2,2 Address of LODs for dust.
+W $5D10,2,2 Address of LODs for car (perp's car).
+W $5D12,2,2 Address of LODs for lambo.
+W $5D14,2,2 Address of LODs for truck.
+W $5D16,2,2 Address of LODs for lambo (again).
+W $5D18,2,2 Address of LODs for car (generic car).
 b $5D1A Data block at 5D1A
-B $5D1A,1,1 loaded by $A813
-B $5D1B,1,1 loaded by $A6A7
-B $5D1C,1,1 loaded by $A759
+@ $5D1A label=car_spawn_rate
+B $5D1A,1,1 How often cars spawn. Lower values spawn cars more often.
+B $5D1B,1,1 Loaded by $A6A7.
+B $5D1C,1,1 Loaded by $A759.
 w $5D1D Data block at 5D1D
 @ $5D1D label=setup_game_data
 W $5D1D,2,2 road_pos
@@ -5461,7 +5463,7 @@ C $A751,1 Preserve HL
 C $A752,3 Call rng
 C $A755,1 Restore HL
 C $A756,3 C = A & 15  mask random value
-C $A759,4 A = ($5D1C) + C   value in $5D1A data block
+C $A759,4 A = ($5D1C) + C
 C $A75D,3 Self modify 'LD A' at $A749 to load A
 C $A760,2 A = 10
 C $A762,1 A--
@@ -5511,18 +5513,20 @@ c $A7F3 Spawns cars
 D $A7F3 Used by the routines at #R$8401 and #R$852A.
 @ $A7F3 label=spawn_cars
 C $A7F3,9 Return if perp_caught_stage or stop_car_spawning flags are set
-C $A7FC,3 A = *$A254  -- spawning flag
-C $A7FF,2 Return if $A254 is zero
-C $A801,4 A = <...> - A  Self modified below
+C $A7FC,3 A = another_spawning_flag
+C $A7FF,2 Return if another_spawning_flag was zero
+C $A801,4 A = <self modified> - another_spawning_flag
 C $A805,3 Self modify above
-C $A808,1 Return if ?
+C $A808,1 Return if carry?
+N $A809 Start spawning cars.
 C $A809,3 Call rng
 C $A80C,3 C = A & 15
 C $A80F,3 A = sighted_flag
 C $A812,1 Set flags
+C $A813,3 Load car_spawn_rate
 C $A816,2 Jump to $A81A if sighted_flag was zero
-C $A818,2 A += 25
-C $A81A,1 A += C
+C $A818,2 A += 25  -- boost factor/rate when perp sighted
+C $A81A,1 A += C  -- add random factor (0..15)
 C $A81B,3 Self modify above
 C $A81E,3 BC = $0500
 C $A821,4 IX = &hazards[1]
