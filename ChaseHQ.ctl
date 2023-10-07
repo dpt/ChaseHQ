@@ -335,7 +335,8 @@ W $5D18,2,2 Address of LODs for car (generic car).
 b $5D1A Data block at 5D1A
 @ $5D1A label=car_spawn_rate
 B $5D1A,1,1 How often cars spawn. Lower values spawn cars more often.
-B $5D1B,1,1 Loaded by $A6A7.
+@ $5D1B label=smash_5d1b
+B $5D1B,1,1 Loaded by $A6A7. Used by smash_handler.
 B $5D1C,1,1 Loaded by $A759.
 w $5D1D Data block at 5D1D
 @ $5D1D label=setup_game_data
@@ -1772,10 +1773,13 @@ B $8000,1,1 Test mode enable flag (cheat mode)
 B $8001,1,1 [128K] Attract mode message cycle. Used by $F437. When zero shows the "ENTER FOR OPTIONS" message.
 @ $8002 label=score_bcd
 B $8002,4,4 Score digits as BCD (4 bytes / 8 digits, little endian)
-B $8006,1,1 Incremented on reset?
+@ $8006 label=retry_count
+B $8006,1,1 0 for first attempt, 1 if second, 2 if final. [Used for bonuses only?]
 @ $8007 label=wanted_stage_number
 B $8007,1,1 Stage number we're loading (1..5 or 6 for the end screen)
-B $8008,12,8,4
+u $8008
+B $8008,8,8 Can't see any consistent use of these.
+B $8010,4,4
 c $8014 Load a stage
 D $8014 Used by the routine at #R$8401.
 @ $8014 label=load_stage
@@ -2104,7 +2108,7 @@ C $83D6,2 Loop for 8 bits
 C $83D8,2 Write #REGc out and advance
 C $83DA,2 Loop for 256 iterations (when #REGl overflows)
 C $83DC,3 Call attract_mode_hook
-C $83DF,4 $A13C = 0
+C $83DF,4 overtake_bonus = 0
 C $83E3,9 Zero $8002..$8006
 C $83EC,2 $8007 = 1 => Load stage 1
 C $83EE,4 credits = 2
@@ -2737,7 +2741,7 @@ N $8AEA Calculate clear bonus.
 C $8AEA,2 '0'
 C $8AEC,4 D = wanted_stage_number
 C $8AF0,2 L = D + '0'
-C $8AF2,3 A = *$8006
+C $8AF2,3 Load retry_count
 C $8AF5,3 Jump to hpc_8b03 if zero
 C $8AF8,8 D <<= 4? or make BCD?
 C $8B00,1 H = L
@@ -3802,7 +3806,7 @@ C $960E,3 No carry, so finish scanline
 C $9611,4 H -= 16
 C $9615,3 Loop back to psf_odd_continue
 c $9618 Random number generator
-R $9618 O:A Random byte?
+R $9618 O:A Random byte
 @ $9618 label=rng_seed
 B $9618,3,3 Seed / initial state
 N $961B This entry point is used by the routines at #R$860F, #R$8A0F, #R$8DF9, #R$99EC, #R$A637, #R$A7F3 and #R$A955.
@@ -4284,7 +4288,8 @@ C $9C62,5 Set user input mask to allow everything through
 C $9C67,3 $A252 = 3
 C $9C6A,3 transition_control = 3 -- Flag set to zero when attributes have been set
 C $9C6D,3 turbos = 3
-C $9C70,9 Set remaining time to 60 (BCD) [doesn't affect stuff if altered?!]
+C $9C70,5 Set remaining time to 60 (BCD) [doesn't affect stuff if altered?!]
+C $9C75,4 Increment retry_count
 N $9C79 This entry point is used by the routines at #R$858C and #R$F220.
 @ $9C79 label=play_start_noise
 C $9C79,2 Index of start noise sample
@@ -5203,7 +5208,8 @@ C $A4B1,3 BC = $0403      -- arrive here if drive into scenery, e.g. a tree
 C $A4B4,3 Call start_sfx
 N $A4B8 This entry point is used by the routines at #R$A637 and #R$A8CD.
 C $A4B8,3 HL = &<crashed flag>
-C $A4BB,2 [why inc then dec?]
+C $A4BB,2 Set flags
+C $A4BD,1 Return if already crashed?
 C $A4BE,2 Set crashed flag
 C $A4C0,4 *$B36F = A++
 C $A4C4,5 *$B38E = A
@@ -5367,14 +5373,18 @@ c $A637 Smash handling.
 D $A637 This gets called whenever the perp is within sight of the hero car.
 @ $A637 label=smash_handler
 C $A637,5 Return if perp_caught_stage > 0
-C $A63C,7 Call $B4CC if sighted_flag is zero
+C $A63C,7 Call perp_sighted if sighted_flag is zero
 C $A643,3 A = IX[7]
 C $A646,1 Set flags
+C $A647,2 Jump if zero
+C $A649,3 Jump if positive
+N $A64C Otherwise A is negative.
 C $A64C,3 IX[7]++
 C $A64F,1 Return if non-zero
+N $A650 A must be zero to arrive here.
 C $A650,2 Preserve IY
 C $A652,3 C = IX[1]
-C $A655,2 B = 5  iterations
+C $A655,2 5 iterations
 C $A657,4 IY = &hazards[1]
 C $A65B,3 DE = 20  stride of hazards
 @ $A65E label=loop_a65e
@@ -5392,38 +5402,44 @@ C $A685,3 CP IX[18]
 C $A68F,2 A = 0
 C $A691,1 Set flags
 C $A694,3 A = IX[1]
-C $A697,2 CP 7
-C $A69B,2 A = 20  self modified below
-C $A69D,1 A--
-C $A6A0,1 C++
-C $A6A1,3 Call rng
-C $A6A6,1 C = A
-C $A6A7,4 A = ($5D1B) + C
+C $A697,4 Jump if A >= 7
+N $A69B Inline decrementing counter.
+C $A69B,3 A = <self modified> - 1  -- self modified below
+C $A69E,2 Jump if != 0
+N $A6A0 When it hits zero we pick a random number...
+C $A6A0,1 -- why increment C when it's overwritten next?
+C $A6A1,6 C = rng() & $1F
+N $A6A7 This gets hit at some point during the smash process.
+C $A6A7,4 A = smash_5d1b + C
 C $A6AB,3 *$A69C = A  -- Self modify LD A at $A69B
-C $A6AE,3 HL = road_pos
-C $A6B1,3 DE = $A4
-C $A6B4,2 HL -= DE
+N $A6AE This smells like it's detecting position and turning that into lanes. The values are like those used by get_spawn_lanes.
+C $A6AE,8 HL = road_pos - 164
 C $A6B6,3 BC = $0404
-C $A6B9,2 Jump to $A6CF if road_pos < $A4
-C $A6BB,2 E = $46
-C $A6BD,1 B--
-C $A6BE,2 HL -= DE   not restored so includes prev subtraction
-C $A6C2,1 B--
-C $A6C3,1 C--
-C $A6C4,2 HL -= DE
-C $A6C8,1 B--
-C $A6C9,1 C--
-C $A6CA,2 HL -= DE
-C $A6CE,1 C--
+C $A6B9,2 Jump to $A6CF if HL < 164
+C $A6BB,2 DE = $0046
+C $A6BD,1 BC = $0304
+C $A6BE,2 HL -= DE  -- includes previous
+C $A6C0,2 Jump to $A6CF if HL < 70
+C $A6C2,2 BC = $0203
+C $A6C4,2 HL -= DE  -- includes previous
+C $A6C6,2 Jump to $A6CF if HL < 70
+C $A6C8,2 BC = $0102
+C $A6CA,2 HL -= DE  -- includes previous
+C $A6CC,2 Jump to $A6CF if HL < 70
+C $A6CE,1 BC = $0101
+@ $A6CF label=j_a6cf
 C $A6CF,3 A = IX[18]
 C $A6D8,3 C = IX[18]
 C $A6DB,3 Call rng
 C $A6DE,1 C++
 C $A6DF,1 Set flags
+C $A6E0,3 Jump if positive
 C $A6E3,2 C -= 2
 C $A6E5,1 A = C
 C $A6E6,1 Set flags
 C $A6E7,2 C = 2
+C $A6E9,3 Jump if A is zero
+C $A6EC,4 Jump if A < 5
 C $A6F0,2 C = $FE
 C $A6F2,1 A += C
 C $A6F3,3 IX[18] = A
@@ -5452,7 +5468,7 @@ C $A735,1 C--
 C $A736,1 A = *HL
 C $A737,3 IX[5] = A
 C $A73A,4 Self modify 'LD A' at $A68F to load C
-C $A73E,2 A = 0
+C $A73E,2 A = <self modified>
 C $A740,1 Set flags
 C $A741,3 DE = $1E
 C $A744,3 HL = $E6
@@ -5467,34 +5483,40 @@ C $A759,4 A = ($5D1C) + C
 C $A75D,3 Self modify 'LD A' at $A749 to load A
 C $A760,2 A = 10
 C $A762,1 A--
-C $A763,3 ($A73F) = A
+C $A763,3 Self modify 'LD A' at $A73E to load A
 C $A768,3 A = IX[1]
 C $A76B,2 CP 13
-C $A76F,4 B = ~A + 14 -- iterations
+C $A76F,4 B = (13 - A)  -- iterations
 @ $A773 label=loop_a773
 C $A773,1 HL += DE
 C $A774,2 Loop to loop_a773 while B
 C $A776,5 A = IX[1] - 6
+C $A77B,2 Jump if A >= 6
 C $A77D,5 A = (A + 5) * 8
 C $A782,1 HL += DE
 C $A783,6 wordat(IX + 13) = HL
 C $A789,1 Return
 C $A78A,4 IX[7] = $FC
+C $A78E,5 Jump if A < 3 -- preserve A
 C $A793,2 A -= 3
-C $A796,3 A = boost
+C $A795,1 Bank
+C $A796,3 Load turbo boost time remaining (60..0)
 C $A799,1 Set flags
-C $A79A,2 A = $C8
-C $A79E,2 A = $E6
-C $A7A4,3 Read HL from LD BC at $B32E
+C $A79A,2 A = $C8  -- value for when not turbo boosting
+C $A79C,2 Jump if no turbo boost
+C $A79E,2 A = $E6  -- value for when turbo boosting
+C $A7A1,3 (crash testing stuff...)
+C $A7A4,3 Read HL from 'LD BC' at $B32E
 C $A7A7,4 HL += 40
 C $A7AB,3 ($B32F) = HL
 C $A7AE,2 D = 0
+C $A7B0,1 -- restore A
 C $A7B1,3 HL = $B4F0
+C $A7B4,1 Preserve HL
 C $A7BC,2 D = 4
 C $A7BE,5 D = wanted_stage_number + D
 C $A7C3,2 E = 0
-C $A7C5,3 A = *$8006
-C $A7C8,1 Set flags
+C $A7C5,6 Jump if retry_count is zero
 C $A7CB,1 Middle digit(s) of bonus
 C $A7CC,1 Set top two digits of bonus
 C $A7CD,4 Move middle digit into position
@@ -5630,7 +5652,7 @@ C $A92B,1 Preserve AF
 C $A92C,4 IX[7] = 0
 C $A930,5 Return if crashed flag set
 N $A935 #REGa is zero.
-C $A935,3 IX[0] = 0
+C $A935,3 IX[0] = 0  -- unused hazard
 C $A938,3 overtake_bonus = 0
 C $A93B,2 A = $96
 C $A93D,1 Restore AF
@@ -6666,7 +6688,7 @@ C $B322,3 off_road = A
 C $B325,2 [this seems to be a crashed flag]
 C $B327,1 Set flags
 C $B32A,3 cornering = A
-C $B32E,3 BC = <...>
+C $B32E,3 BC = <self modified>
 C $B331,2 HL -= BC
 C $B334,2 Jump to $B349 if HL < BC
 C $B336,1 D = H
