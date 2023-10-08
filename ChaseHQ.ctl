@@ -134,7 +134,7 @@
 > $4000 ;
 > $4000 ; THINGS TO LOCATE
 > $4000 ; ----------------
-> $4000 ; Considering this is just level 1 in 48K:
+> $4000 ; Considering this is just stage 1 in 48K:
 > $4000 ;
 > $4000 ; - Input handlers
 > $4000 ; - Score, time, speed, distance, gear, stage no., turbo count and credit count
@@ -154,7 +154,7 @@
 > $4000 ; - Floating HERE! arrow
 > $4000 ; - Road signs
 > $4000 ; - Desert road handling
-> $4000 ; - Background drawing code (hills in 1st level)
+> $4000 ; - Background drawing code (hills in 1st stage)
 > $4000 ; - Attract mode
 > $4000 ; - Text overlay handling
 > $4000 ; - Hi score stuff
@@ -168,7 +168,7 @@
 > $4000 ; - Turbo handling
 > $4000 ; - Level loading code
 > $4000 ; - Level format (and which memory regions are altered)
-> $4000 ; - Helicopter (later levels)
+> $4000 ; - Helicopter (later stages)
 > $4000 ; - Flashing light on car (and hand)
 > $4000 ; - Ok creep! auto driving
 > $4000 ; - Chase HQ monitoring system
@@ -302,11 +302,11 @@ B $5BD7,41,8*5,1
 b $5C00 Graphics
 D $5C00 #HTML[#CALL:graphic($5C00,80,24,0,1)]
 B $5C00,240,8 Horizon backdrop (80x24) inverted. Varies per level
-b $5CF0 Per-level data
-@ $5CF0 label=perp_mugshot_attributes
-W $5CF0,2,2 Address of perp's mugshot attributes
-@ $5CF2 label=perp_mugshot_bitmap
-W $5CF2,2,2 Address of perp's mugshot bitmap
+b $5CF0 Per-stage data
+@ $5CF0 label=ralph_mugshot_attributes
+W $5CF0,2,2 Address of Ralph's mugshot attributes
+@ $5CF2 label=ralph_mugshot_bitmap
+W $5CF2,2,2 Address of Ralph's mugshot bitmap
 @ $5CF4 label=ground_colour
 W $5CF4,2,2 Screen attributes used for the ground colour (a pair of matching bytes)
 @ $5CF6 label=tumbleweeds_etc
@@ -323,7 +323,7 @@ W $5D06,2,2 Address of arrest messages.
 W $5D08,2,2 Loaded by $AA69. Helicopter related.
 W $5D0A,2,2 Loaded by $AA6E. Helicopter related.
 w $5D0C Table of addresses of LODs
-D $5D0C LODs = Levels Of Detail - a set of sprites of various sizes representing the same object.
+D $5D0C LODs = Level Of Detail - a set of sprites of various sizes representing the same object.
 @ $5D0C label=lods_table
 W $5D0C,2,2 Address of LODs for stones.
 W $5D0E,2,2 Address of LODs for dust.
@@ -332,13 +332,13 @@ W $5D12,2,2 Address of LODs for lambo.
 W $5D14,2,2 Address of LODs for truck.
 W $5D16,2,2 Address of LODs for lambo (again).
 W $5D18,2,2 Address of LODs for car (generic car).
-b $5D1A Data block at 5D1A
+b $5D1A Per-stage difficulty settings
 @ $5D1A label=car_spawn_rate
 B $5D1A,1,1 How often cars spawn. Lower values spawn cars more often.
 @ $5D1B label=smash_5d1b
 B $5D1B,1,1 Loaded by $A6A7. Used by smash_handler.
 B $5D1C,1,1 Loaded by $A759.
-w $5D1D Data block at 5D1D
+w $5D1D Per-stage game setup data
 @ $5D1D label=setup_game_data
 W $5D1D,2,2 road_pos
 N $5D1F These all point a byte earlier than the real data start point.
@@ -348,7 +348,7 @@ W $5D23,2,2 -> Start stretch, lanes
 W $5D25,2,2 -> Start stretch, right-side objects
 W $5D27,2,2 -> Start stretch, left-side objects
 W $5D29,2,2 -> Start stretch, hazards
-w $5D2B Data block at 5D2B
+w $5D2B Per-stage attract mode data
 @ $5D2B label=attract_data
 W $5D2B,2,2 road_pos
 N $5D2D These all point a byte earlier than the real data start point.
@@ -359,6 +359,7 @@ W $5D33,2,2 -> Loop section, right-side objects
 W $5D35,2,2 -> Loop section, left-side objects
 W $5D37,2,2 -> Loop section, hazards
 b $5D39 Nancy's perp description
+@ $5D39 label=perp_description
 B $5D39,1,1 Nancy ($01)
 W $5D3A,2,2 Points at "THIS IS NANCY..."
 W $5D3C,2,2 Points at "EMERGENCY HERE..."
@@ -366,10 +367,13 @@ W $5D3E,2,2 Points at "IS FLEEING ..."
 W $5D40,2,2 Points at "VEHICLE IS..."
 B $5D42,1,1 (pause?)
 W $5D43,2,2 -> Random choice of ("WE READ..." / "ROGER!" / "GOTCHA...")
-b $5D45 Messages - Nancy
+@ $5D45 label=perp_description_1
 T $5D45,40,39:n1 "THIS IS NANCY AT CHASE H.Q. WE'VE GOT AN"
+@ $5D6D label=perp_description_2
 T $5D6D,40,39:n1 "EMERGENCY HERE. RALPH THE IDAHO SLASHER,"
+@ $5D95 label=perp_description_3
 T $5D95,42,41:n1 "IS FLEEING TOWARDS THE SUBURBS. THE TARGET"
+@ $5DBF label=perp_description_4
 T $5DBF,46,45:n1 "VEHICLE IS A WHITE BRITISH SPORTS CAR... OVER."
 b $5DED Messages - Arrest
 B $5DED,1,1 Frame delay until first message?
@@ -472,75 +476,106 @@ W $5EC2,2,2 -> Routine at $9278
 b $5EC4 Initial map segment
 N $5EC4 Start stretch
 N $5EC4 Start stretch, curvature
+@ $5EC4 label=map_start_curvature
 B $5EC4,32,8
 N $5EE4 Start stretch, height
+@ $5EE4 label=map_start_height
 B $5EE4,43,8*5,3
 N $5F0F Start stretch, lanes
+@ $5F0F label=map_start_lanes
 B $5F0F,14,8,6
 N $5F1D Start stretch, hazards
+@ $5F1D label=map_start_hazards
 B $5F1D,13,8,5
 N $5F2A Start stretch, left-side objects
+@ $5F2A label=map_start_leftobjs
 B $5F2A,78,8*9,6
 N $5F78 Start stretch, right-side objects
+@ $5F78 label=map_start_rightobjs
 B $5F78,90,8*11,2
 N $5FD2 Left fork
 N $5FD2 Left fork, curvature
+@ $5FD2 label=map_left_curvature
 B $5FD2,20,8*2,4
 N $5FE6 Left fork, height
+@ $5FE6 label=map_left_height
 B $5FE6,29,8*3,5
 N $6003 Left fork, lanes
+@ $6003 label=map_left_lanes
 B $6003,6,6
 N $6009 Left fork, hazards
+@ $6009 label=map_left_hazards
 B $6009,8,8
 N $6011 Left fork, left-side objects
+@ $6011 label=map_left_leftobjs
 B $6011,65,8*8,1
 N $6052 Left fork, right-side objects
+@ $6052 label=map_left_rightobjs
 B $6052,54,8*6,6
 N $6088 Right fork (dirt track), curvature
+@ $6088 label=map_right_curvature
 B $6088,27,8*3,3
 N $60A3 Right fork (dirt track), height
+@ $60A3 label=map_right_height
 B $60A3,66,8*8,2
 N $60E5 Right fork (dirt track), lanes
+@ $60E5 label=map_right_lanes
 B $60E5,10,8,2
 N $60EF Right fork (dirt track), hazards
+@ $60EF label=map_right_hazards
 B $60EF,26,8*3,2
 N $6109 Right fork (dirt track), left-side objects
+@ $6109 label=map_right_leftobjs
 B $6109,58,8*7,2
 N $6143 Right fork (dirt track), right-side objects
+@ $6143 label=map_right_rightobjs
 B $6143,48,8
 N $6173 Tunnel section, curvature
+@ $6173 label=map_tunnel_curvature
 B $6173,22,8*2,6
 N $6189 Tunnel section, height
+@ $6189 label=map_tunnel_height
 B $6189,28,8*3,4
 N $61A5 Tunnel section, lanes
+@ $61A5 label=map_tunnel_lanes
 B $61A5,20,8*2,4
 N $61B9 Tunnel section, hazards
+@ $61B9 label=map_tunnel_hazards
 B $61B9,5,5
 N $61BE Tunnel section, left-side objects
+@ $61BE label=map_tunnel_leftobjs
 B $61BE,11,8,3
 N $61C9 Tunnel section, right-side objects
+@ $61C9 label=map_tunnel_rightobjs
 B $61C9,11,8,3
 N $61D4 Loop section, curvature
+@ $61D4 label=map_loop_curvature
 B $61D4,53,8*6,5
 N $6209 Loop section, height
+@ $6209 label=map_loop_height
 B $6209,84,8*10,4
 N $625D Loop section, lanes
+@ $625D label=map_loop_lanes
 B $625D,26,8*3,2
 N $6277 Loop section, hazards
+@ $6277 label=map_loop_hazards
 B $6277,29,8*3,5
 N $6294 Loop section, left-side objects
+@ $6294 label=map_loop_leftobjs
 B $6294,128,8
 N $6314 Loop section, right-side objects
+@ $6314 label=map_loop_rightobjs
 B $6314,118,8*14,6
-b $638A Perp's face
-N $638A Bitmap data for perp w/ sunglasses (32x40). Stored top-down.
+b $638A Ralph the Idaho Slasher's mugshot
+N $638A Bitmap data for Ralph the Idaho Slasher's mugshot (32x40). Stored top-down.
 N $638A #HTML[#CALL:face($638A)]
-@ $638A label=bitmap_perp
+@ $638A label=bitmap_ralph
 B $638A,160,4
-N $642A Attribute data for perp w/ sunglasses (4x5). Stored top-down.
+N $642A Attribute data for Ralph the Idaho Slasher's mugshot (4x5). Stored top-down.
+@ $642A label=attrs_ralph
 B $642A,20,4
 b $643E LODs
-D $643E LOD = level of detail. These structures collect together the variously sized versions of the same game object.
+D $643E LOD = Level of Detail. These structures collect together the variously sized versions of the same game object.
 N $643E Lamborghini LOD 1
 @ $643E label=lambo_lods
 B $643E,1,1 Width (bytes)
@@ -1583,16 +1618,21 @@ W $77CE,2,2 Back buffer address
 W $77D0,2,2 Attributes address
 T $77D2,6,5:n1 "SIGNAL"
 b $77D8 Data for pre-game screen.
+@ $77D8 label=pregame_data
 B $77D8,136,8 Commands to draw the pre-game screen. RLE'd tile references etc.
 B $7860,71,8*8,7 Seems to be tiles pointed at by car rendering code
-B $78A7,15,8,7 .
-B $78B6,344,8 Tiles used to draw the pre-game screen #HTML[#CALL:graphic($78B6,8,43*8,0,0)]
-B $7A0E,1,1
+B $78A7,360,8 Tiles used to draw the pre-game screen #HTML[#CALL:graphic($78A7,8,45*8,0,0)]
+@ $7A0F label=bitmap_smoke1
 B $7A0F,52,8*6,4 16x13 pixels, masked #HTML[#CALL:graphic($7A0F,16,13,1,0)]
+@ $7A43 label=bitmap_smoke2
 B $7A43,44,8*5,4 16x11 pixels, masked #HTML[#CALL:graphic($7A43,16,11,1,0)]
+@ $7A6F label=bitmap_smoke3
 B $7A6F,36,8*4,4 16x9 pixels, masked  #HTML[#CALL:graphic($7A6F,16,9,1,0)]
+@ $7A93 label=bitmap_smoke4
 B $7A93,14,8,6 8x7 pixels, masked     #HTML[#CALL:graphic($7A93,8,7,1,0)]
+@ $7AA1 label=bitmap_smoke5
 B $7AA1,10,8,2 8x5 pixels, masked     #HTML[#CALL:graphic($7AA1,8,5,1,0)]
+@ $7AAB label=bitmap_smoke6
 B $7AAB,6,6 8x3 pixels, masked        #HTML[#CALL:graphic($7AAB,8,3,1,0)]
 B $7AB1,312,1,8*38,7 more graphics?
 b $7BE9 Graphics: Faces
@@ -1777,7 +1817,7 @@ B $8002,4,4 Score digits as BCD (4 bytes / 8 digits, little endian)
 B $8006,1,1 0 for first attempt, 1 if second, 2 if final. [Used for bonuses only?]
 @ $8007 label=wanted_stage_number
 B $8007,1,1 Stage number we're loading (1..5 or 6 for the end screen)
-u $8008
+u $8008 Unused
 B $8008,8,8 Can't see any consistent use of these.
 B $8010,4,4
 c $8014 Load a stage
@@ -9797,14 +9837,234 @@ D $DFF8 #HTML[#CALL:graphic($DFF8,8,31*6,0,0)]
 @ $DFF8 label=minifont
 B $DFF8,186,6
 b $E0B2 Graphics defns <Byte width, Flags, Height, Ptr, Ptr>
-B $E0B2,252,7
+B $E0B2,1,1 Width (bytes)
+B $E0B3,1,1 Flags
+B $E0B4,1,1 Height (pixels)
+W $E0B5,2,2 Bitmap
+W $E0B7,2,2 Pre-shifted bitmap
+B $E0B9,1,1 Width (bytes)
+B $E0BA,1,1 Flags
+B $E0BB,1,1 Height (pixels)
+W $E0BC,2,2 Bitmap
+W $E0BE,2,2 Pre-shifted bitmap
+B $E0C0,1,1 Width (bytes)
+B $E0C1,1,1 Flags
+B $E0C2,1,1 Height (pixels)
+W $E0C3,2,2 Bitmap
+W $E0C5,2,2 Pre-shifted bitmap
+B $E0C7,1,1 Width (bytes)
+B $E0C8,1,1 Flags
+B $E0C9,1,1 Height (pixels)
+W $E0CA,2,2 Bitmap
+W $E0CC,2,2 Pre-shifted bitmap
+B $E0CE,1,1 Width (bytes)
+B $E0CF,1,1 Flags
+B $E0D0,1,1 Height (pixels)
+W $E0D1,2,2 Bitmap
+W $E0D3,2,2 Pre-shifted bitmap
+B $E0D5,1,1 Width (bytes)
+B $E0D6,1,1 Flags
+B $E0D7,1,1 Height (pixels)
+W $E0D8,2,2 Bitmap
+W $E0DA,2,2 Pre-shifted bitmap
+B $E0DC,1,1 Width (bytes)
+B $E0DD,1,1 Flags
+B $E0DE,1,1 Height (pixels)
+W $E0DF,2,2 Bitmap
+W $E0E1,2,2 Pre-shifted bitmap
+B $E0E3,1,1 Width (bytes)
+B $E0E4,1,1 Flags
+B $E0E5,1,1 Height (pixels)
+W $E0E6,2,2 Bitmap
+W $E0E8,2,2 Pre-shifted bitmap
+B $E0EA,1,1 Width (bytes)
+B $E0EB,1,1 Flags
+B $E0EC,1,1 Height (pixels)
+W $E0ED,2,2 Bitmap
+W $E0EF,2,2 Pre-shifted bitmap
+B $E0F1,1,1 Width (bytes)
+B $E0F2,1,1 Flags
+B $E0F3,1,1 Height (pixels)
+W $E0F4,2,2 Bitmap
+W $E0F6,2,2 Pre-shifted bitmap
+B $E0F8,1,1 Width (bytes)
+B $E0F9,1,1 Flags
+B $E0FA,1,1 Height (pixels)
+W $E0FB,2,2 Bitmap
+W $E0FD,2,2 Pre-shifted bitmap
+B $E0FF,1,1 Width (bytes)
+B $E100,1,1 Flags
+B $E101,1,1 Height (pixels)
+W $E102,2,2 Bitmap
+W $E104,2,2 Pre-shifted bitmap
+B $E106,1,1 Width (bytes)
+B $E107,1,1 Flags
+B $E108,1,1 Height (pixels)
+W $E109,2,2 Bitmap
+W $E10B,2,2 Pre-shifted bitmap
+B $E10D,1,1 Width (bytes)
+B $E10E,1,1 Flags
+B $E10F,1,1 Height (pixels)
+W $E110,2,2 Bitmap
+W $E112,2,2 Pre-shifted bitmap
+B $E114,1,1 Width (bytes)
+B $E115,1,1 Flags
+B $E116,1,1 Height (pixels)
+W $E117,2,2 Bitmap
+W $E119,2,2 Pre-shifted bitmap
+B $E11B,1,1 Width (bytes)
+B $E11C,1,1 Flags
+B $E11D,1,1 Height (pixels)
+W $E11E,2,2 Bitmap
+W $E120,2,2 Pre-shifted bitmap
+B $E122,1,1 Width (bytes)
+B $E123,1,1 Flags
+B $E124,1,1 Height (pixels)
+W $E125,2,2 Bitmap
+W $E127,2,2 Pre-shifted bitmap
+B $E129,1,1 Width (bytes)
+B $E12A,1,1 Flags
+B $E12B,1,1 Height (pixels)
+W $E12C,2,2 Bitmap
+W $E12E,2,2 Pre-shifted bitmap
+B $E130,1,1 Width (bytes)
+B $E131,1,1 Flags
+B $E132,1,1 Height (pixels)
+W $E133,2,2 Bitmap
+W $E135,2,2 Pre-shifted bitmap
+B $E137,1,1 Width (bytes)
+B $E138,1,1 Flags
+B $E139,1,1 Height (pixels)
+W $E13A,2,2 Bitmap
+W $E13C,2,2 Pre-shifted bitmap
+B $E13E,1,1 Width (bytes)
+B $E13F,1,1 Flags
+B $E140,1,1 Height (pixels)
+W $E141,2,2 Bitmap
+W $E143,2,2 Pre-shifted bitmap
+B $E145,1,1 Width (bytes)
+B $E146,1,1 Flags
+B $E147,1,1 Height (pixels)
+W $E148,2,2 Bitmap
+W $E14A,2,2 Pre-shifted bitmap
+B $E14C,1,1 Width (bytes)
+B $E14D,1,1 Flags
+B $E14E,1,1 Height (pixels)
+W $E14F,2,2 Bitmap
+W $E151,2,2 Pre-shifted bitmap
+B $E153,1,1 Width (bytes)
+B $E154,1,1 Flags
+B $E155,1,1 Height (pixels)
+W $E156,2,2 Bitmap
+W $E158,2,2 Pre-shifted bitmap
+B $E15A,1,1 Width (bytes)
+B $E15B,1,1 Flags
+B $E15C,1,1 Height (pixels)
+W $E15D,2,2 Bitmap
+W $E15F,2,2 Pre-shifted bitmap
+B $E161,1,1 Width (bytes)
+B $E162,1,1 Flags
+B $E163,1,1 Height (pixels)
+W $E164,2,2 Bitmap
+W $E166,2,2 Pre-shifted bitmap
+B $E168,1,1 Width (bytes)
+B $E169,1,1 Flags
+B $E16A,1,1 Height (pixels)
+W $E16B,2,2 Bitmap
+W $E16D,2,2 Pre-shifted bitmap
+B $E16F,1,1 Width (bytes)
+B $E170,1,1 Flags
+B $E171,1,1 Height (pixels)
+W $E172,2,2 Bitmap
+W $E174,2,2 Pre-shifted bitmap
+B $E176,1,1 Width (bytes)
+B $E177,1,1 Flags
+B $E178,1,1 Height (pixels)
+W $E179,2,2 Bitmap
+W $E17B,2,2 Pre-shifted bitmap
+B $E17D,1,1 Width (bytes)
+B $E17E,1,1 Flags
+B $E17F,1,1 Height (pixels)
+W $E180,2,2 Bitmap
+W $E182,2,2 Pre-shifted bitmap
+B $E184,1,1 Width (bytes)
+B $E185,1,1 Flags
+B $E186,1,1 Height (pixels)
+W $E187,2,2 Bitmap
+W $E189,2,2 Pre-shifted bitmap
+B $E18B,1,1 Width (bytes)
+B $E18C,1,1 Flags
+B $E18D,1,1 Height (pixels)
+W $E18E,2,2 Bitmap
+W $E190,2,2 Pre-shifted bitmap
+B $E192,1,1 Width (bytes)
+B $E193,1,1 Flags
+B $E194,1,1 Height (pixels)
+W $E195,2,2 Bitmap
+W $E197,2,2 Pre-shifted bitmap
+B $E199,1,1 Width (bytes)
+B $E19A,1,1 Flags
+B $E19B,1,1 Height (pixels)
+W $E19C,2,2 Bitmap
+W $E19E,2,2 Pre-shifted bitmap
+B $E1A0,1,1 Width (bytes)
+B $E1A1,1,1 Flags
+B $E1A2,1,1 Height (pixels)
+W $E1A3,2,2 Bitmap
+W $E1A5,2,2 Pre-shifted bitmap
+B $E1A7,1,1 Width (bytes)
+B $E1A8,1,1 Flags
+B $E1A9,1,1 Height (pixels)
+W $E1AA,2,2 Bitmap
+W $E1AC,2,2 Pre-shifted bitmap
+N $E1AE Smoke graphics (drawn over perp's car when smashed)
 @ $E1AE label=smoke_defns
-B $E1AE,7,7 Smoke graphics (drawn over perp's car when smashed)
-B $E1B5,35,7
+B $E1AE,1,1 Width (bytes)
+B $E1AF,1,1 Flags
+B $E1B0,1,1 Height (pixels)
+W $E1B1,2,2 Bitmap
+W $E1B3,2,2 Pre-shifted bitmap
+B $E1B5,1,1 Width (bytes)
+B $E1B6,1,1 Flags
+B $E1B7,1,1 Height (pixels)
+W $E1B8,2,2 Bitmap
+W $E1BA,2,2 Pre-shifted bitmap
+B $E1BC,1,1 Width (bytes)
+B $E1BD,1,1 Flags
+B $E1BE,1,1 Height (pixels)
+W $E1BF,2,2 Bitmap
+W $E1C1,2,2 Pre-shifted bitmap
+B $E1C3,1,1 Width (bytes)
+B $E1C4,1,1 Flags
+B $E1C5,1,1 Height (pixels)
+W $E1C6,2,2 Bitmap
+W $E1C8,2,2 Pre-shifted bitmap
+B $E1CA,1,1 Width (bytes)
+B $E1CB,1,1 Flags
+B $E1CC,1,1 Height (pixels)
+W $E1CD,2,2 Bitmap
+W $E1CF,2,2 Pre-shifted bitmap
+B $E1D1,1,1 Width (bytes)
+B $E1D2,1,1 Flags
+B $E1D3,1,1 Height (pixels)
+W $E1D4,2,2 Bitmap
+W $E1D6,2,2 Pre-shifted bitmap
+N $E1D8 Arrow graphic (incl. HERE!)
 @ $E1D8 label=floating_arrow_big_defn
-B $E1D8,7,7 Arrow graphic (incl. HERE!)
+B $E1D8,1,1 Width (bytes)
+B $E1D9,1,1 Flags
+B $E1DA,1,1 Height (pixels)
+W $E1DB,2,2 Bitmap
+W $E1DD,2,2 Pre-shifted bitmap
 @ $E1DF label=floating_arrow_defns
-B $E1DF,10,5 <Byte width, Flags, Height, Ptr> [floating arrow defns]
+B $E1DF,1,1 Width (bytes)
+B $E1E0,1,1 Flags
+B $E1E1,1,1 Height (pixels)
+W $E1E2,2,2 Bitmap
+B $E1E4,1,1 Width (bytes)
+B $E1E5,1,1 Flags
+B $E1E6,1,1 Height (pixels)
+W $E1E7,2,2 Bitmap
 b $E1E9 Referenced by graphic entry 1 and 10
 @ $E1E9 label=tunnellight
 W $E1E9,2,2
