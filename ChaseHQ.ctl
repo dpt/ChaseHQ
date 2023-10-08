@@ -1583,7 +1583,7 @@ N $7630 Tree shadow (24x1) pre-shifted
 N $7630 #HTML[#CALL:graphic($7630,24,1,1,1)]
 @ $7630 label=bitmap_tree_shadow_24x1s
 B $7630,6,6 Masked bitmap data
-u $7636 Unused by this level.
+u $7636 Unused by this level
 B $7636,186,8*23,2
 b $76F0 Turbo icons
 D $76F0 #HTML[#CALL:anim($76F0,16,14,1,1,3)]
@@ -1617,11 +1617,12 @@ B $77CD,1,1 flags? attrs?   text is white
 W $77CE,2,2 Back buffer address
 W $77D0,2,2 Attributes address
 T $77D2,6,5:n1 "SIGNAL"
-b $77D8 Data for pre-game screen.
+b $77D8 Data for pre-game screen
 @ $77D8 label=pregame_data
 B $77D8,136,8 Commands to draw the pre-game screen. RLE'd tile references etc.
 B $7860,71,8*8,7 Seems to be tiles pointed at by car rendering code
 B $78A7,360,8 Tiles used to draw the pre-game screen #HTML[#CALL:graphic($78A7,8,45*8,0,0)]
+b $7A0F Smoke graphics
 @ $7A0F label=bitmap_smoke1
 B $7A0F,52,8*6,4 16x13 pixels, masked #HTML[#CALL:graphic($7A0F,16,13,1,0)]
 @ $7A43 label=bitmap_smoke2
@@ -1634,7 +1635,8 @@ B $7A93,14,8,6 8x7 pixels, masked     #HTML[#CALL:graphic($7A93,8,7,1,0)]
 B $7AA1,10,8,2 8x5 pixels, masked     #HTML[#CALL:graphic($7AA1,8,5,1,0)]
 @ $7AAB label=bitmap_smoke6
 B $7AAB,6,6 8x3 pixels, masked        #HTML[#CALL:graphic($7AAB,8,3,1,0)]
-B $7AB1,312,1,8*38,7 more graphics?
+u $7AB1 TBD
+B $7AB1,312,1,8*38,7
 b $7BE9 Graphics: Faces
 N $7BE9 Nancy's face (32x40)
 N $7BE9 #HTML[#CALL:face($7BE9)]
@@ -1892,7 +1894,7 @@ C $80AA,3 A = transition_control
 C $80AD,2 Return if zero
 C $80AF,8 Delay loop
 C $80B7,2 Loop
-c $80B9 Tape loading.
+c $80B9 Tape loading
 D $80B9 Used by the routine at #R$8014.
 @ $80B9 label=tape_load_5C00
 C $80B9,7 Setup to load a block at $5C00 of length $1AF0
@@ -1988,13 +1990,17 @@ B $81DD,1,1 Three-way random choice ($FC)
 W $81DE,2,2 -> Tony: "GIDDY UP BOY!" <STOP>
 W $81E0,2,2 -> Tony: "HOLD ON MAN" <STOP>
 W $81E2,2,2 -> Tony: "LET'S GO. MR. DRIVER." <STOP>
+@ $81E4 label=giddy_up_boy
 B $81E4,1,1 Tony ($03)
 W $81E5,2,2 -> "GIDDY UP BOY!"
 B $81E7,1,1 <STOP>
+@ $81E8 label=hold_on_man
 B $81E8,1,1 Tony ($03)
 W $81E9,2,2 -> "HOLD ON MAN"
 B $81EB,1,1 <STOP>
+@ $81EC label=string_giddy_up_boy
 T $81EC,13,12:n1 "GIDDY UP BOY!"
+@ $81F9 label=string_hold_on_man
 T $81F9,11,10:n1 "HOLD ON MAN"
 c $8204 Generates engine noise
 D $8204 Used by the routine at #R$83B5.
@@ -2109,7 +2115,7 @@ W $8365,2,2 Attribute address
 T $8367,19,18:n1 "ALL RIGHTS RESERVED"
 b $837A Unknown - mostly NUL bytes
 B $837A,59,8*7,3
-c $83B5 Hooks for functions that vary between 48K and 128K modes.
+c $83B5 Hooks for functions that vary between 48K and 128K modes
 D $83B5 Used by the routine at #R$B4CC.
 @ $83B5 label=start_siren_hook
 C $83B5,3 No-op when in 48K mode -- likely siren
@@ -2327,7 +2333,7 @@ C $85D8,3 If no carry call setup_transition
 C $85DB,2 Loop
 b $85DD Data block at 85DD
 B $85DD,7,7
-c $85E4 Reveals the perp's car on the pre-game screen.
+c $85E4 Reveals the perp's car on the pre-game screen
 D $85E4 Used by the routine at #R$858C.
 @ $85E4 label=reveal_perp_car
 C $85E4,6 Return if wanted_stage_number is 5 (the perp's car is hidden on the pre-game screen for that stage)
@@ -2345,7 +2351,7 @@ C $8607,1 Stride of bitmap data in bytes (D is still zero)
 C $8608,1 Bank for plot_sprite entry
 C $8609,3 Address in back buffer to plot at
 C $860C,3 Exit via plot_sprite
-c $860F Animate the signal meters.
+c $860F Animate the signal meters
 D $860F Used by the routine at #R$858C.
 N $860F Update the first meter.
 @ $860F label=animate_meters
@@ -2389,7 +2395,7 @@ C $8653,1 Copy counter to loop counter
 C $8654,3 Set attribute byte to black ink over red
 C $8657,2 Loop while #REGb > 0
 C $8659,1 Return
-c $865A Draw the pre-game screen.
+c $865A Draw the pre-game screen
 D $865A Used by the routine at #R$858C.
 @ $865A label=draw_pregame
 C $865A,3 Address of data
@@ -2727,7 +2733,7 @@ C $8A52,1 H = L
 C $8A53,3 Loop while #REGc > 0
 N $8A56 This entry point is used by the routine at #R$83B5.
 C $8A56,1 Return
-c $8A57 Handle perp caught.
+c $8A57 Handle perp caught
 D $8A57 This handles slowing cars down to a stop and calculating and displaying the bonus score when the perp has been caught.
 @ $8A57 label=handle_perp_caught
 C $8A57,5 Return if perp_caught_stage is zero
@@ -2971,7 +2977,7 @@ W $8D81,2,2 Back buffer address
 W $8D83,2,2 Attribute address
 T $8D85,8,7:n1 "CREDIT  "
 B $8D8D,2,2
-c $8D8F Drives transitions.
+c $8D8F Drives transitions
 D $8D8F Used by the routines at #R$8014, #R$8258, #R$8401, #R$858C, #R$873C and #R$F220.
 @ $8D8F label=transition
 C $8D8F,3 Check the flag/counter that fill_attributes resets
@@ -3009,7 +3015,7 @@ C $8DF0,2 Loop
 C $8DF2,2 Move to next start address
 C $8DF4,4 Loop
 C $8DF8,1 Return
-c $8DF9 Seems to setup a transition.
+c $8DF9 Seems to setup a transition
 D $8DF9 Used by the routines at #R$8014, #R$8401, #R$858C, #R$873C, #R$87DC, #R$8A57 and #R$F220.
 R $8DF9 I:A ?
 @ $8DF9 label=setup_transition
@@ -3029,7 +3035,7 @@ C $8E1B,4 Load DE from HL
 C $8E1F,4 Set transition animation start address
 C $8E23,2 4 frames of animation? 4 states?
 C $8E28,1 Return
-c $8E29 Fills the attribute bytes leftwards from column 1.
+c $8E29 Fills the attribute bytes leftwards from column 1
 D $8E29 Used by the routines at #R$8876, #R$8A57 and #R$8D8F.
 @ $8E29 label=fill_attributes
 C $8E29,3 Screen attribute position (1,8)
@@ -3044,7 +3050,7 @@ C $8E3B,1 Row counter--
 C $8E3C,2 Loop until it hits zero
 C $8E3E,3 Zero this flag
 C $8E41,1 Return
-c $8E42 Subroutine.
+c $8E42 Subroutine
 D $8E42 Used by the routines at #R$8D8F and #R$8E91.
 @ $8E42 label=sub_8e42
 C $8E42,3 Address of current message thing (frame delay, flags, attrs, bufaddr, attraddr, string)
@@ -3302,7 +3308,8 @@ C $904A,1 CALL 916C 9171 924D 9252 92E1 ETC.  -- with B as ?
 @ $904B label=return_904B
 C $904B,4 Restore IX, HL, BC
 C $904F,3 Loop?
-c $9052 Routine at 9052 - gets hit on stage 3 when drawing the overhead structure graphics. sampled IX=$EAB2 DE=$6F26 HL=$9052 BC=$1420 (when in stage3!)
+c $9052 Routine at 9052
+D $9052 This gets used on stage 3 when drawing the overhead structure graphics. sampled IX=$EAB2 DE=$6F26 HL=$9052 BC=$1420 (when in stage3!)
 @ $9052 label=draw_overhead
 C $9052,4 Preserve
 C $9056,3 A = IX[1]
@@ -3673,7 +3680,7 @@ C $9493,1 HL += BC
 C $9495,1 D--
 C $9496,4 E = -E
 C $949B,1 fall through
-c $949C Sprite plotter for back buffer, up to 64px wide, 15px high, no mask, no flip.
+c $949C Sprite plotter for back buffer, up to 64px wide, 15px high, no mask, no flip
 D $949C Used by the routines at #R$85E4, #R$92E1 and #R$B58E.
 R $949C I:A Plot (#REGa + 1) * 8 pixels
 R $949C I:DE' Stride of bitmap data in bytes
@@ -3754,7 +3761,7 @@ C $9535,4 Decrement the high three bits of row address
 C $9539,3 No carry, so finish scanline
 C $953C,3 H -= 16
 C $953F,3 Loop back to ps_odd_loop
-c $9542 Sprite plotter for back buffer, up to 64px wide, 15px high, no mask, flips.
+c $9542 Sprite plotter for back buffer, up to 64px wide, 15px high, no mask, flips
 D $9542 Used by the routines at #R$92E1 and #R$B58E.
 R $9542 I:A Plot (#REGa + 1) * 8 pixels
 R $9542 I:DE' Stride of bitmap data in bytes
@@ -4020,7 +4027,7 @@ B $993B,1,1 Nancy ($01)
 W $993C,2,2 -> "YOU'RE A MEDIOCRE DRIVER, BROTHER!"
 W $993E,2,2 -> "SEE YOU LATER."
 B $9940,1,1 <STOP>
-@ $9941 label=lets_go_chatter
+@ $9941 label=lets_go_mr_driver
 B $9941,1,1 Tony ($03)
 W $9942,2,2 -> "LET'S GO. MR. DRIVER."
 B $9944,1,1 <STOP>
@@ -4378,7 +4385,7 @@ C $9CCE,2 Add carry in, perhaps for rounding?
 C $9CD0,1 BCD correction
 C $9CD1,3 Zero high part of score increment
 C $9CD4,2 Exit via increment_score
-c $9CD6 Add a bonus.
+c $9CD6 Add a bonus
 D $9CD6 The bonus value is passed as five BCD digits in #REGde and #REGa like: 0bDDDDddddEEEEeeeeAAAAxxxxx, where x is not used.
 R $9CD6 The bonus value must have a single sequence of zeroes, e.g. "55000" is okay, but "50500" is not.
 N $9CD6 Used by the routines at #R$9D2E, #R$A637 and #R$B9F4. I:A Low nibble of bonus I:DE High four nibbles of bonus
@@ -4420,7 +4427,7 @@ C $9D0D,1 Return
 C $9D0E,3 Self modify 'LD HL,xxxx' at $9D9B  -- bonus score pointer
 C $9D11,5 Set the trigger_bonus_flag
 C $9D16,1 A = B, then fall into increment_score with the bonus preserved
-c $9D17 Increments the score by (D,E,A).
+c $9D17 Increments the score by (D,E,A)
 D $9D17 Used by the routines at #R$8A57 and #R$9CC2.
 R $9D17 I:A Low byte of increment
 R $9D17 I:E Middle byte of increment
@@ -4541,7 +4548,7 @@ C $9DF4,3 B = 4, C = $40 (BRIGHT bit)
 C $9DF7,19 Toggle attribute byte on five successive locations
 C $9E0A,4 Move to next attribute row
 C $9E0E,3 Repeat for four rows
-c $9E11 Draws the turbo sprites and updates the displayed scores.
+c $9E11 Draws the turbo sprites and updates the displayed scores
 D $9E11 Used by the routine at #R$9D51.
 @ $9E11 label=plot_turbos_and_scores
 C $9E11,6 If no turbo boosts remain jump to plot_scores_only
@@ -5133,7 +5140,7 @@ B $A28F,7,7 Comma
 B $A296,7,7 Full stop
 B $A29D,70,7 0..9
 B $A2E3,182,7 A-Z
-c $A399 Checks for collisions.
+c $A399 Checks for collisions
 D $A399 Used by the routines at #R$8401 and #R$852A.
 @ $A399 label=check_collisions
 C $A399,3 HL = $0048
@@ -5400,7 +5407,7 @@ C $A616,5 Cycle $A235 0-1
 C $A61B,1 Return if it's zero
 C $A61C,6 Cycle $A236 0-1-2-3 at half rate
 C $A622,1 Return
-b $A623 Hazard template?
+b $A623 Hazard template
 D $A623 $A845 copies these 20 bytes to hazards array.
 @ $A623 label=hazard_template
 B $A623,1,1 Used flag
@@ -5409,7 +5416,7 @@ W $A62C,2,2
 W $A62E,2,2 Routine at $A8CD
 W $A630,2,2
 B $A632,5,5
-c $A637 Smash handling.
+c $A637 Smash handling
 D $A637 This gets called whenever the perp is within sight of the hero car.
 @ $A637 label=smash_handler
 C $A637,5 Return if perp_caught_stage > 0
@@ -5630,7 +5637,7 @@ C $A88E,3 HL = &lods_table[3] (first of the generic car lods)
 C $A891,1 HL += BC
 C $A892,9 wordat(IX+9) = HL
 C $A89B,1 Return
-c $A89C Returns lanes that cars can spawn in.
+c $A89C Returns the lanes that cars can spawn in
 D $A89C Return $0101 and cars only appear in the leftmost lane. $0102 (1st and 2nd, mainly 2nd). $0104 first three lanes. $0304 - third and fourth lanes.
 R $A89C I:C Buffer offset
 R $A89C O:BC TBD
@@ -5703,8 +5710,7 @@ C $A94A,2 A = 3
 C $A94C,3 Call chatter
 C $A94F,3 BC = $0302
 C $A952,3 Call start_sfx
-c $A955 Used by the routines at #R$8401 and #R$852A.
-D $A955 Used by the routines at #R$8401 and #R$852A.
+c $A955 Used by the routines at #R$8401 and #R$852A
 @ $A955 label=main_loop_18
 C $A955,5 Return if $A248 is zero
 C $A95A,5 Return if $A254 is zero
@@ -5717,8 +5723,7 @@ C $A972,5 Self modify 'LD A' at $A97E to load 1
 C $A977,3 Self modify 'LD A' at $COBB to load 1
 C $A97A,3 Self modify 'LD A' at $A9DE to load 1
 C $A97D,1 Return
-c $A97E Used by the routines at #R$8401 and #R$852A.
-D $A97E Used by the routines at #R$8401 and #R$852A.
+c $A97E Used by the routines at #R$8401 and #R$852A
 @ $A97E label=main_loop_20
 C $A97E,2 A = <...>  -- Self modified by $A974
 C $A980,2 Return if #REGa is zero
@@ -5810,7 +5815,7 @@ C $AA30,3 Jump to $929A
 C $AA33,1 A += E
 C $AA34,1 Return if no carry
 C $AA35,3 Jump to $929A
-c $AA38 Helicopter related.
+c $AA38 Helicopter related
 D $AA38 $AB89 self modifies $8FA4 to call this.
 @ $AA38 label=helicopter_stuff
 C $AA38,1 A = B
@@ -5923,7 +5928,7 @@ C $AB24,1 Restore AF
 C $AB2A,1 Restore AF
 C $AB2F,3 ($AA95) = HL
 C $AB32,1 Return
-c $AB33 Helicopter.
+c $AB33 Helicopter
 D $AB33 Used by the routine at #R$8401.
 @ $AB33 label=helicopter
 C $AB33,5 Return if helicopter_control is zero
@@ -6169,7 +6174,7 @@ C $AD98,2 E += 2
 C $AD9A,3 IX[7] = E
 C $AD9D,2 D = 1
 C $AD9F,1 Return
-c $ADA0 Draws all hazards.
+c $ADA0 Draws all hazards
 D $ADA0 This includes all cars, barriers, tumbleweeds, etc.
 R $ADA0 Used by the routines at #R$8401, #R$852A and #R$873C.
 @ $ADA0 label=draw_hazards
@@ -7139,7 +7144,8 @@ C $B81E,1 HL += BC
 C $B820,1 D--
 C $B821,4 E = -E
 C $B825,3 Exit via plot_masked_sprite_entry
-b $B828 Horizon image related. breaks/crashes road rendering if messed with
+b $B828 Horizon image related
+D $B828 breaks/crashes road rendering if messed with
 W $B828,32,8
 c $B848 Routine at B848
 D $B848 Used by the routines at #R$8401, #R$852A and #R$873C.
@@ -7487,7 +7493,7 @@ C $BC32,4 no_objects_counter = 1
 C $BC36,3 $A16D              = 1
 C $BC39,4 $A267              = 0  [B & C are zero here]
 C $BC3D,1 Return
-c $BC3E Copies the backbuffer at $F000 to the screen.
+c $BC3E Copies the backbuffer at $F000 to the screen
 D $BC3E Used by the routines at #R$8014, #R$8258, #R$8401, #R$858C, #R$873C and #R$F220.
 @ $BC3E label=draw_screen
 C $BC3E,4 Point #REGhl at screen pixel (136,64). This is positioned halfway across so we can PUSH to the screen via SP.
@@ -7970,7 +7976,7 @@ C $C144,2 A = 3
 C $C146,3 Self modify 'LD A,x' at $C2B8
 C $C149,17 Self modify $8F82 and $8FA7 to be CALL <tunnel drawing code>
 C $C15A,1 Return
-c $C15B Tunnel entrance/interior/exit drawing code.
+c $C15B Tunnel entrance/interior/exit drawing code
 D $C15B Called by $8F82 etc. being self modified.
 C $C15B,2 A = IY.low
 C $C15D,2 Compare to <self modified>
@@ -10180,14 +10186,16 @@ N $E3BC Circle expanding animation mask (8x8, 7 frames)
 N $E3BC #HTML[#CALL:anim($E3BC,8,8,0,0,7)]
 N $E3BC #HTML[#CALL:graphic($E3BC,8,7*8,0,0)]
 B $E3BC,388,8*48,4
-w $E540 A table of 96 words being 10^x or similar function. Distance horizontal shift? Field of view table? It affects the horizontal position of the road.
+w $E540 A table of 96 words being 10^x or similar function
+D $E540 Distance horizontal shift? Field of view table? It affects the horizontal position of the road.
 W $E540,192,2
-b $E600 Data block at E600. Seems to be 3x8 groups of 22 bytes. Clearly it's a set of scaling tables. Perhaps drives the stretching of stretchy graphics.
+b $E600 Data block at E600
+D $E600 Seems to be 3x8 groups of 22 bytes. Clearly it's a set of scaling tables. Perhaps drives the stretching of stretchy graphics.
 @ $E600 label=data_e600
 @ $E6B0 label=data_e6b0
 @ $E760 label=data_e760
 B $E600,528,22
-c $E810 Called once the memory map has been setup.
+c $E810 Called once the memory map has been setup
 @ $E810 label=entrypt_48k
 C $E810,1 Set 128K flag to zero (48K mode)
 C $E811,2 3 relocations to do
@@ -10383,7 +10391,7 @@ D $EBF7 Used by the routines at #R$E90F and #R$ECF3.
 C $EBF7,3 Call menu_draw_string
 C $EBFA,3 If the next byte's zero then return
 C $EBFD,2 Otherwise loop
-c $EBFF Renders a string.
+c $EBFF Renders a string
 D $EBFF Used by the routines at #R$EBF7 and #R$ED6D.
 R $EBFF I:HL Address of a message structure (byte: attribute byte, word: destination screen address, bytes: top bit set terminated ASCII string)
 R $EBFF O:HL Address of next unconsumed byte
@@ -10408,12 +10416,10 @@ C $EC23,1 Advance to next char irrespective
 C $EC24,2 Loop if not
 C $EC27,3 Restore regs
 C $EC2B,1 Return
-c $EC2C Renders a single character. Compare #R$9FB4
-D $EC2C Used by the routine at #R$EBFF.
-R $EC2C I:A The character to plot (ASCII)
-R $EC2C I:F' Carry flag set to draw single height characters
-R $EC2C I:DE' Screen address (UDG aligned)
-R $EC2C I:HL' Attribute address
+c $EC2C Renders a single character
+D $EC2C Compare #R$9FB4
+R $EC2C Used by the routine at #R$EBFF.
+N $EC2C I:A   The character to plot (ASCII) I:F'  Carry flag set to draw single height characters I:DE' Screen address (UDG aligned) I:HL' Attribute address
 @ $EC2C label=menu_draw_char
 C $EC2C,6 Handle spaces
 C $EC32,3 Advance attribute address
@@ -10456,13 +10462,13 @@ C $ECBA,28 Plot 8x7 character  HL->character, DE->screen
 C $ECD6,1 Set the screen attribute
 C $ECD7,1 Advance cursor
 C $ECD9,1 Return
-c $ECDA Clears the screen.
+c $ECDA Clears the screen
 D $ECDA Used by the routines at #R$E90F and #R$ECF3.
 @ $ECDA label=clear_screen
 C $ECDA,12 Wipe bottom 2/3rds of attributes
 C $ECE6,12 Wipe bottom 2/3rds of pixels
 C $ECF2,1 Return
-c $ECF3 Runs the redefine keys screen.
+c $ECF3 Runs the redefine keys screen
 D $ECF3 Used by the routine at #R$E90F.
 @ $ECF3 label=redefine_keys
 C $ECF3,3 Call clear_screen
@@ -10593,7 +10599,7 @@ b $EE38 temp input scheme buffer?
 B $EE38,5,5
 b $EE3D Bytes copied to $A0CD
 B $EE3D,3,3
-c $EE40 Interrupt setup.
+c $EE40 Interrupt setup
 D $EE40 Used by the routine at #R$E8CE.
 @ $EE40 label=setup_interrupts
 C $EE40,1 Disable interrupts
@@ -10645,8 +10651,9 @@ C $EE94,3 Self modify $EEC9
 C $EE97,1 Return
 C $EE98,4 HL = wordat(HL); HL++
 C $EE9C,2 Goto j_ee78
-c $EE9E Loads of self modifying hopping around... likely to need a better name.
-D $EE9E Used by the routines at #R$E90F, #R$ECF3 and #R$ED6D.
+c $EE9E Define keys
+D $EE9E Loads of self modifying hopping around... likely to need a better name.
+R $EE9E Used by the routines at #R$E90F, #R$ECF3 and #R$ED6D.
 @ $EE9E label=define_keys
 C $EE9E,4 Enable wait/spinlock at $EF13
 C $EEA2,2 Self modified by $EEA8
@@ -10708,13 +10715,14 @@ N $EF13 This entry point is used by the routines at #R$EF22 and #R$F0C6.
 @ $EF13 label=dk_wait
 C $EF13,5 Wait/spinlock.  Self modified
 C $EF18,1 Return
-c $EF19 How does this get entered? $EE40 builds a JP $EF19 that's interrupt driven.
+c $EF19 Routine at $EF19
+D $EF19 How does this get entered? $EE40 builds a JP $EF19 that's interrupt driven.
 C $EF19,1 Preserve registers
 C $EF1A,5 Unlock the wait/spinlock  -- Self modify 'LD A,x' at $EF13
 C $EF1F,1 Restore registers
 C $EF20,1 Enable interrupts
 C $EF21,1 Return
-c $EF22 Drum sample player.
+c $EF22 Drum sample player
 D $EF22 Used by the routine at #R$EE9E.
 R $EF22 I:B Speed value?
 @ $EF22 label=playdrum_2
@@ -10795,7 +10803,8 @@ B $F0FE,4,4
 W $F102,14,2 Patterns (offset, repetitions?)
 B $F110,1,1
 B $F111,271,8*33,7 Music
-c $F220 128K mode routines and data relocated to $8014/load_stage onwards during init (926 bytes long).
+c $F220 128K mode routines and data
+D $F220 This is relocated to $8014/load_stage onwards during init (926 bytes long).
 @ $F220 label=page_in_stage_128k
 C $F220,3 Load wanted_stage_number
 C $F223,3 Address of current_stage_number
