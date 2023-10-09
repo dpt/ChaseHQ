@@ -342,21 +342,33 @@ w $5D1D Per-stage game setup data
 @ $5D1D label=setup_game_data
 W $5D1D,2,2 road_pos
 N $5D1F These all point a byte earlier than the real data start point.
+@ $5D1F ssub=DEFW map_start_curvature - 1
 W $5D1F,2,2 -> Start stretch, curvature
+@ $5D21 ssub=DEFW map_start_height - 1
 W $5D21,2,2 -> Start stretch, height
+@ $5D23 ssub=DEFW map_start_lanes - 1
 W $5D23,2,2 -> Start stretch, lanes
+@ $5D25 ssub=DEFW map_start_rightobjs - 1
 W $5D25,2,2 -> Start stretch, right-side objects
+@ $5D27 ssub=DEFW map_start_leftobjs - 1
 W $5D27,2,2 -> Start stretch, left-side objects
+@ $5D29 ssub=DEFW map_start_hazards - 1
 W $5D29,2,2 -> Start stretch, hazards
 w $5D2B Per-stage attract mode data
 @ $5D2B label=attract_data
 W $5D2B,2,2 road_pos
 N $5D2D These all point a byte earlier than the real data start point.
+@ $5D2D ssub=DEFW map_loop_curvature - 1
 W $5D2D,2,2 -> Loop section, curvature
+@ $5D2F ssub=DEFW map_loop_height - 1
 W $5D2F,2,2 -> Loop section, height
+@ $5D31 ssub=DEFW map_loop_lanes - 1
 W $5D31,2,2 -> Loop section, lanes
+@ $5D33 ssub=DEFW map_loop_rightobjs - 1
 W $5D33,2,2 -> Loop section, right-side objects
+@ $5D35 ssub=DEFW map_loop_leftobjs - 1
 W $5D35,2,2 -> Loop section, left-side objects
+@ $5D37 ssub=DEFW map_loop_hazards - 1
 W $5D37,2,2 -> Loop section, hazards
 b $5D39 Nancy's perp description
 @ $5D39 label=perp_description
