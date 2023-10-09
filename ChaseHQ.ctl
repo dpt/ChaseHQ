@@ -9896,230 +9896,276 @@ D $DFF8 #HTML[#CALL:graphic($DFF8,8,31*6,0,0)]
 @ $DFF8 label=minifont
 B $DFF8,186,6
 b $E0B2 Graphics defns <Byte width, Flags, Height, Ptr, Ptr>
+N $E0B2 TODO: Ensure these graphic calls don't clash with other emissions.
+N $E0B2 Regular: #HTML[#CALL:graphic($7AB1,16,16,0,1)]
 B $E0B2,1,1 Width (bytes)
 B $E0B3,1,1 Flags
 B $E0B4,1,1 Height (pixels)
 W $E0B5,2,2 Bitmap
 W $E0B7,2,2 Pre-shifted bitmap
+N $E0B9 Regular: #HTML[#CALL:graphic($7B31,24,8,1,1)]
 B $E0B9,1,1 Width (bytes)
 B $E0BA,1,1 Flags
 B $E0BB,1,1 Height (pixels)
 W $E0BC,2,2 Bitmap
 W $E0BE,2,2 Pre-shifted bitmap
+N $E0C0 Regular: #HTML[#CALL:graphic($7B91,16,5,1,1)] Pre-shifted: #HTML[#CALL:graphic($7BA5,16,5,1,1)]
 B $E0C0,1,1 Width (bytes)
 B $E0C1,1,1 Flags
 B $E0C2,1,1 Height (pixels)
 W $E0C3,2,2 Bitmap
 W $E0C5,2,2 Pre-shifted bitmap
+N $E0C7 Regular: #HTML[#CALL:graphic($7B95,16,4,1,1)] Pre-shifted: #HTML[#CALL:graphic($7BA9,16,4,1,1)]
 B $E0C7,1,1 Width (bytes)
 B $E0C8,1,1 Flags
 B $E0C9,1,1 Height (pixels)
 W $E0CA,2,2 Bitmap
 W $E0CC,2,2 Pre-shifted bitmap
+N $E0CE Regular: #HTML[#CALL:graphic($7B99,16,3,1,1)] Pre-shifted: #HTML[#CALL:graphic($7BAD,16,3,1,1)]
 B $E0CE,1,1 Width (bytes)
 B $E0CF,1,1 Flags
 B $E0D0,1,1 Height (pixels)
 W $E0D1,2,2 Bitmap
 W $E0D3,2,2 Pre-shifted bitmap
+N $E0D5 Regular: #HTML[#CALL:graphic($7B9D,16,2,1,1)] Pre-shifted: #HTML[#CALL:graphic($7BB1,16,2,1,1)]
 B $E0D5,1,1 Width (bytes)
 B $E0D6,1,1 Flags
 B $E0D7,1,1 Height (pixels)
 W $E0D8,2,2 Bitmap
 W $E0DA,2,2 Pre-shifted bitmap
+N $E0DC Regular: #HTML[#CALL:graphic($7AF1,32,16,0,1)]
 B $E0DC,1,1 Width (bytes)
 B $E0DD,1,1 Flags
 B $E0DE,1,1 Height (pixels)
 W $E0DF,2,2 Bitmap
 W $E0E1,2,2 Pre-shifted bitmap
+N $E0E3 Regular: #HTML[#CALL:graphic($7B61,24,8,1,1)]
 B $E0E3,1,1 Width (bytes)
 B $E0E4,1,1 Flags
 B $E0E5,1,1 Height (pixels)
 W $E0E6,2,2 Bitmap
 W $E0E8,2,2 Pre-shifted bitmap
+N $E0EA Regular: #HTML[#CALL:graphic($7BB9,16,6,1,1)] Pre-shifted: #HTML[#CALL:graphic($7BD1,16,6,1,1)]
 B $E0EA,1,1 Width (bytes)
 B $E0EB,1,1 Flags
 B $E0EC,1,1 Height (pixels)
 W $E0ED,2,2 Bitmap
 W $E0EF,2,2 Pre-shifted bitmap
+N $E0F1 Regular: #HTML[#CALL:graphic($7BBD,16,5,1,1)] Pre-shifted: #HTML[#CALL:graphic($7BD5,16,5,1,1)]
 B $E0F1,1,1 Width (bytes)
 B $E0F2,1,1 Flags
 B $E0F3,1,1 Height (pixels)
 W $E0F4,2,2 Bitmap
 W $E0F6,2,2 Pre-shifted bitmap
+N $E0F8 Regular: #HTML[#CALL:graphic($7BC1,16,4,1,1)] Pre-shifted: #HTML[#CALL:graphic($7BD9,16,4,1,1)]
 B $E0F8,1,1 Width (bytes)
 B $E0F9,1,1 Flags
 B $E0FA,1,1 Height (pixels)
 W $E0FB,2,2 Bitmap
 W $E0FD,2,2 Pre-shifted bitmap
+N $E0FF Regular: #HTML[#CALL:graphic($7BC5,16,3,1,1)] Pre-shifted: #HTML[#CALL:graphic($7BDD,16,3,1,1)]
 B $E0FF,1,1 Width (bytes)
 B $E100,1,1 Flags
 B $E101,1,1 Height (pixels)
 W $E102,2,2 Bitmap
 W $E104,2,2 Pre-shifted bitmap
+N $E106 Regular: #HTML[#CALL:graphic($7AC5,32,11,0,1)]
 B $E106,1,1 Width (bytes)
 B $E107,1,1 Flags
 B $E108,1,1 Height (pixels)
 W $E109,2,2 Bitmap
 W $E10B,2,2 Pre-shifted bitmap
+N $E10D Regular: #HTML[#CALL:graphic($7B3D,24,6,1,1)]
 B $E10D,1,1 Width (bytes)
 B $E10E,1,1 Flags
 B $E10F,1,1 Height (pixels)
 W $E110,2,2 Bitmap
 W $E112,2,2 Pre-shifted bitmap
+N $E114 Regular: #HTML[#CALL:graphic($7B3D,16,4,1,1)] Pre-shifted: #HTML[#CALL:graphic($7BA9,16,4,1,1)]
 B $E114,1,1 Width (bytes)
 B $E115,1,1 Flags
 B $E116,1,1 Height (pixels)
 W $E117,2,2 Bitmap
 W $E119,2,2 Pre-shifted bitmap
+N $E11B Regular: #HTML[#CALL:graphic($7B99,16,3,1,1)] Pre-shifted: #HTML[#CALL:graphic($7BAD,16,3,1,1)]
 B $E11B,1,1 Width (bytes)
 B $E11C,1,1 Flags
 B $E11D,1,1 Height (pixels)
 W $E11E,2,2 Bitmap
 W $E120,2,2 Pre-shifted bitmap
+N $E122 Regular: #HTML[#CALL:graphic($7B9D,16,2,1,1)] Pre-shifted: #HTML[#CALL:graphic($7BB1,16,2,1,1)]
 B $E122,1,1 Width (bytes)
 B $E123,1,1 Flags
 B $E124,1,1 Height (pixels)
 W $E125,2,2 Bitmap
 W $E127,2,2 Pre-shifted bitmap
+N $E129 Regular: #HTML[#CALL:graphic($7BA1,16,1,1,1)] Pre-shifted: #HTML[#CALL:graphic($7BB5,16,1,1,1)]
 B $E129,1,1 Width (bytes)
 B $E12A,1,1 Flags
 B $E12B,1,1 Height (pixels)
 W $E12C,2,2 Bitmap
 W $E12E,2,2 Pre-shifted bitmap
+N $E130 Regular: #HTML[#CALL:graphic($7B05,32,11,0,1)]
 B $E130,1,1 Width (bytes)
 B $E131,1,1 Flags
 B $E132,1,1 Height (pixels)
 W $E133,2,2 Bitmap
 W $E135,2,2 Pre-shifted bitmap
+N $E137 Regular: #HTML[#CALL:graphic($7B6D,24,6,1,1)]
 B $E137,1,1 Width (bytes)
 B $E138,1,1 Flags
 B $E139,1,1 Height (pixels)
 W $E13A,2,2 Bitmap
 W $E13C,2,2 Pre-shifted bitmap
+N $E13E Regular: #HTML[#CALL:graphic($7BA1,16,5,1,1)] Pre-shifted: #HTML[#CALL:graphic($7BB5,16,5,1,1)]
 B $E13E,1,1 Width (bytes)
 B $E13F,1,1 Flags
 B $E140,1,1 Height (pixels)
 W $E141,2,2 Bitmap
 W $E143,2,2 Pre-shifted bitmap
+N $E145 Regular: #HTML[#CALL:graphic($7BC1,16,4,1,1)] Pre-shifted: #HTML[#CALL:graphic($7BD9,16,4,1,1)]
 B $E145,1,1 Width (bytes)
 B $E146,1,1 Flags
 B $E147,1,1 Height (pixels)
 W $E148,2,2 Bitmap
 W $E14A,2,2 Pre-shifted bitmap
+N $E14C Regular: #HTML[#CALL:graphic($7BC5,16,3,1,1)] Pre-shifted: #HTML[#CALL:graphic($7BDD,16,3,1,1)]
 B $E14C,1,1 Width (bytes)
 B $E14D,1,1 Flags
 B $E14E,1,1 Height (pixels)
 W $E14F,2,2 Bitmap
 W $E151,2,2 Pre-shifted bitmap
+N $E153 Regular: #HTML[#CALL:graphic($7BC9,16,2,1,1)] Pre-shifted: #HTML[#CALL:graphic($7BE1,16,2,1,1)]
 B $E153,1,1 Width (bytes)
 B $E154,1,1 Flags
 B $E155,1,1 Height (pixels)
 W $E156,2,2 Bitmap
 W $E158,2,2 Pre-shifted bitmap
+N $E15A Regular: #HTML[#CALL:graphic($7AD9,32,6,0,1)]
 B $E15A,1,1 Width (bytes)
 B $E15B,1,1 Flags
 B $E15C,1,1 Height (pixels)
 W $E15D,2,2 Bitmap
 W $E15F,2,2 Pre-shifted bitmap
+N $E161 Regular: #HTML[#CALL:graphic($7B4F,24,3,1,1)]
 B $E161,1,1 Width (bytes)
 B $E162,1,1 Flags
 B $E163,1,1 Height (pixels)
 W $E164,2,2 Bitmap
 W $E166,2,2 Pre-shifted bitmap
+N $E168 Regular: #HTML[#CALL:graphic($7B99,16,3,1,1)] Pre-shifted: #HTML[#CALL:graphic($7BAD,16,3,1,1)]
 B $E168,1,1 Width (bytes)
 B $E169,1,1 Flags
 B $E16A,1,1 Height (pixels)
 W $E16B,2,2 Bitmap
 W $E16D,2,2 Pre-shifted bitmap
+N $E16F Regular: #HTML[#CALL:graphic($7B9D,16,2,1,1)] Pre-shifted: #HTML[#CALL:graphic($7BB1,16,2,1,1)]
 B $E16F,1,1 Width (bytes)
 B $E170,1,1 Flags
 B $E171,1,1 Height (pixels)
 W $E172,2,2 Bitmap
 W $E174,2,2 Pre-shifted bitmap
+N $E176 Regular: #HTML[#CALL:graphic($7BA1,16,1,1,1)] Pre-shifted: #HTML[#CALL:graphic($7BB5,16,1,1,1)]
 B $E176,1,1 Width (bytes)
 B $E177,1,1 Flags
 B $E178,1,1 Height (pixels)
 W $E179,2,2 Bitmap
 W $E17B,2,2 Pre-shifted bitmap
+N $E17D Regular: #HTML[#CALL:graphic($7BA1,16,1,1,1)] Pre-shifted: #HTML[#CALL:graphic($7BB5,16,1,1,1)]
 B $E17D,1,1 Width (bytes)
 B $E17E,1,1 Flags
 B $E17F,1,1 Height (pixels)
 W $E180,2,2 Bitmap
 W $E182,2,2 Pre-shifted bitmap
+N $E184 Regular: #HTML[#CALL:graphic($7B19,32,6,0,1)]
 B $E184,1,1 Width (bytes)
 B $E185,1,1 Flags
 B $E186,1,1 Height (pixels)
 W $E187,2,2 Bitmap
 W $E189,2,2 Pre-shifted bitmap
+N $E18B Regular: #HTML[#CALL:graphic($7B7F,24,3,1,1)]
 B $E18B,1,1 Width (bytes)
 B $E18C,1,1 Flags
 B $E18D,1,1 Height (pixels)
 W $E18E,2,2 Bitmap
 W $E190,2,2 Pre-shifted bitmap
+N $E192 Regular: #HTML[#CALL:graphic($7BC5,16,3,1,1)] Pre-shifted: #HTML[#CALL:graphic($7BDD,16,3,1,1)]
 B $E192,1,1 Width (bytes)
 B $E193,1,1 Flags
 B $E194,1,1 Height (pixels)
 W $E195,2,2 Bitmap
 W $E197,2,2 Pre-shifted bitmap
+N $E199 Regular: #HTML[#CALL:graphic($7BC9,16,2,1,1)] Pre-shifted: #HTML[#CALL:graphic($7BE1,16,2,1,1)]
 B $E199,1,1 Width (bytes)
 B $E19A,1,1 Flags
 B $E19B,1,1 Height (pixels)
 W $E19C,2,2 Bitmap
 W $E19E,2,2 Pre-shifted bitmap
+N $E1A0 Regular: #HTML[#CALL:graphic($7BCD,16,1,1,1)] Pre-shifted: #HTML[#CALL:graphic($7BE5,16,1,1,1)]
 B $E1A0,1,1 Width (bytes)
 B $E1A1,1,1 Flags
 B $E1A2,1,1 Height (pixels)
 W $E1A3,2,2 Bitmap
 W $E1A5,2,2 Pre-shifted bitmap
+N $E1A7 Regular: #HTML[#CALL:graphic($7BCD,16,1,1,1)] Pre-shifted: #HTML[#CALL:graphic($7BE5,16,1,1,1)]
 B $E1A7,1,1 Width (bytes)
 B $E1A8,1,1 Flags
 B $E1A9,1,1 Height (pixels)
 W $E1AA,2,2 Bitmap
 W $E1AC,2,2 Pre-shifted bitmap
 N $E1AE Smoke graphics (drawn over perp's car when smashed)
+N $E1AE #HTML[#CALL:graphic($7A0F,16,13,1,1)]
 @ $E1AE label=smoke_defns
 B $E1AE,1,1 Width (bytes)
 B $E1AF,1,1 Flags
 B $E1B0,1,1 Height (pixels)
 W $E1B1,2,2 Bitmap
 W $E1B3,2,2 Pre-shifted bitmap
+N $E1B5 #HTML[#CALL:graphic($7A43,16,11,1,1)]
 B $E1B5,1,1 Width (bytes)
 B $E1B6,1,1 Flags
 B $E1B7,1,1 Height (pixels)
 W $E1B8,2,2 Bitmap
 W $E1BA,2,2 Pre-shifted bitmap
+N $E1BC #HTML[#CALL:graphic($7A6F,16,9,1,1)]
 B $E1BC,1,1 Width (bytes)
 B $E1BD,1,1 Flags
 B $E1BE,1,1 Height (pixels)
 W $E1BF,2,2 Bitmap
 W $E1C1,2,2 Pre-shifted bitmap
+N $E1C3 #HTML[#CALL:graphic($7A93,8,7,1,1)]
 B $E1C3,1,1 Width (bytes)
 B $E1C4,1,1 Flags
 B $E1C5,1,1 Height (pixels)
 W $E1C6,2,2 Bitmap
 W $E1C8,2,2 Pre-shifted bitmap
+N $E1CA #HTML[#CALL:graphic($7AA1,8,5,1,1)]
 B $E1CA,1,1 Width (bytes)
 B $E1CB,1,1 Flags
 B $E1CC,1,1 Height (pixels)
 W $E1CD,2,2 Bitmap
 W $E1CF,2,2 Pre-shifted bitmap
+N $E1D1 #HTML[#CALL:graphic($7AAB,8,3,1,1)]
 B $E1D1,1,1 Width (bytes)
 B $E1D2,1,1 Flags
 B $E1D3,1,1 Height (pixels)
 W $E1D4,2,2 Bitmap
 W $E1D6,2,2 Pre-shifted bitmap
 N $E1D8 Arrow graphic (incl. HERE!)
+N $E1D8 #HTML[#CALL:graphic($D03F,24,28,1,1)]
 @ $E1D8 label=floating_arrow_big_defn
 B $E1D8,1,1 Width (bytes)
 B $E1D9,1,1 Flags
 B $E1DA,1,1 Height (pixels)
 W $E1DB,2,2 Bitmap
 W $E1DD,2,2 Pre-shifted bitmap
+N $E1DF #HTML[#CALL:graphic($D03F,24,21,1,1)]
 @ $E1DF label=floating_arrow_defns
 B $E1DF,1,1 Width (bytes)
 B $E1E0,1,1 Flags
 B $E1E1,1,1 Height (pixels)
 W $E1E2,2,2 Bitmap
+N $E1E4 #HTML[#CALL:graphic($D03F,24,21,1,1)] (but should be flipped L-R)
 B $E1E4,1,1 Width (bytes)
 B $E1E5,1,1 Flags
 B $E1E6,1,1 Height (pixels)
