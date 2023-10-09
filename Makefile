@@ -62,7 +62,7 @@ asm: $(ASM)
 
 $(ASM): $(SKOOL)
 	mkdir -p $(BUILD)
-	skool2asm.py $(OPTIONS) --create-labels --no-warnings $< > $@
+	skool2asm.py $(OPTIONS) --create-labels --no-warnings --ssub $< > $@
 
 .PHONY: z80
 z80: $(Z80)
