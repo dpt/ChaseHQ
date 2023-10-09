@@ -1622,21 +1622,35 @@ b $77D8 Data for pre-game screen
 B $77D8,136,8 Commands to draw the pre-game screen. RLE'd tile references etc.
 B $7860,71,8*8,7 Seems to be tiles pointed at by car rendering code
 B $78A7,360,8 Tiles used to draw the pre-game screen #HTML[#CALL:graphic($78A7,8,45*8,0,0)]
-b $7A0F Smoke graphics
+b $7A0F Smoke and fire graphics
 @ $7A0F label=bitmap_smoke1
-B $7A0F,52,8*6,4 16x13 pixels, masked #HTML[#CALL:graphic($7A0F,16,13,1,0)]
+B $7A0F,52,8*6,4 16x13 pixels, masked #HTML[#CALL:graphic($7A0F,16,13,1,1)]
 @ $7A43 label=bitmap_smoke2
-B $7A43,44,8*5,4 16x11 pixels, masked #HTML[#CALL:graphic($7A43,16,11,1,0)]
+B $7A43,44,8*5,4 16x11 pixels, masked #HTML[#CALL:graphic($7A43,16,11,1,1)]
 @ $7A6F label=bitmap_smoke3
-B $7A6F,36,8*4,4 16x9 pixels, masked  #HTML[#CALL:graphic($7A6F,16,9,1,0)]
+B $7A6F,36,8*4,4 16x9 pixels, masked  #HTML[#CALL:graphic($7A6F,16,9,1,1)]
 @ $7A93 label=bitmap_smoke4
-B $7A93,14,8,6 8x7 pixels, masked     #HTML[#CALL:graphic($7A93,8,7,1,0)]
+B $7A93,14,8,6 8x7 pixels, masked     #HTML[#CALL:graphic($7A93,8,7,1,1)]
 @ $7AA1 label=bitmap_smoke5
-B $7AA1,10,8,2 8x5 pixels, masked     #HTML[#CALL:graphic($7AA1,8,5,1,0)]
+B $7AA1,10,8,2 8x5 pixels, masked     #HTML[#CALL:graphic($7AA1,8,5,1,1)]
 @ $7AAB label=bitmap_smoke6
-B $7AAB,6,6 8x3 pixels, masked        #HTML[#CALL:graphic($7AAB,8,3,1,0)]
-u $7AB1 TBD
-B $7AB1,312,1,8*38,7
+B $7AAB,6,6 8x3 pixels, masked        #HTML[#CALL:graphic($7AAB,8,3,1,1)]
+@ $7AB1 label=bitmap_fire1
+B $7AB1,64,4 32x16 pixels  #HTML[#CALL:graphic($7AB1,32,16,0,1)]
+@ $7AF1 label=bitmap_fire2
+B $7AF1,64,4 32x16 pixels  #HTML[#CALL:graphic($7AF1,32,16,0,1)]
+@ $7B31 label=bitmap_fire3
+B $7B31,48,3 24x8 pixels, masked  #HTML[#CALL:graphic($7B31,24,8,1,1)]
+@ $7B61 label=bitmap_fire4
+B $7B61,48,3 24x8 pixels, masked  #HTML[#CALL:graphic($7B61,24,8,1,1)]
+@ $7B91 label=bitmap_fire5
+B $7B91,20,4 16x5 pixels, masked  #HTML[#CALL:graphic($7B91,16,5,1,1)]
+@ $7BA5 label=bitmap_fire5s
+B $7BA5,20,4 16x5 pixels, masked  #HTML[#CALL:graphic($7BA5,16,5,1,1)]
+@ $7BB9 label=bitmap_fire6
+B $7BB9,24,4 16x6 pixels, masked  #HTML[#CALL:graphic($7BB9,16,6,1,1)]
+@ $7BD1 label=bitmap_fire6s
+B $7BD1,24,4 16x6 pixels, masked  #HTML[#CALL:graphic($7BD1,16,6,1,1)]
 b $7BE9 Graphics: Faces
 N $7BE9 Nancy's face (32x40)
 N $7BE9 #HTML[#CALL:face($7BE9)]
