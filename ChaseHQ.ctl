@@ -1654,7 +1654,9 @@ T $77D2,6,5:n1 "SIGNAL"
 b $77D8 Data for pre-game screen
 @ $77D8 label=pregame_data
 B $77D8,136,8 Commands to draw the pre-game screen. RLE'd tile references etc.
+@ $7860 label=car_tiles
 B $7860,71,8*8,7 Seems to be tiles pointed at by car rendering code
+@ $78A7 label=pregame_tiles
 B $78A7,360,8 Tiles used to draw the pre-game screen #HTML[#CALL:graphic($78A7,8,45*8,0,0)]
 b $7A0F Smoke and fire graphics
 @ $7A0F label=bitmap_smoke1
@@ -2524,19 +2526,28 @@ C $86EF,1 HL--
 C $86F0,3 Call print_message
 C $86F3,2 Loop while #REGb > 0
 C $86F5,1 Return
-b $86F6 18 byte chunks of this 36-byte table get copied to $C82D by $C808 2C = INC, 00 = NOP, ED+A0 = LDI
+b $86F6 Backdrop shifting instructions
+D $86F6 18 byte chunks of this 36-byte table get copied to #R$C82D by #R$C808. $2C = INC, $00 = NOP, $ED+$A0 = LDI.
 @ $86F6 label=backdrop_shift_instrs
 B $86F6,36,8*4,4
-N $871A 14 bytes of setup_game data used by escape_scene. Map ptr are all a byte earlier than their actual start data.
+b $871A Escape scene setup data
+D $871A 14 bytes of setup_game data used by escape_scene. Map data addresses are all a byte earlier than their actual start data.
 @ $871A label=escape_scene_data
 W $871A,2,2 road_pos
+@ $871C ssub=DEFW perp_escape_curvature - 1
 W $871C,2,2 road_curvature_ptr
+@ $871E ssub=DEFW perp_escape_height - 1
 W $871E,2,2 road_height_ptr
+@ $8720 ssub=DEFW perp_escape_lanes - 1
 W $8720,2,2 road_lanes_ptr
+@ $8722 ssub=DEFW perp_escape_hazards + 5
 W $8722,2,2 road_rightside_ptr (note: reuse of road curvature data)
+@ $8724 ssub=DEFW perp_escape_hazards + 5
 W $8724,2,2 road_leftside_ptr (note: reuse of road curvature data)
+@ $8726 ssub=DEFW perp_escape_hazards - 1
 W $8726,2,2 road_hazard_ptr
 N $8728 20 bytes copied to hazards[0]
+@ $8728 label=escape_scene_hazards
 B $8728,1,1 Used flag
 B $8729,8,8
 W $8731,2,2
@@ -2551,6 +2562,7 @@ C $873F,3 Address of escape_scene_data
 C $8742,3 Call setup_game
 C $8745,6 Set speed to $FA [speed of the camera]
 C $874B,11 Initialise hazards[0] (the perp)
+@ $8759 ssub=LD (hazard_0 + 1),HL
 C $8756,6 Set $A191 to the perp's car LOD
 C $875C,5 inhibit_collision_detection = $FF  -- Stops $AD0D from running
 C $8761,3 Address of failed_chatter ("wrong job" / "one more try" / "mediocre driver")
@@ -3665,7 +3677,7 @@ C $9393,2 B = $00
 C $9395,2 A = $00
 C $939A,2 HL += 2
 C $939C,5 HL = wordat(HL) + BC
-C $93A1,3 *$9413 = HL
+C $93A1,3 Self modify 'LD HL,xxxx' at $9412
 C $93A4,1 C = E
 C $93A6,1 A--
 C $93A9,1 HL += BC
@@ -3688,16 +3700,16 @@ C $93E8,4 #REGix = Base of jump table
 C $93EC,3 (~#REGa + 5) is (4 - #REGa)
 C $93EF,9 IX += A * 5
 C $93F8,3 BC = &plot_sprite_entry
-C $93FB,4 *$9410 = BC
-C $93FF,4 *$941E = BC
-C $9404,3 A = 0 - B
-C $940B,3 *$9405 = A
-C $940F,3 Call plot_sprite_entry
-C $9412,3 HL = <...>  Self modified by $93A1
-C $9415,2 B = <...>   Self modified by $9239
+C $93FB,4 Self modify CALL at $940F
+C $93FF,4 Self modify JP at $941D
+C $9404,3 A = <self modified> - B
+C $940B,3 Self modify 'LD A,x' at $9404
+C $940F,3 Call <self modified> [e.g. plot_sprite_entry]
+C $9412,3 HL = <self modified by $93A1>
+C $9415,2 B = <self modified by $9239>
 C $941A,1 A += B
 C $941B,1 B = A
-C $941D,3 Exit via plot_sprite_entry
+C $941D,3 Exit via <self modified> [e.g. plot_sprite_entry]
 @ $9420 label=plot_sprite_xxx_odd
 C $9420,1 Increment #REGa for upcoming calculation
 C $9421,4 Point #REGix at start of plot instructions
@@ -3769,6 +3781,7 @@ C $94C2,1 Calculate address of next bitmap scanline
 C $94C3,1 Put it in #REGsp (so we can use POP for speed)
 C $94C4,2 Unbank
 C $94C6,2 Jump table
+@ $94C8 label=ps_jumptable
 C $94C8,5 Transfer two bitmap bytes (16 pixels) from the "stack" to screen buffer
 C $94CD,5 Transfer another 16 pixels
 C $94D2,5 Transfer another 16 pixels
@@ -6339,6 +6352,7 @@ C $ADF0,1 A = C
 C $ADF1,4 Jump if A < 23  -- still visible?
 N $ADF5 Wipe the hazard because it's gone?
 C $ADF5,4 IX[0] = 0  -- hazard slot now spare
+@ $ADF9 label=just_ret
 C $ADF9,1 Return
 C $ADFA,3 IX[1] = A  -- distance related
 C $ADFD,3 Return if A >= 20
@@ -6584,7 +6598,7 @@ C $B041,3 Jump to $929A if carry
 C $B044,1 Return
 w $B045 Hero car jump table
 D $B045 Values used to make the car move vertically (by self modifying #R$B58E). Used by $B968.
-@ $B045 label=jump_table
+@ $B045 label=hero_car_jump_table
 W $B045,18,2 Main table (vertical delta describing an arc, TBD)
 W $B057,12,2 Sub-table (another byte pair) [suspect this really starts two bytes later]
 c $B063 Hero car jumps; gear changing; off road checks; speed adjustment
@@ -7074,7 +7088,7 @@ C $B57F,1 Bank
 C $B580,3 B = 0
 C $B583,2 E = 1
 C $B585,1 Unbank
-C $B586,3 Presumably plotting
+C $B586,3 Presumably plotting the debris
 C $B589,1 Restore #REGhl
 C $B58A,1 Restore #REGbc
 C $B58B,2 Loop
@@ -7084,14 +7098,15 @@ D $B58E Used by the routine at #R$B318.
 R $B58E I:A TBD
 @ $B58E label=draw_car
 C $B58E,6 If #REGa is zero then flip = A
-C $B594,1 C=A
+C $B594,1 C = A
 C $B596,9 Point #REGhl at ? then add (#REGa * 4)
 C $B59F,3 Point #REGde at the car tiles [needs a proper label]
-C $B5A2,2 C=7
+C $B5A2,2 C = 7
 C $B5A4,3 Call sub_b627
-C $B5A8,4 117 - (self modified value $B5AB)
-C $B5AC,1 D=A
-C $B5AD,4 A=C+B+(self modified value $B5B0)
+N $B5A8 117 is the car's vertical position.
+C $B5A8,4 117 - <self modified value $B5AB>
+C $B5AC,1 D = A
+C $B5AD,4 A = C + B + <self modified value $B5B0>
 C $B5B1,6 If A >= 9 A -= 9
 C $B5B7,3 Point #REGhl at car definitions[A] (entries are 20 bytes wide)
 C $B5C5,4 A = var_a22a + *HL
@@ -7265,25 +7280,34 @@ C $B76C,3 #REGde = #REGa
 C $B76F,1 #REGhl += #REGde
 N $B770 This entry point is used by the routine at #R$B67C.
 C $B771,4 Save #REGsp for restoration on exit
-C $B775,4 Point #REGix at mystery table
-C $B779,3 Subtract 8 ???
-C $B77C,3 Multiply by 8
+C $B775,4 Point #REGix at jump table
+C $B779,3 Subtract 8
+C $B77C,3 Multiply by 8  -- length of jump table sequences
 C $B77F,5 Add to IX
 C $B784,2 H = $EF
-C $B794,8 Return
-B $B79C,8,8
-C $B7A4,1 Load a bitmap and mask pair (B,C)
-C $B7A5,1 Set flip table index (assuming table is aligned)
-C $B7A6,1 Load the screen pixels
-C $B7A7,1 AND screen pixels with flipped mask
-C $B7A8,1 Set flip table index
-C $B7A9,1 OR in new flipped pixels
-C $B7AA,1 Store back to the screen
-C $B7AB,1 Move to next screen pixel (downwards in memory)
-C $B7AC,47 Repeat 8 times
-C $B7DB,20 Handle end of row. This must be adjusting the screen pointer.
+C $B78E,1 Bank
+C $B78F,2 Next scanline
+C $B791,3 Restore #REGsp (self modified)
+C $B794,1 Return
+C $B795,1 Calculate address of next bitmap scanline
+C $B796,1 Put it in #REGsp (so we can use POP for speed)
+C $B797,1 Unbank
+C $B79A,2 Jump
+@ $B79C label=pmsf_jumptable
+C $B79C,1 Load a bitmap and mask pair (B,C)
+C $B79D,1 Set flip table index (assuming table is aligned)
+C $B79E,1 Load the screen pixels
+C $B79F,1 AND screen pixels with flipped mask
+C $B7A0,1 Set flip table index
+C $B7A1,1 OR in new flipped pixels
+C $B7A2,1 Store back to the screen
+C $B7A3,1 Move to next screen pixel (downwards in memory)
+C $B7A4,55 <Repeat 9 times>
+C $B7E6,2 Loop
+C $B7EC,3 Loop
 c $B7EF Routine at B7EF
 D $B7EF Used by the routine at #R$92E1.
+@ $B7EF label=sub_b7ef
 C $B7EF,4 self modify $B71F - exit of plot_masked_sprite
 C $B7F3,4 IX = &plot_masked_sprite_core_thingy (jump table)
 C $B7F7,3 A = 8 - A
@@ -10365,22 +10389,27 @@ N $E28C #HTML[#CALL:graphic($E28C,16,6,1,1)]
 B $E28C,24,8 Masked bitmap data
 b $E2A4 Data for perp escape scene
 N $E2A4 Perp escape scene, hazards
+@ $E2A4 label=perp_escape_hazards
 B $E2A4,6,6
 N $E2AA Perp escape scene, curvature
+@ $E2AA label=perp_escape_curvature
 B $E2AA,1,1 Straight
 B $E2AB,2,2 Escape, Command 0 (Continue at <Address>)
 W $E2AD,2,2 Loop
 N $E2AF Perp escape scene, height
+@ $E2AF label=perp_escape_height
 B $E2AF,1,1 Level ground
 B $E2B0,2,2 Escape, Command 0 (Continue at <Address>)
 W $E2B2,2,2 Loop
 N $E2B4 Perp escape scene, lanes
+@ $E2B4 label=perp_escape_lanes
 B $E2B4,1,1 Length byte ?
 B $E2B5,1,1 Lanes byte ?
 B $E2B6,6,1
 B $E2BC,2,2 Escape, Command 0 (Continue at <Address>)
 W $E2BE,2,2 Loop (partial)
 N $E2C0 Perp escape scene, lane objects [not sure now, could be right curve road]
+@ $E2C0 label=perp_escape_??
 B $E2C0,2,1
 B $E2C2,2,2 Escape, Command 0 (Continue at <Address>)
 W $E2C4,2,2 Loop (partial)
