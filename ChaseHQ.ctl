@@ -299,10 +299,11 @@ W $5BD3,2,2 entrypt_128k
 B $5BD5,2,2 #R$5B31 loads two bytes to here.  -- unsure what uses them
 u $5BD7 Unused
 B $5BD7,41,8*5,1
-b $5C00 Graphics
+b $5C00 [Stage 1] Horizon graphic
 D $5C00 #HTML[#CALL:graphic($5C00,80,24,0,1)]
+@ $5C00 label=bitmap_horizon
 B $5C00,240,8 Horizon backdrop (80x24) inverted. Varies per level
-b $5CF0 Per-stage data
+b $5CF0 [Stage 1] Per-stage data
 @ $5CF0 label=ralph_mugshot_attributes
 W $5CF0,2,2 Address of Ralph's mugshot attributes
 @ $5CF2 label=ralph_mugshot_bitmap
@@ -318,27 +319,34 @@ W $5CFE,2,2 Address of entry 9, but it isn't aligned.
 @ $5D00 label=data_5d00
 W $5D00,2,2 Loaded by $A490. Address of graphics entry 9.
 W $5D02,2,2 Loaded by $A55C. Address of graphics entry 12.
+@ $5D04 label=addrof_perp_description
 W $5D04,2,2 Address of Nancy's perp description.
+@ $5D06 label=addrof_arrest_messages
 W $5D06,2,2 Address of arrest messages.
+@ $5D08 label=addrof_helicopter_stuff_1
 W $5D08,2,2 Loaded by $AA69. Helicopter related.
+@ $5D0A label=addrof_helicopter_stuff_2
 W $5D0A,2,2 Loaded by $AA6E. Helicopter related.
-w $5D0C Table of addresses of LODs
+w $5D0C [Stage 1] Table of addresses of LODs
 D $5D0C LODs = Level Of Detail - a set of sprites of various sizes representing the same object.
-@ $5D0C label=lods_table
+@ $5D0C label=lods_stones
 W $5D0C,2,2 Address of LODs for stones.
+@ $5D0E label=lods_dust
 W $5D0E,2,2 Address of LODs for dust.
+@ $5D10 label=lods_perp_car
 W $5D10,2,2 Address of LODs for car (perp's car).
+@ $5D12 label=lods_vehicles
 W $5D12,2,2 Address of LODs for lambo.
 W $5D14,2,2 Address of LODs for truck.
 W $5D16,2,2 Address of LODs for lambo (again).
 W $5D18,2,2 Address of LODs for car (generic car).
-b $5D1A Per-stage difficulty settings
+b $5D1A [Stage 1] Per-stage difficulty settings
 @ $5D1A label=car_spawn_rate
 B $5D1A,1,1 How often cars spawn. Lower values spawn cars more often.
 @ $5D1B label=smash_5d1b
 B $5D1B,1,1 Loaded by $A6A7. Used by smash_handler.
 B $5D1C,1,1 Loaded by $A759.
-w $5D1D Per-stage game setup data
+w $5D1D [Stage 1] Per-stage game setup data
 @ $5D1D label=setup_game_data
 W $5D1D,2,2 road_pos
 N $5D1F These all point a byte earlier than the real data start point.
@@ -354,7 +362,7 @@ W $5D25,2,2 -> Start stretch, right-side objects
 W $5D27,2,2 -> Start stretch, left-side objects
 @ $5D29 ssub=DEFW map_start_hazards - 1
 W $5D29,2,2 -> Start stretch, hazards
-w $5D2B Per-stage attract mode data
+w $5D2B [Stage 1] Per-stage attract mode data
 @ $5D2B label=attract_data
 W $5D2B,2,2 road_pos
 N $5D2D These all point a byte earlier than the real data start point.
@@ -370,7 +378,7 @@ W $5D33,2,2 -> Loop section, right-side objects
 W $5D35,2,2 -> Loop section, left-side objects
 @ $5D37 ssub=DEFW map_loop_hazards - 1
 W $5D37,2,2 -> Loop section, hazards
-b $5D39 Nancy's perp description
+b $5D39 [Stage 1] Nancy's perp description
 @ $5D39 label=perp_description
 B $5D39,1,1 Nancy ($01)
 W $5D3A,2,2 Points at "THIS IS NANCY..."
@@ -387,7 +395,8 @@ T $5D6D,40,39:n1 "EMERGENCY HERE. RALPH THE IDAHO SLASHER,"
 T $5D95,42,41:n1 "IS FLEEING TOWARDS THE SUBURBS. THE TARGET"
 @ $5DBF label=perp_description_4
 T $5DBF,46,45:n1 "VEHICLE IS A WHITE BRITISH SPORTS CAR... OVER."
-b $5DED Messages - Arrest
+b $5DED [Stage 1] Arrest messages
+@ $5DED label=arrest_messages
 B $5DED,1,1 Frame delay until first message?
 B $5DEE,1,1 Frame delay until next message?
 B $5DEF,1,1 Flags (?)
@@ -408,8 +417,9 @@ W $5E34,2,2 Back buffer address
 W $5E36,2,2 Attribute address
 T $5E38,6,5:n1 "MURDER"
 B $5E3E,1,1 Frame delay until next message?
-b $5E3F Graphics definitions
+b $5E3F [Stage 1] Graphics definitions
 D $5E3F All are stored inverted except where noted.
+@ $5E3F label=graphics_defs
 B $5E3F,1,1 Pointed to by $5CFA
 B $5E40,1,1 Pointed to by $5CF6
 W $5E41,2,2 Address of tumbleweed_lods table
@@ -1089,13 +1099,25 @@ N $6EB5 #HTML[#CALL:graphic($6EB5,16,7,1,1)]
 B $6EB5,28,4 Masked bitmap data
 N $6ED1 Referenced by graphic entry 6
 @ $6ED1 label=streetlamp_6ed1
-B $6ED1,10,8,2
-W $6EDB,2,2 Ptr?
+B $6ED1,1,1
+W $6ED2,2,2
+B $6ED4,1,1
+W $6ED5,2,2
+B $6ED7,1,1
+W $6ED8,2,2
+B $6EDA,1,1
+W $6EDB,2,2
 B $6EDD,1,1
 N $6EDE Referenced by graphic entry 15
 @ $6EDE label=streetlamp_flipped_6ede
-B $6EDE,10,8,2
-W $6EE8,2,2 Ptr?
+B $6EDE,1,1
+W $6EDF,2,2
+B $6EE1,1,1
+W $6EE2,2,2
+B $6EE4,1,1
+W $6EE5,2,2
+B $6EE7,1,1
+W $6EE8,2,2
 B $6EEA,1,1
 @ $6EEB label=streetlamp_6eeb
 W $6EEB,2,2 Address of another LOD table
@@ -1216,7 +1238,7 @@ B $6FEC,1,1
 W $6FED,2,2
 B $6FEF,1,1
 @ $6FF0 label=telegraphpoletop_6ff0
-W $6FF0,2,2 LOD ptr?
+W $6FF0,2,2
 B $6FF2,20,2
 @ $7006 label=telegraphpoletop_7006
 W $7006,2,2
@@ -1303,7 +1325,7 @@ B $7105,1,1
 N $7106 Referenced by graphic entry 5 and 14. Affects heights of things when meddled with.
 @ $7106 label=tree_7106
 B $7106,1,1
-W $7107,2,2 below ptr to tree_lods
+W $7107,2,2
 B $7109,1,1
 W $710A,2,2
 B $710C,1,1
@@ -1595,8 +1617,8 @@ N $7630 Tree shadow (24x1) pre-shifted
 N $7630 #HTML[#CALL:graphic($7630,24,1,1,1)]
 @ $7630 label=bitmap_tree_shadow_24x1s
 B $7630,6,6 Masked bitmap data
-u $7636 Unused by this level
-B $7636,186,8*23,2
+u $7636 [Stage 1] Unused by this level
+S $7636,186,$BA
 b $76F0 Turbo icons
 D $76F0 #HTML[#CALL:anim($76F0,16,14,1,1,3)]
 N $76F0 Frame 1 (16x14)
@@ -1698,8 +1720,10 @@ B $7E3A,20,2
 @ $7E4E label=streetlampbody_7e4e
 W $7E4E,2,2
 B $7E50,20,2
+@ $7E64 label=streetlampbody_7e64
 W $7E64,2,2
 B $7E66,20,2
+@ $7E7A label=streetlampbody_7e7a
 W $7E7A,2,2
 B $7E7C,20,2
 @ $7E90 label=streetlampbody_7e90
@@ -1856,6 +1880,7 @@ C $8017,3 Point #REGhl at current_stage_number
 C $801A,2 Exit if they match
 C $801C,1 current_stage_number = wanted_stage_number
 C $801D,3 Set var_a220 to wanted level no.
+@ $8022 ssub=LD (searching_for_n + 14),A
 C $8020,5 Update the level number in "SEARCHING FOR <N>"
 C $8025,3 Call clear_screen_set_attrs
 C $8028,3 Call clear_game_attrs
@@ -1871,6 +1896,7 @@ N $8045 This entry point is used by the routine at #R$E810.
 C $8046,1 equal to <distance related>?
 C $8047,2 jump if not
 C $8049,2 #REGa += (48 + 128) (make it ASCII and terminate it)
+@ $804B ssub=LD (found_n + 6),A
 C $804B,3 Set x in "FOUND x"
 C $8050,3 #REGa = wanted_stage_number
 C $8053,1 equal?
@@ -1985,11 +2011,12 @@ C $8163,2 Set MIC bit (deactivate MIC)
 C $8165,2 Output
 C $8167,1 Set carry
 C $8168,1 Return (success)
-@ $8169 label=tape_messsages
+@ $8169 label=rewind_tape
 B $8169,1,1 attr?
 W $816A,2,2 Screen position (8,64)
 W $816C,2,2 Screen attribute position (1,8)
 T $816E,30,29:n1 "REWIND TAPE TO START OF SIDE 2"
+@ $818C label=start_tape
 B $818C,1,1 attr?
 W $818D,2,2 Screen position (88,96)
 W $818F,2,2 Screen attribute position (11,12)
@@ -1997,11 +2024,14 @@ T $8191,10,9:n1 "START TAPE"
 B $819B,1,1 attr?
 W $819C,2,2 Screen position (72,128)
 W $819E,2,2 Screen attribute position (9,16)
+@ $81A0 label=searching_for_n
 T $81A0,15,14:n1 "SEARCHING FOR 1"
 B $81AF,1,1 attr?
 W $81B0,2,2 Screen position (104,160)
 W $81B2,2,2 Screen attribute position (13,20)
+@ $81B4 label=found_n
 T $81B4,7,6:n1 "FOUND 1"
+@ $81BB label=stop_the_tape_press_gear
 B $81BB,1,1 attr?
 W $81BC,2,2 Screen position (80,96)
 W $81BE,2,2 Screen attribute position (10,12)
@@ -2139,8 +2169,9 @@ B $8362,1,1 Attribute (red)
 W $8363,2,2 Back buffer address
 W $8365,2,2 Attribute address
 T $8367,19,18:n1 "ALL RIGHTS RESERVED"
-b $837A Unknown - mostly NUL bytes
-B $837A,59,8*7,3
+B $837A,2,1
+u $837C Unused
+S $837C,57,$39
 c $83B5 Hooks for functions that vary between 48K and 128K modes
 D $83B5 Used by the routine at #R$B4CC.
 @ $83B5 label=start_siren_hook
@@ -2520,7 +2551,7 @@ C $873F,3 Address of escape_scene_data
 C $8742,3 Call setup_game
 C $8745,6 Set speed to $FA [speed of the camera]
 C $874B,11 Initialise hazards[0] (the perp)
-C $8756,6 Set $A191 to value of lods_table[2] (the perp's car)
+C $8756,6 Set $A191 to the perp's car LOD
 C $875C,5 inhibit_collision_detection = $FF  -- Stops $AD0D from running
 C $8761,3 Address of failed_chatter ("wrong job" / "one more try" / "mediocre driver")
 C $8764,3 Call chatter
@@ -2576,7 +2607,7 @@ C $881A,1 $8F84 = NOP (instruction)
 C $881B,9 NOP 6 bytes [of instructions] at $8FA4
 C $8824,3 Self modify "LD (HL),x" at $C058 to x = 0
 C $8827,3 Self modify "LD A,x" at $B063 to x = 0  car jump height
-C $882A,6 Set $A191 to value of lods_table[2] (the perp's car)
+C $882A,6 Set $A191 to the perp's car LOD
 C $8830,15 Zero $EE00..$EEFF, and reset road_buffer_offset to $EE00 [duplicates work from earlier]
 @ $883F label=loop883f
 C $883F,2 32 iterations   - affects start position?
@@ -3237,7 +3268,7 @@ C $8F5E,1 Return
 c $8F5F Routine at 8F5F
 D $8F5F Used by the routines at #R$8401, #R$852A and #R$873C.
 @ $8F5F label=main_loop_23
-C $8F5F,3 Point #REGde at the stack
+C $8F5F,3 Point #REGhl at (something above the stack)
 C $8F62,3 Self modify 'LD HL' at $A9E2 to load the stack address
 C $8F65,6 Self modify 'LD HL' at $AECF to load $E900
 N $8F6B Add 32 to the first 21 entries of tables $E301 and $E336. If meddled with this affects the height of elements.
@@ -3907,9 +3938,9 @@ B $9634,5,5 Five bytes used for noise when character pictures 'noise in'
 B $9639,3,3
 @ $963C label=noise_counter
 B $963C,1,1 Noise effect counter (4..0)
-@ $963D label=TBD963d
+@ $963D label=var_963d
 B $963D,1,1 read by $9946, one'd by $9961, set by $99d9 character index?
-@ $963E label=TBD963e
+@ $963E label=var_963e
 B $963E,1,1 read by $9950, set by $9956
 b $963F In-game messages
 T $963F,27,26:n1 "THIS IS NANCY AT CHASE H.Q."
@@ -4075,7 +4106,7 @@ C $9964,1 Return
 c $9965 Noise effect, Message plotting
 D $9965 Used by the routines at #R$8401, #R$858C and #R$873C.
 @ $9965 label=drive_chatter
-C $9965,4 A = TBD963d - 1
+C $9965,4 A = var_963d - 1
 C $9969,2 if A was zero jump
 C $996B,1 A--
 C $996C,2 if A was zero jump to sub998f_do_noise_effect
@@ -5010,20 +5041,53 @@ B $A181,4,4 Distance as displayed. Stored as one digit per byte.
 B $A185,1,1 If set causes no objects or hazards to be emitted.
 @ $A186 label=horizon_attribute
 W $A186,2,2 Attribute address of horizon. Points to last attribute on the line which shows the ground. (e.g. $59DF)
-N $A188 Hazard structure layout: +0 is $FF if this hazard is used, $00 otherwise +1 looks distance related +2 TBD +3 TBD +4 TBD +5 TBD +6 TBD +7 byte TBD used by hazard_hit +8 byte gets copied from the hazards table +9 word address of e.g. car LOD +11 word address of routine +13 word set to $190 by fully_smashed (likely a horizontal position) +15 byte TBD used by hazard_hit, counter which gets set to 2 then reduced +16 byte TBD +17 byte TBD used by hazard_hit, indexes table $ACDB +18 byte TBD used by hazard_hit +19 byte TBD used by hazard_hit
-@ $A188 label=hazards
-B $A188,120,8 Set by $843B. Groups of 20 bytes. This area looks like a table of spawned vehicles or objects. The first entry is the perp.
-N $A200 Unknown
-B $A200,19,8*2,3
+N $A188 Table of spawned vehicles and/or objects
+N $A188 Each entry is 20 bytes long. The first entry is the perp.
+N $A188 Hazard structure layout:
+N $A188 +0 is $FF if this hazard is used, $00 otherwise
+N $A188 +1 looks distance related
+N $A188 +2 TBD
+N $A188 +3 TBD
+N $A188 +4 TBD
+N $A188 +5 TBD
+N $A188 +6 TBD
+N $A188 +7 byte TBD used by hazard_hit
+N $A188 +8 byte gets copied from the hazards table
+N $A188 +9 word address of LOD
+N $A188 +11 word address of routine
+N $A188 +13 word set to $190 by fully_smashed (likely a horizontal position)
+N $A188 +15 byte TBD used by hazard_hit, counter which gets set to 2 then reduced
+N $A188 +16 byte TBD
+N $A188 +17 byte TBD used by hazard_hit, indexes table $ACDB
+N $A188 +18 byte TBD used by hazard_hit
+N $A188 +19 byte TBD used by hazard_hit
+@ $A188 label=hazard_0
+@ $A19C label=hazard_1
+@ $A1B0 label=hazard_2
+@ $A1C4 label=hazard_3
+@ $A1D8 label=hazard_4
+@ $A1EC label=hazard_5
+S $A188,120,$14
+N $A200 Unknown - not enough space for another hazard
+S $A200,19,$13
 N $A213 AY registers 0..11 [128K]
+@ $A213 label=ay_chan_a_pitch
 W $A213,2,2 0,1: Channel A pitch (fine,course=lo,hi)
+@ $A215 label=ay_chan_b_pitch
 W $A215,2,2 2,3: Channel B pitch
+@ $A217 label=ay_chan_c_pitch
 W $A217,2,2 4,5: Channel C pitch - used for engine tone?
+@ $A219 label=ay_noise_pitch
 B $A219,1,1 6: Noise pitch
+@ $A21A label=ay_mixer
 B $A21A,1,1 7: Mixer
+@ $A21B label=ay_chan_a_vol
 B $A21B,1,1 8: Channel A volume
+@ $A21C label=ay_chan_b_vol
 B $A21C,1,1 9: Channel B volume
+@ $A21D label=ay_chan_c_vol
 B $A21D,1,1 10: Channel C volume
+@ $A21E label=ay_env_fine
 B $A21E,1,1 11: Envelope fine duration
 N $A21F End of AY registers
 B $A21F,1,1 Unused?
@@ -5688,7 +5752,7 @@ C $A882,1 Set flags
 C $A885,2 A = 6
 C $A88A,2 C--
 C $A88C,2 B = 0
-C $A88E,3 HL = &lods_table[3] (first of the generic car lods)
+C $A88E,3 HL = &lods_vehicles (first of the generic car LODs)
 C $A891,1 HL += BC
 C $A892,9 wordat(IX+9) = HL
 C $A89B,1 Return
@@ -5770,7 +5834,7 @@ D $A955 Used by the routines at #R$8401 and #R$852A.
 @ $A955 label=main_loop_18
 C $A955,5 Return if var_a248 is zero
 C $A95A,5 Return if another_spawning_flag is zero
-C $A95F,3 Point #REGhl at something above the stack
+C $A95F,3 Point #REGde at (something above the stack)
 C $A962,3 Call rng
 C $A965,8 Stack 1 if it's +ve or zero, or 2 if it's -ve
 C $A96D,3 Call rng
@@ -5786,7 +5850,7 @@ C $A97E,2 A = <...>  -- Self modified by $A974
 C $A980,2 Return if #REGa is zero
 C $A982,6 #REGiy = $E361
 C $A988,3 BC = $1400
-C $A98B,3 Point #REGhl at something above the stack
+C $A98B,3 Point #REGhl at (something above the stack)
 N $A98E Scan through whatever-it-is for a non-zero byte. Move 4 bytes per iteration.
 @ $A98E label=ml20_loop1
 C $A98E,1 A = *HL++
@@ -5837,16 +5901,16 @@ D $A9DE Used by the routine at #R$8F5F.
 C $A9DE,2 A = <...>  Self modified by $A97A, $A9A3
 C $A9E0,1 Set flags
 C $A9E1,1 Return if zero
-C $A9E2,3 HL = $ED28    -- stack
+C $A9E2,3 Point #REGhl at (something above the stack)
 C $A9E5,3 A = *HL; HL += 2
 C $A9E8,1 Set flags
 C $A9E9,2 Jump to A9F1 if non-zero
 C $A9EB,2 HL += 2
 C $A9ED,3 Self modify 'LD HL,x' at $A9E2 to load HL
 C $A9F0,1 Return
-C $A9F1,4 DE = lods_table[0] (stones_lods)
+C $A9F1,4 DE = *stones_lods
 C $A9F5,1 A--
-C $A9F6,6 If non-zero DE = lods_table[1] (dust_lods)
+C $A9F6,6 If non-zero DE = *dust_lods
 C $A9FC,2 C = *HL++
 C $A9FE,1 A = *HL
 C $AA00,1 HL++
@@ -5983,7 +6047,7 @@ C $AB1E,2 HL -= DE
 C $AB20,1 Restore HL
 C $AB24,1 Restore AF
 C $AB2A,1 Restore AF
-C $AB2F,3 ($AA95) = HL
+C $AB2F,3 Self modify 'LD BC' @ $AA94
 C $AB32,1 Return
 c $AB33 Helicopter
 D $AB33 Used by the routine at #R$8401.
@@ -6161,10 +6225,13 @@ C $ACCC,7 Zero the horizontal position
 C $ACD3,4 Set IX[19] to 1
 C $ACD7,3 Set IX[15] to 1
 C $ACDA,1 Return
+@ $ACDB label=table_acdb
 B $ACDB,40,8 $AC94 uses this
+@ $AD03 label=table_ad03
 W $AD03,10,2 $AC53 uses this
 c $AD0D Routine at AD0D
 D $AD0D Used by the routine at #R$BDFB.
+@ $AD0D label=sub_ad0d
 C $AD0D,5 Return if the inhibit_collision_detection flag is set
 C $AD12,4 IX = &hazards[0]
 C $AD16,3 DE = 20  -- stride of hazards
@@ -6199,6 +6266,7 @@ c $AD51 Routine at AD51
 D $AD51 Used by the routines at #R$AD0D and #R$ADA0.
 R $AD51 I:IX Address of a hazard structure
 R $AD51 O:D Return value
+@ $AD51 label=sub_ad51
 C $AD51,5 Return if IX[7] is non-zero
 C $AD56,6 HL = wordat(IX + 2)
 C $AD5C,3 Return if top byte of HL was set
@@ -6329,7 +6397,7 @@ C $AE6D,1 A = H
 C $AE6F,1 C = A
 C $AE70,4 HL = <self modified> + BC
 C $AE74,6 wordat(IX + 2) = HL
-C $AE7A,3 Call ?
+C $AE7A,3 Call sub_ad51
 C $AE7D,3 D = IX[1]
 C $AE80,3 E = IX[4]
 C $AE83,3 HL = &var_a222
@@ -6852,6 +6920,7 @@ C $B3CA,2 CP $02
 C $B3CE,2 A = $02
 C $B3D0,3 turn_speed = A
 C $B3D3,5 flip = 1
+C $B3D8,3 Draw debris?
 C $B3DB,2 A = $00
 C $B3DD,1 Set flags
 C $B3E0,1 C = A
@@ -6974,6 +7043,42 @@ C $B544,4 Set smash_factor to #REGc
 C $B548,1 Return
 c $B549 Routine at B549
 D $B549 Used by the routine at #R$B318.
+@ $B549 label=sub_b549
+C $B549,2 A = <self modified>
+C $B54B,1 Set flags
+C $B54C,1 Return if zero
+C $B54D,1 A--
+C $B54E,3 Self modify 'LD A' above
+C $B551,1 Double A
+C $B552,3 DE = A
+C $B555,4 Self modify 'LD HL' below
+C $B559,2 3 iterations
+C $B55B,3 HL = <self modified> by $B503
+C $B55E,1 Preserve #REGbc
+C $B55F,4 DE = wordat(HL); HL += 2
+C $B563,1 Preserve #REGhl
+C $B564,4 A = (*DE + 1) & 3
+C $B568,1 *DE = A
+C $B569,2 A <<= 2
+C $B56B,1 C = A
+C $B56C,1 A <<= 1
+C $B56D,2 C += A
+C $B56F,1 DE++
+C $B570,3 HL = <self modified>
+C $B573,1 B = H
+C $B574,1 HL += DE
+C $B575,3 DE = wordat(HL)
+C $B578,4 HL -> bitmap_debris_1/2/3/4
+C $B57C,3 B = height, C = ?
+C $B57F,1 Bank
+C $B580,3 B = 0
+C $B583,2 E = 1
+C $B585,1 Unbank
+C $B586,3 Presumably plotting
+C $B589,1 Restore #REGhl
+C $B58A,1 Restore #REGbc
+C $B58B,2 Loop
+C $B58D,1 Return
 c $B58E Draws the car
 D $B58E Used by the routine at #R$B318.
 R $B58E I:A TBD
@@ -9513,13 +9618,26 @@ C $CDE2,1 Undo final shift
 C $CDE3,8 Divide by 8 with rounding
 C $CDEB,1 Return
 b $CDEC Data block at CDEC
-D $CDEC $AF91 uses this.
-B $CDEC,71,8*8,7
-b $CE33 Used by $B4FD
+@ $CDF4 label=table_cdf4
+B $CDEC,20,8*2,4
+@ $CE00 label=table_ce00
+W $CE00,12,12
+B $CE0C,39,8*4,7
+b $CE33 Used by $B4FD - groups of six bytes
+@ $CE33 label=table_ce33
 W $CE33,24,6
+@ $CE4B label=table_ce4b
+@ $CE5E label=table_ce5e
+@ $CE71 label=table_ce71
+@ $CE84 label=table_ce84
+@ $CE97 label=table_ce97
 B $CE4B,95,8*2,3,8*2,3,8*2,3,8*2,3,8*2,3
-b $CEAA Used by $B578
-B $CEAA,48,8
+b $CEAA Used by $B578 4 frames, all 8x6 masked
+@ $CEAA label=bitmap_debris_1
+@ $CEB6 label=bitmap_debris_2
+@ $CEC2 label=bitmap_debris_3
+@ $CECE label=bitmap_debris_4
+B $CEAA,48,2
 b $CEDA Hero car drawing instructions
 D $CEDA 9 of them. 20 bytes per entry.
 @ $CEDA label=hero_car_refs
