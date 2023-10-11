@@ -2264,7 +2264,7 @@ C $8471,3 Call main_loop_13
 C $8474,3 Call engine_sfx_play_hook
 C $8477,3 Call main_loop_14
 C $847A,3 Call tunnel_setup
-C $847D,3 Call main_loop_16
+C $847D,3 Call spawn_hazards
 C $8480,3 Call helicopter
 C $8483,3 Call main_loop_18
 C $8486,3 Call engine_sfx_play_hook
@@ -2278,7 +2278,7 @@ C $849B,3 Call main_loop_23
 C $849E,3 Call engine_sfx_play_hook
 C $84A1,3 Call main_loop_24
 C $84A4,3 Call speed_score
-C $84A7,3 Call main_loop_25
+C $84A7,3 Call update_scoreboard
 C $84AA,3 Call overtake_bonus
 C $84AD,3 Call engine_sfx_play_hook
 C $84B0,3 Call drive_chatter
@@ -2286,7 +2286,7 @@ C $84B3,3 Call smash_bar_etc
 C $84B6,3 Call transition
 C $84B9,3 Call engine_sfx_play_hook
 C $84BC,3 Call draw_screen
-C $84BF,3 Call main_loop_27
+C $84BF,3 Call road_handling_setup
 C $84C2,3 Is test mode enabled?
 C $84C5,3 If not, goto not_test_mode
 N $84C8 Test mode handling
@@ -2354,7 +2354,7 @@ C $8568,3 Call main_loop_12
 C $856B,3 Call main_loop_13
 C $856E,3 Call main_loop_14
 C $8571,3 Call tunnel_setup
-C $8574,3 Call main_loop_16
+C $8574,3 Call spawn_hazards
 C $8577,3 Call main_loop_18
 C $857A,3 Call main_loop_20
 C $857D,3 Call draw_hazards
@@ -2374,6 +2374,7 @@ C $859D,4 Reset car revealing height counter in #R$85E4
 C $85A1,1 A = $FF (TBD)
 C $85A2,3 Load Nancy's report for this level
 C $85A5,3 Call chatter
+N $85A8 This entry point is used by the routine at #R$85DD.
 @ $85A8 label=rps_loop
 C $85A8,3 Call draw_pregame
 C $85AB,3 Call drive_chatter
@@ -2391,8 +2392,7 @@ C $85D3,3 Exit via play_start_noise
 @ $85D6 label=rps_xxx
 C $85D8,3 If no carry call setup_transition
 C $85DB,2 Loop
-b $85DD Data block at 85DD
-B $85DD,7,7
+c $85DD Possibly dead code
 c $85E4 Reveals the perp's car on the pre-game screen
 D $85E4 Used by the routine at #R$858C.
 @ $85E4 label=reveal_perp_car
@@ -2527,10 +2527,9 @@ C $86EF,1 HL--
 C $86F0,3 Call print_message
 C $86F3,2 Loop while #REGb > 0
 C $86F5,1 Return
-b $86F6 Backdrop shifting instructions
+c $86F6 Routine at 86F6
 D $86F6 18 byte chunks of this 36-byte table get copied to #R$C82D by #R$C808. $2C = INC, $00 = NOP, $ED+$A0 = LDI.
 @ $86F6 label=backdrop_shift_instrs
-B $86F6,36,8*4,4
 b $871A Escape scene setup data
 D $871A 14 bytes of setup_game data used by escape_scene. Map data addresses are all a byte earlier than their actual start data.
 @ $871A label=escape_scene_data
@@ -2579,10 +2578,10 @@ C $877B,3 Call main_loop_12
 C $877E,3 Call main_loop_13
 C $8781,3 Call main_loop_14
 C $8784,3 Call tunnel_setup
-C $8787,3 Call main_loop_16
+C $8787,3 Call spawn_hazards
 C $878A,3 Call draw_hazards
 C $878D,3 Call main_loop_23
-C $8790,3 Call main_loop_25
+C $8790,3 Call update_scoreboard
 C $8793,3 Call drive_chatter
 C $8796,3 Call transition
 C $8799,3 Call draw_screen
@@ -2638,6 +2637,7 @@ C $885D,3 Point #REGhl at right light's attributes then FALL THROUGH
 @ $8860 label=clear_lights
 C $8860,2 Clear the lights' BRIGHT bit
 C $8870,3 Call silence_audio_hook
+C $8873,3 Exit via update_scoreboard
 c $8876 User input checking
 D $8876 Used by the routine at #R$8401.
 @ $8876 label=check_user_input
@@ -5000,7 +5000,7 @@ B $A139,1,1 0/1 => 48K/128K mode
 @ $A13A label=current_stage_number
 B $A13A,1,1 Current stage number
 @ $A13B label=start_random
-B $A13B,1,1 Used by #R$8425  -- seems to start at 4 then cycle 3/2/1 with each restart of the game, another random factor?
+B $A13B,1,1 Used by #R$8424  -- seems to start at 4 then cycle 3/2/1 with each restart of the game, another random factor?
 @ $A13C label=overtake_bonus
 B $A13C,1,1 Overtake combo bonus counter. BCD. This increases by 2 for each overtake and is reset on a crash.
 @ $A13D label=credits
@@ -7647,7 +7647,7 @@ C $BB01,3 Set road position
 C $BB08,3 Get road position
 c $BB69 Setup for road handling perhaps split related
 D $BB69 Used by the routine at #R$8401.
-@ $BB69 label=main_loop_27
+@ $BB69 label=road_handling_setup
 C $BB69,5 Return if (var_a267 & $FF00) is zero
 C $BB6E,4 A = fork_taken - 1
 C $BB72,2 Jump if A is zero (right fork taken)
@@ -7798,7 +7798,7 @@ C $BE0D,4 If speed < 255 then jump
 C $BE11,2 Preserve
 C $BE13,3 Call subfunction $BE1F  -- processing something twice as much when at high speed?
 C $BE16,2 Restore
-@ $BE18 label=j_be18
+@ $BE18 label=rm_be18
 C $BE18,2 fast_counter += bottom byte of speed in A
 C $BE1A,2 A = 0 doesn't seem self modified
 C $BE1C,3 Jump to j_c0d9 if no carry
@@ -11249,7 +11249,7 @@ C $F3AC,1 A = 1
 C $F3AD,3 Load var_a23a  -- copy of noise pitch
 C $F3B0,3 Self modify $8E49
 @ $F3B6 label=plsp_f3b6_128k
-C $F3B3,6 Self modify 'CALL xxxx' at #R$81C5 ($F3D1 here - below)
+C $F3B3,6 Self modify 'CALL xxxx' at $81C5 ($F3D1 here - below)
 C $F3B9,14 Copy 4096 bytes from $B000 to $F000 (preserving registers for later)
 C $F3C7,4 Self modify 'LD SP,xxxx' at #R$81CD ($F3D9 here - below)
 C $F3CB,3 new sp
