@@ -313,6 +313,7 @@ W $5CF4,2,2 Screen attributes used for the ground colour (a pair of matching byt
 @ $5CF6 label=tumbleweeds_etc
 W $5CF6,2,2 Loaded by $AC1F. Address of table of LODs for tumbleweeds, barriers.
 W $5CF8,2,2 Loaded by $900F. Address of an array of 7 byte entries.
+@ $5CFA label=addrof_graphic_defs
 W $5CFA,2,2 Loaded by $A465. Address of graphic definitions.
 W $5CFC,2,2 Loaded by $A53F. Address of graphics entry 3.
 W $5CFE,2,2 Address of entry 9, but it isn't aligned.
@@ -3039,11 +3040,13 @@ B $8D70,2,2
 B $8D72,1,1 Attribute (black)
 W $8D73,2,2 Back buffer address
 W $8D75,2,2 Attribute address
+@ $8D77 label=time_n
 T $8D77,7,6:n1 "TIME 10"
 B $8D7E,2,2
 B $8D80,1,1 Attribute (black)
 W $8D81,2,2 Back buffer address
 W $8D83,2,2 Attribute address
+@ $8D85 label=credit_n
 T $8D85,8,7:n1 "CREDIT  "
 B $8D8D,2,2
 c $8D8F Drives transitions
@@ -4391,6 +4394,7 @@ C $9C2E,3 Exit via play_speech_hook
 C $9C31,5 Return if transition_control is non-zero
 C $9C36,8 Exit via quit_key if no credits remain
 C $9C3E,1 Decrement credits [POKE $9C3E for Infinite credits]
+@ $9C41 ssub=LD (credit_n + 7),A
 C $9C3F,5 Turn it into ASCII and poke it into the "CREDIT x" string
 C $9C44,5 time_up_state = 3
 C $9C49,3 HL = $0115
@@ -4431,7 +4435,8 @@ C $9CA0,5 time_up_state = 4
 C $9CA5,3 Self modify 'LD HL' at #R$9C84 to load HL
 C $9CA8,1 A = L
 C $9CA9,2 A >>= 1
-C $9CAB,3 DE = $8D7C
+@ $9CAB ssub=LD DE,time_n + 5
+C $9CAB,3 Address of nn in "TIME nn"
 C $9CAE,2 CP 10
 C $9CB2,2 A = $31
 C $9CB4,2 L = $00
@@ -4458,8 +4463,10 @@ C $9CD1,3 Zero high part of score increment
 C $9CD4,2 Exit via increment_score
 c $9CD6 Add a bonus
 D $9CD6 The bonus value is passed as five BCD digits in #REGde and #REGa like: 0bDDDDddddEEEEeeeeAAAAxxxxx, where x is not used.
-R $9CD6 The bonus value must have a single sequence of zeroes, e.g. "55000" is okay, but "50500" is not.
-N $9CD6 Used by the routines at #R$9D2E, #R$A637 and #R$B9F4. I:A Low nibble of bonus I:DE High four nibbles of bonus
+D $9CD6 The bonus value must have a single sequence of zeroes, e.g. "55000" is okay, but "50500" is not.
+D $9CD6 Used by the routines at #R$9D2E, #R$A637 and #R$B9F4.
+R $9CD6 I:A Low nibble of bonus
+R $9CD6 I:DE High four nibbles of bonus
 @ $9CD6 label=bonus
 C $9CD6,1 Preserve #REGa
 C $9CD7,3 -> Byte after bonus digits buffer
@@ -4713,10 +4720,12 @@ N $9EC1 Time.
 C $9EC1,3 Point #REGde at time digits screen position (120, 9)
 C $9EC4,1 Bank
 C $9EC5,3 Point #REGde at time_bcd (one BCD byte)
+@ $9EC8 ssub=LD HL,time_digits + 1
 C $9EC8,3 Point #REGhl at time_digits + 1
 C $9ECB,2 One pair of digits
 C $9ECD,3 Call plot_led_digits
 N $9ED0 Distance.
+@ $9ED0 ssub=LD DE,distance_bcd + 1
 C $9ED0,3 Point #REGde at distance_bcd + 1 (the second of two BCD bytes)
 C $9ED3,4 L = Distance byte from first 'hazard' (the perp)
 C $9ED7,4 H = 17th byte from first hazard (not sure yet how they relate)
@@ -4750,13 +4759,17 @@ C $9F00,1 OR in the remainder
 C $9F01,2 distance_bcd[0] = #REGa
 C $9F03,3 Point #REGde at distance digits screen position (136,33)
 C $9F06,1 Bank
+@ $9F07 ssub=LD DE,distance_bcd + 1
 C $9F07,3 Point #REGde at distance_bcd + 1 (two BCD bytes)
+@ $9F0A ssub=LD HL,distance_digits + 3
 C $9F0A,3 Point #REGhl at distance_digits + 3
 C $9F0D,2 Two pairs of digits (4 digits)
 C $9F0F,3 Call ptas_led_digits
 C $9F12,3 Point #REGde at score digits screen position
 C $9F15,1 Bank
+@ $9F16 ssub=LD DE,score_bcd + 3
 C $9F16,3 Point #REGde at score (four BCD bytes)
+@ $9F19 ssub=LD HL,score_digits + 7
 C $9F19,3 Point #REGhl at score digits (eight bytes)
 C $9F1C,2 B = 4
 N $9F1E Plots scoreboard digits (#REGde -> BCD) only if different than recorded values (#REGhl -> byte per digit). #REGb is the count.
@@ -5265,6 +5278,7 @@ W $A276,2,2 Address of the previous left object data byte
 W $A278,2,2 Address of the previous hazard object data byte
 b $A27A Font: 8x7 bitmap
 D $A27A #HTML[#CALL:graphic($A27A,8,41*7,0,0)]
+@ $A27A label=font
 B $A27A,7,7 Exclamation mark
 B $A281,7,7 Open bracket
 B $A288,7,7 Close bracket
@@ -5631,6 +5645,7 @@ C $A708,4 Jump to $A711 if A <= C
 C $A70C,2 A -= 2
 C $A70E,3 IX[18] = A
 C $A711,3 A = IX[18]
+@ $A714 ssub=LD HL,table_a7e7 - 1
 C $A714,3 HL = $A7E6  -> $A7E7 data block
 C $A717,1 A += L
 C $A718,1 L = A
@@ -5709,6 +5724,7 @@ C $A7DE,3 Call chatter
 C $A7E1,3 BC = $0301
 C $A7E4,3 Exit via start_sfx
 b $A7E7 Data block at A7E7
+@ $A7E7 label=table_a7e7
 B $A7E7,12,8,4
 c $A7F3 Spawns cars
 D $A7F3 Used by the routines at #R$8401 and #R$852A.
@@ -5750,6 +5766,7 @@ C $A852,3 A = (A & 3) + B
 C $A855,4 If A >= C A = C
 C $A859,3 IX[17] = A
 C $A85C,3 IX[18] = A
+@ $A85F ssub=LD HL,table_a7e7 - 1
 C $A85F,8 A = $A7E6[A]
 C $A867,3 IX[5] = A
 C $A86A,3 Load sighted_flag
@@ -5809,6 +5826,7 @@ C $A8EA,6 If A < B IX[18] = B
 C $A8F0,8 If A > C IX[18] = C
 C $A8F8,3 A = IX[18]
 C $A8FB,5 Jump to $A926 if A == IX[17]
+@ $A902 ssub=LD HL,table_a7e7 - 1
 C $A902,3 HL = $A7E6   -> $A7E7 data block
 C $A905,1 C = A
 C $A906,2 L += A
