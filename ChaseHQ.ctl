@@ -127,6 +127,11 @@
 > $4000 ; Bank 7 @ $E000..$FAEF is the end screen
 > $4000 ;
 > $4000 ;
+> $4000 ; 128K SOUND
+> $4000 ; ----------
+> $4000 ; Engine drone is played on Channel C
+> $4000 ;
+> $4000 ;
 > $4000 ; NOTES
 > $4000 ; -----
 > $4000 ; Strings are top bit set terminated ASCII.
@@ -2685,7 +2690,7 @@ R $88F2 I:BC e.g. $0704 $0801 $0604
 C $88F2,6 If $A238 is zero then goto sfx_related_assign
 C $88F8,2 Return if $A238 < C
 @ $88FA label=sfx_related_assign
-C $88FA,8 wordat($A237) = BC
+C $88FA,8 wordat(sfx_0) = BC
 C $8902,1 Return
 c $8903 Drives sound effects
 D $8903 Used by the routine at #R$8401.
@@ -2697,24 +2702,26 @@ C $8913,3 Call start_sfx if non-zero
 C $8916,3 Call engine_sfx_setup_hook
 C $8919,3 Call engine_sfx_play_hook
 C $891C,3 Call write_registers_hook
-C $891F,5 If $A237 == 0 return
-C $8924,3 #REGe = $A237 * 4 -- stride of table
-C $8927,4 $A237 = 0
-C $892B,3 $A238 = 0
+C $891F,5 If sfx_0 == 0 return
+C $8924,3 #REGe = sfx_0 * 4 -- stride of table
+C $8927,4 sfx_0 = 0
+C $892B,3 sfx_1 = 0
 C $892E,1 Make #REGde full offset
+@ $892F ssub=LD HL,(sfx_table - 4)
 C $892F,3 #REGhl -> Base of table, but 4 bytes earlier
 C $8932,1 Point at array element
-C $8933,4 Load argument value into #REGde
+C $8933,4 Load argument value into #REGde (note: big endian!)
 C $8937,4 Load address of routine into #REGhl
 C $893B,1 Exit via routine at #REGhl
-N $893C Pairs of words: (argument, address of sound effect routine)
+N $893C Pairs of words: (argument [big endian], address of sound effect routine)
+@ $893C label=sfx_table
 W $893C,2,2 Argument in #REGde for sound effect routine
-W $893E,2,2 Sound effect routine $8A0F - "pitt" and "pfff" and gear noise too?
+W $893E,2,2 Sound effect routine $8A0F
 W $8940,2,2 Argument in #REGde for sound effect routine: D = delay of 8
 W $8942,2,2 Sound effect routine $89D9
 W $8944,2,2 Argument in #REGde for sound effect routine
 W $8946,2,2 Sound effect routine $8960 - crash
-W $8948,2,2 Argument in #REGde for sound effect routine
+W $8948,2,2 Argument in #REGde for sound effect routine (low)
 W $894A,2,2 Sound effect routine $8960 - crash
 W $894C,2,2 Argument in #REGde for sound effect routine
 W $894E,2,2 Sound effect routine $89D9
@@ -2728,12 +2735,12 @@ W $895C,2,2 Argument in #REGde for sound effect routine - time running out low "
 W $895E,2,2 Sound effect routine $8A36 - "bip-bow"
 c $8960 Sound effect - crash
 R $8960 I:D Inner loop count
-@ $8960 label=sfx8960
+@ $8960 label=sfx_crash
 C $8960,3 #REGhl -> Effect data table
 C $8963,2 Length of table is 93
-@ $8965 label=sfx8960_loop_outer
+@ $8965 label=sfx_crash_loop_outer
 C $8965,1 Set inner loop counter
-@ $8966 label=sfx8960_loop_inner
+@ $8966 label=sfx_crash_loop_inner
 C $8966,2 #REGa = 16
 C $8968,2 Top bit set of this byte?
 C $896A,2 Don't clear the EAR bit
@@ -2745,14 +2752,15 @@ C $8974,2 Loop while #REGb > 0
 C $8976,1 Move to the next byte of effect data
 C $8977,4 Loop while #REGc > 0
 C $897B,1 Return
+@ $897C label=sfx_crash_table
 B $897C,93,8*11,5 Effect data table
-c $89D9 Sound effect - not sure
+c $89D9 Sound effect - thud
 R $89D9 I:D Delay value
-@ $89D9 label=sfx89d9
+@ $89D9 label=sfx_thud
 C $89D9,2 Length of table is 32
 C $89DB,3 #REGhl -> Effect data table
 C $89DE,1 Zero output byte
-@ $89DF label=sfx89d9_loop
+@ $89DF label=sfx_thud_loop
 C $89DF,1 B = *HL
 C $89E0,2 Output to
 C $89E2,4 Delay for 'D' iterations
@@ -2761,36 +2769,36 @@ C $89E8,2 Wiggle the EAR bit
 C $89EA,1 Move to the next byte of effect data
 C $89EB,3 Loop while #REGc > 0
 C $89EE,1 Return
-@ $89EF label=sfx_data
+@ $89EF label=sfx_thud_table
 B $89EF,32,8 Effect data table
-c $8A0F Sound effect - "pitt" and "pfff"
+c $8A0F Sound effect - cornering
 R $8A0F I:D Affects delay loops
 R $8A0F I:E Inner loop count
-@ $8A0F label=sfx8a0f
+@ $8A0F label=sfx_cornering
 C $8A0F,2 Half duty cycle
 C $8A11,6 Return if 1
-@ $8A17 label=sfx8a0f_loop_outer
+@ $8A17 label=sfx_cornering_loop_outer
 C $8A17,1 Set inner loop counter
-@ $8A18 label=sfx8a0f_loop_inner
+@ $8A18 label=sfx_cornering_loop_inner
 C $8A18,3 Call rng
 C $8A1B,2 #REGa &= 16
-C $8A1D,2 If zero goto sfx8a0f_continue
+C $8A1D,2 If zero goto sfx_cornering_continue
 C $8A1F,6 Delay loop of (24 - #REGd) iterations
 C $8A25,2 #REGa = 24 set EAR and MIC bits <not sure of the effect>
 C $8A27,2 Output
 C $8A29,3 Delay loop of #REGd iterations
 C $8A2C,3 Output
-@ $8A2F label=sfx8a0f_continue
+@ $8A2F label=sfx_cornering_continue
 C $8A2F,3 Loop while #REGc > 0
 C $8A32,3 Loop while #REGd > 0
 C $8A35,1 Return
 c $8A36 Sound effect - "bip-bow"
 R $8A36 I:D Delay at start
 R $8A36 I:E Same as D
-@ $8A36 label=sfx8a36
+@ $8A36 label=sfx_bipbow
 C $8A36,2 C = 20
 C $8A38,3 Inner loop counter. H is decremented and restored from L each loop.
-@ $8A3B label=sfx8a36_loop
+@ $8A3B label=sfx_bipbow_loop
 C $8A3B,3 Delay loop of D iterations
 C $8A3E,1 D = E
 C $8A3F,6 Delay loop of (24 - C) iterations
