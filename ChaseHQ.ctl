@@ -309,9 +309,9 @@ D $5C00 #HTML[#CALL:graphic($5C00,80,24,0,1)]
 @ $5C00 label=bitmap_horizon
 B $5C00,240,8 Horizon backdrop (80x24) inverted. Varies per level
 b $5CF0 [Stage 1] Per-stage data
-@ $5CF0 label=ralph_mugshot_attributes
+@ $5CF0 label=addrof_perp_mugshot_attributes
 W $5CF0,2,2 Address of Ralph's mugshot attributes
-@ $5CF2 label=ralph_mugshot_bitmap
+@ $5CF2 label=addrof_perp_mugshot_bitmap
 W $5CF2,2,2 Address of Ralph's mugshot bitmap
 @ $5CF4 label=ground_colour
 W $5CF4,2,2 Screen attributes used for the ground colour (a pair of matching bytes)
@@ -431,6 +431,7 @@ B $5E40,1,1 Pointed to by $5CF6
 W $5E41,2,2 Address of tumbleweed_lods table
 B $5E43,1,1 ?
 W $5E44,2,2 Address of barrier_lods table
+N $5E46 Right hand side objects.
 N $5E46 Entry 1 (tunnel light)
 B $5E46,3,3 Unclear if anything uses these bytes
 W $5E49,2,2 Arg for routine passed in DE
@@ -438,68 +439,69 @@ W $5E4B,2,2 -> Routine at $9252
 N $5E4D Entry 2 (empty)
 B $5E4D,3,3
 W $5E50,4,2
-N $5E54 Entry 3 (street lamp or telegraph pole?)
+N $5E54 Entry 3 (stumpy pole)
 B $5E54,3,3
 W $5E57,2,2 Arg for routine passed in DE
 W $5E59,2,2 -> Routine at $9171
 N $5E5B Entry 4 (tree, right hand side)
 B $5E5B,3,3
 W $5E5E,2,2 Arg for routine passed in DE
-W $5E60,2,2 -> Routine at $9171. Loaded into HL at $9017 then jumped to.
-N $5E62 Entry 5 (tree or bush?)
+W $5E60,2,2 -> Routine at $9171.
+N $5E62 Entry 5 (bush)
 B $5E62,3,3
 W $5E65,2,2 Arg for routine passed in DE
 W $5E67,2,2 -> Routine at $9171
-N $5E69 Entry 6 (street lamp or telegraph pole?)
+N $5E69 Entry 6 (street lamp, right hand side)
 B $5E69,3,3
 W $5E6C,2,2 Arg for routine passed in DE
 W $5E6E,2,2 -> Routine at $9171
-N $5E70 Entry 7 (street lamp, no flip?)
+N $5E70 Entry 7 (telegraph pole)
 B $5E70,3,3
 W $5E73,2,2 Arg for routine passed in DE
 W $5E75,2,2 -> Routine at $9171
-N $5E77 Entry 8 (turn sign, no flip)
+N $5E77 Entry 8 (turn sign, pointing left)
 B $5E77,3,3
 W $5E7A,2,2 Arg for routine passed in DE
-W $5E7C,2,2 Routine?
-N $5E7E Entry 9 (turn sign)
+W $5E7C,2,2 -> Routine at $92E1
+N $5E7E Entry 9 (turn sign, pointing right)
 B $5E7E,3,3
 W $5E81,2,2 -> -> turn_sign_lods
 W $5E83,2,2 -> Routine at $92E1
+N $5E85 Left hand side objects.
 N $5E85 Entry 10 (tunnel light)
 B $5E85,3,3
-W $5E88,2,2 Arg
+W $5E88,2,2 Arg for routine passed in DE
 W $5E8A,2,2 -> Routine at $924D
 N $5E8C Entry 11 (empty)
 B $5E8C,3,3
 W $5E8F,4,2
-N $5E93 Entry 12 (pole?)
+N $5E93 Entry 12 (stumpy pole)
 B $5E93,3,3
-W $5E96,2,2 Arg
+W $5E96,2,2 Arg for routine passed in DE
 W $5E98,2,2 -> Routine at $916C
 N $5E9A Entry 13 (tree, left hand side)
 B $5E9A,3,3
-W $5E9D,2,2 Arg
+W $5E9D,2,2 Arg for routine passed in DE
 W $5E9F,2,2 -> Routine at $916C
-N $5EA1 Entry 14 (tree/bush?)
+N $5EA1 Entry 14 (bush)
 B $5EA1,3,3
-W $5EA4,2,2 Arg
+W $5EA4,2,2 Arg for routine passed in DE
 W $5EA6,2,2 -> Routine at $916C
 N $5EA8 Entry 15 (street lamp, flipped)
 B $5EA8,3,3
-W $5EAB,2,2 Arg
+W $5EAB,2,2 Arg for routine passed in DE
 W $5EAD,2,2 -> Routine at $916C
 N $5EAF Entry 16 (telegraph pole)
 B $5EAF,3,3
-W $5EB2,2,2 Arg
+W $5EB2,2,2 Arg for routine passed in DE
 W $5EB4,2,2 -> Routine at $916C
-N $5EB6 Entry 17 (turn sign)
+N $5EB6 Entry 17 (turn sign, pointing left)
 B $5EB6,3,3
-W $5EB9,2,2 Arg
+W $5EB9,2,2 Arg for routine passed in DE
 W $5EBB,2,2 -> Routine at $9278
-N $5EBD Entry 18 (turn sign)
+N $5EBD Entry 18 (turn sign, pointing right)
 B $5EBD,3,3
-W $5EC0,2,2 Arg
+W $5EC0,2,2 Arg for routine passed in DE
 W $5EC2,2,2 -> Routine at $9278
 b $5EC4 Initial map segment
 N $5EC4 Start stretch
@@ -1698,16 +1700,19 @@ N $7BE9 Nancy's face (32x40)
 N $7BE9 #HTML[#CALL:face($7BE9)]
 @ $7BE9 label=bitmap_nancy
 B $7BE9,160,4 Bitmap data, top-down format
+@ $7C89 label=attrs_nancy
 B $7C89,20,4 Attribute data for above
 N $7C9D Raymond's face (32x40)
 N $7C9D #HTML[#CALL:face($7C9D)]
 @ $7C9D label=bitmap_raymond
 B $7C9D,160,4 Bitmap data, top-down format
+@ $7D3D label=attrs_raymond
 B $7D3D,20,4 Attribute data for above
 N $7D51 Tony's face (32x40)
 N $7D51 #HTML[#CALL:face($7D51)]
 @ $7D51 label=bitmap_tony
 B $7D51,160,4 Bitmap data, top-down format
+@ $7DF1 label=attrs_tony
 B $7DF1,20,4 Attribute data for above
 b $7E05 Referenced by graphic entry 3 and 12
 @ $7E05 label=streetlampbody_7e05
@@ -2822,13 +2827,13 @@ C $8A66,3 Jump to hpc_stage4 if it's four
 C $8A69,1 Bank
 C $8A6A,5 Return if transition_control != 0
 C $8A6F,1 Unbank
-C $8A70,3 Jump to hpc_stage5 if perp_caught_stage is five
+C $8A70,3 Jump to hpc_start_stage_6 if perp_caught_stage is five
 N $8A73 Otherwise all of the caught stages are complete and we can move on to the next stage.
-C $8A73,1 [Where's the PUSH?]
+C $8A73,1 Throw away the return address to bypass the remainder of main_loop
 C $8A74,3 Call silence_audio_hook
 C $8A77,4 Increment wanted_stage_number
 C $8A7B,3 Jump to main_loop
-@ $8A7E label=hpc_stage5
+@ $8A7E label=hpc_start_stage_6
 C $8A7E,5 perp_caught_stage = 6
 C $8A83,2 A = 8 -- transition type
 C $8A85,3 Jump to setup_transition
@@ -2853,7 +2858,7 @@ C $8AC0,1 A--
 C $8AC1,3 Self modify 'LD A' @ #R$8ABE to load A
 C $8AC4,1 Return if A != 0
 C $8AC5,5 perp_caught_stage = 4
-C $8ACA,3 HL = *$5D06   -- arrest messages
+C $8ACA,3 Point #REGhl at addrof_arrest_messages
 C $8ACD,2 A = 1         -- transition_control byte
 C $8ACF,3 Jump to j_8e80   -- inside message_printing_related
 @ $8AD2 label=hpc_stage4
@@ -3173,39 +3178,40 @@ c $8E7E Message printing related, called for TIME UP, CONTINUE, etc. messages
 D $8E7E Used by the routines at #R$8258, #R$873C, #R$8A57, #R$8C3A, #R$9BCF, #R$B4CC and #R$F220.
 R $8E7E I:HL -> something  e.g. -> credits_messages
 @ $8E7E label=message_printing_related
-C $8E7E,2 A = 2
+C $8E7E,2 A = 2  -- new value for transition_control
 N $8E80 This entry point is used by the routine at #R$8A57.
 @ $8E80 label=j_8e80
-C $8E80,3 transition_control = A
+C $8E80,3 Set transition_control to #REGa
 C $8E83,4 Modify 'LD A' @ #R$8E49 with frame delay
 C $8E87,4 Modify 'LD HL' @ #R$8E42 to be message struct e.g. $82CD
-C $8E8B,5 Modify 'LD B' @ #R$8E45 to be ?
+C $8E8B,5 Modify 'LD B' @ #R$8E45 to be 1
 C $8E90,1 Return
 c $8E91 Copies the mugshots onto the screen when perp is caught
 D $8E91 Used by the routine at #R$8D8F.
 @ $8E91 label=draw_mugshots
-C $8E91,3 -> Perp's mugshot attributes
-C $8E94,3 Final byte of bitmap (back buffer)
+C $8E91,3 Load end address of perp's mugshot bitmap into #REGhl
+C $8E94,3 Address of final byte of bitmap (back buffer)
 C $8E97,3 Screen position (40,104)
-C $8E9A,3 Call draw_mugshot
-C $8E9D,3 -> Tony mugshot attributes
+C $8E9A,3 Draw
+C $8E9D,3 Load end address of Tony's mugshot bitmap into #REGhl
 C $8EA0,3 Final byte of bitmap (back buffer)
 C $8EA3,3 Screen position (160,104)
-C $8EA6,3 Call draw_mugshot
-C $8EA9,3 -> Raymond mugshot attributes
+C $8EA6,3 Draw
+C $8EA9,3 Load end address of Raymond's mugshot bitmap into #REGhl
 C $8EAC,3 Final byte of bitmap (back buffer)
 C $8EAF,3 Screen position (200,104)
-C $8EB2,3 Call draw_mugshot
+C $8EB2,3 Draw
 C $8EB5,2 Exit via sub_8e42
 c $8EB7 Draws a mugshot
 D $8EB7 Used by the routine at #R$8E91.
 R $8EB7 I:BC Screen position (used for attributes)
 R $8EB7 I:DE Address of last byte of bitmap data to be written (in back buffer)
-R $8EB7 I:HL Address of mugshot attributes (screen)
+R $8EB7 I:HL Address of start of mugshot attributes / end of bitmap data
 @ $8EB7 label=draw_mugshot
 C $8EB7,1 Preserve screen position
 C $8EB8,1 Preserve address of mugshot attributes
-C $8EB9,1 Move back a byte to point at end of bitmap data (we assume that the bitmap data precedes the attribute bytes)
+N $8EB9 We assume that the bitmap data precedes the attribute bytes.
+C $8EB9,1 Move back one byte to point at end of bitmap data
 C $8EBA,3 Size of mugshot data (32x40 bitmap)
 @ $8EBD label=dm_loop
 C $8EBD,1 Save #REGe
@@ -3226,9 +3232,9 @@ C $8EE0,3 Loop
 @ $8EE3 label=dm_plot_attrs
 C $8EE3,1 Restore address of mugshot attributes
 C $8EE4,3 Exit via pf_attrs_bit
-c $8EE7 Smash bar etc.
+c $8EE7 Draw the smash bar
 D $8EE7 Used by the routine at #R$8401.
-@ $8EE7 label=smash_bar_etc
+@ $8EE7 label=draw_smash_bar
 C $8EE7,5 Return if the perp has not yet been sighted
 C $8EEC,6 Return if perp_caught_stage is >= 3 (car has stopped)
 C $8EF2,3 Back buffer address of bottom of bar
@@ -3298,6 +3304,7 @@ N $8F6B Add 32 to the first 21 entries of tables $E301 and $E336. If meddled wit
 C $8F6B,3 HL = $E301
 C $8F6E,3 DE = $E336
 C $8F71,3 B = 21 iterations, C = 32 (added to table entries)
+@ $8F74 label=ml23_loop
 C $8F74,3 *HL += C
 C $8F77,3 *DE += C
 C $8F7A,1 E++
@@ -3317,7 +3324,7 @@ C $8F96,4 Preserve IX, HL, BC
 C $8F9A,3 Load var_a222
 C $8F9D,1 Set flags
 C $8F9E,3 Call if non-zero
-C $8FA1,3 Call
+C $8FA1,3 Call sub_A9DE (dust/stones stuff)
 C $8FA4,1 Self modified
 C $8FA5,1 Self modified
 C $8FA6,1 Self modified
@@ -3389,8 +3396,9 @@ C $904A,1 CALL 916C 9171 924D 9252 92E1 ETC.  -- with B as ?
 @ $904B label=return_904B
 C $904B,4 Restore IX, HL, BC
 C $904F,3 Loop?
-c $9052 Routine at 9052
-D $9052 This gets used on stage 3 when drawing the overhead structure graphics. sampled IX=$EAB2 DE=$6F26 HL=$9052 BC=$1420 (when in stage3!)
+c $9052 Draws overhead graphics.
+D $9052 This gets used on stage 3 when drawing the overhead structure graphics.
+D $9052 sampled IX=$EAB2 DE=$6F26 HL=$9052 BC=$1420 (when in stage3!)
 @ $9052 label=draw_overhead
 C $9052,4 Preserve
 C $9056,3 A = IX[1]
@@ -3413,9 +3421,10 @@ C $9083,1 L = A
 C $9084,2 SRL A
 C $9086,1 A += L
 C $9087,1 A -= C
-C $9088,3 *$90F2 = A
+C $9088,3 Self modify 'SUB x' at $90F1
 C $908B,2 A = B - 1
 C $9091,2 A = $09
+@ $9093 label=do_9093
 C $9093,1 B = A
 C $9094,5 HL = A * 2 + DE
 C $9099,1 C = *HL
@@ -3428,6 +3437,7 @@ C $90AD,6 A = IX[0] + $18 - C
 C $90B5,2 A -= 8
 C $90BD,6 A >>= 3
 C $90C3,1 D = A
+@ $90C4 label=do_90c4
 C $90C4,4 IX -= 2
 C $90C8,2 E = $1F
 C $90CA,3 A = IX[1]
@@ -3435,27 +3445,31 @@ C $90CD,1 Set flags
 C $90D1,4 A = IX[0] + C
 C $90DD,6 A >>= 3
 C $90E3,1 E = A
+@ $90E4 label=do_90e4
 C $90E4,1 C = D
 C $90E5,3 A = E * 2 - C
 C $90E8,3 A = ~A + $3D
 C $90EB,3 *$9116 = A   -- Self modify jump table target
 C $90EE,3 A = IY[$35]
-C $90F1,2 A -= $00     SM?
+C $90F1,2 A -= <self modified>  -- self modified by $9088
 C $90F5,1 A++
 C $90F6,1 B = *HL
 C $90F7,1 A -= B
 C $90FA,1 A += B
 C $90FB,1 B = A
+@ $90FC label=do_90fc
 C $90FC,1 HL++
 C $90FD,3 DE = wordat(HL); HL++
 C $9101,1 L = A
 C $9102,5 H = (A & $0F) + $F0
 C $9107,6 L = (L & $70) * 2 + C
-@ $910F label=continue_910f
+@ $910F label=do_continue
 C $910F,1 DE++
 C $9112,1 Return
+@ $9113 label=do_9113
 C $9113,1 A = *DE
 C $9114,1 C = L
+@ $9115 label=do_9115
 C $9115,2 Self modified
 C $9117,58 *HL++ = A  -- 28 times
 C $9151,1 *HL = A
@@ -3494,7 +3508,7 @@ C $919B,1 A--
 C $919C,1 E = A
 C $919D,2 D = 0
 C $919F,1 C = D
-C $91A0,4 *$91BB = DE
+C $91A0,4 Self modify 'LD BC,xxxx' at #R$91BB
 C $91A4,3 A = -C
 C $91A7,3 Self modify 'LD D,x' @ #R$933D to load A
 C $91AA,2 B = *HL - 1
@@ -3502,8 +3516,7 @@ C $91AD,1 HL++
 C $91AE,4 DE = wordat(HL); HL += 2
 C $91B2,4 Preserve HL, IX, BC
 C $91B7,3 DE = wordat(HL); HL++
-C $91BA,3 must be SM
-C $91BD,1 HL += BC
+C $91BA,4 HL += <self modified>
 C $91BE,2 A = *HL++
 C $91C0,3 HL = *HL
 C $91C3,1 HL += DE
@@ -3557,7 +3570,7 @@ R $924D R:B Offset added to $E6xx address. Routine skipped if it's >= 16.
 @ $924D label=sub_924d
 C $924D,3 HL = $9279
 @ $9252 label=sub_9252
-C $9252,3 HL = $92E2   graphic 1 uses this entry
+C $9252,3 HL = $92E2  -- graphic 1 uses this entry
 C $9255,1 A = B
 C $9256,3 Return if A >= 16
 C $9259,1 Push return address
@@ -3582,7 +3595,7 @@ R $9278 I:DE Address of arg, e.g. $6B0C
 C $9278,4 Self modify 'LD D,x' @ #R$933D to load 0
 C $927C,1 A = B
 C $927D,2 CP 10
-C $927F,2 Jump to $9283 if A < 10
+C $927F,2 Jump to #R$9283 if A < 10
 C $9281,2 A = 10  -- so it's a max() operator
 C $9284,3 DE = wordat(HL); HL++   -- loads address of turn_sign_lods
 C $9287,6 HL += A * 2 - 1   -- index the table
@@ -3618,7 +3631,8 @@ C $92D3,3 D = *HL >> 1
 C $92D9,1 B--
 C $92DA,1 A++
 C $92DB,2 C = 0
-c $92E1 Drives the sprite plotters  WHAT CALLS THIS PROB $901B
+c $92E1 Drives the sprite plotters
+D $92E1 Called via dispatch at #R$901B.
 @ $92E1 label=sub_92e1
 C $92E1,1 A = 0
 C $92E2,3 Self modify 'LD D,x' @ #R$933D to load A
