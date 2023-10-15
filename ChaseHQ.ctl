@@ -451,7 +451,7 @@ N $5E62 Entry 5 (bush)
 B $5E62,3,3
 W $5E65,2,2 Arg for routine passed in DE
 W $5E67,2,2 -> Routine at $9171
-N $5E69 Entry 6 (street lamp, right hand side)
+N $5E69 Entry 6 (street lamp)
 B $5E69,3,3
 W $5E6C,2,2 Arg for routine passed in DE
 W $5E6E,2,2 -> Routine at $9171
@@ -487,7 +487,7 @@ N $5EA1 Entry 14 (bush)
 B $5EA1,3,3
 W $5EA4,2,2 Arg for routine passed in DE
 W $5EA6,2,2 -> Routine at $916C
-N $5EA8 Entry 15 (street lamp, flipped)
+N $5EA8 Entry 15 (street lamp)
 B $5EA8,3,3
 W $5EAB,2,2 Arg for routine passed in DE
 W $5EAD,2,2 -> Routine at $916C
@@ -897,11 +897,11 @@ N $6AF4 #HTML[#CALL:graphic($6AF4,8,1,1,1)]
 B $6AF4,2,2 Masked bitmap data
 @ $6AF6 label=turn_sign_6af6
 W $6AF6,2,2 -> turn_sign_lods
-B $6AF8,20,8*2,4 Read by $928D and $92F6
+B $6AF8,20,2 Read by $928D and $92F6
 N $6B0C Referenced by graphic entry 8 and 17
 @ $6B0C label=turn_sign_6b0c
 W $6B0C,2,2 -> turn_sign_lods
-B $6B0E,20,8*2,4
+B $6B0E,20,2
 N $6B22 Turn sign LOD 1
 @ $6B22 label=turn_sign_lods
 B $6B22,1,1 Width (bytes)
@@ -1105,19 +1105,18 @@ N $6EB5 Bitmap: Barrier (16x7) pre-shifted
 N $6EB5 #HTML[#CALL:graphic($6EB5,16,7,1,1)]
 @ $6EB5 label=bitmap_barrier_4s
 B $6EB5,28,4 Masked bitmap data
-N $6ED1 Referenced by graphic entry 6
-@ $6ED1 label=streetlamp_6ed1
+@ $6ED1 label=stretchy_streetlamp_right
 B $6ED1,1,1
 W $6ED2,2,2
 B $6ED4,1,1
 W $6ED5,2,2
 B $6ED7,1,1
 W $6ED8,2,2
-B $6EDA,1,1
-W $6EDB,2,2
-B $6EDD,1,1
-N $6EDE Referenced by graphic entry 15
-@ $6EDE label=streetlamp_flipped_6ede
+N $6EDA 0 => draws loads 1 => draws none  (1 is terminator) 2 => draws it once 3 => draws at least 3/4 4+ => draws none
+B $6EDA,1,1 flag meaning draw once, or repeat, or?
+W $6EDB,2,2 top
+B $6EDD,1,1 terminator
+@ $6EDE label=stretchy_streetlamp_left
 B $6EDE,1,1
 W $6EDF,2,2
 B $6EE1,1,1
@@ -1127,14 +1126,14 @@ W $6EE5,2,2
 B $6EE7,1,1
 W $6EE8,2,2
 B $6EEA,1,1
-@ $6EEB label=streetlamp_6eeb
+@ $6EEB label=streetlamptop_6eeb
 W $6EEB,2,2 Address of another LOD table
 B $6EED,20,2
-@ $6F01 label=streetlamp_flipped_6f01
+@ $6F01 label=streetlamptop_flipped_6f01
 W $6F01,2,2 Address of another LOD table
 B $6F03,20,2
 N $6F17 Street lamp LOD 1
-@ $6F17 label=streetlamp_lods
+@ $6F17 label=streetlamptop_lods
 B $6F17,1,1 Width (bytes)
 B $6F18,1,1 Flags
 B $6F19,1,1 Height
@@ -1165,7 +1164,7 @@ B $6F35,1,1 Height
 W $6F36,2,2 Bitmap
 W $6F38,2,2 Pre-shifted bitmap
 N $6F3A Street lamp LOD 1 (flipped)
-@ $6F3A label=streetlamp_flipped_lods
+@ $6F3A label=streetlamptop_flipped_lods
 B $6F3A,1,1 Width (bytes)
 B $6F3B,1,1 Flags
 B $6F3C,1,1 Height
@@ -1228,7 +1227,7 @@ N $6FD0 #HTML[#CALL:graphic($6FD0,16,3,1,1)]
 @ $6FD0 label=bitmap_streetlamptop_5s
 B $6FD0,12,2 Masked bitmap data
 N $6FDC Referenced by graphic entry 7
-@ $6FDC label=telegraphpole_6fdc
+@ $6FDC label=stretchy_telegraphpole_right
 B $6FDC,1,1
 W $6FDD,2,2
 B $6FDF,1,1
@@ -1237,7 +1236,7 @@ B $6FE2,1,1
 W $6FE3,2,2
 B $6FE5,1,1
 N $6FE6 Referenced by graphic entry 16
-@ $6FE6 label=telegraphpole_6fe6
+@ $6FE6 label=stretchy_telegraphpole_left
 B $6FE6,1,1
 W $6FE7,2,2
 B $6FE9,1,1
@@ -1316,10 +1315,8 @@ N $70E6 Top of telegraph pole (16x4) pre-shifted and masked
 N $70E6 #HTML[#CALL:graphic($70E6,16,4,1,1)]
 @ $70E6 label=bitmap_telegraphpoletop_5s
 B $70E6,8,8 Masked bitmap data
-B $70EE,8,8
-N $70F6 Referenced by graphic entry 4 and 13. These seem to start and end with a number/count.
-@ $70F6 label=tree_70f6
-B $70F6,1,1
+@ $70F6 label=stretchy_tree_right
+B $70EE,9,8,1
 W $70F7,2,2
 B $70F9,1,1
 W $70FA,2,2
@@ -1329,10 +1326,8 @@ B $70FF,1,1
 W $7100,2,2
 B $7102,1,1
 W $7103,2,2
-B $7105,1,1
-N $7106 Referenced by graphic entry 5 and 14. Affects heights of things when meddled with.
-@ $7106 label=tree_7106
-B $7106,1,1
+@ $7106 label=stretchy_tree_left
+B $7105,2,1
 W $7107,2,2
 B $7109,1,1
 W $710A,2,2
@@ -1714,17 +1709,17 @@ N $7D51 #HTML[#CALL:face($7D51)]
 B $7D51,160,4 Bitmap data, top-down format
 @ $7DF1 label=attrs_tony
 B $7DF1,20,4 Attribute data for above
-b $7E05 Referenced by graphic entry 3 and 12
-@ $7E05 label=streetlampbody_7e05
+b $7E05 Used for both left and right variations.
+@ $7E05 label=stretchy_stumpypole
 B $7E05,1,1
 W $7E06,2,2
 B $7E08,1,1
 W $7E09,2,2
-B $7E0B,1,1
-@ $7E0C label=streetlampbody_7e0c
-W $7E0C,2,2
+B $7E0B,1,1 1 => end
+@ $7E0C label=stumpypole_7e0c
+W $7E0C,2,2 -> streetlampbody_lods
 B $7E0E,20,2
-@ $7E22 label=streetlampbody_7e22
+@ $7E22 label=stumpypole_7e22
 W $7E22,2,2
 B $7E24,20,2
 @ $7E38 label=streetlampbody_7e38
@@ -1821,54 +1816,57 @@ B $7F1F,1,1 Flags
 B $7F20,1,1 Height (pixels)
 W $7F21,2,2 Bitmap
 W $7F23,2,2 Pre-shifted bitmap
+N $7F25 Bottom two rows of largest scale lamppost.
 @ $7F25 label=bitmap_streetlampbody_1
-B $7F25,4,4 Bitmap data
+B $7F25,4,4 Masked bitmap data
+N $7F29 Bottom repeating section of largest scale lamppost.
 @ $7F29 label=bitmap_streetlampbody_2
-B $7F29,4,4 Bitmap data
+B $7F29,4,4 Masked bitmap data
+N $7F2D Upper repeating section of largest scale lamppost.
 @ $7F2D label=bitmap_streetlampbody_3
-B $7F2D,4,4 Bitmap data
+B $7F2D,4,4 Masked bitmap data
 @ $7F31 label=bitmap_streetlampbody_4
-B $7F31,4,4 Bitmap data
+B $7F31,4,4 Masked bitmap data
 @ $7F35 label=bitmap_streetlampbody_5
-B $7F35,4,4 Bitmap data
+B $7F35,4,4 Masked bitmap data
 @ $7F39 label=bitmap_streetlampbody_6
-B $7F39,4,4 Bitmap data
+B $7F39,4,4 Masked bitmap data
 @ $7F3D label=bitmap_streetlampbody_7
-B $7F3D,2,2 Bitmap data
+B $7F3D,2,2 Masked bitmap data
 @ $7F3F label=bitmap_streetlampbody_8
-B $7F3F,4,4 Bitmap data
+B $7F3F,4,4 Masked bitmap data
 @ $7F43 label=bitmap_streetlampbody_9
-B $7F43,4,4 Bitmap data
+B $7F43,4,4 Masked bitmap data
 @ $7F47 label=bitmap_streetlampbody_7s
-B $7F47,2,2 Bitmap data
+B $7F47,2,2 Masked bitmap data
 @ $7F49 label=bitmap_streetlampbody_8s
-B $7F49,4,4 Bitmap data
+B $7F49,4,4 Masked bitmap data
 @ $7F4D label=bitmap_streetlampbody_9s
-B $7F4D,4,4 Bitmap data
+B $7F4D,4,4 Masked bitmap data
 @ $7F51 label=bitmap_streetlampbody_10
-B $7F51,2,2 Bitmap data
+B $7F51,2,2 Masked bitmap data
 @ $7F53 label=bitmap_streetlampbody_11
-B $7F53,4,4 Bitmap data
+B $7F53,4,4 Masked bitmap data
 @ $7F57 label=bitmap_streetlampbody_12
-B $7F57,4,4 Bitmap data
+B $7F57,4,4 Masked bitmap data
 @ $7F5B label=bitmap_streetlampbody_10s
-B $7F5B,2,2 Bitmap data
+B $7F5B,2,2 Masked bitmap data
 @ $7F5D label=bitmap_streetlampbody_11s
-B $7F5D,4,4 Bitmap data
+B $7F5D,4,4 Masked bitmap data
 @ $7F61 label=bitmap_streetlampbody_12s
-B $7F61,4,4 Bitmap data
+B $7F61,4,4 Masked bitmap data
 @ $7F65 label=bitmap_streetlampbody_13
-B $7F65,4,4 Bitmap data
+B $7F65,4,4 Masked bitmap data
 @ $7F69 label=bitmap_streetlampbody_14
-B $7F69,8,8 Bitmap data
+B $7F69,8,8 Masked bitmap data
 @ $7F71 label=bitmap_streetlampbody_15
-B $7F71,8,8 Bitmap data
+B $7F71,8,8 Masked bitmap data
 @ $7F79 label=bitmap_streetlampbody_13s
-B $7F79,4,4 Bitmap data
+B $7F79,4,4 Masked bitmap data
 @ $7F7D label=bitmap_streetlampbody_14s
-B $7F7D,8,8 Bitmap data
+B $7F7D,8,8 Masked bitmap data
 @ $7F85 label=bitmap_streetlampbody_15s
-B $7F85,8,8 Bitmap data
+B $7F85,8,8 Masked bitmap data
 u $7F8D Unused
 B $7F8D,115,8*14,3
 g $8000 Game status buffer entry at 8000
@@ -3378,10 +3376,13 @@ C $9020,3 Jump to $8FB2
 c $9023 Routine at 9023
 D $9023 Used by the routine at #R$8F5F.
 R $9023 I:A ?
+R $9023 I:BC ? Sampled: $0D20, $0520, $0120
+R $9023 I:HL ? Sampled: $EEAC, $EEA4, $EEA0
+R $9023 I:IX ? Sampled: $EACE, $EAEE, $EAFE
 C $9023,1 E = A  -- sampled = 5 (only)
 C $9024,4 Jump if A == 2
 N $9028 A != 2
-C $9028,3 A = IX[1]  -- sampled $EAEE area
+C $9028,3 A = IX[1]
 C $902B,1 Set flags
 C $902C,2 Loop?
 C $902E,4 Preserve IX, HL, BC
@@ -3392,7 +3393,8 @@ C $9041,1 HL += DE
 N $9042 sampled HL = $5EA4 (only) which is "Entry 14"
 C $9042,4 DE = wordat(HL); HL += 2  -- arg for routine
 C $9046,4 HL = wordat(HL)  -- address of routine
-C $904A,1 CALL 916C 9171 924D 9252 92E1 ETC.  -- with B as ?
+N $904A #REGb is used in the routines, what is it here? It must be passed in.
+C $904A,1 Indirect jump  -- Call #R$916C #R$9171 #R$924D #R$9252 #R$92E1 etc.
 @ $904B label=return_904B
 C $904B,4 Restore IX, HL, BC
 C $904F,3 Loop?
@@ -3485,49 +3487,72 @@ C $915E,4 Move to next chunk of 16 scanlines
 C $9162,3 Continue if it didn't roll over
 C $9165,4 Otherwise move to the next chunk of 128 scanlines (would put us outside the back buffer)
 C $9169,3 Loop
-c $916C Routine at 916C
+c $916C Draws stretchy objects, such as trees.
 D $916C Used by the routine at #R$9052.
-R $916C I:B ?
-@ $916C label=sub_916C
+R $916C I:B ? value that affects scaling
+R $916C I:DE Address of graphic data [structure type yet to be named] (e.g. stumpypole/#R$7E05)
+N $916C Entry point for left hand objects.
+@ $916C label=draw_stretchy_object_left
 C $916C,3 HL = $9293  -- callback address
-@ $9171 label=sub_9171
+N $9171 Entry point for right hand objects.
+@ $9171 label=draw_stretchy_object_right
 C $9171,3 HL = $92FC  -- callback address
+@ $9174 label=dso_common
 C $9174,3 Self modify CALL at $91CD to call #REGhl
 C $9177,3 Self modify CALL at $9243 to call #REGhl
 C $917A,5 A = fast_counter & $E0
-N $917F Reduces A by 31.25%
-C $917F,6 A -= A >> 2  [nothing will rotate out due to AND $E0]
-C $9189,2 L = A - L + B
+N $917F Reduces A by 31.25%. A = 0..224 (in steps of 16) becomes 0..154.
+C $917F,1 L = A  -- nothing will rotate out due to AND $E0
+C $9180,4 L >>= 2
+C $9184,1 A -= L
+C $9185,4 L >>= 2
+C $9189,1 A -= L
+C $918A,1 B is the value passed in
+N $918B Look up that value in $E600[].
 C $918B,3 #REGhl = $E600 + #REGl
 C $918E,1 A = *HL
-C $918F,3 *$91DC = A
-C $9193,1 A = B
-C $9194,2 CP 10
-C $9198,2 A = 10
-C $919B,1 A--
-C $919C,1 E = A
-C $919D,2 D = 0
-C $919F,1 C = D
-C $91A0,4 Self modify 'LD BC,xxxx' at #R$91BB
+C $918F,3 Self modify 'LD A,x' at #R$91DB to load A
+C $9192,1 Swap
+C $9193,7 A = min(B,10)
+C $919A,5 DE = A * 2 - 1  -- the -1 accounts for later pointer position
+C $919F,1 C = 0
+C $91A0,4 Self modify 'LD BC,xxxx' at #R$91BA to load DE
+@ $91A4 label=dso_loop
 C $91A4,3 A = -C
 C $91A7,3 Self modify 'LD D,x' @ #R$933D to load A
-C $91AA,2 B = *HL - 1
-C $91AD,1 HL++
-C $91AE,4 DE = wordat(HL); HL += 2
+C $91AA,2 B = *HL - 1  -- read count byte from graphic stream, e.g. stumpypole + 0
+C $91AC,1 Return if zero
+C $91AD,1 Advance past count byte
+C $91AE,4 Read address of ? data to #REGde, e.g. stumpypole_7e0c
 C $91B2,4 Preserve HL, IX, BC
-C $91B7,3 DE = wordat(HL); HL++
-C $91BA,4 HL += <self modified>
-C $91BE,2 A = *HL++
-C $91C0,3 HL = *HL
-C $91C3,1 HL += DE
+C $91B6,1 Swap
+C $91B7,3 DE = wordat(HL); HL++  -- this is the LOD pointer e.g. streetlampbody_lods
+N $91BA This seems to be a 0..9 value that selects from the table.
+C $91BA,4 HL += <self modified>  -- by #R$91A0, this is the table offset from earlier
+N $91BE HL now points to an entry in the table. Load it.
+C $91BE,2 A = *HL++  -- e.g. 0
+C $91C0,3 HL = *HL  -- e.g. $56
+C $91C3,1 HL += DE  -- so HL's an offset from streetlampbody_lods
+C $91C4,1 Restore BC
 C $91C5,1 B--
+C $91C6,2 (jump to dispatch)
+N $91C8 Zero path
 C $91C8,1 B = *HL
 C $91C9,2 HL -= 2
+C $91CB,1 Preserve BC
 C $91CC,1 B = A
-C $91CD,3 Call <self modified>
+C $91CD,3 Call <self modified>  -- callback
+@ $91D0 label=dso_loop_perhaps
+C $91D0,1 Restore BC
 C $91D1,2 A = C + B
 C $91D3,1 C = A
-C $91DB,2 A = $00
+C $91D4,3 Restore IX, HL
+C $91D7,3 Loop dso_loop
+N $91DA Non-zero path
+@ $91DA label=dso_dispatch
+C $91DA,1 Bank <byte[0] of table entry, loaded at #R$91BE>
+C $91DB,2 A = <self modified>
+N $91DD Dispatch ladder
 C $91DD,1 B--
 C $91E0,1 B--
 C $91E3,1 B--
@@ -3535,24 +3560,37 @@ C $91E6,1 B--
 C $91E9,1 B--
 C $91EC,1 B--
 C $91EF,1 B--
+C $91F0,2 Continue
 C $91F2,1 A += A
+C $91F3,2 Continue
+@ $91F5 label=dso_91f5
 C $91F5,4 A >>= 2
+C $91F9,2 Continue
+@ $91FB label=dso_91fb
 C $91FD,1 B = A
 C $9200,1 A += B
+C $9201,2 Continue
+@ $9203 label=dso_9203
 C $9205,1 B = A
 C $9206,4 B >>= 2
 C $920A,1 A -= B
+C $920B,2 Continue
+@ $920D label=dso_920d
 C $920D,1 B = A
 C $920E,6 B >>= 3
 C $9214,1 A += B
+C $9215,2 Continue
+@ $9217 label=dso_9217
+C $9219,2 Continue
+@ $921B label=dso_921b
 C $921B,1 B = A
 C $921E,1 A += B
+@ $921F label=dso_continue
 C $921F,1 A -= C
 C $9224,2 A = 1
 C $9226,1 B = A
 C $9228,6 A = IY[$35] + 1 - C - B
-C $9230,1 A += B
-C $9231,1 B = A
+C $9230,2 B += A
 C $9232,1 A = B
 C $9233,3 *$9405 = A
 C $9236,1 A = *HL
@@ -3564,7 +3602,7 @@ C $923E,3 Self modify 'LD A,x' @ #R$93C0 to load 2
 C $9242,1 B = A
 C $9243,3 Call <self modified>
 C $9246,4 Self modify 'LD A,x' @ #R$93C0 to load 0
-C $924A,3 Loop?
+C $924A,3 Loop?  dso_loop_perhaps
 c $924D Routine at 924D
 R $924D R:B Offset added to $E6xx address. Routine skipped if it's >= 16.
 @ $924D label=sub_924d
@@ -3588,21 +3626,21 @@ C $926E,1 A = *HL
 C $926F,8 A = (A>>2) - A
 C $9277,1 Return via earlier PUSH
 c $9278 Routine at 9278
+D $9278 Used to draw turn signs.
 R $9278 I:B ?
 R $9278 I:IX ?
 R $9278 I:DE Address of arg, e.g. $6B0C
-@ $9278 label=sub_9278
+@ $9278 label=draw_turn_sign
 C $9278,4 Self modify 'LD D,x' @ #R$933D to load 0
-C $927C,1 A = B
-C $927D,2 CP 10
-C $927F,2 Jump to #R$9283 if A < 10
-C $9281,2 A = 10  -- so it's a max() operator
+C $927C,7 A = min(B,10)
+C $9283,1 Put arg address in HL
 C $9284,3 DE = wordat(HL); HL++   -- loads address of turn_sign_lods
 C $9287,6 HL += A * 2 - 1   -- index the table
-C $928D,2 B = *HL++   -- this reads 6AF8
+C $928D,2 B = *HL++   -- this reads $6AF8
 C $928F,3 HL = *HL   -- read as byte
 C $9292,1 HL += DE
 N $9293 This entry point is used by the routine at #R$916C.
+@ $9293 label=draw_stretchy_object_callback_left
 C $9293,6 A = IX[0] + 16 - B
 C $9299,1 Return if carry (if IX[0] + 16 < B)
 N $929A This entry point is used by the routines at #R$A9DE, #R$AA38 and #R$ADA0.
@@ -3643,6 +3681,7 @@ C $92ED,3 DE = wordat(HL); HL++
 C $92F0,6 HL += A * 2 - 1
 C $92F6,2 B = *HL++
 C $92F8,4 HL = *HL + DE
+@ $92FC label=draw_stretchy_object_callback_right
 C $92FC,3 A = IX[0]
 C $9303,1 A += B
 C $9306,1 A += B
