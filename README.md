@@ -4,7 +4,7 @@ Reverse engineering by David Thomas
 
 Project started: March 2023
 
-![Using Spectrum Analyser to investigate the game, including turning the screen green](ChaseHQ.png)
+![Using Spectrum Analyser to investigate the game, including turning the screen green](static-images/spectrum-analyser.png)
 
 This is the beginnings of a disassembly of the [ZX Spectrum version of Chase H.Q. by Ocean Software](https://spectrumcomputing.co.uk/entry/903/ZX-Spectrum/Chase_HQ). Initially this is only of the 48K version - and the first level/stage at that. The 128K version is better (loads all the levels at once, has AY music, menu screen animations, ...) but it has a lot more code to consider, so it's easier to start off with 48K stage 1 first.
 
@@ -48,25 +48,36 @@ Simulation stopped (PC at start address): PC=23372
 Writing chase-hq.z80
 ```
 
-Build a Skool file like so:
+Build a skool file like so:
 
 ``` sh
 make skool
 ```
 
-A Skool file is a high-level assembly listing from which we can generate regular assembly listings, or HTML disassemblies. Generated files are put in a directory called 'build' by default. You can edit the Skool file and turn it back into another control file like so:
+A skool file is a high-level assembly listing from which we can generate regular assembly listings, or HTML disassemblies. Generated files are put in a directory called 'build' by default. You can edit the skool file and turn it back into another control file like so:
 
 ``` sh
 make ctl
 ```
 
-This makes it easy to pull your changes back into the main control file by copying and pasting modified chunks across. The bigger and more detailed the control file gets, the better our explanation of the game is!
+This makes it easy to pull your changes back into the main control file by doing:
+
+``` sh
+cp build/ChaseHQ.ctl ChaseHQ.ctl
+```
+
+Or you can diff the two to be more selective in your staging.
+
+The bigger and more detailed the control file gets, the better our explanation of the game is!
 
 Build an assembly listing like so:
 
 ``` sh
 make asm
 ```
+
+I usually edit with the three control, skool and assembly files all open so I can check the impact of my changes:
+![Using MacVim to edit the sources](static-images/editing-in-macvim.png)
 
 Build a tap or z80 file for loading into emulators or real Spectrums like so:
 
@@ -81,23 +92,30 @@ make tap  # or z80
 
 You may have to do both.
 
-See https://youtu.be/BGVI0TbePsQ for a short video of me running Spectrum Analyser to find out how the game builds the back buffer up.
+See https://youtu.be/BGVI0TbePsQ for a short video of me running Spectrum Analyser to find out how the game builds its back buffer up.
 
 ## POKES
 
 If you're not interested in the disassembly itself then a nice byproduct is POKEs to make the game easier, harder, or just different:
 
-Infinite Credits
+Infinite Credits  
 POKE 39998,166
 
-Infinite Time
+Infinite Time  
 POKE 39937,0
 
-1 Hit To Capture
-POKE 46351,62
+1 Hit To Capture  
+POKE 46351,62 
 
-Infinite Turbos
+Infinite Turbos  
 POKE 45221,0
+
+Affect Car Spawn Rate  
+POKE 23834,&lt;spawn rate&gt;  -- 20 is the default for Stage 1. 10 would spawn twice as often.  
+
+Set Level Colour  
+POKE 23796,&lt;attribute byte&gt;  -- 112 is black on yellow, as for Stage 1. 96 would give black on green.  
+POKE 23797,&lt;attribute byte&gt;
 
 ## RELATED
 
