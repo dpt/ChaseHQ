@@ -1629,10 +1629,10 @@ N $7630 Tree shadow (24x1) pre-shifted
 N $7630 #HTML[#CALL:graphic($7630,24,1,1,1)]
 @ $7630 label=bitmap_tree_shadow_24x1s
 B $7630,6,6 Masked bitmap data
-u $7636 [Stage 1] Unused by this stage
-D $7636 This is the last of the per-stage data.
+u $7636 [Stage 1] Spare space
+D $7636 This is the end of the per-stage data.
 S $7636,186,$BA
-b $76F0 Turbo icons
+b $76F0 [Graphics] Turbo icons
 D $76F0 #HTML[#CALL:anim($76F0,16,14,1,1,3)]
 N $76F0 Frame 1 (16x14)
 N $76F0 #HTML[#CALL:graphic($76F0,16,14,1,1)]
@@ -1646,7 +1646,7 @@ N $7760 Frame 3 (16x14)
 N $7760 #HTML[#CALL:graphic($7760,16,14,1,1)]
 @ $7760 label=bitmap_turbospin_3
 B $7760,56,4 Masked bitmap data
-b $7798 Pre-game screen messages
+b $7798 [Pre-game] Messages
 @ $7798 label=pre_game_messages
 B $7798,1,1 .
 W $7799,2,2 Back buffer address
@@ -1664,14 +1664,14 @@ B $77CD,1,1 flags? attrs?   text is white
 W $77CE,2,2 Back buffer address
 W $77D0,2,2 Attributes address
 T $77D2,6,5:n1 "SIGNAL"
-b $77D8 Data for pre-game screen
+b $77D8 [Pre-game] Data
 @ $77D8 label=pregame_data
 B $77D8,136,8 Commands to draw the pre-game screen. RLE'd tile references etc.
 @ $7860 label=car_tiles
 B $7860,71,8*8,7 Seems to be tiles pointed at by car rendering code
 @ $78A7 label=pregame_tiles
 B $78A7,360,8 Tiles used to draw the pre-game screen #HTML[#CALL:graphic($78A7,8,45*8,0,0)]
-b $7A0F Smoke and fire graphics
+b $7A0F [Graphics] Smoke and fire graphics
 @ $7A0F label=bitmap_smoke1
 B $7A0F,52,8*6,4 16x13 pixels, masked #HTML[#CALL:graphic($7A0F,16,13,1,1)]
 @ $7A43 label=bitmap_smoke2
@@ -1700,7 +1700,7 @@ B $7BA5,20,4 16x5 pixels, masked  #HTML[#CALL:graphic($7BA5,16,5,1,1)]
 B $7BB9,24,4 16x6 pixels, masked  #HTML[#CALL:graphic($7BB9,16,6,1,1)]
 @ $7BD1 label=bitmap_fire6s
 B $7BD1,24,4 16x6 pixels, masked  #HTML[#CALL:graphic($7BD1,16,6,1,1)]
-b $7BE9 Graphics: Faces
+b $7BE9 [Graphics] Faces
 N $7BE9 Nancy's face (32x40)
 N $7BE9 #HTML[#CALL:face($7BE9)]
 @ $7BE9 label=bitmap_nancy
@@ -1719,7 +1719,8 @@ N $7D51 #HTML[#CALL:face($7D51)]
 B $7D51,160,4 Bitmap data, top-down format
 @ $7DF1 label=attrs_tony
 B $7DF1,20,4 Attribute data for above
-b $7E05 Used for both left and right variations.
+b $7E05 [Graphics] Street lamps etc.
+D $7E05 Used for both left and right variations.
 @ $7E05 label=stretchy_shortpole
 B $7E05,1,1
 W $7E06,2,2
@@ -2061,7 +2062,7 @@ B $81CD,1,1 attr?
 W $81CE,2,2 Screen position (88,128)
 W $81D0,2,2 Screen attribute position (11,16)
 T $81D2,11,10:n1 "PRESS  GEAR"
-b $81DD Start of game chatter
+b $81DD [Messages] Start of stage chatter
 @ $81DD label=start_chatter
 B $81DD,1,1 Three-way random choice ($FC)
 W $81DE,2,2 -> Tony: "GIDDY UP BOY!" <STOP>
@@ -2111,10 +2112,10 @@ C $824C,4 Output EAR + MIC
 C $8250,4 Delay for B cycles (self modified above)
 C $8254,3 Loop until iterations is zero
 C $8257,1 Return
-c $8258 Attract mode -- keyscan / cpu driver / text
+c $8258 Attract mode
 D $8258 Used by the routine at #R$83B5.
 @ $8258 label=attract_mode
-C $8258,3 HL -> attract_data
+C $8258,3 #REGhl -> attract_data
 C $825B,3 Call setup_game
 C $825E,4 Reset credits/copyright message blinker to show credits
 C $8262,6 Set speed to $190
@@ -2122,14 +2123,19 @@ C $8268,3 Call keyscan
 C $826B,3 Return if fire was pressed
 C $826E,3 Call cpu_driver
 N $8271 This entry point is used by the routine at #R$F220.
-C $8271,3 HL = attract mode messages "CHASE HQ" "PRESS GEAR TO PLAY" ...
+C $8271,3 #REGhl -> attract mode messages "CHASE HQ" "PRESS GEAR TO PLAY" ...
 C $8274,2 Number of messages?
-C $8276,6 Causes blinking of "PRESS GEAR TO PLAY"
-C $827E,1 nmessages++
+N $8276 Blink "PRESS GEAR TO PLAY".
+C $8276,2 A = <initally $F0, self modified>
+C $8278,1 Rotate
+C $8279,3 Self modify above
+C $827C,2 If carry set the hide the final message
+C $827E,1 Otherwise include it
+N $827F Display 'B' messages.
 C $827F,1 Load flags
 C $8280,3 Call print_message
 C $8283,2 Loop while #REGb > 0
-C $8285,6 Attribute related
+C $8285,6 Jump if transition_control > 0
 N $828B Alternate between credits and copyright messages.
 C $828B,7 Blinking on/off self modified pattern
 C $8292,3 #REGhl -> credits_messages
@@ -2193,8 +2199,9 @@ T $8367,19,18:n1 "ALL RIGHTS RESERVED"
 B $837A,2,1
 u $837C Unused
 S $837C,57,$39
-c $83B5 Hooks for functions that vary between 48K and 128K modes
-D $83B5 Used by the routine at #R$B4CC.
+c $83B5 Indirect calls for 48K/128K features
+D $83B5 The main difference is in sound, but attract mode also has an alternate implementation in 128K mode.
+N $83B5 Used by the routine at #R$B4CC.
 @ $83B5 label=start_siren_hook
 C $83B5,3 No-op when in 48K mode -- likely siren
 N $83B8 This entry point is used by the routines at #R$8401 and #R$8903.
@@ -3073,12 +3080,15 @@ B $8D8D,2,2
 c $8D8F Drives transitions
 D $8D8F Used by the routines at #R$8014, #R$8258, #R$8401, #R$858C, #R$873C and #R$F220.
 @ $8D8F label=transition
-C $8D8F,3 Check the flag/counter that fill_attributes resets
+C $8D8F,3 Check transition_control
 C $8D92,2 Exit early if its zero
 C $8D94,1 Decrement it
 C $8D95,8 If zero, call draw_mugshots
 C $8D9D,3 Call fill_attributes
-C $8DA0,16 (self modified)
+C $8DA0,3 A = <self modified> - 1
+C $8DA3,3 Self modify above
+C $8DA8,3 transition_control = A
+C $8DAD,3 }
 C $8DB0,4 Move to next frame? (self modified)
 C $8DB4,9 Set anim address? (self modify)
 C $8DBD,2 8 chunks
@@ -3127,6 +3137,7 @@ C $8E18,3 Self modify
 C $8E1B,4 Load DE from HL
 C $8E1F,4 Set transition animation start address
 C $8E23,2 4 frames of animation? 4 states?
+C $8E25,3 transition_control = A
 C $8E28,1 Return
 c $8E29 Fills the attribute bytes leftwards from column 1
 D $8E29 Used by the routines at #R$8876, #R$8A57 and #R$8D8F.
@@ -3141,7 +3152,7 @@ C $8E35,2 Fill by 'rolling'
 C $8E37,4 Skip four (32 wide - 28)
 C $8E3B,1 Row counter--
 C $8E3C,2 Loop until it hits zero
-C $8E3E,3 Zero this flag
+C $8E3E,3 transition_control = 0
 C $8E41,1 Return
 c $8E42 Subroutine
 D $8E42 Used by the routines at #R$8D8F and #R$8E91.
