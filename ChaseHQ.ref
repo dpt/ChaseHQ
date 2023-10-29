@@ -31,7 +31,7 @@ Map
 Map=[Road map] (the road map)
 
 [Page:Map]
-PageContent=#INCLUDE(PageContent:Stage1Map)
+PageContent=#INCLUDE(PageContent:Stage1Map) #INCLUDE(PageContent:EscapeMap)
 
 [PageContent:Stage1Map]
 <h3>Stage 1 Map</h3>
@@ -45,20 +45,41 @@ PageContent=#INCLUDE(PageContent:Stage1Map)
 <li>Right-side Objects</li>
 </ul>
 
-<h4>Start stretch, curvature</h4>
+<h4>Stage 1, curvature</h4>
 #CALL:map_curvature($5EC4)
 
-<h4>Start stretch, height</h4>
+<h4>Stage 1, height</h4>
 #CALL:map_height($5EE4)
 
-<h4>Start stretch, lanes</h4>
+<h4>Stage 1, lanes</h4>
 #CALL:map_lanes($5F0F)
 
-<h4>Start stretch, hazards</h4>
+<h4>Stage 1, hazards</h4>
 #CALL:map_hazards($5F1D)
 
-<h4>Start stretch, left objects</h4>
+<h4>Stage 1, left objects</h4>
 #CALL:map_left_objects($5F2A)
 
-<h4>Start stretch, right objects</h4>
+<h4>Stage 1, right objects</h4>
 #CALL:map_right_objects($5F78)
+
+[PageContent:EscapeMap]
+<h3>Escape Scene Map</h3>
+
+<h4>Escape Scene stretch, curvature</h4>
+#CALL:map_curvature($E2AA)
+
+<h4>Escape Scene stretch, height</h4>
+#CALL:map_height($E2AF)
+
+<h4>Escape Scene stretch, lanes</h4>
+#CALL:map_lanes($E2B4)
+
+<h4>Escape Scene stretch, hazards</h4>
+#CALL:map_hazards($E2A4)
+
+<h4>Escape Scene stretch, left objects</h4>
+#CALL:map_left_objects($E2C0)
+
+<h4>Escape Scene stretch, right objects</h4>
+#CALL:map_right_objects($E2C0)
