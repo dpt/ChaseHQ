@@ -21,6 +21,15 @@
 > $4000 ; <https://www.mobygames.com/person/31702/jonathan-dunn/>
 > $4000 ;
 > $4000 ;
+> $4000 ; ALTERNATIVE VERSIONS
+> $4000 ; --------------------
+> $4000 ; There's a demo version of Chase H.Q. on Sinclair User, issue 94: Megatape 23.
+> $4000 ; https://worldofspectrum.org/archive/software/cover-tapes-and-electronic-magazines/sinclair-user-issue-94-megatape-23-sinclair-user.
+> $4000 ; It features a single stage, with the graphics from stage 1 of the real game
+> $4000 ; and what seems to be a custom map. There's no retry on fail and it's a tough
+> $4000 ; level.
+> $4000 ;
+> $4000 ;
 > $4000 ; RELATED PORTS
 > $4000 ; -------------
 > $4000 ; The Amstrad CPC version is by the same authors and was produced after this
