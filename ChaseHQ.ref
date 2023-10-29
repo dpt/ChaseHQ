@@ -31,15 +31,18 @@ Map
 Map=[Road map] (the road map)
 
 [Page:Map]
-PageContent=#INCLUDE(PageContent:Map)
+PageContent=#INCLUDE(PageContent:Stage1Map)
 
-[PageContent:Map]
+[PageContent:Stage1Map]
 <h3>Stage 1 Map</h3>
 
 <ul>
 <li>Curvature</li>
 <li>Height</li>
 <li>Lanes</li>
+<li>Hazards</li>
+<li>Left-side Objects</li>
+<li>Right-side Objects</li>
 </ul>
 
 <h4>Start stretch, curvature</h4>
@@ -53,3 +56,9 @@ PageContent=#INCLUDE(PageContent:Map)
 
 <h4>Start stretch, hazards</h4>
 #CALL:map_hazards($5F1D)
+
+<h4>Start stretch, left objects</h4>
+#CALL:map_left_objects($5F2A)
+
+<h4>Start stretch, right objects</h4>
+#CALL:map_right_objects($5F78)

@@ -24,7 +24,7 @@ class ChaseHQWriter:
             basep = basep + 1
             if b == 0: # Escape
                 if lasttype != -1:
-                    output += "- %s for %d<br/>" % (names[lasttype], runlength)
+                    output += "- %s for %d units<br/>" % (names[lasttype], runlength)
                     totallength += runlength
                 b = self.snapshot[basep]
                 basep = basep + 1
@@ -50,9 +50,9 @@ class ChaseHQWriter:
                     if showlength:
                         output += "+ Total length = %d<br/>" % (totallength)
                     if follow:
-                        output += "<strong>Left</strong><br/>"
+                        output += "<strong>Left Split</strong><br/>"
                         output += self.decode_nibble_rle(cwd, leftdest, typename, names, showlength, follow)
-                        output += "<strong>Right</strong><br/>"
+                        output += "<strong>Right Split</strong><br/>"
                         output += self.decode_nibble_rle(cwd, rightdest, typename, names, showlength, follow)
                 else:
                     output += "- Bad command!<br/>"
@@ -64,50 +64,50 @@ class ChaseHQWriter:
                     lasttype = type_
                     runlength += count
                 else:
-                    output += "- %s for %d<br/>" % (names[lasttype], runlength)
+                    output += "- %s for %d units<br/>" % (names[lasttype], runlength)
                     totallength += runlength
                     runlength = count
                     lasttype = type_
 
     def map_curvature(self, cwd, base):
-        curvemap = {0: "Straight",
-                    1: "Right",
-                    2: "Hard right",
-                    3: "Very hard right",
-                    4: "XXX4",
-                    5: "XXX5",
-                    6: "XXX6",
-                    7: "XXX7",
-                    8: "Straight (alt)",
-                    9: "Left",
-                    10: "Hard left",
-                    11: "Very hard left",
-                    12: "YYY12",
-                    13: "YYY13",
-                    14: "YYY14",
-                    15: "YYY15"}
+        curvemap = {0: "Curve Straight",
+                    1: "Curve Right",
+                    2: "Curve Hard Right",
+                    3: "Curve Very Hard Right",
+                    4: "Curve 4 XXX",
+                    5: "Curve 5 XXX",
+                    6: "Curve 6 XXX",
+                    7: "Curve 7 XXX",
+                    8: "Curve Straight (alt)",
+                    9: "Curve Left",
+                    10: "Curve Hard Left",
+                    11: "Curve Very Hard Left",
+                    12: "Curve 12 XXX",
+                    13: "Curve 13 XXX",
+                    14: "Curve 14 XXX",
+                    15: "Curve 15 XXX"}
         return self.decode_nibble_rle(cwd, base, "curvature", curvemap, showlength=True, follow=True)
 
 # 1/3/5/7 are used - why not the others?
 # "Up 5" and "Down 5" seem to be the most extreme used.
 # Level changes are smoothed in terms of map data?
     def map_height(self, cwd, base):
-        heightmap = {0: "Up 8 XXX",
-                     1: "Up 7",
-                     2: "Up 6 XXX",
-                     3: "Up 5",
-                     4: "Up 4 XXX",
-                     5: "Up 3",
-                     6: "Up 2 XXX",
-                     7: "Up 1",  # up or down?
-                     8: "Level road",
-                     9: "Down 1",
-                     10: "Down 2 XXX",
-                     11: "Down 3",
-                     12: "Down 4 XXX",
-                     13: "Down 5",
-                     14: "Down 6 XXX",
-                     15: "Down 7"}
+        heightmap = {0: "Going Up 8 XXX",
+                     1: "Going Up 7",
+                     2: "Going Up 6 XXX",
+                     3: "Going Up 5",
+                     4: "Going Up 4 XXX",
+                     5: "Going Up 3",
+                     6: "Going Up 2 XXX",
+                     7: "Going Up 1",  # up or down?
+                     8: "Level Road",
+                     9: "Going Down 1",
+                     10: "Going Down 2 XXX",
+                     11: "Going Down 3",
+                     12: "Going Down 4 XXX",
+                     13: "Going Down 5",
+                     14: "Going Down 6 XXX",
+                     15: "Going Down 7"}
         return self.decode_nibble_rle(cwd, base, "height", heightmap, showlength=True, follow=True)
 
     def decode_count_rle(self, cwd, base, typename, names, showlength, follow):
@@ -121,7 +121,7 @@ class ChaseHQWriter:
             basep = basep + 1
             if b == 0: # Escape
                 if lasttype != -1:
-                    output += "- %s for %d<br/>" % (names.get(lasttype, "[%2X]" % lasttype), runlength)
+                    output += "- %s for %d units<br/>" % (names.get(lasttype, "[%2X]" % lasttype), runlength)
                     totallength += runlength
                 b = self.snapshot[basep]
                 basep = basep + 1
@@ -147,9 +147,9 @@ class ChaseHQWriter:
                     if showlength:
                         output += "+ Total length = %d<br/>" % (totallength)
                     if follow:
-                        output += "<strong>Left</strong><br/>"
+                        output += "<strong>Left Split</strong><br/>"
                         output += self.decode_count_rle(cwd, leftdest, typename, names, showlength, follow)
-                        output += "<strong>Right</strong><br/>"
+                        output += "<strong>Right Split</strong><br/>"
                         output += self.decode_count_rle(cwd, rightdest, typename, names, showlength, follow)
                 else:
                     output += "- Bad command!<br/>"
@@ -162,7 +162,7 @@ class ChaseHQWriter:
                     lasttype = type_
                     runlength += count
                 else:
-                    output += "- %s for %d<br/>" % (names.get(lasttype, "[%2X]" % lasttype), runlength)
+                    output += "- %s for %d units<br/>" % (names.get(lasttype, "[%2X]" % lasttype), runlength)
                     totallength += runlength
                     runlength = count
                     lasttype = type_
@@ -190,7 +190,7 @@ class ChaseHQWriter:
             basep = basep + 1
             if b == 0: # Escape
                 if count > 0:
-                    output += "- Wait for %d<br/>" % (count)
+                    output += "- Wait for %d units<br/>" % (count)
                     totallength += count
                 b = self.snapshot[basep]
                 basep = basep + 1
@@ -216,9 +216,9 @@ class ChaseHQWriter:
                     if showlength:
                         output += "+ Total length = %d<br/>" % (totallength)
                     if follow:
-                        output += "<strong>Left</strong><br/>"
+                        output += "<strong>Left Split</strong><br/>"
                         output += self.decode_hazards(cwd, leftdest, typename, names, showlength, follow)
-                        output += "<strong>Right</strong><br/>"
+                        output += "<strong>Right Split</strong><br/>"
                         output += self.decode_hazards(cwd, rightdest, typename, names, showlength, follow)
                 elif b == 3: # TBD Stop Spawning Barriers?
                     output += "- Stop Spawning Barriers 3?<br/>"
@@ -246,13 +246,51 @@ class ChaseHQWriter:
                     return output
             else:
                 count = b
-                output += "- Wait for %d<br/>" % (count)
+                output += "- Wait for %d units<br/>" % (count)
                 totallength += count
                 count = 0
 
     def map_hazards(self, cwd, base):
         hmap = {0x00: "xxx"}
         return self.decode_hazards(cwd, base, "hazards", hmap, showlength=True, follow=True)
+
+    def map_left_objects(self, cwd, base):
+        omap = {0: "Nothing",
+                1: "Tunnel Light",
+                2: "Unknown (2)",
+                3: "Short Pole",
+                4: "Tree",
+                5: "Bush",
+                6: "Street Lamp",
+                7: "Telegraph Pole",
+                8: "Turn Sign, Pointing Left",
+                9: "Turn Sign, Pointing Right",
+                10: "Unknown (10)",
+                11: "Unknown (11)",
+                12: "Unknown (12)",
+                13: "Unknown (13)",
+                14: "Unknown (14)",
+                15: "Unknown (15)"}
+        return self.decode_nibble_rle(cwd, base, "left objects", omap, showlength=True, follow=True)
+
+    def map_right_objects(self, cwd, base):
+        omap = {0: "Nothing",
+                1: "Tunnel Light",
+                2: "Unknown (2)",
+                3: "Short Pole",
+                4: "Tree",
+                5: "Bush",
+                6: "Street Lamp",
+                7: "Telegraph Pole",
+                8: "Turn Sign, Pointing Left",
+                9: "Turn Sign, Pointing Right",
+                10: "Unknown (10)",
+                11: "Unknown (11)",
+                12: "Unknown (12)",
+                13: "Unknown (13)",
+                14: "Unknown (14)",
+                15: "Unknown (15)"}
+        return self.decode_nibble_rle(cwd, base, "right objects", omap, showlength=True, follow=True)
 
 class ChaseHQHtmlWriter(HtmlWriter, ChaseHQWriter):
     def init(self):
