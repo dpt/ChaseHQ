@@ -88,7 +88,7 @@
 > $4000 ; running state:
 > $4000 ;
 > $4000 ; $5B00..$5BFF is a pre-shifted version of the backdrop
-> $4000 ; $5C00..$76EF is the level data:
+> $4000 ; $5C00..$76EF is the per-stage data:
 > $4000 ; - $5C00..$5CFF is the regular version of the backdrop
 > $4000 ; $8DBB (word) is the address of the current transition animation
 > $4000 ; $E500        is ?
@@ -115,7 +115,7 @@
 > $4000 ;
 > $4000 ; 128K MEMORY MAP
 > $4000 ; ---------------
-> $4000 ; Level data has a worst-case size of $1AF0 bytes.
+> $4000 ; Per-stage data has a worst-case size of $1AF0 bytes.
 > $4000 ;
 > $4000 ; Bank 1 @ $C000..$DAEF is stage 1's data
 > $4000 ; Bank 1 @ $E000..$FAEF is stage 2's data
@@ -171,8 +171,8 @@
 > $4000 ; - Message drawing code (white bar)
 > $4000 ; - Turbo sprites/anim
 > $4000 ; - Turbo handling
-> $4000 ; - Level loading code
-> $4000 ; - Level format (and which memory regions are altered)
+> $4000 ; - Stage loading code
+> $4000 ; - Stage format (and which memory regions are altered)
 > $4000 ; - Helicopter (later stages)
 > $4000 ; - Flashing light on car (and hand)
 > $4000 ; - Ok creep! auto driving
@@ -307,7 +307,7 @@ B $5BD7,41,8*5,1
 b $5C00 [Stage 1] Horizon graphic
 D $5C00 #HTML[#CALL:graphic($5C00,80,24,0,1)]
 @ $5C00 label=bitmap_horizon
-B $5C00,240,8 Horizon backdrop (80x24) inverted. Varies per level
+B $5C00,240,8 Horizon backdrop (80x24) inverted. Varies per stage
 b $5CF0 [Stage 1] Per-stage data
 @ $5CF0 label=addrof_perp_mugshot_attributes
 W $5CF0,2,2 Address of Ralph's mugshot attributes
@@ -439,7 +439,7 @@ W $5E4B,2,2 -> Routine at $9252
 N $5E4D Entry 2 (empty)
 B $5E4D,3,3
 W $5E50,4,2
-N $5E54 Entry 3 (stumpy pole)
+N $5E54 Entry 3 (short pole)
 B $5E54,3,3
 W $5E57,2,2 Arg for routine passed in DE
 W $5E59,2,2 -> Routine at $9171
@@ -475,7 +475,7 @@ W $5E8A,2,2 -> Routine at $924D
 N $5E8C Entry 11 (empty)
 B $5E8C,3,3
 W $5E8F,4,2
-N $5E93 Entry 12 (stumpy pole)
+N $5E93 Entry 12 (short pole)
 B $5E93,3,3
 W $5E96,2,2 Arg for routine passed in DE
 W $5E98,2,2 -> Routine at $916C
@@ -503,7 +503,7 @@ N $5EBD Entry 18 (turn sign, pointing right)
 B $5EBD,3,3
 W $5EC0,2,2 Arg for routine passed in DE
 W $5EC2,2,2 -> Routine at $9278
-b $5EC4 Initial map segment
+b $5EC4 [Stage 1] Initial map segment
 N $5EC4 Start stretch
 N $5EC4 Start stretch, curvature
 @ $5EC4 label=map_start_curvature
@@ -596,7 +596,7 @@ B $6294,128,8
 N $6314 Loop section, right-side objects
 @ $6314 label=map_loop_rightobjs
 B $6314,118,8*14,6
-b $638A Ralph the Idaho Slasher's mugshot
+b $638A [Stage 1] Ralph the Idaho Slasher's mugshot
 N $638A Bitmap data for Ralph the Idaho Slasher's mugshot (32x40). Stored top-down.
 N $638A #HTML[#CALL:face($638A)]
 @ $638A label=bitmap_ralph
@@ -604,7 +604,7 @@ B $638A,160,4
 N $642A Attribute data for Ralph the Idaho Slasher's mugshot (4x5). Stored top-down.
 @ $642A label=attrs_ralph
 B $642A,20,4
-b $643E LODs
+b $643E [Stage 1] LODs
 D $643E LOD = Level of Detail. These structures collect together the variously sized versions of the same game object.
 N $643E Lamborghini LOD 1
 @ $643E label=lambo_lods
@@ -895,11 +895,11 @@ N $6AF4 Bitmap: Dust (8x1) pre-shifted
 N $6AF4 #HTML[#CALL:graphic($6AF4,8,1,1,1)]
 @ $6AF4 label=bitmap_dust_1s
 B $6AF4,2,2 Masked bitmap data
-@ $6AF6 label=turn_sign_6af6
+@ $6AF6 label=turn_sign_right
 W $6AF6,2,2 -> turn_sign_lods
 B $6AF8,20,2 Read by $928D and $92F6
 N $6B0C Referenced by graphic entry 8 and 17
-@ $6B0C label=turn_sign_6b0c
+@ $6B0C label=turn_sign_left
 W $6B0C,2,2 -> turn_sign_lods
 B $6B0E,20,2
 N $6B22 Turn sign LOD 1
@@ -1620,7 +1620,8 @@ N $7630 Tree shadow (24x1) pre-shifted
 N $7630 #HTML[#CALL:graphic($7630,24,1,1,1)]
 @ $7630 label=bitmap_tree_shadow_24x1s
 B $7630,6,6 Masked bitmap data
-u $7636 [Stage 1] Unused by this level
+u $7636 [Stage 1] Unused by this stage
+D $7636 This is the last of the per-stage data.
 S $7636,186,$BA
 b $76F0 Turbo icons
 D $76F0 #HTML[#CALL:anim($76F0,16,14,1,1,3)]
@@ -1710,16 +1711,16 @@ B $7D51,160,4 Bitmap data, top-down format
 @ $7DF1 label=attrs_tony
 B $7DF1,20,4 Attribute data for above
 b $7E05 Used for both left and right variations.
-@ $7E05 label=stretchy_stumpypole
+@ $7E05 label=stretchy_shortpole
 B $7E05,1,1
 W $7E06,2,2
 B $7E08,1,1
 W $7E09,2,2
 B $7E0B,1,1 1 => end
-@ $7E0C label=stumpypole_7e0c
+@ $7E0C label=shortpole_7e0c
 W $7E0C,2,2 -> streetlampbody_lods
 B $7E0E,20,2
-@ $7E22 label=stumpypole_7e22
+@ $7E22 label=shortpole_7e22
 W $7E22,2,2
 B $7E24,20,2
 @ $7E38 label=streetlampbody_7e38
@@ -3490,7 +3491,7 @@ C $9169,3 Loop
 c $916C Draws stretchy objects, such as trees.
 D $916C Used by the routine at #R$9052.
 R $916C I:B ? value that affects scaling
-R $916C I:DE Address of graphic data [structure type yet to be named] (e.g. stumpypole/#R$7E05)
+R $916C I:DE Address of graphic data [structure type yet to be named] (e.g. stretchy_shortpole/#R$7E05)
 N $916C Entry point for left hand objects.
 @ $916C label=draw_stretchy_object_left
 C $916C,3 HL = $9293  -- callback address
@@ -3520,10 +3521,10 @@ C $91A0,4 Self modify 'LD BC,xxxx' at #R$91BA to load DE
 @ $91A4 label=dso_loop
 C $91A4,3 A = -C
 C $91A7,3 Self modify 'LD D,x' @ #R$933D to load A
-C $91AA,2 B = *HL - 1  -- read count byte from graphic stream, e.g. stumpypole + 0
-C $91AC,1 Return if zero
+C $91AA,2 B = *HL - 1  -- read count byte from graphic stream, e.g. stretchy_shortpole + 0
+C $91AC,1 Return if count byte was 1 (terminator)
 C $91AD,1 Advance past count byte
-C $91AE,4 Read address of ? data to #REGde, e.g. stumpypole_7e0c
+C $91AE,4 Read address of ? data to #REGde, e.g. shortpole_7e0c
 C $91B2,4 Preserve HL, IX, BC
 C $91B6,1 Swap
 C $91B7,3 DE = wordat(HL); HL++  -- this is the LOD pointer e.g. streetlampbody_lods
@@ -3534,9 +3535,9 @@ C $91BE,2 A = *HL++  -- e.g. 0
 C $91C0,3 HL = *HL  -- e.g. $56
 C $91C3,1 HL += DE  -- so HL's an offset from streetlampbody_lods
 C $91C4,1 Restore BC
-C $91C5,1 B--
-C $91C6,2 (jump to dispatch)
-N $91C8 Zero path
+C $91C5,1 B--   -- e.g. cmd byte 2 would be 0 after this
+C $91C6,2 Jump to dispatch for cmd bytes 3+
+N $91C8 Zero path => command byte was 2
 C $91C8,1 B = *HL
 C $91C9,2 HL -= 2
 C $91CB,1 Preserve BC
@@ -3544,8 +3545,7 @@ C $91CC,1 B = A
 C $91CD,3 Call <self modified>  -- callback
 @ $91D0 label=dso_loop_perhaps
 C $91D0,1 Restore BC
-C $91D1,2 A = C + B
-C $91D3,1 C = A
+C $91D1,3 C += B
 C $91D4,3 Restore IX, HL
 C $91D7,3 Loop dso_loop
 N $91DA Non-zero path
@@ -3553,40 +3553,40 @@ N $91DA Non-zero path
 C $91DA,1 Bank <byte[0] of table entry, loaded at #R$91BE>
 C $91DB,2 A = <self modified>
 N $91DD Dispatch ladder
-C $91DD,1 B--
-C $91E0,1 B--
-C $91E3,1 B--
-C $91E6,1 B--
-C $91E9,1 B--
-C $91EC,1 B--
-C $91EF,1 B--
-C $91F0,2 Continue
+C $91DD,3 Jump if 3
+C $91E0,3 Jump if 4
+C $91E3,3 Jump if 5
+C $91E6,3 Jump if 6
+C $91E9,3 Jump if 7
+C $91EC,3 Jump if 8
+C $91EF,3 Jump to continue if 9
 C $91F2,1 A += A
 C $91F3,2 Continue
-@ $91F5 label=dso_91f5
+@ $91F5 label=dso_case_8
 C $91F5,4 A >>= 2
 C $91F9,2 Continue
-@ $91FB label=dso_91fb
+@ $91FB label=dso_case_7
 C $91FD,1 B = A
 C $9200,1 A += B
 C $9201,2 Continue
-@ $9203 label=dso_9203
+@ $9203 label=dso_case_6
 C $9205,1 B = A
 C $9206,4 B >>= 2
 C $920A,1 A -= B
 C $920B,2 Continue
-@ $920D label=dso_920d
+@ $920D label=dso_case_5
 C $920D,1 B = A
 C $920E,6 B >>= 3
 C $9214,1 A += B
 C $9215,2 Continue
-@ $9217 label=dso_9217
+@ $9217 label=dso_case_4
 C $9219,2 Continue
-@ $921B label=dso_921b
+@ $921B label=dso_case_3
 C $921B,1 B = A
 C $921E,1 A += B
 @ $921F label=dso_continue
 C $921F,1 A -= C
+C $9222,2 C was >= A
 C $9224,2 A = 1
 C $9226,1 B = A
 C $9228,6 A = IY[$35] + 1 - C - B
@@ -3594,23 +3594,21 @@ C $9230,2 B += A
 C $9232,1 A = B
 C $9233,3 *$9405 = A
 C $9236,1 A = *HL
-C $9237,1 HL -= 2
-C $9238,1 HL--
+C $9237,2 HL -= 2
 C $9239,3 *$9416 = A
 C $923C,2 A = $02
 C $923E,3 Self modify 'LD A,x' @ #R$93C0 to load 2
 C $9242,1 B = A
 C $9243,3 Call <self modified>
 C $9246,4 Self modify 'LD A,x' @ #R$93C0 to load 0
-C $924A,3 Loop?  dso_loop_perhaps
-c $924D Routine at 924D
+C $924A,3 Loop to dso_loop_perhaps
+c $924D Draws tunnel lights (and possibly other bitmaps).
 R $924D R:B Offset added to $E6xx address. Routine skipped if it's >= 16.
-@ $924D label=sub_924d
+@ $924D label=draw_tunnel_light_left
 C $924D,3 HL = $9279
-@ $9252 label=sub_9252
-C $9252,3 HL = $92E2  -- graphic 1 uses this entry
-C $9255,1 A = B
-C $9256,3 Return if A >= 16
+@ $9252 label=draw_tunnel_light_right
+C $9252,3 HL = $92E2
+C $9255,4 Return if B >= 16
 C $9259,1 Push return address
 C $925A,5 A = fast_counter & $E0
 N $925F Reduces A by 31.25%
@@ -3621,26 +3619,27 @@ C $9265,4 L >>= 2
 C $9269,1 A -= L
 C $926A,1 A += B   -- B was passed in
 C $926B,1 L = A
-C $926C,2 H = $E6    -- $E6xx data
+C $926C,2 H = $E6   -- $E6xx data
 C $926E,1 A = *HL
 C $926F,8 A = (A>>2) - A
 C $9277,1 Return via earlier PUSH
-c $9278 Routine at 9278
-D $9278 Used to draw turn signs.
+c $9278 Draws objects (left hand version).
+D $9278 Called via dispatch at #R$901B.
+D $9278 Used to draw turn signs, tunnel lights, ... what else?
 R $9278 I:B ?
 R $9278 I:IX ?
 R $9278 I:DE Address of arg, e.g. $6B0C
-@ $9278 label=draw_turn_sign
-C $9278,4 Self modify 'LD D,x' @ #R$933D to load 0
+@ $9278 label=draw_object_left
+C $9278,1 A = 0
+C $9279,3 Self modify 'LD D,x' @ #R$933D to load #REGa
 C $927C,7 A = min(B,10)
 C $9283,1 Put arg address in HL
 C $9284,3 DE = wordat(HL); HL++   -- loads address of turn_sign_lods
 C $9287,6 HL += A * 2 - 1   -- index the table
 C $928D,2 B = *HL++   -- this reads $6AF8
-C $928F,3 HL = *HL   -- read as byte
-C $9292,1 HL += DE
+C $928F,4 HL = *HL + DE   -- read as byte
 N $9293 This entry point is used by the routine at #R$916C.
-@ $9293 label=draw_stretchy_object_callback_left
+@ $9293 label=draw_object_left_stretchy_entrypt
 C $9293,6 A = IX[0] + 16 - B
 C $9299,1 Return if carry (if IX[0] + 16 < B)
 N $929A This entry point is used by the routines at #R$A9DE, #R$AA38 and #R$ADA0.
@@ -3651,12 +3650,12 @@ C $92A0,6 likely E << 3
 C $92A6,1 A -= E
 C $92A9,4 Jump if A >= 8
 C $92AD,1 E = *HL
-C $92B0,3 *$9396 = A
+C $92B0,3 Self modify 'LD A,x' at $9395 to load A
 C $92B3,2 A = E - 1
 C $92B5,3 BC = $0101
 C $92BB,1 E = *HL
 C $92BC,2 A &= $FC
-C $92C0,3 *$9396 = A
+C $92C0,3 Self modify 'LD A,x' at $9395 to load A
 C $92C4,1 B = A
 C $92C5,3 A += E - 33
 C $92C8,2 Return if carry or zero
@@ -3669,40 +3668,51 @@ C $92D3,3 D = *HL >> 1
 C $92D9,1 B--
 C $92DA,1 A++
 C $92DB,2 C = 0
-c $92E1 Drives the sprite plotters
-D $92E1 Called via dispatch at #R$901B.
-@ $92E1 label=sub_92e1
+C $92DE,3 Exit via draw_object_common
+c $92E1 Draws objects (right hand version).
+R $92E1 I:B ?
+R $92E1 I:IX ?
+R $92E1 I:IY ?
+R $92E1 I:DE Address of arg, e.g. $6B0C
+@ $92E1 label=draw_object_right
 C $92E1,1 A = 0
-C $92E2,3 Self modify 'LD D,x' @ #R$933D to load A
-C $92E5,1 A = B
-C $92E6,2 CP 10
-C $92EA,2 A = 10
-C $92ED,3 DE = wordat(HL); HL++
-C $92F0,6 HL += A * 2 - 1
+C $92E2,3 Self modify 'LD D,x' @ #R$933D to load #REGa
+C $92E5,7 A = min(B,10)
+C $92EC,1 Put arg address in HL
+C $92ED,3 DE = wordat(HL); HL++   -- loads address of turn_sign_lods
+C $92F0,6 HL += A * 2 - 1   -- index the table
 C $92F6,2 B = *HL++
-C $92F8,4 HL = *HL + DE
-@ $92FC label=draw_stretchy_object_callback_right
+C $92F8,4 HL = *HL + DE   -- read as byte
+@ $92FC label=draw_object_right_stretchy_entrypt
 C $92FC,3 A = IX[0]
+C $92FF,2 Test B's sign
+C $9301,2 Jump if +ve
 C $9303,1 A += B
+C $9304,2 Jump
 C $9306,1 A += B
 C $9307,1 Return if carry
 C $9308,1 Return if zero
 N $9309 This entry point is used by the routines at #R$A9DE, #R$AA38 and #R$ADA0.
-C $930B,1 Return if not carry
+C $9309,3 Return if A >= $F7
+C $930C,2 C = 0
 N $930E This entry point is used by the routine at #R$9278.
 C $930E,4 A = (A & $FC) >> 2
-C $9312,3 *$9396 = A
+C $9312,3 Self modify 'LD A,x' at $9395 to load A
 C $9315,1 A >>= 1
 C $9316,1 B = A
 C $9317,1 E = *HL
 C $9318,3 A = ~A + 32  -- (31 - A)
+C $931B,1 Is E < A?
+C $931C,2 Jump if so
 C $931E,1 A = E
 C $931F,1 HL++
 C $9320,3 D = *HL >> 1
+C $9323,3 Jump if zero
 C $9326,1 C = A
 C $9328,3 C = E - C
 N $932B This entry point is used by the routine at #R$9278.
-C $932B,7 *$9396 = ~(*$9396)
+@ $932B label=draw_object_common
+C $932B,7 Self modify 'LD A,x' at $9395 to be (~x)
 N $9333 This entry point is used by the routine at #R$9278.
 C $933C,1 HL++
 C $933D,2 D = <self modified>
@@ -3715,6 +3725,7 @@ C $9352,1 A = 0
 C $9353,1 A += D
 C $9354,1 HL++
 C $9355,2 D = 1
+C $9359,4 Jump if D is -ve
 C $935D,1 A -= D
 C $9361,1 A += D
 C $9362,1 D = A
@@ -3737,17 +3748,17 @@ C $938D,1 A++
 C $938E,1 D++
 C $938F,1 HL++
 C $9392,1 D = A
-C $9393,2 B = $00
-C $9395,2 A = $00
+C $9393,2 B = 0  -- not self modified AFAICT
+C $9395,2 A = <self modified>
 C $939A,2 HL += 2
 C $939C,5 HL = wordat(HL) + BC
-C $93A1,3 Self modify 'LD HL,xxxx' @ #R$9412
+C $93A1,3 Self modify 'LD HL,xxxx' @ #R$9412 to load HL
 C $93A4,1 C = E
 C $93A6,1 A--
 C $93A9,1 HL += BC
 C $93AA,1 A--
 C $93AE,1 B = D
-C $93AF,2 D = $00
+C $93AF,2 D = 0  -- not self modified AFAICT
 C $93B4,1 D = A
 C $93B5,5 H = (A & $0F) + $F0
 C $93BA,1 A = D
@@ -3797,7 +3808,7 @@ C $946C,3 HL = <...>  -- Self modified by $9446
 C $946F,2 B = $00
 C $9474,2 B += A
 C $9476,3 Exit via plot_masked_sprite
-C $947B,2 D = $00
+C $947B,2 D = 0  -- not self modified AFAICT
 C $947F,1 H = D
 C $9480,1 L = D
 C $9481,1 A = B
@@ -7325,11 +7336,11 @@ C $B6F3,1 E = C  -- byte width
 C $B6F4,2 E <<= 1
 C $B6F8,1 A = E
 C $B6F9,2 B >>= 1
-C $B6FB,1 unclear why, is this EX'ing AF to get the carry flag?
+C $B6FB,1 Is this EX'ing AF to get the carry flag?
 C $B6FC,1 HL += BC
 N $B701 This entry point is used by the routine at #R$92E1.
 C $B701,4 IX = plot_masked_sprite_core_thingy
-C $B705,3 A = ~A + 9
+C $B705,3 A = ~A + 9 == (8 - A)
 C $B708,4 This multiplies by six - the length of each load-mask-store step in the plotter core.
 C $B70C,5 Add that to #REGix
 C $B711,2 B = 15 -- Set loop counter for 15 iterations?
