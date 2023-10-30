@@ -2263,11 +2263,13 @@ N $841B Run the main game loop.
 C $841B,3 Call run_pregame_screen
 C $841E,3 Address of setup_game_data
 C $8421,3 Call setup_game
-C $8424,10 Cycle start_random 3,2,1 then repeat
-N $842E Choose a random startup sample.
+@ $842D label=ml_store_start_speech
+C $8424,10 Cycle start_speech_cycle 3,2,1 then repeat
+N $842E Choose the startup speech sample.
 C $842E,7 start_speech = (A * 4) OR 2
 C $8435,4 Test 128K mode flag
 C $8439,5 #R$A188 = $FF -- I suspect this keeps the perp spawned
+C $843E,3 Address of start_chatter
 C $8441,3 Call chatter if not in 128K mode
 @ $8444 label=ml_loop
 C $8444,3 Call drive_sfx
@@ -2336,6 +2338,7 @@ C $84F2,9 Increment credits unless maxed out at 9
 @ $84FB label=not_test_mode
 C $84FB,3 A = transition_control
 C $84FE,4 Jump to ml_loop if non-zero
+N $8502 Play once we have a 1-bit shifted out.
 C $8502,3 Address of start_speech
 C $8505,2 Shift the counter right
 C $8507,2 Jump if no carry
@@ -2618,7 +2621,7 @@ C $87AC,4 Jump if it != 5
 C $87B0,11 Activate three hazards? [i.e. the three barriers]
 C $87BB,6 Set speed to zero [speed of camera]
 C $87C1,6 Loop while the perp is still active in the hazards
-C $87C7,6 Loop while chatter is still happening?
+C $87C7,6 Loop while chatter is still happening
 C $87CD,5 Return if transition_control is zero
 C $87D2,2 If transition_control is 4
 C $87D6,3 Call setup_transition if non-zero
@@ -4035,20 +4038,20 @@ C $962D,1 Return
 g $962E In-game message variables
 @ $962E label=next_character
 W $962E,2,2 Address of the next character in the current message
-@ $9630 label=next_message
-W $9630,2,2 Address of the _next_ message to show DOUBTING THIS NOW ... pointer to next command?
+@ $9630 label=message_set
+W $9630,2,2 Address of current message set
 @ $9632 label=message_x
 B $9632,1,1 Index of next character in the message bar
-@ $9633 label=bleh
-B $9633,1,1 zeroed by $995d set to 10 by $9a49
+@ $9633 label=chatter_delay
+B $9633,1,1 Counted down while waiting to display the next line of chatter
 @ $9634 label=noise_bytes
 B $9634,5,5 Five bytes used for noise when character pictures 'noise in'
 B $9639,3,3
 @ $963C label=noise_counter
 B $963C,1,1 Noise effect counter (4..0)
-@ $963D label=var_963d
-B $963D,1,1 read by $9946, one'd by $9961, set by $99d9 character index?
-@ $963E label=var_963e
+@ $963D label=chatter_state
+B $963D,1,1 0 => inactive, 1 => starting, 2 => displaying, 3 => stopping
+@ $963E label=chatter_priority
 B $963E,1,1 read by $9950, set by $9956
 b $963F In-game messages
 T $963F,27,26:n1 "THIS IS NANCY AT CHASE H.Q."
@@ -4200,31 +4203,33 @@ W $9942,2,2 -> "LET'S GO. MR. DRIVER."
 B $9944,1,1 <STOP>
 c $9945 Chatter routine
 D $9945 Used by the routines at #R$8401, #R$858C, #R$873C, #R$8876, #R$9BCF, #R$A637, #R$A8CD, #R$AB33, #R$B063, #R$B4F0 and #R$B9F4.
-R $9945 I:A TBD
+R $9945 I:A Message priority: must be higher than the stored priority for the message to take effect
 R $9945 I:HL Address of message set
 @ $9945 label=chatter
-C $9945,1 B = A
-C $9949,3 If A == 0 jump forward to 9955
-C $994C,4 If A >= 3 jump forward to 9955
-C $9953,2 If A >= B return
-C $9955,4 $963E = B
+C $9945,1 Copy priority value to #REGb
+C $9946,3 Load chatter_state into #REGa
+C $9949,3 If chatter_state == 0 (chatter inactive) jump forward to #R$9955
+C $994C,4 If chatter_state >= 3 (chatter end) jump forward to #R$9955
+C $9950,5 If the current chatter_priority >= priority given then return
+@ $9955 label=chatter_stopped
+C $9955,4 Update chatter_priority
 C $9959,3 Set message set pointer
-C $995C,4 $9633 = 0
-C $9960,4 $963D = 1
+C $995C,4 chatter_delay = 0
+C $9960,4 chatter_state = 1 (start chatter)
 C $9964,1 Return
 c $9965 Noise effect, Message plotting
 D $9965 Used by the routines at #R$8401, #R$858C and #R$873C.
 @ $9965 label=drive_chatter
-C $9965,4 A = var_963d - 1
+C $9965,4 A = chatter_state - 1
 C $9969,2 if A was zero jump
 C $996B,1 A--
 C $996C,2 if A was zero jump to sub998f_do_noise_effect
 C $996E,1 A--
 C $996F,2 if A was NOT zero jump
 C $9971,4 Decrement noise_counter
-C $9975,1 A = *HL A = noise_counter
+C $9975,1 A = *HL -- A = noise_counter
 C $9976,3 Jump if noise_counter was non-zero
-C $9979,3 Zero this
+C $9979,3 chatter_state = 0
 C $997C,3 Call noise_plot_attrs -- clear to black
 C $997F,2 Plot space character
 C $9981,2 {$AA ROR 1 becomes $55 becomes $AA and so on
@@ -4235,8 +4240,8 @@ C $9989,3 jump on $55 -> $AA transitions?
 C $998C,3 Jump to plot_mini_font_1
 @ $998F label=sub998f_do_noise_effect
 C $998F,7 If noise_counter > 0 call noise_effect
-C $9996,3 If $9633 == 0 jump $99b6
-C $999C,1 $9633--
+C $9996,3 If chatter_delay == 0 jump $99b6
+C $999C,1 chatter_delay--
 C $99A1,2 If A was zero jump sub998f_another_something
 C $99A3,3 Load address of next character
 C $99A6,1 Go back 1
@@ -4247,70 +4252,79 @@ C $99AE,2 rotate it by B  (B is noise counter) .. wut?
 C $99B0,3 if carry jump plot_mini_font_2
 C $99B3,3 Jump to plot_mini_font_1
 @ $99B6 label=sub998f_something
-C $99B6,7 If message_x != 0 jump #R$9a30
+C $99B6,7 If message_x != 0 jump #R$9A30
 @ $99BD label=sub998f_another_something
-C $99BD,3 HL = next_message
+C $99BD,3 HL = message_set
 C $99C0,1 A = *HL first char of
 C $99C1,4 String terminator? jump to clear_chatter if so
 C $99C5,2 this tests for $FE -- different terminator?
-C $99C7,2 If not $fe goto chatter_message
-C $99CA,7 next_message = *HL
+C $99C7,2 If not $fe goto pc_chatter_message
+C $99CA,7 message_set = *HL
 C $99D1,2 goto 99e4_exit
 N $99D3 This entry point is used by the routines at #R$858C and #R$8876.
 @ $99D3 label=clear_chatter
 C $99D3,5 Set the noise effect counter to 4
-C $99D8,4 Set #R$963D to 3
+C $99D8,4 Set #R$963D to 3 (end of line?)
 C $99DC,3 Exit via clear_message_line
 @ $99DF label=99df_something_else
-C $99DF,5 $963D = 2
+C $99DF,5 #R$963D = 2 (displaying complete message)
 @ $99E4 label=99e4_exit
 C $99E4,8 Call clear_message_line
-c $99EC Shows the alerts and remarks from the game's characters
+c $99EC Shows the chatter - the alerts and remarks from the game's characters
 D $99EC Used by the routine at #R$9A55.
 @ $99EC label=print_chatter
-C $99EC,3 Fetch address of next remark
-@ $99EF label=chatter_loop
+C $99EC,3 Load message set address
+@ $99EF label=pc_loop
 C $99EF,2 Read a byte and advance
-C $99F1,2 if (byte != $FC) then jump plot_character
-@ $99F5 label=random_chatter
-N $99F6 We have a three-way choice here
+N $99F1 $FC indicates a three-way random choice. Otherwise it's the index of the speaking character (1/2/3 for Nancy/Raymond/Tony) or 0 for the helicopter pilot.
+C $99F1,4 If byte != $FC then jump to pc_plot_character
+@ $99F5 label=pc_random_choice
+C $99F5,1 Preserve message data address
+N $99F6 We have a three-way choice here.
 C $99F6,3 Call rng - returns a random byte
-C $99FA,4 If random value < $55 jump load_message_ptr -- a 33.3% chance
+C $99F9,1 Restore message data address
+C $99FA,4 If random value < $55 jump to pc_load_message_ptr -- a 33.3% chance
 C $99FE,2 Skip first option message
-C $9A00,4 If random value < $AA jump load_message_ptr -- a 66.6% chance
+C $9A00,4 If random value < $AA jump to pc_load_message_ptr -- a 66.6% chance
 C $9A04,2 Skip second option message
-@ $9A06 label=load_message_ptr
-C $9A06,4 Load the address of the message
-C $9A0A,2 Loop back - it could be another random case
-N $9A0C #REGa is the index of the face to show
-@ $9A0C label=plot_character
-C $9A0C,1 Is it zero? (The definable/pilot character's face)
+@ $9A06 label=pc_load_message_ptr
+C $9A06,4 Load the address of the chosen message set
+C $9A0A,2 Loop back - it could be another random choice
+N $9A0C #REGa is the index of the face to show.
+@ $9A0C label=pc_plot_character
+C $9A0C,1 Is it zero? (=> the pilot character's face)
 C $9A0D,1 Preserve message pointer
-C $9A0E,6 Plot whatever face #R$5CF2 points to, otherwise calculate
+C $9A0E,6 Plot whatever face #R$5CF2 points to, otherwise calculate the face graphic's address
+@ $9A14 ssub=LD HL,(bitmap_nancy - 180)
 C $9A14,3 Load base address of face graphics (BUT it's actually earlier than the real base because we're 1-indexed)
 C $9A17,3 Length of face graphic (bitmap + attrs = 4*8*5 + 4*5)
+@ $9A1A label=pc_multiply
 C $9A1A,3 Get face graphic address
-@ $9A1D label=do_plot
+@ $9A1D label=pc_do_plot
 C $9A1D,3 Set plot address to (176,8)
 C $9A20,3 Call plot_face
 C $9A23,1 Restore message pointer
 N $9A24 This entry point is used by the routine at #R$9965.
-@ $9A24 label=chatter_message
+@ $9A24 label=pc_chatter_message
 C $9A24,4 Fetch address of message to start showing
-C $9A28,3 Save address of next message to show (or perhaps the pointer)
+C $9A28,3 Save current message set address
 C $9A2B,4 Save next character address
 C $9A2F,1 Cause a clear_message_line and fall through
 N $9A30 This entry point is used by the routine at #R$9965.
-C $9A30,6 if (A == 0) clear_message_line
+@ $9A30 label=pc_clear_line
+C $9A30,6 If (A == 0) clear_message_line
 C $9A36,3 Fetch next_character
-C $9A39,1 The character itself
-C $9A3A,2 Clear the string terminator bit
+C $9A39,1 Load the character itself
+C $9A3A,2 Clear any string terminator bit
 C $9A3C,1 Preserve message_x
+C $9A3D,1 Preserve string address
 C $9A3E,3 Call plot_mini_font_2, with #REGd as ASCII character to plot
+C $9A41,1 Restore string address
 C $9A42,2 Test string terminator bit
 C $9A44,1 Move to the next character in the string
 C $9A45,2 If not terminated then jump over
-C $9A47,5 $9633 = 10
+C $9A47,5 Set chatter_delay to 10
+@ $9A4C label=pc_exit
 C $9A4C,1 Restore message_x
 C $9A4D,4 Increment and store message_x
 C $9A51,3 Update next_character
@@ -5092,7 +5106,7 @@ g $A139 Game status buffer entry at A139
 B $A139,1,1 0/1 => 48K/128K mode
 @ $A13A label=current_stage_number
 B $A13A,1,1 Current stage number
-@ $A13B label=start_random
+@ $A13B label=start_speech_cycle
 B $A13B,1,1 Used by #R$8424  -- seems to start at 4 then cycle 3/2/1 with each restart of the game, another random factor?
 @ $A13C label=overtake_bonus
 B $A13C,1,1 Overtake combo bonus counter. BCD. This increases by 2 for each overtake and is reset on a crash.
