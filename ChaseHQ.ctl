@@ -23,7 +23,7 @@
 > $4000 ;
 > $4000 ; ALTERNATIVE VERSIONS
 > $4000 ; --------------------
-> $4000 ; There's a demo version of Chase H.Q. on Sinclair User, issue 94: Megatape 23.
+> $4000 ; There's a demo version of Chase H.Q. on Sinclair User issue 94: Megatape 23.
 > $4000 ; https://worldofspectrum.org/archive/software/cover-tapes-and-electronic-magazines/sinclair-user-issue-94-megatape-23-sinclair-user.
 > $4000 ; It features a single stage, with the graphics from stage 1 of the real game
 > $4000 ; and what seems to be a custom map. There's no retry on fail and it's a tough
@@ -57,23 +57,21 @@
 > $4000 ;
 > $4000 ; RESEARCH
 > $4000 ; --------
-> $4000 ; https://www.mobygames.com/game/9832/chase-hq/
-> $4000 ;
+> $4000 ; https://en.wikipedia.org/wiki/Chase_H.Q.
 > $4000 ; https://spectrumcomputing.co.uk/entry/903/ZX-Spectrum/Chase_HQ
-> $4000 ; Known Errors:
+> $4000 ; https://www.mobygames.com/game/9832/chase-hq/
+> $4000 ; http://reassembler.blogspot.com/2012/06/interview-with-spectrum-legend-bill.html
+> $4000 ; https://news.ycombinator.com/item?id=8850193 (discussion about the game loader)
+> $4000 ; http://www.extentofthejam.com/pseudo/ (Lou's Pseudo 3D page)
+> $4000 ;
+> $4000 ;
+> $4000 ; BUGS
+> $4000 ; ----
 > $4000 ; Bugfix provided by Russell Marks:
 > $4000 ; "When you finish a stage, a hidden bonus is sometimes given randomly. At
 > $4000 ;  address $8b3d, instructions EX AF,AF' and LD B,A are in the wrong order.
 > $4000 ;  Therefore calculation of time bonus is using random value from A' instead of
 > $4000 ;  low digit from remaining time. Fixed with POKE 35645,71: POKE 35646,8."
-> $4000 ;
-> $4000 ; https://en.wikipedia.org/wiki/Chase_H.Q.
-> $4000 ;
-> $4000 ; http://reassembler.blogspot.com/2012/06/interview-with-spectrum-legend-bill.html
-> $4000 ;
-> $4000 ; https://news.ycombinator.com/item?id=8850193 (discussion about the game loader)
-> $4000 ;
-> $4000 ; http://www.extentofthejam.com/pseudo/ (Lou's Pseudo 3D page)
 > $4000 ;
 > $4000 ;
 > $4000 ; SECRETS
@@ -83,12 +81,11 @@
 > $4000 ;
 > $4000 ; 48K/128K VERSION DIFFERENCES
 > $4000 ; ----------------------------
-> $4000 ; - 48K is a multiloader
-> $4000 ; - AY music + sampled speech and effects
-> $4000 ; - High score entry
-> $4000 ; - Logo animation > music plays > attract mode (48K version just does attract mode)
-> $4000 ; - Best Officers (high score) on attract screen
-> $4000 ; - Input device/define keys is retained
+> $4000 ; - 48K version is a multiloader
+> $4000 ; - 128K version has AY music with sampled speech and effects
+> $4000 ; - 128K has logo animation > music plays > attract mode (48K version only has attract mode)
+> $4000 ; - 128K has a Best Officers (high score) on attract screen and a high score entry screen
+> $4000 ; - 128K retains the input device/define keys code (48K has to overwrite it for space reasons)
 > $4000 ;
 > $4000 ;
 > $4000 ; MEMORY MAP
@@ -124,11 +121,11 @@
 > $4000 ;
 > $4000 ; 128K MEMORY MAP
 > $4000 ; ---------------
-> $4000 ; Per-stage data has a worst-case size of $1AF0 bytes.
+> $4000 ; The per-stage data has a worst-case size of $1AF0 bytes.
 > $4000 ;
 > $4000 ; Bank 1 @ $C000..$DAEF is stage 1's data
 > $4000 ; Bank 1 @ $E000..$FAEF is stage 2's data
-> $4000 ; Bank 3 @ $C000..$FFFF? is title screen
+> $4000 ; Bank 3 @ $C000..$FFFF? is the title screen
 > $4000 ; Bank 4 @ $C000..$FF66 is sampled speech
 > $4000 ; Bank 6 @ $C000..$DAEF is stage 3's data
 > $4000 ; Bank 6 @ $E000..$FAEF is stage 4's data
@@ -138,60 +135,12 @@
 > $4000 ;
 > $4000 ; 128K SOUND
 > $4000 ; ----------
-> $4000 ; Engine drone is played on Channel C
+> $4000 ; The engine drone is played on Channel C.
 > $4000 ;
 > $4000 ;
 > $4000 ; NOTES
 > $4000 ; -----
 > $4000 ; Strings are top bit set terminated ASCII.
-> $4000 ;
-> $4000 ;
-> $4000 ; THINGS TO LOCATE
-> $4000 ; ----------------
-> $4000 ; Considering this is just stage 1 in 48K:
-> $4000 ;
-> $4000 ; - Input handlers
-> $4000 ; - Score, time, speed, distance, gear, stage no., turbo count and credit count
-> $4000 ; - Music data and player
-> $4000 ; - Most of car sprites
-> $4000 ; - Car smoke sprites
-> $4000 ; - Lamp post sprites
-> $4000 ; - Tree sprites
-> $4000 ; - Car's gravity / jump handling
-> $4000 ; - Collision detection
-> $4000 ; - Sound effects
-> $4000 ; - Tunnel handling
-> $4000 ; - Route/map
-> $4000 ; - Road drawing code
-> $4000 ; - Road split handling (it draws both in one pass)
-> $4000 ; - Floating arrow sprite for road split
-> $4000 ; - Floating HERE! arrow
-> $4000 ; - Road signs
-> $4000 ; - Desert road handling
-> $4000 ; - Background drawing code (hills in 1st stage)
-> $4000 ; - Attract mode
-> $4000 ; - Text overlay handling
-> $4000 ; - Hi score stuff
-> $4000 ; - Cheat mode ("SHOCKED")
-> $4000 ; - Smash meter overlay handling
-> $4000 ; - Redefine keys screen
-> $4000 ; - Names of keys
-> $4000 ; - Default key defs A/Z K/L
-> $4000 ; - Message drawing code (white bar)
-> $4000 ; - Turbo sprites/anim
-> $4000 ; - Turbo handling
-> $4000 ; - Stage loading code
-> $4000 ; - Stage format (and which memory regions are altered)
-> $4000 ; - Helicopter (later stages)
-> $4000 ; - Flashing light on car (and hand)
-> $4000 ; - Ok creep! auto driving
-> $4000 ; - Chase HQ monitoring system
-> $4000 ; - Picture handling / noise-in-out effect
-> $4000 ; - Car graphic encoding
-> $4000 ; - Is attract mode a CPU player or a recording? How does it loop?
-> $4000 ; - Exact scoring rules
-> $4000 ; - Overhead tunnel type drawing
-> $4000 ; - Background music/drums on menu screen
 > $4000 ;
 @ $4000 org
 @ $4000 set-warnings=1
