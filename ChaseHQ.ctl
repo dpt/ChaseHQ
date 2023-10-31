@@ -2270,7 +2270,7 @@ C $842E,7 start_speech = (A * 4) OR 2
 C $8435,4 Test 128K mode flag
 C $8439,5 #R$A188 = $FF -- I suspect this keeps the perp spawned
 C $843E,3 Address of start_chatter
-C $8441,3 Call chatter if not in 128K mode
+C $8441,3 Call chatter if not in 128K mode (priority $FF)
 @ $8444 label=ml_loop
 C $8444,3 Call drive_sfx
 C $8447,3 Call keyscan
@@ -2399,9 +2399,9 @@ C $8592,5 Set var_a220 to $F8  (TBD)
 C $8597,3 Call setup_transition
 C $859A,3 Call clear_screen_set_attrs
 C $859D,4 Reset car revealing height counter in #R$85E4
-C $85A1,1 A = $FF (TBD)
+C $85A1,1 Set chatter priority to $FF
 C $85A2,3 Load Nancy's report for this level
-C $85A5,3 Call chatter
+C $85A5,3 Call chatter (priority $FF)
 N $85A8 This entry point is used by the routine at #R$85DD.
 @ $85A8 label=rps_loop
 C $85A8,3 Call draw_pregame
@@ -2594,7 +2594,7 @@ C $874B,11 Initialise hazards[0] (the perp)
 C $8756,6 Set $A191 to the perp's car LOD
 C $875C,5 inhibit_collision_detection = $FF  -- Stops #R$AD0D from running
 C $8761,3 Address of failed_chatter ("wrong job" / "one more try" / "mediocre driver")
-C $8764,3 Call chatter
+C $8764,3 Call chatter (priority $FF)
 N $8767 Print "GAME OVER" once the transition has completed.
 @ $8767 label=es_loop
 C $8767,3 Address of game_over_message
@@ -2684,7 +2684,8 @@ C $8894,3 Return if a turbo boost is in effect
 C $8897,5 Return if no turbo boosts are left
 C $889C,2 Set 60 ticks of boost
 C $889E,3 HL -> Random choice of (WHOAAAAA! / GREAT! / ONE MORE TIME.)
-C $88A3,3 Call chatter
+C $88A1,2 Set priority to 2
+C $88A3,3 Call chatter (priority 2)
 C $88A6,3 Exit via turbo_sfx_play_hook
 N $88A9 This entry point is used by the routine at #R$9BCF.
 @ $88A9 label=quit_key
@@ -4486,7 +4487,7 @@ C $9BFC,2 Reset time_sixteenths to 15
 C $9BFE,6 Decrement time_bcd [POKE $9C01 for Infinite time]
 C $9C04,3 Return if <> 15s remain
 C $9C07,3 Nancy berating us running out of time message
-C $9C0A,3 Exit via chatter
+C $9C0A,3 Exit via chatter (priority 21)
 C $9C0D,4 Is time_bcd zero? Jump to time_up if so
 C $9C11,4 time_up_state = 0
 C $9C15,4 user_input_mask = $FF (allow all keys)
@@ -5827,7 +5828,7 @@ C $A7D3,3 Call bonus
 C $A7D6,2 A = 5
 C $A7D8,3 Self modify 'LD A' @ #R$A73E to load A
 C $A7DB,3 Point #REGhl at smash_chatter ("BEAR DOWN" / "OH MAN" / etc.)
-C $A7DE,3 Call chatter
+C $A7DE,3 Call chatter (priority 5)
 C $A7E1,3 BC = $0301
 C $A7E4,3 Exit via start_sfx
 b $A7E7 Data block at A7E7
@@ -5963,8 +5964,8 @@ C $A93D,1 Restore AF
 C $A93E,4 Jump if A < 3
 C $A942,2 A -= 3
 C $A947,3 HL = ouch_chatter
-C $A94A,2 A = 3
-C $A94C,3 Call chatter
+C $A94A,2 Set priority to 3
+C $A94C,3 Call chatter (priority 3)
 C $A94F,3 BC = $0302
 C $A952,3 Call start_sfx
 c $A955 main_loop_18
@@ -6218,8 +6219,7 @@ C $AB64,7 Self modify 'LD BC' @ #R$AA94 to load $FFE8
 C $AB6B,4 Self modify 'LD A' @ #R$AAD7 to load zero
 C $AB6F,3 Self modify 'ADD A' @ #R$AAE8 to load zero
 C $AB72,4 Self modify 'LD A' @ #R$AADF to load one
-C $AB76,2 A = 15
-C $AB78,3 Call chatter
+C $AB76,5 Call chatter (priority 15)
 C $AB7B,3 HL = $0070
 C $AB7E,5 Self modify 'LD A' @ #R$AACB to load $85
 C $AB83,2 New value for helicopter_control is 5
@@ -6791,9 +6791,9 @@ C $B0F1,3 Address of idle timer
 C $B0F4,1 Decrement idle timer
 C $B0F5,2 Jump if non-zero
 C $B0F7,2 Reset idle timer to 100
-C $B0F9,2 A = 10
+C $B0F9,2 Set priority to 10
 C $B0FB,3 HL = get_moving_chatter
-C $B0FE,3 Call chatter
+C $B0FE,3 Call chatter (priority 10)
 C $B101,1 Pop speed
 C $B102,2 DE = HL
 C $B104,3 Load the off-road flag
@@ -7166,9 +7166,9 @@ C $B511,3 Exit via fully_smashed if so
 C $B514,2 19 hits?
 C $B516,2 Jump to smash_b522 if not
 N $B518 We have 19 hits
-C $B519,2 A = 10
+C $B519,2 Set priority to 10
 C $B51B,3 HL = raymond_says_one_more_time
-C $B51E,3 Call chatter
+C $B51E,3 Call chatter (priority 10)
 @ $B522 label=smash_b522
 C $B522,3 Set smash_counter to #REGa
 C $B525,5 Set smash_factor to zero if smash_counter is zero
@@ -7718,7 +7718,7 @@ C $BA8C,1 A++
 C $BA8E,3 Address of correct_fork
 C $BA91,1 Match?
 C $BA92,3 -> Tony: "LET'S GO. MR. DRIVER." <STOP>
-C $BA95,2 Jump if correct fork was taken
+C $BA95,2 Jump to ml12_chatter if correct fork was taken
 N $BA97 Incorrect fork was taken.
 @ $BA99 ssub=LD (hazard_0 + 13)
 C $BA99,3 A195 is horz position of perp car
@@ -7729,7 +7729,9 @@ C $BAA2,1 Clear low digit
 C $BAA3,1 Clear middle digits
 C $BAA4,3 Call bonus
 C $BAA7,3 -> Raymond: "WHAT ARE YOU DOING MAN!!" / "THE BAD GUYS ARE GOING THE OTHER WAY." <STOP>
-C $BAAC,3 Call chatter
+@ $BAAA label=ml12_chatter
+C $BAAA,2 Set priority to 20
+C $BAAC,3 Call chatter (priority 20)
 C $BAB0,3 Load another_spawning_flag
 C $BAB4,2 Jump if zero
 C $BAB6,1 C = A
