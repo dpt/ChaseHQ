@@ -5,6 +5,12 @@
 [Page:Changelog]
 SectionType=ListItems
 
+[Changelog:20231013]
+Virtually everything is now labelled
+Most locations are mapped out
+Most graphics are decoded
+Map data format is mostly understood
+
 [Changelog:20230518]
 Lots of graphics decoded
 Map data is understood better
