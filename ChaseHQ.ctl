@@ -2360,11 +2360,11 @@ C $85B1,3 Call animate_meters
 C $85B4,3 Call transition
 C $85B7,3 Call draw_screen
 C $85BA,6 Loop if transition_control is non-zero
-C $85C0,5 Return if #R$963D is zero
-C $85C5,4 Jump to rps_xxx if #R$963D >= 3
+C $85C0,5 Return if chatter_state is zero (idle)
+C $85C5,4 Jump to rps_xxx if chatter_state >= 3 (stopping)
 C $85C9,3 Call keyscan
 C $85CC,4 Loop until fire is hit
-C $85D0,3 Call clear_chatter
+C $85D0,3 Call drive_chatter_stop
 C $85D3,3 Exit via play_start_noise
 @ $85D6 label=rps_xxx
 C $85D8,3 If no carry call setup_transition
@@ -2570,7 +2570,7 @@ C $87AC,4 Jump if it != 5
 C $87B0,11 Activate three hazards? [i.e. the three barriers]
 C $87BB,6 Set speed to zero [speed of camera]
 C $87C1,6 Loop while the perp is still active in the hazards
-C $87C7,6 Loop while chatter is still happening
+C $87C7,6 Loop while chatter_state > 0 => chatter is still happening
 C $87CD,5 Return if transition_control is zero
 C $87D2,2 If transition_control is 4
 C $87D6,3 Call setup_transition if non-zero
@@ -2639,7 +2639,7 @@ C $88A6,3 Exit via turbo_sfx_play_hook
 N $88A9 This entry point is used by the routine at #R$9BCF.
 @ $88A9 label=quit_key
 C $88A9,5 If quit_state != 0 then return (quit in progress)
-C $88AE,3 Call clear_chatter
+C $88AE,3 Call drive_chatter_stop
 C $88B1,3 Call fill_attributes
 C $88B4,4 user_input_mask = 0  -- A is zero from fill_attributes
 C $88B8,3 quit_state = 1  -- start quitting
@@ -4000,7 +4000,7 @@ B $9639,3,3
 @ $963C label=noise_counter
 B $963C,1,1 Noise effect counter (4..0)
 @ $963D label=chatter_state
-B $963D,1,1 0 => inactive, 1 => starting, 2 => displaying, 3 => stopping
+B $963D,1,1 0 => idle, 1 => starting, 2 => displaying, 3 => stopping
 @ $963E label=chatter_priority
 B $963E,1,1 read by $9950, set by $9956
 b $963F In-game messages
@@ -4151,87 +4151,93 @@ B $9940,1,1 <STOP>
 B $9941,1,1 Tony ($03)
 W $9942,2,2 -> "LET'S GO. MR. DRIVER."
 B $9944,1,1 <STOP>
-c $9945 Chatter routine
+c $9945 Set up chatter
 D $9945 Used by the routines at #R$8401, #R$858C, #R$873C, #R$8876, #R$9BCF, #R$A637, #R$A8CD, #R$AB33, #R$B063, #R$B4F0 and #R$B9F4.
 R $9945 I:A Message priority: must be higher than the stored priority for the message to take effect
 R $9945 I:HL Address of message set
 @ $9945 label=chatter
 C $9945,1 Copy priority value to #REGb
 C $9946,3 Load chatter_state into #REGa
-C $9949,3 If chatter_state == 0 (chatter inactive) jump forward to #R$9955
+C $9949,3 If chatter_state == 0 (chatter idle) jump forward to #R$9955
 C $994C,4 If chatter_state >= 3 (chatter end) jump forward to #R$9955
 C $9950,5 If the current chatter_priority >= priority given then return
-@ $9955 label=chatter_stopped
+@ $9955 label=chatter_set
 C $9955,4 Update chatter_priority
 C $9959,3 Set message set pointer
 C $995C,4 chatter_delay = 0
 C $9960,4 chatter_state = 1 (start chatter)
 C $9964,1 Return
-c $9965 Noise effect, Message plotting
+c $9965 Runs chatter, mugshots and noise effect
 D $9965 Used by the routines at #R$8401, #R$858C and #R$873C.
 @ $9965 label=drive_chatter
-C $9965,4 A = chatter_state - 1
-C $9969,2 if A was zero jump
-C $996B,1 A--
-C $996C,2 if A was zero jump to sub998f_do_noise_effect
-C $996E,1 A--
-C $996F,2 if A was NOT zero jump
-C $9971,4 Decrement noise_counter
-C $9975,1 A = *HL -- A = noise_counter
-C $9976,3 Jump if noise_counter was non-zero
-C $9979,3 chatter_state = 0
-C $997C,3 Call noise_plot_attrs -- clear to black
-C $997F,2 Plot space character
-C $9981,2 {$AA ROR 1 becomes $55 becomes $AA and so on
-C $9983,1 probably a delay / alternating call
-C $9984,3 }
-C $9987,2 ...and then gets overwritten?
-C $9989,3 jump on $55 -> $AA transitions?
-C $998C,3 Jump to plot_mini_font_1
-@ $998F label=sub998f_do_noise_effect
-C $998F,7 If noise_counter > 0 call noise_effect
-C $9996,3 If chatter_delay == 0 jump $99b6
-C $999C,1 chatter_delay--
-C $99A1,2 If A was zero jump sub998f_another_something
+C $9965,3 Load chatter_state
+C $9968,3 If chatter_state was 1 (starting) then jump to drive_chatter_clear
+C $996B,3 If chatter_state was 2 (displaying) then jump to drive_chatter_do_noise_effect
+C $996E,3 If chatter_state was 0 (idle) then jump to drive_chatter_idle
+N $9971 Otherwise chatter_state is 3 (stopping).
+C $9971,4 Decrement noise_counter in-place
+C $9975,1 Load noise_counter
+C $9976,3 Jump into noise_effect if it was non-zero
+C $9979,3 New chatter_state is 0 (idle)
+C $997C,3 Call noise_plot_attrs to clear to black
+N $997F This is the flashing cursor.
+@ $997F label=drive_chatter_idle
+C $997F,2 Plot a space character
+C $9981,6 Alternating bit generator: $AA rotated 1 becomes $55, $55 rotated 1 becomes $AA, and so on, result in carry flag
+C $9987,2 (flag?)
+C $9989,3 Exit via plot_mini_font_2 if carry set
+C $998C,3 Otherwise exit via plot_mini_font_1
+@ $998F label=drive_chatter_do_noise_effect
+C $998F,7 If noise_counter > 0 exit via noise_effect
+C $9996,6 If chatter_delay is zero jump to drive_chatter_clear_line
+C $999C,4 Otherwise decrement chatter_delay
+C $99A0,1 Copy chatter_delay for later
+C $99A1,2 If chatter_delay was zero jump to drive_chatter_99bd
 C $99A3,3 Load address of next character
 C $99A6,1 Go back 1
 C $99A7,1 Load the character for when we call plot_mini_font*
 C $99A8,2 Clear string terminator bit
-C $99AA,4 message_x - 1
-C $99AE,2 rotate it by B  (B is noise counter) .. wut?
-C $99B0,3 if carry jump plot_mini_font_2
-C $99B3,3 Jump to plot_mini_font_1
-@ $99B6 label=sub998f_something
-C $99B6,7 If message_x != 0 jump #R$9A30
-@ $99BD label=sub998f_another_something
-C $99BD,3 HL = message_set
-C $99C0,1 A = *HL first char of
-C $99C1,4 String terminator? jump to clear_chatter if so
-C $99C5,2 this tests for $FE -- different terminator?
-C $99C7,2 If not $fe goto pc_chatter_message
-C $99CA,7 message_set = *HL
-C $99D1,2 goto 99e4_exit
+C $99AA,4 A = message_x - 1
+C $99AE,2 Rotate chatter_delay (testing the bottom bit but why?)
+N $99B0 Could JP $9989 here instead.
+C $99B0,3 Exit via plot_mini_font_2 if carry set
+C $99B3,3 Otherwise exit via plot_mini_font_1
+@ $99B6 label=drive_chatter_clear_line
+C $99B6,7 If message_x != 0 exit via pc_clear_line
+@ $99BD label=drive_chatter_99bd
+C $99BD,3 Load message set address
+C $99C0,1 Read a byte
+C $99C1,4 Is it a message set terminator? Jump to drive_chatter_stop if so
+N $99C5 An $FE byte means the next two bytes are the address of another message set.
+C $99C5,2 Is it introducing a message set address?
+C $99C7,2 Exit via pc_chatter_message if not
+N $99C9 The next two bytes hold a message set address.
+C $99C9,1 Step over the $FE byte
+C $99CA,7 message_set = wordat(HL)
+C $99D1,2 Jump to drive_chatter_clear
 N $99D3 This entry point is used by the routines at #R$858C and #R$8876.
-@ $99D3 label=clear_chatter
-C $99D3,5 Set the noise effect counter to 4
-C $99D8,4 Set #R$963D to 3 (end of line?)
+@ $99D3 label=drive_chatter_stop
+C $99D3,5 Set noise_counter to 4
+C $99D8,4 Set chatter_state to 3 (stopping)
 C $99DC,3 Exit via clear_message_line
-@ $99DF label=99df_something_else
-C $99DF,5 #R$963D = 2 (displaying complete message)
-@ $99E4 label=99e4_exit
-C $99E4,8 Call clear_message_line
+@ $99DF label=drive_chatter_starting
+C $99DF,5 chatter_state = 2 (displaying)
+@ $99E4 label=drive_chatter_clear
+C $99E4,3 Call clear_message_line
+C $99E7,2 Set noise effect counter to 4
+C $99E9,3 Exit via noise_effect
 c $99EC Shows the chatter - the alerts and remarks from the game's characters
 D $99EC Used by the routine at #R$9A55.
 @ $99EC label=print_chatter
-C $99EC,3 Load message set address
+C $99EC,3 Load current message set address
 @ $99EF label=pc_loop
 C $99EF,2 Read a byte and advance
 N $99F1 $FC indicates a three-way random choice. Otherwise it's the index of the speaking character (1/2/3 for Nancy/Raymond/Tony) or 0 for the helicopter pilot.
 C $99F1,4 If byte != $FC then jump to pc_plot_character
+N $99F5 We have a three-way choice here.
 @ $99F5 label=pc_random_choice
 C $99F5,1 Preserve message data address
-N $99F6 We have a three-way choice here.
-C $99F6,3 Call rng - returns a random byte
+C $99F6,3 Call rng - returns a random byte in #REGa
 C $99F9,1 Restore message data address
 C $99FA,4 If random value < $55 jump to pc_load_message_ptr -- a 33.3% chance
 C $99FE,2 Skip first option message
@@ -4246,7 +4252,7 @@ C $9A0C,1 Is it zero? (=> the pilot character's face)
 C $9A0D,1 Preserve message pointer
 C $9A0E,6 Plot whatever face #R$5CF2 points to, otherwise calculate the face graphic's address
 @ $9A14 ssub=LD HL,(bitmap_nancy - 180)
-C $9A14,3 Load base address of face graphics (BUT it's actually earlier than the real base because we're 1-indexed)
+C $9A14,3 Load base address of face graphics (BUT it's actually 180 bytes earlier than the real base because we're 1-indexed)
 C $9A17,3 Length of face graphic (bitmap + attrs = 4*8*5 + 4*5)
 @ $9A1A label=pc_multiply
 C $9A1A,3 Get face graphic address
@@ -4260,7 +4266,7 @@ C $9A24,4 Fetch address of message to start showing
 C $9A28,3 Save current message set address
 C $9A2B,4 Save next character address
 C $9A2F,1 Cause a clear_message_line and fall through
-N $9A30 This entry point is used by the routine at #R$9965.
+N $9A30 This entry point is used by the routine at #R$9965. #REGa is message_x.
 @ $9A30 label=pc_clear_line
 C $9A30,6 If (A == 0) clear_message_line
 C $9A36,3 Fetch next_character
@@ -4279,24 +4285,28 @@ C $9A4C,1 Restore message_x
 C $9A4D,4 Increment and store message_x
 C $9A51,3 Update next_character
 C $9A54,1 Return
-c $9A55 Noise in/out effect
+c $9A55 Noise in/out effect used for mugshots
 D $9A55 Used by the routine at #R$9965.
 R $9A55 I:A Noise effect counter
 @ $9A55 label=noise_effect
-C $9A55,4 Decrement the noise effect counter
+C $9A55,4 Decrement noise_counter
 C $9A59,3 Jump to print_chatter if it's zero, otherwise fallthrough
 N $9A5C This entry point is used by the routine at #R$9965.
+@ $9A5C label=ne_9a5c
 C $9A5C,1 Shift A's bottom bit into carry
-C $9A5D,2 A = 255
+C $9A5D,2 A = 255  -- plot_mini_font_1 flag?
 C $9A5F,2 D = 32  -- ASCII character for plot_mini_font*
 C $9A61,5 If A on input was odd then jump
 C $9A66,2 else call plot_mini_font_2 and continue at $9a6b
+@ $9A68 label=ne_9a68
 C $9A68,3 Call plot_mini_font_1
+@ $9A6B label=ne_9a6b
 C $9A6B,3 Set plot address to (176,8)
+@ $9A70 label=ne_9a70
 C $9A6E,4 B,C = 4 columns/bytes, 40 rows
 C $9A72,1 Preserve row ptr
 C $9A73,3 Point #REGhl at noise_bytes
-@ $9A76 label=noise_plot_loop
+@ $9A76 label=ne_plot_loop
 C $9A76,2 A = *HL - B -- Subtract row counter (4,3,2,1)
 C $9A78,2 *HL++ = A
 C $9A7A,1 Rotate A left by 1
@@ -4309,11 +4319,11 @@ C $9A83,15 Usual row movement magic here
 C $9A92,4 Loop while rows remain
 C $9A96,2 #REGa = attribute $47 => BRIGHT + white over black
 N $9A98 This entry point is used by the routine at #R$9965.
-@ $9A98 label=noise_plot_attrs
+@ $9A98 label=ne_plot_attrs
 C $9A98,3 Screen attribute position (22,1)
 C $9A9B,2 5 rows
 C $9A9D,3 32 - 3 = row skip
-@ $9AA0 label=9aa0_loop
+@ $9AA0 label=ne_9a00_loop
 C $9AA0,7 Set four attribute bytes
 C $9AA7,1 Move to start of next row
 C $9AA8,2 Loop while rows remain
@@ -4351,6 +4361,7 @@ C $9AE9,1 Move down 8 attribute rows
 C $9AEA,2 Loop
 c $9AEC Plot mini font characters
 D $9AEC Used by the routines at #R$9965 and #R$9A55.
+R $9AEC I:A flag?
 R $9AEC I:D The character to plot (ASCII)
 @ $9AEC label=plot_mini_font_1
 C $9AEF,2 Jump to pmf_go
@@ -4358,15 +4369,20 @@ N $9AF1 This entry point is used by the routines at #R$9965, #R$99EC and #R$9A55
 @ $9AF1 label=plot_mini_font_2
 C $9AF1,3 values to self modify with
 @ $9AF4 label=pmf_go
+C $9AF4,1 Preserve A
 C $9AF5,8 self modify LD C and OR 7 later
-C $9AFE,4 If not string terminator, goto pmf_regular_char
-N $9B02 String terminator
+C $9AFD,1 Restore A
+C $9AFE,4 If not string terminator, goto pmf_regular_char  -- or is this a flag?
+N $9B02 String terminator?
 C $9B02,2 $BF / 8?
-@ $9B08 label=rpmf_egular_char
+@ $9B08 label=pmf_regular_char
 C $9B08,6 A = A*5+2
+@ $9B10 label=pmf_9b10
 C $9B0E,4 8 - $C0 / 8 ??
+@ $9B12 label=pmf_9b12
 C $9B12,7 divider / rounding?
 C $9B19,8 Modify jump table - A * 4 - 4 bytes per sequence
+@ $9B21 label=pmf_9b21
 C $9B21,3 General multiplier by A
 C $9B24,3 Self modify #R$9B88 which is a mask
 C $9B27,1 Get ASCII character
@@ -4383,6 +4399,7 @@ C $9B48,4 C += A - 47 -- not convinced this is ever used
 C $9B4C,3 Turn the glyph ID in #REGc into ASCII in #REGa
 @ $9B4F label=pmf_have_ascii
 C $9B4F,9 #REGbc = (#REGa - 'A') * 6
+@ $9B5F label=pmf_9b5f
 C $9B58,8 Point #REGhl at minifont
 C $9B60,3 Self modified earlier
 C $9B63,3 Self modified earlier
@@ -4392,6 +4409,7 @@ C $9B8A,4 *scr++ = (*scr AND A) OR B
 C $9B8E,2 *scr-- = C
 C $9B90,1 Next source byte ?
 C $9B91,16 Move to next scanline
+@ $9BA1 label=pmf_next_row
 C $9BA1,2 Decrement row counter
 C $9BA3,3 Loop while rows remain
 C $9BA6,1 Return
