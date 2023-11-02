@@ -461,7 +461,7 @@ N $5EBD Entry 18 (turn sign, pointing right)
 B $5EBD,3,3
 W $5EC0,2,2 Arg for routine passed in DE
 W $5EC2,2,2 -> Routine at #R$9278
-b $5EC4 [Stage 1] Initial map segment
+b $5EC4 [Stage 1] Map: Start stretch
 N $5EC4 Start stretch
 N $5EC4 Start stretch, curvature
 @ $5EC4 label=map_start_curvature
@@ -481,6 +481,7 @@ B $5F2A,78,8*9,6
 N $5F78 Start stretch, right-side objects
 @ $5F78 label=map_start_rightobjs
 B $5F78,90,8*11,2
+b $5FD2 [Stage 1] Map: Left fork
 N $5FD2 Left fork
 N $5FD2 Left fork, curvature
 @ $5FD2 label=map_left_curvature
@@ -500,6 +501,7 @@ B $6011,65,8*8,1
 N $6052 Left fork, right-side objects
 @ $6052 label=map_left_rightobjs
 B $6052,54,8*6,6
+b $6088 [Stage 1] Map: Right fork (dirt track)
 N $6088 Right fork (dirt track), curvature
 @ $6088 label=map_right_curvature
 B $6088,27,8*3,3
@@ -518,6 +520,7 @@ B $6109,58,8*7,2
 N $6143 Right fork (dirt track), right-side objects
 @ $6143 label=map_right_rightobjs
 B $6143,48,8
+b $6173 [Stage 1] Map: Tunnel section
 N $6173 Tunnel section, curvature
 @ $6173 label=map_tunnel_curvature
 B $6173,22,8*2,6
@@ -536,6 +539,7 @@ B $61BE,11,8,3
 N $61C9 Tunnel section, right-side objects
 @ $61C9 label=map_tunnel_rightobjs
 B $61C9,11,8,3
+b $61D4 [Stage 1] Map: Loop section
 N $61D4 Loop section, curvature
 @ $61D4 label=map_loop_curvature
 B $61D4,53,8*6,5
@@ -1626,29 +1630,29 @@ B $7A0F,52,8*6,4 16x13 pixels, masked #HTML[#CALL:graphic($7A0F,16,13,1,1)]
 @ $7A43 label=bitmap_smoke2
 B $7A43,44,8*5,4 16x11 pixels, masked #HTML[#CALL:graphic($7A43,16,11,1,1)]
 @ $7A6F label=bitmap_smoke3
-B $7A6F,36,8*4,4 16x9 pixels, masked  #HTML[#CALL:graphic($7A6F,16,9,1,1)]
+B $7A6F,36,8*4,4 16x9 pixels, masked #HTML[#CALL:graphic($7A6F,16,9,1,1)]
 @ $7A93 label=bitmap_smoke4
-B $7A93,14,8,6 8x7 pixels, masked     #HTML[#CALL:graphic($7A93,8,7,1,1)]
+B $7A93,14,8,6 8x7 pixels, masked #HTML[#CALL:graphic($7A93,8,7,1,1)]
 @ $7AA1 label=bitmap_smoke5
-B $7AA1,10,8,2 8x5 pixels, masked     #HTML[#CALL:graphic($7AA1,8,5,1,1)]
+B $7AA1,10,8,2 8x5 pixels, masked #HTML[#CALL:graphic($7AA1,8,5,1,1)]
 @ $7AAB label=bitmap_smoke6
-B $7AAB,6,6 8x3 pixels, masked        #HTML[#CALL:graphic($7AAB,8,3,1,1)]
+B $7AAB,6,6 8x3 pixels, masked #HTML[#CALL:graphic($7AAB,8,3,1,1)]
 @ $7AB1 label=bitmap_fire1
-B $7AB1,64,4 32x16 pixels  #HTML[#CALL:graphic($7AB1,32,16,0,1)]
+B $7AB1,64,4 32x16 pixels #HTML[#CALL:graphic($7AB1,32,16,0,1)]
 @ $7AF1 label=bitmap_fire2
-B $7AF1,64,4 32x16 pixels  #HTML[#CALL:graphic($7AF1,32,16,0,1)]
+B $7AF1,64,4 32x16 pixels #HTML[#CALL:graphic($7AF1,32,16,0,1)]
 @ $7B31 label=bitmap_fire3
-B $7B31,48,3 24x8 pixels, masked  #HTML[#CALL:graphic($7B31,24,8,1,1)]
+B $7B31,48,3 24x8 pixels, masked #HTML[#CALL:graphic($7B31,24,8,1,1)]
 @ $7B61 label=bitmap_fire4
-B $7B61,48,3 24x8 pixels, masked  #HTML[#CALL:graphic($7B61,24,8,1,1)]
+B $7B61,48,3 24x8 pixels, masked #HTML[#CALL:graphic($7B61,24,8,1,1)]
 @ $7B91 label=bitmap_fire5
-B $7B91,20,4 16x5 pixels, masked  #HTML[#CALL:graphic($7B91,16,5,1,1)]
+B $7B91,20,4 16x5 pixels, masked #HTML[#CALL:graphic($7B91,16,5,1,1)]
 @ $7BA5 label=bitmap_fire5s
-B $7BA5,20,4 16x5 pixels, masked  #HTML[#CALL:graphic($7BA5,16,5,1,1)]
+B $7BA5,20,4 16x5 pixels, masked #HTML[#CALL:graphic($7BA5,16,5,1,1)]
 @ $7BB9 label=bitmap_fire6
-B $7BB9,24,4 16x6 pixels, masked  #HTML[#CALL:graphic($7BB9,16,6,1,1)]
+B $7BB9,24,4 16x6 pixels, masked #HTML[#CALL:graphic($7BB9,16,6,1,1)]
 @ $7BD1 label=bitmap_fire6s
-B $7BD1,24,4 16x6 pixels, masked  #HTML[#CALL:graphic($7BD1,16,6,1,1)]
+B $7BD1,24,4 16x6 pixels, masked #HTML[#CALL:graphic($7BD1,16,6,1,1)]
 b $7BE9 [Graphics] Faces
 N $7BE9 Nancy's face (32x40)
 N $7BE9 #HTML[#CALL:face($7BE9)]
@@ -8134,7 +8138,7 @@ C $C02A,2 Jump to rm_restart_hazards_read
 N $C02C Handle hazard commands (3 = off, 4/5/6 = tumbleweeds left/right/both, 7/8/9 => barriers)
 N $C02C When on left it uses lane 1, on right it uses lane 4, both it uses lane 2 and 3.
 @ $C02C label=rm_hazards_set_hazard_command
-C $C02C,3 Self modify 'LD (HL),xxxx' at #R$C058 to load A  [which is command_no-3]
+C $C02C,3 Self modify 'LD (HL),xxxx' at #R$C058 to load A [which is command_no-3]
 C $C02F,2 Jump to rm_read_hazards
 @ $C031 label=rm_hazards_road_fork_command
 C $C031,4 Load address of left route's hazards data  -- Sampled HL: $5F26 (road split)
@@ -10618,7 +10622,9 @@ B $E364,88,8
 N $E3BC Circle expanding animation mask (8x8, 7 frames)
 N $E3BC #HTML[#CALL:anim($E3BC,8,8,0,0,7)]
 N $E3BC #HTML[#CALL:graphic($E3BC,8,7*8,0,0)]
-B $E3BC,388,8*48,4
+B $E3BC,56,8
+b $E3F4 TBD
+B $E3F4,332,8*41,4
 w $E540 A table of 96 words being 10^x or similar function
 D $E540 Distance horizontal shift? Field of view table? It affects the horizontal position of the road.
 W $E540,192,2
