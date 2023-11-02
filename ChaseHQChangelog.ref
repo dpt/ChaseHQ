@@ -3,18 +3,31 @@
 ;
 
 [Page:Changelog]
-SectionType=ListItems
+SectionType=BulletPoints
 
-[Changelog:20231013]
-Virtually everything is now labelled
-Most locations are mapped out
-Most graphics are decoded
-Map data format is mostly understood
+[Changelog:20231102]
+Third release
+
+- Virtually everything is now labelled
+
+- Most locations are mapped out
+
+- Most of the graphics are decoded
+
+- The map data format is mostly understood
+
+- Many of the routines are reasonably documented
+
+- Some still are not, notably the road drawing code
 
 [Changelog:20230518]
-Lots of graphics decoded
-Map data is understood better
-Many functions have semi decent explanations
+Second release
+
+- Lots of graphics decoded
+
+- Map data is understood better
+
+- Many functions have semi decent explanations
 
 [Changelog:20230426]
 First release
