@@ -45,7 +45,7 @@ Next: <a href="8A57.html">8A57</a>
 </td>
 </tr>
 <tr>
-<td class="asm-label">sfx8a36</td>
+<td class="asm-label">sfx_bipbow</td>
 <td class="address-2"><span id="35382"></span>8A36</td>
 <td class="instruction">LD C,$14</td>
 <td class="comment-1" rowspan="1">C = 20</td>
@@ -57,7 +57,7 @@ Next: <a href="8A57.html">8A57</a>
 <td class="comment-1" rowspan="1">Inner loop counter. H is decremented and restored from L each loop.</td>
 </tr>
 <tr>
-<td class="asm-label">sfx8a36_loop</td>
+<td class="asm-label">sfx_bipbow_loop</td>
 <td class="address-2"><span id="35387"></span>8A3B</td>
 <td class="instruction">DEC D</td>
 <td class="comment-1" rowspan="2">Delay loop of D iterations</td>
@@ -65,7 +65,7 @@ Next: <a href="8A57.html">8A57</a>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="35388"></span>8A3C</td>
-<td class="instruction">JR NZ,<a href="8A36.html#35387">sfx8a36_loop</a></td>
+<td class="instruction">JR NZ,<a href="8A36.html#35387">sfx_bipbow_loop</a></td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -90,9 +90,9 @@ Next: <a href="8A57.html">8A57</a>
 <td class="instruction">LD B,A</td>
 </tr>
 <tr>
-<td class="asm-label">sfx8a36_0</td>
+<td class="asm-label">sfx_bipbow_0</td>
 <td class="address-2"><span id="35395"></span>8A43</td>
-<td class="instruction">DJNZ <a href="8A36.html#35395">sfx8a36_0</a></td>
+<td class="instruction">DJNZ <a href="8A36.html#35395">sfx_bipbow_0</a></td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -113,9 +113,9 @@ Next: <a href="8A57.html">8A57</a>
 <td class="comment-1" rowspan="2">Delay loop of C iterations</td>
 </tr>
 <tr>
-<td class="asm-label">sfx8a36_1</td>
+<td class="asm-label">sfx_bipbow_1</td>
 <td class="address-2"><span id="35402"></span>8A4A</td>
-<td class="instruction">DJNZ <a href="8A36.html#35402">sfx8a36_1</a></td>
+<td class="instruction">DJNZ <a href="8A36.html#35402">sfx_bipbow_1</a></td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -132,12 +132,12 @@ Next: <a href="8A57.html">8A57</a>
 <td class="asm-label"></td>
 <td class="address-1"><span id="35407"></span>8A4F</td>
 <td class="instruction">DEC H</td>
-<td class="comment-1" rowspan="2">Loop while H</td>
+<td class="comment-1" rowspan="2">Loop while <span class="register">H</span> &gt; 0</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="35408"></span>8A50</td>
-<td class="instruction">JR NZ,<a href="8A36.html#35387">sfx8a36_loop</a></td>
+<td class="instruction">JR NZ,<a href="8A36.html#35387">sfx_bipbow_loop</a></td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -149,25 +149,25 @@ Next: <a href="8A57.html">8A57</a>
 <td class="asm-label"></td>
 <td class="address-1"><span id="35411"></span>8A53</td>
 <td class="instruction">DEC C</td>
-<td class="comment-1" rowspan="2">Loop while C</td>
+<td class="comment-1" rowspan="2">Loop while <span class="register">C</span> &gt; 0</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="35412"></span>8A54</td>
-<td class="instruction">JR NZ,<a href="8A36.html#35387">sfx8a36_loop</a></td>
+<td class="instruction">JR NZ,<a href="8A36.html#35387">sfx_bipbow_loop</a></td>
 </tr>
 <tr>
 <td class="routine-comment" colspan="5">
 <span id="35414"></span>
 <div class="comments">
 <div class="paragraph">
-This entry point is used by the routine at <a href="83B5.html">unknown_hook_1</a>.
+This entry point is used by the routine at <a href="83B5.html">start_siren_hook</a>.
 </div>
 </div>
 </td>
 </tr>
 <tr>
-<td class="asm-label">sfx8a36_2</td>
+<td class="asm-label">sfx_bipbow_2</td>
 <td class="address-2"><span id="35414"></span>8A56</td>
 <td class="instruction">RET</td>
 <td class="comment-1" rowspan="1">Return</td>
@@ -185,7 +185,7 @@ Next: <a href="8A57.html">8A57</a>
 </tr>
 </table>
 <footer>
-<div class="release">The incomplete Chase H.Q. disassembly 20230518</div>
+<div class="release">The incomplete Chase H.Q. disassembly 20231102</div>
 <div class="copyright">&copy; 1988 Taito Corporation &copy; 1989 Ocean Software Ltd. (Chase H.Q.) © 2023 David Thomas (this disassembly)</div>
 <div class="created">Created using <a href="https://skoolkit.ca">SkoolKit</a> 8.9.</div>
 </footer>

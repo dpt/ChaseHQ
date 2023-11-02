@@ -54,7 +54,7 @@ Used by the routine at <a href="8401.html">main_loop</a>.
 <td class="asm-label"></td>
 <td class="address-1"><span id="35081"></span>8909</td>
 <td class="instruction">LD A,($A23C)</td>
-<td class="comment-1" rowspan="3">*$A23D |= *$A23C</td>
+<td class="comment-1" rowspan="3">var_a23d |= var_a23c</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -93,14 +93,14 @@ Used by the routine at <a href="8401.html">main_loop</a>.
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="35100"></span>891C</td>
-<td class="instruction">CALL <a href="83B5.html#33726">unknown_hook_2</a></td>
-<td class="comment-1" rowspan="1">Call another hooked routine</td>
+<td class="instruction">CALL <a href="83B5.html#33726">write_registers_hook</a></td>
+<td class="comment-1" rowspan="1">Call write_registers_hook</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="35103"></span>891F</td>
 <td class="instruction">LD A,($A237)</td>
-<td class="comment-1" rowspan="3">If $A237 == 0 return</td>
+<td class="comment-1" rowspan="3">If sfx_0 == 0 return</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -116,7 +116,7 @@ Used by the routine at <a href="8401.html">main_loop</a>.
 <td class="asm-label"></td>
 <td class="address-1"><span id="35108"></span>8924</td>
 <td class="instruction">RLCA</td>
-<td class="comment-1" rowspan="3"><span class="register">E</span> = $A237 * 4 -- stride of table</td>
+<td class="comment-1" rowspan="3"><span class="register">E</span> = sfx_0 * 4 -- stride of table</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -132,7 +132,7 @@ Used by the routine at <a href="8401.html">main_loop</a>.
 <td class="asm-label"></td>
 <td class="address-1"><span id="35111"></span>8927</td>
 <td class="instruction">XOR A</td>
-<td class="comment-1" rowspan="2">$A237 = 0</td>
+<td class="comment-1" rowspan="2">sfx_0 = 0</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -143,7 +143,7 @@ Used by the routine at <a href="8401.html">main_loop</a>.
 <td class="asm-label"></td>
 <td class="address-1"><span id="35115"></span>892B</td>
 <td class="instruction">LD ($A238),A</td>
-<td class="comment-1" rowspan="1">$A238 = 0</td>
+<td class="comment-1" rowspan="1">sfx_1 = 0</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -167,7 +167,7 @@ Used by the routine at <a href="8401.html">main_loop</a>.
 <td class="asm-label"></td>
 <td class="address-1"><span id="35123"></span>8933</td>
 <td class="instruction">LD D,(HL)</td>
-<td class="comment-1" rowspan="4">Load argument value into <span class="register">DE</span></td>
+<td class="comment-1" rowspan="4">Load argument value into <span class="register">DE</span> (note: big endian!)</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -216,13 +216,13 @@ Used by the routine at <a href="8401.html">main_loop</a>.
 <span id="35132"></span>
 <div class="comments">
 <div class="paragraph">
-Pairs of words: (argument, address of sound effect routine)
+Pairs of words: (argument [big endian], address of sound effect routine)
 </div>
 </div>
 </td>
 </tr>
 <tr>
-<td class="asm-label"></td>
+<td class="asm-label">sfx_table</td>
 <td class="address-1"><span id="35132"></span>893C</td>
 <td class="instruction">DEFW $0164</td>
 <td class="comment-1" rowspan="1">Argument in <span class="register">DE</span> for sound effect routine</td>
@@ -230,8 +230,8 @@ Pairs of words: (argument, address of sound effect routine)
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="35134"></span>893E</td>
-<td class="instruction">DEFW <a href="8A0F.html">sfx8a0f</a></td>
-<td class="comment-1" rowspan="1">Sound effect routine $8A0F - "pitt" and "pfff" and gear noise too?</td>
+<td class="instruction">DEFW <a href="8A0F.html">sfx_cornering</a></td>
+<td class="comment-1" rowspan="1">Sound effect routine <a href="8A0F.html">sfx_cornering</a></td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -242,8 +242,8 @@ Pairs of words: (argument, address of sound effect routine)
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="35138"></span>8942</td>
-<td class="instruction">DEFW <a href="89D9.html">sfx89d9</a></td>
-<td class="comment-1" rowspan="1">Sound effect routine $89D9</td>
+<td class="instruction">DEFW <a href="89D9.html">sfx_thud</a></td>
+<td class="comment-1" rowspan="1">Sound effect routine <a href="89D9.html">sfx_thud</a></td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -254,20 +254,20 @@ Pairs of words: (argument, address of sound effect routine)
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="35142"></span>8946</td>
-<td class="instruction">DEFW <a href="8960.html">sfx8960</a></td>
-<td class="comment-1" rowspan="1">Sound effect routine $8960 - crash</td>
+<td class="instruction">DEFW <a href="8960.html">sfx_crash</a></td>
+<td class="comment-1" rowspan="1">Sound effect routine <a href="8960.html">sfx_crash</a> - crash</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="35144"></span>8948</td>
 <td class="instruction">DEFW $000C</td>
-<td class="comment-1" rowspan="1">Argument in <span class="register">DE</span> for sound effect routine</td>
+<td class="comment-1" rowspan="1">Argument in <span class="register">DE</span> for sound effect routine (low)</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="35146"></span>894A</td>
-<td class="instruction">DEFW <a href="8960.html">sfx8960</a></td>
-<td class="comment-1" rowspan="1">Sound effect routine $8960 - crash</td>
+<td class="instruction">DEFW <a href="8960.html">sfx_crash</a></td>
+<td class="comment-1" rowspan="1">Sound effect routine <a href="8960.html">sfx_crash</a> - crash</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -278,8 +278,8 @@ Pairs of words: (argument, address of sound effect routine)
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="35150"></span>894E</td>
-<td class="instruction">DEFW <a href="89D9.html">sfx89d9</a></td>
-<td class="comment-1" rowspan="1">Sound effect routine $89D9</td>
+<td class="instruction">DEFW <a href="89D9.html">sfx_thud</a></td>
+<td class="comment-1" rowspan="1">Sound effect routine <a href="89D9.html">sfx_thud</a></td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -290,8 +290,8 @@ Pairs of words: (argument, address of sound effect routine)
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="35154"></span>8952</td>
-<td class="instruction">DEFW <a href="8A0F.html#35351">sfx8a0f_loop_outer</a></td>
-<td class="comment-1" rowspan="1">Sound effect routine $8A17</td>
+<td class="instruction">DEFW <a href="8A0F.html#35351">sfx_cornering_loop_outer</a></td>
+<td class="comment-1" rowspan="1">Sound effect routine <a href="8A0F.html#35351">sfx_cornering_loop_outer</a></td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -302,8 +302,8 @@ Pairs of words: (argument, address of sound effect routine)
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="35158"></span>8956</td>
-<td class="instruction">DEFW <a href="8A0F.html#35351">sfx8a0f_loop_outer</a></td>
-<td class="comment-1" rowspan="1">Sound effect routine $8A17</td>
+<td class="instruction">DEFW <a href="8A0F.html#35351">sfx_cornering_loop_outer</a></td>
+<td class="comment-1" rowspan="1">Sound effect routine <a href="8A0F.html#35351">sfx_cornering_loop_outer</a></td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -314,8 +314,8 @@ Pairs of words: (argument, address of sound effect routine)
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="35162"></span>895A</td>
-<td class="instruction">DEFW <a href="8A36.html">sfx8a36</a></td>
-<td class="comment-1" rowspan="1">Sound effect routine $8A36 - "bip-bow"</td>
+<td class="instruction">DEFW <a href="8A36.html">sfx_bipbow</a></td>
+<td class="comment-1" rowspan="1">Sound effect routine <a href="8A36.html">sfx_bipbow</a> - "bip-bow"</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -326,8 +326,8 @@ Pairs of words: (argument, address of sound effect routine)
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="35166"></span>895E</td>
-<td class="instruction">DEFW <a href="8A36.html">sfx8a36</a></td>
-<td class="comment-1" rowspan="1">Sound effect routine $8A36 - "bip-bow"</td>
+<td class="instruction">DEFW <a href="8A36.html">sfx_bipbow</a></td>
+<td class="comment-1" rowspan="1">Sound effect routine <a href="8A36.html">sfx_bipbow</a> - "bip-bow"</td>
 </tr>
 </table>
 <table class="asm-navigation">
@@ -342,7 +342,7 @@ Next: <a href="8960.html">8960</a>
 </tr>
 </table>
 <footer>
-<div class="release">The incomplete Chase H.Q. disassembly 20230518</div>
+<div class="release">The incomplete Chase H.Q. disassembly 20231102</div>
 <div class="copyright">&copy; 1988 Taito Corporation &copy; 1989 Ocean Software Ltd. (Chase H.Q.) © 2023 David Thomas (this disassembly)</div>
 <div class="created">Created using <a href="https://skoolkit.ca">SkoolKit</a> 8.9.</div>
 </footer>

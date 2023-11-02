@@ -63,7 +63,7 @@ Used by the routine at <a href="B318.html">main_loop_24</a>.
 <td class="asm-label">draw_car_0</td>
 <td class="address-2"><span id="46484"></span>B594</td>
 <td class="instruction">LD C,A</td>
-<td class="comment-1" rowspan="1">C=A</td>
+<td class="comment-1" rowspan="1">C = A</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -112,7 +112,7 @@ Used by the routine at <a href="B318.html">main_loop_24</a>.
 <td class="asm-label"></td>
 <td class="address-1"><span id="46498"></span>B5A2</td>
 <td class="instruction">LD C,$07</td>
-<td class="comment-1" rowspan="1">C=7</td>
+<td class="comment-1" rowspan="1">C = 7</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -127,10 +127,20 @@ Used by the routine at <a href="B318.html">main_loop_24</a>.
 <td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
+<td class="routine-comment" colspan="5">
+<span id="46504"></span>
+<div class="comments">
+<div class="paragraph">
+117 is the car's vertical position.
+</div>
+</div>
+</td>
+</tr>
+<tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="46504"></span>B5A8</td>
 <td class="instruction">LD A,$75</td>
-<td class="comment-1" rowspan="2">117 - (self modified value $B5AB)</td>
+<td class="comment-1" rowspan="2">117 - &lt;self modified value $B5AB&gt;</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -141,13 +151,13 @@ Used by the routine at <a href="B318.html">main_loop_24</a>.
 <td class="asm-label"></td>
 <td class="address-1"><span id="46508"></span>B5AC</td>
 <td class="instruction">LD D,A</td>
-<td class="comment-1" rowspan="1">D=A</td>
+<td class="comment-1" rowspan="1">D = A</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="46509"></span>B5AD</td>
 <td class="instruction">LD A,C</td>
-<td class="comment-1" rowspan="3">A=C+B+(self modified value $B5B0)</td>
+<td class="comment-1" rowspan="3">A = C + B + &lt;self modified value $B5B0&gt;</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -245,7 +255,7 @@ Used by the routine at <a href="B318.html">main_loop_24</a>.
 <td class="asm-label"></td>
 <td class="address-1"><span id="46533"></span>B5C5</td>
 <td class="instruction">LD A,($A22A)</td>
-<td class="comment-1" rowspan="2">A=*$A22A + *HL</td>
+<td class="comment-1" rowspan="2">A = var_a22a + *HL</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -480,7 +490,7 @@ Used by the routine at <a href="B318.html">main_loop_24</a>.
 <td class="asm-label"></td>
 <td class="address-1"><span id="46590"></span>B5FE</td>
 <td class="instruction">LD E,$68</td>
-<td class="comment-1" rowspan="3">E=$68 C=$05 (width) CALL $B627  draws the top (windscreen)</td>
+<td class="comment-1" rowspan="3">E=$68 C=$05 (width) CALL <a href="B58E.html#46631">sub_b627</a>  draws the top (windscreen)</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -496,7 +506,7 @@ Used by the routine at <a href="B318.html">main_loop_24</a>.
 <td class="asm-label"></td>
 <td class="address-1"><span id="46597"></span>B605</td>
 <td class="instruction">LD E,$68</td>
-<td class="comment-1" rowspan="3">E=$68 C=$05 (width) CALL $B627  draws the bottom (wheels)</td>
+<td class="comment-1" rowspan="3">E=$68 C=$05 (width) CALL <a href="B58E.html#46631">sub_b627</a>  draws the bottom (wheels)</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -755,7 +765,7 @@ Next: <a href="B648.html">B648</a>
 </tr>
 </table>
 <footer>
-<div class="release">The incomplete Chase H.Q. disassembly 20230518</div>
+<div class="release">The incomplete Chase H.Q. disassembly 20231102</div>
 <div class="copyright">&copy; 1988 Taito Corporation &copy; 1989 Ocean Software Ltd. (Chase H.Q.) © 2023 David Thomas (this disassembly)</div>
 <div class="created">Created using <a href="https://skoolkit.ca">SkoolKit</a> 8.9.</div>
 </footer>

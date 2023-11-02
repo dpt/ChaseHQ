@@ -29,7 +29,7 @@ Next: <a href="8876.html">8876</a>
 <td class="routine-comment" colspan="5">
 <div class="details">
 <div class="paragraph">
-Used by the routines at <a href="8258.html">attract_mode</a>, <a href="8401.html">main_loop</a>, <a href="858C.html">run_pregame_screen</a>, <a href="873C.html">escape_scene</a> and <a href="F220.html">load_stage_128k</a>.
+Used by the routines at <a href="8258.html">attract_mode</a>, <a href="8401.html">main_loop</a>, <a href="858C.html">run_pregame_screen</a>, <a href="873C.html">escape_scene</a> and <a href="F220.html">page_in_stage_128k</a>.
 </div>
 </div>
 <table class="input">
@@ -95,7 +95,7 @@ Used by the routines at <a href="8258.html">attract_mode</a>, <a href="8401.html
 <td class="asm-label"></td>
 <td class="address-1"><span id="34797"></span>87ED</td>
 <td class="instruction">LD HL,$A13E</td>
-<td class="comment-1" rowspan="4">Copy (47 bytes) at $A13E to $A16D - saved game state</td>
+<td class="comment-1" rowspan="4">Copy (47 bytes) at <a href="A139.html#41278">saved_game_state</a> to <a href="A139.html#41325">var_a16d</a> - saved game state</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -153,7 +153,7 @@ Used by the routines at <a href="8258.html">attract_mode</a>, <a href="8401.html
 <td class="asm-label"></td>
 <td class="address-1"><span id="34818"></span>8802</td>
 <td class="instruction">LD BC,$000E</td>
-<td class="comment-1" rowspan="2">Copy the 14 bytes passed in to $A26C (road_pos, road_curvature_ptr, etc.)</td>
+<td class="comment-1" rowspan="2">Copy the 14 bytes passed in to <a href="A139.html#41580">road_pos</a> (road_pos, road_curvature_ptr, etc.)</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -262,19 +262,19 @@ Used by the routines at <a href="8258.html">attract_mode</a>, <a href="8401.html
 <td class="asm-label"></td>
 <td class="address-1"><span id="34852"></span>8824</td>
 <td class="instruction">LD ($C059),A</td>
-<td class="comment-1" rowspan="1">Self modify "LD (HL),x" at $C058 to x = 0</td>
+<td class="comment-1" rowspan="1">Self modify "LD (HL),x" at <a href="BDFB.html#49240">C058</a> to x = 0</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="34855"></span>8827</td>
 <td class="instruction">LD ($B064),A</td>
-<td class="comment-1" rowspan="1">Self modify "LD A,x" at $B063 to x = 0  car jump height</td>
+<td class="comment-1" rowspan="1">Self modify "LD A,x" at <a href="B063.html">move_hero_car</a> to x = 0  car jump height</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="34858"></span>882A</td>
 <td class="instruction">LD HL,($5D10)</td>
-<td class="comment-1" rowspan="2">Set $A191 to value of lods_table[2] (the perp's car)</td>
+<td class="comment-1" rowspan="2">Set $A191 to the perp's car LOD</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -357,7 +357,7 @@ Used by the routines at <a href="8258.html">attract_mode</a>, <a href="8401.html
 <td class="asm-label"></td>
 <td class="address-1"><span id="34891"></span>884B</td>
 <td class="instruction">XOR A</td>
-<td class="comment-1" rowspan="2">$A254 = 0  -- clear spawning flag</td>
+<td class="comment-1" rowspan="2">Reset another_spawning_flag</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -469,7 +469,7 @@ Used by the routines at <a href="8258.html">attract_mode</a>, <a href="8401.html
 <td class="asm-label"></td>
 <td class="address-1"><span id="34931"></span>8873</td>
 <td class="instruction">JP <a href="9D51.html#40290">update_scoreboard</a></td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="1">Exit via update_scoreboard</td>
 </tr>
 </table>
 <table class="asm-navigation">
@@ -484,7 +484,7 @@ Next: <a href="8876.html">8876</a>
 </tr>
 </table>
 <footer>
-<div class="release">The incomplete Chase H.Q. disassembly 20230518</div>
+<div class="release">The incomplete Chase H.Q. disassembly 20231102</div>
 <div class="copyright">&copy; 1988 Taito Corporation &copy; 1989 Ocean Software Ltd. (Chase H.Q.) © 2023 David Thomas (this disassembly)</div>
 <div class="created">Created using <a href="https://skoolkit.ca">SkoolKit</a> 8.9.</div>
 </footer>

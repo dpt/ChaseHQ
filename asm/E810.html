@@ -19,11 +19,11 @@ Prev: <a href="E600.html">E600</a>
 </td>
 <td class="up">Up: <a href="../maps/all.html#59408">Map</a></td>
 <td class="next">
-Next: <a href="E8CE.html">E8CE</a>
+Next: <a href="E8FE.html">E8FE</a>
 </td>
 </tr>
 </table>
-<div class="description">E810: looks like initialisation code / relocation perhaps 128K stuff</div>
+<div class="description">E810: Called once the memory map has been setup</div>
 <table class="disassembly">
 <tr>
 <td class="routine-comment" colspan="5">
@@ -32,136 +32,130 @@ Next: <a href="E8CE.html">E8CE</a>
 </td>
 </tr>
 <tr>
-<td class="asm-label">e810_entrypt</td>
+<td class="asm-label">entrypt_48k</td>
 <td class="address-2"><span id="59408"></span>E810</td>
 <td class="instruction">XOR A</td>
-<td class="comment-1" rowspan="1">A = 0</td>
+<td class="comment-1" rowspan="1">Set 128K flag to zero (48K mode)</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="59409"></span>E811</td>
 <td class="instruction">LD B,$03</td>
-<td class="comment-1" rowspan="1">B = 3</td>
+<td class="comment-1" rowspan="1">3 relocations to do</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="59411"></span>E813</td>
-<td class="instruction">JP <a href="E810.html#59421">e810_entrypt_0</a></td>
+<td class="instruction">JP <a href="E810.html#59421">entrypt_48k_0</a></td>
 <td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
-<td class="asm-label">e816_entrypt</td>
+<td class="asm-label">entrypt_128k</td>
 <td class="address-1"><span id="59414"></span>E816</td>
 <td class="instruction">CALL <a href="88D5.html">clear_game_attrs</a></td>
-<td class="comment-1" rowspan="1">Call clear_game_attrs  -- how is this code entered?</td>
+<td class="comment-1" rowspan="1">Call clear_game_attrs</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="59417"></span>E819</td>
 <td class="instruction">LD A,$01</td>
-<td class="comment-1" rowspan="1">A = 1</td>
+<td class="comment-1" rowspan="1">Set 128K flag to one (128K mode)</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="59419"></span>E81B</td>
 <td class="instruction">LD B,$05</td>
-<td class="comment-1" rowspan="1">B = 5</td>
+<td class="comment-1" rowspan="1">5 relocations to do</td>
 </tr>
 <tr>
-<td class="asm-label">e810_entrypt_0</td>
+<td class="asm-label">entrypt_48k_0</td>
 <td class="address-2"><span id="59421"></span>E81D</td>
 <td class="instruction">LD ($A139),A</td>
-<td class="comment-1" rowspan="1">-- suspect this is a 128K mode flag</td>
+<td class="comment-1" rowspan="1">Store 128K mode flag</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="59424"></span>E820</td>
 <td class="instruction">LD SP,$0000</td>
-<td class="comment-1" rowspan="1">SP = 0  -- put stack at end of RAM?</td>
+<td class="comment-1" rowspan="1">Put stack at end of RAM</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="59427"></span>E823</td>
 <td class="instruction">PUSH BC</td>
-<td class="comment-1" rowspan="1">Save B</td>
+<td class="comment-1" rowspan="1">Preserve count in B</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="59428"></span>E824</td>
 <td class="instruction">LD HL,$F5BE</td>
-<td class="comment-1" rowspan="1">Address of data block</td>
+<td class="comment-1" rowspan="4">Copy status panel initial pixels to the top of the screen</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="59431"></span>E827</td>
 <td class="instruction">LD DE,$4000</td>
-<td class="comment-1" rowspan="1">Copy to the screen</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="59434"></span>E82A</td>
 <td class="instruction">LD BC,$0800</td>
-<td class="comment-1" rowspan="1">2K long</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="59437"></span>E82D</td>
 <td class="instruction">LDIR</td>
-<td class="comment-1" rowspan="1">Copy</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="59439"></span>E82F</td>
 <td class="instruction">LD DE,$5800</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="3">Copy status panel initial attributes to the top of the attribute file</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="59442"></span>E832</td>
 <td class="instruction">INC B</td>
-<td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="59443"></span>E833</td>
 <td class="instruction">LDIR</td>
-<td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="59445"></span>E835</td>
 <td class="instruction">AND A</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="2">Call stop_the_tape if in 128K mode  [prob STOP TAPE / PRESS KEY -- does it return?]</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="59446"></span>E836</td>
-<td class="instruction">CALL Z,<a href="E8CE.html#59646">e8fe_mystery</a></td>
-<td class="comment-1" rowspan="1"></td>
+<td class="instruction">CALL Z,<a href="E8FE.html">stop_the_tape</a></td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="59449"></span>E839</td>
 <td class="instruction">POP BC</td>
-<td class="comment-1" rowspan="1">must be the loop counter</td>
+<td class="comment-1" rowspan="1">Restore B</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="59450"></span>E83A</td>
 <td class="instruction">LD HL,$E858</td>
-<td class="comment-1" rowspan="1">Point <span class="register">HL</span> at $e858 table</td>
+<td class="comment-1" rowspan="1">Point <span class="register">HL</span> at relocations</td>
 </tr>
 <tr>
-<td class="asm-label">loopy</td>
+<td class="asm-label">relocate_loop</td>
 <td class="address-2"><span id="59453"></span>E83D</td>
 <td class="instruction">PUSH BC</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="1">Preserve B</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="59454"></span>E83E</td>
 <td class="instruction">LD E,(HL)</td>
-<td class="comment-1" rowspan="4">DE = wordat(HL) HL += 2</td>
+<td class="comment-1" rowspan="4">DE = wordat(HL); HL += 2</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -182,13 +176,13 @@ Next: <a href="E8CE.html">E8CE</a>
 <td class="asm-label"></td>
 <td class="address-1"><span id="59458"></span>E842</td>
 <td class="instruction">PUSH DE</td>
-<td class="comment-1" rowspan="1">Stack DE</td>
+<td class="comment-1" rowspan="1">Stack source pointer</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="59459"></span>E843</td>
 <td class="instruction">LD E,(HL)</td>
-<td class="comment-1" rowspan="4">DE = wordat(HL) HL += 2 -- dest</td>
+<td class="comment-1" rowspan="4">DE = wordat(HL); HL += 2 -- Destination pointer</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -209,7 +203,7 @@ Next: <a href="E8CE.html">E8CE</a>
 <td class="asm-label"></td>
 <td class="address-1"><span id="59463"></span>E847</td>
 <td class="instruction">LD C,(HL)</td>
-<td class="comment-1" rowspan="4">BC = wordat(HL) HL += 2 -- count</td>
+<td class="comment-1" rowspan="4">BC = wordat(HL); HL += 2 -- Count</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -230,13 +224,13 @@ Next: <a href="E8CE.html">E8CE</a>
 <td class="asm-label"></td>
 <td class="address-1"><span id="59467"></span>E84B</td>
 <td class="instruction">EX (SP),HL</td>
-<td class="comment-1" rowspan="1">exchange top of stack and HL. HL is now src</td>
+<td class="comment-1" rowspan="1">Exchange top of stack and HL. HL is now source pointer</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="59468"></span>E84C</td>
 <td class="instruction">LDIR</td>
-<td class="comment-1" rowspan="1">Do copy</td>
+<td class="comment-1" rowspan="1">Copy</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -252,8 +246,8 @@ Next: <a href="E8CE.html">E8CE</a>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="59472"></span>E850</td>
-<td class="instruction">DJNZ <a href="E810.html#59453">loopy</a></td>
-<td class="comment-1" rowspan="1">Loop</td>
+<td class="instruction">DJNZ <a href="E810.html#59453">relocate_loop</a></td>
+<td class="comment-1" rowspan="1">Loop while B</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -264,194 +258,177 @@ Next: <a href="E8CE.html">E8CE</a>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="59477"></span>E855</td>
-<td class="instruction">JP <a href="83CD.html">$83CD</a></td>
-<td class="comment-1" rowspan="1">Start the game</td>
+<td class="instruction">JP <a href="83CD.html">bootstrap</a></td>
+<td class="comment-1" rowspan="1">Exit via bootstrap  -- start the game</td>
 </tr>
 <tr>
-<td class="asm-label">e858_copy_blocks</td>
+<td class="asm-label">relocations</td>
 <td class="address-1"><span id="59480"></span>E858</td>
-<td class="instruction">DEFW $E88E</td>
-<td class="comment-1" rowspan="1">src ptr</td>
+<td class="instruction">DEFW <a href="E810.html#59534">data_e88e</a></td>
+<td class="comment-1" rowspan="3">Copy 24 bytes from data_e88e to $EC00</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="59482"></span>E85A</td>
 <td class="instruction">DEFW <a href="EBFF.html#60416">$EC00</a></td>
-<td class="comment-1" rowspan="1">dst ptr</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="59484"></span>E85C</td>
 <td class="instruction">DEFW $0018</td>
-<td class="comment-1" rowspan="1">count</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="59486"></span>E85E</td>
-<td class="instruction">DEFW $E8A6</td>
-<td class="comment-1" rowspan="1">src ptr</td>
+<td class="instruction">DEFW <a href="E810.html#59558">square_zoom_in_mask</a></td>
+<td class="comment-1" rowspan="3">Copy 40 bytes from square_zoom_in_mask to $EB00</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="59488"></span>E860</td>
 <td class="instruction">DEFW $EB00</td>
-<td class="comment-1" rowspan="1">dst ptr</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="59490"></span>E862</td>
 <td class="instruction">DEFW $0028</td>
-<td class="comment-1" rowspan="1">count</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="59492"></span>E864</td>
-<td class="instruction">DEFW <a href="E8CE.html">$E8CE</a></td>
-<td class="comment-1" rowspan="1">src ptr</td>
+<td class="instruction">DEFW <a href="E810.html#59598">diamond_zoom_in_mask</a></td>
+<td class="comment-1" rowspan="3">Copy 48 bytes from diamond_zoom_in_mask to $EA00</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="59494"></span>E866</td>
 <td class="instruction">DEFW $EA00</td>
-<td class="comment-1" rowspan="1">dst ptr</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="59496"></span>E868</td>
 <td class="instruction">DEFW $0030</td>
-<td class="comment-1" rowspan="1">count</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="59498"></span>E86A</td>
-<td class="instruction">DEFW <a href="F220.html">load_stage_128k</a></td>
-<td class="comment-1" rowspan="1">src ptr</td>
+<td class="instruction">DEFW <a href="F220.html">page_in_stage_128k</a></td>
+<td class="comment-1" rowspan="3">Copy 926 bytes from page_in_stage_128k onwards to $8014 [128K only]</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="59500"></span>E86C</td>
 <td class="instruction">DEFW <a href="8014.html">load_stage</a></td>
-<td class="comment-1" rowspan="1">dst ptr</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="59502"></span>E86E</td>
 <td class="instruction">DEFW $039E</td>
-<td class="comment-1" rowspan="1">count</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="59504"></span>E870</td>
-<td class="instruction">DEFW $E876</td>
-<td class="comment-1" rowspan="1">src ptr</td>
+<td class="instruction">DEFW <a href="E810.html#59510">128k_mode_hooks</a></td>
+<td class="comment-1" rowspan="3">Copy 24 bytes (3 bytes * 8 hooks) from 128k_mode_hooks to hooks at <a href="83B5.html">start_siren_hook</a> [128K only]</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="59506"></span>E872</td>
-<td class="instruction">DEFW <a href="83B5.html">unknown_hook_1</a></td>
-<td class="comment-1" rowspan="1">dst ptr</td>
+<td class="instruction">DEFW <a href="83B5.html">start_siren_hook</a></td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="59508"></span>E874</td>
 <td class="instruction">DEFW $0018</td>
-<td class="comment-1" rowspan="1">count</td>
 </tr>
 <tr>
-<td class="asm-label"></td>
+<td class="asm-label">128k_mode_hooks</td>
 <td class="address-1"><span id="59510"></span>E876</td>
-<td class="instruction">DEFB $C3,$45,$80</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="instruction">JP <a href="8014.html#32837">load_stage_3</a></td>
+<td class="comment-1" rowspan="1">Becomes start_siren_hook</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="59513"></span>E879</td>
-<td class="instruction">DEFB $C3,$5D,$80</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="instruction">JP $805D</td>
+<td class="comment-1" rowspan="1">Becomes engine_sfx_play_hook</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="59516"></span>E87C</td>
-<td class="instruction">DEFB $C3,$91,$80</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="instruction">JP <a href="8014.html#32913">load_stage_6</a></td>
+<td class="comment-1" rowspan="1">Becomes silence_audio_hook</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="59519"></span>E87F</td>
-<td class="instruction">DEFB $C3,$96,$80</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="instruction">JP $8096</td>
+<td class="comment-1" rowspan="1">Becomes write_registers_hook</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="59522"></span>E882</td>
-<td class="instruction">DEFB $C3,$E5,$80</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="instruction">JP $80E5</td>
+<td class="comment-1" rowspan="1">Becomes turbo_sfx_play_hook</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="59525"></span>E885</td>
-<td class="instruction">DEFB $C3,$EE,$80</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="instruction">JP <a href="80B9.html#33006">tape_load_5C00_4</a></td>
+<td class="comment-1" rowspan="1">Becomes engine_sfx_setup_hook</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="59528"></span>E888</td>
-<td class="instruction">DEFB $C3,$36,$81</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="instruction">JP $8136</td>
+<td class="comment-1" rowspan="1">Becomes play_speech_hook</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="59531"></span>E88B</td>
-<td class="instruction">DEFB $C3,$0F,$82</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="instruction">JP $820F</td>
+<td class="comment-1" rowspan="1">Becomes attract_mode_hook</td>
 </tr>
 <tr>
-<td class="asm-label"></td>
+<td class="asm-label">data_e88e</td>
 <td class="address-1"><span id="59534"></span>E88E</td>
 <td class="instruction">DEFB $06,$F8,$EA</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="8">Copied to $EC00</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="59537"></span>E891</td>
 <td class="instruction">DEFB $0C,$5C,$E3</td>
-<td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="59540"></span>E894</td>
 <td class="instruction">DEFB $08,$B4,$E3</td>
-<td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="59543"></span>E897</td>
 <td class="instruction">DEFB $07,$F8,$E9</td>
-<td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="59546"></span>E89A</td>
 <td class="instruction">DEFB $06,$28,$EB</td>
-<td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="59549"></span>E89D</td>
 <td class="instruction">DEFB $0C,$BC,$E3</td>
-<td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="59552"></span>E8A0</td>
 <td class="instruction">DEFB $08,$F4,$E3</td>
-<td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="59555"></span>E8A3</td>
 <td class="instruction">DEFB $07,$30,$EA</td>
-<td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
 <td class="routine-comment" colspan="5">
@@ -470,7 +447,7 @@ Square zoom in animation mask (8x8, 5 frames)
 </td>
 </tr>
 <tr>
-<td class="asm-label"></td>
+<td class="asm-label">square_zoom_in_mask</td>
 <td class="address-1"><span id="59558"></span>E8A6</td>
 <td class="instruction">DEFB $00,$00,$00,$10,$00,$00,$00,$00</td>
 <td class="comment-1" rowspan="1"></td>
@@ -499,6 +476,58 @@ Square zoom in animation mask (8x8, 5 frames)
 <td class="instruction">DEFB $FF,$FF,$FF,$FF,$FF,$FF,$FF,$FF</td>
 <td class="comment-1" rowspan="1"></td>
 </tr>
+<tr>
+<td class="routine-comment" colspan="5">
+<span id="59598"></span>
+<div class="comments">
+<div class="paragraph">
+Diamond zoom in animation mask (8x8, 6 frames)
+</div>
+<div class="paragraph">
+<img alt="anim-e8ce" src="../images/scr/anim-e8ce.png" />
+</div>
+<div class="paragraph">
+<img alt="graphic-e8ce" src="../images/scr/graphic-e8ce.png" />
+</div>
+</div>
+</td>
+</tr>
+<tr>
+<td class="asm-label">diamond_zoom_in_mask</td>
+<td class="address-1"><span id="59598"></span>E8CE</td>
+<td class="instruction">DEFB $81,$42,$24,$18,$18,$24,$42,$81</td>
+<td class="comment-1" rowspan="1"></td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="59606"></span>E8D6</td>
+<td class="instruction">DEFB $81,$C3,$66,$3C,$3C,$66,$C3,$81</td>
+<td class="comment-1" rowspan="1"></td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="59614"></span>E8DE</td>
+<td class="instruction">DEFB $C3,$E7,$7E,$3C,$3C,$7E,$E7,$C3</td>
+<td class="comment-1" rowspan="1"></td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="59622"></span>E8E6</td>
+<td class="instruction">DEFB $C3,$E7,$FF,$7E,$7E,$FF,$E7,$C3</td>
+<td class="comment-1" rowspan="1"></td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="59630"></span>E8EE</td>
+<td class="instruction">DEFB $E7,$FF,$FF,$7E,$7E,$FF,$FF,$E7</td>
+<td class="comment-1" rowspan="1"></td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="59638"></span>E8F6</td>
+<td class="instruction">DEFB $FF,$FF,$FF,$FF,$FF,$FF,$FF,$FF</td>
+<td class="comment-1" rowspan="1"></td>
+</tr>
 </table>
 <table class="asm-navigation">
 <tr>
@@ -507,12 +536,12 @@ Prev: <a href="E600.html">E600</a>
 </td>
 <td class="up">Up: <a href="../maps/all.html#59408">Map</a></td>
 <td class="next">
-Next: <a href="E8CE.html">E8CE</a>
+Next: <a href="E8FE.html">E8FE</a>
 </td>
 </tr>
 </table>
 <footer>
-<div class="release">The incomplete Chase H.Q. disassembly 20230518</div>
+<div class="release">The incomplete Chase H.Q. disassembly 20231102</div>
 <div class="copyright">&copy; 1988 Taito Corporation &copy; 1989 Ocean Software Ltd. (Chase H.Q.) © 2023 David Thomas (this disassembly)</div>
 <div class="created">Created using <a href="https://skoolkit.ca">SkoolKit</a> 8.9.</div>
 </footer>

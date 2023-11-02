@@ -23,7 +23,7 @@ Next: <a href="8401.html">8401</a>
 </td>
 </tr>
 </table>
-<div class="description">83CD: Bootstrap</div>
+<div class="description">83CD: Bootstrap / Uber main loop</div>
 <table class="disassembly">
 <tr>
 <td class="routine-comment" colspan="5">
@@ -45,7 +45,7 @@ Builds a table of flipped bytes at $EF00.
 </td>
 </tr>
 <tr>
-<td class="asm-label"></td>
+<td class="asm-label">bootstrap</td>
 <td class="address-2"><span id="33741"></span>83CD</td>
 <td class="instruction">LD HL,$EF00</td>
 <td class="comment-1" rowspan="1">Point <span class="register">HL</span> at $EF00</td>
@@ -106,7 +106,7 @@ Builds a table of flipped bytes at $EF00.
 <td class="asm-label"></td>
 <td class="address-1"><span id="33759"></span>83DF</td>
 <td class="instruction">XOR A</td>
-<td class="comment-1" rowspan="2">$A13C = 0</td>
+<td class="comment-1" rowspan="2">overtake_bonus = 0</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -114,36 +114,50 @@ Builds a table of flipped bytes at $EF00.
 <td class="instruction">LD ($A13C),A</td>
 </tr>
 <tr>
+<td class="routine-comment" colspan="5">
+<span id="33763"></span>
+<div class="comments">
+<div class="paragraph">
+Clear score_bcd and retry_count.
+</div>
+</div>
+</td>
+</tr>
+<tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="33763"></span>83E3</td>
 <td class="instruction">LD HL,$8002</td>
-<td class="comment-1" rowspan="5">Zero $8002..$8006</td>
+<td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="33766"></span>83E6</td>
 <td class="instruction">LD B,$05</td>
+<td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
-<td class="asm-label"></td>
+<td class="asm-label">bootstrap_0</td>
 <td class="address-2"><span id="33768"></span>83E8</td>
 <td class="instruction">LD (HL),A</td>
+<td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="33769"></span>83E9</td>
 <td class="instruction">INC HL</td>
+<td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="33770"></span>83EA</td>
-<td class="instruction">DJNZ $83E8</td>
+<td class="instruction">DJNZ <a href="83CD.html#33768">bootstrap_0</a></td>
+<td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="33772"></span>83EC</td>
 <td class="instruction">INC A</td>
-<td class="comment-1" rowspan="2">$8007 = 1 =&gt; Load stage 1</td>
+<td class="comment-1" rowspan="2">wanted_stage_number = 1</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -171,7 +185,7 @@ Builds a table of flipped bytes at $EF00.
 <td class="asm-label"></td>
 <td class="address-1"><span id="33781"></span>83F5</td>
 <td class="instruction">LD A,($A139)</td>
-<td class="comment-1" rowspan="4">Call relocated f3b6_128k if $A139 is non-zero [128K]</td>
+<td class="comment-1" rowspan="4">Call relocated plsp_f3b6_128k (speech) if in 128K mode</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -191,7 +205,7 @@ Builds a table of flipped bytes at $EF00.
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="33791"></span>83FF</td>
-<td class="instruction">JR $83CD</td>
+<td class="instruction">JR <a href="83CD.html#33741">bootstrap</a></td>
 <td class="comment-1" rowspan="1">Loop</td>
 </tr>
 </table>
@@ -207,7 +221,7 @@ Next: <a href="8401.html">8401</a>
 </tr>
 </table>
 <footer>
-<div class="release">The incomplete Chase H.Q. disassembly 20230518</div>
+<div class="release">The incomplete Chase H.Q. disassembly 20231102</div>
 <div class="copyright">&copy; 1988 Taito Corporation &copy; 1989 Ocean Software Ltd. (Chase H.Q.) © 2023 David Thomas (this disassembly)</div>
 <div class="created">Created using <a href="https://skoolkit.ca">SkoolKit</a> 8.9.</div>
 </footer>

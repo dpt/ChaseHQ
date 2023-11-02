@@ -15,7 +15,7 @@
 <table class="asm-navigation">
 <tr>
 <td class="prev">
-Prev: <a href="8014.html">8014</a>
+Prev: <a href="80B9.html">80B9</a>
 </td>
 <td class="up">Up: <a href="../maps/all.html#33245">Map</a></td>
 <td class="next">
@@ -23,7 +23,7 @@ Next: <a href="8204.html">8204</a>
 </td>
 </tr>
 </table>
-<div class="description">81DD: Start of game chatter</div>
+<div class="description">81DD: [Messages] Start of stage chatter</div>
 <table class="disassembly">
 <tr>
 <td class="routine-comment" colspan="5">
@@ -40,23 +40,23 @@ Next: <a href="8204.html">8204</a>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="33246"></span>81DE</td>
-<td class="instruction">DEFW $81E4</td>
+<td class="instruction">DEFW <a href="81DD.html#33252">giddy_up_boy</a></td>
 <td class="comment-1" rowspan="1">-&gt; Tony: "GIDDY UP BOY!" &lt;STOP&gt;</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="33248"></span>81E0</td>
-<td class="instruction">DEFW $81E8</td>
+<td class="instruction">DEFW <a href="81DD.html#33256">hold_on_man</a></td>
 <td class="comment-1" rowspan="1">-&gt; Tony: "HOLD ON MAN" &lt;STOP&gt;</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="33250"></span>81E2</td>
-<td class="instruction">DEFW <a href="98A9.html#39233">lets_go_chatter</a></td>
+<td class="instruction">DEFW <a href="98A9.html#39233">lets_go_mr_driver</a></td>
 <td class="comment-1" rowspan="1">-&gt; Tony: "LET'S GO. MR. DRIVER." &lt;STOP&gt;</td>
 </tr>
 <tr>
-<td class="asm-label"></td>
+<td class="asm-label">giddy_up_boy</td>
 <td class="address-1"><span id="33252"></span>81E4</td>
 <td class="instruction">DEFB $03</td>
 <td class="comment-1" rowspan="1">Tony ($03)</td>
@@ -64,7 +64,7 @@ Next: <a href="8204.html">8204</a>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="33253"></span>81E5</td>
-<td class="instruction">DEFW $81EC</td>
+<td class="instruction">DEFW <a href="81DD.html#33260">string_giddy_up_boy</a></td>
 <td class="comment-1" rowspan="1">-&gt; "GIDDY UP BOY!"</td>
 </tr>
 <tr>
@@ -74,7 +74,7 @@ Next: <a href="8204.html">8204</a>
 <td class="comment-1" rowspan="1">&lt;STOP&gt;</td>
 </tr>
 <tr>
-<td class="asm-label"></td>
+<td class="asm-label">hold_on_man</td>
 <td class="address-1"><span id="33256"></span>81E8</td>
 <td class="instruction">DEFB $03</td>
 <td class="comment-1" rowspan="1">Tony ($03)</td>
@@ -82,7 +82,7 @@ Next: <a href="8204.html">8204</a>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="33257"></span>81E9</td>
-<td class="instruction">DEFW $81F9</td>
+<td class="instruction">DEFW <a href="81DD.html#33273">string_hold_on_man</a></td>
 <td class="comment-1" rowspan="1">-&gt; "HOLD ON MAN"</td>
 </tr>
 <tr>
@@ -92,13 +92,13 @@ Next: <a href="8204.html">8204</a>
 <td class="comment-1" rowspan="1">&lt;STOP&gt;</td>
 </tr>
 <tr>
-<td class="asm-label"></td>
+<td class="asm-label">string_giddy_up_boy</td>
 <td class="address-1"><span id="33260"></span>81EC</td>
 <td class="instruction">DEFM "GIDDY UP BOY",$A1</td>
 <td class="comment-1" rowspan="1">"GIDDY UP BOY!"</td>
 </tr>
 <tr>
-<td class="asm-label"></td>
+<td class="asm-label">string_hold_on_man</td>
 <td class="address-1"><span id="33273"></span>81F9</td>
 <td class="instruction">DEFM "HOLD ON MA",$CE</td>
 <td class="comment-1" rowspan="1">"HOLD ON MAN"</td>
@@ -107,7 +107,7 @@ Next: <a href="8204.html">8204</a>
 <table class="asm-navigation">
 <tr>
 <td class="prev">
-Prev: <a href="8014.html">8014</a>
+Prev: <a href="80B9.html">80B9</a>
 </td>
 <td class="up">Up: <a href="../maps/all.html#33245">Map</a></td>
 <td class="next">
@@ -116,7 +116,7 @@ Next: <a href="8204.html">8204</a>
 </tr>
 </table>
 <footer>
-<div class="release">The incomplete Chase H.Q. disassembly 20230518</div>
+<div class="release">The incomplete Chase H.Q. disassembly 20231102</div>
 <div class="copyright">&copy; 1988 Taito Corporation &copy; 1989 Ocean Software Ltd. (Chase H.Q.) © 2023 David Thomas (this disassembly)</div>
 <div class="created">Created using <a href="https://skoolkit.ca">SkoolKit</a> 8.9.</div>
 </footer>

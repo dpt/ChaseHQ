@@ -32,10 +32,10 @@ Next: <a href="A27A.html">A27A</a>
 </td>
 </tr>
 <tr>
-<td class="asm-label"></td>
+<td class="asm-label">mode_128k</td>
 <td class="address-1"><span id="41273"></span>A139</td>
 <td class="instruction">DEFB $00</td>
-<td class="comment-1" rowspan="1">Likely to be a 128K mode flag. [128K] If it's set then $83F5 uses it to jump to $81AA. $8435 tests it too and calls &lt;chatter&gt; when it's zero.</td>
+<td class="comment-1" rowspan="1">0/1 =&gt; 48K/128K mode</td>
 </tr>
 <tr>
 <td class="asm-label">current_stage_number</td>
@@ -44,10 +44,10 @@ Next: <a href="A27A.html">A27A</a>
 <td class="comment-1" rowspan="1">Current stage number</td>
 </tr>
 <tr>
-<td class="asm-label"></td>
+<td class="asm-label">start_speech_cycle</td>
 <td class="address-1"><span id="41275"></span>A13B</td>
 <td class="instruction">DEFB $04</td>
-<td class="comment-1" rowspan="1">Used by $8425  -- seems to start at 4 then cycle 3/2/1 with each restart of the game, another random factor?</td>
+<td class="comment-1" rowspan="1">Used by <a href="8401.html#33828">8424</a>  -- seems to start at 4 then cycle 3/2/1 with each restart of the game, another random factor?</td>
 </tr>
 <tr>
 <td class="asm-label">overtake_bonus</td>
@@ -62,41 +62,212 @@ Next: <a href="A27A.html">A27A</a>
 <td class="comment-1" rowspan="1">Number of credits remaining (2 for a new game)</td>
 </tr>
 <tr>
-<td class="asm-label"></td>
+<td class="routine-comment" colspan="5">
+<span id="41278"></span>
+<div class="comments">
+<div class="paragraph">
+Data copied to $A16D+.
+</div>
+</div>
+</td>
+</tr>
+<tr>
+<td class="asm-label">saved_game_state</td>
 <td class="address-1"><span id="41278"></span>A13E</td>
-<td class="instruction">DEFB $01,$64,$FF,$03,$54,$00,$14,$FF</td>
-<td class="comment-1" rowspan="6">Canned data or Data restored for attract mode?</td>
+<td class="instruction">DEFB $01</td>
+<td class="comment-1" rowspan="1">Copied to var_a16d</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="41279"></span>A13F</td>
+<td class="instruction">DEFB $64</td>
+<td class="comment-1" rowspan="1">Copied to idle_timer</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="41280"></span>A140</td>
+<td class="instruction">DEFB $FF</td>
+<td class="comment-1" rowspan="1">Copied to user_input_mask</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="41281"></span>A141</td>
+<td class="instruction">DEFB $03</td>
+<td class="comment-1" rowspan="1">Copied to turbos</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="41282"></span>A142</td>
+<td class="instruction">DEFW $0054</td>
+<td class="comment-1" rowspan="1">Copied to horizon_level</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="41284"></span>A144</td>
+<td class="instruction">DEFB $14</td>
+<td class="comment-1" rowspan="1">Copied to var_A173</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="41285"></span>A145</td>
+<td class="instruction">DEFB $FF</td>
+<td class="comment-1" rowspan="1">Copied to displayed_gear</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="41286"></span>A146</td>
 <td class="instruction">DEFB $FF,$FF,$FF,$FF,$FF,$FF,$FF,$FF</td>
+<td class="comment-1" rowspan="1">Copied to score_digits</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="41294"></span>A14E</td>
-<td class="instruction">DEFB $0F,$60,$FF,$FF,$FF,$FF,$FF,$FF</td>
+<td class="instruction">DEFB $0F</td>
+<td class="comment-1" rowspan="1">Copied to time_sixteenths</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="41295"></span>A14F</td>
+<td class="instruction">DEFB $60</td>
+<td class="comment-1" rowspan="1">Copied to time_digits</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="41296"></span>A150</td>
+<td class="instruction">DEFB $FF</td>
+<td class="comment-1" rowspan="1"></td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="41297"></span>A151</td>
+<td class="instruction">DEFB $FF,$FF,$FF,$FF</td>
+<td class="comment-1" rowspan="1">Copied to distance_digits</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="41301"></span>A155</td>
+<td class="instruction">DEFB $FF</td>
+<td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="41302"></span>A156</td>
-<td class="instruction">DEFB $01,$BF,$59,$00,$64,$00,$00,$00</td>
+<td class="instruction">DEFB $01</td>
+<td class="comment-1" rowspan="1">Copied to no_objects_counter</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="41303"></span>A157</td>
+<td class="instruction">DEFW $59BF</td>
+<td class="comment-1" rowspan="1">Copied to horizon_attribute</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="41305"></span>A159</td>
+<td class="instruction">DEFB $00</td>
+<td class="comment-1" rowspan="1">Copied to hazards[0].0</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="41306"></span>A15A</td>
+<td class="instruction">DEFB $64</td>
+<td class="comment-1" rowspan="1">Copied to hazards[0].1</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="41307"></span>A15B</td>
+<td class="instruction">DEFB $00</td>
+<td class="comment-1" rowspan="1">Copied to hazards[0].2</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="41308"></span>A15C</td>
+<td class="instruction">DEFB $00</td>
+<td class="comment-1" rowspan="1">Copied to hazards[0].3</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="41309"></span>A15D</td>
+<td class="instruction">DEFB $00</td>
+<td class="comment-1" rowspan="1">Copied to hazards[0].4</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="41310"></span>A15E</td>
-<td class="instruction">DEFB $47,$00,$00,$2C,$00,$00,$37,$A6</td>
+<td class="instruction">DEFB $47</td>
+<td class="comment-1" rowspan="1">Copied to hazards[0].5</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="41311"></span>A15F</td>
+<td class="instruction">DEFB $00</td>
+<td class="comment-1" rowspan="1">Copied to hazards[0].6</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="41312"></span>A160</td>
+<td class="instruction">DEFB $00</td>
+<td class="comment-1" rowspan="1">Copied to hazards[0].7</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="41313"></span>A161</td>
+<td class="instruction">DEFB $2C</td>
+<td class="comment-1" rowspan="1">Copied to hazards[0].8</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="41314"></span>A162</td>
+<td class="instruction">DEFW $0000</td>
+<td class="comment-1" rowspan="1">Copied to hazards[0].9 (car LOD)</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="41316"></span>A164</td>
+<td class="instruction">DEFW <a href="A637.html">smash_handler</a></td>
+<td class="comment-1" rowspan="1">Copied to hazards[0].11 (== smash_handler)</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="41318"></span>A166</td>
-<td class="instruction">DEFB $3C,$00,$FF,$00,$03,$02,$00</td>
+<td class="instruction">DEFW $003C</td>
+<td class="comment-1" rowspan="1">Copied to hazards[0].13 (horz pos)</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
+<td class="address-1"><span id="41320"></span>A168</td>
+<td class="instruction">DEFB $FF</td>
+<td class="comment-1" rowspan="1">Copied to hazards[0].15</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="41321"></span>A169</td>
+<td class="instruction">DEFB $00</td>
+<td class="comment-1" rowspan="1">Copied to hazards[0].16</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="41322"></span>A16A</td>
+<td class="instruction">DEFB $03</td>
+<td class="comment-1" rowspan="1">Copied to hazards[0].17</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="41323"></span>A16B</td>
+<td class="instruction">DEFB $02</td>
+<td class="comment-1" rowspan="1">Copied to hazards[0].18</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="41324"></span>A16C</td>
+<td class="instruction">DEFB $00</td>
+<td class="comment-1" rowspan="1">Copied to hazards[0].19</td>
+</tr>
+<tr>
+<td class="asm-label">var_a16d</td>
 <td class="address-1"><span id="41325"></span>A16D</td>
 <td class="instruction">DEFB $00</td>
-<td class="comment-1" rowspan="1">Used by $BC36</td>
+<td class="comment-1" rowspan="1">Used by <a href="BB69.html#48182">BC36</a></td>
 </tr>
 <tr>
 <td class="asm-label">idle_timer</td>
@@ -123,16 +294,16 @@ Next: <a href="A27A.html">A27A</a>
 <td class="comment-1" rowspan="1">seems to be the horizon level, possibly relative (used during attract mode)</td>
 </tr>
 <tr>
-<td class="asm-label">mystery_A173</td>
+<td class="asm-label">var_A173</td>
 <td class="address-1"><span id="41331"></span>A173</td>
 <td class="instruction">DEFB $00</td>
-<td class="comment-1" rowspan="1">This is decremented by $8BC6 but nothing else seems to read it.</td>
+<td class="comment-1" rowspan="1">This is decremented by <a href="8A57.html#35782">8BC6</a> but nothing else seems to read it.</td>
 </tr>
 <tr>
 <td class="asm-label">displayed_gear</td>
 <td class="address-1"><span id="41332"></span>A174</td>
 <td class="instruction">DEFB $00</td>
-<td class="comment-1" rowspan="1">Low/high gear flag?</td>
+<td class="comment-1" rowspan="1">Low/high gear flag.</td>
 </tr>
 <tr>
 <td class="asm-label">score_digits</td>
@@ -144,7 +315,7 @@ Next: <a href="A27A.html">A27A</a>
 <td class="asm-label">time_sixteenths</td>
 <td class="address-1"><span id="41341"></span>A17D</td>
 <td class="instruction">DEFB $00</td>
-<td class="comment-1" rowspan="1">Seems to be a 1/16ths second counter. Counts from $F to $0. $A17E is decremented when it hits zero.</td>
+<td class="comment-1" rowspan="1">Seems to be a 1/16ths second counter. Counts from $F to $0. <a href="A139.html#41342">time_bcd</a> is decremented when it hits zero.</td>
 </tr>
 <tr>
 <td class="asm-label">time_bcd</td>
@@ -181,93 +352,110 @@ Next: <a href="A27A.html">A27A</a>
 <span id="41352"></span>
 <div class="comments">
 <div class="paragraph">
-+0 is a used flag, either $00 or $FF +1 looks distance related +2/3/4/5/6 TBD +7 byte  TBD used by hazard_hit +8 byte  gets copied from the hazards table +9 word  address of e.g. car lod +11 word  address of routine +13 word  set to $190 by fully_smashed (likely a horizontal position) +15 byte  TBD used by hazard_hit, counter which gets set to 2 then reduced +17 byte  TBD used by hazard_hit, indexes table $ACDB +18 byte  TBD used by hazard_hit +19 byte TBD used by hazard_hit
+Table of spawned vehicles and/or objects
+</div>
+<div class="paragraph">
+Each entry is 20 bytes long. The first entry is the perp.
+</div>
+<div class="paragraph">
+Hazard structure layout:
+</div>
+<div class="paragraph">
++0 is $FF if this hazard is used, $00 otherwise
+</div>
+<div class="paragraph">
++1 looks distance related
+</div>
+<div class="paragraph">
++2 TBD
+</div>
+<div class="paragraph">
++3 TBD
+</div>
+<div class="paragraph">
++4 TBD
+</div>
+<div class="paragraph">
++5 TBD
+</div>
+<div class="paragraph">
++6 TBD
+</div>
+<div class="paragraph">
++7 byte TBD used by hazard_hit
+</div>
+<div class="paragraph">
++8 byte gets copied from the hazards table
+</div>
+<div class="paragraph">
++9 word address of LOD
+</div>
+<div class="paragraph">
++11 word address of routine
+</div>
+<div class="paragraph">
++13 word horizontal position, e.g. $190
+</div>
+<div class="paragraph">
++15 byte TBD used by hazard_hit, counter which gets set to 2 then reduced
+</div>
+<div class="paragraph">
++16 byte TBD
+</div>
+<div class="paragraph">
++17 byte TBD used by hazard_hit, indexes table <a href="AC3C.html#44251">table_acdb</a>
+</div>
+<div class="paragraph">
++18 byte TBD used by hazard_hit
+</div>
+<div class="paragraph">
++19 byte TBD used by hazard_hit
 </div>
 </div>
 </td>
 </tr>
 <tr>
-<td class="asm-label">hazards</td>
+<td class="asm-label">hazard_0</td>
 <td class="address-1"><span id="41352"></span>A188</td>
-<td class="instruction">DEFB $00,$00,$00,$00,$00,$00,$00,$00</td>
-<td class="comment-1" rowspan="15">Set by $843B. Groups of 20 bytes. This area looks like a table of spawned vehicles or objects. The first entry is the perp.</td>
+<td class="instruction">DEFS $14</td>
+<td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
-<td class="asm-label"></td>
-<td class="address-1"><span id="41360"></span>A190</td>
-<td class="instruction">DEFB $00,$00,$00,$00,$00,$00,$00,$00</td>
+<td class="asm-label">hazard_1</td>
+<td class="address-1"><span id="41372"></span>A19C</td>
+<td class="instruction">DEFS $14</td>
+<td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
-<td class="asm-label"></td>
-<td class="address-1"><span id="41368"></span>A198</td>
-<td class="instruction">DEFB $00,$00,$00,$00,$00,$00,$00,$00</td>
-</tr>
-<tr>
-<td class="asm-label"></td>
-<td class="address-1"><span id="41376"></span>A1A0</td>
-<td class="instruction">DEFB $00,$00,$00,$00,$00,$00,$00,$00</td>
-</tr>
-<tr>
-<td class="asm-label"></td>
-<td class="address-1"><span id="41384"></span>A1A8</td>
-<td class="instruction">DEFB $00,$00,$00,$00,$00,$00,$00,$00</td>
-</tr>
-<tr>
-<td class="asm-label"></td>
+<td class="asm-label">hazard_2</td>
 <td class="address-1"><span id="41392"></span>A1B0</td>
-<td class="instruction">DEFB $00,$00,$00,$00,$00,$00,$00,$00</td>
+<td class="instruction">DEFS $14</td>
+<td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
-<td class="asm-label"></td>
-<td class="address-1"><span id="41400"></span>A1B8</td>
-<td class="instruction">DEFB $00,$00,$00,$00,$00,$00,$00,$00</td>
+<td class="asm-label">hazard_3</td>
+<td class="address-1"><span id="41412"></span>A1C4</td>
+<td class="instruction">DEFS $14</td>
+<td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
-<td class="asm-label"></td>
-<td class="address-1"><span id="41408"></span>A1C0</td>
-<td class="instruction">DEFB $00,$00,$00,$00,$00,$00,$00,$00</td>
-</tr>
-<tr>
-<td class="asm-label"></td>
-<td class="address-1"><span id="41416"></span>A1C8</td>
-<td class="instruction">DEFB $00,$00,$00,$00,$00,$00,$00,$00</td>
-</tr>
-<tr>
-<td class="asm-label"></td>
-<td class="address-1"><span id="41424"></span>A1D0</td>
-<td class="instruction">DEFB $00,$00,$00,$00,$00,$00,$00,$00</td>
-</tr>
-<tr>
-<td class="asm-label"></td>
+<td class="asm-label">hazard_4</td>
 <td class="address-1"><span id="41432"></span>A1D8</td>
-<td class="instruction">DEFB $00,$00,$00,$00,$00,$00,$00,$00</td>
+<td class="instruction">DEFS $14</td>
+<td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
-<td class="asm-label"></td>
-<td class="address-1"><span id="41440"></span>A1E0</td>
-<td class="instruction">DEFB $00,$00,$00,$00,$00,$00,$00,$00</td>
-</tr>
-<tr>
-<td class="asm-label"></td>
-<td class="address-1"><span id="41448"></span>A1E8</td>
-<td class="instruction">DEFB $00,$00,$00,$00,$00,$00,$00,$00</td>
-</tr>
-<tr>
-<td class="asm-label"></td>
-<td class="address-1"><span id="41456"></span>A1F0</td>
-<td class="instruction">DEFB $00,$00,$00,$00,$00,$00,$00,$00</td>
-</tr>
-<tr>
-<td class="asm-label"></td>
-<td class="address-1"><span id="41464"></span>A1F8</td>
-<td class="instruction">DEFB $00,$00,$00,$00,$00,$00,$00,$00</td>
+<td class="asm-label">hazard_5</td>
+<td class="address-1"><span id="41452"></span>A1EC</td>
+<td class="instruction">DEFS $14</td>
+<td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
 <td class="routine-comment" colspan="5">
 <span id="41472"></span>
 <div class="comments">
 <div class="paragraph">
-Unknown
+Unknown - not enough space for another hazard
 </div>
 </div>
 </td>
@@ -275,19 +463,7 @@ Unknown
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="41472"></span>A200</td>
-<td class="instruction">DEFB $00,$00,$00,$00,$00,$00,$00,$00</td>
-<td class="comment-1" rowspan="1"></td>
-</tr>
-<tr>
-<td class="asm-label"></td>
-<td class="address-1"><span id="41480"></span>A208</td>
-<td class="instruction">DEFB $00,$00,$00,$00,$00,$00,$00,$00</td>
-<td class="comment-1" rowspan="1"></td>
-</tr>
-<tr>
-<td class="asm-label"></td>
-<td class="address-1"><span id="41488"></span>A210</td>
-<td class="instruction">DEFB $00,$00,$00</td>
+<td class="instruction">DEFS $13</td>
 <td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
@@ -301,55 +477,55 @@ AY registers 0..11 [128K]
 </td>
 </tr>
 <tr>
-<td class="asm-label"></td>
+<td class="asm-label">ay_chan_a_pitch</td>
 <td class="address-1"><span id="41491"></span>A213</td>
 <td class="instruction">DEFW $0000</td>
 <td class="comment-1" rowspan="1">0,1: Channel A pitch (fine,course=lo,hi)</td>
 </tr>
 <tr>
-<td class="asm-label"></td>
+<td class="asm-label">ay_chan_b_pitch</td>
 <td class="address-1"><span id="41493"></span>A215</td>
 <td class="instruction">DEFW $0000</td>
 <td class="comment-1" rowspan="1">2,3: Channel B pitch</td>
 </tr>
 <tr>
-<td class="asm-label"></td>
+<td class="asm-label">ay_chan_c_pitch</td>
 <td class="address-1"><span id="41495"></span>A217</td>
 <td class="instruction">DEFW $0000</td>
 <td class="comment-1" rowspan="1">4,5: Channel C pitch - used for engine tone?</td>
 </tr>
 <tr>
-<td class="asm-label"></td>
+<td class="asm-label">ay_noise_pitch</td>
 <td class="address-1"><span id="41497"></span>A219</td>
 <td class="instruction">DEFB $00</td>
 <td class="comment-1" rowspan="1">6: Noise pitch</td>
 </tr>
 <tr>
-<td class="asm-label"></td>
+<td class="asm-label">ay_mixer</td>
 <td class="address-1"><span id="41498"></span>A21A</td>
 <td class="instruction">DEFB $00</td>
 <td class="comment-1" rowspan="1">7: Mixer</td>
 </tr>
 <tr>
-<td class="asm-label"></td>
+<td class="asm-label">ay_chan_a_vol</td>
 <td class="address-1"><span id="41499"></span>A21B</td>
 <td class="instruction">DEFB $00</td>
 <td class="comment-1" rowspan="1">8: Channel A volume</td>
 </tr>
 <tr>
-<td class="asm-label"></td>
+<td class="asm-label">ay_chan_b_vol</td>
 <td class="address-1"><span id="41500"></span>A21C</td>
 <td class="instruction">DEFB $00</td>
 <td class="comment-1" rowspan="1">9: Channel B volume</td>
 </tr>
 <tr>
-<td class="asm-label"></td>
+<td class="asm-label">ay_chan_c_vol</td>
 <td class="address-1"><span id="41501"></span>A21D</td>
 <td class="instruction">DEFB $00</td>
 <td class="comment-1" rowspan="1">10: Channel C volume</td>
 </tr>
 <tr>
-<td class="asm-label"></td>
+<td class="asm-label">ay_env_fine</td>
 <td class="address-1"><span id="41502"></span>A21E</td>
 <td class="instruction">DEFB $00</td>
 <td class="comment-1" rowspan="1">11: Envelope fine duration</td>
@@ -368,10 +544,10 @@ End of AY registers
 <td class="asm-label"></td>
 <td class="address-1"><span id="41503"></span>A21F</td>
 <td class="instruction">DEFB $00</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="1">Unused?</td>
 </tr>
 <tr>
-<td class="asm-label"></td>
+<td class="asm-label">var_a220</td>
 <td class="address-1"><span id="41504"></span>A220</td>
 <td class="instruction">DEFB $00</td>
 <td class="comment-1" rowspan="1"><a href="8014.html">load_stage</a> sets this to the level number that it's going to load [but I don't see it using it again]. <a href="858C.html">run_pregame_screen</a> sets it to $F8. <a href="BC3E.html">draw_screen</a> uses it to avoid some work.</td>
@@ -387,16 +563,16 @@ Affects collision detection on the left hand side.
 </td>
 </tr>
 <tr>
-<td class="asm-label"></td>
+<td class="asm-label">inhibit_collision_detection</td>
 <td class="address-1"><span id="41505"></span>A221</td>
 <td class="instruction">DEFB $00</td>
-<td class="comment-1" rowspan="1">$ABCE, $AD0D reads</td>
+<td class="comment-1" rowspan="1"><a href="AB9A.html#43982">ABCE</a>, <a href="AD0D.html">sub_ad0d</a> reads</td>
 </tr>
 <tr>
-<td class="asm-label"></td>
+<td class="asm-label">var_a222</td>
 <td class="address-1"><span id="41506"></span>A222</td>
 <td class="instruction">DEFB $00</td>
-<td class="comment-1" rowspan="1">$8F9A reads  $ADA0, $AE83, $AF41 writes</td>
+<td class="comment-1" rowspan="1"><a href="8F5F.html#36762">8F9A</a> reads  <a href="ADA0.html">draw_hazards</a>, <a href="ADA0.html#44675">AE83</a>, <a href="ADA0.html#44865">AF41</a> writes</td>
 </tr>
 <tr>
 <td class="asm-label">displayed_stage</td>
@@ -408,7 +584,7 @@ Affects collision detection on the left hand side.
 <td class="asm-label">helicopter_control</td>
 <td class="address-1"><span id="41508"></span>A224</td>
 <td class="instruction">DEFB $00</td>
-<td class="comment-1" rowspan="1">Set to 1 -&gt; helicopter moves out to the left, gets set to zero. Set to 3/4 -&gt; Helicopter moves in from left, gets set to five. $AAC6, $AB33 reads  $AB96, $C013 writes</td>
+<td class="comment-1" rowspan="1">Set to 1 -&gt; helicopter moves out to the left, gets set to zero. Set to 3/4 -&gt; Helicopter moves in from left, gets set to five. <a href="AAC6.html">move_helicopter</a>, <a href="AB33.html">helicopter</a> reads  <a href="AB33.html#43926">AB96</a>, <a href="BDFB.html#49171">C013</a> writes</td>
 </tr>
 <tr>
 <td class="asm-label">stop_car_spawning</td>
@@ -429,10 +605,10 @@ Affects collision detection on the left hand side.
 <td class="comment-1" rowspan="1">Shows the floating left/right arrow (0 =&gt; off, 1 =&gt; left, 2 =&gt; right).</td>
 </tr>
 <tr>
-<td class="asm-label"></td>
+<td class="asm-label">var_a228</td>
 <td class="address-1"><span id="41512"></span>A228</td>
 <td class="instruction">DEFB $00</td>
-<td class="comment-1" rowspan="1">$B421 reads  $B4C8 writes</td>
+<td class="comment-1" rowspan="1"><a href="B318.html#46113">B421</a> reads  <a href="B318.html#46280">B4C8</a> writes</td>
 </tr>
 <tr>
 <td class="asm-label">time_up_state</td>
@@ -441,16 +617,16 @@ Affects collision detection on the left hand side.
 <td class="comment-1" rowspan="1">1 =&gt; out of time, 2 =&gt; "TIME UP" message is printed; 3 =&gt; "CONTINUE THIS MISSION" message is printed and a countdown runs 4 =&gt; countdown elapsed; 0 otherwise</td>
 </tr>
 <tr>
-<td class="asm-label"></td>
+<td class="asm-label">var_a22a</td>
 <td class="address-1"><span id="41514"></span>A22A</td>
 <td class="instruction">DEFB $00</td>
-<td class="comment-1" rowspan="1">Used by $B6D6 and others</td>
+<td class="comment-1" rowspan="1">Used by <a href="B67C.html#46806">sub_b67c_3</a> and others</td>
 </tr>
 <tr>
-<td class="asm-label"></td>
+<td class="asm-label">allow_overtake_bonus</td>
 <td class="address-1"><span id="41515"></span>A22B</td>
 <td class="instruction">DEFB $00</td>
-<td class="comment-1" rowspan="1">Used by $9D2E and others. Stops overtake bonus working.</td>
+<td class="comment-1" rowspan="1">Enables overtake bonus. Used by <a href="9D2E.html">calc_overtake_bonus</a> and others.</td>
 </tr>
 <tr>
 <td class="asm-label">trigger_bonus_flag</td>
@@ -471,7 +647,7 @@ Affects collision detection on the left hand side.
 <td class="comment-1" rowspan="1">Set to 1 when the perp has been sighted. Enables flashing lights and the smash bar.</td>
 </tr>
 <tr>
-<td class="asm-label"></td>
+<td class="asm-label">var_a22f</td>
 <td class="address-1"><span id="41519"></span>A22F</td>
 <td class="instruction">DEFB $00</td>
 <td class="comment-1" rowspan="1">Set to 2 by fully_smashed</td>
@@ -532,25 +708,25 @@ These seem to get altered even when no sound is being produced.
 <td class="asm-label">sfx_0</td>
 <td class="address-1"><span id="41527"></span>A237</td>
 <td class="instruction">DEFB $00</td>
-<td class="comment-1" rowspan="1">Used by $88F2</td>
+<td class="comment-1" rowspan="1">Used by <a href="88F2.html">start_sfx</a></td>
 </tr>
 <tr>
 <td class="asm-label">sfx_1</td>
 <td class="address-1"><span id="41528"></span>A238</td>
 <td class="instruction">DEFB $00</td>
-<td class="comment-1" rowspan="1">Used by $88F2</td>
+<td class="comment-1" rowspan="1">Used by <a href="88F2.html">start_sfx</a></td>
 </tr>
 <tr>
-<td class="asm-label"></td>
+<td class="asm-label">var_a239</td>
 <td class="address-1"><span id="41529"></span>A239</td>
 <td class="instruction">DEFB $00</td>
-<td class="comment-1" rowspan="1">Used by $F265 [128K]</td>
+<td class="comment-1" rowspan="1">Used by <a href="F220.html#62053">F265</a> [128K]  Siren related.</td>
 </tr>
 <tr>
-<td class="asm-label"></td>
+<td class="asm-label">var_a23a</td>
 <td class="address-1"><span id="41530"></span>A23A</td>
 <td class="instruction">DEFB $00</td>
-<td class="comment-1" rowspan="1">Used by $F2F6 [128K]</td>
+<td class="comment-1" rowspan="1">Used by <a href="F220.html#62198">F2F6</a> [128K]  Copy of noise pitch.</td>
 </tr>
 <tr>
 <td class="asm-label">tunnel_sfx</td>
@@ -559,82 +735,82 @@ These seem to get altered even when no sound is being produced.
 <td class="comment-1" rowspan="1">Set to 5 when we're in a tunnel. Used to modulate sfx.</td>
 </tr>
 <tr>
-<td class="asm-label"></td>
+<td class="asm-label">var_a23c</td>
 <td class="address-1"><span id="41532"></span>A23C</td>
 <td class="instruction">DEFB $00</td>
-<td class="comment-1" rowspan="1">$8909, $BE28 reads  $A3FA, $BDFF, $BE2C writes</td>
+<td class="comment-1" rowspan="1"><a href="8903.html#35081">8909</a>, <a href="BDFB.html#48680">BE28</a> reads  <a href="A399.html#41978">check_collisions_2</a>, <a href="BDFB.html#48639">BDFF</a>, <a href="BDFB.html#48684">BE2C</a> writes</td>
 </tr>
 <tr>
-<td class="asm-label"></td>
+<td class="asm-label">var_a23d</td>
 <td class="address-1"><span id="41533"></span>A23D</td>
 <td class="instruction">DEFB $00</td>
-<td class="comment-1" rowspan="1">$BE33 reads  $890F, $A3D2, $BDFC, $BE37 writes</td>
+<td class="comment-1" rowspan="1"><a href="BDFB.html#48691">BE33</a> reads  <a href="8903.html#35087">890F</a>, <a href="A399.html#41938">A3D2</a>, <a href="BDFB.html#48636">BDFC</a>, <a href="BDFB.html#48695">BE37</a> writes</td>
 </tr>
 <tr>
 <td class="asm-label">off_road</td>
 <td class="address-1"><span id="41534"></span>A23E</td>
 <td class="instruction">DEFB $00</td>
-<td class="comment-1" rowspan="1">0 =&gt; Fully on-road, 1 =&gt; One wheel off-road, 2 =&gt; Both wheels off-road [samples: $B104, $B40C reads  $A3FD, $A52A, $B07D, $B322, $B404, $B443 writes]</td>
+<td class="comment-1" rowspan="1">0 =&gt; Fully on-road, 1 =&gt; One wheel off-road, 2 =&gt; Both wheels off-road [samples: <a href="B063.html#45316">B104</a>, <a href="B318.html#46092">B40C</a> reads  <a href="A399.html#41981">cc_split_set</a>, <a href="A399.html#42282">cc_not_split_set</a>, <a href="B063.html#45181">B07D</a>, <a href="B318.html#45858">B322</a>, <a href="B318.html#46084">B404</a>, <a href="B318.html#46147">B443</a> writes]</td>
 </tr>
 <tr>
 <td class="asm-label">fast_counter</td>
 <td class="address-1"><span id="41535"></span>A23F</td>
 <td class="instruction">DEFB $00</td>
-<td class="comment-1" rowspan="1">this seems to be a very fast counter related to level position</td>
+<td class="comment-1" rowspan="1">This is a very fast counter related to level position. Typically the top three bits are masked off and used to index other tables.</td>
 </tr>
 <tr>
 <td class="asm-label">road_buffer_offset</td>
 <td class="address-1"><span id="41536"></span>A240</td>
 <td class="instruction">DEFW $0000</td>
-<td class="comment-1" rowspan="1">Current offset (in bytes) into the road buffer at $EE00..$EEFF. Much of the code treats this as a byte. Used by $B8F6, $BBF7, $87E0.</td>
+<td class="comment-1" rowspan="1">Current offset (in bytes) into the road buffer at $EE00..$EEFF. Much of the code treats this as a byte. Used by <a href="B8D2.html#47350">sub_b8d2_2</a>, <a href="BB69.html#48119">BBF7</a>, <a href="87DC.html#34784">87E0</a>.</td>
 </tr>
 <tr>
 <td class="asm-label">curvature_byte</td>
 <td class="address-1"><span id="41538"></span>A242</td>
 <td class="instruction">DEFB $00</td>
-<td class="comment-1" rowspan="1">Current curvature byte (minus 16) [$BE3E reads $BC17,$BE7D writes]</td>
+<td class="comment-1" rowspan="1">Current curvature byte (minus 16) [<a href="BDFB.html#48702">BE3E</a> reads <a href="BB69.html#48151">BC17</a>,<a href="BDFB.html#48765">rm_save_curvature_byte</a> writes]</td>
 </tr>
 <tr>
 <td class="asm-label">height_byte</td>
 <td class="address-1"><span id="41539"></span>A243</td>
 <td class="instruction">DEFB $00</td>
-<td class="comment-1" rowspan="1">Current height byte (minus 16) [$BE90 reads $BC1A,$BECF writes]</td>
+<td class="comment-1" rowspan="1">Current height byte (minus 16) [<a href="BDFB.html#48784">BE90</a> reads <a href="BB69.html#48154">BC1A</a>,<a href="BDFB.html#48847">rm_save_height_byte</a> writes]</td>
 </tr>
 <tr>
 <td class="asm-label">leftside_byte</td>
 <td class="address-1"><span id="41540"></span>A244</td>
 <td class="instruction">DEFB $00</td>
-<td class="comment-1" rowspan="1">[$BF9E reads $BC1D,$BFDD writes]</td>
+<td class="comment-1" rowspan="1">[<a href="BDFB.html#49054">BF9E</a> reads <a href="BB69.html#48157">BC1D</a>,<a href="BDFB.html#49117">rm_leftside_count_resume</a> writes]</td>
 </tr>
 <tr>
 <td class="asm-label">rightside_byte</td>
 <td class="address-1"><span id="41541"></span>A245</td>
 <td class="instruction">DEFB $00</td>
-<td class="comment-1" rowspan="1">Current rightside byte [$BF55 reads $BC20,$BF94 writes]</td>
+<td class="comment-1" rowspan="1">Current rightside byte [<a href="BDFB.html#48981">rm_rightside</a> reads <a href="BB69.html#48160">BC20</a>,<a href="BDFB.html#49044">rm_rightside_count_resume</a> writes]</td>
 </tr>
 <tr>
 <td class="asm-label">hazards_byte</td>
 <td class="address-1"><span id="41542"></span>A246</td>
 <td class="instruction">DEFB $00</td>
-<td class="comment-1" rowspan="1">Current hazards byte (minus one) [$BFE7 reads $BC23,$C055 writes]</td>
+<td class="comment-1" rowspan="1">Current hazards byte (minus one) [<a href="BDFB.html#49127">BFE7</a> reads <a href="BB69.html#48163">BC23</a>,<a href="BDFB.html#49237">rm_no_hazards</a> writes]</td>
 </tr>
 <tr>
 <td class="asm-label">lanes_counter_byte</td>
 <td class="address-1"><span id="41543"></span>A247</td>
 <td class="instruction">DEFB $00</td>
-<td class="comment-1" rowspan="1">[$BEDB reads $BC26,$BF15,$BF29 writes]</td>
+<td class="comment-1" rowspan="1">[<a href="BDFB.html#48859">BEDB</a> reads <a href="BB69.html#48166">BC26</a>,<a href="BDFB.html#48917">BF15</a>,<a href="BDFB.html#48937">rm_lanes_count_resume</a> writes]</td>
 </tr>
 <tr>
-<td class="asm-label"></td>
+<td class="asm-label">var_a248</td>
 <td class="address-1"><span id="41544"></span>A248</td>
 <td class="instruction">DEFB $00</td>
-<td class="comment-1" rowspan="1">[$A955 reads $C457,$C526 writes]</td>
+<td class="comment-1" rowspan="1">[<a href="A955.html">main_loop_18</a> reads <a href="C452.html#50263">C457</a>,<a href="C452.html#50470">main_loop_13_8</a> writes]</td>
 </tr>
 <tr>
 <td class="asm-label">fork_taken</td>
 <td class="address-1"><span id="41545"></span>A249</td>
 <td class="instruction">DEFB $00</td>
-<td class="comment-1" rowspan="1">Set to 0 if no fork, or the left fork was taken, or 1 if the right fork was taken. [$A539,$B988,$BAE0,$BB6E reads $BA89,$BC2C writes]</td>
+<td class="comment-1" rowspan="1">Set to 0 if no fork, or the left fork was taken, or 1 if the right fork was taken. [$A539,$B988,$BAE0,$BB6E reads <a href="B9F4.html#47753">main_loop_12_5</a>,<a href="BB69.html#48172">BC2C</a> writes]</td>
 </tr>
 <tr>
 <td class="asm-label">speed</td>
@@ -643,16 +819,16 @@ These seem to get altered even when no sound is being produced.
 <td class="comment-1" rowspan="1">Speed (0..511). Max when in lo gear =~ $E6, hi gear =~ $168, turbo =~ $1FF.</td>
 </tr>
 <tr>
-<td class="asm-label"></td>
+<td class="asm-label">var_a24c</td>
 <td class="address-1"><span id="41548"></span>A24C</td>
 <td class="instruction">DEFB $00</td>
-<td class="comment-1" rowspan="1">$B1B7 reads  $B1E4 writes</td>
+<td class="comment-1" rowspan="1"><a href="B063.html#45495">move_hero_car_14</a> reads  <a href="B063.html#45540">move_hero_car_17</a> writes</td>
 </tr>
 <tr>
 <td class="asm-label">cornering</td>
 <td class="address-1"><span id="41549"></span>A24D</td>
 <td class="instruction">DEFB $00</td>
-<td class="comment-1" rowspan="1">Likely a cornering force flag. Used to trigger smoke. $B3B4, $B432 reads  $B2E5, $B314, $B32A writes</td>
+<td class="comment-1" rowspan="1">Likely a cornering force flag. Used to trigger smoke. <a href="B318.html#46004">B3B4</a>, <a href="B318.html#46130">B432</a> reads  <a href="B063.html#45797">move_hero_car_38</a>, <a href="B063.html#45844">B314</a>, <a href="B318.html#45866">B32A</a> writes</td>
 </tr>
 <tr>
 <td class="asm-label">boost</td>
@@ -679,7 +855,7 @@ These seem to get altered even when no sound is being produced.
 <td class="comment-1" rowspan="1">1 =&gt; Horizontally flip the hero car, 0 =&gt; Don't</td>
 </tr>
 <tr>
-<td class="asm-label"></td>
+<td class="asm-label">var_a252</td>
 <td class="address-1"><span id="41554"></span>A252</td>
 <td class="instruction">DEFB $00</td>
 <td class="comment-1" rowspan="1"></td>
@@ -694,7 +870,7 @@ These seem to get altered even when no sound is being produced.
 <td class="asm-label">another_spawning_flag</td>
 <td class="address-1"><span id="41556"></span>A254</td>
 <td class="instruction">DEFB $00</td>
-<td class="comment-1" rowspan="1">Cleared by $884B   suspected spawning flag (different to flag $A225)</td>
+<td class="comment-1" rowspan="1">Cleared by <a href="87DC.html#34891">884B</a>   suspected spawning flag (different to flag <a href="A139.html#41509">stop_car_spawning</a>)</td>
 </tr>
 <tr>
 <td class="asm-label">distance_bcd</td>
@@ -703,31 +879,31 @@ These seem to get altered even when no sound is being produced.
 <td class="comment-1" rowspan="1">Distance as BCD (2 bytes / 4 digits, little endian)</td>
 </tr>
 <tr>
-<td class="asm-label"></td>
+<td class="asm-label">var_a257</td>
 <td class="address-1"><span id="41559"></span>A257</td>
 <td class="instruction">DEFB $00</td>
-<td class="comment-1" rowspan="1">...</td>
+<td class="comment-1" rowspan="1">Unused</td>
 </tr>
 <tr>
-<td class="asm-label"></td>
+<td class="asm-label">var_a258</td>
 <td class="address-1"><span id="41560"></span>A258</td>
 <td class="instruction">DEFB $00</td>
-<td class="comment-1" rowspan="1">Used by $B8D8</td>
+<td class="comment-1" rowspan="1">Used by <a href="B8D2.html#47320">B8D8</a></td>
 </tr>
 <tr>
-<td class="asm-label"></td>
+<td class="asm-label">var_a259</td>
 <td class="address-1"><span id="41561"></span>A259</td>
 <td class="instruction">DEFB $00</td>
-<td class="comment-1" rowspan="1">Used by $B92B</td>
+<td class="comment-1" rowspan="1">Used by <a href="B8D2.html#47403">B92B</a></td>
 </tr>
 <tr>
-<td class="asm-label"></td>
+<td class="asm-label">var_a25a</td>
 <td class="address-1"><span id="41562"></span>A25A</td>
 <td class="instruction">DEFB $00</td>
-<td class="comment-1" rowspan="1">Used by $B8D2</td>
+<td class="comment-1" rowspan="1">Used by <a href="B8D2.html">sub_b8d2</a></td>
 </tr>
 <tr>
-<td class="asm-label"></td>
+<td class="asm-label">var_a25b</td>
 <td class="address-1"><span id="41563"></span>A25B</td>
 <td class="instruction">DEFB $00</td>
 <td class="comment-1" rowspan="1"></td>
@@ -746,91 +922,85 @@ Horizon horizontal scrolling (+ve for left, -ve for right). Seems to be multiple
 <td class="asm-label">horizon_scroll</td>
 <td class="address-1"><span id="41564"></span>A25C</td>
 <td class="instruction">DEFB $00</td>
-<td class="comment-1" rowspan="1">Used by $B84E</td>
+<td class="comment-1" rowspan="1">Used by <a href="B848.html#47182">B84E</a></td>
 </tr>
 <tr>
-<td class="asm-label"></td>
+<td class="asm-label">var_a25d</td>
 <td class="address-1"><span id="41565"></span>A25D</td>
 <td class="instruction">DEFB $00</td>
-<td class="comment-1" rowspan="1">Used by $B85D</td>
+<td class="comment-1" rowspan="1">Used by <a href="B848.html#47197">B85D</a></td>
 </tr>
 <tr>
-<td class="asm-label"></td>
+<td class="asm-label">var_a25e</td>
 <td class="address-1"><span id="41566"></span>A25E</td>
 <td class="instruction">DEFB $00</td>
 <td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
-<td class="asm-label"></td>
+<td class="asm-label">var_a25f</td>
 <td class="address-1"><span id="41567"></span>A25F</td>
 <td class="instruction">DEFW $0000</td>
-<td class="comment-1" rowspan="1">Used by $B29A</td>
+<td class="comment-1" rowspan="1">Used by <a href="B063.html#45722">move_hero_car_32</a></td>
 </tr>
 <tr>
-<td class="asm-label"></td>
+<td class="asm-label">var_a261</td>
 <td class="address-1"><span id="41569"></span>A261</td>
 <td class="instruction">DEFB $00</td>
-<td class="comment-1" rowspan="1">Used by $B297</td>
+<td class="comment-1" rowspan="1">Used by <a href="B063.html#45719">B297</a></td>
 </tr>
 <tr>
-<td class="asm-label"></td>
+<td class="asm-label">var_a262</td>
 <td class="address-1"><span id="41570"></span>A262</td>
 <td class="instruction">DEFB $00</td>
 <td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
-<td class="asm-label"></td>
+<td class="asm-label">var_a263</td>
 <td class="address-1"><span id="41571"></span>A263</td>
 <td class="instruction">DEFB $00</td>
-<td class="comment-1" rowspan="1">Used by $B2AE</td>
+<td class="comment-1" rowspan="1">Used by <a href="B063.html#45742">B2AE</a></td>
 </tr>
 <tr>
-<td class="asm-label"></td>
+<td class="asm-label">var_a264</td>
 <td class="address-1"><span id="41572"></span>A264</td>
 <td class="instruction">DEFB $00</td>
-<td class="comment-1" rowspan="1">Used by $B2B2 -- together might be a 16-bit qty</td>
+<td class="comment-1" rowspan="1">Used by <a href="B063.html#45746">B2B2</a> -- together might be a 16-bit qty</td>
 </tr>
 <tr>
-<td class="asm-label"></td>
+<td class="asm-label">split_road</td>
 <td class="address-1"><span id="41573"></span>A265</td>
 <td class="instruction">DEFB $00</td>
-<td class="comment-1" rowspan="1">Used by $BC2C -- set to $60 when the split road becomes visible, zero otherwise</td>
+<td class="comment-1" rowspan="1">Used by <a href="BB69.html#48172">BC2C</a> -- set to $60 when the split road becomes visible, zero otherwise</td>
 </tr>
 <tr>
-<td class="asm-label"></td>
+<td class="asm-label">split_road_countdown</td>
 <td class="address-1"><span id="41574"></span>A266</td>
 <td class="instruction">DEFB $00</td>
-<td class="comment-1" rowspan="1">Used by $A3A6 -- counts down (from 16?) when the split road approaches, zero when the split actually starts</td>
+<td class="comment-1" rowspan="1">Used by <a href="A399.html#41894">A3A6</a> -- counts down (from 16?) when the split road approaches, zero when the split actually starts</td>
 </tr>
 <tr>
-<td class="asm-label"></td>
+<td class="asm-label">var_a267</td>
 <td class="address-1"><span id="41575"></span>A267</td>
-<td class="instruction">DEFB $00</td>
-<td class="comment-1" rowspan="1">Used by $BC39 -- as 16-bit</td>
+<td class="instruction">DEFW $0000</td>
+<td class="comment-1" rowspan="1">Used by <a href="BB69.html#48185">BC39</a> -- as 16-bit. Part used by <a href="BB69.html">road_handling_setup</a> - skips routine if not set</td>
 </tr>
 <tr>
-<td class="asm-label"></td>
-<td class="address-1"><span id="41576"></span>A268</td>
-<td class="instruction">DEFB $00</td>
-<td class="comment-1" rowspan="1">Used by $BB69 - skips routine if not set</td>
-</tr>
-<tr>
-<td class="asm-label"></td>
+<td class="asm-label">var_a269</td>
 <td class="address-1"><span id="41577"></span>A269</td>
 <td class="instruction">DEFB $00</td>
-<td class="comment-1" rowspan="1">Used by $BC29</td>
+<td class="comment-1" rowspan="1">Used by <a href="BB69.html#48169">BC29</a></td>
 </tr>
 <tr>
-<td class="asm-label"></td>
+<td class="asm-label">quit_state</td>
 <td class="address-1"><span id="41578"></span>A26A</td>
 <td class="instruction">DEFB $00</td>
-<td class="comment-1" rowspan="1">Used by quit_key - quit in progress flag?</td>
+<td class="comment-1" rowspan="1">0 if not quitting, or 1/2 depending on quit state</td>
 </tr>
 <tr>
-<td class="asm-label"></td>
+<td class="asm-label">start_speech</td>
 <td class="address-1"><span id="41579"></span>A26B</td>
 <td class="instruction">DEFB $00</td>
-<td class="comment-1" rowspan="1">Used by $8432</td>
+<td class="comment-1" rowspan="1">Used by <a href="8401.html#33842">8432</a> - index of speech sample to play</td>
 </tr>
 <tr>
 <td class="asm-label">road_pos</td>
@@ -887,7 +1057,7 @@ Next: <a href="A27A.html">A27A</a>
 </tr>
 </table>
 <footer>
-<div class="release">The incomplete Chase H.Q. disassembly 20230518</div>
+<div class="release">The incomplete Chase H.Q. disassembly 20231102</div>
 <div class="copyright">&copy; 1988 Taito Corporation &copy; 1989 Ocean Software Ltd. (Chase H.Q.) © 2023 David Thomas (this disassembly)</div>
 <div class="created">Created using <a href="https://skoolkit.ca">SkoolKit</a> 8.9.</div>
 </footer>

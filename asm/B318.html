@@ -38,7 +38,7 @@ Used by the routines at <a href="8401.html">main_loop</a> and <a href="852A.html
 <td class="asm-label">main_loop_24</td>
 <td class="address-2"><span id="45848"></span>B318</td>
 <td class="instruction">LD HL,($A24A)</td>
-<td class="comment-1" rowspan="4">If speed &gt; 0 jump $B325</td>
+<td class="comment-1" rowspan="4">If speed &gt; 0 jump <a href="B318.html#45861">main_loop_24_0</a></td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -59,7 +59,7 @@ Used by the routines at <a href="8401.html">main_loop</a> and <a href="852A.html
 <td class="asm-label"></td>
 <td class="address-1"><span id="45855"></span>B31F</td>
 <td class="instruction">LD ($B3DC),A</td>
-<td class="comment-1" rowspan="1">Self modify 'LD A' at $B3DB to load A</td>
+<td class="comment-1" rowspan="1">Self modify 'LD A' @ <a href="B318.html#46043">B3DB</a> to load A</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -101,7 +101,7 @@ Used by the routines at <a href="8401.html">main_loop</a> and <a href="852A.html
 <td class="asm-label"></td>
 <td class="address-1"><span id="45870"></span>B32E</td>
 <td class="instruction">LD BC,$0000</td>
-<td class="comment-1" rowspan="1">BC = &lt;...&gt;</td>
+<td class="comment-1" rowspan="1">BC = &lt;self modified&gt;</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -119,7 +119,7 @@ Used by the routines at <a href="8401.html">main_loop</a> and <a href="852A.html
 <td class="asm-label"></td>
 <td class="address-1"><span id="45876"></span>B334</td>
 <td class="instruction">JR C,<a href="B318.html#45897">main_loop_24_1</a></td>
-<td class="comment-1" rowspan="1">Jump to $B349 if HL &lt; BC</td>
+<td class="comment-1" rowspan="1">Jump to <a href="B318.html#45897">main_loop_24_1</a> if HL &lt; BC</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -280,7 +280,7 @@ Used by the routines at <a href="8401.html">main_loop</a> and <a href="852A.html
 <td class="asm-label"></td>
 <td class="address-1"><span id="45927"></span>B367</td>
 <td class="instruction">LD ($B357),HL</td>
-<td class="comment-1" rowspan="1">($B357) = HL</td>
+<td class="comment-1" rowspan="1">Self modify 'LD HL,$xxxx' @ <a href="B318.html#45910">B356</a></td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -394,7 +394,7 @@ Used by the routines at <a href="8401.html">main_loop</a> and <a href="852A.html
 <td class="asm-label"></td>
 <td class="address-1"><span id="45962"></span>B38A</td>
 <td class="instruction">LD ($B385),A</td>
-<td class="comment-1" rowspan="1">($B385) = A</td>
+<td class="comment-1" rowspan="1">*$B385 = A</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -406,7 +406,7 @@ Used by the routines at <a href="8401.html">main_loop</a> and <a href="852A.html
 <td class="asm-label">main_loop_24_6</td>
 <td class="address-2"><span id="45967"></span>B38F</td>
 <td class="instruction">LD ($B3DC),A</td>
-<td class="comment-1" rowspan="1">($B3DC) = A</td>
+<td class="comment-1" rowspan="1">*$B3DC = A</td>
 </tr>
 <tr>
 <td class="asm-label">main_loop_24_7</td>
@@ -615,8 +615,8 @@ Used by the routines at <a href="8401.html">main_loop</a> and <a href="852A.html
 <tr>
 <td class="asm-label">main_loop_24_12</td>
 <td class="address-2"><span id="46040"></span>B3D8</td>
-<td class="instruction">CALL <a href="B549.html">$B549</a></td>
-<td class="comment-1" rowspan="1"></td>
+<td class="instruction">CALL <a href="B549.html">sub_b549</a></td>
+<td class="comment-1" rowspan="1">Draw debris?</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -853,7 +853,7 @@ Used by the routines at <a href="8401.html">main_loop</a> and <a href="852A.html
 <td class="asm-label"></td>
 <td class="address-1"><span id="46113"></span>B421</td>
 <td class="instruction">LD A,($A228)</td>
-<td class="comment-1" rowspan="1">A = *$A228</td>
+<td class="comment-1" rowspan="1">A = var_a228</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -1033,7 +1033,7 @@ Used by the routines at <a href="8401.html">main_loop</a> and <a href="852A.html
 <td class="asm-label">main_loop_24_19</td>
 <td class="address-2"><span id="46167"></span>B457</td>
 <td class="instruction">LD A,($A22F)</td>
-<td class="comment-1" rowspan="1">A = *$A22F</td>
+<td class="comment-1" rowspan="1">A = var_a22f</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -1122,7 +1122,7 @@ Used by the routines at <a href="8401.html">main_loop</a> and <a href="852A.html
 <td class="asm-label"></td>
 <td class="address-1"><span id="46195"></span>B473</td>
 <td class="instruction">JP <a href="B67C.html#46750">sub_b67c_2</a></td>
-<td class="comment-1" rowspan="1">Exit via $B69E</td>
+<td class="comment-1" rowspan="1">Exit via <a href="B67C.html#46750">sub_b67c_2</a></td>
 </tr>
 <tr>
 <td class="asm-label">main_loop_24_20</td>
@@ -1224,7 +1224,7 @@ Used by the routines at <a href="8401.html">main_loop</a> and <a href="852A.html
 <td class="asm-label"></td>
 <td class="address-1"><span id="46224"></span>B490</td>
 <td class="instruction">LD ($B479),A</td>
-<td class="comment-1" rowspan="1">Self modify 'LD A' at $B478 to load A</td>
+<td class="comment-1" rowspan="1">Self modify 'LD A' @ <a href="B318.html#46200">B478</a> to load A</td>
 </tr>
 <tr>
 <td class="asm-label">main_loop_24_22</td>
@@ -1254,7 +1254,7 @@ Used by the routines at <a href="8401.html">main_loop</a> and <a href="852A.html
 <td class="asm-label"></td>
 <td class="address-1"><span id="46235"></span>B49B</td>
 <td class="instruction">XOR A</td>
-<td class="comment-1" rowspan="2">*$A22F = 0</td>
+<td class="comment-1" rowspan="2">var_a22f = 0</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -1367,7 +1367,7 @@ Used by the routines at <a href="8401.html">main_loop</a> and <a href="852A.html
 <td class="asm-label"></td>
 <td class="address-1"><span id="46269"></span>B4BD</td>
 <td class="instruction">CP $04</td>
-<td class="comment-1" rowspan="2">Jump to $B4C6 if A &gt;= 4</td>
+<td class="comment-1" rowspan="2">Jump to <a href="B318.html#46278">main_loop_24_25</a> if A &gt;= 4</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -1390,13 +1390,13 @@ Used by the routines at <a href="8401.html">main_loop</a> and <a href="852A.html
 <td class="asm-label"></td>
 <td class="address-1"><span id="46275"></span>B4C3</td>
 <td class="instruction">JP <a href="B67C.html#46745">sub_b67c_1</a></td>
-<td class="comment-1" rowspan="1">Exit via $B699</td>
+<td class="comment-1" rowspan="1">Exit via <a href="B67C.html#46745">sub_b67c_1</a></td>
 </tr>
 <tr>
 <td class="asm-label">main_loop_24_25</td>
 <td class="address-2"><span id="46278"></span>B4C6</td>
 <td class="instruction">LD A,$01</td>
-<td class="comment-1" rowspan="2">*$A228 = 1</td>
+<td class="comment-1" rowspan="2">var_a228 = 1</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -1422,7 +1422,7 @@ Next: <a href="B4CC.html">B4CC</a>
 </tr>
 </table>
 <footer>
-<div class="release">The incomplete Chase H.Q. disassembly 20230518</div>
+<div class="release">The incomplete Chase H.Q. disassembly 20231102</div>
 <div class="copyright">&copy; 1988 Taito Corporation &copy; 1989 Ocean Software Ltd. (Chase H.Q.) © 2023 David Thomas (this disassembly)</div>
 <div class="created">Created using <a href="https://skoolkit.ca">SkoolKit</a> 8.9.</div>
 </footer>

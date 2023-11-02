@@ -29,7 +29,7 @@ Next: <a href="852A.html">852A</a>
 <td class="routine-comment" colspan="5">
 <div class="details">
 <div class="paragraph">
-Used by the routines at <a href="83CD.html">83CD</a> and <a href="8A57.html">handle_perp_caught</a>.
+Used by the routines at <a href="83CD.html">bootstrap</a> and <a href="8A57.html">handle_perp_caught</a>.
 </div>
 </div>
 </td>
@@ -44,7 +44,7 @@ Used by the routines at <a href="83CD.html">83CD</a> and <a href="8A57.html">han
 <td class="asm-label"></td>
 <td class="address-1"><span id="33796"></span>8404</td>
 <td class="instruction">LD A,($8007)</td>
-<td class="comment-1" rowspan="3">Are we on stage 6 (end credits) jump $841B if not so</td>
+<td class="comment-1" rowspan="3">Are we on the end screen (stage 6)? Jump <a href="8401.html#33819">ml_not_credits</a> if not so</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -61,16 +61,16 @@ Used by the routines at <a href="83CD.html">83CD</a> and <a href="8A57.html">han
 <span id="33803"></span>
 <div class="comments">
 <div class="paragraph">
-Run the end credits.
+Run the end screen.
 </div>
 </div>
 </td>
 </tr>
 <tr>
-<td class="asm-label">ml_run_end_credits</td>
+<td class="asm-label">ml_run_end_screen</td>
 <td class="address-1"><span id="33803"></span>840B</td>
 <td class="instruction">CALL $5C00</td>
-<td class="comment-1" rowspan="1">Call $5C00 [which is data in earlier stages, must be end credit anim]</td>
+<td class="comment-1" rowspan="1">Call <a href="5C00.html">bitmap_horizon</a> [which is data in earlier stages, must be end screen anim]</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -143,7 +143,7 @@ Run the main game loop.
 <td class="asm-label"></td>
 <td class="address-1"><span id="33828"></span>8424</td>
 <td class="instruction">LD HL,$A13B</td>
-<td class="comment-1" rowspan="6">$A13B cycles 3,2,1 then repeats</td>
+<td class="comment-1" rowspan="6">Cycle start_speech_cycle 3,2,1 then repeat</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -158,7 +158,7 @@ Run the main game loop.
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="33833"></span>8429</td>
-<td class="instruction">JR NZ,<a href="8401.html#33837">main_loop_0</a></td>
+<td class="instruction">JR NZ,<a href="8401.html#33837">ml_store_start_speech</a></td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -166,15 +166,25 @@ Run the main game loop.
 <td class="instruction">LD A,$03</td>
 </tr>
 <tr>
-<td class="asm-label">main_loop_0</td>
+<td class="asm-label">ml_store_start_speech</td>
 <td class="address-2"><span id="33837"></span>842D</td>
 <td class="instruction">LD (HL),A</td>
+</tr>
+<tr>
+<td class="routine-comment" colspan="5">
+<span id="33838"></span>
+<div class="comments">
+<div class="paragraph">
+Choose the startup speech sample.
+</div>
+</div>
+</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="33838"></span>842E</td>
 <td class="instruction">ADD A,A</td>
-<td class="comment-1" rowspan="4">$A26B = (A * 4) OR 2</td>
+<td class="comment-1" rowspan="4">start_speech = (A * 4) OR 2</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -195,7 +205,7 @@ Run the main game loop.
 <td class="asm-label"></td>
 <td class="address-1"><span id="33845"></span>8435</td>
 <td class="instruction">LD A,($A139)</td>
-<td class="comment-1" rowspan="2">Is $A139 zero? (used later) [128K]</td>
+<td class="comment-1" rowspan="2">Test 128K mode flag</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -206,7 +216,7 @@ Run the main game loop.
 <td class="asm-label"></td>
 <td class="address-1"><span id="33849"></span>8439</td>
 <td class="instruction">LD A,$FF</td>
-<td class="comment-1" rowspan="2">$A188 = $FF -- I suspect this keeps the perp spawned</td>
+<td class="comment-1" rowspan="2"><a href="A139.html#41352">hazard_0</a> = $FF -- I suspect this keeps the perp spawned</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -217,16 +227,16 @@ Run the main game loop.
 <td class="asm-label"></td>
 <td class="address-1"><span id="33854"></span>843E</td>
 <td class="instruction">LD HL,$81DD</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="1">Address of start_chatter</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="33857"></span>8441</td>
 <td class="instruction">CALL Z,<a href="9945.html">chatter</a></td>
-<td class="comment-1" rowspan="1">Call chatter if $A139 was zero</td>
+<td class="comment-1" rowspan="1">Call chatter if not in 128K mode (priority $FF)</td>
 </tr>
 <tr>
-<td class="asm-label">main_loop_loop</td>
+<td class="asm-label">ml_loop</td>
 <td class="address-2"><span id="33860"></span>8444</td>
 <td class="instruction">CALL <a href="8903.html">drive_sfx</a></td>
 <td class="comment-1" rowspan="1">Call drive_sfx</td>
@@ -343,7 +353,7 @@ Run the main game loop.
 <td class="asm-label"></td>
 <td class="address-1"><span id="33917"></span>847D</td>
 <td class="instruction">CALL <a href="AB9A.html">spawn_hazards</a></td>
-<td class="comment-1" rowspan="1">Call main_loop_16</td>
+<td class="comment-1" rowspan="1">Call spawn_hazards</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -366,8 +376,8 @@ Run the main game loop.
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="33929"></span>8489</td>
-<td class="instruction">CALL <a href="ADA0.html">main_loop_19</a></td>
-<td class="comment-1" rowspan="1">Call main_loop_19</td>
+<td class="instruction">CALL <a href="ADA0.html">draw_hazards</a></td>
+<td class="comment-1" rowspan="1">Call draw_hazards</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -427,7 +437,7 @@ Run the main game loop.
 <td class="asm-label"></td>
 <td class="address-1"><span id="33959"></span>84A7</td>
 <td class="instruction">CALL <a href="9D51.html#40290">update_scoreboard</a></td>
-<td class="comment-1" rowspan="1">Call main_loop_25</td>
+<td class="comment-1" rowspan="1">Call update_scoreboard</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -450,7 +460,7 @@ Run the main game loop.
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="33971"></span>84B3</td>
-<td class="instruction">CALL <a href="8EE7.html">smash_bar_etc</a></td>
+<td class="instruction">CALL <a href="8EE7.html">draw_smash_bar</a></td>
 <td class="comment-1" rowspan="1">Call smash_bar_etc</td>
 </tr>
 <tr>
@@ -474,8 +484,8 @@ Run the main game loop.
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="33983"></span>84BF</td>
-<td class="instruction">CALL <a href="BB69.html">main_loop_27</a></td>
-<td class="comment-1" rowspan="1">Call main_loop_27</td>
+<td class="instruction">CALL <a href="BB69.html">road_handling_setup</a></td>
+<td class="comment-1" rowspan="1">Call road_handling_setup</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -487,12 +497,12 @@ Run the main game loop.
 <td class="asm-label"></td>
 <td class="address-1"><span id="33989"></span>84C5</td>
 <td class="instruction">AND A</td>
-<td class="comment-1" rowspan="2">If not, goto no_test_mode</td>
+<td class="comment-1" rowspan="2">If not, goto not_test_mode</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="33990"></span>84C6</td>
-<td class="instruction">JR Z,<a href="8401.html#34043">no_test_mode</a></td>
+<td class="instruction">JR Z,<a href="8401.html#34043">not_test_mode</a></td>
 </tr>
 <tr>
 <td class="routine-comment" colspan="5">
@@ -530,7 +540,7 @@ Test mode handling
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="33999"></span>84CF</td>
-<td class="instruction">JR Z,<a href="8401.html#34043">no_test_mode</a></td>
+<td class="instruction">JR Z,<a href="8401.html#34043">not_test_mode</a></td>
 <td class="comment-1" rowspan="1">If none are set then jump</td>
 </tr>
 <tr>
@@ -590,7 +600,7 @@ Test mode handling
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="34020"></span>84E4</td>
-<td class="instruction">JR NC,<a href="8401.html#34026">main_loop_1</a></td>
+<td class="instruction">JR NC,<a href="8401.html#34026">main_loop_0</a></td>
 <td class="comment-1" rowspan="1">Jump if NOT</td>
 </tr>
 <tr>
@@ -606,7 +616,7 @@ Test mode handling
 <td class="comment-1" rowspan="1">Exit via load_stage</td>
 </tr>
 <tr>
-<td class="asm-label">main_loop_1</td>
+<td class="asm-label">main_loop_0</td>
 <td class="address-2"><span id="34026"></span>84EA</td>
 <td class="instruction">RRA</td>
 <td class="comment-1" rowspan="1">Is bit 2 set? (key 3 to load the end screen)</td>
@@ -614,7 +624,7 @@ Test mode handling
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="34027"></span>84EB</td>
-<td class="instruction">JR NC,<a href="8401.html#34034">main_loop_2</a></td>
+<td class="instruction">JR NC,<a href="8401.html#34034">main_loop_1</a></td>
 <td class="comment-1" rowspan="1">Jump if NOT</td>
 </tr>
 <tr>
@@ -630,7 +640,7 @@ Test mode handling
 <td class="comment-1" rowspan="1">Exit via load_stage</td>
 </tr>
 <tr>
-<td class="asm-label">main_loop_2</td>
+<td class="asm-label">main_loop_1</td>
 <td class="address-2"><span id="34034"></span>84F2</td>
 <td class="instruction">LD HL,$A13D</td>
 <td class="comment-1" rowspan="5">Increment credits unless maxed out at 9</td>
@@ -648,7 +658,7 @@ Test mode handling
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="34040"></span>84F8</td>
-<td class="instruction">JR Z,<a href="8401.html#34043">no_test_mode</a></td>
+<td class="instruction">JR Z,<a href="8401.html#34043">not_test_mode</a></td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -656,106 +666,123 @@ Test mode handling
 <td class="instruction">INC (HL)</td>
 </tr>
 <tr>
-<td class="asm-label">no_test_mode</td>
+<td class="asm-label">not_test_mode</td>
 <td class="address-2"><span id="34043"></span>84FB</td>
 <td class="instruction">LD A,($A231)</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="1">A = transition_control</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="34046"></span>84FE</td>
 <td class="instruction">AND A</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="2">Jump to ml_loop if non-zero</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="34047"></span>84FF</td>
-<td class="instruction">JP NZ,<a href="8401.html#33860">main_loop_loop</a></td>
-<td class="comment-1" rowspan="1"></td>
+<td class="instruction">JP NZ,<a href="8401.html#33860">ml_loop</a></td>
+</tr>
+<tr>
+<td class="routine-comment" colspan="5">
+<span id="34050"></span>
+<div class="comments">
+<div class="paragraph">
+Play once we have a 1-bit shifted out.
+</div>
+</div>
+</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="34050"></span>8502</td>
 <td class="instruction">LD HL,$A26B</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="1">Address of start_speech</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="34053"></span>8505</td>
 <td class="instruction">SRL (HL)</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="1">Shift the counter right</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="34055"></span>8507</td>
-<td class="instruction">JR NC,<a href="8401.html#34066">main_loop_3</a></td>
-<td class="comment-1" rowspan="1"></td>
+<td class="instruction">JR NC,<a href="8401.html#34066">main_loop_2</a></td>
+<td class="comment-1" rowspan="1">Jump if no carry</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="34057"></span>8509</td>
 <td class="instruction">LD A,(HL)</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="1">Load it</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="34058"></span>850A</td>
 <td class="instruction">LD (HL),$00</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="1">Zero it</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="34060"></span>850C</td>
-<td class="instruction">CALL <a href="83B5.html#33735">unknown_hook_3</a></td>
-<td class="comment-1" rowspan="1">Call hooked function (likely sfx)</td>
+<td class="instruction">CALL <a href="83B5.html#33735">play_speech_hook</a></td>
+<td class="comment-1" rowspan="1">Call play_speech_hook</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="34063"></span>850F</td>
-<td class="instruction">JP <a href="8401.html#33860">main_loop_loop</a></td>
-<td class="comment-1" rowspan="1">Loop</td>
+<td class="instruction">JP <a href="8401.html#33860">ml_loop</a></td>
+<td class="comment-1" rowspan="1">Loop to ml_loop</td>
 </tr>
 <tr>
-<td class="asm-label">main_loop_3</td>
+<td class="asm-label">main_loop_2</td>
 <td class="address-2"><span id="34066"></span>8512</td>
 <td class="instruction">LD A,($A26A)</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="1">A = quit_state</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="34069"></span>8515</td>
 <td class="instruction">AND A</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="2">Jump to ml_loop if not quitting</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="34070"></span>8516</td>
-<td class="instruction">JP Z,<a href="8401.html#33860">main_loop_loop</a></td>
-<td class="comment-1" rowspan="1"></td>
+<td class="instruction">JP Z,<a href="8401.html#33860">ml_loop</a></td>
+</tr>
+<tr>
+<td class="routine-comment" colspan="5">
+<span id="34073"></span>
+<div class="comments">
+<div class="paragraph">
+Quit in progress.
+</div>
+</div>
+</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="34073"></span>8519</td>
 <td class="instruction">DEC A</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="1">Decrement quit state</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="34074"></span>851A</td>
 <td class="instruction">JP NZ,<a href="873C.html">escape_scene</a></td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="1">Jump to escape_scene if non-zero</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="34077"></span>851D</td>
 <td class="instruction">LD A,$02</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="2">quit_state = 2</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="34079"></span>851F</td>
 <td class="instruction">LD ($A26A),A</td>
-<td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -772,7 +799,7 @@ Test mode handling
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="34087"></span>8527</td>
-<td class="instruction">JP <a href="8401.html#33860">main_loop_loop</a></td>
+<td class="instruction">JP <a href="8401.html#33860">ml_loop</a></td>
 <td class="comment-1" rowspan="1">Loop</td>
 </tr>
 </table>
@@ -788,7 +815,7 @@ Next: <a href="852A.html">852A</a>
 </tr>
 </table>
 <footer>
-<div class="release">The incomplete Chase H.Q. disassembly 20230518</div>
+<div class="release">The incomplete Chase H.Q. disassembly 20231102</div>
 <div class="copyright">&copy; 1988 Taito Corporation &copy; 1989 Ocean Software Ltd. (Chase H.Q.) © 2023 David Thomas (this disassembly)</div>
 <div class="created">Created using <a href="https://skoolkit.ca">SkoolKit</a> 8.9.</div>
 </footer>

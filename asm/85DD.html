@@ -1,15 +1,15 @@
 <!DOCTYPE html>
 <html>
 <head>
-<title>Chase H.Q.: Data at 85DD</title>
+<title>Chase H.Q.: Routine at 85DD</title>
 <meta charset="utf-8" />
 <link rel="stylesheet" type="text/css" href="../skoolkit.css" />
 </head>
-<body class="Asm-b">
+<body class="Asm-c">
 <table class="header">
 <tr>
 <td class="logo"><a href="../index.html">Chase H.Q.</a></td>
-<td class="page-header">Data</td>
+<td class="page-header">Routines</td>
 </tr>
 </table>
 <table class="asm-navigation">
@@ -23,7 +23,7 @@ Next: <a href="85E4.html">85E4</a>
 </td>
 </tr>
 </table>
-<div class="description">85DD: Data block at 85DD</div>
+<div class="description">85DD: Possibly dead code</div>
 <table class="disassembly">
 <tr>
 <td class="routine-comment" colspan="5">
@@ -32,8 +32,23 @@ Next: <a href="85E4.html">85E4</a>
 </td>
 </tr>
 <tr>
-<td class="address-1"><span id="34269"></span>85DD</td>
-<td class="instruction">DEFB $3A,$31,$A2,$A7,$20,$C5,$C9</td>
+<td class="address-2"><span id="34269"></span>85DD</td>
+<td class="instruction">LD A,($A231)</td>
+<td class="comment-0" rowspan="1"></td>
+</tr>
+<tr>
+<td class="address-1"><span id="34272"></span>85E0</td>
+<td class="instruction">AND A</td>
+<td class="comment-0" rowspan="1"></td>
+</tr>
+<tr>
+<td class="address-1"><span id="34273"></span>85E1</td>
+<td class="instruction">JR NZ,<a href="858C.html#34216">rps_loop</a></td>
+<td class="comment-0" rowspan="1"></td>
+</tr>
+<tr>
+<td class="address-1"><span id="34275"></span>85E3</td>
+<td class="instruction">RET</td>
 <td class="comment-0" rowspan="1"></td>
 </tr>
 </table>
@@ -49,7 +64,7 @@ Next: <a href="85E4.html">85E4</a>
 </tr>
 </table>
 <footer>
-<div class="release">The incomplete Chase H.Q. disassembly 20230518</div>
+<div class="release">The incomplete Chase H.Q. disassembly 20231102</div>
 <div class="copyright">&copy; 1988 Taito Corporation &copy; 1989 Ocean Software Ltd. (Chase H.Q.) © 2023 David Thomas (this disassembly)</div>
 <div class="created">Created using <a href="https://skoolkit.ca">SkoolKit</a> 8.9.</div>
 </footer>

@@ -23,7 +23,7 @@ Next: <a href="9278.html">9278</a>
 </td>
 </tr>
 </table>
-<div class="description">924D: Routine at 924D</div>
+<div class="description">924D: Draws tunnel lights (and possibly other bitmaps).</div>
 <table class="disassembly">
 <tr>
 <td class="routine-comment" colspan="5">
@@ -35,133 +35,167 @@ Next: <a href="9278.html">9278</a>
 </tr>
 <tr>
 <td class="register">B</td>
-<td class="register-desc">?</td>
+<td class="register-desc">Offset added to $E6xx address. Routine skipped if it's &gt;= 16.</td>
 </tr>
 </table>
 </td>
 </tr>
 <tr>
+<td class="asm-label">draw_tunnel_light_left</td>
 <td class="address-2"><span id="37453"></span>924D</td>
 <td class="instruction">LD HL,$9279</td>
 <td class="comment-1" rowspan="1">HL = $9279</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="37456"></span>9250</td>
-<td class="instruction">JR $9255</td>
+<td class="instruction">JR <a href="924D.html#37461">draw_tunnel_light_left_0</a></td>
 <td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
+<td class="asm-label">draw_tunnel_light_right</td>
 <td class="address-1"><span id="37458"></span>9252</td>
 <td class="instruction">LD HL,$92E2</td>
-<td class="comment-1" rowspan="1">HL = $92E2   graphic 1 uses this entry</td>
+<td class="comment-1" rowspan="1">HL = $92E2</td>
 </tr>
 <tr>
+<td class="asm-label">draw_tunnel_light_left_0</td>
 <td class="address-2"><span id="37461"></span>9255</td>
 <td class="instruction">LD A,B</td>
-<td class="comment-1" rowspan="1">A = B</td>
+<td class="comment-1" rowspan="3">Return if B &gt;= 16</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="37462"></span>9256</td>
 <td class="instruction">CP $10</td>
-<td class="comment-1" rowspan="1">CP 16</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="37464"></span>9258</td>
 <td class="instruction">RET NC</td>
-<td class="comment-1" rowspan="1">Return if A &gt;= 16</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="37465"></span>9259</td>
 <td class="instruction">PUSH HL</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="1">Push return address</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="37466"></span>925A</td>
 <td class="instruction">LD A,($A23F)</td>
 <td class="comment-1" rowspan="2">A = fast_counter &amp; $E0</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="37469"></span>925D</td>
 <td class="instruction">AND $E0</td>
 </tr>
 <tr>
+<td class="routine-comment" colspan="5">
+<span id="37471"></span>
+<div class="comments">
+<div class="paragraph">
+Reduces A by 31.25%
+</div>
+</div>
+</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="37471"></span>925F</td>
 <td class="instruction">LD L,A</td>
 <td class="comment-1" rowspan="1">L = A</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="37472"></span>9260</td>
 <td class="instruction">RRC L</td>
 <td class="comment-1" rowspan="2">L &gt;&gt;= 2</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="37474"></span>9262</td>
 <td class="instruction">RRC L</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="37476"></span>9264</td>
 <td class="instruction">SUB L</td>
 <td class="comment-1" rowspan="1">A -= L</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="37477"></span>9265</td>
 <td class="instruction">RRC L</td>
 <td class="comment-1" rowspan="2">L &gt;&gt;= 2</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="37479"></span>9267</td>
 <td class="instruction">RRC L</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="37481"></span>9269</td>
 <td class="instruction">SUB L</td>
 <td class="comment-1" rowspan="1">A -= L</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="37482"></span>926A</td>
 <td class="instruction">ADD A,B</td>
-<td class="comment-1" rowspan="1">A += B</td>
+<td class="comment-1" rowspan="1">A += B   -- B was passed in</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="37483"></span>926B</td>
 <td class="instruction">LD L,A</td>
 <td class="comment-1" rowspan="1">L = A</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="37484"></span>926C</td>
 <td class="instruction">LD H,$E6</td>
-<td class="comment-1" rowspan="1">H = $E6    ; $E6xx data</td>
+<td class="comment-1" rowspan="1">H = $E6   -- $E6xx data</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="37486"></span>926E</td>
 <td class="instruction">LD A,(HL)</td>
 <td class="comment-1" rowspan="1">A = *HL</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="37487"></span>926F</td>
 <td class="instruction">LD C,A</td>
-<td class="comment-1" rowspan="5">A = (A &gt;&gt; 2) - A</td>
+<td class="comment-1" rowspan="5">A = (A&gt;&gt;2) - A</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="37488"></span>9270</td>
 <td class="instruction">SRL C</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="37490"></span>9272</td>
 <td class="instruction">SRL C</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="37492"></span>9274</td>
 <td class="instruction">SUB C</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="37493"></span>9275</td>
 <td class="instruction">NEG</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="37495"></span>9277</td>
 <td class="instruction">RET</td>
-<td class="comment-1" rowspan="1">Return</td>
+<td class="comment-1" rowspan="1">Return via earlier PUSH</td>
 </tr>
 </table>
 <table class="asm-navigation">
@@ -176,7 +210,7 @@ Next: <a href="9278.html">9278</a>
 </tr>
 </table>
 <footer>
-<div class="release">The incomplete Chase H.Q. disassembly 20230518</div>
+<div class="release">The incomplete Chase H.Q. disassembly 20231102</div>
 <div class="copyright">&copy; 1988 Taito Corporation &copy; 1989 Ocean Software Ltd. (Chase H.Q.) © 2023 David Thomas (this disassembly)</div>
 <div class="created">Created using <a href="https://skoolkit.ca">SkoolKit</a> 8.9.</div>
 </footer>

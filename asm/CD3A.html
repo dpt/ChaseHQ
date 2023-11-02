@@ -68,7 +68,7 @@ Used by the routines at <a href="8401.html">main_loop</a>, <a href="852A.html">c
 <td class="asm-label"></td>
 <td class="address-1"><span id="52551"></span>CD47</td>
 <td class="instruction">LD A,($A23F)</td>
-<td class="comment-1" rowspan="2">A = fast_counter &amp; $E0</td>
+<td class="comment-1" rowspan="2">A = fast_counter &amp; $E0  -- top three bits</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -101,7 +101,7 @@ Reduces A by 31.25% ... unsure why that figure.
 <td class="asm-label"></td>
 <td class="address-1"><span id="52558"></span>CD4E</td>
 <td class="instruction">RRC L</td>
-<td class="comment-1" rowspan="2">Divide A by 4 and subtract</td>
+<td class="comment-1" rowspan="3">Divide A by 4 and subtract</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -112,13 +112,12 @@ Reduces A by 31.25% ... unsure why that figure.
 <td class="asm-label"></td>
 <td class="address-1"><span id="52562"></span>CD52</td>
 <td class="instruction">SUB L</td>
-<td class="comment-1" rowspan="1">A -= L</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="52563"></span>CD53</td>
 <td class="instruction">RRC L</td>
-<td class="comment-1" rowspan="2">Divide A by 16 and subtract</td>
+<td class="comment-1" rowspan="3">Divide A by 16 and subtract</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -129,7 +128,6 @@ Reduces A by 31.25% ... unsure why that figure.
 <td class="asm-label"></td>
 <td class="address-1"><span id="52567"></span>CD57</td>
 <td class="instruction">SUB L</td>
-<td class="comment-1" rowspan="1">A -= L</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -176,6 +174,16 @@ Reduces A by 31.25% ... unsure why that figure.
 <td class="address-1"><span id="52579"></span>CD63</td>
 <td class="instruction">EXX</td>
 <td class="comment-1" rowspan="1">Bank</td>
+</tr>
+<tr>
+<td class="routine-comment" colspan="5">
+<span id="52580"></span>
+<div class="comments">
+<div class="paragraph">
+This builds the table at $E301.
+</div>
+</div>
+</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -508,7 +516,7 @@ Reduces A by 31.25% ... unsure why that figure.
 <td class="asm-label"></td>
 <td class="address-1"><span id="52654"></span>CDAE</td>
 <td class="instruction">LD (DE),A</td>
-<td class="comment-1" rowspan="1">*DE = A</td>
+<td class="comment-1" rowspan="1">*DE = A  -- writes to the table at $E3xx</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -670,7 +678,7 @@ Next: <a href="CDD6.html">CDD6</a>
 </tr>
 </table>
 <footer>
-<div class="release">The incomplete Chase H.Q. disassembly 20230518</div>
+<div class="release">The incomplete Chase H.Q. disassembly 20231102</div>
 <div class="copyright">&copy; 1988 Taito Corporation &copy; 1989 Ocean Software Ltd. (Chase H.Q.) © 2023 David Thomas (this disassembly)</div>
 <div class="created">Created using <a href="https://skoolkit.ca">SkoolKit</a> 8.9.</div>
 </footer>

@@ -19,11 +19,11 @@ Prev: <a href="5DED.html">5DED</a>
 </td>
 <td class="up">Up: <a href="../maps/all.html#24127">Map</a></td>
 <td class="next">
-Next: <a href="5E40.html">5E40</a>
+Next: <a href="5EC4.html">5EC4</a>
 </td>
 </tr>
 </table>
-<div class="description">5E3F: Graphics or object? definitions</div>
+<div class="description">5E3F: [Stage 1] Graphics definitions</div>
 <table class="disassembly">
 <tr>
 <td class="routine-comment" colspan="5">
@@ -35,9 +35,544 @@ All are stored inverted except where noted.
 </td>
 </tr>
 <tr>
+<td class="asm-label">graphics_defs</td>
 <td class="address-1"><span id="24127"></span>5E3F</td>
 <td class="instruction">DEFB $00</td>
-<td class="comment-1" rowspan="1">Pointed to by $5CFA</td>
+<td class="comment-1" rowspan="1">Pointed to by <a href="5CF0.html#23802">addrof_graphic_defs</a></td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="24128"></span>5E40</td>
+<td class="instruction">DEFB $10</td>
+<td class="comment-1" rowspan="1">Pointed to by <a href="5CF0.html#23798">tumbleweeds_etc</a></td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="24129"></span>5E41</td>
+<td class="instruction">DEFW <a href="643E.html#28034">tumbleweed_lods</a></td>
+<td class="comment-1" rowspan="1">Address of tumbleweed_lods table</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="24131"></span>5E43</td>
+<td class="instruction">DEFB $20</td>
+<td class="comment-1" rowspan="1">?</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="24132"></span>5E44</td>
+<td class="instruction">DEFW <a href="643E.html#28146">barrier_lods</a></td>
+<td class="comment-1" rowspan="1">Address of barrier_lods table</td>
+</tr>
+<tr>
+<td class="routine-comment" colspan="5">
+<span id="24134"></span>
+<div class="comments">
+<div class="paragraph">
+Right hand side objects.
+</div>
+<div class="paragraph">
+Entry 1 (tunnel light)
+</div>
+</div>
+</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="24134"></span>5E46</td>
+<td class="instruction">DEFB $6F,$29,$50</td>
+<td class="comment-1" rowspan="1">Unclear if anything uses these bytes</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="24137"></span>5E49</td>
+<td class="instruction">DEFW <a href="E1E9.html">tunnellight</a></td>
+<td class="comment-1" rowspan="1">Arg for routine passed in DE</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="24139"></span>5E4B</td>
+<td class="instruction">DEFW <a href="924D.html#37458">draw_tunnel_light_right</a></td>
+<td class="comment-1" rowspan="1">-&gt; Routine at <a href="924D.html#37458">draw_tunnel_light_right</a></td>
+</tr>
+<tr>
+<td class="routine-comment" colspan="5">
+<span id="24141"></span>
+<div class="comments">
+<div class="paragraph">
+Entry 2 (empty)
+</div>
+</div>
+</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="24141"></span>5E4D</td>
+<td class="instruction">DEFB $00,$00,$00</td>
+<td class="comment-1" rowspan="1"></td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="24144"></span>5E50</td>
+<td class="instruction">DEFW $0000</td>
+<td class="comment-1" rowspan="1"></td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="24146"></span>5E52</td>
+<td class="instruction">DEFW $0000</td>
+<td class="comment-1" rowspan="1"></td>
+</tr>
+<tr>
+<td class="routine-comment" colspan="5">
+<span id="24148"></span>
+<div class="comments">
+<div class="paragraph">
+Entry 3 (short pole)
+</div>
+</div>
+</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="24148"></span>5E54</td>
+<td class="instruction">DEFB $90,$5C,$28</td>
+<td class="comment-1" rowspan="1"></td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="24151"></span>5E57</td>
+<td class="instruction">DEFW <a href="7E05.html">stretchy_shortpole</a></td>
+<td class="comment-1" rowspan="1">Arg for routine passed in DE</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="24153"></span>5E59</td>
+<td class="instruction">DEFW <a href="916C.html#37233">draw_stretchy_object_right</a></td>
+<td class="comment-1" rowspan="1">-&gt; Routine at <a href="916C.html#37233">draw_stretchy_object_right</a></td>
+</tr>
+<tr>
+<td class="routine-comment" colspan="5">
+<span id="24155"></span>
+<div class="comments">
+<div class="paragraph">
+Entry 4 (tree, right hand side)
+</div>
+</div>
+</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="24155"></span>5E5B</td>
+<td class="instruction">DEFB $5E,$24,$3C</td>
+<td class="comment-1" rowspan="1"></td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="24158"></span>5E5E</td>
+<td class="instruction">DEFW <a href="643E.html#28918">stretchy_tree_right</a></td>
+<td class="comment-1" rowspan="1">Arg for routine passed in DE</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="24160"></span>5E60</td>
+<td class="instruction">DEFW <a href="916C.html#37233">draw_stretchy_object_right</a></td>
+<td class="comment-1" rowspan="1">-&gt; Routine at <a href="916C.html#37233">draw_stretchy_object_right</a>.</td>
+</tr>
+<tr>
+<td class="routine-comment" colspan="5">
+<span id="24162"></span>
+<div class="comments">
+<div class="paragraph">
+Entry 5 (bush)
+</div>
+</div>
+</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="24162"></span>5E62</td>
+<td class="instruction">DEFB $6E,$31,$50</td>
+<td class="comment-1" rowspan="1"></td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="24165"></span>5E65</td>
+<td class="instruction">DEFW <a href="643E.html#28934">stretchy_tree_left</a></td>
+<td class="comment-1" rowspan="1">Arg for routine passed in DE</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="24167"></span>5E67</td>
+<td class="instruction">DEFW <a href="916C.html#37233">draw_stretchy_object_right</a></td>
+<td class="comment-1" rowspan="1">-&gt; Routine at <a href="916C.html#37233">draw_stretchy_object_right</a></td>
+</tr>
+<tr>
+<td class="routine-comment" colspan="5">
+<span id="24169"></span>
+<div class="comments">
+<div class="paragraph">
+Entry 6 (street lamp)
+</div>
+</div>
+</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="24169"></span>5E69</td>
+<td class="instruction">DEFB $6E,$35,$50</td>
+<td class="comment-1" rowspan="1"></td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="24172"></span>5E6C</td>
+<td class="instruction">DEFW <a href="643E.html#28369">stretchy_streetlamp_right</a></td>
+<td class="comment-1" rowspan="1">Arg for routine passed in DE</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="24174"></span>5E6E</td>
+<td class="instruction">DEFW <a href="916C.html#37233">draw_stretchy_object_right</a></td>
+<td class="comment-1" rowspan="1">-&gt; Routine at <a href="916C.html#37233">draw_stretchy_object_right</a></td>
+</tr>
+<tr>
+<td class="routine-comment" colspan="5">
+<span id="24176"></span>
+<div class="comments">
+<div class="paragraph">
+Entry 7 (telegraph pole)
+</div>
+</div>
+</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="24176"></span>5E70</td>
+<td class="instruction">DEFB $6E,$35,$50</td>
+<td class="comment-1" rowspan="1"></td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="24179"></span>5E73</td>
+<td class="instruction">DEFW <a href="643E.html#28636">stretchy_telegraphpole_right</a></td>
+<td class="comment-1" rowspan="1">Arg for routine passed in DE</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="24181"></span>5E75</td>
+<td class="instruction">DEFW <a href="916C.html#37233">draw_stretchy_object_right</a></td>
+<td class="comment-1" rowspan="1">-&gt; Routine at <a href="916C.html#37233">draw_stretchy_object_right</a></td>
+</tr>
+<tr>
+<td class="routine-comment" colspan="5">
+<span id="24183"></span>
+<div class="comments">
+<div class="paragraph">
+Entry 8 (turn sign, pointing left)
+</div>
+</div>
+</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="24183"></span>5E77</td>
+<td class="instruction">DEFB $64,$18,$46</td>
+<td class="comment-1" rowspan="1"></td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="24186"></span>5E7A</td>
+<td class="instruction">DEFW <a href="643E.html#27404">turn_sign_left</a></td>
+<td class="comment-1" rowspan="1">Arg for routine passed in DE</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="24188"></span>5E7C</td>
+<td class="instruction">DEFW <a href="92E1.html">draw_object_right</a></td>
+<td class="comment-1" rowspan="1">-&gt; Routine at <a href="92E1.html">draw_object_right</a></td>
+</tr>
+<tr>
+<td class="routine-comment" colspan="5">
+<span id="24190"></span>
+<div class="comments">
+<div class="paragraph">
+Entry 9 (turn sign, pointing right)
+</div>
+</div>
+</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="24190"></span>5E7E</td>
+<td class="instruction">DEFB $64,$18,$46</td>
+<td class="comment-1" rowspan="1"></td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="24193"></span>5E81</td>
+<td class="instruction">DEFW <a href="643E.html#27382">turn_sign_right</a></td>
+<td class="comment-1" rowspan="1">-&gt; -&gt; turn_sign_lods</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="24195"></span>5E83</td>
+<td class="instruction">DEFW <a href="92E1.html">draw_object_right</a></td>
+<td class="comment-1" rowspan="1">-&gt; Routine at <a href="92E1.html">draw_object_right</a></td>
+</tr>
+<tr>
+<td class="routine-comment" colspan="5">
+<span id="24197"></span>
+<div class="comments">
+<div class="paragraph">
+Left hand side objects.
+</div>
+<div class="paragraph">
+Entry 10 (tunnel light)
+</div>
+</div>
+</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="24197"></span>5E85</td>
+<td class="instruction">DEFB $7E,$BC,$50</td>
+<td class="comment-1" rowspan="1"></td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="24200"></span>5E88</td>
+<td class="instruction">DEFW <a href="E1E9.html">tunnellight</a></td>
+<td class="comment-1" rowspan="1">Arg for routine passed in DE</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="24202"></span>5E8A</td>
+<td class="instruction">DEFW <a href="924D.html">draw_tunnel_light_left</a></td>
+<td class="comment-1" rowspan="1">-&gt; Routine at <a href="924D.html">draw_tunnel_light_left</a></td>
+</tr>
+<tr>
+<td class="routine-comment" colspan="5">
+<span id="24204"></span>
+<div class="comments">
+<div class="paragraph">
+Entry 11 (empty)
+</div>
+</div>
+</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="24204"></span>5E8C</td>
+<td class="instruction">DEFB $00,$00,$00</td>
+<td class="comment-1" rowspan="1"></td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="24207"></span>5E8F</td>
+<td class="instruction">DEFW $0000</td>
+<td class="comment-1" rowspan="1"></td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="24209"></span>5E91</td>
+<td class="instruction">DEFW $0000</td>
+<td class="comment-1" rowspan="1"></td>
+</tr>
+<tr>
+<td class="routine-comment" colspan="5">
+<span id="24211"></span>
+<div class="comments">
+<div class="paragraph">
+Entry 12 (short pole)
+</div>
+</div>
+</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="24211"></span>5E93</td>
+<td class="instruction">DEFB $60,$90,$28</td>
+<td class="comment-1" rowspan="1"></td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="24214"></span>5E96</td>
+<td class="instruction">DEFW <a href="7E05.html">stretchy_shortpole</a></td>
+<td class="comment-1" rowspan="1">Arg for routine passed in DE</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="24216"></span>5E98</td>
+<td class="instruction">DEFW <a href="916C.html">draw_stretchy_object_left</a></td>
+<td class="comment-1" rowspan="1">-&gt; Routine at <a href="916C.html">draw_stretchy_object_left</a></td>
+</tr>
+<tr>
+<td class="routine-comment" colspan="5">
+<span id="24218"></span>
+<div class="comments">
+<div class="paragraph">
+Entry 13 (tree, left hand side)
+</div>
+</div>
+</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="24218"></span>5E9A</td>
+<td class="instruction">DEFB $8C,$C4,$3C</td>
+<td class="comment-1" rowspan="1"></td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="24221"></span>5E9D</td>
+<td class="instruction">DEFW <a href="643E.html#28918">stretchy_tree_right</a></td>
+<td class="comment-1" rowspan="1">Arg for routine passed in DE</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="24223"></span>5E9F</td>
+<td class="instruction">DEFW <a href="916C.html">draw_stretchy_object_left</a></td>
+<td class="comment-1" rowspan="1">-&gt; Routine at <a href="916C.html">draw_stretchy_object_left</a></td>
+</tr>
+<tr>
+<td class="routine-comment" colspan="5">
+<span id="24225"></span>
+<div class="comments">
+<div class="paragraph">
+Entry 14 (bush)
+</div>
+</div>
+</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="24225"></span>5EA1</td>
+<td class="instruction">DEFB $7C,$D0,$50</td>
+<td class="comment-1" rowspan="1"></td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="24228"></span>5EA4</td>
+<td class="instruction">DEFW <a href="643E.html#28934">stretchy_tree_left</a></td>
+<td class="comment-1" rowspan="1">Arg for routine passed in DE</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="24230"></span>5EA6</td>
+<td class="instruction">DEFW <a href="916C.html">draw_stretchy_object_left</a></td>
+<td class="comment-1" rowspan="1">-&gt; Routine at <a href="916C.html">draw_stretchy_object_left</a></td>
+</tr>
+<tr>
+<td class="routine-comment" colspan="5">
+<span id="24232"></span>
+<div class="comments">
+<div class="paragraph">
+Entry 15 (street lamp)
+</div>
+</div>
+</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="24232"></span>5EA8</td>
+<td class="instruction">DEFB $84,$B6,$50</td>
+<td class="comment-1" rowspan="1"></td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="24235"></span>5EAB</td>
+<td class="instruction">DEFW <a href="643E.html#28382">stretchy_streetlamp_left</a></td>
+<td class="comment-1" rowspan="1">Arg for routine passed in DE</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="24237"></span>5EAD</td>
+<td class="instruction">DEFW <a href="916C.html">draw_stretchy_object_left</a></td>
+<td class="comment-1" rowspan="1">-&gt; Routine at <a href="916C.html">draw_stretchy_object_left</a></td>
+</tr>
+<tr>
+<td class="routine-comment" colspan="5">
+<span id="24239"></span>
+<div class="comments">
+<div class="paragraph">
+Entry 16 (telegraph pole)
+</div>
+</div>
+</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="24239"></span>5EAF</td>
+<td class="instruction">DEFB $84,$B6,$50</td>
+<td class="comment-1" rowspan="1"></td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="24242"></span>5EB2</td>
+<td class="instruction">DEFW <a href="643E.html#28646">stretchy_telegraphpole_left</a></td>
+<td class="comment-1" rowspan="1">Arg for routine passed in DE</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="24244"></span>5EB4</td>
+<td class="instruction">DEFW <a href="916C.html">draw_stretchy_object_left</a></td>
+<td class="comment-1" rowspan="1">-&gt; Routine at <a href="916C.html">draw_stretchy_object_left</a></td>
+</tr>
+<tr>
+<td class="routine-comment" colspan="5">
+<span id="24246"></span>
+<div class="comments">
+<div class="paragraph">
+Entry 17 (turn sign, pointing left)
+</div>
+</div>
+</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="24246"></span>5EB6</td>
+<td class="instruction">DEFB $81,$B6,$46</td>
+<td class="comment-1" rowspan="1"></td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="24249"></span>5EB9</td>
+<td class="instruction">DEFW <a href="643E.html#27404">turn_sign_left</a></td>
+<td class="comment-1" rowspan="1">Arg for routine passed in DE</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="24251"></span>5EBB</td>
+<td class="instruction">DEFW <a href="9278.html">draw_object_left</a></td>
+<td class="comment-1" rowspan="1">-&gt; Routine at <a href="9278.html">draw_object_left</a></td>
+</tr>
+<tr>
+<td class="routine-comment" colspan="5">
+<span id="24253"></span>
+<div class="comments">
+<div class="paragraph">
+Entry 18 (turn sign, pointing right)
+</div>
+</div>
+</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="24253"></span>5EBD</td>
+<td class="instruction">DEFB $81,$C8,$46</td>
+<td class="comment-1" rowspan="1"></td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="24256"></span>5EC0</td>
+<td class="instruction">DEFW <a href="643E.html#27382">turn_sign_right</a></td>
+<td class="comment-1" rowspan="1">Arg for routine passed in DE</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="24258"></span>5EC2</td>
+<td class="instruction">DEFW <a href="9278.html">draw_object_left</a></td>
+<td class="comment-1" rowspan="1">-&gt; Routine at <a href="9278.html">draw_object_left</a></td>
 </tr>
 </table>
 <table class="asm-navigation">
@@ -47,12 +582,12 @@ Prev: <a href="5DED.html">5DED</a>
 </td>
 <td class="up">Up: <a href="../maps/all.html#24127">Map</a></td>
 <td class="next">
-Next: <a href="5E40.html">5E40</a>
+Next: <a href="5EC4.html">5EC4</a>
 </td>
 </tr>
 </table>
 <footer>
-<div class="release">The incomplete Chase H.Q. disassembly 20230518</div>
+<div class="release">The incomplete Chase H.Q. disassembly 20231102</div>
 <div class="copyright">&copy; 1988 Taito Corporation &copy; 1989 Ocean Software Ltd. (Chase H.Q.) © 2023 David Thomas (this disassembly)</div>
 <div class="created">Created using <a href="https://skoolkit.ca">SkoolKit</a> 8.9.</div>
 </footer>

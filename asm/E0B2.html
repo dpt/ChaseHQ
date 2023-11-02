@@ -23,7 +23,7 @@ Next: <a href="E1E9.html">E1E9</a>
 </td>
 </tr>
 </table>
-<div class="description">E0B2: Graphics defns</div>
+<div class="description">E0B2: Graphics defns &lt;Byte width, Flags, Height, Ptr, Ptr&gt;</div>
 <table class="disassembly">
 <tr>
 <td class="routine-comment" colspan="5">
@@ -32,231 +32,1801 @@ Next: <a href="E1E9.html">E1E9</a>
 </td>
 </tr>
 <tr>
+<td class="routine-comment" colspan="5">
+<span id="57522"></span>
+<div class="comments">
+<div class="paragraph">
+TODO: Ensure these graphic calls don't clash with other emissions.
+</div>
+<div class="paragraph">
+Regular: <img alt="graphic-7ab1" src="../images/scr/graphic-7ab1.png" />
+</div>
+</div>
+</td>
+</tr>
+<tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="57522"></span>E0B2</td>
-<td class="instruction">DEFB $04,$00,$10,$B1,$7A,$B1,$7A</td>
-<td class="comment-1" rowspan="43">&lt;Byte width, Flags, Height, Ptr, Ptr&gt;</td>
+<td class="instruction">DEFB $04</td>
+<td class="comment-1" rowspan="1">Width (bytes)</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="57523"></span>E0B3</td>
+<td class="instruction">DEFB $00</td>
+<td class="comment-1" rowspan="1">Flags</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="57524"></span>E0B4</td>
+<td class="instruction">DEFB $10</td>
+<td class="comment-1" rowspan="1">Height (pixels)</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="57525"></span>E0B5</td>
+<td class="instruction">DEFW <a href="7A0F.html#31409">bitmap_fire1</a></td>
+<td class="comment-1" rowspan="1">Bitmap</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="57527"></span>E0B7</td>
+<td class="instruction">DEFW <a href="7A0F.html#31409">bitmap_fire1</a></td>
+<td class="comment-1" rowspan="1">Pre-shifted bitmap</td>
+</tr>
+<tr>
+<td class="routine-comment" colspan="5">
+<span id="57529"></span>
+<div class="comments">
+<div class="paragraph">
+Regular: <img alt="graphic-7b31" src="../images/scr/graphic-7b31.png" />
+</div>
+</div>
+</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="57529"></span>E0B9</td>
-<td class="instruction">DEFB $03,$01,$08,$31,$7B,$31,$7B</td>
+<td class="instruction">DEFB $03</td>
+<td class="comment-1" rowspan="1">Width (bytes)</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="57530"></span>E0BA</td>
+<td class="instruction">DEFB $01</td>
+<td class="comment-1" rowspan="1">Flags</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="57531"></span>E0BB</td>
+<td class="instruction">DEFB $08</td>
+<td class="comment-1" rowspan="1">Height (pixels)</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="57532"></span>E0BC</td>
+<td class="instruction">DEFW <a href="7A0F.html#31537">bitmap_fire3</a></td>
+<td class="comment-1" rowspan="1">Bitmap</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="57534"></span>E0BE</td>
+<td class="instruction">DEFW <a href="7A0F.html#31537">bitmap_fire3</a></td>
+<td class="comment-1" rowspan="1">Pre-shifted bitmap</td>
+</tr>
+<tr>
+<td class="routine-comment" colspan="5">
+<span id="57536"></span>
+<div class="comments">
+<div class="paragraph">
+Regular: <img alt="graphic-7b91" src="../images/scr/graphic-7b91.png" /> Pre-shifted: <img alt="graphic-7ba5" src="../images/scr/graphic-7ba5.png" />
+</div>
+</div>
+</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="57536"></span>E0C0</td>
-<td class="instruction">DEFB $02,$01,$05,$91,$7B,$A5,$7B</td>
+<td class="instruction">DEFB $02</td>
+<td class="comment-1" rowspan="1">Width (bytes)</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="57537"></span>E0C1</td>
+<td class="instruction">DEFB $01</td>
+<td class="comment-1" rowspan="1">Flags</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="57538"></span>E0C2</td>
+<td class="instruction">DEFB $05</td>
+<td class="comment-1" rowspan="1">Height (pixels)</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="57539"></span>E0C3</td>
+<td class="instruction">DEFW <a href="7A0F.html#31633">bitmap_fire5</a></td>
+<td class="comment-1" rowspan="1">Bitmap</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="57541"></span>E0C5</td>
+<td class="instruction">DEFW <a href="7A0F.html#31653">bitmap_fire5s</a></td>
+<td class="comment-1" rowspan="1">Pre-shifted bitmap</td>
+</tr>
+<tr>
+<td class="routine-comment" colspan="5">
+<span id="57543"></span>
+<div class="comments">
+<div class="paragraph">
+Regular: <img alt="graphic-7b95" src="../images/scr/graphic-7b95.png" /> Pre-shifted: <img alt="graphic-7ba9" src="../images/scr/graphic-7ba9.png" />
+</div>
+</div>
+</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="57543"></span>E0C7</td>
-<td class="instruction">DEFB $02,$01,$04,$95,$7B,$A9,$7B</td>
+<td class="instruction">DEFB $02</td>
+<td class="comment-1" rowspan="1">Width (bytes)</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="57544"></span>E0C8</td>
+<td class="instruction">DEFB $01</td>
+<td class="comment-1" rowspan="1">Flags</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="57545"></span>E0C9</td>
+<td class="instruction">DEFB $04</td>
+<td class="comment-1" rowspan="1">Height (pixels)</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="57546"></span>E0CA</td>
+<td class="instruction">DEFW <a href="7A0F.html#31637">$7B95</a></td>
+<td class="comment-1" rowspan="1">Bitmap</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="57548"></span>E0CC</td>
+<td class="instruction">DEFW <a href="7A0F.html#31657">$7BA9</a></td>
+<td class="comment-1" rowspan="1">Pre-shifted bitmap</td>
+</tr>
+<tr>
+<td class="routine-comment" colspan="5">
+<span id="57550"></span>
+<div class="comments">
+<div class="paragraph">
+Regular: <img alt="graphic-7b99" src="../images/scr/graphic-7b99.png" /> Pre-shifted: <img alt="graphic-7bad" src="../images/scr/graphic-7bad.png" />
+</div>
+</div>
+</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="57550"></span>E0CE</td>
-<td class="instruction">DEFB $02,$01,$03,$99,$7B,$AD,$7B</td>
+<td class="instruction">DEFB $02</td>
+<td class="comment-1" rowspan="1">Width (bytes)</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="57551"></span>E0CF</td>
+<td class="instruction">DEFB $01</td>
+<td class="comment-1" rowspan="1">Flags</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="57552"></span>E0D0</td>
+<td class="instruction">DEFB $03</td>
+<td class="comment-1" rowspan="1">Height (pixels)</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="57553"></span>E0D1</td>
+<td class="instruction">DEFW <a href="7A0F.html#31641">$7B99</a></td>
+<td class="comment-1" rowspan="1">Bitmap</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="57555"></span>E0D3</td>
+<td class="instruction">DEFW <a href="7A0F.html#31661">$7BAD</a></td>
+<td class="comment-1" rowspan="1">Pre-shifted bitmap</td>
+</tr>
+<tr>
+<td class="routine-comment" colspan="5">
+<span id="57557"></span>
+<div class="comments">
+<div class="paragraph">
+Regular: <img alt="graphic-7b9d" src="../images/scr/graphic-7b9d.png" /> Pre-shifted: <img alt="graphic-7bb1" src="../images/scr/graphic-7bb1.png" />
+</div>
+</div>
+</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="57557"></span>E0D5</td>
-<td class="instruction">DEFB $02,$01,$02,$9D,$7B,$B1,$7B</td>
+<td class="instruction">DEFB $02</td>
+<td class="comment-1" rowspan="1">Width (bytes)</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="57558"></span>E0D6</td>
+<td class="instruction">DEFB $01</td>
+<td class="comment-1" rowspan="1">Flags</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="57559"></span>E0D7</td>
+<td class="instruction">DEFB $02</td>
+<td class="comment-1" rowspan="1">Height (pixels)</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="57560"></span>E0D8</td>
+<td class="instruction">DEFW <a href="7A0F.html#31645">$7B9D</a></td>
+<td class="comment-1" rowspan="1">Bitmap</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="57562"></span>E0DA</td>
+<td class="instruction">DEFW <a href="7A0F.html#31665">$7BB1</a></td>
+<td class="comment-1" rowspan="1">Pre-shifted bitmap</td>
+</tr>
+<tr>
+<td class="routine-comment" colspan="5">
+<span id="57564"></span>
+<div class="comments">
+<div class="paragraph">
+Regular: <img alt="graphic-7af1" src="../images/scr/graphic-7af1.png" />
+</div>
+</div>
+</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="57564"></span>E0DC</td>
-<td class="instruction">DEFB $04,$00,$10,$F1,$7A,$F1,$7A</td>
+<td class="instruction">DEFB $04</td>
+<td class="comment-1" rowspan="1">Width (bytes)</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="57565"></span>E0DD</td>
+<td class="instruction">DEFB $00</td>
+<td class="comment-1" rowspan="1">Flags</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="57566"></span>E0DE</td>
+<td class="instruction">DEFB $10</td>
+<td class="comment-1" rowspan="1">Height (pixels)</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="57567"></span>E0DF</td>
+<td class="instruction">DEFW <a href="7A0F.html#31473">bitmap_fire2</a></td>
+<td class="comment-1" rowspan="1">Bitmap</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="57569"></span>E0E1</td>
+<td class="instruction">DEFW <a href="7A0F.html#31473">bitmap_fire2</a></td>
+<td class="comment-1" rowspan="1">Pre-shifted bitmap</td>
+</tr>
+<tr>
+<td class="routine-comment" colspan="5">
+<span id="57571"></span>
+<div class="comments">
+<div class="paragraph">
+Regular: <img alt="graphic-7b61" src="../images/scr/graphic-7b61.png" />
+</div>
+</div>
+</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="57571"></span>E0E3</td>
-<td class="instruction">DEFB $03,$01,$08,$61,$7B,$61,$7B</td>
+<td class="instruction">DEFB $03</td>
+<td class="comment-1" rowspan="1">Width (bytes)</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="57572"></span>E0E4</td>
+<td class="instruction">DEFB $01</td>
+<td class="comment-1" rowspan="1">Flags</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="57573"></span>E0E5</td>
+<td class="instruction">DEFB $08</td>
+<td class="comment-1" rowspan="1">Height (pixels)</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="57574"></span>E0E6</td>
+<td class="instruction">DEFW <a href="7A0F.html#31585">bitmap_fire4</a></td>
+<td class="comment-1" rowspan="1">Bitmap</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="57576"></span>E0E8</td>
+<td class="instruction">DEFW <a href="7A0F.html#31585">bitmap_fire4</a></td>
+<td class="comment-1" rowspan="1">Pre-shifted bitmap</td>
+</tr>
+<tr>
+<td class="routine-comment" colspan="5">
+<span id="57578"></span>
+<div class="comments">
+<div class="paragraph">
+Regular: <img alt="graphic-7bb9" src="../images/scr/graphic-7bb9.png" /> Pre-shifted: <img alt="graphic-7bd1" src="../images/scr/graphic-7bd1.png" />
+</div>
+</div>
+</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="57578"></span>E0EA</td>
-<td class="instruction">DEFB $02,$01,$06,$B9,$7B,$D1,$7B</td>
+<td class="instruction">DEFB $02</td>
+<td class="comment-1" rowspan="1">Width (bytes)</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="57579"></span>E0EB</td>
+<td class="instruction">DEFB $01</td>
+<td class="comment-1" rowspan="1">Flags</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="57580"></span>E0EC</td>
+<td class="instruction">DEFB $06</td>
+<td class="comment-1" rowspan="1">Height (pixels)</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="57581"></span>E0ED</td>
+<td class="instruction">DEFW <a href="7A0F.html#31673">bitmap_fire6</a></td>
+<td class="comment-1" rowspan="1">Bitmap</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="57583"></span>E0EF</td>
+<td class="instruction">DEFW <a href="7A0F.html#31697">bitmap_fire6s</a></td>
+<td class="comment-1" rowspan="1">Pre-shifted bitmap</td>
+</tr>
+<tr>
+<td class="routine-comment" colspan="5">
+<span id="57585"></span>
+<div class="comments">
+<div class="paragraph">
+Regular: <img alt="graphic-7bbd" src="../images/scr/graphic-7bbd.png" /> Pre-shifted: <img alt="graphic-7bd5" src="../images/scr/graphic-7bd5.png" />
+</div>
+</div>
+</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="57585"></span>E0F1</td>
-<td class="instruction">DEFB $02,$01,$05,$BD,$7B,$D5,$7B</td>
+<td class="instruction">DEFB $02</td>
+<td class="comment-1" rowspan="1">Width (bytes)</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="57586"></span>E0F2</td>
+<td class="instruction">DEFB $01</td>
+<td class="comment-1" rowspan="1">Flags</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="57587"></span>E0F3</td>
+<td class="instruction">DEFB $05</td>
+<td class="comment-1" rowspan="1">Height (pixels)</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="57588"></span>E0F4</td>
+<td class="instruction">DEFW <a href="7A0F.html#31677">$7BBD</a></td>
+<td class="comment-1" rowspan="1">Bitmap</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="57590"></span>E0F6</td>
+<td class="instruction">DEFW <a href="7A0F.html#31701">$7BD5</a></td>
+<td class="comment-1" rowspan="1">Pre-shifted bitmap</td>
+</tr>
+<tr>
+<td class="routine-comment" colspan="5">
+<span id="57592"></span>
+<div class="comments">
+<div class="paragraph">
+Regular: <img alt="graphic-7bc1" src="../images/scr/graphic-7bc1.png" /> Pre-shifted: <img alt="graphic-7bd9" src="../images/scr/graphic-7bd9.png" />
+</div>
+</div>
+</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="57592"></span>E0F8</td>
-<td class="instruction">DEFB $02,$01,$04,$C1,$7B,$D9,$7B</td>
+<td class="instruction">DEFB $02</td>
+<td class="comment-1" rowspan="1">Width (bytes)</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="57593"></span>E0F9</td>
+<td class="instruction">DEFB $01</td>
+<td class="comment-1" rowspan="1">Flags</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="57594"></span>E0FA</td>
+<td class="instruction">DEFB $04</td>
+<td class="comment-1" rowspan="1">Height (pixels)</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="57595"></span>E0FB</td>
+<td class="instruction">DEFW <a href="7A0F.html#31681">$7BC1</a></td>
+<td class="comment-1" rowspan="1">Bitmap</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="57597"></span>E0FD</td>
+<td class="instruction">DEFW <a href="7A0F.html#31705">$7BD9</a></td>
+<td class="comment-1" rowspan="1">Pre-shifted bitmap</td>
+</tr>
+<tr>
+<td class="routine-comment" colspan="5">
+<span id="57599"></span>
+<div class="comments">
+<div class="paragraph">
+Regular: <img alt="graphic-7bc5" src="../images/scr/graphic-7bc5.png" /> Pre-shifted: <img alt="graphic-7bdd" src="../images/scr/graphic-7bdd.png" />
+</div>
+</div>
+</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="57599"></span>E0FF</td>
-<td class="instruction">DEFB $02,$01,$03,$C5,$7B,$DD,$7B</td>
+<td class="instruction">DEFB $02</td>
+<td class="comment-1" rowspan="1">Width (bytes)</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="57600"></span>E100</td>
+<td class="instruction">DEFB $01</td>
+<td class="comment-1" rowspan="1">Flags</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="57601"></span>E101</td>
+<td class="instruction">DEFB $03</td>
+<td class="comment-1" rowspan="1">Height (pixels)</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="57602"></span>E102</td>
+<td class="instruction">DEFW <a href="7A0F.html#31685">$7BC5</a></td>
+<td class="comment-1" rowspan="1">Bitmap</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="57604"></span>E104</td>
+<td class="instruction">DEFW <a href="7A0F.html#31709">$7BDD</a></td>
+<td class="comment-1" rowspan="1">Pre-shifted bitmap</td>
+</tr>
+<tr>
+<td class="routine-comment" colspan="5">
+<span id="57606"></span>
+<div class="comments">
+<div class="paragraph">
+Regular: <img alt="graphic-7ac5" src="../images/scr/graphic-7ac5.png" />
+</div>
+</div>
+</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="57606"></span>E106</td>
-<td class="instruction">DEFB $04,$00,$0B,$C5,$7A,$C5,$7A</td>
+<td class="instruction">DEFB $04</td>
+<td class="comment-1" rowspan="1">Width (bytes)</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="57607"></span>E107</td>
+<td class="instruction">DEFB $00</td>
+<td class="comment-1" rowspan="1">Flags</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="57608"></span>E108</td>
+<td class="instruction">DEFB $0B</td>
+<td class="comment-1" rowspan="1">Height (pixels)</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="57609"></span>E109</td>
+<td class="instruction">DEFW <a href="7A0F.html#31429">$7AC5</a></td>
+<td class="comment-1" rowspan="1">Bitmap</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="57611"></span>E10B</td>
+<td class="instruction">DEFW <a href="7A0F.html#31429">$7AC5</a></td>
+<td class="comment-1" rowspan="1">Pre-shifted bitmap</td>
+</tr>
+<tr>
+<td class="routine-comment" colspan="5">
+<span id="57613"></span>
+<div class="comments">
+<div class="paragraph">
+Regular: <img alt="graphic-7b3d" src="../images/scr/graphic-7b3d.png" />
+</div>
+</div>
+</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="57613"></span>E10D</td>
-<td class="instruction">DEFB $03,$01,$06,$3D,$7B,$3D,$7B</td>
+<td class="instruction">DEFB $03</td>
+<td class="comment-1" rowspan="1">Width (bytes)</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="57614"></span>E10E</td>
+<td class="instruction">DEFB $01</td>
+<td class="comment-1" rowspan="1">Flags</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="57615"></span>E10F</td>
+<td class="instruction">DEFB $06</td>
+<td class="comment-1" rowspan="1">Height (pixels)</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="57616"></span>E110</td>
+<td class="instruction">DEFW <a href="7A0F.html#31549">$7B3D</a></td>
+<td class="comment-1" rowspan="1">Bitmap</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="57618"></span>E112</td>
+<td class="instruction">DEFW <a href="7A0F.html#31549">$7B3D</a></td>
+<td class="comment-1" rowspan="1">Pre-shifted bitmap</td>
+</tr>
+<tr>
+<td class="routine-comment" colspan="5">
+<span id="57620"></span>
+<div class="comments">
+<div class="paragraph">
+Regular: <img alt="graphic-7b3d" src="../images/scr/graphic-7b3d.png" /> Pre-shifted: <img alt="graphic-7ba9" src="../images/scr/graphic-7ba9.png" />
+</div>
+</div>
+</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="57620"></span>E114</td>
-<td class="instruction">DEFB $02,$01,$04,$95,$7B,$A9,$7B</td>
+<td class="instruction">DEFB $02</td>
+<td class="comment-1" rowspan="1">Width (bytes)</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="57621"></span>E115</td>
+<td class="instruction">DEFB $01</td>
+<td class="comment-1" rowspan="1">Flags</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="57622"></span>E116</td>
+<td class="instruction">DEFB $04</td>
+<td class="comment-1" rowspan="1">Height (pixels)</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="57623"></span>E117</td>
+<td class="instruction">DEFW <a href="7A0F.html#31637">$7B95</a></td>
+<td class="comment-1" rowspan="1">Bitmap</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="57625"></span>E119</td>
+<td class="instruction">DEFW <a href="7A0F.html#31657">$7BA9</a></td>
+<td class="comment-1" rowspan="1">Pre-shifted bitmap</td>
+</tr>
+<tr>
+<td class="routine-comment" colspan="5">
+<span id="57627"></span>
+<div class="comments">
+<div class="paragraph">
+Regular: <img alt="graphic-7b99" src="../images/scr/graphic-7b99.png" /> Pre-shifted: <img alt="graphic-7bad" src="../images/scr/graphic-7bad.png" />
+</div>
+</div>
+</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="57627"></span>E11B</td>
-<td class="instruction">DEFB $02,$01,$03,$99,$7B,$AD,$7B</td>
+<td class="instruction">DEFB $02</td>
+<td class="comment-1" rowspan="1">Width (bytes)</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="57628"></span>E11C</td>
+<td class="instruction">DEFB $01</td>
+<td class="comment-1" rowspan="1">Flags</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="57629"></span>E11D</td>
+<td class="instruction">DEFB $03</td>
+<td class="comment-1" rowspan="1">Height (pixels)</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="57630"></span>E11E</td>
+<td class="instruction">DEFW <a href="7A0F.html#31641">$7B99</a></td>
+<td class="comment-1" rowspan="1">Bitmap</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="57632"></span>E120</td>
+<td class="instruction">DEFW <a href="7A0F.html#31661">$7BAD</a></td>
+<td class="comment-1" rowspan="1">Pre-shifted bitmap</td>
+</tr>
+<tr>
+<td class="routine-comment" colspan="5">
+<span id="57634"></span>
+<div class="comments">
+<div class="paragraph">
+Regular: <img alt="graphic-7b9d" src="../images/scr/graphic-7b9d.png" /> Pre-shifted: <img alt="graphic-7bb1" src="../images/scr/graphic-7bb1.png" />
+</div>
+</div>
+</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="57634"></span>E122</td>
-<td class="instruction">DEFB $02,$01,$02,$9D,$7B,$B1,$7B</td>
+<td class="instruction">DEFB $02</td>
+<td class="comment-1" rowspan="1">Width (bytes)</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="57635"></span>E123</td>
+<td class="instruction">DEFB $01</td>
+<td class="comment-1" rowspan="1">Flags</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="57636"></span>E124</td>
+<td class="instruction">DEFB $02</td>
+<td class="comment-1" rowspan="1">Height (pixels)</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="57637"></span>E125</td>
+<td class="instruction">DEFW <a href="7A0F.html#31645">$7B9D</a></td>
+<td class="comment-1" rowspan="1">Bitmap</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="57639"></span>E127</td>
+<td class="instruction">DEFW <a href="7A0F.html#31665">$7BB1</a></td>
+<td class="comment-1" rowspan="1">Pre-shifted bitmap</td>
+</tr>
+<tr>
+<td class="routine-comment" colspan="5">
+<span id="57641"></span>
+<div class="comments">
+<div class="paragraph">
+Regular: <img alt="graphic-7ba1" src="../images/scr/graphic-7ba1.png" /> Pre-shifted: <img alt="graphic-7bb5" src="../images/scr/graphic-7bb5.png" />
+</div>
+</div>
+</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="57641"></span>E129</td>
-<td class="instruction">DEFB $02,$01,$01,$A1,$7B,$B5,$7B</td>
+<td class="instruction">DEFB $02</td>
+<td class="comment-1" rowspan="1">Width (bytes)</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="57642"></span>E12A</td>
+<td class="instruction">DEFB $01</td>
+<td class="comment-1" rowspan="1">Flags</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="57643"></span>E12B</td>
+<td class="instruction">DEFB $01</td>
+<td class="comment-1" rowspan="1">Height (pixels)</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="57644"></span>E12C</td>
+<td class="instruction">DEFW <a href="7A0F.html#31649">$7BA1</a></td>
+<td class="comment-1" rowspan="1">Bitmap</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="57646"></span>E12E</td>
+<td class="instruction">DEFW <a href="7A0F.html#31669">$7BB5</a></td>
+<td class="comment-1" rowspan="1">Pre-shifted bitmap</td>
+</tr>
+<tr>
+<td class="routine-comment" colspan="5">
+<span id="57648"></span>
+<div class="comments">
+<div class="paragraph">
+Regular: <img alt="graphic-7b05" src="../images/scr/graphic-7b05.png" />
+</div>
+</div>
+</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="57648"></span>E130</td>
-<td class="instruction">DEFB $04,$00,$0B,$05,$7B,$05,$7B</td>
+<td class="instruction">DEFB $04</td>
+<td class="comment-1" rowspan="1">Width (bytes)</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="57649"></span>E131</td>
+<td class="instruction">DEFB $00</td>
+<td class="comment-1" rowspan="1">Flags</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="57650"></span>E132</td>
+<td class="instruction">DEFB $0B</td>
+<td class="comment-1" rowspan="1">Height (pixels)</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="57651"></span>E133</td>
+<td class="instruction">DEFW <a href="7A0F.html#31493">$7B05</a></td>
+<td class="comment-1" rowspan="1">Bitmap</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="57653"></span>E135</td>
+<td class="instruction">DEFW <a href="7A0F.html#31493">$7B05</a></td>
+<td class="comment-1" rowspan="1">Pre-shifted bitmap</td>
+</tr>
+<tr>
+<td class="routine-comment" colspan="5">
+<span id="57655"></span>
+<div class="comments">
+<div class="paragraph">
+Regular: <img alt="graphic-7b6d" src="../images/scr/graphic-7b6d.png" />
+</div>
+</div>
+</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="57655"></span>E137</td>
-<td class="instruction">DEFB $03,$01,$06,$6D,$7B,$6D,$7B</td>
+<td class="instruction">DEFB $03</td>
+<td class="comment-1" rowspan="1">Width (bytes)</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="57656"></span>E138</td>
+<td class="instruction">DEFB $01</td>
+<td class="comment-1" rowspan="1">Flags</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="57657"></span>E139</td>
+<td class="instruction">DEFB $06</td>
+<td class="comment-1" rowspan="1">Height (pixels)</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="57658"></span>E13A</td>
+<td class="instruction">DEFW <a href="7A0F.html#31597">$7B6D</a></td>
+<td class="comment-1" rowspan="1">Bitmap</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="57660"></span>E13C</td>
+<td class="instruction">DEFW <a href="7A0F.html#31597">$7B6D</a></td>
+<td class="comment-1" rowspan="1">Pre-shifted bitmap</td>
+</tr>
+<tr>
+<td class="routine-comment" colspan="5">
+<span id="57662"></span>
+<div class="comments">
+<div class="paragraph">
+Regular: <img alt="graphic-7ba1" src="../images/scr/graphic-7ba1.png" /> Pre-shifted: <img alt="graphic-7bb5" src="../images/scr/graphic-7bb5.png" />
+</div>
+</div>
+</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="57662"></span>E13E</td>
-<td class="instruction">DEFB $02,$01,$05,$BD,$7B,$D5,$7B</td>
+<td class="instruction">DEFB $02</td>
+<td class="comment-1" rowspan="1">Width (bytes)</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="57663"></span>E13F</td>
+<td class="instruction">DEFB $01</td>
+<td class="comment-1" rowspan="1">Flags</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="57664"></span>E140</td>
+<td class="instruction">DEFB $05</td>
+<td class="comment-1" rowspan="1">Height (pixels)</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="57665"></span>E141</td>
+<td class="instruction">DEFW <a href="7A0F.html#31677">$7BBD</a></td>
+<td class="comment-1" rowspan="1">Bitmap</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="57667"></span>E143</td>
+<td class="instruction">DEFW <a href="7A0F.html#31701">$7BD5</a></td>
+<td class="comment-1" rowspan="1">Pre-shifted bitmap</td>
+</tr>
+<tr>
+<td class="routine-comment" colspan="5">
+<span id="57669"></span>
+<div class="comments">
+<div class="paragraph">
+Regular: <img alt="graphic-7bc1" src="../images/scr/graphic-7bc1.png" /> Pre-shifted: <img alt="graphic-7bd9" src="../images/scr/graphic-7bd9.png" />
+</div>
+</div>
+</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="57669"></span>E145</td>
-<td class="instruction">DEFB $02,$01,$04,$C1,$7B,$D9,$7B</td>
+<td class="instruction">DEFB $02</td>
+<td class="comment-1" rowspan="1">Width (bytes)</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="57670"></span>E146</td>
+<td class="instruction">DEFB $01</td>
+<td class="comment-1" rowspan="1">Flags</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="57671"></span>E147</td>
+<td class="instruction">DEFB $04</td>
+<td class="comment-1" rowspan="1">Height (pixels)</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="57672"></span>E148</td>
+<td class="instruction">DEFW <a href="7A0F.html#31681">$7BC1</a></td>
+<td class="comment-1" rowspan="1">Bitmap</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="57674"></span>E14A</td>
+<td class="instruction">DEFW <a href="7A0F.html#31705">$7BD9</a></td>
+<td class="comment-1" rowspan="1">Pre-shifted bitmap</td>
+</tr>
+<tr>
+<td class="routine-comment" colspan="5">
+<span id="57676"></span>
+<div class="comments">
+<div class="paragraph">
+Regular: <img alt="graphic-7bc5" src="../images/scr/graphic-7bc5.png" /> Pre-shifted: <img alt="graphic-7bdd" src="../images/scr/graphic-7bdd.png" />
+</div>
+</div>
+</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="57676"></span>E14C</td>
-<td class="instruction">DEFB $02,$01,$03,$C5,$7B,$DD,$7B</td>
+<td class="instruction">DEFB $02</td>
+<td class="comment-1" rowspan="1">Width (bytes)</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="57677"></span>E14D</td>
+<td class="instruction">DEFB $01</td>
+<td class="comment-1" rowspan="1">Flags</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="57678"></span>E14E</td>
+<td class="instruction">DEFB $03</td>
+<td class="comment-1" rowspan="1">Height (pixels)</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="57679"></span>E14F</td>
+<td class="instruction">DEFW <a href="7A0F.html#31685">$7BC5</a></td>
+<td class="comment-1" rowspan="1">Bitmap</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="57681"></span>E151</td>
+<td class="instruction">DEFW <a href="7A0F.html#31709">$7BDD</a></td>
+<td class="comment-1" rowspan="1">Pre-shifted bitmap</td>
+</tr>
+<tr>
+<td class="routine-comment" colspan="5">
+<span id="57683"></span>
+<div class="comments">
+<div class="paragraph">
+Regular: <img alt="graphic-7bc9" src="../images/scr/graphic-7bc9.png" /> Pre-shifted: <img alt="graphic-7be1" src="../images/scr/graphic-7be1.png" />
+</div>
+</div>
+</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="57683"></span>E153</td>
-<td class="instruction">DEFB $02,$01,$02,$C9,$7B,$E1,$7B</td>
+<td class="instruction">DEFB $02</td>
+<td class="comment-1" rowspan="1">Width (bytes)</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="57684"></span>E154</td>
+<td class="instruction">DEFB $01</td>
+<td class="comment-1" rowspan="1">Flags</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="57685"></span>E155</td>
+<td class="instruction">DEFB $02</td>
+<td class="comment-1" rowspan="1">Height (pixels)</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="57686"></span>E156</td>
+<td class="instruction">DEFW <a href="7A0F.html#31689">$7BC9</a></td>
+<td class="comment-1" rowspan="1">Bitmap</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="57688"></span>E158</td>
+<td class="instruction">DEFW <a href="7A0F.html#31713">$7BE1</a></td>
+<td class="comment-1" rowspan="1">Pre-shifted bitmap</td>
+</tr>
+<tr>
+<td class="routine-comment" colspan="5">
+<span id="57690"></span>
+<div class="comments">
+<div class="paragraph">
+Regular: <img alt="graphic-7ad9" src="../images/scr/graphic-7ad9.png" />
+</div>
+</div>
+</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="57690"></span>E15A</td>
-<td class="instruction">DEFB $04,$00,$06,$D9,$7A,$D9,$7A</td>
+<td class="instruction">DEFB $04</td>
+<td class="comment-1" rowspan="1">Width (bytes)</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="57691"></span>E15B</td>
+<td class="instruction">DEFB $00</td>
+<td class="comment-1" rowspan="1">Flags</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="57692"></span>E15C</td>
+<td class="instruction">DEFB $06</td>
+<td class="comment-1" rowspan="1">Height (pixels)</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="57693"></span>E15D</td>
+<td class="instruction">DEFW <a href="7A0F.html#31449">$7AD9</a></td>
+<td class="comment-1" rowspan="1">Bitmap</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="57695"></span>E15F</td>
+<td class="instruction">DEFW <a href="7A0F.html#31449">$7AD9</a></td>
+<td class="comment-1" rowspan="1">Pre-shifted bitmap</td>
+</tr>
+<tr>
+<td class="routine-comment" colspan="5">
+<span id="57697"></span>
+<div class="comments">
+<div class="paragraph">
+Regular: <img alt="graphic-7b4f" src="../images/scr/graphic-7b4f.png" />
+</div>
+</div>
+</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="57697"></span>E161</td>
-<td class="instruction">DEFB $03,$01,$03,$4F,$7B,$4F,$7B</td>
+<td class="instruction">DEFB $03</td>
+<td class="comment-1" rowspan="1">Width (bytes)</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="57698"></span>E162</td>
+<td class="instruction">DEFB $01</td>
+<td class="comment-1" rowspan="1">Flags</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="57699"></span>E163</td>
+<td class="instruction">DEFB $03</td>
+<td class="comment-1" rowspan="1">Height (pixels)</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="57700"></span>E164</td>
+<td class="instruction">DEFW <a href="7A0F.html#31567">$7B4F</a></td>
+<td class="comment-1" rowspan="1">Bitmap</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="57702"></span>E166</td>
+<td class="instruction">DEFW <a href="7A0F.html#31567">$7B4F</a></td>
+<td class="comment-1" rowspan="1">Pre-shifted bitmap</td>
+</tr>
+<tr>
+<td class="routine-comment" colspan="5">
+<span id="57704"></span>
+<div class="comments">
+<div class="paragraph">
+Regular: <img alt="graphic-7b99" src="../images/scr/graphic-7b99.png" /> Pre-shifted: <img alt="graphic-7bad" src="../images/scr/graphic-7bad.png" />
+</div>
+</div>
+</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="57704"></span>E168</td>
-<td class="instruction">DEFB $02,$01,$03,$99,$7B,$AD,$7B</td>
+<td class="instruction">DEFB $02</td>
+<td class="comment-1" rowspan="1">Width (bytes)</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="57705"></span>E169</td>
+<td class="instruction">DEFB $01</td>
+<td class="comment-1" rowspan="1">Flags</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="57706"></span>E16A</td>
+<td class="instruction">DEFB $03</td>
+<td class="comment-1" rowspan="1">Height (pixels)</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="57707"></span>E16B</td>
+<td class="instruction">DEFW <a href="7A0F.html#31641">$7B99</a></td>
+<td class="comment-1" rowspan="1">Bitmap</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="57709"></span>E16D</td>
+<td class="instruction">DEFW <a href="7A0F.html#31661">$7BAD</a></td>
+<td class="comment-1" rowspan="1">Pre-shifted bitmap</td>
+</tr>
+<tr>
+<td class="routine-comment" colspan="5">
+<span id="57711"></span>
+<div class="comments">
+<div class="paragraph">
+Regular: <img alt="graphic-7b9d" src="../images/scr/graphic-7b9d.png" /> Pre-shifted: <img alt="graphic-7bb1" src="../images/scr/graphic-7bb1.png" />
+</div>
+</div>
+</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="57711"></span>E16F</td>
-<td class="instruction">DEFB $02,$01,$02,$9D,$7B,$B1,$7B</td>
+<td class="instruction">DEFB $02</td>
+<td class="comment-1" rowspan="1">Width (bytes)</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="57712"></span>E170</td>
+<td class="instruction">DEFB $01</td>
+<td class="comment-1" rowspan="1">Flags</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="57713"></span>E171</td>
+<td class="instruction">DEFB $02</td>
+<td class="comment-1" rowspan="1">Height (pixels)</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="57714"></span>E172</td>
+<td class="instruction">DEFW <a href="7A0F.html#31645">$7B9D</a></td>
+<td class="comment-1" rowspan="1">Bitmap</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="57716"></span>E174</td>
+<td class="instruction">DEFW <a href="7A0F.html#31665">$7BB1</a></td>
+<td class="comment-1" rowspan="1">Pre-shifted bitmap</td>
+</tr>
+<tr>
+<td class="routine-comment" colspan="5">
+<span id="57718"></span>
+<div class="comments">
+<div class="paragraph">
+Regular: <img alt="graphic-7ba1" src="../images/scr/graphic-7ba1.png" /> Pre-shifted: <img alt="graphic-7bb5" src="../images/scr/graphic-7bb5.png" />
+</div>
+</div>
+</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="57718"></span>E176</td>
-<td class="instruction">DEFB $02,$01,$01,$A1,$7B,$B5,$7B</td>
+<td class="instruction">DEFB $02</td>
+<td class="comment-1" rowspan="1">Width (bytes)</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="57719"></span>E177</td>
+<td class="instruction">DEFB $01</td>
+<td class="comment-1" rowspan="1">Flags</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="57720"></span>E178</td>
+<td class="instruction">DEFB $01</td>
+<td class="comment-1" rowspan="1">Height (pixels)</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="57721"></span>E179</td>
+<td class="instruction">DEFW <a href="7A0F.html#31649">$7BA1</a></td>
+<td class="comment-1" rowspan="1">Bitmap</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="57723"></span>E17B</td>
+<td class="instruction">DEFW <a href="7A0F.html#31669">$7BB5</a></td>
+<td class="comment-1" rowspan="1">Pre-shifted bitmap</td>
+</tr>
+<tr>
+<td class="routine-comment" colspan="5">
+<span id="57725"></span>
+<div class="comments">
+<div class="paragraph">
+Regular: <img alt="graphic-7ba1" src="../images/scr/graphic-7ba1.png" /> Pre-shifted: <img alt="graphic-7bb5" src="../images/scr/graphic-7bb5.png" />
+</div>
+</div>
+</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="57725"></span>E17D</td>
-<td class="instruction">DEFB $02,$01,$01,$A1,$7B,$B5,$7B</td>
+<td class="instruction">DEFB $02</td>
+<td class="comment-1" rowspan="1">Width (bytes)</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="57726"></span>E17E</td>
+<td class="instruction">DEFB $01</td>
+<td class="comment-1" rowspan="1">Flags</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="57727"></span>E17F</td>
+<td class="instruction">DEFB $01</td>
+<td class="comment-1" rowspan="1">Height (pixels)</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="57728"></span>E180</td>
+<td class="instruction">DEFW <a href="7A0F.html#31649">$7BA1</a></td>
+<td class="comment-1" rowspan="1">Bitmap</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="57730"></span>E182</td>
+<td class="instruction">DEFW <a href="7A0F.html#31669">$7BB5</a></td>
+<td class="comment-1" rowspan="1">Pre-shifted bitmap</td>
+</tr>
+<tr>
+<td class="routine-comment" colspan="5">
+<span id="57732"></span>
+<div class="comments">
+<div class="paragraph">
+Regular: <img alt="graphic-7b19" src="../images/scr/graphic-7b19.png" />
+</div>
+</div>
+</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="57732"></span>E184</td>
-<td class="instruction">DEFB $04,$00,$06,$19,$7B,$19,$7B</td>
+<td class="instruction">DEFB $04</td>
+<td class="comment-1" rowspan="1">Width (bytes)</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="57733"></span>E185</td>
+<td class="instruction">DEFB $00</td>
+<td class="comment-1" rowspan="1">Flags</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="57734"></span>E186</td>
+<td class="instruction">DEFB $06</td>
+<td class="comment-1" rowspan="1">Height (pixels)</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="57735"></span>E187</td>
+<td class="instruction">DEFW <a href="7A0F.html#31513">$7B19</a></td>
+<td class="comment-1" rowspan="1">Bitmap</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="57737"></span>E189</td>
+<td class="instruction">DEFW <a href="7A0F.html#31513">$7B19</a></td>
+<td class="comment-1" rowspan="1">Pre-shifted bitmap</td>
+</tr>
+<tr>
+<td class="routine-comment" colspan="5">
+<span id="57739"></span>
+<div class="comments">
+<div class="paragraph">
+Regular: <img alt="graphic-7b7f" src="../images/scr/graphic-7b7f.png" />
+</div>
+</div>
+</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="57739"></span>E18B</td>
-<td class="instruction">DEFB $03,$01,$03,$7F,$7B,$7F,$7B</td>
+<td class="instruction">DEFB $03</td>
+<td class="comment-1" rowspan="1">Width (bytes)</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="57740"></span>E18C</td>
+<td class="instruction">DEFB $01</td>
+<td class="comment-1" rowspan="1">Flags</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="57741"></span>E18D</td>
+<td class="instruction">DEFB $03</td>
+<td class="comment-1" rowspan="1">Height (pixels)</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="57742"></span>E18E</td>
+<td class="instruction">DEFW <a href="7A0F.html#31615">$7B7F</a></td>
+<td class="comment-1" rowspan="1">Bitmap</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="57744"></span>E190</td>
+<td class="instruction">DEFW <a href="7A0F.html#31615">$7B7F</a></td>
+<td class="comment-1" rowspan="1">Pre-shifted bitmap</td>
+</tr>
+<tr>
+<td class="routine-comment" colspan="5">
+<span id="57746"></span>
+<div class="comments">
+<div class="paragraph">
+Regular: <img alt="graphic-7bc5" src="../images/scr/graphic-7bc5.png" /> Pre-shifted: <img alt="graphic-7bdd" src="../images/scr/graphic-7bdd.png" />
+</div>
+</div>
+</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="57746"></span>E192</td>
-<td class="instruction">DEFB $02,$01,$03,$C5,$7B,$DD,$7B</td>
+<td class="instruction">DEFB $02</td>
+<td class="comment-1" rowspan="1">Width (bytes)</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="57747"></span>E193</td>
+<td class="instruction">DEFB $01</td>
+<td class="comment-1" rowspan="1">Flags</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="57748"></span>E194</td>
+<td class="instruction">DEFB $03</td>
+<td class="comment-1" rowspan="1">Height (pixels)</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="57749"></span>E195</td>
+<td class="instruction">DEFW <a href="7A0F.html#31685">$7BC5</a></td>
+<td class="comment-1" rowspan="1">Bitmap</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="57751"></span>E197</td>
+<td class="instruction">DEFW <a href="7A0F.html#31709">$7BDD</a></td>
+<td class="comment-1" rowspan="1">Pre-shifted bitmap</td>
+</tr>
+<tr>
+<td class="routine-comment" colspan="5">
+<span id="57753"></span>
+<div class="comments">
+<div class="paragraph">
+Regular: <img alt="graphic-7bc9" src="../images/scr/graphic-7bc9.png" /> Pre-shifted: <img alt="graphic-7be1" src="../images/scr/graphic-7be1.png" />
+</div>
+</div>
+</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="57753"></span>E199</td>
-<td class="instruction">DEFB $02,$01,$02,$C9,$7B,$E1,$7B</td>
+<td class="instruction">DEFB $02</td>
+<td class="comment-1" rowspan="1">Width (bytes)</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="57754"></span>E19A</td>
+<td class="instruction">DEFB $01</td>
+<td class="comment-1" rowspan="1">Flags</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="57755"></span>E19B</td>
+<td class="instruction">DEFB $02</td>
+<td class="comment-1" rowspan="1">Height (pixels)</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="57756"></span>E19C</td>
+<td class="instruction">DEFW <a href="7A0F.html#31689">$7BC9</a></td>
+<td class="comment-1" rowspan="1">Bitmap</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="57758"></span>E19E</td>
+<td class="instruction">DEFW <a href="7A0F.html#31713">$7BE1</a></td>
+<td class="comment-1" rowspan="1">Pre-shifted bitmap</td>
+</tr>
+<tr>
+<td class="routine-comment" colspan="5">
+<span id="57760"></span>
+<div class="comments">
+<div class="paragraph">
+Regular: <img alt="graphic-7bcd" src="../images/scr/graphic-7bcd.png" /> Pre-shifted: <img alt="graphic-7be5" src="../images/scr/graphic-7be5.png" />
+</div>
+</div>
+</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="57760"></span>E1A0</td>
-<td class="instruction">DEFB $02,$01,$01,$CD,$7B,$E5,$7B</td>
+<td class="instruction">DEFB $02</td>
+<td class="comment-1" rowspan="1">Width (bytes)</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="57761"></span>E1A1</td>
+<td class="instruction">DEFB $01</td>
+<td class="comment-1" rowspan="1">Flags</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="57762"></span>E1A2</td>
+<td class="instruction">DEFB $01</td>
+<td class="comment-1" rowspan="1">Height (pixels)</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="57763"></span>E1A3</td>
+<td class="instruction">DEFW <a href="7A0F.html#31693">$7BCD</a></td>
+<td class="comment-1" rowspan="1">Bitmap</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="57765"></span>E1A5</td>
+<td class="instruction">DEFW <a href="7A0F.html#31717">$7BE5</a></td>
+<td class="comment-1" rowspan="1">Pre-shifted bitmap</td>
+</tr>
+<tr>
+<td class="routine-comment" colspan="5">
+<span id="57767"></span>
+<div class="comments">
+<div class="paragraph">
+Regular: <img alt="graphic-7bcd" src="../images/scr/graphic-7bcd.png" /> Pre-shifted: <img alt="graphic-7be5" src="../images/scr/graphic-7be5.png" />
+</div>
+</div>
+</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="57767"></span>E1A7</td>
-<td class="instruction">DEFB $02,$01,$01,$CD,$7B,$E5,$7B</td>
+<td class="instruction">DEFB $02</td>
+<td class="comment-1" rowspan="1">Width (bytes)</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
+<td class="address-1"><span id="57768"></span>E1A8</td>
+<td class="instruction">DEFB $01</td>
+<td class="comment-1" rowspan="1">Flags</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="57769"></span>E1A9</td>
+<td class="instruction">DEFB $01</td>
+<td class="comment-1" rowspan="1">Height (pixels)</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="57770"></span>E1AA</td>
+<td class="instruction">DEFW <a href="7A0F.html#31693">$7BCD</a></td>
+<td class="comment-1" rowspan="1">Bitmap</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="57772"></span>E1AC</td>
+<td class="instruction">DEFW <a href="7A0F.html#31717">$7BE5</a></td>
+<td class="comment-1" rowspan="1">Pre-shifted bitmap</td>
+</tr>
+<tr>
+<td class="routine-comment" colspan="5">
+<span id="57774"></span>
+<div class="comments">
+<div class="paragraph">
+Smoke graphics (drawn over perp's car when smashed)
+</div>
+<div class="paragraph">
+<img alt="graphic-7a0f" src="../images/scr/graphic-7a0f.png" />
+</div>
+</div>
+</td>
+</tr>
+<tr>
+<td class="asm-label">smoke_defns</td>
 <td class="address-1"><span id="57774"></span>E1AE</td>
-<td class="instruction">DEFB $02,$01,$0D,$0F,$7A,$0F,$7A</td>
+<td class="instruction">DEFB $02</td>
+<td class="comment-1" rowspan="1">Width (bytes)</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="57775"></span>E1AF</td>
+<td class="instruction">DEFB $01</td>
+<td class="comment-1" rowspan="1">Flags</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="57776"></span>E1B0</td>
+<td class="instruction">DEFB $0D</td>
+<td class="comment-1" rowspan="1">Height (pixels)</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="57777"></span>E1B1</td>
+<td class="instruction">DEFW <a href="7A0F.html">bitmap_smoke1</a></td>
+<td class="comment-1" rowspan="1">Bitmap</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="57779"></span>E1B3</td>
+<td class="instruction">DEFW <a href="7A0F.html">bitmap_smoke1</a></td>
+<td class="comment-1" rowspan="1">Pre-shifted bitmap</td>
+</tr>
+<tr>
+<td class="routine-comment" colspan="5">
+<span id="57781"></span>
+<div class="comments">
+<div class="paragraph">
+<img alt="graphic-7a43" src="../images/scr/graphic-7a43.png" />
+</div>
+</div>
+</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="57781"></span>E1B5</td>
-<td class="instruction">DEFB $02,$01,$0B,$43,$7A,$43,$7A</td>
+<td class="instruction">DEFB $02</td>
+<td class="comment-1" rowspan="1">Width (bytes)</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="57782"></span>E1B6</td>
+<td class="instruction">DEFB $01</td>
+<td class="comment-1" rowspan="1">Flags</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="57783"></span>E1B7</td>
+<td class="instruction">DEFB $0B</td>
+<td class="comment-1" rowspan="1">Height (pixels)</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="57784"></span>E1B8</td>
+<td class="instruction">DEFW <a href="7A0F.html#31299">bitmap_smoke2</a></td>
+<td class="comment-1" rowspan="1">Bitmap</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="57786"></span>E1BA</td>
+<td class="instruction">DEFW <a href="7A0F.html#31299">bitmap_smoke2</a></td>
+<td class="comment-1" rowspan="1">Pre-shifted bitmap</td>
+</tr>
+<tr>
+<td class="routine-comment" colspan="5">
+<span id="57788"></span>
+<div class="comments">
+<div class="paragraph">
+<img alt="graphic-7a6f" src="../images/scr/graphic-7a6f.png" />
+</div>
+</div>
+</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="57788"></span>E1BC</td>
-<td class="instruction">DEFB $02,$01,$09,$6F,$7A,$6F,$7A</td>
+<td class="instruction">DEFB $02</td>
+<td class="comment-1" rowspan="1">Width (bytes)</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="57789"></span>E1BD</td>
+<td class="instruction">DEFB $01</td>
+<td class="comment-1" rowspan="1">Flags</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="57790"></span>E1BE</td>
+<td class="instruction">DEFB $09</td>
+<td class="comment-1" rowspan="1">Height (pixels)</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="57791"></span>E1BF</td>
+<td class="instruction">DEFW <a href="7A0F.html#31343">bitmap_smoke3</a></td>
+<td class="comment-1" rowspan="1">Bitmap</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="57793"></span>E1C1</td>
+<td class="instruction">DEFW <a href="7A0F.html#31343">bitmap_smoke3</a></td>
+<td class="comment-1" rowspan="1">Pre-shifted bitmap</td>
+</tr>
+<tr>
+<td class="routine-comment" colspan="5">
+<span id="57795"></span>
+<div class="comments">
+<div class="paragraph">
+<img alt="graphic-7a93" src="../images/scr/graphic-7a93.png" />
+</div>
+</div>
+</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="57795"></span>E1C3</td>
-<td class="instruction">DEFB $01,$01,$07,$93,$7A,$93,$7A</td>
+<td class="instruction">DEFB $01</td>
+<td class="comment-1" rowspan="1">Width (bytes)</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="57796"></span>E1C4</td>
+<td class="instruction">DEFB $01</td>
+<td class="comment-1" rowspan="1">Flags</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="57797"></span>E1C5</td>
+<td class="instruction">DEFB $07</td>
+<td class="comment-1" rowspan="1">Height (pixels)</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="57798"></span>E1C6</td>
+<td class="instruction">DEFW <a href="7A0F.html#31379">bitmap_smoke4</a></td>
+<td class="comment-1" rowspan="1">Bitmap</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="57800"></span>E1C8</td>
+<td class="instruction">DEFW <a href="7A0F.html#31379">bitmap_smoke4</a></td>
+<td class="comment-1" rowspan="1">Pre-shifted bitmap</td>
+</tr>
+<tr>
+<td class="routine-comment" colspan="5">
+<span id="57802"></span>
+<div class="comments">
+<div class="paragraph">
+<img alt="graphic-7aa1" src="../images/scr/graphic-7aa1.png" />
+</div>
+</div>
+</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="57802"></span>E1CA</td>
-<td class="instruction">DEFB $01,$01,$05,$A1,$7A,$A1,$7A</td>
+<td class="instruction">DEFB $01</td>
+<td class="comment-1" rowspan="1">Width (bytes)</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="57803"></span>E1CB</td>
+<td class="instruction">DEFB $01</td>
+<td class="comment-1" rowspan="1">Flags</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="57804"></span>E1CC</td>
+<td class="instruction">DEFB $05</td>
+<td class="comment-1" rowspan="1">Height (pixels)</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="57805"></span>E1CD</td>
+<td class="instruction">DEFW <a href="7A0F.html#31393">bitmap_smoke5</a></td>
+<td class="comment-1" rowspan="1">Bitmap</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="57807"></span>E1CF</td>
+<td class="instruction">DEFW <a href="7A0F.html#31393">bitmap_smoke5</a></td>
+<td class="comment-1" rowspan="1">Pre-shifted bitmap</td>
+</tr>
+<tr>
+<td class="routine-comment" colspan="5">
+<span id="57809"></span>
+<div class="comments">
+<div class="paragraph">
+<img alt="graphic-7aab" src="../images/scr/graphic-7aab.png" />
+</div>
+</div>
+</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="57809"></span>E1D1</td>
-<td class="instruction">DEFB $01,$01,$03,$AB,$7A,$AB,$7A</td>
+<td class="instruction">DEFB $01</td>
+<td class="comment-1" rowspan="1">Width (bytes)</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
+<td class="address-1"><span id="57810"></span>E1D2</td>
+<td class="instruction">DEFB $01</td>
+<td class="comment-1" rowspan="1">Flags</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="57811"></span>E1D3</td>
+<td class="instruction">DEFB $03</td>
+<td class="comment-1" rowspan="1">Height (pixels)</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="57812"></span>E1D4</td>
+<td class="instruction">DEFW <a href="7A0F.html#31403">bitmap_smoke6</a></td>
+<td class="comment-1" rowspan="1">Bitmap</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="57814"></span>E1D6</td>
+<td class="instruction">DEFW <a href="7A0F.html#31403">bitmap_smoke6</a></td>
+<td class="comment-1" rowspan="1">Pre-shifted bitmap</td>
+</tr>
+<tr>
+<td class="routine-comment" colspan="5">
+<span id="57816"></span>
+<div class="comments">
+<div class="paragraph">
+Arrow graphic (incl. HERE!)
+</div>
+<div class="paragraph">
+<img alt="graphic-d03f" src="../images/scr/graphic-d03f.png" />
+</div>
+</div>
+</td>
+</tr>
+<tr>
+<td class="asm-label">floating_arrow_big_defn</td>
 <td class="address-1"><span id="57816"></span>E1D8</td>
-<td class="instruction">DEFB $03,$01,$1C,$3F,$D0,$3F,$D0</td>
+<td class="instruction">DEFB $03</td>
+<td class="comment-1" rowspan="1">Width (bytes)</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="57817"></span>E1D9</td>
+<td class="instruction">DEFB $01</td>
+<td class="comment-1" rowspan="1">Flags</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="57818"></span>E1DA</td>
+<td class="instruction">DEFB $1C</td>
+<td class="comment-1" rowspan="1">Height (pixels)</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="57819"></span>E1DB</td>
+<td class="instruction">DEFW <a href="CEDA.html#53311">bitmap_arrow</a></td>
+<td class="comment-1" rowspan="1">Bitmap</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="57821"></span>E1DD</td>
+<td class="instruction">DEFW <a href="CEDA.html#53311">bitmap_arrow</a></td>
+<td class="comment-1" rowspan="1">Pre-shifted bitmap</td>
+</tr>
+<tr>
+<td class="routine-comment" colspan="5">
+<span id="57823"></span>
+<div class="comments">
+<div class="paragraph">
+<img alt="graphic-d03f" src="../images/scr/graphic-d03f.png" />
+</div>
+</div>
+</td>
 </tr>
 <tr>
 <td class="asm-label">floating_arrow_defns</td>
 <td class="address-1"><span id="57823"></span>E1DF</td>
-<td class="instruction">DEFB $03,$01,$15,$3F,$D0</td>
-<td class="comment-1" rowspan="2">&lt;Byte width, Flags, Height, Ptr&gt; [floating arrow defns]</td>
+<td class="instruction">DEFB $03</td>
+<td class="comment-1" rowspan="1">Width (bytes)</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="57824"></span>E1E0</td>
+<td class="instruction">DEFB $01</td>
+<td class="comment-1" rowspan="1">Flags</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="57825"></span>E1E1</td>
+<td class="instruction">DEFB $15</td>
+<td class="comment-1" rowspan="1">Height (pixels)</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="57826"></span>E1E2</td>
+<td class="instruction">DEFW <a href="CEDA.html#53311">bitmap_arrow</a></td>
+<td class="comment-1" rowspan="1">Bitmap</td>
+</tr>
+<tr>
+<td class="routine-comment" colspan="5">
+<span id="57828"></span>
+<div class="comments">
+<div class="paragraph">
+<img alt="graphic-d03f" src="../images/scr/graphic-d03f.png" /> (but should be flipped L-R)
+</div>
+</div>
+</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="57828"></span>E1E4</td>
-<td class="instruction">DEFB $03,$03,$15,$3F,$D0</td>
+<td class="instruction">DEFB $03</td>
+<td class="comment-1" rowspan="1">Width (bytes)</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="57829"></span>E1E5</td>
+<td class="instruction">DEFB $03</td>
+<td class="comment-1" rowspan="1">Flags</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="57830"></span>E1E6</td>
+<td class="instruction">DEFB $15</td>
+<td class="comment-1" rowspan="1">Height (pixels)</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="57831"></span>E1E7</td>
+<td class="instruction">DEFW <a href="CEDA.html#53311">bitmap_arrow</a></td>
+<td class="comment-1" rowspan="1">Bitmap</td>
 </tr>
 </table>
 <table class="asm-navigation">
@@ -271,7 +1841,7 @@ Next: <a href="E1E9.html">E1E9</a>
 </tr>
 </table>
 <footer>
-<div class="release">The incomplete Chase H.Q. disassembly 20230518</div>
+<div class="release">The incomplete Chase H.Q. disassembly 20231102</div>
 <div class="copyright">&copy; 1988 Taito Corporation &copy; 1989 Ocean Software Ltd. (Chase H.Q.) © 2023 David Thomas (this disassembly)</div>
 <div class="created">Created using <a href="https://skoolkit.ca">SkoolKit</a> 8.9.</div>
 </footer>

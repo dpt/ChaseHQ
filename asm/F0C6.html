@@ -35,7 +35,7 @@ Used by the routine at <a href="EE9E.html">define_keys</a>.
 </td>
 </tr>
 <tr>
-<td class="asm-label"></td>
+<td class="asm-label">noise</td>
 <td class="address-2"><span id="61638"></span>F0C6</td>
 <td class="instruction">LD E,A</td>
 <td class="comment-1" rowspan="1">E = A  Outer-outer counter</td>
@@ -141,8 +141,8 @@ Used by the routine at <a href="EE9E.html">define_keys</a>.
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="61662"></span>F0DE</td>
-<td class="instruction">JR Z,$F0F0</td>
-<td class="comment-1" rowspan="1">Jump to $F0F0 if zero</td>
+<td class="instruction">JR Z,<a href="F0C6.html#61680">noise_2</a></td>
+<td class="comment-1" rowspan="1">Jump to <a href="F0C6.html#61680">noise_2</a> if zero</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -161,9 +161,9 @@ Used by the routine at <a href="EE9E.html">define_keys</a>.
 <td class="instruction">LD B,A</td>
 </tr>
 <tr>
-<td class="asm-label"></td>
+<td class="asm-label">noise_0</td>
 <td class="address-2"><span id="61668"></span>F0E4</td>
-<td class="instruction">DJNZ $F0E4</td>
+<td class="instruction">DJNZ <a href="F0C6.html#61668">noise_0</a></td>
 <td class="comment-1" rowspan="1">Delay loop</td>
 </tr>
 <tr>
@@ -185,9 +185,9 @@ Used by the routine at <a href="EE9E.html">define_keys</a>.
 <td class="comment-1" rowspan="1">B = E</td>
 </tr>
 <tr>
-<td class="asm-label"></td>
+<td class="asm-label">noise_1</td>
 <td class="address-2"><span id="61675"></span>F0EB</td>
-<td class="instruction">DJNZ $F0EB</td>
+<td class="instruction">DJNZ <a href="F0C6.html#61675">noise_1</a></td>
 <td class="comment-1" rowspan="1">Delay loop</td>
 </tr>
 <tr>
@@ -203,7 +203,7 @@ Used by the routine at <a href="EE9E.html">define_keys</a>.
 <td class="comment-1" rowspan="1">Output</td>
 </tr>
 <tr>
-<td class="asm-label"></td>
+<td class="asm-label">noise_2</td>
 <td class="address-2"><span id="61680"></span>F0F0</td>
 <td class="instruction">DEC D</td>
 <td class="comment-1" rowspan="1">Decrement outer counter</td>
@@ -218,7 +218,7 @@ Used by the routine at <a href="EE9E.html">define_keys</a>.
 <td class="asm-label"></td>
 <td class="address-1"><span id="61683"></span>F0F3</td>
 <td class="instruction">LD A,($EF14)</td>
-<td class="comment-1" rowspan="1">Read A from 'LD A' @ $EF13  -- spinlock/wait</td>
+<td class="comment-1" rowspan="1">Read A from 'LD A' @ <a href="EE9E.html#61203">dk_wait</a>  -- spinlock/wait</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -263,7 +263,7 @@ Next: <a href="F0FE.html">F0FE</a>
 </tr>
 </table>
 <footer>
-<div class="release">The incomplete Chase H.Q. disassembly 20230518</div>
+<div class="release">The incomplete Chase H.Q. disassembly 20231102</div>
 <div class="copyright">&copy; 1988 Taito Corporation &copy; 1989 Ocean Software Ltd. (Chase H.Q.) © 2023 David Thomas (this disassembly)</div>
 <div class="created">Created using <a href="https://skoolkit.ca">SkoolKit</a> 8.9.</div>
 </footer>

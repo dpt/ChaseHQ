@@ -38,24 +38,34 @@ Used by the routines at <a href="8401.html">main_loop</a>, <a href="852A.html">c
 <td class="asm-label">main_loop_23</td>
 <td class="address-2"><span id="36703"></span>8F5F</td>
 <td class="instruction">LD HL,$ED28</td>
-<td class="comment-1" rowspan="1">Point <span class="register">DE</span> at the stack</td>
+<td class="comment-1" rowspan="1">Point <span class="register">HL</span> at (something above the stack)</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="36706"></span>8F62</td>
 <td class="instruction">LD ($A9E3),HL</td>
-<td class="comment-1" rowspan="1">Self modify 'LD HL' at $A9E2 to load the stack address</td>
+<td class="comment-1" rowspan="1">Self modify 'LD HL' @ <a href="A9DE.html#43490">A9E2</a> to load the stack address</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="36709"></span>8F65</td>
 <td class="instruction">LD HL,$E900</td>
-<td class="comment-1" rowspan="2">Self modify 'LD HL' at $AECF to load $E900</td>
+<td class="comment-1" rowspan="2">Self modify 'LD HL' @ <a href="ADA0.html#44751">draw_hazards_16</a> to load $E900</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="36712"></span>8F68</td>
 <td class="instruction">LD ($AED0),HL</td>
+</tr>
+<tr>
+<td class="routine-comment" colspan="5">
+<span id="36715"></span>
+<div class="comments">
+<div class="paragraph">
+Add 32 to the first 21 entries of tables $E301 and $E336. If meddled with this affects the height of elements.
+</div>
+</div>
+</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -73,10 +83,10 @@ Used by the routines at <a href="8401.html">main_loop</a>, <a href="852A.html">c
 <td class="asm-label"></td>
 <td class="address-1"><span id="36721"></span>8F71</td>
 <td class="instruction">LD BC,$1520</td>
-<td class="comment-1" rowspan="1">BC = $1520</td>
+<td class="comment-1" rowspan="1">B = 21 iterations, C = 32 (added to table entries)</td>
 </tr>
 <tr>
-<td class="asm-label">main_loop_23_0</td>
+<td class="asm-label">ml23_loop</td>
 <td class="address-2"><span id="36724"></span>8F74</td>
 <td class="instruction">LD A,(HL)</td>
 <td class="comment-1" rowspan="3">*HL += C</td>
@@ -122,8 +132,8 @@ Used by the routines at <a href="8401.html">main_loop</a>, <a href="852A.html">c
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="36732"></span>8F7C</td>
-<td class="instruction">DJNZ <a href="8F5F.html#36724">main_loop_23_0</a></td>
-<td class="comment-1" rowspan="1">Loop to $8F74 while B</td>
+<td class="instruction">DJNZ <a href="8F5F.html#36724">ml23_loop</a></td>
+<td class="comment-1" rowspan="1">Loop to <a href="8F5F.html#36724">ml23_loop</a> while B</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -191,7 +201,7 @@ Used by the routines at <a href="8401.html">main_loop</a>, <a href="852A.html">c
 <td class="comment-1" rowspan="1">BC = $1420</td>
 </tr>
 <tr>
-<td class="asm-label">main_loop_23_1</td>
+<td class="asm-label">main_loop_23_0</td>
 <td class="address-2"><span id="36758"></span>8F96</td>
 <td class="instruction">PUSH IX</td>
 <td class="comment-1" rowspan="3">Preserve IX, HL, BC</td>
@@ -210,7 +220,7 @@ Used by the routines at <a href="8401.html">main_loop</a>, <a href="852A.html">c
 <td class="asm-label"></td>
 <td class="address-1"><span id="36762"></span>8F9A</td>
 <td class="instruction">LD A,($A222)</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="1">Load var_a222</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -221,14 +231,14 @@ Used by the routines at <a href="8401.html">main_loop</a>, <a href="852A.html">c
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="36766"></span>8F9E</td>
-<td class="instruction">CALL NZ,<a href="ADA0.html#44751">main_loop_19_18</a></td>
+<td class="instruction">CALL NZ,<a href="ADA0.html#44751">draw_hazards_16</a></td>
 <td class="comment-1" rowspan="1">Call if non-zero</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="36769"></span>8FA1</td>
 <td class="instruction">CALL <a href="A9DE.html">sub_A9DE</a></td>
-<td class="comment-1" rowspan="1">Call</td>
+<td class="comment-1" rowspan="1">Call sub_A9DE (dust/stones stuff)</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -297,11 +307,11 @@ Used by the routines at <a href="8401.html">main_loop</a>, <a href="852A.html">c
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="36784"></span>8FB0</td>
-<td class="instruction">JR NZ,<a href="8F5F.html#36856">main_loop_23_5</a></td>
+<td class="instruction">JR NZ,<a href="8F5F.html#36856">main_loop_23_4</a></td>
 <td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
-<td class="asm-label">main_loop_23_2</td>
+<td class="asm-label">main_loop_23_1</td>
 <td class="address-2"><span id="36786"></span>8FB2</td>
 <td class="instruction">INC IX</td>
 <td class="comment-1" rowspan="2">IX += 2</td>
@@ -343,7 +353,7 @@ Used by the routines at <a href="8401.html">main_loop</a>, <a href="852A.html">c
 <td class="asm-label"></td>
 <td class="address-1"><span id="36795"></span>8FBB</td>
 <td class="instruction">JR NZ,<a href="9023.html">$9023</a></td>
-<td class="comment-1" rowspan="1">Exit via $9023 if non-zero</td>
+<td class="comment-1" rowspan="1">Exit via <a href="9023.html">9023</a> if non-zero</td>
 </tr>
 <tr>
 <td class="routine-comment" colspan="5">
@@ -356,7 +366,7 @@ This entry point is used by the routine at <a href="9023.html">9023</a>.
 </td>
 </tr>
 <tr>
-<td class="asm-label">main_loop_23_3</td>
+<td class="asm-label">main_loop_23_2</td>
 <td class="address-2"><span id="36797"></span>8FBD</td>
 <td class="instruction">INC IX</td>
 <td class="comment-1" rowspan="2">IX += 2</td>
@@ -391,7 +401,7 @@ This entry point is used by the routine at <a href="9023.html">9023</a>.
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="36807"></span>8FC7</td>
-<td class="instruction">DJNZ <a href="8F5F.html#36758">main_loop_23_1</a></td>
+<td class="instruction">DJNZ <a href="8F5F.html#36758">main_loop_23_0</a></td>
 <td class="comment-1" rowspan="1">Loop to $8F96 while B</td>
 </tr>
 <tr>
@@ -449,7 +459,7 @@ This entry point is used by the routine at <a href="9023.html">9023</a>.
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="36825"></span>8FD9</td>
-<td class="instruction">JR Z,<a href="8F5F.html#36832">main_loop_23_4</a></td>
+<td class="instruction">JR Z,<a href="8F5F.html#36832">main_loop_23_3</a></td>
 <td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
@@ -465,7 +475,7 @@ This entry point is used by the routine at <a href="9023.html">9023</a>.
 <td class="comment-1" rowspan="1">E = $80</td>
 </tr>
 <tr>
-<td class="asm-label">main_loop_23_4</td>
+<td class="asm-label">main_loop_23_3</td>
 <td class="address-2"><span id="36832"></span>8FE0</td>
 <td class="instruction">LD D,$30</td>
 <td class="comment-1" rowspan="1">D = $30</td>
@@ -573,10 +583,10 @@ This entry point is used by the routine at <a href="9023.html">9023</a>.
 <td class="asm-label"></td>
 <td class="address-1"><span id="36853"></span>8FF5</td>
 <td class="instruction">JP <a href="B67C.html#46813">sub_b67c_4</a></td>
-<td class="comment-1" rowspan="1">Exit via $B6DD</td>
+<td class="comment-1" rowspan="1">Exit via <a href="B67C.html#46813">sub_b67c_4</a></td>
 </tr>
 <tr>
-<td class="asm-label">main_loop_23_5</td>
+<td class="asm-label">main_loop_23_4</td>
 <td class="address-2"><span id="36856"></span>8FF8</td>
 <td class="instruction">LD E,A</td>
 <td class="comment-1" rowspan="1">E = A</td>
@@ -596,7 +606,7 @@ This entry point is used by the routine at <a href="9023.html">9023</a>.
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="36861"></span>8FFD</td>
-<td class="instruction">JR NZ,<a href="8F5F.html#36786">main_loop_23_2</a></td>
+<td class="instruction">JR NZ,<a href="8F5F.html#36786">main_loop_23_1</a></td>
 <td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
@@ -746,8 +756,8 @@ This entry point is used by the routine at <a href="9023.html">9023</a>.
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="36896"></span>9020</td>
-<td class="instruction">JP <a href="8F5F.html#36786">main_loop_23_2</a></td>
-<td class="comment-1" rowspan="1">Jump to $8FB2</td>
+<td class="instruction">JP <a href="8F5F.html#36786">main_loop_23_1</a></td>
+<td class="comment-1" rowspan="1">Jump to <a href="8F5F.html#36786">main_loop_23_1</a></td>
 </tr>
 </table>
 <table class="asm-navigation">
@@ -762,7 +772,7 @@ Next: <a href="9023.html">9023</a>
 </tr>
 </table>
 <footer>
-<div class="release">The incomplete Chase H.Q. disassembly 20230518</div>
+<div class="release">The incomplete Chase H.Q. disassembly 20231102</div>
 <div class="copyright">&copy; 1988 Taito Corporation &copy; 1989 Ocean Software Ltd. (Chase H.Q.) © 2023 David Thomas (this disassembly)</div>
 <div class="created">Created using <a href="https://skoolkit.ca">SkoolKit</a> 8.9.</div>
 </footer>

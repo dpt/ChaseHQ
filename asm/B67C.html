@@ -82,7 +82,7 @@ Used by the routine at <a href="B318.html">main_loop_24</a>.
 <td class="asm-label"></td>
 <td class="address-1"><span id="46724"></span>B684</td>
 <td class="instruction">LD A,($A250)</td>
-<td class="comment-1" rowspan="3">Jump to $B698 if turn_speed &lt; B</td>
+<td class="comment-1" rowspan="3">Jump to <a href="B67C.html#46744">sub_b67c_0</a> if turn_speed &lt; B</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -234,7 +234,7 @@ This entry point is used by the routine at <a href="B318.html">main_loop_24</a>.
 <td class="asm-label"></td>
 <td class="address-1"><span id="46758"></span>B6A6</td>
 <td class="instruction">LD HL,$CFB2</td>
-<td class="comment-1" rowspan="2">HL = $CFB2 + BC  -&gt; unknown_cfb2</td>
+<td class="comment-1" rowspan="2">HL = <a href="CEDA.html#53170">unknown_cfb2</a> + BC  -&gt; unknown_cfb2</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -371,7 +371,7 @@ This entry point is used by the routine at <a href="B318.html">main_loop_24</a>.
 <td class="asm-label"></td>
 <td class="address-1"><span id="46788"></span>B6C4</td>
 <td class="instruction">LD A,($B5AB)</td>
-<td class="comment-1" rowspan="1">Read from SUB @ $B5AA</td>
+<td class="comment-1" rowspan="1">Read from SUB @ <a href="B58E.html#46506">B5AA</a></td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -405,7 +405,7 @@ This entry point is used by the routine at <a href="B318.html">main_loop_24</a>.
 <td class="asm-label"></td>
 <td class="address-1"><span id="46800"></span>B6D0</td>
 <td class="instruction">JR Z,<a href="B67C.html#46806">sub_b67c_3</a></td>
-<td class="comment-1" rowspan="2">Jump to $B6D6 if zero</td>
+<td class="comment-1" rowspan="2">Jump to <a href="B67C.html#46806">sub_b67c_3</a> if zero</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -437,7 +437,7 @@ This entry point is used by the routines at <a href="B58E.html">draw_car</a> and
 <td class="asm-label">sub_b67c_3</td>
 <td class="address-2"><span id="46806"></span>B6D6</td>
 <td class="instruction">LD A,($A22A)</td>
-<td class="comment-1" rowspan="4">D = -(*$A22A) + D</td>
+<td class="comment-1" rowspan="4">D -= var_a22a</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -459,7 +459,7 @@ This entry point is used by the routines at <a href="B58E.html">draw_car</a> and
 <span id="46813"></span>
 <div class="comments">
 <div class="paragraph">
-This entry point is used by the routines at <a href="8F5F.html">main_loop_23</a> and <a href="B549.html">B549</a>.
+This entry point is used by the routines at <a href="8F5F.html">main_loop_23</a> and <a href="B549.html">sub_b549</a>.
 </div>
 </div>
 </td>
@@ -603,7 +603,7 @@ This entry point is used by the routines at <a href="8F5F.html">main_loop_23</a>
 <td class="asm-label"></td>
 <td class="address-1"><span id="46843"></span>B6FB</td>
 <td class="instruction">EX AF,AF'</td>
-<td class="comment-1" rowspan="1">unclear why, is this EX'ing AF to get the carry flag?</td>
+<td class="comment-1" rowspan="1">Is this EX'ing AF to get the carry flag?</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -628,7 +628,7 @@ This entry point is used by the routines at <a href="8F5F.html">main_loop_23</a>
 <span id="46849"></span>
 <div class="comments">
 <div class="paragraph">
-This entry point is used by the routine at <a href="92E1.html">92E1</a>.
+This entry point is used by the routine at <a href="92E1.html">draw_object_right</a>.
 </div>
 </div>
 </td>
@@ -643,7 +643,7 @@ This entry point is used by the routine at <a href="92E1.html">92E1</a>.
 <td class="asm-label"></td>
 <td class="address-1"><span id="46853"></span>B705</td>
 <td class="instruction">CPL</td>
-<td class="comment-1" rowspan="2">A = ~A + 9</td>
+<td class="comment-1" rowspan="2">A = ~A + 9 == (8 - A)</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -718,7 +718,7 @@ Next: <a href="B716.html">B716</a>
 </tr>
 </table>
 <footer>
-<div class="release">The incomplete Chase H.Q. disassembly 20230518</div>
+<div class="release">The incomplete Chase H.Q. disassembly 20231102</div>
 <div class="copyright">&copy; 1988 Taito Corporation &copy; 1989 Ocean Software Ltd. (Chase H.Q.) © 2023 David Thomas (this disassembly)</div>
 <div class="created">Created using <a href="https://skoolkit.ca">SkoolKit</a> 8.9.</div>
 </footer>

@@ -23,7 +23,7 @@ Next: <a href="A7E7.html">A7E7</a>
 </td>
 </tr>
 </table>
-<div class="description">A637: Smash handling.</div>
+<div class="description">A637: Smash handling</div>
 <table class="disassembly">
 <tr>
 <td class="routine-comment" colspan="5">
@@ -54,7 +54,7 @@ This gets called whenever the perp is within sight of the hero car.
 <td class="asm-label"></td>
 <td class="address-1"><span id="42556"></span>A63C</td>
 <td class="instruction">LD A,($A22E)</td>
-<td class="comment-1" rowspan="3">Call $B4CC if sighted_flag is zero</td>
+<td class="comment-1" rowspan="3">Call perp_sighted if sighted_flag is zero</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -64,7 +64,7 @@ This gets called whenever the perp is within sight of the hero car.
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="42560"></span>A640</td>
-<td class="instruction">CALL Z,<a href="B4CC.html">$B4CC</a></td>
+<td class="instruction">CALL Z,<a href="B4CC.html">perp_sighted</a></td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -82,13 +82,23 @@ This gets called whenever the perp is within sight of the hero car.
 <td class="asm-label"></td>
 <td class="address-1"><span id="42567"></span>A647</td>
 <td class="instruction">JR Z,<a href="A637.html#42576">smash_handler_0</a></td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="1">Jump if zero</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="42569"></span>A649</td>
-<td class="instruction">JP P,<a href="A637.html#42890">smash_handler_22</a></td>
-<td class="comment-1" rowspan="1"></td>
+<td class="instruction">JP P,<a href="A637.html#42890">smash_handler_21</a></td>
+<td class="comment-1" rowspan="1">Jump if positive</td>
+</tr>
+<tr>
+<td class="routine-comment" colspan="5">
+<span id="42572"></span>
+<div class="comments">
+<div class="paragraph">
+Otherwise A is negative.
+</div>
+</div>
+</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -101,6 +111,16 @@ This gets called whenever the perp is within sight of the hero car.
 <td class="address-1"><span id="42575"></span>A64F</td>
 <td class="instruction">RET NZ</td>
 <td class="comment-1" rowspan="1">Return if non-zero</td>
+</tr>
+<tr>
+<td class="routine-comment" colspan="5">
+<span id="42576"></span>
+<div class="comments">
+<div class="paragraph">
+A must be zero to arrive here.
+</div>
+</div>
+</td>
 </tr>
 <tr>
 <td class="asm-label">smash_handler_0</td>
@@ -118,7 +138,7 @@ This gets called whenever the perp is within sight of the hero car.
 <td class="asm-label"></td>
 <td class="address-1"><span id="42581"></span>A655</td>
 <td class="instruction">LD B,$05</td>
-<td class="comment-1" rowspan="1">B = 5  iterations</td>
+<td class="comment-1" rowspan="1">5 iterations</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -133,10 +153,10 @@ This gets called whenever the perp is within sight of the hero car.
 <td class="comment-1" rowspan="1">DE = 20  stride of hazards</td>
 </tr>
 <tr>
-<td class="asm-label">loop_a65e</td>
+<td class="asm-label">sh_a65e_loop</td>
 <td class="address-2"><span id="42590"></span>A65E</td>
 <td class="instruction">RLC (IY+$00)</td>
-<td class="comment-1" rowspan="2">If the hazard is active then jump to $A66C</td>
+<td class="comment-1" rowspan="2">If the hazard is active then jump to <a href="A637.html#42604">smash_handler_2</a></td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -152,7 +172,7 @@ This gets called whenever the perp is within sight of the hero car.
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="42598"></span>A666</td>
-<td class="instruction">DJNZ <a href="A637.html#42590">loop_a65e</a></td>
+<td class="instruction">DJNZ <a href="A637.html#42590">sh_a65e_loop</a></td>
 <td class="comment-1" rowspan="1">Loop while <span class="register">B</span></td>
 </tr>
 <tr>
@@ -165,7 +185,7 @@ This gets called whenever the perp is within sight of the hero car.
 <td class="asm-label"></td>
 <td class="address-1"><span id="42602"></span>A66A</td>
 <td class="instruction">JR <a href="A637.html#42639">smash_handler_5</a></td>
-<td class="comment-1" rowspan="1">Jump to $A68F</td>
+<td class="comment-1" rowspan="1">Jump to <a href="A637.html#42639">smash_handler_5</a></td>
 </tr>
 <tr>
 <td class="asm-label">smash_handler_2</td>
@@ -253,7 +273,7 @@ This gets called whenever the perp is within sight of the hero car.
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="42637"></span>A68D</td>
-<td class="instruction">JR <a href="A637.html#42712">smash_handler_8</a></td>
+<td class="instruction">JR <a href="A637.html#42712">smash_handler_7</a></td>
 <td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
@@ -271,7 +291,7 @@ This gets called whenever the perp is within sight of the hero car.
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="42642"></span>A692</td>
-<td class="instruction">JR NZ,<a href="A637.html#42742">smash_handler_12</a></td>
+<td class="instruction">JR NZ,<a href="A637.html#42742">smash_handler_11</a></td>
 <td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
@@ -284,61 +304,87 @@ This gets called whenever the perp is within sight of the hero car.
 <td class="asm-label"></td>
 <td class="address-1"><span id="42647"></span>A697</td>
 <td class="instruction">CP $07</td>
-<td class="comment-1" rowspan="1">CP 7</td>
+<td class="comment-1" rowspan="2">Jump if A &gt;= 7</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="42649"></span>A699</td>
-<td class="instruction">JR NC,<a href="A637.html#42742">smash_handler_12</a></td>
-<td class="comment-1" rowspan="1"></td>
+<td class="instruction">JR NC,<a href="A637.html#42742">smash_handler_11</a></td>
+</tr>
+<tr>
+<td class="routine-comment" colspan="5">
+<span id="42651"></span>
+<div class="comments">
+<div class="paragraph">
+Inline decrementing counter.
+</div>
+</div>
+</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="42651"></span>A69B</td>
 <td class="instruction">LD A,$14</td>
-<td class="comment-1" rowspan="1">A = 20  self modified below</td>
+<td class="comment-1" rowspan="2">A = &lt;self modified&gt; - 1  -- self modified below</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="42653"></span>A69D</td>
 <td class="instruction">DEC A</td>
-<td class="comment-1" rowspan="1">A--</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="42654"></span>A69E</td>
 <td class="instruction">JR NZ,<a href="A637.html#42667">smash_handler_6</a></td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="1">Jump if != 0</td>
+</tr>
+<tr>
+<td class="routine-comment" colspan="5">
+<span id="42656"></span>
+<div class="comments">
+<div class="paragraph">
+When it hits zero we pick a random number...
+</div>
+</div>
+</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="42656"></span>A6A0</td>
 <td class="instruction">INC C</td>
-<td class="comment-1" rowspan="1">C++</td>
+<td class="comment-1" rowspan="1">-- why increment C when it's overwritten next?</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="42657"></span>A6A1</td>
 <td class="instruction">CALL <a href="9618.html#38427">rng</a></td>
-<td class="comment-1" rowspan="1">Call rng</td>
+<td class="comment-1" rowspan="3">C = rng() &amp; $1F</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="42660"></span>A6A4</td>
 <td class="instruction">AND $1F</td>
-<td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="42662"></span>A6A6</td>
 <td class="instruction">LD C,A</td>
-<td class="comment-1" rowspan="1">C = A</td>
+</tr>
+<tr>
+<td class="routine-comment" colspan="5">
+<span id="42663"></span>
+<div class="comments">
+<div class="paragraph">
+This gets hit at some point during the smash process.
+</div>
+</div>
+</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="42663"></span>A6A7</td>
 <td class="instruction">LD A,($5D1B)</td>
-<td class="comment-1" rowspan="2">A = ($5D1B) + C</td>
+<td class="comment-1" rowspan="2">A = smash_5d1b + C</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -349,25 +395,33 @@ This gets called whenever the perp is within sight of the hero car.
 <td class="asm-label">smash_handler_6</td>
 <td class="address-2"><span id="42667"></span>A6AB</td>
 <td class="instruction">LD ($A69C),A</td>
-<td class="comment-1" rowspan="1">*$A69C = A  -- Self modify LD A at $A69B</td>
+<td class="comment-1" rowspan="1">*$A69C = A  -- Self modify LD A at <a href="A637.html#42651">A69B</a></td>
+</tr>
+<tr>
+<td class="routine-comment" colspan="5">
+<span id="42670"></span>
+<div class="comments">
+<div class="paragraph">
+This smells like it's detecting position and turning that into lanes. The values are like those used by get_spawn_lanes.
+</div>
+</div>
+</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="42670"></span>A6AE</td>
 <td class="instruction">LD HL,($A26C)</td>
-<td class="comment-1" rowspan="1">HL = road_pos</td>
+<td class="comment-1" rowspan="3">HL = road_pos - 164</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="42673"></span>A6B1</td>
 <td class="instruction">LD DE,$00A4</td>
-<td class="comment-1" rowspan="1">DE = $A4</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="42676"></span>A6B4</td>
 <td class="instruction">SBC HL,DE</td>
-<td class="comment-1" rowspan="1">HL -= DE</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -378,89 +432,87 @@ This gets called whenever the perp is within sight of the hero car.
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="42681"></span>A6B9</td>
-<td class="instruction">JR C,<a href="A637.html#42703">smash_handler_7</a></td>
-<td class="comment-1" rowspan="1">Jump to $A6CF if road_pos &lt; $A4</td>
+<td class="instruction">JR C,<a href="A637.html#42703">sh_a6cf</a></td>
+<td class="comment-1" rowspan="1">Jump to <a href="A637.html#42703">sh_a6cf</a> if HL &lt; 164</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="42683"></span>A6BB</td>
 <td class="instruction">LD E,$46</td>
-<td class="comment-1" rowspan="1">E = $46</td>
+<td class="comment-1" rowspan="1">DE = $0046</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="42685"></span>A6BD</td>
 <td class="instruction">DEC B</td>
-<td class="comment-1" rowspan="1">B--</td>
+<td class="comment-1" rowspan="1">BC = $0304</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="42686"></span>A6BE</td>
 <td class="instruction">SBC HL,DE</td>
-<td class="comment-1" rowspan="1">HL -= DE   not restored so includes prev subtraction</td>
+<td class="comment-1" rowspan="1">HL -= DE  -- includes previous</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="42688"></span>A6C0</td>
-<td class="instruction">JR C,<a href="A637.html#42703">smash_handler_7</a></td>
-<td class="comment-1" rowspan="1"></td>
+<td class="instruction">JR C,<a href="A637.html#42703">sh_a6cf</a></td>
+<td class="comment-1" rowspan="1">Jump to <a href="A637.html#42703">sh_a6cf</a> if HL &lt; 70</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="42690"></span>A6C2</td>
 <td class="instruction">DEC B</td>
-<td class="comment-1" rowspan="1">B--</td>
+<td class="comment-1" rowspan="2">BC = $0203</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="42691"></span>A6C3</td>
 <td class="instruction">DEC C</td>
-<td class="comment-1" rowspan="1">C--</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="42692"></span>A6C4</td>
 <td class="instruction">SBC HL,DE</td>
-<td class="comment-1" rowspan="1">HL -= DE</td>
+<td class="comment-1" rowspan="1">HL -= DE  -- includes previous</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="42694"></span>A6C6</td>
-<td class="instruction">JR C,<a href="A637.html#42703">smash_handler_7</a></td>
-<td class="comment-1" rowspan="1"></td>
+<td class="instruction">JR C,<a href="A637.html#42703">sh_a6cf</a></td>
+<td class="comment-1" rowspan="1">Jump to <a href="A637.html#42703">sh_a6cf</a> if HL &lt; 70</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="42696"></span>A6C8</td>
 <td class="instruction">DEC B</td>
-<td class="comment-1" rowspan="1">B--</td>
+<td class="comment-1" rowspan="2">BC = $0102</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="42697"></span>A6C9</td>
 <td class="instruction">DEC C</td>
-<td class="comment-1" rowspan="1">C--</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="42698"></span>A6CA</td>
 <td class="instruction">SBC HL,DE</td>
-<td class="comment-1" rowspan="1">HL -= DE</td>
+<td class="comment-1" rowspan="1">HL -= DE  -- includes previous</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="42700"></span>A6CC</td>
-<td class="instruction">JR C,<a href="A637.html#42703">smash_handler_7</a></td>
-<td class="comment-1" rowspan="1"></td>
+<td class="instruction">JR C,<a href="A637.html#42703">sh_a6cf</a></td>
+<td class="comment-1" rowspan="1">Jump to <a href="A637.html#42703">sh_a6cf</a> if HL &lt; 70</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="42702"></span>A6CE</td>
 <td class="instruction">DEC C</td>
-<td class="comment-1" rowspan="1">C--</td>
+<td class="comment-1" rowspan="1">BC = $0101</td>
 </tr>
 <tr>
-<td class="asm-label">smash_handler_7</td>
+<td class="asm-label">sh_a6cf</td>
 <td class="address-2"><span id="42703"></span>A6CF</td>
 <td class="instruction">LD A,(IX+$12)</td>
 <td class="comment-1" rowspan="1">A = IX[18]</td>
@@ -474,7 +526,7 @@ This gets called whenever the perp is within sight of the hero car.
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="42707"></span>A6D3</td>
-<td class="instruction">JR Z,<a href="A637.html#42712">smash_handler_8</a></td>
+<td class="instruction">JR Z,<a href="A637.html#42712">smash_handler_7</a></td>
 <td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
@@ -486,11 +538,11 @@ This gets called whenever the perp is within sight of the hero car.
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="42710"></span>A6D6</td>
-<td class="instruction">JR NZ,<a href="A637.html#42742">smash_handler_12</a></td>
+<td class="instruction">JR NZ,<a href="A637.html#42742">smash_handler_11</a></td>
 <td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
-<td class="asm-label">smash_handler_8</td>
+<td class="asm-label">smash_handler_7</td>
 <td class="address-2"><span id="42712"></span>A6D8</td>
 <td class="instruction">LD C,(IX+$12)</td>
 <td class="comment-1" rowspan="1">C = IX[18]</td>
@@ -516,8 +568,8 @@ This gets called whenever the perp is within sight of the hero car.
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="42720"></span>A6E0</td>
-<td class="instruction">JP P,<a href="A637.html#42725">smash_handler_9</a></td>
-<td class="comment-1" rowspan="1"></td>
+<td class="instruction">JP P,<a href="A637.html#42725">smash_handler_8</a></td>
+<td class="comment-1" rowspan="1">Jump if positive</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -531,7 +583,7 @@ This gets called whenever the perp is within sight of the hero car.
 <td class="instruction">DEC C</td>
 </tr>
 <tr>
-<td class="asm-label">smash_handler_9</td>
+<td class="asm-label">smash_handler_8</td>
 <td class="address-2"><span id="42725"></span>A6E5</td>
 <td class="instruction">LD A,C</td>
 <td class="comment-1" rowspan="1">A = C</td>
@@ -551,20 +603,19 @@ This gets called whenever the perp is within sight of the hero car.
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="42729"></span>A6E9</td>
-<td class="instruction">JP Z,<a href="A637.html#42738">smash_handler_10</a></td>
-<td class="comment-1" rowspan="1"></td>
+<td class="instruction">JP Z,<a href="A637.html#42738">smash_handler_9</a></td>
+<td class="comment-1" rowspan="1">Jump if A is zero</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="42732"></span>A6EC</td>
 <td class="instruction">CP $05</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="2">Jump if A &lt; 5</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="42734"></span>A6EE</td>
-<td class="instruction">JR C,<a href="A637.html#42739">smash_handler_11</a></td>
-<td class="comment-1" rowspan="1"></td>
+<td class="instruction">JR C,<a href="A637.html#42739">smash_handler_10</a></td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -573,19 +624,19 @@ This gets called whenever the perp is within sight of the hero car.
 <td class="comment-1" rowspan="1">C = $FE</td>
 </tr>
 <tr>
-<td class="asm-label">smash_handler_10</td>
+<td class="asm-label">smash_handler_9</td>
 <td class="address-2"><span id="42738"></span>A6F2</td>
 <td class="instruction">ADD A,C</td>
 <td class="comment-1" rowspan="1">A += C</td>
 </tr>
 <tr>
-<td class="asm-label">smash_handler_11</td>
+<td class="asm-label">smash_handler_10</td>
 <td class="address-2"><span id="42739"></span>A6F3</td>
 <td class="instruction">LD (IX+$12),A</td>
 <td class="comment-1" rowspan="1">IX[18] = A</td>
 </tr>
 <tr>
-<td class="asm-label">smash_handler_12</td>
+<td class="asm-label">smash_handler_11</td>
 <td class="address-2"><span id="42742"></span>A6F6</td>
 <td class="instruction">LD C,(IX+$01)</td>
 <td class="comment-1" rowspan="1">C = IX[1]</td>
@@ -611,7 +662,7 @@ This gets called whenever the perp is within sight of the hero car.
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="42752"></span>A700</td>
-<td class="instruction">JR NC,<a href="A637.html#42759">smash_handler_13</a></td>
+<td class="instruction">JR NC,<a href="A637.html#42759">smash_handler_12</a></td>
 <td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
@@ -627,7 +678,7 @@ This gets called whenever the perp is within sight of the hero car.
 <td class="comment-1" rowspan="1">IX[18] = A</td>
 </tr>
 <tr>
-<td class="asm-label">smash_handler_13</td>
+<td class="asm-label">smash_handler_12</td>
 <td class="address-2"><span id="42759"></span>A707</td>
 <td class="instruction">CP C</td>
 <td class="comment-1" rowspan="1"></td>
@@ -635,13 +686,13 @@ This gets called whenever the perp is within sight of the hero car.
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="42760"></span>A708</td>
-<td class="instruction">JR Z,<a href="A637.html#42769">smash_handler_14</a></td>
-<td class="comment-1" rowspan="2">Jump to $A711 if A &lt;= C</td>
+<td class="instruction">JR Z,<a href="A637.html#42769">smash_handler_13</a></td>
+<td class="comment-1" rowspan="2">Jump to <a href="A637.html#42769">smash_handler_13</a> if A &lt;= C</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="42762"></span>A70A</td>
-<td class="instruction">JR C,<a href="A637.html#42769">smash_handler_14</a></td>
+<td class="instruction">JR C,<a href="A637.html#42769">smash_handler_13</a></td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -656,7 +707,7 @@ This gets called whenever the perp is within sight of the hero car.
 <td class="comment-1" rowspan="1">IX[18] = A</td>
 </tr>
 <tr>
-<td class="asm-label">smash_handler_14</td>
+<td class="asm-label">smash_handler_13</td>
 <td class="address-2"><span id="42769"></span>A711</td>
 <td class="instruction">LD A,(IX+$12)</td>
 <td class="comment-1" rowspan="1">A = IX[18]</td>
@@ -665,7 +716,7 @@ This gets called whenever the perp is within sight of the hero car.
 <td class="asm-label"></td>
 <td class="address-1"><span id="42772"></span>A714</td>
 <td class="instruction">LD HL,$A7E6</td>
-<td class="comment-1" rowspan="1">HL = $A7E6  -&gt; $A7E7 data block</td>
+<td class="comment-1" rowspan="1">HL = $A7E6 -&gt; <a href="A7E7.html">table_a7e7</a> data block</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -700,13 +751,13 @@ This gets called whenever the perp is within sight of the hero car.
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="42783"></span>A71F</td>
-<td class="instruction">JR Z,<a href="A637.html#42805">smash_handler_17</a></td>
+<td class="instruction">JR Z,<a href="A637.html#42805">smash_handler_16</a></td>
 <td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="42785"></span>A721</td>
-<td class="instruction">JR C,<a href="A637.html#42798">smash_handler_16</a></td>
+<td class="instruction">JR C,<a href="A637.html#42798">smash_handler_15</a></td>
 <td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
@@ -718,7 +769,7 @@ This gets called whenever the perp is within sight of the hero car.
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="42789"></span>A725</td>
-<td class="instruction">JR C,<a href="A637.html#42794">smash_handler_15</a></td>
+<td class="instruction">JR C,<a href="A637.html#42794">smash_handler_14</a></td>
 <td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
@@ -730,11 +781,11 @@ This gets called whenever the perp is within sight of the hero car.
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="42792"></span>A728</td>
-<td class="instruction">JR NC,<a href="A637.html#42807">smash_handler_18</a></td>
+<td class="instruction">JR NC,<a href="A637.html#42807">smash_handler_17</a></td>
 <td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
-<td class="asm-label">smash_handler_15</td>
+<td class="asm-label">smash_handler_14</td>
 <td class="address-2"><span id="42794"></span>A72A</td>
 <td class="instruction">DEC C</td>
 <td class="comment-1" rowspan="1">C--</td>
@@ -748,11 +799,11 @@ This gets called whenever the perp is within sight of the hero car.
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="42796"></span>A72C</td>
-<td class="instruction">JR <a href="A637.html#42807">smash_handler_18</a></td>
+<td class="instruction">JR <a href="A637.html#42807">smash_handler_17</a></td>
 <td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
-<td class="asm-label">smash_handler_16</td>
+<td class="asm-label">smash_handler_15</td>
 <td class="address-2"><span id="42798"></span>A72E</td>
 <td class="instruction">ADD A,$0A</td>
 <td class="comment-1" rowspan="1">A += 10</td>
@@ -760,7 +811,7 @@ This gets called whenever the perp is within sight of the hero car.
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="42800"></span>A730</td>
-<td class="instruction">JR C,<a href="A637.html#42805">smash_handler_17</a></td>
+<td class="instruction">JR C,<a href="A637.html#42805">smash_handler_16</a></td>
 <td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
@@ -772,11 +823,11 @@ This gets called whenever the perp is within sight of the hero car.
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="42803"></span>A733</td>
-<td class="instruction">JR C,<a href="A637.html#42807">smash_handler_18</a></td>
+<td class="instruction">JR C,<a href="A637.html#42807">smash_handler_17</a></td>
 <td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
-<td class="asm-label">smash_handler_17</td>
+<td class="asm-label">smash_handler_16</td>
 <td class="address-2"><span id="42805"></span>A735</td>
 <td class="instruction">DEC C</td>
 <td class="comment-1" rowspan="1">C--</td>
@@ -788,7 +839,7 @@ This gets called whenever the perp is within sight of the hero car.
 <td class="comment-1" rowspan="1">A = *HL</td>
 </tr>
 <tr>
-<td class="asm-label">smash_handler_18</td>
+<td class="asm-label">smash_handler_17</td>
 <td class="address-2"><span id="42807"></span>A737</td>
 <td class="instruction">LD (IX+$05),A</td>
 <td class="comment-1" rowspan="1">IX[5] = A</td>
@@ -797,7 +848,7 @@ This gets called whenever the perp is within sight of the hero car.
 <td class="asm-label"></td>
 <td class="address-1"><span id="42810"></span>A73A</td>
 <td class="instruction">LD A,C</td>
-<td class="comment-1" rowspan="2">Self modify 'LD A' at $A68F to load C</td>
+<td class="comment-1" rowspan="2">Self modify 'LD A' @ <a href="A637.html#42639">smash_handler_5</a> to load C</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -808,7 +859,7 @@ This gets called whenever the perp is within sight of the hero car.
 <td class="asm-label"></td>
 <td class="address-1"><span id="42814"></span>A73E</td>
 <td class="instruction">LD A,$00</td>
-<td class="comment-1" rowspan="1">A = 0</td>
+<td class="comment-1" rowspan="1">A = &lt;self modified&gt;</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -831,14 +882,14 @@ This gets called whenever the perp is within sight of the hero car.
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="42823"></span>A747</td>
-<td class="instruction">JR NZ,<a href="A637.html#42850">smash_handler_19</a></td>
+<td class="instruction">JR NZ,<a href="A637.html#42850">smash_handler_18</a></td>
 <td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="42825"></span>A749</td>
 <td class="instruction">LD A,$14</td>
-<td class="comment-1" rowspan="1">A = &lt;...&gt;  -- Self modified below</td>
+<td class="comment-1" rowspan="1">A = &lt;self modified&gt;  -- Self modified below</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -850,12 +901,12 @@ This gets called whenever the perp is within sight of the hero car.
 <td class="asm-label"></td>
 <td class="address-1"><span id="42828"></span>A74C</td>
 <td class="instruction">LD ($A74A),A</td>
-<td class="comment-1" rowspan="1">Self modify 'LD A' at $A749 to load A</td>
+<td class="comment-1" rowspan="1">Self modify 'LD A' @ <a href="A637.html#42825">A749</a> to load A</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="42831"></span>A74F</td>
-<td class="instruction">JR NZ,<a href="A637.html#42870">smash_handler_20</a></td>
+<td class="instruction">JR NZ,<a href="A637.html#42870">smash_handler_19</a></td>
 <td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
@@ -891,7 +942,7 @@ This gets called whenever the perp is within sight of the hero car.
 <td class="asm-label"></td>
 <td class="address-1"><span id="42841"></span>A759</td>
 <td class="instruction">LD A,($5D1C)</td>
-<td class="comment-1" rowspan="2">A = ($5D1C) + C   value in $5D1A data block</td>
+<td class="comment-1" rowspan="2">A = ($5D1C) + C</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -902,7 +953,7 @@ This gets called whenever the perp is within sight of the hero car.
 <td class="asm-label"></td>
 <td class="address-1"><span id="42845"></span>A75D</td>
 <td class="instruction">LD ($A74A),A</td>
-<td class="comment-1" rowspan="1">Self modify 'LD A' at $A749 to load A</td>
+<td class="comment-1" rowspan="1">Self modify 'LD A' @ <a href="A637.html#42825">A749</a> to load A</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -911,7 +962,7 @@ This gets called whenever the perp is within sight of the hero car.
 <td class="comment-1" rowspan="1">A = 10</td>
 </tr>
 <tr>
-<td class="asm-label">smash_handler_19</td>
+<td class="asm-label">smash_handler_18</td>
 <td class="address-2"><span id="42850"></span>A762</td>
 <td class="instruction">DEC A</td>
 <td class="comment-1" rowspan="1">A--</td>
@@ -920,12 +971,12 @@ This gets called whenever the perp is within sight of the hero car.
 <td class="asm-label"></td>
 <td class="address-1"><span id="42851"></span>A763</td>
 <td class="instruction">LD ($A73F),A</td>
-<td class="comment-1" rowspan="1">($A73F) = A</td>
+<td class="comment-1" rowspan="1">Self modify 'LD A' @ <a href="A637.html#42814">A73E</a> to load A</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="42854"></span>A766</td>
-<td class="instruction">JR Z,<a href="A637.html#42870">smash_handler_20</a></td>
+<td class="instruction">JR Z,<a href="A637.html#42870">smash_handler_19</a></td>
 <td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
@@ -943,14 +994,14 @@ This gets called whenever the perp is within sight of the hero car.
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="42861"></span>A76D</td>
-<td class="instruction">JR NC,<a href="A637.html#42870">smash_handler_20</a></td>
+<td class="instruction">JR NC,<a href="A637.html#42870">smash_handler_19</a></td>
 <td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="42863"></span>A76F</td>
 <td class="instruction">CPL</td>
-<td class="comment-1" rowspan="3">B = ~A + 14 -- iterations</td>
+<td class="comment-1" rowspan="3">B = (13 - A)  -- iterations</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -963,7 +1014,7 @@ This gets called whenever the perp is within sight of the hero car.
 <td class="instruction">LD B,A</td>
 </tr>
 <tr>
-<td class="asm-label">loop_a773</td>
+<td class="asm-label">sh_a773_loop</td>
 <td class="address-2"><span id="42867"></span>A773</td>
 <td class="instruction">ADD HL,DE</td>
 <td class="comment-1" rowspan="1">HL += DE</td>
@@ -971,11 +1022,11 @@ This gets called whenever the perp is within sight of the hero car.
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="42868"></span>A774</td>
-<td class="instruction">DJNZ <a href="A637.html#42867">loop_a773</a></td>
+<td class="instruction">DJNZ <a href="A637.html#42867">sh_a773_loop</a></td>
 <td class="comment-1" rowspan="1">Loop to loop_a773 while B</td>
 </tr>
 <tr>
-<td class="asm-label">smash_handler_20</td>
+<td class="asm-label">smash_handler_19</td>
 <td class="address-2"><span id="42870"></span>A776</td>
 <td class="instruction">LD A,(IX+$01)</td>
 <td class="comment-1" rowspan="2">A = IX[1] - 6</td>
@@ -988,8 +1039,8 @@ This gets called whenever the perp is within sight of the hero car.
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="42875"></span>A77B</td>
-<td class="instruction">JR NC,<a href="A637.html#42883">smash_handler_21</a></td>
-<td class="comment-1" rowspan="1"></td>
+<td class="instruction">JR NC,<a href="A637.html#42883">smash_handler_20</a></td>
+<td class="comment-1" rowspan="1">Jump if A &gt;= 6</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -1019,7 +1070,7 @@ This gets called whenever the perp is within sight of the hero car.
 <td class="comment-1" rowspan="1">HL += DE</td>
 </tr>
 <tr>
-<td class="asm-label">smash_handler_21</td>
+<td class="asm-label">smash_handler_20</td>
 <td class="address-2"><span id="42883"></span>A783</td>
 <td class="instruction">LD (IX+$0D),L</td>
 <td class="comment-1" rowspan="2">wordat(IX + 13) = HL</td>
@@ -1036,7 +1087,7 @@ This gets called whenever the perp is within sight of the hero car.
 <td class="comment-1" rowspan="1">Return</td>
 </tr>
 <tr>
-<td class="asm-label">smash_handler_22</td>
+<td class="asm-label">smash_handler_21</td>
 <td class="address-2"><span id="42890"></span>A78A</td>
 <td class="instruction">LD (IX+$07),$FC</td>
 <td class="comment-1" rowspan="1">IX[7] = $FC</td>
@@ -1045,19 +1096,17 @@ This gets called whenever the perp is within sight of the hero car.
 <td class="asm-label"></td>
 <td class="address-1"><span id="42894"></span>A78E</td>
 <td class="instruction">CP $03</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="3">Jump if A &lt; 3 -- preserve A</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="42896"></span>A790</td>
 <td class="instruction">PUSH AF</td>
-<td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="42897"></span>A791</td>
-<td class="instruction">JR C,<a href="A637.html#42901">smash_handler_23</a></td>
-<td class="comment-1" rowspan="1"></td>
+<td class="instruction">JR C,<a href="A637.html#42901">smash_handler_22</a></td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -1066,16 +1115,16 @@ This gets called whenever the perp is within sight of the hero car.
 <td class="comment-1" rowspan="1">A -= 3</td>
 </tr>
 <tr>
-<td class="asm-label">smash_handler_23</td>
+<td class="asm-label">smash_handler_22</td>
 <td class="address-2"><span id="42901"></span>A795</td>
 <td class="instruction">EX AF,AF'</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="1">Bank</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="42902"></span>A796</td>
 <td class="instruction">LD A,($A24E)</td>
-<td class="comment-1" rowspan="1">A = boost</td>
+<td class="comment-1" rowspan="1">Load turbo boost time remaining (60..0)</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -1087,22 +1136,22 @@ This gets called whenever the perp is within sight of the hero car.
 <td class="asm-label"></td>
 <td class="address-1"><span id="42906"></span>A79A</td>
 <td class="instruction">LD A,$C8</td>
-<td class="comment-1" rowspan="1">A = $C8</td>
+<td class="comment-1" rowspan="1">A = $C8  -- value for when not turbo boosting</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="42908"></span>A79C</td>
-<td class="instruction">JR Z,<a href="A637.html#42912">smash_handler_24</a></td>
-<td class="comment-1" rowspan="1"></td>
+<td class="instruction">JR Z,<a href="A637.html#42912">smash_handler_23</a></td>
+<td class="comment-1" rowspan="1">Jump if no turbo boost</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="42910"></span>A79E</td>
 <td class="instruction">LD A,$E6</td>
-<td class="comment-1" rowspan="1">A = $E6</td>
+<td class="comment-1" rowspan="1">A = $E6  -- value for when turbo boosting</td>
 </tr>
 <tr>
-<td class="asm-label">smash_handler_24</td>
+<td class="asm-label">smash_handler_23</td>
 <td class="address-2"><span id="42912"></span>A7A0</td>
 <td class="instruction">EX AF,AF'</td>
 <td class="comment-1" rowspan="1"></td>
@@ -1111,13 +1160,13 @@ This gets called whenever the perp is within sight of the hero car.
 <td class="asm-label"></td>
 <td class="address-1"><span id="42913"></span>A7A1</td>
 <td class="instruction">CALL <a href="A399.html#42168">check_collisions_8</a></td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="1">(crash testing stuff...)</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="42916"></span>A7A4</td>
 <td class="instruction">LD HL,($B32F)</td>
-<td class="comment-1" rowspan="1">Read HL from LD BC at $B32E</td>
+<td class="comment-1" rowspan="1">Read HL from 'LD BC' @ <a href="B318.html#45870">B32E</a></td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -1146,24 +1195,24 @@ This gets called whenever the perp is within sight of the hero car.
 <td class="asm-label"></td>
 <td class="address-1"><span id="42928"></span>A7B0</td>
 <td class="instruction">POP AF</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="1">-- restore A</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="42929"></span>A7B1</td>
 <td class="instruction">LD HL,$B4F0</td>
-<td class="comment-1" rowspan="1">HL = $B4F0</td>
+<td class="comment-1" rowspan="1">HL = <a href="B4F0.html">smash</a></td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="42932"></span>A7B4</td>
 <td class="instruction">PUSH HL</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="1">Preserve HL</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="42933"></span>A7B5</td>
-<td class="instruction">JR NC,<a href="A637.html#42942">smash_handler_25</a></td>
+<td class="instruction">JR NC,<a href="A637.html#42942">smash_handler_24</a></td>
 <td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
@@ -1175,7 +1224,7 @@ This gets called whenever the perp is within sight of the hero car.
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="42937"></span>A7B9</td>
-<td class="instruction">JR Z,<a href="A637.html#42942">smash_handler_25</a></td>
+<td class="instruction">JR Z,<a href="A637.html#42942">smash_handler_24</a></td>
 <td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
@@ -1191,7 +1240,7 @@ This gets called whenever the perp is within sight of the hero car.
 <td class="comment-1" rowspan="1">D = 4</td>
 </tr>
 <tr>
-<td class="asm-label">smash_handler_25</td>
+<td class="asm-label">smash_handler_24</td>
 <td class="address-2"><span id="42942"></span>A7BE</td>
 <td class="instruction">LD A,($8007)</td>
 <td class="comment-1" rowspan="3">D = wanted_stage_number + D</td>
@@ -1216,37 +1265,35 @@ This gets called whenever the perp is within sight of the hero car.
 <td class="asm-label"></td>
 <td class="address-1"><span id="42949"></span>A7C5</td>
 <td class="instruction">LD A,($8006)</td>
-<td class="comment-1" rowspan="1">A = *$8006</td>
+<td class="comment-1" rowspan="3">Jump if retry_count is zero</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="42952"></span>A7C8</td>
 <td class="instruction">AND A</td>
-<td class="comment-1" rowspan="1">Set flags</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="42953"></span>A7C9</td>
-<td class="instruction">JR Z,<a href="A637.html#42962">smash_handler_26</a></td>
-<td class="comment-1" rowspan="1"></td>
+<td class="instruction">JR Z,<a href="A637.html#42962">smash_handler_25</a></td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="42955"></span>A7CB</td>
 <td class="instruction">LD A,D</td>
-<td class="comment-1" rowspan="1">A = D</td>
+<td class="comment-1" rowspan="1">Middle digit(s) of bonus</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="42956"></span>A7CC</td>
 <td class="instruction">LD D,E</td>
-<td class="comment-1" rowspan="1">D = E</td>
+<td class="comment-1" rowspan="1">Set top two digits of bonus</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="42957"></span>A7CD</td>
 <td class="instruction">RLCA</td>
-<td class="comment-1" rowspan="4">A &lt;&lt;= 4  prob</td>
+<td class="comment-1" rowspan="4">Move middle digit into position</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -1267,19 +1314,19 @@ This gets called whenever the perp is within sight of the hero car.
 <td class="asm-label"></td>
 <td class="address-1"><span id="42961"></span>A7D1</td>
 <td class="instruction">LD E,A</td>
-<td class="comment-1" rowspan="1">E = A</td>
+<td class="comment-1" rowspan="1">Set middle digits of bonus</td>
 </tr>
 <tr>
-<td class="asm-label">smash_handler_26</td>
+<td class="asm-label">smash_handler_25</td>
 <td class="address-2"><span id="42962"></span>A7D2</td>
 <td class="instruction">XOR A</td>
-<td class="comment-1" rowspan="1">A = 0</td>
+<td class="comment-1" rowspan="1">Clear low digits of bonus</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="42963"></span>A7D3</td>
-<td class="instruction">CALL <a href="9CD6.html">$9CD6</a></td>
-<td class="comment-1" rowspan="1"></td>
+<td class="instruction">CALL <a href="9CD6.html">bonus</a></td>
+<td class="comment-1" rowspan="1">Call bonus</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -1291,7 +1338,7 @@ This gets called whenever the perp is within sight of the hero car.
 <td class="asm-label"></td>
 <td class="address-1"><span id="42968"></span>A7D8</td>
 <td class="instruction">LD ($A73F),A</td>
-<td class="comment-1" rowspan="1">Self modify 'LD A' at $A73E to load A</td>
+<td class="comment-1" rowspan="1">Self modify 'LD A' @ <a href="A637.html#42814">A73E</a> to load A</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -1303,7 +1350,7 @@ This gets called whenever the perp is within sight of the hero car.
 <td class="asm-label"></td>
 <td class="address-1"><span id="42974"></span>A7DE</td>
 <td class="instruction">CALL <a href="9945.html">chatter</a></td>
-<td class="comment-1" rowspan="1">Call chatter</td>
+<td class="comment-1" rowspan="1">Call chatter (priority 5)</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -1330,7 +1377,7 @@ Next: <a href="A7E7.html">A7E7</a>
 </tr>
 </table>
 <footer>
-<div class="release">The incomplete Chase H.Q. disassembly 20230518</div>
+<div class="release">The incomplete Chase H.Q. disassembly 20231102</div>
 <div class="copyright">&copy; 1988 Taito Corporation &copy; 1989 Ocean Software Ltd. (Chase H.Q.) © 2023 David Thomas (this disassembly)</div>
 <div class="created">Created using <a href="https://skoolkit.ca">SkoolKit</a> 8.9.</div>
 </footer>

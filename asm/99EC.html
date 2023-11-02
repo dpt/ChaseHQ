@@ -23,7 +23,7 @@ Next: <a href="9A55.html">9A55</a>
 </td>
 </tr>
 </table>
-<div class="description">99EC: Shows the alerts and remarks from the game's characters</div>
+<div class="description">99EC: Shows the chatter - the alerts and remarks from the game's characters</div>
 <table class="disassembly">
 <tr>
 <td class="routine-comment" colspan="5">
@@ -38,10 +38,10 @@ Used by the routine at <a href="9A55.html">noise_effect</a>.
 <td class="asm-label">print_chatter</td>
 <td class="address-2"><span id="39404"></span>99EC</td>
 <td class="instruction">LD HL,($9630)</td>
-<td class="comment-1" rowspan="1">Fetch address of next remark</td>
+<td class="comment-1" rowspan="1">Load current message set address</td>
 </tr>
 <tr>
-<td class="asm-label">chatter_loop</td>
+<td class="asm-label">pc_loop</td>
 <td class="address-2"><span id="39407"></span>99EF</td>
 <td class="instruction">LD A,(HL)</td>
 <td class="comment-1" rowspan="2">Read a byte and advance</td>
@@ -52,55 +52,64 @@ Used by the routine at <a href="9A55.html">noise_effect</a>.
 <td class="instruction">INC HL</td>
 </tr>
 <tr>
-<td class="asm-label"></td>
-<td class="address-1"><span id="39409"></span>99F1</td>
-<td class="instruction">CP $FC</td>
-<td class="comment-1" rowspan="1">if (byte != $FC) then jump plot_character</td>
-</tr>
-<tr>
-<td class="asm-label"></td>
-<td class="address-1"><span id="39411"></span>99F3</td>
-<td class="instruction">JR NZ,<a href="99EC.html#39436">plot_character</a></td>
-<td class="comment-1" rowspan="1"></td>
-</tr>
-<tr>
-<td class="asm-label">random_chatter</td>
-<td class="address-1"><span id="39413"></span>99F5</td>
-<td class="instruction">PUSH HL</td>
-<td class="comment-1" rowspan="1"></td>
-</tr>
-<tr>
 <td class="routine-comment" colspan="5">
-<span id="39414"></span>
+<span id="39409"></span>
 <div class="comments">
 <div class="paragraph">
-We have a three-way choice here
+$FC indicates a three-way random choice. Otherwise it's the index of the speaking character (1/2/3 for Nancy/Raymond/Tony) or 0 for the helicopter pilot.
 </div>
 </div>
 </td>
 </tr>
 <tr>
 <td class="asm-label"></td>
+<td class="address-1"><span id="39409"></span>99F1</td>
+<td class="instruction">CP $FC</td>
+<td class="comment-1" rowspan="2">If byte != $FC then jump to pc_plot_character</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="39411"></span>99F3</td>
+<td class="instruction">JR NZ,<a href="99EC.html#39436">pc_plot_character</a></td>
+</tr>
+<tr>
+<td class="routine-comment" colspan="5">
+<span id="39413"></span>
+<div class="comments">
+<div class="paragraph">
+We have a three-way choice here.
+</div>
+</div>
+</td>
+</tr>
+<tr>
+<td class="asm-label">pc_random_choice</td>
+<td class="address-1"><span id="39413"></span>99F5</td>
+<td class="instruction">PUSH HL</td>
+<td class="comment-1" rowspan="1">Preserve message data address</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="39414"></span>99F6</td>
 <td class="instruction">CALL <a href="9618.html#38427">rng</a></td>
-<td class="comment-1" rowspan="1">Call rng - returns a random byte</td>
+<td class="comment-1" rowspan="1">Call rng - returns a random byte in <span class="register">A</span></td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="39417"></span>99F9</td>
 <td class="instruction">POP HL</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="1">Restore message data address</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="39418"></span>99FA</td>
 <td class="instruction">CP $55</td>
-<td class="comment-1" rowspan="2">If random value &lt; $55 jump load_message_ptr -- a 33.3% chance</td>
+<td class="comment-1" rowspan="2">If random value &lt; $55 jump to pc_load_message_ptr -- a 33.3% chance</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="39420"></span>99FC</td>
-<td class="instruction">JR C,<a href="99EC.html#39430">load_message_ptr</a></td>
+<td class="instruction">JR C,<a href="99EC.html#39430">pc_load_message_ptr</a></td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -117,12 +126,12 @@ We have a three-way choice here
 <td class="asm-label"></td>
 <td class="address-1"><span id="39424"></span>9A00</td>
 <td class="instruction">CP $AA</td>
-<td class="comment-1" rowspan="2">If random value &lt; $AA jump load_message_ptr -- a 66.6% chance</td>
+<td class="comment-1" rowspan="2">If random value &lt; $AA jump to pc_load_message_ptr -- a 66.6% chance</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="39426"></span>9A02</td>
-<td class="instruction">JR C,<a href="99EC.html#39430">load_message_ptr</a></td>
+<td class="instruction">JR C,<a href="99EC.html#39430">pc_load_message_ptr</a></td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -136,10 +145,10 @@ We have a three-way choice here
 <td class="instruction">INC HL</td>
 </tr>
 <tr>
-<td class="asm-label">load_message_ptr</td>
+<td class="asm-label">pc_load_message_ptr</td>
 <td class="address-2"><span id="39430"></span>9A06</td>
 <td class="instruction">LD A,(HL)</td>
-<td class="comment-1" rowspan="4">Load the address of the message</td>
+<td class="comment-1" rowspan="4">Load the address of the chosen message set</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -159,24 +168,24 @@ We have a three-way choice here
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="39434"></span>9A0A</td>
-<td class="instruction">JR <a href="99EC.html#39407">chatter_loop</a></td>
-<td class="comment-1" rowspan="1">Loop back - it could be another random case</td>
+<td class="instruction">JR <a href="99EC.html#39407">pc_loop</a></td>
+<td class="comment-1" rowspan="1">Loop back - it could be another random choice</td>
 </tr>
 <tr>
 <td class="routine-comment" colspan="5">
 <span id="39436"></span>
 <div class="comments">
 <div class="paragraph">
-<span class="register">A</span> is the index of the face to show
+<span class="register">A</span> is the index of the face to show.
 </div>
 </div>
 </td>
 </tr>
 <tr>
-<td class="asm-label">plot_character</td>
+<td class="asm-label">pc_plot_character</td>
 <td class="address-2"><span id="39436"></span>9A0C</td>
 <td class="instruction">AND A</td>
-<td class="comment-1" rowspan="1">Is it zero? (The definable/pilot character's face)</td>
+<td class="comment-1" rowspan="1">Is it zero? (=&gt; the pilot character's face)</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -188,12 +197,12 @@ We have a three-way choice here
 <td class="asm-label"></td>
 <td class="address-1"><span id="39438"></span>9A0E</td>
 <td class="instruction">LD HL,($5CF2)</td>
-<td class="comment-1" rowspan="3">Plot whatever face <a href="5CF0.html#23794">perp_mugshot_bitmap</a> points to, otherwise calculate</td>
+<td class="comment-1" rowspan="3">Plot whatever face <a href="5CF0.html#23794">addrof_perp_mugshot_bitmap</a> points to, otherwise calculate the face graphic's address</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="39441"></span>9A11</td>
-<td class="instruction">JR Z,<a href="99EC.html#39453">do_plot</a></td>
+<td class="instruction">JR Z,<a href="99EC.html#39453">pc_do_plot</a></td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -204,7 +213,7 @@ We have a three-way choice here
 <td class="asm-label"></td>
 <td class="address-1"><span id="39444"></span>9A14</td>
 <td class="instruction">LD HL,$7B35</td>
-<td class="comment-1" rowspan="1">Load base address of face graphics (BUT it's actually earlier than the real base because we're 1-indexed)</td>
+<td class="comment-1" rowspan="1">Load base address of face graphics (BUT it's actually 180 bytes earlier than the real base because we're 1-indexed)</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -213,7 +222,7 @@ We have a three-way choice here
 <td class="comment-1" rowspan="1">Length of face graphic (bitmap + attrs = 4*8*5 + 4*5)</td>
 </tr>
 <tr>
-<td class="asm-label">print_chatter_0</td>
+<td class="asm-label">pc_multiply</td>
 <td class="address-2"><span id="39450"></span>9A1A</td>
 <td class="instruction">ADD HL,DE</td>
 <td class="comment-1" rowspan="2">Get face graphic address</td>
@@ -221,10 +230,10 @@ We have a three-way choice here
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="39451"></span>9A1B</td>
-<td class="instruction">DJNZ <a href="99EC.html#39450">print_chatter_0</a></td>
+<td class="instruction">DJNZ <a href="99EC.html#39450">pc_multiply</a></td>
 </tr>
 <tr>
-<td class="asm-label">do_plot</td>
+<td class="asm-label">pc_do_plot</td>
 <td class="address-2"><span id="39453"></span>9A1D</td>
 <td class="instruction">LD DE,$4036</td>
 <td class="comment-1" rowspan="1">Set plot address to (176,8)</td>
@@ -252,7 +261,7 @@ This entry point is used by the routine at <a href="9965.html">drive_chatter</a>
 </td>
 </tr>
 <tr>
-<td class="asm-label">chatter_message</td>
+<td class="asm-label">pc_chatter_message</td>
 <td class="address-2"><span id="39460"></span>9A24</td>
 <td class="instruction">LD E,(HL)</td>
 <td class="comment-1" rowspan="4">Fetch address of message to start showing</td>
@@ -276,7 +285,7 @@ This entry point is used by the routine at <a href="9965.html">drive_chatter</a>
 <td class="asm-label"></td>
 <td class="address-1"><span id="39464"></span>9A28</td>
 <td class="instruction">LD ($9630),HL</td>
-<td class="comment-1" rowspan="1">Save address of next message to show (or perhaps the pointer)</td>
+<td class="comment-1" rowspan="1">Save current message set address</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -295,16 +304,16 @@ This entry point is used by the routine at <a href="9965.html">drive_chatter</a>
 <span id="39472"></span>
 <div class="comments">
 <div class="paragraph">
-This entry point is used by the routine at <a href="9965.html">drive_chatter</a>.
+This entry point is used by the routine at <a href="9965.html">drive_chatter</a>. <span class="register">A</span> is message_x.
 </div>
 </div>
 </td>
 </tr>
 <tr>
-<td class="asm-label">print_chatter_1</td>
+<td class="asm-label">pc_clear_line</td>
 <td class="address-2"><span id="39472"></span>9A30</td>
 <td class="instruction">PUSH AF</td>
-<td class="comment-1" rowspan="4">if (A == 0) clear_message_line</td>
+<td class="comment-1" rowspan="4">If (A == 0) clear_message_line</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -331,13 +340,13 @@ This entry point is used by the routine at <a href="9965.html">drive_chatter</a>
 <td class="asm-label"></td>
 <td class="address-1"><span id="39481"></span>9A39</td>
 <td class="instruction">LD D,(HL)</td>
-<td class="comment-1" rowspan="1">The character itself</td>
+<td class="comment-1" rowspan="1">Load the character itself</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="39482"></span>9A3A</td>
 <td class="instruction">RES 7,D</td>
-<td class="comment-1" rowspan="1">Clear the string terminator bit</td>
+<td class="comment-1" rowspan="1">Clear any string terminator bit</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -349,7 +358,7 @@ This entry point is used by the routine at <a href="9965.html">drive_chatter</a>
 <td class="asm-label"></td>
 <td class="address-1"><span id="39485"></span>9A3D</td>
 <td class="instruction">PUSH HL</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="1">Preserve string address</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -361,7 +370,7 @@ This entry point is used by the routine at <a href="9965.html">drive_chatter</a>
 <td class="asm-label"></td>
 <td class="address-1"><span id="39489"></span>9A41</td>
 <td class="instruction">POP HL</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="1">Restore string address</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -378,14 +387,14 @@ This entry point is used by the routine at <a href="9965.html">drive_chatter</a>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="39493"></span>9A45</td>
-<td class="instruction">JR Z,<a href="99EC.html#39500">print_chatter_2</a></td>
+<td class="instruction">JR Z,<a href="99EC.html#39500">pc_exit</a></td>
 <td class="comment-1" rowspan="1">If not terminated then jump over</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="39495"></span>9A47</td>
 <td class="instruction">LD A,$0A</td>
-<td class="comment-1" rowspan="2">$9633 = 10</td>
+<td class="comment-1" rowspan="2">Set chatter_delay to 10</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -393,7 +402,7 @@ This entry point is used by the routine at <a href="9965.html">drive_chatter</a>
 <td class="instruction">LD ($9633),A</td>
 </tr>
 <tr>
-<td class="asm-label">print_chatter_2</td>
+<td class="asm-label">pc_exit</td>
 <td class="address-2"><span id="39500"></span>9A4C</td>
 <td class="instruction">POP AF</td>
 <td class="comment-1" rowspan="1">Restore message_x</td>
@@ -434,7 +443,7 @@ Next: <a href="9A55.html">9A55</a>
 </tr>
 </table>
 <footer>
-<div class="release">The incomplete Chase H.Q. disassembly 20230518</div>
+<div class="release">The incomplete Chase H.Q. disassembly 20231102</div>
 <div class="copyright">&copy; 1988 Taito Corporation &copy; 1989 Ocean Software Ltd. (Chase H.Q.) © 2023 David Thomas (this disassembly)</div>
 <div class="created">Created using <a href="https://skoolkit.ca">SkoolKit</a> 8.9.</div>
 </footer>

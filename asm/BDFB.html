@@ -38,7 +38,7 @@ Used by the routines at <a href="8401.html">main_loop</a>, <a href="852A.html">c
 <td class="asm-label">read_map</td>
 <td class="address-2"><span id="48635"></span>BDFB</td>
 <td class="instruction">XOR A</td>
-<td class="comment-1" rowspan="2">($A23D) = 0  -- state var TBD</td>
+<td class="comment-1" rowspan="2">var_a23d = 0  -- state var TBD</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -49,13 +49,13 @@ Used by the routines at <a href="8401.html">main_loop</a>, <a href="852A.html">c
 <td class="asm-label"></td>
 <td class="address-1"><span id="48639"></span>BDFF</td>
 <td class="instruction">LD ($A23C),A</td>
-<td class="comment-1" rowspan="1">($A23C) = 0  -- state var TBD</td>
+<td class="comment-1" rowspan="1">var_a23c = 0  -- state var TBD</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="48642"></span>BE02</td>
 <td class="instruction">LD ($A254),A</td>
-<td class="comment-1" rowspan="1">($A254) = 0  -- spawning flag</td>
+<td class="comment-1" rowspan="1">Reset another_spawning_flag</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -84,7 +84,7 @@ Used by the routines at <a href="8401.html">main_loop</a>, <a href="852A.html">c
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="48655"></span>BE0F</td>
-<td class="instruction">JR NC,<a href="BDFB.html#48664">j_be18</a></td>
+<td class="instruction">JR NC,<a href="BDFB.html#48664">rm_be18</a></td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -101,7 +101,7 @@ Used by the routines at <a href="8401.html">main_loop</a>, <a href="852A.html">c
 <td class="asm-label"></td>
 <td class="address-1"><span id="48659"></span>BE13</td>
 <td class="instruction">CALL <a href="BDFB.html#48671">rm_cycle_buffer_offset</a></td>
-<td class="comment-1" rowspan="1">Call subfunction $BE1F  -- processing something twice as much when at high speed?</td>
+<td class="comment-1" rowspan="1">Call subfunction <a href="BDFB.html#48671">rm_cycle_buffer_offset</a>  -- processing something twice as much when at high speed?</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -115,7 +115,7 @@ Used by the routines at <a href="8401.html">main_loop</a>, <a href="852A.html">c
 <td class="instruction">POP AF</td>
 </tr>
 <tr>
-<td class="asm-label">j_be18</td>
+<td class="asm-label">rm_be18</td>
 <td class="address-2"><span id="48664"></span>BE18</td>
 <td class="instruction">ADD A,(HL)</td>
 <td class="comment-1" rowspan="2">fast_counter += bottom byte of speed in A</td>
@@ -188,7 +188,7 @@ This entry point is used by the routine at <a href="87DC.html">setup_game</a>.
 <td class="asm-label"></td>
 <td class="address-1"><span id="48680"></span>BE28</td>
 <td class="instruction">LD A,($A23C)</td>
-<td class="comment-1" rowspan="3">*$A23C |= *HL</td>
+<td class="comment-1" rowspan="3">var_a23c |= *HL</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -220,7 +220,7 @@ This entry point is used by the routine at <a href="87DC.html">setup_game</a>.
 <td class="asm-label"></td>
 <td class="address-1"><span id="48691"></span>BE33</td>
 <td class="instruction">LD A,($A23D)</td>
-<td class="comment-1" rowspan="3">*$A23D |= *HL</td>
+<td class="comment-1" rowspan="3">var_a23d |= *HL</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -406,7 +406,7 @@ Otherwise it must be a road split command (byte == 2).
 <td class="asm-label"></td>
 <td class="address-1"><span id="48732"></span>BE5C</td>
 <td class="instruction">LD ($BB95),BC</td>
-<td class="comment-1" rowspan="1">Self modify 'LD HL,$xxxx' at $BB94 to load the address</td>
+<td class="comment-1" rowspan="1">Self modify 'LD HL,$xxxx' @ <a href="BB69.html#48020">BB94</a> to load the address</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -433,13 +433,13 @@ Otherwise it must be a road split command (byte == 2).
 <td class="asm-label"></td>
 <td class="address-1"><span id="48740"></span>BE64</td>
 <td class="instruction">LD ($BBC2),HL</td>
-<td class="comment-1" rowspan="1">Self modify 'LD HL,$xxxx' at $BBC1 to load the address</td>
+<td class="comment-1" rowspan="1">Self modify 'LD HL,$xxxx' @ <a href="BB69.html#48065">BBC1</a> to load the address</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="48743"></span>BE67</td>
 <td class="instruction">LD HL,$E2C6</td>
-<td class="comment-1" rowspan="1">HL = $E2C6 -&gt; road split left curvature data</td>
+<td class="comment-1" rowspan="1">HL = <a href="E2C6.html">roadsplit_curvature</a> -&gt; road split left curvature data</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -461,7 +461,7 @@ Handle a command byte of one: TBD.
 <td class="asm-label">rm_curvature_one_command</td>
 <td class="address-2"><span id="48748"></span>BE6C</td>
 <td class="instruction">LD HL,$0000</td>
-<td class="comment-1" rowspan="1">HL = &lt;map curvature address&gt; -- Self modified by $BBCC</td>
+<td class="comment-1" rowspan="1">HL = &lt;map curvature address&gt; -- Self modified by <a href="BB69.html#48076">ml27_bbcc</a></td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -743,7 +743,7 @@ Otherwise it must be a road split command (byte == 2).
 <td class="asm-label"></td>
 <td class="address-1"><span id="48814"></span>BEAE</td>
 <td class="instruction">LD ($BB98),BC</td>
-<td class="comment-1" rowspan="1">Self modify 'LD DE,$xxxx' at $BB97 to load the address</td>
+<td class="comment-1" rowspan="1">Self modify 'LD DE,$xxxx' @ <a href="BB69.html#48023">BB97</a> to load the address</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -770,13 +770,13 @@ Otherwise it must be a road split command (byte == 2).
 <td class="asm-label"></td>
 <td class="address-1"><span id="48822"></span>BEB6</td>
 <td class="instruction">LD ($BBC5),HL</td>
-<td class="comment-1" rowspan="1">Self modify 'LD DE,$xxxx' at $BBC4 to load the address</td>
+<td class="comment-1" rowspan="1">Self modify 'LD DE,$xxxx' @ <a href="BB69.html#48068">BBC4</a> to load the address</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="48825"></span>BEB9</td>
 <td class="instruction">LD HL,$E2CC</td>
-<td class="comment-1" rowspan="1">HL = $E2CC -&gt; road split height data</td>
+<td class="comment-1" rowspan="1">HL = <a href="E2C6.html#58060">roadsplit_height</a> -&gt; road split height data</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -788,7 +788,7 @@ Otherwise it must be a road split command (byte == 2).
 <td class="asm-label">rm_height_one_command</td>
 <td class="address-2"><span id="48830"></span>BEBE</td>
 <td class="instruction">LD HL,$0000</td>
-<td class="comment-1" rowspan="1">HL = &lt;something&gt;  -- Self modified by $BBCF</td>
+<td class="comment-1" rowspan="1">HL = &lt;something&gt;  -- Self modified by <a href="BB69.html#48079">BBCF</a></td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -1037,7 +1037,7 @@ Otherwise it must be a road split command (byte == 2).
 <td class="asm-label"></td>
 <td class="address-1"><span id="48889"></span>BEF9</td>
 <td class="instruction">LD ($BB9B),BC</td>
-<td class="comment-1" rowspan="1">Self modify 'LD BC,$xxxx' at $BB9A to load the address</td>
+<td class="comment-1" rowspan="1">Self modify 'LD BC,$xxxx' @ <a href="BB69.html#48026">BB9A</a> to load the address</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -1064,13 +1064,13 @@ Otherwise it must be a road split command (byte == 2).
 <td class="asm-label"></td>
 <td class="address-1"><span id="48897"></span>BF01</td>
 <td class="instruction">LD ($BBC8),HL</td>
-<td class="comment-1" rowspan="1">Self modify 'LD BC,$xxxx' at $BBC7 to load the address</td>
+<td class="comment-1" rowspan="1">Self modify 'LD BC,$xxxx' @ <a href="BB69.html#48071">BBC7</a> to load the address</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="48900"></span>BF04</td>
 <td class="instruction">LD HL,$E2D1</td>
-<td class="comment-1" rowspan="1">HL = $E2D1 -&gt; road split lanes data</td>
+<td class="comment-1" rowspan="1">HL = <a href="E2C6.html#58065">roadsplit_lanes</a> -&gt; road split lanes data</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -1176,7 +1176,7 @@ Otherwise it must be a road split command (byte == 2).
 <td class="asm-label"></td>
 <td class="address-1"><span id="48932"></span>BF24</td>
 <td class="instruction">LD ($BF2D),A</td>
-<td class="comment-1" rowspan="1">Self modify 'LD A,$xx' at $BF2C</td>
+<td class="comment-1" rowspan="1">Self modify 'LD A,$xx' @ <a href="BDFB.html#48940">BF2C</a></td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -1248,7 +1248,7 @@ Resume updating lanes data.
 <td class="asm-label"></td>
 <td class="address-1"><span id="48950"></span>BF36</td>
 <td class="instruction">LD ($BF2D),A</td>
-<td class="comment-1" rowspan="1">Self modify 'LD A,$xx' at $BF2C</td>
+<td class="comment-1" rowspan="1">Self modify 'LD A,$xx' @ <a href="BDFB.html#48940">BF2C</a></td>
 </tr>
 <tr>
 <td class="asm-label">rm_lanes_bf39</td>
@@ -1527,7 +1527,7 @@ Otherwise it must be a road split command (byte == 2).
 <td class="asm-label"></td>
 <td class="address-1"><span id="49011"></span>BF73</td>
 <td class="instruction">LD ($BB8E),BC</td>
-<td class="comment-1" rowspan="1">Set modify 'LD DE,$xxxx' at $BB8D to load the address</td>
+<td class="comment-1" rowspan="1">Set modify 'LD DE,$xxxx' @ <a href="BB69.html#48013">BB8D</a> to load the address</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -1554,7 +1554,7 @@ Otherwise it must be a road split command (byte == 2).
 <td class="asm-label"></td>
 <td class="address-1"><span id="49019"></span>BF7B</td>
 <td class="instruction">LD ($BBBB),HL</td>
-<td class="comment-1" rowspan="1">Self modify 'LD DE,$xxxx' at $BBBA to load the address</td>
+<td class="comment-1" rowspan="1">Self modify 'LD DE,$xxxx' @ <a href="BB69.html#48058">BBBA</a> to load the address</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -1803,7 +1803,7 @@ Otherwise it must be a road split command (byte == 2).
 <td class="asm-label"></td>
 <td class="address-1"><span id="49084"></span>BFBC</td>
 <td class="instruction">LD ($BB91),BC</td>
-<td class="comment-1" rowspan="1">Self modify 'LD BC,$xxxx' at $BB90</td>
+<td class="comment-1" rowspan="1">Self modify 'LD BC,$xxxx' @ <a href="BB69.html#48016">BB90</a></td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -1830,7 +1830,7 @@ Otherwise it must be a road split command (byte == 2).
 <td class="asm-label"></td>
 <td class="address-1"><span id="49092"></span>BFC4</td>
 <td class="instruction">LD ($BBBE),HL</td>
-<td class="comment-1" rowspan="1">Self modify 'LD BC,$xxxx' at $BBBD</td>
+<td class="comment-1" rowspan="1">Self modify 'LD BC,$xxxx' @ <a href="BB69.html#48061">BBBD</a></td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -2200,7 +2200,7 @@ When on left it uses lane 1, on right it uses lane 4, both it uses lane 2 and 3.
 <td class="asm-label">rm_hazards_set_hazard_command</td>
 <td class="address-2"><span id="49196"></span>C02C</td>
 <td class="instruction">LD ($C059),A</td>
-<td class="comment-1" rowspan="1">Self modify "LD (HL),$xx" at $C058 to load A  [which is command_no-3]</td>
+<td class="comment-1" rowspan="1">Self modify 'LD (HL),xxxx' at <a href="BDFB.html#49240">C058</a> to load A [which is command_no-3]</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -2233,7 +2233,7 @@ When on left it uses lane 1, on right it uses lane 4, both it uses lane 2 and 3.
 <td class="asm-label"></td>
 <td class="address-1"><span id="49205"></span>C035</td>
 <td class="instruction">LD ($BB8B),BC</td>
-<td class="comment-1" rowspan="1">Self modify 'LD HL,$xxxx' at $BB8A</td>
+<td class="comment-1" rowspan="1">Self modify 'LD HL,$xxxx' @ <a href="BB69.html#48010">BB8A</a></td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -2260,13 +2260,13 @@ When on left it uses lane 1, on right it uses lane 4, both it uses lane 2 and 3.
 <td class="asm-label"></td>
 <td class="address-1"><span id="49213"></span>C03D</td>
 <td class="instruction">LD ($BBB8),HL</td>
-<td class="comment-1" rowspan="1">Self modify 'LD HL,$xxxx' at $BBB7</td>
+<td class="comment-1" rowspan="1">Self modify 'LD HL,$xxxx' @ <a href="BB69.html#48055">BBB7</a></td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="49216"></span>C040</td>
 <td class="instruction">LD HL,$E2B8</td>
-<td class="comment-1" rowspan="1">HL = $E2B8</td>
+<td class="comment-1" rowspan="1">HL = <a href="E2A4.html#58040">perp_escape_lanes_loop</a></td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -2358,8 +2358,8 @@ When on left it uses lane 1, on right it uses lane 4, both it uses lane 2 and 3.
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="49247"></span>C05F</td>
-<td class="instruction">CALL <a href="B8D2.html">$B8D2</a></td>
-<td class="comment-1" rowspan="1">Call $B8D2</td>
+<td class="instruction">CALL <a href="B8D2.html">sub_b8d2</a></td>
+<td class="comment-1" rowspan="1">Call <a href="B8D2.html">sub_b8d2</a></td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -2413,13 +2413,13 @@ When on left it uses lane 1, on right it uses lane 4, both it uses lane 2 and 3.
 <td class="asm-label"></td>
 <td class="address-1"><span id="49271"></span>C077</td>
 <td class="instruction">LD HL,$A22B</td>
-<td class="comment-1" rowspan="1">HL = $A22B</td>
+<td class="comment-1" rowspan="1">HL = &amp;allow_overtake_bonus</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="49274"></span>C07A</td>
 <td class="instruction">LD HL,$A22B</td>
-<td class="comment-1" rowspan="1">HL = $A22B  -- duplicate instruction</td>
+<td class="comment-1" rowspan="1">HL = &amp;allow_overtake_bonus  -- duplicate instruction</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -2583,7 +2583,7 @@ When on left it uses lane 1, on right it uses lane 4, both it uses lane 2 and 3.
 <td class="asm-label">rm_c0bb</td>
 <td class="address-2"><span id="49339"></span>C0BB</td>
 <td class="instruction">LD A,$00</td>
-<td class="comment-1" rowspan="1">A = xx  -- Self modified by $A977 + $A9A0 only</td>
+<td class="comment-1" rowspan="1">A = &lt;self modified&gt;  -- Self modified by <a href="A955.html#43383">A977</a> + <a href="A97E.html#43424">A9A0</a> only</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -2677,7 +2677,7 @@ When on left it uses lane 1, on right it uses lane 4, both it uses lane 2 and 3.
 <td class="asm-label">rm_c0d9</td>
 <td class="address-2"><span id="49369"></span>C0D9</td>
 <td class="instruction">LD HL,$A254</td>
-<td class="comment-1" rowspan="3">*$A254 += A  -- spawning flag</td>
+<td class="comment-1" rowspan="3">Increment another_spawning_flag by A</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -2692,8 +2692,8 @@ When on left it uses lane 1, on right it uses lane 4, both it uses lane 2 and 3.
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="49374"></span>C0DE</td>
-<td class="instruction">JP <a href="AD0D.html">$AD0D</a></td>
-<td class="comment-1" rowspan="1">Exit via $AD0D</td>
+<td class="instruction">JP <a href="AD0D.html">sub_ad0d</a></td>
+<td class="comment-1" rowspan="1">Exit via <a href="AD0D.html">sub_ad0d</a></td>
 </tr>
 </table>
 <table class="asm-navigation">
@@ -2708,7 +2708,7 @@ Next: <a href="C0E1.html">C0E1</a>
 </tr>
 </table>
 <footer>
-<div class="release">The incomplete Chase H.Q. disassembly 20230518</div>
+<div class="release">The incomplete Chase H.Q. disassembly 20231102</div>
 <div class="copyright">&copy; 1988 Taito Corporation &copy; 1989 Ocean Software Ltd. (Chase H.Q.) © 2023 David Thomas (this disassembly)</div>
 <div class="created">Created using <a href="https://skoolkit.ca">SkoolKit</a> 8.9.</div>
 </footer>

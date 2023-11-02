@@ -54,13 +54,13 @@ Used by the routine at <a href="8401.html">main_loop</a>.
 <td class="asm-label"></td>
 <td class="address-1"><span id="43723"></span>AACB</td>
 <td class="instruction">LD A,$00</td>
-<td class="comment-1" rowspan="1">A = &lt;...&gt;  -- Self modified by $AAD3 below</td>
+<td class="comment-1" rowspan="1">A = &lt;self modified&gt;  -- Self modified by <a href="AAC6.html#43731">AAD3</a> below</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="43725"></span>AACD</td>
 <td class="instruction">CP $61</td>
-<td class="comment-1" rowspan="2">Jump to $AAD6 if A == 97</td>
+<td class="comment-1" rowspan="2">Jump to <a href="AAC6.html#43734">move_helicopter_0</a> if A == 97</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -77,7 +77,7 @@ Used by the routine at <a href="8401.html">main_loop</a>.
 <td class="asm-label"></td>
 <td class="address-1"><span id="43731"></span>AAD3</td>
 <td class="instruction">LD ($AACC),A</td>
-<td class="comment-1" rowspan="1">Self modify $AACB above</td>
+<td class="comment-1" rowspan="1">Self modify <a href="AAC6.html#43723">AACB</a> above</td>
 </tr>
 <tr>
 <td class="asm-label">move_helicopter_0</td>
@@ -89,7 +89,7 @@ Used by the routine at <a href="8401.html">main_loop</a>.
 <td class="asm-label"></td>
 <td class="address-1"><span id="43735"></span>AAD7</td>
 <td class="instruction">LD A,$00</td>
-<td class="comment-1" rowspan="1">A = &lt;...&gt;  -- Self modified below</td>
+<td class="comment-1" rowspan="1">A = &lt;self modified&gt;  -- Self modified below</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -106,13 +106,13 @@ Used by the routine at <a href="8401.html">main_loop</a>.
 <td class="asm-label"></td>
 <td class="address-1"><span id="43740"></span>AADC</td>
 <td class="instruction">LD ($AAD8),A</td>
-<td class="comment-1" rowspan="1">Self modify $AAD7 above</td>
+<td class="comment-1" rowspan="1">Self modify <a href="AAC6.html#43735">AAD7</a> above</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="43743"></span>AADF</td>
 <td class="instruction">LD A,$01</td>
-<td class="comment-1" rowspan="1">A = &lt;...&gt; -- Self modified by $AAE5 below</td>
+<td class="comment-1" rowspan="1">A = &lt;self modified&gt; -- Self modified by <a href="AAC6.html#43749">AAE5</a> below</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -130,13 +130,13 @@ Used by the routine at <a href="8401.html">main_loop</a>.
 <td class="asm-label"></td>
 <td class="address-1"><span id="43749"></span>AAE5</td>
 <td class="instruction">LD ($AAE0),A</td>
-<td class="comment-1" rowspan="1">Self modify $AADF above</td>
+<td class="comment-1" rowspan="1">Self modify <a href="AAC6.html#43743">AADF</a> above</td>
 </tr>
 <tr>
 <td class="asm-label">move_helicopter_1</td>
 <td class="address-2"><span id="43752"></span>AAE8</td>
 <td class="instruction">ADD A,$00</td>
-<td class="comment-1" rowspan="1">A += &lt;...&gt;  -- Increment by old amount -- Self modified below</td>
+<td class="comment-1" rowspan="1">A += &lt;self modified&gt;  -- Increment by old amount -- Self modified below</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -154,7 +154,7 @@ Used by the routine at <a href="8401.html">main_loop</a>.
 <td class="asm-label"></td>
 <td class="address-1"><span id="43758"></span>AAEE</td>
 <td class="instruction">LD ($AA5B),A</td>
-<td class="comment-1" rowspan="1">Self modify 'LD A' @ $AA5A</td>
+<td class="comment-1" rowspan="1">Self modify 'LD A' @ <a href="AA38.html#43610">AA5A</a></td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -177,7 +177,7 @@ Used by the routine at <a href="8401.html">main_loop</a>.
 <td class="asm-label"></td>
 <td class="address-1"><span id="43766"></span>AAF6</td>
 <td class="instruction">LD BC,$0000</td>
-<td class="comment-1" rowspan="1">BC = &lt;...&gt;  -- Self modified by $AAFC below, $AB60  -- prev road pos?</td>
+<td class="comment-1" rowspan="1">BC = &lt;self modified&gt;  -- Self modified by <a href="AAC6.html#43772">AAFC</a> below, <a href="AB33.html#43872">AB60</a>  -- prev road pos?</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -201,7 +201,7 @@ Used by the routine at <a href="8401.html">main_loop</a>.
 <td class="asm-label"></td>
 <td class="address-1"><span id="43776"></span>AB00</td>
 <td class="instruction">LD DE,($AA95)</td>
-<td class="comment-1" rowspan="1">Load DE from 'LD BC' @ $AA94</td>
+<td class="comment-1" rowspan="1">Load DE from 'LD BC' @ <a href="AA38.html#43668">sub_AA94</a></td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -363,7 +363,7 @@ Used by the routine at <a href="8401.html">main_loop</a>.
 <td class="asm-label">move_helicopter_5</td>
 <td class="address-2"><span id="43823"></span>AB2F</td>
 <td class="instruction">LD ($AA95),HL</td>
-<td class="comment-1" rowspan="1">($AA95) = HL</td>
+<td class="comment-1" rowspan="1">Self modify 'LD BC' @ <a href="AA38.html#43668">sub_AA94</a></td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -384,7 +384,7 @@ Next: <a href="AB33.html">AB33</a>
 </tr>
 </table>
 <footer>
-<div class="release">The incomplete Chase H.Q. disassembly 20230518</div>
+<div class="release">The incomplete Chase H.Q. disassembly 20231102</div>
 <div class="copyright">&copy; 1988 Taito Corporation &copy; 1989 Ocean Software Ltd. (Chase H.Q.) © 2023 David Thomas (this disassembly)</div>
 <div class="created">Created using <a href="https://skoolkit.ca">SkoolKit</a> 8.9.</div>
 </footer>

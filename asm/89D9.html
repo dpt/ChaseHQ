@@ -23,7 +23,7 @@ Next: <a href="8A0F.html">8A0F</a>
 </td>
 </tr>
 </table>
-<div class="description">89D9: Sound effect - not sure</div>
+<div class="description">89D9: Sound effect - thud</div>
 <table class="disassembly">
 <tr>
 <td class="routine-comment" colspan="5">
@@ -41,7 +41,7 @@ Next: <a href="8A0F.html">8A0F</a>
 </td>
 </tr>
 <tr>
-<td class="asm-label">sfx89d9</td>
+<td class="asm-label">sfx_thud</td>
 <td class="address-2"><span id="35289"></span>89D9</td>
 <td class="instruction">LD C,$20</td>
 <td class="comment-1" rowspan="1">Length of table is 32</td>
@@ -59,13 +59,13 @@ Next: <a href="8A0F.html">8A0F</a>
 <td class="comment-1" rowspan="1">Zero output byte</td>
 </tr>
 <tr>
-<td class="asm-label">sfx89d9_loop</td>
+<td class="asm-label">sfx_thud_loop</td>
 <td class="address-2"><span id="35295"></span>89DF</td>
 <td class="instruction">LD B,(HL)</td>
 <td class="comment-1" rowspan="1">B = *HL</td>
 </tr>
 <tr>
-<td class="asm-label">sfx89d9_0</td>
+<td class="asm-label">sfx_thud_0</td>
 <td class="address-2"><span id="35296"></span>89E0</td>
 <td class="instruction">OUT ($FE),A</td>
 <td class="comment-1" rowspan="1">Output to</td>
@@ -77,19 +77,19 @@ Next: <a href="8A0F.html">8A0F</a>
 <td class="comment-1" rowspan="3">Delay for 'D' iterations</td>
 </tr>
 <tr>
-<td class="asm-label">sfx89d9_1</td>
+<td class="asm-label">sfx_thud_1</td>
 <td class="address-2"><span id="35299"></span>89E3</td>
 <td class="instruction">DEC E</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="35300"></span>89E4</td>
-<td class="instruction">JR NZ,<a href="89D9.html#35299">sfx89d9_1</a></td>
+<td class="instruction">JR NZ,<a href="89D9.html#35299">sfx_thud_1</a></td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="35302"></span>89E6</td>
-<td class="instruction">DJNZ <a href="89D9.html#35296">sfx89d9_0</a></td>
+<td class="instruction">DJNZ <a href="89D9.html#35296">sfx_thud_0</a></td>
 <td class="comment-1" rowspan="1">Loop for 'B' iterations</td>
 </tr>
 <tr>
@@ -108,12 +108,12 @@ Next: <a href="8A0F.html">8A0F</a>
 <td class="asm-label"></td>
 <td class="address-1"><span id="35307"></span>89EB</td>
 <td class="instruction">DEC C</td>
-<td class="comment-1" rowspan="2">Loop while <span class="register">C</span></td>
+<td class="comment-1" rowspan="2">Loop while <span class="register">C</span> &gt; 0</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="35308"></span>89EC</td>
-<td class="instruction">JR NZ,<a href="89D9.html#35295">sfx89d9_loop</a></td>
+<td class="instruction">JR NZ,<a href="89D9.html#35295">sfx_thud_loop</a></td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -122,7 +122,7 @@ Next: <a href="8A0F.html">8A0F</a>
 <td class="comment-1" rowspan="1">Return</td>
 </tr>
 <tr>
-<td class="asm-label">sfx_data</td>
+<td class="asm-label">sfx_thud_table</td>
 <td class="address-1"><span id="35311"></span>89EF</td>
 <td class="instruction">DEFB $02,$07,$05,$02,$04,$0A,$01,$04</td>
 <td class="comment-1" rowspan="4">Effect data table</td>
@@ -155,7 +155,7 @@ Next: <a href="8A0F.html">8A0F</a>
 </tr>
 </table>
 <footer>
-<div class="release">The incomplete Chase H.Q. disassembly 20230518</div>
+<div class="release">The incomplete Chase H.Q. disassembly 20231102</div>
 <div class="copyright">&copy; 1988 Taito Corporation &copy; 1989 Ocean Software Ltd. (Chase H.Q.) © 2023 David Thomas (this disassembly)</div>
 <div class="created">Created using <a href="https://skoolkit.ca">SkoolKit</a> 8.9.</div>
 </footer>

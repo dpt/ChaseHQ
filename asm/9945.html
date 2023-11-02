@@ -23,7 +23,7 @@ Next: <a href="9965.html">9965</a>
 </td>
 </tr>
 </table>
-<div class="description">9945: Chatter routine</div>
+<div class="description">9945: Set up chatter</div>
 <table class="disassembly">
 <tr>
 <td class="routine-comment" colspan="5">
@@ -38,7 +38,7 @@ Used by the routines at <a href="8401.html">main_loop</a>, <a href="858C.html">r
 </tr>
 <tr>
 <td class="register">A</td>
-<td class="register-desc">TBD</td>
+<td class="register-desc">Message priority: must be higher than the stored priority for the message to take effect</td>
 </tr>
 <tr>
 <td class="register">HL</td>
@@ -51,47 +51,46 @@ Used by the routines at <a href="8401.html">main_loop</a>, <a href="858C.html">r
 <td class="asm-label">chatter</td>
 <td class="address-2"><span id="39237"></span>9945</td>
 <td class="instruction">LD B,A</td>
-<td class="comment-1" rowspan="1">B = A</td>
+<td class="comment-1" rowspan="1">Copy priority value to <span class="register">B</span></td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="39238"></span>9946</td>
 <td class="instruction">LD A,($963D)</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="1">Load chatter_state into <span class="register">A</span></td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="39241"></span>9949</td>
 <td class="instruction">AND A</td>
-<td class="comment-1" rowspan="2">If A == 0 jump forward to 9955</td>
+<td class="comment-1" rowspan="2">If chatter_state == 0 (chatter idle) jump forward to <a href="9945.html#39253">chatter_set</a></td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="39242"></span>994A</td>
-<td class="instruction">JR Z,<a href="9945.html#39253">chatter_0</a></td>
+<td class="instruction">JR Z,<a href="9945.html#39253">chatter_set</a></td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="39244"></span>994C</td>
 <td class="instruction">CP $03</td>
-<td class="comment-1" rowspan="2">If A &gt;= 3 jump forward to 9955</td>
+<td class="comment-1" rowspan="2">If chatter_state &gt;= 3 (chatter end) jump forward to <a href="9945.html#39253">chatter_set</a></td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="39246"></span>994E</td>
-<td class="instruction">JR NC,<a href="9945.html#39253">chatter_0</a></td>
+<td class="instruction">JR NC,<a href="9945.html#39253">chatter_set</a></td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="39248"></span>9950</td>
 <td class="instruction">LD A,($963E)</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="3">If the current chatter_priority &gt;= priority given then return</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="39251"></span>9953</td>
 <td class="instruction">CP B</td>
-<td class="comment-1" rowspan="2">If A &gt;= B return</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -99,10 +98,10 @@ Used by the routines at <a href="8401.html">main_loop</a>, <a href="858C.html">r
 <td class="instruction">RET NC</td>
 </tr>
 <tr>
-<td class="asm-label">chatter_0</td>
+<td class="asm-label">chatter_set</td>
 <td class="address-2"><span id="39253"></span>9955</td>
 <td class="instruction">LD A,B</td>
-<td class="comment-1" rowspan="2">$963E = B</td>
+<td class="comment-1" rowspan="2">Update chatter_priority</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -119,7 +118,7 @@ Used by the routines at <a href="8401.html">main_loop</a>, <a href="858C.html">r
 <td class="asm-label"></td>
 <td class="address-1"><span id="39260"></span>995C</td>
 <td class="instruction">XOR A</td>
-<td class="comment-1" rowspan="2">$9633 = 0</td>
+<td class="comment-1" rowspan="2">chatter_delay = 0</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -130,7 +129,7 @@ Used by the routines at <a href="8401.html">main_loop</a>, <a href="858C.html">r
 <td class="asm-label"></td>
 <td class="address-1"><span id="39264"></span>9960</td>
 <td class="instruction">INC A</td>
-<td class="comment-1" rowspan="2">$963D = 1</td>
+<td class="comment-1" rowspan="2">chatter_state = 1 (start chatter)</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -156,7 +155,7 @@ Next: <a href="9965.html">9965</a>
 </tr>
 </table>
 <footer>
-<div class="release">The incomplete Chase H.Q. disassembly 20230518</div>
+<div class="release">The incomplete Chase H.Q. disassembly 20231102</div>
 <div class="copyright">&copy; 1988 Taito Corporation &copy; 1989 Ocean Software Ltd. (Chase H.Q.) © 2023 David Thomas (this disassembly)</div>
 <div class="created">Created using <a href="https://skoolkit.ca">SkoolKit</a> 8.9.</div>
 </footer>

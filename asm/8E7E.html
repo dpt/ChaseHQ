@@ -29,7 +29,7 @@ Next: <a href="8E91.html">8E91</a>
 <td class="routine-comment" colspan="5">
 <div class="details">
 <div class="paragraph">
-Used by the routines at <a href="8258.html">attract_mode</a>, <a href="873C.html">escape_scene</a>, <a href="8A57.html">handle_perp_caught</a>, <a href="8C3A.html">fully_smashed</a>, <a href="9BCF.html">tick</a>, <a href="B4CC.html">B4CC</a> and <a href="F220.html">load_stage_128k</a>.
+Used by the routines at <a href="8258.html">attract_mode</a>, <a href="873C.html">escape_scene</a>, <a href="8A57.html">handle_perp_caught</a>, <a href="8C3A.html">fully_smashed</a>, <a href="9BCF.html">tick</a>, <a href="B4CC.html">perp_sighted</a> and <a href="F220.html">page_in_stage_128k</a>.
 </div>
 </div>
 <table class="input">
@@ -47,7 +47,7 @@ Used by the routines at <a href="8258.html">attract_mode</a>, <a href="873C.html
 <td class="asm-label">message_printing_related</td>
 <td class="address-2"><span id="36478"></span>8E7E</td>
 <td class="instruction">LD A,$02</td>
-<td class="comment-1" rowspan="1">A = 2</td>
+<td class="comment-1" rowspan="1">A = 2  -- new value for transition_control</td>
 </tr>
 <tr>
 <td class="routine-comment" colspan="5">
@@ -63,13 +63,13 @@ This entry point is used by the routine at <a href="8A57.html">handle_perp_caugh
 <td class="asm-label">j_8e80</td>
 <td class="address-2"><span id="36480"></span>8E80</td>
 <td class="instruction">LD ($A231),A</td>
-<td class="comment-1" rowspan="1">transition_control = A</td>
+<td class="comment-1" rowspan="1">Set transition_control to <span class="register">A</span></td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="36483"></span>8E83</td>
 <td class="instruction">LD A,(HL)</td>
-<td class="comment-1" rowspan="2">Modify 'LD A' at $8E49 with frame delay</td>
+<td class="comment-1" rowspan="2">Modify 'LD A' @ <a href="8E42.html#36425">8E49</a> with frame delay</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -80,7 +80,7 @@ This entry point is used by the routine at <a href="8A57.html">handle_perp_caugh
 <td class="asm-label"></td>
 <td class="address-1"><span id="36487"></span>8E87</td>
 <td class="instruction">INC HL</td>
-<td class="comment-1" rowspan="2">Modify 'LD HL' at $8E42 to be message struct e.g. $82CD</td>
+<td class="comment-1" rowspan="2">Modify 'LD HL' @ <a href="8E42.html">sub_8e42</a> to be message struct e.g. $82CD</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -91,7 +91,7 @@ This entry point is used by the routine at <a href="8A57.html">handle_perp_caugh
 <td class="asm-label"></td>
 <td class="address-1"><span id="36491"></span>8E8B</td>
 <td class="instruction">LD A,$01</td>
-<td class="comment-1" rowspan="2">Modify 'LD B' at $8E45 to be ?</td>
+<td class="comment-1" rowspan="2">Modify 'LD B' @ <a href="8E42.html#36421">8E45</a> to be 1</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -117,7 +117,7 @@ Next: <a href="8E91.html">8E91</a>
 </tr>
 </table>
 <footer>
-<div class="release">The incomplete Chase H.Q. disassembly 20230518</div>
+<div class="release">The incomplete Chase H.Q. disassembly 20231102</div>
 <div class="copyright">&copy; 1988 Taito Corporation &copy; 1989 Ocean Software Ltd. (Chase H.Q.) © 2023 David Thomas (this disassembly)</div>
 <div class="created">Created using <a href="https://skoolkit.ca">SkoolKit</a> 8.9.</div>
 </footer>

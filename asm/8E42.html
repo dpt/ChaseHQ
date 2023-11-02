@@ -23,7 +23,7 @@ Next: <a href="8E6C.html">8E6C</a>
 </td>
 </tr>
 </table>
-<div class="description">8E42: Subroutine.</div>
+<div class="description">8E42: Subroutine</div>
 <table class="disassembly">
 <tr>
 <td class="routine-comment" colspan="5">
@@ -44,7 +44,7 @@ Used by the routines at <a href="8D8F.html">transition</a> and <a href="8E91.htm
 <td class="asm-label"></td>
 <td class="address-1"><span id="36421"></span>8E45</td>
 <td class="instruction">LD B,$00</td>
-<td class="comment-1" rowspan="1">B = 0 -- self modified by ($8E58 increments it), ($8E8D resets it to 1)</td>
+<td class="comment-1" rowspan="1">B = 0 -- self modified by (<a href="8E42.html#36440">8E58</a> increments it), (<a href="8E7E.html#36493">8E8D</a> resets it to 1)</td>
 </tr>
 <tr>
 <td class="asm-label">sub_8e47_loop</td>
@@ -56,7 +56,7 @@ Used by the routines at <a href="8D8F.html">transition</a> and <a href="8E91.htm
 <td class="asm-label"></td>
 <td class="address-1"><span id="36425"></span>8E49</td>
 <td class="instruction">LD A,$14</td>
-<td class="comment-1" rowspan="1">A = 20 -- self modified by $8E4C, $8E51, ($8E84 resets it perhaps)</td>
+<td class="comment-1" rowspan="1">A = 20 -- self modified by <a href="8E42.html#36428">8E4C</a>, <a href="8E42.html#36433">8E51</a>, (<a href="8E7E.html#36484">8E84</a> resets it perhaps)</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -68,7 +68,7 @@ Used by the routines at <a href="8D8F.html">transition</a> and <a href="8E91.htm
 <td class="asm-label"></td>
 <td class="address-1"><span id="36428"></span>8E4C</td>
 <td class="instruction">LD ($8E4A),A</td>
-<td class="comment-1" rowspan="1">Self modify $8E49</td>
+<td class="comment-1" rowspan="1">Self modify <a href="8E42.html#36425">8E49</a></td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -86,13 +86,13 @@ Used by the routines at <a href="8D8F.html">transition</a> and <a href="8E91.htm
 <td class="asm-label"></td>
 <td class="address-1"><span id="36433"></span>8E51</td>
 <td class="instruction">LD ($8E4A),A</td>
-<td class="comment-1" rowspan="1">Self modify $8E49</td>
+<td class="comment-1" rowspan="1">Self modify <a href="8E42.html#36425">8E49</a></td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="36436"></span>8E54</td>
 <td class="instruction">LD A,($8E46)</td>
-<td class="comment-1" rowspan="3">increment $8E46, affects TIME UP state if disabled</td>
+<td class="comment-1" rowspan="3">Increment operand of <a href="8E42.html#36421">8E45</a>, affects TIME UP state if disabled</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -181,7 +181,7 @@ Next: <a href="8E6C.html">8E6C</a>
 </tr>
 </table>
 <footer>
-<div class="release">The incomplete Chase H.Q. disassembly 20230518</div>
+<div class="release">The incomplete Chase H.Q. disassembly 20231102</div>
 <div class="copyright">&copy; 1988 Taito Corporation &copy; 1989 Ocean Software Ltd. (Chase H.Q.) © 2023 David Thomas (this disassembly)</div>
 <div class="created">Created using <a href="https://skoolkit.ca">SkoolKit</a> 8.9.</div>
 </footer>

@@ -23,11 +23,17 @@ Next: <a href="916C.html">916C</a>
 </td>
 </tr>
 </table>
-<div class="description">9052: Routine at 9052 - gets hit on stage 3 when drawing the overhead structure graphics. sampled IX=$EAB2 DE=$6F26 HL=$9052 BC=$1420 (when in stage3!)</div>
+<div class="description">9052: Draws overhead graphics.</div>
 <table class="disassembly">
 <tr>
 <td class="routine-comment" colspan="5">
 <div class="details">
+<div class="paragraph">
+This gets used on stage 3 when drawing the overhead structure graphics.
+</div>
+<div class="paragraph">
+sampled IX=$EAB2 DE=$6F26 HL=$9052 BC=$1420 (when in stage3!)
+</div>
 </div>
 </td>
 </tr>
@@ -62,7 +68,7 @@ Next: <a href="916C.html">916C</a>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="36954"></span>905A</td>
-<td class="instruction">CALL Z,<a href="916C.html">$916C</a></td>
+<td class="instruction">CALL Z,<a href="916C.html">draw_stretchy_object_left</a></td>
 <td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
@@ -236,7 +242,7 @@ Next: <a href="916C.html">916C</a>
 <td class="asm-label"></td>
 <td class="address-1"><span id="37000"></span>9088</td>
 <td class="instruction">LD ($90F2),A</td>
-<td class="comment-1" rowspan="1">*$90F2 = A</td>
+<td class="comment-1" rowspan="1">Self modify 'SUB x' at $90F1</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -258,7 +264,7 @@ Next: <a href="916C.html">916C</a>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="37007"></span>908F</td>
-<td class="instruction">JR C,<a href="9052.html#37011">draw_overhead_0</a></td>
+<td class="instruction">JR C,<a href="9052.html#37011">do_9093</a></td>
 <td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
@@ -268,7 +274,7 @@ Next: <a href="916C.html">916C</a>
 <td class="comment-1" rowspan="1">A = $09</td>
 </tr>
 <tr>
-<td class="asm-label">draw_overhead_0</td>
+<td class="asm-label">do_9093</td>
 <td class="address-2"><span id="37011"></span>9093</td>
 <td class="instruction">LD B,A</td>
 <td class="comment-1" rowspan="1">B = A</td>
@@ -358,7 +364,7 @@ Next: <a href="916C.html">916C</a>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="37033"></span>90A9</td>
-<td class="instruction">JP M,<a href="9052.html#37060">draw_overhead_1</a></td>
+<td class="instruction">JP M,<a href="9052.html#37060">do_90c4</a></td>
 <td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
@@ -386,7 +392,7 @@ Next: <a href="916C.html">916C</a>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="37043"></span>90B3</td>
-<td class="instruction">JR C,<a href="9052.html#37060">draw_overhead_1</a></td>
+<td class="instruction">JR C,<a href="9052.html#37060">do_90c4</a></td>
 <td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
@@ -398,7 +404,7 @@ Next: <a href="916C.html">916C</a>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="37047"></span>90B7</td>
-<td class="instruction">JR C,<a href="9052.html#37060">draw_overhead_1</a></td>
+<td class="instruction">JR C,<a href="9052.html#37060">do_90c4</a></td>
 <td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
@@ -410,7 +416,7 @@ Next: <a href="916C.html">916C</a>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="37051"></span>90BB</td>
-<td class="instruction">JR C,<a href="9052.html#37060">draw_overhead_1</a></td>
+<td class="instruction">JR C,<a href="9052.html#37060">do_90c4</a></td>
 <td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
@@ -436,7 +442,7 @@ Next: <a href="916C.html">916C</a>
 <td class="comment-1" rowspan="1">D = A</td>
 </tr>
 <tr>
-<td class="asm-label">draw_overhead_1</td>
+<td class="asm-label">do_90c4</td>
 <td class="address-2"><span id="37060"></span>90C4</td>
 <td class="instruction">DEC IX</td>
 <td class="comment-1" rowspan="2">IX -= 2</td>
@@ -473,7 +479,7 @@ Next: <a href="916C.html">916C</a>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="37071"></span>90CF</td>
-<td class="instruction">JR NZ,<a href="9052.html#37092">draw_overhead_2</a></td>
+<td class="instruction">JR NZ,<a href="9052.html#37092">do_90e4</a></td>
 <td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
@@ -490,13 +496,13 @@ Next: <a href="916C.html">916C</a>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="37077"></span>90D5</td>
-<td class="instruction">JR C,<a href="9052.html#37092">draw_overhead_2</a></td>
+<td class="instruction">JR C,<a href="9052.html#37092">do_90e4</a></td>
 <td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="37079"></span>90D7</td>
-<td class="instruction">JR Z,<a href="9052.html#37092">draw_overhead_2</a></td>
+<td class="instruction">JR Z,<a href="9052.html#37092">do_90e4</a></td>
 <td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
@@ -508,7 +514,7 @@ Next: <a href="916C.html">916C</a>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="37083"></span>90DB</td>
-<td class="instruction">JR NC,<a href="9052.html#37092">draw_overhead_2</a></td>
+<td class="instruction">JR NC,<a href="9052.html#37092">do_90e4</a></td>
 <td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
@@ -534,7 +540,7 @@ Next: <a href="916C.html">916C</a>
 <td class="comment-1" rowspan="1">E = A</td>
 </tr>
 <tr>
-<td class="asm-label">draw_overhead_2</td>
+<td class="asm-label">do_90e4</td>
 <td class="address-2"><span id="37092"></span>90E4</td>
 <td class="instruction">LD C,D</td>
 <td class="comment-1" rowspan="1">C = D</td>
@@ -582,7 +588,7 @@ Next: <a href="916C.html">916C</a>
 <td class="asm-label"></td>
 <td class="address-1"><span id="37105"></span>90F1</td>
 <td class="instruction">SUB $00</td>
-<td class="comment-1" rowspan="1">A -= $00     SM?</td>
+<td class="comment-1" rowspan="1">A -= &lt;self modified&gt;  -- self modified by $9088</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -617,7 +623,7 @@ Next: <a href="916C.html">916C</a>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="37112"></span>90F8</td>
-<td class="instruction">JR NC,<a href="9052.html#37116">draw_overhead_3</a></td>
+<td class="instruction">JR NC,<a href="9052.html#37116">do_90fc</a></td>
 <td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
@@ -633,7 +639,7 @@ Next: <a href="916C.html">916C</a>
 <td class="comment-1" rowspan="1">B = A</td>
 </tr>
 <tr>
-<td class="asm-label">draw_overhead_3</td>
+<td class="asm-label">do_90fc</td>
 <td class="address-2"><span id="37116"></span>90FC</td>
 <td class="instruction">INC HL</td>
 <td class="comment-1" rowspan="1">HL++</td>
@@ -711,11 +717,11 @@ Next: <a href="916C.html">916C</a>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="37133"></span>910D</td>
-<td class="instruction">JR <a href="9052.html#37139">draw_overhead_4</a></td>
+<td class="instruction">JR <a href="9052.html#37139">do_9113</a></td>
 <td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
-<td class="asm-label">continue_910f</td>
+<td class="asm-label">do_continue</td>
 <td class="address-2"><span id="37135"></span>910F</td>
 <td class="instruction">INC DE</td>
 <td class="comment-1" rowspan="1">DE++</td>
@@ -723,7 +729,7 @@ Next: <a href="916C.html">916C</a>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="37136"></span>9110</td>
-<td class="instruction">DJNZ <a href="9052.html#37139">draw_overhead_4</a></td>
+<td class="instruction">DJNZ <a href="9052.html#37139">do_9113</a></td>
 <td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
@@ -733,7 +739,7 @@ Next: <a href="916C.html">916C</a>
 <td class="comment-1" rowspan="1">Return</td>
 </tr>
 <tr>
-<td class="asm-label">draw_overhead_4</td>
+<td class="asm-label">do_9113</td>
 <td class="address-2"><span id="37139"></span>9113</td>
 <td class="instruction">LD A,(DE)</td>
 <td class="comment-1" rowspan="1">A = *DE</td>
@@ -745,9 +751,9 @@ Next: <a href="916C.html">916C</a>
 <td class="comment-1" rowspan="1">C = L</td>
 </tr>
 <tr>
-<td class="asm-label">draw_overhead_5</td>
+<td class="asm-label">do_9115</td>
 <td class="address-2"><span id="37141"></span>9115</td>
-<td class="instruction">JR <a href="9052.html#37141">draw_overhead_5</a></td>
+<td class="instruction">JR <a href="9052.html#37141">do_9115</a></td>
 <td class="comment-1" rowspan="1">Self modified</td>
 </tr>
 <tr>
@@ -1084,7 +1090,7 @@ Move to next scanline
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="37207"></span>9157</td>
-<td class="instruction">JP NZ,<a href="9052.html#37135">continue_910f</a></td>
+<td class="instruction">JP NZ,<a href="9052.html#37135">do_continue</a></td>
 <td class="comment-1" rowspan="1">No - continue</td>
 </tr>
 <tr>
@@ -1132,7 +1138,7 @@ It rolled over
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="37218"></span>9162</td>
-<td class="instruction">JP NC,<a href="9052.html#37135">continue_910f</a></td>
+<td class="instruction">JP NC,<a href="9052.html#37135">do_continue</a></td>
 <td class="comment-1" rowspan="1">Continue if it didn't roll over</td>
 </tr>
 <tr>
@@ -1154,7 +1160,7 @@ It rolled over
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="37225"></span>9169</td>
-<td class="instruction">JP <a href="9052.html#37135">continue_910f</a></td>
+<td class="instruction">JP <a href="9052.html#37135">do_continue</a></td>
 <td class="comment-1" rowspan="1">Loop</td>
 </tr>
 </table>
@@ -1170,7 +1176,7 @@ Next: <a href="916C.html">916C</a>
 </tr>
 </table>
 <footer>
-<div class="release">The incomplete Chase H.Q. disassembly 20230518</div>
+<div class="release">The incomplete Chase H.Q. disassembly 20231102</div>
 <div class="copyright">&copy; 1988 Taito Corporation &copy; 1989 Ocean Software Ltd. (Chase H.Q.) © 2023 David Thomas (this disassembly)</div>
 <div class="created">Created using <a href="https://skoolkit.ca">SkoolKit</a> 8.9.</div>
 </footer>

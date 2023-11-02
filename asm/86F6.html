@@ -1,15 +1,15 @@
 <!DOCTYPE html>
 <html>
 <head>
-<title>Chase H.Q.: Data at 86F6</title>
+<title>Chase H.Q.: Routine at 86F6</title>
 <meta charset="utf-8" />
 <link rel="stylesheet" type="text/css" href="../skoolkit.css" />
 </head>
-<body class="Asm-b">
+<body class="Asm-c">
 <table class="header">
 <tr>
 <td class="logo"><a href="../index.html">Chase H.Q.</a></td>
-<td class="page-header">Data</td>
+<td class="page-header">Routines</td>
 </tr>
 </table>
 <table class="asm-navigation">
@@ -19,145 +19,182 @@ Prev: <a href="865A.html">865A</a>
 </td>
 <td class="up">Up: <a href="../maps/all.html#34550">Map</a></td>
 <td class="next">
-Next: <a href="873C.html">873C</a>
+Next: <a href="871A.html">871A</a>
 </td>
 </tr>
 </table>
-<div class="description">86F6: 18 byte chunks of this 36-byte table get copied to $C82D by $C808 2C = INC, 00 = NOP, ED+A0 = LDI</div>
+<div class="description">86F6: Routine at 86F6</div>
 <table class="disassembly">
 <tr>
 <td class="routine-comment" colspan="5">
 <div class="details">
+<div class="paragraph">
+18 byte chunks of this 36-byte table get copied to <a href="C598.html#51245">C82D</a> by <a href="C598.html#51208">C808</a>. $2C = INC, $00 = NOP, $ED+$A0 = LDI.
+</div>
 </div>
 </td>
 </tr>
 <tr>
 <td class="asm-label">backdrop_shift_instrs</td>
-<td class="address-1"><span id="34550"></span>86F6</td>
-<td class="instruction">DEFB $2C,$00,$2C,$00,$2C,$00,$2C,$00</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="address-2"><span id="34550"></span>86F6</td>
+<td class="instruction">INC L</td>
+<td class="comment-0" rowspan="1"></td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="34551"></span>86F7</td>
+<td class="instruction">NOP</td>
+<td class="comment-0" rowspan="1"></td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="34552"></span>86F8</td>
+<td class="instruction">INC L</td>
+<td class="comment-0" rowspan="1"></td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="34553"></span>86F9</td>
+<td class="instruction">NOP</td>
+<td class="comment-0" rowspan="1"></td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="34554"></span>86FA</td>
+<td class="instruction">INC L</td>
+<td class="comment-0" rowspan="1"></td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="34555"></span>86FB</td>
+<td class="instruction">NOP</td>
+<td class="comment-0" rowspan="1"></td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="34556"></span>86FC</td>
+<td class="instruction">INC L</td>
+<td class="comment-0" rowspan="1"></td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="34557"></span>86FD</td>
+<td class="instruction">NOP</td>
+<td class="comment-0" rowspan="1"></td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="34558"></span>86FE</td>
-<td class="instruction">DEFB $2C,$00,$2C,$00,$2C,$00,$2C,$00</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="instruction">INC L</td>
+<td class="comment-0" rowspan="1"></td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="34559"></span>86FF</td>
+<td class="instruction">NOP</td>
+<td class="comment-0" rowspan="1"></td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="34560"></span>8700</td>
+<td class="instruction">INC L</td>
+<td class="comment-0" rowspan="1"></td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="34561"></span>8701</td>
+<td class="instruction">NOP</td>
+<td class="comment-0" rowspan="1"></td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="34562"></span>8702</td>
+<td class="instruction">INC L</td>
+<td class="comment-0" rowspan="1"></td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="34563"></span>8703</td>
+<td class="instruction">NOP</td>
+<td class="comment-0" rowspan="1"></td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="34564"></span>8704</td>
+<td class="instruction">INC L</td>
+<td class="comment-0" rowspan="1"></td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="34565"></span>8705</td>
+<td class="instruction">NOP</td>
+<td class="comment-0" rowspan="1"></td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="34566"></span>8706</td>
-<td class="instruction">DEFB $2C,$00,$ED,$A0,$ED,$A0,$ED,$A0</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="instruction">INC L</td>
+<td class="comment-0" rowspan="1"></td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="34567"></span>8707</td>
+<td class="instruction">NOP</td>
+<td class="comment-0" rowspan="1"></td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="34568"></span>8708</td>
+<td class="instruction">LDI</td>
+<td class="comment-0" rowspan="1"></td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="34570"></span>870A</td>
+<td class="instruction">LDI</td>
+<td class="comment-0" rowspan="1"></td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="34572"></span>870C</td>
+<td class="instruction">LDI</td>
+<td class="comment-0" rowspan="1"></td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="34574"></span>870E</td>
-<td class="instruction">DEFB $ED,$A0,$ED,$A0,$ED,$A0,$ED,$A0</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="instruction">LDI</td>
+<td class="comment-0" rowspan="1"></td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="34576"></span>8710</td>
+<td class="instruction">LDI</td>
+<td class="comment-0" rowspan="1"></td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="34578"></span>8712</td>
+<td class="instruction">LDI</td>
+<td class="comment-0" rowspan="1"></td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="34580"></span>8714</td>
+<td class="instruction">LDI</td>
+<td class="comment-0" rowspan="1"></td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="34582"></span>8716</td>
-<td class="instruction">DEFB $ED,$A0,$ED,$A0</td>
-<td class="comment-1" rowspan="1"></td>
-</tr>
-<tr>
-<td class="routine-comment" colspan="5">
-<span id="34586"></span>
-<div class="comments">
-<div class="paragraph">
-14 bytes of setup_game data used by escape_scene. Map ptr are all a byte earlier than their actual start data.
-</div>
-</div>
-</td>
-</tr>
-<tr>
-<td class="asm-label">escape_scene_data</td>
-<td class="address-1"><span id="34586"></span>871A</td>
-<td class="instruction">DEFW $0134</td>
-<td class="comment-1" rowspan="1">road_pos</td>
+<td class="instruction">LDI</td>
+<td class="comment-0" rowspan="1"></td>
 </tr>
 <tr>
 <td class="asm-label"></td>
-<td class="address-1"><span id="34588"></span>871C</td>
-<td class="instruction">DEFW $E2A9</td>
-<td class="comment-1" rowspan="1">road_curvature_ptr</td>
-</tr>
-<tr>
-<td class="asm-label"></td>
-<td class="address-1"><span id="34590"></span>871E</td>
-<td class="instruction">DEFW $E2AE</td>
-<td class="comment-1" rowspan="1">road_height_ptr</td>
-</tr>
-<tr>
-<td class="asm-label"></td>
-<td class="address-1"><span id="34592"></span>8720</td>
-<td class="instruction">DEFW $E2B3</td>
-<td class="comment-1" rowspan="1">road_lanes_ptr</td>
-</tr>
-<tr>
-<td class="asm-label"></td>
-<td class="address-1"><span id="34594"></span>8722</td>
-<td class="instruction">DEFW $E2A9</td>
-<td class="comment-1" rowspan="1">road_rightside_ptr (note: reuse of road curvature data)</td>
-</tr>
-<tr>
-<td class="asm-label"></td>
-<td class="address-1"><span id="34596"></span>8724</td>
-<td class="instruction">DEFW $E2A9</td>
-<td class="comment-1" rowspan="1">road_leftside_ptr (note: reuse of road curvature data)</td>
-</tr>
-<tr>
-<td class="asm-label"></td>
-<td class="address-1"><span id="34598"></span>8726</td>
-<td class="instruction">DEFW $E2A3</td>
-<td class="comment-1" rowspan="1">road_hazard_ptr</td>
-</tr>
-<tr>
-<td class="routine-comment" colspan="5">
-<span id="34600"></span>
-<div class="comments">
-<div class="paragraph">
-20 bytes copied to hazards[0]
-</div>
-</div>
-</td>
-</tr>
-<tr>
-<td class="asm-label"></td>
-<td class="address-1"><span id="34600"></span>8728</td>
-<td class="instruction">DEFB $FF</td>
-<td class="comment-1" rowspan="1">Used flag</td>
-</tr>
-<tr>
-<td class="asm-label"></td>
-<td class="address-1"><span id="34601"></span>8729</td>
-<td class="instruction">DEFB $01,$00,$00,$00,$4C,$00,$00,$2C</td>
-<td class="comment-1" rowspan="1"></td>
-</tr>
-<tr>
-<td class="asm-label"></td>
-<td class="address-1"><span id="34609"></span>8731</td>
-<td class="instruction">DEFW $0000</td>
-<td class="comment-1" rowspan="1"></td>
-</tr>
-<tr>
-<td class="asm-label"></td>
-<td class="address-1"><span id="34611"></span>8733</td>
-<td class="instruction">DEFW <a href="ADA0.html#44537">$ADF9</a></td>
-<td class="comment-1" rowspan="1">Routine at $ADF9 (it's just a RET)</td>
-</tr>
-<tr>
-<td class="asm-label"></td>
-<td class="address-1"><span id="34613"></span>8735</td>
-<td class="instruction">DEFW $00FA</td>
-<td class="comment-1" rowspan="1"></td>
-</tr>
-<tr>
-<td class="asm-label"></td>
-<td class="address-1"><span id="34615"></span>8737</td>
-<td class="instruction">DEFB $00,$00,$00,$00,$00</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="address-1"><span id="34584"></span>8718</td>
+<td class="instruction">LDI</td>
+<td class="comment-0" rowspan="1"></td>
 </tr>
 </table>
 <table class="asm-navigation">
@@ -167,12 +204,12 @@ Prev: <a href="865A.html">865A</a>
 </td>
 <td class="up">Up: <a href="../maps/all.html#34550">Map</a></td>
 <td class="next">
-Next: <a href="873C.html">873C</a>
+Next: <a href="871A.html">871A</a>
 </td>
 </tr>
 </table>
 <footer>
-<div class="release">The incomplete Chase H.Q. disassembly 20230518</div>
+<div class="release">The incomplete Chase H.Q. disassembly 20231102</div>
 <div class="copyright">&copy; 1988 Taito Corporation &copy; 1989 Ocean Software Ltd. (Chase H.Q.) © 2023 David Thomas (this disassembly)</div>
 <div class="created">Created using <a href="https://skoolkit.ca">SkoolKit</a> 8.9.</div>
 </footer>

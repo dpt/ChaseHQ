@@ -37,6 +37,10 @@ Used by the routines at <a href="9965.html">drive_chatter</a> and <a href="9A55.
 <th colspan="2">Input</th>
 </tr>
 <tr>
+<td class="register">A</td>
+<td class="register-desc">flag?</td>
+</tr>
+<tr>
 <td class="register">D</td>
 <td class="register-desc">The character to plot (ASCII)</td>
 </tr>
@@ -75,7 +79,7 @@ This entry point is used by the routines at <a href="9965.html">drive_chatter</a
 <td class="asm-label">pmf_go</td>
 <td class="address-2"><span id="39668"></span>9AF4</td>
 <td class="instruction">EX AF,AF'</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="1">Preserve A</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -102,25 +106,25 @@ This entry point is used by the routines at <a href="9965.html">drive_chatter</a
 <td class="asm-label"></td>
 <td class="address-1"><span id="39677"></span>9AFD</td>
 <td class="instruction">EX AF,AF'</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="1">Restore A</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="39678"></span>9AFE</td>
 <td class="instruction">CP $FF</td>
-<td class="comment-1" rowspan="2">If not string terminator, goto pmf_regular_char</td>
+<td class="comment-1" rowspan="2">If not string terminator, goto pmf_regular_char  -- or is this a flag?</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="39680"></span>9B00</td>
-<td class="instruction">JR NZ,<a href="9AEC.html#39688">rpmf_egular_char</a></td>
+<td class="instruction">JR NZ,<a href="9AEC.html#39688">pmf_regular_char</a></td>
 </tr>
 <tr>
 <td class="routine-comment" colspan="5">
 <span id="39682"></span>
 <div class="comments">
 <div class="paragraph">
-String terminator
+String terminator?
 </div>
 </div>
 </td>
@@ -140,11 +144,11 @@ String terminator
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="39686"></span>9B06</td>
-<td class="instruction">JR <a href="9AEC.html#39696">plot_mini_font_1_0</a></td>
+<td class="instruction">JR <a href="9AEC.html#39696">pmf_9b10</a></td>
 <td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
-<td class="asm-label">rpmf_egular_char</td>
+<td class="asm-label">pmf_regular_char</td>
 <td class="address-2"><span id="39688"></span>9B08</td>
 <td class="instruction">LD E,A</td>
 <td class="comment-1" rowspan="5">A = A*5+2</td>
@@ -176,12 +180,12 @@ String terminator
 <td class="comment-1" rowspan="2">8 - $C0 / 8 ??</td>
 </tr>
 <tr>
-<td class="asm-label">plot_mini_font_1_0</td>
+<td class="asm-label">pmf_9b10</td>
 <td class="address-2"><span id="39696"></span>9B10</td>
 <td class="instruction">LD C,$08</td>
 </tr>
 <tr>
-<td class="asm-label">plot_mini_font_1_1</td>
+<td class="asm-label">pmf_9b12</td>
 <td class="address-2"><span id="39698"></span>9B12</td>
 <td class="instruction">INC E</td>
 <td class="comment-1" rowspan="4">divider / rounding?</td>
@@ -194,7 +198,7 @@ String terminator
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="39700"></span>9B14</td>
-<td class="instruction">JP NC,<a href="9AEC.html#39698">plot_mini_font_1_1</a></td>
+<td class="instruction">JP NC,<a href="9AEC.html#39698">pmf_9b12</a></td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -228,7 +232,7 @@ String terminator
 <td class="instruction">LD A,$FF</td>
 </tr>
 <tr>
-<td class="asm-label">plot_mini_font_1_2</td>
+<td class="asm-label">pmf_9b21</td>
 <td class="address-2"><span id="39713"></span>9B21</td>
 <td class="instruction">ADD A,A</td>
 <td class="comment-1" rowspan="2">General multiplier by A</td>
@@ -236,13 +240,13 @@ String terminator
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="39714"></span>9B22</td>
-<td class="instruction">DJNZ <a href="9AEC.html#39713">plot_mini_font_1_2</a></td>
+<td class="instruction">DJNZ <a href="9AEC.html#39713">pmf_9b21</a></td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="39716"></span>9B24</td>
 <td class="instruction">LD ($9B89),A</td>
-<td class="comment-1" rowspan="1">Self modify $9B88 which is a mask</td>
+<td class="comment-1" rowspan="1">Self modify <a href="9AEC.html#39816">9B88</a> which is a mask</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -442,7 +446,7 @@ Turn ASCII into glyph IDs
 <td class="instruction">LD A,$06</td>
 </tr>
 <tr>
-<td class="asm-label">plot_mini_font_1_3</td>
+<td class="asm-label">pmf_9b5f</td>
 <td class="address-2"><span id="39775"></span>9B5F</td>
 <td class="instruction">EX AF,AF'</td>
 </tr>
@@ -469,9 +473,9 @@ Turn ASCII into glyph IDs
 <td class="instruction">LD B,A</td>
 </tr>
 <tr>
-<td class="asm-label">plot_mini_font_1_4</td>
+<td class="asm-label">plot_mini_font_1_0</td>
 <td class="address-2"><span id="39782"></span>9B66</td>
-<td class="instruction">JR <a href="9AEC.html#39782">plot_mini_font_1_4</a></td>
+<td class="instruction">JR <a href="9AEC.html#39782">plot_mini_font_1_0</a></td>
 <td class="comment-1" rowspan="1">Jump table (self modified)</td>
 </tr>
 <tr>
@@ -633,7 +637,7 @@ Turn ASCII into glyph IDs
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="39829"></span>9B95</td>
-<td class="instruction">JR NZ,<a href="9AEC.html#39841">plot_mini_font_1_5</a></td>
+<td class="instruction">JR NZ,<a href="9AEC.html#39841">pmf_next_row</a></td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -653,7 +657,7 @@ Turn ASCII into glyph IDs
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="39835"></span>9B9B</td>
-<td class="instruction">JR C,<a href="9AEC.html#39841">plot_mini_font_1_5</a></td>
+<td class="instruction">JR C,<a href="9AEC.html#39841">pmf_next_row</a></td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -671,7 +675,7 @@ Turn ASCII into glyph IDs
 <td class="instruction">LD H,A</td>
 </tr>
 <tr>
-<td class="asm-label">plot_mini_font_1_5</td>
+<td class="asm-label">pmf_next_row</td>
 <td class="address-2"><span id="39841"></span>9BA1</td>
 <td class="instruction">EX AF,AF'</td>
 <td class="comment-1" rowspan="2">Decrement row counter</td>
@@ -684,7 +688,7 @@ Turn ASCII into glyph IDs
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="39843"></span>9BA3</td>
-<td class="instruction">JP NZ,<a href="9AEC.html#39775">plot_mini_font_1_3</a></td>
+<td class="instruction">JP NZ,<a href="9AEC.html#39775">pmf_9b5f</a></td>
 <td class="comment-1" rowspan="1">Loop while rows remain</td>
 </tr>
 <tr>
@@ -706,7 +710,7 @@ Next: <a href="9BA7.html">9BA7</a>
 </tr>
 </table>
 <footer>
-<div class="release">The incomplete Chase H.Q. disassembly 20230518</div>
+<div class="release">The incomplete Chase H.Q. disassembly 20231102</div>
 <div class="copyright">&copy; 1988 Taito Corporation &copy; 1989 Ocean Software Ltd. (Chase H.Q.) © 2023 David Thomas (this disassembly)</div>
 <div class="created">Created using <a href="https://skoolkit.ca">SkoolKit</a> 8.9.</div>
 </footer>

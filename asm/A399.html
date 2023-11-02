@@ -23,7 +23,7 @@ Next: <a href="A579.html">A579</a>
 </td>
 </tr>
 </table>
-<div class="description">A399: Checks for collisions.</div>
+<div class="description">A399: Checks for collisions</div>
 <table class="disassembly">
 <tr>
 <td class="routine-comment" colspan="5">
@@ -56,7 +56,7 @@ Used by the routines at <a href="8401.html">main_loop</a> and <a href="852A.html
 <td class="asm-label"></td>
 <td class="address-1"><span id="41888"></span>A3A0</td>
 <td class="instruction">LD A,($A265)</td>
-<td class="comment-1" rowspan="1">A = *$A265  -- fairly sure this is a split road flag</td>
+<td class="comment-1" rowspan="1">A = split_road  -- fairly sure this is a split road flag</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -74,7 +74,7 @@ Used by the routines at <a href="8401.html">main_loop</a> and <a href="852A.html
 <td class="asm-label"></td>
 <td class="address-1"><span id="41894"></span>A3A6</td>
 <td class="instruction">LD A,($A266)</td>
-<td class="comment-1" rowspan="1">A = *$A266  -- counts down as split approaches</td>
+<td class="comment-1" rowspan="1">A = split_road_countdown</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -138,7 +138,7 @@ Check left hand side of car.
 <td class="asm-label"></td>
 <td class="address-1"><span id="41910"></span>A3B6</td>
 <td class="instruction">PUSH HL</td>
-<td class="comment-1" rowspan="5">Jump to $A3D1 if HL &lt; $40</td>
+<td class="comment-1" rowspan="5">Jump to <a href="A399.html#41937">check_collisions_0</a> if HL &lt; $40</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -164,7 +164,7 @@ Check left hand side of car.
 <td class="asm-label"></td>
 <td class="address-1"><span id="41919"></span>A3BF</td>
 <td class="instruction">PUSH HL</td>
-<td class="comment-1" rowspan="5">Jump to $A3D5 if HL &lt; $6A</td>
+<td class="comment-1" rowspan="5">Jump to <a href="A399.html#41941">check_collisions_1</a> if HL &lt; $6A</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -225,7 +225,7 @@ Check left hand side of car.
 <td class="asm-label">check_collisions_0</td>
 <td class="address-2"><span id="41937"></span>A3D1</td>
 <td class="instruction">XOR A</td>
-<td class="comment-1" rowspan="2">*$A23D = 0</td>
+<td class="comment-1" rowspan="2">var_a23d = 0</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -276,7 +276,7 @@ Check right hand side of car.
 <td class="asm-label"></td>
 <td class="address-1"><span id="41950"></span>A3DE</td>
 <td class="instruction">PUSH HL</td>
-<td class="comment-1" rowspan="5">Jump to $A3FA if HL &gt;= $BE</td>
+<td class="comment-1" rowspan="5">Jump to <a href="A399.html#41978">check_collisions_2</a> if HL &gt;= $BE</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -302,7 +302,7 @@ Check right hand side of car.
 <td class="asm-label"></td>
 <td class="address-1"><span id="41959"></span>A3E7</td>
 <td class="instruction">PUSH HL</td>
-<td class="comment-1" rowspan="5">Jump to $A3FD if HL &gt;= $8E</td>
+<td class="comment-1" rowspan="5">Jump to <a href="A399.html#41981">cc_split_set</a> if HL &gt;= $8E</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -363,7 +363,7 @@ Check right hand side of car.
 <td class="asm-label">check_collisions_2</td>
 <td class="address-2"><span id="41978"></span>A3FA</td>
 <td class="instruction">LD ($A23C),A</td>
-<td class="comment-1" rowspan="1">*$A23C = A</td>
+<td class="comment-1" rowspan="1">var_a23c = A</td>
 </tr>
 <tr>
 <td class="asm-label">cc_split_set</td>
@@ -679,7 +679,7 @@ Check right hand side of car.
 <td class="asm-label"></td>
 <td class="address-1"><span id="42077"></span>A45D</td>
 <td class="instruction">LD C,A</td>
-<td class="comment-1" rowspan="9">HL = $5CFA[A * 7]</td>
+<td class="comment-1" rowspan="9">HL = <a href="5CF0.html#23802">addrof_graphic_defs</a>[A * 7]</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -884,7 +884,7 @@ Check right hand side of car.
 <td class="asm-label"></td>
 <td class="address-1"><span id="42128"></span>A490</td>
 <td class="instruction">LD C,A</td>
-<td class="comment-1" rowspan="9">HL = $5D00[A * 7]</td>
+<td class="comment-1" rowspan="9">HL = (*$5D00)[A * 7]</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -1058,7 +1058,7 @@ This entry point is used by the routines at <a href="A637.html">smash_handler</a
 <td class="asm-label"></td>
 <td class="address-1"><span id="42171"></span>A4BB</td>
 <td class="instruction">INC (HL)</td>
-<td class="comment-1" rowspan="2">[why inc then dec?]</td>
+<td class="comment-1" rowspan="2">Set flags</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -1069,7 +1069,7 @@ This entry point is used by the routines at <a href="A637.html">smash_handler</a
 <td class="asm-label"></td>
 <td class="address-1"><span id="42173"></span>A4BD</td>
 <td class="instruction">RET NZ</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="1">Return if already crashed?</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -1243,7 +1243,7 @@ This entry point is used by the routines at <a href="A637.html">smash_handler</a
 <td class="asm-label">check_collisions_10</td>
 <td class="address-2"><span id="42226"></span>A4F2</td>
 <td class="instruction">LD ($B32F),HL</td>
-<td class="comment-1" rowspan="1">Self modify 'LD BC' at $B32E to load HL</td>
+<td class="comment-1" rowspan="1">Self modify 'LD BC' @ <a href="B318.html#45870">B32E</a> to load HL</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -1279,7 +1279,7 @@ This entry point is used by the routines at <a href="A637.html">smash_handler</a
 <td class="asm-label"></td>
 <td class="address-1"><span id="42237"></span>A4FD</td>
 <td class="instruction">PUSH HL</td>
-<td class="comment-1" rowspan="6">Jump to $A510 if HL &lt; $6A</td>
+<td class="comment-1" rowspan="6">Jump to <a href="A399.html#42256">check_collisions_11</a> if HL &lt; $6A</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -1461,7 +1461,7 @@ This entry point is used by the routines at <a href="A637.html">smash_handler</a
 <td class="asm-label"></td>
 <td class="address-1"><span id="42297"></span>A539</td>
 <td class="instruction">LD A,($A249)</td>
-<td class="comment-1" rowspan="3">Jump to $A55C if the right fork was taken</td>
+<td class="comment-1" rowspan="3">Jump to <a href="A399.html#42332">check_collisions_12</a> if fork_taken was 1 (right fork taken)</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -1696,7 +1696,7 @@ Next: <a href="A579.html">A579</a>
 </tr>
 </table>
 <footer>
-<div class="release">The incomplete Chase H.Q. disassembly 20230518</div>
+<div class="release">The incomplete Chase H.Q. disassembly 20231102</div>
 <div class="copyright">&copy; 1988 Taito Corporation &copy; 1989 Ocean Software Ltd. (Chase H.Q.) © 2023 David Thomas (this disassembly)</div>
 <div class="created">Created using <a href="https://skoolkit.ca">SkoolKit</a> 8.9.</div>
 </footer>

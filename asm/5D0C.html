@@ -23,55 +23,58 @@ Next: <a href="5D1A.html">5D1A</a>
 </td>
 </tr>
 </table>
-<div class="description">5D0C: Table of addresses of LODs (levels of detail - a set of sprites of various sizes representing the same object).</div>
+<div class="description">5D0C: [Stage 1] Table of addresses of LODs</div>
 <table class="disassembly">
 <tr>
 <td class="routine-comment" colspan="5">
 <div class="details">
+<div class="paragraph">
+LODs = Level Of Detail - a set of sprites of various sizes representing the same object.
+</div>
 </div>
 </td>
 </tr>
 <tr>
-<td class="asm-label">lods_table</td>
+<td class="asm-label">lods_stones</td>
 <td class="address-1"><span id="23820"></span>5D0C</td>
 <td class="instruction">DEFW <a href="643E.html#27206">stones_lods</a></td>
-<td class="comment-1" rowspan="1">-&gt; stones_lods</td>
+<td class="comment-1" rowspan="1">Address of LODs for stones.</td>
 </tr>
 <tr>
-<td class="asm-label"></td>
+<td class="asm-label">lods_dust</td>
 <td class="address-1"><span id="23822"></span>5D0E</td>
 <td class="instruction">DEFW <a href="643E.html#27248">dust_lods</a></td>
-<td class="comment-1" rowspan="1">-&gt; dust_lods</td>
+<td class="comment-1" rowspan="1">Address of LODs for dust.</td>
 </tr>
 <tr>
-<td class="asm-label"></td>
+<td class="asm-label">lods_perp_car</td>
 <td class="address-1"><span id="23824"></span>5D10</td>
 <td class="instruction">DEFW <a href="643E.html#25746">car_lods</a></td>
-<td class="comment-1" rowspan="1">-&gt; car_lods (perp's car)</td>
+<td class="comment-1" rowspan="1">Address of LODs for car (perp's car).</td>
 </tr>
 <tr>
-<td class="asm-label"></td>
+<td class="asm-label">lods_vehicles</td>
 <td class="address-1"><span id="23826"></span>5D12</td>
 <td class="instruction">DEFW <a href="643E.html">lambo_lods</a></td>
-<td class="comment-1" rowspan="1">-&gt; lambo_lods</td>
+<td class="comment-1" rowspan="1">Address of LODs for lambo.</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="23828"></span>5D14</td>
 <td class="instruction">DEFW <a href="643E.html#25704">truck_lods</a></td>
-<td class="comment-1" rowspan="1">-&gt; truck_lods</td>
+<td class="comment-1" rowspan="1">Address of LODs for truck.</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="23830"></span>5D16</td>
 <td class="instruction">DEFW <a href="643E.html">lambo_lods</a></td>
-<td class="comment-1" rowspan="1">-&gt; lambo_lods</td>
+<td class="comment-1" rowspan="1">Address of LODs for lambo (again).</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="23832"></span>5D18</td>
 <td class="instruction">DEFW <a href="643E.html#25746">car_lods</a></td>
-<td class="comment-1" rowspan="1">-&gt; car_lods</td>
+<td class="comment-1" rowspan="1">Address of LODs for car (generic car).</td>
 </tr>
 </table>
 <table class="asm-navigation">
@@ -86,7 +89,7 @@ Next: <a href="5D1A.html">5D1A</a>
 </tr>
 </table>
 <footer>
-<div class="release">The incomplete Chase H.Q. disassembly 20230518</div>
+<div class="release">The incomplete Chase H.Q. disassembly 20231102</div>
 <div class="copyright">&copy; 1988 Taito Corporation &copy; 1989 Ocean Software Ltd. (Chase H.Q.) © 2023 David Thomas (this disassembly)</div>
 <div class="created">Created using <a href="https://skoolkit.ca">SkoolKit</a> 8.9.</div>
 </footer>

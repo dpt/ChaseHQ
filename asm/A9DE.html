@@ -23,7 +23,7 @@ Next: <a href="AA38.html">AA38</a>
 </td>
 </tr>
 </table>
-<div class="description">A9DE: dust/stones</div>
+<div class="description">A9DE: Dust/Stones stuff</div>
 <table class="disassembly">
 <tr>
 <td class="routine-comment" colspan="5">
@@ -38,7 +38,7 @@ Used by the routine at <a href="8F5F.html">main_loop_23</a>.
 <td class="asm-label">sub_A9DE</td>
 <td class="address-2"><span id="43486"></span>A9DE</td>
 <td class="instruction">LD A,$00</td>
-<td class="comment-1" rowspan="1">A = &lt;...&gt;  Self modified by $A97A, $A9A3</td>
+<td class="comment-1" rowspan="1">A = &lt;self modified&gt;  Self modified by <a href="A955.html#43386">A97A</a>, <a href="A97E.html#43427">A9A3</a></td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -56,7 +56,7 @@ Used by the routine at <a href="8F5F.html">main_loop_23</a>.
 <td class="asm-label"></td>
 <td class="address-1"><span id="43490"></span>A9E2</td>
 <td class="instruction">LD HL,$ED28</td>
-<td class="comment-1" rowspan="1">HL = $ED28    -- stack</td>
+<td class="comment-1" rowspan="1">Point <span class="register">HL</span> at (something above the stack)</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -101,7 +101,7 @@ Used by the routine at <a href="8F5F.html">main_loop_23</a>.
 <td class="asm-label"></td>
 <td class="address-1"><span id="43501"></span>A9ED</td>
 <td class="instruction">LD ($A9E3),HL</td>
-<td class="comment-1" rowspan="1">Self modify 'LD HL,x' at $A9E2 to load HL</td>
+<td class="comment-1" rowspan="1">Self modify 'LD HL,x' @ <a href="A9DE.html#43490">A9E2</a> to load HL</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -113,7 +113,7 @@ Used by the routine at <a href="8F5F.html">main_loop_23</a>.
 <td class="asm-label">sub_A9DE_0</td>
 <td class="address-2"><span id="43505"></span>A9F1</td>
 <td class="instruction">LD DE,($5D0C)</td>
-<td class="comment-1" rowspan="1">DE = lods_table[0] (stones_lods)</td>
+<td class="comment-1" rowspan="1">DE = *stones_lods</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -125,7 +125,7 @@ Used by the routine at <a href="8F5F.html">main_loop_23</a>.
 <td class="asm-label"></td>
 <td class="address-1"><span id="43510"></span>A9F6</td>
 <td class="instruction">JR Z,<a href="A9DE.html#43516">sub_A9DE_1</a></td>
-<td class="comment-1" rowspan="2">If non-zero DE = lods_table[1] (dust_lods)</td>
+<td class="comment-1" rowspan="2">If non-zero DE = *dust_lods</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -165,7 +165,7 @@ Used by the routine at <a href="8F5F.html">main_loop_23</a>.
 <td class="asm-label"></td>
 <td class="address-1"><span id="43521"></span>AA01</td>
 <td class="instruction">LD ($A9E3),HL</td>
-<td class="comment-1" rowspan="1">Self modify 'LD HL,x' at $A9E2 to load HL</td>
+<td class="comment-1" rowspan="1">Self modify 'LD HL,x' @ <a href="A9DE.html#43490">A9E2</a> to load HL</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -177,7 +177,7 @@ Used by the routine at <a href="8F5F.html">main_loop_23</a>.
 <td class="asm-label"></td>
 <td class="address-1"><span id="43525"></span>AA05</td>
 <td class="instruction">LD ($933E),A</td>
-<td class="comment-1" rowspan="1">Self modify 'LD D,x' at $933D to load zero</td>
+<td class="comment-1" rowspan="1">Self modify 'LD D,x' @ <a href="92E1.html#37693">draw_object_right_8</a> to load zero</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -201,7 +201,7 @@ Used by the routine at <a href="8F5F.html">main_loop_23</a>.
 <td class="asm-label"></td>
 <td class="address-1"><span id="43531"></span>AA0B</td>
 <td class="instruction">CP $0B</td>
-<td class="comment-1" rowspan="3">If A &gt;= 11 A = 10</td>
+<td class="comment-1" rowspan="3">If A &gt; 10 A = 10</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -305,24 +305,24 @@ Used by the routine at <a href="8F5F.html">main_loop_23</a>.
 <td class="asm-label"></td>
 <td class="address-1"><span id="43558"></span>AA26</td>
 <td class="instruction">JP M,<a href="A9DE.html#43571">sub_A9DE_3</a></td>
-<td class="comment-1" rowspan="1">Jump to $AA33 if negative</td>
+<td class="comment-1" rowspan="1">Jump to <a href="A9DE.html#43571">sub_A9DE_3</a> if negative</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="43561"></span>AA29</td>
 <td class="instruction">RET NZ</td>
-<td class="comment-1" rowspan="2">Return if non-zero</td>
+<td class="comment-1" rowspan="1">Return if non-zero</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="43562"></span>AA2A</td>
 <td class="instruction">CP $80</td>
+<td class="comment-1" rowspan="2">Jump to <a href="92E1.html#37635">9303</a> if A &gt;= 128</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="43564"></span>AA2C</td>
-<td class="instruction">JP NC,<a href="92E1.html#37641">$9309</a></td>
-<td class="comment-1" rowspan="1">Jump to $9303 if A &gt;= 128</td>
+<td class="instruction">JP NC,<a href="92E1.html#37641">draw_object_right_3</a></td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -333,8 +333,8 @@ Used by the routine at <a href="8F5F.html">main_loop_23</a>.
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="43568"></span>AA30</td>
-<td class="instruction">JP <a href="9278.html#37530">sub_9278_2</a></td>
-<td class="comment-1" rowspan="1">Jump to $929A</td>
+<td class="instruction">JP <a href="9278.html#37530">draw_object_left_1</a></td>
+<td class="comment-1" rowspan="1">Exit via <a href="9278.html#37530">draw_object_left_1</a></td>
 </tr>
 <tr>
 <td class="asm-label">sub_A9DE_3</td>
@@ -351,8 +351,8 @@ Used by the routine at <a href="8F5F.html">main_loop_23</a>.
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="43573"></span>AA35</td>
-<td class="instruction">JP <a href="9278.html#37530">sub_9278_2</a></td>
-<td class="comment-1" rowspan="1">Jump to $929A</td>
+<td class="instruction">JP <a href="9278.html#37530">draw_object_left_1</a></td>
+<td class="comment-1" rowspan="1">Exit via <a href="9278.html#37530">draw_object_left_1</a></td>
 </tr>
 </table>
 <table class="asm-navigation">
@@ -367,7 +367,7 @@ Next: <a href="AA38.html">AA38</a>
 </tr>
 </table>
 <footer>
-<div class="release">The incomplete Chase H.Q. disassembly 20230518</div>
+<div class="release">The incomplete Chase H.Q. disassembly 20231102</div>
 <div class="copyright">&copy; 1988 Taito Corporation &copy; 1989 Ocean Software Ltd. (Chase H.Q.) © 2023 David Thomas (this disassembly)</div>
 <div class="created">Created using <a href="https://skoolkit.ca">SkoolKit</a> 8.9.</div>
 </footer>

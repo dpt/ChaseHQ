@@ -23,7 +23,7 @@ Next: <a href="5D0C.html">5D0C</a>
 </td>
 </tr>
 </table>
-<div class="description">5CF0: Per-level data</div>
+<div class="description">5CF0: [Stage 1] Per-stage data</div>
 <table class="disassembly">
 <tr>
 <td class="routine-comment" colspan="5">
@@ -32,16 +32,16 @@ Next: <a href="5D0C.html">5D0C</a>
 </td>
 </tr>
 <tr>
-<td class="asm-label">perp_mugshot_attributes</td>
+<td class="asm-label">addrof_perp_mugshot_attributes</td>
 <td class="address-1"><span id="23792"></span>5CF0</td>
-<td class="instruction">DEFW <a href="638A.html#25642">$642A</a></td>
-<td class="comment-1" rowspan="1">Address of perp's mugshot attributes</td>
+<td class="instruction">DEFW <a href="638A.html#25642">attrs_ralph</a></td>
+<td class="comment-1" rowspan="1">Address of Ralph's mugshot attributes</td>
 </tr>
 <tr>
-<td class="asm-label">perp_mugshot_bitmap</td>
+<td class="asm-label">addrof_perp_mugshot_bitmap</td>
 <td class="address-1"><span id="23794"></span>5CF2</td>
 <td class="instruction">DEFW $0000</td>
-<td class="comment-1" rowspan="1">Address of perp's mugshot bitmap</td>
+<td class="comment-1" rowspan="1">Address of Ralph's mugshot bitmap</td>
 </tr>
 <tr>
 <td class="asm-label">ground_colour</td>
@@ -50,64 +50,70 @@ Next: <a href="5D0C.html">5D0C</a>
 <td class="comment-1" rowspan="1">Screen attributes used for the ground colour (a pair of matching bytes)</td>
 </tr>
 <tr>
-<td class="asm-label"></td>
+<td class="asm-label">tumbleweeds_etc</td>
 <td class="address-1"><span id="23798"></span>5CF6</td>
-<td class="instruction">DEFW <a href="5E40.html">$5E40</a></td>
-<td class="comment-1" rowspan="1"></td>
+<td class="instruction">DEFW <a href="5E3F.html#24128">$5E40</a></td>
+<td class="comment-1" rowspan="1">Loaded by <a href="AB9A.html#44063">AC1F</a>. Address of table of LODs for tumbleweeds, barriers.</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="23800"></span>5CF8</td>
 <td class="instruction">DEFW $5E42</td>
-<td class="comment-1" rowspan="1">Loaded by $900F. Points to an array of 7 byte entries.</td>
+<td class="comment-1" rowspan="1">Loaded by <a href="8F5F.html#36879">900F</a>. Address of an array of 7 byte entries.</td>
 </tr>
 <tr>
-<td class="asm-label"></td>
+<td class="asm-label">addrof_graphic_defs</td>
 <td class="address-1"><span id="23802"></span>5CFA</td>
-<td class="instruction">DEFW <a href="5E3F.html">$5E3F</a></td>
-<td class="comment-1" rowspan="1">Address of graphic/object definitions.</td>
+<td class="instruction">DEFW <a href="5E3F.html">graphics_defs</a></td>
+<td class="comment-1" rowspan="1">Loaded by <a href="A399.html#42085">A465</a>. Address of graphic definitions.</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="23804"></span>5CFC</td>
-<td class="instruction">DEFW <a href="5E40.html#24148">$5E54</a></td>
-<td class="comment-1" rowspan="1">-&gt; "Entry 3"</td>
+<td class="instruction">DEFW <a href="5E3F.html#24148">$5E54</a></td>
+<td class="comment-1" rowspan="1">Loaded by <a href="A399.html#42303">A53F</a>. Address of graphics entry 3.</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="23806"></span>5CFE</td>
-<td class="instruction">DEFW <a href="5E40.html#24193">$5E81</a></td>
-<td class="comment-1" rowspan="1">&lt;turn sign lods&gt; inconsistent...</td>
+<td class="instruction">DEFW <a href="5E3F.html#24193">$5E81</a></td>
+<td class="comment-1" rowspan="1">Address of entry 9, but it isn't aligned.</td>
 </tr>
 <tr>
 <td class="asm-label">data_5d00</td>
 <td class="address-1"><span id="23808"></span>5D00</td>
-<td class="instruction">DEFW <a href="5E40.html#24190">$5E7E</a></td>
-<td class="comment-1" rowspan="1">-&gt; "Entry 9 (turn sign)"</td>
+<td class="instruction">DEFW <a href="5E3F.html#24190">$5E7E</a></td>
+<td class="comment-1" rowspan="1">Loaded by <a href="A399.html#42128">A490</a>. Address of graphics entry 9.</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="23810"></span>5D02</td>
-<td class="instruction">DEFW <a href="5E40.html#24211">$5E93</a></td>
-<td class="comment-1" rowspan="1">-&gt; "Entry 12"</td>
+<td class="instruction">DEFW <a href="5E3F.html#24211">$5E93</a></td>
+<td class="comment-1" rowspan="1">Loaded by <a href="A399.html#42332">check_collisions_12</a>. Address of graphics entry 12.</td>
 </tr>
 <tr>
-<td class="asm-label"></td>
+<td class="asm-label">addrof_perp_description</td>
 <td class="address-1"><span id="23812"></span>5D04</td>
-<td class="instruction">DEFW <a href="5D39.html">$5D39</a></td>
-<td class="comment-1" rowspan="1">-&gt; Nancy's report</td>
+<td class="instruction">DEFW <a href="5D39.html">perp_description</a></td>
+<td class="comment-1" rowspan="1">Address of Nancy's perp description.</td>
 </tr>
 <tr>
-<td class="asm-label"></td>
+<td class="asm-label">addrof_arrest_messages</td>
 <td class="address-1"><span id="23814"></span>5D06</td>
-<td class="instruction">DEFW <a href="5DED.html">$5DED</a></td>
-<td class="comment-1" rowspan="1">-&gt; Arrest messages</td>
+<td class="instruction">DEFW <a href="5DED.html">arrest_messages</a></td>
+<td class="comment-1" rowspan="1">Address of arrest messages.</td>
 </tr>
 <tr>
-<td class="asm-label"></td>
+<td class="asm-label">addrof_helicopter_stuff_1</td>
 <td class="address-1"><span id="23816"></span>5D08</td>
-<td class="instruction">DEFB $00,$00,$0C,$00</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="instruction">DEFW $0000</td>
+<td class="comment-1" rowspan="1">Loaded by <a href="AA38.html#43625">AA69</a>. Helicopter related.</td>
+</tr>
+<tr>
+<td class="asm-label">addrof_helicopter_stuff_2</td>
+<td class="address-1"><span id="23818"></span>5D0A</td>
+<td class="instruction">DEFW $000C</td>
+<td class="comment-1" rowspan="1">Loaded by <a href="AA38.html#43630">AA6E</a>. Helicopter related.</td>
 </tr>
 </table>
 <table class="asm-navigation">
@@ -122,7 +128,7 @@ Next: <a href="5D0C.html">5D0C</a>
 </tr>
 </table>
 <footer>
-<div class="release">The incomplete Chase H.Q. disassembly 20230518</div>
+<div class="release">The incomplete Chase H.Q. disassembly 20231102</div>
 <div class="copyright">&copy; 1988 Taito Corporation &copy; 1989 Ocean Software Ltd. (Chase H.Q.) © 2023 David Thomas (this disassembly)</div>
 <div class="created">Created using <a href="https://skoolkit.ca">SkoolKit</a> 8.9.</div>
 </footer>

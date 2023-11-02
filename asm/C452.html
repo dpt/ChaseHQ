@@ -49,25 +49,25 @@ Used by the routines at <a href="8401.html">main_loop</a>, <a href="852A.html">c
 <td class="asm-label"></td>
 <td class="address-1"><span id="50263"></span>C457</td>
 <td class="instruction">LD ($A248),A</td>
-<td class="comment-1" rowspan="1">$A248 = 0</td>
+<td class="comment-1" rowspan="1"><a href="A139.html#41544">var_a248</a> = 0</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="50266"></span>C45A</td>
 <td class="instruction">LD ($C161),A</td>
-<td class="comment-1" rowspan="1">Self modify 'LD A,x' at $C160 to be zero (tunnel drawing code)</td>
+<td class="comment-1" rowspan="1">Self modify 'LD A,x' @ <a href="C15B.html#49504">C160</a> to be zero (tunnel drawing code)</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="50269"></span>C45D</td>
 <td class="instruction">LD ($C890),A</td>
-<td class="comment-1" rowspan="1">Self modify 'LD A,x' at $C88F to be zero</td>
+<td class="comment-1" rowspan="1">Self modify 'LD A,x' @ <a href="C598.html#51343">C88F</a> to be zero</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="50272"></span>C460</td>
 <td class="instruction">LD A,$03</td>
-<td class="comment-1" rowspan="2">Self modify 'LD A,x' at $C6D8 to be 3</td>
+<td class="comment-1" rowspan="2">Self modify 'LD A,x' @ <a href="C598.html#50904">C6D8</a> to be 3</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -187,7 +187,7 @@ Used by the routines at <a href="8401.html">main_loop</a>, <a href="852A.html">c
 <td class="asm-label">j_c48f</td>
 <td class="address-2"><span id="50319"></span>C48F</td>
 <td class="instruction">LD ($C6D4),A</td>
-<td class="comment-1" rowspan="1">Self modify 'XOR x' at $C6D3 to be zero [OR $D0 -- check other code again]</td>
+<td class="comment-1" rowspan="1">Self modify 'XOR x' @ <a href="C598.html#50899">C6D3</a> to be zero [OR $D0 -- check other code again]</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -199,7 +199,7 @@ Used by the routines at <a href="8401.html">main_loop</a>, <a href="852A.html">c
 <td class="asm-label"></td>
 <td class="address-1"><span id="50323"></span>C493</td>
 <td class="instruction">LD ($C678),A</td>
-<td class="comment-1" rowspan="1">Self modify 'ADD A,x' at $C677</td>
+<td class="comment-1" rowspan="1">Self modify 'ADD A,x' @ <a href="C598.html#50807">C677</a></td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -211,7 +211,7 @@ Used by the routines at <a href="8401.html">main_loop</a>, <a href="852A.html">c
 <td class="asm-label"></td>
 <td class="address-1"><span id="50327"></span>C497</td>
 <td class="instruction">LD ($C652),A</td>
-<td class="comment-1" rowspan="1">Self modify 'ADD A,x' at $C651 to be $30</td>
+<td class="comment-1" rowspan="1">Self modify 'ADD A,x' @ <a href="C598.html#50769">C651</a> to be $30</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -223,7 +223,7 @@ Used by the routines at <a href="8401.html">main_loop</a>, <a href="852A.html">c
 <td class="asm-label"></td>
 <td class="address-1"><span id="50331"></span>C49B</td>
 <td class="instruction">LD ($C699),A</td>
-<td class="comment-1" rowspan="1">Self modify 'ADD A,x' at $C698 to be $31</td>
+<td class="comment-1" rowspan="1">Self modify 'ADD A,x' @ <a href="C598.html#50840">C698</a> to be $31</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -235,7 +235,7 @@ Used by the routines at <a href="8401.html">main_loop</a>, <a href="852A.html">c
 <td class="asm-label"></td>
 <td class="address-1"><span id="50337"></span>C4A1</td>
 <td class="instruction">LD ($C4B3),HL</td>
-<td class="comment-1" rowspan="1">Self modify 'JP Z,x' at $C4B2 to be $C534</td>
+<td class="comment-1" rowspan="1">Self modify 'JP Z,x' @ <a href="C452.html#50354">C4B2</a> to be <a href="C452.html#50484">main_loop_13_9</a></td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -259,7 +259,7 @@ Used by the routines at <a href="8401.html">main_loop</a>, <a href="852A.html">c
 <td class="asm-label"></td>
 <td class="address-1"><span id="50346"></span>C4AA</td>
 <td class="instruction">LD ($C6BD),A</td>
-<td class="comment-1" rowspan="1">Self modify 'LD A,x' at $C6BC to be zero?</td>
+<td class="comment-1" rowspan="1">Self modify 'LD A,x' @ <a href="C598.html#50876">C6BC</a> to be zero?</td>
 </tr>
 <tr>
 <td class="routine-comment" colspan="5">
@@ -310,13 +310,13 @@ This entry point is used by the routine at <a href="C598.html">C598</a>.
 <td class="asm-label"></td>
 <td class="address-1"><span id="50363"></span>C4BB</td>
 <td class="instruction">LD ($C643),A</td>
-<td class="comment-1" rowspan="1">Self modify 'LD H,x' at $C642</td>
+<td class="comment-1" rowspan="1">Self modify 'LD H,x' @ <a href="C598.html#50754">C642</a></td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="50366"></span>C4BE</td>
 <td class="instruction">LD ($C5B4),A</td>
-<td class="comment-1" rowspan="1">Self modify 'LD H,x' at $C5B3</td>
+<td class="comment-1" rowspan="1">Self modify 'LD H,x' @ <a href="C598.html#50611">C5B3</a></td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -382,13 +382,13 @@ This entry point is used by the routine at <a href="C598.html">C598</a>.
 <td class="asm-label">main_loop_13_2</td>
 <td class="address-2"><span id="50389"></span>C4D5</td>
 <td class="instruction">LD ($C5DA),A</td>
-<td class="comment-1" rowspan="1">Self modify 'LD H,x' at $C5D9</td>
+<td class="comment-1" rowspan="1">Self modify 'LD H,x' @ <a href="C598.html#50649">C5D9</a></td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="50392"></span>C4D8</td>
 <td class="instruction">LD ($C68B),A</td>
-<td class="comment-1" rowspan="1">Self modify 'LD H,x' at $C68A</td>
+<td class="comment-1" rowspan="1">Self modify 'LD H,x' @ <a href="C598.html#50826">C68A</a></td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -400,7 +400,7 @@ This entry point is used by the routine at <a href="C598.html">C598</a>.
 <td class="asm-label"></td>
 <td class="address-1"><span id="50396"></span>C4DC</td>
 <td class="instruction">LD ($C5AD),A</td>
-<td class="comment-1" rowspan="1">Self modify 'LD B,x' at $C5AC</td>
+<td class="comment-1" rowspan="1">Self modify 'LD B,x' @ <a href="C598.html#50604">C5AC</a></td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -460,7 +460,7 @@ This entry point is used by the routine at <a href="C598.html">C598</a>.
 <td class="asm-label"></td>
 <td class="address-1"><span id="50418"></span>C4F2</td>
 <td class="instruction">LD ($C15E),A</td>
-<td class="comment-1" rowspan="1">Self modify 'CP x' at $C15D</td>
+<td class="comment-1" rowspan="1">Self modify 'CP x' @ <a href="C15B.html#49501">C15D</a></td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -508,7 +508,7 @@ This entry point is used by the routine at <a href="C598.html">C598</a>.
 <td class="asm-label">main_loop_13_5</td>
 <td class="address-2"><span id="50431"></span>C4FF</td>
 <td class="instruction">LD ($C161),A</td>
-<td class="comment-1" rowspan="1">Self modify 'LD A,x' at $C160</td>
+<td class="comment-1" rowspan="1">Self modify 'LD A,x' @ <a href="C15B.html#49504">C160</a></td>
 </tr>
 <tr>
 <td class="asm-label">main_loop_13_6</td>
@@ -520,7 +520,7 @@ This entry point is used by the routine at <a href="C598.html">C598</a>.
 <td class="asm-label"></td>
 <td class="address-1"><span id="50435"></span>C503</td>
 <td class="instruction">LD ($C890),A</td>
-<td class="comment-1" rowspan="1">Self modify 'LD A,x' at $C88F</td>
+<td class="comment-1" rowspan="1">Self modify 'LD A,x' @ <a href="C598.html#51343">C88F</a></td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -532,13 +532,13 @@ This entry point is used by the routine at <a href="C598.html">C598</a>.
 <td class="asm-label"></td>
 <td class="address-1"><span id="50440"></span>C508</td>
 <td class="instruction">LD ($C5DA),A</td>
-<td class="comment-1" rowspan="1">Self modify 'LD H,x' at $C5D9</td>
+<td class="comment-1" rowspan="1">Self modify 'LD H,x' @ <a href="C598.html#50649">C5D9</a></td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="50443"></span>C50B</td>
 <td class="instruction">LD ($C68B),A</td>
-<td class="comment-1" rowspan="1">Self modify 'LD H,x' at $C68A</td>
+<td class="comment-1" rowspan="1">Self modify 'LD H,x' @ <a href="C598.html#50826">C68A</a></td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -550,7 +550,7 @@ This entry point is used by the routine at <a href="C598.html">C598</a>.
 <td class="asm-label"></td>
 <td class="address-1"><span id="50448"></span>C510</td>
 <td class="instruction">LD ($C5AD),A</td>
-<td class="comment-1" rowspan="1">Self modify 'LD B,x' at $C5AC</td>
+<td class="comment-1" rowspan="1">Self modify 'LD B,x' @ <a href="C598.html#50604">C5AC</a></td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -622,7 +622,7 @@ This entry point is used by the routine at <a href="C598.html">C598</a>.
 <td class="asm-label">main_loop_13_8</td>
 <td class="address-2"><span id="50470"></span>C526</td>
 <td class="instruction">LD ($A248),A</td>
-<td class="comment-1" rowspan="1">byte after lanes counter byte</td>
+<td class="comment-1" rowspan="1"><a href="A139.html#41544">var_a248</a> = A</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -634,7 +634,7 @@ This entry point is used by the routine at <a href="C598.html">C598</a>.
 <td class="asm-label"></td>
 <td class="address-1"><span id="50475"></span>C52B</td>
 <td class="instruction">LD ($C5AD),A</td>
-<td class="comment-1" rowspan="1">Self modify 'LD B,x' at $C5AC</td>
+<td class="comment-1" rowspan="1">Self modify 'LD B,x' @ <a href="C598.html#50604">C5AC</a></td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -664,13 +664,13 @@ This entry point is used by the routine at <a href="C598.html">C598</a>.
 <td class="asm-label"></td>
 <td class="address-1"><span id="50487"></span>C537</td>
 <td class="instruction">LD ($C643),A</td>
-<td class="comment-1" rowspan="1">Self modify 'LD H,x' at $C642</td>
+<td class="comment-1" rowspan="1">Self modify 'LD H,x' @ <a href="C598.html#50754">C642</a></td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="50490"></span>C53A</td>
 <td class="instruction">LD ($C5B4),A</td>
-<td class="comment-1" rowspan="1">Self modify 'LD H,x' at $C5B3</td>
+<td class="comment-1" rowspan="1">Self modify 'LD H,x' @ <a href="C598.html#50611">C5B3</a></td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -682,13 +682,13 @@ This entry point is used by the routine at <a href="C598.html">C598</a>.
 <td class="asm-label"></td>
 <td class="address-1"><span id="50495"></span>C53F</td>
 <td class="instruction">LD ($C68B),A</td>
-<td class="comment-1" rowspan="1">Self modify 'LD H,x' at $C68A</td>
+<td class="comment-1" rowspan="1">Self modify 'LD H,x' @ <a href="C598.html#50826">C68A</a></td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="50498"></span>C542</td>
 <td class="instruction">LD ($C5DA),A</td>
-<td class="comment-1" rowspan="1">Self modify 'LD H,x' at $C5D9</td>
+<td class="comment-1" rowspan="1">Self modify 'LD H,x' @ <a href="C598.html#50649">C5D9</a></td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -700,7 +700,7 @@ This entry point is used by the routine at <a href="C598.html">C598</a>.
 <td class="asm-label"></td>
 <td class="address-1"><span id="50503"></span>C547</td>
 <td class="instruction">LD ($C5AD),A</td>
-<td class="comment-1" rowspan="1">Self modify 'LD B,x' at $C5AC</td>
+<td class="comment-1" rowspan="1">Self modify 'LD B,x' @ <a href="C598.html#50604">C5AC</a></td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -722,7 +722,7 @@ This entry point is used by the routine at <a href="C2E7.html">C2E7</a>.
 <td class="asm-label">main_loop_13_10</td>
 <td class="address-2"><span id="50509"></span>C54D</td>
 <td class="instruction">LD ($C4B3),HL</td>
-<td class="comment-1" rowspan="1">Self modify 'JP Z,x' at $C4B2</td>
+<td class="comment-1" rowspan="1">Self modify 'JP Z,x' @ <a href="C452.html#50354">C4B2</a></td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -758,7 +758,7 @@ This entry point is used by the routine at <a href="C2E7.html">C2E7</a>.
 <td class="asm-label"></td>
 <td class="address-1"><span id="50519"></span>C557</td>
 <td class="instruction">LD HL,$C55F</td>
-<td class="comment-1" rowspan="2">Self modify 'JP NZ,x' at $C6AD to be $C55F</td>
+<td class="comment-1" rowspan="2">Self modify 'JP NZ,x' @ <a href="C598.html#50861">C6AD</a> to be <a href="C452.html#50527">C55F</a></td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -815,7 +815,7 @@ This entry point is used by the routine at <a href="C58A.html">C58A</a>.
 <td class="asm-label">main_loop_13_12</td>
 <td class="address-2"><span id="50533"></span>C565</td>
 <td class="instruction">LD ($C56D),DE</td>
-<td class="comment-1" rowspan="1">Self modify 'LD DE,x' at $C56C (below)</td>
+<td class="comment-1" rowspan="1">Self modify 'LD DE,x' @ <a href="C452.html#50540">C56C</a> (below)</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -904,7 +904,7 @@ Next: <a href="C57C.html">C57C</a>
 </tr>
 </table>
 <footer>
-<div class="release">The incomplete Chase H.Q. disassembly 20230518</div>
+<div class="release">The incomplete Chase H.Q. disassembly 20231102</div>
 <div class="copyright">&copy; 1988 Taito Corporation &copy; 1989 Ocean Software Ltd. (Chase H.Q.) © 2023 David Thomas (this disassembly)</div>
 <div class="created">Created using <a href="https://skoolkit.ca">SkoolKit</a> 8.9.</div>
 </footer>

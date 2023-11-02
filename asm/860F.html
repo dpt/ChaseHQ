@@ -23,7 +23,7 @@ Next: <a href="865A.html">865A</a>
 </td>
 </tr>
 </table>
-<div class="description">860F: Animate the signal meters.</div>
+<div class="description">860F: Animate the signal meters</div>
 <table class="disassembly">
 <tr>
 <td class="routine-comment" colspan="5">
@@ -117,7 +117,7 @@ Use sign of the random value to enlarge or reduce the apparent meter level.
 <td class="asm-label">animate_meters_1</td>
 <td class="address-2"><span id="34339"></span>8623</td>
 <td class="instruction">LD ($8614),A</td>
-<td class="comment-1" rowspan="1">Self modify counter in $8613</td>
+<td class="comment-1" rowspan="1">Self modify counter in <a href="860F.html#34323">8613</a></td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -214,7 +214,7 @@ Use sign of the random value to enlarge or reduce the apparent meter level.
 <td class="asm-label">animate_meters_3</td>
 <td class="address-2"><span id="34368"></span>8640</td>
 <td class="instruction">LD ($8631),A</td>
-<td class="comment-1" rowspan="1">Self modify counter in $8630</td>
+<td class="comment-1" rowspan="1">Self modify counter in <a href="860F.html#34352">8630</a></td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -265,7 +265,7 @@ The signal meter bar is seven segments wide. Fill the left hand portion with our
 <td class="asm-label"></td>
 <td class="address-1"><span id="34381"></span>864D</td>
 <td class="instruction">DJNZ <a href="860F.html#34378">animate_meters_4</a></td>
-<td class="comment-1" rowspan="1">Loop while <span class="register">B</span></td>
+<td class="comment-1" rowspan="1">Loop while <span class="register">B</span> &gt; 0</td>
 </tr>
 <tr>
 <td class="asm-label">am_set_right_attrs</td>
@@ -305,7 +305,7 @@ The signal meter bar is seven segments wide. Fill the left hand portion with our
 <td class="asm-label"></td>
 <td class="address-1"><span id="34391"></span>8657</td>
 <td class="instruction">DJNZ <a href="860F.html#34388">animate_meters_5</a></td>
-<td class="comment-1" rowspan="1">Loop while <span class="register">B</span></td>
+<td class="comment-1" rowspan="1">Loop while <span class="register">B</span> &gt; 0</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -326,7 +326,7 @@ Next: <a href="865A.html">865A</a>
 </tr>
 </table>
 <footer>
-<div class="release">The incomplete Chase H.Q. disassembly 20230518</div>
+<div class="release">The incomplete Chase H.Q. disassembly 20231102</div>
 <div class="copyright">&copy; 1988 Taito Corporation &copy; 1989 Ocean Software Ltd. (Chase H.Q.) © 2023 David Thomas (this disassembly)</div>
 <div class="created">Created using <a href="https://skoolkit.ca">SkoolKit</a> 8.9.</div>
 </footer>

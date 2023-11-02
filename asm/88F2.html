@@ -47,7 +47,7 @@ Used by the routines at <a href="8401.html">main_loop</a>, <a href="8903.html">d
 <td class="asm-label">start_sfx</td>
 <td class="address-2"><span id="35058"></span>88F2</td>
 <td class="instruction">LD A,($A238)</td>
-<td class="comment-1" rowspan="3">If $A238 is zero then goto sfx_related_assign</td>
+<td class="comment-1" rowspan="3">If <a href="A139.html#41528">sfx_1</a> is zero then goto sfx_related_assign</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -63,7 +63,7 @@ Used by the routines at <a href="8401.html">main_loop</a>, <a href="8903.html">d
 <td class="asm-label"></td>
 <td class="address-1"><span id="35064"></span>88F8</td>
 <td class="instruction">CP C</td>
-<td class="comment-1" rowspan="2">Return if $A238 &lt; C</td>
+<td class="comment-1" rowspan="2">Return if <a href="A139.html#41528">sfx_1</a> &lt; C</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -74,7 +74,7 @@ Used by the routines at <a href="8401.html">main_loop</a>, <a href="8903.html">d
 <td class="asm-label">sfx_related_assign</td>
 <td class="address-2"><span id="35066"></span>88FA</td>
 <td class="instruction">LD A,B</td>
-<td class="comment-1" rowspan="4">wordat($A237) = BC</td>
+<td class="comment-1" rowspan="4">wordat(sfx_0) = BC</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -110,7 +110,7 @@ Next: <a href="8903.html">8903</a>
 </tr>
 </table>
 <footer>
-<div class="release">The incomplete Chase H.Q. disassembly 20230518</div>
+<div class="release">The incomplete Chase H.Q. disassembly 20231102</div>
 <div class="copyright">&copy; 1988 Taito Corporation &copy; 1989 Ocean Software Ltd. (Chase H.Q.) © 2023 David Thomas (this disassembly)</div>
 <div class="created">Created using <a href="https://skoolkit.ca">SkoolKit</a> 8.9.</div>
 </footer>

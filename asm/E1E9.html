@@ -23,7 +23,7 @@ Next: <a href="E2A4.html">E2A4</a>
 </td>
 </tr>
 </table>
-<div class="description">E1E9: Ref'd by graphic entry 1 and 10</div>
+<div class="description">E1E9: Referenced by graphic entry 1 and 10</div>
 <table class="disassembly">
 <tr>
 <td class="routine-comment" colspan="5">
@@ -32,124 +32,428 @@ Next: <a href="E2A4.html">E2A4</a>
 </td>
 </tr>
 <tr>
+<td class="asm-label">tunnellight</td>
 <td class="address-1"><span id="57833"></span>E1E9</td>
-<td class="instruction">DEFB $FF,$E1,$1C,$00,$14,$07,$10,$07</td>
-<td class="comment-0" rowspan="1"></td>
+<td class="instruction">DEFW <a href="E1E9.html#57855">tunnellight_lods</a></td>
+<td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="57835"></span>E1EB</td>
+<td class="instruction">DEFB $1C,$00</td>
+<td class="comment-1" rowspan="1"></td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="57837"></span>E1ED</td>
+<td class="instruction">DEFB $14,$07</td>
+<td class="comment-1" rowspan="1"></td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="57839"></span>E1EF</td>
+<td class="instruction">DEFB $10,$07</td>
+<td class="comment-1" rowspan="1"></td>
+</tr>
+<tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="57841"></span>E1F1</td>
-<td class="instruction">DEFB $10,$0E,$0C,$0E,$0C,$15,$0C,$15</td>
-<td class="comment-0" rowspan="1"></td>
+<td class="instruction">DEFB $10,$0E</td>
+<td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="57843"></span>E1F3</td>
+<td class="instruction">DEFB $0C,$0E</td>
+<td class="comment-1" rowspan="1"></td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="57845"></span>E1F5</td>
+<td class="instruction">DEFB $0C,$15</td>
+<td class="comment-1" rowspan="1"></td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="57847"></span>E1F7</td>
+<td class="instruction">DEFB $0C,$15</td>
+<td class="comment-1" rowspan="1"></td>
+</tr>
+<tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="57849"></span>E1F9</td>
-<td class="instruction">DEFB $08,$1C,$08,$1C,$08,$23,$02,$00</td>
-<td class="comment-0" rowspan="1"></td>
+<td class="instruction">DEFB $08,$1C</td>
+<td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="57851"></span>E1FB</td>
+<td class="instruction">DEFB $08,$1C</td>
+<td class="comment-1" rowspan="1"></td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="57853"></span>E1FD</td>
+<td class="instruction">DEFB $08,$23</td>
+<td class="comment-1" rowspan="1"></td>
+</tr>
+<tr>
+<td class="asm-label">tunnellight_lods</td>
+<td class="address-1"><span id="57855"></span>E1FF</td>
+<td class="instruction">DEFB $02</td>
+<td class="comment-1" rowspan="1">Width (bytes)</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="57856"></span>E200</td>
+<td class="instruction">DEFB $00</td>
+<td class="comment-1" rowspan="1">Flags</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="57857"></span>E201</td>
-<td class="instruction">DEFB $10,$29,$E2,$29,$E2,$02,$00,$0C</td>
-<td class="comment-0" rowspan="1"></td>
+<td class="instruction">DEFB $10</td>
+<td class="comment-1" rowspan="1">Height (pixels)</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="57858"></span>E202</td>
+<td class="instruction">DEFW <a href="E1E9.html#57897">bitmap_tunnellight_1</a></td>
+<td class="comment-1" rowspan="1">Bitmap</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="57860"></span>E204</td>
+<td class="instruction">DEFW <a href="E1E9.html#57897">bitmap_tunnellight_1</a></td>
+<td class="comment-1" rowspan="1">Pre-shifted bitmap</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="57862"></span>E206</td>
+<td class="instruction">DEFB $02</td>
+<td class="comment-1" rowspan="1">Width (bytes)</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="57863"></span>E207</td>
+<td class="instruction">DEFB $00</td>
+<td class="comment-1" rowspan="1">Flags</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="57864"></span>E208</td>
+<td class="instruction">DEFB $0C</td>
+<td class="comment-1" rowspan="1">Height (pixels)</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="57865"></span>E209</td>
-<td class="instruction">DEFB $49,$E2,$49,$E2,$01,$00,$08,$61</td>
-<td class="comment-0" rowspan="1"></td>
+<td class="instruction">DEFW <a href="E1E9.html#57929">bitmap_tunnellight_2</a></td>
+<td class="comment-1" rowspan="1">Bitmap</td>
 </tr>
 <tr>
-<td class="address-1"><span id="57873"></span>E211</td>
-<td class="instruction">DEFB $E2,$61,$E2,$01,$00,$06,$69,$E2</td>
-<td class="comment-0" rowspan="1"></td>
+<td class="asm-label"></td>
+<td class="address-1"><span id="57867"></span>E20B</td>
+<td class="instruction">DEFW <a href="E1E9.html#57929">bitmap_tunnellight_2</a></td>
+<td class="comment-1" rowspan="1">Pre-shifted bitmap</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="57869"></span>E20D</td>
+<td class="instruction">DEFB $01</td>
+<td class="comment-1" rowspan="1">Width (bytes)</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="57870"></span>E20E</td>
+<td class="instruction">DEFB $00</td>
+<td class="comment-1" rowspan="1">Flags</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="57871"></span>E20F</td>
+<td class="instruction">DEFB $08</td>
+<td class="comment-1" rowspan="1">Height (pixels)</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="57872"></span>E210</td>
+<td class="instruction">DEFW <a href="E1E9.html#57953">bitmap_tunnellight_3</a></td>
+<td class="comment-1" rowspan="1">Bitmap</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="57874"></span>E212</td>
+<td class="instruction">DEFW <a href="E1E9.html#57953">bitmap_tunnellight_3</a></td>
+<td class="comment-1" rowspan="1">Pre-shifted bitmap</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="57876"></span>E214</td>
+<td class="instruction">DEFB $01</td>
+<td class="comment-1" rowspan="1">Width (bytes)</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="57877"></span>E215</td>
+<td class="instruction">DEFB $00</td>
+<td class="comment-1" rowspan="1">Flags</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="57878"></span>E216</td>
+<td class="instruction">DEFB $06</td>
+<td class="comment-1" rowspan="1">Height (pixels)</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="57879"></span>E217</td>
+<td class="instruction">DEFW <a href="E1E9.html#57961">bitmap_tunnellight_4</a></td>
+<td class="comment-1" rowspan="1">Bitmap</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="57881"></span>E219</td>
-<td class="instruction">DEFB $69,$E2,$01,$00,$05,$6F,$E2,$6F</td>
-<td class="comment-0" rowspan="1"></td>
+<td class="instruction">DEFW <a href="E1E9.html#57961">bitmap_tunnellight_4</a></td>
+<td class="comment-1" rowspan="1">Pre-shifted bitmap</td>
 </tr>
 <tr>
-<td class="address-1"><span id="57889"></span>E221</td>
-<td class="instruction">DEFB $E2,$02,$01,$06,$74,$E2,$8C,$E2</td>
-<td class="comment-0" rowspan="1"></td>
+<td class="asm-label"></td>
+<td class="address-1"><span id="57883"></span>E21B</td>
+<td class="instruction">DEFB $01</td>
+<td class="comment-1" rowspan="1">Width (bytes)</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="57884"></span>E21C</td>
+<td class="instruction">DEFB $00</td>
+<td class="comment-1" rowspan="1">Flags</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="57885"></span>E21D</td>
+<td class="instruction">DEFB $05</td>
+<td class="comment-1" rowspan="1">Height (pixels)</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="57886"></span>E21E</td>
+<td class="instruction">DEFW <a href="E1E9.html#57967">bitmap_tunnellight_5</a></td>
+<td class="comment-1" rowspan="1">Bitmap</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="57888"></span>E220</td>
+<td class="instruction">DEFW <a href="E1E9.html#57967">bitmap_tunnellight_5</a></td>
+<td class="comment-1" rowspan="1">Pre-shifted bitmap</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="57890"></span>E222</td>
+<td class="instruction">DEFB $02</td>
+<td class="comment-1" rowspan="1">Width (bytes)</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="57891"></span>E223</td>
+<td class="instruction">DEFB $01</td>
+<td class="comment-1" rowspan="1">Flags</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="57892"></span>E224</td>
+<td class="instruction">DEFB $06</td>
+<td class="comment-1" rowspan="1">Height (pixels)</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="57893"></span>E225</td>
+<td class="instruction">DEFW <a href="E1E9.html#57972">tunnellight_6</a></td>
+<td class="comment-1" rowspan="1">Bitmap</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="57895"></span>E227</td>
+<td class="instruction">DEFW <a href="E1E9.html#57996">tunnellight_6s</a></td>
+<td class="comment-1" rowspan="1">Pre-shifted bitmap</td>
+</tr>
+<tr>
+<td class="routine-comment" colspan="5">
+<span id="57897"></span>
+<div class="comments">
+<div class="paragraph">
+Tunnel light (16x16)
+</div>
+<div class="paragraph">
+<img alt="graphic-e229" src="../images/scr/graphic-e229.png" />
+</div>
+</div>
+</td>
+</tr>
+<tr>
+<td class="asm-label">bitmap_tunnellight_1</td>
 <td class="address-1"><span id="57897"></span>E229</td>
 <td class="instruction">DEFB $FF,$7F,$DE,$7F,$EA,$5F,$E4,$39</td>
-<td class="comment-0" rowspan="1"></td>
+<td class="comment-1" rowspan="4">Bitmap data</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="57905"></span>E231</td>
 <td class="instruction">DEFB $F0,$53,$A8,$27,$D0,$0B,$00,$07</td>
-<td class="comment-0" rowspan="1"></td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="57913"></span>E239</td>
 <td class="instruction">DEFB $C0,$00,$A0,$0B,$D0,$17,$A0,$0B</td>
-<td class="comment-0" rowspan="1"></td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="57921"></span>E241</td>
 <td class="instruction">DEFB $C4,$27,$9A,$53,$FE,$FB,$FE,$FF</td>
-<td class="comment-0" rowspan="1"></td>
 </tr>
 <tr>
+<td class="routine-comment" colspan="5">
+<span id="57929"></span>
+<div class="comments">
+<div class="paragraph">
+Tunnel light (16x12)
+</div>
+<div class="paragraph">
+<img alt="graphic-e249" src="../images/scr/graphic-e249.png" />
+</div>
+</div>
+</td>
+</tr>
+<tr>
+<td class="asm-label">bitmap_tunnellight_2</td>
 <td class="address-1"><span id="57929"></span>E249</td>
 <td class="instruction">DEFB $FB,$FF,$BB,$BF,$D1,$7F,$E0,$5F</td>
-<td class="comment-0" rowspan="1"></td>
+<td class="comment-1" rowspan="3">Bitmap data</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="57937"></span>E251</td>
 <td class="instruction">DEFB $80,$3F,$C0,$0F,$00,$3F,$C0,$1F</td>
-<td class="comment-0" rowspan="1"></td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="57945"></span>E259</td>
 <td class="instruction">DEFB $C0,$3F,$B0,$DF,$EB,$7F,$FB,$FF</td>
-<td class="comment-0" rowspan="1"></td>
 </tr>
 <tr>
+<td class="routine-comment" colspan="5">
+<span id="57953"></span>
+<div class="comments">
+<div class="paragraph">
+<img alt="graphic-e261" src="../images/scr/graphic-e261.png" />
+</div>
+<div class="paragraph">
+Tunnel light (8x8)
+</div>
+</div>
+</td>
+</tr>
+<tr>
+<td class="asm-label">bitmap_tunnellight_3</td>
 <td class="address-1"><span id="57953"></span>E261</td>
 <td class="instruction">DEFB $EF,$AB,$C1,$03,$C0,$83,$D5,$B7</td>
-<td class="comment-0" rowspan="1"></td>
+<td class="comment-1" rowspan="1">Bitmap data</td>
 </tr>
 <tr>
+<td class="routine-comment" colspan="5">
+<span id="57961"></span>
+<div class="comments">
+<div class="paragraph">
+<img alt="graphic-e269" src="../images/scr/graphic-e269.png" />
+</div>
+<div class="paragraph">
+Tunnel light (8x6)
+</div>
+</div>
+</td>
+</tr>
+<tr>
+<td class="asm-label">bitmap_tunnellight_4</td>
 <td class="address-1"><span id="57961"></span>E269</td>
-<td class="instruction">DEFB $FF,$57,$8F,$07,$8F,$57,$DF,$8F</td>
-<td class="comment-0" rowspan="1"></td>
+<td class="instruction">DEFB $FF,$57,$8F,$07,$8F,$57</td>
+<td class="comment-1" rowspan="1">Bitmap data</td>
 </tr>
 <tr>
-<td class="address-1"><span id="57969"></span>E271</td>
-<td class="instruction">DEFB $07,$8F,$DF,$CF,$30,$FF,$00,$87</td>
-<td class="comment-0" rowspan="1"></td>
+<td class="routine-comment" colspan="5">
+<span id="57967"></span>
+<div class="comments">
+<div class="paragraph">
+<img alt="graphic-e26f" src="../images/scr/graphic-e26f.png" />
+</div>
+<div class="paragraph">
+Tunnel light (8x5)
+</div>
+</div>
+</td>
 </tr>
 <tr>
-<td class="address-1"><span id="57977"></span>E279</td>
-<td class="instruction">DEFB $48,$FF,$00,$03,$84,$FF,$00,$03</td>
-<td class="comment-0" rowspan="1"></td>
+<td class="asm-label">bitmap_tunnellight_5</td>
+<td class="address-1"><span id="57967"></span>E26F</td>
+<td class="instruction">DEFB $DF,$8F,$07,$8F,$DF</td>
+<td class="comment-1" rowspan="1">Bitmap data</td>
 </tr>
 <tr>
-<td class="address-1"><span id="57985"></span>E281</td>
-<td class="instruction">DEFB $84,$FF,$00,$87,$48,$FF,$00,$CF</td>
-<td class="comment-0" rowspan="1"></td>
+<td class="routine-comment" colspan="5">
+<span id="57972"></span>
+<div class="comments">
+<div class="paragraph">
+<img alt="graphic-e274" src="../images/scr/graphic-e274.png" />
+</div>
+<div class="paragraph">
+Tunnel light masked (16x6)
+</div>
+</div>
+</td>
 </tr>
 <tr>
-<td class="address-1"><span id="57993"></span>E289</td>
-<td class="instruction">DEFB $30,$FF,$00,$FC,$03,$FF,$00,$F8</td>
-<td class="comment-0" rowspan="1"></td>
+<td class="asm-label">tunnellight_6</td>
+<td class="address-1"><span id="57972"></span>E274</td>
+<td class="instruction">DEFB $CF,$30,$FF,$00,$87,$48,$FF,$00</td>
+<td class="comment-1" rowspan="3">Masked bitmap data</td>
 </tr>
 <tr>
-<td class="address-1"><span id="58001"></span>E291</td>
-<td class="instruction">DEFB $04,$7F,$80,$F0,$08,$3F,$40,$F0</td>
-<td class="comment-0" rowspan="1"></td>
+<td class="asm-label"></td>
+<td class="address-1"><span id="57980"></span>E27C</td>
+<td class="instruction">DEFB $03,$84,$FF,$00,$03,$84,$FF,$00</td>
 </tr>
 <tr>
-<td class="address-1"><span id="58009"></span>E299</td>
-<td class="instruction">DEFB $08,$3F,$40,$F8,$04,$7F,$80,$FC</td>
-<td class="comment-0" rowspan="1"></td>
+<td class="asm-label"></td>
+<td class="address-1"><span id="57988"></span>E284</td>
+<td class="instruction">DEFB $87,$48,$FF,$00,$CF,$30,$FF,$00</td>
 </tr>
 <tr>
-<td class="address-1"><span id="58017"></span>E2A1</td>
-<td class="instruction">DEFB $03,$FF,$00</td>
-<td class="comment-0" rowspan="1"></td>
+<td class="routine-comment" colspan="5">
+<span id="57996"></span>
+<div class="comments">
+<div class="paragraph">
+Tunnel light masked shifted (16x6)
+</div>
+<div class="paragraph">
+<img alt="graphic-e28c" src="../images/scr/graphic-e28c.png" />
+</div>
+</div>
+</td>
+</tr>
+<tr>
+<td class="asm-label">tunnellight_6s</td>
+<td class="address-1"><span id="57996"></span>E28C</td>
+<td class="instruction">DEFB $FC,$03,$FF,$00,$F8,$04,$7F,$80</td>
+<td class="comment-1" rowspan="3">Masked bitmap data</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="58004"></span>E294</td>
+<td class="instruction">DEFB $F0,$08,$3F,$40,$F0,$08,$3F,$40</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="58012"></span>E29C</td>
+<td class="instruction">DEFB $F8,$04,$7F,$80,$FC,$03,$FF,$00</td>
 </tr>
 </table>
 <table class="asm-navigation">
@@ -164,7 +468,7 @@ Next: <a href="E2A4.html">E2A4</a>
 </tr>
 </table>
 <footer>
-<div class="release">The incomplete Chase H.Q. disassembly 20230518</div>
+<div class="release">The incomplete Chase H.Q. disassembly 20231102</div>
 <div class="copyright">&copy; 1988 Taito Corporation &copy; 1989 Ocean Software Ltd. (Chase H.Q.) © 2023 David Thomas (this disassembly)</div>
 <div class="created">Created using <a href="https://skoolkit.ca">SkoolKit</a> 8.9.</div>
 </footer>

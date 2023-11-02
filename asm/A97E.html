@@ -23,7 +23,7 @@ Next: <a href="A9DE.html">A9DE</a>
 </td>
 </tr>
 </table>
-<div class="description">A97E: Used by the routines at <a href="8401.html">main_loop</a> and <a href="852A.html">cpu_driver</a>.</div>
+<div class="description">A97E: main_loop_20</div>
 <table class="disassembly">
 <tr>
 <td class="routine-comment" colspan="5">
@@ -38,7 +38,7 @@ Used by the routines at <a href="8401.html">main_loop</a> and <a href="852A.html
 <td class="asm-label">main_loop_20</td>
 <td class="address-2"><span id="43390"></span>A97E</td>
 <td class="instruction">LD A,$00</td>
-<td class="comment-1" rowspan="1">A = &lt;...&gt;  -- Self modified by $A974</td>
+<td class="comment-1" rowspan="1">A = &lt;self modified&gt;  -- Self modified by <a href="A955.html#43380">A974</a></td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -72,7 +72,7 @@ Used by the routines at <a href="8401.html">main_loop</a> and <a href="852A.html
 <td class="asm-label"></td>
 <td class="address-1"><span id="43403"></span>A98B</td>
 <td class="instruction">LD HL,$ED28</td>
-<td class="comment-1" rowspan="1">Point <span class="register">HL</span> at something above the stack</td>
+<td class="comment-1" rowspan="1">Point <span class="register">HL</span> at (something above the stack)</td>
 </tr>
 <tr>
 <td class="routine-comment" colspan="5">
@@ -157,19 +157,19 @@ Scan through whatever-it-is for a non-zero byte. Move 4 bytes per iteration.
 <td class="asm-label"></td>
 <td class="address-1"><span id="43421"></span>A99D</td>
 <td class="instruction">LD ($A97F),A</td>
-<td class="comment-1" rowspan="1">Self modify LD A @ $A97E</td>
+<td class="comment-1" rowspan="1">Self modify LD A @ <a href="A97E.html">main_loop_20</a></td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="43424"></span>A9A0</td>
 <td class="instruction">LD ($C0BC),A</td>
-<td class="comment-1" rowspan="1">Self modify LD A @ $C0BB</td>
+<td class="comment-1" rowspan="1">Self modify LD A @ <a href="BDFB.html#49339">rm_c0bb</a></td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="43427"></span>A9A3</td>
 <td class="instruction">LD ($A9DF),A</td>
-<td class="comment-1" rowspan="1">Self modify LD A @ $A9DE</td>
+<td class="comment-1" rowspan="1">Self modify LD A @ <a href="A9DE.html">sub_A9DE</a></td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -450,7 +450,7 @@ Next: <a href="A9DE.html">A9DE</a>
 </tr>
 </table>
 <footer>
-<div class="release">The incomplete Chase H.Q. disassembly 20230518</div>
+<div class="release">The incomplete Chase H.Q. disassembly 20231102</div>
 <div class="copyright">&copy; 1988 Taito Corporation &copy; 1989 Ocean Software Ltd. (Chase H.Q.) © 2023 David Thomas (this disassembly)</div>
 <div class="created">Created using <a href="https://skoolkit.ca">SkoolKit</a> 8.9.</div>
 </footer>

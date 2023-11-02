@@ -15,7 +15,7 @@
 <table class="asm-navigation">
 <tr>
 <td class="prev">
-Prev: <a href="837A.html">837A</a>
+Prev: <a href="837C.html">837C</a>
 </td>
 <td class="up">Up: <a href="../maps/all.html#33717">Map</a></td>
 <td class="next">
@@ -23,13 +23,13 @@ Next: <a href="83CD.html">83CD</a>
 </td>
 </tr>
 </table>
-<div class="description">83B5: Hooks for 128K functions</div>
+<div class="description">83B5: Indirect calls for 48K/128K features</div>
 <table class="disassembly">
 <tr>
 <td class="routine-comment" colspan="5">
 <div class="details">
 <div class="paragraph">
-Used by the routine at <a href="B4CC.html">B4CC</a>.
+The main difference is in sound, but attract mode also has an alternate implementation in 128K mode.
 </div>
 </div>
 </td>
@@ -39,16 +39,16 @@ Used by the routine at <a href="B4CC.html">B4CC</a>.
 <span id="33717"></span>
 <div class="comments">
 <div class="paragraph">
-Some of these unknowns will be for the 128K sampled speech.
+Used by the routine at <a href="B4CC.html">perp_sighted</a>.
 </div>
 </div>
 </td>
 </tr>
 <tr>
-<td class="asm-label">unknown_hook_1</td>
+<td class="asm-label">start_siren_hook</td>
 <td class="address-2"><span id="33717"></span>83B5</td>
-<td class="instruction">JP <a href="8A36.html#35414">sfx8a36_2</a></td>
-<td class="comment-1" rowspan="1">Only a RET</td>
+<td class="instruction">JP <a href="8A36.html#35414">sfx_bipbow_2</a></td>
+<td class="comment-1" rowspan="1">No-op when in 48K mode -- likely siren</td>
 </tr>
 <tr>
 <td class="routine-comment" colspan="5">
@@ -64,14 +64,14 @@ This entry point is used by the routines at <a href="8401.html">main_loop</a> an
 <td class="asm-label">engine_sfx_play_hook</td>
 <td class="address-2"><span id="33720"></span>83B8</td>
 <td class="instruction">JP <a href="8204.html#33332">engine_sfx_play</a></td>
-<td class="comment-1" rowspan="1">Call engine_sfx_play</td>
+<td class="comment-1" rowspan="1">Call engine_sfx_play when in 48K mode</td>
 </tr>
 <tr>
 <td class="routine-comment" colspan="5">
 <span id="33723"></span>
 <div class="comments">
 <div class="paragraph">
-This entry point is used by the routines at <a href="8401.html">main_loop</a>, <a href="873C.html">escape_scene</a>, <a href="87DC.html">setup_game</a>, <a href="8876.html">check_user_input</a>, <a href="8A57.html">handle_perp_caught</a> and <a href="F220.html">load_stage_128k</a>.
+This entry point is used by the routines at <a href="8401.html">main_loop</a>, <a href="873C.html">escape_scene</a>, <a href="87DC.html">setup_game</a>, <a href="8876.html">check_user_input</a>, <a href="8A57.html">handle_perp_caught</a> and <a href="F220.html">page_in_stage_128k</a>.
 </div>
 </div>
 </td>
@@ -79,8 +79,8 @@ This entry point is used by the routines at <a href="8401.html">main_loop</a>, <
 <tr>
 <td class="asm-label">silence_audio_hook</td>
 <td class="address-2"><span id="33723"></span>83BB</td>
-<td class="instruction">JP <a href="8A36.html#35414">sfx8a36_2</a></td>
-<td class="comment-1" rowspan="1">Likely silences audio in 128K mode</td>
+<td class="instruction">JP <a href="8A36.html#35414">sfx_bipbow_2</a></td>
+<td class="comment-1" rowspan="1">No-op when in 48K mode</td>
 </tr>
 <tr>
 <td class="routine-comment" colspan="5">
@@ -93,10 +93,10 @@ This entry point is used by the routine at <a href="8903.html">drive_sfx</a>.
 </td>
 </tr>
 <tr>
-<td class="asm-label">unknown_hook_2</td>
+<td class="asm-label">write_registers_hook</td>
 <td class="address-2"><span id="33726"></span>83BE</td>
-<td class="instruction">JP <a href="8A36.html#35414">sfx8a36_2</a></td>
-<td class="comment-1" rowspan="1">Only a RET</td>
+<td class="instruction">JP <a href="8A36.html#35414">sfx_bipbow_2</a></td>
+<td class="comment-1" rowspan="1">No-op when in 48K mode</td>
 </tr>
 <tr>
 <td class="routine-comment" colspan="5">
@@ -111,8 +111,8 @@ This entry point is used by the routine at <a href="8876.html">check_user_input<
 <tr>
 <td class="asm-label">turbo_sfx_play_hook</td>
 <td class="address-2"><span id="33729"></span>83C1</td>
-<td class="instruction">JP <a href="8A36.html#35414">sfx8a36_2</a></td>
-<td class="comment-1" rowspan="1">Likely the turbo boost sound effect</td>
+<td class="instruction">JP <a href="8A36.html#35414">sfx_bipbow_2</a></td>
+<td class="comment-1" rowspan="1">No-op when in 48K mode</td>
 </tr>
 <tr>
 <td class="routine-comment" colspan="5">
@@ -128,7 +128,7 @@ This entry point is used by the routine at <a href="8903.html">drive_sfx</a>.
 <td class="asm-label">engine_sfx_setup_hook</td>
 <td class="address-2"><span id="33732"></span>83C4</td>
 <td class="instruction">JP <a href="8204.html">engine_sfx_setup</a></td>
-<td class="comment-1" rowspan="1">Call engine_sfx_setup</td>
+<td class="comment-1" rowspan="1">Call engine_sfx_setup when in 48K mode</td>
 </tr>
 <tr>
 <td class="routine-comment" colspan="5">
@@ -141,17 +141,17 @@ This entry point is used by the routines at <a href="8401.html">main_loop</a> an
 </td>
 </tr>
 <tr>
-<td class="asm-label">unknown_hook_3</td>
+<td class="asm-label">play_speech_hook</td>
 <td class="address-2"><span id="33735"></span>83C7</td>
-<td class="instruction">JP <a href="8A36.html#35414">sfx8a36_2</a></td>
-<td class="comment-1" rowspan="1">Only a RET</td>
+<td class="instruction">JP <a href="8A36.html#35414">sfx_bipbow_2</a></td>
+<td class="comment-1" rowspan="1">No-op when in 48K mode</td>
 </tr>
 <tr>
 <td class="routine-comment" colspan="5">
 <span id="33738"></span>
 <div class="comments">
 <div class="paragraph">
-This entry point is used by the routine at <a href="83CD.html">83CD</a>.
+This entry point is used by the routine at <a href="83CD.html">bootstrap</a>.
 </div>
 </div>
 </td>
@@ -160,13 +160,13 @@ This entry point is used by the routine at <a href="83CD.html">83CD</a>.
 <td class="asm-label">attract_mode_hook</td>
 <td class="address-2"><span id="33738"></span>83CA</td>
 <td class="instruction">JP <a href="8258.html">attract_mode</a></td>
-<td class="comment-1" rowspan="1">Call attract_mode</td>
+<td class="comment-1" rowspan="1">Call attract_mode when in 48K mode</td>
 </tr>
 </table>
 <table class="asm-navigation">
 <tr>
 <td class="prev">
-Prev: <a href="837A.html">837A</a>
+Prev: <a href="837C.html">837C</a>
 </td>
 <td class="up">Up: <a href="../maps/all.html#33717">Map</a></td>
 <td class="next">
@@ -175,7 +175,7 @@ Next: <a href="83CD.html">83CD</a>
 </tr>
 </table>
 <footer>
-<div class="release">The incomplete Chase H.Q. disassembly 20230518</div>
+<div class="release">The incomplete Chase H.Q. disassembly 20231102</div>
 <div class="copyright">&copy; 1988 Taito Corporation &copy; 1989 Ocean Software Ltd. (Chase H.Q.) © 2023 David Thomas (this disassembly)</div>
 <div class="created">Created using <a href="https://skoolkit.ca">SkoolKit</a> 8.9.</div>
 </footer>

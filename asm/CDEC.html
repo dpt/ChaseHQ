@@ -23,60 +23,54 @@ Next: <a href="CE33.html">CE33</a>
 </td>
 </tr>
 </table>
-<div class="description">CDEC: Data block at CDEC</div>
+<div class="description">CDEC: Data block at CDEC these are words, but not ptrs</div>
 <table class="disassembly">
 <tr>
 <td class="routine-comment" colspan="5">
 <div class="details">
-<div class="paragraph">
-$AF91 uses this.
-</div>
 </div>
 </td>
 </tr>
 <tr>
+<td class="asm-label">table_cdec</td>
 <td class="address-1"><span id="52716"></span>CDEC</td>
 <td class="instruction">DEFB $DC,$30,$E6,$20,$EA,$18,$EE,$10</td>
 <td class="comment-0" rowspan="1"></td>
 </tr>
 <tr>
+<td class="asm-label">table_cdf4</td>
 <td class="address-1"><span id="52724"></span>CDF4</td>
 <td class="instruction">DEFB $5A,$E1,$84,$E1,$06,$E1,$30,$E1</td>
 <td class="comment-0" rowspan="1"></td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="52732"></span>CDFC</td>
-<td class="instruction">DEFB $B2,$E0,$DC,$E0,$EE,$08,$F3,$08</td>
+<td class="instruction">DEFB $B2,$E0,$DC,$E0</td>
 <td class="comment-0" rowspan="1"></td>
 </tr>
 <tr>
-<td class="address-1"><span id="52740"></span>CE04</td>
-<td class="instruction">DEFB $F8,$08,$FA,$04,$FC,$00,$FE,$00</td>
+<td class="asm-label">table_ce00</td>
+<td class="address-1"><span id="52736"></span>CE00</td>
+<td class="instruction">DEFW $08EE,$08F3,$08F8,$04FA,$00FC,$00FE</td>
 <td class="comment-0" rowspan="1"></td>
 </tr>
 <tr>
+<td class="asm-label">data_ce0c</td>
 <td class="address-1"><span id="52748"></span>CE0C</td>
-<td class="instruction">DEFB $03,$00,$00,$00,$00,$00,$00,$00</td>
+<td class="instruction">DEFB $03,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00</td>
 <td class="comment-0" rowspan="1"></td>
 </tr>
 <tr>
-<td class="address-1"><span id="52756"></span>CE14</td>
-<td class="instruction">DEFB $00,$00,$00,$00,$00,$02,$F4,$10</td>
+<td class="asm-label">data_ce19</td>
+<td class="address-1"><span id="52761"></span>CE19</td>
+<td class="instruction">DEFB $02,$F4,$10,$F8,$08,$FA,$08,$FC,$08,$FD,$08,$FE,$00</td>
 <td class="comment-0" rowspan="1"></td>
 </tr>
 <tr>
-<td class="address-1"><span id="52764"></span>CE1C</td>
-<td class="instruction">DEFB $F8,$08,$FA,$08,$FC,$08,$FD,$08</td>
-<td class="comment-0" rowspan="1"></td>
-</tr>
-<tr>
-<td class="address-1"><span id="52772"></span>CE24</td>
-<td class="instruction">DEFB $FE,$00,$05,$F8,$20,$FA,$18,$FC</td>
-<td class="comment-0" rowspan="1"></td>
-</tr>
-<tr>
-<td class="address-1"><span id="52780"></span>CE2C</td>
-<td class="instruction">DEFB $10,$FE,$10,$FF,$08,$00,$08</td>
+<td class="asm-label">data_ce26</td>
+<td class="address-1"><span id="52774"></span>CE26</td>
+<td class="instruction">DEFB $05,$F8,$20,$FA,$18,$FC,$10,$FE,$10,$FF,$08,$00,$08</td>
 <td class="comment-0" rowspan="1"></td>
 </tr>
 </table>
@@ -92,7 +86,7 @@ Next: <a href="CE33.html">CE33</a>
 </tr>
 </table>
 <footer>
-<div class="release">The incomplete Chase H.Q. disassembly 20230518</div>
+<div class="release">The incomplete Chase H.Q. disassembly 20231102</div>
 <div class="copyright">&copy; 1988 Taito Corporation &copy; 1989 Ocean Software Ltd. (Chase H.Q.) © 2023 David Thomas (this disassembly)</div>
 <div class="created">Created using <a href="https://skoolkit.ca">SkoolKit</a> 8.9.</div>
 </footer>

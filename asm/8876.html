@@ -182,13 +182,13 @@ Turbo was pressed
 <td class="asm-label"></td>
 <td class="address-1"><span id="34977"></span>88A1</td>
 <td class="instruction">LD A,$02</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="1">Set priority to 2</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="34979"></span>88A3</td>
 <td class="instruction">CALL <a href="9945.html">chatter</a></td>
-<td class="comment-1" rowspan="1">Call chatter</td>
+<td class="comment-1" rowspan="1">Call chatter (priority 2)</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -210,7 +210,7 @@ This entry point is used by the routine at <a href="9BCF.html">tick</a>.
 <td class="asm-label">quit_key</td>
 <td class="address-2"><span id="34985"></span>88A9</td>
 <td class="instruction">LD A,($A26A)</td>
-<td class="comment-1" rowspan="3">If $A26A != 0 then return</td>
+<td class="comment-1" rowspan="3">If quit_state != 0 then return (quit in progress)</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -225,8 +225,8 @@ This entry point is used by the routine at <a href="9BCF.html">tick</a>.
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="34990"></span>88AE</td>
-<td class="instruction">CALL <a href="9965.html#39379">clear_chatter</a></td>
-<td class="comment-1" rowspan="1">Call clear_chatter</td>
+<td class="instruction">CALL <a href="9965.html#39379">drive_chatter_stop</a></td>
+<td class="comment-1" rowspan="1">Call drive_chatter_stop</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -249,7 +249,7 @@ This entry point is used by the routine at <a href="9BCF.html">tick</a>.
 <td class="asm-label"></td>
 <td class="address-1"><span id="35000"></span>88B8</td>
 <td class="instruction">LD ($A26A),A</td>
-<td class="comment-1" rowspan="1">$A26A = 1</td>
+<td class="comment-1" rowspan="1">quit_state = 1  -- start quitting</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -330,7 +330,7 @@ Next: <a href="88D5.html">88D5</a>
 </tr>
 </table>
 <footer>
-<div class="release">The incomplete Chase H.Q. disassembly 20230518</div>
+<div class="release">The incomplete Chase H.Q. disassembly 20231102</div>
 <div class="copyright">&copy; 1988 Taito Corporation &copy; 1989 Ocean Software Ltd. (Chase H.Q.) © 2023 David Thomas (this disassembly)</div>
 <div class="created">Created using <a href="https://skoolkit.ca">SkoolKit</a> 8.9.</div>
 </footer>

@@ -29,7 +29,7 @@ Next: <a href="ADA0.html">ADA0</a>
 <td class="routine-comment" colspan="5">
 <div class="details">
 <div class="paragraph">
-Used by the routines at <a href="AD0D.html">AD0D</a> and <a href="ADA0.html">main_loop_19</a>.
+Used by the routines at <a href="AD0D.html">sub_ad0d</a> and <a href="ADA0.html">draw_hazards</a>.
 </div>
 </div>
 <table class="input">
@@ -53,209 +53,253 @@ Used by the routines at <a href="AD0D.html">AD0D</a> and <a href="ADA0.html">mai
 </td>
 </tr>
 <tr>
+<td class="asm-label">sub_ad51</td>
 <td class="address-2"><span id="44369"></span>AD51</td>
 <td class="instruction">LD A,(IX+$07)</td>
 <td class="comment-1" rowspan="3">Return if IX[7] is non-zero</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="44372"></span>AD54</td>
 <td class="instruction">AND A</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="44373"></span>AD55</td>
 <td class="instruction">RET NZ</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="44374"></span>AD56</td>
 <td class="instruction">LD L,(IX+$02)</td>
 <td class="comment-1" rowspan="2">HL = wordat(IX + 2)</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="44377"></span>AD59</td>
 <td class="instruction">LD H,(IX+$03)</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="44380"></span>AD5C</td>
 <td class="instruction">LD A,H</td>
 <td class="comment-1" rowspan="3">Return if top byte of HL was set</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="44381"></span>AD5D</td>
 <td class="instruction">AND A</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="44382"></span>AD5E</td>
 <td class="instruction">RET NZ</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="44383"></span>AD5F</td>
 <td class="instruction">LD A,(IX+$0F)</td>
 <td class="comment-1" rowspan="2">A = IX[15] + 1 and set flags</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="44386"></span>AD62</td>
 <td class="instruction">INC A</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="44387"></span>AD63</td>
 <td class="instruction">LD A,(IX+$01)</td>
 <td class="comment-1" rowspan="1">A = IX[1]</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="44390"></span>AD66</td>
 <td class="instruction">LD C,$03</td>
 <td class="comment-1" rowspan="1">C = 3</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="44392"></span>AD68</td>
-<td class="instruction">JR NZ,$AD6C</td>
+<td class="instruction">JR NZ,<a href="AD51.html#44396">sub_ad51_0</a></td>
 <td class="comment-1" rowspan="1">Jump if A /was/ non-zero</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="44394"></span>AD6A</td>
 <td class="instruction">LD C,$02</td>
 <td class="comment-1" rowspan="1">C = 2</td>
 </tr>
 <tr>
+<td class="asm-label">sub_ad51_0</td>
 <td class="address-2"><span id="44396"></span>AD6C</td>
 <td class="instruction">CP C</td>
 <td class="comment-1" rowspan="2">Return if A &gt;= C</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="44397"></span>AD6D</td>
 <td class="instruction">RET NC</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="44398"></span>AD6E</td>
 <td class="instruction">LD E,$04</td>
 <td class="comment-1" rowspan="1">E = 4</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="44400"></span>AD70</td>
 <td class="instruction">DEC A</td>
 <td class="comment-1" rowspan="1">A--</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="44401"></span>AD71</td>
 <td class="instruction">LD A,($A23F)</td>
 <td class="comment-1" rowspan="1">A = fast_counter</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="44404"></span>AD74</td>
-<td class="instruction">JR NZ,$AD7E</td>
+<td class="instruction">JR NZ,<a href="AD51.html#44414">sub_ad51_1</a></td>
 <td class="comment-1" rowspan="1">Jump if A /was/ non0zero</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="44406"></span>AD76</td>
 <td class="instruction">AND A</td>
 <td class="comment-1" rowspan="1">Set flags</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="44407"></span>AD77</td>
-<td class="instruction">JP P,$AD80</td>
+<td class="instruction">JP P,<a href="AD51.html#44416">sub_ad51_2</a></td>
 <td class="comment-1" rowspan="1">Jump if positive</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="44410"></span>AD7A</td>
 <td class="instruction">LD E,$01</td>
 <td class="comment-1" rowspan="1">E = 1</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="44412"></span>AD7C</td>
-<td class="instruction">JR $AD80</td>
+<td class="instruction">JR <a href="AD51.html#44416">sub_ad51_2</a></td>
 <td class="comment-1" rowspan="1">Jump</td>
 </tr>
 <tr>
+<td class="asm-label">sub_ad51_1</td>
 <td class="address-2"><span id="44414"></span>AD7E</td>
 <td class="instruction">AND A</td>
 <td class="comment-1" rowspan="1">Set flags</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="44415"></span>AD7F</td>
 <td class="instruction">RET P</td>
 <td class="comment-1" rowspan="1">Return if positive</td>
 </tr>
 <tr>
+<td class="asm-label">sub_ad51_2</td>
 <td class="address-2"><span id="44416"></span>AD80</td>
 <td class="instruction">LD A,L</td>
 <td class="comment-1" rowspan="1">A = L</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="44417"></span>AD81</td>
 <td class="instruction">AND $F8</td>
 <td class="comment-1" rowspan="1">A &amp;= $F8</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="44419"></span>AD83</td>
 <td class="instruction">CP $90</td>
 <td class="comment-1" rowspan="2">Return if A &gt;= $90</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="44421"></span>AD85</td>
 <td class="instruction">RET NC</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="44422"></span>AD86</td>
 <td class="instruction">ADD A,(IX+$08)</td>
 <td class="comment-1" rowspan="1">A += IX[8]</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="44425"></span>AD89</td>
 <td class="instruction">CP $70</td>
 <td class="comment-1" rowspan="2">Return if A &lt;= $70</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="44427"></span>AD8B</td>
 <td class="instruction">RET C</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="44428"></span>AD8C</td>
 <td class="instruction">SUB (IX+$08)</td>
 <td class="comment-1" rowspan="1">A -= IX[8]</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="44431"></span>AD8F</td>
 <td class="instruction">CP $68</td>
 <td class="comment-1" rowspan="2">Jump if A &lt; $68</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="44433"></span>AD91</td>
-<td class="instruction">JR C,$AD9A</td>
+<td class="instruction">JR C,<a href="AD51.html#44442">sub_ad51_3</a></td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="44435"></span>AD93</td>
 <td class="instruction">DEC E</td>
 <td class="comment-1" rowspan="1">E--</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="44436"></span>AD94</td>
 <td class="instruction">CP $78</td>
 <td class="comment-1" rowspan="2">Jump if A &lt; $78</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="44438"></span>AD96</td>
-<td class="instruction">JR C,$AD9A</td>
+<td class="instruction">JR C,<a href="AD51.html#44442">sub_ad51_3</a></td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="44440"></span>AD98</td>
 <td class="instruction">INC E</td>
 <td class="comment-1" rowspan="2">E += 2</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="44441"></span>AD99</td>
 <td class="instruction">INC E</td>
 </tr>
 <tr>
+<td class="asm-label">sub_ad51_3</td>
 <td class="address-2"><span id="44442"></span>AD9A</td>
 <td class="instruction">LD (IX+$07),E</td>
 <td class="comment-1" rowspan="1">IX[7] = E</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="44445"></span>AD9D</td>
 <td class="instruction">LD D,$01</td>
 <td class="comment-1" rowspan="1">D = 1</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="44447"></span>AD9F</td>
 <td class="instruction">RET</td>
 <td class="comment-1" rowspan="1">Return</td>
@@ -273,7 +317,7 @@ Next: <a href="ADA0.html">ADA0</a>
 </tr>
 </table>
 <footer>
-<div class="release">The incomplete Chase H.Q. disassembly 20230518</div>
+<div class="release">The incomplete Chase H.Q. disassembly 20231102</div>
 <div class="copyright">&copy; 1988 Taito Corporation &copy; 1989 Ocean Software Ltd. (Chase H.Q.) © 2023 David Thomas (this disassembly)</div>
 <div class="created">Created using <a href="https://skoolkit.ca">SkoolKit</a> 8.9.</div>
 </footer>

@@ -19,11 +19,11 @@ Prev: <a href="5D2B.html">5D2B</a>
 </td>
 <td class="up">Up: <a href="../maps/all.html#23865">Map</a></td>
 <td class="next">
-Next: <a href="5D45.html">5D45</a>
+Next: <a href="5DED.html">5DED</a>
 </td>
 </tr>
 </table>
-<div class="description">5D39: Nancy's report</div>
+<div class="description">5D39: [Stage 1] Nancy's perp description</div>
 <table class="disassembly">
 <tr>
 <td class="routine-comment" colspan="5">
@@ -32,39 +32,70 @@ Next: <a href="5D45.html">5D45</a>
 </td>
 </tr>
 <tr>
+<td class="asm-label">perp_description</td>
 <td class="address-1"><span id="23865"></span>5D39</td>
 <td class="instruction">DEFB $01</td>
 <td class="comment-1" rowspan="1">Nancy ($01)</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="23866"></span>5D3A</td>
-<td class="instruction">DEFW <a href="5D45.html">$5D45</a></td>
+<td class="instruction">DEFW <a href="5D39.html#23877">perp_description_1</a></td>
 <td class="comment-1" rowspan="1">Points at "THIS IS NANCY..."</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="23868"></span>5D3C</td>
-<td class="instruction">DEFW <a href="5D45.html#23917">$5D6D</a></td>
+<td class="instruction">DEFW <a href="5D39.html#23917">perp_description_2</a></td>
 <td class="comment-1" rowspan="1">Points at "EMERGENCY HERE..."</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="23870"></span>5D3E</td>
-<td class="instruction">DEFW <a href="5D45.html#23957">$5D95</a></td>
+<td class="instruction">DEFW <a href="5D39.html#23957">perp_description_3</a></td>
 <td class="comment-1" rowspan="1">Points at "IS FLEEING ..."</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="23872"></span>5D40</td>
-<td class="instruction">DEFW <a href="5D45.html#23999">$5DBF</a></td>
+<td class="instruction">DEFW <a href="5D39.html#23999">perp_description_4</a></td>
 <td class="comment-1" rowspan="1">Points at "VEHICLE IS..."</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="23874"></span>5D42</td>
 <td class="instruction">DEFB $FE</td>
 <td class="comment-1" rowspan="1">(pause?)</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="23875"></span>5D43</td>
 <td class="instruction">DEFW <a href="98A9.html#39101">acknowledge_chatter</a></td>
 <td class="comment-1" rowspan="1">-&gt; Random choice of ("WE READ..." / "ROGER!" / "GOTCHA...")</td>
+</tr>
+<tr>
+<td class="asm-label">perp_description_1</td>
+<td class="address-1"><span id="23877"></span>5D45</td>
+<td class="instruction">DEFM "THIS IS NANCY AT CHASE H.Q. WE'VE GOT A",$CE</td>
+<td class="comment-1" rowspan="1">"THIS IS NANCY AT CHASE H.Q. WE'VE GOT AN"</td>
+</tr>
+<tr>
+<td class="asm-label">perp_description_2</td>
+<td class="address-1"><span id="23917"></span>5D6D</td>
+<td class="instruction">DEFM "EMERGENCY HERE. RALPH THE IDAHO SLASHER",$AC</td>
+<td class="comment-1" rowspan="1">"EMERGENCY HERE. RALPH THE IDAHO SLASHER,"</td>
+</tr>
+<tr>
+<td class="asm-label">perp_description_3</td>
+<td class="address-1"><span id="23957"></span>5D95</td>
+<td class="instruction">DEFM "IS FLEEING TOWARDS THE SUBURBS. THE TARGE",$D4</td>
+<td class="comment-1" rowspan="1">"IS FLEEING TOWARDS THE SUBURBS. THE TARGET"</td>
+</tr>
+<tr>
+<td class="asm-label">perp_description_4</td>
+<td class="address-1"><span id="23999"></span>5DBF</td>
+<td class="instruction">DEFM "VEHICLE IS A WHITE BRITISH SPORTS CAR... OVER",$AE</td>
+<td class="comment-1" rowspan="1">"VEHICLE IS A WHITE BRITISH SPORTS CAR... OVER."</td>
 </tr>
 </table>
 <table class="asm-navigation">
@@ -74,12 +105,12 @@ Prev: <a href="5D2B.html">5D2B</a>
 </td>
 <td class="up">Up: <a href="../maps/all.html#23865">Map</a></td>
 <td class="next">
-Next: <a href="5D45.html">5D45</a>
+Next: <a href="5DED.html">5DED</a>
 </td>
 </tr>
 </table>
 <footer>
-<div class="release">The incomplete Chase H.Q. disassembly 20230518</div>
+<div class="release">The incomplete Chase H.Q. disassembly 20231102</div>
 <div class="copyright">&copy; 1988 Taito Corporation &copy; 1989 Ocean Software Ltd. (Chase H.Q.) © 2023 David Thomas (this disassembly)</div>
 <div class="created">Created using <a href="https://skoolkit.ca">SkoolKit</a> 8.9.</div>
 </footer>

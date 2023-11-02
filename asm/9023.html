@@ -32,13 +32,34 @@ Next: <a href="9052.html">9052</a>
 Used by the routine at <a href="8F5F.html">main_loop_23</a>.
 </div>
 </div>
+<table class="input">
+<tr class="asm-input-header">
+<th colspan="2">Input</th>
+</tr>
+<tr>
+<td class="register">A</td>
+<td class="register-desc">?</td>
+</tr>
+<tr>
+<td class="register">BC</td>
+<td class="register-desc">? Sampled: $0D20, $0520, $0120</td>
+</tr>
+<tr>
+<td class="register">HL</td>
+<td class="register-desc">? Sampled: $EEAC, $EEA4, $EEA0</td>
+</tr>
+<tr>
+<td class="register">IX</td>
+<td class="register-desc">? Sampled: $EACE, $EAEE, $EAFE</td>
+</tr>
+</table>
 </td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-2"><span id="36899"></span>9023</td>
 <td class="instruction">LD E,A</td>
-<td class="comment-1" rowspan="1">E = A</td>
+<td class="comment-1" rowspan="1">E = A  -- sampled = 5 (only)</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -50,6 +71,16 @@ Used by the routine at <a href="8F5F.html">main_loop_23</a>.
 <td class="asm-label"></td>
 <td class="address-1"><span id="36902"></span>9026</td>
 <td class="instruction">JR Z,$902E</td>
+</tr>
+<tr>
+<td class="routine-comment" colspan="5">
+<span id="36904"></span>
+<div class="comments">
+<div class="paragraph">
+A != 2
+</div>
+</div>
+</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -66,8 +97,8 @@ Used by the routine at <a href="8F5F.html">main_loop_23</a>.
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="36908"></span>902C</td>
-<td class="instruction">JR NZ,<a href="8F5F.html#36797">main_loop_23_3</a></td>
-<td class="comment-1" rowspan="1"></td>
+<td class="instruction">JR NZ,<a href="8F5F.html#36797">main_loop_23_2</a></td>
+<td class="comment-1" rowspan="1">Loop?</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -145,10 +176,20 @@ Used by the routine at <a href="8F5F.html">main_loop_23</a>.
 <td class="comment-1" rowspan="1">HL += DE</td>
 </tr>
 <tr>
+<td class="routine-comment" colspan="5">
+<span id="36930"></span>
+<div class="comments">
+<div class="paragraph">
+sampled HL = $5EA4 (only) which is "Entry 14"
+</div>
+</div>
+</td>
+</tr>
+<tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="36930"></span>9042</td>
 <td class="instruction">LD E,(HL)</td>
-<td class="comment-1" rowspan="2">E = *HL++</td>
+<td class="comment-1" rowspan="4">DE = wordat(HL); HL += 2  -- arg for routine</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -159,7 +200,6 @@ Used by the routine at <a href="8F5F.html">main_loop_23</a>.
 <td class="asm-label"></td>
 <td class="address-1"><span id="36932"></span>9044</td>
 <td class="instruction">LD D,(HL)</td>
-<td class="comment-1" rowspan="2">D = *HL++</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -170,7 +210,7 @@ Used by the routine at <a href="8F5F.html">main_loop_23</a>.
 <td class="asm-label"></td>
 <td class="address-1"><span id="36934"></span>9046</td>
 <td class="instruction">LD A,(HL)</td>
-<td class="comment-1" rowspan="2">A = *HL++</td>
+<td class="comment-1" rowspan="4">HL = wordat(HL)  -- address of routine</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -181,19 +221,27 @@ Used by the routine at <a href="8F5F.html">main_loop_23</a>.
 <td class="asm-label"></td>
 <td class="address-1"><span id="36936"></span>9048</td>
 <td class="instruction">LD H,(HL)</td>
-<td class="comment-1" rowspan="1">H = *HL</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="36937"></span>9049</td>
 <td class="instruction">LD L,A</td>
-<td class="comment-1" rowspan="1">L = A</td>
+</tr>
+<tr>
+<td class="routine-comment" colspan="5">
+<span id="36938"></span>
+<div class="comments">
+<div class="paragraph">
+<span class="register">B</span> is used in the routines, what is it here? It must be passed in.
+</div>
+</div>
+</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="36938"></span>904A</td>
 <td class="instruction">JP (HL)</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="1">Indirect jump  -- Call <a href="916C.html">draw_stretchy_object_left</a> <a href="916C.html#37233">draw_stretchy_object_right</a> <a href="924D.html">draw_tunnel_light_left</a> <a href="924D.html#37458">draw_tunnel_light_right</a> <a href="92E1.html">draw_object_right</a> etc.</td>
 </tr>
 <tr>
 <td class="asm-label">return_904B</td>
@@ -214,7 +262,7 @@ Used by the routine at <a href="8F5F.html">main_loop_23</a>.
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="36943"></span>904F</td>
-<td class="instruction">JP <a href="8F5F.html#36797">main_loop_23_3</a></td>
+<td class="instruction">JP <a href="8F5F.html#36797">main_loop_23_2</a></td>
 <td class="comment-1" rowspan="1">Loop?</td>
 </tr>
 </table>
@@ -230,7 +278,7 @@ Next: <a href="9052.html">9052</a>
 </tr>
 </table>
 <footer>
-<div class="release">The incomplete Chase H.Q. disassembly 20230518</div>
+<div class="release">The incomplete Chase H.Q. disassembly 20231102</div>
 <div class="copyright">&copy; 1988 Taito Corporation &copy; 1989 Ocean Software Ltd. (Chase H.Q.) © 2023 David Thomas (this disassembly)</div>
 <div class="created">Created using <a href="https://skoolkit.ca">SkoolKit</a> 8.9.</div>
 </footer>

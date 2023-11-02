@@ -23,7 +23,7 @@ Next: <a href="8A36.html">8A36</a>
 </td>
 </tr>
 </table>
-<div class="description">8A0F: Sound effect - "pitt" and "pfff"</div>
+<div class="description">8A0F: Sound effect - cornering</div>
 <table class="disassembly">
 <tr>
 <td class="routine-comment" colspan="5">
@@ -45,7 +45,7 @@ Next: <a href="8A36.html">8A36</a>
 </td>
 </tr>
 <tr>
-<td class="asm-label">sfx8a0f</td>
+<td class="asm-label">sfx_cornering</td>
 <td class="address-2"><span id="35343"></span>8A0F</td>
 <td class="instruction">LD A,$00</td>
 <td class="comment-1" rowspan="1">Half duty cycle</td>
@@ -67,13 +67,13 @@ Next: <a href="8A36.html">8A36</a>
 <td class="instruction">RET NZ</td>
 </tr>
 <tr>
-<td class="asm-label">sfx8a0f_loop_outer</td>
+<td class="asm-label">sfx_cornering_loop_outer</td>
 <td class="address-2"><span id="35351"></span>8A17</td>
 <td class="instruction">LD C,E</td>
 <td class="comment-1" rowspan="1">Set inner loop counter</td>
 </tr>
 <tr>
-<td class="asm-label">sfx8a0f_loop_inner</td>
+<td class="asm-label">sfx_cornering_loop_inner</td>
 <td class="address-2"><span id="35352"></span>8A18</td>
 <td class="instruction">CALL <a href="9618.html#38427">rng</a></td>
 <td class="comment-1" rowspan="1">Call rng</td>
@@ -87,8 +87,8 @@ Next: <a href="8A36.html">8A36</a>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="35357"></span>8A1D</td>
-<td class="instruction">JR Z,<a href="8A0F.html#35375">sfx8a0f_continue</a></td>
-<td class="comment-1" rowspan="1">If zero goto sfx8a0f_continue</td>
+<td class="instruction">JR Z,<a href="8A0F.html#35375">sfx_cornering_continue</a></td>
+<td class="comment-1" rowspan="1">If zero goto sfx_cornering_continue</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -107,9 +107,9 @@ Next: <a href="8A36.html">8A36</a>
 <td class="instruction">LD B,A</td>
 </tr>
 <tr>
-<td class="asm-label">sfx8a0f_0</td>
+<td class="asm-label">sfx_cornering_0</td>
 <td class="address-2"><span id="35363"></span>8A23</td>
-<td class="instruction">DJNZ <a href="8A0F.html#35363">sfx8a0f_0</a></td>
+<td class="instruction">DJNZ <a href="8A0F.html#35363">sfx_cornering_0</a></td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -130,9 +130,9 @@ Next: <a href="8A36.html">8A36</a>
 <td class="comment-1" rowspan="2">Delay loop of <span class="register">D</span> iterations</td>
 </tr>
 <tr>
-<td class="asm-label">sfx8a0f_1</td>
+<td class="asm-label">sfx_cornering_1</td>
 <td class="address-2"><span id="35370"></span>8A2A</td>
-<td class="instruction">DJNZ <a href="8A0F.html#35370">sfx8a0f_1</a></td>
+<td class="instruction">DJNZ <a href="8A0F.html#35370">sfx_cornering_1</a></td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -146,26 +146,26 @@ Next: <a href="8A36.html">8A36</a>
 <td class="instruction">OUT ($FE),A</td>
 </tr>
 <tr>
-<td class="asm-label">sfx8a0f_continue</td>
+<td class="asm-label">sfx_cornering_continue</td>
 <td class="address-2"><span id="35375"></span>8A2F</td>
 <td class="instruction">DEC C</td>
-<td class="comment-1" rowspan="2">Loop while <span class="register">C</span></td>
+<td class="comment-1" rowspan="2">Loop while <span class="register">C</span> &gt; 0</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="35376"></span>8A30</td>
-<td class="instruction">JR NZ,<a href="8A0F.html#35352">sfx8a0f_loop_inner</a></td>
+<td class="instruction">JR NZ,<a href="8A0F.html#35352">sfx_cornering_loop_inner</a></td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="35378"></span>8A32</td>
 <td class="instruction">DEC D</td>
-<td class="comment-1" rowspan="2">Loop while <span class="register">D</span></td>
+<td class="comment-1" rowspan="2">Loop while <span class="register">D</span> &gt; 0</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="35379"></span>8A33</td>
-<td class="instruction">JR NZ,<a href="8A0F.html#35351">sfx8a0f_loop_outer</a></td>
+<td class="instruction">JR NZ,<a href="8A0F.html#35351">sfx_cornering_loop_outer</a></td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -186,7 +186,7 @@ Next: <a href="8A36.html">8A36</a>
 </tr>
 </table>
 <footer>
-<div class="release">The incomplete Chase H.Q. disassembly 20230518</div>
+<div class="release">The incomplete Chase H.Q. disassembly 20231102</div>
 <div class="copyright">&copy; 1988 Taito Corporation &copy; 1989 Ocean Software Ltd. (Chase H.Q.) © 2023 David Thomas (this disassembly)</div>
 <div class="created">Created using <a href="https://skoolkit.ca">SkoolKit</a> 8.9.</div>
 </footer>

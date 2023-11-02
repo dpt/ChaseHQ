@@ -38,7 +38,7 @@ Used by the routines at <a href="8401.html">main_loop</a>, <a href="852A.html">c
 <td class="asm-label">tunnel_setup</td>
 <td class="address-2"><span id="49377"></span>C0E1</td>
 <td class="instruction">LD A,($C161)</td>
-<td class="comment-1" rowspan="1">Read 'LD A,x' at $C160 (tunnel drawing code)</td>
+<td class="comment-1" rowspan="1">Read 'LD A,x' @ <a href="C15B.html#49504">C160</a> (tunnel drawing code)</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -50,7 +50,7 @@ Used by the routines at <a href="8401.html">main_loop</a>, <a href="852A.html">c
 <td class="asm-label"></td>
 <td class="address-1"><span id="49381"></span>C0E5</td>
 <td class="instruction">LD A,($C890)</td>
-<td class="comment-1" rowspan="1">Read 'LD A,x' at $C88F (TBD)</td>
+<td class="comment-1" rowspan="1">Read 'LD A,x' @ <a href="C598.html#51343">C88F</a> (TBD)</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -106,25 +106,25 @@ Tunnel hasn't appeared.
 <td class="asm-label"></td>
 <td class="address-1"><span id="49395"></span>C0F3</td>
 <td class="instruction">LD ($8F82),A</td>
-<td class="comment-1" rowspan="1">$8F82 = NOP (instruction)</td>
+<td class="comment-1" rowspan="1"><a href="8F5F.html#36738">8F82</a> = NOP (instruction)</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="49398"></span>C0F6</td>
 <td class="instruction">LD ($8F83),HL</td>
-<td class="comment-1" rowspan="1">$8F83 &amp; $8F84 = NOP (instruction)</td>
+<td class="comment-1" rowspan="1"><a href="8F5F.html#36739">8F83</a> &amp; <a href="8F5F.html#36740">8F84</a> = NOP (instruction)</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="49401"></span>C0F9</td>
 <td class="instruction">LD ($8FA7),A</td>
-<td class="comment-1" rowspan="1">$8FA7 = NOP (instruction)</td>
+<td class="comment-1" rowspan="1"><a href="8F5F.html#36775">8FA7</a> = NOP (instruction)</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="49404"></span>C0FC</td>
 <td class="instruction">LD ($8FA8),HL</td>
-<td class="comment-1" rowspan="1">$8FA8 &amp; $8FA9 = NOP (instruction)</td>
+<td class="comment-1" rowspan="1"><a href="8F5F.html#36776">8FA8</a> &amp; <a href="8F5F.html#36777">8FA9</a> = NOP (instruction)</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -406,7 +406,7 @@ Tunnel has appeared.
 <td class="asm-label"></td>
 <td class="address-1"><span id="49468"></span>C13C</td>
 <td class="instruction">LD ($C15E),A</td>
-<td class="comment-1" rowspan="1">Self modify 'CP x' at $C15D  [15 when tunnel is small, 6 when fills screen]</td>
+<td class="comment-1" rowspan="1">Self modify 'CP x' @ <a href="C15B.html#49501">C15D</a>  [15 when tunnel is small, 6 when fills screen]</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -418,7 +418,7 @@ Tunnel has appeared.
 <td class="asm-label"></td>
 <td class="address-1"><span id="49473"></span>C141</td>
 <td class="instruction">LD ($C161),A</td>
-<td class="comment-1" rowspan="1">Self modify 'LD A,x' at $C160</td>
+<td class="comment-1" rowspan="1">Self modify 'LD A,x' @ <a href="C15B.html#49504">C160</a></td>
 </tr>
 <tr>
 <td class="asm-label">tunnel_setup_1</td>
@@ -430,13 +430,13 @@ Tunnel has appeared.
 <td class="asm-label"></td>
 <td class="address-1"><span id="49478"></span>C146</td>
 <td class="instruction">LD ($C2B9),A</td>
-<td class="comment-1" rowspan="1">Self modify 'LD A,x' at $C2B8</td>
+<td class="comment-1" rowspan="1">Self modify 'LD A,x' @ <a href="C15B.html#49848">C2B8</a></td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="49481"></span>C149</td>
 <td class="instruction">LD HL,$C15B</td>
-<td class="comment-1" rowspan="6">Self modify $8F82 and $8FA7 to be CALL &lt;tunnel drawing code&gt;</td>
+<td class="comment-1" rowspan="6">Self modify <a href="8F5F.html#36738">8F82</a> and <a href="8F5F.html#36775">8FA7</a> to be CALL &lt;tunnel drawing code&gt;</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -482,7 +482,7 @@ Next: <a href="C15B.html">C15B</a>
 </tr>
 </table>
 <footer>
-<div class="release">The incomplete Chase H.Q. disassembly 20230518</div>
+<div class="release">The incomplete Chase H.Q. disassembly 20231102</div>
 <div class="copyright">&copy; 1988 Taito Corporation &copy; 1989 Ocean Software Ltd. (Chase H.Q.) © 2023 David Thomas (this disassembly)</div>
 <div class="created">Created using <a href="https://skoolkit.ca">SkoolKit</a> 8.9.</div>
 </footer>

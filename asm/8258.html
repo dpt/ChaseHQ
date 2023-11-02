@@ -19,17 +19,17 @@ Prev: <a href="8204.html">8204</a>
 </td>
 <td class="up">Up: <a href="../maps/all.html#33368">Map</a></td>
 <td class="next">
-Next: <a href="837A.html">837A</a>
+Next: <a href="837C.html">837C</a>
 </td>
 </tr>
 </table>
-<div class="description">8258: Attract mode -- keyscan / cpu driver / text</div>
+<div class="description">8258: Attract mode</div>
 <table class="disassembly">
 <tr>
 <td class="routine-comment" colspan="5">
 <div class="details">
 <div class="paragraph">
-Used by the routine at <a href="83B5.html">unknown_hook_1</a>.
+Used by the routine at <a href="83B5.html">start_siren_hook</a>.
 </div>
 </div>
 </td>
@@ -38,7 +38,7 @@ Used by the routine at <a href="83B5.html">unknown_hook_1</a>.
 <td class="asm-label">attract_mode</td>
 <td class="address-2"><span id="33368"></span>8258</td>
 <td class="instruction">LD HL,$5D2B</td>
-<td class="comment-1" rowspan="1">HL -&gt; attract_data</td>
+<td class="comment-1" rowspan="1"><span class="register">HL</span> -&gt; attract_data</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -96,7 +96,7 @@ Used by the routine at <a href="83B5.html">unknown_hook_1</a>.
 <span id="33393"></span>
 <div class="comments">
 <div class="paragraph">
-This entry point is used by the routine at <a href="F220.html">load_stage_128k</a>.
+This entry point is used by the routine at <a href="F220.html">page_in_stage_128k</a>.
 </div>
 </div>
 </td>
@@ -105,7 +105,7 @@ This entry point is used by the routine at <a href="F220.html">load_stage_128k</
 <td class="asm-label">attract_mode_1</td>
 <td class="address-2"><span id="33393"></span>8271</td>
 <td class="instruction">LD HL,$82A6</td>
-<td class="comment-1" rowspan="1">HL = attract mode messages "CHASE HQ" "PRESS GEAR TO PLAY" ...</td>
+<td class="comment-1" rowspan="1"><span class="register">HL</span> -&gt; attract mode messages "CHASE HQ" "PRESS GEAR TO PLAY" ...</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -114,32 +114,54 @@ This entry point is used by the routine at <a href="F220.html">load_stage_128k</
 <td class="comment-1" rowspan="1">Number of messages?</td>
 </tr>
 <tr>
+<td class="routine-comment" colspan="5">
+<span id="33398"></span>
+<div class="comments">
+<div class="paragraph">
+Blink "PRESS GEAR TO PLAY".
+</div>
+</div>
+</td>
+</tr>
+<tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="33398"></span>8276</td>
 <td class="instruction">LD A,$F0</td>
-<td class="comment-1" rowspan="3">Causes blinking of "PRESS GEAR TO PLAY"</td>
+<td class="comment-1" rowspan="1">A = &lt;initally $F0, self modified&gt;</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="33400"></span>8278</td>
 <td class="instruction">RRCA</td>
+<td class="comment-1" rowspan="1">Rotate</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="33401"></span>8279</td>
 <td class="instruction">LD ($8277),A</td>
+<td class="comment-1" rowspan="1">Self modify above</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="33404"></span>827C</td>
 <td class="instruction">JR C,<a href="8258.html#33407">attract_mode_2</a></td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="1">If carry set the hide the final message</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="33406"></span>827E</td>
 <td class="instruction">INC B</td>
-<td class="comment-1" rowspan="1">nmessages++</td>
+<td class="comment-1" rowspan="1">Otherwise include it</td>
+</tr>
+<tr>
+<td class="routine-comment" colspan="5">
+<span id="33407"></span>
+<div class="comments">
+<div class="paragraph">
+Display 'B' messages.
+</div>
+</div>
+</td>
 </tr>
 <tr>
 <td class="asm-label">attract_mode_2</td>
@@ -157,13 +179,13 @@ This entry point is used by the routine at <a href="F220.html">load_stage_128k</
 <td class="asm-label"></td>
 <td class="address-1"><span id="33411"></span>8283</td>
 <td class="instruction">DJNZ <a href="8258.html#33407">attract_mode_2</a></td>
-<td class="comment-1" rowspan="1">Loop while B &gt; 0</td>
+<td class="comment-1" rowspan="1">Loop while <span class="register">B</span> &gt; 0</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="33413"></span>8285</td>
 <td class="instruction">LD A,($A231)</td>
-<td class="comment-1" rowspan="3">Attribute related</td>
+<td class="comment-1" rowspan="3">Jump if transition_control &gt; 0</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -402,7 +424,7 @@ Alternate between credits and copyright messages.
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="33542"></span>8306</td>
-<td class="instruction">DEFW <a href="F0C6.html">$F0C6</a></td>
+<td class="instruction">DEFW <a href="F0C6.html">noise</a></td>
 <td class="comment-1" rowspan="1">Back buffer address</td>
 </tr>
 <tr>
@@ -522,7 +544,7 @@ Alternate between credits and copyright messages.
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="33635"></span>8363</td>
-<td class="instruction">DEFW <a href="F0C6.html">$F0C6</a></td>
+<td class="instruction">DEFW <a href="F0C6.html">noise</a></td>
 <td class="comment-1" rowspan="1">Back buffer address</td>
 </tr>
 <tr>
@@ -537,6 +559,18 @@ Alternate between credits and copyright messages.
 <td class="instruction">DEFM "ALL RIGHTS RESERVE",$C4</td>
 <td class="comment-1" rowspan="1">"ALL RIGHTS RESERVED"</td>
 </tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="33658"></span>837A</td>
+<td class="instruction">DEFB $03</td>
+<td class="comment-1" rowspan="1"></td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="33659"></span>837B</td>
+<td class="instruction">DEFB $00</td>
+<td class="comment-1" rowspan="1"></td>
+</tr>
 </table>
 <table class="asm-navigation">
 <tr>
@@ -545,12 +579,12 @@ Prev: <a href="8204.html">8204</a>
 </td>
 <td class="up">Up: <a href="../maps/all.html#33368">Map</a></td>
 <td class="next">
-Next: <a href="837A.html">837A</a>
+Next: <a href="837C.html">837C</a>
 </td>
 </tr>
 </table>
 <footer>
-<div class="release">The incomplete Chase H.Q. disassembly 20230518</div>
+<div class="release">The incomplete Chase H.Q. disassembly 20231102</div>
 <div class="copyright">&copy; 1988 Taito Corporation &copy; 1989 Ocean Software Ltd. (Chase H.Q.) © 2023 David Thomas (this disassembly)</div>
 <div class="created">Created using <a href="https://skoolkit.ca">SkoolKit</a> 8.9.</div>
 </footer>

@@ -23,7 +23,7 @@ Next: <a href="8C3A.html">8C3A</a>
 </td>
 </tr>
 </table>
-<div class="description">8A57: Handle perp caught.</div>
+<div class="description">8A57: Handle perp caught</div>
 <table class="disassembly">
 <tr>
 <td class="routine-comment" colspan="5">
@@ -126,12 +126,12 @@ This handles slowing cars down to a stop and calculating and displaying the bonu
 <td class="asm-label"></td>
 <td class="address-1"><span id="35440"></span>8A70</td>
 <td class="instruction">DEC A</td>
-<td class="comment-1" rowspan="2">Jump to hpc_stage5 if perp_caught_stage is five</td>
+<td class="comment-1" rowspan="2">Jump to hpc_start_stage_6 if perp_caught_stage is five</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="35441"></span>8A71</td>
-<td class="instruction">JR Z,<a href="8A57.html#35454">hpc_stage5</a></td>
+<td class="instruction">JR Z,<a href="8A57.html#35454">hpc_start_stage_6</a></td>
 </tr>
 <tr>
 <td class="routine-comment" colspan="5">
@@ -147,7 +147,7 @@ Otherwise all of the caught stages are complete and we can move on to the next s
 <td class="asm-label"></td>
 <td class="address-1"><span id="35443"></span>8A73</td>
 <td class="instruction">POP HL</td>
-<td class="comment-1" rowspan="1">[Where's the PUSH?]</td>
+<td class="comment-1" rowspan="1">Throw away the return address to bypass the remainder of main_loop</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -173,7 +173,7 @@ Otherwise all of the caught stages are complete and we can move on to the next s
 <td class="comment-1" rowspan="1">Jump to main_loop</td>
 </tr>
 <tr>
-<td class="asm-label">hpc_stage5</td>
+<td class="asm-label">hpc_start_stage_6</td>
 <td class="address-2"><span id="35454"></span>8A7E</td>
 <td class="instruction">LD A,$06</td>
 <td class="comment-1" rowspan="2">perp_caught_stage = 6</td>
@@ -199,13 +199,13 @@ Otherwise all of the caught stages are complete and we can move on to the next s
 <td class="asm-label">hpc_stage2</td>
 <td class="address-2"><span id="35464"></span>8A88</td>
 <td class="instruction">LD A,($A22A)</td>
-<td class="comment-1" rowspan="1">A = *$A22A</td>
+<td class="comment-1" rowspan="1">A = var_a22a</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="35467"></span>8A8B</td>
 <td class="instruction">CP $10</td>
-<td class="comment-1" rowspan="2">Jump to $8AB2 if A &gt;= 16</td>
+<td class="comment-1" rowspan="2">Jump to <a href="8A57.html#35506">handle_perp_caught_1</a> if A &gt;= 16</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -216,7 +216,7 @@ Otherwise all of the caught stages are complete and we can move on to the next s
 <td class="asm-label"></td>
 <td class="address-1"><span id="35471"></span>8A8F</td>
 <td class="instruction">ADD A,$04</td>
-<td class="comment-1" rowspan="2">$A22A = A + 4</td>
+<td class="comment-1" rowspan="2">var_a22a = A + 4</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -266,7 +266,7 @@ Otherwise all of the caught stages are complete and we can move on to the next s
 <td class="asm-label"></td>
 <td class="address-1"><span id="35490"></span>8AA2</td>
 <td class="instruction">JR C,<a href="8A57.html#35493">handle_perp_caught_0</a></td>
-<td class="comment-1" rowspan="1">Jump to $8AA5 if HL &lt; $126  -- Suspect this is driving the car to stop the perp</td>
+<td class="comment-1" rowspan="1">Jump to <a href="8A57.html#35493">handle_perp_caught_0</a> if HL &lt; $126  -- Suspect this is driving the car to stop the perp</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -341,7 +341,7 @@ Otherwise all of the caught stages are complete and we can move on to the next s
 <td class="asm-label">hpc_stage3</td>
 <td class="address-2"><span id="35518"></span>8ABE</td>
 <td class="instruction">LD A,$00</td>
-<td class="comment-1" rowspan="1">Self modified by $8AB8</td>
+<td class="comment-1" rowspan="1">Self modified by <a href="8A57.html#35512">8AB8</a></td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -353,7 +353,7 @@ Otherwise all of the caught stages are complete and we can move on to the next s
 <td class="asm-label"></td>
 <td class="address-1"><span id="35521"></span>8AC1</td>
 <td class="instruction">LD ($8ABF),A</td>
-<td class="comment-1" rowspan="1">Self modify 'LD A' at $8ABE to load A</td>
+<td class="comment-1" rowspan="1">Self modify 'LD A' @ <a href="8A57.html#35518">hpc_stage3</a> to load A</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -376,7 +376,7 @@ Otherwise all of the caught stages are complete and we can move on to the next s
 <td class="asm-label"></td>
 <td class="address-1"><span id="35530"></span>8ACA</td>
 <td class="instruction">LD HL,($5D06)</td>
-<td class="comment-1" rowspan="1">HL = *$5D06   -- arrest messages</td>
+<td class="comment-1" rowspan="1">Point <span class="register">HL</span> at addrof_arrest_messages</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -394,7 +394,7 @@ Otherwise all of the caught stages are complete and we can move on to the next s
 <td class="asm-label">hpc_stage4</td>
 <td class="address-2"><span id="35538"></span>8AD2</td>
 <td class="instruction">LD A,($A139)</td>
-<td class="comment-1" rowspan="3">Call relocated f39f_128k if $A139 is non-zero [128K]</td>
+<td class="comment-1" rowspan="3">Call relocated f39f_128k if in 128K mode</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -426,7 +426,7 @@ Otherwise all of the caught stages are complete and we can move on to the next s
 <td class="asm-label"></td>
 <td class="address-1"><span id="35550"></span>8ADE</td>
 <td class="instruction">LD A,($A139)</td>
-<td class="comment-1" rowspan="3">Call relocated f39f_128k if $A139 is non-zero [128K]</td>
+<td class="comment-1" rowspan="3">Call relocated f39f_128k if in 128K mode</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -491,7 +491,7 @@ Calculate clear bonus.
 <td class="asm-label"></td>
 <td class="address-1"><span id="35570"></span>8AF2</td>
 <td class="instruction">LD A,($8006)</td>
-<td class="comment-1" rowspan="1">A = *$8006</td>
+<td class="comment-1" rowspan="1">Load retry_count</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -689,7 +689,7 @@ Calculate clear bonus.
 <td class="asm-label"></td>
 <td class="address-1"><span id="35634"></span>8B32</td>
 <td class="instruction">DJNZ <a href="8A57.html#35630">hpc_increment_score_loop_1</a></td>
-<td class="comment-1" rowspan="1">Loop while B</td>
+<td class="comment-1" rowspan="1">Loop while <span class="register">B</span> &gt; 0</td>
 </tr>
 <tr>
 <td class="asm-label">handle_perp_caught_3</td>
@@ -754,7 +754,7 @@ Calculate clear bonus.
 <td class="asm-label"></td>
 <td class="address-1"><span id="35654"></span>8B46</td>
 <td class="instruction">DJNZ <a href="8A57.html#35650">hpc_increment_score_loop_2</a></td>
-<td class="comment-1" rowspan="1">Loop while B</td>
+<td class="comment-1" rowspan="1">Loop while <span class="register">B</span> &gt; 0</td>
 </tr>
 <tr>
 <td class="asm-label">handle_perp_caught_4</td>
@@ -1082,7 +1082,7 @@ Calculate clear bonus.
 <td class="asm-label"></td>
 <td class="address-1"><span id="35757"></span>8BAD</td>
 <td class="instruction">JR NC,<a href="8A57.html#35770">handle_perp_caught_11</a></td>
-<td class="comment-1" rowspan="1">Jump to $8BBA if HL &gt;= DE</td>
+<td class="comment-1" rowspan="1">Jump to <a href="8A57.html#35770">handle_perp_caught_11</a> if HL &gt;= DE</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -1291,7 +1291,7 @@ Calculate clear bonus.
 <td class="asm-label"></td>
 <td class="address-1"><span id="35832"></span>8BF8</td>
 <td class="instruction">DJNZ <a href="8A57.html#35830">handle_perp_caught_13</a></td>
-<td class="comment-1" rowspan="1">Loop while B</td>
+<td class="comment-1" rowspan="1">Loop while <span class="register">B</span> &gt; 0</td>
 </tr>
 <tr>
 <td class="asm-label">handle_perp_caught_14</td>
@@ -1492,7 +1492,7 @@ Next: <a href="8C3A.html">8C3A</a>
 </tr>
 </table>
 <footer>
-<div class="release">The incomplete Chase H.Q. disassembly 20230518</div>
+<div class="release">The incomplete Chase H.Q. disassembly 20231102</div>
 <div class="copyright">&copy; 1988 Taito Corporation &copy; 1989 Ocean Software Ltd. (Chase H.Q.) © 2023 David Thomas (this disassembly)</div>
 <div class="created">Created using <a href="https://skoolkit.ca">SkoolKit</a> 8.9.</div>
 </footer>

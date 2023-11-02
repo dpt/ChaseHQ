@@ -35,10 +35,10 @@ Used by the routine at <a href="8401.html">main_loop</a>.
 </td>
 </tr>
 <tr>
-<td class="asm-label">main_loop_27</td>
+<td class="asm-label">road_handling_setup</td>
 <td class="address-2"><span id="47977"></span>BB69</td>
 <td class="instruction">LD A,($A268)</td>
-<td class="comment-1" rowspan="3">Return if $A268 is zero</td>
+<td class="comment-1" rowspan="3">Return if (var_a267 &amp; $FF00) is zero</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -64,7 +64,7 @@ Used by the routine at <a href="8401.html">main_loop</a>.
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="47986"></span>BB72</td>
-<td class="instruction">JR Z,<a href="BB69.html#48033">main_loop_27_0</a></td>
+<td class="instruction">JR Z,<a href="BB69.html#48033">road_handling_setup_0</a></td>
 <td class="comment-1" rowspan="1">Jump if A is zero (right fork taken)</td>
 </tr>
 <tr>
@@ -99,13 +99,13 @@ Set up left route.
 <td class="asm-label"></td>
 <td class="address-1"><span id="47995"></span>BB7B</td>
 <td class="instruction">LD ($A276),HL</td>
-<td class="comment-1" rowspan="1">road_leftside_ptr  = $E2D9</td>
+<td class="comment-1" rowspan="1">road_leftside_ptr  = <a href="E2C6.html#58073">roadsplit_leftobjs</a></td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="47998"></span>BB7E</td>
 <td class="instruction">LD HL,$E2D5</td>
-<td class="comment-1" rowspan="2">road_rightside_ptr = $E2D5</td>
+<td class="comment-1" rowspan="2">road_rightside_ptr = <a href="E2C6.html#58069">roadsplit_rightobjs</a></td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -116,7 +116,7 @@ Set up left route.
 <td class="asm-label"></td>
 <td class="address-1"><span id="48004"></span>BB84</td>
 <td class="instruction">LD HL,$E2E7</td>
-<td class="comment-1" rowspan="2">road_lanes_ptr     = $E2E7</td>
+<td class="comment-1" rowspan="2">road_lanes_ptr     = <a href="E2C6.html#58087">something_lanes_2</a></td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -188,7 +188,7 @@ Set up right route.
 </td>
 </tr>
 <tr>
-<td class="asm-label">main_loop_27_0</td>
+<td class="asm-label">road_handling_setup_0</td>
 <td class="address-2"><span id="48033"></span>BBA1</td>
 <td class="instruction">LD DE,$0403</td>
 <td class="comment-1" rowspan="1">DE = $0403 (super super hard right?, 3?)</td>
@@ -203,7 +203,7 @@ Set up right route.
 <td class="asm-label"></td>
 <td class="address-1"><span id="48037"></span>BBA5</td>
 <td class="instruction">LD HL,$E2D5</td>
-<td class="comment-1" rowspan="2">road_leftside_ptr  = $E2D5</td>
+<td class="comment-1" rowspan="2">road_leftside_ptr  = <a href="E2C6.html#58069">roadsplit_rightobjs</a></td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -214,7 +214,7 @@ Set up right route.
 <td class="asm-label"></td>
 <td class="address-1"><span id="48043"></span>BBAB</td>
 <td class="instruction">LD HL,$E2D9</td>
-<td class="comment-1" rowspan="2">road_rightside_ptr = $E2D9</td>
+<td class="comment-1" rowspan="2">road_rightside_ptr = <a href="E2C6.html#58073">roadsplit_leftobjs</a></td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -225,7 +225,7 @@ Set up right route.
 <td class="asm-label"></td>
 <td class="address-1"><span id="48049"></span>BBB1</td>
 <td class="instruction">LD HL,$E2F3</td>
-<td class="comment-1" rowspan="2">road_lanes_ptr     = $E2F3</td>
+<td class="comment-1" rowspan="2">road_lanes_ptr     = <a href="E2C6.html#58099">something_lanes_3</a></td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -326,7 +326,7 @@ Set up right route.
 <td class="asm-label"></td>
 <td class="address-1"><span id="48099"></span>BBE3</td>
 <td class="instruction">LD HL,$E2DD</td>
-<td class="comment-1" rowspan="2">road_curvature_ptr = $E2DD</td>
+<td class="comment-1" rowspan="2">road_curvature_ptr = <a href="E2C6.html#58077">something_curvature</a></td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -337,7 +337,7 @@ Set up right route.
 <td class="asm-label"></td>
 <td class="address-1"><span id="48105"></span>BBE9</td>
 <td class="instruction">LD HL,$E2E2</td>
-<td class="comment-1" rowspan="2">road_height_ptr    = $E2E2</td>
+<td class="comment-1" rowspan="2">road_height_ptr    = <a href="E2C6.html#58082">something_height</a></td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -348,7 +348,7 @@ Set up right route.
 <td class="asm-label"></td>
 <td class="address-1"><span id="48111"></span>BBEF</td>
 <td class="instruction">LD HL,$E2D2</td>
-<td class="comment-1" rowspan="2">road_hazard_ptr    = $E2D2</td>
+<td class="comment-1" rowspan="2">road_hazard_ptr    = <a href="E2C6.html#58066">something_hazards</a></td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -377,7 +377,7 @@ Set up right route.
 <td class="asm-label"></td>
 <td class="address-1"><span id="48122"></span>BBFA</td>
 <td class="instruction">LD L,A</td>
-<td class="comment-1" rowspan="2">HL = $EE00 | A   -- curvature data [unsure why the code does this when $A240 seems to be the right value]</td>
+<td class="comment-1" rowspan="2">HL = $EE00 | A   -- curvature data [unsure why the code does this when <a href="A139.html#41536">road_buffer_offset</a> seems to be the right value]</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -391,7 +391,7 @@ Set up right route.
 <td class="comment-1" rowspan="4">Set the 32 bytes at <span class="register">HL</span> to <span class="register">D</span></td>
 </tr>
 <tr>
-<td class="asm-label">main_loop_27_1</td>
+<td class="asm-label">road_handling_setup_1</td>
 <td class="address-2"><span id="48127"></span>BBFF</td>
 <td class="instruction">LD (HL),D</td>
 </tr>
@@ -403,7 +403,7 @@ Set up right route.
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="48129"></span>BC01</td>
-<td class="instruction">DJNZ <a href="BB69.html#48127">main_loop_27_1</a></td>
+<td class="instruction">DJNZ <a href="BB69.html#48127">road_handling_setup_1</a></td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -422,7 +422,7 @@ Set up right route.
 <td class="instruction">LD B,$20</td>
 </tr>
 <tr>
-<td class="asm-label">main_loop_27_2</td>
+<td class="asm-label">road_handling_setup_2</td>
 <td class="address-2"><span id="48136"></span>BC08</td>
 <td class="instruction">LD (HL),E</td>
 </tr>
@@ -434,7 +434,7 @@ Set up right route.
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="48138"></span>BC0A</td>
-<td class="instruction">DJNZ <a href="BB69.html#48136">main_loop_27_2</a></td>
+<td class="instruction">DJNZ <a href="BB69.html#48136">road_handling_setup_2</a></td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -458,7 +458,7 @@ Set up right route.
 <td class="instruction">LD B,$20</td>
 </tr>
 <tr>
-<td class="asm-label">main_loop_27_3</td>
+<td class="asm-label">road_handling_setup_3</td>
 <td class="address-2"><span id="48145"></span>BC11</td>
 <td class="instruction">LD (HL),E</td>
 </tr>
@@ -470,7 +470,7 @@ Set up right route.
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="48147"></span>BC13</td>
-<td class="instruction">DJNZ <a href="BB69.html#48145">main_loop_27_3</a></td>
+<td class="instruction">DJNZ <a href="BB69.html#48145">road_handling_setup_3</a></td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -522,7 +522,7 @@ Set up right route.
 <td class="asm-label"></td>
 <td class="address-1"><span id="48169"></span>BC29</td>
 <td class="instruction">LD ($A269),A</td>
-<td class="comment-1" rowspan="1">$A269              = 0</td>
+<td class="comment-1" rowspan="1">var_a269           = 0</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -534,7 +534,7 @@ Set up right route.
 <td class="asm-label"></td>
 <td class="address-1"><span id="48175"></span>BC2F</td>
 <td class="instruction">LD ($A265),A</td>
-<td class="comment-1" rowspan="1">$A265              = 0</td>
+<td class="comment-1" rowspan="1">split_road         = 0</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -551,13 +551,13 @@ Set up right route.
 <td class="asm-label"></td>
 <td class="address-1"><span id="48182"></span>BC36</td>
 <td class="instruction">LD ($A16D),A</td>
-<td class="comment-1" rowspan="1">$A16D              = 1</td>
+<td class="comment-1" rowspan="1">var_a16d           = 1</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="48185"></span>BC39</td>
 <td class="instruction">LD ($A267),BC</td>
-<td class="comment-1" rowspan="1">$A267              = 0  [B &amp; C are zero here]</td>
+<td class="comment-1" rowspan="1">var_a267           = 0  [B &amp; C are zero here]</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -578,7 +578,7 @@ Next: <a href="BC3E.html">BC3E</a>
 </tr>
 </table>
 <footer>
-<div class="release">The incomplete Chase H.Q. disassembly 20230518</div>
+<div class="release">The incomplete Chase H.Q. disassembly 20231102</div>
 <div class="copyright">&copy; 1988 Taito Corporation &copy; 1989 Ocean Software Ltd. (Chase H.Q.) © 2023 David Thomas (this disassembly)</div>
 <div class="created">Created using <a href="https://skoolkit.ca">SkoolKit</a> 8.9.</div>
 </footer>

@@ -32,34 +32,34 @@ Next: <a href="9DF4.html">9DF4</a>
 </td>
 </tr>
 <tr>
-<td class="asm-label"></td>
+<td class="asm-label">bonus_string</td>
 <td class="address-2"><span id="40273"></span>9D51</td>
-<td class="instruction">DEFB $20,$20,$20,$20,$20,$A0</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="instruction">DEFM "     ",$A0</td>
+<td class="comment-1" rowspan="1">Bonus digits buffer</td>
 </tr>
 <tr>
 <td class="asm-label">hi</td>
 <td class="address-1"><span id="40279"></span>9D57</td>
 <td class="instruction">DEFM "H",$C9</td>
-<td class="comment-1" rowspan="1">"HI"</td>
+<td class="comment-1" rowspan="1">"HI" gear string</td>
 </tr>
 <tr>
 <td class="asm-label">lo</td>
 <td class="address-1"><span id="40281"></span>9D59</td>
 <td class="instruction">DEFM "L",$CF</td>
-<td class="comment-1" rowspan="1">"LO"</td>
+<td class="comment-1" rowspan="1">"LO" gear string</td>
 </tr>
 <tr>
 <td class="asm-label">stage</td>
 <td class="address-1"><span id="40283"></span>9D5B</td>
 <td class="instruction">DEFM "STAGE "</td>
-<td class="comment-1" rowspan="1">"STAGE " message shown in the score area.</td>
+<td class="comment-1" rowspan="1">"STAGE n" message shown in the score area</td>
 </tr>
 <tr>
 <td class="asm-label">stage_n</td>
 <td class="address-1"><span id="40289"></span>9D61</td>
 <td class="instruction">DEFB $A0</td>
-<td class="comment-1" rowspan="1"><a href="9D51.html#40289">stage_n</a> writes the current score number here in ASCII.</td>
+<td class="comment-1" rowspan="1"><a href="9D51.html#40289">stage_n</a> writes the current stage number here in ASCII.</td>
 </tr>
 <tr>
 <td class="routine-comment" colspan="5">
@@ -191,7 +191,7 @@ Clear the area - 5x7 bytes
 <td class="instruction">LD E,L</td>
 </tr>
 <tr>
-<td class="asm-label"></td>
+<td class="asm-label">bonus_string_0</td>
 <td class="address-2"><span id="40333"></span>9D8D</td>
 <td class="instruction">LD C,L</td>
 <td class="comment-1" rowspan="1">Preserve column</td>
@@ -257,7 +257,7 @@ Clear the area - 5x7 bytes
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="40345"></span>9D99</td>
-<td class="instruction">DJNZ $9D8D</td>
+<td class="instruction">DJNZ <a href="9D51.html#40333">bonus_string_0</a></td>
 <td class="comment-1" rowspan="1">Loop</td>
 </tr>
 <tr>
@@ -327,7 +327,7 @@ Clear the area - 5x7 bytes
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="40370"></span>9DB2</td>
-<td class="instruction">JR Z,$9DBA</td>
+<td class="instruction">JR Z,<a href="9D51.html#40378">bonus_string_1</a></td>
 <td class="comment-1" rowspan="1">Jump if <span class="register">C</span> is zero, using zero for attributes</td>
 </tr>
 <tr>
@@ -339,7 +339,7 @@ Clear the area - 5x7 bytes
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="40374"></span>9DB6</td>
-<td class="instruction">JR C,$9DBA</td>
+<td class="instruction">JR C,<a href="9D51.html#40378">bonus_string_1</a></td>
 <td class="comment-1" rowspan="1">Jump if odd</td>
 </tr>
 <tr>
@@ -349,7 +349,7 @@ Clear the area - 5x7 bytes
 <td class="comment-1" rowspan="1">Otherwise 46 =&gt; BRIGHT + yellow over black</td>
 </tr>
 <tr>
-<td class="asm-label"></td>
+<td class="asm-label">bonus_string_1</td>
 <td class="address-2"><span id="40378"></span>9DBA</td>
 <td class="instruction">LD HL,$5868</td>
 <td class="comment-1" rowspan="1">Point at attributes (8,3)</td>
@@ -361,7 +361,7 @@ Clear the area - 5x7 bytes
 <td class="comment-1" rowspan="4">Set them all to <span class="register">C</span></td>
 </tr>
 <tr>
-<td class="asm-label"></td>
+<td class="asm-label">bonus_string_2</td>
 <td class="address-2"><span id="40383"></span>9DBF</td>
 <td class="instruction">LD (HL),C</td>
 </tr>
@@ -373,7 +373,7 @@ Clear the area - 5x7 bytes
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="40385"></span>9DC1</td>
-<td class="instruction">DJNZ $9DBF</td>
+<td class="instruction">DJNZ <a href="9D51.html#40383">bonus_string_2</a></td>
 </tr>
 <tr>
 <td class="asm-label">us_gear</td>
@@ -425,7 +425,7 @@ Clear the area - 5x7 bytes
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="40404"></span>9DD4</td>
-<td class="instruction">JR Z,$9DD9</td>
+<td class="instruction">JR Z,<a href="9D51.html#40409">bonus_string_3</a></td>
 <td class="comment-1" rowspan="1">Jump to draw string if so</td>
 </tr>
 <tr>
@@ -435,7 +435,7 @@ Clear the area - 5x7 bytes
 <td class="comment-1" rowspan="1">Point HL at "HI"</td>
 </tr>
 <tr>
-<td class="asm-label"></td>
+<td class="asm-label">bonus_string_3</td>
 <td class="address-2"><span id="40409"></span>9DD9</td>
 <td class="instruction">CALL <a href="9F99.html#40867">draw_string</a></td>
 <td class="comment-1" rowspan="1">Draw string</td>
@@ -444,7 +444,7 @@ Clear the area - 5x7 bytes
 <td class="asm-label">us_lights</td>
 <td class="address-2"><span id="40412"></span>9DDC</td>
 <td class="instruction">LD A,($A22E)</td>
-<td class="comment-1" rowspan="2">C = &lt;sighted_flag&gt;</td>
+<td class="comment-1" rowspan="2">C = sighted_flag</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -510,7 +510,7 @@ Next: <a href="9DF4.html">9DF4</a>
 </tr>
 </table>
 <footer>
-<div class="release">The incomplete Chase H.Q. disassembly 20230518</div>
+<div class="release">The incomplete Chase H.Q. disassembly 20231102</div>
 <div class="copyright">&copy; 1988 Taito Corporation &copy; 1989 Ocean Software Ltd. (Chase H.Q.) © 2023 David Thomas (this disassembly)</div>
 <div class="created">Created using <a href="https://skoolkit.ca">SkoolKit</a> 8.9.</div>
 </footer>

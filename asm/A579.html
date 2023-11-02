@@ -79,7 +79,7 @@ Used by the routines at <a href="8401.html">main_loop</a>, <a href="852A.html">c
 <td class="asm-label"></td>
 <td class="address-1"><span id="42372"></span>A584</td>
 <td class="instruction">LD ($A60B),SP</td>
-<td class="comment-1" rowspan="1">Self modify 'LD SP' at $A60A to restore SP</td>
+<td class="comment-1" rowspan="1">Self modify 'LD SP' @ <a href="A579.html#42506">ml14_return</a> to restore SP</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -127,7 +127,7 @@ Used by the routines at <a href="8401.html">main_loop</a>, <a href="852A.html">c
 <td class="asm-label"></td>
 <td class="address-1"><span id="42393"></span>A599</td>
 <td class="instruction">LD A,($A265)</td>
-<td class="comment-1" rowspan="1">A = ($A265)  -- split road flag</td>
+<td class="comment-1" rowspan="1">A = split_road  -- split road flag</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -145,7 +145,7 @@ Used by the routines at <a href="8401.html">main_loop</a>, <a href="852A.html">c
 <td class="asm-label"></td>
 <td class="address-1"><span id="42400"></span>A5A0</td>
 <td class="instruction">LD A,($A266)</td>
-<td class="comment-1" rowspan="1">A = ($A266)  -- split road countdown</td>
+<td class="comment-1" rowspan="1">A = split_road_countdown</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -274,6 +274,16 @@ Used by the routines at <a href="8401.html">main_loop</a>, <a href="852A.html">c
 <td class="asm-label"></td>
 <td class="address-1"><span id="42433"></span>A5C1</td>
 <td class="instruction">LD H,A</td>
+</tr>
+<tr>
+<td class="routine-comment" colspan="5">
+<span id="42434"></span>
+<div class="comments">
+<div class="paragraph">
+Sampled HL = E869 E865 E863 E861
+</div>
+</div>
+</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -416,7 +426,7 @@ Used by the routines at <a href="8401.html">main_loop</a>, <a href="852A.html">c
 <td class="asm-label"></td>
 <td class="address-1"><span id="42468"></span>A5E4</td>
 <td class="instruction">LD A,($A266)</td>
-<td class="comment-1" rowspan="1">A = *$A266  -- split road countdown</td>
+<td class="comment-1" rowspan="1">A = split_road_countdown</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -434,7 +444,7 @@ Used by the routines at <a href="8401.html">main_loop</a>, <a href="852A.html">c
 <td class="asm-label">main_loop_14_4</td>
 <td class="address-2"><span id="42475"></span>A5EB</td>
 <td class="instruction">LD A,($A266)</td>
-<td class="comment-1" rowspan="3">A = ~*$A266 + 22</td>
+<td class="comment-1" rowspan="3">A = ~split_road_countdown + 22</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -582,7 +592,7 @@ Next: <a href="A60E.html">A60E</a>
 </tr>
 </table>
 <footer>
-<div class="release">The incomplete Chase H.Q. disassembly 20230518</div>
+<div class="release">The incomplete Chase H.Q. disassembly 20231102</div>
 <div class="copyright">&copy; 1988 Taito Corporation &copy; 1989 Ocean Software Ltd. (Chase H.Q.) © 2023 David Thomas (this disassembly)</div>
 <div class="created">Created using <a href="https://skoolkit.ca">SkoolKit</a> 8.9.</div>
 </footer>

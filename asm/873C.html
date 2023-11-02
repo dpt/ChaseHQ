@@ -15,7 +15,7 @@
 <table class="asm-navigation">
 <tr>
 <td class="prev">
-Prev: <a href="86F6.html">86F6</a>
+Prev: <a href="871A.html">871A</a>
 </td>
 <td class="up">Up: <a href="../maps/all.html#34620">Map</a></td>
 <td class="next">
@@ -88,7 +88,7 @@ Used by the routine at <a href="8401.html">main_loop</a>.
 <td class="asm-label"></td>
 <td class="address-1"><span id="34646"></span>8756</td>
 <td class="instruction">LD HL,($5D10)</td>
-<td class="comment-1" rowspan="2">Set $A191 to value of lods_table[2] (the perp's car)</td>
+<td class="comment-1" rowspan="2">Set $A191 to the perp's car LOD</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -99,7 +99,7 @@ Used by the routine at <a href="8401.html">main_loop</a>.
 <td class="asm-label"></td>
 <td class="address-1"><span id="34652"></span>875C</td>
 <td class="instruction">LD A,$FF</td>
-<td class="comment-1" rowspan="2">This stops $AD0D from running (collision detection?)</td>
+<td class="comment-1" rowspan="2">inhibit_collision_detection = $FF  -- Stops <a href="AD0D.html">sub_ad0d</a> from running</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -116,7 +116,7 @@ Used by the routine at <a href="8401.html">main_loop</a>.
 <td class="asm-label"></td>
 <td class="address-1"><span id="34660"></span>8764</td>
 <td class="instruction">CALL <a href="9945.html">chatter</a></td>
-<td class="comment-1" rowspan="1">Call chatter</td>
+<td class="comment-1" rowspan="1">Call chatter (priority $FF)</td>
 </tr>
 <tr>
 <td class="routine-comment" colspan="5">
@@ -196,13 +196,13 @@ Print "GAME OVER" once the transition has completed.
 <td class="asm-label"></td>
 <td class="address-1"><span id="34695"></span>8787</td>
 <td class="instruction">CALL <a href="AB9A.html">spawn_hazards</a></td>
-<td class="comment-1" rowspan="1">Call main_loop_16</td>
+<td class="comment-1" rowspan="1">Call spawn_hazards</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="34698"></span>878A</td>
-<td class="instruction">CALL <a href="ADA0.html">main_loop_19</a></td>
-<td class="comment-1" rowspan="1">Call main_loop_19</td>
+<td class="instruction">CALL <a href="ADA0.html">draw_hazards</a></td>
+<td class="comment-1" rowspan="1">Call draw_hazards</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -214,7 +214,7 @@ Print "GAME OVER" once the transition has completed.
 <td class="asm-label"></td>
 <td class="address-1"><span id="34704"></span>8790</td>
 <td class="instruction">CALL <a href="9D51.html#40290">update_scoreboard</a></td>
-<td class="comment-1" rowspan="1">Call main_loop_25</td>
+<td class="comment-1" rowspan="1">Call update_scoreboard</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -336,7 +336,7 @@ Print "GAME OVER" once the transition has completed.
 <td class="asm-label"></td>
 <td class="address-1"><span id="34759"></span>87C7</td>
 <td class="instruction">LD A,($963D)</td>
-<td class="comment-1" rowspan="3">Loop while chatter is still happening?</td>
+<td class="comment-1" rowspan="3">Loop while chatter_state &gt; 0 =&gt; chatter is still happening</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -392,7 +392,7 @@ Print "GAME OVER" once the transition has completed.
 <table class="asm-navigation">
 <tr>
 <td class="prev">
-Prev: <a href="86F6.html">86F6</a>
+Prev: <a href="871A.html">871A</a>
 </td>
 <td class="up">Up: <a href="../maps/all.html#34620">Map</a></td>
 <td class="next">
@@ -401,7 +401,7 @@ Next: <a href="87DC.html">87DC</a>
 </tr>
 </table>
 <footer>
-<div class="release">The incomplete Chase H.Q. disassembly 20230518</div>
+<div class="release">The incomplete Chase H.Q. disassembly 20231102</div>
 <div class="copyright">&copy; 1988 Taito Corporation &copy; 1989 Ocean Software Ltd. (Chase H.Q.) © 2023 David Thomas (this disassembly)</div>
 <div class="created">Created using <a href="https://skoolkit.ca">SkoolKit</a> 8.9.</div>
 </footer>

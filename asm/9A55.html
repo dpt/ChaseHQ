@@ -23,7 +23,7 @@ Next: <a href="9AAB.html">9AAB</a>
 </td>
 </tr>
 </table>
-<div class="description">9A55: Noise in/out effect</div>
+<div class="description">9A55: Noise in/out effect used for mugshots</div>
 <table class="disassembly">
 <tr>
 <td class="routine-comment" colspan="5">
@@ -47,7 +47,7 @@ Used by the routine at <a href="9965.html">drive_chatter</a>.
 <td class="asm-label">noise_effect</td>
 <td class="address-2"><span id="39509"></span>9A55</td>
 <td class="instruction">DEC A</td>
-<td class="comment-1" rowspan="2">Decrement the noise effect counter</td>
+<td class="comment-1" rowspan="2">Decrement noise_counter</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -71,7 +71,7 @@ This entry point is used by the routine at <a href="9965.html">drive_chatter</a>
 </td>
 </tr>
 <tr>
-<td class="asm-label">noise_effect_0</td>
+<td class="asm-label">ne_9a5c</td>
 <td class="address-2"><span id="39516"></span>9A5C</td>
 <td class="instruction">RRA</td>
 <td class="comment-1" rowspan="1">Shift A's bottom bit into carry</td>
@@ -80,7 +80,7 @@ This entry point is used by the routine at <a href="9965.html">drive_chatter</a>
 <td class="asm-label"></td>
 <td class="address-1"><span id="39517"></span>9A5D</td>
 <td class="instruction">LD A,$FF</td>
-<td class="comment-1" rowspan="1">A = 255</td>
+<td class="comment-1" rowspan="1">A = 255  -- plot_mini_font_1 flag?</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -91,7 +91,7 @@ This entry point is used by the routine at <a href="9965.html">drive_chatter</a>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="39521"></span>9A61</td>
-<td class="instruction">JR C,<a href="9A55.html#39528">noise_effect_1</a></td>
+<td class="instruction">JR C,<a href="9A55.html#39528">ne_9a68</a></td>
 <td class="comment-1" rowspan="2">If A on input was odd then jump</td>
 </tr>
 <tr>
@@ -102,17 +102,17 @@ This entry point is used by the routine at <a href="9965.html">drive_chatter</a>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="39526"></span>9A66</td>
-<td class="instruction">JR <a href="9A55.html#39531">noise_effect_2</a></td>
+<td class="instruction">JR <a href="9A55.html#39531">ne_9a6b</a></td>
 <td class="comment-1" rowspan="1">else call plot_mini_font_2 and continue at $9a6b</td>
 </tr>
 <tr>
-<td class="asm-label">noise_effect_1</td>
+<td class="asm-label">ne_9a68</td>
 <td class="address-2"><span id="39528"></span>9A68</td>
 <td class="instruction">CALL <a href="9AEC.html">plot_mini_font_1</a></td>
 <td class="comment-1" rowspan="1">Call plot_mini_font_1</td>
 </tr>
 <tr>
-<td class="asm-label">noise_effect_2</td>
+<td class="asm-label">ne_9a6b</td>
 <td class="address-2"><span id="39531"></span>9A6B</td>
 <td class="instruction">LD DE,$4036</td>
 <td class="comment-1" rowspan="1">Set plot address to (176,8)</td>
@@ -124,7 +124,7 @@ This entry point is used by the routine at <a href="9965.html">drive_chatter</a>
 <td class="comment-1" rowspan="2">B,C = 4 columns/bytes, 40 rows</td>
 </tr>
 <tr>
-<td class="asm-label">noise_effect_3</td>
+<td class="asm-label">ne_9a70</td>
 <td class="address-2"><span id="39536"></span>9A70</td>
 <td class="instruction">LD B,$04</td>
 </tr>
@@ -141,7 +141,7 @@ This entry point is used by the routine at <a href="9965.html">drive_chatter</a>
 <td class="comment-1" rowspan="1">Point <span class="register">HL</span> at noise_bytes</td>
 </tr>
 <tr>
-<td class="asm-label">noise_plot_loop</td>
+<td class="asm-label">ne_plot_loop</td>
 <td class="address-2"><span id="39542"></span>9A76</td>
 <td class="instruction">LD A,(HL)</td>
 <td class="comment-1" rowspan="2">A = *HL - B -- Subtract row counter (4,3,2,1)</td>
@@ -193,7 +193,7 @@ This entry point is used by the routine at <a href="9965.html">drive_chatter</a>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="39551"></span>9A7F</td>
-<td class="instruction">DJNZ <a href="9A55.html#39542">noise_plot_loop</a></td>
+<td class="instruction">DJNZ <a href="9A55.html#39542">ne_plot_loop</a></td>
 <td class="comment-1" rowspan="1">Loop while columns remain</td>
 </tr>
 <tr>
@@ -222,7 +222,7 @@ This entry point is used by the routine at <a href="9965.html">drive_chatter</a>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="39558"></span>9A86</td>
-<td class="instruction">JR NZ,<a href="9A55.html#39570">noise_effect_4</a></td>
+<td class="instruction">JR NZ,<a href="9A55.html#39570">noise_effect_0</a></td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -242,7 +242,7 @@ This entry point is used by the routine at <a href="9965.html">drive_chatter</a>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="39564"></span>9A8C</td>
-<td class="instruction">JR C,<a href="9A55.html#39570">noise_effect_4</a></td>
+<td class="instruction">JR C,<a href="9A55.html#39570">noise_effect_0</a></td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -260,7 +260,7 @@ This entry point is used by the routine at <a href="9965.html">drive_chatter</a>
 <td class="instruction">LD D,A</td>
 </tr>
 <tr>
-<td class="asm-label">noise_effect_4</td>
+<td class="asm-label">noise_effect_0</td>
 <td class="address-2"><span id="39570"></span>9A92</td>
 <td class="instruction">DEC C</td>
 <td class="comment-1" rowspan="2">Loop while rows remain</td>
@@ -268,7 +268,7 @@ This entry point is used by the routine at <a href="9965.html">drive_chatter</a>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="39571"></span>9A93</td>
-<td class="instruction">JP NZ,<a href="9A55.html#39536">noise_effect_3</a></td>
+<td class="instruction">JP NZ,<a href="9A55.html#39536">ne_9a70</a></td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -287,7 +287,7 @@ This entry point is used by the routine at <a href="9965.html">drive_chatter</a>
 </td>
 </tr>
 <tr>
-<td class="asm-label">noise_plot_attrs</td>
+<td class="asm-label">ne_plot_attrs</td>
 <td class="address-2"><span id="39576"></span>9A98</td>
 <td class="instruction">LD HL,$5836</td>
 <td class="comment-1" rowspan="1">Screen attribute position (22,1)</td>
@@ -305,7 +305,7 @@ This entry point is used by the routine at <a href="9965.html">drive_chatter</a>
 <td class="comment-1" rowspan="1">32 - 3 = row skip</td>
 </tr>
 <tr>
-<td class="asm-label">9aa0_loop</td>
+<td class="asm-label">ne_9a00_loop</td>
 <td class="address-2"><span id="39584"></span>9AA0</td>
 <td class="instruction">LD (HL),A</td>
 <td class="comment-1" rowspan="7">Set four attribute bytes</td>
@@ -349,7 +349,7 @@ This entry point is used by the routine at <a href="9965.html">drive_chatter</a>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="39592"></span>9AA8</td>
-<td class="instruction">DJNZ <a href="9A55.html#39584">9aa0_loop</a></td>
+<td class="instruction">DJNZ <a href="9A55.html#39584">ne_9a00_loop</a></td>
 <td class="comment-1" rowspan="1">Loop while rows remain</td>
 </tr>
 <tr>
@@ -371,7 +371,7 @@ Next: <a href="9AAB.html">9AAB</a>
 </tr>
 </table>
 <footer>
-<div class="release">The incomplete Chase H.Q. disassembly 20230518</div>
+<div class="release">The incomplete Chase H.Q. disassembly 20231102</div>
 <div class="copyright">&copy; 1988 Taito Corporation &copy; 1989 Ocean Software Ltd. (Chase H.Q.) © 2023 David Thomas (this disassembly)</div>
 <div class="created">Created using <a href="https://skoolkit.ca">SkoolKit</a> 8.9.</div>
 </footer>

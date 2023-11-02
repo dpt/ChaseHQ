@@ -46,7 +46,7 @@ Used by the routine at <a href="8E91.html">draw_mugshots</a>.
 </tr>
 <tr>
 <td class="register">HL</td>
-<td class="register-desc">Address of mugshot attributes (screen)</td>
+<td class="register-desc">Address of start of mugshot attributes / end of bitmap data</td>
 </tr>
 </table>
 </td>
@@ -64,10 +64,20 @@ Used by the routine at <a href="8E91.html">draw_mugshots</a>.
 <td class="comment-1" rowspan="1">Preserve address of mugshot attributes</td>
 </tr>
 <tr>
+<td class="routine-comment" colspan="5">
+<span id="36537"></span>
+<div class="comments">
+<div class="paragraph">
+We assume that the bitmap data precedes the attribute bytes.
+</div>
+</div>
+</td>
+</tr>
+<tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="36537"></span>8EB9</td>
 <td class="instruction">DEC HL</td>
-<td class="comment-1" rowspan="1">Move back a byte to point at end of bitmap data (we assume that the bitmap data precedes the attribute bytes)</td>
+<td class="comment-1" rowspan="1">Move back one byte to point at end of bitmap data</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -243,7 +253,7 @@ Next: <a href="8EE7.html">8EE7</a>
 </tr>
 </table>
 <footer>
-<div class="release">The incomplete Chase H.Q. disassembly 20230518</div>
+<div class="release">The incomplete Chase H.Q. disassembly 20231102</div>
 <div class="copyright">&copy; 1988 Taito Corporation &copy; 1989 Ocean Software Ltd. (Chase H.Q.) © 2023 David Thomas (this disassembly)</div>
 <div class="created">Created using <a href="https://skoolkit.ca">SkoolKit</a> 8.9.</div>
 </footer>

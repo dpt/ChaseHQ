@@ -23,124 +23,143 @@ Next: <a href="9D17.html">9D17</a>
 </td>
 </tr>
 </table>
-<div class="description">9CD6: Routine at 9CD6</div>
+<div class="description">9CD6: Add a bonus</div>
 <table class="disassembly">
 <tr>
 <td class="routine-comment" colspan="5">
 <div class="details">
 <div class="paragraph">
+The bonus value is passed as five BCD digits in <span class="register">DE</span> and <span class="register">A</span> like: 0bDDDDddddEEEEeeeeAAAAxxxxx, where x is not used.
+</div>
+<div class="paragraph">
+The bonus value must have a single sequence of zeroes, e.g. "55000" is okay, but "50500" is not.
+</div>
+<div class="paragraph">
 Used by the routines at <a href="9D2E.html">calc_overtake_bonus</a>, <a href="A637.html">smash_handler</a> and <a href="B9F4.html">main_loop_12</a>.
 </div>
 </div>
+<table class="input">
+<tr class="asm-input-header">
+<th colspan="2">Input</th>
+</tr>
+<tr>
+<td class="register">A</td>
+<td class="register-desc">Low nibble of bonus</td>
+</tr>
+<tr>
+<td class="register">DE</td>
+<td class="register-desc">High four nibbles of bonus</td>
+</tr>
+</table>
 </td>
 </tr>
 <tr>
-<td class="asm-label"></td>
+<td class="asm-label">bonus</td>
 <td class="address-2"><span id="40150"></span>9CD6</td>
 <td class="instruction">LD B,A</td>
-<td class="comment-1" rowspan="1">B=A</td>
+<td class="comment-1" rowspan="1">Preserve <span class="register">A</span></td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="40151"></span>9CD7</td>
 <td class="instruction">LD HL,$9D57</td>
-<td class="comment-1" rowspan="1">"HI"</td>
+<td class="comment-1" rowspan="1">-&gt; Byte after bonus digits buffer</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="40154"></span>9CDA</td>
 <td class="instruction">LD C,$FF</td>
-<td class="comment-1" rowspan="1">C=255</td>
+<td class="comment-1" rowspan="1">Flag, set to $FF while digits are zero</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="40156"></span>9CDC</td>
 <td class="instruction">LD A,B</td>
-<td class="comment-1" rowspan="1">A=B</td>
+<td class="comment-1" rowspan="1">Needless move</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="40157"></span>9CDD</td>
-<td class="instruction">CALL <a href="9CD6.html#40188">j_9cfc</a></td>
-<td class="comment-1" rowspan="1">Call j_9cfc</td>
+<td class="instruction">CALL <a href="9CD6.html#40188">bonus_digit</a></td>
+<td class="comment-1" rowspan="1">Call bonus_digit  -- final digit first</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="40160"></span>9CE0</td>
 <td class="instruction">SET 7,(HL)</td>
-<td class="comment-1" rowspan="1">terminate string?</td>
+<td class="comment-1" rowspan="1">Top-bit terminate the bonus string</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="40162"></span>9CE2</td>
 <td class="instruction">LD A,B</td>
-<td class="comment-1" rowspan="1">A=B</td>
+<td class="comment-1" rowspan="1">Load lowest digit</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="40163"></span>9CE3</td>
-<td class="instruction">CALL <a href="9CD6.html#40184">j_9cf8</a></td>
-<td class="comment-1" rowspan="1"></td>
+<td class="instruction">CALL <a href="9CD6.html#40184">bonus_high_nibble</a></td>
+<td class="comment-1" rowspan="1">Call bonus_high_nibble</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="40166"></span>9CE6</td>
 <td class="instruction">LD A,E</td>
-<td class="comment-1" rowspan="1">A=E</td>
+<td class="comment-1" rowspan="1">Load middle digits</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="40167"></span>9CE7</td>
-<td class="instruction">CALL <a href="9CD6.html#40188">j_9cfc</a></td>
-<td class="comment-1" rowspan="1"></td>
+<td class="instruction">CALL <a href="9CD6.html#40188">bonus_digit</a></td>
+<td class="comment-1" rowspan="1">Call bonus_digit</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="40170"></span>9CEA</td>
 <td class="instruction">LD A,E</td>
-<td class="comment-1" rowspan="1">A=E</td>
+<td class="comment-1" rowspan="1">Load middle digits</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="40171"></span>9CEB</td>
-<td class="instruction">CALL <a href="9CD6.html#40184">j_9cf8</a></td>
-<td class="comment-1" rowspan="1"></td>
+<td class="instruction">CALL <a href="9CD6.html#40184">bonus_high_nibble</a></td>
+<td class="comment-1" rowspan="1">Call bonus_high_nibble</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="40174"></span>9CEE</td>
 <td class="instruction">LD A,D</td>
-<td class="comment-1" rowspan="1">A=D</td>
+<td class="comment-1" rowspan="1">Load high digits</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="40175"></span>9CEF</td>
-<td class="instruction">CALL <a href="9CD6.html#40188">j_9cfc</a></td>
-<td class="comment-1" rowspan="1"></td>
+<td class="instruction">CALL <a href="9CD6.html#40188">bonus_digit</a></td>
+<td class="comment-1" rowspan="1">Call bonus_digit</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="40178"></span>9CF2</td>
 <td class="instruction">LD A,D</td>
-<td class="comment-1" rowspan="1">A=D</td>
+<td class="comment-1" rowspan="1">Load high digits</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="40179"></span>9CF3</td>
-<td class="instruction">CALL <a href="9CD6.html#40184">j_9cf8</a></td>
-<td class="comment-1" rowspan="1"></td>
+<td class="instruction">CALL <a href="9CD6.html#40184">bonus_high_nibble</a></td>
+<td class="comment-1" rowspan="1">Call bonus_high_nibble</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="40182"></span>9CF6</td>
-<td class="instruction">JR $9D0E</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="instruction">JR <a href="9CD6.html#40206">bonus_exit</a></td>
+<td class="comment-1" rowspan="1">Exit via bonus_exit</td>
 </tr>
 <tr>
-<td class="asm-label">j_9cf8</td>
+<td class="asm-label">bonus_high_nibble</td>
 <td class="address-2"><span id="40184"></span>9CF8</td>
 <td class="instruction">RRA</td>
-<td class="comment-1" rowspan="4">A ROR 4</td>
+<td class="comment-1" rowspan="4">Shift the high digit down</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -158,64 +177,82 @@ Used by the routines at <a href="9D2E.html">calc_overtake_bonus</a>, <a href="A6
 <td class="instruction">RRA</td>
 </tr>
 <tr>
-<td class="asm-label">j_9cfc</td>
+<td class="asm-label">bonus_digit</td>
 <td class="address-2"><span id="40188"></span>9CFC</td>
 <td class="instruction">AND $0F</td>
-<td class="comment-1" rowspan="1">A &amp;= 15</td>
+<td class="comment-1" rowspan="1">Mask off low nibble</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="40190"></span>9CFE</td>
-<td class="instruction">JR NZ,<a href="9CD6.html#40199">j_9d07</a></td>
-<td class="comment-1" rowspan="1">if A is not zero goto 9D07</td>
+<td class="instruction">JR NZ,<a href="9CD6.html#40199">bonus_non_zero</a></td>
+<td class="comment-1" rowspan="1">If <span class="register">A</span> is not zero goto bonus_non_zero</td>
+</tr>
+<tr>
+<td class="routine-comment" colspan="5">
+<span id="40192"></span>
+<div class="comments">
+<div class="paragraph">
+Digit is zero.
+</div>
+</div>
+</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="40192"></span>9D00</td>
 <td class="instruction">RLC C</td>
-<td class="comment-1" rowspan="1">top bit set?</td>
+<td class="comment-1" rowspan="2">Jump if the flag in <span class="register">C</span> is set</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="40194"></span>9D02</td>
-<td class="instruction">JR C,$9D09</td>
-<td class="comment-1" rowspan="1">jump if so</td>
+<td class="instruction">JR C,<a href="9CD6.html#40201">bonus_store</a></td>
+</tr>
+<tr>
+<td class="routine-comment" colspan="5">
+<span id="40196"></span>
+<div class="comments">
+<div class="paragraph">
+We saw a non-zero-to-zero transition, so terminate.
+</div>
+</div>
+</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="40196"></span>9D04</td>
 <td class="instruction">POP AF</td>
-<td class="comment-1" rowspan="1">where's the matching PUSH? or are we just discarding the RET addr?</td>
+<td class="comment-1" rowspan="1">Discard return address</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="40197"></span>9D05</td>
-<td class="instruction">JR $9D0E</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="instruction">JR <a href="9CD6.html#40206">bonus_exit</a></td>
+<td class="comment-1" rowspan="1">Exit via bonus_exit</td>
 </tr>
 <tr>
-<td class="asm-label">j_9d07</td>
+<td class="asm-label">bonus_non_zero</td>
 <td class="address-2"><span id="40199"></span>9D07</td>
 <td class="instruction">LD C,$00</td>
-<td class="comment-1" rowspan="1">C = 0</td>
+<td class="comment-1" rowspan="1">Set flag to zero now we've seen a non-zero digit</td>
 </tr>
 <tr>
-<td class="asm-label"></td>
+<td class="asm-label">bonus_store</td>
 <td class="address-2"><span id="40201"></span>9D09</td>
 <td class="instruction">ADD A,$30</td>
-<td class="comment-1" rowspan="1">A += 48</td>
+<td class="comment-1" rowspan="1">Turn digit to ASCII</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="40203"></span>9D0B</td>
 <td class="instruction">DEC HL</td>
-<td class="comment-1" rowspan="1">HL--</td>
+<td class="comment-1" rowspan="2">Write digit out in reverse</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="40204"></span>9D0C</td>
 <td class="instruction">LD (HL),A</td>
-<td class="comment-1" rowspan="1">*HL = A</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -224,10 +261,10 @@ Used by the routines at <a href="9D2E.html">calc_overtake_bonus</a>, <a href="A6
 <td class="comment-1" rowspan="1">Return</td>
 </tr>
 <tr>
-<td class="asm-label"></td>
+<td class="asm-label">bonus_exit</td>
 <td class="address-2"><span id="40206"></span>9D0E</td>
 <td class="instruction">LD ($9D9C),HL</td>
-<td class="comment-1" rowspan="1">Self modify 'LD HL,xxxx' at $9D9B  -- bonus score pointer</td>
+<td class="comment-1" rowspan="1">Self modify 'LD HL,xxxx' @ <a href="9D51.html#40347">9D9B</a>  -- bonus score pointer</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -244,7 +281,7 @@ Used by the routines at <a href="9D2E.html">calc_overtake_bonus</a>, <a href="A6
 <td class="asm-label"></td>
 <td class="address-1"><span id="40214"></span>9D16</td>
 <td class="instruction">LD A,B</td>
-<td class="comment-1" rowspan="1">A = B</td>
+<td class="comment-1" rowspan="1">A = B, then fall into increment_score with the bonus preserved</td>
 </tr>
 </table>
 <table class="asm-navigation">
@@ -259,7 +296,7 @@ Next: <a href="9D17.html">9D17</a>
 </tr>
 </table>
 <footer>
-<div class="release">The incomplete Chase H.Q. disassembly 20230518</div>
+<div class="release">The incomplete Chase H.Q. disassembly 20231102</div>
 <div class="copyright">&copy; 1988 Taito Corporation &copy; 1989 Ocean Software Ltd. (Chase H.Q.) © 2023 David Thomas (this disassembly)</div>
 <div class="created">Created using <a href="https://skoolkit.ca">SkoolKit</a> 8.9.</div>
 </footer>

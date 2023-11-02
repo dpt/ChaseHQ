@@ -31,26 +31,23 @@ Next: <a href="CDEC.html">CDEC</a>
 <div class="paragraph">
 Multiplies <span class="register">C</span> by the top three bits of <span class="register">A</span> then divides by 8 with rounding, on exit.
 </div>
+<div class="paragraph">
+Used by the routines at <a href="CBCE.html#52182">CBD6</a> and <a href="CD3A.html">main_loop_10</a>.
+</div>
 </div>
 <table class="input">
 <tr class="asm-input-header">
 <th colspan="2">Input</th>
 </tr>
 <tr>
-<td class="register">Used</td>
-<td class="register-desc">by the routines at <a href="CBCE.html#52182">CBD6</a> and <a href="CD3A.html">main_loop_10</a>.</td>
-</tr>
-</table>
-</td>
+<td class="register">A</td>
+<td class="register-desc">Multiplier (number to multiply by)  e.g. $A0, $E7, $20, $C0, $E6</td>
 </tr>
 <tr>
-<td class="routine-comment" colspan="5">
-<span id="52694"></span>
-<div class="comments">
-<div class="paragraph">
-I:A Multiplier (number to multiply by)  e.g. $A0, $E7, $20, $C0, $E6 I:C Multiplicand (value to multiply)    e.g. $05, $02, $05, $03, $FE O:A Result e.g. $03, $02, $01, $02, $FE
-</div>
-</div>
+<td class="register">C</td>
+<td class="register-desc">Multiplicand (value to multiply)    e.g. $05, $02, $05, $03, $FE O:A Result e.g. $03, $02, $01, $02, $FE</td>
+</tr>
+</table>
 </td>
 </tr>
 <tr>
@@ -146,7 +143,7 @@ Next: <a href="CDEC.html">CDEC</a>
 </tr>
 </table>
 <footer>
-<div class="release">The incomplete Chase H.Q. disassembly 20230518</div>
+<div class="release">The incomplete Chase H.Q. disassembly 20231102</div>
 <div class="copyright">&copy; 1988 Taito Corporation &copy; 1989 Ocean Software Ltd. (Chase H.Q.) © 2023 David Thomas (this disassembly)</div>
 <div class="created">Created using <a href="https://skoolkit.ca">SkoolKit</a> 8.9.</div>
 </footer>

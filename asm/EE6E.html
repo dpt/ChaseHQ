@@ -38,7 +38,7 @@ Used by the routine at <a href="EE9E.html">define_keys</a>.
 <td class="asm-label">sub_EE6E</td>
 <td class="address-2"><span id="61038"></span>EE6E</td>
 <td class="instruction">LD A,$00</td>
-<td class="comment-1" rowspan="1">Self modified by $EE7E</td>
+<td class="comment-1" rowspan="1">Self modified by <a href="EE6E.html#61054">EE7E</a></td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -50,7 +50,7 @@ Used by the routine at <a href="EE9E.html">define_keys</a>.
 <td class="asm-label"></td>
 <td class="address-1"><span id="61041"></span>EE71</td>
 <td class="instruction">LD ($EE6F),A</td>
-<td class="comment-1" rowspan="1">Self modify $EE6E</td>
+<td class="comment-1" rowspan="1">Self modify <a href="EE6E.html">sub_EE6E</a></td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -62,7 +62,7 @@ Used by the routine at <a href="EE9E.html">define_keys</a>.
 <td class="asm-label"></td>
 <td class="address-1"><span id="61045"></span>EE75</td>
 <td class="instruction">LD HL,$0000</td>
-<td class="comment-1" rowspan="1">Self modified by $EE83 [sampled: F10C, F10E, F102, F104, F106, F108, F10A, ]</td>
+<td class="comment-1" rowspan="1">Self modified by <a href="EE6E.html#61059">EE83</a> [sampled: F10C, F10E, F102, F104, F106, F108, F10A, ]</td>
 </tr>
 <tr>
 <td class="routine-comment" colspan="5">
@@ -89,7 +89,7 @@ This entry point is used by the routine at <a href="EE40.html">setup_interrupts<
 <td class="asm-label"></td>
 <td class="address-1"><span id="61050"></span>EE7A</td>
 <td class="instruction">CP $FF</td>
-<td class="comment-1" rowspan="2">Jump to $EE98 if it's $FF</td>
+<td class="comment-1" rowspan="2">Jump to <a href="EE6E.html#61080">sub_EE6E_0</a> if it's $FF</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -100,7 +100,7 @@ This entry point is used by the routine at <a href="EE40.html">setup_interrupts<
 <td class="asm-label"></td>
 <td class="address-1"><span id="61054"></span>EE7E</td>
 <td class="instruction">LD ($EE6F),A</td>
-<td class="comment-1" rowspan="1">Self modify $EE6E</td>
+<td class="comment-1" rowspan="1">Self modify <a href="EE6E.html">sub_EE6E</a></td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -117,7 +117,7 @@ This entry point is used by the routine at <a href="EE40.html">setup_interrupts<
 <td class="asm-label"></td>
 <td class="address-1"><span id="61059"></span>EE83</td>
 <td class="instruction">LD ($EE76),HL</td>
-<td class="comment-1" rowspan="1">Self modify $EE75</td>
+<td class="comment-1" rowspan="1">Self modify <a href="EE6E.html#61045">EE75</a></td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -152,19 +152,19 @@ This entry point is used by the routine at <a href="EE40.html">setup_interrupts<
 <td class="asm-label"></td>
 <td class="address-1"><span id="61070"></span>EE8E</td>
 <td class="instruction">LD ($EEBA),A</td>
-<td class="comment-1" rowspan="1">Self modify $EEB9</td>
+<td class="comment-1" rowspan="1">Self modify <a href="EE9E.html#61113">dk_eeb9</a></td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="61073"></span>EE91</td>
 <td class="instruction">LD ($EEAE),A</td>
-<td class="comment-1" rowspan="1">Self modify $EEAD</td>
+<td class="comment-1" rowspan="1">Self modify <a href="EE9E.html#61101">define_keys_0</a></td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="61076"></span>EE94</td>
 <td class="instruction">LD ($EECA),HL</td>
-<td class="comment-1" rowspan="1">Self modify $EEC9</td>
+<td class="comment-1" rowspan="1">Self modify <a href="EE9E.html#61129">dk_eec9</a></td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -212,7 +212,7 @@ Next: <a href="EE9E.html">EE9E</a>
 </tr>
 </table>
 <footer>
-<div class="release">The incomplete Chase H.Q. disassembly 20230518</div>
+<div class="release">The incomplete Chase H.Q. disassembly 20231102</div>
 <div class="copyright">&copy; 1988 Taito Corporation &copy; 1989 Ocean Software Ltd. (Chase H.Q.) © 2023 David Thomas (this disassembly)</div>
 <div class="created">Created using <a href="https://skoolkit.ca">SkoolKit</a> 8.9.</div>
 </footer>

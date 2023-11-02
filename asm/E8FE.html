@@ -1,0 +1,571 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Chase H.Q.: Routine at E8FE</title>
+<meta charset="utf-8" />
+<link rel="stylesheet" type="text/css" href="../skoolkit.css" />
+</head>
+<body class="Asm-c">
+<table class="header">
+<tr>
+<td class="logo"><a href="../index.html">Chase H.Q.</a></td>
+<td class="page-header">Routines</td>
+</tr>
+</table>
+<table class="asm-navigation">
+<tr>
+<td class="prev">
+Prev: <a href="E810.html">E810</a>
+</td>
+<td class="up">Up: <a href="../maps/all.html#59646">Map</a></td>
+<td class="next">
+Next: <a href="E9B4.html">E9B4</a>
+</td>
+</tr>
+</table>
+<div class="description">E8FE: Routine at E8FE</div>
+<table class="disassembly">
+<tr>
+<td class="routine-comment" colspan="5">
+<div class="details">
+<div class="paragraph">
+Used by the routine at <a href="E810.html">entrypt_48k</a>.
+</div>
+</div>
+</td>
+</tr>
+<tr>
+<td class="asm-label">stop_the_tape</td>
+<td class="address-2"><span id="59646"></span>E8FE</td>
+<td class="instruction">CALL <a href="EE40.html">setup_interrupts</a></td>
+<td class="comment-1" rowspan="1">Call setup_interrupts</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="59649"></span>E901</td>
+<td class="instruction">CALL <a href="EE5E.html">music_reset</a></td>
+<td class="comment-1" rowspan="1">Call music_reset</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="59652"></span>E904</td>
+<td class="instruction">EI</td>
+<td class="comment-1" rowspan="1">Enable interrupts</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="59653"></span>E905</td>
+<td class="instruction">HALT</td>
+<td class="comment-1" rowspan="1">Wait for next interrupt</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="59654"></span>E906</td>
+<td class="instruction">CALL <a href="ECDA.html">clear_screen</a></td>
+<td class="comment-1" rowspan="1">Call clear_screen</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="59657"></span>E909</td>
+<td class="instruction">LD HL,$E9B4</td>
+<td class="comment-1" rowspan="1">-&gt; "STOP THE TAPE" + "PRESS ANY KEY" message set</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="59660"></span>E90C</td>
+<td class="instruction">CALL <a href="EBF7.html">menu_draw_strings</a></td>
+<td class="comment-1" rowspan="1">Call menu_draw_strings</td>
+</tr>
+<tr>
+<td class="asm-label">wait_for_keypress</td>
+<td class="address-2"><span id="59663"></span>E90F</td>
+<td class="instruction">CALL <a href="EE9E.html">define_keys</a></td>
+<td class="comment-1" rowspan="1">Call define_keys</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="59666"></span>E912</td>
+<td class="instruction">XOR A</td>
+<td class="comment-1" rowspan="4">Was a key pressed?</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="59667"></span>E913</td>
+<td class="instruction">IN A,($FE)</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="59669"></span>E915</td>
+<td class="instruction">CPL</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="59670"></span>E916</td>
+<td class="instruction">AND $1F</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="59672"></span>E918</td>
+<td class="instruction">JR Z,<a href="E8FE.html#59663">wait_for_keypress</a></td>
+<td class="comment-1" rowspan="1">Loop if not</td>
+</tr>
+<tr>
+<td class="routine-comment" colspan="5">
+<span id="59674"></span>
+<div class="comments">
+<div class="paragraph">
+Debounce.
+</div>
+</div>
+</td>
+</tr>
+<tr>
+<td class="asm-label">stop_the_tape_0</td>
+<td class="address-2"><span id="59674"></span>E91A</td>
+<td class="instruction">CALL <a href="EE9E.html">define_keys</a></td>
+<td class="comment-1" rowspan="1">Call define_keys</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="59677"></span>E91D</td>
+<td class="instruction">XOR A</td>
+<td class="comment-1" rowspan="4">Was a key pressed?</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="59678"></span>E91E</td>
+<td class="instruction">IN A,($FE)</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="59680"></span>E920</td>
+<td class="instruction">CPL</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="59681"></span>E921</td>
+<td class="instruction">AND $1F</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="59683"></span>E923</td>
+<td class="instruction">JR NZ,<a href="E8FE.html#59674">stop_the_tape_0</a></td>
+<td class="comment-1" rowspan="1">Loop if it was</td>
+</tr>
+<tr>
+<td class="asm-label">stop_the_tape_1</td>
+<td class="address-2"><span id="59685"></span>E925</td>
+<td class="instruction">CALL <a href="ECDA.html">clear_screen</a></td>
+<td class="comment-1" rowspan="1">Call clear_screen</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="59688"></span>E928</td>
+<td class="instruction">LD HL,$E9E1</td>
+<td class="comment-1" rowspan="1">Point <span class="register">HL</span> at input menu messages (NUL terminated)</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="59691"></span>E92B</td>
+<td class="instruction">CALL <a href="EBF7.html">menu_draw_strings</a></td>
+<td class="comment-1" rowspan="1">Call menu_draw_strings</td>
+</tr>
+<tr>
+<td class="asm-label">stop_the_tape_2</td>
+<td class="address-2"><span id="59694"></span>E92E</td>
+<td class="instruction">CALL <a href="EE9E.html">define_keys</a></td>
+<td class="comment-1" rowspan="1">Call define_keys</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="59697"></span>E931</td>
+<td class="instruction">LD A,$F7</td>
+<td class="comment-1" rowspan="5">Keyscan for 1, 2, 3, 4, 5</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="59699"></span>E933</td>
+<td class="instruction">IN A,($FE)</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="59701"></span>E935</td>
+<td class="instruction">CPL</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="59702"></span>E936</td>
+<td class="instruction">AND $1F</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="59704"></span>E938</td>
+<td class="instruction">JR Z,<a href="E8FE.html#59694">stop_the_tape_2</a></td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="59706"></span>E93A</td>
+<td class="instruction">RRA</td>
+<td class="comment-1" rowspan="2">Keyscan for 0, 9, 8, 7, 6</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="59707"></span>E93B</td>
+<td class="instruction">JR C,<a href="E8FE.html#59723">stop_the_tape_3</a></td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="59709"></span>E93D</td>
+<td class="instruction">RRA</td>
+<td class="comment-1" rowspan="2">Keyscan for P, O, I, U, Y</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="59710"></span>E93E</td>
+<td class="instruction">JR C,<a href="E8FE.html#59728">stop_the_tape_4</a></td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="59712"></span>E940</td>
+<td class="instruction">RRA</td>
+<td class="comment-1" rowspan="2">Keyscan for ENTER, L, K, J, H</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="59713"></span>E941</td>
+<td class="instruction">JR C,<a href="E8FE.html#59807">stop_the_tape_11</a></td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="59715"></span>E943</td>
+<td class="instruction">RRA</td>
+<td class="comment-1" rowspan="2">Keyscan for SPACE, SYM SHFT, M, N, B</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="59716"></span>E944</td>
+<td class="instruction">JR C,<a href="E8FE.html#59739">stop_the_tape_6</a></td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="59718"></span>E946</td>
+<td class="instruction">CALL <a href="ECF3.html">redefine_keys</a></td>
+<td class="comment-1" rowspan="1"></td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="59721"></span>E949</td>
+<td class="instruction">JR <a href="E8FE.html#59685">stop_the_tape_1</a></td>
+<td class="comment-1" rowspan="1"></td>
+</tr>
+<tr>
+<td class="asm-label">stop_the_tape_3</td>
+<td class="address-2"><span id="59723"></span>E94B</td>
+<td class="instruction">LD HL,$EE26</td>
+<td class="comment-1" rowspan="1"></td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="59726"></span>E94E</td>
+<td class="instruction">JR <a href="E8FE.html#59731">stop_the_tape_5</a></td>
+<td class="comment-1" rowspan="1"></td>
+</tr>
+<tr>
+<td class="asm-label">stop_the_tape_4</td>
+<td class="address-2"><span id="59728"></span>E950</td>
+<td class="instruction">LD HL,$EE2B</td>
+<td class="comment-1" rowspan="4">Copy 5 bytes at $EE2B to $EE38   -- cursor joystick input scheme</td>
+</tr>
+<tr>
+<td class="asm-label">stop_the_tape_5</td>
+<td class="address-2"><span id="59731"></span>E953</td>
+<td class="instruction">LD DE,$EE38</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="59734"></span>E956</td>
+<td class="instruction">LD BC,$0005</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="59737"></span>E959</td>
+<td class="instruction">LDIR</td>
+</tr>
+<tr>
+<td class="asm-label">stop_the_tape_6</td>
+<td class="address-2"><span id="59739"></span>E95B</td>
+<td class="instruction">XOR A</td>
+<td class="comment-1" rowspan="1"></td>
+</tr>
+<tr>
+<td class="asm-label">stop_the_tape_7</td>
+<td class="address-2"><span id="59740"></span>E95C</td>
+<td class="instruction">LD HL,$EE3D</td>
+<td class="comment-1" rowspan="1">Address of three bytes to populate <a href="A0CC.html#41165">keydefs_probably</a>.. with</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="59743"></span>E95F</td>
+<td class="instruction">LD DE,$A0CC</td>
+<td class="comment-1" rowspan="2">Set Kempston flag</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="59746"></span>E962</td>
+<td class="instruction">LD (DE),A</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="59747"></span>E963</td>
+<td class="instruction">INC DE</td>
+<td class="comment-1" rowspan="3">Populate <a href="A0CC.html#41165">keydefs_probably</a></td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="59748"></span>E964</td>
+<td class="instruction">LD BC,$0003</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="59751"></span>E967</td>
+<td class="instruction">LDIR</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="59753"></span>E969</td>
+<td class="instruction">LD HL,$EE38</td>
+<td class="comment-1" rowspan="3">Populate $A0D0</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="59756"></span>E96C</td>
+<td class="instruction">LD C,$05</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="59758"></span>E96E</td>
+<td class="instruction">LDIR</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="59760"></span>E970</td>
+<td class="instruction">CALL <a href="ECDA.html">clear_screen</a></td>
+<td class="comment-1" rowspan="1">Call clear_screen</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="59763"></span>E973</td>
+<td class="instruction">LD HL,$EB78</td>
+<td class="comment-1" rowspan="1">Address of "control options cannot be remodified" text (NUL terminated)</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="59766"></span>E976</td>
+<td class="instruction">CALL <a href="EBF7.html">menu_draw_strings</a></td>
+<td class="comment-1" rowspan="1">Call menu_draw_strings</td>
+</tr>
+<tr>
+<td class="asm-label">stop_the_tape_8</td>
+<td class="address-2"><span id="59769"></span>E979</td>
+<td class="instruction">CALL <a href="EE9E.html">define_keys</a></td>
+<td class="comment-1" rowspan="1">Call define_keys</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="59772"></span>E97C</td>
+<td class="instruction">XOR A</td>
+<td class="comment-1" rowspan="1"></td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="59773"></span>E97D</td>
+<td class="instruction">IN A,($FE)</td>
+<td class="comment-1" rowspan="4">Keyscan</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="59775"></span>E97F</td>
+<td class="instruction">CPL</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="59776"></span>E980</td>
+<td class="instruction">AND $1F</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="59778"></span>E982</td>
+<td class="instruction">JR NZ,<a href="E8FE.html#59769">stop_the_tape_8</a></td>
+</tr>
+<tr>
+<td class="asm-label">stop_the_tape_9</td>
+<td class="address-2"><span id="59780"></span>E984</td>
+<td class="instruction">CALL <a href="EE9E.html">define_keys</a></td>
+<td class="comment-1" rowspan="1">Call define_keys</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="59783"></span>E987</td>
+<td class="instruction">LD A,$DF</td>
+<td class="comment-1" rowspan="1"></td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="59785"></span>E989</td>
+<td class="instruction">IN A,($FE)</td>
+<td class="comment-1" rowspan="4">Keyscan</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="59787"></span>E98B</td>
+<td class="instruction">CPL</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="59788"></span>E98C</td>
+<td class="instruction">AND $10</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="59790"></span>E98E</td>
+<td class="instruction">JR NZ,<a href="E8FE.html#59803">stop_the_tape_10</a></td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="59792"></span>E990</td>
+<td class="instruction">LD A,$7F</td>
+<td class="comment-1" rowspan="1"></td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="59794"></span>E992</td>
+<td class="instruction">IN A,($FE)</td>
+<td class="comment-1" rowspan="1"></td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="59796"></span>E994</td>
+<td class="instruction">CPL</td>
+<td class="comment-1" rowspan="1"></td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="59797"></span>E995</td>
+<td class="instruction">AND $08</td>
+<td class="comment-1" rowspan="1"></td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="59799"></span>E997</td>
+<td class="instruction">JR NZ,<a href="E8FE.html#59685">stop_the_tape_1</a></td>
+<td class="comment-1" rowspan="1"></td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="59801"></span>E999</td>
+<td class="instruction">JR <a href="E8FE.html#59780">stop_the_tape_9</a></td>
+<td class="comment-1" rowspan="1"></td>
+</tr>
+<tr>
+<td class="asm-label">stop_the_tape_10</td>
+<td class="address-2"><span id="59803"></span>E99B</td>
+<td class="instruction">DI</td>
+<td class="comment-1" rowspan="1"></td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="59804"></span>E99C</td>
+<td class="instruction">JP <a href="ECDA.html">clear_screen</a></td>
+<td class="comment-1" rowspan="1">Jump to clear_screen</td>
+</tr>
+<tr>
+<td class="asm-label">stop_the_tape_11</td>
+<td class="address-2"><span id="59807"></span>E99F</td>
+<td class="instruction">LD B,$0A</td>
+<td class="comment-1" rowspan="1"></td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="59809"></span>E9A1</td>
+<td class="instruction">IN A,($1F)</td>
+<td class="comment-1" rowspan="1"></td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="59811"></span>E9A3</td>
+<td class="instruction">LD C,A</td>
+<td class="comment-1" rowspan="1"></td>
+</tr>
+<tr>
+<td class="asm-label">stop_the_tape_12</td>
+<td class="address-2"><span id="59812"></span>E9A4</td>
+<td class="instruction">IN A,($1F)</td>
+<td class="comment-1" rowspan="1"></td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="59814"></span>E9A6</td>
+<td class="instruction">CP C</td>
+<td class="comment-1" rowspan="1"></td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="59815"></span>E9A7</td>
+<td class="instruction">JR NZ,<a href="E8FE.html#59694">stop_the_tape_2</a></td>
+<td class="comment-1" rowspan="1"></td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="59817"></span>E9A9</td>
+<td class="instruction">PUSH BC</td>
+<td class="comment-1" rowspan="1"></td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="59818"></span>E9AA</td>
+<td class="instruction">CALL <a href="EE9E.html">define_keys</a></td>
+<td class="comment-1" rowspan="1">Call define_keys</td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="59821"></span>E9AD</td>
+<td class="instruction">POP BC</td>
+<td class="comment-1" rowspan="1"></td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="59822"></span>E9AE</td>
+<td class="instruction">DJNZ <a href="E8FE.html#59812">stop_the_tape_12</a></td>
+<td class="comment-1" rowspan="1"></td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="59824"></span>E9B0</td>
+<td class="instruction">LD A,$01</td>
+<td class="comment-1" rowspan="1"></td>
+</tr>
+<tr>
+<td class="asm-label"></td>
+<td class="address-1"><span id="59826"></span>E9B2</td>
+<td class="instruction">JR <a href="E8FE.html#59740">stop_the_tape_7</a></td>
+<td class="comment-1" rowspan="1"></td>
+</tr>
+</table>
+<table class="asm-navigation">
+<tr>
+<td class="prev">
+Prev: <a href="E810.html">E810</a>
+</td>
+<td class="up">Up: <a href="../maps/all.html#59646">Map</a></td>
+<td class="next">
+Next: <a href="E9B4.html">E9B4</a>
+</td>
+</tr>
+</table>
+<footer>
+<div class="release">The incomplete Chase H.Q. disassembly 20231102</div>
+<div class="copyright">&copy; 1988 Taito Corporation &copy; 1989 Ocean Software Ltd. (Chase H.Q.) © 2023 David Thomas (this disassembly)</div>
+<div class="created">Created using <a href="https://skoolkit.ca">SkoolKit</a> 8.9.</div>
+</footer>
+</body>
+</html>

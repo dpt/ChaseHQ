@@ -23,16 +23,19 @@ Next: <a href="F491.html">F491</a>
 </td>
 </tr>
 </table>
-<div class="description">F220: 128K mode routines and data relocated to $8014/load_stage onwards during init (926 bytes long).</div>
+<div class="description">F220: 128K mode routines and data</div>
 <table class="disassembly">
 <tr>
 <td class="routine-comment" colspan="5">
 <div class="details">
+<div class="paragraph">
+This is relocated to $8014/load_stage onwards during init (926 bytes long).
+</div>
 </div>
 </td>
 </tr>
 <tr>
-<td class="asm-label">load_stage_128k</td>
+<td class="asm-label">page_in_stage_128k</td>
 <td class="address-2"><span id="61984"></span>F220</td>
 <td class="instruction">LD A,($8007)</td>
 <td class="comment-1" rowspan="1">Load wanted_stage_number</td>
@@ -152,7 +155,7 @@ Copy the stage data from the correct bank and address to $5C00..$76EF.
 <td class="asm-label"></td>
 <td class="address-1"><span id="62018"></span>F242</td>
 <td class="instruction">JP $8208</td>
-<td class="comment-1" rowspan="1">Jump to relocated f414_128k</td>
+<td class="comment-1" rowspan="1">Exit via relocated reset_paging_128k</td>
 </tr>
 <tr>
 <td class="routine-comment" colspan="5">
@@ -205,13 +208,13 @@ Pairs of (top byte of source data address, paging flags).
 <span id="62033"></span>
 <div class="comments">
 <div class="paragraph">
-$8045 once relocated. What calls this?
+$8045 once relocated.
 </div>
 </div>
 </td>
 </tr>
 <tr>
-<td class="asm-label">f251_128k</td>
+<td class="asm-label">start_siren_hook_128k</td>
 <td class="address-1"><span id="62033"></span>F251</td>
 <td class="instruction">LD A,$8C</td>
 <td class="comment-1" rowspan="2">Store $8C to channel A fine pitch</td>
@@ -247,7 +250,7 @@ $8045 once relocated. What calls this?
 <td class="asm-label"></td>
 <td class="address-1"><span id="62048"></span>F260</td>
 <td class="instruction">LD A,$AA</td>
-<td class="comment-1" rowspan="2">Self modify 'LD A,x' at $F271 (in this position)</td>
+<td class="comment-1" rowspan="2">Self modify 'LD A,x' @ <a href="F220.html#62065">F271</a> (in this position)</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -258,7 +261,7 @@ $8045 once relocated. What calls this?
 <td class="asm-label"></td>
 <td class="address-1"><span id="62053"></span>F265</td>
 <td class="instruction">LD ($A239),A</td>
-<td class="comment-1" rowspan="1">-- state sfx var</td>
+<td class="comment-1" rowspan="1">var_a239 = $AA</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -267,10 +270,10 @@ $8045 once relocated. What calls this?
 <td class="comment-1" rowspan="1">Return</td>
 </tr>
 <tr>
-<td class="asm-label">f269_128k</td>
+<td class="asm-label">engine_sfx_play_hook_128k</td>
 <td class="address-1"><span id="62057"></span>F269</td>
 <td class="instruction">LD A,($A239)</td>
-<td class="comment-1" rowspan="1">-- state sfx var (initialised to $AA above)</td>
+<td class="comment-1" rowspan="1">var_a239 (initialised to $AA above)</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -444,11 +447,11 @@ Arrive here if A is $5A..$8B
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="62107"></span>F29B</td>
-<td class="instruction">JR <a href="F220.html#62114">load_stage_128k_0</a></td>
+<td class="instruction">JR <a href="F220.html#62114">write_registers_hook_128k</a></td>
 <td class="comment-1" rowspan="1">Jump</td>
 </tr>
 <tr>
-<td class="asm-label">f29d_128k</td>
+<td class="asm-label">silence_audio_hook_128k</td>
 <td class="address-1"><span id="62109"></span>F29D</td>
 <td class="instruction">LD A,$3F</td>
 <td class="comment-1" rowspan="2">Initialise mixer to $3F (all noise and tone off)</td>
@@ -469,7 +472,7 @@ writing the full register set?
 </td>
 </tr>
 <tr>
-<td class="asm-label">load_stage_128k_0</td>
+<td class="asm-label">write_registers_hook_128k</td>
 <td class="address-2"><span id="62114"></span>F2A2</td>
 <td class="instruction">LD HL,$A21E</td>
 <td class="comment-1" rowspan="1">Address of sound register value(s) -- other values must be earlier</td>
@@ -486,7 +489,7 @@ writing the full register set?
 <td class="instruction">LD C,$FD</td>
 </tr>
 <tr>
-<td class="asm-label">f2a9_128k_loop</td>
+<td class="asm-label">write_registers_hook_loop</td>
 <td class="address-1"><span id="62121"></span>F2A9</td>
 <td class="instruction">LD B,$FF</td>
 </tr>
@@ -516,7 +519,7 @@ writing the full register set?
 <td class="asm-label"></td>
 <td class="address-1"><span id="62130"></span>F2B2</td>
 <td class="instruction">JP P,<a href="8014.html#32925">sub_809D</a></td>
-<td class="comment-1" rowspan="1">Loop to $F2A9 while +ve</td>
+<td class="comment-1" rowspan="1">Loop to <a href="F220.html#62121">write_registers_hook_loop</a> while +ve</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -572,7 +575,7 @@ writing the full register set?
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="62147"></span>F2C3</td>
-<td class="instruction">JR Z,<a href="F220.html#62153">load_stage_128k_1</a></td>
+<td class="instruction">JR Z,<a href="F220.html#62153">page_in_stage_128k_0</a></td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -587,7 +590,7 @@ writing the full register set?
 <td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
-<td class="asm-label">load_stage_128k_1</td>
+<td class="asm-label">page_in_stage_128k_0</td>
 <td class="address-2"><span id="62153"></span>F2C9</td>
 <td class="instruction">SLA L</td>
 <td class="comment-1" rowspan="1"></td>
@@ -637,7 +640,7 @@ writing the full register set?
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="62170"></span>F2DA</td>
-<td class="instruction">JR Z,<a href="F220.html#62177">load_stage_128k_2</a></td>
+<td class="instruction">JR Z,<a href="F220.html#62177">page_in_stage_128k_1</a></td>
 <td class="comment-1" rowspan="1">Jump if tunnel_sfx was zero</td>
 </tr>
 <tr>
@@ -653,7 +656,7 @@ writing the full register set?
 <td class="comment-1" rowspan="1">Volume = 12</td>
 </tr>
 <tr>
-<td class="asm-label">load_stage_128k_2</td>
+<td class="asm-label">page_in_stage_128k_1</td>
 <td class="address-2"><span id="62177"></span>F2E1</td>
 <td class="instruction">ADD HL,DE</td>
 <td class="comment-1" rowspan="1">-- speed value + base tone?</td>
@@ -693,7 +696,7 @@ writing the full register set?
 <td class="comment-1" rowspan="1">Return</td>
 </tr>
 <tr>
-<td class="asm-label">f2f1_128k__reset_noise_pitch</td>
+<td class="asm-label">turbo_sfx_play_hook_128k</td>
 <td class="address-1"><span id="62193"></span>F2F1</td>
 <td class="instruction">LD A,$3C</td>
 <td class="comment-1" rowspan="2">Set noise pitch (5-bit) [$3C is &gt; 5-bit...]</td>
@@ -707,7 +710,7 @@ writing the full register set?
 <td class="asm-label"></td>
 <td class="address-1"><span id="62198"></span>F2F6</td>
 <td class="instruction">LD ($A23A),A</td>
-<td class="comment-1" rowspan="1">Copy of it?</td>
+<td class="comment-1" rowspan="1">var_a23a = $3C  -- Copy of it?</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -716,10 +719,10 @@ writing the full register set?
 <td class="comment-1" rowspan="1">Return</td>
 </tr>
 <tr>
-<td class="asm-label">f2f9_128k</td>
+<td class="asm-label">engine_sfx_setup_hook_128k</td>
 <td class="address-1"><span id="62202"></span>F2FA</td>
 <td class="instruction">LD A,($A23A)</td>
-<td class="comment-1" rowspan="3">Jump if $A23A [copy of noise pitch] is zero</td>
+<td class="comment-1" rowspan="3">Jump if var_a23a is zero</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -841,7 +844,7 @@ writing the full register set?
 <td class="asm-label"></td>
 <td class="address-1"><span id="62247"></span>F327</td>
 <td class="instruction">XOR A</td>
-<td class="comment-1" rowspan="2">[copy of noise pitch] = 0</td>
+<td class="comment-1" rowspan="2">var_a23a = 0</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -851,86 +854,139 @@ writing the full register set?
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="62251"></span>F32B</td>
-<td class="instruction">JP <a href="8014.html#32938">load_stage_5</a></td>
+<td class="instruction">JP <a href="8014.html#32938">load_stage_7</a></td>
 <td class="comment-1" rowspan="1">Exit via f2b6_128k</td>
 </tr>
 <tr>
-<td class="asm-label">f32e_128k_table</td>
+<td class="routine-comment" colspan="5">
+<span id="62254"></span>
+<div class="comments">
+<div class="paragraph">
+Relocated to $8122
+</div>
+<div class="paragraph">
+"Giddy up boy!"
+</div>
+</div>
+</td>
+</tr>
+<tr>
+<td class="asm-label">speech_samples_table</td>
 <td class="address-1"><span id="62254"></span>F32E</td>
 <td class="instruction">DEFW $0A8C</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="1">length</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="62256"></span>F330</td>
 <td class="instruction">DEFW $C000</td>
-<td class="comment-1" rowspan="1">address?</td>
+<td class="comment-1" rowspan="1">address</td>
+</tr>
+<tr>
+<td class="routine-comment" colspan="5">
+<span id="62258"></span>
+<div class="comments">
+<div class="paragraph">
+"Let's go Mr. Driver!"
+</div>
+</div>
+</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="62258"></span>F332</td>
 <td class="instruction">DEFW $14E6</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="1">length</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="62260"></span>F334</td>
 <td class="instruction">DEFW <a href="C8E3.html#51852">$CA8C</a></td>
-<td class="comment-1" rowspan="1">address?</td>
+<td class="comment-1" rowspan="1">address</td>
+</tr>
+<tr>
+<td class="routine-comment" colspan="5">
+<span id="62262"></span>
+<div class="comments">
+<div class="paragraph">
+"Hold on man!"
+</div>
+</div>
+</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="62262"></span>F336</td>
 <td class="instruction">DEFW $0A5A</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="1">length</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="62264"></span>F338</td>
 <td class="instruction">DEFW $DF72</td>
-<td class="comment-1" rowspan="1">address?</td>
+<td class="comment-1" rowspan="1">address</td>
+</tr>
+<tr>
+<td class="routine-comment" colspan="5">
+<span id="62266"></span>
+<div class="comments">
+<div class="paragraph">
+"Your time's up"
+</div>
+</div>
+</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="62266"></span>F33A</td>
 <td class="instruction">DEFW $0ABE</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="1">length</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="62268"></span>F33C</td>
 <td class="instruction">DEFW $E9CC</td>
-<td class="comment-1" rowspan="1">address?</td>
+<td class="comment-1" rowspan="1">address</td>
+</tr>
+<tr>
+<td class="routine-comment" colspan="5">
+<span id="62270"></span>
+<div class="comments">
+<div class="paragraph">
+Start noise
+</div>
+</div>
+</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="62270"></span>F33E</td>
 <td class="instruction">DEFW $0ADC</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="1">length</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="62272"></span>F340</td>
 <td class="instruction">DEFW $F48A</td>
-<td class="comment-1" rowspan="1">address?</td>
+<td class="comment-1" rowspan="1">address</td>
 </tr>
 <tr>
-<td class="asm-label"></td>
+<td class="asm-label">play_speech_128k</td>
 <td class="address-1"><span id="62274"></span>F342</td>
-<td class="instruction">DEFW <a href="CBCE.html#52488">$CD08</a></td>
-<td class="comment-1" rowspan="1"></td>
+<td class="instruction">EX AF,AF'</td>
+<td class="comment-1" rowspan="1">Bank input index (sample indices are 1..5)</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
-<td class="address-1"><span id="62276"></span>F344</td>
-<td class="instruction">DEFW <a href="8014.html#32913">$8091</a></td>
-<td class="comment-1" rowspan="1">address?</td>
+<td class="address-1"><span id="62275"></span>F343</td>
+<td class="instruction">CALL <a href="8014.html#32913">load_stage_6</a></td>
+<td class="comment-1" rowspan="1">Call silence_audio_hook_128k</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="62278"></span>F346</td>
 <td class="instruction">LD A,$04</td>
-<td class="comment-1" rowspan="3">128K: Map RAM page 4 to $C000; Map normal screen; Map ROM 0</td>
+<td class="comment-1" rowspan="3">128K: Map RAM bank 4 to $C000; Map normal screen; Map ROM 0</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -970,13 +1026,13 @@ writing the full register set?
 <td class="asm-label"></td>
 <td class="address-1"><span id="62293"></span>F355</td>
 <td class="instruction">EX AF,AF'</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="1">Unbank input index</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="62294"></span>F356</td>
 <td class="instruction">ADD A,A</td>
-<td class="comment-1" rowspan="6">HL = $F32A + A*4  -- i.e. it's 1-indexed f32e_128k_table</td>
+<td class="comment-1" rowspan="6">HL = $F32A + A*4  -- i.e. it's 1-indexed speech_samples_table</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -1007,7 +1063,7 @@ writing the full register set?
 <td class="asm-label"></td>
 <td class="address-1"><span id="62303"></span>F35F</td>
 <td class="instruction">LD E,(HL)</td>
-<td class="comment-1" rowspan="4">DE = wordat(HL); HL += 2</td>
+<td class="comment-1" rowspan="4">DE = wordat(HL); HL += 2  -- read length</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -1028,7 +1084,7 @@ writing the full register set?
 <td class="asm-label"></td>
 <td class="address-1"><span id="62307"></span>F363</td>
 <td class="instruction">LD A,(HL)</td>
-<td class="comment-1" rowspan="4">HL = wordat(HL)</td>
+<td class="comment-1" rowspan="4">HL = wordat(HL)  -- read address</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -1046,16 +1102,16 @@ writing the full register set?
 <td class="instruction">LD L,A</td>
 </tr>
 <tr>
-<td class="asm-label">f367_128k</td>
+<td class="asm-label">plsp_f367_128k</td>
 <td class="address-1"><span id="62311"></span>F367</td>
 <td class="instruction">LD C,$02</td>
-<td class="comment-1" rowspan="1">C = 2  -- iterations</td>
+<td class="comment-1" rowspan="1">C = 2  -- iterations (two nibbles)</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="62313"></span>F369</td>
 <td class="instruction">LD A,(HL)</td>
-<td class="comment-1" rowspan="1">A = *HL</td>
+<td class="comment-1" rowspan="1">A = *HL  -- read a sample (or two?)</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -1079,7 +1135,7 @@ writing the full register set?
 <td class="instruction">RRA</td>
 </tr>
 <tr>
-<td class="asm-label">f36e_loop</td>
+<td class="asm-label">plsp_f36e_loop</td>
 <td class="address-2"><span id="62318"></span>F36E</td>
 <td class="instruction">AND $0F</td>
 <td class="comment-1" rowspan="1">A &amp;= 15</td>
@@ -1106,7 +1162,7 @@ writing the full register set?
 <td class="asm-label"></td>
 <td class="address-1"><span id="62323"></span>F373</td>
 <td class="instruction">LD A,D</td>
-<td class="comment-1" rowspan="1">A = D which is 8</td>
+<td class="comment-1" rowspan="1">A = D which is 8  -- register 8: Channel A volume</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -1130,19 +1186,19 @@ writing the full register set?
 <td class="asm-label"></td>
 <td class="address-1"><span id="62328"></span>F378</td>
 <td class="instruction">OUT (C),A</td>
-<td class="comment-1" rowspan="1">OUT</td>
+<td class="comment-1" rowspan="1">Write to register</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="62330"></span>F37A</td>
 <td class="instruction">EX AF,AF'</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="1">Bank it again</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="62331"></span>F37B</td>
 <td class="instruction">INC A</td>
-<td class="comment-1" rowspan="1">8 -&gt; 9 etc.</td>
+<td class="comment-1" rowspan="1">8 -&gt; 9  -- register 9: Channel B volume</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -1172,19 +1228,19 @@ writing the full register set?
 <td class="asm-label"></td>
 <td class="address-1"><span id="62337"></span>F381</td>
 <td class="instruction">OUT (C),A</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="1">Write to register</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="62339"></span>F383</td>
 <td class="instruction">EX AF,AF'</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="1">Bank it again</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="62340"></span>F384</td>
 <td class="instruction">INC A</td>
-<td class="comment-1" rowspan="1">9 -&gt; 10 etc.</td>
+<td class="comment-1" rowspan="1">9 -&gt; 10  -- register 9: Channel C volume</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -1214,7 +1270,7 @@ writing the full register set?
 <td class="asm-label"></td>
 <td class="address-1"><span id="62346"></span>F38A</td>
 <td class="instruction">OUT (C),A</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="1">Write to register</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -1226,48 +1282,48 @@ writing the full register set?
 <td class="asm-label"></td>
 <td class="address-1"><span id="62349"></span>F38D</td>
 <td class="instruction">LD B,$13</td>
-<td class="comment-1" rowspan="2">Perhaps a delay loop</td>
+<td class="comment-1" rowspan="2">Delay loop (lower value =&gt; higher frequency)</td>
 </tr>
 <tr>
-<td class="asm-label">load_stage_128k_3</td>
+<td class="asm-label">page_in_stage_128k_2</td>
 <td class="address-2"><span id="62351"></span>F38F</td>
-<td class="instruction">DJNZ <a href="F220.html#62351">load_stage_128k_3</a></td>
+<td class="instruction">DJNZ <a href="F220.html#62351">page_in_stage_128k_2</a></td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="62353"></span>F391</td>
 <td class="instruction">LD A,(HL)</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="1">Load next nibble (same byte, but next nibble)</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="62354"></span>F392</td>
 <td class="instruction">DEC C</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="1">Decrement nibble counter</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="62355"></span>F393</td>
-<td class="instruction">JR NZ,<a href="F220.html#62318">f36e_loop</a></td>
-<td class="comment-1" rowspan="1">Loop f36e_loop</td>
+<td class="instruction">JR NZ,<a href="F220.html#62318">plsp_f36e_loop</a></td>
+<td class="comment-1" rowspan="1">Loop plsp_f36e_loop</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="62357"></span>F395</td>
 <td class="instruction">INC HL</td>
-<td class="comment-1" rowspan="1">HL++</td>
+<td class="comment-1" rowspan="1">Advance to next byte of sample data</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="62358"></span>F396</td>
 <td class="instruction">DEC DE</td>
-<td class="comment-1" rowspan="1">DE--</td>
+<td class="comment-1" rowspan="1">Decrement sample data counter</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="62359"></span>F397</td>
 <td class="instruction">LD A,D</td>
-<td class="comment-1" rowspan="3">Jump to f367_128k if DE &gt; 0  -- so DE's a counter</td>
+<td class="comment-1" rowspan="3">Loop to plsp_f367_128k while sample data remains</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -1283,10 +1339,10 @@ writing the full register set?
 <td class="asm-label"></td>
 <td class="address-1"><span id="62364"></span>F39C</td>
 <td class="instruction">JP $8208</td>
-<td class="comment-1" rowspan="1">Jump to relocated f414_128k</td>
+<td class="comment-1" rowspan="1">Exit via relocated reset_paging_128k</td>
 </tr>
 <tr>
-<td class="asm-label">f39f_128k</td>
+<td class="asm-label">plsp_f39f_128k</td>
 <td class="address-1"><span id="62367"></span>F39F</td>
 <td class="instruction">LD A,($8E4A)</td>
 <td class="comment-1" rowspan="1">-- frame delay?</td>
@@ -1312,7 +1368,7 @@ writing the full register set?
 <td class="asm-label"></td>
 <td class="address-1"><span id="62376"></span>F3A8</td>
 <td class="instruction">XOR A</td>
-<td class="comment-1" rowspan="2">$A239 = 0 -- state sfx var</td>
+<td class="comment-1" rowspan="2">var_a239 = 0</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -1329,24 +1385,25 @@ writing the full register set?
 <td class="asm-label"></td>
 <td class="address-1"><span id="62381"></span>F3AD</td>
 <td class="instruction">LD ($A23A),A</td>
-<td class="comment-1" rowspan="1">Load &lt;copy of noise pitch&gt;</td>
+<td class="comment-1" rowspan="1">Load var_a23a  -- copy of noise pitch</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="62384"></span>F3B0</td>
 <td class="instruction">LD ($8E4A),A</td>
-<td class="comment-1" rowspan="1">Self modify $8E49</td>
+<td class="comment-1" rowspan="1">Self modify <a href="8E42.html#36425">8E49</a></td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="62387"></span>F3B3</td>
 <td class="instruction">LD HL,$C006</td>
-<td class="comment-1" rowspan="2">Self modify 'CALL xxxx' at $81C5 ($F3D1 here - below)</td>
+<td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
-<td class="asm-label">f3b6_128k</td>
+<td class="asm-label">plsp_f3b6_128k</td>
 <td class="address-1"><span id="62390"></span>F3B6</td>
 <td class="instruction">LD ($81C6),HL</td>
+<td class="comment-1" rowspan="1">Self modify 'CALL xxxx' @ $81C5 ($F3D1 before relocation - below)</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -1388,7 +1445,7 @@ writing the full register set?
 <td class="asm-label"></td>
 <td class="address-1"><span id="62407"></span>F3C7</td>
 <td class="instruction">LD ($81CE),SP</td>
-<td class="comment-1" rowspan="1">Self modify 'LD SP,xxxx' at $81CD ($F3D9 here - below)</td>
+<td class="comment-1" rowspan="1">Self modify 'LD SP,xxxx' @ <a href="80B9.html#33229">81CD</a> ($F3D9 here - below)</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -1406,7 +1463,7 @@ writing the full register set?
 <td class="asm-label"></td>
 <td class="address-1"><span id="62417"></span>F3D1</td>
 <td class="instruction">CALL $0000</td>
-<td class="comment-1" rowspan="1">Self modified by $F3B3</td>
+<td class="comment-1" rowspan="1">Self modified by <a href="F220.html#62390">plsp_f3b6_128k</a></td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -1430,7 +1487,7 @@ writing the full register set?
 <td class="asm-label"></td>
 <td class="address-1"><span id="62425"></span>F3D9</td>
 <td class="instruction">LD SP,$0000</td>
-<td class="comment-1" rowspan="1">Restore SP - self modified by $F3C7 above</td>
+<td class="comment-1" rowspan="1">Restore SP - self modified by <a href="F220.html#62407">F3C7</a> above</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -1590,7 +1647,7 @@ writing the full register set?
 <td class="asm-label"></td>
 <td class="address-1"><span id="62470"></span>F406</td>
 <td class="instruction">CALL $8208</td>
-<td class="comment-1" rowspan="1">Call relocated f414_128k</td>
+<td class="comment-1" rowspan="1">Call relocated reset_paging_128k</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -1640,7 +1697,7 @@ writing the full register set?
 <td class="comment-1" rowspan="1">Return</td>
 </tr>
 <tr>
-<td class="asm-label">f414_128k</td>
+<td class="asm-label">reset_paging_128k</td>
 <td class="address-1"><span id="62484"></span>F414</td>
 <td class="instruction">XOR A</td>
 <td class="comment-1" rowspan="3">128K: Set paging register to default</td>
@@ -1662,26 +1719,16 @@ writing the full register set?
 <td class="comment-1" rowspan="1">Return</td>
 </tr>
 <tr>
-<td class="routine-comment" colspan="5">
-<span id="62491"></span>
-<div class="comments">
-<div class="paragraph">
-This is like attract_mode.
-</div>
-</div>
-</td>
-</tr>
-<tr>
-<td class="asm-label">f41b_128k</td>
+<td class="asm-label">attract_mode_hook_128k</td>
 <td class="address-1"><span id="62491"></span>F41B</td>
 <td class="instruction">LD HL,$C000</td>
 <td class="comment-1" rowspan="1">HL = $C000</td>
 </tr>
 <tr>
-<td class="asm-label">load_stage_128k_4</td>
+<td class="asm-label">page_in_stage_128k_3</td>
 <td class="address-2"><span id="62494"></span>F41E</td>
 <td class="instruction">CALL $81AA</td>
-<td class="comment-1" rowspan="1">Call relocated f3b6_128k</td>
+<td class="comment-1" rowspan="1">Call relocated plsp_f3b6_128k (speech)</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -1773,8 +1820,8 @@ This is like attract_mode.
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="62533"></span>F445</td>
-<td class="instruction">JP NZ,<a href="9BCF.html#40057">tick_3</a></td>
-<td class="comment-1" rowspan="1">Jump if so</td>
+<td class="instruction">JP NZ,<a href="9BCF.html#40057">play_start_noise</a></td>
+<td class="comment-1" rowspan="1">Jump to play_start_noise if so</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -1814,7 +1861,7 @@ This is like attract_mode.
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="62548"></span>F454</td>
-<td class="instruction">JR C,<a href="F220.html#62494">load_stage_128k_4</a></td>
+<td class="instruction">JR C,<a href="F220.html#62494">page_in_stage_128k_3</a></td>
 <td class="comment-1" rowspan="1">?Jump if ENTER was pressed</td>
 </tr>
 <tr>
@@ -1844,7 +1891,7 @@ This is like attract_mode.
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="62557"></span>F45D</td>
-<td class="instruction">JR NC,<a href="F220.html#62563">load_stage_128k_5</a></td>
+<td class="instruction">JR NC,<a href="F220.html#62563">page_in_stage_128k_4</a></td>
 <td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
@@ -1860,7 +1907,7 @@ This is like attract_mode.
 <td class="comment-1" rowspan="1">Call print_message</td>
 </tr>
 <tr>
-<td class="asm-label">load_stage_128k_5</td>
+<td class="asm-label">page_in_stage_128k_4</td>
 <td class="address-2"><span id="62563"></span>F463</td>
 <td class="instruction">LD A,($A231)</td>
 <td class="comment-1" rowspan="3">If transition_control != 0 jump</td>
@@ -1984,7 +2031,7 @@ Next: <a href="F491.html">F491</a>
 </tr>
 </table>
 <footer>
-<div class="release">The incomplete Chase H.Q. disassembly 20230518</div>
+<div class="release">The incomplete Chase H.Q. disassembly 20231102</div>
 <div class="copyright">&copy; 1988 Taito Corporation &copy; 1989 Ocean Software Ltd. (Chase H.Q.) © 2023 David Thomas (this disassembly)</div>
 <div class="created">Created using <a href="https://skoolkit.ca">SkoolKit</a> 8.9.</div>
 </footer>

@@ -76,7 +76,7 @@ Used by the routine at <a href="8401.html">main_loop</a>.
 <td class="asm-label"></td>
 <td class="address-1"><span id="39901"></span>9BDD</td>
 <td class="instruction">LD A,($A229)</td>
-<td class="comment-1" rowspan="3">Jump to $9C0D if time_up_state was 1 - out of time</td>
+<td class="comment-1" rowspan="3">Jump to <a href="9BCF.html#39949">tick_0</a> if time_up_state was 1 - out of time</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -92,7 +92,7 @@ Used by the routine at <a href="8401.html">main_loop</a>.
 <td class="asm-label"></td>
 <td class="address-1"><span id="39907"></span>9BE3</td>
 <td class="instruction">DEC A</td>
-<td class="comment-1" rowspan="2">Jump to $9C31 if time_up_state was 2 - show "TIME UP" message</td>
+<td class="comment-1" rowspan="2">Jump to <a href="9BCF.html#39985">tick_1</a> if time_up_state was 2 - show "TIME UP" message</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -103,7 +103,7 @@ Used by the routine at <a href="8401.html">main_loop</a>.
 <td class="asm-label"></td>
 <td class="address-1"><span id="39910"></span>9BE6</td>
 <td class="instruction">DEC A</td>
-<td class="comment-1" rowspan="2">Jump to $9C50 if time_up_state was 3 - show "CONTINUE" message &amp; run countdown</td>
+<td class="comment-1" rowspan="2">Jump to <a href="9BCF.html#40016">tick_2</a> if time_up_state was 3 - show "CONTINUE" message &amp; run countdown</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -257,7 +257,7 @@ Out of time.
 <td class="asm-label"></td>
 <td class="address-1"><span id="39946"></span>9C0A</td>
 <td class="instruction">JP <a href="9945.html">chatter</a></td>
-<td class="comment-1" rowspan="1">Exit via chatter</td>
+<td class="comment-1" rowspan="1">Exit via chatter (priority 21)</td>
 </tr>
 <tr>
 <td class="asm-label">tick_0</td>
@@ -301,7 +301,7 @@ Out of time.
 <td class="asm-label"></td>
 <td class="address-1"><span id="39961"></span>9C19</td>
 <td class="instruction">JR <a href="9BCF.html#39929">tick_time_remaining</a></td>
-<td class="comment-1" rowspan="1">Loop back to $9BF9</td>
+<td class="comment-1" rowspan="1">Loop back to <a href="9BCF.html#39929">tick_time_remaining</a></td>
 </tr>
 <tr>
 <td class="asm-label">tick_time_up</td>
@@ -351,13 +351,13 @@ Out of time.
 <td class="asm-label"></td>
 <td class="address-1"><span id="39980"></span>9C2C</td>
 <td class="instruction">LD A,$04</td>
-<td class="comment-1" rowspan="1">A = 4</td>
+<td class="comment-1" rowspan="1">Index of "Your time's up" speech sample</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="39982"></span>9C2E</td>
-<td class="instruction">JP <a href="83B5.html#33735">unknown_hook_3</a></td>
-<td class="comment-1" rowspan="1">Exit via unknown_hook_3</td>
+<td class="instruction">JP <a href="83B5.html#33735">play_speech_hook</a></td>
+<td class="comment-1" rowspan="1">Exit via play_speech_hook</td>
 </tr>
 <tr>
 <td class="asm-label">tick_1</td>
@@ -434,7 +434,7 @@ Out of time.
 <td class="asm-label"></td>
 <td class="address-1"><span id="40012"></span>9C4C</td>
 <td class="instruction">LD ($9C85),HL</td>
-<td class="comment-1" rowspan="1">Self modify 'LD HL' at $9C84 to load HL</td>
+<td class="comment-1" rowspan="1">Self modify 'LD HL' @ <a href="9BCF.html#40068">9C84</a> to load HL</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -522,7 +522,7 @@ Resetting mission code.
 <td class="asm-label"></td>
 <td class="address-1"><span id="40039"></span>9C67</td>
 <td class="instruction">LD ($A252),A</td>
-<td class="comment-1" rowspan="1">$A252 = 3</td>
+<td class="comment-1" rowspan="1">var_a252 = 3</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -540,7 +540,7 @@ Resetting mission code.
 <td class="asm-label"></td>
 <td class="address-1"><span id="40048"></span>9C70</td>
 <td class="instruction">LD A,$60</td>
-<td class="comment-1" rowspan="4">Set remaining time to 60 (BCD) [doesn't affect stuff if altered?!]</td>
+<td class="comment-1" rowspan="2">Set remaining time to 60 (BCD) [doesn't affect stuff if altered?!]</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -551,6 +551,7 @@ Resetting mission code.
 <td class="asm-label"></td>
 <td class="address-1"><span id="40053"></span>9C75</td>
 <td class="instruction">LD HL,$8006</td>
+<td class="comment-1" rowspan="2">Increment retry_count</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -562,22 +563,22 @@ Resetting mission code.
 <span id="40057"></span>
 <div class="comments">
 <div class="paragraph">
-This entry point is used by the routines at <a href="858C.html">run_pregame_screen</a> and <a href="F220.html">load_stage_128k</a>.
+This entry point is used by the routines at <a href="858C.html">run_pregame_screen</a> and <a href="F220.html">page_in_stage_128k</a>.
 </div>
 </div>
 </td>
 </tr>
 <tr>
-<td class="asm-label">tick_3</td>
+<td class="asm-label">play_start_noise</td>
 <td class="address-2"><span id="40057"></span>9C79</td>
 <td class="instruction">LD A,$05</td>
-<td class="comment-1" rowspan="1">A = 5</td>
+<td class="comment-1" rowspan="1">Index of start noise sample</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="40059"></span>9C7B</td>
-<td class="instruction">JP <a href="83B5.html#33735">unknown_hook_3</a></td>
-<td class="comment-1" rowspan="1">Exit via unknown_hook_3</td>
+<td class="instruction">JP <a href="83B5.html#33735">play_speech_hook</a></td>
+<td class="comment-1" rowspan="1">Exit via play_speech_hook</td>
 </tr>
 <tr>
 <td class="asm-label">tick_print_continue</td>
@@ -606,7 +607,7 @@ This entry point is used by the routines at <a href="858C.html">run_pregame_scre
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="40072"></span>9C88</td>
-<td class="instruction">JR NZ,<a href="9BCF.html#40101">tick_5</a></td>
+<td class="instruction">JR NZ,<a href="9BCF.html#40101">tick_4</a></td>
 <td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
@@ -642,7 +643,7 @@ This entry point is used by the routines at <a href="858C.html">run_pregame_scre
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="40082"></span>9C92</td>
-<td class="instruction">JR NC,<a href="9BCF.html#40085">tick_4</a></td>
+<td class="instruction">JR NC,<a href="9BCF.html#40085">tick_3</a></td>
 <td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
@@ -652,7 +653,7 @@ This entry point is used by the routines at <a href="858C.html">run_pregame_scre
 <td class="comment-1" rowspan="1">B++  -- 9 =&gt; bow</td>
 </tr>
 <tr>
-<td class="asm-label">tick_4</td>
+<td class="asm-label">tick_3</td>
 <td class="address-2"><span id="40085"></span>9C95</td>
 <td class="instruction">CALL <a href="88F2.html">start_sfx</a></td>
 <td class="comment-1" rowspan="1">Call start_sfx</td>
@@ -672,7 +673,7 @@ This entry point is used by the routines at <a href="858C.html">run_pregame_scre
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="40090"></span>9C9A</td>
-<td class="instruction">JR NZ,<a href="9BCF.html#40101">tick_5</a></td>
+<td class="instruction">JR NZ,<a href="9BCF.html#40101">tick_4</a></td>
 <td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
@@ -685,7 +686,7 @@ This entry point is used by the routines at <a href="858C.html">run_pregame_scre
 <td class="asm-label"></td>
 <td class="address-1"><span id="40093"></span>9C9D</td>
 <td class="instruction">LD ($A26A),A</td>
-<td class="comment-1" rowspan="1">*$A26A = A</td>
+<td class="comment-1" rowspan="1">quit_state = A</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -699,10 +700,10 @@ This entry point is used by the routines at <a href="858C.html">run_pregame_scre
 <td class="instruction">LD ($A229),A</td>
 </tr>
 <tr>
-<td class="asm-label">tick_5</td>
+<td class="asm-label">tick_4</td>
 <td class="address-2"><span id="40101"></span>9CA5</td>
 <td class="instruction">LD ($9C85),HL</td>
-<td class="comment-1" rowspan="1">Self modify 'LD HL' at $9C84 to load HL</td>
+<td class="comment-1" rowspan="1">Self modify 'LD HL' @ <a href="9BCF.html#40068">9C84</a> to load HL</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -720,7 +721,7 @@ This entry point is used by the routines at <a href="858C.html">run_pregame_scre
 <td class="asm-label"></td>
 <td class="address-1"><span id="40107"></span>9CAB</td>
 <td class="instruction">LD DE,$8D7C</td>
-<td class="comment-1" rowspan="1">DE = $8D7C</td>
+<td class="comment-1" rowspan="1">Address of nn in "TIME nn"</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -731,7 +732,7 @@ This entry point is used by the routines at <a href="858C.html">run_pregame_scre
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="40112"></span>9CB0</td>
-<td class="instruction">JR NZ,<a href="9BCF.html#40120">tick_6</a></td>
+<td class="instruction">JR NZ,<a href="9BCF.html#40120">tick_5</a></td>
 <td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
@@ -749,11 +750,11 @@ This entry point is used by the routines at <a href="858C.html">run_pregame_scre
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="40118"></span>9CB6</td>
-<td class="instruction">JR <a href="9BCF.html#40123">tick_7</a></td>
+<td class="instruction">JR <a href="9BCF.html#40123">tick_6</a></td>
 <td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
-<td class="asm-label">tick_6</td>
+<td class="asm-label">tick_5</td>
 <td class="address-2"><span id="40120"></span>9CB8</td>
 <td class="instruction">LD L,A</td>
 <td class="comment-1" rowspan="1">L = A</td>
@@ -765,7 +766,7 @@ This entry point is used by the routines at <a href="858C.html">run_pregame_scre
 <td class="comment-1" rowspan="1">A = $20</td>
 </tr>
 <tr>
-<td class="asm-label">tick_7</td>
+<td class="asm-label">tick_6</td>
 <td class="address-2"><span id="40123"></span>9CBB</td>
 <td class="instruction">LD (DE),A</td>
 <td class="comment-1" rowspan="1">*DE = A</td>
@@ -812,7 +813,7 @@ Next: <a href="9CC2.html">9CC2</a>
 </tr>
 </table>
 <footer>
-<div class="release">The incomplete Chase H.Q. disassembly 20230518</div>
+<div class="release">The incomplete Chase H.Q. disassembly 20231102</div>
 <div class="copyright">&copy; 1988 Taito Corporation &copy; 1989 Ocean Software Ltd. (Chase H.Q.) © 2023 David Thomas (this disassembly)</div>
 <div class="created">Created using <a href="https://skoolkit.ca">SkoolKit</a> 8.9.</div>
 </footer>

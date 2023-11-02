@@ -117,7 +117,7 @@ Suspect this is counting the distance to road split.
 <td class="asm-label"></td>
 <td class="address-1"><span id="47625"></span>BA09</td>
 <td class="instruction">DJNZ <a href="B9F4.html#47617">main_loop_12_0</a></td>
-<td class="comment-1" rowspan="1">Loop while B</td>
+<td class="comment-1" rowspan="1">Loop while <span class="register">B</span></td>
 </tr>
 <tr>
 <td class="routine-comment" colspan="5">
@@ -157,19 +157,19 @@ No road split found?
 <td class="asm-label">main_loop_12_1</td>
 <td class="address-2"><span id="47639"></span>BA17</td>
 <td class="instruction">LD HL,$BA36</td>
-<td class="comment-1" rowspan="1">Self modify $BA35 to load $EA30</td>
+<td class="comment-1" rowspan="1">Self modify <a href="B9F4.html#47669">BA35</a> to load $EA30</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="47642"></span>BA1A</td>
 <td class="instruction">LD DE,$BA40</td>
-<td class="comment-1" rowspan="1">Self modify $BA3F to load $EB30</td>
+<td class="comment-1" rowspan="1">Self modify <a href="B9F4.html#47679">BA3F</a> to load $EB30</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="47645"></span>BA1D</td>
 <td class="instruction">LD BC,$BA45</td>
-<td class="comment-1" rowspan="1">Self modify $BA44 to load $E930</td>
+<td class="comment-1" rowspan="1">Self modify <a href="B9F4.html#47684">BA44</a> to load $E930</td>
 </tr>
 <tr>
 <td class="asm-label">main_loop_12_2</td>
@@ -193,7 +193,7 @@ No road split found?
 <td class="asm-label"></td>
 <td class="address-1"><span id="47651"></span>BA23</td>
 <td class="instruction">LD ($BA29),A</td>
-<td class="comment-1" rowspan="1">Self modify $BA27 to load ($E800 | A)</td>
+<td class="comment-1" rowspan="1">Self modify <a href="B9F4.html#47655">BA27</a> to load ($E800 | A)</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -356,7 +356,7 @@ Handle road split.
 <td class="asm-label"></td>
 <td class="address-1"><span id="47698"></span>BA52</td>
 <td class="instruction">LD ($A266),A</td>
-<td class="comment-1" rowspan="1">Set split road countdown</td>
+<td class="comment-1" rowspan="1">split_road_countdown = A</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -368,7 +368,7 @@ Handle road split.
 <td class="asm-label"></td>
 <td class="address-1"><span id="47703"></span>BA57</td>
 <td class="instruction">LD A,$60</td>
-<td class="comment-1" rowspan="2">Set split road visible</td>
+<td class="comment-1" rowspan="2">Set split_road visible</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -402,7 +402,7 @@ Handle road split.
 <td class="asm-label"></td>
 <td class="address-1"><span id="47713"></span>BA61</td>
 <td class="instruction">LD HL,($A267)</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="1">HL = var_a267</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -418,26 +418,25 @@ Handle road split.
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="47719"></span>BA67</td>
-<td class="instruction">JR NZ,<a href="B9F4.html#47839">main_loop_12_10</a></td>
+<td class="instruction">JR NZ,<a href="B9F4.html#47839">main_loop_12_9</a></td>
 <td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="47721"></span>BA69</td>
 <td class="instruction">LD A,($A269)</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="2">A = var_a269 - 1</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="47724"></span>BA6C</td>
 <td class="instruction">DEC A</td>
-<td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="47725"></span>BA6D</td>
-<td class="instruction">JR Z,<a href="B9F4.html#47792">main_loop_12_7</a></td>
-<td class="comment-1" rowspan="1"></td>
+<td class="instruction">JR Z,<a href="B9F4.html#47792">main_loop_12_6</a></td>
+<td class="comment-1" rowspan="1">Jump if zero</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -449,7 +448,7 @@ Handle road split.
 <td class="asm-label"></td>
 <td class="address-1"><span id="47729"></span>BA71</td>
 <td class="instruction">LD ($A269),A</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="1">var_a269 = A</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -550,8 +549,18 @@ Handle road split.
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="47765"></span>BA95</td>
-<td class="instruction">JR Z,<a href="B9F4.html#47786">main_loop_12_6</a></td>
-<td class="comment-1" rowspan="1">Jump if correct fork was taken</td>
+<td class="instruction">JR Z,<a href="B9F4.html#47786">ml12_chatter</a></td>
+<td class="comment-1" rowspan="1">Jump to ml12_chatter if correct fork was taken</td>
+</tr>
+<tr>
+<td class="routine-comment" colspan="5">
+<span id="47767"></span>
+<div class="comments">
+<div class="paragraph">
+Incorrect fork was taken.
+</div>
+</div>
+</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -564,6 +573,16 @@ Handle road split.
 <td class="address-1"><span id="47769"></span>BA99</td>
 <td class="instruction">LD ($A195),A</td>
 <td class="comment-1" rowspan="1">A195 is horz position of perp car</td>
+</tr>
+<tr>
+<td class="routine-comment" colspan="5">
+<span id="47772"></span>
+<div class="comments">
+<div class="paragraph">
+Add a bonus of (40,000 + 10,000 * level number) for going the wrong way...?
+</div>
+</div>
+</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -580,25 +599,25 @@ Handle road split.
 <td class="asm-label"></td>
 <td class="address-1"><span id="47777"></span>BAA1</td>
 <td class="instruction">LD D,A</td>
-<td class="comment-1" rowspan="1">D = A</td>
+<td class="comment-1" rowspan="1">Set top digits</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="47778"></span>BAA2</td>
 <td class="instruction">XOR A</td>
-<td class="comment-1" rowspan="1">A = 0</td>
+<td class="comment-1" rowspan="1">Clear low digit</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="47779"></span>BAA3</td>
 <td class="instruction">LD E,A</td>
-<td class="comment-1" rowspan="1">E = A</td>
+<td class="comment-1" rowspan="1">Clear middle digits</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="47780"></span>BAA4</td>
-<td class="instruction">CALL <a href="9CD6.html">$9CD6</a></td>
-<td class="comment-1" rowspan="1"></td>
+<td class="instruction">CALL <a href="9CD6.html">bonus</a></td>
+<td class="comment-1" rowspan="1">Call bonus</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -607,16 +626,16 @@ Handle road split.
 <td class="comment-1" rowspan="1">-&gt; Raymond: "WHAT ARE YOU DOING MAN!!" / "THE BAD GUYS ARE GOING THE OTHER WAY." &lt;STOP&gt;</td>
 </tr>
 <tr>
-<td class="asm-label">main_loop_12_6</td>
+<td class="asm-label">ml12_chatter</td>
 <td class="address-2"><span id="47786"></span>BAAA</td>
 <td class="instruction">LD A,$14</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="1">Set priority to 20</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="47788"></span>BAAC</td>
 <td class="instruction">CALL <a href="9945.html">chatter</a></td>
-<td class="comment-1" rowspan="1">Call chatter</td>
+<td class="comment-1" rowspan="1">Call chatter (priority 20)</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -625,10 +644,10 @@ Handle road split.
 <td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
-<td class="asm-label">main_loop_12_7</td>
+<td class="asm-label">main_loop_12_6</td>
 <td class="address-2"><span id="47792"></span>BAB0</td>
 <td class="instruction">LD A,($A254)</td>
-<td class="comment-1" rowspan="1">Spawning flag</td>
+<td class="comment-1" rowspan="1">Load another_spawning_flag</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -639,7 +658,7 @@ Handle road split.
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="47796"></span>BAB4</td>
-<td class="instruction">JR Z,<a href="B9F4.html#47820">main_loop_12_9</a></td>
+<td class="instruction">JR Z,<a href="B9F4.html#47820">main_loop_12_8</a></td>
 <td class="comment-1" rowspan="1">Jump if zero</td>
 </tr>
 <tr>
@@ -652,7 +671,7 @@ Handle road split.
 <td class="asm-label"></td>
 <td class="address-1"><span id="47799"></span>BAB7</td>
 <td class="instruction">LD A,($A16D)</td>
-<td class="comment-1" rowspan="1">A = &lt;mystery&gt;</td>
+<td class="comment-1" rowspan="1">A = var_a16d</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -675,7 +694,7 @@ Handle road split.
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="47806"></span>BABE</td>
-<td class="instruction">JR C,<a href="B9F4.html#47816">main_loop_12_8</a></td>
+<td class="instruction">JR C,<a href="B9F4.html#47816">main_loop_12_7</a></td>
 <td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
@@ -700,10 +719,10 @@ Handle road split.
 <td class="asm-label"></td>
 <td class="address-1"><span id="47813"></span>BAC5</td>
 <td class="instruction">LD ($A267),HL</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="1">var_a267 = HL</td>
 </tr>
 <tr>
-<td class="asm-label">main_loop_12_8</td>
+<td class="asm-label">main_loop_12_7</td>
 <td class="address-2"><span id="47816"></span>BAC8</td>
 <td class="instruction">LD A,C</td>
 <td class="comment-1" rowspan="1"></td>
@@ -712,13 +731,13 @@ Handle road split.
 <td class="asm-label"></td>
 <td class="address-1"><span id="47817"></span>BAC9</td>
 <td class="instruction">LD ($A16D),A</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="1">var_a16d = A</td>
 </tr>
 <tr>
-<td class="asm-label">main_loop_12_9</td>
+<td class="asm-label">main_loop_12_8</td>
 <td class="address-2"><span id="47820"></span>BACC</td>
 <td class="instruction">LD A,($A16D)</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="1">A = var_a16d</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -783,7 +802,7 @@ Handle road split.
 <td class="comment-1" rowspan="1">HL += DE</td>
 </tr>
 <tr>
-<td class="asm-label">main_loop_12_10</td>
+<td class="asm-label">main_loop_12_9</td>
 <td class="address-2"><span id="47839"></span>BADF</td>
 <td class="instruction">PUSH HL</td>
 <td class="comment-1" rowspan="1"></td>
@@ -802,7 +821,7 @@ Handle road split.
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="47844"></span>BAE4</td>
-<td class="instruction">JR Z,<a href="B9F4.html#47863">main_loop_12_11</a></td>
+<td class="instruction">JR Z,<a href="B9F4.html#47863">main_loop_12_10</a></td>
 </tr>
 <tr>
 <td class="routine-comment" colspan="5">
@@ -859,7 +878,7 @@ Left fork was taken.
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="47861"></span>BAF5</td>
-<td class="instruction">JR <a href="B9F4.html#47879">main_loop_12_12</a></td>
+<td class="instruction">JR <a href="B9F4.html#47879">main_loop_12_11</a></td>
 <td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
@@ -873,7 +892,7 @@ Right fork was taken.
 </td>
 </tr>
 <tr>
-<td class="asm-label">main_loop_12_11</td>
+<td class="asm-label">main_loop_12_10</td>
 <td class="address-2"><span id="47863"></span>BAF7</td>
 <td class="instruction">CALL <a href="CBCE.html">$CBCE</a></td>
 <td class="comment-1" rowspan="1"></td>
@@ -915,7 +934,7 @@ Right fork was taken.
 <td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
-<td class="asm-label">main_loop_12_12</td>
+<td class="asm-label">main_loop_12_11</td>
 <td class="address-2"><span id="47879"></span>BB07</td>
 <td class="instruction">POP HL</td>
 <td class="comment-1" rowspan="1"></td>
@@ -963,7 +982,7 @@ Right fork was taken.
 <td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
-<td class="asm-label">main_loop_12_13</td>
+<td class="asm-label">main_loop_12_12</td>
 <td class="address-2"><span id="47899"></span>BB1B</td>
 <td class="instruction">LD (HL),A</td>
 <td class="comment-1" rowspan="1"></td>
@@ -1151,7 +1170,7 @@ Right fork was taken.
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="47964"></span>BB5C</td>
-<td class="instruction">DJNZ <a href="B9F4.html#47899">main_loop_12_13</a></td>
+<td class="instruction">DJNZ <a href="B9F4.html#47899">main_loop_12_12</a></td>
 <td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
@@ -1203,7 +1222,7 @@ Next: <a href="BB69.html">BB69</a>
 </tr>
 </table>
 <footer>
-<div class="release">The incomplete Chase H.Q. disassembly 20230518</div>
+<div class="release">The incomplete Chase H.Q. disassembly 20231102</div>
 <div class="copyright">&copy; 1988 Taito Corporation &copy; 1989 Ocean Software Ltd. (Chase H.Q.) © 2023 David Thomas (this disassembly)</div>
 <div class="created">Created using <a href="https://skoolkit.ca">SkoolKit</a> 8.9.</div>
 </footer>

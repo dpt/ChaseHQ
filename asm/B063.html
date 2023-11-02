@@ -38,7 +38,7 @@ Used by the routines at <a href="8401.html">main_loop</a> and <a href="852A.html
 <td class="asm-label">move_hero_car</td>
 <td class="address-2"><span id="45155"></span>B063</td>
 <td class="instruction">LD A,$00</td>
-<td class="comment-1" rowspan="1">Load jump counter. Self modified by $8827 and $B965. Highest is 8.</td>
+<td class="comment-1" rowspan="1">Load jump counter. Self modified by <a href="87DC.html#34855">8827</a> and <a href="B8D2.html#47461">B965</a>. Highest is 8.</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -65,7 +65,7 @@ Hero car is jumping.
 <td class="asm-label">mhc_jumping</td>
 <td class="address-1"><span id="45160"></span>B068</td>
 <td class="instruction">DEC A</td>
-<td class="comment-1" rowspan="2">Decrement the jump counter in (self modified) $B063</td>
+<td class="comment-1" rowspan="2">Decrement the jump counter in (self modified) <a href="B063.html">move_hero_car</a></td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -76,7 +76,7 @@ Hero car is jumping.
 <td class="asm-label"></td>
 <td class="address-1"><span id="45164"></span>B06C</td>
 <td class="instruction">JR NZ,<a href="B063.html#45177">mhc_midair</a></td>
-<td class="comment-1" rowspan="1">Jump to $B079 if we're still jumping</td>
+<td class="comment-1" rowspan="1">Jump to <a href="B063.html#45177">mhc_midair</a> if we're still jumping</td>
 </tr>
 <tr>
 <td class="routine-comment" colspan="5">
@@ -125,7 +125,7 @@ Hero car is in mid-air.
 <td class="asm-label">mhc_midair</td>
 <td class="address-2"><span id="45177"></span>B079</td>
 <td class="instruction">LD HL,$0000</td>
-<td class="comment-1" rowspan="1">Point <span class="register">HL</span> at entry in jump table. Self modified by $B96C and $B092</td>
+<td class="comment-1" rowspan="1">Point <span class="register">HL</span> at entry in jump table. Self modified by <a href="B8D2.html#47468">B96C</a> and <a href="B063.html#45202">B092</a></td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -190,7 +190,7 @@ Hero car is in mid-air.
 <td class="asm-label"></td>
 <td class="address-1"><span id="45202"></span>B092</td>
 <td class="instruction">LD ($B07A),HL</td>
-<td class="comment-1" rowspan="1">Update HL load above, $B079</td>
+<td class="comment-1" rowspan="1">Update HL load above, <a href="B063.html#45177">mhc_midair</a></td>
 </tr>
 <tr>
 <td class="asm-label">mhc_not_jumping</td>
@@ -312,7 +312,7 @@ Handle gear changes.
 <td class="asm-label"></td>
 <td class="address-1"><span id="45235"></span>B0B3</td>
 <td class="instruction">LD A,($B326)</td>
-<td class="comment-1" rowspan="1">Read from the LD A at $B325 (crash flag)</td>
+<td class="comment-1" rowspan="1">Read from the 'LD A,x' @ <a href="B318.html#45861">main_loop_24_0</a> (crash flag)</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -369,7 +369,7 @@ Handle gear changes.
 <td class="asm-label"></td>
 <td class="address-1"><span id="45252"></span>B0C4</td>
 <td class="instruction">LD A,($A252)</td>
-<td class="comment-1" rowspan="1">A = *$A252</td>
+<td class="comment-1" rowspan="1">A = var_a252</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -381,7 +381,7 @@ Handle gear changes.
 <td class="asm-label"></td>
 <td class="address-1"><span id="45257"></span>B0C9</td>
 <td class="instruction">AND A</td>
-<td class="comment-1" rowspan="2">Jump if A252 is set</td>
+<td class="comment-1" rowspan="2">Jump if var_a252 is set</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -438,7 +438,7 @@ Handle gear changes.
 <td class="asm-label"></td>
 <td class="address-1"><span id="45275"></span>B0DB</td>
 <td class="instruction">LD ($A252),A</td>
-<td class="comment-1" rowspan="1">$A252 = A</td>
+<td class="comment-1" rowspan="1">var_a252 = A</td>
 </tr>
 <tr>
 <td class="asm-label">move_hero_car_3</td>
@@ -535,7 +535,7 @@ Handle idle timer.
 <td class="asm-label"></td>
 <td class="address-1"><span id="45305"></span>B0F9</td>
 <td class="instruction">LD A,$0A</td>
-<td class="comment-1" rowspan="1">A = 10</td>
+<td class="comment-1" rowspan="1">Set priority to 10</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -547,7 +547,7 @@ Handle idle timer.
 <td class="asm-label"></td>
 <td class="address-1"><span id="45310"></span>B0FE</td>
 <td class="instruction">CALL <a href="9945.html">chatter</a></td>
-<td class="comment-1" rowspan="1">Call chatter</td>
+<td class="comment-1" rowspan="1">Call chatter (priority 10)</td>
 </tr>
 <tr>
 <td class="asm-label">move_hero_car_4</td>
@@ -1203,7 +1203,7 @@ Handle off-road (it can be 1 or 2).
 <td class="asm-label">move_hero_car_14</td>
 <td class="address-2"><span id="45495"></span>B1B7</td>
 <td class="instruction">LD A,($A24C)</td>
-<td class="comment-1" rowspan="2">A = *$A24C - 1</td>
+<td class="comment-1" rowspan="2">A = var_a24c - 1</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -1361,7 +1361,7 @@ Handle off-road (it can be 1 or 2).
 <td class="asm-label">move_hero_car_17</td>
 <td class="address-2"><span id="45540"></span>B1E4</td>
 <td class="instruction">LD ($A24C),A</td>
-<td class="comment-1" rowspan="1">*$A24C = A</td>
+<td class="comment-1" rowspan="1">var_a24c = A</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -1403,7 +1403,7 @@ Handle off-road (it can be 1 or 2).
 <td class="asm-label"></td>
 <td class="address-1"><span id="45555"></span>B1F3</td>
 <td class="instruction">LD A,($A263)</td>
-<td class="comment-1" rowspan="1">A = *$A263</td>
+<td class="comment-1" rowspan="1">A = var_a263</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -1415,7 +1415,7 @@ Handle off-road (it can be 1 or 2).
 <td class="asm-label"></td>
 <td class="address-1"><span id="45559"></span>B1F7</td>
 <td class="instruction">LD A,($A264)</td>
-<td class="comment-1" rowspan="1">A = *$A264</td>
+<td class="comment-1" rowspan="1">A = var_a264</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -1827,7 +1827,7 @@ Positive scroll =&gt; scroll horizon left.
 <td class="asm-label">move_hero_car_28</td>
 <td class="address-2"><span id="45669"></span>B265</td>
 <td class="instruction">LD HL,$B827</td>
-<td class="comment-1" rowspan="1">HL -&gt; 32-byte table at $B828</td>
+<td class="comment-1" rowspan="1">HL -&gt; 32-byte table at <a href="B828.html">table_b828</a></td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -1845,7 +1845,7 @@ Positive scroll =&gt; scroll horizon left.
 <td class="asm-label"></td>
 <td class="address-1"><span id="45674"></span>B26A</td>
 <td class="instruction">LD A,($A261)</td>
-<td class="comment-1" rowspan="1">A = *$A261</td>
+<td class="comment-1" rowspan="1">A = var_a261</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -1952,7 +1952,7 @@ Positive scroll =&gt; scroll horizon left.
 <td class="asm-label"></td>
 <td class="address-1"><span id="45700"></span>B284</td>
 <td class="instruction">LD HL,$A262</td>
-<td class="comment-1" rowspan="1">HL = $A262</td>
+<td class="comment-1" rowspan="1">HL = var_a262</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -2028,7 +2028,7 @@ Positive scroll =&gt; scroll horizon left.
 <td class="asm-label"></td>
 <td class="address-1"><span id="45719"></span>B297</td>
 <td class="instruction">LD ($A261),A</td>
-<td class="comment-1" rowspan="1">*$A261 = A</td>
+<td class="comment-1" rowspan="1">var_a261 = A</td>
 </tr>
 <tr>
 <td class="routine-comment" colspan="5">
@@ -2044,7 +2044,7 @@ No scroll required?
 <td class="asm-label">move_hero_car_32</td>
 <td class="address-2"><span id="45722"></span>B29A</td>
 <td class="instruction">LD HL,($A25F)</td>
-<td class="comment-1" rowspan="2">HL = *$A25F + BC</td>
+<td class="comment-1" rowspan="2">HL = var_a25f + BC</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -2061,7 +2061,7 @@ No scroll required?
 <td class="asm-label"></td>
 <td class="address-1"><span id="45729"></span>B2A1</td>
 <td class="instruction">LD ($A25F),DE</td>
-<td class="comment-1" rowspan="1">$A25F = DE</td>
+<td class="comment-1" rowspan="1">var_a25f = DE</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -2103,7 +2103,7 @@ No scroll required?
 <td class="asm-label"></td>
 <td class="address-1"><span id="45742"></span>B2AE</td>
 <td class="instruction">LD A,B</td>
-<td class="comment-1" rowspan="2">*$A263 = B</td>
+<td class="comment-1" rowspan="2">var_a263 = B</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -2114,7 +2114,7 @@ No scroll required?
 <td class="asm-label"></td>
 <td class="address-1"><span id="45746"></span>B2B2</td>
 <td class="instruction">LD A,C</td>
-<td class="comment-1" rowspan="2">*$A264 = C</td>
+<td class="comment-1" rowspan="2">var_a264 = C</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -2440,7 +2440,7 @@ Next: <a href="B318.html">B318</a>
 </tr>
 </table>
 <footer>
-<div class="release">The incomplete Chase H.Q. disassembly 20230518</div>
+<div class="release">The incomplete Chase H.Q. disassembly 20231102</div>
 <div class="copyright">&copy; 1988 Taito Corporation &copy; 1989 Ocean Software Ltd. (Chase H.Q.) © 2023 David Thomas (this disassembly)</div>
 <div class="created">Created using <a href="https://skoolkit.ca">SkoolKit</a> 8.9.</div>
 </footer>

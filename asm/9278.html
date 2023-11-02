@@ -23,11 +23,17 @@ Next: <a href="92E1.html">92E1</a>
 </td>
 </tr>
 </table>
-<div class="description">9278: Routine at 9278</div>
+<div class="description">9278: Draws objects (left hand version).</div>
 <table class="disassembly">
 <tr>
 <td class="routine-comment" colspan="5">
 <div class="details">
+<div class="paragraph">
+Called via dispatch at <a href="8F5F.html#36891">901B</a>.
+</div>
+<div class="paragraph">
+Used to draw turn signs, tunnel lights, ... what else?
+</div>
 </div>
 <table class="input">
 <tr class="asm-input-header">
@@ -49,45 +55,43 @@ Next: <a href="92E1.html">92E1</a>
 </td>
 </tr>
 <tr>
-<td class="asm-label">sub_9278</td>
+<td class="asm-label">draw_object_left</td>
 <td class="address-2"><span id="37496"></span>9278</td>
 <td class="instruction">XOR A</td>
-<td class="comment-1" rowspan="2">Self modify 'LD D,x' at $933D to load 0</td>
+<td class="comment-1" rowspan="1">A = 0</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="37497"></span>9279</td>
 <td class="instruction">LD ($933E),A</td>
+<td class="comment-1" rowspan="1">Self modify 'LD D,x' @ <a href="92E1.html#37693">draw_object_right_8</a> to load <span class="register">A</span></td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="37500"></span>927C</td>
 <td class="instruction">LD A,B</td>
-<td class="comment-1" rowspan="1">A = B</td>
+<td class="comment-1" rowspan="4">A = min(B,10)</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="37501"></span>927D</td>
 <td class="instruction">CP $0A</td>
-<td class="comment-1" rowspan="1">CP 10</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="37503"></span>927F</td>
-<td class="instruction">JR C,<a href="9278.html#37507">sub_9278_0</a></td>
-<td class="comment-1" rowspan="1">Jump to $9283 if A &lt; 10</td>
+<td class="instruction">JR C,<a href="9278.html#37507">draw_object_left_0</a></td>
 </tr>
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="37505"></span>9281</td>
 <td class="instruction">LD A,$0A</td>
-<td class="comment-1" rowspan="1">A = 10  -- so it's a max() operator</td>
 </tr>
 <tr>
-<td class="asm-label">sub_9278_0</td>
+<td class="asm-label">draw_object_left_0</td>
 <td class="address-2"><span id="37507"></span>9283</td>
 <td class="instruction">EX DE,HL</td>
-<td class="comment-1" rowspan="1"></td>
+<td class="comment-1" rowspan="1">Put arg address in HL</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -135,7 +139,7 @@ Next: <a href="92E1.html">92E1</a>
 <td class="asm-label"></td>
 <td class="address-1"><span id="37517"></span>928D</td>
 <td class="instruction">LD B,(HL)</td>
-<td class="comment-1" rowspan="2">B = *HL++   -- this reads 6AF8</td>
+<td class="comment-1" rowspan="2">B = *HL++   -- this reads <a href="643E.html#27384">6AF8</a></td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -146,7 +150,7 @@ Next: <a href="92E1.html">92E1</a>
 <td class="asm-label"></td>
 <td class="address-1"><span id="37519"></span>928F</td>
 <td class="instruction">LD L,(HL)</td>
-<td class="comment-1" rowspan="2">HL = *HL   -- read as byte</td>
+<td class="comment-1" rowspan="3">HL = *HL + DE   -- read as byte</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -157,20 +161,19 @@ Next: <a href="92E1.html">92E1</a>
 <td class="asm-label"></td>
 <td class="address-1"><span id="37522"></span>9292</td>
 <td class="instruction">ADD HL,DE</td>
-<td class="comment-1" rowspan="1">HL += DE</td>
 </tr>
 <tr>
 <td class="routine-comment" colspan="5">
 <span id="37523"></span>
 <div class="comments">
 <div class="paragraph">
-This entry point is used by the routine at <a href="916C.html">916C</a>.
+This entry point is used by the routine at <a href="916C.html">draw_stretchy_object_left</a>.
 </div>
 </div>
 </td>
 </tr>
 <tr>
-<td class="asm-label">sub_9278_1</td>
+<td class="asm-label">draw_object_left_stretchy_entrypt</td>
 <td class="address-2"><span id="37523"></span>9293</td>
 <td class="instruction">LD A,(IX+$00)</td>
 <td class="comment-1" rowspan="3">A = IX[0] + 16 - B</td>
@@ -196,13 +199,13 @@ This entry point is used by the routine at <a href="916C.html">916C</a>.
 <span id="37530"></span>
 <div class="comments">
 <div class="paragraph">
-This entry point is used by the routines at <a href="A9DE.html">sub_A9DE</a>, <a href="AA38.html">sub_AA38</a> and <a href="ADA0.html">main_loop_19</a>.
+This entry point is used by the routines at <a href="A9DE.html">sub_A9DE</a>, <a href="AA38.html">helicopter_stuff</a> and <a href="ADA0.html">draw_hazards</a>.
 </div>
 </div>
 </td>
 </tr>
 <tr>
-<td class="asm-label">sub_9278_2</td>
+<td class="asm-label">draw_object_left_1</td>
 <td class="address-2"><span id="37530"></span>929A</td>
 <td class="instruction">CP $08</td>
 <td class="comment-1" rowspan="2">Return if A &lt; 8</td>
@@ -249,7 +252,7 @@ This entry point is used by the routines at <a href="A9DE.html">sub_A9DE</a>, <a
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="37543"></span>92A7</td>
-<td class="instruction">JR C,<a href="9278.html#37563">sub_9278_3</a></td>
+<td class="instruction">JR C,<a href="9278.html#37563">draw_object_left_2</a></td>
 <td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
@@ -261,7 +264,7 @@ This entry point is used by the routines at <a href="A9DE.html">sub_A9DE</a>, <a
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="37547"></span>92AB</td>
-<td class="instruction">JR NC,<a href="92E1.html#37646">$930E</a></td>
+<td class="instruction">JR NC,<a href="92E1.html#37646">draw_object_right_4</a></td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -285,7 +288,7 @@ This entry point is used by the routines at <a href="A9DE.html">sub_A9DE</a>, <a
 <td class="asm-label"></td>
 <td class="address-1"><span id="37552"></span>92B0</td>
 <td class="instruction">LD ($9396),A</td>
-<td class="comment-1" rowspan="1">*$9396 = A</td>
+<td class="comment-1" rowspan="1">Self modify 'LD A,x' at $9395 to load A</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -307,11 +310,11 @@ This entry point is used by the routines at <a href="A9DE.html">sub_A9DE</a>, <a
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="37560"></span>92B8</td>
-<td class="instruction">JP <a href="9278.html#37586">sub_9278_4</a></td>
+<td class="instruction">JP <a href="9278.html#37586">draw_object_left_3</a></td>
 <td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
-<td class="asm-label">sub_9278_3</td>
+<td class="asm-label">draw_object_left_2</td>
 <td class="address-2"><span id="37563"></span>92BB</td>
 <td class="instruction">LD E,(HL)</td>
 <td class="comment-1" rowspan="1">E = *HL</td>
@@ -338,7 +341,7 @@ This entry point is used by the routines at <a href="A9DE.html">sub_A9DE</a>, <a
 <td class="asm-label"></td>
 <td class="address-1"><span id="37568"></span>92C0</td>
 <td class="instruction">LD ($9396),A</td>
-<td class="comment-1" rowspan="1">*$9396 = A</td>
+<td class="comment-1" rowspan="1">Self modify 'LD A,x' at $9395 to load A</td>
 </tr>
 <tr>
 <td class="asm-label"></td>
@@ -409,7 +412,7 @@ This entry point is used by the routines at <a href="A9DE.html">sub_A9DE</a>, <a
 <td class="comment-1" rowspan="1">B = 1</td>
 </tr>
 <tr>
-<td class="asm-label">sub_9278_4</td>
+<td class="asm-label">draw_object_left_3</td>
 <td class="address-2"><span id="37586"></span>92D2</td>
 <td class="instruction">INC HL</td>
 <td class="comment-1" rowspan="1">HL++</td>
@@ -428,7 +431,7 @@ This entry point is used by the routines at <a href="A9DE.html">sub_A9DE</a>, <a
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="37590"></span>92D6</td>
-<td class="instruction">JP Z,<a href="92E1.html#37683">$9333</a></td>
+<td class="instruction">JP Z,<a href="92E1.html#37683">draw_object_right_6</a></td>
 <td class="comment-1" rowspan="1"></td>
 </tr>
 <tr>
@@ -458,8 +461,8 @@ This entry point is used by the routines at <a href="A9DE.html">sub_A9DE</a>, <a
 <tr>
 <td class="asm-label"></td>
 <td class="address-1"><span id="37598"></span>92DE</td>
-<td class="instruction">JP <a href="92E1.html#37675">$932B</a></td>
-<td class="comment-1" rowspan="1"></td>
+<td class="instruction">JP <a href="92E1.html#37675">draw_object_common</a></td>
+<td class="comment-1" rowspan="1">Exit via draw_object_common</td>
 </tr>
 </table>
 <table class="asm-navigation">
@@ -474,7 +477,7 @@ Next: <a href="92E1.html">92E1</a>
 </tr>
 </table>
 <footer>
-<div class="release">The incomplete Chase H.Q. disassembly 20230518</div>
+<div class="release">The incomplete Chase H.Q. disassembly 20231102</div>
 <div class="copyright">&copy; 1988 Taito Corporation &copy; 1989 Ocean Software Ltd. (Chase H.Q.) © 2023 David Thomas (this disassembly)</div>
 <div class="created">Created using <a href="https://skoolkit.ca">SkoolKit</a> 8.9.</div>
 </footer>

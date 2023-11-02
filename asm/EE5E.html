@@ -29,37 +29,43 @@ Next: <a href="EE6E.html">EE6E</a>
 <td class="routine-comment" colspan="5">
 <div class="details">
 <div class="paragraph">
-Used by the routine at <a href="E8CE.html">E8CE</a>.
+Used by the routine at <a href="E810.html#59598">diamond_zoom_in_mask</a>.
 </div>
 </div>
 </td>
 </tr>
 <tr>
+<td class="asm-label">music_reset</td>
 <td class="address-2"><span id="61022"></span>EE5E</td>
 <td class="instruction">XOR A</td>
 <td class="comment-1" rowspan="1">A = 0</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="61023"></span>EE5F</td>
 <td class="instruction">LD ($EF0E),A</td>
-<td class="comment-1" rowspan="1">Self modify 'LD A,x' at $EF0D  -- clear drum flag?</td>
+<td class="comment-1" rowspan="1">Self modify 'LD A,x' @ <a href="EE9E.html#61197">dk_ef0d</a>  -- clear drum flag?</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="61026"></span>EE62</td>
 <td class="instruction">LD ($EF01),A</td>
-<td class="comment-1" rowspan="1">Self modify 'LD A,x' at $EF00  -- in define_keys</td>
+<td class="comment-1" rowspan="1">Self modify 'LD A,x' @ <a href="EE9E.html#61184">dk_ef00</a>  -- in define_keys</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="61029"></span>EE65</td>
 <td class="instruction">LD ($EEA3),A</td>
-<td class="comment-1" rowspan="1">Self modify 'LD A,x' at $EEA2  -- in define_keys</td>
+<td class="comment-1" rowspan="1">Self modify 'LD A,x' @ <a href="EE9E.html#61090">EEA2</a>  -- in define_keys</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="61032"></span>EE68</td>
 <td class="instruction">LD HL,$F0FE</td>
 <td class="comment-1" rowspan="1">-&gt; music data</td>
 </tr>
 <tr>
+<td class="asm-label"></td>
 <td class="address-1"><span id="61035"></span>EE6B</td>
 <td class="instruction">JP <a href="EE6E.html#61048">j_ee78</a></td>
 <td class="comment-1" rowspan="1">Jump to j_ee78</td>
@@ -77,7 +83,7 @@ Next: <a href="EE6E.html">EE6E</a>
 </tr>
 </table>
 <footer>
-<div class="release">The incomplete Chase H.Q. disassembly 20230518</div>
+<div class="release">The incomplete Chase H.Q. disassembly 20231102</div>
 <div class="copyright">&copy; 1988 Taito Corporation &copy; 1989 Ocean Software Ltd. (Chase H.Q.) © 2023 David Thomas (this disassembly)</div>
 <div class="created">Created using <a href="https://skoolkit.ca">SkoolKit</a> 8.9.</div>
 </footer>
