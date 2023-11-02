@@ -1621,7 +1621,7 @@ b $77D8 [Pre-game] Data
 @ $77D8 label=pregame_data
 B $77D8,136,8 Commands to draw the pre-game screen. RLE'd tile references etc.
 @ $7860 label=car_tiles
-B $7860,71,8*8,7 Seems to be tiles pointed at by car rendering code
+B $7860,71,8*8,7
 @ $78A7 label=pregame_tiles
 B $78A7,360,8 Tiles used to draw the pre-game screen #HTML[#CALL:graphic($78A7,8,45*8,0,0)]
 b $7A0F [Graphics] Smoke and fire graphics
@@ -5292,7 +5292,7 @@ B $A24E,1,1 Turbo boost time remaining (60..0)
 B $A24F,1,1 Smoke time remaining. This is set to 4 on low-to-high gear changes and to 3 when the hero car lands after a jump. This isn't set for turbo boosts however.
 @ $A250 label=turn_speed
 B $A250,1,1 Turn speed (0/1/2) ignoring direction
-@ $A251 label=flip
+@ $A251 label=flip_car
 B $A251,1,1 1 => Horizontally flip the hero car, 0 => Don't
 @ $A252 label=var_a252
 B $A252,1,1
@@ -6954,7 +6954,7 @@ C $B305,1 B--
 C $B306,1 A = B
 C $B307,3 turn_speed = A
 C $B30A,1 A = D
-C $B30B,3 flip = A
+C $B30B,3 flip_car = A
 C $B30E,3 A = *$B064  -- Jump counter [self modified]
 C $B311,1 Set flags
 C $B312,1 Return if zero
@@ -7000,7 +7000,7 @@ C $B36B,3 HL = road_pos
 C $B36E,2 C = 0
 C $B370,1 A = C
 C $B371,2 AND 1
-C $B373,3 flip = A
+C $B373,3 flip_car = A
 C $B376,1 C--
 C $B379,1 C--
 C $B37C,1 HL += DE
@@ -7030,7 +7030,7 @@ C $B3C7,1 A--
 C $B3CA,2 CP $02
 C $B3CE,2 A = $02
 C $B3D0,3 turn_speed = A
-C $B3D3,5 flip = 1
+C $B3D3,5 flip_car = 1
 C $B3D8,3 Draw debris?
 C $B3DB,2 A = $00
 C $B3DD,1 Set flags
@@ -7039,7 +7039,7 @@ C $B3E2,3 A += C + $18
 C $B3E5,1 C = A
 C $B3E6,3 A = turn_speed
 C $B3E9,2 CP 2
-C $B3ED,3 A = flip
+C $B3ED,3 A = flip_car
 C $B3F0,1 Set flags
 C $B3F3,1 C++
 C $B3F4,1 C++
@@ -7074,17 +7074,19 @@ C $B457,3 A = var_a22f
 C $B45A,1 Set flags
 C $B45B,1 Return if zero
 C $B45C,1 A--
+C $B45D,2 fwd jump
 C $B460,1 B = A
 C $B461,2 C = 0
 C $B464,3 A = turn_speed
 C $B467,2 CP 2
 C $B469,2 A = $24
-C $B46E,5 A = flip + $25
+C $B46B,3 Exit via #R$B69E if != 2
+C $B46E,5 A = flip_car + $25
 C $B473,3 Exit via #R$B69E
-C $B476,2 C = 0
-C $B478,2 A = 0
+C $B476,2 C = <self modified>
+C $B478,2 A = <self modified>
 C $B47A,1 A--
-C $B47B,3 *$B479 = A
+C $B47B,3 Self modify 'LD A' @ #R$B478 (above) to load A
 C $B480,2 B = 2
 C $B482,1 C++
 C $B483,1 A = C
@@ -7094,19 +7096,19 @@ C $B489,1 C = A
 C $B48A,2 CP 2
 C $B48E,1 B++
 C $B48F,1 A = B
-C $B490,3 Self modify 'LD A' @ #R$B478 to load A
+C $B490,3 Self modify 'LD A' @ #R$B478 (above) to load A
 C $B493,1 A = C
-C $B494,3 *$B477 = A
+C $B494,3 Self modify 'LD C' @ #R$B476 (above) to load A
 C $B497,2 CP 7
 C $B49B,4 var_a22f = 0
 C $B49F,1 Return
 C $B4A0,3 A = turn_speed
 C $B4A3,2 CP 2
 C $B4A5,2 A = 6
-C $B4A9,10 A = (A << 3) - flip + 13
+C $B4A9,10 A = (A << 3) - flip_car + 13
 C $B4B3,1 A += C
 C $B4B9,1 C = A
-C $B4BA,3 A = *$B477
+C $B4BA,3 Read from 'LD C' @ #R$B476 (above) to load A
 C $B4BD,4 Jump to #R$B4C6 if A >= 4
 C $B4C1,1 C++
 C $B4C2,1 A = C
@@ -7116,10 +7118,11 @@ C $B4CB,1 Return
 c $B4CC Perp sighted
 D $B4CC Used by the routine at #R$A637.
 @ $B4CC label=perp_sighted
-C $B4CC,5 *$B477 = 0
-C $B4D1,3 var_a22f = 1
+C $B4CC,4 Self modify 'LD C' @ #R$B476 to load 0
+C $B4D0,4 var_a22f = 1
 C $B4D4,3 sighted_flag = 1
 C $B4D7,1 A++
+C $B4D8,3 Self modify 'LD A' @ #R$B478 to load A
 C $B4DB,6 time_sixteenths/$A17D = 15, time_bcd/$A17E = $60
 C $B4E1,3 Point #REGhl at left light's attributes
 C $B4E4,3 Toggle its brightness
@@ -7194,12 +7197,12 @@ c $B58E Draws the car
 D $B58E Used by the routine at #R$B318.
 R $B58E I:A TBD
 @ $B58E label=draw_car
-C $B58E,6 If #REGa is zero then flip = A
+C $B58E,6 If #REGa is zero then flip_car = A
 C $B594,1 C = A
 C $B596,9 Point #REGhl at ? then add (#REGa * 4)
-C $B59F,3 Point #REGde at the car tiles [needs a proper label]
+C $B59F,3 Point #REGde at car_tiles
 C $B5A2,2 C = 7
-C $B5A4,3 Call sub_b627
+C $B5A4,3 Call draw_car_b627
 N $B5A8 117 is the car's vertical position.
 C $B5A8,4 117 - <self modified value $B5AB>
 C $B5AC,1 D = A
@@ -7226,7 +7229,7 @@ C $B5E1,1 L=A
 C $B5E2,2 A=5
 C $B5E4,1 E=A
 C $B5E5,2 D=0
-C $B5EA,6 If flip jump to draw_car_perhaps_flipped
+C $B5EA,6 If flip_car jump to draw_car_perhaps_flipped
 C $B5F1,3 Call plot_sprite -- #REGa is (how many pixels to plot - 1) / 8
 C $B5F4,2 Jump to draw_car_cont
 @ $B5F6 label=draw_car_perhaps_flipped
@@ -7236,28 +7239,31 @@ C $B5F8,3 Call plot_sprite_flipped
 C $B5FD,1 HL++
 C $B5FE,7 E=$68 C=$05 (width) CALL #R$B627  draws the top (windscreen)
 C $B605,7 E=$68 C=$05 (width) CALL #R$B627  draws the bottom (wheels)
-C $B60C,6 Check flip flag
+C $B60C,6 Check flip_car flag
 C $B612,4 unflipped
 C $B616,2 flipped
 C $B618,3 Draws left side of car
 C $B61B,2 C = 1
-C $B61D,3 A = flip
+C $B61D,3 A = flip_car
 C $B620,1 Set flags
 C $B621,2 E = $60
 C $B623,2 Jump if flipped
 C $B625,2 E = $90
-@ $B627 label=sub_b627
-C $B627,1 A=D
-C $B629,3 D=A - *HL++
-C $B62C,2 B=*HL++
-C $B62E,2 A=*HL++
-C $B631,1 H=*HL
-C $B632,1 L=A
-C $B636,3 A=flip
-C $B639,1 B=A
-C $B63A,1 E=C
+N $B627 DE -> car_tiles C = byte width? HL -> ?
+@ $B627 label=draw_car_b627
+C $B627,1 A = D
+C $B628,1 Preserve car_tiles address
+C $B629,3 D = A - *HL++
+C $B62C,2 B = *HL++
+C $B62E,2 A = *HL++
+C $B630,1 Preserve HL
+C $B631,1 H = HL
+C $B632,1 L = A
+C $B636,3 A = flip_car
+C $B639,1 B = A
+C $B63A,1 E = C
 C $B63B,1 C--
-C $B63C,4 If A==0 C=A
+C $B63C,4 If A == 0 C = A
 C $B641,6 Draws right side of car
 C $B647,1 Return
 c $B648 Draw the hero car's smoke
@@ -7298,7 +7304,7 @@ R $B67C I:C ? (used wrt flipping)           e.g. 2
 C $B67C,7 A += counter_C & 1
 C $B683,1 Bank A
 C $B684,6 Jump to #R$B698 if turn_speed < B
-C $B68A,3 A = flip
+C $B68A,3 A = flip_car
 C $B68D,1 Set flags
 C $B68E,2 A = 0
 C $B690,2 Jump to sub_b67c_no_flip if flip is zero
