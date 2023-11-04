@@ -5211,8 +5211,8 @@ B $A225,1,1 Inhibits cars from spawning.
 B $A226,1,1 Holds the correct direction to take at forks (1 => left, 2 => right).
 @ $A227 label=floating_arrow
 B $A227,1,1 Shows the floating left/right arrow (0 => off, 1 => left, 2 => right).
-@ $A228 label=var_a228
-B $A228,1,1 #R$B421 reads  #R$B4C8 writes
+@ $A228 label=cherry_light
+B $A228,1,1 Shows the flashing cherry light on top of the car (0 => off, else on).
 @ $A229 label=time_up_state
 B $A229,1,1 1 => out of time, 2 => "TIME UP" message is printed; 3 => "CONTINUE THIS MISSION" message is printed and a countdown runs 4 => countdown elapsed; 0 otherwise
 @ $A22A label=var_a22a
@@ -6713,12 +6713,12 @@ N $B079 Hero car is in mid-air.
 @ $B079 label=mhc_midair
 C $B079,3 Point #REGhl at entry in jump table. Self modified by #R$B96C and #R$B092
 C $B07C,4 off_road = 0
-C $B080,8 Clear up/down/left/right bits of user input (can't turn in mid-air etc.)
+C $B080,8 Clear up/down/left/right bits of user input (stop the player from turning when in mid-air)
 C $B088,5 $B5B0 = *HL++      -- Self modified value in draw_car
-C $B08D,5 A = *$B5AB + *HL++ -- Self modified value in draw_car - vertical shift?
+C $B08D,5 A = *$B5AB + *HL++ -- Self modified value in draw_car  == car jump offset
 C $B092,3 Update HL load above, #R$B079
 @ $B095 label=mhc_not_jumping
-C $B095,3 *$B5AB = A
+C $B095,3 Self modify 'SUB x' @ #R$B5AA to be zero (car jump offset)
 C $B098,3 Address of boost timer
 C $B09B,4 Jump if a turbo boost is not in effect
 C $B09F,1 Decrement boost timer
@@ -6821,8 +6821,8 @@ C $B1AE,1 Clear carry?
 C $B1AF,2 HL += BC
 C $B1B4,3 HL = $0000
 C $B1B7,5 A = var_a24c - 1
-C $B1BE,3 A = $B5B0
-C $B1C1,1 Set flags
+C $B1BE,3 A = $B5B0  -- self modified value in draw_car
+C $B1C1,3 Jump if zero
 C $B1C4,1 C = A
 C $B1C5,1 A = H
 C $B1C6,1 A |= L
@@ -7045,16 +7045,18 @@ C $B3F6,6 B = counter_A & 1
 C $B3FD,1 C = A
 C $B3FF,1 A = C
 C $B403,4 off_road = 0
-C $B40A,2 B = $00
-C $B40C,3 A = off_road
-C $B40F,1 A--
-C $B412,9 B = (counter_C & 1) * 3
+N $B40A Make the car bounce up and down when it goes off-road.
+C $B40A,2 Default bounce of zero to pass to draw_car. It should be either 0 or 3.
+C $B40C,6 Add the bounce only when one wheel is off-road (if off_road == 1)
+C $B412,9 New bounce = (counter_C & 1) * 3
+@ $B41B label=ml24_draw_car
 C $B41B,3 Load turn_speed
 C $B41E,3 Call draw_car
-C $B421,3 Load var_a228
-C $B424,1 Set flags
+C $B421,6 Jump if cherry_light is zero
+N $B427 Draw the cherry light.
 C $B427,1 A = 0
 C $B428,3 BC = $0102
+C $B42B,3 Call draw_cherry
 C $B42E,4 B = counter_A
 C $B432,7 Jump if cornering
 C $B439,3 A = counter_C
@@ -7112,7 +7114,8 @@ C $B4BD,4 Jump to #R$B4C6 if A >= 4
 C $B4C1,1 C++
 C $B4C2,1 A = C
 C $B4C3,3 Exit via #R$B699
-C $B4C6,5 var_a228 = 1
+@ $B4C6 label=ml24_enable_cherry_light
+C $B4C6,5 Enable the cherry_light
 C $B4CB,1 Return
 c $B4CC Perp sighted
 D $B4CC Used by the routine at #R$A637.
@@ -7194,25 +7197,27 @@ C $B58B,2 Loop
 C $B58D,1 Return
 c $B58E Draws the car
 D $B58E Used by the routine at #R$B318.
-R $B58E I:A 0/1/2 => straight/turn/turn hard
+R $B58E I:A Turn speed. 0/1/2 => Straight/Turning/Turning hard.
+R $B58E I:B 0/3 to make the car wobble when off-road.
 @ $B58E label=draw_car
 C $B58E,6 If #REGa is zero (straight) then flip_car = 0
 C $B594,1 C = A
 C $B595,1 Preserve #REGc (#REGa from input)
 C $B596,9 Point #REGhl at hero_car_shadow then add (#REGa * 4)
-C $B59F,3 D = $78 (vertical postion - in rows), E = $60 (horizontal position in pixels)
+C $B59F,3 D = $78 (vertical postion in rows), E = $60 (horizontal position in pixels)
 C $B5A2,2 C = 7
 C $B5A4,3 Call draw_car_b627 to draw shadow
 C $B5A7,1 Restore #REGc
-N $B5A8 117 is the car's vertical position.
-C $B5A8,4 117 - <self modified value $B5AB>
+N $B5A8 117 is the car's normal vertical position. Smaller values make it higher.
+C $B5A8,4 117 - <self modified value $B5AB>  == car jump offset
 C $B5AC,1 D = A
-C $B5AD,4 A = C + B + <self modified value $B5B0>
-C $B5B1,6 If A >= 9 A -= 9
-C $B5B7,3 Point #REGhl at car definitions[A] (entries are 20 bytes wide)
+N $B5AD Build an index into hero_car_refs[].
+C $B5AD,4 A = C (0/1/2, turn value from input) + B (counter value from input) + <self modified value $B5B0 == up/down facing (0/3/6 => level,up,down)>
+C $B5B1,6 If A >= 9 A -= 9  -- clamping
+C $B5B7,13 Point #REGhl at hero_car_refs[A] (rows/entries are 20 bytes wide)
 C $B5C5,4 A = var_a22a + *HL
 C $B5C9,2 A=0-A
-C $B5CB,1 A+=D  (aka A=D-A)
+C $B5CB,1 A+=D  (aka A=D-A)    D here is (117 - car jump offset) from earlier
 C $B5CC,1 E=A
 C $B5CD,2 A = A & $0F
 C $B5CF,2 A += $F0
@@ -7305,7 +7310,7 @@ D $B67C Used by the routine at #R$B318.
 R $B67C I:A ?
 R $B67C I:B ? (gets compared to turn_speed) e.g. 1
 R $B67C I:C ? (used wrt flipping)           e.g. 2
-@ $B67C label=sub_b67c
+@ $B67C label=draw_cherry
 C $B67C,7 A += counter_C & 1
 C $B683,1 Bank A
 C $B684,6 Jump to #R$B698 if turn_speed < B
@@ -7333,7 +7338,7 @@ C $B6BA,2 C = *HL++  -- byte width
 C $B6BC,4 HL = wordat(HL); HL++   -- masked bitmap data
 C $B6C0,1 A = C
 C $B6C2,1 E = A  -- bank byte width in E'
-C $B6C4,3 Read from SUB @ #R$B5AA
+C $B6C4,3 Read car jump offset from 'SUB x' @ #R$B5AA
 C $B6C7,4 D -= A
 C $B6CB,3 A = *$B5B0 -- Self modified value in draw_car
 C $B6CE,2 A >>= 1
