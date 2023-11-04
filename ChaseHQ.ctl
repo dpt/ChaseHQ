@@ -1619,9 +1619,7 @@ W $77D0,2,2 Attributes address
 T $77D2,6,5:n1 "SIGNAL"
 b $77D8 [Pre-game] Data
 @ $77D8 label=pregame_data
-B $77D8,136,8 Commands to draw the pre-game screen. RLE'd tile references etc.
-@ $7860 label=car_tiles
-B $7860,71,8*8,7
+B $77D8,207,8*25,7 Commands to draw the pre-game screen. RLE'd tile references etc.
 @ $78A7 label=pregame_tiles
 B $78A7,360,8 Tiles used to draw the pre-game screen #HTML[#CALL:graphic($78A7,8,45*8,0,0)]
 b $7A0F [Graphics] Smoke and fire graphics
@@ -5291,7 +5289,7 @@ B $A24E,1,1 Turbo boost time remaining (60..0)
 @ $A24F label=smoke
 B $A24F,1,1 Smoke time remaining. This is set to 4 on low-to-high gear changes and to 3 when the hero car lands after a jump. This isn't set for turbo boosts however.
 @ $A250 label=turn_speed
-B $A250,1,1 Turn speed (0/1/2) ignoring direction
+B $A250,1,1 Turn speed (0/1/2 => straight/turn/turn hard) ignoring direction
 @ $A251 label=flip_car
 B $A251,1,1 1 => Horizontally flip the hero car, 0 => Don't
 @ $A252 label=var_a252
@@ -7051,8 +7049,9 @@ C $B40A,2 B = $00
 C $B40C,3 A = off_road
 C $B40F,1 A--
 C $B412,9 B = (counter_C & 1) * 3
-C $B41B,3 A = turn_speed
-C $B421,3 A = var_a228
+C $B41B,3 Load turn_speed
+C $B41E,3 Call draw_car
+C $B421,3 Load var_a228
 C $B424,1 Set flags
 C $B427,1 A = 0
 C $B428,3 BC = $0102
@@ -7195,14 +7194,16 @@ C $B58B,2 Loop
 C $B58D,1 Return
 c $B58E Draws the car
 D $B58E Used by the routine at #R$B318.
-R $B58E I:A TBD
+R $B58E I:A 0/1/2 => straight/turn/turn hard
 @ $B58E label=draw_car
-C $B58E,6 If #REGa is zero then flip_car = A
+C $B58E,6 If #REGa is zero (straight) then flip_car = 0
 C $B594,1 C = A
-C $B596,9 Point #REGhl at ? then add (#REGa * 4)
-C $B59F,3 Point #REGde at car_tiles
+C $B595,1 Preserve #REGc (#REGa from input)
+C $B596,9 Point #REGhl at hero_car_shadow then add (#REGa * 4)
+C $B59F,3 D = $78 (vertical postion - in rows), E = $60 (horizontal position in pixels)
 C $B5A2,2 C = 7
-C $B5A4,3 Call draw_car_b627
+C $B5A4,3 Call draw_car_b627 to draw shadow
+C $B5A7,1 Restore #REGc
 N $B5A8 117 is the car's vertical position.
 C $B5A8,4 117 - <self modified value $B5AB>
 C $B5AC,1 D = A
@@ -7249,22 +7250,26 @@ C $B620,1 Set flags
 C $B621,2 E = $60
 C $B623,2 Jump if flipped
 C $B625,2 E = $90
-N $B627 DE -> car_tiles C = byte width? HL -> ?
+N $B627 C = byte width? D = Y (vertical postion - in rows), E = X (horizontal position in pixels) HL -> address of graphic def (byte, n.rows, data address)
 @ $B627 label=draw_car_b627
 C $B627,1 A = D
-C $B628,1 Preserve car_tiles address
-C $B629,3 D = A - *HL++
-C $B62C,2 B = *HL++
-C $B62E,2 A = *HL++
-C $B630,1 Preserve HL
-C $B631,1 H = HL
-C $B632,1 L = A
+C $B628,1 Preserve X,Y
+C $B629,3 D = A - *HL++  -- this byte often zero
+C $B62C,2 B = *HL++  -- num rows
+C $B62E,5 HL = wordat(HL) while preserving (HL+1)
+C $B633,1 Preserve byte width
+C $B634,1 Bank
+C $B635,1 Restore byte width
 C $B636,3 A = flip_car
-C $B639,1 B = A
+C $B639,1 B = flip_car
 C $B63A,1 E = C
 C $B63B,1 C--
 C $B63C,4 If A == 0 C = A
-C $B641,6 Draws right side of car
+C $B640,1 Unbank
+C $B641,3 Draws all masked parts of the car
+C $B644,1 Restore ptr
+C $B645,1 Skip final byte
+C $B646,1 Restore X,Y
 C $B647,1 Return
 c $B648 Draw the hero car's smoke
 D $B648 Used by the routine at #R$B318.
