@@ -2034,7 +2034,7 @@ T $81F9,11,10:n1 "HOLD ON MAN"
 c $8204 Generates engine noise
 D $8204 Used by the routine at #R$83B5.
 @ $8204 label=engine_sfx_setup
-C $8204,3 Get speed value
+C $8204,3 Load speed
 C $8207,2 A = speed / 2 (top half)
 N $8209 This entry point is used by the routine at #R$F220.
 C $8209,2 A = speed / 2 (bottom half)
@@ -2254,7 +2254,7 @@ C $8495,3 Call check_collisions
 C $8498,3 Call engine_sfx_play_hook
 C $849B,3 Call main_loop_23
 C $849E,3 Call engine_sfx_play_hook
-C $84A1,3 Call main_loop_24
+C $84A1,3 Call animate_car
 C $84A4,3 Call speed_score
 C $84A7,3 Call update_scoreboard
 C $84AA,3 Call overtake_bonus
@@ -2340,7 +2340,7 @@ C $857D,3 Call draw_hazards
 C $8580,3 Call move_hero_car
 C $8583,3 Call check_collisions
 C $8586,3 Call main_loop_23
-C $8589,3 Exit via main_loop_24
+C $8589,3 Exit via animate_car
 c $858C Pre-game radio screen ("CHASE HQ MONITORING SYSTEM")
 D $858C Used by the routine at #R$8401.
 @ $858C label=run_pregame_screen
@@ -2928,13 +2928,14 @@ C $8BF2,3 DE = 20
 C $8BF5,1 B = A  -- iterations
 C $8BF6,2 HL -= DE
 C $8BF8,2 Loop while #REGb > 0
-C $8BFB,3 HL = speed
+C $8BFB,3 Load speed
+C $8BFE,1 Preserve speed
 C $8BFF,4 Jump if HL < DE
 C $8C03,2 Clear Up, i.e. stop accelerating
 C $8C05,7 Jump if HL < 50
 C $8C0C,2 Set Down bit, i.e. brake
-C $8C0F,3 DE = 150
-C $8C12,2 HL -= DE
+C $8C0E,1 Restore speed
+C $8C0F,5 Calculate speed - 150
 C $8C14,3 A = gear
 C $8C17,2 -- must be removing carry from calc above?
 C $8C1B,2 Set Fire
@@ -2950,9 +2951,9 @@ c $8C3A Fully smashed
 D $8C3A Used by the routine at #R$B4F0.
 @ $8C3A label=fully_smashed
 C $8C3A,5 Set perp_caught_stage to 1 - starts the pull over sequence
-C $8C3F,4 var_a22f = 2
+C $8C3F,4 Show the "stop" hand (hand_flag = 2)
 C $8C43,5 Set smash_counter to 20
-C $8C48,5 Set user input mask to (Quit+Pause)
+C $8C48,5 Set user input mask to (Quit+Pause) to inhibit player control
 C $8C4D,3 Print the "OK! PULL OVER CREEP!" message
 C $8C50,3 Call message_printing_related
 C $8C53,3 #REGde = $190
@@ -4527,7 +4528,7 @@ C $9CC1,1 Return
 c $9CC2 Increments score in proportion to current speed
 D $9CC2 Used by the routine at #R$8401.
 @ $9CC2 label=speed_score
-C $9CC2,3 Fetch current speed into #REGhl
+C $9CC2,3 Fetch speed into #REGhl
 N $9CC5 This code makes little sense.
 C $9CC5,1 Speed low byte
 C $9CC6,2 Bottom bit of #REGh moves to carry (#REGh now unused)
@@ -5225,8 +5226,8 @@ B $A22C,1,1 Bonus flag (1 triggers the effect)
 B $A22D,1,1 Counter for bonus flash effect (counts 8..0)
 @ $A22E label=sighted_flag
 B $A22E,1,1 Set to 1 when the perp has been sighted. Enables flashing lights and the smash bar.
-@ $A22F label=var_a22f
-B $A22F,1,1 Set to 2 by fully_smashed
+@ $A22F label=hand_flag
+B $A22F,1,1 Set to 1 by perp_sighted. This starts the anim where the cherry light is put on the roof. Set to 2 by fully_smashed. This shows the "stop" hand.
 @ $A230 label=perp_caught_stage
 B $A230,1,1 Set to > 0 by fully_smashed when the perp has been caught. #R$8A57 progresses this through stages 1..6 until the cars are slowed to a halt and the bonuses are printed. Used by draw_screen. Seems to inhibit car spawning too.
 @ $A231 label=transition_control
@@ -5279,7 +5280,7 @@ B $A248,1,1 [#R$A955 reads #R$C457,#R$C526 writes]
 @ $A249 label=fork_taken
 B $A249,1,1 Set to 0 if no fork, or the left fork was taken, or 1 if the right fork was taken. [$A539,$B988,$BAE0,$BB6E reads #R$BA89,#R$BC2C writes]
 @ $A24A label=speed
-W $A24A,2,2 Speed (0..511). Max when in lo gear =~ $E6, hi gear =~ $168, turbo =~ $1FF.
+W $A24A,2,2 Speed (0..511). Max when in low gear =~ $E6, high gear =~ $168, turbo =~ $1FF.
 @ $A24C label=var_a24c
 B $A24C,1,1 #R$B1B7 reads  #R$B1E4 writes
 @ $A24D label=cornering
@@ -5379,8 +5380,9 @@ C $A3AE,1 Return if zero  [can't collide immediately before split?]
 N $A3AF Check left hand side of car.
 @ $A3AF label=cc_at_split
 C $A3AF,3 HL = *$EAFE
-C $A3B2,1 A = H  (0 or 255)
+C $A3B2,1 A = H (0 or 255)
 C $A3B3,1 Set flags
+C $A3B4,2 Jump to #R$A3D1 if non-zero
 C $A3B6,9 Jump to #R$A3D1 if HL < $40
 C $A3BF,8 Jump to #R$A3D5 if HL < $6A
 C $A3C7,4 HL -= $85
@@ -5388,12 +5390,15 @@ C $A3CB,1 A++  -- A == 1 => partially off-road
 C $A3CC,2 Jump to cc_split_set if A was 255
 C $A3CE,1 A++  -- A == 2 => fully off-road
 C $A3CF,2 Jump to cc_split_set
+@ $A3D1 label=cc_a3d1
 C $A3D1,4 var_a23d = 0
 N $A3D5 Check right hand side of car.
+@ $A3D5 label=cc_a3d5
 C $A3D5,3 HL = *$EAFC
 C $A3D8,1 A = H
 C $A3D9,1 Set flags
-C $A3DA,2 A = 0
+C $A3DA,2 A = 0  (not self modified)
+C $A3DC,2 Jump to #R$A3FA if non-zero
 C $A3DE,9 Jump to #R$A3FA if HL >= $BE
 C $A3E7,9 Jump to #R$A3FD if HL >= $8E
 C $A3F0,4 HL -= $7C
@@ -5401,11 +5406,12 @@ C $A3F4,1 A++  -- A == 1 => partially off-road
 C $A3F5,2 Jump to cc_split_set if no carry
 C $A3F7,1 A++  -- A == 2 => fully off-road
 C $A3F8,2 Jump to cc_split_set
+@ $A3FA label=cc_a3fa
 C $A3FA,3 var_a23c = A
 @ $A3FD label=cc_split_set
 C $A3FD,3 off_road = A  -- 0/1/2 => on-road/one wheel off-road/both wheels off-road
 C $A400,1 Set flags
-C $A401,2 C = $00
+C $A401,2 C = 0  (not self modified)
 C $A403,2 not off road?
 C $A405,3 Load road_buffer_offset into #REGa
 C $A408,2 Add 64 so it's the lanes data offset
@@ -5421,14 +5427,19 @@ C $A41A,2 Jump if clear
 C $A41C,1 C = A
 C $A41D,2 A = 20
 C $A420,3 A = C & 1
+C $A423,3 Jump to cc_a4b8
+@ $A426 label=cc_a426
 C $A426,3 HL = $00D1
 C $A429,3 DE = $0195
-C $A42D,1 Set flags
+C $A42D,1 Set flags [A is ?]
 C $A42E,2 C = 1
-C $A432,1 C++
+C $A432,1 C = 2
 @ $A433 label=cc_hit_tunnel_wall
+C $A433,1 Preserve BC
 C $A434,3 BC = $0604
 C $A437,3 Call start_sfx
+C $A43A,1 Restore BC
+@ $A43B label=cc_a43b
 C $A43B,1 A = C
 C $A43C,3 ($B3DC) = A
 C $A440,3 ($B396) = HL
@@ -5443,6 +5454,7 @@ C $A452,3 Load road_buffer_offset into #REGa
 C $A455,1 Doubling?
 C $A456,1 A = *HL
 C $A459,1 L++
+@ $A45A label=cc_a45a
 C $A45A,1 A |= *HL
 C $A45D,12 HL = #R$5CFA[A * 7]
 C $A469,2 C = *HL++
@@ -5454,12 +5466,14 @@ C $A473,2 HL -= BC
 C $A478,2 HL -= DE
 C $A47D,1 A = 0
 C $A47E,2 Jump to cc_hit_scenery
+@ $A480 label=cc_a480
 C $A481,2 A += 32
 C $A483,3 HL = $EE00 | A
 C $A486,3 Load road_buffer_offset into #REGa
 C $A489,1 Doubling?
 C $A48A,1 A = *HL
 C $A48D,1 L++
+@ $A48E label=cc_a48e
 C $A48E,1 A |= *HL
 C $A48F,1 Return if zero
 C $A490,12 HL = (*$5D00)[A * 7]
@@ -5473,10 +5487,14 @@ C $A4A9,1 Return if carry
 C $A4AA,2 HL -= DE
 C $A4AC,1 Return if no carry
 C $A4AE,2 A = $01
+N $A4B0 Arrive here if drive into scenery, e.g. a tree.
 @ $A4B0 label=cc_hit_scenery
-C $A4B1,3 BC = $0403      -- arrive here if drive into scenery, e.g. a tree
+C $A4B0,1 Preserve AF
+C $A4B1,3 BC = $0403
 C $A4B4,3 Call start_sfx
+C $A4B7,1 Restore AF
 N $A4B8 This entry point is used by the routines at #R$A637 and #R$A8CD.
+@ $A4B8 label=cc_a4b8
 C $A4B8,3 HL = &<crashed flag>
 C $A4BB,2 Set flags
 C $A4BD,1 Return if already crashed?
@@ -5484,16 +5502,18 @@ C $A4BE,2 Set crashed flag
 C $A4C0,4 *$B36F = A++
 C $A4C4,5 *$B38E = A
 C $A4C9,3 *$B385 = 5
-C $A4CC,3 HL = speed
+C $A4CC,3 Load speed into #REGhl
 C $A4CF,1 Preserve HL
 C $A4D0,2 H >>= 1
 C $A4D2,1 A = L
 C $A4D5,8 A = (A << 3) + 16
 C $A4DD,2 L = 24
 C $A4E2,1 L = A
+@ $A4E3 label=cc_a4e3
 C $A4E3,3 *$B357 = HL
 C $A4E7,3 HL = A
 C $A4EC,2 HL -= DE
+@ $A4F2 label=cc_a4f2
 C $A4F2,3 Self modify 'LD BC' @ #R$B32E to load HL
 C $A4F5,1 Return
 @ $A4F6 label=cc_not_split
@@ -5507,6 +5527,7 @@ C $A50A,1 A++  -- A == 1 => partially off-road
 C $A50B,2 Jump to cc_not_split_set if HL < $85
 C $A50D,1 A++  -- A == 2 => fully off-road
 C $A50E,2 Jump to cc_not_split_set
+@ $A510 label=cc_a510
 C $A510,3 HL = *$EDFC
 C $A513,1 A = H
 C $A514,1 Set flags
@@ -5535,7 +5556,8 @@ C $A54D,5 Return if HL >= BC
 C $A552,3 Return if HL < DE
 C $A555,2 A = $8C
 C $A558,1 A = 0
-C $A559,3 Jump to cc_hit_scenery
+C $A559,3 Exit via cc_hit_scenery
+@ $A55C label=cc_a55c
 C $A55C,3 HL = *$5D02
 C $A55F,2 C = *HL++
 C $A561,2 E = *HL++
@@ -5546,7 +5568,7 @@ C $A569,5 Return if HL < BC
 C $A56E,3 Return if HL >= DE
 C $A571,2 A = $8C
 C $A574,2 A = 1
-C $A576,3 Jump to cc_hit_scenery
+C $A576,3 Exit via cc_hit_scenery
 c $A579 Routine at A579
 D $A579 Used by the routines at #R$8401, #R$852A and #R$873C.
 @ $A579 label=main_loop_14
@@ -6715,7 +6737,7 @@ C $B079,3 Point #REGhl at entry in jump table. Self modified by #R$B96C and #R$B
 C $B07C,4 off_road = 0
 C $B080,8 Clear up/down/left/right bits of user input (stop the player from turning when in mid-air)
 C $B088,5 $B5B0 = *HL++      -- Self modified value in draw_car
-C $B08D,5 A = *$B5AB + *HL++ -- Self modified value in draw_car  == car jump offset
+C $B08D,5 A = *$B5AB + *HL++ -- Self modified value in draw_car == car jump offset
 C $B092,3 Update HL load above, #R$B079
 @ $B095 label=mhc_not_jumping
 C $B095,3 Self modify 'SUB x' @ #R$B5AA to be zero (car jump offset)
@@ -6732,7 +6754,7 @@ C $B0AE,1 Decrement smoke
 N $B0AF Handle gear changes.
 C $B0AF,3 Read user input
 C $B0B2,1 C = A
-C $B0B3,3 Read from the 'LD A,x' @ #R$B325 (crash flag)
+C $B0B3,3 Read from the 'LD A,x' @ #R$B325 (crashed flag)
 C $B0B6,3 Jump if zero
 C $B0B9,4 C = C & $10, i.e. Fire/Gear
 C $B0BD,1 A = C
@@ -6911,7 +6933,7 @@ N $B29A No scroll required?
 C $B29A,4 HL = var_a25f + BC
 C $B29E,3 DE = $0000
 C $B2A1,4 var_a25f = DE
-C $B2A5,3 A = *$B326  -- Read self modified op in main_loop_24 -- crashed flag
+C $B2A5,3 A = *$B326  -- Read self modified op in animate_car -- crashed flag
 C $B2A8,1 Set flags
 C $B2AC,1 D = H
 C $B2AE,4 var_a263 = B
@@ -6958,31 +6980,39 @@ C $B311,1 Set flags
 C $B312,1 Return if zero
 C $B313,4 cornering = 0
 C $B317,1 Return
-c $B318 Routine at B318
+c $B318 Animates the hero car.
 D $B318 Used by the routines at #R$8401 and #R$852A.
-@ $B318 label=main_loop_24
-C $B318,7 If speed > 0 jump #R$B325
+@ $B318 label=animate_car
+C $B318,7 Jump to #R$B325 if speed > 0
 C $B31F,3 Self modify 'LD A' @ #R$B3DB to load A
 C $B322,3 off_road = A
+@ $B325 label=ac_b325
 C $B325,2 [this seems to be a crashed flag]
 C $B327,1 Set flags
 C $B32A,3 cornering = A
+C $B32D,1 Preserve HL
 C $B32E,3 BC = <self modified>
 C $B331,2 HL -= BC
+C $B333,1 Restore HL
 C $B334,2 Jump to #R$B349 if HL < BC
 C $B336,1 D = H
 C $B337,1 A = L
 C $B338,2 D >>= 1
 C $B33C,2 A >>= 1
-C $B33E,2 OR 3
+C $B33E,2 A |= 3
 C $B340,1 E = A
 C $B341,2 HL -= DE
-C $B343,2 equal
+C $B343,2 Jump to #R$B349 if equal
 C $B345,2 A = 2
-C $B347,2 HL > DE
+C $B347,2 Jump if #R$B349 if HL > DE
+N $B349 Otherwise HL < DE.
+@ $B349 label=ac_b349
 C $B349,4 Clear crashed flag
 C $B34D,1 A++
+C $B34E,2 Jump
+@ $B350 label=ac_b350
 C $B350,3 ($A24A) = HL
+@ $B353 label=ac_b353
 C $B353,3 turn_speed = A
 C $B356,3 HL = $0000
 C $B359,1 D = H
@@ -7045,18 +7075,20 @@ C $B3F6,6 B = counter_A & 1
 C $B3FD,1 C = A
 C $B3FF,1 A = C
 C $B403,4 off_road = 0
+C $B407,3 Call ac_check_hand_flag
 N $B40A Make the car bounce up and down when it goes off-road.
 C $B40A,2 Default bounce of zero to pass to draw_car. It should be either 0 or 3.
 C $B40C,6 Add the bounce only when one wheel is off-road (if off_road == 1)
 C $B412,9 New bounce = (counter_C & 1) * 3
-@ $B41B label=ml24_draw_car
+@ $B41B label=ac_draw_car
 C $B41B,3 Load turn_speed
 C $B41E,3 Call draw_car
 C $B421,6 Jump if cherry_light is zero
 N $B427 Draw the cherry light.
 C $B427,1 A = 0
-C $B428,3 BC = $0102
+C $B428,3 BC = $0102  -- size?
 C $B42B,3 Call draw_cherry
+N $B42E Draw smoke?
 C $B42E,4 B = counter_A
 C $B432,7 Jump if cornering
 C $B439,3 A = counter_C
@@ -7071,37 +7103,44 @@ C $B44B,1 A = B
 C $B44D,3 Call draw_smoke  (seems to be the right side)
 C $B450,2 A = $01
 C $B454,3 Exit via draw_smoke
-C $B457,3 A = var_a22f
-C $B45A,1 Set flags
-C $B45B,1 Return if zero
-C $B45C,1 A--
-C $B45D,2 fwd jump
-C $B460,1 B = A
-C $B461,2 C = 0
-C $B464,3 A = turn_speed
-C $B467,2 CP 2
-C $B469,2 A = $24
-C $B46B,3 Exit via #R$B69E if != 2
-C $B46E,5 A = flip_car + $25
+@ $B457 label=ac_check_hand_flag
+C $B457,5 Return if hand_flag is zero
+N $B45C Start the animation.
+@ $B45C label=ac_hand_flag_non_zero
+C $B45C,3 Jump if hand_flag is one
+N $B45F Show the "stop" hand.
+@ $B45F label=ac_hand_flag_gt_one
+C $B45F,1 Bank
+C $B460,3 BC = A
+C $B463,1 Unbank
+C $B464,5 Is turn_speed 2?
+C $B469,2 A = 36
+C $B46B,3 Exit via #R$B69E if turn_speed != 2
+N $B46E Otherwise turn_speed is 2 (turn hard).
+C $B46E,5 A = flip_car + 37
 C $B473,3 Exit via #R$B69E
+N $B476 Start the animation.
+@ $B476 label=ac_hand_flag_one
 C $B476,2 C = <self modified>
-C $B478,2 A = <self modified>
+C $B478,2 A = <self modified>  [could be animation frame?]
 C $B47A,1 A--
 C $B47B,3 Self modify 'LD A' @ #R$B478 (above) to load A
 C $B480,2 B = 2
 C $B482,1 C++
 C $B483,1 A = C
-C $B484,2 CP 4
+C $B484,4 Jump if >= 4
 C $B488,1 A++
 C $B489,1 C = A
-C $B48A,2 CP 2
+C $B48A,4 Jump if != 2
 C $B48E,1 B++
+@ $B48F label=ac_b48f
 C $B48F,1 A = B
 C $B490,3 Self modify 'LD A' @ #R$B478 (above) to load A
+@ $B493 label=ac_b493
 C $B493,1 A = C
 C $B494,3 Self modify 'LD C' @ #R$B476 (above) to load A
-C $B497,2 CP 7
-C $B49B,4 var_a22f = 0
+C $B497,4 Jump if >= 7
+C $B49B,4 hand_flag = 0
 C $B49F,1 Return
 C $B4A0,3 A = turn_speed
 C $B4A3,2 CP 2
@@ -7114,16 +7153,16 @@ C $B4BD,4 Jump to #R$B4C6 if A >= 4
 C $B4C1,1 C++
 C $B4C2,1 A = C
 C $B4C3,3 Exit via #R$B699
-@ $B4C6 label=ml24_enable_cherry_light
+@ $B4C6 label=ac_enable_cherry_light
 C $B4C6,5 Enable the cherry_light
 C $B4CB,1 Return
 c $B4CC Perp sighted
 D $B4CC Used by the routine at #R$A637.
 @ $B4CC label=perp_sighted
 C $B4CC,4 Self modify 'LD C' @ #R$B476 to load 0
-C $B4D0,4 var_a22f = 1
+C $B4D0,4 hand_flag = 1
 C $B4D4,3 sighted_flag = 1
-C $B4D7,1 A++
+C $B4D7,1 A = 2
 C $B4D8,3 Self modify 'LD A' @ #R$B478 to load A
 C $B4DB,6 time_sixteenths/$A17D = 15, time_bcd/$A17E = $60
 C $B4E1,3 Point #REGhl at left light's attributes
@@ -7319,13 +7358,16 @@ C $B68D,1 Set flags
 C $B68E,2 A = 0
 C $B690,2 Jump to sub_b67c_no_flip if flip is zero
 C $B692,1 A += C
-@ $B693 label=sub_b67c_no_flip
+@ $B693 label=draw_cherry_no_flip
 C $B693,1 A += C
 C $B694,1 C = A
 C $B696,1 A += C
+@ $B698 label=draw_cherry_b698
 N $B699 This entry point is used by the routine at #R$B318.
+@ $B699 label=draw_cherry_b699
 C $B69A,3 BC = 0   -- not self modified
 N $B69E This entry point is used by the routine at #R$B318.
+@ $B69E label=draw_cherry_b69e
 C $B69E,2 E = $80
 C $B6A0,6 BC = A * 3
 C $B6A6,4 HL = #R$CFB2 + BC  -> unknown_cfb2
@@ -7345,8 +7387,10 @@ C $B6CE,2 A >>= 1
 C $B6D0,4 Jump to #R$B6D6 if zero
 C $B6D4,2 D += A - 2
 N $B6D6 This entry point is used by the routines at #R$B58E and #R$B648.
+@ $B6D6 label=draw_cherry_b6d6
 C $B6D6,7 D -= var_a22a
 N $B6DD This entry point is used by the routines at #R$8F5F and #R$B549.
+@ $B6DD label=draw_cherry_b6dd
 C $B6DD,1 A = E
 C $B6DE,5 Divide by 8
 C $B6E3,1 E = A
@@ -7360,12 +7404,13 @@ C $B6F9,2 B >>= 1
 C $B6FB,1 Is this EX'ing AF to get the carry flag?
 C $B6FC,1 HL += BC
 N $B701 This entry point is used by the routine at #R$92E1.
+@ $B701 label=draw_cherry_b701
 C $B701,4 IX = plot_masked_sprite_core_thingy
 C $B705,3 A = ~A + 9 == (8 - A)
 C $B708,4 This multiplies by six - the length of each load-mask-store step in the plotter core.
 C $B70C,5 Add that to #REGix
 C $B711,2 B = 15 -- Set loop counter for 15 iterations?
-C $B714,2 D = 0 -- fall through
+C $B714,2 D = 0 -- fall through into plot_masked_sprite
 c $B716 Masked sprite plotter
 D $B716 This plots a lot of the game's masked graphics.
 D $B716 The stack points to pairs of bitmap and mask bytes and HL must point to the screen buffer. Uses AND-OR type masking. Proceeds left-right. Doesn't flip the bytes so there must be an alternative for that.
@@ -7621,7 +7666,7 @@ C $B9A7,1 B = A
 C $B9A8,3 A = var_a25e
 C $B9AB,1 Set flags
 C $B9AC,2 Jump if non-zero
-C $B9AE,3 Get speed value
+C $B9AE,3 Load speed
 C $B9B1,1 A = L
 C $B9B2,2 A = speed / 2 (top half)
 C $B9B7,2 A &= 6
