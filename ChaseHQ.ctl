@@ -97,8 +97,10 @@
 > $4000 ; $5C00..$76EF is the per-stage data:
 > $4000 ; - $5C00..$5CFF is the regular version of the backdrop
 > $4000 ; $8DBB (word) is the address of the current transition animation
+> $4000 ; $E300..$E316 is a height table (22 bytes long)
+> $4000 ; $E336..      is ?
 > $4000 ; $E500        is ?
-> $4000 ; $E600..$E7FF is road drawing data
+> $4000 ; $E600..$E80F is road drawing scaling tables (3x8 groups of 22 bytes)
 > $4000 ; $E900        is a table
 > $4000 ; $EA00..$EA2F is the diamond zoom-in mask
 > $4000 ; $EA30..$EAFE (words) is 104 words related to road drawing
@@ -2233,7 +2235,7 @@ C $8456,3 Call move_hero_car
 C $8459,3 Call spawn_cars
 C $845C,3 Call cycle_counters
 C $845F,3 Call engine_sfx_play_hook
-C $8462,3 Call main_loop_10
+C $8462,3 Call build_height_table
 C $8465,3 Call scroll_horizon
 C $8468,3 Call engine_sfx_play_hook
 C $846B,3 Call main_loop_12
@@ -2327,7 +2329,7 @@ C $8555,4 Set user input
 C $8559,3 Call read_map
 C $855C,3 Call spawn_cars
 C $855F,3 Call cycle_counters
-C $8562,3 Call main_loop_10
+C $8562,3 Call build_height_table
 C $8565,3 Call scroll_horizon
 C $8568,3 Call main_loop_12
 C $856B,3 Call main_loop_13
@@ -2551,7 +2553,7 @@ N $8767 Print "GAME OVER" once the transition has completed.
 C $8767,3 Address of game_over_message
 C $876A,8 If transition_control != 4 Call message_printing_related
 C $8772,3 Call read_map
-C $8775,3 Call main_loop_10
+C $8775,3 Call build_height_table
 C $8778,3 Call scroll_horizon
 C $877B,3 Call main_loop_12
 C $877E,3 Call main_loop_13
@@ -9703,96 +9705,104 @@ C $CD32,1 Bank
 C $CD33,1 B--
 C $CD34,3 Outer loop?
 C $CD37,3 Exit
-c $CD3A Routine at CD3A
-D $CD3A Used by the routines at #R$8401, #R$852A and #R$873C. Point #REGiy at the road buffer height data.
-@ $CD3A label=main_loop_10
-C $CD3A,3 Set #REGiy high byte to road buffer memory region ($EExx)
+c $CD3A Seems to build the height table at $E300 and $E336.
+D $CD3A Used by the routines at #R$8401, #R$852A and #R$873C.
+N $CD3A Point #REGiy at the road buffer's height data. (The "unpacked map height data"?)
+@ $CD3A label=build_height_table
+C $CD3A,3 Set the high byte of #REGiy to road buffer memory region ($EExx)
 C $CD3D,3 Load road_buffer_offset into #REGa
-C $CD40,2 Add 32 so it's the height data offset
+C $CD40,2 Add 32 so it's the height data offset (wrapping around)
 C $CD42,2 #REGiy is now the road buffer height data pointer
-C $CD44,3 Read a height byte into #REGc
+C $CD44,3 Read the current height byte into #REGc
+N $CD47 The height byte is the byte B from the map data but converted like so ((B & 15) - 8). Heights are therefore 0 for level road, 7 for max downslope, -8 for max upslope.
+N $CD47 build A - an index into the road drawing tables.
 C $CD47,5 A = fast_counter & $E0  -- top three bits
-C $CD4C,1 L = A
-C $CD4D,1 B = A
-N $CD4E Reduces A by 31.25% ... unsure why that figure.
+C $CD4C,1 Copy for reducing
+C $CD4D,1 Copy to be a multiplier later
+N $CD4E Reduces A by 31.25%. This maps it to the start of rows in data_e600 (multiples of 22 long). So fast_counter indexes the rows of the table.
 C $CD4E,5 Divide A by 4 and subtract
 C $CD53,5 Divide A by 16 and subtract
-C $CD58,4 HL = $E600 | (A + 1)
-C $CD5C,1 A = B  multiplicand
-C $CD5D,3 Call multiply (A = multiplier, C = multiplicand)
-C $CD60,2 A = -A
-C $CD62,1 C = A
+C $CD58,4 Point #REGhl into road drawing tables at ($E600 | (A + 1))
+C $CD5C,1 Multiplier = (fast_counter & $E0) from above
+N $CD5D Multiplicand is the height byte from the map (7 max downslope, 0 level, -8 max upslope).
+C $CD5D,3 Call multiply (A = multiplier, C = multiplicand) result in A
+C $CD60,3 Negate result and copy to C
 C $CD63,1 Bank
-N $CD64 This builds the table at $E301.
-C $CD64,2 B = $15
+N $CD64 This builds the look-up table at $E301. Assuming it's a height table.
+C $CD64,2 B = 21
 C $CD66,3 DE = $E301
 @ $CD69 label=ml10_loop
 C $CD69,1 Unbank
-C $CD6A,3 E = *HL << 1
+C $CD6A,3 E = *HL * 2  -- HL points at $E6xx (road drawing tables)
 C $CD6D,1 Preserve HL
-C $CD6E,2 D = 0
-C $CD70,1 L = 0
-C $CD71,1 H = 0
-C $CD72,1 A = C  C is multiply result from above
-C $CD73,3 A += *IY   height byte
+C $CD6E,2 DE is now the value from table, widened
+C $CD70,2 Initialise result to zero
+C $CD72,1 A = negated multiply result from above
+C $CD73,3 A += *IY  -- a height byte
 C $CD76,1 C = A
-C $CD7C,1 A = E
-C $CD7D,1 E--
-C $CD7E,2 A = -A
-C $CD80,1 E = A
-C $CD81,1 A = C
-C $CD82,2 A = -A
-C $CD84,2 A <<= 2
-C $CD88,2 HL = DE
-C $CD8A,1 HL *= 2
-C $CD8B,1 A <<= 1
-C $CD8E,1 HL += DE
-C $CD8F,1 HL <<= 1
-C $CD90,1 A <<= 1
-C $CD93,1 HL += DE
-C $CD94,1 HL <<= 1
-C $CD95,1 A <<= 1
-C $CD98,1 HL += DE
-C $CD99,1 HL <<= 1
-C $CD9A,1 A <<= 1
-C $CD9D,1 HL += DE
-C $CD9E,1 HL <<= 1
-C $CD9F,1 A <<= 1
-C $CDA2,1 HL += DE
-C $CDA3,1 HL <<= 1
-C $CDA4,1 A <<= 1
-C $CDA7,1 HL += DE
-C $CDA8,1 HL <<= 1
-C $CDA9,1 A = H
+C $CD77,2 Jump to ml10_continue if zero (since multiply by zero is a no-op)
+C $CD79,3 Jump if positive
+N $CD7C Otherwise handle negative case.
+C $CD7C,5 E = -E; D = $FF  -- negate multiplier
+C $CD81,3 A = -C  -- negate muliplicand
+N $CD84 Multiplier.
+@ $CD84 label=ml10_multiplier
+C $CD84,1 Throw sign bit away?
+@ $CD85 label=ml10_bit6
+C $CD85,1 Shift out a high bit of multiplicand
+C $CD86,4 Copy multiplier (from #REGde) if a bit shifted out
+C $CD8A,1 Shift result up to prepare for next bit
+@ $CD8B label=ml10_bit5
+C $CD8B,1 Shift out a high bit of multiplicand
+C $CD8C,3 Add multiplier (from #REGde) if a bit shifted out
+@ $CD8F label=ml10_bit4
+C $CD8F,1 Shift result up to prepare for next bit
+@ $CD94 label=ml10_bit3
+C $CD90,5 Repeat
+@ $CD99 label=ml10_bit2
+C $CD95,5 Repeat
+@ $CD9E label=ml10_bit1
+C $CD9A,5 Repeat
+@ $CDA3 label=ml10_bit0
+C $CD9F,5 Repeat
+@ $CDA8 label=ml10_cda8
+C $CDA4,5 Repeat
+C $CDA9,1 A = H  -- top byte of result
 @ $CDAA label=ml10_continue
 C $CDAA,1 Restore HL
-C $CDAB,1 A += *HL
-C $CDAC,1 L++
+C $CDAB,1 A += *HL  -- HL points at $E6xx (road drawing data)
+C $CDAC,1 HL++  (wrapping around)
 C $CDAD,1 Bank
-C $CDAE,1 *DE = A  -- writes to the table at $E3xx
-C $CDAF,1 E++
-C $CDB0,2 IYl++
-C $CDB2,2 Loop to ml10_loop
-C $CDB4,2 A = $A0
-C $CDB6,1 *DE = A
+C $CDAE,1 Write #REGa to the table at $E3xx
+C $CDAF,1 DE++  (wrapping around)
+C $CDB0,2 IYl++ (wrapping around)
+C $CDB2,2 Loop to ml10_loop while #REGb
+C $CDB4,3 Final byte is always $A0
+N $CDB7 Copy the table to $E336 while setting -ve values to 96.
+C $CDB7,3 destination
+C $CDBA,3 source
+C $CDBD,3 B = 21 iterations, C = 96 limit
 @ $CDC0 label=ml10_loop2
-C $CDC0,1 A = *DE
-C $CDC5,1 C = A
-C $CDC6,1 *HL = C
-C $CDC7,1 L++
-C $CDC8,1 E++
-C $CDC9,2 Loop ml10_loop2 while B
-C $CDCB,6 C = (C + 3) & $F8
+C $CDC0,1 Read from table just built
+C $CDC1,4 Jump if A is positive
+C $CDC5,1 Otherwise it's negative, so C = 96
+C $CDC6,1 Write it
+C $CDC7,1 HL++  (wrapping around)
+C $CDC8,1 DE++  (wrapping around)
+C $CDC9,2 Loop to ml10_loop2 while #REGb
+N $CDCB Final bytes.
+C $CDCB,6 C = A = (C + 3) & $F8
 C $CDD1,1 A -= *HL
 C $CDD2,1 *HL = C
-C $CDD3,1 L++
+C $CDD3,1 HL++  (wrapping around)
 C $CDD4,1 *HL = A
 C $CDD5,1 Return
 c $CDD6 Multiplier
 D $CDD6 Multiplies #REGc by the top three bits of #REGa then divides by 8 with rounding, on exit.
 D $CDD6 Used by the routines at #R$CBD6 and #R$CD3A.
 R $CDD6 I:A Multiplier (number to multiply by)  e.g. $A0, $E7, $20, $C0, $E6
-R $CDD6 I:C Multiplicand (value to multiply)    e.g. $05, $02, $05, $03, $FE O:A Result e.g. $03, $02, $01, $02, $FE
+R $CDD6 I:C Multiplicand (value to multiply)    e.g. $05, $02, $05, $03, $FE
+R $CDD6 O:A Result e.g. $03, $02, $01, $02, $FE
 @ $CDD6 label=multiply
 C $CDD6,2 3 iterations only
 C $CDD8,1 Copy of multiplier to destroy
