@@ -101,12 +101,17 @@
 > $4000 ; $E336..      is ?
 > $4000 ; $E500        is ?
 > $4000 ; $E600..$E80F is road drawing scaling tables (3x8 groups of 22 bytes)
+> $4000 ; $E830..$E8FF is 104 words for road drawing (left)
 > $4000 ; $E900        is a table
+> $4000 ; $E930..$E9FF is 104 words for road drawing (centre left)
 > $4000 ; $EA00..$EA2F is the diamond zoom-in mask
-> $4000 ; $EA30..$EAFE (words) is 104 words related to road drawing
+> $4000 ; $EA30..$EAFF is 104 words for road drawing (centre)
 > $4000 ; $EB00..$EB27 is the square zoom-in mask
+> $4000 ; $EB30..$EBFF is 104 words for road drawing (centre right)
 > $4000 ; $EC00        is ?
+> $4000 ; $EC30..$ECFF is 104 words for road drawing (right)
 > $4000 ; $ED28        is the stack (growing downwards)
+> $4000 ; $ED30..?     is (possibly another 104 word road drawing buffer)
 > $4000 ; $EE00..$EEFF is the road buffer. holds data unpacked from maps. it's cyclic. fixed sections for each datum. cleared by $87DD.
 > $4000 ; $EF00..$EFFF is a table of flipped bytes
 > $4000 ; $F000..$FFFF is a 4KB back buffer
@@ -2238,7 +2243,7 @@ C $845F,3 Call engine_sfx_play_hook
 C $8462,3 Call build_height_table
 C $8465,3 Call scroll_horizon
 C $8468,3 Call engine_sfx_play_hook
-C $846B,3 Call main_loop_12
+C $846B,3 Call layout_road
 C $846E,3 Call engine_sfx_play_hook
 C $8471,3 Call main_loop_13
 C $8474,3 Call engine_sfx_play_hook
@@ -2331,7 +2336,7 @@ C $855C,3 Call spawn_cars
 C $855F,3 Call cycle_counters
 C $8562,3 Call build_height_table
 C $8565,3 Call scroll_horizon
-C $8568,3 Call main_loop_12
+C $8568,3 Call layout_road
 C $856B,3 Call main_loop_13
 C $856E,3 Call main_loop_14
 C $8571,3 Call tunnel_setup
@@ -2555,7 +2560,7 @@ C $876A,8 If transition_control != 4 Call message_printing_related
 C $8772,3 Call read_map
 C $8775,3 Call build_height_table
 C $8778,3 Call scroll_horizon
-C $877B,3 Call main_loop_12
+C $877B,3 Call layout_road
 C $877E,3 Call main_loop_13
 C $8781,3 Call main_loop_14
 C $8784,3 Call tunnel_setup
@@ -2609,7 +2614,7 @@ C $8842,3 Address of fast_counter
 C $8845,3 Call HUGE function
 C $8848,1 Restore BC
 C $8849,2 Loop
-C $884B,4 Reset another_spawning_flag
+C $884B,4 Clear allow_car_spawning
 C $884F,2 Transition type?
 C $8851,3 Call setup_transition
 C $8854,3 Call clear_screen_set_attrs
@@ -2942,12 +2947,14 @@ C $8C14,3 A = gear
 C $8C17,2 -- must be removing carry from calc above?
 C $8C1B,2 Set Fire
 C $8C1D,4 user_input = C
-C $8C21,3 A195 is horz position of perp car
+@ $8C21 ssub=LD HL,(hazard_0 + 13)
+C $8C21,3 Load the horizontal position of the perp's car into #REGhl
 C $8C24,11 Jump to hpc_set_perp_pos if HL <= $46
 C $8C2F,5 HL -= 5
 N $8C35 This entry point is used by the routine at #R$8C3A.
 @ $8C35 label=hpc_set_perp_pos
-C $8C35,4 $A195 = #REGde (position)
+@ $8C35 ssub=LD (hazard_0 + 13),DE
+C $8C35,4 Set the horizontal position of the perp's car to #REGde
 C $8C39,1 Return
 c $8C3A Fully smashed
 D $8C3A Used by the routine at #R$B4F0.
@@ -3294,7 +3301,7 @@ C $8F84,1 Self modified
 C $8F85,2 IY--
 C $8F87,3 Load road_buffer_offset into #REGa
 C $8F8A,2 Add 115 so it's the right side objects data offset + 19
-C $8F8C,3 HL = $EE00 | A
+C $8F8C,3 Point #REGhl at road buffer right side objects data
 C $8F8F,4 IX = $EAB0
 C $8F93,3 BC = $1420
 C $8F96,4 Preserve IX, HL, BC
@@ -3826,7 +3833,7 @@ C $94B9,2 Jump into body of loop
 C $94BB,1 Bank
 @ $94BC label=ps_even_continue
 C $94BC,2 Next scanline
-C $94BE,3 Restore #REGsp (self modified)
+C $94BE,3 Restore original #REGsp (self modified)
 C $94C1,1 Return
 @ $94C2 label=ps_even_next
 C $94C2,1 Calculate address of next bitmap scanline
@@ -3863,7 +3870,7 @@ C $950B,2 Jump into body of loop
 C $950D,1 Bank
 @ $950E label=ps_odd_continue
 C $950E,2 Next scanline
-C $9510,3 Restore #REGsp (self modified)
+C $9510,3 Restore original #REGsp (self modified)
 C $9513,1 Return
 @ $9514 label=ps_odd_next
 C $9514,1 Calculate address of next bitmap scanline
@@ -3906,7 +3913,7 @@ C $9565,2 Jump into body of loop
 @ $9567 label=psf_even_continue
 C $9567,1 Bank
 C $9568,2 Next scanline
-C $956A,3 Restore #REGsp (self modified)
+C $956A,3 Restore original #REGsp (self modified)
 C $956D,1 Return
 @ $956E label=psf_even_next
 C $956E,1 Calculate address of next bitmap scanline
@@ -3948,7 +3955,7 @@ C $95CE,2 Jump into body of loop
 @ $95D0 label=psf_odd_continue
 C $95D0,1 Bank
 C $95D1,2 Next scanline
-C $95D3,3 Restore #REGsp (self modified)
+C $95D3,3 Restore original #REGsp (self modified)
 C $95D6,1 Return
 @ $95D7 label=psf_odd_next
 C $95D7,1 Calculate address of next bitmap scanline
@@ -4748,7 +4755,7 @@ C $9E72,1 Restore back buffer draw address
 C $9E73,2 Advance screen address to next turbo position
 C $9E75,1 Decrement number of turbos
 C $9E76,2 Loop until none are left
-C $9E78,3 Restore #REGsp
+C $9E78,3 Restore original #REGsp (self modified)
 @ $9E7B label=plot_speed_only
 C $9E7B,3 Point #REGde at speed digits screen position (144, 9)
 C $9E7E,1 Bank
@@ -5119,6 +5126,7 @@ B $A169,1,1 Copied to hazards[0].16
 B $A16A,1,1 Copied to hazards[0].17
 B $A16B,1,1 Copied to hazards[0].18
 B $A16C,1,1 Copied to hazards[0].19
+N $A16D Oscillates during road splits. Adjusts horizontal position of the untaken road.
 @ $A16D label=var_a16d
 B $A16D,1,1 Used by #R$BC36
 @ $A16E label=idle_timer
@@ -5299,8 +5307,8 @@ B $A251,1,1 1 => Horizontally flip the hero car, 0 => Don't
 B $A252,1,1
 @ $A253 label=gear
 B $A253,1,1 0 => Low gear, 1 => High gear
-@ $A254 label=another_spawning_flag
-B $A254,1,1 Cleared by #R$884B   suspected spawning flag (different to flag #R$A225)
+@ $A254 label=allow_car_spawning
+B $A254,1,1 Counter. Usually 0/1/2. Allows cars spawning when non-zero. Seems to oscillate. Returns to zero when the hero car is stopped.
 @ $A255 label=distance_bcd
 B $A255,2,2 Distance as BCD (2 bytes / 4 digits, little endian)
 @ $A257 label=var_a257
@@ -5330,7 +5338,7 @@ B $A262,1,1
 B $A263,1,1 Used by #R$B2AE
 @ $A264 label=var_a264
 B $A264,1,1 Used by #R$B2B2 -- together might be a 16-bit qty
-@ $A265 label=split_road
+@ $A265 label=split_road_visible
 B $A265,1,1 Used by #R$BC2C -- set to $60 when the split road becomes visible, zero otherwise
 @ $A266 label=split_road_countdown
 B $A266,1,1 Used by #R$A3A6 -- counts down (from 16?) when the split road approaches, zero when the split actually starts
@@ -5371,7 +5379,7 @@ D $A399 Used by the routines at #R$8401 and #R$852A.
 @ $A399 label=check_collisions
 C $A399,3 HL = $0048
 C $A39C,3 DE = $01D8
-C $A3A0,3 A = split_road  -- fairly sure this is a split road flag
+C $A3A0,3 A = split_road_visible  -- fairly sure this is a split road flag
 C $A3A3,1 Set flags
 C $A3A4,2 Jump to cc_at_split if zero
 C $A3A6,3 A = split_road_countdown
@@ -5417,7 +5425,7 @@ C $A401,2 C = 0  (not self modified)
 C $A403,2 not off road?
 C $A405,3 Load road_buffer_offset into #REGa
 C $A408,2 Add 64 so it's the lanes data offset
-C $A40A,3 HL = $EE00 | L
+C $A40A,3 Point #REGhl at road buffer lanes data
 C $A40D,1 A = *HL
 C $A40E,2 Test bit 6  -- tunnel bits perhaps?
 C $A410,2 Jump if clear
@@ -5450,8 +5458,7 @@ C $A447,1 Set flags
 C $A448,1 Return if non-zero
 C $A449,3 Load road_buffer_offset into #REGa
 C $A44C,2 Add 96 so it's the right side objects data offset
-C $A44E,1 L = A
-C $A450,2 H = $EE
+C $A44E,4 Point #REGhl at road buffer right side objects data
 C $A452,3 Load road_buffer_offset into #REGa
 C $A455,1 Doubling?
 C $A456,1 A = *HL
@@ -5469,8 +5476,8 @@ C $A478,2 HL -= DE
 C $A47D,1 A = 0
 C $A47E,2 Jump to cc_hit_scenery
 @ $A480 label=cc_a480
-C $A481,2 A += 32
-C $A483,3 HL = $EE00 | A
+C $A481,2 Add 32 so it's the left side objects data offset
+C $A483,3 Point #REGhl at road buffer left side objects data
 C $A486,3 Load road_buffer_offset into #REGa
 C $A489,1 Doubling?
 C $A48A,1 A = *HL
@@ -5519,12 +5526,12 @@ C $A4EC,2 HL -= DE
 C $A4F2,3 Self modify 'LD BC' @ #R$B32E to load HL
 C $A4F5,1 Return
 @ $A4F6 label=cc_not_split
-C $A4F6,3 HL = *$E8FE  [mystery var]
+C $A4F6,3 HL = *$E8FE  -- checking the final word of the road drawing (left) table
 C $A4F9,1 A = H  (0 or 255)
 C $A4FA,1 Set flags
-C $A4FB,2 A isn't zero
-C $A4FD,11 Jump to #R$A510 if HL < $6A
-C $A508,2 HL -= $85
+C $A4FB,2 Jump to cc_a510 if A isn't zero
+C $A4FD,9 Jump to #R$A510 if HL < $6A
+C $A506,4 HL -= $85
 C $A50A,1 A++  -- A == 1 => partially off-road
 C $A50B,2 Jump to cc_not_split_set if HL < $85
 C $A50D,1 A++  -- A == 2 => fully off-road
@@ -5540,6 +5547,7 @@ C $A522,4 HL -= $7C
 C $A526,1 A++  -- A == 1 => partially off-road
 C $A527,2 Jump to cc_not_split_set if HL >= $7C
 C $A529,1 A++  -- A == 2 => fully off-road
+N $A52A Set the off-road flag etc.
 @ $A52A label=cc_not_split_set
 C $A52A,3 off_road = A
 C $A52D,1 A = 0
@@ -5583,13 +5591,13 @@ C $A580,2 *HL++ = A
 C $A582,2 Loop ml14_loop1 while B
 C $A584,4 Self modify 'LD SP' @ #R$A60A to restore SP
 C $A588,3 SP = $EB00
-C $A58B,2 D = $EE
+C $A58B,2 Point #REGde at road buffer (somewhere)
 C $A58D,3 Load road_buffer_offset into #REGa
 C $A590,2 Add 64 so it's the lanes data offset
 C $A592,1 E = calculated offset
 C $A593,4 IY = $E34F
 C $A597,2 B = 21
-C $A599,3 A = split_road  -- split road flag
+C $A599,3 A = split_road_visible  -- split road flag
 C $A59C,1 Set flags
 C $A59D,3 Jump to ml14_loop2 if zero [not in road split]
 C $A5A0,3 A = split_road_countdown
@@ -5609,7 +5617,7 @@ C $A5B9,1 C = *HL
 C $A5BB,2 H = $EC
 C $A5BD,2 Jump to ml14_a5da
 C $A5BF,3 H = A + $E7
-N $A5C2 Sampled HL = E869 E865 E863 E861
+N $A5C2 Sampled HL = E869 E865 E863 E861 (road drawing left)
 C $A5C2,1 B = *HL
 C $A5C3,1 L--
 C $A5C4,1 C = *HL
@@ -5644,7 +5652,7 @@ C $A604,1 D = *HL
 C $A606,2 IY++
 C $A608,2 Loop ml14_loop3 while B
 @ $A60A label=ml14_return
-C $A60A,3 Restore stack pointer -- Self modified above on entry
+C $A60A,3 Restore original stack pointer (self modified above)
 C $A60D,1 Return
 c $A60E Counters
 D $A60E Used by the routines at #R$8401 and #R$852A.
@@ -5831,9 +5839,9 @@ c $A7F3 Spawns cars
 D $A7F3 Used by the routines at #R$8401 and #R$852A.
 @ $A7F3 label=spawn_cars
 C $A7F3,9 Return if perp_caught_stage or stop_car_spawning flags are set
-C $A7FC,3 Load another_spawning_flag
-C $A7FF,2 Return if another_spawning_flag was zero
-C $A801,4 A = <self modified> - another_spawning_flag
+C $A7FC,3 Load allow_car_spawning
+C $A7FF,2 Return if allow_car_spawning was zero
+C $A801,4 A = <self modified> - allow_car_spawning
 C $A805,3 Self modify above
 C $A808,1 Return if carry?
 N $A809 Start spawning cars.
@@ -5892,8 +5900,9 @@ D $A89C Return $0101 and cars only appear in the leftmost lane. $0102 (1st and 2
 R $A89C I:C Buffer offset
 R $A89C O:BC TBD
 @ $A89C label=get_spawn_lanes
-C $A89C,6 A = [current buffer offset] + 66 + C   (wrapping around)
-C $A8A2,4 A = $EE00[A]
+C $A89C,6 A = [current buffer offset] + 66 + C  (wrapping around)
+C $A8A2,3 Point #REGde at road buffer lanes data (+2 bytes)
+C $A8A5,1 Read lanes byte
 C $A8A6,1 Set flags
 C $A8A7,3 BC = $0104
 C $A8AA,1 Return if zero
@@ -5964,8 +5973,8 @@ C $A952,3 Call start_sfx
 c $A955 main_loop_18
 D $A955 Used by the routines at #R$8401 and #R$852A.
 @ $A955 label=main_loop_18
-C $A955,5 Return if #R$A248 is zero
-C $A95A,5 Return if #$A254 is zero
+C $A955,5 Return if var_a248 is zero
+C $A95A,5 Return if allow_car_spawning is zero
 C $A95F,3 Point #REGde at (something above the stack)
 C $A962,3 Call rng
 C $A965,8 Stack 1 if it's +ve or zero, or 2 if it's -ve
@@ -6229,16 +6238,13 @@ C $AB99,1 Return
 c $AB9A Routine at AB9A
 D $AB9A Used by the routines at #R$8401, #R$852A and #R$873C.
 @ $AB9A label=spawn_hazards
-C $AB9A,3 Load another_spawning_flag
-C $AB9D,1 Set flags
-C $AB9E,1 Return if zero
+C $AB9A,5 Return if allow_car_spawning is zero
 C $AB9F,3 A = ~A + 21
 C $ABA2,1 C = A
 C $ABA3,3 Load road_buffer_offset into #REGa
 C $ABA6,2 Add 160 so it's the hazards data offset
 C $ABA8,1 A += C
-C $ABA9,1 L = A
-C $ABAA,2 H = $EE
+C $ABA9,3 Point #REGhl at road buffer hazards data
 C $ABAC,1 A = *HL   -- load the hazard byte
 C $ABAD,1 Set flags
 C $ABAE,1 Return if zero
@@ -6504,7 +6510,7 @@ C $AE3E,2 Loop
 C $AE40,1 A = H  -- high part of result
 C $AE42,3 IX[6] = A
 C $AE45,5 A = ~((C - A) << 1)
-C $AE4A,3 HL = $E800 + A
+C $AE4A,3 HL = $E800 | A (road drawing left)
 C $AE4D,1 D = *HL
 C $AE4E,1 HL--
 C $AE4F,1 E = *HL
@@ -7422,7 +7428,7 @@ R $B716 I:HL Address of data to plot
 @ $B716 label=plot_masked_sprite
 @ $B71C label=plot_masked_sprite_loop
 C $B716,9 Save #REGsp for restoration on exit
-C $B71F,5 Restore original #REGsp
+C $B71F,5 Restore original #REGsp (self modified)
 N $B724 This entry point is used by the routine at #R$B7EF.
 @ $B724 label=plot_masked_sprite_entry
 C $B724,1 Point #REGhl at the graphic data
@@ -7447,7 +7453,7 @@ C $B77F,5 Add to IX
 C $B784,2 H = $EF
 C $B78E,1 Bank
 C $B78F,2 Next scanline
-C $B791,3 Restore #REGsp (self modified)
+C $B791,3 Restore original #REGsp (self modified)
 C $B794,1 Return
 C $B795,1 Calculate address of next bitmap scanline
 C $B796,1 Put it in #REGsp (so we can use POP for speed)
@@ -7591,7 +7597,7 @@ C $B8F2,1 HL += BC
 C $B8F3,3 horizon_level = HL
 C $B8F6,3 Load road_buffer_offset into #REGa
 C $B8F9,2 Add (32+2) so it's the height data
-C $B8FB,3 HL = $EE00 + A
+C $B8FB,3 Point #REGhl at road buffer height data
 C $B8FE,1 A = 0
 C $B8FF,3 var_a25b = 0
 C $B902,3 var_a25a = 0
@@ -7643,8 +7649,8 @@ C $B96F,1 Restore HL
 C $B970,1 *HL = C
 C $B971,3 A = horizon_scroll
 C $B975,3 Load road_buffer_offset into #REGa
-C $B978,3 HL = $EE00 + A  -- curvature data
-C $B97B,3 A = split_road  -- split road flag
+C $B978,3 Point #REGhl at road buffer curvature data
+C $B97B,3 A = split_road_visible  -- split road flag
 C $B97E,1 Set flags
 C $B97F,1 A = *HL
 C $B980,2 Jump if zero
@@ -7699,41 +7705,59 @@ C $B9EC,1 A = 0
 C $B9ED,3 var_a261 = 0
 C $B9F0,3 var_a262 = 0
 C $B9F3,1 Return
-c $B9F4 Routine at B9F4
+c $B9F4 Seems to lay out lanes.
 D $B9F4 Used by the routines at #R$8401, #R$852A and #R$873C.
-@ $B9F4 label=main_loop_12
+@ $B9F4 label=layout_road
 C $B9F4,3 Load road_buffer_offset into #REGa [as byte]
 C $B9F7,2 Add 64 so it's the lanes data offset
-C $B9F9,3 DE = $EE00 | A
-C $B9FC,3 B=20, C=$E1 -- counter, mask
-C $B9FF,2 Counter/Index
-N $BA01 Suspect this is counting the distance to road split.
+C $B9F9,3 Point #REGde at road buffer lanes data
+N $B9FC Suspect this is counting the distance to road split.
+C $B9FC,3 #REGb = 20 iterations, #REGc = $E1, a mask
+C $B9FF,2 Counter
 C $BA01,1 Load a lanes byte
-C $BA02,5 Jump if (byte & $E1) == $E1
+C $BA02,5 Jump to lr_road_split if (lanes byte & $E1) == $E1
 C $BA07,1 Advance to next lanes byte (wrapping around)
 C $BA08,1 Increment counter
 C $BA09,2 Loop while #REGb
-N $BA0B No road split found?
-C $BA0B,3 [road is still rendered if this is NOPped, but road is in wrong position]
-C $BA0E,4 Self modify return path
-C $BA12,3 must be data
-C $BA17,3 Self modify #R$BA35 to load $EA30
-C $BA1A,3 Self modify #R$BA3F to load $EB30
-C $BA1D,3 Self modify #R$BA44 to load $E930
-C $BA23,3 Self modify #R$BA27 to load ($E800 | A)
+N $BA0B No road split found.
+N $BA0B The road is still rendered if the following call is nopped out, but it's in the wrong position.
+C $BA0B,3 Call sub_cbce_non_split
+C $BA0E,4 Self modify 'LD SP' @ #R$BA4D to restore #REGsp on exit
+C $BA12,3 Put $EC30 (road right) in #REGsp (so we can use POP for speed)
+C $BA15,2 Iterate from $30 to $00 in steps of 2 = 104 iterations
+@ $BA17 label=lr_ba17
+C $BA17,3 Self modify #R$BA35 to load $EA30 upwards (road centre)
+C $BA1A,3 Self modify #R$BA3F to load $EB30 upwards (road centre right)
+C $BA1D,3 Self modify #R$BA44 to load $E930 upwards (road centre left)
+@ $BA20 label=lr_ba20
+C $BA20,3 Self modify the locations setup above
+C $BA23,3 Self modify #R$BA27 (below) to load ($E800 | A) (road left)
 C $BA26,1 Bank
-C $BA27,4 Self modified
-C $BA32,2 BC = HL
-C $BA38,2 DE = BC
-C $BA47,2 A += 2
+N $BA27 Centre = Left + (Right - Left) / 2
+C $BA27,4 DE = *$E8xx (xx = self modified) (road left)
+C $BA2B,1 Read from $ECxx
+C $BA2C,2 HL = *$ECxx - *$E8xx  [total width]
+C $BA2E,4 Divide HL by 2  [halve total width]
+C $BA32,2 BC = HL  [keep a copy]
+C $BA34,1 HL += DE  == (*$ECxx - *$E8xx) / 2 + *$E8xx  [calc centre from left]
+C $BA35,3 *$EAxx = HL (xx = self modified) (road centre)  [store centre pos]
+C $BA38,2 DE = BC  [copy halved width again]
+C $BA3A,4 Divide BC by 2   [divide by 2 again for quarter width]
+C $BA3E,1 == [centre] + [quarter width]
+C $BA3F,3 *$EBxx = HL (xx = self modified) (road centre right) [store centre-right pos]
+C $BA42,2 == [[centre] + [quarter width]] - [half total width]
+C $BA44,3 *$E9xx = HL (xx = self modified) (road centre left) [store centre-left pos]
+C $BA47,2 A += 2 [remember A's not banked by EXX]
 C $BA49,1 Unbank
-C $BA4A,3 Loop while A > 0 ?
-@ $BA4D label=ml12_exit
-C $BA4D,3 Restore original SP
+C $BA4A,3 Loop while #REGa
+@ $BA4D label=lr_exit
+C $BA4D,3 Restore original #REGsp (self modified)
 C $BA50,1 Return
 N $BA51 Handle road split.
+@ $BA51 label=lr_road_split
 C $BA52,3 split_road_countdown = A
-C $BA57,5 Set split_road visible
+C $BA55,2 HL = $E3xx
+C $BA57,5 Set split_road_visible to visible
 C $BA5D,3 A = ~A + $69
 C $BA61,3 HL = var_a267
 C $BA64,3 A = *DE & 4
@@ -7744,55 +7768,109 @@ C $BA71,3 var_a269 = A
 C $BA74,4 Get road position
 C $BA78,2 A = 1
 C $BA7A,1 D--
-C $BA81,1 A = E
-C $BA86,2 Jump if E < 12
-C $BA88,1 A--
+C $BA7B,3 jump with A==1  => right fork
+C $BA7E,3 jump with A==1  => left fork
+C $BA81,1 A = E  -- E is ?
+C $BA82,6 Jump with A==1 if E < 12
+@ $BA88 label=lr_left_fork
+C $BA88,1 A should be 1, will become zero
+@ $BA89 label=lr_check_correct_fork_taken
 C $BA89,3 Set fork_taken to #REGa
-C $BA8C,1 A++
+C $BA8C,1 0/1 -> 1/2
+C $BA8D,1 Preserve HL (which points to var_a267?)
 C $BA8E,3 Address of correct_fork
 C $BA91,1 Match?
 C $BA92,3 -> Tony: "LET'S GO. MR. DRIVER." <STOP>
-C $BA95,2 Jump to ml12_chatter if correct fork was taken
+C $BA95,2 Jump to lr_chatter if correct fork was taken
 N $BA97 Incorrect fork was taken.
-@ $BA99 ssub=LD (hazard_0 + 13)
-C $BA99,3 A195 is horz position of perp car
-N $BA9C Add a bonus of (40,000 + 10,000 * level number) for going the wrong way...?
+@ $BA99 ssub=LD (hazard_0 + 13),A
+C $BA97,5 Set the horizontal position of the perp's car to $5F
+N $BA9C Add a bonus of (40,000 + 10,000 * level number) for going the wrong way (eh?)
 C $BA9C,5 A = wanted_stage_number + 4
 C $BAA1,1 Set top digits
 C $BAA2,1 Clear low digit
 C $BAA3,1 Clear middle digits
 C $BAA4,3 Call bonus
 C $BAA7,3 -> Raymond: "WHAT ARE YOU DOING MAN!!" / "THE BAD GUYS ARE GOING THE OTHER WAY." <STOP>
-@ $BAAA label=ml12_chatter
+@ $BAAA label=lr_chatter
 C $BAAA,2 Set priority to 20
 C $BAAC,3 Call chatter (priority 20)
-C $BAB0,3 Load another_spawning_flag
-C $BAB4,2 Jump if zero
-C $BAB6,1 C = A
-C $BAB7,3 A = var_a16d
-C $BABA,1 A += C
+C $BAAF,1 Restore HL (which points to var_a267?)
+C $BAB0,3 Load allow_car_spawning
+C $BAB3,3 Jump to lr_bacc if zero
+N $BAB6 allow_car_spawning is set
+C $BAB6,5 A = var_a16d + A
 C $BABB,1 C = A
 C $BABC,2 A -= 2
+C $BABE,2 Jump if A < 2
 C $BAC0,1 C = A
-C $BAC1,3 DE = 16
-C $BAC4,1 HL += DE
+C $BAC1,4 HL += 16
 C $BAC5,3 var_a267 = HL
-C $BAC9,3 var_a16d = A
+@ $BAC8 label=lr_bac8
+C $BAC8,4 var_a16d = C
+@ $BACC label=lr_bacc
 C $BACC,3 A = var_a16d
-C $BAD0,3 A = fast_counter
-C $BAD3,4 A ROR 4
-C $BAD7,2 A &= $0F
-C $BAD9,2 A -= 16
+C $BACF,1 Getting carry?
+C $BAD0,9 A = (fast_counter >> 4)
+C $BAD9,2 A -= 16  -- sets top nibble to $F
 C $BADB,3 DE = $FF00 | A
 C $BADE,1 HL += DE
+@ $BADF label=lr_badf
+C $BADF,1 Preserve HL
 C $BAE0,6 Jump if fork_taken was 1 (right fork taken)
 N $BAE6 Left fork was taken.
+@ $BAE6 label=lr_left_fork_taken
+C $BAE6,3 Call sub_cbce_non_split
+C $BAE9,1 Restore HL from earlier
 C $BAEA,3 Get road position
+C $BAED,1 Stack it
+C $BAEE,1 DE must be a road position delta?
 C $BAEF,3 Set road position
+C $BAF2,3 Call sub_cbce_split
 N $BAF7 Right fork was taken.
+@ $BAF7 label=lr_right_fork_taken
+C $BAF7,3 Call sub_cbce_split
+C $BAFA,1 Pop result?
 C $BAFB,3 Get road position
+C $BAFE,1 Stack it
+C $BAFF,2 DE must be a road position delta?
 C $BB01,3 Set road position
-C $BB08,3 Get road position
+C $BB04,3 Call sub_cbce_non_split
+@ $BB07 label=lr_bb07
+C $BB07,1 Unstack road position
+C $BB08,3 Set road position
+C $BB0B,1 B used as a counter in a moment
+C $BB0C,4 Self modify 'LD SP' @ #R$BA4D to restore #REGsp
+C $BB10,3 Put $EC30 (road right) in #REGsp (so we can use POP for speed)
+C $BB13,2 Iterate from $30 to $00 in steps of 2 = 104 iterations [CHECK]
+C $BB15,3 Self modify 'LD ($EAxx),HL' @ #R$BB37 to be $EA30 (road centre)
+C $BB18,3 Self modify 'LD ($E9xx),HL' @ #R$BB3F to be $E930 (road centre left)
+@ $BB1B label=lr_loop
+C $BB1B,2 Self modify the locations setup above
+C $BB1D,3 Self modify 'LD DE,($E8xx)' @ #R$BB2D to be $E830 (road left)
+C $BB20,3 Self modify 'LD DE,($EDxx)' @ #R$BB42 to be $ED30
+C $BB23,3 Self modify 'LD HL,($EB00)' @ #R$BB46 to be $EB30 (road centre right)
+C $BB26,3 Self modify 'LD ($EB00),HL' @ #R$BB4E to be $EB30 (road centre right)
+C $BB29,3 Self modify 'LD ($EC00),HL' @ #R$BB56 to be $EC30 (road right)
+C $BB2C,1 Bank during inner loop
+C $BB2D,4 DE = *$E8xx (xx = self modified) (road left)
+C $BB31,1 Read from $ECxx
+C $BB32,5 (Right + Left) / 2  == new road centre
+C $BB37,3 *$EAxx = HL (xx = self modified) (store road centre)
+C $BB3A,5 (Centre + Left) / 2  == new road centre left
+C $BB3F,3 *$E9xx = HL (xx = self modified) store (road centre left)
+C $BB42,4 DE = *$EDxx (xx = self modified) (?)
+C $BB46,3 HL = *$EBxx (xx = self modified) (road centre right)
+C $BB49,5 (Centre-right + ?) / 2  == new road centre right
+C $BB4E,3 *$EBxx = HL (xx = self modified) store (road centre right)
+C $BB51,5 (Centre-right) + ?) / 2 == new road right
+C $BB56,3 *$ECxx = HL (xx = self modified) (road right)
+C $BB59,2 A += 2
+C $BB5B,1 Unbank
+C $BB5C,2 Loop while B > 0
+C $BB5E,4 Jump to lr_exit if A is zero
+C $BB62,4 Point #REGsp at $EC00 | A (road right)
+C $BB66,3 Jump back to #R$BA17
 c $BB69 Setup for road handling perhaps split related
 D $BB69 Used by the routine at #R$8401.
 @ $BB69 label=road_handling_setup
@@ -7836,8 +7914,9 @@ C $BBE3,6 road_curvature_ptr = #R$E2DD
 C $BBE9,6 road_height_ptr    = #R$E2E2
 C $BBEF,6 road_hazard_ptr    = #R$E2D2
 C $BBF6,1 C = A
+N $BBF7 The code commonly loads the byte at $A240 and merges it with $EE00, yet #R$A240 contains a whole word with the right value.
 C $BBF7,3 Load road_buffer_offset into #REGa [as byte]
-C $BBFA,3 HL = $EE00 | A   -- curvature data [unsure why the code does this when #R$A240 seems to be the right value]
+C $BBFA,3 Point #REGhl at road buffer curvature data
 C $BBFD,6 Set the 32 bytes at #REGhl to #REGd
 C $BC03,9 Set the 32 bytes at #REGhl + 64 to #REGe
 C $BC0C,9 Zero the 32 bytes at #REGhl + 64 + #REGc
@@ -7849,7 +7928,7 @@ C $BC23,3 hazards_byte       = 0
 C $BC26,3 lanes_counter_byte = 0
 C $BC29,3 var_a269           = 0
 C $BC2C,3 fork_taken         = 0
-C $BC2F,3 split_road         = 0
+C $BC2F,3 split_road_visible = 0
 C $BC32,4 no_objects_counter = 1
 C $BC36,3 var_a16d           = 1
 C $BC39,4 var_a267           = 0  [B & C are zero here]
@@ -7922,7 +8001,7 @@ C $BDB4,4 Set two attrs
 C $BDB8,2 Black over bright white
 C $BDBA,3 Set two attrs
 @ $BDBD label=draw_screen_exit
-C $BDBD,3 Restore #REGsp (self modified at start of routine)
+C $BDBD,3 Restore original #REGsp (self modified at start of routine)
 C $BDC0,1 Return
 c $BDC1 Clears screen then sets in-game attributes
 D $BDC1 Used by the routines at #R$8014, #R$858C and #R$87DC.
@@ -7939,7 +8018,7 @@ D $BDFB Used by the routines at #R$8401, #R$852A and #R$873C.
 @ $BDFB label=read_map
 C $BDFB,4 var_a23d = 0  -- state var TBD
 C $BDFF,3 var_a23c = 0  -- state var TBD
-C $BE02,3 Reset another_spawning_flag
+C $BE02,3 Clear allow_car_spawning
 C $BE05,3 HL = Address of fast_counter
 C $BE08,4 DE = speed
 C $BE0C,1 A = Bottom byte of speed
@@ -7949,8 +8028,8 @@ C $BE13,3 Call subfunction #R$BE1F  -- processing something twice as much when a
 C $BE16,2 Restore
 @ $BE18 label=rm_be18
 C $BE18,2 fast_counter += bottom byte of speed in A
-C $BE1A,2 A = 0 doesn't seem self modified
-C $BE1C,3 Jump to j_c0d9 if no carry
+C $BE1A,2 A = 0  -- disallow car spawning
+C $BE1C,3 Jump to rm_inc_car_spawning if no carry
 N $BE1F This entry point is used by the routine at #R$87DC.
 @ $BE1F label=rm_cycle_buffer_offset
 C $BE1F,4 Increment road_buffer_offset
@@ -8072,7 +8151,7 @@ C $BF14,4 lanes_counter_byte = (lanes byte) - 1
 C $BF18,5 road_lanes_ptr = ++DE
 C $BF1D,4 *HL = *DE & $F7  -- HL points into cyclic road buffer? Sampled HL = $EE60
 C $BF21,3 A = *DE & $FB
-C $BF24,3 Self modify 'LD A,$xx' @ #R$BF2C
+C $BF24,3 Self modify 'LD A,$xx' @ #R$BF2C (below)
 C $BF27,2 Jump to rm_lanes_done
 N $BF29 Resume updating lanes data.
 @ $BF29 label=rm_lanes_count_resume
@@ -8082,7 +8161,7 @@ C $BF2E,1 C = A  -- Save temporarily
 C $BF2F,4 Jump to rm_lanes_bf39 if (A & $0C) is zero
 N $BF33 (bottom two bits significant)
 C $BF33,3 A = C & $F3
-C $BF36,3 Self modify 'LD A,$xx' @ #R$BF2C
+C $BF36,3 Self modify 'LD A,$xx' @ #R$BF2C (above)
 @ $BF39 label=rm_lanes_bf39
 C $BF39,1 *HL = C  -- Sampled HL: $EEE9
 @ $BF3A label=rm_lanes_done
@@ -8189,13 +8268,13 @@ C $C011,5 Otherwise helicopter_control = A - 11
 C $C016,2 Jump to rm_do_restart
 N $C018 Handle car spawning commands (13/14 = enable/disable car spawning).
 @ $C018 label=rm_hazards_spawning_command
-C $C018,5 stop_car_spawning = A - 10
+C $C018,5 stop_car_spawning = A - 10  (13/14 in map data)
 C $C01D,2 Jump to rm_do_restart
 N $C01F Handle floating arrow commands (10/11/12 = off/left/right).
 @ $C01F label=rm_hazards_set_arrow_command
-C $C01F,5 floating_arrow = A - 7
+C $C01F,5 floating_arrow = A - 7  (10/11/12 in map data)
 C $C024,2 Jump to rm_do_restart if zero
-C $C026,3 correct_fork = A
+C $C026,3 correct_fork = A  (0 or 1)
 @ $C029 label=rm_do_restart
 C $C02A,2 Jump to rm_restart_hazards_read
 N $C02C Handle hazard commands (3 = off, 4/5/6 = tumbleweeds left/right/both, 7/8/9 => barriers)
@@ -8269,22 +8348,23 @@ C $C0B9,2 Jump to rm_c072_continue
 @ $C0BB label=rm_c0bb
 C $C0BB,2 A = <self modified>  -- Self modified by #R$A977 + #R$A9A0 only
 C $C0BD,1 Set flags
-C $C0BE,3 Jump to rm_c0d7 if zero
-C $C0C1,3 HL = $ED73  -- This must be a buffer pointer at this point
-C $C0C4,3 DE = $ED77
-C $C0C7,3 BC = 38
-@ $C0CA label=rm_c0ca
+C $C0BE,3 Jump to rm_allow_car_spawning if zero
+N $C0C1 Some sort of block copy.
+C $C0C1,3 HL = $ED73  -- Source+2. This must be a buffer pointer at this point
+C $C0C4,3 DE = $ED77  -- Destination+2
+C $C0C7,3 BC = 38  -- Bytes?
+@ $C0CA label=rm_c0ca_loop
 C $C0CA,2 HL -= 2
 C $C0CC,2 DE -= 2
 C $C0CE,2 *DE-- = *HL--; BC--
 C $C0D0,2 *DE-- = *HL--; BC--
-C $C0D2,3 Jump to rm_c0ca if PE  PE => B became zero
-C $C0D5,1 HL++
-C $C0D6,1 *HL = B
-@ $C0D7 label=rm_c0d7
+N $C0D2 This seems to get hit in the dirt track section.
+C $C0D2,3 Loop to rm_c0ca while B != 0 (LDD sets P/V if BC != 0)
+C $C0D5,2 *++HL = 0  (since B is zero)
+@ $C0D7 label=rm_allow_car_spawning
 C $C0D7,2 A = 1
-@ $C0D9 label=rm_c0d9
-C $C0D9,5 Increment another_spawning_flag by A
+@ $C0D9 label=rm_inc_car_spawning
+C $C0D9,5 Increment allow_car_spawning by #REGa (which should be 0 or 1)
 C $C0DE,3 Exit via #R$AD0D
 c $C0E1 Tunnel setup?
 D $C0E1 Used by the routines at #R$8401, #R$852A and #R$873C.
@@ -8506,7 +8586,7 @@ C $C2D7,4 L -= 32
 C $C2DB,2 Jump if carry
 C $C2DD,4 H -= 16
 C $C2E1,2 Next scanline ?
-C $C2E3,3 Restore #REGsp (self modified)
+C $C2E3,3 Restore original #REGsp (self modified)
 C $C2E6,1 Return
 c $C2E7 Routine at C2E7
 D $C2E7 Used by the routine at #R$C452.
@@ -8711,7 +8791,7 @@ C $C465,4 #REGiy = $E301
 C $C469,6 C = $60 - IY[0]
 C $C46F,3 Load road_buffer_offset into #REGa
 C $C472,2 Add 64 so it's the lanes data offset
-C $C474,5 IX = $EE00 + A
+C $C474,5 IX = $EE00 | A
 C $C479,3 B = A
 C $C47C,3 $C6B3 = A & 1
 C $C47F,4 RR B twice
@@ -9172,7 +9252,7 @@ C $C89A,1 A &= C
 C $C89B,2 Jump if non-zero  -- draw blank scanline
 C $C89D,4 L -= 32
 C $C8A1,2 Jump if no carry
-C $C8A3,3 Restore #REGsp (self modified)
+C $C8A3,3 Restore original #REGsp (self modified)
 C $C8A6,1 Return
 C $C8A7,4 H += 16
 N $C8AB Writes #REGde to #REGhl 15 times.
@@ -9524,6 +9604,7 @@ C $CB9C,3 Jump if positive
 C $CB9F,2 L -= 2
 C $CBA1,3 Loop
 c $CBA4 Routine at CBA4
+D $CBA4 I can't find what calls this routine. Checked various stages...
 C $CBA4,1 C = A
 C $CBA5,3 A = IY[0]
 C $CBA8,2 IY++
@@ -9538,20 +9619,25 @@ C $CBC1,1 C = A
 C $CBC2,3 Exit via #R$C915
 c $CBC5 Routine at CBC5
 D $CBC5 Used by the routine at #R$C95A.
+N $CBC5 This gets hit during road splits.
 C $CBC5,1 C = A
 C $CBC6,5 Jump if A < 80
 C $CBCB,3 Exit via #R$C79A
-c $CBCE Routine at CBCE - road drawing stuff
+c $CBCE Road drawing - curvature stuff?
 D $CBCE Used by the routine at #R$B9F4.
-C $CBCE,3 Load two high bytes ($EExx table offset, $ECxx table offset)
-C $CBD1,3 $ED $44 => NEG instr for #R$CC21 & #R$CC22
+N $CBCE This gets hit during road splits.
+@ $CBCE label=sub_cbce_split
+C $CBCE,3 Load two table high-bytes: $EE, $EC
+C $CBD1,3 $ED $44 => NEG instruction for #R$CC21 & #R$CC22
 N $CBD6 This entry point is used by the routine at #R$B9F4.
-C $CBD6,3 Load two high bytes ($ED00 table offset, $E900 table offset)
-C $CBD9,3 Pair of NOPs for #R$CC21 & #R$CC22
+N $CBD6 This is the normal entry point?
+@ $CBD6 label=sub_cbce_non_split
+C $CBD6,3 Load two table high-bytes: $ED, $E9
+C $CBD9,3 Pair of NOP instructions for #R$CC21 & #R$CC22
 N $CBDC This entry point is used by the routine at #R$CBCE.
 C $CBDC,4 Write instructions in #REGde to #R$CC21 & #R$CC22
-C $CBE0,4 Self modify 'LD HL' @ #R$CC70 to load ($ED00 + H)
-C $CBE4,4 Self modify 'LD HL' @ #R$CCA5 to load ($E900 + L)
+C $CBE0,4 Self modify 'LD HL' @ #R$CC70 to load ($<H>00)
+C $CBE4,4 Self modify 'LD HL' @ #R$CCA5 to load ($<L>00)
 C $CBE8,3 Load road_buffer_offset into #REGhl
 C $CBEB,1 Read a curvature data byte
 N $CBEC There's similar code at #R$CD47.
@@ -9662,7 +9748,7 @@ C $CCED,1 Self modified: INC DE or DEC DE
 C $CCEF,2 Loop while B
 C $CCF1,1 Unbank
 C $CCF2,2 Outer loop?
-C $CCF4,3 Restore original SP (must be self modified)
+C $CCF4,3 Restore original #REGsp (must be self modified)
 C $CCF7,1 Return
 C $CCF8,3 Self modify instruction below
 C $CCFB,1 A = 0
@@ -9700,7 +9786,7 @@ C $CD2D,1 A = A - A - carry
 C $CD2E,1 H = A
 C $CD2F,1 HL += DE
 C $CD30,1 swap
-C $CD31,1 push
+C $CD31,1 push result?
 C $CD32,1 Bank
 C $CD33,1 B--
 C $CD34,3 Outer loop?
@@ -11507,7 +11593,7 @@ C $F3D1,3 Self modified by #R$F3B6
 C $F3D4,1 Preserve ?
 C $F3D5,3 Call relocated f3e2_128k
 C $F3D8,1 Restore ?
-C $F3D9,3 Restore SP - self modified by #R$F3C7 above
+C $F3D9,3 Restore original #REGsp (self modified by #R$F3C7 above)
 C $F3DC,3 Copy 4096 bytes from $B000 to $F000
 C $F3DF,2 Copy
 C $F3E1,1 Return
