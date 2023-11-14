@@ -1924,7 +1924,7 @@ C $80A5,3 Call draw_screen
 C $80A8,1 restore message pointer
 C $80A9,1 restore counter
 N $80AA This entry point is used by the routine at #R$F220.
-C $80AA,3 A = transition_control
+C $80AA,3 Load transition_control
 C $80AD,2 Return if zero
 C $80AF,8 Delay loop
 C $80B7,2 Loop
@@ -2061,7 +2061,7 @@ C $8229,4 Self modify delay loop -- H
 C $822D,7 Self modify delay loop -- (5 - A)
 N $8234 This entry point is used by the routine at #R$83B5.
 @ $8234 label=engine_sfx_play
-C $8234,6 Return if perp_caught_stage is >= 3 (when car stops)
+C $8234,6 Return if perp_caught_phase is >= 3 (when car stops)
 C $823A,8 Self modifying counter produces 0,1,2
 C $8242,1 Return if nonzero
 N $8243 This produces the engine sound effect.
@@ -2296,7 +2296,7 @@ C $84ED,2 wanted_stage_number = 6
 C $84EF,3 Exit via load_stage
 C $84F2,9 Increment credits unless maxed out at 9
 @ $84FB label=not_test_mode
-C $84FB,3 A = transition_control
+C $84FB,3 Load transition_control
 C $84FE,4 Jump to ml_loop if non-zero
 N $8502 Play once we have a 1-bit shifted out.
 C $8502,3 Address of start_speech
@@ -2798,53 +2798,55 @@ C $8A56,1 Return
 c $8A57 Handle perp caught
 D $8A57 This handles slowing cars down to a stop and calculating and displaying the bonus score when the perp has been caught.
 @ $8A57 label=handle_perp_caught
-C $8A57,5 Return if perp_caught_stage is zero
-C $8A5C,4 Jump to hpc_stage1 if it's one
-C $8A60,3 Jump to hpc_stage2 if it's two
-C $8A63,3 Jump to hpc_stage3 if it's three
-C $8A66,3 Jump to hpc_stage4 if it's four
+C $8A57,5 Return if perp_caught_phase is zero
+C $8A5C,4 Jump to hpc_phase1 if it's one
+C $8A60,3 Jump to hpc_phase2 if it's two
+C $8A63,3 Jump to hpc_phase3 if it's three
+C $8A66,3 Jump to hpc_phase4 if it's four
 C $8A69,1 Bank
 C $8A6A,5 Return if transition_control != 0
 C $8A6F,1 Unbank
-C $8A70,3 Jump to hpc_start_stage_6 if perp_caught_stage is five
-N $8A73 Otherwise all of the caught stages are complete and we can move on to the next stage.
+C $8A70,3 Jump to hpc_start_stage_6 if perp_caught_phase is five
+N $8A73 Otherwise all of the caught phases are complete and we can move on to the next stage.
 C $8A73,1 Throw away the return address to bypass the remainder of main_loop
 C $8A74,3 Call silence_audio_hook
 C $8A77,4 Increment wanted_stage_number
 C $8A7B,3 Jump to main_loop
 @ $8A7E label=hpc_start_stage_6
-C $8A7E,5 perp_caught_stage = 6
+C $8A7E,5 perp_caught_phase = 6
 C $8A83,2 A = 8 -- transition type
 C $8A85,3 Jump to setup_transition
-@ $8A88 label=hpc_stage2
+@ $8A88 label=hpc_phase2
 C $8A88,3 A = var_a22a
 C $8A8B,4 Jump to #R$8AB2 if A >= 16
 C $8A8F,5 var_a22a = A + 4
 C $8A94,7 HL = road_pos + 12
 C $8A9C,5 HL -= $126
 C $8AA2,2 Jump to #R$8AA5 if HL < $126  -- Suspect this is driving the car to stop the perp
+@ $8AA5 label=hpc_8aa5
 C $8AA5,3 road_pos = HL
 C $8AA8,5 A = fast_counter + 32
 C $8AAD,1 Return if carry
 C $8AAE,3 fast_counter = A
 C $8AB1,1 Return
-C $8AB2,5 perp_caught_stage = 3
+@ $8AB2 label=hpc_8ab2
+C $8AB2,5 perp_caught_phase = 3
 C $8AB7,4 $8ABF = 4
 C $8ABB,3 Call fill_attributes
-@ $8ABE label=hpc_stage3
+@ $8ABE label=hpc_phase3
 C $8ABE,2 Self modified by #R$8AB8
 C $8AC0,1 A--
 C $8AC1,3 Self modify 'LD A' @ #R$8ABE to load A
 C $8AC4,1 Return if A != 0
-C $8AC5,5 perp_caught_stage = 4
+C $8AC5,5 perp_caught_phase = 4
 C $8ACA,3 Point #REGhl at addrof_arrest_messages
 C $8ACD,2 A = 1         -- transition_control byte
 C $8ACF,3 Jump to j_8e80   -- inside message_printing_related
-@ $8AD2 label=hpc_stage4
+@ $8AD2 label=hpc_phase4
 C $8AD2,7 Call relocated f39f_128k if in 128K mode
 C $8AD9,5 Return if transition_control != 0
 C $8ADE,7 Call relocated f39f_128k if in 128K mode
-C $8AE5,5 perp_caught_stage = 5
+C $8AE5,5 perp_caught_phase = 5
 N $8AEA Calculate clear bonus.
 C $8AEA,2 '0'
 C $8AEC,4 D = wanted_stage_number
@@ -2864,6 +2866,7 @@ C $8B19,1 C = A
 C $8B1A,4 A <<= 4?
 C $8B1E,2 A &= $F
 C $8B22,2 A = ' '
+@ $8B27 label=hpc_8b27
 C $8B27,1 B = A -- iterations
 C $8B28,2 A += '0'
 C $8B2B,3 DE = $0500
@@ -2871,14 +2874,18 @@ C $8B2B,3 DE = $0500
 C $8B2E,1 A = 0
 C $8B2F,3 Call increment_score
 C $8B32,2 Loop while #REGb > 0
+@ $8B34 label=hpc_8b34
 C $8B35,3 Set A in "TIME BONUS   A  X 5000"
 C $8B38,3 A = C & 15
-C $8B3E,1 B = A -- iterations
+C $8B3B,2 Jump if zero
+N $8B3D To apply Russell Marks' fix here transpose the next two instructions.
+C $8B3E,1 B = A -- iterations [should be the low nibble of score]
 C $8B3F,3 DE = $0050
 @ $8B42 label=hpc_increment_score_loop_2
 C $8B42,1 A = 0
 C $8B43,3 Call increment_score
 C $8B46,2 Loop while #REGb > 0
+@ $8B48 label=hpc_8b48
 C $8B49,2 A += '0'
 C $8B4B,3 Set A in "TIME BONUS   xA X 5000"
 C $8B51,3 Point DE at last digit of score_bcd (big end)
@@ -2887,13 +2894,17 @@ C $8B54,3 Point HL at x in "SCORE         x       " - the ten millions?
 C $8B57,1 A = *DE    -- fetch digits
 C $8B58,6 A = (A << 4) & 15   -- extract first digit
 C $8B64,2 A = ' '
+@ $8B68 label=hpc_8b68
 C $8B68,2 C = $FF
 C $8B6A,2 A += '0'
+@ $8B6C label=hpc_8b6c
 C $8B6C,2 *HL++ = A
 C $8B6E,3 A = *DE & 15
 C $8B77,2 A = ' '
+@ $8B7B label=hpc_8b7b
 C $8B7B,2 C = $FF
 C $8B7D,2 A += '0'
+@ $8B7F label=hpc_8b7f
 C $8B7F,1 *HL = A
 C $8B80,1 HL++
 C $8B81,1 DE--
@@ -2902,7 +2913,7 @@ C $8B84,1 HL--
 C $8B85,2 *HL |= 1<<7
 C $8B87,3 Point at "CLEAR BONUS - TIME BONUS - SCORE" messages
 C $8B8A,3 Call message_printing_related
-@ $8B8D label=hpc_stage1
+@ $8B8D label=hpc_phase1
 C $8B8D,3 A = *$A18D  -- hazards[0].something  perp car's current hz pos?  byte only? i thought it was  a word
 C $8B90,2 C = 45  -- likely where the perp car should stop (horizontally)
 C $8B92,1 Compare
@@ -2910,7 +2921,9 @@ C $8B93,2 B = 5
 C $8B95,2 -- no change required
 C $8B97,2 -- change by 5
 C $8B99,2 B = -5  -- change by -5
+@ $8B9B label=hpc_8b9b
 C $8B9B,2 C = A + B
+@ $8B9D label=hpc_8b9d
 C $8B9D,4 *$A18D = C  -- hazards[0].something  perp car hz pos
 C $8BA1,3 HL = road_pos
 C $8BA4,1 Stack it
@@ -2922,32 +2935,38 @@ C $8BAD,2 Jump to #R$8BBA if HL >= DE
 C $8BB2,2 HL -= DE
 C $8BB4,2 A = 10
 C $8BB8,2 A = 8
+@ $8BBA label=hpc_8bba
 C $8BBA,1 C = A
 C $8BBB,2 A &= 3
 C $8BBF,3 A = *$A189  -- hazards[0].<distance related>
 C $8BCC,7 speed = 0
 C $8BD3,3 *$A18C = 0  -- hazards[0].something
 C $8BD6,4 *$A189 = 1  -- hazards[0].<distance related>
-C $8BDA,4 perp_caught_stage = 2
+C $8BDA,4 perp_caught_phase = 2
 C $8BDE,4 smoke = 3
 C $8BE2,3 Jump to hpc_set_perp_pos
+@ $8BE5 label=hpc_8be5
 C $8BE5,3 A = *$A189  -- hazards[0].<distance related>
 C $8BEF,3 A = ~A + $F
 C $8BF2,3 DE = 20
 C $8BF5,1 B = A  -- iterations
+@ $8BF6 label=hpc_8bf6
 C $8BF6,2 HL -= DE
 C $8BF8,2 Loop while #REGb > 0
+@ $8BFA label=hpc_8bfa
 C $8BFB,3 Load speed
 C $8BFE,1 Preserve speed
 C $8BFF,4 Jump if HL < DE
 C $8C03,2 Clear Up, i.e. stop accelerating
 C $8C05,7 Jump if HL < 50
 C $8C0C,2 Set Down bit, i.e. brake
+@ $8C0E label=hpc_8c0e
 C $8C0E,1 Restore speed
 C $8C0F,5 Calculate speed - 150
 C $8C14,3 A = gear
 C $8C17,2 -- must be removing carry from calc above?
 C $8C1B,2 Set Fire
+@ $8C1D label=hpc_8c1d
 C $8C1D,4 user_input = C
 @ $8C21 ssub=LD HL,(hazard_0 + 13)
 C $8C21,3 Load the horizontal position of the perp's car into #REGhl
@@ -2961,7 +2980,7 @@ C $8C39,1 Return
 c $8C3A Fully smashed
 D $8C3A Used by the routine at #R$B4F0.
 @ $8C3A label=fully_smashed
-C $8C3A,5 Set perp_caught_stage to 1 - starts the pull over sequence
+C $8C3A,5 Set perp_caught_phase to 1 - starts the pull over sequence
 C $8C3F,4 Show the "stop" hand (hand_flag = 2)
 C $8C43,5 Set smash_counter to 20
 C $8C48,5 Set user input mask to (Quit+Pause) to inhibit player control
@@ -3044,7 +3063,7 @@ W $8D83,2,2 Attribute address
 @ $8D85 label=credit_n
 T $8D85,8,7:n1 "CREDIT  "
 B $8D8D,2,2
-c $8D8F Drives transitions
+c $8D8F Drives transitions (fades)
 D $8D8F Used by the routines at #R$8014, #R$8258, #R$8401, #R$858C, #R$873C and #R$F220.
 @ $8D8F label=transition
 C $8D8F,3 Check transition_control
@@ -3222,7 +3241,7 @@ c $8EE7 Draw the smash bar
 D $8EE7 Used by the routine at #R$8401.
 @ $8EE7 label=draw_smash_bar
 C $8EE7,5 Return if the perp has not yet been sighted
-C $8EEC,6 Return if perp_caught_stage is >= 3 (car has stopped)
+C $8EEC,6 Return if perp_caught_phase is >= 3 (car has stopped)
 C $8EF2,3 Back buffer address of bottom of bar
 C $8EF5,3 #REGd = 15 = mask, #REGe = 16 = row stride
 N $8EF8 Draws bottom two rows
@@ -4446,7 +4465,7 @@ C $9BCE,1 Return
 c $9BCF Game timer
 D $9BCF Used by the routine at #R$8401.
 @ $9BCF label=tick
-C $9BCF,5 Return if perp_caught_stage > 0
+C $9BCF,5 Return if perp_caught_phase > 0
 C $9BD4,6 Return if transition_control == 4 -- don't tick while transitions are running
 C $9BDA,3 Point #REGhl at time_bcd
 C $9BDD,6 Jump to #R$9C0D if time_up_state was 1 - out of time
@@ -5240,10 +5259,10 @@ B $A22D,1,1 Counter for bonus flash effect (counts 8..0)
 B $A22E,1,1 Set to 1 when the perp has been sighted. Enables flashing lights and the smash bar.
 @ $A22F label=hand_flag
 B $A22F,1,1 Set to 1 by perp_sighted. This starts the anim where the cherry light is put on the roof. Set to 2 by fully_smashed. This shows the "stop" hand.
-@ $A230 label=perp_caught_stage
-B $A230,1,1 Set to > 0 by fully_smashed when the perp has been caught. #R$8A57 progresses this through stages 1..6 until the cars are slowed to a halt and the bonuses are printed. Used by draw_screen. Seems to inhibit car spawning too.
+@ $A230 label=perp_caught_phase
+B $A230,1,1 Set to > 0 by fully_smashed when the perp has been caught. #R$8A57 progresses this through stages 1..6 until the cars are slowed to a halt and the bonuses are printed. Used by draw_screen. Inhibits car spawning.
 @ $A231 label=transition_control
-B $A231,1,1 Transition control/counter. Set to zero when fill_attributes has run. Set to 4 while transitioning. Also 2 sometimes. Set to 1 when the perp has been caught and we're drawing mugshots.
+B $A231,1,1 Transition/fade control/counter. Set to zero when fill_attributes has run. Set to 4 while transitioning. Also 2 sometimes. Set to 1 when the perp has been caught and we're drawing mugshots.
 @ $A232 label=smash_factor
 B $A232,1,1 Set to 0..6 if (0..3, 4..6, 7..10, 11..13, 14..16, 17+) smashes
 @ $A233 label=smash_counter
@@ -5676,7 +5695,7 @@ B $A632,5,5
 c $A637 Smash handling
 D $A637 This gets called whenever the perp is within sight of the hero car.
 @ $A637 label=smash_handler
-C $A637,5 Return if perp_caught_stage > 0
+C $A637,5 Return if perp_caught_phase > 0
 C $A63C,7 Call perp_sighted if sighted_flag is zero
 C $A643,3 A = IX[7]
 C $A646,1 Set flags
@@ -5840,7 +5859,7 @@ B $A7E7,12,8,4
 c $A7F3 Spawns cars
 D $A7F3 Used by the routines at #R$8401 and #R$852A.
 @ $A7F3 label=spawn_cars
-C $A7F3,9 Return if perp_caught_stage or stop_car_spawning flags are set
+C $A7F3,9 Return if perp_caught_phase or stop_car_spawning flags are set
 C $A7FC,3 Load allow_car_spawning
 C $A7FF,2 Return if allow_car_spawning was zero
 C $A801,4 A = <self modified> - allow_car_spawning
@@ -5927,7 +5946,7 @@ C $A8C9,3 BC = $0304
 C $A8CC,1 Return
 c $A8CD Hazard handler routine? Triggered at road split
 @ $A8CD label=hazard_handler_a8cd
-C $A8CD,6 Return if perp_caught_stage > 0
+C $A8CD,6 Return if perp_caught_phase > 0
 C $A8D3,6 Check stop_car_spawning flag
 C $A8D9,4 IX[14] = $01  -- horizontal position
 C $A8DD,4 IX[13] = $FF
@@ -6786,7 +6805,7 @@ C $B0E0,3 Read current speed
 C $B0E3,1 Stack it
 C $B0E4,5 HL -= 120
 C $B0E9,2 Jump if speed >= 120
-C $B0EB,6 Jump if perp_caught_stage > 0
+C $B0EB,6 Jump if perp_caught_phase > 0
 N $B0F1 Handle idle timer.
 C $B0F1,3 Address of idle timer
 C $B0F4,1 Decrement idle timer
@@ -7063,7 +7082,7 @@ C $B3AD,1 A -= E
 C $B3B1,3 road_pos = HL
 C $B3B4,7 A = cornering | smoke
 C $B3BB,6 Call start_sfx with cornering noise
-C $B3C1,6 Jump if perp_caught_stage > 0
+C $B3C1,6 Jump if perp_caught_phase > 0
 C $B3C7,1 A--
 C $B3CA,2 CP $02
 C $B3CE,2 A = $02
@@ -7990,7 +8009,7 @@ C $BD7E,15 Fill 30 bytes - length of attribute line minus the two blank edges
 C $BD8F,1 Move to next line of attributes
 C $BD90,3 Save the address of the first line of ground attributes (+ 31)
 C $BD93,6 Exit if sighted_flag is zero (flashing lights / smash mode)
-C $BD99,7 Jump if perp_caught_stage >= 3 (when car stops)
+C $BD99,7 Jump if perp_caught_phase >= 3 (when car stops)
 N $BDA0 Set the smash meter attributes
 C $BDA0,3 Screen attribute (2,11)
 C $BDA3,3 = 32
