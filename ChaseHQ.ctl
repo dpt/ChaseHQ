@@ -1,10 +1,12 @@
 > $4000 ; ChaseHQ.skool
 > $4000 ;
-> $4000 ; This is a SkoolKit control file that disassembles the ZX Spectrum 48K version
+> $4000 ; This is a SkoolKit control file that disassembles the ZX Spectrum version
 > $4000 ; of Chase H.Q. by Ocean Software. A home computer version of the arcade game
 > $4000 ; by Taito Corporation.
 > $4000 ;
-> $4000 ; This documents the game when it is in a "pristine" as-loaded state.
+> $4000 ; This documents the 48K version of game when it is in a "pristine" as-loaded
+> $4000 ; state. It also covers a lot of the 128K code too, but doesn't yet describe any
+> $4000 ; of the extra memory banks.
 > $4000 ;
 > $4000 ; Reverse engineering by David Thomas, 2023.
 > $4000 ;
