@@ -2320,10 +2320,10 @@ D $852A This runs the game loop while driving the car.
 C $852A,3 Get road position
 C $852D,7 Subtract centre value. Carry flag will be set if we're on the right hand side of the road
 C $8534,2 Set input ACCELERATE + RIGHT
-C $8536,2 Jump cd_check_speed if we're on the left
+C $8536,2 Jump to cd_check_speed if we're on the left
 C $8538,5 Subtract "ideal road position"? value. Carry will be set if we're on the right of it.
 C $853D,2 Set input ACCELERATE + LEFT
-C $853F,2 Jump cd_check_speed if we're on the right
+C $853F,2 Jump to cd_check_speed if we're on the right
 C $8541,2 Set input ACCELERATE
 @ $8543 label=cd_check_speed
 C $8543,1 Move input into #REGc for the moment
@@ -2593,7 +2593,7 @@ R $87DC I:HL Address of 14 bytes of data to be copied to $A26C+
 C $87DC,1 Preserve data pointer
 C $87DD,15 Zero $EE00..$EEFF, and reset road_buffer_offset to $EE00
 C $87EC,1 A = 0
-C $87ED,11 Copy (47 bytes) at #R$A13E to #R$A16D - saved game state
+C $87ED,11 Copy (47 bytes) of saved game state at #R$A13E to #R$A16D
 C $87F8,9 Zero 208 bytes at $A19D
 C $8801,1 Restore data pointer
 C $8802,5 Copy the 14 bytes passed in to #R$A26C (road_pos, road_curvature_ptr, etc.)
@@ -2799,23 +2799,23 @@ c $8A57 Handle perp caught
 D $8A57 This handles slowing cars down to a stop and calculating and displaying the bonus score when the perp has been caught.
 @ $8A57 label=handle_perp_caught
 C $8A57,5 Return if perp_caught_phase is zero
-C $8A5C,4 Jump to hpc_phase1 if it's one
-C $8A60,3 Jump to hpc_phase2 if it's two
-C $8A63,3 Jump to hpc_phase3 if it's three
-C $8A66,3 Jump to hpc_phase4 if it's four
+C $8A5C,4 Jump to #R$8B8D if it's currently one
+C $8A60,3 Jump to #R$8A88 if it's currently two
+C $8A63,3 Jump to #R$8ABE if it's currently three
+C $8A66,3 Jump to #R$8AD2 if it's currently four
 C $8A69,1 Bank
 C $8A6A,5 Return if transition_control != 0
 C $8A6F,1 Unbank
-C $8A70,3 Jump to hpc_start_stage_6 if perp_caught_phase is five
-N $8A73 Otherwise all of the caught phases are complete and we can move on to the next stage.
-C $8A73,1 Throw away the return address to bypass the remainder of main_loop
+C $8A70,3 Jump to #R$8A7E if perp_caught_phase is currently five
+N $8A73 Otherwise all of the perp caught phases are complete and we can move on to the next stage.
+C $8A73,1 Throw away the return address causing the remainder of main_loop to be bypassed
 C $8A74,3 Call silence_audio_hook
 C $8A77,4 Increment wanted_stage_number
-C $8A7B,3 Jump to main_loop
-@ $8A7E label=hpc_start_stage_6
+C $8A7B,3 Exit via main_loop
+@ $8A7E label=hpc_phase5
 C $8A7E,5 perp_caught_phase = 6
 C $8A83,2 A = 8 -- transition type
-C $8A85,3 Jump to setup_transition
+C $8A85,3 Exit via setup_transition
 @ $8A88 label=hpc_phase2
 C $8A88,3 A = var_a22a
 C $8A8B,4 Jump to #R$8AB2 if A >= 16
@@ -2829,12 +2829,12 @@ C $8AA8,5 A = fast_counter + 32
 C $8AAD,1 Return if carry
 C $8AAE,3 fast_counter = A
 C $8AB1,1 Return
-@ $8AB2 label=hpc_8ab2
+@ $8AB2 label=hpc_start_phase_3
 C $8AB2,5 perp_caught_phase = 3
-C $8AB7,4 $8ABF = 4
-C $8ABB,3 Call fill_attributes
+C $8AB7,4 Self modify the 'LD A,x' at #R$8ABE below to load 4
+C $8ABB,3 Exit via fill_attributes
 @ $8ABE label=hpc_phase3
-C $8ABE,2 Self modified by #R$8AB8
+C $8ABE,2 Self modified by #R$8AB8 above
 C $8AC0,1 A--
 C $8AC1,3 Self modify 'LD A' @ #R$8ABE to load A
 C $8AC4,1 Return if A != 0
@@ -2914,63 +2914,73 @@ C $8B85,2 *HL |= 1<<7
 C $8B87,3 Point at "CLEAR BONUS - TIME BONUS - SCORE" messages
 C $8B8A,3 Call message_printing_related
 @ $8B8D label=hpc_phase1
-C $8B8D,3 A = *$A18D  -- hazards[0].something  perp car's current hz pos?  byte only? i thought it was  a word
-C $8B90,2 C = 45  -- likely where the perp car should stop (horizontally)
-C $8B92,1 Compare
-C $8B93,2 B = 5
-C $8B95,2 -- no change required
-C $8B97,2 -- change by 5
-C $8B99,2 B = -5  -- change by -5
-@ $8B9B label=hpc_8b9b
-C $8B9B,2 C = A + B
-@ $8B9D label=hpc_8b9d
-C $8B9D,4 *$A18D = C  -- hazards[0].something  perp car hz pos
-C $8BA1,3 HL = road_pos
-C $8BA4,1 Stack it
-C $8BA5,3 DE = $0105  -- centre road position
-C $8BA8,2 HL -= DE
-C $8BAA,1 Unstack read_pos
-C $8BAB,2 A = 9
-C $8BAD,2 Jump to #R$8BBA if HL >= DE
-C $8BB2,2 HL -= DE
-C $8BB4,2 A = 10
-C $8BB8,2 A = 8
-@ $8BBA label=hpc_8bba
-C $8BBA,1 C = A
-C $8BBB,2 A &= 3
-C $8BBF,3 A = *$A189  -- hazards[0].<distance related>
+C $8B8D,3 Load the perp car's horizontal position (byte)
+C $8B90,3 Is it 35?
+C $8B93,2 Change by 5
+C $8B95,2 Jump if no change required
+C $8B97,2 Jump to change if pos < 35
+C $8B99,2 Otherwise change by -5
+@ $8B9B label=hpc_change_perp_pos
+C $8B9B,2 C = A + B  -- new pos = old pos + delta
+@ $8B9D label=hpc_assign_perp_pos
+C $8B9D,4 Set the perp car's horizontal position (byte)
+N $8BA1 Now move the hero car. Similar code to cpu_driver.
+C $8BA1,3 Get road position
+C $8BA4,7 Subtract centre value. Carry flag will be set if we're on the right hand side of the road
+C $8BAB,2 Set input ACCELERATE + RIGHT
+C $8BAD,2 Jump to #R$8BBA if we're on the left
+C $8BAF,5 Subtract "ideal road position"? value. Carry will be set if we're on the right of it.
+C $8BB4,2 Set input ACCELERATE + LEFT
+C $8BB6,2 Jump to #R$8BBA if we're on the right
+C $8BB8,2 Set input ACCELERATE
+@ $8BBA label=hpc_assign_hero_pos
+C $8BBA,1 Move input into #REGc for the moment
+C $8BBB,2 Mask off LEFT and RIGHT flags
+C $8BBD,2 Jump to #R$8BE5 if non-zero
+N $8BBF Going straight. Are we within distance?
+C $8BBF,3 A = *$A189  -- hazards[0]+1 <distance related>
+C $8BC2,4 Jump if <distance value> >= 3
+N $8BC6 Count down while we're within distance.
+C $8BC6,4 perp_halt_counter--
+C $8BCA,2 Jump if countdown is non-zero
+N $8BCC Countdown hit zero: stop.
 C $8BCC,7 speed = 0
 C $8BD3,3 *$A18C = 0  -- hazards[0].something
 C $8BD6,4 *$A189 = 1  -- hazards[0].<distance related>
 C $8BDA,4 perp_caught_phase = 2
 C $8BDE,4 smoke = 3
 C $8BE2,3 Jump to hpc_set_perp_pos
+N $8BE5 HL = 350 - (16 - <distance related>) * 20  -- compared to speed later
 @ $8BE5 label=hpc_8be5
-C $8BE5,3 A = *$A189  -- hazards[0].<distance related>
-C $8BEF,3 A = ~A + $F
+C $8BE5,3 A = *$A189  -- hazards[0]+1 <distance related>
+C $8BE8,3 HL = 350  -- compared to speed later
+C $8BEB,4 Jump if <distance related> >= 15
+C $8BEF,3 A = 16 - <distance related>
 C $8BF2,3 DE = 20
 C $8BF5,1 B = A  -- iterations
 @ $8BF6 label=hpc_8bf6
 C $8BF6,2 HL -= DE
 C $8BF8,2 Loop while #REGb > 0
 @ $8BFA label=hpc_8bfa
+C $8BFA,1 DE = HL
 C $8BFB,3 Load speed
 C $8BFE,1 Preserve speed
-C $8BFF,4 Jump if HL < DE
-C $8C03,2 Clear Up, i.e. stop accelerating
+C $8BFF,4 Jump if speed < DE  -- DE is e.g. 350
+N $8C03 #REGc is a user input here.
+C $8C03,2 Clear input ACCELERATE
 C $8C05,7 Jump if HL < 50
-C $8C0C,2 Set Down bit, i.e. brake
+C $8C0C,2 Set input BRAKE
 @ $8C0E label=hpc_8c0e
 C $8C0E,1 Restore speed
 C $8C0F,5 Calculate speed - 150
-C $8C14,3 A = gear
-C $8C17,2 -- must be removing carry from calc above?
-C $8C1B,2 Set Fire
+C $8C14,3 Load gear
+C $8C17,2 Set gear to low if speed < 150, otherwise high
+C $8C1B,2 Set input GEAR
 @ $8C1D label=hpc_8c1d
-C $8C1D,4 user_input = C
+C $8C1D,4 Set user input
 @ $8C21 ssub=LD HL,(hazard_0 + 13)
 C $8C21,3 Load the horizontal position of the perp's car into #REGhl
-C $8C24,11 Jump to hpc_set_perp_pos if HL <= $46
+C $8C24,11 Jump to hpc_set_perp_pos if HL <= 70
 C $8C2F,5 HL -= 5
 N $8C35 This entry point is used by the routine at #R$8C3A.
 @ $8C35 label=hpc_set_perp_pos
@@ -5120,7 +5130,7 @@ B $A13F,1,1 Copied to idle_timer
 B $A140,1,1 Copied to user_input_mask
 B $A141,1,1 Copied to turbos
 W $A142,2,2 Copied to horizon_level
-B $A144,1,1 Copied to var_A173
+B $A144,1,1 Copied to perp_halt_counter
 B $A145,1,1 Copied to displayed_gear
 B $A146,8,8 Copied to score_digits
 B $A14E,1,1 Copied to time_sixteenths
@@ -5158,8 +5168,8 @@ B $A16F,1,1 User input mask, set to $C0 (Quit+Pause) when perp is fully smashed,
 B $A170,1,1 Number of turbo boosts remaining (3 for a new game)
 @ $A171 label=horizon_level
 W $A171,2,2 seems to be the horizon level, possibly relative (used during attract mode)
-@ $A173 label=var_A173
-B $A173,1,1 This is decremented by #R$8BC6 but nothing else seems to read it.
+@ $A173 label=perp_halt_counter
+B $A173,1,1 This is set to 20 by #$87ED then decremented by #R$8BC6 which uses it. It's a counter decremented while slowing down to catch the perp.
 @ $A174 label=displayed_gear
 B $A174,1,1 Low/high gear flag.
 @ $A175 label=score_digits
@@ -5184,7 +5194,7 @@ N $A188 +1 looks distance related
 N $A188 +2 TBD
 N $A188 +3 TBD
 N $A188 +4 TBD
-N $A188 +5 TBD
+N $A188 +5 horizontal position
 N $A188 +6 TBD
 N $A188 +7 byte TBD used by hazard_hit
 N $A188 +8 byte gets copied from the hazards table
