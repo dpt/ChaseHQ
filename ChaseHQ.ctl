@@ -2386,16 +2386,18 @@ D $85E4 Used by the routine at #R$858C.
 @ $85E4 label=reveal_perp_car
 C $85E4,6 Return if wanted_stage_number is 5 (the perp's car is hidden on the pre-game screen for that stage)
 N $85EA The perp's car is revealed from the bottom-up.
-C $85EA,2 Load (self modified) height counter
+C $85EA,2 Load height counter (self modified)
 C $85EC,1 Increment it
 C $85ED,5 Max height is 50
+@ $85F2 label=rpc_height_max_ok
 C $85F2,3 Update height counter
 C $85F5,3 Load address of perp's car LOD
 C $85F8,3 Read lod.width_bytes
 C $85FB,3 Read lod.height
-C $85FE,4 If height counter < lod.height, B = height counter
+C $85FE,4 If height counter < lod.height #REGb = height counter
+@ $8602 label=rpc_height_lod_ok
 C $8602,5 Load address of bitmap data
-C $8607,1 Stride of bitmap data in bytes (D is still zero)
+C $8607,1 Stride of bitmap data in bytes (#REGd is still zero)
 C $8608,1 Bank for plot_sprite entry
 C $8609,3 Address in back buffer to plot at
 C $860C,3 Exit via plot_sprite
