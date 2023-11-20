@@ -1861,7 +1861,7 @@ C $8014,3 Load wanted_stage_number
 C $8017,3 Point #REGhl at current_stage_number
 C $801A,2 Exit if they match
 C $801C,1 current_stage_number = wanted_stage_number
-C $801D,3 Set var_a220 to wanted level no.
+C $801D,3 Set dont_draw_screen_attrs to any non-zero value
 @ $8022 ssub=LD (searching_for_n + 14),A
 C $8020,5 Update the level number in "SEARCHING FOR <N>"
 C $8025,3 Call clear_screen_set_attrs
@@ -2355,7 +2355,7 @@ D $858C Used by the routine at #R$8401.
 @ $858C label=run_pregame_screen
 C $858C,3 Address of setup_game_data
 C $858F,3 Call setup_game
-C $8592,5 Set var_a220 to $F8  (TBD)
+C $8592,5 Set dont_draw_screen_attrs to a non-zero value
 C $8597,3 Call setup_transition
 C $859A,3 Call clear_screen_set_attrs
 C $859D,4 Reset car revealing height counter in #R$85E4
@@ -5236,8 +5236,8 @@ B $A21D,1,1 10: Channel C volume
 B $A21E,1,1 11: Envelope fine duration
 N $A21F End of AY registers
 B $A21F,1,1 Unused?
-@ $A220 label=var_a220
-B $A220,1,1 #R$8014 sets this to the level number that it's going to load [but I don't see it using it again]. #R$858C sets it to $F8. #R$BC3E uses it to avoid some work.
+@ $A220 label=dont_draw_screen_attrs
+B $A220,1,1 If this is non-zero then draw_screen_attributes won't run.
 N $A221 Affects collision detection on the left hand side.
 @ $A221 label=inhibit_collision_detection
 B $A221,1,1 #R$ABCE, #R$AD0D reads
