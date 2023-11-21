@@ -1861,7 +1861,7 @@ C $8014,3 Load wanted_stage_number
 C $8017,3 Point #REGhl at current_stage_number
 C $801A,2 Exit if they match
 C $801C,1 current_stage_number = wanted_stage_number
-C $801D,3 Set dont_draw_screen_attrs to any non-zero value
+C $801D,3 Set dont_draw_screen_attrs to a non-zero value
 @ $8022 ssub=LD (searching_for_n + 14),A
 C $8020,5 Update the level number in "SEARCHING FOR <N>"
 C $8025,3 Call clear_screen_set_attrs
@@ -3338,9 +3338,7 @@ C $8F8C,3 Point #REGhl at road buffer right side objects data
 C $8F8F,4 IX = $EAB0
 C $8F93,3 BC = $1420
 C $8F96,4 Preserve IX, HL, BC
-C $8F9A,3 Load var_a222
-C $8F9D,1 Set flags
-C $8F9E,3 Call if non-zero
+C $8F9A,7 Call (somewhere in draw_hazards) if n_hazards is set
 C $8FA1,3 Call sub_A9DE (dust/stones stuff)
 C $8FA4,1 Self modified
 C $8FA5,1 Self modified
@@ -5243,8 +5241,8 @@ B $A220,1,1 If this is non-zero then draw_screen_attributes won't run.
 N $A221 Affects collision detection on the left hand side.
 @ $A221 label=inhibit_collision_detection
 B $A221,1,1 #R$ABCE, #R$AD0D reads
-@ $A222 label=var_a222
-B $A222,1,1 #R$8F9A reads  #R$ADA0, #R$AE83, #R$AF41 writes
+@ $A222 label=n_hazards
+B $A222,1,1 Seems to be a count of visible cars+hazards.
 @ $A223 label=displayed_stage
 B $A223,1,1 Stage number as shown on the scoreboard. Stored as ASCII.
 @ $A224 label=helicopter_control
@@ -6473,7 +6471,7 @@ c $ADA0 Draws all hazards
 D $ADA0 This includes all cars, barriers, tumbleweeds, etc.
 R $ADA0 Used by the routines at #R$8401, #R$852A and #R$873C.
 @ $ADA0 label=draw_hazards
-C $ADA0,4 var_a222 = 0
+C $ADA0,4 n_hazards = 0
 C $ADA4,3 IY = $E3xx
 C $ADA7,4 IX = &hazards[0]
 C $ADAB,3 Stride of hazards entry in bytes
@@ -6571,14 +6569,14 @@ C $AE74,6 wordat(IX + 2) = HL
 C $AE7A,3 Call sub_ad51
 C $AE7D,3 D = IX[1]
 C $AE80,3 E = IX[4]
-C $AE83,3 HL = &var_a222
+C $AE83,3 HL = &n_hazards
 C $AE86,1 A = *HL
 C $AE87,1 (*HL)++
 C $AE88,3 HL -> table
 C $AE8B,1 Set flags
-C $AE8C,2 Jump if zero
+C $AE8C,2 Jump to dh_no_hazards if zero
 C $AE8E,1 Iterations
-N $AE8F Loop starts
+N $AE8F Loop starts (loop for all hazards)
 C $AE8F,1 A = D
 C $AE90,1 Compare to *HL
 C $AE91,1 L++
@@ -6589,6 +6587,7 @@ C $AE97,1 Compare to *HL
 C $AE98,2 Jump if A < *HL
 C $AE9A,3 L += 3
 C $AE9D,2 Loop
+@ $AE9F label=dh_no_hazards
 C $AE9F,4 wordat(HL) = DE; HL += 2
 C $AEA3,3 DE = IX
 C $AEA6,3 wordat(HL) = DE; HL++
@@ -6647,7 +6646,7 @@ C $AF2C,3 Jump
 C $AF2F,1 A += E
 C $AF30,2 Jump if no carry
 C $AF3D,4 Self modify 'LD A,x' @ #R$93C0 to load 0
-C $AF41,3 HL = &var_a222
+C $AF41,3 HL = &n_hazards
 C $AF44,1 (*HL)--
 C $AF45,1 Restore HL
 C $AF46,1 Return if zero
