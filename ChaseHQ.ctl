@@ -2253,7 +2253,7 @@ C $8477,3 Call main_loop_14
 C $847A,3 Call tunnel_setup
 C $847D,3 Call spawn_hazards
 C $8480,3 Call helicopter
-C $8483,3 Call main_loop_18
+C $8483,3 Call draw_stones
 C $8486,3 Call engine_sfx_play_hook
 C $8489,3 Call draw_hazards
 C $848C,3 Call main_loop_20
@@ -2343,7 +2343,7 @@ C $856B,3 Call main_loop_13
 C $856E,3 Call main_loop_14
 C $8571,3 Call tunnel_setup
 C $8574,3 Call spawn_hazards
-C $8577,3 Call main_loop_18
+C $8577,3 Call draw_stones
 C $857A,3 Call main_loop_20
 C $857D,3 Call draw_hazards
 C $8580,3 Call move_hero_car
@@ -5316,8 +5316,8 @@ B $A245,1,1 Current rightside byte [#R$BF55 reads #R$BC20,#R$BF94 writes]
 B $A246,1,1 Current hazards byte (minus one) [#R$BFE7 reads #R$BC23,#R$C055 writes]
 @ $A247 label=lanes_counter_byte
 B $A247,1,1 [#R$BEDB reads #R$BC26,#R$BF15,#R$BF29 writes]
-@ $A248 label=var_a248
-B $A248,1,1 [#R$A955 reads #R$C457,#R$C526 writes]
+@ $A248 label=on_dirt_track
+B $A248,1,1 Set to 1 when on dirt track. [#R$A955 reads #R$C457,#R$C526 writes]
 @ $A249 label=fork_taken
 B $A249,1,1 Set to 0 if no fork, or the left fork was taken, or 1 if the right fork was taken. [$A539,$B988,$BAE0,$BB6E reads #R$BA89,#R$BC2C writes]
 @ $A24A label=speed
@@ -6001,10 +6001,10 @@ C $A94A,2 Set priority to 3
 C $A94C,3 Call chatter (priority 3)
 C $A94F,3 BC = $0302
 C $A952,3 Call start_sfx
-c $A955 main_loop_18
+c $A955 Draws stones and dirt.
 D $A955 Used by the routines at #R$8401 and #R$852A.
-@ $A955 label=main_loop_18
-C $A955,5 Return if var_a248 is zero
+@ $A955 label=draw_stones
+C $A955,5 Return if on_dirt_track is zero
 C $A95A,5 Return if allow_car_spawning is zero
 C $A95F,3 Point #REGde at (something above the stack)
 C $A962,3 Call rng
@@ -8814,8 +8814,8 @@ C $C450,2 Jump to exit
 c $C452 Landscape related
 D $C452 Used by the routines at #R$8401, #R$852A and #R$873C.
 @ $C452 label=main_loop_13
-C $C452,5 Self modify #REGsp restore instruction
-C $C457,3 #R$A248 = 0
+C $C452,4 Self modify #REGsp restore instruction
+C $C456,4 on_dirt_track = 0
 C $C45A,3 Self modify 'LD A,x' @ #R$C160 to be zero (tunnel drawing code)
 C $C45D,3 Self modify 'LD A,x' @ #R$C88F to be zero
 C $C460,5 Self modify 'LD A,x' @ #R$C6D8 to be 3
@@ -8904,7 +8904,7 @@ C $C51F,2 A &= 24
 C $C521,2 A = 0
 C $C523,2 Jump if non-zero
 C $C525,1 A++
-C $C526,3 #R$A248 = A
+C $C526,3 on_dirt_track = A
 C $C529,2 A = $FF
 C $C52B,3 Self modify 'LD B,x' @ #R$C5AC
 C $C531,3 Jump forward
