@@ -2618,7 +2618,7 @@ C $8842,3 Address of fast_counter
 C $8845,3 Call HUGE function
 C $8848,1 Restore BC
 C $8849,2 Loop
-C $884B,4 Clear allow_car_spawning
+C $884B,4 Clear allow_spawning
 C $884F,2 Transition type?
 C $8851,3 Call setup_transition
 C $8854,3 Call clear_screen_set_attrs
@@ -5338,8 +5338,8 @@ B $A251,1,1 1 => Horizontally flip the hero car, 0 => Don't
 B $A252,1,1
 @ $A253 label=gear
 B $A253,1,1 0 => Low gear, 1 => High gear
-@ $A254 label=allow_car_spawning
-B $A254,1,1 Counter. Usually 0/1/2. Allows cars spawning when non-zero. Seems to oscillate. Returns to zero when the hero car is stopped.
+@ $A254 label=allow_spawning
+B $A254,1,1 If non-zero this permits cars and hazards to spawn. It can be 0, 1 or 2, depending on the hero car's speed. Returns to zero when the hero car is stopped.
 @ $A255 label=distance_bcd
 B $A255,2,2 Distance as BCD (2 bytes / 4 digits, little endian)
 @ $A257 label=var_a257
@@ -5870,9 +5870,9 @@ c $A7F3 Spawns cars
 D $A7F3 Used by the routines at #R$8401 and #R$852A.
 @ $A7F3 label=spawn_cars
 C $A7F3,9 Return if perp_caught_phase or stop_car_spawning flags are set
-C $A7FC,3 Load allow_car_spawning
-C $A7FF,2 Return if allow_car_spawning was zero
-C $A801,4 A = <self modified> - allow_car_spawning
+C $A7FC,3 Load allow_spawning
+C $A7FF,2 Return if allow_spawning was zero
+C $A801,4 A = <self modified> - allow_spawning
 C $A805,3 Self modify above
 C $A808,1 Return if carry?
 N $A809 Start spawning cars.
@@ -6005,7 +6005,7 @@ c $A955 Draws stones and dirt.
 D $A955 Used by the routines at #R$8401 and #R$852A.
 @ $A955 label=draw_stones
 C $A955,5 Return if on_dirt_track is zero
-C $A95A,5 Return if allow_car_spawning is zero
+C $A95A,5 Return if allow_spawning is zero
 C $A95F,3 Point #REGde at (something above the stack)
 C $A962,3 Call rng
 C $A965,8 Stack 1 if it's +ve or zero, or 2 if it's -ve
@@ -6269,7 +6269,7 @@ C $AB99,1 Return
 c $AB9A Routine at AB9A
 D $AB9A Used by the routines at #R$8401, #R$852A and #R$873C.
 @ $AB9A label=spawn_hazards
-C $AB9A,5 Return if allow_car_spawning is zero
+C $AB9A,5 Return if allow_spawning is zero
 C $AB9F,3 A = ~A + 21
 C $ABA2,1 C = A
 C $ABA3,3 Load road_buffer_offset into #REGa
@@ -7828,11 +7828,11 @@ C $BAA7,3 -> Raymond: "WHAT ARE YOU DOING MAN!!" / "THE BAD GUYS ARE GOING THE O
 C $BAAA,2 Set priority to 20
 C $BAAC,3 Call chatter (priority 20)
 C $BAAF,1 Restore HL (which points to var_a267?)
-C $BAB0,3 Load allow_car_spawning
+C $BAB0,3 Load allow_spawning
 C $BAB3,3 Jump to lr_bacc if zero
-N $BAB6 allow_car_spawning is set
 C $BAB6,5 A = var_a16d + A
 C $BABB,1 C = A
+N $BAB6 Otherwise allow_spawning is non-zero.
 C $BABC,2 A -= 2
 C $BABE,2 Jump if A < 2
 C $BAC0,1 C = A
@@ -8050,7 +8050,7 @@ D $BDFB Used by the routines at #R$8401, #R$852A and #R$873C.
 @ $BDFB label=read_map
 C $BDFB,4 var_a23d = 0  -- state var TBD
 C $BDFF,3 var_a23c = 0  -- state var TBD
-C $BE02,3 Clear allow_car_spawning
+C $BE02,3 Clear allow_spawning
 C $BE05,3 HL = Address of fast_counter
 C $BE08,4 DE = speed
 C $BE0C,1 A = Bottom byte of speed
@@ -8061,7 +8061,7 @@ C $BE16,2 Restore
 @ $BE18 label=rm_be18
 C $BE18,2 fast_counter += bottom byte of speed in A
 C $BE1A,2 A = 0  -- disallow car spawning
-C $BE1C,3 Jump to rm_inc_car_spawning if no carry
+C $BE1C,3 Jump to rm_inc_spawning if no carry
 N $BE1F This entry point is used by the routine at #R$87DC.
 @ $BE1F label=rm_cycle_buffer_offset
 C $BE1F,4 Increment road_buffer_offset
@@ -8395,8 +8395,8 @@ C $C0D2,3 Loop to rm_c0ca while B != 0 (LDD sets P/V if BC != 0)
 C $C0D5,2 *++HL = 0  (since B is zero)
 @ $C0D7 label=rm_allow_car_spawning
 C $C0D7,2 A = 1
-@ $C0D9 label=rm_inc_car_spawning
-C $C0D9,5 Increment allow_car_spawning by #REGa (which should be 0 or 1)
+@ $C0D9 label=rm_inc_spawning
+C $C0D9,5 Increment allow_spawning by #REGa (which should be 0 or 1)
 C $C0DE,3 Exit via #R$AD0D
 c $C0E1 Tunnel setup?
 D $C0E1 Used by the routines at #R$8401, #R$852A and #R$873C.
