@@ -114,7 +114,7 @@
 > $4000 ; $EC30..$ECFF is 104 words for road drawing (right)
 > $4000 ; $ED28        is the stack (growing downwards)
 > $4000 ; $ED30..?     is (possibly another 104 word road drawing buffer)
-> $4000 ; $EE00..$EEFF is the road buffer. holds data unpacked from maps. it's cyclic. fixed sections for each datum. cleared by $87DD.
+> $4000 ; $EE00..$EEFF is the road buffer. holds data unpacked from maps. it's cyclic. 32 byte fixed sections for each datum (curvature, height, lanes, right side objects, left side objects, hazards). cleared by $87DD.
 > $4000 ; $EF00..$EFFF is a table of flipped bytes
 > $4000 ; $F000..$FFFF is a 4KB back buffer
 > $4000 ;
@@ -2273,7 +2273,7 @@ C $84B3,3 Call smash_bar_etc
 C $84B6,3 Call transition
 C $84B9,3 Call engine_sfx_play_hook
 C $84BC,3 Call draw_screen
-C $84BF,3 Call after_split_road_setup
+C $84BF,3 Call exit_fork
 C $84C2,3 Is test mode enabled?
 C $84C5,3 If not, goto not_test_mode
 N $84C8 Test mode handling
@@ -7908,54 +7908,69 @@ C $BB5E,4 Jump to lr_exit if A is zero
 C $BB62,4 Point #REGsp at $EC00 | A (road right)
 C $BB66,3 Jump back to #R$BA17
 c $BB69 After-split road setup
-D $BB69 Used by the routine at #R$8401. When split_distance exceeds 255 we can proceed.
-@ $BB69 label=after_split_road_setup
+D $BB69 Used by the routine at #R$8401.
+N $BB69 When split_distance exceeds 255 we can proceed.
+@ $BB69 label=exit_fork
 @ $BB69 ssub=LD A,(split_distance + 1)
 C $BB69,5 Return if (split_distance & $FF00) is zero
+N $BB6E Reset road setup back to a single road now that the split road has completed.
 C $BB6E,4 A = fork_taken - 1
 C $BB72,2 Jump if A is zero (right fork taken)
 N $BB74 Set up left route.
-C $BB74,3 DE = $FC01  (super super hard left?, 1?)
-C $BB7B,3 road_leftside_ptr  = #R$E2D9
+@ $BB74 label=ef_left
+C $BB74,3 D,E = $FC,$01  (curvature = super super hard left?, lanes = 1?)
+C $BB77,1 Save for later
+C $BB78,6 road_leftside_ptr  = #R$E2D9
 C $BB7E,6 road_rightside_ptr = #R$E2D5
 C $BB84,6 road_lanes_ptr     = #R$E2E7
-C $BB8A,3 Self modified by $C035 to be the left route's hazards data
-C $BB8D,3 Self modified by $BF73 to be the left route's rightside data
-C $BB90,3 Self modified by $BFBC to be the left route's leftside data
-C $BB94,3 Self modified by $BE5C to be the left route's curvature data
-C $BB97,3 Self modified by $BEAE to be the left route's height data
-C $BB9A,3 Self modified by $BEF9 to be the left route's lanes data
-C $BB9D,2 A = 64   offset into road buffer
-C $BB9F,2 Jump to ml27_bbcc
+C $BB8A,3 Self modified by #R$C035 to be the left route's hazards data
+C $BB8D,3 Self modified by #R$BF73 to be the left route's rightside data
+C $BB90,3 Self modified by #R$BFBC to be the left route's leftside data
+C $BB93,1 Bank
+C $BB94,3 Self modified by #R$BE5C to be the left route's curvature data
+C $BB97,3 Self modified by #R$BEAE to be the left route's height data
+C $BB9A,3 Self modified by #R$BEF9 to be the left route's lanes data
+C $BB9D,2 A = 64  -- additional offset into road buffer (presumably left objects)
+C $BB9F,2 Jump to ef_set_handlers
 N $BBA1 Set up right route.
-C $BBA1,3 DE = $0403 (super super hard right?, 3?)
+@ $BBA1 label=ef_right
+C $BBA1,3 D,E = $04,03  (curvature = super super hard right?, lanes = 3?)
+C $BBA4,1 Save for later
 C $BBA5,6 road_leftside_ptr  = #R$E2D5
 C $BBAB,6 road_rightside_ptr = #R$E2D9
 C $BBB1,6 road_lanes_ptr     = #R$E2F3
-C $BBB7,3 Self modified by $C03D to be the right route's hazards data
-C $BBBA,3 Self modified by $BF73 to be the right route's rightside data
-C $BBBD,3 Self modified by $BFC4 to be the right route's leftside data
-C $BBC1,3 Self modified by $BE62 to be the right route's curvature data
-C $BBC4,3 Self modified by $BEB6 to be the right route's height data
-C $BBC7,3 Self modified by $BF01 to be the right route's lanes data
-C $BBCA,2 A = 32   offset into road buffer
-@ $BBCC label=ml27_bbcc
+C $BBB7,3 Self modified by #R$C03D to be the right route's hazards data
+C $BBBA,3 Self modified by #R$BF73 to be the right route's rightside data
+C $BBBD,3 Self modified by #R$BFC4 to be the right route's leftside data
+C $BBC0,1 Bank
+C $BBC1,3 Self modified by #R$BE62 to be the right route's curvature data
+C $BBC4,3 Self modified by #R$BEB6 to be the right route's height data
+C $BBC7,3 Self modified by #R$BF01 to be the right route's lanes data
+C $BBCA,2 A = 32  -- additional offset into road buffer (presumably right objects)
+@ $BBCC label=ef_set_handlers
 C $BBCC,3 Self modify rm_curvature_one_command handler
 C $BBCF,4 Self modify rm_height_one_command handler
 C $BBD3,4 Self modify rm_lanes_one_command handler
+C $BBD7,1 Unbank
 C $BBD8,4 Self modify rm_leftside_one_command handler
 C $BBDC,4 Self modify rm_rightside_one_command handler
 C $BBE0,3 Self modify rm_hazards_one_command handler
 C $BBE3,6 road_curvature_ptr = #R$E2DD
 C $BBE9,6 road_height_ptr    = #R$E2E2
 C $BBEF,6 road_hazard_ptr    = #R$E2D2
-C $BBF6,1 C = A
-N $BBF7 The code commonly loads the byte at $A240 and merges it with $EE00, yet #R$A240 contains a whole word with the right value.
+C $BBF5,1 Suspected road curve type left/right
+C $BBF6,1 Copy road buffer additional offset
+N $BBF7 The code commonly loads the byte at #R$A240 and merges it with $EE00, yet #R$A240 already contains a whole word with the right value.
 C $BBF7,3 Load road_buffer_offset into #REGa [as byte]
 C $BBFA,3 Point #REGhl at road buffer curvature data
-C $BBFD,6 Set the 32 bytes at #REGhl to #REGd
-C $BC03,9 Set the 32 bytes at #REGhl + 64 to #REGe
-C $BC0C,9 Zero the 32 bytes at #REGhl + 64 + #REGc
+N $BBFD Set the 32 bytes at #REGhl to the road curvature type in #REGd.
+@ $BBFF label=ef_set_curvature_loop
+N $BC03 Set the 32 bytes at #REGhl + 64 to the lane type in #REGe.
+C $BC03,2 A = road_buffer_offset + 64
+@ $BC08 label=ef_set_lanes_loop
+N $BC0C Zero the 32 bytes at #REGhl + 64 + #REGc (the additional offset that was setup earlier). This seems to be objects.
+C $BC0E,1 E = 0, since B is zero
+@ $BC11 label=ef_set_objects_loop
 C $BC15,5 curvature_byte     = 0
 C $BC1A,3 height_byte        = 0
 C $BC1D,3 leftside_byte      = 0
