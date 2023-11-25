@@ -5156,7 +5156,7 @@ B $A169,1,1 Copied to hazards[0].16
 B $A16A,1,1 Copied to hazards[0].17
 B $A16B,1,1 Copied to hazards[0].18
 B $A16C,1,1 Copied to hazards[0].19
-N $A16D Oscillates during road splits. Adjusts horizontal position of the untaken road.
+N $A16D Oscillates when the road forks. Adjusts horizontal position of the untaken road.
 @ $A16D label=var_a16d
 B $A16D,1,1 Used by #R$BC36
 @ $A16E label=idle_timer
@@ -5368,12 +5368,12 @@ B $A262,1,1
 B $A263,1,1 Used by #R$B2AE
 @ $A264 label=var_a264
 B $A264,1,1 Used by #R$B2B2 -- together might be a 16-bit qty
-@ $A265 label=split_road_visible
-B $A265,1,1 Used by #R$BC2C -- set to $60 when the split road becomes visible, zero otherwise
-@ $A266 label=split_road_countdown
-B $A266,1,1 Used by #R$A3A6 -- counts down (from 16?) when the split road approaches, zero when the split actually starts
-@ $A267 label=split_distance
-W $A267,2,2 Counts 0..255 during road splits
+@ $A265 label=forked_road_visible
+B $A265,1,1 Used by #R$BC2C -- set to $60 when the forked road becomes visible, zero otherwise
+@ $A266 label=fork_countdown
+B $A266,1,1 Used by #R$A3A6 -- counts down (from 16?) when the forked road approaches, zero when the fork actually starts
+@ $A267 label=fork_distance
+W $A267,2,2 Counts 0..255 during road forks
 @ $A269 label=var_a269
 B $A269,1,1 Used by #R$BC29
 @ $A26A label=quit_state
@@ -5409,16 +5409,16 @@ D $A399 Used by the routines at #R$8401 and #R$852A.
 @ $A399 label=check_collisions
 C $A399,3 HL = $0048
 C $A39C,3 DE = $01D8
-C $A3A0,3 A = split_road_visible  -- fairly sure this is a split road flag
+C $A3A0,3 A = forked_road_visible
 C $A3A3,1 Set flags
-C $A3A4,2 Jump to cc_at_split if zero
-C $A3A6,3 A = split_road_countdown
+C $A3A4,2 Jump to cc_at_fork if zero
+C $A3A6,3 A = fork_countdown
 C $A3A9,1 Set flags
-C $A3AA,3 Jump to cc_not_split if zero
+C $A3AA,3 Jump to cc_not_fork if zero
 C $A3AD,1 A--
-C $A3AE,1 Return if zero  [can't collide immediately before split?]
+C $A3AE,1 Return if zero  [can't collide immediately before fork?]
 N $A3AF Check left hand side of car.
-@ $A3AF label=cc_at_split
+@ $A3AF label=cc_at_fork
 C $A3AF,3 HL = *$EAFE
 C $A3B2,1 A = H (0 or 255)
 C $A3B3,1 Set flags
@@ -5427,9 +5427,9 @@ C $A3B6,9 Jump to #R$A3D1 if HL < $40
 C $A3BF,8 Jump to #R$A3D5 if HL < $6A
 C $A3C7,4 HL -= $85
 C $A3CB,1 A++  -- A == 1 => partially off-road
-C $A3CC,2 Jump to cc_split_set if A was 255
+C $A3CC,2 Jump to cc_fork_set if A was 255
 C $A3CE,1 A++  -- A == 2 => fully off-road
-C $A3CF,2 Jump to cc_split_set
+C $A3CF,2 Jump to cc_fork_set
 @ $A3D1 label=cc_a3d1
 C $A3D1,4 var_a23d = 0
 N $A3D5 Check right hand side of car.
@@ -5443,12 +5443,12 @@ C $A3DE,9 Jump to #R$A3FA if HL >= $BE
 C $A3E7,9 Jump to #R$A3FD if HL >= $8E
 C $A3F0,4 HL -= $7C
 C $A3F4,1 A++  -- A == 1 => partially off-road
-C $A3F5,2 Jump to cc_split_set if no carry
+C $A3F5,2 Jump to cc_fork_set if no carry
 C $A3F7,1 A++  -- A == 2 => fully off-road
-C $A3F8,2 Jump to cc_split_set
+C $A3F8,2 Jump to cc_fork_set
 @ $A3FA label=cc_a3fa
 C $A3FA,3 var_a23c = A
-@ $A3FD label=cc_split_set
+@ $A3FD label=cc_fork_set
 C $A3FD,3 off_road = A  -- 0/1/2 => on-road/one wheel off-road/both wheels off-road
 C $A400,1 Set flags
 C $A401,2 C = 0  (not self modified)
@@ -5555,7 +5555,7 @@ C $A4EC,2 HL -= DE
 @ $A4F2 label=cc_a4f2
 C $A4F2,3 Self modify 'LD BC' @ #R$B32E to load HL
 C $A4F5,1 Return
-@ $A4F6 label=cc_not_split
+@ $A4F6 label=cc_not_fork
 C $A4F6,3 HL = *$E8FE  -- checking the final word of the road drawing (left) table
 C $A4F9,1 A = H  (0 or 255)
 C $A4FA,1 Set flags
@@ -5563,22 +5563,22 @@ C $A4FB,2 Jump to cc_a510 if A isn't zero
 C $A4FD,9 Jump to #R$A510 if HL < $6A
 C $A506,4 HL -= $85
 C $A50A,1 A++  -- A == 1 => partially off-road
-C $A50B,2 Jump to cc_not_split_set if HL < $85
+C $A50B,2 Jump to cc_not_fork_set if HL < $85
 C $A50D,1 A++  -- A == 2 => fully off-road
-C $A50E,2 Jump to cc_not_split_set
+C $A50E,2 Jump to cc_not_fork_set
 @ $A510 label=cc_a510
 C $A510,3 HL = *$EDFC
 C $A513,1 A = H
 C $A514,1 Set flags
 C $A515,2 A = 0
-C $A517,2 JR NZ,cc_not_split_set
-C $A519,9 Jump to cc_not_split_set if HL >= $8E
+C $A517,2 JR NZ,cc_not_fork_set
+C $A519,9 Jump to cc_not_fork_set if HL >= $8E
 C $A522,4 HL -= $7C
 C $A526,1 A++  -- A == 1 => partially off-road
-C $A527,2 Jump to cc_not_split_set if HL >= $7C
+C $A527,2 Jump to cc_not_fork_set if HL >= $7C
 C $A529,1 A++  -- A == 2 => fully off-road
 N $A52A Set the off-road flag etc.
-@ $A52A label=cc_not_split_set
+@ $A52A label=cc_not_fork_set
 C $A52A,3 off_road = A
 C $A52D,1 A = 0
 C $A52E,3 *$B3DC = A
@@ -5627,12 +5627,12 @@ C $A590,2 Add 64 so it's the lanes data offset
 C $A592,1 E = calculated offset
 C $A593,4 IY = $E34F
 C $A597,2 B = 21
-C $A599,3 A = split_road_visible  -- split road flag
+C $A599,3 A = forked_road_visible
 C $A59C,1 Set flags
-C $A59D,3 Jump to ml14_loop2 if zero [not in road split]
-C $A5A0,3 A = split_road_countdown
+C $A59D,3 Jump to ml14_loop2 if zero [not in forked road]
+C $A5A0,3 A = fork_countdown
 C $A5A3,1 Set flags
-C $A5A4,2 [not about to road split]
+C $A5A4,2 [not about to fork the road]
 C $A5A6,1 B = A
 @ $A5A7 label=ml14_loop2
 C $A5A7,1 A = *DE
@@ -5662,10 +5662,10 @@ C $A5DC,1 B = *HL
 C $A5DF,2 IY++
 C $A5E1,1 E++
 C $A5E2,2 Loop to ml14_loop2 while B
-C $A5E4,3 A = split_road_countdown
+C $A5E4,3 A = fork_countdown
 C $A5E7,1 Set flags
 C $A5E8,3 Jump to ml14_return if zero
-C $A5EB,6 A = ~split_road_countdown + 22
+C $A5EB,6 A = ~fork_countdown + 22
 C $A5F1,2 Jump to ml14_return if zero
 C $A5F3,1 B = A
 C $A5F4,2 H = $EB
@@ -5953,7 +5953,7 @@ C $A8C5,3 BC = $0102
 C $A8C8,1 Return if zero
 C $A8C9,3 BC = $0304
 C $A8CC,1 Return
-c $A8CD Hazard handler routine? Triggered at road split
+c $A8CD Hazard handler routine? Triggered at road fork
 @ $A8CD label=hazard_handler_a8cd
 C $A8CD,6 Return if perp_caught_phase > 0
 C $A8D3,6 Check stop_car_spawning flag
@@ -6279,7 +6279,7 @@ C $ABAD,1 Set flags
 C $ABAE,1 Return if zero
 C $ABAF,2 Is it 4?
 C $ABB1,3 DE = 0
-C $ABB4,2 Jump if < 4   -- stop spawning barriers etc? jump/split too?
+C $ABB4,2 Jump if < 4   -- stop spawning barriers etc? jump/fork too?
 C $ABB6,2 E = 3
 C $ABB8,1 A -= E
 C $ABB9,2 B = 50
@@ -7680,7 +7680,7 @@ C $B970,1 *HL = C
 C $B971,3 A = horizon_scroll
 C $B975,3 Load road_buffer_offset into #REGa
 C $B978,3 Point #REGhl at road buffer curvature data
-C $B97B,3 A = split_road_visible  -- split road flag
+C $B97B,3 A = forked_road_visible
 C $B97E,1 Set flags
 C $B97F,1 A = *HL
 C $B980,2 Jump if zero
@@ -7741,22 +7741,22 @@ D $B9F4 Used by the routines at #R$8401, #R$852A and #R$873C.
 C $B9F4,3 Load road_buffer_offset into #REGa [as byte]
 C $B9F7,2 Add 64 so it's the lanes data offset
 C $B9F9,3 Point #REGde at road buffer lanes data
-N $B9FC Suspect this is counting the distance to road split.
+N $B9FC Suspect this is counting the distance to the forked road.
 C $B9FC,3 #REGb = 20 iterations, #REGc = $E1, a mask
 C $B9FF,2 Counter
 C $BA01,1 Load a lanes byte
-C $BA02,5 Jump to lr_road_split if (lanes byte & $E1) == $E1
+C $BA02,5 Jump to lr_forked_road if (lanes byte & $E1) == $E1
 C $BA07,1 Advance to next lanes byte (wrapping around)
 C $BA08,1 Increment counter
 C $BA09,2 Loop while #REGb
-N $BA0B No road split found.
+N $BA0B No forked road found.
 N $BA0B The road is still rendered if the following call is nopped out, but it's in the wrong position.
-@ $BA0B label=lr_no_split
-C $BA0B,3 Call sub_cbce_non_split
+@ $BA0B label=lr_no_fork
+C $BA0B,3 Call sub_cbce_non_fork
 C $BA0E,4 Self modify 'LD SP' @ #R$BA4D to restore #REGsp on exit
 C $BA12,3 Put $EC30 (road right) in #REGsp (so we can use POP for speed)
 C $BA15,2 Iterate from $30 to $00 in steps of 2 = 104 iterations
-N $BA17 Note that the split case branches back here.
+N $BA17 Note that the fork case branches back here.
 @ $BA17 label=lr_ba17
 C $BA17,3 Self modify #R$BA35 to load $EA30 upwards (road centre)
 C $BA1A,3 Self modify #R$BA3F to load $EB30 upwards (road centre right)
@@ -7785,17 +7785,17 @@ C $BA4A,3 Loop while #REGa
 @ $BA4D label=lr_exit
 C $BA4D,3 Restore original #REGsp (self modified)
 C $BA50,1 Return
-N $BA51 Handle road split.
-@ $BA51 label=lr_road_split
-C $BA52,3 split_road_countdown = A
+N $BA51 Handle a forked road.
+@ $BA51 label=lr_forked_road
+C $BA52,3 fork_countdown = A
 C $BA55,2 HL = $E3xx
-C $BA57,5 Set split_road_visible to visible
+C $BA57,5 Set forked_road_visible
 C $BA5C,4 A = 106 - (A - *HL)  -- HL is $E3xx
 C $BA60,1 Preserve A
-C $BA61,3 Load split_distance
+C $BA61,3 Load fork_distance
 C $BA64,3 A = *DE & 4  -- DE is the lanes byte ptr
 C $BA67,2 Jump if non-zero
-N $BA69 Lanes byte & 4 is zero. Hit at road split time (during the split itself).
+N $BA69 Lanes byte & 4 is zero. Hit when the road forks (during the fork itself).
 C $BA69,4 A = var_a269 - 1
 C $BA6D,2 Jump if zero
 C $BA6F,2 A = -A
@@ -7812,7 +7812,7 @@ C $BA88,1 A should be 1, will become zero
 @ $BA89 label=lr_check_correct_fork_taken
 C $BA89,3 Set fork_taken to #REGa
 C $BA8C,1 0/1 -> 1/2
-C $BA8D,1 Preserve HL (holds split_distance)
+C $BA8D,1 Preserve HL (holds fork_distance)
 C $BA8E,3 Address of correct_fork
 C $BA91,1 Match?
 C $BA92,3 -> Tony: "LET'S GO. MR. DRIVER." <STOP>
@@ -7829,7 +7829,7 @@ C $BAA4,3 Call bonus
 C $BAA7,3 -> Raymond: "WHAT ARE YOU DOING MAN!!" / "THE BAD GUYS ARE GOING THE OTHER WAY." <STOP>
 @ $BAAA label=lr_chatter
 C $BAAA,5 Call chatter (with priority 20)
-C $BAAF,1 Restore HL (holds split_distance)
+C $BAAF,1 Restore HL (holds fork_distance)
 C $BAB0,3 Load allow_spawning
 C $BAB3,3 Jump to lr_bacc if zero
 N $BAB6 allow_spawning is non-zero.
@@ -7839,8 +7839,8 @@ C $BABC,2 A -= 2
 C $BABE,2 Jump if A < 2
 N $BAC0 Otherwise clamp it to 2.
 C $BAC0,1 C = A
-N $BAC1 Adjusting this delta will cause the road split effect to proceed faster (higher values) or slower (lower values).
-C $BAC1,7 Increase split_distance by 16
+N $BAC1 Adjusting this delta will cause the forked road effect to proceed faster (higher values) or slower (lower values).
+C $BAC1,7 Increase fork_distance by 16
 @ $BAC8 label=lr_bac8
 C $BAC8,4 var_a16d = C
 @ $BACC label=lr_no_car_spawning
@@ -7850,28 +7850,28 @@ C $BAD0,9 A = (fast_counter >> 4)
 C $BAD9,2 A -= 16  -- sets top nibble to $F
 C $BADB,3 DE = $FF00 | A
 C $BADE,1 HL += DE
-N $BADF Lanes byte & 4 is non-zero. Hit at road split time (as it becomes visible).
+N $BADF Lanes byte & 4 is non-zero. Hit when the road forks (as it becomes visible).
 @ $BADF label=lr_badf
 C $BADF,1 Preserve HL
 C $BAE0,6 Jump if fork_taken was 1 (right fork taken)
 N $BAE6 Left fork was taken.
 @ $BAE6 label=lr_left_fork_taken
-C $BAE6,3 Call sub_cbce_non_split
+C $BAE6,3 Call sub_cbce_non_fork
 C $BAE9,1 Restore HL from earlier
 C $BAEA,3 Get road position
 C $BAED,1 Stack it
 C $BAEE,1 DE must be a road position delta?
 C $BAEF,3 Set road position
-C $BAF2,3 Call sub_cbce_split
+C $BAF2,3 Call sub_cbce_fork
 N $BAF7 Right fork was taken.
 @ $BAF7 label=lr_right_fork_taken
-C $BAF7,3 Call sub_cbce_split
+C $BAF7,3 Call sub_cbce_fork
 C $BAFA,1 Pop result?
 C $BAFB,3 Get road position
 C $BAFE,1 Stack it
 C $BAFF,2 DE must be a road position delta?
 C $BB01,3 Set road position
-C $BB04,3 Call sub_cbce_non_split
+C $BB04,3 Call sub_cbce_non_fork
 @ $BB07 label=lr_bb07
 C $BB07,1 Unstack road position
 C $BB08,3 Set road position
@@ -7907,13 +7907,13 @@ C $BB5C,2 Loop while B > 0
 C $BB5E,4 Jump to lr_exit if A is zero
 C $BB62,4 Point #REGsp at $EC00 | A (road right)
 C $BB66,3 Jump back to #R$BA17
-c $BB69 After-split road setup
+c $BB69 Handle exiting from a road fork
 D $BB69 Used by the routine at #R$8401.
-N $BB69 When split_distance exceeds 255 we can proceed.
+N $BB69 When fork_distance exceeds 255 we can proceed.
 @ $BB69 label=exit_fork
-@ $BB69 ssub=LD A,(split_distance + 1)
-C $BB69,5 Return if (split_distance & $FF00) is zero
-N $BB6E Reset road setup back to a single road now that the split road has completed.
+@ $BB69 ssub=LD A,(fork_distance + 1)
+C $BB69,5 Return if (fork_distance & $FF00) is zero
+N $BB6E Reset road setup back to a single road now that the forked road has completed.
 C $BB6E,4 A = fork_taken - 1
 C $BB72,2 Jump if A is zero (right fork taken)
 N $BB74 Set up left route.
@@ -7979,10 +7979,10 @@ C $BC23,3 hazards_byte       = 0
 C $BC26,3 lanes_counter_byte = 0
 C $BC29,3 var_a269           = 0
 C $BC2C,3 fork_taken         = 0
-C $BC2F,3 split_road_visible = 0
+C $BC2F,3 forked_road_visible = 0
 C $BC32,4 no_objects_counter = 1
 C $BC36,3 var_a16d           = 1
-C $BC39,4 split_distance     = 0  [B & C are zero here]
+C $BC39,4 fork_distance      = 0  [B & C are zero here]
 C $BC3D,1 Return
 c $BC3E Copies the backbuffer at $F000 to the screen
 D $BC3E Used by the routines at #R$8014, #R$8258, #R$8401, #R$858C, #R$873C and #R$F220.
@@ -8103,12 +8103,12 @@ C $BE4E,1 #REGhl is now address of escape byte
 C $BE4F,3 Increment, read command byte, increment again
 C $BE52,3 Jump to rm_curvature_jump_command if command byte is zero
 C $BE55,3 Jump to rm_curvature_one_command if command byte is one
-N $BE58 Otherwise it must be a road split command (byte == 2).
+N $BE58 Otherwise it must be a fork road command (byte == 2).
 C $BE58,4 Load address of left route's curvature data
 C $BE5C,4 Self modify 'LD HL,$xxxx' @ #R$BB94 to load the address
 C $BE60,4 Load address of right route's curvature data
 C $BE64,3 Self modify 'LD HL,$xxxx' @ #R$BBC1 to load the address
-C $BE67,3 HL = #R$E2C6 -> road split left curvature data
+C $BE67,3 HL = #R$E2C6 -> forked road left curvature data
 C $BE6A,2 Jump to rm_read_curvature
 N $BE6C Handle a command byte of one: TBD.
 @ $BE6C label=rm_curvature_one_command
@@ -8144,12 +8144,12 @@ C $BEA0,1 #REGhl is now address of escape byte
 C $BEA1,3 Increment, read command byte, increment again
 C $BEA4,4 Jump to rm_height_jump_command if command byte is zero
 C $BEA8,2 Jump to rm_height_one_command if command byte is one
-N $BEAA Otherwise it must be a road split command (byte == 2).
+N $BEAA Otherwise it must be a fork road command (byte == 2).
 C $BEAA,4 Load address of left route's height data
 C $BEAE,4 Self modify 'LD DE,$xxxx' @ #R$BB97 to load the address
 C $BEB2,4 Load address of right route's height data
 C $BEB6,3 Self modify 'LD DE,$xxxx' @ #R$BBC4 to load the address
-C $BEB9,3 HL = #R$E2CC -> road split height data
+C $BEB9,3 HL = #R$E2CC -> forked road height data
 C $BEBC,2 Jump to rm_read_height
 @ $BEBE label=rm_height_one_command
 C $BEBE,3 HL = <something>  -- Self modified by #R$BBCF
@@ -8179,12 +8179,12 @@ C $BEEB,1 #REGhl is now address of escape byte
 C $BEEC,3 Increment, read command byte, increment again
 C $BEEF,3 Jump to rm_lanes_jump_command if command byte is zero
 C $BEF2,3 Jump to rm_lanes_one_command if command byte is one
-N $BEF5 Otherwise it must be a road split command (byte == 2).
+N $BEF5 Otherwise it must be a fork road command (byte == 2).
 C $BEF5,4 Load address of left route's lanes data
 C $BEF9,4 Self modify 'LD BC,$xxxx' @ #R$BB9A to load the address
 C $BEFD,4 Load address of right route's lanes data
 C $BF01,3 Self modify 'LD BC,$xxxx' @ #R$BBC7 to load the address
-C $BF04,3 HL = #R$E2D1 -> road split lanes data
+C $BF04,3 HL = #R$E2D1 -> forked road lanes data
 C $BF07,2 Jump to rm_read_lanes
 @ $BF09 label=rm_lanes_one_command
 C $BF09,3 HL = $0000  -- This looks setup for it as others, but doesn't seem to be self modified.
@@ -8239,7 +8239,7 @@ C $BF65,1 #REGhl is now address of escape byte
 C $BF66,3 Increment, read command byte, increment again
 C $BF69,3 Jump to rm_rightside_jump_command if command byte is zero
 C $BF6C,3 Jump to rm_rightside_one_command if command byte is one
-N $BF6F Otherwise it must be a road split command (byte == 2).
+N $BF6F Otherwise it must be a fork road command (byte == 2).
 C $BF6F,4 Load address of left route's rightside data
 C $BF73,4 Set modify 'LD DE,$xxxx' @ #R$BB8D to load the address
 C $BF77,4 Load address of right route's rightside data
@@ -8272,7 +8272,7 @@ C $BFAE,1 #REGhl is now address of escape byte
 C $BFAF,3 Increment, read command byte, increment again
 C $BFB2,3 Jump to rm_leftside_jump_command if command byte is zero
 C $BFB5,3 Jump to rm_leftside_one_command if command byte is one
-N $BFB8 Otherwise it must be a road split command (byte == 2).
+N $BFB8 Otherwise it must be a fork road command (byte == 2).
 C $BFB8,4 Load address of left route's leftside data
 C $BFBC,4 Self modify 'LD BC,$xxxx' @ #R$BB90
 C $BFC0,4 Load address of right route's leftside data
@@ -8306,7 +8306,7 @@ C $BFF7,1 #REGhl is now address of escape byte
 C $BFF8,3 Increment, read command byte, increment again
 C $BFFB,4 Jump to rm_hazards_jump_command if command byte is zero
 C $BFFF,2 Jump to rm_hazards_one_command if command byte is one
-C $C001,4 Jump to rm_hazards_road_fork_command if command byte is two
+C $C001,4 Jump to rm_hazards_fork_road_command if command byte is two
 C $C005,4 Jump to rm_hazards_set_hazard_command if command byte is < 10 -- 3..9
 C $C009,4 Jump to rm_hazards_set_arrow_command if command byte is < 13 -- 10..12
 C $C00D,4 Jump to rm_hazards_spawning_command if command byte is < 15 -- 13..14
@@ -8328,8 +8328,8 @@ N $C02C When on left it uses lane 1, on right it uses lane 4, both it uses lane 
 @ $C02C label=rm_hazards_set_hazard_command
 C $C02C,3 Self modify 'LD (HL),xxxx' at #R$C058 to load A [which is command_no-3]
 C $C02F,2 Jump to rm_read_hazards
-@ $C031 label=rm_hazards_road_fork_command
-C $C031,4 Load address of left route's hazards data  -- Sampled HL: $5F26 (road split)
+@ $C031 label=rm_hazards_fork_road_command
+C $C031,4 Load address of left route's hazards data  -- Sampled HL: $5F26 (road fork)
 C $C035,4 Self modify 'LD HL,$xxxx' @ #R$BB8A
 C $C039,4 Load address of right route's hazards data
 C $C03D,3 Self modify 'LD HL,$xxxx' @ #R$BBB7
@@ -8870,7 +8870,7 @@ C $C4BE,3 Self modify 'LD H,x' @ #R$C5B3
 C $C4C1,1 H = A
 C $C4C2,2 L <<= 1
 C $C4C4,2 New bit 7 set?
-C $C4C6,2 Jump if set  -- Split road plotting path
+C $C4C6,2 Jump if set  -- Forked road plotting path
 C $C4CA,2 A &= 3
 C $C4CC,2 C = $FD
 C $C4CE,3 Jump
@@ -8881,7 +8881,7 @@ C $C4D8,3 Self modify 'LD H,x' @ #R$C68A
 C $C4DB,1 A = C
 C $C4DC,3 Self modify 'LD B,x' @ #R$C5AC
 C $C4DF,3 Jump
-C $C4E2,2 -- Split road plotting path
+C $C4E2,2 -- Forked road plotting path
 C $C4E4,2 C = $FF
 C $C4E6,2 H = $01
 C $C4E8,2 Bit 4 set?
@@ -8910,7 +8910,7 @@ C $C514,1 Bank/unbank
 C $C515,1 B = A
 C $C516,3 Jump
 C $C519,2 Bit 6 set?
-C $C51B,3 Jump if set -- Split road plotting path
+C $C51B,3 Jump if set -- Forked road plotting path
 C $C51E,1 A = L
 C $C51F,2 A &= 24
 C $C521,2 A = 0
@@ -9325,7 +9325,7 @@ C $C8DD,1 Restore counters
 C $C8DE,1 Decrement row counter
 C $C8DF,3 Loop while rows remain
 C $C8E2,1 Return
-c $C8E3 Split road plotting
+c $C8E3 Forked road plotting
 D $C8E3 Used by the routine at #R$C452.
 C $C8E3,1 Bank
 N $C8E4 Reset/Update a load of self modified locations.
@@ -9469,7 +9469,7 @@ C $CA0A,1 A <<= 1  -- Rotate the road shading pattern (0x55 <-> 0xAA)
 C $CA0B,1 H = A   -- Prepare pattern for storing
 C $CA0C,1 L = A
 C $CA0D,1 Unbank A
-N $CA0E This BC filling the blank parts of the road when drawing the split road.
+N $CA0E This BC filling the blank parts of the road when drawing the forked road.
 C $CA0E,3 BC = 0 [doesn't seem self modified]
 C $CA11,17 Jump table (self modified) Write 16 pixels
 C $CA22,17 Jump table (self modified)
@@ -9663,19 +9663,19 @@ C $CBC1,1 C = A
 C $CBC2,3 Exit via #R$C915
 c $CBC5 Routine at CBC5
 D $CBC5 Used by the routine at #R$C95A.
-N $CBC5 This gets hit during road splits.
+N $CBC5 This gets hit during road forks.
 C $CBC5,1 C = A
 C $CBC6,5 Jump if A < 80
 C $CBCB,3 Exit via #R$C79A
 c $CBCE Road drawing - curvature stuff?
 D $CBCE Used by the routine at #R$B9F4.
-N $CBCE This gets hit during road splits.
-@ $CBCE label=sub_cbce_split
+N $CBCE This gets hit during road forks.
+@ $CBCE label=sub_cbce_fork
 C $CBCE,3 Load two table high-bytes: $EE, $EC
 C $CBD1,3 $ED $44 => NEG instruction for #R$CC21 & #R$CC22
 N $CBD6 This entry point is used by the routine at #R$B9F4.
 N $CBD6 This is the normal entry point?
-@ $CBD6 label=sub_cbce_non_split
+@ $CBD6 label=sub_cbce_non_fork
 C $CBD6,3 Load two table high-bytes: $ED, $E9
 C $CBD9,3 Pair of NOP instructions for #R$CC21 & #R$CC22
 N $CBDC This entry point is used by the routine at #R$CBCE.
@@ -10781,27 +10781,27 @@ N $E2C0 Perp escape scene, lane objects [not sure now, could be right curve road
 B $E2C0,2,1
 B $E2C2,2,2 Escape, Command 0 (Continue at <Address>)
 W $E2C4,2,2 Loop (partial)
-b $E2C6 Data for road splits
-N $E2C6 Road split, curvature
-@ $E2C6 label=roadsplit_curvature
+b $E2C6 Data for road forks
+N $E2C6 Road fork, curvature
+@ $E2C6 label=forked_road_curvature
 B $E2C6,1,1
-@ $E2C7 label=roadsplit_curvature_loop
+@ $E2C7 label=forked_road_curvature_loop
 B $E2C7,1,1 Curve left (67%)
 B $E2C8,2,2 Escape, Command 0 (Continue at <Address>)
 W $E2CA,2,2 Loop (partial)
-N $E2CC Road split, height
-@ $E2CC label=roadsplit_height
+N $E2CC Road fork, height
+@ $E2CC label=forked_road_height
 B $E2CC,1,1
 B $E2CD,2,2 Escape, Command 0 (Continue at <Address>)
 W $E2CF,2,2 Loop
-N $E2D1 Road split, lanes
-@ $E2D1 label=roadsplit_lanes
+N $E2D1 Road fork, lanes
+@ $E2D1 label=forked_road_lanes
 B $E2D1,1,1
 @ $E2D2 label=something_hazards
-B $E2D2,3,3 Referenced by #R$BBEF  --  Used after road split
-@ $E2D5 label=roadsplit_rightobjs
+B $E2D2,3,3 Referenced by #R$BBEF  --  Used after road fork
+@ $E2D5 label=forked_road_rightobjs
 B $E2D5,4,4 rightside data  [flips around depending on who's accessing it]
-@ $E2D9 label=roadsplit_leftobjs
+@ $E2D9 label=forked_road_leftobjs
 B $E2D9,4,4 leftside data   [flips]
 @ $E2DD label=something_curvature
 B $E2DD,4,4 Referenced by #R$BBE3
