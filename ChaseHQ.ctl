@@ -2646,8 +2646,7 @@ C $8894,3 Return if a turbo boost is in effect
 C $8897,5 Return if no turbo boosts are left
 C $889C,2 Set 60 ticks of boost
 C $889E,3 HL -> Random choice of (WHOAAAAA! / GREAT! / ONE MORE TIME.)
-C $88A1,2 Set priority to 2
-C $88A3,3 Call chatter (priority 2)
+C $88A1,5 Call chatter (priority 2)
 C $88A6,3 Exit via turbo_sfx_play_hook
 N $88A9 This entry point is used by the routine at #R$9BCF.
 @ $88A9 label=quit_key
@@ -5997,8 +5996,7 @@ C $A93D,1 Restore AF
 C $A93E,4 Jump if A < 3
 C $A942,2 A -= 3
 C $A947,3 HL = ouch_chatter
-C $A94A,2 Set priority to 3
-C $A94C,3 Call chatter (priority 3)
+C $A94A,5 Call chatter (priority 3)
 C $A94F,3 BC = $0302
 C $A952,3 Call start_sfx
 c $A955 Draws stones and dirt.
@@ -7825,9 +7823,8 @@ C $BAA3,1 Clear middle digits
 C $BAA4,3 Call bonus
 C $BAA7,3 -> Raymond: "WHAT ARE YOU DOING MAN!!" / "THE BAD GUYS ARE GOING THE OTHER WAY." <STOP>
 @ $BAAA label=lr_chatter
-C $BAAA,2 Set priority to 20
-C $BAAC,3 Call chatter (priority 20)
 C $BAAF,1 Restore HL (which points to var_a267?)
+C $BAAA,5 Call chatter (with priority 20)
 C $BAB0,3 Load allow_spawning
 C $BAB3,3 Jump to lr_bacc if zero
 C $BAB6,5 A = var_a16d + A
