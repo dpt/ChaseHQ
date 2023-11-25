@@ -2273,7 +2273,7 @@ C $84B3,3 Call smash_bar_etc
 C $84B6,3 Call transition
 C $84B9,3 Call engine_sfx_play_hook
 C $84BC,3 Call draw_screen
-C $84BF,3 Call road_handling_setup
+C $84BF,3 Call after_split_road_setup
 C $84C2,3 Is test mode enabled?
 C $84C5,3 If not, goto not_test_mode
 N $84C8 Test mode handling
@@ -5372,8 +5372,8 @@ B $A264,1,1 Used by #R$B2B2 -- together might be a 16-bit qty
 B $A265,1,1 Used by #R$BC2C -- set to $60 when the split road becomes visible, zero otherwise
 @ $A266 label=split_road_countdown
 B $A266,1,1 Used by #R$A3A6 -- counts down (from 16?) when the split road approaches, zero when the split actually starts
-@ $A267 label=var_a267
-W $A267,2,2 Used by #R$BC39 -- as 16-bit. Part used by #R$BB69 - skips routine if not set
+@ $A267 label=split_distance
+W $A267,2,2 Counts 0..255 during road splits
 @ $A269 label=var_a269
 B $A269,1,1 Used by #R$BC29
 @ $A26A label=quit_state
@@ -7735,7 +7735,7 @@ C $B9EC,1 A = 0
 C $B9ED,3 var_a261 = 0
 C $B9F0,3 var_a262 = 0
 C $B9F3,1 Return
-c $B9F4 Seems to lay out lanes.
+c $B9F4 Lays out the road.
 D $B9F4 Used by the routines at #R$8401, #R$852A and #R$873C.
 @ $B9F4 label=layout_road
 C $B9F4,3 Load road_buffer_offset into #REGa [as byte]
@@ -7751,10 +7751,12 @@ C $BA08,1 Increment counter
 C $BA09,2 Loop while #REGb
 N $BA0B No road split found.
 N $BA0B The road is still rendered if the following call is nopped out, but it's in the wrong position.
+@ $BA0B label=lr_no_split
 C $BA0B,3 Call sub_cbce_non_split
 C $BA0E,4 Self modify 'LD SP' @ #R$BA4D to restore #REGsp on exit
 C $BA12,3 Put $EC30 (road right) in #REGsp (so we can use POP for speed)
 C $BA15,2 Iterate from $30 to $00 in steps of 2 = 104 iterations
+N $BA17 Note that the split case branches back here.
 @ $BA17 label=lr_ba17
 C $BA17,3 Self modify #R$BA35 to load $EA30 upwards (road centre)
 C $BA1A,3 Self modify #R$BA3F to load $EB30 upwards (road centre right)
@@ -7788,9 +7790,12 @@ N $BA51 Handle road split.
 C $BA52,3 split_road_countdown = A
 C $BA55,2 HL = $E3xx
 C $BA57,5 Set split_road_visible to visible
-C $BA5D,3 A = ~A + $69
-C $BA61,3 HL = var_a267
-C $BA64,3 A = *DE & 4
+C $BA5C,4 A = 106 - (A - *HL)  -- HL is $E3xx
+C $BA60,1 Preserve A
+C $BA61,3 Load split_distance
+C $BA64,3 A = *DE & 4  -- DE is the lanes byte ptr
+C $BA67,2 Jump if non-zero
+N $BA69 Lanes byte & 4 is zero. Hit at road split time (during the split itself).
 C $BA69,4 A = var_a269 - 1
 C $BA6D,2 Jump if zero
 C $BA6F,2 A = -A
@@ -7807,7 +7812,7 @@ C $BA88,1 A should be 1, will become zero
 @ $BA89 label=lr_check_correct_fork_taken
 C $BA89,3 Set fork_taken to #REGa
 C $BA8C,1 0/1 -> 1/2
-C $BA8D,1 Preserve HL (which points to var_a267?)
+C $BA8D,1 Preserve HL (holds split_distance)
 C $BA8E,3 Address of correct_fork
 C $BA91,1 Match?
 C $BA92,3 -> Tony: "LET'S GO. MR. DRIVER." <STOP>
@@ -7823,27 +7828,29 @@ C $BAA3,1 Clear middle digits
 C $BAA4,3 Call bonus
 C $BAA7,3 -> Raymond: "WHAT ARE YOU DOING MAN!!" / "THE BAD GUYS ARE GOING THE OTHER WAY." <STOP>
 @ $BAAA label=lr_chatter
-C $BAAF,1 Restore HL (which points to var_a267?)
 C $BAAA,5 Call chatter (with priority 20)
+C $BAAF,1 Restore HL (holds split_distance)
 C $BAB0,3 Load allow_spawning
 C $BAB3,3 Jump to lr_bacc if zero
-C $BAB6,5 A = var_a16d + A
-C $BABB,1 C = A
-N $BAB6 Otherwise allow_spawning is non-zero.
+N $BAB6 allow_spawning is non-zero.
+C $BAB6,5 A = allow_spawning + var_a16d
+C $BABB,1 C = A  -- copy so we can destroy A
 C $BABC,2 A -= 2
 C $BABE,2 Jump if A < 2
+N $BAC0 Otherwise clamp it to 2.
 C $BAC0,1 C = A
-C $BAC1,4 HL += 16
-C $BAC5,3 var_a267 = HL
+N $BAC1 Adjusting this delta will cause the road split effect to proceed faster (higher values) or slower (lower values).
+C $BAC1,7 Increase split_distance by 16
 @ $BAC8 label=lr_bac8
 C $BAC8,4 var_a16d = C
-@ $BACC label=lr_bacc
+@ $BACC label=lr_no_car_spawning
 C $BACC,3 A = var_a16d
 C $BACF,1 Getting carry?
 C $BAD0,9 A = (fast_counter >> 4)
 C $BAD9,2 A -= 16  -- sets top nibble to $F
 C $BADB,3 DE = $FF00 | A
 C $BADE,1 HL += DE
+N $BADF Lanes byte & 4 is non-zero. Hit at road split time (as it becomes visible).
 @ $BADF label=lr_badf
 C $BADF,1 Preserve HL
 C $BAE0,6 Jump if fork_taken was 1 (right fork taken)
@@ -7900,11 +7907,11 @@ C $BB5C,2 Loop while B > 0
 C $BB5E,4 Jump to lr_exit if A is zero
 C $BB62,4 Point #REGsp at $EC00 | A (road right)
 C $BB66,3 Jump back to #R$BA17
-c $BB69 Setup for road handling perhaps split related
-D $BB69 Used by the routine at #R$8401.
-@ $BB69 label=road_handling_setup
-@ $BB69 ssub=LD A,(var_a267 + 1)
-C $BB69,5 Return if (var_a267 & $FF00) is zero
+c $BB69 After-split road setup
+D $BB69 Used by the routine at #R$8401. When split_distance exceeds 255 we can proceed.
+@ $BB69 label=after_split_road_setup
+@ $BB69 ssub=LD A,(split_distance + 1)
+C $BB69,5 Return if (split_distance & $FF00) is zero
 C $BB6E,4 A = fork_taken - 1
 C $BB72,2 Jump if A is zero (right fork taken)
 N $BB74 Set up left route.
@@ -7960,7 +7967,7 @@ C $BC2C,3 fork_taken         = 0
 C $BC2F,3 split_road_visible = 0
 C $BC32,4 no_objects_counter = 1
 C $BC36,3 var_a16d           = 1
-C $BC39,4 var_a267           = 0  [B & C are zero here]
+C $BC39,4 split_distance     = 0  [B & C are zero here]
 C $BC3D,1 Return
 c $BC3E Copies the backbuffer at $F000 to the screen
 D $BC3E Used by the routines at #R$8014, #R$8258, #R$8401, #R$858C, #R$873C and #R$F220.
@@ -8074,8 +8081,7 @@ C $BE43,2 Jump to rm_save_curvature_byte if curvature_byte >= 16
 N $BE45 Load a new curvature byte.
 C $BE45,5 Read and increment address of curvature data
 C $BE4A,1 Read a curvature byte
-C $BE4B,1 Set flags
-C $BE4C,2 Jump to rm_curvature_regular_byte if non-zero
+C $BE4B,3 Jump to rm_curvature_regular_byte if non-zero
 N $BE4E Handle curvature escape byte.
 @ $BE4E label=rm_curvature_escape_byte
 C $BE4E,1 #REGhl is now address of escape byte
@@ -8117,8 +8123,7 @@ C $BE90,5 A = height_byte - 16
 C $BE95,2 Jump to rm_save_height_byte if height_byte >= 16
 C $BE97,5 Read and increment address of height data
 C $BE9C,1 Read a height byte
-C $BE9D,1 Set flags
-C $BE9E,2 Jump to rm_height_regular_byte if non-zero
+C $BE9D,3 Jump to rm_height_regular_byte if non-zero
 N $BEA0 Handle height escape byte.
 C $BEA0,1 #REGhl is now address of escape byte
 C $BEA1,3 Increment, read command byte, increment again
@@ -8153,8 +8158,7 @@ C $BEE0,2 Jump to rm_lanes_count_resume if non-zero
 N $BEE2 Lanes counter hit zero, so reload.
 C $BEE2,5 Read and increment address of lanes data
 C $BEE7,1 Read a lanes byte
-C $BEE8,1 Set flags
-C $BEE9,2 Jump to rm_lanes_regular_byte if non-zero
+C $BEE8,3 Jump to rm_lanes_regular_byte if non-zero
 N $BEEB Handle lanes escape byte.
 C $BEEB,1 #REGhl is now address of escape byte
 C $BEEC,3 Increment, read command byte, increment again
@@ -8163,7 +8167,7 @@ C $BEF2,3 Jump to rm_lanes_one_command if command byte is one
 N $BEF5 Otherwise it must be a road split command (byte == 2).
 C $BEF5,4 Load address of left route's lanes data
 C $BEF9,4 Self modify 'LD BC,$xxxx' @ #R$BB9A to load the address
-C $BEFD,4 Load address of right route's height data
+C $BEFD,4 Load address of right route's lanes data
 C $BF01,3 Self modify 'LD BC,$xxxx' @ #R$BBC7 to load the address
 C $BF04,3 HL = #R$E2D1 -> road split lanes data
 C $BF07,2 Jump to rm_read_lanes
@@ -8178,7 +8182,9 @@ C $BF13,1 Read a lanes byte (regular, not an escape)
 @ $BF14 label=rm_lanes_regular_byte
 C $BF14,4 lanes_counter_byte = (lanes byte) - 1
 C $BF18,5 road_lanes_ptr = ++DE
-C $BF1D,4 *HL = *DE & $F7  -- HL points into cyclic road buffer? Sampled HL = $EE60
+N $BF1D Store (map byte & $F7) to cyclic road buffer (HL).
+C $BF1D,4 *HL = *DE & $F7
+N $BF21 Store (map byte & $FB) to LD A below.
 C $BF21,3 A = *DE & $FB
 C $BF24,3 Self modify 'LD A,$xx' @ #R$BF2C (below)
 C $BF27,2 Jump to rm_lanes_done
@@ -8188,11 +8194,11 @@ C $BF29,3 Store decremented lanes counter
 C $BF2C,2 A = <self modified value>  -- Self modified above AND below
 C $BF2E,1 C = A  -- Save temporarily
 C $BF2F,4 Jump to rm_lanes_bf39 if (A & $0C) is zero
-N $BF33 (bottom two bits significant)
-C $BF33,3 A = C & $F3
+N $BF33 (bottom two bits significant)  $F3 is complement of $0C
+C $BF33,3 A = C & $F3  -- discard bit 3 only?
 C $BF36,3 Self modify 'LD A,$xx' @ #R$BF2C (above)
 @ $BF39 label=rm_lanes_bf39
-C $BF39,1 *HL = C  -- Sampled HL: $EEE9
+C $BF39,1 Store to cyclic road buffer (HL)
 @ $BF3A label=rm_lanes_done
 C $BF3A,4 L += 32
 N $BF3E -- SKIPPING ALL OBJECTS AND HAZARDS --
@@ -8212,8 +8218,7 @@ C $BF5A,2 Jump to rm_rightside_count_resume if rightside_byte >= 16
 N $BF5C Rightside counter hit zero, so reload.
 C $BF5C,5 Read and increment address of rightside data
 C $BF61,1 Read a rightside byte
-C $BF62,1 Set flags
-C $BF63,2 Jump to rm_rightside_regular_byte if non-zero
+C $BF62,3 Jump to rm_rightside_regular_byte if non-zero
 N $BF65 Handle rightside escape byte.
 C $BF65,1 #REGhl is now address of escape byte
 C $BF66,3 Increment, read command byte, increment again
@@ -8246,8 +8251,7 @@ C $BF9E,5 A = leftside_byte - 16
 C $BFA3,2 Jump to rm_leftside_count_resume if leftside_byte >= 16
 C $BFA5,5 DE = road_leftside_ptr + 1
 C $BFAA,1 Read a lanes byte
-C $BFAB,1 Set flags
-C $BFAC,2 Jump to rm_leftside_regular_byte if non-zero
+C $BFAB,3 Jump to rm_leftside_regular_byte if non-zero
 N $BFAE Handle leftside escape byte.
 C $BFAE,1 #REGhl is now address of escape byte
 C $BFAF,3 Increment, read command byte, increment again
@@ -8281,13 +8285,11 @@ C $BFEC,2 Jump to rm_no_hazards if no carry
 C $BFEE,5 DE = road_hazard_ptr + 1
 @ $BFF3 label=rm_restart_hazards_read
 C $BFF3,1 Read a hazards byte
-C $BFF4,1 Set flags
-C $BFF5,2 Jump to rm_hazards_regular_byte if non-zero
+C $BFF4,3 Jump to rm_hazards_regular_byte if non-zero
 N $BFF7 Handle hazards escape byte.
 C $BFF7,1 #REGhl is now address of escape byte
 C $BFF8,3 Increment, read command byte, increment again
-C $BFFB,1 Set flags
-C $BFFC,3 Jump to rm_hazards_jump_command if command byte is zero
+C $BFFB,4 Jump to rm_hazards_jump_command if command byte is zero
 C $BFFF,2 Jump to rm_hazards_one_command if command byte is one
 C $C001,4 Jump to rm_hazards_road_fork_command if command byte is two
 C $C005,4 Jump to rm_hazards_set_hazard_command if command byte is < 10 -- 3..9
@@ -8366,8 +8368,7 @@ C $C09B,3 IX[1] = A
 C $C09E,2 Jump to rm_c0b2 if carry
 C $C0A0,2 Jump to rm_c072_continue if non-zero
 C $C0A2,3 A = IX[17]
-C $C0A5,1 Set flags
-C $C0A6,2 Jump to rm_c072_continue if non-zero
+C $C0A5,3 Jump to rm_c072_continue if non-zero
 C $C0A8,4 IX[1] = 1
 C $C0AC,4 IX[4] = 255
 C $C0B0,2 Jump to rm_c072_continue
@@ -8376,8 +8377,7 @@ C $C0B2,7 IX[17]--
 C $C0B9,2 Jump to rm_c072_continue
 @ $C0BB label=rm_c0bb
 C $C0BB,2 A = <self modified>  -- Self modified by #R$A977 + #R$A9A0 only
-C $C0BD,1 Set flags
-C $C0BE,3 Jump to rm_allow_car_spawning if zero
+C $C0BD,4 Jump to rm_allow_car_spawning if zero
 N $C0C1 Some sort of block copy.
 C $C0C1,3 HL = $ED73  -- Source+2. This must be a buffer pointer at this point
 C $C0C4,3 DE = $ED77  -- Destination+2
@@ -8830,14 +8830,14 @@ C $C487,2 B = $55 -- Set this to $00 and the landscape goes blank - but only hal
 C $C489,2 If B carried out earlier then jump
 C $C48B,3 HL = $0030
 C $C48E,1 B = $00
-@ $C48F label=j_c48f
-C $C48F,3 Self modify 'XOR x' @ #R$C6D3 to be zero [OR $D0 -- check other code again]
-C $C492,1 A = $00
+@ $C48F label=ml13_c48f
+C $C48F,3 Self modify 'XOR x' @ #R$C6D3 to be $D0 or $00
+C $C492,1 A = $D0 or $00
 C $C493,3 Self modify 'ADD A,x' @ #R$C677
-C $C496,1 A = $30
-C $C497,3 Self modify 'ADD A,x' @ #R$C651 to be $30
-C $C49A,1 A = $31
-C $C49B,3 Self modify 'ADD A,x' @ #R$C698 to be $31
+C $C496,1 A = $10 or $30
+C $C497,3 Self modify 'ADD A,x' @ #R$C651
+C $C49A,1 A = $11 or $31
+C $C49B,3 Self modify 'ADD A,x' @ #R$C698
 C $C49E,3 HL = $C534
 C $C4A1,3 Self modify 'JP Z,x' @ #R$C4B2 to be #R$C534
 C $C4A4,2 L = $FF
