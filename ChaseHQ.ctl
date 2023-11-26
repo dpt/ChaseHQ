@@ -100,8 +100,10 @@
 > $4000 ; - $5C00..$5CFF is the regular version of the backdrop
 > $4000 ; $8DBB (word) is the address of the current transition animation
 > $4000 ; $E300..$E316 is a height table (22 bytes long)
-> $4000 ; $E336..      is ?
-> $4000 ; $E500        is ?
+> $4000 ; $E336..      is TBD
+> $4000 ; $E410..$E4CF is a road edge/markings table
+> $4000 ; $E4D0..$E4FF is road lane markings
+> $4000 ; $E500        is TBD
 > $4000 ; $E600..$E80F is road drawing scaling tables (3x8 groups of 22 bytes)
 > $4000 ; $E830..$E8FF is 104 words for road drawing (left)
 > $4000 ; $E900        is a table
@@ -9032,19 +9034,18 @@ C $C62C,2 Jump table (self modified)
 N $C62E This entry point is used by the routine at #R$C452.
 C $C63D,1 B = E
 C $C63E,1 C--
-C $C63F,2 H = $E4
+C $C63F,2 H = $E4  -- point at $E4xx - road edge/markings table
 C $C641,1 Bank/unbank
-C $C642,2 H = <self modified>
+C $C642,2 H = <self modified>  -- seems to receive $E8 $E9 $EA (left, centre left, centre tables)
 C $C644,1 A = *HL
-C $C645,1 Set flags
-C $C646,2 Jump if non-zero
+C $C645,3 Jump if non-zero
 C $C648,3 A = HL[-1]
 C $C64B,1 Bank/unbank
-C $C64C,1 E = A
-C $C64D,2 A &= 7
-C $C64F,2 A <<= 2
-C $C651,2 A += <self modifed>
-C $C653,1 L = A
+N $C64C Building addresses of road edge markings here.
+C $C64C,1 E = A  -- save index
+C $C64D,4 A = (A & 7) * 4
+C $C651,2 A += <self modifed>  -- must be an offset to one of the three groups, saw $10 $30 $50 $70 $90 $B0
+C $C653,1 L = A  -- set road/edge markings address
 C $C654,8 E = ((E >> 3) & 31) + B
 N $C65C AND-OR masking here.
 C $C65C,2 A = *DE & *HL
@@ -9066,6 +9067,7 @@ C $C673,1 E = A  -- save A
 C $C674,6 L = ((A & 7) << 1) + <self modified>
 C $C67A,8 E = ((E >> 3) & 31) + B
 C $C682,2 *DE++ = *HL++, BC--
+N $C684 This reads a road edge byte from $E4xx.
 C $C684,1 A = *HL
 C $C685,1 *DE = A
 C $C686,1 Bank/unbank
@@ -10824,7 +10826,33 @@ N $E3BC #HTML[#CALL:anim($E3BC,8,8,0,0,7)]
 N $E3BC #HTML[#CALL:graphic($E3BC,8,7*8,0,0)]
 B $E3BC,56,8
 b $E3F4 TBD
-B $E3F4,332,8*41,4
+B $E3F4,28,8*3,4
+b $E410 Road edge markings
+D $E410 Six sets of 16x8 pixels. Masked. Stored bottom up. 32 bytes each.
+N $E410 #HTML[#CALL:graphic($E410,16,8,1,1)]
+@ $E410 label=edge_markings
+B $E410,32,8
+N $E430 #HTML[#CALL:graphic($E430,16,8,1,1)]
+B $E430,32,8
+N $E450 #HTML[#CALL:graphic($E450,16,8,1,1)]
+B $E450,32,8
+N $E470 #HTML[#CALL:graphic($E470,16,8,1,1)]
+B $E470,32,8
+N $E490 #HTML[#CALL:graphic($E490,16,8,1,1)]
+B $E490,32,8
+N $E4B0 #HTML[#CALL:graphic($E4B0,16,8,1,1)]
+B $E4B0,32,8
+b $E4D0 Road lane markings
+D $E4D0 Three sets of 16x8 pixels. Unmasked. Stored bottom up. 16 bytes each.
+N $E4D0 #HTML[#CALL:graphic($E4D0,16,8,0,1)]
+@ $E4D0 label=lane_markings
+B $E4D0,16,8
+N $E4E0 #HTML[#CALL:graphic($E4E0,16,8,0,1)]
+B $E4E0,16,8
+N $E4F0 #HTML[#CALL:graphic($E4F0,16,8,0,1)]
+B $E4F0,16,8
+b $E500 TBD
+B $E500,64,8
 w $E540 A table of 96 words being 10^x or similar function
 D $E540 Distance horizontal shift? Field of view table? It affects the horizontal position of the road.
 W $E540,192,2
