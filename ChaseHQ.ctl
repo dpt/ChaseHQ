@@ -5375,7 +5375,7 @@ B $A266,1,1 Used by #R$A3A6 -- counts down (from 16?) when the forked road appro
 @ $A267 label=fork_distance
 W $A267,2,2 Counts 0..255 during road forks
 @ $A269 label=var_a269
-B $A269,1,1 Used by #R$BC29
+B $A269,1,1 Used by #R$BC29. Set to 1 while the road forks.
 @ $A26A label=quit_state
 B $A26A,1,1 0 if not quitting, or 1/2 depending on quit state
 @ $A26B label=start_speech
@@ -7684,9 +7684,7 @@ C $B97B,3 A = forked_road_visible
 C $B97E,1 Set flags
 C $B97F,1 A = *HL
 C $B980,2 Jump if zero
-C $B982,3 A = var_a269
-C $B985,1 Set flags
-C $B986,2 Jump if zero
+C $B982,6 Jump if var_a269 is zero
 C $B988,5 Check fork_taken
 C $B98D,2 Jump if left fork was taken
 C $B98F,2 A = -A
@@ -7797,9 +7795,9 @@ C $BA64,3 A = *DE & 4  -- DE is the lanes byte ptr
 C $BA67,2 Jump if non-zero
 N $BA69 Lanes byte & 4 is zero. Hit when the road forks (during the fork itself).
 C $BA69,4 A = var_a269 - 1
-C $BA6D,2 Jump if zero
-C $BA6F,2 A = -A
-C $BA71,3 var_a269 = A
+C $BA6D,2 Jump to lr_check_spawning if zero
+N $BA6F Otherwise A has 255? NEG turns that back to zero. Why not XOR A which is shorter?
+C $BA6F,5 var_a269 = -var_a269 + 1 = ~var_a269
 C $BA74,4 Get road position
 C $BA78,2 A = 1
 C $BA7A,1 D--
@@ -7830,6 +7828,7 @@ C $BAA7,3 -> Raymond: "WHAT ARE YOU DOING MAN!!" / "THE BAD GUYS ARE GOING THE O
 @ $BAAA label=lr_chatter
 C $BAAA,5 Call chatter (with priority 20)
 C $BAAF,1 Restore HL (holds fork_distance)
+@ $BAB0 label=lr_check_spawning
 C $BAB0,3 Load allow_spawning
 C $BAB3,3 Jump to lr_bacc if zero
 N $BAB6 allow_spawning is non-zero.
@@ -7918,7 +7917,7 @@ C $BB6E,4 A = fork_taken - 1
 C $BB72,2 Jump if A is zero (right fork taken)
 N $BB74 Set up left route.
 @ $BB74 label=ef_left
-C $BB74,3 D,E = $FC,$01  (curvature = super super hard left?, lanes = 1?)
+C $BB74,3 D,E = $FC,$01  (curvature byte -4 => super hard (?) left turn, lanes byte = 1)
 C $BB77,1 Save for later
 C $BB78,6 road_leftside_ptr  = #R$E2D9
 C $BB7E,6 road_rightside_ptr = #R$E2D5
@@ -7934,7 +7933,7 @@ C $BB9D,2 A = 64  -- additional offset into road buffer (presumably left objects
 C $BB9F,2 Jump to ef_set_handlers
 N $BBA1 Set up right route.
 @ $BBA1 label=ef_right
-C $BBA1,3 D,E = $04,03  (curvature = super super hard right?, lanes = 3?)
+C $BBA1,3 D,E = $04,$03  (curvature byte +4 => super hard (?) right turn, lanes byte = 3)
 C $BBA4,1 Save for later
 C $BBA5,6 road_leftside_ptr  = #R$E2D5
 C $BBAB,6 road_rightside_ptr = #R$E2D9
@@ -7972,17 +7971,17 @@ N $BC0C Zero the 32 bytes at #REGhl + 64 + #REGc (the additional offset that was
 C $BC0E,1 E = 0, since B is zero
 @ $BC11 label=ef_set_objects_loop
 C $BC15,5 curvature_byte     = 0
-C $BC1A,3 height_byte        = 0
-C $BC1D,3 leftside_byte      = 0
-C $BC20,3 rightside_byte     = 0
-C $BC23,3 hazards_byte       = 0
-C $BC26,3 lanes_counter_byte = 0
-C $BC29,3 var_a269           = 0
-C $BC2C,3 fork_taken         = 0
+C $BC1A,3 height_byte         = 0
+C $BC1D,3 leftside_byte       = 0
+C $BC20,3 rightside_byte      = 0
+C $BC23,3 hazards_byte        = 0
+C $BC26,3 lanes_counter_byte  = 0
+C $BC29,3 var_a269            = 0
+C $BC2C,3 fork_taken          = 0
 C $BC2F,3 forked_road_visible = 0
 C $BC32,4 no_objects_counter = 1
-C $BC36,3 var_a16d           = 1
-C $BC39,4 fork_distance      = 0  [B & C are zero here]
+C $BC36,3 var_a16d            = 1
+C $BC39,4 fork_distance       = 0  [B & C are zero here]
 C $BC3D,1 Return
 c $BC3E Copies the backbuffer at $F000 to the screen
 D $BC3E Used by the routines at #R$8014, #R$8258, #R$8401, #R$858C, #R$873C and #R$F220.
