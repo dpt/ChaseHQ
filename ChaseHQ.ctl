@@ -103,7 +103,7 @@
 > $4000 ; $E336..      is TBD
 > $4000 ; $E410..$E4CF is a road edge/markings table
 > $4000 ; $E4D0..$E4FF is road lane markings
-> $4000 ; $E500        is TBD
+> $4000 ; $E500        is road bending tables
 > $4000 ; $E600..$E80F is road drawing scaling tables (3x8 groups of 22 bytes)
 > $4000 ; $E830..$E8FF is 104 words for road drawing (left)
 > $4000 ; $E900        is a table
@@ -10825,7 +10825,7 @@ N $E3BC Circle expanding animation mask (8x8, 7 frames)
 N $E3BC #HTML[#CALL:anim($E3BC,8,8,0,0,7)]
 N $E3BC #HTML[#CALL:graphic($E3BC,8,7*8,0,0)]
 B $E3BC,56,8
-b $E3F4 TBD
+u $E3F4 Unused
 B $E3F4,28,8*3,4
 b $E410 Road edge markings
 D $E410 Six sets of 16x8 pixels. Masked. Stored bottom up. 32 bytes each.
@@ -10851,10 +10851,13 @@ N $E4E0 #HTML[#CALL:graphic($E4E0,16,8,0,1)]
 B $E4E0,16,8
 N $E4F0 #HTML[#CALL:graphic($E4F0,16,8,0,1)]
 B $E4F0,16,8
-b $E500 TBD
-B $E500,64,8
+b $E500 A table of 32 words being (some function)
+D $E500 This is the table, used for forking roads, that bends the road horizontally away from the centre of the screen, as it disappears into the distance.
+@ $E500 label=outward_bend_table
+W $E500,64,2
 w $E540 A table of 96 words being 10^x or similar function
-D $E540 Distance horizontal shift? Field of view table? It affects the horizontal position of the road.
+D $E540 This is the table, used for regular roads, that bends the road horizontally towards the centre of the screen as it disappears into the distance.
+@ $E540 label=inward_bend_table
 W $E540,192,2
 b $E600 Data block at E600
 D $E600 Seems to be 3x8 groups of 22 bytes. Clearly it's a set of scaling tables. Perhaps drives the stretching of stretchy graphics.
