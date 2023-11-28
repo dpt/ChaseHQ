@@ -112,7 +112,7 @@
 > $4000 ; $EA30..$EAFF is 104 words for road drawing (centre)
 > $4000 ; $EB00..$EB27 is the square zoom-in mask
 > $4000 ; $EB30..$EBFF is 104 words for road drawing (centre right)
-> $4000 ; $EC00        is ?
+> $4000 ; $EC00..$EC2F is TBD (transition uses this)
 > $4000 ; $EC30..$ECFF is 104 words for road drawing (right)
 > $4000 ; $ED28        is the stack (growing downwards)
 > $4000 ; $ED30..?     is (possibly another 104 word road drawing buffer)
@@ -2103,7 +2103,7 @@ C $828B,7 Blinking on/off self modified pattern
 C $8292,3 #REGhl -> credits_messages
 C $8295,2 Skip next LD HL based on blink above
 C $8297,3 #REGhl -> copyright_messages
-C $829A,3 Call message_printing_related
+C $829A,3 Call setup_overlay_messages
 C $829D,3 Call transition
 C $82A0,3 Call draw_screen
 C $82A3,3 Loop
@@ -2562,7 +2562,7 @@ C $8764,3 Call chatter (priority $FF)
 N $8767 Print "GAME OVER" once the transition has completed.
 @ $8767 label=es_loop
 C $8767,3 Address of game_over_message
-C $876A,8 If transition_control != 4 Call message_printing_related
+C $876A,8 If transition_control != 4 Call setup_overlay_messages
 C $8772,3 Call read_map
 C $8775,3 Call build_height_table
 C $8778,3 Call scroll_horizon
@@ -2843,8 +2843,8 @@ C $8AC1,3 Self modify 'LD A' @ #R$8ABE to load A
 C $8AC4,1 Return if A != 0
 C $8AC5,5 perp_caught_phase = 4
 C $8ACA,3 Point #REGhl at addrof_arrest_messages
-C $8ACD,2 A = 1         -- transition_control byte
-C $8ACF,3 Jump to j_8e80   -- inside message_printing_related
+C $8ACD,2 Set transition_control to 1 (draw mugshots)
+C $8ACF,3 Exit via setup_overlay_messages_with_A
 @ $8AD2 label=hpc_phase4
 C $8AD2,7 Call relocated f39f_128k if in 128K mode
 C $8AD9,5 Return if transition_control != 0
@@ -2915,7 +2915,7 @@ C $8B82,2 Loop hpc_loop_3 while B
 C $8B84,1 HL--
 C $8B85,2 *HL |= 1<<7
 C $8B87,3 Point at "CLEAR BONUS - TIME BONUS - SCORE" messages
-C $8B8A,3 Call message_printing_related
+C $8B8A,3 Call setup_overlay_messages
 @ $8B8D label=hpc_phase1
 C $8B8D,3 Load the perp car's horizontal position (byte)
 C $8B90,3 Is it 35?
@@ -2998,7 +2998,7 @@ C $8C3F,4 Show the "stop" hand (hand_flag = 2)
 C $8C43,5 Set smash_counter to 20
 C $8C48,5 Set user input mask to (Quit+Pause) to inhibit player control
 C $8C4D,3 Print the "OK! PULL OVER CREEP!" message
-C $8C50,3 Call message_printing_related
+C $8C50,3 Call setup_overlay_messages
 C $8C53,3 #REGde = $190
 C $8C56,2 Exit via hpc_set_perp_pos
 b $8C58 End of level messages
@@ -3076,41 +3076,51 @@ W $8D83,2,2 Attribute address
 @ $8D85 label=credit_n
 T $8D85,8,7:n1 "CREDIT  "
 B $8D8D,2,2
-c $8D8F Drives transitions (fades)
+c $8D8F Drives transitions (scene fades)
 D $8D8F Used by the routines at #R$8014, #R$8258, #R$8401, #R$858C, #R$873C and #R$F220.
 @ $8D8F label=transition
-C $8D8F,3 Check transition_control
-C $8D92,2 Exit early if its zero
-C $8D94,1 Decrement it
-C $8D95,8 If zero, call draw_mugshots
-C $8D9D,3 Call fill_attributes
-C $8DA0,3 A = <self modified> - 1
+C $8D8F,3 Load transition_control
+C $8D92,2 Exit early if it's zero
+C $8D94,4 If transition_control was 1, call draw_mugshots
+C $8D98,4 If transition_control was 2, call draw_overlay_messages
+C $8D9C,4 If transition_control was 3, call fill_attributes
+N $8DA0 Otherwise transition_control was 4.
+C $8DA0,3 A = <self modified> - 1  -- Self modified by #R$8E18, and below
 C $8DA3,3 Self modify above
+C $8DA6,2 Jump if non-zero
 C $8DA8,3 transition_control = A
-C $8DAD,3 }
-C $8DB0,4 Move to next frame? (self modified)
-C $8DB4,9 Set anim address? (self modify)
+C $8DAB,2 Jump to t_8db7
+@ $8DAD label=t_8dad
+C $8DAD,3 Read #R$8DBA below
+C $8DB0,3 Load offset  -- Self modified by #R$8E07
+C $8DB3,1 Move to next frame
+C $8DB4,3 Set anim address? (self modify)
+@ $8DB7 label=t_8db7
+C $8DB7,2 H = $FF  -- row counter
+C $8DB9,1 Bank
+C $8DBA,3 HL = <self modified>  -- Self modified by #R$8E1F, and above
 C $8DBD,2 8 chunks
-@ $8DBF label=transition_loop
+@ $8DBF label=t_loop
 C $8DBF,1 Fetch a byte of anim?
-C $8DC0,1 Bank
-C $8DC1,1 Get it into #REGe
+C $8DC0,1 Unbank
+C $8DC1,1 Get it into #REGe (value ORred in)
 C $8DC2,1 Preserve H in D (which is safe)
 C $8DC3,2 Reset ptr
-C $8DC5,3 Draw a chunk
+C $8DC5,3 Draw all even? chunks
 C $8DC8,2 Reset ptr
-C $8DCA,1 Move up (screen-wise) by 8
-C $8DCE,3 Draw a chunk
+C $8DCA,4 Move up (screen-wise) by 8
+C $8DCE,3 Draw all odd? chunks
 C $8DD1,2 H = D - 1 -- drop down 1 row
-C $8DD3,1 Unbank
+C $8DD3,1 Bank
 C $8DD4,1 Next byte of anim
 C $8DD5,2 Loop
 C $8DD7,1 Return
-@ $8DD8 label=fade_chunk
+N $8DD8 Fade odd/even UDG rows of the screen with a single byte.
+@ $8DD8 label=t_fade_chunk
 C $8DD8,2 8 rows
-@ $8DDA label=fade_row_loop
-C $8DDA,2 6 iterations (of 5 each) = 30 bytes written (~ a scanline)
-@ $8DDC label=fade_column_loop
+@ $8DDA label=t_fade_row_loop
+C $8DDA,2 6 iterations (of 5 ops each in the loop below) = 30 bytes written (~ a scanline)
+@ $8DDC label=t_fade_column_loop
 C $8DDC,3 OR #REGe into the screen pixels
 C $8DDF,17 Repeat another four times
 C $8DF0,2 Loop
@@ -3119,21 +3129,22 @@ C $8DF4,4 Loop
 C $8DF8,1 Return
 c $8DF9 Seems to setup a transition
 D $8DF9 Used by the routines at #R$8014, #R$8401, #R$858C, #R$873C, #R$87DC, #R$8A57 and #R$F220.
-R $8DF9 I:A ?
+R $8DF9 I:A $08 or $F8 to animate forwards or backwards respectively.
 @ $8DF9 label=setup_transition
 C $8DF9,1 Set flags from #REGa
-C $8DFA,3 #REGbc = #REGa
-C $8DFD,3 Points to some data TBD
+C $8DFA,3 Widen #REGa to #REGbc
+C $8DFD,3 Points to first half of table
 C $8E00,3 Jump over if #REGa was +ve
-C $8E03,1 #REGb = $FF
-C $8E04,3 Points to some data TBD
-@ $8E07 label=dunno_jump
-C $8E07,4 Self modify
-C $8E0B,3 Call random
-C $8E0E,2 Mask 0..3
+C $8E03,1 #REGb = $FF to make #REGbc properly negative
+C $8E04,3 Points to second half of table
+@ $8E07 label=st_set_offset
+C $8E07,4 Self modify "LD DE,x" at #R$8DB0 to load BC
+N $8E0B Pick a random entry in the table.
+C $8E0B,5 Get a random number 0..3
 C $8E10,7 HL = A * 3 + DE
-C $8E18,3 Self modify
-C $8E1B,4 Load DE from HL
+C $8E17,1 Load first byte from entry
+C $8E18,3 Self modify "LD A,x" at #R$8DA0 to load A
+C $8E1B,4 DE = wordat(++HL)
 C $8E1F,4 Set transition animation start address
 C $8E23,2 4 frames of animation? 4 states?
 C $8E25,3 transition_control = A
@@ -3153,28 +3164,27 @@ C $8E3B,1 Row counter--
 C $8E3C,2 Loop until it hits zero
 C $8E3E,3 transition_control = 0
 C $8E41,1 Return
-c $8E42 Subroutine
+c $8E42 Draw overlay messages
 D $8E42 Used by the routines at #R$8D8F and #R$8E91.
-@ $8E42 label=sub_8e42
+@ $8E42 label=draw_overlay_messages
 C $8E42,3 Address of current message thing (frame delay, flags, attrs, bufaddr, attraddr, string)
 C $8E45,2 B = 0 -- self modified by (#R$8E58 increments it), (#R$8E8D resets it to 1)
-@ $8E47 label=sub_8e47_loop
-C $8E47,2 sub_8e42_1
-C $8E49,2 A = 20 -- self modified by #R$8E4C, #R$8E51, (#R$8E84 resets it perhaps)
+@ $8E47 label=dom_loop
+C $8E47,2 Loop? to dom_1
+C $8E49,2 A = <self modified> frame delay. Self modified by #R$8E4C, #R$8E51, (#R$8E84 sets it)
 C $8E4B,1 A--
-C $8E4C,3 Self modify #R$8E49
+C $8E4C,3 Self modify #R$8E49 above
 C $8E4F,1 Return if non-zero
 C $8E50,1 A = *HL
-C $8E51,3 Self modify #R$8E49
+C $8E51,3 Self modify #R$8E49 above
 C $8E54,7 Increment operand of #R$8E45, affects TIME UP state if disabled
 C $8E5B,1 B++
-@ $8E5C label=sub_8e42_1
-C $8E5C,1 HL++
-C $8E5D,1 A = *HL
-C $8E5E,1 test flags
-C $8E5F,2 jump if zero
+@ $8E5C label=dom_1
+C $8E5C,2 A = *++HL
+C $8E5E,3 Jump to dom_2 if A is zero
 C $8E61,3 Call print_message
-C $8E64,2 Loop?
+C $8E64,2 Loop to dom_loop
+@ $8E66 label=dom_2
 C $8E66,5 transition_control = HL[-1]
 C $8E6B,1 Return
 c $8E6C Print a message
@@ -3192,17 +3202,19 @@ N $8E79 #REGhl now points at the string.
 C $8E79,3 Call alt draw_string entry point
 C $8E7C,1 Restore #REGbc
 C $8E7D,1 Return
-c $8E7E Message printing related, called for TIME UP, CONTINUE, etc. messages
+c $8E7E Setup overlay messages
+D $8E7E Called for TIME UP, CONTINUE, BEST OFFICERS, etc. messages.
 D $8E7E Used by the routines at #R$8258, #R$873C, #R$8A57, #R$8C3A, #R$9BCF, #R$B4CC and #R$F220.
-R $8E7E I:HL -> something  e.g. -> credits_messages
-@ $8E7E label=message_printing_related
-C $8E7E,2 A = 2  -- new value for transition_control
+R $8E7E I:HL Address of a message structure, e.g. credits_messages. [One beginning with a frame delay.]
+@ $8E7E label=setup_overlay_messages
+C $8E7E,2 Set transition_control to 2 (show overlay)
 N $8E80 This entry point is used by the routine at #R$8A57.
-@ $8E80 label=j_8e80
+@ $8E80 label=setup_overlay_messages_with_A
 C $8E80,3 Set transition_control to #REGa
-C $8E83,4 Modify 'LD A' @ #R$8E49 with frame delay
-C $8E87,4 Modify 'LD HL' @ #R$8E42 to be message struct e.g. $82CD
-C $8E8B,5 Modify 'LD B' @ #R$8E45 to be 1
+C $8E83,4 Modify 'LD A,x' @ #R$8E49 with frame delay
+N $8E87 Set the overlay message structure address.
+C $8E87,4 Modify 'LD HL,x' @ #R$8E42 to be a (different type) message struct address, e.g. $82CD
+C $8E8B,5 Modify 'LD B,x' @ #R$8E45 to be 1
 C $8E90,1 Return
 c $8E91 Copies the mugshots onto the screen when perp is caught
 D $8E91 Used by the routine at #R$8D8F.
@@ -3219,7 +3231,7 @@ C $8EA9,3 Load end address of Raymond's mugshot bitmap into #REGhl
 C $8EAC,3 Final byte of bitmap (back buffer)
 C $8EAF,3 Screen position (200,104)
 C $8EB2,3 Draw
-C $8EB5,2 Exit via sub_8e42
+C $8EB5,2 Exit via draw_overlay_messages
 c $8EB7 Draws a mugshot
 D $8EB7 Used by the routine at #R$8E91.
 R $8EB7 I:BC Screen position (used for attributes)
@@ -4505,7 +4517,7 @@ C $9C15,4 user_input_mask = $FF (allow all keys)
 C $9C19,2 Loop back to #R$9BF9
 @ $9C1B label=tick_time_up
 C $9C1B,3 Point at "TIME UP" message
-C $9C1E,3 Call message_printing_related
+C $9C1E,3 Call setup_overlay_messages
 C $9C21,6 Return if speed > 0
 C $9C27,5 time_up_state = 2
 C $9C2C,2 Index of "Your time's up" speech sample
@@ -4537,7 +4549,7 @@ C $9C79,2 Index of start noise sample
 C $9C7B,3 Exit via play_speech_hook
 @ $9C7E label=tick_print_continue
 C $9C7E,3 Print "CONTINUE THIS MISSION" messages
-C $9C81,3 Call message_printing_related
+C $9C81,3 Call setup_overlay_messages
 C $9C84,3 <self modified>
 C $9C87,1 H--
 C $9C8A,2 H = 6
@@ -7208,7 +7220,7 @@ C $B4DB,6 time_sixteenths/$A17D = 15, time_bcd/$A17E = $60
 C $B4E1,3 Point #REGhl at left light's attributes
 C $B4E4,3 Toggle its brightness
 C $B4E7,3 Point at "SIGHTING OF TARGET VEHICLE" message
-C $B4EA,3 Call message_printing_related
+C $B4EA,3 Call setup_overlay_messages
 C $B4ED,3 Exit via start_siren_hook
 c $B4F0 Smash handling
 @ $B4F0 label=smash
@@ -10908,8 +10920,24 @@ C $E882,3 Becomes turbo_sfx_play_hook
 C $E885,3 Becomes engine_sfx_setup_hook
 C $E888,3 Becomes play_speech_hook
 C $E88B,3 Becomes attract_mode_hook
+N $E88E Copied to $EC00
 @ $E88E label=data_e88e
-B $E88E,24,3 Copied to $EC00
+B $E88E,1,1
+W $E88F,2,2
+B $E891,1,1
+W $E892,2,2
+B $E894,1,1
+W $E895,2,2
+B $E897,1,1
+W $E898,2,2
+B $E89A,1,1
+W $E89B,2,2
+B $E89D,1,1
+W $E89E,2,2
+B $E8A0,1,1
+W $E8A1,2,2
+B $E8A3,1,1
+W $E8A4,2,2
 N $E8A6 Square zoom in animation mask (8x8, 5 frames)
 N $E8A6 #HTML[#CALL:anim($E8A6,8,8,0,0,5)]
 N $E8A6 #HTML[#CALL:graphic($E8A6,8,5*8,0,0)]
@@ -11736,7 +11764,7 @@ C $F478,3 Call setup_transition
 C $F47D,3 -- must be messages ptr below ($8208+165 means ?)
 C $F482,3 -- must be messages ptr below ($8208+263 means ?)
 @ $F485 label=f485_128k
-C $F485,3 Call message_printing_related
+C $F485,3 Call setup_overlay_messages
 @ $F488 label=f488_128k
 C $F488,3 Call transition
 C $F48B,3 Call draw_screen
