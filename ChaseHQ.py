@@ -168,16 +168,29 @@ class ChaseHQWriter:
                     lasttype = type_
 
     def map_lanes(self, cwd, base):
+        # If not noted then the respective byte is used by Stage 1. If "Poke"
+        # then it was discovered by altering the game.
+        #
+        #                                  [  * ] is car's default position
         lanesmap = {0x00: "Four lanes      [||||] {00}",
+                    0x01: "Two lanes       [||]   {01}", # Poke
+                    0x02: "Two lanes        [||]  {02}", # Poke
+                    0x03: "Two lanes         [||] {03}", # Stage 5
+                    0x06: "Narrowing 3-2 L [/||]  {06}", # Poke
+                    0x0D: "Narrowing 3-2 L[/||]   {0D}", # Poke (left flickers)
+                    0x0F: "Narrowing 3-2 L  [/||] {0F}",
+                    0x1F: "Widening 2-3 L   [\||] {1F}",
                     0x45: "Tunnel start           {45}",
                     0x59: "Tunnel cont/end?       {59}",
-                    0x81: "Three lanes     [|||_] {81}",
-                    0x82: "Three lanes     [_|||] {82}",
+                    0x81: "Three lanes     [|||]  {81}",
+                    0x82: "Three lanes      [|||] {82}",
                     0x8E: "Narrowing 4-3 L [/|||] {8E}",
                     0x9E: "Widening 3-4 L  [\|||] {9E}",
                     0xAD: "Widening 3-4 R  [|||/] {AD}",
                     0xBD: "Narrowing 4-3 R [|||\] {BD}",
-                    0xC1: "Dirt track             {C1}"}
+                    0xC1: "Dirt track      [||||] {C1}",
+                    0xC2: "Dirt track       [|||] {C2}", # Poke
+                    0xC3: "Dirt track        [||] {C3}"} # Poke (stones on verge)
         return self.decode_count_rle(cwd, base, "lanes", lanesmap, showlength=True, follow=True)
 
     def decode_hazards(self, cwd, base, typename, names, showlength, follow):
