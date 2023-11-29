@@ -207,7 +207,7 @@ C $5B4C,1 Restore command list address
 C $5B4D,2 Process next entry
 N $5B4F Subroutine that loads #REGde bytes to address #REGix.
 @ $5B4F label=loader_load_chunk
-C $5B4F,3 Call tape_load
+C $5B4F,3 Call tape_load_at_ix
 C $5B52,1 Return if no errors
 N $5B53 Infinitely cycle through border colours if a tape loading error occurred.
 @ $5B53 label=loader_load_failed
@@ -1872,7 +1872,7 @@ C $802B,2 Transition type?
 C $802D,3 Call setup_transition
 C $8032,3 Call TBD subroutine
 C $8035,4 IX = &hazards[1]
-C $803C,3 Call tape_load subroutine
+C $803C,3 Call tape_load_at_ix subroutine
 C $803F,2 loop while failed perhaps?
 C $8041,3 #REGhl = &hazards[1]
 C $8044,1 Load used flag [doesn't add up - this is a level number?]
@@ -1886,13 +1886,13 @@ C $8050,3 #REGa = wanted_stage_number
 C $8053,1 equal?
 C $8054,2 not the wanted stage
 C $8056,3 Call TBD subroutine
-C $8059,3 Call tape_load_5C00
+C $8059,3 Call tape_load_at_5c00
 N $805E Success - must have loaded the correct level data.
 C $805E,3 Set border to black
 C $8061,3 Call clear_screen_set_attrs
 C $8064,3 Call clear_game_attrs
 C $8067,3 HL -> "STOP THE TAPE" message structure
-C $806C,3 Call sub_8098
+C $806C,3 Call ls_8098
 C $806F,1 Preserve ?
 N $8070 Wait for a keypress - debounce.
 C $8070,3 Call keyscan
@@ -1902,23 +1902,23 @@ C $807A,4 Loop while key pressed
 C $8080,3 Call setup_transition
 C $8083,1 Restore ?
 C $8084,2 B = 2
-C $8086,2 Exit via sub_8098
-@ $8088 label=sub_8088
+C $8086,2 Exit via ls_8098
+@ $8088 label=ls_8088
 C $8088,3 Point #REGhl at "START TAPE" message structure
 C $808B,4 A = wanted_stage_number - 1
 C $808F,2 Jump if > 0
 N $8091 This entry point is used by the routine at #R$E810.
 C $8092,3 Point #REGhl at tape_messsages
-@ $8095 label=sub_8095
+@ $8095 label=ls_8095
 C $8095,3 why call adjacent instr? to exec this func twice?
-@ $8098 label=sub_8098
+@ $8098 label=ls_8098
 C $8098,1 preserve counter
 C $8099,1 preserve message pointer
-@ $809A label=sub_809A
+@ $809A label=ls_809A
 C $809A,2 flags byte for print_message
 C $809C,1 why dec here?
 N $809D This entry point is used by the routine at #R$F220.
-@ $809D label=sub_809D
+@ $809D label=ls_809D
 C $809D,3 Call print_message
 C $80A0,2 printing a whole set by looping?
 C $80A2,3 Call transition
@@ -1932,10 +1932,10 @@ C $80AF,8 Delay loop
 C $80B7,2 Loop
 c $80B9 Tape loading
 D $80B9 Used by the routine at #R$8014.
-@ $80B9 label=tape_load_5C00
+@ $80B9 label=tape_load_to_5c00
 C $80B9,7 Setup to load a block at $5C00 of length $1AF0
 N $80C0 This entry point is used by the routine at #R$5B00. IX = address DE = bytes
-@ $80C0 label=tape_load
+@ $80C0 label=tape_load_at_ix
 C $80C0,1 D++
 C $80C1,2 A = 152
 C $80C3,1 Set carry flag
@@ -1949,28 +1949,41 @@ C $80CD,1 why shift?
 C $80CE,2 Check EAR input bit 6
 C $80D0,2 set border?
 C $80D3,1 A == A ?
-C $80D5,3 Call sub_814b
+@ $80D4 label=tl_80d4
+@ $80D5 label=tl_80d5
+C $80D5,3 Call tl_delay_814b
 C $80DA,3 Delay time
+@ $80DD label=tl_delay
 C $80DD,2 Delay for B iterations -- is B not initialised?
 C $80DF,1 HL--
 C $80E0,4 Loop while HL > 0
-C $80E4,3 Call sub_8147
+C $80E4,3 Call tl_8147
+@ $80E9 label=tl_80e9
 C $80E9,2 B = 156
-C $80EB,3 Call sub_8147
+C $80EB,3 Call tl_8147
 N $80EE This entry point is used by the routine at #R$E810.
+@ $80EE label=tl_80ee
 C $80F0,2 A = 198
+@ $80F8 label=tl_80f8
 C $80F8,2 B = 201
-C $80FA,3 Call sub_814b
+C $80FA,3 Call tl_delay_814b
 C $8100,2 212
-C $8104,3 Call sub_814b
+C $8104,3 Call tl_delay_814b
 C $8108,4 A = C ^= 3
 C $810E,2 B = 176
+@ $8112 label=tl_8112
 C $8113,2 wuuuut?
+@ $8117 label=tl_8117
+@ $811C label=tl_811c
 C $811E,1 A ^= L
 C $8120,3 RR C and copy to A?
 C $8123,1 DE++
+@ $8126 label=tl_8126
+@ $8128 label=tl_8128
 C $812A,2 B = 178
-C $812E,3 Call sub_8147
+@ $812C label=tl_812c
+@ $812E label=tl_812e
+C $812E,3 Call tl_8147
 C $8132,2 A = 200
 C $8137,2 B = 176
 C $813C,2 A = H ^ L
@@ -1979,10 +1992,13 @@ C $813F,4 Loop while DE > 0
 C $8143,1 Restore A
 C $8144,2 Is it 1?
 C $8146,1 Return (with flags?)
-@ $8147 label=sub_8147
-@ $814B label=sub_814b
+@ $8147 label=tl_8147
+C $8147,3 Call tl_delay_814b
+@ $814B label=tl_delay_814b
+@ $814D label=tl_delay_814d
 C $814B,5 Delay loop of 22 iterations
 C $8150,1 Clear carry flag
+@ $8151 label=tl_8151
 C $8151,1 what's in B?
 C $8152,1 Return if zero (failure)
 C $8153,2 %01111111
@@ -2839,7 +2855,7 @@ C $8ABB,3 Exit via fill_attributes
 @ $8ABE label=hpc_phase3
 C $8ABE,2 Self modified by #R$8AB8 above
 C $8AC0,1 A--
-C $8AC1,3 Self modify 'LD A' @ #R$8ABE to load A
+C $8AC1,3 Self modify 'LD A' at #R$8ABE to load A
 C $8AC4,1 Return if A != 0
 C $8AC5,5 perp_caught_phase = 4
 C $8ACA,3 Point #REGhl at addrof_arrest_messages
@@ -3094,7 +3110,7 @@ C $8DAB,2 Jump to t_8db7
 C $8DAD,3 Read #R$8DBA below
 C $8DB0,3 Load offset  -- Self modified by #R$8E07
 C $8DB3,1 Move to next frame
-C $8DB4,3 Set anim address? (self modify)
+C $8DB4,3 Set anim address? (Self modify #R$8DBA below)
 @ $8DB7 label=t_8db7
 C $8DB7,2 H = $FF  -- row counter
 C $8DB9,1 Bank
