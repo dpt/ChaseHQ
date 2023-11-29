@@ -2265,7 +2265,7 @@ C $8465,3 Call scroll_horizon
 C $8468,3 Call engine_sfx_play_hook
 C $846B,3 Call layout_road
 C $846E,3 Call engine_sfx_play_hook
-C $8471,3 Call main_loop_13
+C $8471,3 Call draw_road
 C $8474,3 Call engine_sfx_play_hook
 C $8477,3 Call main_loop_14
 C $847A,3 Call tunnel_setup
@@ -2357,7 +2357,7 @@ C $855F,3 Call cycle_counters
 C $8562,3 Call build_height_table
 C $8565,3 Call scroll_horizon
 C $8568,3 Call layout_road
-C $856B,3 Call main_loop_13
+C $856B,3 Call draw_road
 C $856E,3 Call main_loop_14
 C $8571,3 Call tunnel_setup
 C $8574,3 Call spawn_hazards
@@ -2583,7 +2583,7 @@ C $8772,3 Call read_map
 C $8775,3 Call build_height_table
 C $8778,3 Call scroll_horizon
 C $877B,3 Call layout_road
-C $877E,3 Call main_loop_13
+C $877E,3 Call draw_road
 C $8781,3 Call main_loop_14
 C $8784,3 Call tunnel_setup
 C $8787,3 Call spawn_hazards
@@ -8852,9 +8852,9 @@ C $C44C,1 A -= L
 C $C44D,1 Stack DE
 C $C44E,2 Loop
 C $C450,2 Jump to exit
-c $C452 Landscape related
+c $C452 Draws the road
 D $C452 Used by the routines at #R$8401, #R$852A and #R$873C.
-@ $C452 label=main_loop_13
+@ $C452 label=draw_road
 C $C452,4 Self modify #REGsp restore instruction
 C $C456,4 on_dirt_track = 0
 C $C45A,3 Self modify 'LD A,x' @ #R$C160 to be zero (tunnel drawing code)
@@ -8889,7 +8889,7 @@ C $C4A6,3 DE = $0100
 C $C4A9,1 A = B
 C $C4AA,3 Self modify 'LD A,x' @ #R$C6BC to be zero?
 N $C4AD This entry point is used by the routine at #R$C598.
-C $C4AD,5 A = IX[0] & 3
+C $C4AD,5 A = IX[0] & 3  -- lanes byte & 3
 C $C4B2,3 Jump to <self modified> if zero
 C $C4B5,1 Bank
 C $C4B6,3 L = IX[0] -- sampled IX=$EEFD $EEFE $EEFF $EE00 .. etc.
@@ -8900,6 +8900,7 @@ C $C4C1,1 H = A
 C $C4C2,2 L <<= 1
 C $C4C4,2 New bit 7 set?
 C $C4C6,2 Jump if set  -- Forked road plotting path
+C $C4C8,2 Old bit 7 was set?
 C $C4CA,2 A &= 3
 C $C4CC,2 C = $FD
 C $C4CE,3 Jump
@@ -8983,20 +8984,17 @@ C $C574,1 Put it in #REGsp (so we can use PUSH for speed)
 C $C575,3 HL = 0  [not self modified apparently]
 C $C578,1 C = L
 C $C579,3 Jump into a sequence of 15 PUSH HLs
-c $C57C smells like scanline/buffer pointer movement
-D $C57C Used by the routine at #R$C598.
+N $C57C smells like scanline/buffer pointer movement
 C $C57C,4 E -= 32
 C $C580,3 Jump if it went -ve
 C $C583,4 D += 16
 C $C587,3 jump
-c $C58A ditto
-D $C58A Used by the routine at #R$C452.
+N $C58A smells like scanline/buffer pointer movement
 C $C58A,4 E -= 32
 C $C58E,3 Jump if it went -ve
 C $C591,4 D += 16
 C $C595,3 jump
-c $C598 Road and backdrop plotting
-D $C598 Used by the routine at #R$C452.
+N $C598 Road and backdrop plotting
 C $C598,1 Bank
 C $C599,6 Self modify 'JP NZ,x' @ #R$C6AD to be #R$C5A1
 C $C59F,1 Unbank
