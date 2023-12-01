@@ -2248,7 +2248,7 @@ C $842E,7 start_speech = (A * 4) OR 2
 C $8435,4 Test 128K mode flag
 C $8439,5 #R$A188 = $FF -- I suspect this keeps the perp spawned
 C $843E,3 Address of start_chatter
-C $8441,3 Call chatter if not in 128K mode (priority $FF)
+C $8441,3 Call start_chatter if not in 128K mode (priority $FF)
 @ $8444 label=ml_loop
 C $8444,3 Call drive_sfx
 C $8447,3 Call keyscan
@@ -2267,21 +2267,21 @@ C $846B,3 Call layout_road
 C $846E,3 Call engine_sfx_play_hook
 C $8471,3 Call draw_road
 C $8474,3 Call engine_sfx_play_hook
-C $8477,3 Call main_loop_14
-C $847A,3 Call tunnel_setup
-C $847D,3 Call spawn_hazards
+C $8477,3 Call layout_objects
+C $847A,3 Call prepare_tunnel
+C $847D,3 Call spawn_barriers
 C $8480,3 Call helicopter
-C $8483,3 Call draw_stones
+C $8483,3 Call choose_dirt_and_stones
 C $8486,3 Call engine_sfx_play_hook
 C $8489,3 Call draw_hazards
-C $848C,3 Call main_loop_20
+C $848C,3 Call layout_dirt_and_stones
 C $848F,3 Call engine_sfx_play_hook
 C $8492,3 Call move_helicopter
 C $8495,3 Call check_collisions
 C $8498,3 Call engine_sfx_play_hook
-C $849B,3 Call main_loop_23
+C $849B,3 Call draw_everything_else
 C $849E,3 Call engine_sfx_play_hook
-C $84A1,3 Call animate_car
+C $84A1,3 Call animate_hero_car
 C $84A4,3 Call speed_score
 C $84A7,3 Call update_scoreboard
 C $84AA,3 Call overtake_bonus
@@ -2358,16 +2358,16 @@ C $8562,3 Call build_height_table
 C $8565,3 Call scroll_horizon
 C $8568,3 Call layout_road
 C $856B,3 Call draw_road
-C $856E,3 Call main_loop_14
-C $8571,3 Call tunnel_setup
-C $8574,3 Call spawn_hazards
-C $8577,3 Call draw_stones
-C $857A,3 Call main_loop_20
+C $856E,3 Call layout_objects
+C $8571,3 Call prepare_tunnel
+C $8574,3 Call spawn_barriers
+C $8577,3 Call choose_dirt_and_stones
+C $857A,3 Call layout_dirt_and_stones
 C $857D,3 Call draw_hazards
 C $8580,3 Call move_hero_car
 C $8583,3 Call check_collisions
-C $8586,3 Call main_loop_23
-C $8589,3 Exit via animate_car
+C $8586,3 Call draw_everything_else
+C $8589,3 Exit via animate_hero_car
 c $858C Pre-game radio screen ("CHASE HQ MONITORING SYSTEM")
 D $858C Used by the routine at #R$8401.
 @ $858C label=run_pregame_screen
@@ -2379,7 +2379,7 @@ C $859A,3 Call clear_screen_set_attrs
 C $859D,4 Reset car revealing height counter in #R$85E4
 C $85A1,1 Set chatter priority to $FF
 C $85A2,3 Load Nancy's report for this level
-C $85A5,3 Call chatter (priority $FF)
+C $85A5,3 Call start_chatter (priority $FF)
 N $85A8 This entry point is used by the routine at #R$85DD.
 @ $85A8 label=rps_loop
 C $85A8,3 Call draw_pregame
@@ -2574,7 +2574,7 @@ C $874B,11 Initialise hazards[0] (the perp)
 C $8756,6 Set $A191 to the perp's car LOD
 C $875C,5 inhibit_collision_detection = $FF  -- Stops #R$AD0D from running
 C $8761,3 Address of failed_chatter ("wrong job" / "one more try" / "mediocre driver")
-C $8764,3 Call chatter (priority $FF)
+C $8764,3 Call start_chatter (priority $FF)
 N $8767 Print "GAME OVER" once the transition has completed.
 @ $8767 label=es_loop
 C $8767,3 Address of game_over_message
@@ -2584,11 +2584,11 @@ C $8775,3 Call build_height_table
 C $8778,3 Call scroll_horizon
 C $877B,3 Call layout_road
 C $877E,3 Call draw_road
-C $8781,3 Call main_loop_14
-C $8784,3 Call tunnel_setup
-C $8787,3 Call spawn_hazards
+C $8781,3 Call layout_objects
+C $8784,3 Call prepare_tunnel
+C $8787,3 Call spawn_barriers
 C $878A,3 Call draw_hazards
-C $878D,3 Call main_loop_23
+C $878D,3 Call draw_everything_else
 C $8790,3 Call update_scoreboard
 C $8793,3 Call drive_chatter
 C $8796,3 Call transition
@@ -2664,7 +2664,7 @@ C $8894,3 Return if a turbo boost is in effect
 C $8897,5 Return if no turbo boosts are left
 C $889C,2 Set 60 ticks of boost
 C $889E,3 HL -> Random choice of (WHOAAAAA! / GREAT! / ONE MORE TIME.)
-C $88A1,5 Call chatter (priority 2)
+C $88A1,5 Call start_chatter (priority 2)
 C $88A6,3 Exit via turbo_sfx_play_hook
 N $88A9 This entry point is used by the routine at #R$9BCF.
 @ $88A9 label=quit_key
@@ -3340,9 +3340,9 @@ C $8F59,3 Otherwise move to the next chunk of 128 scanlines (would put us outsid
 @ $8F5C label=draw_smash_bar_cont
 C $8F5C,2 Loop while iterations remain
 C $8F5E,1 Return
-c $8F5F Routine at 8F5F
+c $8F5F Draws anything that's not the road or the hero car
 D $8F5F Used by the routines at #R$8401, #R$852A and #R$873C.
-@ $8F5F label=main_loop_23
+@ $8F5F label=draw_everything_else
 C $8F5F,3 Point #REGhl at (something above the stack)
 C $8F62,3 Self modify 'LD HL' @ #R$A9E2 to load the stack address
 C $8F65,6 Self modify 'LD HL' @ #R$AECF to load $E900
@@ -3350,7 +3350,7 @@ N $8F6B Add 32 to the first 21 entries of tables $E301 and $E336. If meddled wit
 C $8F6B,3 HL = $E301
 C $8F6E,3 DE = $E336
 C $8F71,3 B = 21 iterations, C = 32 (added to table entries)
-@ $8F74 label=ml23_loop
+@ $8F74 label=dee_loop
 C $8F74,3 *HL += C
 C $8F77,3 *DE += C
 C $8F7A,1 E++
@@ -3688,6 +3688,7 @@ N $9293 This entry point is used by the routine at #R$916C.
 C $9293,6 A = IX[0] + 16 - B
 C $9299,1 Return if carry (if IX[0] + 16 < B)
 N $929A This entry point is used by the routines at #R$A9DE, #R$AA38 and #R$ADA0.
+@ $929A label=draw_object_left_helicopter_entrypt
 C $929A,3 Return if A < 8
 C $929D,2 C = 0
 C $929F,1 E = *HL
@@ -4223,11 +4224,11 @@ B $9940,1,1 <STOP>
 B $9941,1,1 Tony ($03)
 W $9942,2,2 -> "LET'S GO. MR. DRIVER."
 B $9944,1,1 <STOP>
-c $9945 Set up chatter
+c $9945 Start chatter
 D $9945 Used by the routines at #R$8401, #R$858C, #R$873C, #R$8876, #R$9BCF, #R$A637, #R$A8CD, #R$AB33, #R$B063, #R$B4F0 and #R$B9F4.
 R $9945 I:A Message priority: must be higher than the stored priority for the message to take effect
 R $9945 I:HL Address of message set
-@ $9945 label=chatter
+@ $9945 label=start_chatter
 C $9945,1 Copy priority value to #REGb
 C $9946,3 Load chatter_state into #REGa
 C $9949,3 If chatter_state == 0 (chatter idle) jump forward to #R$9955
@@ -4526,7 +4527,7 @@ C $9BFC,2 Reset time_sixteenths to 15
 C $9BFE,6 Decrement time_bcd [POKE $9C01 for Infinite time]
 C $9C04,3 Return if <> 15s remain
 C $9C07,3 Nancy berating us running out of time message
-C $9C0A,3 Exit via chatter (priority 21)
+C $9C0A,3 Exit via start_chatter (priority 21)
 C $9C0D,4 Is time_bcd zero? Jump to time_up if so
 C $9C11,4 time_up_state = 0
 C $9C15,4 user_input_mask = $FF (allow all keys)
@@ -5368,7 +5369,7 @@ B $A252,1,1
 @ $A253 label=gear
 B $A253,1,1 0 => Low gear, 1 => High gear
 @ $A254 label=allow_spawning
-B $A254,1,1 If non-zero this permits cars and hazards to spawn. It can be 0, 1 or 2, depending on the hero car's speed. Returns to zero when the hero car is stopped.
+B $A254,1,1 If non-zero this permits cars, hazards and dust/stones to spawn. It can be 0, 1 or 2, depending on the hero car's speed. Returns to zero when the hero car is stopped.
 @ $A255 label=distance_bcd
 B $A255,2,2 Distance as BCD (2 bytes / 4 digits, little endian)
 @ $A257 label=var_a257
@@ -5639,16 +5640,16 @@ C $A56E,3 Return if HL >= DE
 C $A571,2 A = $8C
 C $A574,2 A = 1
 C $A576,3 Exit via cc_hit_scenery
-c $A579 Routine at A579
+c $A579 Lays out roadside objects
 D $A579 Used by the routines at #R$8401, #R$852A and #R$873C.
-@ $A579 label=main_loop_14
+@ $A579 label=layout_objects
 C $A579,3 HL = $E34F  -- somewhere in data block $E34B
 C $A57C,2 B = 21  -- iterations
 C $A57E,1 A = 0
-@ $A57F label=ml14_loop1
+@ $A57F label=lo_loop1
 C $A57F,1 A += *HL
 C $A580,2 *HL++ = A
-C $A582,2 Loop ml14_loop1 while B
+C $A582,2 Loop lo_loop1 while B
 C $A584,4 Self modify 'LD SP' @ #R$A60A to restore SP
 C $A588,3 SP = $EB00
 C $A58B,2 Point #REGde at road buffer (somewhere)
@@ -5659,12 +5660,12 @@ C $A593,4 IY = $E34F
 C $A597,2 B = 21
 C $A599,3 A = forked_road_visible
 C $A59C,1 Set flags
-C $A59D,3 Jump to ml14_loop2 if zero [not in forked road]
+C $A59D,3 Jump to lo_loop2 if zero [not in forked road]
 C $A5A0,3 A = fork_countdown
 C $A5A3,1 Set flags
 C $A5A4,2 [not about to fork the road]
 C $A5A6,1 B = A
-@ $A5A7 label=ml14_loop2
+@ $A5A7 label=lo_loop2
 C $A5A7,1 A = *DE
 C $A5A9,1 E = A
 C $A5AA,5 A = ~(IY[0] * 2)
@@ -5675,7 +5676,7 @@ C $A5B7,1 B = *HL
 C $A5B8,1 L--
 C $A5B9,1 C = *HL
 C $A5BB,2 H = $EC
-C $A5BD,2 Jump to ml14_a5da
+C $A5BD,2 Jump to lo_a5da
 C $A5BF,3 H = A + $E7
 N $A5C2 Sampled HL = E869 E865 E863 E861 (road drawing left)
 C $A5C2,1 B = *HL
@@ -5685,21 +5686,21 @@ C $A5CF,2 A = 3
 C $A5D3,2 A = 3
 C $A5D7,1 A--
 C $A5D8,2 H += A
-@ $A5DA label=ml14_a5da
+@ $A5DA label=lo_a5da
 C $A5DA,1 C = *HL
 C $A5DB,1 L++
 C $A5DC,1 B = *HL
 C $A5DF,2 IY++
 C $A5E1,1 E++
-C $A5E2,2 Loop to ml14_loop2 while B
+C $A5E2,2 Loop to lo_loop2 while B
 C $A5E4,3 A = fork_countdown
 C $A5E7,1 Set flags
-C $A5E8,3 Jump to ml14_return if zero
+C $A5E8,3 Jump to lo_return if zero
 C $A5EB,6 A = ~fork_countdown + 22
-C $A5F1,2 Jump to ml14_return if zero
+C $A5F1,2 Jump to lo_return if zero
 C $A5F3,1 B = A
 C $A5F4,2 H = $EB
-@ $A5F6 label=ml14_loop3
+@ $A5F6 label=lo_loop3
 C $A5F6,6 L = ~(IY[0] * 2)
 C $A5FC,1 H--
 C $A5FD,1 D = *HL
@@ -5710,8 +5711,8 @@ C $A602,1 E = *HL
 C $A603,1 L++
 C $A604,1 D = *HL
 C $A606,2 IY++
-C $A608,2 Loop ml14_loop3 while B
-@ $A60A label=ml14_return
+C $A608,2 Loop lo_loop3 while B
+@ $A60A label=lo_return
 C $A60A,3 Restore original stack pointer (self modified above)
 C $A60D,1 Return
 c $A60E Counters
@@ -5889,7 +5890,7 @@ C $A7D3,3 Call bonus
 C $A7D6,2 A = 5
 C $A7D8,3 Self modify 'LD A' @ #R$A73E to load A
 C $A7DB,3 Point #REGhl at smash_chatter ("BEAR DOWN" / "OH MAN" / etc.)
-C $A7DE,3 Call chatter (priority 5)
+C $A7DE,3 Call start_chatter (priority 5)
 C $A7E1,3 BC = $0301
 C $A7E4,3 Exit via start_sfx
 b $A7E7 Data block at A7E7
@@ -6026,40 +6027,42 @@ C $A93D,1 Restore AF
 C $A93E,4 Jump if A < 3
 C $A942,2 A -= 3
 C $A947,3 HL = ouch_chatter
-C $A94A,5 Call chatter (priority 3)
+C $A94A,5 Call start_chatter (priority 3)
 C $A94F,3 BC = $0302
 C $A952,3 Call start_sfx
-c $A955 Draws stones and dirt.
+c $A955 Chooses random dirt and stones (not tumbleweeds though)
 D $A955 Used by the routines at #R$8401 and #R$852A.
-@ $A955 label=draw_stones
+@ $A955 label=choose_dirt_and_stones
 C $A955,5 Return if on_dirt_track is zero
 C $A95A,5 Return if allow_spawning is zero
 C $A95F,3 Point #REGde at (something above the stack)
 C $A962,3 Call rng
-C $A965,8 Stack 1 if it's +ve or zero, or 2 if it's -ve
-C $A96D,3 Call rng
-C $A970,2 Stack that random byte
+@ $A96C label=cdas_store
+C $A965,8 Store 1 (stone) if it's +ve or zero, or 2 (dirt) if it's -ve
+C $A96D,3 Call rng [could be a position?]
+C $A970,2 Store that random byte
 C $A972,5 Self modify 'LD A' @ #R$A97E to load 1
 C $A977,3 Self modify 'LD A' @ #R$C0BB to load 1
 C $A97A,3 Self modify 'LD A' @ #R$A9DE to load 1
 C $A97D,1 Return
-c $A97E main_loop_20
+c $A97E Lays out dirt and stones
+D $A97E This seems to calculate the position of stones on the dirt track section.
 D $A97E Used by the routines at #R$8401 and #R$852A.
-@ $A97E label=main_loop_20
+@ $A97E label=layout_dirt_and_stones
 C $A97E,2 A = <self modified>  -- Self modified by #R$A974
 C $A980,2 Return if #REGa is zero
 C $A982,6 #REGiy = $E361
 C $A988,3 BC = $1400
 C $A98B,3 Point #REGhl at (something above the stack)
 N $A98E Scan through whatever-it-is for a non-zero byte. Move 4 bytes per iteration.
-@ $A98E label=ml20_loop1
+@ $A98E label=ldas_loop1
 C $A98E,1 A = *HL++
 C $A98F,2 Set flags
 C $A991,2 Jump to A9A7 if non-zero
 C $A993,3 HL += 3
-@ $A996 label=ml20_loop1_continue
+@ $A996 label=ldas_loop1_continue
 C $A996,2 IY--
-C $A998,2 Loop to ml20_loop1 while B
+C $A998,2 Loop to ldas_loop1 while B
 C $A99A,1 A = C
 C $A99B,1 Set flags
 C $A99C,1 Return if non-zero
@@ -6071,7 +6074,7 @@ C $A9A7,2 A = *HL++
 C $A9A9,1 C++
 C $A9AB,1 Bank A
 C $A9AC,6 L = ~(IY[1] * 2)
-C $A9B2,2 H = $E8
+C $A9B2,2 H = $E8  -- road drawing (left)
 C $A9B4,1 D = *HL
 C $A9B5,1 L--
 C $A9B6,1 E = *HL
@@ -6082,19 +6085,19 @@ C $A9BB,1 H = *HL
 C $A9BC,1 L = A
 C $A9BD,1 Set flags
 C $A9BF,2 HL -= DE
-C $A9C2,3 HL = $0000
+C $A9C2,3 HL = $0000 [not self modified]
 C $A9C5,1 Unbank A
 N $A9C6 Multiplier.
 C $A9C6,2 B = 8
-@ $A9C8 label=ml20_loop2
+@ $A9C8 label=ldas_loop2
 C $A9C9,3 If carry HL += DE
 C $A9CC,1 HL <<= 1
-C $A9CD,2 Loop to ml20_loop2 while B
+C $A9CD,2 Loop to ldas_loop2 while B
 C $A9CF,1 A = H
 C $A9D1,1 C = A
 C $A9D3,1 HL += BC
 C $A9D7,4 DE = wordat(HL); HL += 2
-C $A9DB,3 Jump to ml20_loop1_continue
+C $A9DB,3 Jump to ldas_loop1_continue
 c $A9DE Dust/Stones stuff
 D $A9DE Used by the routine at #R$8F5F.
 @ $A9DE label=sub_A9DE
@@ -6138,7 +6141,7 @@ C $AA34,1 Return if no carry
 C $AA35,3 Exit via #R$929A
 c $AA38 Helicopter related
 D $AA38 #R$AB89 self modifies #R$8FA4 to call this.
-@ $AA38 label=helicopter_stuff
+@ $AA38 label=draw_helicopter
 C $AA38,1 A = B
 C $AA39,3 Return if A != 3
 C $AA3C,6 A = IY[$4F] - IY[$4E]
@@ -6149,7 +6152,7 @@ C $AA46,1 E = A
 C $AA47,3 A = fast_counter
 C $AA4A,2 B = 8
 C $AA4C,2 A &= $E0
-@ $AA4E label = subAA38_loop1
+@ $AA4E label=subAA38_loop1
 C $AA4F,3 If carry HL += DE
 C $AA52,1 HL <<= 1
 C $AA53,2 Loop #R$AA4E while B
@@ -6201,7 +6204,7 @@ C $AABE,3 Jump to #R$929A
 C $AAC1,1 A += B
 C $AAC2,1 Return if no carry
 C $AAC3,3 Jump to #R$929A
-c $AAC6 Routine at AAC6
+c $AAC6 Move the helicopter
 D $AAC6 Used by the routine at #R$8401.
 @ $AAC6 label=move_helicopter
 C $AAC6,5 Return if helicopter_control is zero
@@ -6280,25 +6283,26 @@ C $AB64,7 Self modify 'LD BC' @ #R$AA94 to load $FFE8
 C $AB6B,4 Self modify 'LD A' @ #R$AAD7 to load zero
 C $AB6F,3 Self modify 'ADD A' @ #R$AAE8 to load zero
 C $AB72,4 Self modify 'LD A' @ #R$AADF to load one
-C $AB76,5 Call chatter (priority 15)
+C $AB76,5 Call start_chatter (priority 15)
 C $AB7B,3 HL = $0070
 C $AB7E,5 Self modify 'LD A' @ #R$AACB to load $85
 C $AB83,2 New value for helicopter_control is 5
 @ $AB85 label=hc_2
 C $AB85,1 Preserve AF
 C $AB86,3 Self modify 'LD DE' @ #R$AB06 to load $0070, or $FFC8
-C $AB89,3 Address of helicopter_stuff
+C $AB89,3 Address of draw_helicopter
 C $AB8C,2 Opcode for CALL
 @ $AB8E label=hc_3
-C $AB8E,7 Self modify #R$8FA4 to be CALL helicopter_stuff, or NOPs
+C $AB8E,7 Self modify #R$8FA4 to be CALL draw_helicopter, or NOPs
 C $AB95,1 Restore AF
 C $AB96,3 helicopter_control = A
 C $AB99,1 Return
-c $AB9A Routine at AB9A
+c $AB9A Spawn hazards
+D $AB9A Spawns hittable hazards in the road, like barriers and tumbleweeds.
 D $AB9A Used by the routines at #R$8401, #R$852A and #R$873C.
-@ $AB9A label=spawn_hazards
+@ $AB9A label=spawn_barriers
 C $AB9A,5 Return if allow_spawning is zero
-C $AB9F,3 A = ~A + 21
+C $AB9F,3 A = 22 - A
 C $ABA2,1 C = A
 C $ABA3,3 Load road_buffer_offset into #REGa
 C $ABA6,2 Add 160 so it's the hazards data offset
@@ -6330,36 +6334,35 @@ C $ABD1,1 Set flags
 C $ABD2,2 Jump if zero
 N $ABD4 Flag was set.
 C $ABD4,2 B = 32
-C $ABD6,3 Call sh_spawn
+C $ABD6,3 Call sb_spawn
 C $ABD9,2 B = 86
-C $ABDB,3 Call sh_spawn
+C $ABDB,3 Call sb_spawn
 C $ABDE,2 B = 140
-C $ABE0,2 Calls sh_spawn then returns
+C $ABE0,2 Calls sb_spawn then returns
 C $ABE2,2 B = 80
-C $ABE4,3 Call sh_spawn
+C $ABE4,3 Call sb_spawn
 C $ABE7,2 B = 160
-C $ABE9,2 Calls sh_spawn then returns
+C $ABE9,2 Calls sb_spawn then returns
 C $ABEB,2 B = 70
-C $ABED,3 Call sh_spawn
+C $ABED,3 Call sb_spawn
 C $ABF0,2 B = 180
-C $ABF2,3 Call sh_spawn
+C $ABF2,3 Call sb_spawn
 C $ABF5,1 Return
-N $ABF6 Spawns hazards in the road, like barriers and tumbleweeds.
 N $ABF6 I:B Stored at entry+5  e.g. $20/$46/$56/$50/$B4
 N $ABF6 I:C Stored at entry+1  e.g. $13
-@ $ABF6 label=sh_spawn
+@ $ABF6 label=sb_spawn
 C $ABF6,1 Bank entry registers
 C $ABF7,2 6 iterations
 C $ABF9,3 Point #REGhl at hazards table
 C $ABFC,3 Stride of 20 bytes
 @ $ABFF label=sh_loop
 C $ABFF,2 Check the flag byte to see if the entry is used (it's either $00 if empty, or $FF if used, so rotating it in place is not a problem)
-C $AC01,2 Jump to sh_found_spare if it didn't carry
+C $AC01,2 Jump to sb_found_spare if it didn't carry
 C $AC03,1 Move to the next entry
 C $AC04,2 Loop while iterations remain
 C $AC07,1 Return
 N $AC08 #REGhl points to the unused entry
-@ $AC08 label=sh_found_spare
+@ $AC08 label=sb_found_spare
 C $AC08,3 #REGix = #REGhl
 C $AC0B,10 Zero 20 bytes at #REGhl
 C $AC15,1 Restore entry registers
@@ -6495,9 +6498,9 @@ C $AD98,2 E += 2
 C $AD9A,3 IX[7] = E
 C $AD9D,2 D = 1
 C $AD9F,1 Return
-c $ADA0 Draws all hazards
+c $ADA0 Draws hazards
 D $ADA0 This includes all cars, barriers, tumbleweeds, etc.
-R $ADA0 Used by the routines at #R$8401, #R$852A and #R$873C.
+D $ADA0 Used by the routines at #R$8401, #R$852A and #R$873C.
 @ $ADA0 label=draw_hazards
 C $ADA0,4 n_hazards = 0
 C $ADA4,3 IY = $E3xx
@@ -6852,7 +6855,7 @@ C $B0F5,2 Jump if non-zero
 C $B0F7,2 Reset idle timer to 100
 C $B0F9,2 Set priority to 10
 C $B0FB,3 HL = get_moving_chatter
-C $B0FE,3 Call chatter (priority 10)
+C $B0FE,3 Call start_chatter (priority 10)
 C $B101,1 Pop speed
 C $B102,2 DE = HL
 C $B104,3 Load the off-road flag
@@ -7001,7 +7004,7 @@ N $B29A No scroll required?
 C $B29A,4 HL = var_a25f + BC
 C $B29E,3 DE = $0000
 C $B2A1,4 var_a25f = DE
-C $B2A5,3 A = *$B326  -- Read self modified op in animate_car -- crashed flag
+C $B2A5,3 A = *$B326  -- Read self modified op in animate_hero_car -- crashed flag
 C $B2A8,1 Set flags
 C $B2AC,1 D = H
 C $B2AE,4 var_a263 = B
@@ -7050,7 +7053,7 @@ C $B313,4 cornering = 0
 C $B317,1 Return
 c $B318 Animates the hero car.
 D $B318 Used by the routines at #R$8401 and #R$852A.
-@ $B318 label=animate_car
+@ $B318 label=animate_hero_car
 C $B318,7 Jump to #R$B325 if speed > 0
 C $B31F,3 Self modify 'LD A' @ #R$B3DB to load A
 C $B322,3 off_road = A
@@ -7251,7 +7254,7 @@ C $B516,2 Jump to smash_b522 if not
 N $B518 We have 19 hits
 C $B519,2 Set priority to 10
 C $B51B,3 HL = raymond_says_one_more_time
-C $B51E,3 Call chatter (priority 10)
+C $B51E,3 Call start_chatter (priority 10)
 @ $B522 label=smash_b522
 C $B522,3 Set smash_counter to #REGa
 C $B525,5 Set smash_factor to zero if smash_counter is zero
@@ -7763,7 +7766,7 @@ C $B9EC,1 A = 0
 C $B9ED,3 var_a261 = 0
 C $B9F0,3 var_a262 = 0
 C $B9F3,1 Return
-c $B9F4 Lays out the road.
+c $B9F4 Lays out the road
 D $B9F4 Used by the routines at #R$8401, #R$852A and #R$873C.
 @ $B9F4 label=layout_road
 C $B9F4,3 Load road_buffer_offset into #REGa [as byte]
@@ -7856,7 +7859,7 @@ C $BAA3,1 Clear middle digits
 C $BAA4,3 Call bonus
 C $BAA7,3 -> Raymond: "WHAT ARE YOU DOING MAN!!" / "THE BAD GUYS ARE GOING THE OTHER WAY." <STOP>
 @ $BAAA label=lr_chatter
-C $BAAA,5 Call chatter (with priority 20)
+C $BAAA,5 Call start_chatter (with priority 20)
 C $BAAF,1 Restore HL (holds fork_distance)
 @ $BAB0 label=lr_check_spawning
 C $BAB0,3 Load allow_spawning
@@ -8439,9 +8442,9 @@ C $C0D7,2 A = 1
 @ $C0D9 label=rm_inc_spawning
 C $C0D9,5 Increment allow_spawning by #REGa (which should be 0 or 1)
 C $C0DE,3 Exit via #R$AD0D
-c $C0E1 Tunnel setup?
+c $C0E1 Set up the tunnel
 D $C0E1 Used by the routines at #R$8401, #R$852A and #R$873C.
-@ $C0E1 label=tunnel_setup
+@ $C0E1 label=prepare_tunnel
 C $C0E1,3 Read 'LD A,x' @ #R$C160 (tunnel drawing code)
 C $C0E4,1 Set flags
 C $C0E5,3 Read 'LD A,x' @ #R$C88F (TBD)
