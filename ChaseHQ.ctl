@@ -2041,7 +2041,7 @@ W $81CE,2,2 Screen position (88,128)
 W $81D0,2,2 Screen attribute position (11,16)
 T $81D2,11,10:n1 "PRESS  GEAR"
 b $81DD [Messages] Start of stage chatter
-@ $81DD label=start_chatter
+@ $81DD label=start_stage_chatter
 B $81DD,1,1 Three-way random choice ($FC)
 W $81DE,2,2 -> Tony: "GIDDY UP BOY!" <STOP>
 W $81E0,2,2 -> Tony: "HOLD ON MAN" <STOP>
@@ -2247,7 +2247,7 @@ N $842E Choose the startup speech sample.
 C $842E,7 start_speech = (A * 4) OR 2
 C $8435,4 Test 128K mode flag
 C $8439,5 #R$A188 = $FF -- I suspect this keeps the perp spawned
-C $843E,3 Address of start_chatter
+C $843E,3 Address of start_stage_chatter
 C $8441,3 Call start_chatter if not in 128K mode (priority $FF)
 @ $8444 label=ml_loop
 C $8444,3 Call drive_sfx
