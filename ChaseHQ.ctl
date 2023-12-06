@@ -2061,15 +2061,15 @@ T $81F9,11,10:n1 "HOLD ON MAN"
 c $8204 Generates engine noise
 D $8204 Used by the routine at #R$83B5.
 @ $8204 label=engine_sfx_setup
-C $8204,3 Load speed
-C $8207,2 A = speed / 2 (top half)
+C $8204,3 Fetch speed into #REGhl
+C $8207,2 Bottom bit of #REGh moves to carry (#REGh now unused)
 N $8209 This entry point is used by the routine at #R$F220.
-C $8209,2 A = speed / 2 (bottom half)
+C $8209,1 Speed low byte
+C $820A,1 Halve speed, shifting carry in as MSB
 C $820B,1 A = ~A
-C $820C,4 A /= 4
+C $820C,4 Divide by four
 C $8210,2 A |= 1
-C $8212,1 L = A
-C $8213,2 H = 3
+C $8212,3 #REGhl = 0x0300 | #REGa
 C $8215,6 Jump if in high gear
 C $821B,2 L >>= 1
 C $821D,6 Jump if tunnel_sfx == 0
@@ -2270,7 +2270,7 @@ C $8474,3 Call engine_sfx_play_hook
 C $8477,3 Call layout_objects
 C $847A,3 Call prepare_tunnel
 C $847D,3 Call spawn_barriers
-C $8480,3 Call helicopter
+C $8480,3 Call drive_helicopter
 C $8483,3 Call choose_dirt_and_stones
 C $8486,3 Call engine_sfx_play_hook
 C $8489,3 Call draw_hazards
@@ -2624,7 +2624,7 @@ C $8812,1 $E34D = 0
 C $8813,5 $8F82 = NOP (instruction)
 C $8818,2 $8F83 = NOP (instruction)
 C $881A,1 $8F84 = NOP (instruction)
-C $881B,9 NOP 6 bytes [of instructions] at $8FA4
+N $881B NOP the 6 instruction bytes at $8FA4: the helicopter and tunnel drawing calls.
 C $8824,3 Self modify "LD (HL),x" at #R$C058 to x = 0
 C $8827,3 Self modify "LD A,x" at #R$B063 to x = 0  car jump height
 C $882A,6 Set $A191 to the perp's car LOD
@@ -3344,7 +3344,7 @@ c $8F5F Draws anything that's not the road or the hero car
 D $8F5F Used by the routines at #R$8401, #R$852A and #R$873C.
 @ $8F5F label=draw_everything_else
 C $8F5F,3 Point #REGhl at (something above the stack)
-C $8F62,3 Self modify 'LD HL' @ #R$A9E2 to load the stack address
+C $8F62,3 Self modify 'LD HL' @ #R$A9E2 to load the stack? address
 C $8F65,6 Self modify 'LD HL' @ #R$AECF to load $E900
 N $8F6B Add 32 to the first 21 entries of tables $E301 and $E336. If meddled with this affects the height of elements.
 C $8F6B,3 HL = $E301
@@ -3357,9 +3357,7 @@ C $8F7A,1 E++
 C $8F7B,1 L++
 C $8F7C,2 Loop to #R$8F74 while B
 C $8F7E,4 IY = $E315
-C $8F82,1 Self modified
-C $8F83,1 Self modified
-C $8F84,1 Self modified
+C $8F82,3 Self modified: either CALL draw_tunnel, or NOPs
 C $8F85,2 IY--
 C $8F87,3 Load road_buffer_offset into #REGa
 C $8F8A,2 Add 115 so it's the right side objects data offset + 19
@@ -3368,13 +3366,9 @@ C $8F8F,4 IX = $EAB0
 C $8F93,3 BC = $1420
 C $8F96,4 Preserve IX, HL, BC
 C $8F9A,7 Call (somewhere in draw_hazards) if n_hazards is set
-C $8FA1,3 Call sub_A9DE (dust/stones stuff)
-C $8FA4,1 Self modified
-C $8FA5,1 Self modified
-C $8FA6,1 Self modified
-C $8FA7,1 Self modified
-C $8FA8,1 Self modified
-C $8FA9,1 Self modified
+C $8FA1,3 Call dust_stones_stuff (dust/stones stuff)
+C $8FA4,3 Self modified: either CALL draw_helicopter, or NOPs
+C $8FA7,3 Self modified: either CALL draw_tunnel, or NOPs
 C $8FAA,4 Restore IX, HL, BC
 C $8FAE,1 A = *HL
 C $8FAF,1 Set flags
@@ -3739,6 +3733,7 @@ C $9306,1 A += B
 C $9307,1 Return if carry
 C $9308,1 Return if zero
 N $9309 This entry point is used by the routines at #R$A9DE, #R$AA38 and #R$ADA0.
+@ $9309 label=draw_object_right_helicopter_entrypt
 C $9309,3 Return if A >= $F7
 C $930C,2 C = 0
 N $930E This entry point is used by the routine at #R$9278.
@@ -4602,9 +4597,9 @@ C $9CC2,3 Fetch speed into #REGhl
 N $9CC5 This code makes little sense.
 C $9CC5,1 Speed low byte
 C $9CC6,2 Bottom bit of #REGh moves to carry (#REGh now unused)
-C $9CC8,1 Merge carry into LSB of speed (wrong end?)
+C $9CC8,1 Merge carry into LSB of speed [Wrong end?]
 C $9CC9,4 Divide by four
-C $9CCD,1 Needless move
+C $9CCD,1 [Needless move]
 C $9CCE,2 Add carry in, perhaps for rounding?
 C $9CD0,1 BCD correction
 C $9CD1,3 Zero high part of score increment
@@ -5275,6 +5270,7 @@ B $A221,1,1 #R$ABCE, #R$AD0D reads
 B $A222,1,1 Seems to be a count of visible cars+hazards.
 @ $A223 label=displayed_stage
 B $A223,1,1 Stage number as shown on the scoreboard. Stored as ASCII.
+N $A224 0 => no helicopter 1 => moves to left 2 => bobs around in the air 3/4 => moves from left 5 => bobs around in the air
 @ $A224 label=helicopter_control
 B $A224,1,1 Set to 1 -> helicopter moves out to the left, gets set to zero. Set to 3/4 -> Helicopter moves in from left, gets set to five. #R$AAC6, #R$AB33 reads  #R$AB96, #R$C013 writes
 @ $A225 label=stop_car_spawning
@@ -5382,10 +5378,10 @@ B $A259,1,1 Used by #R$B92B
 B $A25A,1,1 Used by #R$B8D2
 @ $A25B label=var_a25b
 B $A25B,1,1
-N $A25C Horizon horizontal scrolling (+ve for left, -ve for right). Seems to be multiples of two. Values seen: FA FC FE 00 02 04 06
-@ $A25C label=horizon_scroll
+N $A25C Current road curvature (-ve for left, +ve for right). Values seen: FA FC FE 00 02 04 06
+@ $A25C label=current_curvature
 B $A25C,1,1 Used by #R$B84E
-@ $A25D label=var_a25d
+@ $A25D label=horizon_a25d
 B $A25D,1,1 Used by #R$B85D
 @ $A25E label=var_a25e
 B $A25E,1,1
@@ -5399,13 +5395,13 @@ B $A262,1,1
 B $A263,1,1 Used by #R$B2AE
 @ $A264 label=var_a264
 B $A264,1,1 Used by #R$B2B2 -- together might be a 16-bit qty
-@ $A265 label=forked_road_visible
+@ $A265 label=fork_visible
 B $A265,1,1 Used by #R$BC2C -- set to $60 when the forked road becomes visible, zero otherwise
 @ $A266 label=fork_countdown
 B $A266,1,1 Used by #R$A3A6 -- counts down (from 16?) when the forked road approaches, zero when the fork actually starts
 @ $A267 label=fork_distance
 W $A267,2,2 Counts 0..255 during road forks
-@ $A269 label=var_a269
+@ $A269 label=fork_in_progress
 B $A269,1,1 Used by #R$BC29. Set to 1 while the road forks.
 @ $A26A label=quit_state
 B $A26A,1,1 0 if not quitting, or 1/2 depending on quit state
@@ -5440,7 +5436,7 @@ D $A399 Used by the routines at #R$8401 and #R$852A.
 @ $A399 label=check_collisions
 C $A399,3 HL = $0048
 C $A39C,3 DE = $01D8
-C $A3A0,3 A = forked_road_visible
+C $A3A0,3 A = fork_visible
 C $A3A3,1 Set flags
 C $A3A4,2 Jump to cc_at_fork if zero
 C $A3A6,3 A = fork_countdown
@@ -5658,7 +5654,7 @@ C $A590,2 Add 64 so it's the lanes data offset
 C $A592,1 E = calculated offset
 C $A593,4 IY = $E34F
 C $A597,2 B = 21
-C $A599,3 A = forked_road_visible
+C $A599,3 A = fork_visible
 C $A59C,1 Set flags
 C $A59D,3 Jump to lo_loop2 if zero [not in forked road]
 C $A5A0,3 A = fork_countdown
@@ -6099,21 +6095,25 @@ C $A9D3,1 HL += BC
 C $A9D7,4 DE = wordat(HL); HL += 2
 C $A9DB,3 Jump to ldas_loop1_continue
 c $A9DE Dust/Stones stuff
+D $A9DE If disabled this stops stones and dirt from rendering.
 D $A9DE Used by the routine at #R$8F5F.
-@ $A9DE label=sub_A9DE
+@ $A9DE label=dust_stones_stuff
 C $A9DE,2 A = <self modified>  Self modified by #R$A97A, #R$A9A3
 C $A9E0,1 Set flags
 C $A9E1,1 Return if zero
-C $A9E2,3 Point #REGhl at (something above the stack)
+C $A9E2,3 Point #REGhl at <self modified>
 C $A9E5,3 A = *HL; HL += 2
 C $A9E8,1 Set flags
-C $A9E9,2 Jump to A9F1 if non-zero
+C $A9E9,2 Jump to dss_lods if non-zero
+N $A9EB Otherwise skip the next two bytes.
 C $A9EB,2 HL += 2
-C $A9ED,3 Self modify 'LD HL,x' @ #R$A9E2 to load HL
+C $A9ED,3 Self modify 'LD HL,x' @ #R$A9E2 (above) to load HL
 C $A9F0,1 Return
-C $A9F1,4 DE = *stones_lods
+@ $A9F1 label=dss_lods
+C $A9F1,4 Load contents of stones_lods
 C $A9F5,1 A--
-C $A9F6,6 If non-zero DE = *dust_lods
+C $A9F6,6 If non-zero load contents of dust_lods
+@ $A9FC label=dss_a9fc
 C $A9FC,2 C = *HL++
 C $A9FE,1 A = *HL
 C $AA00,1 HL++
@@ -6121,25 +6121,26 @@ C $AA01,3 Self modify 'LD HL,x' @ #R$A9E2 to load HL
 C $AA04,1 A = 0
 C $AA05,3 Self modify 'LD D,x' @ #R$933D to load zero
 C $AA08,1 H = A
-C $AA09,1 A = B
-C $AA0A,1 A--
+C $AA09,2 A = B - 1
 C $AA0B,6 If A > 10 A = 10
+@ $AA11 label=dss_aa11
 C $AA11,2 A >>= 1
 C $AA13,6 L = A * 7
 C $AA19,1 HL += DE
 C $AA1A,7 E = *HL * 8
 C $AA22,1 Set flags
 C $AA23,1 A = C
-C $AA24,2 C = $00
+C $AA24,2 C = $00 [not self modified]
 C $AA26,3 Jump to #R$AA33 if negative
 C $AA29,1 Return if non-zero
-C $AA2A,5 Jump to #R$9303 if A >= 128
+C $AA2A,5 Jump to draw_object_right_helicopter_entrypt if A >= 128
 C $AA2F,1 A += E
-C $AA30,3 Exit via #R$929A
+C $AA30,3 Exit via draw_object_left_helicopter_entrypt
+@ $AA33 label=dss_aa33
 C $AA33,1 A += E
 C $AA34,1 Return if no carry
-C $AA35,3 Exit via #R$929A
-c $AA38 Helicopter related
+C $AA35,3 Exit via draw_object_left_helicopter_entrypt
+c $AA38 Draw the helicopter
 D $AA38 #R$AB89 self modifies #R$8FA4 to call this.
 @ $AA38 label=draw_helicopter
 C $AA38,1 A = B
@@ -6152,44 +6153,47 @@ C $AA46,1 E = A
 C $AA47,3 A = fast_counter
 C $AA4A,2 B = 8
 C $AA4C,2 A &= $E0
-@ $AA4E label=subAA38_loop1
+N $AA4E Multiplier
+@ $AA4E label=dhl_loop1
+C $AA4E,1 Shift top bit out
 C $AA4F,3 If carry HL += DE
+@ $AA52 label=dhl_aa52
 C $AA52,1 HL <<= 1
 C $AA53,2 Loop #R$AA4E while B
-C $AA55,1 A = H
+C $AA55,2 A = H / 2
 C $AA57,3 Self modify 'LD A' @ #R$AA8C
 C $AA5A,2 A = <self modified> -- Self modified by #R$AAEE
 C $AA5C,3 A -= IY[$4E]
 C $AA5F,3 Self modify 'ADD A' @ #R$AA76
 C $AA62,2 B = 5  iterations
 C $AA64,5 A = counter_A & 1  -- counter used for turbo smoke
-N $AA69 For stage 1 at least this (would) load #REGhl with 0 or 12.
 C $AA69,3 HL = *$5D08
 C $AA6C,2 If A was set
 C $AA6E,3 HL = *$5D0A
-@ $AA71 label=loop_aa71
+@ $AA71 label=dhl_aa71
 C $AA71,4 DE = wordat(HL); HL += 2
 C $AA75,1 A = *DE
 C $AA76,2 A += <self modified> -- Self modified by #R$AA5F
 C $AA78,1 DE++
 C $AA79,4 Preserve IY, HL, BC
-C $AA7D,3 Call sub_AA94
+C $AA7D,3 Call dhl_aa94
 C $AA80,4 Restore IY, HL, BC
 C $AA84,2 Loop loop_aa71 while B
 C $AA86,3 DE = wordat(HL); HL++
 C $AA89,1 A = 0
 C $AA8A,2 Preserve IY
 C $AA8C,2 A = <self modified> -- Self modified by #R$AA57
-C $AA8E,3 Call sub_AA94
+C $AA8E,3 Call dhl_aa94
 C $AA91,2 Restore IY
 C $AA93,1 Return
-@ $AA94 label=sub_AA94
+@ $AA94 label=dhl_aa94
 C $AA94,3 BC = <self modified> -- Self modified by #R$AB00, #R$AB2F + others
 C $AA97,2 A = -A
 C $AA99,3 Self modify 'LD D,x' @ #R$933D to load A
 C $AA9C,5 HL = *DE++
 C $AAA1,1 Set flags
 C $AAA5,1 H--
+@ $AAA6 label=dhl_aaa6
 C $AAA6,1 HL += BC
 C $AAA8,1 B = *HL
 C $AAA9,6 B <<= 3
@@ -6198,25 +6202,28 @@ C $AAB0,1 Set flags
 C $AAB1,1 A = E
 C $AAB2,2 C = 0
 C $AAB7,1 Return if non-zero
-C $AAB8,5 Jump to #R$9309 if A >= 128
+C $AAB8,5 Jump to draw_object_right_helicopter_entrypt if A >= 128
 C $AABD,1 A += B
-C $AABE,3 Jump to #R$929A
+C $AABE,3 Exit via draw_object_left_helicopter_entrypt
+@ $AAC1 label=dhl_aac1
 C $AAC1,1 A += B
 C $AAC2,1 Return if no carry
-C $AAC3,3 Jump to #R$929A
+C $AAC3,3 Exit via draw_object_left_helicopter_entrypt
 c $AAC6 Move the helicopter
 D $AAC6 Used by the routine at #R$8401.
 @ $AAC6 label=move_helicopter
 C $AAC6,5 Return if helicopter_control is zero
-C $AACB,2 A = <self modified>  -- Self modified by #R$AAD3 below
+N $AACB Helicopter descends while moving to height 97 (smaller = lower).
+C $AACB,2 A = <self modified>  -- Self modified by #R$AAD3 below [target vert pos?]
 C $AACD,4 Jump to #R$AAD6 if A == 97
-C $AAD1,2 A -= 2
+C $AAD1,2 Descend by 2 pixels
 C $AAD3,3 Self modify #R$AACB above
+@ $AAD6 label=mh_descended
 C $AAD6,1 C = A
-C $AAD7,2 A = <self modified>  -- Self modified below
+C $AAD7,2 A = <self modified>  -- Self modified below [counts 0..3]
 C $AAD9,3 A = (A + 1) & 3
 C $AADC,3 Self modify #R$AAD7 above
-C $AADF,2 A = <self modified> -- Self modified by #R$AAE5 below
+C $AADF,2 A = <self modified> -- Self modified by #R$AAE5 below [direction 1 or $FF]
 C $AAE1,2 what are we testing here?
 C $AAE3,2 A = -A
 C $AAE5,3 Self modify #R$AADF above
@@ -6254,7 +6261,7 @@ C $AB2F,3 Self modify 'LD BC' @ #R$AA94
 C $AB32,1 Return
 c $AB33 Helicopter
 D $AB33 Used by the routine at #R$8401.
-@ $AB33 label=helicopter
+@ $AB33 label=drive_helicopter
 C $AB33,5 Return if helicopter_control is zero
 C $AB38,3 Jump to hc_1 if helicopter_control is one
 C $AB3B,3 Jump to hc_pick_direction if helicopter_control >= 3
@@ -6264,12 +6271,12 @@ C $AB41,1 Set flags
 C $AB42,1 Return if zero
 C $AB43,1 A = 0  -- NOP
 C $AB44,2 DE = 0  -- NOPs
-C $AB47,1 A = 0
-C $AB48,2 Jump to hc_3
+C $AB46,2 New value for helicopter_control is 0
+C $AB48,2 Jump to hc_exit
 @ $AB4A label=hc_1
-C $AB4A,3 HL = $FFC8
+C $AB4A,3 HL = $FFC8 (-56)
 C $AB4D,2 New value for helicopter_control is 2
-C $AB4F,2 Jump to hc_2
+C $AB4F,2 Jump to hc_set_draw
 @ $AB51 label=hc_pick_direction
 C $AB51,1 A--
 C $AB52,3 Point #REGhl at pilot "turn left" messages
@@ -6285,16 +6292,17 @@ C $AB6F,3 Self modify 'ADD A' @ #R$AAE8 to load zero
 C $AB72,4 Self modify 'LD A' @ #R$AADF to load one
 C $AB76,5 Call start_chatter (priority 15)
 C $AB7B,3 HL = $0070
-C $AB7E,5 Self modify 'LD A' @ #R$AACB to load $85
+N $AB7E Set starting vertical position of the helicopter.
+C $AB7E,5 Self modify 'LD A' @ #R$AACB to load 133
 C $AB83,2 New value for helicopter_control is 5
-@ $AB85 label=hc_2
-C $AB85,1 Preserve AF
+@ $AB85 label=hc_set_draw
+C $AB85,1 Preserve new value for helicopter_control
 C $AB86,3 Self modify 'LD DE' @ #R$AB06 to load $0070, or $FFC8
 C $AB89,3 Address of draw_helicopter
 C $AB8C,2 Opcode for CALL
-@ $AB8E label=hc_3
+@ $AB8E label=hc_exit
 C $AB8E,7 Self modify #R$8FA4 to be CALL draw_helicopter, or NOPs
-C $AB95,1 Restore AF
+C $AB95,1 Restore new value for helicopter_control
 C $AB96,3 helicopter_control = A
 C $AB99,1 Return
 c $AB9A Spawn hazards
@@ -6676,6 +6684,10 @@ C $AF2B,1 A += E
 C $AF2C,3 Jump
 C $AF2F,1 A += E
 C $AF30,2 Jump if no carry
+C $AF32,3 Call draw_object_left_helicopter_entrypt
+C $AF35,3 Jump over next CALL
+C $AF38,3 Call draw_object_right_helicopter_entrypt
+C $AF3B,2 Restore DE, BC
 C $AF3D,4 Self modify 'LD A,x' @ #R$93C0 to load 0
 C $AF41,3 HL = &n_hazards
 C $AF44,1 (*HL)--
@@ -6697,7 +6709,9 @@ C $AF68,1 A = E
 C $AF69,3 Jump
 C $AF6C,1 A = E
 C $AF6D,2 -- checking result of test at #R$AF56?
+C $AF6F,3 Call draw_object_left_helicopter_entrypt
 C $AF72,3 Jump
+C $AF75,3 Call draw_object_right_helicopter_entrypt
 C $AF78,3 Read A from 'LD D,x' @ #R$933D
 C $AF7B,3 Self modify 'LD A,x' @ #R$B023
 C $AF7E,3 Get smash_factor
@@ -6775,14 +6789,14 @@ C $B02E,3 Jump to #R$B03D if negative
 C $B031,1 Return if non-zero
 C $B032,1 A += C
 C $B033,1 Return if carry
-C $B034,5 Jump to #R$9309 if A >= 128
+C $B034,5 Exit via draw_object_right_helicopter_entrypt if A >= 128
 C $B039,1 A += E  -- pixel width
-C $B03A,3 Jump to #R$929A
+C $B03A,3 Exit via draw_object_left_helicopter_entrypt
 C $B03D,1 A += C
 C $B03E,2 Loop? if carry
 C $B040,1 A += E  -- pixel width
-C $B041,3 Jump to #R$929A if carry
-C $B044,1 Return
+C $B041,3 Exit via draw_object_left_helicopter_entrypt if carry
+C $B044,1 Otherwise return
 w $B045 Hero car jump table
 D $B045 Values used to make the car move vertically (by self modifying #R$B58E). Used by #R$B968.
 @ $B045 label=hero_car_jump_table
@@ -6860,16 +6874,17 @@ C $B101,1 Pop speed
 C $B102,2 DE = HL
 C $B104,3 Load the off-road flag
 C $B107,3 Jump if zero
-N $B10A Handle off-road (it can be 1 or 2).
+N $B10A Handle off-road (#REGa can be 1 or 2 here).
 C $B10A,3 BC = 120  -- factor for off-road == 1
 C $B10D,3 Jump if off-road was one
 C $B110,3 BC = 110  -- factor for off-road == 2
-C $B113,1 Clear carry?
-C $B114,2 HL -= BC  -- 16-bit sub just for testing
-C $B116,2 HL = DE
+C $B113,1 Clear carry
+C $B114,2 HL -= BC  -- 16-bit subtract only for result in flags
+C $B116,2 HL = D  -- speed
 C $B118,2 Jump if HL < BC (result of subtraction)
-C $B11A,1 A = L
-C $B11B,2 H >>= 1  -- 9 bit rotate right through carry
+N $B11A Otherwise do something speed dependent.
+C $B11A,1 Speed low byte
+C $B11B,2 Bottom bit of #REGh moves to carry
 C $B11D,4 A <<= 4  -- 9 bit rotate left through carry
 C $B121,6 A = -((A & $0F) | 1)
 C $B127,3 BC = $FF00 | A
@@ -6955,10 +6970,11 @@ C $B22F,2 C = $24
 C $B234,1 C = A
 C $B235,3 B -= C
 C $B23A,2 B = 0
-C $B23C,3 HL = speed
-C $B23F,1 A = L
-C $B243,2 A >>= 1
-C $B245,2 A >>= 1
+C $B23C,3 Fetch speed into #REGhl
+C $B23F,1 Speed low byte
+C $B240,2 Bottom bit of #REGh moves to carry (#REGh now unused)
+C $B242,1 Halve speed, shifting carry in as MSB
+C $B243,4 A >>= 2
 C $B247,1 L = A
 C $B248,2 L >>= 1
 C $B24A,1 A += L
@@ -6966,7 +6982,7 @@ C $B24E,1 B = A
 C $B252,1 C = A
 C $B254,3 BC = $0000
 C $B257,1 E = B
-C $B258,3 A = horizon_scroll (e.g. $FA..$06 in multiples of two)
+C $B258,3 Load current_curvature (e.g. $FA..$06 in multiples of two)
 C $B25B,1 Set flags
 C $B25C,3 Jump if zero
 C $B25F,3 Jump if positive
@@ -7000,7 +7016,7 @@ C $B292,1 B--
 C $B293,2 A = -A
 C $B295,1 C = A
 C $B297,3 var_a261 = A
-N $B29A No scroll required?
+N $B29A No curvature - No scroll required?
 C $B29A,4 HL = var_a25f + BC
 C $B29E,3 DE = $0000
 C $B2A1,4 var_a25f = DE
@@ -7563,20 +7579,18 @@ b $B828 Horizon image related
 D $B828 breaks/crashes road rendering if messed with
 @ $B828 label=table_b828
 W $B828,32,8
-c $B848 Routine at B848
+c $B848 Scroll the horizon
 D $B848 Used by the routines at #R$8401, #R$852A and #R$873C.
+R $B848 I:A' ?
 @ $B848 label=scroll_horizon
-C $B848,6 Return if speed is zero
-C $B84E,3 A = horizon_scroll
-C $B851,1 Set flags
-C $B852,2 Jump if zero
-C $B854,1 Bank
-C $B855,2 RR H -- shift out carry?
-C $B857,1 A <<= 1
-C $B858,1 A <<= 1
-C $B859,1 A <<= 1
-C $B85A,2 A &= 6
-C $B85C,6 C = A + var_a25d
+C $B848,3 Fetch speed into #REGhl
+C $B84B,3 Return if speed is zero
+C $B84E,3 Fetch current_curvature into #REGa
+C $B851,3 Jump if current_curvature is zero
+C $B854,1 Bank current_curvature, which is non-zero here
+C $B855,2 Bottom bit of #REGh moves to carry (#REGh now unused)
+C $B857,5 A = (A << 3) & 6  [+ carry... I can't see where this banked A comes from to start with.]
+C $B85C,6 C = A + horizon_a25d
 C $B862,2 B = 0
 C $B864,3 16 word table at #R$B828
 C $B867,1 HL += BC
@@ -7585,17 +7599,21 @@ C $B86B,3 HL = &var_a25e
 C $B86E,1 *HL--
 C $B86F,2 Jump if non-zero
 C $B871,1 *HL = B
-C $B872,1 Bank
+C $B872,1 Bank [must be]
 C $B873,1 A = C
 C $B874,3 Jump if positive
 C $B877,2 A = -A
+@ $B879 label=sh_b879
 C $B879,3 Address of operand in 'LD A,x' @ #R$C7E7
 C $B87C,1 A += *HL
 C $B87D,3 Jump if positive
 C $B880,2 A += 20
+@ $B882 label=sh_b882
 C $B882,4 Jump if A < 20
 C $B886,2 A -= 20
+@ $B888 label=sh_b888
 C $B888,1 *HL = A
+@ $B889 label=sh_b889
 C $B889,1 A = 0
 C $B88A,1 B = 0
 C $B88B,1 E = 0
@@ -7603,6 +7621,7 @@ C $B88C,1 Bank
 C $B88D,5 Return if var_a258 is zero
 C $B892,3 Jump if positive
 C $B895,3 E = -(E + 1)
+@ $B898 label=sh_b898
 @ $B898 ssub=LD HL,table_b828 - 1
 C $B898,3 32-byte table at #R$B828
 C $B89B,1 C = A
@@ -7612,6 +7631,7 @@ C $B8A1,4 A = fast_counter - C
 C $B8A5,1 Set flags
 C $B8A6,1 Return if non-zero
 C $B8A7,1 C = *HL
+@ $B8A8 label=sh_b8a8
 C $B8A8,1 A -= C
 C $B8A9,2 Jump if carry
 C $B8AB,1 B++
@@ -7619,6 +7639,7 @@ C $B8AC,1 Bank
 C $B8AD,1 A += C
 C $B8AE,1 Bank
 C $B8AF,2 Jump
+@ $B8B1 label=sh_b8b1
 C $B8B1,1 A = B
 C $B8B2,1 Set flags
 C $B8B3,1 Return if zero
@@ -7630,6 +7651,7 @@ C $B8BC,2 B = 0
 C $B8BE,2 Jump if no carry
 C $B8C0,1 B--
 C $B8C1,2 A = -A
+@ $B8C3 label=sh_b8c3
 C $B8C3,3 HL = horizon_level
 C $B8C6,1 C = A
 C $B8C7,1 HL += BC
@@ -7710,36 +7732,39 @@ C $B968,4 HL = #R$B045 + E  points into jump values table
 C $B96C,3 Self modify #R$B079
 C $B96F,1 Restore HL
 C $B970,1 *HL = C
-C $B971,3 A = horizon_scroll
+C $B971,3 A = current_curvature
+C $B974,1 Preserve existing current_curvature
 C $B975,3 Load road_buffer_offset into #REGa
 C $B978,3 Point #REGhl at road buffer curvature data
-C $B97B,3 A = forked_road_visible
+C $B97B,3 A = fork_visible
 C $B97E,1 Set flags
-C $B97F,1 A = *HL
-C $B980,2 Jump if zero
-C $B982,6 Jump if var_a269 is zero
-C $B988,5 Check fork_taken
+C $B97F,1 Load a curvature byte
+C $B980,2 Jump if fork_visible was zero
+N $B982 Forked road is visible.
+C $B982,6 Jump if fork_in_progress is zero [set while the road forks]
+C $B988,4 Check fork_taken
+C $B98C,1 Load a curvature byte again
 C $B98D,2 Jump if left fork was taken
-C $B98F,2 A = -A
-C $B991,3 horizon_scroll = A
+C $B98F,2 Negate if right fork was taken
+C $B991,3 current_curvature = <curvature byte>
 C $B994,1 Set flags
 C $B995,1 E = A
-C $B996,2 Jump if zero
+C $B996,2 Jump if curvature byte was zero
 C $B998,2 E = 1
 C $B99A,3 Jump if positive
 C $B99F,2 A = -A
 C $B9A1,1 D = A
 C $B9A2,2 A *= 4
-C $B9A4,3 var_a25d = A
+C $B9A4,3 horizon_a25d = A
 C $B9A7,1 B = A
 C $B9A8,3 A = var_a25e
 C $B9AB,1 Set flags
 C $B9AC,2 Jump if non-zero
-C $B9AE,3 Load speed
-C $B9B1,1 A = L
-C $B9B2,2 A = speed / 2 (top half)
-C $B9B7,2 A &= 6
-C $B9B9,1 A = B
+C $B9AE,3 Fetch speed into #REGhl
+C $B9B1,1 Speed low byte
+C $B9B2,2 Bottom bit of #REGh moves to carry (#REGh now unused)
+C $B9B4,5 A = (A << 3) & 6
+C $B9B9,1 A += B
 C $B9BA,3 BC = A
 C $B9BD,3 HL -> table of 16 words
 C $B9C0,1 HL += BC
@@ -7820,17 +7845,17 @@ N $BA51 Handle a forked road.
 @ $BA51 label=lr_forked_road
 C $BA52,3 fork_countdown = A
 C $BA55,2 HL = $E3xx
-C $BA57,5 Set forked_road_visible
+C $BA57,5 Set fork_visible
 C $BA5C,4 A = 106 - (A - *HL)  -- HL is $E3xx
 C $BA60,1 Preserve A
 C $BA61,3 Load fork_distance
 C $BA64,3 A = *DE & 4  -- DE is the lanes byte ptr
 C $BA67,2 Jump if non-zero
 N $BA69 Lanes byte & 4 is zero. Hit when the road forks (during the fork itself).
-C $BA69,4 A = var_a269 - 1
+C $BA69,4 A = fork_in_progress - 1
 C $BA6D,2 Jump to lr_check_spawning if zero
 N $BA6F Otherwise A has 255? NEG turns that back to zero. Why not XOR A which is shorter?
-C $BA6F,5 var_a269 = -var_a269 + 1 = ~var_a269
+C $BA6F,5 fork_in_progress = -fork_in_progress + 1 = ~fork_in_progress
 C $BA74,4 Get road position
 C $BA78,2 A = 1
 C $BA7A,1 D--
@@ -8009,9 +8034,9 @@ C $BC1D,3 leftside_byte       = 0
 C $BC20,3 rightside_byte      = 0
 C $BC23,3 hazards_byte        = 0
 C $BC26,3 lanes_counter_byte  = 0
-C $BC29,3 var_a269            = 0
+C $BC29,3 fork_in_progress    = 0
 C $BC2C,3 fork_taken          = 0
-C $BC2F,3 forked_road_visible = 0
+C $BC2F,3 fork_visible        = 0
 C $BC32,4 no_objects_counter = 1
 C $BC36,3 var_a16d            = 1
 C $BC39,4 fork_distance       = 0  [B & C are zero here]
@@ -8445,7 +8470,7 @@ C $C0DE,3 Exit via #R$AD0D
 c $C0E1 Set up the tunnel
 D $C0E1 Used by the routines at #R$8401, #R$852A and #R$873C.
 @ $C0E1 label=prepare_tunnel
-C $C0E1,3 Read 'LD A,x' @ #R$C160 (tunnel drawing code)
+C $C0E1,3 Read 'LD A,x' @ #R$C160 (in draw_tunnel)
 C $C0E4,1 Set flags
 C $C0E5,3 Read 'LD A,x' @ #R$C88F (TBD)
 C $C0E8,2 Jump if tunnel has appeared
@@ -8455,6 +8480,7 @@ C $C0EA,1 Set flags
 C $C0EB,2 Jump if non-zero
 C $C0ED,4 tunnel_sfx = 0
 C $C0F1,2 #REGhl = 0
+N $C0F3 Remove draw_tunnel calls.
 C $C0F3,3 #R$8F82 = NOP (instruction)
 C $C0F6,3 #R$8F83 & #R$8F84 = NOP (instruction)
 C $C0F9,3 #R$8FA7 = NOP (instruction)
@@ -8488,13 +8514,14 @@ C $C137,2 Loop to tunnel_loop
 C $C139,3 A = 9 - A
 C $C13C,3 Self modify 'CP x' @ #R$C15D  [15 when tunnel is small, 6 when fills screen]
 C $C13F,2 A = 2
-C $C141,3 Self modify 'LD A,x' @ #R$C160
+C $C141,3 Self modify 'LD A,x' @ #R$C160 (in draw_tunnel below)
 C $C144,2 A = 3
 C $C146,3 Self modify 'LD A,x' @ #R$C2B8
-C $C149,17 Self modify #R$8F82 and #R$8FA7 to be CALL <tunnel drawing code>
+N $C149 Self modify #R$8F82 and #R$8FA7 to be CALL draw_tunnel.
 C $C15A,1 Return
 c $C15B Tunnel entrance/interior/exit drawing code
 D $C15B Called by $8F82 etc. being self modified.
+@ $C15B label=draw_tunnel
 C $C15B,2 A = IY.low
 C $C15D,2 Compare to <self modified>
 C $C15F,1 Return if non-zero
@@ -8860,7 +8887,7 @@ D $C452 Used by the routines at #R$8401, #R$852A and #R$873C.
 @ $C452 label=draw_road
 C $C452,4 Self modify #REGsp restore instruction
 C $C456,4 on_dirt_track = 0
-C $C45A,3 Self modify 'LD A,x' @ #R$C160 to be zero (tunnel drawing code)
+C $C45A,3 Self modify 'LD A,x' @ #R$C160 to be zero (in draw_tunnel)
 C $C45D,3 Self modify 'LD A,x' @ #R$C88F to be zero
 C $C460,5 Self modify 'LD A,x' @ #R$C6D8 to be 3
 C $C465,4 #REGiy = $E301
@@ -8930,7 +8957,7 @@ C $C4FA,2 Jump if clear
 C $C4FC,1 C--
 C $C4FD,1 A++
 C $C4FE,1 H--
-C $C4FF,3 Self modify 'LD A,x' @ #R$C160
+C $C4FF,3 Self modify 'LD A,x' @ #R$C160 (in draw_tunnel)
 C $C502,1 A = H
 C $C503,3 Self modify 'LD A,x' @ #R$C88F
 C $C506,2 A = $EB
@@ -9178,7 +9205,7 @@ C $C737,2 Jump if clear
 C $C739,1 B--
 C $C73A,1 A++
 C $C73B,1 C--
-C $C73C,3 Self modify 'LD A,x' @ #R$C160
+C $C73C,3 Self modify 'LD A,x' @ #R$C160 (in draw_tunnel)
 C $C73F,1 A = C
 C $C740,3 Self modify 'LD A,x' @ #R$C88F
 C $C743,3 Jump
@@ -9203,7 +9230,7 @@ C $C767,2 Jump if clear
 C $C769,1 B--
 C $C76A,1 A++
 C $C76B,1 C--
-C $C76C,3 Self modify 'LD A,x' @ #R$C160
+C $C76C,3 Self modify 'LD A,x' @ #R$C160 (in draw_tunnel)
 C $C76F,1 A = C
 C $C770,3 Self modify 'LD A,x' @ #R$C88F
 C $C773,1 Swap
@@ -9226,7 +9253,7 @@ C $C795,2 Compare to $50
 C $C797,3 Jump if A < $50
 N $C79A This entry point is used by the routines at #R$CBA4 and #R$CBC5.
 C $C79A,1 E++
-C $C79B,3 Address of x in 'LD A,x' @ #R$C160
+C $C79B,3 Address of x in 'LD A,x' @ #R$C160 (in draw_tunnel)
 C $C79E,3 Read 'LD A,x' @ #R$C88F (TBD)
 C $C7A1,1 A |= *HL
 C $C7A2,1 A >>= 1
@@ -11599,9 +11626,10 @@ C $F2B1,1 Next register down
 C $F2B2,3 Loop to #R$F2A9 while +ve
 C $F2B5,1 Return
 @ $F2B6 label=f2b6_128k
-C $F2B6,3 Get speed value
-C $F2B9,2 A = speed / 2 (top half)
-C $F2BB,2 A = speed / 2 (bottom half)
+C $F2B6,3 Fetch speed into #REGhl
+C $F2B9,2 Bottom bit of #REGh moves to carry
+C $F2BB,1 Speed low byte
+C $F2BC,1 Halve speed, shifting carry in as MSB
 C $F2BD,2 L = ~A
 C $F2BF,6 Jump if in low gear
 C $F2D1,3 A = tunnel_sfx
