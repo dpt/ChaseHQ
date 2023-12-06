@@ -2626,7 +2626,7 @@ C $8818,2 $8F83 = NOP (instruction)
 C $881A,1 $8F84 = NOP (instruction)
 N $881B NOP the 6 instruction bytes at $8FA4: the helicopter and tunnel drawing calls.
 C $8824,3 Self modify "LD (HL),x" at #R$C058 to x = 0
-C $8827,3 Self modify "LD A,x" at #R$B063 to x = 0  car jump height
+C $8827,3 Self modify "LD A,x" at #R$B063 to x = 0  -- reset car jump counter
 C $882A,6 Set $A191 to the perp's car LOD
 C $8830,15 Zero $EE00..$EEFF, and reset road_buffer_offset to $EE00 [duplicates work from earlier]
 @ $883F label=loop883f
@@ -6798,10 +6798,20 @@ C $B040,1 A += E  -- pixel width
 C $B041,3 Exit via draw_object_left_helicopter_entrypt if carry
 C $B044,1 Otherwise return
 w $B045 Hero car jump table
-D $B045 Values used to make the car move vertically (by self modifying #R$B58E). Used by #R$B968.
+D $B045 This is a table of 10 values used when the hero car jumps. The first byte of the entry is used to make the car move vertically (by self modifying #R$B5AB). The second byte is used to change the pitch of the car where level/up/down = 0/3/6 (by self modifying #R$B5AF). Used by #R$B968.
 @ $B045 label=hero_car_jump_table
-W $B045,18,2 Main table (vertical delta describing an arc, TBD)
-W $B057,12,2 Sub-table (another byte pair) [suspect this really starts two bytes later]
+W $B045,2,2 Delta  13, Pitch Up
+W $B047,2,2 Delta  10, Pitch Up
+W $B049,2,2 Delta   7, Pitch Up
+W $B04B,2,2 Delta   4, Pitch Up
+W $B04D,2,2 Delta   2, Pitch Level
+W $B04F,2,2 Delta  -2, Pitch Level
+W $B051,2,2 Delta  -4, Pitch Down
+W $B053,2,2 Delta  -7, Pitch Down
+W $B055,2,2 Delta -10, Pitch Down
+W $B057,2,2 Delta -13, Pitch Down
+N $B059 Sub-table (another byte pair)
+W $B059,10,2
 c $B063 Hero car jumps; gear changing; off road checks; speed adjustment
 D $B063 Used by the routines at #R$8401 and #R$852A.
 @ $B063 label=move_hero_car
@@ -6810,26 +6820,27 @@ C $B065,3 Jump to mhc_not_jumping if the jump counter is zero
 N $B068 Hero car is jumping.
 @ $B068 label=mhc_jumping
 C $B068,4 Decrement the jump counter in (self modified) #R$B063
-C $B06C,2 Jump to #R$B079 if we're still jumping
+C $B06C,2 Jump to mhc_midair if we're still jumping
 N $B06E Hero car has landed.
 @ $B06E label=mhc_landed
 C $B06E,5 smoke = 3
-C $B073,3 Thump sfx as the car lands
-C $B076,3 Call start_sfx
-N $B079 Hero car is in mid-air.
+C $B073,6 Play the thump sfx when the car lands
+N $B079 Hero car is in mid-air, or has just landed.
 @ $B079 label=mhc_midair
-C $B079,3 Point #REGhl at entry in jump table. Self modified by #R$B96C and #R$B092
+C $B079,3 Point #REGhl at entry in jump table. Self modified by #R$B96C and #R$B092. Default is $B055.
 C $B07C,4 off_road = 0
 C $B080,8 Clear up/down/left/right bits of user input (stop the player from turning when in mid-air)
-C $B088,5 $B5B0 = *HL++      -- Self modified value in draw_car
-C $B08D,5 A = *$B5AB + *HL++ -- Self modified value in draw_car == car jump offset
-C $B092,3 Update HL load above, #R$B079
-@ $B095 label=mhc_not_jumping
-C $B095,3 Self modify 'SUB x' @ #R$B5AA to be zero (car jump offset)
+N $B088 The low bytes of the hero_car_jump_table entries are the car's pitch (0/3/6).
+C $B088,5 Self modify the 'ADD A,x' at #$B5AF to load the car's pitch
+N $B08D The high bytes of the entries are the car's jump offset (-13..13).
+C $B08D,5 A = *$B5AB + *HL++  -- Self modified value in draw_car
+C $B092,3 Update #REGhl jump table entry address above @ #R$B079
+@ $B095 label=mhc_set_jump_offset
+C $B095,3 Self modify 'SUB x' @ #R$B5AA to be the new car jump offset
 C $B098,3 Address of boost timer
-C $B09B,4 Jump if a turbo boost is not in effect
+C $B09B,4 Jump to mhc_smoke if a turbo boost is not in effect
 C $B09F,1 Decrement boost timer
-C $B0A0,2 Jump if boost timer is non-zero
+C $B0A0,2 Jump to mhc_smoke if boost timer is non-zero
 C $B0A2,7 Decrement turbo boost count [POKE $B0A5,0 for Infinite turbos]
 N $B0A9 Handle smoke effect.
 @ $B0A9 label=mhc_smoke
@@ -6837,11 +6848,13 @@ C $B0A9,1 #REGhl now points at smoke
 C $B0AA,4 Jump if smoke is zero
 C $B0AE,1 Decrement smoke
 N $B0AF Handle gear changes.
+@ $B0AF label=mhc_gear_change
 C $B0AF,3 Read user input
 C $B0B2,1 C = A
 C $B0B3,3 Read from the 'LD A,x' @ #R$B325 (crashed flag)
 C $B0B6,3 Jump if zero
 C $B0B9,4 C = C & $10, i.e. Fire/Gear
+@ $B0BD label=mhc_b0bd
 C $B0BD,1 A = C
 C $B0BF,2 Test it again? [Strange to re-test it?]
 C $B0C1,3 Address of gear flag
@@ -6852,9 +6865,11 @@ C $B0CC,4 Toggle gear flag
 C $B0D0,2 A = 4
 C $B0D2,2 Jump if low gear?
 C $B0D4,3 smoke = A
+@ $B0D7 label=mhc_b0d7
 C $B0D7,2 Decement A  [why write it as a SUB 1?]
 C $B0D9,2 jump if +ve?
 C $B0DB,3 var_a252 = A
+@ $B0DE label=mhc_b0de
 C $B0DE,1 Read current gear flag
 C $B0DF,1 Bank it
 C $B0E0,3 Read current speed
@@ -6870,6 +6885,7 @@ C $B0F7,2 Reset idle timer to 100
 C $B0F9,2 Set priority to 10
 C $B0FB,3 HL = get_moving_chatter
 C $B0FE,3 Call start_chatter (priority 10)
+@ $B101 label=mhc_b101
 C $B101,1 Pop speed
 C $B102,2 DE = HL
 C $B104,3 Load the off-road flag
@@ -6878,6 +6894,7 @@ N $B10A Handle off-road (#REGa can be 1 or 2 here).
 C $B10A,3 BC = 120  -- factor for off-road == 1
 C $B10D,3 Jump if off-road was one
 C $B110,3 BC = 110  -- factor for off-road == 2
+@ $B113 label=mhc_b113
 C $B113,1 Clear carry
 C $B114,2 HL -= BC  -- 16-bit subtract only for result in flags
 C $B116,2 HL = D  -- speed
@@ -6888,6 +6905,8 @@ C $B11B,2 Bottom bit of #REGh moves to carry
 C $B11D,4 A <<= 4  -- 9 bit rotate left through carry
 C $B121,6 A = -((A & $0F) | 1)
 C $B127,3 BC = $FF00 | A
+C $B12A,3 Jump to mhc_b19a
+@ $B12D label=mhc_b12d
 C $B12D,3 A = boost (time remaining)
 C $B130,1 Test then bank the flags
 C $B131,1 Bank
@@ -6896,19 +6915,26 @@ C $B135,3 BC = 470
 C $B138,1 Unbank boost + flags
 C $B139,2 Uses banked flags
 C $B13B,3 BC = 230
+@ $B13E label=mhc_b13e
 C $B13E,2 HL -= BC
+C $B140,3 Jump if HL was >= BC
 C $B143,3 C = ~L
 C $B146,3 B = ~H
 C $B149,1 BC++
 C $B14A,1 A = C
-C $B14B,2 B >>= 1
-C $B14E,2 B >>= 1
+C $B14B,3 Shift a bit out of B into A?
+C $B14E,3 and again
+C $B151,2 Then divide by 4?
 C $B153,5 C = (A & $3F) | 1
+C $B158,2 Jump to mhc_b19a
+@ $B15A label=mhc_b15a
 C $B15A,1 A = L
 C $B15B,2 H >>= 1
 C $B15E,2 H >>= 1
 C $B163,6 A = -((A & $1F) | 1)
 C $B169,3 BC = $FF00 | A
+C $B16C,2 Jump to mhc_b19a
+@ $B16E label=mhc_b16e
 C $B16E,3 BC = 220
 C $B171,2 HL -= BC  -- for flags
 C $B173,2 HL = DE
@@ -6919,15 +6945,21 @@ C $B17E,1 B = D
 C $B17F,2 B >>= 1
 C $B182,2 B >>= 1
 C $B187,5 C = (A | 1) & $1F
+C $B18C,2 Jump to mhc_b19a
+@ $B18E label=mhc_b18e
 C $B18E,3 BC = 695
 C $B194,3 BC = 360
+@ $B19A label=mhc_b19a
 C $B19A,2 Get stacked #REGaf
 C $B19C,3 Test bit 2?
 C $B1A1,3 BC = $FFEC
+@ $B1A6 label=mhc_b1a6
+@ $B1AC label=mhc_b1ac
 C $B1AC,2 HL = DE
 C $B1AE,1 Clear carry?
 C $B1AF,2 HL += BC
 C $B1B4,3 HL = $0000
+@ $B1B7 label=mhc_b1b7
 C $B1B7,5 A = var_a24c - 1
 C $B1BE,3 A = $B5B0  -- self modified value in draw_car
 C $B1C1,3 Jump if zero
@@ -6938,38 +6970,66 @@ C $B1C9,5 A = (C - 5) | 1
 C $B1CE,1 C = A
 C $B1CF,2 B = 0
 C $B1D4,1 B--
+@ $B1D5 label=mhc_b1d5
 C $B1D5,2 DE = HL
 C $B1D7,1 HL += BC
 C $B1D8,3 BC = 695
 C $B1DC,2 HL -= BC
+C $B1DF,2 Jump if HL < BC
+@ $B1E2 label=mhc_b1e2
 C $B1E2,2 A = 3
+@ $B1E4 label=mhc_b1e4
 C $B1E4,3 var_a24c = A
 C $B1E7,1 A = H
 C $B1E8,2 CP 2
 C $B1EC,3 Cap speed to $1FF
+@ $B1EF label=mhc_b1ef
 C $B1EF,3 Set speed to #REGhl
-C $B1F3,3 A = var_a263
-C $B1F6,1 B = A
-C $B1F7,3 A = var_a264
-C $B1FA,1 C = A
+C $B1F2,1 Restore HL  [what is it?]
+C $B1F3,4 B = var_a263
+C $B1F7,4 C = var_a264
 C $B1FB,3 A = *$B064  -- Jump counter [self modified]
-C $B1FE,1 Set flags
-C $B20A,3 A = C - 9
+C $B1FE,4 Jump to mhc_b253 if non-zero
+C $B202,2 Shift LSB out of H
+C $B204,2 Jump to mhc_b21a if set
+C $B206,2 Shift new LSB out of H
+C $B208,2 Jump to mhc_b22c if set
+N $B20A A = ((C >= 9) ? C - 9 : 0) = MAX(C - 9, 0)
+C $B20A,3 A = C - 9  -- var_a264 from earlier
+C $B20D,2 Jump if C >= 9
 C $B20F,1 A = 0
+@ $B210 label=mhc_b210
 C $B210,1 C = A
+N $B211 A = ((B >= 9) ? B - 9 : 0) = MAX(B - 9, 0)
 C $B211,3 A = B - 9
+C $B214,2 Jump to mhc_b217 if B >= 9
 C $B216,1 A = 0
+@ $B217 label=mhc_b217
 C $B217,1 B = A
+C $B218,2 Jump to mhc_b23c
+N $B21A B = ((B + 4 >= 36) ? 36 : B + 4) = MIN(36, B + 4)
+@ $B21A label=mhc_b21a
 C $B21A,3 A = B + 4
 C $B21D,5 Jump if A >= 36
 C $B222,1 B = A
+N $B223 C = ((C >= B) ? C - B : 0) = MAX(C - B, 0)
+@ $B223 label=mhc_b223
 C $B223,3 C -= B
+C $B226,2 Jump to mhc_b23c if C >= B
 C $B228,2 C = 0
+C $B22A,2 Jump to mhc_b23c
+N $B22C C = ((C + 4 >= 36) ? 36 : C + 4) = MIN(36, C + 4)
+@ $B22C label=mhc_b22c
 C $B22C,3 A = C + 4
-C $B22F,2 C = $24
+C $B22F,2 C = 36
+C $B231,3 Jump to mhc_b235 if A >= 36
 C $B234,1 C = A
+N $B235 B = ((B >= C) ? B - C : 0) = MAX(B - C, 0)
+@ $B235 label=mhc_b235
 C $B235,3 B -= C
+C $B238,2 Jump to mhc_b23c if B >= C
 C $B23A,2 B = 0
+@ $B23C label=mhc_b23c
 C $B23C,3 Fetch speed into #REGhl
 C $B23F,1 Speed low byte
 C $B240,2 Bottom bit of #REGh moves to carry (#REGh now unused)
@@ -6978,8 +7038,13 @@ C $B243,4 A >>= 2
 C $B247,1 L = A
 C $B248,2 L >>= 1
 C $B24A,1 A += L
+C $B24B,3 Jump if A >= B
 C $B24E,1 B = A
+@ $B24F label=mhc_b24f
+C $B24F,1 Compare
+C $B250,2 Jump if A >= C
 C $B252,1 C = A
+@ $B253 label=mhc_b253
 C $B254,3 BC = $0000
 C $B257,1 E = B
 C $B258,3 Load current_curvature (e.g. $FA..$06 in multiples of two)
@@ -6990,9 +7055,10 @@ N $B262 Negative scroll => scroll horizon right.
 C $B262,1 E++
 C $B263,2 A = -A
 N $B265 Positive scroll => scroll horizon left.
+@ $B265 label=mhc_scroll_horizon
 @ $B265 ssub=LD HL,table_b828 - 1
 C $B265,3 HL -> 32-byte table at #R$B828
-C $B268,1 C = A  -- B is zero at this point
+C $B268,1 BC = A  -- B is zero at this point
 C $B269,1 HL += BC
 C $B26A,3 A = var_a261
 C $B26D,1 C = A
@@ -7000,72 +7066,85 @@ C $B26F,4 A = fast_counter - C
 C $B273,1 Set flags
 C $B274,2 Jump if zero
 C $B276,1 C = *HL
+@ $B277 label=mhc_b277
 C $B277,1 A -= C
 C $B278,2 Jump if carry
 C $B27A,1 B++
 C $B27C,1 A += C
-C $B27E,2 Jump
+C $B27E,2 Jump to mhc_b277 (above)  -- loop?
+@ $B280 label=mhc_b280
 C $B280,1 A = B
-C $B281,1 Set flags
+C $B281,3 Jump to mhc_b295 if A is zero
 C $B284,3 HL = var_a262
 C $B287,1 A += *HL
 C $B288,1 *HL = A
 C $B289,3 A = B * 3
 C $B28C,2 B = 0
+C $B28E,2 Bottom bit of E moves to carry
+C $B290,2 Jump if clear
 C $B292,1 B--
 C $B293,2 A = -A
+@ $B295 label=mhc_b295
 C $B295,1 C = A
 C $B297,3 var_a261 = A
 N $B29A No curvature - No scroll required?
+@ $B29A label=mhc_straight_road
 C $B29A,4 HL = var_a25f + BC
-C $B29E,3 DE = $0000
+C $B29E,3 DE = $0000  -- not self modfied
 C $B2A1,4 var_a25f = DE
 C $B2A5,3 A = *$B326  -- Read self modified op in animate_hero_car -- crashed flag
 C $B2A8,1 Set flags
-C $B2AC,1 D = H
+C $B2A9,2 Jump to mhc_b2ad if zero
+C $B2AC,1 D = H  [must be a delta]
+@ $B2AD label=mhc_b2ad
 C $B2AE,4 var_a263 = B
 C $B2B2,4 var_a264 = C
 C $B2B6,1 A -= B
-C $B2BA,1 D--
-C $B2BB,1 E = A
+C $B2B7,3 Jump to mhc_b2bb if positive
+C $B2BA,1 Otherwise decrement D
+@ $B2BB label=mhc_b2bb
+C $B2BB,3 E = A >> 1
 C $B2BE,1 HL += DE
 C $B2BF,1 Set flags
-C $B2C0,2 Jump if zero
+C $B2C0,2 Jump to mhc_set_cornering if zero
 C $B2C2,3 Jump if positive
 C $B2C5,2 A = -A
-C $B2C7,2 Compare
-C $B2C9,2 A = 0  -- not self modified
-C $B2CB,2 Jump if A < 17
+@ $B2C7 label=mhc_check_cornering
+C $B2C7,2 Compare A to 17
+C $B2C9,2 A = 0  -- cornering = 0
+C $B2CB,2 Jump to mhc_set_cornering if A < 17
 C $B2CD,4 Jump if H bit 7 clear
-C $B2D1,4 Jump if D bit 7 set
-C $B2D5,4 Jump if H bit 7 clear  -- bug? already tested above
-C $B2D9,2 Jump
-C $B2DB,4 Jump if D bit 7 clear
-C $B2DF,4 Jump if H bit 7 set
+C $B2D1,4 Jump to mhc_set_cornering if D bit 7 set
+C $B2D5,4 Jump to mhc_set_cornering if H bit 7 clear  -- bug? already tested above
+C $B2D9,2 Jump to mhc_is_cornering
+@ $B2DB label=mhc_b2db
+C $B2DB,4 Jump to mhc_set_cornering if D bit 7 clear
+C $B2DF,4 Jump to mhc_set_cornering if H bit 7 set
+@ $B2E3 label=mhc_is_cornering
 C $B2E3,2 A = 1
+@ $B2E5 label=mhc_set_cornering
 C $B2E5,3 cornering = A
-C $B2E8,4 BC = road_pos
-C $B2EC,1 HL += BC
-C $B2ED,3 road_pos = HL
-C $B2F0,2 D = 1
-C $B2F2,1 A = E
+C $B2E8,8 road_pos += HL  [must be a delta]
+C $B2F0,2 D = 1  -- flip flag
+C $B2F2,1 A = E  -- E is?
 C $B2F3,1 Set flags [why are some ORs and some ANDs?]
 C $B2F4,3 Jump if positive
-C $B2F7,1 D--
+C $B2F7,1 D--  -- flip flag -> 0
 C $B2F8,2 A = -A
-C $B2FA,2 CP 12
-C $B2FC,2 B = 2
-C $B300,1 B--
-C $B301,2 CP 6
-C $B305,1 B--
-C $B306,1 A = B
-C $B307,3 turn_speed = A
-C $B30A,1 A = D
-C $B30B,3 flip_car = A
+@ $B2FA label=mhc_decide_turn_speed
+C $B2FA,2 Compare A to 12
+C $B2FC,2 2 => Turn hard
+C $B2FE,2 Jump to mhc_exit if A >= 12
+C $B300,1 1 => Turn
+C $B301,2 Compare A to 6
+C $B303,2 Jump to mhc_exit if A >= 6
+C $B305,1 0 => Straight
+@ $B306 label=mhc_exit
+C $B306,4 turn_speed = B  -- should be 0/1/2
+C $B30A,4 flip_car = D  -- should be 0/1
 C $B30E,3 A = *$B064  -- Jump counter [self modified]
-C $B311,1 Set flags
-C $B312,1 Return if zero
-C $B313,4 cornering = 0
+C $B311,2 Return if zero
+C $B313,4 cornering = 0  -- reset cornering if not jumping
 C $B317,1 Return
 c $B318 Animates the hero car.
 D $B318 Used by the routines at #R$8401 and #R$852A.
