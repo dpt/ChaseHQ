@@ -180,7 +180,7 @@ C $5B1A,2 Increment the read byte by $FD (being a handy non-zero value)
 C $5B1C,1 Store it
 N $5B1D If the modified byte remains present after restoring bank 0 then it's a 48K machine.
 C $5B1D,3 Attempt to map RAM bank 0 to $C000
-C $5B20,1 Fetch potentially changed byte
+C $5B20,1 Load potentially changed byte
 C $5B21,1 Restore original byte
 C $5B22,3 Point #REGhl at loader_commands_48K
 N $5B25 If byte was modified no paging took place, so this is a 48K machine.
@@ -2061,7 +2061,7 @@ T $81F9,11,10:n1 "HOLD ON MAN"
 c $8204 Generates engine noise
 D $8204 Used by the routine at #R$83B5.
 @ $8204 label=engine_sfx_setup
-C $8204,3 Fetch speed into #REGhl
+C $8204,3 Load speed into #REGhl
 C $8207,2 Bottom bit of #REGh moves to carry (#REGh now unused)
 N $8209 This entry point is used by the routine at #R$F220.
 C $8209,1 Speed low byte
@@ -3117,7 +3117,7 @@ C $8DB9,1 Bank
 C $8DBA,3 HL = <self modified>  -- Self modified by #R$8E1F, and above
 C $8DBD,2 8 chunks
 @ $8DBF label=t_loop
-C $8DBF,1 Fetch a byte of anim?
+C $8DBF,1 Load a byte of anim?
 C $8DC0,1 Unbank
 C $8DC1,1 Get it into #REGe (value ORred in)
 C $8DC2,1 Preserve H in D (which is safe)
@@ -4330,14 +4330,14 @@ C $9A20,3 Call plot_face
 C $9A23,1 Restore message pointer
 N $9A24 This entry point is used by the routine at #R$9965.
 @ $9A24 label=pc_chatter_message
-C $9A24,4 Fetch address of message to start showing
+C $9A24,4 Load address of message to start showing
 C $9A28,3 Save current message set address
 C $9A2B,4 Save next character address
 C $9A2F,1 Cause a clear_message_line and fall through
 N $9A30 This entry point is used by the routine at #R$9965. #REGa is message_x.
 @ $9A30 label=pc_clear_line
 C $9A30,6 If (A == 0) clear_message_line
-C $9A36,3 Fetch next_character
+C $9A36,3 Load next_character
 C $9A39,1 Load the character itself
 C $9A3A,2 Clear any string terminator bit
 C $9A3C,1 Preserve message_x
@@ -4593,7 +4593,7 @@ C $9CC1,1 Return
 c $9CC2 Increments score in proportion to current speed
 D $9CC2 Used by the routine at #R$8401.
 @ $9CC2 label=speed_score
-C $9CC2,3 Fetch speed into #REGhl
+C $9CC2,3 Load speed into #REGhl
 N $9CC5 This code makes little sense.
 C $9CC5,1 Speed low byte
 C $9CC6,2 Bottom bit of #REGh moves to carry (#REGh now unused)
@@ -5378,15 +5378,14 @@ B $A259,1,1 Used by #R$B92B
 B $A25A,1,1 Used by #R$B8D2
 @ $A25B label=var_a25b
 B $A25B,1,1
-N $A25C Current road curvature (-ve for left, +ve for right). Values seen: FA FC FE 00 02 04 06
 @ $A25C label=current_curvature
-B $A25C,1,1 Used by #R$B84E
+B $A25C,1,1 This holds the road curvature byte at the position of the hero car. -ve when curving left or +ve when curving right. $FA..$06 in multiples of two.
 @ $A25D label=horizon_a25d
-B $A25D,1,1 Used by #R$B85D
-@ $A25E label=var_a25e
-B $A25E,1,1
+B $A25D,1,1 Seems to be added to the index for the b828 table. Saw: 8/16/24.
+@ $A25E label=horizon_a25e
+B $A25E,1,1 Seems to cycle 4-3-2-1 / 3-2-1 / 2-1 when the roads are curving. Must be the horizon scroll/shift/roll value.
 @ $A25F label=var_a25f
-W $A25F,2,2 Used by #R$B29A
+W $A25F,2,2 Repeatedly set to zero in mhc_straight_road. If altered this changes the car's position on the road.
 @ $A261 label=var_a261
 B $A261,1,1 Used by #R$B297
 @ $A262 label=var_a262
@@ -6812,7 +6811,7 @@ W $B055,2,2 Delta -10, Pitch Down
 W $B057,2,2 Delta -13, Pitch Down
 N $B059 Sub-table (another byte pair)
 W $B059,10,2
-c $B063 Hero car jumps; gear changing; off road checks; speed adjustment
+c $B063 Hero car jumps; gear changing; turbos; off road checks; speed adjustment
 D $B063 Used by the routines at #R$8401 and #R$852A.
 @ $B063 label=move_hero_car
 C $B063,2 Load jump counter. Self modified by #R$8827 and #R$B965. Highest is 8.
@@ -6828,7 +6827,8 @@ C $B073,6 Play the thump sfx when the car lands
 N $B079 Hero car is in mid-air, or has just landed.
 @ $B079 label=mhc_midair
 C $B079,3 Point #REGhl at entry in jump table. Self modified by #R$B96C and #R$B092. Default is $B055.
-C $B07C,4 off_road = 0
+C $B07C,1 off_road = 0
+C $B07D,3 }
 C $B080,8 Clear up/down/left/right bits of user input (stop the player from turning when in mid-air)
 N $B088 The low bytes of the hero_car_jump_table entries are the car's pitch (0/3/6).
 C $B088,5 Self modify the 'ADD A,x' at #$B5AF to load the car's pitch
@@ -6850,9 +6850,10 @@ C $B0AE,1 Decrement smoke
 N $B0AF Handle gear changes.
 @ $B0AF label=mhc_gear_change
 C $B0AF,3 Read user input
-C $B0B2,1 C = A
-C $B0B3,3 Read from the 'LD A,x' @ #R$B325 (crashed flag)
+C $B0B2,1 Preserve it in #REGc
+C $B0B3,3 Read from the 'LD A,x' @ #R$B325 (suspected crashed flag)
 C $B0B6,3 Jump if zero
+N $B0B9 Otherwise crashed flag is set.
 C $B0B9,4 C = C & $10, i.e. Fire/Gear
 @ $B0BD label=mhc_b0bd
 C $B0BD,1 A = C
@@ -6866,7 +6867,7 @@ C $B0D0,2 A = 4
 C $B0D2,2 Jump if low gear?
 C $B0D4,3 smoke = A
 @ $B0D7 label=mhc_b0d7
-C $B0D7,2 Decement A  [why write it as a SUB 1?]
+C $B0D7,2 Decrement A  [why write it as a SUB 1?]
 C $B0D9,2 jump if +ve?
 C $B0DB,3 var_a252 = A
 @ $B0DE label=mhc_b0de
@@ -6918,9 +6919,7 @@ C $B13B,3 BC = 230
 @ $B13E label=mhc_b13e
 C $B13E,2 HL -= BC
 C $B140,3 Jump if HL was >= BC
-C $B143,3 C = ~L
-C $B146,3 B = ~H
-C $B149,1 BC++
+C $B143,7 BC = ~HL + 1
 C $B14A,1 A = C
 C $B14B,3 Shift a bit out of B into A?
 C $B14E,3 and again
@@ -6952,7 +6951,9 @@ C $B194,3 BC = 360
 @ $B19A label=mhc_b19a
 C $B19A,2 Get stacked #REGaf
 C $B19C,3 Test bit 2?
+C $B19F,2 Jump to mhc_b1a6 if no carry
 C $B1A1,3 BC = $FFEC
+C $B1A4,2 Jump to mhc_b1ac
 @ $B1A6 label=mhc_b1a6
 @ $B1AC label=mhc_b1ac
 C $B1AC,2 HL = DE
@@ -6994,7 +6995,7 @@ C $B202,2 Shift LSB out of H
 C $B204,2 Jump to mhc_b21a if set
 C $B206,2 Shift new LSB out of H
 C $B208,2 Jump to mhc_b22c if set
-N $B20A A = ((C >= 9) ? C - 9 : 0) = MAX(C - 9, 0)
+N $B20A A = ((C >= 9) ? C - 9 : 0) = MAX(C - 9, 0) This instr is hit continuously
 C $B20A,3 A = C - 9  -- var_a264 from earlier
 C $B20D,2 Jump if C >= 9
 C $B20F,1 A = 0
@@ -7030,7 +7031,7 @@ C $B235,3 B -= C
 C $B238,2 Jump to mhc_b23c if B >= C
 C $B23A,2 B = 0
 @ $B23C label=mhc_b23c
-C $B23C,3 Fetch speed into #REGhl
+C $B23C,3 Load speed into #REGhl
 C $B23F,1 Speed low byte
 C $B240,2 Bottom bit of #REGh moves to carry (#REGh now unused)
 C $B242,1 Halve speed, shifting carry in as MSB
@@ -7041,16 +7042,15 @@ C $B24A,1 A += L
 C $B24B,3 Jump if A >= B
 C $B24E,1 B = A
 @ $B24F label=mhc_b24f
-C $B24F,1 Compare
-C $B250,2 Jump if A >= C
+C $B24F,3 Jump if A >= C
 C $B252,1 C = A
 @ $B253 label=mhc_b253
 C $B254,3 BC = $0000
 C $B257,1 E = B
-C $B258,3 Load current_curvature (e.g. $FA..$06 in multiples of two)
+C $B258,3 Load current_curvature
 C $B25B,1 Set flags
-C $B25C,3 Jump if zero
-C $B25F,3 Jump if positive
+C $B25C,3 Jump to mhc_straight_road if zero
+C $B25F,3 Jump to mhc_scroll_horizon if positive
 N $B262 Negative scroll => scroll horizon right.
 C $B262,1 E++
 C $B263,2 A = -A
@@ -7090,11 +7090,11 @@ C $B297,3 var_a261 = A
 N $B29A No curvature - No scroll required?
 @ $B29A label=mhc_straight_road
 C $B29A,4 HL = var_a25f + BC
-C $B29E,3 DE = $0000  -- not self modfied
-C $B2A1,4 var_a25f = DE
+C $B29E,7 var_a25f = 0
 C $B2A5,3 A = *$B326  -- Read self modified op in animate_hero_car -- crashed flag
 C $B2A8,1 Set flags
 C $B2A9,2 Jump to mhc_b2ad if zero
+C $B2AB,1 DE <> HL
 C $B2AC,1 D = H  [must be a delta]
 @ $B2AD label=mhc_b2ad
 C $B2AE,4 var_a263 = B
@@ -7662,22 +7662,23 @@ c $B848 Scroll the horizon
 D $B848 Used by the routines at #R$8401, #R$852A and #R$873C.
 R $B848 I:A' ?
 @ $B848 label=scroll_horizon
-C $B848,3 Fetch speed into #REGhl
+C $B848,3 Load speed into #REGhl
 C $B84B,3 Return if speed is zero
-C $B84E,3 Fetch current_curvature into #REGa
+C $B84E,3 Load current_curvature into #REGa
 C $B851,3 Jump if current_curvature is zero
 C $B854,1 Bank current_curvature, which is non-zero here
 C $B855,2 Bottom bit of #REGh moves to carry (#REGh now unused)
 C $B857,5 A = (A << 3) & 6  [+ carry... I can't see where this banked A comes from to start with.]
-C $B85C,6 C = A + horizon_a25d
-C $B862,2 B = 0
+C $B85C,8 BC = A + horizon_a25d
 C $B864,3 16 word table at #R$B828
 C $B867,1 HL += BC
 C $B868,3 BC = wordat(HL)
-C $B86B,3 HL = &var_a25e
+N $B86B Decrement horizon_a25e.
+C $B86B,3 HL = &horizon_a25e
 C $B86E,1 *HL--
 C $B86F,2 Jump if non-zero
-C $B871,1 *HL = B
+N $B871 It became zero.
+C $B871,1 *HL = B  [bottom byte of table entry]
 C $B872,1 Bank [must be]
 C $B873,1 A = C
 C $B874,3 Jump if positive
@@ -7739,7 +7740,8 @@ C $B8CB,1 Bank
 C $B8CC,5 var_a25b += A
 C $B8D1,1 Return
 c $B8D2 Routine at B8D2
-D $B8D2 Used by the routine at #R$BDFB.
+D $B8D2 Horizon stuff? Not sure.
+R $B8D2 Used by the routine at #R$BDFB.
 @ $B8D2 label=sub_b8d2
 C $B8D2,3 A = var_a25a
 C $B8D5,3 BC = A
@@ -7811,8 +7813,8 @@ C $B968,4 HL = #R$B045 + E  points into jump values table
 C $B96C,3 Self modify #R$B079
 C $B96F,1 Restore HL
 C $B970,1 *HL = C
-C $B971,3 A = current_curvature
-C $B974,1 Preserve existing current_curvature
+C $B971,3 Load current_curvature into #REGa
+C $B974,1 Preserve it
 C $B975,3 Load road_buffer_offset into #REGa
 C $B978,3 Point #REGhl at road buffer curvature data
 C $B97B,3 A = fork_visible
@@ -7825,7 +7827,7 @@ C $B988,4 Check fork_taken
 C $B98C,1 Load a curvature byte again
 C $B98D,2 Jump if left fork was taken
 C $B98F,2 Negate if right fork was taken
-C $B991,3 current_curvature = <curvature byte>
+C $B991,3 Store new curvature value to current_curvature
 C $B994,1 Set flags
 C $B995,1 E = A
 C $B996,2 Jump if curvature byte was zero
@@ -7836,10 +7838,8 @@ C $B9A1,1 D = A
 C $B9A2,2 A *= 4
 C $B9A4,3 horizon_a25d = A
 C $B9A7,1 B = A
-C $B9A8,3 A = var_a25e
-C $B9AB,1 Set flags
-C $B9AC,2 Jump if non-zero
-C $B9AE,3 Fetch speed into #REGhl
+C $B9A8,6 Jump if horizon_a25e is non-zero
+C $B9AE,3 Load speed into #REGhl
 C $B9B1,1 Speed low byte
 C $B9B2,2 Bottom bit of #REGh moves to carry (#REGh now unused)
 C $B9B4,5 A = (A << 3) & 6
@@ -7848,7 +7848,7 @@ C $B9BA,3 BC = A
 C $B9BD,3 HL -> table of 16 words
 C $B9C0,1 HL += BC
 C $B9C1,1 A = *HL
-C $B9C2,3 var_a25e = A
+C $B9C2,3 horizon_a25e = A
 C $B9C5,3 A = var_a262
 C $B9C8,3 BC = A
 C $B9CC,1 Set flags
@@ -8166,7 +8166,7 @@ C $BD68,1 Jump to exit check if both are zero
 C $BD6B,3 E = A * 4
 C $BD6E,1 A = $FF if carry set, zero otherwise
 C $BD6F,1 D = A
-C $BD70,3 Fetch the address of the first line of ground attributes (+ 31)
+C $BD70,3 Load the address of the first line of ground attributes (+ 31)
 C $BD73,3 Set the sky colour screen attributes (always black over bright cyan)
 C $BD76,2 If A was zero then jump (Z => sky, NZ => ground)
 C $BD78,4 Load the ground colour screen attributes (varies per level)
@@ -11705,7 +11705,7 @@ C $F2B1,1 Next register down
 C $F2B2,3 Loop to #R$F2A9 while +ve
 C $F2B5,1 Return
 @ $F2B6 label=f2b6_128k
-C $F2B6,3 Fetch speed into #REGhl
+C $F2B6,3 Load speed into #REGhl
 C $F2B9,2 Bottom bit of #REGh moves to carry
 C $F2BB,1 Speed low byte
 C $F2BC,1 Halve speed, shifting carry in as MSB
