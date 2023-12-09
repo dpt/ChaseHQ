@@ -4550,7 +4550,7 @@ C $9C57,4 Reset time_up_state to zero
 C $9C5B,5 Reset smash_factor to zero
 C $9C60,2 Reset smash_counter to zero
 C $9C62,5 Set user input mask to allow everything through
-C $9C67,3 var_a252 = 3
+C $9C67,3 gear_lockout = 3
 C $9C6A,3 transition_control = 3 -- Flag set to zero when attributes have been set
 C $9C6D,3 turbos = 3
 C $9C70,5 Set remaining time to 60 (BCD) [doesn't affect stuff if altered?!]
@@ -5118,7 +5118,7 @@ B $A0CC,1,1 Set to 1 if Kempston joystick is chosen, 0 otherwise
 @ $A0CD label=keydefs_probably
 B $A0CD,8,8 must be keydefs
 @ $A0D5 label=user_input
-B $A0D5,1,1 User input: QPBFUDLR - Quit Pause Boost Fire Up Down Left Right. Note that attract mode is driven through this var.
+B $A0D5,1,1 User input: QPBFUDLR - Quit Pause Boost Fire/Gear Up Down Left Right. Note that attract mode is driven through this var.
 N $A0D6 This entry point is used by the routines at #R$8014, #R$8258, #R$8401, #R$858C, #R$8876 and #R$F220.
 @ $A0D6 label=keyscan
 C $A0D6,6 If not Kempston then goto #R$A0F3
@@ -5360,8 +5360,8 @@ B $A24F,1,1 Smoke time remaining. This is set to 4 on low-to-high gear changes a
 B $A250,1,1 Turn speed (0/1/2 => straight/turn/turn hard) ignoring direction
 @ $A251 label=flip_car
 B $A251,1,1 1 => Horizontally flip the hero car, 0 => Don't
-@ $A252 label=var_a252
-B $A252,1,1
+@ $A252 label=gear_lockout
+B $A252,1,1 Locks out repeated gear changes. Counts down 3-2-1-0
 @ $A253 label=gear
 B $A253,1,1 0 => Low gear, 1 => High gear
 @ $A254 label=allow_spawning
@@ -6853,23 +6853,25 @@ C $B0AF,3 Read user input
 C $B0B2,1 Preserve it in #REGc
 C $B0B3,3 Read from the 'LD A,x' @ #R$B325 (suspected crashed flag)
 C $B0B6,3 Jump if zero
-N $B0B9 Otherwise crashed flag is set.
-C $B0B9,4 C = C & $10, i.e. Fire/Gear
+N $B0B9 Otherwise the crashed flag is set.
+C $B0B9,4 Change user input to be ONLY the fire/gear flag (if set)
 @ $B0BD label=mhc_b0bd
 C $B0BD,1 A = C
-C $B0BF,2 Test it again? [Strange to re-test it?]
+C $B0BE,1 Preserve (modified) user input
+C $B0BF,2 Test fire/gear flag
 C $B0C1,3 Address of gear flag
-C $B0C4,3 A = var_a252
+C $B0C4,3 Load gear_lockout
 C $B0C7,2 Jump if fire/gear is unset
-C $B0C9,3 Jump if var_a252 is set
+N $B0C9 Fire/gear was set.
+C $B0C9,3 Jump if gear_lockout is set  -- lock out gear changes while set
 C $B0CC,4 Toggle gear flag
-C $B0D0,2 A = 4
-C $B0D2,2 Jump if low gear?
-C $B0D4,3 smoke = A
+C $B0D0,2 Smoke time remaining
+C $B0D2,2 Jump if low gear
+C $B0D4,3 Set smoke counter
 @ $B0D7 label=mhc_b0d7
 C $B0D7,2 Decrement A  [why write it as a SUB 1?]
-C $B0D9,2 jump if +ve?
-C $B0DB,3 var_a252 = A
+C $B0D9,2 Jump if positive result
+C $B0DB,3 gear_lockout = A
 @ $B0DE label=mhc_b0de
 C $B0DE,1 Read current gear flag
 C $B0DF,1 Bank it
