@@ -287,12 +287,12 @@ W $5CF4,2,2 Screen attributes used for the ground colour (a pair of matching byt
 @ $5CF6 label=tumbleweeds_etc
 W $5CF6,2,2 Loaded by #R$AC1F. Address of table of LODs for tumbleweeds, barriers.
 W $5CF8,2,2 Loaded by #R$900F. Address of an array of 7 byte entries.
-@ $5CFA label=addrof_graphic_defs
-W $5CFA,2,2 Loaded by #R$A465. Address of graphic definitions.
+@ $5CFA label=addrof_right_hand_objects
+W $5CFA,2,2 Loaded by #R$A465. Address of graphics entry 1. 1-indexed: it points 7 bytes earlier.
 W $5CFC,2,2 Loaded by #R$A53F. Address of graphics entry 3.
 W $5CFE,2,2 Address of entry 9, but it isn't aligned.
-@ $5D00 label=data_5d00
-W $5D00,2,2 Loaded by #R$A490. Address of graphics entry 9.
+@ $5D00 label=addrof_left_hand_objects
+W $5D00,2,2 Loaded by #R$A490. Address of graphics entry 10. 1-indexed: it points 7 bytes earlier.
 W $5D02,2,2 Loaded by #R$A55C. Address of graphics entry 12.
 @ $5D04 label=addrof_perp_description
 W $5D04,2,2 Address of Nancy's perp description.
@@ -402,7 +402,7 @@ B $5E43,1,1 ?
 W $5E44,2,2 Address of barrier_lods table
 N $5E46 Right hand side objects.
 N $5E46 Entry 1 (tunnel light)
-B $5E46,3,3 Unclear if anything uses these bytes
+B $5E46,3,3 (hit coord max, hit coord min, ?)
 W $5E49,2,2 Arg for routine passed in DE
 W $5E4B,2,2 -> Routine at #R$9252
 N $5E4D Entry 2 (empty)
@@ -5513,56 +5513,69 @@ C $A443,4 ($B3A4) = DE
 C $A447,1 Set flags
 C $A448,1 Return if non-zero
 C $A449,3 Load road_buffer_offset into #REGa
+N $A44C -- RIGHT SIDE OBJECT HIT CHECKING --
 C $A44C,2 Add 96 so it's the right side objects data offset
-C $A44E,4 Point #REGhl at road buffer right side objects data
+C $A44E,1 Point #REGhl at road buffer right side objects data
+C $A44F,1 Bank road buffer offset
+C $A450,2 (cont.)
 C $A452,3 Load road_buffer_offset into #REGa
-C $A455,1 Doubling?
-C $A456,1 A = *HL
-C $A459,1 L++
+C $A455,1 Top bit -> carry
+C $A456,1 Read a right side object data byte
+C $A457,2 Jump if top bit was clear
+C $A459,1 L++  -- so if the top bit of the road buffer offset is set we take next byte?
 @ $A45A label=cc_a45a
-C $A45A,1 A |= *HL
-C $A45D,12 HL = #R$5CFA[A * 7]
-C $A469,2 C = *HL++
-C $A46B,2 E = *HL++
-C $A46D,1 A = *HL
-C $A46E,1 D = B
-C $A46F,3 HL = *$EAFC
-C $A473,2 HL -= BC
-C $A478,2 HL -= DE
-C $A47D,1 A = 0
+C $A45A,1 OR in the (next) byte
+C $A45B,2 Jump if it's zero -- no object
+N $A45D Build a graphics_defs address.
+C $A45D,12 HL = (*#R$5CFA)[A * 7]
+N $A469 Read collision values.
+C $A469,2 C = *HL++  -- e.g. $5E5B. a higher value
+C $A46B,2 E = *HL++  -- e.g. $5E5C. a lower value
+C $A46D,1 A = *HL     -- e.g. $5E5D. TBD
+C $A46E,1 D = B       -- B is zero here, so BC = C and DE = E
+N $A46F Check for collisions with scenery (right hand side).
+C $A46F,3 HL = *$EAFC  -- near end of road drawing words (centre)... must be position of car
+C $A472,6 Jump to cc_a480 if HL >= BC
+C $A478,4 Jump to cc_a480 if HL < DE
+C $A47C,1 Unbank road buffer offset
+C $A47D,1 A = 0  -- perhaps a right hand flag
 C $A47E,2 Jump to cc_hit_scenery
 @ $A480 label=cc_a480
+C $A480,1 Unbank road buffer offset
+N $A481 -- LEFT SIDE OBJECT HIT CHECKING --
 C $A481,2 Add 32 so it's the left side objects data offset
 C $A483,3 Point #REGhl at road buffer left side objects data
 C $A486,3 Load road_buffer_offset into #REGa
-C $A489,1 Doubling?
-C $A48A,1 A = *HL
+C $A489,1 Top bit -> carry
+C $A48A,1 Read a left side object data byte
+C $A48B,2 Jump if top bit was clear
 C $A48D,1 L++
 @ $A48E label=cc_a48e
-C $A48E,1 A |= *HL
-C $A48F,1 Return if zero
-C $A490,12 HL = (*$5D00)[A * 7]
+C $A48E,1 OR in the (next) byte
+C $A48F,1 Return if zero -- no object
+C $A490,12 HL = (*#R$5D00)[A * 7]
+N $A49C Read collision values.
 C $A49C,2 C = *HL++
 C $A49E,2 E = *HL++
 C $A4A0,1 A = *HL
 C $A4A1,1 D = B  must be zero?
-C $A4A2,3 HL = *$EAFE
-C $A4A6,2 HL -= BC
-C $A4A9,1 Return if carry
-C $A4AA,2 HL -= DE
-C $A4AC,1 Return if no carry
-C $A4AE,2 A = $01
-N $A4B0 Arrive here if drive into scenery, e.g. a tree.
+N $A4A2 Check for collisions with scenery (left hand side).
+C $A4A2,3 HL = *$EAFE  -- suspected position of car
+C $A4A5,5 Return if HL < BC
+C $A4AA,3 Return if HL >= DE
+C $A4AD,1 Unbank road buffer offset
+C $A4AE,2 A = 1  -- perhaps a left hand flag
+N $A4B0 Arrive here if hit scenery, e.g. drove a tree or a lamp post.
 @ $A4B0 label=cc_hit_scenery
-C $A4B0,1 Preserve AF
+C $A4B0,1 Preserve AF  suspected flag
 C $A4B1,3 BC = $0403
 C $A4B4,3 Call start_sfx
 C $A4B7,1 Restore AF
 N $A4B8 This entry point is used by the routines at #R$A637 and #R$A8CD.
-@ $A4B8 label=cc_a4b8
+@ $A4B8 label=cc_hit_scenery2
 C $A4B8,3 HL = &<crashed flag>
 C $A4BB,2 Set flags
-C $A4BD,1 Return if already crashed?
+C $A4BD,1 Return if already crashed
 C $A4BE,2 Set crashed flag
 C $A4C0,4 *$B36F = A++
 C $A4C4,5 *$B38E = A
@@ -6851,7 +6864,7 @@ N $B0AF Handle gear changes.
 @ $B0AF label=mhc_gear_change
 C $B0AF,3 Read user input
 C $B0B2,1 Preserve it in #REGc
-C $B0B3,3 Read from the 'LD A,x' @ #R$B325 (suspected crashed flag)
+C $B0B3,3 Read from the 'LD A,x' @ #R$B325 (crashed flag)
 C $B0B6,3 Jump if zero
 N $B0B9 Otherwise the crashed flag is set.
 C $B0B9,4 Change user input to be ONLY the fire/gear flag (if set)
@@ -7154,10 +7167,11 @@ D $B318 Used by the routines at #R$8401 and #R$852A.
 C $B318,7 Jump to #R$B325 if speed > 0
 C $B31F,3 Self modify 'LD A' @ #R$B3DB to load A
 C $B322,3 off_road = A
-@ $B325 label=ac_b325
-C $B325,2 [this seems to be a crashed flag]
-C $B327,1 Set flags
-C $B32A,3 cornering = A
+@ $B325 label=ahc_check_crashed
+C $B325,2 A = <self modified>  -- crashed flag
+C $B327,3 Jump if not crashed
+N $B32A Crashed.
+C $B32A,3 cornering = A (which is non-zero here)
 C $B32D,1 Preserve HL
 C $B32E,3 BC = <self modified>
 C $B331,2 HL -= BC
@@ -7174,13 +7188,13 @@ C $B343,2 Jump to #R$B349 if equal
 C $B345,2 A = 2
 C $B347,2 Jump if #R$B349 if HL > DE
 N $B349 Otherwise HL < DE.
-@ $B349 label=ac_b349
+@ $B349 label=ahc_b349
 C $B349,4 Clear crashed flag
 C $B34D,1 A++
 C $B34E,2 Jump
-@ $B350 label=ac_b350
+@ $B350 label=ahc_b350
 C $B350,3 ($A24A) = HL
-@ $B353 label=ac_b353
+@ $B353 label=ahc_b353
 C $B353,3 turn_speed = A
 C $B356,3 HL = $0000
 C $B359,1 D = H
@@ -7193,21 +7207,23 @@ C $B363,2 E >>= 1
 C $B365,2 HL -= DE
 C $B367,3 Self modify 'LD HL,$xxxx' @ #R$B356
 C $B36B,3 HL = road_pos
-C $B36E,2 C = 0
-C $B370,1 A = C
-C $B371,2 AND 1
+N $B36E This seems to be 1 if I crash on the left, 0 if I crash on the right. So is it flipping the crash graphics?
+C $B36E,2 C = <self modified>
+C $B370,3 A = C & 1
 C $B373,3 flip_car = A
-C $B376,1 C--
+C $B376,3 Jump if C == 1
 C $B379,1 C--
+C $B37A,2 [I wonder if this jump is ever taken]
 C $B37C,1 HL += DE
 C $B37F,2 HL -= DE
 C $B381,3 road_pos = HL
-C $B384,2 A = $00
-C $B386,1 Set flags
+C $B384,2 A = <self modified>  -- set to 5 on collisions
+C $B386,3 Jump if zero
 C $B389,1 A--
-C $B38A,3 *$B385 = A
-C $B38D,2 A = $00
+C $B38A,3 Self modify 'LD A,x' @ #R$B384 (above) to x = A
+C $B38D,2 A = <self modified>
 C $B38F,3 *$B3DC = A
+N $B392 Arrive here if not crashed.
 C $B392,3 HL = road_pos
 C $B395,3 DE = $0048
 C $B398,1 A = H
@@ -7223,32 +7239,36 @@ C $B3B4,7 A = cornering | smoke
 C $B3BB,6 Call start_sfx with cornering noise
 C $B3C1,6 Jump if perp_caught_phase > 0
 C $B3C7,1 A--
-C $B3CA,2 CP $02
-C $B3CE,2 A = $02
+C $B3C8,2 Jump if zero
+N $B3CA New turn speed = MIN(A,2)
+C $B3CA,4 Jump if A < 2
+C $B3CE,2 Else A = 2
 C $B3D0,3 turn_speed = A
 C $B3D3,5 flip_car = 1
 C $B3D8,3 Draw debris?
-C $B3DB,2 A = $00
-C $B3DD,1 Set flags
+C $B3DB,2 A = <self modified>
+C $B3DD,3 Jump if zero
 C $B3E0,1 C = A
-C $B3E2,3 A += C + $18
+C $B3E2,3 A += C + 24
 C $B3E5,1 C = A
-C $B3E6,3 A = turn_speed
-C $B3E9,2 CP 2
-C $B3ED,3 A = flip_car
-C $B3F0,1 Set flags
-C $B3F3,1 C++
-C $B3F4,1 C++
+C $B3E6,3 Load turn_speed
+C $B3E9,4 Jump if < 2
+N $B3ED turn_speed is 2.
+C $B3ED,3 Load flip_car
+C $B3F0,3 Jump if zero
+C $B3F3,1 2 -> 3
+C $B3F4,1 2/3 -> 3/4
+C $B3F5,1 Bank/unbank
 C $B3F6,6 B = counter_A & 1
 C $B3FD,1 C = A
 C $B3FF,1 A = C
 C $B403,4 off_road = 0
-C $B407,3 Call ac_check_hand_flag
+C $B407,3 Call ahc_check_hand_flag
 N $B40A Make the car bounce up and down when it goes off-road.
 C $B40A,2 Default bounce of zero to pass to draw_car. It should be either 0 or 3.
 C $B40C,6 Add the bounce only when one wheel is off-road (if off_road == 1)
 C $B412,9 New bounce = (counter_C & 1) * 3
-@ $B41B label=ac_draw_car
+@ $B41B label=ahc_draw_car
 C $B41B,3 Load turn_speed
 C $B41E,3 Call draw_car
 C $B421,6 Jump if cherry_light is zero
@@ -7271,13 +7291,13 @@ C $B44B,1 A = B
 C $B44D,3 Call draw_smoke  (seems to be the right side)
 C $B450,2 A = $01
 C $B454,3 Exit via draw_smoke
-@ $B457 label=ac_check_hand_flag
+@ $B457 label=ahc_check_hand_flag
 C $B457,5 Return if hand_flag is zero
 N $B45C Start the animation.
-@ $B45C label=ac_hand_flag_non_zero
+@ $B45C label=ahc_hand_flag_non_zero
 C $B45C,3 Jump if hand_flag is one
 N $B45F Show the "stop" hand.
-@ $B45F label=ac_hand_flag_gt_one
+@ $B45F label=ahc_hand_flag_gt_one
 C $B45F,1 Bank
 C $B460,3 BC = A
 C $B463,1 Unbank
@@ -7288,7 +7308,7 @@ N $B46E Otherwise turn_speed is 2 (turn hard).
 C $B46E,5 A = flip_car + 37
 C $B473,3 Exit via #R$B69E
 N $B476 Start the animation.
-@ $B476 label=ac_hand_flag_one
+@ $B476 label=ahc_hand_flag_one
 C $B476,2 C = <self modified>
 C $B478,2 A = <self modified>  [could be animation frame?]
 C $B47A,1 A--
@@ -7301,10 +7321,10 @@ C $B488,1 A++
 C $B489,1 C = A
 C $B48A,4 Jump if != 2
 C $B48E,1 B++
-@ $B48F label=ac_b48f
+@ $B48F label=ahc_b48f
 C $B48F,1 A = B
 C $B490,3 Self modify 'LD A' @ #R$B478 (above) to load A
-@ $B493 label=ac_b493
+@ $B493 label=ahc_b493
 C $B493,1 A = C
 C $B494,3 Self modify 'LD C' @ #R$B476 (above) to load A
 C $B497,4 Jump if >= 7
@@ -7321,7 +7341,7 @@ C $B4BD,4 Jump to #R$B4C6 if A >= 4
 C $B4C1,1 C++
 C $B4C2,1 A = C
 C $B4C3,3 Exit via #R$B699
-@ $B4C6 label=ac_enable_cherry_light
+@ $B4C6 label=ahc_enable_cherry_light
 C $B4C6,5 Enable the cherry_light
 C $B4CB,1 Return
 c $B4CC Perp sighted
