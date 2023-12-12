@@ -271,8 +271,9 @@ W $5BD1,2,2 loader_done
 W $5BD3,2,2 entrypt_128k
 @ $5BD5 label=loader_scratch
 B $5BD5,2,2 #R$5B31 loads two bytes to here.  -- unsure what uses them
-u $5BD7 Unused
-B $5BD7,41,8*5,1
+u $5BD7 Padding bytes
+S $5BD7,31,$1F
+B $5BF6,10,10
 b $5C00 [Stage 1] Horizon graphic
 D $5C00 #HTML[#CALL:graphic($5C00,80,24,0,1)]
 @ $5C00 label=bitmap_horizon
