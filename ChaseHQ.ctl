@@ -284,15 +284,22 @@ W $5CF0,2,2 Address of Ralph's mugshot attributes
 W $5CF2,2,2 Address of Ralph's mugshot bitmap
 @ $5CF4 label=ground_colour
 W $5CF4,2,2 Screen attributes used for the ground colour (a pair of matching bytes)
-@ $5CF6 label=tumbleweeds_etc
+@ $5CF6 label=addrof_hittable_objects
 W $5CF6,2,2 Loaded by #R$AC1F. Address of table of LODs for tumbleweeds, barriers.
-W $5CF8,2,2 Loaded by #R$900F. Address of an array of 7 byte entries.
+@ $5CF8 label=addrof_right_hand_handlers
+@ $5CF8 ssub=DEFW right_hand_handlers - 7
+W $5CF8,2,2 Loaded by #R$900F. Address of an array of 7 byte entries. Points 7 bytes earlier.
 @ $5CFA label=addrof_right_hand_objects
+@ $5CFA ssub=DEFW right_hand_graphics_defs - 7
 W $5CFA,2,2 Loaded by #R$A465. Address of graphics entry 1. 1-indexed: it points 7 bytes earlier.
+@ $5CFC label=addrof_right_hand_short_pole_object
 W $5CFC,2,2 Loaded by #R$A53F. Address of graphics entry 3.
-W $5CFE,2,2 Address of entry 9, but it isn't aligned.
+@ $5CFE label=addrof_turn_sign_handlers
+W $5CFE,2,2 Address of turn sign arg and handler address.
 @ $5D00 label=addrof_left_hand_objects
+@ $5D00 ssub=DEFW left_hand_graphics_defs - 7
 W $5D00,2,2 Loaded by #R$A490. Address of graphics entry 10. 1-indexed: it points 7 bytes earlier.
+@ $5D02 label=addrof_left_hand_short_pole_object
 W $5D02,2,2 Loaded by #R$A55C. Address of graphics entry 12.
 @ $5D04 label=addrof_perp_description
 W $5D04,2,2 Address of Nancy's perp description.
@@ -396,19 +403,24 @@ b $5E3F [Stage 1] Graphics definitions
 D $5E3F All are stored inverted except where noted.
 @ $5E3F label=graphics_defs
 B $5E3F,1,1 Pointed to by #R$5CFA
+N $5E40 Hittable hazards: tumbleweed and barrier.
+@ $5E40 label=hittable_objects_defs
 B $5E40,1,1 Pointed to by #R$5CF6
 W $5E41,2,2 Address of tumbleweed_lods table
 B $5E43,1,1 ?
 W $5E44,2,2 Address of barrier_lods table
 N $5E46 Right hand side objects.
 N $5E46 Entry 1 (tunnel light)
+@ $5E46 label=right_hand_graphics_defs
 B $5E46,3,3 (hit coord max, hit coord min, ?)
+@ $5E49 label=right_hand_handlers
 W $5E49,2,2 Arg for routine passed in DE
 W $5E4B,2,2 -> Routine at #R$9252
 N $5E4D Entry 2 (empty)
 B $5E4D,3,3
 W $5E50,4,2
 N $5E54 Entry 3 (short pole)
+@ $5E54 label=right_hand_short_pole_object
 B $5E54,3,3
 W $5E57,2,2 Arg for routine passed in DE
 W $5E59,2,2 -> Routine at #R$9171
@@ -434,10 +446,12 @@ W $5E7A,2,2 Arg for routine passed in DE
 W $5E7C,2,2 -> Routine at #R$92E1
 N $5E7E Entry 9 (turn sign, pointing right)
 B $5E7E,3,3
+@ $5E81 label=right_hand_turn_sign_handlers
 W $5E81,2,2 -> -> turn_sign_lods
 W $5E83,2,2 -> Routine at #R$92E1
 N $5E85 Left hand side objects.
 N $5E85 Entry 10 (tunnel light)
+@ $5E85 label=left_hand_graphics_defs
 B $5E85,3,3
 W $5E88,2,2 Arg for routine passed in DE
 W $5E8A,2,2 -> Routine at #R$924D
@@ -445,6 +459,7 @@ N $5E8C Entry 11 (empty)
 B $5E8C,3,3
 W $5E8F,4,2
 N $5E93 Entry 12 (short pole)
+@ $5E93 label=left_hand_short_pole_object
 B $5E93,3,3
 W $5E96,2,2 Arg for routine passed in DE
 W $5E98,2,2 -> Routine at #R$916C
@@ -3408,6 +3423,7 @@ C $8FF9,3 A = IX[1]
 C $8FFC,1 Set flags
 C $9003,8 DE = E * 7
 C $900B,3 Push return address onto stack
+N $9012 $5E42 sampled DE = $23, $1C, $3F, $38, $31, $2A -- multiples of 7
 C $9012,1 HL += DE
 C $9013,4 DE = wordat(HL); HL += 2
 C $9017,4 HL = wordat(HL); HL += 1
@@ -5625,8 +5641,8 @@ C $A532,3 *$B396 = HL
 C $A535,4 *$B3A4 = DE
 C $A539,6 Jump to #R$A55C if fork_taken was 1 (right fork taken)
 C $A53F,3 HL = *$5CFC
-C $A542,2 C = *HL++
-C $A544,2 E = *HL++
+C $A542,2 C = *HL++  -- max object boundary
+C $A544,2 E = *HL++  -- min object boundary
 C $A546,1 A = *HL
 C $A547,2 B = 0
 C $A549,1 D = B
@@ -5646,6 +5662,7 @@ C $A566,3 HL = *$EAFC
 C $A569,5 Return if HL < BC
 C $A56E,3 Return if HL >= DE
 C $A571,2 A = $8C
+C $A573,1 Bank
 C $A574,2 A = 1
 C $A576,3 Exit via cc_hit_scenery
 c $A579 Lays out roadside objects
@@ -6387,6 +6404,7 @@ C $AC08,3 #REGix = #REGhl
 C $AC0B,10 Zero 20 bytes at #REGhl
 C $AC15,1 Restore entry registers
 C $AC16,9 wordat(IX + 11) = Address of #R$AC3C routine
+N $AC1F Gets hit when on the dirt track. sampled DE = $3 (tumbleweed), $0 (barrier)
 C $AC1F,4 Point #REGhl at the hazards data table entry (*$5CF6 -> #R$5E40 + 3)
 C $AC23,5 Copy flag TBD
 C $AC28,9 Copy lod address (e.g. tumbleweed_lods)
