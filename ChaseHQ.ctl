@@ -272,6 +272,7 @@ W $5BD3,2,2 entrypt_128k
 @ $5BD5 label=loader_scratch
 B $5BD5,2,2 #R$5B31 loads two bytes to here.  -- unsure what uses them
 u $5BD7 Padding bytes
+D $5BD7 These bytes do get touched by e.g. #R$C861.
 S $5BD7,31,$1F
 B $5BF6,10,10
 b $5C00 [Stage 1] Horizon graphic
@@ -328,6 +329,7 @@ b $5D1A [Stage 1] Per-stage difficulty settings
 B $5D1A,1,1 How often cars spawn. Lower values spawn cars more often.
 @ $5D1B label=smash_5d1b
 B $5D1B,1,1 Loaded by #R$A6A7. Used by smash_handler.
+@ $5D1C label=smash_5d1c
 B $5D1C,1,1 Loaded by #R$A759.
 w $5D1D [Stage 1] Per-stage game setup data
 @ $5D1D label=setup_game_data
@@ -4058,6 +4060,7 @@ C $9611,4 H -= 16
 C $9615,3 Loop back to psf_odd_continue
 c $9618 Random number generator
 R $9618 O:A Random byte
+R $9618 O:HL Corrupted
 @ $9618 label=rng_seed
 B $9618,3,3 Seed / initial state
 N $961B This entry point is used by the routines at #R$860F, #R$8A0F, #R$8DF9, #R$99EC, #R$A637, #R$A7F3 and #R$A955.
@@ -4066,8 +4069,8 @@ C $961B,3 Point at rng_seed / state bytes
 C $961E,4 rng_seed[0] -= 141
 C $9622,4 rng_seed[1] += 3
 C $9626,2 A = rng_seed[0] + rng_seed[1]
-C $9628,1 Rotate A by 1
-C $9629,2 Rotate rng_seed[2] by 1
+C $9628,1 Rotate A by 1 through carry
+C $9629,2 Rotate rng_seed[2] by 1 through carry
 C $962B,2 rng_seed[2] += A
 C $962D,1 Return
 g $962E In-game message variables
@@ -5231,23 +5234,23 @@ W $A186,2,2 Attribute address of horizon. Points to last attribute on the line w
 N $A188 Table of spawned vehicles and/or objects
 N $A188 Each entry is 20 bytes long. The first entry is the perp.
 N $A188 Hazard structure layout:
-N $A188 +0 is $FF if this hazard is used, $00 otherwise
-N $A188 +1 looks distance related
-N $A188 +2 TBD
-N $A188 +3 TBD
-N $A188 +4 TBD
-N $A188 +5 horizontal position
-N $A188 +6 TBD
-N $A188 +7 byte TBD used by hazard_hit
-N $A188 +8 byte gets copied from the hazards table
-N $A188 +9 word address of LOD
-N $A188 +11 word address of routine
-N $A188 +13 word horizontal position, e.g. $190
-N $A188 +15 byte TBD used by hazard_hit, counter which gets set to 2 then reduced
-N $A188 +16 byte TBD
-N $A188 +17 byte TBD used by hazard_hit, indexes table #R$ACDB
-N $A188 +18 byte TBD used by hazard_hit
-N $A188 +19 byte TBD used by hazard_hit
+N $A188 +0 (byte) is $FF if this hazard is used, $00 otherwise
+N $A188 +1 (byte) is the low byte of the distance from 'camera'. increments when the perp is getting further away, decrements otherwise.
+N $A188 +2 (byte) is horizontal position
+N $A188 +3 (byte) TBD
+N $A188 +4 (byte) TBD
+N $A188 +5 (byte) is horizontal position
+N $A188 +6 (byte) TBD
+N $A188 +7 (byte) TBD used by hazard_hit, used in plotting
+N $A188 +8 (byte) gets copied from the hazards table
+N $A188 +9 (word) address of LOD
+N $A188 +11 (word) address of routine
+N $A188 +13 (word) horizontal position, e.g. $190
+N $A188 +15 (byte) TBD used by hazard_hit, counter which gets set to 2 then reduced
+N $A188 +16 (byte) TBD
+N $A188 +17 (byte) TBD used by hazard_hit, indexes table #R$ACDB
+N $A188 +18 (byte) TBD used by hazard_hit
+N $A188 +19 (byte) TBD used by hazard_hit
 @ $A188 label=hazard_0
 @ $A19C label=hazard_1
 @ $A1B0 label=hazard_2
@@ -5510,7 +5513,7 @@ C $A41A,2 Jump if clear
 C $A41C,1 C = A
 C $A41D,2 A = 20
 C $A420,3 A = C & 1
-C $A423,3 Jump to cc_a4b8
+C $A423,3 Jump to cc_hit_scenery2
 @ $A426 label=cc_a426
 C $A426,3 HL = $00D1
 C $A429,3 DE = $0195
@@ -5758,7 +5761,7 @@ W $A62C,2,2
 W $A62E,2,2 Routine at #R$A8CD
 W $A630,2,2
 B $A632,5,5
-c $A637 Smash handling
+c $A637 Smash/chase handling
 D $A637 This gets called whenever the perp is within sight of the hero car.
 @ $A637 label=smash_handler
 C $A637,5 Return if perp_caught_phase > 0
@@ -5771,36 +5774,50 @@ N $A64C Otherwise A is negative.
 C $A64C,3 IX[7]++
 C $A64F,1 Return if non-zero
 N $A650 A must be zero to arrive here.
+@ $A650 label=sh_a650
 C $A650,2 Preserve IY
 C $A652,3 C = IX[1]
 C $A655,2 5 iterations
 C $A657,4 IY = &hazards[1]
-C $A65B,3 DE = 20  stride of hazards
-@ $A65E label=sh_a65e_loop
+C $A65B,3 DE = 20  -- stride of hazards
+@ $A65E label=sh_hazards_loop
 C $A65E,6 If the hazard is active then jump to #R$A66C
+@ $A664 label=sh_a664
 C $A664,2 Move to next hazard
 C $A666,2 Loop while #REGb
 C $A668,2 Restore IY
 C $A66A,2 Jump to #R$A68F
+@ $A66C label=sh_a66c
 C $A66C,3 A = IY[15]
+C $A66F,1 Check top bit
+C $A670,3 Jump if clear
 C $A673,4 A = IY[1] - C
+C $A677,3 Jump to sh_a67e if IY[1] > c
 C $A67A,2 A += 2
+C $A67C,2 Jump to sh_a680
+@ $A67E label=sh_a67e
 C $A67E,2 A -= 3
+@ $A680 label=sh_a680
 C $A682,3 A = IY[17]
-C $A685,3 CP IX[18]
-C $A68F,2 A = 0
-C $A691,1 Set flags
+C $A685,3 Compare to IX[18]
+C $A68B,2 Restore IY $A650 pushed
+C $A68D,2 Jump to sh_a6d8
+@ $A68F label=sh_a68f
+C $A68F,2 A = <self modified>
+C $A691,3 Jump if non-zero
 C $A694,3 A = IX[1]
 C $A697,4 Jump if A >= 7
-N $A69B Inline decrementing counter.
-C $A69B,3 A = <self modified> - 1  -- self modified below
-C $A69E,2 Jump if != 0
+N $A69B I'm failing to understand what the following section does. It's a countdown that, when it hits zero, picks a new random countdown value summed with smash_5d1b. I can only think that it's a delay loop.
+N $A69B In-place decrementing counter.
+C $A69B,3 A = <self modified> - 1  -- Self modified below
+C $A69E,2 Jump to sh_update_counter if non-zero
 N $A6A0 When it hits zero we pick a random number...
-C $A6A0,1 -- why increment C when it's overwritten next?
-C $A6A1,6 C = rng() & $1F
+C $A6A0,1 [C incremented but overwritten in a moment - no effect?]
+C $A6A1,6 C = rng() & 31
 N $A6A7 This gets hit at some point during the smash process.
 C $A6A7,4 A = smash_5d1b + C
-C $A6AB,3 *$A69C = A  -- Self modify LD A at #R$A69B
+@ $A6AB label=sh_update_counter
+C $A6AB,3 Self modify 'LD A,x' at #R$A69B (above) to load A
 N $A6AE This smells like it's detecting position and turning that into lanes. The values are like those used by get_spawn_lanes.
 C $A6AE,8 HL = road_pos - 164
 C $A6B6,3 BC = $0404
@@ -5818,92 +5835,135 @@ C $A6CC,2 Jump to #R$A6CF if HL < 70
 C $A6CE,1 BC = $0101
 @ $A6CF label=sh_a6cf
 C $A6CF,3 A = IX[18]
+C $A6D2,3 Jump to sh_a6d8 if A == C
+C $A6D5,3 Jump to sh_a6f6 if A == B
+@ $A6D8 label=sh_a6d8
 C $A6D8,3 C = IX[18]
 C $A6DB,3 Call rng
 C $A6DE,1 C++
-C $A6DF,1 Set flags
-C $A6E0,3 Jump if positive
+C $A6DF,4 Jump if C positive
 C $A6E3,2 C -= 2
+@ $A6E5 label=sh_a6e5
 C $A6E5,1 A = C
 C $A6E6,1 Set flags
 C $A6E7,2 C = 2
 C $A6E9,3 Jump if A is zero
 C $A6EC,4 Jump if A < 5
 C $A6F0,2 C = $FE
+@ $A6F2 label=sh_a6f2
 C $A6F2,1 A += C
+@ $A6F3 label=sh_a6f3
 C $A6F3,3 IX[18] = A
+@ $A6F6 label=sh_a6f6
 C $A6F6,3 C = IX[1]
 C $A6F9,3 Call get_spawn_lanes
 C $A6FC,3 A = IX[18]
+C $A6FF,3 Jump to sh_a707 if A >= B  -- upper boundary?
 C $A702,2 A += 2
 C $A704,3 IX[18] = A
-C $A708,4 Jump to #R$A711 if A <= C
+@ $A707 label=sh_a707
+C $A707,5 Jump to #R$A711 if A <= C  -- lower boundary?
 C $A70C,2 A -= 2
 C $A70E,3 IX[18] = A
+@ $A711 label=sh_a711
 C $A711,3 A = IX[18]
 @ $A714 ssub=LD HL,table_a7e7 - 1
 C $A714,3 HL = $A7E6 -> #R$A7E7 data block
-C $A717,1 A += L
-C $A718,1 L = A
+C $A717,2 L += A
 C $A719,3 A = IX[5]
-C $A71C,1 CP *HL
+C $A71C,1 A == *HL ?
 C $A71D,2 C = 1
+C $A71F,2 Jump if A == *HL
+C $A721,2 Jump if A < *HL
 C $A723,2 A -= 10
-C $A727,1 CP *HL
+C $A725,2 Jump if A was < 10
+C $A727,1 A == *HL ?
+C $A728,2 Jump if A >= *HL
+@ $A72A label=sh_a72a
 C $A72A,1 C--
 C $A72B,1 A = *HL
+C $A72C,2 Jump sh_a737
+@ $A72E label=sh_a72e
 C $A72E,2 A += 10
-C $A732,1 CP *HL
+C $A730,2 Jump if A+10 carried
+C $A732,1 A == *HL ?
+C $A733,2 Jump if A < *HL
+@ $A735 label=sh_a735
 C $A735,1 C--
 C $A736,1 A = *HL
+@ $A737 label=sh_a737
 C $A737,3 IX[5] = A
 C $A73A,4 Self modify 'LD A' @ #R$A68F to load C
 C $A73E,2 A = <self modified>
 C $A740,1 Set flags
 C $A741,3 DE = $1E
 C $A744,3 HL = $E6
-C $A749,2 A = <self modified>  -- Self modified below
-C $A74B,1 A--
-C $A74C,3 Self modify 'LD A' @ #R$A749 to load A
-C $A751,1 Preserve HL
+C $A747,2 Jump sh_a762 if non-zero
+N $A749 Countdown+rng stuff again... as at #R$A69B
+N $A749 In-place decrementing counter.
+C $A749,3 A = <self modified> - 1  -- Self modified below
+C $A74C,3 Self modify 'LD A,x' @ #R$A749 (above) to load A
+C $A74F,2 Jump to sh_a776 if non-zero
+N $A751 When it hits zero we pick a random number...
+C $A751,1 Preserve HL [what's in it?]
 C $A752,3 Call rng
 C $A755,1 Restore HL
-C $A756,3 C = A & 15  mask random value
-C $A759,4 A = ($5D1C) + C
-C $A75D,3 Self modify 'LD A' @ #R$A749 to load A
+C $A756,3 C = (result of rng) & 15
+C $A759,4 A = smash_5d1c + C
+C $A75D,3 Self modify 'LD A,x' @ #R$A749 (above) to load A
 C $A760,2 A = 10
+@ $A762 label=sh_a762
 C $A762,1 A--
-C $A763,3 Self modify 'LD A' @ #R$A73E to load A
-C $A768,3 A = IX[1]
-C $A76B,2 CP 13
-C $A76F,4 B = (13 - A)  -- iterations
+C $A763,3 Self modify 'LD A,x' @ #R$A73E (above) to load A
+C $A766,2 Jump to sh_a776 if zero
+N $A768 sampled IX = $A188 (hazards)
+C $A768,3 A = IX[1]  -- load hazard_1 distance byte
+C $A76B,4 Jump if A >= 13 -- too far
+N $A76F Distance to perp is 12 or less.
+N $A76F HL += (15 - A) * DE
+N $A76F This seems to be using the distance to the perp as a scale by which to adjust its horizontal position.
+C $A76F,4 B = (15 - A)  -- iterations
 @ $A773 label=sh_a773_loop
 C $A773,1 HL += DE
 C $A774,2 Loop to loop_a773 while B
-C $A776,5 A = IX[1] - 6
-C $A77B,2 Jump if A >= 6
-C $A77D,5 A = (A + 5) * 8
+@ $A776 label=sh_a776
+C $A776,5 A = IX[1] - 6  -- load hazard_1 distance byte again
+C $A77B,2 Jump to sh_store_exit if A >= 6
+N $A77D Distance to perp is 5 or less.
+C $A77D,2 Put back most of what we just subtracted
+C $A77F,3 Multiply by 8
+N $A782 And then we do nothing with #REGa?
 C $A782,1 HL += DE
-C $A783,6 wordat(IX + 13) = HL
+@ $A783 label=sh_store_exit
+C $A783,6 wordat(IX + 13) = HL  -- store horizontal position
 C $A789,1 Return
+@ $A78A label=sh_a78a
 C $A78A,4 IX[7] = $FC
-C $A78E,5 Jump if A < 3 -- preserve A
-C $A793,2 A -= 3
+C $A78E,5 Jump if A < 3  -- preserve A
+C $A793,2 A -= 3  -- 0..
+@ $A795 label=sh_check_boost
 C $A795,1 Bank
 C $A796,3 Load turbo boost time remaining (60..0)
 C $A799,1 Set flags
-C $A79A,2 A = $C8  -- value for when not turbo boosting
+C $A79A,2 200 when not turbo boosting
 C $A79C,2 Jump if no turbo boost
-C $A79E,2 A = $E6  -- value for when turbo boosting
-C $A7A1,3 (crash testing stuff...)
-C $A7A4,3 Read HL from 'LD BC' @ #R$B32E
+C $A79E,2 230 when turbo boosting
+@ $A7A0 label=sh_a7a0
+C $A7A0,1 Bank value chosen from boost; Unbank other
+C $A7A1,3 Call cc_hit_scenery2
+C $A7A4,3 Read #REGhl from 'LD BC,x' @ #R$B32E
 C $A7A7,4 HL += 40
-C $A7AB,3 ($B32F) = HL
+C $A7AB,3 Self modify 'LD BC,x' @ #R$B32E
 C $A7AE,2 D = 0
-C $A7B0,1 -- restore A
-C $A7B1,3 HL = #R$B4F0
-C $A7B4,1 Preserve HL
+C $A7B0,1 -- restore A which holds the IX[7] flags from earlier AND FLAGS TOO
+C $A7B1,3 HL = #R$B4F0  == smash routine
+C $A7B4,1 Preserve HL or push addr to stack?
+C $A7B5,2 Jump if no carry
+C $A7B7,4 Jump if A == 2
+C $A7BB,1 Push smash again?
+N $A7BC Break?
 C $A7BC,2 D = 4
+@ $A7BE label=sh_a7be
 C $A7BE,5 D = wanted_stage_number + D
 C $A7C3,2 E = 0
 C $A7C5,6 Jump if retry_count is zero
@@ -5911,6 +5971,7 @@ C $A7CB,1 Middle digit(s) of bonus
 C $A7CC,1 Set top two digits of bonus
 C $A7CD,4 Move middle digit into position
 C $A7D1,1 Set middle digits of bonus
+@ $A7D2 label=sh_a7d2
 C $A7D2,1 Clear low digits of bonus
 C $A7D3,3 Call bonus
 C $A7D6,2 A = 5
@@ -5993,10 +6054,9 @@ C $A8A5,1 Read lanes byte
 C $A8A6,1 Set flags
 C $A8A7,3 BC = $0104
 C $A8AA,1 Return if zero
-C $A8AB,1 E = A  preserve
+C $A8AB,1 E = A  -- preserve E
 C $A8AC,2 A &= $C1
-C $A8AE,2 CP $C1
-C $A8B0,1 Return if zero
+C $A8AE,3 Return if A == $C1
 C $A8B1,2 CP $41
 C $A8B3,3 BC = $0103
 C $A8B6,1 Return if zero
@@ -6006,6 +6066,7 @@ C $A8BD,3 BC = $0204
 C $A8C0,1 Return if non-zero
 C $A8C1,3 BC = $0103
 C $A8C4,1 Return
+@ $A8C5 label=gsl_a8c5
 C $A8C5,3 BC = $0102
 C $A8C8,1 Return if zero
 C $A8C9,3 BC = $0304
@@ -6052,6 +6113,7 @@ C $A93B,2 A = $96
 C $A93D,1 Restore AF
 C $A93E,4 Jump if A < 3
 C $A942,2 A -= 3
+C $A944,3 Call cc_hit_scenery2
 C $A947,3 HL = ouch_chatter
 C $A94A,5 Call start_chatter (priority 3)
 C $A94F,3 BC = $0302
@@ -6486,7 +6548,7 @@ C $AD30,1 UNBANK_CONTINUE if non-zero
 C $AD31,3 A = IX[1]  -- distance related
 C $AD34,3 UNBANK_CONTINUE if >= 20
 C $AD37,2 D = 0  -- not SM
-C $AD39,3 Call ? below
+C $AD39,3 Call sub_ad51
 C $AD3C,1 A = D
 C $AD3D,1 Set flags
 C $AD3E,1 UNBANK_CONTINUE if zero
@@ -6507,7 +6569,7 @@ R $AD51 O:D Return value
 @ $AD51 label=sub_ad51
 C $AD51,5 Return if IX[7] is non-zero
 C $AD56,6 HL = wordat(IX + 2)
-C $AD5C,3 Return if top byte of HL was set
+C $AD5C,3 Return if top byte of #REGhl was set
 C $AD5F,4 A = IX[15] + 1 and set flags
 C $AD63,3 A = IX[1]
 C $AD66,2 C = 3
@@ -6517,15 +6579,14 @@ C $AD6C,2 Return if A >= C
 C $AD6E,2 E = 4
 C $AD70,1 A--
 C $AD71,3 A = fast_counter
-C $AD74,2 Jump if A /was/ non0zero
+C $AD74,2 Jump if A /was/ non-zero
 C $AD76,1 Set flags
 C $AD77,3 Jump if positive
 C $AD7A,2 E = 1
 C $AD7C,2 Jump
 C $AD7E,1 Set flags
 C $AD7F,1 Return if positive
-C $AD80,1 A = L
-C $AD81,2 A &= $F8
+C $AD80,3 A = L & $F8
 C $AD83,3 Return if A >= $90
 C $AD86,3 A += IX[8]
 C $AD89,3 Return if A <= $70
