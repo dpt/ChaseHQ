@@ -2318,6 +2318,8 @@ C $84C8,4 Read keys 1/2/3/4/5
 C $84CC,1 Change to active high
 C $84CD,2 Mask off just keys
 C $84CF,2 If none are set then jump
+C $84D2,3 Effect 8 (bip), Priority 4
+C $84D5,3 Call start_sfx
 C $84D8,3 Call silence_audio_hook
 C $84DC,1 Is bit 0 set? (key 1 to restart the level)
 C $84DD,3 Restart level if so
@@ -2706,27 +2708,29 @@ D $88E2 Used by the routine at #R$BDC1.
 @ $88E2 label=clear_game_screen
 c $88F2 Starts a sound effect
 D $88F2 Used by the routines at #R$8401, #R$8903, #R$9BCF, #R$A399, #R$A637, #R$A8CD, #R$AC3C, #R$B063 and #R$B318.
-R $88F2 I:BC e.g. $0704 $0801 $0604
+R $88F2 I:B Sound effect index: 1..9. This indexes the table at #R$893C.
+R $88F2 I:C Priority. Lower priority effects will take precedence.
 @ $88F2 label=start_sfx
-C $88F2,6 If #R$A238 is zero then goto sfx_related_assign
-C $88F8,2 Return if #R$A238 < C
-@ $88FA label=sfx_related_assign
-C $88FA,8 wordat(sfx_0) = BC
+C $88F2,6 If current effect's priority is zero then assign
+C $88F8,2 Return if current effect's priority is lower than request
+@ $88FA label=ss_assign
+C $88FA,4 sfx_index = B
+C $88FE,4 sfx_priority = C
 C $8902,1 Return
 c $8903 Drives sound effects
 D $8903 Used by the routine at #R$8401.
 @ $8903 label=drive_sfx
 C $8903,6 Jump if tunnel_sfx
 C $8909,7 var_a23d |= var_a23c
-C $8910,3 Counters?
+C $8910,3 Effect 7 (tit-tit), Priority 4
 C $8913,3 Call start_sfx if non-zero
 C $8916,3 Call engine_sfx_setup_hook
 C $8919,3 Call engine_sfx_play_hook
 C $891C,3 Call write_registers_hook
-C $891F,5 If sfx_0 == 0 return
-C $8924,3 #REGe = sfx_0 * 4 -- stride of table
-C $8927,4 sfx_0 = 0
-C $892B,3 sfx_1 = 0
+C $891F,5 If sfx_index == 0 return
+C $8924,3 #REGe = sfx_index * 4 -- stride of table
+C $8927,4 sfx_index = 0
+C $892B,3 sfx_priority = 0
 C $892E,1 Make #REGde full offset
 @ $892F ssub=LD HL,(sfx_table - 4)
 C $892F,3 #REGhl -> Base of table, but 4 bytes earlier
@@ -2734,26 +2738,26 @@ C $8932,1 Point at array element
 C $8933,4 Load argument value into #REGde (note: big endian!)
 C $8937,4 Load address of routine into #REGhl
 C $893B,1 Exit via routine at #REGhl
-N $893C Pairs of words: (argument [big endian], address of sound effect routine)
+N $893C Pairs of words: (argument [big endian], address of sound effect routine) The first word is the argument passed in #REGde to sound effect routine. The second word is the address of the routine.
+N $893C Effect 1 - Cornering squeal
 @ $893C label=sfx_table
-W $893C,2,2 Argument in #REGde for sound effect routine
-W $893E,2,2 Sound effect routine #R$8A0F
-W $8940,2,2 Argument in #REGde for sound effect routine: D = delay of 8
-W $8942,2,2 Sound effect routine #R$89D9
-W $8944,2,2 Argument in #REGde for sound effect routine
-W $8946,2,2 Sound effect routine #R$8960 - crash
-W $8948,2,2 Argument in #REGde for sound effect routine (low)
-W $894A,2,2 Sound effect routine #R$8960 - crash
-W $894C,2,2 Argument in #REGde for sound effect routine
-W $894E,2,2 Sound effect routine #R$89D9
-W $8950,2,2 Argument in #REGde for sound effect routine
-W $8952,2,2 Sound effect routine #R$8A17
-W $8954,2,2 Argument in #REGde for sound effect routine - "tit-tit" used when cornering
-W $8956,2,2 Sound effect routine #R$8A17
-W $8958,2,2 Argument in #REGde for sound effect routine - time running out high "bip"
-W $895A,2,2 Sound effect routine #R$8A36 - "bip-bow"
-W $895C,2,2 Argument in #REGde for sound effect routine - time running out low "bow"
-W $895E,2,2 Sound effect routine #R$8A36 - "bip-bow"
+W $893C,4,2
+N $8940 Effect 2 - Car landing (low thump)
+W $8940,4,2
+N $8944 Effect 3 - Crash (high) - Used for hits on cars
+W $8944,4,2
+N $8948 Effect 4 - Crash (low) - Used for hits on scenery
+W $8948,4,2
+N $894C Effect 5 - Hazard hit (high thump)
+W $894C,4,2
+N $8950 Effect 6 - Tunnel wall hit
+W $8950,4,2
+N $8954 Effect 7 - Cornering ("tit-tit")
+W $8954,4,2
+N $8958 Effect 8 - Time running out high ("bip")
+W $8958,4,2
+N $895C Effect 9 - Time running out low ("bow")
+W $895C,4,2
 c $8960 Sound effect - crash
 R $8960 I:D Inner loop count
 @ $8960 label=sfx_crash
@@ -4587,8 +4591,8 @@ C $9C87,1 H--
 C $9C8A,2 H = 6
 C $9C8C,1 L--
 C $9C8D,1 A = L
-C $9C8F,3 BC = $0801  -- 8 => bip
-C $9C94,1 B++  -- 9 => bow
+C $9C8F,3 Effect 8 (bip), Priority 1
+C $9C94,1 Effect 9 (bow)
 C $9C95,3 Call start_sfx
 C $9C98,1 A = L
 C $9C99,1 Set flags
@@ -5330,10 +5334,10 @@ B $A235,1,1 Cycles 0-1 as the game runs (used to toggle flash the red/blue light
 @ $A236 label=counter_C
 B $A236,1,1 Cycles 0-1-2-3 as the game runs - at half rate
 N $A237 These seem to get altered even when no sound is being produced.
-@ $A237 label=sfx_0
-B $A237,1,1 Used by #R$88F2
-@ $A238 label=sfx_1
-B $A238,1,1 Used by #R$88F2
+@ $A237 label=sfx_index
+B $A237,1,1 Current sound effect index
+@ $A238 label=sfx_priority
+B $A238,1,1 Current sound effect priority
 @ $A239 label=var_a239
 B $A239,1,1 Used by #R$F265 [128K]  Siren related.
 @ $A23A label=var_a23a
@@ -5522,7 +5526,7 @@ C $A42E,2 C = 1
 C $A432,1 C = 2
 @ $A433 label=cc_hit_tunnel_wall
 C $A433,1 Preserve BC
-C $A434,3 BC = $0604
+C $A434,3 Effect 6 (), Priority 4
 C $A437,3 Call start_sfx
 C $A43A,1 Restore BC
 @ $A43B label=cc_a43b
@@ -5588,7 +5592,7 @@ C $A4AE,2 A = 1  -- perhaps a left hand flag
 N $A4B0 Arrive here if hit scenery, e.g. drove a tree or a lamp post.
 @ $A4B0 label=cc_hit_scenery
 C $A4B0,1 Preserve AF  suspected flag
-C $A4B1,3 BC = $0403
+C $A4B1,3 Effect 4 (), Priority 3
 C $A4B4,3 Call start_sfx
 C $A4B7,1 Restore AF
 N $A4B8 This entry point is used by the routines at #R$A637 and #R$A8CD.
@@ -5978,7 +5982,7 @@ C $A7D6,2 A = 5
 C $A7D8,3 Self modify 'LD A' @ #R$A73E to load A
 C $A7DB,3 Point #REGhl at smash_chatter ("BEAR DOWN" / "OH MAN" / etc.)
 C $A7DE,3 Call start_chatter (priority 5)
-C $A7E1,3 BC = $0301
+C $A7E1,3 Effect 3, Priority 1
 C $A7E4,3 Exit via start_sfx
 b $A7E7 Data block at A7E7
 @ $A7E7 label=table_a7e7
@@ -6116,7 +6120,7 @@ C $A942,2 A -= 3
 C $A944,3 Call cc_hit_scenery2
 C $A947,3 HL = ouch_chatter
 C $A94A,5 Call start_chatter (priority 3)
-C $A94F,3 BC = $0302
+C $A94F,3 Effect 3, Priority 2
 C $A952,3 Call start_sfx
 c $A955 Chooses random dirt and stones (not tumbleweeds though)
 D $A955 Used by the routines at #R$8401 and #R$852A.
@@ -6504,7 +6508,8 @@ C $AC7C,3 Increment IX[7]
 C $AC7F,2 if B is zero then don't store it
 C $AC81,3 Set top byte of horizontal position
 C $AC84,3 Increment IX[1]
-C $AC87,6 Call start_sfx with BC = $0503
+C $AC87,3 Effect 5, Priority 3
+C $AC8A,3 Call start_sfx
 C $AC8D,2 A = 2        [set this to 1 and it drives off like a car]
 C $AC8F,3 Set IX[15] to 2
 @ $AC92 label=hh_ac92
@@ -6916,7 +6921,8 @@ C $B06C,2 Jump to mhc_midair if we're still jumping
 N $B06E Hero car has landed.
 @ $B06E label=mhc_landed
 C $B06E,5 smoke = 3
-C $B073,6 Play the thump sfx when the car lands
+C $B073,3 Effect 2, Priority 3
+C $B076,3 Call start_sfx
 N $B079 Hero car is in mid-air, or has just landed.
 @ $B079 label=mhc_midair
 C $B079,3 Point #REGhl at entry in jump table. Self modified by #R$B96C and #R$B092. Default is $B055.
@@ -7316,7 +7322,8 @@ C $B3AC,1 A = L
 C $B3AD,1 A -= E
 C $B3B1,3 road_pos = HL
 C $B3B4,7 A = cornering | smoke
-C $B3BB,6 Call start_sfx with cornering noise
+C $B3BB,3 Effect 1, Priority 5
+C $B3BE,3 Call start_sfx
 C $B3C1,6 Jump if perp_caught_phase > 0
 C $B3C7,1 A--
 C $B3C8,2 Jump if zero
