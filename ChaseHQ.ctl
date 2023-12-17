@@ -6895,7 +6895,7 @@ C $B040,1 A += E  -- pixel width
 C $B041,3 Exit via draw_object_left_helicopter_entrypt if carry
 C $B044,1 Otherwise return
 w $B045 Hero car jump table
-D $B045 This is a table of 10 values used when the hero car jumps. The first byte of the entry is used to make the car move vertically (by self modifying #R$B5AB). The second byte is used to change the pitch of the car where level/up/down = 0/3/6 (by self modifying #R$B5AF). Used by #R$B968.
+D $B045 This is a table of 10 values used when the hero car jumps. The first byte of the entry is used to make the car move vertically (by self modifying #R$B5AA). The second byte is used to change the pitch of the car where level/up/down = 0/3/6 (by self modifying #R$B5AF). Used by #R$B968.
 @ $B045 label=hero_car_jump_table
 W $B045,2,2 Delta  13, Pitch Up
 W $B047,2,2 Delta  10, Pitch Up
