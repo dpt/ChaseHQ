@@ -5526,7 +5526,7 @@ C $A42E,2 C = 1
 C $A432,1 C = 2
 @ $A433 label=cc_hit_tunnel_wall
 C $A433,1 Preserve BC
-C $A434,3 Effect 6 (), Priority 4
+C $A434,3 Effect 6 (tunnel wall hit), Priority 4
 C $A437,3 Call start_sfx
 C $A43A,1 Restore BC
 @ $A43B label=cc_a43b
@@ -5592,7 +5592,7 @@ C $A4AE,2 A = 1  -- perhaps a left hand flag
 N $A4B0 Arrive here if hit scenery, e.g. drove a tree or a lamp post.
 @ $A4B0 label=cc_hit_scenery
 C $A4B0,1 Preserve AF  suspected flag
-C $A4B1,3 Effect 4 (), Priority 3
+C $A4B1,3 Effect 4 (scenery crash), Priority 3
 C $A4B4,3 Call start_sfx
 C $A4B7,1 Restore AF
 N $A4B8 This entry point is used by the routines at #R$A637 and #R$A8CD.
@@ -5982,7 +5982,7 @@ C $A7D6,2 A = 5
 C $A7D8,3 Self modify 'LD A' @ #R$A73E to load A
 C $A7DB,3 Point #REGhl at smash_chatter ("BEAR DOWN" / "OH MAN" / etc.)
 C $A7DE,3 Call start_chatter (priority 5)
-C $A7E1,3 Effect 3, Priority 1
+C $A7E1,3 Effect 3 (car crash), Priority 1
 C $A7E4,3 Exit via start_sfx
 b $A7E7 Data block at A7E7
 @ $A7E7 label=table_a7e7
@@ -6120,7 +6120,7 @@ C $A942,2 A -= 3
 C $A944,3 Call cc_hit_scenery2
 C $A947,3 HL = ouch_chatter
 C $A94A,5 Call start_chatter (priority 3)
-C $A94F,3 Effect 3, Priority 2
+C $A94F,3 Effect 3 (car crash), Priority 2
 C $A952,3 Call start_sfx
 c $A955 Chooses random dirt and stones (not tumbleweeds though)
 D $A955 Used by the routines at #R$8401 and #R$852A.
@@ -6508,7 +6508,7 @@ C $AC7C,3 Increment IX[7]
 C $AC7F,2 if B is zero then don't store it
 C $AC81,3 Set top byte of horizontal position
 C $AC84,3 Increment IX[1]
-C $AC87,3 Effect 5, Priority 3
+C $AC87,3 Effect 5 (hazard hit), Priority 3
 C $AC8A,3 Call start_sfx
 C $AC8D,2 A = 2        [set this to 1 and it drives off like a car]
 C $AC8F,3 Set IX[15] to 2
@@ -6921,7 +6921,7 @@ C $B06C,2 Jump to mhc_midair if we're still jumping
 N $B06E Hero car has landed.
 @ $B06E label=mhc_landed
 C $B06E,5 smoke = 3
-C $B073,3 Effect 2, Priority 3
+C $B073,3 Effect 2 (car landing), Priority 3
 C $B076,3 Call start_sfx
 N $B079 Hero car is in mid-air, or has just landed.
 @ $B079 label=mhc_midair
@@ -7322,7 +7322,7 @@ C $B3AC,1 A = L
 C $B3AD,1 A -= E
 C $B3B1,3 road_pos = HL
 C $B3B4,7 A = cornering | smoke
-C $B3BB,3 Effect 1, Priority 5
+C $B3BB,3 Effect 1 (cornering squeal), Priority 5
 C $B3BE,3 Call start_sfx
 C $B3C1,6 Jump if perp_caught_phase > 0
 C $B3C7,1 A--
