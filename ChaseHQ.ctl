@@ -1886,9 +1886,9 @@ C $801D,3 Set dont_draw_screen_attrs to a non-zero value
 C $8020,5 Update the level number in "SEARCHING FOR <N>"
 C $8025,3 Call clear_screen_set_attrs
 C $8028,3 Call clear_game_attrs
-C $802B,2 Transition type?
+C $802B,2 Transition backwards
 C $802D,3 Call setup_transition
-C $8032,3 Call TBD subroutine
+C $8032,3 Call ls_8088
 C $8035,4 IX = &hazards[1]
 C $803C,3 Call tape_load_at_ix subroutine
 C $803F,2 loop while failed perhaps?
@@ -1917,10 +1917,12 @@ C $8070,3 Call keyscan
 C $8073,4 Loop while key not pressed
 C $8077,3 Call keyscan
 C $807A,4 Loop while key pressed
+C $807E,2 Transition forwards
 C $8080,3 Call setup_transition
 C $8083,1 Restore ?
 C $8084,2 B = 2
 C $8086,2 Exit via ls_8098
+N $8088 #REGb is passed in.
 @ $8088 label=ls_8088
 C $8088,3 Point #REGhl at "START TAPE" message structure
 C $808B,4 A = wanted_stage_number - 1
@@ -2318,9 +2320,11 @@ C $84C8,4 Read keys 1/2/3/4/5
 C $84CC,1 Change to active high
 C $84CD,2 Mask off just keys
 C $84CF,2 If none are set then jump
+C $84D1,1 Bank key flags
 C $84D2,3 Effect 8 (bip), Priority 4
 C $84D5,3 Call start_sfx
 C $84D8,3 Call silence_audio_hook
+C $84DB,1 Unbank key flags
 C $84DC,1 Is bit 0 set? (key 1 to restart the level)
 C $84DD,3 Restart level if so
 C $84E0,3 HL = &wanted_stage_number
@@ -2332,6 +2336,7 @@ C $84EA,1 Is bit 2 set? (key 3 to load the end screen)
 C $84EB,2 Jump if NOT
 C $84ED,2 wanted_stage_number = 6
 C $84EF,3 Exit via load_stage
+@ $84F2 label=increment_credits
 C $84F2,9 Increment credits unless maxed out at 9
 @ $84FB label=not_test_mode
 C $84FB,3 Load transition_control
@@ -2350,6 +2355,7 @@ N $8519 Quit in progress.
 C $8519,1 Decrement quit state
 C $851A,3 Jump to escape_scene if non-zero
 C $851D,5 quit_state = 2
+C $8522,2 Transition forwards
 C $8524,3 Call setup_transition
 C $8527,3 Loop
 c $852A CPU driver
@@ -2393,7 +2399,8 @@ D $858C Used by the routine at #R$8401.
 @ $858C label=run_pregame_screen
 C $858C,3 Address of setup_game_data
 C $858F,3 Call setup_game
-C $8592,5 Set dont_draw_screen_attrs to a non-zero value
+C $8592,2 Transition backwards
+C $8594,3 Set dont_draw_screen_attrs to a non-zero value
 C $8597,3 Call setup_transition
 C $859A,3 Call clear_screen_set_attrs
 C $859D,4 Reset car revealing height counter in #R$85E4
@@ -2416,6 +2423,7 @@ C $85CC,4 Loop until fire is hit
 C $85D0,3 Call drive_chatter_stop
 C $85D3,3 Exit via play_start_noise
 @ $85D6 label=rps_xxx
+C $85D6,2 Transition forwards
 C $85D8,3 If no carry call setup_transition
 C $85DB,2 Loop
 c $85DD Possibly dead code
@@ -2624,6 +2632,7 @@ C $87C1,6 Loop while the perp is still active in the hazards
 C $87C7,6 Loop while chatter_state > 0 => chatter is still happening
 C $87CD,5 Return if transition_control is zero
 C $87D2,2 If transition_control is 4
+C $87D4,2 Transition forwards
 C $87D6,3 Call setup_transition if non-zero
 C $87D9,3 Loop
 c $87DC Sets up the game or the level?
@@ -2657,7 +2666,7 @@ C $8845,3 Call HUGE function
 C $8848,1 Restore BC
 C $8849,2 Loop
 C $884B,4 Clear allow_spawning
-C $884F,2 Transition type?
+C $884F,2 Transition backwards
 C $8851,3 Call setup_transition
 C $8854,3 Call clear_screen_set_attrs
 C $8857,6 Point #REGhl at left light's attributes
@@ -2855,7 +2864,7 @@ C $8A77,4 Increment wanted_stage_number
 C $8A7B,3 Exit via main_loop
 @ $8A7E label=hpc_phase5
 C $8A7E,5 perp_caught_phase = 6
-C $8A83,2 A = 8 -- transition type
+C $8A83,2 Transition forwards
 C $8A85,3 Exit via setup_transition
 @ $8A88 label=hpc_phase2
 C $8A88,3 A = var_a22a
@@ -11991,7 +12000,7 @@ C $F463,6 If transition_control != 0 jump
 C $F469,2 -- smells like self modified
 C $F46F,1 A--
 C $F470,3 self modifying?
-C $F476,2 Transition type?
+C $F476,2 Transition forwards
 C $F478,3 Call setup_transition
 @ $F47D label=f47d_128k
 C $F47D,3 -- must be messages ptr below ($8208+165 means ?)
