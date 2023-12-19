@@ -1884,27 +1884,30 @@ C $801C,1 current_stage_number = wanted_stage_number
 C $801D,3 Set dont_draw_screen_attrs to a non-zero value
 @ $8022 ssub=LD (searching_for_n + 14),A
 C $8020,5 Update the level number in "SEARCHING FOR <N>"
+@ $8025 label=ls_8025
 C $8025,3 Call clear_screen_set_attrs
 C $8028,3 Call clear_game_attrs
 C $802B,2 Transition backwards
 C $802D,3 Call setup_transition
+@ $8032 label=ls_8032
 C $8032,3 Call ls_8088
-C $8035,4 IX = &hazards[1]
+@ $8035 label=ls_load_header
+C $8035,4 Load to address &hazards[1] as a temporary scratch area
+C $8039,3 Load 2 bytes
 C $803C,3 Call tape_load_at_ix subroutine
-C $803F,2 loop while failed perhaps?
+C $803F,2 Loop to ls_load_header while failed
 C $8041,3 #REGhl = &hazards[1]
-C $8044,1 Load used flag [doesn't add up - this is a level number?]
-N $8045 This entry point is used by the routine at #R$E810.
-C $8046,1 equal to <distance related>?
-C $8047,2 jump if not
-C $8049,2 #REGa += (48 + 128) (make it ASCII and terminate it)
+C $8044,3 Are the two loaded bytes equal? [seems odd]
+C $8047,2 Loop to ls_load_header if not
+C $8049,2 Make it ASCII and terminate it by adding 48+128
 @ $804B ssub=LD (found_n + 6),A
 C $804B,3 Set x in "FOUND x"
 C $8050,3 #REGa = wanted_stage_number
 C $8053,1 equal?
 C $8054,2 not the wanted stage
-C $8056,3 Call TBD subroutine
-C $8059,3 Call tape_load_at_5c00
+C $8056,3 Call ls_8088
+C $8059,3 Call tape_load_to_5c00
+C $805C,2 Jump to ls_8025 if no carry
 N $805E Success - must have loaded the correct level data.
 C $805E,3 Set border to black
 C $8061,3 Call clear_screen_set_attrs
@@ -1952,6 +1955,7 @@ C $80AF,8 Delay loop
 C $80B7,2 Loop
 c $80B9 Tape loading
 D $80B9 Used by the routine at #R$8014.
+R $80B9 O:F Carry set on return likely signals success.
 @ $80B9 label=tape_load_to_5c00
 C $80B9,7 Setup to load a block at $5C00 of length $1AF0
 N $80C0 This entry point is used by the routine at #R$5B00. IX = address DE = bytes
