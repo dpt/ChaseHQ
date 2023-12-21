@@ -1897,6 +1897,7 @@ C $8039,3 Load 2 bytes
 C $803C,3 Call tape_load_at_ix subroutine
 C $803F,2 Loop to ls_load_header while failed
 C $8041,3 #REGhl = &hazards[1]
+@ $8045 refs=:$E810
 C $8044,3 Are the two loaded bytes equal? [seems odd]
 C $8047,2 Loop to ls_load_header if not
 C $8049,2 Make it ASCII and terminate it by adding 48+128
@@ -1930,7 +1931,7 @@ N $8088 #REGb is passed in.
 C $8088,3 Point #REGhl at "START TAPE" message structure
 C $808B,4 A = wanted_stage_number - 1
 C $808F,2 Jump if > 0
-N $8091 This entry point is used by the routine at #R$E810.
+@ $8091 refs=:$E810,$F220
 C $8092,3 Point #REGhl at tape_messsages
 @ $8095 label=ls_8095
 C $8095,3 why call adjacent instr? to exec this func twice?
@@ -1985,7 +1986,7 @@ C $80E4,3 Call tl_8147
 @ $80E9 label=tl_80e9
 C $80E9,2 B = 156
 C $80EB,3 Call tl_8147
-N $80EE This entry point is used by the routine at #R$E810.
+@ $80EE refs=:$E810
 @ $80EE label=tl_80ee
 C $80F0,2 A = 198
 @ $80F8 label=tl_80f8
