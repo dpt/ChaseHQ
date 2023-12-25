@@ -153,6 +153,17 @@
 > $4000 ; -----
 > $4000 ; Strings are top bit set terminated ASCII.
 > $4000 ;
+> $4000 ;
+> $4000 ; TODO
+> $4000 ; ----
+> $4000 ; - Decode all stages' level data.
+> $4000 ; - Disassemble the Chase HQ demo version.
+> $4000 ; - $8008 area used at all?
+> $4000 ; - Stretchy streetlamps etc. encoding
+> $4000 ; - CHASE HQ MONITORING SYSTEM drawing code
+> $4000 ; - $E34B block is what?
+> $4000 ;
+> $4000
 @ $4000 org
 @ $4000 set-warnings=1
 @ $4000 start
@@ -203,6 +214,7 @@ C $5B3D,7 Load address into #REGix
 C $5B44,4 Load count into #REGde
 C $5B48,1 Preserve command list address
 C $5B49,3 Call loader_load_chunk
+N $5B4C The following instruction is the entry point for this capture.
 C $5B4C,1 Restore command list address
 C $5B4D,2 Process next entry
 N $5B4F Subroutine that loads #REGde bytes to address #REGix.
@@ -331,10 +343,10 @@ B $5D1A,1,1 How often cars spawn. Lower values spawn cars more often.
 B $5D1B,1,1 Loaded by #R$A6A7. Used by smash_handler.
 @ $5D1C label=smash_5d1c
 B $5D1C,1,1 Loaded by #R$A759.
-w $5D1D [Stage 1] Per-stage game setup data
-@ $5D1D label=setup_game_data
+w $5D1D [Stage 1] Per-stage setup data
+@ $5D1D label=stage_set_up_data
 W $5D1D,2,2 road_pos
-N $5D1F These all point a byte earlier than the real data start point.
+N $5D1F The following all point a byte earlier than the real data's start.
 @ $5D1F ssub=DEFW map_start_curvature - 1
 W $5D1F,2,2 -> Start stretch, curvature
 @ $5D21 ssub=DEFW map_start_height - 1
@@ -1973,7 +1985,7 @@ C $80CB,2 input
 C $80CD,1 why shift?
 C $80CE,2 Check EAR input bit 6
 C $80D0,2 set border?
-C $80D3,1 A == A ?
+C $80D3,1 Set Z? [weird]
 @ $80D4 label=tl_80d4
 @ $80D5 label=tl_80d5
 C $80D5,3 Call tl_delay_814b
@@ -2020,7 +2032,7 @@ C $8146,1 Return (with flags?)
 @ $8147 label=tl_8147
 C $8147,3 Call tl_delay_814b
 @ $814B label=tl_delay_814b
-@ $814D label=tl_delay_814d
+@ $814D label=tl_delay_loop
 C $814B,5 Delay loop of 22 iterations
 C $8150,1 Clear carry flag
 @ $8151 label=tl_8151
@@ -2119,7 +2131,7 @@ c $8258 Attract mode
 D $8258 Used by the routine at #R$83B5.
 @ $8258 label=attract_mode
 C $8258,3 #REGhl -> attract_data
-C $825B,3 Call setup_game
+C $825B,3 Call set_up_stage
 C $825E,4 Reset credits/copyright message blinker to show credits
 C $8262,6 Set speed to $190
 C $8268,3 Call keyscan
@@ -2264,8 +2276,8 @@ C $841A,1 Return
 N $841B Run the main game loop.
 @ $841B label=ml_not_credits
 C $841B,3 Call run_pregame_screen
-C $841E,3 Address of setup_game_data
-C $8421,3 Call setup_game
+C $841E,3 Address of stage_set_up_data
+C $8421,3 Call set_up_stage
 @ $842D label=ml_store_start_speech
 C $8424,10 Cycle start_speech_cycle 3,2,1 then repeat
 N $842E Choose the startup speech sample.
@@ -2402,17 +2414,16 @@ C $8589,3 Exit via animate_hero_car
 c $858C Pre-game radio screen ("CHASE HQ MONITORING SYSTEM")
 D $858C Used by the routine at #R$8401.
 @ $858C label=run_pregame_screen
-C $858C,3 Address of setup_game_data
-C $858F,3 Call setup_game
+C $858C,3 Address of stage_set_up_data
+C $858F,3 Call set_up_stage
 C $8592,2 Transition backwards
 C $8594,3 Set dont_draw_screen_attrs to a non-zero value
 C $8597,3 Call setup_transition
 C $859A,3 Call clear_screen_set_attrs
-C $859D,4 Reset car revealing height counter in #R$85E4
+C $859D,4 Reset the counter in #R$85E4 that reveals the perp's car
 C $85A1,1 Set chatter priority to $FF
 C $85A2,3 Load Nancy's report for this level
 C $85A5,3 Call start_chatter (priority $FF)
-N $85A8 This entry point is used by the routine at #R$85DD.
 @ $85A8 label=rps_loop
 C $85A8,3 Call draw_pregame
 C $85AB,3 Call drive_chatter
@@ -2420,18 +2431,24 @@ C $85AE,3 Call reveal_perp_car
 C $85B1,3 Call animate_meters
 C $85B4,3 Call transition
 C $85B7,3 Call draw_screen
-C $85BA,6 Loop if transition_control is non-zero
-C $85C0,5 Return if chatter_state is zero (idle)
-C $85C5,4 Jump to rps_xxx if chatter_state >= 3 (stopping)
+C $85BA,6 Loop to rps_loop while transition_control is non-zero
+N $85C0 transition_control is now zero.
+C $85C0,5 Return if chatter_state is idle (zero)
+C $85C5,4 Jump to rps_start_game if chatter_state is stopping (>= 3)
 C $85C9,3 Call keyscan
-C $85CC,4 Loop until fire is hit
+C $85CC,4 Loop to rps_start_game unless fire was hit
+N $85D0 Fire was hit.
 C $85D0,3 Call drive_chatter_stop
-C $85D3,3 Exit via play_start_noise
-@ $85D6 label=rps_xxx
+C $85D3,3 Exit via play_start_noise (will RET for us)
+@ $85D6 label=rps_start_game
 C $85D6,2 Transition forwards
-C $85D8,3 If no carry call setup_transition
-C $85DB,2 Loop
-c $85DD Possibly dead code
+N $85D8 We can only arrive here if no carry... so why the conditional CALL?
+C $85D8,3 If no carry (A was >= 3) call setup_transition
+C $85DB,2 Loop to rps_loop
+N $85DD Since nothing can arrive here this can only be dead code.
+@ $85DD label=rps_dead_code
+C $85DD,6 Loop to rps_loop if transition_control is non-zero
+C $85E3,1 Return
 c $85E4 Reveals the perp's car on the pre-game screen
 D $85E4 Used by the routine at #R$858C.
 @ $85E4 label=reveal_perp_car
@@ -2572,7 +2589,7 @@ c $86F6 Routine at 86F6
 D $86F6 18 byte chunks of this 36-byte table get copied to #R$C82D by #R$C808. $2C = INC, $00 = NOP, $ED+$A0 = LDI.
 @ $86F6 label=backdrop_shift_instrs
 b $871A Escape scene setup data
-D $871A 14 bytes of setup_game data used by escape_scene. Map data addresses are all a byte earlier than their actual start data.
+D $871A 14 bytes of set_up_stage data used by escape_scene. Map data addresses are all a byte earlier than their actual start data.
 @ $871A label=escape_scene_data
 W $871A,2,2 road_pos
 @ $871C ssub=DEFW perp_escape_curvature - 1
@@ -2600,7 +2617,7 @@ D $873C Used by the routine at #R$8401.
 @ $873C label=escape_scene
 C $873C,3 Call silence_audio_hook
 C $873F,3 Address of escape_scene_data
-C $8742,3 Call setup_game
+C $8742,3 Call set_up_stage
 C $8745,6 Set speed to $FA [speed of the camera]
 C $874B,11 Initialise hazards[0] (the perp)
 @ $8759 ssub=LD (hazard_0 + 1),HL
@@ -2640,44 +2657,55 @@ C $87D2,2 If transition_control is 4
 C $87D4,2 Transition forwards
 C $87D6,3 Call setup_transition if non-zero
 C $87D9,3 Loop
-c $87DC Sets up the game or the level?
+c $87DC Sets up the stage
 D $87DC Used by the routines at #R$8258, #R$8401, #R$858C, #R$873C and #R$F220.
-R $87DC I:HL Address of 14 bytes of data to be copied to $A26C+
-@ $87DC label=setup_game
+R $87DC I:HL Address of 14 bytes of set up data to be copied to #R$A26C onwards.
+@ $87DC label=set_up_stage
 C $87DC,1 Preserve data pointer
-C $87DD,15 Zero $EE00..$EEFF, and reset road_buffer_offset to $EE00
+N $87DD Zero $EE00..$EEFF and reset road_buffer_offset to $EE00.
 C $87EC,1 A = 0
-C $87ED,11 Copy (47 bytes) of saved game state at #R$A13E to #R$A16D
-C $87F8,9 Zero 208 bytes at $A19D
+N $87ED Copy 47 bytes of saved game state at #R$A13E to #R$A16D.
+N $87F8 Zero 208 bytes at $A19C onwards (hazard_1 onwards).
 C $8801,1 Restore data pointer
-C $8802,5 Copy the 14 bytes passed in to #R$A26C (road_pos, road_curvature_ptr, etc.)
-C $8807,3 Pre-shift the backdrop image
+N $8802 Copy the 14 bytes of set up data passed in to #R$A26C (road_pos, road_curvature_ptr, etc.)
+N $8807 Pre-shift the backdrop image.
+N $880A TBD
 C $880A,6 $E34B = 8
 C $8810,2 $E34C = 0
 C $8812,1 $E34D = 0
+N $8813 NOP some things TBD.
 C $8813,5 $8F82 = NOP (instruction)
 C $8818,2 $8F83 = NOP (instruction)
 C $881A,1 $8F84 = NOP (instruction)
 N $881B NOP the 6 instruction bytes at $8FA4: the helicopter and tunnel drawing calls.
+N $8824 ...
 C $8824,3 Self modify "LD (HL),x" at #R$C058 to x = 0
-C $8827,3 Self modify "LD A,x" at #R$B063 to x = 0  -- reset car jump counter
+N $8827 Reset car jump counter.
+C $8827,3 Self modify "LD A,x" at #R$B063 to x = 0
 C $882A,6 Set $A191 to the perp's car LOD
-C $8830,15 Zero $EE00..$EEFF, and reset road_buffer_offset to $EE00 [duplicates work from earlier]
-@ $883F label=loop883f
-C $883F,2 32 iterations   - affects start position?
+N $8830 Zero $EE00..$EEFF and reset road_buffer_offset to $EE00 [duplicates work from earlier].
+N $883F Run the map reader 32 times [enough to draw the screen?]
+C $883F,2 32 iterations
+@ $8841 label=sus_loop
 C $8841,1 Preserve BC
-C $8842,3 Address of fast_counter
-C $8845,3 Call HUGE function
+C $8842,3 Address of fast_counter == road_buffer_offset - 1 since rm_cycle_buffer_offset will INC HL [why not call an instruction later?]
+C $8845,3 Call rm_cycle_buffer_offset
 C $8848,1 Restore BC
 C $8849,2 Loop
+N $884B Disallow spawning.
 C $884B,4 Clear allow_spawning
+N $884F Set up screen.
 C $884F,2 Transition backwards
 C $8851,3 Call setup_transition
 C $8854,3 Call clear_screen_set_attrs
 C $8857,6 Point #REGhl at left light's attributes
 C $885D,3 Point #REGhl at right light's attributes then FALL THROUGH
-@ $8860 label=clear_lights
-C $8860,2 Clear the lights' BRIGHT bit
+N $8860 Clear the lights' BRIGHT bit.
+@ $8860 label=sus_clear_lights
+C $8860,2 4 rows
+C $8862,2 5 columns
+C $8864,2 Clear BRIGHT bit
+N $8870 Exit, updating the scoreboard. [This must happen twice since this block is CALLed.]
 C $8870,3 Call silence_audio_hook
 C $8873,3 Exit via update_scoreboard
 c $8876 User input checking
@@ -2701,14 +2729,14 @@ C $889E,3 HL -> Random choice of (WHOAAAAA! / GREAT! / ONE MORE TIME.)
 C $88A1,5 Call start_chatter (priority 2)
 C $88A6,3 Exit via turbo_sfx_play_hook
 N $88A9 This entry point is used by the routine at #R$9BCF.
-@ $88A9 label=quit_key
+@ $88A9 label=cui_quit_key
 C $88A9,5 If quit_state != 0 then return (quit in progress)
 C $88AE,3 Call drive_chatter_stop
 C $88B1,3 Call fill_attributes
 C $88B4,4 user_input_mask = 0  -- A is zero from fill_attributes
 C $88B8,3 quit_state = 1  -- start quitting
 C $88BB,1 Return
-@ $88BC label=pause_key
+@ $88BC label=cui_pause_key
 C $88BC,3 Call silence_audio_hook
 C $88BF,7 Call keyscan while PAUSE is pressed
 C $88C6,7 Call keyscan until keys are pressed
@@ -5989,7 +6017,7 @@ C $A7CB,1 Middle digit(s) of bonus
 C $A7CC,1 Set top two digits of bonus
 C $A7CD,4 Move middle digit into position
 C $A7D1,1 Set middle digits of bonus
-@ $A7D2 label=sh_a7d2
+@ $A7D2 label=sh_retry_was_zero
 C $A7D2,1 Clear low digits of bonus
 C $A7D3,3 Call bonus
 C $A7D6,2 A = 5
@@ -8342,7 +8370,8 @@ C $BE1A,2 A = 0  -- disallow car spawning
 C $BE1C,3 Jump to rm_inc_spawning if no carry
 N $BE1F This entry point is used by the routine at #R$87DC.
 @ $BE1F label=rm_cycle_buffer_offset
-C $BE1F,4 Increment road_buffer_offset
+C $BE1F,1 Set #REGhl to address of road_buffer_offset
+C $BE20,3 Increment road_buffer_offset
 C $BE23,5 HL = $EE00 | (A + 95)  -- final byte of lanes data? or compensating for previous increment?
 C $BE28,7 var_a23c |= *HL
 C $BE2F,4 L += 32    -- offset 128
@@ -11981,7 +12010,7 @@ C $F41B,3 HL = $C000
 C $F41E,3 Call relocated plsp_f3b6_128k (speech)
 C $F421,2 Return if A is zero
 C $F423,3 HL -> attract_data
-C $F426,3 Call setup_game
+C $F426,3 Call set_up_stage
 C $F429,5 var or self modify or ..?
 C $F42E,6 Set speed to $190
 @ $F434 label=f434_128k_loop
