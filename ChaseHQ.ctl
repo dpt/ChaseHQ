@@ -3946,7 +3946,7 @@ C $94AC,3 Move result to #REGbc
 C $94AF,2 Add it to #REGix to complete the jump target
 N $94B1 This entry point is used by the routine at #R$92E1.
 @ $94B1 label=plot_sprite_entry
-C $94B1,4 Save #REGsp to restore later (self modify)
+C $94B1,4 Save #REGsp to restore on exit (self modify)
 C $94B5,3 #REGb = 15 rows to draw, #REGc = 16, an increment value used later
 C $94B8,1 Bank
 C $94B9,2 Jump into body of loop
@@ -3983,7 +3983,7 @@ C $94F7,3 (~#REGa + 5) is (4 - #REGa) is the number of plot operations to skip
 C $94FA,4 Multiply #REGa by 5: the length of an individual plot operation
 C $94FE,3 Move result to #REGbc
 C $9501,2 Add it to #REGix to complete the jump target
-C $9503,4 Save #REGsp to restore later (self modify)
+C $9503,4 Save #REGsp to restore on exit (self modify)
 C $9507,3 #REGb = 15 rows to draw, #REGc = 16, an increment value used later
 C $950A,1 Bank
 C $950B,2 Jump into body of loop
@@ -4022,7 +4022,7 @@ R $9542 I:HL' Address of bitmap data
 @ $9542 label=plot_sprite_flipped
 C $9542,4 Advance the back buffer pointer to the end of the first line, so we can draw in reverse
 C $9546,5 Use psf_odd if the bottom bit is set (odd widths)
-C $954B,4 Save #REGsp to restore later (self modify)
+C $954B,4 Save #REGsp to restore on exit (self modify)
 C $954F,4 #REGix = Base of jump table
 C $9553,3 (~#REGa + 5) is (4 - #REGa) is the number of plot operations to skip
 C $9556,5 Multiply #REGa by 9: the length of an individual plot operation
@@ -4064,7 +4064,7 @@ C $95AC,4 H -= 16
 C $95B0,3 Loop back to psf_even_continue
 @ $95B3 label=psf_odd
 C $95B3,1 Increment #REGa for upcoming calculation
-C $95B4,4 Save #REGsp to restore later (self modify) [in a different position to others]
+C $95B4,4 Save #REGsp to restore on exit (self modify) [in a different position to others]
 C $95B8,4 Point #REGix at start of plot instructions
 C $95BC,3 (~#REGa + 5) is (4 - #REGa) is the number of plot operations to skip
 C $95BF,5 Multiply #REGa by 9: the length of an individual plot operation
@@ -8763,7 +8763,7 @@ C $C165,2 Jump if zero
 C $C167,2 D = $FF
 C $C169,1 E = D
 C $C16A,4 Self modify 'LD DE,x' @ #R$C21C
-C $C16E,4 Save #REGsp to restore later (self modify)
+C $C16E,4 Save #REGsp to restore on exit (self modify)
 C $C172,8 L = ~((IY[$4E] - 2) << 1)
 C $C17A,2 C = 0
 C $C17C,2 H = $EB
@@ -10046,7 +10046,7 @@ C $CCA4,1 Unbank
 C $CCA5,3 table?
 C $CCA8,4 table?
 C $CCAC,2 B = 21
-C $CCAE,4 Save #REGsp to restore later (self modify)
+C $CCAE,4 Save #REGsp to restore on exit (self modify)
 C $CCB2,1 Put address in #REGsp (so we can use POP for speed)
 C $CCB3,1 Bank
 C $CCB4,3 A = B - 2
