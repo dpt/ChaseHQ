@@ -5718,20 +5718,21 @@ C $A576,3 Exit via cc_hit_scenery
 c $A579 Lays out roadside objects
 D $A579 Used by the routines at #R$8401, #R$852A and #R$873C.
 @ $A579 label=layout_objects
-C $A579,3 HL = $E34F  -- somewhere in data block $E34B
-C $A57C,2 B = 21  -- iterations
-C $A57E,1 A = 0
+C $A579,3 Address of object_positions
+C $A57C,2 21 iterations [max no of objects on-screen?]
+N $A57E Turn a run of sizes into accumulating values.
+C $A57E,1 total = 0
 @ $A57F label=lo_loop1
-C $A57F,1 A += *HL
-C $A580,2 *HL++ = A
+C $A57F,1 total += *HL
+C $A580,2 *HL++ = total
 C $A582,2 Loop lo_loop1 while B
-C $A584,4 Self modify 'LD SP' @ #R$A60A to restore SP
+C $A584,4 Save #REGsp to restore on exit (self modify)
 C $A588,3 SP = $EB00
 C $A58B,2 Point #REGde at road buffer (somewhere)
 C $A58D,3 Load road_buffer_offset into #REGa
 C $A590,2 Add 64 so it's the lanes data offset
 C $A592,1 E = calculated offset
-C $A593,4 IY = $E34F
+C $A593,4 Address of object_positions
 C $A597,2 B = 21
 C $A599,3 A = fork_visible
 C $A59C,1 Set flags
@@ -5753,7 +5754,7 @@ C $A5B9,1 C = *HL
 C $A5BB,2 H = $EC
 C $A5BD,2 Jump to lo_a5da
 C $A5BF,3 H = A + $E7
-N $A5C2 Sampled HL = E869 E865 E863 E861 (road drawing left)
+N $A5C2 Sampled HL = $E869 $E865 $E863 $E861 (road drawing left)
 C $A5C2,1 B = *HL
 C $A5C3,1 L--
 C $A5C4,1 C = *HL
@@ -9129,27 +9130,25 @@ C $C474,5 IX = $EE00 | A
 C $C479,3 B = A
 C $C47C,3 $C6B3 = A & 1
 C $C47F,4 RR B twice
-C $C483,3 HL = $D010  doubtful that this is a pointer
-C $C486,1 A = $D0
-C $C487,2 B = $55 -- Set this to $00 and the landscape goes blank - but only half the time
-C $C489,2 If B carried out earlier then jump
-C $C48B,3 HL = $0030
-C $C48E,1 B = $00
-@ $C48F label=ml13_c48f
-C $C48F,3 Self modify 'XOR x' @ #R$C6D3 to be $D0 or $00
-C $C492,1 A = $D0 or $00
-C $C493,3 Self modify 'ADD A,x' @ #R$C677
-C $C496,1 A = $10 or $30
-C $C497,3 Self modify 'ADD A,x' @ #R$C651
-C $C49A,1 A = $11 or $31
-C $C49B,3 Self modify 'ADD A,x' @ #R$C698
-C $C49E,3 HL = $C534
-C $C4A1,3 Self modify 'JP Z,x' @ #R$C4B2 to be #R$C534
+N $C483 I'm debating whether $D0 is an opcode. I'm currently thinking not.
+C $C483,3 H = $D0, L = 16
+C $C486,1 Copy $D0 to #REGa
+C $C487,2 B = $55 -- Zero this and the landscape goes blank but only half the time
+C $C489,2 If B carried out (earlier) then jump
+C $C48B,3 H = $00, L = 48
+C $C48E,1 Copy $00 to #REGb
+@ $C48F label=dr_c48f
+C $C48F,3 Self modify 'XOR x' @ #R$C6D3 to be x = $D0
+C $C492,4 Self modify 'ADD A,x' @ #R$C677 to be x = $D0 or x = $00
+C $C496,4 Self modify 'ADD A,x' @ #R$C651 to be x = $10 or x = $30
+C $C49A,4 Self modify 'ADD A,x' @ #R$C698 to be x = $11 or x = $31
+C $C49E,6 Self modify 'JP Z,x' @ #R$C4B2 to be #R$C534
 C $C4A4,2 L = $FF
 C $C4A6,3 DE = $0100
 C $C4A9,1 A = B
 C $C4AA,3 Self modify 'LD A,x' @ #R$C6BC to be zero?
 N $C4AD This entry point is used by the routine at #R$C598.
+@ $C4AD label=dr_c4ad
 C $C4AD,5 A = IX[0] & 3  -- lanes byte & 3
 C $C4B2,3 Jump to <self modified> if zero
 C $C4B5,1 Bank
@@ -9165,20 +9164,24 @@ C $C4C8,2 Old bit 7 was set?
 C $C4CA,2 A &= 3
 C $C4CC,2 C = $FD
 C $C4CE,3 Jump
+@ $C4D1 label=dr_c4d1
 C $C4D1,2 A += 2
 C $C4D3,2 C = $FE
+@ $C4D5 label=dr_c4d5
 C $C4D5,3 Self modify 'LD H,x' @ #R$C5D9
 C $C4D8,3 Self modify 'LD H,x' @ #R$C68A
 C $C4DB,1 A = C
 C $C4DC,3 Self modify 'LD B,x' @ #R$C5AC
 C $C4DF,3 Jump
+@ $C4E2 label=dr_c4e2
 C $C4E2,2 -- Forked road plotting path
 C $C4E4,2 C = $FF
-C $C4E6,2 H = $01
+C $C4E6,2 H = 1
 C $C4E8,2 Bit 4 set?
 C $C4EA,2 Jump if set
 C $C4EC,2 Bit 3 set?
 C $C4EE,2 Jump if clear
+@ $C4F0 label=dr_c4f0
 C $C4F0,2 A = IY.low
 C $C4F2,3 Self modify 'CP x' @ #R$C15D
 C $C4F5,2 A = 1
@@ -9188,7 +9191,9 @@ C $C4FA,2 Jump if clear
 C $C4FC,1 C--
 C $C4FD,1 A++
 C $C4FE,1 H--
+@ $C4FF label=dr_c4ff
 C $C4FF,3 Self modify 'LD A,x' @ #R$C160 (in draw_tunnel)
+@ $C502 label=dr_c502
 C $C502,1 A = H
 C $C503,3 Self modify 'LD A,x' @ #R$C88F
 C $C506,2 A = $EB
@@ -9200,17 +9205,21 @@ C $C513,1 A = C
 C $C514,1 Bank/unbank
 C $C515,1 B = A
 C $C516,3 Jump
+@ $C519 label=dr_c519
 C $C519,2 Bit 6 set?
-C $C51B,3 Jump if set -- Forked road plotting path
+C $C51B,3 Jump to forked_road_plotter if set
+N $C51E Non-forked path.
 C $C51E,1 A = L
 C $C51F,2 A &= 24
 C $C521,2 A = 0
 C $C523,2 Jump if non-zero
 C $C525,1 A++
+@ $C526 label=dr_c526
 C $C526,3 on_dirt_track = A
 C $C529,2 A = $FF
 C $C52B,3 Self modify 'LD B,x' @ #R$C5AC
 C $C531,3 Jump forward
+@ $C534 label=dr_c534
 C $C534,1 Bank/unbank
 C $C535,2 A = $E8
 C $C537,3 Self modify 'LD H,x' @ #R$C642
@@ -9221,8 +9230,10 @@ C $C542,3 Self modify 'LD H,x' @ #R$C5D9
 C $C545,2 A = $FC
 C $C547,3 Self modify 'LD B,x' @ #R$C5AC
 N $C54D This entry point is used by the routine at #R$C2E7.
+@ $C54D label=dr_c54d
 C $C54D,3 Self modify 'JP Z,x' @ #R$C4B2
 C $C550,1 Bank/unbank
+@ $C551 label=dr_c551
 C $C551,1 A = B
 C $C552,1 Set flags
 C $C553,3 Jump if non-zero
@@ -9234,6 +9245,7 @@ C $C560,1 D--
 C $C561,2 A &= 15
 C $C563,2 Jump if zero
 N $C565 This entry point is used by the routine at #R$C58A.
+@ $C565 label=dr_c565
 C $C565,4 Self modify 'LD DE,x' @ #R$C56C (below)
 C $C569,2 B = $FF
 C $C56B,1 Bank/unbank
@@ -9246,16 +9258,19 @@ C $C575,3 HL = 0  [not self modified apparently]
 C $C578,1 C = L
 C $C579,3 Jump into a sequence of 15 PUSH HLs
 N $C57C smells like scanline/buffer pointer movement
+@ $C57C label=dr_c57c
 C $C57C,4 E -= 32
 C $C580,3 Jump if it went -ve
 C $C583,4 D += 16
 C $C587,3 jump
 N $C58A smells like scanline/buffer pointer movement
+@ $C58A label=dr_c58a
 C $C58A,4 E -= 32
 C $C58E,3 Jump if it went -ve
 C $C591,4 D += 16
 C $C595,3 jump
 N $C598 Road and backdrop plotting
+@ $C598 label=dr_c598
 C $C598,1 Bank
 C $C599,6 Self modify 'JP NZ,x' @ #R$C6AD to be #R$C5A1
 C $C59F,1 Unbank
@@ -9264,6 +9279,7 @@ C $C5A2,1 D--
 C $C5A3,2 A &= 15
 C $C5A5,2 Jump if zero
 N $C5A7 This entry point is used by the routine at #R$C57C.
+@ $C5A7 label=dr_c5a7
 C $C5A7,4 Self modify 'LD DE,x' @ #R$C5F9
 C $C5AB,1 A = L
 C $C5AC,2 B = <self modified>
@@ -9279,6 +9295,7 @@ C $C5BC,3 Jump if negative
 C $C5BF,2 A = 15
 C $C5C1,3 Jump
 N $C5C4 Pattern
+@ $C5C4 label=dr_c5c4
 C $C5C4,3 A = HL[-1]
 C $C5C7,1 A &= C  -- C is the mask $F8 here
 C $C5C8,3 A >>= 3
@@ -9286,6 +9303,7 @@ C $C5CB,1 A >>= 1
 C $C5CC,2 Add carry
 C $C5CE,4 Jump if A < B
 C $C5D2,1 A--
+@ $C5D3 label=dr_c5d3
 C $C5D3,1 E = A
 C $C5D4,2 A = ~A + B
 C $C5D6,3 Self modify 'JR x' @ #R$C62C -- jump table target
@@ -9298,10 +9316,12 @@ C $C5E2,3 Jump if positive
 C $C5E5,1 A = 0
 C $C5E6,3 Jump
 N $C5E9 Same pattern again
+@ $C5E9 label=dr_c5e9
 C $C5E9,1 L--
 C $C5EA,2 A = *HL & C  -- C is the mask $F8 here
 C $C5EC,3 A >>= 3
 C $C5EF,1 A >>= 1
+@ $C5F0 label=dr_c5f0
 C $C5F0,3 Self modify 'JR x' @ #R$C60A -- jump table target
 C $C5F3,3 A = ~A + B + E
 C $C5F6,3 Self modify 'JR x' @ #R$C61B -- jump table target
@@ -9315,10 +9335,14 @@ C $C604,1 H = A
 C $C605,1 L = A
 C $C606,1 Unbank
 C $C607,3 BC = 0
+@ $C60A refs=:$C60A
 C $C60A,2 Jump table (self modified)
+@ $C61B refs=:$C61B
 C $C61B,2 Jump table (self modified)
+@ $C62C refs=:$C62C
 C $C62C,2 Jump table (self modified)
 N $C62E This entry point is used by the routine at #R$C452.
+@ $C62E label=dr_c62e
 C $C63D,1 B = E
 C $C63E,1 C--
 C $C63F,2 H = $E4  -- point at $E4xx - road edge/markings table
@@ -9328,20 +9352,26 @@ C $C644,1 A = *HL
 C $C645,3 Jump if non-zero
 C $C648,3 A = HL[-1]
 C $C64B,1 Bank/unbank
-N $C64C Building addresses of road edge markings here.
-C $C64C,1 E = A  -- save index
+N $C64C Build address of road edge marking graphic.
+N $C64C Bottom three bits select the row.
+C $C64C,1 Save index
 C $C64D,4 A = (A & 7) * 4
-C $C651,2 A += <self modifed>  -- must be an offset to one of the three groups, saw $10 $30 $50 $70 $90 $B0
-C $C653,1 L = A  -- set road/edge markings address
-C $C654,8 E = ((E >> 3) & 31) + B
-N $C65C AND-OR masking here.
-C $C65C,2 A = *DE & *HL
-C $C65E,1 L++
-C $C65F,2 *DE = A | *HL
+C $C651,2 A += <self modifed>  -- set to one of $10 $30 $50 $70 $90 $B0 - offset of the current edge graphic
+C $C653,1 Set road/edge markings address
+N $C654 Top five bits select screen buffer addr?
+N $C654 If I break this it seems to affect the left hand side only.
+C $C654,8 E = ((index >> 3) & 31) + B
+N $C65C AND-OR masking here. DE is address of screen buffer byte HL is address of mask byte, followed by bitmap byte [then again since the edges are 16x8]
+C $C65C,1 Read a screen buffer byte  -- A = *DE & *HL  [DE = $FDA1, HL = $E430]
+C $C65D,1 Apply the mask
+C $C65E,1 Advance to bitmap byte
+C $C65F,1 Apply the bitmap
+C $C660,1 Write the new screen buffer byte
 C $C661,2 L += 2
 C $C663,1 E++
 C $C664,2 *DE++ = *HL++, BC--
 C $C666,1 Bank/unbank
+@ $C667 label=dr_c667
 C $C667,1 B++  -- counter?
 C $C668,2 Jump if zero  -- exit?
 C $C66A,1 H++
@@ -9359,6 +9389,7 @@ C $C684,1 A = *HL
 C $C685,1 *DE = A
 C $C686,1 Bank/unbank
 C $C687,3 Jump  -- looks like a loop
+@ $C68A label=dr_c68a
 C $C68A,2 H = <self modified>
 C $C68C,1 A = *HL
 C $C68D,1 L--
@@ -9367,6 +9398,7 @@ C $C68F,2 Jump if non-zero
 C $C691,1 A = *HL
 C $C692,1 Bank/unbank
 C $C693,1 E = A  -- save A
+N $C694 Must be the right hand edge handling.
 C $C694,7 L = ((A & 7) << 2) + <self modified>   -- as above but * 4
 C $C69B,8 E = ((E >> 3) & 31) + B
 C $C6A3,2 *DE++ = *HL++, BC--
@@ -9375,11 +9407,13 @@ C $C6A5,2 A = *DE & *HL
 C $C6A7,1 L++
 C $C6A8,2 *DE = A | *HL
 C $C6AA,1 Bank/unbank
+@ $C6AB label=dr_c6ab
 C $C6AB,1 L--
 C $C6AC,1 C--
 C $C6AD,3 Jump to <self modified> if non-zero
 C $C6B0,1 Swap
 C $C6B1,1 B = A
+@ $C6B2 label=dr_c6b2
 C $C6B2,2 A = <self modified>
 C $C6B4,2 A ^= 1
 C $C6B6,3 Self modify above
@@ -9387,10 +9421,12 @@ C $C6B9,3 Jump if non-zero
 C $C6BC,4 A = <self modified> ^ 0x55
 C $C6C0,3 Self modify above
 C $C6C3,1 B = A
-C $C6C4,8 Toggle bit 5 of x in 'ADD A,x' @ #R$C651
+N $C6C4 This causes the road edge stripes.
+C $C6C4,8 Toggle bit 5 of x in 'ADD A,x' @ #R$C651  -- switch between adjacent edge graphics
 C $C6CC,1 A++
 C $C6CD,3 Self modify 'ADD A,x' @ #R$C698
 C $C6D0,8 Toggle <self modified> bits of 'ADD A,x' @ #R$C677
+@ $C6D8 label=dr_c6d8
 C $C6D8,2 A = <self modified>  -- self modified below
 C $C6DA,1 A--
 C $C6DB,3 Self modify 'LD A' @ #R$C6D8 to be new #REGa [above]
@@ -9405,10 +9441,10 @@ C $C6EF,1 Set flags
 C $C6F0,2 Jump if zero
 C $C6F2,1 A = C
 C $C6F3,3 Self modify 'ADD A,x' @ #R$C677
-C $C6F6,3 Read 'ADD A,x' @ #R$C651
-C $C6F9,2 A += 64
-C $C6FB,3 Self modify 'ADD A,x' @ #R$C651
+@ $C6F6 label=dr_c6f6
+C $C6F6,8 Increment x in 'ADD A,x' @ #R$C651 by 64  -- next road edge graphic?
 C $C6FE,5 Self modify 'LD A,x' @ #R$C6D8 to be 5
+@ $C703 label=dr_c703
 C $C703,3 A = IY[0]
 C $C706,2 IY++
 C $C708,2 IX.low++
@@ -9416,6 +9452,7 @@ C $C70A,3 A -= IY[0]
 C $C70D,2 Jump if zero
 C $C70F,3 Jump if positive
 C $C712,3 Jump
+@ $C715 label=dr_c715
 C $C715,2 L -= 2
 C $C717,3 C = IX[0]
 C $C71A,2 Bit 6 of C set?
@@ -9436,11 +9473,14 @@ C $C737,2 Jump if clear
 C $C739,1 B--
 C $C73A,1 A++
 C $C73B,1 C--
+@ $C73C label=dr_c73c
 C $C73C,3 Self modify 'LD A,x' @ #R$C160 (in draw_tunnel)
 C $C73F,1 A = C
+@ $C740 label=dr_c740
 C $C740,3 Self modify 'LD A,x' @ #R$C88F
 C $C743,3 Jump
 N $C746 Variation:
+@ $C746 label=dr_c746
 C $C746,3 C = IX[0]
 C $C749,2 Bit 6 of C set?
 C $C74B,3 Jump if clear
@@ -9461,10 +9501,13 @@ C $C767,2 Jump if clear
 C $C769,1 B--
 C $C76A,1 A++
 C $C76B,1 C--
+@ $C76C label=dr_c76c
 C $C76C,3 Self modify 'LD A,x' @ #R$C160 (in draw_tunnel)
 C $C76F,1 A = C
+@ $C770 label=dr_c770
 C $C770,3 Self modify 'LD A,x' @ #R$C88F
 C $C773,1 Swap
+@ $C774 label=dr_c774
 C $C774,1 C = A
 C $C775,3 A = IY[0]
 C $C778,2 IY++
@@ -9474,15 +9517,18 @@ C $C77F,2 Compare to $E0
 C $C781,3 Jump if A >= $E0
 C $C784,2 Compare to $50
 C $C786,2 Jump if A >= $50
+@ $C788 label=dr_c788
 C $C788,2 L -= 2
 C $C78A,1 A += C
 C $C78B,5 Jump if zero or negative
 C $C790,1 C = A
 C $C791,3 Jump
+@ $C794 label=dr_c794
 C $C794,1 C = A
 C $C795,2 Compare to $50
 C $C797,3 Jump if A < $50
 N $C79A This entry point is used by the routines at #R$CBA4 and #R$CBC5.
+@ $C79A label=dr_c79a
 C $C79A,1 E++
 C $C79B,3 Address of x in 'LD A,x' @ #R$C160 (in draw_tunnel)
 C $C79E,3 Read 'LD A,x' @ #R$C88F (TBD)
@@ -9511,6 +9557,7 @@ C $C7C2,1 A += C
 C $C7C3,3 Jump if no carry
 C $C7C6,3 Jump if zero
 C $C7C9,1 C = A
+@ $C7CA label=dr_c7ca
 C $C7CA,1 A = C
 C $C7CB,3 Self modify xx in 'LD BC,$xxyy' @ #R$C80A
 C $C7CE,1 A += B
@@ -9520,6 +9567,7 @@ C $C7D4,2 A = -A
 C $C7D6,1 A += C
 C $C7D7,3 Self modify xx in 'LD BC,$xxyy' @ #R$C80A
 C $C7DA,1 C = A
+@ $C7DB label=dr_c7db
 C $C7DB,4 A = 24 - C
 C $C7DF,1 A <<= 1
 C $C7E0,1 C = A
@@ -9532,6 +9580,7 @@ C $C7E9,1 A >>= 1  -- deciding whether to use the shifted or non shifted backdro
 C $C7EA,3 Point at first hill backdrop (shifted version)
 C $C7ED,2 Jump if no carry
 C $C7EF,3 Point at second hill backdrop
+@ $C7F2 label=dr_c7f2
 C $C7F2,1 HL += BC
 C $C7F3,1 Bank/unbank
 C $C7F4,4 A = 18 - A * 2
@@ -9548,21 +9597,26 @@ C $C80E,1 A = L
 C $C80F,1 Swap
 C $C810,3 Jump
 N $C813 Scanline advance pattern.
+@ $C813 label=dr_c813
 C $C813,4 E -= 32
 C $C817,3 Jump if E < 32
 C $C81A,4 D -= 16
+@ $C821 label=dr_c821
 C $C821,1 Bank/unbank
 C $C822,1 Swap
 C $C823,1 E = A
+@ $C824 label=dr_c824
 C $C824,1 A = D
 C $C825,1 D--
 C $C826,2 A &= 15
 C $C828,2 Jump if zero
 N $C82A This entry point is used by the routine at #R$C813.
+@ $C82A label=dr_c82a
 C $C82A,1 A = E
 C $C82B,1 Swap
 C $C82C,1 L = A
 C $C82D,18 18 instructions/lines filled in by earlier code
+@ $C86C label=dr_c86c
 C $C86C,2 Self modified - jump table
 C $C881,1 A += C
 C $C882,2 Loop?
@@ -9570,6 +9624,7 @@ C $C884,1 Bank/unbank
 C $C885,1 Swap
 C $C886,1 E = A
 N $C887 This entry point is used by the routine at #R$C598.
+@ $C887 label=dr_c887
 C $C887,1 Swap
 C $C888,4 L += $1E
 C $C88C,3 Fill value for blank sky
@@ -9577,7 +9632,9 @@ C $C88F,2 A = <self modified>
 C $C891,1 Set flags
 C $C892,3 Jump if zero
 C $C895,1 DE--  -- $0000 -> $FFFF ?
+@ $C896 label=dr_c896
 C $C896,2 C = 15
+@ $C898 label=dr_c898
 C $C898,1 A = H
 C $C899,1 H--
 C $C89A,1 A &= C
@@ -9586,8 +9643,10 @@ C $C89D,4 L -= 32
 C $C8A1,2 Jump if no carry
 C $C8A3,3 Restore original #REGsp (self modified)
 C $C8A6,1 Return
+@ $C8A7 label=dr_c8a7
 C $C8A7,4 H += 16
 N $C8AB Writes #REGde to #REGhl 15 times.
+@ $C8AB label=dr_c8ab
 C $C8AB,1 Put it in #REGsp (so we can use PUSH for speed)
 C $C8AC,15 Write 30 bytes
 C $C8BB,3 Loop
@@ -9603,8 +9662,10 @@ C $C8CB,1 Restore source address
 C $C8CC,5 DE = Source address + 9
 C $C8D1,1 Pop destination address
 C $C8D2,3 Load counters for 10 bytes per row, 24 rows
+@ $C8D5 label=psd_row_loop
 C $C8D5,1 Preserve counters
 C $C8D6,1 A = *DE
+@ $C8D7 label=psd_loop
 C $C8D7,2 Rotate nibbles from A to *HL
 C $C8D9,1 Advance destination address
 C $C8DA,1 Advance source address
@@ -9615,6 +9676,7 @@ C $C8DF,3 Loop while rows remain
 C $C8E2,1 Return
 c $C8E3 Forked road plotting
 D $C8E3 Used by the routine at #R$C452.
+@ $C8E3 label=forked_road_plotter
 C $C8E3,1 Bank
 N $C8E4 Reset/Update a load of self modified locations.
 C $C8E4,3 Read 'LD A,x' @ #R$C6D8
@@ -9922,9 +9984,14 @@ C $CB5F,3 Self modify 'LD A,x' @ #R$CA9D
 C $CB62,3 Self modify 'ADD A,x' @ #R$CAFF
 C $CB65,3 A = <self modified> - 1
 C $CB68,3 Self modify 'LD A,x' @ #R$CB65
+C $CB6B,3 Jump if non-zero
 C $CB6E,10 Self modify 'XOR x' @ #R$CB5D
 C $CB78,1 C = A
-C $CB79,10 self modified chunk Set flags Jump if zero A = C
+C $CB79,3 Read 'LD A,x' @ #R$CA9D
+C $CB7C,1 Set flags
+C $CB7D,2 Jump if zero
+C $CB7F,1 A = C
+C $CB80,3 Self modify 'LD A,x' @ #R$CA9D
 C $CB83,8 Self modify 'LD A,x' @ #R$CA7A
 C $CB8B,5 Self modify 'LD A,x' @ #R$CB65 to load 5
 C $CB90,3 A = IY[0]
@@ -11101,8 +11168,12 @@ B $E2E7,12,8,4 lanes data
 @ $E2F3 label=something_lanes_3
 B $E2F3,88,8 lanes data
 b $E34B Data block at E34B
+D $E34B These bytes all seem to affect the horizon height when meddled with.
 B $E34B,3,3 3 bytes set to 8 by #R$880A
-B $E34E,22,8*2,6
+B $E34E,1,1
+b $E34F Data block at E34F
+@ $E34F label=object_positions
+S $E34F,21,$15
 b $E364 Transition masks
 N $E364 Spiral inward animation mask (8x8, 11 frames)
 N $E364 #HTML[#CALL:anim($E364,8,8,0,0,11)]
