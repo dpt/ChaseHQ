@@ -11118,26 +11118,35 @@ b $E410 Road edge markings
 D $E410 Six sets of 16x8 pixels. Masked. Stored bottom up. 32 bytes each.
 N $E410 #HTML[#CALL:graphic($E410,16,8,1,1)]
 @ $E410 label=edge_markings
-B $E410,32,8
+B $E410,8,8 Widest edge. White.
+B $E418,24,8
 N $E430 #HTML[#CALL:graphic($E430,16,8,1,1)]
-B $E430,32,8
+B $E430,8,8 Widest edge. Black.
+B $E438,24,8
 N $E450 #HTML[#CALL:graphic($E450,16,8,1,1)]
-B $E450,32,8
+B $E450,8,8 Middle edge. White.
+B $E458,24,8
 N $E470 #HTML[#CALL:graphic($E470,16,8,1,1)]
-B $E470,32,8
+B $E470,8,8 Middle edge. Black.
+B $E478,24,8
 N $E490 #HTML[#CALL:graphic($E490,16,8,1,1)]
-B $E490,32,8
+B $E490,8,8 Thinnest edge. White.
+B $E498,24,8
 N $E4B0 #HTML[#CALL:graphic($E4B0,16,8,1,1)]
-B $E4B0,32,8
+B $E4B0,8,8 Thinnest edge. Black.
+B $E4B8,24,8
 b $E4D0 Road lane markings
 D $E4D0 Three sets of 16x8 pixels. Unmasked. Stored bottom up. 16 bytes each.
 N $E4D0 #HTML[#CALL:graphic($E4D0,16,8,0,1)]
 @ $E4D0 label=lane_markings
-B $E4D0,16,8
+B $E4D0,8,8 Widest marking.
+B $E4D8,8,8
 N $E4E0 #HTML[#CALL:graphic($E4E0,16,8,0,1)]
-B $E4E0,16,8
+B $E4E0,8,8 Middle marking.
+B $E4E8,8,8
 N $E4F0 #HTML[#CALL:graphic($E4F0,16,8,0,1)]
-B $E4F0,16,8
+B $E4F0,8,8 Thinnest marking.
+B $E4F8,8,8
 b $E500 A table of 32 words being (some function)
 D $E500 This is the table, used for forking roads, that bends the road horizontally away from the centre of the screen, as it disappears into the distance.
 @ $E500 label=outward_bend_table
