@@ -162,6 +162,7 @@
 > $4000 ; - Stretchy streetlamps etc. encoding
 > $4000 ; - CHASE HQ MONITORING SYSTEM drawing code
 > $4000 ; - $E34B block is what?
+> $4000 ; - Stripy tunnel fills.
 > $4000 ;
 > $4000
 @ $4000 org
@@ -4004,12 +4005,13 @@ C $951F,5 Transfer another 16 pixels
 C $9524,5 Transfer another 16 pixels
 C $9529,2 Transfer another 8 pixels
 C $952B,1 Restore #REGhl
-C $952C,2 Save H in A then H--
-N $952E Decrement the screen address.
+N $952C Decrement the screen address.
+C $952C,1 Save H in A
+C $952D,1 Decrement row address
 C $952E,1 Extract low four bits of row address
 C $952F,3 If zero we'll need to handle it below, otherwise just loop
 C $9532,3 H += 16
-C $9535,4 Decrement the high three bits of row address
+C $9535,4 Decrement high three bits of the row address
 C $9539,3 No carry, so finish scanline
 C $953C,3 H -= 16
 C $953F,3 Loop back to ps_odd_loop
@@ -8704,7 +8706,7 @@ D $C0E1 Used by the routines at #R$8401, #R$852A and #R$873C.
 @ $C0E1 label=prepare_tunnel
 C $C0E1,3 Read 'LD A,x' @ #R$C160 (in draw_tunnel)
 C $C0E4,1 Set flags
-C $C0E5,3 Read 'LD A,x' @ #R$C88F (TBD)
+C $C0E5,3 Read 'LD A,x' @ #R$C88F (tunnel related)
 C $C0E8,2 Jump if tunnel has appeared
 N $C0EA Tunnel hasn't appeared.
 @ $C0EA label=no_tunnel
@@ -9120,7 +9122,7 @@ D $C452 Used by the routines at #R$8401, #R$852A and #R$873C.
 C $C452,4 Self modify #REGsp restore instruction
 C $C456,4 on_dirt_track = 0
 C $C45A,3 Self modify 'LD A,x' @ #R$C160 to be zero (in draw_tunnel)
-C $C45D,3 Self modify 'LD A,x' @ #R$C88F to be zero
+C $C45D,3 Self modify 'LD A,x' @ #R$C88F to be zero (tunnel related)
 C $C460,5 Self modify 'LD A,x' @ #R$C6D8 to be 3
 C $C465,4 #REGiy = $E301
 C $C469,6 C = $60 - IY[0]
@@ -9195,7 +9197,7 @@ C $C4FE,1 H--
 C $C4FF,3 Self modify 'LD A,x' @ #R$C160 (in draw_tunnel)
 @ $C502 label=dr_c502
 C $C502,1 A = H
-C $C503,3 Self modify 'LD A,x' @ #R$C88F
+C $C503,3 Self modify 'LD A,x' @ #R$C88F (tunnel related)
 C $C506,2 A = $EB
 C $C508,3 Self modify 'LD H,x' @ #R$C5D9
 C $C50B,3 Self modify 'LD H,x' @ #R$C68A
@@ -9362,7 +9364,7 @@ N $C654 Top five bits select screen buffer addr?
 N $C654 If I break this it seems to affect the left hand side only.
 C $C654,8 E = ((index >> 3) & 31) + B
 N $C65C AND-OR masking here. DE is address of screen buffer byte HL is address of mask byte, followed by bitmap byte [then again since the edges are 16x8]
-C $C65C,1 Read a screen buffer byte  -- A = *DE & *HL  [DE = $FDA1, HL = $E430]
+C $C65C,1 Read a screen buffer byte
 C $C65D,1 Apply the mask
 C $C65E,1 Advance to bitmap byte
 C $C65F,1 Apply the bitmap
@@ -9477,7 +9479,7 @@ C $C73B,1 C--
 C $C73C,3 Self modify 'LD A,x' @ #R$C160 (in draw_tunnel)
 C $C73F,1 A = C
 @ $C740 label=dr_c740
-C $C740,3 Self modify 'LD A,x' @ #R$C88F
+C $C740,3 Self modify 'LD A,x' @ #R$C88F (tunnel related)
 C $C743,3 Jump
 N $C746 Variation:
 @ $C746 label=dr_c746
@@ -9505,7 +9507,7 @@ C $C76B,1 C--
 C $C76C,3 Self modify 'LD A,x' @ #R$C160 (in draw_tunnel)
 C $C76F,1 A = C
 @ $C770 label=dr_c770
-C $C770,3 Self modify 'LD A,x' @ #R$C88F
+C $C770,3 Self modify 'LD A,x' @ #R$C88F (tunnel related)
 C $C773,1 Swap
 @ $C774 label=dr_c774
 C $C774,1 C = A
@@ -9531,7 +9533,7 @@ N $C79A This entry point is used by the routines at #R$CBA4 and #R$CBC5.
 @ $C79A label=dr_c79a
 C $C79A,1 E++
 C $C79B,3 Address of x in 'LD A,x' @ #R$C160 (in draw_tunnel)
-C $C79E,3 Read 'LD A,x' @ #R$C88F (TBD)
+C $C79E,3 Read 'LD A,x' @ #R$C88F (tunnel related)
 C $C7A1,1 A |= *HL
 C $C7A2,1 A >>= 1
 C $C7A3,3 Jump if carry
@@ -9624,31 +9626,37 @@ C $C884,1 Bank/unbank
 C $C885,1 Swap
 C $C886,1 E = A
 N $C887 This entry point is used by the routine at #R$C598.
-@ $C887 label=dr_c887
+@ $C887 label=dr_start_sky_fill
 C $C887,1 Swap
-C $C888,4 L += $1E
+C $C888,4 L += 30
 C $C88C,3 Fill value for blank sky
+N $C88F The following value is tunnel related: 1 if in tunnel, 0 if not.
+N $C88F It alternates fast when there is a partial tunnel on screen.
 C $C88F,2 A = <self modified>
 C $C891,1 Set flags
 C $C892,3 Jump if zero
-C $C895,1 DE--  -- $0000 -> $FFFF ?
-@ $C896 label=dr_c896
-C $C896,2 C = 15
-@ $C898 label=dr_c898
-C $C898,1 A = H
-C $C899,1 H--
-C $C89A,1 A &= C
-C $C89B,2 Jump if non-zero  -- draw blank scanline
-C $C89D,4 L -= 32
-C $C8A1,2 Jump if no carry
+N $C895 In tunnel. Draw black scanlines for the sky instead of coloured.
+C $C895,1 $0000 -> $FFFF
+@ $C896 label=dr_chose_colour
+C $C896,2 Mask for later
+N $C898 Decrement the screen address.
+@ $C898 label=dr_sky_fill_loop
+C $C898,1 Save H in A
+C $C899,1 Decrement row address
+C $C89A,1 Extract low four bits of row address
+C $C89B,2 Jump to dr_sky_fill_scanline if non-zero (easy case)
+N $C89D Otherwise it was zero so will need extra work.
+C $C89D,4 Decrement high three bits of the row address
+C $C8A1,2 No carry, so ...
+N $C8A3 Exit.
 C $C8A3,3 Restore original #REGsp (self modified)
 C $C8A6,1 Return
-@ $C8A7 label=dr_c8a7
-C $C8A7,4 H += 16
-N $C8AB Writes #REGde to #REGhl 15 times.
-@ $C8AB label=dr_c8ab
+@ $C8A7 label=dr_sky_fill_fix_address
+C $C8A7,4 Didn't carry so fix H from earlier DEC H (1110xxxx -> 1111xxxx)
+N $C8AB Writes #REGde to #REGhl 15 times filling the scanline. Draws the blank upper part of the sky. DE must always be zero? or what about tunnels?
+@ $C8AB label=dr_sky_fill_scanline
 C $C8AB,1 Put it in #REGsp (so we can use PUSH for speed)
-C $C8AC,15 Write 30 bytes
+C $C8AC,15 Write 30 bytes of sky pixels
 C $C8BB,3 Loop
 c $C8BE Builds a pre-shifted version of the backdrop horizon image
 D $C8BE 80x24 pixels = 240 bytes
