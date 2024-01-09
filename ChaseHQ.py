@@ -41,8 +41,8 @@ class ChaseHQWriter:
                         if follow:
                             output += "<strong>Jump</strong><br/>"
                             output += self.decode_nibble_rle(cwd, loopdest, typename, names, showlength, follow)
-                elif b == 1: # TBD
-                    output += "- TBD<br/>"
+                elif b == 1: # Fork End
+                    output += "- Fork End<br/>"
                 elif b == 2: # Split
                     leftdest  = self.snapshot[basep + 0] + self.snapshot[basep + 1] * 256
                     rightdest = self.snapshot[basep + 2] + self.snapshot[basep + 3] * 256
@@ -138,8 +138,8 @@ class ChaseHQWriter:
                         if follow:
                             output += "<strong>Jump</strong><br/>"
                             output += self.decode_count_rle(cwd, loopdest, typename, names, showlength, follow)
-                elif b == 1: # TBD
-                    output += "- TBD<br/>"
+                elif b == 1: # Fork End
+                    output += "- Fork End<br/>"
                 elif b == 2: # Split
                     leftdest  = self.snapshot[basep + 0] + self.snapshot[basep + 1] * 256
                     rightdest = self.snapshot[basep + 2] + self.snapshot[basep + 3] * 256
@@ -168,29 +168,33 @@ class ChaseHQWriter:
                     lasttype = type_
 
     def map_lanes(self, cwd, base):
+        # L/M/R is the left/middle/right alignment of the road with respect to
+        # the default four-lane road.
+        #
         # If not noted then the respective byte is used by Stage 1. If "Poke"
         # then it was discovered by altering the game.
         #
-        #                                  [  * ] is car's default position
-        lanesmap = {0x00: "Four lanes      [||||] {00}",
-                    0x01: "Two lanes       [||]   {01}", # Poke
-                    0x02: "Two lanes        [||]  {02}", # Poke
-                    0x03: "Two lanes         [||] {03}", # Stage 5
-                    0x06: "Narrowing 3-2 L [/||]  {06}", # Poke
-                    0x0D: "Narrowing 3-2 L[/||]   {0D}", # Poke (left flickers)
-                    0x0F: "Narrowing 3-2 L  [/||] {0F}",
-                    0x1F: "Widening 2-3 L   [\||] {1F}",
-                    0x45: "Tunnel start           {45}",
-                    0x59: "Tunnel cont/end?       {59}",
-                    0x81: "Three lanes     [|||]  {81}",
-                    0x82: "Three lanes      [|||] {82}",
-                    0x8E: "Narrowing 4-3 L [/|||] {8E}",
-                    0x9E: "Widening 3-4 L  [\|||] {9E}",
-                    0xAD: "Widening 3-4 R  [|||/] {AD}",
-                    0xBD: "Narrowing 4-3 R [|||\] {BD}",
-                    0xC1: "Dirt track      [||||] {C1}",
-                    0xC2: "Dirt track       [|||] {C2}", # Poke
-                    0xC3: "Dirt track        [||] {C3}"} # Poke (stones on verge)
+        #                                  [  * ] is the car's default position
+        lanesmap = {0x00: "4 Lanes              [||||] {00}",
+                    0x01: "2 Lanes L            [||]   {01}", # Poke
+                    0x02: "2 Lanes M             [||]  {02}", # Poke
+                    0x03: "2 Lanes R              [||] {03}", # Stage 5
+                    0x06: "3-2 Narrowing L      [/||]  {06}", # Poke
+                    0x0D: "3-2 Narrowing X     [/||]   {0D}", # Poke - Invalid: left side flickers
+                    0x0F: "3-2 Narrowing R       [/||] {0F}",
+                    0x1F: "2-3 Widening R        [\||] {1F}",
+                    0x2D: "2-3 Widening L       [\||]  {2D}", # used in fork exit
+                    0x45: "Tunnel start                {45}", # tunnels always two lanes?
+                    0x59: "Tunnel cont/end?            {59}", # TBD
+                    0x81: "3 Lanes L            [|||]  {81}",
+                    0x82: "3 Lanes R             [|||] {82}",
+                    0x8E: "4-3 Narrowing R      [/|||] {8E}",
+                    0x9E: "3-4 Widening R       [\|||] {9E}",
+                    0xAD: "3-4 Widening L       [|||/] {AD}",
+                    0xBD: "4-3 Narrowing L      [|||\] {BD}",
+                    0xC1: "4 Lanes dirt track   [||||] {C1}",
+                    0xC2: "3 Lanes dirt track R  [|||] {C2}", # Poke
+                    0xC3: "2 Lanes dirt track R   [||] {C3}"} # Poke (stones on verge)
         return self.decode_count_rle(cwd, base, "lanes", lanesmap, showlength=True, follow=True)
 
     def decode_hazards(self, cwd, base, typename, names, showlength, follow):
@@ -220,8 +224,8 @@ class ChaseHQWriter:
                         if follow:
                             output += "<strong>Jump</strong><br/>"
                             output += self.decode_hazards(cwd, loopdest, typename, names, showlength, follow)
-                elif b == 1: # TBD
-                    output += "- TBD<br/>"
+                elif b == 1: # Fork End
+                    output += "- Fork End<br/>"
                 elif b == 2: # Split
                     leftdest  = self.snapshot[basep + 0] + self.snapshot[basep + 1] * 256
                     rightdest = self.snapshot[basep + 2] + self.snapshot[basep + 3] * 256

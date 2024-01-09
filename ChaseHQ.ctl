@@ -2670,7 +2670,7 @@ N $87F8 Zero 208 bytes at $A19C onwards (hazard_1 onwards).
 C $8801,1 Restore data pointer
 N $8802 Copy the 14 bytes of set up data passed in to #R$A26C (road_pos, road_curvature_ptr, etc.)
 N $8807 Pre-shift the backdrop image.
-N $880A TBD
+N $880A Set backdrop position in the <road drawing table TBD>.
 C $880A,6 $E34B = 8
 C $8810,2 $E34C = 0
 C $8812,1 $E34D = 0
@@ -8210,9 +8210,12 @@ N $BB74 Set up left route.
 @ $BB74 label=ef_left
 C $BB74,3 D,E = $FC,$01  (curvature byte -4 => super hard (?) left turn, lanes byte = 1)
 C $BB77,1 Save for later
-C $BB78,6 road_leftside_ptr  = #R$E2D9
-C $BB7E,6 road_rightside_ptr = #R$E2D5
-C $BB84,6 road_lanes_ptr     = #R$E2E7
+@ $BB78 ssub=LD HL,forked_road_leftobjs - 1
+C $BB78,6 road_leftside_ptr  = $E2D9
+@ $BB7E ssub=LD HL,forked_road_rightobjs - 1
+C $BB7E,6 road_rightside_ptr = $E2D5
+@ $BB84 ssub=LD HL,forked_road_exit_lanes_left - 1
+C $BB84,6 road_lanes_ptr     = $E2E7
 C $BB8A,3 Self modified by #R$C035 to be the left route's hazards data
 C $BB8D,3 Self modified by #R$BF73 to be the left route's rightside data
 C $BB90,3 Self modified by #R$BFBC to be the left route's leftside data
@@ -8226,9 +8229,13 @@ N $BBA1 Set up right route.
 @ $BBA1 label=ef_right
 C $BBA1,3 D,E = $04,$03  (curvature byte +4 => super hard (?) right turn, lanes byte = 3)
 C $BBA4,1 Save for later
-C $BBA5,6 road_leftside_ptr  = #R$E2D5
-C $BBAB,6 road_rightside_ptr = #R$E2D9
-C $BBB1,6 road_lanes_ptr     = #R$E2F3
+N $BBA5 Note the switch around here.
+@ $BBA5 ssub=LD HL,forked_road_rightobjs - 1
+C $BBA5,6 road_leftside_ptr  = $E2D5
+@ $BBAB ssub=LD HL,forked_road_leftobjs - 1
+C $BBAB,6 road_rightside_ptr = $E2D9
+@ $BBB1 ssub=LD HL,forked_road_exit_lanes_right - 1
+C $BBB1,6 road_lanes_ptr     = $E2F3
 C $BBB7,3 Self modified by #R$C03D to be the right route's hazards data
 C $BBBA,3 Self modified by #R$BF73 to be the right route's rightside data
 C $BBBD,3 Self modified by #R$BFC4 to be the right route's leftside data
@@ -8245,9 +8252,12 @@ C $BBD7,1 Unbank
 C $BBD8,4 Self modify rm_leftside_one_command handler
 C $BBDC,4 Self modify rm_rightside_one_command handler
 C $BBE0,3 Self modify rm_hazards_one_command handler
-C $BBE3,6 road_curvature_ptr = #R$E2DD
-C $BBE9,6 road_height_ptr    = #R$E2E2
-C $BBEF,6 road_hazard_ptr    = #R$E2D2
+@ $BBE3 ssub=LD HL,forked_road_exit_curvature - 1
+C $BBE3,6 road_curvature_ptr = $E2DD
+@ $BBE9 ssub=LD HL,forked_road_exit_height - 1
+C $BBE9,6 road_height_ptr    = $E2E2
+@ $BBEF ssub=LD HL,forked_road_hazards - 1
+C $BBEF,6 road_hazard_ptr    = $E2D2
 C $BBF5,1 Suspected road curve type left/right
 C $BBF6,1 Copy road buffer additional offset
 N $BBF7 The code commonly loads the byte at #R$A240 and merges it with $EE00, yet #R$A240 already contains a whole word with the right value.
@@ -8755,6 +8765,7 @@ N $C149 Self modify #R$8F82 and #R$8FA7 to be CALL draw_tunnel.
 C $C15A,1 Return
 c $C15B Tunnel entrance/interior/exit drawing code
 D $C15B Called by $8F82 etc. being self modified.
+R $C15B I:IY e.g. $E315
 @ $C15B label=draw_tunnel
 C $C15B,2 A = IY.low
 C $C15D,2 Compare to <self modified>
@@ -9132,7 +9143,7 @@ C $C474,5 IX = $EE00 | A
 C $C479,3 B = A
 C $C47C,3 $C6B3 = A & 1
 C $C47F,4 RR B twice
-N $C483 I'm debating whether $D0 is an opcode. I'm currently thinking not.
+N $C483 I'm debating whether $D0 here is an opcode. I'm currently thinking not.
 C $C483,3 H = $D0, L = 16
 C $C486,1 Copy $D0 to #REGa
 C $C487,2 B = $55 -- Zero this and the landscape goes blank but only half the time
@@ -10106,6 +10117,7 @@ C $CC7B,11 same pattern as above
 C $CC88,3 HL = $E700 | A
 C $CC8B,2 Jump if A+$60 had no carry
 C $CC8D,1 Add carry otherwise
+N $CC8E Converts the 20 bytes at $E320 to totals.
 C $CC8E,3 [points to presumed lanes data in pristine memory map but must be something else]
 C $CC91,2 B = 20
 C $CC93,1 *DE += *HL
@@ -11157,24 +11169,41 @@ N $E2CC Road fork, height
 B $E2CC,1,1
 B $E2CD,2,2 Escape, Command 0 (Continue at <Address>)
 W $E2CF,2,2 Loop
-N $E2D1 Road fork, lanes
-@ $E2D1 label=forked_road_lanes
-B $E2D1,1,1
-@ $E2D2 label=something_hazards
-B $E2D2,3,3 Referenced by #R$BBEF  --  Used after road fork
-@ $E2D5 label=forked_road_rightobjs
-B $E2D5,4,4 rightside data  [flips around depending on who's accessing it]
-@ $E2D9 label=forked_road_leftobjs
-B $E2D9,4,4 leftside data   [flips]
-@ $E2DD label=something_curvature
-B $E2DD,4,4 Referenced by #R$BBE3
-B $E2E1,1,1 Curvature escape byte
-@ $E2E2 label=something_height
-B $E2E2,5,5 Referenced by #R$BBE9
-@ $E2E7 label=something_lanes_2
-B $E2E7,12,8,4 lanes data
-@ $E2F3 label=something_lanes_3
-B $E2F3,88,8 lanes data
+N $E2D1 Road fork, hazards? Previously thought this was lane data...
+@ $E2D1 label=forked_road_hazards
+B $E2D1,5,5
+@ $E2D6 label=forked_road_rightobjs
+B $E2D6,4,4 rightside data  [flips around depending on who's accessing it]
+@ $E2DA label=forked_road_leftobjs
+B $E2DA,4,4 leftside data   [flips]
+b $E2DE Data for road fork exits
+D $E2DE Possibly off-by-one here, if the terminator is ($00,$01)
+N $E2DE Road fork exit, curvature
+@ $E2DE label=forked_road_exit_curvature
+B $E2DE,5,5 [ (15x straight), (15x straight), (6x straight), FORK_END ]
+N $E2E3 Road fork exit, height
+@ $E2E3 label=forked_road_exit_height
+B $E2E3,5,5 [ (15x level), (15x level), (6x level), FORK_END ]
+N $E2E8 Road fork exit, lanes (left fork)
+@ $E2E8 label=forked_road_exit_left_lanes
+B $E2E8,7,7 [ (10x Two lanes), (2x $2D?), (10x Three lanes), (2x Widening 3-4 R), (12x Four lanes), FORK_END ]
+B $E2EF,5,5
+N $E2F4 Road fork exit, lanes (right fork)
+@ $E2F4 label=forked_road_exit_right_lanes
+B $E2F4,7,7 [ (10x Two lanes), (2x Widening 2-3 L), (10x Three lanes), (2x Widening 3-4 L), (12x Four lanes), FORK_END ]
+B $E2FB,5,5
+b $E300 Data block at E300
+@ $E300 label=table_e300
+B $E300,1,1
+S $E301,31,$1F
+b $E320 Data block at E320
+@ $E320 label=table_e320
+S $E320,21,$15 21 entries. Used by $CC8E
+u $E335 Unused
+S $E335,1,$01 padding byte or the start of the next table?
+b $E336 Data block at E336
+@ $E336 label=table_e336
+S $E336,21,$15 21 entries. Used by $8F6E
 b $E34B Data block at E34B
 D $E34B These bytes all seem to affect the horizon height when meddled with.
 B $E34B,3,3 3 bytes set to 8 by #R$880A
