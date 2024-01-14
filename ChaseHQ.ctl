@@ -2241,26 +2241,30 @@ C $83C7,3 No-op when in 48K mode
 N $83CA This entry point is used by the routine at #R$83CD.
 @ $83CA label=attract_mode_hook
 C $83CA,3 Call attract_mode when in 48K mode
-c $83CD Bootstrap / Uber main loop
+c $83CD Bootstrap and uber main loop
 D $83CD Used by the routine at #R$E839.
-N $83CD Builds a table of flipped bytes at $EF00.
+N $83CD Build a table of flipped bytes at $EF00.
 @ $83CD label=bootstrap
 C $83CD,3 Point #REGhl at $EF00
-@ $83D0 label=flip_table_loop
+@ $83D0 label=bs_flip_table_loop
 C $83D0,2 8 iterations
 C $83D2,1 #REGa is the index into the table
-@ $83D3 label=flip_byte_loop
+@ $83D3 label=bs_flip_byte_loop
 C $83D3,3 Shift a bit out of #REGa leftwards and into #REGc rightwards
 C $83D6,2 Loop for 8 bits
 C $83D8,2 Write #REGc out and advance
-C $83DA,2 Loop for 256 iterations (when #REGl overflows)
+C $83DA,2 Loop for 256 iterations (until #REGl overflows)
+N $83DC Start attract mode.
 C $83DC,3 Call attract_mode_hook
-C $83DF,4 overtake_bonus = 0
+N $83DF When attract mode yields then we set up the game.
+C $83DF,4 Reset overtake_bonus
 N $83E3 Clear score_bcd and retry_count.
+@ $83E8 label=bs_clear_loop
+N $83EC Reset wanted_stage_number and credits.
 C $83EC,2 wanted_stage_number = 1
 C $83EE,4 credits = 2
 C $83F2,3 Call the main loop
-C $83F5,10 Call relocated plsp_f3b6_128k (speech) if in 128K mode
+C $83F5,10 Call relocated plsp_f3b6_128k (title screen?) if in 128K mode
 C $83FF,2 Loop
 c $8401 Main loop
 D $8401 Used by the routines at #R$83CD and #R$8A57.
@@ -2282,7 +2286,7 @@ C $8421,3 Call set_up_stage
 @ $842D label=ml_store_start_speech
 C $8424,10 Cycle start_speech_cycle 3,2,1 then repeat
 N $842E Choose the startup speech sample.
-C $842E,7 start_speech = (A * 4) OR 2
+C $842E,7 start_speech = (A * 4) OR 2  -- leading zeroes are a delay
 C $8435,4 Test 128K mode flag
 C $8439,5 #R$A188 = $FF -- I suspect this keeps the perp spawned
 C $843E,3 Address of start_stage_chatter
@@ -2333,7 +2337,7 @@ C $84BF,3 Call exit_fork
 C $84C2,3 Is test mode enabled?
 C $84C5,3 If not, goto not_test_mode
 N $84C8 Test mode handling
-@ $84C8 label=handle_test_mode
+@ $84C8 label=ml_handle_test_mode
 C $84C8,4 Read keys 1/2/3/4/5
 C $84CC,1 Change to active high
 C $84CD,2 Mask off just keys
@@ -2350,32 +2354,33 @@ C $84E3,1 Is bit 1 set? (key 2 to load the next level)
 C $84E4,2 Jump if NOT
 C $84E6,1 wanted_stage_number++
 C $84E7,3 Exit via load_stage
+@ $84EA label=ml_check_for_3
 C $84EA,1 Is bit 2 set? (key 3 to load the end screen)
 C $84EB,2 Jump if NOT
 C $84ED,2 wanted_stage_number = 6
 C $84EF,3 Exit via load_stage
-@ $84F2 label=increment_credits
+@ $84F2 label=ml_increment_credits
 C $84F2,9 Increment credits unless maxed out at 9
-@ $84FB label=not_test_mode
+@ $84FB label=ml_not_test_mode
 C $84FB,3 Load transition_control
 C $84FE,4 Jump to ml_loop if non-zero
-N $8502 Play once we have a 1-bit shifted out.
+N $8502 Play speech when we see a 1-bit shift out of start_speech.
 C $8502,3 Address of start_speech
 C $8505,2 Shift the counter right
 C $8507,2 Jump if no carry
-C $8509,1 Load it
-C $850A,2 Zero it
+C $8509,1 Load speech sample index
+C $850A,2 Zero start_speech
 C $850C,3 Call play_speech_hook
 C $850F,3 Loop to ml_loop
-C $8512,3 A = quit_state
-C $8515,4 Jump to ml_loop if not quitting
-N $8519 Quit in progress.
-C $8519,1 Decrement quit state
+@ $8512 label=ml_check_quit
+C $8512,7 Loop to ml_loop if quit_state is zero
+N $8519 Quitting the game is in progress.
+C $8519,1 Decrement quit_state
 C $851A,3 Jump to escape_scene if non-zero
 C $851D,5 quit_state = 2
 C $8522,2 Transition forwards
 C $8524,3 Call setup_transition
-C $8527,3 Loop
+C $8527,3 Loop to ml_loop
 c $852A CPU driver
 D $852A This runs the game loop while driving the car.
 @ $852A label=cpu_driver
@@ -5473,7 +5478,7 @@ B $A269,1,1 Used by #R$BC29. Set to 1 while the road forks.
 @ $A26A label=quit_state
 B $A26A,1,1 0 if not quitting, or 1/2 depending on quit state
 @ $A26B label=start_speech
-B $A26B,1,1 Used by #R$8432 - index of speech sample to play
+B $A26B,1,1 Index of speech sample to play preceded by N zero bits and a one bit.
 @ $A26C label=road_pos
 W $A26C,2,2 Road position of car. Left..Right = $1E2...$03A, $105 is centre.
 @ $A26E label=road_curvature_ptr
@@ -12078,11 +12083,13 @@ C $F3A8,4 var_a239 = 0
 C $F3AC,1 A = 1
 C $F3AD,3 Load var_a23a  -- copy of noise pitch
 C $F3B0,3 Self modify #R$8E49
+C $F3B3,3 (an address)
+N $F3B6 Starts the title screen?
 @ $F3B6 label=plsp_f3b6_128k
 C $F3B6,3 Self modify 'CALL xxxx' @ $81C5 ($F3D1 before relocation - below)
 C $F3B9,14 Copy 4096 bytes from $B000 to $F000 (preserving registers for later)
 C $F3C7,4 Self modify 'LD SP,xxxx' @ #R$81CD ($F3D9 here - below)
-C $F3CB,3 new sp
+C $F3CB,3 Set stack pointer
 C $F3CE,3 Call relocated f3e2_128k
 C $F3D1,3 Self modified by #R$F3B6
 C $F3D4,1 Preserve ?
@@ -12123,8 +12130,8 @@ C $F413,1 Return
 C $F414,6 128K: Set paging register to default
 C $F41A,1 Return
 @ $F41B label=attract_mode_hook_128k
-C $F41B,3 HL = $C000
-C $F41E,3 Call relocated plsp_f3b6_128k (speech)
+C $F41B,3 (an address)
+C $F41E,3 Call relocated plsp_f3b6_128k (title screen?)
 C $F421,2 Return if A is zero
 C $F423,3 HL -> attract_data
 C $F426,3 Call set_up_stage
