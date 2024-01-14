@@ -2322,7 +2322,7 @@ C $849E,3 Call engine_sfx_play_hook
 C $84A1,3 Call animate_hero_car
 C $84A4,3 Call speed_score
 C $84A7,3 Call update_scoreboard
-C $84AA,3 Call overtake_bonus
+C $84AA,3 Call calc_overtake_bonus
 C $84AD,3 Call engine_sfx_play_hook
 C $84B0,3 Call drive_chatter
 C $84B3,3 Call smash_bar_etc
