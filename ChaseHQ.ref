@@ -48,7 +48,7 @@ CommonGraphics
 PageContent=#INCLUDE(PageContent:MapFormatX)
 
 [PageContent:MapFormatX]
-<p>Each stage's map is composed of six separate streams of data. They are:
+<p>Each stage's map is composed of six separate variable-length streams of data. They are:
 
 <ul>
 <li>Curvature</li>
@@ -59,17 +59,18 @@ PageContent=#INCLUDE(PageContent:MapFormatX)
 <li>Hazards</li>
 </ul>
 
-<p><b>Curvature</b> controls the left-right turn of the road. It is stored as a sequence of bytes of the form $CT where $C is a count (0..15) and $T is a type. The valid types are:
+<p><b>Curvature</b> controls the left-right turn of the road. It is stored as a sequence of bytes of the form $CT where $C is a count (1..15) and $T is a type. The valid types are:
 
 <ul>
-<li>0: Curve Straight</li>
-<li>1: Curve Right</li>
-<li>2: Curve Hard Right</li>
-<li>3: Curve Very Hard Right</li>
-<li>8: Curve Straight (alternate)</li>
-<li>9: Curve Left</li>
-<li>10: Curve Hard Left</li>
-<li>11: Curve Very Hard Left</li>
+<li>0: Straight</li>
+<li>1: Right</li>
+<li>2: Right Hard</li>
+<li>3: Right Very Hard</li>
+<li>8: Straight (alternate)</li>
+<li>9: Left</li>
+<li>10: Left Hard</li>
+<li>11: Left Very Hard</li>
+<li>Other values are unused by the game.</li>
 </ul>
 
 <p>A zero byte in the stream is an escape which can be followed by one of:
@@ -81,9 +82,9 @@ PageContent=#INCLUDE(PageContent:MapFormatX)
 <li>Other values are invalid.
 </ul>
 
-<p>This escape setup is the same for all the other streams.
+<p>This escape format the same for all the other streams.
 
-<p><b>Height</b> controls the up-down inclination of the road. It uses the same encoding but the type field instead indicates an incline. Its valid values are:
+<p><b>Height</b> controls the up-down inclination of the road. It uses the same encoding as curvature but the type field instead defines the road's inclination. Its valid values are:
 
 <ul>
 <li>1: Going Up 7 (steep incline)</li>
@@ -95,35 +96,36 @@ PageContent=#INCLUDE(PageContent:MapFormatX)
 <li>11: Going Down 3</li>
 <li>13: Going Down 5</li>
 <li>15: Going Down 7 (steep)</li>
+<li>Other values are unused by the game.</li>
 </ul>
 
-<p><b>Lanes</b> use a different scheme: each first byte is a count and the following byte is the data. The (currently understood) valid data values are:
+<p><b>Lanes</b> use a different scheme: pairs of bytes. The first byte is a count and the following byte is the data. The currently understood valid data values are:
 
 <ul>
-<li>$00: <strong><code>[||||]</code></strong> 4 Lanes             </li>
-<li>$01: <strong><code>[||]__</code></strong> 2 Lanes L           </li>
-<li>$02: <strong><code>_[||]_</code></strong> 2 Lanes M           </li>
-<li>$03: <strong><code>__[||]</code></strong> 2 Lanes R           </li>
-<li>$06: <strong><code>[/||]_</code></strong> 3-2 Narrowing L     </li>
-<li>$0F: <strong><code>_[/||]</code></strong> 3-2 Narrowing R     </li>
-<li>$1F: <strong><code>_[\||]</code></strong> 2-3 Widening R      </li>
-<li>$2D: <strong><code>[\||] </code></strong> 2-3 Widening L      </li>
-<li>$45: <strong><code>______</code></strong> Tunnel start        </li>
-<li>$59: <strong><code>______</code></strong> Tunnel cont/end?    </li>
-<li>$81: <strong><code>[|||]_</code></strong> 3 Lanes L           </li>
-<li>$82: <strong><code>_[|||]</code></strong> 3 Lanes R           </li>
-<li>$8E: <strong><code>[/|||]</code></strong> 4-3 Narrowing R     </li>
-<li>$9E: <strong><code>[\|||]</code></strong> 3-4 Widening R      </li>
-<li>$AD: <strong><code>[|||/]</code></strong> 3-4 Widening L      </li>
-<li>$BD: <strong><code>[|||\]</code></strong> 4-3 Narrowing L     </li>
-<li>$C1: <strong><code>[||||]</code></strong> 4 Lanes dirt track  </li>
-<li>$C2: <strong><code>_[|||]</code></strong> 3 Lanes dirt track R</li>
-<li>$C3: <strong><code>__[||]</code></strong> 2 Lanes dirt track R</li>
+<li><code>$00: [ |||| ] </code>4 Lanes</li>
+<li><code>$01: [ ||__ ] </code>2 Lanes, Left Aligned</li>
+<li><code>$02: [ _||_ ] </code>2 Lanes, Centre Aligned</li>
+<li><code>$03: [ __|| ] </code>2 Lanes, Right Aligned</li>
+<li><code>$06: [ /||_ ] </code>3 Lanes to 2 Narrowing, Left Aligned</li>
+<li><code>$0F: [ _/|| ] </code>3 Lanes to 2 Narrowing, Right Aligned</li>
+<li><code>$1F: [ _\|| ] </code>2 Lanes to 3 Widening, Left Aligned</li>
+<li><code>$2D: [ \||_ ] </code>2 Lanes to 3 Widening, Right Aligned</li>
+<li><code>$45: [ ____ ] </code>Tunnel start</li>
+<li><code>$59: [ ____ ] </code>Tunnel cont/end?</li>
+<li><code>$81: [ |||_ ] </code>3 Lanes, Left Aligned</li>
+<li><code>$82: [ _||| ] </code>3 Lanes, Right Aligned</li>
+<li><code>$8E: [ /||| ] </code>4 Lanes to 3 Narrowing, Right Aligned</li>
+<li><code>$9E: [ \||| ] </code>3 Lanes to 4 Widening, Right Aligned</li>
+<li><code>$AD: [ |||/ ] </code>3 Lanes to 4 Widening, Left Aligned</li>
+<li><code>$BD: [ |||\ ] </code>4 Lanes to 3 Narrowing, Left Aligned</li>
+<li><code>$C1: [ |||| ] </code>4 Lanes, Dirt track  </li>
+<li><code>$C2: [ _||| ] </code>3 Lanes, Dirt track, Right Aligned</li>
+<li><code>$C3: [ __|| ] </code>2 Lanes, Dirt track, Right Aligned</li>
 </ul>
 
-<p><b>Right and Left side objects</b> are nibble RLE encoded as for curvature data.
+<p><b>Right and Left side objects</b> are encoded in nibbles as for curvature data.
 
-Object types (for Stage 1) are:
+The object types (for Stage 1) are:
 
 <ul>
 <li>0: Nothing
@@ -137,7 +139,7 @@ Object types (for Stage 1) are:
 <li>9: Turn Sign, Pointing Right
 </ul>
 
-<p><b>Hazards</b> consists of only byte counters and an extended form of the escapes with the following additional codes:
+<p><b>Hazards</b> are encoded only as byte counters and an extended form of the escapes with the following additional codes:
 
 <ul>
 <li>3: TBD Stop Spawning Barriers?</li>
