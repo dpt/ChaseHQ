@@ -12,15 +12,22 @@ CodeFiles={address:04X}.html
 [Game]
 Game=Chase H.Q.
 Release=The incomplete Chase H.Q. disassembly 20231102
-Copyright=&copy; 1988 Taito Corporation &copy; 1989 Ocean Software Ltd. (Chase H.Q.) © 2023 David Thomas (this disassembly)
+Copyright=&copy; 1988 Taito Corporation &copy; 1989 Ocean Software Ltd. (Chase H.Q.) © 2023-2024 David Thomas (this disassembly)
 
 [PageHeaders]
 GameIndex=The incomplete<>disassembly
 
 [Links]
+CommonGraphics=[Common] (graphics common to all stages)
 Map=[Road map] (the road map)
 Stage1Graphics=[Stage 1] (graphics specific to stage 1)
-CommonGraphics=[Common] (graphics common to all stages)
+Stage1Map=[Stage 1] (map data for stage 1)
+
+[Titles]
+CommonGraphics=Common Graphics
+MapFormat=Map Data Format
+Stage1Graphics=Stage 1 Graphics
+Stage1Map=Stage 1 Map
 
 [Index]
 Game
@@ -30,11 +37,174 @@ DataTables
 Reference
 
 [Index:Game:Game]
-Map
+MapFormat
+Stage1Map
 
 [Index:Graphics:Graphics]
 Stage1Graphics
 CommonGraphics
+
+[Page:MapFormat]
+PageContent=#INCLUDE(PageContent:MapFormatX)
+
+[PageContent:MapFormatX]
+<p>Each stage's map is composed of six separate streams of data. They are:
+
+<ul>
+<li>Curvature</li>
+<li>Height</li>
+<li>Lanes</li>
+<li>Right side objects</li>
+<li>Left side objects</li>
+<li>Hazards</li>
+</ul>
+
+<p><b>Curvature</b> controls the left-right turn of the road. It is stored as a sequence of bytes of the form $CT where $C is a count (0..15) and $T is a type. The valid types are:
+
+<ul>
+<li>0: Curve Straight</li>
+<li>1: Curve Right</li>
+<li>2: Curve Hard Right</li>
+<li>3: Curve Very Hard Right</li>
+<li>8: Curve Straight (alternate)</li>
+<li>9: Curve Left</li>
+<li>10: Curve Hard Left</li>
+<li>11: Curve Very Hard Left</li>
+</ul>
+
+<p>A zero byte in the stream is an escape which can be followed by one of:
+
+<ul>
+<li>0: Jump. The next two bytes are the address of the next byte in the stream.</li>
+<li>1: Fork End. Used during road forks.</li>
+<li>2: Split. Used to follow road forks. The next two bytes are the address of the left fork's data, and the next two bytes are the address of the right fork's data.</li>
+<li>Other values are invalid.
+</ul>
+
+<p>This escape setup is the same for all the other streams.
+
+<p><b>Height</b> controls the up-down inclination of the road. It uses the same encoding but the type field instead indicates an incline. Its valid values are:
+
+<ul>
+<li>1: Going Up 7 (steep incline)</li>
+<li>3: Going Up 5</li>
+<li>5: Going Up 3</li>
+<li>7: Going Up 1 (gentle incline)</li>
+<li>8: Level Road</li>
+<li>9: Going Down 1 (gentle)</li>
+<li>11: Going Down 3</li>
+<li>13: Going Down 5</li>
+<li>15: Going Down 7 (steep)</li>
+</ul>
+
+<p><b>Lanes</b> use a different scheme: each first byte is a count and the following byte is the data. The (currently understood) valid data values are:
+
+<ul>
+<li>$00: <strong><code>[||||]</code></strong> 4 Lanes             </li>
+<li>$01: <strong><code>[||]__</code></strong> 2 Lanes L           </li>
+<li>$02: <strong><code>_[||]_</code></strong> 2 Lanes M           </li>
+<li>$03: <strong><code>__[||]</code></strong> 2 Lanes R           </li>
+<li>$06: <strong><code>[/||]_</code></strong> 3-2 Narrowing L     </li>
+<li>$0F: <strong><code>_[/||]</code></strong> 3-2 Narrowing R     </li>
+<li>$1F: <strong><code>_[\||]</code></strong> 2-3 Widening R      </li>
+<li>$2D: <strong><code>[\||] </code></strong> 2-3 Widening L      </li>
+<li>$45: <strong><code>______</code></strong> Tunnel start        </li>
+<li>$59: <strong><code>______</code></strong> Tunnel cont/end?    </li>
+<li>$81: <strong><code>[|||]_</code></strong> 3 Lanes L           </li>
+<li>$82: <strong><code>_[|||]</code></strong> 3 Lanes R           </li>
+<li>$8E: <strong><code>[/|||]</code></strong> 4-3 Narrowing R     </li>
+<li>$9E: <strong><code>[\|||]</code></strong> 3-4 Widening R      </li>
+<li>$AD: <strong><code>[|||/]</code></strong> 3-4 Widening L      </li>
+<li>$BD: <strong><code>[|||\]</code></strong> 4-3 Narrowing L     </li>
+<li>$C1: <strong><code>[||||]</code></strong> 4 Lanes dirt track  </li>
+<li>$C2: <strong><code>_[|||]</code></strong> 3 Lanes dirt track R</li>
+<li>$C3: <strong><code>__[||]</code></strong> 2 Lanes dirt track R</li>
+</ul>
+
+<p><b>Right and Left side objects</b> are nibble RLE encoded as for curvature data.
+
+Object types (for Stage 1) are:
+
+<ul>
+<li>0: Nothing
+<li>1: Tunnel Light
+<li>3: Short Pole
+<li>4: Tree
+<li>5: Bush
+<li>6: Street Lamp
+<li>7: Telegraph Pole
+<li>8: Turn Sign, Pointing Left
+<li>9: Turn Sign, Pointing Right
+</ul>
+
+<p><b>Hazards</b> consists of only byte counters and an extended form of the escapes with the following additional codes:
+
+<ul>
+<li>3: TBD Stop Spawning Barriers?</li>
+<li>6: TBD Stop Spawning Barriers?</li>
+<li>7: Start Spawning Barriers Left</li>
+<li>8: Start Spawning Barriers Right</li>
+<li>9: Start Spawning Two Barriers</li>
+<li>10: Set Floating Arrow Off</li>
+<li>11: Set Floating Arrow to Left</li>
+<li>12: Set Floating Arrow to Right</li>
+<li>13: Enable Car Spawning</li>
+<li>14: Disable Car Spawning</li>
+</ul>
+
+[Page:Stage1Map]
+PageContent=#INCLUDE(PageContent:Stage1Map) #INCLUDE(PageContent:EscapeMap)
+
+[PageContent:Stage1Map]
+<h3>Stage 1 Map</h3>
+
+<ul>
+<li>Curvature</li>
+<li>Height</li>
+<li>Lanes</li>
+<li>Hazards</li>
+<li>Left-side Objects</li>
+<li>Right-side Objects</li>
+</ul>
+
+<h4>Stage 1, curvature</h4>
+#CALL:map_curvature($5EC4)
+
+<h4>Stage 1, height</h4>
+#CALL:map_height($5EE4)
+
+<h4>Stage 1, lanes</h4>
+#CALL:map_lanes($5F0F)
+
+<h4>Stage 1, hazards</h4>
+#CALL:map_hazards($5F1D)
+
+<h4>Stage 1, left objects</h4>
+#CALL:map_left_objects($5F2A)
+
+<h4>Stage 1, right objects</h4>
+#CALL:map_right_objects($5F78)
+
+[PageContent:EscapeMap]
+<h3>Escape Scene Map</h3>
+
+<h4>Escape Scene stretch, curvature</h4>
+#CALL:map_curvature($E2AA)
+
+<h4>Escape Scene stretch, height</h4>
+#CALL:map_height($E2AF)
+
+<h4>Escape Scene stretch, lanes</h4>
+#CALL:map_lanes($E2B4)
+
+<h4>Escape Scene stretch, hazards</h4>
+#CALL:map_hazards($E2A4)
+
+<h4>Escape Scene stretch, left objects</h4>
+#CALL:map_left_objects($E2C0)
+
+<h4>Escape Scene stretch, right objects</h4>
+#CALL:map_right_objects($E2C0)
 
 [Page:Stage1Graphics]
 PageContent=#INCLUDE(PageContent:Stage1Graphics)
@@ -164,57 +334,3 @@ PageContent=#INCLUDE(PageContent:CommonGraphics)
 #CALL:graphic($D1F5,8,12,1,1)
 #CALL:anim($D20D,32,16,1,1,4)
 #CALL:graphic($DFF8,8,31*6,0,0)
-
-[Page:Map]
-PageContent=#INCLUDE(PageContent:Stage1Map) #INCLUDE(PageContent:EscapeMap)
-
-[PageContent:Stage1Map]
-<h3>Stage 1 Map</h3>
-
-<ul>
-<li>Curvature</li>
-<li>Height</li>
-<li>Lanes</li>
-<li>Hazards</li>
-<li>Left-side Objects</li>
-<li>Right-side Objects</li>
-</ul>
-
-<h4>Stage 1, curvature</h4>
-#CALL:map_curvature($5EC4)
-
-<h4>Stage 1, height</h4>
-#CALL:map_height($5EE4)
-
-<h4>Stage 1, lanes</h4>
-#CALL:map_lanes($5F0F)
-
-<h4>Stage 1, hazards</h4>
-#CALL:map_hazards($5F1D)
-
-<h4>Stage 1, left objects</h4>
-#CALL:map_left_objects($5F2A)
-
-<h4>Stage 1, right objects</h4>
-#CALL:map_right_objects($5F78)
-
-[PageContent:EscapeMap]
-<h3>Escape Scene Map</h3>
-
-<h4>Escape Scene stretch, curvature</h4>
-#CALL:map_curvature($E2AA)
-
-<h4>Escape Scene stretch, height</h4>
-#CALL:map_height($E2AF)
-
-<h4>Escape Scene stretch, lanes</h4>
-#CALL:map_lanes($E2B4)
-
-<h4>Escape Scene stretch, hazards</h4>
-#CALL:map_hazards($E2A4)
-
-<h4>Escape Scene stretch, left objects</h4>
-#CALL:map_left_objects($E2C0)
-
-<h4>Escape Scene stretch, right objects</h4>
-#CALL:map_right_objects($E2C0)
