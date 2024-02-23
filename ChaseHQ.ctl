@@ -2241,7 +2241,8 @@ C $83C7,3 No-op when in 48K mode
 N $83CA This entry point is used by the routine at #R$83CD.
 @ $83CA label=attract_mode_hook
 C $83CA,3 Call attract_mode when in 48K mode
-c $83CD Bootstrap and uber main loop
+c $83CD Bootstrap / Über main loop
+D $83CD This is the true start and main loop of the game, called once the memory map is set up. It builds a table of 256 flipped bytes at $EF00 then starts attract mode. When the player causes attract mode to yield, the overtaking bonus, the score and the retry count are reset as are the wanted stage number and the number of credits. The main loop is then called to run the game. When the main loop yields we will start the 128K animated title screen, or just loop if we're on a 48K machine.
 D $83CD Used by the routine at #R$E839.
 N $83CD Build a table of flipped bytes at $EF00.
 @ $83CD label=bootstrap
