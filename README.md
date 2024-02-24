@@ -1,22 +1,22 @@
-# Pulling apart Chase H.Q. for the ZX Spectrum
+# Pulling apart _Chase H.Q._ for the ZX Spectrum
 
-Reverse engineering by David Thomas
+Reverse engineering by David Thomas, 2023-2024
 
 Project started: March 2023
 
 ![Using Spectrum Analyser to investigate the game, including turning the screen green](static-images/spectrum-analyser.png)
 
-This is the beginnings of a disassembly of the [ZX Spectrum version of Chase H.Q. by Ocean Software](https://spectrumcomputing.co.uk/entry/903/ZX-Spectrum/Chase_HQ). Initially this is only of the 48K version - and the first level/stage at that. The 128K version is better (loads all the levels at once, has AY music, menu screen animations, ...) but it has a lot more code to consider, so it's easier to start off with 48K stage 1 first.
+This is an in-progress disassembly of the [ZX Spectrum version of Chase H.Q. by Ocean Software](https://spectrumcomputing.co.uk/entry/903/ZX-Spectrum/Chase_HQ). So far this only covers the 48K version and the first stage of the game. The 128K version is better (loads all the levels at once, has AY music and menu screen animations) but it has a lot more code to consider, so it's easier to start off with 48K stage 1 first.
 
 In this repository is a [SkoolKit](https://skoolkit.ca/) _control_ file which you can use to disassemble the game. This works with the game when it is in a "pristine" just-loaded state. See below for how to make a pristine snapshot and instructions on how to drive SkoolKit. I've provided a Makefile to automate most of the required steps.
 
 The current disassembly is [here](https://dpt.github.io/ChaseHQ/).
 
-## WHY?
+## Why?
 
 To find out how it works! (and maybe one day we could make new levels...)
 
-## HOW TO
+## How To
 
 - Install SkoolKit:
 
@@ -85,7 +85,7 @@ Build a tap or z80 file for loading into emulators or real Spectrums like so:
 make tap  # or z80
 ```
 
-## HOW TO DETERMINE HOW THE GAME WORKS?
+## How do we determine how the game works?
 
 - Option (1) is to run the game in the [Spectrum Analyser interactive disassembler](https://colourclash.co.uk/spectrum-analyser/) and look for clues.
 - Option (2) is to stare at the code _really hard_ until it makes sense.
@@ -94,35 +94,35 @@ You may have to do both.
 
 See https://youtu.be/BGVI0TbePsQ for a short video of me running Spectrum Analyser to find out how the game builds its back buffer up.
 
-## POKES
+## POKEs
 
 If you're not interested in the disassembly itself then a nice byproduct is POKEs to make the game easier, harder, or just different:
 
-Infinite Credits  
-POKE 39998,166
+* Infinite Credits  
+`POKE 39998,166`
 
-Infinite Time  
-POKE 39937,0
+* Infinite Time  
+`POKE 39937,0`
 
-1 Hit To Capture  
-POKE 46351,62 
+* 1 Hit To Capture  
+`POKE 46351,62`
 
-Infinite Turbos  
-POKE 45221,0
+* Infinite Turbos  
+`POKE 45221,0`
 
-Affect Car Spawn Rate  
-POKE 23834,&lt;spawn rate&gt;  -- 20 is the default for Stage 1. 10 would spawn twice as often.  
+* Affect Car Spawn Rate  
+`POKE 23834,`&lt;spawn rate&gt;  -- `20` is the default for Stage 1. `10` would spawn twice as often.  
 
-Set Level Colour  
-POKE 23796,&lt;attribute byte&gt;  -- 112 is black on yellow, as for Stage 1. 96 would give black on green.  
-POKE 23797,&lt;attribute byte&gt;
+* Set Level Colour  
+`POKE 23796,`&lt;attribute byte&gt;  -- `112` is black on yellow, as for Stage 1. `96` would give black on green.  
+`POKE 23797,`&lt;attribute byte&gt;
 
-## RELATED
+## Links
+
+Spectrum Computing forums thread: https://spectrumcomputing.co.uk/forums/viewtopic.php?p=113633
 
 Play Chase H.Q. online: http://torinak.com/qaop#!chasehq
 
-Chat: https://matrix.to/#/#The-Great-Escape_Lobby:gitter.im
+## Related
 
 My previous disassembly project: https://github.com/dpt/The-Great-Escape
-
-Spectrum Computing forums thread: https://spectrumcomputing.co.uk/forums/viewtopic.php?p=113633
