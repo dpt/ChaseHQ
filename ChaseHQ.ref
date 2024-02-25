@@ -82,7 +82,7 @@ PageContent=#INCLUDE(PageContent:MapFormatX)
 <li>Other values are invalid.
 </ul>
 
-<p>This escape format the same for all the other streams.
+<p>This escape format is the same for all the other streams.
 
 <p><b>Height</b> controls the up-down inclination of the road. It uses the same encoding as curvature but the type field instead defines the road's inclination. Its valid values are:
 
@@ -142,8 +142,8 @@ The object types (for Stage 1) are:
 <p><b>Hazards</b> are encoded only as byte counters and an extended form of the escapes with the following additional codes:
 
 <ul>
-<li>3: TBD Stop Spawning Barriers?</li>
-<li>6: TBD Stop Spawning Barriers?</li>
+<li>3: (TBD) Stop Spawning Barriers</li>
+<li>6: (TBD) Stop Spawning Barriers</li>
 <li>7: Start Spawning Barriers Left</li>
 <li>8: Start Spawning Barriers Right</li>
 <li>9: Start Spawning Two Barriers</li>
