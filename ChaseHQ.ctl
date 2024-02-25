@@ -8,7 +8,7 @@
 > $4000 ; state. It also covers a lot of the 128K code too, but doesn't yet describe any
 > $4000 ; of the extra memory banks.
 > $4000 ;
-> $4000 ; Reverse engineering by David Thomas, 2023.
+> $4000 ; Reverse engineering by David Thomas, 2023-2024.
 > $4000 ;
 > $4000 ;
 > $4000 ; AUTHORS
@@ -136,7 +136,7 @@
 > $4000 ;
 > $4000 ; Bank 1 @ $C000..$DAEF is stage 1's data
 > $4000 ; Bank 1 @ $E000..$FAEF is stage 2's data
-> $4000 ; Bank 3 @ $C000..$FFFF? is the title screen
+> $4000 ; Bank 3 @ $C000..$FFFF? is the animated title screen
 > $4000 ; Bank 4 @ $C000..$FF66 is sampled speech
 > $4000 ; Bank 6 @ $C000..$DAEF is stage 3's data
 > $4000 ; Bank 6 @ $E000..$FAEF is stage 4's data
@@ -174,7 +174,8 @@ D $4000 #UDGTABLE { #SCR(loading) | This is the loading screen. } TABLE#
 B $4000,6144,8 Screen bitmap
 B $5800,768,8 Screen attributes
 c $5B00 The game has loaded
-D $5B00 The game starts here.
+D $5B00 This is entered when the game is first loaded. It disables interrupts, moves memory into the right position, detects 128K machines and then runs the secondary loader to load the first stage (48K) or all stages (128K) as required.
+N $5B00 The game starts here.
 @ $5B00 label=start
 C $5B00,1 Disable interrupts
 C $5B01,3 Set stack pointer
@@ -185,10 +186,11 @@ C $5B0A,3 Count
 C $5B0D,2 Copy
 N $5B0F Detect 128K machines.
 N $5B0F Assuming bank 0 is mapped in to start with, we copy a byte from bank 0.
+@ $5B0F label=detect_128k
 C $5B0F,4 Read the byte at $FFF0 into #REGe
 N $5B13 Now we modify it, then store it back after attempting to page in bank 1.
 C $5B13,7 Attempt to map RAM bank 1 to $C000
-C $5B1A,2 Increment the read byte by $FD (being a handy non-zero value)
+C $5B1A,2 Increment the read byte by $FD (a convenient non-zero value)
 C $5B1C,1 Store it
 N $5B1D If the modified byte remains present after restoring bank 0 then it's a 48K machine.
 C $5B1D,3 Attempt to map RAM bank 0 to $C000
@@ -199,23 +201,23 @@ N $5B25 If byte was modified no paging took place, so this is a 48K machine.
 C $5B25,3 If modified, jump to loader with loader_commands_48K setup
 @ $5B28 label=mode_is_128k
 C $5B28,3 Otherwise point #REGhl at loader_commands_128K
-N $5B2B Loader accepts a command list and uses it to load the game into memory. The 48K command list at #R$5B7D loads stage 1, then starts the game. The 128K command list at #R$5B87 loads stages while paging in the appropriate banks, then starts the game.
+N $5B2B The loader accepts a command list and uses it to load the game into memory. The 48K command list at #R$5B7D loads stage 1, then starts the game. The 128K command list at #R$5B87 loads all stages while paging in the appropriate banks, then starts the game.
 @ $5B2B label=loader
 C $5B2B,4 Load a handler address from #REGhl
 C $5B2F,2 Call the handler
 N $5B31 Loader handler that loads a stage.
 @ $5B31 label=loader_load
 C $5B31,1 Preserve command list address
-C $5B32,4 Address
-C $5B36,3 Count
+C $5B32,4 Address of loader_scratch
+C $5B36,3 Length of loader_scratch
 C $5B39,3 Call loader_load_chunk
 C $5B3C,1 Restore command list address
 @ $5B3D label=loader_load_headerless
-C $5B3D,7 Load address into #REGix
-C $5B44,4 Load count into #REGde
+C $5B3D,7 Load address from command list into #REGix
+C $5B44,4 Load length from command list into #REGde
 C $5B48,1 Preserve command list address
 C $5B49,3 Call loader_load_chunk
-N $5B4C The following instruction is the entry point for this capture.
+N $5B4C The following instruction is the point at which this disassembly was captured.
 C $5B4C,1 Restore command list address
 C $5B4D,2 Process next entry
 N $5B4F Subroutine that loads #REGde bytes to address #REGix.
@@ -239,49 +241,44 @@ C $5B67,11 Move $5C00..$76EF to $C000 onwards
 C $5B72,1 Restore command list address
 C $5B73,2 Process next entry
 N $5B75 Loader handler that starts the game.
-@ $5B75 label=loader_done
+@ $5B75 label=loader_start_game
 C $5B75,4 Load entrypoint address from #REGhl
 C $5B79,3 Set border to black
 C $5B7C,1 Exit via entrypoint just read
 N $5B7D Loader commands for 48K mode.
 @ $5B7D label=loader_commands_48K
-W $5B7D,2,2 loader_load
-W $5B7F,4,4 Stage 1: at $5C00 load $1AF0 bytes
-W $5B83,2,2 loader_done
-W $5B85,2,2 entrypt_48k
+W $5B7D,6,2,4 Load stage 1 at $5C00 ($1AF0 bytes)
+W $5B83,4,2 Start game at entrypt_48k
 N $5B87 Loader commands for 128K mode.
 @ $5B87 label=loader_commands_128K
-W $5B87,2,2 loader_load
-W $5B89,4,4 Stage 1: at $5C00 load $1AF0 bytes
-W $5B8D,2,2 loader_set_bank
-B $5B8F,2,2 Bank 1 (second byte is unused here)
-W $5B91,2,2 loader_copy
-W $5B93,2,2 loader_load
-W $5B95,4,4 Stage 2: at $E000 load $1AF0 bytes
-W $5B99,2,2 loader_set_bank
-B $5B9B,2,2 Bank 6
-W $5B9D,2,2 loader_load
-W $5B9F,4,4 Stage 3: at $C000 load $1AF0 bytes
-W $5BA3,2,2 loader_load
-W $5BA5,4,4 Stage 4: at $E000 load $1AF0 bytes
-W $5BA9,2,2 loader_set_bank
-B $5BAB,2,2 Bank 7
-W $5BAD,2,2 loader_load
-W $5BAF,4,4 Stage 5: at $C000 load $1AF0 bytes
-W $5BB3,2,2 loader_load
-W $5BB5,4,4 End screen: at $E000 load $1AF0 bytes
-W $5BB9,2,2 loader_set_bank
-B $5BBB,2,2 Bank 3
-W $5BBD,2,2 loader_load_headerless
-W $5BBF,4,4 Title screen: at $C000 load $4000 bytes
-W $5BC3,2,2 loader_set_bank
-B $5BC5,2,2 Bank 4
-W $5BC7,2,2 loader_load_headerless
-W $5BC9,4,4 Sampled speech: at $C000 load $4000 bytes
-W $5BCD,2,2 loader_set_bank
-B $5BCF,2,2 Bank 0
-W $5BD1,2,2 loader_done
-W $5BD3,2,2 entrypt_128k
+W $5B87,6,2,4 Load stage 1 at $5C00 ($1AF0 bytes)
+M $5B8D,4 Set bank 1 (second byte is unused in Set Bank commands)
+W $5B8D,2,2
+B $5B8F,2,2
+W $5B91,2,2 Copy $5C00..$76EF to $C000
+W $5B93,6,2,4 Load stage 2 at $E000 ($1AF0 bytes)
+M $5B99,4 Set bank 6
+W $5B99,2,2
+B $5B9B,2,2
+W $5B9D,6,2,4 Load stage 3 at $C000 ($1AF0 bytes)
+W $5BA3,6,2,4 Load stage 4 at $E000 ($1AF0 bytes)
+M $5BA9,4 Set bank 7
+W $5BA9,2,2
+B $5BAB,2,2
+W $5BAD,6,2,4 Load stage 5 at $C000 ($1AF0 bytes)
+W $5BB3,6,2,4 Load end screen at $E000 ($1AF0 bytes)
+M $5BB9,4 Set bank 3
+W $5BB9,2,2
+B $5BBB,2,2
+W $5BBD,6,2,4 (Headerless) Load animated title screen at $C000 ($4000 bytes)
+M $5BC3,4 Set bank 4
+W $5BC3,2,2
+B $5BC5,2,2
+W $5BC7,6,2,4 (Headerless) Load sampled speech at $C000 ($4000 bytes)
+M $5BCD,4 Set bank 0
+W $5BCD,2,2
+B $5BCF,2,2
+W $5BD1,4,2 Start game at entrypt_128k
 @ $5BD5 label=loader_scratch
 B $5BD5,2,2 #R$5B31 loads two bytes to here.  -- unsure what uses them
 u $5BD7 Padding bytes
@@ -2242,7 +2239,7 @@ N $83CA This entry point is used by the routine at #R$83CD.
 @ $83CA label=attract_mode_hook
 C $83CA,3 Call attract_mode when in 48K mode
 c $83CD Bootstrap / Über main loop
-D $83CD This is the true start and main loop of the game, called once the memory map is set up. It builds a table of 256 flipped bytes at $EF00 then starts attract mode. When the player causes attract mode to yield, the overtaking bonus, the score and the retry count are reset as are the wanted stage number and the number of credits. The main loop is then called to run the game. When the main loop yields we will start the 128K animated title screen, or just loop if we're on a 48K machine.
+D $83CD This is the true start and main loop of the game. It's called once the memory map is set up. It builds a table of 256 flipped bytes at $EF00 then starts attract mode. When the player causes attract mode to yield, the overtaking bonus, the score and the retry count are reset as are the wanted stage number and the number of credits. The main loop is then called to run the game. Then when the main loop yields it will start the 128K animated title screen, or just loop if we're running on a 48K machine.
 D $83CD Used by the routine at #R$E839.
 N $83CD Build a table of flipped bytes at $EF00.
 @ $83CD label=bootstrap
@@ -2265,16 +2262,16 @@ N $83EC Reset wanted_stage_number and credits.
 C $83EC,2 wanted_stage_number = 1
 C $83EE,4 credits = 2
 C $83F2,3 Call the main loop
-C $83F5,10 Call relocated plsp_f3b6_128k (title screen?) if in 128K mode
+C $83F5,10 Call relocated plsp_f3b6_128k (animated title screen?) if in 128K mode
 C $83FF,2 Loop
 c $8401 Main loop
 D $8401 Used by the routines at #R$83CD and #R$8A57.
 @ $8401 label=main_loop
 C $8401,3 Call load_stage
-C $8404,7 Are we on the end screen (stage 6)? Jump #R$841B if not so
+C $8404,7 Jump to #R$841B if we're not on the end screen (stage 6)
 N $840B Run the end screen.
 @ $840B label=ml_run_end_screen
-C $840B,3 Call #R$5C00 [which is data in earlier stages, must be end screen anim]
+C $840B,3 Call the end screen animation routine
 C $840E,5 Reset (wanted) stage to 1
 C $8413,5 Call load_stage
 C $8418,2 Set (wanted) stage to 6   [not sure why]
@@ -2287,9 +2284,9 @@ C $8421,3 Call set_up_stage
 @ $842D label=ml_store_start_speech
 C $8424,10 Cycle start_speech_cycle 3,2,1 then repeat
 N $842E Choose the startup speech sample.
-C $842E,7 start_speech = (A * 4) OR 2  -- leading zeroes are a delay
+C $842E,7 start_speech = (#REGa << 2) OR 2  -- The leading zeroes are used to specify a delay
 C $8435,4 Test 128K mode flag
-C $8439,5 #R$A188 = $FF -- I suspect this keeps the perp spawned
+C $8439,5 Set hazards[0].used to $FF -- I suspect this keeps the perp spawned
 C $843E,3 Address of start_stage_chatter
 C $8441,3 Call start_chatter if not in 128K mode (priority $FF)
 @ $8444 label=ml_loop
@@ -12085,7 +12082,7 @@ C $F3AC,1 A = 1
 C $F3AD,3 Load var_a23a  -- copy of noise pitch
 C $F3B0,3 Self modify #R$8E49
 C $F3B3,3 (an address)
-N $F3B6 Starts the title screen?
+N $F3B6 Starts the animated title screen?
 @ $F3B6 label=plsp_f3b6_128k
 C $F3B6,3 Self modify 'CALL xxxx' @ $81C5 ($F3D1 before relocation - below)
 C $F3B9,14 Copy 4096 bytes from $B000 to $F000 (preserving registers for later)
@@ -12132,7 +12129,7 @@ C $F414,6 128K: Set paging register to default
 C $F41A,1 Return
 @ $F41B label=attract_mode_hook_128k
 C $F41B,3 (an address)
-C $F41E,3 Call relocated plsp_f3b6_128k (title screen?)
+C $F41E,3 Call relocated plsp_f3b6_128k (animated title screen?)
 C $F421,2 Return if A is zero
 C $F423,3 HL -> attract_data
 C $F426,3 Call set_up_stage
