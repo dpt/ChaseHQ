@@ -12,7 +12,55 @@ from skoolkit.skoolmacro import parse_ints
 
 ZX_ATTRIBUTE_BLACK_OVER_YELLOW = 48
 
+COLOUR_NAMES = [
+    "Black",
+    "Blue",
+    "Red",
+    "Magenta",
+    "Green",
+    "Cyan",
+    "Yellow",
+    "White",
+    "Bright Black",
+    "Bright Blue",
+    "Bright Red",
+    "Bright Magenta",
+    "Bright Green",
+    "Bright Cyan",
+    "Bright Yellow",
+    "Bright White"
+]
+
 class ChaseHQWriter:
+    def decode_pregame_screen(self, cwd, base):
+        output = ""
+        basep = base
+        while 1:
+            b = self.snapshot[basep]
+            basep = basep + 1
+            if b == 0x00:
+                output += "Stop\n"
+                return output
+            elif b >= 0x01 and b <= 0x1E:
+                output += "Repeat %d\n" % (b)
+            elif b >= 0x1F and b <= 0x1F+45:
+                output += "Plot tile %d\n" % (b - 0x1F)
+            elif b >= 0xD0 and b <= 0xDF:
+                c = b - 0xD0
+                output += "Set colour %d (%s)\n" % (c, COLOUR_NAMES[c])
+            elif b == 0xE1:
+                output += "Draw horizontally\n"
+            elif b == 0xE2:
+                output += "Draw vertically\n"
+            elif b >= 0xF0 and b <= 0xFF:
+                b = (b << 8) | self.snapshot[basep]
+                basep = basep + 1
+                x = b & 0x1F
+                y = ((b & 0x00D0) | ((b & 0x0F00) >> 7)) >> 4
+                output += "Set address to (%d,%d)\n" % (x,y)
+            else:
+                output += "Unknown %X\n" % (b)
+
     def decode_nibble_rle(self, cwd, base, typename, names, showlength, follow):
         output = "Start of %s data at $%X (nibble counted)<br/>" % (typename, base)
         runlength = 0
