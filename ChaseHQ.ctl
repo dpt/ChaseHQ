@@ -1656,208 +1656,262 @@ B $77CD,1,1 flags? attrs?   text is white
 W $77CE,2,2 Back buffer address
 W $77D0,2,2 Attributes address
 T $77D2,6,5:n1 "SIGNAL"
-b $77D8 [Pre-game] Data Commands to draw the pre-game screen. RLE'd tile references etc. $00+ => draw N tiles $1F+ => draw single tile (N - $1F) $E0+ => set draw direction $F0+ => set backbuffer address
+b $77D8 [Pre-game] Drawing commands for the pre-game screen
 @ $77D8 label=pregame_data
-B $77D8,1,1 Set colour 12 (bright green)
+B $77D8,1,1 Set colour 12 (Bright Green)
 B $77D9,1,1 Draw horizontally
-N $77DA Row 0
-W $77DA,2,2 Set address to (0,1)
-B $77DC,1,1 Draw tile 0 (stored as +$1F)
-B $77DD,1,1 Repeat next tile 28 times across
-B $77DE,1,1 Draw tile 6 (stored as +$1F)
-B $77DF,1,1 Draw tile 1
-N $77E0 Row 2
-W $77E0,2,2 Set address to (1,2)
-B $77E2,1,1 Draw tile 2
+@ $77DA keep
+W $77DA,2,2 Set address to (1,0)
+B $77DC,1,1 Plot tile 0
+B $77DD,1,1 Repeat 28
+B $77DE,1,1 Plot tile 6
+B $77DF,1,1 Plot tile 1
+@ $77E0 keep
+W $77E0,2,2 Set address to (1,0)
+B $77E2,1,1 Plot tile 2
 B $77E3,1,1 Repeat 28
-B $77E4,1,1 Draw tile 5
-B $77E5,1,1 Draw tile 3
-N $77E6 Row 1
-W $77E6,2,2 Set address to $F801 (1,1)
-B $77E8,1,1 Draw tile 4
-N $77E9 Row 1
-W $77E9,2,2 Set address to $F81E (30,1)
-B $77EB,1,1 Draw tile 7
-N $77EC Row 4
-B $77EC,1,1 Set colour 13 (bright cyan)
-W $77ED,2,2 Set address to $F041 (1,4)
-B $77EF,1,1 Draw tile 0
+B $77E4,1,1 Plot tile 5
+B $77E5,1,1 Plot tile 3
+@ $77E6 keep
+W $77E6,2,2 Set address to (1,1)
+B $77E8,1,1 Plot tile 4
+@ $77E9 keep
+W $77E9,2,2 Set address to (30,1)
+B $77EB,1,1 Plot tile 7
+B $77EC,1,1 Set colour 13 (Bright Cyan)
+@ $77ED keep
+W $77ED,2,2 Set address to (1,4)
+B $77EF,1,1 Plot tile 0
 B $77F0,1,1 Repeat 28
-B $77F1,1,1 Draw tile 6
-B $77F2,1,1 Draw tile 1
-N $77F3 Row 15
-W $77F3,2,2 Set address to $F8E1 (1,15)
-B $77F5,1,1 Draw tile 2
+B $77F1,1,1 Plot tile 6
+B $77F2,1,1 Plot tile 1
+@ $77F3 keep
+W $77F3,2,2 Set address to (1,13)
+B $77F5,1,1 Plot tile 2
 B $77F6,1,1 Repeat 28
-B $77F7,1,1 Draw tile 5
-B $77F8,1,1 Draw tile 3
-N $77F9 Row 5
+B $77F7,1,1 Plot tile 5
+B $77F8,1,1 Plot tile 3
 B $77F9,1,1 Draw vertically
-W $77FA,2,2 Set address to $F841 (1,5)
+@ $77FA keep
+W $77FA,2,2 Set address to (1,5)
 B $77FC,1,1 Repeat 10
-B $77FD,1,1 Draw tile 4
-N $77FE Row 5
-W $77FE,2,2 Set address to $F85E (30,5)  must be?
+B $77FD,1,1 Plot tile 4
+@ $77FE keep
+W $77FE,2,2 Set address to (30,5)
 B $7800,1,1 Repeat 10
-B $7801,1,1 Draw tile 7
-N $7802 Row 8. Signal top bar
-B $7802,1,1 Set colour 0 (black)
+B $7801,1,1 Plot tile 7
+B $7802,1,1 Set colour 0 (Black)
 B $7803,1,1 Draw horizontally
-W $7804,2,2 Set address to $F097 (23,8)
+@ $7804 keep
+W $7804,2,2 Set address to (23,9)
 B $7806,1,1 Repeat 7
-B $7807,1,1 Draw tile 8
-N $7808 Row 10. Signal bottom bar
-W $7808,2,2 Set address to $F0B7 (23,10)
+B $7807,1,1 Plot tile 8
+@ $7808 keep
+W $7808,2,2 Set address to (23,9)
 B $780A,1,1 Repeat 7
-B $780B,1,1 Draw tile 8
-N $780C Row 5. Top bezel of screen
-W $780C,2,2 Set address to $F849 (9,5)
-B $780E,1,1 Set colour 15 (bright white)
-B $780F,1,1 Draw tile 11
-B $7810,1,1 Draw tile 12
+B $780B,1,1 Plot tile 8
+@ $780C keep
+W $780C,2,2 Set address to (9,5)
+B $780E,1,1 Set colour 15 (Bright White)
+B $780F,1,1 Plot tile 11
+B $7810,1,1 Plot tile 12
 B $7811,1,1 Repeat 9
-B $7812,1,1 Draw tile 13
-B $7813,1,1 Draw tile 14
-B $7814,1,1 Draw tile 15
-B $7815,1,1 Draw tile 16
-N $7816 Row 6. Top inner bezel of screen
-W $7816,2,2 Set address to $F069 (9,6)
-B $7818,1,1 Set colour 15 (bright white)
-B $7819,1,1 Draw tile 22
-B $781A,1,1 Set colour 13 (bright cyan)
-B $781B,1,1 Draw tile 23
+B $7812,1,1 Plot tile 13
+B $7813,1,1 Plot tile 14
+B $7814,1,1 Plot tile 15
+B $7815,1,1 Plot tile 16
+@ $7816 keep
+W $7816,2,2 Set address to (9,4)
+B $7818,1,1 Set colour 15 (Bright White)
+B $7819,1,1 Plot tile 22
+B $781A,1,1 Set colour 13 (Bright Cyan)
+B $781B,1,1 Plot tile 23
 B $781C,1,1 Repeat 9
-B $781D,1,1 Draw tile 24
-B $781E,1,1 Draw tile 25
-B $781F,1,1 Draw tile 26
-B $7820,1,1 Set colour 15 (bright white)
-B $7821,1,1 Draw tile 27
-N $7822 Row 7. Top row of screen
-W $7822,2,2 Set address to $F86B (9,7)
-B $7824,1,1 Set colour 6 (yellow)
-B $7825,1,1 Draw tile 35
-B $7826,1,1 Draw tile 17
-B $7827,1,1 Draw tile 17
+B $781D,1,1 Plot tile 24
+B $781E,1,1 Plot tile 25
+B $781F,1,1 Plot tile 26
+B $7820,1,1 Set colour 15 (Bright White)
+B $7821,1,1 Plot tile 27
+@ $7822 keep
+W $7822,2,2 Set address to (11,5)
+B $7824,1,1 Set colour 6 (Yellow)
+B $7825,1,1 Plot tile 35
+B $7826,1,1 Plot tile 17
+B $7827,1,1 Plot tile 17
 B $7828,1,1 Repeat 4
-B $7829,1,1 Draw tile 18
-B $782A,1,1 Draw tile 17
-B $782B,1,1 Draw tile 17
-B $782C,1,1 Draw tile 36
-N $782D Row 8.
-W $782D,2,2 Set address to $F08B ()
-B $782F,1,1 Set colour 14 (bright yellow)
+B $7829,1,1 Plot tile 18
+B $782A,1,1 Plot tile 17
+B $782B,1,1 Plot tile 17
+B $782C,1,1 Plot tile 36
+@ $782D keep
+W $782D,2,2 Set address to (11,8)
+B $782F,1,1 Set colour 14 (Bright Yellow)
 B $7830,1,1 Repeat 10
-B $7831,1,1 Draw tile 44
-N $7832 Row 9.
-W $7832,2,2 Set address to $F8B8
+B $7831,1,1 Plot tile 44
+@ $7832 keep
+W $7832,2,2 Set address to (11,9)
 B $7834,1,1 Repeat 10
-B $7835,1,1 Draw tile 44
-N $7836 Row 10.
-W $7836,2,2 Set address to $F0AB
+B $7835,1,1 Plot tile 44
+@ $7836 keep
+W $7836,2,2 Set address to (11,8)
 B $7838,1,1 Repeat 10
-B $7839,1,1 Draw tile 44
-N $783A Row 11.
-W $783A,2,2 Set address to $F8AB
+B $7839,1,1 Plot tile 44
+@ $783A keep
+W $783A,2,2 Set address to (11,9)
 B $783C,1,1 Repeat 10
-B $783D,1,1 Draw tile 44
-N $783E Row 12.
-W $783E,2,2 Set address to $F0CB
+B $783D,1,1 Plot tile 44
+@ $783E keep
+W $783E,2,2 Set address to (11,12)
 B $7840,1,1 Repeat 10
-B $7841,1,1 Draw tile 44
-N $7842 Row 7? Left bezel of screen.
+B $7841,1,1 Plot tile 44
 B $7842,1,1 Draw vertically
-W $7843,2,2 Set address to $F869 (9,15?)
-B $7845,1,1 Set colour 7 (white)
-B $7846,1,1 Draw tile 33
-B $7847,1,1 Set colour 13 (bright cyan)
-B $7848,1,1 Draw tile 33
-B $7849,1,1 Set colour 5 (cyan)
+@ $7843 keep
+W $7843,2,2 Set address to (9,5)
+B $7845,1,1 Set colour 7 (White)
+B $7846,1,1 Plot tile 33
+B $7847,1,1 Set colour 13 (Bright Cyan)
+B $7848,1,1 Plot tile 33
+B $7849,1,1 Set colour 5 (Cyan)
 B $784A,1,1 Repeat 6
-B $784B,1,1 Draw tile 33
-N $784C Right bezel of screen.
-W $784C,2,2 Set address to $F876 (21,15?)
-B $784E,1,1 Set colour 7 (white)
-B $784F,1,1 Draw tile 38
-B $7850,1,1 Set colour 13 (bright cyan)
-B $7851,1,1 Draw tile 38
-B $7852,1,1 Set colour 5 (cyan)
+B $784B,1,1 Plot tile 33
+@ $784C keep
+W $784C,2,2 Set address to (22,5)
+B $784E,1,1 Set colour 7 (White)
+B $784F,1,1 Plot tile 38
+B $7850,1,1 Set colour 13 (Bright Cyan)
+B $7851,1,1 Plot tile 38
+B $7852,1,1 Set colour 5 (Cyan)
 B $7853,1,1 Repeat 6
-B $7854,1,1 Draw tile 38
-W $7855,2,2 Set address to $F86A
+B $7854,1,1 Plot tile 38
+@ $7855 keep
+W $7855,2,2 Set address to (10,5)
 B $7857,1,1 Repeat 3
-B $7858,1,1 Draw tile 34
-W $7859,2,2 Set address to $F875
+B $7858,1,1 Plot tile 34
+@ $7859 keep
+W $7859,2,2 Set address to (21,5)
 B $785B,1,1 Repeat 3
-B $785C,1,1 Draw tile 37
-N $785D Bottom row of screen.
+B $785C,1,1 Plot tile 37
 B $785D,1,1 Draw horizontally
-W $785E,2,2 Set address to $F8CA
-B $7860,1,1 Set colour 13 (bright cyan)
-B $7861,1,1 Draw tile 28
-B $7862,1,1 Set colour 14 (bright yellow)
-B $7863,1,1 Draw tile 29
+@ $785E keep
+W $785E,2,2 Set address to (10,13)
+B $7860,1,1 Set colour 13 (Bright Cyan)
+B $7861,1,1 Plot tile 28
+B $7862,1,1 Set colour 14 (Bright Yellow)
+B $7863,1,1 Plot tile 29
 B $7864,1,1 Repeat 8
-B $7865,1,1 Draw tile 30
-B $7866,1,1 Draw tile 31
-B $7867,1,1 Set colour 13 (bright cyan)
-B $7868,1,1 Draw tile 32
-W $7869,2,2 Set address to $F0EA
-B $786B,1,1 Draw tile 39
-B $786C,1,1 Draw tile 40
+B $7865,1,1 Plot tile 30
+B $7866,1,1 Plot tile 31
+B $7867,1,1 Set colour 13 (Bright Cyan)
+B $7868,1,1 Plot tile 32
+@ $7869 keep
+W $7869,2,2 Set address to (10,12)
+B $786B,1,1 Plot tile 39
+B $786C,1,1 Plot tile 40
 B $786D,1,1 Repeat 8
-B $786E,1,1 Draw tile 41
-B $786F,1,1 Draw tile 42
-B $7870,1,1 Draw tile 43
-N $7871 Bottom bezel of screen.
-W $7871,2,2 Set address to $F8EA
-B $7873,1,1 Set colour 13 (bright cyan)
+B $786E,1,1 Plot tile 41
+B $786F,1,1 Plot tile 42
+B $7870,1,1 Plot tile 43
+@ $7871 keep
+W $7871,2,2 Set address to (10,13)
+B $7873,1,1 Set colour 13 (Bright Cyan)
 B $7874,1,1 Repeat 12
-B $7875,1,1 Draw tile 19
-N $7876 TUNE button top.
-W $7876,2,2 Set address to $F084 (4,8)
-B $7878,1,1 Set colour 15 (bright white)
-B $7879,1,1 Draw tile 9
-B $787A,1,1 Set colour 13 (bright cyan)
-B $787B,1,1 Draw tile 10
-N $787C TUNE button bottom.
-W $787C,2,2 Set address to $F884 (4,9).
-B $787E,1,1 Set colour 14 (bright yellow)
-B $787F,1,1 Draw tile 20
-B $7880,1,1 Set colour 5 (cyan)
-B $7881,1,1 Draw tile 21
-W $7882,2,2 Set address to $F0C4
-B $7884,1,1 Set colour 15 (bright white)
-B $7885,1,1 Draw tile 9
-B $7886,1,1 Set colour 13 (bright cyan)
-B $7887,1,1 Draw tile 10
-W $7888,2,2 Set address to $F8C4
-B $788A,1,1 Set colour 14 (bright yellow)
-B $788B,1,1 Draw tile 20
-B $788C,1,1 Set colour 5 (cyan)
-B $788D,1,1 Draw tile 21
-W $788E,2,2 Set address to $F0D8
-B $7890,1,1 Set colour 15 (bright white)
-B $7891,1,1 Draw tile 9
-B $7892,1,1 Set colour 13 (bright cyan)
-B $7893,1,1 Draw tile 10
-W $7894,2,2 Set address to $F8D8
-B $7896,1,1 Set colour 14 (bright yellow)
-B $7897,1,1 Draw tile 20
-B $7898,1,1 Set colour 5 (cyan)
-B $7899,1,1 Draw tile 21
-W $789A,2,2 Set address to $F0DB
-B $789C,1,1 Set colour 15 (bright white)
-B $789D,1,1 Draw tile 9
-B $789E,1,1 Set colour 13 (bright cyan)
-B $789F,1,1 Draw tile 10
-W $78A0,2,2 Set address to $F8DB
-B $78A2,1,1 Set colour 14 (bright yellow)
-B $78A3,1,1 Draw tile 20
-B $78A4,1,1 Set colour 5 (cyan)
-B $78A5,1,1 Draw tile 21
+B $7875,1,1 Plot tile 19
+@ $7876 keep
+W $7876,2,2 Set address to (4,8)
+B $7878,1,1 Set colour 15 (Bright White)
+B $7879,1,1 Plot tile 9
+B $787A,1,1 Set colour 13 (Bright Cyan)
+B $787B,1,1 Plot tile 10
+@ $787C keep
+W $787C,2,2 Set address to (4,9)
+B $787E,1,1 Set colour 14 (Bright Yellow)
+B $787F,1,1 Plot tile 20
+B $7880,1,1 Set colour 5 (Cyan)
+B $7881,1,1 Plot tile 21
+@ $7882 keep
+W $7882,2,2 Set address to (4,12)
+B $7884,1,1 Set colour 15 (Bright White)
+B $7885,1,1 Plot tile 9
+B $7886,1,1 Set colour 13 (Bright Cyan)
+B $7887,1,1 Plot tile 10
+@ $7888 keep
+W $7888,2,2 Set address to (4,13)
+B $788A,1,1 Set colour 14 (Bright Yellow)
+B $788B,1,1 Plot tile 20
+B $788C,1,1 Set colour 5 (Cyan)
+B $788D,1,1 Plot tile 21
+@ $788E keep
+W $788E,2,2 Set address to (24,13)
+B $7890,1,1 Set colour 15 (Bright White)
+B $7891,1,1 Plot tile 9
+B $7892,1,1 Set colour 13 (Bright Cyan)
+B $7893,1,1 Plot tile 10
+@ $7894 keep
+W $7894,2,2 Set address to (24,13)
+B $7896,1,1 Set colour 14 (Bright Yellow)
+B $7897,1,1 Plot tile 20
+B $7898,1,1 Set colour 5 (Cyan)
+B $7899,1,1 Plot tile 21
+@ $789A keep
+W $789A,2,2 Set address to (27,13)
+B $789C,1,1 Set colour 15 (Bright White)
+B $789D,1,1 Plot tile 9
+B $789E,1,1 Set colour 13 (Bright Cyan)
+B $789F,1,1 Plot tile 10
+@ $78A0 keep
+W $78A0,2,2 Set address to (27,13)
+B $78A2,1,1 Set colour 14 (Bright Yellow)
+B $78A3,1,1 Plot tile 20
+B $78A4,1,1 Set colour 5 (Cyan)
+B $78A5,1,1 Plot tile 21
 B $78A6,1,1 Stop
+N $78A7 45 tiles used to draw the pre-game screen.
 @ $78A7 label=pregame_tiles
-B $78A7,360,8 45 tiles used to draw the pre-game screen #HTML[#CALL:graphic($78A7,8,45*8,0,0)]
+B $78A7,8,8 Tile 0 #HTML[#CALL:graphic($78A7,8,8,0,0)]
+B $78AF,8,8 Tile 1 #HTML[#CALL:graphic($78AF,8,8,0,0)]
+B $78B7,8,8 Tile 2 #HTML[#CALL:graphic($78B7,8,8,0,0)]
+B $78BF,8,8 Tile 3 #HTML[#CALL:graphic($78BF,8,8,0,0)]
+B $78C7,8,8 Tile 4 #HTML[#CALL:graphic($78C7,8,8,0,0)]
+B $78CF,8,8 Tile 5 #HTML[#CALL:graphic($78CF,8,8,0,0)]
+B $78D7,8,8 Tile 6 #HTML[#CALL:graphic($78D7,8,8,0,0)]
+B $78DF,8,8 Tile 7 #HTML[#CALL:graphic($78DF,8,8,0,0)]
+B $78E7,8,8 Tile 8 #HTML[#CALL:graphic($78E7,8,8,0,0)]
+B $78EF,8,8 Tile 9 #HTML[#CALL:graphic($78EF,8,8,0,0)]
+B $78F7,8,8 Tile 10 #HTML[#CALL:graphic($78F7,8,8,0,0)]
+B $78FF,8,8 Tile 11 #HTML[#CALL:graphic($78FF,8,8,0,0)]
+B $7907,8,8 Tile 12 #HTML[#CALL:graphic($7907,8,8,0,0)]
+B $790F,8,8 Tile 13 #HTML[#CALL:graphic($790F,8,8,0,0)]
+B $7917,8,8 Tile 14 #HTML[#CALL:graphic($7917,8,8,0,0)]
+B $791F,8,8 Tile 15 #HTML[#CALL:graphic($791F,8,8,0,0)]
+B $7927,8,8 Tile 16 #HTML[#CALL:graphic($7927,8,8,0,0)]
+B $792F,8,8 Tile 17 #HTML[#CALL:graphic($792F,8,8,0,0)]
+B $7937,8,8 Tile 18 #HTML[#CALL:graphic($7937,8,8,0,0)]
+B $793F,8,8 Tile 19 #HTML[#CALL:graphic($793F,8,8,0,0)]
+B $7947,8,8 Tile 20 #HTML[#CALL:graphic($7947,8,8,0,0)]
+B $794F,8,8 Tile 21 #HTML[#CALL:graphic($794F,8,8,0,0)]
+B $7957,8,8 Tile 22 #HTML[#CALL:graphic($7957,8,8,0,0)]
+B $795F,8,8 Tile 23 #HTML[#CALL:graphic($795F,8,8,0,0)]
+B $7967,8,8 Tile 24 #HTML[#CALL:graphic($7967,8,8,0,0)]
+B $796F,8,8 Tile 25 #HTML[#CALL:graphic($796F,8,8,0,0)]
+B $7977,8,8 Tile 26 #HTML[#CALL:graphic($7977,8,8,0,0)]
+B $797F,8,8 Tile 27 #HTML[#CALL:graphic($797F,8,8,0,0)]
+B $7987,8,8 Tile 28 #HTML[#CALL:graphic($7987,8,8,0,0)]
+B $798F,8,8 Tile 29 #HTML[#CALL:graphic($798F,8,8,0,0)]
+B $7997,8,8 Tile 30 #HTML[#CALL:graphic($7997,8,8,0,0)]
+B $799F,8,8 Tile 31 #HTML[#CALL:graphic($799F,8,8,0,0)]
+B $79A7,8,8 Tile 32 #HTML[#CALL:graphic($79A7,8,8,0,0)]
+B $79AF,8,8 Tile 33 #HTML[#CALL:graphic($79AF,8,8,0,0)]
+B $79B7,8,8 Tile 34 #HTML[#CALL:graphic($79B7,8,8,0,0)]
+B $79BF,8,8 Tile 35 #HTML[#CALL:graphic($79BF,8,8,0,0)]
+B $79C7,8,8 Tile 36 #HTML[#CALL:graphic($79C7,8,8,0,0)]
+B $79CF,8,8 Tile 37 #HTML[#CALL:graphic($79CF,8,8,0,0)]
+B $79D7,8,8 Tile 38 #HTML[#CALL:graphic($79D7,8,8,0,0)]
+B $79DF,8,8 Tile 39 #HTML[#CALL:graphic($79DF,8,8,0,0)]
+B $79E7,8,8 Tile 40 #HTML[#CALL:graphic($79E7,8,8,0,0)]
+B $79EF,8,8 Tile 41 #HTML[#CALL:graphic($79EF,8,8,0,0)]
+B $79F7,8,8 Tile 42 #HTML[#CALL:graphic($79F7,8,8,0,0)]
+B $79FF,8,8 Tile 43 #HTML[#CALL:graphic($79FF,8,8,0,0)]
+B $7A07,8,8 Tile 44 #HTML[#CALL:graphic($7A07,8,8,0,0)]
 b $7A0F [Graphics] Smoke and fire graphics
 @ $7A0F label=bitmap_smoke1
 B $7A0F,52,8*6,4 16x13 pixels, masked #HTML[#CALL:graphic($7A0F,16,13,1,1)]
@@ -2715,88 +2769,99 @@ C $8654,3 Set attribute byte to black ink over red
 C $8657,2 Loop while #REGb > 0
 C $8659,1 Return
 c $865A Draw the pre-game screen
+D $865A The pre-game screen ("CHASE H.Q. MONITORING SYSTEM") is drawn by following the commands stored at #R$77D8. Possible commands are "plot tile" (single or up to 30 repetitions), "set background colour", "set address", "draw horizontally", "draw vertically" or "stop". The tiles are the 45 8x8 pixel tiles that live at #R$78A7.
+D $865A Once the tiles are drawn the strings at #R$7798 are drawn by calling #R$8E6C.
 D $865A Used by the routine at #R$858C.
 @ $865A label=draw_pregame
 C $865A,3 Address of pre-game screen data
-@ $865D label=dp_loop
-C $865D,1 Read a byte
+@ $865D label=dp_get_command
+C $865D,1 Read a command byte
 C $865E,1 Set flags
-C $865F,3 Jump to rendering messages only, if zero
-C $8662,1 Advance to next byte
-C $8663,4 Jump if < $D0
-C $8667,4 Jump if < $D0..DF
-C $866B,4 Jump if >= $F0
-N $866F Otherwise handle $E0..$EF. This just seems to set a value.
-@ $866F label=dp_cmd_e0_to_ef
+C $865F,3 Zero is the "Stop" command so jump to rendering messages
+C $8662,1 Advance to next command byte
+C $8663,4 Jump if < $D0 (either "Repeat" or "Plot tile")
+C $8667,4 Jump if < $D0..$DF ("Set background colour")
+C $866B,4 Jump if >= $F0 ("Set address")
+N $866F $E1 is "Draw horizontally". $E2 is "Draw vertically".
+@ $866F label=dp_set_direction
 C $866F,5 Self modify #R$86C8 with (#REGa - $E0)
-C $8674,2 Loop dp_loop
-N $8676 Handle $D0..DF.
-@ $8676 label=dp_cmd_d0_to_df
-C $8676,8 Self modify #R$86C2 with (#REGa - $D0) * 8
-C $867E,2 Loop dp_loop
-N $8680 Handle $F0..FF.
-@ $8680 label=dp_cmd_f0_to_ff
-C $8680,1 D = A
-C $8681,2 E = *HL++
-C $8683,2 Loop dp_loop
-N $8685 Handle $00..$CF.
-@ $8685 label=dp_cmd_00_cf
-C $8687,2 B = 1  -- single tile?
-C $8689,2 Jump if >= $1F
-C $868B,1 B = A  -- run of tiles?
-C $868C,2 A = *HL++
-N $868E Handle $1F..?
-@ $868E label=dp_cmd_1f
-C $868E,1 Preserve HL
-C $868F,2 A -= $1F  -- A is now a tile index
-C $8691,3 Multiply by 8 - size of tile - Why the different rotates?
-C $8694,1 Preserve BC (tile count?)
-C $8695,3 BC = A  -- tile index
-C $8698,2 Shift in carry flag?
+C $8674,2 Loop dp_get_command
+N $8676 $D0..$DF is "Set background colour".
+@ $8676 label=dp_set_bg_colour
+C $8676,8 Self modify #R$86C2 with (#REGa - $D0) << 3
+C $867E,2 Loop dp_get_command
+N $8680 $F0..$FF is "Set address".
+@ $8680 label=dp_set_address
+C $8680,3 Load new backbuffer address into #REGde
+C $8683,2 Loop dp_get_command
+N $8685 $00..$CF could be either "Repeat" or "Plot tile".
+@ $8685 label=dp_repeat_or_plot_tile
+C $8685,2 Command bytes >= $1F emit single tiles
+C $8687,2 Set count to 1 irrespective
+C $8689,2 Jump if so
+N $868B Plot multiple tiles.
+C $868B,1 Command bytes <= $1E emit repeated tiles
+C $868C,1 Read tile index
+C $868D,1 Advance to next command
+@ $868E label=dp_do_plot
+C $868E,1 Preserve command pointer
+C $868F,2 Turn command byte into a tile index
+C $8691,3 Multiply by 8 - size of tile. Carry flag is updated
+C $8694,1 Preserve count
+C $8695,3 Expand tile offset into #REGbc
+C $8698,2 Add in carry flag
 C $869A,4 HL = &pregame_tiles[A]
-C $869E,1 Restore BC
-C $869F,1 DE = tile ptr, HL = backbuffer ptr
-@ $86A0 label=dp_loop_86a0
+C $869E,1 Restore count
+C $869F,1 #REGde becomes tile ptr, #REGhl becomes backbuffer ptr
+@ $86A0 label=dp_line_loop
 C $86A0,1 Count
 C $86A1,1 Tile ptr
 C $86A2,1 Backbuffer ptr
 N $86A3 Plot a tile.
-C $86A3,2 B = 8
+C $86A3,2 8 rows per tile
 @ $86A5 label=dp_tile_loop
-C $86A5,3 *HL = *DE++
-C $86A8,1 HL += 256
+C $86A5,2 Copy a row of tile pixels to the screen
+C $86A7,1 Move to next tile row
+C $86A8,1 Move to next scanline
 C $86A9,2 Loop dp_tile_loop
 C $86AB,1 Pop backbuffer ptr
 N $86AC Seems to be building an attribute address?
-C $86AC,6 D = (B << 2) & 32
-C $86B2,5 E = (C & $1F) + D
-C $86B7,4 A = (C & $E0) << 1
-C $86BB,2 D = $59
-C $86BF,1 D = $5A
-C $86C0,1 A += E
-C $86C1,1 E = A
-C $86C2,2 A = <self modified> by $Dx commands
-C $86C4,1 Set flags
-C $86C5,2 Jump if zero
-C $86C7,1 Load an attribute byte?
-C $86C8,3 <self modified - 1> by $Ex commands
-C $86CB,2 Jump if zero
-C $86CD,3 A = H & $0F
-C $86D0,2 Jump if non-zero
-C $86D2,4 H -= $10   scanliney stuff
-C $86D6,4 L += $20
-C $86DC,2 HL = BC
-C $86DE,1 L++
+C $86AC,6 Get bit 3 of Y
+C $86B2,5 Add to X bits
+C $86B7,4 Get bits 4..6 of Y. Bit 6 goes to carry
+C $86BB,4 Select second third of attributes
+C $86BF,1 Otherwise select final third of attributes
+@ $86C0 label=dp_attrs
+C $86C0,2 #REGde is now the attribute byte address
+C $86C2,2 Load <self modified> attribute value, as set by the $Dx commands
+C $86C4,4 Set attribute byte if non-zero
+@ $86C8 label=dp_direction
+C $86C8,3 Load <self modified - 1> direction value, as set by the $Ex commands
+C $86CB,2 Jump if horizontal
+@ $86CD label=dp_direction_vertical
+C $86CD,3 Get bits 0..3 of Y
+C $86D0,2 Jump to dp_nextone if non-zero
+N $86D2 #REGh is incremented by 1 earlier. So if it was 0b11111111 it's now 0b00000000 so make it 0b11110000. Does this happen in any other case?
+C $86D2,4 H -= 16
+C $86D6,4 Increment bits 4..6 of Y (visually downwards by 16?)
+C $86DA,2 Jump to dp_nextone
+@ $86DC label=dp_direction_horizontal
+C $86DC,3 Move one character to the right
+@ $86DF label=dp_nextone
 C $86DF,1 Restore tile ptr
 C $86E0,1 Restore count
-C $86E1,2 Loop dp_loop_86a0 while B
-C $86E5,3 Loop
-C $86E8,2 4 messages to print
+C $86E1,2 Loop dp_line_loop while #REGb > 0
+C $86E3,1 #REGde = Back buffer ptr
+C $86E4,1 Restore command pointer
+C $86E5,3 Loop dp_get_command
+@ $86E8 label=dp_print_strings
+C $86E8,2 Four messages to print
 C $86EA,3 Address of pre_game_messages
+@ $86ED label=dp_print_string
 C $86ED,2 Flags TBD
 C $86EF,1 HL--
 C $86F0,3 Call print_message
-C $86F3,2 Loop while #REGb > 0
+C $86F3,2 Loop to dp_print_string while #REGb > 0
 C $86F5,1 Return
 c $86F6 Routine at 86F6
 D $86F6 18 byte chunks of this 36-byte table get copied to #R$C82D by #R$C808. $2C = INC, $00 = NOP, $ED+$A0 = LDI.
@@ -3204,7 +3269,7 @@ C $8B7D,2 A += '0'
 C $8B7F,1 *HL = A
 C $8B80,1 HL++
 C $8B81,1 DE--
-C $8B82,2 Loop hpc_loop_3 while B
+C $8B82,2 Loop hpc_loop_3 while #REGb > 0
 C $8B84,1 HL--
 C $8B85,2 *HL |= 1<<7
 C $8B87,3 Point at "CLEAR BONUS - TIME BONUS - SCORE" messages
@@ -3632,7 +3697,7 @@ C $8F74,3 *HL += C
 C $8F77,3 *DE += C
 C $8F7A,1 E++
 C $8F7B,1 L++
-C $8F7C,2 Loop to #R$8F74 while B
+C $8F7C,2 Loop to #R$8F74 while #REGb > 0
 C $8F7E,4 IY = $E315
 C $8F82,3 Self modified: either CALL draw_tunnel, or NOPs
 C $8F85,2 IY--
@@ -3658,7 +3723,7 @@ N $8FBD This entry point is used by the routine at #R$9023.
 C $8FBD,4 IX += 2
 C $8FC1,4 L -= $21
 C $8FC5,2 IY--
-C $8FC7,2 Loop to $8F96 while B
+C $8FC7,2 Loop to $8F96 while #REGb > 0
 C $8FC9,3 Load self modified instructions from earlier
 C $8FCC,1 Set flags
 C $8FCD,1 Return if non-zero (not NOP)
@@ -5939,7 +6004,7 @@ C $A57E,1 total = 0
 @ $A57F label=lo_loop1
 C $A57F,1 total += *HL
 C $A580,2 *HL++ = total
-C $A582,2 Loop lo_loop1 while B
+C $A582,2 Loop lo_loop1 while #REGb > 0
 C $A584,4 Save #REGsp to restore on exit (self modify)
 C $A588,3 SP = $EB00
 C $A58B,2 Point #REGde at road buffer (somewhere)
@@ -5982,7 +6047,7 @@ C $A5DB,1 L++
 C $A5DC,1 B = *HL
 C $A5DF,2 IY++
 C $A5E1,1 E++
-C $A5E2,2 Loop to lo_loop2 while B
+C $A5E2,2 Loop to lo_loop2 while #REGb > 0
 C $A5E4,3 A = fork_countdown
 C $A5E7,1 Set flags
 C $A5E8,3 Jump to lo_return if zero
@@ -6001,7 +6066,7 @@ C $A602,1 E = *HL
 C $A603,1 L++
 C $A604,1 D = *HL
 C $A606,2 IY++
-C $A608,2 Loop lo_loop3 while B
+C $A608,2 Loop lo_loop3 while #REGb > 0
 @ $A60A label=lo_return
 C $A60A,3 Restore original stack pointer (self modified above)
 C $A60D,1 Return
@@ -6186,7 +6251,7 @@ N $A76F This seems to be using the distance to the perp as a scale by which to a
 C $A76F,4 B = (15 - A)  -- iterations
 @ $A773 label=sh_a773_loop
 C $A773,1 HL += DE
-C $A774,2 Loop to loop_a773 while B
+C $A774,2 Loop to loop_a773 while #REGb > 0
 @ $A776 label=sh_a776
 C $A776,5 A = IX[1] - 6  -- load hazard_1 distance byte again
 C $A77B,2 Jump to sh_store_exit if A >= 6
@@ -6270,7 +6335,7 @@ C $A825,3 DE = 20  -- stride of hazards
 C $A828,6 If the hazard is not active jump to sc_fill_in
 C $A82E,3 A = IX[15]
 C $A837,2 IX += DE
-C $A839,2 Loop to sc_loop while B
+C $A839,2 Loop to sc_loop while #REGb > 0
 C $A83B,1 Return
 @ $A83C label=sc_fill_in
 C $A83F,3 DE = IX
@@ -6411,7 +6476,7 @@ C $A991,2 Jump to A9A7 if non-zero
 C $A993,3 HL += 3
 @ $A996 label=ldas_loop1_continue
 C $A996,2 IY--
-C $A998,2 Loop to ldas_loop1 while B
+C $A998,2 Loop to ldas_loop1 while #REGb > 0
 C $A99A,1 A = C
 C $A99B,1 Set flags
 C $A99C,1 Return if non-zero
@@ -6441,7 +6506,7 @@ C $A9C6,2 B = 8
 @ $A9C8 label=ldas_loop2
 C $A9C9,3 If carry HL += DE
 C $A9CC,1 HL <<= 1
-C $A9CD,2 Loop to ldas_loop2 while B
+C $A9CD,2 Loop to ldas_loop2 while #REGb > 0
 C $A9CF,1 A = H
 C $A9D1,1 C = A
 C $A9D3,1 HL += BC
@@ -6512,7 +6577,7 @@ C $AA4E,1 Shift top bit out
 C $AA4F,3 If carry HL += DE
 @ $AA52 label=dhl_aa52
 C $AA52,1 HL <<= 1
-C $AA53,2 Loop #R$AA4E while B
+C $AA53,2 Loop #R$AA4E while #REGb > 0
 C $AA55,2 A = H / 2
 C $AA57,3 Self modify 'LD A' @ #R$AA8C
 C $AA5A,2 A = <self modified> -- Self modified by #R$AAEE
@@ -6531,7 +6596,7 @@ C $AA78,1 DE++
 C $AA79,4 Preserve IY, HL, BC
 C $AA7D,3 Call dhl_aa94
 C $AA80,4 Restore IY, HL, BC
-C $AA84,2 Loop loop_aa71 while B
+C $AA84,2 Loop loop_aa71 while #REGb > 0
 C $AA86,3 DE = wordat(HL); HL++
 C $AA89,1 A = 0
 C $AA8A,2 Preserve IY
@@ -8405,7 +8470,7 @@ C $BB51,5 (Centre-right) + ?) / 2 == new road right
 C $BB56,3 *$ECxx = HL (xx = self modified) (road right)
 C $BB59,2 A += 2
 C $BB5B,1 Unbank
-C $BB5C,2 Loop while B > 0
+C $BB5C,2 Loop while #REGb > 0
 C $BB5E,4 Jump to lr_exit if A is zero
 C $BB62,4 Point #REGsp at $EC00 | A (road right)
 C $BB66,3 Jump back to #R$BA17
@@ -10337,7 +10402,7 @@ N $CC94 This reads from $E760+ in sequence.
 C $CC95,1 }
 C $CC96,1 HL++
 C $CC97,1 E++
-C $CC98,2 Loop while B
+C $CC98,2 Loop while #REGb > 0
 C $CC9A,7 HL = road position - 295
 C $CCA1,1 swap
 C $CCA2,2 B = 0
@@ -10376,7 +10441,7 @@ C $CCE9,1 A < C ?
 C $CCEA,2 jump if A < C
 C $CCEC,1 A -= C
 C $CCED,1 Self modified: INC DE or DEC DE
-C $CCEF,2 Loop while B
+C $CCEF,2 Loop while #REGb > 0
 C $CCF1,1 Unbank
 C $CCF2,2 Outer loop?
 C $CCF4,3 Restore original #REGsp (must be self modified)
@@ -10389,7 +10454,7 @@ C $CCFE,2 jump if overflow
 C $CD00,1 A < L ?
 C $CD01,2 jump if A < L
 C $CD03,1 A -= L
-C $CD05,2 Loop while B
+C $CD05,2 Loop while #REGb > 0
 C $CD07,1 Bank
 C $CD08,2 Outer loop?
 C $CD0A,2 Exit
@@ -11506,7 +11571,7 @@ C $E847,4 BC = wordat(HL); HL += 2 -- Count
 C $E84B,1 Exchange top of stack and HL. HL is now source pointer
 C $E84C,2 Copy
 C $E84E,2 Restore base pointer and count
-C $E850,2 Loop while B
+C $E850,2 Loop while #REGb > 0
 C $E852,3 Set up the stack
 C $E855,3 Exit via bootstrap  -- start the game
 @ $E858 label=relocations
@@ -11793,13 +11858,13 @@ C $ED0F,2 Discard any non-key flags
 C $ED11,2 Jump if any keys are pressed
 C $ED16,1 C++
 C $ED17,1 HL++
-C $ED18,2 Loop rdk_loop_1 while B
+C $ED18,2 Loop rdk_loop_1 while #REGb > 0
 C $ED1A,2 B = 20
 @ $ED1C label=rdk_loop_2
 C $ED1C,1 Preserve
 C $ED1D,3 Call define_keys
 C $ED20,1 Restore
-C $ED21,2 Loop rdk_loop_2 while B
+C $ED21,2 Loop rdk_loop_2 while #REGb > 0
 N $ED23 Test keys are "SHOCKED<ENTER>".
 C $ED23,2 B = 8
 C $ED25,3 DE -> shocked bytes
@@ -11810,7 +11875,7 @@ C $ED2C,1 CP *HL
 C $ED2D,1 HL++
 C $ED2E,1 DE++
 C $ED2F,1 Return if non-zero -- no match
-C $ED30,2 Loop rdk_loop_3 while B
+C $ED30,2 Loop rdk_loop_3 while #REGb > 0
 C $ED32,5 Set test mode flag
 C $ED37,3 Call clear_screen
 C $ED3A,3 Address of TEST MODE strings
