@@ -2148,7 +2148,7 @@ C $8020,5 Update the level number in "SEARCHING FOR <N>"
 @ $8025 label=ls_8025
 C $8025,3 Call clear_screen_set_attrs
 C $8028,3 Call clear_game_attrs
-C $802B,2 Transition backwards
+C $802B,2 Reverse transition
 C $802D,3 Call setup_transition
 @ $8032 label=ls_8032
 C $8032,3 Call ls_8088
@@ -2182,7 +2182,7 @@ C $8070,3 Call keyscan
 C $8073,4 Loop while key not pressed
 C $8077,3 Call keyscan
 C $807A,4 Loop while key pressed
-C $807E,2 Transition forwards
+C $807E,2 Forward transition
 C $8080,3 Call setup_transition
 C $8083,1 Restore ?
 C $8084,2 B = 2
@@ -2346,7 +2346,7 @@ T $81EC,13,12:n1 "GIDDY UP BOY!"
 T $81F9,11,10:n1 "HOLD ON MAN"
 c $8204 Generates engine noise
 D $8204 Used by the routine at #R$83B5.
-@ $8204 label=engine_sfx_setup
+@ $8204 label=setup_engine_sfx
 C $8204,3 Load speed into #REGhl
 C $8207,2 Bottom bit of #REGh moves to carry (#REGh now unused)
 N $8209 This entry point is used by the routine at #R$F220.
@@ -2364,7 +2364,7 @@ C $8225,4 Self modify iterations -- L
 C $8229,4 Self modify delay loop -- H
 C $822D,7 Self modify delay loop -- (5 - A)
 N $8234 This entry point is used by the routine at #R$83B5.
-@ $8234 label=engine_sfx_play
+@ $8234 label=play_engine_sfx
 C $8234,6 Return if perp_caught_phase is >= 3 (when car stops)
 C $823A,8 Self modifying counter produces 0,1,2
 C $8242,1 Return if nonzero
@@ -2469,8 +2469,8 @@ N $83B5 Used by the routine at #R$B4CC.
 @ $83B5 label=start_siren_hook
 C $83B5,3 No-op when in 48K mode -- likely siren
 N $83B8 This entry point is used by the routines at #R$8401 and #R$8903.
-@ $83B8 label=engine_sfx_play_hook
-C $83B8,3 Call engine_sfx_play when in 48K mode
+@ $83B8 label=play_engine_sfx_hook
+C $83B8,3 Call play_engine_sfx when in 48K mode
 N $83BB This entry point is used by the routines at #R$8401, #R$873C, #R$87DC, #R$8876, #R$8A57 and #R$F220.
 @ $83BB label=silence_audio_hook
 C $83BB,3 No-op when in 48K mode
@@ -2478,11 +2478,11 @@ N $83BE This entry point is used by the routine at #R$8903.
 @ $83BE label=write_registers_hook
 C $83BE,3 No-op when in 48K mode
 N $83C1 This entry point is used by the routine at #R$8876.
-@ $83C1 label=turbo_sfx_play_hook
+@ $83C1 label=play_turbo_sfx_hook
 C $83C1,3 No-op when in 48K mode
 N $83C4 This entry point is used by the routine at #R$8903.
-@ $83C4 label=engine_sfx_setup_hook
-C $83C4,3 Call engine_sfx_setup when in 48K mode
+@ $83C4 label=setup_engine_sfx_hook
+C $83C4,3 Call setup_engine_sfx when in 48K mode
 N $83C7 This entry point is used by the routines at #R$8401 and #R$9BCF.
 @ $83C7 label=play_speech_hook
 C $83C7,3 No-op when in 48K mode
@@ -2516,7 +2516,8 @@ C $83F2,3 Call the main loop
 C $83F5,10 Call relocated plsp_f3b6_128k (animated title screen?) if in 128K mode
 C $83FF,2 Loop
 c $8401 Main loop
-D $8401 Used by the routines at #R$83CD and #R$8A57.
+D $8401 This is the "main loop" because it does all of the driving of the primary game functions, but it's really a subroutine of the uber main loop above.
+R $8401 Used by the routines at #R$83CD and #R$8A57.
 @ $8401 label=main_loop
 C $8401,3 Call load_stage
 C $8404,7 Jump to #R$841B if we're not on the end screen (stage 6)
@@ -2535,9 +2536,9 @@ C $8421,3 Call set_up_stage
 @ $842D label=ml_store_start_speech
 C $8424,10 Cycle start_speech_cycle 3,2,1 then repeat
 N $842E Choose the startup speech sample.
-C $842E,7 start_speech = (#REGa << 2) OR 2  -- The leading zeroes are used to specify a delay
+C $842E,7 start_speech = (#REGa << 2) OR 2  -- The number of leading zeroes are used to encode a delay
 C $8435,4 Test 128K mode flag
-C $8439,5 Set hazards[0].used to $FF -- I suspect this keeps the perp spawned
+C $8439,5 Set hazards[0].used to $FF  -- I suspect this keeps the perp spawned
 C $843E,3 Address of start_stage_chatter
 C $8441,3 Call start_chatter if not in 128K mode (priority $FF)
 @ $8444 label=ml_loop
@@ -2550,37 +2551,37 @@ C $8453,3 Call handle_perp_caught
 C $8456,3 Call move_hero_car
 C $8459,3 Call spawn_cars
 C $845C,3 Call cycle_counters
-C $845F,3 Call engine_sfx_play_hook
+C $845F,3 Call play_engine_sfx_hook
 C $8462,3 Call build_height_table
 C $8465,3 Call scroll_horizon
-C $8468,3 Call engine_sfx_play_hook
+C $8468,3 Call play_engine_sfx_hook
 C $846B,3 Call layout_road
-C $846E,3 Call engine_sfx_play_hook
+C $846E,3 Call play_engine_sfx_hook
 C $8471,3 Call draw_road
-C $8474,3 Call engine_sfx_play_hook
+C $8474,3 Call play_engine_sfx_hook
 C $8477,3 Call layout_objects
 C $847A,3 Call prepare_tunnel
 C $847D,3 Call spawn_barriers
 C $8480,3 Call drive_helicopter
 C $8483,3 Call choose_dirt_and_stones
-C $8486,3 Call engine_sfx_play_hook
+C $8486,3 Call play_engine_sfx_hook
 C $8489,3 Call draw_hazards
 C $848C,3 Call layout_dirt_and_stones
-C $848F,3 Call engine_sfx_play_hook
+C $848F,3 Call play_engine_sfx_hook
 C $8492,3 Call move_helicopter
 C $8495,3 Call check_collisions
-C $8498,3 Call engine_sfx_play_hook
+C $8498,3 Call play_engine_sfx_hook
 C $849B,3 Call draw_everything_else
-C $849E,3 Call engine_sfx_play_hook
+C $849E,3 Call play_engine_sfx_hook
 C $84A1,3 Call animate_hero_car
 C $84A4,3 Call speed_score
 C $84A7,3 Call update_scoreboard
 C $84AA,3 Call calc_overtake_bonus
-C $84AD,3 Call engine_sfx_play_hook
+C $84AD,3 Call play_engine_sfx_hook
 C $84B0,3 Call drive_chatter
 C $84B3,3 Call smash_bar_etc
 C $84B6,3 Call transition
-C $84B9,3 Call engine_sfx_play_hook
+C $84B9,3 Call play_engine_sfx_hook
 C $84BC,3 Call draw_screen
 C $84BF,3 Call exit_fork
 C $84C2,3 Is test mode enabled?
@@ -2602,12 +2603,12 @@ C $84E0,3 HL = &wanted_stage_number
 C $84E3,1 Is bit 1 set? (key 2 to load the next level)
 C $84E4,2 Jump if NOT
 C $84E6,1 wanted_stage_number++
-C $84E7,3 Exit via load_stage
+C $84E7,3 Loop to main_loop
 @ $84EA label=ml_check_for_3
 C $84EA,1 Is bit 2 set? (key 3 to load the end screen)
 C $84EB,2 Jump if NOT
 C $84ED,2 wanted_stage_number = 6
-C $84EF,3 Exit via load_stage
+C $84EF,3 Loop to main_loop
 @ $84F2 label=ml_increment_credits
 C $84F2,9 Increment credits unless maxed out at 9
 @ $84FB label=ml_not_test_mode
@@ -2627,7 +2628,7 @@ N $8519 Quitting the game is in progress.
 C $8519,1 Decrement quit_state
 C $851A,3 Jump to escape_scene if non-zero
 C $851D,5 quit_state = 2
-C $8522,2 Transition forwards
+C $8522,2 Forward transition
 C $8524,3 Call setup_transition
 C $8527,3 Loop to ml_loop
 c $852A CPU driver
@@ -2671,7 +2672,7 @@ D $858C Used by the routine at #R$8401.
 @ $858C label=run_pregame_screen
 C $858C,3 Address of stage_set_up_data
 C $858F,3 Call set_up_stage
-C $8592,2 Transition backwards
+C $8592,2 Reverse transition
 C $8594,3 Set dont_draw_screen_attrs to a non-zero value
 C $8597,3 Call setup_transition
 C $859A,3 Call clear_screen_set_attrs
@@ -2696,7 +2697,7 @@ N $85D0 Fire was hit.
 C $85D0,3 Call drive_chatter_stop
 C $85D3,3 Exit via play_start_noise (will RET for us)
 @ $85D6 label=rps_start_game
-C $85D6,2 Transition forwards
+C $85D6,2 Forward transition
 N $85D8 We can only arrive here if no carry... so why the conditional CALL?
 C $85D8,3 If no carry (A was >= 3) call setup_transition
 C $85DB,2 Loop to rps_loop
@@ -2932,7 +2933,7 @@ C $87C1,6 Loop while the perp is still active in the hazards
 C $87C7,6 Loop while chatter_state > 0 => chatter is still happening
 C $87CD,5 Return if transition_control is zero
 C $87D2,2 If transition_control is 4
-C $87D4,2 Transition forwards
+C $87D4,2 Forward transition
 C $87D6,3 Call setup_transition if non-zero
 C $87D9,3 Loop
 c $87DC Sets up the stage
@@ -2973,7 +2974,7 @@ C $8849,2 Loop
 N $884B Disallow spawning.
 C $884B,4 Clear allow_spawning
 N $884F Set up screen.
-C $884F,2 Transition backwards
+C $884F,2 Reverse transition
 C $8851,3 Call setup_transition
 C $8854,3 Call clear_screen_set_attrs
 C $8857,6 Point #REGhl at left light's attributes
@@ -3005,7 +3006,7 @@ C $8897,5 Return if no turbo boosts are left
 C $889C,2 Set 60 ticks of boost
 C $889E,3 HL -> Random choice of (WHOAAAAA! / GREAT! / ONE MORE TIME.)
 C $88A1,5 Call start_chatter (priority 2)
-C $88A6,3 Exit via turbo_sfx_play_hook
+C $88A6,3 Exit via play_turbo_sfx_hook
 N $88A9 This entry point is used by the routine at #R$9BCF.
 @ $88A9 label=cui_quit_key
 C $88A9,5 If quit_state != 0 then return (quit in progress)
@@ -3044,8 +3045,8 @@ C $8903,6 Jump if tunnel_sfx
 C $8909,7 var_a23d |= var_a23c
 C $8910,3 Effect 7 (tit-tit), Priority 4
 C $8913,3 Call start_sfx if non-zero
-C $8916,3 Call engine_sfx_setup_hook
-C $8919,3 Call engine_sfx_play_hook
+C $8916,3 Call setup_engine_sfx_hook
+C $8919,3 Call play_engine_sfx_hook
 C $891C,3 Call write_registers_hook
 C $891F,5 If sfx_index == 0 return
 C $8924,3 #REGe = sfx_index * 4 -- stride of table
@@ -3175,7 +3176,7 @@ C $8A77,4 Increment wanted_stage_number
 C $8A7B,3 Exit via main_loop
 @ $8A7E label=hpc_phase5
 C $8A7E,5 perp_caught_phase = 6
-C $8A83,2 Transition forwards
+C $8A83,2 Forward transition
 C $8A85,3 Exit via setup_transition
 @ $8A88 label=hpc_phase2
 C $8A88,3 A = var_a22a
@@ -11582,11 +11583,11 @@ W $E86A,6,2 Copy 926 bytes from page_in_stage_128k onwards to $8014 [128K only]
 W $E870,6,2 Copy 24 bytes (3 bytes * 8 hooks) from 128k_mode_hooks to hooks at #R$83B5 [128K only]
 @ $E876 label=128k_mode_hooks
 C $E876,3 Becomes start_siren_hook
-C $E879,3 Becomes engine_sfx_play_hook
+C $E879,3 Becomes play_engine_sfx_hook
 C $E87C,3 Becomes silence_audio_hook
 C $E87F,3 Becomes write_registers_hook
-C $E882,3 Becomes turbo_sfx_play_hook
-C $E885,3 Becomes engine_sfx_setup_hook
+C $E882,3 Becomes play_turbo_sfx_hook
+C $E885,3 Becomes setup_engine_sfx_hook
 C $E888,3 Becomes play_speech_hook
 C $E88B,3 Becomes attract_mode_hook
 N $E88E Copied to $EC00
@@ -12382,7 +12383,7 @@ C $F3EB,3 4096 bytes
 C $F3EE,2 Preserve
 C $F3F0,2 Copy
 C $F3F2,2 A = 3
-C $F3F4,3 Jump into engine_sfx_setup with engine speed setup
+C $F3F4,3 Jump into setup_engine_sfx with engine speed setup
 C $F3F7,4 Retrieve from stack
 C $F3FB,2 DE = $B000
 @ $F3FD label=f3fd_loop
@@ -12430,7 +12431,7 @@ C $F463,6 If transition_control != 0 jump
 C $F469,2 -- smells like self modified
 C $F46F,1 A--
 C $F470,3 self modifying?
-C $F476,2 Transition forwards
+C $F476,2 Forward transition
 C $F478,3 Call setup_transition
 @ $F47D label=f47d_128k
 C $F47D,3 -- must be messages ptr below ($8208+165 means ?)
