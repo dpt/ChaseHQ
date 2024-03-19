@@ -362,17 +362,17 @@ w $5D2B [Stage 1] Per-stage attract mode data
 W $5D2B,2,2 road_pos
 N $5D2D These all point a byte earlier than the real data start point.
 @ $5D2D ssub=DEFW map_loop_curvature - 1
-W $5D2D,2,2 -> Loop section, curvature
+W $5D2D,2,2 -> Loop section, curvature @ #R$61D4
 @ $5D2F ssub=DEFW map_loop_height - 1
-W $5D2F,2,2 -> Loop section, height
+W $5D2F,2,2 -> Loop section, height @ #R$6209
 @ $5D31 ssub=DEFW map_loop_lanes - 1
-W $5D31,2,2 -> Loop section, lanes
+W $5D31,2,2 -> Loop section, lanes @ #R$625D
 @ $5D33 ssub=DEFW map_loop_rightobjs - 1
-W $5D33,2,2 -> Loop section, right-side objects
+W $5D33,2,2 -> Loop section, right-side objects @ #R$6314
 @ $5D35 ssub=DEFW map_loop_leftobjs - 1
-W $5D35,2,2 -> Loop section, left-side objects
+W $5D35,2,2 -> Loop section, left-side objects @ #R$6294
 @ $5D37 ssub=DEFW map_loop_hazards - 1
-W $5D37,2,2 -> Loop section, hazards
+W $5D37,2,2 -> Loop section, hazards @ #R$6277
 b $5D39 [Stage 1] Nancy's perp description
 @ $5D39 label=perp_description
 B $5D39,1,1 Nancy ($01)
