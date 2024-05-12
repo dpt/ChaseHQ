@@ -160,7 +160,6 @@
 > $4000 ; - Disassemble the Chase HQ demo version.
 > $4000 ; - $8008 area used at all?
 > $4000 ; - Stretchy streetlamps etc. encoding
-> $4000 ; - CHASE HQ MONITORING SYSTEM drawing code
 > $4000 ; - $E34B block is what?
 > $4000 ; - Stripy tunnel fills.
 > $4000 ;
@@ -2948,8 +2947,8 @@ N $87F8 Zero 208 bytes at $A19C onwards (hazard_1 onwards).
 C $8801,1 Restore data pointer
 N $8802 Copy the 14 bytes of set up data passed in to #R$A26C (road_pos, road_curvature_ptr, etc.)
 N $8807 Pre-shift the backdrop image.
-N $880A Set backdrop position in the <road drawing table TBD>.
-C $880A,6 $E34B = 8
+N $880A Set backdrop position values in the <road drawing table TBD>.
+C $880A,6 $E34B = 8  -- perhaps a relative value
 C $8810,2 $E34C = 0
 C $8812,1 $E34D = 0
 N $8813 NOP some things TBD.
@@ -4078,7 +4077,7 @@ C $9307,1 Return if carry
 C $9308,1 Return if zero
 N $9309 This entry point is used by the routines at #R$A9DE, #R$AA38 and #R$ADA0.
 @ $9309 label=draw_object_right_helicopter_entrypt
-C $9309,3 Return if A >= $F7
+C $9309,3 Return if A >= 247
 C $930C,2 C = 0
 N $930E This entry point is used by the routine at #R$9278.
 C $930E,4 A = (A & $FC) >> 2
@@ -4151,7 +4150,7 @@ C $93BB,5 L = (A & $70) * 2 + B
 C $93C0,2 A = <self modified>
 C $93C2,1 Set flags
 C $93C6,1 A--
-C $93D3,3 prob plot_sprite_flipped
+C $93D3,3 Exit via draw_cherry_b701 if carry
 C $93D6,3 Exit via plot_sprite
 C $93D9,3 Exit via plot_masked_sprite_flipped
 C $93DC,3 Exit via plot_sprite_flipped
@@ -5727,7 +5726,7 @@ B $A25B,1,1
 @ $A25C label=current_curvature
 B $A25C,1,1 This holds the road curvature byte at the position of the hero car. -ve when curving left or +ve when curving right. $FA..$06 in multiples of two.
 @ $A25D label=horizon_a25d
-B $A25D,1,1 Seems to be added to the index for the b828 table. Saw: 8/16/24.
+B $A25D,1,1 Seems to be added to the index for the horizon_table. Saw: 8/16/24.
 @ $A25E label=horizon_a25e
 B $A25E,1,1 Seems to cycle 4-3-2-1 / 3-2-1 / 2-1 when the roads are curving. Must be the horizon scroll/shift/roll value.
 @ $A25F label=var_a25f
@@ -6440,6 +6439,7 @@ C $A93B,2 A = $96
 C $A93D,1 Restore AF
 C $A93E,4 Jump if A < 3
 C $A942,2 A -= 3
+@ $A944 label=hazard_handler_crash
 C $A944,3 Call cc_hit_scenery2
 C $A947,3 HL = ouch_chatter
 C $A94A,5 Call start_chatter (priority 3)
@@ -6545,18 +6545,19 @@ C $AA0B,6 If A > 10 A = 10
 @ $AA11 label=dss_aa11
 C $AA11,2 A >>= 1
 C $AA13,6 L = A * 7
-C $AA19,1 HL += DE
-C $AA1A,7 E = *HL * 8
+C $AA19,1 HL += DE  -- find graphic definition entry
+C $AA1A,1 Fetch byte width
+C $AA1B,6 Multiply it by 8 yielding the pixel width
 C $AA22,1 Set flags
 C $AA23,1 A = C
 C $AA24,2 C = $00 [not self modified]
 C $AA26,3 Jump to #R$AA33 if negative
 C $AA29,1 Return if non-zero
-C $AA2A,5 Jump to draw_object_right_helicopter_entrypt if A >= 128
-C $AA2F,1 A += E
+C $AA2A,5 Exit via draw_object_right_helicopter_entrypt if A >= 128
+C $AA2F,1 Add pixel width
 C $AA30,3 Exit via draw_object_left_helicopter_entrypt
 @ $AA33 label=dss_aa33
-C $AA33,1 A += E
+C $AA33,1 Add pixel width
 C $AA34,1 Return if no carry
 C $AA35,3 Exit via draw_object_left_helicopter_entrypt
 c $AA38 Draw the helicopter
@@ -6857,7 +6858,7 @@ C $ACDA,1 Return
 B $ACDB,40,8 #R$AC94 uses this
 @ $AD03 label=table_ad03
 W $AD03,10,2 #R$AC53 uses this
-c $AD0D Routine at AD0D
+c $AD0D Routine at AD0D  spawning/collision related
 D $AD0D Used by the routine at #R$BDFB.
 @ $AD0D label=sub_ad0d
 C $AD0D,5 Return if the inhibit_collision_detection flag is set
@@ -6890,7 +6891,7 @@ C $AD4B,1 Unbank
 C $AD4C,2 Move to next hazard
 C $AD4E,2 Loop
 C $AD50,1 Return
-c $AD51 Routine at AD51
+c $AD51 Routine at AD51  hazard related
 D $AD51 Used by the routines at #R$AD0D and #R$ADA0.
 R $AD51 I:IX Address of a hazard structure
 R $AD51 O:D Return value
@@ -7154,53 +7155,60 @@ C $AFB1,4 HL = #R$CE00 + DE  -- table?
 C $AFB5,3 BC = wordat(HL); HL++
 C $AFB8,1 Unbank
 C $AFB9,1 E = A
-C $AFBA,3 another table?
-C $AFBD,5 Load counter_C AND 1
-C $AFC2,1 A <<= 1?
-C $AFC3,1 A += E
-C $AFC4,1 E = A
+C $AFBA,3 Address of table of car-on-fire LODs
+C $AFBD,8 E += (counter_C AND 1) * 2
 C $AFC5,1 HL += DE
 C $AFC6,4 HL = wordat(HL)
 C $AFCA,2 Retrieve DE from stack
-C $AFCF,3 Get smash_factor
-C $AFD2,4 Jump if zero
-C $AFD6,1 A--
-C $AFD7,2 Jump if zero
-C $AFD9,1 A--
-C $AFDA,2 Jump if zero
-C $AFDC,3 table?
-C $AFDF,3 Call aff1
-C $AFE5,3 Call aff1
-C $AFEB,3 Call aff1
-C $AFF1,2 A = *HL - 1
+C $AFCC,3 Draw
+@ $AFCF label=check_smash_factor
+C $AFCF,3 Get smash_factor (should be 0..6)
+C $AFD2,1 Is smash_factor 0?
+C $AFD3,3 Jump if so (draw nothing, continue)
+C $AFD6,1 Is smash_factor 1?
+C $AFD7,2 Jump if so (draw 1 lot)
+C $AFD9,1 Is smash_factor 2?
+C $AFDA,2 Jump if so (draw 2 lots)
+N $AFDC Otherwise draw all 3 lots.
+C $AFDC,3 Smoke data
+C $AFDF,3 Call sub_aff1
+C $AFE2,3 Smoke data
+C $AFE5,3 Call sub_aff1
+C $AFE8,3 Smoke data
+C $AFEB,3 Call sub_aff1
+C $AFEE,3 Continue
+N $AFF1 decrements a counter 5..1 then repeats this must be the car-on-fire animation index is it just the smoke?
+@ $AFF1 label=sub_aff1
+C $AFF1,2 Load counter and decrement it
 C $AFF3,3 Jump if +ve
-C $AFF6,2 A = 5  -- it became zero, reset to 5
+C $AFF6,2 It became zero, reset to 5
 C $AFF8,1 *HL = A
-C $AFF9,1 E = A
+C $AFF9,1 Copy counter to #REGe
 C $AFFA,1 HL++
-C $AFFB,2 A = <self modified>
+N $AFFB some added value to animation index? perhaps a speed factor?
+C $AFFB,2 A = <self modified by #R$AEDE>
 C $AFFD,1 C = A
 C $AFFE,1 D = A
-C $AFFF,1 A += E
+C $AFFF,1 A += E  -- add counter
 C $B000,3 Return if A >= 6
-C $B003,1 E = A
-C $B004,1 A -= D
-C $B005,1 D = A
-C $B006,2 C <<= 1
-C $B008,2 B = 0
+C $B003,1 E = A  -- smoke animation index
+C $B004,2 D = A - D
+C $B006,2 Double self mod value from earlier
+C $B008,2 BC = C
 C $B00A,1 HL += BC
-C $B00B,1 A = *HL
-C $B00C,1 A -= D
-C $B00D,1 B = A
+C $B00B,3 B = *HL - D
 C $B00E,1 HL++
 C $B00F,1 C = *HL
-N $B010 #REGe = smoke animation index Select the frame.
+N $B010 #REGe = SMOKE animation index
+N $B010 Select the frame.
 C $B010,8 DE = E * 7
 C $B018,3 Point #REGhl at smoke_defns
-N $B01B Similar code to $AA19.
-C $B01B,1 HL += DE
-C $B01C,7 E = *HL * 8  -- turn byte width to pixel width
-C $B023,3 A = <self modified> + B
+N $B01B Similar code to $AA19 (in dust/stones code). Does plotting.
+@ $B01B label=sub_b01b
+C $B01B,1 HL += DE  -- find graphic definition entry
+C $B01C,1 Fetch byte width
+C $B01D,6 Multiply it by 8 yielding the pixel width
+C $B023,3 A = <self modified by #R$AF7B> + B
 C $B026,3 Self modify 'LD D,x' @ #R$933D to load A
 C $B029,2 A = <self modified>
 C $B02B,1 Set flags
@@ -7210,11 +7218,11 @@ C $B031,1 Return if non-zero
 C $B032,1 A += C
 C $B033,1 Return if carry
 C $B034,5 Exit via draw_object_right_helicopter_entrypt if A >= 128
-C $B039,1 A += E  -- pixel width
+C $B039,1 Add pixel width
 C $B03A,3 Exit via draw_object_left_helicopter_entrypt
 C $B03D,1 A += C
 C $B03E,2 Loop? if carry
-C $B040,1 A += E  -- pixel width
+C $B040,1 Add pixel width
 C $B041,3 Exit via draw_object_left_helicopter_entrypt if carry
 C $B044,1 Otherwise return
 w $B045 Hero car jump table
@@ -8011,7 +8019,7 @@ C $B711,2 B = 15 -- Set loop counter for 15 iterations?
 C $B714,2 D = 0 -- fall through into plot_masked_sprite
 c $B716 Masked sprite plotter
 D $B716 This plots a lot of the game's masked graphics.
-D $B716 The stack points to pairs of bitmap and mask bytes and HL must point to the screen buffer. Uses AND-OR type masking. Proceeds left-right. Doesn't flip the bytes so there must be an alternative for that.
+D $B716 The stack points to pairs of bitmap and mask bytes and HL must point to the screen buffer. Uses AND-OR type masking. Proceeds left-right. Doesn't flip the bytes instead use plot_masked_sprite_flipped below for that.
 R $B716 I:B Rows
 R $B716 I:DE Stride (e.g. 10 for 40px wide)
 R $B716 I:HL Address of data to plot
@@ -8088,7 +8096,7 @@ C $B821,4 E = -E
 C $B825,3 Exit via plot_masked_sprite_entry
 b $B828 Horizon image related
 D $B828 breaks/crashes road rendering if messed with
-@ $B828 label=table_b828
+@ $B828 label=horizon_table
 W $B828,32,8
 c $B848 Scroll the horizon
 D $B848 Used by the routines at #R$8401, #R$852A and #R$873C.
@@ -8098,10 +8106,12 @@ C $B848,3 Load speed into #REGhl
 C $B84B,3 Return if speed is zero
 C $B84E,3 Load current_curvature into #REGa
 C $B851,3 Jump if current_curvature is zero
-C $B854,1 Bank current_curvature, which is non-zero here
-C $B855,2 Bottom bit of #REGh moves to carry (#REGh now unused)
-C $B857,5 A = (A << 3) & 6  [+ carry... I can't see where this banked A comes from to start with.]
-C $B85C,8 BC = A + horizon_a25d
+N $B854 current_curvature is non-zero here.
+C $B854,1 Bank current_curvature and unbank what?
+C $B855,2 Bottom bit of #REGh (speed.hi) moves to carry (#REGh now unused)
+N $B857 A here must be the banked A'... it must be passed in. This doesn't make much sense to me.
+C $B857,5 A = ((A << 3) + (carry << 2)) & 6
+C $B85C,8 BC = horizon_a25d + A
 C $B864,3 16 word table at #R$B828
 C $B867,1 HL += BC
 C $B868,3 BC = wordat(HL)
@@ -8111,15 +8121,15 @@ C $B86E,1 *HL--
 C $B86F,2 Jump if non-zero
 N $B871 It became zero.
 C $B871,1 *HL = B  [bottom byte of table entry]
-C $B872,1 Bank [must be]
+C $B872,1 Bank A [must be because A gets overwritten next]
 C $B873,1 A = C
 C $B874,3 Jump if positive
 C $B877,2 A = -A
 @ $B879 label=sh_b879
-C $B879,3 Address of operand in 'LD A,x' @ #R$C7E7
+C $B879,3 Address of operand in 'LD A,x' @ #R$C7E7 (horizon shift value 0..19)
 C $B87C,1 A += *HL
 C $B87D,3 Jump if positive
-C $B880,2 A += 20
+C $B880,2 A += 20  -- negative case (or zero)
 @ $B882 label=sh_b882
 C $B882,4 Jump if A < 20
 C $B886,2 A -= 20
@@ -8136,7 +8146,7 @@ C $B895,3 E = -(E + 1)
 @ $B898 label=sh_b898
 @ $B898 ssub=LD HL,table_b828 - 1
 C $B898,3 32-byte table at #R$B828
-C $B89B,1 C = A
+C $B89B,1 BC = A (B is zeroed earlier)
 C $B89C,1 HL += BC
 C $B89D,4 C = var_a25b
 C $B8A1,4 A = fast_counter - C
@@ -8277,7 +8287,7 @@ C $B9B2,2 Bottom bit of #REGh moves to carry (#REGh now unused)
 C $B9B4,5 A = (A << 3) & 6
 C $B9B9,1 A += B
 C $B9BA,3 BC = A
-C $B9BD,3 HL -> table of 16 words
+C $B9BD,3 HL -> horizon_table
 C $B9C0,1 HL += BC
 C $B9C1,1 A = *HL
 C $B9C2,3 horizon_a25e = A
@@ -8308,9 +8318,10 @@ D $B9F4 Used by the routines at #R$8401, #R$852A and #R$873C.
 C $B9F4,3 Load road_buffer_offset into #REGa [as byte]
 C $B9F7,2 Add 64 so it's the lanes data offset
 C $B9F9,3 Point #REGde at road buffer lanes data
-N $B9FC Suspect this is counting the distance to the forked road.
-C $B9FC,3 #REGb = 20 iterations, #REGc = $E1, a mask
+N $B9FC Count the distance to the forked road.
+C $B9FC,3 #REGb = 20 iterations, #REGc = $E1 (a mask)
 C $B9FF,2 Counter
+N $BA01 Q. Lanes bytes are pairs of bytes (count,data), so how does looking for $E1 help?
 C $BA01,1 Load a lanes byte
 C $BA02,5 Jump to lr_forked_road if (lanes byte & $E1) == $E1
 C $BA07,1 Advance to next lanes byte (wrapping around)
@@ -8542,13 +8553,28 @@ N $BBF7 The code commonly loads the byte at #R$A240 and merges it with $EE00, ye
 C $BBF7,3 Load road_buffer_offset into #REGa [as byte]
 C $BBFA,3 Point #REGhl at road buffer curvature data
 N $BBFD Set the 32 bytes at #REGhl to the road curvature type in #REGd.
+C $BBFD,2 32 iterations
 @ $BBFF label=ef_set_curvature_loop
+C $BBFF,1 Store
+C $BC00,1 Advance
+C $BC01,2 Loop
 N $BC03 Set the 32 bytes at #REGhl + 64 to the lane type in #REGe.
 C $BC03,2 A = road_buffer_offset + 64
+C $BC05,1 Point #REGhl at lane bytes
+C $BC06,2 32 iterations
 @ $BC08 label=ef_set_lanes_loop
+C $BC08,1 Store
+C $BC09,1 Advance
+C $BC0A,2 Loop
 N $BC0C Zero the 32 bytes at #REGhl + 64 + #REGc (the additional offset that was setup earlier). This seems to be objects.
+C $BC0C,1 get offset
+C $BC0D,1 Point #REGhl at (?) bytes
 C $BC0E,1 E = 0, since B is zero
+C $BC0F,2 32 iterations
 @ $BC11 label=ef_set_objects_loop
+C $BC11,1 Store
+C $BC12,1 Advance
+C $BC13,2 Loop
 C $BC15,5 curvature_byte     = 0
 C $BC1A,3 height_byte         = 0
 C $BC1D,3 leftside_byte       = 0
@@ -8562,13 +8588,16 @@ C $BC32,4 no_objects_counter = 1
 C $BC36,3 var_a16d            = 1
 C $BC39,4 fork_distance       = 0  [B & C are zero here]
 C $BC3D,1 Return
-c $BC3E Copies the backbuffer at $F000 to the screen
-D $BC3E Used by the routines at #R$8014, #R$8258, #R$8401, #R$858C, #R$873C and #R$F220.
+c $BC3E Copies the backbuffer at $F000 to the screen (and sets attributes)
+D $BC3E Copies 240 x ? pixels from the backbuffer to the screen. This is a thinner than the real screen due to the main gameplay area's left and right black borders. It then sets up the attributes.
+R $BC3E Used by the routines at #R$8014, #R$8258, #R$8401, #R$858C, #R$873C and
+R $BC3E #R$F220.
 @ $BC3E label=draw_screen
 C $BC3E,4 Point #REGhl at screen pixel (136,64). This is positioned halfway across so we can PUSH to the screen via SP.
 C $BC42,3 Point #REGhl' at backbuffer + 1 byte.
 C $BC45,4 Self modify #REGsp restore instruction
 N $BC49 A sequence that transfers 16 bytes
+@ $BC49 label=ds_loop
 C $BC49,1 Point #REGsp at the back buffer
 C $BC4A,12 Pull in 16 bytes from the back buffer (order: AF' DE BC AF' DE' BC' IX IY), incrementing SP
 C $BC56,1 Point #REGsp at screen
@@ -8579,8 +8608,8 @@ C $BC64,1 Advance back buffer pointer
 C $BC65,28 Transfer another 16 bytes (128 pixels)
 C $BC81,28 Transfer another 16 bytes (128 pixels)
 C $BC9D,28 Transfer another 16 bytes (128 pixels)
-C $BCB9,2 is the back buffer row a multiple of 4?
-C $BCBB,3 loop if so
+C $BCB9,2 Is the back buffer row a multiple of 4?
+C $BCBB,3 Loop if so
 C $BCBE,5 Advance back buffer pointer (backwards) by a half row?
 C $BCC3,5 Advance screen pointer (backwards) by half a row?
 N $BCC8 This is a similar sequence but only moves 14 bytes (not using IY)
@@ -8595,18 +8624,20 @@ C $BD31,2 L -= $F0, H = $F0
 C $BD36,3 L >= $F0
 C $BD39,3 PE = parity even
 C $BD3D,3 Increment the screen address
-@ $BD45 label=draw_screen_bd45
+@ $BD45 label=ds_bd45
 C $BD46,3 Point #REGhl at screen pixel (136,128).
 C $BD4A,3 Copy more
-@ $BD4D label=draw_screen_bd4d
+@ $BD4D label=ds_bd4d
 C $BD51,1 Which one are we modifying here?
 C $BD54,2 Ditto, which?
-@ $BD5A label=draw_screen_attributes
+@ $BD5A label=ds_attributes
 C $BD5A,6 Don't update the attributes if the level intro screen is being shown
-C $BD63,1 Seems to be related to the horizon level
-C $BD68,1 Jump to exit check if both are zero
+C $BD60,4 Seems to be related to the horizon level
+C $BD64,2 Read $E34D
+C $BD66,1 Write $E34D
+C $BD67,4 Jump to exit check if E is zero
 C $BD6B,3 E = A * 4
-C $BD6E,1 A = $FF if carry set, zero otherwise
+C $BD6E,1 A = $FF if carry set, zero otherwise (sign extending?)
 C $BD6F,1 D = A
 C $BD70,3 Load the address of the first line of ground attributes (+ 31)
 C $BD73,3 Set the sky colour screen attributes (always black over bright cyan)
@@ -8629,7 +8660,7 @@ C $BDB2,2 Black over bright green
 C $BDB4,4 Set two attrs
 C $BDB8,2 Black over bright white
 C $BDBA,3 Set two attrs
-@ $BDBD label=draw_screen_exit
+@ $BDBD label=ds_exit
 C $BDBD,3 Restore original #REGsp (self modified at start of routine)
 C $BDC0,1 Return
 c $BDC1 Clears screen then sets in-game attributes
@@ -8997,7 +9028,7 @@ C $C0E4,1 Set flags
 C $C0E5,3 Read 'LD A,x' @ #R$C88F (tunnel related)
 C $C0E8,2 Jump if tunnel has appeared
 N $C0EA Tunnel hasn't appeared.
-@ $C0EA label=no_tunnel
+@ $C0EA label=pt_no_tunnel
 C $C0EA,1 Set flags
 C $C0EB,2 Jump if non-zero
 C $C0ED,4 tunnel_sfx = 0
@@ -9009,14 +9040,14 @@ C $C0F9,3 #R$8FA7 = NOP (instruction)
 C $C0FC,3 #R$8FA8 & #R$8FA9 = NOP (instruction)
 C $C0FF,1 Return
 N $C100 Tunnel has appeared.
-@ $C100 label=yes_a_tunnel
+@ $C100 label=pt_yes_a_tunnel
 C $C100,5 tunnel_sfx = 5  -- this quietens noises when in the tunnel
 C $C105,3 -- somewhere in road height data table
 C $C108,6 #REGbc = wordat(HL); #REGhl -= 4
 C $C10E,1 Bank
 C $C10F,3 -- somewhere in road height data table
 C $C112,6 #REGde = wordat(HL); #REGhl -= 4
-@ $C118 label=tunnel_loop
+@ $C118 label=pt_tunnel_loop
 C $C118,1 Bank
 C $C119,3 #REGde = wordat(HL); #REGhl--
 C $C11C,1 Stack #REGde
@@ -9949,20 +9980,20 @@ C $C8AC,15 Write 30 bytes of sky pixels
 C $C8BB,3 Loop
 c $C8BE Builds a pre-shifted version of the backdrop horizon image
 D $C8BE 80x24 pixels = 240 bytes
-R $C8BE Used by the routine at #R$87DC.
+D $C8BE Used by the routine at #R$87DC.
 @ $C8BE label=pre_shift_backdrop
 C $C8BE,3 Point at source image
 C $C8C1,3 Point at destination image (to be shifted)
 C $C8C4,2 Preserve addresses
 C $C8C6,5 Copy whole source image to destination
 C $C8CB,1 Restore source address
-C $C8CC,5 DE = Source address + 9
+C $C8CC,5 #REGde = Source address + 9
 C $C8D1,1 Pop destination address
 C $C8D2,3 Load counters for 10 bytes per row, 24 rows
-@ $C8D5 label=psd_row_loop
+@ $C8D5 label=psb_row_loop
 C $C8D5,1 Preserve counters
 C $C8D6,1 A = *DE
-@ $C8D7 label=psd_loop
+@ $C8D7 label=psb_loop
 C $C8D7,2 Rotate nibbles from A to *HL
 C $C8D9,1 Advance destination address
 C $C8DA,1 Advance source address
@@ -10599,15 +10630,17 @@ C $CDE0,2 While iterations remain, goto mult_loop
 C $CDE2,1 Undo final shift
 C $CDE3,8 Divide by 8 with rounding
 C $CDEB,1 Return
-b $CDEC Data block at CDEC these are words, but not ptrs
+b $CDEC these are words, but not ptrs
 @ $CDEC label=table_cdec
-@ $CDF4 label=table_cdf4
-B $CDEC,20,8*2,4
+W $CDEC,8,8
+N $CDF4 Ptrs to car-on-fire LODs, small to large
+@ $CDF4 label=table_car_on_fire_LOD_ptrs
 @ $CE00 label=table_ce00
-W $CE00,12,12
-@ $CE0C label=data_ce0c
-@ $CE19 label=data_ce19
-@ $CE26 label=data_ce26
+W $CDF4,24,12
+N $CE0C first byte of each of the following is a counter
+@ $CE0C label=smoke_ce0c
+@ $CE19 label=smoke_ce19
+@ $CE26 label=smoke_ce26
 B $CE0C,39,13
 b $CE33 Used by #R$B4FD - groups of six bytes
 @ $CE33 label=table_ce33
@@ -11482,9 +11515,12 @@ S $E335,1,$01 padding byte or the start of the next table?
 b $E336 Data block at E336
 @ $E336 label=table_e336
 S $E336,21,$15 21 entries. Used by $8F6E
-b $E34B Data block at E34B
+b $E34B Horizon values
 D $E34B These bytes all seem to affect the horizon height when meddled with.
-B $E34B,3,3 3 bytes set to 8 by #R$880A
+B $E34B,1,1 set to 8 by #R$880A
+B $E34C,1,1 set to 0 by #R$8810
+B $E34D,1,1 set to 0 by #R$8812
+u $E34E
 B $E34E,1,1
 b $E34F Data block at E34F
 @ $E34F label=object_positions
