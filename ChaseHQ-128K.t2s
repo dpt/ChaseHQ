@@ -1,0 +1,7 @@
+https://worldofspectrum.net/pub/sinclair/games/c/ChaseH.Q..tzx.zip
+--tape-name "Chase HQ - Side 1.tzx"
+--tape-sum 2bfca22594217e032d1a59d56f57179d
+--start 23384
+--sim-load-config machine=128
+--sim-load-config finish-tape=1
+--sim-load-config accelerator=rom,paul-owens

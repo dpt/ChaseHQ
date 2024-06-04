@@ -2,16 +2,28 @@
 #
 
 NAME="Chase H.Q."
-GAME=ChaseHQ
+GAME=ChaseHQ-128K
 BUILD?=build
 OPTIONS=--hex
 
 CTL=$(GAME).ctl
+CTLBANK1=$(GAME)-bank-1.ctl
+CTLBANK3=$(GAME)-bank-3.ctl
+CTLBANK4=$(GAME)-bank-4.ctl
+CTLBANK6=$(GAME)-bank-6.ctl
+CTLBANK7=$(GAME)-bank-7.ctl
 
 ASM=$(BUILD)/$(GAME).asm
 BIN=$(BUILD)/$(GAME).bin
 PRISTINEZ80=$(BUILD)/$(GAME).pristine.z80
+
 SKOOL=$(GAME).skool
+SKOOLBANK1=$(GAME)-bank-1.skool
+SKOOLBANK3=$(GAME)-bank-3.skool
+SKOOLBANK4=$(GAME)-bank-4.skool
+SKOOLBANK6=$(GAME)-bank-6.skool
+SKOOLBANK7=$(GAME)-bank-7.skool
+
 REF=$(GAME).ref
 TAP=$(BUILD)/$(GAME).tap
 Z80=$(BUILD)/$(GAME).z80
@@ -47,11 +59,16 @@ $(PRISTINEZ80):
 	tap2sna.py --output-dir $(BUILD) @$(GAME).t2s && mv $(BUILD)/$(GAME).z80 $(PRISTINEZ80)
 
 .PHONY: skool
-skool: $(SKOOL)
+skool: $(SKOOL) $(SKOOLBANK1) $(SKOOLBANK3) $(SKOOLBANK4) $(SKOOLBANK6) $(SKOOLBANK7)
 
-$(SKOOL): $(PRISTINEZ80) $(CTL)
+$(SKOOL): $(PRISTINEZ80) $(CTL) $(CTLBANK1) $(CTLBANK3) $(CTLBANK4) $(CTLBANK6) $(CTLBANK7)
 	mkdir -p $(BUILD)
-	sna2skool.py $(OPTIONS) --ctl $(CTL) $(PRISTINEZ80) > $@
+	sna2skool.py $(OPTIONS) --ctl $(CTL) --page 0 $(PRISTINEZ80) > $@
+	sna2skool.py $(OPTIONS) --ctl $(CTLBANK1) --page 1 --start 49152 --end 65536 $(PRISTINEZ80) > $(SKOOLBANK1)
+	sna2skool.py $(OPTIONS) --ctl $(CTLBANK3) --page 3 --start 49152 --end 65536 $(PRISTINEZ80) > $(SKOOLBANK3)
+	sna2skool.py $(OPTIONS) --ctl $(CTLBANK4) --page 4 --start 49152 --end 65536 $(PRISTINEZ80) > $(SKOOLBANK4)
+	sna2skool.py $(OPTIONS) --ctl $(CTLBANK6) --page 6 --start 49152 --end 65536 $(PRISTINEZ80) > $(SKOOLBANK6)
+	sna2skool.py $(OPTIONS) --ctl $(CTLBANK7) --page 7 --start 49152 --end 65536 $(PRISTINEZ80) > $(SKOOLBANK7)
 
 .PHONY: disasm
 disasm: $(SKOOL)
