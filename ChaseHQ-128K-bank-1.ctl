@@ -1,4 +1,4 @@
-> $C000 ; ChaseHQ-128K-bank-1.ctl
+> $C000 ; ChaseHQ-128K-bank-1.skool
 > $C000 ;
 > $C000 ; Bank 1 holds the data for stages 1 and 2.
 > $C000 ;
@@ -1345,16 +1345,972 @@ D $DA36 This is the end of the per-stage data.
 S $DA36,186,$BA
 b $E000 [Stage 2] Horizon graphic
 b $E0F0 [Stage 2] Per-stage data
-W $E0F0,28,2 vars
+W $E0F0,2 Address of PERP's mugshot attributes
+W $E0F2,2 Address of PERP's mugshot bitmap
+W $E0F4,2 Screen attributes used for the ground colour (a pair of matching bytes)
+W $E0F6,2 Address of table of LODs for tumbleweeds, barriers.
+W $E0F8,2 points to objects?
+W $E0FA,2 points to objects?
+W $E0FC,2 points to objects?
+W $E0FE,2 Address of turn sign arg and handler address
+W $E100,2 Address of graphics entry 10
+W $E102,2 Address of graphics entry 12
+W $E104,2 Address of Nancy's perp description
+W $E106,2 Address of arrest messages
+W $E108,2 Helicopter related 1
+W $E10A,2 Helicopter related 2
 w $E10C [Stage 2] Table of addresses of LODs
+W $E10C,2 Address of LOD of stone/dust?
+W $E10E,2 Address of LOD of stone/dust?
+W $E110,2 Address of LOD of car (perp's car)
+W $E112,2 Address of LOD of lambo?
+W $E114,2 Address of LOD of truck?
+W $E116,2 Address of LOD of lambo again?
+W $E118,2 Address of LOD of car (generic car)?
 b $E11A [Stage 2] Per-stage difficulty settings
+B $E11A,1 How often cars spawn. Lower values spawn cars more often.
+B $E11B,1 smash related
+B $E11C,1 smash related
 w $E11D [Stage 2] Per-stage setup data
-W $E11D,14,2 vars
+W $E11D,2 road_pos
+W $E11F,2 -> Start stretch, curvature
+W $E121,2 -> Start stretch, height
+W $E123,2 -> Start stretch, lanes
+W $E125,2 -> Start stretch, right-side objects
+W $E127,2 -> Start stretch, left-side objects
+W $E129,2 -> Start stretch, hazards
 w $E12B [Stage 2] Per-stage attract mode data
-W $E12B,14,2 vars
-t $E139 [Stage 2] Nancy's perp description
-t $E1DD [Stage 2] Arrest messages
-b $E223 [Stage 2] Graphics definitions
-B $E223,126,7
-b $E2A1 [Stage 2] Map: Start stretch
+W $E12B,2 road_pos
+W $E12D,2 -> Loop section, curvature
+W $E12F,2 -> Loop section, height
+W $E131,2 -> Loop section, lanes
+W $E133,2 -> Loop section, right-side objects
+W $E135,2 -> Loop section, left-side objects
+W $E137,2 -> Loop section, hazards
+b $E139 [Stage 2] character id, e.g. nancy
+w $E13A [Stage 2] perp desc ptr
+w $E13C [Stage 2] perp desc ptr
+w $E13E [Stage 2] perp desc ptr
+w $E140 [Stage 2] perp desc ptr
+b $E142 [Stage 2] terminator?
+T $E145 "THIS IS NANCY AT CHASE H.Q. WE'VE GOT AN"
+T $E16D "EMERGENCY HERE. CARLOS, THE NEW YORK"
+T $E191 "ARMED ROBBER, HAS BEEN SPOTTED IN A"
+T $E1B4 "YELLOW SPORTS CAR ON THE FREEWAY... OVER."
+b $E1DD [Stage 2] frame delay until first message?
+B $E1DE,1 frame delay until next message?
+B $E1DF,1 flags
+B $E1E0,1 attribute
+W $E1E1,2 back buffer addr
+W $E1E3,2 attribute addr
+T $E1E5 "OK! YOU ARE UNDER ARREST ON"
+B $E200,1 frame delay until next message?
+B $E201,1 flags
+B $E202,1 attribute
+W $E203,2 back buffer addr
+W $E205,2 attribute addr
+T $E207 "SUSPICION OF ARMED ROBBERY."
+B $E222,1 frame delay until next message?
+B $E223,1 flags
+N $E224 Hittable hazards
+B $E224,1 attribute
+W $E225,2 back buffer addr
+W $E227,2 attribute addr
+T $E229 "vo)Pi"
+B $E22E,1 frame delay until next message?
+b $E28C [Stage 2] Map curvature data
+B $E28C,1 Curve Straight for 73 units
+B $E291,1 Curve Right for 24 units
+B $E293,1 Curve Right Hard for 27 units
+B $E295,1 Curve Right for 20 units
+B $E297,1 Curve Straight for 59 units
+B $E29B,1 Curve Left for 12 units
+B $E29C,1 Curve Left Hard for 59 units
+B $E2A0,1 Curve Left for 14 units
+B $E2A1,1 Curve Straight for 59 units
+B $E2A5,1 Curve Right for 16 units
+B $E2A7,1 Curve Straight for 37 units
+B $E2AA,1 <Esc> Split
+W $E2AC,2 Left target
+W $E2AE,2 Right target
+b $E2B0 [Stage 2] Map height data
+B $E2B0,1 Level Road for 2 units
+B $E2B1,1 Going Up 1 for 7 units
+B $E2B2,1 Going Up 3 for 12 units
+B $E2B3,1 Going Up 1 for 3 units
+B $E2B4,1 Level Road for 3 units
+B $E2B5,1 Going Down 1 for 3 units
+B $E2B6,1 Going Down 3 for 20 units
+B $E2B8,1 Going Down 1 for 6 units
+B $E2B9,1 Level Road for 55 units
+B $E2BD,1 Going Up 1 for 4 units
+B $E2BE,1 Going Up 3 for 4 units
+B $E2BF,1 Going Up 5 for 12 units
+B $E2C0,1 Going Up 3 for 4 units
+B $E2C1,1 Going Up 1 for 3 units
+B $E2C2,1 Level Road for 44 units
+B $E2C5,1 Going Down 1 for 2 units
+B $E2C6,1 Going Down 3 for 8 units
+B $E2C7,1 Going Down 5 for 7 units
+B $E2C8,1 Going Down 3 for 2 units
+B $E2C9,1 Going Down 1 for 3 units
+B $E2CA,1 Level Road for 68 units
+B $E2CF,1 Going Down 1 for 3 units
+B $E2D0,1 Going Down 3 for 6 units
+B $E2D1,1 Going Down 5 for 16 units
+B $E2D3,1 Going Down 3 for 3 units
+B $E2D4,1 Level Road for 3 units
+B $E2D5,1 Going Up 3 for 5 units
+B $E2D6,1 Going Up 5 for 4 units
+B $E2D7,1 Going Up 7 for 14 units
+B $E2D8,1 Going Up 5 for 4 units
+B $E2D9,1 Going Down 5 for 4 units
+B $E2DA,1 Going Down 3 for 14 units
+B $E2DB,1 Going Down 1 for 3 units
+B $E2DC,1 Level Road for 49 units
+B $E2E0,1 <Esc> Split
+W $E2E2,2 Left target
+W $E2E4,2 Right target
+b $E2E6 [Stage 2] Map lanes data
+B $E2E6,1 4 Lanes              [||||] {00} for 2 units
+B $E2E8,1 4-3 Narrowing R      [/|||] {8E} for 30 units
+B $E2EA,1 3-4 Widening R       [\|||] {9E} for 2 units
+B $E2EC,1 4 Lanes              [||||] {00} for 10 units
+B $E2EE,1 4-3 Narrowing L      [|||\] {BD} for 2 units
+B $E2F0,1 3 Lanes L            [|||]  {81} for 130 units
+B $E2F2,1 3-4 Widening L       [|||/] {AD} for 2 units
+B $E2F4,1 4 Lanes              [||||] {00} for 222 units
+B $E2F6,1 <Esc> Split
+W $E2F8,2 Left target
+W $E2FA,2 Right target
+b $E2FC [Stage 2] Map hazards data
+B $E2FC,1 Wait for 38 units
+B $E2FD,1 Unknown command 4
+B $E2FF,1 Wait for 2 units
+B $E300,1 Stop Spawning Barriers 3?
+B $E302,1 Wait for 10 units
+B $E303,1 Unknown command 4
+B $E305,1 Wait for 2 units
+B $E306,1 Stop Spawning Barriers 3?
+B $E308,1 Wait for 45 units
+B $E309,1 Unknown command 5
+B $E30B,1 Wait for 2 units
+B $E30C,1 Stop Spawning Barriers 3?
+B $E30E,1 Wait for 16 units
+B $E30F,1 Unknown command 5
+B $E311,1 Wait for 2 units
+B $E312,1 Stop Spawning Barriers 3?
+B $E314,1 Wait for 8 units
+B $E315,1 Unknown command 11
+B $E317,1 Wait for 19 units
+B $E318,1 Unknown command 4
+B $E31A,1 Wait for 2 units
+B $E31B,1 Stop Spawning Barriers 3?
+B $E31D,1 Wait for 29 units
+B $E31E,1 Unknown command 4
+B $E320,1 Wait for 2 units
+B $E321,1 Stop Spawning Barriers 3?
+B $E323,1 Wait for 13 units
+B $E324,1 Disable Car Spawning
+B $E326,1 Wait for 9 units
+B $E327,1 Set Floating Arrow to Left
+B $E329,1 Wait for 1 units
+B $E32A,1 <Esc> Split
+W $E32C,2 Left target
+W $E32E,2 Right target
+b $E330 [Stage 2] Map left object data
+B $E330,1 Street Lamp for 1 units
+B $E331,1 Nothing for 1 units
+B $E332,1 Street Lamp for 1 units
+B $E333,1 Nothing for 1 units
+B $E334,1 Street Lamp for 1 units
+B $E335,1 Nothing for 1 units
+B $E336,1 Street Lamp for 1 units
+B $E337,1 Nothing for 3 units
+B $E338,1 Street Lamp for 1 units
+B $E339,1 Nothing for 3 units
+B $E33A,1 Street Lamp for 1 units
+B $E33B,1 Nothing for 3 units
+B $E33C,1 Street Lamp for 1 units
+B $E33D,1 Nothing for 1 units
+B $E33E,1 Street Lamp for 1 units
+B $E33F,1 Nothing for 1 units
+B $E340,1 Street Lamp for 1 units
+B $E341,1 Nothing for 13 units
+B $E342,1 Bush for 1 units
+B $E343,1 Nothing for 1 units
+B $E344,1 Bush for 1 units
+B $E345,1 Nothing for 1 units
+B $E346,1 Bush for 1 units
+B $E347,1 Nothing for 1 units
+B $E348,1 Bush for 1 units
+B $E349,1 Nothing for 9 units
+B $E34A,1 Bush for 1 units
+B $E34B,1 Nothing for 1 units
+B $E34C,1 Bush for 1 units
+B $E34D,1 Nothing for 1 units
+B $E34E,1 Bush for 1 units
+B $E34F,1 Nothing for 1 units
+B $E350,1 Bush for 1 units
+B $E351,1 Nothing for 1 units
+B $E352,1 Bush for 1 units
+B $E353,1 Nothing for 3 units
+B $E354,1 Bush for 1 units
+B $E355,1 Nothing for 1 units
+B $E356,1 Bush for 1 units
+B $E357,1 Nothing for 1 units
+B $E358,1 Bush for 1 units
+B $E359,1 Nothing for 3 units
+B $E35A,1 Bush for 1 units
+B $E35B,1 Nothing for 1 units
+B $E35C,1 Bush for 1 units
+B $E35D,1 Nothing for 1 units
+B $E35E,1 Bush for 1 units
+B $E35F,1 Nothing for 7 units
+B $E360,1 Bush for 1 units
+B $E361,1 Nothing for 1 units
+B $E362,1 Bush for 1 units
+B $E363,1 Nothing for 1 units
+B $E364,1 Bush for 1 units
+B $E365,1 Nothing for 1 units
+B $E366,1 Bush for 1 units
+B $E367,1 Nothing for 3 units
+B $E368,1 Bush for 1 units
+B $E369,1 Nothing for 1 units
+B $E36A,1 Bush for 1 units
+B $E36B,1 Nothing for 3 units
+B $E36C,1 Bush for 1 units
+B $E36D,1 Nothing for 1 units
+B $E36E,1 Bush for 1 units
+B $E36F,1 Nothing for 3 units
+B $E370,1 Bush for 1 units
+B $E371,1 Nothing for 3 units
+B $E372,1 Bush for 1 units
+B $E373,1 Nothing for 1 units
+B $E374,1 Bush for 1 units
+B $E375,1 Nothing for 1 units
+B $E376,1 Street Lamp for 1 units
+B $E377,1 Nothing for 1 units
+B $E378,1 Street Lamp for 1 units
+B $E379,1 Nothing for 1 units
+B $E37A,1 Street Lamp for 1 units
+B $E37B,1 Nothing for 1 units
+B $E37C,1 Street Lamp for 1 units
+B $E37D,1 Nothing for 3 units
+B $E37E,1 Bush for 1 units
+B $E37F,1 Nothing for 1 units
+B $E380,1 Street Lamp for 1 units
+B $E381,1 Nothing for 1 units
+B $E382,1 Bush for 1 units
+B $E383,1 Nothing for 1 units
+B $E384,1 Street Lamp for 1 units
+B $E385,1 Nothing for 1 units
+B $E386,1 Street Lamp for 1 units
+B $E387,1 Nothing for 1 units
+B $E388,1 Bush for 1 units
+B $E389,1 Nothing for 7 units
+B $E38A,1 Telegraph Pole for 1 units
+B $E38B,1 Nothing for 1 units
+B $E38C,1 Telegraph Pole for 1 units
+B $E38D,1 Nothing for 1 units
+B $E38E,1 Telegraph Pole for 1 units
+B $E38F,1 Nothing for 1 units
+B $E390,1 Telegraph Pole for 1 units
+B $E391,1 Nothing for 1 units
+B $E392,1 Telegraph Pole for 1 units
+B $E393,1 Nothing for 1 units
+B $E394,1 Telegraph Pole for 1 units
+B $E395,1 Nothing for 1 units
+B $E396,1 Telegraph Pole for 1 units
+B $E397,1 Nothing for 1 units
+B $E398,1 Telegraph Pole for 1 units
+B $E399,1 Nothing for 1 units
+B $E39A,1 Telegraph Pole for 1 units
+B $E39B,1 Nothing for 1 units
+B $E39C,1 Telegraph Pole for 1 units
+B $E39D,1 Nothing for 1 units
+B $E39E,1 Telegraph Pole for 1 units
+B $E39F,1 Nothing for 1 units
+B $E3A0,1 Telegraph Pole for 1 units
+B $E3A1,1 Nothing for 1 units
+B $E3A2,1 Telegraph Pole for 1 units
+B $E3A3,1 Nothing for 1 units
+B $E3A4,1 Telegraph Pole for 1 units
+B $E3A5,1 Nothing for 1 units
+B $E3A6,1 Telegraph Pole for 1 units
+B $E3A7,1 Nothing for 1 units
+B $E3A8,1 Telegraph Pole for 1 units
+B $E3A9,1 Nothing for 1 units
+B $E3AA,1 Telegraph Pole for 1 units
+B $E3AB,1 Nothing for 1 units
+B $E3AC,1 Telegraph Pole for 1 units
+B $E3AD,1 Nothing for 1 units
+B $E3AE,1 Telegraph Pole for 1 units
+B $E3AF,1 Nothing for 5 units
+B $E3B0,1 Telegraph Pole for 1 units
+B $E3B1,1 Nothing for 1 units
+B $E3B2,1 Telegraph Pole for 1 units
+B $E3B3,1 Nothing for 1 units
+B $E3B4,1 Telegraph Pole for 1 units
+B $E3B5,1 Nothing for 3 units
+B $E3B6,1 Telegraph Pole for 1 units
+B $E3B7,1 Nothing for 1 units
+B $E3B8,1 Telegraph Pole for 1 units
+B $E3B9,1 Nothing for 3 units
+B $E3BA,1 Telegraph Pole for 1 units
+B $E3BB,1 Nothing for 1 units
+B $E3BC,1 <Esc> Split
+W $E3BE,2 Left target
+W $E3C0,2 Right target
+b $E3C2 [Stage 2] Map right object data
+B $E3C2,1 Nothing for 2 units
+B $E3C3,1 Telegraph Pole for 1 units
+B $E3C4,1 Nothing for 1 units
+B $E3C5,1 Telegraph Pole for 1 units
+B $E3C6,1 Nothing for 1 units
+B $E3C7,1 Telegraph Pole for 1 units
+B $E3C8,1 Nothing for 1 units
+B $E3C9,1 Telegraph Pole for 1 units
+B $E3CA,1 Nothing for 1 units
+B $E3CB,1 Telegraph Pole for 1 units
+B $E3CC,1 Nothing for 7 units
+B $E3CD,1 Bush for 1 units
+B $E3CE,1 Nothing for 1 units
+B $E3CF,1 Bush for 1 units
+B $E3D0,1 Nothing for 1 units
+B $E3D1,1 Bush for 1 units
+B $E3D2,1 Nothing for 3 units
+B $E3D3,1 Bush for 1 units
+B $E3D4,1 Nothing for 1 units
+B $E3D5,1 Bush for 1 units
+B $E3D6,1 Nothing for 3 units
+B $E3D7,1 Bush for 1 units
+B $E3D8,1 Nothing for 3 units
+B $E3D9,1 Bush for 1 units
+B $E3DA,1 Nothing for 1 units
+B $E3DB,1 Bush for 1 units
+B $E3DC,1 Nothing for 3 units
+B $E3DD,1 Street Lamp for 1 units
+B $E3DE,1 Nothing for 1 units
+B $E3DF,1 Street Lamp for 1 units
+B $E3E0,1 Nothing for 1 units
+B $E3E1,1 Street Lamp for 1 units
+B $E3E2,1 Nothing for 1 units
+B $E3E3,1 Street Lamp for 1 units
+B $E3E4,1 Nothing for 3 units
+B $E3E5,1 Street Lamp for 1 units
+B $E3E6,1 Nothing for 3 units
+B $E3E7,1 Street Lamp for 1 units
+B $E3E8,1 Nothing for 1 units
+B $E3E9,1 Street Lamp for 1 units
+B $E3EA,1 Nothing for 3 units
+B $E3EB,1 Telegraph Pole for 1 units
+B $E3EC,1 Nothing for 1 units
+B $E3ED,1 Telegraph Pole for 1 units
+B $E3EE,1 Nothing for 1 units
+B $E3EF,1 Telegraph Pole for 1 units
+B $E3F0,1 Nothing for 3 units
+B $E3F1,1 Telegraph Pole for 1 units
+B $E3F2,1 Nothing for 3 units
+B $E3F3,1 Telegraph Pole for 1 units
+B $E3F4,1 Nothing for 3 units
+B $E3F5,1 Telegraph Pole for 1 units
+B $E3F6,1 Nothing for 1 units
+B $E3F7,1 Telegraph Pole for 1 units
+B $E3F8,1 Nothing for 1 units
+B $E3F9,1 Telegraph Pole for 1 units
+B $E3FA,1 Nothing for 21 units
+B $E3FC,1 Bush for 1 units
+B $E3FD,1 Nothing for 1 units
+B $E3FE,1 Bush for 1 units
+B $E3FF,1 Nothing for 1 units
+B $E400,1 Bush for 1 units
+B $E401,1 Nothing for 3 units
+B $E402,1 Bush for 1 units
+B $E403,1 Nothing for 1 units
+B $E404,1 Bush for 1 units
+B $E405,1 Nothing for 13 units
+B $E406,1 Bush for 1 units
+B $E407,1 Nothing for 1 units
+B $E408,1 Bush for 1 units
+B $E409,1 Nothing for 1 units
+B $E40A,1 Bush for 1 units
+B $E40B,1 Nothing for 3 units
+B $E40C,1 Bush for 1 units
+B $E40D,1 Nothing for 3 units
+B $E40E,1 Bush for 1 units
+B $E40F,1 Nothing for 1 units
+B $E410,1 Telegraph Pole for 1 units
+B $E411,1 Nothing for 1 units
+B $E412,1 Telegraph Pole for 1 units
+B $E413,1 Nothing for 1 units
+B $E414,1 Telegraph Pole for 1 units
+B $E415,1 Nothing for 1 units
+B $E416,1 Telegraph Pole for 1 units
+B $E417,1 Nothing for 1 units
+B $E418,1 Telegraph Pole for 1 units
+B $E419,1 Nothing for 1 units
+B $E41A,1 Telegraph Pole for 1 units
+B $E41B,1 Nothing for 1 units
+B $E41C,1 Telegraph Pole for 1 units
+B $E41D,1 Nothing for 1 units
+B $E41E,1 Telegraph Pole for 1 units
+B $E41F,1 Nothing for 1 units
+B $E420,1 Telegraph Pole for 1 units
+B $E421,1 Nothing for 1 units
+B $E422,1 Telegraph Pole for 1 units
+B $E423,1 Nothing for 1 units
+B $E424,1 Telegraph Pole for 1 units
+B $E425,1 Nothing for 1 units
+B $E426,1 Telegraph Pole for 1 units
+B $E427,1 Nothing for 1 units
+B $E428,1 Telegraph Pole for 1 units
+B $E429,1 Nothing for 1 units
+B $E42A,1 Telegraph Pole for 1 units
+B $E42B,1 Nothing for 1 units
+B $E42C,1 Telegraph Pole for 1 units
+B $E42D,1 Nothing for 5 units
+B $E42E,1 Telegraph Pole for 1 units
+B $E42F,1 Nothing for 1 units
+B $E430,1 Telegraph Pole for 1 units
+B $E431,1 Nothing for 21 units
+B $E433,1 <Esc> Split
+W $E435,2 Left target
+W $E437,2 Right target
+b $E674 [Stage 2] Map curvature data
+B $E674,1 Curve Straight for 28 units
+B $E676,1 Curve Right for 37 units
+B $E679,1 Curve Straight for 23 units
+B $E67B,1 Curve Left for 8 units
+B $E67C,1 Curve Left Hard for 14 units
+B $E67D,1 Curve Left for 31 units
+B $E680,1 Curve Straight for 31 units
+B $E683,1 Curve Left for 49 units
+B $E687,1 Curve Straight for 59 units
+B $E68B,1 Curve Right Hard for 34 units
+B $E68E,1 Curve Right for 27 units
+B $E690,1 Curve Straight for 59 units
+B $E694,1 Curve Left for 41 units
+B $E697,1 Curve Straight for 9 units
+B $E698,1 <Esc> Loop
+W $E69A,2 Target
+b $E69C [Stage 2] Map height data
+B $E69C,1 Level Road for 11 units
+B $E69D,1 Going Up 3 for 14 units
+B $E69E,1 Going Down 5 for 20 units
+B $E6A0,1 Going Up 3 for 20 units
+B $E6A2,1 Going Up 5 for 3 units
+B $E6A3,1 Going Up 7 for 4 units
+B $E6A4,1 Going Down 5 for 5 units
+B $E6A5,1 Going Down 3 for 2 units
+B $E6A6,1 Level Road for 67 units
+B $E6AB,1 Going Down 1 for 1 units
+B $E6AC,1 Going Down 3 for 1 units
+B $E6AD,1 Going Down 5 for 4 units
+B $E6AE,1 Going Down 3 for 1 units
+B $E6AF,1 Going Up 3 for 1 units
+B $E6B0,1 Going Up 5 for 1 units
+B $E6B1,1 Going Up 7 for 10 units
+B $E6B2,1 Going Up 5 for 2 units
+B $E6B3,1 Going Down 3 for 4 units
+B $E6B4,1 Going Down 5 for 11 units
+B $E6B5,1 Going Down 3 for 1 units
+B $E6B6,1 Going Down 1 for 1 units
+B $E6B7,1 Level Road for 34 units
+B $E6BA,1 Going Up 3 for 9 units
+B $E6BB,1 Going Down 3 for 16 units
+B $E6BD,1 Going Up 3 for 7 units
+B $E6BE,1 Going Up 7 for 3 units
+B $E6BF,1 Going Up 5 for 1 units
+B $E6C0,1 Going Up 3 for 1 units
+B $E6C1,1 Level Road for 13 units
+B $E6C2,1 Going Down 1 for 2 units
+B $E6C3,1 Going Down 3 for 12 units
+B $E6C4,1 Level Road for 82 units
+B $E6CA,1 Going Up 3 for 1 units
+B $E6CB,1 Going Up 5 for 1 units
+B $E6CC,1 Going Up 7 for 3 units
+B $E6CD,1 Going Up 5 for 1 units
+B $E6CE,1 Going Up 3 for 1 units
+B $E6CF,1 Going Up 1 for 1 units
+B $E6D0,1 Going Down 1 for 1 units
+B $E6D1,1 Going Down 3 for 1 units
+B $E6D2,1 Going Down 5 for 1 units
+B $E6D3,1 Going Down 7 for 2 units
+B $E6D4,1 Going Down 5 for 2 units
+B $E6D5,1 Going Down 3 for 2 units
+B $E6D6,1 Going Down 1 for 1 units
+B $E6D7,1 Level Road for 68 units
+B $E6DC,1 <Esc> Loop
+W $E6DE,2 Target
+b $E6E0 [Stage 2] Map lanes data
+B $E6E0,1 4 Lanes              [||||] {00} for 92 units
+B $E6E2,1 3 Lanes L            [|||]  {81} for 46 units
+B $E6E4,1 3-4 Widening L       [|||/] {AD} for 2 units
+B $E6E6,1 4 Lanes              [||||] {00} for 102 units
+B $E6E8,1 3 Lanes R             [|||] {82} for 6 units
+B $E6EA,1 4 Lanes              [||||] {00} for 202 units
+B $E6EC,1 <Esc> Loop
+W $E6EE,2 Target
+b $E6F0 [Stage 2] Map hazards data
+B $E6F0,1 Wait for 19 units
+B $E6F1,1 Unknown command 4
+B $E6F3,1 Wait for 3 units
+B $E6F4,1 Stop Spawning Barriers 3?
+B $E6F6,1 Wait for 23 units
+B $E6F7,1 Start Spawning Barriers Right
+B $E6F9,1 Wait for 2 units
+B $E6FA,1 Stop Spawning Barriers 3?
+B $E6FC,1 Wait for 54 units
+B $E6FD,1 Unknown command 5
+B $E6FF,1 Wait for 2 units
+B $E700,1 Stop Spawning Barriers 3?
+B $E702,1 Wait for 18 units
+B $E703,1 Start Spawning Barriers Left
+B $E705,1 Wait for 1 units
+B $E706,1 Stop Spawning Barriers 3?
+B $E708,1 Wait for 2 units
+B $E709,1 Start Spawning Barriers Left
+B $E70B,1 Wait for 1 units
+B $E70C,1 Stop Spawning Barriers 3?
+B $E70E,1 Wait for 100 units
+B $E70F,1 <Esc> Loop
+W $E711,2 Target
+b $E713 [Stage 2] Map left object data
+B $E713,1 Telegraph Pole for 1 units
+B $E714,1 Nothing for 1 units
+B $E715,1 Telegraph Pole for 1 units
+B $E716,1 Nothing for 1 units
+B $E717,1 Telegraph Pole for 1 units
+B $E718,1 Nothing for 5 units
+B $E719,1 Tree for 1 units
+B $E71A,1 Nothing for 1 units
+B $E71B,1 Tree for 1 units
+B $E71C,1 Nothing for 1 units
+B $E71D,1 Tree for 1 units
+B $E71E,1 Nothing for 1 units
+B $E71F,1 Tree for 1 units
+B $E720,1 Nothing for 1 units
+B $E721,1 Tree for 1 units
+B $E722,1 Nothing for 1 units
+B $E723,1 Tree for 1 units
+B $E724,1 Nothing for 1 units
+B $E725,1 Tree for 1 units
+B $E726,1 Nothing for 1 units
+B $E727,1 Tree for 1 units
+B $E728,1 Nothing for 1 units
+B $E729,1 Tree for 1 units
+B $E72A,1 Nothing for 1 units
+B $E72B,1 Tree for 1 units
+B $E72C,1 Nothing for 1 units
+B $E72D,1 Tree for 1 units
+B $E72E,1 Nothing for 1 units
+B $E72F,1 Tree for 1 units
+B $E730,1 Nothing for 1 units
+B $E731,1 Tree for 1 units
+B $E732,1 Nothing for 1 units
+B $E733,1 Tree for 1 units
+B $E734,1 Nothing for 1 units
+B $E735,1 Tree for 1 units
+B $E736,1 Nothing for 1 units
+B $E737,1 Tree for 1 units
+B $E738,1 Nothing for 3 units
+B $E739,1 Bush for 1 units
+B $E73A,1 Nothing for 1 units
+B $E73B,1 Bush for 1 units
+B $E73C,1 Nothing for 1 units
+B $E73D,1 Bush for 1 units
+B $E73E,1 Nothing for 1 units
+B $E73F,1 Bush for 1 units
+B $E740,1 Nothing for 1 units
+B $E741,1 Bush for 1 units
+B $E742,1 Nothing for 3 units
+B $E743,1 Street Lamp for 1 units
+B $E744,1 Nothing for 1 units
+B $E745,1 Street Lamp for 1 units
+B $E746,1 Nothing for 3 units
+B $E747,1 Street Lamp for 1 units
+B $E748,1 Nothing for 9 units
+B $E749,1 Street Lamp for 1 units
+B $E74A,1 Nothing for 1 units
+B $E74B,1 Street Lamp for 1 units
+B $E74C,1 Nothing for 1 units
+B $E74D,1 Street Lamp for 1 units
+B $E74E,1 Nothing for 1 units
+B $E74F,1 Street Lamp for 1 units
+B $E750,1 Nothing for 23 units
+B $E752,1 Bush for 1 units
+B $E753,1 Nothing for 1 units
+B $E754,1 Bush for 1 units
+B $E755,1 Nothing for 1 units
+B $E756,1 Bush for 1 units
+B $E757,1 Nothing for 1 units
+B $E758,1 Bush for 1 units
+B $E759,1 Nothing for 1 units
+B $E75A,1 Bush for 1 units
+B $E75B,1 Nothing for 1 units
+B $E75C,1 Bush for 1 units
+B $E75D,1 Nothing for 1 units
+B $E75E,1 Bush for 1 units
+B $E75F,1 Nothing for 1 units
+B $E760,1 Bush for 1 units
+B $E761,1 Nothing for 47 units
+B $E765,1 Tree for 1 units
+B $E766,1 Nothing for 1 units
+B $E767,1 Tree for 1 units
+B $E768,1 Nothing for 1 units
+B $E769,1 Tree for 1 units
+B $E76A,1 Nothing for 1 units
+B $E76B,1 Tree for 1 units
+B $E76C,1 Nothing for 1 units
+B $E76D,1 Tree for 1 units
+B $E76E,1 Nothing for 1 units
+B $E76F,1 Tree for 1 units
+B $E770,1 Nothing for 1 units
+B $E771,1 Tree for 1 units
+B $E772,1 Nothing for 1 units
+B $E773,1 Tree for 1 units
+B $E774,1 Nothing for 1 units
+B $E775,1 Tree for 1 units
+B $E776,1 Nothing for 1 units
+B $E777,1 Tree for 1 units
+B $E778,1 Nothing for 1 units
+B $E779,1 Tree for 1 units
+B $E77A,1 Nothing for 1 units
+B $E77B,1 Tree for 1 units
+B $E77C,1 Nothing for 1 units
+B $E77D,1 Tree for 1 units
+B $E77E,1 Nothing for 1 units
+B $E77F,1 Tree for 1 units
+B $E780,1 Nothing for 3 units
+B $E781,1 Tree for 1 units
+B $E782,1 Nothing for 3 units
+B $E783,1 Tree for 1 units
+B $E784,1 Nothing for 3 units
+B $E785,1 Tree for 1 units
+B $E786,1 Nothing for 1 units
+B $E787,1 Tree for 1 units
+B $E788,1 Nothing for 1 units
+B $E789,1 Tree for 1 units
+B $E78A,1 Nothing for 1 units
+B $E78B,1 Tree for 1 units
+B $E78C,1 Nothing for 1 units
+B $E78D,1 Tree for 1 units
+B $E78E,1 Nothing for 1 units
+B $E78F,1 Tree for 1 units
+B $E790,1 Nothing for 1 units
+B $E791,1 Tree for 1 units
+B $E792,1 Nothing for 3 units
+B $E793,1 Tree for 1 units
+B $E794,1 Nothing for 3 units
+B $E795,1 Tree for 1 units
+B $E796,1 Nothing for 2 units
+B $E797,1 <Esc> Loop
+W $E799,2 Target
+b $E79B [Stage 2] Map right object data
+B $E79B,1 Nothing for 2 units
+B $E79C,1 Street Lamp for 1 units
+B $E79D,1 Nothing for 3 units
+B $E79E,1 Street Lamp for 1 units
+B $E79F,1 Nothing for 3 units
+B $E7A0,1 Street Lamp for 1 units
+B $E7A1,1 Nothing for 1 units
+B $E7A2,1 Street Lamp for 1 units
+B $E7A3,1 Nothing for 3 units
+B $E7A4,1 Street Lamp for 1 units
+B $E7A5,1 Nothing for 3 units
+B $E7A6,1 Street Lamp for 1 units
+B $E7A7,1 Nothing for 7 units
+B $E7A8,1 Bush for 1 units
+B $E7A9,1 Nothing for 3 units
+B $E7AA,1 Bush for 1 units
+B $E7AB,1 Nothing for 1 units
+B $E7AC,1 Bush for 1 units
+B $E7AD,1 Nothing for 1 units
+B $E7AE,1 Bush for 1 units
+B $E7AF,1 Nothing for 9 units
+B $E7B0,1 Tree for 1 units
+B $E7B1,1 Nothing for 1 units
+B $E7B2,1 Tree for 1 units
+B $E7B3,1 Nothing for 1 units
+B $E7B4,1 Tree for 1 units
+B $E7B5,1 Nothing for 1 units
+B $E7B6,1 Tree for 1 units
+B $E7B7,1 Nothing for 1 units
+B $E7B8,1 Tree for 1 units
+B $E7B9,1 Nothing for 1 units
+B $E7BA,1 Tree for 1 units
+B $E7BB,1 Nothing for 1 units
+B $E7BC,1 Tree for 1 units
+B $E7BD,1 Nothing for 1 units
+B $E7BE,1 Tree for 1 units
+B $E7BF,1 Nothing for 1 units
+B $E7C0,1 Tree for 1 units
+B $E7C1,1 Nothing for 1 units
+B $E7C2,1 Tree for 1 units
+B $E7C3,1 Nothing for 1 units
+B $E7C4,1 Tree for 1 units
+B $E7C5,1 Nothing for 1 units
+B $E7C6,1 Tree for 1 units
+B $E7C7,1 Nothing for 1 units
+B $E7C8,1 Tree for 1 units
+B $E7C9,1 Nothing for 1 units
+B $E7CA,1 Tree for 1 units
+B $E7CB,1 Nothing for 1 units
+B $E7CC,1 Tree for 1 units
+B $E7CD,1 Nothing for 1 units
+B $E7CE,1 Tree for 1 units
+B $E7CF,1 Nothing for 1 units
+B $E7D0,1 Tree for 1 units
+B $E7D1,1 Nothing for 1 units
+B $E7D2,1 Tree for 1 units
+B $E7D3,1 Nothing for 1 units
+B $E7D4,1 Tree for 1 units
+B $E7D5,1 Nothing for 1 units
+B $E7D6,1 Tree for 1 units
+B $E7D7,1 Nothing for 1 units
+B $E7D8,1 Tree for 1 units
+B $E7D9,1 Nothing for 1 units
+B $E7DA,1 Tree for 1 units
+B $E7DB,1 Nothing for 1 units
+B $E7DC,1 Tree for 1 units
+B $E7DD,1 Nothing for 1 units
+B $E7DE,1 Tree for 1 units
+B $E7DF,1 Nothing for 1 units
+B $E7E0,1 Tree for 1 units
+B $E7E1,1 Nothing for 5 units
+B $E7E2,1 Tree for 1 units
+B $E7E3,1 Nothing for 1 units
+B $E7E4,1 Tree for 1 units
+B $E7E5,1 Nothing for 1 units
+B $E7E6,1 Tree for 1 units
+B $E7E7,1 Nothing for 1 units
+B $E7E8,1 Tree for 1 units
+B $E7E9,1 Nothing for 1 units
+B $E7EA,1 Tree for 1 units
+B $E7EB,1 Nothing for 1 units
+B $E7EC,1 Tree for 1 units
+B $E7ED,1 Nothing for 1 units
+B $E7EE,1 Tree for 1 units
+B $E7EF,1 Nothing for 1 units
+B $E7F0,1 Tree for 1 units
+B $E7F1,1 Nothing for 1 units
+B $E7F2,1 Tree for 1 units
+B $E7F3,1 Nothing for 1 units
+B $E7F4,1 Tree for 1 units
+B $E7F5,1 Nothing for 1 units
+B $E7F6,1 Tree for 1 units
+B $E7F7,1 Nothing for 1 units
+B $E7F8,1 Tree for 1 units
+B $E7F9,1 Nothing for 1 units
+B $E7FA,1 Tree for 1 units
+B $E7FB,1 Nothing for 1 units
+B $E7FC,1 Tree for 1 units
+B $E7FD,1 Nothing for 1 units
+B $E7FE,1 Tree for 1 units
+B $E7FF,1 Nothing for 1 units
+B $E800,1 Tree for 1 units
+B $E801,1 Nothing for 1 units
+B $E802,1 Tree for 1 units
+B $E803,1 Nothing for 1 units
+B $E804,1 Tree for 1 units
+B $E805,1 Nothing for 1 units
+B $E806,1 Tree for 1 units
+B $E807,1 Nothing for 1 units
+B $E808,1 Tree for 1 units
+B $E809,1 Nothing for 1 units
+B $E80A,1 Tree for 1 units
+B $E80B,1 Nothing for 1 units
+B $E80C,1 Tree for 1 units
+B $E80D,1 Nothing for 1 units
+B $E80E,1 Tree for 1 units
+B $E80F,1 Nothing for 1 units
+B $E810,1 Tree for 1 units
+B $E811,1 Nothing for 1 units
+B $E812,1 Tree for 1 units
+B $E813,1 Nothing for 1 units
+B $E814,1 Tree for 1 units
+B $E815,1 Nothing for 1 units
+B $E816,1 Tree for 1 units
+B $E817,1 Nothing for 3 units
+B $E818,1 Bush for 1 units
+B $E819,1 Nothing for 1 units
+B $E81A,1 Bush for 1 units
+B $E81B,1 Nothing for 1 units
+B $E81C,1 Bush for 1 units
+B $E81D,1 Nothing for 3 units
+B $E81E,1 Tree for 1 units
+B $E81F,1 Nothing for 1 units
+B $E820,1 Tree for 1 units
+B $E821,1 Nothing for 1 units
+B $E822,1 Tree for 1 units
+B $E823,1 Nothing for 1 units
+B $E824,1 Tree for 1 units
+B $E825,1 Nothing for 1 units
+B $E826,1 Tree for 1 units
+B $E827,1 Nothing for 7 units
+B $E828,1 Tree for 1 units
+B $E829,1 Nothing for 1 units
+B $E82A,1 Tree for 1 units
+B $E82B,1 Nothing for 1 units
+B $E82C,1 Tree for 1 units
+B $E82D,1 Nothing for 1 units
+B $E82E,1 Tree for 1 units
+B $E82F,1 Nothing for 1 units
+B $E830,1 Tree for 1 units
+B $E831,1 Nothing for 1 units
+B $E832,1 Tree for 1 units
+B $E833,1 Nothing for 1 units
+B $E834,1 Tree for 1 units
+B $E835,1 Nothing for 3 units
+B $E836,1 Tree for 1 units
+B $E837,1 Nothing for 3 units
+B $E838,1 Tree for 1 units
+B $E839,1 Nothing for 3 units
+B $E83A,1 Tree for 1 units
+B $E83B,1 Nothing for 9 units
+B $E83C,1 Telegraph Pole for 1 units
+B $E83D,1 Nothing for 1 units
+B $E83E,1 Telegraph Pole for 1 units
+B $E83F,1 Nothing for 1 units
+B $E840,1 Telegraph Pole for 1 units
+B $E841,1 Nothing for 1 units
+B $E842,1 Telegraph Pole for 1 units
+B $E843,1 Nothing for 1 units
+B $E844,1 Telegraph Pole for 1 units
+B $E845,1 Nothing for 1 units
+B $E846,1 Telegraph Pole for 1 units
+B $E847,1 <Esc> Loop
+W $E849,2 Target
+N $E8FF LOD
+B $E8FF,1 Width (bytes)
+B $E900,1 Flags
+B $E901,1 Height (pixels)
+W $E902,2 Bitmap address
+W $E904,2 Pre-shifted bitmap address
+N $E906 LOD
+B $E906,1 Width (bytes)
+B $E907,1 Flags
+B $E908,1 Height (pixels)
+W $E909,2 Bitmap address
+W $E90B,2 Pre-shifted bitmap address
+N $E90D LOD
+B $E90D,1 Width (bytes)
+B $E90E,1 Flags
+B $E90F,1 Height (pixels)
+W $E910,2 Bitmap address
+W $E912,2 Pre-shifted bitmap address
+N $E914 LOD
+B $E914,1 Width (bytes)
+B $E915,1 Flags
+B $E916,1 Height (pixels)
+W $E917,2 Bitmap address
+W $E919,2 Pre-shifted bitmap address
+N $E91B LOD
+B $E91B,1 Width (bytes)
+B $E91C,1 Flags
+B $E91D,1 Height (pixels)
+W $E91E,2 Bitmap address
+W $E920,2 Pre-shifted bitmap address
+N $E922 LOD
+B $E922,1 Width (bytes)
+B $E923,1 Flags
+B $E924,1 Height (pixels)
+W $E925,2 Bitmap address
+W $E927,2 Pre-shifted bitmap address
+N $E929 LOD
+B $E929,1 Width (bytes)
+B $E92A,1 Flags
+B $E92B,1 Height (pixels)
+W $E92C,2 Bitmap address
+W $E92E,2 Pre-shifted bitmap address
+N $E930 LOD
+B $E930,1 Width (bytes)
+B $E931,1 Flags
+B $E932,1 Height (pixels)
+W $E933,2 Bitmap address
+W $E935,2 Pre-shifted bitmap address
+N $E937 LOD
+B $E937,1 Width (bytes)
+B $E938,1 Flags
+B $E939,1 Height (pixels)
+W $E93A,2 Bitmap address
+W $E93C,2 Pre-shifted bitmap address
+N $E93E LOD
+B $E93E,1 Width (bytes)
+B $E93F,1 Flags
+B $E940,1 Height (pixels)
+W $E941,2 Bitmap address
+W $E943,2 Pre-shifted bitmap address
+N $E945 LOD
+B $E945,1 Width (bytes)
+B $E946,1 Flags
+B $E947,1 Height (pixels)
+W $E948,2 Bitmap address
+W $E94A,2 Pre-shifted bitmap address
+N $E94C LOD
+B $E94C,1 Width (bytes)
+B $E94D,1 Flags
+B $E94E,1 Height (pixels)
+W $E94F,2 Bitmap address
+W $E951,2 Pre-shifted bitmap address
+N $E953 LOD
+B $E953,1 Width (bytes)
+B $E954,1 Flags
+B $E955,1 Height (pixels)
+W $E956,2 Bitmap address
+W $E958,2 Pre-shifted bitmap address
+N $E95A LOD
+B $E95A,1 Width (bytes)
+B $E95B,1 Flags
+B $E95C,1 Height (pixels)
+W $E95D,2 Bitmap address
+W $E95F,2 Pre-shifted bitmap address
+N $E961 LOD
+B $E961,1 Width (bytes)
+B $E962,1 Flags
+B $E963,1 Height (pixels)
+W $E964,2 Bitmap address
+W $E966,2 Pre-shifted bitmap address
+N $E968 LOD
+B $E968,1 Width (bytes)
+B $E969,1 Flags
+B $E96A,1 Height (pixels)
+W $E96B,2 Bitmap address
+W $E96D,2 Pre-shifted bitmap address
+N $E96F LOD
+B $E96F,1 Width (bytes)
+B $E970,1 Flags
+B $E971,1 Height (pixels)
+W $E972,2 Bitmap address
+W $E974,2 Pre-shifted bitmap address
+N $E976 LOD
+B $E976,1 Width (bytes)
+B $E977,1 Flags
+B $E978,1 Height (pixels)
+W $E979,2 Bitmap address
+W $E97B,2 Pre-shifted bitmap address
+B $E97D,174,6 Bitmap data 6 bytes x 29
+B $EA2B,76,4 Bitmap data 4 bytes x 19
+B $EA77,39,3 Bitmap data 3 bytes x 13
+B $EA77,39,3 Bitmap data 3 bytes x 13
+B $EA9E,16,2 Bitmap data 2 bytes x 8
+B $EA9E,16,2 Bitmap data 2 bytes x 8
+B $EABE,16,2 Pre-shifted bitmap data 2 bytes x 8
+B $EADE,180,6 Bitmap data 6 bytes x 30
+B $EB92,88,4 Bitmap data 4 bytes x 22
+B $EBEA,45,3 Bitmap data 3 bytes x 15
+B $EBEA,45,3 Bitmap data 3 bytes x 15
+B $EC17,16,2 Bitmap data 2 bytes x 8
+B $EC17,16,2 Bitmap data 2 bytes x 8
+B $EC17,16,2 Bitmap data 2 bytes x 8
+B $EC17,16,2 Bitmap data 2 bytes x 8
+B $EC37,16,2 Pre-shifted bitmap data 2 bytes x 8
+B $EC37,16,2 Pre-shifted bitmap data 2 bytes x 8
+B $EC37,16,2 Pre-shifted bitmap data 2 bytes x 8
+B $EC37,16,2 Pre-shifted bitmap data 2 bytes x 8
+B $EC57,180,6 Bitmap data 6 bytes x 30
+B $ED0B,88,4 Bitmap data 4 bytes x 22
+B $ED63,48,3 Bitmap data 3 bytes x 16
+B $ED63,48,3 Bitmap data 3 bytes x 16
 u $FAF0

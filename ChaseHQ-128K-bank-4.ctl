@@ -1,4 +1,4 @@
-> $C000 ; ChaseHQ-128K-bank-4.ctl
+> $C000 ; ChaseHQ-128K-bank-4.skool
 > $C000 ;
 > $C000 ; Bank 4 holds sampled sound data.
 > $C000 ;
