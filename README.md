@@ -92,7 +92,7 @@ make tap  # or z80
 
 You may have to do both.
 
-See https://youtu.be/BGVI0TbePsQ for a short video of me running Spectrum Analyser to find out how the game builds its back buffer up.
+See https://youtu.be/ZcoFi4T4tsU for a short video of me running Spectrum Analyser to find out how the game builds its back buffer up.
 
 ## POKEs
 
