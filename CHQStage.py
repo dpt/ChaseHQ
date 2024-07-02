@@ -9,6 +9,71 @@
 # skool2bin.py ChaseHQ-128K-bank-1.skool -S 49152 -E 57344
 #
 
+# TODO
+# - per-stage object names
+
+OBJNAME = [
+        [ ],
+        [
+            # STAGE 1
+            "(nothing)",
+            "TUNNEL_LIGHT",
+            "(object 2 - unused)",
+            "SHORT_POLE",
+            "TREE",
+            "BUSH",
+            "STREET_LAMP",
+            "TELEGRAPH_POLE",
+            "TURN_SIGN_POINTING_LEFT",
+            "TURN_SIGN_POINTING_RIGHT",
+        ],
+        [
+            # STAGE 2
+            "(nothing)",
+            "TUNNEL_LIGHT",
+            "(object 2 - unused)",
+            "SHORT_POLE",
+            "HUGE_ROCK",
+            "PALM_TREE",
+            "LEAVES",
+            "DOUBLE_STREET_LAMP"
+        ],
+        [
+            # STAGE 3
+            "(nothing)",
+            "TUNNEL_LIGHT",
+            "OVERHEAD_BRIDGE",
+            "SHORT_POLE",
+            "TOWER_BLOCK",
+            "SPEED_LIMIT_SIGN",
+            "TELEGRAPH_POLE"
+        ],
+        [
+            # STAGE 4
+            "(nothing)",
+            "TUNNEL_LIGHT",
+            "(object 2 - unused)",
+            "SHORT_POLE",
+            "NEAR_COLUMN",
+            "FAR_COLUMN",
+            "PILE_OF_ROCKS",
+            "STREET_LAMP", # single lamp - same as Stage 1?
+            "TURN_SIGN_POINTING_LEFT",
+            "TURN_SIGN_POINTING_RIGHT"
+        ],
+        [
+            # STAGE 5
+            "(nothing)",
+            "TUNNEL_LIGHT",
+            "OVERHEAD_BRIDGE",
+            "(object 3 - unused)",
+            "CACTUS",
+            "DOUBLE_STREET_LAMP", # different from Stage 2?
+            "HUGE_ROCK",
+            "TELEGRAPH_POLE"
+        ]
+        ]
+
 import getopt
 import os
 import sys
@@ -34,6 +99,11 @@ def main(args):
             # error
             print(hex(addr), desc)
             assert False
+
+    """ Add a relocated address """
+    def addaddr(addr, desc):
+        dest = wordat(addr)
+        add("W", addr, "[$%4X] %s" % (dest - BASE + 0xC000, desc))
 
     def addjob(kind, addr):
         if not (kind, addr) in jobs:
@@ -62,7 +132,7 @@ def main(args):
           addr += 1
         return c + 1
 
-    def decode_nibble_rle(base, typename, names):
+    def decode_nibble_rle(base, jobname, typename, names):
         runlength = 0
         lasttype = -1
         basep = base
@@ -82,15 +152,18 @@ def main(args):
                         add("B", commentaddr, "<Esc> Loop")
                     else:
                         add("B", commentaddr, "<Esc> Jump")
-                    add("W", commentaddr + 2, "Target")
+                        addjob(jobname, loopdest)
+                    addaddr(commentaddr + 2, "Target")
                 elif b == 1: # Fork End
                     add("B", commentaddr, "<Esc> Fork End")
                 elif b == 2: # Split
                     leftdest  = wordat(basep + 0)
                     rightdest = wordat(basep + 2)
                     add("B", commentaddr, "<Esc> Split")
-                    add("W", commentaddr + 2, "Left target")
-                    add("W", commentaddr + 4, "Right target")
+                    addaddr(commentaddr + 2, "Left target")
+                    addaddr(commentaddr + 4, "Right target")
+                    addjob(jobname, leftdest)
+                    addjob(jobname, rightdest)
                 else:
                     assert False
                 return
@@ -105,8 +178,8 @@ def main(args):
                     commentaddr = basep - 1
                     runlength = count
                     lasttype = type_
-        
-    def decode_count_rle(base, typename, names):
+
+    def decode_count_rle(base, jobname, typename, names):
         runlength = 0
         lasttype = -1
         basep = base
@@ -126,15 +199,18 @@ def main(args):
                         add("B", commentaddr, "<Esc> Loop")
                     else:
                         add("B", commentaddr, "<Esc> Jump")
-                    add("W", commentaddr + 2, "Target")
+                        addjob(jobname, loopdest)
+                    addaddr(commentaddr + 2, "Target")
                 elif b == 1: # Fork End
                     add("B", commentaddr, "<Esc> Fork End")
                 elif b == 2: # Split
                     leftdest  = wordat(basep + 0)
                     rightdest = wordat(basep + 2)
                     add("B", commentaddr, "<Esc> Split")
-                    add("W", commentaddr + 2, "Left target")
-                    add("W", commentaddr + 4, "Right target")
+                    addaddr(commentaddr + 2, "Left target")
+                    addaddr(commentaddr + 4, "Right target")
+                    addjob(jobname, leftdest)
+                    addjob(jobname, rightdest)
                 else:
                     assert False
                 return
@@ -151,7 +227,7 @@ def main(args):
                     runlength = count
                     lasttype = type_
 
-    def decode_hazards(base, typename, names):
+    def decode_hazards(base, jobname, typename, names):
         count = 0
         basep = base
         commentaddr = basep
@@ -170,15 +246,18 @@ def main(args):
                         add("B", commentaddr, "<Esc> Loop")
                     else:
                         add("B", commentaddr, "<Esc> Jump")
-                    add("W", commentaddr + 2, "Target")
+                        addjob(jobname, loopdest)
+                    addaddr(commentaddr + 2, "Target")
                 elif b == 1: # Fork End
                     add("B", commentaddr, "<Esc> Fork End")
                 elif b == 2: # Split
                     leftdest  = wordat(basep + 0)
                     rightdest = wordat(basep + 2)
                     add("B", commentaddr, "<Esc> Split")
-                    add("W", commentaddr + 2, "Left target")
-                    add("W", commentaddr + 4, "Right target")
+                    addaddr(commentaddr + 2, "Left target")
+                    addaddr(commentaddr + 4, "Right target")
+                    addjob(jobname, leftdest)
+                    addjob(jobname, rightdest)
                 elif b == 3: # TBD Stop Spawning Barriers?
                     add("B", commentaddr, "Stop Spawning Barriers 3?")
                 elif b == 6: # TBD Stop Spawning Barriers?
@@ -224,7 +303,7 @@ def main(args):
         elif o in ("-b", "--base"):
             ORIGBASE = eval(a)
         else:
-            assert False, "unhandled option "+o
+            assert False, "unhandled option " + o
 
     if STAGE < 0 or ORIGBASE < 0:
         usage()
@@ -240,10 +319,10 @@ def main(args):
         ram = file.read()
 
     # check length
+    if len(ram) != 8192:
+        usage()
 
-    # add funcs for reading its bytes (assuming it lives at $5C00)
-
-    # insert some root entries in the job queue
+    # insert the root entries in the job queue
     jobs.append(("horizon_graphic", 0x5C00))
     jobs.append(("per_stage_data", 0x5CF0))
     jobs.append(("table_of_lods", 0x5D0C))
@@ -260,56 +339,78 @@ def main(args):
 
             case "per_stage_data":
                 add("b", addr, "Per-stage data")
-                add("W", addr + 0, "Address of PERP's mugshot attributes")
-                add("W", addr + 2, "Address of PERP's mugshot bitmap")
-                add("W", addr + 4, "Screen attributes used for the ground colour (a pair of matching bytes)")
-                add("W", addr + 6, "Address of table of LODs for tumbleweeds, barriers.")
-                add("W", addr + 8, "points to objects?")
-                add("W", addr + 10, "points to objects?")
-                add("W", addr + 12, "points to objects?")
-                add("W", addr + 14, "Address of turn sign arg and handler address")
-                add("W", addr + 16, "Address of graphics entry 10")
-                add("W", addr + 18, "Address of graphics entry 12")
-                add("W", addr + 20, "Address of Nancy's perp description")
-                add("W", addr + 22, "Address of arrest messages")
-                add("W", addr + 24, "Helicopter related 1")
-                add("W", addr + 26, "Helicopter related 2")
-                
+                addaddr(addr + 0, "Address of perp's mugshot attributes")
+                addaddr(addr + 2, "Address of perp's mugshot bitmap")
+                addaddr(addr + 4, "Screen attributes used for the ground colour (a pair of matching bytes)")
+                addaddr(addr + 6, "Address of table of LODs for tumbleweeds, barriers.")
+                addaddr(addr + 8, "(points at a handler address)")
+                addaddr(addr + 10, "Address of right hand graphics entry/entries (-7 bytes)")
+                addaddr(addr + 12, "(points at a handler address)")
+                addaddr(addr + 14, "(points at a handler address)")
+                addaddr(addr + 16, "Address of left hand graphics entry/entries (-7 bytes)")
+                addaddr(addr + 18, "(points at a handler address)")
+                addaddr(addr + 20, "Address of Nancy's perp description")
+                addaddr(addr + 22, "Address of arrest messages")
+                addaddr(addr + 24, "Helicopter related 1")
+                addaddr(addr + 26, "Helicopter related 2")
+
                 addjob("hittable_objects", wordat(addr + 6))
+                addjob("graphics_defs",    wordat(addr + 10) + 7)
+                addjob("graphics_defs",    wordat(addr + 16) + 7)
                 addjob("nancy_perp_desc",  wordat(addr + 20))
                 addjob("arrest_messages",  wordat(addr + 22))
 
+            case "graphics_defs":
+                add("b", addr, "Graphic definition")
+                for def_addr in range(addr + 0, addr + 7*7, 7): # seems to be 7 per set
+                    add("N", def_addr + 0, "Definition")
+                    add("B", def_addr + 0, "Hit coord max/min (R/L)")
+                    add("B", def_addr + 1, "Hit coord min/max (R/L)")
+                    add("B", def_addr + 2, "?how far to push hero car away if hit")
+                    add("W", def_addr + 3, "Argument for routine passed in #REGde")
+
+                    rout = wordat(def_addr + 5)
+                    if   rout == 0x9052: routname = "draw_overhead"
+                    elif rout == 0x916C: routname = "draw_stretchy_object_left"
+                    elif rout == 0x9171: routname = "draw_stretchy_object_right"
+                    elif rout == 0x924D: routname = "draw_tunnel_light_left"
+                    elif rout == 0x9252: routname = "draw_tunnel_light_right"
+                    else:                routname = "TBD"
+
+                    add("W", def_addr + 5, "Address of routine %s" % routname)
+
             case "table_of_lods":
                 add("w", addr, "Table of addresses of LODs")
-                add("W", addr + 0, "Address of LOD of stone/dust?")
-                add("W", addr + 2, "Address of LOD of stone/dust?")
-                add("W", addr + 4, "Address of LOD of car (perp's car)")
-                add("W", addr + 6, "Address of LOD of lambo?")
-                add("W", addr + 8, "Address of LOD of truck?")
-                add("W", addr + 10, "Address of LOD of lambo again?")
-                add("W", addr + 12, "Address of LOD of car (generic car)?")
+                addaddr(addr + 0, "Address of LOD of stone/dust?")
+                addaddr(addr + 2, "Address of LOD of stone/dust?")
+                addaddr(addr + 4, "Address of LOD of car (the perp's car)")
+                addaddr(addr + 6, "Address of LOD of car (a Lambo in S1)")
+                addaddr(addr + 8, "Address of LOD of car (a truck in S1)")
+                addaddr(addr + 10, "Address of LOD of car (a Lambo in S1)")
+                addaddr(addr + 12, "Address of LOD of car (a generic car in S1)")
 
                 for lod_addr in range(addr + 0, addr + 14, 2):
                     lod = wordat(lod_addr)
                     if lod > 0:
                         addjob("lod", lod)
-            
+
             case "difficulty":
                 add("b", addr, "Per-stage difficulty settings")
                 add("B", addr + 0, "How often cars spawn. Lower values spawn cars more often.")
-                add("B", addr + 1, "smash related")
-                add("B", addr + 2, "smash related")
+                add("B", addr + 1, "Smash related parameter")
+                add("B", addr + 2, "Smash related parameter")
 
             case "setup_data":
                 add("w", addr, "Per-stage setup data")
                 add("W", addr + 0, "road_pos")
-                add("W", addr + 2, "-> Start stretch, curvature")  # to add to jobs
-                add("W", addr + 4, "-> Start stretch, height")  # to add to jobs
-                add("W", addr + 6, "-> Start stretch, lanes")  # to add to jobs
-                add("W", addr + 8, "-> Start stretch, right-side objects")  # to add to jobs
-                add("W", addr + 10, "-> Start stretch, left-side objects")  # to add to jobs
-                add("W", addr + 12, "-> Start stretch, hazards")  # to add to jobs
+                addaddr(addr + 2, "Address of start stretch, curvature")
+                addaddr(addr + 4, "Address of start stretch, height")
+                addaddr(addr + 6, "Address of start stretch, lanes")
+                addaddr(addr + 8, "Address of start stretch, right-side objects")
+                addaddr(addr + 10, "Address of start stretch, left-side objects")
+                addaddr(addr + 12, "Address of start stretch, hazards")
 
+                # +1 since these map data pointers point a byte earlier than the data
                 addjob("map_curvature", wordat(addr +  2) + 1)
                 addjob("map_height",    wordat(addr +  4) + 1)
                 addjob("map_lanes",     wordat(addr +  6) + 1)
@@ -320,12 +421,12 @@ def main(args):
             case "attract_data":
                 add("w", addr, "Per-stage attract mode data")
                 add("W", addr + 0, "road_pos")
-                add("W", addr + 2, "-> Loop section, curvature")  # to add to jobs
-                add("W", addr + 4, "-> Loop section, height")  # to add to jobs
-                add("W", addr + 6, "-> Loop section, lanes")  # to add to jobs
-                add("W", addr + 8, "-> Loop section, right-side objects")  # to add to jobs
-                add("W", addr + 10, "-> Loop section, left-side objects")  # to add to jobs
-                add("W", addr + 12, "-> Loop section, hazards")  # to add to jobs
+                addaddr(addr + 2, "Address of loop section, curvature")
+                addaddr(addr + 4, "Address of loop section, height")
+                addaddr(addr + 6, "Address of loop section, lanes")
+                addaddr(addr + 8, "Address of loop section, right-side objects")
+                addaddr(addr + 10, "Address of loop section, left-side objects")
+                addaddr(addr + 12, "Address of loop section, hazards")
 
                 addjob("map_curvature", wordat(addr +  2) + 1)
                 addjob("map_height",    wordat(addr +  4) + 1)
@@ -335,18 +436,24 @@ def main(args):
                 addjob("map_hazards",   wordat(addr + 12) + 1)
 
             case "hittable_objects":
-                add("N", addr + 0, "Hittable hazards")
+                add("b", addr, "Hittable hazards")
+                for _ in range(0,2):
+                    add("B", addr + 0, "?id")
+                    addaddr(addr + 1, "Address of LODs")
+                    addjob("lod", wordat(addr + 1))
+                    addr += 3
 
             case "nancy_perp_desc":
                 who = byteat(addr)
-                add("b", addr, "character id, e.g. nancy")
+                add("b", addr, "Nancy's perp description")
+                add("B", addr, "Character identifier (0/1/2/3 = Pilot/Nancy/Raymond/Tony)")
                 addr += 1
                 while 1:
                     desc = wordat(addr)
                     if desc & 0xFF == 0xFE:  # unclear
-                        add("b", addr, "terminator?")
+                        add("B", addr, "terminator?")
                         break
-                    add("w", addr, "perp desc ptr")
+                    addaddr(addr, "Perp description pointer")
                     addjob("string", wordat(addr))
                     addr += 2
                 # TODO final pointer always random choice?
@@ -356,19 +463,24 @@ def main(args):
                 add("T", addr, "\"%s\"" % decodedstring)
 
             case "arrest_messages":
-                add("b", addr, "frame delay until first message?")
+                add("b", addr, "Arrest messages")
+                add("B", addr, "?frame delay until first message")
                 addr += 1
-                for _ in range(1,4):
-                    add("B", addr + 0, "frame delay until next message?")
-                    add("B", addr + 1, "flags")
-                    add("B", addr + 2, "attribute")
-                    add("W", addr + 3, "back buffer addr")
-                    add("W", addr + 5, "attribute addr")
-                    addr += 7
-                    addjob("string", addr)
-                    addr += topbitstrlen(addr)
-                add("B", addr, "frame delay until next message?")
-                addr += 1
+                for _ in range(1,999):
+                    flags = byteat(addr + 1)
+                    if flags > 0:
+                        add("B", addr + 0, "?frame delay until next message")
+                        add("B", addr + 1, "Flags")
+                        add("B", addr + 2, "Attribute")
+                        add("W", addr + 3, "Back buffer address")
+                        add("W", addr + 5, "Attribute address")
+                        addr += 7
+                        addjob("string", addr)
+                        addr += topbitstrlen(addr)
+                    else:
+                        add("B", addr + 0, "?frame delay until next message")
+                        add("B", addr + 1, "Stop")
+                        break
 
             case "map_curvature":
                 add("b", addr, "Map curvature data")
@@ -388,7 +500,7 @@ def main(args):
                             13: "Curve 13 XXX",
                             14: "Curve 14 XXX",
                             15: "Curve 15 XXX"}
-                decode_nibble_rle(addr, "curvature", curvemap)
+                decode_nibble_rle(addr, job, "curvature", curvemap)
 
             case "map_height":
                 add("b", addr, "Map height data")
@@ -408,47 +520,15 @@ def main(args):
                              13: "Going Down 5",
                              14: "Going Down 6 XXX",
                              15: "Going Down 7"}
-                decode_nibble_rle(addr, "height", heightmap)
+                decode_nibble_rle(addr, job, "height", heightmap)
 
             case "map_rightobjs":
                 add("b", addr, "Map right object data")
-                omap = {0: "Nothing",
-                        1: "Tunnel Light",
-                        2: "Unknown (2)",
-                        3: "Short Pole",
-                        4: "Tree",
-                        5: "Bush",
-                        6: "Street Lamp",
-                        7: "Telegraph Pole",
-                        8: "Turn Sign, Pointing Left",
-                        9: "Turn Sign, Pointing Right",
-                        10: "Unknown (10)",
-                        11: "Unknown (11)",
-                        12: "Unknown (12)",
-                        13: "Unknown (13)",
-                        14: "Unknown (14)",
-                        15: "Unknown (15)"}
-                decode_nibble_rle(addr, "right objects", omap)
+                decode_nibble_rle(addr, job, "right objects", OBJNAME[STAGE])
 
             case "map_leftobjs":
                 add("b", addr, "Map left object data")
-                omap = {0: "Nothing",
-                        1: "Tunnel Light",
-                        2: "Unknown (2)",
-                        3: "Short Pole",
-                        4: "Tree",
-                        5: "Bush",
-                        6: "Street Lamp",
-                        7: "Telegraph Pole",
-                        8: "Turn Sign, Pointing Left",
-                        9: "Turn Sign, Pointing Right",
-                        10: "Unknown (10)",
-                        11: "Unknown (11)",
-                        12: "Unknown (12)",
-                        13: "Unknown (13)",
-                        14: "Unknown (14)",
-                        15: "Unknown (15)"}
-                decode_nibble_rle(addr, "left objects", omap)
+                decode_nibble_rle(addr, job, "left objects", OBJNAME[STAGE])
 
             case "map_lanes":
                 add("b", addr, "Map lanes data")
@@ -479,12 +559,12 @@ def main(args):
                             0xC1: r'4 Lanes dirt track   [||||] {C1}',
                             0xC2: r'3 Lanes dirt track R  [|||] {C2}', # Poke
                             0xC3: r'2 Lanes dirt track R   [||] {C3}'} # Poke (stones on verge)
-                decode_count_rle(addr, "lanes", lanesmap)
+                decode_count_rle(addr, job, "lanes", lanesmap)
 
             case "map_hazards":
                 add("b", addr, "Map hazards data")
                 hmap = {0x00: "xxx"}
-                decode_hazards(addr, "hazards", hmap)
+                decode_hazards(addr, job, "hazards", hmap)
 
             case "lod":
                 for _ in range(0,6):
@@ -492,18 +572,24 @@ def main(args):
                     add("B", addr + 0, "Width (bytes)")
                     add("B", addr + 1, "Flags")
                     add("B", addr + 2, "Height (pixels)")
-                    add("W", addr + 3, "Bitmap address")
-                    add("W", addr + 5, "Pre-shifted bitmap address")
+                    addaddr(addr + 3, "Bitmap address")
+                    addaddr(addr + 5, "Pre-shifted bitmap address")
 
                     widthbytes    = byteat(addr + 0)
+                    flags         = byteat(addr + 1)
                     height        = byteat(addr + 2)
                     bitmap        = wordat(addr + 3)
                     shiftedbitmap = wordat(addr + 5)
                     nbytes        = widthbytes * height
 
-                    add("B", bitmap, "Bitmap data %d bytes x %d" % (widthbytes, height), nbytes, widthbytes)
+                    masked = ""
+                    if flags & 1:
+                        nbytes *= 2
+                        masked = "(masked) "
+
+                    add("B", bitmap, "Bitmap data %s%d bytes x %d" % (masked, widthbytes, height), nbytes, widthbytes)
                     if bitmap != shiftedbitmap:
-                        add("B", shiftedbitmap, "Pre-shifted bitmap data %d bytes x %d" % (widthbytes, height), nbytes, widthbytes)
+                        add("B", shiftedbitmap, "Pre-shifted bitmap data %s%d bytes x %d" % (masked, widthbytes, height), nbytes, widthbytes)
 
                     addr += 7
 
