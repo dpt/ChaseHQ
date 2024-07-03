@@ -4,18 +4,17 @@
 #
 # Chase H.Q. data decoder
 #
+# by dpt, June 2024
+#
 
 # Create binary using:
 # skool2bin.py ChaseHQ-128K-bank-1.skool -S 49152 -E 57344
 #
 
-# TODO
-# - per-stage object names
-
-OBJNAME = [
+OBJECT_NAMES = [
         [ ],
         [
-            # STAGE 1
+            # Stage 1
             "(nothing)",
             "TUNNEL_LIGHT",
             "(object 2 - unused)",
@@ -28,7 +27,7 @@ OBJNAME = [
             "TURN_SIGN_POINTING_RIGHT",
         ],
         [
-            # STAGE 2
+            # Stage 2
             "(nothing)",
             "TUNNEL_LIGHT",
             "(object 2 - unused)",
@@ -39,7 +38,7 @@ OBJNAME = [
             "DOUBLE_STREET_LAMP"
         ],
         [
-            # STAGE 3
+            # Stage 3
             "(nothing)",
             "TUNNEL_LIGHT",
             "OVERHEAD_BRIDGE",
@@ -49,7 +48,7 @@ OBJNAME = [
             "TELEGRAPH_POLE"
         ],
         [
-            # STAGE 4
+            # Stage 4
             "(nothing)",
             "TUNNEL_LIGHT",
             "(object 2 - unused)",
@@ -62,7 +61,7 @@ OBJNAME = [
             "TURN_SIGN_POINTING_RIGHT"
         ],
         [
-            # STAGE 5
+            # Stage 5
             "(nothing)",
             "TUNNEL_LIGHT",
             "OVERHEAD_BRIDGE",
@@ -103,7 +102,7 @@ def main(args):
     """ Add a relocated address """
     def addaddr(addr, desc):
         dest = wordat(addr)
-        add("W", addr, "[$%4X] %s" % (dest - BASE + 0xC000, desc))
+        add("W", addr, "[$%4X] %s" % (dest - BASE + ORIGBASE, desc))
 
     def addjob(kind, addr):
         if not (kind, addr) in jobs:
@@ -258,28 +257,51 @@ def main(args):
                     addaddr(commentaddr + 4, "Right target")
                     addjob(jobname, leftdest)
                     addjob(jobname, rightdest)
-                elif b == 3: # TBD Stop Spawning Barriers?
-                    add("B", commentaddr, "Stop Spawning Barriers 3?")
-                elif b == 6: # TBD Stop Spawning Barriers?
-                    add("B", commentaddr, "Stop Spawning Barriers 6?")
-                elif b == 7: # Start Spawning Barriers Left
-                    add("B", commentaddr, "Start Spawning Barriers Left")
-                elif b == 8: # Start Spawning Barriers Right
-                    add("B", commentaddr, "Start Spawning Barriers Right")
-                elif b == 9: # Start Spawning Two Barriers
-                    add("B", commentaddr, "Start Spawning Two Barriers")
-                elif b == 10: # Set Floating Arrow Off
+
+                # 3..9 COMMAND
+
+                elif b == 3:
+                    add("B", commentaddr, "Stop Spawning Hazards")
+                elif b == 4: # Used on Stages 2, 3 and 4
+                    add("B", commentaddr, "Start Spawning HAZARD_1 Left")
+                elif b == 5: # Used on Stages 2 and 4
+                    add("B", commentaddr, "Start Spawning HAZARD_1 Right")
+                elif b == 6:
+                    add("B", commentaddr, "Start Spawning HAZARD_1 Both Sides")
+                elif b == 7:
+                    add("B", commentaddr, "Start Spawning HAZARD_2 Left")
+                elif b == 8:
+                    add("B", commentaddr, "Start Spawning HAZARD_2 Right")
+                elif b == 9:
+                    add("B", commentaddr, "Start Spawning HAZARD_2 Both Sides")
+
+                # ARROW COMMANDS 10..12
+
+                elif b == 10:
                     add("B", commentaddr, "Set Floating Arrow Off")
-                elif b == 11: # Set Floating Arrow to Left
+                elif b == 11:
                     add("B", commentaddr, "Set Floating Arrow to Left")
-                elif b == 12: # Set Floating Arrow to Right
+                elif b == 12:
                     add("B", commentaddr, "Set Floating Arrow to Right")
-                elif b == 13: # Enable Car Spawning
+
+                # SPAWNING COMMAND 13..14
+
+                elif b == 13:
                     add("B", commentaddr, "Enable Car Spawning")
-                elif b == 14: # Disable Car Spawning
+                elif b == 14:
                     add("B", commentaddr, "Disable Car Spawning")
+
+                # HELICOPTER CONTROL 15+
+
+                elif b == 15: # Used on Stages 2 and 4
+                    add("B", commentaddr, "Stop helicopter")
+                # 16 not used
+                elif b == 17: # Used on Stage 2 only
+                    add("B", commentaddr, "Start helicopter (pilot says turn left)")
+                elif b == 18: # Used on Stage 4 only
+                    add("B", commentaddr, "Start helicopter (pilot says turn right)")
                 else:
-                    add("B", commentaddr, "Unknown command %X" % (b))
+                    add("B", commentaddr, "Unknown command $%X" % (b))
                 if b <= 2:
                     return
                 commentaddr = basep
@@ -288,6 +310,14 @@ def main(args):
                 add("B", commentaddr, "Wait for %d units" % (count))
                 commentaddr = basep
                 count = 0
+
+    def routinename(addr):
+        if   addr == 0x9052: return "draw_overhead"
+        elif addr == 0x916C: return "draw_stretchy_object_left"
+        elif addr == 0x9171: return "draw_stretchy_object_right"
+        elif addr == 0x924D: return "draw_tunnel_light_left"
+        elif addr == 0x9252: return "draw_tunnel_light_right"
+        else:                return "(null)"
 
     try:
         opts,files = getopt.getopt(args, 's:b:', ['stage=', 'base='])
@@ -354,30 +384,43 @@ def main(args):
                 addaddr(addr + 24, "Helicopter related 1")
                 addaddr(addr + 26, "Helicopter related 2")
 
-                addjob("hittable_objects", wordat(addr + 6))
-                addjob("graphics_defs",    wordat(addr + 10) + 7)
-                addjob("graphics_defs",    wordat(addr + 16) + 7)
-                addjob("nancy_perp_desc",  wordat(addr + 20))
-                addjob("arrest_messages",  wordat(addr + 22))
+                addjob("hazard_graphics",       wordat(addr + 6))
+                addjob("object_graphics_right", wordat(addr + 10) + 7)
+                addjob("object_graphics_left",  wordat(addr + 16) + 7)
+                addjob("nancy_perp_desc",       wordat(addr + 20))
+                addjob("arrest_messages",       wordat(addr + 22))
 
-            case "graphics_defs":
-                add("b", addr, "Graphic definition")
-                for def_addr in range(addr + 0, addr + 7*7, 7): # seems to be 7 per set
-                    add("N", def_addr + 0, "Definition")
-                    add("B", def_addr + 0, "Hit coord max/min (R/L)")
-                    add("B", def_addr + 1, "Hit coord min/max (R/L)")
+            case "object_graphics_right":
+                objs = OBJECT_NAMES[STAGE]
+                add("b", addr, "Object graphic definitions (right)")
+                i = 0
+                for def_addr in range(addr + 0, addr + (len(objs) - 1) * 7, 7):
+                    add("N", def_addr + 0, "Graphic definition for object %d - %s" % (i + 1, objs[i + 1]))
+                    add("B", def_addr + 0, "Hit coord max")
+                    add("B", def_addr + 1, "Hit coord min")
                     add("B", def_addr + 2, "?how far to push hero car away if hit")
                     add("W", def_addr + 3, "Argument for routine passed in #REGde")
 
-                    rout = wordat(def_addr + 5)
-                    if   rout == 0x9052: routname = "draw_overhead"
-                    elif rout == 0x916C: routname = "draw_stretchy_object_left"
-                    elif rout == 0x9171: routname = "draw_stretchy_object_right"
-                    elif rout == 0x924D: routname = "draw_tunnel_light_left"
-                    elif rout == 0x9252: routname = "draw_tunnel_light_right"
-                    else:                routname = "TBD"
+                    rname = routinename(wordat(def_addr + 5))
+                    add("W", def_addr + 5, "Address of routine %s" % rname)
 
-                    add("W", def_addr + 5, "Address of routine %s" % routname)
+                    i += 1
+
+            case "object_graphics_left":
+                objs = OBJECT_NAMES[STAGE]
+                add("b", addr, "Object graphic definitions (left)")
+                i = 0
+                for def_addr in range(addr + 0, addr + (len(objs) - 1) * 7, 7):
+                    add("N", def_addr + 0, "Graphic definition for object %d - %s" % (i + 1, objs[i + 1]))
+                    add("B", def_addr + 0, "Hit coord min")
+                    add("B", def_addr + 1, "Hit coord max")
+                    add("B", def_addr + 2, "?how far to push hero car away if hit")
+                    add("W", def_addr + 3, "Argument for routine passed in #REGde")
+
+                    rname = routinename(wordat(def_addr + 5))
+                    add("W", def_addr + 5, "Address of routine %s" % rname)
+
+                    i += 1
 
             case "table_of_lods":
                 add("w", addr, "Table of addresses of LODs")
@@ -435,7 +478,7 @@ def main(args):
                 addjob("map_leftobjs",  wordat(addr + 10) + 1)
                 addjob("map_hazards",   wordat(addr + 12) + 1)
 
-            case "hittable_objects":
+            case "hazard_graphics":
                 add("b", addr, "Hittable hazards")
                 for _ in range(0,2):
                     add("B", addr + 0, "?id")
@@ -449,14 +492,15 @@ def main(args):
                 add("B", addr, "Character identifier (0/1/2/3 = Pilot/Nancy/Raymond/Tony)")
                 addr += 1
                 while 1:
-                    desc = wordat(addr)
-                    if desc & 0xFF == 0xFE:  # unclear
-                        add("B", addr, "terminator?")
+                    byte = byteat(addr)
+                    if byte == 0xFE: # jump
+                        # TODO final pointer always random choice?
+                        add("B", addr, "Escape: Jump")
+                        add("W", addr + 1, "Address of next message (always $98BD)")
                         break
                     addaddr(addr, "Perp description pointer")
                     addjob("string", wordat(addr))
                     addr += 2
-                # TODO final pointer always random choice?
 
             case "string": # top bit terminated
                 decodedstring = topbitstring(addr)
@@ -524,11 +568,11 @@ def main(args):
 
             case "map_rightobjs":
                 add("b", addr, "Map right object data")
-                decode_nibble_rle(addr, job, "right objects", OBJNAME[STAGE])
+                decode_nibble_rle(addr, job, "right objects", OBJECT_NAMES[STAGE])
 
             case "map_leftobjs":
                 add("b", addr, "Map left object data")
-                decode_nibble_rle(addr, job, "left objects", OBJNAME[STAGE])
+                decode_nibble_rle(addr, job, "left objects", OBJECT_NAMES[STAGE])
 
             case "map_lanes":
                 add("b", addr, "Map lanes data")
