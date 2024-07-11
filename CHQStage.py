@@ -95,14 +95,16 @@ def main(args):
                 prefix = ""
             locations.append((blocktype, addr, prefix + desc, nbytes, widthbytes))
         else:
-            # error
-            print(hex(addr), desc)
-            assert False
+            print("warning: $%04X is not in range" % addr)
 
     """ Add a relocated address """
     def addaddr(addr, desc):
-        dest = wordat(addr)
-        add("W", addr, "[$%4X] %s" % (dest - BASE + ORIGBASE, desc))
+        if BASE <= addr < BASE + LEN:
+            dest = wordat(addr)
+            relocaddr = "$%04X" % (dest - BASE + ORIGBASE)
+            add("W", addr, "[%s] %s" % (relocaddr, desc))
+        else:
+            print("warning: $%04X is not in range" % addr)
 
     def addjob(kind, addr):
         if not (kind, addr) in jobs:
@@ -353,12 +355,12 @@ def main(args):
         usage()
 
     # insert the root entries in the job queue
-    jobs.append(("horizon_graphic", 0x5C00))
-    jobs.append(("per_stage_data", 0x5CF0))
-    jobs.append(("table_of_lods", 0x5D0C))
-    jobs.append(("difficulty", 0x5D1A))
-    jobs.append(("setup_data", 0x5D1D))
-    jobs.append(("attract_data", 0x5D2B))
+    addjob("horizon_graphic", 0x5C00)
+    addjob("per_stage_data", 0x5CF0)
+    addjob("table_of_lods", 0x5D0C)
+    addjob("difficulty", 0x5D1A)
+    addjob("setup_data", 0x5D1D)
+    addjob("attract_data", 0x5D2B)
 
     # iterate over job queue
     while jobs:
@@ -369,8 +371,8 @@ def main(args):
 
             case "per_stage_data":
                 add("b", addr, "Per-stage data")
-                addaddr(addr + 0, "Address of perp's mugshot attributes")
-                addaddr(addr + 2, "Address of perp's mugshot bitmap")
+                addaddr(addr + 0, "Address of perp's mugshot (attributes)")
+                addaddr(addr + 2, "Address of pilot's mugshot (bitmap)")
                 addaddr(addr + 4, "Screen attributes used for the ground colour (a pair of matching bytes)")
                 addaddr(addr + 6, "Address of table of LODs for tumbleweeds, barriers.")
                 addaddr(addr + 8, "(points at a handler address)")
@@ -384,11 +386,27 @@ def main(args):
                 addaddr(addr + 24, "Helicopter related 1")
                 addaddr(addr + 26, "Helicopter related 2")
 
+                addjob("mugshot_perp",          wordat(addr + 0))
+                addjob("mugshot_pilot",         wordat(addr + 2))
                 addjob("hazard_graphics",       wordat(addr + 6))
                 addjob("object_graphics_right", wordat(addr + 10) + 7)
                 addjob("object_graphics_left",  wordat(addr + 16) + 7)
                 addjob("nancy_perp_desc",       wordat(addr + 20))
                 addjob("arrest_messages",       wordat(addr + 22))
+                addjob("helicopter_data_1",     wordat(addr + 24))
+                addjob("helicopter_data_2",     wordat(addr + 26))
+
+            case "mugshot_perp":
+                realbase = addr - 4*40
+                add("b", realbase, "Perp's mugshot")
+                add("B", realbase, "Bitmap data for the perp's mugshot (32x40). Stored top-down.", 4*40, 4)
+                add("B", addr, "Attribute data for the perp's mugshot (4x5). Stored top-down.", 4*5, 4)
+
+            case "mugshot_pilot":
+                if addr != 0:
+                    add("b", addr, "Pilot's mugshot")
+                    add("B", addr, "Bitmap data for the pilot's mugshot (32x40). Stored top-down.", 4*40, 4)
+                    add("B", addr + 4*40, "Attribute data for the pilot's mugshot (4x5). Stored top-down.", 4*5, 4)
 
             case "object_graphics_right":
                 objs = OBJECT_NAMES[STAGE]
@@ -434,14 +452,14 @@ def main(args):
 
                 for lod_addr in range(addr + 0, addr + 14, 2):
                     lod = wordat(lod_addr)
-                    if lod > 0:
-                        addjob("lod", lod)
+                    if lod != 0:
+                        addjob("lod_table", lod)
 
             case "difficulty":
                 add("b", addr, "Per-stage difficulty settings")
                 add("B", addr + 0, "How often cars spawn. Lower values spawn cars more often.")
-                add("B", addr + 1, "Smash related parameter")
-                add("B", addr + 2, "Smash related parameter")
+                add("B", addr + 1, "Smash config parameter TBD")
+                add("B", addr + 2, "Smash config parameter TBD")
 
             case "setup_data":
                 add("w", addr, "Per-stage setup data")
@@ -453,7 +471,7 @@ def main(args):
                 addaddr(addr + 10, "Address of start stretch, left-side objects")
                 addaddr(addr + 12, "Address of start stretch, hazards")
 
-                # +1 since these map data pointers point a byte earlier than the data
+                # We +1 since these map data pointers point a byte earlier than the data
                 addjob("map_curvature", wordat(addr +  2) + 1)
                 addjob("map_height",    wordat(addr +  4) + 1)
                 addjob("map_lanes",     wordat(addr +  6) + 1)
@@ -483,7 +501,7 @@ def main(args):
                 for _ in range(0,2):
                     add("B", addr + 0, "?id")
                     addaddr(addr + 1, "Address of LODs")
-                    addjob("lod", wordat(addr + 1))
+                    addjob("lod_table", wordat(addr + 1))
                     addr += 3
 
             case "nancy_perp_desc":
@@ -512,7 +530,7 @@ def main(args):
                 addr += 1
                 for _ in range(1,999):
                     flags = byteat(addr + 1)
-                    if flags > 0:
+                    if flags != 0:
                         add("B", addr + 0, "?frame delay until next message")
                         add("B", addr + 1, "Flags")
                         add("B", addr + 2, "Attribute")
@@ -525,6 +543,24 @@ def main(args):
                         add("B", addr + 0, "?frame delay until next message")
                         add("B", addr + 1, "Stop")
                         break
+
+            case "helicopter_data_1":
+                if addr != 0:
+                    add("b", addr, "Helicopter data 1")
+                    for _ in range(0,6):
+                        w = wordat(addr)
+                        add("B", w, "pointed to by helicopter data 1")
+                        addjob("lod", w + 2) # possibly not a lod?
+                        addr += 2
+
+            case "helicopter_data_2":
+                if addr != 0x000C:
+                    add("b", addr, "Helicopter data 2")
+                    for _ in range(0,6):
+                        w = wordat(addr)
+                        add("B", w, "pointed to by helicopter data 2")
+                        addjob("lod", w + 2) # possibly not a lod?
+                        addr += 2
 
             case "map_curvature":
                 add("b", addr, "Map curvature data")
@@ -611,30 +647,33 @@ def main(args):
                 decode_hazards(addr, job, "hazards", hmap)
 
             case "lod":
+                add("N", addr + 0, "LOD")
+                add("B", addr + 0, "Width (bytes)")
+                add("B", addr + 1, "Flags")
+                add("B", addr + 2, "Height (pixels)")
+                addaddr(addr + 3, "Bitmap address")
+                addaddr(addr + 5, "Pre-shifted bitmap address")
+
+                widthbytes    = byteat(addr + 0)
+                flags         = byteat(addr + 1)
+                height        = byteat(addr + 2)
+                bitmap        = wordat(addr + 3)
+                shiftedbitmap = wordat(addr + 5)
+                nbytes        = widthbytes * height
+
+                masked = ""
+                if flags & 1:
+                    nbytes *= 2
+                    masked = "(masked) "
+
+                add("B", bitmap, "Bitmap data %s%d bytes x %d" % (masked, widthbytes, height), nbytes, widthbytes)
+                if bitmap != shiftedbitmap:
+                    add("B", shiftedbitmap, "Pre-shifted bitmap data %s%d bytes x %d" % (masked, widthbytes, height), nbytes, widthbytes)
+
+            case "lod_table":
+                add("N", addr + 0, "LOD table")
                 for _ in range(0,6):
-                    add("N", addr + 0, "LOD")
-                    add("B", addr + 0, "Width (bytes)")
-                    add("B", addr + 1, "Flags")
-                    add("B", addr + 2, "Height (pixels)")
-                    addaddr(addr + 3, "Bitmap address")
-                    addaddr(addr + 5, "Pre-shifted bitmap address")
-
-                    widthbytes    = byteat(addr + 0)
-                    flags         = byteat(addr + 1)
-                    height        = byteat(addr + 2)
-                    bitmap        = wordat(addr + 3)
-                    shiftedbitmap = wordat(addr + 5)
-                    nbytes        = widthbytes * height
-
-                    masked = ""
-                    if flags & 1:
-                        nbytes *= 2
-                        masked = "(masked) "
-
-                    add("B", bitmap, "Bitmap data %s%d bytes x %d" % (masked, widthbytes, height), nbytes, widthbytes)
-                    if bitmap != shiftedbitmap:
-                        add("B", shiftedbitmap, "Pre-shifted bitmap data %s%d bytes x %d" % (masked, widthbytes, height), nbytes, widthbytes)
-
+                    addjob("lod", addr)
                     addr += 7
 
             case _:
@@ -658,7 +697,7 @@ def main(args):
                 widthstr = ",2"
         else:
             widthstr = ",%d" % widthbytes
-        print("%s $%4X%s%s %s" % (blocktype, addr + ORIGBASE - BASE, nbytesstr, widthstr, desc))
+        print("%s $%04X%s%s %s" % (blocktype, addr + ORIGBASE - BASE, nbytesstr, widthstr, desc))
 
 if __name__ == '__main__':
     main(sys.argv[1:])
