@@ -15,7 +15,7 @@ OBJECT_NAMES = [
         [ ],
         [
             # Stage 1
-            "(nothing)",
+            "EMPTY",
             "TUNNEL_LIGHT",
             "(object 2 - unused)",
             "SHORT_POLE",
@@ -28,7 +28,7 @@ OBJECT_NAMES = [
         ],
         [
             # Stage 2
-            "(nothing)",
+            "EMPTY",
             "TUNNEL_LIGHT",
             "(object 2 - unused)",
             "SHORT_POLE",
@@ -39,7 +39,7 @@ OBJECT_NAMES = [
         ],
         [
             # Stage 3
-            "(nothing)",
+            "EMPTY",
             "TUNNEL_LIGHT",
             "OVERHEAD_BRIDGE",
             "SHORT_POLE",
@@ -49,7 +49,7 @@ OBJECT_NAMES = [
         ],
         [
             # Stage 4
-            "(nothing)",
+            "EMPTY",
             "TUNNEL_LIGHT",
             "(object 2 - unused)",
             "SHORT_POLE",
@@ -62,7 +62,7 @@ OBJECT_NAMES = [
         ],
         [
             # Stage 5
-            "(nothing)",
+            "EMPTY",
             "TUNNEL_LIGHT",
             "OVERHEAD_BRIDGE",
             "(object 3 - unused)",
@@ -81,37 +81,47 @@ def usage():
     print('Usage: CHQStage.py --stage STAGE --base BASEADDR LEVELDATA')
     sys.exit(1)
 
+def warn(message):
+    print("warning: " + message, file=sys.stderr)
+
 def main(args):
 
     BASE = 0x5C00  # once relocated
     LEN  = 0x2000  # 8K per level
 
+    """ Is the address valid? (when in-place at 0x5C00) """
+    def validaddr(addr):
+        return addr >= BASE and addr < BASE + LEN
+
+    """ Is the address valid? (when relocated to 0xC000 etc.) """
+    def validrelocaddr(addr):
+        return addr >= ORIGBASE and addr < ORIGBASE + LEN
+
     """ Add a block at 0x5C00+ """
     def add(blocktype, addr, desc, nbytes = -1, widthbytes = -1):
-        if BASE <= addr < BASE + LEN:
+        if validaddr(addr):
             if blocktype.islower():
                 prefix = "[Stage %d] " % (STAGE)
             else:
                 prefix = ""
             locations.append((blocktype, addr, prefix + desc, nbytes, widthbytes))
         else:
-            print("warning: $%04X is not in range" % addr)
+            warn("add: $%04X is not in range [%s]" % (addr, desc))
 
     """ Add a relocated address """
     def addaddr(addr, desc):
-        if BASE <= addr < BASE + LEN:
+        if validaddr(addr):
             dest = wordat(addr)
-            relocaddr = "$%04X" % (dest - BASE + ORIGBASE)
-            add("W", addr, "[%s] %s" % (relocaddr, desc))
+            relocaddr = dest - BASE + ORIGBASE
+            if validrelocaddr(relocaddr):
+                add("W", addr, "[$%04X] %s" % (relocaddr, desc))
+            else:
+                add("W", addr, "[out-of-bounds] %s" % (desc))
         else:
-            print("warning: $%04X is not in range" % addr)
-
-    def addjob(kind, addr):
-        if not (kind, addr) in jobs:
-            jobs.append((kind, addr))
+            warn("addaddr: $%04X is not in range [%s]" % (addr, desc))
 
     def byteat(addr):
-        assert BASE <= addr < BASE + LEN
+        assert validaddr(addr)
         return ram[addr - BASE]
 
     def wordat(addr):
@@ -120,25 +130,50 @@ def main(args):
     def topbitstring(addr):
         s = ""
         while (byteat(addr) < 0x80):
-          s += chr(byteat(addr))
-          addr += 1
+            s += chr(byteat(addr))
+            addr += 1
         s += chr(byteat(addr) - 0x80)
         return s
 
     def topbitstrlen(addr):
         c = 0
         while (byteat(addr) < 0x80):
-          assert c < 100
-          c += 1
-          addr += 1
+            assert c < 100
+            c += 1
+            addr += 1
         return c + 1
 
-    def decode_nibble_rle(base, jobname, typename, names):
+    def decode_nibble_rle(base, jobkind, typename, names):
         runlength = 0
         lasttype = -1
         basep = base
         commentaddr = basep
         while 1:
+            oldbasep = basep
+
+            # Find sequences of alternating pairs
+            run = 2
+            b0 = byteat(basep + 0)
+            b1 = byteat(basep + 1)
+            basep = basep + 2
+            if (b0 & 0xF0) == 0x10 and (b1 & 0xF0) == 0x10:
+                while True:
+                    c0 = byteat(basep + 0)
+                    c1 = byteat(basep + 1)
+                    basep = basep + 2
+                    if (c0,c1) == (b0,b1):
+                        run = run + 2
+                    else:
+                        basep = basep - 2
+                        break
+            if run > 2:
+                add("B", commentaddr, "Alternating (%s, %s) for %d units" % (names[b0 & 0x0F], names[b1 & 0x0F], run))
+                commentaddr = basep
+                lasttype = -1
+                continue
+            else:
+                basep = oldbasep
+
             b = byteat(basep)
             basep = basep + 1
             if b == 0: # Escape
@@ -153,7 +188,7 @@ def main(args):
                         add("B", commentaddr, "<Esc> Loop")
                     else:
                         add("B", commentaddr, "<Esc> Jump")
-                        addjob(jobname, loopdest)
+                        addjob(job(jobkind, loopdest))
                     addaddr(commentaddr + 2, "Target")
                 elif b == 1: # Fork End
                     add("B", commentaddr, "<Esc> Fork End")
@@ -163,8 +198,8 @@ def main(args):
                     add("B", commentaddr, "<Esc> Split")
                     addaddr(commentaddr + 2, "Left target")
                     addaddr(commentaddr + 4, "Right target")
-                    addjob(jobname, leftdest)
-                    addjob(jobname, rightdest)
+                    addjob(job(jobkind, leftdest))
+                    addjob(job(jobkind, rightdest))
                 else:
                     assert False
                 return
@@ -180,7 +215,7 @@ def main(args):
                     runlength = count
                     lasttype = type_
 
-    def decode_count_rle(base, jobname, typename, names):
+    def decode_count_rle(base, jobkind, typename, names):
         runlength = 0
         lasttype = -1
         basep = base
@@ -200,7 +235,7 @@ def main(args):
                         add("B", commentaddr, "<Esc> Loop")
                     else:
                         add("B", commentaddr, "<Esc> Jump")
-                        addjob(jobname, loopdest)
+                        addjob(job(jobkind, loopdest))
                     addaddr(commentaddr + 2, "Target")
                 elif b == 1: # Fork End
                     add("B", commentaddr, "<Esc> Fork End")
@@ -210,8 +245,8 @@ def main(args):
                     add("B", commentaddr, "<Esc> Split")
                     addaddr(commentaddr + 2, "Left target")
                     addaddr(commentaddr + 4, "Right target")
-                    addjob(jobname, leftdest)
-                    addjob(jobname, rightdest)
+                    addjob(job(jobkind, leftdest))
+                    addjob(job(jobkind, rightdest))
                 else:
                     assert False
                 return
@@ -228,7 +263,7 @@ def main(args):
                     runlength = count
                     lasttype = type_
 
-    def decode_hazards(base, jobname, typename, names):
+    def decode_hazards(base, jobkind, typename, names):
         count = 0
         basep = base
         commentaddr = basep
@@ -247,7 +282,7 @@ def main(args):
                         add("B", commentaddr, "<Esc> Loop")
                     else:
                         add("B", commentaddr, "<Esc> Jump")
-                        addjob(jobname, loopdest)
+                        addjob(job(jobkind, loopdest))
                     addaddr(commentaddr + 2, "Target")
                 elif b == 1: # Fork End
                     add("B", commentaddr, "<Esc> Fork End")
@@ -257,8 +292,8 @@ def main(args):
                     add("B", commentaddr, "<Esc> Split")
                     addaddr(commentaddr + 2, "Left target")
                     addaddr(commentaddr + 4, "Right target")
-                    addjob(jobname, leftdest)
-                    addjob(jobname, rightdest)
+                    addjob(job(jobkind, leftdest))
+                    addjob(job(jobkind, rightdest))
 
                 # 3..9 COMMAND
 
@@ -319,7 +354,39 @@ def main(args):
         elif addr == 0x9171: return "draw_stretchy_object_right"
         elif addr == 0x924D: return "draw_tunnel_light_left"
         elif addr == 0x9252: return "draw_tunnel_light_right"
+        elif addr == 0x9278: return "draw_object_left"
+        elif addr == 0x92E1: return "draw_object_right"
         else:                return "(null)"
+
+    def stretchyname(addr):
+        if   addr == 0x7E05: return "stretchy_shortpole"
+        elif addr == 0xE1E9: return "tunnellight"
+        else:                return "(null)"
+
+    class job(object):
+        def __init__(self, kind, addr):
+            self.kind = kind
+            self.addr = addr
+
+        def get_kind(self):
+            return self.kind
+
+        def get_addr(self):
+            return self.addr
+
+    class lod_table_job(job):
+        def __init__(self, nentries, addr):
+            super().__init__("lod_table", addr)
+            self.nentries = nentries
+
+        def get_nentries(self):
+            return self.nentries
+
+    def addjob(job):
+        assert(type(job.kind) == type(""))
+        if not job in jobs:
+            jobs.append(job)
+            # don't jobs.sort()
 
     try:
         opts,files = getopt.getopt(args, 's:b:', ['stage=', 'base='])
@@ -355,17 +422,19 @@ def main(args):
         usage()
 
     # insert the root entries in the job queue
-    addjob("horizon_graphic", 0x5C00)
-    addjob("per_stage_data", 0x5CF0)
-    addjob("table_of_lods", 0x5D0C)
-    addjob("difficulty", 0x5D1A)
-    addjob("setup_data", 0x5D1D)
-    addjob("attract_data", 0x5D2B)
+    addjob(job("horizon_graphic", 0x5C00))
+    addjob(job("per_stage_data", 0x5CF0))
+    addjob(job("table_of_lods", 0x5D0C))
+    addjob(job("difficulty", 0x5D1A))
+    addjob(job("setup_data", 0x5D1D))
+    addjob(job("attract_data", 0x5D2B))
 
     # iterate over job queue
     while jobs:
-        job,addr = jobs.pop(0)
-        match job:
+        curjob = jobs.pop(0)
+        kind = curjob.get_kind()
+        addr = curjob.get_addr()
+        match kind:
             case "horizon_graphic":
                 add("b", addr, "Horizon graphic")
 
@@ -386,15 +455,15 @@ def main(args):
                 addaddr(addr + 24, "Helicopter related 1")
                 addaddr(addr + 26, "Helicopter related 2")
 
-                addjob("mugshot_perp",          wordat(addr + 0))
-                addjob("mugshot_pilot",         wordat(addr + 2))
-                addjob("hazard_graphics",       wordat(addr + 6))
-                addjob("object_graphics_right", wordat(addr + 10) + 7)
-                addjob("object_graphics_left",  wordat(addr + 16) + 7)
-                addjob("nancy_perp_desc",       wordat(addr + 20))
-                addjob("arrest_messages",       wordat(addr + 22))
-                addjob("helicopter_data_1",     wordat(addr + 24))
-                addjob("helicopter_data_2",     wordat(addr + 26))
+                addjob(job("mugshot_perp",          wordat(addr + 0)))
+                addjob(job("mugshot_pilot",         wordat(addr + 2)))
+                addjob(job("hazard_graphics",       wordat(addr + 6)))
+                addjob(job("object_graphics_right", wordat(addr + 10) + 7))
+                addjob(job("object_graphics_left",  wordat(addr + 16) + 7))
+                addjob(job("nancy_perp_desc",       wordat(addr + 20)))
+                addjob(job("arrest_messages",       wordat(addr + 22)))
+                addjob(job("helicopter_data_1",     wordat(addr + 24)))
+                addjob(job("helicopter_data_2",     wordat(addr + 26)))
 
             case "mugshot_perp":
                 realbase = addr - 4*40
@@ -413,14 +482,28 @@ def main(args):
                 add("b", addr, "Object graphic definitions (right)")
                 i = 0
                 for def_addr in range(addr + 0, addr + (len(objs) - 1) * 7, 7):
+                    localgraphic = False
+                    arg = wordat(def_addr + 3)
+                    rname = routinename(wordat(def_addr + 5))
+                    if rname == "draw_stretchy_object_right":
+                        if arg not in [0x7E05]:
+                            addjob(job("stretchy", arg))
+                            localgraphic = True
+                        else:
+                            localgraphic = False
+                    elif rname == "draw_object_right":
+                        addjob(job("draw_object_data", arg))
+                        localgraphic = True
+
                     add("N", def_addr + 0, "Graphic definition for object %d - %s" % (i + 1, objs[i + 1]))
                     add("B", def_addr + 0, "Hit coord max")
                     add("B", def_addr + 1, "Hit coord min")
                     add("B", def_addr + 2, "?how far to push hero car away if hit")
-                    add("W", def_addr + 3, "Argument for routine passed in #REGde")
-
-                    rname = routinename(wordat(def_addr + 5))
-                    add("W", def_addr + 5, "Address of routine %s" % rname)
+                    if localgraphic:
+                        addaddr(def_addr + 3, "Argument for routine passed in #REGde")
+                    else:
+                        add("W", def_addr + 3, "Argument - %s" % stretchyname(arg))
+                    addaddr(def_addr + 5, "Address of routine %s" % rname)
 
                     i += 1
 
@@ -429,21 +512,35 @@ def main(args):
                 add("b", addr, "Object graphic definitions (left)")
                 i = 0
                 for def_addr in range(addr + 0, addr + (len(objs) - 1) * 7, 7):
+                    localgraphic = False
+                    arg = wordat(def_addr + 3)
+                    rname = routinename(wordat(def_addr + 5))
+                    if rname == "draw_stretchy_object_left":
+                        if arg not in [0x7E05]:
+                            addjob(job("stretchy", arg))
+                            localgraphic = True
+                        else:
+                            localgraphic = False
+                    elif rname == "draw_object_left":
+                        addjob(job("draw_object_data", arg))
+                        localgraphic = True
+
                     add("N", def_addr + 0, "Graphic definition for object %d - %s" % (i + 1, objs[i + 1]))
                     add("B", def_addr + 0, "Hit coord min")
                     add("B", def_addr + 1, "Hit coord max")
                     add("B", def_addr + 2, "?how far to push hero car away if hit")
-                    add("W", def_addr + 3, "Argument for routine passed in #REGde")
-
-                    rname = routinename(wordat(def_addr + 5))
-                    add("W", def_addr + 5, "Address of routine %s" % rname)
+                    if localgraphic:
+                        addaddr(def_addr + 3, "Argument for routine passed in #REGde")
+                    else:
+                        add("W", def_addr + 3, "Argument - %s" % stretchyname(arg))
+                    addaddr(def_addr + 5, "Address of routine %s" % rname)
 
                     i += 1
 
             case "table_of_lods":
                 add("w", addr, "Table of addresses of LODs")
-                addaddr(addr + 0, "Address of LOD of stone/dust?")
-                addaddr(addr + 2, "Address of LOD of stone/dust?")
+                addaddr(addr + 0, "Address of LOD of hazard (stone/dust?)")
+                addaddr(addr + 2, "Address of LOD of hazard (stone/dust?)")
                 addaddr(addr + 4, "Address of LOD of car (the perp's car)")
                 addaddr(addr + 6, "Address of LOD of car (a Lambo in S1)")
                 addaddr(addr + 8, "Address of LOD of car (a truck in S1)")
@@ -453,7 +550,7 @@ def main(args):
                 for lod_addr in range(addr + 0, addr + 14, 2):
                     lod = wordat(lod_addr)
                     if lod != 0:
-                        addjob("lod_table", lod)
+                        addjob(lod_table_job(6, lod))
 
             case "difficulty":
                 add("b", addr, "Per-stage difficulty settings")
@@ -472,12 +569,12 @@ def main(args):
                 addaddr(addr + 12, "Address of start stretch, hazards")
 
                 # We +1 since these map data pointers point a byte earlier than the data
-                addjob("map_curvature", wordat(addr +  2) + 1)
-                addjob("map_height",    wordat(addr +  4) + 1)
-                addjob("map_lanes",     wordat(addr +  6) + 1)
-                addjob("map_rightobjs", wordat(addr +  8) + 1)
-                addjob("map_leftobjs",  wordat(addr + 10) + 1)
-                addjob("map_hazards",   wordat(addr + 12) + 1)
+                addjob(job("map_curvature", wordat(addr +  2) + 1))
+                addjob(job("map_height",    wordat(addr +  4) + 1))
+                addjob(job("map_lanes",     wordat(addr +  6) + 1))
+                addjob(job("map_rightobjs", wordat(addr +  8) + 1))
+                addjob(job("map_leftobjs",  wordat(addr + 10) + 1))
+                addjob(job("map_hazards",   wordat(addr + 12) + 1))
 
             case "attract_data":
                 add("w", addr, "Per-stage attract mode data")
@@ -489,19 +586,19 @@ def main(args):
                 addaddr(addr + 10, "Address of loop section, left-side objects")
                 addaddr(addr + 12, "Address of loop section, hazards")
 
-                addjob("map_curvature", wordat(addr +  2) + 1)
-                addjob("map_height",    wordat(addr +  4) + 1)
-                addjob("map_lanes",     wordat(addr +  6) + 1)
-                addjob("map_rightobjs", wordat(addr +  8) + 1)
-                addjob("map_leftobjs",  wordat(addr + 10) + 1)
-                addjob("map_hazards",   wordat(addr + 12) + 1)
+                addjob(job("map_curvature", wordat(addr +  2) + 1))
+                addjob(job("map_height",    wordat(addr +  4) + 1))
+                addjob(job("map_lanes",     wordat(addr +  6) + 1))
+                addjob(job("map_rightobjs", wordat(addr +  8) + 1))
+                addjob(job("map_leftobjs",  wordat(addr + 10) + 1))
+                addjob(job("map_hazards",   wordat(addr + 12) + 1))
 
             case "hazard_graphics":
                 add("b", addr, "Hittable hazards")
                 for _ in range(0,2):
                     add("B", addr + 0, "?id")
                     addaddr(addr + 1, "Address of LODs")
-                    addjob("lod_table", wordat(addr + 1))
+                    addjob(lod_table_job(5, wordat(addr + 1)))  # CHECK
                     addr += 3
 
             case "nancy_perp_desc":
@@ -517,7 +614,7 @@ def main(args):
                         add("W", addr + 1, "Address of next message (always $98BD)")
                         break
                     addaddr(addr, "Perp description pointer")
-                    addjob("string", wordat(addr))
+                    addjob(job("string", wordat(addr)))
                     addr += 2
 
             case "string": # top bit terminated
@@ -537,7 +634,7 @@ def main(args):
                         add("W", addr + 3, "Back buffer address")
                         add("W", addr + 5, "Attribute address")
                         addr += 7
-                        addjob("string", addr)
+                        addjob(job("string", addr))
                         addr += topbitstrlen(addr)
                     else:
                         add("B", addr + 0, "?frame delay until next message")
@@ -547,20 +644,26 @@ def main(args):
             case "helicopter_data_1":
                 if addr != 0:
                     add("b", addr, "Helicopter data 1")
-                    for _ in range(0,6):
+                    for i in range(0,6):
+                        addaddr(addr, "ptr")
                         w = wordat(addr)
-                        add("B", w, "pointed to by helicopter data 1")
-                        addjob("lod", w + 2) # possibly not a lod?
                         addr += 2
+                        add("B", w, "Pointed to by helicopter data 1")
+                        lod = w + 2
+                        if i == 5: lod = w + 1  # bodge to get shadows pointed at
+                        addjob(job("lod", lod))
 
             case "helicopter_data_2":
                 if addr != 0x000C:
                     add("b", addr, "Helicopter data 2")
-                    for _ in range(0,6):
+                    for i in range(0,6):
+                        addaddr(addr, "ptr")
                         w = wordat(addr)
-                        add("B", w, "pointed to by helicopter data 2")
-                        addjob("lod", w + 2) # possibly not a lod?
                         addr += 2
+                        add("B", w, "Pointed to by helicopter data 2")
+                        lod = w + 2
+                        if i == 5: lod = w + 1  # bodge to get shadows pointed at
+                        addjob(job("lod", lod))
 
             case "map_curvature":
                 add("b", addr, "Map curvature data")
@@ -580,7 +683,7 @@ def main(args):
                             13: "Curve 13 XXX",
                             14: "Curve 14 XXX",
                             15: "Curve 15 XXX"}
-                decode_nibble_rle(addr, job, "curvature", curvemap)
+                decode_nibble_rle(addr, kind, "curvature", curvemap)
 
             case "map_height":
                 add("b", addr, "Map height data")
@@ -600,15 +703,15 @@ def main(args):
                              13: "Going Down 5",
                              14: "Going Down 6 XXX",
                              15: "Going Down 7"}
-                decode_nibble_rle(addr, job, "height", heightmap)
+                decode_nibble_rle(addr, kind, "height", heightmap)
 
             case "map_rightobjs":
                 add("b", addr, "Map right object data")
-                decode_nibble_rle(addr, job, "right objects", OBJECT_NAMES[STAGE])
+                decode_nibble_rle(addr, kind, "right objects", OBJECT_NAMES[STAGE])
 
             case "map_leftobjs":
                 add("b", addr, "Map left object data")
-                decode_nibble_rle(addr, job, "left objects", OBJECT_NAMES[STAGE])
+                decode_nibble_rle(addr, kind, "left objects", OBJECT_NAMES[STAGE])
 
             case "map_lanes":
                 add("b", addr, "Map lanes data")
@@ -639,12 +742,12 @@ def main(args):
                             0xC1: r'4 Lanes dirt track   [||||] {C1}',
                             0xC2: r'3 Lanes dirt track R  [|||] {C2}', # Poke
                             0xC3: r'2 Lanes dirt track R   [||] {C3}'} # Poke (stones on verge)
-                decode_count_rle(addr, job, "lanes", lanesmap)
+                decode_count_rle(addr, kind, "lanes", lanesmap)
 
             case "map_hazards":
                 add("b", addr, "Map hazards data")
                 hmap = {0x00: "xxx"}
-                decode_hazards(addr, job, "hazards", hmap)
+                decode_hazards(addr, kind, "hazards", hmap)
 
             case "lod":
                 add("N", addr + 0, "LOD")
@@ -663,6 +766,7 @@ def main(args):
 
                 masked = ""
                 if flags & 1:
+                    widthbytes *= 2
                     nbytes *= 2
                     masked = "(masked) "
 
@@ -671,13 +775,50 @@ def main(args):
                     add("B", shiftedbitmap, "Pre-shifted bitmap data %s%d bytes x %d" % (masked, widthbytes, height), nbytes, widthbytes)
 
             case "lod_table":
-                add("N", addr + 0, "LOD table")
-                for _ in range(0,6):
-                    addjob("lod", addr)
+                nentries = curjob.get_nentries()
+                add("N", addr, "LOD table")
+                for _ in range(0,nentries):
+                    addjob(job("lod", addr))
                     addr += 7
 
+            case "stretchy":
+                add("N", addr, "Stretchy graphic")
+                while 1:
+                    b = byteat(addr)
+                    if b == 1:
+                        add("B", addr, "Terminator")
+                        break
+                    else:
+                        add("B", addr, "?index")
+                    
+                    addaddr(addr + 1, "pointer to ?")
+
+                    sgp = wordat(addr + 1)
+                    if validaddr(sgp):
+                        addjob(job("stretchy_graphic_part", sgp))
+
+                    addr += 3
+
+            case "stretchy_graphic_part":
+                add("N", addr, "Stretchy graphic part")
+                addaddr(addr, "LOD ptr")
+                addjob(lod_table_job(5, wordat(addr + 0)))  # probably just 5 long?
+                addr += 2
+                for i in range(0,10):  # always ten?
+                    add("W", addr + 0, "TBD")  # ought to be a pair?
+                    addr += 2
+
+            case "draw_object_data":
+                add("N", addr, "draw_object_left/right graphic data")
+                addaddr(addr, "LOD ptr")
+                addjob(lod_table_job(5, wordat(addr + 0)))  # probably just 5 long?
+                addr += 2
+                for i in range(0,10):  # always ten?
+                    add("W", addr + 0, "TBD")  # ought to be a pair?
+                    addr += 2
+
             case _:
-                print("Unhandled: " + job, file=sys.stderr)
+                warn("Unhandled: " + kind)
 
     # sort locations
     locations.sort(key=lambda entry: entry[1])
