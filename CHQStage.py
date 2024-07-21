@@ -374,19 +374,34 @@ def main(args):
         def get_addr(self):
             return self.addr
 
+        def __eq__(self, other):
+            if isinstance(other, job):
+                return self.kind == other.kind and self.addr == other.addr
+            return False
+
     class lod_table_job(job):
-        def __init__(self, nentries, addr):
+        def __init__(self, desc, nentries, addr):
             super().__init__("lod_table", addr)
+            self.desc = desc
             self.nentries = nentries
+
+        def get_desc(self):
+            return self.desc
 
         def get_nentries(self):
             return self.nentries
 
+        def __eq__(self, other):
+            if isinstance(other, lod_table_job):
+                # ignoring desc
+                return self.kind == other.kind and self.addr == other.addr and self.nentries == other.nentries
+            return False
+
     def addjob(job):
         assert(type(job.kind) == type(""))
-        if not job in jobs:
+        if not job in jobs + donejobs:
             jobs.append(job)
-            # don't jobs.sort()
+        # don't jobs.sort()
 
     try:
         opts,files = getopt.getopt(args, 's:b:', ['stage=', 'base='])
@@ -411,6 +426,7 @@ def main(args):
         usage()
 
     jobs = []
+    donejobs = []
     locations = []
 
     # load 8K blob of stage data
@@ -432,8 +448,11 @@ def main(args):
     # iterate over job queue
     while jobs:
         curjob = jobs.pop(0)
+        donejobs.append(curjob)
+
         kind = curjob.get_kind()
         addr = curjob.get_addr()
+
         match kind:
             case "horizon_graphic":
                 add("b", addr, "Horizon graphic")
@@ -538,19 +557,22 @@ def main(args):
                     i += 1
 
             case "table_of_lods":
-                add("w", addr, "Table of addresses of LODs")
-                addaddr(addr + 0, "Address of LOD of hazard (stone/dust?)")
-                addaddr(addr + 2, "Address of LOD of hazard (stone/dust?)")
-                addaddr(addr + 4, "Address of LOD of car (the perp's car)")
-                addaddr(addr + 6, "Address of LOD of car (a Lambo in S1)")
-                addaddr(addr + 8, "Address of LOD of car (a truck in S1)")
-                addaddr(addr + 10, "Address of LOD of car (a Lambo in S1)")
-                addaddr(addr + 12, "Address of LOD of car (a generic car in S1)")
+                objects = [
+                    "Hazard (stone/dust)",
+                    "Hazard (stone/dust)",
+                    "Car (the perp's car)",
+                    "Car (a Lambo in S1)",
+                    "Car (a truck in S1)",
+                    "Car (a Lambo in S1)",
+                    "Car (a generic car in S1)"
+                ]
 
-                for lod_addr in range(addr + 0, addr + 14, 2):
-                    lod = wordat(lod_addr)
-                    if lod != 0:
-                        addjob(lod_table_job(6, lod))
+                add("w", addr, "Table of addresses of LODs")
+                for i, addr in enumerate(range(addr + 0, addr + 14, 2)):
+                    addaddr(addr, "Address of LOD of %s" % objects[i])
+                    table = wordat(addr)
+                    if table != 0:
+                        addjob(lod_table_job(objects[i], 6, table))
 
             case "difficulty":
                 add("b", addr, "Per-stage difficulty settings")
@@ -595,10 +617,10 @@ def main(args):
 
             case "hazard_graphics":
                 add("b", addr, "Hittable hazards")
-                for _ in range(0,2):
+                for _ in range(0, 2):
                     add("B", addr + 0, "?id")
                     addaddr(addr + 1, "Address of LODs")
-                    addjob(lod_table_job(5, wordat(addr + 1)))  # CHECK
+                    addjob(lod_table_job("hittable hazard", 6, wordat(addr + 1)))
                     addr += 3
 
             case "nancy_perp_desc":
@@ -625,7 +647,7 @@ def main(args):
                 add("b", addr, "Arrest messages")
                 add("B", addr, "?frame delay until first message")
                 addr += 1
-                for _ in range(1,999):
+                for _ in range(1, 999):
                     flags = byteat(addr + 1)
                     if flags != 0:
                         add("B", addr + 0, "?frame delay until next message")
@@ -644,7 +666,7 @@ def main(args):
             case "helicopter_data_1":
                 if addr != 0:
                     add("b", addr, "Helicopter data 1")
-                    for i in range(0,6):
+                    for i in range(0, 6):
                         addaddr(addr, "ptr")
                         w = wordat(addr)
                         addr += 2
@@ -656,7 +678,7 @@ def main(args):
             case "helicopter_data_2":
                 if addr != 0x000C:
                     add("b", addr, "Helicopter data 2")
-                    for i in range(0,6):
+                    for i in range(0, 6):
                         addaddr(addr, "ptr")
                         w = wordat(addr)
                         addr += 2
@@ -776,8 +798,8 @@ def main(args):
 
             case "lod_table":
                 nentries = curjob.get_nentries()
-                add("N", addr, "LOD table")
-                for _ in range(0,nentries):
+                add("N", addr, "LOD table for \"%s\"" % curjob.get_desc())
+                for _ in range(0, nentries):
                     addjob(job("lod", addr))
                     addr += 7
 
@@ -791,7 +813,7 @@ def main(args):
                     else:
                         add("B", addr, "?index")
                     
-                    addaddr(addr + 1, "pointer to ?")
+                    addaddr(addr + 1, "Pointer to stretchy_graphic_part")
 
                     sgp = wordat(addr + 1)
                     if validaddr(sgp):
@@ -802,18 +824,23 @@ def main(args):
             case "stretchy_graphic_part":
                 add("N", addr, "Stretchy graphic part")
                 addaddr(addr, "LOD ptr")
-                addjob(lod_table_job(5, wordat(addr + 0)))  # probably just 5 long?
+                addjob(lod_table_job("stretchy", 5, wordat(addr + 0)))  # length?
                 addr += 2
-                for i in range(0,10):  # always ten?
-                    add("W", addr + 0, "TBD")  # ought to be a pair?
+                for i in range(0, 10):  # always ten entries AFAICT
+                    add("W", addr + 0, "TBD")  # perhaps a pair (distance,index)
                     addr += 2
+
+                # second byte in pair is a multiple of 4
+                # minimum of 8, maximum is 88
+                # (88 - 8) = 80 / 4 = 20
+                # but there's 15 entries in the table
 
             case "draw_object_data":
                 add("N", addr, "draw_object_left/right graphic data")
                 addaddr(addr, "LOD ptr")
-                addjob(lod_table_job(5, wordat(addr + 0)))  # probably just 5 long?
+                addjob(lod_table_job("non-stretchy", 10, wordat(addr + 0)))
                 addr += 2
-                for i in range(0,10):  # always ten?
+                for i in range(0, 10):  # always ten?
                     add("W", addr + 0, "TBD")  # ought to be a pair?
                     addr += 2
 
