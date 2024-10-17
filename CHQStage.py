@@ -471,8 +471,8 @@ def main(args):
                 addaddr(addr + 18, "(points at a handler address)")
                 addaddr(addr + 20, "Address of Nancy's perp description")
                 addaddr(addr + 22, "Address of arrest messages")
-                addaddr(addr + 24, "Helicopter related 1")
-                addaddr(addr + 26, "Helicopter related 2")
+                addaddr(addr + 24, "Helicopter data 1")
+                addaddr(addr + 26, "Helicopter data 2")
 
                 addjob(job("mugshot_perp",          wordat(addr + 0)))
                 addjob(job("mugshot_pilot",         wordat(addr + 2)))
@@ -515,9 +515,9 @@ def main(args):
                         localgraphic = True
 
                     add("N", def_addr + 0, "Graphic definition for object %d - %s" % (i + 1, objs[i + 1]))
-                    add("B", def_addr + 0, "Hit coord max")
-                    add("B", def_addr + 1, "Hit coord min")
-                    add("B", def_addr + 2, "?how far to push hero car away if hit")
+                    add("B", def_addr + 0, "Hit coord max (furthest)")
+                    add("B", def_addr + 1, "Hit coord min (nearest)")
+                    add("B", def_addr + 2, "How far to push hero car away if hit")
                     if localgraphic:
                         addaddr(def_addr + 3, "Argument for routine passed in #REGde")
                     else:
@@ -545,9 +545,9 @@ def main(args):
                         localgraphic = True
 
                     add("N", def_addr + 0, "Graphic definition for object %d - %s" % (i + 1, objs[i + 1]))
-                    add("B", def_addr + 0, "Hit coord min")
-                    add("B", def_addr + 1, "Hit coord max")
-                    add("B", def_addr + 2, "?how far to push hero car away if hit")
+                    add("B", def_addr + 0, "Hit coord min (furthest)")
+                    add("B", def_addr + 1, "Hit coord max (nearest)")
+                    add("B", def_addr + 2, "How far to push hero car away if hit")
                     if localgraphic:
                         addaddr(def_addr + 3, "Argument for routine passed in #REGde")
                     else:
@@ -560,11 +560,11 @@ def main(args):
                 objects = [
                     "Hazard (stone/dust)",
                     "Hazard (stone/dust)",
-                    "Car (the perp's car)",
-                    "Car (a Lambo in S1)",
-                    "Car (a truck in S1)",
-                    "Car (a Lambo in S1)",
-                    "Car (a generic car in S1)"
+                    "Car A (the perp's car)",
+                    "Car B (a Lambo in S1)",
+                    "Car C (a truck in S1)",
+                    "Car D (a Lambo in S1)",
+                    "Car E (a generic car in S1)"
                 ]
 
                 add("w", addr, "Table of addresses of LODs")

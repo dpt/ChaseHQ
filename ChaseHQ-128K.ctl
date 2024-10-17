@@ -2381,7 +2381,7 @@ D $8258 Used by the routine at #R$83B5.
 C $8258,3 #REGhl -> attract_data
 C $825B,3 Call set_up_stage
 C $825E,4 Reset credits/copyright message blinker to show credits
-C $8262,6 Set speed to $190
+C $8262,6 Set speed to 400
 C $8268,3 Call keyscan
 C $826B,3 Return if fire was pressed
 C $826E,3 Call cpu_driver
@@ -3705,7 +3705,7 @@ C $8F87,3 Load road_buffer_offset into #REGa
 C $8F8A,2 Add 115 so it's the right side objects data offset + 19
 C $8F8C,3 Point #REGhl at road buffer right side objects data
 C $8F8F,4 IX = $EAB0
-C $8F93,3 BC = $1420
+C $8F93,3 Counter #REGb = 20, Stride #REGc = 32
 C $8F96,4 Preserve IX, HL, BC
 C $8F9A,7 Call (somewhere in draw_hazards) if n_hazards is set
 C $8FA1,3 Call dust_stones_stuff (dust/stones stuff)
@@ -3721,7 +3721,7 @@ C $8FBA,1 Set flags
 C $8FBB,2 Exit via #R$9023 if non-zero
 N $8FBD This entry point is used by the routine at #R$9023.
 C $8FBD,4 IX += 2
-C $8FC1,4 L -= $21
+C $8FC1,4 L -= 33
 C $8FC5,2 IY--
 C $8FC7,2 Loop to $8F96 while #REGb > 0
 C $8FC9,3 Load self modified instructions from earlier
@@ -3912,7 +3912,7 @@ C $91B6,1 Swap
 C $91B7,3 DE = wordat(HL); HL++  -- this is the LOD pointer e.g. streetlampbody_lods
 N $91BA This seems to be a 0..9 value that selects from the table.
 C $91BA,4 HL += <self modified>  -- by #R$91A0, this is the table offset from earlier
-N $91BE HL now points to an entry in the table. Load it.
+N $91BE HL now points to an entry in the table. Load it. sampled DE = $717E (-> tree_lods), HL = $713E (first of a byte pair)
 C $91BE,2 A = *HL++  -- e.g. 0
 C $91C0,3 HL = *HL  -- e.g. $56
 C $91C3,1 HL += DE  -- so HL's an offset from streetlampbody_lods
@@ -3984,7 +3984,7 @@ C $9242,1 B = A
 C $9243,3 Call <self modified>
 C $9246,4 Self modify 'LD A,x' @ #R$93C0 to load 0
 C $924A,3 Loop to dso_loop_perhaps
-c $924D Draws tunnel lights (and possibly other bitmaps).
+c $924D Draws tunnel lights (and possibly other bitmaps)
 R $924D R:B Offset added to $E6xx address. Routine skipped if it's >= 16.
 @ $924D label=draw_tunnel_light_left
 C $924D,3 HL = $9279
@@ -4005,7 +4005,7 @@ C $926C,2 H = $E6   -- $E6xx data
 C $926E,1 A = *HL
 C $926F,8 A = (A>>2) - A
 C $9277,1 Return via earlier PUSH
-c $9278 Draws objects (left hand version).
+c $9278 Draws objects (left hand version)
 D $9278 Called via dispatch at #R$901B.
 D $9278 Used to draw turn signs, tunnel lights, ... what else?
 R $9278 I:B ?
@@ -4052,7 +4052,7 @@ C $92D9,1 B--
 C $92DA,1 A++
 C $92DB,2 C = 0
 C $92DE,3 Exit via draw_object_common
-c $92E1 Draws objects (right hand version).
+c $92E1 Draws objects (right hand version)
 R $92E1 I:B ?
 R $92E1 I:IX ?
 R $92E1 I:IY ?
@@ -4240,7 +4240,7 @@ C $94C2,1 Calculate address of next bitmap scanline
 C $94C3,1 Put it in #REGsp (so we can use POP for speed)
 C $94C4,2 Unbank
 C $94C6,2 Jump table
-@ $94C8 label=ps_jumptable
+@ $94C8 label=ps_even_jumptable
 C $94C8,5 Transfer two bitmap bytes (16 pixels) from the "stack" to screen buffer
 C $94CD,5 Transfer another 16 pixels
 C $94D2,5 Transfer another 16 pixels
@@ -4277,6 +4277,7 @@ C $9514,1 Calculate address of next bitmap scanline
 C $9515,1 Put it in #REGsp (so we can use POP for speed)
 C $9516,2 Unbank
 C $9518,2 Jump table
+@ $951A label=ps_odd_jumptable
 C $951A,5 Transfer two bitmap bytes (16 pixels) from the "stack" to screen buffer
 C $951F,5 Transfer another 16 pixels
 C $9524,5 Transfer another 16 pixels
@@ -4322,6 +4323,7 @@ C $956F,1 Put it in #REGsp (so we can use POP for speed)
 C $9570,1 Unbank
 C $9571,1 [check elsewhere too]
 C $9573,2 Jump table
+@ $9575 label=psf_even_jumptable
 C $9575,1 Transfer two bitmap bytes (16 pixels) from the "stack" to screen buffer with flipping
 C $9576,1 Set flip table address
 C $9577,2 Flip byte and write to screen
@@ -4363,6 +4365,7 @@ C $95D7,1 Calculate address of next bitmap scanline
 C $95D8,1 Put it in #REGsp (so we can use POP for speed)
 C $95D9,1 Unbank
 C $95DC,2 Jump table
+@ $95DE label=psf_odd_jumptable
 C $95DE,1 Transfer two bitmap bytes (16 pixels) from the "stack" to screen buffer with flipping
 C $95DF,1 Set flip table address
 C $95E0,2 Flip byte and write to screen
@@ -4663,7 +4666,7 @@ N $9A0C #REGa is the index of the face to show.
 @ $9A0C label=pc_plot_character
 C $9A0C,1 Is it zero? (=> the pilot character's face)
 C $9A0D,1 Preserve message pointer
-C $9A0E,6 Plot whatever face #R$5CF2 points to, otherwise calculate the face graphic's address
+C $9A0E,6 Plot the face that #R$5CF2 points to, otherwise calculate the face graphic's address (because it points at attributes)
 @ $9A14 ssub=LD HL,(bitmap_nancy - 180)
 C $9A14,3 Load base address of face graphics (BUT it's actually 180 bytes earlier than the real base because we're 1-indexed)
 C $9A17,3 Length of face graphic (bitmap + attrs = 4*8*5 + 4*5)
@@ -5649,9 +5652,9 @@ B $A232,1,1 Set to 0..6 if (0..3, 4..6, 7..10, 11..13, 14..16, 17+) smashes
 @ $A233 label=smash_counter
 B $A233,1,1 Smash counter (0..20)
 @ $A234 label=counter_A
-B $A234,1,1 Cycles 0-1-2-3 as the game runs (used to animate turbo smoke CHECK)
+B $A234,1,1 Cycles 0-1-2-3 as the game runs. Used to animate turbo smoke and helicopter blades.
 @ $A235 label=counter_B
-B $A235,1,1 Cycles 0-1 as the game runs (used to toggle flash the red/blue lights)
+B $A235,1,1 Cycles 0-1 as the game runs (used to flash the red/blue lights)
 @ $A236 label=counter_C
 B $A236,1,1 Cycles 0-1-2-3 as the game runs - at half rate
 N $A237 These seem to get altered even when no sound is being produced.
@@ -5692,7 +5695,7 @@ B $A248,1,1 Set to 1 when on dirt track. [#R$A955 reads #R$C457,#R$C526 writes]
 @ $A249 label=fork_taken
 B $A249,1,1 Set to 0 if no fork, or the left fork was taken, or 1 if the right fork was taken. [$A539,$B988,$BAE0,$BB6E reads #R$BA89,#R$BC2C writes]
 @ $A24A label=speed
-W $A24A,2,2 Speed (0..511). Max when in low gear =~ $E6, high gear =~ $168, turbo =~ $1FF.
+W $A24A,2,2 Speed (0..511). Max when in low gear =~ $E6 (230), high gear =~ $168 (360), turbo =~ $1FF (511). In practice I see maximums of 188 / 295 / 419 (82% of original value...)
 @ $A24C label=var_a24c
 B $A24C,1,1 #R$B1B7 reads  #R$B1E4 writes
 @ $A24D label=cornering
@@ -5912,7 +5915,7 @@ C $A4AD,1 Unbank road buffer offset
 C $A4AE,2 A = 1  -- perhaps a left hand flag
 N $A4B0 Arrive here if hit scenery, e.g. drove a tree or a lamp post.
 @ $A4B0 label=cc_hit_scenery
-C $A4B0,1 Preserve AF  suspected flag
+C $A4B0,1 Preserve AF  -- suspected left hand flag
 C $A4B1,3 Effect 4 (scenery crash), Priority 3
 C $A4B4,3 Call start_sfx
 C $A4B7,1 Restore AF
@@ -5921,10 +5924,11 @@ N $A4B8 This entry point is used by the routines at #R$A637 and #R$A8CD.
 C $A4B8,3 HL = &<crashed flag>
 C $A4BB,2 Set flags
 C $A4BD,1 Return if already crashed
+@ $A4BE label=cc_new_crash
 C $A4BE,2 Set crashed flag
-C $A4C0,4 *$B36F = A++
-C $A4C4,5 *$B38E = A
-C $A4C9,3 *$B385 = 5
+C $A4C0,4 *$B36F = A++  -- set flip flag (0/1 = right/left)
+C $A4C4,3 *$B38E = A
+C $A4C7,5 *$B385 = 5
 C $A4CC,3 Load speed into #REGhl
 C $A4CF,1 Preserve HL
 C $A4D0,2 H >>= 1
@@ -5933,7 +5937,7 @@ C $A4D5,8 A = (A << 3) + 16
 C $A4DD,2 L = 24
 C $A4E2,1 L = A
 @ $A4E3 label=cc_a4e3
-C $A4E3,3 *$B357 = HL
+C $A4E3,3 Self modify 'LD HL,$xxxx' @ #R$B356
 C $A4E7,3 HL = A
 C $A4EC,2 HL -= DE
 @ $A4F2 label=cc_a4f2
@@ -5979,7 +5983,7 @@ C $A54A,3 HL = *$EAFE
 C $A54D,5 Return if HL >= BC
 C $A552,3 Return if HL < DE
 C $A555,2 A = $8C
-C $A558,1 A = 0
+C $A558,1 A = 0  -- perhaps a right hand flag
 C $A559,3 Exit via cc_hit_scenery
 @ $A55C label=cc_a55c
 C $A55C,3 HL = *$5D02
@@ -5992,7 +5996,7 @@ C $A569,5 Return if HL < BC
 C $A56E,3 Return if HL >= DE
 C $A571,2 A = $8C
 C $A573,1 Bank
-C $A574,2 A = 1
+C $A574,2 A = 1  -- perhaps a left hand flag
 C $A576,3 Exit via cc_hit_scenery
 c $A579 Lays out roadside objects
 D $A579 Used by the routines at #R$8401, #R$852A and #R$873C.
@@ -6516,6 +6520,7 @@ C $A9DB,3 Jump to ldas_loop1_continue
 c $A9DE Dust/Stones stuff
 D $A9DE If disabled this stops stones and dirt from rendering.
 D $A9DE Used by the routine at #R$8F5F.
+R $A9DE I:B Counter?
 @ $A9DE label=dust_stones_stuff
 C $A9DE,2 A = <self modified>  Self modified by #R$A97A, #R$A9A3
 C $A9E0,1 Set flags
@@ -6561,39 +6566,39 @@ C $AA33,1 Add pixel width
 C $AA34,1 Return if no carry
 C $AA35,3 Exit via draw_object_left_helicopter_entrypt
 c $AA38 Draw the helicopter
-D $AA38 #R$AB89 self modifies #R$8FA4 to call this.
+D $AA38 #R$AB89 (in drive_helicopter) self modifies #R$8FA4 to call this.
+R $AA38 I:B Counter
+R $AA38 I:IY Somewhere in the $E315 buffer
 @ $AA38 label=draw_helicopter
-C $AA38,1 A = B
-C $AA39,3 Return if A != 3
-C $AA3C,6 A = IY[$4F] - IY[$4E]
+C $AA38,4 Return if counter isn't 3
+C $AA3C,6 A = IY[$4F] - IY[$4E]  -- a delta between two bytes in this unknown $E315 buffer
 C $AA42,2 D = 0
-C $AA44,1 H = D -- ie HL = 0
-C $AA45,1 L = D
-C $AA46,1 E = A
-C $AA47,3 A = fast_counter
+C $AA44,2 HL = 0
+C $AA46,1 E = A => DE = A  -- DE is now the delta from above, widened
+C $AA47,3 Load fast_counter
 C $AA4A,2 B = 8
-C $AA4C,2 A &= $E0
+C $AA4C,2 fast_counter & $E0
 N $AA4E Multiplier
 @ $AA4E label=dhl_loop1
 C $AA4E,1 Shift top bit out
-C $AA4F,3 If carry HL += DE
+C $AA4F,3 If it was set then HL += DE
 @ $AA52 label=dhl_aa52
 C $AA52,1 HL <<= 1
 C $AA53,2 Loop #R$AA4E while #REGb > 0
-C $AA55,2 A = H / 2
-C $AA57,3 Self modify 'LD A' @ #R$AA8C
-C $AA5A,2 A = <self modified> -- Self modified by #R$AAEE
+C $AA55,2 A = H / 2  -- is this undoing overshoot?
+C $AA57,3 Self modify 'LD A' @ #R$AA8C (below)
+C $AA5A,2 A = <self modified>  -- Self modified by #R$AAEE (in move_helicopter)
 C $AA5C,3 A -= IY[$4E]
-C $AA5F,3 Self modify 'ADD A' @ #R$AA76
-C $AA62,2 B = 5  iterations
-C $AA64,5 A = counter_A & 1  -- counter used for turbo smoke
-C $AA69,3 HL = *$5D08
+C $AA5F,3 Self modify 'ADD A' @ #R$AA76 (below)
+C $AA62,2 5 iterations
+C $AA64,5 A = counter_A & 1  -- counter used for turbo smoke and helicopter blades
+C $AA69,3 Load addrof_helicopter_stuff_1
 C $AA6C,2 If A was set
-C $AA6E,3 HL = *$5D0A
+C $AA6E,3 Kiad addrof_helicopter_stuff_2
 @ $AA71 label=dhl_aa71
 C $AA71,4 DE = wordat(HL); HL += 2
 C $AA75,1 A = *DE
-C $AA76,2 A += <self modified> -- Self modified by #R$AA5F
+C $AA76,2 A += <self modified> -- Self modified by #R$AA5F (above)
 C $AA78,1 DE++
 C $AA79,4 Preserve IY, HL, BC
 C $AA7D,3 Call dhl_aa94
@@ -6602,7 +6607,7 @@ C $AA84,2 Loop loop_aa71 while #REGb > 0
 C $AA86,3 DE = wordat(HL); HL++
 C $AA89,1 A = 0
 C $AA8A,2 Preserve IY
-C $AA8C,2 A = <self modified> -- Self modified by #R$AA57
+C $AA8C,2 A = <self modified> -- Self modified by #R$AA57 (above)
 C $AA8E,3 Call dhl_aa94
 C $AA91,2 Restore IY
 C $AA93,1 Return
@@ -7144,6 +7149,8 @@ C $AF8E,3 BC = A
 C $AF91,4 HL = #R$CDEC + BC
 N $AF95 I see this getting hit only when in smash mode.
 C $AF95,3 BC = wordat(HL)
+C $AF98,3 -> floating_arrow_big_defn (incl. "HERE!")
+C $AF9B,3 Call plotting func TBD
 C $AF9E,3 Get smash_factor
 C $AFA1,4 Jump if it's < 4
 C $AFA5,4 A = (A - 4) * 4 ?
@@ -7156,10 +7163,11 @@ C $AFB5,3 BC = wordat(HL); HL++
 C $AFB8,1 Unbank
 C $AFB9,1 E = A
 C $AFBA,3 Address of table of car-on-fire LODs
-C $AFBD,8 E += (counter_C AND 1) * 2
+C $AFBD,8 E += (counter_C AND 1) * 2  -- half rate counter 0/1/2/3
 C $AFC5,1 HL += DE
 C $AFC6,4 HL = wordat(HL)
 C $AFCA,2 Retrieve DE from stack
+N $AFCC DE is offset, HL is base of graphic defns
 C $AFCC,3 Draw
 @ $AFCF label=check_smash_factor
 C $AFCF,3 Get smash_factor (should be 0..6)
@@ -7206,6 +7214,7 @@ C $B018,3 Point #REGhl at smoke_defns
 N $B01B Similar code to $AA19 (in dust/stones code). Does plotting.
 @ $B01B label=sub_b01b
 C $B01B,1 HL += DE  -- find graphic definition entry
+N $B01C HL -> graphic definition
 C $B01C,1 Fetch byte width
 C $B01D,6 Multiply it by 8 yielding the pixel width
 C $B023,3 A = <self modified by #R$AF7B> + B
@@ -7582,90 +7591,99 @@ c $B318 Animates the hero car.
 D $B318 Used by the routines at #R$8401 and #R$852A.
 @ $B318 label=animate_hero_car
 C $B318,7 Jump to #R$B325 if speed > 0
-C $B31F,3 Self modify 'LD A' @ #R$B3DB to load A
-C $B322,3 off_road = A
+N $B31F #REGa is zero here.
+C $B31F,3 Self modify 'LD A' @ #R$B3DB (below) to load zero
+C $B322,3 off_road = 0
 @ $B325 label=ahc_check_crashed
-C $B325,2 A = <self modified>  -- crashed flag
+C $B325,2 A = <self modified>  -- crashed flag set by #R$A4BE
 C $B327,3 Jump if not crashed
-N $B32A Crashed.
+N $B32A Crashed. #REGa is non-zero here.
+@ $B32A label=ahc_crashed
 C $B32A,3 cornering = A (which is non-zero here)
-C $B32D,1 Preserve HL
-C $B32E,3 BC = <self modified>
-C $B331,2 HL -= BC
-C $B333,1 Restore HL
-C $B334,2 Jump to #R$B349 if HL < BC
-C $B336,1 D = H
-C $B337,1 A = L
-C $B338,2 D >>= 1
-C $B33C,2 A >>= 1
-C $B33E,2 A |= 3
+C $B32D,1 Preserve speed
+C $B32E,3 BC = <self modified>  -- set when crashed by #R$A4F2
+C $B331,2 Speed minus whatever BC holds?
+C $B333,1 Restore speed
+C $B334,2 Jump to #R$B349 if speed < ?
+@ $B336 label=ahc_speed_greater
+C $B336,8 Divide speed by four (#REGd becomes zero since game max speed is 511)
+C $B33E,2 A |= 3  -- perhaps rounding up
 C $B340,1 E = A
-C $B341,2 HL -= DE
-C $B343,2 Jump to #R$B349 if equal
-C $B345,2 A = 2
-C $B347,2 Jump if #R$B349 if HL > DE
+C $B341,2 HL -= DE  -- overall expr is  new_speed = (speed - ((speed / 4) | 3))
+C $B343,2 Jump to #R$B349 if equal (to zero?)
+C $B345,2 Turn speed = 2 (fastest)
+C $B347,2 Jump to #R$B350 if HL > DE
 N $B349 Otherwise HL < DE.
-@ $B349 label=ahc_b349
+@ $B349 label=ahc_speed_less_or_eq
 C $B349,4 Clear crashed flag
-C $B34D,1 A++
-C $B34E,2 Jump
-@ $B350 label=ahc_b350
-C $B350,3 ($A24A) = HL
-@ $B353 label=ahc_b353
-C $B353,3 turn_speed = A
-C $B356,3 HL = $0000
-C $B359,1 D = H
-C $B35A,1 E = L
-C $B35B,2 D >>= 1
-C $B35D,2 RR E
-C $B35F,2 E >>= 1
-C $B361,2 E >>= 1
-C $B363,2 E >>= 1
-C $B365,2 HL -= DE
-C $B367,3 Self modify 'LD HL,$xxxx' @ #R$B356
-C $B36B,3 HL = road_pos
-N $B36E This seems to be 1 if I crash on the left, 0 if I crash on the right. So is it flipping the crash graphics?
-C $B36E,2 C = <self modified>
-C $B370,3 A = C & 1
-C $B373,3 flip_car = A
-C $B376,3 Jump if C == 1
-C $B379,1 C--
-C $B37A,2 [I wonder if this jump is ever taken]
-C $B37C,1 HL += DE
-C $B37F,2 HL -= DE
-C $B381,3 road_pos = HL
-C $B384,2 A = <self modified>  -- set to 5 on collisions
+C $B34D,1 Turn speed = 1 (middle)
+C $B34E,2 Jump to set turn speed
+@ $B350 label=ahc_assign_speed
+C $B350,3 Set speed to #REGhl
+@ $B353 label=ahc_assign_turn_speed
+C $B353,3 Set turn_speed to #REGa -- could be 0, 1 or 2
+N $B356 This value is set by #R$A4E3, then decremented by 1/16 each time we pass here.
+C $B356,3 HL = <self modified below>
+N $B359 Divide HL by 16.
+C $B359,2 DE = HL
+C $B35B,4 DE / 2  -- after this it all fits into #REGe
+C $B35F,6 Divide #REGe by 8
+C $B365,2 HL -= DE  -- i.e. original HL minus HL/16
+C $B367,3 Self modify 'LD HL,$xxxx' @ #R$B356 above
+C $B36B,3 Load road_pos
+C $B36E,2 Load flip_flag, self modified by #R$A4C0 in check_collisions
+C $B370,6 flip_car = (flip_flag & 1)
+C $B376,3 Jump if flip_flag is 1
+C $B379,3 Jump if flip_flag is 2  -- is this ever taken?
+N $B37C Flip flag was zero?
+@ $B37C label=ahc_increase_road_pos
+C $B37C,1 Increment road position by #REGde
+C $B37D,2 Jump to set road_pos
+@ $B37F label=ahc_reduce_road_pos
+C $B37F,2 Decrement road position by #REGde
+@ $B381 label=ahc_assign_road_pos
+C $B381,3 Set road_pos to #REGhl
+N $B384 Decrement this counter.
+C $B384,2 Set to 5 on collisions (by #R$A4C7, and decremented below)
 C $B386,3 Jump if zero
-C $B389,1 A--
+C $B389,1 Decrement
 C $B38A,3 Self modify 'LD A,x' @ #R$B384 (above) to x = A
-C $B38D,2 A = <self modified>
-C $B38F,3 *$B3DC = A
+C $B38D,2 A = <self modified>  -- gets set to (flip flag + 1)
+C $B38F,3 *$B3DC = A  (below)
 N $B392 Arrive here if not crashed.
-C $B392,3 HL = road_pos
-C $B395,3 DE = $0048
+@ $B392 label=ahc_not_crashed
+C $B392,3 Load road_pos
+C $B395,3 DE = 72
 C $B398,1 A = H
 C $B399,1 Set flags
+C $B39A,3 Jump if top bit is set?
+C $B39D,2 Jump if non-zero
+N $B39F Otherwise it was zero.
 C $B39F,1 A = L
 C $B3A0,1 A -= E
+C $B3A1,2 Jump if E > L
 C $B3A3,3 DE = $01D8
 C $B3A6,1 A = H
+C $B3A8,2 Jump if D > H
 C $B3AC,1 A = L
 C $B3AD,1 A -= E
-C $B3B1,3 road_pos = HL
+C $B3AE,2 Jump if E > L
+@ $B3B1 label=ahc_assign_road_pos_2
+C $B3B1,3 Set road_pos to #REGhl
 C $B3B4,7 A = cornering | smoke
 C $B3BB,3 Effect 1 (cornering squeal), Priority 5
-C $B3BE,3 Call start_sfx
-C $B3C1,6 Jump if perp_caught_phase > 0
-C $B3C7,1 A--
-C $B3C8,2 Jump if zero
+C $B3BE,3 Call start_sfx if cornering or smoke
+C $B3C1,6 Jump if perp_caught_phase == 0
+C $B3C7,3 Jump if perp_caught_phase is 1 (starts the pull over sequence)
 N $B3CA New turn speed = MIN(A,2)
 C $B3CA,4 Jump if A < 2
 C $B3CE,2 Else A = 2
 C $B3D0,3 turn_speed = A
 C $B3D3,5 flip_car = 1
+@ $B3D8 label=ahc_debris
 C $B3D8,3 Draw debris?
-C $B3DB,2 A = <self modified>
-C $B3DD,3 Jump if zero
+C $B3DB,2 A = <self modified>  -- flip flag + 1
+C $B3DD,3 Jump if zero (not flipped?)
 C $B3E0,1 C = A
 C $B3E2,3 A += C + 24
 C $B3E5,1 C = A
@@ -7677,7 +7695,7 @@ C $B3F0,3 Jump if zero
 C $B3F3,1 2 -> 3
 C $B3F4,1 2/3 -> 3/4
 C $B3F5,1 Bank/unbank
-C $B3F6,6 B = counter_A & 1
+C $B3F6,6 B = counter_A & 1  -- animation counter
 C $B3FD,1 C = A
 C $B3FF,1 A = C
 C $B403,4 off_road = 0
@@ -7685,7 +7703,7 @@ C $B407,3 Call ahc_check_hand_flag
 N $B40A Make the car bounce up and down when it goes off-road.
 C $B40A,2 Default bounce of zero to pass to draw_car. It should be either 0 or 3.
 C $B40C,6 Add the bounce only when one wheel is off-road (if off_road == 1)
-C $B412,9 New bounce = (counter_C & 1) * 3
+C $B412,9 New bounce = (counter_C & 1) * 3  -- half rate counter 0/1/2/3
 @ $B41B label=ahc_draw_car
 C $B41B,3 Load turn_speed
 C $B41E,3 Call draw_car
@@ -7695,9 +7713,9 @@ C $B427,1 A = 0
 C $B428,3 BC = $0102  -- size?
 C $B42B,3 Call draw_cherry
 N $B42E Draw smoke?
-C $B42E,4 B = counter_A
+C $B42E,4 B = counter_A (0/1/2/3)
 C $B432,7 Jump if cornering
-C $B439,3 A = counter_C
+C $B439,3 A = counter_C  -- half rate counter 0/1/2/3
 C $B43C,1 B = A
 C $B43D,1 HL++
 C $B43E,2 A = *HL++
@@ -7802,9 +7820,9 @@ C $B543,1 Otherwise set smash_factor to 6
 @ $B544 label=set_smash_factor
 C $B544,4 Set smash_factor to #REGc
 C $B548,1 Return
-c $B549 Routine at B549
+c $B549 Draws the debris
 D $B549 Used by the routine at #R$B318.
-@ $B549 label=sub_b549
+@ $B549 label=draw_debris
 C $B549,2 A = <self modified>
 C $B54B,1 Set flags
 C $B54C,1 Return if zero
@@ -7956,7 +7974,7 @@ R $B67C I:A ?
 R $B67C I:B ? (gets compared to turn_speed) e.g. 1
 R $B67C I:C ? (used wrt flipping)           e.g. 2
 @ $B67C label=draw_cherry
-C $B67C,7 A += counter_C & 1
+C $B67C,7 A += counter_C & 1  -- half rate counter 0/1/2/3
 C $B683,1 Bank A
 C $B684,6 Jump to #R$B698 if turn_speed < B
 C $B68A,3 A = flip_car
@@ -10630,14 +10648,19 @@ C $CDE0,2 While iterations remain, goto mult_loop
 C $CDE2,1 Undo final shift
 C $CDE3,8 Divide by 8 with rounding
 C $CDEB,1 Return
-b $CDEC these are words, but not ptrs
+b $CDEC
 @ $CDEC label=table_cdec
 W $CDEC,8,8
-N $CDF4 Ptrs to car-on-fire LODs, small to large
+w $CDF4 Pointers to car-on-fire LODs
 @ $CDF4 label=table_car_on_fire_LOD_ptrs
+W $CDF4,2,2 smallest
+W $CDF6,8,2
+W $CDFE,2,2 largest
+w $CE00
 @ $CE00 label=table_ce00
-W $CDF4,24,12
-N $CE0C first byte of each of the following is a counter
+W $CE00,12,12
+b $CE0C Smoke tables
+D $CE0C first byte of each of the following is a counter
 @ $CE0C label=smoke_ce0c
 @ $CE19 label=smoke_ce19
 @ $CE26 label=smoke_ce26
@@ -10651,12 +10674,20 @@ W $CE33,24,6
 @ $CE84 label=table_ce84
 @ $CE97 label=table_ce97
 B $CE4B,95,8*2,3,8*2,3,8*2,3,8*2,3,8*2,3
-b $CEAA Used by #R$B578 4 frames, all 8x6 masked
+b $CEAA [Graphics] Debris
+D $CEAA Used by #R$B578 4 frames, all 8x6 masked
 @ $CEAA label=bitmap_debris_1
+B $CEAA,2,2 #HTML[#CALL:graphic($CEAA,8,6,1,1)]
+B $CEAC,10,2
 @ $CEB6 label=bitmap_debris_2
+B $CEB6,2,2 #HTML[#CALL:graphic($CEB6,8,6,1,1)]
+B $CEB8,10,2
 @ $CEC2 label=bitmap_debris_3
+B $CEC2,2,2 #HTML[#CALL:graphic($CEC2,8,6,1,1)]
+B $CEC4,10,2
 @ $CECE label=bitmap_debris_4
-B $CEAA,48,2
+B $CECE,2,2 #HTML[#CALL:graphic($CECE,8,6,1,1)]
+B $CED0,10,2
 b $CEDA Hero car drawing instructions
 D $CEDA 9 of them. 20 bytes per entry.
 @ $CEDA label=hero_car_refs
@@ -11091,12 +11122,12 @@ N $DEBA Shadow + Turn right hard (56x12)
 N $DEBA #HTML[#CALL:graphic($DEBA,56,12,1,1)]
 @ $DEBA label=bitmap_shadow_turn_right_hard
 B $DEBA,168,14 Masked, inverted bitmap data
-b $DF62 LED style numeric font used for scores
+b $DF62 [Graphics] LED style numeric font used for scores
 D $DF62 8x15 pixels, digits 0..9 only
 D $DF62 #HTML[#CALL:graphic($DF62,8,10*15,0,0)]
 @ $DF62 label=ledfont
 B $DF62,150,15
-b $DFF8 Mini font used for in-game messages
+b $DFF8 [Graphics] Mini font used for in-game messages
 D $DFF8 8x6 pixels, though the digits are thinner than 8, A-Z + five symbols.
 D $DFF8 #HTML[#CALL:graphic($DFF8,8,31*6,0,0)]
 @ $DFF8 label=minifont
@@ -11520,7 +11551,7 @@ D $E34B These bytes all seem to affect the horizon height when meddled with.
 B $E34B,1,1 set to 8 by #R$880A
 B $E34C,1,1 set to 0 by #R$8810
 B $E34D,1,1 set to 0 by #R$8812
-u $E34E
+u $E34E Unused
 B $E34E,1,1
 b $E34F Data block at E34F
 @ $E34F label=object_positions
@@ -11536,7 +11567,7 @@ N $E3BC #HTML[#CALL:graphic($E3BC,8,7*8,0,0)]
 B $E3BC,56,8
 u $E3F4 Unused
 B $E3F4,28,8*3,4
-b $E410 Road edge markings
+b $E410 [Graphics] Road edge markings
 D $E410 Six sets of 16x8 pixels. Masked. Stored bottom up. 32 bytes each.
 N $E410 #HTML[#CALL:graphic($E410,16,8,1,1)]
 @ $E410 label=edge_markings
@@ -11557,7 +11588,7 @@ B $E498,24,8
 N $E4B0 #HTML[#CALL:graphic($E4B0,16,8,1,1)]
 B $E4B0,8,8 Thinnest edge. Black.
 B $E4B8,24,8
-b $E4D0 Road lane markings
+b $E4D0 [Graphics] Road lane markings
 D $E4D0 Three sets of 16x8 pixels. Unmasked. Stored bottom up. 16 bytes each.
 N $E4D0 #HTML[#CALL:graphic($E4D0,16,8,0,1)]
 @ $E4D0 label=lane_markings
@@ -11569,12 +11600,12 @@ B $E4E8,8,8
 N $E4F0 #HTML[#CALL:graphic($E4F0,16,8,0,1)]
 B $E4F0,8,8 Thinnest marking.
 B $E4F8,8,8
-b $E500 A table of 32 words being (some function)
-D $E500 This is the table, used for forking roads, that bends the road horizontally away from the centre of the screen, as it disappears into the distance.
+b $E500 Outward bend table
+D $E500 This is the table of 32 words used for forking roads. It bends the road horizontally away from the centre of the screen, as it disappears into the distance.
 @ $E500 label=outward_bend_table
 W $E500,64,2
-w $E540 A table of 96 words being 10^x or similar function
-D $E540 This is the table, used for regular roads, that bends the road horizontally towards the centre of the screen as it disappears into the distance.
+w $E540 Inward bend table
+D $E540 This is the table of 96 words (being 10^x or similar function), used for regular roads, that bends the road horizontally towards the centre of the screen as it disappears into the distance.
 @ $E540 label=inward_bend_table
 W $E540,192,2
 b $E600 Data block at E600
@@ -12506,6 +12537,8 @@ B $F599,7,7
 T $F5A0,28,27:n1 "3RD   4340300   3     2  DEF"
 B $F5BC,2,2
 b $F5BE Status panel initial image
+D $F5BE Stored in screen format.
+R $F5BE #HTML[# CALL:graphic($F5BE,256,64,0,0)]
 @ $F5BE label=status_panel
 B $F5BE,2048,32
 b $FDBE Status panel initial attributes
@@ -12513,5 +12546,3 @@ b $FDBE Status panel initial attributes
 B $FDBE,256,8
 u $FEBE Unused
 B $FEBE,322,8*40,2
-@ $C000 bank=1
-
