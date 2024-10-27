@@ -7348,55 +7348,61 @@ C $B113,1 Clear carry
 C $B114,2 16-bit subtract only for result in flags
 C $B116,2 Restore current speed saved earlier
 C $B118,2 Jump if current speed (HL) < max speed (DE)  -- don't reduce speed?
-N $B11A This seems to be reducing the speed by a pseudorandom value when we're off-road.
+N $B11A This seems to be reducing the speed by a pseudorandom value when we're off-road. If it's NOPped out then going offroad will cause max speed.
 @ $B11A label=mhc_offroad_reduce_speed
 C $B11A,1 Current speed low byte
 C $B11B,2 Bottom bit of #REGh moves to carry
 C $B11D,4 A <<= 4  -- 9 bit rotate left through carry
-C $B121,6 A = -((A & $0F) | 1)
+C $B121,6 A = -((A & $0F) | 1)  -- top four bits of speed... at least one
 C $B127,3 BC = $FF00 | A  -- speed delta (slowing)
 C $B12A,3 Jump to mhc_check_brake
 @ $B12D label=mhc_done_offroad
-C $B12D,3 A = boost (time remaining)
-C $B130,1 Test then bank the flags
-C $B131,1 Bank
-C $B132,1 Check previously banked A
-C $B135,3 BC = 470
-C $B138,1 Unbank boost + flags
-C $B139,2 Uses banked flags
-C $B13B,3 BC = 230
-@ $B13E label=mhc_b13e
+C $B12D,3 Load turbo boost time remaining (60..0)
+C $B130,1 Test
+C $B131,1 Bank with flags
+C $B132,1 Test previously banked copy of gear flag
+C $B133,2 Jump if in high gear
+@ $B135 label=mhc_low_gear
+C $B135,3 BC = 470 -- max speed?
+C $B138,1 Unbank turbo boost with flags
+C $B139,2 Jump if turbo boost in effect -- Uses banked flags
+N $B13B No turbo boost.
+C $B13B,3 BC = 230 -- max speed?
+@ $B13E label=mhc_low_gear_slowing
 C $B13E,2 HL -= BC
-C $B140,3 Jump if HL was >= BC
-C $B143,7 BC = ~HL + 1
+C $B140,3 Jump if HL was >= BC  -- speed > limit value
+C $B143,7 BC = ~HL + 1 = -HL
 C $B14A,1 A = C
 C $B14B,3 Shift a bit out of B into A?
-C $B14E,3 and again
+C $B14E,3 and again  -- B must now be zero
 C $B151,2 Then divide by 4?
 C $B153,5 C = (A & $3F) | 1
 C $B158,2 Jump to mhc_check_brake
-@ $B15A label=mhc_b15a
+@ $B15A label=mhc_low_gear_accelerating
 C $B15A,1 A = L
-C $B15B,2 H >>= 1
-C $B15E,2 H >>= 1
+C $B15B,8 A = HL >> 4
 C $B163,6 A = -((A & $1F) | 1)
 C $B169,3 BC = $FF00 | A  -- speed delta (slowing)
 C $B16C,2 Jump to mhc_check_brake
-@ $B16E label=mhc_b16e
-C $B16E,3 BC = 220
-C $B171,2 HL -= BC  -- for flags
-C $B173,2 HL = DE
-C $B175,2 from result of calc
-C $B177,3 BC = 470
-C $B17D,1 A = E
-C $B17E,1 B = D
-C $B17F,2 B >>= 1
-C $B182,2 B >>= 1
+@ $B16E label=mhc_high_gear
+C $B16E,3 BC = 220 -- max speed?
+C $B171,2 16-bit subtract only for result in flags
+C $B173,2 Restore current speed saved earlier
+C $B175,2 Jump if current speed (HL) < max speed (DE)
+@ $B177 label=mhc_high_gear_slowing
+C $B177,3 BC = 470 -- max speed?
+C $B17A,1 Unbank turbo boost with flags
+C $B17B,2 Jump if turbo boost in effect -- Uses banked flags
+@ $B17D label=mhc_something2
+C $B17D,10 A = DE >> 4
 C $B187,5 C = (A | 1) & $1F
 C $B18C,2 Jump to mhc_check_brake
-@ $B18E label=mhc_b18e
-C $B18E,3 BC = 695   -- value used later
-C $B194,3 BC = 360
+@ $B18E label=mhc_high_gear_accelerating
+C $B18E,3 BC = 695 -- max speed?
+C $B191,1 Unbank turbo boost with flags
+C $B192,2 Jump if turbo boost in effect -- Uses banked flags
+C $B194,3 BC = 360 -- max speed?
+C $B197,3 Use mhc_low_gear_slowing
 @ $B19A label=mhc_check_brake
 C $B19A,2 Get modified user input (stored by #R$B0BE)
 C $B19C,3 Is BRAKE pressed? (bit 2 / down)
