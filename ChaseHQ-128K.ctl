@@ -5735,13 +5735,13 @@ B $A25E,1,1 Seems to cycle 4-3-2-1 / 3-2-1 / 2-1 when the roads are curving. Mus
 @ $A25F label=var_a25f
 W $A25F,2,2 Repeatedly set to zero in mhc_straight_road. If altered this changes the car's position on the road.
 @ $A261 label=var_a261
-B $A261,1,1 Used by #R$B297
+B $A261,1,1 Used by #R$B297  -- horizon scroll related e.g. 0 if no motion /$3F/$BD/$7F
 @ $A262 label=var_a262
-B $A262,1,1
-@ $A263 label=var_a263
-B $A263,1,1 Used by #R$B2AE -- right turning force? 0..36
-@ $A264 label=var_a264
-B $A264,1,1 Used by #R$B2B2 -- left turning force? 0..36
+B $A262,1,1 Used by #R$B284  -- horizon scroll related e.g. 0 if no motion /1/2/3
+@ $A263 label=right_turn
+B $A263,1,1 Right turning force (0..36)
+@ $A264 label=left_turn
+B $A264,1,1 Left turning force (0..36)
 @ $A265 label=fork_visible
 B $A265,1,1 Used by #R$BC2C -- set to $60 when the forked road becomes visible, zero otherwise
 @ $A266 label=fork_countdown
@@ -7423,7 +7423,7 @@ C $B1B1,3 Jump if still positive or zero
 N $B1B4 Cope with speed going negative
 C $B1B4,3 HL = $0000
 N $B1B7 HL = new speed
-@ $B1B7 label=mhc_b1b7
+@ $B1B7 label=mhc_speed_set
 C $B1B7,5 A = inclined - 1  (hasn't used DEC A here... possibly left for tweaking)
 C $B1BC,2 Jump if A is now >= 0
 N $B1BE "inclined" counter went -ve
@@ -7453,8 +7453,8 @@ C $B1EC,3 Cap speed to $1FF
 @ $B1EF label=mhc_b1ef
 C $B1EF,3 Set speed to #REGhl
 C $B1F2,1 Restore HL  [likely to be the user input?]
-C $B1F3,4 B = var_a263  -- right turning force
-C $B1F7,4 C = var_a264  -- left turning force
+C $B1F3,4 B = right_turn
+C $B1F7,4 C = left_turn
 C $B1FB,3 A = *$B064  -- Jump counter [self modified]
 C $B1FE,4 Jump to mhc_b253 if non-zero
 N $B202 Is this checking input flags in H?
@@ -7502,6 +7502,7 @@ C $B23C,3 Load speed into #REGhl
 C $B23F,1 Speed low byte
 C $B240,2 Bottom bit of #REGh moves to carry (#REGh now unused)
 C $B242,1 Halve speed, shifting carry in as MSB
+N $B243 Divide by 2.666 but not quite right?
 C $B243,4 A >>= 2
 C $B247,1 L = A
 C $B248,2 L >>= 1
@@ -7514,18 +7515,19 @@ C $B252,1 C = A
 @ $B253 label=mhc_b253
 C $B253,1 Store turning forces for later #R$B2AD
 C $B254,3 BC = $0000
-C $B257,1 E = B
+C $B257,1 E = B, i.e. zero
 C $B258,3 Load current_curvature
 C $B25B,1 Set flags
 C $B25C,3 Jump to mhc_straight_road if zero
 C $B25F,3 Jump to mhc_scroll_horizon if positive
 N $B262 Negative scroll => scroll horizon right.
-C $B262,1 E++
+@ $B262 label=mhc_scroll_right
+C $B262,1 E++  -- i.e. 1
 C $B263,2 A = -A
 N $B265 Positive scroll => scroll horizon left.
 @ $B265 label=mhc_scroll_horizon
-@ $B265 ssub=LD HL,table_b828 - 1
-C $B265,3 HL -> 32-byte table at #R$B828
+@ $B265 ssub=LD HL,horizon_table - 1
+C $B265,3 HL -> 16 word table at #R$B828
 C $B268,1 BC = A  -- B is zero at this point
 C $B269,1 HL += BC
 C $B26A,3 A = var_a261
@@ -7565,8 +7567,9 @@ C $B2A9,2 Jump to mhc_b2ad if zero
 C $B2AB,1 DE <> HL
 C $B2AC,1 D = H  [must be a delta]
 @ $B2AD label=mhc_reset_turning_forces
-C $B2AE,4 var_a263 = B  -- right turning force
-C $B2B2,4 var_a264 = C  -- left turning force
+C $B2AD,1 Restore turning forces
+C $B2AE,4 right_turn = B
+C $B2B2,4 left_turn = C
 C $B2B6,1 A -= B
 C $B2B7,3 Jump to mhc_b2bb if positive
 C $B2BA,1 Otherwise decrement D
@@ -8152,7 +8155,8 @@ C $B84B,3 Return if speed is zero
 C $B84E,3 Load current_curvature into #REGa
 C $B851,3 Jump if current_curvature is zero
 N $B854 current_curvature is non-zero here.
-C $B854,1 Bank current_curvature and unbank what?
+@ $B854 label=sh_curved_road
+C $B854,1 Bank current_curvature (and unbank what?)
 C $B855,2 Bottom bit of #REGh (speed.hi) moves to carry (#REGh now unused)
 N $B857 A here must be the banked A'... it must be passed in. This doesn't make much sense to me.
 C $B857,5 A = ((A << 3) + (carry << 2)) & 6
@@ -8180,17 +8184,15 @@ C $B882,4 Jump if A < 20
 C $B886,2 A -= 20
 @ $B888 label=sh_b888
 C $B888,1 *HL = A
-@ $B889 label=sh_b889
-C $B889,1 A = 0
-C $B88A,1 B = 0
-C $B88B,1 E = 0
-C $B88C,1 Bank
+@ $B889 label=sh_straight_road
+C $B889,3 Zero #REGa, #REGb, #REGe
+C $B88C,1 Bank zeroed #REGa
 C $B88D,5 Return if var_a258 is zero
 C $B892,3 Jump if positive
 C $B895,3 E = -(E + 1)
 @ $B898 label=sh_b898
-@ $B898 ssub=LD HL,table_b828 - 1
-C $B898,3 32-byte table at #R$B828
+@ $B898 ssub=LD HL,horizon_table - 1
+C $B898,3 16 word table at #R$B828
 C $B89B,1 BC = A (B is zeroed earlier)
 C $B89C,1 HL += BC
 C $B89D,4 C = var_a25b
