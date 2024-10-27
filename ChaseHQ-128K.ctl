@@ -5739,9 +5739,9 @@ B $A261,1,1 Used by #R$B297
 @ $A262 label=var_a262
 B $A262,1,1
 @ $A263 label=var_a263
-B $A263,1,1 Used by #R$B2AE
+B $A263,1,1 Used by #R$B2AE -- right turning force? 0..36
 @ $A264 label=var_a264
-B $A264,1,1 Used by #R$B2B2 -- together might be a 16-bit qty
+B $A264,1,1 Used by #R$B2B2 -- left turning force? 0..36
 @ $A265 label=fork_visible
 B $A265,1,1 Used by #R$BC2C -- set to $60 when the forked road becomes visible, zero otherwise
 @ $A266 label=fork_countdown
@@ -7082,7 +7082,7 @@ C $AED5,1 A--
 C $AED6,4 Jump if A < 11
 C $AEDA,2 A = 10
 C $AEDC,2 A >>= 1
-C $AEDE,3 Self modify 'LD A,x' @ #R$AFFB
+C $AEDE,3 Self modify 'LD A,x' @ #R$AFFB  -- possible speed factor
 C $AEE1,1 E = A
 C $AEE2,3 A <<= 3
 C $AEE5,1 A -= E
@@ -7161,12 +7161,13 @@ C $AFAE,3 DE = A
 C $AFB1,4 HL = #R$CE00 + DE  -- table?
 C $AFB5,3 BC = wordat(HL); HL++
 C $AFB8,1 Unbank
-C $AFB9,1 E = A
-C $AFBA,3 Address of table of car-on-fire LODs
-C $AFBD,8 E += (counter_C AND 1) * 2  -- half rate counter 0/1/2/3
-C $AFC5,1 HL += DE
-C $AFC6,4 HL = wordat(HL)
-C $AFCA,2 Retrieve DE from stack
+C $AFB9,1 E = A   this must be a distance value?
+C $AFBA,3 Address of table of car-on-fire LODs (six entries long)
+C $AFBD,5 Take half-rate counter_C (counts 0/1/2/3) and make it 0/1/0/1 (this is the animation frame)
+C $AFC2,3 Double it so it's a table offset
+C $AFC5,1 Form table entry pointer
+C $AFC6,4 HL = wordat(HL)   Load table entry (a pointer) into #REGhl
+C $AFCA,2 Retrieve #REGde from stack
 N $AFCC DE is offset, HL is base of graphic defns
 C $AFCC,3 Draw
 @ $AFCF label=check_smash_factor
@@ -7179,13 +7180,13 @@ C $AFD9,1 Is smash_factor 2?
 C $AFDA,2 Jump if so (draw 2 lots)
 N $AFDC Otherwise draw all 3 lots.
 C $AFDC,3 Smoke data
-C $AFDF,3 Call sub_aff1
+C $AFDF,3 Call #R$AFF1
 C $AFE2,3 Smoke data
-C $AFE5,3 Call sub_aff1
+C $AFE5,3 Call #R$AFF1
 C $AFE8,3 Smoke data
-C $AFEB,3 Call sub_aff1
+C $AFEB,3 Call #R$AFF1
 C $AFEE,3 Continue
-N $AFF1 decrements a counter 5..1 then repeats this must be the car-on-fire animation index is it just the smoke?
+N $AFF1 Decrements a counter 5..1 then repeats this must be the car-on-fire animation index is it just the smoke?
 @ $AFF1 label=sub_aff1
 C $AFF1,2 Load counter and decrement it
 C $AFF3,3 Jump if +ve
@@ -7202,8 +7203,8 @@ C $B000,3 Return if A >= 6
 C $B003,1 E = A  -- smoke animation index
 C $B004,2 D = A - D
 C $B006,2 Double self mod value from earlier
-C $B008,2 BC = C
-C $B00A,1 HL += BC
+C $B008,2 Widen to 16-bit
+C $B00A,1 Add to #REGhl
 C $B00B,3 B = *HL - D
 C $B00E,1 HL++
 C $B00F,1 C = *HL
@@ -7247,9 +7248,11 @@ W $B051,2,2 Delta  -4, Pitch Down
 W $B053,2,2 Delta  -7, Pitch Down
 W $B055,2,2 Delta -10, Pitch Down
 W $B057,2,2 Delta -13, Pitch Down
-N $B059 Sub-table (another byte pair)
+w $B059 Sub-table (another byte pair)
+D $B059 Note: $b057 is used to refer to this table
+@ $B059 label=table_b059
 W $B059,10,2
-c $B063 Hero car jumps; gear changing; turbos; off road checks; speed adjustment
+c $B063 Hero car jumps; gear changing; turbos; off road checks; speed adjustment; turning
 D $B063 Used by the routines at #R$8401 and #R$852A.
 @ $B063 label=move_hero_car
 C $B063,2 Load jump counter. Self modified by #R$8827 and #R$B965. Highest is 8.
@@ -7296,7 +7299,7 @@ N $B0B9 Otherwise the crashed flag is set.
 C $B0B9,4 Change user input to be ONLY the fire/gear flag (if set)
 @ $B0BD label=mhc_b0bd
 C $B0BD,1 A = C
-C $B0BE,1 Preserve (modified) user input
+C $B0BE,1 Preserve the modified user input for later
 C $B0BF,2 Test fire/gear flag
 C $B0C1,3 Address of gear flag
 C $B0C4,3 Load gear_lockout
@@ -7346,8 +7349,8 @@ C $B11A,1 Speed low byte
 C $B11B,2 Bottom bit of #REGh moves to carry
 C $B11D,4 A <<= 4  -- 9 bit rotate left through carry
 C $B121,6 A = -((A & $0F) | 1)
-C $B127,3 BC = $FF00 | A
-C $B12A,3 Jump to mhc_b19a
+C $B127,3 BC = $FF00 | A  -- speed delta (slowing)
+C $B12A,3 Jump to mhc_check_brake
 @ $B12D label=mhc_b12d
 C $B12D,3 A = boost (time remaining)
 C $B130,1 Test then bank the flags
@@ -7366,14 +7369,14 @@ C $B14B,3 Shift a bit out of B into A?
 C $B14E,3 and again
 C $B151,2 Then divide by 4?
 C $B153,5 C = (A & $3F) | 1
-C $B158,2 Jump to mhc_b19a
+C $B158,2 Jump to mhc_check_brake
 @ $B15A label=mhc_b15a
 C $B15A,1 A = L
 C $B15B,2 H >>= 1
 C $B15E,2 H >>= 1
 C $B163,6 A = -((A & $1F) | 1)
-C $B169,3 BC = $FF00 | A
-C $B16C,2 Jump to mhc_b19a
+C $B169,3 BC = $FF00 | A  -- speed delta (slowing)
+C $B16C,2 Jump to mhc_check_brake
 @ $B16E label=mhc_b16e
 C $B16E,3 BC = 220
 C $B171,2 HL -= BC  -- for flags
@@ -7385,22 +7388,30 @@ C $B17E,1 B = D
 C $B17F,2 B >>= 1
 C $B182,2 B >>= 1
 C $B187,5 C = (A | 1) & $1F
-C $B18C,2 Jump to mhc_b19a
+C $B18C,2 Jump to mhc_check_brake
 @ $B18E label=mhc_b18e
 C $B18E,3 BC = 695
 C $B194,3 BC = 360
-@ $B19A label=mhc_b19a
-C $B19A,2 Get stacked #REGaf
-C $B19C,3 Test bit 2?
-C $B19F,2 Jump to mhc_b1a6 if no carry
-C $B1A1,3 BC = $FFEC
-C $B1A4,2 Jump to mhc_b1ac
-@ $B1A6 label=mhc_b1a6
-@ $B1AC label=mhc_b1ac
-C $B1AC,2 HL = DE
-C $B1AE,1 Clear carry?
-C $B1AF,2 HL += BC
+@ $B19A label=mhc_check_brake
+C $B19A,2 Get modified user input (stored by #R$B0BE)
+C $B19C,3 Is BRAKE pressed? (bit 2 / down)
+C $B19F,2 Jump to mhc_not_braking if not pressed
+N $B1A1 Braking
+C $B1A1,3 Speed delta -20 to slow down
+C $B1A4,2 Jump to mhc_calc_speed
+@ $B1A6 label=mhc_not_braking
+C $B1A6,1 Is ACCELERATE pressed? (bit 3 / up)
+C $B1A7,2 Jump if so {what's in BC?}
+N $B1A9 Not accelerating
+C $B1A9,3 Speed delta -10 to gradually slow
+@ $B1AC label=mhc_calc_speed
+C $B1AC,2 Copy speed from #REGde
+C $B1AE,1 Clear carry
+C $B1AF,2 Change speed
+C $B1B1,3 Jump if still positive or zero
+N $B1B4 Cope with speed going negative
 C $B1B4,3 HL = $0000
+N $B1B7 HL = speed
 @ $B1B7 label=mhc_b1b7
 C $B1B7,5 A = var_a24c - 1
 C $B1BE,3 A = $B5B0  -- self modified value in draw_car
@@ -7427,29 +7438,30 @@ C $B1E8,2 CP 2
 C $B1EC,3 Cap speed to $1FF
 @ $B1EF label=mhc_b1ef
 C $B1EF,3 Set speed to #REGhl
-C $B1F2,1 Restore HL  [what is it?]
-C $B1F3,4 B = var_a263
-C $B1F7,4 C = var_a264
+C $B1F2,1 Restore HL  [likely to be the user input?]
+C $B1F3,4 B = var_a263  -- right turning force
+C $B1F7,4 C = var_a264  -- left turning force
 C $B1FB,3 A = *$B064  -- Jump counter [self modified]
 C $B1FE,4 Jump to mhc_b253 if non-zero
+N $B202 Is this checking input flags in H?
 C $B202,2 Shift LSB out of H
 C $B204,2 Jump to mhc_b21a if set
 C $B206,2 Shift new LSB out of H
 C $B208,2 Jump to mhc_b22c if set
-N $B20A A = ((C >= 9) ? C - 9 : 0) = MAX(C - 9, 0) This instr is hit continuously
-C $B20A,3 A = C - 9  -- var_a264 from earlier
+N $B20A Reduce left turning force A = ((C >= 9) ? C - 9 : 0) = MAX(C - 9, 0) This instr is hit continuously
+C $B20A,3 A = C - 9  -- left turning force from earlier
 C $B20D,2 Jump if C >= 9
-C $B20F,1 A = 0
-@ $B210 label=mhc_b210
+C $B20F,1 A = 0  -- clamp
+@ $B210 label=mhc_store_left_turning_force
 C $B210,1 C = A
-N $B211 A = ((B >= 9) ? B - 9 : 0) = MAX(B - 9, 0)
-C $B211,3 A = B - 9
+N $B211 Reduce right turning force A = ((B >= 9) ? B - 9 : 0) = MAX(B - 9, 0)
+C $B211,3 A = B - 9  -- right turning force from earlier
 C $B214,2 Jump to mhc_b217 if B >= 9
-C $B216,1 A = 0
-@ $B217 label=mhc_b217
+C $B216,1 A = 0  -- clamp
+@ $B217 label=mhc_store_right_turning_force
 C $B217,1 B = A
-C $B218,2 Jump to mhc_b23c
-N $B21A B = ((B + 4 >= 36) ? 36 : B + 4) = MIN(36, B + 4)
+C $B218,2 Jump to mhc_handle_speed
+N $B21A B = ((B + 4 >= 36) ? 36 : B + 4) = MIN(36, B + 4) -- 36 is the max turning force
 @ $B21A label=mhc_b21a
 C $B21A,3 A = B + 4
 C $B21D,5 Jump if A >= 36
@@ -7457,9 +7469,9 @@ C $B222,1 B = A
 N $B223 C = ((C >= B) ? C - B : 0) = MAX(C - B, 0)
 @ $B223 label=mhc_b223
 C $B223,3 C -= B
-C $B226,2 Jump to mhc_b23c if C >= B
+C $B226,2 Jump to mhc_handle_speed if C >= B
 C $B228,2 C = 0
-C $B22A,2 Jump to mhc_b23c
+C $B22A,2 Jump to mhc_handle_speed
 N $B22C C = ((C + 4 >= 36) ? 36 : C + 4) = MIN(36, C + 4)
 @ $B22C label=mhc_b22c
 C $B22C,3 A = C + 4
@@ -7469,9 +7481,9 @@ C $B234,1 C = A
 N $B235 B = ((B >= C) ? B - C : 0) = MAX(B - C, 0)
 @ $B235 label=mhc_b235
 C $B235,3 B -= C
-C $B238,2 Jump to mhc_b23c if B >= C
+C $B238,2 Jump to mhc_handle_speed if B >= C
 C $B23A,2 B = 0
-@ $B23C label=mhc_b23c
+@ $B23C label=mhc_handle_speed
 C $B23C,3 Load speed into #REGhl
 C $B23F,1 Speed low byte
 C $B240,2 Bottom bit of #REGh moves to carry (#REGh now unused)
@@ -7486,6 +7498,7 @@ C $B24E,1 B = A
 C $B24F,3 Jump if A >= C
 C $B252,1 C = A
 @ $B253 label=mhc_b253
+C $B253,1 Store turning forces for later #R$B2AD
 C $B254,3 BC = $0000
 C $B257,1 E = B
 C $B258,3 Load current_curvature
@@ -7537,9 +7550,9 @@ C $B2A8,1 Set flags
 C $B2A9,2 Jump to mhc_b2ad if zero
 C $B2AB,1 DE <> HL
 C $B2AC,1 D = H  [must be a delta]
-@ $B2AD label=mhc_b2ad
-C $B2AE,4 var_a263 = B
-C $B2B2,4 var_a264 = C
+@ $B2AD label=mhc_reset_turning_forces
+C $B2AE,4 var_a263 = B  -- right turning force
+C $B2B2,4 var_a264 = C  -- left turning force
 C $B2B6,1 A -= B
 C $B2B7,3 Jump to mhc_b2bb if positive
 C $B2BA,1 Otherwise decrement D
@@ -8200,16 +8213,16 @@ C $B8CB,1 Bank
 C $B8CC,5 var_a25b += A
 C $B8D1,1 Return
 c $B8D2 Routine at B8D2
-D $B8D2 Horizon stuff? Not sure.
+D $B8D2 Horizon stuff? Car jumping stuff? Not sure.
 R $B8D2 Used by the routine at #R$BDFB.
 @ $B8D2 label=sub_b8d2
-C $B8D2,3 A = var_a25a
-C $B8D5,3 BC = A
+C $B8D2,6 BC = var_a25a  -- var set by scroll_horizon
 C $B8D8,3 A = var_a258
 C $B8DB,1 Set flags
 C $B8DC,3 Jump if positive
 C $B8DF,2 A = -A
 C $B8E1,1 C++
+@ $B8E2 label=xxx_positive
 C $B8E2,1 B--
 C $B8E3,2 Jump if zero
 C $B8E5,2 9-bit rotate right through carry
@@ -8217,19 +8230,22 @@ C $B8E7,2 B = 0
 C $B8E9,2 Jump if no carry
 C $B8EB,2 A = -A
 C $B8ED,1 B--
+@ $B8EE label=xxx_horizon_level
 C $B8EE,3 HL = horizon_level
 C $B8F1,1 C = A
 C $B8F2,1 HL += BC
 C $B8F3,3 horizon_level = HL
+@ $B8F6 label=xxx_road_height
 C $B8F6,3 Load road_buffer_offset into #REGa
 C $B8F9,2 Add (32+2) so it's the height data
 C $B8FB,3 Point #REGhl at road buffer height data
 C $B8FE,1 A = 0
 C $B8FF,3 var_a25b = 0
 C $B902,3 var_a25a = 0
-C $B905,1 A = *HL
-C $B908,3 Jump if positive
+C $B905,3 A = *HL >> 1
+C $B908,3 Jump if positive (or zero?)
 C $B90B,1 A++
+@ $B90C label=xxx_positive
 C $B90C,3 var_a258 = A
 C $B90F,2 L -= 2
 C $B911,1 A = *HL
@@ -8241,8 +8257,10 @@ C $B918,2 B = 6
 C $B91A,3 Jump if positive
 C $B91D,2 A = -A
 C $B91F,2 B = 3
+@ $B921 label=xxx_another_positive
 C $B921,4 Jump if A >= 3
 C $B925,2 B = 0
+@ $B927 label=xxx_ge_3
 C $B927,1 A = B
 C $B928,3 Self modify 'ADD A,x' @ #R$B5AF
 C $B92B,3 HL = &var_a259
@@ -8265,13 +8283,13 @@ C $B94D,6 D = ~(A & 3) + 4
 C $B953,2 A = B - D
 C $B955,4 Jump if <=
 C $B959,1 Preserve HL
-C $B95A,8 HL = #R$B057 + A*2  looks early.. might be 1-indexed? [sampled A: 3,2,4]
-C $B962,2 E = *HL++  offset into B045
-C $B964,1 Load new jump value [sampled: $B060]
+C $B95A,8 HL = #R$B057 + A*2  -- 1-indexed pointer into table_b059 [sampled A: 3,2,4]
+C $B962,2 E = *HL++  (loads one of 2/4/6/8/10)
+C $B964,1 Load new jump value [sampled: $B060]  (loads one of 8/6/4/2/0)
 C $B965,3 Set jump counter
-C $B968,4 HL = #R$B045 + E  points into jump values table
-C $B96C,3 Self modify #R$B079
-C $B96F,1 Restore HL
+C $B968,4 HL = #R$B045 + #REGe  -- points into jump values table
+C $B96C,3 Self modify #R$B079 (mhc_midair)
+C $B96F,1 Restore HL (is ..?)
 C $B970,1 *HL = C
 C $B971,3 Load current_curvature into #REGa
 C $B974,1 Preserve it
@@ -8287,13 +8305,15 @@ C $B988,4 Check fork_taken
 C $B98C,1 Load a curvature byte again
 C $B98D,2 Jump if left fork was taken
 C $B98F,2 Negate if right fork was taken
+@ $B991 label=xxx_fork_not_visible
 C $B991,3 Store new curvature value to current_curvature
 C $B994,1 Set flags
 C $B995,1 E = A
 C $B996,2 Jump if curvature byte was zero
 C $B998,2 E = 1
 C $B99A,3 Jump if positive
-C $B99F,2 A = -A
+N $B99D Otherwise negative
+C $B99F,2 A = -A  -- make positive
 C $B9A1,1 D = A
 C $B9A2,2 A *= 4
 C $B9A4,3 horizon_a25d = A
@@ -8305,27 +8325,27 @@ C $B9B2,2 Bottom bit of #REGh moves to carry (#REGh now unused)
 C $B9B4,5 A = (A << 3) & 6
 C $B9B9,1 A += B
 C $B9BA,3 BC = A
-C $B9BD,3 HL -> horizon_table
-C $B9C0,1 HL += BC
+C $B9BD,4 HL = horizon_table + BC
 C $B9C1,1 A = *HL
 C $B9C2,3 horizon_a25e = A
 C $B9C5,3 A = var_a262
 C $B9C8,3 BC = A
 C $B9CC,1 Set flags
 C $B9CD,3 Jump if positive
-C $B9D0,2 A = -A
+N $B9D0 Otherwise negative
+C $B9D0,2 A = -A  -- make positive
 C $B9D2,1 C++
 C $B9D3,1 A -= B
 C $B9D4,4 Jump if <=
 C $B9D8,1 B = A
-C $B9D9,2 A *= 4
+C $B9D9,2 A <<= 2
 C $B9DD,1 A += B
 C $B9E0,2 B = 0
 C $B9E2,2 Jump if no carry
 C $B9E4,1 B--
 C $B9E5,2 A = -A
 C $B9E7,1 C = A
-C $B9E8,4 var_a25f = BC
+C $B9E8,4 var_a25f = BC  -- car position delta?
 C $B9EC,1 A = 0
 C $B9ED,3 var_a261 = 0
 C $B9F0,3 var_a262 = 0
@@ -10653,9 +10673,12 @@ b $CDEC
 W $CDEC,8,8
 w $CDF4 Pointers to car-on-fire LODs
 @ $CDF4 label=table_car_on_fire_LOD_ptrs
-W $CDF4,2,2 smallest
-W $CDF6,8,2
-W $CDFE,2,2 largest
+W $CDF4,2,2 32x6, frame A
+W $CDF6,2,2 32x6, frame B
+W $CDF8,2,2 32x11, frame A
+W $CDFA,2,2 32x11, frame B
+W $CDFC,2,2 32x16, frame A
+W $CDFE,2,2 32x16, frame B
 w $CE00
 @ $CE00 label=table_ce00
 W $CE00,12,12
@@ -11133,6 +11156,7 @@ D $DFF8 #HTML[#CALL:graphic($DFF8,8,31*6,0,0)]
 @ $DFF8 label=minifont
 B $DFF8,186,6
 b $E0B2 Graphics defns <Byte width, Flags, Height, Ptr, Ptr>
+D $E0B2 Note: The definitions may use subsections of graphic data.
 N $E0B2 TODO: Ensure these graphic calls don't clash with other emissions.
 N $E0B2 Regular: #HTML[#CALL:graphic($7AB1,16,16,0,1)]
 B $E0B2,1,1 Width (bytes)
