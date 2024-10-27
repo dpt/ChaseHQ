@@ -5696,8 +5696,8 @@ B $A248,1,1 Set to 1 when on dirt track. [#R$A955 reads #R$C457,#R$C526 writes]
 B $A249,1,1 Set to 0 if no fork, or the left fork was taken, or 1 if the right fork was taken. [$A539,$B988,$BAE0,$BB6E reads #R$BA89,#R$BC2C writes]
 @ $A24A label=speed
 W $A24A,2,2 Speed (0..511). Max when in low gear =~ $E6 (230), high gear =~ $168 (360), turbo =~ $1FF (511). In practice I see maximums of 188 / 295 / 419 (82% of original value...)
-@ $A24C label=var_a24c
-B $A24C,1,1 #R$B1B7 reads  #R$B1E4 writes
+@ $A24C label=inclined
+B $A24C,1,1 Counts 3/2/1/0 when the hero car is ascending or descending. #R$B1B7 reads  #R$B1E4 writes
 @ $A24D label=cornering
 B $A24D,1,1 Likely a cornering force flag. Used to trigger smoke. #R$B3B4, #R$B432 reads  #R$B2E5, #R$B314, #R$B32A writes
 @ $A24E label=boost
@@ -7318,40 +7318,45 @@ C $B0DB,3 gear_lockout = A
 C $B0DE,1 Read current gear flag
 C $B0DF,1 Bank it
 C $B0E0,3 Read current speed
-C $B0E3,1 Stack it
-C $B0E4,5 HL -= 120
-C $B0E9,2 Jump if speed >= 120
-C $B0EB,6 Jump if perp_caught_phase > 0
+C $B0E3,1 Stack current speed
+C $B0E4,7 Jump if speed >= 120
+N $B0EB Going slowly here (<120).
+@ $B0EB label=mhc_going_slow
+C $B0EB,6 Jump if perp_caught_phase > 0  -- Don't do idle handling if we're slowing while catching the perp
 N $B0F1 Handle idle timer.
+@ $B0F1 label=mhc_idle_timer
 C $B0F1,3 Address of idle timer
 C $B0F4,1 Decrement idle timer
 C $B0F5,2 Jump if non-zero
+@ $B0F7 label=mhc_reset_idle_timer
 C $B0F7,2 Reset idle timer to 100
 C $B0F9,2 Set priority to 10
-C $B0FB,3 HL = get_moving_chatter
+C $B0FB,3 Point #REGhl at get_moving_chatter (Raymond: "LET'S GET MOVIN' MAN!")
 C $B0FE,3 Call start_chatter (priority 10)
-@ $B101 label=mhc_b101
-C $B101,1 Pop speed
-C $B102,2 DE = HL
+@ $B101 label=mhc_done_idle
+C $B101,1 Pop current speed
+C $B102,2 Save current speed in #REGde for later
 C $B104,3 Load the off-road flag
-C $B107,3 Jump if zero
+C $B107,3 Jump if zero (fully on-road)
 N $B10A Handle off-road (#REGa can be 1 or 2 here).
-C $B10A,3 BC = 120  -- factor for off-road == 1
+@ $B10A label=mhc_offroad
+C $B10A,3 Set max speed for when one wheel off-road (120 => ~100?)
 C $B10D,3 Jump if off-road was one
-C $B110,3 BC = 110  -- factor for off-road == 2
-@ $B113 label=mhc_b113
+C $B110,3 Set max speed for when both wheels off-road (110 => ~90?)
+@ $B113 label=mhc_chose_offroad_speed
 C $B113,1 Clear carry
-C $B114,2 HL -= BC  -- 16-bit subtract only for result in flags
-C $B116,2 HL = D  -- speed
-C $B118,2 Jump if HL < BC (result of subtraction)
-N $B11A Otherwise do something speed dependent.
-C $B11A,1 Speed low byte
+C $B114,2 16-bit subtract only for result in flags
+C $B116,2 Restore current speed saved earlier
+C $B118,2 Jump if current speed (HL) < max speed (DE)  -- don't reduce speed?
+N $B11A This seems to be reducing the speed by a pseudorandom value when we're off-road.
+@ $B11A label=mhc_offroad_reduce_speed
+C $B11A,1 Current speed low byte
 C $B11B,2 Bottom bit of #REGh moves to carry
 C $B11D,4 A <<= 4  -- 9 bit rotate left through carry
 C $B121,6 A = -((A & $0F) | 1)
 C $B127,3 BC = $FF00 | A  -- speed delta (slowing)
 C $B12A,3 Jump to mhc_check_brake
-@ $B12D label=mhc_b12d
+@ $B12D label=mhc_done_offroad
 C $B12D,3 A = boost (time remaining)
 C $B130,1 Test then bank the flags
 C $B131,1 Bank
@@ -7390,20 +7395,20 @@ C $B182,2 B >>= 1
 C $B187,5 C = (A | 1) & $1F
 C $B18C,2 Jump to mhc_check_brake
 @ $B18E label=mhc_b18e
-C $B18E,3 BC = 695
+C $B18E,3 BC = 695   -- value used later
 C $B194,3 BC = 360
 @ $B19A label=mhc_check_brake
 C $B19A,2 Get modified user input (stored by #R$B0BE)
 C $B19C,3 Is BRAKE pressed? (bit 2 / down)
 C $B19F,2 Jump to mhc_not_braking if not pressed
 N $B1A1 Braking
-C $B1A1,3 Speed delta -20 to slow down
+C $B1A1,3 Speed delta is -20 to slow down
 C $B1A4,2 Jump to mhc_calc_speed
 @ $B1A6 label=mhc_not_braking
 C $B1A6,1 Is ACCELERATE pressed? (bit 3 / up)
-C $B1A7,2 Jump if so {what's in BC?}
+C $B1A7,2 Jump if so {what's in BC? must be the speed delta from earlier}
 N $B1A9 Not accelerating
-C $B1A9,3 Speed delta -10 to gradually slow
+C $B1A9,3 Speed delta is -10 to gradually slow
 @ $B1AC label=mhc_calc_speed
 C $B1AC,2 Copy speed from #REGde
 C $B1AE,1 Clear carry
@@ -7411,28 +7416,31 @@ C $B1AF,2 Change speed
 C $B1B1,3 Jump if still positive or zero
 N $B1B4 Cope with speed going negative
 C $B1B4,3 HL = $0000
-N $B1B7 HL = speed
+N $B1B7 HL = new speed
 @ $B1B7 label=mhc_b1b7
-C $B1B7,5 A = var_a24c - 1
-C $B1BE,3 A = $B5B0  -- self modified value in draw_car
-C $B1C1,3 Jump if zero
-C $B1C4,1 C = A
-C $B1C5,1 A = H
-C $B1C6,1 A |= L
-C $B1C9,5 A = (C - 5) | 1
-C $B1CE,1 C = A
-C $B1CF,2 B = 0
-C $B1D4,1 B--
-@ $B1D5 label=mhc_b1d5
-C $B1D5,2 DE = HL
-C $B1D7,1 HL += BC
-C $B1D8,3 BC = 695
-C $B1DC,2 HL -= BC
-C $B1DF,2 Jump if HL < BC
+C $B1B7,5 A = inclined - 1  (hasn't used DEC A here... possibly left for tweaking)
+C $B1BC,2 Jump if A is now >= 0
+N $B1BE "inclined" counter went -ve
+C $B1BE,3 A = $B5B0  -- read self modified value in draw_car that sets the car's pitch (0/3/6)
+C $B1C1,3 Jump if zero (pitch is level)
+C $B1C4,1 C = A  -- temp save A
+C $B1C5,4 Jump if HL (new speed) is zero
+N $B1C9 new speed is non-zero
+C $B1C9,8 BC = (C - 5) | 1  -- 0/3/6 in C => -5/-1/1 in BC
+C $B1D1,3 Jump if result is positive
+C $B1D4,1 BC = $FF00 | A  -- otherwise widen as negative
+@ $B1D5 label=mhc_positive
+C $B1D5,2 Copy speed from HL to DE
+C $B1D7,1 Increment speed ... by a value computed from car's pitch ... eh?
+C $B1D8,3 Speed threshold 695
+C $B1DB,1 Save it
+C $B1DC,2 Reduce speed by threshold
+C $B1DE,1 Restore it
+C $B1DF,2 Jump if speed < 695  -- surely always the case?!
 @ $B1E2 label=mhc_b1e2
-C $B1E2,2 A = 3
-@ $B1E4 label=mhc_b1e4
-C $B1E4,3 var_a24c = A
+C $B1E2,2 A = 3  -- reset A24C to 3
+@ $B1E4 label=mhc_set_inclined
+C $B1E4,3 inclined = A
 C $B1E7,1 A = H
 C $B1E8,2 CP 2
 C $B1EC,3 Cap speed to $1FF
