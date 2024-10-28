@@ -5718,8 +5718,8 @@ B $A254,1,1 If non-zero this permits cars, hazards and dust/stones to spawn. It 
 B $A255,2,2 Distance as BCD (2 bytes / 4 digits, little endian)
 @ $A257 label=var_a257
 B $A257,1,1 Unused
-@ $A258 label=var_a258
-B $A258,1,1 Used by #R$B8D8
+@ $A258 label=inclination
+B $A258,1,1 Road inclination $FF/$FE/$FD if the road is climbing, $00 if level, $01/$02/$03 if the road is falling
 @ $A259 label=var_a259
 B $A259,1,1 Used by #R$B92B
 @ $A25A label=var_a25a
@@ -8187,7 +8187,7 @@ C $B888,1 *HL = A
 @ $B889 label=sh_straight_road
 C $B889,3 Zero #REGa, #REGb, #REGe
 C $B88C,1 Bank zeroed #REGa
-C $B88D,5 Return if var_a258 is zero
+C $B88D,5 Return if inclination is zero (flat road)
 C $B892,3 Jump if positive
 C $B895,3 E = -(E + 1)
 @ $B898 label=sh_b898
@@ -8233,12 +8233,12 @@ D $B8D2 Horizon stuff? Car jumping stuff? Not sure.
 R $B8D2 Used by the routine at #R$BDFB.
 @ $B8D2 label=sub_b8d2
 C $B8D2,6 BC = var_a25a  -- var set by scroll_horizon
-C $B8D8,3 A = var_a258
+C $B8D8,3 Load inclination
 C $B8DB,1 Set flags
 C $B8DC,3 Jump if positive
 C $B8DF,2 A = -A
 C $B8E1,1 C++
-@ $B8E2 label=xxx_positive
+@ $B8E2 label=xxx_inclination_positive
 C $B8E2,1 B--
 C $B8E3,2 Jump if zero
 C $B8E5,2 9-bit rotate right through carry
@@ -8262,7 +8262,7 @@ C $B905,3 A = *HL >> 1
 C $B908,3 Jump if positive (or zero?)
 C $B90B,1 A++
 @ $B90C label=xxx_positive
-C $B90C,3 var_a258 = A
+C $B90C,3 inclination = A
 C $B90F,2 L -= 2
 C $B911,1 A = *HL
 C $B912,1 C = A
