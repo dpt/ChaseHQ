@@ -5732,8 +5732,8 @@ B $A25C,1,1 This holds the road curvature byte at the position of the hero car. 
 B $A25D,1,1 Seems to be added to the index for the horizon_table. Saw: 8/16/24.
 @ $A25E label=horizon_a25e
 B $A25E,1,1 Seems to cycle 4-3-2-1 / 3-2-1 / 2-1 when the roads are curving. Must be the horizon scroll/shift/roll value.
-@ $A25F label=var_a25f
-W $A25F,2,2 Repeatedly set to zero in mhc_straight_road. If altered this changes the car's position on the road.
+@ $A25F label=horizontal_adjust
+W $A25F,2,2 Repeatedly set to zero in mhc_straight_road. If altered this changes the car's position on the road. It's mainly zero but occasionally gets set to one. +ve shifts the hero car left, -ve shifts it right.
 @ $A261 label=var_a261
 B $A261,1,1 Used by #R$B297  -- horizon scroll related e.g. 0 if no motion /$3F/$BD/$7F
 @ $A262 label=var_a262
@@ -7559,8 +7559,8 @@ C $B295,1 C = A
 C $B297,3 var_a261 = A
 N $B29A No curvature - No scroll required?
 @ $B29A label=mhc_straight_road
-C $B29A,4 HL = var_a25f + BC
-C $B29E,7 var_a25f = 0
+C $B29A,4 HL = horizontal_adjust + BC
+C $B29E,7 horizontal_adjust = 0
 C $B2A5,3 A = *$B326  -- Read self modified op in animate_hero_car -- crashed flag
 C $B2A8,1 Set flags
 C $B2A9,2 Jump to mhc_b2ad if zero
@@ -8280,14 +8280,17 @@ C $B925,2 B = 0
 @ $B927 label=xxx_ge_3
 C $B927,1 A = B
 C $B928,3 Self modify 'ADD A,x' @ #R$B5AF
-C $B92B,3 HL = &var_a259
-C $B92E,1 A = *HL
+C $B92B,3 Address of var_a259
+C $B92E,1 Read var_a259
 C $B92F,1 Set flags
 C $B930,3 Jump if positive
+N $B933 Else negative or zero.
 C $B933,2 Test bit 7
 C $B935,2 Jump if non-zero
+N $B937 Else zero.
 C $B937,4 A = -A - 2
-C $B93B,2 Jump if carry
+C $B93B,2 Jump if carry  (-A < 2)
+N $B93D Else ?
 C $B93D,1 B = A
 C $B93E,3 Load jump counter
 C $B941,1 Set flags
@@ -8307,16 +8310,17 @@ C $B965,3 Set jump counter
 C $B968,4 HL = #R$B045 + #REGe  -- points into jump values table
 C $B96C,3 Self modify #R$B079 (mhc_midair)
 C $B96F,1 Restore HL (is ..?)
+@ $B970 label=xxx_potato
 C $B970,1 *HL = C
 C $B971,3 Load current_curvature into #REGa
 C $B974,1 Preserve it
 C $B975,3 Load road_buffer_offset into #REGa
 C $B978,3 Point #REGhl at road buffer curvature data
-C $B97B,3 A = fork_visible
-C $B97E,1 Set flags
+C $B97B,4 Test fork_visible
 C $B97F,1 Load a curvature byte
 C $B980,2 Jump if fork_visible was zero
 N $B982 Forked road is visible.
+@ $B982 label=xxx_fork_visible
 C $B982,6 Jump if fork_in_progress is zero [set while the road forks]
 C $B988,4 Check fork_taken
 C $B98C,1 Load a curvature byte again
@@ -8331,6 +8335,7 @@ C $B998,2 E = 1
 C $B99A,3 Jump if positive
 N $B99D Otherwise negative
 C $B99F,2 A = -A  -- make positive
+@ $B9A1 label=xxx_b9a1
 C $B9A1,1 D = A
 C $B9A2,2 A *= 4
 C $B9A4,3 horizon_a25d = A
@@ -8344,7 +8349,9 @@ C $B9B9,1 A += B
 C $B9BA,3 BC = A
 C $B9BD,4 HL = horizon_table + BC
 C $B9C1,1 A = *HL
+@ $B9C2 label=xxx_b9c2
 C $B9C2,3 horizon_a25e = A
+@ $B9C5 label=xxx_b9c5
 C $B9C5,3 A = var_a262
 C $B9C8,3 BC = A
 C $B9CC,1 Set flags
@@ -8352,17 +8359,22 @@ C $B9CD,3 Jump if positive
 N $B9D0 Otherwise negative
 C $B9D0,2 A = -A  -- make positive
 C $B9D2,1 C++
+@ $B9D3 label=xxx_b9d3
 C $B9D3,1 A -= B
 C $B9D4,4 Jump if <=
 C $B9D8,1 B = A
-C $B9D9,2 A <<= 2
+C $B9D9,2 A = A * 4
+C $B9DB,2 B >>= 1
 C $B9DD,1 A += B
 C $B9E0,2 B = 0
 C $B9E2,2 Jump if no carry
+@ $B9E4 label=xxx_b9e4
 C $B9E4,1 B--
 C $B9E5,2 A = -A
+@ $B9E7 label=xxx_b9e7
 C $B9E7,1 C = A
-C $B9E8,4 var_a25f = BC  -- car position delta?
+C $B9E8,4 Set horizontal_adjust to BC (this shifts the car left/right if +ve/-ve)
+@ $B9EC label=xxx_b9ec
 C $B9EC,1 A = 0
 C $B9ED,3 var_a261 = 0
 C $B9F0,3 var_a262 = 0
