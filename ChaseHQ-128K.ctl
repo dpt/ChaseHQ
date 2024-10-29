@@ -5723,9 +5723,9 @@ B $A258,1,1 Road inclination $FF/$FE/$FD if the road is climbing, $00 if level, 
 @ $A259 label=var_a259
 B $A259,1,1 Used by #R$B92B
 @ $A25A label=var_a25a
-B $A25A,1,1 Used by #R$B8D2
+B $A25A,1,1 Changes often when the backdrop Y changes.
 @ $A25B label=var_a25b
-B $A25B,1,1
+B $A25B,1,1 Changes often when the backdrop Y changes.
 @ $A25C label=current_curvature
 B $A25C,1,1 This holds the road curvature byte at the position of the hero car. -ve when curving left or +ve when curving right. $FA..$06 in multiples of two.
 @ $A25D label=horizon_a25d
@@ -8236,41 +8236,42 @@ C $B8D2,6 BC = var_a25a  -- var set by scroll_horizon
 C $B8D8,3 Load inclination
 C $B8DB,1 Set flags
 C $B8DC,3 Jump if positive
+N $B8DF Otherwise negative.
 C $B8DF,2 A = -A
 C $B8E1,1 C++
 @ $B8E2 label=xxx_inclination_positive
 C $B8E2,1 B--
 C $B8E3,2 Jump if zero
+@ $B8E5 label=xxx_inclination_nonzero
 C $B8E5,2 9-bit rotate right through carry
-C $B8E7,2 B = 0
+C $B8E7,2 BC = C
 C $B8E9,2 Jump if no carry
-C $B8EB,2 A = -A
-C $B8ED,1 B--
-@ $B8EE label=xxx_horizon_level
-C $B8EE,3 HL = horizon_level
+C $B8EB,2 A = -A  -- invert inclination
+C $B8ED,1 B = $FF
+@ $B8EE label=xxx_alter_horizon_level
+C $B8EE,3 Point #REGhl at horizon_level
 C $B8F1,1 C = A
 C $B8F2,1 HL += BC
-C $B8F3,3 horizon_level = HL
-@ $B8F6 label=xxx_road_height
+C $B8F3,3 Store horizon_level
+@ $B8F6 label=xxx_read_road_height
 C $B8F6,3 Load road_buffer_offset into #REGa
 C $B8F9,2 Add (32+2) so it's the height data
 C $B8FB,3 Point #REGhl at road buffer height data
-C $B8FE,1 A = 0
-C $B8FF,3 var_a25b = 0
-C $B902,3 var_a25a = 0
-C $B905,3 A = *HL >> 1
+C $B8FE,7 Zero var_a25b and var_a25a
+C $B905,3 A = (height byte) >> 1
 C $B908,3 Jump if positive (or zero?)
 C $B90B,1 A++
 @ $B90C label=xxx_positive
 C $B90C,3 inclination = A
-C $B90F,2 L -= 2
-C $B911,1 A = *HL
-C $B912,1 C = A
+C $B90F,2 Step back 2 in the height data (frontmost height byte?)
+C $B911,1 Read height byte
+C $B912,1 Copy to #REGc
 C $B913,1 Set flags
 C $B914,2 B = 0
-C $B916,2 Jump if zero
+C $B916,2 Jump if height was zero
 C $B918,2 B = 6
 C $B91A,3 Jump if positive
+N $B91D Else negative.
 C $B91D,2 A = -A
 C $B91F,2 B = 3
 @ $B921 label=xxx_another_positive
