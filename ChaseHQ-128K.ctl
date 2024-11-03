@@ -3883,15 +3883,15 @@ C $9171,3 HL = $92FC  -- callback address
 @ $9174 label=dso_common
 C $9174,3 Self modify CALL at $91CD to call #REGhl
 C $9177,3 Self modify CALL at $9243 to call #REGhl
-C $917A,5 A = fast_counter & $E0
-N $917F Reduces A by 31.25%. A = 0..224 (in steps of 16) becomes 0..154.
-C $917F,1 L = A  -- nothing will rotate out due to AND $E0
-C $9180,4 L >>= 2
-C $9184,1 A -= L
-C $9185,4 L >>= 2
-C $9189,1 A -= L
-C $918A,1 B is the value passed in
-N $918B Look up that value in $E600[].
+N $917A build A - an index into the road drawing tables.
+N $917A See similar code at #R$CD4D.
+C $917A,5 A = fast_counter & $E0  -- top three bits
+N $917F Scale 0..223 (in steps of 16) to 0..153, reducing A by 31.25%, mapping the incoming value to the 7x22 byte tables. So fast_counter indexes the rows of the table.
+C $917F,1 Copy for reducing
+C $9180,5 Divide A by 4 and subtract  -- nothing will rotate out due to AND $E0
+C $9185,5 Divide A by 16 and subtract
+C $918A,1 B here must be an additional table offset
+N $918B Look up that value in the vertical table.
 C $918B,3 #REGhl = $E600 + #REGl
 C $918E,1 A = *HL
 C $918F,3 Self modify 'LD A,x' at #R$91DB to load A
@@ -5530,7 +5530,7 @@ B $A169,1,1 Copied to hazards[0].16
 B $A16A,1,1 Copied to hazards[0].17
 B $A16B,1,1 Copied to hazards[0].18
 B $A16C,1,1 Copied to hazards[0].19
-N $A16D Oscillates when the road forks. Adjusts horizontal position of the untaken road.
+N $A16D Usually 1. Oscillates 0/1 when the road forks. Adjusts horizontal position of the untaken road.
 @ $A16D label=var_a16d
 B $A16D,1,1 Used by #R$BC36
 @ $A16E label=idle_timer
@@ -8229,7 +8229,7 @@ C $B8CB,1 Bank
 C $B8CC,5 var_a25b += A
 C $B8D1,1 Return
 c $B8D2 Routine at B8D2
-D $B8D2 Horizon stuff? Car jumping stuff? Not sure.
+D $B8D2 Horizon stuff / ... Called from read_map
 R $B8D2 Used by the routine at #R$BDFB.
 @ $B8D2 label=sub_b8d2
 C $B8D2,6 BC = var_a25a  -- var set by scroll_horizon
@@ -8237,12 +8237,12 @@ C $B8D8,3 Load inclination
 C $B8DB,1 Set flags
 C $B8DC,3 Jump if positive
 N $B8DF Otherwise negative.
-C $B8DF,2 A = -A
-C $B8E1,1 C++
-@ $B8E2 label=xxx_inclination_positive
+C $B8DF,2 A = -A  -- make positive
+C $B8E1,1 C++     -- C = 1
+@ $B8E2 label=xxx_inclination_was_positive
 C $B8E2,1 B--
 C $B8E3,2 Jump if zero
-@ $B8E5 label=xxx_inclination_nonzero
+@ $B8E5 label=xxx_inclination_was_nonzero
 C $B8E5,2 9-bit rotate right through carry
 C $B8E7,2 BC = C
 C $B8E9,2 Jump if no carry
@@ -8371,7 +8371,7 @@ C $B9E2,2 Jump if no carry
 @ $B9E4 label=xxx_b9e4
 C $B9E4,1 B--
 C $B9E5,2 A = -A
-@ $B9E7 label=xxx_b9e7
+@ $B9E7 label=xxx_set_hz_adjust
 C $B9E7,1 C = A
 C $B9E8,4 Set horizontal_adjust to BC (this shifts the car left/right if +ve/-ve)
 @ $B9EC label=xxx_b9ec
@@ -8476,8 +8476,8 @@ C $BAA7,3 -> Raymond: "WHAT ARE YOU DOING MAN!!" / "THE BAD GUYS ARE GOING THE O
 C $BAAA,5 Call start_chatter (with priority 20)
 C $BAAF,1 Restore HL (holds fork_distance)
 @ $BAB0 label=lr_check_spawning
-C $BAB0,3 Load allow_spawning
-C $BAB3,3 Jump to lr_bacc if zero
+C $BAB0,3 Load allow_spawning (0/1/2)
+C $BAB3,3 Jump to lr_no_car_spawning if zero
 N $BAB6 allow_spawning is non-zero.
 C $BAB6,5 A = allow_spawning + var_a16d
 C $BABB,1 C = A  -- copy so we can destroy A
@@ -8487,15 +8487,15 @@ N $BAC0 Otherwise clamp it to 2.
 C $BAC0,1 C = A
 N $BAC1 Adjusting this delta will cause the forked road effect to proceed faster (higher values) or slower (lower values).
 C $BAC1,7 Increase fork_distance by 16
-@ $BAC8 label=lr_bac8
+@ $BAC8 label=lr_set_var_a16d_from_c
 C $BAC8,4 var_a16d = C
 @ $BACC label=lr_no_car_spawning
 C $BACC,3 A = var_a16d
 C $BACF,1 Getting carry?
 C $BAD0,9 A = (fast_counter >> 4)
 C $BAD9,2 A -= 16  -- sets top nibble to $F
-C $BADB,3 DE = $FF00 | A
-C $BADE,1 HL += DE
+C $BADB,3 DE = $FF00 | A  -- ($FFF0..$FFFF)
+C $BADE,1 HL += DE  -- fork_distance + DE
 N $BADF Lanes byte & 4 is non-zero. Hit when the road forks (as it becomes visible).
 @ $BADF label=lr_badf
 C $BADF,1 Preserve HL
@@ -10428,7 +10428,7 @@ N $CBD6 This is the normal entry point?
 @ $CBD6 label=sub_cbce_non_fork
 C $CBD6,3 Load two table high-bytes: $ED, $E9
 C $CBD9,3 Pair of NOP instructions for #R$CC21 & #R$CC22
-N $CBDC This entry point is used by the routine at #R$CBCE.
+@ $CBDC label=sub_cbce_self_modify
 C $CBDC,4 Write instructions in #REGde to #R$CC21 & #R$CC22
 C $CBE0,4 Self modify 'LD HL' @ #R$CC70 to load ($<H>00)
 C $CBE4,4 Self modify 'LD HL' @ #R$CCA5 to load ($<L>00)
@@ -10442,8 +10442,8 @@ C $CBF7,5 Divide A by 16 and subtract
 C $CBFC,10 #REGiy = data_e6b0[#REGa]
 C $CC06,3 Call multiply (A = multiplier, C = multiplicand)
 C $CC09,6 A = (128 - A) & $FE
-C $CC0F,5 IX = $E500 + A  -- distance shift table
-C $CC14,3 not a pointer, separate values
+C $CC0F,5 IX = $E500 + A  -- point into inward_bend_table
+C $CC14,3 D = $E3, E = $20
 C $CC17,2 20 iterations
 C $CC19,1 Bank
 C $CC1A,4 Get road position
@@ -10452,10 +10452,11 @@ C $CC20,1 Read road buffer byte
 C $CC21,2 Self modified above - Set to NOP or NEG
 C $CC23,1 Advance road buffer pointer (wrapping)
 C $CC24,1 Bank
-C $CC2C,3 Reads from the #R$E540 table (distance shift table)
+C $CC25,4 IX.low += A  -- point into distance shift table
+C $CC29,3 HL = 0  -- not self modified
+C $CC2C,3 Reads from the #R$E540 table (inward_bend_table)
 N $CC2F Subtract DE from table entry, result in BC.
-C $CC2F,1 A -= E
-C $CC30,1 C = A
+C $CC2F,2 C = A - E  -- E is $20 here I think
 C $CC31,3 high byte
 C $CC34,1 A -= D
 C $CC35,1 B = A
@@ -10597,12 +10598,14 @@ C $CD42,2 #REGiy is now the road buffer height data pointer
 C $CD44,3 Read the current height byte into #REGc
 N $CD47 The height byte is the byte B from the map data but converted like so ((B & 15) - 8). Heights are therefore 0 for level road, 7 for max downslope, -8 for max upslope.
 N $CD47 build A - an index into the road drawing tables.
+N $CD47 See similar code at #R$917A.
 C $CD47,5 A = fast_counter & $E0  -- top three bits
+N $CD4C Scale 0..223 (in steps of 16) to 0..153, reducing A by 31.25%, mapping the incoming value to the 7x22 byte tables. So fast_counter indexes the rows of the table.
 C $CD4C,1 Copy for reducing
 C $CD4D,1 Copy to be a multiplier later
-N $CD4E Reduces A by 31.25%. This maps it to the start of rows in data_e600 (multiples of 22 long). So fast_counter indexes the rows of the table.
-C $CD4E,5 Divide A by 4 and subtract
+C $CD4E,5 Divide A by 4 and subtract  -- nothing will rotate out due to AND $E0
 C $CD53,5 Divide A by 16 and subtract
+N $CD58 Look up that value in the vertical table.
 C $CD58,4 Point #REGhl into road drawing tables at ($E600 | (A + 1))
 C $CD5C,1 Multiplier = (fast_counter & $E0) from above
 N $CD5D Multiplicand is the height byte from the map (7 max downslope, 0 level, -8 max upslope).
@@ -10612,7 +10615,7 @@ C $CD63,1 Bank
 N $CD64 This builds the look-up table at $E301. Assuming it's a height table.
 C $CD64,2 B = 21
 C $CD66,3 DE = $E301
-@ $CD69 label=ml10_loop
+@ $CD69 label=bht_loop
 C $CD69,1 Unbank
 C $CD6A,3 E = *HL * 2  -- HL points at $E6xx (road drawing tables)
 C $CD6D,1 Preserve HL
@@ -10621,35 +10624,35 @@ C $CD70,2 Initialise result to zero
 C $CD72,1 A = negated multiply result from above
 C $CD73,3 A += *IY  -- a height byte
 C $CD76,1 C = A
-C $CD77,2 Jump to ml10_continue if zero (since multiply by zero is a no-op)
+C $CD77,2 Jump to bht_continue if zero (since multiply by zero is a no-op)
 C $CD79,3 Jump if positive
 N $CD7C Otherwise handle negative case.
 C $CD7C,5 E = -E; D = $FF  -- negate multiplier
 C $CD81,3 A = -C  -- negate muliplicand
 N $CD84 Multiplier.
-@ $CD84 label=ml10_multiplier
+@ $CD84 label=bht_multiplier
 C $CD84,1 Throw sign bit away?
-@ $CD85 label=ml10_bit6
+@ $CD85 label=bht_bit6
 C $CD85,1 Shift out a high bit of multiplicand
 C $CD86,4 Copy multiplier (from #REGde) if a bit shifted out
 C $CD8A,1 Shift result up to prepare for next bit
-@ $CD8B label=ml10_bit5
+@ $CD8B label=bht_bit5
 C $CD8B,1 Shift out a high bit of multiplicand
 C $CD8C,3 Add multiplier (from #REGde) if a bit shifted out
-@ $CD8F label=ml10_bit4
+@ $CD8F label=bht_bit4
 C $CD8F,1 Shift result up to prepare for next bit
-@ $CD94 label=ml10_bit3
+@ $CD94 label=bht_bit3
 C $CD90,5 Repeat
-@ $CD99 label=ml10_bit2
+@ $CD99 label=bht_bit2
 C $CD95,5 Repeat
-@ $CD9E label=ml10_bit1
+@ $CD9E label=bht_bit1
 C $CD9A,5 Repeat
-@ $CDA3 label=ml10_bit0
+@ $CDA3 label=bht_bit0
 C $CD9F,5 Repeat
-@ $CDA8 label=ml10_cda8
+@ $CDA8 label=bht_cda8
 C $CDA4,5 Repeat
 C $CDA9,1 A = H  -- top byte of result
-@ $CDAA label=ml10_continue
+@ $CDAA label=bht_continue
 C $CDAA,1 Restore HL
 C $CDAB,1 A += *HL  -- HL points at $E6xx (road drawing data)
 C $CDAC,1 HL++  (wrapping around)
@@ -10657,20 +10660,20 @@ C $CDAD,1 Bank
 C $CDAE,1 Write #REGa to the table at $E3xx
 C $CDAF,1 DE++  (wrapping around)
 C $CDB0,2 IYl++ (wrapping around)
-C $CDB2,2 Loop to ml10_loop while #REGb
+C $CDB2,2 Loop to bht_loop while #REGb
 C $CDB4,3 Final byte is always $A0
 N $CDB7 Copy the table to $E336 while setting -ve values to 96.
 C $CDB7,3 destination
 C $CDBA,3 source
 C $CDBD,3 B = 21 iterations, C = 96 limit
-@ $CDC0 label=ml10_loop2
+@ $CDC0 label=bht_loop2
 C $CDC0,1 Read from table just built
 C $CDC1,4 Jump if A is positive
 C $CDC5,1 Otherwise it's negative, so C = 96
 C $CDC6,1 Write it
 C $CDC7,1 HL++  (wrapping around)
 C $CDC8,1 DE++  (wrapping around)
-C $CDC9,2 Loop to ml10_loop2 while #REGb
+C $CDC9,2 Loop to bht_loop2 while #REGb
 N $CDCB Final bytes.
 C $CDCB,6 C = A = (C + 3) & $F8
 C $CDD1,1 A -= *HL
@@ -11661,12 +11664,17 @@ w $E540 Inward bend table
 D $E540 This is the table of 96 words (being 10^x or similar function), used for regular roads, that bends the road horizontally towards the centre of the screen as it disappears into the distance.
 @ $E540 label=inward_bend_table
 W $E540,192,2
-b $E600 Data block at E600
-D $E600 Seems to be 3x8 groups of 22 bytes. Clearly it's a set of scaling tables. Perhaps drives the stretching of stretchy graphics.
-@ $E600 label=data_e600
-@ $E6B0 label=data_e6b0
-@ $E760 label=data_e760
-B $E600,528,22
+b $E600 Road/object animation tables
+D $E600 Seems to be 3x8 groups of 22 bytes. Clearly it's a set of scaling tables. E6B0 and E760 used in regular driving... Have only seen a single byte in each row accessed ($E6BB etc.) IGNORE THAT S.A. was leading me astray. 8 animation frames? Set the values to zero you get the road fully flush against the RHS.
+R $E600 vertical = lower moves values UP
+@ $E600 label=vertical_e600
+B $E600,176,22
+N $E6B0 horizontal = lower moves the road RIGHT
+@ $E6B0 label=horizontal_e6b0
+B $E6B0,176,22
+N $E760 affects horizontal too = lower moves the road LEFT earlier bytes affect nearest, later bytes affect the distance
+@ $E760 label=horizontal_e760
+B $E760,176,22
 c $E810 Called once the memory map has been setup
 @ $E810 label=entrypt_48k
 C $E810,1 Set 128K flag to zero (48K mode)
