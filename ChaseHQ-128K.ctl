@@ -7151,6 +7151,7 @@ N $AF95 I see this getting hit only when in smash mode.
 C $AF95,3 BC = wordat(HL)
 C $AF98,3 -> floating_arrow_big_defn (incl. "HERE!")
 C $AF9B,3 Call plotting func TBD
+@ $AF9E label=dh_smash_factor
 C $AF9E,3 Get smash_factor
 C $AFA1,4 Jump if it's < 4
 C $AFA5,4 A = (A - 4) * 4 ?
@@ -7170,7 +7171,7 @@ C $AFC6,4 HL = wordat(HL)   Load table entry (a pointer) into #REGhl
 C $AFCA,2 Retrieve #REGde from stack
 N $AFCC DE is offset, HL is base of graphic defns
 C $AFCC,3 Draw
-@ $AFCF label=check_smash_factor
+@ $AFCF label=dh_check_smash_factor
 C $AFCF,3 Get smash_factor (should be 0..6)
 C $AFD2,1 Is smash_factor 0?
 C $AFD3,3 Jump if so (draw nothing, continue)
@@ -7187,10 +7188,11 @@ C $AFE8,3 Smoke data
 C $AFEB,3 Call #R$AFF1
 C $AFEE,3 Continue
 N $AFF1 Decrements a counter 5..1 then repeats this must be the car-on-fire animation index is it just the smoke?
-@ $AFF1 label=sub_aff1
+@ $AFF1 label=dh_aff1
 C $AFF1,2 Load counter and decrement it
 C $AFF3,3 Jump if +ve
 C $AFF6,2 It became zero, reset to 5
+@ $AFF8 label=dh_aff8
 C $AFF8,1 *HL = A
 C $AFF9,1 Copy counter to #REGe
 C $AFFA,1 HL++
@@ -7213,9 +7215,10 @@ N $B010 Select the frame.
 C $B010,8 DE = E * 7
 C $B018,3 Point #REGhl at smoke_defns
 N $B01B Similar code to $AA19 (in dust/stones code). Does plotting.
-@ $B01B label=sub_b01b
+@ $B01B label=dh_draw
 C $B01B,1 HL += DE  -- find graphic definition entry
 N $B01C HL -> graphic definition
+@ $B01C label=dh_draw_hl_setup
 C $B01C,1 Fetch byte width
 C $B01D,6 Multiply it by 8 yielding the pixel width
 C $B023,3 A = <self modified by #R$AF7B> + B
@@ -7228,10 +7231,12 @@ C $B031,1 Return if non-zero
 C $B032,1 A += C
 C $B033,1 Return if carry
 C $B034,5 Exit via draw_object_right_helicopter_entrypt if A >= 128
+@ $B039 label=dh_exit_1
 C $B039,1 Add pixel width
 C $B03A,3 Exit via draw_object_left_helicopter_entrypt
+@ $B03D label=dh_exit_2
 C $B03D,1 A += C
-C $B03E,2 Loop? if carry
+C $B03E,2 Jump if carry
 C $B040,1 Add pixel width
 C $B041,3 Exit via draw_object_left_helicopter_entrypt if carry
 C $B044,1 Otherwise return
