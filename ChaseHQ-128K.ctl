@@ -85,9 +85,10 @@
 > $4000 ; ----------------------------
 > $4000 ; - 48K version is a multiloader
 > $4000 ; - 128K version has AY music with sampled speech and effects
-> $4000 ; - 128K has logo animation > music plays > attract mode (48K version only has attract mode)
+> $4000 ; - 128K has a logo animation > music plays > attract mode cycle (48K version only has attract mode)
 > $4000 ; - 128K has a Best Officers (high score) on attract screen and a high score entry screen
 > $4000 ; - 128K retains the input device/define keys code (48K has to overwrite it for space reasons)
+> $4000 ; - 48K has a beatbox music routine on the input selection screen
 > $4000 ;
 > $4000 ;
 > $4000 ; MEMORY MAP
@@ -7254,7 +7255,7 @@ W $B053,2,2 Delta  -7, Pitch Down
 W $B055,2,2 Delta -10, Pitch Down
 W $B057,2,2 Delta -13, Pitch Down
 w $B059 Sub-table (another byte pair)
-D $B059 Note: $b057 is used to refer to this table
+D $B059 Note: $B057 is used to refer to this table
 @ $B059 label=table_b059
 W $B059,10,2
 c $B063 Hero car jumps; gear changing; turbos; off road checks; speed adjustment; turning
@@ -8308,6 +8309,7 @@ C $B94D,6 D = ~(A & 3) + 4
 C $B953,2 A = B - D
 C $B955,4 Jump if <=
 C $B959,1 Preserve HL
+@ $B95E ssub=LD HL,(table_b059 - 2)
 C $B95A,8 HL = #R$B057 + A*2  -- 1-indexed pointer into table_b059 [sampled A: 3,2,4]
 C $B962,2 E = *HL++  (loads one of 2/4/6/8/10)
 C $B964,1 Load new jump value [sampled: $B060]  (loads one of 8/6/4/2/0)
@@ -11683,21 +11685,24 @@ B $E760,176,22
 c $E810 Called once the memory map has been setup
 @ $E810 label=entrypt_48k
 C $E810,1 Set 128K flag to zero (48K mode)
-C $E811,2 3 relocations to do
+C $E811,2 3 relocations to do in 48K mode
+C $E813,3 Jump to common
 @ $E816 label=entrypt_128k
 C $E816,3 Call clear_game_attrs
 C $E819,2 Set 128K flag to one (128K mode)
-C $E81B,2 5 relocations to do
+C $E81B,2 5 relocations to do in 128K mode
+@ $E81D label=entrypt_common
 C $E81D,3 Store 128K mode flag
 C $E820,3 Put stack at end of RAM
-C $E823,1 Preserve count in B
+C $E823,1 Preserve the count in #REGb
 C $E824,11 Copy status panel initial pixels to the top of the screen
 C $E82F,6 Copy status panel initial attributes to the top of the attribute file
-C $E835,4 Call stop_the_tape if in 128K mode  [prob STOP TAPE / PRESS KEY -- does it return?]
-C $E839,1 Restore B
+C $E835,4 Call stop_the_tape_48k if not in 128K mode
+N $E839 Now that "stop the tape" has run we can relocate the game into position.
+C $E839,1 Restore #REGb
 C $E83A,3 Point #REGhl at relocations
-@ $E83D label=relocate_loop
-C $E83D,1 Preserve B
+@ $E83D label=entrypt_relocate_loop
+C $E83D,1 Preserve #REGb
 C $E83E,4 DE = wordat(HL); HL += 2
 C $E842,1 Stack source pointer
 C $E843,4 DE = wordat(HL); HL += 2 -- Destination pointer
@@ -11723,7 +11728,7 @@ C $E882,3 Becomes play_turbo_sfx_hook
 C $E885,3 Becomes setup_engine_sfx_hook
 C $E888,3 Becomes play_speech_hook
 C $E88B,3 Becomes attract_mode_hook
-N $E88E Copied to $EC00
+N $E88E Copied to $EC00 - transitions?
 @ $E88E label=data_e88e
 B $E88E,1,1
 W $E88F,2,2
@@ -11751,9 +11756,9 @@ N $E8CE #HTML[#CALL:anim($E8CE,8,8,0,0,6)]
 N $E8CE #HTML[#CALL:graphic($E8CE,8,6*8,0,0)]
 @ $E8CE label=diamond_zoom_in_mask
 B $E8CE,48,8
-c $E8FE Routine at E8FE
+c $E8FE "Stop the tape" handler (48K mode only)
 D $E8FE Used by the routine at #R$E810.
-@ $E8FE label=stop_the_tape
+@ $E8FE label=stop_the_tape_48k
 C $E8FE,3 Call setup_interrupts
 C $E901,3 Call music_reset
 C $E904,1 Enable interrupts
@@ -11761,37 +11766,65 @@ C $E905,1 Wait for next interrupt
 C $E906,3 Call clear_screen
 C $E909,3 -> "STOP THE TAPE" + "PRESS ANY KEY" message set
 C $E90C,3 Call menu_draw_strings
-@ $E90F label=wait_for_keypress
-C $E90F,3 Call define_keys
+N $E90F Wait for a keypress.
+@ $E90F label=stt_wait_for_keypress_loop
+C $E90F,3 Call play_music_48k during the loop
 C $E912,6 Was a key pressed?
 C $E918,2 Loop if not
 N $E91A Debounce.
-C $E91A,3 Call define_keys
+@ $E91A label=stt_debounce_loop
+C $E91A,3 Call play_music_48k during the loop
 C $E91D,6 Was a key pressed?
 C $E923,2 Loop if it was
+N $E925 Draw the input selection menu.
+@ $E925 label=stt_clear_screen
 C $E925,3 Call clear_screen
 C $E928,3 Point #REGhl at input menu messages (NUL terminated)
 C $E92B,3 Call menu_draw_strings
-C $E92E,3 Call define_keys
-C $E931,9 Keyscan for 1, 2, 3, 4, 5
-C $E93A,3 Keyscan for 0, 9, 8, 7, 6
-C $E93D,3 Keyscan for P, O, I, U, Y
-C $E940,3 Keyscan for ENTER, L, K, J, H
-C $E943,3 Keyscan for SPACE, SYM SHFT, M, N, B
-C $E950,11 Copy 5 bytes at $EE2B to $EE38   -- cursor joystick input scheme
+N $E92E Wait for a choice.
+@ $E92E label=stt_keyscan_anything
+C $E92E,3 Call play_music_48k during the loop
+C $E931,7 Keyscan for 1, 2, 3, 4, 5
+C $E938,2 Loop while no selection
+C $E93A,3 1. SINCLAIR JOYSTICK selected
+C $E93D,3 2. CURSOR JOYSTICK selected
+C $E940,3 3. KEMPSTON JOYSTICK selected
+C $E943,3 4. KEYBOARD selected
+C $E946,3 5. DEFINE KEYS selected
+C $E949,2 Loop
+@ $E94B label=stt_sinclair_joystick
+@ $E950 label=stt_cursor_joystick
+C $E950,3 Point at cursor keydefs
+@ $E953 label=stt_copy_keydefs
+C $E953,8 Copy keydefs in #REGhl to $EE38
+@ $E95B label=stt_keyboard
+C $E95B,1 A = 0
 C $E95C,3 Address of three bytes to populate #R$A0CD.. with
 C $E95F,4 Set Kempston flag
 C $E963,6 Populate #R$A0CD
 C $E969,7 Populate $A0D0
+N $E970 Warn the player that they can't return to this screen.
 C $E970,3 Call clear_screen
 C $E973,3 Address of "control options cannot be remodified" text (NUL terminated)
 C $E976,3 Call menu_draw_strings
-C $E979,3 Call define_keys
-C $E97D,7 Keyscan
-C $E984,3 Call define_keys
-C $E989,7 Keyscan
+@ $E979 label=stt_wait_for_keypress_loop2
+C $E979,3 Call play_music_48k
+C $E97C,6 Was a key pressed?
+C $E982,2 Loop if not
+@ $E984 label=stt_debounce_loop2
+C $E984,3 Call play_music_48k
+C $E987,7 Was Y pressed?
+C $E98E,2 Jump if so
+C $E990,7 Was N pressed?
+C $E997,2 Start over if so
+C $E999,2 Loop
+@ $E99B label=stt_done
+C $E99B,1 Disable interrupts
 C $E99C,3 Jump to clear_screen
-C $E9AA,3 Call define_keys
+@ $E99F label=stt_kempston_joystick
+C $E99F,2 10 iterations
+C $E9AA,3 Call play_music_48k
+C $E9AE,2 Loop until ?
 b $E9B4 Messages
 @ $E9B4 label=messages_stop_the_tape
 B $E9B4,1,1 Attribute: Green ink over black
@@ -11975,28 +12008,32 @@ D $ECDA Used by the routines at #R$E90F and #R$ECF3.
 C $ECDA,12 Wipe bottom 2/3rds of attributes
 C $ECE6,12 Wipe bottom 2/3rds of pixels
 C $ECF2,1 Return
-c $ECF3 Runs the redefine keys screen
+c $ECF3 Runs the redefine keys screen (48K mode only)
 D $ECF3 Used by the routine at #R$E90F.
-@ $ECF3 label=redefine_keys
-C $ECF3,3 Call clear_screen
-C $ECF6,3 Address of "REDEFINE KEYS" strings
-C $ECF9,3 Call menu_draw_strings
+@ $ECF3 label=redefine_keys_48k
+C $ECF3,3 Clear the screen
+C $ECF6,6 Draw all of the REDEFINE KEYS / GEAR / ACCELERATE / ... strings
+C $ECFC,3 Set the screen location (179,112) to where the first defined key is shown
+C $ECFF,3 Loop counter #REGb = 8 iterations, and index #REGc = 1
 @ $ED02 label=rdk_loop_1
 C $ED02,3 Preserve registers
-C $ED05,3 Call define_keys
+C $ED05,3 Call play_music_48k  -- does this define a *single* key?
 C $ED08,3 Restore registers
-N $ED0B Debounce?
-C $ED0B,3 Read port $00FE
+N $ED0B Wait for the keyboard to clear.
+C $ED0B,3 Read keyboard port $00FE
 C $ED0E,1 Complement the value returned to change it from active-low to active-high
 C $ED0F,2 Discard any non-key flags
 C $ED11,2 Jump if any keys are pressed
-C $ED16,1 C++
-C $ED17,1 HL++
+N $ED13 Otherwise...
+C $ED13,3 Call sub_ED6D
+C $ED16,1 Increment index
+C $ED17,1 HL++  -- what's in HL?
 C $ED18,2 Loop rdk_loop_1 while #REGb > 0
+N $ED1A All keys are now defined.
 C $ED1A,2 B = 20
 @ $ED1C label=rdk_loop_2
 C $ED1C,1 Preserve
-C $ED1D,3 Call define_keys
+C $ED1D,3 Call play_music_48k
 C $ED20,1 Restore
 C $ED21,2 Loop rdk_loop_2 while #REGb > 0
 N $ED23 Test keys are "SHOCKED<ENTER>".
@@ -12014,9 +12051,10 @@ C $ED32,5 Set test mode flag
 C $ED37,3 Call clear_screen
 C $ED3A,3 Address of TEST MODE strings
 C $ED3D,3 Call menu_draw_strings
-C $ED40,3 Call define_keys
+@ $ED40 label=rdk_ed40
+C $ED40,3 Call play_music_48k
 N $ED43 Debounce?
-C $ED43,3 Read port $00FE
+C $ED43,3 Read keyboard port $00FE
 C $ED46,1 Complement the value returned to change it from active-low to active-high
 C $ED47,2 Discard any non-key flags
 C $ED49,2 Loop while no keys were pressed
@@ -12048,10 +12086,11 @@ C $ED66,1 Decrement #REGe
 C $ED67,2 Rotate the half-row selector ($FE -> $FD -> $FB -> .. -> $7F)
 C $ED69,2 ...loop until the zero bit shifts out (eight iterations)
 C $ED6B,2 Set Z
-c $ED6D Routine at ED6D
+c $ED6D Routine at ED6D - key definition
 D $ED6D Used by the routine at #R$ECF3.
+@ $ED6D label=sub_ED6D
 C $ED6D,2 Preserve #REGde, #REGbc
-C $ED6F,3 Call define_keys
+C $ED6F,3 Call play_music_48k
 C $ED72,3 Call keyscan_all
 C $ED75,2 ?Loop while keys are pressed
 C $ED77,3 ?No keys were pressed
@@ -12063,9 +12102,8 @@ C $ED82,1 B--
 C $ED88,1 HL++
 C $ED8D,3 Last byte of 'shocked'
 C $ED90,2 B = 0
-C $ED92,1 HL += BC
-C $ED93,1 *HL = A
-C $ED94,3 -> "B N M ..."
+C $ED92,2 Read byte from shocked
+C $ED94,3 Point at key names (two chars per key)
 C $ED97,2 D = 0
 C $ED99,3 B = A & 7
 C $ED9C,4 A *= 5
@@ -12079,14 +12117,13 @@ C $EDB6,1 HL++
 C $EDB7,1 A = *HL
 C $EDB8,2 Terminate the string
 C $EDBA,3 Write new character
-C $EDBD,3 -> test mode strings
-C $EDC0,3 Call menu_draw_strings
+C $EDBD,6 Draw all of the TEST MODE strings
 C $EDC8,1 A = B
 C $EDC9,3 Return if A != 4
 C $EDCC,4 E += $20
 C $EDD1,4 D += 8
 C $EDD5,1 Return
-t $EDD6 Names of keys
+t $EDD6 Names of keys, two characters per key.
 @ $EDD6 label=key_names
 T $EDD6,10,10 $7F
 T $EDE0,10,10 $BF
@@ -12163,17 +12200,16 @@ C $EE94,3 Self modify #R$EEC9
 C $EE97,1 Return
 C $EE98,4 HL = wordat(HL); HL++
 C $EE9C,2 Goto j_ee78
-c $EE9E Define keys
-D $EE9E Loads of self modifying hopping around... likely to need a better name.
-R $EE9E Used by the routines at #R$E90F, #R$ECF3 and #R$ED6D.
-@ $EE9E label=define_keys
+c $EE9E Play menu music (48K mode only)
+D $EE9E Used by the routines at #R$E90F, #R$ECF3 and #R$ED6D.
+@ $EE9E label=play_music_48k
 C $EE9E,4 Enable wait/spinlock at #R$EF13
-C $EEA2,2 Self modified by #R$EEA8
+C $EEA2,2 Counter, self modified by #R$EEA8 below
 C $EEA4,1 Set flags
 C $EEA5,2 Jump to #R$EEAD if non-zero
-C $EEA7,1 A++
-C $EEA8,3 Self modify #R$EEA2
-C $EEAB,2 Jump to dk_eec9
+C $EEA7,4 Otherwise increment and self modify #R$EEA2
+C $EEAB,2 Jump to #R$EEC9
+@ $EEAD label=dk_eead
 C $EEAD,2 Self modified by #R$EEBB, cycles 5,3,2,1
 C $EEAF,1 A--
 C $EEB0,3 Jump to dk_eeb9 if zero
@@ -12188,7 +12224,7 @@ C $EEC1,2 A = *HL - 1
 C $EEC3,3 Jump to dk_eed2 if non-zero
 C $EEC6,3 Call sub_EE6E
 @ $EEC9 label=dk_eec9
-C $EEC9,3 HL = xxxx     Self modified by #R$EE94
+C $EEC9,3 HL = xxxx  -- Self modified by #R$EE94
 C $EECC,3 *$EEBF = HL
 C $EECF,3 Goto dk_eec1
 @ $EED2 label=dk_eed2
@@ -12196,13 +12232,14 @@ C $EED2,1 HL++
 C $EED3,3 *$EEBF = HL
 C $EED6,1 A++
 C $EED7,2 >= 128?
-C $EEDB,2 A &= $7F   note
+C $EEDB,2 A &= $7F  -- note
 C $EEDE,5 Self modify 'LD A' @ #R$EEAD
 C $EEE3,3 Self modify 'LD A' @ #R$EF00
+@ $EEE7 label=dk_eee7
 C $EEE7,1 D = A
 C $EEE8,2 A &= 7
 C $EEEA,2 Jump to dk_ef00 if zero
-C $EEEC,1 B = A   the 'note'
+C $EEEC,1 B = A  -- the 'note'
 C $EEED,1 A = D
 C $EEEE,6 A >>= 3
 C $EEF4,1 B--
