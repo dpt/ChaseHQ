@@ -5464,8 +5464,8 @@ C $A0CB,1 Return
 c $A0CC Keyscan
 @ $A0CC label=kempston_flag
 B $A0CC,1,1 Set to 1 if Kempston joystick is chosen, 0 otherwise
-@ $A0CD label=keydefs_probably
-B $A0CD,8,8 must be keydefs
+@ $A0CD label=keydefs
+B $A0CD,8,8 Gear, Accelerate, Brake, Left, Right, Quit, Pause, Turbo
 @ $A0D5 label=user_input
 B $A0D5,1,1 User input: QPBFUDLR - Quit Pause Boost Fire/Gear Up Down Left Right. Note that attract mode is driven through this var.
 N $A0D6 This entry point is used by the routines at #R$8014, #R$8258, #R$8401, #R$858C, #R$8876 and #R$F220.
@@ -11793,16 +11793,20 @@ C $E943,3 4. KEYBOARD selected
 C $E946,3 5. DEFINE KEYS selected
 C $E949,2 Loop
 @ $E94B label=stt_sinclair_joystick
+C $E94B,3 Point at sinclair joystick keydefs
+C $E94E,2 Jump to copy keydefs
 @ $E950 label=stt_cursor_joystick
-C $E950,3 Point at cursor keydefs
+C $E950,3 Point at cursor joystick keydefs
 @ $E953 label=stt_copy_keydefs
 C $E953,8 Copy keydefs in #REGhl to $EE38
 @ $E95B label=stt_keyboard
-C $E95B,1 A = 0
-C $E95C,3 Address of three bytes to populate #R$A0CD.. with
-C $E95F,4 Set Kempston flag
-C $E963,6 Populate #R$A0CD
-C $E969,7 Populate $A0D0
+C $E95B,1 Clear Kempston joystick flag
+@ $E95C label=stt_do_define
+@ $E95C ssub=LD HL,temp_keydefs + 5
+C $E95C,3 Point at final three bytes of temp_keydefs
+C $E95F,4 Assign Kempston joystick flag
+C $E963,6 Populate Quit/Pause/Turbo keys at $A0CD+
+C $E969,7 Populate Gear/Accelerate/Brake/Left/Right keys at $A0D2+
 N $E970 Warn the player that they can't return to this screen.
 C $E970,3 Call clear_screen
 C $E973,3 Address of "control options cannot be remodified" text (NUL terminated)
@@ -11814,17 +11818,25 @@ C $E982,2 Loop if not
 @ $E984 label=stt_debounce_loop2
 C $E984,3 Call play_music_48k
 C $E987,7 Was Y pressed?
-C $E98E,2 Jump if so
+C $E98E,2 Jump to done if so
 C $E990,7 Was N pressed?
 C $E997,2 Start over if so
 C $E999,2 Loop
 @ $E99B label=stt_done
 C $E99B,1 Disable interrupts
 C $E99C,3 Jump to clear_screen
+N $E99F This seems to be checking for a stable reading from the joystick port before allowing the user to proceed.
 @ $E99F label=stt_kempston_joystick
 C $E99F,2 10 iterations
-C $E9AA,3 Call play_music_48k
-C $E9AE,2 Loop until ?
+C $E9A1,3 Read the joystick port into #REGc
+@ $E9A4 label=stt_kempston_loop
+C $E9A4,2 Read the port again
+C $E9A6,1 Is it the same?
+C $E9A7,2 If not, jump back to menu
+C $E9A9,5 Call play_music_48k
+C $E9AE,2 Loop while #REGb > 0
+C $E9B0,2 Set Kempston joystick flag
+C $E9B2,2 Jump to do define
 b $E9B4 Messages
 @ $E9B4 label=messages_stop_the_tape
 B $E9B4,1,1 Attribute: Green ink over black
@@ -12025,7 +12037,7 @@ C $ED0E,1 Complement the value returned to change it from active-low to active-h
 C $ED0F,2 Discard any non-key flags
 C $ED11,2 Jump if any keys are pressed
 N $ED13 Otherwise...
-C $ED13,3 Call sub_ED6D
+C $ED13,3 Call define_a_key
 C $ED16,1 Increment index
 C $ED17,1 HL++  -- what's in HL?
 C $ED18,2 Loop rdk_loop_1 while #REGb > 0
@@ -12036,29 +12048,28 @@ C $ED1C,1 Preserve
 C $ED1D,3 Call play_music_48k
 C $ED20,1 Restore
 C $ED21,2 Loop rdk_loop_2 while #REGb > 0
-N $ED23 Test keys are "SHOCKED<ENTER>".
-C $ED23,2 B = 8
-C $ED25,3 DE -> shocked bytes
-C $ED28,3 HL -> #R$EE38
+N $ED23 Test if keys are "SHOCKED<ENTER>".
+C $ED23,2 8 iterations
+C $ED25,3 Point #REGde at shocked bytes
+C $ED28,3 Point #REGhl at #R$EE38
 @ $ED2B label=rdk_loop_3
-C $ED2B,1 A = *DE
-C $ED2C,1 CP *HL
-C $ED2D,1 HL++
-C $ED2E,1 DE++
-C $ED2F,1 Return if non-zero -- no match
+C $ED2B,2 Matching byte?
+C $ED2D,2 Advance
+C $ED2F,1 Return if no match
 C $ED30,2 Loop rdk_loop_3 while #REGb > 0
-C $ED32,5 Set test mode flag
+N $ED32 Matched: Show the test mode screen.
+C $ED32,5 Set test mode fla
 C $ED37,3 Call clear_screen
 C $ED3A,3 Address of TEST MODE strings
 C $ED3D,3 Call menu_draw_strings
-@ $ED40 label=rdk_ed40
+N $ED40 Wait for any key.
+@ $ED40 label=rdk_wait
 C $ED40,3 Call play_music_48k
-N $ED43 Debounce?
 C $ED43,3 Read keyboard port $00FE
 C $ED46,1 Complement the value returned to change it from active-low to active-high
 C $ED47,2 Discard any non-key flags
-C $ED49,2 Loop while no keys were pressed
-C $ED4B,2 Loop
+C $ED49,2 Loop while no keys are pressed
+C $ED4B,2 Restart routine
 c $ED4D Keyscan
 D $ED4D Used by the routine at #R$ED6D.
 R $ED4D want some examples here
@@ -12086,9 +12097,9 @@ C $ED66,1 Decrement #REGe
 C $ED67,2 Rotate the half-row selector ($FE -> $FD -> $FB -> .. -> $7F)
 C $ED69,2 ...loop until the zero bit shifts out (eight iterations)
 C $ED6B,2 Set Z
-c $ED6D Routine at ED6D - key definition
+c $ED6D Defines a single key.
 D $ED6D Used by the routine at #R$ECF3.
-@ $ED6D label=sub_ED6D
+@ $ED6D label=define_a_key
 C $ED6D,2 Preserve #REGde, #REGbc
 C $ED6F,3 Call play_music_48k
 C $ED72,3 Call keyscan_all
@@ -12142,12 +12153,9 @@ B $EE2B,5,5
 b $EE30 "SHOCKED<ENTER>" ?
 @ $EE30 label=shocked
 B $EE30,8,8
-b $EE38 temp input scheme buffer?
-@ $EE38 label=input_tmp
-B $EE38,5,5
-b $EE3D Bytes copied to $A0CD
-@ $EE3D label=data_ee3d
-B $EE3D,3,3
+b $EE38 Temporary keydefs
+@ $EE38 label=temp_keydefs
+B $EE38,8,8
 c $EE40 Interrupt setup
 D $EE40 Used by the routine at #R$E8CE.
 @ $EE40 label=setup_interrupts
@@ -12171,8 +12179,8 @@ D $EE5E Used by the routine at #R$E8CE.
 @ $EE5E label=music_reset
 C $EE5E,1 A = 0
 C $EE5F,3 Self modify 'LD A,x' @ #R$EF0D  -- clear drum flag?
-C $EE62,3 Self modify 'LD A,x' @ #R$EF00  -- in define_keys
-C $EE65,3 Self modify 'LD A,x' @ #R$EEA2  -- in define_keys
+C $EE62,3 Self modify 'LD A,x' @ #R$EF00  -- in play_music_48k
+C $EE65,3 Self modify 'LD A,x' @ #R$EEA2  -- in play_music_48k
 C $EE68,3 -> music data
 C $EE6B,3 Jump to j_ee78
 c $EE6E Routine at EE6E
@@ -12209,25 +12217,25 @@ C $EEA4,1 Set flags
 C $EEA5,2 Jump to #R$EEAD if non-zero
 C $EEA7,4 Otherwise increment and self modify #R$EEA2
 C $EEAB,2 Jump to #R$EEC9
-@ $EEAD label=dk_eead
+@ $EEAD label=pm_eead
 C $EEAD,2 Self modified by #R$EEBB, cycles 5,3,2,1
 C $EEAF,1 A--
 C $EEB0,3 Jump to dk_eeb9 if zero
 C $EEB3,3 Self modified by #R$EE8E
 C $EEB6,3 Jump to dk_ef00
-@ $EEB9 label=dk_eeb9
+@ $EEB9 label=pm_eeb9
 C $EEB9,2 Self modified by #R$EE8E
 C $EEBB,3 Self modify 'LD A' @ #R$EEAD
 C $EEBE,3 Self modified, cycles $F12x .. $F2xx ish
-@ $EEC1 label=dk_eec1
+@ $EEC1 label=pm_eec1
 C $EEC1,2 A = *HL - 1
 C $EEC3,3 Jump to dk_eed2 if non-zero
 C $EEC6,3 Call sub_EE6E
-@ $EEC9 label=dk_eec9
+@ $EEC9 label=pm_eec9
 C $EEC9,3 HL = xxxx  -- Self modified by #R$EE94
 C $EECC,3 *$EEBF = HL
 C $EECF,3 Goto dk_eec1
-@ $EED2 label=dk_eed2
+@ $EED2 label=pm_eed2
 C $EED2,1 HL++
 C $EED3,3 *$EEBF = HL
 C $EED6,1 A++
@@ -12235,7 +12243,7 @@ C $EED7,2 >= 128?
 C $EEDB,2 A &= $7F  -- note
 C $EEDE,5 Self modify 'LD A' @ #R$EEAD
 C $EEE3,3 Self modify 'LD A' @ #R$EF00
-@ $EEE7 label=dk_eee7
+@ $EEE7 label=pm_eee7
 C $EEE7,1 D = A
 C $EEE8,2 A &= 7
 C $EEEA,2 Jump to dk_ef00 if zero
@@ -12248,7 +12256,7 @@ C $EEF8,1 B--
 C $EEF9,3 Jump to playdrum_1 if zero
 C $EEFC,1 B--
 C $EEFD,3 Jump to #R$F0C6 if zero
-@ $EF00 label=dk_ef00
+@ $EF00 label=pm_ef00
 C $EF00,2 Self modified by #R$EEE3, #R$EF09
 C $EF02,1 Set flags
 C $EF03,2 Jump to dk_ef0d if zero
@@ -12256,12 +12264,12 @@ C $EF05,3 Self modify 'LD A' @ #R$EEAD
 C $EF08,1 (*HL)--
 C $EF09,3 Self modify 'LD A' @ #R$EF00
 C $EF0C,1 (*HL)--
-@ $EF0D label=dk_ef0d
+@ $EF0D label=pm_ef0d
 C $EF0D,2 Self modified by #R$EF33
 C $EF0F,1 A--
 C $EF10,3 Jump to playdrum_go if zero
 N $EF13 This entry point is used by the routines at #R$EF22 and #R$F0C6.
-@ $EF13 label=dk_wait
+@ $EF13 label=pm_wait
 C $EF13,5 Wait/spinlock.  Self modified
 C $EF18,1 Return
 c $EF19 Routine at $EF19
