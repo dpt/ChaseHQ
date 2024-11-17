@@ -10707,7 +10707,7 @@ C $CDE0,2 While iterations remain, goto mult_loop
 C $CDE2,1 Undo final shift
 C $CDE3,8 Divide by 8 with rounding
 C $CDEB,1 Return
-b $CDEC
+b $CDEC Data block at CDEC
 @ $CDEC label=table_cdec
 W $CDEC,8,8
 w $CDF4 Pointers to car-on-fire LODs
@@ -10718,7 +10718,7 @@ W $CDF8,2,2 32x11, frame A
 W $CDFA,2,2 32x11, frame B
 W $CDFC,2,2 32x16, frame A
 W $CDFE,2,2 32x16, frame B
-w $CE00
+w $CE00 Data block at CE00
 @ $CE00 label=table_ce00
 W $CE00,12,12
 b $CE0C Smoke tables
@@ -11977,33 +11977,45 @@ R $EC2C I:F' Carry flag set to draw single height characters
 R $EC2C I:DE' Screen address (UDG aligned)
 R $EC2C I:HL' Attribute address
 @ $EC2C label=menu_draw_char
-C $EC2C,6 Handle spaces
+C $EC2C,6 Handle space
 C $EC32,3 Advance attribute address
-C $EC35,2 Map character ranges:
-C $EC37,4 >= 'A' then glyph offset C=(65-32-18)=15
-C $EC3B,6 >= '0' then glyph offset C=(48-32-11)=5
-C $EC41,5 == '!' then glyph offset C=0
-C $EC46,5 == '(' then glyph offset C=1
-C $EC4B,4 == ')' then glyph offset C=2
-C $EC4F,5 == ',' then glyph offset C=3
+N $EC35 Map character ranges.
+@ $EC35 label=mdc_not_space
+C $EC35,6 >= 'A' then glyph offset #REGc=(65-32-18)=15
+C $EC3B,6 >= '0' then glyph offset #REGc=(48-32-11)=5
+C $EC41,5 == '!' then glyph offset #REGc=0
+C $EC46,5 == '(' then glyph offset #REGc=1
+C $EC4B,4 == ')' then glyph offset #REGc=2
+C $EC4F,5 == ',' then glyph offset #REGc=3
 C $EC54,3 Anything else becomes a full stop
+@ $EC57 label=mdc_have_ascii
 C $EC57,2 ASCII - 32 - offset in #REGc
+@ $EC59 label=mdc_have_glyph
 C $EC59,6 Multiply #REGc by seven - the height of a glyph
-C $EC5F,5 #REGbc = #REGa -- Why the RL?
+C $EC5F,5 #REGbc = #REGa  -- Why the RL?
 C $EC64,3 Point #REGhl at 8x7 font
-C $EC67,7 Point at glyph
-C $EC6E,3 If the carry flag is set then draw single height characters
-@ $EC71 label=menu_draw_char_double_height
-C $EC71,1 Load a row of glyph
-C $EC72,1 Put it on the screen
-C $EC73,1 Move to next scanline
-C $EC74,2 Put another row
-C $EC76,1 Undo LDI
+C $EC67,1 Point at glyph
+C $EC68,1 bank
+C $EC69,1 push banked scr addr
+C $EC6A,1 advance banked scr addr
+C $EC6B,1 unbank
+C $EC6C,1 pop scr addr as-was
+C $EC6D,4 If the banked carry flag is set then draw single height characters
+@ $EC71 label=mdc_double_height
+C $EC71,2 Copy a row of glyph to screen (not advancing)
+C $EC73,1 Advance to next scanline
+C $EC74,2 Copy another row (advancing)
+C $EC76,1 Undo LDI's DE++
 C $EC77,1 Move to next scanline
-C $EC78,19 Repeat ...
+C $EC78,7 Row 2/7
+C $EC80,6 Row 3/7
+C $EC86,5 Row 4/7
 C $EC8B,7 Move to next scanline after boundary (DE += $F81F)
-C $EC92,22 Repeat ...
-C $ECA8,3 ...
+C $EC92,8 Row 5/7
+C $EC9A,7 Row 6/7
+C $ECA1,7 Row 7/7
+C $ECA8,2 why writing a blank?
+C $ECAA,1 Bank
 C $ECAB,1 Save #REGl
 C $ECAC,2 Set the BRIGHT bit
 C $ECAE,1 Set the screen attribute
@@ -12012,11 +12024,21 @@ C $ECB3,2 Clear the BRIGHT bit
 C $ECB5,1 Set the screen attribute
 C $ECB6,1 Restore #REGl
 C $ECB7,1 Advance cursor
+C $ECB8,1 Unbank
 C $ECB9,1 Return
-@ $ECBA label==menu_draw_char_single_height
-C $ECBA,28 Plot 8x7 character  HL->character, DE->screen
+N $ECBA Plot 8x7 character  HL->character, DE->screen
+@ $ECBA label=mdc_single_height
+C $ECBB,4 Row 1/7
+C $ECBF,4 Row 2/7
+C $ECC3,4 Row 3/7
+C $ECC7,4 Row 4/7
+C $ECCB,4 Row 5/7
+C $ECCF,4 Row 6/7
+C $ECD3,2 Row 7/7
+C $ECD5,1 Bank
 C $ECD6,1 Set the screen attribute
 C $ECD7,1 Advance cursor
+C $ECD8,1 Unbank
 C $ECD9,1 Return
 c $ECDA Clears the screen
 D $ECDA Used by the routines at #R$E90F and #R$ECF3.
