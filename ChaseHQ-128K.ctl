@@ -11766,15 +11766,15 @@ C $E905,1 Wait for next interrupt
 C $E906,3 Call clear_screen
 C $E909,3 -> "STOP THE TAPE" + "PRESS ANY KEY" message set
 C $E90C,3 Call menu_draw_strings
-N $E90F Wait for a keypress.
+N $E90F Wait for a key down.
 @ $E90F label=stt_wait_for_keypress_loop
 C $E90F,3 Call play_music_48k during the loop
-C $E912,6 Was a key pressed?
+C $E912,6 Was any key pressed?
 C $E918,2 Loop if not
-N $E91A Debounce.
+N $E91A Wait for key up.
 @ $E91A label=stt_debounce_loop
 C $E91A,3 Call play_music_48k during the loop
-C $E91D,6 Was a key pressed?
+C $E91D,6 Was any key pressed?
 C $E923,2 Loop if it was
 N $E925 Draw the input selection menu.
 @ $E925 label=stt_clear_screen
@@ -11782,7 +11782,7 @@ C $E925,3 Call clear_screen
 C $E928,3 Point #REGhl at input menu messages (NUL terminated)
 C $E92B,3 Call menu_draw_strings
 N $E92E Wait for a choice.
-@ $E92E label=stt_keyscan_anything
+@ $E92E label=stt_keyscan_choice
 C $E92E,3 Call play_music_48k during the loop
 C $E931,7 Keyscan for 1, 2, 3, 4, 5
 C $E938,2 Loop while no selection
@@ -11793,12 +11793,12 @@ C $E943,3 4. KEYBOARD selected
 C $E946,3 5. DEFINE KEYS selected
 C $E949,2 Loop
 @ $E94B label=stt_sinclair_joystick
-C $E94B,3 Point at sinclair joystick keydefs
+C $E94B,3 Point at Sinclair joystick keydefs
 C $E94E,2 Jump to copy keydefs
 @ $E950 label=stt_cursor_joystick
 C $E950,3 Point at cursor joystick keydefs
 @ $E953 label=stt_copy_keydefs
-C $E953,8 Copy keydefs in #REGhl to $EE38
+C $E953,8 Copy the five keydefs at #REGhl to $EE38
 @ $E95B label=stt_keyboard
 C $E95B,1 Clear Kempston joystick flag
 @ $E95C label=stt_do_define
@@ -11811,11 +11811,12 @@ N $E970 Warn the player that they can't return to this screen.
 C $E970,3 Call clear_screen
 C $E973,3 Address of "control options cannot be remodified" text (NUL terminated)
 C $E976,3 Call menu_draw_strings
-@ $E979 label=stt_wait_for_keypress_loop2
+N $E979 Wait for key up.
+@ $E979 label=stt_debounce_loop2
 C $E979,3 Call play_music_48k
 C $E97C,6 Was a key pressed?
-C $E982,2 Loop if not
-@ $E984 label=stt_debounce_loop2
+C $E982,2 Loop if it was
+@ $E984 label=stt_confirm
 C $E984,3 Call play_music_48k
 C $E987,7 Was Y pressed?
 C $E98E,2 Jump to done if so
@@ -11825,14 +11826,13 @@ C $E999,2 Loop
 @ $E99B label=stt_done
 C $E99B,1 Disable interrupts
 C $E99C,3 Jump to clear_screen
-N $E99F This seems to be checking for a stable reading from the joystick port before allowing the user to proceed.
+N $E99F Check for a stable reading from the Kempston joystick port before allowing the user to proceed.
 @ $E99F label=stt_kempston_joystick
 C $E99F,2 10 iterations
 C $E9A1,3 Read the joystick port into #REGc
 @ $E9A4 label=stt_kempston_loop
-C $E9A4,2 Read the port again
-C $E9A6,1 Is it the same?
-C $E9A7,2 If not, jump back to menu
+C $E9A4,2 Read the same port again
+C $E9A6,3 If it doesn't match then jump back to menu
 C $E9A9,5 Call play_music_48k
 C $E9AE,2 Loop while #REGb > 0
 C $E9B0,2 Set Kempston joystick flag
@@ -11895,8 +11895,8 @@ B $EACC,1,1 Attribute: Bright green ink over black + Single height bit
 W $EACD,2,2 Screen position (72,176)
 T $EACF,12,11:n1 "TURBO......."
 B $EADB,1,1 Probably a stop marker
-@ $EADC label=messages_empty
-B $EADC,5,5 Seems to be an empty message structure
+@ $EADC label=messages_key_string
+B $EADC,5,5 Used to draw key names when defined.
 @ $EAE1 label=messages_test_mode
 B $EAE1,1,1 Attribute: Bright blue over black + Single height bit
 W $EAE2,2,2 Screen position (0,0)
@@ -11949,29 +11949,33 @@ R $EBFF I:HL Address of a message structure (byte: attribute byte, word: destina
 R $EBFF O:HL Address of next unconsumed byte
 @ $EBFF label=menu_draw_string
 C $EBFF,1 Load attribute byte
-C $EC00,5 Bank the top bit of the attribute byte as the C flag (this is the single height flag)
+C $EC00,5 Extract top bit of attribute byte as carry flag then bank (this is the single height flag)
 C $EC05,1 Advance
 C $EC06,4 Load screen address into #REGde
 C $EC0A,1 Stack screen address
-N $EC0B Calculate the attribute address from the screen address
-C $EC0B,9 #REGh = $58 + ((D >> 3) & 3)
-C $EC14,1 #REGl = E
+N $EC0B Calculate attribute address from screen address
+C $EC0B,9 #REGh = $58 + ((#REGd >> 3) & 3)
+C $EC14,1 #REGl = #REGe
+C $EC15,1 Bank for when calling #R$EC2C
 N $EC16 #REGhl' is screen address, #REGde' is attribute address
 C $EC16,1 Get screen address and preserve old #REGhl
 C $EC17,2 Preserve regs
 @ $EC19 label=menu_draw_string_loop
-C $EC19,3 Mask off the terminator bit
-C $EC1C,1 #REGa = Character to draw
-C $EC1D,3 Draw the character
+C $EC19,3 Mask off terminator bit
+C $EC1C,5 Draw character in #REGa
 C $EC21,2 End of string?
 C $EC23,1 Advance to next char irrespective
 C $EC24,2 Loop if not
 C $EC27,3 Restore regs
+C $EC2A,1 Unbank
 C $EC2B,1 Return
 c $EC2C Renders a single character
 D $EC2C Compare #R$9FB4
-R $EC2C Used by the routine at #R$EBFF.
-N $EC2C I:A   The character to plot (ASCII) I:F'  Carry flag set to draw single height characters I:DE' Screen address (UDG aligned) I:HL' Attribute address
+D $EC2C Used by the routine at #R$EBFF.
+R $EC2C I:A The character to plot (ASCII)
+R $EC2C I:F' Carry flag set to draw single height characters
+R $EC2C I:DE' Screen address (UDG aligned)
+R $EC2C I:HL' Attribute address
 @ $EC2C label=menu_draw_char
 C $EC2C,6 Handle spaces
 C $EC32,3 Advance attribute address
@@ -12037,7 +12041,7 @@ C $ED0E,1 Complement the value returned to change it from active-low to active-h
 C $ED0F,2 Discard any non-key flags
 C $ED11,2 Jump if any keys are pressed
 N $ED13 Otherwise...
-C $ED13,3 Call define_a_key
+C $ED13,3 Call define_a_key (passing index in #REGc)
 C $ED16,1 Increment index
 C $ED17,1 HL++  -- what's in HL?
 C $ED18,2 Loop rdk_loop_1 while #REGb > 0
@@ -12072,8 +12076,8 @@ C $ED49,2 Loop while no keys are pressed
 C $ED4B,2 Restart routine
 c $ED4D Keyscan
 D $ED4D Used by the routine at #R$ED6D.
-R $ED4D want some examples here
-N $ED4D O:D Key half-row number in bits 0..2, key in bits 3+  [or is it inverted?] or $FF if no keys pressed O:F Z clear if keys are pressed 47 = 00101111 = kkkkkrrr (k = key is 5, r = row is 7)
+R $ED4D O:D Key half-row number in bits 0..2, key in bits 3+ [or is it inverted?] or $FF if no keys pressed
+R $ED4D O:F Z clear if keys are pressed, Z set otherwise
 @ $ED4D label=keyscan_all
 C $ED4D,3 #REGd = flag/counter? (255 to start), #REGe = initial key and row counters (47 to start)
 C $ED50,3 Set #REGb to $FE (initial keyboard half-row selector) and #REGc to $FE (keyboard port number)
@@ -12099,39 +12103,55 @@ C $ED69,2 ...loop until the zero bit shifts out (eight iterations)
 C $ED6B,2 Set Z
 c $ED6D Defines a single key.
 D $ED6D Used by the routine at #R$ECF3.
+R $ED6D I:C Index of key to define
+R $ED6D I:DE ...
 @ $ED6D label=define_a_key
 C $ED6D,2 Preserve #REGde, #REGbc
+@ $ED6F label=dak_loop1
 C $ED6F,3 Call play_music_48k
 C $ED72,3 Call keyscan_all
-C $ED75,2 ?Loop while keys are pressed
+C $ED75,2 ?Loop until a key ISN'T pressed
 C $ED77,3 ?No keys were pressed
 C $ED7A,1 D--
 C $ED7B,1 A = D
-C $ED7C,2 Retrieve #REGbc
-C $ED81,1 B = C
-C $ED82,1 B--
+C $ED7C,2 Retrieve index in #REGc
+C $ED7E,3 Point #REGhl at temp_keydefs
+C $ED81,2 B = C - 1
+C $ED83,2 Jump if zero  -- can't be used
+N $ED85 Checking for existing uses of that key.
+@ $ED85 label=dak_check_used
+C $ED86,2 Already used - try again
 C $ED88,1 HL++
-C $ED8D,3 Last byte of 'shocked'
-C $ED90,2 B = 0
-C $ED92,2 Read byte from shocked
+C $ED89,2 Loop while #REGb > 0
+@ $ED8B label=dak_store
+C $ED8B,2 Retrieve index in #REGc
+@ $ED8D ssub=LD HR,temp_keydefs - 1
+C $ED8D,3 Point at temp_keydefs (1-indexed)
+C $ED90,2 BC = C to widen the index
+C $ED92,2 Write byte
 C $ED94,3 Point at key names (two chars per key)
 C $ED97,2 D = 0
-C $ED99,3 B = A & 7
-C $ED9C,4 A *= 5
-C $EDA0,6 B >>= 3
+C $ED99,1 B = A
+C $ED9A,2 A &= 7  -- half row
+C $ED9C,4 A *= 5  -- multiply half row by 5
+C $EDA0,6 B >>= 3  -- key
 C $EDA6,1 A += B
 C $EDA7,1 A += A
-C $EDA8,1 E = A
+C $EDA8,1 DE = A  (D is zero)
 C $EDA9,1 HL += DE
-C $EDB2,1 A = *HL
+C $EDAA,4 Retrieve DE and index?
+C $EDAE,4 Poke screen address into key string
+C $EDB2,1 A = *HL  -- read a byte of key name
+C $EDB3,3 Poke first byte of key name
 C $EDB6,1 HL++
-C $EDB7,1 A = *HL
-C $EDB8,2 Terminate the string
-C $EDBA,3 Write new character
-C $EDBD,6 Draw all of the TEST MODE strings
-C $EDC8,1 A = B
-C $EDC9,3 Return if A != 4
-C $EDCC,4 E += $20
+C $EDB7,1 A = *HL  -- read another byte of key name
+C $EDB8,2 Terminate the second byte
+C $EDBA,3 Poke into key string
+C $EDBD,6 Draw the key string
+C $EDC4,3 Advance to next? character row
+C $EDC8,4 Return if B != 4
+@ $EDCC label=dak_move_down
+C $EDCC,4 E += 32
 C $EDD1,4 D += 8
 C $EDD5,1 Return
 t $EDD6 Names of keys, two characters per key.
@@ -12150,7 +12170,7 @@ B $EE26,5,5
 b $EE2B Cursor joystick input scheme
 @ $EE2B label=cursor_joy
 B $EE2B,5,5
-b $EE30 "SHOCKED<ENTER>" ?
+b $EE30 Keydefs for "SHOCKED<ENTER>"
 @ $EE30 label=shocked
 B $EE30,8,8
 b $EE38 Temporary keydefs
