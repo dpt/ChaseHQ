@@ -5621,7 +5621,7 @@ B $A222,1,1 Seems to be a count of visible cars+hazards.
 B $A223,1,1 Stage number as shown on the scoreboard. Stored as ASCII.
 N $A224 0 => no helicopter 1 => moves to left 2 => bobs around in the air 3/4 => moves from left 5 => bobs around in the air
 @ $A224 label=helicopter_control
-B $A224,1,1 Set to 1 -> helicopter moves out to the left, gets set to zero. Set to 3/4 -> Helicopter moves in from left, gets set to five. #R$AAC6, #R$AB33 reads  #R$AB96, #R$C013 writes
+B $A224,1,1 Set to 1 -> helicopter moves out to the left, gets set to zero. Set to 3/4 -> Helicopter moves in from left, gets set to five. #R$AAC6, #R$AB33 reads #R$AB96, #R$C013 writes
 @ $A225 label=stop_car_spawning
 B $A225,1,1 Inhibits cars from spawning.
 @ $A226 label=correct_fork
@@ -12200,20 +12200,23 @@ b $EE38 Temporary keydefs
 B $EE38,8,8
 c $EE40 Interrupt setup
 D $EE40 Used by the routine at #R$E8CE.
+D $EE40 See http://www.breakintoprogram.co.uk/hardware/computers/zx-spectrum/interrupts
 @ $EE40 label=setup_interrupts
 C $EE40,1 Disable interrupts
-C $EE41,3 HL = $FD00
-C $EE44,1 A = $FD
-N $EE45 Set the 128 words at $FD00 to $FEFE.
-C $EE45,2 B = 0 -- 256 iterations, or 255?
-C $EE47,2 C = $FE
-C $EE49,2 *HL++ = C
+C $EE41,3 Address of interrupt vector table
+C $EE44,1 Interrupt vector table high byte
+N $EE45 Point the 128 interrupt vector table words at $FD00 to $FEFE.
+C $EE45,2 256 iterations
+C $EE47,2 #REGc = $FE
+@ $EE49 label=si_fill
+C $EE49,2 *HL++ = $FE
 C $EE4B,2 Loop
+N $EE4D Now store an additional byte since the IVT needs to be 257 bytes long.
 C $EE4D,1 Store final $FE
-C $EE4E,2 Set interrupt vector base to $FD00
+C $EE4E,2 Set interrupt vector table base to $FD00
 C $EE50,2 Set interrupt mode 2
 N $EE52 Set $FEFE to be "JP $EF19".
-C $EE52,5 $FEFE = $C3  -- opcode for JP
+C $EE52,5 $FEFE = Opcode for JP
 C $EE57,6 $FEFF = #R$EF19
 C $EE5D,1 Return
 c $EE5E Routine at $EE5E  -- suspect a music reset routine
@@ -12253,7 +12256,7 @@ C $EE9C,2 Goto j_ee78
 c $EE9E Play menu music (48K mode only)
 D $EE9E Used by the routines at #R$E90F, #R$ECF3 and #R$ED6D.
 @ $EE9E label=play_music_48k
-C $EE9E,4 Enable wait/spinlock at #R$EF13
+C $EE9E,4 Enable wait/spinlock/cancel at #R$EF13
 C $EEA2,2 Counter, self modified by #R$EEA8 below
 C $EEA4,1 Set flags
 C $EEA5,2 Jump to #R$EEAD if non-zero
@@ -12312,13 +12315,13 @@ C $EF0F,1 A--
 C $EF10,3 Jump to playdrum_go if zero
 N $EF13 This entry point is used by the routines at #R$EF22 and #R$F0C6.
 @ $EF13 label=pm_wait
-C $EF13,5 Wait/spinlock.  Self modified
+C $EF13,5 Wait/spinlock/cancel.  Self modified
 C $EF18,1 Return
 c $EF19 Routine at $EF19
 D $EF19 How does this get entered? $EE40 builds a JP $EF19 that's interrupt driven.
 @ $EF19 label=sub_ef19
 C $EF19,1 Preserve registers
-C $EF1A,5 Unlock the wait/spinlock  -- Self modify 'LD A,x' @ #R$EF13
+C $EF1A,5 Unlock the wait/spinlock/cancel  -- Self modify 'LD A,x' @ #R$EF13
 C $EF1F,1 Restore registers
 C $EF20,1 Enable interrupts
 C $EF21,1 Return
@@ -12352,7 +12355,7 @@ C $EF48,2 Loop to playdrum_loop while #REGb
 C $EF4A,1 Move to next sample byte
 C $EF4B,1 Decrement sample bytes remaining
 C $EF4C,2 Jump to playdrum_end_of_sample if no bytes remain
-C $EF4E,3 Read A from 'LD A' @ #R$EF13  -- wait/spinlock
+C $EF4E,3 Read A from 'LD A' @ #R$EF13  -- wait/spinlock/cancel
 C $EF51,1 Set flags
 C $EF52,3 Jump to playdrum_go if zero
 C $EF56,1 Return
@@ -12363,42 +12366,46 @@ C $EF5B,3 Jump to dk_playdrum_finished
 B $EF5E,252,8*31,4 Drum 1 sample/data
 @ $F05A label=drum2
 B $F05A,108,8*13,4 Drum 2 sample/data
-c $F0C6 White noise generator?
+c $F0C6 White noise generator
 D $F0C6 Used by the routine at #R$EE9E.
+R $F0C6 I:A Duration? up to 24?
 @ $F0C6 label=noise
-C $F0C6,1 E = A  Outer-outer counter
-@ $F0C7 label=noise_outer_loop
-C $F0C7,2 D = 50  Outer counter
-@ $F0C9 label=noise_loop
-C $F0C9,3 Point at rng_seed / state bytes
-C $F0CC,3 rng_seed[0] += 3  Increment first byte of seed by 3
+C $F0C6,1 #REGe = #REGa  -- Outer-outer counter
+@ $F0C7 label=n_outer_loop
+C $F0C7,2 #REGd = 50  -- Outer counter
+@ $F0C9 label=n_loop
+C $F0C9,3 Point at rng_seed
+C $F0CC,3 rng_seed[0] += 3  -- Increment first byte of seed by 3
 C $F0CF,1 Load it into #REGb
-C $F0D0,1 HL++
-C $F0D1,4 rng_seed[1] -= 141   Note that this is different order to rng/$961B
-C $F0D5,1 A = rng_seed[0] + rng_seed[1]
-C $F0D6,1 HL++
-C $F0D7,1 Rotate A by 1
+C $F0D0,1 Advance to next byte of seed
+N $F0D1 Note that this is a different order of operations than in rng/#R$961B.
+C $F0D1,4 rng_seed[1] -= 141
+C $F0D5,1 #REGa = rng_seed[0] + rng_seed[1]
+C $F0D6,1 Advance to next byte of seed
+C $F0D7,1 Rotate #REGa by 1
 C $F0D8,2 Rotate rng_seed[2] by 1
-C $F0DA,1 A += *HL
-C $F0DB,1 *HL = A
-C $F0DC,2 A &= 16
+C $F0DA,1 #REGa += rng_seed[2]
+C $F0DB,1 rng_seed[2] = #REGa
+C $F0DC,2 #REGa &= 16
 C $F0DE,2 Jump to #R$F0F0 if zero
-C $F0E0,4 B = 24 - E
+@ $F0E0 label=n_make_noise
+C $F0E0,4 Delay for (24 - #REGe) iterations
+@ $F0E4 label=n_delay_loop_1
 C $F0E4,2 Delay loop
-C $F0E6,2 A = 24   EAR + MIC ?
-C $F0E8,2 Output
-C $F0EA,1 B = E
+C $F0E6,4 Set EAR + MIC bits
+C $F0EA,1 Delay for #REGe iterations
+@ $F0EB label=n_delay_loop_2
 C $F0EB,2 Delay loop
-C $F0ED,1 A = 0
-C $F0EE,2 Output
+C $F0ED,3 Clear EAR + MIC bits
+@ $F0F0 label=n_continue
 C $F0F0,1 Decrement outer counter
-C $F0F1,2 Jump to noise_loop if non-zero
-C $F0F3,3 Read A from 'LD A' @ #R$EF13  -- spinlock/wait
+C $F0F1,2 Jump to n_loop if non-zero
+C $F0F3,3 Read A from 'LD A' @ #R$EF13  -- spinlock/wait/cancel
 C $F0F6,1 Set flags
 C $F0F7,1 Return if carry set
 C $F0F8,1 Decrement outer-outer counter
-C $F0F9,2 Jump to noise_outer_loop if non-zero
-C $F0FB,3 Jump to dk_wait
+C $F0F9,2 Jump to n_outer_loop if non-zero
+C $F0FB,3 Jump to pm_wait
 b $F0FE Music data
 @ $F0FE label=music_patterns
 B $F0FE,4,4
