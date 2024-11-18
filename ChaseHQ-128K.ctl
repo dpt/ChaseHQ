@@ -11760,7 +11760,7 @@ c $E8FE "Stop the tape" handler (48K mode only)
 D $E8FE Used by the routine at #R$E810.
 @ $E8FE label=stop_the_tape_48k
 C $E8FE,3 Call setup_interrupts
-C $E901,3 Call music_reset
+C $E901,3 Call reset_music
 C $E904,1 Enable interrupts
 C $E905,1 Wait for next interrupt
 C $E906,3 Call clear_screen
@@ -12219,40 +12219,43 @@ N $EE52 Set $FEFE to be "JP $EF19".
 C $EE52,5 $FEFE = Opcode for JP
 C $EE57,6 $FEFF = #R$EF19
 C $EE5D,1 Return
-c $EE5E Routine at $EE5E  -- suspect a music reset routine
+c $EE5E Reset music
 D $EE5E Used by the routine at #R$E8CE.
-@ $EE5E label=music_reset
+@ $EE5E label=reset_music
 C $EE5E,1 A = 0
 C $EE5F,3 Self modify 'LD A,x' @ #R$EF0D  -- clear drum flag?
 C $EE62,3 Self modify 'LD A,x' @ #R$EF00  -- in play_music_48k
 C $EE65,3 Self modify 'LD A,x' @ #R$EEA2  -- in play_music_48k
-C $EE68,3 -> music data
+C $EE68,3 Address of music patterns
 C $EE6B,3 Jump to j_ee78
-c $EE6E Routine at EE6E
+c $EE6E Setup the next music pattern
 D $EE6E Used by the routine at #R$EE9E.
-@ $EE6E label=sub_EE6E
-C $EE6E,2 Self modified by #R$EE7E
-C $EE70,1 A--
-C $EE71,3 Self modify #R$EE6E
-C $EE74,1 Return if non-zero  -- so it's a delay?
-C $EE75,3 Self modified by #R$EE83 [sampled: F10C, F10E, F102, F104, F106, F108, F10A, ]
-N $EE78 This entry point is used by the routine at #R$EE40.
-@ $EE78 label=j_ee78
-C $EE78,2 A = *HL++
-C $EE7A,4 Jump to #R$EE98 if it's $FF
-C $EE7E,3 Self modify #R$EE6E
-C $EE81,2 C = *HL++
-C $EE83,3 Self modify #R$EE75
-C $EE86,2 B = 0
-C $EE88,3 Address of music data
-C $EE8B,1 HL += BC
-C $EE8C,2 A = *HL++
+@ $EE6E label=next_pattern
+C $EE6E,2 Load number of repetitions. Self modified by #R$EE7E, and below.
+C $EE70,1 Decrease
+C $EE71,3 Self modify #R$EE6E above
+C $EE74,1 Return if non-zero  -- keep playing current pattern
+@ $EE75 label=np_next
+C $EE75,3 Load address of current pattern. Self modified by #R$EE83.
+N $EE78 This entry point is used by the routine at #R$EE5E.
+@ $EE78 label=np_start_at_hl
+C $EE78,2 Read number of repetitions
+C $EE7A,4 Jump to #R$EE98 if it's $FF (end of patterns)
+C $EE7E,3 Self modify #R$EE6E above with repetitions
+C $EE81,2 Read data offset
+C $EE83,3 Self modify #R$EE75 above (pattern addr)
+N $EE86 Calculate address of music data.
+C $EE86,2 #REGbc = #REGc
+C $EE88,3 Address of base of music data
+C $EE8B,1 Combine with offset
+C $EE8C,2 A = *HL++ -- load first byte of music data
 C $EE8E,3 Self modify #R$EEB9
 C $EE91,3 Self modify #R$EEAD
 C $EE94,3 Self modify #R$EEC9
 C $EE97,1 Return
+@ $EE98 label=np_restart
 C $EE98,4 HL = wordat(HL); HL++
-C $EE9C,2 Goto j_ee78
+C $EE9C,2 Jump to np_start_at_hl
 c $EE9E Play menu music (48K mode only)
 D $EE9E Used by the routines at #R$E90F, #R$ECF3 and #R$ED6D.
 @ $EE9E label=play_music_48k
@@ -12275,7 +12278,7 @@ C $EEBE,3 Self modified, cycles $F12x .. $F2xx ish
 @ $EEC1 label=pm_eec1
 C $EEC1,2 A = *HL - 1
 C $EEC3,3 Jump to dk_eed2 if non-zero
-C $EEC6,3 Call sub_EE6E
+C $EEC6,3 Call next_pattern
 @ $EEC9 label=pm_eec9
 C $EEC9,3 HL = xxxx  -- Self modified by #R$EE94
 C $EECC,3 *$EEBF = HL
@@ -12336,19 +12339,20 @@ N $EF29 This entry point is used by the routine at #R$EE9E.
 @ $EF29 label=playdrum_1
 C $EF29,3 Address of drum 1 data
 C $EF2C,2 Sample bytes remaining = 252
-@ $EF2E label=playdrum_start
+@ $EF2E label=pd_start
 C $EF2E,3 Self modify 'LD B' @ #R$EF39 to be A  -- speed value passed in?
 C $EF31,5 Self modify 'LD A' @ #R$EF0D to be 1  -- set to 1 while playing?
 C $EF36,2 Jump to playdrum_go
 N $EF38 This entry point is used by the routine at #R$EE9E.
-@ $EF39 label=playdrum_go
+@ $EF39 label=pd_go
 C $EF39,2 Self modified by #R$EF2E (sampled: 8, 3, 1)
-@ $EF3B label=playdrum_loop
+@ $EF3B label=pd_loop
 C $EF3B,2 Output flag
 C $EF3D,1 Delay?
 C $EF3E,2 Test a bit
 C $EF40,2 Don't reset output if sample bit set
 C $EF42,2 Reset flag if bit was zero
+@ $EF44 label=pd_output
 C $EF44,2 Output it
 C $EF46,2 Rotate sample byte in-place
 C $EF48,2 Loop to playdrum_loop while #REGb
@@ -12359,7 +12363,7 @@ C $EF4E,3 Read A from 'LD A' @ #R$EF13  -- wait/spinlock/cancel
 C $EF51,1 Set flags
 C $EF52,3 Jump to playdrum_go if zero
 C $EF56,1 Return
-@ $EF57 label=playdrum_end_of_sample
+@ $EF57 label=pd_end_of_sample
 C $EF57,4 Self modify 'LD A' @ #R$EF0D to be 0  -- set to 0 when playing stops?
 C $EF5B,3 Jump to dk_playdrum_finished
 @ $EF5E label=drum1
@@ -12406,12 +12410,14 @@ C $F0F7,1 Return if carry set
 C $F0F8,1 Decrement outer-outer counter
 C $F0F9,2 Jump to n_outer_loop if non-zero
 C $F0FB,3 Jump to pm_wait
-b $F0FE Music data
+b $F0FE Music patterns
 @ $F0FE label=music_patterns
-B $F0FE,4,4
-W $F102,14,2 Patterns (offset, repetitions?)
-B $F110,1,1
-B $F111,271,8*33,7 Music
+B $F0FE,16,2 Patterns (repetitions, data offset)
+B $F10E,1,1 End marker
+W $F10F,2,2 Pattern restart address
+b $F111 Music data
+@ $F111 label=music_data
+B $F111,271,8*33,7
 c $F220 128K mode routines and data
 D $F220 This is relocated to $8014/load_stage onwards during init (926 bytes long).
 @ $F220 label=page_in_stage_128k
