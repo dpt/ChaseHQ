@@ -12417,7 +12417,14 @@ B $F10E,1,1 End marker
 W $F10F,2,2 Pattern restart address
 b $F111 Music data
 @ $F111 label=music_data
-B $F111,271,8*33,7
+B $F111,41,8*5,1 Pattern data A
+B $F13A,3,3 Pattern data B
+B $F13D,69,8*8,5 Pattern data C
+B $F182,32,8 Pattern data D
+B $F1A2,28,8*3,4 Pattern data E
+B $F1BE,32,8 Pattern data F
+B $F1DE,32,8 Pattern data G
+B $F1FE,34,8*4,2 Pattern data H
 c $F220 128K mode routines and data
 D $F220 This is relocated to $8014/load_stage onwards during init (926 bytes long).
 @ $F220 label=page_in_stage_128k
