@@ -12223,7 +12223,7 @@ c $EE5E Reset music
 D $EE5E Used by the routine at #R$E8CE.
 @ $EE5E label=reset_music
 C $EE5E,1 A = 0
-C $EE5F,3 Self modify 'LD A,x' @ #R$EF0D  -- clear drum flag?
+C $EE5F,3 Self modify 'LD A,x' @ #R$EF0D  -- clear drum flag
 C $EE62,3 Self modify 'LD A,x' @ #R$EF00  -- in play_music_48k
 C $EE65,3 Self modify 'LD A,x' @ #R$EEA2  -- in play_music_48k
 C $EE68,3 Address of music patterns
@@ -12259,7 +12259,7 @@ C $EE9C,2 Jump to np_start_at_hl
 c $EE9E Play menu music (48K mode only)
 D $EE9E Used by the routines at #R$E90F, #R$ECF3 and #R$ED6D.
 @ $EE9E label=play_music_48k
-C $EE9E,4 Enable wait/spinlock/cancel at #R$EF13
+C $EE9E,4 Clear cancel flag at #R$EF13
 C $EEA2,2 Counter, self modified by #R$EEA8 below
 C $EEA4,1 Set flags
 C $EEA5,2 Jump to #R$EEAD if non-zero
@@ -12268,52 +12268,52 @@ C $EEAB,2 Jump to #R$EEC9
 @ $EEAD label=pm_eead
 C $EEAD,2 Self modified by #R$EEBB, cycles 5,3,2,1
 C $EEAF,1 A--
-C $EEB0,3 Jump to dk_eeb9 if zero
+C $EEB0,3 Jump to pm_eeb9 if zero
 C $EEB3,3 Self modified by #R$EE8E
-C $EEB6,3 Jump to dk_ef00
+C $EEB6,3 Jump to pm_ef00
 @ $EEB9 label=pm_eeb9
 C $EEB9,2 Self modified by #R$EE8E
 C $EEBB,3 Self modify 'LD A' @ #R$EEAD
 C $EEBE,3 Self modified, cycles $F12x .. $F2xx ish
 @ $EEC1 label=pm_eec1
 C $EEC1,2 A = *HL - 1
-C $EEC3,3 Jump to dk_eed2 if non-zero
+C $EEC3,3 Jump to pm_eed2 if non-zero
 C $EEC6,3 Call next_pattern
 @ $EEC9 label=pm_eec9
 C $EEC9,3 HL = xxxx  -- Self modified by #R$EE94
 C $EECC,3 *$EEBF = HL
-C $EECF,3 Goto dk_eec1
+C $EECF,3 Goto pm_eec1
 @ $EED2 label=pm_eed2
 C $EED2,1 HL++
 C $EED3,3 *$EEBF = HL
 C $EED6,1 A++
 C $EED7,2 >= 128?
+C $EED9,2 Jump if not
 C $EEDB,2 A &= $7F  -- note
+C $EEDD,1 Bank
 C $EEDE,5 Self modify 'LD A' @ #R$EEAD
 C $EEE3,3 Self modify 'LD A' @ #R$EF00
+C $EEE6,1 Unbank
 @ $EEE7 label=pm_eee7
 C $EEE7,1 D = A
 C $EEE8,2 A &= 7
-C $EEEA,2 Jump to dk_ef00 if zero
+C $EEEA,2 Jump to pm_ef00 if zero
 C $EEEC,1 B = A  -- the 'note'
 C $EEED,1 A = D
 C $EEEE,6 A >>= 3
-C $EEF4,1 B--
-C $EEF5,3 Jump to playdrum_2 if zero
-C $EEF8,1 B--
-C $EEF9,3 Jump to playdrum_1 if zero
-C $EEFC,1 B--
-C $EEFD,3 Jump to #R$F0C6 if zero
+C $EEF4,4 Jump to #R$EF22 if 1
+C $EEF8,4 Jump to #R$EF29 if 2
+C $EEFC,4 Jump to #R$F0C6 if 3
 @ $EF00 label=pm_ef00
 C $EF00,2 Self modified by #R$EEE3, #R$EF09
 C $EF02,1 Set flags
-C $EF03,2 Jump to dk_ef0d if zero
+C $EF03,2 Jump to pm_start_drums if zero
 C $EF05,3 Self modify 'LD A' @ #R$EEAD
 C $EF08,1 (*HL)--
 C $EF09,3 Self modify 'LD A' @ #R$EF00
 C $EF0C,1 (*HL)--
-@ $EF0D label=pm_ef0d
-C $EF0D,2 Self modified by #R$EF33
+@ $EF0D label=pm_start_drums
+C $EF0D,2 Self modified by #R$EF33 (set when drums are playing)
 C $EF0F,1 A--
 C $EF10,3 Jump to playdrum_go if zero
 N $EF13 This entry point is used by the routines at #R$EF22 and #R$F0C6.
@@ -12324,48 +12324,50 @@ c $EF19 Routine at $EF19
 D $EF19 How does this get entered? $EE40 builds a JP $EF19 that's interrupt driven.
 @ $EF19 label=sub_ef19
 C $EF19,1 Preserve registers
-C $EF1A,5 Unlock the wait/spinlock/cancel  -- Self modify 'LD A,x' @ #R$EF13
+C $EF1A,5 Set cancel flag  -- Self modify 'LD A,x' @ #R$EF13
 C $EF1F,1 Restore registers
 C $EF20,1 Enable interrupts
 C $EF21,1 Return
 c $EF22 Drum sample player
 D $EF22 Used by the routine at #R$EE9E.
-R $EF22 I:B Speed value?
+R $EF22 I:A Speed value?
 @ $EF22 label=playdrum_2
 C $EF22,3 Address of drum 2 data
-C $EF25,2 Sample bytes remaining = 108
-C $EF27,2 Jump to playdrum_start
+C $EF25,2 108 sample bytes
+C $EF27,2 Jump to pd_start
 N $EF29 This entry point is used by the routine at #R$EE9E.
 @ $EF29 label=playdrum_1
 C $EF29,3 Address of drum 1 data
-C $EF2C,2 Sample bytes remaining = 252
+C $EF2C,2 252 sample bytes
 @ $EF2E label=pd_start
-C $EF2E,3 Self modify 'LD B' @ #R$EF39 to be A  -- speed value passed in?
+C $EF2E,3 Self modify 'LD B' @ #R$EF39 to be #REGa  -- speed value passed in?
 C $EF31,5 Self modify 'LD A' @ #R$EF0D to be 1  -- set to 1 while playing?
-C $EF36,2 Jump to playdrum_go
+C $EF36,2 Jump to pd_go
 N $EF38 This entry point is used by the routine at #R$EE9E.
+C $EF38,1 Bank
+N $EF39 Output a byte.
 @ $EF39 label=pd_go
 C $EF39,2 Self modified by #R$EF2E (sampled: 8, 3, 1)
 @ $EF3B label=pd_loop
-C $EF3B,2 Output flag
-C $EF3D,1 Delay?
-C $EF3E,2 Test a bit
-C $EF40,2 Don't reset output if sample bit set
-C $EF42,2 Reset flag if bit was zero
-@ $EF44 label=pd_output
+C $EF3B,2 Set speaker flag
+C $EF3D,1 Delay
+C $EF3E,2 Test a sample bit
+C $EF40,4 Set speaker flag to sample bit
+@ $EF44 label=pd_output_bit
 C $EF44,2 Output it
 C $EF46,2 Rotate sample byte in-place
-C $EF48,2 Loop to playdrum_loop while #REGb
+C $EF48,2 Loop to pd_loop while #REGb
 C $EF4A,1 Move to next sample byte
 C $EF4B,1 Decrement sample bytes remaining
-C $EF4C,2 Jump to playdrum_end_of_sample if no bytes remain
-C $EF4E,3 Read A from 'LD A' @ #R$EF13  -- wait/spinlock/cancel
+C $EF4C,2 Jump to pd_end_of_sample if no bytes remain
+C $EF4E,3 Read A from 'LD A' @ #R$EF13  -- cancel flag
 C $EF51,1 Set flags
-C $EF52,3 Jump to playdrum_go if zero
+C $EF52,3 Loop to pd_go if clear
+C $EF55,1 Otherwise unbank
 C $EF56,1 Return
 @ $EF57 label=pd_end_of_sample
 C $EF57,4 Self modify 'LD A' @ #R$EF0D to be 0  -- set to 0 when playing stops?
-C $EF5B,3 Jump to dk_playdrum_finished
+C $EF5B,3 Jump to pm_wait
 @ $EF5E label=drum1
 B $EF5E,252,8*31,4 Drum 1 sample/data
 @ $F05A label=drum2
@@ -12404,7 +12406,7 @@ C $F0ED,3 Clear EAR + MIC bits
 @ $F0F0 label=n_continue
 C $F0F0,1 Decrement outer counter
 C $F0F1,2 Jump to n_loop if non-zero
-C $F0F3,3 Read A from 'LD A' @ #R$EF13  -- spinlock/wait/cancel
+C $F0F3,3 Read A from 'LD A' @ #R$EF13  -- cancel flag
 C $F0F6,1 Set flags
 C $F0F7,1 Return if carry set
 C $F0F8,1 Decrement outer-outer counter
