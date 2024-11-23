@@ -12242,16 +12242,16 @@ N $EE78 This entry point is used by the routine at #R$EE5E.
 C $EE78,2 Read new repetition count
 C $EE7A,4 Jump to #R$EE98 if it's $FF (end of patterns)
 C $EE7E,3 Self modify #R$EE6E above with new repetition count
-C $EE81,2 Read data offset
+C $EE81,2 Read music data offset
 C $EE83,3 Self modify #R$EE75 above (pattern addr)
 N $EE86 Calculate address of music data.
 C $EE86,2 #REGbc = #REGc
 C $EE88,3 Address of base of music data
 C $EE8B,1 Combine with offset
 C $EE8C,2 A = *HL++ -- load first byte of music data
-C $EE8E,3 Self modify #R$EEB9
-C $EE91,3 Self modify #R$EEAD
-C $EE94,3 Self modify #R$EEC9
+C $EE8E,3 Self modify #R$EEB9 (first byte of pattern)
+C $EE91,3 Self modify #R$EEAD (first byte of pattern)
+C $EE94,3 Self modify #R$EEC9 (addr of second music data byte in pattern)
 C $EE97,1 Return
 @ $EE98 label=np_restart
 C $EE98,4 HL = wordat(HL); HL++
@@ -12265,53 +12265,52 @@ C $EEA4,1 Set flags
 C $EEA5,2 Jump to #R$EEAD if non-zero
 C $EEA7,4 Otherwise increment and self modify #R$EEA2
 C $EEAB,2 Jump to #R$EEC9
-@ $EEAD label=pm_eead
-C $EEAD,2 Self modified by #R$EEBB, cycles 5,3,2,1
-C $EEAF,1 A--
-C $EEB0,3 Jump to pm_eeb9 if zero
-C $EEB3,3 Self modified by #R$EE8E
-C $EEB6,3 Jump to pm_ef00
-@ $EEB9 label=pm_eeb9
-C $EEB9,2 Self modified by #R$EE8E
-C $EEBB,3 Self modify 'LD A' @ #R$EEAD
-C $EEBE,3 Self modified, cycles $F12x .. $F2xx ish
-@ $EEC1 label=pm_eec1
-C $EEC1,2 A = *HL - 1
-C $EEC3,3 Jump to pm_eed2 if non-zero
+@ $EEAD label=pm_delay_1
+C $EEAD,2 Self modified by #R$EEBB, cycles 5,4?,3,2,1  (set to first music data byte)
+C $EEAF,1 Decrement and set flags
+C $EEB0,3 Jump to pm_delay_complete if zero
+C $EEB3,3 Self modify 'LD A' @ #R$EEAD above  (store decremented)
+C $EEB6,3 Jump to pm_zero_or_456
+@ $EEB9 label=pm_delay_complete
+C $EEB9,2 Self modified by #R$EE8E  (set to first music data byte - value for when resetting)
+C $EEBB,3 Self modify 'LD A' @ #R$EEAD above  (reset it)
+C $EEBE,3 Self modified below, cycles $F12x .. $F2xx ish  <addr of next music byte>
+@ $EEC1 label=pm_loop
+C $EEC1,1 Fetch a music byte
+C $EEC2,1 Temporarily decrement for testing (will undo later)
+C $EEC3,3 Jump to pm_continue_pattern if the byte is NOT 1 - the terminating byte of the music data
 C $EEC6,3 Call next_pattern
-@ $EEC9 label=pm_eec9
-C $EEC9,3 HL = xxxx  -- Self modified by #R$EE94
-C $EECC,3 *$EEBF = HL
-C $EECF,3 Goto pm_eec1
-@ $EED2 label=pm_eed2
-C $EED2,1 HL++
-C $EED3,3 *$EEBF = HL
-C $EED6,1 A++
-C $EED7,2 >= 128?
-C $EED9,2 Jump if not
-C $EEDB,2 A &= $7F  -- note
+@ $EEC9 label=pm_reset_pattern
+C $EEC9,3 Self modified by #R$EE94  (set to address of second music data byte)
+C $EECC,3 *$EEBF = HL  (Resetting <addr of next music byte> above when we loop)
+C $EECF,3 Loop
+@ $EED2 label=pm_continue_pattern
+C $EED2,1 Advance
+C $EED3,3 Update <addr of next music byte> above
+C $EED6,1 Compensate for earlier decrement
+C $EED7,4 Jump if music byte < 128
+N $EEDB Music byte is >= 128 here.
+C $EEDB,2 Extract note
 C $EEDD,1 Bank
-C $EEDE,5 Self modify 'LD A' @ #R$EEAD
-C $EEE3,3 Self modify 'LD A' @ #R$EF00
+C $EEDE,5 Self modify 'LD A' @ #R$EEAD  (setting delay data byte thing to 1)
+C $EEE3,3 Self modify 'LD A' @ #R$EF00 below
 C $EEE6,1 Unbank
 N $EEE7 A byte of the form 0b0xxxxyyy
 @ $EEE7 label=pm_byte_lt_128
-C $EEE7,1 Save a copy of the byte
+C $EEE7,1 Save a copy of the byte (note)
 C $EEE8,2 Extract bottom 3 yyy bits  -- must be the command
-C $EEEA,2 Jump to pm_zero if they're zero
+C $EEEA,2 Jump to pm_zero_or_456 if they're zero
 C $EEEC,1 Save the 'note'
 C $EEED,7 Extract the 4 xxxx bits  -- must be the argument
 C $EEF4,4 Jump to #R$EF22 if yyy is 1  -- drum 2
 C $EEF8,4 Jump to #R$EF29 if yyy is 2  -- drum 1
 C $EEFC,4 Jump to #R$F0C6 if yyy is 3  -- noise
 @ $EF00 label=pm_zero_or_456
-C $EF00,2 Self modified by #R$EEE3 above, #R$EF09 below
+C $EF00,2 Self modified by #R$EEE3 above, #R$EF09 below  (set to delay data byte thing)
 C $EF02,1 Set flags
-C $EF03,2 Jump to pm_start_drums if zero
-C $EF05,3 Self modify 'LD A' @ #R$EEAD
-C $EF08,1 (*HL)--
-C $EF09,3 Self modify 'LD A' @ #R$EF00
-C $EF0C,1 (*HL)--
+C $EF03,2 Jump to pm_start_drums if zero (no delay)
+C $EF05,4 Self modify 'LD A' @ #R$EEAD  (decrementing initial delay counter)
+C $EF09,4 Self modify 'LD A' @ #R$EF00 above
 @ $EF0D label=pm_start_drums
 C $EF0D,2 Self modified by #R$EF33 (set when drums are playing)
 C $EF0F,1 A--
