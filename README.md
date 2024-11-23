@@ -6,7 +6,9 @@ Project started: March 2023
 
 ![Using Spectrum Analyser to investigate the game, including turning the screen green](static-images/spectrum-analyser.png)
 
-This is an in-progress disassembly of the [ZX Spectrum version of Chase H.Q. by Ocean Software](https://spectrumcomputing.co.uk/entry/903/ZX-Spectrum/Chase_HQ). So far this only covers the 48K version and the first stage of the game. The 128K version is better (loads all the levels at once, has AY music and menu screen animations) but it has a lot more code to consider, so it's easier to start off with 48K stage 1 first.
+This is an in-progress disassembly of the [ZX Spectrum version of Chase H.Q. by Ocean Software](https://spectrumcomputing.co.uk/entry/903/ZX-Spectrum/Chase_HQ). So far this only covers the 48K version and the first stage of the game. The 128K version is better (loads all of the levels at once, has AY music and menu screen animations) but it has a _lot_ more code to consider, so it's easier to start off with 48K stage 1 first.
+
+**Note: I'm currently working on the 128K version over on the "128k" branch.**
 
 In this repository is a [SkoolKit](https://skoolkit.ca/) _control_ file which you can use to disassemble the game. This works with the game when it is in a "pristine" just-loaded state. See below for how to make a pristine snapshot and instructions on how to drive SkoolKit. I've provided a Makefile to automate most of the required steps.
 
@@ -90,7 +92,7 @@ make tap  # or z80
 - Option (1) is to run the game in the [Spectrum Analyser interactive disassembler](https://colourclash.co.uk/spectrum-analyser/) and look for clues.
 - Option (2) is to stare at the code _really hard_ until it makes sense.
 
-You may have to do both.
+You will probably have to do both.
 
 See https://youtu.be/ZcoFi4T4tsU for a short video of me running Spectrum Analyser to find out how the game builds its back buffer up.
 
