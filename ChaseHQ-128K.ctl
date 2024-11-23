@@ -12275,6 +12275,7 @@ C $EEB6,3 Jump to pm_zero_or_456
 C $EEB9,2 Self modified by #R$EE8E  (set to first music data byte - value for when resetting)
 C $EEBB,3 Self modify 'LD A' @ #R$EEAD above  (reset it)
 C $EEBE,3 Self modified below, cycles $F12x .. $F2xx ish  <addr of next music byte>
+N $EEC1 Fetch a byte of the form 0bdaaaaiii (d is delay bit, aaaa is argument, iii is instrument index
 @ $EEC1 label=pm_loop
 C $EEC1,1 Fetch a music byte
 C $EEC2,1 Temporarily decrement for testing (will undo later)
@@ -12289,24 +12290,24 @@ C $EED2,1 Advance
 C $EED3,3 Update <addr of next music byte> above
 C $EED6,1 Compensate for earlier decrement
 C $EED7,4 Jump if music byte < 128
-N $EEDB Music byte is >= 128 here.
-C $EEDB,2 Extract note
+N $EEDB A byte of the form 0b1aaaaiii (1 is delay bit)
+C $EEDB,2 Mask off delay bit
 C $EEDD,1 Bank
-C $EEDE,5 Self modify 'LD A' @ #R$EEAD  (setting delay data byte thing to 1)
+C $EEDE,5 Self modify 'LD A' @ #R$EEAD  (setting <delay data byte thing> to 1)
 C $EEE3,3 Self modify 'LD A' @ #R$EF00 below
 C $EEE6,1 Unbank
-N $EEE7 A byte of the form 0b0xxxxyyy
-@ $EEE7 label=pm_byte_lt_128
-C $EEE7,1 Save a copy of the byte (note)
-C $EEE8,2 Extract bottom 3 yyy bits  -- must be the command
+N $EEE7 A byte now of the form 0b0aaaaiii
+@ $EEE7 label=pm_play_inst
+C $EEE7,1 Save a copy of the byte
+C $EEE8,2 Extract bottom 3 instrument bits  -- must be the command
 C $EEEA,2 Jump to pm_zero_or_456 if they're zero
-C $EEEC,1 Save the 'note'
-C $EEED,7 Extract the 4 xxxx bits  -- must be the argument
-C $EEF4,4 Jump to #R$EF22 if yyy is 1  -- drum 2
-C $EEF8,4 Jump to #R$EF29 if yyy is 2  -- drum 1
-C $EEFC,4 Jump to #R$F0C6 if yyy is 3  -- noise
+C $EEEC,1 Save the instrument
+C $EEED,7 Extract the 4 aaaa bits  -- must be the argument
+C $EEF4,4 Jump to #R$EF22 if instrument is 1  -- drum 2
+C $EEF8,4 Jump to #R$EF29 if instrument is 2  -- drum 1
+C $EEFC,4 Jump to #R$F0C6 if instrument is 3  -- noise
 @ $EF00 label=pm_zero_or_456
-C $EF00,2 Self modified by #R$EEE3 above, #R$EF09 below  (set to delay data byte thing)
+C $EF00,2 Self modified by #R$EEE3 above, #R$EF09 below  (set to <delay data byte thing>)
 C $EF02,1 Set flags
 C $EF03,2 Jump to pm_start_drums if zero (no delay)
 C $EF05,4 Self modify 'LD A' @ #R$EEAD  (decrementing initial delay counter)
@@ -12320,7 +12321,7 @@ N $EF13 This entry point is used by the routines at #R$EF22 and #R$F0C6.
 C $EF13,5 Check interrupt flag. Self modified
 C $EF18,1 Return
 c $EF19 Interrupt entry point
-D $EF19 #R$EE40 builds a JP $EF19 that's interrupt driven.
+D $EF19 #R$EE40 builds a table at $FD00 containing 257 occurences of $FE. Address $FEFE contains a JP $EF19 to here.
 @ $EF19 label=interrupt_entry
 C $EF19,1 Preserve registers
 C $EF1A,5 Set interrupt flag  -- Self modify 'LD A,x' @ #R$EF13
