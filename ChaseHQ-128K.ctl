@@ -2344,9 +2344,9 @@ B $81EB,1,1 <STOP>
 T $81EC,13,12:n1 "GIDDY UP BOY!"
 @ $81F9 label=string_hold_on_man
 T $81F9,11,10:n1 "HOLD ON MAN"
-c $8204 Generates engine noise
+c $8204 Generates engine noise (48K)
 D $8204 Used by the routine at #R$83B5.
-@ $8204 label=setup_engine_sfx
+@ $8204 label=setup_engine_sfx_48k
 C $8204,3 Load speed into #REGhl
 C $8207,2 Bottom bit of #REGh moves to carry (#REGh now unused)
 N $8209 This entry point is used by the routine at #R$F220.
@@ -3035,8 +3035,8 @@ R $88F2 I:C Priority. Lower priority effects will take precedence.
 C $88F2,6 If current effect's priority is zero then assign
 C $88F8,2 Return if current effect's priority is lower than request
 @ $88FA label=ss_assign
-C $88FA,4 sfx_index = B
-C $88FE,4 sfx_priority = C
+C $88FA,4 Store sfx_index
+C $88FE,4 Store sfx_priority
 C $8902,1 Return
 c $8903 Drives sound effects
 D $8903 Used by the routine at #R$8401.
@@ -5591,7 +5591,7 @@ N $A200 Unknown - not enough space for another hazard
 S $A200,19,$13
 N $A213 AY registers 0..11 [128K]
 @ $A213 label=ay_chan_a_pitch
-W $A213,2,2 0,1: Channel A pitch (fine,course=lo,hi)
+W $A213,2,2 0,1: Channel A pitch (fine,coarse=lo,hi)
 @ $A215 label=ay_chan_b_pitch
 W $A215,2,2 2,3: Channel B pitch
 @ $A217 label=ay_chan_c_pitch
@@ -9105,7 +9105,7 @@ N $C0EA Tunnel hasn't appeared.
 @ $C0EA label=pt_no_tunnel
 C $C0EA,1 Set flags
 C $C0EB,2 Jump if non-zero
-C $C0ED,4 tunnel_sfx = 0
+C $C0ED,4 Zero tunnel_sfx
 C $C0F1,2 #REGhl = 0
 N $C0F3 Remove draw_tunnel calls.
 C $C0F3,3 #R$8F82 = NOP (instruction)
@@ -9115,7 +9115,7 @@ C $C0FC,3 #R$8FA8 & #R$8FA9 = NOP (instruction)
 C $C0FF,1 Return
 N $C100 Tunnel has appeared.
 @ $C100 label=pt_yes_a_tunnel
-C $C100,5 tunnel_sfx = 5  -- this quietens noises when in the tunnel
+C $C100,5 Set tunnel_sfx to 5. This quietens effects when in the tunnel
 C $C105,3 -- somewhere in road height data table
 C $C108,6 #REGbc = wordat(HL); #REGhl -= 4
 C $C10E,1 Bank
@@ -12457,14 +12457,14 @@ W $F24B,2,2 Level 4. Source = $E000, Paging = bank 6
 W $F24D,2,2 Level 5. Source = $C000, Paging = bank 7
 W $F24F,2,2 Level 6. Source = $E000, Paging = bank 7
 N $F251 $8045 once relocated.
-@ $F251 label=start_siren_hook_128k
+@ $F251 label=start_siren_128k
 C $F251,5 Store $8C to channel A fine pitch
 C $F256,5 Store 14 to channel A volume (4-bit)
 C $F25B,5 Store 12 to channel B volume
 C $F260,5 Self modify 'LD A,x' @ #R$F271 (in this position)
 C $F265,3 var_a239 = $AA
 C $F268,1 Return
-@ $F269 label=engine_sfx_play_hook_128k
+@ $F269 label=play_engine_sfx_128k
 C $F269,3 var_a239 (initialised to $AA above)
 C $F26C,2 Return if zero
 C $F26E,3 Load channel A fine pitch
@@ -12486,40 +12486,43 @@ C $F28B,3 Update channel A fine pitch
 C $F28E,5 and store 4 less to channel B fine pitch
 C $F293,8 Set mixer to enable tone A & B
 C $F29B,2 Jump
-@ $F29D label=silence_audio_hook_128k
+@ $F29D label=silence_audio_128k
 C $F29D,5 Initialise mixer to $3F (all noise and tone off)
 N $F2A2 writing the full register set?
-@ $F2A2 label=write_registers_hook_128k
+@ $F2A2 label=write_registers_128k
 C $F2A2,3 Address of sound register value(s) -- other values must be earlier
-@ $F2A9 label=write_registers_hook_loop
+@ $F2A9 label=write_registers_loop
 C $F2A5,8 Select AY-3-8912 sound chip register 11: envelope fine duration
 C $F2AD,4 Write to the register from (HL), then decrement B and HL
 C $F2B1,1 Next register down
 C $F2B2,3 Loop to #R$F2A9 while +ve
 C $F2B5,1 Return
-@ $F2B6 label=f2b6_128k
+N $F2B6 munging speed value into tone?
+@ $F2B6 label=engine_sfx_from_speed_128k
 C $F2B6,3 Load speed into #REGhl
-C $F2B9,2 Bottom bit of #REGh moves to carry
+C $F2B9,2 Bottom bit of #REGh moves to carry  -- is H now empty?
 C $F2BB,1 Speed low byte
 C $F2BC,1 Halve speed, shifting carry in as MSB
-C $F2BD,2 L = ~A
+C $F2BD,2 L = ~A  -- why complement?
 C $F2BF,6 Jump if in low gear
-C $F2D1,3 A = tunnel_sfx
+C $F2D1,3 Read tunnel_sfx
 C $F2D4,1 Set flags
-C $F2D5,3 -- base tone value?
-C $F2DA,2 Jump if tunnel_sfx was zero
-C $F2DC,3 -- base tone value?
-C $F2DF,2 Volume = 12
-C $F2E1,1 -- speed value + base tone?
-C $F2E2,3 Set channel C pitch (both fine and course)
+C $F2D5,3 Non-tunnel tone value
+C $F2D8,2 Non-tunnel volume
+C $F2DA,2 Jump if tunnel_sfx was zero (not in tunnel)
+N $F2DC In tunnel.
+C $F2DC,3 In-tunnel tone value
+C $F2DF,2 In-tunnel volume
+C $F2E1,1 -- speed value + tone?
+C $F2E2,3 Set channel C pitch (both fine and coarse)
 C $F2E5,3 Set channel C volume
 C $F2E8,8 Set mixer to enable tone C
 C $F2F0,1 Return
-@ $F2F1 label=turbo_sfx_play_hook_128k
+@ $F2F1 label=play_turbo_sfx_128k
 C $F2F1,5 Set noise pitch (5-bit) [$3C is > 5-bit...]
 C $F2F6,3 var_a23a = $3C  -- Copy of it?
 C $F2F9,1 Return
-@ $F2FA label=engine_sfx_setup_hook_128k
+@ $F2FA label=setup_engine_sfx_128k
 C $F2FA,6 Jump if var_a23a is zero
 C $F300,1 Decrement noise pitch
 C $F301,1 Return if zero
@@ -12527,14 +12530,14 @@ C $F302,3 Address of noise pitch register soft copy
 C $F305,1 Decrement in-place
 C $F306,2 Jump if zero
 C $F308,6 Increment noise pitch register soft copy by 10
-C $F30E,3 Set channel C pitch (both fine and course)
+C $F30E,3 Set channel C pitch (both fine and coarse)
 C $F311,8 Set mixer to enable tone C and noise C
 C $F319,5 Set channel C volume to 13
 C $F31E,1 Return
 @ $F31F label=f31f_128k
 C $F31F,8 Set mixer to disable tone C and noise C
 C $F327,4 var_a23a = 0
-C $F32B,3 Exit via f2b6_128k
+C $F32B,3 Exit via engine_sfx_from_speed_128k
 N $F32E Relocated to $8122
 N $F32E "Giddy up boy!"
 @ $F32E label=speech_samples_table
@@ -12554,7 +12557,7 @@ W $F33E,2,2 length
 W $F340,2,2 address
 @ $F342 label=play_speech_128k
 C $F342,1 Bank input index (sample indices are 1..5)
-C $F343,3 Call silence_audio_hook_128k
+C $F343,3 Call silence_audio_128k
 C $F346,7 128K: Map RAM bank 4 to $C000; Map normal screen; Map ROM 0
 C $F355,1 Unbank input index
 C $F356,9 HL = $F32A + A*4  -- i.e. it's 1-indexed speech_samples_table
@@ -12648,7 +12651,7 @@ C $F413,1 Return
 @ $F414 label=reset_paging_128k
 C $F414,6 128K: Set paging register to default
 C $F41A,1 Return
-@ $F41B label=attract_mode_hook_128k
+@ $F41B label=attract_mode_128k
 C $F41B,3 (an address)
 C $F41E,3 Call relocated plsp_f3b6_128k (animated title screen?)
 C $F421,2 Return if A is zero
