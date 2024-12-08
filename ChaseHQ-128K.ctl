@@ -3079,7 +3079,7 @@ N $8958 Effect 8 - Time running out high ("bip")
 W $8958,4,2
 N $895C Effect 9 - Time running out low ("bow")
 W $895C,4,2
-c $8960 Sound effect - crash
+c $8960 Crash sound effect
 R $8960 I:D Inner loop count
 @ $8960 label=sfx_crash
 C $8960,3 #REGhl -> Effect data table
@@ -3100,61 +3100,71 @@ C $8977,4 Loop while #REGc > 0
 C $897B,1 Return
 @ $897C label=sfx_crash_table
 B $897C,93,8*11,5 Effect data table
-c $89D9 Sound effect - thud
-R $89D9 I:D Delay value
+c $89D9 "Thud" sound effect
+D $89D9 The game uses a delay multiplier of 8 for car landings and 3 for hazard hits.
+R $89D9 I:D Delay multiplier value
 @ $89D9 label=sfx_thud
 C $89D9,2 Length of table is 32
-C $89DB,3 #REGhl -> Effect data table
+C $89DB,3 Point #REGhl at the effect data table
 C $89DE,1 Zero output byte
 @ $89DF label=sfx_thud_loop
-C $89DF,1 B = *HL
-C $89E0,2 Output to
-C $89E2,4 Delay for 'D' iterations
-C $89E6,2 Loop for 'B' iterations
-C $89E8,2 Wiggle the EAR bit
-C $89EA,1 Move to the next byte of effect data
-C $89EB,3 Loop while #REGc > 0
+C $89DF,1 Read a byte (a delay)
+@ $89E0 label=sfx_thud_output
+C $89E0,2 Output
+@ $89E3 label=sfx_thud_delay
+C $89E2,4 Delay/hold for #REGd iterations
+N $89E6 This will jump back and re-do the OUT again, but #REGa will not have changed value in the meanwhile... however it might be this way for timing reasons.
+C $89E6,2 Loop for #REGb iterations
+C $89E8,2 Toggle the EAR bit
+C $89EA,1 Advance to next effect data byte
+C $89EB,3 Loop until out of effect data
 C $89EE,1 Return
 @ $89EF label=sfx_thud_table
-B $89EF,32,8 Effect data table
-c $8A0F Sound effect - cornering
-R $8A0F I:D Affects delay loops
+B $89EF,32,8 Each byte is a delay between speaker toggles (off-on-off-...)
+c $8A0F Cornering sound effect
+D $8A0F The game only ever uses a duty factor of 100 and a count of 1.
+R $8A0F I:D Duty factor and outer loop count
 R $8A0F I:E Inner loop count
+R $8A0F Half duty cycle: only run on every other call.
 @ $8A0F label=sfx_cornering
-C $8A0F,2 Half duty cycle
-C $8A11,6 Return if 1
+C $8A0F,7 Toggle static flag
+C $8A16,1 Return if flag became non-zero
 @ $8A17 label=sfx_cornering_loop_outer
 C $8A17,1 Set inner loop counter
 @ $8A18 label=sfx_cornering_loop_inner
 C $8A18,3 Call rng
-C $8A1B,2 #REGa &= 16
+C $8A1B,2 Mask off bit 4
 C $8A1D,2 If zero goto sfx_cornering_continue
-C $8A1F,6 Delay loop of (24 - #REGd) iterations
-C $8A25,2 #REGa = 24 set EAR and MIC bits <not sure of the effect>
-C $8A27,2 Output
-C $8A29,3 Delay loop of #REGd iterations
-C $8A2C,3 Output
+N $8A1F Delay for (24 - #REGd) iterations.
+@ $8A23 label=sfx_cornering_delay1
+N $8A25 I'm unsure why they're setting both of the EAR and MIC bits here. Is it louder?
+C $8A25,2 Set EAR and MIC bits
+C $8A27,2 Set output
+N $8A29 Delay for #REGd iterations.
+@ $8A2A label=sfx_cornering_delay2
+C $8A2C,3 Clear output
 @ $8A2F label=sfx_cornering_continue
-C $8A2F,3 Loop while #REGc > 0
-C $8A32,3 Loop while #REGd > 0
+C $8A2F,3 Loop while inner loop counter > 0
+C $8A32,3 Loop while duty factor > 0
 C $8A35,1 Return
-c $8A36 Sound effect - "bip-bow"
+c $8A36 "Bip" or "Bow" sound effect
+D $8A36 The game uses $78 or $C8 for both args.
 R $8A36 I:D Delay at start
-R $8A36 I:E Same as D
+R $8A36 I:E Same as #REGd
 @ $8A36 label=sfx_bipbow
-C $8A36,2 C = 20
+C $8A36,2 Set outer loop counter to 20
 C $8A38,3 Inner loop counter. H is decremented and restored from L each loop.
+N $8A3B Delay for #REGd iterations.
 @ $8A3B label=sfx_bipbow_loop
-C $8A3B,3 Delay loop of D iterations
-C $8A3E,1 D = E
-C $8A3F,6 Delay loop of (24 - C) iterations
-C $8A45,2 A = 24 set EAR and MIC bits <not sure of the effect>
-C $8A47,2 Output A
-C $8A49,3 Delay loop of C iterations
-C $8A4C,3 Output 0
-C $8A4F,3 Loop while #REGh > 0
-C $8A52,1 H = L
-C $8A53,3 Loop while #REGc > 0
+C $8A3E,1 Restore #REGd
+N $8A3F Delay for (24 - #REGc) iterations.
+C $8A45,2 Set EAR and MIC bits
+C $8A47,2 Set output
+N $8A49 Delay for #REGc iterations.
+C $8A4C,3 Clear output
+C $8A4F,3 Loop while inner loop counter > 0
+C $8A52,1 Restore #REGh
+C $8A53,3 Loop while outer loop counter > 0
 N $8A56 This entry point is used by the routine at #R$83B5.
 C $8A56,1 Return
 c $8A57 Handle perp caught
