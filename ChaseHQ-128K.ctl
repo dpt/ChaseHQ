@@ -3168,19 +3168,20 @@ C $8A53,3 Loop while outer loop counter > 0
 N $8A56 This entry point is used by the routine at #R$83B5.
 C $8A56,1 Return
 c $8A57 Handle perp caught
-D $8A57 This handles slowing cars down to a stop and calculating and displaying the bonus score when the perp has been caught.
+D $8A57 This handles slowing cars down to a stop when the perp has been caught. It also calculates and displays the bonus score.
 @ $8A57 label=handle_perp_caught
 C $8A57,5 Return if perp_caught_phase is zero
 C $8A5C,4 Jump to #R$8B8D if it's currently one
 C $8A60,3 Jump to #R$8A88 if it's currently two
 C $8A63,3 Jump to #R$8ABE if it's currently three
 C $8A66,3 Jump to #R$8AD2 if it's currently four
+N $8A69 Otherwise it's five or six.
 C $8A69,1 Bank
 C $8A6A,5 Return if transition_control != 0
 C $8A6F,1 Unbank
 C $8A70,3 Jump to #R$8A7E if perp_caught_phase is currently five
 N $8A73 Otherwise all of the perp caught phases are complete and we can move on to the next stage.
-C $8A73,1 Throw away the return address causing the remainder of main_loop to be bypassed
+C $8A73,1 Throw away the return address. This causes the remainder of main_loop to be bypassed
 C $8A74,3 Call silence_audio_hook
 C $8A77,4 Increment wanted_stage_number
 C $8A7B,3 Exit via main_loop
@@ -3189,9 +3190,9 @@ C $8A7E,5 perp_caught_phase = 6
 C $8A83,2 Forward transition
 C $8A85,3 Exit via setup_transition
 @ $8A88 label=hpc_phase2
-C $8A88,3 A = var_a22a
+C $8A88,3 A = car_y
 C $8A8B,4 Jump to #R$8AB2 if A >= 16
-C $8A8F,5 var_a22a = A + 4
+C $8A8F,5 car_y = A + 4
 C $8A94,7 HL = road_pos + 12
 C $8A9C,5 HL -= $126
 C $8AA2,2 Jump to #R$8AA5 if HL < $126  -- Suspect this is driving the car to stop the perp
@@ -5642,8 +5643,8 @@ B $A227,1,1 Shows the floating left/right arrow (0 => off, 1 => left, 2 => right
 B $A228,1,1 Shows the flashing cherry light on top of the car (0 => off, else on).
 @ $A229 label=time_up_state
 B $A229,1,1 1 => out of time, 2 => "TIME UP" message is printed; 3 => "CONTINUE THIS MISSION" message is printed and a countdown runs 4 => countdown elapsed; 0 otherwise
-@ $A22A label=var_a22a
-B $A22A,1,1 Used by #R$B6D6 and others
+@ $A22A label=car_y
+B $A22A,1,1 Car Y offset. Used when the car pulls in after catching a perp. Used by #R$B6D6 and others
 @ $A22B label=allow_overtake_bonus
 B $A22B,1,1 Enables overtake bonus. Used by #R$9D2E and others.
 @ $A22C label=trigger_bonus_flag
@@ -7924,7 +7925,7 @@ N $B5AD Build an index into hero_car_refs[].
 C $B5AD,4 A = C (0/1/2, turn value from input) + B (counter value from input) + <self modified value $B5B0 == up/down facing (0/3/6 => level,up,down)>
 C $B5B1,6 If A >= 9 A -= 9  -- clamping
 C $B5B7,13 Point #REGhl at hero_car_refs[A] (rows/entries are 20 bytes wide)
-C $B5C5,4 A = var_a22a + *HL
+C $B5C5,4 A = car_y + *HL
 C $B5C9,2 A=0-A
 C $B5CB,1 A+=D  (aka A=D-A)    D here is (117 - car jump offset) from earlier
 C $B5CC,1 E=A
@@ -8058,7 +8059,7 @@ C $B6D0,4 Jump to #R$B6D6 if zero
 C $B6D4,2 D += A - 2
 N $B6D6 This entry point is used by the routines at #R$B58E and #R$B648.
 @ $B6D6 label=draw_cherry_b6d6
-C $B6D6,7 D -= var_a22a
+C $B6D6,7 D -= car_y
 N $B6DD This entry point is used by the routines at #R$8F5F and #R$B549.
 @ $B6DD label=draw_cherry_b6dd
 C $B6DD,1 A = E
