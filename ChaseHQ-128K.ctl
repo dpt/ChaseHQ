@@ -3189,17 +3189,24 @@ C $8A7B,3 Exit via main_loop
 C $8A7E,5 perp_caught_phase = 6
 C $8A83,2 Forward transition
 C $8A85,3 Exit via setup_transition
+N $8A88 This phase moves the car upwards and makes it pull to the left so that it appears to pull in in front of the perp's car.
 @ $8A88 label=hpc_phase2
-C $8A88,3 A = car_y
-C $8A8B,4 Jump to #R$8AB2 if A >= 16
-C $8A8F,5 car_y = A + 4
-C $8A94,7 HL = road_pos + 12
-C $8A9C,5 HL -= $126
-C $8AA2,2 Jump to #R$8AA5 if HL < $126  -- Suspect this is driving the car to stop the perp
-@ $8AA5 label=hpc_8aa5
-C $8AA5,3 road_pos = HL
+C $8A88,3 Fetch car_y
+C $8A8B,4 Jump to #R$8AB2 if car_y >= 16
+N $8A8F Move the car up and left.
+C $8A8F,5 car_y += 4
+C $8A94,7 HL = road_pos + 12  -- move the car left by 12
+C $8A9B,1 Preserve #REGhl
+C $8A9C,5 HL -= $126  -- are we at $126 yet?
+C $8AA1,1 Restore #REGhl
+C $8AA2,2 Jump to #R$8AA5 if #REGhl < $126
+N $8AA4 Otherwise the car's in the correct position now.
+C $8AA4,1 Move $126 in #REGde to #REGhl
+@ $8AA5 label=hpc_set_road_pos
+C $8AA5,3 road_pos = #REGhl
+N $8AA8 Not sure why we're changing fast_counter here.
 C $8AA8,5 A = fast_counter + 32
-C $8AAD,1 Return if carry
+C $8AAD,1 Return if result > 255
 C $8AAE,3 fast_counter = A
 C $8AB1,1 Return
 @ $8AB2 label=hpc_start_phase_3
@@ -3207,7 +3214,7 @@ C $8AB2,5 perp_caught_phase = 3
 C $8AB7,4 Self modify the 'LD A,x' at #R$8ABE below to load 4
 C $8ABB,3 Exit via fill_attributes
 @ $8ABE label=hpc_phase3
-C $8ABE,2 Self modified by #R$8AB8 above
+C $8ABE,2 Self modified by #R$8AB8 above  -- meaning?
 C $8AC0,1 A--
 C $8AC1,3 Self modify 'LD A' at #R$8ABE to load A
 C $8AC4,1 Return if A != 0
@@ -7911,12 +7918,12 @@ R $B58E I:A Turn speed. 0/1/2 => Straight/Turning/Turning hard.
 R $B58E I:B 0/3 to make the car wobble when off-road.
 @ $B58E label=draw_car
 C $B58E,6 If #REGa is zero (straight) then flip_car = 0
-C $B594,1 C = A
-C $B595,1 Preserve #REGc (#REGa from input)
+@ $B594 label=dc_1
+C $B594,2 Preserve #REGc (#REGa from input)
 C $B596,9 Point #REGhl at hero_car_shadow then add (#REGa * 4)
 C $B59F,3 D = $78 (vertical postion in rows), E = $60 (horizontal position in pixels)
 C $B5A2,2 C = 7
-C $B5A4,3 Call draw_car_b627 to draw shadow
+C $B5A4,3 Call dc_draw to draw shadow
 C $B5A7,1 Restore #REGc
 N $B5A8 117 is the car's normal vertical position. Smaller values make it higher.
 C $B5A8,4 117 - <self modified value $B5AB>  == car jump offset
@@ -7924,12 +7931,13 @@ C $B5AC,1 D = A
 N $B5AD Build an index into hero_car_refs[].
 C $B5AD,4 A = C (0/1/2, turn value from input) + B (counter value from input) + <self modified value $B5B0 == up/down facing (0/3/6 => level,up,down)>
 C $B5B1,6 If A >= 9 A -= 9  -- clamping
+@ $B5B7 label=dc_2
 C $B5B7,13 Point #REGhl at hero_car_refs[A] (rows/entries are 20 bytes wide)
 C $B5C5,4 A = car_y + *HL
 C $B5C9,2 A=0-A
 C $B5CB,1 A+=D  (aka A=D-A)    D here is (117 - car jump offset) from earlier
 C $B5CC,1 E=A
-C $B5CD,2 A = A & $0F
+C $B5CD,2 A &= $0F
 C $B5CF,2 A += $F0
 C $B5D1,1 D=A
 C $B5D2,1 A=E
@@ -7948,16 +7956,17 @@ C $B5E5,2 D=0
 C $B5EA,6 If flip_car jump to draw_car_perhaps_flipped
 C $B5F1,3 Call plot_sprite -- #REGa is (how many pixels to plot - 1) / 8
 C $B5F4,2 Jump to draw_car_cont
-@ $B5F6 label=draw_car_perhaps_flipped
+@ $B5F6 label=dc_perhaps_flipped
 C $B5F7,1 L--
 C $B5F8,3 Call plot_sprite_flipped
-@ $B5FB label=draw_car_cont
+@ $B5FB label=dc_cont
 C $B5FD,1 HL++
 C $B5FE,7 E=$68 C=$05 (width) CALL #R$B627  draws the top (windscreen)
 C $B605,7 E=$68 C=$05 (width) CALL #R$B627  draws the bottom (wheels)
 C $B60C,6 Check flip_car flag
 C $B612,4 unflipped
 C $B616,2 flipped
+@ $B618 label=dc_3
 C $B618,3 Draws left side of car
 C $B61B,2 C = 1
 C $B61D,3 A = flip_car
@@ -7965,11 +7974,11 @@ C $B620,1 Set flags
 C $B621,2 E = $60
 C $B623,2 Jump if flipped
 C $B625,2 E = $90
-N $B627 C = byte width? D = Y (vertical postion - in rows), E = X (horizontal position in pixels) HL -> address of graphic def (byte, n.rows, data address)
-@ $B627 label=draw_car_b627
-C $B627,1 A = D
+N $B627 Drawing subroutine. C = byte width?, D = Y (vertical postion in rows), E = X (horizontal position in pixels), HL -> address of graphic def (byte, n.rows, data address)
+@ $B627 label=dc_draw
+C $B627,1 A = D  -- vertical position in rows
 C $B628,1 Preserve X,Y
-C $B629,3 D = A - *HL++  -- this byte often zero
+C $B629,3 D = A - *HL++  -- this byte seems to be a vertical shift value
 C $B62C,2 B = *HL++  -- num rows
 C $B62E,5 HL = wordat(HL) while preserving (HL+1)
 C $B633,1 Preserve byte width
@@ -7980,6 +7989,7 @@ C $B639,1 B = flip_car
 C $B63A,1 E = C
 C $B63B,1 C--
 C $B63C,4 If A == 0 C = A
+@ $B640 label=dc_5
 C $B640,1 Unbank
 C $B641,3 Draws all masked parts of the car
 C $B644,1 Restore ptr
