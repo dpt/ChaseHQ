@@ -4169,7 +4169,7 @@ C $93BB,5 L = (A & $70) * 2 + B
 C $93C0,2 A = <self modified>
 C $93C2,1 Set flags
 C $93C6,1 A--
-C $93D3,3 Exit via draw_cherry_b701 if carry
+C $93D3,3 Exit via draw_part_b701 if carry
 C $93D6,3 Exit via plot_sprite
 C $93D9,3 Exit via plot_masked_sprite_flipped
 C $93DC,3 Exit via plot_sprite_flipped
@@ -7974,21 +7974,21 @@ C $B620,1 Set flags
 C $B621,2 E = $60
 C $B623,2 Jump if flipped
 C $B625,2 E = $90
-N $B627 Drawing subroutine. C = byte width?, D = Y (vertical postion in rows), E = X (horizontal position in pixels), HL -> address of graphic def (byte, n.rows, data address)
+N $B627 Drawing subroutine. C = byte width?, D = Y (vertical postion in rows), E = X (horizontal position in pixels), HL -> address of graphic def (v.shift, n.rows, data address)
 @ $B627 label=dc_draw
 C $B627,1 A = D  -- vertical position in rows
 C $B628,1 Preserve X,Y
 C $B629,3 D = A - *HL++  -- this byte seems to be a vertical shift value
 C $B62C,2 B = *HL++  -- num rows
-C $B62E,5 HL = wordat(HL) while preserving (HL+1)
+C $B62E,5 HL = wordat(HL) while preserving (HL+1)  -- load data address
 C $B633,1 Preserve byte width
+N $B634 D = v.shift, B = n.rows, HL -> data
 C $B634,1 Bank
 C $B635,1 Restore byte width
-C $B636,3 A = flip_car
-C $B639,1 B = flip_car
-C $B63A,1 E = C
-C $B63B,1 C--
-C $B63C,4 If A == 0 C = A
+C $B636,4 Load flip_car into #REGb
+C $B63A,1 E = C  -- byte width
+C $B63B,1 C--  -- reduce byte width
+C $B63C,4 If A == 0 C = A  -- check flip_car flag, if clear then C = 0 else C = bytewidth-1
 @ $B640 label=dc_5
 C $B640,1 Unbank
 C $B641,3 Draws all masked parts of the car
@@ -8025,7 +8025,7 @@ C $B674,1 A = D
 C $B675,3 E = A + 127 -- horizontal position
 C $B678,2 D = 119  -- vertical position
 C $B67A,2 Exit via #R$B6D6
-c $B67C Routine at B67C
+c $B67C Likely NOT just drawing cherries
 D $B67C Used by the routine at #R$B318.
 R $B67C I:A ?
 R $B67C I:B ? (gets compared to turn_speed) e.g. 1
@@ -8047,8 +8047,10 @@ C $B696,1 A += C
 N $B699 This entry point is used by the routine at #R$B318.
 @ $B699 label=draw_cherry_b699
 C $B69A,3 BC = 0   -- not self modified
-N $B69E This entry point is used by the routine at #R$B318.
-@ $B69E label=draw_cherry_b69e
+E $B67C FALL THROUGH
+c $B69E This entry point is used by the routine at #R$B318.
+D $B69E Used by the routine at #R$B318.
+@ $B69E label=draw_crash
 C $B69E,2 E = $80
 C $B6A0,6 BC = A * 3
 C $B6A6,4 HL = #R$CFB2 + BC  -> unknown_cfb2
@@ -8067,11 +8069,13 @@ C $B6CB,3 A = *$B5B0 -- Self modified value in draw_car
 C $B6CE,2 A >>= 1
 C $B6D0,4 Jump to #R$B6D6 if zero
 C $B6D4,2 D += A - 2
-N $B6D6 This entry point is used by the routines at #R$B58E and #R$B648.
-@ $B6D6 label=draw_cherry_b6d6
-C $B6D6,7 D -= car_y
+E $B69E FALL THROUGH
+c $B6D6 This entry point is used by the routines at #R$B58E and #R$B648.
+D $B6D6 I:D v.shift I:B n.rows I:HL data I:E byte width I:C = 0/bytewidth-1
+@ $B6D6 label=draw_part
+C $B6D6,7 D -= car_y  -- add additional car_y to v.shift
 N $B6DD This entry point is used by the routines at #R$8F5F and #R$B549.
-@ $B6DD label=draw_cherry_b6dd
+@ $B6DD label=draw_part_b6dd
 C $B6DD,1 A = E
 C $B6DE,5 Divide by 8
 C $B6E3,1 E = A
@@ -8085,13 +8089,14 @@ C $B6F9,2 B >>= 1
 C $B6FB,1 Is this EX'ing AF to get the carry flag?
 C $B6FC,1 HL += BC
 N $B701 This entry point is used by the routine at #R$92E1.
-@ $B701 label=draw_cherry_b701
+@ $B701 label=draw_part_b701
 C $B701,4 IX = plot_masked_sprite_core_thingy
 C $B705,3 A = ~A + 9 == (8 - A)
 C $B708,4 This multiplies by six - the length of each load-mask-store step in the plotter core.
 C $B70C,5 Add that to #REGix
 C $B711,2 B = 15 -- Set loop counter for 15 iterations?
 C $B714,2 D = 0 -- fall through into plot_masked_sprite
+E $B6D6 FALL THROUGH
 c $B716 Masked sprite plotter
 D $B716 This plots a lot of the game's masked graphics.
 D $B716 The stack points to pairs of bitmap and mask bytes and HL must point to the screen buffer. Uses AND-OR type masking. Proceeds left-right. Doesn't flip the bytes instead use plot_masked_sprite_flipped below for that.
@@ -10928,8 +10933,15 @@ W $CFA6,4,2
 W $CFAA,2,2 -> Turbo smoke plume data frame 3
 W $CFAC,4,2
 W $CFB0,2,2 -> Turbo smoke plume data frame 4
+N $CFB2 TBD groups of 3 bytes ref'd by #R$B6A6. 3rd byte is byte index into car_adornments.
 @ $CFB2 label=unknown_cfb2
-B $CFB2,117,3 TBD groups of 3 bytes ref'd by #R$B6A6. 3rd byte is index into car_adornments.
+B $CFB2,3,3 ?cherry
+B $CFB5,3,3 ?cherry flash
+B $CFB8,3,3 ?cherry
+B $CFBB,3,3 ?cherry flash
+B $CFBE,3,3 ?cherry
+B $CFC1,3,3 ?cherry flash
+B $CFC4,99,3
 @ $D027 label=car_adornments
 B $D027,1,1 7 rows high
 B $D028,1,1 1 byte wide
