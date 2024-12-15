@@ -7752,6 +7752,7 @@ C $B3F5,1 Bank/unbank
 C $B3F6,6 B = counter_A & 1  -- animation counter
 C $B3FD,1 C = A
 C $B3FF,1 A = C
+C $B400,3 Draw crash
 C $B403,4 off_road = 0
 C $B407,3 Call ahc_check_hand_flag
 N $B40A Make the car bounce up and down when it goes off-road.
@@ -7766,7 +7767,8 @@ N $B427 Draw the cherry light.
 C $B427,1 A = 0
 C $B428,3 BC = $0102  -- size?
 C $B42B,3 Call draw_cherry
-N $B42E Draw smoke?
+N $B42E Check to see if smoke needs drawing.
+@ $B42E label=ahc_draw_smoke
 C $B42E,4 B = counter_A (0/1/2/3)
 C $B432,7 Jump if cornering
 C $B439,3 A = counter_C  -- half rate counter 0/1/2/3
@@ -7774,13 +7776,17 @@ C $B43C,1 B = A
 C $B43D,1 HL++
 C $B43E,2 A = *HL++
 C $B440,1 A |= *HL
-C $B443,3 A = off_road
+C $B443,3 Load off_road
 C $B446,3 Return if not fully off-road
-C $B449,1 A = 0
-C $B44B,1 A = B
-C $B44D,3 Call draw_smoke  (seems to be the right side)
-C $B450,2 A = $01
-C $B454,3 Exit via draw_smoke
+N $B449 Draw the smoke.
+@ $B449 label=ahc_do_draw_smoke
+C $B449,2 A' = 0
+C $B44B,1 A = B  -- smoke anim index
+C $B44C,1 preserve
+C $B44D,3 Call draw_smoke - for the right hand side
+C $B450,3 A' = 1
+C $B453,1 restore smoke anim index
+C $B454,3 Exit via draw_smoke - for the left hand side
 @ $B457 label=ahc_check_hand_flag
 C $B457,5 Return if hand_flag is zero
 N $B45C Start the animation.
@@ -7791,7 +7797,8 @@ N $B45F Show the "stop" hand.
 C $B45F,1 Bank
 C $B460,3 BC = A
 C $B463,1 Unbank
-C $B464,5 Is turn_speed 2?
+N $B464 Avoid the hand animation if turning hard?
+C $B464,5 Is turn_speed 2? (turn hard)
 C $B469,2 A = 36
 C $B46B,3 Exit via #R$B69E if turn_speed != 2
 N $B46E Otherwise turn_speed is 2 (turn hard).
@@ -7998,9 +8005,10 @@ C $B646,1 Restore X,Y
 C $B647,1 Return
 c $B648 Draw the hero car's smoke
 D $B648 Used by the routine at #R$B318.
+R $B648 I:A Index 0..3 of car smoke animation
 @ $B648 label=draw_smoke
-C $B648,11 #REGhl = &hero_car_smoke[A]  A is 0..3
-C $B653,3 A = *$B064 -- jump counter
+C $B648,11 #REGhl = &hero_car_smoke[#REGa]
+C $B653,3 A = *$B064 -- jump counter in move_hero_car
 C $B656,1 Set flags
 C $B657,1 Return if non-zero -- don't draw smoke if jumping
 C $B658,2 C = *HL++  -- these must be size and position
@@ -8025,24 +8033,24 @@ C $B674,1 A = D
 C $B675,3 E = A + 127 -- horizontal position
 C $B678,2 D = 119  -- vertical position
 C $B67A,2 Exit via #R$B6D6
-c $B67C Likely NOT just drawing cherries
+c $B67C Likely NOT just drawing the cherry
 D $B67C Used by the routine at #R$B318.
-R $B67C I:A ?
+R $B67C I:A ? (seems to always be zero)
 R $B67C I:B ? (gets compared to turn_speed) e.g. 1
 R $B67C I:C ? (used wrt flipping)           e.g. 2
 @ $B67C label=draw_cherry
-C $B67C,7 A += counter_C & 1  -- half rate counter 0/1/2/3
+C $B67C,7 Take the bottom bit of the half rate counter_C (counts 0/1/2/3 then repeats) and add it to #REGa
 C $B683,1 Bank A
-C $B684,6 Jump to #R$B698 if turn_speed < B
-C $B68A,3 A = flip_car
+C $B684,6 Jump to #R$B698 if turn_speed < #REGb
+C $B68A,3 Load flip_car
 C $B68D,1 Set flags
 C $B68E,2 A = 0
-C $B690,2 Jump to sub_b67c_no_flip if flip is zero
+C $B690,2 Jump to draw_cherry_no_flip if flip_car is zero
 C $B692,1 A += C
 @ $B693 label=draw_cherry_no_flip
 C $B693,1 A += C
 C $B694,1 C = A
-C $B696,1 A += C
+C $B695,3 A' += C
 @ $B698 label=draw_cherry_b698
 N $B699 This entry point is used by the routine at #R$B318.
 @ $B699 label=draw_cherry_b699
@@ -8050,28 +8058,30 @@ C $B69A,3 BC = 0   -- not self modified
 E $B67C FALL THROUGH
 c $B69E This entry point is used by the routine at #R$B318.
 D $B69E Used by the routine at #R$B318.
+R $B69E I:A Index of thing to draw - indexes unknown_cfb2
 @ $B69E label=draw_crash
-C $B69E,2 E = $80
-C $B6A0,6 BC = A * 3
-C $B6A6,4 HL = #R$CFB2 + BC  -> unknown_cfb2
-C $B6AA,5 D = *HL++ + $79
-C $B6AF,4 E = *HL++ + E
-C $B6B3,1 C = *HL  -- B is still zero
-C $B6B4,4 HL = &car_adornments + BC
-C $B6B8,2 B = *HL++  -- height
-C $B6BA,2 C = *HL++  -- byte width
-C $B6BC,4 HL = wordat(HL); HL++   -- masked bitmap data
-C $B6C0,1 A = C
-C $B6C2,1 E = A  -- bank byte width in E'
+C $B69E,2 E = 128  -- horz position/offset?
+C $B6A0,6 Turn index into offset into unknown_cfb2 (BC = A * 3)
+C $B6A6,4 HL = #R$CFB2 + BC  -> unknown_cfb2[index]  -- Point #REGhl at element
+C $B6AA,5 D = *HL++ + 121  -- presumably the vertical position/offset
+C $B6AF,4 E += *HL++ -- add to horz position/offset
+C $B6B3,1 Load offset into car_adornments
+C $B6B4,4 Point #REGhl at (car_adornments + BC)
+C $B6B8,2 Read row height & advance
+C $B6BA,2 Read byte width & advance
+C $B6BC,4 Read masked bitmap data pointer & advance
+C $B6C0,1 Get byte width in #REGa
+C $B6C1,3 Bank byte width in #REGe'
 C $B6C4,3 Read car jump offset from 'SUB x' @ #R$B5AA
-C $B6C7,4 D -= A
-C $B6CB,3 A = *$B5B0 -- Self modified value in draw_car
-C $B6CE,2 A >>= 1
-C $B6D0,4 Jump to #R$B6D6 if zero
-C $B6D4,2 D += A - 2
+C $B6C7,4 D -= A  -- vert pos/offset - car jump offset
+C $B6CB,3 Read self modified value in draw_car that sets the car's pitch (0/3/6)
+C $B6CE,2 0 -> 0, 3 -> 1, 6 -> 3
+C $B6D0,2 Jump to #R$B6D6 if zero
+N $B6D2 Otherwise pitch was 3/6.
+C $B6D2,4 D += A - 2  -- make v.shift -1/1
 E $B69E FALL THROUGH
 c $B6D6 This entry point is used by the routines at #R$B58E and #R$B648.
-D $B6D6 I:D v.shift I:B n.rows I:HL data I:E byte width I:C = 0/bytewidth-1
+D $B6D6 I:D v.shift (always -1/0/1 ?) I:B n.rows I:HL data I:E byte width I:C = 0/bytewidth-1
 @ $B6D6 label=draw_part
 C $B6D6,7 D -= car_y  -- add additional car_y to v.shift
 N $B6DD This entry point is used by the routines at #R$8F5F and #R$B549.
@@ -10933,7 +10943,7 @@ W $CFA6,4,2
 W $CFAA,2,2 -> Turbo smoke plume data frame 3
 W $CFAC,4,2
 W $CFB0,2,2 -> Turbo smoke plume data frame 4
-N $CFB2 TBD groups of 3 bytes ref'd by #R$B6A6. 3rd byte is byte index into car_adornments.
+N $CFB2 TBD groups of 3 bytes ref'd by #R$B6A6. 3rd byte is byte offset into car_adornments.
 @ $CFB2 label=unknown_cfb2
 B $CFB2,3,3 ?cherry
 B $CFB5,3,3 ?cherry flash
@@ -10942,13 +10952,14 @@ B $CFBB,3,3 ?cherry flash
 B $CFBE,3,3 ?cherry
 B $CFC1,3,3 ?cherry flash
 B $CFC4,99,3
+N $D027 Entries of 4 bytes.
 @ $D027 label=car_adornments
 B $D027,1,1 7 rows high
 B $D028,1,1 1 byte wide
-W $D029,2,2 -> Cherry light
+W $D029,2,2 -> Cherry light (8x7 masked data)
 B $D02B,1,1 14 rows high
 B $D02C,1,1 3 bytes wide
-W $D02D,2,2 -> Flashing cherry light
+W $D02D,2,2 -> Flashing cherry light (24x14 masked data)
 B $D02F,1,1 20 rows high
 B $D030,1,1 3 bytes wide
 W $D031,2,2 -> Crash/spark data
