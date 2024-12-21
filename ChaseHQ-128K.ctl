@@ -3625,12 +3625,12 @@ C $8EBD,1 Save #REGe
 C $8EBE,8 Transfer four bytes (#REGde, #REGhl and #REGbc are decremented by 4)
 C $8EC6,1 Restore #REGe
 C $8EC7,3 If #REGbc becomes zero then proceed to dm_plot_attrs
-N $8ECA Move to next scanline
+N $8ECA Move to next scanline.
 C $8ECA,1 Save for checking in a moment
 C $8ECB,1 Move to next scanline (visually upwards)
 C $8ECC,2 Would it have rolled over into the top nibble?
 C $8ECE,3 No - continue
-N $8ED1 It rolled over
+N $8ED1 It rolled over.
 C $8ED1,4 Put back the bit stolen by rollover
 C $8ED5,4 Move to next chunk of 16 scanlines
 C $8ED9,3 Continue if it didn't roll over
@@ -3661,11 +3661,12 @@ C $8F0A,6 B = ~(A * 3) + 63 = amount of solid rows to draw
 C $8F10,3 Call draw_smash_bar_solid_bit
 @ $8F13 label=draw_smash_bar_segment
 C $8F13,2 Set 8 pixels to "X......X"
+N $8F15 Move to next scanline.
 C $8F15,1 Save for checking in a moment
 C $8F16,1 Move to next scanline
 C $8F17,1 Would it have rolled over into the top nibble?
 C $8F18,3 No - continue
-N $8F1B It rolled over
+N $8F1B It rolled over.
 C $8F1B,3 Put back the bit stolen by rollover
 C $8F1E,4 Move to next chunk of 16 scanlines
 C $8F22,3 Continue if it didn't roll over
@@ -3688,12 +3689,12 @@ C $8F42,4 Loop while iterations remain
 C $8F46,1 Return
 @ $8F47 label=draw_smash_bar_solid_bit
 C $8F47,2 Set 8 pixels to solid black
-N $8F49 Move to next scanline
+N $8F49 Move to next scanline.
 C $8F49,1 Save for checking in a moment
 C $8F4A,1 Move to next scanline (visually upwards)
 C $8F4B,1 Would it have rolled over into the top nibble?
 C $8F4C,3 No - continue
-N $8F4F It rolled over
+N $8F4F It rolled over.
 C $8F4F,3 Put back the bit stolen by rollover
 C $8F52,4 Move to next chunk of 16 scanlines
 C $8F56,3 Continue if it didn't roll over
@@ -3883,7 +3884,7 @@ C $9153,1 Save for checking in a moment
 C $9154,1 Move to next scanline (visually upwards)
 C $9155,2 Would it have rolled over into the top nibble?
 C $9157,3 No - continue
-N $915A It rolled over
+N $915A It rolled over.
 C $915A,4 Put back the bit stolen by rollover
 C $915E,4 Move to next chunk of 16 scanlines
 C $9162,3 Continue if it didn't roll over
@@ -4169,7 +4170,7 @@ C $93BB,5 L = (A & $70) * 2 + B
 C $93C0,2 A = <self modified>
 C $93C2,1 Set flags
 C $93C6,1 A--
-C $93D3,3 Exit via draw_part_b701 if carry
+C $93D3,3 Exit via draw_part_entry3 if carry
 C $93D6,3 Exit via plot_sprite
 C $93D9,3 Exit via plot_masked_sprite_flipped
 C $93DC,3 Exit via plot_sprite_flipped
@@ -4202,8 +4203,8 @@ C $943D,9 IX += A * 6
 C $9446,8 *$946D = *$9413  -- Self modify LD HL at $946C to load ?
 C $944E,6 *$9470 = *$9416
 C $9454,6 *$9460 = *$9405
-C $945A,2 B = $0F
-C $945D,2 D = $00
+C $945A,3 B' = $0F  -- Set mask used by scanline calc in plot_masked_sprite
+C $945D,2 D = $00  -- Clear top byte of source data stride
 C $945F,3 A = 0 - B
 C $9466,3 *$9460 = A
 C $9469,3 Call plot_masked_sprite
@@ -4258,7 +4259,7 @@ C $94C2,1 Calculate address of next bitmap scanline
 @ $94C3 label=ps_even_body
 C $94C3,1 Put it in #REGsp (so we can use POP for speed)
 C $94C4,2 Unbank
-C $94C6,2 Jump table
+C $94C6,2 Jump into table
 @ $94C8 label=ps_even_jumptable
 C $94C8,5 Transfer two bitmap bytes (16 pixels) from the "stack" to screen buffer
 C $94CD,5 Transfer another 16 pixels
@@ -4295,7 +4296,7 @@ C $9514,1 Calculate address of next bitmap scanline
 @ $9515 label=ps_odd_body
 C $9515,1 Put it in #REGsp (so we can use POP for speed)
 C $9516,2 Unbank
-C $9518,2 Jump table
+C $9518,2 Jump into table
 @ $951A label=ps_odd_jumptable
 C $951A,5 Transfer two bitmap bytes (16 pixels) from the "stack" to screen buffer
 C $951F,5 Transfer another 16 pixels
@@ -4341,7 +4342,7 @@ C $956E,1 Calculate address of next bitmap scanline
 C $956F,1 Put it in #REGsp (so we can use POP for speed)
 C $9570,1 Unbank
 C $9571,1 [check elsewhere too]
-C $9573,2 Jump table
+C $9573,2 Jump into table
 @ $9575 label=psf_even_jumptable
 C $9575,1 Transfer two bitmap bytes (16 pixels) from the "stack" to screen buffer with flipping
 C $9576,1 Set flip table address
@@ -4383,7 +4384,7 @@ C $95D7,1 Calculate address of next bitmap scanline
 @ $95D8 label=psf_odd_body
 C $95D8,1 Put it in #REGsp (so we can use POP for speed)
 C $95D9,1 Unbank
-C $95DC,2 Jump table
+C $95DC,2 Jump into table
 @ $95DE label=psf_odd_jumptable
 C $95DE,1 Transfer two bitmap bytes (16 pixels) from the "stack" to screen buffer with flipping
 C $95DF,1 Set flip table address
@@ -5430,7 +5431,7 @@ C $A041,2 *DE = *HL
 C $A043,1 D++ -- next row
 C $A046,1 E--
 C $A047,1 D++
-C $A048,42 Repeat six times
+C $A048,42 Repeat six more times
 C $A072,1 A = 0
 C $A073,1 *DE = A
 @ $A074 label=dc_a074
@@ -8085,12 +8086,13 @@ D $B6D6 I:D v.shift (always -1/0/1 ?) I:B n.rows I:HL data I:E byte width I:C = 
 @ $B6D6 label=draw_part
 C $B6D6,7 D -= car_y  -- add additional car_y to v.shift
 N $B6DD This entry point is used by the routines at #R$8F5F and #R$B549.
-@ $B6DD label=draw_part_b6dd
+@ $B6DD label=draw_part_entry2
 C $B6DD,1 A = E
 C $B6DE,5 Divide by 8
 C $B6E3,1 E = A
 C $B6E4,1 A = D
 C $B6E6,6 D = (D & $0F) + $F0
+C $B6EC,1 Preserve A & save carry flag?
 C $B6ED,5 E += (A & $70) * 2
 C $B6F3,1 E = C  -- byte width
 C $B6F4,2 E <<= 1
@@ -8099,41 +8101,64 @@ C $B6F9,2 B >>= 1
 C $B6FB,1 Is this EX'ing AF to get the carry flag?
 C $B6FC,1 HL += BC
 N $B701 This entry point is used by the routine at #R$92E1.
-@ $B701 label=draw_part_b701
-C $B701,4 IX = plot_masked_sprite_core_thingy
+@ $B701 label=draw_part_entry3
+C $B701,4 Point #REGix at pms_jumptable
 C $B705,3 A = ~A + 9 == (8 - A)
 C $B708,4 This multiplies by six - the length of each load-mask-store step in the plotter core.
 C $B70C,5 Add that to #REGix
-C $B711,2 B = 15 -- Set loop counter for 15 iterations?
-C $B714,2 D = 0 -- fall through into plot_masked_sprite
+C $B711,2 B' = 15 -- Set mask used by scanline calculation in plot_masked_sprite
+C $B714,2 D = 0 -- Clear top byte of source data stride; fall through into plot_masked_sprite
 E $B6D6 FALL THROUGH
 c $B716 Masked sprite plotter
-D $B716 This plots a lot of the game's masked graphics.
-D $B716 The stack points to pairs of bitmap and mask bytes and HL must point to the screen buffer. Uses AND-OR type masking. Proceeds left-right. Doesn't flip the bytes instead use plot_masked_sprite_flipped below for that.
-R $B716 I:B Rows
-R $B716 I:DE Stride (e.g. 10 for 40px wide)
-R $B716 I:HL Address of data to plot
+D $B716 This plots the game's graphics using AND-OR masking.
+D $B716 This uses the "stack trick": internally the stack is pointed at pairs of bitmap and mask bytes and #REGhl points into the screen buffer. It proceeds left-right.
+D $B716 This routine doesn't flip sprites; instead use #R$B76C (below) for that.
+R $B716 I:B Number of source data rows (loop counter)
+R $B716 I:DE Source data stride in byte pairs (e.g. 10 for 40px wide)
+R $B716 I:HL Source data (bitmap, mask byte pairs)
+R $B716 I:B' 15 (mask used at #R$B75B)
+R $B716 I:HL' Destination address
 @ $B716 label=plot_masked_sprite
-@ $B71C label=plot_masked_sprite_loop
-C $B716,9 Save #REGsp for restoration on exit
-C $B71F,5 Restore original #REGsp (self modified)
+C $B716,4 Save #REGsp to be restored on exit
+C $B71A,2 Start
+@ $B71C label=pms_end_row
+C $B71C,1 Unbank
+C $B71D,2 Decrement rows, jump if +ve
+C $B71F,3 Restore original #REGsp (self modified)
+C $B722,1 Return
+@ $B723 label=pms_start_row
+C $B723,1 Advance to start of next row
 N $B724 This entry point is used by the routine at #R$B7EF.
-@ $B724 label=plot_masked_sprite_entry
-C $B724,1 Point #REGhl at the graphic data
-@ $B729 label=plot_masked_sprite_core_thingy
+@ $B724 label=pms_entry
+C $B724,1 Point #REGsp at the source data
+C $B725,1 Bank
+C $B726,1 Preserve start address
+C $B727,2 Jump into table
+@ $B729 label=pms_jumptable
 C $B729,1 Load a bitmap and mask pair (#REGd,#REGe)
 C $B72A,2 Load the screen pixels and AND with mask
 C $B72C,2 OR in new pixels and store back to screen
 C $B72E,1 Move to next screen pixel
-C $B72F,41 <Repeat 8 times>
-C $B758,20 Handle end of row. This must be adjusting the screen pointer.
+C $B72F,41 Repeat 7 more times
+N $B758 Handle end of row.
+C $B758,1 Restore start address
+N $B759 Move to next scanline.
+C $B759,1 Save for checking in a moment
+C $B75A,1 Move to next scanline
+C $B75B,1 Would it have rolled over into the top nibble? (mask #REGb' is 15 here)
+C $B75C,3 No - continue
+N $B75F It rolled over.
+C $B75F,4 Move to next chunk of 16 scanlines
+C $B763,2 Continue if it didn't roll over  (check: if borrowed then don't need to put the bit back?)
+C $B765,4 Put back the bit stolen by rollover
+C $B769,3 Loop
 c $B76C Masked sprite plotter which flips
 D $B76C Used by the routine at #R$92E1.
 @ $B76C label=plot_masked_sprite_flipped
 C $B76C,3 #REGde = #REGa
 C $B76F,1 #REGhl += #REGde
 N $B770 This entry point is used by the routine at #R$B67C.
-C $B771,4 Save #REGsp for restoration on exit
+C $B771,4 Save #REGsp to be restored on exit
 C $B775,4 Point #REGix at jump table
 C $B779,3 Subtract 8
 C $B77C,3 Multiply by 8  -- length of jump table sequences
@@ -8146,7 +8171,7 @@ C $B794,1 Return
 C $B795,1 Calculate address of next bitmap scanline
 C $B796,1 Put it in #REGsp (so we can use POP for speed)
 C $B797,1 Unbank
-C $B79A,2 Jump
+C $B79A,2 Jump into table
 @ $B79C label=pmsf_jumptable
 C $B79C,1 Load a bitmap and mask pair (B,C)
 C $B79D,1 Set flip table index (assuming table is aligned)
@@ -8159,31 +8184,42 @@ C $B7A3,1 Move to next screen pixel (downwards in memory)
 C $B7A4,55 <Repeat 9 times>
 C $B7E6,2 Loop
 C $B7EC,3 Loop
-c $B7EF Routine at B7EF
+c $B7EF Masked sprite plotter variant TBD
 D $B7EF Used by the routine at #R$92E1.
-@ $B7EF label=sub_b7ef
-C $B7EF,4 self modify #R$B71F - exit of plot_masked_sprite
-C $B7F3,4 IX = &plot_masked_sprite_core_thingy (jump table)
-C $B7F7,3 A = 8 - A
-C $B7FA,9 IX += A * 6
-C $B803,2 B = $0F
+R $B7EF I:BC'
+R $B7EF I:HL'
+R $B7EF I:E' this value is multiplied
+@ $B7EF label=plot_masked_sprite_variant
+C $B7EF,4 Self modify #R$B71F - exit of plot_masked_sprite to be #REGsp to be restored on exit
+C $B7F3,4 Point #REGix at pms_jumptable
+C $B7F7,3 A = 8 - A  -- jump table index
+C $B7FA,9 IX += A * 6  -- jump table entry size
+C $B803,3 B' = $0F
 C $B806,2 D = 0
-C $B80A,1 H = D
-C $B80B,1 L = D
+C $B808,1 pushing banked-on-entry BC
+C $B809,1 pushing banked-on-entry HL
+C $B80A,2 Zero HL
+N $B80C Multiplier
 C $B80C,1 A = B
-C $B80D,2 B = 5
-C $B80F,1 A--
-@ $B812 label=j_b812
-C $B813,2 JR NC,j_b816
+C $B80D,2 5 iterations
+C $B80F,3 A = (A - 1) * 4
+@ $B812 label=pmsv_loop
+C $B812,1 Test top bit
+C $B813,2 Jump if not set
 C $B815,1 HL += DE
-@ $B816 label=j_b816
-C $B816,1 HL += HL
-C $B817,2 DJNZ j_b812
+@ $B816 label=pmsv_2
+C $B816,1 Double HL
+C $B817,2 Loop until iterations is zero
+C $B819,1 Test top bit
+C $B81A,2 Jump if not set
 C $B81C,1 HL += DE
-C $B81E,1 HL += BC
-C $B820,1 D--
+@ $B81D label=pmsv_3
+C $B81D,2 pop and add banked-on-entry BC
+C $B81F,1 pop banked-on-entry HL
+C $B820,1 D--  -- always setting D to 255?
 C $B821,4 E = -E
-C $B825,3 Exit via plot_masked_sprite_entry
+N $B825 HL -> graphic data here
+C $B825,3 Exit via pms_entry
 b $B828 Horizon image related
 D $B828 breaks/crashes road rendering if messed with
 @ $B828 label=horizon_table
