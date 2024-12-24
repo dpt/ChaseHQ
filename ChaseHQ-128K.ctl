@@ -3663,7 +3663,7 @@ C $8F10,3 Call draw_smash_bar_solid_bit
 C $8F13,2 Set 8 pixels to "X......X"
 N $8F15 Move to next scanline.
 C $8F15,1 Save for checking in a moment
-C $8F16,1 Move to next scanline
+C $8F16,1 Move to next scanline (visually upwards)
 C $8F17,1 Would it have rolled over into the top nibble?
 C $8F18,3 No - continue
 N $8F1B It rolled over.
@@ -3674,7 +3674,7 @@ C $8F25,3 Otherwise move to the next chunk of 128 scanlines (would put us outsid
 @ $8F28 label=draw_smash_bar_segment2
 C $8F28,2 Set 8 pixels to "X......X"
 C $8F2A,1 Save for checking in a moment
-C $8F2B,1 Move to next scanline
+C $8F2B,1 Move to next scanline (visually upwards)
 C $8F2C,1 Would it have rolled over into the top nibble?
 N $8F2D It rolled over
 C $8F2D,3 No - continue
@@ -3690,7 +3690,7 @@ C $8F46,1 Return
 @ $8F47 label=draw_smash_bar_solid_bit
 C $8F47,2 Set 8 pixels to solid black
 N $8F49 Move to next scanline.
-C $8F49,1 Save for checking in a moment
+C $8F49,1 Save for checking in a moment (visually upwards)
 C $8F4A,1 Move to next scanline (visually upwards)
 C $8F4B,1 Would it have rolled over into the top nibble?
 C $8F4C,3 No - continue
@@ -3879,7 +3879,7 @@ C $9115,2 Self modified
 C $9117,58 *HL++ = A  -- 28 times
 C $9151,1 *HL = A
 C $9152,1 L = C  -- restore
-N $9153 Move to next scanline
+N $9153 Move to next scanline.
 C $9153,1 Save for checking in a moment
 C $9154,1 Move to next scanline (visually upwards)
 C $9155,2 Would it have rolled over into the top nibble?
@@ -4265,15 +4265,19 @@ C $94C8,5 Transfer two bitmap bytes (16 pixels) from the "stack" to screen buffe
 C $94CD,5 Transfer another 16 pixels
 C $94D2,5 Transfer another 16 pixels
 C $94D7,4 Transfer another 16 pixels
-C $94DB,1 Restore #REGhl
-C $94DC,2 Save H in A then H--
-C $94DE,1 Extract low four bits of row address
-C $94DF,3 If zero we'll need to handle it below, otherwise just loop
-C $94E2,3 H += 16
-C $94E5,4 Decrement the high three bits of row address
-C $94E9,3 No carry, so finish scanline
-C $94EC,1 H -= 16
-C $94ED,5 Loop back to ps_even_loop
+C $94DB,1 Restore row start address
+N $94DC Move to next back buffer row (addresses have the form 0b1111BAAACCCXXXXX where 0bCCCBAAA is the row index)
+C $94DC,1 Preserve #REGa for checking in a moment
+C $94DD,1 Move to next row (visually upwards)
+C $94DE,1 Would it have rolled over into the top nibble? (#REGb is a mask, 15, here)
+C $94DF,3 No - continue
+N $94E2 The row field BAAA was zero but the decrement changed it to 1111 and borrowed from the 1111 field at the top of the address.
+C $94E2,3 Fix 1111 field (#REGc is 16 here)
+C $94E5,4 Move to next chunk of 16 rows
+C $94E9,3 No carry, so continue
+N $94EC Otherwise have to compensate 1111 field.
+C $94EC,3 Undo carry
+C $94EF,3 Continue
 @ $94F2 label=ps_odd
 C $94F2,1 Increment #REGa for upcoming calculation
 C $94F3,4 Point #REGix at start of plot instructions
@@ -4302,17 +4306,20 @@ C $951A,5 Transfer two bitmap bytes (16 pixels) from the "stack" to screen buffe
 C $951F,5 Transfer another 16 pixels
 C $9524,5 Transfer another 16 pixels
 C $9529,2 Transfer another 8 pixels
-C $952B,1 Restore #REGhl
-N $952C Decrement the screen address.
-C $952C,1 Save H in A
-C $952D,1 Decrement row address
-C $952E,1 Extract low four bits of row address
-C $952F,3 If zero we'll need to handle it below, otherwise just loop
-C $9532,3 H += 16
-C $9535,4 Decrement high three bits of the row address
-C $9539,3 No carry, so finish scanline
-C $953C,3 H -= 16
-C $953F,3 Loop back to ps_odd_loop
+N $952B Handle end of row.
+C $952B,1 Restore row start address
+N $952C Move to next back buffer row (addresses have the form 0b1111BAAACCCXXXXX where 0bCCCBAAA is the row index)
+C $952C,1 Preserve #REGa for checking in a moment
+C $952D,1 Move to next row (visually upwards)
+C $952E,1 Would it have rolled over into the top nibble? (#REGb is a mask, 15, here)
+C $952F,3 No - continue
+N $9532 The row field BAAA was zero but the decrement changed it to 1111 and borrowed from the 1111 field at the top of the address.
+C $9532,3 Fix 1111 field (#REGc is 16 here)
+C $9535,4 Move to next chunk of 16 rows
+C $9539,3 No carry, so continue
+N $953C Otherwise have to compensate 1111 field.
+C $953C,3 Undo carry
+C $953F,3 Continue
 c $9542 Sprite plotter for back buffer, up to 64px wide, 15px high, no mask, flips
 D $9542 Used by the routines at #R$92E1 and #R$B58E.
 R $9542 I:A Plot (#REGa + 1) * 8 pixels
@@ -8141,17 +8148,18 @@ C $B72C,2 OR in new pixels and store back to screen
 C $B72E,1 Move to next screen pixel
 C $B72F,41 Repeat 7 more times
 N $B758 Handle end of row.
-C $B758,1 Restore start address
-N $B759 Move to next scanline.
-C $B759,1 Save for checking in a moment
-C $B75A,1 Move to next scanline
-C $B75B,1 Would it have rolled over into the top nibble? (mask #REGb' is 15 here)
+C $B758,1 Restore row start address
+N $B759 Move to next back buffer row (addresses have the form 0b1111BAAACCCXXXXX where 0bCCCBAAA is the row index)
+C $B759,1 Preserve #REGa for checking in a moment
+C $B75A,1 Move to next row (visually upwards)
+C $B75B,1 Would it have rolled over into the top nibble? (#REGb is a mask, 15, here)
 C $B75C,3 No - continue
-N $B75F It rolled over.
-C $B75F,4 Move to next chunk of 16 scanlines
-C $B763,2 Continue if it didn't roll over  (check: if borrowed then don't need to put the bit back?)
-C $B765,4 Put back the bit stolen by rollover
-C $B769,3 Loop
+N $B75F The row field BAAA was zero but the decrement changed it to 1111 and borrowed from the 1111 field at the top of the address.
+C $B75F,4 Move to next chunk of 16 rows
+C $B763,2 Carry set if CCC field was zero - don't compensate 1111 field and continue
+N $B765 Otherwise have to compensate 1111 field.
+C $B765,4 Put back the bit stolen since BAAA field was zero
+C $B769,3 Continue
 c $B76C Masked sprite plotter which flips
 D $B76C Used by the routine at #R$92E1.
 @ $B76C label=plot_masked_sprite_flipped
