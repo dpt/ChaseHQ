@@ -1,8 +1,8 @@
 > $4000 ; ChaseHQ.skool
 > $4000 ;
-> $4000 ; This is a SkoolKit control file that disassembles the ZX Spectrum version
-> $4000 ; of Chase H.Q. by Ocean Software. A home computer version of the arcade game
-> $4000 ; by Taito Corporation.
+> $4000 ; This is a SkoolKit control file that disassembles the ZX Spectrum version of
+> $4000 ; "Chase H.Q." by Ocean Software. A home computer version of the arcade game by
+> $4000 ; Taito Corporation.
 > $4000 ;
 > $4000 ; This documents the 48K version of game when it is in a "pristine" as-loaded
 > $4000 ; state. It also covers a lot of the 128K code too, but doesn't yet describe any
@@ -26,7 +26,7 @@
 > $4000 ; ALTERNATIVE VERSIONS
 > $4000 ; --------------------
 > $4000 ; There's a demo version of Chase H.Q. on Sinclair User issue 94: Megatape 23.
-> $4000 ; https://worldofspectrum.org/archive/software/cover-tapes-and-electronic-magazines/sinclair-user-issue-94-megatape-23-sinclair-user.
+> $4000 ; <https://worldofspectrum.org/archive/software/cover-tapes-and-electronic-magazines/sinclair-user-issue-94-megatape-23-sinclair-user>.
 > $4000 ; It features a single stage, with the graphics from stage 1 of the real game
 > $4000 ; and what seems to be a custom map. There's no retry on fail and it's a tough
 > $4000 ; level.
@@ -42,12 +42,12 @@
 > $4000 ; -------------
 > $4000 ; "WEC Le Mans" (Imagine, 1989)
 > $4000 ; [Lamb/Mullins/Dunn/Harbison/Morrall]
-> $4000 ; - Shares a composer and an artist with ZX Chase HQ.
+> $4000 ; - Shares a composer and an artist with ZX Chase H.Q.
 > $4000 ; <https://www.mobygames.com/game/15167/wec-le-mans-24/>
 > $4000 ;
 > $4000 ; "Batman: The Movie" (Ocean Software, 1989)
 > $4000 ; [Lamb/O'Brien/Shortt/Drake/Harbison/Palmer/Hemphill/Dunn/Cannon]
-> $4000 ; - ZX Chase HQ's authors worked on the driving sequences for the Atari ST and
+> $4000 ; - ZX Chase H.Q.'s authors worked on the driving sequences for the Atari ST and
 > $4000 ;   Amiga versions of this game.
 > $4000 ; <https://www.mobygames.com/game/3848/batman/>
 > $4000 ;
