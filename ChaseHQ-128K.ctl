@@ -98,7 +98,7 @@
 > $4000 ;
 > $4000 ; $5B00..$5BFF is a pre-shifted version of the backdrop
 > $4000 ; $5C00..$76EF is the per-stage data:
-> $4000 ; - $5C00..$5CFF is the regular version of the backdrop
+> $4000 ; - $5C00..$5CEF is the regular version of the backdrop
 > $4000 ; $8DBB (word) is the address of the current transition animation
 > $4000 ; $E300..$E316 is a height table (22 bytes long)
 > $4000 ; $E336..      is TBD
@@ -152,17 +152,17 @@
 > $4000 ;
 > $4000 ; NOTES
 > $4000 ; -----
-> $4000 ; Strings are top bit set terminated ASCII.
+> $4000 ; Strings are ASCII with termination indicated by the top bit being set.
 > $4000 ;
 > $4000 ;
 > $4000 ; TODO
 > $4000 ; ----
-> $4000 ; - Decode all stages' level data.
-> $4000 ; - Disassemble the Chase HQ demo version.
+> $4000 ; - Decode all stages' level data (see CHQStage.py)
+> $4000 ; - Disassemble the Chase HQ demo version
 > $4000 ; - $8008 area used at all?
 > $4000 ; - Stretchy streetlamps etc. encoding
 > $4000 ; - $E34B block is what?
-> $4000 ; - Stripy tunnel fills.
+> $4000 ; - Stripy tunnel fills
 > $4000 ;
 > $4000
 @ $4000 org
@@ -306,7 +306,9 @@ W $5CF8,2,2 Loaded by #R$900F. Address of an array of 7 byte entries. Points 7 b
 W $5CFA,2,2 Loaded by #R$A465. Address of graphics entry 1. Points 7 bytes earlier to permit 1-indexing.
 @ $5CFC label=addrof_right_hand_short_pole_object
 W $5CFC,2,2 Loaded by #R$A53F. Address of graphics entry 3.
-@ $5CFE label=addrof_turn_sign_handlers
+N $5CFE CHECK: This might be left hand objects but its off-by-one!
+@ $5CFE label=addrof_left_hand_handlers
+@ $5CFE ssub=DEFW left_hand_handlers - 7
 W $5CFE,2,2 Address of turn sign arg and handler address.
 @ $5D00 label=addrof_left_hand_objects
 @ $5D00 ssub=DEFW left_hand_graphics_defs - 7
@@ -459,13 +461,13 @@ W $5E7A,2,2 Arg for routine passed in DE
 W $5E7C,2,2 -> Routine at #R$92E1
 N $5E7E Entry 9 (turn sign, pointing right)
 B $5E7E,3,3
-@ $5E81 label=right_hand_turn_sign_handlers
 W $5E81,2,2 -> -> turn_sign_lods
 W $5E83,2,2 -> Routine at #R$92E1
 N $5E85 Left hand side objects.
 N $5E85 Entry 10 (tunnel light)
 @ $5E85 label=left_hand_graphics_defs
 B $5E85,3,3
+@ $5E88 label=left_hand_handlers
 W $5E88,2,2 Arg for routine passed in DE
 W $5E8A,2,2 -> Routine at #R$924D
 N $5E8C Entry 11 (empty)
@@ -3717,7 +3719,8 @@ C $8F74,3 *HL += C
 C $8F77,3 *DE += C
 C $8F7A,1 E++
 C $8F7B,1 L++
-C $8F7C,2 Loop to #R$8F74 while #REGb > 0
+C $8F7C,2 Loop to while #REGb > 0
+N $8F7E Draw tunnel, if configured.
 C $8F7E,4 IY = $E315
 C $8F82,3 Self modified: either CALL draw_tunnel, or NOPs
 C $8F85,2 IY--
@@ -3726,24 +3729,28 @@ C $8F8A,2 Add 115 so it's the right side objects data offset + 19
 C $8F8C,3 Point #REGhl at road buffer right side objects data
 C $8F8F,4 IX = $EAB0
 C $8F93,3 Counter #REGb = 20, Stride #REGc = 32
+@ $8F96 label=dee_inner_loop
 C $8F96,4 Preserve IX, HL, BC
 C $8F9A,7 Call (somewhere in draw_hazards) if n_hazards is set
-C $8FA1,3 Call dust_stones_stuff (dust/stones stuff)
+C $8FA1,3 Call dust_stones_stuff
 C $8FA4,3 Self modified: either CALL draw_helicopter, or NOPs
 C $8FA7,3 Self modified: either CALL draw_tunnel, or NOPs
 C $8FAA,4 Restore IX, HL, BC
-C $8FAE,1 A = *HL
-C $8FAF,1 Set flags
+C $8FAE,1 Fetch from right side objs data
+C $8FAF,3 Jump to right hand stuff if non-zero [why not a CALL?]
+N $8FB2 ...
+@ $8FB2 label=dee_continue_after_right_hand_done
 C $8FB2,4 IX += 2
 C $8FB6,3 L += C
 C $8FB9,1 A = *HL
 C $8FBA,1 Set flags
 C $8FBB,2 Exit via #R$9023 if non-zero
 N $8FBD This entry point is used by the routine at #R$9023.
+@ $8FBD label=dee_continue_after_left_hand_done
 C $8FBD,4 IX += 2
 C $8FC1,4 L -= 33
 C $8FC5,2 IY--
-C $8FC7,2 Loop to $8F96 while #REGb > 0
+C $8FC7,2 Loop to #R$8F96 while #REGb > 0
 C $8FC9,3 Load self modified instructions from earlier
 C $8FCC,1 Set flags
 C $8FCD,1 Return if non-zero (not NOP)
@@ -3753,6 +3760,7 @@ C $8FD6,2 E = $78
 C $8FD8,1 A--
 C $8FDB,3 HL = &floating_arrow_defns[1]
 C $8FDE,2 E = $80
+@ $8FE0 label=dee_8fe0
 C $8FE0,2 D = $30
 C $8FE2,2 C = *HL++
 C $8FE4,1 B = *HL
@@ -3765,42 +3773,45 @@ C $8FF1,2 A = *HL++
 C $8FF3,1 H = *HL
 C $8FF4,1 L = A
 C $8FF5,3 Exit via #R$B6DD
+N $8FF8 Right hand object handling.
+@ $8FF8 label=dee_right_hand_stuff
 C $8FF8,1 E = A
-C $8FF9,3 A = IX[1]
+C $8FF9,3 A = IX[1]  -- what are we checking here?
 C $8FFC,1 Set flags
+C $8FFD,2 Loop or exit?
+C $8FFF,4 Preserve IX, HL, BC
 C $9003,8 DE = E * 7
-C $900B,3 Push return address onto stack
-N $9012 $5E42 sampled DE = $23, $1C, $3F, $38, $31, $2A -- multiples of 7
-C $9012,1 HL += DE
-C $9013,4 DE = wordat(HL); HL += 2
-C $9017,4 HL = wordat(HL); HL += 1
-C $901B,1 Jump to HL
-C $9020,3 Jump to #R$8FB2
-c $9023 Routine at 9023
-D $9023 Used by the routine at #R$8F5F.
-R $9023 I:A ?
-R $9023 I:BC ? Sampled: $0D20, $0520, $0120
-R $9023 I:HL ? Sampled: $EEAC, $EEA4, $EEA0
-R $9023 I:IX ? Sampled: $EACE, $EAEE, $EAFE
+C $900B,4 Set return address to #R$901C (below)
+C $900F,3 Load addrof_right_hand_handlers
+C $9012,1 Index right_hand_handlers
+C $9013,4 Read argument for routine into #REGde & advance
+C $9017,4 Read address of routine into #REGhl
+C $901B,1 Indirect jump
+@ $901C label=dee_return_901C
+C $901C,4 Restore IX, HL, BC
+C $9020,3 Continue
+c $9023 Left hand object handling.
+@ $9023 label=dee_left_hand_stuff
 C $9023,1 E = A  -- sampled = 5 (only)
-C $9024,4 Jump if A == 2
+C $9024,4 Jump if A == 2  -- this test not present for RHS
 N $9028 A != 2
-C $9028,3 A = IX[1]
+@ $9028 label=dee_a_isnt_2
+C $9028,3 A = IX[1]  -- what are we checking here?
 C $902B,1 Set flags
-C $902C,2 Loop?
+C $902C,2 Loop or exit?
+@ $902E label=dee_a_is_2
 C $902E,4 Preserve IX, HL, BC
 C $9032,8 DE = E * 7
-C $903A,4 Set return address
-C $903E,3 turn sign lods
-C $9041,1 HL += DE
-N $9042 sampled HL = $5EA4 (only) which is "Entry 14"
-C $9042,4 DE = wordat(HL); HL += 2  -- arg for routine
-C $9046,4 HL = wordat(HL)  -- address of routine
+C $903A,4 Set return address to #R$904B (below)
+C $903E,3 Load addrof_left_hand_handlers
+C $9041,1 Index left_hand_handlers
+C $9042,4 Read argument for routine into #REGde & advance
+C $9046,4 Read address of routine into #REGhl
 N $904A #REGb is used in the routines, what is it here? It must be passed in.
 C $904A,1 Indirect jump  -- Call #R$916C #R$9171 #R$924D #R$9252 #R$92E1 etc.
-@ $904B label=return_904B
+@ $904B label=dee_return_904B
 C $904B,4 Restore IX, HL, BC
-C $904F,3 Loop?
+C $904F,3 Continue
 c $9052 Draws overhead graphics.
 D $9052 This gets used on stage 3 when drawing the overhead structure graphics.
 D $9052 sampled IX=$EAB2 DE=$6F26 HL=$9052 BC=$1420 (when in stage3!)
@@ -9648,7 +9659,7 @@ C $C4D5,3 Self modify 'LD H,x' @ #R$C5D9
 C $C4D8,3 Self modify 'LD H,x' @ #R$C68A
 C $C4DB,1 A = C
 C $C4DC,3 Self modify 'LD B,x' @ #R$C5AC
-C $C4DF,3 Jump
+C $C4DF,3 Exit via
 @ $C4E2 label=dr_c4e2
 C $C4E2,2 -- Forked road plotting path
 C $C4E4,2 C = $FF
