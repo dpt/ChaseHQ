@@ -306,10 +306,9 @@ W $5CF8,2,2 Loaded by #R$900F. Address of an array of 7 byte entries. Points 7 b
 W $5CFA,2,2 Loaded by #R$A465. Address of graphics entry 1. Points 7 bytes earlier to permit 1-indexing.
 @ $5CFC label=addrof_right_hand_short_pole_object
 W $5CFC,2,2 Loaded by #R$A53F. Address of graphics entry 3.
-N $5CFE CHECK: This might be left hand objects but its off-by-one!
 @ $5CFE label=addrof_left_hand_handlers
 @ $5CFE ssub=DEFW left_hand_handlers - 7
-W $5CFE,2,2 Address of turn sign arg and handler address.
+W $5CFE,2,2 Address of turn sign arg and handler address. Points 7 bytes earlier to permit 1-indexing.
 @ $5D00 label=addrof_left_hand_objects
 @ $5D00 ssub=DEFW left_hand_graphics_defs - 7
 W $5D00,2,2 Loaded by #R$A490. Address of graphics entry 10. Points 7 bytes earlier to permit 1-indexing.
@@ -2468,8 +2467,9 @@ S $837C,57,$39
 c $83B5 Indirect calls for 48K/128K features
 D $83B5 The main difference is in sound, but attract mode also has an alternate implementation in 128K mode.
 N $83B5 Used by the routine at #R$B4CC.
+@ $83B5 label=all_hooks
 @ $83B5 label=start_siren_hook
-C $83B5,3 No-op when in 48K mode -- likely siren
+C $83B5,3 No-op when in 48K mode
 N $83B8 This entry point is used by the routines at #R$8401 and #R$8903.
 @ $83B8 label=play_engine_sfx_hook
 C $83B8,3 Call play_engine_sfx when in 48K mode
@@ -3715,11 +3715,12 @@ C $8F6B,3 HL = $E301
 C $8F6E,3 DE = $E336
 C $8F71,3 B = 21 iterations, C = 32 (added to table entries)
 @ $8F74 label=dee_loop
-C $8F74,3 *HL += C
-C $8F77,3 *DE += C
-C $8F7A,1 E++
-C $8F7B,1 L++
-C $8F7C,2 Loop to while #REGb > 0
+C $8F74,3 *HL += 32
+C $8F77,3 *DE += 32
+N $8F7A Do these wrap around?
+C $8F7A,1 DE++
+C $8F7B,1 HL++
+C $8F7C,2 Loop while #REGb > 0
 N $8F7E Draw tunnel, if configured.
 C $8F7E,4 IY = $E315
 C $8F82,3 Self modified: either CALL draw_tunnel, or NOPs
@@ -3740,39 +3741,41 @@ C $8FAE,1 Fetch from right side objs data
 C $8FAF,3 Jump to right hand stuff if non-zero [why not a CALL?]
 N $8FB2 ...
 @ $8FB2 label=dee_continue_after_right_hand_done
-C $8FB2,4 IX += 2
-C $8FB6,3 L += C
-C $8FB9,1 A = *HL
+C $8FB2,4 Advance #REGix by 2
+C $8FB6,3 Advance #REGhl by 32
+C $8FB9,1 A = *HL  -- reading $EE0C down to $EEF9 (wrapping!)
 C $8FBA,1 Set flags
-C $8FBB,2 Exit via #R$9023 if non-zero
-N $8FBD This entry point is used by the routine at #R$9023.
+C $8FBB,2 Jump to #R$9023 if non-zero  -- left hand stuff, it will jump back here so I'm not sure why it's not a CALL
 @ $8FBD label=dee_continue_after_left_hand_done
-C $8FBD,4 IX += 2
-C $8FC1,4 L -= 33
+C $8FBD,4 Advance #REGix by 2
+C $8FC1,4 Advance #REGhl by -33
 C $8FC5,2 IY--
-C $8FC7,2 Loop to #R$8F96 while #REGb > 0
+C $8FC7,2 Loop to #R$8F96 while #REGb > 0  -- inner loop
+N $8FC9 ..
 C $8FC9,3 Load self modified instructions from earlier
-C $8FCC,1 Set flags
-C $8FCD,1 Return if non-zero (not NOP)
-C $8FCE,5 Return if floating_arrow is zero
-C $8FD3,3 HL = &floating_arrow_defns[0]
-C $8FD6,2 E = $78
-C $8FD8,1 A--
-C $8FDB,3 HL = &floating_arrow_defns[1]
-C $8FDE,2 E = $80
-@ $8FE0 label=dee_8fe0
+C $8FCC,2 Return if drawing the helicopter
+C $8FCE,5 Return if floating_arrow is zero => no arrow
+N $8FD3 Draw the floating arrow.
+@ $8FD3 label=dee_draw_floating_arrow
+C $8FD3,3 Point #REGhl at floating_arrow_defns[0]
+C $8FD6,2 Set horizontal position to 120
+C $8FD8,3 Jump if floating_arrow is 1 => left facing arrow
+C $8FDB,3 Point #REGhl at floating_arrow_defns[1]
+C $8FDE,2 Set horizontal position to 128
+@ $8FE0 label=dee_floating_arrow_chosen
 C $8FE0,2 D = $30
-C $8FE2,2 C = *HL++
-C $8FE4,1 B = *HL
-C $8FE5,2 B >>= 1
-C $8FEA,1 E = C
-C $8FEB,2 C = $00
-C $8FEE,1 HL++
-C $8FEF,2 D = *HL++
-C $8FF1,2 A = *HL++
-C $8FF3,1 H = *HL
-C $8FF4,1 L = A
-C $8FF5,3 Exit via #R$B6DD
+C $8FE2,1 Load width bytes
+C $8FE3,1 Advance to flags
+C $8FE4,1 Load flags
+C $8FE5,2 flags >>= 1
+C $8FE7,3 BC' = BC
+C $8FEA,1 E' = C'
+C $8FEB,2 C' = 0
+C $8FED,1 Unbank
+C $8FEE,1 Advance to height
+C $8FEF,2 Load height into #REGb
+C $8FF1,4 Load bitmap address into #REGhl
+C $8FF5,3 Exit via #R$B6DD  (plotting)
 N $8FF8 Right hand object handling.
 @ $8FF8 label=dee_right_hand_stuff
 C $8FF8,1 E = A
@@ -3787,19 +3790,19 @@ C $9012,1 Index right_hand_handlers
 C $9013,4 Read argument for routine into #REGde & advance
 C $9017,4 Read address of routine into #REGhl
 C $901B,1 Indirect jump
-@ $901C label=dee_return_901C
+@ $901C label=dee_right__return_901C
 C $901C,4 Restore IX, HL, BC
 C $9020,3 Continue
-c $9023 Left hand object handling.
+N $9023 Left hand object handling.
 @ $9023 label=dee_left_hand_stuff
 C $9023,1 E = A  -- sampled = 5 (only)
 C $9024,4 Jump if A == 2  -- this test not present for RHS
 N $9028 A != 2
-@ $9028 label=dee_a_isnt_2
+@ $9028 label=dee_left__a_isnt_2
 C $9028,3 A = IX[1]  -- what are we checking here?
 C $902B,1 Set flags
 C $902C,2 Loop or exit?
-@ $902E label=dee_a_is_2
+@ $902E label=dee_left__a_is_2
 C $902E,4 Preserve IX, HL, BC
 C $9032,8 DE = E * 7
 C $903A,4 Set return address to #R$904B (below)
@@ -3809,7 +3812,7 @@ C $9042,4 Read argument for routine into #REGde & advance
 C $9046,4 Read address of routine into #REGhl
 N $904A #REGb is used in the routines, what is it here? It must be passed in.
 C $904A,1 Indirect jump  -- Call #R$916C #R$9171 #R$924D #R$9252 #R$92E1 etc.
-@ $904B label=dee_return_904B
+@ $904B label=dee_left__return
 C $904B,4 Restore IX, HL, BC
 C $904F,3 Continue
 c $9052 Draws overhead graphics.
@@ -8100,15 +8103,17 @@ N $B6D2 Otherwise pitch was 3/6.
 C $B6D2,4 D += A - 2  -- make v.shift -1/1
 E $B69E FALL THROUGH
 c $B6D6 This entry point is used by the routines at #R$B58E and #R$B648.
-D $B6D6 I:D v.shift (always -1/0/1 ?) I:B n.rows I:HL data I:E byte width I:C = 0/bytewidth-1
+R $B6D6 I:B height (in rows)
+R $B6D6 I:C = 0/bytewidth-1
+R $B6D6 I:D v.shift (always -1/0/1 ?)  -- seems to be in D' but inconsistent!
+R $B6D6 I:E byte width? can't be right
+R $B6D6 I:HL address of bitmap data
 @ $B6D6 label=draw_part
 C $B6D6,7 D -= car_y  -- add additional car_y to v.shift
 N $B6DD This entry point is used by the routines at #R$8F5F and #R$B549.
 @ $B6DD label=draw_part_entry2
-C $B6DD,1 A = E
-C $B6DE,5 Divide by 8
-C $B6E3,1 E = A
-C $B6E4,1 A = D
+C $B6DD,7 Divide #REGe by 8
+C $B6E4,2 A' = D
 C $B6E6,6 D = (D & $0F) + $F0
 C $B6EC,1 Preserve A & save carry flag?
 C $B6ED,5 E += (A & $70) * 2
@@ -8177,6 +8182,7 @@ D $B76C Used by the routine at #R$92E1.
 C $B76C,3 #REGde = #REGa
 C $B76F,1 #REGhl += #REGde
 N $B770 This entry point is used by the routine at #R$B67C.
+@ $B770 label=plot_masked_sprite_flipped_entry2
 C $B771,4 Save #REGsp to be restored on exit
 C $B775,4 Point #REGix at jump table
 C $B779,3 Subtract 8
@@ -11817,16 +11823,24 @@ W $E858,6,2 Copy 24 bytes from data_e88e to $EC00
 W $E85E,6,2 Copy 40 bytes from square_zoom_in_mask to $EB00
 W $E864,6,2 Copy 48 bytes from diamond_zoom_in_mask to $EA00
 W $E86A,6,2 Copy 926 bytes from page_in_stage_128k onwards to $8014 [128K only]
-W $E870,6,2 Copy 24 bytes (3 bytes * 8 hooks) from 128k_mode_hooks to hooks at #R$83B5 [128K only]
-@ $E876 label=128k_mode_hooks
-C $E876,3 Becomes start_siren_hook
-C $E879,3 Becomes play_engine_sfx_hook
-C $E87C,3 Becomes silence_audio_hook
-C $E87F,3 Becomes write_registers_hook
-C $E882,3 Becomes play_turbo_sfx_hook
-C $E885,3 Becomes setup_engine_sfx_hook
-C $E888,3 Becomes play_speech_hook
-C $E88B,3 Becomes attract_mode_hook
+W $E870,6,2 Copy 24 bytes (3 bytes * 8 hooks) from hooks_128k to hooks at #R$83B5 [128K only]
+@ $E876 label=hooks_128k
+@ $E876 ssub=JP start_siren_128k - hooks_128k + all_hooks
+C $E876,3 Replaces 48K start_siren_hook
+@ $E879 ssub=JP play_engine_sfx_128k - hooks_128k + all_hooks
+C $E879,3 Replaces 48K play_engine_sfx_hook
+@ $E87C ssub=JP silence_audio_128k - hooks_128k + all_hooks
+C $E87C,3 Replaces 48K silence_audio_hook
+@ $E87F ssub=JP write_registers_128k - hooks_128k + all_hooks
+C $E87F,3 Replaces 48K write_registers_hook
+@ $E882 ssub=JP play_turbo_sfx_128k - hooks_128k + all_hooks
+C $E882,3 Replaces 48K play_turbo_sfx_hook
+@ $E885 ssub=JP setup_engine_sfx_128k - hooks_128k + all_hooks
+C $E885,3 Replaces 48K setup_engine_sfx_hook
+@ $E888 ssub=JP play_speech_128k - hooks_128k + all_hooks
+C $E888,3 Replaces 48K play_speech_hook
+@ $E88B ssub=JP attract_mode_128k - hooks_128k + all_hooks
+C $E88B,3 Replaces 48K attract_mode_hook
 N $E88E Copied to $EC00 - transitions?
 @ $E88E label=data_e88e
 B $E88E,1,1
