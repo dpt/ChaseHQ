@@ -2259,9 +2259,11 @@ C $8104,3 Call tl_delay_814b
 C $8108,4 A = C ^= 3
 C $810E,2 B = 176
 @ $8112 label=tl_8112
-C $8113,2 wuuuut?
+C $8113,2 Odd/Bug: Doubled JR NZ
+C $8115,2 Odd/Bug: Jump to next instr
 @ $8117 label=tl_8117
 @ $811C label=tl_811c
+C $811C,2 Shift into carry?
 C $811E,1 A ^= L
 C $8120,3 RR C and copy to A?
 C $8123,1 DE++
@@ -2563,7 +2565,7 @@ C $8471,3 Call draw_road
 C $8474,3 Call play_engine_sfx_hook
 C $8477,3 Call layout_objects
 C $847A,3 Call prepare_tunnel
-C $847D,3 Call spawn_barriers
+C $847D,3 Call spawn_hazards
 C $8480,3 Call drive_helicopter
 C $8483,3 Call choose_dirt_and_stones
 C $8486,3 Call play_engine_sfx_hook
@@ -2661,7 +2663,7 @@ C $8568,3 Call layout_road
 C $856B,3 Call draw_road
 C $856E,3 Call layout_objects
 C $8571,3 Call prepare_tunnel
-C $8574,3 Call spawn_barriers
+C $8574,3 Call spawn_hazards
 C $8577,3 Call choose_dirt_and_stones
 C $857A,3 Call layout_dirt_and_stones
 C $857D,3 Call draw_hazards
@@ -2917,21 +2919,22 @@ C $877B,3 Call layout_road
 C $877E,3 Call draw_road
 C $8781,3 Call layout_objects
 C $8784,3 Call prepare_tunnel
-C $8787,3 Call spawn_barriers
+C $8787,3 Call spawn_hazards
 C $878A,3 Call draw_hazards
 C $878D,3 Call draw_everything_else
 C $8790,3 Call update_scoreboard
 C $8793,3 Call drive_chatter
 C $8796,3 Call transition
 C $8799,3 Call draw_screen
-C $879C,6 Jump to es_loop unless the tunnel has appeared
+C $879C,6 Loop to es_loop unless the tunnel has appeared
+N $87A2 Tunnel has appeared.
 C $87A2,3 reading from tunnel code [15 when tunnel is small, 6 when fills screen]
-C $87A5,4 loop if tunnel code value >= 7
+C $87A5,4 Loop to es_loop if tunnel code value >= 7
 C $87A9,3 $A189 is hazards 2nd byte
 C $87AC,4 Jump if it != 5
 C $87B0,11 Activate three hazards? [i.e. the three barriers]
 C $87BB,6 Set speed to zero [speed of camera]
-C $87C1,6 Loop while the perp is still active in the hazards
+C $87C1,6 Loop to es_loop while the perp is still active in the hazards
 C $87C7,6 Loop while chatter_state > 0 => chatter is still happening
 C $87CD,5 Return if transition_control is zero
 C $87D2,2 If transition_control is 4
@@ -6355,34 +6358,39 @@ b $A7E7 Data block at A7E7
 @ $A7E7 label=table_a7e7
 B $A7E7,12,8,4
 c $A7F3 Spawns cars
-D $A7F3 Used by the routines at #R$8401 and #R$852A.
+D $A7F3 Used by the routines at #R$8401 and #R$852A. Return and don't spawn anything if perp_caught_phase or stop_car_spawning flags are set.
 @ $A7F3 label=spawn_cars
-C $A7F3,9 Return if perp_caught_phase or stop_car_spawning flags are set
-C $A7FC,3 Load allow_spawning
-C $A7FF,2 Return if allow_spawning was zero
-C $A801,4 A = <self modified> - allow_spawning
+N $A7FC Return and don't spawn anything if allow_spawning is zero.
+C $A801,4 A = <self modified> - allow_spawning (can be 1 or 2)
 C $A805,3 Self modify above
-C $A808,1 Return if carry?
+C $A808,1 Return if carry set  -- when's it set?
 N $A809 Start spawning cars.
-C $A809,3 Call rng
-C $A80C,3 C = A & 15
-C $A80F,3 Load sighted_flag
-C $A812,1 Set flags
+N $A809 Call rng and take the bottom four bits of the result. Put it in #REGc
+C $A80F,4 Load and test sighted_flag
 C $A813,3 Load car_spawn_rate
-C $A816,2 Jump to #R$A81A if sighted_flag was zero
-C $A818,2 A += 25  -- boost factor/rate when perp sighted
-C $A81A,1 A += C  -- add random factor (0..15)
-C $A81B,3 Self modify above
-C $A81E,3 BC = $0500
-C $A821,4 IX = &hazards[1]
-C $A825,3 DE = 20  -- stride of hazards
+C $A816,2 Jump (don't boost) if sighted_flag was zero
+N $A818 Perp was sighted.
+@ $A818 label=sc_boost
+C $A818,2 Boost rate by 25 when perp sighted
+@ $A81A label=sc_set
+C $A81A,1 Add random factor (0..15) in #REGc to rate
+C $A81B,3 Self modify spawn value above
+C $A81E,3 B = 5 iterations; C = 0 - a flag?
+C $A821,4 Point #REGix at hazards[1]
+C $A825,3 Stride of hazards is 20 bytes
 @ $A828 label=sc_loop
 C $A828,6 If the hazard is not active jump to sc_fill_in
-C $A82E,3 A = IX[15]
-C $A837,2 IX += DE
+C $A82E,3 A = IX[15]  -- what are we reading here?
+C $A831,1 Shift a bit out left into carry flag
+C $A832,3 Continue if clear
+C $A835,2 Shift carry into #REGc
+@ $A837 label=sc_continue
+C $A837,2 Advance to next hazard
 C $A839,2 Loop to sc_loop while #REGb > 0
 C $A83B,1 Return
 @ $A83C label=sc_fill_in
+C $A83C,2 test bit 2 of ?
+C $A83E,1 Return if set?
 C $A83F,3 DE = IX
 C $A842,3 BC = 20
 C $A845,3 Point #REGhl at hazard_template
@@ -6392,6 +6400,7 @@ C $A84C,3 Call get_spawn_lanes  -- Gets car spawning positions (B = min, C = max
 C $A84F,3 Call rng
 C $A852,3 A = (A & 3) + B
 C $A855,4 If A >= C A = C
+@ $A859 label=sc_a859
 C $A859,3 IX[17] = A
 C $A85C,3 IX[18] = A
 @ $A85F ssub=LD HL,table_a7e7 - 1
@@ -6401,6 +6410,7 @@ C $A86A,3 Load sighted_flag
 C $A86D,1 Set flags
 C $A86E,2 A = 4
 C $A872,1 A <<= 1
+@ $A873 label=sc_a873
 C $A873,2 HL += A
 C $A875,4 IX[13] = *HL
 C $A879,3 Call rng
@@ -6409,6 +6419,7 @@ C $A87F,3 Load sighted_flag
 C $A882,1 Set flags
 C $A885,2 A = 6
 C $A88A,2 C--
+@ $A88C label=sc_a88c
 C $A88C,2 B = 0
 C $A88E,3 HL = &lods_vehicles (first of the generic car LODs)
 C $A891,1 HL += BC
@@ -6774,10 +6785,9 @@ C $AB99,1 Return
 c $AB9A Spawn hazards
 D $AB9A Spawns hittable hazards in the road, like barriers and tumbleweeds.
 D $AB9A Used by the routines at #R$8401, #R$852A and #R$873C.
-@ $AB9A label=spawn_barriers
+@ $AB9A label=spawn_hazards
 C $AB9A,5 Return if allow_spawning is zero
-C $AB9F,3 A = 22 - A
-C $ABA2,1 C = A
+C $AB9F,4 #REGc = 20 - allow_spawning (is 1/2 here)
 C $ABA3,3 Load road_buffer_offset into #REGa
 C $ABA6,2 Add 160 so it's the hazards data offset
 C $ABA8,1 A += C
@@ -6790,6 +6800,7 @@ C $ABB1,3 DE = 0
 C $ABB4,2 Jump if < 4   -- stop spawning barriers etc? jump/fork too?
 C $ABB6,2 E = 3
 C $ABB8,1 A -= E
+@ $ABB9 label=sh_abb9
 C $ABB9,2 B = 50
 C $ABBB,1 A--
 C $ABBC,2 Jump if zero  [A == 1]
@@ -6808,35 +6819,38 @@ C $ABD1,1 Set flags
 C $ABD2,2 Jump if zero
 N $ABD4 Flag was set.
 C $ABD4,2 B = 32
-C $ABD6,3 Call sb_spawn
+C $ABD6,3 Call sh_spawn
 C $ABD9,2 B = 86
-C $ABDB,3 Call sb_spawn
+C $ABDB,3 Call sh_spawn
 C $ABDE,2 B = 140
-C $ABE0,2 Calls sb_spawn then returns
+C $ABE0,2 Calls sh_spawn then returns
+@ $ABE2 label=sh_abe2
 C $ABE2,2 B = 80
-C $ABE4,3 Call sb_spawn
+C $ABE4,3 Call sh_spawn
 C $ABE7,2 B = 160
-C $ABE9,2 Calls sb_spawn then returns
+C $ABE9,2 Calls sh_spawn then returns
+@ $ABEB label=sh_abeb
 C $ABEB,2 B = 70
-C $ABED,3 Call sb_spawn
+C $ABED,3 Call sh_spawn
 C $ABF0,2 B = 180
-C $ABF2,3 Call sb_spawn
+@ $ABF2 label=sh_abf2
+C $ABF2,3 Call sh_spawn
 C $ABF5,1 Return
 N $ABF6 I:B Stored at entry+5  e.g. $20/$46/$56/$50/$B4
 N $ABF6 I:C Stored at entry+1  e.g. $13
-@ $ABF6 label=sb_spawn
+@ $ABF6 label=sh_spawn
 C $ABF6,1 Bank entry registers
 C $ABF7,2 6 iterations
 C $ABF9,3 Point #REGhl at hazards table
 C $ABFC,3 Stride of 20 bytes
 @ $ABFF label=sh_loop
 C $ABFF,2 Check the flag byte to see if the entry is used (it's either $00 if empty, or $FF if used, so rotating it in place is not a problem)
-C $AC01,2 Jump to sb_found_spare if it didn't carry
+C $AC01,2 Jump to sh_found_spare if it didn't carry
 C $AC03,1 Move to the next entry
 C $AC04,2 Loop while iterations remain
 C $AC07,1 Return
 N $AC08 #REGhl points to the unused entry
-@ $AC08 label=sb_found_spare
+@ $AC08 label=sh_found_spare
 C $AC08,3 #REGix = #REGhl
 C $AC0B,10 Zero 20 bytes at #REGhl
 C $AC15,1 Restore entry registers
@@ -6851,13 +6865,15 @@ C $AC37,4 Mark the entry as used
 C $AC3B,1 Return
 c $AC3C Test for collision with hazard
 R $AC3C I:IX Address of hazard structure ($A188+)
+R $AC3C If IX[15] is non-zero then jump forward.
 @ $AC3C label=hazard_hit
 C $AC3C,3 IX[15] appears to be a delay of some sort
-C $AC3F,3 If IX[15] != 0 then goto hh_ac92
+C $AC3F,3 If IX[15] != 0 then goto hh_dec_test
 C $AC42,5 If IX[7] == 0 then return
 N $AC47 If we arrive here then a hit has occurred.
 C $AC47,4 Load speed
 C $AC4B,6 If IX[7] < 0 then #REGde = 280
+@ $AC51 label=hh_ac51
 C $AC51,2 #REGbc = #REGde
 C $AC53,3 Point #REGhl at #R$AD03 table
 N $AC56 This must be mapping the speed into the 5-entry array.
@@ -6873,18 +6889,20 @@ C $AC63,1 HL += DE
 C $AC64,9 Copy (two bytes?) to IX+17 from table
 C $AC6D,4 double BC?  adjusted speed retained from earlier
 C $AC71,8 If B >= 2 BC = 350  so this is if we hit the object very fast it gets put on the left?
+@ $AC79 label=hh_ac79
 C $AC79,3 Set bottom byte of horizontal position
 C $AC7C,3 Increment IX[7]
 C $AC7F,2 if B is zero then don't store it
 C $AC81,3 Set top byte of horizontal position
+@ $AC84 label=hh_ac84
 C $AC84,3 Increment IX[1]
 C $AC87,3 Effect 5 (hazard hit), Priority 3
 C $AC8A,3 Call start_sfx
-C $AC8D,2 A = 2        [set this to 1 and it drives off like a car]
-C $AC8F,3 Set IX[15] to 2
-@ $AC92 label=hh_ac92
-C $AC92,1 A--
-C $AC93,1 If A == 0 return
+C $AC8D,2 A = 2        [set this to 1 and the hazard drives off like a car]
+C $AC8F,3 Set IX[15] to 2  -- a delay value?
+@ $AC92 label=hh_dec_test
+C $AC92,2 If --A == 0 return
+@ $AC94 label=hh_ac94
 C $AC94,13 IX[16] = #R$ACDB[IX[17]]
 C $ACA1,3 Increment IX[17]
 C $ACA4,6 Load horizontal position into #REGhl
@@ -8103,6 +8121,7 @@ N $B6D2 Otherwise pitch was 3/6.
 C $B6D2,4 D += A - 2  -- make v.shift -1/1
 E $B69E FALL THROUGH
 c $B6D6 This entry point is used by the routines at #R$B58E and #R$B648.
+D $B6D6 Used by the routines at #R$B58E, #R$B648 and #R$B69E.
 R $B6D6 I:B height (in rows)
 R $B6D6 I:C = 0/bytewidth-1
 R $B6D6 I:D v.shift (always -1/0/1 ?)  -- seems to be in D' but inconsistent!
@@ -9675,7 +9694,7 @@ C $C4EA,2 Jump if set
 C $C4EC,2 Bit 3 set?
 C $C4EE,2 Jump if clear
 @ $C4F0 label=dr_c4f0
-C $C4F0,2 A = IY.low
+C $C4F0,2 A = IY.low  -- tunnel size factor
 C $C4F2,3 Self modify 'CP x' @ #R$C15D
 C $C4F5,2 A = 1
 C $C4F7,1 C++
@@ -9956,7 +9975,7 @@ C $C724,2 B = 255
 C $C726,2 Bit 2 of C set?
 C $C728,2 A = 1
 C $C72A,2 Jump if clear
-C $C72C,2 A = IY.low
+C $C72C,2 A = IY.low  -- tunnel size factor
 C $C72E,3 Self modify 'CP x' @ #R$C15D  [15 when tunnel is small, 6 when fills screen]
 C $C731,2 A = 1
 C $C733,1 B++
@@ -9984,7 +10003,7 @@ C $C754,2 B = 255
 C $C756,2 Bit 2 of C set?
 C $C758,2 A = 1
 C $C75A,2 Jump if clear
-C $C75C,2 A = IY.low
+C $C75C,2 A = IY.low  -- tunnel size factor
 C $C75E,3 Self modify 'CP x' @ #R$C15D  [15 when tunnel is small, 6 when fills screen]
 C $C761,2 A = 1
 C $C763,1 B++
