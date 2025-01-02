@@ -2193,6 +2193,7 @@ N $8088 #REGb is passed in.
 C $8088,3 Point #REGhl at "START TAPE" message structure
 C $808B,4 A = wanted_stage_number - 1
 C $808F,2 Jump if > 0
+N $8091 This entry point is used by the routine at #R$F32E.
 @ $8091 refs=:$E810,$F220
 C $8092,3 Point #REGhl at tape_messsages
 @ $8095 label=ls_8095
@@ -2498,6 +2499,7 @@ D $83CD This is the true start and main loop of the game. It's called once the m
 D $83CD Used by the routine at #R$E839.
 N $83CD Build a table of flipped bytes at $EF00.
 @ $83CD label=bootstrap
+@ $83CD keep=$EF00
 C $83CD,3 Point #REGhl at $EF00
 @ $83D0 label=bs_flip_table_loop
 C $83D0,2 8 iterations
@@ -2517,10 +2519,10 @@ N $83EC Reset wanted_stage_number and credits.
 C $83EC,2 wanted_stage_number = 1
 C $83EE,4 credits = 2
 C $83F2,3 Call the main loop
-C $83F5,10 Call relocated plsp_f3b6_128k (animated title screen?) if in 128K mode
+C $83F5,10 Call relocated plsp_f3b6_128k if in 128K mode
 C $83FF,2 Loop
 c $8401 Main loop
-D $8401 This is the "main loop" because it does all of the driving of the primary game functions, but it's really a subroutine of the uber main loop above.
+D $8401 This is called the "main loop" because it does all of the driving of the primary game functions, but it's really a subroutine of the boostrap / uber main loop above.
 R $8401 Used by the routines at #R$83CD and #R$8A57.
 @ $8401 label=main_loop
 C $8401,3 Call load_stage
@@ -2896,7 +2898,8 @@ W $8733,2,2 Routine at #R$ADF9 (it's just a RET)
 W $8735,2,2
 B $8737,5,5
 c $873C Escape scene
-D $873C Used by the routine at #R$8401.
+D $873C This runs the scene shown when the perp has escaped.
+R $873C Used by the routine at #R$8401.
 @ $873C label=escape_scene
 C $873C,3 Call silence_audio_hook
 C $873F,3 Address of escape_scene_data
@@ -3228,9 +3231,9 @@ C $8ACA,3 Point #REGhl at addrof_arrest_messages
 C $8ACD,2 Set transition_control to 1 (draw mugshots)
 C $8ACF,3 Exit via setup_overlay_messages_with_A
 @ $8AD2 label=hpc_phase4
-C $8AD2,7 Call relocated f39f_128k if in 128K mode
+C $8AD2,7 Call relocated plsp_f39f_128k if in 128K mode
 C $8AD9,5 Return if transition_control != 0
-C $8ADE,7 Call relocated f39f_128k if in 128K mode
+C $8ADE,7 Call relocated plsp_f39f_128k if in 128K mode
 C $8AE5,5 perp_caught_phase = 5
 N $8AEA Calculate clear bonus.
 C $8AEA,2 '0'
@@ -12588,7 +12591,7 @@ W $F249,2,2 Level 3. Source = $C000, Paging = bank 6
 W $F24B,2,2 Level 4. Source = $E000, Paging = bank 6
 W $F24D,2,2 Level 5. Source = $C000, Paging = bank 7
 W $F24F,2,2 Level 6. Source = $E000, Paging = bank 7
-N $F251 $8045 once relocated.
+c $F251 $8045 once relocated.
 @ $F251 label=start_siren_128k
 C $F251,5 Store $8C to channel A fine pitch
 C $F256,5 Store 14 to channel A volume (4-bit)
@@ -12596,40 +12599,44 @@ C $F25B,5 Store 12 to channel B volume
 C $F260,5 Self modify 'LD A,x' @ #R$F271 (in this position)
 C $F265,3 var_a239 = $AA
 C $F268,1 Return
+c $F269 Routine at F269
 @ $F269 label=play_engine_sfx_128k
 C $F269,3 var_a239 (initialised to $AA above)
 C $F26C,2 Return if zero
 C $F26E,3 Load channel A fine pitch
 C $F271,6 jump on 50-50 alternating pattern? -- could be flipping between string sets?
 N $F277 Decreasing case
+@ $F277 label=pe_decreasing
 C $F277,2 A -= 3
 C $F279,4 Jump if A >= $5A
 C $F27D,2 Jump
 N $F27F Increasing case
-@ $F27F label=f27f_128k
+@ $F27F label=pe_increasing
 C $F27F,2 A += 3
 C $F281,4 Jump if A < $8C
 N $F285 Arrive here if A is outside of $5A..$8B
-@ $F285 label=f285_128k
+@ $F285 label=pe_2
 C $F286,4 Store B (rotating pattern)
 N $F28B Arrive here if A is $5A..$8B
-@ $F28B label=f28b_128k
+@ $F28B label=pe_3
 C $F28B,3 Update channel A fine pitch
 C $F28E,5 and store 4 less to channel B fine pitch
 C $F293,8 Set mixer to enable tone A & B
 C $F29B,2 Jump
+c $F29D Routine at F29D
 @ $F29D label=silence_audio_128k
 C $F29D,5 Initialise mixer to $3F (all noise and tone off)
 N $F2A2 writing the full register set?
 @ $F2A2 label=write_registers_128k
 C $F2A2,3 Address of sound register value(s) -- other values must be earlier
-@ $F2A9 label=write_registers_loop
+@ $F2A9 label=wr_loop
 C $F2A5,8 Select AY-3-8912 sound chip register 11: envelope fine duration
 C $F2AD,4 Write to the register from (HL), then decrement B and HL
 C $F2B1,1 Next register down
 C $F2B2,3 Loop to #R$F2A9 while +ve
 C $F2B5,1 Return
-N $F2B6 munging speed value into tone?
+c $F2B6 munging speed value into tone?
+D $F2B6 Used by the routine at #R$F2FA.
 @ $F2B6 label=engine_sfx_from_speed_128k
 C $F2B6,3 Load speed into #REGhl
 C $F2B9,2 Bottom bit of #REGh moves to carry  -- is H now empty?
@@ -12637,6 +12644,7 @@ C $F2BB,1 Speed low byte
 C $F2BC,1 Halve speed, shifting carry in as MSB
 C $F2BD,2 L = ~A  -- why complement?
 C $F2BF,6 Jump if in low gear
+@ $F2C9 label=esfs_1
 C $F2D1,3 Read tunnel_sfx
 C $F2D4,1 Set flags
 C $F2D5,3 Non-tunnel tone value
@@ -12645,15 +12653,18 @@ C $F2DA,2 Jump if tunnel_sfx was zero (not in tunnel)
 N $F2DC In tunnel.
 C $F2DC,3 In-tunnel tone value
 C $F2DF,2 In-tunnel volume
+@ $F2E1 label=esfs_2
 C $F2E1,1 -- speed value + tone?
 C $F2E2,3 Set channel C pitch (both fine and coarse)
 C $F2E5,3 Set channel C volume
 C $F2E8,8 Set mixer to enable tone C
 C $F2F0,1 Return
+c $F2F1 Routine at F2F1
 @ $F2F1 label=play_turbo_sfx_128k
 C $F2F1,5 Set noise pitch (5-bit) [$3C is > 5-bit...]
 C $F2F6,3 var_a23a = $3C  -- Copy of it?
 C $F2F9,1 Return
+c $F2FA Routine at F2FA
 @ $F2FA label=setup_engine_sfx_128k
 C $F2FA,6 Jump if var_a23a is zero
 C $F300,1 Decrement noise pitch
@@ -12666,11 +12677,12 @@ C $F30E,3 Set channel C pitch (both fine and coarse)
 C $F311,8 Set mixer to enable tone C and noise C
 C $F319,5 Set channel C volume to 13
 C $F31E,1 Return
-@ $F31F label=f31f_128k
+@ $F31F label=ses_1
 C $F31F,8 Set mixer to disable tone C and noise C
 C $F327,4 var_a23a = 0
 C $F32B,3 Exit via engine_sfx_from_speed_128k
-N $F32E Relocated to $8122
+c $F32E Play speech
+D $F32E Relocated to $8122
 N $F32E "Giddy up boy!"
 @ $F32E label=speech_samples_table
 W $F32E,2,2 length
@@ -12695,11 +12707,11 @@ C $F355,1 Unbank input index
 C $F356,9 HL = $F32A + A*4  -- i.e. it's 1-indexed speech_samples_table
 C $F35F,4 DE = wordat(HL); HL += 2  -- read length
 C $F363,4 HL = wordat(HL)  -- read address
-@ $F367 label=plsp_f367_128k
+@ $F367 label=plsp_1
 C $F367,2 C = 2  -- iterations (two nibbles)
 C $F369,1 A = *HL  -- read a sample (or two?)
 C $F36A,4 A = A ROR 4
-@ $F36E label=plsp_f36e_loop
+@ $F36E label=plsp_2
 C $F36E,2 A &= 15
 C $F372,1 B = H which is $FF
 C $F373,1 A = D which is 8  -- register 8: Channel A volume
@@ -12724,11 +12736,12 @@ C $F38A,2 Write to register
 C $F38D,4 Delay loop (lower value => higher frequency)
 C $F391,1 Load next nibble (same byte, but next nibble)
 C $F392,1 Decrement nibble counter
-C $F393,2 Loop plsp_f36e_loop
+C $F393,2 Loop plsp_2
 C $F395,1 Advance to next byte of sample data
 C $F396,1 Decrement sample data counter
-C $F397,5 Loop to plsp_f367_128k while sample data remains
+C $F397,5 Loop to plsp_1 while sample data remains
 C $F39C,3 Exit via relocated reset_paging_128k
+c $F39F something done in phase 4 when perp is caught (play sample?)
 @ $F39F label=plsp_f39f_128k
 C $F39F,3 -- frame delay?
 C $F3A2,3 Return if A < 42
@@ -12738,7 +12751,9 @@ C $F3AC,1 A = 1
 C $F3AD,3 Load var_a23a  -- copy of noise pitch
 C $F3B0,3 Self modify #R$8E49
 C $F3B3,3 (an address)
-N $F3B6 Starts the animated title screen?
+E $F39F FALLTHROUGH
+c $F3B6 paging or something?
+R $F3B6 I:HL $C000 $C003 $C006
 @ $F3B6 label=plsp_f3b6_128k
 C $F3B6,3 Self modify 'CALL xxxx' @ $81C5 ($F3D1 before relocation - below)
 C $F3B9,14 Copy 4096 bytes from $B000 to $F000 (preserving registers for later)
@@ -12753,6 +12768,7 @@ C $F3D9,3 Restore original #REGsp (self modified by #R$F3C7 above)
 C $F3DC,3 Copy 4096 bytes from $B000 to $F000
 C $F3DF,2 Copy
 C $F3E1,1 Return
+c $F3E2 Routine at F3E2
 @ $F3E2 label=f3e2_128k
 C $F3E2,3 HL = $C000
 C $F3E5,2 4 iterations
@@ -12780,12 +12796,14 @@ C $F40F,1 H = D
 C $F410,1 Restore iterations
 C $F411,2 Loop to f3e8_loop
 C $F413,1 Return
+c $F414 Routine at F414
 @ $F414 label=reset_paging_128k
 C $F414,6 128K: Set paging register to default
 C $F41A,1 Return
+c $F41B Routine at F41B
 @ $F41B label=attract_mode_128k
 C $F41B,3 (an address)
-C $F41E,3 Call relocated plsp_f3b6_128k (animated title screen?)
+C $F41E,3 Call relocated plsp_f3b6_128k
 C $F421,2 Return if A is zero
 C $F423,3 HL -> attract_data
 C $F426,3 Call set_up_stage
