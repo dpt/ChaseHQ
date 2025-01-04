@@ -2519,7 +2519,10 @@ N $83EC Reset wanted_stage_number and credits.
 C $83EC,2 wanted_stage_number = 1
 C $83EE,4 credits = 2
 C $83F2,3 Call the main loop
-C $83F5,10 Call relocated plsp_f3b6_128k if in 128K mode
+N $83F5 Call the 128K/bank 3 ?bootstrap routine.
+C $83F5,4 Check for 128K mode
+C $83F9,3 Entry point for ?bootstrap
+C $83FC,3 Call relocated call_bank_3_128k if in 128K mode
 C $83FF,2 Loop
 c $8401 Main loop
 D $8401 This is called the "main loop" because it does all of the driving of the primary game functions, but it's really a subroutine of the boostrap / uber main loop above.
@@ -12750,19 +12753,19 @@ C $F3A8,4 var_a239 = 0
 C $F3AC,1 A = 1
 C $F3AD,3 Load var_a23a  -- copy of noise pitch
 C $F3B0,3 Self modify #R$8E49
-C $F3B3,3 (an address)
+C $F3B3,3 Entry point for ?success music in bank 3
 E $F39F FALLTHROUGH
-c $F3B6 paging or something?
-R $F3B6 I:HL $C000 $C003 $C006
-@ $F3B6 label=plsp_f3b6_128k
+c $F3B6 Call a routine in bank 3
+R $F3B6 I:HL Address of entry point ($C000 + 0/3/6/9)
+@ $F3B6 label=call_bank_3_128k
 C $F3B6,3 Self modify 'CALL xxxx' @ $81C5 ($F3D1 before relocation - below)
 C $F3B9,14 Copy 4096 bytes from $B000 to $F000 (preserving registers for later)
 C $F3C7,4 Self modify 'LD SP,xxxx' @ #R$81CD ($F3D9 here - below)
 C $F3CB,3 Set stack pointer
-C $F3CE,3 Call relocated f3e2_128k
-C $F3D1,3 Self modified by #R$F3B6
+C $F3CE,3 Call relocated f3e2_128k  -- page in?
+C $F3D1,3 Call the entry point requested. Self modified by #R$F3B6
 C $F3D4,1 Preserve ?
-C $F3D5,3 Call relocated f3e2_128k
+C $F3D5,3 Call relocated f3e2_128k  -- page out?
 C $F3D8,1 Restore ?
 C $F3D9,3 Restore original #REGsp (self modified by #R$F3C7 above)
 C $F3DC,3 Copy 4096 bytes from $B000 to $F000
@@ -12802,14 +12805,14 @@ C $F414,6 128K: Set paging register to default
 C $F41A,1 Return
 c $F41B Routine at F41B
 @ $F41B label=attract_mode_128k
-C $F41B,3 (an address)
-C $F41E,3 Call relocated plsp_f3b6_128k
-C $F421,2 Return if A is zero
+C $F41B,3 Entry point for title animations
+C $F41E,3 Call relocated call_bank_3_128k
+C $F421,2 Return if #REGa is zero
 C $F423,3 HL -> attract_data
 C $F426,3 Call set_up_stage
 C $F429,5 var or self modify or ..?
 C $F42E,6 Set speed to $190
-@ $F434 label=f434_128k_loop
+@ $F434 label=am1_loop
 C $F434,3 Call cpu_driver
 C $F437,3 Load attract_cycle
 C $F43A,1 Set flags
@@ -12819,13 +12822,15 @@ C $F440,3 Call keyscan
 C $F443,2 Was FIRE pressed?
 C $F445,3 Jump to play_start_noise if so
 C $F448,3 -> press_gear_messages
-@ $F44B label=f44b_key_check
-C $F44B,4 Read port $BFFE -- ENTER, L, K, J, H
-C $F44F,1 Complement the value returned to change it from to active-high
-C $F450,1 ?Shift out lsb
-C $F454,2 ?Jump if ENTER was pressed
+@ $F44B label=am1_check_enter
+C $F44B,4 Read keyboard port $BFFE: ENTER, L, K, J, H
+C $F44F,1 Complement value so it's active-high
+C $F450,1 Shift ENTER's flag out to carry
+C $F451,3 Load entry point for keyboard/joystick selection menu
+C $F454,2 Jump if ENTER was pressed
 C $F459,1 -- why load A then shift? self modified?
 C $F460,3 Call print_message
+@ $F463 label=f463_128k
 C $F463,6 If transition_control != 0 jump
 C $F469,2 -- smells like self modified
 C $F46F,1 A--
@@ -12840,7 +12845,7 @@ C $F485,3 Call setup_overlay_messages
 @ $F488 label=f488_128k
 C $F488,3 Call transition
 C $F48B,3 Call draw_screen
-C $F48E,3 Loop to f434_128k_loop
+C $F48E,3 Loop to attract_mode_128k_loop
 b $F491 Credits / Score messages show in attract mode
 @ $F491 label=press_gear_messages
 B $F491,6,6
