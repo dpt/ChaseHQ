@@ -3234,9 +3234,9 @@ C $8ACA,3 Point #REGhl at addrof_arrest_messages
 C $8ACD,2 Set transition_control to 1 (draw mugshots)
 C $8ACF,3 Exit via setup_overlay_messages_with_A
 @ $8AD2 label=hpc_phase4
-C $8AD2,7 Call relocated plsp_f39f_128k if in 128K mode
+C $8AD2,7 Call relocated handle_perp_caught_128k if in 128K mode
 C $8AD9,5 Return if transition_control != 0
-C $8ADE,7 Call relocated plsp_f39f_128k if in 128K mode
+C $8ADE,7 Call relocated handle_perp_caught_128k if in 128K mode
 C $8AE5,5 perp_caught_phase = 5
 N $8AEA Calculate clear bonus.
 C $8AEA,2 '0'
@@ -5712,10 +5712,10 @@ N $A237 These seem to get altered even when no sound is being produced.
 B $A237,1,1 Current sound effect index
 @ $A238 label=sfx_priority
 B $A238,1,1 Current sound effect priority
-@ $A239 label=var_a239
-B $A239,1,1 Used by #R$F265 [128K]  Siren related.
+@ $A239 label=siren_enabled
+B $A239,1,1 Enables siren. Used by #R$F265 [128K]
 @ $A23A label=var_a23a
-B $A23A,1,1 Used by #R$F2F6 [128K]  Copy of noise pitch.
+B $A23A,1,1 Copy of noise pitch. Used by #R$F2F6 [128K]
 @ $A23B label=tunnel_sfx
 B $A23B,1,1 Set to 5 when we're in a tunnel. Used to modulate sfx.
 @ $A23C label=var_a23c
@@ -11852,7 +11852,7 @@ W $E870,6,2 Copy 24 bytes (3 bytes * 8 hooks) from hooks_128k to hooks at #R$83B
 @ $E876 label=hooks_128k
 @ $E876 ssub=JP start_siren_128k - hooks_128k + all_hooks
 C $E876,3 Replaces 48K start_siren_hook
-@ $E879 ssub=JP play_engine_sfx_128k - hooks_128k + all_hooks
+@ $E879 ssub=JP play_siren_sfx_128k - hooks_128k + all_hooks
 C $E879,3 Replaces 48K play_engine_sfx_hook
 @ $E87C ssub=JP silence_audio_128k - hooks_128k + all_hooks
 C $E87C,3 Replaces 48K silence_audio_hook
@@ -12596,40 +12596,44 @@ W $F24D,2,2 Level 5. Source = $C000, Paging = bank 7
 W $F24F,2,2 Level 6. Source = $E000, Paging = bank 7
 c $F251 $8045 once relocated.
 @ $F251 label=start_siren_128k
-C $F251,5 Store $8C to channel A fine pitch
+C $F251,5 Store 140 to channel A fine pitch
 C $F256,5 Store 14 to channel A volume (4-bit)
 C $F25B,5 Store 12 to channel B volume
-C $F260,5 Self modify 'LD A,x' @ #R$F271 (in this position)
-C $F265,3 var_a239 = $AA
+N $F260 Set alternating pattern for siren tone.
+C $F260,5 Self modify 'LD A,x' @ #R$F271 (in this position) below
+C $F265,3 Enable siren (storing $AA for bool)
 C $F268,1 Return
-c $F269 Routine at F269
-@ $F269 label=play_engine_sfx_128k
-C $F269,3 var_a239 (initialised to $AA above)
-C $F26C,2 Return if zero
+c $F269 Plays the siren sound effect.
+@ $F269 label=play_siren_sfx_128k
+C $F269,5 Return if siren disabled
 C $F26E,3 Load channel A fine pitch
-C $F271,6 jump on 50-50 alternating pattern? -- could be flipping between string sets?
-N $F277 Decreasing case
-@ $F277 label=pe_decreasing
-C $F277,2 A -= 3
-C $F279,4 Jump if A >= $5A
-C $F27D,2 Jump
-N $F27F Increasing case
-@ $F27F label=pe_increasing
-C $F27F,2 A += 3
-C $F281,4 Jump if A < $8C
-N $F285 Arrive here if A is outside of $5A..$8B
-@ $F285 label=pe_2
-C $F286,4 Store B (rotating pattern)
-N $F28B Arrive here if A is $5A..$8B
-@ $F28B label=pe_3
+C $F271,2 Load 50-50 alternating pattern (self modified above)
+C $F273,4 Jump to increasing case if top bit was set
+N $F277 Decreasing case.
+@ $F277 label=pss_decreasing
+C $F277,2 Decrease pitch by 3
+C $F279,4 Jump to set regs if new pitch >= 90
+C $F27D,2 Otherwise went too far: jump to pss_change
+N $F27F Increasing case.
+@ $F27F label=pss_increasing
+C $F27F,2 Increase pitch by 3
+C $F281,4 Jump to set regs if new pitch < 140
+N $F285 Arrive here if new pitch is outside of 90..139.
+@ $F285 label=pss_change
+C $F285,1 Preserve new pitch
+C $F286,4 Store rotating pattern (self modifying above)
+C $F28A,1 Restore new pitch
+N $F28B Arrive here if new pitch is 90..139.
+@ $F28B label=pss_set_regs
 C $F28B,3 Update channel A fine pitch
 C $F28E,5 and store 4 less to channel B fine pitch
 C $F293,8 Set mixer to enable tone A & B
-C $F29B,2 Jump
+C $F29B,2 Exit via write_registers_128k
 c $F29D Routine at F29D
 @ $F29D label=silence_audio_128k
 C $F29D,5 Initialise mixer to $3F (all noise and tone off)
-N $F2A2 writing the full register set?
+E $F29D FALLTHROUGH
+c $F2A2 writing the full register set?
 @ $F2A2 label=write_registers_128k
 C $F2A2,3 Address of sound register value(s) -- other values must be earlier
 @ $F2A9 label=wr_loop
@@ -12745,11 +12749,10 @@ C $F396,1 Decrement sample data counter
 C $F397,5 Loop to plsp_1 while sample data remains
 C $F39C,3 Exit via relocated reset_paging_128k
 c $F39F something done in phase 4 when perp is caught (play sample?)
-@ $F39F label=plsp_f39f_128k
-C $F39F,3 -- frame delay?
-C $F3A2,3 Return if A < 42
+@ $F39F label=handle_perp_caught_128k
+C $F39F,6 Return if overlay frame delay < 42
 C $F3A5,3 Call silence_audio_hook
-C $F3A8,4 var_a239 = 0
+C $F3A8,4 Stop siren
 C $F3AC,1 A = 1
 C $F3AD,3 Load var_a23a  -- copy of noise pitch
 C $F3B0,3 Self modify #R$8E49
