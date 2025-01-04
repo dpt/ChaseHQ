@@ -12753,7 +12753,7 @@ C $F3A8,4 var_a239 = 0
 C $F3AC,1 A = 1
 C $F3AD,3 Load var_a23a  -- copy of noise pitch
 C $F3B0,3 Self modify #R$8E49
-C $F3B3,3 Entry point for ?success music in bank 3
+C $F3B3,3 Entry point for success music in bank 3
 E $F39F FALLTHROUGH
 c $F3B6 Call a routine in bank 3
 R $F3B6 I:HL Address of entry point ($C000 + 0/3/6/9)

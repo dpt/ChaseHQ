@@ -7,7 +7,7 @@
 c $C000 Entry points
 C $C000 Title animations
 C $C003 Called from bootstrap
-C $C006 Plays success? music
+C $C006 Plays success music
 C $C009 Entry point for keyboard/joystick selection menu
 c $C00C
 c $C06E
