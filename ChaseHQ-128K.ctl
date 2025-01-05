@@ -2474,7 +2474,7 @@ N $83B5 Used by the routine at #R$B4CC.
 @ $83B5 label=start_siren_hook
 C $83B5,3 No-op when in 48K mode
 N $83B8 This entry point is used by the routines at #R$8401 and #R$8903.
-@ $83B8 label=play_engine_sfx_hook
+@ $83B8 label=play_engine_or_siren_sfx_hook
 C $83B8,3 Call play_engine_sfx when in 48K mode
 N $83BB This entry point is used by the routines at #R$8401, #R$873C, #R$87DC, #R$8876, #R$8A57 and #R$F220.
 @ $83BB label=silence_audio_hook
@@ -2483,10 +2483,10 @@ N $83BE This entry point is used by the routine at #R$8903.
 @ $83BE label=write_registers_hook
 C $83BE,3 No-op when in 48K mode
 N $83C1 This entry point is used by the routine at #R$8876.
-@ $83C1 label=play_turbo_sfx_hook
+@ $83C1 label=setup_engine_sfx_hook
 C $83C1,3 No-op when in 48K mode
 N $83C4 This entry point is used by the routine at #R$8903.
-@ $83C4 label=setup_engine_sfx_hook
+@ $83C4 label=play_engine_sfx_hook
 C $83C4,3 Call setup_engine_sfx when in 48K mode
 N $83C7 This entry point is used by the routines at #R$8401 and #R$9BCF.
 @ $83C7 label=play_speech_hook
@@ -2560,37 +2560,37 @@ C $8453,3 Call handle_perp_caught
 C $8456,3 Call move_hero_car
 C $8459,3 Call spawn_cars
 C $845C,3 Call cycle_counters
-C $845F,3 Call play_engine_sfx_hook
+C $845F,3 Call play_engine_or_siren_sfx_hook
 C $8462,3 Call build_height_table
 C $8465,3 Call scroll_horizon
-C $8468,3 Call play_engine_sfx_hook
+C $8468,3 Call play_engine_or_siren_sfx_hook
 C $846B,3 Call layout_road
-C $846E,3 Call play_engine_sfx_hook
+C $846E,3 Call play_engine_or_siren_sfx_hook
 C $8471,3 Call draw_road
-C $8474,3 Call play_engine_sfx_hook
+C $8474,3 Call play_engine_or_siren_sfx_hook
 C $8477,3 Call layout_objects
 C $847A,3 Call prepare_tunnel
 C $847D,3 Call spawn_hazards
 C $8480,3 Call drive_helicopter
 C $8483,3 Call choose_dirt_and_stones
-C $8486,3 Call play_engine_sfx_hook
+C $8486,3 Call play_engine_or_siren_sfx_hook
 C $8489,3 Call draw_hazards
 C $848C,3 Call layout_dirt_and_stones
-C $848F,3 Call play_engine_sfx_hook
+C $848F,3 Call play_engine_or_siren_sfx_hook
 C $8492,3 Call move_helicopter
 C $8495,3 Call check_collisions
-C $8498,3 Call play_engine_sfx_hook
+C $8498,3 Call play_engine_or_siren_sfx_hook
 C $849B,3 Call draw_everything_else
-C $849E,3 Call play_engine_sfx_hook
+C $849E,3 Call play_engine_or_siren_sfx_hook
 C $84A1,3 Call animate_hero_car
 C $84A4,3 Call speed_score
 C $84A7,3 Call update_scoreboard
 C $84AA,3 Call calc_overtake_bonus
-C $84AD,3 Call play_engine_sfx_hook
+C $84AD,3 Call play_engine_or_siren_sfx_hook
 C $84B0,3 Call drive_chatter
 C $84B3,3 Call smash_bar_etc
 C $84B6,3 Call transition
-C $84B9,3 Call play_engine_sfx_hook
+C $84B9,3 Call play_engine_or_siren_sfx_hook
 C $84BC,3 Call draw_screen
 C $84BF,3 Call exit_fork
 C $84C2,3 Is test mode enabled?
@@ -3017,7 +3017,7 @@ C $8897,5 Return if no turbo boosts are left
 C $889C,2 Set 60 ticks of boost
 C $889E,3 HL -> Random choice of (WHOAAAAA! / GREAT! / ONE MORE TIME.)
 C $88A1,5 Call start_chatter (priority 2)
-C $88A6,3 Exit via play_turbo_sfx_hook
+C $88A6,3 Exit via setup_engine_sfx_hook
 N $88A9 This entry point is used by the routine at #R$9BCF.
 @ $88A9 label=cui_quit_key
 C $88A9,5 If quit_state != 0 then return (quit in progress)
@@ -3056,9 +3056,10 @@ C $8903,6 Jump if tunnel_sfx
 C $8909,7 var_a23d |= var_a23c
 C $8910,3 Effect 7 (tit-tit), Priority 4
 C $8913,3 Call start_sfx if non-zero
-C $8916,3 Call setup_engine_sfx_hook
-C $8919,3 Call play_engine_sfx_hook
-C $891C,3 Call write_registers_hook
+@ $8916 label=drs_8916
+C $8916,3 Call play_engine_sfx_hook
+C $8919,3 Call play_engine_or_siren_sfx_hook  -- plays engine in 48K, siren in 128K
+C $891C,3 Call write_registers_hook  -- nop in 48K
 C $891F,5 If sfx_index == 0 return
 C $8924,3 #REGe = sfx_index * 4 -- stride of table
 C $8927,4 sfx_index = 0
@@ -5714,7 +5715,7 @@ B $A237,1,1 Current sound effect index
 B $A238,1,1 Current sound effect priority
 @ $A239 label=siren_enabled
 B $A239,1,1 Enables siren. Used by #R$F265 [128K]
-@ $A23A label=var_a23a
+@ $A23A label=turbo_sfx_enabled
 B $A23A,1,1 Copy of noise pitch. Used by #R$F2F6 [128K]
 @ $A23B label=tunnel_sfx
 B $A23B,1,1 Set to 5 when we're in a tunnel. Used to modulate sfx.
@@ -7781,7 +7782,7 @@ C $B3CE,2 Else A = 2
 C $B3D0,3 turn_speed = A
 C $B3D3,5 flip_car = 1
 @ $B3D8 label=ahc_debris
-C $B3D8,3 Draw debris?
+C $B3D8,3 Draw debris
 C $B3DB,2 A = <self modified>  -- flip flag + 1
 C $B3DD,3 Jump if zero (not flipped?)
 C $B3E0,1 C = A
@@ -7853,7 +7854,7 @@ C $B473,3 Exit via #R$B69E
 N $B476 Start the animation.
 @ $B476 label=ahc_hand_flag_one
 C $B476,2 C = <self modified>
-C $B478,2 A = <self modified>  [could be animation frame?]
+C $B478,2 A = <self modified>  [could be animation frame?]  -- gets set to 2
 C $B47A,1 A--
 C $B47B,3 Self modify 'LD A' @ #R$B478 (above) to load A
 C $B480,2 B = 2
@@ -7890,31 +7891,30 @@ C $B4CB,1 Return
 c $B4CC Perp sighted
 D $B4CC Used by the routine at #R$A637.
 @ $B4CC label=perp_sighted
-C $B4CC,4 Self modify 'LD C' @ #R$B476 to load 0
-C $B4D0,4 hand_flag = 1
-C $B4D4,3 sighted_flag = 1
-C $B4D7,1 A = 2
-C $B4D8,3 Self modify 'LD A' @ #R$B478 to load A
-C $B4DB,6 time_sixteenths/$A17D = 15, time_bcd/$A17E = $60
-C $B4E1,3 Point #REGhl at left light's attributes
-C $B4E4,3 Toggle its brightness
-C $B4E7,3 Point at "SIGHTING OF TARGET VEHICLE" message
-C $B4EA,3 Call setup_overlay_messages
+C $B4CC,4 Self modify 'LD C' @ #R$B476 to load 0  -- hand animation related
+C $B4D0,4 Set hand_flag to 1  -- put the cherry light on the roof
+C $B4D4,3 Set sighted_flag to 1  -- enable flashing lights and smash bar
+C $B4D7,4 Self modify 'LD A' @ #R$B478 to load 2  -- animation frame?
+C $B4DB,6 Set time_sixteenths to 15 and time_bcd to 96
+C $B4E1,6 Toggle the left light's brightness
+C $B4E7,6 Show the "SIGHTING OF TARGET VEHICLE" message
 C $B4ED,3 Exit via start_siren_hook
 c $B4F0 Smash handling
 @ $B4F0 label=smash
 C $B4F0,8 Cycle #REGa one step through 0..3 each time the routine is entered
-C $B4F8,14 *$B55C = #R$CE33 + #REGa * 6
-C $B506,5 $B54A = 9
+C $B4F8,14 *$B55C = #R$CE33 + #REGa * 6  -- in draw_debris
+C $B506,5 $B54A = 9  -- in draw_debris
 C $B50B,4 Load and increment smash_counter
-C $B50F,2 20 hits? [POKE $B50F for Single hit capture]
+C $B50F,2 20 hits? [POKE $B50F for single hit capture]
 C $B511,3 Exit via fully_smashed if so
 C $B514,2 19 hits?
 C $B516,2 Jump to smash_b522 if not
 N $B518 We have 19 hits
+C $B518,1 Preserve new smash counter
 C $B519,2 Set priority to 10
-C $B51B,3 HL = raymond_says_one_more_time
+C $B51B,3 Raymond: "ONE MORE TIME"
 C $B51E,3 Call start_chatter (priority 10)
+C $B521,1 Restore new smash counter
 @ $B522 label=smash_b522
 C $B522,3 Set smash_counter to #REGa
 C $B525,5 Set smash_factor to zero if smash_counter is zero
@@ -7924,7 +7924,7 @@ C $B534,5 Set smash_factor to 3 if smash_counter < 11
 C $B539,5 Set smash_factor to 4 if smash_counter < 14
 C $B53E,5 Set smash_factor to 5 if smash_counter < 17
 C $B543,1 Otherwise set smash_factor to 6
-@ $B544 label=set_smash_factor
+@ $B544 label=smash_set
 C $B544,4 Set smash_factor to #REGc
 C $B548,1 Return
 c $B549 Draws the debris
@@ -7932,29 +7932,26 @@ D $B549 Used by the routine at #R$B318.
 @ $B549 label=draw_debris
 C $B549,2 A = <self modified>
 C $B54B,1 Set flags
-C $B54C,1 Return if zero
-C $B54D,1 A--
+C $B54C,1 Return if zero  -- no debris?
+C $B54D,1 Decrement
 C $B54E,3 Self modify 'LD A' above
-C $B551,1 Double A
-C $B552,3 DE = A
+C $B551,4 DE = A * 2  -- builds an offset
 C $B555,4 Self modify 'LD HL' below
 C $B559,2 3 iterations
-C $B55B,3 HL = <self modified> by #R$B503
+C $B55B,3 HL = <self modified> by #R$B503  -- an entry in debris_table_ce33
+@ $B55E label=dd_loop
 C $B55E,1 Preserve #REGbc
-C $B55F,4 DE = wordat(HL); HL += 2
+C $B55F,4 Load an address
 C $B563,1 Preserve #REGhl
 C $B564,4 A = (*DE + 1) & 3
-C $B568,1 *DE = A
-C $B569,2 A <<= 2
-C $B56B,1 C = A
-C $B56C,1 A <<= 1
-C $B56D,2 C += A
-C $B56F,1 DE++
-C $B570,3 HL = <self modified>
-C $B573,1 B = H
-C $B574,1 HL += DE
+C $B568,1 *DE = A  -- writes back into table
+C $B569,6 C = A * 12
+C $B56F,1 DE++ -- advance to next byte in table
+C $B570,3 HL = <self modified> above
+C $B573,1 B = H  -- H is zero so BC = C
+C $B574,1 HL += DE  -- DE is ptr to table, HL is offset
 C $B575,3 DE = wordat(HL)
-C $B578,4 HL -> bitmap_debris_1/2/3/4
+C $B578,4 Address of bitmap_debris_1/2/3/4
 C $B57C,3 B = height, C = ?
 C $B57F,1 Bank
 C $B580,3 B = 0
@@ -7963,7 +7960,7 @@ C $B585,1 Unbank
 C $B586,3 Presumably plotting the debris
 C $B589,1 Restore #REGhl
 C $B58A,1 Restore #REGbc
-C $B58B,2 Loop
+C $B58B,2 Loop to dd_loop
 C $B58D,1 Return
 c $B58E Draws the car
 D $B58E Used by the routine at #R$B318.
@@ -10849,14 +10846,14 @@ D $CE0C first byte of each of the following is a counter
 @ $CE19 label=smoke_ce19
 @ $CE26 label=smoke_ce26
 B $CE0C,39,13
-b $CE33 Used by #R$B4FD - groups of six bytes
-@ $CE33 label=table_ce33
+b $CE33 Used by #R$B4FD - four groups of three words
+@ $CE33 label=debris_table_ce33
 W $CE33,24,6
-@ $CE4B label=table_ce4b
-@ $CE5E label=table_ce5e
-@ $CE71 label=table_ce71
-@ $CE84 label=table_ce84
-@ $CE97 label=table_ce97
+@ $CE4B label=debris_table_ce4b
+@ $CE5E label=debris_table_ce5e
+@ $CE71 label=debris_table_ce71
+@ $CE84 label=debris_table_ce84
+@ $CE97 label=debris_table_ce97
 B $CE4B,95,8*2,3,8*2,3,8*2,3,8*2,3,8*2,3
 b $CEAA [Graphics] Debris
 D $CEAA Used by #R$B578 4 frames, all 8x6 masked
@@ -11853,15 +11850,15 @@ W $E870,6,2 Copy 24 bytes (3 bytes * 8 hooks) from hooks_128k to hooks at #R$83B
 @ $E876 ssub=JP start_siren_128k - hooks_128k + all_hooks
 C $E876,3 Replaces 48K start_siren_hook
 @ $E879 ssub=JP play_siren_sfx_128k - hooks_128k + all_hooks
-C $E879,3 Replaces 48K play_engine_sfx_hook
+C $E879,3 Replaces 48K play_engine_or_siren_sfx_hook
 @ $E87C ssub=JP silence_audio_128k - hooks_128k + all_hooks
 C $E87C,3 Replaces 48K silence_audio_hook
 @ $E87F ssub=JP write_registers_128k - hooks_128k + all_hooks
 C $E87F,3 Replaces 48K write_registers_hook
-@ $E882 ssub=JP play_turbo_sfx_128k - hooks_128k + all_hooks
-C $E882,3 Replaces 48K play_turbo_sfx_hook
-@ $E885 ssub=JP setup_engine_sfx_128k - hooks_128k + all_hooks
-C $E885,3 Replaces 48K setup_engine_sfx_hook
+@ $E882 ssub=JP setup_turbo_sfx_128k - hooks_128k + all_hooks
+C $E882,3 Replaces 48K setup_engine_sfx_hook
+@ $E885 ssub=JP play_turbo_sfx_128k - hooks_128k + all_hooks
+C $E885,3 Replaces 48K play_engine_sfx_hook
 @ $E888 ssub=JP play_speech_128k - hooks_128k + all_hooks
 C $E888,3 Replaces 48K play_speech_hook
 @ $E88B ssub=JP attract_mode_128k - hooks_128k + all_hooks
@@ -12594,7 +12591,8 @@ W $F249,2,2 Level 3. Source = $C000, Paging = bank 6
 W $F24B,2,2 Level 4. Source = $E000, Paging = bank 6
 W $F24D,2,2 Level 5. Source = $C000, Paging = bank 7
 W $F24F,2,2 Level 6. Source = $E000, Paging = bank 7
-c $F251 $8045 once relocated.
+c $F251 Start the siren sound effect.
+D $F251 $8045 once relocated.
 @ $F251 label=start_siren_128k
 C $F251,5 Store 140 to channel A fine pitch
 C $F256,5 Store 14 to channel A volume (4-bit)
@@ -12634,6 +12632,7 @@ c $F29D Routine at F29D
 C $F29D,5 Initialise mixer to $3F (all noise and tone off)
 E $F29D FALLTHROUGH
 c $F2A2 writing the full register set?
+D $F2A2 Used by the routine at #R$F269.
 @ $F2A2 label=write_registers_128k
 C $F2A2,3 Address of sound register value(s) -- other values must be earlier
 @ $F2A9 label=wr_loop
@@ -12642,7 +12641,7 @@ C $F2AD,4 Write to the register from (HL), then decrement B and HL
 C $F2B1,1 Next register down
 C $F2B2,3 Loop to #R$F2A9 while +ve
 C $F2B5,1 Return
-c $F2B6 munging speed value into tone?
+c $F2B6 Plays engine effect.
 D $F2B6 Used by the routine at #R$F2FA.
 @ $F2B6 label=engine_sfx_from_speed_128k
 C $F2B6,3 Load speed into #REGhl
@@ -12667,13 +12666,13 @@ C $F2E5,3 Set channel C volume
 C $F2E8,8 Set mixer to enable tone C
 C $F2F0,1 Return
 c $F2F1 Routine at F2F1
-@ $F2F1 label=play_turbo_sfx_128k
+@ $F2F1 label=setup_turbo_sfx_128k
 C $F2F1,5 Set noise pitch (5-bit) [$3C is > 5-bit...]
-C $F2F6,3 var_a23a = $3C  -- Copy of it?
+C $F2F6,3 turbo_sfx_enabled = $3C  -- set flag?
 C $F2F9,1 Return
-c $F2FA Routine at F2FA
-@ $F2FA label=setup_engine_sfx_128k
-C $F2FA,6 Jump if var_a23a is zero
+c $F2FA Plays turbo effect, exits via engine effect.
+@ $F2FA label=play_turbo_sfx_128k
+C $F2FA,6 Jump if turbo_sfx_enabled is zero
 C $F300,1 Decrement noise pitch
 C $F301,1 Return if zero
 C $F302,3 Address of noise pitch register soft copy
@@ -12686,7 +12685,7 @@ C $F319,5 Set channel C volume to 13
 C $F31E,1 Return
 @ $F31F label=ses_1
 C $F31F,8 Set mixer to disable tone C and noise C
-C $F327,4 var_a23a = 0
+C $F327,4 turbo_sfx_enabled = 0
 C $F32B,3 Exit via engine_sfx_from_speed_128k
 c $F32E Play speech
 D $F32E Relocated to $8122
