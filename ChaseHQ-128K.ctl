@@ -3239,71 +3239,94 @@ C $8AD2,7 Call relocated handle_perp_caught_128k if in 128K mode
 C $8AD9,5 Return if transition_control != 0
 C $8ADE,7 Call relocated handle_perp_caught_128k if in 128K mode
 C $8AE5,5 perp_caught_phase = 5
-N $8AEA Calculate clear bonus.
-C $8AEA,2 '0'
+N $8AEA Calculate level clear bonus (<stage number> * 100,000 points for the first try, 10,000 on retries).
+C $8AEA,2 '0' (second digit)
 C $8AEC,4 D = wanted_stage_number
-C $8AF0,2 L = D + '0'
-C $8AF2,3 Load retry_count
-C $8AF5,3 Jump to hpc_8b03 if zero
-C $8AF8,8 D <<= 4? or make BCD?
-C $8B00,1 H = L
-C $8B01,2 L = ' '
-@ $8B03 label=hpc_8b03
+C $8AF0,2 L = wanted_stage_number + '0'
+N $8AF2 Completing the level on the first try awards <stage number> * 100,000 points.
+C $8AF2,6 Jump to hpc_set_score if retry_count is zero
+N $8AF8 Divide bonus by 10 if stage was retried.
+C $8AF8,8 Neutralise the upcoming shift so bonus is divided by 10
+C $8B00,1 H = L    -- becomes second ASCII digit
+C $8B01,2 L = ' '  -- first ASCII digit replaced with space
+@ $8B03 label=hpc_set_score
 C $8B03,3 Set first two digits of the clear bonus to #REGhl, "LH0,000"
-C $8B06,10 Set score
-C $8B10,3 Call increment_score
+N $8B06 Set score increment to (<stage number> * 100,000).
+C $8B06,8 Move wanted_stage_number to first digit
+C $8B0E,2 Zero other digits
+C $8B10,3 Call increment_score (with D,E,A)
+N $8B13 Calculate time remaining bonus.
 C $8B13,3 Get time remaining (BCD)
-C $8B16,3 Set A in "TIME BONUS   A  X 5000"
-C $8B19,1 C = A
-C $8B1A,4 A <<= 4?
-C $8B1E,2 A &= $F
-C $8B22,2 A = ' '
-@ $8B27 label=hpc_8b27
-C $8B27,1 B = A -- iterations
-C $8B28,2 A += '0'
-C $8B2B,3 DE = $0500
+C $8B16,3 Set A in "TIME BONUS   Ax X 5000"  as a temporary location
+C $8B19,1 Copy time remaining (BCD)
+C $8B1A,6 Extract high digit
+C $8B20,2 Jump if it's non-zero
+N $8B22 Otherwise write out a space character.
+@ $8B22 label=hpc_no_high_digit
+C $8B22,3 Put a space character in #REGa'
+C $8B25,2 Jump to store
+@ $8B27 label=hpc_have_high_digit
+C $8B27,1 Multiplier (high digit)
+C $8B28,2 Make it ASCII
+C $8B2A,1 Bank it
+C $8B2B,3 #REGde = $0500  (this is 50,000 here because we're doing the tens)
 @ $8B2E label=hpc_increment_score_loop_1
-C $8B2E,1 A = 0
-C $8B2F,3 Call increment_score
+C $8B2E,1 Clear #REGa since increment_score will corrupt it
+C $8B2F,3 Call increment_score (with D,E,A)
 C $8B32,2 Loop while #REGb > 0
-@ $8B34 label=hpc_8b34
-C $8B35,3 Set A in "TIME BONUS   A  X 5000"
-C $8B38,3 A = C & 15
+@ $8B34 label=hpc_store_time_bonus_high
+C $8B34,1 Unbank ASCII of high digit
+C $8B35,3 Store as x in "TIME BONUS   xy X 5000"
+C $8B38,1 Copy time remaining (BCD)
+C $8B39,2 Extract low digit
 C $8B3B,2 Jump if zero
-N $8B3D To apply Russell Marks' fix here transpose the next two instructions.
-C $8B3E,1 B = A -- iterations [should be the low nibble of score]
-C $8B3F,3 DE = $0050
+N $8B3D Bug: This banks the low digit in #REGa which the LD B,A then expects to be able to use. To fix this transpose the next two instructions. (Credit: Russell Marks)
+@ $8B3D label=hpc_have_low_digit
+C $8B3D,1 Bank low digit
+C $8B3E,1 Multiplier (should be low digit but bugged)
+C $8B3F,3 #REGde = $0050  (this is 5,000 here because we're doing the ones)
 @ $8B42 label=hpc_increment_score_loop_2
-C $8B42,1 A = 0
-C $8B43,3 Call increment_score
+C $8B42,1 Clear #REGa since increment_score will corrupt it
+C $8B43,3 Call increment_score (with D,E,A)
 C $8B46,2 Loop while #REGb > 0
-@ $8B48 label=hpc_8b48
-C $8B49,2 A += '0'
-C $8B4B,3 Set A in "TIME BONUS   xA X 5000"
+@ $8B48 label=hpc_store_time_bonus_low
+C $8B48,1 Unbank low digit
+C $8B49,2 Make it ASCII
+C $8B4B,3 Store as y in "TIME BONUS   xy X 5000"
+N $8B4E Display score.
+C $8B4E,3 Iterations = 4; Clear #REGc flag byte (set if seen a digit?)
 C $8B51,3 Point DE at last digit of score_bcd (big end)
 C $8B54,3 Point HL at x in "SCORE         x       " - the ten millions?
-@ $8B57 label=hpc_loop_3
-C $8B57,1 A = *DE    -- fetch digits
-C $8B58,6 A = (A << 4) & 15   -- extract first digit
-C $8B64,2 A = ' '
-@ $8B68 label=hpc_8b68
-C $8B68,2 C = $FF
-C $8B6A,2 A += '0'
-@ $8B6C label=hpc_8b6c
-C $8B6C,2 *HL++ = A
-C $8B6E,3 A = *DE & 15
-C $8B77,2 A = ' '
-@ $8B7B label=hpc_8b7b
-C $8B7B,2 C = $FF
-C $8B7D,2 A += '0'
-@ $8B7F label=hpc_8b7f
-C $8B7F,1 *HL = A
-C $8B80,1 HL++
-C $8B81,1 DE--
-C $8B82,2 Loop hpc_loop_3 while #REGb > 0
-C $8B84,1 HL--
-C $8B85,2 *HL |= 1<<7
-C $8B87,3 Point at "CLEAR BONUS - TIME BONUS - SCORE" messages
+@ $8B57 label=hpc_score_loop
+C $8B57,1 Fetch a pair of digits from score_bcd
+C $8B58,6 Extract the high digit
+C $8B5E,2 Jump if it's non-zero
+@ $8B60 label=hpc_score_zero_high_digit
+C $8B60,2 Seen a digit yet?
+C $8B62,2 Jump if so
+C $8B64,2 Space
+C $8B66,2 Jump to store
+@ $8B68 label=hpc_score_have_high_digit
+C $8B68,2 Set "saw a digit" flag
+C $8B6A,2 Make it ASCII
+@ $8B6C label=hpc_score_store_high
+C $8B6C,2 Store ASCII high digit
+C $8B6E,3 Extract the low digit
+C $8B71,2 Jump if it's non-zero
+@ $8B73 label=hpc_score_zero_low_digit
+C $8B73,2 Seen a digit yet?
+C $8B75,2 Jump if so
+C $8B77,2 Space
+C $8B79,2 Jump to store
+@ $8B7B label=hpc_score_have_low_digit
+C $8B7B,2 Set "saw a digit" flag
+C $8B7D,2 Make it ASCII
+@ $8B7F label=hpc_score_store_low
+C $8B7F,2 Store ASCII low digit
+C $8B81,1 Advance (backwards) to next digits of score_bcd
+C $8B82,2 Loop hpc_score_loop while #REGb > 0
+C $8B84,3 Terminate the string
+C $8B87,3 Point at "CLEAR BONUS ..." "TIME BONUS ..." "SCORE ..." messages
 C $8B8A,3 Call setup_overlay_messages
 @ $8B8D label=hpc_phase1
 C $8B8D,3 Load the perp car's horizontal position (byte)
@@ -4946,7 +4969,7 @@ C $9C50,5 Is fire pressed?
 C $9C55,2 Jump if not (?)
 N $9C57 Resetting mission code.
 C $9C57,4 Reset time_up_state to zero
-C $9C5B,5 Reset smash_factor to zero
+C $9C5B,5 Reset smash_level to zero
 C $9C60,2 Reset smash_counter to zero
 C $9C62,5 Set user input mask to allow everything through
 C $9C67,3 gear_lockout = 3
@@ -5049,9 +5072,11 @@ C $9D11,5 Set the trigger_bonus_flag
 C $9D16,1 A = B, then fall into increment_score with the bonus preserved
 c $9D17 Increments the score by (D,E,A)
 D $9D17 Used by the routines at #R$8A57 and #R$9CC2.
-R $9D17 I:A Low byte of increment
-R $9D17 I:E Middle byte of increment
-R $9D17 I:D High byte of increment
+R $9D17 I:A Low byte of increment (low two digits)
+R $9D17 I:E Middle byte of increment (middle two digits)
+R $9D17 I:D High byte of increment (high two digits)
+R $9D17 O:A Corrupted
+R $9D17 O:HL Corrupted
 @ $9D17 label=increment_score
 C $9D17,3 HL = &score_bcd
 C $9D1A,1 A += *HL
@@ -5063,7 +5088,7 @@ C $9D21,2 *HL++ = A
 C $9D23,2 A = D + *HL + carry
 C $9D25,1 BCD correct A
 C $9D26,2 *HL++ = A
-C $9D28,3 A = 0 + *HL + carry
+C $9D28,3 A = *HL + carry
 C $9D2B,1 BCD correct A
 C $9D2C,1 *HL = A
 C $9D2D,1 Return
@@ -5698,7 +5723,7 @@ B $A22F,1,1 Set to 1 by perp_sighted. This starts the anim where the cherry ligh
 B $A230,1,1 Set to > 0 by fully_smashed when the perp has been caught. #R$8A57 progresses this through stages 1..6 until the cars are slowed to a halt and the bonuses are printed. Used by draw_screen. Inhibits car spawning.
 @ $A231 label=transition_control
 B $A231,1,1 Transition/fade control/counter. Set to zero when fill_attributes has run. Set to 4 while transitioning. Also 2 sometimes. Set to 1 when the perp has been caught and we're drawing mugshots.
-@ $A232 label=smash_factor
+@ $A232 label=smash_level
 B $A232,1,1 Set to 0..6 if (0..3, 4..6, 7..10, 11..13, 14..16, 17+) smashes
 @ $A233 label=smash_counter
 B $A233,1,1 Smash counter (0..20)
@@ -6335,18 +6360,17 @@ C $A7A1,3 Call cc_hit_scenery2
 C $A7A4,3 Read #REGhl from 'LD BC,x' @ #R$B32E
 C $A7A7,4 HL += 40
 C $A7AB,3 Self modify 'LD BC,x' @ #R$B32E
-C $A7AE,2 D = 0
+C $A7AE,2 D = 0  -- bonus middle digit
 C $A7B0,1 -- restore A which holds the IX[7] flags from earlier AND FLAGS TOO
-C $A7B1,3 HL = #R$B4F0  == smash routine
-C $A7B4,1 Preserve HL or push addr to stack?
+C $A7B1,4 Put a call to smash on the stack
 C $A7B5,2 Jump if no carry
 C $A7B7,4 Jump if A == 2
-C $A7BB,1 Push smash again?
+C $A7BB,1 Put another call to smash on the stack
 N $A7BC Break?
-C $A7BC,2 D = 4
+C $A7BC,2 D = 4  -- bonus middle digit
 @ $A7BE label=sh_a7be
-C $A7BE,5 D = wanted_stage_number + D
-C $A7C3,2 E = 0
+C $A7BE,5 D = wanted_stage_number + D  (D could be 0 or 4)
+C $A7C3,2 E = 0  -- bonus top digit(s)
 C $A7C5,6 Jump if retry_count is zero
 C $A7CB,1 Middle digit(s) of bonus
 C $A7CC,1 Set top two digits of bonus
@@ -7206,7 +7230,7 @@ C $AF72,3 Jump
 C $AF75,3 Call draw_object_right_helicopter_entrypt
 C $AF78,3 Read A from 'LD D,x' @ #R$933D
 C $AF7B,3 Self modify 'LD A,x' @ #R$B023
-C $AF7E,3 Get smash_factor
+C $AF7E,3 Get smash_level
 C $AF81,4 Jump if A >= 5
 C $AF85,3 A = x in 'LD A,x' @ #R$AFFB
 C $AF88,5 Jump if A >= 4
@@ -7217,8 +7241,8 @@ N $AF95 I see this getting hit only when in smash mode.
 C $AF95,3 BC = wordat(HL)
 C $AF98,3 -> floating_arrow_big_defn (incl. "HERE!")
 C $AF9B,3 Call plotting func TBD
-@ $AF9E label=dh_smash_factor
-C $AF9E,3 Get smash_factor
+@ $AF9E label=dh_smash_level
+C $AF9E,3 Get smash_level
 C $AFA1,4 Jump if it's < 4
 C $AFA5,4 A = (A - 4) * 4 ?
 C $AFA9,1 Bank
@@ -7237,13 +7261,13 @@ C $AFC6,4 HL = wordat(HL)   Load table entry (a pointer) into #REGhl
 C $AFCA,2 Retrieve #REGde from stack
 N $AFCC DE is offset, HL is base of graphic defns
 C $AFCC,3 Draw
-@ $AFCF label=dh_check_smash_factor
-C $AFCF,3 Get smash_factor (should be 0..6)
-C $AFD2,1 Is smash_factor 0?
+@ $AFCF label=dh_check_smash_level
+C $AFCF,3 Get smash_level (should be 0..6)
+C $AFD2,1 Is smash_level 0?
 C $AFD3,3 Jump if so (draw nothing, continue)
-C $AFD6,1 Is smash_factor 1?
+C $AFD6,1 Is smash_level 1?
 C $AFD7,2 Jump if so (draw 1 lot)
-C $AFD9,1 Is smash_factor 2?
+C $AFD9,1 Is smash_level 2?
 C $AFDA,2 Jump if so (draw 2 lots)
 N $AFDC Otherwise draw all 3 lots.
 C $AFDC,3 Smoke data
@@ -7905,27 +7929,27 @@ C $B4F0,8 Cycle #REGa one step through 0..3 each time the routine is entered
 C $B4F8,14 *$B55C = #R$CE33 + #REGa * 6  -- in draw_debris
 C $B506,5 $B54A = 9  -- in draw_debris
 C $B50B,4 Load and increment smash_counter
-C $B50F,2 20 hits? [POKE $B50F for single hit capture]
+C $B50F,2 20 hits? [POKE this for single hit capture]
 C $B511,3 Exit via fully_smashed if so
 C $B514,2 19 hits?
-C $B516,2 Jump to smash_b522 if not
+C $B516,2 Jump to smash_set_counter if not
 N $B518 We have 19 hits
 C $B518,1 Preserve new smash counter
 C $B519,2 Set priority to 10
 C $B51B,3 Raymond: "ONE MORE TIME"
 C $B51E,3 Call start_chatter (priority 10)
 C $B521,1 Restore new smash counter
-@ $B522 label=smash_b522
+@ $B522 label=smash_set_counter
 C $B522,3 Set smash_counter to #REGa
-C $B525,5 Set smash_factor to zero if smash_counter is zero
-C $B52A,5 Set smash_factor to 1 if smash_counter < 4
-C $B52F,5 Set smash_factor to 2 if smash_counter < 7
-C $B534,5 Set smash_factor to 3 if smash_counter < 11
-C $B539,5 Set smash_factor to 4 if smash_counter < 14
-C $B53E,5 Set smash_factor to 5 if smash_counter < 17
-C $B543,1 Otherwise set smash_factor to 6
+C $B525,5 Set smash_level to zero if smash_counter is zero
+C $B52A,5 Set smash_level to 1 if smash_counter < 4
+C $B52F,5 Set smash_level to 2 if smash_counter < 7
+C $B534,5 Set smash_level to 3 if smash_counter < 11
+C $B539,5 Set smash_level to 4 if smash_counter < 14
+C $B53E,5 Set smash_level to 5 if smash_counter < 17
+C $B543,1 Otherwise set smash_level to 6
 @ $B544 label=smash_set
-C $B544,4 Set smash_factor to #REGc
+C $B544,4 Set smash_level to #REGc
 C $B548,1 Return
 c $B549 Draws the debris
 D $B549 Used by the routine at #R$B318.
