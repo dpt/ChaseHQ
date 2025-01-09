@@ -2640,16 +2640,19 @@ C $851D,5 quit_state = 2
 C $8522,2 Forward transition
 C $8524,3 Call setup_transition
 C $8527,3 Loop to ml_loop
-c $852A CPU driver
+c $852A CPU driver for attract mode
 D $852A This runs the game loop while driving the car.
 @ $852A label=cpu_driver
 C $852A,3 Get road position
-C $852D,7 Subtract centre value. Carry flag will be set if we're on the right hand side of the road
+N $852D If we're on the left, go right.
+C $852D,7 Subtract centre-left edge. Carry flag will be set if we're on the right hand side of it
 C $8534,2 Set input ACCELERATE + RIGHT
 C $8536,2 Jump to cd_check_speed if we're on the left
-C $8538,5 Subtract "ideal road position"? value. Carry will be set if we're on the right of it.
+N $8538 If we're on the right, go left.
+C $8538,5 Subtract centre-right edge. Carry flag will be set if we're on the right hand side of it
 C $853D,2 Set input ACCELERATE + LEFT
 C $853F,2 Jump to cd_check_speed if we're on the right
+N $8541 Otherwise we're in the centre zone.
 C $8541,2 Set input ACCELERATE
 @ $8543 label=cd_check_speed
 C $8543,1 Move input into #REGc for the moment
@@ -3328,25 +3331,29 @@ C $8B82,2 Loop hpc_score_loop while #REGb > 0
 C $8B84,3 Terminate the string
 C $8B87,3 Point at "CLEAR BONUS ..." "TIME BONUS ..." "SCORE ..." messages
 C $8B8A,3 Call setup_overlay_messages
-@ $8B8D label=hpc_phase1
-C $8B8D,3 Load the perp car's horizontal position (byte)
-C $8B90,3 Is it 35?
+N $8B8D This is phase 1 of the caught process. Set the perp's horizontal position.
+@ $8B8D label=hpc_move_perp
+C $8B8D,3 Load the perp car's horizontal position (as byte)
+C $8B90,3 Compare it to 35 (left hand side of road)
 C $8B93,2 Change by 5
 C $8B95,2 Jump if no change required
-C $8B97,2 Jump to change if pos < 35
-C $8B99,2 Otherwise change by -5
+C $8B97,2 Jump to increase by 5 if pos < 35
+C $8B99,2 Otherwise decrease by 5
 @ $8B9B label=hpc_change_perp_pos
-C $8B9B,2 C = A + B  -- new pos = old pos + delta
+C $8B9B,2 new pos = old pos + delta
 @ $8B9D label=hpc_assign_perp_pos
-C $8B9D,4 Set the perp car's horizontal position (byte)
-N $8BA1 Now move the hero car. Similar code to cpu_driver.
+C $8B9D,4 Set the perp car's horizontal position (as byte)
+N $8BA1 Now move the hero car. Similar code is in cpu_driver.
 C $8BA1,3 Get road position
-C $8BA4,7 Subtract centre value. Carry flag will be set if we're on the right hand side of the road
+N $8BA4 If we're on the left, go right.
+C $8BA4,7 Subtract centre-left edge. Carry flag will be set if we're on the right hand side of it
 C $8BAB,2 Set input ACCELERATE + RIGHT
 C $8BAD,2 Jump to #R$8BBA if we're on the left
-C $8BAF,5 Subtract "ideal road position"? value. Carry will be set if we're on the right of it.
+N $8BAF If we're on the right, go left.
+C $8BAF,5 Subtract centre-right edge. Carry flag will be set if we're on the right hand side of it
 C $8BB4,2 Set input ACCELERATE + LEFT
 C $8BB6,2 Jump to #R$8BBA if we're on the right
+N $8BB8 Otherwise we're in the centre zone.
 C $8BB8,2 Set input ACCELERATE
 @ $8BBA label=hpc_assign_hero_pos
 C $8BBA,1 Move input into #REGc for the moment
@@ -5649,7 +5656,7 @@ N $A188 +7 (byte) TBD used by hazard_hit, used in plotting
 N $A188 +8 (byte) gets copied from the hazards table
 N $A188 +9 (word) address of LOD
 N $A188 +11 (word) address of routine
-N $A188 +13 (word) horizontal position, e.g. $190
+N $A188 +13 (word) horizontal position, e.g. $190. but if it's the perp we seem to use it as a byte.
 N $A188 +15 (byte) TBD used by hazard_hit, counter which gets set to 2 then reduced
 N $A188 +16 (byte) TBD
 N $A188 +17 (byte) TBD used by hazard_hit, indexes table #R$ACDB
@@ -5831,7 +5838,7 @@ B $A26A,1,1 0 if not quitting, or 1/2 depending on quit state
 @ $A26B label=start_speech
 B $A26B,1,1 Index of speech sample to play preceded by N zero bits and a one bit.
 @ $A26C label=road_pos
-W $A26C,2,2 Road position of car. Left..Right = $1E2...$03A, $105 is centre.
+W $A26C,2,2 Road position of car. Left..Right = $1E2...$03A. ~$109 is centre.
 @ $A26E label=road_curvature_ptr
 W $A26E,2,2 Address of the previous curvature data byte
 @ $A270 label=road_height_ptr
