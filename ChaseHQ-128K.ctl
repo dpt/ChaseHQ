@@ -3343,7 +3343,7 @@ C $8B99,2 Otherwise decrease by 5
 C $8B9B,2 new pos = old pos + delta
 @ $8B9D label=hpc_assign_perp_pos
 C $8B9D,4 Set the perp car's horizontal position (as byte)
-N $8BA1 Now move the hero car. Similar code is in cpu_driver.
+N $8BA1 Now move the hero car. This section is similar to code in cpu_driver.
 C $8BA1,3 Get road position
 N $8BA4 If we're on the left, go right.
 C $8BA4,7 Subtract centre-left edge. Carry flag will be set if we're on the right hand side of it
@@ -3358,68 +3358,72 @@ C $8BB8,2 Set input ACCELERATE
 @ $8BBA label=hpc_assign_hero_pos
 C $8BBA,1 Move input into #REGc for the moment
 C $8BBB,2 Mask off LEFT and RIGHT flags
-C $8BBD,2 Jump to #R$8BE5 if non-zero
-N $8BBF Going straight. Are we within distance?
-C $8BBF,3 A = *$A189  -- hazards[0]+1 <distance related>
-C $8BC2,4 Jump if <distance value> >= 3
-N $8BC6 Count down while we're within distance.
-C $8BC6,4 perp_halt_counter--
+C $8BBD,2 Jump to #R$8BE5 if either is set
+N $8BBF Not turning. Are we within distance?
+@ $8BBF label=hpc_check_distance
+C $8BBF,3 Load perp's distance (low byte)
+C $8BC2,4 Jump if distance >= 3
+N $8BC6 Count down while we're within distance of the perp.
+C $8BC6,4 Decrement perp_halt_counter
 C $8BCA,2 Jump if countdown is non-zero
 N $8BCC Countdown hit zero: stop.
 C $8BCC,7 speed = 0
-C $8BD3,3 *$A18C = 0  -- hazards[0].something
-C $8BD6,4 *$A189 = 1  -- hazards[0].<distance related>
-C $8BDA,4 perp_caught_phase = 2
-C $8BDE,4 smoke = 3
-C $8BE2,3 Jump to hpc_set_perp_pos
-N $8BE5 HL = 350 - (16 - <distance related>) * 20  -- compared to speed later
-@ $8BE5 label=hpc_8be5
-C $8BE5,3 A = *$A189  -- hazards[0]+1 <distance related>
+C $8BD3,3 *$A18C = 0  -- distance related? [reset by set_up_stage]
+C $8BD6,4 Set perp's distance to 1
+C $8BDA,4 Set perp_caught_phase to 2
+C $8BDE,4 Set smoke to 3
+C $8BE2,3 Jump to hpc_set_perp_pos_or_accel (with #REGde = 0)
+N $8BE5 HL = 350 - (16 - <distance related>) * 20  -- compared to speed later Arrive here if we're turning or the perp is too far away.
+@ $8BE5 label=hpc_perp_too_far_away
+C $8BE5,3 Load perp's distance
 C $8BE8,3 HL = 350  -- compared to speed later
-C $8BEB,4 Jump if <distance related> >= 15
-C $8BEF,3 A = 16 - <distance related>
+C $8BEB,4 Jump if distance >= 15
+C $8BEF,3 A = 16 - distance
+N $8BF2 Calculate 350 - A * 20.
 C $8BF2,3 DE = 20
 C $8BF5,1 B = A  -- iterations
-@ $8BF6 label=hpc_8bf6
+@ $8BF6 label=hpc_subtract_loop
 C $8BF6,2 HL -= DE
 C $8BF8,2 Loop while #REGb > 0
-@ $8BFA label=hpc_8bfa
-C $8BFA,1 DE = HL
+@ $8BFA label=hpc_perp_far
+C $8BFA,1 Put result in DE
 C $8BFB,3 Load speed
 C $8BFE,1 Preserve speed
 C $8BFF,4 Jump if speed < DE  -- DE is e.g. 350
-N $8C03 #REGc is a user input here.
+N $8C03 Slow down to match the perp. #REGc is a user input here.
 C $8C03,2 Clear input ACCELERATE
 C $8C05,7 Jump if HL < 50
 C $8C0C,2 Set input BRAKE
-@ $8C0E label=hpc_8c0e
+@ $8C0E label=hpc_set_gear
 C $8C0E,1 Restore speed
 C $8C0F,5 Calculate speed - 150
 C $8C14,3 Load gear
 C $8C17,2 Set gear to low if speed < 150, otherwise high
 C $8C1B,2 Set input GEAR
-@ $8C1D label=hpc_8c1d
+@ $8C1D label=hpc_assign_user_input
 C $8C1D,4 Set user input
+@ $8C21 label=hpc_check_perp_accel
 @ $8C21 ssub=LD HL,(hazard_0 + 13)
-C $8C21,3 Load the horizontal position of the perp's car into #REGhl
-C $8C24,11 Jump to hpc_set_perp_pos if HL <= 70
-C $8C2F,5 HL -= 5
+C $8C21,3 Load the (accel?) of the perp's car into #REGhl
+C $8C24,7 Compare it to 70
+C $8C2B,4 Jump to hpc_set_perp_pos_or_accel if result <= 70, with #REGde = 70
+C $8C2F,6 Otherwise reduce it by 5 with result in #REGde
 N $8C35 This entry point is used by the routine at #R$8C3A.
-@ $8C35 label=hpc_set_perp_pos
+@ $8C35 label=hpc_set_perp_pos_or_accel
 @ $8C35 ssub=LD (hazard_0 + 13),DE
-C $8C35,4 Set the horizontal position of the perp's car to #REGde
+C $8C35,4 Set the horizontal position (or accel?) of the perp's car to #REGde -- and it's writing A196 too is that the high byte?
 C $8C39,1 Return
 c $8C3A Fully smashed
 D $8C3A Used by the routine at #R$B4F0.
 @ $8C3A label=fully_smashed
-C $8C3A,5 Set perp_caught_phase to 1 - starts the pull over sequence
+C $8C3A,5 Start the pull over sequence (perp_caught_phase = 1)
 C $8C3F,4 Show the "stop" hand (hand_flag = 2)
-C $8C43,5 Set smash_counter to 20
+C $8C43,5 Set smash_counter to 20 [Should it not always be 20 at this point already?]
 C $8C48,5 Set user input mask to (Quit+Pause) to inhibit player control
 C $8C4D,3 Print the "OK! PULL OVER CREEP!" message
 C $8C50,3 Call setup_overlay_messages
-C $8C53,3 #REGde = $190
-C $8C56,2 Exit via hpc_set_perp_pos
+C $8C53,3 #REGde = $190 (pos/accel?)
+C $8C56,2 Exit via hpc_set_perp_pos_or_accel
 b $8C58 End of level messages
 @ $8C58 label=score_messages
 B $8C58,3,3
@@ -5625,7 +5629,7 @@ B $A170,1,1 Number of turbo boosts remaining (3 for a new game)
 @ $A171 label=horizon_level
 W $A171,2,2 seems to be the horizon level, possibly relative (used during attract mode)
 @ $A173 label=perp_halt_counter
-B $A173,1,1 This is set to 20 by #$87ED then decremented by #R$8BC6 which uses it. It's a counter decremented while slowing down to catch the perp.
+B $A173,1,1 A counter decremented while slowing down the caught perp. This is set to 20 by #$87ED then decremented by #R$8BC6.
 @ $A174 label=displayed_gear
 B $A174,1,1 Low/high gear flag.
 @ $A175 label=score_digits
@@ -6348,7 +6352,7 @@ C $A77F,3 Multiply by 8
 N $A782 And then we do nothing with #REGa?
 C $A782,1 HL += DE
 @ $A783 label=sh_store_exit
-C $A783,6 wordat(IX + 13) = HL  -- store horizontal position
+C $A783,6 wordat(IX + 13) = HL  -- store horizontal position (or accel?)
 C $A789,1 Return
 @ $A78A label=sh_a78a
 C $A78A,4 IX[7] = $FC
@@ -6495,7 +6499,7 @@ c $A8CD Hazard handler routine? Triggered at road fork
 @ $A8CD label=hazard_handler_a8cd
 C $A8CD,6 Return if perp_caught_phase > 0
 C $A8D3,6 Check stop_car_spawning flag
-C $A8D9,4 IX[14] = $01  -- horizontal position
+C $A8D9,4 IX[14] = $01  -- horizontal position or accel?
 C $A8DD,4 IX[13] = $FF
 C $A8E1,3 C = IX[1]  -- buffer offset
 C $A8E4,3 Call get_spawn_lanes
@@ -6943,7 +6947,7 @@ C $AC92,2 If --A == 0 return
 @ $AC94 label=hh_ac94
 C $AC94,13 IX[16] = #R$ACDB[IX[17]]
 C $ACA1,3 Increment IX[17]
-C $ACA4,6 Load horizontal position into #REGhl
+C $ACA4,6 Load horizontal position (or accel?) into #REGhl
 C $ACAA,2 #REGde = #REGhl
 C $ACAC,4 Divide horizontal position by 2?
 C $ACB0,8 Then by 16 once it's 8 bits
@@ -7047,9 +7051,11 @@ C $ADB9,2 Advance to next hazard
 C $ADBB,2 Loop while iterations remain -- #REGb > 0
 C $ADBD,1 Return
 @ $ADBE label=dh_draw_one_hazard
-C $ADBE,3 C = IX[14]  -- top byte of horz position?
-C $ADC1,9 IX[4] -= IX[13]  -- (TBD -= (bottom byte of horz position?))
+C $ADBE,3 C = IX[14]  -- top byte of horz position or accel?
+N $ADC1 Distance? If I disable this calculation and $A18C remains zero then the perp car cannot be caught up with. IX[4] here is e.g. $A18C IX[13] here is e.g. $A195 which seems to be the perp's acceleration or offset or ? (low byte)
+C $ADC1,9 IX[4] -= IX[13]  -- bottom byte of accel/something?
 C $ADCA,3 If IX[4] was < IX[13] Then C++
+@ $ADCD label=dh_adcd
 C $ADCD,5 C += IX[1]  -- distance related?
 C $ADD2,4 A = IX[15] + 1  -- counter?
 C $ADD6,2 Jump to dh_adf0 if non-zero
@@ -8385,7 +8391,7 @@ C $B8CB,1 Bank
 C $B8CC,5 var_a25b += A
 C $B8D1,1 Return
 c $B8D2 Routine at B8D2
-D $B8D2 Horizon stuff / ... Called from read_map
+D $B8D2 Horizon stuff / Car jumping stuff / ... Called from read_map
 R $B8D2 Used by the routine at #R$BDFB.
 @ $B8D2 label=sub_b8d2
 C $B8D2,6 BC = var_a25a  -- var set by scroll_horizon
@@ -8621,7 +8627,7 @@ C $BA92,3 -> Tony: "LET'S GO. MR. DRIVER." <STOP>
 C $BA95,2 Jump to lr_chatter if correct fork was taken
 N $BA97 Incorrect fork was taken.
 @ $BA99 ssub=LD (hazard_0 + 13),A
-C $BA97,5 Set the horizontal position of the perp's car to $5F
+C $BA97,5 Set the (accel?) of the perp's car to $5F  -- reducing accel so we can catch up?
 N $BA9C Add a bonus of (40,000 + 10,000 * level number) for going the wrong way (eh?)
 C $BA9C,5 A = wanted_stage_number + 4
 C $BAA1,1 Set top digits
