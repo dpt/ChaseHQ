@@ -5806,13 +5806,13 @@ B $A255,2,2 Distance as BCD (2 bytes / 4 digits, little endian)
 @ $A257 label=var_a257
 B $A257,1,1 Unused
 @ $A258 label=inclination
-B $A258,1,1 Road inclination $FF/$FE/$FD if the road is climbing, $00 if level, $01/$02/$03 if the road is falling
+B $A258,1,1 Road inclination $FF/$FE/$FD if the road is climbing, $00 if level, $01/$02/$03 if the road is descending
 @ $A259 label=var_a259
 B $A259,1,1 Used by #R$B92B
 @ $A25A label=var_a25a
-B $A25A,1,1 Changes often when the backdrop Y changes.
+B $A25A,1,1 Changes often? when the backdrop Y changes. (0/1/2?)
 @ $A25B label=var_a25b
-B $A25B,1,1 Changes often when the backdrop Y changes.
+B $A25B,1,1 Changes often? when the backdrop Y changes. ($00/$55/$7F/$AA/?)
 @ $A25C label=current_curvature
 B $A25C,1,1 This holds the road curvature byte at the position of the hero car. -ve when curving left or +ve when curving right. $FA..$06 in multiples of two.
 @ $A25D label=horizon_a25d
@@ -7635,7 +7635,7 @@ C $B263,2 A = -A
 N $B265 Positive scroll => scroll horizon left.
 @ $B265 label=mhc_scroll_horizon
 @ $B265 ssub=LD HL,horizon_table - 1
-C $B265,3 HL -> 16 word table at #R$B828
+C $B265,3 16 word horizon table at #R$B828
 C $B268,1 BC = A  -- B is zero at this point
 C $B269,1 HL += BC
 C $B26A,3 A = var_a261
@@ -8310,7 +8310,8 @@ D $B828 breaks/crashes road rendering if messed with
 W $B828,32,8
 c $B848 Scroll the horizon
 D $B848 Used by the routines at #R$8401, #R$852A and #R$873C.
-R $B848 I:A' ?
+R $B848 I:A' Seems to be using A' on entry
+R $B848 O:A' Seems to be leaving A' with a value in it
 @ $B848 label=scroll_horizon
 C $B848,3 Load speed into #REGhl
 C $B84B,3 Return if speed is zero
@@ -8323,7 +8324,7 @@ C $B855,2 Bottom bit of #REGh (speed.hi) moves to carry (#REGh now unused)
 N $B857 A here must be the banked A'... it must be passed in. This doesn't make much sense to me.
 C $B857,5 A = ((A << 3) + (carry << 2)) & 6
 C $B85C,8 BC = horizon_a25d + A
-C $B864,3 16 word table at #R$B828
+C $B864,3 16 word horizon table at #R$B828
 C $B867,1 HL += BC
 C $B868,3 BC = wordat(HL)
 N $B86B Decrement horizon_a25e.
@@ -8351,63 +8352,61 @@ C $B889,3 Zero #REGa, #REGb, #REGe
 C $B88C,1 Bank zeroed #REGa
 C $B88D,5 Return if inclination is zero (flat road)
 C $B892,3 Jump if positive
+N $B895 Otherwise negative.
 C $B895,3 E = -(E + 1)
-@ $B898 label=sh_b898
+@ $B898 label=sh_not_flat_road
 @ $B898 ssub=LD HL,horizon_table - 1
-C $B898,3 16 word table at #R$B828
+C $B898,3 16 word horizon table at #R$B828
 C $B89B,1 BC = A (B is zeroed earlier)
 C $B89C,1 HL += BC
-C $B89D,4 C = var_a25b
-C $B8A1,4 A = fast_counter - C
+C $B89D,8 A = fast_counter - var_a25b
 C $B8A5,1 Set flags
 C $B8A6,1 Return if non-zero
-C $B8A7,1 C = *HL
-@ $B8A8 label=sh_b8a8
+C $B8A7,1 C = *HL  -- loading from horizon table
+@ $B8A8 label=sh_b8a8_loop
 C $B8A8,1 A -= C
 C $B8A9,2 Jump if carry
 C $B8AB,1 B++
 C $B8AC,1 Bank
 C $B8AD,1 A += C
 C $B8AE,1 Bank
-C $B8AF,2 Jump
-@ $B8B1 label=sh_b8b1
-C $B8B1,1 A = B
-C $B8B2,1 Set flags
-C $B8B3,1 Return if zero
-C $B8B4,3 HL = &var_a25a
-C $B8B7,1 A += *HL
-C $B8B8,1 *HL = A
+C $B8AF,2 Loop
+@ $B8B1 label=sh_b8b1_exit
+C $B8B1,3 Return if B is zero
+C $B8B4,5 var_a25a += A
+N $B8B9 Sign extend based on low bit of E?
 C $B8B9,1 A = B
-C $B8BC,2 B = 0
+C $B8BA,2 Shift bottom bit of E out?
+C $B8BC,2 B = 0  -- just widen to (B,A)
 C $B8BE,2 Jump if no carry
-C $B8C0,1 B--
+N $B8C0 Otherwise negative.
+C $B8C0,1 B = $FF
 C $B8C1,2 A = -A
-@ $B8C3 label=sh_b8c3
-C $B8C3,3 HL = horizon_level
-C $B8C6,1 C = A
-C $B8C7,1 HL += BC
-C $B8C8,3 write it back
+N $B8C3 Adjust horizon_level by (B,A).
+@ $B8C3 label=sh_set_horizon
+C $B8C3,8 Change horizon_level by (B,A)
 C $B8CB,1 Bank
 C $B8CC,5 var_a25b += A
 C $B8D1,1 Return
-c $B8D2 Routine at B8D2
-D $B8D2 Horizon stuff / Car jumping stuff / ... Called from read_map
+c $B8D2 Horizon stuff / Car jumping stuff
+D $B8D2 Called from read_map
 R $B8D2 Used by the routine at #R$BDFB.
-@ $B8D2 label=sub_b8d2
+@ $B8D2 label=update_road_level
 C $B8D2,6 BC = var_a25a  -- var set by scroll_horizon
-C $B8D8,3 Load inclination
+C $B8D8,3 Load inclination ($FD..$03 = climbing..descending)
 C $B8DB,1 Set flags
-C $B8DC,3 Jump if positive
-N $B8DF Otherwise negative.
+C $B8DC,3 Jump if road descending (positive)
+N $B8DF Otherwise road climbing (negative).
 C $B8DF,2 A = -A  -- make positive
 C $B8E1,1 C++     -- C = 1
-@ $B8E2 label=xxx_inclination_was_positive
+@ $B8E2 label=xxx_inclination_set
 C $B8E2,1 B--
 C $B8E3,2 Jump if zero
 @ $B8E5 label=xxx_inclination_was_nonzero
-C $B8E5,2 9-bit rotate right through carry
+C $B8E5,2 9-bit rotate right through carry  -- C can be 0 or 1?
 C $B8E7,2 BC = C
 C $B8E9,2 Jump if no carry
+N $B8EB Otherwise negative?
 C $B8EB,2 A = -A  -- invert inclination
 C $B8ED,1 B = $FF
 @ $B8EE label=xxx_alter_horizon_level
@@ -8472,7 +8471,7 @@ C $B964,1 Load new jump value [sampled: $B060]  (loads one of 8/6/4/2/0)
 C $B965,3 Set jump counter
 C $B968,4 HL = #R$B045 + #REGe  -- points into jump values table
 C $B96C,3 Self modify #R$B079 (mhc_midair)
-C $B96F,1 Restore HL (is ..?)
+C $B96F,1 Restore HL (which is what?)
 @ $B970 label=xxx_potato
 C $B970,1 *HL = C
 C $B971,3 Load current_curvature into #REGa
