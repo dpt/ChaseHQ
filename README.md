@@ -6,7 +6,7 @@ Project started: March 2023
 
 ![Using Spectrum Analyser to investigate the game, including turning the screen green](static-images/spectrum-analyser.png)
 
-This is an in-progress disassembly of the [ZX Spectrum version of Chase H.Q. by Ocean Software](https://spectrumcomputing.co.uk/entry/903/ZX-Spectrum/Chase_HQ). So far this only covers the 48K version and the first stage of the game. The 128K version is better (loads all of the levels at once, has AY music and menu screen animations) but it has a _lot_ more code to consider, so it's easier to start off with 48K stage 1 first.
+This is an in-progress disassembly of the [ZX Spectrum conversion of Chase H.Q. by Ocean Software](https://spectrumcomputing.co.uk/entry/903/ZX-Spectrum/Chase_HQ). So far this only covers the 48K version and the first stage of the game. The 128K version is better (loads all of the levels at once, has AY music and menu screen animations) but it has a _lot_ more code to consider, so it's easier to start off with 48K stage 1 first.
 
 **Note: I'm currently working on the 128K version over on the "128k" branch.**
 

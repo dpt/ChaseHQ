@@ -5805,8 +5805,8 @@ B $A254,1,1 If non-zero this permits cars, hazards and dust/stones to spawn. It 
 B $A255,2,2 Distance as BCD (2 bytes / 4 digits, little endian)
 @ $A257 label=var_a257
 B $A257,1,1 Unused
-@ $A258 label=inclination
-B $A258,1,1 Road inclination $FF/$FE/$FD if the road is climbing, $00 if level, $01/$02/$03 if the road is descending
+@ $A258 label=incline
+B $A258,1,1 Road incline $FF/$FE/$FD if the road is climbing, $00 if level, $01/$02/$03 if the road is descending
 @ $A259 label=var_a259
 B $A259,1,1 Used by #R$B92B
 @ $A25A label=var_a25a
@@ -8350,7 +8350,7 @@ C $B888,1 *HL = A
 @ $B889 label=sh_straight_road
 C $B889,3 Zero #REGa, #REGb, #REGe
 C $B88C,1 Bank zeroed #REGa
-C $B88D,5 Return if inclination is zero (flat road)
+C $B88D,5 Return if incline is zero (flat road)
 C $B892,3 Jump if positive
 N $B895 Otherwise negative.
 C $B895,3 E = -(E + 1)
@@ -8392,29 +8392,28 @@ c $B8D2 Horizon stuff / Car jumping stuff
 D $B8D2 Called from read_map
 R $B8D2 Used by the routine at #R$BDFB.
 @ $B8D2 label=update_road_level
-C $B8D2,6 BC = var_a25a  -- var set by scroll_horizon
-C $B8D8,3 Load inclination ($FD..$03 = climbing..descending)
+C $B8D2,6 BC = var_a25a  -- set by scroll_horizon
+C $B8D8,3 Load incline ($FD..$03 = climbing..descending)
 C $B8DB,1 Set flags
-C $B8DC,3 Jump if road descending (positive)
-N $B8DF Otherwise road climbing (negative).
-C $B8DF,2 A = -A  -- make positive
-C $B8E1,1 C++     -- C = 1
-@ $B8E2 label=xxx_inclination_set
-C $B8E2,1 B--
-C $B8E3,2 Jump if zero
-@ $B8E5 label=xxx_inclination_was_nonzero
+C $B8DC,3 Jump if road descending (positive incline)
+N $B8DF Otherwise road climbing (negative incline).
+C $B8DF,2 A = -A  -- make positive ($FD..$FF => 3..1)
+C $B8E1,1 C++     -- C becomes 1
+@ $B8E2 label=url_incline_set
+C $B8E2,3 Jump if (A-B) == 0  (B is copy of var_a25a, not used again)
+@ $B8E5 label=url_incline_was_nonzero
 C $B8E5,2 9-bit rotate right through carry  -- C can be 0 or 1?
 C $B8E7,2 BC = C
 C $B8E9,2 Jump if no carry
 N $B8EB Otherwise negative?
-C $B8EB,2 A = -A  -- invert inclination
+C $B8EB,2 A = -A  -- invert incline
 C $B8ED,1 B = $FF
-@ $B8EE label=xxx_alter_horizon_level
+@ $B8EE label=url_alter_horizon_level
 C $B8EE,3 Point #REGhl at horizon_level
 C $B8F1,1 C = A
 C $B8F2,1 HL += BC
 C $B8F3,3 Store horizon_level
-@ $B8F6 label=xxx_read_road_height
+@ $B8F6 label=url_read_road_height
 C $B8F6,3 Load road_buffer_offset into #REGa
 C $B8F9,2 Add (32+2) so it's the height data
 C $B8FB,3 Point #REGhl at road buffer height data
@@ -8422,8 +8421,8 @@ C $B8FE,7 Zero var_a25b and var_a25a
 C $B905,3 A = (height byte) >> 1
 C $B908,3 Jump if positive (or zero?)
 C $B90B,1 A++
-@ $B90C label=xxx_positive
-C $B90C,3 inclination = A
+@ $B90C label=url_positive
+C $B90C,3 incline = A
 C $B90F,2 Step back 2 in the height data (frontmost height byte?)
 C $B911,1 Read height byte
 C $B912,1 Copy to #REGc
@@ -8435,10 +8434,10 @@ C $B91A,3 Jump if positive
 N $B91D Else negative.
 C $B91D,2 A = -A
 C $B91F,2 B = 3
-@ $B921 label=xxx_another_positive
+@ $B921 label=url_another_positive
 C $B921,4 Jump if A >= 3
 C $B925,2 B = 0
-@ $B927 label=xxx_ge_3
+@ $B927 label=url_ge_3
 C $B927,1 A = B
 C $B928,3 Self modify 'ADD A,x' @ #R$B5AF
 C $B92B,3 Address of var_a259
@@ -8472,7 +8471,7 @@ C $B965,3 Set jump counter
 C $B968,4 HL = #R$B045 + #REGe  -- points into jump values table
 C $B96C,3 Self modify #R$B079 (mhc_midair)
 C $B96F,1 Restore HL (which is what?)
-@ $B970 label=xxx_potato
+@ $B970 label=url_potato
 C $B970,1 *HL = C
 C $B971,3 Load current_curvature into #REGa
 C $B974,1 Preserve it
@@ -8482,13 +8481,13 @@ C $B97B,4 Test fork_visible
 C $B97F,1 Load a curvature byte
 C $B980,2 Jump if fork_visible was zero
 N $B982 Forked road is visible.
-@ $B982 label=xxx_fork_visible
+@ $B982 label=url_fork_visible
 C $B982,6 Jump if fork_in_progress is zero [set while the road forks]
 C $B988,4 Check fork_taken
 C $B98C,1 Load a curvature byte again
 C $B98D,2 Jump if left fork was taken
 C $B98F,2 Negate if right fork was taken
-@ $B991 label=xxx_fork_not_visible
+@ $B991 label=url_fork_not_visible
 C $B991,3 Store new curvature value to current_curvature
 C $B994,1 Set flags
 C $B995,1 E = A
@@ -8497,7 +8496,7 @@ C $B998,2 E = 1
 C $B99A,3 Jump if positive
 N $B99D Otherwise negative
 C $B99F,2 A = -A  -- make positive
-@ $B9A1 label=xxx_b9a1
+@ $B9A1 label=url_b9a1
 C $B9A1,1 D = A
 C $B9A2,2 A *= 4
 C $B9A4,3 horizon_a25d = A
@@ -8511,9 +8510,9 @@ C $B9B9,1 A += B
 C $B9BA,3 BC = A
 C $B9BD,4 HL = horizon_table + BC
 C $B9C1,1 A = *HL
-@ $B9C2 label=xxx_b9c2
+@ $B9C2 label=url_b9c2
 C $B9C2,3 horizon_a25e = A
-@ $B9C5 label=xxx_b9c5
+@ $B9C5 label=url_b9c5
 C $B9C5,3 A = var_a262
 C $B9C8,3 BC = A
 C $B9CC,1 Set flags
@@ -8521,7 +8520,7 @@ C $B9CD,3 Jump if positive
 N $B9D0 Otherwise negative
 C $B9D0,2 A = -A  -- make positive
 C $B9D2,1 C++
-@ $B9D3 label=xxx_b9d3
+@ $B9D3 label=url_b9d3
 C $B9D3,1 A -= B
 C $B9D4,4 Jump if <=
 C $B9D8,1 B = A
@@ -8530,13 +8529,13 @@ C $B9DB,2 B >>= 1
 C $B9DD,1 A += B
 C $B9E0,2 B = 0
 C $B9E2,2 Jump if no carry
-@ $B9E4 label=xxx_b9e4
+@ $B9E4 label=url_b9e4
 C $B9E4,1 B--
 C $B9E5,2 A = -A
-@ $B9E7 label=xxx_set_hz_adjust
+@ $B9E7 label=url_set_hz_adjust
 C $B9E7,1 C = A
 C $B9E8,4 Set horizontal_adjust to BC (this shifts the car left/right if +ve/-ve)
-@ $B9EC label=xxx_b9ec
+@ $B9EC label=url_b9ec
 C $B9EC,1 A = 0
 C $B9ED,3 var_a261 = 0
 C $B9F0,3 var_a262 = 0
