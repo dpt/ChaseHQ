@@ -8,7 +8,7 @@
 > $4000 ; state. It also covers a lot of the 128K code too, but doesn't yet describe any
 > $4000 ; of the extra memory banks.
 > $4000 ;
-> $4000 ; Reverse engineering by David Thomas, 2023-2024.
+> $4000 ; Reverse engineering by David Thomas, 2023-2025.
 > $4000 ;
 > $4000 ;
 > $4000 ; AUTHORS
