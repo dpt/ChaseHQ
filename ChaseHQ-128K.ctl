@@ -4289,7 +4289,7 @@ C $9496,4 E = -E
 C $949B,1 fall through
 c $949C Sprite plotter for back buffer, up to 64px wide, 15px high, no mask, no flip
 D $949C Used by the routines at #R$85E4, #R$92E1 and #R$B58E.
-R $949C I:A Plot (#REGa + 1) * 8 pixels
+R $949C I:A Width in bytes
 R $949C I:DE' Stride of bitmap data in bytes
 R $949C I:HL Address in back buffer to plot at
 R $949C I:HL' Address of bitmap data
@@ -5719,7 +5719,7 @@ B $A228,1,1 Shows the flashing cherry light on top of the car (0 => off, else on
 @ $A229 label=time_up_state
 B $A229,1,1 1 => out of time, 2 => "TIME UP" message is printed; 3 => "CONTINUE THIS MISSION" message is printed and a countdown runs 4 => countdown elapsed; 0 otherwise
 @ $A22A label=car_y
-B $A22A,1,1 Car Y offset. Used when the car pulls in after catching a perp. Used by #R$B6D6 and others
+B $A22A,1,1 Car Y offset. Usually zero. Higher values move the car upwards. Used when the car pulls in after catching a perp. Used by #R$B6D6 and others
 @ $A22B label=allow_overtake_bonus
 B $A22B,1,1 Enables overtake bonus. Used by #R$9D2E and others.
 @ $A22C label=trigger_bonus_flag
@@ -7967,7 +7967,7 @@ C $B548,1 Return
 c $B549 Draws the debris animation
 D $B549 Used by the routine at #R$B318.
 @ $B549 label=draw_debris
-C $B549,2 Load <self modified> frame counter  -- set to 9 to start the animation
+C $B549,2 Load <self modified> frame counter  -- this is set to 9 to start the animation
 C $B54B,2 Return if the counter is zero (not animating)
 C $B54D,1 Decrement counter
 C $B54E,3 Self modify 'LD A' above
@@ -7984,7 +7984,7 @@ C $B564,5 Cycle this byte 0-1-2-3
 C $B569,6 Multiply it by 12 (stride of bitmap_debris_1/2/3/4)
 C $B56F,1 Advance to next byte in table
 C $B570,3 Load frame counter turned into offset <self modified> above
-C $B573,1 BC = C since H is always zero here
+C $B573,1 BC = C since #REGh is always zero here
 C $B574,1 Add table address to offset
 C $B575,1 Load vertical position
 C $B576,2 Load horizontal position
@@ -8004,83 +8004,103 @@ D $B58E Used by the routine at #R$B318.
 R $B58E I:A Turn speed. 0/1/2 => Straight/Turning/Turning hard.
 R $B58E I:B 0/3 to make the car wobble when off-road.
 @ $B58E label=draw_car
-C $B58E,6 If #REGa is zero (straight) then flip_car = 0
-@ $B594 label=dc_1
-C $B594,2 Preserve #REGc (#REGa from input)
-C $B596,9 Point #REGhl at hero_car_shadow then add (#REGa * 4)
-C $B59F,3 D = $78 (vertical postion in rows), E = $60 (horizontal position in pixels)
-C $B5A2,2 C = 7
-C $B5A4,3 Call dc_draw to draw shadow
-C $B5A7,1 Restore #REGc
-N $B5A8 117 is the car's normal vertical position. Smaller values make it higher.
-C $B5A8,4 117 - <self modified value $B5AB>  == car jump offset
-C $B5AC,1 D = A
-N $B5AD Build an index into hero_car_refs[].
-C $B5AD,4 A = C (0/1/2, turn value from input) + B (counter value from input) + <self modified value $B5B0 == up/down facing (0/3/6 => level,up,down)>
+C $B58E,6 If not turning (turn speed zero) then flip_car = 0
+@ $B594 label=dc_draw_shadow
+C $B594,2 Preserve turn speed argument
+C $B596,9 Point #REGhl at hero_car_shadow [array of 3 x 4 bytes] then add (#REGa * 4)
+C $B59F,3 D = 120 (vertical postion in rows), E = 96 (horizontal position in pixels)
+C $B5A2,2 C = 7 (56 pixels wide)
+C $B5A4,3 Call draw_car_part to draw the shadow
+C $B5A7,1 Restore turn speed to #REGc
+N $B5A8 117 is the car's usual vertical position. Smaller values make it move higher.
+C $B5A8,5 D = 117 - <self modified car jump offset @ $B5AB>
+N $B5AD Build an index into hero_car_parts[]. Valid indices are 0 to 8 inclusive.
+C $B5AD,4 A = C (0/1/2, turn speed argument) + B (car wobble argument) + <self modified value $B5B0 == up/down facing (0/3/6 => level,up,down)>
 C $B5B1,6 If A >= 9 A -= 9  -- clamping
-@ $B5B7 label=dc_2
-C $B5B7,13 Point #REGhl at hero_car_refs[A] (rows/entries are 20 bytes wide)
-C $B5C5,4 A = car_y + *HL
-C $B5C9,2 A = 0-A
-C $B5CB,1 A += D  (aka A=D-A)    D here is (117 - car jump offset) from earlier
-C $B5CC,1 E = A
-C $B5CD,2 A &= $0F
-C $B5CF,2 A += $F0
-C $B5D1,1 D = A
-C $B5D2,1 A = E
-C $B5D3,2 A &= $70
-C $B5D5,1 A = A*2
-C $B5D6,2 A += $0D
-C $B5D8,1 E = A
-C $B5D9,1 HL++
-C $B5DA,2 B=*HL++
-C $B5DC,2 A=*HL++
-C $B5E0,1 H = *HL
-C $B5E1,1 L = A
-C $B5E2,2 A = 5
-C $B5E4,1 E = A
-C $B5E5,2 D = 0
-C $B5EA,6 If flip_car jump to draw_car_perhaps_flipped
-C $B5F1,3 Call plot_sprite -- #REGa is (how many pixels to plot - 1) / 8
-C $B5F4,2 Jump to draw_car_cont
-@ $B5F6 label=dc_perhaps_flipped
-C $B5F7,1 L--
+@ $B5B7 label=dc_draw_middle
+C $B5B7,13 Point #REGhl at hero_car_parts[A] (rows/entries are 20 bytes wide)
+C $B5C4,1 Preserve car vertical position (only in D - anything in E?)
+C $B5C5,7 A = D - car_y - hero_car_part.y  [car_y is the shift value used when a perp is caught] -- D here is (117 - car jump offset) from earlier
+C $B5CC,1 Preserve #REGa
+C $B5CD,5 D = (A & $F) | $F0  -- sign extending?
+C $B5D2,1 Restore #REGa
+C $B5D3,6 E = (A & $70) * 2 + 13  -- computes horizontal position somehow
+C $B5D9,1 Advance to hero_car_part.rows
+C $B5DA,1 Read rows
+C $B5DB,1 Advance to hero_car_part.address
+C $B5DC,2 Read low byte of address
+C $B5DE,1 Preserve HL  [saving halfway through the address seems weird]
+C $B5DF,1 Preserve #REGde [back buffer plot address]
+C $B5E0,1 Read high byte of address
+C $B5E1,1 #REGhl now holds address of bitmap data
+C $B5E2,5 Set #REGa and #REGde to 5, which is the width & stride of the bitmap data in bytes
+C $B5E7,1 Bank for plot_sprite (DE' = stride, HL' = address of bitmap data)
+C $B5E8,1 Restore the #REGde saved earlier [back buffer plot address]
+C $B5E9,1 Preserve #REGa for the flip test
+C $B5EA,6 If flip_car jump to dc_middle_flipped
+C $B5F0,1 Restore #REGa
+C $B5F1,3 Call plot_sprite -- #REGa is (width in bytes)
+C $B5F4,2 Jump to dc_cont
+@ $B5F6 label=dc_middle_flipped
+C $B5F6,1 Restore #REGa
+C $B5F7,1 Adjust back buffer plot address to be a byte earlier
 C $B5F8,3 Call plot_sprite_flipped
 @ $B5FB label=dc_cont
-C $B5FD,1 HL++
-C $B5FE,7 E=$68 C=$05 (width) CALL #R$B627  draws the top (windscreen)
-C $B605,7 E=$68 C=$05 (width) CALL #R$B627  draws the bottom (wheels)
-C $B60C,6 Check flip_car flag
-C $B612,4 unflipped
-C $B616,2 flipped
-@ $B618 label=dc_3
+C $B5FB,1 Restore HL [points at second byte of hero_car_part address field]
+C $B5FC,1 Restore DE [car vertical position]
+C $B5FD,1 Advance to ?
+N $B5FE Draw the windscreen
+C $B5FE,2 Set (horz pos in px) to 104
+C $B600,2 Set (byte width) to 5
+C $B602,3 Call draw_car_part
+N $B605 Draw the wheels
+C $B605,2 Set (horz pos in px) to 104
+C $B607,2 Set (byte width) to 5
+C $B609,3 Call draw_car_part
+N $B60C Draw left hand side
+C $B60C,4 Check flip_car flag
+C $B610,2 Set (byte width) to 1
+C $B612,2 Set (horz pos in px) to 96 if not flipped
+C $B614,2 Jump if not flipped
+C $B616,2 Set (horz pos in px) to 144 if flipped
+@ $B618 label=dc_flip_checked
 C $B618,3 Draws left side of car
-C $B61B,2 C = 1
-C $B61D,3 A = flip_car
-C $B620,1 Set flags
-C $B621,2 E = $60
+N $B61B Draw right hand side
+C $B61B,2 Set (byte width) to 1
+C $B61D,4 Load flip_car and set flags
+C $B621,2 Set (horz pos in px) to 96 if flipped
 C $B623,2 Jump if flipped
-C $B625,2 E = $90
-N $B627 Drawing subroutine. C = byte width?, D = Y (vertical postion in rows), E = X (horizontal position in pixels), HL -> address of graphic def (v.shift, n.rows, data address)
-@ $B627 label=dc_draw
-C $B627,1 A = D  -- vertical position in rows
+C $B625,2 Set (horz pos in px) to 144 if not flipped [then fall through]
+c $B627 Draws a car part
+D $B627 Used by the routine at #R$B58E.
+R $B627 I:C Byte width
+R $B627 I:D Y/Vertical postion (in rows)
+R $B627 I:E X/Horizontal position (in pixels)
+R $B627 I:HL Address of graphic def (y_offset, nrows, data address)
+R $B627 O:D Preserved
+R $B627 O:E Preserved
+R $B627 O:HL Address of next graphic def
+@ $B627 label=draw_car_part
+C $B627,1 A = Y
 C $B628,1 Preserve X,Y
-C $B629,3 D = A - *HL++  -- this byte seems to be a vertical shift value
-C $B62C,2 B = *HL++  -- num rows
-C $B62E,5 HL = wordat(HL) while preserving (HL+1)  -- load data address
-C $B633,1 Preserve byte width
-N $B634 D = v.shift, B = n.rows, HL -> data
+C $B629,2 D = Y - y_offset
+C $B62B,1 Advance to nrows field
+C $B62C,1 Read nrows
+C $B62D,1 Advance to data address field
+C $B62E,5 Read data address while stacking HL+1
+C $B633,1 Preserve byte width over bank
+N $B634 D = y_offset, B = nrows, HL -> data
 C $B634,1 Bank
 C $B635,1 Restore byte width
 C $B636,4 Load flip_car into #REGb
-C $B63A,1 E = C  -- byte width
-C $B63B,1 C--  -- reduce byte width
-C $B63C,4 If A == 0 C = A  -- check flip_car flag, if clear then C = 0 else C = bytewidth-1
-@ $B640 label=dc_5
+C $B63A,1 E = byte width  -- becomes E' which is <source data stride>?
+C $B63B,1 C = byte width - 1
+C $B63C,4 Test flip_car flag, if clear then C = 0 else C = (byte width - 1)
+@ $B640 label=dcp_cont
 C $B640,1 Unbank
 C $B641,3 Draws all masked parts of the car (using car_y)
-C $B644,1 Restore ptr
-C $B645,1 Skip final byte
+C $B644,1 Restore graphic def ptr
+C $B645,1 Skip final byte - already consumed
 C $B646,1 Restore X,Y
 C $B647,1 Return
 c $B648 Draw the hero car's smoke
@@ -8163,7 +8183,7 @@ E $B69E FALL THROUGH
 c $B6D6 Draw a masked bitmap at (E,D)
 D $B6D6 Used by the routines at #R$B58E, #R$B648 and #R$B69E.
 R $B6D6 I:B Height (in rows)
-R $B6D6 I:C = 0/bytewidth-1
+R $B6D6 I:C (byte width - 1) if flipping, 0 if not
 R $B6D6 I:D Vertical position (rows)
 R $B6D6 I:E Horizontal position (pixels)
 R $B6D6 I:HL Address of bitmap data
@@ -10898,154 +10918,162 @@ B $CEC4,10,2
 @ $CECE label=bitmap_debris_4
 B $CECE,2,2 #HTML[#CALL:graphic($CECE,8,6,1,1)]
 B $CED0,10,2
-b $CEDA Hero car drawing instructions
-D $CEDA 9 of them. 20 bytes per entry.
-@ $CEDA label=hero_car_refs
-B $CEDA,1,1
-B $CEDB,1,1 rows
+b $CEDA Hero car drawing data
+D $CEDA Built of 9 entries of 20 bytes per entry. In turn composed of five entries of four bytes: (y_offset, n_rows, address).
+@ $CEDA label=hero_car_parts
+B $CEDA,1,1 y_offset
+B $CEDB,1,1 14 rows
 W $CEDC,2,2 -> middle graphic
-B $CEDE,1,1
-B $CEDF,1,1 rows
+B $CEDE,1,1 y_offset
+B $CEDF,1,1 9 rows
 W $CEE0,2,2 -> top graphic
-B $CEE2,1,1
-B $CEE3,1,1 rows
+B $CEE2,1,1 y_offset
+B $CEE3,1,1 6 rows
 W $CEE4,2,2 -> bottom graphic
-B $CEE6,1,1
-B $CEE7,1,1 rows
+B $CEE6,1,1 y_offset
+B $CEE7,1,1 14 rows
 W $CEE8,2,2 -> left graphic
-B $CEEA,1,1
-B $CEEB,1,1 rows
+B $CEEA,1,1 y_offset
+B $CEEB,1,1 14 rows
 W $CEEC,2,2 -> right graphic
-B $CEEE,1,1
-B $CEEF,1,1 rows
+@ $CEEE label=hero_car_parts_1
+B $CEEE,1,1 y_offset
+B $CEEF,1,1 17 rows
 W $CEF0,2,2 -> middle graphic
-B $CEF2,1,1
-B $CEF3,1,1 rows
+B $CEF2,1,1 y_offset
+B $CEF3,1,1 8 rows
 W $CEF4,2,2 -> top graphic
-B $CEF6,1,1
-B $CEF7,1,1 rows
+B $CEF6,1,1 y_offset
+B $CEF7,1,1 4 rows
 W $CEF8,2,2 -> bottom graphic
-B $CEFA,1,1
-B $CEFB,1,1 rows
+B $CEFA,1,1 y_offset
+B $CEFB,1,1 13 rows
 W $CEFC,2,2 -> left graphic
-B $CEFE,1,1
-B $CEFF,1,1 rows
+B $CEFE,1,1 y_offset
+B $CEFF,1,1 13 rows
 W $CF00,2,2 -> right graphic
-B $CF02,1,1
-B $CF03,1,1 rows
+@ $CF02 label=hero_car_parts_2
+B $CF02,1,1 y_offset
+B $CF03,1,1 16 rows
 W $CF04,2,2 -> middle graphic
-B $CF06,1,1
-B $CF07,1,1 rows
+B $CF06,1,1 y_offset
+B $CF07,1,1 9 rows
 W $CF08,2,2 -> top graphic
-B $CF0A,1,1
-B $CF0B,1,1 rows
+B $CF0A,1,1 y_offset
+B $CF0B,1,1 4 rows
 W $CF0C,2,2 -> bottom graphic
-B $CF0E,1,1
-B $CF0F,1,1 rows
+B $CF0E,1,1 y_offset
+B $CF0F,1,1 12 rows
 W $CF10,2,2 -> left graphic
-B $CF12,1,1
-B $CF13,1,1 rows
+B $CF12,1,1 y_offset
+B $CF13,1,1 15 rows
 W $CF14,2,2 -> right graphic
-B $CF16,1,1
-B $CF17,1,1 rows
+@ $CF16 label=hero_car_parts_3
+B $CF16,1,1 y_offset
+B $CF17,1,1 14 rows
 W $CF18,2,2 -> middle graphic
-B $CF1A,1,1
-B $CF1B,1,1 rows
+B $CF1A,1,1 y_offset
+B $CF1B,1,1 10 rows
 W $CF1C,2,2 -> top graphic
-B $CF1E,1,1
-B $CF1F,1,1 rows
+B $CF1E,1,1 y_offset
+B $CF1F,1,1 6 rows
 W $CF20,2,2 -> bottom graphic
-B $CF22,1,1
-B $CF23,1,1 rows
+B $CF22,1,1 y_offset
+B $CF23,1,1 13 rows
 W $CF24,2,2 -> left graphic
-B $CF26,1,1
-B $CF27,1,1 rows
+B $CF26,1,1 y_offset
+B $CF27,1,1 14 rows
 W $CF28,2,2 -> right graphic
-B $CF2A,1,1
-B $CF2B,1,1 rows
+@ $CF2A label=hero_car_parts_4
+B $CF2A,1,1 y_offset
+B $CF2B,1,1 17 rows
 W $CF2C,2,2 -> middle graphic
-B $CF2E,1,1
-B $CF2F,1,1 rows
+B $CF2E,1,1 y_offset
+B $CF2F,1,1 9 rows
 W $CF30,2,2 -> top graphic
-B $CF32,1,1
-B $CF33,1,1 rows
+B $CF32,1,1 y_offset
+B $CF33,1,1 4 rows
 W $CF34,2,2 -> bottom graphic
-B $CF36,1,1
-B $CF37,1,1 rows
+B $CF36,1,1 y_offset
+B $CF37,1,1 12 rows
 W $CF38,2,2 -> left graphic
-B $CF3A,1,1
-B $CF3B,1,1 rows
+B $CF3A,1,1 y_offset
+B $CF3B,1,1 14 rows
 W $CF3C,2,2 -> right graphic
-B $CF3E,1,1
-B $CF3F,1,1 rows
+@ $CF3E label=hero_car_parts_5
+B $CF3E,1,1 y_offset
+B $CF3F,1,1 15 rows
 W $CF40,2,2 -> middle graphic
-B $CF42,1,1
-B $CF43,1,1 rows
+B $CF42,1,1 y_offset
+B $CF43,1,1 9 rows
 W $CF44,2,2 -> top graphic
-B $CF46,1,1
-B $CF47,1,1 rows
+B $CF46,1,1 y_offset
+B $CF47,1,1 6 rows
 W $CF48,2,2 -> bottom graphic
-B $CF4A,1,1
-B $CF4B,1,1 rows
+B $CF4A,1,1 y_offset
+B $CF4B,1,1 11 rows
 W $CF4C,2,2 -> left graphic
-B $CF4E,1,1
-B $CF4F,1,1 rows
+B $CF4E,1,1 y_offset
+B $CF4F,1,1 15 rows
 W $CF50,2,2 -> right graphic
-B $CF52,1,1
-B $CF53,1,1 rows
+@ $CF52 label=hero_car_parts_6
+B $CF52,1,1 y_offset
+B $CF53,1,1 14 rows
 W $CF54,2,2 -> middle graphic
-B $CF56,1,1
-B $CF57,1,1 rows
+B $CF56,1,1 y_offset
+B $CF57,1,1 8 rows
 W $CF58,2,2 -> top graphic
-B $CF5A,1,1
-B $CF5B,1,1 rows
+B $CF5A,1,1 y_offset
+B $CF5B,1,1 6 rows
 W $CF5C,2,2 -> bottom graphic
-B $CF5E,1,1
-B $CF5F,1,1 rows
+B $CF5E,1,1 y_offset
+B $CF5F,1,1 13 rows
 W $CF60,2,2 -> left graphic
-B $CF62,1,1
-B $CF63,1,1 rows
+B $CF62,1,1 y_offset
+B $CF63,1,1 14 rows
 W $CF64,2,2 -> right graphic
-B $CF66,1,1
-B $CF67,1,1 rows
+@ $CF66 label=hero_car_parts_7
+B $CF66,1,1 y_offset
+B $CF67,1,1 16 rows
 W $CF68,2,2 -> middle graphic
-B $CF6A,1,1
-B $CF6B,1,1 rows
+B $CF6A,1,1 y_offset
+B $CF6B,1,1 8 rows
 W $CF6C,2,2 -> top graphic
-B $CF6E,1,1
-B $CF6F,1,1 rows
+B $CF6E,1,1 y_offset
+B $CF6F,1,1 4 rows
 W $CF70,2,2 -> bottom graphic
-B $CF72,1,1
-B $CF73,1,1 rows
+B $CF72,1,1 y_offset
+B $CF73,1,1 13 rows
 W $CF74,2,2 -> left graphic
-B $CF76,1,1
-B $CF77,1,1 rows
+B $CF76,1,1 y_offset
+B $CF77,1,1 13 rows
 W $CF78,2,2 -> right graphic
-B $CF7A,1,1
-B $CF7B,1,1 rows
+@ $CF7A label=hero_car_parts_8
+B $CF7A,1,1 y_offset
+B $CF7B,1,1 16 rows
 W $CF7C,2,2 -> middle graphic
-B $CF7E,1,1
-B $CF7F,1,1 rows
+B $CF7E,1,1 y_offset
+B $CF7F,1,1 8 rows
 W $CF80,2,2 -> top graphic
-B $CF82,1,1
-B $CF83,1,1 rows
+B $CF82,1,1 y_offset
+B $CF83,1,1 4 rows
 W $CF84,2,2 -> bottom graphic
-B $CF86,1,1
-B $CF87,1,1 rows
+B $CF86,1,1 y_offset
+B $CF87,1,1 13 rows
 W $CF88,2,2 -> left graphic
-B $CF8A,1,1
-B $CF8B,1,1 rows
+B $CF8A,1,1 y_offset
+B $CF8B,1,1 15 rows
 W $CF8C,2,2 -> right graphic
 @ $CF8E label=hero_car_shadow
-B $CF8E,1,1
-B $CF8F,1,1 rows
-W $CF90,2,2 -> shadow graphic
-B $CF92,1,1
-B $CF93,1,1 rows
-W $CF94,2,2 -> shadow graphic
-B $CF96,1,1
-B $CF97,1,1 rows
-W $CF98,2,2 -> shadow graphic
+B $CF8E,1,1 y_offset
+B $CF8F,1,1 12 rows
+W $CF90,2,2 -> bitmap_shadow_straight
+B $CF92,1,1 y_offset
+B $CF93,1,1 12 rows
+W $CF94,2,2 -> bitmap_shadow_turn_right
+B $CF96,1,1 y_offset
+B $CF97,1,1 12 rows
+W $CF98,2,2 -> bitmap_shadow_turn_right_hard
 @ $CF9A label=hero_car_smoke
 W $CF9A,4,2
 W $CF9E,2,2 -> Turbo smoke plume data frame 1
