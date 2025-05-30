@@ -7563,7 +7563,7 @@ C $B1EF,3 Set speed to #REGhl
 C $B1F2,1 Restore HL  [likely to be the user input?]
 C $B1F3,4 B = right_turn
 C $B1F7,4 C = left_turn
-C $B1FB,3 A = *$B064  -- Jump counter [self modified]
+C $B1FB,3 A = *$B064  -- Read jump counter [self modified]
 C $B1FE,4 Jump to mhc_b253 if non-zero
 N $B202 Is this checking input flags in H?
 C $B202,2 Shift LSB out of H
@@ -7721,7 +7721,7 @@ C $B305,1 0 => Straight
 @ $B306 label=mhc_exit
 C $B306,4 turn_speed = B  -- should be 0/1/2
 C $B30A,4 flip_car = D  -- should be 0/1
-C $B30E,3 A = *$B064  -- Jump counter [self modified]
+C $B30E,3 A = *$B064  -- Read jump counter [self modified]
 C $B311,2 Return if zero
 C $B313,4 cornering = 0  -- reset cornering if not jumping
 C $B317,1 Return
@@ -7864,11 +7864,11 @@ C $B443,3 Load off_road
 C $B446,3 Return if not fully off-road
 N $B449 Draw the smoke.
 @ $B449 label=ahc_do_draw_smoke
-C $B449,2 A' = 0
+C $B449,2 A' = 0  -- no flip?
 C $B44B,1 A = B  -- smoke anim index
 C $B44C,1 preserve
 C $B44D,3 Call draw_smoke - for the right hand side
-C $B450,3 A' = 1
+C $B450,3 A' = 1  -- flip?
 C $B453,1 restore smoke anim index
 C $B454,3 Exit via draw_smoke - for the left hand side
 @ $B457 label=ahc_check_hand_flag
@@ -8103,36 +8103,47 @@ C $B644,1 Restore graphic def ptr
 C $B645,1 Skip final byte - already consumed
 C $B646,1 Restore X,Y
 C $B647,1 Return
-c $B648 Draw the hero car's smoke
+c $B648 Draw the hero car's turbo smoke
 D $B648 Used by the routine at #R$B318.
-R $B648 I:A Index 0..3 of car smoke animation
+R $B648 I:A Index 0..3 of car turbo smoke animation
+R $B648 I:A' Flip flag?
+R $B648 Calculate address of hero_car_turbo smoke[#REGa]
 @ $B648 label=draw_smoke
-C $B648,11 #REGhl = &hero_car_smoke[#REGa]
-C $B653,3 A = *$B064 -- jump counter in move_hero_car
+N $B653 Don't draw smoke if car's mid-jump
+C $B653,3 Read jump counter in move_hero_car
 C $B656,1 Set flags
-C $B657,1 Return if non-zero -- don't draw smoke if jumping
-C $B658,2 C = *HL++  -- these must be size and position
+C $B657,1 Return if non-zero
+N $B658 Load size(s) and position(s) TBD?
+C $B658,2 C = *HL++
 C $B65A,2 B = *HL++
 C $B65C,2 D = *HL++
 C $B65E,2 E = *HL++
-C $B660,2 A = *HL++  -- frame pointer
-C $B662,1 H = *HL
-C $B663,1 L = A
+N $B660 Load frame data pointer into #REGhl
+C $B660,1 Load low byte
+C $B661,1 Advance
+C $B662,1 Load high byte
+C $B663,1 Finalise
+N $B664 blah
+C $B664,1 Preserve (sizes ?)
 C $B665,1 Bank
-C $B668,1 B = A
+C $B666,1 unbanking a flip flag?
+C $B667,1 Restore (sizes ?)
+C $B668,1 B = A  -- copy flip flag
 C $B669,1 E = C
 C $B66A,1 C--
-C $B66B,1 Set flags
-C $B66C,2 Jump to #R$B673 if non-zero
+C $B66B,1 Set flags  -- test flip
+C $B66C,2 Jump to #R$B673 if non-zero  -- flipped
 C $B66E,1 C = A
 C $B66F,1 Unbank
 C $B670,1 A = E
 C $B671,2 Jump to #R$B675
+@ $B673 label=dsm_flip
 C $B673,1 Unbank
 C $B674,1 A = D
+@ $B675 label=dsm_draw
 C $B675,3 E = A + 127 -- horizontal position
 C $B678,2 Set vertical position to 119
-C $B67A,2 Exit via #R$B6D6 (using car_y)
+C $B67A,2 Exit via #R$B6D6 (draw part using car_y)
 c $B67C Likely NOT just drawing the cherry
 D $B67C Used by the routine at #R$B318.
 R $B67C I:A ? (seems to always be zero)
@@ -11074,7 +11085,7 @@ W $CF94,2,2 -> bitmap_shadow_turn_right
 B $CF96,1,1 y_offset
 B $CF97,1,1 12 rows
 W $CF98,2,2 -> bitmap_shadow_turn_right_hard
-@ $CF9A label=hero_car_smoke
+@ $CF9A label=hero_car_turbo smoke
 W $CF9A,4,2
 W $CF9E,2,2 -> Turbo smoke plume data frame 1
 W $CFA0,4,2
