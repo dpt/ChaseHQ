@@ -7940,7 +7940,8 @@ C $B4ED,3 Exit via start_siren_hook
 c $B4F0 Smash handling
 @ $B4F0 label=smash
 C $B4F0,8 Cycle #REGa one step through 0..3 each time the routine is entered
-C $B4F8,14 *$B55C = #R$CE33 + #REGa * 6  -- in draw_debris
+N $B4F8 Setup debris_table entry in draw_debris
+C $B4F8,14 *$B55C = #R$CE33 + #REGa * 6
 C $B506,5 $B54A = 9  -- set counter in draw_debris
 C $B50B,4 Load and increment smash_counter
 C $B50F,2 20 hits? [POKE this for single hit capture]
@@ -7971,16 +7972,16 @@ D $B549 Used by the routine at #R$B318.
 C $B549,2 Load <self modified> frame counter  -- this is set to 9 to start the animation
 C $B54B,2 Return if the counter is zero (not animating)
 C $B54D,1 Decrement counter
-C $B54E,3 Self modify 'LD A' above
+C $B54E,3 Self modify 'LD A' above with new counter value
 C $B551,4 Double the frame counter, turning it into an offset in #REGde
-C $B555,4 Self modify 'LD HL' below
+C $B555,4 Self modify 'LD HL' below with the result
 C $B559,2 3 iterations
-C $B55B,3 Load value <self modified> by #R$B503  -- an entry in #R$CE33
+C $B55B,3 Load value <self modified by #R$B503>  -- an entry in #R$CE33
 @ $B55E label=dd_loop
 C $B55E,1 Preserve #REGbc (iterations)
-C $B55F,4 Load an address
-C $B563,1 Preserve #REGhl (addr)
-N $B564 First byte seems to be a 0..3 counter
+C $B55F,4 Load address of debris sub-table into #REGde (e.g. #R$CE4B)
+C $B563,1 Preserve #REGhl (table addr)
+N $B564 First subtable byte seems to be a 0..3 counter
 C $B564,5 Cycle this byte 0-1-2-3
 C $B569,6 Multiply it by 12 (stride of bitmap_debris_1/2/3/4)
 C $B56F,1 Advance to next byte in table
@@ -10905,17 +10906,31 @@ D $CE0C first byte of each of the following is a counter
 B $CE0C,39,13
 b $CE33 Debris tables
 D $CE33 Used by #R$B4FD - four groups of three addresses (following on)
+N $CE33 1,2,3
 @ $CE33 label=debris_table
-W $CE33,6,6 1,2,3
-W $CE39,6,6 5,3,4
-W $CE3F,6,6 1,2,5
-W $CE45,6,6 3,4,1
-@ $CE4B label=debris_table_ce4b
-@ $CE5E label=debris_table_ce5e
-@ $CE71 label=debris_table_ce71
-@ $CE84 label=debris_table_ce84
-@ $CE97 label=debris_table_ce97
-B $CE4B,95,19
+W $CE33,6,2
+N $CE39 5,3,4
+W $CE39,6,2
+N $CE3F 1,2,5
+W $CE3F,6,2
+N $CE45 3,4,1
+W $CE45,6,2
+N $CE4B First byte seems to be a counter 0..3
+@ $CE4B label=debris_subtable_1
+B $CE4B,1,1 Counter
+B $CE4C,18,18
+@ $CE5E label=debris_subtable_2
+B $CE5E,1,1 Counter
+B $CE5F,18,18
+@ $CE71 label=debris_subtable_3
+B $CE71,1,1 Counter
+B $CE72,18,18
+@ $CE84 label=debris_subtable_4
+B $CE84,1,1 Counter
+B $CE85,18,18
+@ $CE97 label=debris_subtable_5
+B $CE97,1,1 Counter
+B $CE98,18,18
 b $CEAA [Graphics] Debris
 D $CEAA Used by #R$B578 4 frames, all 8x6 masked
 @ $CEAA label=bitmap_debris_1
@@ -10932,8 +10947,8 @@ B $CECE,2,2 #HTML[#CALL:graphic($CECE,8,6,1,1)]
 B $CED0,10,2
 b $CEDA Hero car drawing data
 D $CEDA Built of 9 entries of 20 bytes per entry. In turn composed of five entries of four bytes: (y_offset, n_rows, address).
-R $CEDA #HTML[# CALL:herocar($CEDA)]
-@ $CEDA label=hero_car_parts
+N $CEDA #HTML[#CALL:herocar($CEDA)]
+@ $CEDA label=hero_car_straight
 B $CEDA,1,1 y_offset
 B $CEDB,1,1 14 rows
 W $CEDC,2,2 -> middle graphic
@@ -10950,7 +10965,7 @@ B $CEEA,1,1 y_offset
 B $CEEB,1,1 14 rows
 W $CEEC,2,2 -> right graphic
 N $CEEE #HTML[#CALL:herocar($CEEE)]
-@ $CEEE label=hero_car_parts_1
+@ $CEEE label=hero_car_turn
 B $CEEE,1,1 y_offset
 B $CEEF,1,1 17 rows
 W $CEF0,2,2 -> middle graphic
@@ -10967,7 +10982,7 @@ B $CEFE,1,1 y_offset
 B $CEFF,1,1 13 rows
 W $CF00,2,2 -> right graphic
 N $CF02 #HTML[#CALL:herocar($CF02)]
-@ $CF02 label=hero_car_parts_2
+@ $CF02 label=hero_car_turn_hard
 B $CF02,1,1 y_offset
 B $CF03,1,1 16 rows
 W $CF04,2,2 -> middle graphic
@@ -10984,7 +10999,7 @@ B $CF12,1,1 y_offset
 B $CF13,1,1 15 rows
 W $CF14,2,2 -> right graphic
 N $CF16 #HTML[#CALL:herocar($CF16)]
-@ $CF16 label=hero_car_parts_3
+@ $CF16 label=hero_car_up
 B $CF16,1,1 y_offset
 B $CF17,1,1 14 rows
 W $CF18,2,2 -> middle graphic
@@ -11001,7 +11016,7 @@ B $CF26,1,1 y_offset
 B $CF27,1,1 14 rows
 W $CF28,2,2 -> right graphic
 N $CF2A #HTML[#CALL:herocar($CF2A)]
-@ $CF2A label=hero_car_parts_4
+@ $CF2A label=hero_car_up_turn
 B $CF2A,1,1 y_offset
 B $CF2B,1,1 17 rows
 W $CF2C,2,2 -> middle graphic
@@ -11018,7 +11033,7 @@ B $CF3A,1,1 y_offset
 B $CF3B,1,1 14 rows
 W $CF3C,2,2 -> right graphic
 N $CF3E #HTML[#CALL:herocar($CF3E)]
-@ $CF3E label=hero_car_parts_5
+@ $CF3E label=hero_car_up_turn_hard
 B $CF3E,1,1 y_offset
 B $CF3F,1,1 15 rows
 W $CF40,2,2 -> middle graphic
@@ -11035,7 +11050,7 @@ B $CF4E,1,1 y_offset
 B $CF4F,1,1 15 rows
 W $CF50,2,2 -> right graphic
 N $CF52 #HTML[#CALL:herocar($CF52)]
-@ $CF52 label=hero_car_parts_6
+@ $CF52 label=hero_car_down
 B $CF52,1,1 y_offset
 B $CF53,1,1 14 rows
 W $CF54,2,2 -> middle graphic
@@ -11052,7 +11067,7 @@ B $CF62,1,1 y_offset
 B $CF63,1,1 14 rows
 W $CF64,2,2 -> right graphic
 N $CF66 #HTML[#CALL:herocar($CF66)]
-@ $CF66 label=hero_car_parts_7
+@ $CF66 label=hero_car_down_turn
 B $CF66,1,1 y_offset
 B $CF67,1,1 16 rows
 W $CF68,2,2 -> middle graphic
@@ -11069,7 +11084,7 @@ B $CF76,1,1 y_offset
 B $CF77,1,1 13 rows
 W $CF78,2,2 -> right graphic
 N $CF7A #HTML[#CALL:herocar($CF7A)]
-@ $CF7A label=hero_car_parts_8
+@ $CF7A label=hero_car_down_turn_hard
 B $CF7A,1,1 y_offset
 B $CF7B,1,1 16 rows
 W $CF7C,2,2 -> middle graphic
