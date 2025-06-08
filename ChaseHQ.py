@@ -2,12 +2,15 @@
 #
 # by David Thomas, 2023-2025
 #
+# Formatted using "shed".
+#
 
 """
 Defines the :class:`ChaseHQWriter`, :class:`ChaseHQHtmlWriter` and :class:`ChaseHQAsmWriter` classes.
 """
 
 import time
+from collections import namedtuple
 
 from skoolkit.graphics import Frame, Udg
 from skoolkit.skoolasm import AsmWriter
@@ -35,6 +38,21 @@ ZX_COLOUR_NAMES = [
     "Bright Yellow",
     "Bright White",
 ]
+
+# Scale factor of output graphics.
+GRAPHICS_SCALE = 2
+
+# Function return types.
+HeroCarPart = namedtuple(
+    "Part",
+    ["width", "stride", "n_rows", "x_offset", "y_offset", "bitmapbase", "masked"],
+)
+HeroCarParts = namedtuple("Parts", ["width", "height", "parts"])
+
+
+def round8(i: int):
+    """Round the given value up to a multiple of eight."""
+    return (i + 7) & ~7
 
 
 class ChaseHQWriter:
@@ -522,7 +540,7 @@ class ChaseHQHtmlWriter(HtmlWriter, ChaseHQWriter):
         :return: (Decoded image)
         :rtype: (skoolkit image)
         """
-        scale = 2
+        scale = GRAPHICS_SCALE
         if interleaved:
             mask_type = 2
         else:
@@ -576,89 +594,142 @@ class ChaseHQHtmlWriter(HtmlWriter, ChaseHQWriter):
             nframes=1,
         )
 
-    def _carpart(self, cwd, partbase: int, width: int, stride: int):
+    def _herocarpart(
+        self, partbase: int, x_offset: int, width: int, stride: int, masked: bool = True
+    ) -> HeroCarPart:
         """
         Decode the hero car part at the specified snapshot address.
         """
-        y_offset = self.snapshot[partbase + 0]  # to understand
-        n_rows = self.snapshot[
-            partbase + 1
-        ]  # number of rows to use? actual graphic may be larger
+        y_offset = self.snapshot[partbase + 0]  # offset from bottom
+        n_rows = self.snapshot[partbase + 1]  # actual graphic may be larger
         bitmapbase = self.snapshot[partbase + 2] + self.snapshot[partbase + 3] * 256
-        bitmapbase += (
-            y_offset * stride
-        )  # not sure which direction we're offsetting from
-        return (
-            (width, n_rows),
-            self._decode_snapshot_to_udgs(
-                cwd,
-                bitmapbase,
-                None,
-                width=width,
-                height=n_rows,
-                stride=stride,
-                interleaved=False,
-                invert=False,
-            ),
+        return HeroCarPart(
+            width=width,  # pixels
+            stride=stride,  # bytes
+            n_rows=n_rows,
+            x_offset=x_offset,  # pixels
+            y_offset=y_offset,  # rows
+            bitmapbase=bitmapbase,
+            masked=masked,
         )
 
-    def _carparts(self, cwd, partsbase: int):
+    def _herocarparts(self, cwd, partsbase: int) -> HeroCarParts:
         """
         Decode the set of five hero car parts at the specified snapshot address.
         """
-        centrewidth = 32
-        centrestride = 40 // 8
-        middle = self._carpart(
-            cwd, partsbase + 0 * 4, width=centrewidth, stride=centrestride
-        )
-        top = self._carpart(
-            cwd, partsbase + 1 * 4, width=centrewidth, stride=centrestride
-        )
-        bottom = self._carpart(
-            cwd, partsbase + 2 * 4, width=centrewidth, stride=centrestride
-        )
 
+        centrewidth = 40
+        centrestride = centrewidth // 8  # bytes
         sidewidth = 8
-        sidestride = 8 // 8
-        left = self._carpart(cwd, partsbase + 3 * 4, width=sidewidth, stride=sidestride)
-        right = self._carpart(
-            cwd, partsbase + 4 * 4, width=sidewidth, stride=sidestride
+        sidestride = sidewidth // 8  # bytes
+
+        middle = self._herocarpart(
+            partsbase + 0 * 4,
+            x_offset=sidewidth,
+            width=centrewidth,
+            stride=centrestride,
+            masked=False,
+        )
+        top = self._herocarpart(
+            partsbase + 1 * 4,
+            x_offset=sidewidth,
+            width=centrewidth,
+            stride=centrestride * 2,
+        )
+        bottom = self._herocarpart(
+            partsbase + 2 * 4,
+            x_offset=sidewidth,
+            width=centrewidth,
+            stride=centrestride * 2,
+        )
+        left = self._herocarpart(
+            partsbase + 3 * 4,
+            x_offset=0,
+            width=sidewidth,
+            stride=sidestride * 2,
+        )
+        right = self._herocarpart(
+            partsbase + 4 * 4,
+            x_offset=sidewidth + centrewidth,
+            width=sidewidth,
+            stride=sidestride * 2,
         )
 
         # Get total dimensions
-        width = sum(x[0][0] for x in [left, middle, right])  # pixels
-        height = sum(x[0][1] for x in [top, middle, bottom])  # pixels
+        width = sum(pt.width for pt in [left, middle, right])  # pixels
+        height = sum(pt.n_rows for pt in [top, middle, bottom])  # pixels
 
-        return ((width, height), (middle, top, bottom, left, right))
+        return HeroCarParts(
+            width=width, height=height, parts=(middle, top, bottom, left, right)
+        )
 
     def herocar(self, cwd, partsbase: int):
         """
         Decode a hero car graphic from the parts list at the specified snapshot address.
+
+        The hero car is composed of five parts: middle, top, bottom, left, and right. All parts save for the middle one are masked. All are stored inverted.
         """
-        scale = 2  # probably should be a global
-        mask_type = 0  # might need to vary with car part
-        invert = True
+        scale = GRAPHICS_SCALE
+        mask_type = 2  # input is masked around the edges, so the result will be too
 
-        dimensions, parts = self._carparts(cwd, partsbase)
+        output_width, output_height, parts = self._herocarparts(cwd, partsbase)
 
-        output_width, output_height = dimensions  # pixels
-        width_udgs, height_udgs = (output_width // 8, output_height // 8)
+        padded_output_width = round8(output_width)
+        padded_output_height = round8(output_height)
+        y_shift = padded_output_height - output_height
 
-        udg_array = self._make_empty_udg_array(width_udgs, height_udgs)
+        # Decode the car parts into a bitmap
 
-        x = y = 0
-        for part in parts:
-            for yy in range(height_udgs):
-                for xx in range(width_udgs):
-                    src_udg_array = part[1][0]
-                    udg_array[y + yy][x + xx] = src_udg_array[0][0]
+        def mkarray(val: int):
+            """Build a 2D array of only the given value."""
+            return [
+                [val for x in range(padded_output_width // 8)]
+                for y in range(padded_output_height)
+            ]
 
-        y = len(udg_array) * 8 - output_height if invert else 0
+        pixels = mkarray(0)
+        masks = mkarray(255)
+        for pt in parts:
+            for y in range(pt.n_rows):
+                for x in range(pt.width // 8):
+                    u = x + pt.x_offset // 8
+                    v = y + pt.y_offset
+                    po = pt.bitmapbase + y * pt.stride
+                    if pt.masked:
+                        pixels[v][u] = self.snapshot[po + x * 2 + 1]
+                        masks[v][u] = self.snapshot[po + x * 2 + 0]
+                    else:
+                        pixels[v][u] = self.snapshot[po + x + 0]
+                        masks[v][u] = 0
+
+        # Repack bitmap into UDGs. The input is inverted so flip vertically while doing that.
+
+        width_udgs, height_udgs = (
+            padded_output_width // 8,
+            padded_output_height // 8,
+        )
+
+        def mkudg(array, x: int, y: int, y_shift: int):
+            """Build data/mask values for Udg(). Inverts."""
+            return [array[y * 8 + (7 - i) - y_shift][x] for i in range(8)]
+
+        new_udg_array = [
+            [
+                Udg(
+                    attr=ZX_ATTRIBUTE_BLACK_OVER_YELLOW,
+                    data=mkudg(pixels, x, y, y_shift),
+                    mask=mkudg(masks, x, y, y_shift),
+                )
+                for x in range(width_udgs)
+            ]
+            for y in range(height_udgs - 1, -1, -1)
+        ]
+
         frame = Frame(
-            udg_array,
+            new_udg_array,
             scale=scale,
             mask=mask_type,
-            y=y * scale,
+            y=0,
             width=output_width * scale,
             height=output_height * scale,
         )

@@ -1658,6 +1658,7 @@ W $77CE,2,2 Back buffer address
 W $77D0,2,2 Attributes address
 T $77D2,6,5:n1 "SIGNAL"
 b $77D8 [Pre-game] Drawing commands for the pre-game screen
+N $77D8 #HTML[#CALL:decode_pregame_screen($77D8)]
 @ $77D8 label=pregame_data
 B $77D8,1,1 Set colour 12 (Bright Green)
 B $77D9,1,1 Draw horizontally
@@ -10931,6 +10932,7 @@ B $CECE,2,2 #HTML[#CALL:graphic($CECE,8,6,1,1)]
 B $CED0,10,2
 b $CEDA Hero car drawing data
 D $CEDA Built of 9 entries of 20 bytes per entry. In turn composed of five entries of four bytes: (y_offset, n_rows, address).
+R $CEDA #HTML[# CALL:herocar($CEDA)]
 @ $CEDA label=hero_car_parts
 B $CEDA,1,1 y_offset
 B $CEDB,1,1 14 rows
@@ -10947,6 +10949,7 @@ W $CEE8,2,2 -> left graphic
 B $CEEA,1,1 y_offset
 B $CEEB,1,1 14 rows
 W $CEEC,2,2 -> right graphic
+N $CEEE #HTML[#CALL:herocar($CEEE)]
 @ $CEEE label=hero_car_parts_1
 B $CEEE,1,1 y_offset
 B $CEEF,1,1 17 rows
@@ -10963,6 +10966,7 @@ W $CEFC,2,2 -> left graphic
 B $CEFE,1,1 y_offset
 B $CEFF,1,1 13 rows
 W $CF00,2,2 -> right graphic
+N $CF02 #HTML[#CALL:herocar($CF02)]
 @ $CF02 label=hero_car_parts_2
 B $CF02,1,1 y_offset
 B $CF03,1,1 16 rows
@@ -10979,6 +10983,7 @@ W $CF10,2,2 -> left graphic
 B $CF12,1,1 y_offset
 B $CF13,1,1 15 rows
 W $CF14,2,2 -> right graphic
+N $CF16 #HTML[#CALL:herocar($CF16)]
 @ $CF16 label=hero_car_parts_3
 B $CF16,1,1 y_offset
 B $CF17,1,1 14 rows
@@ -10995,6 +11000,7 @@ W $CF24,2,2 -> left graphic
 B $CF26,1,1 y_offset
 B $CF27,1,1 14 rows
 W $CF28,2,2 -> right graphic
+N $CF2A #HTML[#CALL:herocar($CF2A)]
 @ $CF2A label=hero_car_parts_4
 B $CF2A,1,1 y_offset
 B $CF2B,1,1 17 rows
@@ -11011,6 +11017,7 @@ W $CF38,2,2 -> left graphic
 B $CF3A,1,1 y_offset
 B $CF3B,1,1 14 rows
 W $CF3C,2,2 -> right graphic
+N $CF3E #HTML[#CALL:herocar($CF3E)]
 @ $CF3E label=hero_car_parts_5
 B $CF3E,1,1 y_offset
 B $CF3F,1,1 15 rows
@@ -11027,6 +11034,7 @@ W $CF4C,2,2 -> left graphic
 B $CF4E,1,1 y_offset
 B $CF4F,1,1 15 rows
 W $CF50,2,2 -> right graphic
+N $CF52 #HTML[#CALL:herocar($CF52)]
 @ $CF52 label=hero_car_parts_6
 B $CF52,1,1 y_offset
 B $CF53,1,1 14 rows
@@ -11043,6 +11051,7 @@ W $CF60,2,2 -> left graphic
 B $CF62,1,1 y_offset
 B $CF63,1,1 14 rows
 W $CF64,2,2 -> right graphic
+N $CF66 #HTML[#CALL:herocar($CF66)]
 @ $CF66 label=hero_car_parts_7
 B $CF66,1,1 y_offset
 B $CF67,1,1 16 rows
@@ -11059,6 +11068,7 @@ W $CF74,2,2 -> left graphic
 B $CF76,1,1 y_offset
 B $CF77,1,1 13 rows
 W $CF78,2,2 -> right graphic
+N $CF7A #HTML[#CALL:herocar($CF7A)]
 @ $CF7A label=hero_car_parts_8
 B $CF7A,1,1 y_offset
 B $CF7B,1,1 16 rows
