@@ -336,7 +336,7 @@ W $5D14,2,2 Address of LODs for truck.
 W $5D16,2,2 Address of LODs for lambo (again).
 W $5D18,2,2 Address of LODs for car (generic car).
 b $5D1A [Stage 1] Per-stage difficulty settings
-@ $5D1A label=car_spawn_rate
+@ $5D1A label=car_spawn_delay
 B $5D1A,1,1 How often cars spawn. Lower values spawn cars more often.
 @ $5D1B label=smash_5d1b
 B $5D1B,1,1 Loaded by #R$A6A7. Used by perp_sighted.
@@ -2513,7 +2513,7 @@ C $83DA,2 Loop for 256 iterations (until #REGl overflows)
 N $83DC Start attract mode.
 C $83DC,3 Call attract_mode_hook
 N $83DF When attract mode yields then we set up the game.
-C $83DF,4 Reset overtake_bonus
+C $83DF,4 Reset overtake_bonus_bcd
 N $83E3 Clear score_bcd and retry_count.
 @ $83E8 label=bs_clear_loop
 N $83EC Reset wanted_stage_number and credits.
@@ -3824,7 +3824,7 @@ C $8FF5,3 Exit via #R$B6DD (plotting)
 N $8FF8 Right hand object handling.
 @ $8FF8 label=dee_right_hand_stuff
 C $8FF8,1 E = A
-C $8FF9,3 A = IX[1]  -- what are we checking here?
+C $8FF9,3 A = IX[1]  -- this is a buffer offset
 C $8FFC,1 Set flags
 C $8FFD,2 Loop or exit?
 C $8FFF,4 Preserve IX, HL, BC
@@ -3844,7 +3844,7 @@ C $9023,1 E = A  -- sampled = 5 (only)
 C $9024,4 Jump if A == 2  -- this test not present for RHS
 N $9028 A != 2
 @ $9028 label=dee_left__a_isnt_2
-C $9028,3 A = IX[1]  -- what are we checking here?
+C $9028,3 A = IX[1]  -- this is a buffer offset
 C $902B,1 Set flags
 C $902C,2 Loop or exit?
 @ $902E label=dee_left__a_is_2
@@ -3865,7 +3865,7 @@ D $9052 This gets used on stage 3 when drawing the overhead structure graphics.
 D $9052 sampled IX=$EAB2 DE=$6F26 HL=$9052 BC=$1420 (when in stage3!)
 @ $9052 label=draw_overhead
 C $9052,4 Preserve
-C $9056,3 A = IX[1]
+C $9056,3 A = IX[1]  -- buffer offset
 C $9059,1 Set flags
 C $905D,4 Restore (restore DE to HL)
 C $9061,1 HL++
@@ -3895,7 +3895,7 @@ C $9099,1 C = *HL
 C $909A,1 A = B
 C $909B,8 HL = ((A * 2) + B + 20) + DE
 C $90A3,2 D = 1
-C $90A5,3 A = IX[1]
+C $90A5,3 A = IX[1]  -- buffer offset
 C $90A8,1 Set flags
 C $90AD,6 A = IX[0] + $18 - C
 C $90B5,2 A -= 8
@@ -3904,7 +3904,7 @@ C $90C3,1 D = A
 @ $90C4 label=do_90c4
 C $90C4,4 IX -= 2
 C $90C8,2 E = $1F
-C $90CA,3 A = IX[1]
+C $90CA,3 A = IX[1]  -- buffer offset
 C $90CD,1 Set flags
 C $90D1,4 A = IX[0] + C
 C $90DD,6 A >>= 3
@@ -5044,7 +5044,7 @@ D $9CD6 The bonus value must have a single sequence of zeroes, e.g. "55000" is o
 D $9CD6 Used by the routines at #R$9D2E, #R$A637 and #R$B9F4.
 R $9CD6 I:A Low nibble of bonus
 R $9CD6 I:DE High four nibbles of bonus
-@ $9CD6 label=bonus
+@ $9CD6 label=add_bonus
 C $9CD6,1 Preserve #REGa
 C $9CD7,3 -> Byte after bonus digits buffer
 C $9CDA,2 Flag, set to $FF while digits are zero
@@ -5062,9 +5062,9 @@ C $9CEF,3 Call bonus_digit
 C $9CF2,1 Load high digits
 C $9CF3,3 Call bonus_high_nibble
 C $9CF6,2 Exit via bonus_exit
-@ $9CF8 label=bonus_high_nibble
+@ $9CF8 label=ab_high_nibble
 C $9CF8,4 Shift the high digit down
-@ $9CFC label=bonus_digit
+@ $9CFC label=ab_digit
 C $9CFC,2 Mask off low nibble
 C $9CFE,2 If #REGa is not zero goto bonus_non_zero
 N $9D00 Digit is zero.
@@ -5072,13 +5072,13 @@ C $9D00,4 Jump if the flag in #REGc is set
 N $9D04 We saw a non-zero-to-zero transition, so terminate.
 C $9D04,1 Discard return address
 C $9D05,2 Exit via bonus_exit
-@ $9D07 label=bonus_non_zero
+@ $9D07 label=ab_non_zero
 C $9D07,2 Set flag to zero now we've seen a non-zero digit
-@ $9D09 label=bonus_store
+@ $9D09 label=ab_store
 C $9D09,2 Turn digit to ASCII
 C $9D0B,2 Write digit out in reverse
 C $9D0D,1 Return
-@ $9D0E label=bonus_exit
+@ $9D0E label=ab_exit
 C $9D0E,3 Self modify 'LD HL,xxxx' @ #R$9D9B  -- bonus score pointer
 C $9D11,5 Set the trigger_bonus_flag
 C $9D16,1 A = B, then fall into increment_score with the bonus preserved
@@ -5105,28 +5105,29 @@ C $9D2B,1 BCD correct A
 C $9D2C,1 *HL = A
 C $9D2D,1 Return
 c $9D2E Calculate overtake bonus
-D $9D2E Bonus is 200 for each overtaken car, reset on crashes.
+D $9D2E The bonus is 200 for each overtaken car and is reset on crashes.
 R $9D2E Used by the routine at #R$8401.
 N $9D2E I:A Iterations (number of sequential overtakes to consider)
 @ $9D2E label=calc_overtake_bonus
-C $9D2E,5 If allow_overtake_bonus is zero then return
-C $9D33,1 B = A -- iterations / no. of overtakes
-C $9D34,3 Point #REGhl at overtake_bonus
+C $9D2E,5 If overtake_bonus_counter is zero then return
+C $9D33,1 Set iterations to no. of overtakes
+C $9D34,3 Point #REGhl at overtake_bonus_bcd
 N $9D37 Increment bonus by 2 up to a max of 128.
-@ $9D37 label=cob_overtake_loop
-C $9D37,3 A = *HL + 2
-C $9D3A,1 BCD correction
-C $9D3B,6 If A >= 128 then A = 128  [80 in BCD]
-C $9D41,1 *HL = A
+@ $9D37 label=cob_loop
+C $9D37,3 Increment overtake_bonus_bcd by 2
+C $9D3A,1 Perform BCD correction
+C $9D3B,6 If A >= 128 then A = 128 (80 in BCD)
+@ $9D41 label=cob_store_bcd
+C $9D41,1 Store new overtake_bonus_bcd
 C $9D42,1 Bank
 N $9D43 Set bonus to N * 100.
-C $9D43,1 Set middle digits
+C $9D43,1 Set middle digits, in effect multiplying the bonus by 100
 C $9D44,1 Clear low digit
 C $9D45,1 Clear top two digits
-C $9D46,3 Call bonus
+C $9D46,3 Call add_bonus
 C $9D49,1 Unbank
 C $9D4A,2 Loop while #REGb > 0
-C $9D4C,4 Clear allow_overtake_bonus
+C $9D4C,4 Clear overtake_bonus_counter
 C $9D50,1 Return
 c $9D51 Update scoreboard and flashing lights
 @ $9D51 label=bonus_string
@@ -5307,7 +5308,7 @@ N $9ED0 Distance.
 @ $9ED0 ssub=LD DE,distance_bcd + 1
 C $9ED0,3 Point #REGde at distance_bcd + 1 (the second of two BCD bytes)
 C $9ED3,4 L = Distance byte from first 'hazard' (the perp)
-C $9ED7,4 H = 17th byte from first hazard (not sure yet how they relate)
+C $9ED7,4 H = 17th byte from first hazard (not sure yet how they relate) -- could be a lane
 N $9EDB Count 1000s (no loop here - it's not required)
 C $9EDB,3 1,000
 C $9EDE,2 Decrease total by 1,000
@@ -5580,7 +5581,7 @@ B $A139,1,1 0/1 => 48K/128K mode
 B $A13A,1,1 Current stage number
 @ $A13B label=start_speech_cycle
 B $A13B,1,1 Used by #R$8424  -- seems to start at 4 then cycle 3/2/1 with each restart of the game, another random factor?
-@ $A13C label=overtake_bonus
+@ $A13C label=overtake_bonus_bcd
 B $A13C,1,1 Overtake combo bonus counter. BCD. This increases by 2 for each overtake and is reset on a crash.
 @ $A13D label=credits
 B $A13D,1,1 Number of credits remaining (2 for a new game)
@@ -5664,8 +5665,8 @@ N $A188 +11 (word) address of routine
 N $A188 +13 (word) horizontal position, e.g. $190. but if it's the perp we seem to use it as a byte.
 N $A188 +15 (byte) TBD used by hazard_hit, counter which gets set to 2 then reduced
 N $A188 +16 (byte) TBD
-N $A188 +17 (byte) TBD used by hazard_hit, indexes table #R$ACDB
-N $A188 +18 (byte) TBD used by hazard_hit
+N $A188 +17 (byte) TBD used by hazard_hit, indexes table #R$ACDB, set with a lane
+N $A188 +18 (byte) TBD used by hazard_hit, set with a lane
 N $A188 +19 (byte) TBD used by hazard_hit
 @ $A188 label=hazard_0
 @ $A19C label=hazard_1
@@ -5721,8 +5722,8 @@ B $A228,1,1 Shows the flashing cherry light on top of the car (0 => off, else on
 B $A229,1,1 1 => out of time, 2 => "TIME UP" message is printed; 3 => "CONTINUE THIS MISSION" message is printed and a countdown runs 4 => countdown elapsed; 0 otherwise
 @ $A22A label=car_y
 B $A22A,1,1 Car Y offset. Usually zero. Higher values move the car upwards. Used when the car pulls in after catching a perp. Used by #R$B6D6 and others
-@ $A22B label=allow_overtake_bonus
-B $A22B,1,1 Enables overtake bonus. Used by #R$9D2E and others.
+@ $A22B label=overtake_bonus_counter
+B $A22B,1,1 Number of cars overtaken since a bonus was last awarded. Used by #R$9D2E and others.
 @ $A22C label=trigger_bonus_flag
 B $A22C,1,1 Bonus flag (1 triggers the effect)
 @ $A22D label=bonus_counter
@@ -6199,7 +6200,7 @@ C $A64F,1 Return if non-zero
 N $A650 A must be zero to arrive here.
 @ $A650 label=psi_is_zero
 C $A650,2 Preserve IY
-C $A652,3 C = IX[1]  -- distance from camera
+C $A652,3 C = IX[1]  -- distance from camera / buffer offset
 C $A655,2 5 iterations
 C $A657,4 IY = &hazards[1]
 C $A65B,3 DE = 20  -- stride of hazards
@@ -6228,7 +6229,7 @@ C $A68D,2 Jump to psi_a6d8
 @ $A68F label=psi_a68f
 C $A68F,2 A = <self modified>
 C $A691,3 Jump if non-zero
-C $A694,3 A = IX[1]
+C $A694,3 Load buffer offset
 C $A697,4 Jump if A >= 7
 N $A69B I'm failing to understand what the following section does. It's a countdown that, when it hits zero, picks a new random countdown value summed with smash_5d1b. I can only think that it's a delay loop.
 N $A69B In-place decrementing counter.
@@ -6278,7 +6279,7 @@ C $A6F2,1 A += C
 @ $A6F3 label=psi_a6f3
 C $A6F3,3 IX[18] = A
 @ $A6F6 label=psi_a6f6
-C $A6F6,3 C = IX[1]
+C $A6F6,3 C = IX[1]  -- buffer offset
 C $A6F9,3 Call get_spawn_lanes
 C $A6FC,3 A = IX[18]
 C $A6FF,3 Jump to psi_a707 if A >= B  -- upper boundary?
@@ -6340,7 +6341,7 @@ C $A762,1 A--
 C $A763,3 Self modify 'LD A,x' @ #R$A73E (above) to load A
 C $A766,2 Jump to psi_a776 if zero
 N $A768 sampled IX = $A188 (hazards)
-C $A768,3 A = IX[1]  -- load hazard_1 distance byte
+C $A768,3 A = IX[1]  -- load hazard_1 distance byte / buffer offset
 C $A76B,4 Jump if A >= 13 -- too far
 N $A76F Distance to perp is 12 or less.
 N $A76F HL += (15 - A) * DE
@@ -6395,7 +6396,7 @@ C $A7CD,4 Move middle digit into position
 C $A7D1,1 Set middle digits of bonus
 @ $A7D2 label=psi_retry_was_zero
 C $A7D2,1 Clear low digits of bonus
-C $A7D3,3 Call bonus
+C $A7D3,3 Call add_bonus
 C $A7D6,2 A = 5
 C $A7D8,3 Self modify 'LD A' @ #R$A73E to load A
 C $A7DB,3 Point #REGhl at smash_chatter ("BEAR DOWN" / "OH MAN" / etc.)
@@ -6403,6 +6404,7 @@ C $A7DE,3 Call start_chatter (priority 5)
 C $A7E1,3 Effect 3 (car crash), Priority 1
 C $A7E4,3 Exit via start_sfx
 b $A7E7 Data block at A7E7
+D $A7E7 This seems to be lane movement related.
 @ $A7E7 label=table_a7e7
 B $A7E7,12,8,4
 c $A7F3 Spawns cars
@@ -6416,27 +6418,28 @@ C $A7FB,1 Return if either is set
 N $A7FC Return without spawning anything if allow_spawning is zero.
 C $A7FC,3 Load allow_spawning
 C $A7FF,2 Return if it's not set
-N $A801 Reduce the spawn delay by allow_spawning (1 or 2).
+N $A801 Reduce the spawn delay by the value of allow_spawning (1 or 2).
 C $A801,4 A = <self modified> - allow_spawning
 C $A805,3 Self modify above
 C $A808,1 Return unless counter hits zero
 N $A809 Start spawning cars.
 C $A809,6 Call rng and take the bottom four bits of the result. Put it in #REGc
 C $A80F,4 Load and test sighted_flag
-C $A813,3 Load car_spawn_rate
+C $A813,3 Load the current stage's car_spawn_delay
 C $A816,2 Jump (don't boost) if sighted_flag was zero
-N $A818 Perp was sighted so boost the spawn rate.
+N $A818 Perp was sighted so boost the spawn delay.
 @ $A818 label=sc_boost
-C $A818,2 Boost spawn rate by 25 when perp sighted
-@ $A81A label=sc_set
-C $A81A,1 Add random factor (0..15) in #REGc to rate
-C $A81B,3 Self modify spawn value above
-C $A81E,3 B = 5 iterations; C = 0 - a flag?
+C $A818,2 Boost spawn delay by 25
+@ $A81A label=sc_set_spawn
+C $A81A,1 Add random factor (0..15) in #REGc to delay
+C $A81B,3 Self modify spawn delay above
+N $A81E ....
+C $A81E,3 B = 5 iterations; C = 0 - a byte of flags
 C $A821,4 Point #REGix at hazards[1]
 C $A825,3 Stride of hazards is 20 bytes
-@ $A828 label=sc_loop
-C $A828,6 If the hazard is not active jump to sc_fill_in
-C $A82E,3 A = IX[15]  -- what are we reading here?
+@ $A828 label=sc_find_unused_hazard_loop
+C $A828,6 If the hazard is not used jump to sc_fill_in
+C $A82E,3 A = IX[15]  -- seems to be a collision related counter
 C $A831,1 Shift a bit out left into carry flag
 C $A832,3 Continue if clear
 C $A835,2 Shift carry into #REGc
@@ -6445,20 +6448,21 @@ C $A837,2 Advance to next hazard
 C $A839,2 Loop to sc_loop while #REGb > 0
 C $A83B,1 Return
 @ $A83C label=sc_fill_in
-C $A83C,2 test bit 2 of ?
-C $A83E,1 Return if set?
-C $A83F,3 DE = IX
-C $A842,3 BC = 20
+C $A83C,2 Test bit 2 of flags  -- testing if the third hazard was colliding?
+C $A83E,1 Return if set
+N $A83F Copy template hazard across.
+C $A83F,3 Copy destination address to #REGde so we can LDIR
+C $A842,3 Size of hazard is 20 bytes
 C $A845,3 Point #REGhl at hazard_template
 C $A848,2 Copy hazard_template
+N $A84A Choose a lane in which to spawn the hazard.
 C $A84A,2 Buffer offset of 20 for get_spawn_lanes
-C $A84C,3 Call get_spawn_lanes  -- Gets car spawning positions (B = min, C = max?)
-C $A84F,3 Call rng
-C $A852,3 A = (A & 3) + B
-C $A855,4 If A >= C A = C
-@ $A859 label=sc_a859
-C $A859,3 IX[17] = A
-C $A85C,3 IX[18] = A
+C $A84C,3 Call get_spawn_lanes to get valid spawning positions (B = min, C = max?)
+C $A84F,6 lane = (rng() & 3) + min
+C $A855,4 If lane >= max lane = max
+@ $A859 label=sc_set_lane
+C $A859,3 IX[17] = lane
+C $A85C,3 IX[18] = lane  -- seems to be current lane
 @ $A85F ssub=LD HL,table_a7e7 - 1
 C $A85F,8 A = $A7E6[A]
 C $A867,3 IX[5] = A
@@ -6481,10 +6485,10 @@ C $A88E,3 HL = &lods_vehicles (first of the generic car LODs)
 C $A891,1 HL += BC
 C $A892,9 wordat(IX+9) = HL
 C $A89B,1 Return
-c $A89C Returns the lanes that cars can spawn in
-D $A89C Return $0101 and cars only appear in the leftmost lane. $0102 (1st and 2nd, mainly 2nd). $0104 first three lanes. $0304 - third and fourth lanes.
-R $A89C I:C Buffer offset
-R $A89C O:BC TBD
+c $A89C Returns the lanes that cars or hazards can spawn in
+D $A89C Return $0101 and cars will only appear in the leftmost lane. $0102 (1st and 2nd, mainly 2nd). $0104 first three lanes. $0304 - third and fourth lanes.
+R $A89C I:C Buffer offset (e.g. 20)
+R $A89C O:BC Could be (min,max) position
 @ $A89C label=get_spawn_lanes
 C $A89C,6 A = [current buffer offset] + 66 + C  (wrapping around)
 C $A8A2,3 Point #REGde at road buffer lanes data (+2 bytes)
@@ -6509,35 +6513,49 @@ C $A8C5,3 BC = $0102
 C $A8C8,1 Return if zero
 C $A8C9,3 BC = $0304
 C $A8CC,1 Return
-c $A8CD Hazard handler routine? Triggered at road fork
-@ $A8CD label=hazard_handler_a8cd
-C $A8CD,6 Return if perp_caught_phase > 0
+c $A8CD Hazard handler routine?
+D $A8CD Triggered at road fork.
+@ $A8CD label=hazard_handler
+C $A8CD,6 Jump if perp_caught_phase > 0
 C $A8D3,6 Check stop_car_spawning flag
+@ $A8D9 label=hzh_perp_caught_or_no_car_spawning
 C $A8D9,4 IX[14] = $01  -- horizontal position or accel?
 C $A8DD,4 IX[13] = $FF
-C $A8E1,3 C = IX[1]  -- buffer offset
+@ $A8E1 label=hzh_clamp_lanes
+C $A8E1,3 Load buffer offset (distance from camera) required for next call
 C $A8E4,3 Call get_spawn_lanes
-C $A8E7,3 A = IX[17]
-C $A8EA,6 If A < B IX[18] = B
-C $A8F0,8 If A > C IX[18] = C
-C $A8F8,3 A = IX[18]
-C $A8FB,5 Jump to #R$A926 if A == IX[17]
+N $A8E7 Hazard's IX[17] must be a lane value here.
+C $A8E7,3 Read (current? minimum?) lane
+C $A8EA,6 If A < B IX[18] = B  -- set min lane if less than get_spawn_lanes' min. It's odd that it's setting IX[18] here and not IX[17].
+@ $A8F0 label=hzh_clamp_max_lane
+C $A8F0,8 If A > C IX[18] = C  -- set max lane if over
+@ $A8F8 label=hzh_test_chosen_lane
+C $A8F8,3 Read back the chosen lane
+C $A8FB,5 Jump to #R$A926 if A == IX[17]  -- lanes equal, no movement choice to be made?
+C $A900,2 shift out?
 @ $A902 ssub=LD HL,table_a7e7 - 1
-C $A902,3 HL = $A7E6 -> #R$A7E7 data block
-C $A905,1 C = A
-C $A906,2 L += A
-C $A908,3 A = IX[5]
-C $A90B,2 test bottom bit?
+C $A902,3 HL = $A7E6 -> #R$A7E7 data block (1-indexed)
+C $A905,1 C = A  -- copy chosen lane to C
+C $A906,2 Compute HL[A]
+N $A908 breakpoint hit here seemingly when the right hand side narrows and there's a barrier
+C $A908,3 A = IX[5]  e.g. $A19C[5]
+C $A90B,2 test bottom bit? top bit? could be testing sign
+C $A90D,2 jump if clear
 C $A90F,2 A -= 5
-C $A911,1 CP *HL
-C $A914,1 A = *HL
-C $A915,3 IX[17] = C
+C $A911,1 CP *HL   -- comparing (IX[5]-5) to entry from A7E7 table
+C $A912,2 jump if (IX[5]-5) > entry
+C $A914,1 load entry
+C $A915,3 IX[17] = C  -- set chosen lane
 C $A918,2 Jump to #R$A923
-C $A91A,2 A += 5
-C $A91C,1 CP *HL
-C $A91F,1 A = *HL
-C $A920,3 IX[17] = C
-C $A923,3 IX[5] = A
+@ $A91A label=hzh_check_max
+C $A91A,2 compute (IX[5]+5)
+C $A91C,1 compare to (same) entry from A7E7 table
+C $A91D,2 jump if (IX[5]+5) < entry
+C $A91F,1 load entry
+C $A920,3 IX[17] = C  -- set chosen lane
+@ $A923 label=hzh_set_ix_5
+C $A923,3 IX[5] = A  -- set entry from table
+@ $A926 label=hzh_7
 C $A926,3 A = IX[7]
 C $A929,1 Set flags
 C $A92A,1 Return if zero
@@ -6546,14 +6564,14 @@ C $A92C,4 IX[7] = 0
 C $A930,5 Return if crashed flag set
 N $A935 #REGa is zero.
 C $A935,3 IX[0] = 0  -- unused hazard
-C $A938,3 overtake_bonus = 0
+C $A938,3 overtake_bonus_bcd = 0
 C $A93B,2 A = $96
 C $A93D,1 Restore AF
 C $A93E,4 Jump if A < 3
 C $A942,2 A -= 3
-@ $A944 label=hazard_handler_crash
+@ $A944 label=hzh_crashed
 C $A944,3 Call cc_hit_scenery2
-C $A947,3 HL = ouch_chatter
+C $A947,3 Address of ouch_chatter
 C $A94A,5 Call start_chatter (priority 3)
 C $A94F,3 Effect 3 (car crash), Priority 2
 C $A952,3 Call start_sfx
@@ -6924,7 +6942,7 @@ C $AC1F,4 Point #REGhl at the hazards data table entry (*$5CF6 -> #R$5E40 + 3)
 C $AC23,5 Copy flag TBD
 C $AC28,9 Copy lod address (e.g. tumbleweed_lods)
 C $AC31,3 IX[5] = B TBD -- passed in, setup before psi_find_free calls
-C $AC34,3 IX[1] = C TBD
+C $AC34,3 IX[1] = C  -- buffer offset
 C $AC37,4 Mark the entry as used
 C $AC3B,1 Return
 c $AC3C Test for collision with hazard
@@ -6941,16 +6959,17 @@ C $AC4B,6 If IX[7] < 0 then #REGde = 280
 C $AC51,2 #REGbc = #REGde
 C $AC53,3 Point #REGhl at #R$AD03 table
 N $AC56 This must be mapping the speed into the 5-entry array.
-C $AC56,1 A = D     top part of speed
-C $AC57,2 E ROL 1   double speed
+C $AC56,1 A = D  -- top part of speed
+C $AC57,2 E ROL 1  -- double speed
 C $AC59,1 A ROL 1
-C $AC5A,2 A &= 3    mask top part to 3 (for ref. turbo speed = $1FF)
-C $AC5C,2 RR D      halve D to carry?
+C $AC5A,2 A &= 3  -- mask top part to 3 (for ref. turbo speed = $1FF)
+C $AC5C,2 RR D  -- halve D to carry?
 C $AC5E,2 D = 0
-C $AC60,2 A = (A + D + carry) * 2  scale for element size of 2
-C $AC62,1 E = A   it's an offset in #R$AD03
+C $AC60,2 A = (A + D + carry) * 2  -- scale for element size of 2
+C $AC62,1 E = A  -- it's now an offset into #R$AD03
 C $AC63,1 HL += DE
-C $AC64,9 Copy (two bytes?) to IX+17 from table
+N $AC64 Copy two bytes to IX+17 from table
+C $AC6A,3 -- usually current lane
 C $AC6D,4 double BC?  adjusted speed retained from earlier
 C $AC71,8 If B >= 2 BC = 350  so this is if we hit the object very fast it gets put on the left?
 @ $AC79 label=hh_ac79
@@ -6986,22 +7005,24 @@ C $ACDA,1 Return
 B $ACDB,40,8 #R$AC94 uses this
 @ $AD03 label=table_ad03
 W $AD03,10,2 #R$AC53 uses this
-c $AD0D Routine at AD0D  spawning/collision related
+c $AD0D Spawning/collision related subroutine
 D $AD0D Used by the routine at #R$BDFB.
 @ $AD0D label=sub_ad0d
 C $AD0D,5 Return if the inhibit_collision_detection flag is set
-C $AD12,4 IX = &hazards[0]
-C $AD16,3 DE = 20  -- stride of hazards
-C $AD19,2 B = 6
+N $AD12 Iterate over all hazards.
+C $AD12,4 Point #REGix at hazards[0]
+C $AD16,3 Stride of hazards is 20 bytes
+C $AD19,2 6 iterations
+@ $AD1B label=ad0d_1
 C $AD1B,6 If the hazard is not active continue to next one
 C $AD21,1 Bank
-C $AD22,3 Address of ad0d_unbank_continue
-C $AD25,1 Push  -- this makes RETs below jump to ad0d_unbank_continue
-C $AD26,4 A = IX[15] + 1
+C $AD22,4 Push address of ad0d_unbank_continue on the stack so any RETs below will jump to ad0d_unbank_continue rather than returning
+C $AD26,4 A = IX[15] + 1  -- a delay of some sort used for hits
 C $AD2A,2 Jump if non-zero
 C $AD2C,3 A = IX[17]
 C $AD2F,1 Set flags
 C $AD30,1 UNBANK_CONTINUE if non-zero
+@ $AD31 label=ad0d_2
 C $AD31,3 A = IX[1]  -- distance related
 C $AD34,3 UNBANK_CONTINUE if >= 20
 C $AD37,2 D = 0  -- not SM
@@ -7019,12 +7040,13 @@ C $AD4B,1 Unbank
 C $AD4C,2 Move to next hazard
 C $AD4E,2 Loop
 C $AD50,1 Return
-c $AD51 Routine at AD51  hazard related
+c $AD51 Hazard related subroutine
 D $AD51 Used by the routines at #R$AD0D and #R$ADA0.
 R $AD51 I:IX Address of a hazard structure
 R $AD51 O:D Return value
 @ $AD51 label=sub_ad51
 C $AD51,5 Return if IX[7] is non-zero
+N $AD56 Otherwise we're...
 C $AD56,6 HL = wordat(IX + 2)
 C $AD5C,3 Return if top byte of #REGhl was set
 C $AD5F,4 A = IX[15] + 1 and set flags
@@ -7032,6 +7054,7 @@ C $AD63,3 A = IX[1]
 C $AD66,2 C = 3
 C $AD68,2 Jump if A /was/ non-zero
 C $AD6A,2 C = 2
+@ $AD6C label=ad51_1
 C $AD6C,2 Return if A >= C
 C $AD6E,2 E = 4
 C $AD70,1 A--
@@ -7041,8 +7064,10 @@ C $AD76,1 Set flags
 C $AD77,3 Jump if positive
 C $AD7A,2 E = 1
 C $AD7C,2 Jump
+@ $AD7E label=ad51_2
 C $AD7E,1 Set flags
 C $AD7F,1 Return if positive
+@ $AD80 label=ad51_3
 C $AD80,3 A = L & $F8
 C $AD83,3 Return if A >= $90
 C $AD86,3 A += IX[8]
@@ -7052,6 +7077,7 @@ C $AD8F,4 Jump if A < $68
 C $AD93,1 E--
 C $AD94,4 Jump if A < $78
 C $AD98,2 E += 2
+@ $AD9A label=ad51_4
 C $AD9A,3 IX[7] = E
 C $AD9D,2 D = 1
 C $AD9F,1 Return
@@ -7086,7 +7112,7 @@ C $ADDB,2 Jump if no carry (from earlier)
 C $ADDD,5 Jump if ++A < 4
 C $ADE2,1 A--
 C $ADE3,2 C = $FF  -- gets put in distance related field
-C $ADE5,3 IX[17] = A
+C $ADE5,3 IX[17] = A  -- set lane?
 C $ADE8,1 Set flags
 C $ADE9,1 A = C
 C $ADEA,2 Jump if zero
@@ -7110,7 +7136,7 @@ C $AE12,2 Jump if zero
 N $AE14 Wipe the hazard because car overtaken?
 C $AE14,4 IX[0] = 0  -- hazard slot now spare
 C $AE1A,1 Return if no carry
-C $AE1B,4 Increment allow_overtake_bonus
+C $AE1B,4 Increment overtake_bonus_counter
 C $AE1F,1 Return
 C $AE20,3 IX[4] = A
 C $AE23,1 A = 0
@@ -8696,7 +8722,7 @@ C $BA9C,5 A = wanted_stage_number + 4
 C $BAA1,1 Set top digits
 C $BAA2,1 Clear low digit
 C $BAA3,1 Clear middle digits
-C $BAA4,3 Call bonus
+C $BAA4,3 Call add_bonus
 C $BAA7,3 -> Raymond: "WHAT ARE YOU DOING MAN!!" / "THE BAD GUYS ARE GOING THE OTHER WAY." <STOP>
 @ $BAAA label=lr_chatter
 C $BAAA,5 Call start_chatter (with priority 20)
@@ -9257,43 +9283,46 @@ C $C05A,2 no_objects_counter = 2
 @ $C05C label=rm_all_hazards
 C $C05C,3 Set no_objects_counter to #REGa
 C $C05F,3 Call #R$B8D2 to update the road level
-C $C062,4 IX = &hazards[0]
-C $C066,3 DE = 20  -- stride of hazards
-C $C069,3 B = 6, C = 0
-@ $C06C label=rm_find_unused_hazard_loop
+C $C062,4 Point #REGix at hazards[0]
+C $C066,3 Stride of hazards is 20 bytes
+C $C069,3 6 iterations in #REGb & clear overtake counter in #REGc
+@ $C06C label=rm_hazard_loop
 C $C06C,6 If the hazard is active then jump to #R$C080
-@ $C072 label=rm_find_unused_hazard_continue
+@ $C072 label=rm_hazard_loop_continue
 C $C072,2 Move to next hazard
 C $C074,2 Loop while #REGb
-C $C076,1 A = C  -- A = 0?
-C $C077,3 HL = &allow_overtake_bonus
-C $C07A,3 HL = &allow_overtake_bonus  -- bug: duplicate instruction
-C $C07D,1 *HL = A
-C $C07E,2 Jump to rm_c0bb
-@ $C080 label=rm_c080
+C $C076,1 Copy overtake counter
+C $C077,3 Point #REGhl at overtake_bonus_counter
+C $C07A,3 Bug: duplicated instruction
+C $C07D,1 Store the number of cars overtaken [only cars!]
+C $C07E,2 Jump to rm_hazard_continue
+N $C080 Could be any active hazard here.
+@ $C080 label=rm_active_hazard
 C $C080,4 A = IX[15] + 1
 C $C084,2 Jump to rm_c096 if zero
 C $C086,3 IX[1]--
-C $C089,3 Jump to rm_find_unused_hazard_continue if non-zero
-C $C08C,4 IX[0] = 0  -- mark the hazard entry unused
-C $C090,1 testing top bit of A
-C $C091,2 Jump to rm_find_unused_hazard_continue if no carry
-C $C093,1 C++
-C $C094,2 Jump to rm_find_unused_hazard_continue
+C $C089,3 Jump to rm_hazard_loop_continue if non-zero
+C $C08C,4 Mark the hazard entry unused
+C $C090,1 Top bit of #REGa set if hazard is vehicle
+C $C091,2 Jump to rm_hazard_loop_continue if no carry - hazard is not vehicle
+N $C093 Overtook a car.
+C $C093,1 Increment overtake counter
+C $C094,2 Jump to rm_hazard_loop_continue
+N $C096 This gets hit all the time when the road is moving... but not in attract mode!
 @ $C096 label=rm_c096
-C $C096,5 A = IX[1] - 1
-C $C09B,3 IX[1] = A
-C $C09E,2 Jump to rm_c0b2 if carry
-C $C0A0,2 Jump to rm_find_unused_hazard_continue if non-zero
-C $C0A2,3 A = IX[17]
-C $C0A5,3 Jump to rm_find_unused_hazard_continue if non-zero
+C $C096,8 Decrement IX[1]
+C $C09E,2 Jump to rm_c0b2 if carry (IX[1] was 0?)
+C $C0A0,2 Jump to rm_hazard_loop_continue if non-zero
+C $C0A2,3 A = IX[17]  -- lane
+C $C0A5,3 Jump to rm_hazard_loop_continue if non-zero
+N $C0A8 This gets hit when you overtake the perp.
 C $C0A8,4 IX[1] = 1
 C $C0AC,4 IX[4] = 255
-C $C0B0,2 Jump to rm_find_unused_hazard_continue
+C $C0B0,2 Jump to rm_hazard_loop_continue
 @ $C0B2 label=rm_c0b2
-C $C0B2,7 IX[17]--
-C $C0B9,2 Jump to rm_find_unused_hazard_continue
-@ $C0BB label=rm_c0bb
+C $C0B2,7 IX[17]--  -- lane
+C $C0B9,2 Jump to rm_hazard_loop_continue
+@ $C0BB label=rm_hazard_continue
 C $C0BB,2 A = <self modified>  -- Self modified by #R$A977 + #R$A9A0 only
 C $C0BD,4 Jump to rm_allow_car_spawning if zero
 N $C0C1 Some sort of block copy.
