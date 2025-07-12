@@ -339,7 +339,7 @@ b $5D1A [Stage 1] Per-stage difficulty settings
 @ $5D1A label=car_spawn_delay
 B $5D1A,1,1 How often cars spawn. Lower values spawn cars more often.
 @ $5D1B label=smash_5d1b
-B $5D1B,1,1 Loaded by #R$A6A7. Used by perp_sighted.
+B $5D1B,1,1 Loaded by #R$A6A7. Used by perp_behaviour.
 @ $5D1C label=smash_5d1c
 B $5D1C,1,1 Loaded by #R$A759.
 w $5D1D [Stage 1] Per-stage setup data
@@ -2548,7 +2548,7 @@ C $8424,10 Cycle start_speech_cycle 3,2,1 then repeat
 N $842E Choose the startup speech sample.
 C $842E,7 start_speech = (#REGa << 2) OR 2  -- The number of leading zeroes are used to encode a delay
 C $8435,4 Test 128K mode flag
-C $8439,5 Set hazards[0].used to $FF  -- I suspect this keeps the perp spawned
+C $8439,5 Set hazards[0].used to $FF to keep the perp spawned
 C $843E,3 Address of start_stage_chatter
 C $8441,3 Call start_chatter if not in 128K mode (priority $FF)
 @ $8444 label=ml_loop
@@ -2901,7 +2901,7 @@ N $8728 20 bytes copied to hazards[0]
 B $8728,1,1 Hazard used flag (true)
 B $8729,8,8
 W $8731,2,2 Car LOD
-W $8733,2,2 Routine at #R$ADF9 (it's just a RET). Set to perp_sighted in other places
+W $8733,2,2 Routine at #R$ADF9 (it's just a RET). Set to perp_behaviour in other places
 W $8735,2,2 Horizontal position
 B $8737,5,5
 c $873C Escape scene
@@ -3824,7 +3824,7 @@ C $8FF5,3 Exit via #R$B6DD (plotting)
 N $8FF8 Right hand object handling.
 @ $8FF8 label=dee_right_hand_stuff
 C $8FF8,1 E = A
-C $8FF9,3 A = IX[1]  -- this is a buffer offset
+C $8FF9,3 A = IX[1]  -- buffer offset/distance
 C $8FFC,1 Set flags
 C $8FFD,2 Loop or exit?
 C $8FFF,4 Preserve IX, HL, BC
@@ -3844,7 +3844,7 @@ C $9023,1 E = A  -- sampled = 5 (only)
 C $9024,4 Jump if A == 2  -- this test not present for RHS
 N $9028 A != 2
 @ $9028 label=dee_left__a_isnt_2
-C $9028,3 A = IX[1]  -- this is a buffer offset
+C $9028,3 A = IX[1]  -- buffer offset/distance
 C $902B,1 Set flags
 C $902C,2 Loop or exit?
 @ $902E label=dee_left__a_is_2
@@ -3865,7 +3865,7 @@ D $9052 This gets used on stage 3 when drawing the overhead structure graphics.
 D $9052 sampled IX=$EAB2 DE=$6F26 HL=$9052 BC=$1420 (when in stage3!)
 @ $9052 label=draw_overhead
 C $9052,4 Preserve
-C $9056,3 A = IX[1]  -- buffer offset
+C $9056,3 A = IX[1]  -- buffer offset/distance
 C $9059,1 Set flags
 C $905D,4 Restore (restore DE to HL)
 C $9061,1 HL++
@@ -3895,7 +3895,7 @@ C $9099,1 C = *HL
 C $909A,1 A = B
 C $909B,8 HL = ((A * 2) + B + 20) + DE
 C $90A3,2 D = 1
-C $90A5,3 A = IX[1]  -- buffer offset
+C $90A5,3 A = IX[1]  -- buffer offset/distance
 C $90A8,1 Set flags
 C $90AD,6 A = IX[0] + $18 - C
 C $90B5,2 A -= 8
@@ -3904,7 +3904,7 @@ C $90C3,1 D = A
 @ $90C4 label=do_90c4
 C $90C4,4 IX -= 2
 C $90C8,2 E = $1F
-C $90CA,3 A = IX[1]  -- buffer offset
+C $90CA,3 A = IX[1]  -- buffer offset/distance
 C $90CD,1 Set flags
 C $90D1,4 A = IX[0] + C
 C $90DD,6 A >>= 3
@@ -5603,7 +5603,7 @@ B $A155,1,1
 B $A156,1,1 Copied to no_objects_counter
 W $A157,2,2 Copied to horizon_attribute
 B $A159,1,1 Copied to hazards[0].0
-B $A15A,1,1 Copied to hazards[0].1
+B $A15A,1,1 Copied to hazards[0].1 (distance)
 B $A15B,1,1 Copied to hazards[0].2
 B $A15C,1,1 Copied to hazards[0].3
 B $A15D,1,1 Copied to hazards[0].4
@@ -5612,7 +5612,7 @@ B $A15F,1,1 Copied to hazards[0].6
 B $A160,1,1 Copied to hazards[0].7
 B $A161,1,1 Copied to hazards[0].8
 W $A162,2,2 Copied to hazards[0].9 (car LOD)
-W $A164,2,2 Copied to hazards[0].11 (== perp_sighted)
+W $A164,2,2 Copied to hazards[0].11 (== perp_behaviour)
 W $A166,2,2 Copied to hazards[0].13 (horz pos)
 B $A168,1,1 Copied to hazards[0].15
 B $A169,1,1 Copied to hazards[0].16
@@ -5658,7 +5658,7 @@ N $A188 +3 (byte) TBD
 N $A188 +4 (byte) TBD
 N $A188 +5 (byte) is horizontal position
 N $A188 +6 (byte) TBD
-N $A188 +7 (byte) TBD used by hazard_hit, used in plotting, read by perp_sighted, goes high when the perp is smashed into
+N $A188 +7 (byte) TBD used by hazard_hit, used in plotting, read by perp_behaviour, goes high when the perp is smashed into
 N $A188 +8 (byte) gets copied from the hazards table
 N $A188 +9 (word) address of LOD
 N $A188 +11 (word) address of routine
@@ -6180,53 +6180,56 @@ W $A62C,2,2
 W $A62E,2,2 Routine at #R$A8CD
 W $A630,2,2
 B $A632,5,5
-c $A637 Perp was sighted
-D $A637 This gets called whenever the perp is within sight of the hero car.
+c $A637 Perp car behaviour
+D $A637 This gets called whenever the perp is within sight of the hero car. It moves the perp to avoid other vehicles etc.
 R $A637 I:IX Address of hazard[0] (the perp)
 R $A637 I:IY ? sampled $E360 $E356 $E34F
 N $A637 Exit if we've caught the perp.
-@ $A637 label=perp_sighted
+@ $A637 label=perp_behaviour
 C $A637,5 Return if perp_caught_phase > 0
-N $A63C Exit if we've already started the chase.
+N $A63C Start the chase if required (enables flashing lights, smash bar, sirens, etc.)
 C $A63C,7 Call start_chase if sighted_flag is zero
-N $A643 Reading a distance or hit flag?
-C $A643,3 Read IX[7] e.g. $A18F  -- is it a hit?
+N $A643 Reading a hit counter here? It starts at $FC (set at #R$A78A) and is incremented. This seems like it might speed the perp car up when it's hit.
+C $A643,3 Read IX[7] e.g. $A18F  -- a hit counter
 C $A646,1 Set flags
-C $A647,2 Jump if zero
-C $A649,3 Jump if positive
-N $A64C Otherwise A is negative.
+C $A647,2 Jump if zero  -- delay finished?
+C $A649,3 Jump to set delay if positive
+N $A64C Otherwise A is negative. This gets hit 4 times when we smash into the perp's car - matching the $FC value it's reset to.
 C $A64C,3 IX[7]++
 C $A64F,1 Return if non-zero
-N $A650 A must be zero to arrive here.
-@ $A650 label=psi_is_zero
-C $A650,2 Preserve IY
-C $A652,3 C = IX[1]  -- distance from camera / buffer offset
+N $A650 IX[7] must be zero to arrive here. We now iterate over all non-perp hazards.
+@ $A650 label=pb_is_zero
+C $A650,2 Preserve #REGiy
+C $A652,3 Read perp's distance (buffer offset) into #REGc
 C $A655,2 5 iterations
-C $A657,4 IY = &hazards[1]
-C $A65B,3 DE = 20  -- stride of hazards
-@ $A65E label=psi_find_unused_hazard_loop
+C $A657,4 Point #REGiy at hazards[1]
+C $A65B,3 Stride of hazards is 20 bytes
+@ $A65E label=pb_find_unused_hazard_loop
 C $A65E,6 If the hazard is active then jump to #R$A66C
-@ $A664 label=psi_find_unused_hazard_continue
+@ $A664 label=pb_find_unused_hazard_continue
 C $A664,2 Move to next hazard
 C $A666,2 Loop while #REGb
-C $A668,2 Restore IY
+C $A668,2 Restore #REGiy
 C $A66A,2 Jump to #R$A68F
-@ $A66C label=psi_a66c
-C $A66C,3 A = IY[15]
-C $A66F,1 Check top bit
-C $A670,3 Jump if clear
-C $A673,4 A = IY[1] - C
-C $A677,3 Jump to psi_a67e if IY[1] > c
-C $A67A,2 A += 2
-C $A67C,2 Jump to psi_a680
-@ $A67E label=psi_a67e
+@ $A66C label=pb_hazard_active
+C $A66C,3 A = IY[15]  -- apparently a counter - checking for non-vehicles?
+C $A66F,1 Check top bit  -- checking if it went negative?
+C $A670,3 Jump if it did - continue to next hazard
+N $A673 Calculate distance between this car/hazard and the perp.
+C $A673,4 A = IY[1] - <perp distance>
+C $A677,3 Jump to pb_a67e if car/hazard further than perp
+N $A67A Otherwise car is behind perp...
+C $A67A,2 A += 2  move it two lanes away?
+C $A67C,2 Jump to pb_a680
+@ $A67E label=pb_a67e
 C $A67E,2 A -= 3
-@ $A680 label=psi_a680
-C $A682,3 A = IY[17]
-C $A685,3 Compare to IX[18]
+@ $A680 label=pb_a680
+C $A680,2 Jump if (out of range?) - continue to next hazard
+C $A682,3 A = IY[17]  -- lane
+C $A685,3 Compare to IX[18]  -- compare to perp's lane
 C $A68B,2 Restore IY pushed at $A650
-C $A68D,2 Jump to psi_a6d8
-@ $A68F label=psi_a68f
+C $A68D,2 Jump to pb_a6d8
+@ $A68F label=pb_a68f
 C $A68F,2 A = <self modified>
 C $A691,3 Jump if non-zero
 C $A694,3 Load buffer offset
@@ -6234,13 +6237,13 @@ C $A697,4 Jump if A >= 7
 N $A69B I'm failing to understand what the following section does. It's a countdown that, when it hits zero, picks a new random countdown value summed with smash_5d1b. I can only think that it's a delay loop.
 N $A69B In-place decrementing counter.
 C $A69B,3 A = <self modified> - 1  -- Self modified below
-C $A69E,2 Jump to psi_update_counter if non-zero
+C $A69E,2 Jump to pb_update_counter if non-zero
 N $A6A0 When it hits zero we pick a random number...
 C $A6A0,1 [C incremented but overwritten in a moment - no effect?]
 C $A6A1,6 C = rng() & 31
 N $A6A7 This gets hit at some point during the smash process.
 C $A6A7,4 A = smash_5d1b + C
-@ $A6AB label=psi_update_counter
+@ $A6AB label=pb_update_counter
 C $A6AB,3 Self modify 'LD A,x' at #R$A69B (above) to load A
 N $A6AE This smells like it's detecting position and turning that into lanes. The values are like those used by get_spawn_lanes.
 C $A6AE,8 HL = road_pos - 164
@@ -6257,39 +6260,39 @@ C $A6C8,2 BC = $0102
 C $A6CA,2 HL -= DE  -- includes previous
 C $A6CC,2 Jump to #R$A6CF if HL < 70
 C $A6CE,1 BC = $0101
-@ $A6CF label=psi_a6cf
+@ $A6CF label=pb_a6cf
 C $A6CF,3 A = IX[18]
-C $A6D2,3 Jump to psi_a6d8 if A == C
-C $A6D5,3 Jump to psi_a6f6 if A == B
-@ $A6D8 label=psi_a6d8
+C $A6D2,3 Jump to pb_a6d8 if A == C
+C $A6D5,3 Jump to pb_a6f6 if A == B
+@ $A6D8 label=pb_a6d8
 C $A6D8,3 C = IX[18]
 C $A6DB,3 Call rng
 C $A6DE,1 C++
 C $A6DF,4 Jump if C positive
 C $A6E3,2 C -= 2
-@ $A6E5 label=psi_a6e5
+@ $A6E5 label=pb_a6e5
 C $A6E5,1 A = C
 C $A6E6,1 Set flags
 C $A6E7,2 C = 2
 C $A6E9,3 Jump if A is zero
 C $A6EC,4 Jump if A < 5
 C $A6F0,2 C = $FE
-@ $A6F2 label=psi_a6f2
+@ $A6F2 label=pb_a6f2
 C $A6F2,1 A += C
-@ $A6F3 label=psi_a6f3
+@ $A6F3 label=pb_a6f3
 C $A6F3,3 IX[18] = A
-@ $A6F6 label=psi_a6f6
-C $A6F6,3 C = IX[1]  -- buffer offset
+@ $A6F6 label=pb_a6f6
+C $A6F6,3 C = IX[1]  -- buffer offset/distance
 C $A6F9,3 Call get_spawn_lanes
 C $A6FC,3 A = IX[18]
-C $A6FF,3 Jump to psi_a707 if A >= B  -- upper boundary?
+C $A6FF,3 Jump to pb_a707 if A >= B  -- upper boundary?
 C $A702,2 A += 2
 C $A704,3 IX[18] = A
-@ $A707 label=psi_a707
+@ $A707 label=pb_a707
 C $A707,5 Jump to #R$A711 if A <= C  -- lower boundary?
 C $A70C,2 A -= 2
 C $A70E,3 IX[18] = A
-@ $A711 label=psi_a711
+@ $A711 label=pb_a711
 C $A711,3 A = IX[18]
 @ $A714 ssub=LD HL,table_a7e7 - 1
 C $A714,3 HL = $A7E6 -> #R$A7E7 data block
@@ -6303,31 +6306,31 @@ C $A723,2 A -= 10
 C $A725,2 Jump if A was < 10
 C $A727,1 A == *HL ?
 C $A728,2 Jump if A >= *HL
-@ $A72A label=psi_a72a
+@ $A72A label=pb_a72a
 C $A72A,1 C--
 C $A72B,1 A = *HL
-C $A72C,2 Jump psi_a737
-@ $A72E label=psi_a72e
+C $A72C,2 Jump pb_a737
+@ $A72E label=pb_a72e
 C $A72E,2 A += 10
 C $A730,2 Jump if A+10 carried
 C $A732,1 A == *HL ?
 C $A733,2 Jump if A < *HL
-@ $A735 label=psi_a735
+@ $A735 label=pb_a735
 C $A735,1 C--
 C $A736,1 A = *HL
-@ $A737 label=psi_a737
+@ $A737 label=pb_a737
 C $A737,3 IX[5] = A
 C $A73A,4 Self modify 'LD A' @ #R$A68F to load C
 C $A73E,2 A = <self modified>
 C $A740,1 Set flags
 C $A741,3 DE = $1E
 C $A744,3 HL = $E6
-C $A747,2 Jump psi_a762 if non-zero
+C $A747,2 Jump pb_a762 if non-zero
 N $A749 Countdown+rng stuff again... as at #R$A69B
 N $A749 In-place decrementing counter.
 C $A749,3 A = <self modified> - 1  -- Self modified below
 C $A74C,3 Self modify 'LD A,x' @ #R$A749 (above) to load A
-C $A74F,2 Jump to psi_a776 if non-zero
+C $A74F,2 Jump to pb_a776 if non-zero
 N $A751 When it hits zero we pick a random number...
 C $A751,1 Preserve HL [what's in it?]
 C $A752,3 Call rng
@@ -6336,10 +6339,10 @@ C $A756,3 C = (result of rng) & 15
 C $A759,4 A = smash_5d1c + C
 C $A75D,3 Self modify 'LD A,x' @ #R$A749 (above) to load A
 C $A760,2 A = 10
-@ $A762 label=psi_a762
+@ $A762 label=pb_a762
 C $A762,1 A--
 C $A763,3 Self modify 'LD A,x' @ #R$A73E (above) to load A
-C $A766,2 Jump to psi_a776 if zero
+C $A766,2 Jump to pb_a776 if zero
 N $A768 sampled IX = $A188 (hazards)
 C $A768,3 A = IX[1]  -- load hazard_1 distance byte / buffer offset
 C $A76B,4 Jump if A >= 13 -- too far
@@ -6347,32 +6350,33 @@ N $A76F Distance to perp is 12 or less.
 N $A76F HL += (15 - A) * DE
 N $A76F This seems to be using the distance to the perp as a scale by which to adjust its horizontal position.
 C $A76F,4 B = (15 - A)  -- iterations
-@ $A773 label=psi_a773_loop
+@ $A773 label=pb_a773_loop
 C $A773,1 HL += DE
 C $A774,2 Loop to loop_a773 while #REGb > 0
-@ $A776 label=psi_a776
-C $A776,5 A = IX[1] - 6  -- load hazard_1 distance byte again
-C $A77B,2 Jump to psi_store_exit if A >= 6
+@ $A776 label=pb_a776
+C $A776,5 A = IX[1] - 6  -- load hazard_1 distance byte / buffer offset again
+C $A77B,2 Jump to pb_store_exit if A >= 6
 N $A77D Distance to perp is 5 or less.
 C $A77D,2 Put back most of what we just subtracted
 C $A77F,3 Multiply by 8
 N $A782 And then we do nothing with #REGa?
 C $A782,1 HL += DE
-@ $A783 label=psi_store_exit
+@ $A783 label=pb_store_exit
 C $A783,6 wordat(IX + 13) = HL  -- store horizontal position (or accel?)
 C $A789,1 Return
-@ $A78A label=psi_a78a
-C $A78A,4 IX[7] = $FC
+N $A78A If I meddle with this value the perp seems to race off too fast to catch.
+@ $A78A label=pb_set_delay
+C $A78A,4 IX[7] = $FC  -- set a delay of 4 turns until we ... do what?
 C $A78E,5 Jump if A < 3  -- preserve A
 C $A793,2 A -= 3  -- 0..
-@ $A795 label=psi_check_boost
+@ $A795 label=pb_check_boost
 C $A795,1 Bank
 C $A796,3 Load turbo boost time remaining (60..0)
 C $A799,1 Set flags
 C $A79A,2 200 when not turbo boosting
 C $A79C,2 Jump if no turbo boost
 C $A79E,2 230 when turbo boosting
-@ $A7A0 label=psi_a7a0
+@ $A7A0 label=pb_a7a0
 C $A7A0,1 Bank value chosen from boost; Unbank other
 C $A7A1,3 Call cc_hit_scenery2
 C $A7A4,3 Read #REGhl from 'LD BC,x' @ #R$B32E
@@ -6386,7 +6390,7 @@ C $A7B7,4 Jump if A == 2
 C $A7BB,1 Put another call to smash on the stack
 N $A7BC Break?
 C $A7BC,2 D = 4  -- bonus middle digit
-@ $A7BE label=psi_a7be
+@ $A7BE label=pb_a7be
 C $A7BE,5 D = wanted_stage_number + D  (D could be 0 or 4)
 C $A7C3,2 E = 0  -- bonus top digit(s)
 C $A7C5,6 Jump if retry_count is zero
@@ -6394,7 +6398,7 @@ C $A7CB,1 Middle digit(s) of bonus
 C $A7CC,1 Set top two digits of bonus
 C $A7CD,4 Move middle digit into position
 C $A7D1,1 Set middle digits of bonus
-@ $A7D2 label=psi_retry_was_zero
+@ $A7D2 label=pb_retry_was_zero
 C $A7D2,1 Clear low digits of bonus
 C $A7D3,3 Call add_bonus
 C $A7D6,2 A = 5
@@ -6878,11 +6882,11 @@ C $ABB4,2 Jump if < 4  -- stop spawning barriers is the only case?
 C $ABB6,2 DE = 3  -- used as flag later?
 C $ABB8,1 A -= 3
 N $ABB9 A is 1/2/3 here?
-@ $ABB9 label=psi_select_hazard
+@ $ABB9 label=sh_select_hazard
 C $ABB9,2 X coordinate = 50
-C $ABBB,3 If #REGa was 1 exit via psi_add_hazards_done, adding one barrier? (left case?)
+C $ABBB,3 If #REGa was 1 exit via sh_add_hazards_done, adding one barrier? (left case?)
 C $ABBE,2 X coordinate = 220
-C $ABC0,3 If #REGa was 2 exit via psi_add_hazards_done, adding one barrier? (right case?)
+C $ABC0,3 If #REGa was 2 exit via sh_add_hazards_done, adding one barrier? (right case?)
 C $ABC3,2 L += 2  -- step to next hazards?
 C $ABC5,1 *HL = 0  -- D is zero here
 C $ABC6,2 L += 2
@@ -6893,46 +6897,46 @@ C $ABCC,2 Jump if non-zero
 N $ABCE Use inhibit_collision_detection to choose between two or three barriers? Seems odd
 C $ABCE,3 Load inhibit_collision_detection
 C $ABD1,1 Set flags
-C $ABD2,2 Jump to psi_add_two_barriers if zero, otherwise add three
+C $ABD2,2 Jump to sh_add_two_barriers if zero, otherwise add three
 N $ABD4 Flag was set.
 N $ABD4 Populate hazards with three barriers (e.g. for perp escape screen).
-@ $ABD4 label=psi_add_three_barriers
+@ $ABD4 label=sh_add_three_barriers
 C $ABD4,2 X coordinate = 32
 C $ABD6,3 Add barrier
 C $ABD9,2 X coordinate = 86
 C $ABDB,3 Add barrier
 C $ABDE,2 X coordinate = 140
-C $ABE0,2 Exit via psi_add_hazards_done
+C $ABE0,2 Exit via sh_add_hazards_done
 N $ABE2 Populate hazards with two barriers (e.g. for dirt track).
-@ $ABE2 label=psi_add_two_barriers
+@ $ABE2 label=sh_add_two_barriers
 C $ABE2,2 X coordinate = 80
 C $ABE4,3 Add barrier
 C $ABE7,2 X coordinate = 160
-C $ABE9,2 Exit via psi_add_hazards_done
+C $ABE9,2 Exit via sh_add_hazards_done
 N $ABEB Populate hazards with two tumbleweeds (e.g. for dirt track).
-@ $ABEB label=psi_add_two_tumbleweeds
+@ $ABEB label=sh_add_two_tumbleweeds
 C $ABEB,2 X coordinate = 70
 C $ABED,3 Add barrier
 C $ABF0,2 X coordinate = 180
-@ $ABF2 label=psi_add_hazards_done
+@ $ABF2 label=sh_add_hazards_done
 C $ABF2,3 Add barrier
 C $ABF5,1 Return
 N $ABF6 Adds a barrier.
 N $ABF6 I:B Stored at entry+5  e.g. $20/$46/$56/$50/$B4
 N $ABF6 I:C Stored at entry+1  e.g. $13
-@ $ABF6 label=psi_find_free
+@ $ABF6 label=sh_find_free
 C $ABF6,1 Bank entry registers
 C $ABF7,2 6 iterations
 C $ABF9,3 Point #REGhl at hazards table
 C $ABFC,3 Stride of 20 bytes
-@ $ABFF label=psi_ff_loop
+@ $ABFF label=sh_ff_loop
 C $ABFF,2 Check the flag byte to see if the entry is used (it's either $00 if empty, or $FF if used, so rotating it in place does not affect its value)
-C $AC01,2 Jump to psi_found_free if it didn't carry
+C $AC01,2 Jump to sh_found_free if it didn't carry
 C $AC03,1 Move to the next entry
 C $AC04,2 Loop while iterations remain
 C $AC06,2 No iterations remain so discard the return address and exit spawn_hazards
 N $AC08 #REGhl points to the unused entry.
-@ $AC08 label=psi_found_free
+@ $AC08 label=sh_found_free
 C $AC08,3 #REGix = #REGhl
 C $AC0B,10 Zero 20 bytes at #REGhl
 C $AC15,1 Restore entry registers
@@ -6941,8 +6945,8 @@ N $AC1F Gets hit when on the dirt track. sampled DE = $3 (tumbleweed), $0 (barri
 C $AC1F,4 Point #REGhl at the hazards data table entry (*$5CF6 -> #R$5E40 + 3)
 C $AC23,5 Copy flag TBD
 C $AC28,9 Copy lod address (e.g. tumbleweed_lods)
-C $AC31,3 IX[5] = B TBD -- passed in, setup before psi_find_free calls
-C $AC34,3 IX[1] = C  -- buffer offset
+C $AC31,3 IX[5] = B TBD -- passed in, setup before sh_find_free calls
+C $AC34,3 IX[1] = C  -- buffer offset/distance
 C $AC37,4 Mark the entry as used
 C $AC3B,1 Return
 c $AC3C Test for collision with hazard
@@ -6978,7 +6982,7 @@ C $AC7C,3 Increment IX[7]
 C $AC7F,2 if B is zero then don't store it
 C $AC81,3 Set top byte of horizontal position
 @ $AC84 label=hh_ac84
-C $AC84,3 Increment IX[1]
+C $AC84,3 Increment IX[1]  -- distance/buffer offset
 C $AC87,3 Effect 5 (hazard hit), Priority 3
 C $AC8A,3 Call start_sfx
 C $AC8D,2 A = 2        [set this to 1 and the hazard drives off like a car]
@@ -7023,8 +7027,9 @@ C $AD2C,3 A = IX[17]
 C $AD2F,1 Set flags
 C $AD30,1 UNBANK_CONTINUE if non-zero
 @ $AD31 label=ad0d_2
-C $AD31,3 A = IX[1]  -- distance related
-C $AD34,3 UNBANK_CONTINUE if >= 20
+C $AD31,3 A = IX[1]  -- buffer offset/distance
+C $AD34,3 UNBANK_CONTINUE if distance >= 20
+N $AD37 Distance is < 20.
 C $AD37,2 D = 0  -- not SM
 C $AD39,3 Call sub_ad51
 C $AD3C,1 A = D
@@ -7050,7 +7055,7 @@ N $AD56 Otherwise we're...
 C $AD56,6 HL = wordat(IX + 2)
 C $AD5C,3 Return if top byte of #REGhl was set
 C $AD5F,4 A = IX[15] + 1 and set flags
-C $AD63,3 A = IX[1]
+C $AD63,3 A = IX[1]  -- buffer offset/distance
 C $AD66,2 C = 3
 C $AD68,2 Jump if A /was/ non-zero
 C $AD6A,2 C = 2
@@ -7087,8 +7092,8 @@ D $ADA0 Used by the routines at #R$8401, #R$852A and #R$873C.
 @ $ADA0 label=draw_hazards
 C $ADA0,4 n_hazards = 0
 C $ADA4,3 IY = $E3xx
-C $ADA7,4 IX = &hazards[0]
-C $ADAB,3 Stride of hazards entry in bytes
+C $ADA7,4 Point #REGix at hazards[0]
+C $ADAB,3 Stride of hazards is 20 bytes
 C $ADAE,2 6 iterations
 @ $ADB0 label=dh_loop
 C $ADB0,4 Set carry if the hazard is active
@@ -7102,9 +7107,9 @@ C $ADBD,1 Return
 C $ADBE,3 C = IX[14]  -- top byte of horz position or accel?
 N $ADC1 Distance? If I disable this calculation and $A18C remains zero then the perp car cannot be caught up with. IX[4] here is e.g. $A18C IX[13] here is e.g. $A195 which seems to be the perp's acceleration or offset or ? (low byte)
 C $ADC1,9 IX[4] -= IX[13]  -- bottom byte of accel/something?
-C $ADCA,3 If IX[4] was < IX[13] Then C++
+C $ADCA,3 If IX[4] was < IX[13] then C++
 @ $ADCD label=dh_adcd
-C $ADCD,5 C += IX[1]  -- distance related?
+C $ADCD,5 C += IX[1]  -- buffer offset/distance
 C $ADD2,4 A = IX[15] + 1  -- counter?
 C $ADD6,2 Jump to dh_adf0 if non-zero
 C $ADD8,3 A = IX[17]  -- byte that indexes #R$ACDB
@@ -7116,7 +7121,7 @@ C $ADE5,3 IX[17] = A  -- set lane?
 C $ADE8,1 Set flags
 C $ADE9,1 A = C
 C $ADEA,2 Jump if zero
-C $ADEC,3 IX[1] = A  -- update distance?
+C $ADEC,3 IX[1] = A  -- buffer offset/distance
 C $ADEF,1 Return
 @ $ADF0 label=dh_adf0
 C $ADF0,1 A = C
@@ -7125,7 +7130,7 @@ N $ADF5 Wipe the hazard because it's gone?
 C $ADF5,4 IX[0] = 0  -- hazard slot now spare
 @ $ADF9 label=just_ret
 C $ADF9,1 Return
-C $ADFA,3 IX[1] = A  -- distance related
+C $ADFA,3 IX[1] = A  -- buffer offset/distance
 C $ADFD,3 Return if A >= 20
 C $AE00,1 A--
 C $AE01,2 Jump if non-zero
@@ -7183,7 +7188,7 @@ C $AE6F,1 C = A
 C $AE70,4 HL = <self modified> + BC
 C $AE74,6 wordat(IX + 2) = HL
 C $AE7A,3 Call sub_ad51
-C $AE7D,3 D = IX[1]
+C $AE7D,3 D = IX[1]  -- buffer offset/distance
 C $AE80,3 E = IX[4]
 C $AE83,3 HL = &n_hazards
 C $AE86,1 A = *HL
@@ -9300,7 +9305,7 @@ N $C080 Could be any active hazard here.
 @ $C080 label=rm_active_hazard
 C $C080,4 A = IX[15] + 1
 C $C084,2 Jump to rm_c096 if zero
-C $C086,3 IX[1]--
+C $C086,3 IX[1]--   -- buffer offset/distance
 C $C089,3 Jump to rm_hazard_loop_continue if non-zero
 C $C08C,4 Mark the hazard entry unused
 C $C090,1 Top bit of #REGa set if hazard is vehicle
@@ -9308,15 +9313,15 @@ C $C091,2 Jump to rm_hazard_loop_continue if no carry - hazard is not vehicle
 N $C093 Overtook a car.
 C $C093,1 Increment overtake counter
 C $C094,2 Jump to rm_hazard_loop_continue
-N $C096 This gets hit all the time when the road is moving... but not in attract mode!
+N $C096 This gets hit all the time when the road is moving... but not in attract mode! Perhaps perp specific?
 @ $C096 label=rm_c096
-C $C096,8 Decrement IX[1]
-C $C09E,2 Jump to rm_c0b2 if carry (IX[1] was 0?)
+C $C096,8 Decrement IX[1]  -- buffer offset/distance
+C $C09E,2 Jump to rm_c0b2 if carry (IX[1] was 0?)  -- 0 distance to perp
 C $C0A0,2 Jump to rm_hazard_loop_continue if non-zero
 C $C0A2,3 A = IX[17]  -- lane
 C $C0A5,3 Jump to rm_hazard_loop_continue if non-zero
 N $C0A8 This gets hit when you overtake the perp.
-C $C0A8,4 IX[1] = 1
+C $C0A8,4 Set perp to be 1 away
 C $C0AC,4 IX[4] = 255
 C $C0B0,2 Jump to rm_hazard_loop_continue
 @ $C0B2 label=rm_c0b2
