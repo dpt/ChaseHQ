@@ -465,7 +465,7 @@ W $5E83,2,2 -> Routine at #R$92E1
 N $5E85 Left hand side objects.
 N $5E85 Entry 10 (tunnel light)
 @ $5E85 label=left_hand_graphics_defs
-B $5E85,3,3
+B $5E85,3,3 (hit coord min, hit coord max, ?)  -- note reversed order
 @ $5E88 label=left_hand_handlers
 W $5E88,2,2 Arg for routine passed in DE
 W $5E8A,2,2 -> Routine at #R$924D
@@ -3057,10 +3057,13 @@ c $8903 Drives sound effects
 D $8903 Used by the routine at #R$8401.
 @ $8903 label=drive_sfx
 C $8903,6 Jump if tunnel_sfx
-C $8909,7 var_a23d |= var_a23c
+N $8909 If var_a23d or var_a23c is set then play effect 7 ("tit-tit").
+C $8909,3 Load var_a23c
+C $890C,3 Load address of var_a23d
+C $890F,1 OR together vars and set flags
 C $8910,3 Effect 7 (tit-tit), Priority 4
 C $8913,3 Call start_sfx if non-zero
-@ $8916 label=drs_8916
+@ $8916 label=drs_skip_effect_no7
 C $8916,3 Call play_engine_sfx_hook
 C $8919,3 Call play_engine_or_siren_sfx_hook  -- plays engine in 48K, siren in 128K
 C $891C,3 Call write_audio_registers_hook  -- nop in 48K
@@ -5653,7 +5656,7 @@ N $A188 Each entry is 20 bytes long. The first entry is the perp.
 N $A188 Hazard structure layout:
 N $A188 +0 (byte) is $FF if this hazard is used, $00 otherwise
 N $A188 +1 (byte) is the low byte of the distance from 'camera'. increments when the perp is getting further away, decrements otherwise.
-N $A188 +2 (byte) is horizontal position
+N $A188 +2 (byte) is horizontal position (relative?)
 N $A188 +3 (byte) TBD
 N $A188 +4 (byte) TBD
 N $A188 +5 (byte) is horizontal position
@@ -5834,7 +5837,7 @@ B $A264,1,1 Left turning force (0..36)
 @ $A265 label=fork_visible
 B $A265,1,1 Used by #R$BC2C -- set to $60 when the forked road becomes visible, zero otherwise
 @ $A266 label=fork_countdown
-B $A266,1,1 Used by #R$A3A6 -- counts down (from 16?) when the forked road approaches, zero when the fork actually starts
+B $A266,1,1 Used by #R$A3A6 -- counts down from 21 when the forked road approaches, zero when the fork actually starts or otherwise
 @ $A267 label=fork_distance
 W $A267,2,2 Counts 0..255 during road forks
 @ $A269 label=fork_in_progress
@@ -5865,75 +5868,115 @@ B $A281,7,7 Open bracket
 B $A288,7,7 Close bracket
 B $A28F,7,7 Comma
 B $A296,7,7 Full stop
-B $A29D,70,7 0..9
-B $A2E3,182,7 A-Z
+B $A29D,7,7 0
+B $A2A4,7,7 1
+B $A2AB,7,7 2
+B $A2B2,7,7 3
+B $A2B9,7,7 4
+B $A2C0,7,7 5
+B $A2C7,7,7 6
+B $A2CE,7,7 7
+B $A2D5,7,7 8
+B $A2DC,7,7 9
+B $A2E3,7,7 A
+B $A2EA,7,7 B
+B $A2F1,7,7 C
+B $A2F8,7,7 D
+B $A2FF,7,7 E
+B $A306,7,7 F
+B $A30D,7,7 G
+B $A314,7,7 H
+B $A31B,7,7 I
+B $A322,7,7 J
+B $A329,7,7 K
+B $A330,7,7 L
+B $A337,7,7 M
+B $A33E,7,7 N
+B $A345,7,7 O
+B $A34C,7,7 P
+B $A353,7,7 Q
+B $A35A,7,7 R
+B $A361,7,7 S
+B $A368,7,7 T
+B $A36F,7,7 U
+B $A376,7,7 V
+B $A37D,7,7 W
+B $A384,7,7 X
+B $A38B,7,7 Y
+B $A392,7,7 Z
 c $A399 Checks for scenery collisions
 D $A399 Used by the routines at #R$8401 and #R$852A.
 @ $A399 label=check_scenery_collisions
 C $A399,3 HL = $0048
-C $A39C,3 DE = $01D8
-C $A3A0,3 A = fork_visible
+C $A39C,3 DE = $01D8  -- constant indicates road centre?
+C $A39F,1 Bank
+C $A3A0,3 Load fork_visible
 C $A3A3,1 Set flags
-C $A3A4,2 Jump to csc_at_fork if zero
-C $A3A6,3 A = fork_countdown
+C $A3A4,2 Jump to csc_fork_not_visible_or_fork_in_progress if zero
+N $A3A6 The fork is visible.
+C $A3A6,3 Load fork_countdown
 C $A3A9,1 Set flags
-C $A3AA,3 Jump to csc_not_fork if zero
-C $A3AD,1 A--
-C $A3AE,1 Return if zero  [can't collide immediately before fork?]
-N $A3AF Check left hand side of car.
-@ $A3AF label=csc_at_fork
-C $A3AF,3 HL = *$EAFE
-C $A3B2,1 A = H (0 or 255)
-C $A3B3,1 Set flags
-C $A3B4,2 Jump to #R$A3D1 if non-zero
-C $A3B6,9 Jump to #R$A3D1 if HL < $40
-C $A3BF,8 Jump to #R$A3D5 if HL < $6A
-C $A3C7,4 HL -= $85
+C $A3AA,3 Jump to csc_fork_completed if zero
+N $A3AD Currently forking.
+C $A3AD,1 Decrement the fork_countdown
+C $A3AE,1 Return if zero  -- can't collide immediately before fork?
+N $A3AF Check left hand side of car. This reads the position of the road from generated data at $EAFE. The values as seen in the debugger vibrate so it's hard to tell exactly what the buffer is. Presumably it's a dual-use buffer and I need to know what it's being used for at this instant to make a clear statement here.
+@ $A3AF label=csc_fork_not_visible_or_fork_in_progress
+C $A3AF,3 Read signed word at $EAFE
+C $A3B2,2 Set flags from sign of word: 0 when hero car on left side, 255 if right
+C $A3B4,2 Jump to #R$A3D1 if non-zero  -- right side
+N $A3B6 Otherwise left side.
+C $A3B6,9 Jump to #R$A3D1 if HL < 64
+C $A3BF,8 Jump to #R$A3D5 if HL < 106
+C $A3C7,4 HL -= 133
 C $A3CB,1 A++  -- A == 1 => partially off-road
-C $A3CC,2 Jump to csc_fork_set if A was 255
+C $A3CC,2 Jump to csc_store_off_road if A was 255
 C $A3CE,1 A++  -- A == 2 => fully off-road
-C $A3CF,2 Jump to csc_fork_set
-@ $A3D1 label=csc_a3d1
-C $A3D1,4 var_a23d = 0
+C $A3CF,2 Jump to csc_store_off_road
+@ $A3D1 label=csc_clear_var_a23d
+C $A3D1,4 var_a23d = 0  -- offroad/sfx flag perhaps?
 N $A3D5 Check right hand side of car.
 @ $A3D5 label=csc_a3d5
-C $A3D5,3 HL = *$EAFC
-C $A3D8,1 A = H
-C $A3D9,1 Set flags
-C $A3DA,2 A = 0  (not self modified)
+C $A3D5,3 Read signed word at $EAFC
+C $A3D8,2 Set flags from sign of word: 1 when hero car on left side, 0 if right
+C $A3DA,2 var_a23c = 0
 C $A3DC,2 Jump to #R$A3FA if non-zero
-C $A3DE,9 Jump to #R$A3FA if HL >= $BE
-C $A3E7,9 Jump to #R$A3FD if HL >= $8E
-C $A3F0,4 HL -= $7C
+C $A3DE,9 Jump to #R$A3FA if HL >= 190
+C $A3E7,9 Jump to #R$A3FD if HL >= 142
+C $A3F0,4 HL -= 124
 C $A3F4,1 A++  -- A == 1 => partially off-road
-C $A3F5,2 Jump to csc_fork_set if no carry
+C $A3F5,2 Jump to csc_store_off_road if no carry
 C $A3F7,1 A++  -- A == 2 => fully off-road
-C $A3F8,2 Jump to csc_fork_set
-@ $A3FA label=csc_a3fa
+C $A3F8,2 Jump to csc_store_off_road
+@ $A3FA label=csc_store_var_a23c
 C $A3FA,3 var_a23c = A
-@ $A3FD label=csc_fork_set
+@ $A3FD label=csc_store_off_road
 C $A3FD,3 off_road = A  -- 0/1/2 => on-road/one wheel off-road/both wheels off-road
 C $A400,1 Set flags
 C $A401,2 C = 0  (not self modified)
-C $A403,2 not off road?
+C $A403,2 Jump if not off road
+N $A405 Otherwise we're off-road.
 C $A405,3 Load road_buffer_offset into #REGa
 C $A408,2 Add 64 so it's the lanes data offset
 C $A40A,3 Point #REGhl at road buffer lanes data
-C $A40D,1 A = *HL
+C $A40D,1 Read lane data byte
 C $A40E,2 Test bit 6  -- tunnel bits perhaps?
 C $A410,2 Jump if clear
 C $A412,1 Test bit 7
 C $A413,2 Jump if set
+N $A415 We arrive here if we're far into the tunnel.
 C $A415,2 Test bit 3 (was bit 2 before RLA)
-C $A417,3 A = road_pos.hi
+C $A417,3 Load road_pos high byte
 C $A41A,2 Jump if clear
 C $A41C,1 C = A
 C $A41D,2 A = 20
+C $A41F,1 Bank it
 C $A420,3 A = C & 1
-C $A423,3 Jump to csc_hit_scenery2
+C $A423,3 Exit via scenery_hit
 @ $A426 label=csc_a426
 C $A426,3 HL = $00D1
 C $A429,3 DE = $0195
+C $A42C,1 Unbank from #R$A39F
 C $A42D,1 Set flags [A is ?]
 C $A42E,2 C = 1
 C $A432,1 C = 2
@@ -5947,7 +5990,7 @@ C $A43B,1 A = C
 C $A43C,3 ($B3DC) = A
 C $A440,3 ($B396) = HL
 C $A443,4 ($B3A4) = DE
-C $A447,1 Set flags
+C $A447,1 Set flags from A (was C)
 C $A448,1 Return if non-zero
 C $A449,3 Load road_buffer_offset into #REGa
 N $A44C -- RIGHT SIDE OBJECT HIT CHECKING --
@@ -5969,7 +6012,7 @@ N $A469 Read collision values.
 C $A469,2 C = *HL++  -- e.g. $5E5B. a higher value
 C $A46B,2 E = *HL++  -- e.g. $5E5C. a lower value
 C $A46D,1 A = *HL     -- e.g. $5E5D. TBD
-C $A46E,1 D = B       -- B is zero here, so BC = C and DE = E
+C $A46E,1 DE = E, BC = C  -- #REGb is zero from #R$A463 above
 N $A46F Check for collisions with scenery (right hand side).
 C $A46F,3 HL = *$EAFC  -- near end of road drawing words (centre)... must be position of car
 C $A472,6 Jump to csc_a480 if HL >= BC
@@ -5978,42 +6021,44 @@ C $A47C,1 Unbank road buffer offset
 C $A47D,1 A = 0  -- perhaps a right hand flag
 C $A47E,2 Jump to csc_hit_scenery
 @ $A480 label=csc_a480
-C $A480,1 Unbank road buffer offset
+C $A480,1 Unbank road buffer offset or/and bank mystery value in A
 N $A481 -- LEFT SIDE OBJECT HIT CHECKING --
 C $A481,2 Add 32 so it's the left side objects data offset
 C $A483,3 Point #REGhl at road buffer left side objects data
 C $A486,3 Load road_buffer_offset into #REGa
 C $A489,1 Top bit -> carry
 C $A48A,1 Read a left side object data byte
-C $A48B,2 Jump if top bit was clear
-C $A48D,1 L++
+C $A48B,2 Jump if top bit of road_buffer_offset was clear
+C $A48D,1 Advance to next data byte
 @ $A48E label=csc_a48e
 C $A48E,1 OR in the (next) byte
-C $A48F,1 Return if zero -- no object
-C $A490,12 HL = (*#R$5D00)[A * 7]
+C $A48F,1 Return if combined value is zero -- no object
+C $A490,12 HL = (*#R$5D00)[A * 7]  -- indexing left hand objects
 N $A49C Read collision values.
-C $A49C,2 C = *HL++
-C $A49E,2 E = *HL++
+C $A49C,2 C = *HL++  -- must be min/left hit coord
+C $A49E,2 E = *HL++  -- must be max/right hit coord
 C $A4A0,1 A = *HL
-C $A4A1,1 D = B  must be zero?
+C $A4A1,1 DE = E, BC = C  -- #REGb is zero from #R$A496 above
 N $A4A2 Check for collisions with scenery (left hand side).
-C $A4A2,3 HL = *$EAFE  -- suspected position of car
+C $A4A2,3 HL = *$EAFE  -- suspected position of car/road
 C $A4A5,5 Return if HL < BC
 C $A4AA,3 Return if HL >= DE
-C $A4AD,1 Unbank road buffer offset
+C $A4AD,1 ?Unbank road buffer offset
 C $A4AE,2 A = 1  -- perhaps a left hand flag
-N $A4B0 Arrive here if hit scenery, e.g. drove a tree or a lamp post.
+N $A4B0 Arrive here if hit scenery, e.g. drove into a tree or a lamp post.
 @ $A4B0 label=csc_hit_scenery
 C $A4B0,1 Preserve AF  -- suspected left hand flag
 C $A4B1,3 Effect 4 (scenery crash), Priority 3
 C $A4B4,3 Call start_sfx
 C $A4B7,1 Restore AF
-N $A4B8 This entry point is used by the routines at #R$A637 and #R$A8CD.
-@ $A4B8 label=csc_hit_scenery2
-C $A4B8,3 HL = &<crashed flag>
+E $A399 FALLTHROUGH
+c $A4B8 Scenery was hit
+D $A4B8 Used by the routines at #R$A399, #R$A637 and #R$A8CD.
+@ $A4B8 label=scenery_hit
+C $A4B8,3 Load address of the x in 'LD A,x' @ #R$B325 (crashed flag)
 C $A4BB,2 Set flags
 C $A4BD,1 Return if already crashed
-@ $A4BE label=csc_new_crash
+@ $A4BE label=sch_new_crash
 C $A4BE,2 Set crashed flag
 C $A4C0,4 *$B36F = A++  -- set flip flag (0/1 = right/left)
 C $A4C4,3 *$B38E = A
@@ -6025,40 +6070,41 @@ C $A4D2,1 A = L
 C $A4D5,8 A = (A << 3) + 16
 C $A4DD,2 L = 24
 C $A4E2,1 L = A
-@ $A4E3 label=csc_a4e3
+@ $A4E3 label=sch_a4e3
 C $A4E3,3 Self modify 'LD HL,$xxxx' @ #R$B356
 C $A4E7,3 HL = A
 C $A4EC,2 HL -= DE
-@ $A4F2 label=csc_a4f2
+@ $A4F2 label=sch_a4f2
 C $A4F2,3 Self modify 'LD BC' @ #R$B32E to load HL
 C $A4F5,1 Return
-@ $A4F6 label=csc_not_fork
+c $A4F6 Fork completed
+D $A4F6 Used by the routine at #R$A399.
+@ $A4F6 label=fork_completed
 C $A4F6,3 HL = *$E8FE  -- checking the final word of the road drawing (left) table
 C $A4F9,1 A = H  (0 or 255)
 C $A4FA,1 Set flags
-C $A4FB,2 Jump to csc_a510 if A isn't zero
+C $A4FB,2 Jump to fc_a510 if A isn't zero
 C $A4FD,9 Jump to #R$A510 if HL < $6A
 C $A506,4 HL -= $85
 C $A50A,1 A++  -- A == 1 => partially off-road
-C $A50B,2 Jump to csc_not_fork_set if HL < $85
+C $A50B,2 Jump to fc_not_fork_set if HL < $85
 C $A50D,1 A++  -- A == 2 => fully off-road
-C $A50E,2 Jump to csc_not_fork_set
-@ $A510 label=csc_a510
+C $A50E,2 Jump to fc_not_fork_set
+@ $A510 label=fc_a510
 C $A510,3 HL = *$EDFC
 C $A513,1 A = H
 C $A514,1 Set flags
 C $A515,2 A = 0
-C $A517,2 JR NZ,csc_not_fork_set
-C $A519,9 Jump to csc_not_fork_set if HL >= $8E
+C $A517,2 JR NZ,fc_not_fork_set
+C $A519,9 Jump to fc_not_fork_set if HL >= $8E
 C $A522,4 HL -= $7C
 C $A526,1 A++  -- A == 1 => partially off-road
-C $A527,2 Jump to csc_not_fork_set if HL >= $7C
+C $A527,2 Jump to fc_not_fork_set if HL >= $7C
 C $A529,1 A++  -- A == 2 => fully off-road
 N $A52A Set the off-road flag etc.
-@ $A52A label=csc_not_fork_set
+@ $A52A label=fc_not_fork_set
 C $A52A,3 off_road = A
-C $A52D,1 A = 0
-C $A52E,3 *$B3DC = A
+C $A52D,4 *$B3DC = 0
 C $A532,3 *$B396 = HL
 C $A535,4 *$B3A4 = DE
 C $A539,6 Jump to #R$A55C if fork_taken was 1 (right fork taken)
@@ -6074,7 +6120,7 @@ C $A552,3 Return if HL < DE
 C $A555,2 A = $8C
 C $A558,1 A = 0  -- perhaps a right hand flag
 C $A559,3 Exit via csc_hit_scenery
-@ $A55C label=csc_a55c
+@ $A55C label=fc_a55c
 C $A55C,3 HL = *$5D02
 C $A55F,2 C = *HL++
 C $A561,2 E = *HL++
@@ -6380,7 +6426,7 @@ C $A79C,2 Jump if no turbo boost
 C $A79E,2 230 when turbo boosting
 @ $A7A0 label=pb_a7a0
 C $A7A0,1 Bank value chosen from boost; Unbank other
-C $A7A1,3 Call cc_hit_scenery2
+C $A7A1,3 Call scenery_hit
 C $A7A4,3 Read #REGhl from 'LD BC,x' @ #R$B32E
 C $A7A7,4 HL += 40
 C $A7AB,3 Self modify 'LD BC,x' @ #R$B32E
@@ -6576,7 +6622,7 @@ C $A93D,1 Restore AF
 C $A93E,4 Jump if A < 3
 C $A942,2 A -= 3
 @ $A944 label=hzh_crashed
-C $A944,3 Call cc_hit_scenery2
+C $A944,3 Call scenery_hit
 C $A947,3 Address of ouch_chatter
 C $A94A,5 Call start_chatter (priority 3)
 C $A94F,3 Effect 3 (car crash), Priority 2
@@ -6945,7 +6991,7 @@ C $AC15,1 Restore entry registers
 C $AC16,9 wordat(IX + 11) = Address of #R$AC3C routine
 N $AC1F Gets hit when on the dirt track. sampled DE = $3 (tumbleweed), $0 (barrier)
 C $AC1F,4 Point #REGhl at the hazards data table entry (*$5CF6 -> #R$5E40 + 3)
-C $AC23,5 Copy flag TBD
+C $AC23,5 Copy flag/value TBD from hazard table
 C $AC28,9 Copy lod address (e.g. tumbleweed_lods)
 C $AC31,3 IX[5] = B TBD -- passed in, setup before sh_find_free calls
 C $AC34,3 IX[1] = C  -- buffer offset/distance
@@ -7012,7 +7058,7 @@ C $ACDA,1 Return
 B $ACDB,40,8 #R$AC94 uses this
 @ $AD03 label=table_ad03
 W $AD03,10,2 #R$AC53 uses this
-c $AD0D Collision related subroutine
+c $AD0D Checks for hazard collisions
 D $AD0D Called continuously.
 D $AD0D Used by the routine at #R$BDFB.
 @ $AD0D label=check_hazard_collisions
@@ -7038,8 +7084,9 @@ C $AD31,3 A = IX[1]  -- buffer offset/distance
 C $AD34,3 End this iteration if distance >= 20  -- too far away?
 N $AD37 Distance is < 20.
 C $AD37,2 Initialise #REGd
-C $AD39,3 Call sub_ad51 (returns #REGd)
-C $AD3C,3 End this iteration if returned D was zero
+C $AD39,3 Call check_collision (returns #REGd)
+C $AD3C,3 End this iteration if no collision
+N $AD3F There was a collision.
 C $AD3F,4 A = IX[15] + 1  -- increment delay
 C $AD43,1 End this iteration if zero
 C $AD44,6 Load address of hit handler into #REGhl
@@ -7050,22 +7097,22 @@ C $AD4B,1 Unbank
 C $AD4C,2 Move to next hazard
 C $AD4E,2 Loop
 C $AD50,1 Return
-c $AD51 Hazard related subroutine
+c $AD51 Hazard collision
 D $AD51 Used by the routines at #R$AD0D and #R$ADA0.
 R $AD51 I:D Initialised to zero (when return value is required)
 R $AD51 I:IX Address of a hazard structure
 R $AD51 O:D Return value
-@ $AD51 label=sub_ad51
+@ $AD51 label=check_collision
 C $AD51,5 Return if hit counter is non-zero
 N $AD56 Otherwise we're... ?
-C $AD56,6 HL = wordat(IX + 2)
-C $AD5C,3 Return if top byte of #REGhl was set
+C $AD56,6 L = horizontal position, H = ?
+C $AD5C,3 Return if top byte of #REGhl was non-zero
 C $AD5F,4 A = IX[15] + 1 and set flags  -- hazard anim counter thing
 C $AD63,3 A = IX[1]  -- buffer offset/distance
 C $AD66,2 C = 3
 C $AD68,2 Jump if (IX[15] + 1) was non-zero
 C $AD6A,2 C = 2
-@ $AD6C label=ad51_1
+@ $AD6C label=ccl_1
 C $AD6C,2 Return if distance >= C
 C $AD6E,2 E = 4
 C $AD70,1 A--
@@ -7076,22 +7123,22 @@ C $AD77,3 Jump if positive
 N $AD7A Otherwise zero or negative?
 C $AD7A,2 E = 1
 C $AD7C,2 Jump
-@ $AD7E label=ad51_2
+@ $AD7E label=ccl_2
 C $AD7E,1 Set flags for fast_counter
 C $AD7F,1 Return if positive
-@ $AD80 label=ad51_3
-C $AD80,3 A = L & $F8
-C $AD83,3 Return if A >= $90
-C $AD86,3 A += IX[8]
-C $AD89,3 Return if A <= $70
+@ $AD80 label=ccl_check_horz_pos
+C $AD80,3 A = (horizontal position) & $F8
+C $AD83,3 Return if A >= 144
+C $AD86,3 A += IX[8]  -- from hazard data table
+C $AD89,3 Return if A <= 112
 C $AD8C,3 A -= IX[8]
-C $AD8F,4 Jump if A < $68
+C $AD8F,4 Jump if A < 104
 C $AD93,1 E--
-C $AD94,4 Jump if A < $78
+C $AD94,4 Jump if A < 120
 C $AD98,2 E += 2
-@ $AD9A label=ad51_4
+@ $AD9A label=ccl_exit
 C $AD9A,3 IX[7] (hit counter) = E
-C $AD9D,2 D = 1
+C $AD9D,2 D = 1  -- perhaps a "was hit" flag
 C $AD9F,1 Return
 c $ADA0 Draws hazards
 D $ADA0 This includes all cars, barriers, tumbleweeds, etc.
@@ -7194,7 +7241,7 @@ C $AE6D,1 A = H
 C $AE6F,1 C = A
 C $AE70,4 HL = <self modified> + BC
 C $AE74,6 wordat(IX + 2) = HL
-C $AE7A,3 Call sub_ad51
+C $AE7A,3 Call check_collision (result ignored)
 C $AE7D,3 D = IX[1]  -- buffer offset/distance
 C $AE80,3 E = IX[4]
 C $AE83,3 HL = &n_hazards
@@ -7880,8 +7927,10 @@ C $B3D0,3 turn_speed = A
 C $B3D3,5 flip_car = 1
 @ $B3D8 label=ahc_debris
 C $B3D8,3 Draw debris
+@ $B3DB label=ahc_load_flip_flag
 C $B3DB,2 A = <self modified>  -- flip flag + 1
 C $B3DD,3 Jump if zero (not flipped?)
+N $B3E0 Otherwise ...
 C $B3E0,1 C = A
 C $B3E2,3 A += C + 24
 C $B3E5,1 C = A
@@ -7891,13 +7940,16 @@ N $B3ED turn_speed is 2.
 C $B3ED,3 Load flip_car
 C $B3F0,3 Jump if zero
 C $B3F3,1 2 -> 3
+@ $B3F4 label=ahc_b3f4
 C $B3F4,1 2/3 -> 3/4
+@ $B3F5 label=ahc_b3f5
 C $B3F5,1 Bank/unbank
 C $B3F6,6 B = counter_A & 1  -- animation counter
 C $B3FD,1 C = A
 C $B3FF,1 A = C
 C $B400,3 Draw crash
 C $B403,4 off_road = 0
+@ $B407 label=ahc_b407
 C $B407,3 Call ahc_check_hand_flag
 N $B40A Make the car bounce up and down when it goes off-road.
 C $B40A,2 Default bounce of zero to pass to draw_car. It should be either 0 or 3.
@@ -7908,38 +7960,43 @@ C $B41B,3 Load turn_speed
 C $B41E,3 Call draw_car
 C $B421,6 Jump if cherry_light is zero
 N $B427 Draw the cherry light.
-C $B427,1 A = 0
-C $B428,3 BC = $0102  -- size?
+C $B427,1 A = 0  -- parameter TBD
+C $B428,3 BC = $0102  -- parameters TBD
 C $B42B,3 Call draw_cherry
 N $B42E Check to see if smoke needs drawing.
-@ $B42E label=ahc_draw_smoke
-C $B42E,4 B = counter_A (0/1/2/3)
-C $B432,7 Jump if cornering
-C $B439,3 A = counter_C  -- half rate counter 0/1/2/3
-C $B43C,1 B = A
-C $B43D,1 HL++
-C $B43E,2 A = *HL++
-C $B440,1 A |= *HL
+@ $B42E label=ahc_need_smoke
+C $B42E,4 Load counter_A (0/1/2/3 full rate) into #REGb  -- animate smoke fast if cornering
+C $B432,3 Read cornering flag
+C $B435,4 Jump to ahc_do_draw_smoke if it's non-zero
+N $B439 Not cornering.
+C $B439,4 Load counter_C (0/1/2/3 half rate) into #REGb
+C $B43D,1 Advance to boost var
+C $B43E,1 Read boost var
+C $B43F,1 Advance to smoke var
+C $B440,1 Merge together
+C $B441,2 Jump to ahc_do_draw_smoke if either is set
+N $B443 No boost nor smoke.
 C $B443,3 Load off_road
 C $B446,3 Return if not fully off-road
+N $B449 Otherwise we're off-road.
 N $B449 Draw the smoke.
 @ $B449 label=ahc_do_draw_smoke
 C $B449,2 A' = 0  -- no flip?
 C $B44B,1 A = B  -- smoke anim index
-C $B44C,1 preserve
+C $B44C,1 Preserve smoke anim index
 C $B44D,3 Call draw_smoke - for the right hand side
 C $B450,3 A' = 1  -- flip?
-C $B453,1 restore smoke anim index
+C $B453,1 Restore smoke anim index
 C $B454,3 Exit via draw_smoke - for the left hand side
 @ $B457 label=ahc_check_hand_flag
 C $B457,5 Return if hand_flag is zero
-N $B45C Start the animation.
+N $B45C Start the hand animation.
 @ $B45C label=ahc_hand_flag_non_zero
 C $B45C,3 Jump if hand_flag is one
 N $B45F Show the "stop" hand.
 @ $B45F label=ahc_hand_flag_gt_one
 C $B45F,1 Bank
-C $B460,3 BC = A
+C $B460,3 BC' = A
 C $B463,1 Unbank
 N $B464 Avoid the hand animation if turning hard?
 C $B464,5 Is turn_speed 2? (turn hard)
@@ -7950,38 +8007,45 @@ C $B46E,5 A = flip_car + 37
 C $B473,3 Exit via #R$B69E
 N $B476 Start the animation.
 @ $B476 label=ahc_hand_flag_one
-C $B476,2 C = <self modified>
+C $B476,2 C = <self modified>  zeroed in start_chase
 C $B478,2 A = <self modified>  [could be animation frame?]  -- gets set to 2
-C $B47A,1 A--
+C $B47A,1 Decrement counter
 C $B47B,3 Self modify 'LD A' @ #R$B478 (above) to load A
+C $B47E,2 Jump to ahc_b493 if A != 0
+N $B480 A was zero.
 C $B480,2 B = 2
-C $B482,1 C++
+C $B482,1 Increment C
 C $B483,1 A = C
 C $B484,4 Jump if >= 4
-C $B488,1 A++
+C $B488,1 Increment A
 C $B489,1 C = A
 C $B48A,4 Jump if != 2
-C $B48E,1 B++
+C $B48E,1 Increment B
 @ $B48F label=ahc_b48f
-C $B48F,1 A = B
-C $B490,3 Self modify 'LD A' @ #R$B478 (above) to load A
+C $B48F,4 Self modify 'LD A' @ #R$B478 (above) to load B
 @ $B493 label=ahc_b493
-C $B493,1 A = C
-C $B494,3 Self modify 'LD C' @ #R$B476 (above) to load A
+C $B493,4 Self modify 'LD C' @ #R$B476 (above) to load C
 C $B497,4 Jump if >= 7
+N $B49B Hide the "stop" hand.
 C $B49B,4 hand_flag = 0
 C $B49F,1 Return
-C $B4A0,3 A = turn_speed
-C $B4A3,2 CP 2
-C $B4A5,2 A = 6
-C $B4A9,10 A = (A << 3) - flip_car + 13
-C $B4B3,1 A += C
+@ $B4A0 label=ahc_ge_7
+C $B4A0,3 Load turn_speed
+C $B4A3,2 Turning hard?
+C $B4A5,4 Jump if not turning hard with A = 6
+C $B4A9,10 A = (flip_car * 7) + 13
+@ $B4B3 label=ahc_b4b3
+C $B4B3,1 A += C  -- C is?
+C $B4B4,1 Preserve A
+C $B4B5,3 Call draw_cherry_b699
+C $B4B8,1 Restore A
 C $B4B9,1 C = A
 C $B4BA,3 Read from 'LD C' @ #R$B476 (above) to load A
 C $B4BD,4 Jump to #R$B4C6 if A >= 4
+N $B4C1 A < 4
 C $B4C1,1 C++
 C $B4C2,1 A = C
-C $B4C3,3 Exit via #R$B699
+C $B4C3,3 Exit via draw_cherry_b699
 @ $B4C6 label=ahc_enable_cherry_light
 C $B4C6,5 Enable the cherry_light
 C $B4CB,1 Return
@@ -8231,7 +8295,7 @@ C $B695,3 A' += C
 @ $B698 label=draw_cherry_b698
 N $B699 This entry point is used by the routine at #R$B318.
 @ $B699 label=draw_cherry_b699
-C $B69A,3 BC = 0   -- not self modified
+C $B699,5 BC' = 0   -- not self modified
 E $B67C FALL THROUGH
 c $B69E This entry point is used by the routine at #R$B318.
 D $B69E Used by the routine at #R$B318.
@@ -9007,8 +9071,8 @@ C $BDFA,1 Return
 c $BDFB Map reader
 D $BDFB Used by the routines at #R$8401, #R$852A and #R$873C.
 @ $BDFB label=read_map
-C $BDFB,4 var_a23d = 0  -- state var TBD
-C $BDFF,3 var_a23c = 0  -- state var TBD
+C $BDFC,3 Clear var_a23d
+C $BDFF,3 Clear var_a23c
 C $BE02,3 Clear allow_spawning
 C $BE05,3 HL = Address of fast_counter
 C $BE08,4 DE = speed
