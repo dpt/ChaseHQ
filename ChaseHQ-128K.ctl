@@ -5684,9 +5684,9 @@ N $A213 AY registers 0..11 [128K]
 @ $A213 label=ay_chan_a_pitch
 W $A213,2,2 0,1: Channel A pitch (fine,coarse=lo,hi)
 @ $A215 label=ay_chan_b_pitch
-W $A215,2,2 2,3: Channel B pitch
+W $A215,2,2 2,3: Channel B pitch (fine,coarse=lo,hi)
 @ $A217 label=ay_chan_c_pitch
-W $A217,2,2 4,5: Channel C pitch - used for engine tone?
+W $A217,2,2 4,5: Channel C pitch (fine,coarse=lo,hi) - used for engine tone
 @ $A219 label=ay_noise_pitch
 B $A219,1,1 6: Noise pitch
 @ $A21A label=ay_mixer
@@ -12851,20 +12851,21 @@ W $F24B,2,2 Level 4. Source = $E000, Paging = bank 6
 W $F24D,2,2 Level 5. Source = $C000, Paging = bank 7
 W $F24F,2,2 Level 6. Source = $E000, Paging = bank 7
 c $F251 Start the siren sound effect (128K)
-D $F251 $8045 once relocated.
+D $F251 Lives at $8045 when relocated.
 @ $F251 label=start_siren_128k
-C $F251,5 Store 140 to channel A fine pitch
+C $F251,5 Store 140 to channel A fine pitch (~792Hz)
 C $F256,5 Store 14 to channel A volume (4-bit)
 C $F25B,5 Store 12 to channel B volume
 N $F260 Set alternating pattern for siren tone.
-C $F260,5 Self modify 'LD A,x' @ #R$F271 (in this position) below
+C $F260,5 Self modify 'LD A,x' @ #R$F271 below
 C $F265,3 Enable siren (storing $AA for bool)
 C $F268,1 Return
 c $F269 Plays the siren sound effect (128K)
+D $F269 Lives at $805D when relocated.
 @ $F269 label=play_siren_sfx_128k
 C $F269,5 Return if siren disabled
 C $F26E,3 Load channel A fine pitch
-C $F271,2 Load 50-50 alternating pattern (self modified above)
+C $F271,2 Load 50-50 alternating pattern (self modified @ #R$F260 above)
 C $F273,4 Jump to increasing case if top bit was set
 N $F277 Decreasing case.
 @ $F277 label=pss_decreasing
@@ -12887,49 +12888,70 @@ C $F28E,5 and store 4 less to channel B fine pitch
 C $F293,8 Set mixer to enable tone A & B
 C $F29B,2 Exit via write_audio_registers_128k
 c $F29D Silence audio (128K)
+D $F29D Lives at $8091 when relocated.
 @ $F29D label=silence_audio_128k
-C $F29D,5 Initialise mixer to $3F (all noise and tone off)
+C $F29D,5 Initialise mixer to $3F (all noise and tone channels disabled)
 E $F29D FALLTHROUGH
-c $F2A2 Writes the AY registers (128K)
+c $F2A2 Writes the AY audio registers (128K)
+D $F2A2 Lives at $8096 when relocated.
 D $F2A2 Used by the routine at #R$F269.
 @ $F2A2 label=write_audio_registers_128k
-C $F2A2,3 Address of sound register value(s) -- other values must be earlier
+C $F2A2,3 Address of final AY register value
+C $F2A5,2 Select AY-3-8912 sound chip register 11: envelope fine duration
+C $F2A7,2 Load constant for port writes
 @ $F2A9 label=wr_loop
-C $F2A5,8 Select AY-3-8912 sound chip register 11: envelope fine duration
-C $F2AD,4 Write to the register from (HL), then decrement B and HL
-C $F2B1,1 Next register down
+C $F2A9,2 Writing to port $FFFD
+C $F2AB,2 Select register #REGa
+C $F2AD,2 Writing to port $BFFD
+C $F2AF,2 Write to the register from (#REGhl), then decrement #REGb and #REGhl
+C $F2B1,1 Advance to next register down
 C $F2B2,3 Loop to #R$F2A9 while +ve
 C $F2B5,1 Return
 c $F2B6 Plays the engine effect
+D $F2B6 Lives at $80AA when relocated.
 D $F2B6 Used by the routine at #R$F2FA.
 @ $F2B6 label=engine_sfx_from_speed_128k
 C $F2B6,3 Load speed into #REGhl
-C $F2B9,2 Bottom bit of #REGh moves to carry  -- is H now empty?
-C $F2BB,1 Speed low byte
+C $F2B9,2 Move bottom bit of #REGh to carry
+N $F2BB #REGh is zero since speed can never exceed 511.
+C $F2BB,1 Get speed low byte
 C $F2BC,1 Halve speed, shifting carry in as MSB
-C $F2BD,2 L = ~A  -- why complement?
+N $F2BD This is now a portion of the pitch divisor that we'll set later.
+C $F2BD,1 Invert the divisor (and the pitch)
+C $F2BE,1 Move to #REGl
 C $F2BF,6 Jump if in low gear
-@ $F2C9 label=esfs_1
+N $F2C5 We're in high gear.
+C $F2C5,4 Double divisor in #REGhl to lower the pitch
+@ $F2C9 label=esfs_low_gear
+C $F2C9,8 Quadruple divisor in #REGhl to lower the pitch more
 C $F2D1,3 Read tunnel_sfx
 C $F2D4,1 Set flags
-C $F2D5,3 Non-tunnel tone value
-C $F2D8,2 Non-tunnel volume
+C $F2D5,3 Not-in-tunnel base divisor
+C $F2D8,2 Not-in-tunnel volume
 C $F2DA,2 Jump if tunnel_sfx was zero (not in tunnel)
-N $F2DC In tunnel.
-C $F2DC,3 In-tunnel tone value
+N $F2DC We're in the tunnel.
+C $F2DC,3 In-tunnel base divisor
 C $F2DF,2 In-tunnel volume
-@ $F2E1 label=esfs_2
-C $F2E1,1 -- speed value + tone?
-C $F2E2,3 Set channel C pitch (both fine and coarse)
+@ $F2E1 label=esfs_tone_chosen
+C $F2E1,1 Add speed divisor to base divisor
+C $F2E2,3 Set channel C pitch divisor (both fine and coarse)
 C $F2E5,3 Set channel C volume
-C $F2E8,8 Set mixer to enable tone C
+C $F2E8,8 Set mixer to enable Tone C
 C $F2F0,1 Return
+> $F2F1 ; On ZX Spectrum 128K models the AY chip is clocked at 1.77345 MHz (half CPU clock).
+> $F2F1 ; "output frequency is equal to the IC's incoming clock frequency divided by 16 and then further divided by the number written to the course and fine pitch registers"
+> $F2F1 ; 440Hz    (A4) would be (1773450 / 16) / 252 = ~439.84
+> $F2F1 ; 261.63Hz (C4) would be (1773450 / 16) / 424 = ~261.41
 c $F2F1 Sets up turbo effect
+D $F2F1 Lives at $8035 when relocated.
 @ $F2F1 label=setup_turbo_sfx_128k
-C $F2F1,5 Set noise pitch (5-bit) [$3C is > 5-bit...]
-C $F2F6,3 turbo_sfx_enabled = $3C  -- set flag?
+C $F2F1,2 Set noise pitch (5-bit) [$3C is > 5-bit...]
+N $F2F3 this says it's the pitch but it seems to affect how long the effect runs for.
+C $F2F3,3 }
+C $F2F6,3 Set turbo_sfx_enabled flag to $3C (any non-zero value works)
 C $F2F9,1 Return
 c $F2FA Plays turbo effect, exits via engine effect
+D $F2FA Lives at $80EE when relocated.
 @ $F2FA label=play_turbo_sfx_128k
 C $F2FA,6 Jump if turbo_sfx_enabled is zero
 C $F300,1 Decrement noise pitch
@@ -12947,7 +12969,7 @@ C $F31F,8 Set mixer to disable tone C and noise C
 C $F327,4 turbo_sfx_enabled = 0
 C $F32B,3 Exit via engine_sfx_from_speed_128k
 c $F32E Play speech
-D $F32E Relocated to $8122
+D $F32E Lives at $8122 when relocated.
 N $F32E "Giddy up boy!"
 @ $F32E label=speech_samples_table
 W $F32E,2,2 length
