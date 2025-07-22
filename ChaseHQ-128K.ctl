@@ -12129,14 +12129,17 @@ W $E88F,2,2
 B $E891,1,1
 W $E892,2,2
 B $E894,1,1
+@ $E895 keep
 W $E895,2,2
 B $E897,1,1
 W $E898,2,2
 B $E89A,1,1
 W $E89B,2,2
 B $E89D,1,1
+@ $E89E keep
 W $E89E,2,2
 B $E8A0,1,1
+@ $E8A1 keep
 W $E8A1,2,2
 B $E8A3,1,1
 W $E8A4,2,2
@@ -12593,7 +12596,7 @@ b $EE38 Temporary keydefs
 @ $EE38 label=temp_keydefs
 B $EE38,8,8
 c $EE40 Interrupt setup
-D $EE40 Used by the routine at #R$E8CE.
+D $EE40 Used by the routine at #R$E8FE.
 D $EE40 See http://www.breakintoprogram.co.uk/hardware/computers/zx-spectrum/interrupts
 @ $EE40 label=setup_interrupts
 C $EE40,1 Disable interrupts
@@ -12614,7 +12617,7 @@ C $EE52,5 $FEFE = Opcode for JP
 C $EE57,6 $FEFF = #R$EF19
 C $EE5D,1 Return
 c $EE5E Reset music
-D $EE5E Used by the routine at #R$E8CE.
+D $EE5E Used by the routine at #R$E8FE.
 @ $EE5E label=reset_music
 C $EE5E,1 A = 0
 C $EE5F,3 Self modify 'LD A,x' @ #R$EF0D  -- clear <drum is playing flag>
@@ -12623,7 +12626,8 @@ C $EE65,3 Self modify 'LD A,x' @ #R$EEA2  -- in play_music_48k
 C $EE68,3 Address of music patterns
 C $EE6B,3 Jump to np_start_at_hl
 c $EE6E Setup the next music pattern
-D $EE6E Used by the routine at #R$EE9E. Keep playing current pattern until this counter becomes zero.
+D $EE6E Used by the routine at #R$EE9E.
+N $EE6E Keep playing current pattern until this counter becomes zero.
 @ $EE6E label=next_pattern
 C $EE6E,2 Load number of pattern repetitions. Self modified by #R$EE7E, and below.
 C $EE70,1 Decrease
@@ -12723,7 +12727,7 @@ C $EF1A,5 Set <interrupt flag> to $FF  -- Self modify 'LD A,x' @ #R$EF13
 C $EF1F,1 Restore registers
 C $EF20,1 Enable interrupts
 C $EF21,1 Return
-c $EF22 Drum sample player
+c $EF22 Drum sample players
 D $EF22 Used by the routine at #R$EE9E.
 R $EF22 I:A Calling this <speed value> (8/3/1 seem to be the used values in practice)
 @ $EF22 label=playdrum_2
@@ -12803,10 +12807,10 @@ C $F0ED,3 Clear EAR + MIC bits
 @ $F0F0 label=n_continue
 C $F0F0,1 Decrement inner counter
 C $F0F1,2 Jump to n_loop if non-zero
-N $F0F3 This whole interrupt check is redundant since AND A + RET C results in the return never being taken. Should it be RET NZ instead? RET Z messed things up.
+N $F0F3 This whole interrupt check is redundant since AND A + RET C results in the return never being taken. Should it be RET NZ instead? (RET Z messed things up when I tried it.)
 C $F0F3,3 Read A from 'LD A' @ #R$EF13  -- <interrupt flag>
 C $F0F6,1 Set flags
-C $F0F7,1 Carry is cleared by AND A so this makes no sense
+C $F0F7,1 Bug: Carry is cleared by AND A so this makes no sense
 C $F0F8,1 Decrement duration counter
 C $F0F9,2 Jump to n_outer_loop if non-zero
 C $F0FB,3 Exit via pm_wait_for_interrupt
