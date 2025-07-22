@@ -12850,18 +12850,28 @@ W $F249,2,2 Level 3. Source = $C000, Paging = bank 6
 W $F24B,2,2 Level 4. Source = $E000, Paging = bank 6
 W $F24D,2,2 Level 5. Source = $C000, Paging = bank 7
 W $F24F,2,2 Level 6. Source = $E000, Paging = bank 7
+> $F251 ; Audio Notes:
+> $F251 ;
+> $F251 ; On ZX Spectrum 128K models the AY chip is clocked at 1.77345 MHz (half CPU
+> $F251 ; clock). The output frequency is equal to the AY clock frequency over 16
+> $F251 ; further divided by the respective pitch register value.
+> $F251 ;
+> $F251 ; e.g.
+> $F251 ; A4 would be (1773450 / 16) / 252 = ~439.84Hz
+> $F251 ; C4 would be (1773450 / 16) / 424 = ~261.41Hz
 c $F251 Start the siren sound effect (128K)
 D $F251 Lives at $8045 when relocated.
 @ $F251 label=start_siren_128k
 C $F251,5 Store 140 to channel A fine pitch (~792Hz)
 C $F256,5 Store 14 to channel A volume (4-bit)
 C $F25B,5 Store 12 to channel B volume
-N $F260 Set alternating pattern for siren tone.
+N $F260 Initialise alternating pattern for siren tone.
 C $F260,5 Self modify 'LD A,x' @ #R$F271 below
 C $F265,3 Enable siren (storing $AA for bool)
 C $F268,1 Return
 c $F269 Plays the siren sound effect (128K)
-D $F269 Lives at $805D when relocated.
+D $F269 If the siren is enabled this produces an alternating rising and falling siren sound effect. AY channels A and B are used.
+R $F269 Lives at $805D when relocated.
 @ $F269 label=play_siren_sfx_128k
 C $F269,5 Return if siren disabled
 C $F26E,3 Load channel A fine pitch
@@ -12869,32 +12879,34 @@ C $F271,2 Load 50-50 alternating pattern (self modified @ #R$F260 above)
 C $F273,4 Jump to increasing case if top bit was set
 N $F277 Decreasing case.
 @ $F277 label=pss_decreasing
-C $F277,2 Decrease pitch by 3
-C $F279,4 Jump to set regs if new pitch >= 90
+C $F277,2 Decrease fine pitch by 3
+C $F279,4 Jump to set registers if new fine pitch >= 90
 C $F27D,2 Otherwise went too far: jump to pss_change
 N $F27F Increasing case.
 @ $F27F label=pss_increasing
-C $F27F,2 Increase pitch by 3
-C $F281,4 Jump to set regs if new pitch < 140
-N $F285 Arrive here if new pitch is outside of 90..139.
+C $F27F,2 Increase fine pitch by 3
+C $F281,4 Jump to set registers if new fine pitch < 140
+N $F285 Arrive here if new fine pitch is outside of 90..139.
 @ $F285 label=pss_change
-C $F285,1 Preserve new pitch
-C $F286,4 Store rotating pattern (self modifying above)
-C $F28A,1 Restore new pitch
-N $F28B Arrive here if new pitch is 90..139.
+C $F285,1 Preserve new fine pitch
+C $F286,4 Store rotating pattern (self modifying #R$F271 above)
+C $F28A,1 Restore new fine pitch
+N $F28B Arrive here if new fine pitch is 90..139.
 @ $F28B label=pss_set_regs
 C $F28B,3 Update channel A fine pitch
-C $F28E,5 and store 4 less to channel B fine pitch
+C $F28E,5 and store 4 less to channel B fine pitch (~23Hz higher than A)
 C $F293,8 Set mixer to enable tone A & B
 C $F29B,2 Exit via write_audio_registers_128k
 c $F29D Silence audio (128K)
-D $F29D Lives at $8091 when relocated.
+D $F29D Silences all audio by setting all channels to disabled.
+R $F29D Lives at $8091 when relocated.
 @ $F29D label=silence_audio_128k
 C $F29D,5 Initialise mixer to $3F (all noise and tone channels disabled)
 E $F29D FALLTHROUGH
 c $F2A2 Writes the AY audio registers (128K)
-D $F2A2 Lives at $8096 when relocated.
-D $F2A2 Used by the routine at #R$F269.
+D $F2A2 Writes the complete set of AY audio registers, final register first.
+R $F2A2 Lives at $8096 when relocated.
+R $F2A2 Used by the routine at #R$F269.
 @ $F2A2 label=write_audio_registers_128k
 C $F2A2,3 Address of final AY register value
 C $F2A5,2 Select AY-3-8912 sound chip register 11: envelope fine duration
@@ -12908,15 +12920,16 @@ C $F2B1,1 Advance to next register down
 C $F2B2,3 Loop to #R$F2A9 while +ve
 C $F2B5,1 Return
 c $F2B6 Plays the engine effect
-D $F2B6 Lives at $80AA when relocated.
-D $F2B6 Used by the routine at #R$F2FA.
+D $F2B6 This takes the current speed, halves it, then complements it, then quarters it (or eighths it if in high gear). It's then added to a base value to produce a divisor suitable for poking into the AY chip. If we're in a tunnel then an even lower base value is used. AY channel C is used.
+R $F2B6 Lives at $80AA when relocated.
+R $F2B6 Used by the routine at #R$F2FA.
 @ $F2B6 label=engine_sfx_from_speed_128k
 C $F2B6,3 Load speed into #REGhl
 C $F2B9,2 Move bottom bit of #REGh to carry
 N $F2BB #REGh is zero since speed can never exceed 511.
 C $F2BB,1 Get speed low byte
 C $F2BC,1 Halve speed, shifting carry in as MSB
-N $F2BD This is now a portion of the pitch divisor that we'll set later.
+N $F2BD This is now part of the pitch divisor that we'll set later.
 C $F2BD,1 Invert the divisor (and the pitch)
 C $F2BE,1 Move to #REGl
 C $F2BF,6 Jump if in low gear
@@ -12926,22 +12939,18 @@ C $F2C5,4 Double divisor in #REGhl to lower the pitch
 C $F2C9,8 Quadruple divisor in #REGhl to lower the pitch more
 C $F2D1,3 Read tunnel_sfx
 C $F2D4,1 Set flags
-C $F2D5,3 Not-in-tunnel base divisor
+C $F2D5,3 Not-in-tunnel base divisor (~277Hz)
 C $F2D8,2 Not-in-tunnel volume
 C $F2DA,2 Jump if tunnel_sfx was zero (not in tunnel)
 N $F2DC We're in the tunnel.
-C $F2DC,3 In-tunnel base divisor
+C $F2DC,3 In-tunnel base divisor (~185Hz)
 C $F2DF,2 In-tunnel volume
 @ $F2E1 label=esfs_tone_chosen
 C $F2E1,1 Add speed divisor to base divisor
-C $F2E2,3 Set channel C pitch divisor (both fine and coarse)
+C $F2E2,3 Set channel C pitch divisor (12-bit combined, fine and coarse registers)
 C $F2E5,3 Set channel C volume
 C $F2E8,8 Set mixer to enable Tone C
 C $F2F0,1 Return
-> $F2F1 ; On ZX Spectrum 128K models the AY chip is clocked at 1.77345 MHz (half CPU clock).
-> $F2F1 ; "output frequency is equal to the IC's incoming clock frequency divided by 16 and then further divided by the number written to the course and fine pitch registers"
-> $F2F1 ; 440Hz    (A4) would be (1773450 / 16) / 252 = ~439.84
-> $F2F1 ; 261.63Hz (C4) would be (1773450 / 16) / 424 = ~261.41
 c $F2F1 Sets up turbo effect
 D $F2F1 Lives at $8035 when relocated.
 @ $F2F1 label=setup_turbo_sfx_128k
