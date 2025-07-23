@@ -147,6 +147,7 @@
 > $4000 ;
 > $4000 ; 128K SOUND
 > $4000 ; ----------
+> $4000 ; The siren is played on Channels A and B.
 > $4000 ; The engine drone is played on Channel C.
 > $4000 ;
 > $4000 ;
@@ -158,13 +159,13 @@
 > $4000 ; TODO
 > $4000 ; ----
 > $4000 ; - Decode all stages' level data (see CHQStage.py)
+> $4000 ; - Decode the music data at $F111
 > $4000 ; - Disassemble the Chase HQ demo version
-> $4000 ; - $8008 area used at all?
+> $4000 ; - Is the $8008 area used at all?
 > $4000 ; - Stretchy streetlamps etc. encoding
 > $4000 ; - $E34B block is what?
 > $4000 ; - Stripy tunnel fills
 > $4000 ;
-> $4000
 @ $4000 org
 @ $4000 set-warnings=1
 @ $4000 start
@@ -208,8 +209,8 @@ C $5B2F,2 Call the handler
 N $5B31 Loader handler that loads a stage.
 @ $5B31 label=loader_load
 C $5B31,1 Preserve command list address
-C $5B32,4 Address of loader_scratch
-C $5B36,3 Length of loader_scratch
+C $5B32,4 Load address of loader_scratch
+C $5B36,3 Load length of loader_scratch
 C $5B39,3 Call loader_load_chunk
 C $5B3C,1 Restore command list address
 @ $5B3D label=loader_load_headerless
@@ -2541,7 +2542,7 @@ C $841A,1 Return
 N $841B Run the main game loop.
 @ $841B label=ml_not_credits
 C $841B,3 Call run_pregame_screen
-C $841E,3 Address of stage_set_up_data
+C $841E,3 Load address of stage_set_up_data
 C $8421,3 Call set_up_stage
 @ $842D label=ml_store_start_speech
 C $8424,10 Cycle start_speech_cycle 3,2,1 then repeat
@@ -2549,7 +2550,7 @@ N $842E Choose the startup speech sample.
 C $842E,7 start_speech = (#REGa << 2) OR 2  -- The number of leading zeroes are used to encode a delay
 C $8435,4 Test 128K mode flag
 C $8439,5 Set hazards[0].used to $FF to keep the perp spawned
-C $843E,3 Address of start_stage_chatter
+C $843E,3 Load address of start_stage_chatter
 C $8441,3 Call start_chatter if not in 128K mode (priority $FF)
 @ $8444 label=ml_loop
 C $8444,3 Call drive_sfx
@@ -2625,7 +2626,7 @@ C $84F2,9 Increment credits unless maxed out at 9
 C $84FB,3 Load transition_control
 C $84FE,4 Jump to ml_loop if non-zero
 N $8502 Play speech when we see a 1-bit shift out of start_speech.
-C $8502,3 Address of start_speech
+C $8502,3 Load address of start_speech
 C $8505,2 Shift the counter right
 C $8507,2 Jump if no carry
 C $8509,1 Load speech sample index
@@ -2683,7 +2684,7 @@ C $8589,3 Exit via animate_hero_car
 c $858C Pre-game radio screen ("CHASE HQ MONITORING SYSTEM")
 D $858C Used by the routine at #R$8401.
 @ $858C label=run_pregame_screen
-C $858C,3 Address of stage_set_up_data
+C $858C,3 Load address of stage_set_up_data
 C $858F,3 Call set_up_stage
 C $8592,2 Reverse transition
 C $8594,3 Set dont_draw_screen_attrs to a non-zero value
@@ -2787,7 +2788,7 @@ D $865A The pre-game screen ("CHASE H.Q. MONITORING SYSTEM") is drawn by followi
 D $865A Once the tiles are drawn the strings at #R$7798 are drawn by calling #R$8E6C.
 D $865A Used by the routine at #R$858C.
 @ $865A label=draw_pregame
-C $865A,3 Address of pre-game screen data
+C $865A,3 Load address of pre-game screen data
 @ $865D label=dp_get_command
 C $865D,1 Read a command byte
 C $865E,1 Set flags
@@ -2870,7 +2871,7 @@ C $86E4,1 Restore command pointer
 C $86E5,3 Loop dp_get_command
 @ $86E8 label=dp_print_strings
 C $86E8,2 Four messages to print
-C $86EA,3 Address of pre_game_messages
+C $86EA,3 Load address of pre_game_messages
 @ $86ED label=dp_print_string
 C $86ED,2 Flags TBD
 C $86EF,1 HL--
@@ -2909,18 +2910,18 @@ D $873C This runs the scene shown when the perp has escaped.
 R $873C Used by the routine at #R$8401.
 @ $873C label=escape_scene
 C $873C,3 Call silence_audio_hook
-C $873F,3 Address of escape_scene_data
+C $873F,3 Load address of escape_scene_data
 C $8742,3 Call set_up_stage
 C $8745,6 Set speed to $FA [speed of the camera]
 C $874B,11 Initialise hazards[0] (the perp)
 @ $8759 ssub=LD (hazard_0 + 1),HL
 C $8756,6 Set $A191 to the perp's car LOD
 C $875C,5 inhibit_collision_detection = $FF  -- Stops #R$AD0D from running
-C $8761,3 Address of failed_chatter ("wrong job" / "one more try" / "mediocre driver")
+C $8761,3 Load address of failed_chatter ("wrong job" / "one more try" / "mediocre driver")
 C $8764,3 Call start_chatter (priority $FF)
 N $8767 Print "GAME OVER" once the transition has completed.
 @ $8767 label=es_loop
-C $8767,3 Address of game_over_message
+C $8767,3 Load address of game_over_message
 C $876A,8 If transition_control != 4 Call setup_overlay_messages
 C $8772,3 Call read_map
 C $8775,3 Call build_height_table
@@ -2982,7 +2983,7 @@ N $883F Run the map reader 32 times [enough to draw the screen?]
 C $883F,2 32 iterations
 @ $8841 label=sus_loop
 C $8841,1 Preserve BC
-C $8842,3 Address of fast_counter == road_buffer_offset - 1 since rm_cycle_buffer_offset will INC HL [why not call an instruction later?]
+C $8842,3 Load address of fast_counter == road_buffer_offset - 1 since rm_cycle_buffer_offset will INC HL [why not call an instruction later?]
 C $8845,3 Call rm_cycle_buffer_offset
 C $8848,1 Restore BC
 C $8849,2 Loop
@@ -3006,7 +3007,7 @@ c $8876 User input checking
 D $8876 Used by the routine at #R$8401.
 @ $8876 label=check_user_input
 C $8876,3 Load transition_control
-C $8879,3 Address of user_input
+C $8879,3 Load address of user_input
 C $887C,4 Ignore the user's input unless transition_control is set to 4
 C $8880,2 Clear user_input
 C $8882,1 Return
@@ -3015,7 +3016,7 @@ C $8888,3 AND with mask for (Quit+Pause+Turbo), return if none
 C $888B,3 Quit bit set? Jump to quit_key if so
 C $888E,3 Pause bit set? Jump to pause_key if so
 N $8891 Turbo was pressed
-C $8891,3 Address of boost timer
+C $8891,3 Load address of boost timer
 C $8894,3 Return if a turbo boost is in effect
 C $8897,5 Return if no turbo boosts are left
 C $889C,2 Set 60 ticks of boost
@@ -3594,7 +3595,7 @@ C $8E41,1 Return
 c $8E42 Draw overlay messages
 D $8E42 Used by the routines at #R$8D8F and #R$8E91.
 @ $8E42 label=draw_overlay_messages
-C $8E42,3 Address of current message thing (frame delay, flags, attrs, bufaddr, attraddr, string)
+C $8E42,3 Load address of current message thing (frame delay, flags, attrs, bufaddr, attraddr, string)
 C $8E45,2 B = 0 -- self modified by (#R$8E58 increments it), (#R$8E8D resets it to 1)
 @ $8E47 label=dom_loop
 C $8E47,2 Loop? to dom_1
@@ -3647,7 +3648,7 @@ c $8E91 Copies the mugshots onto the screen when perp is caught
 D $8E91 Used by the routine at #R$8D8F.
 @ $8E91 label=draw_mugshots
 C $8E91,3 Load end address of perp's mugshot bitmap into #REGhl
-C $8E94,3 Address of final byte of bitmap (back buffer)
+C $8E94,3 Load address of final byte of bitmap (back buffer)
 C $8E97,3 Screen position (40,104)
 C $8E9A,3 Draw
 C $8E9D,3 Load end address of Tony's mugshot bitmap into #REGhl
@@ -5016,7 +5017,7 @@ C $9CA5,3 Self modify 'LD HL' @ #R$9C84 to load HL
 C $9CA8,1 A = L
 C $9CA9,2 A >>= 1
 @ $9CAB ssub=LD DE,time_n + 5
-C $9CAB,3 Address of nn in "TIME nn"
+C $9CAB,3 Load address of nn in "TIME nn"
 C $9CAE,2 CP 10
 C $9CB2,2 A = $31
 C $9CB4,2 L = $00
@@ -5686,7 +5687,7 @@ W $A213,2,2 0,1: Channel A pitch (fine,coarse=lo,hi)
 @ $A215 label=ay_chan_b_pitch
 W $A215,2,2 2,3: Channel B pitch (fine,coarse=lo,hi)
 @ $A217 label=ay_chan_c_pitch
-W $A217,2,2 4,5: Channel C pitch (fine,coarse=lo,hi) - used for engine tone
+W $A217,2,2 4,5: Channel C pitch (fine,coarse=lo,hi) - used for engine tone/drone
 @ $A219 label=ay_noise_pitch
 B $A219,1,1 6: Noise pitch
 @ $A21A label=ay_mixer
@@ -6136,7 +6137,7 @@ C $A576,3 Exit via csc_hit_scenery
 c $A579 Lays out roadside objects
 D $A579 Used by the routines at #R$8401, #R$852A and #R$873C.
 @ $A579 label=layout_objects
-C $A579,3 Address of object_positions
+C $A579,3 Load address of object_positions
 C $A57C,2 21 iterations [max no of objects on-screen?]
 N $A57E Turn a run of sizes into accumulating values.
 C $A57E,1 total = 0
@@ -6150,7 +6151,7 @@ C $A58B,2 Point #REGde at road buffer (somewhere)
 C $A58D,3 Load road_buffer_offset into #REGa
 C $A590,2 Add 64 so it's the lanes data offset
 C $A592,1 E = calculated offset
-C $A593,4 Address of object_positions
+C $A593,4 Load address of object_positions
 C $A597,2 B = 21
 C $A599,3 A = fork_visible
 C $A59C,1 Set flags
@@ -6623,7 +6624,7 @@ C $A93E,4 Jump if A < 3
 C $A942,2 A -= 3
 @ $A944 label=hzh_crashed
 C $A944,3 Call scenery_hit
-C $A947,3 Address of ouch_chatter
+C $A947,3 Load address of ouch_chatter
 C $A94A,5 Call start_chatter (priority 3)
 C $A94F,3 Effect 3 (car crash), Priority 2
 C $A952,3 Call start_sfx
@@ -6901,7 +6902,7 @@ C $AB83,2 New value for helicopter_control is 5
 @ $AB85 label=hc_set_draw
 C $AB85,1 Preserve new value for helicopter_control
 C $AB86,3 Self modify 'LD DE' @ #R$AB06 to load $0070, or $FFC8
-C $AB89,3 Address of draw_helicopter
+C $AB89,3 Load address of draw_helicopter
 C $AB8C,2 Opcode for CALL
 @ $AB8E label=hc_exit
 C $AB8E,7 Self modify #R$8FA4 to be CALL draw_helicopter, or NOPs
@@ -6988,7 +6989,8 @@ N $AC08 #REGhl points to the unused entry.
 C $AC08,3 #REGix = #REGhl
 C $AC0B,10 Zero 20 bytes at #REGhl
 C $AC15,1 Restore entry registers
-C $AC16,9 wordat(IX + 11) = Address of #R$AC3C routine
+C $AC16,3 Load address of #R$AC3C routine
+C $AC19,6 Store to #REGix+11
 N $AC1F Gets hit when on the dirt track. sampled DE = $3 (tumbleweed), $0 (barrier)
 C $AC1F,4 Point #REGhl at the hazards data table entry (*$5CF6 -> #R$5E40 + 3)
 C $AC23,5 Copy flag/value TBD from hazard table
@@ -7373,7 +7375,7 @@ C $AFB1,4 HL = #R$CE00 + DE  -- table?
 C $AFB5,3 BC = wordat(HL); HL++
 C $AFB8,1 Unbank
 C $AFB9,1 E = A   this must be a distance value?
-C $AFBA,3 Address of table of car-on-fire LODs (six entries long)
+C $AFBA,3 Load address of table of car-on-fire LODs (six entries long)
 C $AFBD,5 Take half-rate counter_C (counts 0/1/2/3) and make it 0/1/0/1 (this is the animation frame)
 C $AFC2,3 Double it so it's a table offset
 C $AFC5,1 Form table entry pointer
@@ -7494,7 +7496,7 @@ C $B08D,5 A = *$B5AB + *HL++  -- Self modified value in draw_car
 C $B092,3 Update #REGhl jump table entry address above @ #R$B079
 @ $B095 label=mhc_set_jump_offset
 C $B095,3 Self modify 'SUB x' @ #R$B5AA to be the new car jump offset
-C $B098,3 Address of boost timer
+C $B098,3 Load address of boost timer
 C $B09B,4 Jump to mhc_smoke if a turbo boost is not in effect
 C $B09F,1 Decrement boost timer
 C $B0A0,2 Jump to mhc_smoke if boost timer is non-zero
@@ -7516,7 +7518,7 @@ C $B0B9,4 Change user input to be ONLY the fire/gear flag (if set)
 C $B0BD,1 A = C
 C $B0BE,1 Preserve the modified user input for later
 C $B0BF,2 Test fire/gear flag
-C $B0C1,3 Address of gear flag
+C $B0C1,3 Load address of gear flag
 C $B0C4,3 Load gear_lockout
 C $B0C7,2 Jump if fire/gear is unset
 N $B0C9 Fire/gear was set.
@@ -7540,7 +7542,7 @@ N $B0EB Going slowly here (<120).
 C $B0EB,6 Jump if perp_caught_phase > 0  -- Don't do idle handling if we're slowing while catching the perp
 N $B0F1 Handle idle timer.
 @ $B0F1 label=mhc_idle_timer
-C $B0F1,3 Address of idle timer
+C $B0F1,3 Load address of idle timer
 C $B0F4,1 Decrement idle timer
 C $B0F5,2 Jump if non-zero
 @ $B0F7 label=mhc_reset_idle_timer
@@ -8503,7 +8505,7 @@ C $B873,1 A = C
 C $B874,3 Jump if positive
 C $B877,2 A = -A
 @ $B879 label=sh_update_hz_shift
-C $B879,3 Address of operand in 'LD A,x' @ #R$C7E7 (horizon's horizontal shift value 0..19)
+C $B879,3 Load address of operand in 'LD A,x' @ #R$C7E7 (horizon's horizontal shift value 0..19)
 C $B87C,1 A += *HL
 C $B87D,3 Jump if positive
 N $B880 Otherwise negative (or zero).
@@ -8607,7 +8609,7 @@ C $B925,2 B = 0
 @ $B927 label=url_ge_3
 C $B927,1 A = B
 C $B928,3 Self modify 'ADD A,x' @ #R$B5AF
-C $B92B,3 Address of var_a259
+C $B92B,3 Load address of var_a259
 C $B92E,1 Read var_a259
 C $B92F,1 Set flags
 C $B930,3 Jump if positive
@@ -8786,7 +8788,7 @@ C $BA88,1 A should be 1, will become zero
 C $BA89,3 Set fork_taken to #REGa
 C $BA8C,1 0/1 -> 1/2
 C $BA8D,1 Preserve HL (holds fork_distance)
-C $BA8E,3 Address of correct_fork
+C $BA8E,3 Load address of correct_fork
 C $BA91,1 Match?
 C $BA92,3 -> Tony: "LET'S GO. MR. DRIVER." <STOP>
 C $BA95,2 Jump to lr_chatter if correct fork was taken
@@ -10250,7 +10252,7 @@ C $C797,3 Jump if A < $50
 N $C79A Drawing backdrop here? This entry point is used by the routines at #R$CBA4 and #R$CBC5.
 @ $C79A label=dr_c79a
 C $C79A,1 E++
-C $C79B,3 Address of x in 'LD A,x' @ #R$C160 (in draw_tunnel)
+C $C79B,3 Load address of x in 'LD A,x' @ #R$C160 (in draw_tunnel)
 C $C79E,3 Read 'LD A,x' @ #R$C88F (tunnel related)
 C $C7A1,1 A |= *HL
 C $C7A2,1 A >>= 1
@@ -10290,10 +10292,10 @@ C $C7F3,1 Bank/unbank
 C $C7F4,4 A = 18 - A * 2
 C $C7F8,3 Self modify 'JR x' @ #R$C86C -- jump table target
 C $C7FB,3 DE = A
-C $C7FE,3 Address of backdrop_shift_instrs
+C $C7FE,3 Load address of backdrop_shift_instrs
 C $C801,1 HL += DE
 C $C802,3 18 bytes
-C $C805,3 Address in instruction stream
+C $C805,3 Load address in instruction stream
 C $C808,2 Copy
 C $C80A,3 BC = $<self modified>0A
 C $C80D,1 Bank/unbank
@@ -12206,7 +12208,7 @@ C $E963,6 Populate Quit/Pause/Turbo keys at $A0CD+
 C $E969,7 Populate Gear/Accelerate/Brake/Left/Right keys at $A0D2+
 N $E970 Warn the player that they can't return to this screen.
 C $E970,3 Call clear_screen
-C $E973,3 Address of "control options cannot be remodified" text (NUL terminated)
+C $E973,3 Load address of "control options cannot be remodified" text (NUL terminated)
 C $E976,3 Call menu_draw_strings
 N $E979 Wait for key up.
 @ $E979 label=stt_debounce_loop2
@@ -12483,7 +12485,7 @@ C $ED30,2 Loop rdk_loop_3 while #REGb > 0
 N $ED32 Matched: Show the test mode screen.
 C $ED32,5 Set test mode fla
 C $ED37,3 Call clear_screen
-C $ED3A,3 Address of TEST MODE strings
+C $ED3A,3 Load address of TEST MODE strings
 C $ED3D,3 Call menu_draw_strings
 N $ED40 Wait for any key.
 @ $ED40 label=rdk_wait
@@ -12600,7 +12602,7 @@ D $EE40 Used by the routine at #R$E8FE.
 D $EE40 See http://www.breakintoprogram.co.uk/hardware/computers/zx-spectrum/interrupts
 @ $EE40 label=setup_interrupts
 C $EE40,1 Disable interrupts
-C $EE41,3 Address of interrupt vector table
+C $EE41,3 Load address of interrupt vector table
 C $EE44,1 Interrupt vector table high byte
 N $EE45 Point the 128 interrupt vector table words at $FD00 to $FEFE.
 C $EE45,2 256 iterations
@@ -12623,7 +12625,7 @@ C $EE5E,1 A = 0
 C $EE5F,3 Self modify 'LD A,x' @ #R$EF0D  -- clear <drum is playing flag>
 C $EE62,3 Self modify 'LD A,x' @ #R$EF00  -- in play_music_48k
 C $EE65,3 Self modify 'LD A,x' @ #R$EEA2  -- in play_music_48k
-C $EE68,3 Address of music patterns
+C $EE68,3 Load address of music patterns
 C $EE6B,3 Jump to np_start_at_hl
 c $EE6E Setup the next music pattern
 D $EE6E Used by the routine at #R$EE9E.
@@ -12644,7 +12646,7 @@ C $EE81,2 Read music data offset
 C $EE83,3 Self modify #R$EE75 above (pattern addr)
 N $EE86 Calculate address of music data.
 C $EE86,2 #REGbc = #REGc
-C $EE88,3 Address of base of music data
+C $EE88,3 Load address of base of music data
 C $EE8B,1 Combine with offset
 C $EE8C,2 A = *HL++ -- load first byte of music data
 C $EE8E,3 Self modify #R$EEB9 (first byte of pattern)
@@ -12731,12 +12733,12 @@ c $EF22 Drum sample players
 D $EF22 Used by the routine at #R$EE9E.
 R $EF22 I:A Calling this <speed value> (8/3/1 seem to be the used values in practice)
 @ $EF22 label=playdrum_2
-C $EF22,3 Address of drum 2 data
+C $EF22,3 Load address of drum 2 data
 C $EF25,2 108 sample bytes
 C $EF27,2 Jump to pd_start
 N $EF29 This entry point is used by the routine at #R$EE9E.
 @ $EF29 label=playdrum_1
-C $EF29,3 Address of drum 1 data
+C $EF29,3 Load address of drum 1 data
 C $EF2C,2 252 sample bytes
 N $EF2E This modifies the number of bits of each sample byte that is output.
 @ $EF2E label=pd_start
@@ -12816,6 +12818,7 @@ C $F0F9,2 Jump to n_outer_loop if non-zero
 C $F0FB,3 Exit via pm_wait_for_interrupt
 b $F0FE Music patterns
 @ $F0FE label=music_patterns
+@ $F100 label=mp_restart
 B $F0FE,16,2 Patterns (repetitions, data offset)
 B $F10E,1,1 End marker
 W $F10F,2,2 Pattern restart address
@@ -12833,27 +12836,28 @@ c $F220 128K mode routines and data
 D $F220 This is relocated to $8014/load_stage onwards during init (926 bytes long).
 @ $F220 label=page_in_stage_128k
 C $F220,3 Load wanted_stage_number
-C $F223,3 Address of current_stage_number
+C $F223,3 Load address of current_stage_number
 C $F226,2 Return if the stage is already loaded
-C $F228,1 wanted_stage_number = current_stage_number
-N $F229 Copy the stage data from the correct bank and address to $5C00..$76EF.
+C $F228,1 Set wanted_stage_number to current_stage_number
+N $F229 Copy the stage data from the correct bank and address to $5C00..$76EF (from the horizon backdrop to just before the turbo icons).
 C $F229,8 Point #REGhl at stage_data_locations[current_stage_number]
 C $F231,1 Load paging flags byte
-C $F232,1 HL++
-C $F233,2 #REGhl = Source data address (#REGb is zero)
+C $F232,1 Advance to source data address high byte
+C $F233,1 Load source data address high byte
+C $F234,1 #REGhl is source data address (#REGb is zero)
 C $F235,5 128K: Page in required bank
-C $F23A,3 Destination $5C00..$76EF (from the horizon backdrop to just before the turbo icons)
+C $F23A,3 Set destination to $5C00
 C $F23D,3 Bytes to copy (worst case)
 C $F240,2 Copy
 C $F242,3 Exit via relocated reset_paging_128k
 N $F245 Pairs of (top byte of source data address, paging flags).
 @ $F245 label=stage_data_locations
-W $F245,2,2 Level 1. Source = $C000, Paging = bank 1
-W $F247,2,2 Level 2. Source = $E000, Paging = bank 1
-W $F249,2,2 Level 3. Source = $C000, Paging = bank 6
-W $F24B,2,2 Level 4. Source = $E000, Paging = bank 6
-W $F24D,2,2 Level 5. Source = $C000, Paging = bank 7
-W $F24F,2,2 Level 6. Source = $E000, Paging = bank 7
+W $F245,2,2 Level 1: Source at $C000, Paging from bank 1
+W $F247,2,2 Level 2: Source at $E000, Paging from bank 1
+W $F249,2,2 Level 3: Source at $C000, Paging from bank 6
+W $F24B,2,2 Level 4: Source at $E000, Paging from bank 6
+W $F24D,2,2 Level 5: Source at $C000, Paging from bank 7
+W $F24F,2,2 Level 6: Source at $E000, Paging from bank 7
 > $F251 ; Audio Notes:
 > $F251 ;
 > $F251 ; On ZX Spectrum 128K models the AY chip is clocked at 1.77345 MHz (half CPU
@@ -12912,7 +12916,7 @@ D $F2A2 Writes the complete set of AY audio registers, final register first.
 R $F2A2 Lives at $8096 when relocated.
 R $F2A2 Used by the routine at #R$F269.
 @ $F2A2 label=write_audio_registers_128k
-C $F2A2,3 Address of final AY register value
+C $F2A2,3 Load address of final AY register value
 C $F2A5,2 Select AY-3-8912 sound chip register 11: envelope fine duration
 C $F2A7,2 Load constant for port writes
 @ $F2A9 label=wr_loop
@@ -12957,29 +12961,32 @@ C $F2E8,8 Set mixer to enable Tone C
 C $F2F0,1 Return
 c $F2F1 Sets up turbo effect
 D $F2F1 Lives at $8035 when relocated.
+R $F2F1 Note that this sets a 5-bit field to 60. The code below uses this value to
+R $F2F1 set the channel C pitch too.
 @ $F2F1 label=setup_turbo_sfx_128k
-C $F2F1,2 Set noise pitch (5-bit) [$3C is > 5-bit...]
-N $F2F3 this says it's the pitch but it seems to affect how long the effect runs for.
-C $F2F3,3 }
+C $F2F1,2 Initial noise pitch value
+C $F2F3,3 Set noise pitch (a 5-bit field)
 C $F2F6,3 Set turbo_sfx_enabled flag to $3C (any non-zero value works)
 C $F2F9,1 Return
 c $F2FA Plays turbo effect, exits via engine effect
 D $F2FA Lives at $80EE when relocated.
 @ $F2FA label=play_turbo_sfx_128k
-C $F2FA,6 Jump if turbo_sfx_enabled is zero
+C $F2FA,6 Jump to #R$F2B6 if turbo_sfx_enabled is zero
 C $F300,1 Decrement noise pitch
 C $F301,1 Return if zero
-C $F302,3 Address of noise pitch register soft copy
+C $F302,3 Load address of noise pitch register soft copy
 C $F305,1 Decrement in-place
-C $F306,2 Jump if zero
-C $F308,6 Increment noise pitch register soft copy by 10
+C $F306,2 Jump to pts_stop if zero
+C $F308,1 Load noise pitch register soft copy
+C $F309,2 Increment by 10
+C $F30B,3 Widen result to #REGhl
 C $F30E,3 Set channel C pitch (both fine and coarse)
 C $F311,8 Set mixer to enable tone C and noise C
 C $F319,5 Set channel C volume to 13
 C $F31E,1 Return
-@ $F31F label=ses_1
+@ $F31F label=pts_stop
 C $F31F,8 Set mixer to disable tone C and noise C
-C $F327,4 turbo_sfx_enabled = 0
+C $F327,4 Clear turbo_sfx_enabled
 C $F32B,3 Exit via engine_sfx_from_speed_128k
 c $F32E Play speech
 D $F32E Lives at $8122 when relocated.
