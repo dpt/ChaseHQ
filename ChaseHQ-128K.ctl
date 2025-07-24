@@ -4104,11 +4104,11 @@ C $9287,6 HL += A * 2 - 1   -- index the table
 C $928D,2 B = *HL++   -- this reads #R$6AF8
 C $928F,4 HL = *HL + DE   -- read as byte
 N $9293 This entry point is used by the routine at #R$916C.
-@ $9293 label=draw_object_left_stretchy_entrypt
+@ $9293 label=*draw_object_left_stretchy_entrypt
 C $9293,6 A = IX[0] + 16 - B
 C $9299,1 Return if carry (if IX[0] + 16 < B)
 N $929A This entry point is used by the routines at #R$A9DE, #R$AA38 and #R$ADA0.
-@ $929A label=draw_object_left_helicopter_entrypt
+@ $929A label=*draw_object_left_helicopter_entrypt
 C $929A,3 Return if A < 8
 C $929D,2 C = 0
 C $929F,1 E = *HL
@@ -4149,7 +4149,7 @@ C $92ED,3 DE = wordat(HL); HL++   -- loads address of turn_sign_lods
 C $92F0,6 HL += A * 2 - 1   -- index the table
 C $92F6,2 B = *HL++
 C $92F8,4 HL = *HL + DE   -- read as byte
-@ $92FC label=draw_object_right_stretchy_entrypt
+@ $92FC label=*draw_object_right_stretchy_entrypt
 C $92FC,3 A = IX[0]
 C $92FF,2 Test B's sign
 C $9301,2 Jump if +ve
@@ -4159,10 +4159,11 @@ C $9306,1 A += B
 C $9307,1 Return if carry
 C $9308,1 Return if zero
 N $9309 This entry point is used by the routines at #R$A9DE, #R$AA38 and #R$ADA0.
-@ $9309 label=draw_object_right_helicopter_entrypt
+@ $9309 label=*draw_object_right_helicopter_entrypt
 C $9309,3 Return if A >= 247
 C $930C,2 C = 0
 N $930E This entry point is used by the routine at #R$9278.
+@ $930E label=*draw_object_930e_entrypt
 C $930E,4 A = (A & $FC) >> 2
 C $9312,3 Self modify 'LD A,x' at $9395 to load A
 C $9315,1 A >>= 1
@@ -4306,7 +4307,7 @@ C $94A8,4 Multiply #REGa by 5: the length of an individual plot operation
 C $94AC,3 Move result to #REGbc
 C $94AF,2 Add it to #REGix to complete the jump target
 N $94B1 This entry point is used by the routine at #R$92E1.
-@ $94B1 label=plot_sprite_entry
+@ $94B1 label=*plot_sprite_entry
 C $94B1,4 Save #REGsp to restore on exit (self modify)
 C $94B5,3 #REGb = 15 rows to draw, #REGc = 16, an increment value used later
 C $94B8,1 Bank
@@ -5409,9 +5410,9 @@ C $9F9F,1 C = A
 C $9FA0,1 Bank
 C $9FA1,2 goto draw_string_entry
 N $9FA3 The string is terminated by setting the topmost bit of the final character.
-@ $9FA3 label=draw_string
+@ $9FA3 label=*draw_string
 C $9FA3,3 A' = 1  Set drawing type (single height, plots to real screen)
-@ $9FA6 label=draw_string_entry
+@ $9FA6 label=*draw_string_entry
 C $9FA6,8 Load a byte and mask off the text part
 C $9FAE,6 Was bit 7 set?, quit if so, otherwise loop
 c $9FB4 Draws a character (to buffer or screen?)
@@ -8337,7 +8338,7 @@ R $B6D6 I:E' ?
 @ $B6D6 label=draw_part
 C $B6D6,7 Subtract car_y from vertical position
 N $B6DD This entry point is used by the routines at #R$8F5F and #R$B549.
-@ $B6DD label=draw_part_entry2
+@ $B6DD label=*draw_part_entry2
 C $B6DD,7 Divide #REGe by 8
 C $B6E4,2 A' = D
 C $B6E6,6 D = (D & $0F) + $F0
@@ -8350,7 +8351,7 @@ C $B6F9,2 B >>= 1
 C $B6FB,1 Is this EX'ing AF to get the carry flag?
 C $B6FC,1 HL += BC
 N $B701 This entry point is used by the routine at #R$92E1.
-@ $B701 label=draw_part_entry3
+@ $B701 label=*draw_part_entry3
 C $B701,4 Point #REGix at pms_jumptable
 C $B705,3 A = ~A + 9 == (8 - A)
 C $B708,4 This multiplies by six - the length of each load-mask-store step in the plotter core.
@@ -8378,7 +8379,7 @@ C $B722,1 Return
 @ $B723 label=pms_start_row
 C $B723,1 Advance to start of next row
 N $B724 This entry point is used by the routine at #R$B7EF.
-@ $B724 label=pms_entry
+@ $B724 label=*pms_entry
 C $B724,1 Point #REGsp at the source data
 C $B725,1 Bank
 C $B726,1 Preserve start address
@@ -8408,7 +8409,7 @@ D $B76C Used by the routine at #R$92E1.
 C $B76C,3 #REGde = #REGa
 C $B76F,1 #REGhl += #REGde
 N $B770 This entry point is used by the routine at #R$B67C.
-@ $B770 label=plot_masked_sprite_flipped_entry2
+@ $B770 label=*plot_masked_sprite_flipped_entry2
 C $B771,4 Save #REGsp to be restored on exit
 C $B775,4 Point #REGix at jump table
 C $B779,3 Subtract 8
@@ -12075,11 +12076,11 @@ c $E810 Called once the memory map has been setup
 C $E810,1 Set 128K flag to zero (48K mode)
 C $E811,2 3 relocations to do in 48K mode
 C $E813,3 Jump to common
-@ $E816 label=entrypt_128k
+@ $E816 label=*entrypt_128k
 C $E816,3 Call clear_game_attrs
 C $E819,2 Set 128K flag to one (128K mode)
 C $E81B,2 5 relocations to do in 128K mode
-@ $E81D label=entrypt_common
+@ $E81D label=*entrypt_common
 C $E81D,3 Store 128K mode flag
 C $E820,3 Put stack at end of RAM
 C $E823,1 Preserve the count in #REGb
