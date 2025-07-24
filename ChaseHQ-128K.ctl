@@ -12876,7 +12876,7 @@ N $F260 Initialise alternating pattern for siren tone.
 C $F260,5 Self modify 'LD A,x' @ #R$F271 below
 C $F265,3 Enable siren (storing $AA for bool)
 C $F268,1 Return
-c $F269 Plays the siren sound effect (128K)
+c $F269 Play the siren sound effect (128K)
 D $F269 If the siren is enabled this produces an alternating rising and falling siren sound effect. AY channels A and B are used.
 D $F269 Lives at $805D when relocated.
 @ $F269 label=play_siren_sfx_128k
@@ -12910,7 +12910,7 @@ D $F29D Lives at $8091 when relocated.
 @ $F29D label=silence_audio_128k
 C $F29D,5 Initialise mixer to $3F (all noise and tone channels disabled)
 E $F29D FALLTHROUGH
-c $F2A2 Writes the AY audio registers (128K)
+c $F2A2 Write the AY audio registers (128K)
 D $F2A2 Writes the complete set of AY audio registers, final register first.
 D $F2A2 Lives at $8096 when relocated. Used by the routine at #R$F269.
 @ $F2A2 label=write_audio_registers_128k
@@ -12926,7 +12926,7 @@ C $F2B1,1 Advance to next register down
 @ $F2B2 keep
 C $F2B2,3 Loop to #R$F2A9 while +ve
 C $F2B5,1 Return
-c $F2B6 Plays the engine effect
+c $F2B6 Play the engine sound effect
 D $F2B6 This takes the current speed, halves it, then complements it, then quarters it (or eighths it if in high gear). It's then added to a base value to produce a divisor suitable for poking into the AY chip. If we're in a tunnel then an even lower base value is used. AY Channel C is used.
 D $F2B6 Lives at $80AA when relocated. Used by the routine at #R$F2FA.
 @ $F2B6 label=engine_sfx_from_speed_128k
@@ -12957,7 +12957,7 @@ C $F2E2,3 Set Channel C pitch divisor (12-bit combined, fine and coarse register
 C $F2E5,3 Set Channel C volume
 C $F2E8,8 Set mixer to enable Tone C
 C $F2F0,1 Return
-c $F2F1 Sets up turbo effect
+c $F2F1 Set up turbo sound effect
 D $F2F1 Lives at $8035 when relocated.
 N $F2F1 Note that this sets a 5-bit field to 60. The playing routine below uses this value to set the channel C pitch too.
 @ $F2F1 label=setup_turbo_sfx_128k
@@ -12965,7 +12965,7 @@ C $F2F1,2 Initial noise pitch value
 C $F2F3,3 Set AY noise pitch -- this is a 5-bit field so is it masked and becomes 28?
 C $F2F6,3 Set turbo_sfx_noise_pitch to 60
 C $F2F9,1 Return
-c $F2FA Plays turbo effect
+c $F2FA Play turbo sound effect
 D $F2FA Lives at $80EE when relocated.
 @ $F2FA label=play_turbo_sfx_128k
 C $F2FA,6 Jump to #R$F2B6 if turbo_sfx_noise_pitch is zero
@@ -12985,7 +12985,7 @@ C $F31E,1 Return
 C $F31F,8 Set mixer to disable Tone C and Noise C
 C $F327,4 Clear turbo_sfx_noise_pitch
 C $F32B,3 Exit via engine_sfx_from_speed_128k
-c $F32E Play samples (mostly speech)
+c $F32E Play a sampled sound effect (mostly speech)
 D $F32E Lives at $8122 when relocated.
 R $F32E I:A Input index (1..5)
 N $F32E "Giddy up boy!"
@@ -13009,15 +13009,15 @@ W $F340,2,2 Address (in bank 4)
 C $F342,1 Bank input index
 C $F343,3 Call silence_audio_128k
 C $F346,7 128K: Map RAM bank 4 to $C000; Map normal screen; Map ROM 0
-C $F34D,2 =for port write
-C $F34F,3 =$ff for port writes, $bf for port writes
-C $F352,2 =constant for Channel A volume
+C $F34D,2 Set up #REGc as $FD for forming port values
+C $F34F,3 Set up #REGh as $FF and #REGl as $BF for forming port values
+C $F352,2 Set up #REGd as 8 for Channel A volume register
 C $F354,1 Bank
 C $F355,1 Unbank input index
 C $F356,9 Compute address of speech_samples_table[#REGa] (accounting for relocation and being 1-indexed)
 C $F35F,4 Load length into #REGde and advance #REGhl
 C $F363,4 Load address into #REGhl
-N $F367 There seems to be two samples per byte.
+N $F367 There are two samples per byte so we iterate here.
 @ $F367 label=plsp_1
 C $F367,2 Set nibble counter to 2
 C $F369,1 Read a byte of sample data
@@ -13027,7 +13027,7 @@ C $F36E,2 Mask off next sample
 C $F370,1 Bank it
 C $F371,1 Unbank
 N $F372 Write sample as Channel A volume.
-C $F372,1 Load $FF into #REGb  -- port hi
+C $F372,1 Load $FF into #REGb to set high byte of port
 C $F373,1 Load 8 into #REGa
 N $F374 #REGc is $FD here.
 C $F374,2 Write to $FFFD to select register 8: Channel A volume
@@ -13037,7 +13037,7 @@ C $F378,2 Write to $BFFD to write volume register
 C $F37A,1 Bank sample again
 N $F37B Write sample as Channel B volume.
 C $F37B,1 Increment #REGa from 8 to 9
-C $F37C,1 Load $FF into #REGb  -- port hi
+C $F37C,1 Load $FF into #REGb to set high byte of port
 C $F37D,2 Write to $FFFD to select register 9: Channel B volume
 C $F37F,1 Load $BF into #REGb
 C $F380,1 Unbank sample
@@ -13045,7 +13045,7 @@ C $F381,2 Write to register
 C $F383,1 Bank sample again
 N $F384 Write sample as Channel C volume.
 C $F384,1 Increment #REGa from 9 to 10
-C $F385,1 Load $FF into #REGb  -- port hi
+C $F385,1 Load $FF into #REGb to set high byte of port
 C $F386,2 Write to $FFFD to select register 10: Channel C volume
 C $F388,1 Load $BF into #REGb
 C $F389,1 Unbank sample
@@ -13061,34 +13061,37 @@ C $F395,1 Advance to next byte of sample data
 C $F396,1 Decrement sample data counter
 C $F397,5 Loop to plsp_1 while sample data remains
 C $F39C,3 Exit via relocated reset_paging_128k
-c $F39F something done in phase 4 when perp is caught (play sample?)
+c $F39F Phase 4 of catching the perp - likely plays the success music
+D $F39F Lives at $???? when relocated.
 @ $F39F label=handle_perp_caught_128k
 C $F39F,6 Return if overlay frame delay < 42
 C $F3A5,3 Call silence_audio_hook
 C $F3A8,4 Stop siren
-C $F3AC,1 A = 1
-C $F3AD,3 Load var_a23a  -- copy of noise pitch
-C $F3B0,3 Self modify #R$8E49
+C $F3AC,1 Set #REGa to 1
+C $F3AD,3 Set turbo_sfx_noise_pitch to 1
+C $F3B0,3 Self modify #R$8E49 - reset overlay frame delay
 C $F3B3,3 Entry point for success music in bank 3
 E $F39F FALLTHROUGH
-c $F3B6 Call a routine in bank 3
+c $F3B6 Call a routine in RAM bank 3
 R $F3B6 I:HL Address of entry point ($C000 + 0/3/6/9)
 @ $F3B6 label=call_bank_3_128k
-C $F3B6,3 Self modify 'CALL xxxx' @ $81C5 ($F3D1 before relocation - below)
-C $F3B9,14 Copy 4096 bytes from $B000 to $F000 (preserving registers for later)
-C $F3C7,4 Self modify 'LD SP,xxxx' @ #R$81CD ($F3D9 here - below)
+C $F3B6,3 Self modify 'CALL xxxx' @ $81C5 (#R$F3D1 here - below)
+C $F3B9,9 Set up registers to copy 4096 bytes from $B000 to $F000
+C $F3C2,3 Preserve registers for later
+C $F3C5,2 Copy 4096 bytes from $B000 to $F000
+C $F3C7,4 Self modify 'LD SP,xxxx' @ $81CD (#R$F3D9 here - below)
 C $F3CB,3 Set stack pointer
-C $F3CE,3 Call relocated f3e2_128k  -- page in?
+C $F3CE,3 Call page_128k to page in
 C $F3D1,3 Call the entry point requested. Self modified by #R$F3B6
-C $F3D4,1 Preserve ?
-C $F3D5,3 Call relocated f3e2_128k  -- page out?
-C $F3D8,1 Restore ?
+C $F3D4,1 Preserve (why?)
+C $F3D5,3 Call page_128k to page out
+C $F3D8,1 Restore
 C $F3D9,3 Restore original #REGsp (self modified by #R$F3C7 above)
-C $F3DC,3 Copy 4096 bytes from $B000 to $F000
-C $F3DF,2 Copy
+C $F3DC,3 Restore registers but swap source and destination around
+C $F3DF,2 Copy 4096 bytes from $F000 to $B000
 C $F3E1,1 Return
-c $F3E2 Routine at F3E2
-@ $F3E2 label=f3e2_128k
+c $F3E2 Page in/out a RAM bank?
+@ $F3E2 label=page_128k
 C $F3E2,3 HL = $C000
 C $F3E5,2 4 iterations
 C $F3E7,1 E = 0
