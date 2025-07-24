@@ -12928,7 +12928,7 @@ C $F2B1,1 Advance to next register down
 C $F2B2,3 Loop to #R$F2A9 while +ve
 C $F2B5,1 Return
 c $F2B6 Plays the engine effect
-D $F2B6 This takes the current speed, halves it, then complements it, then quarters it (or eighths it if in high gear). It's then added to a base value to produce a divisor suitable for poking into the AY chip. If we're in a tunnel then an even lower base value is used. AY channel C is used.
+D $F2B6 This takes the current speed, halves it, then complements it, then quarters it (or eighths it if in high gear). It's then added to a base value to produce a divisor suitable for poking into the AY chip. If we're in a tunnel then an even lower base value is used. AY Channel C is used.
 R $F2B6 Lives at $80AA when relocated.
 R $F2B6 Used by the routine at #R$F2FA.
 @ $F2B6 label=engine_sfx_from_speed_128k
@@ -12955,8 +12955,8 @@ C $F2DC,3 In-tunnel base divisor (~185Hz)
 C $F2DF,2 In-tunnel volume
 @ $F2E1 label=esfs_tone_chosen
 C $F2E1,1 Add speed divisor to base divisor
-C $F2E2,3 Set channel C pitch divisor (12-bit combined, fine and coarse registers)
-C $F2E5,3 Set channel C volume
+C $F2E2,3 Set Channel C pitch divisor (12-bit combined, fine and coarse registers)
+C $F2E5,3 Set Channel C volume
 C $F2E8,8 Set mixer to enable Tone C
 C $F2F0,1 Return
 c $F2F1 Sets up turbo effect
@@ -12980,66 +12980,81 @@ C $F306,2 Jump to pts_stop if zero
 C $F308,1 Load noise pitch register soft copy
 C $F309,2 Increment by 10
 C $F30B,3 Widen result to #REGhl
-C $F30E,3 Set channel C pitch (both fine and coarse)
-C $F311,8 Set mixer to enable tone C and noise C
-C $F319,5 Set channel C volume to 13
+C $F30E,3 Set Channel C pitch (both fine and coarse)
+C $F311,8 Set mixer to enable Tone C and Noise C
+C $F319,5 Set Channel C volume to 13
 C $F31E,1 Return
 @ $F31F label=pts_stop
-C $F31F,8 Set mixer to disable tone C and noise C
+C $F31F,8 Set mixer to disable Tone C and Noise C
 C $F327,4 Clear turbo_sfx_enabled
 C $F32B,3 Exit via engine_sfx_from_speed_128k
-c $F32E Play speech
+c $F32E Play samples (mostly speech)
 D $F32E Lives at $8122 when relocated.
+R $F32E I:A Input index (1..5)
 N $F32E "Giddy up boy!"
 @ $F32E label=speech_samples_table
-W $F32E,2,2 length
-W $F330,2,2 address
+W $F32E,2,2 Length
+W $F330,2,2 Address (in bank 4)
 N $F332 "Let's go Mr. Driver!"
-W $F332,2,2 length
-W $F334,2,2 address
+W $F332,2,2 Length
+W $F334,2,2 Address (in bank 4)
 N $F336 "Hold on man!"
-W $F336,2,2 length
-W $F338,2,2 address
+W $F336,2,2 Length
+W $F338,2,2 Address (in bank 4)
 N $F33A "Your time's up"
-W $F33A,2,2 length
-W $F33C,2,2 address
+W $F33A,2,2 Length
+W $F33C,2,2 Address (in bank 4)
 N $F33E Start noise
-W $F33E,2,2 length
-W $F340,2,2 address
+W $F33E,2,2 Length
+W $F340,2,2 Address (in bank 4)
 @ $F342 label=play_speech_128k
-C $F342,1 Bank input index (sample indices are 1..5)
+C $F342,1 Bank input index
 C $F343,3 Call silence_audio_128k
 C $F346,7 128K: Map RAM bank 4 to $C000; Map normal screen; Map ROM 0
+C $F34D,2 =for port write
+C $F34F,3 =$ff for port writes, $bf for port writes
+C $F352,2 =constant for Channel A volume
+C $F354,1 Bank
 C $F355,1 Unbank input index
-C $F356,9 HL = $F32A + A*4  -- i.e. it's 1-indexed speech_samples_table
-C $F35F,4 DE = wordat(HL); HL += 2  -- read length
-C $F363,4 HL = wordat(HL)  -- read address
+C $F356,9 Compute address of speech_samples_table[#REGa] (accounting for relocation and being 1-indexed)
+C $F35F,4 Load length into #REGde and advance #REGhl
+C $F363,4 Load address into #REGhl
+N $F367 There seems to be two samples per byte.
 @ $F367 label=plsp_1
-C $F367,2 C = 2  -- iterations (two nibbles)
-C $F369,1 A = *HL  -- read a sample (or two?)
-C $F36A,4 A = A ROR 4
+C $F367,2 Set nibble counter to 2
+C $F369,1 Read a byte of sample data
+C $F36A,4 Exchange nibbles so we do high nibble first?
 @ $F36E label=plsp_2
-C $F36E,2 A &= 15
-C $F372,1 B = H which is $FF
-C $F373,1 A = D which is 8  -- register 8: Channel A volume
-C $F374,2 C is $FD
-C $F376,1 B = L which is $BF
-C $F377,1 A = value loaded above
-C $F378,2 Write to register
-C $F37A,1 Bank it again
-C $F37B,1 8 -> 9  -- register 9: Channel B volume
-C $F37C,1 B = $FF
-C $F37D,2 C is $FD
-C $F37F,1 B = L which is $BF
-C $F380,1 A = value loaded above
+C $F36E,2 Mask off next nibble/sample
+C $F370,1 Bank it
+C $F371,1 Unbank
+N $F372 Write sample as Channel A volume.
+C $F372,1 Load $FF into #REGb  -- port hi
+C $F373,1 Load 8 into #REGa
+N $F374 #REGc is $FD here.
+C $F374,2 Write to $FFFD to select register 8: Channel A volume
+C $F376,1 Load $BF into #REGb
+C $F377,1 Unbank nibble/sample
+C $F378,2 Write to $BFFD to write volume register
+C $F37A,1 Bank nibble/sample again
+N $F37B Write sample as Channel B volume.
+C $F37B,1 Increment #REGa from 8 to 9
+C $F37C,1 Load $FF into #REGb  -- port hi
+C $F37D,2 Write to $FFFD to select register 9: Channel B volume
+C $F37F,1 Load $BF into #REGb
+C $F380,1 Unbank nibble/sample
 C $F381,2 Write to register
-C $F383,1 Bank it again
-C $F384,1 9 -> 10  -- register 9: Channel C volume
-C $F385,1 B = $FF
-C $F386,2 C is $FD
-C $F388,1 B = L which is $BF
-C $F389,1 A = value loaded above
+C $F383,1 Bank nibble/sample again
+N $F384 Write sample as Channel C volume.
+C $F384,1 Increment #REGa from 9 to 10
+C $F385,1 Load $FF into #REGb  -- port hi
+C $F386,2 Write to $FFFD to select register 10: Channel C volume
+C $F388,1 Load $BF into #REGb
+C $F389,1 Unbank nibble/sample
 C $F38A,2 Write to register
+C $F38C,1 Bank
+N $F38D Delay for 19 DJNZ's.
+@ $F38F label=plsp_delay
 C $F38D,4 Delay loop (lower value => higher frequency)
 C $F391,1 Load next nibble (same byte, but next nibble)
 C $F392,1 Decrement nibble counter
