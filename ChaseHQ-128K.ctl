@@ -2144,11 +2144,11 @@ D $8014 Used by the routine at #R$8401.
 C $8014,3 Load wanted_stage_number
 C $8017,3 Point #REGhl at current_stage_number
 C $801A,2 Exit if they match
-C $801C,1 current_stage_number = wanted_stage_number
+C $801C,1 Set current_stage_number to wanted_stage_number
 C $801D,3 Set dont_draw_screen_attrs to a non-zero value
 @ $8022 ssub=LD (searching_for_n + 14),A
 C $8020,5 Update the level number in "SEARCHING FOR <N>"
-@ $8025 label=ls_8025
+@ $8025 label=ls_loop
 C $8025,3 Call clear_screen_set_attrs
 C $8028,3 Call clear_game_attrs
 C $802B,2 Reverse transition
@@ -2195,8 +2195,6 @@ N $8088 #REGb is passed in.
 C $8088,3 Point #REGhl at "START TAPE" message structure
 C $808B,4 A = wanted_stage_number - 1
 C $808F,2 Jump if > 0
-N $8091 This entry point is used by the routine at #R$F32E.
-@ $8091 refs=:$E810,$F220
 C $8092,3 Point #REGhl at tape_messsages
 @ $8095 label=ls_8095
 C $8095,3 why call adjacent instr? to exec this func twice?
@@ -2206,17 +2204,15 @@ C $8099,1 preserve message pointer
 @ $809A label=ls_809A
 C $809A,2 flags byte for print_message
 C $809C,1 why dec here?
-N $809D This entry point is used by the routine at #R$F220.
-@ $809D label=ls_809D
 C $809D,3 Call print_message
 C $80A0,2 printing a whole set by looping?
 C $80A2,3 Call transition
 C $80A5,3 Call draw_screen
 C $80A8,1 restore message pointer
 C $80A9,1 restore counter
-N $80AA This entry point is used by the routine at #R$F220.
 C $80AA,3 Load transition_control
 C $80AD,2 Return if zero
+@ $80B2 label=ls_delay_loop
 C $80AF,8 Delay loop
 C $80B7,2 Loop
 c $80B9 Tape loading
@@ -5758,7 +5754,7 @@ B $A237,1,1 Current sound effect index
 B $A238,1,1 Current sound effect priority
 @ $A239 label=siren_enabled
 B $A239,1,1 Enables siren. Used by #R$F265 [128K]
-@ $A23A label=turbo_sfx_enabled
+@ $A23A label=turbo_sfx_noise_pitch
 B $A23A,1,1 Copy of noise pitch. Used by #R$F2F6 [128K]
 @ $A23B label=tunnel_sfx
 B $A23B,1,1 Set to 5 when we're in a tunnel. Used to modulate sfx.
@@ -12853,10 +12849,12 @@ C $F240,2 Copy
 C $F242,3 Exit via relocated reset_paging_128k
 N $F245 Pairs of (top byte of source data address, paging flags).
 @ $F245 label=stage_data_locations
+@ $F245 keep
 W $F245,2,2 Level 1: Source at $C000, Paging from bank 1
 W $F247,2,2 Level 2: Source at $E000, Paging from bank 1
 W $F249,2,2 Level 3: Source at $C000, Paging from bank 6
 W $F24B,2,2 Level 4: Source at $E000, Paging from bank 6
+@ $F24D keep
 W $F24D,2,2 Level 5: Source at $C000, Paging from bank 7
 W $F24F,2,2 Level 6: Source at $E000, Paging from bank 7
 > $F251 ; Audio Notes:
@@ -12880,7 +12878,7 @@ C $F265,3 Enable siren (storing $AA for bool)
 C $F268,1 Return
 c $F269 Plays the siren sound effect (128K)
 D $F269 If the siren is enabled this produces an alternating rising and falling siren sound effect. AY channels A and B are used.
-R $F269 Lives at $805D when relocated.
+D $F269 Lives at $805D when relocated.
 @ $F269 label=play_siren_sfx_128k
 C $F269,5 Return if siren disabled
 C $F26E,3 Load channel A fine pitch
@@ -12908,14 +12906,13 @@ C $F293,8 Set mixer to enable tone A & B
 C $F29B,2 Exit via write_audio_registers_128k
 c $F29D Silence audio (128K)
 D $F29D Silences all audio by setting all channels to disabled.
-R $F29D Lives at $8091 when relocated.
+D $F29D Lives at $8091 when relocated.
 @ $F29D label=silence_audio_128k
 C $F29D,5 Initialise mixer to $3F (all noise and tone channels disabled)
 E $F29D FALLTHROUGH
 c $F2A2 Writes the AY audio registers (128K)
 D $F2A2 Writes the complete set of AY audio registers, final register first.
-R $F2A2 Lives at $8096 when relocated.
-R $F2A2 Used by the routine at #R$F269.
+D $F2A2 Lives at $8096 when relocated. Used by the routine at #R$F269.
 @ $F2A2 label=write_audio_registers_128k
 C $F2A2,3 Load address of final AY register value
 C $F2A5,2 Select AY-3-8912 sound chip register 11: envelope fine duration
@@ -12926,12 +12923,12 @@ C $F2AB,2 Select register #REGa
 C $F2AD,2 Writing to port $BFFD
 C $F2AF,2 Write to the register from (#REGhl), then decrement #REGb and #REGhl
 C $F2B1,1 Advance to next register down
+@ $F2B2 keep
 C $F2B2,3 Loop to #R$F2A9 while +ve
 C $F2B5,1 Return
 c $F2B6 Plays the engine effect
 D $F2B6 This takes the current speed, halves it, then complements it, then quarters it (or eighths it if in high gear). It's then added to a base value to produce a divisor suitable for poking into the AY chip. If we're in a tunnel then an even lower base value is used. AY Channel C is used.
-R $F2B6 Lives at $80AA when relocated.
-R $F2B6 Used by the routine at #R$F2FA.
+D $F2B6 Lives at $80AA when relocated. Used by the routine at #R$F2FA.
 @ $F2B6 label=engine_sfx_from_speed_128k
 C $F2B6,3 Load speed into #REGhl
 C $F2B9,2 Move bottom bit of #REGh to carry
@@ -12962,20 +12959,19 @@ C $F2E8,8 Set mixer to enable Tone C
 C $F2F0,1 Return
 c $F2F1 Sets up turbo effect
 D $F2F1 Lives at $8035 when relocated.
-R $F2F1 Note that this sets a 5-bit field to 60. The code below uses this value to
-R $F2F1 set the channel C pitch too.
+N $F2F1 Note that this sets a 5-bit field to 60. The playing routine below uses this value to set the channel C pitch too.
 @ $F2F1 label=setup_turbo_sfx_128k
 C $F2F1,2 Initial noise pitch value
-C $F2F3,3 Set noise pitch (a 5-bit field)
-C $F2F6,3 Set turbo_sfx_enabled flag to $3C (any non-zero value works)
+C $F2F3,3 Set AY noise pitch -- this is a 5-bit field so is it masked and becomes 28?
+C $F2F6,3 Set turbo_sfx_noise_pitch to 60
 C $F2F9,1 Return
-c $F2FA Plays turbo effect, exits via engine effect
+c $F2FA Plays turbo effect
 D $F2FA Lives at $80EE when relocated.
 @ $F2FA label=play_turbo_sfx_128k
-C $F2FA,6 Jump to #R$F2B6 if turbo_sfx_enabled is zero
+C $F2FA,6 Jump to #R$F2B6 if turbo_sfx_noise_pitch is zero
 C $F300,1 Decrement noise pitch
 C $F301,1 Return if zero
-C $F302,3 Load address of noise pitch register soft copy
+C $F302,3 Load address of AY noise pitch register soft copy
 C $F305,1 Decrement in-place
 C $F306,2 Jump to pts_stop if zero
 C $F308,1 Load noise pitch register soft copy
@@ -12987,7 +12983,7 @@ C $F319,5 Set Channel C volume to 13
 C $F31E,1 Return
 @ $F31F label=pts_stop
 C $F31F,8 Set mixer to disable Tone C and Noise C
-C $F327,4 Clear turbo_sfx_enabled
+C $F327,4 Clear turbo_sfx_noise_pitch
 C $F32B,3 Exit via engine_sfx_from_speed_128k
 c $F32E Play samples (mostly speech)
 D $F32E Lives at $8122 when relocated.
@@ -12998,6 +12994,7 @@ W $F32E,2,2 Length
 W $F330,2,2 Address (in bank 4)
 N $F332 "Let's go Mr. Driver!"
 W $F332,2,2 Length
+@ $F334 keep
 W $F334,2,2 Address (in bank 4)
 N $F336 "Hold on man!"
 W $F336,2,2 Length
@@ -13024,9 +13021,9 @@ N $F367 There seems to be two samples per byte.
 @ $F367 label=plsp_1
 C $F367,2 Set nibble counter to 2
 C $F369,1 Read a byte of sample data
-C $F36A,4 Exchange nibbles so we do high nibble first?
+C $F36A,4 Use high nibble first
 @ $F36E label=plsp_2
-C $F36E,2 Mask off next nibble/sample
+C $F36E,2 Mask off next sample
 C $F370,1 Bank it
 C $F371,1 Unbank
 N $F372 Write sample as Channel A volume.
@@ -13035,31 +13032,31 @@ C $F373,1 Load 8 into #REGa
 N $F374 #REGc is $FD here.
 C $F374,2 Write to $FFFD to select register 8: Channel A volume
 C $F376,1 Load $BF into #REGb
-C $F377,1 Unbank nibble/sample
+C $F377,1 Unbank sample
 C $F378,2 Write to $BFFD to write volume register
-C $F37A,1 Bank nibble/sample again
+C $F37A,1 Bank sample again
 N $F37B Write sample as Channel B volume.
 C $F37B,1 Increment #REGa from 8 to 9
 C $F37C,1 Load $FF into #REGb  -- port hi
 C $F37D,2 Write to $FFFD to select register 9: Channel B volume
 C $F37F,1 Load $BF into #REGb
-C $F380,1 Unbank nibble/sample
+C $F380,1 Unbank sample
 C $F381,2 Write to register
-C $F383,1 Bank nibble/sample again
+C $F383,1 Bank sample again
 N $F384 Write sample as Channel C volume.
 C $F384,1 Increment #REGa from 9 to 10
 C $F385,1 Load $FF into #REGb  -- port hi
 C $F386,2 Write to $FFFD to select register 10: Channel C volume
 C $F388,1 Load $BF into #REGb
-C $F389,1 Unbank nibble/sample
+C $F389,1 Unbank sample
 C $F38A,2 Write to register
 C $F38C,1 Bank
 N $F38D Delay for 19 DJNZ's.
 @ $F38F label=plsp_delay
 C $F38D,4 Delay loop (lower value => higher frequency)
-C $F391,1 Load next nibble (same byte, but next nibble)
+C $F391,1 Load next sample (same byte, but next nibble)
 C $F392,1 Decrement nibble counter
-C $F393,2 Loop plsp_2
+C $F393,2 Loop to plsp_2
 C $F395,1 Advance to next byte of sample data
 C $F396,1 Decrement sample data counter
 C $F397,5 Loop to plsp_1 while sample data remains
