@@ -2195,6 +2195,7 @@ N $8088 #REGb is passed in.
 C $8088,3 Point #REGhl at "START TAPE" message structure
 C $808B,4 A = wanted_stage_number - 1
 C $808F,2 Jump if > 0
+@ $8091 refs=:$E810,$F32E
 C $8092,3 Point #REGhl at tape_messsages
 @ $8095 label=ls_8095
 C $8095,3 why call adjacent instr? to exec this func twice?
@@ -2204,12 +2205,14 @@ C $8099,1 preserve message pointer
 @ $809A label=ls_809A
 C $809A,2 flags byte for print_message
 C $809C,1 why dec here?
+@ $809D refs=:$F2A2
 C $809D,3 Call print_message
 C $80A0,2 printing a whole set by looping?
 C $80A2,3 Call transition
 C $80A5,3 Call draw_screen
 C $80A8,1 restore message pointer
 C $80A9,1 restore counter
+@ $80AA refs=:$F2FA
 C $80AA,3 Load transition_control
 C $80AD,2 Return if zero
 @ $80B2 label=ls_delay_loop
