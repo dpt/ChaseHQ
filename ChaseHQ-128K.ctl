@@ -9464,46 +9464,57 @@ C $C133,1 Swap
 C $C134,2 #REGde = #REGbc
 C $C136,1 A--
 C $C137,2 Loop to tunnel_loop
+@ $C139 lavel=pt_c139
 C $C139,3 A = 9 - A
 C $C13C,3 Self modify 'CP x' @ #R$C15D  [15 when tunnel is small, 6 when fills screen]
 C $C13F,2 A = 2
 C $C141,3 Self modify 'LD A,x' @ #R$C160 (in draw_tunnel below)
+@ $C144 lavel=pt_c144
 C $C144,2 A = 3
 C $C146,3 Self modify 'LD A,x' @ #R$C2B8
 N $C149 Self modify #R$8F82 and #R$8FA7 to be CALL draw_tunnel.
+C $C149,3 Load address of draw_tunnel
+C $C14C,2 Load opcode of 'CALL'
+C $C14E,6 Write CALL draw_tunnel to #R$8F82
+C $C154,6 Write CALL draw_tunnel to #R$8FA7
 C $C15A,1 Return
 c $C15B Tunnel entrance/interior/exit drawing code
-D $C15B Called by $8F82 etc. being self modified.
-R $C15B I:IY e.g. $E315
+D $C15B Called by #R$8F82 etc. when it's modified to CALL.
+R $C15B I:IY e.g. $E315 buffer
 @ $C15B label=draw_tunnel
-C $C15B,2 A = IY.low
+C $C15B,2 Load #REGiy's low byte
+N $C15D This is set to 20 then counts down to 9 as the tunnel is entered.
 C $C15D,2 Compare to <self modified>
-C $C15F,1 Return if non-zero
-C $C160,2 A = <self modified>
-C $C162,2 D = $EE
-C $C164,1 A--
+C $C15F,1 Return if not equal
+C $C160,2 Load <self modified>
+C $C162,2 Set fill value to use for striped tunnel entrance to $EE
+C $C164,1 Decrement #REGa
 C $C165,2 Jump if zero
-C $C167,2 D = $FF
-C $C169,1 E = D
+C $C167,2 Set fill value to use for (much of) tunnel interior to $FF
+@ $C169 label=dt_fill_chosen
+C $C169,1 Widen fill value to $EEEE or $FFFF
 C $C16A,4 Self modify 'LD DE,x' @ #R$C21C
 C $C16E,4 Save #REGsp to restore on exit (self modify)
-C $C172,8 L = ~((IY[$4E] - 2) << 1)
-C $C17A,2 C = 0
+C $C172,8 #REGl = ~((#REGiy[$4E] - 2) << 1)
+C $C17A,2 Clear #REGc
 C $C17C,2 H = $EB
 C $C17E,1 A = *HL
 C $C17F,1 Set flags
 C $C180,3 Jump if zero
 C $C183,2 D = 16
 C $C185,3 Jump if positive
+@ $C188 label=dt_c188
 C $C188,2 D = 22
 C $C18A,2 L = 31
 C $C18C,2 Jump
+@ $C18E label=dt_c18e
 C $C18E,3 A = HL[-1]
 C $C191,5 Divide by 8
 C $C196,2 A >>= 1
 C $C198,2 Rotate C
 C $C19A,1 A++
 C $C19B,1 D = A
+@ $C19C label=dt_c19c
 C $C19C,2 H = $E8
 C $C19E,1 A = *HL
 C $C19F,1 Set flags
@@ -9511,19 +9522,23 @@ C $C1A0,2 Jump if zero
 C $C1A2,2 E = 16
 C $C1A4,3 Jump if negative
 C $C1A7,3 Jump
+@ $C1AA label=dt_c1aa
 C $C1AA,1 L--
 C $C1AB,3 A = *HL + 8
 C $C1AE,2 Jump if carry
 C $C1B0,5 Divide by 8
 C $C1B5,1 B = A
 C $C1B6,6 E = 16 - (A >> 1)
+@ $C1BC label=dt_c1bc
 C $C1BC,3 A = 32 - B
 C $C1BF,2 L = 32
 C $C1C1,2 Rotate left
 C $C1C3,2 Jump if carry
 C $C1C5,1 L--
 C $C1C6,1 A--
+@ $C1C7 label=dt_c1c7
 C $C1C7,1 C = A
+@ $C1C8 label=dt_c1c8
 C $C1C8,1 A = D
 C $C1C9,3 Self modify 'JR x' @ #R$C221 -- jump table target
 C $C1CC,1 A = E
@@ -9534,6 +9549,7 @@ C $C1D4,5 H = (A & 15) + $F0
 C $C1D9,5 A = ((B & $70) << 1) + L
 C $C1DE,2 Jump if no carry
 C $C1E0,1 A--
+@ $C1E1 label=dt_c1e1
 C $C1E1,1 L = A
 C $C1E2,3 A = 128 - B
 C $C1E5,1 Bank/unbank
@@ -9563,17 +9579,21 @@ C $C215,2 A = -A
 C $C217,1 A += D
 C $C218,1 D = A
 C $C219,1 A = E
+@ $C21A label=dt_c21a
 C $C21A,1 Bank/unbank
 C $C21B,1 B = D
 N $C21C Pixels of tunnel loaded here. Top byte, D, seems to affect bottom row? Bottom byte, E, affects whole pattern. The LD E,D later would explain that.
 C $C21C,3 DE = <self modified>  -- pixels of tunnel
 N $C21F Loop
+@ $C21F label=dt_c21f
 C $C21F,1 Put it in #REGsp (so we can use PUSH for speed)
 C $C220,1 A = L
+@ $C221 label=dt_store1
 C $C221,2 Jump table (self modified)
 C $C233,1 A -= C
 C $C234,1 L = A
 C $C235,1 Put it in #REGsp (so we can use PUSH for speed)
+@ $C236 label=dt_store2
 C $C236,2 Jump table (self modified)
 C $C248,1 A += C
 C $C249,1 L = A
@@ -9584,6 +9604,7 @@ C $C24E,3 Jump if non-zero
 C $C251,4 L -= 32
 C $C255,2 Jump if carry
 C $C257,4 H -= 16
+@ $C25B label=dt_c25b
 C $C25D,1 E = D
 C $C25E,2 Loop
 C $C260,1 Bank/unbank
@@ -9603,6 +9624,7 @@ C $C276,2 A = -A
 C $C278,1 A = B
 C $C279,1 B = A
 C $C27A,1 A = E
+@ $C27B label=dt_c27b
 C $C27B,1 Bank/unbank
 C $C27C,1 A = B
 C $C27D,1 Bank/unbank
@@ -9611,8 +9633,10 @@ C $C27F,1 A = L
 C $C280,2 A &= 15
 C $C282,2 Jump if non-zero
 C $C284,1 L--
+@ $C285 label=dt_c285
 C $C285,2 C = 15
 N $C287 Loop
+@ $C287 label=dt_store3
 C $C287,1 Put it in #REGsp (so we can use PUSH for speed)
 C $C297,1 A = H
 C $C298,1 H--
@@ -9621,6 +9645,7 @@ C $C29A,3 Jump if non-zero
 C $C29D,4 L -= 32
 C $C2A1,2 Jump if carry
 C $C2A3,4 H += 16
+@ $C2A7 label=dt_c2a7
 C $C2A9,1 E = D
 C $C2AA,2 Loop
 C $C2AD,1 Set flags
@@ -9633,6 +9658,7 @@ C $C2BB,2 Jump if zero
 C $C2BD,1 A--
 C $C2BE,2 Jump if non-zero
 C $C2C0,1 DE--
+@ $C2C1 label=dt_store4
 C $C2C1,1 Put it in #REGsp (so we can use PUSH for speed)
 C $C2D1,1 A = H
 C $C2D2,1 H--
@@ -9642,7 +9668,9 @@ N $C2D7 Scanline increment pattern.
 C $C2D7,4 L -= 32
 C $C2DB,2 Jump if carry
 C $C2DD,4 H -= 16
+@ $C2E1 label=dt_next
 C $C2E1,2 Next scanline ?
+@ $C2E3 label=dt_exit
 C $C2E3,3 Restore original #REGsp (self modified)
 C $C2E6,1 Return
 c $C2E7 Routine at C2E7
@@ -9805,11 +9833,11 @@ C $C41B,2 A = -A
 C $C41D,1 L = A
 C $C41E,1 A = B
 C $C41F,1 Compare to L
-C $C420,2 A = 'DEC DE'
+C $C420,2 Load opcode of 'DEC DE'
 C $C422,2 Jump if A was < L
 C $C424,2 Jump
 C $C426,1 Compare to L
-C $C427,2 A = 'INC DE'
+C $C427,2 Load opcode of 'INC DE'
 C $C429,2 Jump if A was < L
 C $C42B,3 Self modify instruction at #R$C435
 C $C42E,1 A = B
@@ -9894,7 +9922,7 @@ C $C4D5,3 Self modify 'LD H,x' @ #R$C5D9
 C $C4D8,3 Self modify 'LD H,x' @ #R$C68A
 C $C4DB,1 A = C
 C $C4DC,3 Self modify 'LD B,x' @ #R$C5AC
-C $C4DF,3 Exit via
+C $C4DF,3 Exit via #R$C2E7
 @ $C4E2 label=dr_c4e2
 C $C4E2,2 -- Forked road plotting path
 C $C4E4,2 C = $FF
@@ -10058,10 +10086,13 @@ C $C605,1 L = A
 C $C606,1 Unbank
 C $C607,3 BC = 0
 @ $C60A refs=:$C60A
+@ $C60A label=dr_jumptable1
 C $C60A,2 Jump table (self modified)
 @ $C61B refs=:$C61B
+@ $C61B label=dr_jumptable2
 C $C61B,2 Jump table (self modified)
 @ $C62C refs=:$C62C
+@ $C62C label=dr_jumptable3
 C $C62C,2 Jump table (self modified)
 N $C62E This entry point is used by the routine at #R$C452.
 @ $C62E label=dr_c62e
