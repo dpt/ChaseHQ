@@ -4425,13 +4425,16 @@ C $957E,9 Transfer another 16 pixels
 C $9587,9 Transfer another 16 pixels
 C $9590,8 Transfer another 16 pixels
 C $9599,1 Restore #REGhl
-C $959A,2 Save H in A then H--
-C $959C,2 Extract low four bits of row address
-C $959E,3 If zero we'll need to handle it below, otherwise just loop
-C $95A1,4 H += 16
-C $95A5,4 Decrement the high three bits of row address
-C $95A9,3 No carry, so finish scanline
-C $95AC,4 H -= 16
+N $959A Move to next scanline.
+C $959A,1 Save for checking in a moment
+C $959B,1 Move to next scanline (visually upwards)
+C $959C,2 Would it have rolled over into the top nibble?
+C $959E,3 No - continue
+N $95A1 It rolled over.
+C $95A1,4 Put back the bit stolen by rollover
+C $95A5,4 Move to next chunk of 16 scanlines
+C $95A9,3 Continue if it didn't roll over
+C $95AC,4 Otherwise move to the next chunk of 128 scanlines (would put us outside the back buffer)
 C $95B0,3 Loop back to psf_even_continue
 @ $95B3 label=psf_odd
 C $95B3,1 Increment #REGa for upcoming calculation
@@ -4467,14 +4470,16 @@ C $95E7,9 Transfer another 16 pixels
 C $95F0,9 Transfer another 16 pixels
 C $95F9,4 Transfer another 8 pixels
 C $95FE,1 Restore #REGhl
-C $95FF,2 Save H in A then H--
-N $9601 Decrement the screen address.
-C $9601,2 Extract low four bits of row address
-C $9603,3 If zero we'll need to handle it below, otherwise just loop
-C $9606,4 H += 16
-C $960A,4 Decrement the high three bits of row address
-C $960E,3 No carry, so finish scanline
-C $9611,4 H -= 16
+N $95FF Move to next scanline.
+C $95FF,1 Save for checking in a moment
+C $9600,1 Move to next scanline (visually upwards)
+C $9601,2 Would it have rolled over into the top nibble?
+C $9603,3 No - continue
+N $9606 It rolled over.
+C $9606,4 Put back the bit stolen by rollover
+C $960A,4 Move to next chunk of 16 scanlines
+C $960E,3 Continue if it didn't roll over
+C $9611,4 Otherwise move to the next chunk of 128 scanlines (would put us outside the back buffer)
 C $9615,3 Loop back to psf_odd_continue
 c $9618 Random number generator
 R $9618 O:A Random byte
@@ -5245,7 +5250,16 @@ C $9E4F,4 Write to screen: Screen = (Screen AND Mask) OR Bitmap
 C $9E53,1 Advance screen address to next column
 C $9E54,5 (Repeat)
 C $9E59,1 Step back
-C $9E5A,22 Move up a row (standard pattern)
+N $9E5A Move to next scanline.
+C $9E5A,1 Save for checking in a moment
+C $9E5B,1 Move to next scanline (visually upwards)
+C $9E5C,2 Would it have rolled over into the top nibble?
+C $9E5E,3 No - continue
+N $9E61 It rolled over.
+C $9E61,4 Put back the bit stolen by rollover
+C $9E65,4 Move to next chunk of 16 scanlines
+C $9E69,3 Continue if it didn't roll over
+C $9E6C,4 Otherwise move to the next chunk of 128 scanlines (would put us outside the back buffer)
 @ $9E70 label=plot_turbo_continue
 C $9E70,2 Loop until out of rows
 C $9E72,1 Restore back buffer draw address
@@ -8388,20 +8402,27 @@ C $B729,1 Load a bitmap and mask pair (#REGd,#REGe)
 C $B72A,2 Load the screen pixels and AND with mask
 C $B72C,2 OR in new pixels and store back to screen
 C $B72E,1 Move to next screen pixel
-C $B72F,41 Repeat 7 more times
+C $B72F,6 7
+C $B735,6 6
+C $B73B,6 5
+C $B741,6 4
+C $B747,6 3
+C $B74D,6 2
+C $B753,5 1
 N $B758 Handle end of row.
 C $B758,1 Restore row start address
 N $B759 Move to next back buffer row (addresses have the form 0b1111BAAACCCXXXXX where 0bCCCBAAA is the row index)
-C $B759,1 Preserve #REGa for checking in a moment
-C $B75A,1 Move to next row (visually upwards)
+C $B759,1 Save for checking in a moment
+C $B75A,1 Move to next scanline (visually upwards)
 C $B75B,1 Would it have rolled over into the top nibble? (#REGb is a mask, 15, here)
 C $B75C,3 No - continue
+N $B75F It rolled over.
 N $B75F The row field BAAA was zero but the decrement changed it to 1111 and borrowed from the 1111 field at the top of the address.
-C $B75F,4 Move to next chunk of 16 rows
+C $B75F,4 Move to next chunk of 16 scanlines
 C $B763,2 Carry set if CCC field was zero - don't compensate 1111 field and continue
 N $B765 Otherwise have to compensate 1111 field.
 C $B765,4 Put back the bit stolen since BAAA field was zero
-C $B769,3 Continue
+C $B769,3 Loop
 c $B76C Masked sprite plotter which flips
 D $B76C Used by the routine at #R$92E1.
 @ $B76C label=plot_masked_sprite_flipped
@@ -8422,6 +8443,7 @@ C $B794,1 Return
 C $B795,1 Calculate address of next bitmap scanline
 C $B796,1 Put it in #REGsp (so we can use POP for speed)
 C $B797,1 Unbank
+C $B798,2 Bank #REGe for next-scanline code below
 C $B79A,2 Jump into table
 @ $B79C label=pmsf_jumptable
 C $B79C,1 Load a bitmap and mask pair (B,C)
@@ -8432,8 +8454,23 @@ C $B7A0,1 Set flip table index
 C $B7A1,1 OR in new flipped pixels
 C $B7A2,1 Store back to the screen
 C $B7A3,1 Move to next screen pixel (downwards in memory)
-C $B7A4,55 <Repeat 9 times>
-C $B7E6,2 Loop
+C $B7A4,8 7
+C $B7AC,8 6
+C $B7B4,8 5
+C $B7BC,8 4
+C $B7C4,8 3
+C $B7CC,8 2
+C $B7D4,7 1
+N $B7DB Handle end of row.
+C $B7DB,1 Save for checking in a moment
+C $B7DC,1 Move to next scanline (visually upwards)
+C $B7DD,2 Would it have rolled over into the top nibble?
+C $B7DF,3 No - continue
+N $B7E2 It rolled over.
+C $B7E2,4 Move to next chunk of 16 scanlines
+C $B7E6,2 Carry set if CCC field was zero - don't compensate 1111 field and continue
+N $B7E8 Otherwise have to compensate 1111 field.
+C $B7E8,4 Put back the bit stolen since BAAA field was zero
 C $B7EC,3 Loop
 c $B7EF Masked sprite plotter variant TBD
 D $B7EF Used by the routine at #R$92E1.
@@ -9479,11 +9516,11 @@ C $C14E,6 Write CALL draw_tunnel to #R$8F82
 C $C154,6 Write CALL draw_tunnel to #R$8FA7
 C $C15A,1 Return
 c $C15B Tunnel entrance/interior/exit drawing code
-D $C15B Called by #R$8F82 etc. when it's modified to CALL.
+D $C15B Called by #R$8F82 etc. when that's self modified to call here.
 R $C15B I:IY e.g. $E315 buffer
 @ $C15B label=draw_tunnel
-C $C15B,2 Load #REGiy's low byte
-N $C15D This is set to 20 then counts down to 9 as the tunnel is entered.
+C $C15B,2 Load #REGiy's low byte -- it's a size/distance value
+N $C15D This is set to ~20 then counts down to ~9 as the tunnel is entered. (I've noted 15..6 elsewhere).
 C $C15D,2 Compare to <self modified>
 C $C15F,1 Return if not equal
 C $C160,2 Load <self modified>
@@ -9497,14 +9534,15 @@ C $C16A,4 Self modify 'LD DE,x' @ #R$C21C
 C $C16E,4 Save #REGsp to restore on exit (self modify)
 C $C172,8 #REGl = ~((#REGiy[$4E] - 2) << 1)
 C $C17A,2 Clear #REGc
-C $C17C,2 H = $EB
-C $C17E,1 A = *HL
+C $C17C,2 Set #REGhl to $EBxx
+C $C17E,1 Load byte at $EBxx
 C $C17F,1 Set flags
 C $C180,3 Jump if zero
-C $C183,2 D = 16
+N $C183 This path is hit only when the tunnel is entered.
+C $C183,2 D = 16 = jump table target
 C $C185,3 Jump if positive
 @ $C188 label=dt_c188
-C $C188,2 D = 22
+C $C188,2 D = 22 = jump table target
 C $C18A,2 L = 31
 C $C18C,2 Jump
 @ $C18E label=dt_c18e
@@ -9585,25 +9623,29 @@ C $C21B,1 B = D
 N $C21C Pixels of tunnel loaded here. Top byte, D, seems to affect bottom row? Bottom byte, E, affects whole pattern. The LD E,D later would explain that.
 C $C21C,3 DE = <self modified>  -- pixels of tunnel
 N $C21F Loop
-@ $C21F label=dt_c21f
-C $C21F,1 Put it in #REGsp (so we can use PUSH for speed)
-C $C220,1 A = L
-@ $C221 label=dt_store1
+@ $C21F label=dt_fill_loop
+C $C21F,1 Put destination in #REGsp so we can use PUSH for speed
+C $C220,1 Preserve destination?
+@ $C221 label=dt_jump_table_1
 C $C221,2 Jump table (self modified)
+C $C223,16 Store up to 16 words / 256 pixels
 C $C233,1 A -= C
-C $C234,1 L = A
-C $C235,1 Put it in #REGsp (so we can use PUSH for speed)
-@ $C236 label=dt_store2
+C $C234,1 Restore destination?
+C $C235,1 Put destination in #REGsp so we can use PUSH for speed
+@ $C236 label=dt_jump_table_2
 C $C236,2 Jump table (self modified)
+C $C238,16 Store up to 16 words / 256 pixels
 C $C248,1 A += C
 C $C249,1 L = A
-C $C24A,1 A = H
-C $C24B,1 H--
-C $C24C,2 A &= 15
-C $C24E,3 Jump if non-zero
-C $C251,4 L -= 32
+N $C24A Move up a row (standard pattern).
+C $C24A,1 Save #REGh in #REGa
+C $C24B,1 Decrement row address
+C $C24C,2 Extract low four bits of row address
+C $C24E,3 Jump to dt_c25b if non-zero (easy case)
+N $C251 Otherwise it was zero so will need extra work.
+C $C251,4 Decrement the high three bits of row address
 C $C255,2 Jump if carry
-C $C257,4 H -= 16
+C $C257,4 Didn't carry so fix #REGh from earlier DEC H (1110xxxx -> 1111xxxx)
 @ $C25B label=dt_c25b
 C $C25D,1 E = D
 C $C25E,2 Loop
@@ -9636,7 +9678,7 @@ C $C284,1 L--
 @ $C285 label=dt_c285
 C $C285,2 C = 15
 N $C287 Loop
-@ $C287 label=dt_store3
+@ $C287 label=dt_jump_table_3
 C $C287,1 Put it in #REGsp (so we can use PUSH for speed)
 C $C297,1 A = H
 C $C298,1 H--
@@ -9658,13 +9700,13 @@ C $C2BB,2 Jump if zero
 C $C2BD,1 A--
 C $C2BE,2 Jump if non-zero
 C $C2C0,1 DE--
-@ $C2C1 label=dt_store4
+@ $C2C1 label=dt_jump_table_4
 C $C2C1,1 Put it in #REGsp (so we can use PUSH for speed)
+N $C2D1 Scanline increment pattern.
 C $C2D1,1 A = H
 C $C2D2,1 H--
 C $C2D3,1 A &= C
 C $C2D4,3 Jump if non-zero
-N $C2D7 Scanline increment pattern.
 C $C2D7,4 L -= 32
 C $C2DB,2 Jump if carry
 C $C2DD,4 H -= 16
@@ -9932,7 +9974,7 @@ C $C4EA,2 Jump if set
 C $C4EC,2 Bit 3 set?
 C $C4EE,2 Jump if clear
 @ $C4F0 label=dr_c4f0
-C $C4F0,2 A = IY.low  -- tunnel size factor
+C $C4F0,2 A = IY.low  -- tunnel size/distance
 C $C4F2,3 Self modify 'CP x' @ #R$C15D
 C $C4F5,2 A = 1
 C $C4F7,1 C++
@@ -10376,7 +10418,7 @@ C $C895,1 $0000 -> $FFFF
 C $C896,2 Mask for later
 N $C898 Decrement the screen address.
 @ $C898 label=dr_sky_fill_loop
-C $C898,1 Save H in A
+C $C898,1 Save #REGh in #REGa
 C $C899,1 Decrement row address
 C $C89A,1 Extract low four bits of row address
 C $C89B,2 Jump to dr_sky_fill_scanline if non-zero (easy case)
@@ -10387,7 +10429,7 @@ N $C8A3 Exit.
 C $C8A3,3 Restore original #REGsp (self modified)
 C $C8A6,1 Return
 @ $C8A7 label=dr_sky_fill_fix_address
-C $C8A7,4 Didn't carry so fix H from earlier DEC H (1110xxxx -> 1111xxxx)
+C $C8A7,4 Didn't carry so fix #REGh from earlier DEC H (1110xxxx -> 1111xxxx)
 N $C8AB Writes #REGde to #REGhl 15 times filling the scanline. Draws the blank upper part of the sky. DE must always be zero? or what about tunnels?
 @ $C8AB label=dr_sky_fill_scanline
 C $C8AB,1 Put it in #REGsp (so we can use PUSH for speed)
