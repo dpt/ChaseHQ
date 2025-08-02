@@ -3675,7 +3675,7 @@ C $8EBD,1 Save #REGe
 C $8EBE,8 Transfer four bytes (#REGde, #REGhl and #REGbc are decremented by 4)
 C $8EC6,1 Restore #REGe
 C $8EC7,3 If #REGbc becomes zero then proceed to dm_plot_attrs
-N $8ECA Move to next scanline.
+N $8ECA Move to next scanline (longer form).
 C $8ECA,1 Save for checking in a moment
 C $8ECB,1 Move to next scanline (visually upwards)
 C $8ECC,2 Would it have rolled over into the top nibble?
@@ -3711,7 +3711,7 @@ C $8F0A,6 B = ~(A * 3) + 63 = amount of solid rows to draw
 C $8F10,3 Call draw_smash_bar_solid_bit
 @ $8F13 label=draw_smash_bar_segment
 C $8F13,2 Set 8 pixels to "X......X"
-N $8F15 Move to next scanline.
+N $8F15 Move to next scanline (longer form).
 C $8F15,1 Save for checking in a moment
 C $8F16,1 Move to next scanline (visually upwards)
 C $8F17,1 Would it have rolled over into the top nibble?
@@ -3723,11 +3723,12 @@ C $8F22,3 Continue if it didn't roll over
 C $8F25,3 Otherwise move to the next chunk of 128 scanlines (would put us outside the back buffer)
 @ $8F28 label=draw_smash_bar_segment2
 C $8F28,2 Set 8 pixels to "X......X"
+N $8F2A Move to next scanline (longer form).
 C $8F2A,1 Save for checking in a moment
 C $8F2B,1 Move to next scanline (visually upwards)
 C $8F2C,1 Would it have rolled over into the top nibble?
-N $8F2D It rolled over
 C $8F2D,3 No - continue
+N $8F30 It rolled over.
 C $8F30,3 Put back the bit stolen by rollover
 C $8F33,4 Move to next chunk of 16 scanlines
 C $8F37,3 Continue if it didn't roll over
@@ -3740,7 +3741,7 @@ C $8F46,1 Return
 @ $8F47 label=draw_smash_bar_solid_bit
 C $8F47,2 Set 8 pixels to solid black
 N $8F49 Move to next scanline.
-C $8F49,1 Save for checking in a moment (visually upwards)
+C $8F49,1 Save for checking in a moment
 C $8F4A,1 Move to next scanline (visually upwards)
 C $8F4B,1 Would it have rolled over into the top nibble?
 C $8F4C,3 No - continue
@@ -3938,10 +3939,10 @@ C $9113,1 A = *DE
 C $9114,1 C = L
 @ $9115 label=do_9115
 C $9115,2 Self modified
-C $9117,58 *HL++ = A  -- 28 times
-C $9151,1 *HL = A
+C $9117,58 Store #REGa to #REGhl and advance, 28 times
+C $9151,1 Store #REGa to #REGhl
 C $9152,1 L = C  -- restore
-N $9153 Move to next scanline.
+N $9153 Move to next scanline (longer form).
 C $9153,1 Save for checking in a moment
 C $9154,1 Move to next scanline (visually upwards)
 C $9155,2 Would it have rolled over into the top nibble?
@@ -4329,17 +4330,19 @@ C $94CD,5 Transfer another 16 pixels
 C $94D2,5 Transfer another 16 pixels
 C $94D7,4 Transfer another 16 pixels
 C $94DB,1 Restore row start address
-N $94DC Move to next back buffer row (addresses have the form 0b1111BAAACCCXXXXX where 0bCCCBAAA is the row index)
-C $94DC,1 Preserve #REGa for checking in a moment
-C $94DD,1 Move to next row (visually upwards)
+N $94DC Move to next scanline (longer form).
+N $94DC Move to next back buffer row (addresses have the form 0b1111BAAACCCXXXXX where 0bCCCBAAA is the row index).
+C $94DC,1 Save for checking in a moment
+C $94DD,1 Move to next scanline (visually upwards)
 C $94DE,1 Would it have rolled over into the top nibble? (#REGb is a mask, 15, here)
 C $94DF,3 No - continue
+N $94E2 It rolled over.
 N $94E2 The row field BAAA was zero but the decrement changed it to 1111 and borrowed from the 1111 field at the top of the address.
-C $94E2,3 Fix 1111 field (#REGc is 16 here)
-C $94E5,4 Move to next chunk of 16 rows
-C $94E9,3 No carry, so continue
+C $94E2,3 Put back the bit stolen by rollover (#REGc is 16 here)
+C $94E5,4 Move to next chunk of 16 scanlines
+C $94E9,3 Continue if it didn't roll over
 N $94EC Otherwise have to compensate 1111 field.
-C $94EC,3 Undo carry
+C $94EC,3 Otherwise move to the next chunk of 128 scanlines (would put us outside the back buffer) (#REGc is 16 here)
 C $94EF,3 Continue
 @ $94F2 label=ps_odd
 C $94F2,1 Increment #REGa for upcoming calculation
@@ -4369,16 +4372,17 @@ C $951A,5 Transfer two bitmap bytes (16 pixels) from the "stack" to screen buffe
 C $951F,5 Transfer another 16 pixels
 C $9524,5 Transfer another 16 pixels
 C $9529,2 Transfer another 8 pixels
-N $952B Handle end of row.
+N $952B Handle end of row (longer form).
+N $952B Move to next back buffer row (addresses have the form 0b1111BAAACCCXXXXX where 0bCCCBAAA is the row index).
 C $952B,1 Restore row start address
-N $952C Move to next back buffer row (addresses have the form 0b1111BAAACCCXXXXX where 0bCCCBAAA is the row index)
-C $952C,1 Preserve #REGa for checking in a moment
-C $952D,1 Move to next row (visually upwards)
+C $952C,1 Save for checking in a moment
+C $952D,1 Move to next scanline (visually upwards)
 C $952E,1 Would it have rolled over into the top nibble? (#REGb is a mask, 15, here)
 C $952F,3 No - continue
+N $9532 It rolled over.
 N $9532 The row field BAAA was zero but the decrement changed it to 1111 and borrowed from the 1111 field at the top of the address.
 C $9532,3 Fix 1111 field (#REGc is 16 here)
-C $9535,4 Move to next chunk of 16 rows
+C $9535,4 Move to next chunk of 16 scanlines
 C $9539,3 No carry, so continue
 N $953C Otherwise have to compensate 1111 field.
 C $953C,3 Undo carry
@@ -4425,7 +4429,7 @@ C $957E,9 Transfer another 16 pixels
 C $9587,9 Transfer another 16 pixels
 C $9590,8 Transfer another 16 pixels
 C $9599,1 Restore #REGhl
-N $959A Move to next scanline.
+N $959A Move to next scanline (longer form).
 C $959A,1 Save for checking in a moment
 C $959B,1 Move to next scanline (visually upwards)
 C $959C,2 Would it have rolled over into the top nibble?
@@ -4470,7 +4474,7 @@ C $95E7,9 Transfer another 16 pixels
 C $95F0,9 Transfer another 16 pixels
 C $95F9,4 Transfer another 8 pixels
 C $95FE,1 Restore #REGhl
-N $95FF Move to next scanline.
+N $95FF Move to next scanline (longer form).
 C $95FF,1 Save for checking in a moment
 C $9600,1 Move to next scanline (visually upwards)
 C $9601,2 Would it have rolled over into the top nibble?
@@ -5250,7 +5254,7 @@ C $9E4F,4 Write to screen: Screen = (Screen AND Mask) OR Bitmap
 C $9E53,1 Advance screen address to next column
 C $9E54,5 (Repeat)
 C $9E59,1 Step back
-N $9E5A Move to next scanline.
+N $9E5A Move to next scanline (longer form).
 C $9E5A,1 Save for checking in a moment
 C $9E5B,1 Move to next scanline (visually upwards)
 C $9E5C,2 Would it have rolled over into the top nibble?
@@ -8409,9 +8413,9 @@ C $B741,6 4
 C $B747,6 3
 C $B74D,6 2
 C $B753,5 1
-N $B758 Handle end of row.
 C $B758,1 Restore row start address
-N $B759 Move to next back buffer row (addresses have the form 0b1111BAAACCCXXXXX where 0bCCCBAAA is the row index)
+N $B759 Move to next scanline (shorter form).
+N $B759 Move to next back buffer row (addresses have the form 0b1111BAAACCCXXXXX where 0bCCCBAAA is the row index).
 C $B759,1 Save for checking in a moment
 C $B75A,1 Move to next scanline (visually upwards)
 C $B75B,1 Would it have rolled over into the top nibble? (#REGb is a mask, 15, here)
@@ -8461,7 +8465,7 @@ C $B7BC,8 4
 C $B7C4,8 3
 C $B7CC,8 2
 C $B7D4,7 1
-N $B7DB Handle end of row.
+N $B7DB Move to next scanline (shorter form).
 C $B7DB,1 Save for checking in a moment
 C $B7DC,1 Move to next scanline (visually upwards)
 C $B7DD,2 Would it have rolled over into the top nibble?
@@ -9637,15 +9641,16 @@ C $C236,2 Jump table (self modified)
 C $C238,16 Store up to 16 words / 256 pixels
 C $C248,1 A += C
 C $C249,1 L = A
-N $C24A Move up a row (standard pattern).
-C $C24A,1 Save #REGh in #REGa
-C $C24B,1 Decrement row address
-C $C24C,2 Extract low four bits of row address
-C $C24E,3 Jump to dt_c25b if non-zero (easy case)
-N $C251 Otherwise it was zero so will need extra work.
-C $C251,4 Decrement the high three bits of row address
+N $C24A Move to next scanline (shorter form).
+C $C24A,1 Save for checking in a moment
+C $C24B,1 Move to next scanline (visually upwards)
+C $C24C,2 Would it have rolled over into the top nibble?
+C $C24E,3 No - continue
+N $C251 It rolled over.
+C $C251,4 Move to next chunk of 16 scanlines
 C $C255,2 Jump if carry
-C $C257,4 Didn't carry so fix #REGh from earlier DEC H (1110xxxx -> 1111xxxx)
+N $C257 Otherwise have to compensate 1111 field.
+C $C257,4 Put back the bit stolen since BAAA field was zero
 @ $C25B label=dt_c25b
 C $C25D,1 E = D
 C $C25E,2 Loop
@@ -9680,13 +9685,16 @@ C $C285,2 C = 15
 N $C287 Loop
 @ $C287 label=dt_jump_table_3
 C $C287,1 Put it in #REGsp (so we can use PUSH for speed)
-C $C297,1 A = H
-C $C298,1 H--
-C $C299,1 A &= C
-C $C29A,3 Jump if non-zero
-C $C29D,4 L -= 32
-C $C2A1,2 Jump if carry
-C $C2A3,4 H += 16
+N $C297 Move to next scanline (shorter form).
+C $C297,1 Save for checking in a moment
+C $C298,1 Move to next scanline (visually upwards)
+C $C299,1 Would it have rolled over into the top nibble? (#REGc is a mask, 15, here)
+C $C29A,3 No - continue
+N $C29D It rolled over.
+C $C29D,4 Move to next chunk of 16 scanlines
+C $C2A1,2 Carry set if CCC field was zero - don't compensate 1111 field and continue
+N $C2A3 Otherwise have to compensate 1111 field.
+C $C2A3,4 Put back the bit stolen since BAAA field was zero
 @ $C2A7 label=dt_c2a7
 C $C2A9,1 E = D
 C $C2AA,2 Loop
@@ -9702,14 +9710,16 @@ C $C2BE,2 Jump if non-zero
 C $C2C0,1 DE--
 @ $C2C1 label=dt_jump_table_4
 C $C2C1,1 Put it in #REGsp (so we can use PUSH for speed)
-N $C2D1 Scanline increment pattern.
-C $C2D1,1 A = H
-C $C2D2,1 H--
-C $C2D3,1 A &= C
-C $C2D4,3 Jump if non-zero
-C $C2D7,4 L -= 32
-C $C2DB,2 Jump if carry
-C $C2DD,4 H -= 16
+N $C2D1 Move to next scanline (shorter form).
+C $C2D1,1 Save for checking in a moment
+C $C2D2,1 Move to next scanline (visually upwards)
+C $C2D3,1 Would it have rolled over into the top nibble? (#REGc is a mask, 15, here)
+C $C2D4,3 No - continue
+N $C2D7 It rolled over.
+C $C2D7,4 Move to next chunk of 16 scanlines
+C $C2DB,2 Carry set if CCC field was zero - don't compensate 1111 field and continue
+N $C2DD Otherwise have to compensate 1111 field.
+C $C2DD,4 Put back the bit stolen since BAAA field was zero
 @ $C2E1 label=dt_next
 C $C2E1,2 Next scanline ?
 @ $C2E3 label=dt_exit
@@ -10049,27 +10059,28 @@ C $C574,1 Put it in #REGsp (so we can use PUSH for speed)
 C $C575,3 HL = 0  [not self modified apparently]
 C $C578,1 C = L
 C $C579,3 Jump into a sequence of 15 PUSH HLs
-N $C57C smells like scanline/buffer pointer movement
-@ $C57C label=dr_c57c
-C $C57C,4 E -= 32
-C $C580,3 Jump if it went -ve
-C $C583,4 D += 16
+N $C57C This is scanline/buffer pointer movement
+@ $C57C label=dr_rollover
+C $C57C,4 Move to next chunk of 16 scanlines
+C $C580,3 Carry set if CCC field was zero - don't compensate 1111 field and continue
+C $C583,4 Put back the bit stolen since BAAA field was zero
 C $C587,3 jump
-N $C58A smells like scanline/buffer pointer movement
+N $C58A This is scanline/buffer pointer movement
 @ $C58A label=dr_c58a
-C $C58A,4 E -= 32
-C $C58E,3 Jump if it went -ve
-C $C591,4 D += 16
+C $C58A,4 Move to next chunk of 16 scanlines
+C $C58E,3 Carry set if CCC field was zero - don't compensate 1111 field and continue
+C $C591,4 Put back the bit stolen since BAAA field was zero
 C $C595,3 jump
 N $C598 Road and backdrop plotting
 @ $C598 label=dr_c598
 C $C598,1 Bank
 C $C599,6 Self modify 'JP NZ,x' @ #R$C6AD to be #R$C5A1
 C $C59F,1 Unbank
-C $C5A1,1 A = D
-C $C5A2,1 D--
-C $C5A3,2 A &= 15
-C $C5A5,2 Jump if zero
+N $C5A1 Move to next scanline.
+C $C5A1,1 Save for checking in a moment
+C $C5A2,1 Move to next scanline (visually upwards)
+C $C5A3,2 Would it have rolled over into the top nibble?
+C $C5A5,2 Jump if rolled over
 N $C5A7 This entry point is used by the routine at #R$C57C.
 @ $C5A7 label=dr_c5a7
 C $C5A7,4 Self modify 'LD DE,x' @ #R$C5F9
