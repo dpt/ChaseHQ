@@ -291,27 +291,28 @@ class ChaseHQHtmlWriter(HtmlWriter, ChaseHQWriter):
         #
         #                                  [  * ] is the car's default position
         lanesmap = {
-            0x00: "4 Lanes              [||||] {00}",
-            0x01: "2 Lanes L            [||]   {01}",  # Poke
-            0x02: "2 Lanes M             [||]  {02}",  # Poke
-            0x03: "2 Lanes R              [||] {03}",  # Stage 5
-            0x06: "3-2 Narrowing L      [/||]  {06}",  # Poke
-            0x0D: "3-2 Narrowing X     [/||]   {0D}",  # Poke - Invalid: left side flickers
-            0x0F: "3-2 Narrowing R       [/||] {0F}",
-            0x1F: "2-3 Widening R        [`||] {1F}",
-            0x2D: "2-3 Widening L       [`||]  {2D}",  # used in fork exit
-            0x45: "Tunnel start                {45}",  # tunnels always two lanes?
-            0x59: "Tunnel cont/end?            {59}",  # TBD
-            0x81: "3 Lanes L            [|||]  {81}",
-            0x82: "3 Lanes R             [|||] {82}",
-            0x8E: "4-3 Narrowing R      [/|||] {8E}",
-            0x9E: "3-4 Widening R       [`|||] {9E}",
-            0xAD: "3-4 Widening L       [|||/] {AD}",
-            0xBD: "4-3 Narrowing L      [|||`] {BD}",
-            0xC1: "4 Lanes dirt track   [||||] {C1}",
-            0xC2: "3 Lanes dirt track R  [|||] {C2}",  # Poke
-            0xC3: "2 Lanes dirt track R   [||] {C3}",
-        }  # Poke (stones on verge)
+            0b00000000: "4 Lanes              [||||] {00}",
+            0b00000001: "2 Lanes L            [||]   {01}",  # Poke
+            0b00000010: "2 Lanes M             [||]  {02}",  # Poke
+            0b00000011: "2 Lanes R              [||] {03}",  # Stage 5
+            0b00000110: "3-2 Narrowing L      [/||]  {06}",  # Poke
+            0b00001101: "3-2 Narrowing X     [/||]   {0D}",  # Poke - Invalid: left side flickers
+            0b00001111: "3-2 Narrowing R       [/||] {0F}",
+            0b00011111: "2-3 Widening R        [`||] {1F}",
+            0b00101101: "2-3 Widening L       [`||]  {2D}",  # Used in fork exit
+            0b01000101: "Tunnel start                {45}",  # Are tunnels always two lanes?
+            0b01011001: "Tunnel cont/end             {59}",  # TBD
+            0b10000001: "3 Lanes L            [|||]  {81}",
+            0b10000010: "3 Lanes R             [|||] {82}",
+            0b10001110: "4-3 Narrowing R      [/|||] {8E}",
+            0b10011110: "3-4 Widening R       [`|||] {9E}",
+            0b10101101: "3-4 Widening L       [|||/] {AD}",
+            0b10111101: "4-3 Narrowing L      [|||`] {BD}",
+            0b11000001: "4 Lanes dirt track   [||||] {C1}",
+            0b11000010: "3 Lanes dirt track R  [|||] {C2}",  # Poke
+            0b11000011: "2 Lanes dirt track R   [||] {C3}",  # Poke (stones on verge)
+        }
+        # Bottom two bits set the left hand offset (0/1 leftmost, 2, 3).
         return self.decode_count_rle(
             cwd, base, "lanes", lanesmap, showlength=True, follow=True
         )
