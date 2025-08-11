@@ -289,30 +289,35 @@ class ChaseHQHtmlWriter(HtmlWriter, ChaseHQWriter):
         # If not noted then the respective byte is used by Stage 1. If "Poke"
         # then it was discovered by altering the game.
         #
-        #                                  [  * ] is the car's default position
+        #                                     [  * ] is the car's default position  CHECK
         lanesmap = {
             0b00000000: "4 Lanes              [||||] {00}",
+
             0b00000001: "2 Lanes L            [||]   {01}",  # Poke
             0b00000010: "2 Lanes M             [||]  {02}",  # Poke
             0b00000011: "2 Lanes R              [||] {03}",  # Stage 5
+
+            0b10000001: "3 Lanes L            [|||]  {81}",
+            0b10000010: "3 Lanes R             [|||] {82}",
+            
             0b00000110: "3-2 Narrowing L      [/||]  {06}",  # Poke
             0b00001101: "3-2 Narrowing X     [/||]   {0D}",  # Poke - Invalid: left side flickers
             0b00001111: "3-2 Narrowing R       [/||] {0F}",
             0b00011111: "2-3 Widening R        [`||] {1F}",
             0b00101101: "2-3 Widening L       [`||]  {2D}",  # Used in fork exit
-            0b01000101: "Tunnel start                {45}",  # Are tunnels always two lanes?
-            0b01011001: "Tunnel cont/end             {59}",  # TBD
-            0b10000001: "3 Lanes L            [|||]  {81}",
-            0b10000010: "3 Lanes R             [|||] {82}",
             0b10001110: "4-3 Narrowing R      [/|||] {8E}",
             0b10011110: "3-4 Widening R       [`|||] {9E}",
             0b10101101: "3-4 Widening L       [|||/] {AD}",
             0b10111101: "4-3 Narrowing L      [|||`] {BD}",
+            
+            0b01000101: "Tunnel entrance             {45}",  # Are tunnels always two lanes?
+            0b01011001: "Tunnel cont/exit            {59}",  # TBD
             0b11000001: "4 Lanes dirt track   [||||] {C1}",
             0b11000010: "3 Lanes dirt track R  [|||] {C2}",  # Poke
-            0b11000011: "2 Lanes dirt track R   [||] {C3}",  # Poke (stones on verge)
+            0b11000011: "2 Lanes dirt track R   [||] {C3}",  # Poke (but stones appear on verge)
         }
-        # Bottom two bits set the left hand offset (0/1 leftmost, 2, 3).
+        # Bits 0+1 set the left hand offset (0/1 is leftmost, 2, 3).
+        # Bit 6 indicates tunnel or dirt track. Where 6 is set, bit 7 indicates tunnel.
         return self.decode_count_rle(
             cwd, base, "lanes", lanesmap, showlength=True, follow=True
         )

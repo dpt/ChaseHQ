@@ -107,7 +107,7 @@
 > $4000 ; $E500        is road bending tables
 > $4000 ; $E600..$E80F is road drawing scaling tables (3x8 groups of 22 bytes)
 > $4000 ; $E830..$E8FF is 104 words for road drawing (left)
-> $4000 ; $E900        is a table
+> $4000 ; $E900        is a curvature? table
 > $4000 ; $E930..$E9FF is 104 words for road drawing (centre left)
 > $4000 ; $EA00..$EA2F is the diamond zoom-in mask
 > $4000 ; $EA30..$EAFF is 104 words for road drawing (centre)
@@ -115,6 +115,7 @@
 > $4000 ; $EB30..$EBFF is 104 words for road drawing (centre right)
 > $4000 ; $EC00..$EC2F is TBD (transition uses this)
 > $4000 ; $EC30..$ECFF is 104 words for road drawing (right)
+> $4000 ; $EDxx        is a curvature? table
 > $4000 ; $ED28        is the stack (growing downwards)
 > $4000 ; $ED30..?     is (possibly another 104 word road drawing buffer)
 > $4000 ; $EE00..$EEFF is the road buffer. holds data unpacked from maps. it's cyclic. 32 byte fixed sections for each datum (curvature, height, lanes, right side objects, left side objects, hazards). cleared by $87DD.
@@ -8768,7 +8769,7 @@ C $BA09,2 Loop while #REGb
 N $BA0B No forked road found.
 N $BA0B The road is still rendered if the following call is nopped out, but it's in the wrong position.
 @ $BA0B label=lr_no_fork
-C $BA0B,3 Call sub_cbce_non_fork
+C $BA0B,3 Call build_curve_table_non_forked
 C $BA0E,4 Self modify 'LD SP' @ #R$BA4D to restore #REGsp on exit
 C $BA12,3 Put $EC30 (road right) in #REGsp (so we can use POP for speed)
 C $BA15,2 Iterate from $30 to $00 in steps of 2 = 104 iterations
@@ -8873,22 +8874,22 @@ C $BADF,1 Preserve HL
 C $BAE0,6 Jump if fork_taken was 1 (right fork taken)
 N $BAE6 Left fork was taken.
 @ $BAE6 label=lr_left_fork_taken
-C $BAE6,3 Call sub_cbce_non_fork
+C $BAE6,3 Call build_curve_table_non_forked
 C $BAE9,1 Restore HL from earlier
 C $BAEA,3 Get road position
 C $BAED,1 Stack it
 C $BAEE,1 DE must be a road position delta?
 C $BAEF,3 Set road position
-C $BAF2,3 Call sub_cbce_fork
+C $BAF2,3 Call build_curve_table_forked
 N $BAF7 Right fork was taken.
 @ $BAF7 label=lr_right_fork_taken
-C $BAF7,3 Call sub_cbce_fork
+C $BAF7,3 Call build_curve_table_forked
 C $BAFA,1 Pop result?
 C $BAFB,3 Get road position
 C $BAFE,1 Stack it
 C $BAFF,2 DE must be a road position delta?
 C $BB01,3 Set road position
-C $BB04,3 Call sub_cbce_non_fork
+C $BB04,3 Call build_curve_table_non_forked
 @ $BB07 label=lr_bb07
 C $BB07,1 Unstack road position
 C $BB08,3 Set road position
@@ -9725,23 +9726,29 @@ C $C2E1,2 Next scanline ?
 @ $C2E3 label=dt_exit
 C $C2E3,3 Restore original #REGsp (self modified)
 C $C2E6,1 Return
-c $C2E7 Routine at C2E7
+c $C2E7 Subroutine of draw_road
+D $C2E7 This seems to get called around changes in scene, e.g. at the start of a level, after a split, before a tunnel, after a tunnel or when the final loop restarts.
 D $C2E7 Used by the routine at #R$C452.
-C $C2E7,2 A = IY.low
+R $C2E7 I:IX ... sampled: $EE60..
+R $C2E7 I:IY ... sampled: $E301..E315 (height table)
+@ $C2E7 label=sub_c2e7
+C $C2E7,2 Load #REGiy.low (distance)
 C $C2E9,2 Compare to 19
 C $C2EB,3 Jump if >= 19
 C $C2EE,1 Bank
-C $C2EF,3 A = IX[0]
-C $C2F2,1 L = A
-C $C2F3,2 A &= 12
+C $C2EF,3 Load IX[0]  -- lane flags?
+C $C2F2,1 Copy to #REGl
+C $C2F3,2 Mask with 0b00001100
 C $C2F5,3 Jump if zero
+N $C2F8 Otherwise ...
 C $C2F8,2 IY--
 C $C2FA,2 Bit 5 of L set?
 C $C2FC,2 Jump if clear
 C $C2FE,2 Bit 7 of L set?
-C $C300,2 H = $EC
+C $C300,2 H = $EC  -- must be a top byte of address
 C $C302,2 Jump if set
 C $C304,1 H = $EB
+@ $C305 label=sub_c2e7_1
 C $C305,2 Bit 4 of L set?
 C $C307,3 Jump if clear
 C $C30A,1 Bank
@@ -9754,24 +9761,20 @@ C $C315,3 C = IY[1]
 C $C318,2 Jump if != 4
 C $C31A,1 A = 0
 C $C31B,3 C = IY[2]
+@ $C31E label=sub_c2e7_2
 C $C31E,3 Self modify 'ADD A,x' @ #R$C345
-C $C321,3 A = IY[0]
-C $C324,1 A -= C
+C $C321,4 A = IY[0] - C
 C $C325,6 Jump if A was <= C
 C $C32B,1 C = A
-C $C32C,1 A <<= 1
-C $C32D,1 B = A
+C $C32C,2 B = (A << 1)
 C $C32E,8 L = ~(($60 - IY[0]) << 1)
 C $C336,1 -- why are we copying to SP with no push/pop nearby?
 C $C337,1 D = *HL
 C $C338,1 L--
 C $C339,1 E = *HL
-C $C33A,1 A -= B
-C $C33B,1 L = A
+C $C33A,2 L = A - B
 C $C33C,1 H--
-C $C33D,3 A = fast_counter
-C $C340,3 A ROR 3
-C $C343,2 A &= 28
+C $C33D,8 A = (fast_counter ROR 3) & 0b00011100
 C $C345,2 A += <self modified>
 C $C347,3 Self modify 'LD HL,x' @ #R$C351 below
 C $C34A,1 Swap
@@ -9781,23 +9784,23 @@ C $C350,1 Swap
 C $C351,3 HL = <self modified>
 C $C354,3 Jump
 N $C357 Another case.
+@ $C357 label=sub_c2e7_3
 C $C357,1 Bank
 C $C358,2 Compare to 4
 C $C35A,3 Jump if non-zero
 C $C35D,6 A = IY[0] - IY[2]
 C $C363,6 Jump if IY[0] was <= IY[2]
 C $C369,1 C = A
-C $C36A,1 A <<= 1
-C $C36B,1 B = A
+C $C36A,2 B = A << 1
 C $C36C,8 L = ~(($60 - IY[0]) << 1)
-C $C374,1 -- this again
+C $C374,1 -- this pattern again
 C $C375,1 D = *HL
 C $C376,1 L--
 C $C377,1 E = *HL
-C $C378,1 A -= B
-C $C379,1 L = A
+C $C378,2 L = A - B
 C $C37A,1 H--
 C $C37B,3 Jump
+@ $C37E label=sub_c2e7_4
 C $C37E,1 Bank/unbank
 C $C37F,2 Compare to 2
 N $C381 This entry point is used by the routine at #R$E8CE.
@@ -9809,6 +9812,7 @@ C $C389,3 C = IY[1]
 C $C38C,2 Jump if non-zero
 C $C38E,1 X = 0
 C $C38F,3 C = IY[2]
+@ $C392 label=sub_c2e7_5
 C $C392,3 Self modify 'ADD A,x' @ #R$C3BD below
 C $C395,3 A = IY[0]
 C $C398,1 A -= C
@@ -9816,24 +9820,22 @@ C $C399,6 Jump if A was >= C
 C $C39F,2 C = A << 1
 C $C3A1,1 B = A
 C $C3A2,8 L = ~(($60 - IY[0]) << 1)
-C $C3AA,1 -- this again
+C $C3AA,1 -- this pattern again (2)
 C $C3AB,1 H--
 C $C3AC,1 D = *HL
 C $C3AD,1 L--
 C $C3AE,1 E = *HL
-C $C3AF,1 A -= B
-C $C3B0,1 L = A
+C $C3AF,2 L = A - B
 C $C3B1,1 H++
 C $C3B2,3 Self modify 'LD HL,x' @ #R$C3C4 below
-C $C3B5,3 A = fast_counter
-C $C3B8,3 A ROR 3
-C $C3BB,2 A &= 28
+C $C3B5,8 A = (fast_counter ROR 3) & 0b00011100
 C $C3BD,2 A += <self modified>
 C $C3BF,3 HL = A
 C $C3C2,1 HL += DE
 C $C3C3,1 Swap
 C $C3C4,3 HL = <self modified>
 C $C3C7,3 Jump
+@ $C3CA label=sub_c2e7_6
 C $C3CA,1 Swap
 C $C3CB,2 Compare to 4
 C $C3CD,2 Jump if non-zero
@@ -9843,15 +9845,15 @@ C $C3DB,1 C = A
 C $C3DC,1 A <<= 1
 C $C3DD,1 B = A
 C $C3DE,8 L = ~(($60 - IY[0]) << 1)
-C $C3E6,1 -- this again
+C $C3E6,1 -- this pattern again (3)
 C $C3E7,1 H--
 C $C3E8,1 D = *HL
 C $C3E9,1 L--
 C $C3EA,1 E = *HL
-C $C3EB,1 A -= B
-C $C3EC,1 L = A
+C $C3EB,2 L = A - B
 C $C3ED,1 H++
 N $C3EE Continuation point.
+@ $C3EE label=sub_c2e7_7
 C $C3EE,1 A = *HL
 C $C3EF,1 L--
 C $C3F0,1 L = *HL
@@ -9865,16 +9867,19 @@ C $C3FA,3 Jump if positive
 C $C3FD,2 A = 127
 C $C3FF,2 Jump
 N $C401 Negative case.
+@ $C401 label=sub_c2e7_8
 C $C401,1 Set flags
 C $C402,3 Jump if negative
 C $C405,2 A = $81
 N $C407 Positive case.
+@ $C407 label=sub_c2e7_9
 C $C407,1 SP++
 C $C408,4 Bit 5 of IX[0] set?
 C $C40C,2 Jump if clear
 C $C40E,3 HL = $FF00
 C $C411,1 HL += SP
 C $C412,1 SP = HL
+@ $C413 label=sub_c2e7_10
 C $C413,1 L = A
 C $C414,1 B = C
 C $C415,1 A = C
@@ -9888,30 +9893,39 @@ C $C41F,1 Compare to L
 C $C420,2 Load opcode of 'DEC DE'
 C $C422,2 Jump if A was < L
 C $C424,2 Jump
+@ $C426 label=sub_c2e7_11
 C $C426,1 Compare to L
 C $C427,2 Load opcode of 'INC DE'
 C $C429,2 Jump if A was < L
-C $C42B,3 Self modify instruction at #R$C435
-C $C42E,1 A = B
-C $C42F,1 A >>= 1
+@ $C42B label=sub_c2e7_self_modify
+C $C42B,3 Self modify instruction at #R$C435 below
+C $C42E,2 A = B >> 1
 N $C430 Divider?
+@ $C430 label=sub_c2e7_possible_divide_loop
 C $C430,1 A = L
 C $C431,1 Compare to C
 C $C432,2 Jump if A < C
 C $C434,1 A -= C
 C $C435,1 <self modified instruction> DE++ or DE--
+@ $C436 label=sub_c2e7_14
 C $C436,1 Stack DE
 C $C437,2 Loop
+@ $C439 label=sub_c2e7_15
 C $C439,2 IY++
+N $C43B Four lane highway?
+@ $C43B label=sub_c2e7_16
 C $C43B,3 Set instruction #R$C4B2 to call dr_four_lane_highway/#R$C534
 C $C43E,3 Jump
+@ $C441 label=sub_c2e7_17
 C $C441,3 Self modify instruction at #R$C445
-C $C444,1 A = 0
+C $C444,1 A = 0  -- init counter
+@ $C445 label=sub_c2e7_18_something_loop
 C $C445,1 <self modified instruction> DE++ or DE--
 C $C446,1 A += C
-C $C447,2 Jump if carry
+C $C447,2 Jump if carry  -- went over?
 C $C449,1 Compare to L
 C $C44A,2 Jump if A < L
+@ $C44C label=sub_c2e7_19
 C $C44C,1 A -= L
 C $C44D,1 Stack DE
 C $C44E,2 Loop
@@ -9925,7 +9939,7 @@ C $C45A,3 Self modify 'LD A,x' @ #R$C160 to load zero (in draw_tunnel)
 C $C45D,3 Self modify 'LD A,x' @ #R$C88F to load zero (below, tunnel related)
 N $C460 This affects the thickness of the road edges and lane markings with increasing distance. Larger value => Lines remain thick in distance.
 C $C460,5 Self modify 'LD A,x' @ #R$C6D8 to load 3 (below)
-C $C465,4 Load address of table $E301 (suspected height table)
+C $C465,4 Load address of table $E301 (height table + 1) [height of what?]
 C $C469,6 #REGc = 96 - IY[0]   -- sampled IY[0]: $5D $4F
 C $C46F,3 Load road_buffer_offset
 C $C472,2 Add 64 so it's the lanes data offset
@@ -9949,64 +9963,62 @@ C $C496,4 Self modify 'ADD A,x' @ #R$C651 to be x = $10 or $30
 C $C49A,4 Self modify 'ADD A,x' @ #R$C698 to be x = $11 or $31
 C $C49E,6 Self modify 'JP Z,x' @ #R$C4B2 to be dr_four_lane_highway/#R$C534
 C $C4A4,2 Set #REGl to $FF
-C $C4A6,3 DE = $0100
+C $C4A6,3 Set #REGde to $0100
 C $C4A9,4 Self modify 'LD A,x' @ #R$C6BC to load on/off stripe fill pattern
 N $C4AD This entry point is used by the routine at #R$C598.
 @ $C4AD label=dr_read_lanes
 C $C4AD,3 Load a lanes byte
-C $C4B0,2 Mask off bottom two bits  -- left hand position bits
-C $C4B2,3 Jump to <self modified> if zero  -- dr_four_lane_highway or ...
-N $C4B5 Otherwise it's anything other than the 4 lanes case.
+C $C4B0,2 Mask off bottom two bits (left hand position)
+C $C4B2,3 Jump to <self modified> if zero (e.g. dr_four_lane_highway)
+N $C4B5 Otherwise it's anything other than the zero case.
 C $C4B5,1 Bank
 N $C4B6 Sampled IX=$EEFD $EEFE $EEFF $EE00 .. etc.
-C $C4B6,3 Load a lanes byte
-C $C4B9,2 (lanes byte & 3) += $E7  --- set top byte ($E8/E9/EA) of table to left hand pos of road
+C $C4B6,3 Reload the lanes byte
+C $C4B9,2 Turn left hand road position (1..3) into table high byte ($E8..$EA)
 C $C4BB,3 Self modify 'LD H,x' @ #R$C642
 C $C4BE,3 Self modify 'LD H,x' @ #R$C5B3
-C $C4C1,1 H = A
+C $C4C1,1 Copy
 C $C4C2,2 Shift bit 7 into carry
-C $C4C4,2 Test (former) bit 6, set if tunnel or dirt track
-C $C4C6,2 Jump if set  -- Forked road plotting path (to check)
+C $C4C4,2 Test former bit 6; is set if tunnel or dirt track
+C $C4C6,2 Jump if set  -- Forked road plotting path (if carry set)
 C $C4C8,2 Bit 7 was set  -- Tunnel start/cont/end flag
-C $C4CA,2 Mask off bottom two bits  -- left hand position bits
-C $C4CC,2 C = $FD
+C $C4CA,2 Mask left hand road position bits
+C $C4CC,2 Set #REGc to $FD
 C $C4CE,3 Jump
 @ $C4D1 label=dr_c4d1
-C $C4D1,2 A += 2
-C $C4D3,2 C = $FE
+C $C4D1,2 Increment #REGa by 2
+C $C4D3,2 Set #REGc to $FE
 @ $C4D5 label=dr_c4d5
 C $C4D5,3 Self modify 'LD H,x' @ #R$C5D9
 C $C4D8,3 Self modify 'LD H,x' @ #R$C68A
-C $C4DB,1 A = C
+C $C4DB,1 Set #REGa to $FD (from #REGc)
 C $C4DC,3 Self modify 'LD B,x' @ #R$C5AC
 C $C4DF,3 Exit via #R$C2E7
 @ $C4E2 label=dr_c4e2
 C $C4E2,2 --> Forked road plotting path
-C $C4E4,2 C = $FF
-C $C4E6,2 H = 1
-C $C4E8,2 Bit 4 set?
-C $C4EA,2 Jump if set
-C $C4EC,2 Bit 3 set?
-C $C4EE,2 Jump if clear
-@ $C4F0 label=dr_c4f0
-C $C4F0,2 A = IY.low  -- tunnel size/distance
-C $C4F2,3 Self modify 'CP x' @ #R$C15D
-C $C4F5,2 A = 1
-C $C4F7,1 C++
-C $C4F8,2 Bit 5 set?
-C $C4FA,2 Jump if clear
-C $C4FC,1 C--
-C $C4FD,1 A++
-C $C4FE,1 H--
+C $C4E4,2 Set #REGc to $FF
+C $C4E6,2 Set #REGh to 1
+C $C4E8,4 Jump if bit 4 of lanes byte set (tunnel entrance or exit)
+C $C4EC,4 Jump if bit 3 of lanes byte clear
+@ $C4F0 label=dr_tunnel_transition
+C $C4F0,2 Load #REGiy.low (distance)
+C $C4F2,3 Self modify 'CP x' @ #R$C15D (in draw_tunnel)
+C $C4F5,2 Set #REGa to 1
+C $C4F7,1 Set #REGc to 0
+C $C4F8,4 Jump if bit 5 of lanes byte clear (tunnel entrance)
+N $C4FC Otherwise it's tunnel exit.
+C $C4FC,1 Set #REGc to $FF
+C $C4FD,1 Set #REGa to 2
+C $C4FE,1 Set #REGh to 0
 @ $C4FF label=dr_c4ff
 C $C4FF,3 Self modify 'LD A,x' @ #R$C160 (in draw_tunnel)
 @ $C502 label=dr_c502
-C $C502,1 A = H
+C $C502,1 Set #REGa to 0 (from #REGh)
 C $C503,3 Self modify 'LD A,x' @ #R$C88F (tunnel related)
-C $C506,2 A = $EB  -- top byte of table?
+C $C506,2 Set #REGa to $EB  -- top byte of table?
 C $C508,3 Self modify 'LD H,x' @ #R$C5D9
 C $C50B,3 Self modify 'LD H,x' @ #R$C68A
-C $C50E,2 A = $FF
+C $C50E,2 Set #REGa to $FF
 C $C510,3 Self modify 'LD B,x' @ #R$C5AC
 C $C513,1 A = C
 C $C514,1 Bank/unbank
@@ -10015,25 +10027,27 @@ C $C516,3 Jump
 @ $C519 label=dr_check_forked
 C $C519,5 Jump to forked_road_plotter if bit 6 is set
 N $C51E Dirt track check.
-C $C51E,3 Set flags of (L & 24)
+C $C51E,3 Set flags of (#REGl & 24)
 C $C521,2 Set new on_dirt_track value to 0  -- not self modified (why not XOR A)
 C $C523,2 Jump if flags non-zero
 C $C525,1 Set new on_dirt_track value to 1
 @ $C526 label=dr_c526
 C $C526,3 Set on_dirt_track to new value
-C $C529,2 A = $FF
+C $C529,2 Set #REGa to $FF
 C $C52B,3 Self modify 'LD B,x' @ #R$C5AC
+C $C52E,3 -> dr_four_lane_highway
 C $C531,3 Jump forward
 @ $C534 label=dr_four_lane_highway
 C $C534,1 Bank/unbank
-C $C535,2 A = $E8  -- set left hand road position to "middle"
+C $C535,2 Set #REGa to $E8  -- set left hand road position to "middle"
 C $C537,3 Self modify 'LD H,x' @ #R$C642
 C $C53A,3 Self modify 'LD H,x' @ #R$C5B3
-C $C53D,2 A += 4  -- set right hand road position to (something)
+C $C53D,2 Set #REGa to $EC  -- set right hand road position to (something)
 C $C53F,3 Self modify 'LD H,x' @ #R$C68A
 C $C542,3 Self modify 'LD H,x' @ #R$C5D9
-C $C545,2 A = $FC
+C $C545,2 Set #REGa to $FC
 C $C547,3 Self modify 'LD B,x' @ #R$C5AC
+C $C54A,3 -> dr_c551
 N $C54D This entry point is used by the routine at #R$C2E7. Called for regular roads incl dirt track, but not tunnels or splits.
 @ $C54D label=dr_c54d
 C $C54D,3 Self modify 'JP Z,x' @ #R$C4B2
@@ -10052,7 +10066,7 @@ C $C563,2 Jump if zero
 N $C565 This entry point is used by the routine at #R$C58A.
 @ $C565 label=dr_c565
 C $C565,4 Self modify 'LD DE,x' @ #R$C56C (below)
-C $C569,2 B = $FF
+C $C569,2 Set #REGb to $FF
 C $C56B,1 Bank/unbank
 N $C56C Calculate address of next bitmap scanline ??
 C $C56C,3 DE = <self modified>
@@ -10102,8 +10116,8 @@ C $C5BF,2 A = 15
 C $C5C1,3 Jump
 N $C5C4 Pattern
 @ $C5C4 label=dr_c5c4
-C $C5C4,3 A = HL[-1]
-C $C5C7,1 A &= C  -- C is the mask $F8 here
+C $C5C4,3 Load HL[-1]
+C $C5C7,1 A &= $F8  -- C is the mask $F8 here
 C $C5C8,3 A >>= 3
 C $C5CB,1 A >>= 1
 C $C5CC,2 Add carry
@@ -10124,7 +10138,7 @@ C $C5E6,3 Jump
 N $C5E9 Same pattern again
 @ $C5E9 label=dr_c5e9
 C $C5E9,1 L--
-C $C5EA,2 A = *HL & C  -- C is the mask $F8 here
+C $C5EA,2 A = *HL & $F8  -- C is the mask $F8 here
 C $C5EC,3 A >>= 3
 C $C5EF,1 A >>= 1
 @ $C5F0 label=dr_c5f0
@@ -10281,7 +10295,7 @@ C $C724,2 Load 255
 C $C726,2 Bit 2 indicates tunnel start
 C $C728,2 Load 1  -- value for (tunnel related)
 C $C72A,2 Jump if clear (tunnel cont/end?)
-C $C72C,2 Load #REGiy.low  -- tunnel size factor?
+C $C72C,2 Load #REGiy.low (distance)
 C $C72E,3 Self modify 'CP x' @ #R$C15D  [15 when tunnel is small, 6 when fills screen]
 C $C731,2 A = 1
 C $C733,1 B++
@@ -10309,7 +10323,7 @@ C $C754,2 B = 255
 C $C756,2 Bit 2 of C set?
 C $C758,2 A = 1
 C $C75A,2 Jump if clear
-C $C75C,2 A = IY.low  -- tunnel size factor
+C $C75C,2 Load #REGiy.low (distance)
 C $C75E,3 Self modify 'CP x' @ #R$C15D  [15 when tunnel is small, 6 when fills screen]
 C $C761,2 A = 1
 C $C763,1 B++
@@ -10830,29 +10844,31 @@ N $CBC5 This gets hit during road forks.
 C $CBC5,1 C = A
 C $CBC6,5 Jump if A < 80
 C $CBCB,3 Exit via #R$C79A
-c $CBCE Road drawing - curvature stuff?
+c $CBCE Seems to be building road curvature table(s)
 D $CBCE Used by the routine at #R$B9F4.
 N $CBCE This gets hit during road forks.
-@ $CBCE label=sub_cbce_fork
+@ $CBCE label=build_curve_table_forked
 C $CBCE,3 Load two table high-bytes: $EE, $EC
-C $CBD1,3 $ED $44 => NEG instruction for #R$CC21 & #R$CC22
+C $CBD1,3 $ED $44 => Opcode of NEG instruction for #R$CC21
 N $CBD6 This entry point is used by the routine at #R$B9F4.
-N $CBD6 This is the normal entry point?
-@ $CBD6 label=sub_cbce_non_fork
+@ $CBD6 label=build_curve_table_non_forked
 C $CBD6,3 Load two table high-bytes: $ED, $E9
-C $CBD9,3 Pair of NOP instructions for #R$CC21 & #R$CC22
-@ $CBDC label=sub_cbce_self_modify
-C $CBDC,4 Write instructions in #REGde to #R$CC21 & #R$CC22
-C $CBE0,4 Self modify 'LD HL' @ #R$CC70 to load ($<H>00)
-C $CBE4,4 Self modify 'LD HL' @ #R$CCA5 to load ($<L>00)
+C $CBD9,3 Pair of NOP instructions for #R$CC21
+@ $CBDC label=build_curve_table_self_modify
+C $CBDC,4 Write instruction(s) in #REGde to #R$CC21
+C $CBE0,4 Self modify 'LD HL' @ #R$CC70 to load ($<H>00) e.g. $ED00
+C $CBE4,4 Self modify 'LD HL' @ #R$CCA5 to load ($<L>00) e.g. $E900
 C $CBE8,3 Load road_buffer_offset into #REGhl
 C $CBEB,1 Read a curvature data byte
 N $CBEC There's similar code at #R$CD47.
-C $CBEC,5 A = fast_counter & $E0  -- top three bits
-N $CBF2 Reduces A by 31.25% ... unsure why that figure.
-C $CBF2,5 Divide A by 4 and subtract
-C $CBF7,5 Divide A by 16 and subtract
-C $CBFC,10 #REGiy = data_e6b0[#REGa]
+C $CBEC,3 Load fast_counter
+C $CBEF,2 Mask off top three bits
+C $CBF1,1 Move result to #REGb
+N $CBF2 Reduces #REGb by 31.25% ... unsure why that figure (0..31 => 0..21 perhaps)
+C $CBF2,5 Divide by 4 and subtract
+C $CBF7,5 Divide by 16 and subtract
+N $CBFC Index the road animation tables.
+C $CBFC,10 #REGiy = horizontal_e6b0[#REGa]
 C $CC06,3 Call multiply (A = multiplier, C = multiplicand)
 C $CC09,6 A = (128 - A) & $FE
 C $CC0F,5 IX = $E500 + A  -- point into inward_bend_table
@@ -10921,7 +10937,7 @@ C $CCA1,1 swap
 C $CCA2,2 B = 0
 C $CCA4,1 Unbank
 C $CCA5,3 table?
-C $CCA8,4 table?
+C $CCA8,4 height table?
 C $CCAC,2 B = 21
 C $CCAE,4 Save #REGsp to restore on exit (self modify)
 C $CCB2,1 Put address in #REGsp (so we can use POP for speed)
@@ -11068,7 +11084,7 @@ C $CDA9,1 A = H  -- top byte of result
 @ $CDAA label=bht_continue
 C $CDAA,1 Restore HL
 C $CDAB,1 A += *HL  -- HL points at $E6xx (road drawing data)
-C $CDAC,1 HL++  (wrapping around)
+C $CDAC,1 Advance to next byte of HL while wrapping around
 C $CDAD,1 Bank
 C $CDAE,1 Write #REGa to the table at $E3xx
 C $CDAF,1 DE++  (wrapping around)
