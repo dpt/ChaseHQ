@@ -10136,12 +10136,12 @@ C $C5E2,3 Jump if positive
 C $C5E5,1 A = 0
 C $C5E6,3 Jump
 N $C5E9 Same pattern again
-@ $C5E9 label=dr_c5e9
+@ $C5E9 label=dr_calc_righthand_width
 C $C5E9,1 L--
 C $C5EA,2 A = *HL & $F8  -- C is the mask $F8 here
 C $C5EC,3 A >>= 3
 C $C5EF,1 A >>= 1
-@ $C5F0 label=dr_c5f0
+@ $C5F0 label=dr_calc_more
 C $C5F0,3 Self modify 'JR x' @ #R$C60A -- jump table target
 C $C5F3,3 A = ~A + B + E
 C $C5F6,3 Self modify 'JR x' @ #R$C61B -- jump table target
@@ -10151,18 +10151,20 @@ C $C600,1 H = D
 C $C601,1 Put it in #REGsp (so we can use PUSH for speed)
 C $C602,1 Bank
 C $C603,1 A <<= 1
-C $C604,1 H = A
-C $C605,1 L = A
+C $C604,2 Widen stripe fill byte to whole word
 C $C606,1 Unbank
-C $C607,3 BC = 0
+C $C607,3 Set road fill to zero (but only when drawing stripes)
+N $C60A Fill right hand road stripes - starting from right hand side.
 @ $C60A refs=:$C60A
-@ $C60A label=dr_jumptable1
+@ $C60A label=dr_righthand_jumptable
 C $C60A,2 Jump table (self modified)
+N $C61B Fill blank road surface - continuing from the right hand side.
 @ $C61B refs=:$C61B
-@ $C61B label=dr_jumptable2
+@ $C61B label=dr_road_jumptable
 C $C61B,2 Jump table (self modified)
+N $C62C Fill left hand road stripes - continuing from the right hand side.
 @ $C62C refs=:$C62C
-@ $C62C label=dr_jumptable3
+@ $C62C label=dr_lefthand_jumptable
 C $C62C,2 Jump table (self modified)
 N $C62E This entry point is used by the routine at #R$C452.
 @ $C62E label=dr_c62e
@@ -10170,21 +10172,22 @@ C $C63D,1 B = E
 C $C63E,1 C--
 C $C63F,2 Point #REGhl at road edge/markings table at $E4xx
 C $C641,1 Bank/unbank
-C $C642,2 Load <self modified> top byte of road left hand edge table ($E8/$E9/$EA for left/centre left/centre)
-C $C644,1 Read from left hand edge table
+C $C642,2 Load <self modified> top byte of road left hand edge table ($E8/$E9/$EA for left/centre-left/centre)
+C $C644,1 Read from left/centre-left/centre hand edge table at $E8xx/$E9xx/$EAxx
 C $C645,3 Jump if non-zero
-C $C648,3 A = HL[-1]
+N $C648 Otherwise zero.
+C $C648,3 index = HL[-1]  -- Load the byte prior
 C $C64B,1 Bank/unbank
 N $C64C Build address of road edge marking graphic.
-N $C64C Bottom three bits select the row.
 C $C64C,1 Save index
-C $C64D,4 A = (A & 7) * 4
-C $C651,2 A += <self modifed>  -- set to one of $10 $30 $50 $70 $90 $B0 - offset of the current edge graphic
-C $C653,1 Set road/edge markings address
+C $C64D,2 Bottom three bits select the row number 0..7
+C $C64F,2 Turn into a scanline offset (4 bytes per row)
+C $C651,2 Add offset of current edge marking graphic ($10,$30,$50,$70,$90,$B0)
+C $C653,1 Set #REGhl to road edge marking address
 N $C654 Top five bits select screen buffer addr?
 N $C654 If I break this it seems to affect the left hand side only.
 C $C654,8 E = ((index >> 3) & 31) + B
-N $C65C AND-OR masking here. DE is address of screen buffer byte HL is address of mask byte, followed by bitmap byte [then again since the edges are 16x8]
+N $C65C AND-OR masking here. #REGde is address of screen buffer byte. #REGhl is address of mask byte, followed by bitmap byte [then again since the edges are 16x8]
 C $C65C,1 Read a screen buffer byte
 C $C65D,1 Apply the mask
 C $C65E,1 Advance to bitmap byte
@@ -10194,24 +10197,24 @@ C $C661,2 L += 2
 C $C663,1 E++
 C $C664,2 *DE++ = *HL++, BC--
 C $C666,1 Bank/unbank
-@ $C667 label=dr_c667
-C $C667,1 B++  -- counter?
-C $C668,2 Jump if zero  -- exit?
+N $C667 Perhaps a loop for road lane markings.
+@ $C667 label=dr_c667_loop
+C $C667,1 Increment counter
+C $C668,2 Jump if zero  -- an exit?
 C $C66A,1 H++
-C $C66B,1 A = *HL
+C $C66B,1 Read from road left drawing table e.g $E89F
 C $C66C,1 Set flags
-C $C66D,2 Jump if non-zero
-C $C66F,3 A = HL[-1]
+C $C66D,2 Loop if non-zero
+C $C66F,3 A = HL[-1]  (with wraparound?)
 C $C672,1 Bank/unbank
 C $C673,1 E = A  -- save A
 C $C674,6 L = ((A & 7) << 1) + <self modified>
 C $C67A,8 E = ((E >> 3) & 31) + B
 C $C682,2 *DE++ = *HL++, BC--
-N $C684 This reads a road edge byte from $E4xx.
-C $C684,1 A = *HL
-C $C685,1 *DE = A
+N $C684 This reads an (unmasked) road lane marker bitmap byte from $E4D0+.
+C $C684,2 Copy a byte from $E4D0+ to the buffer
 C $C686,1 Bank/unbank
-C $C687,3 Jump  -- looks like a loop
+C $C687,3 Loop
 @ $C68A label=dr_c68a
 C $C68A,2 H = <self modified>
 C $C68C,1 A = *HL
