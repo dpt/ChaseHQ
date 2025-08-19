@@ -4322,7 +4322,7 @@ C $94C1,1 Return
 @ $94C2 label=ps_even_next
 C $94C2,1 Calculate address of next bitmap scanline
 @ $94C3 label=ps_even_body
-C $94C3,1 Put it in #REGsp (so we can use POP for speed)
+C $94C3,1 Put it in #REGsp (so we can use PUSH for speed)
 C $94C4,2 Unbank
 C $94C6,2 Jump into table
 @ $94C8 label=ps_even_jumptable
@@ -4365,7 +4365,7 @@ C $9513,1 Return
 @ $9514 label=ps_odd_next
 C $9514,1 Calculate address of next bitmap scanline
 @ $9515 label=ps_odd_body
-C $9515,1 Put it in #REGsp (so we can use POP for speed)
+C $9515,1 Put it in #REGsp (so we can use PUSH for speed)
 C $9516,2 Unbank
 C $9518,2 Jump into table
 @ $951A label=ps_odd_jumptable
@@ -4414,7 +4414,7 @@ C $956D,1 Return
 @ $956E label=psf_even_next
 C $956E,1 Calculate address of next bitmap scanline
 @ $956F label=psf_even_body
-C $956F,1 Put it in #REGsp (so we can use POP for speed)
+C $956F,1 Put it in #REGsp (so we can use PUSH for speed)
 C $9570,1 Unbank
 C $9571,1 [check elsewhere too]
 C $9573,2 Jump into table
@@ -4460,7 +4460,7 @@ C $95D6,1 Return
 @ $95D7 label=psf_odd_next
 C $95D7,1 Calculate address of next bitmap scanline
 @ $95D8 label=psf_odd_body
-C $95D8,1 Put it in #REGsp (so we can use POP for speed)
+C $95D8,1 Put it in #REGsp (so we can use PUSH for speed)
 C $95D9,1 Unbank
 C $95DC,2 Jump into table
 @ $95DE label=psf_odd_jumptable
@@ -8446,7 +8446,7 @@ C $B78F,2 Next scanline
 C $B791,3 Restore original #REGsp (self modified)
 C $B794,1 Return
 C $B795,1 Calculate address of next bitmap scanline
-C $B796,1 Put it in #REGsp (so we can use POP for speed)
+C $B796,1 Put it in #REGsp (so we can use PUSH for speed)
 C $B797,1 Unbank
 C $B798,2 Bank #REGe for next-scanline code below
 C $B79A,2 Jump into table
@@ -10127,25 +10127,27 @@ C $C5D2,1 A--
 C $C5D3,1 E = A
 C $C5D4,2 A = ~E + B
 C $C5D6,3 Self modify 'JR x' @ #R$C62C -- jump table target
-C $C5D9,2 H = $EC
-C $C5DB,1 A = *HL
+C $C5D9,2 Set table to $ECxx
+C $C5DB,1 Read from table  -- is this 8-bit or a partial 16-bit value?
 C $C5DC,1 Set flags
-C $C5DD,3 Jump if zero
-C $C5E0,2 A = 15
+C $C5DD,3 Jump if zero  -- jump to calc bit
+C $C5E0,2 Set righthand jump table target to 15 (just plots 16 pixels?)
 C $C5E2,3 Jump if positive
-C $C5E5,1 A = 0
+C $C5E5,1 Otherwise set it to zero (plots 15*16 pixels?)
 C $C5E6,3 Jump
 N $C5E9 Same pattern again
 @ $C5E9 label=dr_calc_righthand_width
 C $C5E9,1 L--
-C $C5EA,2 A = *HL & $F8  -- C is the mask $F8 here
+C $C5EA,1 Read from table
+C $C5EB,1 Mask with $F8 (#REGc is the mask $F8 here)
 C $C5EC,3 A >>= 3
 C $C5EF,1 A >>= 1
-@ $C5F0 label=dr_calc_more
-C $C5F0,3 Self modify 'JR x' @ #R$C60A -- jump table target
+@ $C5F0 label=dr_set_righthand_jump_table_target
+C $C5F0,3 Self modify 'JR x' @ #R$C60A -- righthand jump table target
+N $C5F3 Calculate road jump table target.
 C $C5F3,3 A = ~A + B + E
-C $C5F6,3 Self modify 'JR x' @ #R$C61B -- jump table target
-C $C5F9,3 DE = <self modified>
+C $C5F6,3 Self modify 'JR x' @ #R$C61B -- road jump table target
+C $C5F9,3 DE = <self modified by #$C5A7>
 C $C5FC,4 L = E + 31
 C $C600,1 H = D
 C $C601,1 Put it in #REGsp (so we can use PUSH for speed)
@@ -10168,6 +10170,7 @@ N $C62C Fill left hand road stripes - continuing from the right hand side.
 C $C62C,2 Jump table (self modified)
 N $C62E This entry point is used by the routine at #R$C452.
 @ $C62E label=dr_c62e
+N $C63D ...
 C $C63D,1 B = E
 C $C63E,1 C--
 C $C63F,2 Point #REGhl at road edge/markings table at $E4xx
@@ -10200,7 +10203,7 @@ C $C666,1 Bank/unbank
 N $C667 Perhaps a loop for road lane markings.
 @ $C667 label=dr_c667_loop
 C $C667,1 Increment counter
-C $C668,2 Jump if zero  -- an exit?
+C $C668,2 Exit loop if zero
 C $C66A,1 H++
 C $C66B,1 Read from road left drawing table e.g $E89F
 C $C66C,1 Set flags
@@ -10362,8 +10365,8 @@ C $C791,3 Jump
 C $C794,1 C = A
 C $C795,2 Compare to $50
 C $C797,3 Jump if A < $50
-N $C79A Drawing backdrop here? This entry point is used by the routines at #R$CBA4 and #R$CBC5.
-@ $C79A label=dr_c79a
+N $C79A This entry point is used by the routines at #R$CBA4 and #R$CBC5.
+@ $C79A label=dr_start_backdrop_fill
 C $C79A,1 E++
 C $C79B,3 Load address of x in 'LD A,x' @ #R$C160 (in draw_tunnel)
 C $C79E,3 Read 'LD A,x' @ #R$C88F (tunnel related)
@@ -10372,7 +10375,7 @@ C $C7A2,1 A >>= 1
 C $C7A3,3 Jump if carry (bottom bit set)
 C $C7A6,4 C = D & 15
 C $C7AA,8 B = ~((E >> 1) + C) + $80
-C $C7B2,3 HL = horizon_level
+C $C7B2,3 Load horizon_level
 C $C7B5,2 C = 24
 C $C7B7,1 A = H
 C $C7B8,1 Set flags
@@ -10394,21 +10397,21 @@ C $C7D7,3 Self modify xx in 'LD BC,$xxyy' @ #R$C80A
 C $C7DA,1 C = A
 @ $C7DB label=dr_c7db
 C $C7DB,12 BC = (24 - C) * 3  -- assuming no overflow from calc of C
-C $C7E7,2 Load A <self modified>  -- horizon's horizontal shift value (ranges 0..19)
-C $C7E9,1 Shift bottom bit out to carry. This is deciding whether to use the shifted or non shifted backdrop
-C $C7EA,3 Point at first hill backdrop (shifted version)
+C $C7E7,2 Load <self modified> horizon's horizontal shift value (ranges 0..19)
+N $C7E9 Decide whether to use the pre-shifted or the non-shifted version of the backdrop bitmap.
+C $C7E9,1 Shift bottom bit out to carry
+C $C7EA,3 Point at hill backdrop (pre-shifted version)
 C $C7ED,2 Jump if no carry
-C $C7EF,3 Point at second hill backdrop
+C $C7EF,3 Point at hill backdrop (non-shifted version)
 @ $C7F2 label=dr_c7f2
 C $C7F2,1 HL += BC
 C $C7F3,1 Bank/unbank
+N $C7F4 #REGa is 0..9 here, turn it back to 0..18 and invert to make jump table target.
 C $C7F4,4 A = 18 - A * 2
 C $C7F8,3 Self modify 'JR x' @ #R$C86C -- jump table target
-C $C7FB,3 DE = A
-C $C7FE,3 Load address of backdrop_shift_instrs
-C $C801,1 HL += DE
-C $C802,3 18 bytes
-C $C805,3 Load address in instruction stream
+C $C7FB,7 Set source address to backdrop_shifting_instrs[A]
+C $C802,3 Copy 18 bytes
+C $C805,3 Set destination address to instruction stream
 C $C808,2 Copy
 C $C80A,3 BC = $<self modified>0A
 C $C80D,1 Bank/unbank
@@ -10420,7 +10423,7 @@ N $C813 Scanline advance pattern.
 C $C813,4 E -= 32
 C $C817,3 Jump if E < 32
 C $C81A,4 D -= 16
-@ $C821 label=dr_c821
+@ $C821 label=dr_c821_apparent_loop_start
 C $C821,1 Bank/unbank
 C $C822,1 Swap
 C $C823,1 E = A
@@ -10434,6 +10437,7 @@ N $C82A This entry point is used by the routine at #R$C813.
 C $C82A,1 A = E
 C $C82B,1 Swap
 C $C82C,1 L = A
+@ $C82D label=dr_c82d
 C $C82D,18 18 instructions/lines filled in by earlier code
 @ $C86C label=dr_c86c
 C $C86C,2 Self modified - jump table
@@ -10522,6 +10526,7 @@ C $C90C,3 Self modify 'ADD A,x' @ #R$CABB
 C $C90F,3 Read 'LD A,x' @ #R$C6BC  -- read road stripe fill pattern
 C $C912,3 Self modify 'LD A,x' @ #R$CB40
 N $C915 This entry point is used by the routines at #R$CBA4 and #R$CBC5.
+@ $C915 label=frp_c915
 C $C915,1 A = B
 C $C916,1 Set flags
 C $C917,3 Jump if non-zero
@@ -10531,31 +10536,35 @@ C $C921,1 Bank
 C $C923,4 A = (D - 1) & 15
 C $C927,2 Jump if zero
 N $C929 This entry point is used by the routine at #R$C94C.
-C $C929,4 Self modify 'LD DE,x' @ #R$C92E (just below)
+@ $C929 label=frp_c929
+C $C929,4 Self modify 'LD DE,x' @ #R$C92E (just below) to load current DE  -- start of current scanline
 C $C92D,1 Unbank
-N $C92E Calculate address of next bitmap scanline ??
-C $C92E,3 DE = <self modified>
-C $C931,4 L = E + 31
+C $C92E,3 Load <self modified> address of start of current scanline
+C $C931,4 Calculate final byte of scanline (start + 31)
 C $C935,1 H = D
-C $C936,1 Put it in #REGsp (so we can use POP for speed)
+C $C936,1 Put it in #REGsp (so we can use PUSH for speed)
 C $C937,3 HL = 0  [not self modified apparently]
 C $C93A,1 C = L
 C $C93B,3 Jump into a sequence of 15 PUSH HLs
-N $C93E Smells line scanline counting foo.
+N $C93E Scanline advance then jump somewhere.
+@ $C93E label=frp_next_scanline_then_c969
 C $C93E,4 E -= 32
 C $C942,3 Jump if E < 32
 C $C945,4 D -= 16
-N $C94C Smells line scanline counting foo.
+N $C94C Another scanline advance then jump.
+@ $C94C label=frp_next_scanline_then_c929
 C $C94C,4 E -= 32
 C $C950,3 Jump if E < 32
 C $C953,4 D -= 16
+@ $C95A label=frp_c95a
 C $C95A,1 Unbank
 C $C95B,6 Self modify 'JP NZ,x' @ #R$CB31 to be #R$C963
 C $C963,1 A = D
 C $C964,1 D--
 C $C965,2 A &= $0F
 C $C967,2 Jump if zero
-C $C969,4 Self modify 'LD DE,x' @ #R$CA00 to load current DE
+@ $C969 label=frp_c969
+C $C969,4 Self modify 'LD DE,x' @ #R$CA00 to load current DE  -- start of current scanline
 C $C96D,1 A = L
 C $C96E,1 Bank/unbank
 C $C96F,1 L = A
@@ -10569,6 +10578,7 @@ C $C97C,3 Jump if negative
 C $C97F,2 A = 15
 C $C981,3 Jump
 N $C984 Variation 1?
+@ $C984 label=frp_c984
 C $C984,3 A = HL[-1]
 C $C987,1 A &= C  -- C is the mask $F8 here
 C $C988,3 A >>= 3
@@ -10576,10 +10586,11 @@ C $C98B,1 A >>= 1
 C $C98C,2 Add carry
 C $C98E,4 Jump if A < B
 C $C992,1 A--
+@ $C993 label=frp_c993
 C $C993,1 E = A
 C $C994,1 A = ~A
 C $C995,1 A += B
-C $C996,3 Self modify 'JR x' @ #R$CA55 -- jump table target
+C $C996,3 Self modify 'JR x' @ #R$CA55  -- set lefthand off-road jump table target
 C $C999,2 H++
 C $C99B,1 A = *HL
 C $C99C,1 Set flags
@@ -10588,14 +10599,16 @@ C $C9A0,2 A = 0 (not self modified)
 C $C9A2,3 Jump if negative
 C $C9A5,2 A = 15
 C $C9A7,3 Jump
-N $C9AA Variation 2?
+N $C9AA Variation 2?  [hit when left turn at fork]
+@ $C9AA label=frp_c9aa
 C $C9AA,3 A = HL[-1]
 C $C9AD,1 A &= C  -- C is the mask $F8 here
 C $C9AE,3 A >>= 3
 C $C9B1,1 A >>= 1
+@ $C9B2 label=frp_c9b2
 C $C9B2,1 D = A
 C $C9B3,3 A = ~(A - E) + B
-C $C9B6,3 Self modify jump table target
+C $C9B6,3 Self modify 'JR x' @ #R$CA44  -- set lefthand blank road jump table target
 C $C9B9,1 H++
 C $C9BA,1 A = *HL
 C $C9BB,1 Set flags
@@ -10605,6 +10618,7 @@ C $C9C1,3 Jump if negative
 C $C9C4,2 A = 15
 C $C9C6,3 Jump
 N $C9C9 Variation 3?
+@ $C9C9 label=frp_c9c9
 C $C9C9,3 A = HL[-1]
 C $C9CC,1 A &= C  -- C is the mask $F8 here
 C $C9CD,3 A >>= 3
@@ -10612,11 +10626,12 @@ C $C9D0,1 A >>= 1
 C $C9D1,2 Add carry
 C $C9D3,4 Jump if A < B
 C $C9D7,1 A--
+@ $C9D8 label=frp_c9d8
 C $C9D8,1 E = A
 C $C9D9,1 A -= D
 C $C9DA,1 A = ~A
 C $C9DB,1 A += B
-C $C9DC,3 Self modify 'JR x' @ #R$CA33 -- jump table target
+C $C9DC,3 Self modify 'JR x' @ #R$CA33  -- set middle off-road jump table target
 C $C9DF,2 H += 2
 C $C9E1,1 A = *HL
 C $C9E2,1 Set flags
@@ -10626,37 +10641,48 @@ C $C9E8,3 Jump if negative
 C $C9EB,2 A = 15
 C $C9ED,3 Jump
 N $C9F0 Different chunk
+@ $C9F0 label=frp_c9f0
 C $C9F0,2 A = HL[-1]
 C $C9F2,1 A &= C  -- C is the mask $F8 here
 C $C9F3,3 A >>= 3
 C $C9F6,1 A >>= 1
-C $C9F7,3 Self modify 'JR x' @ #R$CA11 -- jump table target
+@ $C9F7 label=frp_c9f7
+C $C9F7,3 Self modify 'JR x' @ #R$CA11  -- set righthand off-road jump table target
 C $C9FA,1 A -= E
 C $C9FB,2 A = ~A + B
-C $C9FD,3 Self modify 'JR x' @ #R$CA22 -- jump table target
-C $CA00,3 Self modified
-C $CA03,3 A = E + 31
-C $CA06,1 L = A
-C $CA07,1 H = D
-C $CA08,1 Put it in #REGsp (so we can use POP for speed)
-C $CA09,1 Bank A
-C $CA0A,1 A <<= 1  -- Rotate the road shading pattern (0x55 <-> 0xAA)
-C $CA0B,1 H = A   -- Prepare pattern for storing
-C $CA0C,1 L = A
-C $CA0D,1 Unbank A
-N $CA0E This BC filling the blank parts of the road when drawing the forked road.
-C $CA0E,3 BC = 0 [doesn't seem self modified]
-C $CA11,17 Jump table (self modified) Write 16 pixels
+C $C9FD,3 Self modify 'JR x' @ #R$CA22  -- set righthand blank road jump table target
+C $CA00,3 Load <self modified> address of start of current scanline
+C $CA03,5 Calculate final byte of scanline (start + 31)
+N $CA08 HL is now the end of the scanline we're drawing (in the back buffer).
+C $CA08,1 Put it in #REGsp (so we can use PUSH for speed)
+C $CA09,1 Unbank the stripe shading pattern
+C $CA0A,1 Alternate the pattern (0x55 <-> 0xAA)
+C $CA0B,2 Prepare pattern for storing
+C $CA0D,1 Bank it again
+N $CA0E Draw striped pattern.
+C $CA0E,3 Load zero fill pattern (NOT self modified)
+@ $CA11 label=frp_draw_righthand_verge
+C $CA11,17 Jump table (self modified)
+N $CA22 Draw blank road.
+@ $CA22 label=frp_draw_righthand_road
 C $CA22,17 Jump table (self modified)
+N $CA33 Draw striped pattern.
+@ $CA33 label=frp_draw_middle_verge
 C $CA33,17 Jump table (self modified)
+N $CA44 Draw blank road.
+@ $CA44 label=frp_draw_lefthand_road
 C $CA44,17 Jump table (self modified)
+N $CA55 Draw striped pattern.
+@ $CA55 label=frp_draw_lefthand_verge
 C $CA55,2 Jump table (self modified)
+@ $CA57 label=frp_push_15_hls
+N $CA66 (end of scanline filling)
 C $CA66,1 B = E
 C $CA67,1 C--
-C $CA68,2 H = $E4
+C $CA68,2 H = $E4  -- table high byte
 C $CA6A,1 Bank/unbank
-C $CA6B,2 H = $E8
-C $CA6D,1 A = *HL
+C $CA6B,2 H = $E8  -- table high byte
+C $CA6D,1 Load from $E8xx
 C $CA6E,1 Set flags
 C $CA6F,2 Jump if non-zero
 C $CA71,3 A = HL[-1]
@@ -10671,7 +10697,7 @@ C $CA7E,3 A = A (rotate right through carry) 3
 C $CA81,3 A = (A & 31) + B
 C $CA84,1 E = A
 C $CA85,1 A = *DE
-C $CA86,1 A = A & *HL
+C $CA86,1 A = A & *HL  -- AND with ($E4xx)
 C $CA87,1 L++
 C $CA88,1 A |= *HL
 C $CA89,1 *DE = A
@@ -10680,6 +10706,7 @@ C $CA8C,1 E++
 C $CA8D,2 *DE++ = *HL++, BC--
 C $CA8F,1 Bank/unbank
 N $CA90 Similar chunk to above
+@ $CA90 label=frp_ca90
 C $CA90,1 H++
 C $CA91,1 A = *HL
 C $CA92,1 Set flags
@@ -10700,6 +10727,7 @@ C $CAAA,1 A = *HL
 C $CAAB,1 *DE = A
 C $CAAC,1 Bank/unbank
 N $CAAD Similar chunk again to above... different rotates
+@ $CAAD label=frp_caad
 C $CAAD,1 H++
 C $CAAE,1 A = *HL
 C $CAAF,1 Set flags
@@ -10716,12 +10744,14 @@ C $CABF,3 A = A (rotate right through carry) 3
 C $CAC2,3 A = (A & 31) + B
 C $CAC5,1 E = A
 C $CAC6,2 *DE++ = *HL++, BC--
+N $CAC8 AND-OR masking here?
 C $CAC8,2 A = *DE & *HL
 C $CACA,1 L++
 C $CACB,1 A |= *HL
 C $CACC,1 *DE = A
 C $CACD,1 Bank/unbank
 N $CACE Similar chunk again
+@ $CACE label=frp_cace
 C $CACE,1 H++
 C $CACF,1 A = *HL
 C $CAD0,1 Set flags
@@ -10737,6 +10767,7 @@ C $CADF,1 A = E
 C $CAE0,3 A = A (rotate right through carry) 3
 C $CAE3,3 A = (A & 31) + B
 C $CAE6,1 E = A
+N $CAE7 AND-OR masking here?
 C $CAE7,2 A = *DE & *HL
 C $CAE9,1 L++
 C $CAEA,1 A |= *HL
@@ -10746,6 +10777,7 @@ C $CAEE,1 E++
 C $CAEF,2 *DE++ = *HL++, BC--
 C $CAF1,1 Bank/unbank
 N $CAF2 Similar chunk again
+@ $CAF2 label=frp_caf2
 C $CAF2,1 H++
 C $CAF3,1 A = *HL
 C $CAF4,1 Set flags
@@ -10765,6 +10797,8 @@ C $CB09,1 E = A
 C $CB0C,1 A = *HL
 C $CB0D,1 *DE = A
 C $CB0E,1 Bank/unbank
+N $CB0F Similar chunk again
+@ $CB0F label=frp_cb0f
 C $CB0F,3 A = HL[-1]
 C $CB12,1 Set flags
 C $CB13,2 Jump if non-zero
@@ -10786,10 +10820,12 @@ C $CB2B,1 L++
 C $CB2C,1 A |= *HL
 C $CB2D,1 *DE = A
 C $CB2E,1 Bank/unbank
+@ $CB2F label=frp_cb2f
 C $CB2F,1 L--
 C $CB30,1 C--
 C $CB31,3 Jump if non-zero to <self modified>
 C $CB35,1 B = A
+@ $CB36 label=frp_loop
 C $CB36,2 A = <self modified>
 C $CB38,2 Toggle bit 0
 C $CB3A,3 Self modify 'LD A,x' @ #R$CB36 (just above)
@@ -10807,6 +10843,7 @@ C $CB5A,3 Read 'LD A,x' @ #R$CA9D
 C $CB5D,2 [nested self modification - INCEPTION ACHIEVED]
 C $CB5F,3 Self modify 'LD A,x' @ #R$CA9D
 C $CB62,3 Self modify 'ADD A,x' @ #R$CAFF
+@ $CB65 label=frp_cb65
 C $CB65,3 A = <self modified> - 1
 C $CB68,3 Self modify 'LD A,x' @ #R$CB65
 C $CB6B,3 Jump if non-zero
@@ -10817,25 +10854,29 @@ C $CB7C,1 Set flags
 C $CB7D,2 Jump if zero
 C $CB7F,1 A = C
 C $CB80,3 Self modify 'LD A,x' @ #R$CA9D
+@ $CB83 label=frp_cb83
 C $CB83,8 Self modify 'LD A,x' @ #R$CA7A
 C $CB8B,5 Self modify 'LD A,x' @ #R$CB65 to load 5
+@ $CB90 label=frp_cb90
 C $CB90,3 A = IY[0]
 C $CB93,2 IY++
 C $CB95,2 IX.low++
 C $CB97,3 A -= IY[0]
 C $CB9A,2 Jump if zero
 C $CB9C,3 Jump if positive
+@ $CB9F label=frp_cb9f
 C $CB9F,2 L -= 2
 C $CBA1,3 Loop
-c $CBA4 Routine at CBA4
-D $CBA4 I can't find what calls this routine. Checked various stages...
+c $CBA4 Unknown routine or dead code
+D $CBA4 I can't find what calls this routine. I've checked various stages...
+@ $CBA4 label=mystery_cba4
 C $CBA4,1 C = A
 C $CBA5,3 A = IY[0]
 C $CBA8,2 IY++
 C $CBAA,2 IX.low++
 C $CBAC,3 A -= IY[0]
 C $CBAF,5 Jump if >= 240
-C $CBB4,5 Jump if >= 80
+C $CBB4,5 Exit via #R$C79A/dr_start_backdrop_fill if >= 80
 C $CBB9,2 L -= 2
 C $CBBB,1 A += C
 C $CBBC,5 Jump if zero or negative
@@ -10844,9 +10885,10 @@ C $CBC2,3 Exit via #R$C915
 c $CBC5 Routine at CBC5
 D $CBC5 Used by the routine at #R$C95A.
 N $CBC5 This gets hit during road forks.
+@ $CBC5 label=backdrop_fill_choice
 C $CBC5,1 C = A
 C $CBC6,5 Jump if A < 80
-C $CBCB,3 Exit via #R$C79A
+C $CBCB,3 Exit via #R$C79A/dr_start_backdrop_fill
 c $CBCE Seems to be building road curvature table(s)
 D $CBCE Used by the routine at #R$B9F4.
 N $CBCE This gets hit during road forks.
@@ -10880,6 +10922,7 @@ C $CC17,2 20 iterations
 C $CC19,1 Bank
 C $CC1A,4 Get road position
 C $CC1F,1 Unbank
+@ $CC20 label=bct_cc20
 C $CC20,1 Read road buffer byte
 C $CC21,2 Self modified above - Set to NOP or NEG
 C $CC23,1 Advance road buffer pointer (wrapping)
@@ -10892,20 +10935,26 @@ C $CC2F,2 C = A - E  -- E is $20 here I think
 C $CC31,3 high byte
 C $CC34,1 A -= D
 C $CC35,1 B = A
-N $CC36 Sampled IY = E71E E71F E720 ..
+N $CC36 Sampled IY = $E71E $E71F $E720 ..
 C $CC36,3 IY seems to point to $E6xx..E7xx
 N $CC3B This is a multiplier of HL (distance shift value computed above) by A (value from $E600+).
-C $CC3B,1 shift left
-C $CC3C,2 top bit not set
-C $CC3E,2 HL = BC  copy of distance shift value
-C $CC40,1 shift result left. HL seems to be zeroed above, so this is confusing
-C $CC41,1 shift topmost bit out
-C $CC42,2 jump if top bit not set
-C $CC44,1 otherwise HL += BC
+C $CC3B,1 Shift left
+C $CC3C,2 Top bit not set
+C $CC3E,2 Copy distance shift value
+C $CC40,1 Double it
+@ $CC41 label=bct_cc41
+C $CC41,1 Shift topmost bit out
+C $CC42,2 Jump if top bit not set
+C $CC44,1 Otherwise HL += BC
+@ $CC45 label=bct_cc45
 C $CC45,5 repeat
+@ $CC4A label=bct_cc4a
 C $CC4A,5 repeat
+@ $CC4F label=bct_cc4f
 C $CC4F,5 repeat
+@ $CC54 label=bct_cc54
 C $CC54,5 repeat
+@ $CC59 label=bct_cc59
 C $CC59,1 A = H
 C $CC5A,2 L <<= 1
 C $CC5C,2 H = 0
@@ -10914,6 +10963,7 @@ C $CC5F,1 L = A
 C $CC60,1 A <<= 1
 C $CC61,2 jump if top bit not set
 C $CC63,1 H--
+@ $CC64 label=bct_cc64
 C $CC64,1 A >>= 1
 C $CC67,1 Unbank
 C $CC68,2 *DE++ = A
@@ -10927,8 +10977,10 @@ C $CC88,3 HL = $E700 | A
 C $CC8B,2 Jump if A+$60 had no carry
 C $CC8D,1 Add carry otherwise
 N $CC8E Converts the 20 bytes at $E320 to totals.
+@ $CC8E label=bct_cc8e
 C $CC8E,3 [points to presumed lanes data in pristine memory map but must be something else]
 C $CC91,2 B = 20
+@ $CC93 label=bct_cc93
 C $CC93,1 *DE += *HL
 N $CC94 This reads from $E760+ in sequence.
 C $CC95,1 }
@@ -10940,10 +10992,12 @@ C $CCA1,1 swap
 C $CCA2,2 B = 0
 C $CCA4,1 Unbank
 C $CCA5,3 table?
+@ $CCA8 label=bct_cca8
 C $CCA8,4 height table?
 C $CCAC,2 B = 21
 C $CCAE,4 Save #REGsp to restore on exit (self modify)
-C $CCB2,1 Put address in #REGsp (so we can use POP for speed)
+C $CCB2,1 Put address in #REGsp (so we can use PUSH for speed)
+@ $CCB3 label=bct_ccb3
 C $CCB3,1 Bank
 C $CCB4,3 A = B - 2
 C $CCB7,3 A += *IY
@@ -10962,34 +11016,43 @@ C $CCD5,1 A = B
 C $CCD6,1 A < L ?
 C $CCD7,2 Opcode for DEC DE
 C $CCD9,2 jump if A < L
+@ $CCDE label=bct_ccde
 C $CCDE,1 A < L ?
 C $CCDF,2 Opcode for INC DE
 C $CCE1,2 jump if A < L
+@ $CCE3 label=bct_cce3
 C $CCE3,3 Self modify instruction below
 C $CCE6,1 A = B
 C $CCE7,1 A >>= 1
+@ $CCE8 label=bct_cce8
 C $CCE8,1 A += L
 C $CCE9,1 A < C ?
 C $CCEA,2 jump if A < C
 C $CCEC,1 A -= C
 C $CCED,1 Self modified: INC DE or DEC DE
+@ $CCEE label=bct_ccee
 C $CCEF,2 Loop while #REGb > 0
 C $CCF1,1 Unbank
 C $CCF2,2 Outer loop?
+@ $CCF4 label=bct_exit
 C $CCF4,3 Restore original #REGsp (must be self modified)
 C $CCF7,1 Return
+@ $CCF8 label=bct_ccf8
 C $CCF8,3 Self modify instruction below
 C $CCFB,1 A = 0
+@ $CCFC label=bct_ccfc
 C $CCFC,1 Self modified: INC DE or DEC DE
 C $CCFD,1 A += C
 C $CCFE,2 jump if overflow
 C $CD00,1 A < L ?
 C $CD01,2 jump if A < L
+@ $CD03 label=bct_cd03
 C $CD03,1 A -= L
 C $CD05,2 Loop while #REGb > 0
 C $CD07,1 Bank
 C $CD08,2 Outer loop?
 C $CD0A,2 Exit
+@ $CD0C label=bct_cd0c
 C $CD0C,4 IY[$4E] = 1
 C $CD10,1 A++
 C $CD13,1 A++
@@ -11006,6 +11069,7 @@ C $CD1F,1 Unbank
 C $CD20,1 B--
 C $CD21,3 Outer loop?
 C $CD24,3 Exit
+@ $CD27 label=bct_cd27
 C $CD27,1 B = A
 C $CD28,3 A = IY[$1F]
 C $CD2B,1 L = A
