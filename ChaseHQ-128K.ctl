@@ -6171,7 +6171,7 @@ C $A58D,3 Load road_buffer_offset into #REGa
 C $A590,2 Add 64 so it's the lanes data offset
 C $A592,1 E = calculated offset
 C $A593,4 Load address of object_positions
-C $A597,2 B = 21
+C $A597,2 21 iterations
 C $A599,3 A = fork_visible
 C $A59C,1 Set flags
 C $A59D,3 Jump to lo_loop2 if zero [not in forked road]
@@ -10909,20 +10909,21 @@ N $CBEC There's similar code at #R$CD47.
 C $CBEC,3 Load fast_counter
 C $CBEF,2 Mask off top three bits
 C $CBF1,1 Move result to #REGb
-N $CBF2 Reduces #REGb by 31.25% ... unsure why that figure (0..31 => 0..21 perhaps)
+N $CBF2 Reduce #REGb 0..31 => 0..21.
 C $CBF2,5 Divide by 4 and subtract
 C $CBF7,5 Divide by 16 and subtract
-N $CBFC Index the road animation tables.
-C $CBFC,10 #REGiy = horizontal_e6b0[#REGa]
-C $CC06,3 Call multiply (A = multiplier, C = multiplicand)
+N $CBFC Index the road animation table horizontal_e6b0.
+C $CBFC,10 #REGiy = horizontal_e6b0[#REGa] } Sampled: A is $E7, C is 2 (value to multiply) This multiplies by top three bits of A then divides by 8 (with rounding) on return.
+C $CC06,3 Call multiply (#REGa = multiplier, #REGc = multiplicand, result in #REGa)
 C $CC09,6 A = (128 - A) & $FE
 C $CC0F,5 IX = $E500 + A  -- point into inward_bend_table
 C $CC14,3 D = $E3, E = $20
 C $CC17,2 20 iterations
 C $CC19,1 Bank
-C $CC1A,4 Get road position
+C $CC1A,4 Read road position
+C $CC1E,1 Stack it
 C $CC1F,1 Unbank
-@ $CC20 label=bct_cc20
+@ $CC20 label=bct_loop
 C $CC20,1 Read road buffer byte
 C $CC21,2 Self modified above - Set to NOP or NEG
 C $CC23,1 Advance road buffer pointer (wrapping)
@@ -10947,13 +10948,13 @@ C $CC41,1 Shift topmost bit out
 C $CC42,2 Jump if top bit not set
 C $CC44,1 Otherwise HL += BC
 @ $CC45 label=bct_cc45
-C $CC45,5 repeat
+C $CC45,5 Repeat
 @ $CC4A label=bct_cc4a
-C $CC4A,5 repeat
+C $CC4A,5 Repeat
 @ $CC4F label=bct_cc4f
-C $CC4F,5 repeat
+C $CC4F,5 Repeat
 @ $CC54 label=bct_cc54
-C $CC54,5 repeat
+C $CC54,5 Repeat
 @ $CC59 label=bct_cc59
 C $CC59,1 A = H
 C $CC5A,2 L <<= 1
@@ -10965,44 +10966,53 @@ C $CC61,2 jump if top bit not set
 C $CC63,1 H--
 @ $CC64 label=bct_cc64
 C $CC64,1 A >>= 1
+C $CC65,1 HL += DE
+C $CC66,1 Swap
 C $CC67,1 Unbank
 C $CC68,2 *DE++ = A
 C $CC6A,2 Loop back to read buffer byte bit
+C $CC6C,1 Pop road position
+C $CC6D,2 B = 0  -- not self modified
 C $CC6F,1 Bank
-C $CC73,3 subroutine
-C $CC76,3 A = fast_counter
-C $CC79,2 take top three bits
-C $CC7B,11 same pattern as above
-C $CC88,3 HL = $E700 | A
+C $CC70,3 Output address
+C $CC73,3 Call bct_cca8
+C $CC76,3 Load fast_counter
+C $CC79,2 Take top three bits
+C $CC7B,1 Move result to #REGb
+N $CC7C Reduce #REGb 0..31 => 0..21.
+C $CC7C,5 Divide by 4 and subtract
+C $CC81,5 Divide by 16 and subtract
+N $CC86 Index the road animation table horizontal_e760.
+C $CC86,5 HL = $E700 + $60 + A
 C $CC8B,2 Jump if A+$60 had no carry
 C $CC8D,1 Add carry otherwise
-N $CC8E Converts the 20 bytes at $E320 to totals.
+N $CC8E Adds one of the entries (somewhere in) horizontal_e760 to the 22 bytes at $E320.
 @ $CC8E label=bct_cc8e
-C $CC8E,3 [points to presumed lanes data in pristine memory map but must be something else]
-C $CC91,2 B = 20
-@ $CC93 label=bct_cc93
-C $CC93,1 *DE += *HL
-N $CC94 This reads from $E760+ in sequence.
-C $CC95,1 }
-C $CC96,1 HL++
-C $CC97,1 E++
+C $CC8E,3 Address of table_e320
+C $CC91,2 22 iterations
+@ $CC93 label=bct_cc93_loop
+C $CC93,1 Load an entry from table_e320
+N $CC94 This reads from (somewhere in) horizontal_e760 in sequence.
+C $CC94,1 Increment it by (HL)
+C $CC95,1 Write back to (DE)
+C $CC96,1 Increment entry address in horizontal_e760
+C $CC97,1 Increment entry address in table_e320
 C $CC98,2 Loop while #REGb > 0
-C $CC9A,7 HL = road position - 295
-C $CCA1,1 swap
-C $CCA2,2 B = 0
+N $CC9A This controls the vanishing point. Decrease this value for wider roads - but the road might appear to bend left...
+C $CC9A,7 HL = road_pos - 295  -- consider: this is $127 but $109 is centre...
+C $CCA1,1 Swap
+C $CCA2,2 B = 0  -- probably initialising some counter
 C $CCA4,1 Unbank
-C $CCA5,3 table?
+C $CCA5,3 Destination address (road centre left table? or is does it have a different use in these parts?)
 @ $CCA8 label=bct_cca8
-C $CCA8,4 height table?
-C $CCAC,2 B = 21
+C $CCA8,4 Address of height table (22 bytes long)
+C $CCAC,2 21 iterations
 C $CCAE,4 Save #REGsp to restore on exit (self modify)
 C $CCB2,1 Put address in #REGsp (so we can use PUSH for speed)
-@ $CCB3 label=bct_ccb3
+@ $CCB3 label=bct_loop_ccb3
 C $CCB3,1 Bank
-C $CCB4,3 A = B - 2
-C $CCB7,3 A += *IY
-C $CCBA,2 IY++
-C $CCBC,3 A -= *IY
+C $CCB4,11 A = B - 2 + IY[0] - IY[1]; IY++
+C $CCBF,3 Jump to bct_endbit_B if M
 C $CCC2,2 A += 2
 C $CCC4,3 IY[$4E] = A
 C $CCC7,1 A -= B
@@ -11010,7 +11020,7 @@ C $CCC8,1 C = A
 C $CCC9,1 B = A
 C $CCCA,3 L = IY[$1F]
 C $CCCD,2 test bit 7 of L
-C $CCCF,2 jump if ?
+C $CCCF,2 jump if clear
 C $CCD1,4 L = -L
 C $CCD5,1 A = B
 C $CCD6,1 A < L ?
@@ -11022,67 +11032,56 @@ C $CCDF,2 Opcode for INC DE
 C $CCE1,2 jump if A < L
 @ $CCE3 label=bct_cce3
 C $CCE3,3 Self modify instruction below
-C $CCE6,1 A = B
-C $CCE7,1 A >>= 1
-@ $CCE8 label=bct_cce8
+C $CCE6,2 A = B >> 1
+@ $CCE8 label=bct_loop_cce8
 C $CCE8,1 A += L
 C $CCE9,1 A < C ?
-C $CCEA,2 jump if A < C
+C $CCEA,2 Jump if A < C
 C $CCEC,1 A -= C
-C $CCED,1 Self modified: INC DE or DEC DE
+C $CCED,1 Self modified: could be INC DE or DEC DE
 @ $CCEE label=bct_ccee
-C $CCEF,2 Loop while #REGb > 0
+C $CCEE,1 Push the current state of #REGde to table
+C $CCEF,2 Loop to bct_loop_cce8 while #REGb > 0
 C $CCF1,1 Unbank
-C $CCF2,2 Outer loop?
+C $CCF2,2 Loop to bct_loop_ccb3 while #REGb > 0
 @ $CCF4 label=bct_exit
-C $CCF4,3 Restore original #REGsp (must be self modified)
+C $CCF4,3 Restore original #REGsp (self modified by #R$CCAE)
 C $CCF7,1 Return
-@ $CCF8 label=bct_ccf8
+N $CCF8 #REGa is opcode of instruction (INC DE/DEC DE) #REGb is max iterations #REGc is ? #REGl is ? #REGde is ?
+@ $CCF8 label=bct_endbit_A
 C $CCF8,3 Self modify instruction below
-C $CCFB,1 A = 0
-@ $CCFC label=bct_ccfc
-C $CCFC,1 Self modified: INC DE or DEC DE
-C $CCFD,1 A += C
-C $CCFE,2 jump if overflow
-C $CD00,1 A < L ?
-C $CD01,2 jump if A < L
-@ $CD03 label=bct_cd03
-C $CD03,1 A -= L
-C $CD05,2 Loop while #REGb > 0
+C $CCFB,1 Initialise total to zero
+@ $CCFC label=bct_loop_ccfc
+C $CCFC,1 Self modified: could be INC DE or DEC DE
+C $CCFD,1 Increment total by #REGc
+C $CCFE,2 Jump if overflow
+C $CD00,3 Otherwise, loop if A < L
+@ $CD03 label=bct_carried_or_a_ge_l
+C $CD03,1 Decrement A by L
+C $CD04,1 Push the current state of #REGde to table
+C $CD05,2 Loop to bct_loop_ccfc while #REGb > 0
 C $CD07,1 Bank
-C $CD08,2 Outer loop?
-C $CD0A,2 Exit
-@ $CD0C label=bct_cd0c
+C $CD08,2 Loop to bct_loop_ccb3 while #REGb > 0
+C $CD0A,2 Exit via bct_exit
+@ $CD0C label=bct_endbit_B
 C $CD0C,4 IY[$4E] = 1
 C $CD10,1 A++
+C $CD11,2 Jump to bct_endbit_C if zero
 C $CD13,1 A++
 C $CD14,1 B = A
 C $CD15,3 A = IY[$1F]
 C $CD18,1 L = A
 C $CD19,1 A <<= 1
-C $CD1A,1 A = A - A - carry
-C $CD1B,1 H = A
+C $CD1A,2 H = A - A - carry  -- strange sequence?
 C $CD1C,1 HL += DE
 C $CD1D,1 swap
-C $CD1E,1 push
-C $CD1F,1 Unbank
-C $CD20,1 B--
-C $CD21,3 Outer loop?
-C $CD24,3 Exit
-@ $CD27 label=bct_cd27
-C $CD27,1 B = A
-C $CD28,3 A = IY[$1F]
-C $CD2B,1 L = A
-C $CD2C,1 A <<= 1
-C $CD2D,1 A = A - A - carry
-C $CD2E,1 H = A
-C $CD2F,1 HL += DE
-C $CD30,1 swap
-C $CD31,1 push result?
-C $CD32,1 Bank
-C $CD33,1 B--
-C $CD34,3 Outer loop?
-C $CD37,3 Exit
+C $CD1E,1 push result?
+C $CD1F,1 Bank/Unbank?
+C $CD20,1 Decrement loop counter  -- Why not using DJNZ?
+C $CD21,3 Loop to bct_loop_ccb3 while #REGb > 0
+C $CD24,3 Exit via bct_exit
+N $CD27 This is identical to the preceding sequence starting at #R$CD14, so could be removed if #R$CD11 instead just jumped over #R$CD13.
+@ $CD27 label=bct_endbit_C
 c $CD3A Seems to build the height table at $E300 and $E336
 D $CD3A Used by the routines at #R$8401, #R$852A and #R$873C.
 N $CD3A Point #REGiy at the road buffer's height data. (The "unpacked map height data"?)
@@ -11092,7 +11091,7 @@ C $CD3D,3 Load road_buffer_offset into #REGa
 C $CD40,2 Add 32 so it's the height data offset (wrapping around)
 C $CD42,2 #REGiy is now the road buffer height data pointer
 C $CD44,3 Read the current height byte into #REGc
-N $CD47 The height byte is the byte B from the map data but converted like so ((B & 15) - 8). Heights are therefore 0 for level road, 7 for max downslope, -8 for max upslope.
+N $CD47 The height byte is the byte B from the map data but converted like so: ((B & 15) - 8). Heights are therefore 0 for level road, 7 for max downslope, -8 for max upslope.
 N $CD47 build A - an index into the road drawing tables.
 N $CD47 See similar code at #R$917A.
 C $CD47,5 A = fast_counter & $E0  -- top three bits
@@ -11109,13 +11108,13 @@ C $CD5D,3 Call multiply (A = multiplier, C = multiplicand) result in A
 C $CD60,3 Negate result and copy to C
 C $CD63,1 Bank
 N $CD64 This builds the look-up table at $E301. Assuming it's a height table.
-C $CD64,2 B = 21
+C $CD64,2 21 iterations
 C $CD66,3 DE = $E301
 @ $CD69 label=bht_loop
 C $CD69,1 Unbank
 C $CD6A,3 E = *HL * 2  -- HL points at $E6xx (road drawing tables)
 C $CD6D,1 Preserve HL
-C $CD6E,2 DE is now the value from table, widened
+C $CD6E,2 #REGde is now the value from table, widened
 C $CD70,2 Initialise result to zero
 C $CD72,1 A = negated multiply result from above
 C $CD73,3 A += *IY  -- a height byte
@@ -11154,18 +11153,19 @@ C $CDAB,1 A += *HL  -- HL points at $E6xx (road drawing data)
 C $CDAC,1 Advance to next byte of HL while wrapping around
 C $CDAD,1 Bank
 C $CDAE,1 Write #REGa to the table at $E3xx
-C $CDAF,1 DE++  (wrapping around)
+C $CDAF,1 Increment address of entry in table (wrapping around)
 C $CDB0,2 IYl++ (wrapping around)
 C $CDB2,2 Loop to bht_loop while #REGb
 C $CDB4,3 Final byte is always $A0
-N $CDB7 Copy the table to $E336 while setting -ve values to 96.
-C $CDB7,3 destination
-C $CDBA,3 source (height table?)
-C $CDBD,3 B = 21 iterations, C = 96 limit
+N $CDB7 Copy the table to $E336 while setting negative values to 96.
+C $CDB7,3 Load address of destination
+C $CDBA,3 Load address of source (height table?)
+C $CDBD,3 B = 21 iterations, C = 96 limit/minimum
 @ $CDC0 label=bht_loop2
 C $CDC0,1 Read from table just built
-C $CDC1,4 Jump if A is positive
-C $CDC5,1 Otherwise it's negative, so C = 96
+C $CDC1,4 Jump to bht_write_it if A is positive
+C $CDC5,1 Otherwise it's negative, so use 96
+@ $CDC6 label=bht_write_it
 C $CDC6,1 Write it
 C $CDC7,1 HL++  (wrapping around)
 C $CDC8,1 DE++  (wrapping around)
@@ -11182,18 +11182,18 @@ D $CDD6 Multiplies #REGc by the top three bits of #REGa then divides by 8 with r
 D $CDD6 Used by the routines at #R$CBD6 and #R$CD3A.
 R $CDD6 I:A Multiplier (number to multiply by)  e.g. $A0, $E7, $20, $C0, $E6
 R $CDD6 I:C Multiplicand (value to multiply)    e.g. $05, $02, $05, $03, $FE
-R $CDD6 O:A Result e.g. $03, $02, $01, $02, $FE
+R $CDD6 O:A Result                              e.g. $03, $02, $01, $02, $FE
 @ $CDD6 label=multiply
 C $CDD6,2 3 iterations only
 C $CDD8,1 Copy of multiplier to destroy
-C $CDD9,1 Initialise total
+C $CDD9,1 Initialise total to zero
 @ $CDDA label=mult_loop
 C $CDDA,2 Shift the most significant bit out of multiplier
-C $CDDC,3 If the MSB was set then total += multiplicand
+C $CDDC,3 If it was set then increase total by multiplicand
 @ $CDDF label=mult_continue
-C $CDDF,1 total <<= 1
+C $CDDF,1 Double the total
 C $CDE0,2 While iterations remain, goto mult_loop
-C $CDE2,1 Undo final shift
+C $CDE2,1 Undo final doubling
 C $CDE3,8 Divide by 8 with rounding
 C $CDEB,1 Return
 b $CDEC Data block at CDEC
@@ -12170,9 +12170,7 @@ B $E300,1,1
 S $E301,31,$1F
 b $E320 Data block at E320
 @ $E320 label=table_e320
-S $E320,21,$15 21 entries. Used by $CC8E
-u $E335 Unused
-S $E335,1,$01 padding byte or the start of the next table?
+S $E320,22,$16 22 entries. Used by $CC8E
 b $E336 Data block at E336
 @ $E336 label=table_e336
 S $E336,21,$15 21 entries. Used by $8F6E
