@@ -287,7 +287,8 @@ class ChaseHQHtmlWriter(HtmlWriter, ChaseHQWriter):
         # the default four-lane road.
         #
         # If not noted then the respective byte is used by Stage 1. If "Poke"
-        # then it was discovered by altering the game.
+        # then it was discovered by altering the game and might break
+        # assumptions, e.g. get_spawn_lanes.
         #
         #                                     [  * ] is the car's default position  CHECK
         lanesmap = {
@@ -310,7 +311,7 @@ class ChaseHQHtmlWriter(HtmlWriter, ChaseHQWriter):
             0b10101101: "3-4 Widening L       [|||/] {AD}",
             0b10111101: "4-3 Narrowing L      [|||`] {BD}",
             
-            0b01000101: "Tunnel entrance             {45}",  # Are tunnels always two lanes?
+            0b01000101: "Tunnel entrance             {45}",  # Tunnel always three lanes
             0b01011001: "Tunnel cont/exit            {59}",  # TBD
             0b11000001: "4 Lanes dirt track   [||||] {C1}",
             0b11000010: "3 Lanes dirt track R  [|||] {C2}",  # Poke
@@ -321,6 +322,27 @@ class ChaseHQHtmlWriter(HtmlWriter, ChaseHQWriter):
         return self.decode_count_rle(
             cwd, base, "lanes", lanesmap, showlength=True, follow=True
         )
+
+# Build the tree of possibilities from get_spawn_lanes decoder.
+#for byte in range(0,256):
+#    if byte == 0:
+#        print (byte, "4 lanes", 1,4)
+#    elif (byte & 0xC1) == 0xC1:
+#        print (byte, "4 lane dirt track", 1,4)
+#    elif (byte & 0xC1) == 0x41:
+#        print (byte, "tunnel", 1,3)
+#    three_or_two_lanes = (byte & 0x80) != 0
+#    right_aligned = (byte & 2)
+#    if three_or_two_lanes:
+#        if right_aligned == 0:
+#            print (byte, "3 lanes", 1,3) # note flipped order here
+#        else:
+#            print (byte, "3 lanes", 2,4)
+#    else:
+#        if right_aligned == 0:
+#            print (byte, "2 lanes", 1,2)
+#        else:
+#            print (byte, "2 lanes", 3,4)
 
     def decode_hazards(self, cwd, base, typename, names, showlength, follow):
 

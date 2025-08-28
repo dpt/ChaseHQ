@@ -5672,13 +5672,13 @@ B $A185,1,1 If set causes no objects or hazards to be emitted.
 @ $A186 label=horizon_attribute
 W $A186,2,2 Attribute address of horizon. Points to last attribute on the line which shows the ground. (e.g. $59DF)
 N $A188 Table of spawned vehicles and/or objects
-N $A188 Each entry is 20 bytes long. The first entry is the perp.
+N $A188 Each entry is 20 bytes long. The first entry is the perp. There are six entries in total.
 N $A188 Hazard structure layout:
 N $A188 +0 (byte) is $FF if this hazard is used, $00 otherwise
 N $A188 +1 (byte) is the low byte of the distance from 'camera'. increments when the perp is getting further away, decrements otherwise.
 N $A188 +2 (byte) is horizontal position (relative?)
 N $A188 +3 (byte) TBD
-N $A188 +4 (byte) TBD
+N $A188 +4 (byte) TBD. seems to count fast while the perp is escaping. distance low-low byte?
 N $A188 +5 (byte) is horizontal position
 N $A188 +6 (byte) TBD
 N $A188 +7 (byte) TBD used by hazard_hit, used in plotting, read by perp_behaviour, goes high when the perp is smashed into
@@ -5688,7 +5688,7 @@ N $A188 +11 (word) address of hit handler routine
 N $A188 +13 (word) horizontal position, e.g. $190. but if it's the perp we seem to use it as a byte.
 N $A188 +15 (byte) TBD used by hazard_hit, counter which gets set to 2 then reduced. $ff if unused. $80 for vehicles. 0+ for hazards.
 N $A188 +16 (byte) TBD
-N $A188 +17 (byte) TBD used by hazard_hit, indexes table #R$ACDB, set with a lane, seemingly a minimum lane (but not always)
+N $A188 +17 (byte) TBD used by hazard_hit, indexes table #R$ACDB, set with a lane, seemingly a minimum lane (but not always). For the perp this is definitely the high byte of the distance.
 N $A188 +18 (byte) TBD used by hazard_hit, set with a lane, likely current lane
 N $A188 +19 (byte) TBD used by hazard_hit
 @ $A188 label=hazard_0
@@ -5787,7 +5787,7 @@ B $A23D,1,1 #R$BE33 reads  #R$890F, #R$A3D2, #R$BDFC, #R$BE37 writes
 @ $A23E label=off_road
 B $A23E,1,1 0 => Fully on-road, 1 => One wheel off-road, 2 => Both wheels off-road [samples: #R$B104, #R$B40C reads  #R$A3FD, #R$A52A, #R$B07D, #R$B322, #R$B404, #R$B443 writes]
 @ $A23F label=fast_counter
-B $A23F,1,1 This is a very fast counter related to level position. Typically the top three bits are masked off and used to index other tables.
+B $A23F,1,1 This is a very fast counter that only increments when the car is in motion. Typically the top three bits are masked off and used to index other tables.
 @ $A240 label=road_buffer_offset
 W $A240,2,2 Current offset (in bytes) into the road buffer at $EE00..$EEFF. Much of the code treats this as a byte. Used by #R$B8F6, #R$BBF7, #R$87E0.
 @ $A242 label=curvature_byte
@@ -6557,33 +6557,35 @@ C $A88E,3 HL = &lods_vehicles (first of the generic car LODs)
 C $A891,1 HL += BC
 C $A892,9 wordat(IX+9) = HL
 C $A89B,1 Return
-c $A89C Returns the lanes that cars or hazards can spawn in
-D $A89C Return $0101 and cars will only appear in the leftmost lane. $0102 (1st and 2nd, mainly 2nd). $0104 first three lanes. $0304 - third and fourth lanes.
-R $A89C I:C Buffer offset (e.g. 20)
-R $A89C O:BC Could be (min,max) position
+c $A89C Returns the range of lanes that cars or hazards should spawn within
+D $A89C Returning (1,1) means that cars will only spawn in the leftmost lane; returning (3,4) makes them spawn in the third or fourth lane; and so on.
+R $A89C I:C Additional lanes buffer offset (e.g. 20)
+R $A89C O:B Lowest lane
+R $A89C O:C Highest lane
 @ $A89C label=get_spawn_lanes
-C $A89C,6 A = [current buffer offset] + 66 + C  (wrapping around)
-C $A8A2,3 Point #REGde at road buffer lanes data (+2 bytes)
-C $A8A5,1 Read lanes byte
+C $A89C,6 Calculate [current buffer offset] + [lanes offset of 64] + 2 bytes + [additional buffer offset] (wrapping around)
+C $A8A2,3 Point #REGde at road buffer lane data as calculated
+C $A8A5,1 Read lanes_byte
 C $A8A6,1 Set flags
-C $A8A7,3 BC = $0104
-C $A8AA,1 Return if zero
-C $A8AB,1 E = A  -- preserve E
-C $A8AC,2 A &= $C1
-C $A8AE,3 Return if A == $C1
-C $A8B1,2 CP $41
-C $A8B3,3 BC = $0103
-C $A8B6,1 Return if zero
-C $A8B7,4 A = (E & $82) << 1
-C $A8BB,2 Jump to #R$A8C5 if didn't carry
-C $A8BD,3 BC = $0204
-C $A8C0,1 Return if non-zero
-C $A8C1,3 BC = $0103
-C $A8C4,1 Return
-@ $A8C5 label=gsl_a8c5
-C $A8C5,3 BC = $0102
-C $A8C8,1 Return if zero
-C $A8C9,3 BC = $0304
+C $A8A7,3 Set lowest lane = 1, highest lane = 4
+C $A8AA,1 Return if lanes_byte was zero (4 lanes)
+C $A8AB,1 Preserve lanes_byte
+C $A8AC,5 Return if ((lanes_byte & $C1) == $C1) (4 lane dirt track) [would also choose 2 lane dirt track but that's nonstandard]
+C $A8B1,2 Test for tunnel (three lanes)
+C $A8B3,3 Set lowest = 1, highest = 3
+C $A8B6,1 Return if tunnel
+C $A8B7,3 Compute (lanes_byte & $82)
+C $A8BA,1 Set carry from top bit while discarding it
+C $A8BB,2 Jump to #R$A8C5 if top bit not set
+@ $A8BD label=gsl_three_lanes
+C $A8BD,3 Set lowest = 2, highest = 4
+C $A8C0,1 Return if non-zero (3 lanes right aligned)
+C $A8C1,3 Set lowest = 1, highest = 3
+C $A8C4,1 Return (3 lanes left aligned)
+@ $A8C5 label=gsl_two_lanes
+C $A8C5,3 Set lowest = 1, highest = 2
+C $A8C8,1 Return if zero (2 lanes left aligned)
+C $A8C9,3 Set lowest = 3, highest = 4
 C $A8CC,1 Return
 c $A8CD Hazard handler routine?
 D $A8CD Triggered at road fork.
@@ -7180,7 +7182,7 @@ C $ADBB,2 Loop while iterations remain -- #REGb > 0
 C $ADBD,1 Return
 @ $ADBE label=dh_draw_one_hazard
 C $ADBE,3 C = IX[14]  -- top byte of horz position or accel?
-N $ADC1 Distance? If I disable this calculation and $A18C remains zero then the perp car cannot be caught up with. IX[4] here is e.g. $A18C IX[13] here is e.g. $A195 which seems to be the perp's acceleration or offset or ? (low byte)
+N $ADC1 Distance? If I disable this calculation and $A18C remains zero then the perp car cannot be caught up with. IX[4] here is e.g. $A18C. IX[13] here is e.g. $A195 which seems to be the perp's acceleration or offset or ? (low byte)
 C $ADC1,9 IX[4] -= IX[13]  -- bottom byte of accel/something?
 C $ADCA,3 If IX[4] was < IX[13] then C++
 @ $ADCD label=dh_adcd
@@ -7203,8 +7205,9 @@ C $ADF0,1 A = C
 C $ADF1,4 Jump if A < 23  -- still visible?
 N $ADF5 Wipe the hazard because it's gone?
 C $ADF5,4 IX[0] = 0  -- hazard slot now spare
-@ $ADF9 label=just_ret
-C $ADF9,1 Return
+@ $ADF9 label=dh_exit
+C $ADF9,1 Return (used as just a RET elsewhere)
+@ $ADFA label=dh_adfa
 C $ADFA,3 IX[1] = A  -- buffer offset/distance
 C $ADFD,3 Return if A >= 20
 C $AE00,1 A--
@@ -7218,8 +7221,11 @@ C $AE14,4 IX[0] = 0  -- hazard slot now spare
 C $AE1A,1 Return if no carry
 C $AE1B,4 Increment overtake_bonus_counter
 C $AE1F,1 Return
+@ $AE20 label=dh_ae20
 C $AE20,3 IX[4] = A
+@ $AE23 label=dh_ae23
 C $AE23,1 A = 0
+@ $AE24 label=dh_ae24
 C $AE24,2 A += $4E
 N $AE26 $E300..$E316 is regularly accessed. $E300 is always $60, $E316 is always $A0
 C $AE26,2 IY.low = A  -- i.e. $E300 | A
@@ -7230,8 +7236,10 @@ N $AE2F Multiplier. DE = multiplier. A = multiplicand. HL = result.
 C $AE2F,5 DE = A; HL = 0
 C $AE34,3 A = IX[4]
 C $AE37,2 B = 8  -- iterations of multiply loop
+@ $AE39 label=dh_ae39_loop
 C $AE39,1 Test top bit
 C $AE3A,3 If it carried out then add
+@ $AE3D label=dh_not_set
 C $AE3D,1 Double
 C $AE3E,2 Loop
 C $AE40,1 A = H  -- high part of result
@@ -7254,8 +7262,10 @@ C $AE5E,3 HL = 0
 C $AE61,3 A = IX[5]
 N $AE64 Another multiplier.
 C $AE64,2 B = 8
+@ $AE66 label=dh_ae66
 C $AE66,1 A <<= 1
 C $AE67,3 If it carried out then add
+@ $AE6A label=dh_ae6a
 C $AE6A,1 Double
 C $AE6B,2 Loop
 C $AE6D,1 A = H
@@ -7264,15 +7274,15 @@ C $AE70,4 HL = <self modified> + BC
 C $AE74,6 wordat(IX + 2) = HL
 C $AE7A,3 Call check_collision (result ignored)
 C $AE7D,3 D = IX[1]  -- buffer offset/distance
-C $AE80,3 E = IX[4]
-C $AE83,3 HL = &n_hazards
-C $AE86,1 A = *HL
-C $AE87,1 (*HL)++
-C $AE88,3 HL -> table
-C $AE8B,1 Set flags
-C $AE8C,2 Jump to dh_no_hazards if zero
+C $AE80,3 E = IX[4]  -- possibly a distance low byte?
+C $AE83,3 Load address of n_hazards
+C $AE86,1 Load n_hazards
+C $AE87,1 Increment n_hazards
+C $AE88,3 Load address of (road centre left?) table
+C $AE8B,3 Jump to dh_no_hazards if n_hazards was zero
 C $AE8E,1 Iterations
 N $AE8F Loop starts (loop for all hazards)
+@ $AE8F label=dh_ae8f
 C $AE8F,1 A = D
 C $AE90,1 Compare to *HL
 C $AE91,1 L++
@@ -7281,6 +7291,7 @@ C $AE94,2 Jump if A != *HL
 C $AE96,1 A = E
 C $AE97,1 Compare to *HL
 C $AE98,2 Jump if A < *HL
+@ $AE9A label=dh_ae9a
 C $AE9A,3 L += 3
 C $AE9D,2 Loop
 @ $AE9F label=dh_no_hazards
@@ -7288,6 +7299,7 @@ C $AE9F,4 wordat(HL) = DE; HL += 2
 C $AEA3,3 DE = IX
 C $AEA6,3 wordat(HL) = DE; HL++
 C $AEA9,2 Jump
+@ $AEAB label=dh_aeab
 C $AEAB,1 Preserve DE
 C $AEAC,3 A = B * 4
 C $AEAF,3 BC = A
@@ -7303,21 +7315,25 @@ C $AEC4,1 Restore DE
 C $AEC5,1 *HL = E
 C $AEC6,1 L--
 C $AEC7,1 *HL = D
+@ $AEC8 label=dh_aec8
 C $AEC8,6 HL = wordat(IX + 11)
 C $AECE,1 Jump there
 N $AECF This entry point is used by the routine at #R$8F5F.
+@ $AECF label=dh_aecf
 C $AECF,3 HL = <self modified>
 C $AED2,1 A = B
 C $AED3,2 Return if A != *HL
 C $AED5,1 A--
 C $AED6,4 Jump if A < 11
 C $AEDA,2 A = 10
+@ $AEDC label=dh_aedc
 C $AEDC,2 A >>= 1
 C $AEDE,3 Self modify 'LD A,x' @ #R$AFFB  -- possible speed factor
 C $AEE1,1 E = A
 C $AEE2,3 A <<= 3
 C $AEE5,1 A -= E
 C $AEE6,3 DE = A
+@ $AEE9 label=dh_equal
 C $AEE9,2 L += 2
 C $AEEB,8 IX = wordat(HL); HL += 2
 C $AEF3,3 Preserve HL, BC, DE
@@ -7339,14 +7355,18 @@ C $AF23,3 Jump if non-zero
 C $AF26,5 Jump if A >= 128
 C $AF2B,1 A += E
 C $AF2C,3 Jump
+@ $AF2F label=dh_af2f
 C $AF2F,1 A += E
 C $AF30,2 Jump if no carry
+@ $AF32 label=dh_af32
 C $AF32,3 Call draw_object_left_helicopter_entrypt
 C $AF35,3 Jump over next CALL
+@ $AF38 label=dh_af38
 C $AF38,3 Call draw_object_right_helicopter_entrypt
+@ $AF3B label=dh_af3b
 C $AF3B,2 Restore DE, BC
 C $AF3D,4 Self modify 'LD A,x' @ #R$93C0 to load 0
-C $AF41,3 HL = &n_hazards
+C $AF41,3 Load address of n_hazards
 C $AF44,1 (*HL)--
 C $AF45,1 Restore HL
 C $AF46,1 Return if zero
@@ -7354,6 +7374,7 @@ C $AF47,1 A = *HL
 C $AF48,4 Jump if A == B
 C $AF4C,3 Self modify 'LD HL' @ #R$AECF to load HL
 C $AF4F,1 Return
+@ $AF50 label=dh_af50
 C $AF50,3 A = IX[3]
 C $AF53,3 Self modify 'LD A,x' @ #R$B029 to load A
 C $AF56,1 Set flags
@@ -7364,36 +7385,42 @@ C $AF60,3 Jump if non-zero
 C $AF63,5 Jump if A >= 128
 C $AF68,1 A = E
 C $AF69,3 Jump
+@ $AF6C label=dh_af6c
 C $AF6C,1 A = E
 C $AF6D,2 -- checking result of test at #R$AF56?
+@ $AF6F label=dh_draw_left
 C $AF6F,3 Call draw_object_left_helicopter_entrypt
 C $AF72,3 Jump
+@ $AF75 label=dh_draw_right
 C $AF75,3 Call draw_object_right_helicopter_entrypt
+@ $AF78 label=dh_done_draw_object
 C $AF78,3 Read A from 'LD D,x' @ #R$933D
 C $AF7B,3 Self modify 'LD A,x' @ #R$B023
 C $AF7E,3 Get smash_level
 C $AF81,4 Jump if A >= 5
 C $AF85,3 A = x in 'LD A,x' @ #R$AFFB
 C $AF88,5 Jump if A >= 4
-C $AF8D,1 Double A
+C $AF8D,1 Double A to make it an index
 C $AF8E,3 BC = A
 C $AF91,4 HL = #R$CDEC + BC
 N $AF95 I see this getting hit only when in smash mode.
-C $AF95,3 BC = wordat(HL)
-C $AF98,3 -> floating_arrow_big_defn (incl. "HERE!")
-C $AF9B,3 Call plotting func TBD
+C $AF95,1 Load x offset
+C $AF96,1 Advance
+C $AF97,1 Load y offset
+C $AF98,3 Address of floating_arrow_big_defn (incl. "HERE!")
+C $AF9B,3 Call dh_draw_hl_setup
 @ $AF9E label=dh_smash_level
 C $AF9E,3 Get smash_level
 C $AFA1,4 Jump if it's < 4
-C $AFA5,4 A = (A - 4) * 4 ?
-C $AFA9,1 Bank
+C $AFA5,4 Compute (smash_level - 4) * 4
+C $AFA9,1 Bank result
 C $AFAA,3 A = x in 'LD A,x' @ #R$AFFB
 C $AFAD,1 *= 2
 C $AFAE,3 DE = A
-C $AFB1,4 HL = #R$CE00 + DE  -- table?
+C $AFB1,4 HL = #R$CE00 + DE  -- index smoke_offsets
 C $AFB5,3 BC = wordat(HL); HL++
 C $AFB8,1 Unbank
-C $AFB9,1 E = A   this must be a distance value?
+C $AFB9,1 E = A  -- this must be a distance value?
 C $AFBA,3 Load address of table of car-on-fire LODs (six entries long)
 C $AFBD,5 Take half-rate counter_C (counts 0/1/2/3) and make it 0/1/0/1 (this is the animation frame)
 C $AFC2,3 Double it so it's a table offset
@@ -7413,8 +7440,10 @@ C $AFDA,2 Jump if so (draw 2 lots)
 N $AFDC Otherwise draw all 3 lots.
 C $AFDC,3 Smoke data
 C $AFDF,3 Call #R$AFF1
+@ $AFE2 label=dh_draw_smoke_2
 C $AFE2,3 Smoke data
 C $AFE5,3 Call #R$AFF1
+@ $AFE8 label=dh_draw_smoke_3
 C $AFE8,3 Smoke data
 C $AFEB,3 Call #R$AFF1
 C $AFEE,3 Continue
@@ -7448,7 +7477,7 @@ C $B018,3 Point #REGhl at smoke_defns
 N $B01B Similar code to $AA19 (in dust/stones code). Does plotting.
 @ $B01B label=dh_draw
 C $B01B,1 HL += DE  -- find graphic definition entry
-N $B01C HL -> graphic definition
+N $B01C B,C = x,y offset/position? HL -> graphic definition
 @ $B01C label=dh_draw_hl_setup
 C $B01C,1 Fetch byte width
 C $B01D,6 Multiply it by 8 yielding the pixel width
@@ -7471,19 +7500,19 @@ C $B03E,2 Jump if carry
 C $B040,1 Add pixel width
 C $B041,3 Exit via draw_object_left_helicopter_entrypt if carry
 C $B044,1 Otherwise return
-w $B045 Hero car's jump table
-D $B045 This is a table of 10 values used when the hero car jumps. The first byte of the entry is used to make the car move vertically (by self modifying #R$B5AA). The second byte is used to change the pitch of the car where level/up/down = 0/3/6 (by self modifying #R$B5AF). Used by #R$B968.
+b $B045 Hero car's jump table
+D $B045 This is a table of 10 values used when the hero car jumps. The first byte of each entry is used to change the pitch of the car, where level/up/down = 0/3/6 (by self modifying #R$B5AF). The second byte of the entry is a delta used to make the car move vertically (by self modifying #R$B5AA). Used by #R$B968.
 @ $B045 label=hero_car_jump_table
-W $B045,2,2 Delta  13, Pitch Up
-W $B047,2,2 Delta  10, Pitch Up
-W $B049,2,2 Delta   7, Pitch Up
-W $B04B,2,2 Delta   4, Pitch Up
-W $B04D,2,2 Delta   2, Pitch Level
-W $B04F,2,2 Delta  -2, Pitch Level
-W $B051,2,2 Delta  -4, Pitch Down
-W $B053,2,2 Delta  -7, Pitch Down
-W $B055,2,2 Delta -10, Pitch Down
-W $B057,2,2 Delta -13, Pitch Down
+B $B045,2,2 Pitch Up,    Delta  13
+B $B047,2,2 Pitch Up,    Delta  10
+B $B049,2,2 Pitch Up,    Delta   7
+B $B04B,2,2 Pitch Up,    Delta   4
+B $B04D,2,2 Pitch Level, Delta   2
+B $B04F,2,2 Pitch Level, Delta  -2
+B $B051,2,2 Pitch Down,  Delta  -4
+B $B053,2,2 Pitch Down,  Delta  -7
+B $B055,2,2 Pitch Down,  Delta -10
+B $B057,2,2 Pitch Down,  Delta -13
 w $B059 Sub-table (another byte pair)
 D $B059 Note: $B057 is used to refer to this table
 @ $B059 label=table_b059
@@ -9036,7 +9065,7 @@ C $BC3E,4 Point #REGhl at screen pixel (136,64). This is positioned halfway acro
 C $BC42,3 Point #REGhl' at backbuffer + 1 byte.
 C $BC45,4 Self modify #REGsp restore instruction
 N $BC49 A sequence that transfers 16 bytes
-@ $BC49 label=ds_loop
+@ $BC49 label=ds_loop_16bytes
 C $BC49,1 Point #REGsp at the back buffer
 C $BC4A,12 Pull in 16 bytes from the back buffer (order: AF' DE BC AF' DE' BC' IX IY), incrementing SP
 C $BC56,1 Point #REGsp at screen
@@ -9052,6 +9081,7 @@ C $BCBB,3 Loop if so
 C $BCBE,5 Advance back buffer pointer (backwards) by a half row?
 C $BCC3,5 Advance screen pointer (backwards) by half a row?
 N $BCC8 This is a similar sequence but only moves 14 bytes (not using IY)
+@ $BCC8 label=ds_loop_14bytes
 C $BCC8,1 Point #REGsp at the back buffer
 C $BCC9,23 Pull in 16 bytes from the back buffer (order: AF' DE BC AF' DE' BC' IX), incrementing SP
 C $BCE0,24 Transfer another 14 bytes (112 pixels)
@@ -9082,10 +9112,13 @@ C $BD70,3 Load the address of the first line of ground attributes (+ 31)
 C $BD73,3 Set the sky colour screen attributes (always black over bright cyan)
 C $BD76,2 If A was zero then jump (Z => sky, NZ => ground)
 C $BD78,4 Load the ground colour screen attributes (varies per level)
+@ $BD7D label=ds_bd7d
 C $BD7C,2 Point #REGsp at the screen attributes (DE = $FFE0 = -32)
 C $BD7E,15 Fill 30 bytes - length of attribute line minus the two blank edges
 C $BD8F,1 Move to next line of attributes
+@ $BD90 label=ds_bd90
 C $BD90,3 Save the address of the first line of ground attributes (+ 31)
+@ $BD93 label=ds_bd93
 C $BD93,6 Exit if sighted_flag is zero (flashing lights / smash mode)
 C $BD99,7 Jump if perp_caught_phase >= 3 (when car stops)
 N $BDA0 Set the smash meter attributes
@@ -9106,38 +9139,41 @@ c $BDC1 Clears screen then sets in-game attributes
 D $BDC1 Used by the routines at #R$8014, #R$858C and #R$87DC.
 @ $BDC1 label=clear_screen_set_attrs
 C $BDC1,3 Call clear_game_screen
-C $BDC4,13 Clear the game screen pixels to $FF (redoes similar work just done)
+C $BDC4,13 Clear the game screen pixels to $FF (bug: duplicates work just done)
 C $BDD1,12 Clear the game screen attributes to $28 (black over cyan) - first two rows only
 C $BDDD,6 Clear the next three rows to $68 (black over bright cyan)
 C $BDE3,9 Clear the next 11 rows to the current ground colour
+@ $BDF4 label=cssa_clear_edges_loop
 C $BDEC,14 Clear the edges of the game screen to black on black
 C $BDFA,1 Return
 c $BDFB Map reader
 D $BDFB Used by the routines at #R$8401, #R$852A and #R$873C.
 @ $BDFB label=read_map
+C $BDFB,1 Prepare to clear
 C $BDFC,3 Clear var_a23d
 C $BDFF,3 Clear var_a23c
 C $BE02,3 Clear allow_spawning
-C $BE05,3 HL = Address of fast_counter
-C $BE08,4 DE = speed
-C $BE0C,1 A = Bottom byte of speed
-C $BE0D,4 If speed < 255 then jump
-C $BE11,2 Preserve
-C $BE13,3 Call subfunction #R$BE1F  -- processing something twice as much when at high speed?
+C $BE05,3 Load address of fast_counter
+C $BE08,4 Load speed
+C $BE0C,1 Copy bottom byte of speed
+C $BE0D,4 If speed <= 255 then jump
+N $BE11 Otherwise we're going fast. This seems to cause the buffer to be processed twice as often as when in slow mode.
+C $BE11,2 Preserve registers over next call
+C $BE13,3 Call rm_cycle_buffer_offset/#R$BE1F
 C $BE16,2 Restore
-@ $BE18 label=rm_be18
-C $BE18,2 fast_counter += bottom byte of speed in A
-C $BE1A,2 A = 0  -- disallow car spawning
-C $BE1C,3 Jump to rm_inc_spawning if no carry
+@ $BE18 label=rm_check_speed
+C $BE18,2 Increment fast_counter by bottom byte of current speed
+C $BE1A,2 Set flag to disallow car spawning
+C $BE1C,3 Jump to rm_exit if fast_counter didn't carry (meaning we're going slow or have stopped)
 N $BE1F This entry point is used by the routine at #R$87DC.
 @ $BE1F label=rm_cycle_buffer_offset
 C $BE1F,1 Set #REGhl to address of road_buffer_offset
-C $BE20,3 Increment road_buffer_offset
-C $BE23,5 HL = $EE00 | (A + 95)  -- final byte of lanes data? or compensating for previous increment?
-C $BE28,7 var_a23c |= *HL
-C $BE2F,4 L += 32    -- offset 128
+C $BE20,3 Load, increment and update road_buffer_offset (wrapping around)
+C $BE23,5 HL = $EE00 | (A + 95)  -- calculate final byte of lanes data
+C $BE28,7 var_a23c |= *HL  -- final lanes byte
+C $BE2F,4 L += 32    -- offset 128... or 127?
 C $BE33,7 var_a23d |= *HL
-C $BE3A,4 L -= 96    -- offset 32
+C $BE3A,4 L -= 96    -- offset 32... or 31?
 N $BE3E -- CURVATURE --
 N $BE3E The top nibble of each byte is a counter. The bottom nibble is curvature data.
 C $BE3E,5 A = curvature_byte - 16
@@ -9419,7 +9455,7 @@ C $C07E,2 Jump to rm_hazard_continue
 N $C080 Could be any active hazard here.
 @ $C080 label=rm_active_hazard
 C $C080,4 A = IX[15] + 1
-C $C084,2 Jump to rm_c096 if zero
+C $C084,2 Jump to rm_decrement_distance if zero
 C $C086,3 IX[1]--   -- buffer offset/distance
 C $C089,3 Jump to rm_hazard_loop_continue if non-zero
 C $C08C,4 Mark the hazard entry unused
@@ -9429,18 +9465,19 @@ N $C093 Overtook a car.
 C $C093,1 Increment overtake counter
 C $C094,2 Jump to rm_hazard_loop_continue
 N $C096 This gets hit all the time when the road is moving... but not in attract mode! Perhaps perp specific?
-@ $C096 label=rm_c096
-C $C096,8 Decrement IX[1]  -- buffer offset/distance
-C $C09E,2 Jump to rm_c0b2 if carry (IX[1] was 0?)  -- 0 distance to perp
+@ $C096 label=rm_decrement_distance
+C $C096,8 Decrement the low byte of the distance
+C $C09E,2 If the decrement carried (went 0 -> 255) jump to rm_decrement_distance_high_byte
 C $C0A0,2 Jump to rm_hazard_loop_continue if non-zero
-C $C0A2,3 A = IX[17]  -- lane
+N $C0A2 Low byte of distance was zero.
+C $C0A2,3 Load distance high byte
 C $C0A5,3 Jump to rm_hazard_loop_continue if non-zero
-N $C0A8 This gets hit when you overtake the perp.
-C $C0A8,4 Set perp to be 1 away
-C $C0AC,4 IX[4] = 255
+N $C0A8 Both low and high bytes were zero - player has caught up with the perp. This will bump the perp forward so the player can never actually overtake them.
+C $C0A8,4 Set perp to be just one unit away
+C $C0AC,4 Set distance high byte to 255  -- how's that work?
 C $C0B0,2 Jump to rm_hazard_loop_continue
-@ $C0B2 label=rm_c0b2
-C $C0B2,7 IX[17]--  -- lane
+@ $C0B2 label=rm_decrement_distance_high_byte
+C $C0B2,7 Decrement the high byte of the distance
 C $C0B9,2 Jump to rm_hazard_loop_continue
 @ $C0BB label=rm_hazard_continue
 C $C0BB,2 A = <self modified>  -- Self modified by #R$A977 + #R$A9A0 only
@@ -9458,10 +9495,10 @@ N $C0D2 This seems to get hit in the dirt track section.
 C $C0D2,3 Loop to rm_c0ca while B != 0 (LDD sets P/V if BC != 0)
 C $C0D5,2 *++HL = 0  (since B is zero)
 @ $C0D7 label=rm_allow_car_spawning
-C $C0D7,2 A = 1
-@ $C0D9 label=rm_inc_spawning
+C $C0D7,2 Set flag to allow car spawning
+@ $C0D9 label=rm_exit
 C $C0D9,5 Increment allow_spawning by #REGa (which should be 0 or 1)
-C $C0DE,3 Exit via #R$AD0D
+C $C0DE,3 Exit via check_hazard_collisions/#R$AD0D
 c $C0E1 Set up the tunnel
 D $C0E1 Used by the routines at #R$8401, #R$852A and #R$873C.
 @ $C0E1 label=prepare_tunnel
@@ -11123,7 +11160,7 @@ C $CD77,2 Jump to bht_continue if zero (since multiply by zero is a no-op)
 C $CD79,3 Jump if positive
 N $CD7C Otherwise handle negative case.
 C $CD7C,5 E = -E; D = $FF  -- negate multiplier
-C $CD81,3 A = -C  -- negate muliplicand
+C $CD81,3 A = -C  -- negate multiplicand
 N $CD84 Multiplier.
 @ $CD84 label=bht_multiplier
 C $CD84,1 Throw sign bit away?
@@ -11197,8 +11234,9 @@ C $CDE2,1 Undo final doubling
 C $CDE3,8 Divide by 8 with rounding
 C $CDEB,1 Return
 b $CDEC Data block at CDEC
-@ $CDEC label=table_cdec
-W $CDEC,8,8
+@ $CDEC label=arrow_offsets
+B $CDEC,2,2 x,y
+B $CDEE,6,6
 w $CDF4 Pointers to car-on-fire LODs
 @ $CDF4 label=table_car_on_fire_LOD_ptrs
 W $CDF4,2,2 32x6, frame A
@@ -11207,9 +11245,9 @@ W $CDF8,2,2 32x11, frame A
 W $CDFA,2,2 32x11, frame B
 W $CDFC,2,2 32x16, frame A
 W $CDFE,2,2 32x16, frame B
-w $CE00 Data block at CE00
-@ $CE00 label=table_ce00
-W $CE00,12,12
+b $CE00 Data block at CE00
+@ $CE00 label=smoke_offsets
+B $CE00,12,2
 b $CE0C Smoke tables
 D $CE0C first byte of each of the following is a counter
 @ $CE0C label=smoke_ce0c
