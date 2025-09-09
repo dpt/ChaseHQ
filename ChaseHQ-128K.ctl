@@ -8,7 +8,8 @@
 > $4000 ; state. It also covers a lot of the 128K code too, but doesn't yet describe any
 > $4000 ; of the extra memory banks.
 > $4000 ;
-> $4000 ; Reverse engineering by David Thomas, 2023-2025.
+> $4000 ; Reverse engineering by David Thomas <dave@davespace.co.uk>, 2023-2025.
+> $4000 ; Sources live at <https://github.com/dpt/ChaseHQ>.
 > $4000 ;
 > $4000 ;
 > $4000 ; AUTHORS
@@ -342,8 +343,8 @@ b $5D1A [Stage 1] Per-stage difficulty settings
 B $5D1A,1,1 How often cars spawn. Lower values spawn cars more often.
 @ $5D1B label=smash_5d1b
 B $5D1B,1,1 Loaded by #R$A6A7. Used by perp_behaviour.
-@ $5D1C label=smash_5d1c
-B $5D1C,1,1 Loaded by #R$A759.
+@ $5D1C label=smash_perp_delay
+B $5D1C,1,1 Loaded by #R$A759. Delay between perp boosts or something?
 w $5D1D [Stage 1] Per-stage setup data
 @ $5D1D label=stage_set_up_data
 W $5D1D,2,2 road_pos
@@ -2743,7 +2744,7 @@ c $860F Animate the signal meters
 D $860F Used by the routine at #R$858C.
 N $860F Update the first meter.
 @ $860F label=animate_meters
-C $860F,3 Call rng
+C $860F,3 Fetch a random byte
 C $8612,1 Set flags
 C $8613,2 Self modified counter
 N $8615 Use sign of the random value to enlarge or reduce the apparent meter level.
@@ -2757,7 +2758,7 @@ C $8623,3 Self modify counter in #R$8613
 C $8626,3 Screen attribute (23,16)
 C $8629,3 Call am_set_attrs
 N $862C Update the second meter. Repeats the above.
-C $862C,3 Call rng
+C $862C,3 Fetch a random byte
 C $862F,1 Set flags
 C $8630,2 Self modified counter
 N $8632 Use sign of the random value to enlarge or reduce the apparent meter level.
@@ -3152,7 +3153,7 @@ C $8A16,1 Return if flag became non-zero
 @ $8A17 label=sfx_cornering_loop_outer
 C $8A17,1 Set inner loop counter
 @ $8A18 label=sfx_cornering_loop_inner
-C $8A18,3 Call rng
+C $8A18,3 Fetch a random byte
 C $8A1B,2 Mask off bit 4
 C $8A1D,2 If zero goto sfx_cornering_continue
 N $8A1F Delay for (24 - #REGd) iterations.
@@ -4487,6 +4488,7 @@ C $960E,3 Continue if it didn't roll over
 C $9611,4 Otherwise move to the next chunk of 128 scanlines (would put us outside the back buffer)
 C $9615,3 Loop back to psf_odd_continue
 c $9618 Random number generator
+D $9618 My tests show this has a period of 32,768.
 R $9618 O:A Random byte
 R $9618 O:HL Corrupted
 @ $9618 label=rng_seed
@@ -4753,7 +4755,7 @@ C $99F1,4 If byte != $FC then jump to pc_plot_character
 N $99F5 We have a three-way choice here.
 @ $99F5 label=pc_random_choice
 C $99F5,1 Preserve message data address
-C $99F6,3 Call rng - returns a random byte in #REGa
+C $99F6,3 Fetch a random byte
 C $99F9,1 Restore message data address
 C $99FA,4 If random value < $55 jump to pc_load_message_ptr -- a 33.3% chance
 C $99FE,2 Skip first option message
@@ -5679,7 +5681,7 @@ N $A188 +1 (byte) is the low byte of the distance from 'camera'. increments when
 N $A188 +2 (byte) is horizontal position (relative?)
 N $A188 +3 (byte) TBD
 N $A188 +4 (byte) TBD. seems to count fast while the perp is escaping. distance low-low byte?
-N $A188 +5 (byte) is horizontal position
+N $A188 +5 (byte) is horizontal position on the road (observed values: 5..216 left..right)
 N $A188 +6 (byte) TBD
 N $A188 +7 (byte) TBD used by hazard_hit, used in plotting, read by perp_behaviour, goes high when the perp is smashed into
 N $A188 +8 (byte) gets copied from the hazards table
@@ -5688,7 +5690,7 @@ N $A188 +11 (word) address of hit handler routine
 N $A188 +13 (word) horizontal position, e.g. $190. but if it's the perp we seem to use it as a byte.
 N $A188 +15 (byte) TBD used by hazard_hit, counter which gets set to 2 then reduced. $ff if unused. $80 for vehicles. 0+ for hazards.
 N $A188 +16 (byte) TBD
-N $A188 +17 (byte) TBD used by hazard_hit, indexes table #R$ACDB, set with a lane, seemingly a minimum lane (but not always). For the perp this is definitely the high byte of the distance.
+N $A188 +17 (byte) used by hazard_hit, indexes table #R$ACDB, set with a minimum lane. For the perp this is the high byte of the distance.
 N $A188 +18 (byte) TBD used by hazard_hit, set with a lane, likely current lane
 N $A188 +19 (byte) TBD used by hazard_hit
 @ $A188 label=hazard_0
@@ -5733,7 +5735,7 @@ B $A223,1,1 Stage number as shown on the scoreboard. Stored as ASCII.
 N $A224 0 => no helicopter 1 => moves to left 2 => bobs around in the air 3/4 => moves from left 5 => bobs around in the air
 @ $A224 label=helicopter_control
 B $A224,1,1 Set to 1 -> helicopter moves out to the left, gets set to zero. Set to 3/4 -> Helicopter moves in from left, gets set to five. #R$AAC6, #R$AB33 reads #R$AB96, #R$C013 writes
-@ $A225 label=stop_car_spawning
+@ $A225 label=dont_spawn_cars
 B $A225,1,1 Inhibits cars from spawning.
 @ $A226 label=correct_fork
 B $A226,1,1 Holds the correct direction to take at forks (1 => left, 2 => right).
@@ -5825,7 +5827,7 @@ B $A252,1,1 Locks out repeated gear changes. Counts down 3-2-1-0
 @ $A253 label=gear
 B $A253,1,1 0 => Low gear, 1 => High gear
 @ $A254 label=allow_spawning
-B $A254,1,1 If non-zero this permits cars, hazards and dust/stones to spawn. It can be 0, 1 or 2, depending on the hero car's speed. Returns to zero when the hero car is stopped.
+B $A254,1,1 If non-zero this permits cars, hazards and dust/stones to spawn. It can be 0, 1 or 2, depending on the hero car's speed. Reset to zero when the hero car is stopped.
 @ $A255 label=distance_bcd
 B $A255,2,2 Distance as BCD (2 bytes / 4 digits, little endian)
 @ $A257 label=var_a257
@@ -6296,13 +6298,14 @@ C $A685,3 Compare to IX[18]  -- compare to perp's lane
 C $A688,3 Jump if not equal - continue to next hazard
 N $A68B So the lanes match.
 C $A68B,2 Restore #REGiy pushed at #R$A650
-C $A68D,2 Jump to pb_a6d8
-@ $A68F label=pb_a68f
-C $A68F,2 A = <self modified>
-C $A691,3 Jump if non-zero
+C $A68D,2 Jump to pb_random_move
+@ $A68F label=pb_check_changing_lane_flag
+C $A68F,2 A = <self modified>  -- load "changing lane" flag that appears to be set to 1 when the perp changes lane
+C $A691,3 Jump to pb_check_lane if non-zero
+N $A694 Otherwise not changing lane?
 C $A694,3 Load buffer offset
-C $A697,4 Jump if A >= 7
-N $A69B I'm failing to understand what the following section does. It's a countdown that, when it hits zero, picks a new random countdown value summed with smash_5d1b. I can only think that it's a delay loop.
+C $A697,4 Jump to pb_check_lane if A >= 7
+N $A69B I'm failing to understand what the following section does. It's a countdown that, when it hits zero, picks a new random countdown value summed with smash_5d1b. I can only think that it's a delay loop between lane changes.
 N $A69B In-place decrementing counter.
 C $A69B,3 A = <self modified> - 1  -- Self modified below
 C $A69E,2 Jump to pb_update_counter if non-zero
@@ -6329,85 +6332,87 @@ C $A6CA,2 HL -= DE  -- includes previous
 C $A6CC,2 Jump to #R$A6CF if HL < 70
 C $A6CE,1 BC = $0101
 @ $A6CF label=pb_a6cf
-C $A6CF,3 A = IX[18]
-C $A6D2,3 Jump to pb_a6d8 if A == C
-C $A6D5,3 Jump to pb_a6f6 if A == B
-@ $A6D8 label=pb_a6d8
-C $A6D8,3 C = IX[18]
-C $A6DB,3 Call rng
-C $A6DE,1 C++
-C $A6DF,4 Jump if C positive
-C $A6E3,2 C -= 2
-@ $A6E5 label=pb_a6e5
-C $A6E5,1 A = C
+C $A6CF,3 Read current_lane
+C $A6D2,3 Jump to pb_random_move if A == C
+C $A6D5,3 Jump to pb_check_lane if A == B
+@ $A6D8 label=pb_random_move_left_or_right
+C $A6D8,3 Read current_lane
+C $A6DB,3 Fetch a random byte
+C $A6DE,1 Increment current_lane
+C $A6DF,4 Jump if random value is positive
+C $A6E3,2 Otherwise decrement current_lane (twice to counter earlier increment)
+@ $A6E5 label=pb_clamping
+C $A6E5,1 Copy current_lane
 C $A6E6,1 Set flags
-C $A6E7,2 C = 2
-C $A6E9,3 Jump if A is zero
-C $A6EC,4 Jump if A < 5
-C $A6F0,2 C = $FE
-@ $A6F2 label=pb_a6f2
-C $A6F2,1 A += C
-@ $A6F3 label=pb_a6f3
-C $A6F3,3 IX[18] = A
-@ $A6F6 label=pb_a6f6
-C $A6F6,3 C = IX[1]  -- buffer offset/distance
+C $A6E7,2 Delta = 2
+C $A6E9,3 Jump if current_lane is zero  -- new current_lane will be 2
+C $A6EC,4 Jump if A < 5  -- lane is reasonable?
+N $A6F0 Arrive here if the updated current_lane is >= 5.
+C $A6F0,2 Delta = -2  -- new current_lane will be 3+
+@ $A6F2 label=pb_change_lane_by_delta
+C $A6F2,1 Change A by delta
+@ $A6F3 label=pb_set_current_lane
+C $A6F3,3 Update current_lane
+@ $A6F6 label=pb_check_lane
+C $A6F6,3 Read buffer offset/distance
 C $A6F9,3 Call get_spawn_lanes
-C $A6FC,3 A = IX[18]
-C $A6FF,3 Jump to pb_a707 if A >= B  -- upper boundary?
-C $A702,2 A += 2
-C $A704,3 IX[18] = A
-@ $A707 label=pb_a707
-C $A707,5 Jump to #R$A711 if A <= C  -- lower boundary?
-C $A70C,2 A -= 2
-C $A70E,3 IX[18] = A
-@ $A711 label=pb_a711
-C $A711,3 A = IX[18]
-@ $A714 ssub=LD HL,table_a7e7 - 1
-C $A714,3 HL = $A7E6 -> #R$A7E7 data block
-C $A717,2 L += A
-C $A719,3 A = IX[5]
-C $A71C,1 A == *HL ?
-C $A71D,2 C = 1
-C $A71F,2 Jump if A == *HL
-C $A721,2 Jump if A < *HL
-C $A723,2 A -= 10
-C $A725,2 Jump if A was < 10
-C $A727,1 A == *HL ?
-C $A728,2 Jump if A >= *HL
-@ $A72A label=pb_a72a
-C $A72A,1 C--
-C $A72B,1 A = *HL
-C $A72C,2 Jump pb_a737
-@ $A72E label=pb_a72e
-C $A72E,2 A += 10
-C $A730,2 Jump if A+10 carried
-C $A732,1 A == *HL ?
-C $A733,2 Jump if A < *HL
-@ $A735 label=pb_a735
-C $A735,1 C--
-C $A736,1 A = *HL
-@ $A737 label=pb_a737
-C $A737,3 IX[5] = A
-C $A73A,4 Self modify 'LD A' @ #R$A68F to load C
-C $A73E,2 A = <self modified>
+C $A6FC,3 Read current_lane from IX[18]
+C $A6FF,3 Jump to pb_min_lane_set/#R$A707 if current_lane >= min_lane
+N $A702 Otherwise the (perp?) needs to move right to stay on the road.
+C $A702,2 Move right by two lanes [why two?]
+C $A704,3 Update current_lane
+@ $A707 label=pb_min_lane_set
+C $A707,5 Jump to pb_reread_current_lane/#R$A711 if current_lane <= max_lane
+N $A70C Otherwise the (perp?) needs to move left to stay on the road.
+C $A70C,2 Move left by two lanes
+C $A70E,3 Update current_lane
+N $A711 current_lane is 1/2/3/4
+@ $A711 label=pb_reread_current_lane
+C $A711,3 Re-read current_lane [not convinced this is required]
+@ $A714 ssub=LD HL,hazard_lanes - 1
+C $A714,5 Load address of hazard_lanes[current_lane]
+C $A719,4 Compare horizontal position IX[5] with table value
+N $A71D #REGc seems to be a flag that's 1 when changing lane and 0 otherwise. We seem to be bumping the position by +/-10.
+C $A71D,2 Set flag indicating we're changing lane
+@ $A71F label=pb_check_low
+C $A71F,4 Jump with C==1 if horizontal position <= table value  [is this meaning left or right?]
+C $A723,4 Jump with C==1 if horizontal position - 10 carried  -- at lower limit?
+C $A727,1 Compare with table value (again)
+C $A728,2 Jump with C==1 if (horizontal position - 10) was >= table value
+N $A72A Redundant code path; jump to pb_set_lane_from_table_2 instead.
+@ $A72A label=pb_set_lane_from_table_1
+C $A72A,1 Decrement 1 to 0 so we're not changing lane
+C $A72B,1 Read table value
+C $A72C,2 Jump to pb_set_horz_pos
+@ $A72E label=pb_check_high
+C $A72E,4 Jump with C==1 if horizontal position + 10 carried  -- at upper limit?
+C $A732,1 Compare with table value
+C $A733,2 Jump with C==1 if (horizontal position + 10) was < table value
+@ $A735 label=pb_set_lane_from_table_2
+C $A735,1 Decrement 1 to 0 so we're not changing lane
+C $A736,1 Read table value
+@ $A737 label=pb_set_horz_pos
+C $A737,3 Set horizontal position
+C $A73A,4 Self modify 'LD A' @ #R$A68F to load #REGc  -- changing lane flag will be 0 or 1
+C $A73E,2 A = <self modified>  -- delay counter
 C $A740,1 Set flags
-C $A741,3 DE = $1E
-C $A744,3 HL = $E6
-C $A747,2 Jump pb_a762 if non-zero
+C $A741,3 DE = $1E  -- multiplicand
+C $A744,3 HL = $E6  -- base
+C $A747,2 Jump pb_bypass if non-zero  -- bypasses all the delay stuff
 N $A749 Countdown+rng stuff again... as at #R$A69B
 N $A749 In-place decrementing counter.
 C $A749,3 A = <self modified> - 1  -- Self modified below
 C $A74C,3 Self modify 'LD A,x' @ #R$A749 (above) to load A
 C $A74F,2 Jump to pb_a776 if non-zero
 N $A751 When it hits zero we pick a random number...
-C $A751,1 Preserve HL [what's in it?]
-C $A752,3 Call rng
+C $A751,1 Preserve HL [always holding $E6?]
+C $A752,3 Fetch a random byte
 C $A755,1 Restore HL
-C $A756,3 C = (result of rng) & 15
-C $A759,4 A = smash_5d1c + C
+C $A756,7 A = smash_perp_delay + (random value) & 15  -- perhaps a base delay plus random factor
 C $A75D,3 Self modify 'LD A,x' @ #R$A749 (above) to load A
-C $A760,2 A = 10
-@ $A762 label=pb_a762
+C $A760,2 A = 10  -- reset the delay loop
+N $A762 Count down outer delay loop.
+@ $A762 label=pb_bypass
 C $A762,1 A--
 C $A763,3 Self modify 'LD A,x' @ #R$A73E (above) to load A
 C $A766,2 Jump to pb_a776 if zero
@@ -6415,19 +6420,19 @@ N $A768 sampled IX = $A188 (hazards)
 C $A768,3 A = IX[1]  -- load hazard_1 distance byte / buffer offset
 C $A76B,4 Jump if A >= 13 -- too far
 N $A76F Distance to perp is 12 or less.
-N $A76F HL += (15 - A) * DE
+N $A76F HL += (13 - A) * DE    HL is 230, DE is 30
 N $A76F This seems to be using the distance to the perp as a scale by which to adjust its horizontal position.
-C $A76F,4 B = (15 - A)  -- iterations
-@ $A773 label=pb_a773_loop
-C $A773,1 HL += DE
-C $A774,2 Loop to loop_a773 while #REGb > 0
+C $A76F,4 B = (13 - A)  -- iterations
+@ $A773 label=pb_mult_loop
+C $A773,1 HL += 30
+C $A774,2 Loop while #REGb > 0
 @ $A776 label=pb_a776
 C $A776,5 A = IX[1] - 6  -- load hazard_1 distance byte / buffer offset again
 C $A77B,2 Jump to pb_store_exit if A >= 6
 N $A77D Distance to perp is 5 or less.
 C $A77D,2 Put back most of what we just subtracted
 C $A77F,3 Multiply by 8
-N $A782 And then we do nothing with #REGa?
+N $A782 Bug? And then we do nothing with #REGa...
 C $A782,1 HL += DE
 @ $A783 label=pb_store_exit
 C $A783,6 wordat(IX + 13) = HL  -- store horizontal position (or accel?)
@@ -6441,26 +6446,26 @@ C $A793,2 A -= 3  -- 0..
 C $A795,1 Bank
 C $A796,3 Load turbo boost time remaining (60..0)
 C $A799,1 Set flags
-C $A79A,2 200 when not turbo boosting
-C $A79C,2 Jump if no turbo boost
-C $A79E,2 230 when turbo boosting
-@ $A7A0 label=pb_a7a0
-C $A7A0,1 Bank value chosen from boost; Unbank other
+C $A79A,2 200 when not boosting
+C $A79C,2 Jump if not boosting
+C $A79E,2 230 when boosting
+@ $A7A0 label=pb_not_boosting
+C $A7A0,1 Bank value chosen; Unbank other [which is?]
 C $A7A1,3 Call scenery_hit
-C $A7A4,3 Read #REGhl from 'LD BC,x' @ #R$B32E
-C $A7A7,4 HL += 40
+C $A7A4,3 Read #REGhl from 'LD BC,x' @ #R$B32E  -- a value set when crashed
+C $A7A7,4 Add 40 to it
 C $A7AB,3 Self modify 'LD BC,x' @ #R$B32E
-C $A7AE,2 D = 0  -- bonus middle digit
-C $A7B0,1 -- restore A which holds the IX[7] flags from earlier AND FLAGS TOO
-C $A7B1,4 Put a call to smash on the stack
+C $A7AE,2 Zero bonus middle digit
+C $A7B0,1 Restore #REGa which holds IX[7] and flags from earlier
+C $A7B1,4 Put a call to 'smash' on the stack
 C $A7B5,2 Jump if no carry
 C $A7B7,4 Jump if A == 2
 C $A7BB,1 Put another call to smash on the stack
 N $A7BC Break?
-C $A7BC,2 D = 4  -- bonus middle digit
+C $A7BC,2 Set bonus middle digit to 4
 @ $A7BE label=pb_a7be
-C $A7BE,5 D = wanted_stage_number + D  (D could be 0 or 4)
-C $A7C3,2 E = 0  -- bonus top digit(s)
+C $A7BE,5 Add wanted_stage_number to #REGd (could be 0 or 4)
+C $A7C3,2 Zero bonus top digit(s)
 C $A7C5,6 Jump if retry_count is zero
 C $A7CB,1 Middle digit(s) of bonus
 C $A7CC,1 Set top two digits of bonus
@@ -6469,49 +6474,55 @@ C $A7D1,1 Set middle digits of bonus
 @ $A7D2 label=pb_retry_was_zero
 C $A7D2,1 Clear low digits of bonus
 C $A7D3,3 Call add_bonus
-C $A7D6,2 A = 5
-C $A7D8,3 Self modify 'LD A' @ #R$A73E to load A
+C $A7D6,2 Set delay to 5 turns?
+C $A7D8,3 Self modify 'LD A' @ #R$A73E to load A  -- delay counter
 C $A7DB,3 Point #REGhl at smash_chatter ("BEAR DOWN" / "OH MAN" / etc.)
 C $A7DE,3 Call start_chatter (priority 5)
 C $A7E1,3 Effect 3 (car crash), Priority 1
 C $A7E4,3 Exit via start_sfx
-b $A7E7 Data block at A7E7
-D $A7E7 This seems to be lane movement related.
-@ $A7E7 label=table_a7e7
-B $A7E7,12,8,4
+b $A7E7 Horizontal positions of lanes
+D $A7E7 Three groups of four horizontal position values. Indexed by lane number [0..3]. Offset +4 is used when spawning cars before the perp is sighted. Offset +8 is used when sighted.
+@ $A7E7 label=hazard_lanes
+B $A7E7,4,4 positions the perp will align with
+B $A7EB,4,4 used when perp has not been sighted
+B $A7EF,4,4 used when perp is sighted
+> $A7F3 ; a7f0, a7f1, a7ec, a7ef is used by $a875
+> $A7F3 ; a7ea by $A866
 c $A7F3 Spawns cars
 D $A7F3 Used by the routines at #R$8401 and #R$852A.
-N $A7F3 Return without spawning anything if perp_caught_phase is > 0 or the stop_car_spawning flag is set.
+N $A7F3 Return without spawning anything if perp_caught_phase is non-zero or the dont_spawn_cars flag is set.
 @ $A7F3 label=spawn_cars
-C $A7F3,4 Load perp_caught_phase into #REGc
-C $A7F7,3 Load stop_car_spawning
-C $A7FA,1 OR them together
-C $A7FB,1 Return if either is set
-N $A7FC Return without spawning anything if allow_spawning is zero.
+C $A7F3,4 Load perp_caught_phase as #REGc
+C $A7F7,3 Load dont_spawn_cars as #REGa
+C $A7FA,1 Merge them together
+C $A7FB,1 Return if either has set bits
+N $A7FC Return without spawning anything if allow_spawning is false.
 C $A7FC,3 Load allow_spawning
-C $A7FF,2 Return if it's not set
-N $A801 Reduce the spawn delay by the value of allow_spawning (1 or 2).
-C $A801,4 A = <self modified> - allow_spawning
-C $A805,3 Self modify above
+C $A7FF,2 Return if it's zero
+N $A801 Reduce inline spawn delay counter by the value of allow_spawning (1 or 2 here).
+C $A801,4 A = <self modified counter> - allow_spawning
+C $A805,3 Self modify above ADD instruction
 C $A808,1 Return unless counter hits zero
 N $A809 Start spawning cars.
-C $A809,6 Call rng and take the bottom four bits of the result. Put it in #REGc
+C $A809,3 Fetch a random byte
+C $A80C,2 Take the bottom four bits of the result
+C $A80E,1 Put it in #REGc
 C $A80F,4 Load and test sighted_flag
 C $A813,3 Load the current stage's car_spawn_delay
-C $A816,2 Jump (don't boost) if sighted_flag was zero
+C $A816,2 Jump (don't boost the spawn delay) if sighted_flag was zero
 N $A818 Perp was sighted so boost the spawn delay.
 @ $A818 label=sc_boost
 C $A818,2 Boost spawn delay by 25
-@ $A81A label=sc_set_spawn
+@ $A81A label=sc_set_spawn_delay
 C $A81A,1 Add random factor (0..15) in #REGc to delay
-C $A81B,3 Self modify spawn delay above
-N $A81E ....
-C $A81E,3 B = 5 iterations; C = flags initialised to zero
+C $A81B,3 Self modify spawn delay counter above
+N $A81E Now walk the hazards array to find an unused slot.
+C $A81E,3 #REGb = 5 iterations; #REGc = flags initialised to zero
 C $A821,4 Point #REGix at hazards[1]
 C $A825,3 Stride of hazards is 20 bytes
 @ $A828 label=sc_find_unused_hazard_loop
-C $A828,6 If the hazard is not used jump to sc_fill_in
-C $A82E,3 Read IX[15]. Top bit set for vehicles.
+C $A828,6 If hazard is unused jump to sc_fill_in
+C $A82E,3 Read IX[15]. Top bit is set for vehicles
 C $A831,4 If the top bit is clear then it's not a vehicle, continue to next hazard
 C $A835,2 Shift is-a-vehicle flag into #REGc
 @ $A837 label=sc_continue
@@ -6529,23 +6540,24 @@ C $A845,3 Point #REGhl at hazard_template
 C $A848,2 Copy hazard_template
 N $A84A Choose a lane in which to spawn the hazard.
 C $A84A,2 Buffer offset of 20 for get_spawn_lanes
-C $A84C,3 Call get_spawn_lanes to get valid spawning positions (B = min, C = max?)
+C $A84C,3 Call get_spawn_lanes to get valid spawning positions (B,C = min,max)
 C $A84F,6 lane = (rng() & 3) + min
 C $A855,4 If lane >= max lane = max
 @ $A859 label=sc_set_lane
 C $A859,3 IX[17] = lane
-C $A85C,3 IX[18] = lane  -- seems to be current lane
-@ $A85F ssub=LD HL,table_a7e7 - 1
-C $A85F,8 A = $A7E6[A]
-C $A867,3 IX[5] = A
+C $A85C,3 IX[18] = lane  -- seems to be current lane (1..4 ?)
+@ $A85F ssub=LD HL,hazard_lanes - 1
+C $A85F,8 Read hazard_lanes[current_lane - 1]
+C $A867,3 Set horizontal position
 C $A86A,3 Load sighted_flag
 C $A86D,1 Set flags
-C $A86E,2 A = 4
-C $A872,1 A <<= 1
-@ $A873 label=sc_a873
-C $A873,2 HL += A
-C $A875,4 IX[13] = *HL
-C $A879,3 Call rng
+C $A86E,2 Set offset to 4  -- not sighted
+C $A870,2 Jump if not sighted
+C $A872,1 Double offset to 8  -- sighted
+@ $A873 label=sc_have_offset
+C $A873,2 Add offset to hazard_lanes base address (#REGb still zero)
+C $A875,4 Set horizontal position from table
+C $A879,3 Fetch a random byte
 C $A87C,3 C = A & 6
 C $A87F,3 Load sighted_flag
 C $A882,1 Set flags
@@ -6591,7 +6603,7 @@ c $A8CD Hazard handler routine?
 D $A8CD Triggered at road fork.
 @ $A8CD label=hazard_handler
 C $A8CD,6 Jump if perp_caught_phase > 0
-C $A8D3,6 Check stop_car_spawning flag
+C $A8D3,6 Check dont_spawn_cars flag
 @ $A8D9 label=hzh_perp_caught_or_no_car_spawning
 C $A8D9,4 IX[14] = $01  -- horizontal position or accel?
 C $A8DD,4 IX[13] = $FF
@@ -6607,8 +6619,8 @@ C $A8F0,8 If A > C IX[18] = C  -- set max lane if over
 C $A8F8,3 Read back the chosen lane
 C $A8FB,5 Jump to #R$A926 if A == IX[17]  -- lanes equal, no movement choice to be made?
 C $A900,2 shift out?
-@ $A902 ssub=LD HL,table_a7e7 - 1
-C $A902,3 HL = $A7E6 -> #R$A7E7 data block (1-indexed)
+@ $A902 ssub=LD HL,hazard_lanes - 1
+C $A902,3 HL = $A7E6 -> #R$A7E7 table (1-indexed)
 C $A905,1 C = A  -- copy chosen lane to C
 C $A906,2 Compute HL[A]
 N $A908 breakpoint hit here seemingly when the right hand side narrows and there's a barrier
@@ -6655,10 +6667,10 @@ D $A955 Used by the routines at #R$8401 and #R$852A.
 C $A955,5 Return if on_dirt_track is zero
 C $A95A,5 Return if allow_spawning is zero
 C $A95F,3 Point #REGde at (something above the stack)
-C $A962,3 Call rng
+C $A962,3 Fetch a random byte
 @ $A96C label=cdas_store
 C $A965,8 Store 1 (stone) if it's +ve or zero, or 2 (dirt) if it's -ve
-C $A96D,3 Call rng [could be a position?]
+C $A96D,3 Fetch a random byte [could be a position?]
 C $A970,2 Store that random byte
 C $A972,5 Self modify 'LD A' @ #R$A97E to load 1
 C $A977,3 Self modify 'LD A' @ #R$C0BB to load 1
@@ -9400,7 +9412,7 @@ C $C011,5 Otherwise helicopter_control = A - 11
 C $C016,2 Jump to rm_do_restart
 N $C018 Handle car spawning commands (13/14 = enable/disable car spawning).
 @ $C018 label=rm_hazards_spawning_command
-C $C018,5 stop_car_spawning = A - 10  (13/14 in map data)
+C $C018,5 dont_spawn_cars = A - 10  (13/14 in map data)
 C $C01D,2 Jump to rm_do_restart
 N $C01F Handle floating arrow commands (10/11/12 = off/left/right).
 @ $C01F label=rm_hazards_set_arrow_command
