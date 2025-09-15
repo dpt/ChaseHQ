@@ -337,7 +337,7 @@ W $5D10,2,2 Address of LODs for car (perp's car).
 W $5D12,2,2 Address of LODs for lambo.
 W $5D14,2,2 Address of LODs for truck.
 W $5D16,2,2 Address of LODs for lambo (again).
-W $5D18,2,2 Address of LODs for car (generic car).
+W $5D18,2,2 Address of LODs for car (generic car - must match the perp's car; not spawned once perp is seen).
 b $5D1A [Stage 1] Per-stage difficulty settings
 @ $5D1A label=car_spawn_delay
 B $5D1A,1,1 How often cars spawn. Lower values spawn cars more often.
@@ -2744,7 +2744,7 @@ c $860F Animate the signal meters
 D $860F Used by the routine at #R$858C.
 N $860F Update the first meter.
 @ $860F label=animate_meters
-C $860F,3 Fetch a random byte
+C $860F,3 Generate a random byte
 C $8612,1 Set flags
 C $8613,2 Self modified counter
 N $8615 Use sign of the random value to enlarge or reduce the apparent meter level.
@@ -2758,7 +2758,7 @@ C $8623,3 Self modify counter in #R$8613
 C $8626,3 Screen attribute (23,16)
 C $8629,3 Call am_set_attrs
 N $862C Update the second meter. Repeats the above.
-C $862C,3 Fetch a random byte
+C $862C,3 Generate a random byte
 C $862F,1 Set flags
 C $8630,2 Self modified counter
 N $8632 Use sign of the random value to enlarge or reduce the apparent meter level.
@@ -3153,7 +3153,7 @@ C $8A16,1 Return if flag became non-zero
 @ $8A17 label=sfx_cornering_loop_outer
 C $8A17,1 Set inner loop counter
 @ $8A18 label=sfx_cornering_loop_inner
-C $8A18,3 Fetch a random byte
+C $8A18,3 Generate a random byte
 C $8A1B,2 Mask off bit 4
 C $8A1D,2 If zero goto sfx_cornering_continue
 N $8A1F Delay for (24 - #REGd) iterations.
@@ -4755,7 +4755,7 @@ C $99F1,4 If byte != $FC then jump to pc_plot_character
 N $99F5 We have a three-way choice here.
 @ $99F5 label=pc_random_choice
 C $99F5,1 Preserve message data address
-C $99F6,3 Fetch a random byte
+C $99F6,3 Generate a random byte
 C $99F9,1 Restore message data address
 C $99FA,4 If random value < $55 jump to pc_load_message_ptr -- a 33.3% chance
 C $99FE,2 Skip first option message
@@ -6337,7 +6337,7 @@ C $A6D2,3 Jump to pb_random_move if A == C
 C $A6D5,3 Jump to pb_check_lane if A == B
 @ $A6D8 label=pb_random_move_left_or_right
 C $A6D8,3 Read current_lane
-C $A6DB,3 Fetch a random byte
+C $A6DB,3 Generate a random byte
 C $A6DE,1 Increment current_lane
 C $A6DF,4 Jump if random value is positive
 C $A6E3,2 Otherwise decrement current_lane (twice to counter earlier increment)
@@ -6406,7 +6406,7 @@ C $A74C,3 Self modify 'LD A,x' @ #R$A749 (above) to load A
 C $A74F,2 Jump to pb_a776 if non-zero
 N $A751 When it hits zero we pick a random number...
 C $A751,1 Preserve HL [always holding $E6?]
-C $A752,3 Fetch a random byte
+C $A752,3 Generate a random byte
 C $A755,1 Restore HL
 C $A756,7 A = smash_perp_delay + (random value) & 15  -- perhaps a base delay plus random factor
 C $A75D,3 Self modify 'LD A,x' @ #R$A749 (above) to load A
@@ -6500,11 +6500,11 @@ N $A7FC Return without spawning anything if allow_spawning is false.
 C $A7FC,3 Load allow_spawning
 C $A7FF,2 Return if it's zero
 N $A801 Reduce inline spawn delay counter by the value of allow_spawning (1 or 2 here).
-C $A801,4 A = <self modified counter> - allow_spawning
+C $A801,4 Calculate <self modified counter> - allow_spawning
 C $A805,3 Self modify above ADD instruction
-C $A808,1 Return unless counter hits zero
+C $A808,1 Return unless counter hits zero (adding positive delay counter to negative #REGa will normally carry)
 N $A809 Start spawning cars.
-C $A809,3 Fetch a random byte
+C $A809,3 Generate a random byte
 C $A80C,2 Take the bottom four bits of the result
 C $A80E,1 Put it in #REGc
 C $A80F,4 Load and test sighted_flag
@@ -6517,7 +6517,7 @@ C $A818,2 Boost spawn delay by 25
 C $A81A,1 Add random factor (0..15) in #REGc to delay
 C $A81B,3 Self modify spawn delay counter above
 N $A81E Now walk the hazards array to find an unused slot.
-C $A81E,3 #REGb = 5 iterations; #REGc = flags initialised to zero
+C $A81E,3 #REGb = 5 iterations; #REGc = is-a-vehicle flags initialised to zero
 C $A821,4 Point #REGix at hazards[1]
 C $A825,3 Stride of hazards is 20 bytes
 @ $A828 label=sc_find_unused_hazard_loop
@@ -6529,45 +6529,57 @@ C $A835,2 Shift is-a-vehicle flag into #REGc
 C $A837,2 Advance to next hazard
 C $A839,2 Loop to sc_loop while #REGb > 0
 C $A83B,1 Return
-N $A83C This might be checking for three cars or more on-screen and giving up in that case.
+N $A83C Don't spawn if there are three or more cars already on-screen.
 @ $A83C label=sc_fill_in
-C $A83C,2 Test bit 2 of flags
-C $A83E,1 Return if set
-N $A83F Copy template hazard across.
+C $A83C,3 Return if bit 2 of flags is set
+N $A83F Copy template hazard to unused slot.
 C $A83F,3 Copy destination address to #REGde so we can LDIR
 C $A842,3 Size of hazard is 20 bytes
 C $A845,3 Point #REGhl at hazard_template
 C $A848,2 Copy hazard_template
-N $A84A Choose a lane in which to spawn the hazard.
+N $A84A Select a random lane in which to spawn the hazard.
 C $A84A,2 Buffer offset of 20 for get_spawn_lanes
-C $A84C,3 Call get_spawn_lanes to get valid spawning positions (B,C = min,max)
-C $A84F,6 lane = (rng() & 3) + min
-C $A855,4 If lane >= max lane = max
+C $A84C,3 Call get_spawn_lanes to get valid spawning positions (#REGb,#REGc = min,max)
+N $A84F Clamp new lane to minimum. -- lane = (rng() & 3) + min
+C $A84F,3 Generate a random byte
+C $A852,2 Take the bottom two bits of the result
+C $A854,1 Add to minimum lane, result is new lane
+N $A855 Clamp new lane to maximum. -- if lane >= max lane = max
+C $A855,1 Compare new lane to maximum lane
+C $A856,2 Jump if less than or equal
+C $A858,1 Otherwise set to maximum lane
 @ $A859 label=sc_set_lane
-C $A859,3 IX[17] = lane
-C $A85C,3 IX[18] = lane  -- seems to be current lane (1..4 ?)
+C $A859,3 Set IX[17] to new lane
+C $A85C,3 Set IX[18] to new lane  [but what's the difference between the two?]
+N $A85F Read hazard_lanes[current_lane - 1].
 @ $A85F ssub=LD HL,hazard_lanes - 1
-C $A85F,8 Read hazard_lanes[current_lane - 1]
-C $A867,3 Set horizontal position
-C $A86A,3 Load sighted_flag
-C $A86D,1 Set flags
-C $A86E,2 Set offset to 4  -- not sighted
+C $A85F,3 Load address of #R$A7E7 table (but start a byte earlier so it's 1-indexed)
+C $A862,4 ....
+C $A866,1 Load horizontal position from table
+C $A867,3 Set new horizontal position
+C $A86A,4 Load and test sighted_flag
+C $A86E,2 Set offset to 4 by default
 C $A870,2 Jump if not sighted
-C $A872,1 Double offset to 8  -- sighted
+C $A872,1 Double offset to 8 if sighted
 @ $A873 label=sc_have_offset
-C $A873,2 Add offset to hazard_lanes base address (#REGb still zero)
+C $A873,2 Add offset to hazard_lanes base address (#REGb is zero)
 C $A875,4 Set horizontal position from table
-C $A879,3 Fetch a random byte
-C $A87C,3 C = A & 6
-C $A87F,3 Load sighted_flag
-C $A882,1 Set flags
-C $A885,2 A = 6
-C $A88A,2 C--
-@ $A88C label=sc_a88c
-C $A88C,2 B = 0
-C $A88E,3 HL = &lods_vehicles (first of the generic car LODs)
-C $A891,1 HL += BC
-C $A892,9 wordat(IX+9) = HL
+N $A879 Now pick a random car LOD to show.
+C $A879,3 Generate a random byte from which to create a LOD index
+C $A87C,2 Mask off two bits (giving a valid array index of 0/2/4/6)
+C $A87E,1 Copy to #REGc
+N $A87F If we've sighted the perp then don't spawn any generic cars (index 6) since they look just like the perp's. Instead spawn index 4.
+C $A87F,4 Load and test sighted_flag
+C $A883,2 Jump if not sighted - use the random index
+C $A885,2 If sighted set #REGa to 6 (generic car)
+C $A887,1 Compare with masked random byte
+C $A888,2 Jump to sc_set_lod if different
+C $A88A,2 Decrement the masked random byte (6 -> 4)
+@ $A88C label=sc_set_lod
+C $A88C,2 Clear #REGb so we can index using #REGbc
+C $A88E,3 Load address of lods_vehicles (first of the generic car LODs)
+C $A891,1 Index array
+C $A892,9 Set hazard's LOD address to #REGhl (IX+9)
 C $A89B,1 Return
 c $A89C Returns the range of lanes that cars or hazards should spawn within
 D $A89C Returning (1,1) means that cars will only spawn in the leftmost lane; returning (3,4) makes them spawn in the third or fourth lane; and so on.
@@ -6667,10 +6679,10 @@ D $A955 Used by the routines at #R$8401 and #R$852A.
 C $A955,5 Return if on_dirt_track is zero
 C $A95A,5 Return if allow_spawning is zero
 C $A95F,3 Point #REGde at (something above the stack)
-C $A962,3 Fetch a random byte
+C $A962,3 Generate a random byte
 @ $A96C label=cdas_store
 C $A965,8 Store 1 (stone) if it's +ve or zero, or 2 (dirt) if it's -ve
-C $A96D,3 Fetch a random byte [could be a position?]
+C $A96D,3 Generate a random byte [could be a position?]
 C $A970,2 Store that random byte
 C $A972,5 Self modify 'LD A' @ #R$A97E to load 1
 C $A977,3 Self modify 'LD A' @ #R$C0BB to load 1
