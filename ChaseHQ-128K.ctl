@@ -6375,8 +6375,8 @@ C $A719,4 Compare horizontal position IX[5] with table value
 N $A71D #REGc seems to be a flag that's 1 when changing lane and 0 otherwise. We seem to be bumping the position by +/-10.
 C $A71D,2 Set flag indicating we're changing lane
 @ $A71F label=pb_check_low
-C $A71F,4 Jump with C==1 if horizontal position <= table value  [is this meaning left or right?]
-C $A723,4 Jump with C==1 if horizontal position - 10 carried  -- at lower limit?
+C $A71F,4 Jump with C==1 if horizontal position <= table value [is this meaning left or right?]
+C $A723,4 Jump with C==1 if horizontal position - 10 carried -- at lower limit?
 C $A727,1 Compare with table value (again)
 C $A728,2 Jump with C==1 if (horizontal position - 10) was >= table value
 N $A72A Redundant code path; jump to pb_set_lane_from_table_2 instead.
@@ -6385,7 +6385,7 @@ C $A72A,1 Decrement 1 to 0 so we're not changing lane
 C $A72B,1 Read table value
 C $A72C,2 Jump to pb_set_horz_pos
 @ $A72E label=pb_check_high
-C $A72E,4 Jump with C==1 if horizontal position + 10 carried  -- at upper limit?
+C $A72E,4 Jump with C==1 if horizontal position + 10 carried -- at upper limit?
 C $A732,1 Compare with table value
 C $A733,2 Jump with C==1 if (horizontal position + 10) was < table value
 @ $A735 label=pb_set_lane_from_table_2
@@ -6496,7 +6496,7 @@ C $A7F3,4 Load perp_caught_phase as #REGc
 C $A7F7,3 Load dont_spawn_cars as #REGa
 C $A7FA,1 Merge them together
 C $A7FB,1 Return if either has set bits
-N $A7FC Return without spawning anything if allow_spawning is false.
+N $A7FC Return without spawning anything if allow_spawning is zero.
 C $A7FC,3 Load allow_spawning
 C $A7FF,2 Return if it's zero
 N $A801 Reduce inline spawn delay counter by the value of allow_spawning (1 or 2 here).
@@ -6509,10 +6509,10 @@ C $A80C,2 Take the bottom four bits of the result
 C $A80E,1 Put it in #REGc
 C $A80F,4 Load and test sighted_flag
 C $A813,3 Load the current stage's car_spawn_delay
-C $A816,2 Jump (don't boost the spawn delay) if sighted_flag was zero
-N $A818 Perp was sighted so boost the spawn delay.
-@ $A818 label=sc_boost
-C $A818,2 Boost spawn delay by 25
+C $A816,2 Jump if sighted_flag was zero (don't increase the spawn delay)
+N $A818 Perp was sighted so increase the spawn delay by 25.
+@ $A818 label=sc_increase_spawn_delay
+C $A818,2 Increase spawn delay by 25
 @ $A81A label=sc_set_spawn_delay
 C $A81A,1 Add random factor (0..15) in #REGc to delay
 C $A81B,3 Self modify spawn delay counter above
@@ -6539,22 +6539,21 @@ C $A845,3 Point #REGhl at hazard_template
 C $A848,2 Copy hazard_template
 N $A84A Select a random lane in which to spawn the hazard.
 C $A84A,2 Buffer offset of 20 for get_spawn_lanes
-C $A84C,3 Call get_spawn_lanes to get valid spawning positions (#REGb,#REGc = min,max)
-N $A84F Clamp new lane to minimum. -- lane = (rng() & 3) + min
+C $A84C,3 Call get_spawn_lanes to get valid spawning range (#REGb,#REGc = min,max)
 C $A84F,3 Generate a random byte
 C $A852,2 Take the bottom two bits of the result
+N $A854 Clamp new lane to valid range.
 C $A854,1 Add to minimum lane, result is new lane
-N $A855 Clamp new lane to maximum. -- if lane >= max lane = max
 C $A855,1 Compare new lane to maximum lane
 C $A856,2 Jump if less than or equal
 C $A858,1 Otherwise set to maximum lane
 @ $A859 label=sc_set_lane
 C $A859,3 Set IX[17] to new lane
 C $A85C,3 Set IX[18] to new lane  [but what's the difference between the two?]
-N $A85F Read hazard_lanes[current_lane - 1].
+N $A85F Copy hazard_lanes[current_lane - 1] to IX[5].
 @ $A85F ssub=LD HL,hazard_lanes - 1
 C $A85F,3 Load address of #R$A7E7 table (but start a byte earlier so it's 1-indexed)
-C $A862,4 ....
+C $A862,4 Index the table
 C $A866,1 Load horizontal position from table
 C $A867,3 Set new horizontal position
 C $A86A,4 Load and test sighted_flag
@@ -6562,22 +6561,22 @@ C $A86E,2 Set offset to 4 by default
 C $A870,2 Jump if not sighted
 C $A872,1 Double offset to 8 if sighted
 @ $A873 label=sc_have_offset
-C $A873,2 Add offset to hazard_lanes base address (#REGb is zero)
-C $A875,4 Set horizontal position from table
+C $A873,2 Add offset to previously computed table address (#REGb is zero)
+C $A875,4 Set (different) horizontal position from table
 N $A879 Now pick a random car LOD to show.
-C $A879,3 Generate a random byte from which to create a LOD index
-C $A87C,2 Mask off two bits (giving a valid array index of 0/2/4/6)
+C $A879,3 Generate a random byte with which we shall select a LOD
+C $A87C,2 Mask off two bits, shifted up by one (giving a valid array byte offset of 0/2/4/6)
 C $A87E,1 Copy to #REGc
-N $A87F If we've sighted the perp then don't spawn any generic cars (index 6) since they look just like the perp's. Instead spawn index 4.
+N $A87F If we've sighted the perp then don't spawn any generic cars (offset 6) since they look just like the perp's. Instead use offset 4.
 C $A87F,4 Load and test sighted_flag
-C $A883,2 Jump if not sighted - use the random index
-C $A885,2 If sighted set #REGa to 6 (generic car)
-C $A887,1 Compare with masked random byte
+C $A883,2 Jump if not sighted - use random offset
+C $A885,2 If sighted set #REGa to 6 (LOD offset of generic car)
+C $A887,1 Compare with random LOD offset
 C $A888,2 Jump to sc_set_lod if different
-C $A88A,2 Decrement the masked random byte (6 -> 4)
+C $A88A,2 Decrement offset from 6 to 4
 @ $A88C label=sc_set_lod
-C $A88C,2 Clear #REGb so we can index using #REGbc
-C $A88E,3 Load address of lods_vehicles (first of the generic car LODs)
+C $A88C,2 Clear #REGb so we can use full offset as #REGbc
+C $A88E,3 Load address of lods_vehicles (first of generic car LODs)
 C $A891,1 Index array
 C $A892,9 Set hazard's LOD address to #REGhl (IX+9)
 C $A89B,1 Return
