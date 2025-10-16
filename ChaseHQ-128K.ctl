@@ -116,9 +116,9 @@
 > $4000 ; $EB30..$EBFF is 104 words for road drawing (centre right)
 > $4000 ; $EC00..$EC2F is TBD (transition uses this)
 > $4000 ; $EC30..$ECFF is 104 words for road drawing (right)
-> $4000 ; $EDxx        is a curvature? table
+> $4000 ; $ED00..$ED?? is a curvature table?
 > $4000 ; $ED28        is the stack (growing downwards)
-> $4000 ; $ED30..?     is (possibly another 104 word road drawing buffer)
+> $4000 ; $ED30..$EDFF is (possibly another 104 word road drawing buffer)
 > $4000 ; $EE00..$EEFF is the road buffer. holds data unpacked from maps. it's cyclic. 32 byte fixed sections for each datum (curvature, height, lanes, right side objects, left side objects, hazards). cleared by $87DD.
 > $4000 ; $EF00..$EFFF is a table of flipped bytes
 > $4000 ; $F000..$FFFF is a 4KB back buffer
@@ -6159,59 +6159,83 @@ c $A579 Lays out roadside objects
 D $A579 Used by the routines at #R$8401, #R$852A and #R$873C.
 @ $A579 label=layout_objects
 C $A579,3 Load address of object_positions
-C $A57C,2 21 iterations [max no of objects on-screen?]
-N $A57E Turn a run of sizes into accumulating values.
-C $A57E,1 total = 0
+C $A57C,2 21 iterations [max no of objects on-screen? max no of stripes?]
+N $A57E object_positions is individual sizes. Turn them into positions.
+C $A57E,1 Initialise total to zero
 @ $A57F label=lo_loop1
-C $A57F,1 total += *HL
-C $A580,2 *HL++ = total
+C $A57F,1 Increment total by (HL)
+C $A580,2 Write total back in place
 C $A582,2 Loop lo_loop1 while #REGb > 0
+N $A584 Setup addresses.
 C $A584,4 Save #REGsp to restore on exit (self modify)
-C $A588,3 SP = $EB00
-C $A58B,2 Point #REGde at road buffer (somewhere)
+C $A588,3 Load #REGsp with $EB00 - where results will be stored
+C $A58B,2 Point #REGde at road buffer
 C $A58D,3 Load road_buffer_offset into #REGa
 C $A590,2 Add 64 so it's the lanes data offset
-C $A592,1 E = calculated offset
+C $A592,1 Finalised #REGde now points into lanes data
 C $A593,4 Load address of object_positions
 C $A597,2 21 iterations
-C $A599,3 A = fork_visible
+C $A599,3 Load fork_visible
 C $A59C,1 Set flags
-C $A59D,3 Jump to lo_loop2 if zero [not in forked road]
-C $A5A0,3 A = fork_countdown
+C $A59D,3 Jump to lo_loop2 if zero (passing iterations in #REGb)
+N $A5A0 Otherwise the road fork is visible.
+@ $A5A0 label=lo_fork_visible
+C $A5A0,3 Load fork_countdown
 C $A5A3,1 Set flags
-C $A5A4,2 [not about to fork the road]
-C $A5A6,1 B = A
+C $A5A4,2 Jump to lo_forking if forking
+N $A5A6 Fork is visible but not forking as yet.
+C $A5A6,1 Set iterations to fork_countdown
 @ $A5A7 label=lo_loop2
-C $A5A7,1 A = *DE
-C $A5A9,1 E = A
-C $A5AA,5 A = ~(IY[0] * 2)
-C $A5AF,1 L = A
-C $A5B0,3 A = E & 3
-C $A5B5,2 H = $E8
-C $A5B7,1 B = *HL
-C $A5B8,1 L--
-C $A5B9,1 C = *HL
-C $A5BB,2 H = $EC
-C $A5BD,2 Jump to lo_a5da
-C $A5BF,3 H = A + $E7
+C $A5A7,1 Read a lanes byte
+C $A5A8,1 Bank
+C $A5A9,1 Copy lanes byte to #REGe
+N $A5AA L = ~(IY[0] * 2) -- unsure what this is doing.
+C $A5AA,3 Read from current index in object_positions array
+C $A5AD,1 Double it
+C $A5AE,1 Complement it
+C $A5AF,1 Move result to #REGl
+N $A5B0 Read left hand offset bits (0+1).
+C $A5B0,1 Copy lanes byte to #REGa
+C $A5B1,2 Mask off left hand offset bits
+C $A5B3,2 Jump if there's a left hand offset
+N $A5B5 Otherwise no left hand offset is set.
+C $A5B5,2 Set #REGhl to left hand table address: $E8xx
+C $A5B7,3 Load #REGbc from the table
+C $A5BA,1 Store left hand value - then fallthrough
+@ $A5BB label=lo_set_right_hand
+C $A5BB,2 Set #REGhl to right hand table - $ECxx
+C $A5BD,2 Jump to lo_load_and_store
+N $A5BF The left hand position of the road in #REGa is 1/2/3 here. Use that to select table $E8xx/$E9xx/$EAxx.
+@ $A5BF label=lo_a5bf
+C $A5BF,3 Set table high byte to $E7 + #REGa
 N $A5C2 Sampled HL = $E869 $E865 $E863 $E861 (road drawing left)
-C $A5C2,1 B = *HL
-C $A5C3,1 L--
-C $A5C4,1 C = *HL
-C $A5CF,2 A = 3
-C $A5D3,2 A = 3
-C $A5D7,1 A--
-C $A5D8,2 H += A
-@ $A5DA label=lo_a5da
-C $A5DA,1 C = *HL
-C $A5DB,1 L++
-C $A5DC,1 B = *HL
-C $A5DF,2 IY++
-C $A5E1,1 E++
+C $A5C2,3 Load #REGbc from the table
+C $A5C5,1 Store left hand value
+C $A5C6,2 Shift bit 7 of lanes byte into carry (checked later)
+C $A5C8,2 Test former bit 6; set if tunnel, dirt track or fork (carry preserved)
+C $A5CA,3 Jump to lo_normal_road if clear
+C $A5CD,2 Jump to lo_set_right_hand if carry (dirt track or fork)
+N $A5CF Otherwise it's a tunnel piece. [Confirmed in debugger]
+C $A5CF,2 Set lane shift amount for 3 lanes
+C $A5D1,2 Jump to lo_set_table_right
+@ $A5D3 label=lo_normal_road
+C $A5D3,2 Set lane shift amount for 3 lanes
+C $A5D5,2 Jump to lo_set_table_right if 3 lane or 3/4 lane widening/narrowing
+N $A5D7 Otherwise it's 2 lane or 2/3 lane widening/narrowing.
+C $A5D7,1 Set lane shift amount for 2 lanes
+@ $A5D8 label=lo_set_table_right
+C $A5D8,2 Add #REGa to table high byte
+@ $A5DA label=lo_load_and_store
+C $A5DA,3 Load #REGbc from the table
+C $A5DD,1 Store right hand value
+C $A5DE,1 Unbank
+C $A5DF,2 Advance object_positions pointer
+C $A5E1,1 Advance lanes pointer
 C $A5E2,2 Loop to lo_loop2 while #REGb > 0
 C $A5E4,3 A = fork_countdown
 C $A5E7,1 Set flags
 C $A5E8,3 Jump to lo_return if zero
+@ $A5EB label=lo_forking
 C $A5EB,6 A = ~fork_countdown + 22
 C $A5F1,2 Jump to lo_return if zero
 C $A5F3,1 B = A
@@ -8990,9 +9014,9 @@ N $BB74 Set up left route.
 @ $BB74 label=ef_left
 C $BB74,3 D,E = $FC,$01  (curvature byte -4 => super hard (?) left turn, lanes byte = 1)
 C $BB77,1 Save for later
-@ $BB78 ssub=LD HL,forked_road_leftobjs - 1
+@ $BB78 ssub=LD HL,forked_road_exit_leftobjs - 1
 C $BB78,6 road_leftside_ptr  = $E2D9
-@ $BB7E ssub=LD HL,forked_road_rightobjs - 1
+@ $BB7E ssub=LD HL,forked_road_exit_rightobjs - 1
 C $BB7E,6 road_rightside_ptr = $E2D5
 @ $BB84 ssub=LD HL,forked_road_exit_lanes_left - 1
 C $BB84,6 road_lanes_ptr     = $E2E7
@@ -9010,9 +9034,9 @@ N $BBA1 Set up right route.
 C $BBA1,3 D,E = $04,$03  (curvature byte +4 => super hard (?) right turn, lanes byte = 3)
 C $BBA4,1 Save for later
 N $BBA5 Note the switch around here.
-@ $BBA5 ssub=LD HL,forked_road_rightobjs - 1
+@ $BBA5 ssub=LD HL,forked_road_exit_rightobjs - 1
 C $BBA5,6 road_leftside_ptr  = $E2D5
-@ $BBAB ssub=LD HL,forked_road_leftobjs - 1
+@ $BBAB ssub=LD HL,forked_road_exit_leftobjs - 1
 C $BBAB,6 road_rightside_ptr = $E2D9
 @ $BBB1 ssub=LD HL,forked_road_exit_lanes_right - 1
 C $BBB1,6 road_lanes_ptr     = $E2F3
@@ -9036,7 +9060,7 @@ C $BBE0,3 Self modify rm_hazards_one_command handler
 C $BBE3,6 road_curvature_ptr = $E2DD
 @ $BBE9 ssub=LD HL,forked_road_exit_height - 1
 C $BBE9,6 road_height_ptr    = $E2E2
-@ $BBEF ssub=LD HL,forked_road_hazards - 1
+@ $BBEF ssub=LD HL,forked_road_exit_hazards - 1
 C $BBEF,6 road_hazard_ptr    = $E2D2
 C $BBF5,1 Suspected road curve type left/right
 C $BBF6,1 Copy road buffer additional offset
@@ -9352,7 +9376,7 @@ C $BF6F,4 Load address of left route's rightside data
 C $BF73,4 Set modify 'LD DE,$xxxx' @ #R$BB8D to load the address
 C $BF77,4 Load address of right route's rightside data
 C $BF7B,3 Self modify 'LD DE,$xxxx' @ #R$BBBA to load the address
-C $BF7E,3 HL = $E2C1  [overlapping use of data TBD]
+C $BF7E,3 HL = fork_leftrightobjs_loop
 C $BF81,2 Jump to rm_read_rightside
 @ $BF83 label=rm_rightside_one_command
 C $BF83,3 HL = $0000  -- This looks setup for it as others, but doesn't seem to be self modified.
@@ -9385,7 +9409,7 @@ C $BFB8,4 Load address of left route's leftside data
 C $BFBC,4 Self modify 'LD BC,$xxxx' @ #R$BB90
 C $BFC0,4 Load address of right route's leftside data
 C $BFC4,3 Self modify 'LD BC,$xxxx' @ #R$BBBD
-C $BFC7,3 HL = $E2C0  [overlapping use of data TBD]
+C $BFC7,3 HL = fork_leftrightobjs
 C $BFCA,2 Jump to rm_read_leftside
 @ $BFCC label=rm_leftside_one_command
 C $BFCC,3 HL = $0000  -- This looks setup for it as others, but doesn't seem to be self modified.
@@ -9791,7 +9815,7 @@ D $C2E7 This seems to get called around changes in scene, e.g. at the start of a
 D $C2E7 Used by the routine at #R$C452.
 R $C2E7 I:IX ... sampled: $EE60..
 R $C2E7 I:IY ... sampled: $E301..E315 (height table)
-@ $C2E7 label=sub_c2e7
+@ $C2E7 label=draw_road_scene_change
 C $C2E7,2 Load #REGiy.low (distance)
 C $C2E9,2 Compare to 19
 C $C2EB,3 Jump if >= 19
@@ -10038,28 +10062,31 @@ C $C4B9,2 Turn left hand road position (1..3) into table high byte ($E8..$EA)
 C $C4BB,3 Self modify 'LD H,x' @ #R$C642
 C $C4BE,3 Self modify 'LD H,x' @ #R$C5B3
 C $C4C1,1 Copy
-C $C4C2,2 Shift bit 7 into carry
-C $C4C4,2 Test former bit 6; is set if tunnel or dirt track
-C $C4C6,2 Jump if set  -- Forked road plotting path (if carry set)
-C $C4C8,2 Bit 7 was set  -- Tunnel start/cont/end flag
-C $C4CA,2 Mask left hand road position bits
+C $C4C2,2 Shift bit 7 of lanes byte into carry (a flag, undetermined at this point, but perhaps the dirt track flag)
+C $C4C4,2 Test former bit 6; is set for tunnel or for dirt track (carry preserved)
+C $C4C6,2 Jump to dr_tunnel_or_dirt_track if set
+C $C4C8,2 Jump to dr_two_lane if bit 7 was clear (any of the two-lane roads or 2-to-3 narrowing/widening lane types)
+N $C4CA Otherwise carry/bit 7 was set indicating 3 lanes or 3/4 lanes narrowing/widening.
+C $C4CA,2 $E8..$EA becomes $EB..$ED
 C $C4CC,2 Set #REGc to $FD
-C $C4CE,3 Jump
-@ $C4D1 label=dr_c4d1
-C $C4D1,2 Increment #REGa by 2
+C $C4CE,3 Jump to dr_setup_scene_change
+N $C4D1 This is hit when on two-lane roads (or 2-to-3 narrowing/widening lane types).
+@ $C4D1 label=dr_two_lane
+C $C4D1,2 $E8..$EA becomes $EA..$EC
 C $C4D3,2 Set #REGc to $FE
-@ $C4D5 label=dr_c4d5
+@ $C4D5 label=dr_setup_scene_change
 C $C4D5,3 Self modify 'LD H,x' @ #R$C5D9
 C $C4D8,3 Self modify 'LD H,x' @ #R$C68A
-C $C4DB,1 Set #REGa to $FD (from #REGc)
+C $C4DB,1 Set #REGa to $FD or $FE (from #REGc)
 C $C4DC,3 Self modify 'LD B,x' @ #R$C5AC
-C $C4DF,3 Exit via #R$C2E7
-@ $C4E2 label=dr_c4e2
-C $C4E2,2 --> Forked road plotting path
+C $C4DF,3 Exit via draw_road_scene_change/#R$C2E7  [this is its only caller]
+@ $C4E2 label=dr_tunnel_or_dirt_track
+C $C4E2,2 Jump to dr_dirt_track if carry set (bit 7 of lanes byte - dirt track flag)
+N $C4E4 Otherwise it's a tunnel [confirmed in debugger].
 C $C4E4,2 Set #REGc to $FF
 C $C4E6,2 Set #REGh to 1
-C $C4E8,4 Jump if bit 4 of lanes byte set (tunnel entrance or exit)
-C $C4EC,4 Jump if bit 3 of lanes byte clear
+C $C4E8,4 Jump if former bit 3 of lanes byte set (tunnel exit)
+C $C4EC,4 Jump if former bit 2 of lanes byte clear (also tunnel exit... so that can't be right)
 @ $C4F0 label=dr_tunnel_transition
 C $C4F0,2 Load #REGiy.low (distance)
 C $C4F2,3 Self modify 'CP x' @ #R$C15D (in draw_tunnel)
@@ -10084,8 +10111,8 @@ C $C513,1 A = C
 C $C514,1 Bank/unbank
 C $C515,1 B = A
 C $C516,3 Jump
-@ $C519 label=dr_check_forked
-C $C519,5 Jump to forked_road_plotter if bit 6 is set
+@ $C519 label=dr_dirt_track
+C $C519,5 Jump to forked_road_plotter if former bit 5 (not 6 because shifted) of lanes byte is set
 N $C51E Dirt track check.
 C $C51E,3 Set flags of (#REGl & 24)
 C $C521,2 Set new on_dirt_track value to 0  -- not self modified (why not XOR A)
@@ -10162,7 +10189,7 @@ N $C5A7 This entry point is used by the routine at #R$C57C.
 @ $C5A7 label=dr_c5a7
 C $C5A7,4 Self modify 'LD DE,x' @ #R$C5F9
 C $C5AB,1 A = L
-C $C5AC,2 B = <self modified>
+C $C5AC,2 B = <self modified>  e.g. $FC or $FD
 C $C5AE,1 Bank
 C $C5AF,1 L = A
 C $C5B0,3 B = 16, C = $F8 (mask)
@@ -10187,7 +10214,7 @@ C $C5D2,1 A--
 C $C5D3,1 E = A
 C $C5D4,2 A = ~E + B
 C $C5D6,3 Self modify 'JR x' @ #R$C62C -- jump table target
-C $C5D9,2 Set table to $ECxx
+C $C5D9,2 Set high byte of table address to <self modified> e.g. $EC
 C $C5DB,1 Read from table  -- is this 8-bit or a partial 16-bit value?
 C $C5DC,1 Set flags
 C $C5DD,3 Jump if zero  -- jump to calc bit
@@ -10279,7 +10306,7 @@ C $C684,2 Copy a byte from $E4D0+ to the buffer
 C $C686,1 Bank/unbank
 C $C687,3 Loop
 @ $C68A label=dr_c68a
-C $C68A,2 H = <self modified>
+C $C68A,2 Set high byte of table address to <self modified> e.g. $EC
 C $C68C,1 A = *HL
 C $C68D,1 L--
 C $C68E,1 Set flags
@@ -12164,67 +12191,98 @@ B $E28C,24,8 Masked bitmap data
 b $E2A4 Data for perp escape scene
 N $E2A4 Perp escape scene, hazards
 @ $E2A4 label=perp_escape_hazards
-B $E2A4,6,6
+B $E2A4,1,1 Wait for 27 units
+B $E2A5,2,2 Escape, Command 9 (Start Spawning Two Barriers)
+B $E2A7,1,1 Wait for 1 unit
+B $E2A8,2,2 Escape, Command 3 (Stop Spawning Barriers)
 N $E2AA Perp escape scene, curvature
 @ $E2AA label=perp_escape_curvature
-B $E2AA,1,1 Straight
+B $E2AA,1,1 Straight for 15 units
 B $E2AB,2,2 Escape, Command 0 (Continue at <Address>)
 W $E2AD,2,2 Loop
 N $E2AF Perp escape scene, height
 @ $E2AF label=perp_escape_height
-B $E2AF,1,1 Level ground
+B $E2AF,1,1 Level Road for 15 units
 B $E2B0,2,2 Escape, Command 0 (Continue at <Address>)
 W $E2B2,2,2 Loop
 N $E2B4 Perp escape scene, lanes
 @ $E2B4 label=perp_escape_lanes
-B $E2B4,1,1 Length byte ?
-B $E2B5,1,1 Lanes byte ?
-@ $E2B8 label=perp_escape_lanes_loop
-B $E2B6,6,1
+B $E2B4,2,2 53 units of 3 Lanes L
+B $E2B6,2,2 255 units of Tunnel  -- Is no explicit stop required here since the camera stops?
+N $E2B8 Fork scene, hazards
+@ $E2B8 label=fork_hazards
+B $E2B8,1,1 Wait for 12
+B $E2B9,2,2 Escape, Command 10 (Set Floating Arrow Off)
+B $E2BB,1,1 Wait for 255
 B $E2BC,2,2 Escape, Command 0 (Continue at <Address>)
-W $E2BE,2,2 Loop (partial)
-N $E2C0 Perp escape scene, lane objects [not sure now, could be right curve road]
-@ $E2C0 label=perp_escape_leftobjs
-@ $E2C1 label=perp_escape_leftobjs_loop
-B $E2C0,2,1
+W $E2BE,2,2 Loop
+N $E2C0 Fork scene, left and right hand objects This first byte of the data is only used when drawing objects on the left hand side. Perhaps to stop the initial pole drawing twice?
+@ $E2C0 label=fork_leftrightobjs
+B $E2C0,1,1 1 units of Nothing
+@ $E2C1 label=fork_leftrightobjs_loop
+B $E2C1,1,1 15 units of Short Pole
 B $E2C2,2,2 Escape, Command 0 (Continue at <Address>)
-W $E2C4,2,2 Loop (partial)
+W $E2C4,2,2 Loop
 b $E2C6 Data for road forks
 N $E2C6 Road fork, curvature
 @ $E2C6 label=forked_road_curvature
-B $E2C6,1,1
+B $E2C6,1,1 Straight for 1 unit
 @ $E2C7 label=forked_road_curvature_loop
-B $E2C7,1,1 Curve left (67%)
+B $E2C7,1,1 Curve Left Hard for 15 units
 B $E2C8,2,2 Escape, Command 0 (Continue at <Address>)
-W $E2CA,2,2 Loop (partial)
+W $E2CA,2,2 Loop
 N $E2CC Road fork, height
 @ $E2CC label=forked_road_height
-B $E2CC,1,1
+B $E2CC,1,1 Level Road for 15 units
 B $E2CD,2,2 Escape, Command 0 (Continue at <Address>)
 W $E2CF,2,2 Loop
-N $E2D1 Road fork, hazards? Previously thought this was lane data...
-@ $E2D1 label=forked_road_hazards
-B $E2D1,5,5
-@ $E2D6 label=forked_road_rightobjs
-B $E2D6,4,4 rightside data  [flips around depending on who's accessing it]
-@ $E2DA label=forked_road_leftobjs
-B $E2DA,4,4 leftside data   [flips]
-b $E2DE Data for road fork exits
-D $E2DE Possibly off-by-one here, if the terminator is ($00,$01)
+N $E2D1 Road fork, lanes
+@ $E2D1 label=forked_road_lanes
+B $E2D1,2,2 $ED for 255 units
+b $E2D3 Data for road fork exits
+D $E2D3 Data used when exiting from road forks.
+N $E2D3 Road fork exit, hazards
+@ $E2D3 label=forked_road_exit_hazards
+B $E2D3,1,1 Wait for 18 units
+B $E2D4,2,2 Escape, Command 1 (Fork End)
+N $E2D6 Road fork exit, right objects
+@ $E2D6 label=forked_road_exit_rightobjs
+B $E2D6,1,1 Short Pole for 5 units
+B $E2D7,1,1 Nothing for 13 units
+B $E2D8,2,2 Escape, Command 1 (Fork End)
+N $E2DA Road fork exit, left objects
+@ $E2DA label=forked_road_exit_leftobjs
+B $E2DA,1,1 Nothing for 5 units
+B $E2DB,1,1 Nothing for 13 units
+B $E2DC,2,2 Escape, Command 1 (Fork End)
 N $E2DE Road fork exit, curvature
 @ $E2DE label=forked_road_exit_curvature
-B $E2DE,5,5 [ (15x straight), (15x straight), (6x straight), FORK_END ]
+B $E2DE,1,1 Straight for 15 units
+B $E2DF,1,1 Straight for 15 units
+B $E2E0,1,1 Straight for 6 units
+B $E2E1,2,2 Escape, Command 1 (Fork End)
 N $E2E3 Road fork exit, height
 @ $E2E3 label=forked_road_exit_height
-B $E2E3,5,5 [ (15x level), (15x level), (6x level), FORK_END ]
+B $E2E3,1,1 Level Road for 15 units
+B $E2E4,1,1 Level Road for 15 units
+B $E2E5,1,1 Level Road for 6 units
+B $E2E6,2,2 Escape, Command 1 (Fork End)
 N $E2E8 Road fork exit, lanes (left fork)
 @ $E2E8 label=forked_road_exit_left_lanes
-B $E2E8,7,7 [ (10x Two lanes), (2x $2D?), (10x Three lanes), (2x Widening 3-4 R), (12x Four lanes), FORK_END ]
-B $E2EF,5,5
+B $E2E8,2,2 2 Lanes L for 10 units
+B $E2EA,2,2 2-3 Widening L for 2 units
+B $E2EC,2,2 3 Lanes L for 10 units
+B $E2EE,2,2 3-4 Widening L for 2 units
+B $E2F0,2,2 4 Lanes for 12 units
+B $E2F2,2,2 Escape, Command 1 (Fork End)
 N $E2F4 Road fork exit, lanes (right fork)
 @ $E2F4 label=forked_road_exit_right_lanes
-B $E2F4,7,7 [ (10x Two lanes), (2x Widening 2-3 L), (10x Three lanes), (2x Widening 3-4 L), (12x Four lanes), FORK_END ]
-B $E2FB,5,5
+B $E2F4,2,2 2 Lanes R for 10 units
+B $E2F6,2,2 2-3 Widening R for 2 units
+B $E2F8,2,2 3 Lanes R for 10 units
+B $E2FA,2,2 3-4 Widening R for 2 units
+B $E2FC,2,2 4 Lanes for 12 units
+B $E2FE,2,2 Escape, Command 1 (Fork End)
 b $E300 Data block at E300 - height table?
 @ $E300 label=table_e300
 B $E300,1,1
@@ -12244,7 +12302,7 @@ u $E34E Unused
 B $E34E,1,1
 b $E34F Data block at E34F
 @ $E34F label=object_positions
-S $E34F,21,$15
+S $E34F,21,$15 21 entries
 b $E364 Transition masks
 N $E364 Spiral inward animation mask (8x8, 11 frames)
 N $E364 #HTML[#CALL:anim($E364,8,8,0,0,11)]

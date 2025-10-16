@@ -311,11 +311,13 @@ class ChaseHQHtmlWriter(HtmlWriter, ChaseHQWriter):
             0b10101101: "3-4 Widening L       [|||/] {AD}",
             0b10111101: "4-3 Narrowing L      [|||`] {BD}",
             
-            0b01000101: "Tunnel entrance             {45}",  # Tunnel always three lanes
-            0b01011001: "Tunnel cont/exit            {59}",  # TBD
+            0b01000101: "Tunnel               [|||]  {45}",  # Tunnel always three lanes
+            0b01011001: "Tunnel exit          [|||]  {59}",
             0b11000001: "4 Lanes dirt track   [||||] {C1}",
             0b11000010: "3 Lanes dirt track R  [|||] {C2}",  # Poke
             0b11000011: "2 Lanes dirt track R   [||] {C3}",  # Poke (but stones appear on verge)
+
+            0b11101101: "Forked road                 {ED}",  # During forks
         }
         # Bits 0+1 set the left hand offset (0/1 is leftmost, 2, 3).
         # Bit 6 indicates tunnel or dirt track. Where 6 is set, bit 7 indicates tunnel.
@@ -397,7 +399,7 @@ class ChaseHQHtmlWriter(HtmlWriter, ChaseHQWriter):
                         )
                 else:
                     map = {
-                        3: "TBD Stop Spawning Barriers?",
+                        3: "Stop Spawning Barriers",
                         6: "TBD Start Spawning Barriers?",
                         7: "Start Spawning Barriers Left",
                         8: "Start Spawning Barriers Right",
