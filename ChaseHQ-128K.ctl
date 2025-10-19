@@ -6168,7 +6168,7 @@ C $A580,2 Write total back in place
 C $A582,2 Loop lo_loop1 while #REGb > 0
 N $A584 Setup addresses.
 C $A584,4 Save #REGsp to restore on exit (self modify)
-C $A588,3 Load #REGsp with $EB00 - where results will be stored
+C $A588,3 Load #REGsp with $EB00 - where results will be stored (end of - stack is descending)
 C $A58B,2 Point #REGde at road buffer
 C $A58D,3 Load road_buffer_offset into #REGa
 C $A590,2 Add 64 so it's the lanes data offset
@@ -6189,7 +6189,7 @@ C $A5A6,1 Set iterations to fork_countdown
 C $A5A7,1 Read a lanes byte
 C $A5A8,1 Bank
 C $A5A9,1 Copy lanes byte to #REGe
-N $A5AA L = ~(IY[0] * 2) -- unsure what this is doing.
+N $A5AA L = ~(IY[0] * 2) -- this doubles then complements, not sure why yet.
 C $A5AA,3 Read from current index in object_positions array
 C $A5AD,1 Double it
 C $A5AE,1 Complement it
@@ -6241,16 +6241,14 @@ N $A5EB Otherwise we're about to fork.
 C $A5EB,6 Calculate (21 - fork_countdown)
 C $A5F1,2 Jump to lo_return if zero  [no fork, or not about to fork?]
 C $A5F3,1 Set iterations to above
-C $A5F4,2 H = $EB  -- are we reading from $EBxx?
+C $A5F4,2 Set up to read from $EBxx
 @ $A5F6 label=lo_fork_loop
 C $A5F6,6 L = ~(IY[0] * 2)  -- still not sure why we invert then double
-C $A5FC,1 H--  why step back by 256? same relative position so adjusting L wouldn't matter?
-C $A5FD,1 D = *HL
-C $A5FE,1 L--
-C $A5FF,1 E = *HL
+C $A5FC,1 Step back by 256 to read from $EAxx (centre table)
+C $A5FD,3 Load #REGde from table (reading high byte first)
 C $A600,1 Store left hand value
-C $A601,1 H++ -- restore ptr
-C $A602,3 Load #REGde from table
+C $A601,1 Restore pointer to read from $EBxx (centre right)
+C $A602,3 Load #REGde from table (reading low byte first)
 C $A605,1 Store right hand value
 C $A606,2 Advance object_positions pointer
 C $A608,2 Loop lo_fork_loop while #REGb > 0
