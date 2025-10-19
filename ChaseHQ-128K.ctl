@@ -2397,7 +2397,7 @@ N $8271 This entry point is used by the routine at #R$F220.
 C $8271,3 #REGhl -> attract mode messages "CHASE HQ" "PRESS GEAR TO PLAY" ...
 C $8274,2 Number of messages?
 N $8276 Blink "PRESS GEAR TO PLAY".
-C $8276,2 A = <initally $F0, self modified>
+C $8276,2 A = <initially $F0, self modified>
 C $8278,1 Rotate
 C $8279,3 Self modify above
 C $827C,2 If carry set the hide the final message
@@ -2528,7 +2528,7 @@ C $83F9,3 Entry point for ?bootstrap
 C $83FC,3 Call relocated call_bank_3_128k if in 128K mode
 C $83FF,2 Loop
 c $8401 Main loop
-D $8401 This is called the "main loop" because it does all of the driving of the primary game functions, but it's really a subroutine of the boostrap / uber main loop above.
+D $8401 This is called the "main loop" because it does all of the driving of the primary game functions, but it's really a subroutine of the bootstrap / uber main loop above.
 R $8401 Used by the routines at #R$83CD and #R$8A57.
 @ $8401 label=main_loop
 C $8401,3 Call load_stage
@@ -3402,7 +3402,7 @@ C $8C05,7 Jump if HL < 50
 C $8C0C,2 Set input BRAKE
 @ $8C0E label=hpc_set_gear
 C $8C0E,1 Restore speed
-C $8C0F,5 Calculate speed - 150
+C $8C0F,5 Calculate (speed - 150)
 C $8C14,3 Load gear
 C $8C17,2 Set gear to low if speed < 150, otherwise high
 C $8C1B,2 Set input GEAR
@@ -6177,7 +6177,7 @@ C $A593,4 Load address of object_positions
 C $A597,2 21 iterations
 C $A599,3 Load fork_visible
 C $A59C,1 Set flags
-C $A59D,3 Jump to lo_loop2 if zero (passing iterations in #REGb)
+C $A59D,3 Jump to lo_positions_loop if zero (passing iterations in #REGb)
 N $A5A0 Otherwise the road fork is visible.
 @ $A5A0 label=lo_fork_visible
 C $A5A0,3 Load fork_countdown
@@ -6185,7 +6185,7 @@ C $A5A3,1 Set flags
 C $A5A4,2 Jump to lo_forking if forking
 N $A5A6 Fork is visible but not forking as yet.
 C $A5A6,1 Set iterations to fork_countdown
-@ $A5A7 label=lo_loop2
+@ $A5A7 label=lo_positions_loop
 C $A5A7,1 Read a lanes byte
 C $A5A8,1 Bank
 C $A5A9,1 Copy lanes byte to #REGe
@@ -6204,7 +6204,7 @@ C $A5B7,3 Load #REGbc from the table
 C $A5BA,1 Store left hand value - then fallthrough
 @ $A5BB label=lo_set_right_hand
 C $A5BB,2 Set #REGhl to right hand table - $ECxx
-C $A5BD,2 Jump to lo_load_and_store
+C $A5BD,2 Jump to lo_load_and_store_right
 N $A5BF The left hand position of the road in #REGa is 1/2/3 here. Use that to select table $E8xx/$E9xx/$EAxx.
 @ $A5BF label=lo_a5bf
 C $A5BF,3 Set table high byte to $E7 + #REGa
@@ -6215,7 +6215,7 @@ C $A5C6,2 Shift bit 7 of lanes byte into carry (checked later)
 C $A5C8,2 Test former bit 6; set if tunnel, dirt track or fork (carry preserved)
 C $A5CA,3 Jump to lo_normal_road if clear
 C $A5CD,2 Jump to lo_set_right_hand if carry (dirt track or fork)
-N $A5CF Otherwise it's a tunnel piece. [Confirmed in debugger]
+N $A5CF Otherwise it's a tunnel piece.
 C $A5CF,2 Set lane shift amount for 3 lanes
 C $A5D1,2 Jump to lo_set_table_right
 @ $A5D3 label=lo_normal_road
@@ -6225,33 +6225,35 @@ N $A5D7 Otherwise it's 2 lane or 2/3 lane widening/narrowing.
 C $A5D7,1 Set lane shift amount for 2 lanes
 @ $A5D8 label=lo_set_table_right
 C $A5D8,2 Add #REGa to table high byte
-@ $A5DA label=lo_load_and_store
+@ $A5DA label=lo_load_and_store_right
 C $A5DA,3 Load #REGbc from the table
 C $A5DD,1 Store right hand value
 C $A5DE,1 Unbank
 C $A5DF,2 Advance object_positions pointer
 C $A5E1,1 Advance lanes pointer
-C $A5E2,2 Loop to lo_loop2 while #REGb > 0
-C $A5E4,3 A = fork_countdown
+C $A5E2,2 Loop to lo_positions_loop while #REGb > 0
+N $A5E4 $EB00 now contains pairs of 16-bit left,right object positions.
+C $A5E4,3 Load fork_countdown
 C $A5E7,1 Set flags
-C $A5E8,3 Jump to lo_return if zero
+C $A5E8,3 Jump to lo_return if zero (no fork)
+N $A5EB Otherwise we're about to fork.
 @ $A5EB label=lo_forking
-C $A5EB,6 A = ~fork_countdown + 22
-C $A5F1,2 Jump to lo_return if zero
-C $A5F3,1 B = A
-C $A5F4,2 H = $EB
-@ $A5F6 label=lo_loop3
-C $A5F6,6 L = ~(IY[0] * 2)
-C $A5FC,1 H--
+C $A5EB,6 Calculate (21 - fork_countdown)
+C $A5F1,2 Jump to lo_return if zero  [no fork, or not about to fork?]
+C $A5F3,1 Set iterations to above
+C $A5F4,2 H = $EB  -- are we reading from $EBxx?
+@ $A5F6 label=lo_fork_loop
+C $A5F6,6 L = ~(IY[0] * 2)  -- still not sure why we invert then double
+C $A5FC,1 H--  why step back by 256? same relative position so adjusting L wouldn't matter?
 C $A5FD,1 D = *HL
 C $A5FE,1 L--
 C $A5FF,1 E = *HL
-C $A601,1 H++
-C $A602,1 E = *HL
-C $A603,1 L++
-C $A604,1 D = *HL
-C $A606,2 IY++
-C $A608,2 Loop lo_loop3 while #REGb > 0
+C $A600,1 Store left hand value
+C $A601,1 H++ -- restore ptr
+C $A602,3 Load #REGde from table
+C $A605,1 Store right hand value
+C $A606,2 Advance object_positions pointer
+C $A608,2 Loop lo_fork_loop while #REGb > 0
 @ $A60A label=lo_return
 C $A60A,3 Restore original stack pointer (self modified above)
 C $A60D,1 Return
@@ -8235,7 +8237,7 @@ C $B58E,6 If not turning (turn speed zero) then flip_car = 0
 @ $B594 label=dc_draw_shadow
 C $B594,2 Preserve turn speed argument
 C $B596,9 Point #REGhl at hero_car_shadow [array of 3 x 4 bytes] then add (#REGa * 4)
-C $B59F,3 D = 120 (vertical postion in rows), E = 96 (horizontal position in pixels)
+C $B59F,3 D = 120 (vertical position in rows), E = 96 (horizontal position in pixels)
 C $B5A2,2 C = 7 (56 pixels wide)
 C $B5A4,3 Call draw_car_part to draw the shadow
 C $B5A7,1 Restore turn speed to #REGc
@@ -8301,7 +8303,7 @@ C $B625,2 Set (horz pos in px) to 144 if not flipped [then fall through]
 c $B627 Draws a car part
 D $B627 Used by the routine at #R$B58E.
 R $B627 I:C Byte width
-R $B627 I:D Y/Vertical postion (in rows)
+R $B627 I:D Y/Vertical position (in rows)
 R $B627 I:E X/Horizontal position (in pixels)
 R $B627 I:HL Address of graphic def (y_offset, nrows, data address)
 R $B627 O:D Preserved
@@ -9590,12 +9592,12 @@ C $C133,1 Swap
 C $C134,2 #REGde = #REGbc
 C $C136,1 A--
 C $C137,2 Loop to tunnel_loop
-@ $C139 lavel=pt_c139
+@ $C139 label=pt_c139
 C $C139,3 A = 9 - A
 C $C13C,3 Self modify 'CP x' @ #R$C15D  [15 when tunnel is small, 6 when fills screen]
 C $C13F,2 A = 2
 C $C141,3 Self modify 'LD A,x' @ #R$C160 (in draw_tunnel below)
-@ $C144 lavel=pt_c144
+@ $C144 label=pt_c144
 C $C144,2 A = 3
 C $C146,3 Self modify 'LD A,x' @ #R$C2B8
 N $C149 Self modify #R$8F82 and #R$8FA7 to be CALL draw_tunnel.
@@ -13018,7 +13020,7 @@ N $EF13 This entry point is used by the routines at #R$EF22 and #R$F0C6.
 C $EF13,5 Loop while waiting for this <interrupt flag> to be set
 C $EF18,1 Return
 c $EF19 Interrupt entry point
-D $EF19 #R$EE40 builds a table at $FD00 containing 257 occurences of $FE. Address $FEFE contains a JP $EF19 to here.
+D $EF19 #R$EE40 builds a table at $FD00 containing 257 occurrences of $FE. Address $FEFE contains a JP $EF19 to here.
 @ $EF19 label=interrupt_entry
 C $EF19,1 Preserve registers
 C $EF1A,5 Set <interrupt flag> to $FF  -- Self modify 'LD A,x' @ #R$EF13
