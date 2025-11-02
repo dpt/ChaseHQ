@@ -8828,15 +8828,16 @@ C $B9ED,3 var_a261 = 0
 C $B9F0,3 var_a262 = 0
 C $B9F3,1 Return
 c $B9F4 Lays out the road
-D $B9F4 Used by the routines at #R$8401, #R$852A and #R$873C.
+D $B9F4 Reads in (expanded out) lane data then...
+R $B9F4 Used by the routines at #R$8401, #R$852A and #R$873C.
 @ $B9F4 label=layout_road
 C $B9F4,3 Load road_buffer_offset into #REGa [as byte]
-C $B9F7,2 Add 64 so it's the lanes data offset
+C $B9F7,2 Add 64 so it's the lanes data offset (wrapping around)
 C $B9F9,3 Point #REGde at road buffer lanes data
 N $B9FC Count the distance to the forked road.
-C $B9FC,3 #REGb = 20 iterations, #REGc = $E1 (a mask)
+C $B9FC,3 #REGb = 20 iterations, #REGc = $E1 (a mask)  [forked road is $ED]
 C $B9FF,2 Counter
-N $BA01 Q. Lanes bytes are pairs of bytes (count,data), so how does looking for $E1 help?
+@ $BA01 label=lr_loop1
 C $BA01,1 Load a lanes byte
 C $BA02,5 Jump to lr_forked_road if (lanes byte & $E1) == $E1
 C $BA07,1 Advance to next lanes byte (wrapping around)
@@ -10976,23 +10977,24 @@ N $CBC5 This gets hit during road forks.
 C $CBC5,1 C = A
 C $CBC6,5 Jump if A < 80
 C $CBCB,3 Exit via #R$C79A/dr_start_backdrop_fill
-c $CBCE Seems to be building road curvature table(s)
+c $CBCE Builds road curvature tables
 D $CBCE Used by the routine at #R$B9F4.
-N $CBCE This gets hit during road forks.
+N $CBCE This gets hit during road forks (where the roads bend outwards).
 @ $CBCE label=build_curve_table_forked
 C $CBCE,3 Load two table high-bytes: $EE, $EC
-C $CBD1,3 $ED $44 => Opcode of NEG instruction for #R$CC21
+C $CBD1,3 Load $ED $44 => Opcode of NEG instruction for #R$CC21
+C $CBD4,2 Jump forward
 N $CBD6 This entry point is used by the routine at #R$B9F4.
 @ $CBD6 label=build_curve_table_non_forked
 C $CBD6,3 Load two table high-bytes: $ED, $E9
-C $CBD9,3 Pair of NOP instructions for #R$CC21
+C $CBD9,3 Load opcodes of two NOP instructions for #R$CC21
 @ $CBDC label=build_curve_table_self_modify
-C $CBDC,4 Write instruction(s) in #REGde to #R$CC21
+C $CBDC,4 Write pair of instructions in #REGde to #R$CC21
 C $CBE0,4 Self modify 'LD HL' @ #R$CC70 to load ($<H>00) e.g. $ED00
 C $CBE4,4 Self modify 'LD HL' @ #R$CCA5 to load ($<L>00) e.g. $E900
 C $CBE8,3 Load road_buffer_offset into #REGhl
 C $CBEB,1 Read a curvature data byte
-N $CBEC There's similar code at #R$CD47.
+N $CBEC See similar code at #R$CD47.
 C $CBEC,3 Load fast_counter
 C $CBEF,2 Mask off top three bits
 C $CBF1,1 Move result to #REGb
@@ -11000,11 +11002,12 @@ N $CBF2 Reduce #REGb 0..31 => 0..21.
 C $CBF2,5 Divide by 4 and subtract
 C $CBF7,5 Divide by 16 and subtract
 N $CBFC Index the road animation table horizontal_e6b0.
-C $CBFC,10 #REGiy = horizontal_e6b0[#REGa] } Sampled: A is $E7, C is 2 (value to multiply) This multiplies by top three bits of A then divides by 8 (with rounding) on return.
-C $CC06,3 Call multiply (#REGa = multiplier, #REGc = multiplicand, result in #REGa)
+C $CBFC,10 #REGiy = horizontal_e6b0 + #REGa
+N $CC06 Multiply #REGc by the top three bits of #REGa then divide by 8 (with rounding) on return.
+C $CC06,3 Call multiply (result in #REGa)
 C $CC09,6 A = (128 - A) & $FE
-C $CC0F,5 IX = $E500 + A  -- point into inward_bend_table
-C $CC14,3 D = $E3, E = $20
+C $CC0F,5 IX = $E500 + A  -- point into inward_bend_table [always inward?]
+C $CC14,3 D = $E3, E = 32
 C $CC17,2 20 iterations
 C $CC19,1 Bank
 C $CC1A,4 Read road position
@@ -11012,20 +11015,20 @@ C $CC1E,1 Stack it
 C $CC1F,1 Unbank
 @ $CC20 label=bct_loop
 C $CC20,1 Read road buffer byte
-C $CC21,2 Self modified above - Set to NOP or NEG
+C $CC21,2 Self modified above - Set to NOP (if non-forked) or NEG (if forked)
 C $CC23,1 Advance road buffer pointer (wrapping)
 C $CC24,1 Bank
-C $CC25,4 IX.low += A  -- point into distance shift table
-C $CC29,3 HL = 0  -- not self modified
-C $CC2C,3 Reads from the #R$E540 table (inward_bend_table)
-N $CC2F Subtract DE from table entry, result in BC.
-C $CC2F,2 C = A - E  -- E is $20 here I think
-C $CC31,3 high byte
-C $CC34,1 A -= D
-C $CC35,1 B = A
+C $CC25,4 IX.low += A  -- point into bend table
+C $CC29,3 Initialise a total?
+N $CC2C Subtract #REGde from table entry, result in #REGbc.
+C $CC2C,3 Reads low byte from the #R$E540 table (inward_bend_table)
+C $CC2F,2 C = A - 32
+C $CC31,3 Reads high byte
+C $CC34,2 B = A - D (with carry)
 N $CC36 Sampled IY = $E71E $E71F $E720 ..
-C $CC36,3 IY seems to point to $E6xx..E7xx
-N $CC3B This is a multiplier of HL (distance shift value computed above) by A (value from $E600+).
+C $CC36,3 Load from somewhere in horizontal_e6b0[]
+C $CC39,2 Advance
+N $CC3B This is a multiplier of #REGhl (distance shift value computed above) by #REGa (value from $E600+).
 C $CC3B,1 Shift left
 C $CC3C,2 Top bit not set
 C $CC3E,2 Copy distance shift value
