@@ -45,6 +45,7 @@
 > $4000 ; [Lamb/Mullins/Dunn/Harbison/Morrall]
 > $4000 ; - Shares a composer and an artist with ZX Chase H.Q.
 > $4000 ; <https://www.mobygames.com/game/15167/wec-le-mans-24/>
+> $4000 ; - Chase H.Q. is reportedly a modification of WEC Le Mans' game engine.
 > $4000 ;
 > $4000 ; "Batman: The Movie" (Ocean Software, 1989)
 > $4000 ; [Lamb/O'Brien/Shortt/Drake/Harbison/Palmer/Hemphill/Dunn/Cannon]
@@ -5789,7 +5790,7 @@ B $A23D,1,1 #R$BE33 reads  #R$890F, #R$A3D2, #R$BDFC, #R$BE37 writes
 @ $A23E label=off_road
 B $A23E,1,1 0 => Fully on-road, 1 => One wheel off-road, 2 => Both wheels off-road [samples: #R$B104, #R$B40C reads  #R$A3FD, #R$A52A, #R$B07D, #R$B322, #R$B404, #R$B443 writes]
 @ $A23F label=fast_counter
-B $A23F,1,1 This is a very fast counter that only increments when the car is in motion. Typically the top three bits are masked off and used to index other tables.
+B $A23F,1,1 This is a very fast counter that increments only when the car is in motion. Typically the top three bits are masked off and used to index other tables. When this rolls over the road_buffer_offset increments so it's really the lowest byte of the road offset.
 @ $A240 label=road_buffer_offset
 W $A240,2,2 Current offset (in bytes) into the road buffer at $EE00..$EEFF. Much of the code treats this as a byte. Used by #R$B8F6, #R$BBF7, #R$87E0.
 @ $A242 label=curvature_byte
@@ -10990,15 +10991,16 @@ C $CBD6,3 Load two table high-bytes: $ED, $E9
 C $CBD9,3 Load opcodes of two NOP instructions for #R$CC21
 @ $CBDC label=build_curve_table_self_modify
 C $CBDC,4 Write pair of instructions in #REGde to #R$CC21
-C $CBE0,4 Self modify 'LD HL' @ #R$CC70 to load ($<H>00) e.g. $ED00
-C $CBE4,4 Self modify 'LD HL' @ #R$CCA5 to load ($<L>00) e.g. $E900
+C $CBE0,4 Self modify 'LD HL' @ #R$CC70 to load ($<H>00) e.g. $ED00 or $EE00
+C $CBE4,4 Self modify 'LD HL' @ #R$CCA5 to load ($<L>00) e.g. $E900 or $EC00
+N $CBE8 Using road_buffer_offset as a full address here.
 C $CBE8,3 Load road_buffer_offset into #REGhl
 C $CBEB,1 Read a curvature data byte
 N $CBEC See similar code at #R$CD47.
 C $CBEC,3 Load fast_counter
 C $CBEF,2 Mask off top three bits
 C $CBF1,1 Move result to #REGb
-N $CBF2 Reduce #REGb 0..31 => 0..21.
+N $CBF2 Map #REGb (0,32,64,96,...,224) to (0,22,44,66,...,154)
 C $CBF2,5 Divide by 4 and subtract
 C $CBF7,5 Divide by 16 and subtract
 N $CBFC Index the road animation table horizontal_e6b0.
@@ -11006,11 +11008,12 @@ C $CBFC,10 #REGiy = horizontal_e6b0 + #REGa
 N $CC06 Multiply #REGc by the top three bits of #REGa then divide by 8 (with rounding) on return.
 C $CC06,3 Call multiply (result in #REGa)
 C $CC09,6 A = (128 - A) & $FE
-C $CC0F,5 IX = $E500 + A  -- point into inward_bend_table [always inward?]
-C $CC14,3 D = $E3, E = 32
+C $CC0F,5 IX = $E500 + A  -- point into inward_bend_table
+C $CC14,3 -> table_e320
 C $CC17,2 20 iterations
 C $CC19,1 Bank
 C $CC1A,4 Read road position
+N $CC1E SP is regular stack here.
 C $CC1E,1 Stack it
 C $CC1F,1 Unbank
 @ $CC20 label=bct_loop
@@ -11019,10 +11022,10 @@ C $CC21,2 Self modified above - Set to NOP (if non-forked) or NEG (if forked)
 C $CC23,1 Advance road buffer pointer (wrapping)
 C $CC24,1 Bank
 C $CC25,4 IX.low += A  -- point into bend table
-C $CC29,3 Initialise a total?
-N $CC2C Subtract #REGde from table entry, result in #REGbc.
+C $CC29,3 Initialise a multiplier result
+N $CC2C Subtract road_pos in #REGde from table entry, result in #REGbc.
 C $CC2C,3 Reads low byte from the #R$E540 table (inward_bend_table)
-C $CC2F,2 C = A - 32
+C $CC2F,2 C = A - E
 C $CC31,3 Reads high byte
 C $CC34,2 B = A - D (with carry)
 N $CC36 Sampled IY = $E71E $E71F $E720 ..
@@ -11033,38 +11036,37 @@ C $CC3B,1 Shift left
 C $CC3C,2 Top bit not set
 C $CC3E,2 Copy distance shift value
 C $CC40,1 Double it
-@ $CC41 label=bct_cc41
+@ $CC41 label=bct_mult1
 C $CC41,1 Shift topmost bit out
 C $CC42,2 Jump if top bit not set
 C $CC44,1 Otherwise HL += BC
-@ $CC45 label=bct_cc45
+@ $CC45 label=bct_mult2
 C $CC45,5 Repeat
-@ $CC4A label=bct_cc4a
+@ $CC4A label=bct_mult3
 C $CC4A,5 Repeat
-@ $CC4F label=bct_cc4f
+@ $CC4F label=bct_mult4
 C $CC4F,5 Repeat
-@ $CC54 label=bct_cc54
+@ $CC54 label=bct_mult5
 C $CC54,5 Repeat
 @ $CC59 label=bct_cc59
 C $CC59,1 A = H
 C $CC5A,2 L <<= 1
 C $CC5C,2 H = 0
-C $CC5E,1 A += H + carry
-C $CC5F,1 L = A
+C $CC5E,2 L = A + H + carry
 C $CC60,1 A <<= 1
-C $CC61,2 jump if top bit not set
-C $CC63,1 H--
-@ $CC64 label=bct_cc64
+C $CC61,2 Jump if top bit not set
+C $CC63,1 H = $FF - make negative
+@ $CC64 label=bct_topbitclear
 C $CC64,1 A >>= 1
 C $CC65,1 HL += DE
-C $CC66,1 Swap
+C $CC66,1 Swap (DE is result)
 C $CC67,1 Unbank
 C $CC68,2 *DE++ = A
-C $CC6A,2 Loop back to read buffer byte bit
+C $CC6A,2 Loop back to bct_loop to read buffer byte bit
 C $CC6C,1 Pop road position
 C $CC6D,2 B = 0  -- not self modified
 C $CC6F,1 Bank
-C $CC70,3 Output address
+C $CC70,3 SELF MODIFIED output address $ED00 or $EE00
 C $CC73,3 Call bct_cca8
 C $CC76,3 Load fast_counter
 C $CC79,2 Take top three bits
@@ -11076,11 +11078,11 @@ N $CC86 Index the road animation table horizontal_e760.
 C $CC86,5 HL = $E700 + $60 + A
 C $CC8B,2 Jump if A+$60 had no carry
 C $CC8D,1 Add carry otherwise
-N $CC8E Adds one of the entries (somewhere in) horizontal_e760 to the 22 bytes at $E320.
-@ $CC8E label=bct_cc8e
-C $CC8E,3 Address of table_e320
+N $CC8E Adds one of the entries somewhere in horizontal_e760 to the 22 bytes at $E320.
+@ $CC8E label=bct_build_table_e320
+C $CC8E,3 Address of table_e320 (written to)
 C $CC91,2 22 iterations
-@ $CC93 label=bct_cc93_loop
+@ $CC93 label=bct_build_table_e320_loop
 C $CC93,1 Load an entry from table_e320
 N $CC94 This reads from (somewhere in) horizontal_e760 in sequence.
 C $CC94,1 Increment it by (HL)
@@ -11088,12 +11090,13 @@ C $CC95,1 Write back to (DE)
 C $CC96,1 Increment entry address in horizontal_e760
 C $CC97,1 Increment entry address in table_e320
 C $CC98,2 Loop while #REGb > 0
-N $CC9A This controls the vanishing point. Decrease this value for wider roads - but the road might appear to bend left...
-C $CC9A,7 HL = road_pos - 295  -- consider: this is $127 but $109 is centre...
-C $CCA1,1 Swap
-C $CCA2,2 B = 0  -- probably initialising some counter
+N $CC9A This controls the vanishing point. Decrease this value for wider roads - but the road might appear to bend left... Consider that this is $127 but $109 is the centre.
+C $CC9A,7 HL = road_pos - 295
+C $CCA1,1 Swap result to #REGde
+C $CCA2,2 Initialise total/counter
 C $CCA4,1 Unbank
-C $CCA5,3 Destination address (road centre left table? or is does it have a different use in these parts?)
+C $CCA5,3 SELF MODIFIED destination address $E900 or $EC00
+N $CCA8 Called as subroutine, also fallthrough.
 @ $CCA8 label=bct_cca8
 C $CCA8,4 Address of height table (22 bytes long)
 C $CCAC,2 21 iterations
@@ -11102,25 +11105,26 @@ C $CCB2,1 Put address in #REGsp (so we can use PUSH for speed)
 @ $CCB3 label=bct_loop_ccb3
 C $CCB3,1 Bank
 C $CCB4,11 A = B - 2 + IY[0] - IY[1]; IY++
-C $CCBF,3 Jump to bct_endbit_B if M
+C $CCBF,3 Jump to bct_endbit_negative if M
 C $CCC2,2 A += 2
-C $CCC4,3 IY[$4E] = A
+C $CCC4,3 IY[$4E] = A -- in table_e320?
 C $CCC7,1 A -= B
 C $CCC8,1 C = A
 C $CCC9,1 B = A
 C $CCCA,3 L = IY[$1F]
-C $CCCD,2 test bit 7 of L
-C $CCCF,2 jump if clear
+C $CCCD,2 Test bit 7 of L
+C $CCCF,2 Jump if clear
 C $CCD1,4 L = -L
 C $CCD5,1 A = B
 C $CCD6,1 A < L ?
 C $CCD7,2 Opcode for DEC DE
-C $CCD9,2 jump if A < L
-@ $CCDE label=bct_ccde
+C $CCD9,2 Jump to bct_endbit_A if A < L
+C $CCDB,3 Jump to bct_do_self_modify
+@ $CCDE label=bct_increment_case
 C $CCDE,1 A < L ?
 C $CCDF,2 Opcode for INC DE
-C $CCE1,2 jump if A < L
-@ $CCE3 label=bct_cce3
+C $CCE1,2 Jump to bct_endbit_A if A < L
+@ $CCE3 label=bct_do_self_modify
 C $CCE3,3 Self modify instruction below
 C $CCE6,2 A = B >> 1
 @ $CCE8 label=bct_loop_cce8
@@ -11130,7 +11134,7 @@ C $CCEA,2 Jump if A < C
 C $CCEC,1 A -= C
 C $CCED,1 Self modified: could be INC DE or DEC DE
 @ $CCEE label=bct_ccee
-C $CCEE,1 Push the current state of #REGde to table
+C $CCEE,1 Store the current state of #REGde to table
 C $CCEF,2 Loop to bct_loop_cce8 while #REGb > 0
 C $CCF1,1 Unbank
 C $CCF2,2 Loop to bct_loop_ccb3 while #REGb > 0
@@ -11150,10 +11154,10 @@ C $CD00,3 Otherwise, loop if A < L
 C $CD03,1 Decrement A by L
 C $CD04,1 Push the current state of #REGde to table
 C $CD05,2 Loop to bct_loop_ccfc while #REGb > 0
-C $CD07,1 Bank
+C $CD07,1 Unbank
 C $CD08,2 Loop to bct_loop_ccb3 while #REGb > 0
 C $CD0A,2 Exit via bct_exit
-@ $CD0C label=bct_endbit_B
+@ $CD0C label=bct_endbit_negative
 C $CD0C,4 IY[$4E] = 1
 C $CD10,1 A++
 C $CD11,2 Jump to bct_endbit_C if zero
@@ -11162,7 +11166,7 @@ C $CD14,1 B = A
 C $CD15,3 A = IY[$1F]
 C $CD18,1 L = A
 C $CD19,1 A <<= 1
-C $CD1A,2 H = A - A - carry  -- strange sequence?
+C $CD1A,2 H = A - A - carry  -- sign extend?
 C $CD1C,1 HL += DE
 C $CD1D,1 swap
 C $CD1E,1 push result?
