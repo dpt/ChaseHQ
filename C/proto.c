@@ -4,20 +4,17 @@
 //
 // by dpt
 
-#include "SDL2/SDL_events.h"
-#include "SDL2/SDL_pixels.h"
-#include "SDL2/SDL_surface.h"
-#include "SDL2/SDL_video.h"
+// Compile with:
+// gcc `sdl2-config --cflags --libs` -Wall -o proto proto.c
+
 #include <assert.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <string.h>
-#include <SDL2/SDL.h>
-#include <sys/_types/_null.h>
-#include <sys/types.h>
+
+#include "SDL.h"
 
 /* ----------------------------------------------------------------------- */
-
 /* Z80 instruction simulator macros. */
 
 /**
@@ -76,7 +73,7 @@ do {                                \
 typedef int8_t T; // works
 
 // $CDD6
-T multiply(T a, T c)
+static T multiply(T a, T c)
 {
 #if 1
     int b; // can be int, not T
@@ -106,6 +103,15 @@ T multiply(T a, T c)
 
 /* ----------------------------------------------------------------------- */
 
+#define CHATTERSTATE_IDLE   (0)
+#define CHATTERSTATE_START  (1)
+#define CHATTERSTATE_RUN    (2)
+#define CHATTERSTATE_STOP   (3)
+
+typedef uint8_t chatterpriority_t;
+
+/* ----------------------------------------------------------------------- */
+
 typedef struct hazard_s
 {
     uint8_t  used;
@@ -130,8 +136,28 @@ hazard_t;
 
 typedef struct chqstate_s
 {
+    // $8002
+    char     score_bcd[4];
+
     // $8007
     uint8_t  wanted_stage_number;
+
+    // $9630
+    const uint8_t *chatter; // chatter block current pointer, renamed to "chatter"
+
+    // $9633
+    uint8_t  chatter_state;
+
+    // $963D
+    uint8_t  chatter_delay;
+    // $963E
+    chatterpriority_t chatter_priority;
+
+    // $9D51
+    char    bonus_string[6];
+
+    // $9D9B
+    char    *SM_address_of_score_digits; // self modified
 
     // $A16D
     uint8_t  var_a16d;
@@ -141,6 +167,9 @@ typedef struct chqstate_s
 
     // $A226
     uint8_t  correct_fork;
+
+    // $A22C
+    uint8_t  trigger_bonus_flag;
 
     // $A249
     uint8_t  fork_taken;
@@ -202,55 +231,107 @@ static void chasehq_reset_state(chqstate_t *state)
 
 /* ----------------------------------------------------------------------- */
 
-void build_curve_table(chqstate_t *state, int forked);
+static void start_chatter(chqstate_t       *state,
+                          chatterpriority_t priority,
+                          const uint8_t    *chatterblk);
 
-void build_curve_table_sub_cca8(chqstate_t *state,
-                                uint8_t     Bdash_alwayszero,
-                                uint16_t   *HLtableend,
-                                uint16_t    DEroadpos);
+static void add_bonus(chqstate_t *state,
+                      uint8_t A_lo,
+                      uint8_t E_md,
+                      uint8_t D_hi);
+static int bonus_digit(uint8_t digit, uint8_t *nonzeroflag, char **poutput);
+
+static void increment_score(chqstate_t *state,
+                            uint8_t A_lo,
+                            uint8_t E_md,
+                            uint8_t D_hi);
+static uint8_t DAA(uint8_t v, int *carry_out);
+
+static void build_curve_table(chqstate_t *state, int forked);
+
+static void build_curve_table_sub_cca8(chqstate_t *state,
+                                       uint8_t     Bdash_alwayszero,
+                                       uint16_t   *HLtableend,
+                                       uint16_t    DEroadpos);
 
 /* ----------------------------------------------------------------------- */
 
+// Conv: The C version uses IDs for strings and blocks rather than inline addresses.
+
+#define CHATTER_RANDOM                      (0xFC) // Followed by three chatterblock indices
+#define CHATTER_PAUSE                       (0xFE) // Followed by a single chatterblock index
 #define CHATTER_STOP                        (0xFF)
 
-///Chatter characters
-#define CHATTERCHR_PILOT                    (0)
-#define CHATTERCHR_NANCY                    (1)
-#define CHATTERCHR_RAYMOND                  (2)
-#define CHATTERCHR_TONY                     (3)
+/// Chatter characters
+#define CHATTERCHR_PILOT                       (0)
+#define CHATTERCHR_NANCY                       (1)
+#define CHATTERCHR_RAYMOND                     (2)
+#define CHATTERCHR_TONY                        (3)
 
-///Chatter strings
-#define CHATTERSTR_THIS_IS_NANCY            (0)
-#define CHATTERSTR_THIS_IS_AIRBORNE         (1)
-#define CHATTERSTR_TARGET_VEHICLE_TURNED    (2)
-#define CHATTERSTR_RIGHT_AHEAD_OVER         (3)
-#define CHATTERSTR_LEFT_AHEAD_OVER          (4)
-#define CHATTERSTR_READ_LOUD_CLEAR          (5)
-#define CHATTERSTR_ROGER                    (6)
-#define CHATTERSTR_GOTCHA_NANCY             (7)
-#define CHATTERSTR_WHAT_YOU_DOING           (8)
-#define CHATTERSTR_GOING_OTHER_WAY          (9)
-#define CHATTERSTR_MESSIN_AROUND            (10)
-#define CHATTERSTR_TIME_RUN_OUT             (11)
-#define CHATTERSTR_GET_MOVIN_MAN            (12)
-#define CHATTERSTR_OH_NO                    (13)
-#define CHATTERSTR_PLEASE                   (14)
-#define CHATTERSTR_GREAT                    (15)
-#define CHATTERSTR_OUCH                     (16)
-#define CHATTERSTR_LETS_GO                  (17)
-#define CHATTERSTR_YAOW                     (18)
-#define CHATTERSTR_BEAR_DOWN                (19)
-#define CHATTERSTR_MORE_PUSH_MORE           (20)
-#define CHATTERSTR_ONE_MORE_TIME            (21)
-#define CHATTERSTR_OH_MAN                   (22)
-#define CHATTERSTR_WHOA                     (23)
-#define CHATTERSTR_HARDER                   (24)
-#define CHATTERSTR_PICKED_WRONG_JOB         (25)
-#define CHATTERSTR_CHECK_CLASSIFIED_ADS     (26)
-#define CHATTERSTR_ONE_MORE_TRY             (27)
-#define CHATTERSTR_MEDIOCRE_DRIVER          (28)
-#define CHATTERSTR_SEE_YOU_LATER            (29)
-#define CHATTERSTR__LIMIT                   (30)
+/// Chatter string indices
+#define CHATTERSTR_THIS_IS_NANCY               (0)
+#define CHATTERSTR_THIS_IS_AIRBORNE            (1)
+#define CHATTERSTR_TARGET_VEHICLE_TURNED       (2)
+#define CHATTERSTR_RIGHT_AHEAD_OVER            (3)
+#define CHATTERSTR_LEFT_AHEAD_OVER             (4)
+#define CHATTERSTR_READ_LOUD_CLEAR             (5)
+#define CHATTERSTR_ROGER                       (6)
+#define CHATTERSTR_GOTCHA_NANCY                (7)
+#define CHATTERSTR_WHAT_YOU_DOING              (8)
+#define CHATTERSTR_GOING_OTHER_WAY             (9)
+#define CHATTERSTR_MESSIN_AROUND              (10)
+#define CHATTERSTR_TIME_RUN_OUT               (11)
+#define CHATTERSTR_GET_MOVIN_MAN              (12)
+#define CHATTERSTR_OH_NO                      (13)
+#define CHATTERSTR_PLEASE                     (14)
+#define CHATTERSTR_GREAT                      (15)
+#define CHATTERSTR_OUCH                       (16)
+#define CHATTERSTR_LETS_GO                    (17)
+#define CHATTERSTR_YAOW                       (18)
+#define CHATTERSTR_BEAR_DOWN                  (19)
+#define CHATTERSTR_MORE_PUSH_MORE             (20)
+#define CHATTERSTR_ONE_MORE_TIME              (21)
+#define CHATTERSTR_OH_MAN                     (22)
+#define CHATTERSTR_WHOA                       (23)
+#define CHATTERSTR_HARDER                     (24)
+#define CHATTERSTR_PICKED_WRONG_JOB           (25)
+#define CHATTERSTR_CHECK_CLASSIFIED_ADS       (26)
+#define CHATTERSTR_ONE_MORE_TRY               (27)
+#define CHATTERSTR_MEDIOCRE_DRIVER            (28)
+#define CHATTERSTR_SEE_YOU_LATER              (29)
+#define CHATTERSTR__LIMIT                     (30)
+
+/// Chatter block indices
+#define CHATTERBLK_PILOT_TURN_LEFT             (0)
+#define CHATTERBLK_PILOT_TURN_RIGHT            (1)
+#define CHATTERBLK_HEROES_ACKNOWLEDGE          (2)
+#define CHATTERBLK_TONY_LOUD_CLEAR             (3)
+#define CHATTERBLK_RAYMOND_ROGER               (4)
+#define CHATTERBLK_TONY_GOTCHA                 (5)
+#define CHATTERBLK_RAYMOND_WRONG_WAY           (6)
+#define CHATTERBLK_RAYMOND_SMASH               (7)
+#define CHATTERBLK_RAYMOND_BEAR_DOWN           (8)
+#define CHATTERBLK_RAYMOND_PUSH_IT             (9)
+#define CHATTERBLK_RAYMOND_HARDER             (10)
+#define CHATTERBLK_RAYMOND_OH_MAN             (11)
+#define CHATTERBLK_RAYMOND_RANDOM_PLEAS       (12)
+#define CHATTERBLK_RAYMOND_PLEASE             (13)
+#define CHATTERBLK_RAYMOND_GET_MOVING         (14)
+#define CHATTERBLK_NANCY_TIME_RUNNING_OUT     (15)
+#define CHATTERBLK_RAYMOND_RANDOM_YELPS       (16)
+#define CHATTERBLK_RAYMOND_OHNO               (17)
+#define CHATTERBLK_RAYMOND_OUCH               (18)
+#define CHATTERBLK_RAYMOND_YAOW               (19)
+#define CHATTERBLK_TURBO                      (20)
+#define CHATTERBLK_TONY_WHOA                  (21)
+#define CHATTERBLK_TONY_GREAT                 (22)
+#define CHATTERBLK_RAYMOND_ONE_MORE_TIME      (23)
+#define CHATTERBLK_NANCY_BERATES              (24)
+#define CHATTERBLK_NANCY_WRONG_JOB            (25)
+#define CHATTERBLK_NANCY_ONE_MORE_TRY         (26)
+#define CHATTERBLK_NANCY_MEDIOCRE_DRIVER      (27)
+#define CHATTERBLK_TONY_LETS_GO               (28)
+#define CHATTERBLK__LIMIT                     (29)
 
 // $97B5
 static const char *chatter_strings[CHATTERSTR__LIMIT] = {
@@ -286,22 +367,259 @@ static const char *chatter_strings[CHATTERSTR__LIMIT] = {
     "SEE YOU LATER."
 };
 
-// Conv: The C version uses an ID for strings in chatter data rather than an inline address.
+// $98A9
+static const uint8_t chatterblk_pilot_turn_left[] = {
+    CHATTERCHR_PILOT,
+    CHATTERSTR_THIS_IS_AIRBORNE,
+    CHATTERSTR_TARGET_VEHICLE_TURNED,
+    CHATTERSTR_LEFT_AHEAD_OVER,
+    CHATTER_PAUSE,
+    CHATTERBLK_TONY_LOUD_CLEAR
+};
+
+// $98B3
+static const uint8_t chatterblk_pilot_turn_right[] = {
+    CHATTERCHR_PILOT,
+    CHATTERSTR_THIS_IS_AIRBORNE,
+    CHATTERSTR_TARGET_VEHICLE_TURNED,
+    CHATTERSTR_RIGHT_AHEAD_OVER,
+    CHATTER_PAUSE,
+    CHATTERBLK_TONY_LOUD_CLEAR
+};
+
+// $98BD
+static const uint8_t chatterblk_heroes_acknowledge[] = {
+    CHATTER_RANDOM,
+    CHATTERBLK_TONY_LOUD_CLEAR,
+    CHATTERBLK_RAYMOND_ROGER,
+    CHATTERBLK_TONY_GOTCHA,
+};
+
+// $98C4
+static const uint8_t chatterblk_tony_loud_clear[] = {
+    CHATTERCHR_TONY,
+    CHATTERSTR_READ_LOUD_CLEAR,
+    CHATTER_STOP
+};
+
+// $98C8
+static const uint8_t chatterblk_raymond_roger[] = {
+    CHATTERCHR_RAYMOND,
+    CHATTERSTR_ROGER,
+    CHATTER_STOP
+};
+
+// $98CC
+static const uint8_t chatterblk_tony_gotcha[] = {
+    CHATTERCHR_TONY,
+    CHATTERSTR_GOTCHA_NANCY,
+    CHATTER_STOP
+};
 
 // $98D0
-static const uint8_t raymond_says_wrong_way_chatter[] = {
+static const uint8_t chatterblk_raymond_wrong_way[] = {
     CHATTERCHR_RAYMOND,
     CHATTERSTR_WHAT_YOU_DOING,
     CHATTERSTR_GOING_OTHER_WAY,
     CHATTER_STOP
 };
 
+// $98D6
+static const uint8_t chatterblk_raymond_smash[] = {
+    CHATTER_RANDOM,
+    CHATTERBLK_RAYMOND_BEAR_DOWN,
+    CHATTERBLK_RAYMOND_RANDOM_PLEAS,
+    CHATTERBLK_RAYMOND_PUSH_IT
+};
+
+// $98DD
+static const uint8_t chatterblk_raymond_bear_down[] = {
+    CHATTERCHR_RAYMOND,
+    CHATTERSTR_BEAR_DOWN,
+    CHATTER_STOP
+};
+
+// $98E1
+static const uint8_t chatterblk_raymond_push_it[] = {
+    CHATTERCHR_RAYMOND,
+    CHATTERSTR_MORE_PUSH_MORE,
+    CHATTER_STOP
+};
+
+// $98E5
+static const uint8_t chatterblk_raymond_harder[] = {
+    CHATTERCHR_RAYMOND,
+    CHATTERSTR_HARDER,
+    CHATTER_STOP
+};
+
+// $98E9
+static const uint8_t chatterblk_raymond_oh_man[] = {
+    CHATTERCHR_RAYMOND,
+    CHATTERSTR_OH_MAN,
+    CHATTER_STOP
+};
+
+// $98ED
+static const uint8_t chatterblk_raymond_random_pleas[] = {
+    CHATTER_RANDOM,
+    CHATTERBLK_RAYMOND_OH_MAN,
+    CHATTERBLK_RAYMOND_HARDER,
+    CHATTERBLK_RAYMOND_PLEASE
+};
+
+// $98F4
+static const uint8_t chatterblk_raymond_please[] = {
+    CHATTERCHR_RAYMOND,
+    CHATTERSTR_PLEASE,
+    CHATTER_STOP
+};
+
+// $98F8
+static const uint8_t chatterblk_raymond_get_moving[] = {
+    CHATTERCHR_RAYMOND,
+    CHATTERSTR_GET_MOVIN_MAN,
+    CHATTER_STOP
+};
+
+// $98FC
+static const uint8_t chatterblk_nancy_time_running_out[] = {
+    CHATTERCHR_NANCY,
+    CHATTERSTR_THIS_IS_NANCY,
+    CHATTERSTR_MESSIN_AROUND,
+    CHATTERSTR_TIME_RUN_OUT,
+    CHATTER_STOP
+};
+
+// $9904
+static const uint8_t chatterblk_raymond_random_yelps[] = {
+    CHATTER_RANDOM,
+    CHATTERBLK_RAYMOND_OHNO,
+    CHATTERBLK_RAYMOND_OUCH,
+    CHATTERBLK_RAYMOND_YAOW
+};
+
+// $990B
+static const uint8_t chatterblk_raymond_ohno[] = {
+    CHATTERCHR_RAYMOND,
+    CHATTERSTR_OH_NO,
+    CHATTER_STOP
+};
+
+// $990F
+static const uint8_t chatterblk_raymond_ouch[] = {
+    CHATTERCHR_RAYMOND,
+    CHATTERSTR_OUCH,
+    CHATTER_STOP
+};
+
+// $9913
+static const uint8_t chatterblk_raymond_yaow[] = {
+    CHATTERCHR_RAYMOND,
+    CHATTERSTR_YAOW,
+    CHATTER_STOP
+};
+
+// $9917
+static const uint8_t chatterblk_turbo[] = {
+    CHATTER_RANDOM,
+    CHATTERBLK_TONY_WHOA,
+    CHATTERBLK_TONY_GREAT,
+    CHATTERBLK_RAYMOND_ONE_MORE_TIME
+};
+
+// $991E
+static const uint8_t chatterblk_tony_whoa[] = {
+    CHATTERCHR_TONY,
+    CHATTERSTR_WHOA,
+    CHATTER_STOP
+};
+
+// $9922
+static const uint8_t chatterblk_tony_great[] = {
+    CHATTERCHR_TONY,
+    CHATTERSTR_GREAT,
+    CHATTER_STOP
+};
+
+// $9926
+static const uint8_t chatterblk_raymond_one_more_time[] = {
+    CHATTERCHR_RAYMOND,
+    CHATTERSTR_ONE_MORE_TIME,
+    CHATTER_STOP
+};
+
+// $992A
+static const uint8_t chatterblk_nancy_berates_hero[] = {
+    CHATTER_RANDOM,
+    CHATTERBLK_NANCY_WRONG_JOB,
+    CHATTERBLK_NANCY_ONE_MORE_TRY,
+    CHATTERBLK_NANCY_MEDIOCRE_DRIVER
+};
+
+// $9931
+static const uint8_t chatterblk_nancy_wrong_job[] = {
+    CHATTERCHR_NANCY,
+    CHATTERSTR_PICKED_WRONG_JOB,
+    CHATTER_STOP
+};
+
+// $9937
+static const uint8_t chatterblk_nancy_one_more_try[] = {
+    CHATTERCHR_NANCY,
+    CHATTERSTR_ONE_MORE_TRY,
+    CHATTER_STOP
+};
+
+// $993B
+static const uint8_t chatterblk_nancy_mediocre_driver[] = {
+    CHATTERCHR_NANCY,
+    CHATTERSTR_MEDIOCRE_DRIVER,
+    CHATTERSTR_SEE_YOU_LATER,
+    CHATTER_STOP
+};
+
 // $9941
-static const uint8_t tony_says_lets_go_mr_driver[] = {
+static const uint8_t chatterblk_tony_lets_go[] = {
     CHATTERCHR_TONY,
     CHATTERSTR_LETS_GO,
     CHATTER_STOP
 };
+
+// Additional: List of all chatter blocks
+static const uint8_t *chatter_blocks[CHATTERBLK__LIMIT] = {
+    &chatterblk_pilot_turn_left[0],
+    &chatterblk_pilot_turn_right[0],
+    &chatterblk_heroes_acknowledge[0],
+    &chatterblk_tony_loud_clear[0],
+    &chatterblk_raymond_roger[0],
+    &chatterblk_tony_gotcha[0],
+    &chatterblk_raymond_wrong_way[0],
+    &chatterblk_raymond_smash[0],
+    &chatterblk_raymond_bear_down[0],
+    &chatterblk_raymond_push_it[0],
+    &chatterblk_raymond_harder[0],
+    &chatterblk_raymond_oh_man[0],
+    &chatterblk_raymond_random_pleas[0],
+    &chatterblk_raymond_please[0],
+    &chatterblk_raymond_get_moving[0],
+    &chatterblk_nancy_time_running_out[0],
+    &chatterblk_raymond_random_yelps[0],
+    &chatterblk_raymond_ohno[0],
+    &chatterblk_raymond_ouch[0],
+    &chatterblk_raymond_yaow[0],
+    &chatterblk_turbo[0],
+    &chatterblk_tony_whoa[0],
+    &chatterblk_tony_great[0],
+    &chatterblk_raymond_one_more_time[0],
+    &chatterblk_nancy_berates_hero[0],
+    &chatterblk_nancy_wrong_job[0],
+    &chatterblk_nancy_one_more_try[0],
+    &chatterblk_nancy_mediocre_driver[0],
+    &chatterblk_tony_lets_go[0]
+};
+
+/* ----------------------------------------------------------------------- */
 
 // $E540
 static const uint16_t inward_bend_table[96] = {
@@ -430,13 +748,99 @@ static const uint8_t horizontal_e760[8][22] = {
 /* ----------------------------------------------------------------------- */
 
 // $9945
-void start_chatter(uint8_t priority, const uint8_t *chatter)
+static void start_chatter(chqstate_t       *state,
+                          chatterpriority_t priority,
+                          const uint8_t    *chatterblk)
 {
+    uint8_t chatter_state; // was A
+
+    chatter_state = state->chatter_state;
+    if (chatter_state != CHATTERSTATE_IDLE && chatter_state < CHATTERSTATE_STOP)
+        if (state->chatter_priority >= priority)
+            return;
+
+    state->chatter_priority = priority;
+    state->chatter = chatterblk;
+    state->chatter_delay = 0;
+    state->chatter_state = CHATTERSTATE_START;
 }
 
 // $9CD6
-void add_bonus(uint8_t A_low, uint16_t DE_high)
+// Bug: As soon as a nonzero->zero transition is seen the routine finishes so you can only have a single run of zeroes in the bonus.
+static void add_bonus(chqstate_t *state, uint8_t A_lo, uint8_t E_md, uint8_t D_hi)
 {
+    char   *output;      // was HL
+    uint8_t nonzeroflag; // was C - used to track if a zero has been emitted.
+
+    output = &state->bonus_string[6]; // points to byte after buffer
+    nonzeroflag = 0xFF; // flag (zero not seen)
+    (void) bonus_digit(A_lo >> 0, &nonzeroflag, &output); // always runs since flag > 0
+    *output |= 1<<7; // terminate string
+
+    // Using lazy evaluation here to avoid having a load of gotos
+    (void) (bonus_digit(A_lo >> 4, &nonzeroflag, &output) >= 0 &&
+            bonus_digit(E_md >> 0, &nonzeroflag, &output) >= 0 &&
+            bonus_digit(E_md >> 4, &nonzeroflag, &output) >= 0 &&
+            bonus_digit(D_hi >> 0, &nonzeroflag, &output) >= 0 &&
+            bonus_digit(D_hi >> 4, &nonzeroflag, &output) >= 0);
+
+    state->SM_address_of_score_digits = output;
+    state->trigger_bonus_flag = 1;
+    increment_score(state, A_lo, E_md, D_hi); // was fallthrough
+}
+
+// Subroutine of above broken out
+static int bonus_digit(uint8_t digit, uint8_t *nonzeroflag, char **poutput)
+{
+    digit &= 0x0F;
+
+    if (digit != 0)
+        goto non_zero;
+    else if (*nonzeroflag != 0)
+        goto store;
+    else
+        // Conv: Was a POP+JP to cause exit.
+        return -1; // We saw a non-zero-to-zero transition, so terminate.
+
+non_zero:
+    *nonzeroflag = 0; // Set flag to zero now we've seen a non-zero digit
+store:
+    (*poutput)--;
+    **poutput = digit + '0';
+    return 0;
+}
+
+static void increment_score(chqstate_t *state, uint8_t A_lo, uint8_t E_md, uint8_t D_hi)
+{
+    char    *HLscorebcd;
+    uint8_t  A;
+    int      carry;
+
+    HLscorebcd = &state->score_bcd[0];
+    A = A_lo + *HLscorebcd;
+    *HLscorebcd++ = DAA(A, &carry);
+    A = E_md + *HLscorebcd + carry;
+    *HLscorebcd++ = DAA(A, &carry);
+    A = D_hi + *HLscorebcd + carry;
+    *HLscorebcd++ = DAA(A, &carry);
+    A = *HLscorebcd + carry;
+    *HLscorebcd = DAA(A, &carry);
+}
+
+/// Minimal equivalent of Z80 BCD correct operation
+/// Additional
+static uint8_t DAA(uint8_t v, int *carry_out)
+{
+    int lo, hi;
+    int carry = 0;
+
+    lo = (v >> 0) & 0x0F;
+    hi = (v >> 4) & 0x0F;
+    if (lo >= 10) { lo -= 10; hi++; }
+    if (hi >= 10) { hi -= 10; carry++; }
+
+    *carry_out = carry;
+    return (hi << 4) | (lo << 0);
 }
 
 #define ROADBUF(N) \
@@ -451,7 +855,7 @@ void add_bonus(uint8_t A_low, uint16_t DE_high)
 #define ROADBUF_LANES_OFFSET (64)
 
 // $B9F4
-void layout_road(chqstate_t *state)
+static void layout_road(chqstate_t *state)
 {
     uint8_t  *DElanedata;
     uint8_t   Biterations;
@@ -469,7 +873,7 @@ void layout_road(chqstate_t *state)
     uint16_t  DEdash;
     uint16_t  HLdash;
     uint16_t  DEroadpos;
-    const uint8_t *HLchatter;
+    const uint8_t *HLchatterblk;
     uint8_t   Ca16d;
     uint16_t  HLforkdistance;
     uint16_t  DEforkdistance;
@@ -560,15 +964,15 @@ lr_forked_road:
     // PUSH HLforkdistance (ok)
     if (Aiterations == state->correct_fork) {
         // Correct fork taken
-        HLchatter = &tony_says_lets_go_mr_driver[0];
+        HLchatterblk = &chatterblk_tony_lets_go[0];
     } else {
         // Incorrect fork taken
         state->hazards[0].speed = 95; // boost perp speed from normal 60 (writes $A195)
         // Q. Why is a bonus awarded for going the wrong way?
-        add_bonus(0, (state->wanted_stage_number + 4) << 8);
-        HLchatter = &raymond_says_wrong_way_chatter[0];
+        add_bonus(state, 0, 0, state->wanted_stage_number + 4);
+        HLchatterblk = &chatterblk_raymond_wrong_way[0];
     }
-    start_chatter(20, HLchatter);
+    start_chatter(state, 20, HLchatterblk);
     // POP HLforkdistance (ok)
 
 lr_check_spawning:
@@ -646,7 +1050,7 @@ lr_badf:
 }
 
 // $CBD6 ish
-void build_curve_table(chqstate_t *state, int forked)
+static void build_curve_table(chqstate_t *state, int forked)
 {
     uint16_t       *table1, *table2;
     const uint8_t  *road_buffer_ptr_HL; // was HL
@@ -782,7 +1186,7 @@ void build_curve_table(chqstate_t *state, int forked)
 }
 
 // HL -> points past end of destination table we're filling
-void build_curve_table_sub_cca8(chqstate_t *state,
+static void build_curve_table_sub_cca8(chqstate_t *state,
                                 uint8_t     Bdash_alwayszero,
                                 uint16_t   *HLtableend,
                                 uint16_t    DEroadpos)
