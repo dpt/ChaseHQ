@@ -73,39 +73,6 @@
 
 /* ----------------------------------------------------------------------- */
 
-typedef int8_t T; // works
-
-// $CDD6
-static T multiply(T a, T c)
-{
-#if 1
-  int b; // can be int, not T
-  int e;
-  int carry;
-
-  b = 3;
-  e = a;
-  a = 0; // result
-  do {
-    carry = (e >> 7) & 1;
-    e <<= 1;
-    if (carry) a += c;
-    a <<= 1;
-  } while (--b);
-  a >>= 1; // undo final doubling
-  a >>= 2;
-  carry = a & 1;
-  a = (a >> 1) + carry;
-  return a;
-#else
-  // This is theoretically equivalent but needs further testing.
-  int t = (((a & 0xE0) >> 5) * c) >> 2;
-  return (t >> 1) + (t & 1);
-#endif
-}
-
-/* ----------------------------------------------------------------------- */
-
 #define CHATTERSTATE_IDLE   (0)
 #define CHATTERSTATE_START  (1)
 #define CHATTERSTATE_RUN    (2)
@@ -142,11 +109,22 @@ typedef struct chqstate_s
   // $4000
   uint8_t  screen[256*192/8+32*24];
 
+  // $8000
+  uint8_t  test_mode;
+  // $8001
+  uint8_t  attract_cycle;
   // $8002
   char     score_bcd[4];
-
+  // $8006
+  uint8_t  retry_count;
   // $8007
   uint8_t  wanted_stage_number;
+
+  // $xxxx
+  uint8_t  stagedata[9999];
+
+  // $9618
+  uint8_t  rng_seed[3]; // init to 0x7B,0x2D,0xE9
 
   // $962E
   const char *next_character;
@@ -173,6 +151,17 @@ typedef struct chqstate_s
 
   // $9D9B
   char    *SM_address_of_score_digits; // self modified
+
+  // $A139
+  uint8_t  mode_128k;
+  // $A13A
+  uint8_t  current_stage_number; // init to 1
+  // $A13B
+  uint8_t  start_speech_cycle; // init to 4
+  // $A13C
+  uint8_t  overtake_bonus_bcd;
+  // $A13D
+  uint8_t  credits;
 
   // $A16D
   uint8_t  var_a16d;
@@ -201,6 +190,8 @@ typedef struct chqstate_s
   // $A269
   uint8_t  fork_in_progress;
 
+  // $A26B
+  uint8_t  start_speech;
   // $A26C
   uint16_t road_pos;
 
@@ -246,6 +237,8 @@ static void chasehq_reset_state(chqstate_t *state)
 
 /* ----------------------------------------------------------------------- */
 
+static uint8_t rng(chqstate_t *state);
+
 static void start_chatter(chqstate_t       *state,
                           chatterpriority_t priority,
                           const uint8_t    *chatterblk);
@@ -288,11 +281,16 @@ static void increment_score(chqstate_t *state,
 
 static uint8_t DAA(uint8_t v, int *carry_out);
 
+static void layout_road(chqstate_t *state);
+
 static void build_curve_table(chqstate_t *state, int forked);
 static void build_curve_table_sub_cca8(chqstate_t *state,
                                        uint8_t     Bdash_alwayszero,
                                        uint16_t   *HLtableend,
                                        uint16_t    DEroadpos);
+
+typedef int8_t T; // works
+static T multiply(T a, T c);
 
 /* ----------------------------------------------------------------------- */
 
@@ -309,72 +307,102 @@ static void build_curve_table_sub_cca8(chqstate_t *state,
 #define CHATTERCHR_TONY                        (3)
 
 /// Chatter string indices
-#define CHATTERSTR_THIS_IS_NANCY               (0)
-#define CHATTERSTR_THIS_IS_AIRBORNE            (1)
-#define CHATTERSTR_TARGET_VEHICLE_TURNED       (2)
-#define CHATTERSTR_RIGHT_AHEAD_OVER            (3)
-#define CHATTERSTR_LEFT_AHEAD_OVER             (4)
-#define CHATTERSTR_READ_LOUD_CLEAR             (5)
-#define CHATTERSTR_ROGER                       (6)
-#define CHATTERSTR_GOTCHA_NANCY                (7)
-#define CHATTERSTR_WHAT_YOU_DOING              (8)
-#define CHATTERSTR_GOING_OTHER_WAY             (9)
-#define CHATTERSTR_MESSIN_AROUND              (10)
-#define CHATTERSTR_TIME_RUN_OUT               (11)
-#define CHATTERSTR_GET_MOVIN_MAN              (12)
-#define CHATTERSTR_OH_NO                      (13)
-#define CHATTERSTR_PLEASE                     (14)
-#define CHATTERSTR_GREAT                      (15)
-#define CHATTERSTR_OUCH                       (16)
-#define CHATTERSTR_LETS_GO                    (17)
-#define CHATTERSTR_YAOW                       (18)
-#define CHATTERSTR_BEAR_DOWN                  (19)
-#define CHATTERSTR_MORE_PUSH_MORE             (20)
-#define CHATTERSTR_ONE_MORE_TIME              (21)
-#define CHATTERSTR_OH_MAN                     (22)
-#define CHATTERSTR_WHOA                       (23)
-#define CHATTERSTR_HARDER                     (24)
-#define CHATTERSTR_PICKED_WRONG_JOB           (25)
-#define CHATTERSTR_CHECK_CLASSIFIED_ADS       (26)
-#define CHATTERSTR_ONE_MORE_TRY               (27)
-#define CHATTERSTR_MEDIOCRE_DRIVER            (28)
-#define CHATTERSTR_SEE_YOU_LATER              (29)
-#define CHATTERSTR__LIMIT                     (30)
+#define CHATTERSTR_GIDDY_UP_BOY                (0)
+#define CHATTERSTR_HOLD_ON_MAN                 (1)
+#define CHATTERSTR_THIS_IS_NANCY               (2)
+#define CHATTERSTR_THIS_IS_AIRBORNE            (3)
+#define CHATTERSTR_TARGET_VEHICLE_TURNED       (4)
+#define CHATTERSTR_RIGHT_AHEAD_OVER            (5)
+#define CHATTERSTR_LEFT_AHEAD_OVER             (6)
+#define CHATTERSTR_READ_LOUD_CLEAR             (7)
+#define CHATTERSTR_ROGER                       (8)
+#define CHATTERSTR_GOTCHA_NANCY                (9)
+#define CHATTERSTR_WHAT_YOU_DOING             (10)
+#define CHATTERSTR_GOING_OTHER_WAY            (11)
+#define CHATTERSTR_MESSIN_AROUND              (12)
+#define CHATTERSTR_TIME_RUN_OUT               (13)
+#define CHATTERSTR_GET_MOVIN_MAN              (14)
+#define CHATTERSTR_OH_NO                      (15)
+#define CHATTERSTR_PLEASE                     (16)
+#define CHATTERSTR_GREAT                      (17)
+#define CHATTERSTR_OUCH                       (18)
+#define CHATTERSTR_LETS_GO                    (19)
+#define CHATTERSTR_YAOW                       (20)
+#define CHATTERSTR_BEAR_DOWN                  (21)
+#define CHATTERSTR_MORE_PUSH_MORE             (22)
+#define CHATTERSTR_ONE_MORE_TIME              (23)
+#define CHATTERSTR_OH_MAN                     (24)
+#define CHATTERSTR_WHOA                       (25)
+#define CHATTERSTR_HARDER                     (26)
+#define CHATTERSTR_PICKED_WRONG_JOB           (27)
+#define CHATTERSTR_CHECK_CLASSIFIED_ADS       (28)
+#define CHATTERSTR_ONE_MORE_TRY               (29)
+#define CHATTERSTR_MEDIOCRE_DRIVER            (30)
+#define CHATTERSTR_SEE_YOU_LATER              (31)
+#define CHATTERSTR__LIMIT                     (32)
 
 /// Chatter block indices
-#define CHATTERBLK_PILOT_TURN_LEFT             (0)
-#define CHATTERBLK_PILOT_TURN_RIGHT            (1)
-#define CHATTERBLK_HEROES_ACKNOWLEDGE          (2)
-#define CHATTERBLK_TONY_LOUD_CLEAR             (3)
-#define CHATTERBLK_RAYMOND_ROGER               (4)
-#define CHATTERBLK_TONY_GOTCHA                 (5)
-#define CHATTERBLK_RAYMOND_WRONG_WAY           (6)
-#define CHATTERBLK_RAYMOND_SMASH               (7)
-#define CHATTERBLK_RAYMOND_BEAR_DOWN           (8)
-#define CHATTERBLK_RAYMOND_PUSH_IT             (9)
-#define CHATTERBLK_RAYMOND_HARDER             (10)
-#define CHATTERBLK_RAYMOND_OH_MAN             (11)
-#define CHATTERBLK_RAYMOND_RANDOM_PLEAS       (12)
-#define CHATTERBLK_RAYMOND_PLEASE             (13)
-#define CHATTERBLK_RAYMOND_GET_MOVING         (14)
-#define CHATTERBLK_NANCY_TIME_RUNNING_OUT     (15)
-#define CHATTERBLK_RAYMOND_RANDOM_YELPS       (16)
-#define CHATTERBLK_RAYMOND_OHNO               (17)
-#define CHATTERBLK_RAYMOND_OUCH               (18)
-#define CHATTERBLK_RAYMOND_YAOW               (19)
-#define CHATTERBLK_TURBO                      (20)
-#define CHATTERBLK_TONY_WHOA                  (21)
-#define CHATTERBLK_TONY_GREAT                 (22)
-#define CHATTERBLK_RAYMOND_ONE_MORE_TIME      (23)
-#define CHATTERBLK_NANCY_BERATES              (24)
-#define CHATTERBLK_NANCY_WRONG_JOB            (25)
-#define CHATTERBLK_NANCY_ONE_MORE_TRY         (26)
-#define CHATTERBLK_NANCY_MEDIOCRE_DRIVER      (27)
-#define CHATTERBLK_TONY_LETS_GO               (28)
-#define CHATTERBLK__LIMIT                     (29)
+#define CHATTERBLK_START_STAGE                 (0)
+#define CHATTERBLK_TONY_GIDDY_UP               (1)
+#define CHATTERBLK_TONY_HOLD_ON                (2)
+#define CHATTERBLK_PILOT_TURN_LEFT             (3)
+#define CHATTERBLK_PILOT_TURN_RIGHT            (4)
+#define CHATTERBLK_HEROES_ACKNOWLEDGE          (5)
+#define CHATTERBLK_TONY_LOUD_CLEAR             (6)
+#define CHATTERBLK_RAYMOND_ROGER               (7)
+#define CHATTERBLK_TONY_GOTCHA                 (8)
+#define CHATTERBLK_RAYMOND_WRONG_WAY           (9)
+#define CHATTERBLK_RAYMOND_SMASH              (10)
+#define CHATTERBLK_RAYMOND_BEAR_DOWN          (10)
+#define CHATTERBLK_RAYMOND_PUSH_IT            (12)
+#define CHATTERBLK_RAYMOND_HARDER             (13)
+#define CHATTERBLK_RAYMOND_OH_MAN             (14)
+#define CHATTERBLK_RAYMOND_RANDOM_PLEAS       (15)
+#define CHATTERBLK_RAYMOND_PLEASE             (16)
+#define CHATTERBLK_RAYMOND_GET_MOVING         (17)
+#define CHATTERBLK_NANCY_TIME_RUNNING_OUT     (18)
+#define CHATTERBLK_RAYMOND_RANDOM_YELPS       (19)
+#define CHATTERBLK_RAYMOND_OHNO               (20)
+#define CHATTERBLK_RAYMOND_OUCH               (21)
+#define CHATTERBLK_RAYMOND_YAOW               (22)
+#define CHATTERBLK_TURBO                      (23)
+#define CHATTERBLK_TONY_WHOA                  (24)
+#define CHATTERBLK_TONY_GREAT                 (25)
+#define CHATTERBLK_RAYMOND_ONE_MORE_TIME      (26)
+#define CHATTERBLK_NANCY_BERATES              (27)
+#define CHATTERBLK_NANCY_WRONG_JOB            (28)
+#define CHATTERBLK_NANCY_ONE_MORE_TRY         (29)
+#define CHATTERBLK_NANCY_MEDIOCRE_DRIVER      (30)
+#define CHATTERBLK_TONY_LETS_GO               (31)
+#define CHATTERBLK__LIMIT                     (32)
 
-// $97B5
+// $81DD
+static const uint8_t chatterblk_start_stage[] = {
+  CHATTERCMD_RANDOM,
+  CHATTERBLK_TONY_GIDDY_UP,
+  CHATTERBLK_TONY_HOLD_ON,
+  CHATTERBLK_TONY_LETS_GO
+};
+
+// $81E4
+static const uint8_t chatterblk_tony_giddy_up[] = {
+  CHATTERCHR_TONY,
+  CHATTERSTR_GIDDY_UP_BOY,
+  CHATTERCMD_STOP
+};
+
+// $81E8
+static const uint8_t chatterblk_tony_hold_on[] = {
+  CHATTERCHR_TONY,
+  CHATTERSTR_HOLD_ON_MAN,
+  CHATTERCMD_STOP
+};
+
 static const char *chatter_strings[CHATTERSTR__LIMIT] = {
+  // $81EC
+  "GIDDY UP BOY!",
+  "HOLD ON MAN",
+  // $97B5
   "THIS IS NANCY AT CHASE H.Q.",
   "THIS IS SPECIAL INVESTIGATION AIRBORNE.",
   "THE TARGET VEHICLE HAS TURNED",
@@ -627,7 +655,12 @@ static const uint8_t chatterblk_tony_lets_go[] = {
 };
 
 // Additional: List of all chatter blocks
+// Note: Strictly this only needs to be the blocks that are referred to from
+// other blocks.
 static const uint8_t *chatter_blocks[CHATTERBLK__LIMIT] = {
+  &chatterblk_start_stage[0],
+  &chatterblk_tony_giddy_up[0],
+  &chatterblk_tony_hold_on[0],
   &chatterblk_pilot_turn_left[0],
   &chatterblk_pilot_turn_right[0],
   &chatterblk_heroes_acknowledge[0],
@@ -787,6 +820,110 @@ static const uint8_t horizontal_e760[8][22] = {
 
 /* ----------------------------------------------------------------------- */
 
+// CODE GOES HERE
+//
+
+// $8401
+static void main_loop(chqstate_t *state)
+{
+  uint8_t start_speech_index; // was A
+
+  // call load_stage
+  if (state->wanted_stage_number != 6)
+    goto ml_not_credits;
+
+  // run end screen
+  // call $5c00
+  state->wanted_stage_number = 1;
+  // push hl
+  // load_stage();
+  // pop hl
+  state->wanted_stage_number = 6; // not sure why
+  return;
+
+ml_not_credits:
+  // call run_pregame_screen
+  // set_up_stage(&stage_set_up_data);
+
+  // Cycle start_speech_cycle 3,2,1 then repeat
+  start_speech_index = state->start_speech_cycle - 1;
+  if (start_speech_index == 0)
+    start_speech_index = 3;
+  state->start_speech_cycle = start_speech_index;
+
+  // Choose the startup speech sample
+  state->start_speech = (start_speech_index * 4) | 2;
+  state->hazards[0].used = 0xFF;
+  if (state->mode_128k == 0) 
+    start_chatter(state, 0xFF, chatterblk_start_stage);
+
+  do {
+    // drive_sfx(state);
+    // keyscan(state);
+    tick(state);
+    // check_user_input(state);
+    // read_map(state);
+    // handle_perp_caught(state);
+    // move_hero_car(state);
+    // spawn_cars(state);
+    // cycle_counters(state);
+    // play_engine_or_siren_sfx_hook(state);
+    // build_height_table(state);
+    // scroll_horizon(state);
+    // play_engine_or_siren_sfx_hook(state);
+    layout_road(state);
+    // play_engine_or_siren_sfx_hook(state);
+    // draw_road(state);
+    // play_engine_or_siren_sfx_hook(state);
+    // layout_objects(state);
+    // prepare_tunnel(state);
+    // spawn_hazards(state);
+    // drive_helicopter(state);
+    // choose_dirt_and_stones(state);
+    // play_engine_or_siren_sfx_hook(state);
+    // draw_hazards(state);
+    // layout_dirt_and_stones(state);
+    // play_engine_or_siren_sfx_hook(state);
+    // move_helicopter(state);
+    // check_scenery_collisions(state);
+    // play_engine_or_siren_sfx_hook(state);
+    // draw_everything_else(state);
+    // play_engine_or_siren_sfx_hook(state);
+    // animate_hero_car(state);
+    speed_score(state);
+    // update_scoreboard(state);
+    // calc_overtake_bonus(state);
+    // play_engine_or_siren_sfx_hook(state);
+    drive_chatter(state);
+    // smash_bar_etc(state);
+    // transition(state);
+    // play_engine_or_siren_sfx_hook(state);
+    // draw_screen(state);
+    // exit_fork(state);
+  } while (state->test_mode == 0);
+
+  // TODO test mode etc
+}
+
+// $961B
+static uint8_t rng(chqstate_t *state)
+{
+  uint8_t *HL;
+  uint8_t  A;
+  int      carry = 0;
+
+  HL = &state->rng_seed[0];
+  A = *HL - 0x8D;
+  *HL++ = A;
+  *HL += 3;
+  A += *HL++;
+  RRC(A);
+  RRC(*HL);
+  A += *HL;
+  *HL = A;
+  return A;
+}
+
 // $9945
 static void start_chatter(chqstate_t       *state,
                           chatterpriority_t priority,
@@ -911,6 +1048,20 @@ clear:
 // $99EC
 static void print_chatter(chqstate_t *state)
 {
+  const uint8_t *HLchatter;
+  uint8_t        A;
+
+  HLchatter = state->chatterblk_ptr;
+  do {
+    A = *HLchatter++;
+    if (A != CHATTERCMD_RANDOM)
+      goto pc_plot_character;
+
+    // Random choice
+    // PUSH HLchatter
+    A = random();
+    // POP HLchatter
+  } while (0);
 }
 
 // $9A24
@@ -984,7 +1135,7 @@ static void noise_effect_9a5c(chqstate_t *state, uint8_t counter)
   } while (--C > 0);
 
   ne_plot_attrs(state, 0x47); // BRIGHT + white over black
-  // FALLTHROUGH
+  // was FALLTHROUGH
 }
 
 // $9A98
@@ -994,15 +1145,15 @@ static void ne_plot_attrs(chqstate_t *state, uint8_t attr)
   uint8_t  B;
   uint16_t DE;
   
-  HL = 0x5836; // Screen attribute position (22,1)
+  HL = 0x5836 - 0x5800; // Screen attribute (22,1) (Conv: address -> offset)
   B = 5; // 5 rows
   DE = 32 - 3; // row skip
   do {
     // Conv: Screen write now goes via state.
-    state->screen[HL++ - 0x5800] = attr;
-    state->screen[HL++ - 0x5800] = attr;
-    state->screen[HL++ - 0x5800] = attr;
-    state->screen[HL   - 0x5800] = attr;
+    state->screen[HL++] = attr;
+    state->screen[HL++] = attr;
+    state->screen[HL++] = attr;
+    state->screen[HL  ] = attr;
     HL += DE;
   } while (--B > 0);
 }
@@ -1564,6 +1715,37 @@ bct_endbit_negative:
 
 /* ----------------------------------------------------------------------- */
 
+// $CDD6
+static T multiply(T a, T c)
+{
+#if 1
+  int b; // can be int, not T
+  int e;
+  int carry;
+
+  b = 3;
+  e = a;
+  a = 0; // result
+  do {
+    carry = (e >> 7) & 1;
+    e <<= 1;
+    if (carry) a += c;
+    a <<= 1;
+  } while (--b);
+  a >>= 1; // undo final doubling
+  a >>= 2;
+  carry = a & 1;
+  a = (a >> 1) + carry;
+  return a;
+#else
+  // This is theoretically equivalent but needs further testing.
+  int t = (((a & 0xE0) >> 5) * c) >> 2;
+  return (t >> 1) + (t & 1);
+#endif
+}
+
+/* ----------------------------------------------------------------------- */
+
 int main(void)
 {
 #if 0
@@ -1617,6 +1799,7 @@ int main(void)
   SDL_UpdateWindowSurface(window);
 
   chasehq_reset_state(&state);
+  main_loop(&state);
 
   while (!quit)
   {
