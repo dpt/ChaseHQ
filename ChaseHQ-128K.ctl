@@ -108,18 +108,18 @@
 > $4000 ; $E4D0..$E4FF is road lane markings
 > $4000 ; $E500        is road bending tables
 > $4000 ; $E600..$E80F is road drawing scaling tables (3x8 groups of 22 bytes)
-> $4000 ; $E830..$E8FF is 104 words for road drawing (left)
+> $4000 ; $E830..$E8FF is 104? words for road drawing (left)
 > $4000 ; $E900        is a curvature? table
-> $4000 ; $E930..$E9FF is 104 words for road drawing (centre left)
+> $4000 ; $E930..$E9FF is 104? words for road drawing (centre left)
 > $4000 ; $EA00..$EA2F is the diamond zoom-in mask
-> $4000 ; $EA30..$EAFF is 104 words for road drawing (centre)
+> $4000 ; $EA30..$EAFF is 104? words for road drawing (centre)
 > $4000 ; $EB00..$EB27 is the square zoom-in mask
-> $4000 ; $EB30..$EBFF is 104 words for road drawing (centre right)
+> $4000 ; $EB30..$EBFF is 104? words for road drawing (centre right)
 > $4000 ; $EC00..$EC2F is TBD (transition uses this)
-> $4000 ; $EC30..$ECFF is 104 words for road drawing (right)
+> $4000 ; $EC30..$ECFF is 104? words for road drawing (right)
 > $4000 ; $ED00..$ED?? is a curvature table?
 > $4000 ; $ED28        is the stack (growing downwards)
-> $4000 ; $ED30..$EDFF is (possibly another 104 word road drawing buffer)
+> $4000 ; $ED30..$EDFF is (possibly another 104? word road drawing buffer)
 > $4000 ; $EE00..$EEFF is the road buffer. holds data unpacked from maps. it's cyclic. 32 byte fixed sections for each datum (curvature, height, lanes, right side objects, left side objects, hazards). cleared by $87DD.
 > $4000 ; $EF00..$EFFF is a table of flipped bytes
 > $4000 ; $F000..$FFFF is a 4KB back buffer
@@ -2985,7 +2985,7 @@ N $883F Run the map reader 32 times [enough to draw the screen?]
 C $883F,2 32 iterations
 @ $8841 label=sus_loop
 C $8841,1 Preserve BC
-C $8842,3 Load address of fast_counter == road_buffer_offset - 1 since rm_cycle_buffer_offset will INC HL [why not call an instruction later?]
+C $8842,3 Load address of fast_counter (== road_buffer_offset - 1) since rm_cycle_buffer_offset will INC HL [why not call an instruction later?]
 C $8845,3 Call rm_cycle_buffer_offset
 C $8848,1 Restore BC
 C $8849,2 Loop
@@ -3411,14 +3411,14 @@ C $8C1B,2 Set input GEAR
 C $8C1D,4 Set user input
 @ $8C21 label=hpc_check_perp_accel
 @ $8C21 ssub=LD HL,(hazard_0 + 13)
-C $8C21,3 Load the (accel?) of the perp's car into #REGhl
+C $8C21,3 Load the speed of the perp's car into #REGhl
 C $8C24,7 Compare it to 70
 C $8C2B,4 Jump to hpc_set_perp_pos_or_accel if result <= 70, with #REGde = 70
 C $8C2F,6 Otherwise reduce it by 5 with result in #REGde
 N $8C35 This entry point is used by the routine at #R$8C3A.
 @ $8C35 label=hpc_set_perp_pos_or_accel
 @ $8C35 ssub=LD (hazard_0 + 13),DE
-C $8C35,4 Set the horizontal position (or accel?) of the perp's car to #REGde -- and it's writing A196 too is that the high byte?
+C $8C35,4 Set the speed of the perp's car to #REGde
 C $8C39,1 Return
 c $8C3A Fully smashed
 D $8C3A Used by the routine at #R$B4F0.
@@ -3777,7 +3777,7 @@ N $8F7E Draw tunnel, if configured.
 C $8F7E,4 IY = $E315
 C $8F82,3 Self modified: either CALL draw_tunnel, or NOPs
 C $8F85,2 IY--
-C $8F87,3 Load road_buffer_offset into #REGa
+C $8F87,3 Load road_buffer_offset.lo into #REGa
 C $8F8A,2 Add 115 so it's the right side objects data offset + 19
 C $8F8C,3 Point #REGhl at road buffer right side objects data
 C $8F8F,4 IX = $EAB0
@@ -4507,15 +4507,15 @@ C $962D,1 Return
 g $962E In-game message variables
 @ $962E label=next_character
 W $962E,2,2 Address of the next character in the current message
-@ $9630 label=message_set
-W $9630,2,2 Address of current message set
+@ $9630 label=chatterblk_ptr
+W $9630,2,2 Address of current chatter block byte
 @ $9632 label=message_x
 B $9632,1,1 Index of next character in the message bar
 @ $9633 label=chatter_delay
 B $9633,1,1 Counted down while waiting to display the next line of chatter
 @ $9634 label=noise_bytes
 B $9634,5,5 Five bytes used for noise when character pictures 'noise in'
-B $9639,3,3
+B $9639,3,3 Used?
 @ $963C label=noise_counter
 B $963C,1,1 Noise effect counter (4..0)
 @ $963D label=chatter_state
@@ -4573,16 +4573,19 @@ B $98BD,1,1 Three-way random choice ($FC)
 W $98BE,2,2 -> Tony: "WE READ LOUD AND CLEAR! OVER." <STOP>
 W $98C0,2,2 -> Raymond: "ROGER!" <STOP>
 W $98C2,2,2 -> Tony: "GOTCHA NANCY BABY!" <STOP>
+@ $98C4 label=loud_and_clear_chatter
 B $98C4,1,1 Tony ($03)
 W $98C5,2,2 -> "WE READ LOUD AND CLEAR! OVER."
 B $98C7,1,1 <STOP>
+@ $98C8 label=roger_chatter
 B $98C8,1,1 Raymond ($02)
 W $98C9,2,2 -> "ROGER!"
 B $98CB,1,1 <STOP>
+@ $98CC label=gotcha_chatter
 B $98CC,1,1 Tony ($03)
 W $98CD,2,2 -> "GOTCHA NANCY BABY!"
 B $98CF,1,1 <STOP>
-@ $98D0 label=wrong_way_chatter
+@ $98D0 label=raymond_says_wrong_way_chatter
 B $98D0,1,1 Raymond ($02)
 W $98D1,2,2 -> "WHAT ARE YOU DOING MAN!!"
 W $98D3,2,2 -> "THE BAD GUYS ARE GOING THE OTHER WAY."
@@ -4666,7 +4669,7 @@ B $993B,1,1 Nancy ($01)
 W $993C,2,2 -> "YOU'RE A MEDIOCRE DRIVER, BROTHER!"
 W $993E,2,2 -> "SEE YOU LATER."
 B $9940,1,1 <STOP>
-@ $9941 label=lets_go_mr_driver
+@ $9941 label=tony_says_lets_go_mr_driver
 B $9941,1,1 Tony ($03)
 W $9942,2,2 -> "LET'S GO. MR. DRIVER."
 B $9944,1,1 <STOP>
@@ -4682,7 +4685,7 @@ C $994C,4 If chatter_state >= 3 (chatter end) jump forward to #R$9955
 C $9950,5 If the current chatter_priority >= priority given then return
 @ $9955 label=chatter_set
 C $9955,4 Update chatter_priority
-C $9959,3 Set message set pointer
+C $9959,3 Set chatter block pointer
 C $995C,4 chatter_delay = 0
 C $9960,4 chatter_state = 1 (start chatter)
 C $9964,1 Return
@@ -4690,15 +4693,15 @@ c $9965 Runs chatter, mugshots and noise effect
 D $9965 Used by the routines at #R$8401, #R$858C and #R$873C.
 @ $9965 label=drive_chatter
 C $9965,3 Load chatter_state
-C $9968,3 If chatter_state was 1 (starting) then jump to drive_chatter_clear
+C $9968,3 If chatter_state was 1 (starting) then jump to drive_chatter_starting
 C $996B,3 If chatter_state was 2 (displaying) then jump to drive_chatter_do_noise_effect
-C $996E,3 If chatter_state was 0 (idle) then jump to drive_chatter_idle
+C $996E,3 If chatter_state was not 3 (stopping) it must be 0 (idle) so jump to drive_chatter_idle
 N $9971 Otherwise chatter_state is 3 (stopping).
 C $9971,4 Decrement noise_counter in-place
 C $9975,1 Load noise_counter
 C $9976,3 Jump into noise_effect if it was non-zero
 C $9979,3 New chatter_state is 0 (idle)
-C $997C,3 Call noise_plot_attrs to clear to black
+C $997C,3 Call ne_plot_attrs to clear to black
 N $997F This is the flashing cursor.
 @ $997F label=drive_chatter_idle
 C $997F,2 Plot a space character
@@ -4711,7 +4714,7 @@ C $998F,7 If noise_counter > 0 exit via noise_effect
 C $9996,6 If chatter_delay is zero jump to drive_chatter_clear_line
 C $999C,4 Otherwise decrement chatter_delay
 C $99A0,1 Copy chatter_delay for later
-C $99A1,2 If chatter_delay was zero jump to drive_chatter_99bd
+C $99A1,2 If chatter_delay was zero jump to drive_chatter_read_message
 C $99A3,3 Load address of next character
 C $99A6,1 Go back 1
 C $99A7,1 Load the character for when we call plot_mini_font*
@@ -4723,8 +4726,8 @@ C $99B0,3 Exit via plot_mini_font_2 if carry set
 C $99B3,3 Otherwise exit via plot_mini_font_1
 @ $99B6 label=drive_chatter_clear_line
 C $99B6,7 If message_x != 0 exit via pc_clear_line
-@ $99BD label=drive_chatter_99bd
-C $99BD,3 Load message set address
+@ $99BD label=drive_chatter_read_message
+C $99BD,3 Load current chatter block pointer
 C $99C0,1 Read a byte
 C $99C1,4 Is it a message set terminator? Jump to drive_chatter_stop if so
 N $99C5 An $FE byte means the next two bytes are the address of another message set.
@@ -4732,7 +4735,7 @@ C $99C5,2 Is it introducing a message set address?
 C $99C7,2 Exit via pc_chatter_message if not
 N $99C9 The next two bytes hold a message set address.
 C $99C9,1 Step over the $FE byte
-C $99CA,7 message_set = wordat(HL)
+C $99CA,7 Set chatter block pointer to wordat(HL)
 C $99D1,2 Jump to drive_chatter_clear
 N $99D3 This entry point is used by the routines at #R$858C and #R$8876.
 @ $99D3 label=drive_chatter_stop
@@ -4748,7 +4751,7 @@ C $99E9,3 Exit via noise_effect
 c $99EC Shows the chatter - the alerts and remarks from the game's characters
 D $99EC Used by the routine at #R$9A55.
 @ $99EC label=print_chatter
-C $99EC,3 Load current message set address
+C $99EC,3 Load current chatter block pointer
 @ $99EF label=pc_loop
 C $99EF,2 Read a byte and advance
 N $99F1 $FC indicates a three-way random choice. Otherwise it's the index of the speaking character (1/2/3 for Nancy/Raymond/Tony) or 0 for the helicopter pilot.
@@ -4782,7 +4785,7 @@ C $9A23,1 Restore message pointer
 N $9A24 This entry point is used by the routine at #R$9965.
 @ $9A24 label=pc_chatter_message
 C $9A24,4 Load address of message to start showing
-C $9A28,3 Save current message set address
+C $9A28,3 Save current chatter block pointer
 C $9A2B,4 Save next character address
 C $9A2F,1 Cause a clear_message_line and fall through
 N $9A30 This entry point is used by the routine at #R$9965. #REGa is message_x.
@@ -4809,7 +4812,7 @@ D $9A55 Used by the routine at #R$9965.
 R $9A55 I:A Noise effect counter
 @ $9A55 label=noise_effect
 C $9A55,4 Decrement noise_counter
-C $9A59,3 Jump to print_chatter if it's zero, otherwise fallthrough
+C $9A59,3 Exit via print_chatter if it's zero, otherwise fallthrough
 N $9A5C This entry point is used by the routine at #R$9965.
 @ $9A5C label=ne_9a5c
 C $9A5C,1 Shift A's bottom bit into carry
@@ -5066,29 +5069,29 @@ C $9CD6,1 Preserve #REGa
 C $9CD7,3 -> Byte after bonus digits buffer
 C $9CDA,2 Flag, set to $FF while digits are zero
 C $9CDC,1 Needless move
-C $9CDD,3 Call bonus_digit  -- final digit first
+C $9CDD,3 Call ab_digit  -- final digit first
 C $9CE0,2 Top-bit terminate the bonus string
 C $9CE2,1 Load lowest digit
-C $9CE3,3 Call bonus_high_nibble
+C $9CE3,3 Call ab_high_nibble
 C $9CE6,1 Load middle digits
-C $9CE7,3 Call bonus_digit
+C $9CE7,3 Call ab_digit
 C $9CEA,1 Load middle digits
-C $9CEB,3 Call bonus_high_nibble
+C $9CEB,3 Call ab_high_nibble
 C $9CEE,1 Load high digits
-C $9CEF,3 Call bonus_digit
+C $9CEF,3 Call ab_digit
 C $9CF2,1 Load high digits
-C $9CF3,3 Call bonus_high_nibble
-C $9CF6,2 Exit via bonus_exit
+C $9CF3,3 Call ab_high_nibble
+C $9CF6,2 Exit via ab_exit
 @ $9CF8 label=ab_high_nibble
 C $9CF8,4 Shift the high digit down
 @ $9CFC label=ab_digit
 C $9CFC,2 Mask off low nibble
-C $9CFE,2 If #REGa is not zero goto bonus_non_zero
+C $9CFE,2 If #REGa is not zero goto ab_non_zero
 N $9D00 Digit is zero.
 C $9D00,4 Jump if the flag in #REGc is set
 N $9D04 We saw a non-zero-to-zero transition, so terminate.
 C $9D04,1 Discard return address
-C $9D05,2 Exit via bonus_exit
+C $9D05,2 Exit via ab_exit
 @ $9D07 label=ab_non_zero
 C $9D07,2 Set flag to zero now we've seen a non-zero digit
 @ $9D09 label=ab_store
@@ -5979,7 +5982,7 @@ C $A400,1 Set flags
 C $A401,2 C = 0  (not self modified)
 C $A403,2 Jump if not off road
 N $A405 Otherwise we're off-road.
-C $A405,3 Load road_buffer_offset into #REGa
+C $A405,3 Load road_buffer_offset.lo into #REGa
 C $A408,2 Add 64 so it's the lanes data offset
 C $A40A,3 Point #REGhl at road buffer lanes data
 C $A40D,1 Read lane data byte
@@ -6015,13 +6018,13 @@ C $A440,3 ($B396) = HL
 C $A443,4 ($B3A4) = DE
 C $A447,1 Set flags from A (was C)
 C $A448,1 Return if non-zero
-C $A449,3 Load road_buffer_offset into #REGa
+C $A449,3 Load road_buffer_offset.lo into #REGa
 N $A44C -- RIGHT SIDE OBJECT HIT CHECKING --
 C $A44C,2 Add 96 so it's the right side objects data offset
 C $A44E,1 Point #REGhl at road buffer right side objects data
 C $A44F,1 Bank road buffer offset
 C $A450,2 (cont.)
-C $A452,3 Load road_buffer_offset into #REGa
+C $A452,3 Load road_buffer_offset.lo into #REGa
 C $A455,1 Top bit -> carry
 C $A456,1 Read a right side object data byte
 C $A457,2 Jump if top bit was clear
@@ -6048,10 +6051,10 @@ C $A480,1 Unbank road buffer offset or/and bank mystery value in A
 N $A481 -- LEFT SIDE OBJECT HIT CHECKING --
 C $A481,2 Add 32 so it's the left side objects data offset
 C $A483,3 Point #REGhl at road buffer left side objects data
-C $A486,3 Load road_buffer_offset into #REGa
+C $A486,3 Load road_buffer_offset.lo into #REGa
 C $A489,1 Top bit -> carry
 C $A48A,1 Read a left side object data byte
-C $A48B,2 Jump if top bit of road_buffer_offset was clear
+C $A48B,2 Jump if top bit of road_buffer_offset.lo was clear
 C $A48D,1 Advance to next data byte
 @ $A48E label=csc_a48e
 C $A48E,1 OR in the (next) byte
@@ -6171,7 +6174,7 @@ N $A584 Setup addresses.
 C $A584,4 Save #REGsp to restore on exit (self modify)
 C $A588,3 Load #REGsp with $EB00 - where results will be stored (end of - stack is descending)
 C $A58B,2 Point #REGde at road buffer
-C $A58D,3 Load road_buffer_offset into #REGa
+C $A58D,3 Load road_buffer_offset.lo into #REGa
 C $A590,2 Add 64 so it's the lanes data offset
 C $A592,1 Finalised #REGde now points into lanes data
 C $A593,4 Load address of object_positions
@@ -6986,7 +6989,7 @@ C $AB9A,5 Return if allow_spawning is zero
 N $AB9F Calculate a spawning distance.
 C $AB9F,4 #REGc = 20 - allow_spawning (can be 1 or 2 here)
 N $ABA3 Point #REGhl at hazards data.
-C $ABA3,3 Load road_buffer_offset into #REGa
+C $ABA3,3 Load road_buffer_offset.lo into #REGa
 C $ABA6,2 Add 160 for the hazards data offset
 C $ABA8,1 Add spawn distance
 C $ABA9,3 Point #REGhl at road buffer hazards data
@@ -7230,8 +7233,8 @@ C $ADBB,2 Loop while iterations remain -- #REGb > 0
 C $ADBD,1 Return
 @ $ADBE label=dh_draw_one_hazard
 C $ADBE,3 C = IX[14]  -- top byte of horz position or accel?
-N $ADC1 Distance? If I disable this calculation and $A18C remains zero then the perp car cannot be caught up with. IX[4] here is e.g. $A18C. IX[13] here is e.g. $A195 which seems to be the perp's acceleration or offset or ? (low byte)
-C $ADC1,9 IX[4] -= IX[13]  -- bottom byte of accel/something?
+N $ADC1 Distance? If I disable this calculation and $A18C remains zero then the perp car cannot be caught up with. IX[4] here is e.g. $A18C. IX[13] here is e.g. $A195 which is the perp's speed
+C $ADC1,9 IX[4] -= IX[13]  -- bottom byte of speed
 C $ADCA,3 If IX[4] was < IX[13] then C++
 @ $ADCD label=dh_adcd
 C $ADCD,5 C += IX[1]  -- buffer offset/distance
@@ -8702,7 +8705,7 @@ C $B8F1,1 C = A
 C $B8F2,1 HL += BC
 C $B8F3,3 Store horizon_level
 @ $B8F6 label=url_read_road_height
-C $B8F6,3 Load road_buffer_offset into #REGa
+C $B8F6,3 Load road_buffer_offset.lo into #REGa
 C $B8F9,2 Add (32+2) so it's the height data
 C $B8FB,3 Point #REGhl at road buffer height data
 C $B8FE,7 Zero var_a25b and var_a25a
@@ -8763,7 +8766,7 @@ C $B96F,1 Restore HL (which is what?)
 C $B970,1 *HL = C
 C $B971,3 Load current_curvature into #REGa
 C $B974,1 Preserve it
-C $B975,3 Load road_buffer_offset into #REGa
+C $B975,3 Load road_buffer_offset.lo into #REGa
 C $B978,3 Point #REGhl at road buffer curvature data
 C $B97B,4 Test fork_visible
 C $B97F,1 Load a curvature byte
@@ -8832,7 +8835,7 @@ c $B9F4 Lays out the road
 D $B9F4 Reads in (expanded out) lane data then...
 R $B9F4 Used by the routines at #R$8401, #R$852A and #R$873C.
 @ $B9F4 label=layout_road
-C $B9F4,3 Load road_buffer_offset into #REGa [as byte]
+C $B9F4,3 Load road_buffer_offset.lo into #REGa [as byte]
 C $B9F7,2 Add 64 so it's the lanes data offset (wrapping around)
 C $B9F9,3 Point #REGde at road buffer lanes data
 N $B9FC Count the distance to the forked road.
@@ -8852,7 +8855,7 @@ C $BA0E,4 Self modify 'LD SP' @ #R$BA4D to restore #REGsp on exit
 C $BA12,3 Put $EC30 (road right) in #REGsp (so we can use POP for speed)
 C $BA15,2 Iterate from $30 to $00 in steps of 2 = 104 iterations
 N $BA17 Note that the fork case branches back here.
-@ $BA17 label=lr_ba17
+@ $BA17 label=lr_calc_single_lane
 C $BA17,3 Self modify #R$BA35 to load $EA30 upwards (road centre)
 C $BA1A,3 Self modify #R$BA3F to load $EB30 upwards (road centre right)
 C $BA1D,3 Self modify #R$BA44 to load $E930 upwards (road centre left)
@@ -8893,14 +8896,13 @@ C $BA67,2 Jump if non-zero
 N $BA69 Lanes byte & 4 is zero. Hit when the road forks (during the fork itself).
 C $BA69,4 A = fork_in_progress - 1
 C $BA6D,2 Jump to lr_check_spawning if zero
-N $BA6F Otherwise A has 255? NEG turns that back to zero. Why not XOR A which is shorter?
-C $BA6F,5 fork_in_progress = -fork_in_progress + 1 = ~fork_in_progress
+C $BA6F,5 fork_in_progress = -A
 C $BA74,4 Get road position
 C $BA78,2 A = 1
 C $BA7A,1 D--
 C $BA7B,3 jump with A==1  => right fork
 C $BA7E,3 jump with A==1  => left fork
-C $BA81,1 A = E  -- E is ?
+C $BA81,1 A = E  -- E is bottom of road position
 C $BA82,6 Jump with A==1 if E < 12
 @ $BA88 label=lr_left_fork
 C $BA88,1 A should be 1, will become zero
@@ -8914,7 +8916,7 @@ C $BA92,3 -> Tony: "LET'S GO. MR. DRIVER." <STOP>
 C $BA95,2 Jump to lr_chatter if correct fork was taken
 N $BA97 Incorrect fork was taken.
 @ $BA99 ssub=LD (hazard_0 + 13),A
-C $BA97,5 Set the (accel?) of the perp's car to $5F  -- reducing accel so we can catch up?
+C $BA97,5 Set the speed of the perp's car to 95 (normally 60)
 N $BA9C Add a bonus of (40,000 + 10,000 * level number) for going the wrong way (eh?)
 C $BA9C,5 A = wanted_stage_number + 4
 C $BAA1,1 Set top digits
@@ -8941,8 +8943,10 @@ C $BAC1,7 Increase fork_distance by 16
 C $BAC8,4 var_a16d = C
 @ $BACC label=lr_no_car_spawning
 C $BACC,3 A = var_a16d
-C $BACF,1 Getting carry?
-C $BAD0,9 A = (fast_counter >> 4)
+C $BACF,1 this must extract the bottom bit to carry
+C $BAD0,3 A = fast_counter
+C $BAD3,1 A = (A << 1) | carry
+C $BAD4,1 A = (...)
 C $BAD9,2 A -= 16  -- sets top nibble to $F
 C $BADB,3 DE = $FF00 | A  -- ($FFF0..$FFFF)
 C $BADE,1 HL += DE  -- fork_distance + DE
@@ -9067,7 +9071,7 @@ C $BBEF,6 road_hazard_ptr    = $E2D2
 C $BBF5,1 Suspected road curve type left/right
 C $BBF6,1 Copy road buffer additional offset
 N $BBF7 The code commonly loads the byte at #R$A240 and merges it with $EE00, yet #R$A240 already contains a whole word with the right value.
-C $BBF7,3 Load road_buffer_offset into #REGa [as byte]
+C $BBF7,3 Load road_buffer_offset.lo into #REGa [as byte]
 C $BBFA,3 Point #REGhl at road buffer curvature data
 N $BBFD Set the 32 bytes at #REGhl to the road curvature type in #REGd.
 C $BBFD,2 32 iterations
@@ -9076,7 +9080,7 @@ C $BBFF,1 Store
 C $BC00,1 Advance
 C $BC01,2 Loop
 N $BC03 Set the 32 bytes at #REGhl + 64 to the lane type in #REGe.
-C $BC03,2 A = road_buffer_offset + 64
+C $BC03,2 A = road_buffer_offset.lo + 64
 C $BC05,1 Point #REGhl at lane bytes
 C $BC06,2 32 iterations
 @ $BC08 label=ef_set_lanes_loop
@@ -9217,7 +9221,7 @@ C $BE1C,3 Jump to rm_exit if fast_counter didn't carry (meaning we're going slow
 N $BE1F This entry point is used by the routine at #R$87DC.
 @ $BE1F label=rm_cycle_buffer_offset
 C $BE1F,1 Set #REGhl to address of road_buffer_offset
-C $BE20,3 Load, increment and update road_buffer_offset (wrapping around)
+C $BE20,3 Load, increment and update road_buffer_offset.lo (wrapping around)
 C $BE23,5 HL = $EE00 | (A + 95)  -- calculate final byte of lanes data
 C $BE28,7 var_a23c |= *HL  -- final lanes byte
 C $BE2F,4 L += 32    -- offset 128... or 127?
@@ -10027,7 +10031,7 @@ N $C460 This affects the thickness of the road edges and lane markings with incr
 C $C460,5 Self modify 'LD A,x' @ #R$C6D8 to load 3 (below)
 C $C465,4 Load address of table $E301 (height table + 1) [height of what?]
 C $C469,6 #REGc = 96 - IY[0]   -- sampled IY[0]: $5D $4F
-C $C46F,3 Load road_buffer_offset
+C $C46F,3 Load road_buffer_offset.lo
 C $C472,2 Add 64 so it's the lanes data offset
 C $C474,5 Load address of $EE00[#REGa]
 C $C479,1 Copy lanes data offset to #REGb
@@ -10979,7 +10983,7 @@ C $CBC5,1 C = A
 C $CBC6,5 Jump if A < 80
 C $CBCB,3 Exit via #R$C79A/dr_start_backdrop_fill
 c $CBCE Builds road curvature tables
-D $CBCE Used by the routine at #R$B9F4.
+D $CBCE Possibly just for one section of the road at a time. Used by the routine at #R$B9F4.
 N $CBCE This gets hit during road forks (where the roads bend outwards).
 @ $CBCE label=build_curve_table_forked
 C $CBCE,3 Load two table high-bytes: $EE, $EC
