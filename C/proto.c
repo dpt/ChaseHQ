@@ -18,6 +18,266 @@
 
 /* ----------------------------------------------------------------------- */
 
+// Pinched from TGE
+#define ________ 0
+#define _______X 1
+#define ______X_ 2
+#define ______XX 3
+#define _____X__ 4
+#define _____X_X 5
+#define _____XX_ 6
+#define _____XXX 7
+#define ____X___ 8
+#define ____X__X 9
+#define ____X_X_ 10
+#define ____X_XX 11
+#define ____XX__ 12
+#define ____XX_X 13
+#define ____XXX_ 14
+#define ____XXXX 15
+#define ___X____ 16
+#define ___X___X 17
+#define ___X__X_ 18
+#define ___X__XX 19
+#define ___X_X__ 20
+#define ___X_X_X 21
+#define ___X_XX_ 22
+#define ___X_XXX 23
+#define ___XX___ 24
+#define ___XX__X 25
+#define ___XX_X_ 26
+#define ___XX_XX 27
+#define ___XXX__ 28
+#define ___XXX_X 29
+#define ___XXXX_ 30
+#define ___XXXXX 31
+#define __X_____ 32
+#define __X____X 33
+#define __X___X_ 34
+#define __X___XX 35
+#define __X__X__ 36
+#define __X__X_X 37
+#define __X__XX_ 38
+#define __X__XXX 39
+#define __X_X___ 40
+#define __X_X__X 41
+#define __X_X_X_ 42
+#define __X_X_XX 43
+#define __X_XX__ 44
+#define __X_XX_X 45
+#define __X_XXX_ 46
+#define __X_XXXX 47
+#define __XX____ 48
+#define __XX___X 49
+#define __XX__X_ 50
+#define __XX__XX 51
+#define __XX_X__ 52
+#define __XX_X_X 53
+#define __XX_XX_ 54
+#define __XX_XXX 55
+#define __XXX___ 56
+#define __XXX__X 57
+#define __XXX_X_ 58
+#define __XXX_XX 59
+#define __XXXX__ 60
+#define __XXXX_X 61
+#define __XXXXX_ 62
+#define __XXXXXX 63
+#define _X______ 64
+#define _X_____X 65
+#define _X____X_ 66
+#define _X____XX 67
+#define _X___X__ 68
+#define _X___X_X 69
+#define _X___XX_ 70
+#define _X___XXX 71
+#define _X__X___ 72
+#define _X__X__X 73
+#define _X__X_X_ 74
+#define _X__X_XX 75
+#define _X__XX__ 76
+#define _X__XX_X 77
+#define _X__XXX_ 78
+#define _X__XXXX 79
+#define _X_X____ 80
+#define _X_X___X 81
+#define _X_X__X_ 82
+#define _X_X__XX 83
+#define _X_X_X__ 84
+#define _X_X_X_X 85
+#define _X_X_XX_ 86
+#define _X_X_XXX 87
+#define _X_XX___ 88
+#define _X_XX__X 89
+#define _X_XX_X_ 90
+#define _X_XX_XX 91
+#define _X_XXX__ 92
+#define _X_XXX_X 93
+#define _X_XXXX_ 94
+#define _X_XXXXX 95
+#define _XX_____ 96
+#define _XX____X 97
+#define _XX___X_ 98
+#define _XX___XX 99
+#define _XX__X__ 100
+#define _XX__X_X 101
+#define _XX__XX_ 102
+#define _XX__XXX 103
+#define _XX_X___ 104
+#define _XX_X__X 105
+#define _XX_X_X_ 106
+#define _XX_X_XX 107
+#define _XX_XX__ 108
+#define _XX_XX_X 109
+#define _XX_XXX_ 110
+#define _XX_XXXX 111
+#define _XXX____ 112
+#define _XXX___X 113
+#define _XXX__X_ 114
+#define _XXX__XX 115
+#define _XXX_X__ 116
+#define _XXX_X_X 117
+#define _XXX_XX_ 118
+#define _XXX_XXX 119
+#define _XXXX___ 120
+#define _XXXX__X 121
+#define _XXXX_X_ 122
+#define _XXXX_XX 123
+#define _XXXXX__ 124
+#define _XXXXX_X 125
+#define _XXXXXX_ 126
+#define _XXXXXXX 127
+#define X_______ 128
+#define X______X 129
+#define X_____X_ 130
+#define X_____XX 131
+#define X____X__ 132
+#define X____X_X 133
+#define X____XX_ 134
+#define X____XXX 135
+#define X___X___ 136
+#define X___X__X 137
+#define X___X_X_ 138
+#define X___X_XX 139
+#define X___XX__ 140
+#define X___XX_X 141
+#define X___XXX_ 142
+#define X___XXXX 143
+#define X__X____ 144
+#define X__X___X 145
+#define X__X__X_ 146
+#define X__X__XX 147
+#define X__X_X__ 148
+#define X__X_X_X 149
+#define X__X_XX_ 150
+#define X__X_XXX 151
+#define X__XX___ 152
+#define X__XX__X 153
+#define X__XX_X_ 154
+#define X__XX_XX 155
+#define X__XXX__ 156
+#define X__XXX_X 157
+#define X__XXXX_ 158
+#define X__XXXXX 159
+#define X_X_____ 160
+#define X_X____X 161
+#define X_X___X_ 162
+#define X_X___XX 163
+#define X_X__X__ 164
+#define X_X__X_X 165
+#define X_X__XX_ 166
+#define X_X__XXX 167
+#define X_X_X___ 168
+#define X_X_X__X 169
+#define X_X_X_X_ 170
+#define X_X_X_XX 171
+#define X_X_XX__ 172
+#define X_X_XX_X 173
+#define X_X_XXX_ 174
+#define X_X_XXXX 175
+#define X_XX____ 176
+#define X_XX___X 177
+#define X_XX__X_ 178
+#define X_XX__XX 179
+#define X_XX_X__ 180
+#define X_XX_X_X 181
+#define X_XX_XX_ 182
+#define X_XX_XXX 183
+#define X_XXX___ 184
+#define X_XXX__X 185
+#define X_XXX_X_ 186
+#define X_XXX_XX 187
+#define X_XXXX__ 188
+#define X_XXXX_X 189
+#define X_XXXXX_ 190
+#define X_XXXXXX 191
+#define XX______ 192
+#define XX_____X 193
+#define XX____X_ 194
+#define XX____XX 195
+#define XX___X__ 196
+#define XX___X_X 197
+#define XX___XX_ 198
+#define XX___XXX 199
+#define XX__X___ 200
+#define XX__X__X 201
+#define XX__X_X_ 202
+#define XX__X_XX 203
+#define XX__XX__ 204
+#define XX__XX_X 205
+#define XX__XXX_ 206
+#define XX__XXXX 207
+#define XX_X____ 208
+#define XX_X___X 209
+#define XX_X__X_ 210
+#define XX_X__XX 211
+#define XX_X_X__ 212
+#define XX_X_X_X 213
+#define XX_X_XX_ 214
+#define XX_X_XXX 215
+#define XX_XX___ 216
+#define XX_XX__X 217
+#define XX_XX_X_ 218
+#define XX_XX_XX 219
+#define XX_XXX__ 220
+#define XX_XXX_X 221
+#define XX_XXXX_ 222
+#define XX_XXXXX 223
+#define XXX_____ 224
+#define XXX____X 225
+#define XXX___X_ 226
+#define XXX___XX 227
+#define XXX__X__ 228
+#define XXX__X_X 229
+#define XXX__XX_ 230
+#define XXX__XXX 231
+#define XXX_X___ 232
+#define XXX_X__X 233
+#define XXX_X_X_ 234
+#define XXX_X_XX 235
+#define XXX_XX__ 236
+#define XXX_XX_X 237
+#define XXX_XXX_ 238
+#define XXX_XXXX 239
+#define XXXX____ 240
+#define XXXX___X 241
+#define XXXX__X_ 242
+#define XXXX__XX 243
+#define XXXX_X__ 244
+#define XXXX_X_X 245
+#define XXXX_XX_ 246
+#define XXXX_XXX 247
+#define XXXXX___ 248
+#define XXXXX__X 249
+#define XXXXX_X_ 250
+#define XXXXX_XX 251
+#define XXXXXX__ 252
+#define XXXXXX_X 253
+#define XXXXXXX_ 254
+#define XXXXXXXX 255
+
+/* ----------------------------------------------------------------------- */
+
 /* Z80 instruction simulator macros. */
 
 /**
@@ -412,6 +672,159 @@ static T multiply(T a, T c);
 #define CHATTERBLK_NANCY_MEDIOCRE_DRIVER      (30)
 #define CHATTERBLK_TONY_LETS_GO               (31)
 #define CHATTERBLK__LIMIT                     (32)
+
+/* ----------------------------------------------------------------------- */
+
+// [Graphics] Faces
+//
+
+#define FACESIZE (32*40/8 + 4*5)
+
+// $7BE9
+static const uint8_t bitmap_faces[FACESIZE * 3] = {
+  XXXXXXXX,XXXXXXXX,XXXXXXXX,XXXXXXXX,
+  X__XX__X,X_______,________,____X_XX,
+  X_XX___X,________,________,_____X_X,
+  XX____XX,________,________,_____X_X,
+  X___XXXX,____XXXX,XX______,__XX_X_X,
+  X_XX_XX_,___X____,_XXX____,XX__XXXX,
+  XXX_XXX_,________,__XX___X,X____XXX,
+  XXX_XXX_,___X_XXX,X_X____X,X____X__,
+  XX_XXXX_,___XXX_X,XXX____X,XXXX_XXX,
+  XX_XXX__,____XXXX,__XX___X,X_XXXXX_,
+  X_XXXX__,______XX,X______X,XXX_XXX_,
+  XXXXXXX_,________,________,XX___XX_,
+  XXXXXX__,________,____X___,_____XXX,
+  XXXXX_X_,________,________,_____XXX,
+  XXXX_X_X,________,__X__X__,_____X_X,
+  XXX_X_X_,________,__X_XXXX,X____X_X,
+  XXXX_X_X,_X______,_X_XXXXX,_____X__,
+  _XXXX_X_,X_X_____,_____XX_,_____X__,
+  _X_____X,_X_X_X__,______X_,_____X__,
+  ___XX___,__X_X___,________,_____X__,
+  X__X____,_X_X____,___XXX_X,X___XX__,
+  XXXX____,__X_____,_XXXXXXX,X___XX__,
+  XXXX____,_X_X____,XXX____X,XX__XXX_,
+  XXXX____,__X_____,________,____X_X_,
+  XXXX____,________,_X______,X__XX_X_,
+  XXXXX___,________,__XXXXXX,___XX_X_,
+  XXXXX___,________,___XXXXX,___XX_X_,
+  XXXXXX__,________,________,__XXX_X_,
+  _XXXX_X_,X_______,________,__XXX_X_,
+  _XXX_X_X,XXXX_X__,_____XX_,__XXX_X_,
+  _XXXX_X_,XXXXX_XX,_X_XXXXX,_XXXX_XX,
+  __XX___X,XXXXXXXX,XXXXXXXX,XXXXX_XX,
+  __XXX___,_XXXXXXX,XXXXXX_X,XXXXX__X,
+  __XX____,___XXXXX,XXXXX_XX,XXXXXX_X,
+  __X_X___,_____X_X,XXXX_XXX,XXXXXX_X,
+  __XX____,______X_,XXXXXXXX,XXX_XX_X,
+  _XX_____,_______X,XXXX_XXX,XXX_XX_X,
+  _X_X____,_X____X_,XXX_XXXX,XXX_XX_X,
+  _XX____X,__X____X,XXXX_XXX,XXX_XX_X,
+  XXXXXXXX,XXXXXXXX,XXXXXXXX,XXXXXXXX,
+
+  0x78,0x70,0x30,0x30,
+  0x70,0x70,0x70,0x30,
+  0x70,0x72,0x70,0x30,
+  0x30,0x70,0x70,0x30,
+  0x30,0x30,0x28,0x30,
+
+  XXXXXXXX,XXXXXXXX,XXXXXXXX,XXXXXXXX,
+  XXXXXXXX,XXXXXXXX,XXXXXXXX,XXXXX__X,
+  XXXXXXXX,XXXXXXXX,XXXXXXXX,XXXXXX_X,
+  XXXXXXXX,XXXXXXXX,XX_X_XXX,XXXXXX_X,
+  XXXXXXXX,XXXXXXXX,XXXXX_X_,XXXXXXXX,
+  XXXXXXXX,XXXXXXX_,_X_X_X_X,XXXXXX_X,
+  XXXXXXXX,XX_X_X__,______X_,XXXXXXXX,
+  XXXXXXXX,X_X_X___,_____X_X,_XXXXXXX,
+  XXXXXXXX,XX______,__X_X_X_,XXXXXXXX,
+  XXXXXXXX,X_X__X__,_X_X_XXX,_XXXXXXX,
+  XXXXXXXX,XX______,_______X,XXXXXXXX,
+  XXXXXXXX,_XX__X__,_X_XXX_X,_XXXXXXX,
+  XXXXXXXX,XXXX_X_X,XXXXXXX_,XXXXXXXX,
+  XXXXXXXX,XXXX__X_,XXX____X,_XXXXXXX,
+  XXXXXXX_,___XX___,_XXXXX__,__XXXXXX,
+  XXXXXX__,XXXXXX__,_X_XXXX_,_XXXXXXX,
+  XXXXXXXX,XXXXXX__,_XX_____,___XXX_X,
+  XXXXXX_X,__XXX___,__X_X___,__XXXXXX,
+  XXXXXX__,___XX___,X_______,___XXXXX,
+  XXXXX___,__XXX___,____X___,__XXXX_X,
+  XXXXXX_X,_XXXXX__,_XXXX___,___XXX_X,
+  XXXXXXX_,X_XXXXXX,X___XX__,__XXX__X,
+  XXXXXXXX,XXXXXXXX,____XXX_,X_XXX__X,
+  X_XXXXXX,XXXXXXX_,_____XXX,_XXXXX_X,
+  X_XXXXXX,XXXXXX_X,____XXXX,XXXXX__X,
+  XX_XXXXX,XXXXXXXX,XXX___XX,_XXXX__X,
+  X__XXXXX,XXXXX___,______XX,XXXX___X,
+  X_X_XXXX,XXXXXX__,___XX_X_,XXXX___X,
+  X__XXXXX,XXXXXXXX,XXX__X_X,XXX_X__X,
+  X___XXXX,XXXXXXXX,X_X_X_X_,X______X,
+  X___XXXX,XXXXXX__,_____X_X,XX_____X,
+  X____XXX,XXXXX___,____X_XX,X_XXX__X,
+  X____XXX,XXXXX___,_____XXX,X_XXXXXX,
+  X___XX_X,XXXXXX_X,_X_XXXX_,X_XXXXXX,
+  X_XX_X_X,XXXXXXXX,XXXXXXX_,X__XXXXX,
+  XX___X__,XXXXXXXX,XXXXXX_X,___XXXXX,
+  X____X__,_XXXXXXX,XXXXX__X,___XXXXX,
+  X_XX_X__,_XXXXXXX,XXX___X_,___XXXXX,
+  XX__XX__,__XXX_X_,X_____X_,__XXXXXX,
+  XXXXXXXX,XXXXXXXX,XXXXXXXX,XXXXXXXX,
+
+  0x68,0x38,0x78,0x68,
+  0x38,0x38,0x38,0x38,
+  0x38,0x38,0x38,0x38,
+  0x68,0x38,0x38,0x68,
+  0x68,0x38,0x38,0x78,
+
+  XXXXXXXX,XXXXXXXX,XXXXXXXX,XXXXXXXX,
+  X_X_XXXX,XXXXXXXX,XXXXXXXX,XXXXXX_X,
+  X_XXXXXX,XXXXXXXX,XXXXXXXX,XXXXXXXX,
+  XXXXXXXX,XXXXXXXX,XXXXXXXX,XXXXXXXX,
+  XXXXXXXX,XXXX_XX_,_X_XXXXX,XXXXXXXX,
+  XXXXXXXX,XX__XX__,_X_XXX_X,XXXXXXXX,
+  XXXXXXXX,XXXX_X__,_X_X__XX,_XXXXXXX,
+  XXXXXXXX,XXXX_X__,_X_X__XX,_XXXXXXX,
+  XXXXXXXX,XXXXXX__,___X__XX,_XX_XXXX,
+  XXXXXXXX,X_XX_X__,__X___X_,_XX_XXXX,
+  XXXXXXXX,XX______,__X_____,____XXXX,
+  XXXXXXXX,XX_XXX__,________,XXXX_XXX,
+  XXXXXXXX,__XXXXXX,XX____XX,XXXXXXXX,
+  XXXXXXXX,_X__XXXX,XX___XXX,X___XXXX,
+  XXXXXXXX,_X____XX,X____XXX,___X_XXX,
+  XXXXXXXX,____XXXX,XX___XXX,XXX_XXXX,
+  XXXXXXX_,X_XXXX_X,XX____XX,XX_XXXXX,
+  XXXXXXXX,_XX_____,_X____XX,____XXXX,
+  XXX_XXX_,X__X_X__,_XX_____,X_X__XXX,
+  XXX_XXX_,________,XX______,_____X_X,
+  XXX__XXX,_______X,__X___X_,_______X,
+  XXX__XX_,X_____XX,_______X,_____X_X,
+  XXXX__XX,_____XXX,XXX___XX,_______X,
+  XXXX_XXX,X____XXX,XXXXXX_X,X____X_X,
+  XXXXXXXX,_X_X_XXX,XXX_X_X_,XXX_X__X,
+  X_XXXXXX,X_X_XXX_,X_X__X_X,_XXX_X_X,
+  X__XXXXX,XX_XXXXX,_______X,XXX_X__X,
+  X_XXXXXX,XXX_XX__,XXXXXXX_,___XX__X,
+  X_XXXXXX,XX_XXXX_,________,__X_X__X,
+  X_XXXX_X,XXXX_XXX,______XX,_X_X___X,
+  X_XXXXX_,XX_XX_X_,__XXXXX_,__XX___X,
+  X__XXX_X,XXXX_X__,________,_X_X___X,
+  X___XXX_,XXXXX_X_,________,X_XX___X,
+  X_XXXX_X,_XXXXX_X,_X_X_X_X,_XX_XX_X,
+  XX__X_X_,X_XXXXX_,X_XXX_X_,XXX___XX,
+  X___X___,_XXXXXXX,XXXXXXXX,X_X__X_X,
+  X__XX___,X_XXXXXX,XXXXXXXX,__X___XX,
+  X__XX___,_X_X_XXX,XXXXXXXX,__X__X_X,
+  XX_XX___,____X_X_,XXX_X_XX,X_X_X_XX,
+  XXXXXXXX,XXXXXXXX,XXXXXXXX,XXXXXXXX,
+
+  0x38,0x70,0x30,0x30,
+  0x38,0x70,0x70,0x30,
+  0x38,0x70,0x70,0x30,
+  0x38,0x70,0x70,0x30,
+  0x30,0x70,0x70,0x28,
+};
+
+/* ----------------------------------------------------------------------- */
 
 // $81DD
 static const uint8_t chatterblk_start_stage[] = {
@@ -984,43 +1397,51 @@ static void start_chatter(chqstate_t       *state,
 // $9965
 static void drive_chatter(chqstate_t *state)
 {
-  uint8_t chatter_state; // was A
-  int     carry = 0;
-  char    D;
-  uint8_t A;
-  uint8_t B;
-  const char *HL;
-  const uint8_t *HLchatterblk;
+  uint8_t        chatter_state; // was A
+  int            carry = 0;
+  char           character; // was D
+  uint8_t        rotating; // was A
+  uint8_t        delay; // was A
+  uint8_t        A;
+  uint8_t        flag; // was A
+  uint8_t        B;
+  const char    *HL;
+  const uint8_t *chatterblk; // was HL
+  uint8_t        chattercmd; // was A
 
   chatter_state = state->chatter_state;
+
   chatter_state--;
   if (chatter_state == 0) // starting (1)
     goto starting;
+
   chatter_state--;
   if (chatter_state == 0) // displaying (2)
     goto do_noise_effect;
-  chatter_state--;
-  if (chatter_state != 0) // not stopping (3), must be idle (0)
-    goto idle;
 
-  if (--state->noise_counter != 0) {
-    noise_effect(state, state->noise_counter); // exit via
-    return;
+  chatter_state--;
+  if (chatter_state == 0) { // stopping (3)
+    if (--state->noise_counter != 0) {
+      noise_effect(state, state->noise_counter); // exit via
+      return;
+    }
+
+    // enter idle state, hide face by wiping attrs to black on black
+    state->chatter_state = CHATTERSTATE_IDLE;
+    ne_plot_attrs(state, 0 /* black on black attrs */);
   }
 
-  state->chatter_state = CHATTERSTATE_IDLE;
-  ne_plot_attrs(state, 0 /* black on black attrs */);
+  // idle state (0)
 
-idle:
-  D = ' ';
-  A = state->SM_9982;
-  RRC(A);
-  state->SM_9982 = A;
-  A = 0xFF;
+  character = ' ';
+  rotating = state->SM_9982; // Conv: Was self modified
+  RRC(rotating);
+  state->SM_9982 = rotating;
+  flag = 0xFF;
   if (carry)
-    plot_mini_font_2(state, A, D); // exit via
+    plot_mini_font_2(state, flag, character); // exit via
   else
-    plot_mini_font_1(state, A, D); // exit via
+    plot_mini_font_1(state, flag, character); // exit via
   return;
 
 do_noise_effect:
@@ -1028,22 +1449,22 @@ do_noise_effect:
     noise_effect(state, state->noise_counter); // exit via
     return;
   }
-  A = state->chatter_delay;
-  if (A == 0)
+  delay = state->chatter_delay;
+  if (delay == 0)
     goto clear_line;
-  A--;
-  state->chatter_delay = A;
+  delay--;
+  state->chatter_delay = delay;
   B = state->chatter_delay;
-  if (A == 0)
+  if (delay == 0)
     goto read_message;
   HL = state->next_character - 1; // addr of next char
-  D = *HL & ~(1 << 7); // load char and clear terminator
-  A = state->message_x - 1;
+  character = *HL & ~(1 << 7); // load char and clear any terminator
+  flag = state->message_x - 1;
   RR(B);
   if (carry)
-    plot_mini_font_2(state, A, D); // exit via
+    plot_mini_font_2(state, flag, character); // exit via
   else
-    plot_mini_font_1(state, A, D); // exit via
+    plot_mini_font_1(state, flag, character); // exit via
   return;
 
 clear_line:
@@ -1054,18 +1475,18 @@ clear_line:
   }
 
 read_message:
-  HLchatterblk = state->chatterblk_ptr;
-  A = *HLchatterblk;
-  if (A == CHATTERCMD_STOP)
+  chatterblk = state->chatterblk_ptr;
+  chattercmd = *chatterblk;
+  if (chattercmd == CHATTERCMD_STOP)
     goto stop;
-  if (A != CHATTERCMD_PAUSE) {
-    pc_chatter_message(state, HLchatterblk); // exit via
+  if (chattercmd != CHATTERCMD_PAUSE) {
+    pc_chatter_message(state, chatterblk); // exit via
     return;
   }
   // Conv: The next byte is no longer an address but an index into table of
   // chatter blocks.
-  HLchatterblk++;
-  state->chatterblk_ptr = chatter_blocks[*HLchatterblk];
+  chatterblk++;
+  state->chatterblk_ptr = chatter_blocks[*chatterblk];
   goto clear;
 
 stop:
@@ -1088,8 +1509,7 @@ static void print_chatter(chqstate_t *state)
   const uint8_t *HLchatter;
   uint8_t        Acmd;
   uint8_t        Arand;
-  const uint8_t *HLface;
-  uint8_t        B;
+  const uint8_t *face; // was HL
   uint8_t       *DEscreen;
 
   HLchatter = state->chatterblk_ptr;
@@ -1114,16 +1534,13 @@ static void print_chatter(chqstate_t *state)
 pc_plot_character:
   // Acmd is now the character ID
   // PUSH HLchatter - accounted for
-  HLface = stageptr(state, 0x5CF2);
-  if (Acmd == CHATTERCHR_PILOT) {
-    B = Acmd;
-    HLface = 0x7B35; // bitmap_nancy - 180
-    do HLface += 0xB4; while (--B > 0);
-  }
+  face = stageptr(state, 0x5CF2);
+  if (Acmd != CHATTERCHR_PILOT)
+    face = &bitmap_faces[Acmd]; // Conv: Simplified
 
 //pc_do_plot:
   DEscreen = &state->screen[0x4036 - SCREEN_BASE]; // Set plot address to (176,8)
-  plot_face(state, HLface, DEscreen);
+  plot_face(state, face, DEscreen);
   // POP HLchatter - accounted for
   
   pc_chatter_message(state, HLchatter); // was FALLTHROUGH
@@ -1144,18 +1561,19 @@ static void pc_chatter_message(chqstate_t *state, const uint8_t *HLchatter)
 // $9A30
 static void pc_clear_line(chqstate_t *state, uint8_t A)
 {
-  const char *nextch; // was HL
+  const char *nextch;    // was HL
   char        character; // was D
 
   if (A == 0)
     clear_message_line(state);
 
   nextch = state->next_character;
+  assert(nextch);
   character = *nextch & ~(1<<7); // remove any terminator
   plot_mini_font_2(state, A, character);
   if (*nextch++ & (1<<7)) // if terminated
     state->chatter_delay = 10; // pause at end of string
-  state->message_x = ++A;
+  state->message_x = A + 1;
   state->next_character = nextch;
 }
 
@@ -1169,6 +1587,7 @@ static void noise_effect(chqstate_t *state, uint8_t counter)
     noise_effect_9a5c(state, counter); // FALLTHROUGH
 }
 
+// $9A5C
 static void noise_effect_9a5c(chqstate_t *state, uint8_t counter)
 {
   uint8_t  flag; // was A
