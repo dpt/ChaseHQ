@@ -104,6 +104,12 @@ typedef struct hazard_s
 }
 hazard_t;
 
+#define SCREEN_BASE    (0x4000)
+
+#define STAGEDATA_BASE (0x5C00)
+#define STAGEDATA_END  (0x76EF) // inclusive
+#define STAGEDATA_SIZE (STAGEDATA_END + 1 - STAGEDATA_BASE)
+
 typedef struct chqstate_s
 {
   // $4000
@@ -120,8 +126,8 @@ typedef struct chqstate_s
   // $8007
   uint8_t  wanted_stage_number;
 
-  // $xxxx
-  uint8_t  stagedata[9999];
+  // $5C00..$76EF
+  uint8_t  stagedata[STAGEDATA_SIZE];
 
   // $9618
   uint8_t  rng_seed[3]; // init to 0x7B,0x2D,0xE9
@@ -237,6 +243,35 @@ static void chasehq_reset_state(chqstate_t *state)
 
 /* ----------------------------------------------------------------------- */
 
+static uint16_t stagebyte(chqstate_t *state, int address)
+{
+  int offset;
+  assert(address >= STAGEDATA_BASE && address <= STAGEDATA_END);
+  offset = address - STAGEDATA_BASE;
+  return state->stagedata[offset];
+}
+
+static uint16_t stageword(chqstate_t *state, int address)
+{
+  int offset;
+  assert(address >= STAGEDATA_BASE && address <= STAGEDATA_END);
+  offset = address - STAGEDATA_BASE;
+  return state->stagedata[offset + 0] | (state->stagedata[offset + 1] << 8);
+}
+
+// read a pointer in stage data converting on return
+static const uint8_t *stageptr(chqstate_t *state, int address)
+{
+  int zxaddress;
+  zxaddress = stageword(state, address);
+  if (zxaddress == 0)
+    return NULL;
+  assert(zxaddress >= STAGEDATA_BASE && zxaddress <= STAGEDATA_END);
+  return &state->stagedata[zxaddress - STAGEDATA_BASE];
+}
+
+/* ----------------------------------------------------------------------- */
+
 static uint8_t rng(chqstate_t *state);
 
 static void start_chatter(chqstate_t       *state,
@@ -246,17 +281,19 @@ static void start_chatter(chqstate_t       *state,
 static void drive_chatter(chqstate_t *state);
 
 static void print_chatter(chqstate_t *state);
-static void pc_chatter_message(chqstate_t *state);
-static void pc_clear_line(chqstate_t *state);
+static void pc_chatter_message(chqstate_t *state, const uint8_t *HLchatter);
+static void pc_clear_line(chqstate_t *state, uint8_t A);
 
 static void noise_effect(chqstate_t *state, uint8_t counter);
 static void noise_effect_9a5c(chqstate_t *state, uint8_t counter);
 static void ne_plot_attrs(chqstate_t *state, uint8_t A);
 
-static void plot_face(chqstate_t *state, uint8_t *HLface, uint8_t *DEscreen);
+static void plot_face(chqstate_t *state,
+                const uint8_t    *HLface,
+                      uint8_t    *DEscreen);
 
-static void plot_mini_font_1(chqstate_t *state, uint8_t Aflag, char Acharacter);
-static void plot_mini_font_2(chqstate_t *state, uint8_t Aflag, char Acharacter);
+static void plot_mini_font_1(chqstate_t *state, uint8_t flag, char character);
+static void plot_mini_font_2(chqstate_t *state, uint8_t flag, char character);
 static void pmf_go(chqstate_t *state, uint8_t Aflag, char Acharacter, uint16_t BC);
 
 static void clear_message_line(chqstate_t *state);
@@ -1012,7 +1049,7 @@ do_noise_effect:
 clear_line:
   A = state->message_x;
   if (A) {
-    pc_clear_line(state); // exit via
+    pc_clear_line(state, A); // exit via
     return;
   }
 
@@ -1022,7 +1059,7 @@ read_message:
   if (A == CHATTERCMD_STOP)
     goto stop;
   if (A != CHATTERCMD_PAUSE) {
-    pc_chatter_message(state); // exit via
+    pc_chatter_message(state, HLchatterblk); // exit via
     return;
   }
   // Conv: The next byte is no longer an address but an index into table of
@@ -1049,36 +1086,83 @@ clear:
 static void print_chatter(chqstate_t *state)
 {
   const uint8_t *HLchatter;
-  uint8_t        A;
+  uint8_t        Acmd;
+  uint8_t        Arand;
+  const uint8_t *HLface;
+  uint8_t        B;
+  uint8_t       *DEscreen;
 
   HLchatter = state->chatterblk_ptr;
-  do {
-    A = *HLchatter++;
-    if (A != CHATTERCMD_RANDOM)
-      goto pc_plot_character;
+  for (;;) {
+    Acmd = *HLchatter++; // read a command ($FC) or speaking character's ID
+    if (Acmd != CHATTERCMD_RANDOM)
+      goto pc_plot_character; // use break instead?
 
     // Random choice
-    // PUSH HLchatter
-    A = random();
-    // POP HLchatter
-  } while (0);
+    // PUSH HLchatter - accounted for
+    Arand = rng(state);
+    // POP HLchatter - accounted for
+    if (Arand >= 0x55) {
+      HLchatter += 2;
+      if (Arand >= 0xAA)
+        HLchatter += 2;
+    }
+    /* Conv: This is an index, not an address */
+    HLchatter = chatter_blocks[*HLchatter];
+  }
+
+pc_plot_character:
+  // Acmd is now the character ID
+  // PUSH HLchatter - accounted for
+  HLface = stageptr(state, 0x5CF2);
+  if (Acmd == CHATTERCHR_PILOT) {
+    B = Acmd;
+    HLface = 0x7B35; // bitmap_nancy - 180
+    do HLface += 0xB4; while (--B > 0);
+  }
+
+//pc_do_plot:
+  DEscreen = &state->screen[0x4036 - SCREEN_BASE]; // Set plot address to (176,8)
+  plot_face(state, HLface, DEscreen);
+  // POP HLchatter - accounted for
+  
+  pc_chatter_message(state, HLchatter); // was FALLTHROUGH
 }
 
 // $9A24
-static void pc_chatter_message(chqstate_t *state)
+static void pc_chatter_message(chqstate_t *state, const uint8_t *HLchatter)
 {
+  const char *DE;
+
+  // Conv: Original game loads an address directly here.
+  DE = chatter_strings[*HLchatter++];
+  state->chatterblk_ptr = HLchatter;
+  state->next_character = DE;
+  pc_clear_line(state, 0); // was FALLTHROUGH
 }
 
 // $9A30
-static void pc_clear_line(chqstate_t *state)
+static void pc_clear_line(chqstate_t *state, uint8_t A)
 {
+  const char *nextch; // was HL
+  char        character; // was D
+
+  if (A == 0)
+    clear_message_line(state);
+
+  nextch = state->next_character;
+  character = *nextch & ~(1<<7); // remove any terminator
+  plot_mini_font_2(state, A, character);
+  if (*nextch++ & (1<<7)) // if terminated
+    state->chatter_delay = 10; // pause at end of string
+  state->message_x = ++A;
+  state->next_character = nextch;
 }
 
 // $9A55
 static void noise_effect(chqstate_t *state, uint8_t counter)
 {
-  counter--;
-  state->noise_counter = counter;
+  state->noise_counter = --counter;
   if (counter == 0)
     print_chatter(state); // exit via
   else
@@ -1159,7 +1243,9 @@ static void ne_plot_attrs(chqstate_t *state, uint8_t attr)
 }
 
 // $9AAB
-static void plot_face(chqstate_t *state, uint8_t *HLface, uint8_t *DEscreen)
+static void plot_face(chqstate_t *state,
+                const uint8_t    *HLface,
+                      uint8_t    *DEscreen)
 {
 }
 

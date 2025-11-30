@@ -4766,8 +4766,8 @@ C $99FE,2 Skip first option message
 C $9A00,4 If random value < $AA jump to pc_load_message_ptr -- a 66.6% chance
 C $9A04,2 Skip second option message
 @ $9A06 label=pc_load_message_ptr
-C $9A06,4 Load the address of the chosen message set
-C $9A0A,2 Loop back - it could be another random choice
+C $9A06,4 Load the address of the chosen chatter block
+C $9A0A,2 Loop back and process the pointed-to chatter block
 N $9A0C #REGa is the index of the face to show.
 @ $9A0C label=pc_plot_character
 C $9A0C,1 Is it zero? (=> the pilot character's face)
@@ -4784,7 +4784,7 @@ C $9A20,3 Call plot_face
 C $9A23,1 Restore message pointer
 N $9A24 This entry point is used by the routine at #R$9965.
 @ $9A24 label=pc_chatter_message
-C $9A24,4 Load address of message to start showing
+C $9A24,4 Load address of message (set/block?) to start showing
 C $9A28,3 Save current chatter block pointer
 C $9A2B,4 Save next character address
 C $9A2F,1 Cause a clear_message_line and fall through
