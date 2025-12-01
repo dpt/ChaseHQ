@@ -333,6 +333,39 @@
 
 /* ----------------------------------------------------------------------- */
 
+#define STREND              (1<<7)
+
+#define QUITSTATE_IDLE      (0)
+#define QUITSTATE_START     (1)
+#define QUITSTATE_DONE      (2) // not sure
+
+#define USERINPUT_RIGHT     (1<<0)
+#define USERINPUT_LEFT      (1<<1)
+#define USERINPUT_DOWN      (1<<2) // aka brake
+#define USERINPUT_UP        (1<<3) // aka accelerate
+#define USERINPUT_FIRE      (1<<4) // aka gear
+#define USERINPUT_TURBO     (1<<5)
+#define USERINPUT_PAUSE     (1<<6)
+#define USERINPUT_QUIT      (1<<7)
+#define USERINPUT_ALLOW_ALL (0xFF)
+
+#define EFFECT_SQUEAL       (1)
+#define EFFECT_LANDING      (2)
+#define EFFECT_CAR_HIT      (3)
+#define EFFECT_SCENERY_HIT  (4)
+#define EFFECT_HAZARD_HIT   (5)
+#define EFFECT_WALL_HIT     (6)
+#define EFFECT_CORNERING    (7)
+#define EFFECT_BIP          (8)
+#define EFFECT_BOW          (9)
+
+// these state names need clarification
+#define TIMEUP_INIT           (0)
+#define TIMEUP_CHECK_TIME_UP  (1)
+#define TIMEUP_CAR_STOPPED    (2)
+#define TIMEUP_CHECK_RESTART  (3)
+#define TIMEUP_WAITING        (4)
+
 #define CHATTERSTATE_IDLE   (0)
 #define CHATTERSTATE_START  (1)
 #define CHATTERSTATE_RUN    (2)
@@ -389,6 +422,11 @@ typedef struct chqstate_s
   // $5C00..$76EF
   uint8_t  stagedata[STAGEDATA_SIZE];
 
+  // $8D77
+  char     time_nn[7];
+  // $8D85
+  char     credit_n[8]; // TODO Populate when state inited
+
   // $9618
   uint8_t  rng_seed[3]; // init to 0x7B,0x2D,0xE9
 
@@ -410,13 +448,22 @@ typedef struct chqstate_s
   // $963E
   chatterpriority_t chatter_priority;
 
+  // $9982
   uint8_t  SM_9982;
+  
+  // $9C85
+  uint8_t  SM_9c85;
+  // $9C86
+  uint8_t  SM_9c86;
 
   // $9D51
-  char    bonus_string[6];
+  char     bonus_string[6];
 
   // $9D9B
   char    *SM_address_of_score_digits; // self modified
+
+  // $A0D5
+  uint8_t  user_input;
 
   // $A139
   uint8_t  mode_128k;
@@ -432,20 +479,76 @@ typedef struct chqstate_s
   // $A16D
   uint8_t  var_a16d;
 
+  // $A16F
+  uint8_t  user_input_mask;
+  // $A170
+  uint8_t  turbos;
+  // $A171
+  uint16_t horizon_level;
+  // $A173
+  uint8_t  perp_halt_counter;
+  // $A174
+  uint8_t  displayed_gear;
+  // $A175
+  uint8_t  score_digits[8];
+  // $A17D
+  uint8_t  time_sixteenths;
+  // $A17E
+  uint8_t  time_bcd;
+
   // $A188
   hazard_t hazards[6];
 
   // $A226
   uint8_t  correct_fork;
 
+  // $A229
+  uint8_t  time_up_state;
+
   // $A22C
   uint8_t  trigger_bonus_flag;
+
+  // $A230
+  uint8_t  perp_caught_phase;
+  // $A231
+  uint8_t  transition_control;
+  // $A232
+  uint8_t  smash_level;
+  // $A233
+  uint8_t  smash_counter;
+
+  // $A23F
+  uint8_t  fast_counter;
+  // $A240
+  uint8_t *road_buffer_offset;
+  uint8_t *road_buffer_start; // additional
+  uint8_t *road_buffer_end; // additional
 
   // $A249
   uint8_t  fork_taken;
 
+  // $A24A
+  uint16_t speed;
+  // $A24C
+  uint8_t  inclined;
+  // $A24D
+  uint8_t  cornering;
+  // $A24E
+  uint8_t  boost;
+  // $A24F
+  uint8_t  smoke;
+  // $A250
+  uint8_t  turn_speed;
+  // $A251
+  uint8_t  flip_car;
+  // $A252
+  uint8_t  gear_lockout;
+  // $A253
+  uint8_t  gear;
   // $A254
   uint8_t  allow_spawning;
+  // $A255
+  uint8_t  distance_bcd[2];
 
   // $A265
   uint8_t  fork_visible;
@@ -455,18 +558,12 @@ typedef struct chqstate_s
   uint16_t fork_distance;
   // $A269
   uint8_t  fork_in_progress;
-
+  // $A26A
+  uint8_t  quit_state;
   // $A26B
   uint8_t  start_speech;
   // $A26C
   uint16_t road_pos;
-
-  // $A23F
-  uint8_t  fast_counter;
-  // $A240
-  uint8_t *road_buffer_offset;
-  uint8_t *road_buffer_start; // additional
-  uint8_t *road_buffer_end; // additional
 
   // $E300
   uint8_t  table_e300[32]; // note: first byte should be $60
@@ -550,7 +647,7 @@ static void ne_plot_attrs(chqstate_t *state, uint8_t A);
 
 static void plot_face(chqstate_t *state,
                 const uint8_t    *HLface,
-                      uint8_t    *DEscreen);
+                      uint16_t    DEscreen);
 
 static void plot_mini_font_1(chqstate_t *state, uint8_t flag, char character);
 static void plot_mini_font_2(chqstate_t *state, uint8_t flag, char character);
@@ -678,10 +775,13 @@ static T multiply(T a, T c);
 // [Graphics] Faces
 //
 
-#define FACESIZE (32*40/8 + 4*5)
+#define FACEBITMAPBYTES (32*40/8)
+#define FACEATTRBYTES   (4*5)
+#define FACEBYTES       (FACEBITMAPBYTES + FACEATTRBYTES)
+#define NFACES          (3)
 
 // $7BE9
-static const uint8_t bitmap_faces[FACESIZE * 3] = {
+static const uint8_t bitmap_faces[FACEBYTES * NFACES] = {
   XXXXXXXX,XXXXXXXX,XXXXXXXX,XXXXXXXX,
   X__XX__X,X_______,________,____X_XX,
   X_XX___X,________,________,_____X_X,
@@ -1485,8 +1585,7 @@ read_message:
   }
   // Conv: The next byte is no longer an address but an index into table of
   // chatter blocks.
-  chatterblk++;
-  state->chatterblk_ptr = chatter_blocks[*chatterblk];
+  state->chatterblk_ptr = chatter_blocks[*++chatterblk];
   goto clear;
 
 stop:
@@ -1510,7 +1609,6 @@ static void print_chatter(chqstate_t *state)
   uint8_t        Acmd;
   uint8_t        Arand;
   const uint8_t *face; // was HL
-  uint8_t       *DEscreen;
 
   HLchatter = state->chatterblk_ptr;
   for (;;) {
@@ -1539,8 +1637,7 @@ pc_plot_character:
     face = &bitmap_faces[Acmd]; // Conv: Simplified
 
 //pc_do_plot:
-  DEscreen = &state->screen[0x4036 - SCREEN_BASE]; // Set plot address to (176,8)
-  plot_face(state, face, DEscreen);
+  plot_face(state, face, 0x4036); // Set plot address to (176,8)
   // POP HLchatter - accounted for
   
   pc_chatter_message(state, HLchatter); // was FALLTHROUGH
@@ -1625,7 +1722,7 @@ static void noise_effect_9a5c(chqstate_t *state, uint8_t counter)
     } while (--B > 0);
     DEscreen = DEscreen_saved; // was POP - restore row ptr
 
-    // Move to next row
+    // Move to next row (TODO: make a macro)
     DEscreen += 256;
     if (((DEscreen >> 8) & 7) == 0) {
       int t = (DE & 0xFF) + 32;
@@ -1664,8 +1761,60 @@ static void ne_plot_attrs(chqstate_t *state, uint8_t attr)
 // $9AAB
 static void plot_face(chqstate_t *state,
                 const uint8_t    *HLface,
-                      uint8_t    *DEscreen)
+                      uint16_t    DEscreen)
 {
+  uint16_t DEscreen_saved;
+  uint16_t counter; // was BC
+  uint8_t  A;
+  int      carry = 0;
+
+  counter = FACEBITMAPBYTES;
+  DEscreen_saved = DEscreen;
+  DEscreen -= SCREEN_BASE; // Conv: address -> offset
+  for (;;) {
+    state->screen[DEscreen++] = *HLface++; counter--;
+    state->screen[DEscreen++] = *HLface++; counter--;
+    state->screen[DEscreen++] = *HLface++; counter--;
+    state->screen[DEscreen++] = *HLface++; counter--;
+    DEscreen -= 4; // replaces PUSH/POP
+    if (counter == 0)
+      break;
+
+    // Move to next row (TODO: make a macro)
+    DEscreen += 256;
+    if (((DEscreen >> 8) & 7) == 0) {
+      int t = (DEscreen & 0xFF) + 32;
+      DEscreen = (DEscreen & 0xFF00) | (t & 0xFF);
+      if (t < 0x100) { // didn't carry
+        t = (DEscreen >> 8) - 8;
+        DEscreen = (t << 8) | (DEscreen & 0xFF);
+      }
+    }
+  }
+
+  DEscreen = DEscreen_saved;
+  A = DEscreen >> 8;
+  RRC(A);
+  RRC(A);
+  RRC(A);
+  A &= 3;
+  A += 0x58; // redundant here - removed below
+  DEscreen = (A << 8) | (DEscreen & 0xFF);
+  DEscreen -= SCREEN_BASE; // Conv: address -> offset
+  counter = FACEATTRBYTES;
+  for (;;) {
+    state->screen[DEscreen++] = *HLface++; counter--;
+    state->screen[DEscreen++] = *HLface++; counter--;
+    state->screen[DEscreen++] = *HLface++; counter--;
+    state->screen[DEscreen++] = *HLface++; counter--;
+    if (counter == 0)
+      break;
+
+    int t = (DEscreen & 0xFF) + 0x1C;
+    DEscreen = (DEscreen & 0xFF00) | (t & 0xFF);
+    if (t >= 0x100)
+      DEscreen += 256;
+  }
 }
 
 // $9AEC
@@ -1693,11 +1842,154 @@ static void clear_message_line(chqstate_t *state)
 // $9BCF
 static void tick(chqstate_t *state)
 {
+  int      carry = 0;
+  uint8_t *ptimebcd;    // was HL
+  uint8_t  timeupstate; // was A
+  uint8_t  timebcd;     // was A
+  char    *timedigits;  // was DE
+  uint8_t  effect;      // was B
+  uint8_t  H;
+  uint8_t  L;
+  uint8_t  A;
+  uint8_t  hidigit;      // was A
+  uint8_t  lodigit;      // was L
+
+  if (state->perp_caught_phase > 0 || state->transition_control == 4)
+    return;
+
+  ptimebcd = &state->time_bcd;
+  timeupstate = state->time_up_state;
+  switch (timeupstate) {
+  case TIMEUP_CHECK_TIME_UP: goto check_time_up;
+  case TIMEUP_CAR_STOPPED:   goto check_credits;
+  case TIMEUP_CHECK_RESTART: goto check_restart;
+  case TIMEUP_WAITING:       return;
+  }
+  
+  // otherwise it's state 0
+
+  if (*ptimebcd == 0) {
+    // Ran out of time
+    state->time_up_state   = TIMEUP_CHECK_TIME_UP;
+    // Stop acceleration/brake/turbo/pause
+    state->user_input_mask = USERINPUT_RIGHT | USERINPUT_LEFT | USERINPUT_FIRE | USERINPUT_QUIT;
+    return;
+  }
+
+update_remaining_time:
+  if (--state->time_sixteenths > 0)
+    return;
+  state->time_sixteenths = 15; // is this sixteenths or fifteenths since we reset to 15?
+  state->time_bcd = timebcd = DAA(state->time_bcd - 1, &carry);
+  if (timebcd == 0x15)
+    // suss: passes timebcd(A) as priority...
+    start_chatter(state, timebcd, chatterblk_nancy_time_running_out); // exit via
+  return;
+
+check_time_up:
+  if (*ptimebcd != 0) {
+    state->time_up_state   = TIMEUP_INIT;
+    state->user_input_mask = USERINPUT_ALLOW_ALL;
+    goto update_remaining_time;
+  }
+
+  // TODO setup_overlay_messages(state, time_up_message);
+  if (state->speed > 0)
+    return;
+  state->time_up_state = TIMEUP_CAR_STOPPED;
+  // TODO play_speech_hook(state, 4);
+
+check_credits:
+  if (state->transition_control > 0)
+    return;
+  if (state->credits == 0) {
+    // TODO cui_quit_key(state); // exit via
+  } else {
+    state->credits--;
+    state->credit_n[7]   = (state->credits + '0') | STREND;
+    state->time_up_state = TIMEUP_CHECK_RESTART;
+    state->SM_9c85       = 0x15; // seconds remaining BCD?
+    state->SM_9c86       = 0x01; // causes set_digits to run once?
+  }
+  return;
+
+check_restart:
+  if ((state->user_input & USERINPUT_FIRE) == 0)
+    goto print_continue;
+ 
+  // Resetting mission code.
+  state->time_up_state      = TIMEUP_INIT;
+  state->smash_level        = 0;
+  state->smash_counter      = 0;
+  state->user_input_mask    = USERINPUT_ALLOW_ALL;
+  state->gear_lockout       = 3;
+  state->transition_control = 3;
+  state->turbos             = 3;
+  state->time_bcd           = 0x60; // 60 seconds
+  state->retry_count++;
+
+// play_start_noise:  (code elsewhere jumps to this)
+  // TODO play_speech_hook(state, 5); // exit via
+  return;
+
+print_continue:
+  // TODO setup_overlay_messages(state, continue_messages);
+  L = state->SM_9c85;
+  H = state->SM_9c86 - 1;
+  if (H != 0)
+    goto set_digits;
+
+  H = 6; // reset to 6 for when storeda - delay?
+  L--;
+  A = L;
+  RR(A);
+  effect = (carry) ? EFFECT_BIP : EFFECT_BOW;
+  // TODO start_sfx(state, effect, 1);  // 1 for high priority
+  A = L;
+  if (A == 0) {
+    state->quit_state    = QUITSTATE_START;
+    state->time_up_state = TIMEUP_WAITING;
+  }
+
+set_digits:
+  state->SM_9c85 = L;
+  state->SM_9c86 = H;
+  A = L;
+  SRL(A);
+  timedigits = &state->time_nn[5]; // Load address of nn in "TIME nn"
+  if (A == 10) {
+    hidigit = '1'; // ASCII
+    lodigit = 0;   // integer
+  } else {
+    lodigit = A;   // integer
+    hidigit = ' '; // ASCII
+  }
+
+  timedigits[0] = hidigit; // write first digit (must be ASCII)
+  timedigits[1] = (lodigit + '0') | STREND;
 }
 
 // $9CC2
 static void speed_score(chqstate_t *state)
 {
+  uint16_t speed; // was HL
+  uint8_t  A;
+  uint8_t  H;
+  int      carry = 0;
+
+  // The original code makes little sense...
+
+  speed = state->speed;
+  A = speed & 0xFF;
+  H = speed >> 8; // Conv: added
+  RR(H);
+  RL(A);
+  SRL(A);
+  SRL(A);
+  // E = A;
+  A += carry;
+  DAA(A, &carry);
+  increment_score(state, A, 0, 0); // exit via
 }
 
 // $9CD6
