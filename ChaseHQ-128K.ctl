@@ -2152,7 +2152,7 @@ C $801D,3 Set dont_draw_screen_attrs to a non-zero value
 @ $8022 ssub=LD (searching_for_n + 14),A
 C $8020,5 Update the level number in "SEARCHING FOR <N>"
 @ $8025 label=ls_loop
-C $8025,3 Call clear_screen_set_attrs
+C $8025,3 Call clear_playfield_set_attrs
 C $8028,3 Call clear_game_attrs
 C $802B,2 Reverse transition
 C $802D,3 Call setup_transition
@@ -2178,7 +2178,7 @@ C $8059,3 Call tape_load_to_5c00
 C $805C,2 Jump to ls_8025 if no carry
 N $805E Success - must have loaded the correct level data.
 C $805E,3 Set border to black
-C $8061,3 Call clear_screen_set_attrs
+C $8061,3 Call clear_playfield_set_attrs
 C $8064,3 Call clear_game_attrs
 C $8067,3 HL -> "STOP THE TAPE" message structure
 C $806C,3 Call ls_8098
@@ -2691,7 +2691,7 @@ C $858F,3 Call set_up_stage
 C $8592,2 Reverse transition
 C $8594,3 Set dont_draw_screen_attrs to a non-zero value
 C $8597,3 Call setup_transition
-C $859A,3 Call clear_screen_set_attrs
+C $859A,3 Call clear_playfield_set_attrs
 C $859D,4 Reset the counter in #R$85E4 that reveals the perp's car
 C $85A1,1 Set chatter priority to $FF
 C $85A2,3 Load Nancy's report for this level
@@ -2994,7 +2994,7 @@ C $884B,4 Clear allow_spawning
 N $884F Set up screen.
 C $884F,2 Reverse transition
 C $8851,3 Call setup_transition
-C $8854,3 Call clear_screen_set_attrs
+C $8854,3 Call clear_playfield_set_attrs
 C $8857,6 Point #REGhl at left light's attributes
 C $885D,3 Point #REGhl at right light's attributes then FALL THROUGH
 N $8860 Clear the lights' BRIGHT bit.
@@ -3088,9 +3088,9 @@ W $893C,4,2
 N $8940 Effect 2 - Car landing (low thump)
 W $8940,4,2
 N $8944 Effect 3 - Crash (high) - Used for hits on cars
-W $8944,4,2
+W $8944,4,2 Play sfx_crash with speed 8
 N $8948 Effect 4 - Crash (low) - Used for hits on scenery
-W $8948,4,2
+W $8948,4,2 Play sfx_crash with speed 12
 N $894C Effect 5 - Hazard hit (high thump)
 W $894C,4,2
 N $8950 Effect 6 - Tunnel wall hit
@@ -3621,6 +3621,7 @@ c $8E6C Print a message
 D $8E6C Used by the routines at #R$8014, #R$8258, #R$865A, #R$8E42 and #R$F220.
 R $8E6C I:A Flags byte
 R $8E6C I:HL -> as yet unnamed message structure
+R $8E6C O:HL -> next unconsumed byte
 @ $8E6C label=print_message
 C $8E6C,1 Preserve/bank flags byte in #REGa
 C $8E6D,1 Preserve #REGbc
@@ -4718,9 +4719,9 @@ C $99A1,2 If chatter_delay was zero jump to drive_chatter_read_message
 C $99A3,3 Load address of next character
 C $99A6,1 Go back 1
 C $99A7,1 Load the character for when we call plot_mini_font*
-C $99A8,2 Clear string terminator bit
+C $99A8,2 Clear any string terminator bit
 C $99AA,4 A = message_x - 1
-C $99AE,2 Rotate chatter_delay (testing the bottom bit but why?)
+C $99AE,2 Rotate chatter_delay (testing the bottom bit but why? flashing cursor?)
 N $99B0 Could JP $9989 here instead.
 C $99B0,3 Exit via plot_mini_font_2 if carry set
 C $99B3,3 Otherwise exit via plot_mini_font_1
@@ -4871,7 +4872,7 @@ C $9ACC,2 Loop
 N $9ACE This entry point is used by the routine at #R$8EB7.
 @ $9ACE label=pf_attrs_bit
 C $9ACE,1 Restore current screen address
-C $9ACF,6 Extract line bits (0..7)
+C $9ACF,6 Extract line bits (0..3)
 C $9AD5,3 Turn it into an attribute address (works for first band only?)
 C $9AD8,2 Byte length of attributes - counter
 @ $9ADA label=pf_attrs_loop
@@ -4883,7 +4884,7 @@ C $9AE9,1 Move down 8 attribute rows
 C $9AEA,2 Loop
 c $9AEC Plot mini font characters
 D $9AEC Used by the routines at #R$9965 and #R$9A55.
-R $9AEC I:A flag?
+R $9AEC I:A 0xFF (meaning ?) or value (meaning ?)
 R $9AEC I:D The character to plot (ASCII)
 @ $9AEC label=plot_mini_font_1
 C $9AEF,2 Jump to pmf_go
@@ -4899,12 +4900,12 @@ N $9B02 String terminator?
 C $9B02,2 $BF / 8?
 @ $9B08 label=pmf_regular_char
 C $9B08,6 A = A*5+2
-@ $9B10 label=pmf_9b10
+@ $9B10 label=pmf_divider
 C $9B0E,4 8 - $C0 / 8 ??
 @ $9B12 label=pmf_9b12
 C $9B12,7 divider / rounding?
 C $9B19,8 Modify jump table - A * 4 - 4 bytes per sequence
-@ $9B21 label=pmf_9b21
+@ $9B21 label=pmf_multiplier
 C $9B21,3 General multiplier by A
 C $9B24,3 Self modify #R$9B88 which is a mask
 C $9B27,1 Get ASCII character
@@ -4951,7 +4952,7 @@ C $9BB9,16 Move to next scanline
 C $9BCA,1 Decrement row counter
 C $9BCB,3 Loop while rows remain to clear
 C $9BCE,1 Return
-c $9BCF Game timer
+c $9BCF Time up / Countdown / Continue
 D $9BCF Used by the routine at #R$8401.
 @ $9BCF label=tick
 C $9BCF,5 Return if perp_caught_phase > 0
@@ -4967,7 +4968,7 @@ C $9BEC,1 Set flags
 C $9BED,2 Jump to tick_time_remaining if non-zero
 N $9BEF Out of time.
 C $9BEF,4 time_up_state = 1
-C $9BF3,5 user_input_mask = $93 (allow Quit, Fire, Left, Right) [Q: Why left and right?]
+C $9BF3,5 user_input_mask = $93 (allow only Quit, Fire, Left, Right to force stop)
 C $9BF8,1 Return
 @ $9BF9 label=tick_time_remaining
 C $9BF9,2 Decrement the 1/16th sec counter
@@ -4977,6 +4978,7 @@ C $9BFE,6 Decrement time_bcd [POKE $9C01 for Infinite time]
 C $9C04,3 Return if <> 15s remain
 C $9C07,3 Nancy berating us running out of time message
 C $9C0A,3 Exit via start_chatter (priority 21)
+@ $9C0D label=tick_9c0d
 C $9C0D,4 Is time_bcd zero? Jump to time_up if so
 C $9C11,4 time_up_state = 0
 C $9C15,4 user_input_mask = $FF (allow all keys)
@@ -4988,8 +4990,9 @@ C $9C21,6 Return if speed > 0
 C $9C27,5 time_up_state = 2
 C $9C2C,2 Index of "Your time's up" speech sample
 C $9C2E,3 Exit via play_speech_hook
+@ $9C31 label=tick_check_credits
 C $9C31,5 Return if transition_control is non-zero
-C $9C36,8 Exit via quit_key if no credits remain
+C $9C36,8 Exit via cui_quit_key if no credits remain
 C $9C3E,1 Decrement credits [POKE $9C3E for Infinite credits]
 @ $9C41 ssub=LD (credit_n + 7),A
 C $9C3F,5 Turn it into ASCII and poke it into the "CREDIT x" string
@@ -4997,6 +5000,7 @@ C $9C44,5 time_up_state = 3
 C $9C49,3 HL = $0115
 C $9C4C,3 Self modify 'LD HL' @ #R$9C84 to load HL
 C $9C4F,1 Return
+@ $9C50 label=tick_9c50
 C $9C50,5 Is fire pressed?
 C $9C55,2 Jump if not (?)
 N $9C57 Resetting mission code.
@@ -5023,22 +5027,27 @@ C $9C8C,1 L--
 C $9C8D,1 A = L
 C $9C8F,3 Effect 8 (bip), Priority 1
 C $9C94,1 Effect 9 (bow)
+@ $9C95 label=tick_9c95
 C $9C95,3 Call start_sfx
 C $9C98,1 A = L
 C $9C99,1 Set flags
 C $9C9C,1 A++
-C $9C9D,3 quit_state = A
+C $9C9D,3 quit_state = A  (A is 1)
 C $9CA0,5 time_up_state = 4
+@ $9CA5 label=tick_set_digits
 C $9CA5,3 Self modify 'LD HL' @ #R$9C84 to load HL
 C $9CA8,1 A = L
 C $9CA9,2 A >>= 1
 @ $9CAB ssub=LD DE,time_n + 5
 C $9CAB,3 Load address of nn in "TIME nn"
 C $9CAE,2 CP 10
-C $9CB2,2 A = $31
+C $9CB2,2 A = '1'
 C $9CB4,2 L = $00
+C $9CB6,2 Write the digits out
+@ $9CB8 label=tick_9cb8
 C $9CB8,1 L = A
-C $9CB9,2 A = $20
+C $9CB9,2 A = ' '
+@ $9CBB label=tick_write_digits
 C $9CBB,1 *DE = A
 C $9CBC,3 A = L + $B0
 C $9CBF,1 DE++
@@ -5051,7 +5060,7 @@ C $9CC2,3 Load speed into #REGhl
 N $9CC5 This code makes little sense.
 C $9CC5,1 Speed low byte
 C $9CC6,2 Bottom bit of #REGh moves to carry (#REGh now unused)
-C $9CC8,1 Merge carry into LSB of speed [Wrong end?]
+C $9CC8,1 Merge carry into LSB of speed [Wrong end? RRA intended?]
 C $9CC9,4 Divide by four
 C $9CCD,1 [Needless move]
 C $9CCE,2 Add carry in, perhaps for rounding?
@@ -5427,6 +5436,7 @@ C $9F97,1 Bank
 C $9F98,1 Return
 c $9F99 Another draw string entry point?
 D $9F99 Used by the routine at #R$8E6C.
+@ $9F99 label=draw_string_A
 C $9F9A,1 Bank
 C $9F9B,1 HL' = BC   so BC is ptr to text
 C $9F9C,3 DE = 32
@@ -5625,10 +5635,9 @@ B $A144,1,1 Copied to perp_halt_counter
 B $A145,1,1 Copied to displayed_gear
 B $A146,8,8 Copied to score_digits
 B $A14E,1,1 Copied to time_sixteenths
-B $A14F,1,1 Copied to time_digits
-B $A150,1,1
-B $A151,4,4 Copied to distance_digits
-B $A155,1,1
+B $A14F,1,1 Copied to time_bcd
+B $A150,2,2 Copies to time_digits
+B $A152,4,4 Copied to distance_digits
 B $A156,1,1 Copied to no_objects_counter
 W $A157,2,2 Copied to horizon_attribute
 B $A159,1,1 Copied to hazards[0].0
@@ -7753,7 +7762,7 @@ C $B1D1,3 Jump if result is positive
 C $B1D4,1 BC = $FF00 | A  -- otherwise widen as negative
 @ $B1D5 label=mhc_positive
 C $B1D5,2 Copy speed from HL to DE
-C $B1D7,1 Increment speed ... by a value computed from car's pitch ... eh?
+C $B1D7,1 Increment speed ... by a value computed from car's pitch ... accelerating slowly when going upwards?
 C $B1D8,3 Speed threshold 695
 C $B1DB,1 Save it
 C $B1DC,2 Reduce speed by threshold
@@ -9188,15 +9197,16 @@ C $BDBA,3 Set two attrs
 @ $BDBD label=ds_exit
 C $BDBD,3 Restore original #REGsp (self modified at start of routine)
 C $BDC0,1 Return
-c $BDC1 Clears screen then sets in-game attributes
-D $BDC1 Used by the routines at #R$8014, #R$858C and #R$87DC.
-@ $BDC1 label=clear_screen_set_attrs
+c $BDC1 Clears the playfield then sets its attributes
+D $BDC1 The playfield is the lower two thirds of the screen - where the action happens.
+R $BDC1 Used by the routines at #R$8014, #R$858C and #R$87DC.
+@ $BDC1 label=clear_playfield_set_attrs
 C $BDC1,3 Call clear_game_screen
 C $BDC4,13 Clear the game screen pixels to $FF (bug: duplicates work just done)
 C $BDD1,12 Clear the game screen attributes to $28 (black over cyan) - first two rows only
 C $BDDD,6 Clear the next three rows to $68 (black over bright cyan)
 C $BDE3,9 Clear the next 11 rows to the current ground colour
-@ $BDF4 label=cssa_clear_edges_loop
+@ $BDF4 label=cpsa_clear_edges_loop
 C $BDEC,14 Clear the edges of the game screen to black on black
 C $BDFA,1 Return
 c $BDFB Map reader

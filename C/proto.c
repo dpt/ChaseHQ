@@ -7,7 +7,7 @@
 // vim: ts=8 sts=2 sw=2 et
 
 // Compile with:
-// gcc `sdl2-config --cflags --libs` -Wall -o proto proto.c
+// gcc `sdl2-config --cflags --libs` -Wall -Wextra -Wpedantic -o proto proto.c
 
 #include <assert.h>
 #include <stdint.h>
@@ -18,263 +18,264 @@
 
 /* ----------------------------------------------------------------------- */
 
-// Pinched from TGE
-#define ________ 0
-#define _______X 1
-#define ______X_ 2
-#define ______XX 3
-#define _____X__ 4
-#define _____X_X 5
-#define _____XX_ 6
-#define _____XXX 7
-#define ____X___ 8
-#define ____X__X 9
-#define ____X_X_ 10
-#define ____X_XX 11
-#define ____XX__ 12
-#define ____XX_X 13
-#define ____XXX_ 14
-#define ____XXXX 15
-#define ___X____ 16
-#define ___X___X 17
-#define ___X__X_ 18
-#define ___X__XX 19
-#define ___X_X__ 20
-#define ___X_X_X 21
-#define ___X_XX_ 22
-#define ___X_XXX 23
-#define ___XX___ 24
-#define ___XX__X 25
-#define ___XX_X_ 26
-#define ___XX_XX 27
-#define ___XXX__ 28
-#define ___XXX_X 29
-#define ___XXXX_ 30
-#define ___XXXXX 31
-#define __X_____ 32
-#define __X____X 33
-#define __X___X_ 34
-#define __X___XX 35
-#define __X__X__ 36
-#define __X__X_X 37
-#define __X__XX_ 38
-#define __X__XXX 39
-#define __X_X___ 40
-#define __X_X__X 41
-#define __X_X_X_ 42
-#define __X_X_XX 43
-#define __X_XX__ 44
-#define __X_XX_X 45
-#define __X_XXX_ 46
-#define __X_XXXX 47
-#define __XX____ 48
-#define __XX___X 49
-#define __XX__X_ 50
-#define __XX__XX 51
-#define __XX_X__ 52
-#define __XX_X_X 53
-#define __XX_XX_ 54
-#define __XX_XXX 55
-#define __XXX___ 56
-#define __XXX__X 57
-#define __XXX_X_ 58
-#define __XXX_XX 59
-#define __XXXX__ 60
-#define __XXXX_X 61
-#define __XXXXX_ 62
-#define __XXXXXX 63
-#define _X______ 64
-#define _X_____X 65
-#define _X____X_ 66
-#define _X____XX 67
-#define _X___X__ 68
-#define _X___X_X 69
-#define _X___XX_ 70
-#define _X___XXX 71
-#define _X__X___ 72
-#define _X__X__X 73
-#define _X__X_X_ 74
-#define _X__X_XX 75
-#define _X__XX__ 76
-#define _X__XX_X 77
-#define _X__XXX_ 78
-#define _X__XXXX 79
-#define _X_X____ 80
-#define _X_X___X 81
-#define _X_X__X_ 82
-#define _X_X__XX 83
-#define _X_X_X__ 84
-#define _X_X_X_X 85
-#define _X_X_XX_ 86
-#define _X_X_XXX 87
-#define _X_XX___ 88
-#define _X_XX__X 89
-#define _X_XX_X_ 90
-#define _X_XX_XX 91
-#define _X_XXX__ 92
-#define _X_XXX_X 93
-#define _X_XXXX_ 94
-#define _X_XXXXX 95
-#define _XX_____ 96
-#define _XX____X 97
-#define _XX___X_ 98
-#define _XX___XX 99
-#define _XX__X__ 100
-#define _XX__X_X 101
-#define _XX__XX_ 102
-#define _XX__XXX 103
-#define _XX_X___ 104
-#define _XX_X__X 105
-#define _XX_X_X_ 106
-#define _XX_X_XX 107
-#define _XX_XX__ 108
-#define _XX_XX_X 109
-#define _XX_XXX_ 110
-#define _XX_XXXX 111
-#define _XXX____ 112
-#define _XXX___X 113
-#define _XXX__X_ 114
-#define _XXX__XX 115
-#define _XXX_X__ 116
-#define _XXX_X_X 117
-#define _XXX_XX_ 118
-#define _XXX_XXX 119
-#define _XXXX___ 120
-#define _XXXX__X 121
-#define _XXXX_X_ 122
-#define _XXXX_XX 123
-#define _XXXXX__ 124
-#define _XXXXX_X 125
-#define _XXXXXX_ 126
-#define _XXXXXXX 127
-#define X_______ 128
-#define X______X 129
-#define X_____X_ 130
-#define X_____XX 131
-#define X____X__ 132
-#define X____X_X 133
-#define X____XX_ 134
-#define X____XXX 135
-#define X___X___ 136
-#define X___X__X 137
-#define X___X_X_ 138
-#define X___X_XX 139
-#define X___XX__ 140
-#define X___XX_X 141
-#define X___XXX_ 142
-#define X___XXXX 143
-#define X__X____ 144
-#define X__X___X 145
-#define X__X__X_ 146
-#define X__X__XX 147
-#define X__X_X__ 148
-#define X__X_X_X 149
-#define X__X_XX_ 150
-#define X__X_XXX 151
-#define X__XX___ 152
-#define X__XX__X 153
-#define X__XX_X_ 154
-#define X__XX_XX 155
-#define X__XXX__ 156
-#define X__XXX_X 157
-#define X__XXXX_ 158
-#define X__XXXXX 159
-#define X_X_____ 160
-#define X_X____X 161
-#define X_X___X_ 162
-#define X_X___XX 163
-#define X_X__X__ 164
-#define X_X__X_X 165
-#define X_X__XX_ 166
-#define X_X__XXX 167
-#define X_X_X___ 168
-#define X_X_X__X 169
-#define X_X_X_X_ 170
-#define X_X_X_XX 171
-#define X_X_XX__ 172
-#define X_X_XX_X 173
-#define X_X_XXX_ 174
-#define X_X_XXXX 175
-#define X_XX____ 176
-#define X_XX___X 177
-#define X_XX__X_ 178
-#define X_XX__XX 179
-#define X_XX_X__ 180
-#define X_XX_X_X 181
-#define X_XX_XX_ 182
-#define X_XX_XXX 183
-#define X_XXX___ 184
-#define X_XXX__X 185
-#define X_XXX_X_ 186
-#define X_XXX_XX 187
-#define X_XXXX__ 188
-#define X_XXXX_X 189
-#define X_XXXXX_ 190
-#define X_XXXXXX 191
-#define XX______ 192
-#define XX_____X 193
-#define XX____X_ 194
-#define XX____XX 195
-#define XX___X__ 196
-#define XX___X_X 197
-#define XX___XX_ 198
-#define XX___XXX 199
-#define XX__X___ 200
-#define XX__X__X 201
-#define XX__X_X_ 202
-#define XX__X_XX 203
-#define XX__XX__ 204
-#define XX__XX_X 205
-#define XX__XXX_ 206
-#define XX__XXXX 207
-#define XX_X____ 208
-#define XX_X___X 209
-#define XX_X__X_ 210
-#define XX_X__XX 211
-#define XX_X_X__ 212
-#define XX_X_X_X 213
-#define XX_X_XX_ 214
-#define XX_X_XXX 215
-#define XX_XX___ 216
-#define XX_XX__X 217
-#define XX_XX_X_ 218
-#define XX_XX_XX 219
-#define XX_XXX__ 220
-#define XX_XXX_X 221
-#define XX_XXXX_ 222
-#define XX_XXXXX 223
-#define XXX_____ 224
-#define XXX____X 225
-#define XXX___X_ 226
-#define XXX___XX 227
-#define XXX__X__ 228
-#define XXX__X_X 229
-#define XXX__XX_ 230
-#define XXX__XXX 231
-#define XXX_X___ 232
-#define XXX_X__X 233
-#define XXX_X_X_ 234
-#define XXX_X_XX 235
-#define XXX_XX__ 236
-#define XXX_XX_X 237
-#define XXX_XXX_ 238
-#define XXX_XXXX 239
-#define XXXX____ 240
-#define XXXX___X 241
-#define XXXX__X_ 242
-#define XXXX__XX 243
-#define XXXX_X__ 244
-#define XXXX_X_X 245
-#define XXXX_XX_ 246
-#define XXXX_XXX 247
-#define XXXXX___ 248
-#define XXXXX__X 249
-#define XXXXX_X_ 250
-#define XXXXX_XX 251
-#define XXXXXX__ 252
-#define XXXXXX_X 253
-#define XXXXXXX_ 254
-#define XXXXXXXX 255
+/* Macros for building bitmaps in code (pinched from TGE-in-C) */
+
+#define ________   (0)
+#define _______X   (1)
+#define ______X_   (2)
+#define ______XX   (3)
+#define _____X__   (4)
+#define _____X_X   (5)
+#define _____XX_   (6)
+#define _____XXX   (7)
+#define ____X___   (8)
+#define ____X__X   (9)
+#define ____X_X_  (10)
+#define ____X_XX  (11)
+#define ____XX__  (12)
+#define ____XX_X  (13)
+#define ____XXX_  (14)
+#define ____XXXX  (15)
+#define ___X____  (16)
+#define ___X___X  (17)
+#define ___X__X_  (18)
+#define ___X__XX  (19)
+#define ___X_X__  (20)
+#define ___X_X_X  (21)
+#define ___X_XX_  (22)
+#define ___X_XXX  (23)
+#define ___XX___  (24)
+#define ___XX__X  (25)
+#define ___XX_X_  (26)
+#define ___XX_XX  (27)
+#define ___XXX__  (28)
+#define ___XXX_X  (29)
+#define ___XXXX_  (30)
+#define ___XXXXX  (31)
+#define __X_____  (32)
+#define __X____X  (33)
+#define __X___X_  (34)
+#define __X___XX  (35)
+#define __X__X__  (36)
+#define __X__X_X  (37)
+#define __X__XX_  (38)
+#define __X__XXX  (39)
+#define __X_X___  (40)
+#define __X_X__X  (41)
+#define __X_X_X_  (42)
+#define __X_X_XX  (43)
+#define __X_XX__  (44)
+#define __X_XX_X  (45)
+#define __X_XXX_  (46)
+#define __X_XXXX  (47)
+#define __XX____  (48)
+#define __XX___X  (49)
+#define __XX__X_  (50)
+#define __XX__XX  (51)
+#define __XX_X__  (52)
+#define __XX_X_X  (53)
+#define __XX_XX_  (54)
+#define __XX_XXX  (55)
+#define __XXX___  (56)
+#define __XXX__X  (57)
+#define __XXX_X_  (58)
+#define __XXX_XX  (59)
+#define __XXXX__  (60)
+#define __XXXX_X  (61)
+#define __XXXXX_  (62)
+#define __XXXXXX  (63)
+#define _X______  (64)
+#define _X_____X  (65)
+#define _X____X_  (66)
+#define _X____XX  (67)
+#define _X___X__  (68)
+#define _X___X_X  (69)
+#define _X___XX_  (70)
+#define _X___XXX  (71)
+#define _X__X___  (72)
+#define _X__X__X  (73)
+#define _X__X_X_  (74)
+#define _X__X_XX  (75)
+#define _X__XX__  (76)
+#define _X__XX_X  (77)
+#define _X__XXX_  (78)
+#define _X__XXXX  (79)
+#define _X_X____  (80)
+#define _X_X___X  (81)
+#define _X_X__X_  (82)
+#define _X_X__XX  (83)
+#define _X_X_X__  (84)
+#define _X_X_X_X  (85)
+#define _X_X_XX_  (86)
+#define _X_X_XXX  (87)
+#define _X_XX___  (88)
+#define _X_XX__X  (89)
+#define _X_XX_X_  (90)
+#define _X_XX_XX  (91)
+#define _X_XXX__  (92)
+#define _X_XXX_X  (93)
+#define _X_XXXX_  (94)
+#define _X_XXXXX  (95)
+#define _XX_____  (96)
+#define _XX____X  (97)
+#define _XX___X_  (98)
+#define _XX___XX  (99)
+#define _XX__X__ (100)
+#define _XX__X_X (101)
+#define _XX__XX_ (102)
+#define _XX__XXX (103)
+#define _XX_X___ (104)
+#define _XX_X__X (105)
+#define _XX_X_X_ (106)
+#define _XX_X_XX (107)
+#define _XX_XX__ (108)
+#define _XX_XX_X (109)
+#define _XX_XXX_ (110)
+#define _XX_XXXX (111)
+#define _XXX____ (112)
+#define _XXX___X (113)
+#define _XXX__X_ (114)
+#define _XXX__XX (115)
+#define _XXX_X__ (116)
+#define _XXX_X_X (117)
+#define _XXX_XX_ (118)
+#define _XXX_XXX (119)
+#define _XXXX___ (120)
+#define _XXXX__X (121)
+#define _XXXX_X_ (122)
+#define _XXXX_XX (123)
+#define _XXXXX__ (124)
+#define _XXXXX_X (125)
+#define _XXXXXX_ (126)
+#define _XXXXXXX (127)
+#define X_______ (128)
+#define X______X (129)
+#define X_____X_ (130)
+#define X_____XX (131)
+#define X____X__ (132)
+#define X____X_X (133)
+#define X____XX_ (134)
+#define X____XXX (135)
+#define X___X___ (136)
+#define X___X__X (137)
+#define X___X_X_ (138)
+#define X___X_XX (139)
+#define X___XX__ (140)
+#define X___XX_X (141)
+#define X___XXX_ (142)
+#define X___XXXX (143)
+#define X__X____ (144)
+#define X__X___X (145)
+#define X__X__X_ (146)
+#define X__X__XX (147)
+#define X__X_X__ (148)
+#define X__X_X_X (149)
+#define X__X_XX_ (150)
+#define X__X_XXX (151)
+#define X__XX___ (152)
+#define X__XX__X (153)
+#define X__XX_X_ (154)
+#define X__XX_XX (155)
+#define X__XXX__ (156)
+#define X__XXX_X (157)
+#define X__XXXX_ (158)
+#define X__XXXXX (159)
+#define X_X_____ (160)
+#define X_X____X (161)
+#define X_X___X_ (162)
+#define X_X___XX (163)
+#define X_X__X__ (164)
+#define X_X__X_X (165)
+#define X_X__XX_ (166)
+#define X_X__XXX (167)
+#define X_X_X___ (168)
+#define X_X_X__X (169)
+#define X_X_X_X_ (170)
+#define X_X_X_XX (171)
+#define X_X_XX__ (172)
+#define X_X_XX_X (173)
+#define X_X_XXX_ (174)
+#define X_X_XXXX (175)
+#define X_XX____ (176)
+#define X_XX___X (177)
+#define X_XX__X_ (178)
+#define X_XX__XX (179)
+#define X_XX_X__ (180)
+#define X_XX_X_X (181)
+#define X_XX_XX_ (182)
+#define X_XX_XXX (183)
+#define X_XXX___ (184)
+#define X_XXX__X (185)
+#define X_XXX_X_ (186)
+#define X_XXX_XX (187)
+#define X_XXXX__ (188)
+#define X_XXXX_X (189)
+#define X_XXXXX_ (190)
+#define X_XXXXXX (191)
+#define XX______ (192)
+#define XX_____X (193)
+#define XX____X_ (194)
+#define XX____XX (195)
+#define XX___X__ (196)
+#define XX___X_X (197)
+#define XX___XX_ (198)
+#define XX___XXX (199)
+#define XX__X___ (200)
+#define XX__X__X (201)
+#define XX__X_X_ (202)
+#define XX__X_XX (203)
+#define XX__XX__ (204)
+#define XX__XX_X (205)
+#define XX__XXX_ (206)
+#define XX__XXXX (207)
+#define XX_X____ (208)
+#define XX_X___X (209)
+#define XX_X__X_ (210)
+#define XX_X__XX (211)
+#define XX_X_X__ (212)
+#define XX_X_X_X (213)
+#define XX_X_XX_ (214)
+#define XX_X_XXX (215)
+#define XX_XX___ (216)
+#define XX_XX__X (217)
+#define XX_XX_X_ (218)
+#define XX_XX_XX (219)
+#define XX_XXX__ (220)
+#define XX_XXX_X (221)
+#define XX_XXXX_ (222)
+#define XX_XXXXX (223)
+#define XXX_____ (224)
+#define XXX____X (225)
+#define XXX___X_ (226)
+#define XXX___XX (227)
+#define XXX__X__ (228)
+#define XXX__X_X (229)
+#define XXX__XX_ (230)
+#define XXX__XXX (231)
+#define XXX_X___ (232)
+#define XXX_X__X (233)
+#define XXX_X_X_ (234)
+#define XXX_X_XX (235)
+#define XXX_XX__ (236)
+#define XXX_XX_X (237)
+#define XXX_XXX_ (238)
+#define XXX_XXXX (239)
+#define XXXX____ (240)
+#define XXXX___X (241)
+#define XXXX__X_ (242)
+#define XXXX__XX (243)
+#define XXXX_X__ (244)
+#define XXXX_X_X (245)
+#define XXXX_XX_ (246)
+#define XXXX_XXX (247)
+#define XXXXX___ (248)
+#define XXXXX__X (249)
+#define XXXXX_X_ (250)
+#define XXXXX_XX (251)
+#define XXXXXX__ (252)
+#define XXXXXX_X (253)
+#define XXXXXXX_ (254)
+#define XXXXXXXX (255)
 
 /* ----------------------------------------------------------------------- */
 
@@ -331,47 +332,110 @@
     (r) = ((r) >> 1) | (carry << 7);  \
   } while (0)
 
+/// Minimal equivalent of Z80 BCD correct operation
+/// Additional
+static uint8_t DAA(uint8_t v, int *carry_out)
+{
+  int lo, hi;
+  int carry = 0;
+
+  lo = (v >> 0) & 0x0F;
+  hi = (v >> 4) & 0x0F;
+  if (lo >= 10) { lo -= 10; hi++; }
+  if (hi >= 10) { hi -= 10; carry++; }
+
+  *carry_out = carry;
+  return (hi << 4) | (lo << 0);
+}
+
 /* ----------------------------------------------------------------------- */
 
-#define STREND              (1<<7)
+// Pinched from Spectrum.h
 
-#define QUITSTATE_IDLE      (0)
-#define QUITSTATE_START     (1)
-#define QUITSTATE_DONE      (2) // not sure
+#define SCREEN_WIDTH                    (256)
+#define SCREEN_HEIGHT                   (192)
 
-#define USERINPUT_RIGHT     (1<<0)
-#define USERINPUT_LEFT      (1<<1)
-#define USERINPUT_DOWN      (1<<2) // aka brake
-#define USERINPUT_UP        (1<<3) // aka accelerate
-#define USERINPUT_FIRE      (1<<4) // aka gear
-#define USERINPUT_TURBO     (1<<5)
-#define USERINPUT_PAUSE     (1<<6)
-#define USERINPUT_QUIT      (1<<7)
-#define USERINPUT_ALLOW_ALL (0xFF)
+enum
+{
+  attribute_BLUE_OVER_BLACK           = 1,
+  attribute_RED_OVER_BLACK            = 2,
+  attribute_PURPLE_OVER_BLACK         = 3,
+  attribute_GREEN_OVER_BLACK          = 4,
+  attribute_CYAN_OVER_BLACK           = 5,
+  attribute_YELLOW_OVER_BLACK         = 6,
+  attribute_WHITE_OVER_BLACK          = 7,
+  attribute_BRIGHT_BLUE_OVER_BLACK    = 65,
+  attribute_BRIGHT_RED_OVER_BLACK     = 66,
+  attribute_BRIGHT_PURPLE_OVER_BLACK  = 67,
+  attribute_BRIGHT_GREEN_OVER_BLACK   = 68,
+  attribute_BRIGHT_CYAN_OVER_BLACK    = 69,
+  attribute_BRIGHT_YELLOW_OVER_BLACK  = 70,
+  attribute_BRIGHT_WHITE_OVER_BLACK   = 71
+};
 
-#define EFFECT_SQUEAL       (1)
-#define EFFECT_LANDING      (2)
-#define EFFECT_CAR_HIT      (3)
-#define EFFECT_SCENERY_HIT  (4)
-#define EFFECT_HAZARD_HIT   (5)
-#define EFFECT_WALL_HIT     (6)
-#define EFFECT_CORNERING    (7)
-#define EFFECT_BIP          (8)
-#define EFFECT_BOW          (9)
+/* Memory map */
+
+#define ROM_LENGTH                      0x4000
+#define SCREEN_BITMAP_LENGTH            (SCREEN_WIDTH / 8 * SCREEN_HEIGHT)
+#define SCREEN_ATTRIBUTES_LENGTH        (SCREEN_WIDTH / 8 * SCREEN_HEIGHT / 8)
+#define SCREEN_LENGTH                   (SCREEN_BITMAP_LENGTH + SCREEN_ATTRIBUTES_LENGTH)
+
+#define ROM_START_ADDRESS               ((uint16_t) 0x0000)
+#define ROM_END_ADDRESS                 ((uint16_t) 0x3FFF)
+#define SCREEN_START_ADDRESS            ((uint16_t) 0x4000)
+#define SCREEN_END_ADDRESS              ((uint16_t) 0x57FF)
+#define SCREEN_ATTRIBUTES_START_ADDRESS ((uint16_t) 0x5800)
+#define SCREEN_ATTRIBUTES_END_ADDRESS   ((uint16_t) 0x5AFF)
+
+/* ----------------------------------------------------------------------- */
+
+#define SCREEN(addr) (&state->screen[(addr) - SCREEN_START_ADDRESS])
+
+/* ----------------------------------------------------------------------- */
+
+#define STREND                (1<<7) // string terminating top bit
+
+#define QUITSTATE_IDLE        (0)
+#define QUITSTATE_START       (1)
+#define QUITSTATE_DONE        (2) // not sure
+
+#define USERINPUT_RIGHT       (1<<0)
+#define USERINPUT_LEFT        (1<<1)
+#define USERINPUT_DOWN        (1<<2) // aka brake
+#define USERINPUT_UP          (1<<3) // aka accelerate
+#define USERINPUT_FIRE        (1<<4) // aka gear
+#define USERINPUT_TURBO       (1<<5)
+#define USERINPUT_PAUSE       (1<<6)
+#define USERINPUT_QUIT        (1<<7)
+#define USERINPUT_ALLOW_ALL   (0xFF)
+
+#define EFFECT_SQUEAL         (1)
+#define EFFECT_LANDING        (2)
+#define EFFECT_CAR_HIT        (3)
+#define EFFECT_SCENERY_HIT    (4)
+#define EFFECT_HAZARD_HIT     (5)
+#define EFFECT_WALL_HIT       (6)
+#define EFFECT_CORNERING      (7)
+#define EFFECT_BIP            (8)
+#define EFFECT_BOW            (9)
 
 // these state names need clarification
-#define TIMEUP_INIT           (0)
-#define TIMEUP_CHECK_TIME_UP  (1)
-#define TIMEUP_CAR_STOPPED    (2)
-#define TIMEUP_CHECK_RESTART  (3)
-#define TIMEUP_WAITING        (4)
+#define TIMEUPSTATE_INIT           (0)
+#define TIMEUPSTATE_CHECK_TIME_UP  (1)
+#define TIMEUPSTATE_CAR_STOPPED    (2)
+#define TIMEUPSTATE_CHECK_RESTART  (3)
+#define TIMEUPSTATE_WAITING        (4)
 
-#define CHATTERSTATE_IDLE   (0)
-#define CHATTERSTATE_START  (1)
-#define CHATTERSTATE_RUN    (2)
-#define CHATTERSTATE_STOP   (3)
+#define CHATTERSTATE_IDLE     (0)
+#define CHATTERSTATE_START    (1)
+#define CHATTERSTATE_RUN      (2)
+#define CHATTERSTATE_STOP     (3)
 
 typedef uint8_t chatterpriority_t;
+                              
+#define STAGEDATA_BASE        (0x5C00)
+#define STAGEDATA_END         (0x76EF) // inclusive
+#define STAGEDATA_SIZE        (STAGEDATA_END + 1 - STAGEDATA_BASE)
 
 /* ----------------------------------------------------------------------- */
 
@@ -397,16 +461,44 @@ typedef struct hazard_s
 }
 hazard_t;
 
-#define SCREEN_BASE    (0x4000)
-
-#define STAGEDATA_BASE (0x5C00)
-#define STAGEDATA_END  (0x76EF) // inclusive
-#define STAGEDATA_SIZE (STAGEDATA_END + 1 - STAGEDATA_BASE)
+// crap name
+typedef struct stagevars_s
+{
+  // $A16D
+  uint8_t  var_a16d;
+  // $A16E
+  uint8_t  idle_timer;
+  // $A16F
+  uint8_t  user_input_mask;
+  // $A170
+  uint8_t  turbos;
+  // $A171
+  uint16_t horizon_level;
+  // $A173
+  uint8_t  perp_halt_counter;
+  // $A174
+  uint8_t  displayed_gear;
+  // $A175
+  uint8_t  score_digits[8];
+  // $A17D
+  uint8_t  time_sixteenths;
+  // $A17E
+  uint8_t  time_bcd;
+  // $A17F
+  uint8_t  time_digits[2];
+  // $A181
+  uint8_t  distance_digits[4];
+  // $A185
+  uint8_t  no_objects_counter;
+  // $A186
+  uint16_t horizon_attribute;
+}
+stagevars_t;
 
 typedef struct chqstate_s
 {
   // $4000
-  uint8_t  screen[256*192/8+32*24];
+  uint8_t  screen[SCREEN_LENGTH];
 
   // $8000
   uint8_t  test_mode;
@@ -422,13 +514,16 @@ typedef struct chqstate_s
   // $5C00..$76EF
   uint8_t  stagedata[STAGEDATA_SIZE];
 
+  // $8277
+  uint8_t  SM_8277;
+
   // $8D77
-  char     time_nn[7];
+  char     time_nn[7]; // initialised to "TIME 10"
   // $8D85
-  char     credit_n[8]; // TODO Populate when state inited
+  char     credit_n[8]; // initialised to "CREDIT  "
 
   // $9618
-  uint8_t  rng_seed[3]; // init to 0x7B,0x2D,0xE9
+  uint8_t  rng_seed[3];
 
   // $962E
   const char *next_character;
@@ -450,7 +545,7 @@ typedef struct chqstate_s
 
   // $9982
   uint8_t  SM_9982;
-  
+
   // $9C85
   uint8_t  SM_9c85;
   // $9C86
@@ -475,27 +570,9 @@ typedef struct chqstate_s
   uint8_t  overtake_bonus_bcd;
   // $A13D
   uint8_t  credits;
-
+  
   // $A16D
-  uint8_t  var_a16d;
-
-  // $A16F
-  uint8_t  user_input_mask;
-  // $A170
-  uint8_t  turbos;
-  // $A171
-  uint16_t horizon_level;
-  // $A173
-  uint8_t  perp_halt_counter;
-  // $A174
-  uint8_t  displayed_gear;
-  // $A175
-  uint8_t  score_digits[8];
-  // $A17D
-  uint8_t  time_sixteenths;
-  // $A17E
-  uint8_t  time_bcd;
-
+  stagevars_t st;
   // $A188
   hazard_t hazards[6];
 
@@ -516,6 +593,12 @@ typedef struct chqstate_s
   uint8_t  smash_level;
   // $A233
   uint8_t  smash_counter;
+  // $A234
+  uint8_t  counter_A;
+  // $A235
+  uint8_t  counter_B;
+  // $A236
+  uint8_t  counter_C;
 
   // $A23F
   uint8_t  fast_counter;
@@ -564,6 +647,12 @@ typedef struct chqstate_s
   uint8_t  start_speech;
   // $A26C
   uint16_t road_pos;
+  const uint8_t *road_curvature_ptr;
+  const uint8_t *road_height_ptr;
+  const uint8_t *road_lanes_ptr;
+  const uint8_t *road_rightside_ptr;
+  const uint8_t *road_leftside_ptr;
+  const uint8_t *road_hazard_ptr;
 
   // $E300
   uint8_t  table_e300[32]; // note: first byte should be $60
@@ -593,6 +682,17 @@ static void chasehq_reset_state(chqstate_t *state)
 {
   memset(state, 0, sizeof(*state));
 
+  state->wanted_stage_number = 1;
+
+  state->SM_8277 = 0xF0; // attract mode blinker
+
+  memcpy(state->time_nn, "TIME 1\xB0", 7);
+  memcpy(state->credit_n, "CREDIT \xA0", 8);
+
+  state->rng_seed[0] = 0x7B;
+  state->rng_seed[1] = 0x2D;
+  state->rng_seed[2] = 0xE9;
+
   state->road_buffer_offset = &state->road_buffer[0];
   state->road_buffer_start  = &state->road_buffer[0];
   state->road_buffer_end    = &state->road_buffer[256];
@@ -600,7 +700,14 @@ static void chasehq_reset_state(chqstate_t *state)
 
 /* ----------------------------------------------------------------------- */
 
-static uint16_t stagebyte(chqstate_t *state, int address)
+// read an arbitrary native word
+static uint16_t wordat(const uint8_t *addr)
+{
+  return (addr[0] << 0) | (addr[1] << 8);
+}
+
+// given a Z80 address read a stagedata byte
+static uint16_t stgbyte(chqstate_t *state, int address)
 {
   int offset;
   assert(address >= STAGEDATA_BASE && address <= STAGEDATA_END);
@@ -608,26 +715,47 @@ static uint16_t stagebyte(chqstate_t *state, int address)
   return state->stagedata[offset];
 }
 
-static uint16_t stageword(chqstate_t *state, int address)
+// given a Z80 address read a stagedata word
+static uint16_t stgword(chqstate_t *state, int address)
 {
   int offset;
   assert(address >= STAGEDATA_BASE && address <= STAGEDATA_END);
   offset = address - STAGEDATA_BASE;
-  return state->stagedata[offset + 0] | (state->stagedata[offset + 1] << 8);
+  return wordat(&state->stagedata[offset]);
 }
 
-// read a pointer in stage data converting on return
-static const uint8_t *stageptr(chqstate_t *state, int address)
+// map a Z80 address to a stagedata pointer
+static const uint8_t *stgmap(chqstate_t *state, int address)
 {
-  int zxaddress;
-  zxaddress = stageword(state, address);
-  if (zxaddress == 0)
+  if (address == 0)
     return NULL;
-  assert(zxaddress >= STAGEDATA_BASE && zxaddress <= STAGEDATA_END);
-  return &state->stagedata[zxaddress - STAGEDATA_BASE];
+  assert(address >= STAGEDATA_BASE && address <= STAGEDATA_END);
+  return &state->stagedata[address - STAGEDATA_BASE];
+}
+
+// given a Z80 address read a stagedata word and map it to a native pointer into stagedata
+static const uint8_t *stgwordtostgptr(chqstate_t *state, int address)
+{
+  return stgmap(state, stgword(state, address));
+}
+
+// given a native pointer read a word and map it to a native pointer into stagedata
+static const uint8_t *ptrtostgptr(chqstate_t *state, const uint8_t *addr)
+{
+  return stgmap(state, wordat(addr));
 }
 
 /* ----------------------------------------------------------------------- */
+
+static void attract_mode(chqstate_t *state);
+
+static void main_loop(chqstate_t *state);
+
+static void set_up_stage(chqstate_t *state, const uint8_t *stage_data);
+static void sus_clear_lights(uint8_t *attrptr);
+
+static void clear_playfield_attrs(chqstate_t *state);
+static void clear_playfield(chqstate_t *state);
 
 static uint8_t rng(chqstate_t *state);
 
@@ -639,7 +767,7 @@ static void drive_chatter(chqstate_t *state);
 
 static void print_chatter(chqstate_t *state);
 static void pc_chatter_message(chqstate_t *state, const uint8_t *HLchatter);
-static void pc_clear_line(chqstate_t *state, uint8_t A);
+static void pc_clear_line(chqstate_t *state, uint8_t x);
 
 static void noise_effect(chqstate_t *state, uint8_t counter);
 static void noise_effect_9a5c(chqstate_t *state, uint8_t counter);
@@ -649,9 +777,13 @@ static void plot_face(chqstate_t *state,
                 const uint8_t    *HLface,
                       uint16_t    DEscreen);
 
-static void plot_mini_font_1(chqstate_t *state, uint8_t flag, char character);
-static void plot_mini_font_2(chqstate_t *state, uint8_t flag, char character);
-static void pmf_go(chqstate_t *state, uint8_t Aflag, char Acharacter, uint16_t BC);
+static void plot_mini_font_1(chqstate_t *state, uint8_t x, char character);
+static void plot_mini_font_2(chqstate_t *state, uint8_t x, char character);
+static void pmf_go(chqstate_t *state,
+                   uint8_t     x,
+                   char        character,
+                   uint8_t     B,
+                   uint8_t     C);
 
 static void clear_message_line(chqstate_t *state);
 
@@ -675,7 +807,11 @@ static void increment_score(chqstate_t *state,
 
 static uint8_t DAA(uint8_t v, int *carry_out);
 
+static void cycle_counters(chqstate_t *state);
+
 static void layout_road(chqstate_t *state);
+
+static void clear_playfield_set_attrs(chqstate_t *state);
 
 static void build_curve_table(chqstate_t *state, int forked);
 static void build_curve_table_sub_cca8(chqstate_t *state,
@@ -1244,6 +1380,268 @@ static const uint8_t *chatter_blocks[CHATTERBLK__LIMIT] = {
 
 /* ----------------------------------------------------------------------- */
 
+// $A13E
+static const stagevars_t saved_game_state = {
+  1, // var_a16d
+  100, // idle_timer
+  USERINPUT_ALLOW_ALL,
+  3, // turbos
+  0x54, // horizon_level
+  20, // perp_halt_counter
+  0xFF, // displayed_gear
+  { 0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF }, // score digits
+  15, // sixteenths
+  0x60, // time_bcd
+  { 0xFF,0xFF }, // time_digits
+  { 0xFF,0xFF,0xFF,0xFF }, // distance_digits
+  1, // no_objects_counter
+  0x59BF, // horizon_attribute
+};
+
+static const hazard_t saved_game_state_hazard_0 = {
+  0,
+  100, // distance
+  0,
+  0,
+  0,
+  0x47,
+  0,
+  0,
+  0x2c,
+  0x0000,
+  0xa637,
+  0x003c,
+  0xff,
+  0,
+  3,
+  2,
+  0
+};
+
+/* ----------------------------------------------------------------------- */
+
+// $DFF8
+static const uint8_t minifont[] = {
+  _XX_____,
+  X__X____,
+  X__X____,
+  XXXX____,
+  X__X____,
+  X__X____,
+
+  XXX_____,
+  X__X____,
+  XXX_____,
+  X__X____,
+  X__X____,
+  XXX_____,
+
+  _XX_____,
+  X__X____,
+  X_______,
+  X_______,
+  X__X____,
+  _XX_____,
+
+  XXX_____,
+  X__X____,
+  X__X____,
+  X__X____,
+  X__X____,
+  XXX_____,
+
+  XXXX____,
+  X_______,
+  XXX_____,
+  X_______,
+  X_______,
+  XXXX____,
+
+  XXXX____,
+  X_______,
+  XXX_____,
+  X_______,
+  X_______,
+  X_______,
+
+  _XX_____,
+  X__X____,
+  X_______,
+  X_XX____,
+  X__X____,
+  _XXX____,
+
+  X__X____,
+  X__X____,
+  XXXX____,
+  X__X____,
+  X__X____,
+  X__X____,
+
+  _XXX____,
+  __X_____,
+  __X_____,
+  __X_____,
+  __X_____,
+  _XXX____,
+
+  ___X____,
+  ___X____,
+  ___X____,
+  ___X____,
+  X__X____,
+  _XX_____,
+
+  X__X____,
+  X__X____,
+  X_X_____,
+  XXX_____,
+  X__X____,
+  X__X____,
+
+  X_______,
+  X_______,
+  X_______,
+  X_______,
+  X_______,
+  XXXX____,
+
+  X__X____,
+  XXXX____,
+  X__X____,
+  X__X____,
+  X__X____,
+  X__X____,
+
+  X__X____,
+  XX_X____,
+  XX_X____,
+  X_XX____,
+  X_XX____,
+  X__X____,
+
+  _XX_____,
+  X__X____,
+  X__X____,
+  X__X____,
+  X__X____,
+  _XX_____,
+
+  XXX_____,
+  X__X____,
+  X__X____,
+  XXX_____,
+  X_______,
+  X_______,
+
+  _XX_____,
+  X__X____,
+  X__X____,
+  XX_X____,
+  X_XX____,
+  _XX_____,
+
+  XXX_____,
+  X__X____,
+  X__X____,
+  XXX_____,
+  X__X____,
+  X__X____,
+
+  _XX_____,
+  X_______,
+  _XX_____,
+  ___X____,
+  X__X____,
+  _XX_____,
+
+  _XXX____,
+  __X_____,
+  __X_____,
+  __X_____,
+  __X_____,
+  __X_____,
+
+  X__X____,
+  X__X____,
+  X__X____,
+  X__X____,
+  X__X____,
+  _XX_____,
+
+  X__X____,
+  X__X____,
+  X__X____,
+  X__X____,
+  _XX_____,
+  _XX_____,
+
+  X__X____,
+  X__X____,
+  X__X____,
+  XXXX____,
+  XXXX____,
+  X__X____,
+
+  X__X____,
+  X__X____,
+  _XX_____,
+  _XX_____,
+  X__X____,
+  X__X____,
+
+  _X_X____,
+  _X_X____,
+  _X_X____,
+  __X_____,
+  __X_____,
+  __X_____,
+
+  XXXX____,
+  ___X____,
+  __X_____,
+  _X______,
+  X_______,
+  XXXX____,
+
+  ________,
+  ________,
+  ________,
+  ________,
+  _XX_____,
+  _XX_____,
+
+  ________,
+  ________,
+  ________,
+  __X_____,
+  __X_____,
+  _X______,
+
+  __X_____,
+  __X_____,
+  __X_____,
+  __X_____,
+  ________,
+  __X_____,
+
+  ________,
+  ________,
+  ________,
+  ________,
+  ________,
+  ________,
+
+  __X_____,
+  __X_____,
+  _X______,
+  ________,
+  ________,
+  ________
+};
+
+/* ----------------------------------------------------------------------- */
+
 // $E540
 static const uint16_t inward_bend_table[96] = {
   0x0000,
@@ -1373,6 +1771,56 @@ static const uint8_t horizontal_e760[8][22] = {
 // CODE GOES HERE
 //
 
+#if 0
+// $8258
+static void attract_mode(chqstate_t *state)
+{
+  int     carry = 0;
+  uint8_t SM_828c; // blinker - move to state?
+
+  set_up_stage(state, &attract_data);
+  SM_828c = 0;
+  state->speed = 400;
+  for (;;) {
+    A = keyscan();
+    if (A == USERINPUT_FIRE)
+      return;
+
+    cpu_driver();
+
+    HL = &attract_mode_messages[0];
+    B  = 1;
+    A  = state->SM_8277;
+    RRC(A);
+    state->SM_8277 = A;
+    if (!carry)
+      B++;
+
+    // Display 'B' messages
+    do {
+      A = *HL; // load flags
+      HL = print_message(state, A, HL);
+    } while (--B > 0);
+
+    if (state->transition_control > 0)
+      goto do_transition;
+
+    // Alternate between credits and copyright messages.
+    A = state->SM_828c;
+    A ^= 1;
+    state->SM_828c = A;
+    HL = &credits_messages[0];
+    if (A)
+      HL = &copyright_messages[0];
+do_setup:
+    setup_overlay_messages(state, HL);
+do_transition:
+    transition(state);
+    draw_screen(state);
+  }
+}
+#endif
+
 // $8401
 static void main_loop(chqstate_t *state)
 {
@@ -1393,7 +1841,7 @@ static void main_loop(chqstate_t *state)
 
 ml_not_credits:
   // call run_pregame_screen
-  // set_up_stage(&stage_set_up_data);
+  set_up_stage(state, &state->stagedata[0x5D1D - STAGEDATA_BASE]);
 
   // Cycle start_speech_cycle 3,2,1 then repeat
   start_speech_index = state->start_speech_cycle - 1;
@@ -1404,7 +1852,7 @@ ml_not_credits:
   // Choose the startup speech sample
   state->start_speech = (start_speech_index * 4) | 2;
   state->hazards[0].used = 0xFF;
-  if (state->mode_128k == 0) 
+  if (state->mode_128k == 0)
     start_chatter(state, 0xFF, chatterblk_start_stage);
 
   do {
@@ -1416,7 +1864,7 @@ ml_not_credits:
     // handle_perp_caught(state);
     // move_hero_car(state);
     // spawn_cars(state);
-    // cycle_counters(state);
+    cycle_counters(state);
     // play_engine_or_siren_sfx_hook(state);
     // build_height_table(state);
     // scroll_horizon(state);
@@ -1452,7 +1900,101 @@ ml_not_credits:
     // exit_fork(state);
   } while (state->test_mode == 0);
 
-  // TODO test mode etc
+  // TODO test mode etc.
+}
+
+// $87DC
+static void set_up_stage(chqstate_t *state, const uint8_t *stage_data)
+{
+  memset(&state->road_buffer[0], 0, 256);
+  state->st         = saved_game_state;
+  state->hazards[0] = saved_game_state_hazard_0;
+  memset(&state->hazards[1], 0, sizeof(hazard_t) * 5);
+ 
+  // stage_data is genuine pointer here since sometimes it's pointed at stage
+  // data or attract data and at other times it's the escape scene data.
+
+  state->road_pos           = wordat(stage_data);
+  state->road_curvature_ptr = ptrtostgptr(state, stage_data +  2);
+  state->road_height_ptr    = ptrtostgptr(state, stage_data +  4);
+  state->road_lanes_ptr     = ptrtostgptr(state, stage_data +  6);
+  state->road_rightside_ptr = ptrtostgptr(state, stage_data +  8);
+  state->road_leftside_ptr  = ptrtostgptr(state, stage_data + 10);
+  state->road_hazard_ptr    = ptrtostgptr(state, stage_data + 12);
+
+#if 0
+  pre_shift_backdrop(state);
+
+  // set backdrop position in ?road drawing table?
+  state->SM_E34B = 8;
+  state->SM_E34C = 0; // check this zero
+  state->SM_E34D = 0;
+
+  // NOP some things TBD
+  state->SM_8F82 = 0;
+  //$8F83 = 0; // first one covers it all
+  //$8F84 = 0;
+ 
+  // NOP heli and tunnel drawing calls
+  state->SM_8FA4 = 0; // draw heli call
+  state->SM_8FA7 = 0; // draw tunnel call
+
+  state->SM_C058 = 0; // ?
+  state->SM_B063 = 0;
+  state->hazards[0].lod_addr = stgwordtostgptr(state, 0x5D10);
+
+  // Conv: Duplicate work removed.
+
+  // Run the map reader 32 times [enough to draw the screen?]
+  B = 32; // iterations
+  do {
+    HL = &state->fast_counter;
+    rm_cycle_buffer_offset(state, HL);
+  } while (--B > 0);
+
+  // Disallow spawning.
+  state->allow_spawning = 0;
+
+  A = 0xF8; // reverse transition
+  setup_transition(state, ...);
+#endif
+  clear_playfield_set_attrs(state);
+  // Clear the lights' BRIGHT bit.
+  sus_clear_lights(SCREEN(0x5820));
+  sus_clear_lights(SCREEN(0x583B));
+#if 0
+  silence_audio_hook();
+  update_scoreboard(); // exit via
+#endif
+}
+
+// $8860 (pulled out of above)
+static void sus_clear_lights(uint8_t *attrptr)
+{
+  int rows; // was C
+  int cols; // was B
+
+  rows = 4;
+  do {
+    cols = 5;
+    do {
+      *attrptr++ &= ~(1<<6); // BRIGHT bit (needs symbol)
+    } while (--cols > 0);
+    attrptr += 0x1B;
+  } while (--rows > 0);
+}
+
+// $88D5
+static void clear_playfield_attrs(chqstate_t *state)
+{
+  memset(SCREEN(0x5900), 0x00, 16 * 32);
+}
+
+// $88E2
+static void clear_playfield(chqstate_t *state)
+{
+  clear_playfield_attrs(state);
+  memset(SCREEN(0x4800), 0x00, 16 * 32 * 8);
 }
 
 // $961B
@@ -1503,7 +2045,7 @@ static void drive_chatter(chqstate_t *state)
   uint8_t        rotating; // was A
   uint8_t        delay; // was A
   uint8_t        A;
-  uint8_t        flag; // was A
+  uint8_t        x; // was A
   uint8_t        B;
   const char    *HL;
   const uint8_t *chatterblk; // was HL
@@ -1537,11 +2079,11 @@ static void drive_chatter(chqstate_t *state)
   rotating = state->SM_9982; // Conv: Was self modified
   RRC(rotating);
   state->SM_9982 = rotating;
-  flag = 0xFF;
+  x = 0xFF; // ie -1
   if (carry)
-    plot_mini_font_2(state, flag, character); // exit via
+    plot_mini_font_2(state, x, character); // exit via
   else
-    plot_mini_font_1(state, flag, character); // exit via
+    plot_mini_font_1(state, x, character); // exit via
   return;
 
 do_noise_effect:
@@ -1558,19 +2100,19 @@ do_noise_effect:
   if (delay == 0)
     goto read_message;
   HL = state->next_character - 1; // addr of next char
-  character = *HL & ~(1 << 7); // load char and clear any terminator
-  flag = state->message_x - 1;
+  character = *HL & ~STREND; // load char and clear any terminator
+  x = state->message_x - 1;
   RR(B);
   if (carry)
-    plot_mini_font_2(state, flag, character); // exit via
+    plot_mini_font_2(state, x, character); // exit via
   else
-    plot_mini_font_1(state, flag, character); // exit via
+    plot_mini_font_1(state, x, character); // exit via
   return;
 
 clear_line:
-  A = state->message_x;
-  if (A) {
-    pc_clear_line(state, A); // exit via
+  x = state->message_x;
+  if (x) {
+    pc_clear_line(state, x); // exit via
     return;
   }
 
@@ -1605,72 +2147,68 @@ clear:
 // $99EC
 static void print_chatter(chqstate_t *state)
 {
-  const uint8_t *HLchatter;
-  uint8_t        Acmd;
-  uint8_t        Arand;
-  const uint8_t *face; // was HL
+  const uint8_t *chatter; // was HL
+  uint8_t        cmd;     // was A
+  uint8_t        rnd;     // was A
+  const uint8_t *face;    // was HL
 
-  HLchatter = state->chatterblk_ptr;
+  chatter = state->chatterblk_ptr;
   for (;;) {
-    Acmd = *HLchatter++; // read a command ($FC) or speaking character's ID
-    if (Acmd != CHATTERCMD_RANDOM)
+    cmd = *chatter++; // read a command ($FC) or speaking character's ID
+    if (cmd != CHATTERCMD_RANDOM)
       goto pc_plot_character; // use break instead?
 
     // Random choice
-    // PUSH HLchatter - accounted for
-    Arand = rng(state);
-    // POP HLchatter - accounted for
-    if (Arand >= 0x55) {
-      HLchatter += 2;
-      if (Arand >= 0xAA)
-        HLchatter += 2;
+    rnd = rng(state);
+    if (rnd >= 0x55) {
+      chatter += 2;
+      if (rnd >= 0xAA)
+        chatter += 2;
     }
     /* Conv: This is an index, not an address */
-    HLchatter = chatter_blocks[*HLchatter];
+    chatter = chatter_blocks[*chatter];
   }
 
 pc_plot_character:
-  // Acmd is now the character ID
-  // PUSH HLchatter - accounted for
-  face = stageptr(state, 0x5CF2);
-  if (Acmd != CHATTERCHR_PILOT)
-    face = &bitmap_faces[Acmd]; // Conv: Simplified
+  // cmd is now the character ID
+  face = stgwordtostgptr(state, 0x5CF2);
+  if (cmd != CHATTERCHR_PILOT)
+    face = &bitmap_faces[cmd]; // Conv: Simplified
 
-//pc_do_plot:
   plot_face(state, face, 0x4036); // Set plot address to (176,8)
-  // POP HLchatter - accounted for
-  
-  pc_chatter_message(state, HLchatter); // was FALLTHROUGH
+
+  pc_chatter_message(state, chatter); // was FALLTHROUGH
 }
 
 // $9A24
 static void pc_chatter_message(chqstate_t *state, const uint8_t *HLchatter)
 {
-  const char *DE;
+  const char *chatterblk; // was DE
 
   // Conv: Original game loads an address directly here.
-  DE = chatter_strings[*HLchatter++];
+  chatterblk = chatter_strings[*HLchatter++];
   state->chatterblk_ptr = HLchatter;
-  state->next_character = DE;
+  state->next_character = chatterblk;
   pc_clear_line(state, 0); // was FALLTHROUGH
 }
 
 // $9A30
-static void pc_clear_line(chqstate_t *state, uint8_t A)
+// 'x' was A
+static void pc_clear_line(chqstate_t *state, uint8_t x)
 {
   const char *nextch;    // was HL
   char        character; // was D
 
-  if (A == 0)
+  if (x == 0)
     clear_message_line(state);
 
   nextch = state->next_character;
   assert(nextch);
-  character = *nextch & ~(1<<7); // remove any terminator
-  plot_mini_font_2(state, A, character);
-  if (*nextch++ & (1<<7)) // if terminated
+  character = *nextch & ~STREND; // remove any terminator
+  plot_mini_font_2(state, x, character);
+  if (*nextch++ & STREND) // if terminated
     state->chatter_delay = 10; // pause at end of string
-  state->message_x = A + 1;
+  state->message_x = x + 1;
   state->next_character = nextch;
 }
 
@@ -1681,30 +2219,45 @@ static void noise_effect(chqstate_t *state, uint8_t counter)
   if (counter == 0)
     print_chatter(state); // exit via
   else
-    noise_effect_9a5c(state, counter); // FALLTHROUGH
+    noise_effect_9a5c(state, counter); // was FALLTHROUGH
+}
+
+// Move to next row (down)
+// Conv: added
+static uint16_t nextrow(uint16_t screen)
+{
+  screen += 256;
+  if (((screen >> 8) & 7) == 0) {
+    int t = (screen & 0xFF) + 32;
+    screen = (screen & 0xFF00) | (t & 0xFF);
+    if (t < 0x100) { // didn't carry
+      t = (screen >> 8) - 8;
+      screen = (t << 8) | (screen & 0xFF);
+    }
+  }
+  return screen;
 }
 
 // $9A5C
 static void noise_effect_9a5c(chqstate_t *state, uint8_t counter)
 {
-  uint8_t  flag; // was A
-  char     character; // was D
-  uint16_t DE;
+  uint8_t  x;               // was A
+  char     character;       // was D
   uint8_t  C;
   int      carry = 0;
   uint8_t  B;
   uint8_t *HLnoisebytes;
   uint16_t DEscreen;
   uint16_t DEscreen_saved;
-  uint8_t  A; // was A
+  uint8_t  A;               // was A
 
   RR(counter);
-  flag = 0xFF;
+  x = 0xFF;
   character = ' ';
   if (!carry)
-    plot_mini_font_2(state, flag, character);
+    plot_mini_font_2(state, x, character);
   else
-    plot_mini_font_1(state, flag, character);
+    plot_mini_font_1(state, x, character);
   DEscreen = 0x4036; // Set plot address to (176,8)
   C = 40; // rows
   do {
@@ -1717,21 +2270,11 @@ static void noise_effect_9a5c(chqstate_t *state, uint8_t counter)
       RRC(A); // FIXME should be RLC(A);
       A += *HLnoisebytes;
       *HLnoisebytes = A;
-      // *DEscreen = A; // Conv: will need to go via state
+      state->screen[DEscreen - SCREEN_START_ADDRESS] = A;
       DEscreen++; // was E++
     } while (--B > 0);
     DEscreen = DEscreen_saved; // was POP - restore row ptr
-
-    // Move to next row (TODO: make a macro)
-    DEscreen += 256;
-    if (((DEscreen >> 8) & 7) == 0) {
-      int t = (DE & 0xFF) + 32;
-      DE = (DE & 0xFF00) | (t & 0xFF);
-      if (t < 0x100) { // didn't carry
-        t = (DE >> 8) - 8;
-        DE = (t << 8) | (DE & 0xFF);
-      }
-    }
+    DEscreen = nextrow(DEscreen);
   } while (--C > 0);
 
   ne_plot_attrs(state, 0x47); // BRIGHT + white over black
@@ -1744,7 +2287,7 @@ static void ne_plot_attrs(chqstate_t *state, uint8_t attr)
   uint16_t HL;
   uint8_t  B;
   uint16_t DE;
-  
+
   HL = 0x5836 - 0x5800; // Screen attribute (22,1) (Conv: address -> offset)
   B = 5; // 5 rows
   DE = 32 - 3; // row skip
@@ -1770,7 +2313,7 @@ static void plot_face(chqstate_t *state,
 
   counter = FACEBITMAPBYTES;
   DEscreen_saved = DEscreen;
-  DEscreen -= SCREEN_BASE; // Conv: address -> offset
+  DEscreen -= SCREEN_START_ADDRESS; // Conv: address -> offset
   for (;;) {
     state->screen[DEscreen++] = *HLface++; counter--;
     state->screen[DEscreen++] = *HLface++; counter--;
@@ -1779,17 +2322,7 @@ static void plot_face(chqstate_t *state,
     DEscreen -= 4; // replaces PUSH/POP
     if (counter == 0)
       break;
-
-    // Move to next row (TODO: make a macro)
-    DEscreen += 256;
-    if (((DEscreen >> 8) & 7) == 0) {
-      int t = (DEscreen & 0xFF) + 32;
-      DEscreen = (DEscreen & 0xFF00) | (t & 0xFF);
-      if (t < 0x100) { // didn't carry
-        t = (DEscreen >> 8) - 8;
-        DEscreen = (t << 8) | (DEscreen & 0xFF);
-      }
-    }
+    DEscreen = nextrow(DEscreen);
   }
 
   DEscreen = DEscreen_saved;
@@ -1797,10 +2330,10 @@ static void plot_face(chqstate_t *state,
   RRC(A);
   RRC(A);
   RRC(A);
-  A &= 3;
-  A += 0x58; // redundant here - removed below
+  A &= 3; // extract band
+  A += 0x58;
   DEscreen = (A << 8) | (DEscreen & 0xFF);
-  DEscreen -= SCREEN_BASE; // Conv: address -> offset
+  DEscreen -= SCREEN_START_ADDRESS; // Conv: address -> offset
   counter = FACEATTRBYTES;
   for (;;) {
     state->screen[DEscreen++] = *HLface++; counter--;
@@ -1818,25 +2351,128 @@ static void plot_face(chqstate_t *state,
 }
 
 // $9AEC
-static void plot_mini_font_1(chqstate_t *state, uint8_t flag, char character)
+static void plot_mini_font_1(chqstate_t *state, uint8_t x, char character)
 {
-  pmf_go(state, flag, character, 0x0000);
+  pmf_go(state, x, character, 0x00, 0x00);
 }
 
 // $9AF1
-static void plot_mini_font_2(chqstate_t *state, uint8_t flag, char character)
+static void plot_mini_font_2(chqstate_t *state, uint8_t x, char character)
 {
-  pmf_go(state, flag, character, 0x0780);
+  pmf_go(state, x, character, 0x07, 0x80);
 }
 
 // $9AF4
-static void pmf_go(chqstate_t *state, uint8_t flag, char character, uint16_t BC)
+static void pmf_go(chqstate_t *state,
+                   uint8_t     x,     // was A
+                   char        ascii, // was D
+                   uint8_t     B,     // background
+                   uint8_t     C)
 {
+  int            carry = 0;
+
+  uint8_t        bgright; // was self modified $9B61 - right background of bitmap
+  uint8_t        bgleft;  // was self modified $9B64 - left background of bitmap
+  uint8_t        mask;    // was self modified $9B89
+  uint8_t        rotate;  // was self modified $96B7
+
+  uint8_t        A;
+  uint8_t        ascii2; // was A
+  uint8_t        row;    // was A
+  uint8_t        gid;    // was C
+  uint8_t        sgid;   // was A
+  uint16_t       screen; // was DE
+  const uint8_t *DEfont;
+  uint16_t       HLscreen;
+
+#define MFWIDTH  (5)
+#define MFHEIGHT (6)
+
+  bgleft  = B; // ORed with hi font bytes
+  bgright = C; // lo font bytes
+  if (x == 0xFF) {
+    screen = 0xBF; // low byte of screen addr
+    A = MFWIDTH;
+  } else {
+    A = x * MFWIDTH + 2;
+    screen = 0xC0; // low byte of screen addr
+  }
+  // A is now a scaled x position?
+
+  // find rotate/shift by reducing scaled-x (A) until it's less than 8 bits
+  do {
+    screen++; // was E++
+    carry = 8 > A;
+    A -= 8;
+  } while (!carry);
+  A = -A;
+
+  rotate = A; // Conv: multiply by 4 removed
+  mask   = 0xFF << A; // Conv: Loop replaced with shift
+
+  // Turn ASCII into glyph IDs
+  ascii2 = ascii; // remove ascii2 later
+  screen |= 0x4500; // high byte of screen addr
+  gid = 26;
+  if (ascii2 == '.') goto pmf_have_glyph_id;
+  gid++;
+  if (ascii2 == ',') goto pmf_have_glyph_id;
+  gid++;
+  if (ascii2 == '!') goto pmf_have_glyph_id;
+  gid++;
+  if (ascii2 == ' ') goto pmf_have_glyph_id;
+  gid++;
+  if (ascii2 == '\'') goto pmf_have_glyph_id;
+  if (ascii2 >= ';') { sgid = ascii2; goto pmf_have_ascii; }
+  gid += ascii2 - '/'; // not convinced this is ever used in the game
+
+pmf_have_glyph_id:
+  sgid = gid + 'A'; // Turn the glyph ID in #REGc into ASCII in #REGa
+
+pmf_have_ascii:
+  DEfont = &minifont[(sgid - 'A') * MFHEIGHT];
+  HLscreen = screen; // was EX
+  row = MFHEIGHT;
+  do {
+    uint8_t r; // was C
+    uint8_t l; // was B
+
+    r = bgright;
+    l = *DEfont | bgleft; // first pixel written
+
+    switch (rotate) {
+      default: assert(0);
+      case 0: SRL(l); RR(r);
+      case 1: SRL(l); RR(r);
+      case 2: SRL(l); RR(r);
+      case 3: SRL(l); RR(r);
+      case 4: SRL(l); RR(r);
+      case 5: SRL(l); RR(r);
+      case 6: SRL(l); RR(r);
+      case 7: SRL(l); RR(r);
+      case 8:
+    }
+
+    uint8_t *screen = SCREEN(HLscreen); // Conv: added
+    screen[0] = (mask & screen[0]) | l;
+    screen[1] = r;
+    DEfont++;
+    HLscreen = nextrow(HLscreen);
+  } while (--row > 0);
 }
 
 // $9BA7
 static void clear_message_line(chqstate_t *state)
 {
+  uint16_t screen; // was HL
+  uint8_t  rows;   // was A
+
+  screen = 0x45C1; // Screen coordinate (8,53)
+  rows = 6; // Clear six rows
+  do {
+    memset(SCREEN(screen + 1), 0, 29); // Conv: Replacing LDIR
+    screen = nextrow(screen);
+  } while (--rows);
 }
 
 // $9BCF
@@ -1857,30 +2493,30 @@ static void tick(chqstate_t *state)
   if (state->perp_caught_phase > 0 || state->transition_control == 4)
     return;
 
-  ptimebcd = &state->time_bcd;
+  ptimebcd = &state->st.time_bcd;
   timeupstate = state->time_up_state;
   switch (timeupstate) {
-  case TIMEUP_CHECK_TIME_UP: goto check_time_up;
-  case TIMEUP_CAR_STOPPED:   goto check_credits;
-  case TIMEUP_CHECK_RESTART: goto check_restart;
-  case TIMEUP_WAITING:       return;
+  case TIMEUPSTATE_CHECK_TIME_UP: goto check_time_up;
+  case TIMEUPSTATE_CAR_STOPPED:   goto check_credits;
+  case TIMEUPSTATE_CHECK_RESTART: goto check_restart;
+  case TIMEUPSTATE_WAITING:       return;
   }
-  
+
   // otherwise it's state 0
 
   if (*ptimebcd == 0) {
     // Ran out of time
-    state->time_up_state   = TIMEUP_CHECK_TIME_UP;
+    state->time_up_state      = TIMEUPSTATE_CHECK_TIME_UP;
     // Stop acceleration/brake/turbo/pause
-    state->user_input_mask = USERINPUT_RIGHT | USERINPUT_LEFT | USERINPUT_FIRE | USERINPUT_QUIT;
+    state->st.user_input_mask = USERINPUT_RIGHT | USERINPUT_LEFT | USERINPUT_FIRE | USERINPUT_QUIT;
     return;
   }
 
 update_remaining_time:
-  if (--state->time_sixteenths > 0)
+  if (--state->st.time_sixteenths > 0)
     return;
-  state->time_sixteenths = 15; // is this sixteenths or fifteenths since we reset to 15?
-  state->time_bcd = timebcd = DAA(state->time_bcd - 1, &carry);
+  state->st.time_sixteenths = 15; // is this sixteenths or fifteenths since we reset to 15?
+  state->st.time_bcd = timebcd = DAA(state->st.time_bcd - 1, &carry);
   if (timebcd == 0x15)
     // suss: passes timebcd(A) as priority...
     start_chatter(state, timebcd, chatterblk_nancy_time_running_out); // exit via
@@ -1888,15 +2524,15 @@ update_remaining_time:
 
 check_time_up:
   if (*ptimebcd != 0) {
-    state->time_up_state   = TIMEUP_INIT;
-    state->user_input_mask = USERINPUT_ALLOW_ALL;
+    state->time_up_state      = TIMEUPSTATE_INIT;
+    state->st.user_input_mask = USERINPUT_ALLOW_ALL;
     goto update_remaining_time;
   }
 
   // TODO setup_overlay_messages(state, time_up_message);
   if (state->speed > 0)
     return;
-  state->time_up_state = TIMEUP_CAR_STOPPED;
+  state->time_up_state = TIMEUPSTATE_CAR_STOPPED;
   // TODO play_speech_hook(state, 4);
 
 check_credits:
@@ -1907,7 +2543,7 @@ check_credits:
   } else {
     state->credits--;
     state->credit_n[7]   = (state->credits + '0') | STREND;
-    state->time_up_state = TIMEUP_CHECK_RESTART;
+    state->time_up_state = TIMEUPSTATE_CHECK_RESTART;
     state->SM_9c85       = 0x15; // seconds remaining BCD?
     state->SM_9c86       = 0x01; // causes set_digits to run once?
   }
@@ -1916,16 +2552,16 @@ check_credits:
 check_restart:
   if ((state->user_input & USERINPUT_FIRE) == 0)
     goto print_continue;
- 
+
   // Resetting mission code.
-  state->time_up_state      = TIMEUP_INIT;
+  state->time_up_state      = TIMEUPSTATE_INIT;
   state->smash_level        = 0;
   state->smash_counter      = 0;
-  state->user_input_mask    = USERINPUT_ALLOW_ALL;
+  state->st.user_input_mask = USERINPUT_ALLOW_ALL;
   state->gear_lockout       = 3;
   state->transition_control = 3;
-  state->turbos             = 3;
-  state->time_bcd           = 0x60; // 60 seconds
+  state->st.turbos          = 3;
+  state->st.time_bcd        = 0x60; // 60 seconds
   state->retry_count++;
 
 // play_start_noise:  (code elsewhere jumps to this)
@@ -1948,7 +2584,7 @@ print_continue:
   A = L;
   if (A == 0) {
     state->quit_state    = QUITSTATE_START;
-    state->time_up_state = TIMEUP_WAITING;
+    state->time_up_state = TIMEUPSTATE_WAITING;
   }
 
 set_digits:
@@ -1993,7 +2629,8 @@ static void speed_score(chqstate_t *state)
 }
 
 // $9CD6
-// Bug: As soon as a nonzero->zero transition is seen the routine finishes so you can only have a single run of zeroes in the bonus.
+// Bug: As soon as a non-zero->zero transition is seen the routine finishes so
+// you can only have a single run of zeroes in the bonus.
 static void add_bonus(chqstate_t *state,
                       uint8_t     A_lo,
                       uint8_t     E_md,
@@ -2005,7 +2642,7 @@ static void add_bonus(chqstate_t *state,
   output = &state->bonus_string[6]; // points to byte after buffer
   nonzeroflag = 0xFF; // flag (zero not seen)
   (void) bonus_digit(A_lo >> 0, &nonzeroflag, &output); // always runs since flag > 0
-  *output |= 1<<7; // terminate string
+  *output |= STREND; // terminate string
 
   // Using lazy evaluation here to avoid having a load of gotos
   (void) (bonus_digit(A_lo >> 4, &nonzeroflag, &output) >= 0 &&
@@ -2042,40 +2679,35 @@ store:
   return 0;
 }
 
+// $9D17
 static void increment_score(chqstate_t *state,
                             uint8_t     A_lo,
                             uint8_t     E_md,
                             uint8_t     D_hi)
 {
-  char    *HLscorebcd;
+  int      carry = 0;
+  char    *scorebcd; // was HL
   uint8_t  A;
-  int      carry;
 
-  HLscorebcd = &state->score_bcd[0];
-  A = A_lo + *HLscorebcd;
-  *HLscorebcd++ = DAA(A, &carry);
-  A = E_md + *HLscorebcd + carry;
-  *HLscorebcd++ = DAA(A, &carry);
-  A = D_hi + *HLscorebcd + carry;
-  *HLscorebcd++ = DAA(A, &carry);
-  A = *HLscorebcd + carry;
-  *HLscorebcd = DAA(A, &carry);
+  scorebcd = &state->score_bcd[0];
+  A = A_lo + *scorebcd;
+  *scorebcd++ = DAA(A, &carry);
+  A = E_md + *scorebcd + carry;
+  *scorebcd++ = DAA(A, &carry);
+  A = D_hi + *scorebcd + carry;
+  *scorebcd++ = DAA(A, &carry);
+  A = *scorebcd + carry;
+  *scorebcd = DAA(A, &carry);
 }
 
-/// Minimal equivalent of Z80 BCD correct operation
-/// Additional
-static uint8_t DAA(uint8_t v, int *carry_out)
+// $A60E
+static void cycle_counters(chqstate_t *state)
 {
-  int lo, hi;
-  int carry = 0;
-
-  lo = (v >> 0) & 0x0F;
-  hi = (v >> 4) & 0x0F;
-  if (lo >= 10) { lo -= 10; hi++; }
-  if (hi >= 10) { hi -= 10; carry++; }
-
-  *carry_out = carry;
-  return (hi << 4) | (lo << 0);
+  state->counter_A = (state->counter_A + 1) & 3;
+  state->counter_B = (state->counter_B + 1) & 1;
+  if (state->counter_B == 0)
+    return;
+  state->counter_C = (state->counter_C + 1) & 3;
 }
 
 #define ROADBUF(N) \
@@ -2092,6 +2724,7 @@ static uint8_t DAA(uint8_t v, int *carry_out)
 // $B9F4
 static void layout_road(chqstate_t *state)
 {
+  int            carry = 0;
   uint8_t       *DElanedata;
   uint8_t        Biterations;
   uint8_t        Lcounter;
@@ -2112,7 +2745,6 @@ static void layout_road(chqstate_t *state)
   uint8_t        Ca16d;
   uint16_t       HLforkdistance;
   uint16_t       DEforkdistance;
-  int            carry = 0;
   uint16_t       HLroadpos;
   uint16_t       HLroadpos_saved;
   uint8_t       *HLunknown;
@@ -2214,7 +2846,7 @@ lr_check_spawning:
   Aiterations = state->allow_spawning;
   if (Aiterations == 0)
     goto lr_no_car_spawning;
-  Aiterations += state->var_a16d;
+  Aiterations += state->st.var_a16d;
   Ca16d = Aiterations; // new value for $A16D
   Aiterations -= 2;
   if (Aiterations >= 256-2) // carried?
@@ -2223,9 +2855,9 @@ lr_check_spawning:
   HLforkdistance += 16;
   state->fork_distance = HLforkdistance;
 lr_set_var_a16d_from_c:
-  state->var_a16d = Ca16d;
+  state->st.var_a16d = Ca16d;
 lr_no_car_spawning:
-  carry = state->var_a16d & 1; // CHECK
+  carry = state->st.var_a16d & 1; // CHECK
   Aiterations = state->fast_counter;
   RL(Aiterations);
   RL(Aiterations);
@@ -2282,6 +2914,40 @@ lr_badf:
   } while (Biterations > 0);
   SProadright = &state->table_ec00[Aiterations];
   goto lr_calc_single_lane; // jump into no_fork code
+}
+
+// $BDC1
+static void clear_playfield_set_attrs(chqstate_t *state)
+{
+  int      B;
+  uint8_t *screen; // was HL
+  uint16_t DE;
+
+  clear_playfield(state);
+
+  // Clear the playfield pixels to $FF (bug: duplicates work just done)
+  memset(SCREEN(0x4800), 0xFF, 0x1000);
+
+  // Clear the playfield attributes to $28 (black over cyan) - first two
+  // rows only
+  memset(SCREEN(0x5900), 0x28, 2*32);
+
+  // Clear the next three rows to $68 (black over bright cyan)
+  memset(SCREEN(0x5940), 0x68, 3*32);
+
+  // Clear the next 11 rows to the current ground colour
+  // Note: Only using the bottom byte of ground_colour (as orig).
+  memset(SCREEN(0x59A0), stgbyte(state, 0x5CF4), 0x160); // CHECK
+
+  // Clear the edges of the playfield to black on black
+  screen = SCREEN(0x5900);
+  DE = 0x1F;
+  B = 16;
+  do {
+    *screen = 0;
+    screen += DE;
+    *screen++ = 0;
+  } while (--B > 0);
 }
 
 // $CBD6 ish
@@ -2543,6 +3209,247 @@ static T multiply(T a, T c)
 
 /* ----------------------------------------------------------------------- */
 
+/**
+ * Return the minimum of (a,b).
+ */
+#define MIN(a,b) (((a) < (b)) ? (a) : (b))
+
+/**
+ * Return the maximum of (a,b).
+ */
+#define MAX(a,b) (((a) > (b)) ? (a) : (b))
+
+/**
+ * Return 'a' clamped to the range [b..c].
+ */
+#define CLAMP(a,b,c) MIN(MAX(a,b),c)
+
+typedef struct zxbox
+{
+  int x0, y0, x1, y1;
+}
+zxbox_t;
+
+#define SCREEN_BITMAP_LENGTH            (SCREEN_WIDTH / 8 * SCREEN_HEIGHT)
+
+/* Define to highlight dirty rectangles when they're drawn. */
+//#define SHOW_DIRTY_RECTS
+
+#define RGB
+
+#ifdef RGB
+/* 0x00RRGGBB */
+#define BK_ 0x00000000
+#define RD_ 0x00010000
+#define GR_ 0x00000100
+#define YL_ 0x00010100
+#define BL_ 0x00000001
+#define MG_ 0x00010001
+#define CY_ 0x00000101
+#define WH_ 0x00010101
+#else
+/* 0x00BBGGRR */
+#define BK_ 0x00000000
+#define RD_ 0x00000001
+#define GR_ 0x00000100
+#define YL_ 0x00000101
+#define BL_ 0x00010000
+#define MG_ 0x00010001
+#define CY_ 0x00010100
+#define WH_ 0x00010101
+#endif
+
+#define NORMAL(C) (C * 0xCD)
+#define BRIGHT(C) (C * 0xFF)
+
+/* BRIGHT 0 */
+#define BKd NORMAL(BK_)
+#define RDd NORMAL(RD_)
+#define GRd NORMAL(GR_)
+#define YLd NORMAL(YL_)
+#define BLd NORMAL(BL_)
+#define MGd NORMAL(MG_)
+#define CYd NORMAL(CY_)
+#define WHd NORMAL(WH_)
+/* BRIGHT 1 */
+#define BKb BRIGHT(BK_)
+#define RDb BRIGHT(RD_)
+#define GRb BRIGHT(GR_)
+#define YLb BRIGHT(YL_)
+#define BLb BRIGHT(BL_)
+#define MGb BRIGHT(MG_)
+#define CYb BRIGHT(CY_)
+#define WHb BRIGHT(WH_)
+
+/* Given a set of tokens: A, B, C, which have permutations:
+ *   (AA, AB, AC, BA, BB, BC, CA, CB, CC)
+ * They can be written out contiguously as:
+ *   AAABACBABBBCCACBCC
+ * We can remove and index the redundant overlaps:
+ *   AABACBBCACC
+ * (Note that 'AC' occurs twice in the sequence).
+ * Producing a mapping:
+ *   (0, 1, 3, 2, 5, 6, 7, 4, 9)
+ * This is a De Bruijn sequence.
+ *
+ * The following palette is laid out in a De Bruijn sequence in a vain attempt
+ * to improve performance.
+ */
+static const unsigned int palette[66 + 65] =
+{
+  BKd, BKd, BLd, BKd, RDd, BKd, MGd, BKd,
+  GRd, BKd, CYd, BKd, YLd, BKd, WHd, BLd,
+  BLd, RDd, BLd, MGd, BLd, GRd, BLd, CYd,
+  BLd, YLd, BLd, WHd, RDd, RDd, MGd, RDd,
+  GRd, RDd, CYd, RDd, YLd, RDd, WHd, MGd,
+  MGd, GRd, MGd, CYd, MGd, YLd, MGd, WHd,
+  GRd, GRd, CYd, GRd, YLd, GRd, WHd, CYd,
+  CYd, YLd, CYd, WHd, YLd, YLd, WHd, BKd,
+  WHd, WHd,
+
+  /* The zeroth bright entry is shared. */
+       BKb, BLb, BKb, RDb, BKb, MGb, BKb,
+  GRb, BKb, CYb, BKb, YLb, BKb, WHb, BLb,
+  BLb, RDb, BLb, MGb, BLb, GRb, BLb, CYb,
+  BLb, YLb, BLb, WHb, RDb, RDb, MGb, RDb,
+  GRb, RDb, CYb, RDb, YLb, RDb, WHb, MGb,
+  MGb, GRb, MGb, CYb, MGb, YLb, MGb, WHb,
+  GRb, GRb, CYb, GRb, YLb, GRb, WHb, CYb,
+  CYb, YLb, CYb, WHb, YLb, YLb, WHb, BKb,
+  WHb, WHb,
+};
+
+static const unsigned char offsets[66 + 65] =
+{
+    0,   1,   3,   5,   7,   9,  11,  13,
+    2,  15,  16,  18,  20,  22,  24,  26,
+    4,  17,  28,  29,  31,  33,  35,  37,
+    6,  19,  30,  39,  40,  42,  44,  46,
+    8,  21,  32,  41,  48,  49,  51,  53,
+   10,  23,  34,  43,  50,  55,  56,  58,
+   12,  25,  36,  45,  52,  57,  60,  61,
+   62,  14,  27,  38,  47,  54,  59,  64,
+    0,  66,  68,  70,  72,  74,  76,  78,
+   67,  80,  81,  83,  85,  87,  89,  91,
+   69,  82,  93,  94,  96,  98, 100, 102,
+   71,  84,  95, 104, 105, 107, 109, 111,
+   73,  86,  97, 106, 113, 114, 116, 118,
+   75,  88,  99, 108, 115, 120, 121, 123,
+   77,  90, 101, 110, 117, 122, 125, 126,
+  127,  79,  92, 103, 112, 119, 124, 129,
+};
+
+#define WRITE8PIX(shift)                            \
+do {                                                \
+  pal = &palette[offsets[(attrs >> shift) & 0x7F]]; \
+  *poutput++ = pal[(input >> (shift + 7)) & 1];     \
+  *poutput++ = pal[(input >> (shift + 6)) & 1];     \
+  *poutput++ = pal[(input >> (shift + 5)) & 1];     \
+  *poutput++ = pal[(input >> (shift + 4)) & 1];     \
+  *poutput++ = pal[(input >> (shift + 3)) & 1];     \
+  *poutput++ = pal[(input >> (shift + 2)) & 1];     \
+  *poutput++ = pal[(input >> (shift + 1)) & 1];     \
+  *poutput++ = pal[(input >> (shift + 0)) & 1];     \
+} while (0)
+
+/* For reference:
+ *
+ * Spectrum screen memory has the arrangement:
+ * 0b010BBLLLRRRCCCCC (B = band, L = line, R = row, C = column)
+ *
+ * Attribute bytes have the format:
+ * 0bLRBBBFFF (L = flash, R = bright, B = paper (background), F = ink (foreground))
+ */
+
+void zxscreen_convert(const void    *vscr,
+                      unsigned int  *poutput,
+                      const zxbox_t *dirty)
+{
+  zxbox_t              box;
+  int                  height;
+  const unsigned int  *pattrs;
+  int                  width;
+  int                  x,linear_y;
+  const unsigned int  *pinput;
+  unsigned int         input;
+  unsigned int         attrs;
+  const unsigned int  *pal;
+
+  assert(dirty);
+
+#ifdef SHOW_DIRTY_RECTS
+  static int dirtybits;
+  dirtybits = 0x20202020 - dirtybits;
+#endif
+
+  /* Clamp the dirty rectangle to the screen dimensions. */
+  box.x0 = CLAMP(dirty->x0, 0, 255);
+  box.y0 = CLAMP(dirty->y0, 0, 191);
+  box.x1 = CLAMP(dirty->x1, 1, 256);
+  box.y1 = CLAMP(dirty->y1, 1, 192);
+
+  /* The inner loop processes 32 pixels at a time, so we need to convert x
+   * coordinates into chunks four attributes wide while rounding up and down as
+   * required. */
+  box.x0 = (box.x0     ) / 32; /* divide to 0..7 rounding down */
+  box.x1 = (box.x1 + 31) / 32; /* divide to 0..7 rounding up */
+
+  /* Convert y coordinates into screen space - (0,0) is top left. */
+  height = box.y1 - box.y0;
+  box.y0 = 192 - box.y1;
+  box.y1 = box.y0 + height;
+
+  pattrs = (const unsigned int *) vscr
+         + (SCREEN_BITMAP_LENGTH
+         + box.y0 / 8 * 32  /* 8 scanlines/row, 32 attrs/row */
+         + box.x0 * 4) / 4; /* 4 bytes/chunk, 4 bytes/word */
+
+  poutput += box.y0 * 256 /* 256 pixels/row (256 words) for output */
+           + box.x0 * 32; /* 32 pixels/chunk (32 words) */
+
+  width = box.x1 - box.x0; /* hoisted out of loop */
+
+  for (linear_y = box.y0; linear_y < box.y1; linear_y++)
+  {
+    /* Transpose fields using XOR */
+    unsigned int tmp = (linear_y ^ (linear_y >> 3)) & 7;
+    int          y   = linear_y ^ (tmp | (tmp << 3));
+
+    pinput = (const unsigned int *) vscr
+           + (y     * 32           /* 32 bytes/row */
+           + box.x0 * 32 / 8) / 4; /* 32 bytes/row, 8 pixels/byte, 4 bytes/word */
+    for (x = width; x > 0; x--) /* x is unused in the loop body */
+    {
+      input = *pinput++;
+      attrs = *pattrs++;
+#ifdef SHOW_DIRTY_RECTS
+      attrs ^= dirtybits; /* force colour attrs to show redrawn areas */
+#endif
+
+      WRITE8PIX(0);
+      WRITE8PIX(8);
+      WRITE8PIX(16);
+      WRITE8PIX(24);
+    }
+
+    /* Skip to the start of the next row. */
+    pattrs  += 8   - width;
+    poutput += 256 - width * 32;
+
+    /* Rewind pattrs except at the end of an attribute row. */
+    if ((linear_y & 7) != 7)
+      pattrs -= 8;
+  }
+}
+
+/* ----------------------------------------------------------------------- */
+
+#define GAMEWIDTH 256
+#define GAMEHEIGHT 192
+
+static const SDL_Rect dstrect = { 0, 0, GAMEWIDTH, GAMEHEIGHT };
+unsigned int pixels[GAMEWIDTH * GAMEHEIGHT];
+
 int main(void)
 {
 #if 0
@@ -2564,82 +3471,149 @@ int main(void)
   return 0;
 #else
   SDL_Event event;
-  SDL_Surface *surface;
   SDL_Window *window;
+  SDL_Renderer *renderer;
+  SDL_Texture *texture;
   chqstate_t state;
   int quit = 0;
+  int mx = 0, my = 0;
 
-  if (SDL_Init(SDL_INIT_EVERYTHING) != 0)
+  if (SDL_Init(SDL_INIT_VIDEO) != 0)
   {
     printf("SDL_Init failed: %s\n", SDL_GetError());
     return 1;
   }
 
-  window = SDL_CreateWindow("Chase H.Q.", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, 256, 192, SDL_WINDOW_SHOWN);
-  if (!window)
+  window = SDL_CreateWindow("Chase H.Q.",
+      SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED,
+      GAMEWIDTH, GAMEHEIGHT,
+      SDL_WINDOW_SHOWN | SDL_WINDOW_RESIZABLE);
+  if (window == NULL)
   {
     printf("SDL_CreateWindow failed: %s\n", SDL_GetError());
     SDL_Quit();
     return 1;
   }
 
-  surface = SDL_GetWindowSurface(window);
-  if (!surface)
+  renderer = SDL_CreateRenderer(window,
+      -1,
+      SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC);
+  if (renderer == NULL)
   {
-    printf("SDL_GetWindowSurface failed: %s\n", SDL_GetError());
-    SDL_DestroyWindow(window);
+    printf("SDL_CreateRenderer failed: %s\n", SDL_GetError());
     SDL_Quit();
     return 1;
   }
 
-  SDL_FillRect(surface, NULL, SDL_MapRGB(surface->format, 0xFF, 0xFF, 0xFF));
-  SDL_UpdateWindowSurface(window);
+  texture = SDL_CreateTexture(renderer,
+                              SDL_PIXELFORMAT_ARGB8888, // fastest?
+                              SDL_TEXTUREACCESS_STREAMING,
+                              GAMEWIDTH, GAMEHEIGHT);
+  if (texture == NULL)
+  {
+    printf("SDL_CreateTexture failed: %s\n", SDL_GetError());
+    SDL_Quit();
+    return 1;
+  }
+
+  if (SDL_SetTextureBlendMode(texture, SDL_BLENDMODE_NONE) < 0)
+  {
+    printf("SDL_SetTextureBlendMode failed: %s\n", SDL_GetError());
+    SDL_Quit();
+    return 1;
+  }
 
   chasehq_reset_state(&state);
-  main_loop(&state);
 
-  while (!quit)
-  {
-    SDL_PollEvent(&event);
-    switch (event.type)
-    {
-      case SDL_QUIT:
-        quit = 1;
-        break;
+  if (1) { // temp - fill screen with junk
+    for (int i = 0; i < SCREEN_BITMAP_LENGTH; i++)
+      state.screen[i] = 0; // rng(&state);
+    for (int i = 0; i < SCREEN_ATTRIBUTES_LENGTH; i++)
+      state.screen[SCREEN_ATTRIBUTES_START_ADDRESS - SCREEN_START_ADDRESS + i] = attribute_YELLOW_OVER_BLACK;
+    //clear_playfield_set_attrs(&state);
 
-      case SDL_MOUSEMOTION:
-        // Handle mouse motion event
-        for (int i = 0; i < 22; i++) // we read 20/21 entries
-          state.road_buffer[i] = 0x70 + (event.motion.x * 0x10 / 256);
-        build_curve_table(&state, /*forked=*/0);
-
-        SDL_FillRect(surface, NULL, SDL_MapRGB(surface->format, 0xFF, 0xFF, 0xFF));
-
-        for (int y = 0; y < 104; y++) {
-          int yp = y; // 0 is top
-
-          int r = state.table_ec00[0x30 + y] >> 0;
-          int l = state.table_e800[0x30 + y] >> 0;
-          SDL_Rect rrect = {255 - r, yp, r, 1};
-          SDL_Rect lrect = {      0, yp, l, 1};
-          SDL_FillRect(surface, &rrect, SDL_MapRGB(surface->format, 0x00, 0x00, 0xFF));
-          SDL_FillRect(surface, &lrect, SDL_MapRGB(surface->format, 0xFF, 0x00, 0x00));
-
-          SDL_Rect rect = {0, yp, 1, 1};
-          SDL_FillRect(surface, &rect, SDL_MapRGB(surface->format, 0xFF, 0xFF, 0x00));
-        }
-        SDL_UpdateWindowSurface(window);
-        state.fast_counter++;
-        break;
-
-      case SDL_MOUSEBUTTONDOWN:
-        break;
-
-      case SDL_MOUSEBUTTONUP:
-        break;
+    static const char msg[] = "GREETS TO THE RETRO FUNSTERS FROM CHASE D.P.T.!";
+    for (int i = 0; i < sizeof(msg) - 1; i++) {
+      plot_mini_font_1(&state, i, msg[i]);
     }
   }
 
+  while (!quit)
+  {
+    while (SDL_PollEvent(&event))
+    {
+      switch (event.type)
+      {
+        case SDL_QUIT:
+          quit = 1;
+          break;
+
+        case SDL_KEYDOWN:
+          break;
+        case SDL_KEYUP:
+          break;
+
+        case SDL_MOUSEMOTION:
+          //main_loop(&state);
+          plot_face(&state, &bitmap_faces[FACEBYTES*0], 0x4036);
+          plot_face(&state, &bitmap_faces[FACEBYTES*1], 0x4836);
+          plot_face(&state, &bitmap_faces[FACEBYTES*2], 0x5036);
+#if 0
+          // Handle mouse motion event
+          for (int i = 0; i < 22; i++) // we read 20/21 entries
+            state.road_buffer[i] = 0x70 + (event.motion.x * 0x10 / 256);
+          build_curve_table(&state, /*forked=*/0);
+
+          SDL_FillRect(surface, NULL, SDL_MapRGB(surface->format, 0xFF, 0xFF, 0xFF));
+
+          for (int y = 0; y < 104; y++) {
+            int yp = y; // 0 is top
+
+            int r = state.table_ec00[0x30 + y] >> 0;
+            int l = state.table_e800[0x30 + y] >> 0;
+            SDL_Rect rrect = {255 - r, yp, r, 1};
+            SDL_Rect lrect = {      0, yp, l, 1};
+            SDL_FillRect(surface, &rrect, SDL_MapRGB(surface->format, 0x00, 0x00, 0xFF));
+            SDL_FillRect(surface, &lrect, SDL_MapRGB(surface->format, 0xFF, 0x00, 0x00));
+
+            SDL_Rect rect = {0, yp, 1, 1};
+            SDL_FillRect(surface, &rect, SDL_MapRGB(surface->format, 0xFF, 0xFF, 0x00));
+          }
+          SDL_UpdateWindowSurface(window);
+          state.fast_counter++;
+#endif
+          break;
+
+        case SDL_MOUSEBUTTONDOWN:
+          break;
+
+        case SDL_MOUSEBUTTONUP:
+          for (int i = 0; i < 6912; i++)
+            state.screen[i] = 0xff;
+          break;
+      }
+    }
+
+    if (quit)
+      break;
+
+    {
+      zxbox_t dirty = {0,0,GAMEWIDTH,GAMEHEIGHT};
+
+      zxscreen_convert(&state.screen[0], pixels, &dirty);
+      SDL_UpdateTexture(texture, NULL, pixels, GAMEWIDTH * 4);
+    }
+
+    SDL_SetRenderDrawColor(renderer, 0x00, 0x00, 0x00, 0xFF);
+    SDL_RenderClear(renderer);
+    SDL_RenderCopy(renderer, texture, NULL, &dstrect);
+    SDL_RenderPresent(renderer);
+
+    SDL_Delay(1000 / 60); //fps
+  }
+
+  SDL_DestroyTexture(texture);
+  SDL_DestroyRenderer(renderer);
   SDL_DestroyWindow(window);
 
   SDL_Quit();
