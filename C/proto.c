@@ -355,8 +355,7 @@ static uint8_t DAA(uint8_t v, int *carry_out)
 #define SCREEN_WIDTH                    (256)
 #define SCREEN_HEIGHT                   (192)
 
-enum
-{
+enum {
   attribute_BLUE_OVER_BLACK           = 1,
   attribute_RED_OVER_BLACK            = 2,
   attribute_PURPLE_OVER_BLACK         = 3,
@@ -432,15 +431,14 @@ enum
 #define CHATTERSTATE_STOP     (3)
 
 typedef uint8_t chatterpriority_t;
-                              
+
 #define STAGEDATA_BASE        (0x5C00)
 #define STAGEDATA_END         (0x76EF) // inclusive
 #define STAGEDATA_SIZE        (STAGEDATA_END + 1 - STAGEDATA_BASE)
 
 /* ----------------------------------------------------------------------- */
 
-typedef struct hazard_s
-{
+typedef struct hazard_s {
   uint8_t  used;
   uint8_t  distance;
   uint8_t  horz_pos;
@@ -462,8 +460,7 @@ typedef struct hazard_s
 hazard_t;
 
 // crap name
-typedef struct stagevars_s
-{
+typedef struct stagevars_s {
   // $A16D
   uint8_t  var_a16d;
   // $A16E
@@ -495,8 +492,7 @@ typedef struct stagevars_s
 }
 stagevars_t;
 
-typedef struct chqstate_s
-{
+typedef struct chqstate_s {
   // $4000
   uint8_t  screen[SCREEN_LENGTH];
 
@@ -555,7 +551,7 @@ typedef struct chqstate_s
   char     bonus_string[6];
 
   // $9D9B
-  char    *SM_address_of_score_digits; // self modified
+  char    *SM_address_of_score_digits; // was self modified
 
   // $A0D5
   uint8_t  user_input;
@@ -570,7 +566,7 @@ typedef struct chqstate_s
   uint8_t  overtake_bonus_bcd;
   // $A13D
   uint8_t  credits;
-  
+
   // $A16D
   stagevars_t st;
   // $A188
@@ -656,7 +652,7 @@ typedef struct chqstate_s
 
   // $E300
   uint8_t  table_e300[32]; // note: first byte should be $60
-                           // $E320
+  // $E320
   uint8_t  table_e320[2];
   // $E34F
   uint8_t  object_positions[21];
@@ -773,9 +769,9 @@ static void noise_effect(chqstate_t *state, uint8_t counter);
 static void noise_effect_9a5c(chqstate_t *state, uint8_t counter);
 static void ne_plot_attrs(chqstate_t *state, uint8_t A);
 
-static void plot_face(chqstate_t *state,
-                const uint8_t    *HLface,
-                      uint16_t    DEscreen);
+static void plot_face(chqstate_t    *state,
+                      const uint8_t *HLface,
+                      uint16_t       DEscreen);
 
 static void plot_mini_font_1(chqstate_t *state, uint8_t x, char character);
 static void plot_mini_font_2(chqstate_t *state, uint8_t x, char character);
@@ -918,146 +914,146 @@ static T multiply(T a, T c);
 
 // $7BE9
 static const uint8_t bitmap_faces[FACEBYTES * NFACES] = {
-  XXXXXXXX,XXXXXXXX,XXXXXXXX,XXXXXXXX,
-  X__XX__X,X_______,________,____X_XX,
-  X_XX___X,________,________,_____X_X,
-  XX____XX,________,________,_____X_X,
-  X___XXXX,____XXXX,XX______,__XX_X_X,
-  X_XX_XX_,___X____,_XXX____,XX__XXXX,
-  XXX_XXX_,________,__XX___X,X____XXX,
-  XXX_XXX_,___X_XXX,X_X____X,X____X__,
-  XX_XXXX_,___XXX_X,XXX____X,XXXX_XXX,
-  XX_XXX__,____XXXX,__XX___X,X_XXXXX_,
-  X_XXXX__,______XX,X______X,XXX_XXX_,
-  XXXXXXX_,________,________,XX___XX_,
-  XXXXXX__,________,____X___,_____XXX,
-  XXXXX_X_,________,________,_____XXX,
-  XXXX_X_X,________,__X__X__,_____X_X,
-  XXX_X_X_,________,__X_XXXX,X____X_X,
-  XXXX_X_X,_X______,_X_XXXXX,_____X__,
-  _XXXX_X_,X_X_____,_____XX_,_____X__,
-  _X_____X,_X_X_X__,______X_,_____X__,
-  ___XX___,__X_X___,________,_____X__,
-  X__X____,_X_X____,___XXX_X,X___XX__,
-  XXXX____,__X_____,_XXXXXXX,X___XX__,
-  XXXX____,_X_X____,XXX____X,XX__XXX_,
-  XXXX____,__X_____,________,____X_X_,
-  XXXX____,________,_X______,X__XX_X_,
-  XXXXX___,________,__XXXXXX,___XX_X_,
-  XXXXX___,________,___XXXXX,___XX_X_,
-  XXXXXX__,________,________,__XXX_X_,
-  _XXXX_X_,X_______,________,__XXX_X_,
-  _XXX_X_X,XXXX_X__,_____XX_,__XXX_X_,
-  _XXXX_X_,XXXXX_XX,_X_XXXXX,_XXXX_XX,
-  __XX___X,XXXXXXXX,XXXXXXXX,XXXXX_XX,
-  __XXX___,_XXXXXXX,XXXXXX_X,XXXXX__X,
-  __XX____,___XXXXX,XXXXX_XX,XXXXXX_X,
-  __X_X___,_____X_X,XXXX_XXX,XXXXXX_X,
-  __XX____,______X_,XXXXXXXX,XXX_XX_X,
-  _XX_____,_______X,XXXX_XXX,XXX_XX_X,
-  _X_X____,_X____X_,XXX_XXXX,XXX_XX_X,
-  _XX____X,__X____X,XXXX_XXX,XXX_XX_X,
-  XXXXXXXX,XXXXXXXX,XXXXXXXX,XXXXXXXX,
+  XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX,
+  X__XX__X, X_______, ________, ____X_XX,
+  X_XX___X, ________, ________, _____X_X,
+  XX____XX, ________, ________, _____X_X,
+  X___XXXX, ____XXXX, XX______, __XX_X_X,
+  X_XX_XX_, ___X____, _XXX____, XX__XXXX,
+  XXX_XXX_, ________, __XX___X, X____XXX,
+  XXX_XXX_, ___X_XXX, X_X____X, X____X__,
+  XX_XXXX_, ___XXX_X, XXX____X, XXXX_XXX,
+  XX_XXX__, ____XXXX, __XX___X, X_XXXXX_,
+  X_XXXX__, ______XX, X______X, XXX_XXX_,
+  XXXXXXX_, ________, ________, XX___XX_,
+  XXXXXX__, ________, ____X___, _____XXX,
+  XXXXX_X_, ________, ________, _____XXX,
+  XXXX_X_X, ________, __X__X__, _____X_X,
+  XXX_X_X_, ________, __X_XXXX, X____X_X,
+  XXXX_X_X, _X______, _X_XXXXX, _____X__,
+  _XXXX_X_, X_X_____, _____XX_, _____X__,
+  _X_____X, _X_X_X__, ______X_, _____X__,
+  ___XX___, __X_X___, ________, _____X__,
+  X__X____, _X_X____, ___XXX_X, X___XX__,
+  XXXX____, __X_____, _XXXXXXX, X___XX__,
+  XXXX____, _X_X____, XXX____X, XX__XXX_,
+  XXXX____, __X_____, ________, ____X_X_,
+  XXXX____, ________, _X______, X__XX_X_,
+  XXXXX___, ________, __XXXXXX, ___XX_X_,
+  XXXXX___, ________, ___XXXXX, ___XX_X_,
+  XXXXXX__, ________, ________, __XXX_X_,
+  _XXXX_X_, X_______, ________, __XXX_X_,
+  _XXX_X_X, XXXX_X__, _____XX_, __XXX_X_,
+  _XXXX_X_, XXXXX_XX, _X_XXXXX, _XXXX_XX,
+  __XX___X, XXXXXXXX, XXXXXXXX, XXXXX_XX,
+  __XXX___, _XXXXXXX, XXXXXX_X, XXXXX__X,
+  __XX____, ___XXXXX, XXXXX_XX, XXXXXX_X,
+  __X_X___, _____X_X, XXXX_XXX, XXXXXX_X,
+  __XX____, ______X_, XXXXXXXX, XXX_XX_X,
+  _XX_____, _______X, XXXX_XXX, XXX_XX_X,
+  _X_X____, _X____X_, XXX_XXXX, XXX_XX_X,
+  _XX____X, __X____X, XXXX_XXX, XXX_XX_X,
+  XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX,
 
-  0x78,0x70,0x30,0x30,
-  0x70,0x70,0x70,0x30,
-  0x70,0x72,0x70,0x30,
-  0x30,0x70,0x70,0x30,
-  0x30,0x30,0x28,0x30,
+  0x78, 0x70, 0x30, 0x30,
+  0x70, 0x70, 0x70, 0x30,
+  0x70, 0x72, 0x70, 0x30,
+  0x30, 0x70, 0x70, 0x30,
+  0x30, 0x30, 0x28, 0x30,
 
-  XXXXXXXX,XXXXXXXX,XXXXXXXX,XXXXXXXX,
-  XXXXXXXX,XXXXXXXX,XXXXXXXX,XXXXX__X,
-  XXXXXXXX,XXXXXXXX,XXXXXXXX,XXXXXX_X,
-  XXXXXXXX,XXXXXXXX,XX_X_XXX,XXXXXX_X,
-  XXXXXXXX,XXXXXXXX,XXXXX_X_,XXXXXXXX,
-  XXXXXXXX,XXXXXXX_,_X_X_X_X,XXXXXX_X,
-  XXXXXXXX,XX_X_X__,______X_,XXXXXXXX,
-  XXXXXXXX,X_X_X___,_____X_X,_XXXXXXX,
-  XXXXXXXX,XX______,__X_X_X_,XXXXXXXX,
-  XXXXXXXX,X_X__X__,_X_X_XXX,_XXXXXXX,
-  XXXXXXXX,XX______,_______X,XXXXXXXX,
-  XXXXXXXX,_XX__X__,_X_XXX_X,_XXXXXXX,
-  XXXXXXXX,XXXX_X_X,XXXXXXX_,XXXXXXXX,
-  XXXXXXXX,XXXX__X_,XXX____X,_XXXXXXX,
-  XXXXXXX_,___XX___,_XXXXX__,__XXXXXX,
-  XXXXXX__,XXXXXX__,_X_XXXX_,_XXXXXXX,
-  XXXXXXXX,XXXXXX__,_XX_____,___XXX_X,
-  XXXXXX_X,__XXX___,__X_X___,__XXXXXX,
-  XXXXXX__,___XX___,X_______,___XXXXX,
-  XXXXX___,__XXX___,____X___,__XXXX_X,
-  XXXXXX_X,_XXXXX__,_XXXX___,___XXX_X,
-  XXXXXXX_,X_XXXXXX,X___XX__,__XXX__X,
-  XXXXXXXX,XXXXXXXX,____XXX_,X_XXX__X,
-  X_XXXXXX,XXXXXXX_,_____XXX,_XXXXX_X,
-  X_XXXXXX,XXXXXX_X,____XXXX,XXXXX__X,
-  XX_XXXXX,XXXXXXXX,XXX___XX,_XXXX__X,
-  X__XXXXX,XXXXX___,______XX,XXXX___X,
-  X_X_XXXX,XXXXXX__,___XX_X_,XXXX___X,
-  X__XXXXX,XXXXXXXX,XXX__X_X,XXX_X__X,
-  X___XXXX,XXXXXXXX,X_X_X_X_,X______X,
-  X___XXXX,XXXXXX__,_____X_X,XX_____X,
-  X____XXX,XXXXX___,____X_XX,X_XXX__X,
-  X____XXX,XXXXX___,_____XXX,X_XXXXXX,
-  X___XX_X,XXXXXX_X,_X_XXXX_,X_XXXXXX,
-  X_XX_X_X,XXXXXXXX,XXXXXXX_,X__XXXXX,
-  XX___X__,XXXXXXXX,XXXXXX_X,___XXXXX,
-  X____X__,_XXXXXXX,XXXXX__X,___XXXXX,
-  X_XX_X__,_XXXXXXX,XXX___X_,___XXXXX,
-  XX__XX__,__XXX_X_,X_____X_,__XXXXXX,
-  XXXXXXXX,XXXXXXXX,XXXXXXXX,XXXXXXXX,
+  XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX,
+  XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXX__X,
+  XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXX_X,
+  XXXXXXXX, XXXXXXXX, XX_X_XXX, XXXXXX_X,
+  XXXXXXXX, XXXXXXXX, XXXXX_X_, XXXXXXXX,
+  XXXXXXXX, XXXXXXX_, _X_X_X_X, XXXXXX_X,
+  XXXXXXXX, XX_X_X__, ______X_, XXXXXXXX,
+  XXXXXXXX, X_X_X___, _____X_X, _XXXXXXX,
+  XXXXXXXX, XX______, __X_X_X_, XXXXXXXX,
+  XXXXXXXX, X_X__X__, _X_X_XXX, _XXXXXXX,
+  XXXXXXXX, XX______, _______X, XXXXXXXX,
+  XXXXXXXX, _XX__X__, _X_XXX_X, _XXXXXXX,
+  XXXXXXXX, XXXX_X_X, XXXXXXX_, XXXXXXXX,
+  XXXXXXXX, XXXX__X_, XXX____X, _XXXXXXX,
+  XXXXXXX_, ___XX___, _XXXXX__, __XXXXXX,
+  XXXXXX__, XXXXXX__, _X_XXXX_, _XXXXXXX,
+  XXXXXXXX, XXXXXX__, _XX_____, ___XXX_X,
+  XXXXXX_X, __XXX___, __X_X___, __XXXXXX,
+  XXXXXX__, ___XX___, X_______, ___XXXXX,
+  XXXXX___, __XXX___, ____X___, __XXXX_X,
+  XXXXXX_X, _XXXXX__, _XXXX___, ___XXX_X,
+  XXXXXXX_, X_XXXXXX, X___XX__, __XXX__X,
+  XXXXXXXX, XXXXXXXX, ____XXX_, X_XXX__X,
+  X_XXXXXX, XXXXXXX_, _____XXX, _XXXXX_X,
+  X_XXXXXX, XXXXXX_X, ____XXXX, XXXXX__X,
+  XX_XXXXX, XXXXXXXX, XXX___XX, _XXXX__X,
+  X__XXXXX, XXXXX___, ______XX, XXXX___X,
+  X_X_XXXX, XXXXXX__, ___XX_X_, XXXX___X,
+  X__XXXXX, XXXXXXXX, XXX__X_X, XXX_X__X,
+  X___XXXX, XXXXXXXX, X_X_X_X_, X______X,
+  X___XXXX, XXXXXX__, _____X_X, XX_____X,
+  X____XXX, XXXXX___, ____X_XX, X_XXX__X,
+  X____XXX, XXXXX___, _____XXX, X_XXXXXX,
+  X___XX_X, XXXXXX_X, _X_XXXX_, X_XXXXXX,
+  X_XX_X_X, XXXXXXXX, XXXXXXX_, X__XXXXX,
+  XX___X__, XXXXXXXX, XXXXXX_X, ___XXXXX,
+  X____X__, _XXXXXXX, XXXXX__X, ___XXXXX,
+  X_XX_X__, _XXXXXXX, XXX___X_, ___XXXXX,
+  XX__XX__, __XXX_X_, X_____X_, __XXXXXX,
+  XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX,
 
-  0x68,0x38,0x78,0x68,
-  0x38,0x38,0x38,0x38,
-  0x38,0x38,0x38,0x38,
-  0x68,0x38,0x38,0x68,
-  0x68,0x38,0x38,0x78,
+  0x68, 0x38, 0x78, 0x68,
+  0x38, 0x38, 0x38, 0x38,
+  0x38, 0x38, 0x38, 0x38,
+  0x68, 0x38, 0x38, 0x68,
+  0x68, 0x38, 0x38, 0x78,
 
-  XXXXXXXX,XXXXXXXX,XXXXXXXX,XXXXXXXX,
-  X_X_XXXX,XXXXXXXX,XXXXXXXX,XXXXXX_X,
-  X_XXXXXX,XXXXXXXX,XXXXXXXX,XXXXXXXX,
-  XXXXXXXX,XXXXXXXX,XXXXXXXX,XXXXXXXX,
-  XXXXXXXX,XXXX_XX_,_X_XXXXX,XXXXXXXX,
-  XXXXXXXX,XX__XX__,_X_XXX_X,XXXXXXXX,
-  XXXXXXXX,XXXX_X__,_X_X__XX,_XXXXXXX,
-  XXXXXXXX,XXXX_X__,_X_X__XX,_XXXXXXX,
-  XXXXXXXX,XXXXXX__,___X__XX,_XX_XXXX,
-  XXXXXXXX,X_XX_X__,__X___X_,_XX_XXXX,
-  XXXXXXXX,XX______,__X_____,____XXXX,
-  XXXXXXXX,XX_XXX__,________,XXXX_XXX,
-  XXXXXXXX,__XXXXXX,XX____XX,XXXXXXXX,
-  XXXXXXXX,_X__XXXX,XX___XXX,X___XXXX,
-  XXXXXXXX,_X____XX,X____XXX,___X_XXX,
-  XXXXXXXX,____XXXX,XX___XXX,XXX_XXXX,
-  XXXXXXX_,X_XXXX_X,XX____XX,XX_XXXXX,
-  XXXXXXXX,_XX_____,_X____XX,____XXXX,
-  XXX_XXX_,X__X_X__,_XX_____,X_X__XXX,
-  XXX_XXX_,________,XX______,_____X_X,
-  XXX__XXX,_______X,__X___X_,_______X,
-  XXX__XX_,X_____XX,_______X,_____X_X,
-  XXXX__XX,_____XXX,XXX___XX,_______X,
-  XXXX_XXX,X____XXX,XXXXXX_X,X____X_X,
-  XXXXXXXX,_X_X_XXX,XXX_X_X_,XXX_X__X,
-  X_XXXXXX,X_X_XXX_,X_X__X_X,_XXX_X_X,
-  X__XXXXX,XX_XXXXX,_______X,XXX_X__X,
-  X_XXXXXX,XXX_XX__,XXXXXXX_,___XX__X,
-  X_XXXXXX,XX_XXXX_,________,__X_X__X,
-  X_XXXX_X,XXXX_XXX,______XX,_X_X___X,
-  X_XXXXX_,XX_XX_X_,__XXXXX_,__XX___X,
-  X__XXX_X,XXXX_X__,________,_X_X___X,
-  X___XXX_,XXXXX_X_,________,X_XX___X,
-  X_XXXX_X,_XXXXX_X,_X_X_X_X,_XX_XX_X,
-  XX__X_X_,X_XXXXX_,X_XXX_X_,XXX___XX,
-  X___X___,_XXXXXXX,XXXXXXXX,X_X__X_X,
-  X__XX___,X_XXXXXX,XXXXXXXX,__X___XX,
-  X__XX___,_X_X_XXX,XXXXXXXX,__X__X_X,
-  XX_XX___,____X_X_,XXX_X_XX,X_X_X_XX,
-  XXXXXXXX,XXXXXXXX,XXXXXXXX,XXXXXXXX,
+  XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX,
+  X_X_XXXX, XXXXXXXX, XXXXXXXX, XXXXXX_X,
+  X_XXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX,
+  XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX,
+  XXXXXXXX, XXXX_XX_, _X_XXXXX, XXXXXXXX,
+  XXXXXXXX, XX__XX__, _X_XXX_X, XXXXXXXX,
+  XXXXXXXX, XXXX_X__, _X_X__XX, _XXXXXXX,
+  XXXXXXXX, XXXX_X__, _X_X__XX, _XXXXXXX,
+  XXXXXXXX, XXXXXX__, ___X__XX, _XX_XXXX,
+  XXXXXXXX, X_XX_X__, __X___X_, _XX_XXXX,
+  XXXXXXXX, XX______, __X_____, ____XXXX,
+  XXXXXXXX, XX_XXX__, ________, XXXX_XXX,
+  XXXXXXXX, __XXXXXX, XX____XX, XXXXXXXX,
+  XXXXXXXX, _X__XXXX, XX___XXX, X___XXXX,
+  XXXXXXXX, _X____XX, X____XXX, ___X_XXX,
+  XXXXXXXX, ____XXXX, XX___XXX, XXX_XXXX,
+  XXXXXXX_, X_XXXX_X, XX____XX, XX_XXXXX,
+  XXXXXXXX, _XX_____, _X____XX, ____XXXX,
+  XXX_XXX_, X__X_X__, _XX_____, X_X__XXX,
+  XXX_XXX_, ________, XX______, _____X_X,
+  XXX__XXX, _______X, __X___X_, _______X,
+  XXX__XX_, X_____XX, _______X, _____X_X,
+  XXXX__XX, _____XXX, XXX___XX, _______X,
+  XXXX_XXX, X____XXX, XXXXXX_X, X____X_X,
+  XXXXXXXX, _X_X_XXX, XXX_X_X_, XXX_X__X,
+  X_XXXXXX, X_X_XXX_, X_X__X_X, _XXX_X_X,
+  X__XXXXX, XX_XXXXX, _______X, XXX_X__X,
+  X_XXXXXX, XXX_XX__, XXXXXXX_, ___XX__X,
+  X_XXXXXX, XX_XXXX_, ________, __X_X__X,
+  X_XXXX_X, XXXX_XXX, ______XX, _X_X___X,
+  X_XXXXX_, XX_XX_X_, __XXXXX_, __XX___X,
+  X__XXX_X, XXXX_X__, ________, _X_X___X,
+  X___XXX_, XXXXX_X_, ________, X_XX___X,
+  X_XXXX_X, _XXXXX_X, _X_X_X_X, _XX_XX_X,
+  XX__X_X_, X_XXXXX_, X_XXX_X_, XXX___XX,
+  X___X___, _XXXXXXX, XXXXXXXX, X_X__X_X,
+  X__XX___, X_XXXXXX, XXXXXXXX, __X___XX,
+  X__XX___, _X_X_XXX, XXXXXXXX, __X__X_X,
+  XX_XX___, ____X_X_, XXX_X_XX, X_X_X_XX,
+  XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX,
 
-  0x38,0x70,0x30,0x30,
-  0x38,0x70,0x70,0x30,
-  0x38,0x70,0x70,0x30,
-  0x38,0x70,0x70,0x30,
-  0x30,0x70,0x70,0x28,
+  0x38, 0x70, 0x30, 0x30,
+  0x38, 0x70, 0x70, 0x30,
+  0x38, 0x70, 0x70, 0x30,
+  0x38, 0x70, 0x70, 0x30,
+  0x30, 0x70, 0x70, 0x28,
 };
 
 /* ----------------------------------------------------------------------- */
@@ -1389,11 +1385,11 @@ static const stagevars_t saved_game_state = {
   0x54, // horizon_level
   20, // perp_halt_counter
   0xFF, // displayed_gear
-  { 0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF }, // score digits
+  { 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF }, // score digits
   15, // sixteenths
   0x60, // time_bcd
-  { 0xFF,0xFF }, // time_digits
-  { 0xFF,0xFF,0xFF,0xFF }, // distance_digits
+  { 0xFF, 0xFF }, // time_digits
+  { 0xFF, 0xFF, 0xFF, 0xFF }, // distance_digits
   1, // no_objects_counter
   0x59BF, // horizon_attribute
 };
@@ -1407,11 +1403,11 @@ static const hazard_t saved_game_state_hazard_0 = {
   0x47,
   0,
   0,
-  0x2c,
+  0x2C,
   0x0000,
-  0xa637,
-  0x003c,
-  0xff,
+  0xA637,
+  0x003C,
+  0xFF,
   0,
   3,
   2,
@@ -1744,26 +1740,26 @@ static const uint16_t inward_bend_table[96] = {
 
 // $E6B0 - a right hand table?
 static const uint8_t horizontal_e6b0[8][22] = {
-  { 0xEB,0xC1,0xAA,0x8F,0x8E,0x6E,0x5D,0x66,0x71,0x55,0x2E,0x61,0x35,0x38,0x3C,0x40,0x44,0x49,0x4E,0x55,0x5D,0x66 },
-  { 0xD5,0xCA,0xA7,0x8C,0x8B,0x6B,0x78,0x66,0x4B,0x51,0x59,0x61,0x35,0x38,0x3C,0x40,0x44,0x49,0x4E,0x55,0x5D,0x66 },
-  { 0xB5,0xCF,0xB3,0x89,0x88,0x83,0x78,0x66,0x4B,0x51,0x59,0x30,0x66,0x38,0x3C,0x40,0x44,0x49,0x4E,0x55,0x5D,0x66 },
-  { 0xA0,0xCA,0xBD,0x9A,0x88,0x69,0x75,0x63,0x6D,0x51,0x59,0x30,0x66,0x38,0x3C,0x40,0x44,0x49,0x4E,0x55,0x5D,0x66 },
-  { 0x80,0xDB,0xAA,0xA7,0x85,0x80,0x75,0x63,0x49,0x76,0x2C,0x5D,0x33,0x6B,0x3C,0x40,0x44,0x49,0x4E,0x55,0x5D,0x66 },
-  { 0x60,0xDF,0xB5,0xA4,0x82,0x7C,0x71,0x60,0x69,0x4E,0x55,0x5D,0x33,0x6B,0x3C,0x40,0x44,0x49,0x4E,0x55,0x5D,0x66 },
-  { 0x4B,0xDB,0xBE,0xA1,0x95,0x7C,0x71,0x60,0x69,0x4E,0x55,0x5D,0x33,0x35,0x71,0x40,0x44,0x49,0x4E,0x55,0x5D,0x66 },
-  { 0x20,0xE7,0xB9,0xAD,0x92,0x79,0x6E,0x7C,0x69,0x4E,0x55,0x5D,0x33,0x35,0x38,0x3C,0x40,0x44,0x49,0x4E,0x55,0x5D },
+  { 0xEB, 0xC1, 0xAA, 0x8F, 0x8E, 0x6E, 0x5D, 0x66, 0x71, 0x55, 0x2E, 0x61, 0x35, 0x38, 0x3C, 0x40, 0x44, 0x49, 0x4E, 0x55, 0x5D, 0x66 },
+  { 0xD5, 0xCA, 0xA7, 0x8C, 0x8B, 0x6B, 0x78, 0x66, 0x4B, 0x51, 0x59, 0x61, 0x35, 0x38, 0x3C, 0x40, 0x44, 0x49, 0x4E, 0x55, 0x5D, 0x66 },
+  { 0xB5, 0xCF, 0xB3, 0x89, 0x88, 0x83, 0x78, 0x66, 0x4B, 0x51, 0x59, 0x30, 0x66, 0x38, 0x3C, 0x40, 0x44, 0x49, 0x4E, 0x55, 0x5D, 0x66 },
+  { 0xA0, 0xCA, 0xBD, 0x9A, 0x88, 0x69, 0x75, 0x63, 0x6D, 0x51, 0x59, 0x30, 0x66, 0x38, 0x3C, 0x40, 0x44, 0x49, 0x4E, 0x55, 0x5D, 0x66 },
+  { 0x80, 0xDB, 0xAA, 0xA7, 0x85, 0x80, 0x75, 0x63, 0x49, 0x76, 0x2C, 0x5D, 0x33, 0x6B, 0x3C, 0x40, 0x44, 0x49, 0x4E, 0x55, 0x5D, 0x66 },
+  { 0x60, 0xDF, 0xB5, 0xA4, 0x82, 0x7C, 0x71, 0x60, 0x69, 0x4E, 0x55, 0x5D, 0x33, 0x6B, 0x3C, 0x40, 0x44, 0x49, 0x4E, 0x55, 0x5D, 0x66 },
+  { 0x4B, 0xDB, 0xBE, 0xA1, 0x95, 0x7C, 0x71, 0x60, 0x69, 0x4E, 0x55, 0x5D, 0x33, 0x35, 0x71, 0x40, 0x44, 0x49, 0x4E, 0x55, 0x5D, 0x66 },
+  { 0x20, 0xE7, 0xB9, 0xAD, 0x92, 0x79, 0x6E, 0x7C, 0x69, 0x4E, 0x55, 0x5D, 0x33, 0x35, 0x38, 0x3C, 0x40, 0x44, 0x49, 0x4E, 0x55, 0x5D },
 };
 
 // $E760 - a left hand table?
 static const uint8_t horizontal_e760[8][22] = {
-  { 0x42,0x2A,0x1E,0x15,0x12,0x0C,0x09,0x09,0x09,0x06,0x03,0x06,0x03,0x03,0x03,0x03,0x03,0x03,0x03,0x03,0x03,0x00 },
-  { 0x3D,0x2D,0x1F,0x15,0x12,0x0C,0x0C,0x09,0x06,0x06,0x06,0x06,0x03,0x03,0x03,0x03,0x03,0x03,0x03,0x03,0x03,0x00 },
-  { 0x34,0x30,0x21,0x15,0x12,0x0F,0x0C,0x09,0x06,0x06,0x06,0x03,0x06,0x03,0x03,0x03,0x03,0x03,0x03,0x03,0x03,0x00 },
-  { 0x2E,0x30,0x24,0x18,0x12,0x0C,0x0C,0x09,0x09,0x06,0x06,0x03,0x06,0x03,0x03,0x03,0x03,0x03,0x03,0x03,0x03,0x00 },
-  { 0x25,0x36,0x21,0x1C,0x12,0x0F,0x0C,0x09,0x06,0x09,0x03,0x06,0x03,0x06,0x03,0x03,0x03,0x03,0x03,0x03,0x03,0x00 },
-  { 0x1C,0x3A,0x24,0x1B,0x12,0x0F,0x0C,0x09,0x09,0x06,0x06,0x06,0x03,0x06,0x03,0x03,0x03,0x03,0x03,0x03,0x03,0x00 },
-  { 0x15,0x39,0x27,0x1B,0x15,0x0F,0x0C,0x09,0x09,0x06,0x06,0x06,0x03,0x03,0x06,0x03,0x03,0x03,0x03,0x03,0x03,0x00 },
-  { 0x0A,0x3F,0x27,0x1E,0x15,0x0F,0x0C,0x0C,0x09,0x06,0x06,0x06,0x03,0x03,0x03,0x03,0x03,0x03,0x03,0x03,0x03,0x00 },
+  { 0x42, 0x2A, 0x1E, 0x15, 0x12, 0x0C, 0x09, 0x09, 0x09, 0x06, 0x03, 0x06, 0x03, 0x03, 0x03, 0x03, 0x03, 0x03, 0x03, 0x03, 0x03, 0x00 },
+  { 0x3D, 0x2D, 0x1F, 0x15, 0x12, 0x0C, 0x0C, 0x09, 0x06, 0x06, 0x06, 0x06, 0x03, 0x03, 0x03, 0x03, 0x03, 0x03, 0x03, 0x03, 0x03, 0x00 },
+  { 0x34, 0x30, 0x21, 0x15, 0x12, 0x0F, 0x0C, 0x09, 0x06, 0x06, 0x06, 0x03, 0x06, 0x03, 0x03, 0x03, 0x03, 0x03, 0x03, 0x03, 0x03, 0x00 },
+  { 0x2E, 0x30, 0x24, 0x18, 0x12, 0x0C, 0x0C, 0x09, 0x09, 0x06, 0x06, 0x03, 0x06, 0x03, 0x03, 0x03, 0x03, 0x03, 0x03, 0x03, 0x03, 0x00 },
+  { 0x25, 0x36, 0x21, 0x1C, 0x12, 0x0F, 0x0C, 0x09, 0x06, 0x09, 0x03, 0x06, 0x03, 0x06, 0x03, 0x03, 0x03, 0x03, 0x03, 0x03, 0x03, 0x00 },
+  { 0x1C, 0x3A, 0x24, 0x1B, 0x12, 0x0F, 0x0C, 0x09, 0x09, 0x06, 0x06, 0x06, 0x03, 0x06, 0x03, 0x03, 0x03, 0x03, 0x03, 0x03, 0x03, 0x00 },
+  { 0x15, 0x39, 0x27, 0x1B, 0x15, 0x0F, 0x0C, 0x09, 0x09, 0x06, 0x06, 0x06, 0x03, 0x03, 0x06, 0x03, 0x03, 0x03, 0x03, 0x03, 0x03, 0x00 },
+  { 0x0A, 0x3F, 0x27, 0x1E, 0x15, 0x0F, 0x0C, 0x0C, 0x09, 0x06, 0x06, 0x06, 0x03, 0x03, 0x03, 0x03, 0x03, 0x03, 0x03, 0x03, 0x03, 0x00 },
 };
 
 /* ----------------------------------------------------------------------- */
@@ -1910,7 +1906,7 @@ static void set_up_stage(chqstate_t *state, const uint8_t *stage_data)
   state->st         = saved_game_state;
   state->hazards[0] = saved_game_state_hazard_0;
   memset(&state->hazards[1], 0, sizeof(hazard_t) * 5);
- 
+
   // stage_data is genuine pointer here since sometimes it's pointed at stage
   // data or attract data and at other times it's the escape scene data.
 
@@ -1934,7 +1930,7 @@ static void set_up_stage(chqstate_t *state, const uint8_t *stage_data)
   state->SM_8F82 = 0;
   //$8F83 = 0; // first one covers it all
   //$8F84 = 0;
- 
+
   // NOP heli and tunnel drawing calls
   state->SM_8FA4 = 0; // draw heli call
   state->SM_8FA7 = 0; // draw tunnel call
@@ -1978,7 +1974,7 @@ static void sus_clear_lights(uint8_t *attrptr)
   do {
     cols = 5;
     do {
-      *attrptr++ &= ~(1<<6); // BRIGHT bit (needs symbol)
+      *attrptr++ &= ~(1 << 6); // BRIGHT bit (needs symbol)
     } while (--cols > 0);
     attrptr += 0x1B;
   } while (--rows > 0);
@@ -2303,7 +2299,7 @@ static void ne_plot_attrs(chqstate_t *state, uint8_t attr)
 
 // $9AAB
 static void plot_face(chqstate_t *state,
-                const uint8_t    *HLface,
+                      const uint8_t    *HLface,
                       uint16_t    DEscreen)
 {
   uint16_t DEscreen_saved;
@@ -2441,16 +2437,16 @@ pmf_have_ascii:
     l = *DEfont | bgleft; // first pixel written
 
     switch (rotate) {
-      default: assert(0);
-      case 0: SRL(l); RR(r);
-      case 1: SRL(l); RR(r);
-      case 2: SRL(l); RR(r);
-      case 3: SRL(l); RR(r);
-      case 4: SRL(l); RR(r);
-      case 5: SRL(l); RR(r);
-      case 6: SRL(l); RR(r);
-      case 7: SRL(l); RR(r);
-      case 8:
+    default: assert(0);
+    case 0: SRL(l); RR(r);
+    case 1: SRL(l); RR(r);
+    case 2: SRL(l); RR(r);
+    case 3: SRL(l); RR(r);
+    case 4: SRL(l); RR(r);
+    case 5: SRL(l); RR(r);
+    case 6: SRL(l); RR(r);
+    case 7: SRL(l); RR(r);
+    case 8:
     }
 
     uint8_t *screen = SCREEN(HLscreen); // Conv: added
@@ -2508,14 +2504,16 @@ static void tick(chqstate_t *state)
     // Ran out of time
     state->time_up_state      = TIMEUPSTATE_CHECK_TIME_UP;
     // Stop acceleration/brake/turbo/pause
-    state->st.user_input_mask = USERINPUT_RIGHT | USERINPUT_LEFT | USERINPUT_FIRE | USERINPUT_QUIT;
+    state->st.user_input_mask = USERINPUT_RIGHT | USERINPUT_LEFT | USERINPUT_FIRE |
+                                USERINPUT_QUIT;
     return;
   }
 
 update_remaining_time:
   if (--state->st.time_sixteenths > 0)
     return;
-  state->st.time_sixteenths = 15; // is this sixteenths or fifteenths since we reset to 15?
+  state->st.time_sixteenths =
+    15; // is this sixteenths or fifteenths since we reset to 15?
   state->st.time_bcd = timebcd = DAA(state->st.time_bcd - 1, &carry);
   if (timebcd == 0x15)
     // suss: passes timebcd(A) as priority...
@@ -2641,7 +2639,8 @@ static void add_bonus(chqstate_t *state,
 
   output = &state->bonus_string[6]; // points to byte after buffer
   nonzeroflag = 0xFF; // flag (zero not seen)
-  (void) bonus_digit(A_lo >> 0, &nonzeroflag, &output); // always runs since flag > 0
+  (void) bonus_digit(A_lo >> 0, &nonzeroflag,
+                     &output); // always runs since flag > 0
   *output |= STREND; // terminate string
 
   // Using lazy evaluation here to avoid having a load of gotos
@@ -2806,7 +2805,8 @@ lr_forked_road:
   Aiterations = 106 - (Aiterations - *HLunknown);
   // PUSH AF  // preserve Aiterations
   HLforkdistance = state->fork_distance;
-  if ((*DElanedata & 4) != 0) // check for forked road (have already checked flags for 0xE1)
+  if ((*DElanedata & 4) !=
+      0) // check for forked road (have already checked flags for 0xE1)
     goto lr_badf;
   // is this forked or unforked or ...?
   Aforkinprogress = state->fork_in_progress - 1;
@@ -2816,7 +2816,7 @@ lr_forked_road:
   DEroadpos = state->road_pos;
   Aiterations = 1;
   DEroadpos -= 256; // was DEC D
-                    // Chooses the fork taken based on car's distance from centre
+  // Chooses the fork taken based on car's distance from centre
   if ((DEroadpos >> 8) < 128) { // possibly redundant check
     if (DEroadpos < 12) { // checking full word - car close to centre?
       Aiterations = 1;
@@ -2828,14 +2828,14 @@ lr_forked_road:
   //lr_check_correct_fork_taken:
   state->fork_taken = Aiterations;
   Aiterations++; // 0/1 -> 1/2
-                 // PUSH HLforkdistance (ok)
+  // PUSH HLforkdistance (ok)
   if (Aiterations == state->correct_fork) {
     // Correct fork taken
     HLchatterblk = &chatterblk_tony_lets_go[0];
   } else {
     // Incorrect fork taken
     state->hazards[0].speed = 95; // boost perp speed from normal 60 (writes $A195)
-                                  // Q. Why is a bonus awarded for going the wrong way?
+    // Q. Why is a bonus awarded for going the wrong way?
     add_bonus(state, 0, 0, state->wanted_stage_number + 4);
     HLchatterblk = &chatterblk_raymond_wrong_way[0];
   }
@@ -2849,7 +2849,7 @@ lr_check_spawning:
   Aiterations += state->st.var_a16d;
   Ca16d = Aiterations; // new value for $A16D
   Aiterations -= 2;
-  if (Aiterations >= 256-2) // carried?
+  if (Aiterations >= 256 - 2) // carried?
     goto lr_set_var_a16d_from_c;
   Ca16d = Aiterations; // new value for $A16D
   HLforkdistance += 16;
@@ -2864,7 +2864,8 @@ lr_no_car_spawning:
   RL(Aiterations);
   RL(Aiterations);
   Aiterations -= 0x10; // sets top nibble to $F
-  HLforkdistance += 0xFF | Aiterations; // a signed -15..16 value now IS THIS INCREMENT WRONG?
+  HLforkdistance += 0xFF |
+                    Aiterations; // a signed -15..16 value now IS THIS INCREMENT WRONG?
 lr_badf:
   // PUSH HLforkdistance
   if (state->fork_taken - 1 != 0) {
@@ -2887,8 +2888,8 @@ lr_badf:
   // $BB07
   HLroadpos = HLroadpos_saved; // was POP HLroadpos
   state->road_pos = HLroadpos; // restore normal road pos after fork rendering
-                               // POP BC
-                               // (set SP restoring op)
+  // POP BC
+  // (set SP restoring op)
   SProadright = &state->table_ec00[0x30]; // (set SP to $EC30)
   Aiterations = 0x30; // 48..256 in steps of 2 = 104 iterations
   do {
@@ -2930,10 +2931,10 @@ static void clear_playfield_set_attrs(chqstate_t *state)
 
   // Clear the playfield attributes to $28 (black over cyan) - first two
   // rows only
-  memset(SCREEN(0x5900), 0x28, 2*32);
+  memset(SCREEN(0x5900), 0x28, 2 * 32);
 
   // Clear the next three rows to $68 (black over bright cyan)
-  memset(SCREEN(0x5940), 0x68, 3*32);
+  memset(SCREEN(0x5940), 0x68, 3 * 32);
 
   // Clear the next 11 rows to the current ground colour
   // Note: Only using the bottom byte of ground_colour (as orig).
@@ -2991,14 +2992,14 @@ static void build_curve_table(chqstate_t *state, int forked)
   A = 0xE6 + ((IY - &horizontal_e6b0[0][0]) >> 8);
   A = multiply(A, curvature_C);
   A = (128 - A) & 0xFE; // 0xFE must round to whole word
-                        // A expecting $7C to $82 depending on curvature (7C if bending right?)
+  // A expecting $7C to $82 depending on curvature (7C if bending right?)
   A = (A - 0x40) / 2; // adjust to index inward_bend_table
   assert(A >= 0 && A <= 95);
   IX = &inward_bend_table[A]; // table is 16-bit
 
   DE = &state->table_e320[0];
   B = 20; // iterations
-          // EXX Bank
+  // EXX Bank
   DEdash = state->road_pos;
   // PUSH DEdash; // save on stack
   // EXX Unbank
@@ -3009,7 +3010,7 @@ static void build_curve_table(chqstate_t *state, int forked)
     if (forked)
       curvature_A = -curvature_A;
     assert(curvature_A >= 0 && curvature_A <= 255);
-    printf("curvature_A=%d\n",curvature_A);
+    printf("curvature_A=%d\n", curvature_A);
 
     if (++road_buffer_ptr_HL == state->road_buffer_end)
       road_buffer_ptr_HL = state->road_buffer_start;
@@ -3028,28 +3029,28 @@ static void build_curve_table(chqstate_t *state, int forked)
     A = *IY++; // points into horizontal_e6b0
 
     // multiplier
-    carry = ((A & (1<<7)) != 0);
+    carry = ((A & (1 << 7)) != 0);
     A = (A << 1) & 0xFF;
     if (carry) HLdash = BCdash << 1;
-    carry = ((A & (1<<7)) != 0);
+    carry = ((A & (1 << 7)) != 0);
     A = (A << 1) & 0xFF;
     if (carry) HLdash += BCdash;
     HLdash <<= 1;
-    carry = ((A & (1<<7)) != 0);
+    carry = ((A & (1 << 7)) != 0);
     A = (A << 1) & 0xFF;
     if (carry) HLdash += BCdash;
     HLdash <<= 1;
-    carry = ((A & (1<<7)) != 0);
+    carry = ((A & (1 << 7)) != 0);
     A = (A << 1) & 0xFF;
     if (carry) HLdash += BCdash;
     HLdash <<= 1;
-    carry = ((A & (1<<7)) != 0);
+    carry = ((A & (1 << 7)) != 0);
     A = (A << 1) & 0xFF;
     if (carry) HLdash += BCdash;
 
-    HLdash = (HLdash >> 8) + ((HLdash & (1<<7)) != 0); // rounding
+    HLdash = (HLdash >> 8) + ((HLdash & (1 << 7)) != 0); // rounding
     A = HLdash & 0xFF;
-    if (HLdash & (1<<7)) HLdash |= 0xFF00;
+    if (HLdash & (1 << 7)) HLdash |= 0xFF00;
 
     DEdash += HLdash;
 
@@ -3060,11 +3061,11 @@ static void build_curve_table(chqstate_t *state, int forked)
 
   DEroadpos = state->road_pos; // was POP DE
   B = 0; // init counter
-         // EXX Bank
+  // EXX Bank
   build_curve_table_sub_cca8(state,
-      B,
-      table1, // table1 is $EE00 or $ED00 (right hand table)
-      DEroadpos);
+                             B,
+                             table1, // table1 is $EE00 or $ED00 (right hand table)
+                             DEroadpos);
 
   // repeat of above code - generate left hand table
 
@@ -3079,11 +3080,11 @@ static void build_curve_table(chqstate_t *state, int forked)
   DEroadpos = DEroadpos - 295; // vanishing point config (for left hand)
 
   Bdash = 0; // init counter
-             // EXX Unbank
+  // EXX Unbank
   build_curve_table_sub_cca8(state,
-      Bdash,
-      table2, // table2 is $EC00 or $E900 (left hand table)
-      DEroadpos);
+                             Bdash,
+                             table2, // table2 is $EC00 or $E900 (left hand table)
+                             DEroadpos);
 }
 
 // HL -> points past end of destination table we're filling
@@ -3105,7 +3106,7 @@ static void build_curve_table_sub_cca8(chqstate_t *state,
 
   IYe300 = &state->table_e300[0]; // was 0xE300; // addr of height table
   Biterations = 21; // iterations
-                    // (restore SP on exit, load SP with HL)
+  // (restore SP on exit, load SP with HL)
   SPoutput = HLtableend;
   do {
     // EXX Bank
@@ -3113,12 +3114,14 @@ static void build_curve_table_sub_cca8(chqstate_t *state,
     IYe300++;
     if (A > 128) goto bct_endbit_negative; // if A is negative
     A += 2;
-    state->object_positions[IYe300 - 1 - &state->table_e300[0]] = A; // must write to $E34F+ which is object_positions
+    state->object_positions[IYe300 - 1 - &state->table_e300[0]] =
+      A; // must write to $E34F+ which is object_positions
     A -= Bdash;
     Bdash = A;
     Cdash = A;
-    Ldash = state->table_e320[IYe300 - 1 - &state->table_e300[0]]; // IY[$1F]; // $E320+
-    if ((Ldash & (1<<7)) != 0) {
+    Ldash = state->table_e320[IYe300 - 1 -
+                              &state->table_e300[0]]; // IY[$1F]; // $E320+
+    if ((Ldash & (1 << 7)) != 0) {
       Ldash = -Ldash & 0xFF; // mask here to fix neg?
       Aopcode = 0x1B; // Opcode for DEC DE
       if (Bdash < Ldash) goto bct_endbit_A;
@@ -3131,7 +3134,8 @@ static void build_curve_table_sub_cca8(chqstate_t *state,
       A += Ldash;
       if (A >= Cdash) {
         A -= Cdash;
-        if (Aopcode == 0x13) DEroadpos++; else DEroadpos--;
+        if (Aopcode == 0x13) DEroadpos++;
+        else DEroadpos--;
       }
       SPoutput--; *SPoutput = DEroadpos; // PUSH to output table
     } while (--Bdash > 0);
@@ -3151,7 +3155,8 @@ bct_endbit_A:
   do {
     int overflow;
     do {
-      if (Aopcode == 0x13) DEroadpos++; else DEroadpos--;
+      if (Aopcode == 0x13) DEroadpos++;
+      else DEroadpos--;
       Atotal += Cdash;
       overflow = Atotal > 0xff;
       Atotal &= 0xff;
@@ -3166,9 +3171,9 @@ bct_endbit_negative:
   if (++A != 0) A++;
   Bdash = A;
   A = state->table_e320[IYe300 - 1 - &state->table_e300[0]]; // IY[$1F]; // $E320+
-                                                             //Ldash = A;
-                                                             //carry = (A & (1<<7) != 0;
-                                                             //Hdash = -carry; //sign ext
+  //Ldash = A;
+  //carry = (A & (1<<7) != 0;
+  //Hdash = -carry; //sign ext
   HLdash = (int8_t) A;
   HLdash += DEroadpos;
   DEroadpos = HLdash; // was EX
@@ -3224,8 +3229,7 @@ static T multiply(T a, T c)
  */
 #define CLAMP(a,b,c) MIN(MAX(a,b),c)
 
-typedef struct zxbox
-{
+typedef struct zxbox {
   int x0, y0, x1, y1;
 }
 zxbox_t;
@@ -3295,8 +3299,7 @@ zxbox_t;
  * The following palette is laid out in a De Bruijn sequence in a vain attempt
  * to improve performance.
  */
-static const unsigned int palette[66 + 65] =
-{
+static const unsigned int palette[66 + 65] = {
   BKd, BKd, BLd, BKd, RDd, BKd, MGd, BKd,
   GRd, BKd, CYd, BKd, YLd, BKd, WHd, BLd,
   BLd, RDd, BLd, MGd, BLd, GRd, BLd, CYd,
@@ -3308,7 +3311,7 @@ static const unsigned int palette[66 + 65] =
   WHd, WHd,
 
   /* The zeroth bright entry is shared. */
-       BKb, BLb, BKb, RDb, BKb, MGb, BKb,
+  BKb, BLb, BKb, RDb, BKb, MGb, BKb,
   GRb, BKb, CYb, BKb, YLb, BKb, WHb, BLb,
   BLb, RDb, BLb, MGb, BLb, GRb, BLb, CYb,
   BLb, YLb, BLb, WHb, RDb, RDb, MGb, RDb,
@@ -3319,23 +3322,22 @@ static const unsigned int palette[66 + 65] =
   WHb, WHb,
 };
 
-static const unsigned char offsets[66 + 65] =
-{
-    0,   1,   3,   5,   7,   9,  11,  13,
-    2,  15,  16,  18,  20,  22,  24,  26,
-    4,  17,  28,  29,  31,  33,  35,  37,
-    6,  19,  30,  39,  40,  42,  44,  46,
-    8,  21,  32,  41,  48,  49,  51,  53,
-   10,  23,  34,  43,  50,  55,  56,  58,
-   12,  25,  36,  45,  52,  57,  60,  61,
-   62,  14,  27,  38,  47,  54,  59,  64,
-    0,  66,  68,  70,  72,  74,  76,  78,
-   67,  80,  81,  83,  85,  87,  89,  91,
-   69,  82,  93,  94,  96,  98, 100, 102,
-   71,  84,  95, 104, 105, 107, 109, 111,
-   73,  86,  97, 106, 113, 114, 116, 118,
-   75,  88,  99, 108, 115, 120, 121, 123,
-   77,  90, 101, 110, 117, 122, 125, 126,
+static const unsigned char offsets[66 + 65] = {
+  0,   1,   3,   5,   7,   9,  11,  13,
+  2,  15,  16,  18,  20,  22,  24,  26,
+  4,  17,  28,  29,  31,  33,  35,  37,
+  6,  19,  30,  39,  40,  42,  44,  46,
+  8,  21,  32,  41,  48,  49,  51,  53,
+  10,  23,  34,  43,  50,  55,  56,  58,
+  12,  25,  36,  45,  52,  57,  60,  61,
+  62,  14,  27,  38,  47,  54,  59,  64,
+  0,  66,  68,  70,  72,  74,  76,  78,
+  67,  80,  81,  83,  85,  87,  89,  91,
+  69,  82,  93,  94,  96,  98, 100, 102,
+  71,  84,  95, 104, 105, 107, 109, 111,
+  73,  86,  97, 106, 113, 114, 116, 118,
+  75,  88,  99, 108, 115, 120, 121, 123,
+  77,  90, 101, 110, 117, 122, 125, 126,
   127,  79,  92, 103, 112, 119, 124, 129,
 };
 
@@ -3369,7 +3371,7 @@ void zxscreen_convert(const void    *vscr,
   int                  height;
   const unsigned int  *pattrs;
   int                  width;
-  int                  x,linear_y;
+  int                  x, linear_y;
   const unsigned int  *pinput;
   unsigned int         input;
   unsigned int         attrs;
@@ -3391,7 +3393,7 @@ void zxscreen_convert(const void    *vscr,
   /* The inner loop processes 32 pixels at a time, so we need to convert x
    * coordinates into chunks four attributes wide while rounding up and down as
    * required. */
-  box.x0 = (box.x0     ) / 32; /* divide to 0..7 rounding down */
+  box.x0 = (box.x0) / 32;      /* divide to 0..7 rounding down */
   box.x1 = (box.x1 + 31) / 32; /* divide to 0..7 rounding up */
 
   /* Convert y coordinates into screen space - (0,0) is top left. */
@@ -3400,26 +3402,24 @@ void zxscreen_convert(const void    *vscr,
   box.y1 = box.y0 + height;
 
   pattrs = (const unsigned int *) vscr
-         + (SCREEN_BITMAP_LENGTH
-         + box.y0 / 8 * 32  /* 8 scanlines/row, 32 attrs/row */
-         + box.x0 * 4) / 4; /* 4 bytes/chunk, 4 bytes/word */
+           + (SCREEN_BITMAP_LENGTH
+              + box.y0 / 8 * 32  /* 8 scanlines/row, 32 attrs/row */
+              + box.x0 * 4) / 4; /* 4 bytes/chunk, 4 bytes/word */
 
   poutput += box.y0 * 256 /* 256 pixels/row (256 words) for output */
-           + box.x0 * 32; /* 32 pixels/chunk (32 words) */
+             + box.x0 * 32; /* 32 pixels/chunk (32 words) */
 
   width = box.x1 - box.x0; /* hoisted out of loop */
 
-  for (linear_y = box.y0; linear_y < box.y1; linear_y++)
-  {
+  for (linear_y = box.y0; linear_y < box.y1; linear_y++) {
     /* Transpose fields using XOR */
     unsigned int tmp = (linear_y ^ (linear_y >> 3)) & 7;
     int          y   = linear_y ^ (tmp | (tmp << 3));
 
     pinput = (const unsigned int *) vscr
-           + (y     * 32           /* 32 bytes/row */
-           + box.x0 * 32 / 8) / 4; /* 32 bytes/row, 8 pixels/byte, 4 bytes/word */
-    for (x = width; x > 0; x--) /* x is unused in the loop body */
-    {
+             + (y     * 32           /* 32 bytes/row */
+                + box.x0 * 32 / 8) / 4; /* 32 bytes/row, 8 pixels/byte, 4 bytes/word */
+    for (x = width; x > 0; x--) { /* x is unused in the loop body */
       input = *pinput++;
       attrs = *pattrs++;
 #ifdef SHOW_DIRTY_RECTS
@@ -3459,8 +3459,7 @@ int main(void)
   static const T c[5] = { 0x05, 0x02, 0x05, 0x03, 0xFE };
   static const T r[5] = { 0x03, 0x02, 0x01, 0x02, 0xFE };
 
-  for (int i = 0; i < 5; i++)
-  {
+  for (int i = 0; i < 5; i++) {
     T n = multiply(a[i], c[i]);
     if (n == r[i])
       printf("ok: %d x %d = %d\n", a[i], c[i], r[i]);
@@ -3470,36 +3469,34 @@ int main(void)
 
   return 0;
 #else
-  SDL_Event event;
-  SDL_Window *window;
+  SDL_Event     event;
+  SDL_Window   *window;
   SDL_Renderer *renderer;
-  SDL_Texture *texture;
-  chqstate_t state;
-  int quit = 0;
-  int mx = 0, my = 0;
+  SDL_Texture  *texture;
+  chqstate_t    state;
+  int           quit = 0;
+  int           mx = 0, my = 0;
+  int           t = 0;
 
-  if (SDL_Init(SDL_INIT_VIDEO) != 0)
-  {
+  if (SDL_Init(SDL_INIT_VIDEO) != 0) {
     printf("SDL_Init failed: %s\n", SDL_GetError());
     return 1;
   }
 
   window = SDL_CreateWindow("Chase H.Q.",
-      SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED,
-      GAMEWIDTH, GAMEHEIGHT,
-      SDL_WINDOW_SHOWN | SDL_WINDOW_RESIZABLE);
-  if (window == NULL)
-  {
+                            SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED,
+                            GAMEWIDTH, GAMEHEIGHT,
+                            SDL_WINDOW_SHOWN | SDL_WINDOW_RESIZABLE);
+  if (window == NULL) {
     printf("SDL_CreateWindow failed: %s\n", SDL_GetError());
     SDL_Quit();
     return 1;
   }
 
   renderer = SDL_CreateRenderer(window,
-      -1,
-      SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC);
-  if (renderer == NULL)
-  {
+                                -1,
+                                SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC);
+  if (renderer == NULL) {
     printf("SDL_CreateRenderer failed: %s\n", SDL_GetError());
     SDL_Quit();
     return 1;
@@ -3509,15 +3506,13 @@ int main(void)
                               SDL_PIXELFORMAT_ARGB8888, // fastest?
                               SDL_TEXTUREACCESS_STREAMING,
                               GAMEWIDTH, GAMEHEIGHT);
-  if (texture == NULL)
-  {
+  if (texture == NULL) {
     printf("SDL_CreateTexture failed: %s\n", SDL_GetError());
     SDL_Quit();
     return 1;
   }
 
-  if (SDL_SetTextureBlendMode(texture, SDL_BLENDMODE_NONE) < 0)
-  {
+  if (SDL_SetTextureBlendMode(texture, SDL_BLENDMODE_NONE) < 0) {
     printf("SDL_SetTextureBlendMode failed: %s\n", SDL_GetError());
     SDL_Quit();
     return 1;
@@ -3525,72 +3520,75 @@ int main(void)
 
   chasehq_reset_state(&state);
 
-  if (1) { // temp - fill screen with junk
-    for (int i = 0; i < SCREEN_BITMAP_LENGTH; i++)
-      state.screen[i] = 0; // rng(&state);
-    for (int i = 0; i < SCREEN_ATTRIBUTES_LENGTH; i++)
-      state.screen[SCREEN_ATTRIBUTES_START_ADDRESS - SCREEN_START_ADDRESS + i] = attribute_YELLOW_OVER_BLACK;
-    //clear_playfield_set_attrs(&state);
+  while (!quit) {
+    while (SDL_PollEvent(&event)) {
+      switch (event.type) {
+      case SDL_QUIT:
+        quit = 1;
+        break;
 
-    static const char msg[] = "GREETS TO THE RETRO FUNSTERS FROM CHASE D.P.T.!";
-    for (int i = 0; i < sizeof(msg) - 1; i++) {
-      plot_mini_font_1(&state, i, msg[i]);
-    }
-  }
+      case SDL_KEYDOWN:
+      case SDL_KEYUP:
+        if (1) { // temp - fill screen with junk
+          for (int i = 0; i < SCREEN_BITMAP_LENGTH; i++)
+            state.screen[i] = rng(&state);
+          for (int i = 0; i < SCREEN_ATTRIBUTES_LENGTH; i++)
+            state.screen[SCREEN_ATTRIBUTES_START_ADDRESS - SCREEN_START_ADDRESS + i] =
+              attribute_YELLOW_OVER_BLACK;
 
-  while (!quit)
-  {
-    while (SDL_PollEvent(&event))
-    {
-      switch (event.type)
-      {
-        case SDL_QUIT:
-          quit = 1;
-          break;
+          clear_playfield_set_attrs(&state);
 
-        case SDL_KEYDOWN:
-          break;
-        case SDL_KEYUP:
-          break;
-
-        case SDL_MOUSEMOTION:
-          //main_loop(&state);
-          plot_face(&state, &bitmap_faces[FACEBYTES*0], 0x4036);
-          plot_face(&state, &bitmap_faces[FACEBYTES*1], 0x4836);
-          plot_face(&state, &bitmap_faces[FACEBYTES*2], 0x5036);
-#if 0
-          // Handle mouse motion event
-          for (int i = 0; i < 22; i++) // we read 20/21 entries
-            state.road_buffer[i] = 0x70 + (event.motion.x * 0x10 / 256);
-          build_curve_table(&state, /*forked=*/0);
-
-          SDL_FillRect(surface, NULL, SDL_MapRGB(surface->format, 0xFF, 0xFF, 0xFF));
-
-          for (int y = 0; y < 104; y++) {
-            int yp = y; // 0 is top
-
-            int r = state.table_ec00[0x30 + y] >> 0;
-            int l = state.table_e800[0x30 + y] >> 0;
-            SDL_Rect rrect = {255 - r, yp, r, 1};
-            SDL_Rect lrect = {      0, yp, l, 1};
-            SDL_FillRect(surface, &rrect, SDL_MapRGB(surface->format, 0x00, 0x00, 0xFF));
-            SDL_FillRect(surface, &lrect, SDL_MapRGB(surface->format, 0xFF, 0x00, 0x00));
-
-            SDL_Rect rect = {0, yp, 1, 1};
-            SDL_FillRect(surface, &rect, SDL_MapRGB(surface->format, 0xFF, 0xFF, 0x00));
+          static const char msg[] = "GREETS TO THE RETRO FUNSTERS FROM CHASE D.P.T.!";
+          for (int i = 0; i < sizeof(msg) - 1; i++) {
+            if (t)
+              plot_mini_font_1(&state, i, msg[i]);
+            else
+              plot_mini_font_2(&state, i, msg[i]);
           }
-          SDL_UpdateWindowSurface(window);
-          state.fast_counter++;
+        }
+        break;
+
+      case SDL_MOUSEMOTION:
+        mx = event.motion.x;
+        my = event.motion.y;
+        break;
+
+      case SDL_MOUSEBUTTONUP:
+      case SDL_MOUSEBUTTONDOWN:
+        t  = event.button.state == SDL_PRESSED;
+        break;
+
+        // main_loop(&state);
+
+        //plot_face(&state, &bitmap_faces[FACEBYTES*0], 0x4036);
+        //plot_face(&state, &bitmap_faces[FACEBYTES*1], 0x4836);
+        //plot_face(&state, &bitmap_faces[FACEBYTES*2], 0x5036);
+
+#if 0
+        // Handle mouse motion event
+        for (int i = 0; i < 22; i++) // we read 20/21 entries
+          state.road_buffer[i] = 0x70 + (event.motion.x * 0x10 / 256);
+        build_curve_table(&state, /*forked=*/0);
+
+        SDL_FillRect(surface, NULL, SDL_MapRGB(surface->format, 0xFF, 0xFF, 0xFF));
+
+        for (int y = 0; y < 104; y++) {
+          int yp = y; // 0 is top
+
+          int r = state.table_ec00[0x30 + y] >> 0;
+          int l = state.table_e800[0x30 + y] >> 0;
+          SDL_Rect rrect = {255 - r, yp, r, 1};
+          SDL_Rect lrect = {      0, yp, l, 1};
+          SDL_FillRect(surface, &rrect, SDL_MapRGB(surface->format, 0x00, 0x00, 0xFF));
+          SDL_FillRect(surface, &lrect, SDL_MapRGB(surface->format, 0xFF, 0x00, 0x00));
+
+          SDL_Rect rect = {0, yp, 1, 1};
+          SDL_FillRect(surface, &rect, SDL_MapRGB(surface->format, 0xFF, 0xFF, 0x00));
+        }
+        SDL_UpdateWindowSurface(window);
+        state.fast_counter++;
 #endif
-          break;
-
-        case SDL_MOUSEBUTTONDOWN:
-          break;
-
-        case SDL_MOUSEBUTTONUP:
-          for (int i = 0; i < 6912; i++)
-            state.screen[i] = 0xff;
-          break;
+        break;
       }
     }
 
@@ -3598,7 +3596,7 @@ int main(void)
       break;
 
     {
-      zxbox_t dirty = {0,0,GAMEWIDTH,GAMEHEIGHT};
+      zxbox_t dirty = {0, 0, GAMEWIDTH, GAMEHEIGHT};
 
       zxscreen_convert(&state.screen[0], pixels, &dirty);
       SDL_UpdateTexture(texture, NULL, pixels, GAMEWIDTH * 4);
