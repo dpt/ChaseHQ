@@ -42,6 +42,11 @@
 // logic and the data separate.
 //
 
+// TODO
+//
+// Align the screen (and perhaps the back buffer too) on a 4K? boundary such
+// that the assumed alignment still works.
+
 #include <assert.h>
 #include <stdint.h>
 #include <stdio.h>
@@ -999,23 +1004,23 @@ static const uint8_t stage1[] = {
 /* ----------------------------------------------------------------------- */
 
 typedef struct hazard_s {
-  uint8_t  used;
-  uint8_t  distance;
-  uint8_t  horz_pos;
-  uint8_t  TBD3;
-  uint8_t  TBD4;
-  uint8_t  horz_pos_on_road;
-  uint8_t  TBD6;
-  uint8_t  TBD7;
-  uint8_t  TBD8;
-  uint16_t lod_addr;
-  uint16_t hit_handler;
-  uint16_t speed;
-  uint8_t  TBD15;
-  uint8_t  TBD16;
-  uint8_t  TBD17;
-  uint8_t  TBD18;
-  uint8_t  TBD19;
+  uint8_t        used;
+  uint8_t        distance;
+  uint8_t        horz_pos;
+  uint8_t        TBD3;
+  uint8_t        TBD4;
+  uint8_t        horz_pos_on_road;
+  uint8_t        TBD6;
+  uint8_t        TBD7;
+  uint8_t        TBD8;
+  const uint8_t *lod_addr; // Conv: uint16_t becomes pointer
+  uint16_t       hit_handler;
+  uint16_t       speed;
+  uint8_t        TBD15;
+  uint8_t        TBD16;
+  uint8_t        TBD17;
+  uint8_t        TBD18;
+  uint8_t        TBD19;
 }
 hazard_t;
 
@@ -1405,12 +1410,17 @@ static void plot_turbos_and_scores(chqstate_t *state);
 
 static uint8_t *ledfont_plot(chqstate_t *state, uint8_t ord, uint8_t *screen);
 
-static void draw_string_A(chqstate_t *state, uint8_t A, uint8_t *BC);
-static void draw_string(chqstate_t *state);
-static void draw_string_entry(chqstate_t *state,
-                              uint8_t     Adash,
-                              uint8_t    *DE,
-                              uint8_t    *HL);
+static void draw_string_A(chqstate_t *state, uint8_t A, const uint8_t *BCstring,
+                          uint8_t *DEscreen);
+static void draw_string(chqstate_t *state, uint8_t A, const uint8_t *BCstring,
+                        uint8_t *DEscreen);
+static void draw_string_entry(chqstate_t    *state,
+                              uint8_t       *DEscreen,
+                              const uint8_t *HLstring,
+                              uint8_t        Adash,
+                              uint8_t        Cdash,
+                              uint8_t        DEstride,
+                              uint8_t       *HLattr);
 
 #define DRAWCHAR_TYPE_DUNNO           (0)
 #define DRAWCHAR_TYPE_GENERIC         (1)
@@ -1424,7 +1434,7 @@ static void draw_char(chqstate_t *state,
                       uint8_t    *DE,    // screen address
                       uint8_t     Adash, // draw type
                       uint8_t     Cdash, // attribute
-                      uint8_t    *DEdash,
+                      uint8_t     DEdash, // e.g. 32 - a stride?
                       uint8_t    *HLdash);
 
 static uint8_t keyscan(chqstate_t *state);
@@ -1761,18 +1771,20 @@ static const char *chatter_strings[CHATTERSTR__LIMIT] = {
   "SEE YOU LATER."
 };
 
+#define TWOBYTES(addr) (addr) & 0xFF, (addr) >> 8
+
 // $82A6
 static const uint8_t attract_messages[] = {
   DRAWCHAR_TYPE_DOUBLE,
   attribute_BLACK_OVER_BLACK, // zero
-  0x2C, 0xF0, // back buffer addr
-  0x4C, 0x59, // attr addr
+  TWOBYTES(0xF02C), // back buffer addr
+  TWOBYTES(0x594C), // attr addr
   'C', 'H', 'A', 'S', 'E', ' ', 'H', 'Q' | STREND,
 
   DRAWCHAR_TYPE_SINGLE,
   attribute_BLACK_OVER_BLACK, // zero
-  0x47, 0xF8,
-  0xA7, 0x59,
+  TWOBYTES(0xF847),
+  TWOBYTES(0x59A7),
   'P', 'R', 'E', 'S', 'S', ' ', 'G', 'E', 'A', 'R', ' ', 'T', 'O',  'P', 'L', 'A', 'Y' | STREND
 };
 
@@ -1782,20 +1794,20 @@ static const uint8_t credits_messages[] = {
   8, // vertical gap?
   DRAWCHAR_TYPE_SINGLE,
   attribute_RED_OVER_BLACK, // 2
-  0x86, 0xF0,
-  0x06, 0x5A,
+  TWOBYTES(0xF086),
+  TWOBYTES(0x5A06),
   'P', 'R', 'O', 'G', 'R', 'A', 'M', ' ', ' ', ' ', ' ', ' ', ' ', 'J', 'O', 'B', 'B', 'E', 'E', 'E' | STREND,
   8,
   DRAWCHAR_TYPE_SINGLE,
   attribute_RED_OVER_BLACK, // 2
-  0xA6, 0xF0,
-  0x46, 0x5A,
+  TWOBYTES(0xF0A6),
+  TWOBYTES(0x5A46),
   'G', 'R', 'A', 'P', 'H', 'I', 'C', 'S', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', 'B', 'I', 'L', 'L' | STREND,
   0x28,
   DRAWCHAR_TYPE_SINGLE,
   attribute_RED_OVER_BLACK, // 2
-  0xC6, 0xF0,
-  0x86, 0x5A,
+  TWOBYTES(0xF0C6),
+  TWOBYTES(0x5A86),
   'M', 'U', 'S', 'I', 'C', ' ', ' ', ' ', ' ', ' ', ' ', ' ', 'J', 'O', 'N', ' ', 'D', 'U', 'N', 'N' | STREND,
   3,
   0
@@ -1807,25 +1819,121 @@ static const uint8_t copyright_messages[] = {
   8,
   DRAWCHAR_TYPE_SINGLE,
   attribute_RED_OVER_BLACK, // 2
-  0x84, 0xF0,
-  0x04, 0x5A,
+  TWOBYTES(0xF084),
+  TWOBYTES(0x5A04),
   '(', 'C', ')', ' ', '1', '9', '8', '9', ' ', 'O', 'C', 'E', 'A', 'N', ' ', 'S', 'O', 'F', 'T', 'W', 'A', 'R', 'E' | STREND,
   8,
   DRAWCHAR_TYPE_SINGLE,
   attribute_RED_OVER_BLACK, // 2
-  0xA3, 0xF0,
-  0x43, 0x5A,
+  TWOBYTES(0xF0A3),
+  TWOBYTES(0x5A43),
   '(', 'C', ')', ' ', '1', '9', '8', '8', ' ', 'T', 'A', 'I', 'T', 'O', ' ', 'C', 'O', 'R', 'P', 'O', 'R', 'A', 'T', 'I', 'O', 'N' | STREND,
   8,
   DRAWCHAR_TYPE_SINGLE,
   attribute_RED_OVER_BLACK, // 2
-  0xC6, 0xF0,
-  0x86, 0x5A,
+  TWOBYTES(0xF0C6),
+  TWOBYTES(0x5A86),
   'A', 'L', 'L', ' ', 'R', 'I', 'G', 'H', 'T', 'S', ' ', 'R', 'E', 'S', 'E', 'R', 'V', 'E', 'D' | STREND,
   3,
   0
 };
 
+// $8C58
+// This will need to be a template copied into state.
+static const uint8_t score_messages[] = {
+  5, 4, 3,
+  attribute_RED_OVER_BLACK,
+  TWOBYTES(0xF025),
+  TWOBYTES(0x5945),
+  'C', 'L', 'E', 'A', 'R', ' ', 'B', 'O', 'N', 'U', 'S', ' ', ' ', ' ', ' ', ' ', ' ', '0', ',', '0', '0', '0' | STREND,
+  4, 3,
+  attribute_RED_OVER_BLACK,
+  TWOBYTES(0xF065),
+  TWOBYTES(0x59C5),
+  'T', 'I', 'M', 'E', ' ', 'B', 'O', 'N', 'U', 'S', ' ', ' ', ' ', ' ', ' ', ' ', 'X', ' ', '5', '0', '0', '0' | STREND,
+  0x32, 3,
+  attribute_RED_OVER_BLACK,
+  TWOBYTES(0xF0A5),
+  TWOBYTES(0x5A45),
+  'S', 'C', 'O', 'R', 'E', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ' | STREND,
+  3, 0
+};
+
+// $8CB2
+static const uint8_t sighting_message[] = {
+  0x01, 0x1E, 0x02,
+  attribute_BLACK_OVER_BLACK,
+  TWOBYTES(0xF023),
+  TWOBYTES(0x5943),
+  'S', 'I', 'G', 'H', 'T', 'I', 'N', 'G', ' ', 'O', 'F', ' ', 'T', 'A', 'R', 'G', 'E', 'T', ' ', 'V', 'E', 'H', 'I', 'C', 'L', 'E' | STREND,
+  0, 0
+};
+
+// $8CD6
+static const uint8_t pull_over_message[] = {
+  0x01, 0x1E, 0x02,
+  attribute_BLACK_OVER_BLACK,
+  TWOBYTES(0xF026),
+  TWOBYTES(0x5946),
+  'O', 'K', '!', ' ', 'P', 'U', 'L', 'L', ' ', 'O', 'V', 'E', 'R', ' ', 'C', 'R', 'E', 'E', 'P', '!' | STREND,
+  0, 0
+};
+
+// $8CF4
+static const uint8_t game_over_message[] = {
+  0x01, 0x1E, 0x03,
+  attribute_BLACK_OVER_BLACK,
+  TWOBYTES(0xF02B),
+  TWOBYTES(0x594B),
+  'G', 'A', 'M', 'E', ' ', 'O', 'V', 'E', 'R' | STREND,
+  3, 0
+};
+
+// $8D07
+static const uint8_t time_up_message[] = {
+  0x01, 0x19, 0x03,
+  attribute_BLACK_OVER_BLACK,
+  TWOBYTES(0xF02C),
+  TWOBYTES(0x594C),
+  'T', 'I', 'M', 'E', ' ', 'U', 'P' | STREND,
+  3, 0
+};
+
+// $8D18
+// This will need to be a template copied into state.
+static const uint8_t continue_messages[] = {
+  0x01, 0x01, 0x03,
+  attribute_BLACK_OVER_BLACK,
+  TWOBYTES(0xF02C),
+  TWOBYTES(0x594C),
+  'C', 'O', 'N', 'T', 'I', 'N', 'U', 'E', ' ' | STREND,
+  0x01, 0x03,
+  attribute_BLACK_OVER_BLACK,
+  TWOBYTES(0xF04A),
+  TWOBYTES(0x598A),
+  'T', 'H', 'I', 'S', ' ', 'M', 'I', 'S', 'S', 'I', 'O', 'N' | STREND,
+  0x01, 0x02,
+  attribute_BLACK_OVER_BLACK,
+  TWOBYTES(0xF868),
+  TWOBYTES(0x59E8),
+  'P', 'U', 'S', 'H', ' ', 'G', 'E', 'A', 'R', ' ', 'B', 'U', 'T', 'T', 'O', 'N' | STREND,
+  0x01, 0x02,
+  attribute_BLACK_OVER_BLACK,
+  TWOBYTES(0xF086),
+  TWOBYTES(0x5A06),
+  'B', 'E', 'F', 'O', 'R', 'E', ' ', 'T', 'I', 'M', 'E', 'R', ' ', 'R', 'E', 'A', 'C', 'H', 'E', 'S', ' ', '0' | STREND,
+  0x01, 0x02,
+  attribute_BLACK_OVER_BLACK,
+  TWOBYTES(0xF0AC),
+  TWOBYTES(0x5A4C),
+  'T', 'I', 'M', 'E', ' ', '1', '0' | STREND,
+  0x0A, 0x02,
+  attribute_BLACK_OVER_BLACK,
+  TWOBYTES(0xF8F6),
+  TWOBYTES(0x5AF6),
+  'C', 'R', 'E', 'D', 'I', 'T', ' ', ' ' | STREND,
+  0x01, 0x03
+};
 
 // $98A9
 static const uint8_t chatterblk_pilot_turn_left[] = {
@@ -3030,19 +3138,17 @@ static void attract_mode(chqstate_t *state)
       HL = print_message(state, A, HL);
     } while (--B > 0);
 
-    if (state->transition_control > 0)
-      goto do_transition;
+    if (state->transition_control == 0) {
+      // Alternate between credits and copyright messages.
+      A = state->SM_828c;
+      A ^= 1;
+      state->SM_828c = A;
+      HL = &credits_messages[0];
+      if (A)
+        HL = &copyright_messages[0];
+      setup_overlay_messages(state, HL);
+    }
 
-    // Alternate between credits and copyright messages.
-    A = state->SM_828c;
-    A ^= 1;
-    state->SM_828c = A;
-    HL = &credits_messages[0];
-    if (A)
-      HL = &copyright_messages[0];
-do_setup:
-    setup_overlay_messages(state, HL);
-do_transition:
     transition(state);
     draw_screen(state);
   }
@@ -3057,7 +3163,6 @@ static void main_loop(chqstate_t *state)
   if (state->wanted_stage_number != 6)
     goto ml_not_credits;
 
-ml_run_end_screen:
   // call $5c00
   state->wanted_stage_number = 1;
   // push hl
@@ -3237,10 +3342,10 @@ static void clear_playfield(chqstate_t *state)
 static void fully_smashed(chqstate_t *state)
 {
   state->perp_caught_phase  = 1; // add symbols
-  state->hand_flag          = 2; // for this too
+  state->hand_flag          = 2; // for this one too
   state->smash_counter      = 20;
   state->st.user_input_mask = USERINPUT_PAUSE | USERINPUT_QUIT;
-  setup_overlay_messages(state, &pull_over_message);
+  setup_overlay_messages(state, &pull_over_message[0]);
   // hpc_set_perp_speed(state, 0x0190);
 }
 
@@ -3286,6 +3391,7 @@ static const uint8_t *print_message(chqstate_t    *state,
                                     uint8_t        Aflags,
                                     const uint8_t *HLmessages)
 {
+  return NULL; // TODO
 }
 
 // $8E7E
@@ -3749,7 +3855,7 @@ pmf_have_ascii:
       case 5: SRL(bm1); RR(bm2);
       case 6: SRL(bm1); RR(bm2);
       case 7: SRL(bm1); RR(bm2);
-      case 8:
+      case 8: break;
       }
     } else {
       // Conv: "modern" version
@@ -3837,7 +3943,7 @@ check_time_up:
     goto update_remaining_time;
   }
 
-  // TODO setup_overlay_messages(state, time_up_message);
+  setup_overlay_messages(state, &time_up_message[0]);
   if (state->speed > 0)
     return;
   state->time_up_state = TIMEUPSTATE_CAR_STOPPED;
@@ -3877,7 +3983,7 @@ check_restart:
   return;
 
 print_continue:
-  // TODO setup_overlay_messages(state, continue_messages);
+  setup_overlay_messages(state, &continue_messages[0]);
   L = state->SM_9c85;
   H = state->SM_9c86 - 1;
   if (H != 0)
@@ -4100,37 +4206,44 @@ static uint8_t *ledfont_plot(chqstate_t *state, uint8_t ord, uint8_t *screen)
 }
 
 // $9F99
-static void draw_string_A(chqstate_t *state, uint8_t A, uint8_t *BC)
+static void draw_string_A(chqstate_t *state, uint8_t A, const uint8_t *BCstring,
+                          uint8_t *DEscreen)
 {
-  draw_string_entry(state, 0/*Adash*/, BC/*HL*/, A/*BC'*/, 32/*DE'*/);
+  draw_string_entry(state, DEscreen, BCstring/*HL*/, 0/*Adash*/, A/*C'*/,
+                    32/*DE'*/, NULL);
 }
 
 // $9FA3
-static void draw_string(chqstate_t *state)
+static void draw_string(chqstate_t *state, uint8_t A, const uint8_t *BCstring,
+                        uint8_t *DEscreen)
 {
-  draw_string_entry(state, 1/*Adash*/, BC/*HL*/, A/*BC'*/, 32/*DE'*/);
+  draw_string_entry(state, DEscreen, BCstring/*HL*/, 1/*Adash*/, A/*C'*/,
+                    32/*DE'*/, NULL);
 }
 
 // $9FA6
-static void draw_string_entry(chqstate_t *state,
-                              uint8_t     Adash,
-                              uint8_t    *DE,
-                              uint8_t    *HL)
+static void draw_string_entry(chqstate_t    *state,
+                              uint8_t       *DEscreen,
+                              const uint8_t *HLstring,
+                              uint8_t        Adash,
+                              uint8_t        Cdash,
+                              uint8_t        DEstride,
+                              uint8_t       *HLattr)
 {
-  uint8_t A;
+  uint8_t Achar;
 
   do {
-    A = *HL & ~STREND;
-    DE = draw_char(state, A, Adash, DE, HL);
-  } while ((A & STREND) == 0);
+    Achar = *HLstring & ~STREND;
+    draw_char(state, Achar, DEscreen, Adash, Cdash, DEstride, HLattr);
+  } while ((Achar & STREND) == 0);
 }
 
 static void draw_char(chqstate_t *state,
                       uint8_t     Achar,
-                      uint8_t    *DE,    // screen address
+                      uint8_t    *DEscreen, // screen address
                       uint8_t     Adash, // draw type
                       uint8_t     Cdash, // attribute
-                      uint8_t    *DEdash,
+                      uint8_t     DEstride, // DE' e.g. 32 - a stride?
                       uint8_t    *HLdash)
 {
   uint8_t        Cglyphid; // was C
@@ -4143,7 +4256,7 @@ static void draw_char(chqstate_t *state,
   Achar -= ' ';
   if (Achar == 0) {
     // Space
-    DE++;
+    DEscreen++;
     HLdash++; // FIXME: Do we need to return these?
     return;
   }
@@ -4187,111 +4300,107 @@ dc_have_single:
   if (Ctype == 0) goto dc_double_height_inverted; // 5
 
   // Otherwise it's type 0 or anything else
-  DEorig = DE;
+  DEorig = DEscreen;
   B = 4; // iterations
   do {
     A = *HLfont;
-    *DE = A;
-    DE += 256;
-    *DE = A;
-    DE += 256;
+    *DEscreen = A;
+    DEscreen += 256;
+    *DEscreen = A;
+    DEscreen += 256;
     HLfont++;
   } while (--B > 0);
-  DE -= 8 * 256;
-  DE += 32;
+  DEscreen -= 8 * 256;
+  DEscreen += 32;
   B = 3; // iterations
   do {
     A = *HLfont;
-    *DE = A;
-    DE += 256;
-    *DE = A;
-    DE += 256;
+    *DEscreen = A;
+    DEscreen += 256;
+    *DEscreen = A;
+    DEscreen += 256;
     HLfont++;
   } while (--B > 0);
   goto dc_set_double_attrs;
 
   // double height inverted
 dc_double_height_inverted:
-  DEorig = DE;
+  DEorig = DEscreen;
   B = 7;
   do {
     A = ~*HLfont;
-    *DE = A;
-    DE += 256;
-    *DE = A;
-    DE += 256;
+    *DEscreen = A;
+    DEscreen += 256;
+    *DEscreen = A;
+    DEscreen += 256;
     HLfont++;
   } while (--B > 0);
   goto dc_set_double_attrs;
 
 dc_single_height_inverted:
-  DEorig = DE;
+  DEorig = DEscreen;
   B = 7;
   do {
     A = ~*HLfont;
-    *DE = A;
+    *DEscreen = A;
     HLfont++;
-    DE += 256;
+    DEscreen += 256;
   } while (--B > 0);
   goto dc_set_single_attrs;
 
-// Plots double-height glyphs. DE->screen HLfont->glyph def
+// Plots double-height glyphs. DEscreen->screen HLfont->glyph def
 dc_double_height:
-  DEorig = DE;
-  *DE = 0; // leave gap at top
-  DE += 256;
+  DEorig = DEscreen;
+  *DEscreen = 0; // leave gap at top
+  DEscreen += 256;
   for (int i = 0; i < 7; i++) { // Conv: rolled
     A = *HLfont;
-    *DE = A;
-    DE += 256;
-    *DE++ = *HLfont++; // was LDI, could reuse A
-    DE--; // was DEC E, could remove if DE++ above is dropped
-    DE += 256;
+    *DEscreen = A;
+    DEscreen += 256;
+    *DEscreen++ = *HLfont++; // was LDI, could reuse A
+    DEscreen--; // was DEC E, could remove if DEscreen++ above is dropped
+    DEscreen += 256;
   }
-  *DE = 0; // leave gap at bottom
+  *DEscreen = 0; // leave gap at bottom
 
 dc_set_double_attrs:
-  DE = DEorig + 1; // was POP DE, INC E
+  DEscreen = DEorig + 1; // was POP DEscreen, INC E
   *HLdash |= Cdash;
-  HLdash += DEdash;
+  HLdash += DEstride;
   *HLdash |= Cdash;
-  HLdash -= DEdash; // was POP HLdash
+  HLdash -= DEstride; // was POP HLdash
   HLdash++; // was INC L
   return;
 
 dc_single_height: // seems to store 9 rows
-  DEorig = DE;
-  *DE = 0; // leave gap at top
-  DE += 256;
+  DEorig = DEscreen;
+  *DEscreen = 0; // leave gap at top
+  DEscreen += 256;
   for (int i = 0; i < 7; i++) { // Conv: rolled
-    *DE++ = *HLfont++;
-    DE--; // could drop
-    DE += 256;
+    *DEscreen++ = *HLfont++;
+    DEscreen--; // could drop
+    DEscreen += 256;
   }
-  *DE = 0; // leave gap at bottom
+  *DEscreen = 0; // leave gap at bottom
 
 dc_set_single_attrs:
-  DE = DEorig + 1; // was POP DE
+  DEscreen = DEorig + 1; // was POP DEscreen
   *HLdash |= Cdash;
   HLdash++; // was INC L
   return;
 
 dc_generic:
-  DEorig = DE;
+  DEorig = DEscreen;
   B = 7; // iterations
   do {
-    *DE = *HLfont;
-    DE += 256;
+    *DEscreen = *HLfont;
+    DEscreen += 256;
     HLfont++;
 
-    // A = D & 7;
-    // JR NZ,$A0C7   ; If no rollover goto loop
-    // D -= 8;
-    // E += 32;
-    // JR NC,$A0C7   ; If no rollover goto loop
-    // D += 8;
+    // variation on nextrow()
+    // DEscreen = nextrow(DEscreen); // won't work!
   } while (--B > 0);
-  DE = DEorig + 1; // was POP DE
+  DEscreen = DEorig + 1; // was POP DEscreen
   return;
 }
 
