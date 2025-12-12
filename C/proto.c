@@ -1327,10 +1327,33 @@ static const uint8_t *ptrtostgptr(chqstate_t *state, const uint8_t *addr)
 
 static void attract_mode(chqstate_t *state);
 
+static void start_siren_hook(chqstate_t *state);
+
+static void play_engine_or_siren_sfx_hook(chqstate_t *state);
+static void silence_audio_hook(chqstate_t *state);
+static void write_audio_registers_hook(chqstate_t *state);
+static void setup_engine_sfx_hook(chqstate_t *state);
+static void play_engine_sfx_hook(chqstate_t *state);
+static void play_speech_hook(chqstate_t *state);
+static void attract_mode_hook(chqstate_t *state);
+
 static void main_loop(chqstate_t *state);
 
 static void set_up_stage(chqstate_t *state, const uint8_t *stage_data);
 static void sus_clear_lights(uint8_t *attrptr);
+
+static void check_user_input(chqstate_t *state);
+
+static void start_sfx(chqstate_t *state, uint8_t Bindex, uint8_t Cpriority);
+
+static void drive_sfx(chqstate_t *state);
+
+static void sfx_crash(chqstate_t *state, uint8_t Dparam);
+static void sfx_thud(chqstate_t *state, uint8_t Dparam);
+static void sfx_cornering(chqstate_t *state, uint8_t Dparam, uint8_t Eparam);
+static void sfx_bipbow(chqstate_t *state, uint8_t Dparam, uint8_t Eparam);
+
+static void handle_perp_caught(chqstate_t *state);
 
 static void clear_playfield_attrs(chqstate_t *state);
 static void clear_playfield(chqstate_t *state);
@@ -1348,6 +1371,10 @@ static const uint8_t *print_message(chqstate_t    *state,
                                     const uint8_t *HLmessages);
 
 static void setup_overlay_messages(chqstate_t *state, const uint8_t *HL);
+
+static void draw_smash_bar(chqstate_t *state);
+
+static void draw_everything_else(chqstate_t *state);
 
 static uint8_t rng(chqstate_t *state);
 
@@ -1439,9 +1466,37 @@ static void draw_char(chqstate_t *state,
 
 static uint8_t keyscan(chqstate_t *state);
 
+static void check_scenery_collisions(chqstate_t *state);
+
+static void layout_objects(chqstate_t *state);
+
 static void cycle_counters(chqstate_t *state);
 
+static void spawn_cars(chqstate_t *state);
+
+static void choose_dirt_and_stones(chqstate_t *state);
+
+static void layout_dirt_and_stones(chqstate_t *state);
+
+static void move_helicopter(chqstate_t *state);
+
+static void drive_helicopter(chqstate_t *state);
+
+static void spawn_hazards(chqstate_t *state);
+
+static void draw_hazards(chqstate_t *state);
+
+static void move_hero_car(chqstate_t *state);
+
+static void animate_hero_car(chqstate_t *state);
+
+static void scroll_horizon(chqstate_t *state);
+
+static void update_road_level(chqstate_t *state);
+
 static void layout_road(chqstate_t *state);
+
+static void exit_fork(chqstate_t *state);
 
 static void draw_screen(chqstate_t *state);
 
@@ -1468,6 +1523,8 @@ static void build_curve_table_sub_cca8(chqstate_t *state,
                                        uint8_t     Bdash_alwayszero,
                                        uint16_t   *HLtableend,
                                        uint16_t    DEroadpos);
+
+static void build_height_table(chqstate_t *state);
 
 typedef int8_t T; // works
 static T multiply(T a, T c);
@@ -3154,6 +3211,48 @@ static void attract_mode(chqstate_t *state)
   }
 }
 
+// $83B5
+static void start_siren_hook(chqstate_t *state)
+{
+}
+
+// $83B8
+static void play_engine_or_siren_sfx_hook(chqstate_t *state)
+{
+}
+
+// $83BB
+static void silence_audio_hook(chqstate_t *state)
+{
+}
+
+// $83BE
+static void write_audio_registers_hook(chqstate_t *state)
+{
+}
+
+// $83C1
+static void setup_engine_sfx_hook(chqstate_t *state)
+{
+}
+
+// $83C4
+static void play_engine_sfx_hook(chqstate_t *state)
+{
+}
+
+// $83C7
+static void play_speech_hook(chqstate_t *state)
+{
+}
+
+// $83CA
+static void attract_mode_hook(chqstate_t *state)
+{
+}
+
+
+
 // $8401
 static void main_loop(chqstate_t *state)
 {
@@ -3188,48 +3287,48 @@ ml_not_credits:
     start_chatter(state, 0xFF, chatterblk_start_stage);
 
   do {
-    // drive_sfx(state);
+    drive_sfx(state);
     keyscan(state);
     tick(state);
-    // check_user_input(state);
+    check_user_input(state);
     read_map(state);
-    // handle_perp_caught(state);
-    // move_hero_car(state);
-    // spawn_cars(state);
+    handle_perp_caught(state);
+    move_hero_car(state);
+    spawn_cars(state);
     cycle_counters(state);
-    // play_engine_or_siren_sfx_hook(state);
-    // build_height_table(state);
-    // scroll_horizon(state);
-    // play_engine_or_siren_sfx_hook(state);
+    play_engine_or_siren_sfx_hook(state);
+    build_height_table(state);
+    scroll_horizon(state);
+    play_engine_or_siren_sfx_hook(state);
     layout_road(state);
-    // play_engine_or_siren_sfx_hook(state);
+    play_engine_or_siren_sfx_hook(state);
     draw_road(state);
-    // play_engine_or_siren_sfx_hook(state);
-    // layout_objects(state);
+    play_engine_or_siren_sfx_hook(state);
+    layout_objects(state);
     prepare_tunnel(state);
-    // spawn_hazards(state);
-    // drive_helicopter(state);
-    // choose_dirt_and_stones(state);
-    // play_engine_or_siren_sfx_hook(state);
-    // draw_hazards(state);
-    // layout_dirt_and_stones(state);
-    // play_engine_or_siren_sfx_hook(state);
-    // move_helicopter(state);
-    // check_scenery_collisions(state);
-    // play_engine_or_siren_sfx_hook(state);
-    // draw_everything_else(state);
-    // play_engine_or_siren_sfx_hook(state);
-    // animate_hero_car(state);
+    spawn_hazards(state);
+    drive_helicopter(state);
+    choose_dirt_and_stones(state);
+    play_engine_or_siren_sfx_hook(state);
+    draw_hazards(state);
+    layout_dirt_and_stones(state);
+    play_engine_or_siren_sfx_hook(state);
+    move_helicopter(state);
+    check_scenery_collisions(state);
+    play_engine_or_siren_sfx_hook(state);
+    draw_everything_else(state);
+    play_engine_or_siren_sfx_hook(state);
+    animate_hero_car(state);
     speed_score(state);
-    // update_scoreboard(state);
-    // calc_overtake_bonus(state);
-    // play_engine_or_siren_sfx_hook(state);
+    update_scoreboard(state);
+    calc_overtake_bonus(state);
+    play_engine_or_siren_sfx_hook(state);
     drive_chatter(state);
-    // smash_bar_etc(state);
+    draw_smash_bar(state);
     transition(state);
-    // play_engine_or_siren_sfx_hook(state);
+    play_engine_or_siren_sfx_hook(state);
     draw_screen(state);
-    // exit_fork(state);
+    exit_fork(state);
   } while (state->test_mode == 0);
 
   // TODO test mode etc.
@@ -3325,6 +3424,11 @@ static void sus_clear_lights(uint8_t *attrptr)
   } while (--rows > 0);
 }
 
+// $8876
+static void check_user_input(chqstate_t *state)
+{
+}
+
 // $88D5
 static void clear_playfield_attrs(chqstate_t *state)
 {
@@ -3336,6 +3440,41 @@ static void clear_playfield(chqstate_t *state)
 {
   clear_playfield_attrs(state);
   memset(SCREEN(0x4800), 0x00, 16 * 32 * 8);
+}
+
+// $88F2
+static void start_sfx(chqstate_t *state, uint8_t Bindex, uint8_t Cpriority)
+{
+}
+
+// $8903
+static void drive_sfx(chqstate_t *state)
+{
+}
+
+// $8960
+static void sfx_crash(chqstate_t *state, uint8_t Dparam)
+{
+}
+
+// $89D9
+static void sfx_thud(chqstate_t *state, uint8_t Dparam)
+{
+}
+
+// $8A0F
+static void sfx_cornering(chqstate_t *state, uint8_t Dparam, uint8_t Eparam)
+{
+}
+
+// $8A36
+static void sfx_bipbow(chqstate_t *state, uint8_t Dparam, uint8_t Eparam)
+{
+}
+
+// $8A57
+static void handle_perp_caught(chqstate_t *state)
+{
 }
 
 // $8C3A
@@ -3396,6 +3535,16 @@ static const uint8_t *print_message(chqstate_t    *state,
 
 // $8E7E
 static void setup_overlay_messages(chqstate_t *state, const uint8_t *HL)
+{
+}
+
+// $8EE7
+static void draw_smash_bar(chqstate_t *state)
+{
+}
+
+// $8F5F
+static void draw_everything_else(chqstate_t *state)
 {
 }
 
@@ -4238,6 +4387,7 @@ static void draw_string_entry(chqstate_t    *state,
   } while ((Achar & STREND) == 0);
 }
 
+// $9FB4
 static void draw_char(chqstate_t *state,
                       uint8_t     Achar,
                       uint8_t    *DEscreen, // screen address
@@ -4410,6 +4560,16 @@ static uint8_t keyscan(chqstate_t *state)
   return 0;
 }
 
+// $A399
+static void check_scenery_collisions(chqstate_t *state)
+{
+}
+
+// $A579
+static void layout_objects(chqstate_t *state)
+{
+}
+
 // $A60E
 static void cycle_counters(chqstate_t *state)
 {
@@ -4418,6 +4578,61 @@ static void cycle_counters(chqstate_t *state)
   if (state->counter_B == 0)
     return;
   state->counter_C = (state->counter_C + 1) & 3;
+}
+
+// $A7F3
+static void spawn_cars(chqstate_t *state)
+{
+}
+
+// $A955
+static void choose_dirt_and_stones(chqstate_t *state)
+{
+}
+
+// $A97E
+static void layout_dirt_and_stones(chqstate_t *state)
+{
+}
+
+// $AAC6
+static void move_helicopter(chqstate_t *state)
+{
+}
+
+// $AB33
+static void drive_helicopter(chqstate_t *state)
+{
+}
+
+// $AB9A
+static void spawn_hazards(chqstate_t *state)
+{
+}
+
+// $ADA0
+static void draw_hazards(chqstate_t *state)
+{
+}
+
+// $B063
+static void move_hero_car(chqstate_t *state)
+{
+}
+
+// $B318
+static void animate_hero_car(chqstate_t *state)
+{
+}
+
+// $B848
+static void scroll_horizon(chqstate_t *state)
+{
+}
+
+// $B8D2
+static void update_road_level(chqstate_t *state)
+{
 }
 
 #define ROADBUF(N) \
@@ -4626,6 +4841,11 @@ lr_badf:
   } while (Biterations > 0);
   SProadright = &state->table_ec00[Aiterations];
   goto lr_calc_single_lane; // jump into no_fork code
+}
+
+// $BB69
+static void exit_fork(chqstate_t *state)
+{
 }
 
 // $BC3E
@@ -4968,6 +5188,11 @@ bct_endbit_negative:
   DEroadpos = HLdash; // was EX
   SPoutput--; *SPoutput = DEroadpos; // PUSH to output table
   goto bct_continue;
+}
+
+// $CD3A
+static void build_height_table(chqstate_t *state)
+{
 }
 
 /* ----------------------------------------------------------------------- */
