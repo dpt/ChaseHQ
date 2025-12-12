@@ -2153,7 +2153,7 @@ C $801D,3 Set dont_draw_screen_attrs to a non-zero value
 C $8020,5 Update the level number in "SEARCHING FOR <N>"
 @ $8025 label=ls_loop
 C $8025,3 Call clear_playfield_set_attrs
-C $8028,3 Call clear_game_attrs
+C $8028,3 Call clear_playfield_attrs
 C $802B,2 Reverse transition
 C $802D,3 Call setup_transition
 @ $8032 label=ls_8032
@@ -2179,7 +2179,7 @@ C $805C,2 Jump to ls_8025 if no carry
 N $805E Success - must have loaded the correct level data.
 C $805E,3 Set border to black
 C $8061,3 Call clear_playfield_set_attrs
-C $8064,3 Call clear_game_attrs
+C $8064,3 Call clear_playfield_attrs
 C $8067,3 HL -> "STOP THE TAPE" message structure
 C $806C,3 Call ls_8098
 C $806F,1 Preserve ?
@@ -2423,7 +2423,7 @@ B $82A7,1,1 Attribute (black)
 W $82A8,2,2 Back buffer address
 W $82AA,2,2 Attribute address
 T $82AC,8,7:n1 "CHASE HQ"
-B $82B4,1,1 Flags (regular)
+B $82B4,1,1 Flags (single height)
 B $82B5,1,1 Attribute (black)
 W $82B6,2,2 Back buffer address
 W $82B8,2,2 Attribute address
@@ -2431,19 +2431,19 @@ T $82BA,18,17:n1 "PRESS GEAR TO PLAY"  (this blinks)
 @ $82CC label=credits_messages
 B $82CC,1,1 Frame delay until the following messages start being shown (0 = 256)
 B $82CD,1,1 Frame delay until next message?
-B $82CE,1,1 Flags (regular)
+B $82CE,1,1 Flags (single)
 B $82CF,1,1 Attribute (red)
 W $82D0,2,2 Back buffer address
 W $82D2,2,2 Attribute address
 T $82D4,20,19:n1 "PROGRAM      JOBBEEE"
 B $82E8,1,1 Frame delay?
-B $82E9,1,1 Flags (regular)
+B $82E9,1,1 Flags (single)
 B $82EA,1,1 Attribute (red)
 W $82EB,2,2 Back buffer address
 W $82ED,2,2 Attribute address
 T $82EF,20,19:n1 "GRAPHICS        BILL"
 B $8303,1,1 Delay + stop flags?  $28
-B $8304,1,1 Flags (regular)
+B $8304,1,1 Flags (single)
 B $8305,1,1 Attribute (red)
 W $8306,2,2 Back buffer address
 W $8308,2,2 Attribute address
@@ -2451,19 +2451,19 @@ T $830A,20,19:n1 "MUSIC       JON DUNN"
 B $831E,2,1
 @ $8320 label=copyright_messages
 B $8320,2,2 (Frame delays as #R$82CC)
-B $8322,1,1 Flags (regular)
+B $8322,1,1 Flags (single)
 B $8323,1,1 Attribute (red)
 W $8324,2,2 Back buffer address
 W $8326,2,2 Attribute address
 T $8328,23,22:n1 "(C) 1989 OCEAN SOFTWARE"
 B $833F,1,1 Frame delay?
-B $8340,1,1 Flags (regular)
+B $8340,1,1 Flags (single)
 B $8341,1,1 Attribute (red)
 W $8342,2,2 Back buffer address
 W $8344,2,2 Attribute address
 T $8346,26,25:n1 "(C) 1988 TAITO CORPORATION"
 B $8360,1,1 Delay + stop flags?  $28
-B $8361,1,1 Flags (regular)
+B $8361,1,1 Flags (single)
 B $8362,1,1 Attribute (red)
 W $8363,2,2 Back buffer address
 W $8365,2,2 Attribute address
@@ -2592,7 +2592,7 @@ C $84A7,3 Call update_scoreboard
 C $84AA,3 Call calc_overtake_bonus
 C $84AD,3 Call play_engine_or_siren_sfx_hook
 C $84B0,3 Call drive_chatter
-C $84B3,3 Call smash_bar_etc
+C $84B3,3 Call draw_smash_bar
 C $84B6,3 Call transition
 C $84B9,3 Call play_engine_or_siren_sfx_hook
 C $84BC,3 Call draw_screen
@@ -2603,7 +2603,7 @@ N $84C8 Test mode handling
 @ $84C8 label=ml_handle_test_mode
 C $84C8,4 Read keys 1/2/3/4/5
 C $84CC,1 Change to active high
-C $84CD,2 Mask off just keys
+C $84CD,2 Isolate just keys
 C $84CF,2 If none are set then jump
 C $84D1,1 Bank key flags
 C $84D2,3 Effect 8 (bip), Priority 4
@@ -3041,10 +3041,10 @@ C $88CD,7 Call keyscan until keys are released (debounce)
 C $88D4,1 Return
 c $88D5 Clears the game screen attributes to zero
 D $88D5 Used by the routines at #R$8014 and #R$88E2.
-@ $88D5 label=clear_game_attrs
+@ $88D5 label=clear_playfield_attrs
 c $88E2 Clears the game screen attributes and the game screen to zero
 D $88E2 Used by the routine at #R$BDC1.
-@ $88E2 label=clear_game_screen
+@ $88E2 label=clear_playfield_screen
 c $88F2 Starts a sound effect
 D $88F2 Used by the routines at #R$8401, #R$8903, #R$9BCF, #R$A399, #R$A637, #R$A8CD, #R$AC3C, #R$B063 and #R$B318.
 R $88F2 I:B Sound effect index: 1..9. This indexes the table at #R$893C.
@@ -3155,7 +3155,7 @@ C $8A16,1 Return if flag became non-zero
 C $8A17,1 Set inner loop counter
 @ $8A18 label=sfx_cornering_loop_inner
 C $8A18,3 Generate a random byte
-C $8A1B,2 Mask off bit 4
+C $8A1B,2 Isolate bit 4
 C $8A1D,2 If zero goto sfx_cornering_continue
 N $8A1F Delay for (24 - #REGd) iterations.
 @ $8A23 label=sfx_cornering_delay1
@@ -3364,7 +3364,7 @@ N $8BB8 Otherwise we're in the centre zone.
 C $8BB8,2 Set input ACCELERATE
 @ $8BBA label=hpc_assign_hero_pos
 C $8BBA,1 Move input into #REGc for the moment
-C $8BBB,2 Mask off LEFT and RIGHT flags
+C $8BBB,2 Isolate LEFT and RIGHT flags
 C $8BBD,2 Jump to #R$8BE5 if either is set
 N $8BBF Not turning. Are we within distance?
 @ $8BBF label=hpc_check_distance
@@ -3416,7 +3416,7 @@ C $8C24,7 Compare it to 70
 C $8C2B,4 Jump to hpc_set_perp_pos_or_accel if result <= 70, with #REGde = 70
 C $8C2F,6 Otherwise reduce it by 5 with result in #REGde
 N $8C35 This entry point is used by the routine at #R$8C3A.
-@ $8C35 label=hpc_set_perp_pos_or_accel
+@ $8C35 label=hpc_set_perp_speed
 @ $8C35 ssub=LD (hazard_0 + 13),DE
 C $8C35,4 Set the speed of the perp's car to #REGde
 C $8C39,1 Return
@@ -3429,8 +3429,8 @@ C $8C43,5 Set smash_counter to 20 [Should it not always be 20 at this point alre
 C $8C48,5 Set user input mask to (Quit+Pause) to inhibit player control
 C $8C4D,3 Print the "OK! PULL OVER CREEP!" message
 C $8C50,3 Call setup_overlay_messages
-C $8C53,3 #REGde = $190 (pos/accel?)
-C $8C56,2 Exit via hpc_set_perp_pos_or_accel
+C $8C53,3 #REGde = $190 (perp speed)
+C $8C56,2 Exit via hpc_set_perp_speed
 b $8C58 End of stage bonus/score messages
 @ $8C58 label=score_messages
 B $8C58,3,3
@@ -3579,7 +3579,7 @@ C $8E1F,4 Set transition animation start address
 C $8E23,2 4 frames of animation? 4 states?
 C $8E25,3 transition_control = A
 C $8E28,1 Return
-c $8E29 Fills the attribute bytes leftwards from column 1
+c $8E29 Fills the playfield attribute bytes leftwards from column 1
 D $8E29 Used by the routines at #R$8876, #R$8A57 and #R$8D8F.
 @ $8E29 label=fill_attributes
 C $8E29,3 Screen attribute position (1,8)
@@ -5094,7 +5094,7 @@ C $9CF6,2 Exit via ab_exit
 @ $9CF8 label=ab_high_nibble
 C $9CF8,4 Shift the high digit down
 @ $9CFC label=ab_digit
-C $9CFC,2 Mask off low nibble
+C $9CFC,2 Isolate low nibble
 C $9CFE,2 If #REGa is not zero goto ab_non_zero
 N $9D00 Digit is zero.
 C $9D00,4 Jump if the flag in #REGc is set
@@ -5136,7 +5136,6 @@ C $9D2D,1 Return
 c $9D2E Calculate overtake bonus
 D $9D2E The bonus is 200 for each overtaken car and is reset on crashes.
 R $9D2E Used by the routine at #R$8401.
-N $9D2E I:A Iterations (number of sequential overtakes to consider)
 @ $9D2E label=calc_overtake_bonus
 C $9D2E,5 If overtake_bonus_counter is zero then return
 C $9D33,1 Set iterations to no. of overtakes
@@ -5227,9 +5226,11 @@ C $9DE3,3 If (<sighted> AND <counter_B>) is zero jump to plot_turbos_and_scores
 C $9DE6,3 Point #REGhl at left light's attributes
 C $9DE9,3 Toggle its brightness
 C $9DEC,3 Point #REGhl at right light's attributes
-C $9DEF,5 Toggle its brightness
+C $9DEF,3 Toggle its brightness
+C $9DF2,2 Exit via plot_turbos_and_scores
 c $9DF4 Toggle the light's BRIGHT bit (#REGhl -> attrs)
 D $9DF4 Used by the routines at #R$9D51 and #R$B4CC.
+R $9DF4 I:HL Address of light to toggle.
 @ $9DF4 label=toggle_light_brightness
 C $9DF4,3 B = 4, C = $40 (BRIGHT bit)
 C $9DF7,19 Toggle attribute byte on five successive locations
@@ -5419,6 +5420,7 @@ c $9F47 Plots an 8x15 LED font digit
 D $9F47 This appears to be set up to work for Y coordinates of 1, 9, 17, ...
 R $9F47 I:A Glyph ID (0..9)
 R $9F47 I:DE Address of (real) screen location
+R $9F47 O:DE' Next screen location
 @ $9F47 label=ledfont_plot
 C $9F47,1 Bank
 C $9F48,13 #REGhl = &ledfont[glyphID * 15]
@@ -5436,20 +5438,23 @@ C $9F97,1 Bank
 C $9F98,1 Return
 c $9F99 Another draw string entry point?
 D $9F99 Used by the routine at #R$8E6C.
+R $9F99 I:A ...
+R $9F99 I:BC String
 @ $9F99 label=draw_string_A
 C $9F9A,1 Bank
 C $9F9B,1 HL' = BC   so BC is ptr to text
-C $9F9C,3 DE = 32
-C $9F9F,1 C = A
+C $9F9C,3 DE' = 32
+C $9F9F,1 C' = A
 C $9FA0,1 Bank
 C $9FA1,2 goto draw_string_entry
 N $9FA3 The string is terminated by setting the topmost bit of the final character.
 @ $9FA3 label=*draw_string
 C $9FA3,3 A' = 1  Set drawing type (single height, plots to real screen)
 @ $9FA6 label=*draw_string_entry
-C $9FA6,8 Load a byte and mask off the text part
+C $9FA6,8 Load a byte and isolate the text part
 C $9FAE,6 Was bit 7 set?, quit if so, otherwise loop
 c $9FB4 Draws a character (to buffer or screen?)
+D $9FB4 Input font definitions are only seven rows high so gaps are left when drawing.
 D $9FB4 Used by the routine at #R$9F99.
 R $9FB4 I:A Character to draw (ASCII)
 R $9FB4 I:A' Rendering type (double height, invert, etc.)
@@ -5516,6 +5521,7 @@ C $A01C,1 *DE = A
 C $A01D,1 Move to next row
 C $A01E,1 Move to next glyph row
 C $A01F,2 While iterations remain, goto loop2
+@ $A023 label=dc_double_height_inverted
 C $A024,2 B = 7
 @ $A026 label=dc_loop3
 C $A026,2 A = ~*HL
@@ -5525,6 +5531,7 @@ C $A02A,1 *DE = A
 C $A02B,1 Move to next row
 C $A02C,1 Move to next glyph row
 C $A02D,2 While iterations remain, goto loop3
+@ $A031 label=dc_single_height_inverted
 C $A032,2 B = 7
 @ $A034 label=dc_loop4
 C $A034,3 *DE = ~*HL
@@ -5532,7 +5539,7 @@ C $A037,1 Move to next glyph row
 C $A038,1 Move to next row
 C $A039,2 While iterations remain, goto loop4
 N $A03D Plots double-height glyphs. DE->screen HL->glyph def
-@ $A03D label=dc_double_height_glyph
+@ $A03D label=dc_double_height
 C $A03E,2 *DE = 0
 C $A040,1 D++
 C $A041,2 *DE = *HL
@@ -5542,13 +5549,14 @@ C $A047,1 D++
 C $A048,42 Repeat six more times
 C $A072,1 A = 0
 C $A073,1 *DE = A
-@ $A074 label=dc_a074
+@ $A074 label=dc_set_double_attrs
 C $A075,1 E++
 C $A078,3 *HL |= C
 C $A07B,1 HL += DE
 C $A07C,3 *HL |= C
 C $A080,1 L++
 C $A082,1 Return
+@ $A083 label=dc_single_height
 C $A084,1 A = 0
 C $A085,1 *DE = A
 C $A086,1 D++
@@ -5567,14 +5575,15 @@ C $A09E,1 D++
 C $A0A1,1 E--
 C $A0A2,1 D++
 C $A0A3,1 *DE = A
-@ $A0A4 label=dc_a0a4
+@ $A0A4 label=dc_set_single_attrs
 C $A0A5,1 E++
 C $A0A7,3 *HL |= C
 C $A0AA,1 L++
 C $A0AC,1 Return
+@ $A0AD label=dc_generic
 C $A0AD,1 Save screen pointer
 C $A0AE,2 7 iterations/rows
-@ $A0B0 label=dc_loop_a0b0
+@ $A0B0 label=dc_generic_loop
 C $A0B0,2 Transfer a byte
 C $A0B2,1 Move to next scanline (Y0++)
 C $A0B3,1 Move to next row of glyph data
@@ -6209,7 +6218,7 @@ C $A5AE,1 Complement it
 C $A5AF,1 Move result to #REGl
 N $A5B0 Read left hand offset bits (0+1).
 C $A5B0,1 Copy lanes byte to #REGa
-C $A5B1,2 Mask off left hand offset bits
+C $A5B1,2 Isolate left hand offset bits
 C $A5B3,2 Jump if there's a left hand offset
 N $A5B5 Otherwise no left hand offset is set.
 C $A5B5,2 Set #REGhl to left hand table address: $E8xx
@@ -6602,7 +6611,7 @@ C $A873,2 Add offset to previously computed table address (#REGb is zero)
 C $A875,4 Set (different) horizontal position from table
 N $A879 Now pick a random car LOD to show.
 C $A879,3 Generate a random byte with which we shall select a LOD
-C $A87C,2 Mask off two bits, shifted up by one (giving a valid array byte offset of 0/2/4/6)
+C $A87C,2 Isolate two bits, shifted up by one (giving a valid array byte offset of 0/2/4/6)
 C $A87E,1 Copy to #REGc
 N $A87F If we've sighted the perp then don't spawn any generic cars (offset 6) since they look just like the perp's. Instead use offset 4.
 C $A87F,4 Load and test sighted_flag
@@ -9201,7 +9210,7 @@ c $BDC1 Clears the playfield then sets its attributes
 D $BDC1 The playfield is the lower two thirds of the screen - where the action happens.
 R $BDC1 Used by the routines at #R$8014, #R$858C and #R$87DC.
 @ $BDC1 label=clear_playfield_set_attrs
-C $BDC1,3 Call clear_game_screen
+C $BDC1,3 Call clear_playfield_screen
 C $BDC4,13 Clear the game screen pixels to $FF (bug: duplicates work just done)
 C $BDD1,12 Clear the game screen attributes to $28 (black over cyan) - first two rows only
 C $BDDD,6 Clear the next three rows to $68 (black over bright cyan)
@@ -9273,7 +9282,7 @@ C $BE77,4 road_curvature_ptr = #REGde
 C $BE7B,2 A -= 16  -- decrement counter in top nibble
 @ $BE7D label=rm_save_curvature_byte
 C $BE7D,3 curvature_byte = A
-C $BE80,2 Mask off direction bits
+C $BE80,2 Isolate direction bits
 C $BE82,4 Jump to rm_set_curvature if (A & (1<<3)) is zero   -- bit 3 => left (so jump if right)
 C $BE86,4 A = -(A & 7)  -- Left direction becomes -ve
 N $BE8A Write the direction into the cyclic road buffer.
@@ -10068,7 +10077,7 @@ C $C4A9,4 Self modify 'LD A,x' @ #R$C6BC to load on/off stripe fill pattern
 N $C4AD This entry point is used by the routine at #R$C598.
 @ $C4AD label=dr_read_lanes
 C $C4AD,3 Load a lanes byte
-C $C4B0,2 Mask off bottom two bits (left hand position)
+C $C4B0,2 Isolate bottom two bits (left hand position)
 C $C4B2,3 Jump to <self modified> if zero (e.g. dr_four_lane_highway)
 N $C4B5 Otherwise it's anything other than the zero case.
 C $C4B5,1 Bank
@@ -10582,16 +10591,16 @@ N $C8AB Writes #REGde to #REGhl 15 times filling the scanline. Draws the blank u
 C $C8AB,1 Put it in #REGsp (so we can use PUSH for speed)
 C $C8AC,15 Write 30 bytes of sky pixels
 C $C8BB,3 Loop
-c $C8BE Builds a pre-shifted version of the backdrop horizon image
+c $C8BE Builds a pre-shifted version of the backdrop horizon bitmap
 D $C8BE 80x24 pixels = 240 bytes
 D $C8BE Used by the routine at #R$87DC.
 @ $C8BE label=pre_shift_backdrop
-C $C8BE,3 Point at source image
-C $C8C1,3 Point at destination image (to be shifted)
+C $C8BE,3 Point at source bitmap
+C $C8C1,3 Point at destination bitmap (to be shifted)
 C $C8C4,2 Preserve addresses
-C $C8C6,5 Copy whole source image to destination
+C $C8C6,5 Copy whole source bitmap to destination
 C $C8CB,1 Restore source address
-C $C8CC,5 #REGde = Source address + 9
+C $C8CC,5 #REGde = Source address + 9 (final byte on line)
 C $C8D1,1 Pop destination address
 C $C8D2,3 Load counters for 10 bytes per row, 24 rows
 @ $C8D5 label=psb_row_loop
@@ -11012,7 +11021,7 @@ C $CBE8,3 Load road_buffer_offset into #REGhl
 C $CBEB,1 Read a curvature data byte
 N $CBEC See similar code at #R$CD47.
 C $CBEC,3 Load fast_counter
-C $CBEF,2 Mask off top three bits
+C $CBEF,2 Isolate top three bits
 C $CBF1,1 Move result to #REGb
 N $CBF2 Map #REGb (0,32,64,96,...,224) to (0,22,44,66,...,154)
 C $CBF2,5 Divide by 4 and subtract
@@ -12393,7 +12402,7 @@ C $E810,1 Set 128K flag to zero (48K mode)
 C $E811,2 3 relocations to do in 48K mode
 C $E813,3 Jump to common
 @ $E816 label=*entrypt_128k
-C $E816,3 Call clear_game_attrs
+C $E816,3 Call clear_playfield_attrs
 C $E819,2 Set 128K flag to one (128K mode)
 C $E81B,2 5 relocations to do in 128K mode
 @ $E81D label=*entrypt_common
@@ -12422,7 +12431,7 @@ C $E855,3 Exit via bootstrap  -- start the game
 W $E858,6,2 Copy 24 bytes from data_e88e to $EC00
 W $E85E,6,2 Copy 40 bytes from square_zoom_in_mask to $EB00
 W $E864,6,2 Copy 48 bytes from diamond_zoom_in_mask to $EA00
-W $E86A,6,2 Copy 926 bytes from page_in_stage_128k onwards to $8014 [128K only]
+W $E86A,6,2 Copy 926 bytes from load_stage_128k onwards to $8014 [128K only]
 W $E870,6,2 Copy 24 bytes (3 bytes * 8 hooks) from hooks_128k to hooks at #R$83B5 [128K only]
 @ $E876 label=hooks_128k
 @ $E876 ssub=JP start_siren_128k - hooks_128k + all_hooks
@@ -12677,7 +12686,7 @@ N $EC16 #REGhl' is screen address, #REGde' is attribute address
 C $EC16,1 Get screen address and preserve old #REGhl
 C $EC17,2 Preserve regs
 @ $EC19 label=menu_draw_string_loop
-C $EC19,3 Mask off terminator bit
+C $EC19,3 Isolate terminator bit
 C $EC1C,5 Draw character in #REGa
 C $EC21,2 End of string?
 C $EC23,1 Advance to next char irrespective
@@ -12708,14 +12717,14 @@ C $EC54,3 Anything else becomes a full stop
 C $EC57,2 ASCII - 32 - offset in #REGc
 @ $EC59 label=mdc_have_glyph
 C $EC59,6 Multiply #REGc by seven - the height of a glyph
-C $EC5F,5 #REGbc = #REGa  -- Why the RL?
+C $EC5F,5 #REGbc = #REGa  -- Using RL to shift the carry in
 C $EC64,3 Point #REGhl at 8x7 font
 C $EC67,1 Point at glyph
-C $EC68,1 bank
-C $EC69,1 push banked scr addr
-C $EC6A,1 advance banked scr addr
-C $EC6B,1 unbank
-C $EC6C,1 pop scr addr as-was
+C $EC68,1 Bank
+C $EC69,1 Push banked scr addr
+C $EC6A,1 Advance banked scr addr
+C $EC6B,1 Unbank
+C $EC6C,1 Pop scr addr as-was
 C $EC6D,4 If the banked carry flag is set then draw single height characters
 @ $EC71 label=mdc_double_height
 C $EC71,2 Copy a row of glyph to screen (not advancing)
@@ -12726,8 +12735,8 @@ C $EC77,1 Move to next scanline
 C $EC78,7 Row 2/7
 C $EC80,6 Row 3/7
 C $EC86,5 Row 4/7
-C $EC8B,7 Move to next scanline after boundary (DE += $F81F)
-C $EC92,8 Row 5/7
+C $EC8B,8 Move to next scanline after boundary (DE += $F81F)
+C $EC93,7 Row 5/7
 C $EC9A,7 Row 6/7
 C $ECA1,7 Row 7/7
 C $ECA8,2 why writing a blank?
@@ -12744,6 +12753,7 @@ C $ECB8,1 Unbank
 C $ECB9,1 Return
 N $ECBA Plot 8x7 character  HL->character, DE->screen
 @ $ECBA label=mdc_single_height
+C $ECBA,1 Put A back
 C $ECBB,4 Row 1/7
 C $ECBF,4 Row 2/7
 C $ECC3,4 Row 3/7
@@ -13008,7 +13018,7 @@ C $EED3,3 Update <addr of next music byte> above
 C $EED6,1 Compensate for earlier decrement
 C $EED7,4 Jump if music byte < 128
 N $EEDB A byte of the form 0b1aaaaiii (1 is delay bit)
-C $EEDB,2 Mask off delay bit
+C $EEDB,2 Isolate delay bit
 C $EEDD,1 Bank
 C $EEDE,5 Self modify 'LD A' @ #R$EEAD  (setting <delay data byte thing> to 1)
 C $EEE3,3 Self modify 'LD A' @ #R$EF00 below
@@ -13151,7 +13161,7 @@ B $F1DE,32,8 Pattern data G
 B $F1FE,34,8*4,2 Pattern data H
 c $F220 128K mode routines and data
 D $F220 This is relocated to $8014/load_stage onwards during init (926 bytes long).
-@ $F220 label=page_in_stage_128k
+@ $F220 label=load_stage_128k
 C $F220,3 Load wanted_stage_number
 C $F223,3 Load address of current_stage_number
 C $F226,2 Return if the stage is already loaded
@@ -13343,7 +13353,7 @@ C $F367,2 Set nibble counter to 2
 C $F369,1 Read a byte of sample data
 C $F36A,4 Use high nibble first
 @ $F36E label=plsp_2
-C $F36E,2 Mask off next sample
+C $F36E,2 Isolate next sample
 C $F370,1 Bank it
 C $F371,1 Unbank
 N $F372 Write sample as Channel A volume.
@@ -13438,11 +13448,11 @@ C $F40F,1 H = D
 C $F410,1 Restore iterations
 C $F411,2 Loop to f3e8_loop
 C $F413,1 Return
-c $F414 Routine at F414
+c $F414 Reset the paging register
 @ $F414 label=reset_paging_128k
 C $F414,6 128K: Set paging register to default
 C $F41A,1 Return
-c $F41B Routine at F41B
+c $F41B Attract mode (128K)
 @ $F41B label=attract_mode_128k
 C $F41B,3 Entry point for title animations
 C $F41E,3 Call relocated call_bank_3_128k
