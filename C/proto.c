@@ -46,6 +46,9 @@
 //
 // Align the screen (and perhaps the back buffer too) on a 4K? boundary such
 // that the assumed alignment still works.
+//
+// Copy whole messages that get modified into the state structure.
+//
 
 #include <assert.h>
 #include <stdint.h>
@@ -435,10 +438,25 @@ enum {
 
 /* ----------------------------------------------------------------------- */
 
-#define SCREEN(addr) (&state->screen[(addr) - SCREEN_START_ADDRESS])
-#define BACKBUF(addr) (&state->backbuffer[(addr) - BACKBUFFER_START_ADDRESS])
+#define BACKBUFFER_WIDTH                (256) // or is it 240?
+#define BACKBUFFER_HEIGHT               (128)
+#define BACKBUFFER_LENGTH               (BACKBUFFER_WIDTH / 8 * BACKBUFFER_HEIGHT)
+#define BACKBUFFER_START_ADDRESS        ((uint16_t) 0xF000)
+
+#define SCREEN(addr)    (&state->screen[(addr) - SCREEN_START_ADDRESS])
+#define BACKBUF(addr)   (&state->backbuffer[(addr) - BACKBUFFER_START_ADDRESS])
+
+#define UNSCREEN(ptr)   ((ptr) - &state->screen[0])
+// Returns byte offset within backbuf, given a pointer [TODO cast to char *]
+#define UNBACKBUF(ptr)  ((ptr) - &state->backbuffer[0])
 
 #define ATTRIBUTE_BRIGHT      (1<<6)
+
+#define ATTRIBUTE_BLACK_OVER_BRIGHT_RED     (0x50)
+#define ATTRIBUTE_BLACK_OVER_BRIGHT_MAGENTA (0x58)
+#define ATTRIBUTE_BLACK_OVER_BRIGHT_GREEN   (0x60)
+#define ATTRIBUTE_BLACK_OVER_BRIGHT_CYAN    (0x68)
+#define ATTRIBUTE_BLACK_OVER_BRIGHT_WHITE   (0x78)
 
 #define STREND                (1<<7) // string terminating top bit
 
@@ -483,6 +501,11 @@ typedef uint8_t chatterpriority_t;
 #define STAGEDATA_BASE        (0x5C00)
 #define STAGEDATA_END         (0x76EF) // inclusive
 #define STAGEDATA_SIZE        (STAGEDATA_END + 1 - STAGEDATA_BASE)
+
+#define PERPCAUGHTPHASE_0     (0)
+#define PERPCAUGHTPHASE_1     (1)
+#define PERPCAUGHTPHASE_2     (2)
+#define PERPCAUGHTPHASE_3     (3)
 
 /* ----------------------------------------------------------------------- */
 
@@ -1018,7 +1041,7 @@ typedef struct hazard_s {
   uint16_t       speed;
   uint8_t        TBD15;
   uint8_t        TBD16;
-  uint8_t        TBD17;
+  uint8_t        TBD17; // perp distance high byte
   uint8_t        TBD18;
   uint8_t        TBD19;
 }
@@ -1069,7 +1092,7 @@ typedef struct chqstate_s {
   // $8001
   uint8_t  attract_cycle;
   // $8002
-  char     score_bcd[4];
+  uint8_t  score_bcd[4];
   // $8006
   uint8_t  retry_count;
   // $8007
@@ -1123,6 +1146,9 @@ typedef struct chqstate_s {
   // $9D9B
   char    *SM_address_of_score_digits; // was self modified
 
+  // $9E22
+  uint8_t  SM_9e22; // in plot_turbos_and_scores
+
   // $A0D5
   uint8_t  user_input;
 
@@ -1143,6 +1169,18 @@ typedef struct chqstate_s {
   // $A188
   hazard_t hazards[6];
 
+  // $A220
+  uint8_t  dont_draw_screen_attrs;
+  // $A221
+  uint8_t  inhibit_collision_detection;
+  // $A222
+  uint8_t  n_hazards;
+  // $A223
+  uint8_t  displayed_stage;
+  // $A224
+  uint8_t  helicopter_control;
+  // $A225
+  uint8_t  dont_spawn_cars;
   // $A226
   uint8_t  correct_fork;
   // $A227
@@ -1236,6 +1274,8 @@ typedef struct chqstate_s {
   uint8_t  table_e300[32]; // note: first byte should be $60
   // $E320
   uint8_t  table_e320[2];
+  // $E34B
+  uint8_t  horizon_table_e34b[3]; // horizon related
   // $E34F
   uint8_t  object_positions[21];
   // $E800
@@ -1252,6 +1292,9 @@ typedef struct chqstate_s {
   uint16_t table_ed00[128];
   // $EE00
   uint8_t  road_buffer[256];
+
+  // $F000
+  uint8_t  backbuffer[BACKBUFFER_LENGTH];
 } chqstate_t;
 
 /* ----------------------------------------------------------------------- */
@@ -1338,6 +1381,8 @@ static void play_speech_hook(chqstate_t *state);
 static void attract_mode_hook(chqstate_t *state);
 
 static void main_loop(chqstate_t *state);
+
+static void cpu_driver(chqstate_t *state);
 
 static void set_up_stage(chqstate_t *state, const uint8_t *stage_data);
 static void sus_clear_lights(uint8_t *attrptr);
@@ -1434,13 +1479,22 @@ static void update_scoreboard(chqstate_t *state);
 static void toggle_light_brightness(chqstate_t *state, uint8_t *HL);
 
 static void plot_turbos_and_scores(chqstate_t *state);
+static void ptas_led_digits(chqstate_t    *state,
+                            uint8_t        Biterations,
+                            const uint8_t *DEdigits,
+                            uint8_t       *HLstored,
+                            uint8_t       *DEscreen);
 
 static uint8_t *ledfont_plot(chqstate_t *state, uint8_t ord, uint8_t *screen);
 
-static void draw_string_A(chqstate_t *state, uint8_t A, const uint8_t *BCstring,
-                          uint8_t *DEscreen);
-static void draw_string(chqstate_t *state, uint8_t A, const uint8_t *BCstring,
-                        uint8_t *DEscreen);
+static void draw_string_A(chqstate_t    *state,
+                          uint8_t        A,
+                          const uint8_t *BCstring,
+                          uint8_t       *DEscreen);
+static void draw_string(chqstate_t    *state,
+                        uint8_t        A,
+                        const uint8_t *BCstring,
+                        uint8_t       *DEscreen);
 static void draw_string_entry(chqstate_t    *state,
                               uint8_t       *DEscreen,
                               const uint8_t *HLstring,
@@ -1614,6 +1668,61 @@ static T multiply(T a, T c);
 #define CHATTERBLK__LIMIT                     (32)
 
 /* ----------------------------------------------------------------------- */
+
+// [Graphics] Turbo icons
+//
+
+#define TURBOWIDTH  (16) // pixels
+#define TURBOHEIGHT (14)
+#define TURBOFRAMES  (3)
+
+static const uint8_t bitmap_turbospin[TURBOWIDTH / 8 * 2 * TURBOHEIGHT *
+                                      TURBOFRAMES] = {
+  ________, ________, ___XXXXX, ________,
+  ________, _XXXXXXX, ____XXXX, XXX_____,
+  ________, _XXXXXXX, _____XXX, XXXX____,
+  ________, ________, ______XX, __XXX___,
+  ________, _XXX____, _______X, _X_XXX__,
+  ________, _XXX_XX_, _______X, _X__XX__,
+  X_______, __XX___X, _______X, X___XX__,
+  X_______, __XX___X, _______X, X___XX__,
+  X_______, __XX__X_, ________, _XX_XXX_,
+  X_______, __XXX_X_, ________, ____XXX_,
+  XX______, ___XXX__, ________, ________,
+  XXX_____, ____XXXX, ________, XXXXXXX_,
+  XXXX____, _____XXX, ________, XXXXXXX_,
+  XXXXX___, ________, ________, ________,
+
+  ________, ________, ___XXXXX, ________,
+  ________, _XXXXXXX, ____XXXX, XXX_____,
+  ________, _XXXXXXX, _____XXX, XXXX____,
+  ________, ________, ______XX, __XXX___,
+  ________, _XXX__X_, _______X, ___XXX__,
+  ________, _XXX___X, _______X, __X_XX__,
+  X_______, __XX___X, _______X, XX__XX__,
+  X_______, __XX__XX, _______X, X___XX__,
+  X_______, __XX_X__, ________, X___XXX_,
+  X_______, __XXX___, ________, _X__XXX_,
+  XX______, ___XXX__, ________, ________,
+  XXX_____, ____XXXX, ________, XXXXXXX_,
+  XXXX____, _____XXX, ________, XXXXXXX_,
+  XXXXX___, ________, ________, ________,
+
+  ________, ________, ___XXXXX, ________,
+  ________, _XXXXXXX, ____XXXX, XXX_____,
+  ________, _XXXXXXX, _____XXX, XXXX____,
+  ________, ________, ______XX, __XXX___,
+  ________, _XXX___X, _______X, ___XXX__,
+  ________, _XXX____, _______X, X___XX__,
+  X_______, __XX__XX, _______X, X_X_XX__,
+  X_______, __XX_X_X, _______X, XX__XX__,
+  X_______, __XX___X, ________, ____XXX_,
+  X_______, __XXX___, ________, X___XXX_,
+  XX______, ___XXX__, ________, ________,
+  XXX_____, ____XXXX, ________, XXXXXXX_,
+  XXXX____, _____XXX, ________, XXXXXXX_,
+  XXXXX___, ________, ________, ________
+};
 
 // [Graphics] Faces
 //
@@ -3155,7 +3264,7 @@ static void load_stage(chqstate_t *state)
   A = state->wanted_stage_number;
   if (A == state->current_stage_number)
     return;
-  state->current_stage_number = A;
+  state->current_stage_number   = A;
 
   // Copy the stage data from source to stagedata[]
   memcpy((uint8_t *) stgmap(state, STAGEDATA_BASE), stage_data_locations[A],
@@ -3179,7 +3288,7 @@ static void attract_mode(chqstate_t *state)
     if (A == USERINPUT_FIRE)
       return;
 
-    // TODO cpu_driver();
+    cpu_driver(state);
 
     HL = &attract_messages[0];
     B  = 1;
@@ -3334,6 +3443,43 @@ ml_not_credits:
   // TODO test mode etc.
 }
 
+// $852A
+static void cpu_driver(chqstate_t *state)
+{
+  uint16_t roadpos; // was HL
+  uint8_t  input;   // was A
+
+  roadpos = state->road_pos;
+  input = USERINPUT_UP | USERINPUT_RIGHT;
+  if (roadpos < 0x0105) {
+    input = USERINPUT_UP | USERINPUT_LEFT;
+    if (roadpos >= 0x00F5)
+      input = USERINPUT_UP;
+  }
+
+  if (state->gear != (state->speed < 150))
+    input |= USERINPUT_FIRE;
+
+  state->user_input = input;
+  read_map(state);
+  spawn_cars(state);
+  cycle_counters(state);
+  build_height_table(state);
+  scroll_horizon(state);
+  layout_road(state);
+  draw_road(state);
+  layout_objects(state);
+  prepare_tunnel(state);
+  spawn_hazards(state);
+  choose_dirt_and_stones(state);
+  layout_dirt_and_stones(state);
+  draw_hazards(state);
+  move_hero_car(state);
+  check_scenery_collisions(state);
+  draw_everything_else(state);
+  animate_hero_car(state); // exit via
+}
+
 // $87DC
 static void set_up_stage(chqstate_t *state, const uint8_t *stage_data)
 {
@@ -3358,12 +3504,12 @@ static void set_up_stage(chqstate_t *state, const uint8_t *stage_data)
 
   pre_shift_backdrop(state);
 
-#if 0
-  // set backdrop position in ?road drawing table?
-  state->SM_E34B = 8;
-  state->SM_E34C = 0; // check this zero
-  state->SM_E34D = 0;
+  // set backdrop position in ?horizon table?
+  state->horizon_table_e34b[0] = 8;
+  state->horizon_table_e34b[1] = 0; // presumed to be zero (needs checking)
+  state->horizon_table_e34b[2] = 0;
 
+#if 0
   // NOP some things TBD
   state->SM_8F82 = 0;
   //$8F83 = 0; // first one covers it all
@@ -3480,7 +3626,7 @@ static void handle_perp_caught(chqstate_t *state)
 // $8C3A
 static void fully_smashed(chqstate_t *state)
 {
-  state->perp_caught_phase  = 1; // add symbols
+  state->perp_caught_phase  = PERPCAUGHTPHASE_1;
   state->hand_flag          = 2; // for this one too
   state->smash_counter      = 20;
   state->st.user_input_mask = USERINPUT_PAUSE | USERINPUT_QUIT;
@@ -4051,7 +4197,8 @@ static void tick(chqstate_t *state)
   uint8_t  hidigit;      // was A
   uint8_t  lodigit;      // was L
 
-  if (state->perp_caught_phase > 0 || state->transition_control == 4)
+  if (state->perp_caught_phase > PERPCAUGHTPHASE_0
+      || state->transition_control == 4)
     return;
 
   ptimebcd = &state->st.time_bcd;
@@ -4250,7 +4397,7 @@ static void increment_score(chqstate_t *state,
                             uint8_t     D_hi)
 {
   int      carry = 0;
-  char    *scorebcd; // was HL
+  uint8_t *scorebcd; // was HL
   uint8_t  A;
 
   scorebcd = &state->score_bcd[0];
@@ -4320,6 +4467,249 @@ static void toggle_light_brightness(chqstate_t *state, uint8_t *HL)
 // $9E11
 static void plot_turbos_and_scores(chqstate_t *state)
 {
+  int             carry;
+  uint8_t         Aturbos;
+  uint8_t         Cturbos;
+  uint8_t         Aboost;
+  const uint8_t  *HLbitmap;
+  uint8_t         Aframe;
+  uint8_t         B;
+  const uint16_t *SM_9e45;
+  uint8_t         A;
+  const uint16_t *SPbitmap;
+  uint8_t        *HLscreen;
+  uint16_t        DEbitmap;
+  uint8_t        *DEscreen;
+  uint16_t        DEdash_speed;
+  uint8_t         Bdash_iterations;
+  uint8_t         Ascale;
+  uint16_t        HLdash;
+  uint16_t        BCdash;
+  uint8_t         Ddash;
+  uint8_t         Edash;
+  uint8_t        *DEbcd;
+  uint16_t        HLdistance;
+  uint16_t        BCdivisor;
+
+  Aturbos = state->st.turbos;
+  if (Aturbos) {
+
+    Cturbos = Aturbos;
+    Aboost = state->boost;
+    HLbitmap = &bitmap_turbospin[0];
+    if (Aboost == 0)
+      goto ptas_turbo_setup;
+
+    Aframe = state->SM_9e22 + 1;
+    if (Aframe == 3)
+      Aframe = 0;
+    state->SM_9e22 = Aframe;
+    if (Aframe == 0)
+      goto ptas_turbo_setup;
+
+    // Calculate the frame address
+    B = Aframe;
+    do { HLbitmap += 56; } while (--B > 0);
+
+ptas_turbo_setup:
+    SM_9e45 = (const uint16_t *) HLbitmap; // local
+    //SM_9e79 = SP; // save old SP
+
+    A = 0xE1; // Low byte of back buffer draw address
+    do {
+      SPbitmap = (const uint16_t *) &bitmap_turbospin[0];
+      Cturbos--;
+      if (Cturbos == 0)
+        SPbitmap = SM_9e45;
+      Cturbos++;
+      HLscreen = BACKBUF(0xFE00 | A);
+      // EX AF,AF'
+      B = TURBOHEIGHT;
+      do {
+        uint8_t Emask, Dbitmap;
+
+        DEbitmap = *SPbitmap++; // POP DEbitmap
+        Emask = DEbitmap & 0xFF;
+        Dbitmap = DEbitmap >> 8;
+        *HLscreen = (*HLscreen & Emask) | Dbitmap;
+        HLscreen++;
+
+        DEbitmap = *SPbitmap++; // POP DEbitmap
+        Emask = DEbitmap & 0xFF;
+        Dbitmap = DEbitmap >> 8;
+        *HLscreen = (*HLscreen & Emask) | Dbitmap;
+        HLscreen--;
+
+        // Is this advancing a screen or a backbuffer pointer?
+
+        // FIXME row advance
+        //A = H;
+        //H--;
+        //A &= 15;
+        //JP NZ;
+        //A = H;
+        //A += 0x10;
+        //H = A;
+        //A = L;
+        //A -= 0x20;
+        //L = A;
+        //JP NC;
+        //A = H;
+        //A -= 0x10;
+        //H = A;
+      } while (--B > 0);
+      // EX AF,AF'
+      A += 2;
+    } while (--Cturbos > 0);
+
+    // LD SP was here
+  }
+
+  DEscreen = SCREEN(0x4132); // speed digits pos (144,9)
+  // EXX
+  DEdash_speed = state->speed;
+
+  // Scale speed by 82%
+  HLdash = 0;
+  Bdash_iterations = 7; // iterations
+  Ascale = 82; // speed scale
+  do {
+    RL(Ascale);
+    if (carry)
+      HLdash += DEdash_speed;
+    HLdash <<= 1;
+  } while (--Bdash_iterations > 0);
+
+  // Count 10,000s
+  BCdash = 10000;
+  Ddash = Edash = -1; // Conv: original inited both at once
+  //A = 0; // clear carry?
+  do {
+    Ddash++;
+    carry = (BCdash > HLdash), HLdash -= BCdash;
+  } while (!carry);
+  HLdash += BCdash; // correct overshoot
+
+  // Count 1,000s
+  //A = 0; // clear carry?
+  BCdash = 1000;
+  do {
+    Edash++;
+    carry = (BCdash > HLdash), HLdash -= BCdash;
+  } while (!carry);
+  HLdash += BCdash; // correct overshoot
+
+  // Count 100s
+  A = 0; // counter
+  BCdash = 100;
+  do {
+    A++;
+    carry = (BCdash > HLdash), HLdash -= BCdash;
+  } while (!carry);
+  A--; // correct for starting early
+
+  // Plot speed digits
+  ledfont_plot(state, Ddash, DEscreen); // draw 10,000s
+  ledfont_plot(state, Edash, DEscreen); // draw  1,000s
+  ledfont_plot(state, A,     DEscreen); // draw    100s
+
+  // Time
+  // EXX
+  ptas_led_digits(state, 1, &state->st.time_bcd, &state->st.time_digits[1],
+                  SCREEN(0x412F)); // (120,9)
+
+  // Distance (to perp)
+
+  DEbcd = &state->distance_bcd[1];
+  // TBD17 is the high byte of the distance
+  HLdistance = (state->hazards[0].TBD17 << 8) | state->hazards[0].distance;
+
+  // Count 1,000s (no loop required)
+  BCdivisor = 1000;
+  HLdistance -= BCdivisor; // TODO set carry
+  A = 0x10; // BCD
+  if (carry) {
+    HLdistance += BCdivisor; // correct overshoot
+    A = 0x00; // BCD
+  }
+
+  // Count 100s
+  BCdivisor = 100;
+  do {
+    A++;
+    HLdistance -= BCdivisor;
+  } while (!carry);
+  HLdistance += BCdivisor; // correct overshoot
+  A--; // correct for starting early
+  DEbcd[0] = A;
+
+  // Count 10s
+  BCdivisor = 10;
+  // AND A
+  A = 0xF0; // BCD
+  do {
+    A += 0x10;
+    // AND A
+    HLdistance -= BCdivisor;
+  } while (!carry);
+  HLdistance += BCdivisor; // correct overshoot
+
+  A |= HLdistance & 0xFF; // OR in remainder
+  DEbcd[-1] = A;
+
+  ptas_led_digits(state, 2, &state->distance_bcd[1],
+                  &state->st.distance_digits[3],
+                  SCREEN(0x4191)); // was fallthrough
+
+  ptas_led_digits(state, 4, &state->score_bcd[3], &state->st.score_digits[7],
+                  SCREEN(0x4126)); // was fallthrough
+}
+
+// $9F1E
+//
+// Biterations was B
+// DEdigits was DE
+// HLstored was HL
+// DEscreen was DE'
+static void ptas_led_digits(chqstate_t    *state,
+                            uint8_t        Biterations,
+                            const uint8_t *DEdigits,
+                            uint8_t       *HLstored,
+                            uint8_t       *DEscreen)
+{
+  uint8_t Adigits;
+  uint8_t Cdigits;
+
+  do {
+    Adigits = *DEdigits;
+    Cdigits = Adigits; //tmp copy
+
+    Adigits = Adigits >> 4;
+    if (Adigits != *HLstored)
+      goto ptas_led_plot_1st;
+    DEscreen++; // move screen pos
+ptas_led_next_half:
+    HLstored--;
+    Adigits = Cdigits & 0x0F;
+    if (Adigits != *HLstored)
+      goto ptas_led_plot_2nd;
+    DEscreen++; // move screen pos
+
+ptas_led_next_whole:
+    HLstored--;
+    DEscreen--;
+  } while (--Biterations > 0);
+  return;
+
+ptas_led_plot_1st:
+  *HLstored = Adigits;
+  ledfont_plot(state, Adigits, DEscreen);
+  goto ptas_led_next_half;
+
+ptas_led_plot_2nd:
+  *HLstored = Adigits;
+  ledfont_plot(state, Adigits, DEscreen);
+  goto ptas_led_next_whole;
 }
 
 #define LEDFONT_HEIGHT (15)
@@ -4327,7 +4717,7 @@ static void plot_turbos_and_scores(chqstate_t *state)
 // $9F47
 //
 // ord (was A)
-// screen (was DE)
+// screen (was DE')
 static uint8_t *ledfont_plot(chqstate_t *state, uint8_t ord, uint8_t *screen)
 {
   const uint8_t *font;        // was HL
@@ -4355,16 +4745,20 @@ static uint8_t *ledfont_plot(chqstate_t *state, uint8_t ord, uint8_t *screen)
 }
 
 // $9F99
-static void draw_string_A(chqstate_t *state, uint8_t A, const uint8_t *BCstring,
-                          uint8_t *DEscreen)
+static void draw_string_A(chqstate_t    *state,
+                          uint8_t        A,
+                          const uint8_t *BCstring,
+                          uint8_t       *DEscreen)
 {
   draw_string_entry(state, DEscreen, BCstring/*HL*/, 0/*Adash*/, A/*C'*/,
-                    32/*DE'*/, NULL);
+                    32/*DE'*/, NULL); // FIXME: NULL needs to be attr ptr
 }
 
 // $9FA3
-static void draw_string(chqstate_t *state, uint8_t A, const uint8_t *BCstring,
-                        uint8_t *DEscreen)
+static void draw_string(chqstate_t    *state,
+                        uint8_t        A,
+                        const uint8_t *BCstring,
+                        uint8_t       *DEscreen)
 {
   draw_string_entry(state, DEscreen, BCstring/*HL*/, 1/*Adash*/, A/*C'*/,
                     32/*DE'*/, NULL);
@@ -4376,7 +4770,7 @@ static void draw_string_entry(chqstate_t    *state,
                               const uint8_t *HLstring,
                               uint8_t        Adash,
                               uint8_t        Cdash,
-                              uint8_t        DEstride,
+                              uint8_t        DEstride, // was DE'
                               uint8_t       *HLattr)
 {
   uint8_t Achar;
@@ -4848,9 +5242,127 @@ static void exit_fork(chqstate_t *state)
 {
 }
 
+// The screen has the format 0b010BBLLLRRRCCCCC (B = band, L = scanline, R = row (group), C = column)
+// The buffer has the format 0b1111LLLLRRRCCCCC (L = scanline, R = row (group))
+
 // $BC3E
 static void draw_screen(chqstate_t *state)
 {
+  uint8_t  *scr;      // was HL
+  uint8_t  *buf;      // was HL'
+  uint16_t  offset;   // added
+  uint16_t  BCattrs;
+  uint16_t  DEstride;
+  uint8_t   Cattr;
+  uint8_t  *HLattrs;
+  uint8_t   A;
+  uint8_t   D;
+  uint8_t   E;
+
+  scr = SCREEN(0x4811); // (136, 64)
+  buf = BACKBUF(0xF001); // (8, 1)
+  for (;;) {
+ds_loop_16bytes:
+    memcpy(scr, buf, 16); scr += 256; buf += 256;
+    memcpy(scr, buf, 16); scr += 256; buf += 256;
+    memcpy(scr, buf, 16); scr += 256; buf += 256;
+    memcpy(scr, buf, 16); scr += 256; buf += 256;
+    offset = UNBACKBUF(buf); // Conv: convert back to offset
+    // Loop on the first pass (4 lines of 8 done) but not the second
+    if (offset & (1 << 10))
+      goto ds_loop_16bytes;
+
+    // Move to right hand side?
+    buf = BACKBUF(UNBACKBUF(buf) -
+                  0x07F0); // e.g. (0xF001 + 8*256 - 0x7F0) == 0xF011 on the first pass
+    scr = SCREEN(UNSCREEN(scr) - 0x07F2);
+
+ds_loop_14bytes:
+    memcpy(scr, buf, 14); scr += 256; buf += 256;
+    memcpy(scr, buf, 14); scr += 256; buf += 256;
+    memcpy(scr, buf, 14); scr += 256; buf += 256;
+    memcpy(scr, buf, 14); scr += 256; buf += 256;
+    offset = UNBACKBUF(buf); // Conv: convert back to offset
+    // Loop on the first pass (4 lines of 8 done) but not the second
+    if (offset & (1 << 10))
+      goto ds_loop_14bytes;
+
+    offset = UNBACKBUF(buf); // Conv: convert back to offset
+    // Loop on the first pass (8 lines of 16 done) but not the second
+    if ((offset & (1 << 11)) == 0) {
+      // Otherwise we've rolled into to top nibble
+      uint8_t tmp, lo, hi;
+
+      hi = 0xF0;
+      tmp = offset & 0xFF;
+      lo = tmp - hi;
+      if (tmp >= hi)
+        goto ds_attributes;
+      if (lo <= tmp) { // not overflowed
+        scr = SCREEN(UNSCREEN(scr) - 0x07EE);
+      } else { // overflowed
+        scr = SCREEN(0x5011); // (136,128)
+      }
+    } else {
+      // next scanline
+      scr = SCREEN(UNSCREEN(scr) - 0x07EE);
+      buf -= 0x10;
+    }
+  }
+
+ds_attributes:
+  // Attributes
+  if (state->dont_draw_screen_attrs)
+    return;
+
+  uint16_t DE;
+
+  A = state->horizon_table_e34b[1]; // -> horizon table?
+  E = state->horizon_table_e34b[2]; // current value?
+  state->horizon_table_e34b[2] = A;
+  if (E != 0) { // if moved? some sort of previous/current behaviour here
+    E = A * 4;
+    D = (A * 4 >= 256) ? 0xFF : 0; // was SBC A,A - must be sign extending
+    DE = (D << 8) | E;
+    HLattrs = SCREEN(state->st.horizon_attribute);
+    // Set sky colour
+    BCattrs = (ATTRIBUTE_BLACK_OVER_BRIGHT_CYAN << 8) |
+              ATTRIBUTE_BLACK_OVER_BRIGHT_CYAN;
+    // If A was zero then jump (Z => sky, NZ => ground)
+    if (D != 0) {
+      // Set ground colour
+      BCattrs = stgword(state, 0x5CF4); // load stage's ground_colour (pair of attrs)
+      HLattrs += DE;
+    }
+
+    // Conv: Use memset and only use bottom byte of BCattrs
+    memset(HLattrs, BCattrs, 30); // scr attr width -2
+    if (D == 0)
+      HLattrs += DE;
+
+    state->st.horizon_attribute = SCREEN_START_ADDRESS + UNSCREEN(HLattrs);
+  }
+
+  /* Draw smash meter attributes */
+
+  if (state->sighted_flag == 0 || state->perp_caught_phase >= PERPCAUGHTPHASE_3)
+    return;
+
+  HLattrs = SCREEN(0x5962); // attr (2,11)
+  DEstride = 32;
+
+  Cattr = ATTRIBUTE_BLACK_OVER_BRIGHT_RED;
+  *HLattrs = Cattr; HLattrs += DEstride;
+  *HLattrs = Cattr; HLattrs += DEstride;
+  Cattr = ATTRIBUTE_BLACK_OVER_BRIGHT_MAGENTA;
+  *HLattrs = Cattr; HLattrs += DEstride;
+  *HLattrs = Cattr; HLattrs += DEstride;
+  Cattr = ATTRIBUTE_BLACK_OVER_BRIGHT_GREEN;
+  *HLattrs = Cattr; HLattrs += DEstride;
+  *HLattrs = Cattr; HLattrs += DEstride;
+  Cattr = ATTRIBUTE_BLACK_OVER_BRIGHT_WHITE;
+  *HLattrs = Cattr; HLattrs += DEstride;
+  *HLattrs = Cattr;
 }
 
 // $BDC1
