@@ -399,13 +399,15 @@ static uint8_t DAA(uint8_t v, int *carry_out)
 
 /* ----------------------------------------------------------------------- */
 
-// Pinched from Spectrum.h
+// Pinched from Spectrum.h + modified
 
 #define SCREEN_WIDTH                    (256)
 #define SCREEN_HEIGHT                   (192)
 
+#define ATTRIBUTE_BRIGHT                (1<<6)
+
 enum {
-  attribute_BLACK_OVER_BLACK          = 0, // CHQ added
+  attribute_BLACK_OVER_BLACK          = 0,
   attribute_BLUE_OVER_BLACK           = 1,
   attribute_RED_OVER_BLACK            = 2,
   attribute_PURPLE_OVER_BLACK         = 3,
@@ -419,24 +421,35 @@ enum {
   attribute_BRIGHT_GREEN_OVER_BLACK   = 68,
   attribute_BRIGHT_CYAN_OVER_BLACK    = 69,
   attribute_BRIGHT_YELLOW_OVER_BLACK  = 70,
-  attribute_BRIGHT_WHITE_OVER_BLACK   = 71
+  attribute_BRIGHT_WHITE_OVER_BLACK   = 71,
+  attribute_BLACK_OVER_BRIGHT_RED     = 0x50,
+  attribute_BLACK_OVER_BRIGHT_MAGENTA = 0x58,
+  attribute_BLACK_OVER_BRIGHT_GREEN   = 0x60,
+  attribute_BLACK_OVER_BRIGHT_CYAN    = 0x68,
+  attribute_BLACK_OVER_BRIGHT_WHITE   = 0x78
 };
 
 /* Memory map */
 
-#define ROM_LENGTH                      0x4000
-#define SCREEN_BITMAP_LENGTH            (SCREEN_WIDTH / 8 * SCREEN_HEIGHT)
-#define SCREEN_ATTRIBUTES_LENGTH        (SCREEN_WIDTH / 8 * SCREEN_HEIGHT / 8)
-#define SCREEN_LENGTH                   (SCREEN_BITMAP_LENGTH + SCREEN_ATTRIBUTES_LENGTH)
+#define ROM_START_ADDRESS               (0x0000)
+#define ROM_LENGTH                      (0x4000)
+#define ROM_END_ADDRESS                 (ROM_START_ADDRESS + ROM_LENGTH - 1)
 
-#define ROM_START_ADDRESS               ((uint16_t) 0x0000)
-#define ROM_END_ADDRESS                 ((uint16_t) 0x3FFF)
-#define SCREEN_START_ADDRESS            ((uint16_t) 0x4000)
-#define SCREEN_END_ADDRESS              ((uint16_t) 0x57FF)
-#define SCREEN_ATTRIBUTES_START_ADDRESS ((uint16_t) 0x5800)
-#define SCREEN_ATTRIBUTES_END_ADDRESS   ((uint16_t) 0x5AFF)
+#define SCREEN_START_ADDRESS            (ROM_END_ADDRESS + 1)
+#define SCREEN_BITMAP_ROWBYTES          (SCREEN_WIDTH / 8)
+#define SCREEN_BITMAP_LENGTH            (SCREEN_BITMAP_ROWBYTES * SCREEN_HEIGHT)
+#define SCREEN_ATTRIBUTES_START_ADDRESS (SCREEN_START_ADDRESS + SCREEN_BITMAP_LENGTH)
+#define SCREEN_ATTRIBUTES_WIDTH         (SCREEN_WIDTH / 8)
+#define SCREEN_ATTRIBUTES_ROWBYTES      SCREEN_ATTRIBUTES_WIDTH
+#define SCREEN_ATTRIBUTES_HEIGHT        (SCREEN_HEIGHT / 8)
+#define SCREEN_ATTRIBUTES_LENGTH        (SCREEN_ATTRIBUTES_ROWBYTES * SCREEN_ATTRIBUTES_HEIGHT)
+#define SCREEN_LENGTH                   (SCREEN_BITMAP_LENGTH + SCREEN_ATTRIBUTES_LENGTH)
+#define SCREEN_END_ADDRESS              (SCREEN_START_ADDRESS + SCREEN_LENGTH - 1)
+#define SCREEN_ATTRIBUTES_END_ADDRESS   SCREEN_END_ADDRESS
 
 /* ----------------------------------------------------------------------- */
+
+#define PLAYFIELD_HEIGHT                (16 * 8)
 
 #define BACKBUFFER_WIDTH                (256) // or is it 240?
 #define BACKBUFFER_HEIGHT               (128)
@@ -450,24 +463,25 @@ enum {
 // Returns byte offset within backbuf, given a pointer [TODO cast to char *]
 #define UNBACKBUF(ptr)  ((ptr) - &state->backbuffer[0])
 
-#define ATTRIBUTE_BRIGHT      (1<<6)
+#define STAGEDATA_BASE        (0x5C00)
+#define STAGEDATA_END         (0x76EF) // inclusive
+#define STAGEDATA_LENGTH      (STAGEDATA_END + 1 - STAGEDATA_BASE)
 
-#define ATTRIBUTE_BLACK_OVER_BRIGHT_RED     (0x50)
-#define ATTRIBUTE_BLACK_OVER_BRIGHT_MAGENTA (0x58)
-#define ATTRIBUTE_BLACK_OVER_BRIGHT_GREEN   (0x60)
-#define ATTRIBUTE_BLACK_OVER_BRIGHT_CYAN    (0x68)
-#define ATTRIBUTE_BLACK_OVER_BRIGHT_WHITE   (0x78)
+#define MAXHAZARDS            (6)
+
+#define MARQUEELIGHTWIDTH     (5)
+#define MARQUEELIGHTHEIGHT    (4)
 
 #define STREND                (1<<7) // string terminating top bit
 
-#define TURBOWIDTH  (16) // pixels
-#define TURBOHEIGHT (14)
-#define TURBOFRAMES  (3)
+#define TURBOWIDTH            (16) // pixels
+#define TURBOHEIGHT           (14)
+#define TURBOFRAMES           (3)
 
-#define FACEBITMAPBYTES (32*40/8)
-#define FACEATTRBYTES   (4*5)
-#define FACEBYTES       (FACEBITMAPBYTES + FACEATTRBYTES)
-#define NFACES          (3)
+#define FACEBITMAPBYTES       (32 / 8 * 40)
+#define FACEATTRBYTES         (4 * 5)
+#define FACEBYTES             (FACEBITMAPBYTES + FACEATTRBYTES)
+#define NFACES                (3)
 
 #define DRAWCHAR_TYPE_DUNNO           (0)
 #define DRAWCHAR_TYPE_GENERIC         (1)
@@ -488,7 +502,11 @@ enum {
 #define USERINPUT_TURBO       (1<<5)
 #define USERINPUT_PAUSE       (1<<6)
 #define USERINPUT_QUIT        (1<<7)
-#define USERINPUT_ALLOW_ALL   (0xFF)
+#define USERINPUT_NOT_QUIT    (0x7F)
+#define USERINPUT_NONE        (0x00)
+
+#define USERINPUTMASK_ALLOW_NONE (0x00)
+#define USERINPUTMASK_ALLOW_ALL (0xFF)
 
 #define EFFECT_SQUEAL         (1)
 #define EFFECT_LANDING        (2)
@@ -513,10 +531,6 @@ enum {
 #define CHATTERSTATE_STOP     (3)
 
 typedef uint8_t chatterpriority_t;
-
-#define STAGEDATA_BASE        (0x5C00)
-#define STAGEDATA_END         (0x76EF) // inclusive
-#define STAGEDATA_SIZE        (STAGEDATA_END + 1 - STAGEDATA_BASE)
 
 #define PERPCAUGHTPHASE_0     (0)
 #define PERPCAUGHTPHASE_1     (1)
@@ -609,6 +623,8 @@ typedef uint8_t chatterpriority_t;
 
 /* ----------------------------------------------------------------------- */
 
+#define HAZARD_UNUSED           (0xFF)
+
 typedef struct hazard_s {
   uint8_t        used;
   uint8_t        distance;
@@ -682,7 +698,7 @@ typedef struct chqstate_s {
   uint8_t  wanted_stage_number;
 
   // $5C00..$76EF
-  uint8_t  stagedata[STAGEDATA_SIZE];
+  uint8_t  stagedata[STAGEDATA_LENGTH];
 
   // $8277
   uint8_t  SM_8277;
@@ -750,7 +766,7 @@ typedef struct chqstate_s {
   stagevars_t st;
 
   // $A188
-  hazard_t hazards[6];
+  hazard_t hazards[MAXHAZARDS];
 
   // $A220
   uint8_t  dont_draw_screen_attrs;
@@ -1015,6 +1031,7 @@ static void start_chatter(chqstate_t       *state,
                           const uint8_t    *chatterblk);
 
 static void drive_chatter(chqstate_t *state);
+static void drive_chatter_stop(chqstate_t *state);
 
 static void print_chatter(chqstate_t *state);
 static void pc_chatter_message(chqstate_t *state, const uint8_t *HLchatter);
@@ -1165,9 +1182,6 @@ static T multiply(T a, T c);
 
 /* ----------------------------------------------------------------------- */
 
-// CODE GOES HERE
-//
-
 // $8014 (copied to that position in the original)
 // $F220 page_in_stage_128k
 static void load_stage(chqstate_t *state)
@@ -1191,7 +1205,7 @@ static void load_stage(chqstate_t *state)
 
   // Copy the stage data from source to stagedata[]
   memcpy((uint8_t *) stgmap(state, STAGEDATA_BASE), stage_data_locations[A],
-         STAGEDATA_SIZE);
+         STAGEDATA_LENGTH);
 }
 
 // $8258
@@ -1283,8 +1297,6 @@ static void attract_mode_hook(chqstate_t *state)
 {
 }
 
-
-
 // $8401
 static void main_loop(chqstate_t *state)
 {
@@ -1294,16 +1306,14 @@ static void main_loop(chqstate_t *state)
   if (state->wanted_stage_number != 6)
     goto ml_not_credits;
 
-  // call $5c00
+  // TODO: Call $5C00
   state->wanted_stage_number = 1;
-  // push hl
-  // load_stage();
-  // pop hl
+  // TODO: load_stage();
   state->wanted_stage_number = 6; // not sure why
   return;
 
 ml_not_credits:
-  // call run_pregame_screen
+  // TODO: Call run_pregame_screen
   set_up_stage(state, stgmap(state, 0x5D1D));
 
   // Cycle start_speech_cycle 3,2,1 then repeat
@@ -1314,7 +1324,7 @@ ml_not_credits:
 
   // Choose the startup speech sample
   state->start_speech = (start_speech_index * 4) | 2;
-  state->hazards[0].used = 0xFF;
+  state->hazards[0].used = HAZARD_UNUSED;
   if (state->mode_128k == 0)
     start_chatter(state, 0xFF, chatterblk_start_stage);
 
@@ -1369,18 +1379,22 @@ ml_not_credits:
 // $852A
 static void cpu_driver(chqstate_t *state)
 {
+  const uint16_t LeftPos  = 0x0105; // note: road_pos left..right is high..low
+  const uint16_t RightPos = 0x00F5;
+  const uint8_t  MinSpeed = 150;
+
   uint16_t roadpos; // was HL
   uint8_t  input;   // was A
 
   roadpos = state->road_pos;
   input = USERINPUT_UP | USERINPUT_RIGHT;
-  if (roadpos < 0x0105) {
+  if (roadpos < LeftPos) {
     input = USERINPUT_UP | USERINPUT_LEFT;
-    if (roadpos >= 0x00F5)
+    if (roadpos >= RightPos)
       input = USERINPUT_UP;
   }
 
-  if (state->gear != (state->speed < 150))
+  if (state->gear != (state->speed < MinSpeed))
     input |= USERINPUT_FIRE;
 
   state->user_input = input;
@@ -1404,18 +1418,18 @@ static void cpu_driver(chqstate_t *state)
 }
 
 // $87DC
+//
+// stage_data is genuine pointer here since sometimes it's pointed at stage
+// data or attract data and at other times it's the escape scene data.
 static void set_up_stage(chqstate_t *state, const uint8_t *stage_data)
 {
-  uint8_t  B;
+  uint8_t  iterations; // was B
   uint8_t *HL;
 
   memset(&state->road_buffer[0], 0, 256);
   state->st         = saved_game_state;
   state->hazards[0] = saved_game_state_hazard_0;
-  memset(&state->hazards[1], 0, sizeof(hazard_t) * 5);
-
-  // stage_data is genuine pointer here since sometimes it's pointed at stage
-  // data or attract data and at other times it's the escape scene data.
+  memset(&state->hazards[1], 0, sizeof(hazard_t) * (MAXHAZARDS - 1));
 
   state->road_pos           = wordat(stage_data);
   state->road_curvature_ptr = ptrtostgptr(state, stage_data +  2);
@@ -1427,9 +1441,10 @@ static void set_up_stage(chqstate_t *state, const uint8_t *stage_data)
 
   pre_shift_backdrop(state);
 
-  // set backdrop position in ?horizon table?
+  // Set backdrop position in horizon table (used to draw attributes)
   state->horizon_table_e34b[0] = 8;
-  state->horizon_table_e34b[1] = 0; // presumed to be zero (needs checking)
+  state->horizon_table_e34b[1] =
+    0; // initialised strangely, presumed to be zero (needs checking)
   state->horizon_table_e34b[2] = 0;
 
 #if 0
@@ -1450,15 +1465,15 @@ static void set_up_stage(chqstate_t *state, const uint8_t *stage_data)
   // Conv: Duplicate work removed.
 
   // Run the map reader 32 times [enough to draw the screen?]
-  B = 32; // iterations
+  iterations = 32;
   do {
     HL = &state->fast_counter;
 #if 0
     rm_cycle_buffer_offset(state, HL);
 #endif
-  } while (--B > 0);
+  } while (--iterations > 0);
 
-  // Disallow spawning.
+  // Disallow spawning
   state->allow_spawning = 0;
 
 #if 0
@@ -1467,14 +1482,12 @@ static void set_up_stage(chqstate_t *state, const uint8_t *stage_data)
 #endif
 
   clear_playfield_set_attrs(state);
-  // Clear the lights' BRIGHT bit.
+  // Clear the lights' BRIGHT bit
   sus_clear_lights(SCREEN(0x5820));
   sus_clear_lights(SCREEN(0x583B));
 
-#if 0
-  silence_audio_hook();
-  update_scoreboard(); // exit via
-#endif
+  silence_audio_hook(state);
+  update_scoreboard(state); // exit via
 }
 
 // $8860 (pulled out of above)
@@ -1483,32 +1496,86 @@ static void sus_clear_lights(uint8_t *attrptr)
   int rows; // was C
   int cols; // was B
 
-  rows = 4;
+  rows = MARQUEELIGHTHEIGHT;
   do {
-    cols = 5;
+    cols = MARQUEELIGHTWIDTH;
     do
       *attrptr++ &= ~ATTRIBUTE_BRIGHT;
     while (--cols > 0);
-    attrptr += 0x1B;
+    attrptr += (SCREEN_ATTRIBUTES_ROWBYTES - MARQUEELIGHTWIDTH);
   } while (--rows > 0);
 }
 
 // $8876
 static void check_user_input(chqstate_t *state)
 {
+  uint8_t  Atransition;
+  uint8_t *HLuserinput;
+  uint8_t  Ainput;
+  uint8_t *HLboost;
+  uint8_t *HLchatter;
+  uint8_t  Akey;
+
+  Atransition = state->transition_control;
+  HLuserinput = &state->user_input;
+  if (Atransition != 4) {
+    *HLuserinput = USERINPUT_NONE;
+    return;
+  }
+
+  *HLuserinput = Ainput = (state->st.user_input_mask & *HLuserinput);
+  if ((Ainput & (USERINPUT_QUIT | USERINPUT_PAUSE | USERINPUT_TURBO)) == 0)
+    return;
+
+  if (Ainput & USERINPUT_QUIT)
+    goto quit_key;
+  else if (Ainput & USERINPUT_PAUSE)
+    goto pause_key;
+
+  // Turbo pressed
+  HLboost = &state->boost;
+  if (*HLboost > 0 || state->st.turbos == 0)
+    return; // already boosting or no turbos remain
+  *HLboost = 60; // set ticks of boost
+
+  start_chatter(state, 2, &chatterblk_turbo[0]);
+  setup_engine_sfx_hook(state); // exit via
+  return;
+
+quit_key:
+  if (state->quit_state == 0) {
+    drive_chatter_stop(state);
+    fill_attributes(state);
+
+    state->st.user_input_mask = USERINPUTMASK_ALLOW_NONE;
+    state->quit_state         = QUITSTATE_START;
+  }
+  return;
+
+pause_key:
+  silence_audio_hook(state);
+  do
+    Akey = keyscan(state);
+  while (Akey & USERINPUT_PAUSE);
+  do
+    Akey = keyscan(state);
+  while ((Akey & USERINPUT_NOT_QUIT) == 0);
+  do
+    Akey = keyscan(state);
+  while ((Akey & USERINPUT_NOT_QUIT) != 0);
 }
 
 // $88D5
 static void clear_playfield_attrs(chqstate_t *state)
 {
-  memset(SCREEN(0x5900), 0x00, 16 * 32);
+  memset(SCREEN(0x5900), 0, SCREEN_ATTRIBUTES_ROWBYTES * PLAYFIELD_HEIGHT / 8);
 }
 
 // $88E2
 static void clear_playfield(chqstate_t *state)
 {
   clear_playfield_attrs(state);
-  memset(SCREEN(0x4800), 0x00, 16 * 32 * 8);
+  memset(SCREEN(0x4800), 0, SCREEN_BITMAP_ROWBYTES * PLAYFIELD_HEIGHT);
 }
 
 // $88F2
@@ -1737,8 +1804,10 @@ clear_line:
 read_message:
   chatterblk = state->chatterblk_ptr;
   chattercmd = *chatterblk;
-  if (chattercmd == CHATTERCMD_STOP)
-    goto stop;
+  if (chattercmd == CHATTERCMD_STOP) {
+    drive_chatter_stop(state);
+    return;
+  }
   if (chattercmd != CHATTERCMD_PAUSE) {
     pc_chatter_message(state, chatterblk); // exit via
     return;
@@ -1748,11 +1817,7 @@ read_message:
   state->chatterblk_ptr = chatter_blocks[*++chatterblk];
   goto clear;
 
-stop:
-  state->noise_counter = 4;
-  state->chatter_state = CHATTERSTATE_STOP;
-  clear_message_line(state); // exit via
-  return;
+  // Conv: drive_chatter_stop lived here.
 
 starting:
   state->chatter_state = CHATTERSTATE_RUN;
@@ -1760,6 +1825,15 @@ starting:
 clear:
   clear_message_line(state);
   noise_effect(state, 4); // exit via
+}
+
+// $99D3
+// Factored out from above, since other routines call it.
+static void drive_chatter_stop(chqstate_t *state)
+{
+  state->noise_counter = 4;
+  state->chatter_state = CHATTERSTATE_STOP;
+  clear_message_line(state); // exit via
 }
 
 // $99EC
@@ -2158,7 +2232,7 @@ update_remaining_time:
 check_time_up:
   if (*ptimebcd != 0) {
     state->time_up_state      = TIMEUPSTATE_INIT;
-    state->st.user_input_mask = USERINPUT_ALLOW_ALL;
+    state->st.user_input_mask = USERINPUTMASK_ALLOW_ALL;
     goto update_remaining_time;
   }
 
@@ -2190,7 +2264,7 @@ check_restart:
   state->time_up_state      = TIMEUPSTATE_INIT;
   state->smash_level        = 0;
   state->smash_counter      = 0;
-  state->st.user_input_mask = USERINPUT_ALLOW_ALL;
+  state->st.user_input_mask = USERINPUTMASK_ALLOW_ALL;
   state->gear_lockout       = 3;
   state->transition_control = 3;
   state->st.turbos          = 3;
@@ -2363,7 +2437,6 @@ static void calc_overtake_bonus(chqstate_t *state)
 // $9D62
 static void update_scoreboard(chqstate_t *state)
 {
-
   toggle_light_brightness(state, SCREEN(0x5820));
   toggle_light_brightness(state, SCREEN(0x583B));
   plot_turbos_and_scores(state);
@@ -3249,8 +3322,8 @@ ds_attributes:
     DE = (D << 8) | E;
     HLattrs = SCREEN(state->st.horizon_attribute);
     // Set sky colour
-    BCattrs = (ATTRIBUTE_BLACK_OVER_BRIGHT_CYAN << 8) |
-              ATTRIBUTE_BLACK_OVER_BRIGHT_CYAN;
+    BCattrs = (attribute_BLACK_OVER_BRIGHT_CYAN << 8) |
+              attribute_BLACK_OVER_BRIGHT_CYAN;
     // If A was zero then jump (Z => sky, NZ => ground)
     if (D != 0) {
       // Set ground colour
@@ -3274,16 +3347,16 @@ ds_attributes:
   HLattrs = SCREEN(0x5962); // attr (2,11)
   DEstride = 32;
 
-  Cattr = ATTRIBUTE_BLACK_OVER_BRIGHT_RED;
+  Cattr = attribute_BLACK_OVER_BRIGHT_RED;
   *HLattrs = Cattr; HLattrs += DEstride;
   *HLattrs = Cattr; HLattrs += DEstride;
-  Cattr = ATTRIBUTE_BLACK_OVER_BRIGHT_MAGENTA;
+  Cattr = attribute_BLACK_OVER_BRIGHT_MAGENTA;
   *HLattrs = Cattr; HLattrs += DEstride;
   *HLattrs = Cattr; HLattrs += DEstride;
-  Cattr = ATTRIBUTE_BLACK_OVER_BRIGHT_GREEN;
+  Cattr = attribute_BLACK_OVER_BRIGHT_GREEN;
   *HLattrs = Cattr; HLattrs += DEstride;
   *HLattrs = Cattr; HLattrs += DEstride;
-  Cattr = ATTRIBUTE_BLACK_OVER_BRIGHT_WHITE;
+  Cattr = attribute_BLACK_OVER_BRIGHT_WHITE;
   *HLattrs = Cattr; HLattrs += DEstride;
   *HLattrs = Cattr;
 }
@@ -3778,8 +3851,6 @@ typedef struct zxbox {
   int x0, y0, x1, y1;
 }
 zxbox_t;
-
-#define SCREEN_BITMAP_LENGTH            (SCREEN_WIDTH / 8 * SCREEN_HEIGHT)
 
 /* Define to highlight dirty rectangles when they're drawn. */
 //#define SHOW_DIRTY_RECTS
