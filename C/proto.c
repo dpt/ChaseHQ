@@ -341,7 +341,7 @@
   } while (0)
 
 /**
- * Rotate left.
+ * Rotate left through carry.
  */
 #define RL(r)                   \
   do {                          \
@@ -350,6 +350,15 @@
     carry_out = (r) >> 7;       \
     (r) = ((r) << 1) | (carry); \
     carry = carry_out;          \
+  } while (0)
+
+/**
+ * Rotate left
+ */
+#define RLC(r)                        \
+  do {                                \
+    carry = (r) >> 7;                 \
+    (r) = ((r) << 1) | (carry);       \
   } while (0)
 
 /**
@@ -536,6 +545,11 @@ typedef uint8_t chatterpriority_t;
 #define PERPCAUGHTPHASE_1     (1)
 #define PERPCAUGHTPHASE_2     (2)
 #define PERPCAUGHTPHASE_3     (3)
+#define PERPCAUGHTPHASE_4     (4)
+#define PERPCAUGHTPHASE_5     (5)
+#define PERPCAUGHTPHASE_6     (6)
+
+#define TRANSITION_1          (1)
 
 /* ----------------------------------------------------------------------- */
 
@@ -621,6 +635,10 @@ typedef uint8_t chatterpriority_t;
 #define CHATTERBLK_TONY_LETS_GO               (31)
 #define CHATTERBLK__LIMIT                     (32)
 
+// note: road_pos left..right is high..low
+#define ROAD_LEFTMOST   (0x0105)
+#define ROAD_RIGHTMOST  (0x00F5)
+
 /* ----------------------------------------------------------------------- */
 
 #define HAZARD_UNUSED           (0xFF)
@@ -629,7 +647,7 @@ typedef struct hazard_s {
   uint8_t        used;
   uint8_t        distance;
   uint8_t        horz_pos;
-  uint8_t        TBD3;
+  uint8_t        TBD3;    // distance related
   uint8_t        TBD4;
   uint8_t        horz_pos_on_road;
   uint8_t        TBD6;
@@ -705,10 +723,25 @@ typedef struct chqstate_s {
   // $828C
   uint8_t  SM_828c;
 
+  // $8ABE
+  uint8_t  SM_8ABE;
+
+#define SCORE_MESSAGES_BASE   (0x8C58)
+#define SCORE_MESSAGES_LENGTH (0x8CB2 - SCORE_MESSAGES_BASE)
+  // $8C58
+  uint8_t  score_messages[SCORE_MESSAGES_LENGTH];
+
   // $8D77
   char     time_nn[7]; // initialised to "TIME 10"
   // $8D85
   char     credit_n[8]; // initialised to "CREDIT  "
+
+  // $8E43
+  const uint8_t *SM_8E43; // in draw_overlay_messages
+  // $8E46
+  uint8_t  SM_8E46; // in draw_overlay_messages
+  // $8E49
+  uint8_t  SM_8E49; // in draw_overlay_messages
 
   // $9618
   uint8_t  rng_seed[3];
@@ -1001,10 +1034,20 @@ static void sfx_thud(chqstate_t *state, uint8_t Dparam);
 static void sfx_cornering(chqstate_t *state, uint8_t Dparam, uint8_t Eparam);
 static void sfx_bipbow(chqstate_t *state, uint8_t Dparam, uint8_t Eparam);
 
-static void handle_perp_caught(chqstate_t *state);
+static int handle_perp_caught(chqstate_t *state);
 
 static void clear_playfield_attrs(chqstate_t *state);
 static void clear_playfield(chqstate_t *state);
+
+static void start_sfx(chqstate_t *state, uint8_t Bindex, uint8_t Cpriority);
+static void drive_sfx(chqstate_t *state);
+static void sfx_crash(chqstate_t *state, uint8_t Dparam);
+static void sfx_thud(chqstate_t *state, uint8_t Dparam);
+static void sfx_cornering(chqstate_t *state, uint8_t Dparam, uint8_t Eparam);
+static void sfx_bipbow(chqstate_t *state, uint8_t Dparam, uint8_t Eparam);
+
+static int handle_perp_caught(chqstate_t *state);
+static void hpc_set_perp_speed(chqstate_t *state, uint16_t DE);
 
 static void fully_smashed(chqstate_t *state);
 
@@ -1019,6 +1062,10 @@ static const uint8_t *print_message(chqstate_t    *state,
                                     const uint8_t *HLmessages);
 
 static void setup_overlay_messages(chqstate_t *state, const uint8_t *HL);
+
+static void setup_overlay_messages_with_A(chqstate_t    *state,
+    uint8_t        Atransition,
+    const uint8_t *HL);
 
 static void draw_smash_bar(chqstate_t *state);
 
@@ -1302,6 +1349,7 @@ static void main_loop(chqstate_t *state)
 {
   uint8_t start_speech_index; // was A
 
+restart:
   load_stage(state);
   if (state->wanted_stage_number != 6)
     goto ml_not_credits;
@@ -1334,7 +1382,9 @@ ml_not_credits:
     tick(state);
     check_user_input(state);
     read_map(state);
-    handle_perp_caught(state);
+    if (handle_perp_caught(state))
+      goto restart; // Conv: hpc would POP and goto main_loop to cause a
+    // restart
     move_hero_car(state);
     spawn_cars(state);
     cycle_counters(state);
@@ -1379,18 +1429,16 @@ ml_not_credits:
 // $852A
 static void cpu_driver(chqstate_t *state)
 {
-  const uint16_t LeftPos  = 0x0105; // note: road_pos left..right is high..low
-  const uint16_t RightPos = 0x00F5;
-  const uint8_t  MinSpeed = 150;
+  const uint8_t MinSpeed = 150;
 
   uint16_t roadpos; // was HL
   uint8_t  input;   // was A
 
   roadpos = state->road_pos;
   input = USERINPUT_UP | USERINPUT_RIGHT;
-  if (roadpos < LeftPos) {
+  if (roadpos < ROAD_LEFTMOST) {
     input = USERINPUT_UP | USERINPUT_LEFT;
-    if (roadpos >= RightPos)
+    if (roadpos >= ROAD_RIGHTMOST)
       input = USERINPUT_UP;
   }
 
@@ -1568,14 +1616,15 @@ pause_key:
 // $88D5
 static void clear_playfield_attrs(chqstate_t *state)
 {
-  memset(SCREEN(0x5900), 0, SCREEN_ATTRIBUTES_ROWBYTES * PLAYFIELD_HEIGHT / 8);
+  memset(SCREEN(0x5900), attribute_BLACK_OVER_BLACK,
+         SCREEN_ATTRIBUTES_ROWBYTES * PLAYFIELD_HEIGHT / 8);
 }
 
 // $88E2
 static void clear_playfield(chqstate_t *state)
 {
   clear_playfield_attrs(state);
-  memset(SCREEN(0x4800), 0, SCREEN_BITMAP_ROWBYTES * PLAYFIELD_HEIGHT);
+  memset(SCREEN(0x4800), 0x00, SCREEN_BITMAP_ROWBYTES * PLAYFIELD_HEIGHT);
 }
 
 // $88F2
@@ -1609,8 +1658,326 @@ static void sfx_bipbow(chqstate_t *state, uint8_t Dparam, uint8_t Eparam)
 }
 
 // $8A57
-static void handle_perp_caught(chqstate_t *state)
+static int handle_perp_caught(chqstate_t *state)
 {
+  int            carry = 0;
+  int            zero = 0;
+  uint8_t        phase; // was A
+  uint8_t        A;
+  uint8_t        Ainput;
+  uint8_t       *HL;
+  uint8_t        H;
+  uint8_t        L;
+  uint8_t        D;
+  uint8_t        C;
+  uint8_t        Cinput;
+  uint8_t        Biterations;
+  uint8_t        Bdelta;
+  uint8_t        Adash;
+  uint8_t       *DE;
+  uint8_t        DEspeed;
+  uint8_t       *HLscore;
+  uint8_t       *HLphc;
+  uint8_t        Aperpdistance;
+  uint16_t       HLspeed;
+  uint16_t       HLspeedpushed;
+  uint16_t       HLroadpos;
+  const uint8_t *HLmessages;
+  uint8_t        Cflag;
+
+  phase = state->perp_caught_phase;
+  if (phase == PERPCAUGHTPHASE_0)
+    return 0;
+
+  phase--;
+  if (phase == 0) goto hpc_move_perp;
+  phase--;
+  if (phase == 0) goto hpc_phase2;
+  phase--;
+  if (phase == 0) goto hpc_phase3;
+  phase--;
+  if (phase == 0) goto hpc_phase4;
+
+  // Otherwise 5/6
+  if (state->transition_control)
+    return 0;
+  phase--;
+  if (phase == 0) goto hpc_phase5;
+
+  // Must be 6
+  silence_audio_hook(state);
+  state->wanted_stage_number++;
+  return 1; // Conv: signal to bypass remainder of main loop
+
+hpc_phase5:
+  state->perp_caught_phase = PERPCAUGHTPHASE_6;
+  // TODO setup_transition(state, 8); // was exit via
+  return 0;
+
+hpc_phase2:
+  A = state->car_y;
+  if (A >= 16)
+    goto hpc_start_phase_3;
+  state->car_y = A + 4;
+
+  HLroadpos = state->road_pos + 12;
+  if (HLroadpos >= 0x126)
+    HLroadpos = 0x126;
+  state->road_pos = HLroadpos;
+
+  A = state->fast_counter + 32;
+  if (state->fast_counter + 32 > 255)
+    return 0;
+  state->fast_counter = A;
+  return 0;
+
+hpc_start_phase_3:
+  state->perp_caught_phase = 3;
+  state->SM_8ABE = 4;
+  fill_attributes(state); // exit via
+  return 0;
+
+hpc_phase3:
+  A = state->SM_8ABE - 1;
+  state->SM_8ABE = A;
+  if (A)
+    return 0;
+
+  state->perp_caught_phase = PERPCAUGHTPHASE_4;
+  HLmessages = stgwordtostgptr(state, 0x5D06); // addrof_arrest_messages
+  setup_overlay_messages_with_A(state, TRANSITION_1, HL); // was exit via
+  return 0;
+
+hpc_phase4:
+  //TODOif (state->mode_128k)
+  //TODO  handle_perp_caught_128k(state);
+  if (state->transition_control)
+    return 0;
+  //TODOif (state->mode_128k)
+  //TODO  handle_perp_caught_128k(state);
+
+  state->perp_caught_phase = PERPCAUGHTPHASE_5;
+
+  // Calc bonus
+
+  H = '0';
+  D = state->wanted_stage_number;
+  L = D + '0';
+
+  if (state->retry_count) {
+    RLC(D);
+    RLC(D);
+    RLC(D);
+    RLC(D);
+
+    H = L;
+    L = ' ';
+  }
+  // Write to CLEAR BONUS line
+  // Conv: Split up
+  state->score_messages[0x8C6F - SCORE_MESSAGES_BASE] = L;
+  state->score_messages[0x8C70 - SCORE_MESSAGES_BASE] = H;
+
+  RLC(D);
+  RLC(D);
+  RLC(D);
+  RLC(D);
+  increment_score(state, 0, 0, D);
+
+  A = state->st.time_bcd;
+  state->score_messages[0x8C8A - SCORE_MESSAGES_BASE] =
+    A; // Write to TIME BONUS line
+  C = A;
+  RLC(A);
+  RLC(A);
+  RLC(A);
+  RLC(A);
+  A &= 0xF;
+  if (A)
+    goto hpc_have_high_digit;
+
+hpc_no_high_digit:
+  Adash = ' ';
+  goto hpc_store_time_bonus_high;
+
+hpc_have_high_digit:
+  Biterations = A;
+  A += '0';
+  Adash = A;
+  do
+    increment_score(state, 0, 0x00, 0x05); // 50,000 lo,mid,hi
+  while (--Biterations > 0);
+hpc_store_time_bonus_high:
+  A = Adash;
+  state->score_messages[0x8C8A - SCORE_MESSAGES_BASE] =
+    A; // Write to TIME BONUS line
+  A = C & 0x0F;
+  if (A == 0)
+    goto hpc_store_time_bonus_low;
+
+hpc_have_low_digit:
+  // Bug fix applied
+  Biterations = A;
+  Adash = A;
+  do
+    increment_score(state, 0, 0x50, 0x00); // 5,000 lo,mid,hi
+  while (--Biterations > 0);
+hpc_store_time_bonus_low:
+  A = Adash + '0';
+  state->score_messages[0x8C8B - SCORE_MESSAGES_BASE] =
+    A; // Write to TIME BONUS line
+
+  // Display score
+  Biterations = 4;
+  Cflag = 0; // flag
+  DE = &state->score_bcd[3];
+  HLscore = &state->score_messages[0x8CA8 - SCORE_MESSAGES_BASE];
+  do {
+    A = *DE;
+    RLC(A);
+    RLC(A);
+    RLC(A);
+    RLC(A);
+    A &= 0x0F;
+    if (A)
+      goto hpc_score_have_high_digit;
+
+hpc_score_zero_high_digit:
+    RLC(A);
+    if (carry)
+      goto hpc_score_have_high_digit;
+    A = ' ';
+    goto hpc_score_store_high;
+
+hpc_score_have_high_digit:
+    Cflag = 0xFF;
+    A += '0';
+
+hpc_score_store_high:
+    *HLscore++ = A;
+    A = *DE & 0x0F;
+    if (A)
+      goto hpc_score_have_low_digit;
+
+hpc_score_zero_low_digit:
+    RLC(Cflag);
+    if (carry)
+      goto hpc_score_have_low_digit;
+    A = ' ';
+    goto hpc_score_store_low;
+
+hpc_score_have_low_digit:
+    Cflag = 0xFF;
+    A += '0';
+
+hpc_score_store_low:
+    *HLscore++ = A;
+    DE--;
+  } while (--Biterations > 0);
+
+  HLscore--;
+  *HLscore |= STREND;
+
+  setup_overlay_messages(state, &state->score_messages[0]); // was exit via
+  return 0;
+
+hpc_move_perp:
+  A = state->hazards[0].horz_pos;
+  Bdelta = 5;
+  if (A == 35) goto hpc_assign_perp_pos;
+  else if (A < 35) goto hpc_change_perp_pos;
+  Bdelta = -5; // else greater than
+
+hpc_change_perp_pos:
+  C = A + Bdelta;
+
+hpc_assign_perp_pos:
+  A = C;
+  state->hazards[0].horz_pos = A;
+  HLroadpos = state->road_pos;
+  // PUSH HLroadpos
+  carry = (HLroadpos < ROAD_LEFTMOST); // was SUB
+  // POP HLroadpos
+  Ainput = USERINPUT_UP | USERINPUT_RIGHT;
+  if (!carry)
+    goto hpc_assign_hero_pos;
+  HLroadpos -= ROAD_RIGHTMOST;
+  Ainput = USERINPUT_UP | USERINPUT_LEFT;
+  if (carry)
+    goto hpc_assign_hero_pos;
+  Ainput = USERINPUT_UP;
+
+hpc_assign_hero_pos:
+  Cinput = Ainput & (USERINPUT_LEFT | USERINPUT_RIGHT);
+  if (Cinput)
+    goto hpc_perp_too_far_away;
+
+hpc_check_distance:
+  if (state->hazards[0].distance >= 3)
+    goto hpc_perp_too_far_away;
+  HLphc = &state->st.perp_halt_counter;
+  (*HLphc)--;
+  if (*HLphc)
+    goto hpc_perp_too_far_away;
+  state->speed = 0;
+  state->hazards[0].TBD4 = 0;
+  state->hazards[0].distance = 1;
+  state->perp_caught_phase = PERPCAUGHTPHASE_2;
+  state->smoke = 3;
+  DEspeed = 0; // Conv
+  goto hpc_set_perp_speed;
+
+hpc_perp_too_far_away:
+  Aperpdistance = state->hazards[0].distance;
+  HLspeed = 350;
+  if (Aperpdistance < 15) {
+    Biterations = 16 - Aperpdistance;
+    do HLspeed -= 20;
+    while (--Biterations > 0);
+  }
+  DEspeed = HLspeed; // perp's adjusted speed
+  HLspeed = state->speed; // our speed
+  HLspeedpushed = HLspeed; // PUSH HL
+  carry = (HLspeed < DEspeed);
+  HLspeed -= DEspeed;
+  if (!carry) {
+    Cinput &= ~USERINPUT_UP;
+    carry = (HLspeed < 50);
+    HLspeed -= 50;
+    if (!carry)
+      Cinput |= USERINPUT_DOWN;
+  }
+  HLspeed = HLspeedpushed; // POP HL
+  carry = (HLspeed > 150);
+  HLspeed -= 150;
+  A = state->gear - carry; // set low speed if speed<150
+  if (A == 0)
+    Cinput |= USERINPUT_FIRE; // change gear
+  state->user_input = Cinput;
+
+hpc_check_perp_accel:
+  HLspeed = state->hazards[0].speed;
+  HLspeedpushed = HLspeed; // PUSH HL
+  DEspeed = 70;
+  carry = (HLspeed < DEspeed);
+  HLspeed -= DEspeed;
+  zero = (HLspeed == 0);
+  HLspeed = HLspeedpushed; // POP HL
+  if (zero || carry) {
+    goto hpc_set_perp_speed; // with DE=70
+  }
+  HLspeed -= 5;
+  DEspeed = HLspeed;
+
+hpc_set_perp_speed:
+  hpc_set_perp_speed(state, DEspeed); // was fallthrough
+  return 0;
+}
+
+// $8C35
+static void hpc_set_perp_speed(chqstate_t *state, uint16_t DEspeed)
+{
+  state->hazards[0].speed = DEspeed;
 }
 
 // $8C3A
@@ -1621,7 +1988,7 @@ static void fully_smashed(chqstate_t *state)
   state->smash_counter      = 20;
   state->st.user_input_mask = USERINPUT_PAUSE | USERINPUT_QUIT;
   setup_overlay_messages(state, &pull_over_message[0]);
-  // hpc_set_perp_speed(state, 0x0190);
+  hpc_set_perp_speed(state, 0x0190);
 }
 
 // $8D8F
@@ -1672,6 +2039,21 @@ static const uint8_t *print_message(chqstate_t    *state,
 // $8E7E
 static void setup_overlay_messages(chqstate_t *state, const uint8_t *HL)
 {
+  setup_overlay_messages_with_A(state, 2, HL);
+}
+
+// $8E80
+static void setup_overlay_messages_with_A(chqstate_t    *state,
+    uint8_t        Atransition,
+    const uint8_t *HL)
+{
+  uint8_t A;
+
+  state->transition_control = Atransition;
+  A = *HL++;
+  state->SM_8E49 = A;
+  state->SM_8E43 = HL;
+  state->SM_8E46 = 1;
 }
 
 // $8EE7

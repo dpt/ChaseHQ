@@ -844,8 +844,8 @@ static const uint8_t copyright_messages[] = {
 };
 
 // $8C58
-// This will need to be a template copied into state.
-static const uint8_t score_messages[] = {
+// Conv: This is now a template copied into state.
+static const uint8_t score_messages_template[] = {
   5, 4, 3,
   attribute_RED_OVER_BLACK,
   TWOBYTES(0xF025),
@@ -1203,7 +1203,7 @@ static const uint8_t *chatter_blocks[CHATTERBLK__LIMIT] = {
 static const stagevars_t saved_game_state = {
   1, // var_a16d
   100, // idle_timer
-  USERINPUT_ALLOW_ALL,
+  USERINPUTMASK_ALLOW_ALL,
   3, // turbos
   0x54, // horizon_level
   20, // perp_halt_counter
