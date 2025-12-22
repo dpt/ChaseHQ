@@ -741,7 +741,7 @@ typedef struct chqstate_s {
   // $8E46
   uint8_t  SM_8E46; // in draw_overlay_messages
   // $8E49
-  uint8_t  SM_8E49; // in draw_overlay_messages
+  uint8_t  SM_8E4A_delay; // in draw_overlay_messages
 
   // $9618
   uint8_t  rng_seed[3];
@@ -1140,12 +1140,14 @@ static uint8_t *ledfont_plot(chqstate_t *state, uint8_t ord, uint8_t *screen);
 
 static void draw_string_A(chqstate_t    *state,
                           uint8_t        A,
-                          const uint8_t *BCstring,
-                          uint8_t       *DEscreen);
+                          uint8_t       *BCstring,
+                          uint8_t       *DEbackbuf,
+                          const uint8_t *HLstring);
 static void draw_string(chqstate_t    *state,
                         uint8_t        A,
-                        const uint8_t *BCstring,
-                        uint8_t       *DEscreen);
+                        uint8_t       *BCstring,
+                        uint8_t       *DEbackbuf,
+                        const uint8_t *HLstring);
 static void draw_string_entry(chqstate_t    *state,
                               uint8_t       *DEscreen,
                               const uint8_t *HLstring,
@@ -2026,6 +2028,33 @@ static void fill_attributes(chqstate_t *state)
 // $8E42
 static void draw_overlay_messages(chqstate_t *state)
 {
+  const uint8_t *message;    // was HL
+  uint8_t        iterations; // was B
+  uint8_t        delay;      // was A
+  uint8_t        flags;      // was A
+
+  message    = state->SM_8E43;
+  iterations = state->SM_8E46;
+  for (;;) {
+    if (--iterations == 0) {
+      delay = state->SM_8E4A_delay - 1;
+      state->SM_8E4A_delay = delay;
+      if (delay)
+        return;
+
+      state->SM_8E4A_delay = *message; // set new delay
+      state->SM_8E46++;
+      iterations++;
+    }
+
+    flags = *++message;
+    if (flags == 0)
+      break;
+
+    print_message(state, flags, message);
+  }
+
+  state->transition_control = message[-1];
 }
 
 // $8E6C
@@ -2033,7 +2062,19 @@ static const uint8_t *print_message(chqstate_t    *state,
                                     uint8_t        Aflags,
                                     const uint8_t *HLmessages)
 {
-  return NULL; // TODO
+  uint8_t  attr;     // was A
+  uint16_t backbuf;  // was DE
+  uint16_t attraddr; // was BC
+
+  // EX AF - banking flags?
+  attr     = HLmessages[0];
+  backbuf  = (HLmessages[2] << 8) | HLmessages[1];
+  attraddr = (HLmessages[4] << 8) | HLmessages[3];
+  HLmessages += 5;
+
+  draw_string_A(state, attr, BACKBUF(attraddr), BACKBUF(backbuf), HLmessages);
+
+  return HLmessages;
 }
 
 // $8E7E
@@ -2051,7 +2092,7 @@ static void setup_overlay_messages_with_A(chqstate_t    *state,
 
   state->transition_control = Atransition;
   A = *HL++;
-  state->SM_8E49 = A;
+  state->SM_8E4A_delay = A;
   state->SM_8E43 = HL;
   state->SM_8E46 = 1;
 }
@@ -3124,22 +3165,24 @@ static uint8_t *ledfont_plot(chqstate_t *state, uint8_t ord, uint8_t *screen)
 
 // $9F99
 static void draw_string_A(chqstate_t    *state,
-                          uint8_t        A,
-                          const uint8_t *BCstring,
-                          uint8_t       *DEscreen)
+                          uint8_t        Aattr,
+                          uint8_t       *BCattrs,
+                          uint8_t       *DEbackbuf,
+                          const uint8_t *HLstring)
 {
-  draw_string_entry(state, DEscreen, BCstring/*HL*/, 0/*Adash*/, A/*C'*/,
-                    32/*DE'*/, NULL); // FIXME: NULL needs to be attr ptr
+  draw_string_entry(state, DEbackbuf, HLstring/*HL*/, 0/*Adash*/, Aattr/*C'*/,
+                    32/*DE'*/, BCattrs/*HL'*/);
 }
 
 // $9FA3
 static void draw_string(chqstate_t    *state,
-                        uint8_t        A,
-                        const uint8_t *BCstring,
-                        uint8_t       *DEscreen)
+                        uint8_t        Aattr,
+                        uint8_t       *BCattrs,
+                        uint8_t       *DEbackbuf,
+                        const uint8_t *HLstring)
 {
-  draw_string_entry(state, DEscreen, BCstring/*HL*/, 1/*Adash*/, A/*C'*/,
-                    32/*DE'*/, NULL);
+  draw_string_entry(state, DEbackbuf, HLstring/*HL*/, 1/*Adash*/, Aattr/*C'*/,
+                    32/*DE'*/, BCattrs/*HL'*/);
 }
 
 // $9FA6
@@ -3149,13 +3192,13 @@ static void draw_string_entry(chqstate_t    *state,
                               uint8_t        Adash,
                               uint8_t        Cdash,
                               uint8_t        DEstride, // was DE'
-                              uint8_t       *HLattr)
+                              uint8_t       *HLattrs)  // was HL'
 {
-  uint8_t Achar;
+  uint8_t Achar; // was A
 
   do {
     Achar = *HLstring & ~STREND;
-    draw_char(state, Achar, DEscreen, Adash, Cdash, DEstride, HLattr);
+    draw_char(state, Achar, DEscreen, Adash, Cdash, DEstride, HLattrs);
   } while ((Achar & STREND) == 0);
 }
 
@@ -3163,14 +3206,14 @@ static void draw_string_entry(chqstate_t    *state,
 static void draw_char(chqstate_t *state,
                       uint8_t     Achar,
                       uint8_t    *DEscreen, // screen address
-                      uint8_t     Adash, // draw type
-                      uint8_t     Cdash, // attribute
-                      uint8_t     DEstride, // DE' e.g. 32 - a stride?
-                      uint8_t    *HLdash)
+                      uint8_t     Adash,    // draw type
+                      uint8_t     Cdash,    // attribute
+                      uint8_t     DEstride, // was DE' e.g. 32 - a stride?
+                      uint8_t    *HLattrs)  // was HL'
 {
   uint8_t        Cglyphid; // was C
   uint8_t        Ctype;    // was C
-  uint8_t        A;
+  uint8_t        Adata;    // was A
   uint8_t        B;
   const uint8_t *HLfont;   // was HL
   uint8_t       *DEorig;   // was stacked
@@ -3179,7 +3222,7 @@ static void draw_char(chqstate_t *state,
   if (Achar == 0) {
     // Space
     DEscreen++;
-    HLdash++; // FIXME: Do we need to return these?
+    HLattrs++; // FIXME: Do we need to return these?
     return;
   }
 
@@ -3225,10 +3268,10 @@ dc_have_single:
   DEorig = DEscreen;
   B = 4; // iterations
   do {
-    A = *HLfont;
-    *DEscreen = A;
+    Adata = *HLfont;
+    *DEscreen = Adata;
     DEscreen += 256;
-    *DEscreen = A;
+    *DEscreen = Adata;
     DEscreen += 256;
     HLfont++;
   } while (--B > 0);
@@ -3236,10 +3279,10 @@ dc_have_single:
   DEscreen += 32;
   B = 3; // iterations
   do {
-    A = *HLfont;
-    *DEscreen = A;
+    Adata = *HLfont;
+    *DEscreen = Adata;
     DEscreen += 256;
-    *DEscreen = A;
+    *DEscreen = Adata;
     DEscreen += 256;
     HLfont++;
   } while (--B > 0);
@@ -3248,12 +3291,12 @@ dc_have_single:
   // double height inverted
 dc_double_height_inverted:
   DEorig = DEscreen;
-  B = 7;
+  B = 7; // iterations
   do {
-    A = ~*HLfont;
-    *DEscreen = A;
+    Adata = ~*HLfont;
+    *DEscreen = Adata;
     DEscreen += 256;
-    *DEscreen = A;
+    *DEscreen = Adata;
     DEscreen += 256;
     HLfont++;
   } while (--B > 0);
@@ -3261,10 +3304,10 @@ dc_double_height_inverted:
 
 dc_single_height_inverted:
   DEorig = DEscreen;
-  B = 7;
+  B = 7; // iterations
   do {
-    A = ~*HLfont;
-    *DEscreen = A;
+    Adata = ~*HLfont;
+    *DEscreen = Adata;
     HLfont++;
     DEscreen += 256;
   } while (--B > 0);
@@ -3276,8 +3319,8 @@ dc_double_height:
   *DEscreen = 0; // leave gap at top
   DEscreen += 256;
   for (int i = 0; i < 7; i++) { // Conv: rolled
-    A = *HLfont;
-    *DEscreen = A;
+    Adata = *HLfont;
+    *DEscreen = Adata;
     DEscreen += 256;
     *DEscreen++ = *HLfont++; // was LDI, could reuse A
     DEscreen--; // was DEC E, could remove if DEscreen++ above is dropped
@@ -3287,11 +3330,11 @@ dc_double_height:
 
 dc_set_double_attrs:
   DEscreen = DEorig + 1; // was POP DEscreen, INC E
-  *HLdash |= Cdash;
-  HLdash += DEstride;
-  *HLdash |= Cdash;
-  HLdash -= DEstride; // was POP HLdash
-  HLdash++; // was INC L
+  *HLattrs |= Cdash;
+  HLattrs += DEstride;
+  *HLattrs |= Cdash;
+  HLattrs -= DEstride; // was POP HLattrs
+  HLattrs++; // was INC L
   return;
 
 dc_single_height: // seems to store 9 rows
@@ -3307,8 +3350,8 @@ dc_single_height: // seems to store 9 rows
 
 dc_set_single_attrs:
   DEscreen = DEorig + 1; // was POP DEscreen
-  *HLdash |= Cdash;
-  HLdash++; // was INC L
+  *HLattrs |= Cdash;
+  HLattrs++; // was INC L
   return;
 
 dc_generic:
