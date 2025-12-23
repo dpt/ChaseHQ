@@ -1,4 +1,4 @@
-CFLAGS = -Wall #-Wextra -Wpedantic
+CFLAGS = -Wall -Wno-unused-function #-Wextra -Wpedantic
 
 proto: proto.c
 	gcc $(CFLAGS) `sdl2-config --cflags --libs` -g -o $@ $<

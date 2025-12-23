@@ -6,40 +6,42 @@
 
 // vim: ts=8 sts=2 sw=2 et
 
-// Compile with:
-// gcc `sdl2-config --cflags --libs` -Wall -Wextra -Wpedantic -o proto proto.c
-
 // Notes
 //
-// As with The Great Escape C conversion we model the game as if it's still
-// running on a ZX Spectrum, avoiding a full rewrite of the original code and
-// leaving (some) Z80-specific microoptimisations in place. This means the
-// code remains a useful basis for comparison and lowers the risk of
-// translation errors. Although it's very tempting to rewrite all the code to
-// be fully idiomatic C, if the code's made too different then it gets harder
-// and harder to refer back to the disassembled game and spot our mistakes.
-// The goal after all is to use this C conversion to expose problem points
-// and feed those back into the disassembly's description.
+// As with my conversion of The Great Escape to C we model the game as if
+// it's still running on a ZX Spectrum, avoiding a full rewrite of the
+// original code and leaving (some) Z80-specific micro-optimisations in
+// place. This means the code remains a useful basis for comparison and
+// lowers the risk of translation errors. Although it's very tempting to
+// rewrite all the code to be fully idiomatic C, the more different the code
+// is made from the original disassembly, the harder it gets to refer back to
+// it and spot our mistakes. The goal after all is to use this C conversion
+// to expose problem points and feed those back into the disassembly's
+// description.
 //
 // The level data (called "stage" data in this conversion to match the
 // original game) is retained whole in the converted game, even including
-// embedded addresses. This lets us 'page in' levels by just importing the
-// original game data. This also means that any new or adjusted levels
-// produced by means of this conversion will be compatible with the original
-// game. It will be interesting to see, but unlikely, if the Sinclair User
-// demo version of the game uses the same level format. The Amstrad CPC
-// version will no doubt be considerably different but perhaps familiar.
+// embedded addresses. This lets us 'page in' levels by copying the
+// original game data into the game state structure. This also means that any
+// new or adjusted levels produced by means of this conversion will be
+// compatible with the original game. It will be interesting to see, but
+// unlikely, if the Sinclair User demo version of the game uses the same
+// level format. The Amstrad CPC version will no doubt be considerably
+// different but perhaps familiar.
 //
 // Generic code will be converted to use native pointers. This means that
 // some word-sized values will need to be indirected through new tables. For
 // example see the "chatter" code: the code that prints the messages
 // on-screen as the game runs. It previously embedded addresses inline in
-// chatter structures. These are replaced with single bytes that reference
+// chatter structures. These are replaced with single bytes that reference a
 // new tables of pointers.
 //
 // This code is presently one honkin' great source file, including bits I've
 // pinched from TGE-in-C. I'll likely split it up in due course, keeping the
 // logic and the data separate.
+//
+// Like with TGE a game state structure is added to encapsulate the complete
+// game state. It is passed to every state-accessing function in the game.
 //
 
 // TODO
@@ -382,12 +384,15 @@
     (r) = ((r) >> 1) | (carry << 7);  \
   } while (0)
 
-#define RRD(A, HL)                        \
-  do {                                    \
-    tmp = *HL & 0x0F;                     \
-    *HL = (*HL >> 4) | ((A & 0x0F) << 4); \
-    HL++;                                 \
-    A = (A & 0xF0) | tmp;                 \
+/**
+ * Rotate right (BCD) digit.
+ */
+#define RRD(acc, addr)                          \
+  do {                                          \
+    tmp = *addr & 0x0F;                         \
+    *addr = (*addr >> 4) | ((acc & 0x0F) << 4); \
+    addr++;                                     \
+    acc = (acc & 0xF0) | tmp;                   \
   } while (0)
 
 /// Minimal equivalent of Z80 BCD correct operation
@@ -549,7 +554,10 @@ typedef uint8_t chatterpriority_t;
 #define PERPCAUGHTPHASE_5     (5)
 #define PERPCAUGHTPHASE_6     (6)
 
+#define TRANSITION_0          (0)
 #define TRANSITION_1          (1)
+#define TRANSITION_3          (3)
+#define TRANSITION_4          (4)
 
 /* ----------------------------------------------------------------------- */
 
@@ -720,8 +728,6 @@ typedef struct chqstate_s {
 
   // $8277
   uint8_t  SM_8277;
-  // $828C
-  uint8_t  SM_828c;
 
   // $8ABE
   uint8_t  SM_8ABE;
@@ -1024,17 +1030,7 @@ static void set_up_stage(chqstate_t *state, const uint8_t *stage_data);
 static void sus_clear_lights(uint8_t *attrptr);
 
 static void check_user_input(chqstate_t *state);
-
-static void start_sfx(chqstate_t *state, uint8_t Bindex, uint8_t Cpriority);
-
-static void drive_sfx(chqstate_t *state);
-
-static void sfx_crash(chqstate_t *state, uint8_t Dparam);
-static void sfx_thud(chqstate_t *state, uint8_t Dparam);
-static void sfx_cornering(chqstate_t *state, uint8_t Dparam, uint8_t Eparam);
-static void sfx_bipbow(chqstate_t *state, uint8_t Dparam, uint8_t Eparam);
-
-static int handle_perp_caught(chqstate_t *state);
+static void check_user_input_quit_key(chqstate_t *state);
 
 static void clear_playfield_attrs(chqstate_t *state);
 static void clear_playfield(chqstate_t *state);
@@ -1067,6 +1063,13 @@ static void setup_overlay_messages_with_A(chqstate_t    *state,
     uint8_t        Atransition,
     const uint8_t *HL);
 
+static void draw_mugshots(chqstate_t *state);
+
+static void draw_mugshot(chqstate_t    *state,
+                         uint16_t       BCscreenpos,
+                         uint16_t       DEbackbuf,
+                         const uint8_t *HLmugshot);
+
 static void draw_smash_bar(chqstate_t *state);
 
 static void draw_everything_else(chqstate_t *state);
@@ -1089,8 +1092,11 @@ static void noise_effect_9a5c(chqstate_t *state, uint8_t counter);
 static void ne_plot_attrs(chqstate_t *state, uint8_t A);
 
 static void plot_face(chqstate_t    *state,
-                      const uint8_t *HLface,
-                      uint16_t       DEscreen);
+                      uint16_t       DEscreen,
+                      const uint8_t *HLface);
+static void plot_face_attributes(chqstate_t    *state,
+                                 uint16_t       DEscreen,
+                                 const uint8_t *HLface);
 
 static void plot_mini_font_cursor_off(chqstate_t *state,
                                       uint8_t     x,
@@ -1142,7 +1148,8 @@ static void draw_string_A(chqstate_t    *state,
                           uint8_t        A,
                           uint8_t       *BCstring,
                           uint8_t       *DEbackbuf,
-                          const uint8_t *HLstring);
+                          const uint8_t *HLstring,
+                          uint8_t        Adash);
 static void draw_string(chqstate_t    *state,
                         uint8_t        A,
                         uint8_t       *BCstring,
@@ -1261,13 +1268,13 @@ static void load_stage(chqstate_t *state)
 static void attract_mode(chqstate_t *state)
 {
   int            carry = 0;
-  uint8_t        SM_828c; // blinker - move to state?
+  uint8_t        SM_828C; // blinker - move to state?
   uint8_t        A;
   const uint8_t *HL;
   uint8_t        B;
 
   set_up_stage(state, stgmap(state, 0x5D2B)); // attract_data
-  SM_828c = 0;
+  SM_828C = 0;
   state->speed = 400;
   for (;;) {
     A = keyscan(state);
@@ -1286,17 +1293,15 @@ static void attract_mode(chqstate_t *state)
 
     // Display 'B' messages
     do {
-      A = *HL; // load flags
+      A = *HL; // load flags/attr - is this used in practice?
       HL = print_message(state, A, HL);
     } while (--B > 0);
 
-    if (state->transition_control == 0) {
+    if (state->transition_control == TRANSITION_0) {
       // Alternate between credits and copyright messages.
-      A = state->SM_828c;
-      A ^= 1;
-      state->SM_828c = A;
+      SM_828C ^= 1;
       HL = &credits_messages[0];
-      if (A)
+      if (SM_828C)
         HL = &copyright_messages[0];
       setup_overlay_messages(state, HL);
     }
@@ -1344,6 +1349,7 @@ static void play_speech_hook(chqstate_t *state)
 // $83CA
 static void attract_mode_hook(chqstate_t *state)
 {
+  attract_mode(state);
 }
 
 // $8401
@@ -1563,12 +1569,11 @@ static void check_user_input(chqstate_t *state)
   uint8_t *HLuserinput;
   uint8_t  Ainput;
   uint8_t *HLboost;
-  uint8_t *HLchatter;
   uint8_t  Akey;
 
   Atransition = state->transition_control;
   HLuserinput = &state->user_input;
-  if (Atransition != 4) {
+  if (Atransition != TRANSITION_4) {
     *HLuserinput = USERINPUT_NONE;
     return;
   }
@@ -1577,9 +1582,10 @@ static void check_user_input(chqstate_t *state)
   if ((Ainput & (USERINPUT_QUIT | USERINPUT_PAUSE | USERINPUT_TURBO)) == 0)
     return;
 
-  if (Ainput & USERINPUT_QUIT)
-    goto quit_key;
-  else if (Ainput & USERINPUT_PAUSE)
+  if (Ainput & USERINPUT_QUIT) {
+    check_user_input_quit_key(state);
+    return;
+  } else if (Ainput & USERINPUT_PAUSE)
     goto pause_key;
 
   // Turbo pressed
@@ -1592,15 +1598,7 @@ static void check_user_input(chqstate_t *state)
   setup_engine_sfx_hook(state); // exit via
   return;
 
-quit_key:
-  if (state->quit_state == 0) {
-    drive_chatter_stop(state);
-    fill_attributes(state);
-
-    state->st.user_input_mask = USERINPUTMASK_ALLOW_NONE;
-    state->quit_state         = QUITSTATE_START;
-  }
-  return;
+  // Conv: check_user_input_quit_key hoisted out from here.
 
 pause_key:
   silence_audio_hook(state);
@@ -1613,6 +1611,18 @@ pause_key:
   do
     Akey = keyscan(state);
   while ((Akey & USERINPUT_NOT_QUIT) != 0);
+}
+
+// $88A9
+static void check_user_input_quit_key(chqstate_t *state)
+{
+  if (state->quit_state == QUITSTATE_IDLE) {
+    drive_chatter_stop(state);
+    fill_attributes(state);
+
+    state->st.user_input_mask = USERINPUTMASK_ALLOW_NONE;
+    state->quit_state         = QUITSTATE_START;
+  }
 }
 
 // $88D5
@@ -1667,7 +1677,6 @@ static int handle_perp_caught(chqstate_t *state)
   uint8_t        phase; // was A
   uint8_t        A;
   uint8_t        Ainput;
-  uint8_t       *HL;
   uint8_t        H;
   uint8_t        L;
   uint8_t        D;
@@ -1747,7 +1756,7 @@ hpc_phase3:
 
   state->perp_caught_phase = PERPCAUGHTPHASE_4;
   HLmessages = stgwordtostgptr(state, 0x5D06); // addrof_arrest_messages
-  setup_overlay_messages_with_A(state, TRANSITION_1, HL); // was exit via
+  setup_overlay_messages_with_A(state, TRANSITION_1, HLmessages); // was exit via
   return 0;
 
 hpc_phase4:
@@ -1798,7 +1807,6 @@ hpc_phase4:
   if (A)
     goto hpc_have_high_digit;
 
-hpc_no_high_digit:
   Adash = ' ';
   goto hpc_store_time_bonus_high;
 
@@ -1817,7 +1825,6 @@ hpc_store_time_bonus_high:
   if (A == 0)
     goto hpc_store_time_bonus_low;
 
-hpc_have_low_digit:
   // Bug fix applied
   Biterations = A;
   Adash = A;
@@ -1844,7 +1851,6 @@ hpc_store_time_bonus_low:
     if (A)
       goto hpc_score_have_high_digit;
 
-hpc_score_zero_high_digit:
     RLC(A);
     if (carry)
       goto hpc_score_have_high_digit;
@@ -1861,7 +1867,6 @@ hpc_score_store_high:
     if (A)
       goto hpc_score_have_low_digit;
 
-hpc_score_zero_low_digit:
     RLC(Cflag);
     if (carry)
       goto hpc_score_have_low_digit;
@@ -1914,7 +1919,6 @@ hpc_assign_hero_pos:
   if (Cinput)
     goto hpc_perp_too_far_away;
 
-hpc_check_distance:
   if (state->hazards[0].distance >= 3)
     goto hpc_perp_too_far_away;
   HLphc = &state->st.perp_halt_counter;
@@ -1957,7 +1961,6 @@ hpc_perp_too_far_away:
     Cinput |= USERINPUT_FIRE; // change gear
   state->user_input = Cinput;
 
-hpc_check_perp_accel:
   HLspeed = state->hazards[0].speed;
   HLspeedpushed = HLspeed; // PUSH HL
   DEspeed = 70;
@@ -1986,16 +1989,31 @@ static void hpc_set_perp_speed(chqstate_t *state, uint16_t DEspeed)
 static void fully_smashed(chqstate_t *state)
 {
   state->perp_caught_phase  = PERPCAUGHTPHASE_1;
-  state->hand_flag          = 2; // for this one too
+  state->hand_flag          = 2; // need symbol for this
   state->smash_counter      = 20;
   state->st.user_input_mask = USERINPUT_PAUSE | USERINPUT_QUIT;
   setup_overlay_messages(state, &pull_over_message[0]);
-  hpc_set_perp_speed(state, 0x0190);
+  hpc_set_perp_speed(state, 400);
 }
 
 // $8D8F
 static void transition(chqstate_t *state)
 {
+  uint8_t A;
+
+  A = state->transition_control;
+  if (A == 0)
+    return;
+
+  A--;
+  if (A == 0) { draw_mugshots(state); return; }
+  A--;
+  if (A == 0) { draw_overlay_messages(state); return; }
+  A--;
+  if (A == 0) { fill_attributes(state); return; }
+  // Otherwise it's 4
+
+  // TODO
 }
 
 // $8E29
@@ -2022,7 +2040,7 @@ static void fill_attributes(chqstate_t *state)
     }
   } while (--rows > 0);
 
-  state->transition_control = 0;
+  state->transition_control = TRANSITION_0;
 }
 
 // $8E42
@@ -2066,13 +2084,13 @@ static const uint8_t *print_message(chqstate_t    *state,
   uint16_t backbuf;  // was DE
   uint16_t attraddr; // was BC
 
-  // EX AF - banking flags?
   attr     = HLmessages[0];
   backbuf  = (HLmessages[2] << 8) | HLmessages[1];
   attraddr = (HLmessages[4] << 8) | HLmessages[3];
   HLmessages += 5;
 
-  draw_string_A(state, attr, BACKBUF(attraddr), BACKBUF(backbuf), HLmessages);
+  draw_string_A(state, attr, BACKBUF(attraddr), BACKBUF(backbuf), HLmessages,
+                Aflags);
 
   return HLmessages;
 }
@@ -2095,6 +2113,64 @@ static void setup_overlay_messages_with_A(chqstate_t    *state,
   state->SM_8E4A_delay = A;
   state->SM_8E43 = HL;
   state->SM_8E46 = 1;
+}
+
+// $8E91
+static void draw_mugshots(chqstate_t *state)
+{
+  draw_mugshot(state, 0x48A5, 0xFF88, stgwordtostgptr(state, 0x5CF0));
+  draw_mugshot(state, 0x48B4, 0xFF97,
+               &bitmap_faces[2 * FACEBYTES + FACEBITMAPBYTES]);
+  draw_mugshot(state, 0x48B9, 0xFF9C,
+               &bitmap_faces[1 * FACEBYTES + FACEBITMAPBYTES]);
+  draw_overlay_messages(state);
+}
+
+// Macro
+// 0b 1111LLLL RRRCCCCC
+static uint16_t prevbufrow(uint16_t backbuf)
+{
+  uint8_t A;
+
+  A = backbuf >> 8;
+  backbuf -= 256;
+  if ((A & 0x0F) == 0) {
+    backbuf += 0x1000; // re-add borrow?
+    int t = (backbuf & 0xFF) - 32;
+    backbuf = (backbuf & 0xFF00) | (t & 0xFF);
+    if (t < 0x100) { // didn't carry
+      backbuf -= 0x1000;
+    }
+  }
+  return backbuf;
+}
+
+// $8EB7
+static void draw_mugshot(chqstate_t    *state,
+                         uint16_t       BCscreenpos,
+                         uint16_t       DEbackbuf,
+                         const uint8_t *HLmugshot)
+{
+  const uint8_t *HLmugshot_orig;
+  uint16_t       counter; // was BC
+
+  HLmugshot_orig = HLmugshot;
+  HLmugshot--; // step back to bitmap data
+  counter = FACEBITMAPBYTES;
+  DEbackbuf -= BACKBUFFER_START_ADDRESS; // Conv: address -> offset
+  for (;;) {
+    state->backbuffer[DEbackbuf--] = *HLmugshot--; counter--;
+    state->backbuffer[DEbackbuf--] = *HLmugshot--; counter--;
+    state->backbuffer[DEbackbuf--] = *HLmugshot--; counter--;
+    state->backbuffer[DEbackbuf--] = *HLmugshot--; counter--;
+    DEbackbuf += 4; // Conv: replaces register stash
+    if (counter == 0)
+      break;
+
+    DEbackbuf = prevbufrow(DEbackbuf);
+  }
+
+  plot_face_attributes(state, BCscreenpos, HLmugshot_orig); // exit via
 }
 
 // $8EE7
@@ -2288,9 +2364,9 @@ pc_plot_character:
   // cmd is now the character ID
   face = stgwordtostgptr(state, 0x5CF2);
   if (cmd != CHATTERCHR_PILOT)
-    face = &bitmap_faces[cmd]; // Conv: Simplified
+    face = &bitmap_faces[cmd * FACEBYTES]; // Conv: Simplified
 
-  plot_face(state, face, 0x4036); // Set plot address to (176,8)
+  plot_face(state, 0x4036, face); // Set plot address to (176,8)
 
   pc_chatter_message(state, chatter); // was FALLTHROUGH
 }
@@ -2337,16 +2413,16 @@ static void noise_effect(chqstate_t *state, uint8_t counter)
     noise_effect_9a5c(state, counter); // was FALLTHROUGH
 }
 
-// Move to next row (down)
+// Move to next screen row (downwards)
 // Conv: added
-static uint16_t nextrow(uint16_t screen)
+static uint16_t nextscrrow(uint16_t screen)
 {
   screen += 256;
   if (((screen >> 8) & 7) == 0) {
     int t = (screen & 0xFF) + 32;
     screen = (screen & 0xFF00) | (t & 0xFF);
     if (t < 0x100) { // didn't carry
-      t = (screen >> 8) - 8;
+      t = (screen >> 8) - 8; // reduce?
       screen = (t << 8) | (screen & 0xFF);
     }
   }
@@ -2389,7 +2465,7 @@ static void noise_effect_9a5c(chqstate_t *state, uint8_t counter)
       DEscreen++; // was E++
     } while (--B > 0);
     DEscreen = DEscreen_saved; // was POP - restore row ptr
-    DEscreen = nextrow(DEscreen);
+    DEscreen = nextscrrow(DEscreen);
   } while (--C > 0);
 
   ne_plot_attrs(state, 0x47); // BRIGHT + white over black
@@ -2417,14 +2493,12 @@ static void ne_plot_attrs(chqstate_t *state, uint8_t attr)
 }
 
 // $9AAB
-static void plot_face(chqstate_t *state,
-                      const uint8_t    *HLface,
-                      uint16_t    DEscreen)
+static void plot_face(chqstate_t    *state,
+                      uint16_t       DEscreen,
+                      const uint8_t *HLface)
 {
   uint16_t DEscreen_saved;
   uint16_t counter; // was BC
-  uint8_t  A;
-  int      carry = 0;
 
   counter = FACEBITMAPBYTES;
   DEscreen_saved = DEscreen;
@@ -2437,10 +2511,24 @@ static void plot_face(chqstate_t *state,
     DEscreen -= 4; // replaces PUSH/POP
     if (counter == 0)
       break;
-    DEscreen = nextrow(DEscreen);
+    DEscreen = nextscrrow(DEscreen);
   }
 
-  DEscreen = DEscreen_saved;
+  plot_face_attributes(state, DEscreen_saved, HLface); // was fallthrough
+}
+
+// $9ACE
+//
+// DEscreen - was POP
+// HLface - HL
+static void plot_face_attributes(chqstate_t    *state,
+                                 uint16_t       DEscreen,
+                                 const uint8_t *HLface)
+{
+  int      carry = 0;
+  uint8_t  A;
+  uint16_t counter; // was BC
+
   A = DEscreen >> 8;
   RRC(A);
   RRC(A);
@@ -2458,6 +2546,7 @@ static void plot_face(chqstate_t *state,
     if (counter == 0)
       break;
 
+    // TODO Hoist to next-attr-row macro?
     int t = (DEscreen & 0xFF) + 0x1C;
     DEscreen = (DEscreen & 0xFF00) | (t & 0xFF);
     if (t >= 0x100)
@@ -2584,7 +2673,7 @@ pmf_have_ascii:
     screen[0] = (mask & screen[0]) | bm1;
     screen[1] = bm2;
     DEfont++;
-    HLscreen = nextrow(HLscreen);
+    HLscreen = nextscrrow(HLscreen);
   } while (--row > 0);
 }
 
@@ -2598,7 +2687,7 @@ static void clear_message_line(chqstate_t *state)
   rows = 6; // Clear six rows
   do {
     memset(SCREEN(screen + 1), 0, 29); // Conv: Replacing LDIR
-    screen = nextrow(screen);
+    screen = nextscrrow(screen);
   } while (--rows);
 }
 
@@ -2618,7 +2707,7 @@ static void tick(chqstate_t *state)
   uint8_t  lodigit;      // was L
 
   if (state->perp_caught_phase > PERPCAUGHTPHASE_0
-      || state->transition_control == 4)
+      || state->transition_control == TRANSITION_4)
     return;
 
   ptimebcd = &state->st.time_bcd;
@@ -2666,10 +2755,10 @@ check_time_up:
   // TODO play_speech_hook(state, 4);
 
 check_credits:
-  if (state->transition_control > 0)
+  if (state->transition_control > TRANSITION_0)
     return;
   if (state->credits == 0) {
-    // TODO cui_quit_key(state); // exit via
+    check_user_input_quit_key(state); // exit via
   } else {
     state->credits--;
     state->credit_n[7]   = (state->credits + '0') | STREND;
@@ -2689,7 +2778,7 @@ check_restart:
   state->smash_counter      = 0;
   state->st.user_input_mask = USERINPUTMASK_ALLOW_ALL;
   state->gear_lockout       = 3;
-  state->transition_control = 3;
+  state->transition_control = TRANSITION_3;
   state->st.turbos          = 3;
   state->st.time_bcd        = 0x60; // 60 seconds
   state->retry_count++;
@@ -2710,7 +2799,7 @@ print_continue:
   A = L;
   RR(A);
   effect = (carry) ? EFFECT_BIP : EFFECT_BOW;
-  // TODO start_sfx(state, effect, 1);  // 1 for high priority
+  start_sfx(state, effect, 1);  // 1 for high priority
   A = L;
   if (A == 0) {
     state->quit_state    = QUITSTATE_START;
@@ -2886,7 +2975,7 @@ static void toggle_light_brightness(chqstate_t *state, uint8_t *HL)
 // $9E11
 static void plot_turbos_and_scores(chqstate_t *state)
 {
-  int             carry;
+  int             carry = 0;
   uint8_t         Aturbos;
   uint8_t         Cturbos;
   uint8_t         Aboost;
@@ -3168,9 +3257,10 @@ static void draw_string_A(chqstate_t    *state,
                           uint8_t        Aattr,
                           uint8_t       *BCattrs,
                           uint8_t       *DEbackbuf,
-                          const uint8_t *HLstring)
+                          const uint8_t *HLstring,
+                          uint8_t        Adash)
 {
-  draw_string_entry(state, DEbackbuf, HLstring/*HL*/, 0/*Adash*/, Aattr/*C'*/,
+  draw_string_entry(state, DEbackbuf, HLstring/*HL*/, Adash/*Adash*/, Aattr/*C'*/,
                     32/*DE'*/, BCattrs/*HL'*/);
 }
 
@@ -3362,8 +3452,8 @@ dc_generic:
     DEscreen += 256;
     HLfont++;
 
-    // variation on nextrow()
-    // DEscreen = nextrow(DEscreen); // won't work!
+    // variation on nextscrrow()
+    // DEscreen = nextscrrow(DEscreen); // won't work!
   } while (--B > 0);
   DEscreen = DEorig + 1; // was POP DEscreen
   return;
@@ -4592,10 +4682,14 @@ int main(void)
         break;
 
       case SDL_MOUSEMOTION:
-        mx = event.motion.x;
-        my = event.motion.y;
-        ledfont_plot(&state, 1 + my % 10,
-                     &state.screen[(0x4000 + mx / 8) - SCREEN_START_ADDRESS]);
+        // mx = event.motion.x;
+        // my = event.motion.y;
+        // ledfont_plot(&state, 1 + my % 10,
+        //              &state.screen[(0x4000 + mx / 8) - SCREEN_START_ADDRESS]);
+      
+        for (int i = 0; i < BACKBUFFER_LENGTH; i++)
+          state.backbuffer[i] = rng(&state);
+        draw_screen(&state);
         break;
 
       case SDL_MOUSEBUTTONUP:
@@ -4605,9 +4699,9 @@ int main(void)
 
         // main_loop(&state);
 
-        //plot_face(&state, &bitmap_faces[FACEBYTES*0], 0x4036);
-        //plot_face(&state, &bitmap_faces[FACEBYTES*1], 0x4836);
-        //plot_face(&state, &bitmap_faces[FACEBYTES*2], 0x5036);
+        //plot_face(&state, 0x4036, &bitmap_faces[FACEBYTES*0]);
+        //plot_face(&state, 0x4836, &bitmap_faces[FACEBYTES*1]);
+        //plot_face(&state, 0x5036, &bitmap_faces[FACEBYTES*2]);
 
 #if 0
         // Handle mouse motion event
