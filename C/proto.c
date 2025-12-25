@@ -470,6 +470,7 @@ enum {
 #define BACKBUFFER_HEIGHT     (128)
 #define BACKBUFFER_LENGTH     (BACKBUFFER_ROWBYTES * BACKBUFFER_HEIGHT)
 #define BACKBUFFER_START_ADDRESS ((uint16_t) 0xF000)
+#define BACKBUFFER_END_ADDRESS (BACKBUFFER_START_ADDRESS + BACKBUFFER_LENGTH)
 
 // Return screen[] pointer given a Z80 address.
 #define ADDRTOSCREEN(addr)    (&state->screen[(addr) - SCREEN_START_ADDRESS])
@@ -1268,7 +1269,7 @@ static void load_stage(chqstate_t *state)
   A = state->wanted_stage_number;
   if (A == state->current_stage_number)
     return;
-  state->current_stage_number   = A;
+  state->current_stage_number = A;
 
   // Copy the stage data from source to stagedata[]
   memcpy((uint8_t *) stgmap(state, STAGEDATA_BASE), stage_data_locations[A],
@@ -2135,24 +2136,23 @@ static void draw_mugshots(chqstate_t *state)
                &bitmap_faces[2 * FACEBYTES + FACEBITMAPBYTES]);
   draw_mugshot(state, 0x48B9, 0xFF9C,
                &bitmap_faces[1 * FACEBYTES + FACEBITMAPBYTES]);
-  draw_overlay_messages(state);
+ //tmp nobbled draw_overlay_messages(state);
 }
 
 // Macro
 // 0b 1111LLLL RRRCCCCC
 static uint16_t prevbufrow(uint16_t backbuf)
 {
-  uint8_t A;
+  uint16_t bborig;
 
-  A = backbuf >> 8;
+  bborig = backbuf;
   backbuf -= 256;
-  if ((A & 0x0F) == 0) {
+  if ((bborig & 0x0F00) == 0) {
     backbuf += 0x1000; // re-add borrow?
     int t = (backbuf & 0xFF) - 32;
     backbuf = (backbuf & 0xFF00) | (t & 0xFF);
-    if (t < 0x100) { // didn't carry
+    if (t >= 0x0100) // carried
       backbuf -= 0x1000;
-    }
   }
   return backbuf;
 }
@@ -2170,6 +2170,7 @@ static void draw_mugshot(chqstate_t    *state,
   HLmugshot--; // step back to bitmap data
   counter = FACEBITMAPBYTES;
   DEbackbuf -= BACKBUFFER_START_ADDRESS; // Conv: address -> offset
+  assert(DEbackbuf < BACKBUFFER_LENGTH);
   for (;;) {
     state->backbuffer[DEbackbuf--] = *HLmugshot--; counter--;
     state->backbuffer[DEbackbuf--] = *HLmugshot--; counter--;
@@ -4681,6 +4682,10 @@ int main(void)
 
   chasehq_reset_state(state);
 
+  state->current_stage_number = -1; // force load
+  state->wanted_stage_number = 0;
+  load_stage(state);
+
   if (1) { // temp - fill screen with junk
     for (int i = 0; i < SCREEN_BITMAP_LENGTH; i++)
       state->screen[i] = rng(state);
@@ -4688,7 +4693,9 @@ int main(void)
       state->screen[SCREEN_ATTRIBUTES_START_ADDRESS - SCREEN_START_ADDRESS + i] =
         attribute_YELLOW_OVER_BLACK;
 
-    //clear_playfield_set_attrs(state);
+    clear_playfield_set_attrs(state);
+    state->sighted_flag = 0;
+    memcpy(&state->backbuffer[0], backbufexample, sizeof(backbufexample));
   }
 
   while (!quit) {
@@ -4700,8 +4707,9 @@ int main(void)
 
       case SDL_KEYDOWN:
       case SDL_KEYUP:
-        if (1) { // temp - fill screen with junk
+        {
           static const char msg[] = "GREETS TO THE RETRO FUNSTERS FROM CHASE D.P.T.!";
+
           for (int i = 0; i < sizeof(msg) - 1; i++) {
             if (t)
               plot_mini_font_cursor_off(state, i, msg[i]);
@@ -4716,12 +4724,7 @@ int main(void)
         // my = event.motion.y;
         // ledfont_plot(state, 1 + my % 10,
         //              &state->screen[(0x4000 + mx / 8) - SCREEN_START_ADDRESS]);
-
-        state->sighted_flag = 0;
-        memcpy(&state->backbuffer[0], backbufexample, sizeof(backbufexample));
-//        for (int y = 0; y < BACKBUFFER_HEIGHT; y++)
-//          for (int x = 0; x < BACKBUFFER_ROWBYTES; x++)
-//            state->backbuffer[y * BACKBUFFER_ROWBYTES + x] = (y & 1) ? 0x55 : 0xAA;
+        draw_mugshots(state);
         draw_screen(state);
         break;
 
