@@ -463,19 +463,28 @@ enum {
 
 /* ----------------------------------------------------------------------- */
 
-#define PLAYFIELD_HEIGHT                (16 * 8)
+#define PLAYFIELD_HEIGHT      (16 * 8)
 
-#define BACKBUFFER_WIDTH                (256) // or is it 240?
-#define BACKBUFFER_HEIGHT               (128)
-#define BACKBUFFER_LENGTH               (BACKBUFFER_WIDTH / 8 * BACKBUFFER_HEIGHT)
-#define BACKBUFFER_START_ADDRESS        ((uint16_t) 0xF000)
+#define BACKBUFFER_WIDTH      (256)
+#define BACKBUFFER_ROWBYTES   (BACKBUFFER_WIDTH / 8)
+#define BACKBUFFER_HEIGHT     (128)
+#define BACKBUFFER_LENGTH     (BACKBUFFER_ROWBYTES * BACKBUFFER_HEIGHT)
+#define BACKBUFFER_START_ADDRESS ((uint16_t) 0xF000)
 
-#define SCREEN(addr)    (&state->screen[(addr) - SCREEN_START_ADDRESS])
-#define BACKBUF(addr)   (&state->backbuffer[(addr) - BACKBUFFER_START_ADDRESS])
+// Return screen[] pointer given a Z80 address.
+#define ADDRTOSCREEN(addr)    (&state->screen[(addr) - SCREEN_START_ADDRESS])
+// Return backbuffer[] pointer given a Z80 address.
+#define ADDRTOBACKBUF(addr)   (&state->backbuffer[(addr) - BACKBUFFER_START_ADDRESS])
 
-#define UNSCREEN(ptr)   ((ptr) - &state->screen[0])
-// Returns byte offset within backbuf, given a pointer [TODO cast to char *]
-#define UNBACKBUF(ptr)  ((ptr) - &state->backbuffer[0])
+// Return byte offset of screen[] pointer.
+#define SCREENTOOFFSET(ptr)   ((ptr) - &state->screen[0])
+// Return byte offset of backbuffer[] pointer.
+#define BACKBUFTOOFFSET(ptr)  ((ptr) - &state->backbuffer[0])
+
+// Return screen[] pointer given byte offset.
+#define OFFSETTOSCREEN(off)   (&state->screen[off])
+// Return backbuffer[] pointer given byte offset.
+#define OFFSETTOBACKBUF(off)  (&state->backbuffer[off])
 
 #define STAGEDATA_BASE        (0x5C00)
 #define STAGEDATA_END         (0x76EF) // inclusive
@@ -497,10 +506,10 @@ enum {
 #define FACEBYTES             (FACEBITMAPBYTES + FACEATTRBYTES)
 #define NFACES                (3)
 
-#define DRAWCHAR_TYPE_DUNNO           (0)
-#define DRAWCHAR_TYPE_GENERIC         (1)
-#define DRAWCHAR_TYPE_SINGLE          (2)
-#define DRAWCHAR_TYPE_DOUBLE          (3)
+#define DRAWCHAR_TYPE_DUNNO   (0)
+#define DRAWCHAR_TYPE_GENERIC (1)
+#define DRAWCHAR_TYPE_SINGLE  (2)
+#define DRAWCHAR_TYPE_DOUBLE  (3)
 #define DRAWCHAR_TYPE_SINGLE_INVERTED (4)
 #define DRAWCHAR_TYPE_DOUBLE_INVERTED (5)
 
@@ -533,11 +542,11 @@ enum {
 #define EFFECT_BOW            (9)
 
 // these state names need clarification
-#define TIMEUPSTATE_INIT           (0)
-#define TIMEUPSTATE_CHECK_TIME_UP  (1)
-#define TIMEUPSTATE_CAR_STOPPED    (2)
-#define TIMEUPSTATE_CHECK_RESTART  (3)
-#define TIMEUPSTATE_WAITING        (4)
+#define TIMEUPSTATE_INIT      (0)
+#define TIMEUPSTATE_CHECK_TIME_UP (1)
+#define TIMEUPSTATE_CAR_STOPPED (2)
+#define TIMEUPSTATE_CHECK_RESTART (3)
+#define TIMEUPSTATE_WAITING   (4)
 
 #define CHATTERSTATE_IDLE     (0)
 #define CHATTERSTATE_START    (1)
@@ -931,6 +940,8 @@ typedef struct chqstate_s {
   // $EE00
   uint8_t  road_buffer[256];
 
+  // MUST ALIGN THIS
+  uint8_t  padding[3990];
   // $F000
   uint8_t  backbuffer[BACKBUFFER_LENGTH];
 } chqstate_t;
@@ -1539,8 +1550,8 @@ static void set_up_stage(chqstate_t *state, const uint8_t *stage_data)
 
   clear_playfield_set_attrs(state);
   // Clear the lights' BRIGHT bit
-  sus_clear_lights(SCREEN(0x5820));
-  sus_clear_lights(SCREEN(0x583B));
+  sus_clear_lights(ADDRTOSCREEN(0x5820));
+  sus_clear_lights(ADDRTOSCREEN(0x583B));
 
   silence_audio_hook(state);
   update_scoreboard(state); // exit via
@@ -1628,7 +1639,7 @@ static void check_user_input_quit_key(chqstate_t *state)
 // $88D5
 static void clear_playfield_attrs(chqstate_t *state)
 {
-  memset(SCREEN(0x5900), attribute_BLACK_OVER_BLACK,
+  memset(ADDRTOSCREEN(0x5900), attribute_BLACK_OVER_BLACK,
          SCREEN_ATTRIBUTES_ROWBYTES * PLAYFIELD_HEIGHT / 8);
 }
 
@@ -1636,7 +1647,7 @@ static void clear_playfield_attrs(chqstate_t *state)
 static void clear_playfield(chqstate_t *state)
 {
   clear_playfield_attrs(state);
-  memset(SCREEN(0x4800), 0x00, SCREEN_BITMAP_ROWBYTES * PLAYFIELD_HEIGHT);
+  memset(ADDRTOSCREEN(0x4800), 0x00, SCREEN_BITMAP_ROWBYTES * PLAYFIELD_HEIGHT);
 }
 
 // $88F2
@@ -2024,7 +2035,7 @@ static void fill_attributes(chqstate_t *state)
   int      rows;    // was A
   int      columns; // was BC
 
-  src = SCREEN(0x5901); // (1,8)
+  src = ADDRTOSCREEN(0x5901); // (1,8)
   rows = 16; // rows
   do {
     if (1) {
@@ -2089,7 +2100,8 @@ static const uint8_t *print_message(chqstate_t    *state,
   attraddr = (HLmessages[4] << 8) | HLmessages[3];
   HLmessages += 5;
 
-  draw_string_A(state, attr, BACKBUF(attraddr), BACKBUF(backbuf), HLmessages,
+  draw_string_A(state, attr, ADDRTOSCREEN(attraddr), ADDRTOBACKBUF(backbuf),
+                HLmessages,
                 Aflags);
 
   return HLmessages;
@@ -2669,7 +2681,7 @@ pmf_have_ascii:
       bm2 = bm & 0xff;
     }
 
-    uint8_t *screen = SCREEN(HLscreen); // Conv: added
+    uint8_t *screen = ADDRTOSCREEN(HLscreen); // Conv: added
     screen[0] = (mask & screen[0]) | bm1;
     screen[1] = bm2;
     DEfont++;
@@ -2686,7 +2698,7 @@ static void clear_message_line(chqstate_t *state)
   screen = 0x45C1; // Screen coordinate (8,53)
   rows = 6; // Clear six rows
   do {
-    memset(SCREEN(screen + 1), 0, 29); // Conv: Replacing LDIR
+    memset(ADDRTOSCREEN(screen + 1), 0, 29); // Conv: Replacing LDIR
     screen = nextscrrow(screen);
   } while (--rows);
 }
@@ -2949,8 +2961,8 @@ static void calc_overtake_bonus(chqstate_t *state)
 // $9D62
 static void update_scoreboard(chqstate_t *state)
 {
-  toggle_light_brightness(state, SCREEN(0x5820));
-  toggle_light_brightness(state, SCREEN(0x583B));
+  toggle_light_brightness(state, ADDRTOSCREEN(0x5820));
+  toggle_light_brightness(state, ADDRTOSCREEN(0x583B));
   plot_turbos_and_scores(state);
 }
 
@@ -3030,7 +3042,7 @@ ptas_turbo_setup:
       if (Cturbos == 0)
         SPbitmap = SM_9e45;
       Cturbos++;
-      HLscreen = BACKBUF(0xFE00 | A);
+      HLscreen = ADDRTOBACKBUF(0xFE00 | A);
       // EX AF,AF'
       B = TURBOHEIGHT;
       do {
@@ -3073,7 +3085,7 @@ ptas_turbo_setup:
     // LD SP was here
   }
 
-  DEscreen = SCREEN(0x4132); // speed digits pos (144,9)
+  DEscreen = ADDRTOSCREEN(0x4132); // speed digits pos (144,9)
   // EXX
   DEdash_speed = state->speed;
 
@@ -3124,7 +3136,7 @@ ptas_turbo_setup:
   // Time
   // EXX
   ptas_led_digits(state, 1, &state->st.time_bcd, &state->st.time_digits[1],
-                  SCREEN(0x412F)); // (120,9)
+                  ADDRTOSCREEN(0x412F)); // (120,9)
 
   // Distance (to perp)
 
@@ -3167,10 +3179,10 @@ ptas_turbo_setup:
 
   ptas_led_digits(state, 2, &state->distance_bcd[1],
                   &state->st.distance_digits[3],
-                  SCREEN(0x4191)); // was fallthrough
+                  ADDRTOSCREEN(0x4191)); // was fallthrough
 
   ptas_led_digits(state, 4, &state->score_bcd[3], &state->st.score_digits[7],
-                  SCREEN(0x4126)); // was fallthrough
+                  ADDRTOSCREEN(0x4126)); // was fallthrough
 }
 
 // $9F1E
@@ -3759,121 +3771,133 @@ static void exit_fork(chqstate_t *state)
 // $BC3E
 static void draw_screen(chqstate_t *state)
 {
-  uint8_t  *scr;      // was HL
-  uint8_t  *buf;      // was HL'
-  uint16_t  offset;   // added
-  uint16_t  BCattrs;
-  uint16_t  DEstride;
-  uint8_t   Cattr;
-  uint8_t  *HLattrs;
-  uint8_t   A;
-  uint8_t   D;
-  uint8_t   E;
+  uint8_t  *scr;       // was HL
+  uint8_t  *buf;       // was HL'
+  uint16_t  bufoffset; // Conv: added
 
-  scr = SCREEN(0x4811); // (136, 64)
-  buf = BACKBUF(0xF001); // (8, 1)
+  scr = ADDRTOSCREEN(0x4811); // (136, 64)
+  buf = ADDRTOBACKBUF(0xF001); // (8, 1)
+
   for (;;) {
-ds_loop_16bytes:
-    memcpy(scr, buf, 16); scr += 256; buf += 256;
-    memcpy(scr, buf, 16); scr += 256; buf += 256;
-    memcpy(scr, buf, 16); scr += 256; buf += 256;
-    memcpy(scr, buf, 16); scr += 256; buf += 256;
-    offset = UNBACKBUF(buf); // Conv: convert back to offset
+    // First do left hand side (original reads forwards, stores backwards)
+lefthand_16_bytes:
+    memcpy(scr - 16, buf, 16); scr += 256; buf += 256;
+    memcpy(scr - 16, buf, 16); scr += 256; buf += 256;
+    memcpy(scr - 16, buf, 16); scr += 256; buf += 256;
+    memcpy(scr - 16, buf, 16); scr += 256; buf += 256;
+    bufoffset = BACKBUFTOOFFSET(buf); // Conv: convert back to offset
     // Loop on the first pass (4 lines of 8 done) but not the second
-    if (offset & (1 << 10))
-      goto ds_loop_16bytes;
+    if (bufoffset & (1 << 10))
+      goto lefthand_16_bytes;
 
-    // Move to right hand side?
-    buf = BACKBUF(UNBACKBUF(buf) -
-                  0x07F0); // e.g. (0xF001 + 8*256 - 0x7F0) == 0xF011 on the first pass
-    scr = SCREEN(UNSCREEN(scr) - 0x07F2);
-
-ds_loop_14bytes:
-    memcpy(scr, buf, 14); scr += 256; buf += 256;
-    memcpy(scr, buf, 14); scr += 256; buf += 256;
-    memcpy(scr, buf, 14); scr += 256; buf += 256;
-    memcpy(scr, buf, 14); scr += 256; buf += 256;
-    offset = UNBACKBUF(buf); // Conv: convert back to offset
+    // Now move over to the right hand side
+    // e.g. (0xF001 + 8*256 - 0x7F0) == 0xF011 on the first pass
+    buf = OFFSETTOBACKBUF(bufoffset - 0x07F0);
+    scr = OFFSETTOSCREEN(SCREENTOOFFSET(scr) - 0x07F2);
+righthand_14_bytes:
+    memcpy(scr - 14, buf, 14); scr += 256; buf += 256;
+    memcpy(scr - 14, buf, 14); scr += 256; buf += 256;
+    memcpy(scr - 14, buf, 14); scr += 256; buf += 256;
+    memcpy(scr - 14, buf, 14); scr += 256; buf += 256;
+    bufoffset = BACKBUFTOOFFSET(buf); // Conv: convert back to offset
     // Loop on the first pass (4 lines of 8 done) but not the second
-    if (offset & (1 << 10))
-      goto ds_loop_14bytes;
+    if (bufoffset & (1 << 10))
+      goto righthand_14_bytes;
 
-    offset = UNBACKBUF(buf); // Conv: convert back to offset
-    // Loop on the first pass (8 lines of 16 done) but not the second
-    if ((offset & (1 << 11)) == 0) {
-      // Otherwise we've rolled into to top nibble
-      uint8_t tmp, lo, hi;
+    if ((bufoffset & (1 << 11)) == 0) {
+      uint8_t H;
+      uint8_t A;
+      uint8_t L;
+      int     res;
+      int     carry, overflow;
 
-      hi = 0xF0;
-      tmp = offset & 0xFF;
-      lo = tmp - hi;
-      if (tmp >= hi)
-        goto ds_attributes;
-      if (lo <= tmp) { // not overflowed
-        scr = SCREEN(UNSCREEN(scr) - 0x07EE);
-      } else { // overflowed
-        scr = SCREEN(0x5011); // (136,128)
-      }
+      // Otherwise we've rolled into to the top nibble
+
+      // TODO: This is magic that I cannot yet explain.
+      H        = 0xF0;
+      A        = bufoffset & 0xFF;
+      res      = A - H;
+      carry    = (A < H); // treating as unsigned
+      overflow = ((H ^ A) & (res ^ A)) >> 7;
+      L        = res; // truncates
+
+      if (!carry)
+        goto draw_attributes; // bitmap copy complete
+
+      buf = ADDRTOBACKBUF((H << 8) | L);
+
+      if (!overflow)
+        scr = OFFSETTOSCREEN(SCREENTOOFFSET(scr) - 0x07EE);
+      else
+        // Start of second half
+        scr = ADDRTOSCREEN(0x5011); // (136, 128)
     } else {
-      // next scanline
-      scr = SCREEN(UNSCREEN(scr) - 0x07EE);
-      buf -= 0x10;
+      scr = OFFSETTOSCREEN(SCREENTOOFFSET(scr) - 0x07EE);
+      buf -= 16;
     }
   }
 
-ds_attributes:
-  // Attributes
-  if (state->dont_draw_screen_attrs)
-    return;
+  {
+    uint8_t   A;
+    uint8_t   E;
+    uint8_t   D;
+    uint16_t  DE;
+    uint8_t  *HLattrs;
+    uint16_t  BCattrs;
+    uint8_t   Cattr;
 
-  uint16_t DE;
+draw_attributes:
+    // Attributes
+    if (state->dont_draw_screen_attrs)
+      return;
 
-  A = state->horizon_table_e34b[1]; // -> horizon table?
-  E = state->horizon_table_e34b[2]; // current value?
-  state->horizon_table_e34b[2] = A;
-  if (E != 0) { // if moved? some sort of previous/current behaviour here
-    E = A * 4;
-    D = (A * 4 >= 256) ? 0xFF : 0; // was SBC A,A - must be sign extending
-    DE = (D << 8) | E;
-    HLattrs = SCREEN(state->st.horizon_attribute);
-    // Set sky colour
-    BCattrs = (attribute_BLACK_OVER_BRIGHT_CYAN << 8) |
-              attribute_BLACK_OVER_BRIGHT_CYAN;
-    // If A was zero then jump (Z => sky, NZ => ground)
-    if (D != 0) {
-      // Set ground colour
-      BCattrs = stgword(state, 0x5CF4); // load stage's ground_colour (pair of attrs)
-      HLattrs += DE;
+    A = state->horizon_table_e34b[1]; // -> horizon table?
+    E = state->horizon_table_e34b[2]; // current value?
+    state->horizon_table_e34b[2] = A;
+    if (E != 0) { // if moved? some sort of previous/current behaviour here
+      E = A * 4;
+      D = (A * 4 >= 256) ? 0xFF : 0; // was SBC A,A - must be sign extending
+      DE = (D << 8) | E;
+      HLattrs = ADDRTOSCREEN(state->st.horizon_attribute);
+      // Set sky colour
+      BCattrs = (attribute_BLACK_OVER_BRIGHT_CYAN << 8) |
+                attribute_BLACK_OVER_BRIGHT_CYAN;
+      // If A was zero then jump (Z => sky, NZ => ground)
+      if (D != 0) {
+        // Set ground colour
+        BCattrs = stgword(state, 0x5CF4); // load stage's ground_colour (pair of attrs)
+        HLattrs += DE;
+      }
+
+      // Conv: Use memset and only use bottom byte of BCattrs
+      memset(HLattrs, BCattrs, 30); // scr attr width -2
+      if (D == 0)
+        HLattrs += DE;
+
+      state->st.horizon_attribute = SCREEN_START_ADDRESS + SCREENTOOFFSET(
+                                      HLattrs); // create OFFSETTOSCREENADDR?
     }
 
-    // Conv: Use memset and only use bottom byte of BCattrs
-    memset(HLattrs, BCattrs, 30); // scr attr width -2
-    if (D == 0)
-      HLattrs += DE;
+    /* Draw smash meter attributes */
 
-    state->st.horizon_attribute = SCREEN_START_ADDRESS + UNSCREEN(HLattrs);
+    if (state->sighted_flag == 0 || state->perp_caught_phase >= PERPCAUGHTPHASE_3)
+      return;
+
+    HLattrs = ADDRTOSCREEN(0x5962); // attr (2, 11)
+
+    Cattr = attribute_BLACK_OVER_BRIGHT_RED;
+    *HLattrs = Cattr; HLattrs += SCREEN_ATTRIBUTES_WIDTH;
+    *HLattrs = Cattr; HLattrs += SCREEN_ATTRIBUTES_WIDTH;
+    Cattr = attribute_BLACK_OVER_BRIGHT_MAGENTA;
+    *HLattrs = Cattr; HLattrs += SCREEN_ATTRIBUTES_WIDTH;
+    *HLattrs = Cattr; HLattrs += SCREEN_ATTRIBUTES_WIDTH;
+    Cattr = attribute_BLACK_OVER_BRIGHT_GREEN;
+    *HLattrs = Cattr; HLattrs += SCREEN_ATTRIBUTES_WIDTH;
+    *HLattrs = Cattr; HLattrs += SCREEN_ATTRIBUTES_WIDTH;
+    Cattr = attribute_BLACK_OVER_BRIGHT_WHITE;
+    *HLattrs = Cattr; HLattrs += SCREEN_ATTRIBUTES_WIDTH;
+    *HLattrs = Cattr;
   }
-
-  /* Draw smash meter attributes */
-
-  if (state->sighted_flag == 0 || state->perp_caught_phase >= PERPCAUGHTPHASE_3)
-    return;
-
-  HLattrs = SCREEN(0x5962); // attr (2,11)
-  DEstride = 32;
-
-  Cattr = attribute_BLACK_OVER_BRIGHT_RED;
-  *HLattrs = Cattr; HLattrs += DEstride;
-  *HLattrs = Cattr; HLattrs += DEstride;
-  Cattr = attribute_BLACK_OVER_BRIGHT_MAGENTA;
-  *HLattrs = Cattr; HLattrs += DEstride;
-  *HLattrs = Cattr; HLattrs += DEstride;
-  Cattr = attribute_BLACK_OVER_BRIGHT_GREEN;
-  *HLattrs = Cattr; HLattrs += DEstride;
-  *HLattrs = Cattr; HLattrs += DEstride;
-  Cattr = attribute_BLACK_OVER_BRIGHT_WHITE;
-  *HLattrs = Cattr; HLattrs += DEstride;
-  *HLattrs = Cattr;
 }
 
 // $BDC1
@@ -3886,21 +3910,21 @@ static void clear_playfield_set_attrs(chqstate_t *state)
   clear_playfield(state);
 
   // Clear the playfield pixels to $FF (bug: duplicates work just done)
-  memset(SCREEN(0x4800), 0xFF, 0x1000);
+  memset(ADDRTOSCREEN(0x4800), 0xFF, 0x1000);
 
   // Clear the playfield attributes to $28 (black over cyan) - first two
   // rows only
-  memset(SCREEN(0x5900), 0x28, 2 * 32);
+  memset(ADDRTOSCREEN(0x5900), 0x28, 2 * 32);
 
   // Clear the next three rows to $68 (black over bright cyan)
-  memset(SCREEN(0x5940), 0x68, 3 * 32);
+  memset(ADDRTOSCREEN(0x5940), 0x68, 3 * 32);
 
   // Clear the next 11 rows to the current ground colour
   // Note: Only using the bottom byte of ground_colour (as orig).
-  memset(SCREEN(0x59A0), stgbyte(state, 0x5CF4), 0x160); // CHECK
+  memset(ADDRTOSCREEN(0x59A0), stgbyte(state, 0x5CF4), 0x160); // CHECK
 
   // Clear the edges of the playfield to black on black
-  screen = SCREEN(0x5900);
+  screen = ADDRTOSCREEN(0x5900);
   DE = 0x1F;
   B = 16;
   do {
@@ -4575,10 +4599,11 @@ void zxscreen_convert(const void    *vscr,
 
 /* ----------------------------------------------------------------------- */
 
-#define GAMEWIDTH 256
-#define GAMEHEIGHT 192
+#define GAMEWIDTH  (256)
+#define GAMEHEIGHT (192)
+#define GAMESCALE  (4)
 
-static const SDL_Rect dstrect = { 0, 0, GAMEWIDTH, GAMEHEIGHT };
+static const SDL_Rect dstrect = { 0, 0, GAMEWIDTH * GAMESCALE, GAMEHEIGHT * GAMESCALE };
 unsigned int pixels[GAMEWIDTH * GAMEHEIGHT];
 
 int main(void)
@@ -4604,7 +4629,7 @@ int main(void)
   SDL_Window   *window;
   SDL_Renderer *renderer;
   SDL_Texture  *texture;
-  chqstate_t    state;
+  chqstate_t   *state;
   int           quit = 0;
   int           mx = 0, my = 0;
   int           t = 0;
@@ -4616,7 +4641,7 @@ int main(void)
 
   window = SDL_CreateWindow("Chase H.Q.",
                             SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED,
-                            GAMEWIDTH, GAMEHEIGHT,
+                            GAMEWIDTH * GAMESCALE, GAMEHEIGHT * GAMESCALE,
                             SDL_WINDOW_SHOWN | SDL_WINDOW_RESIZABLE);
   if (window == NULL) {
     printf("SDL_CreateWindow failed: %s\n", SDL_GetError());
@@ -4649,16 +4674,21 @@ int main(void)
     return 1;
   }
 
-  chasehq_reset_state(&state);
+  posix_memalign((void **) &state, 4096, sizeof(*state));
+
+  uintptr_t p = (1 << 12) - ((uintptr_t)&state->backbuffer[0] & ((1 << 12) -1));
+  printf("state=%p backbuffer=%p p=%ld\n", state, &state->backbuffer[0], p);
+
+  chasehq_reset_state(state);
 
   if (1) { // temp - fill screen with junk
     for (int i = 0; i < SCREEN_BITMAP_LENGTH; i++)
-      state.screen[i] = rng(&state);
+      state->screen[i] = rng(state);
     for (int i = 0; i < SCREEN_ATTRIBUTES_LENGTH; i++)
-      state.screen[SCREEN_ATTRIBUTES_START_ADDRESS - SCREEN_START_ADDRESS + i] =
+      state->screen[SCREEN_ATTRIBUTES_START_ADDRESS - SCREEN_START_ADDRESS + i] =
         attribute_YELLOW_OVER_BLACK;
 
-    clear_playfield_set_attrs(&state);
+    //clear_playfield_set_attrs(state);
   }
 
   while (!quit) {
@@ -4674,22 +4704,25 @@ int main(void)
           static const char msg[] = "GREETS TO THE RETRO FUNSTERS FROM CHASE D.P.T.!";
           for (int i = 0; i < sizeof(msg) - 1; i++) {
             if (t)
-              plot_mini_font_cursor_off(&state, i, msg[i]);
+              plot_mini_font_cursor_off(state, i, msg[i]);
             else
-              plot_mini_font_cursor_on(&state, i, msg[i]);
+              plot_mini_font_cursor_on(state, i, msg[i]);
           }
         }
         break;
 
       case SDL_MOUSEMOTION:
-        // mx = event.motion.x;
+        mx = event.motion.x;
         // my = event.motion.y;
-        // ledfont_plot(&state, 1 + my % 10,
-        //              &state.screen[(0x4000 + mx / 8) - SCREEN_START_ADDRESS]);
-      
-        for (int i = 0; i < BACKBUFFER_LENGTH; i++)
-          state.backbuffer[i] = rng(&state);
-        draw_screen(&state);
+        // ledfont_plot(state, 1 + my % 10,
+        //              &state->screen[(0x4000 + mx / 8) - SCREEN_START_ADDRESS]);
+
+        state->sighted_flag = 0;
+        memcpy(&state->backbuffer[0], backbufexample, sizeof(backbufexample));
+//        for (int y = 0; y < BACKBUFFER_HEIGHT; y++)
+//          for (int x = 0; x < BACKBUFFER_ROWBYTES; x++)
+//            state->backbuffer[y * BACKBUFFER_ROWBYTES + x] = (y & 1) ? 0x55 : 0xAA;
+        draw_screen(state);
         break;
 
       case SDL_MOUSEBUTTONUP:
@@ -4697,25 +4730,25 @@ int main(void)
         t  = event.button.state == SDL_PRESSED;
         break;
 
-        // main_loop(&state);
+        // main_loop(state);
 
-        //plot_face(&state, 0x4036, &bitmap_faces[FACEBYTES*0]);
-        //plot_face(&state, 0x4836, &bitmap_faces[FACEBYTES*1]);
-        //plot_face(&state, 0x5036, &bitmap_faces[FACEBYTES*2]);
+        //plot_face(state, 0x4036, &bitmap_faces[FACEBYTES*0]);
+        //plot_face(state, 0x4836, &bitmap_faces[FACEBYTES*1]);
+        //plot_face(state, 0x5036, &bitmap_faces[FACEBYTES*2]);
 
 #if 0
         // Handle mouse motion event
         for (int i = 0; i < 22; i++) // we read 20/21 entries
-          state.road_buffer[i] = 0x70 + (event.motion.x * 0x10 / 256);
-        build_curve_table(&state, /*forked=*/0);
+          state->road_buffer[i] = 0x70 + (event.motion.x * 0x10 / 256);
+        build_curve_table(state, /*forked=*/0);
 
         SDL_FillRect(surface, NULL, SDL_MapRGB(surface->format, 0xFF, 0xFF, 0xFF));
 
         for (int y = 0; y < 104; y++) {
           int yp = y; // 0 is top
 
-          int r = state.table_ec00[0x30 + y] >> 0;
-          int l = state.table_e800[0x30 + y] >> 0;
+          int r = state->table_ec00[0x30 + y] >> 0;
+          int l = state->table_e800[0x30 + y] >> 0;
           SDL_Rect rrect = {255 - r, yp, r, 1};
           SDL_Rect lrect = {      0, yp, l, 1};
           SDL_FillRect(surface, &rrect, SDL_MapRGB(surface->format, 0x00, 0x00, 0xFF));
@@ -4725,7 +4758,7 @@ int main(void)
           SDL_FillRect(surface, &rect, SDL_MapRGB(surface->format, 0xFF, 0xFF, 0x00));
         }
         SDL_UpdateWindowSurface(window);
-        state.fast_counter++;
+        state->fast_counter++;
 #endif
         break;
       }
@@ -4737,7 +4770,7 @@ int main(void)
     {
       zxbox_t dirty = {0, 0, GAMEWIDTH, GAMEHEIGHT};
 
-      zxscreen_convert(&state.screen[0], pixels, &dirty);
+      zxscreen_convert(&state->screen[0], pixels, &dirty);
       SDL_UpdateTexture(texture, NULL, pixels, GAMEWIDTH * 4);
     }
 
