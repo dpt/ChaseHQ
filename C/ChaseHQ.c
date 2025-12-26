@@ -3196,13 +3196,38 @@ void entrypt_128k(chqstate_t *state)
 // $E81D
 void entrypt_common(chqstate_t *state, uint8_t Amode_128k, uint8_t Bnrelocs)
 {
+  static const struct Relocations {
+    const uint8_t *src;
+    ptrdiff_t      dst;
+    size_t         len;
+  } relocations[] = {
+    { transitions_e88e, offsetof(chqstate_t, transitions_ec00), sizeof(transitions_e88e) },
+    { square_transition_mask, 0xEB00, sizeof(square_transition_mask) },
+    { diamond_transition_mask, 0xEA00, sizeof(diamond_transition_mask) },
+    // { 0xF220, 0x8014, 926 }, // copies load_stage_128k into place
+    // { 0xE876, 0x83B5, 24 },  // copies hooks_128k
+  };
+
+  const struct Relocations *reloc; // was HL
+  uint8_t                   iterations; // was BC
+
   state->mode_128k = Amode_128k;
 
   memcpy(ADDRTOSCREEN(SCREEN_START_ADDRESS), marquee_initial,
          sizeof(marquee_initial));
   memcpy(ADDRTOSCREEN(SCREEN_ATTRIBUTES_START_ADDRESS), marquee_attrs,
          sizeof(marquee_attrs));
-  // ...
+  if (Amode_128k == 0) {
+    // stop_the_tape_48k(state);
+  }
+
+  reloc      = &relocations[0];
+  iterations = 3; // Have to ignore requested nrelocs since 128K copies aren't done here
+  do
+    memcpy((char *) state + reloc->dst, reloc->src, reloc->len);
+  while (--iterations> 0);
+
+  bootstrap(state);
 }
 
 // $EC2C
@@ -3298,3 +3323,52 @@ mdc_have_glyph:
   *HLdash_out = HLdash;
   *DEdash_out = DEdash;
 }
+
+// $EF00
+void bootstrap(chqstate_t *state)
+{
+  for (;;) {
+    int      carry = 0;
+    uint8_t *HL;
+    int      B;
+    uint8_t  A;
+    uint8_t  Aorig;
+    uint8_t  C = 0; // Conv: Original doesn't initialise C.
+
+    // Build a table of flipped bytes at $EF00.
+    HL = &state->flipped[0];
+    do {
+      B = 8;
+      Aorig = A = HL - &state->flipped[0];
+      do {
+        RLC(A);
+        RR(C);
+      } while (--B > 0);
+      *HL++ = C;
+    } while (Aorig);
+
+    // Conv: Returning here - may have to split this routine up for
+    // conversion.
+    return;
+
+    // Start attract mode.
+    attract_mode_hook(state);
+
+    // When attract mode yields then we set up the game.
+    state->overtake_bonus_bcd = 0;
+
+    // Clear score_bcd and retry_count.
+    memset(&state->score_bcd[0], 0, sizeof(state->score_bcd));
+    state->retry_count = 0;
+
+    // Reset wanted_stage_number and credits.
+    state->wanted_stage_number = 1;
+    state->credits = 2;
+    main_loop(state);
+
+    // Call the 128K/bank 3 ?bootstrap routine.
+    //TODO if (state->mode_128k)
+    //TODO   call_bank_3_128k(0xC003);
+  }
+}
+

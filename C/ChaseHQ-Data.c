@@ -1970,6 +1970,185 @@ const uint8_t minifont[31 * 6] = {
 
 /* ----------------------------------------------------------------------- */
 
+// $E364
+const uint8_t spiral_transition_mask[13 * 8] = {
+  ________,
+  ________,
+  ________,
+  ________,
+  ________,
+  ________,
+  ________,
+  ________,
+
+  XXXXXXXX,
+  ________,
+  ________,
+  ________,
+  ________,
+  ________,
+  ________,
+  ________,
+
+  XXXXXXXX,
+  _______X,
+  _______X,
+  _______X,
+  _______X,
+  _______X,
+  _______X,
+  _______X,
+
+  XXXXXXXX,
+  _______X,
+  _______X,
+  _______X,
+  _______X,
+  _______X,
+  _______X,
+  XXXXXXXX,
+
+  XXXXXXXX,
+  X______X,
+  X______X,
+  X______X,
+  X______X,
+  X______X,
+  X______X,
+  XXXXXXXX,
+
+  XXXXXXXX,
+  XXXXXXXX,
+  X______X,
+  X______X,
+  X______X,
+  X______X,
+  X______X,
+  XXXXXXXX,
+
+  XXXXXXXX,
+  XXXXXXXX,
+  X_____XX,
+  X_____XX,
+  X_____XX,
+  X_____XX,
+  X_____XX,
+  XXXXXXXX,
+
+  XXXXXXXX,
+  XXXXXXXX,
+  X_____XX,
+  X_____XX,
+  X_____XX,
+  X_____XX,
+  XXXXXXXX,
+  XXXXXXXX,
+
+  XXXXXXXX,
+  XXXXXXXX,
+  XX____XX,
+  XX____XX,
+  XX____XX,
+  XX____XX,
+  XXXXXXXX,
+  XXXXXXXX,
+
+  XXXXXXXX,
+  XXXXXXXX,
+  XXXXXXXX,
+  XX____XX,
+  XX____XX,
+  XX____XX,
+  XXXXXXXX,
+  XXXXXXXX,
+
+  XXXXXXXX,
+  XXXXXXXX,
+  XXXXXXXX,
+  XX___XXX,
+  XX___XXX,
+  XXXXXXXX,
+  XXXXXXXX,
+  XXXXXXXX,
+
+  XXXXXXXX,
+  XXXXXXXX,
+  XXXXXXXX,
+  XXXXXXXX,
+  XXXXXXXX,
+  XXXXXXXX,
+  XXXXXXXX,
+  XXXXXXXX
+};
+
+// $E3BC
+const uint8_t circle_transition_mask[7 * 8] = {
+  ________,
+  ________,
+  ________,
+  ___XX___,
+  ___XX___,
+  ________,
+  ________,
+  ________,
+
+  ________,
+  ________,
+  ___XX___,
+  __XXXX__,
+  __XXXX__,
+  ___XX___,
+  ________,
+  ________,
+
+  ________,
+  ___XX___,
+  __XXXX__,
+  _XXXXXX_,
+  _XXXXXX_,
+  __XXXX__,
+  ___XX___,
+  ________,
+
+  ___XX___,
+  __XXXX__,
+  _XXXXXX_,
+  XXXXXXXX,
+  XXXXXXXX,
+  _XXXXXX_,
+  __XXXX__,
+  ___XX___,
+
+  __XXXX__,
+  _XXXXXX_,
+  XXXXXXXX,
+  XXXXXXXX,
+  XXXXXXXX,
+  XXXXXXXX,
+  _XXXXXX_,
+  __XXXX__,
+
+  _XXXXXX_,
+  XXXXXXXX,
+  XXXXXXXX,
+  XXXXXXXX,
+  XXXXXXXX,
+  XXXXXXXX,
+  XXXXXXXX,
+  _XXXXXX_,
+
+  XXXXXXXX,
+  XXXXXXXX,
+  XXXXXXXX,
+  XXXXXXXX,
+  XXXXXXXX,
+  XXXXXXXX,
+  XXXXXXXX,
+  XXXXXXXX
+};
+
+/* ----------------------------------------------------------------------- */
+
 // $E540
 const uint16_t inward_bend_table[96] = {
   0x0000,
@@ -2092,6 +2271,131 @@ const uint8_t horizontal_e760[8][22] = {
   { 0x1C, 0x3A, 0x24, 0x1B, 0x12, 0x0F, 0x0C, 0x09, 0x09, 0x06, 0x06, 0x06, 0x03, 0x06, 0x03, 0x03, 0x03, 0x03, 0x03, 0x03, 0x03, 0x00 },
   { 0x15, 0x39, 0x27, 0x1B, 0x15, 0x0F, 0x0C, 0x09, 0x09, 0x06, 0x06, 0x06, 0x03, 0x03, 0x06, 0x03, 0x03, 0x03, 0x03, 0x03, 0x03, 0x00 },
   { 0x0A, 0x3F, 0x27, 0x1E, 0x15, 0x0F, 0x0C, 0x0C, 0x09, 0x06, 0x06, 0x06, 0x03, 0x03, 0x03, 0x03, 0x03, 0x03, 0x03, 0x03, 0x03, 0x00 },
+};
+
+// $E88E
+const uint8_t transitions_e88e[3 * 8] = {
+  0x06,
+  0xEAF8,
+  0x0C,
+  0xE35C,
+  0x08,
+  0xE3B4,
+  0x07,
+  0xE9F8,
+  0x06,
+  0xEB28,
+  0x0C,
+  0xE3BC,
+  0x08,
+  0xE3F4,
+  0x07,
+  0xEA30
+};
+
+// 0xE8A6
+const uint8_t square_transition_mask[] = {
+  ________,
+  ________,
+  ________,
+  ___X____,
+  ________,
+  ________,
+  ________,
+  ________,
+
+  ________,
+  ________,
+  ________,
+  ___XX___,
+  ___XX___,
+  ________,
+  ________,
+  ________,
+
+  ________,
+  ________,
+  __XXXX__,
+  __XXXX__,
+  __XXXX__,
+  __XXXX__,
+  ________,
+  ________,
+
+  ________,
+  _XXXXXX_,
+  _XXXXXX_,
+  _XXXXXX_,
+  _XXXXXX_,
+  _XXXXXX_,
+  _XXXXXX_,
+  ________,
+
+  XXXXXXXX,
+  XXXXXXXX,
+  XXXXXXXX,
+  XXXXXXXX,
+  XXXXXXXX,
+  XXXXXXXX,
+  XXXXXXXX,
+  XXXXXXXX
+};
+
+// 0xE8CE
+const uint8_t diamond_transition_mask[6 * 8] = {
+  X______X,
+  _X____X_,
+  __X__X__,
+  ___XX___,
+  ___XX___,
+  __X__X__,
+  _X____X_,
+  X______X,
+
+  X______X,
+  XX____XX,
+  _XX__XX_,
+  __XXXX__,
+  __XXXX__,
+  _XX__XX_,
+  XX____XX,
+  X______X,
+
+  XX____XX,
+  XXX__XXX,
+  _XXXXXX_,
+  __XXXX__,
+  __XXXX__,
+  _XXXXXX_,
+  XXX__XXX,
+  XX____XX,
+
+  XX____XX,
+  XXX__XXX,
+  XXXXXXXX,
+  _XXXXXX_,
+  _XXXXXX_,
+  XXXXXXXX,
+  XXX__XXX,
+  XX____XX,
+
+  XXX__XXX,
+  XXXXXXXX,
+  XXXXXXXX,
+  _XXXXXX_,
+  _XXXXXX_,
+  XXXXXXXX,
+  XXXXXXXX,
+  XXX__XXX,
+
+  XXXXXXXX,
+  XXXXXXXX,
+  XXXXXXXX,
+  XXXXXXXX,
+  XXXXXXXX,
+  XXXXXXXX,
+  XXXXXXXX,
+  XXXXXXXX
 };
 
 /* ----------------------------------------------------------------------- */

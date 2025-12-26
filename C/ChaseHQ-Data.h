@@ -74,10 +74,18 @@ const uint8_t font[41 * 7];
 const uint8_t ledfont[10 * 16];
 const uint8_t minifont[31 * 6];
 
+const uint8_t spiral_transition_mask[13 * 8];
+const uint8_t circle_transition_mask[7 * 8];
+
 const uint16_t inward_bend_table[96];
 
 const uint8_t horizontal_e6b0[8][22];
 const uint8_t horizontal_e760[8][22];
+
+const uint8_t transitions_e88e[3 * 8];
+
+const uint8_t square_transition_mask[5 * 8];
+const uint8_t diamond_transition_mask[6 * 8];
 
 const uint8_t marquee_initial[SCREEN_BITMAP_ROWBYTES * MARQUEE_HEIGHT];
 const uint8_t marquee_attrs[SCREEN_ATTRIBUTES_WIDTH * MARQUEE_HEIGHT / 8];

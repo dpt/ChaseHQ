@@ -461,6 +461,8 @@ void menu_draw_char(chqstate_t *state,
                     uint8_t   **DEdash_out,
                     uint8_t   **HLdash_out);
 
+void bootstrap(chqstate_t *state);
+
 /* ----------------------------------------------------------------------- */
 
 #endif /* CHASEHQ_H */
