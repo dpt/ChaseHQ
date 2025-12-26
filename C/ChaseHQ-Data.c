@@ -6,9 +6,16 @@
 
 // vim: ts=8 sts=2 sw=2 et
 
+#include <stdint.h>
+
+#include "ChaseHQ.h"
+#include "Pixels.h"
+
+#include "ChaseHQ-Data.h"
+
 /* ----------------------------------------------------------------------- */
 
-static const uint8_t stage1[] = {
+const uint8_t stage1[16 * 512] = {
   0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xF0, 0x25, 0x5D, 0x7F, 0x5F, 0xFF,
   0xFF, 0xAF, 0x0E, 0xA5, 0xB8, 0x08, 0x2B, 0xBA, 0x87, 0xD7, 0xF5, 0x55, 0xE3, 0x02, 0x57, 0x02,
   0x15, 0xFC, 0x02, 0xAB, 0xA8, 0x02, 0xB0, 0x80, 0x0B, 0x80, 0xBF, 0xEE, 0x01, 0x56, 0x38, 0x00,
@@ -528,8 +535,8 @@ static const uint8_t stage1[] = {
 // [Graphics] Turbo icons
 //
 
-static const uint8_t bitmap_turbospin[TURBOWIDTH / 8 * 2 * TURBOHEIGHT *
-                                      TURBOFRAMES] = {
+const uint8_t bitmap_turbospin[TURBOWIDTH / 8 * 2 * TURBOHEIGHT *
+                               TURBOFRAMES] = {
   ________, ________, ___XXXXX, ________,
   ________, _XXXXXXX, ____XXXX, XXX_____,
   ________, _XXXXXXX, _____XXX, XXXX____,
@@ -580,7 +587,7 @@ static const uint8_t bitmap_turbospin[TURBOWIDTH / 8 * 2 * TURBOHEIGHT *
 //
 
 // $7BE9
-static const uint8_t bitmap_faces[FACEBYTES * NFACES] = {
+const uint8_t bitmap_faces[FACEBYTES * NFACES] = {
   XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX,
   X__XX__X, X_______, ________, ____X_XX,
   X_XX___X, ________, ________, _____X_X,
@@ -726,7 +733,7 @@ static const uint8_t bitmap_faces[FACEBYTES * NFACES] = {
 /* ----------------------------------------------------------------------- */
 
 // $81DD
-static const uint8_t chatterblk_start_stage[] = {
+const uint8_t chatterblk_start_stage[4] = {
   CHATTERCMD_RANDOM,
   CHATTERBLK_TONY_GIDDY_UP,
   CHATTERBLK_TONY_HOLD_ON,
@@ -734,20 +741,20 @@ static const uint8_t chatterblk_start_stage[] = {
 };
 
 // $81E4
-static const uint8_t chatterblk_tony_giddy_up[] = {
+const uint8_t chatterblk_tony_giddy_up[3] = {
   CHATTERCHR_TONY,
   CHATTERSTR_GIDDY_UP_BOY,
   CHATTERCMD_STOP
 };
 
 // $81E8
-static const uint8_t chatterblk_tony_hold_on[] = {
+const uint8_t chatterblk_tony_hold_on[3] = {
   CHATTERCHR_TONY,
   CHATTERSTR_HOLD_ON_MAN,
   CHATTERCMD_STOP
 };
 
-static const char *chatter_strings[CHATTERSTR__LIMIT] = {
+const char *chatter_strings[CHATTERSTR__LIMIT] = {
   // $81EC
   "GIDDY UP BOY!",
   "HOLD ON MAN",
@@ -787,7 +794,7 @@ static const char *chatter_strings[CHATTERSTR__LIMIT] = {
 #define TWOBYTES(addr) (addr) & 0xFF, (addr) >> 8
 
 // $82A6
-static const uint8_t attract_messages[] = {
+const uint8_t attract_messages[37] = {
   DRAWCHAR_TYPE_DOUBLE,
   attribute_BLACK_OVER_BLACK, // zero
   TWOBYTES(0xF02C), // back buffer addr
@@ -802,7 +809,7 @@ static const uint8_t attract_messages[] = {
 };
 
 // $82CC
-static const uint8_t credits_messages[] = {
+const uint8_t credits_messages[84] = {
   10, // frame delay
   8, // vertical gap?
   DRAWCHAR_TYPE_SINGLE,
@@ -827,7 +834,7 @@ static const uint8_t credits_messages[] = {
 };
 
 // $8320
-static const uint8_t copyright_messages[] = {
+const uint8_t copyright_messages[92] = {
   10,
   8,
   DRAWCHAR_TYPE_SINGLE,
@@ -853,7 +860,7 @@ static const uint8_t copyright_messages[] = {
 
 // $8C58
 // Conv: This is now a template copied into state.
-static const uint8_t score_messages_template[] = {
+const uint8_t score_messages_template[90] = {
   5, 4, 3,
   attribute_RED_OVER_BLACK,
   TWOBYTES(0xF025),
@@ -873,7 +880,7 @@ static const uint8_t score_messages_template[] = {
 };
 
 // $8CB2
-static const uint8_t sighting_message[] = {
+const uint8_t sighting_message[36] = {
   0x01, 0x1E, 0x02,
   attribute_BLACK_OVER_BLACK,
   TWOBYTES(0xF023),
@@ -883,7 +890,7 @@ static const uint8_t sighting_message[] = {
 };
 
 // $8CD6
-static const uint8_t pull_over_message[] = {
+const uint8_t pull_over_message[30] = {
   0x01, 0x1E, 0x02,
   attribute_BLACK_OVER_BLACK,
   TWOBYTES(0xF026),
@@ -893,7 +900,7 @@ static const uint8_t pull_over_message[] = {
 };
 
 // $8CF4
-static const uint8_t game_over_message[] = {
+const uint8_t game_over_message[20] = {
   0x01, 0x1E, 0x03,
   attribute_BLACK_OVER_BLACK,
   TWOBYTES(0xF02B),
@@ -903,7 +910,7 @@ static const uint8_t game_over_message[] = {
 };
 
 // $8D07
-static const uint8_t time_up_message[] = {
+const uint8_t time_up_message[20] = {
   0x01, 0x19, 0x03,
   attribute_BLACK_OVER_BLACK,
   TWOBYTES(0xF02C),
@@ -914,7 +921,7 @@ static const uint8_t time_up_message[] = {
 
 // $8D18
 // This will need to be a template copied into state.
-static const uint8_t continue_messages[] = {
+const uint8_t continue_messages[119] = {
   0x01, 0x01, 0x03,
   attribute_BLACK_OVER_BLACK,
   TWOBYTES(0xF02C),
@@ -949,7 +956,7 @@ static const uint8_t continue_messages[] = {
 };
 
 // $98A9
-static const uint8_t chatterblk_pilot_turn_left[] = {
+const uint8_t chatterblk_pilot_turn_left[6] = {
   CHATTERCHR_PILOT,
   CHATTERSTR_THIS_IS_AIRBORNE,
   CHATTERSTR_TARGET_VEHICLE_TURNED,
@@ -959,7 +966,7 @@ static const uint8_t chatterblk_pilot_turn_left[] = {
 };
 
 // $98B3
-static const uint8_t chatterblk_pilot_turn_right[] = {
+const uint8_t chatterblk_pilot_turn_right[6] = {
   CHATTERCHR_PILOT,
   CHATTERSTR_THIS_IS_AIRBORNE,
   CHATTERSTR_TARGET_VEHICLE_TURNED,
@@ -969,7 +976,7 @@ static const uint8_t chatterblk_pilot_turn_right[] = {
 };
 
 // $98BD
-static const uint8_t chatterblk_heroes_acknowledge[] = {
+const uint8_t chatterblk_heroes_acknowledge[4] = {
   CHATTERCMD_RANDOM,
   CHATTERBLK_TONY_LOUD_CLEAR,
   CHATTERBLK_RAYMOND_ROGER,
@@ -977,28 +984,28 @@ static const uint8_t chatterblk_heroes_acknowledge[] = {
 };
 
 // $98C4
-static const uint8_t chatterblk_tony_loud_clear[] = {
+const uint8_t chatterblk_tony_loud_clear[3] = {
   CHATTERCHR_TONY,
   CHATTERSTR_READ_LOUD_CLEAR,
   CHATTERCMD_STOP
 };
 
 // $98C8
-static const uint8_t chatterblk_raymond_roger[] = {
+const uint8_t chatterblk_raymond_roger[3] = {
   CHATTERCHR_RAYMOND,
   CHATTERSTR_ROGER,
   CHATTERCMD_STOP
 };
 
 // $98CC
-static const uint8_t chatterblk_tony_gotcha[] = {
+const uint8_t chatterblk_tony_gotcha[3] = {
   CHATTERCHR_TONY,
   CHATTERSTR_GOTCHA_NANCY,
   CHATTERCMD_STOP
 };
 
 // $98D0
-static const uint8_t chatterblk_raymond_wrong_way[] = {
+const uint8_t chatterblk_raymond_wrong_way[4] = {
   CHATTERCHR_RAYMOND,
   CHATTERSTR_WHAT_YOU_DOING,
   CHATTERSTR_GOING_OTHER_WAY,
@@ -1006,7 +1013,7 @@ static const uint8_t chatterblk_raymond_wrong_way[] = {
 };
 
 // $98D6
-static const uint8_t chatterblk_raymond_smash[] = {
+const uint8_t chatterblk_raymond_smash[4] = {
   CHATTERCMD_RANDOM,
   CHATTERBLK_RAYMOND_BEAR_DOWN,
   CHATTERBLK_RAYMOND_RANDOM_PLEAS,
@@ -1014,35 +1021,35 @@ static const uint8_t chatterblk_raymond_smash[] = {
 };
 
 // $98DD
-static const uint8_t chatterblk_raymond_bear_down[] = {
+const uint8_t chatterblk_raymond_bear_down[3] = {
   CHATTERCHR_RAYMOND,
   CHATTERSTR_BEAR_DOWN,
   CHATTERCMD_STOP
 };
 
 // $98E1
-static const uint8_t chatterblk_raymond_push_it[] = {
+const uint8_t chatterblk_raymond_push_it[3] = {
   CHATTERCHR_RAYMOND,
   CHATTERSTR_MORE_PUSH_MORE,
   CHATTERCMD_STOP
 };
 
 // $98E5
-static const uint8_t chatterblk_raymond_harder[] = {
+const uint8_t chatterblk_raymond_harder[3] = {
   CHATTERCHR_RAYMOND,
   CHATTERSTR_HARDER,
   CHATTERCMD_STOP
 };
 
 // $98E9
-static const uint8_t chatterblk_raymond_oh_man[] = {
+const uint8_t chatterblk_raymond_oh_man[3] = {
   CHATTERCHR_RAYMOND,
   CHATTERSTR_OH_MAN,
   CHATTERCMD_STOP
 };
 
 // $98ED
-static const uint8_t chatterblk_raymond_random_pleas[] = {
+const uint8_t chatterblk_raymond_random_pleas[4] = {
   CHATTERCMD_RANDOM,
   CHATTERBLK_RAYMOND_OH_MAN,
   CHATTERBLK_RAYMOND_HARDER,
@@ -1050,21 +1057,21 @@ static const uint8_t chatterblk_raymond_random_pleas[] = {
 };
 
 // $98F4
-static const uint8_t chatterblk_raymond_please[] = {
+const uint8_t chatterblk_raymond_please[3] = {
   CHATTERCHR_RAYMOND,
   CHATTERSTR_PLEASE,
   CHATTERCMD_STOP
 };
 
 // $98F8
-static const uint8_t chatterblk_raymond_get_moving[] = {
+const uint8_t chatterblk_raymond_get_moving[3] = {
   CHATTERCHR_RAYMOND,
   CHATTERSTR_GET_MOVIN_MAN,
   CHATTERCMD_STOP
 };
 
 // $98FC
-static const uint8_t chatterblk_nancy_time_running_out[] = {
+const uint8_t chatterblk_nancy_time_running_out[5] = {
   CHATTERCHR_NANCY,
   CHATTERSTR_THIS_IS_NANCY,
   CHATTERSTR_MESSIN_AROUND,
@@ -1073,7 +1080,7 @@ static const uint8_t chatterblk_nancy_time_running_out[] = {
 };
 
 // $9904
-static const uint8_t chatterblk_raymond_random_yelps[] = {
+const uint8_t chatterblk_raymond_random_yelps[4] = {
   CHATTERCMD_RANDOM,
   CHATTERBLK_RAYMOND_OHNO,
   CHATTERBLK_RAYMOND_OUCH,
@@ -1081,28 +1088,28 @@ static const uint8_t chatterblk_raymond_random_yelps[] = {
 };
 
 // $990B
-static const uint8_t chatterblk_raymond_ohno[] = {
+const uint8_t chatterblk_raymond_ohno[3] = {
   CHATTERCHR_RAYMOND,
   CHATTERSTR_OH_NO,
   CHATTERCMD_STOP
 };
 
 // $990F
-static const uint8_t chatterblk_raymond_ouch[] = {
+const uint8_t chatterblk_raymond_ouch[3] = {
   CHATTERCHR_RAYMOND,
   CHATTERSTR_OUCH,
   CHATTERCMD_STOP
 };
 
 // $9913
-static const uint8_t chatterblk_raymond_yaow[] = {
+const uint8_t chatterblk_raymond_yaow[3] = {
   CHATTERCHR_RAYMOND,
   CHATTERSTR_YAOW,
   CHATTERCMD_STOP
 };
 
 // $9917
-static const uint8_t chatterblk_turbo[] = {
+const uint8_t chatterblk_turbo[4] = {
   CHATTERCMD_RANDOM,
   CHATTERBLK_TONY_WHOA,
   CHATTERBLK_TONY_GREAT,
@@ -1110,28 +1117,28 @@ static const uint8_t chatterblk_turbo[] = {
 };
 
 // $991E
-static const uint8_t chatterblk_tony_whoa[] = {
+const uint8_t chatterblk_tony_whoa[3] = {
   CHATTERCHR_TONY,
   CHATTERSTR_WHOA,
   CHATTERCMD_STOP
 };
 
 // $9922
-static const uint8_t chatterblk_tony_great[] = {
+const uint8_t chatterblk_tony_great[3] = {
   CHATTERCHR_TONY,
   CHATTERSTR_GREAT,
   CHATTERCMD_STOP
 };
 
 // $9926
-static const uint8_t chatterblk_raymond_one_more_time[] = {
+const uint8_t chatterblk_raymond_one_more_time[3] = {
   CHATTERCHR_RAYMOND,
   CHATTERSTR_ONE_MORE_TIME,
   CHATTERCMD_STOP
 };
 
 // $992A
-static const uint8_t chatterblk_nancy_berates_hero[] = {
+const uint8_t chatterblk_nancy_berates_hero[4] = {
   CHATTERCMD_RANDOM,
   CHATTERBLK_NANCY_WRONG_JOB,
   CHATTERBLK_NANCY_ONE_MORE_TRY,
@@ -1139,21 +1146,21 @@ static const uint8_t chatterblk_nancy_berates_hero[] = {
 };
 
 // $9931
-static const uint8_t chatterblk_nancy_wrong_job[] = {
+const uint8_t chatterblk_nancy_wrong_job[3] = {
   CHATTERCHR_NANCY,
   CHATTERSTR_PICKED_WRONG_JOB,
   CHATTERCMD_STOP
 };
 
 // $9937
-static const uint8_t chatterblk_nancy_one_more_try[] = {
+const uint8_t chatterblk_nancy_one_more_try[3] = {
   CHATTERCHR_NANCY,
   CHATTERSTR_ONE_MORE_TRY,
   CHATTERCMD_STOP
 };
 
 // $993B
-static const uint8_t chatterblk_nancy_mediocre_driver[] = {
+const uint8_t chatterblk_nancy_mediocre_driver[4] = {
   CHATTERCHR_NANCY,
   CHATTERSTR_MEDIOCRE_DRIVER,
   CHATTERSTR_SEE_YOU_LATER,
@@ -1161,7 +1168,7 @@ static const uint8_t chatterblk_nancy_mediocre_driver[] = {
 };
 
 // $9941
-static const uint8_t chatterblk_tony_lets_go[] = {
+const uint8_t chatterblk_tony_lets_go[3] = {
   CHATTERCHR_TONY,
   CHATTERSTR_LETS_GO,
   CHATTERCMD_STOP
@@ -1170,7 +1177,7 @@ static const uint8_t chatterblk_tony_lets_go[] = {
 // Additional: List of all chatter blocks
 // Note: Strictly this only needs to be the blocks that are referred to from
 // other blocks.
-static const uint8_t *chatter_blocks[CHATTERBLK__LIMIT] = {
+const uint8_t *chatter_blocks[CHATTERBLK__LIMIT] = {
   &chatterblk_start_stage[0],
   &chatterblk_tony_giddy_up[0],
   &chatterblk_tony_hold_on[0],
@@ -1208,7 +1215,7 @@ static const uint8_t *chatter_blocks[CHATTERBLK__LIMIT] = {
 /* ----------------------------------------------------------------------- */
 
 // $A13E
-static const stagevars_t saved_game_state = {
+const stagevars_t saved_game_state = {
   1, // var_a16d
   100, // idle_timer
   USERINPUTMASK_ALLOW_ALL,
@@ -1225,7 +1232,7 @@ static const stagevars_t saved_game_state = {
   0x59BF, // horizon_attribute
 };
 
-static const hazard_t saved_game_state_hazard_0 = {
+const hazard_t saved_game_state_hazard_0 = {
   0,
   100, // distance
   0,
@@ -1248,7 +1255,7 @@ static const hazard_t saved_game_state_hazard_0 = {
 /* ----------------------------------------------------------------------- */
 
 // $A27A
-static const uint8_t font[] = {
+const uint8_t font[41 * 7] = {
   __XX____,
   _XXXX___,
   _XXXX___,
@@ -1579,7 +1586,7 @@ static const uint8_t font[] = {
 };
 
 // $DF62
-static const uint8_t ledfont[] = {
+const uint8_t ledfont[10 * 16] = {
   _XXXXX__,
   X_XXX_X_,
   XX___XX_,
@@ -1742,7 +1749,7 @@ static const uint8_t ledfont[] = {
 };
 
 // $DFF8
-static const uint8_t minifont[] = {
+const uint8_t minifont[31 * 6] = {
   _XX_____,
   X__X____,
   X__X____,
@@ -1964,7 +1971,7 @@ static const uint8_t minifont[] = {
 /* ----------------------------------------------------------------------- */
 
 // $E540
-static const uint16_t inward_bend_table[96] = {
+const uint16_t inward_bend_table[96] = {
   0x0000,
   0x0006,
   0x000C,
@@ -2064,7 +2071,7 @@ static const uint16_t inward_bend_table[96] = {
 };
 
 // $E6B0 - a right hand table?
-static const uint8_t horizontal_e6b0[8][22] = {
+const uint8_t horizontal_e6b0[8][22] = {
   { 0xEB, 0xC1, 0xAA, 0x8F, 0x8E, 0x6E, 0x5D, 0x66, 0x71, 0x55, 0x2E, 0x61, 0x35, 0x38, 0x3C, 0x40, 0x44, 0x49, 0x4E, 0x55, 0x5D, 0x66 },
   { 0xD5, 0xCA, 0xA7, 0x8C, 0x8B, 0x6B, 0x78, 0x66, 0x4B, 0x51, 0x59, 0x61, 0x35, 0x38, 0x3C, 0x40, 0x44, 0x49, 0x4E, 0x55, 0x5D, 0x66 },
   { 0xB5, 0xCF, 0xB3, 0x89, 0x88, 0x83, 0x78, 0x66, 0x4B, 0x51, 0x59, 0x30, 0x66, 0x38, 0x3C, 0x40, 0x44, 0x49, 0x4E, 0x55, 0x5D, 0x66 },
@@ -2076,7 +2083,7 @@ static const uint8_t horizontal_e6b0[8][22] = {
 };
 
 // $E760 - a left hand table?
-static const uint8_t horizontal_e760[8][22] = {
+const uint8_t horizontal_e760[8][22] = {
   { 0x42, 0x2A, 0x1E, 0x15, 0x12, 0x0C, 0x09, 0x09, 0x09, 0x06, 0x03, 0x06, 0x03, 0x03, 0x03, 0x03, 0x03, 0x03, 0x03, 0x03, 0x03, 0x00 },
   { 0x3D, 0x2D, 0x1F, 0x15, 0x12, 0x0C, 0x0C, 0x09, 0x06, 0x06, 0x06, 0x06, 0x03, 0x03, 0x03, 0x03, 0x03, 0x03, 0x03, 0x03, 0x03, 0x00 },
   { 0x34, 0x30, 0x21, 0x15, 0x12, 0x0F, 0x0C, 0x09, 0x06, 0x06, 0x06, 0x03, 0x06, 0x03, 0x03, 0x03, 0x03, 0x03, 0x03, 0x03, 0x03, 0x00 },
@@ -2090,7 +2097,7 @@ static const uint8_t horizontal_e760[8][22] = {
 /* ----------------------------------------------------------------------- */
 
 // for testing
-static const uint8_t backbufexample[] = {
+const uint8_t backbufexample[16 * 256] = {
   0xFE, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
   0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0xCB,
   0x03, 0x3F, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,

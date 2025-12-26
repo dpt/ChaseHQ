@@ -1,13 +1,13 @@
 CFLAGS = -Wall -Wno-unused-function #-Wextra -Wpedantic
 
-proto: proto.c
-	gcc $(CFLAGS) `sdl2-config --cflags --libs` -g -o $@ $<
+ChaseHQ: ChaseHQ.c ChaseHQ-Data.c Main.c
+	gcc $(CFLAGS) `sdl2-config --cflags --libs` -g -o $@ $^
 
 fmt:
-	astyle --project=.astylerc proto.c data.c
+	astyle --project=.astylerc *.[ch]
 
 clean:
-	rm -f proto *.o
+	rm -f ChaseHQ *.o
 
 .PHONY:	fmt clean
 

@@ -1,0 +1,448 @@
+#ifndef CHASEHQ_H
+#define CHASEHQ_H
+
+#include "Spectrum.h"
+
+#define PLAYFIELD_HEIGHT      (16 * 8)
+
+#define BACKBUFFER_WIDTH      (256)
+#define BACKBUFFER_ROWBYTES   (BACKBUFFER_WIDTH / 8)
+#define BACKBUFFER_HEIGHT     (128)
+#define BACKBUFFER_LENGTH     (BACKBUFFER_ROWBYTES * BACKBUFFER_HEIGHT)
+#define BACKBUFFER_START_ADDRESS ((uint16_t) 0xF000)
+#define BACKBUFFER_END_ADDRESS (BACKBUFFER_START_ADDRESS + BACKBUFFER_LENGTH)
+
+// Return screen[] pointer given a Z80 address.
+#define ADDRTOSCREEN(addr)    (&state->screen[(addr) - SCREEN_START_ADDRESS])
+// Return backbuffer[] pointer given a Z80 address.
+#define ADDRTOBACKBUF(addr)   (&state->backbuffer[(addr) - BACKBUFFER_START_ADDRESS])
+
+// Return byte offset of screen[] pointer.
+#define SCREENTOOFFSET(ptr)   ((ptr) - &state->screen[0])
+// Return byte offset of backbuffer[] pointer.
+#define BACKBUFTOOFFSET(ptr)  ((ptr) - &state->backbuffer[0])
+
+// Return screen[] pointer given byte offset.
+#define OFFSETTOSCREEN(off)   (&state->screen[off])
+// Return backbuffer[] pointer given byte offset.
+#define OFFSETTOBACKBUF(off)  (&state->backbuffer[off])
+
+#define STAGEDATA_BASE        (0x5C00)
+#define STAGEDATA_END         (0x76EF) // inclusive
+#define STAGEDATA_LENGTH      (STAGEDATA_END + 1 - STAGEDATA_BASE)
+
+#define MAXHAZARDS            (6)
+
+#define MARQUEELIGHTWIDTH     (5)
+#define MARQUEELIGHTHEIGHT    (4)
+
+#define STREND                (1<<7) // string terminating top bit
+
+#define TURBOWIDTH            (16) // pixels
+#define TURBOHEIGHT           (14)
+#define TURBOFRAMES           (3)
+
+#define FACEBITMAPBYTES       (32 / 8 * 40)
+#define FACEATTRBYTES         (4 * 5)
+#define FACEBYTES             (FACEBITMAPBYTES + FACEATTRBYTES)
+#define NFACES                (3)
+
+#define DRAWCHAR_TYPE_DUNNO   (0)
+#define DRAWCHAR_TYPE_GENERIC (1)
+#define DRAWCHAR_TYPE_SINGLE  (2)
+#define DRAWCHAR_TYPE_DOUBLE  (3)
+#define DRAWCHAR_TYPE_SINGLE_INVERTED (4)
+#define DRAWCHAR_TYPE_DOUBLE_INVERTED (5)
+
+#define QUITSTATE_IDLE        (0)
+#define QUITSTATE_START       (1)
+#define QUITSTATE_DONE        (2) // not sure
+
+#define USERINPUT_RIGHT       (1<<0)
+#define USERINPUT_LEFT        (1<<1)
+#define USERINPUT_DOWN        (1<<2) // aka brake
+#define USERINPUT_UP          (1<<3) // aka accelerate
+#define USERINPUT_FIRE        (1<<4) // aka gear
+#define USERINPUT_TURBO       (1<<5)
+#define USERINPUT_PAUSE       (1<<6)
+#define USERINPUT_QUIT        (1<<7)
+#define USERINPUT_NOT_QUIT    (0x7F)
+#define USERINPUT_NONE        (0x00)
+
+#define USERINPUTMASK_ALLOW_NONE (0x00)
+#define USERINPUTMASK_ALLOW_ALL (0xFF)
+
+#define EFFECT_SQUEAL         (1)
+#define EFFECT_LANDING        (2)
+#define EFFECT_CAR_HIT        (3)
+#define EFFECT_SCENERY_HIT    (4)
+#define EFFECT_HAZARD_HIT     (5)
+#define EFFECT_WALL_HIT       (6)
+#define EFFECT_CORNERING      (7)
+#define EFFECT_BIP            (8)
+#define EFFECT_BOW            (9)
+
+// these state names need clarification
+#define TIMEUPSTATE_INIT      (0)
+#define TIMEUPSTATE_CHECK_TIME_UP (1)
+#define TIMEUPSTATE_CAR_STOPPED (2)
+#define TIMEUPSTATE_CHECK_RESTART (3)
+#define TIMEUPSTATE_WAITING   (4)
+
+#define CHATTERSTATE_IDLE     (0)
+#define CHATTERSTATE_START    (1)
+#define CHATTERSTATE_RUN      (2)
+#define CHATTERSTATE_STOP     (3)
+
+typedef uint8_t chatterpriority_t;
+
+#define PERPCAUGHTPHASE_0     (0)
+#define PERPCAUGHTPHASE_1     (1)
+#define PERPCAUGHTPHASE_2     (2)
+#define PERPCAUGHTPHASE_3     (3)
+#define PERPCAUGHTPHASE_4     (4)
+#define PERPCAUGHTPHASE_5     (5)
+#define PERPCAUGHTPHASE_6     (6)
+
+#define TRANSITION_0          (0)
+#define TRANSITION_1          (1)
+#define TRANSITION_3          (3)
+#define TRANSITION_4          (4)
+
+/* ----------------------------------------------------------------------- */
+
+// Conv: The C version uses IDs for strings and blocks rather than inline addresses.
+
+#define CHATTERCMD_RANDOM                   (0xFC) // Followed by three chatterblock indices
+#define CHATTERCMD_PAUSE                    (0xFE) // Followed by a single chatterblock index
+#define CHATTERCMD_STOP                     (0xFF)
+
+/// Chatter characters
+#define CHATTERCHR_PILOT                       (0)
+#define CHATTERCHR_NANCY                       (1)
+#define CHATTERCHR_RAYMOND                     (2)
+#define CHATTERCHR_TONY                        (3)
+
+/// Chatter string indices
+#define CHATTERSTR_GIDDY_UP_BOY                (0)
+#define CHATTERSTR_HOLD_ON_MAN                 (1)
+#define CHATTERSTR_THIS_IS_NANCY               (2)
+#define CHATTERSTR_THIS_IS_AIRBORNE            (3)
+#define CHATTERSTR_TARGET_VEHICLE_TURNED       (4)
+#define CHATTERSTR_RIGHT_AHEAD_OVER            (5)
+#define CHATTERSTR_LEFT_AHEAD_OVER             (6)
+#define CHATTERSTR_READ_LOUD_CLEAR             (7)
+#define CHATTERSTR_ROGER                       (8)
+#define CHATTERSTR_GOTCHA_NANCY                (9)
+#define CHATTERSTR_WHAT_YOU_DOING             (10)
+#define CHATTERSTR_GOING_OTHER_WAY            (11)
+#define CHATTERSTR_MESSIN_AROUND              (12)
+#define CHATTERSTR_TIME_RUN_OUT               (13)
+#define CHATTERSTR_GET_MOVIN_MAN              (14)
+#define CHATTERSTR_OH_NO                      (15)
+#define CHATTERSTR_PLEASE                     (16)
+#define CHATTERSTR_GREAT                      (17)
+#define CHATTERSTR_OUCH                       (18)
+#define CHATTERSTR_LETS_GO                    (19)
+#define CHATTERSTR_YAOW                       (20)
+#define CHATTERSTR_BEAR_DOWN                  (21)
+#define CHATTERSTR_MORE_PUSH_MORE             (22)
+#define CHATTERSTR_ONE_MORE_TIME              (23)
+#define CHATTERSTR_OH_MAN                     (24)
+#define CHATTERSTR_WHOA                       (25)
+#define CHATTERSTR_HARDER                     (26)
+#define CHATTERSTR_PICKED_WRONG_JOB           (27)
+#define CHATTERSTR_CHECK_CLASSIFIED_ADS       (28)
+#define CHATTERSTR_ONE_MORE_TRY               (29)
+#define CHATTERSTR_MEDIOCRE_DRIVER            (30)
+#define CHATTERSTR_SEE_YOU_LATER              (31)
+#define CHATTERSTR__LIMIT                     (32)
+
+/// Chatter block indices
+#define CHATTERBLK_START_STAGE                 (0)
+#define CHATTERBLK_TONY_GIDDY_UP               (1)
+#define CHATTERBLK_TONY_HOLD_ON                (2)
+#define CHATTERBLK_PILOT_TURN_LEFT             (3)
+#define CHATTERBLK_PILOT_TURN_RIGHT            (4)
+#define CHATTERBLK_HEROES_ACKNOWLEDGE          (5)
+#define CHATTERBLK_TONY_LOUD_CLEAR             (6)
+#define CHATTERBLK_RAYMOND_ROGER               (7)
+#define CHATTERBLK_TONY_GOTCHA                 (8)
+#define CHATTERBLK_RAYMOND_WRONG_WAY           (9)
+#define CHATTERBLK_RAYMOND_SMASH              (10)
+#define CHATTERBLK_RAYMOND_BEAR_DOWN          (10)
+#define CHATTERBLK_RAYMOND_PUSH_IT            (12)
+#define CHATTERBLK_RAYMOND_HARDER             (13)
+#define CHATTERBLK_RAYMOND_OH_MAN             (14)
+#define CHATTERBLK_RAYMOND_RANDOM_PLEAS       (15)
+#define CHATTERBLK_RAYMOND_PLEASE             (16)
+#define CHATTERBLK_RAYMOND_GET_MOVING         (17)
+#define CHATTERBLK_NANCY_TIME_RUNNING_OUT     (18)
+#define CHATTERBLK_RAYMOND_RANDOM_YELPS       (19)
+#define CHATTERBLK_RAYMOND_OHNO               (20)
+#define CHATTERBLK_RAYMOND_OUCH               (21)
+#define CHATTERBLK_RAYMOND_YAOW               (22)
+#define CHATTERBLK_TURBO                      (23)
+#define CHATTERBLK_TONY_WHOA                  (24)
+#define CHATTERBLK_TONY_GREAT                 (25)
+#define CHATTERBLK_RAYMOND_ONE_MORE_TIME      (26)
+#define CHATTERBLK_NANCY_BERATES              (27)
+#define CHATTERBLK_NANCY_WRONG_JOB            (28)
+#define CHATTERBLK_NANCY_ONE_MORE_TRY         (29)
+#define CHATTERBLK_NANCY_MEDIOCRE_DRIVER      (30)
+#define CHATTERBLK_TONY_LETS_GO               (31)
+#define CHATTERBLK__LIMIT                     (32)
+
+// note: road_pos left..right is high..low
+#define ROAD_LEFTMOST   (0x0105)
+#define ROAD_RIGHTMOST  (0x00F5)
+
+/* ----------------------------------------------------------------------- */
+
+#define HAZARD_UNUSED           (0xFF)
+
+/* ----------------------------------------------------------------------- */
+
+typedef struct hazard_s hazard_t;
+typedef struct stagevars_s stagevars_t;
+typedef struct chqstate_s chqstate_t;
+
+/* ----------------------------------------------------------------------- */
+
+void chasehq_reset_state(chqstate_t *state);
+void main_loop(chqstate_t *state);
+
+/* ----------------------------------------------------------------------- */
+
+// Ideally all of these will become static in the long run.
+
+void load_stage(chqstate_t *state);
+
+void attract_mode(chqstate_t *state);
+
+void start_siren_hook(chqstate_t *state);
+
+void play_engine_or_siren_sfx_hook(chqstate_t *state);
+void silence_audio_hook(chqstate_t *state);
+void write_audio_registers_hook(chqstate_t *state);
+void setup_engine_sfx_hook(chqstate_t *state);
+void play_engine_sfx_hook(chqstate_t *state);
+void play_speech_hook(chqstate_t *state);
+void attract_mode_hook(chqstate_t *state);
+
+void cpu_driver(chqstate_t *state);
+
+void set_up_stage(chqstate_t *state, const uint8_t *stage_data);
+void sus_clear_lights(uint8_t *attrptr);
+
+void check_user_input(chqstate_t *state);
+void check_user_input_quit_key(chqstate_t *state);
+
+void clear_playfield_attrs(chqstate_t *state);
+void clear_playfield(chqstate_t *state);
+
+void start_sfx(chqstate_t *state, uint8_t Bindex, uint8_t Cpriority);
+void drive_sfx(chqstate_t *state);
+void sfx_crash(chqstate_t *state, uint8_t Dparam);
+void sfx_thud(chqstate_t *state, uint8_t Dparam);
+void sfx_cornering(chqstate_t *state, uint8_t Dparam, uint8_t Eparam);
+void sfx_bipbow(chqstate_t *state, uint8_t Dparam, uint8_t Eparam);
+
+int handle_perp_caught(chqstate_t *state);
+void hpc_set_perp_speed(chqstate_t *state, uint16_t DE);
+
+void fully_smashed(chqstate_t *state);
+
+void transition(chqstate_t *state);
+
+void fill_attributes(chqstate_t *state);
+
+void draw_overlay_messages(chqstate_t *state);
+
+const uint8_t *print_message(chqstate_t    *state,
+                             uint8_t        Aflags,
+                             const uint8_t *HLmessages);
+
+void setup_overlay_messages(chqstate_t *state, const uint8_t *HL);
+
+void setup_overlay_messages_with_A(chqstate_t    *state,
+                                   uint8_t        Atransition,
+                                   const uint8_t *HL);
+
+void draw_mugshots(chqstate_t *state);
+
+void draw_mugshot(chqstate_t    *state,
+                  uint16_t       BCscreenpos,
+                  uint16_t       DEbackbuf,
+                  const uint8_t *HLmugshot);
+
+void draw_smash_bar(chqstate_t *state);
+
+void draw_everything_else(chqstate_t *state);
+
+uint8_t rng(chqstate_t *state);
+
+void start_chatter(chqstate_t       *state,
+                   chatterpriority_t priority,
+                   const uint8_t    *chatterblk);
+
+void drive_chatter(chqstate_t *state);
+void drive_chatter_stop(chqstate_t *state);
+
+void print_chatter(chqstate_t *state);
+void pc_chatter_message(chqstate_t *state, const uint8_t *HLchatter);
+void pc_clear_line(chqstate_t *state, uint8_t x);
+
+void noise_effect(chqstate_t *state, uint8_t counter);
+void noise_effect_9a5c(chqstate_t *state, uint8_t counter);
+void ne_plot_attrs(chqstate_t *state, uint8_t A);
+
+void plot_face(chqstate_t    *state,
+               uint16_t       DEscreen,
+               const uint8_t *HLface);
+void plot_face_attributes(chqstate_t    *state,
+                          uint16_t       DEscreen,
+                          const uint8_t *HLface);
+
+void plot_mini_font_cursor_off(chqstate_t *state,
+                               uint8_t     x,
+                               char        character);
+void plot_mini_font_cursor_on(chqstate_t *state,
+                              uint8_t     x,
+                              char        character);
+void pmf_go(chqstate_t *state,
+            uint8_t     x,
+            char        character,
+            uint8_t     B,
+            uint8_t     C);
+
+void clear_message_line(chqstate_t *state);
+
+void tick(chqstate_t *state);
+
+void speed_score(chqstate_t *state);
+
+void add_bonus(chqstate_t *state,
+               uint8_t     A_lo,
+               uint8_t     E_md,
+               uint8_t     D_hi);
+int bonus_digit(uint8_t digit,
+                uint8_t *nonzeroflag,
+                char   **poutput);
+
+void increment_score(chqstate_t *state,
+                     uint8_t     A_lo,
+                     uint8_t     E_md,
+                     uint8_t     D_hi);
+
+void calc_overtake_bonus(chqstate_t *state);
+
+void update_scoreboard(chqstate_t *state);
+
+void toggle_light_brightness(chqstate_t *state, uint8_t *HL);
+
+void plot_turbos_and_scores(chqstate_t *state);
+void ptas_led_digits(chqstate_t    *state,
+                     uint8_t        Biterations,
+                     const uint8_t *DEdigits,
+                     uint8_t       *HLstored,
+                     uint8_t       *DEscreen);
+
+uint8_t *ledfont_plot(chqstate_t *state, uint8_t ord, uint8_t *screen);
+
+void draw_string_A(chqstate_t    *state,
+                   uint8_t        A,
+                   uint8_t       *BCstring,
+                   uint8_t       *DEbackbuf,
+                   const uint8_t *HLstring,
+                   uint8_t        Adash);
+void draw_string(chqstate_t    *state,
+                 uint8_t        A,
+                 uint8_t       *BCstring,
+                 uint8_t       *DEbackbuf,
+                 const uint8_t *HLstring);
+void draw_string_entry(chqstate_t    *state,
+                       uint8_t       *DEscreen,
+                       const uint8_t *HLstring,
+                       uint8_t        Adash,
+                       uint8_t        Cdash,
+                       uint8_t        DEstride,
+                       uint8_t       *HLattr);
+
+void draw_char(chqstate_t *state,
+               uint8_t     Achar,
+               uint8_t    *DE,    // screen address
+               uint8_t     Adash, // draw type
+               uint8_t     Cdash, // attribute
+               uint8_t     DEdash, // e.g. 32 - a stride?
+               uint8_t    *HLdash);
+
+uint8_t keyscan(chqstate_t *state);
+
+void check_scenery_collisions(chqstate_t *state);
+
+void layout_objects(chqstate_t *state);
+
+void cycle_counters(chqstate_t *state);
+
+void spawn_cars(chqstate_t *state);
+
+void choose_dirt_and_stones(chqstate_t *state);
+
+void layout_dirt_and_stones(chqstate_t *state);
+
+void move_helicopter(chqstate_t *state);
+
+void drive_helicopter(chqstate_t *state);
+
+void spawn_hazards(chqstate_t *state);
+
+void draw_hazards(chqstate_t *state);
+
+void move_hero_car(chqstate_t *state);
+
+void animate_hero_car(chqstate_t *state);
+
+void scroll_horizon(chqstate_t *state);
+
+void update_road_level(chqstate_t *state);
+
+void layout_road(chqstate_t *state);
+
+void exit_fork(chqstate_t *state);
+
+void draw_screen(chqstate_t *state);
+
+void clear_playfield_set_attrs(chqstate_t *state);
+
+void read_map(chqstate_t *state);
+
+void prepare_tunnel(chqstate_t *state);
+
+void draw_tunnel(chqstate_t *state, uint8_t *IY);
+
+void draw_road_scene_change(chqstate_t *state, uint8_t *IX, uint8_t *IY);
+
+void draw_road(chqstate_t *state);
+
+void pre_shift_backdrop(chqstate_t *state);
+
+void forked_road_plotter(chqstate_t *state);
+
+void backdrop_fill_choice(chqstate_t *state);
+
+void build_curve_table(chqstate_t *state, int forked);
+void build_curve_table_sub_cca8(chqstate_t *state,
+                                uint8_t     Bdash_alwayszero,
+                                uint16_t   *HLtableend,
+                                uint16_t    DEroadpos);
+
+void build_height_table(chqstate_t *state);
+
+typedef int8_t T; // works
+T multiply(T a, T c);
+
+/* ----------------------------------------------------------------------- */
+
+#endif /* CHASEHQ_H */
+
