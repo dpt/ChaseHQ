@@ -3,7 +3,8 @@
 
 #include "Spectrum.h"
 
-#define PLAYFIELD_HEIGHT      (16 * 8)
+#define MARQUEE_HEIGHT        (8 * 8) // rows
+#define PLAYFIELD_HEIGHT      (16 * 8) // rows
 
 #define BACKBUFFER_WIDTH      (256)
 #define BACKBUFFER_ROWBYTES   (BACKBUFFER_WIDTH / 8)
@@ -104,10 +105,13 @@ typedef uint8_t chatterpriority_t;
 #define PERPCAUGHTPHASE_5     (5)
 #define PERPCAUGHTPHASE_6     (6)
 
-#define TRANSITION_0          (0)
-#define TRANSITION_1          (1)
-#define TRANSITION_3          (3)
-#define TRANSITION_4          (4)
+#define TRANSITIONCONTROL_0   (0)
+#define TRANSITIONCONTROL_1   (1)
+#define TRANSITIONCONTROL_3   (3)
+#define TRANSITIONCONTROL_4   (4)
+
+#define TRANSITION_FORWARD    (0x08)
+#define TRANSITION_REVERSE    (0xF8)
 
 /* ----------------------------------------------------------------------- */
 
@@ -254,6 +258,8 @@ void hpc_set_perp_speed(chqstate_t *state, uint16_t DE);
 void fully_smashed(chqstate_t *state);
 
 void transition(chqstate_t *state);
+
+void setup_transition(chqstate_t *state, uint8_t Atransition);
 
 void fill_attributes(chqstate_t *state);
 
@@ -441,6 +447,19 @@ void build_height_table(chqstate_t *state);
 
 typedef int8_t T; // works
 T multiply(T a, T c);
+
+void entrypt_48k(chqstate_t *state);
+void entrypt_128k(chqstate_t *state);
+void entrypt_common(chqstate_t *state, uint8_t Amode_128k, uint8_t Bnrelocs);
+
+void menu_draw_char(chqstate_t *state,
+                    uint8_t     Achar,
+                    uint8_t     Fdash,
+                    uint8_t     Cdash,
+                    uint8_t    *DEdash,
+                    uint8_t    *HLdash,
+                    uint8_t   **DEdash_out,
+                    uint8_t   **HLdash_out);
 
 /* ----------------------------------------------------------------------- */
 

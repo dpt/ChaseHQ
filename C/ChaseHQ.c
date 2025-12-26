@@ -194,7 +194,7 @@ void attract_mode(chqstate_t *state)
       HL = print_message(state, A, HL);
     } while (--B > 0);
 
-    if (state->transition_control == TRANSITION_0) {
+    if (state->transition_control == TRANSITIONCONTROL_0) {
       // Alternate between credits and copyright messages.
       SM_828C ^= 1;
       HL = &credits_messages[0];
@@ -429,10 +429,7 @@ void set_up_stage(chqstate_t *state, const uint8_t *stage_data)
   // Disallow spawning
   state->allow_spawning = 0;
 
-#if 0
-  A = 0xF8; // reverse transition
-  setup_transition(state, ...);
-#endif
+  setup_transition(state, TRANSITION_REVERSE);
 
   clear_playfield_set_attrs(state);
   // Clear the lights' BRIGHT bit
@@ -470,7 +467,7 @@ void check_user_input(chqstate_t *state)
 
   Atransition = state->transition_control;
   HLuserinput = &state->user_input;
-  if (Atransition != TRANSITION_4) {
+  if (Atransition != TRANSITIONCONTROL_4) {
     *HLuserinput = USERINPUT_NONE;
     return;
   }
@@ -619,7 +616,7 @@ int handle_perp_caught(chqstate_t *state)
 
 hpc_phase5:
   state->perp_caught_phase = PERPCAUGHTPHASE_6;
-  // TODO setup_transition(state, 8); // was exit via
+  setup_transition(state, TRANSITION_FORWARD); // was exit via
   return 0;
 
 hpc_phase2:
@@ -653,7 +650,8 @@ hpc_phase3:
 
   state->perp_caught_phase = PERPCAUGHTPHASE_4;
   HLmessages = stgwordtostgptr(state, 0x5D06); // addrof_arrest_messages
-  setup_overlay_messages_with_A(state, TRANSITION_1, HLmessages); // was exit via
+  setup_overlay_messages_with_A(state, TRANSITIONCONTROL_1,
+                                HLmessages); // was exit via
   return 0;
 
 hpc_phase4:
@@ -913,6 +911,30 @@ void transition(chqstate_t *state)
   // TODO
 }
 
+// $8DF9
+void setup_transition(chqstate_t *state, uint8_t Atransition)
+{
+  uint16_t  BC;
+  uint16_t  DE;
+  uint8_t  *HL;
+
+  BC = Atransition;
+  DE = 0xEC00; // table ptr
+  if (Atransition < 0) {
+    BC = 0xFF00 | (BC & 0x00FF);
+    DE = 0xEC0C; // table ptr
+  }
+
+  state->SM_8DB1 = BC;
+
+//  // Pick a random entry in the table
+//  HL = &DE[(rng(state) & 3) * 3];
+//
+//  state->SM_8DA1 = *HL++;
+//  state->SM_8DBB = wordat(HL); // Set transition animation start address
+  state->transition_control = TRANSITIONCONTROL_4;
+}
+
 // $8E29
 void fill_attributes(chqstate_t *state)
 {
@@ -937,7 +959,7 @@ void fill_attributes(chqstate_t *state)
     }
   } while (--rows > 0);
 
-  state->transition_control = TRANSITION_0;
+  state->transition_control = TRANSITIONCONTROL_0;
 }
 
 // $8E42
@@ -1606,7 +1628,7 @@ void tick(chqstate_t *state)
   uint8_t  lodigit;      // was L
 
   if (state->perp_caught_phase > PERPCAUGHTPHASE_0
-      || state->transition_control == TRANSITION_4)
+      || state->transition_control == TRANSITIONCONTROL_4)
     return;
 
   ptimebcd = &state->st.time_bcd;
@@ -1654,7 +1676,7 @@ check_time_up:
   // TODO play_speech_hook(state, 4);
 
 check_credits:
-  if (state->transition_control > TRANSITION_0)
+  if (state->transition_control > TRANSITIONCONTROL_0)
     return;
   if (state->credits == 0) {
     check_user_input_quit_key(state); // exit via
@@ -1677,7 +1699,7 @@ check_restart:
   state->smash_counter      = 0;
   state->st.user_input_mask = USERINPUTMASK_ALLOW_ALL;
   state->gear_lockout       = 3;
-  state->transition_control = TRANSITION_3;
+  state->transition_control = TRANSITIONCONTROL_3;
   state->st.turbos          = 3;
   state->st.time_bcd        = 0x60; // 60 seconds
   state->retry_count++;
@@ -3129,8 +3151,6 @@ void build_height_table(chqstate_t *state)
 {
 }
 
-/* ----------------------------------------------------------------------- */
-
 // $CDD6
 T multiply(T a, T c)
 {
@@ -3160,7 +3180,30 @@ T multiply(T a, T c)
 #endif
 }
 
-/* ----------------------------------------------------------------------- */
+// $E810
+void entrypt_48k(chqstate_t *state)
+{
+  entrypt_common(state, 0, 3);
+}
+
+// $E816
+void entrypt_128k(chqstate_t *state)
+{
+  clear_playfield_attrs(state);
+  entrypt_common(state, 1, 5);
+}
+
+// $E81D
+void entrypt_common(chqstate_t *state, uint8_t Amode_128k, uint8_t Bnrelocs)
+{
+  state->mode_128k = Amode_128k;
+
+  memcpy(ADDRTOSCREEN(SCREEN_START_ADDRESS), marquee_initial,
+         sizeof(marquee_initial));
+  memcpy(ADDRTOSCREEN(SCREEN_ATTRIBUTES_START_ADDRESS), marquee_attrs,
+         sizeof(marquee_attrs));
+  // ...
+}
 
 // $EC2C
 void menu_draw_char(chqstate_t *state,

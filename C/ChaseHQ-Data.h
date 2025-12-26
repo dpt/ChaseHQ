@@ -79,6 +79,9 @@ const uint16_t inward_bend_table[96];
 const uint8_t horizontal_e6b0[8][22];
 const uint8_t horizontal_e760[8][22];
 
+const uint8_t marquee_initial[SCREEN_BITMAP_ROWBYTES * MARQUEE_HEIGHT];
+const uint8_t marquee_attrs[SCREEN_ATTRIBUTES_WIDTH * MARQUEE_HEIGHT / 8];
+
 const uint8_t backbufexample[16 * 256];
 
 #endif /* DATA_H */
