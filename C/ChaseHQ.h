@@ -284,6 +284,8 @@ void draw_mugshot(chqstate_t    *state,
                   const u8 *HLmugshot);
 
 void draw_smash_bar(chqstate_t *state);
+u16 draw_smash_bar_segment(chqstate_t *state, u8 Cnrows, u16 HLbuf);
+u16 draw_smash_bar_solid_bit(chqstate_t *state, u8 Bnrows, u16 HLbuf);
 
 void draw_everything_else(chqstate_t *state);
 

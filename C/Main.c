@@ -343,7 +343,7 @@ int main(void)
 
       case SDL_KEYDOWN:
       case SDL_KEYUP: {
-        static const char msg[] = "ALERT! THE AIRPORTS ARE CLOSED DUE TO SNOW";
+        static const char msg[] = "WOOT, NOW WE HAVE A SMASH BAR";
 
         for (int i = 0; i < sizeof(msg) - 1; i++) {
           if (t)
@@ -356,10 +356,14 @@ int main(void)
 
       case SDL_MOUSEMOTION:
         mx = event.motion.x;
-        // my = event.motion.y;
+        my = event.motion.y;
         // ledfont_plot(state, 1 + my % 10,
         //              &state->screen[(0x4000 + mx / 8) - SCREEN_START_ADDRESS]);
         draw_mugshots(state);
+        state->sighted_flag = 1;
+        state->perp_caught_phase = PERPCAUGHTPHASE_2;
+        state->smash_counter = my / 16;
+        draw_smash_bar(state);
         draw_screen(state);
         break;
 
