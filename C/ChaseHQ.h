@@ -1,6 +1,7 @@
 #ifndef CHASEHQ_H
 #define CHASEHQ_H
 
+#include "Types.h"
 #include "Spectrum.h"
 
 #define MARQUEE_HEIGHT        (8 * 8) // rows
@@ -10,7 +11,7 @@
 #define BACKBUFFER_ROWBYTES   (BACKBUFFER_WIDTH / 8)
 #define BACKBUFFER_HEIGHT     (128)
 #define BACKBUFFER_LENGTH     (BACKBUFFER_ROWBYTES * BACKBUFFER_HEIGHT)
-#define BACKBUFFER_START_ADDRESS ((uint16_t) 0xF000)
+#define BACKBUFFER_START_ADDRESS ((u16) 0xF000)
 #define BACKBUFFER_END_ADDRESS (BACKBUFFER_START_ADDRESS + BACKBUFFER_LENGTH)
 
 // Return screen[] pointer given a Z80 address.
@@ -95,7 +96,7 @@
 #define CHATTERSTATE_RUN      (2)
 #define CHATTERSTATE_STOP     (3)
 
-typedef uint8_t chatterpriority_t;
+typedef u8 chatterpriority_t;
 
 #define PERPCAUGHTPHASE_0     (0)
 #define PERPCAUGHTPHASE_1     (1)
@@ -236,8 +237,8 @@ void attract_mode_hook(chqstate_t *state);
 
 void cpu_driver(chqstate_t *state);
 
-void set_up_stage(chqstate_t *state, const uint8_t *stage_data);
-void sus_clear_lights(uint8_t *attrptr);
+void set_up_stage(chqstate_t *state, const u8 *stage_data);
+void sus_clear_lights(u8 *attrptr);
 
 void check_user_input(chqstate_t *state);
 void check_user_input_quit_key(chqstate_t *state);
@@ -245,82 +246,82 @@ void check_user_input_quit_key(chqstate_t *state);
 void clear_playfield_attrs(chqstate_t *state);
 void clear_playfield(chqstate_t *state);
 
-void start_sfx(chqstate_t *state, uint8_t Bindex, uint8_t Cpriority);
+void start_sfx(chqstate_t *state, u8 Bindex, u8 Cpriority);
 void drive_sfx(chqstate_t *state);
-void sfx_crash(chqstate_t *state, uint8_t Dparam);
-void sfx_thud(chqstate_t *state, uint8_t Dparam);
-void sfx_cornering(chqstate_t *state, uint8_t Dparam, uint8_t Eparam);
-void sfx_bipbow(chqstate_t *state, uint8_t Dparam, uint8_t Eparam);
+void sfx_crash(chqstate_t *state, u8 Dparam);
+void sfx_thud(chqstate_t *state, u8 Dparam);
+void sfx_cornering(chqstate_t *state, u8 Dparam, u8 Eparam);
+void sfx_bipbow(chqstate_t *state, u8 Dparam, u8 Eparam);
 
 int handle_perp_caught(chqstate_t *state);
-void hpc_set_perp_speed(chqstate_t *state, uint16_t DE);
+void hpc_set_perp_speed(chqstate_t *state, u16 DE);
 
 void fully_smashed(chqstate_t *state);
 
 void transition(chqstate_t *state);
 
-void setup_transition(chqstate_t *state, uint8_t Atransition);
+void setup_transition(chqstate_t *state, u8 Atransition);
 
 void fill_attributes(chqstate_t *state);
 
 void draw_overlay_messages(chqstate_t *state);
 
-const uint8_t *print_message(chqstate_t    *state,
-                             uint8_t        Aflags,
-                             const uint8_t *HLmessages);
+const u8 *print_message(chqstate_t    *state,
+                        u8        Aflags,
+                        const u8 *HLmessages);
 
-void setup_overlay_messages(chqstate_t *state, const uint8_t *HL);
+void setup_overlay_messages(chqstate_t *state, const u8 *HL);
 
 void setup_overlay_messages_with_A(chqstate_t    *state,
-                                   uint8_t        Atransition,
-                                   const uint8_t *HL);
+                                   u8        Atransition,
+                                   const u8 *HL);
 
 void draw_mugshots(chqstate_t *state);
 
 void draw_mugshot(chqstate_t    *state,
-                  uint16_t       BCscreenpos,
-                  uint16_t       DEbackbuf,
-                  const uint8_t *HLmugshot);
+                  u16       BCscreenpos,
+                  u16       DEbackbuf,
+                  const u8 *HLmugshot);
 
 void draw_smash_bar(chqstate_t *state);
 
 void draw_everything_else(chqstate_t *state);
 
-uint8_t rng(chqstate_t *state);
+u8 rng(chqstate_t *state);
 
 void start_chatter(chqstate_t       *state,
                    chatterpriority_t priority,
-                   const uint8_t    *chatterblk);
+                   const u8    *chatterblk);
 
 void drive_chatter(chqstate_t *state);
 void drive_chatter_stop(chqstate_t *state);
 
 void print_chatter(chqstate_t *state);
-void pc_chatter_message(chqstate_t *state, const uint8_t *HLchatter);
-void pc_clear_line(chqstate_t *state, uint8_t x);
+void pc_chatter_message(chqstate_t *state, const u8 *HLchatter);
+void pc_clear_line(chqstate_t *state, u8 x);
 
-void noise_effect(chqstate_t *state, uint8_t counter);
-void noise_effect_9a5c(chqstate_t *state, uint8_t counter);
-void ne_plot_attrs(chqstate_t *state, uint8_t A);
+void noise_effect(chqstate_t *state, u8 counter);
+void noise_effect_9a5c(chqstate_t *state, u8 counter);
+void ne_plot_attrs(chqstate_t *state, u8 A);
 
 void plot_face(chqstate_t    *state,
-               uint16_t       DEscreen,
-               const uint8_t *HLface);
+               u16       DEscreen,
+               const u8 *HLface);
 void plot_face_attributes(chqstate_t    *state,
-                          uint16_t       DEscreen,
-                          const uint8_t *HLface);
+                          u16       DEscreen,
+                          const u8 *HLface);
 
 void plot_mini_font_cursor_off(chqstate_t *state,
-                               uint8_t     x,
+                               u8     x,
                                char        character);
 void plot_mini_font_cursor_on(chqstate_t *state,
-                              uint8_t     x,
+                              u8     x,
                               char        character);
 void pmf_go(chqstate_t *state,
-            uint8_t     x,
+            u8     x,
             char        character,
-            uint8_t     B,
-            uint8_t     C);
+            u8     B,
+            u8     C);
 
 void clear_message_line(chqstate_t *state);
 
@@ -329,61 +330,61 @@ void tick(chqstate_t *state);
 void speed_score(chqstate_t *state);
 
 void add_bonus(chqstate_t *state,
-               uint8_t     A_lo,
-               uint8_t     E_md,
-               uint8_t     D_hi);
-int bonus_digit(uint8_t digit,
-                uint8_t *nonzeroflag,
+               u8     A_lo,
+               u8     E_md,
+               u8     D_hi);
+int bonus_digit(u8 digit,
+                u8 *nonzeroflag,
                 char   **poutput);
 
 void increment_score(chqstate_t *state,
-                     uint8_t     A_lo,
-                     uint8_t     E_md,
-                     uint8_t     D_hi);
+                     u8     A_lo,
+                     u8     E_md,
+                     u8     D_hi);
 
 void calc_overtake_bonus(chqstate_t *state);
 
 void update_scoreboard(chqstate_t *state);
 
-void toggle_light_brightness(chqstate_t *state, uint8_t *HL);
+void toggle_light_brightness(chqstate_t *state, u8 *HL);
 
 void plot_turbos_and_scores(chqstate_t *state);
 void ptas_led_digits(chqstate_t    *state,
-                     uint8_t        Biterations,
-                     const uint8_t *DEdigits,
-                     uint8_t       *HLstored,
-                     uint8_t       *DEscreen);
+                     u8        Biterations,
+                     const u8 *DEdigits,
+                     u8       *HLstored,
+                     u8       *DEscreen);
 
-uint8_t *ledfont_plot(chqstate_t *state, uint8_t ord, uint8_t *screen);
+u8 *ledfont_plot(chqstate_t *state, u8 ord, u8 *screen);
 
 void draw_string_A(chqstate_t    *state,
-                   uint8_t        A,
-                   uint8_t       *BCstring,
-                   uint8_t       *DEbackbuf,
-                   const uint8_t *HLstring,
-                   uint8_t        Adash);
+                   u8        A,
+                   u8       *BCstring,
+                   u8       *DEbackbuf,
+                   const u8 *HLstring,
+                   u8        Adash);
 void draw_string(chqstate_t    *state,
-                 uint8_t        A,
-                 uint8_t       *BCstring,
-                 uint8_t       *DEbackbuf,
-                 const uint8_t *HLstring);
+                 u8        A,
+                 u8       *BCstring,
+                 u8       *DEbackbuf,
+                 const u8 *HLstring);
 void draw_string_entry(chqstate_t    *state,
-                       uint8_t       *DEscreen,
-                       const uint8_t *HLstring,
-                       uint8_t        Adash,
-                       uint8_t        Cdash,
-                       uint8_t        DEstride,
-                       uint8_t       *HLattr);
+                       u8       *DEscreen,
+                       const u8 *HLstring,
+                       u8        Adash,
+                       u8        Cdash,
+                       u8        DEstride,
+                       u8       *HLattr);
 
 void draw_char(chqstate_t *state,
-               uint8_t     Achar,
-               uint8_t    *DE,    // screen address
-               uint8_t     Adash, // draw type
-               uint8_t     Cdash, // attribute
-               uint8_t     DEdash, // e.g. 32 - a stride?
-               uint8_t    *HLdash);
+               u8     Achar,
+               u8    *DE,    // screen address
+               u8     Adash, // draw type
+               u8     Cdash, // attribute
+               u8     DEdash, // e.g. 32 - a stride?
+               u8    *HLdash);
 
-uint8_t keyscan(chqstate_t *state);
+u8 keyscan(chqstate_t *state);
 
 void check_scenery_collisions(chqstate_t *state);
 
@@ -425,9 +426,9 @@ void read_map(chqstate_t *state);
 
 void prepare_tunnel(chqstate_t *state);
 
-void draw_tunnel(chqstate_t *state, uint8_t *IY);
+void draw_tunnel(chqstate_t *state, u8 *IY);
 
-void draw_road_scene_change(chqstate_t *state, uint8_t *IX, uint8_t *IY);
+void draw_road_scene_change(chqstate_t *state, u8 *IX, u8 *IY);
 
 void draw_road(chqstate_t *state);
 
@@ -439,9 +440,9 @@ void backdrop_fill_choice(chqstate_t *state);
 
 void build_curve_table(chqstate_t *state, int forked);
 void build_curve_table_sub_cca8(chqstate_t *state,
-                                uint8_t     Bdash_alwayszero,
-                                uint16_t   *HLtableend,
-                                uint16_t    DEroadpos);
+                                u8     Bdash_alwayszero,
+                                u16   *HLtableend,
+                                u16    DEroadpos);
 
 void build_height_table(chqstate_t *state);
 
@@ -450,16 +451,16 @@ T multiply(T a, T c);
 
 void entrypt_48k(chqstate_t *state);
 void entrypt_128k(chqstate_t *state);
-void entrypt_common(chqstate_t *state, uint8_t Amode_128k, uint8_t Bnrelocs);
+void entrypt_common(chqstate_t *state, u8 Amode_128k, u8 Bnrelocs);
 
 void menu_draw_char(chqstate_t *state,
-                    uint8_t     Achar,
-                    uint8_t     Fdash,
-                    uint8_t     Cdash,
-                    uint8_t    *DEdash,
-                    uint8_t    *HLdash,
-                    uint8_t   **DEdash_out,
-                    uint8_t   **HLdash_out);
+                    u8     Achar,
+                    u8     Fdash,
+                    u8     Cdash,
+                    u8    *DEdash,
+                    u8    *HLdash,
+                    u8   **DEdash_out,
+                    u8   **HLdash_out);
 
 void bootstrap(chqstate_t *state);
 
