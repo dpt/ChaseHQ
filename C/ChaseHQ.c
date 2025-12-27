@@ -1101,13 +1101,14 @@ void draw_mugshot(chqstate_t    *state,
 // $8EE7
 void draw_smash_bar(chqstate_t *state)
 {
-  const int TotalBarHeight = 64;
-  const int BottomEdgeHeight = 2;
-  const int SegmentHeight = 3;
+  const int MaxSegments    = 20;
+  const int SegmentHeight  = 3;
+  const int BorderHeight   = 2;
+  const int TotalBarHeight = MaxSegments * SegmentHeight * BorderHeight * 2;
 
-  u16 HLbuf;
+  u16 buf;        // was HL
   u8  nsmashsegs; // was A
-  u8  nsolid; // was B
+  u8  nsolid;     // was B
 
   if (state->sighted_flag == 0)
     return; // Return if the perp has not yet been sighted
@@ -1115,37 +1116,39 @@ void draw_smash_bar(chqstate_t *state)
   if (state->perp_caught_phase >= PERPCAUGHTPHASE_3)
     return; // Return if perp_caught_phase is >= 3 (car has stopped)
 
-  HLbuf = 0xF7A2; // Back buffer address of bottom of bar
+  buf = 0xF7A2; // Back buffer address of bottom of bar
   // Conv: D & E moved into prevbufrow forward
 
   // Draws bottom two rows
-  HLbuf = draw_smash_bar_solid_bit(state, BottomEdgeHeight, HLbuf);
+  buf = draw_smash_bar_solid_bit(state, BorderHeight, buf);
 
   nsmashsegs = state->smash_counter;
   if (nsmashsegs > 0)
-    HLbuf = draw_smash_bar_segment(state, nsmashsegs, HLbuf);
+    buf = draw_smash_bar_segments(state, nsmashsegs, buf);
 
-  nsolid = TotalBarHeight - BottomEdgeHeight - nsmashsegs *
-           SegmentHeight; // number of solid rows to draw at the top
-  (void) draw_smash_bar_solid_bit(state, nsolid, HLbuf); // exit via
+  nsolid = TotalBarHeight - BorderHeight - nsmashsegs *
+           SegmentHeight; // Number of solid rows to draw at the top
+  (void) draw_smash_bar_solid_bit(state, nsolid, buf); // exit via
 }
 
-u16 draw_smash_bar_segment(chqstate_t *state, u8 Cnrows, u16 HLbuf)
+// $8F13
+u16 draw_smash_bar_segments(chqstate_t *state, u8 Cnsegs, u16 HLbuf)
 {
   do {
-    *ADDRTOBACKBUF(HLbuf) = X______X; // Set 8 pixels)
+    *ADDRTOBACKBUF(HLbuf) = X______X; // Set 8 pixels
     HLbuf = prevbufrow(HLbuf);
-    *ADDRTOBACKBUF(HLbuf) = X______X; // Set 8 pixels)
+    *ADDRTOBACKBUF(HLbuf) = X______X; // Set 8 pixels
     HLbuf = prevbufrow(HLbuf);
     HLbuf = draw_smash_bar_solid_bit(state, 1, HLbuf); // 1 row gap
-  } while (--Cnrows > 0);
+  } while (--Cnsegs > 0);
   return HLbuf;
 }
 
+// $8F47
 u16 draw_smash_bar_solid_bit(chqstate_t *state, u8 Bnrows, u16 HLbuf)
 {
   do {
-    *ADDRTOBACKBUF(HLbuf) = XXXXXXXX; // Set 8 pixels)
+    *ADDRTOBACKBUF(HLbuf) = XXXXXXXX; // Set 8 pixels
     HLbuf = prevbufrow(HLbuf);
   } while (--Bnrows > 0);
   return HLbuf;
