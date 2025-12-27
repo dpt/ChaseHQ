@@ -2500,6 +2500,7 @@ N $83CA This entry point is used by the routine at #R$83CD.
 C $83CA,3 Call attract_mode when in 48K mode
 c $83CD Bootstrap / Über main loop
 D $83CD This is the true start and main loop of the game. It's called once the memory map is set up. It builds a table of 256 flipped bytes at $EF00 then starts attract mode. When the player causes attract mode to yield, the overtaking bonus, the score and the retry count are reset as are the wanted stage number and the number of credits. The main loop is then called to run the game. Then when the main loop yields it will start the 128K animated title screen, or just loop if we're running on a 48K machine.
+D $83CD Note that the flipped bytes table build happens each time the loopr restarts.
 D $83CD Used by the routine at #R$E839.
 N $83CD Build a table of flipped bytes at $EF00.
 @ $83CD label=bootstrap
@@ -2809,7 +2810,7 @@ C $8676,8 Self modify #R$86C2 with (#REGa - $D0) << 3
 C $867E,2 Loop dp_get_command
 N $8680 $F0..$FF is "Set address".
 @ $8680 label=dp_set_address
-C $8680,3 Load new backbuffer address into #REGde
+C $8680,3 Load new back buffer address into #REGde
 C $8683,2 Loop dp_get_command
 N $8685 $00..$CF could be either "Repeat" or "Plot tile".
 @ $8685 label=dp_repeat_or_plot_tile
@@ -2829,11 +2830,11 @@ C $8695,3 Expand tile offset into #REGbc
 C $8698,2 Add in carry flag
 C $869A,4 HL = &pregame_tiles[A]
 C $869E,1 Restore count
-C $869F,1 #REGde becomes tile ptr, #REGhl becomes backbuffer ptr
+C $869F,1 #REGde becomes tile ptr, #REGhl becomes back buffer ptr
 @ $86A0 label=dp_line_loop
 C $86A0,1 Count
 C $86A1,1 Tile ptr
-C $86A2,1 Backbuffer ptr
+C $86A2,1 Back buffer ptr
 N $86A3 Plot a tile.
 C $86A3,2 8 rows per tile
 @ $86A5 label=dp_tile_loop
@@ -2841,7 +2842,7 @@ C $86A5,2 Copy a row of tile pixels to the screen
 C $86A7,1 Move to next tile row
 C $86A8,1 Move to next scanline
 C $86A9,2 Loop dp_tile_loop
-C $86AB,1 Pop backbuffer ptr
+C $86AB,1 Pop back buffer ptr
 N $86AC Seems to be building an attribute address?
 C $86AC,6 Get bit 3 of Y
 C $86B2,5 Add to X bits
@@ -3005,7 +3006,7 @@ C $8864,2 Clear BRIGHT bit
 N $8870 Exit, updating the scoreboard. [This must happen twice since this block is CALLed.]
 C $8870,3 Call silence_audio_hook
 C $8873,3 Exit via update_scoreboard
-c $8876 User input checking
+c $8876 Handle quit, pause or turbo
 D $8876 Used by the routine at #R$8401.
 @ $8876 label=check_user_input
 C $8876,3 Load transition_control
@@ -3036,7 +3037,7 @@ C $88BB,1 Return
 @ $88BC label=cui_pause_key
 C $88BC,3 Call silence_audio_hook
 C $88BF,7 Call keyscan while PAUSE is pressed
-C $88C6,7 Call keyscan until keys are pressed
+C $88C6,7 Call keyscan until keys are pressed (ignoring quit)
 C $88CD,7 Call keyscan until keys are released (debounce)
 C $88D4,1 Return
 c $88D5 Clears the game screen attributes to zero
@@ -3267,7 +3268,7 @@ C $8B0E,2 Zero other digits
 C $8B10,3 Call increment_score (with D,E,A)
 N $8B13 Calculate time remaining bonus.
 C $8B13,3 Get time remaining (BCD)
-C $8B16,3 Set A in "TIME BONUS   Ax X 5000"  as a temporary location
+C $8B16,3 Set A in "TIME BONUS   Ax X 5000" as a temporary location
 C $8B19,1 Copy time remaining (BCD)
 C $8B1A,6 Extract high digit
 C $8B20,2 Jump if it's non-zero
@@ -3379,7 +3380,7 @@ C $8BD3,3 *$A18C = 0  -- distance related? [reset by set_up_stage]
 C $8BD6,4 Set perp's distance to 1
 C $8BDA,4 Set perp_caught_phase to 2
 C $8BDE,4 Set smoke to 3
-C $8BE2,3 Jump to hpc_set_perp_pos_or_accel (with #REGde = 0)
+C $8BE2,3 Jump to hpc_set_perp_speed (with #REGde = 0)
 N $8BE5 HL = 350 - (16 - <distance related>) * 20  -- compared to speed later Arrive here if we're turning or the perp is too far away.
 @ $8BE5 label=hpc_perp_too_far_away
 C $8BE5,3 Load perp's distance
@@ -3413,7 +3414,7 @@ C $8C1D,4 Set user input
 @ $8C21 ssub=LD HL,(hazard_0 + 13)
 C $8C21,3 Load the speed of the perp's car into #REGhl
 C $8C24,7 Compare it to 70
-C $8C2B,4 Jump to hpc_set_perp_pos_or_accel if result <= 70, with #REGde = 70
+C $8C2B,4 Jump to hpc_set_perp_speed if result <= 70, with #REGde = 70
 C $8C2F,6 Otherwise reduce it by 5 with result in #REGde
 N $8C35 This entry point is used by the routine at #R$8C3A.
 @ $8C35 label=hpc_set_perp_speed
@@ -3647,31 +3648,32 @@ N $8E87 Set the overlay message structure address.
 C $8E87,4 Modify 'LD HL,x' @ #R$8E42 to be a (different type) message struct address, e.g. $82CD
 C $8E8B,5 Modify 'LD B,x' @ #R$8E45 to be 1
 C $8E90,1 Return
-c $8E91 Copies the mugshots onto the screen when perp is caught
+c $8E91 Draws the three mugshots to the back buffer when perp is caught
+D $8E91 Each mugshot's bitmap address is the start of attributes or: the byte after the final byte of bitmap data.
 D $8E91 Used by the routine at #R$8D8F.
 @ $8E91 label=draw_mugshots
-C $8E91,3 Load end address of perp's mugshot bitmap into #REGhl
+C $8E91,3 Load end address + 1 of perp's mugshot bitmap into #REGhl
 C $8E94,3 Load address of final byte of bitmap (back buffer)
 C $8E97,3 Screen position (40,104)
 C $8E9A,3 Draw
-C $8E9D,3 Load end address of Tony's mugshot bitmap into #REGhl
+C $8E9D,3 Load end address + 1 of Tony's mugshot bitmap into #REGhl
 C $8EA0,3 Final byte of bitmap (back buffer)
 C $8EA3,3 Screen position (160,104)
 C $8EA6,3 Draw
-C $8EA9,3 Load end address of Raymond's mugshot bitmap into #REGhl
+C $8EA9,3 Load end address + 1 of Raymond's mugshot bitmap into #REGhl
 C $8EAC,3 Final byte of bitmap (back buffer)
 C $8EAF,3 Screen position (200,104)
 C $8EB2,3 Draw
 C $8EB5,2 Exit via draw_overlay_messages
-c $8EB7 Draws a mugshot
+c $8EB7 Draws a mugshot to the back buffer
 D $8EB7 Used by the routine at #R$8E91.
 R $8EB7 I:BC Screen position (used for attributes)
 R $8EB7 I:DE Address of last byte of bitmap data to be written (in back buffer)
 R $8EB7 I:HL Address of start of mugshot attributes / end of bitmap data
 @ $8EB7 label=draw_mugshot
-C $8EB7,1 Preserve screen position
+C $8EB7,1 Preserve screen position (plot_face_attributes POPs it)
 C $8EB8,1 Preserve address of mugshot attributes
-N $8EB9 We assume that the bitmap data precedes the attribute bytes.
+N $8EB9 The bitmap data precedes the attribute bytes.
 C $8EB9,1 Move back one byte to point at end of bitmap data
 C $8EBA,3 Size of mugshot data (32x40 bitmap)
 @ $8EBD label=dm_loop
@@ -3679,7 +3681,7 @@ C $8EBD,1 Save #REGe
 C $8EBE,8 Transfer four bytes (#REGde, #REGhl and #REGbc are decremented by 4)
 C $8EC6,1 Restore #REGe
 C $8EC7,3 If #REGbc becomes zero then proceed to dm_plot_attrs
-N $8ECA Move to next scanline (longer form).
+N $8ECA Move to previous buffer scanline.
 C $8ECA,1 Save for checking in a moment
 C $8ECB,1 Move to next scanline (visually upwards)
 C $8ECC,2 Would it have rolled over into the top nibble?
@@ -3692,7 +3694,7 @@ C $8EDC,4 Otherwise move to the next chunk of 128 scanlines (would put us outsid
 C $8EE0,3 Loop
 @ $8EE3 label=dm_plot_attrs
 C $8EE3,1 Restore address of mugshot attributes
-C $8EE4,3 Exit via pf_attrs_bit
+C $8EE4,3 Exit via plot_face_attributes
 c $8EE7 Draw the smash bar
 D $8EE7 Used by the routine at #R$8401.
 @ $8EE7 label=draw_smash_bar
@@ -4708,8 +4710,8 @@ N $997F This is the flashing cursor.
 C $997F,2 Plot a space character
 C $9981,6 Alternating bit generator: $AA rotated 1 becomes $55, $55 rotated 1 becomes $AA, and so on, result in carry flag
 C $9987,2 (flag?)
-C $9989,3 Exit via plot_mini_font_2 if carry set
-C $998C,3 Otherwise exit via plot_mini_font_1
+C $9989,3 Exit via plot_mini_font_cursor_on if carry set
+C $998C,3 Otherwise exit via plot_mini_font_cursor_off
 @ $998F label=drive_chatter_do_noise_effect
 C $998F,7 If noise_counter > 0 exit via noise_effect
 C $9996,6 If chatter_delay is zero jump to drive_chatter_clear_line
@@ -4723,8 +4725,8 @@ C $99A8,2 Clear any string terminator bit
 C $99AA,4 A = message_x - 1
 C $99AE,2 Rotate chatter_delay (testing the bottom bit but why? flashing cursor?)
 N $99B0 Could JP $9989 here instead.
-C $99B0,3 Exit via plot_mini_font_2 if carry set
-C $99B3,3 Otherwise exit via plot_mini_font_1
+C $99B0,3 Exit via plot_mini_font_cursor_on if carry set
+C $99B3,3 Otherwise exit via plot_mini_font_cursor_off
 @ $99B6 label=drive_chatter_clear_line
 C $99B6,7 If message_x != 0 exit via pc_clear_line
 @ $99BD label=drive_chatter_read_message
@@ -4797,7 +4799,7 @@ C $9A39,1 Load the character itself
 C $9A3A,2 Clear any string terminator bit
 C $9A3C,1 Preserve message_x
 C $9A3D,1 Preserve string address
-C $9A3E,3 Call plot_mini_font_2, with #REGd as ASCII character to plot
+C $9A3E,3 Call plot_mini_font_cursor_on, with #REGd as ASCII character to plot
 C $9A41,1 Restore string address
 C $9A42,2 Test string terminator bit
 C $9A44,1 Move to the next character in the string
@@ -4817,12 +4819,12 @@ C $9A59,3 Exit via print_chatter if it's zero, otherwise fallthrough
 N $9A5C This entry point is used by the routine at #R$9965.
 @ $9A5C label=ne_9a5c
 C $9A5C,1 Shift A's bottom bit into carry
-C $9A5D,2 A = 255  -- plot_mini_font_1 flag?
+C $9A5D,2 A = 255  -- plot_mini_font_cursor_off flag?
 C $9A5F,2 D = 32  -- ASCII character for plot_mini_font*
 C $9A61,5 If A on input was odd then jump
-C $9A66,2 else call plot_mini_font_2 and continue at $9a6b
+C $9A66,2 else call plot_mini_font_cursor_on and continue at $9a6b
 @ $9A68 label=ne_9a68
-C $9A68,3 Call plot_mini_font_1
+C $9A68,3 Call plot_mini_font_cursor_off
 @ $9A6B label=ne_9a6b
 C $9A6B,3 Set plot address to (176,8)
 @ $9A70 label=ne_9a70
@@ -4851,7 +4853,7 @@ C $9AA0,7 Set four attribute bytes
 C $9AA7,1 Move to start of next row
 C $9AA8,2 Loop while rows remain
 C $9AAA,1 Return
-c $9AAB Plots a face
+c $9AAB Plots a face on the screen
 D $9AAB Used by the routine at #R$99EC.
 R $9AAB I:HL Address of face to plot (32x40 bitmap followed by 4x5 attribute bytes)
 R $9AAB I:DE Address of screen location (real screen)
@@ -4870,7 +4872,7 @@ C $9AC6,2 If carry then loop (overflow is ok)
 C $9AC8,4 Step back 8 lines (undo overflow)
 C $9ACC,2 Loop
 N $9ACE This entry point is used by the routine at #R$8EB7.
-@ $9ACE label=pf_attrs_bit
+@ $9ACE label=plot_face_attributes
 C $9ACE,1 Restore current screen address
 C $9ACF,6 Extract line bits (0..3)
 C $9AD5,3 Turn it into an attribute address (works for first band only?)
@@ -4886,10 +4888,10 @@ c $9AEC Plot mini font characters
 D $9AEC Used by the routines at #R$9965 and #R$9A55.
 R $9AEC I:A 0xFF (meaning ?) or value (meaning ?)
 R $9AEC I:D The character to plot (ASCII)
-@ $9AEC label=plot_mini_font_1
+@ $9AEC label=plot_mini_font_cursor_off
 C $9AEF,2 Jump to pmf_go
 N $9AF1 This entry point is used by the routines at #R$9965, #R$99EC and #R$9A55.
-@ $9AF1 label=plot_mini_font_2
+@ $9AF1 label=plot_mini_font_cursor_on
 C $9AF1,3 values to self modify with
 @ $9AF4 label=pmf_go
 C $9AF4,1 Preserve A
@@ -4965,12 +4967,12 @@ C $9BE9,2 Return if it was 4 - countdown elapsed
 N $9BEB Otherwise it's zero?
 C $9BEB,1 A = time_bcd
 C $9BEC,1 Set flags
-C $9BED,2 Jump to tick_time_remaining if non-zero
+C $9BED,2 Jump to tick_update_remaining_time if non-zero
 N $9BEF Out of time.
 C $9BEF,4 time_up_state = 1
 C $9BF3,5 user_input_mask = $93 (allow only Quit, Fire, Left, Right to force stop)
 C $9BF8,1 Return
-@ $9BF9 label=tick_time_remaining
+@ $9BF9 label=tick_update_remaining_time
 C $9BF9,2 Decrement the 1/16th sec counter
 C $9BFB,1 Return if not zero
 C $9BFC,2 Reset time_sixteenths to 15
@@ -4978,12 +4980,12 @@ C $9BFE,6 Decrement time_bcd [POKE $9C01 for Infinite time]
 C $9C04,3 Return if <> 15s remain
 C $9C07,3 Nancy berating us running out of time message
 C $9C0A,3 Exit via start_chatter (priority 21)
-@ $9C0D label=tick_9c0d
+@ $9C0D label=tick_check_time_up
 C $9C0D,4 Is time_bcd zero? Jump to time_up if so
 C $9C11,4 time_up_state = 0
 C $9C15,4 user_input_mask = $FF (allow all keys)
 C $9C19,2 Loop back to #R$9BF9
-@ $9C1B label=tick_time_up
+@ $9C1B label=tick_time_is_up
 C $9C1B,3 Point at "TIME UP" message
 C $9C1E,3 Call setup_overlay_messages
 C $9C21,6 Return if speed > 0
@@ -5000,7 +5002,7 @@ C $9C44,5 time_up_state = 3
 C $9C49,3 HL = $0115
 C $9C4C,3 Self modify 'LD HL' @ #R$9C84 to load HL
 C $9C4F,1 Return
-@ $9C50 label=tick_9c50
+@ $9C50 label=tick_check_restart
 C $9C50,5 Is fire pressed?
 C $9C55,2 Jump if not (?)
 N $9C57 Resetting mission code.
@@ -5027,7 +5029,7 @@ C $9C8C,1 L--
 C $9C8D,1 A = L
 C $9C8F,3 Effect 8 (bip), Priority 1
 C $9C94,1 Effect 9 (bow)
-@ $9C95 label=tick_9c95
+@ $9C95 label=tick_play_sfx
 C $9C95,3 Call start_sfx
 C $9C98,1 A = L
 C $9C99,1 Set flags
@@ -5044,7 +5046,7 @@ C $9CAE,2 CP 10
 C $9CB2,2 A = '1'
 C $9CB4,2 L = $00
 C $9CB6,2 Write the digits out
-@ $9CB8 label=tick_9cb8
+@ $9CB8 label=tick_less_than_10
 C $9CB8,1 L = A
 C $9CB9,2 A = ' '
 @ $9CBB label=tick_write_digits
@@ -5239,7 +5241,7 @@ C $9E0E,3 Repeat for four rows
 c $9E11 Draws the turbo sprites and updates the displayed scores
 D $9E11 Used by the routine at #R$9D51.
 @ $9E11 label=plot_turbos_and_scores
-C $9E11,6 If no turbo boosts remain jump to plot_scores_only
+C $9E11,6 If no turbo boosts remain, jump to plot_scores_only
 C $9E17,1 Preserve number of turbo boosts in #REGc
 C $9E18,4 Read boost time remaining and set flags
 C $9E1C,3 Point #REGhl at base of turbo sprites
@@ -5296,10 +5298,10 @@ N $9E83 Scale internal speed (0..511) to displayed speed by multiplying by 82 th
 C $9E83,3 Initialise counter
 C $9E86,2 Do 7 digits / iterations
 C $9E88,2 Multiplier of 82 (a percentage: speed * multiplier / 100 = displayed speed)
+@ $9E8A label=ptas_speed_multiply_loop
 C $9E8A,1 Shift one bit out
 C $9E8B,2 Jump if not adding
 C $9E8D,1 Add
-@ $9E8E label=ptas_speed_multiply_loop
 C $9E8E,1 Double
 C $9E8F,2 Loop
 N $9E91 Count 10,000s.
@@ -5311,8 +5313,8 @@ C $9E98,1 Increment counter
 C $9E99,2 Decrease total by 10,000
 C $9E9B,2 Loop until #REGhl goes negative
 C $9E9D,1 Correct for overshoot
+N $9E9E Count 1,000s.
 C $9E9E,1 ?Clear carry flag?
-N $9E9F Count 1,000s.
 C $9E9F,3 1000
 @ $9EA2 label=plot_speed_1000s_loop
 C $9EA2,1 Increment counter
@@ -5342,12 +5344,12 @@ C $9EC5,3 Point #REGde at time_bcd (one BCD byte)
 @ $9EC8 ssub=LD HL,time_digits + 1
 C $9EC8,3 Point #REGhl at time_digits + 1
 C $9ECB,2 One pair of digits
-C $9ECD,3 Call plot_led_digits
+C $9ECD,3 Call ptas_led_digits
 N $9ED0 Distance.
 @ $9ED0 ssub=LD DE,distance_bcd + 1
 C $9ED0,3 Point #REGde at distance_bcd + 1 (the second of two BCD bytes)
 C $9ED3,4 L = Distance byte from first 'hazard' (the perp)
-C $9ED7,4 H = 17th byte from first hazard (not sure yet how they relate) -- could be a lane
+C $9ED7,4 H = High byte of distance
 N $9EDB Count 1000s (no loop here - it's not required)
 C $9EDB,3 1,000
 C $9EDE,2 Decrease total by 1,000
@@ -5416,10 +5418,10 @@ C $9F3F,2 Jump back to handle next digit (second half of a pair)
 C $9F41,1 Update drawn digit
 C $9F42,3 Plot the digit
 C $9F45,2 Jump back to handle hext digit (next whole pair)
-c $9F47 Plots an 8x15 LED font digit
+c $9F47 Plots an 8x15 LED font digit to the screen
 D $9F47 This appears to be set up to work for Y coordinates of 1, 9, 17, ...
 R $9F47 I:A Glyph ID (0..9)
-R $9F47 I:DE Address of (real) screen location
+R $9F47 I:DE' Address of (real) screen location
 R $9F47 O:DE' Next screen location
 @ $9F47 label=ledfont_plot
 C $9F47,1 Bank
@@ -5439,10 +5441,11 @@ C $9F98,1 Return
 c $9F99 Another draw string entry point?
 D $9F99 Used by the routine at #R$8E6C.
 R $9F99 I:A ...
-R $9F99 I:BC String
+R $9F99 I:BC Attribute address
 @ $9F99 label=draw_string_A
+C $9F99,1 Push attribute address
 C $9F9A,1 Bank
-C $9F9B,1 HL' = BC   so BC is ptr to text
+C $9F9B,1 HL' = BC
 C $9F9C,3 DE' = 32
 C $9F9F,1 C' = A
 C $9FA0,1 Bank
@@ -5650,7 +5653,7 @@ B $A152,4,4 Copied to distance_digits
 B $A156,1,1 Copied to no_objects_counter
 W $A157,2,2 Copied to horizon_attribute
 B $A159,1,1 Copied to hazards[0].0
-B $A15A,1,1 Copied to hazards[0].1 (distance)
+B $A15A,1,1 Copied to hazards[0].1 (distance low byte)
 B $A15B,1,1 Copied to hazards[0].2
 B $A15C,1,1 Copied to hazards[0].3
 B $A15D,1,1 Copied to hazards[0].4
@@ -5663,7 +5666,7 @@ W $A164,2,2 Copied to hazards[0].11 (== perp_behaviour)
 W $A166,2,2 Copied to hazards[0].13 (horz pos)
 B $A168,1,1 Copied to hazards[0].15
 B $A169,1,1 Copied to hazards[0].16
-B $A16A,1,1 Copied to hazards[0].17
+B $A16A,1,1 Copied to hazards[0].17 (distance high byte)
 B $A16B,1,1 Copied to hazards[0].18
 B $A16C,1,1 Copied to hazards[0].19
 N $A16D Usually 1. Oscillates 0/1 when the road forks. Adjusts horizontal position of the untaken road.
@@ -9127,13 +9130,13 @@ C $BC32,4 no_objects_counter = 1
 C $BC36,3 var_a16d            = 1
 C $BC39,4 fork_distance       = 0  [B & C are zero here]
 C $BC3D,1 Return
-c $BC3E Copies the backbuffer at $F000 to the screen (and sets attributes)
-D $BC3E Copies 240 x ? pixels from the backbuffer to the screen. This is a thinner than the real screen due to the main gameplay area's left and right black borders. It then sets up the attributes.
+c $BC3E Copies the back buffer at $F000 to the screen (and sets attributes)
+D $BC3E Copies 240 x ? pixels from the back buffer to the screen. This is a thinner than the real screen due to the main gameplay area's left and right black borders. It then sets up the attributes.
 R $BC3E Used by the routines at #R$8014, #R$8258, #R$8401, #R$858C, #R$873C and
 R $BC3E #R$F220.
 @ $BC3E label=draw_screen
 C $BC3E,4 Point #REGhl at screen pixel (136,64). This is positioned halfway across so we can PUSH to the screen via SP.
-C $BC42,3 Point #REGhl' at backbuffer + 1 byte.
+C $BC42,3 Point #REGhl' at back buffer + 1 byte.
 C $BC45,4 Self modify #REGsp restore instruction
 N $BC49 A sequence that transfers 16 bytes
 @ $BC49 label=ds_loop_16bytes
@@ -9147,29 +9150,36 @@ C $BC64,1 Advance back buffer pointer
 C $BC65,28 Transfer another 16 bytes (128 pixels)
 C $BC81,28 Transfer another 16 bytes (128 pixels)
 C $BC9D,28 Transfer another 16 bytes (128 pixels)
-C $BCB9,2 Is the back buffer row a multiple of 4?
+C $BCB9,2 If bit 2 of backbufptr is set then we're on the first pass
 C $BCBB,3 Loop if so
 C $BCBE,5 Advance back buffer pointer (backwards) by a half row?
 C $BCC3,5 Advance screen pointer (backwards) by half a row?
 N $BCC8 This is a similar sequence but only moves 14 bytes (not using IY)
 @ $BCC8 label=ds_loop_14bytes
 C $BCC8,1 Point #REGsp at the back buffer
-C $BCC9,23 Pull in 16 bytes from the back buffer (order: AF' DE BC AF' DE' BC' IX), incrementing SP
+C $BCC9,23 Pull in 14 bytes from the back buffer (order: AF' DE BC AF' DE' BC' IX), incrementing SP
 C $BCE0,24 Transfer another 14 bytes (112 pixels)
 C $BCF8,24 Transfer another 14 bytes (112 pixels)
 C $BD10,24 Transfer another 14 bytes (112 pixels)
-C $BD28,2 Is the back buffer row multiple of 4?
-C $BD2D,2 Is the back buffer row multiple of 8?
-C $BD31,2 L -= $F0, H = $F0
+C $BD28,2 If bit 2 of backbufptr is set then we're on the first pass
+C $BD2A,3 Loop if so
+N $BD2D Second pass completed.
+C $BD2D,2 If bit 3 of backbufptr is set then we're not overflowing into the top four bits yet
+C $BD2F,2 Jump if so
+N $BD31 Otherwise we've rolled into the top nibble.
+C $BD31,2 H = $F0
+C $BD33,3 L -= $F0
 C $BD36,3 L >= $F0
-C $BD39,3 PE = parity even
-C $BD3D,3 Increment the screen address
+C $BD39,3 PE => signed overflow for SUB
+C $BD3D,4 Increment the screen address
+C $BD42,3 Copy more
 @ $BD45 label=ds_bd45
-C $BD46,3 Point #REGhl at screen pixel (136,128).
+C $BD46,3 Point #REGhl at screen pixel (136,128)
 C $BD4A,3 Copy more
 @ $BD4D label=ds_bd4d
-C $BD51,1 Which one are we modifying here?
-C $BD54,2 Ditto, which?
+C $BD4E,4 Increment the screen address
+C $BD53,4 Update buffer address
+C $BD57,3 Copy more
 @ $BD5A label=ds_attributes
 C $BD5A,6 Don't update the attributes if the level intro screen is being shown
 C $BD60,4 Seems to be related to the horizon level
@@ -9184,12 +9194,12 @@ C $BD73,3 Set the sky colour screen attributes (always black over bright cyan)
 C $BD76,2 If A was zero then jump (Z => sky, NZ => ground)
 C $BD78,4 Load the ground colour screen attributes (varies per level)
 @ $BD7D label=ds_bd7d
-C $BD7C,2 Point #REGsp at the screen attributes (DE = $FFE0 = -32)
+C $BD7C,2 Point #REGsp at the screen attributes (DE = $FFE0 = -32) - doesn't affect Z
 C $BD7E,15 Fill 30 bytes - length of attribute line minus the two blank edges
 C $BD8F,1 Move to next line of attributes
 @ $BD90 label=ds_bd90
 C $BD90,3 Save the address of the first line of ground attributes (+ 31)
-@ $BD93 label=ds_bd93
+@ $BD93 label=ds_smash_meter
 C $BD93,6 Exit if sighted_flag is zero (flashing lights / smash mode)
 C $BD99,7 Jump if perp_caught_phase >= 3 (when car stops)
 N $BDA0 Set the smash meter attributes
@@ -12332,15 +12342,17 @@ u $E34E Unused
 B $E34E,1,1
 b $E34F Data block at E34F
 @ $E34F label=object_positions
-S $E34F,21,$15 21 entries
-b $E364 Transition masks
-N $E364 Spiral inward animation mask (8x8, 11 frames)
-N $E364 #HTML[#CALL:anim($E364,8,8,0,0,11)]
-N $E364 #HTML[#CALL:graphic($E364,8,11*8,0,0)]
-B $E364,88,8
+S $E34F,13,$0D 13 entries
+b $E35C Transition masks
+N $E35C Spiral inward animation mask (8x8, 12 frames)
+N $E35C #HTML[#CALL:anim($E364,8,8,0,0,11)]
+N $E35C #HTML[#CALL:graphic($E364,8,11*8,0,0)]
+@ $E35C label=spiral_transition_mask
+B $E35C,96,8
 N $E3BC Circle expanding animation mask (8x8, 7 frames)
 N $E3BC #HTML[#CALL:anim($E3BC,8,8,0,0,7)]
 N $E3BC #HTML[#CALL:graphic($E3BC,8,7*8,0,0)]
+@ $E3BC label=circle_transition_mask
 B $E3BC,56,8
 u $E3F4 Unused
 B $E3F4,28,8*3,4
@@ -12409,8 +12421,8 @@ C $E81B,2 5 relocations to do in 128K mode
 C $E81D,3 Store 128K mode flag
 C $E820,3 Put stack at end of RAM
 C $E823,1 Preserve the count in #REGb
-C $E824,11 Copy status panel initial pixels to the top of the screen
-C $E82F,6 Copy status panel initial attributes to the top of the attribute file
+C $E824,11 Copy marquee initial pixels to the top of the screen
+C $E82F,6 Copy marquee initial attributes to the top of the attribute file
 C $E835,4 Call stop_the_tape_48k if not in 128K mode
 N $E839 Now that "stop the tape" has run we can relocate the game into position.
 C $E839,1 Restore #REGb
@@ -12429,8 +12441,8 @@ C $E852,3 Set up the stack
 C $E855,3 Exit via bootstrap  -- start the game
 @ $E858 label=relocations
 W $E858,6,2 Copy 24 bytes from data_e88e to $EC00
-W $E85E,6,2 Copy 40 bytes from square_zoom_in_mask to $EB00
-W $E864,6,2 Copy 48 bytes from diamond_zoom_in_mask to $EA00
+W $E85E,6,2 Copy 40 bytes from square_transition_mask to $EB00
+W $E864,6,2 Copy 48 bytes from diamond_transition_mask to $EA00
 W $E86A,6,2 Copy 926 bytes from load_stage_128k onwards to $8014 [128K only]
 W $E870,6,2 Copy 24 bytes (3 bytes * 8 hooks) from hooks_128k to hooks at #R$83B5 [128K only]
 @ $E876 label=hooks_128k
@@ -12474,12 +12486,12 @@ W $E8A4,2,2
 N $E8A6 Square zoom in animation mask (8x8, 5 frames)
 N $E8A6 #HTML[#CALL:anim($E8A6,8,8,0,0,5)]
 N $E8A6 #HTML[#CALL:graphic($E8A6,8,5*8,0,0)]
-@ $E8A6 label=square_zoom_in_mask
+@ $E8A6 label=square_transition_mask
 B $E8A6,40,8
 N $E8CE Diamond zoom in animation mask (8x8, 6 frames)
 N $E8CE #HTML[#CALL:anim($E8CE,8,8,0,0,6)]
 N $E8CE #HTML[#CALL:graphic($E8CE,8,6*8,0,0)]
-@ $E8CE label=diamond_zoom_in_mask
+@ $E8CE label=diamond_transition_mask
 B $E8CE,48,8
 c $E8FE "Stop the tape" handler (48K mode only)
 D $E8FE Used by the routine at #R$E810.
@@ -13522,13 +13534,13 @@ T $F57D,28,27:n1 "2ND  35678000   4     1  ABC"
 B $F599,7,7
 T $F5A0,28,27:n1 "3RD   4340300   3     2  DEF"
 B $F5BC,2,2
-b $F5BE Status panel initial image
+b $F5BE Marquee initial image
 D $F5BE Stored in screen format.
 R $F5BE #HTML[# CALL:graphic($F5BE,256,64,0,0)]
-@ $F5BE label=status_panel
+@ $F5BE label=marquee
 B $F5BE,2048,32
-b $FDBE Status panel initial attributes
-@ $FDBE label=status_panel_attrs
+b $FDBE Marquee initial attributes
+@ $FDBE label=marquee_attrs
 B $FDBE,256,8
 u $FEBE Unused
 B $FEBE,322,8*40,2
