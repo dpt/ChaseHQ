@@ -1,4 +1,4 @@
-// main.c
+// Main.c
 //
 // Chase H.Q. code model
 //

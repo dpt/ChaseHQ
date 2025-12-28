@@ -1,3 +1,11 @@
+// ChaseHQ.h
+//
+// Chase H.Q. code model
+//
+// by dpt
+
+// vim: ts=8 sts=2 sw=2 et
+
 #ifndef CHASEHQ_H
 #define CHASEHQ_H
 

@@ -1,4 +1,4 @@
-// proto.c
+// ChaseHQ.c
 //
 // Chase H.Q. code model
 //
@@ -927,7 +927,7 @@ void transition(chqstate_t *state)
     // Advance before use - initial mask points one earlier/later
     state->transition_mask += state->transition_frame_stride;
 
-  printf("frame=%d\n",state->transition_nframes);
+  printf("frame=%d\n", state->transition_nframes);
 
   screen  = 0xFF00; // was H=$FF
   maskptr = state->transition_mask;
