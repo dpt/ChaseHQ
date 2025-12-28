@@ -430,7 +430,7 @@ void set_up_stage(chqstate_t *state, const u8 *stage_data)
   // Disallow spawning
   state->allow_spawning = 0;
 
-  setup_transition(state, TRANSITION_REVERSE);
+  setup_transition(state, TRANSITIONSTRIDE_REVERSE);
 
   clear_playfield_set_attrs(state);
   // Clear the lights' BRIGHT bit
@@ -617,7 +617,7 @@ int handle_perp_caught(chqstate_t *state)
 
 hpc_phase5:
   state->perp_caught_phase = PERPCAUGHTPHASE_6;
-  setup_transition(state, TRANSITION_FORWARD); // was exit via
+  setup_transition(state, TRANSITIONSTRIDE_FORWARD); // was exit via
   return 0;
 
 hpc_phase2:
@@ -897,45 +897,100 @@ void fully_smashed(chqstate_t *state)
 // $8D8F
 void transition(chqstate_t *state)
 {
-  u8 A;
+  int       iterations; // was B'
+  u16       screen;     // was HL
+  const u8 *maskptr;    // was HL'
+  u16       screencopy; // was D
+  u8        mask;       // was E
 
-  A = state->transition_control;
-  if (A == 0)
+  switch (state->transition_control) {
+  case TRANSITIONCONTROL_0:
     return;
+  case TRANSITIONCONTROL_1:
+    draw_mugshots(state);
+    return;
+  case TRANSITIONCONTROL_2:
+    draw_overlay_messages(state);
+    return;
+  case TRANSITIONCONTROL_3:
+    fill_attributes(state);
+    return;
+  case TRANSITIONCONTROL_4:
+    break;
+  default:
+    assert(0);
+  }
 
-  A--;
-  if (A == 0) { draw_mugshots(state); return; }
-  A--;
-  if (A == 0) { draw_overlay_messages(state); return; }
-  A--;
-  if (A == 0) { fill_attributes(state); return; }
-  // Otherwise it's 4
+  if (--state->transition_nframes == 0)
+    state->transition_control = TRANSITIONCONTROL_0;
+  else
+    // Advance before use - initial mask points one earlier/later
+    state->transition_mask += state->transition_frame_stride;
 
-  // TODO
+  printf("frame=%d\n",state->transition_nframes);
+
+  screen  = 0xFF00; // was H=$FF
+  maskptr = state->transition_mask;
+  iterations = 8; // iterations
+  do {
+    mask = *maskptr;
+    screencopy = screen; // Conv: Original just saved H in D
+    screen = (screen & 0xFF00) | 0xFE;
+    t_fade_chunk(state, mask, ADDRTOBACKBUF(screen));
+    screen -= 8 << 8;
+    t_fade_chunk(state, mask, ADDRTOBACKBUF(screen));
+    screen = screencopy - 256; // restore
+    maskptr++;
+  } while (--iterations > 0);
+}
+
+// $8DD8
+// Overwrite odd/even UDG rows of the screen with a single byte.
+void t_fade_chunk(chqstate_t *state, u8 Emask, u8 *HLscreen)
+{
+  int rows;       // was C
+  int iterations; // was B
+
+  rows = 8; // rows
+  do {
+    iterations =
+      6; // 6 iterations (of 5 ops each in the loop below) = 30 bytes written (~ a scanline)
+    do {
+      *HLscreen-- |= Emask;
+      *HLscreen-- |= Emask;
+      *HLscreen-- |= Emask;
+      *HLscreen-- |= Emask;
+      *HLscreen-- |= Emask;
+    } while (--iterations > 0);
+    HLscreen -= 2;
+  } while (--rows > 0);
 }
 
 // $8DF9
-void setup_transition(chqstate_t *state, u8 Atransition)
+void setup_transition(chqstate_t *state, u8 Astride)
 {
-  u16  BC;
-  u16  DE;
-  u8  *HL;
+  s16                 frame_stride; // was BC
+  const transition_t *transitions;  // was DE
+  const transition_t *transition;   // was HL
 
-  BC = Atransition;
-  DE = 0xEC00; // table ptr
-  if (Atransition < 0) {
-    BC = 0xFF00 | (BC & 0x00FF);
-    DE = 0xEC0C; // table ptr
+  assert(Astride == 8 || Astride == 0xF8); // 8 or -8
+
+  frame_stride = Astride;
+  // Conv: Points at non-relocated table.
+  transitions = &transitions_e88e[0];
+  if ((s8) Astride < 0) { // reversed
+    frame_stride |= 0xFF00; // widen -8 to 16 bits
+    transitions = &transitions_e88e[4]; // second half of table
   }
 
-  state->SM_8DB1 = BC;
+  state->transition_frame_stride = frame_stride;
 
-  //  // Pick a random entry in the table
-  //  HL = &DE[(rng(state) & 3) * 3];
-  //
-  //  state->SM_8DA1 = *HL++;
-  //  state->SM_8DBB = wordat(HL); // Set transition animation start address
-  state->transition_control = TRANSITIONCONTROL_4;
+  // Pick a random entry in the table
+  transition = &transitions[rng(state) & 3];
+
+  state->transition_nframes = transition->nframes;
+  state->transition_mask    = transition->maskbase;
+  state->transition_control = TRANSITIONCONTROL_4; // fade
 }
 
 // $8E29
@@ -943,8 +998,8 @@ void fill_attributes(chqstate_t *state)
 {
   u8 *src;     // was HL
   u8 *dst;     // was DE
-  int      rows;    // was A
-  int      columns; // was BC
+  int rows;    // was A
+  int columns; // was BC
 
   src = ADDRTOSCREEN(0x5901); // (1,8)
   rows = 16; // rows
@@ -3251,10 +3306,11 @@ void entrypt_128k(chqstate_t *state)
 // $E81D
 void entrypt_common(chqstate_t *state, u8 Amode_128k, u8 Bnrelocs)
 {
+#if 0
   static const struct Relocations {
     const u8 *src;
-    ptrdiff_t      dst;
-    size_t         len;
+    ptrdiff_t dst;
+    size_t    len;
   } relocations[] = {
     { transitions_e88e, offsetof(chqstate_t, transitions_ec00), sizeof(transitions_e88e) },
     { square_transition_mask, 0xEB00, sizeof(square_transition_mask) },
@@ -3265,6 +3321,7 @@ void entrypt_common(chqstate_t *state, u8 Amode_128k, u8 Bnrelocs)
 
   const struct Relocations *reloc; // was HL
   u8                   iterations; // was BC
+#endif
 
   state->mode_128k = Amode_128k;
 
@@ -3276,12 +3333,14 @@ void entrypt_common(chqstate_t *state, u8 Amode_128k, u8 Bnrelocs)
     // stop_the_tape_48k(state);
   }
 
+#if 0
   reloc      = &relocations[0];
   iterations =
     3; // Have to ignore requested nrelocs since 128K copies aren't done here
   do
     memcpy((char *) state + reloc->dst, reloc->src, reloc->len);
   while (--iterations > 0);
+#endif
 
   bootstrap(state);
 }

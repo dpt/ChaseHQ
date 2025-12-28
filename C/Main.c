@@ -1,3 +1,11 @@
+// main.c
+//
+// Chase H.Q. code model
+//
+// by dpt
+
+// vim: ts=8 sts=2 sw=2 et
+
 #include <assert.h>
 #include <stdint.h>
 #include <stdio.h>
@@ -328,12 +336,6 @@ int main(void)
   state->wanted_stage_number = 0;
   load_stage(state);
 
-  if (1) { // temp
-    clear_playfield_set_attrs(state);
-    state->sighted_flag = 0;
-    memcpy(&state->backbuffer[0], backbufexample, sizeof(backbufexample));
-  }
-
   while (!quit) {
     while (SDL_PollEvent(&event)) {
       switch (event.type) {
@@ -341,7 +343,7 @@ int main(void)
         quit = 1;
         break;
 
-      case SDL_KEYDOWN:
+      //case SDL_KEYDOWN:
       case SDL_KEYUP: {
         static const char msg[] = "WOOT, NOW WE HAVE A SMASH BAR";
 
@@ -357,19 +359,27 @@ int main(void)
       case SDL_MOUSEMOTION:
         mx = event.motion.x;
         my = event.motion.y;
+        //printf("my=%d\n",my);
         // ledfont_plot(state, 1 + my % 10,
         //              &state->screen[(0x4000 + mx / 8) - SCREEN_START_ADDRESS]);
+        clear_playfield_set_attrs(state);
+        memcpy(&state->backbuffer[0], backbufexample, sizeof(backbufexample));
         draw_mugshots(state);
         state->sighted_flag = 1;
         state->perp_caught_phase = PERPCAUGHTPHASE_2;
         state->smash_counter = my / 16;
         draw_smash_bar(state);
+        transition(state);
         draw_screen(state);
         break;
 
       case SDL_MOUSEBUTTONUP:
       case SDL_MOUSEBUTTONDOWN:
-        t  = event.button.state == SDL_PRESSED;
+        t = event.button.state == SDL_PRESSED;
+        if (t) {
+          //state->sighted_flag = 0;
+          setup_transition(state, 8);
+        }
         break;
 
         // main_loop(state);

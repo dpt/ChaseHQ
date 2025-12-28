@@ -83,7 +83,12 @@ const u16 inward_bend_table[96];
 const u8 horizontal_e6b0[8][22];
 const u8 horizontal_e760[8][22];
 
-const u8 transitions_e88e[3 * 8];
+typedef struct {
+  u8        nframes;  // stores nframes+1
+  const u8 *maskbase; // points to the frame before/after the base
+} transition_t;
+
+const transition_t transitions_e88e[8];
 
 const u8 square_transition_mask[5 * 8];
 const u8 diamond_transition_mask[6 * 8];

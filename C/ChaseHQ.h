@@ -107,12 +107,13 @@ typedef u8 chatterpriority_t;
 #define PERPCAUGHTPHASE_6     (6)
 
 #define TRANSITIONCONTROL_0   (0)
-#define TRANSITIONCONTROL_1   (1)
-#define TRANSITIONCONTROL_3   (3)
-#define TRANSITIONCONTROL_4   (4)
+#define TRANSITIONCONTROL_1   (1) // draw mugshots
+#define TRANSITIONCONTROL_2   (2) // draw overlay messages
+#define TRANSITIONCONTROL_3   (3) // fill attributes
+#define TRANSITIONCONTROL_4   (4) // fade
 
-#define TRANSITION_FORWARD    (0x08)
-#define TRANSITION_REVERSE    (0xF8)
+#define TRANSITIONSTRIDE_FORWARD (0x08)
+#define TRANSITIONSTRIDE_REVERSE (0xF8)
 
 /* ----------------------------------------------------------------------- */
 
@@ -259,8 +260,9 @@ void hpc_set_perp_speed(chqstate_t *state, u16 DE);
 void fully_smashed(chqstate_t *state);
 
 void transition(chqstate_t *state);
+void t_fade_chunk(chqstate_t *state, u8 Emask, u8 *HL);
 
-void setup_transition(chqstate_t *state, u8 Atransition);
+void setup_transition(chqstate_t *state, u8 Astride);
 
 void fill_attributes(chqstate_t *state);
 
@@ -284,7 +286,7 @@ void draw_mugshot(chqstate_t    *state,
                   const u8 *HLmugshot);
 
 void draw_smash_bar(chqstate_t *state);
-u16 draw_smash_bar_segment(chqstate_t *state, u8 Cnrows, u16 HLbuf);
+u16 draw_smash_bar_segments(chqstate_t *state, u8 Cnsegs, u16 HLbuf);
 u16 draw_smash_bar_solid_bit(chqstate_t *state, u8 Bnrows, u16 HLbuf);
 
 void draw_everything_else(chqstate_t *state);

@@ -96,20 +96,18 @@ struct chqstate_s {
   // $8D85
   char     credit_n[8]; // initialised to "CREDIT  "
 
-  // $8DA1
-  u8  SM_8DA1;
+  // $8DA1 (SM)
+  u8  transition_nframes;
+  // $8DB1 (SM)
+  s16 transition_frame_stride; // fade step value: 8 or -8
+  // $8DBB (SM)
+  const u8 *transition_mask;
 
-  // $8DB1
-  u16 SM_8DB1;
-
-  // $8DBB
-  u16 SM_8DBB;
-
-  // $8E43
+  // $8E43 (SM)
   const u8 *SM_8E43; // in draw_overlay_messages
-  // $8E46
+  // $8E46 (SM)
   u8  SM_8E46; // in draw_overlay_messages
-  // $8E49
+  // $8E49 (SM)
   u8  SM_8E4A_delay; // in draw_overlay_messages
 
   // $9618
@@ -287,8 +285,6 @@ struct chqstate_s {
   u16 table_ea00[128];
   // $EB00
   u16 table_eb00[128];
-  // $EC00
-  u8  transitions_ec00[24]; // note: the overlap here needs thinking over
   // $EC00
   u16 table_ec00[128];
   // $ED00

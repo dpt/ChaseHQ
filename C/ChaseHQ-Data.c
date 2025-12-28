@@ -2275,27 +2275,24 @@ const u8 horizontal_e760[8][22] = {
 };
 
 // $E88E
-const u8 transitions_e88e[3 * 8] = {
-  0x06,
-  0xEAF8,
-  0x0C,
-  0xE35C,
-  0x08,
-  0xE3B4,
-  0x07,
-  0xE9F8,
-  0x06,
-  0xEB28,
-  0x0C,
-  0xE3BC,
-  0x08,
-  0xE3F4,
-  0x07,
-  0xEA30
+// Conv: Changed to point at fixed data only. Original game copied two of the
+// transition frames around during relocation.
+const transition_t transitions_e88e[8] = {
+  // forward
+  {  6, &square_transition_mask[-1 * 8] },
+  { 12, &spiral_transition_mask[-1 * 8] },
+  {  8, &circle_transition_mask[-1 * 8] },
+  {  7, &diamond_transition_mask[-1 * 8] },
+
+  // reverse
+  {  6, &square_transition_mask[6 * 8] },
+  { 12, &spiral_transition_mask[12 * 8] },
+  {  8, &circle_transition_mask[8 * 8] },
+  {  7, &diamond_transition_mask[7 * 8] },
 };
 
 // 0xE8A6
-const u8 square_transition_mask[] = {
+const u8 square_transition_mask[5 * 8] = {
   ________,
   ________,
   ________,
