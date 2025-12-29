@@ -12,6 +12,8 @@
 #include "Types.h"
 #include "Spectrum.h"
 
+/* ----------------------------------------------------------------------- */
+
 #define MARQUEE_HEIGHT        (8 * 8) // rows
 #define PLAYFIELD_HEIGHT      (16 * 8) // rows
 
@@ -57,75 +59,85 @@
 #define FACEBYTES             (FACEBITMAPBYTES + FACEATTRBYTES)
 #define NFACES                (3)
 
-#define DRAWCHAR_TYPE_DUNNO   (0)
-#define DRAWCHAR_TYPE_GENERIC (1)
-#define DRAWCHAR_TYPE_SINGLE  (2)
-#define DRAWCHAR_TYPE_DOUBLE  (3)
-#define DRAWCHAR_TYPE_SINGLE_INVERTED (4)
-#define DRAWCHAR_TYPE_DOUBLE_INVERTED (5)
+/* ----------------------------------------------------------------------- */
 
-#define QUITSTATE_IDLE        (0)
-#define QUITSTATE_START       (1)
-#define QUITSTATE_DONE        (2) // not sure
+#define DRAWCHAR_TYPE_DUNNO                    (0)
+#define DRAWCHAR_TYPE_GENERIC                  (1)
+#define DRAWCHAR_TYPE_SINGLE                   (2)
+#define DRAWCHAR_TYPE_DOUBLE                   (3)
+#define DRAWCHAR_TYPE_SINGLE_INVERTED          (4)
+#define DRAWCHAR_TYPE_DOUBLE_INVERTED          (5)
 
-#define USERINPUT_RIGHT       (1<<0)
-#define USERINPUT_LEFT        (1<<1)
-#define USERINPUT_DOWN        (1<<2) // aka brake
-#define USERINPUT_UP          (1<<3) // aka accelerate
-#define USERINPUT_FIRE        (1<<4) // aka gear
-#define USERINPUT_TURBO       (1<<5)
-#define USERINPUT_PAUSE       (1<<6)
-#define USERINPUT_QUIT        (1<<7)
-#define USERINPUT_NOT_QUIT    (0x7F)
-#define USERINPUT_NONE        (0x00)
+#define QUITSTATE_IDLE                         (0)
+#define QUITSTATE_START                        (1)
+#define QUITSTATE_DONE                         (2) // not sure
 
-#define USERINPUTMASK_ALLOW_NONE (0x00)
-#define USERINPUTMASK_ALLOW_ALL (0xFF)
+#define USERINPUT_RIGHT                     (1<<0)
+#define USERINPUT_LEFT                      (1<<1)
+#define USERINPUT_DOWN                      (1<<2) // aka brake
+#define USERINPUT_UP                        (1<<3) // aka accelerate
+#define USERINPUT_FIRE                      (1<<4) // aka gear
+#define USERINPUT_TURBO                     (1<<5)
+#define USERINPUT_PAUSE                     (1<<6)
+#define USERINPUT_QUIT                      (1<<7)
+#define USERINPUT_NOT_QUIT                  (0x7F)
+#define USERINPUT_NONE                      (0x00)
 
-#define EFFECT_SQUEAL         (1)
-#define EFFECT_LANDING        (2)
-#define EFFECT_CAR_HIT        (3)
-#define EFFECT_SCENERY_HIT    (4)
-#define EFFECT_HAZARD_HIT     (5)
-#define EFFECT_WALL_HIT       (6)
-#define EFFECT_CORNERING      (7)
-#define EFFECT_BIP            (8)
-#define EFFECT_BOW            (9)
+#define USERINPUTMASK_ALLOW_NONE            (0x00)
+#define USERINPUTMASK_ALLOW_ALL             (0xFF)
 
-// these state names need clarification
-#define TIMEUPSTATE_INIT      (0)
-#define TIMEUPSTATE_CHECK_TIME_UP (1)
-#define TIMEUPSTATE_CAR_STOPPED (2)
-#define TIMEUPSTATE_CHECK_RESTART (3)
-#define TIMEUPSTATE_WAITING   (4)
+#define EFFECT_SQUEAL                          (1)
+#define EFFECT_LANDING                         (2)
+#define EFFECT_CAR_HIT                         (3)
+#define EFFECT_SCENERY_HIT                     (4)
+#define EFFECT_HAZARD_HIT                      (5)
+#define EFFECT_WALL_HIT                        (6)
+#define EFFECT_CORNERING                       (7)
+#define EFFECT_BIP                             (8)
+#define EFFECT_BOW                             (9)
 
-#define CHATTERSTATE_IDLE     (0)
-#define CHATTERSTATE_START    (1)
-#define CHATTERSTATE_RUN      (2)
-#define CHATTERSTATE_STOP     (3)
+// TODO: These state names need clarification
+#define TIMEUPSTATE_INIT                       (0)
+#define TIMEUPSTATE_CHECK_TIME_UP              (1)
+#define TIMEUPSTATE_CAR_STOPPED                (2)
+#define TIMEUPSTATE_CHECK_RESTART              (3)
+#define TIMEUPSTATE_WAITING                    (4)
+
+#define CHATTERSTATE_IDLE                      (0)
+#define CHATTERSTATE_START                     (1)
+#define CHATTERSTATE_RUN                       (2)
+#define CHATTERSTATE_STOP                      (3)
 
 typedef u8 chatterpriority_t;
 
-#define PERPCAUGHTPHASE_0     (0)
-#define PERPCAUGHTPHASE_1     (1)
-#define PERPCAUGHTPHASE_2     (2)
-#define PERPCAUGHTPHASE_3     (3)
-#define PERPCAUGHTPHASE_4     (4)
-#define PERPCAUGHTPHASE_5     (5)
-#define PERPCAUGHTPHASE_6     (6)
+#define PERPCAUGHTPHASE_0                      (0)
+#define PERPCAUGHTPHASE_1                      (1)
+#define PERPCAUGHTPHASE_2                      (2)
+#define PERPCAUGHTPHASE_3                      (3)
+#define PERPCAUGHTPHASE_4                      (4)
+#define PERPCAUGHTPHASE_5                      (5)
+#define PERPCAUGHTPHASE_6                      (6)
 
-#define TRANSITIONCONTROL_0   (0)
-#define TRANSITIONCONTROL_1   (1) // draw mugshots
-#define TRANSITIONCONTROL_2   (2) // draw overlay messages
-#define TRANSITIONCONTROL_3   (3) // fill attributes
-#define TRANSITIONCONTROL_4   (4) // fade
+#define TRANSITIONCONTROL_STOP                 (0)
+#define TRANSITIONCONTROL_DRAW_MUGSHOTS        (1)
+#define TRANSITIONCONTROL_OVERLAY_MESSAGES     (2)
+#define TRANSITIONCONTROL_FILL_ATTRIBUTES      (3)
+#define TRANSITIONCONTROL_FADE                 (4)
 
-#define TRANSITIONSTRIDE_FORWARD (0x08)
-#define TRANSITIONSTRIDE_REVERSE (0xF8)
+#define TRANSITIONSTRIDE_FORWARD            (0x08)
+#define TRANSITIONSTRIDE_REVERSE            (0xF8)
+
+// Note: road_pos left..right is high..low
+#define ROAD_126                          (0x0126)
+#define ROAD_LEFTMOST                     (0x0105)
+#define ROAD_RIGHTMOST                    (0x00F5)
+
+#define HAZARD_UNUSED                       (0xFF)
 
 /* ----------------------------------------------------------------------- */
 
-// Conv: The C version uses IDs for strings and blocks rather than inline addresses.
+// Conv: The C version uses IDs for strings and blocks rather than inline
+// addresses.
 
 #define CHATTERCMD_RANDOM                   (0xFC) // Followed by three chatterblock indices
 #define CHATTERCMD_PAUSE                    (0xFE) // Followed by a single chatterblock index
@@ -207,14 +219,6 @@ typedef u8 chatterpriority_t;
 #define CHATTERBLK_TONY_LETS_GO               (31)
 #define CHATTERBLK__LIMIT                     (32)
 
-// note: road_pos left..right is high..low
-#define ROAD_LEFTMOST   (0x0105)
-#define ROAD_RIGHTMOST  (0x00F5)
-
-/* ----------------------------------------------------------------------- */
-
-#define HAZARD_UNUSED           (0xFF)
-
 /* ----------------------------------------------------------------------- */
 
 typedef struct hazard_s hazard_t;
@@ -224,18 +228,16 @@ typedef struct chqstate_s chqstate_t;
 /* ----------------------------------------------------------------------- */
 
 void chasehq_reset_state(chqstate_t *state);
-void main_loop(chqstate_t *state);
 
 /* ----------------------------------------------------------------------- */
 
-// Ideally all of these will become static in the long run.
+// TODO: Ideally all of these will become static in the long run.
 
 void load_stage(chqstate_t *state);
 
 void attract_mode(chqstate_t *state);
 
 void start_siren_hook(chqstate_t *state);
-
 void play_engine_or_siren_sfx_hook(chqstate_t *state);
 void silence_audio_hook(chqstate_t *state);
 void write_audio_registers_hook(chqstate_t *state);
@@ -244,10 +246,12 @@ void play_engine_sfx_hook(chqstate_t *state);
 void play_speech_hook(chqstate_t *state);
 void attract_mode_hook(chqstate_t *state);
 
+void main_loop(chqstate_t *state);
+
 void cpu_driver(chqstate_t *state);
 
 void set_up_stage(chqstate_t *state, const u8 *stage_data);
-void sus_clear_lights(u8 *attrptr);
+void reset_lights(u8 *attrptr);
 
 void check_user_input(chqstate_t *state);
 void check_user_input_quit_key(chqstate_t *state);
@@ -255,47 +259,46 @@ void check_user_input_quit_key(chqstate_t *state);
 void clear_playfield_attrs(chqstate_t *state);
 void clear_playfield(chqstate_t *state);
 
-void start_sfx(chqstate_t *state, u8 Bindex, u8 Cpriority);
+void start_sfx(chqstate_t *state, u8 index, u8 priority);
 void drive_sfx(chqstate_t *state);
-void sfx_crash(chqstate_t *state, u8 Dparam);
-void sfx_thud(chqstate_t *state, u8 Dparam);
-void sfx_cornering(chqstate_t *state, u8 Dparam, u8 Eparam);
-void sfx_bipbow(chqstate_t *state, u8 Dparam, u8 Eparam);
+void sfx_crash(chqstate_t *state, u8 param);
+void sfx_thud(chqstate_t *state, u8 param);
+void sfx_cornering(chqstate_t *state, u8 param, u8 param2);
+void sfx_bipbow(chqstate_t *state, u8 param, u8 param2);
 
 int handle_perp_caught(chqstate_t *state);
-void hpc_set_perp_speed(chqstate_t *state, u16 DE);
+void hpc_set_perp_speed(chqstate_t *state, u16 speed);
 
 void fully_smashed(chqstate_t *state);
 
 void transition(chqstate_t *state);
-void t_fade_chunk(chqstate_t *state, u8 Emask, u8 *HL);
+void transition_fade_chunk(chqstate_t *state, u8 mask, u8 *screen);
 
-void setup_transition(chqstate_t *state, u8 Astride);
+void setup_transition(chqstate_t *state, u8 stride);
 
 void fill_attributes(chqstate_t *state);
 
 void draw_overlay_messages(chqstate_t *state);
 
-const u8 *print_message(chqstate_t    *state,
-                        u8        Aflags,
-                        const u8 *HLmessages);
+const u8 *print_message(chqstate_t *state,
+                        u8          flags,
+                        const u8   *messages);
 
-void setup_overlay_messages(chqstate_t *state, const u8 *HL);
-
-void setup_overlay_messages_with_A(chqstate_t    *state,
-                                   u8        Atransition,
-                                   const u8 *HL);
+void setup_overlay_messages(chqstate_t *state, const u8 *message);
+void setup_overlay_messages_with_transition(chqstate_t *state,
+                                            u8          transition,
+                                            const u8   *message);
 
 void draw_mugshots(chqstate_t *state);
 
-void draw_mugshot(chqstate_t    *state,
-                  u16       BCscreenpos,
-                  u16       DEbackbuf,
-                  const u8 *HLmugshot);
+void draw_mugshot(chqstate_t *state,
+                  u16         screenpos,
+                  u16         backbuf,
+                  const u8   *mugshot);
 
 void draw_smash_bar(chqstate_t *state);
-u16 draw_smash_bar_segments(chqstate_t *state, u8 Cnsegs, u16 HLbuf);
-u16 draw_smash_bar_solid_bit(chqstate_t *state, u8 Bnrows, u16 HLbuf);
+u16 draw_smash_bar_segments(chqstate_t *state, int nsegs, u16 buf);
+u16 draw_smash_bar_solid_bit(chqstate_t *state, int nrows, u16 buf);
 
 void draw_everything_else(chqstate_t *state);
 
@@ -303,37 +306,37 @@ u8 rng(chqstate_t *state);
 
 void start_chatter(chqstate_t       *state,
                    chatterpriority_t priority,
-                   const u8    *chatterblk);
+                   const u8         *chatterblk);
 
 void drive_chatter(chqstate_t *state);
 void drive_chatter_stop(chqstate_t *state);
 
 void print_chatter(chqstate_t *state);
-void pc_chatter_message(chqstate_t *state, const u8 *HLchatter);
+void pc_chatter_message(chqstate_t *state, const u8 *chatter);
 void pc_clear_line(chqstate_t *state, u8 x);
 
 void noise_effect(chqstate_t *state, u8 counter);
 void noise_effect_9a5c(chqstate_t *state, u8 counter);
-void ne_plot_attrs(chqstate_t *state, u8 A);
+void ne_plot_attrs(chqstate_t *state, u8 attr);
 
-void plot_face(chqstate_t    *state,
-               u16       DEscreen,
-               const u8 *HLface);
-void plot_face_attributes(chqstate_t    *state,
-                          u16       DEscreen,
-                          const u8 *HLface);
+void plot_face(chqstate_t *state,
+               u16         screen,
+               const u8   *face);
+void plot_face_attributes(chqstate_t *state,
+                          u16         screen,
+                          const u8   *face);
 
 void plot_mini_font_cursor_off(chqstate_t *state,
-                               u8     x,
+                               u8          x,
                                char        character);
 void plot_mini_font_cursor_on(chqstate_t *state,
-                              u8     x,
+                              u8          x,
                               char        character);
 void pmf_go(chqstate_t *state,
-            u8     x,
-            char        character,
-            u8     B,
-            u8     C);
+            u8          x,
+            char        ascii,
+            u8          extrabm1,
+            u8          extrabm2);
 
 void clear_message_line(chqstate_t *state);
 
@@ -341,60 +344,52 @@ void tick(chqstate_t *state);
 
 void speed_score(chqstate_t *state);
 
-void add_bonus(chqstate_t *state,
-               u8     A_lo,
-               u8     E_md,
-               u8     D_hi);
-int bonus_digit(u8 digit,
-                u8 *nonzeroflag,
-                char   **poutput);
+void add_bonus(chqstate_t *state, u8 lo, u8 md, u8 hi);
+int bonus_digit(u8 digit, u8 *nonzeroflag, char **poutput);
 
-void increment_score(chqstate_t *state,
-                     u8     A_lo,
-                     u8     E_md,
-                     u8     D_hi);
+void increment_score(chqstate_t *state, u8 lo, u8 md, u8 hi);
 
 void calc_overtake_bonus(chqstate_t *state);
 
 void update_scoreboard(chqstate_t *state);
 
-void toggle_light_brightness(chqstate_t *state, u8 *HL);
+void toggle_light_brightness(chqstate_t *state, u8 *attrs);
 
 void plot_turbos_and_scores(chqstate_t *state);
-void ptas_led_digits(chqstate_t    *state,
-                     u8        Biterations,
-                     const u8 *DEdigits,
-                     u8       *HLstored,
-                     u8       *DEscreen);
+void ptas_led_digits(chqstate_t *state,
+                     u8          iterations,
+                     const u8   *digits,
+                     u8         *stored,
+                     u8         *screen);
 
 u8 *ledfont_plot(chqstate_t *state, u8 ord, u8 *screen);
 
-void draw_string_A(chqstate_t    *state,
-                   u8        A,
-                   u8       *BCstring,
-                   u8       *DEbackbuf,
-                   const u8 *HLstring,
-                   u8        Adash);
-void draw_string(chqstate_t    *state,
-                 u8        A,
-                 u8       *BCstring,
-                 u8       *DEbackbuf,
-                 const u8 *HLstring);
-void draw_string_entry(chqstate_t    *state,
-                       u8       *DEscreen,
-                       const u8 *HLstring,
-                       u8        Adash,
-                       u8        Cdash,
-                       u8        DEstride,
-                       u8       *HLattr);
+void draw_string_A(chqstate_t *state,
+                   u8          A,
+                   u8         *BCstring,
+                   u8         *DEbackbuf,
+                   const u8   *HLstring,
+                   u8          Adash);
+void draw_string(chqstate_t *state,
+                 u8          A,
+                 u8         *BCstring,
+                 u8         *DEbackbuf,
+                 const u8   *HLstring);
+void draw_string_entry(chqstate_t *state,
+                       u8         *DEscreen,
+                       const u8   *HLstring,
+                       u8          Adash,
+                       u8          Cdash,
+                       u8          DEstride,
+                       u8         *HLattr);
 
 void draw_char(chqstate_t *state,
-               u8     Achar,
-               u8    *DE,    // screen address
-               u8     Adash, // draw type
-               u8     Cdash, // attribute
-               u8     DEdash, // e.g. 32 - a stride?
-               u8    *HLdash);
+               u8          Achar,
+               u8         *DE,     // screen address
+               u8          Adash,  // draw type
+               u8          Cdash,  // attribute
+               u8          DEdash, // e.g. 32 - a stride?
+               u8         *HLdash);
 
 u8 keyscan(chqstate_t *state);
 
