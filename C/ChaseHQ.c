@@ -1584,7 +1584,8 @@ void ne_plot_attrs(chqstate_t *state, u8 attr)
   u8  iterations; // was B
   u16 skip;       // was DE
 
-  addr       = 0x5836 - 0x5800; // Screen attribute (22,1) (Conv: address -> offset)
+  addr       = 0x5836 -
+               0x5800; // Screen attribute (22,1) (Conv: address -> offset)
   iterations = 5; // 5 rows
   skip       = 32 - 3;
   do {
@@ -1696,7 +1697,7 @@ void pmf_go(chqstate_t *state,
   u8        extra1;   // was self modified $9B64 - left extra bitmap
   u8        mask;     // was self modified $9B89
   u8        rotate;   // was self modified $96B7
-                      
+
   u8        A;        // was A
   u8        ascii2;   // was A
   u8        row;      // was A
@@ -3071,7 +3072,103 @@ void clear_playfield_set_attrs(chqstate_t *state)
 // $BDFB
 void read_map(chqstate_t *state)
 {
+#if 0
+  int carry = 0;
+  u8  A;
+  u8 *HL;
+  u16 DE;
+
+  state->var_a23d       = 0;
+  state->var_a23c       = 0;
+  state->allow_spawning = 0;
+  HL = &state->fast_counter;
+  DE = state->speed;
+  A = DE & 0xFF;
+  RR(D);
+  if (carry) {
+    // Otherwise we're going fast. This seems to cause the buffer to be
+    // processed twice as often as when in slow mode.
+
+    // PUSH AF
+    // PUSH HL
+    rm_cycle_buffer_offset(state);
+    // POP HL
+    // POP AF
+  }
+
+rm_check_speed:
+  A += *HL;
+  *HL = A;
+  A = 0; // set flag
+  if (!carry)
+    goto rm_exit;
+
+  rm_cycle_buffer_offset(state); // was fallthrough
+
+  // ...
+
+rm_exit:
+#endif
 }
+
+/// An add that affects the low byte only.
+#define LO_ADD(t,d) (((t) & ~0xFF) | (((t) + (d)) & 0xFF))
+
+void rm_cycle_buffer_offset(chqstate_t *state)
+{
+#if 0
+  int carry = 0;
+  u8 *HL;
+  u8  A;
+  u8 *DE;
+
+  HL = &state->road_buffer_offset; // Conv: was an INC
+  A = *HL + 1;
+  *HL = A;
+  A += 0x5F;
+  HL = 0xEE | A;
+  state->var_a23c |= *HL;
+  HL = LO_ADD(HL, 0x20);
+  state->var_a23d |= *HL;
+  HL = LO_ADD(HL, -0x60);
+
+  // -- CURVATURE --
+
+  A = state->curvature_byte;
+  carry = A < 16;
+  A -= 16;
+  if (!carry)
+    goto rm_save_curvature_byte;
+
+  DE = state->road_curvature_ptr + 1;
+  A = *DE;
+  if (A)
+    goto rm_curvature_regular_byte;
+
+rm_curvature_escape_byte:
+  // EX DE,HL
+  HL++;
+  A = *HL;
+  HL++;
+  if (A == 0)
+    goto rm_curvature_jump_command;
+  A--;
+  if (A == 0)
+    goto rm_curvature_one_command;
+  // Otherwise it must be a fork road command (byte == 2).
+  state->SM_BB95 = wordat(HL);
+  HL += 2;
+  state->SM_BBC2 = wordat(HL);
+
+  HL = &forked_road_curvature[0];
+  goto rm_read_curvature;
+
+rm_save_curvature_byte:
+  state->curvature_byte = A;
+#endif
+}
+
+
 
 // $C0E1
 void prepare_tunnel(chqstate_t *state)

@@ -14,6 +14,8 @@
 
 #include "ChaseHQ-Data.h"
 
+#define TWOBYTES(addr) (addr) & 0xFF, (addr) >> 8
+
 /* ----------------------------------------------------------------------- */
 
 const u8 stage1[16 * 512] = {
@@ -536,6 +538,7 @@ const u8 stage1[16 * 512] = {
 // [Graphics] Turbo icons
 //
 
+// $76F0
 const u8 bitmap_turbospin[TURBOWIDTH / 8 * 2 * TURBOHEIGHT *
                           TURBOFRAMES] = {
   ________, ________, ___XXXXX, ________,
@@ -582,6 +585,761 @@ const u8 bitmap_turbospin[TURBOWIDTH / 8 * 2 * TURBOHEIGHT *
   XXX_____, ____XXXX, ________, XXXXXXX_,
   XXXX____, _____XXX, ________, XXXXXXX_,
   XXXXX___, ________, ________, ________
+};
+
+const u8 pre_game_messages[64] = {
+  0x78,
+  TWOBYTES(0xF802),
+  TWOBYTES(0xF922),
+  'C', 'H', 'A', 'S', 'E', ' ', 'H', '.', 'Q', '.', ' ', 'M', 'O', 'N', 'I', 'T', 'O', 'R', 'I', 'N', 'G', ' ', 'S', 'Y', 'S', 'T', 'E', 'M' | STREND,
+  0x60,
+  TWOBYTES(0xF863),
+  TWOBYTES(0x59E3),
+  'T', 'U', 'N', 'E' | STREND,
+  0x60,
+  TWOBYTES(0xF8A2),
+  TWOBYTES(0x5A62),
+  'V', 'O', 'L', 'U', 'M', 'E' | STREND,
+  0x58,
+  TWOBYTES(0xF077),
+  TWOBYTES(0x59D7),
+  'S', 'I', 'G', 'N', 'A', 'L' | STREND
+};
+
+const u8 pregame_data[207] = {
+  0xDC, // Set colour 12 (Bright Green)
+  0xE1, // Draw horizontally
+  TWOBYTES(0x01F0), // Set address to (1,0)
+  0x1F, // Plot tile 0
+  0x1C, // Repeat 28
+  0x25, // Plot tile 6
+  0x20, // Plot tile 1
+  TWOBYTES(0x21F0), // Set address to (1,0)
+  0x21, // Plot tile 2
+  0x1C, // Repeat 28
+  0x24, // Plot tile 5
+  0x22, // Plot tile 3
+  TWOBYTES(0x01F8), // Set address to (1,1)
+  0x23, // Plot tile 4
+  TWOBYTES(0x1EF8), // Set address to (30,1)
+  0x26, // Plot tile 7
+  0xDD, // Set colour 13 (Bright Cyan)
+  TWOBYTES(0x41F0), // Set address to (1,4)
+  0x1F, // Plot tile 0
+  0x1C, // Repeat 28
+  0x25, // Plot tile 6
+  0x20, // Plot tile 1
+  TWOBYTES(0xE1F8), // Set address to (1,13)
+  0x21, // Plot tile 2
+  0x1C, // Repeat 28
+  0x24, // Plot tile 5
+  0x22, // Plot tile 3
+  0xE2, // Draw vertically
+  TWOBYTES(0x41F8), // Set address to (1,5)
+  0x0A, // Repeat 10
+  0x23, // Plot tile 4
+  TWOBYTES(0x5EF8), // Set address to (30,5)
+  0x0A, // Repeat 10
+  0x26, // Plot tile 7
+  0xD0, // Set colour 0 (Black)
+  0xE1, // Draw horizontally
+  TWOBYTES(0x97F0), // Set address to (23,9)
+  0x07, // Repeat 7
+  0x27, // Plot tile 8
+  TWOBYTES(0xB7F0), // Set address to (23,9)
+  0x07, // Repeat 7
+  0x27, // Plot tile 8
+  TWOBYTES(0x49F8), // Set address to (9,5)
+  0xDF, // Set colour 15 (Bright White)
+  0x2A, // Plot tile 11
+  0x2B, // Plot tile 12
+  0x09, // Repeat 9
+  0x2C, // Plot tile 13
+  0x2D, // Plot tile 14
+  0x2E, // Plot tile 15
+  0x2F, // Plot tile 16
+  TWOBYTES(0x69F0), // Set address to (9,4)
+  0xDF, // Set colour 15 (Bright White)
+  0x35, // Plot tile 22
+  0xDD, // Set colour 13 (Bright Cyan)
+  0x36, // Plot tile 23
+  0x09, // Repeat 9
+  0x37, // Plot tile 24
+  0x38, // Plot tile 25
+  0x39, // Plot tile 26
+  0xDF, // Set colour 15 (Bright White)
+  0x3A, // Plot tile 27
+  TWOBYTES(0x6BF8), // Set address to (11,5)
+  0xD6, // Set colour 6 (Yellow)
+  0x42, // Plot tile 35
+  0x30, // Plot tile 17
+  0x30, // Plot tile 17
+  0x04, // Repeat 4
+  0x31, // Plot tile 18
+  0x30, // Plot tile 17
+  0x30, // Plot tile 17
+  0x43, // Plot tile 36
+  TWOBYTES(0x8BF0), // Set address to (11,8)
+  0xDE, // Set colour 14 (Bright Yellow)
+  0x0A, // Repeat 10
+  0x4B, // Plot tile 44
+  TWOBYTES(0x8BF8), // Set address to (11,9)
+  0x0A, // Repeat 10
+  0x4B, // Plot tile 44
+  TWOBYTES(0xABF0), // Set address to (11,8)
+  0x0A, // Repeat 10
+  0x4B, // Plot tile 44
+  TWOBYTES(0xABF8), // Set address to (11,9)
+  0x0A, // Repeat 10
+  0x4B, // Plot tile 44
+  TWOBYTES(0xCBF0), // Set address to (11,12)
+  0x0A, // Repeat 10
+  0x4B, // Plot tile 44
+  0xE2, // Draw vertically
+  TWOBYTES(0x69F8), // Set address to (9,5)
+  0xD7, // Set colour 7 (White)
+  0x40, // Plot tile 33
+  0xDD, // Set colour 13 (Bright Cyan)
+  0x40, // Plot tile 33
+  0xD5, // Set colour 5 (Cyan)
+  0x06, // Repeat 6
+  0x40, // Plot tile 33
+  TWOBYTES(0x76F8), // Set address to (22,5)
+  0xD7, // Set colour 7 (White)
+  0x45, // Plot tile 38
+  0xDD, // Set colour 13 (Bright Cyan)
+  0x45, // Plot tile 38
+  0xD5, // Set colour 5 (Cyan)
+  0x06, // Repeat 6
+  0x45, // Plot tile 38
+  TWOBYTES(0x6AF8), // Set address to (10,5)
+  0x03, // Repeat 3
+  0x41, // Plot tile 34
+  TWOBYTES(0x75F8), // Set address to (21,5)
+  0x03, // Repeat 3
+  0x44, // Plot tile 37
+  0xE1, // Draw horizontally
+  TWOBYTES(0xCAF8), // Set address to (10,13)
+  0xDD, // Set colour 13 (Bright Cyan)
+  0x3B, // Plot tile 28
+  0xDE, // Set colour 14 (Bright Yellow)
+  0x3C, // Plot tile 29
+  0x08, // Repeat 8
+  0x3D, // Plot tile 30
+  0x3E, // Plot tile 31
+  0xDD, // Set colour 13 (Bright Cyan)
+  0x3F, // Plot tile 32
+  TWOBYTES(0xEAF0), // Set address to (10,12)
+  0x46, // Plot tile 39
+  0x47, // Plot tile 40
+  0x08, // Repeat 8
+  0x48, // Plot tile 41
+  0x49, // Plot tile 42
+  0x4A, // Plot tile 43
+  TWOBYTES(0xEAF8), // Set address to (10,13)
+  0xDD, // Set colour 13 (Bright Cyan)
+  0x0C, // Repeat 12
+  0x32, // Plot tile 19
+  TWOBYTES(0x84F0), // Set address to (4,8)
+  0xDF, // Set colour 15 (Bright White)
+  0x28, // Plot tile 9
+  0xDD, // Set colour 13 (Bright Cyan)
+  0x29, // Plot tile 10
+  TWOBYTES(0x84F8), // Set address to (4,9)
+  0xDE, // Set colour 14 (Bright Yellow)
+  0x33, // Plot tile 20
+  0xD5, // Set colour 5 (Cyan)
+  0x34, // Plot tile 21
+  TWOBYTES(0xC4F0), // Set address to (4,12)
+  0xDF, // Set colour 15 (Bright White)
+  0x28, // Plot tile 9
+  0xDD, // Set colour 13 (Bright Cyan)
+  0x29, // Plot tile 10
+  TWOBYTES(0xC4F8), // Set address to (4,13)
+  0xDE, // Set colour 14 (Bright Yellow)
+  0x33, // Plot tile 20
+  0xD5, // Set colour 5 (Cyan)
+  0x34, // Plot tile 21
+  TWOBYTES(0xD8F0), // Set address to (24,13)
+  0xDF, // Set colour 15 (Bright White)
+  0x28, // Plot tile 9
+  0xDD, // Set colour 13 (Bright Cyan)
+  0x29, // Plot tile 10
+  TWOBYTES(0xD8F8), // Set address to (24,13)
+  0xDE, // Set colour 14 (Bright Yellow)
+  0x33, // Plot tile 20
+  0xD5, // Set colour 5 (Cyan)
+  0x34, // Plot tile 21
+  TWOBYTES(0xDBF0), // Set address to (27,13)
+  0xDF, // Set colour 15 (Bright White)
+  0x28, // Plot tile 9
+  0xDD, // Set colour 13 (Bright Cyan)
+  0x29, // Plot tile 10
+  TWOBYTES(0xDBF8), // Set address to (27,13)
+  0xDE, // Set colour 14 (Bright Yellow)
+  0x33, // Plot tile 20
+  0xD5, // Set colour 5 (Cyan)
+  0x34, // Plot tile 21
+  0x00 // Stop
+};
+
+// 45 tiles used to draw the pre-game screen.
+const u8 pregame_tiles[45 * 8] = {
+  ________,
+  _X_X_X_X,
+  __XXXXXX,
+  _XXXXXXX,
+  __XXXXXX,
+  _XXXXXXX,
+  __XXXXXX,
+  _XXXXXXX,
+
+  ________,
+  _X_X_X__,
+  XXXXXXX_,
+  XXXXXX__,
+  XXXXXXX_,
+  XXXXXX__,
+  XXXXXXX_,
+  XXXXXX__,
+
+  __XXXXXX,
+  _XXXXXXX,
+  __XXXXXX,
+  _XXXXXXX,
+  __XXXXXX,
+  _XXXXXXX,
+  __X_X_X_,
+  ________,
+
+  XXXXXXX_,
+  XXXXXX__,
+  XXXXXXX_,
+  XXXXXX__,
+  XXXXXXX_,
+  XXXXXX__,
+  X_X_X_X_,
+  ________,
+
+  __XXXXXX,
+  _XXXXXXX,
+  __XXXXXX,
+  _XXXXXXX,
+  __XXXXXX,
+  _XXXXXXX,
+  __XXXXXX,
+  _XXXXXXX,
+
+  XXXXXXXX,
+  XXXXXXXX,
+  XXXXXXXX,
+  XXXXXXXX,
+  XXXXXXXX,
+  XXXXXXXX,
+  X_X_X_X_,
+  ________,
+
+  ________,
+  _X_X_X_X,
+  XXXXXXXX,
+  XXXXXXXX,
+  XXXXXXXX,
+  XXXXXXXX,
+  XXXXXXXX,
+  XXXXXXXX,
+
+  XXXXXXX_,
+  XXXXXX__,
+  XXXXXXX_,
+  XXXXXX__,
+  XXXXXXX_,
+  XXXXXX__,
+  XXXXXXX_,
+  XXXXXX__,
+
+  X_______,
+  X_______,
+  X_______,
+  X_______,
+  XXXXXXXX,
+  XXXXXXXX,
+  XXXXXXXX,
+  XXXXXXXX,
+
+  XXXXX___,
+  XXX_____,
+  XX___XXX,
+  X___X_X_,
+  X__X___X,
+  __X___XX,
+  __XX_XXX,
+  __X_XXXX,
+
+  ___XXXXX,
+  _____XXX,
+  XXX_X_XX,
+  X_XXXXXX,
+  _XXXX_XX,
+  XXXXXXXX,
+  XXXXXX_X,
+  XXXXXXXX,
+
+  XXXXXXXX,
+  XXXXXXXX,
+  XXXXXXXX,
+  XXXXXXXX,
+  XXXXXXXX,
+  XXXXXXXX,
+  XXXXXX__,
+  XXXXXX__,
+
+  XXXXXXXX,
+  XXXXXXXX,
+  XXXXXXXX,
+  XXXXXXXX,
+  XXXXXXXX,
+  XXXXXXXX,
+  ________,
+  ________,
+
+  XXXXXXXX,
+  XXXXXXXX,
+  XXXXXXXX,
+  XXXXXXXX,
+  XXXXXXXX,
+  XXXXXXXX,
+  ________,
+  ________,
+
+  XXXXXXXX,
+  XXXXXXXX,
+  XXXXXXXX,
+  XXXXXXXX,
+  XXXXXXXX,
+  XXXXXXXX,
+  ________,
+  ________,
+
+  XXXXXXXX,
+  XXXXXXXX,
+  XXXXXXXX,
+  XXXXXXXX,
+  XXXXXXXX,
+  XXXXXXXX,
+  ________,
+  ________,
+
+  XXXXXXXX,
+  XXXXXXXX,
+  XXXXXXXX,
+  XXXXXXXX,
+  XXXXXXXX,
+  XXXXXXXX,
+  __XXXXXX,
+  __XXXXXX,
+
+  XXXXXXXX,
+  _X_X_X_X,
+  X_X_X_X_,
+  ________,
+  ________,
+  ________,
+  ________,
+  ________,
+
+  XXXXXXXX,
+  _X_X_X_X,
+  ________,
+  ________,
+  ________,
+  ________,
+  ________,
+  ________,
+
+  ________,
+  ________,
+  XXXXXXXX,
+  XXXXXXXX,
+  XXXXXXXX,
+  XXXXXXXX,
+  X_X_X_X_,
+  ________,
+
+  __XX_XXX,
+  __X_XXXX,
+  __XXXXXX,
+  X__XXXXX,
+  X___XXXX,
+  XX___XXX,
+  XXX_____,
+  XXXXX___,
+
+  XXXXXX_X,
+  XXXXXXXX,
+  XXXXXX_X,
+  XXXXX_XX,
+  XXXXXXXX,
+  XXX_X_XX,
+  _____XXX,
+  ___XXXXX,
+
+  XXXXXX__,
+  XXXXXX__,
+  XXXXXX__,
+  XXXXXX__,
+  XXXXXX__,
+  XXXXXX__,
+  XXXXXX__,
+  XXXXXX__,
+
+  _XXXXXXX,
+  XXXXXXXX,
+  XX_X_X_X,
+  XXX_X_X_,
+  XX_X_X_X,
+  XXX_XXXX,
+  XX_X_XXX,
+  XXX_XXXX,
+
+  XXXXXXXX,
+  XXXXXXXX,
+  _X_X_X_X,
+  X_X_X_X_,
+  _X_X_X_X,
+  XXXXXXXX,
+  XXXXXXXX,
+  XXXXXXXX,
+
+  XXXXXXXX,
+  XXXXXXXX,
+  _X_X_X_X,
+  X_X_X_X_,
+  _X_X_X_X,
+  XXXXXXXX,
+  XXXXXXXX,
+  XXXXXXXX,
+
+  XXXXXXX_,
+  XXXXXXXX,
+  _X_X_XXX,
+  X_X_X_XX,
+  _X_X_XXX,
+  XXX_X_XX,
+  XXXX_XXX,
+  XXX_X_XX,
+
+  __XXXXXX,
+  __XXXXXX,
+  __XXXXXX,
+  __XXXXXX,
+  __XXXXXX,
+  __XXXXXX,
+  __XXXXXX,
+  __XXXXXX,
+
+  XXXXXXXX,
+  XXXXXXXX,
+  XXXXXXXX,
+  XXXXXXX_,
+  XXXXXX_X,
+  XXXXXXX_,
+  XXXXXX_X,
+  XXXXXX__,
+
+  X_______,
+  X_______,
+  X_______,
+  X_______,
+  X_______,
+  _X______,
+  XX______,
+  __XX____,
+
+  ________,
+  ________,
+  ________,
+  ________,
+  ________,
+  ________,
+  ________,
+  ________,
+
+  _______X,
+  _______X,
+  _______X,
+  _______X,
+  _______X,
+  ______XX,
+  ______X_,
+  ____XX__,
+
+  XXXXXXXX,
+  XXXXXXXX,
+  XXXXXXXX,
+  _XXXXXXX,
+  X_XXXXXX,
+  _XXXXXXX,
+  X_XXXXXX,
+  __XXXXXX,
+
+  XXXXXX__,
+  XXXXXX__,
+  XXXXXX__,
+  XXXXXX__,
+  XXXXXX__,
+  XXXXXX__,
+  XXXXXX__,
+  XXXXXX__,
+
+  XX_X_XXX,
+  XXX_XXXX,
+  XX_X_XXX,
+  XXX_XXXX,
+  XX_X_XXX,
+  XXX_XXXX,
+  XX_X_XXX,
+  XXX_XXXX,
+
+  XXXXXXXX,
+  XXXX_X_X,
+  XX__X_X_,
+  XX______,
+  X_X_____,
+  XX______,
+  X_______,
+  XX______,
+
+  XXXXXXXX,
+  _X_XXXXX,
+  X_X_X_XX,
+  _____XXX,
+  _______X,
+  ______XX,
+  _______X,
+  ______XX,
+
+  XXXX_XXX,
+  XXX_X_XX,
+  XXXX_XXX,
+  XXX_X_XX,
+  XXXX_XXX,
+  XXX_X_XX,
+  XXXX_XXX,
+  XXX_X_XX,
+
+  __XXXXXX,
+  __XXXXXX,
+  __XXXXXX,
+  __XXXXXX,
+  __XXXXXX,
+  __XXXXXX,
+  __XXXXXX,
+  __XXXXXX,
+
+  XXXXXX__,
+  XXXXXX__,
+  XXXXXX__,
+  XXXXXXX_,
+  XXXXXXXX,
+  XXXXXXXX,
+  XXXXXXXX,
+  _XXXXXXX,
+
+  ____XXXX,
+  _____X_X,
+  __X_X_X_,
+  _X_X_X_X,
+  XXXXXXXX,
+  XXXXXXXX,
+  XXXXXXXX,
+  XXXXXXXX,
+
+  XXXXXXXX,
+  _X_X_X_X,
+  X_X_X_X_,
+  _X_X_X_X,
+  XXXXXXXX,
+  XXXXXXXX,
+  XXXXXXXX,
+  XXXXXXXX,
+
+  XXXXX___,
+  _X_X_X__,
+  X_X_X___,
+  _X_X_X_X,
+  XXXXXXXX,
+  XXXXXXXX,
+  XXXXXXXX,
+  XXXXXXXX,
+
+  __XXXXXX,
+  __XXXXXX,
+  __XXXXXX,
+  _XXXXXXX,
+  XXXXXXXX,
+  XXXXXXXX,
+  XXXXXXXX,
+  XXXXXXX_,
+
+  ________,
+  ________,
+  ________,
+  ________,
+  ________,
+  ________,
+  ________,
+  ________
+};
+
+// [Graphics] Smoke and fire graphics
+//
+
+const u8 bitmap_smoke1[4 * 13] = {
+  XXXX____, ____XXXX, __XXXXXX, XX______,
+  XX______, __XXXXXX, _____XXX, XXXXX___,
+  X_______, _XXXXX_X, ______XX, _XXXXX__,
+  X_______, _X_X_XXX, _______X, X_X_XXX_,
+  X_______, __X_____, _______X, _X_X_XX_,
+  X_______, _X______, _______X, _____XX_,
+  X_______, ________, ______XX, ____XX__,
+  X_______, _X______, ______XX, _____X__,
+  X_______, ________, _______X, ______X_,
+  X_______, _X______, ______XX, ________,
+  XX______, ________, _______X, ______X_,
+  XX______, __X____X, ______XX, ___X_X__,
+  XXXX____, ____X_X_, ___XXXXX, X_X_____
+};
+const u8 bitmap_smoke2[4 * 11] = {
+  XXXXX___, _____XXX, _XXXXXXX, X_______,
+  XXX_____, ___XXXXX, ____XXXX, XXXX____,
+  XX______, __XX_XXX, _____XXX, XXXXX___,
+  XX______, __X_X_XX, ______XX, XX_XXX__,
+  XX______, ________, ______XX, _XX_XX__,
+  XX______, ___X____, ______XX, ___X_X__,
+  XX______, __X_____, _____XXX, ____X___,
+  XX______, ________, _____XXX, ________,
+  XX______, ________, _____XXX, ____X___,
+  XX______, __X_____, ____XXXX, ________,
+  XXX____X, ___XX_X_, ____XXXX, X_XX____
+};
+const u8 bitmap_smoke3[4 * 9] = {
+  XXXX____, ____XXXX, __XXXXXX, XX______,
+  XXX_____, ___XXXXX, ____XXXX, XXXX____,
+  XX______, __XXX_XX, _____XXX, XXXXX___,
+  XX______, __X____X, _____XXX, _XX_X___,
+  XX______, ___X____, _____XXX, ___X____,
+  XXX_____, ________, _____XXX, ____X___,
+  XXX_____, ___X____, ____XXXX, ________,
+  XXX_____, ____X___, ____XXXX, ___X____,
+  XXXXX___, ______X_, ___XXXXX, X_X_____
+};
+const u8 bitmap_smoke4[2 * 7] = {
+  X_____XX, _XXXXX__,
+  ________, XXXXXXXX,
+  ________, X_X_X_XX,
+  ________, X____X_X,
+  ________, ________,
+  ________, X______X,
+  XX_____X, __X_X_X_
+};
+const u8 bitmap_smoke5[2 * 5] = {
+  XX_____X, __XXXXX_,
+  X______X, _XX_XXX_,
+  X______X, _X___X__,
+  X______X, _X____X_,
+  XX____XX, ___X_X__
+};
+const u8 bitmap_smoke6[2 * 3] = {
+  XX____XX, __XXXX__,
+  XX____XX, __X__X__,
+  XX____XX, __X_X___
+};
+
+const u8 bitmap_fire1[4 * 16] = {
+  ___XXXX_, XXXXXXXX, XXXXXXXX, XXX_____,
+  _______X, ________, ________, _X_XXX__,
+  __X_____, ________, ________, ____X___,
+  _X______, ________, ________, ______X_,
+  _X______, ________, ________, _______X,
+  _XX_____, ________, ________, _______X,
+  _X______, ________, ________, _______X,
+  X____X__, ________, ________, _____X_X,
+  X_______, _X______, X___X_X_, X_____X_,
+  X_X__X__, __X____X, ___XX__X, ____X__X,
+  _X___XX_, _X_____X, ___X_X_X, _______X,
+  __X__X_X, _XX____X, X__X_X_X, ____X__X,
+  X_X__X__, X_X___X_, _X_X__X_, X___X__X,
+  _XXX__XX, _X____X_, __XXX___, X___X_X_,
+  _X_X__X_, X__X__X_, __X__X__, _X_X_X__,
+  X__X_X__, ____XX__, ___X_X__, __X_____
+};
+const u8 bitmap_fire2[4 * 16] = {
+  ___XXXX_, XXXXXXXX, XXXXXXXX, XXX_____,
+  __X____X, ________, ________, _X_XXX__,
+  _X______, ________, ________, ____X_X_,
+  _XX_____, ________, ________, _______X,
+  _X______, ________, ________, ______X_,
+  X_______, ________, ________, _______X,
+  _X______, ________, ________, ______XX,
+  X____X__, ________, ________, ________,
+  X_____X_, ___X____, ________, ______X_,
+  X_X__X__, ________, X_______, ______X_,
+  X____XX_, ___X___X, _______X, __X_X__X,
+  X_X__XX_, __X____X, X______X, X_XX_X_X,
+  X_X__X_X, _X_X__XX, _X__X___, _X_X__X_,
+  _X_X__XX, _X_X__X_, _X_X_X_X, X_X__XX_,
+  ____XX_X, _X_X_X__, _X_X__XX, _X__X__X,
+  ________, X___X___, __X____X, X____X_X
+};
+const u8 bitmap_fire3[6 * 8] = {
+  XX______, __XXXXXX, ________, XXXXXXXX, ___XXXXX, XXX_____,
+  X_______, _X______, ________, ________, ____XXXX, ___X____,
+  ________, X_______, ________, ________, _____XXX, ____X___,
+  ________, X__X__X_, ________, ________, _____XXX, ____X___,
+  ________, X______X, ________, _X__X__X, _____XXX, _X__X___,
+  ________, X_X__X_X, ________, X___X___, _____XXX, X___X___,
+  X_____XX, _XX__X__, X_______, _X__X___, ____XXXX, XX_X____,
+  XX____XX, __XX_X__, X___X___, _X_X_X_X, X___XXXX, _X_X____
+};
+const u8 bitmap_fire4[6 * 8] = {
+  XX____X_, __XXXX_X, ________, XXXXXXXX, ___XXXXX, XXX_____,
+  X_______, _X____X_, ________, ________, ____XXXX, __XX____,
+  ________, X_______, ________, ________, _____XXX, ____X___,
+  ________, X_______, ________, ________, _____XXX, ___XX___,
+  ________, X_______, ________, X_____X_, _____XXX, ____X___,
+  ________, X_X_____, ________, _X__X__X, _____XXX, ___XX___,
+  ________, X_X__X__, ____X___, XX_X_X_X, ____XXXX, X_XX____,
+  X_X_____, _X_X_XX_, ____XX__, XX_X__XX, _XX_XXXX, ___X____
+};
+const u8 bitmap_fire5[4 * 5] = {
+  X_______, _XXXXXXX, ___XXXXX, XXX_____,
+  ________, X_______, ____XXXX, ___X____,
+  ________, ___X____, ____XXXX, X__X____,
+  ________, X_XX_X_X, X___XXXX, _X_X____,
+  XXXX_X_X, ____X_X_, XX_XXXXX, __X_____
+};
+const u8 bitmap_fire5s[4 * 5] = {
+  XXXXX___, _____XXX, _______X, XXXXXXX_,
+  XXXX____, ____X___, ________, _______X,
+  XXXX____, _______X, ________, ____X__X,
+  XXXX____, ____X_XX, ____X___, _X_X_X_X,
+  XXXXXXXX, ________, _X_XXX_X, X_X___X_
+};
+const u8 bitmap_fire6[4 * 6] = {
+  X_______, _XXXXXXX, __XXXXXX, XX______,
+  ________, X_______, ___XXXXX, __X_____,
+  ________, X_____X_, ____XXXX, _X_X____,
+  ________, _X_X__XX, ____XXXX, X__X____,
+  _X____XX, X_XX_X__, X_X_XXXX, _X_X____,
+  XXXX_XXX, ____X___, XXXXXXXX, ________
+};
+const u8 bitmap_fire6s[4 * 6] = {
+  XXXXX___, _____XXX, ______XX, XXXXXX__,
+  XXXX____, ____X___, _______X, ______X_,
+  XXXX____, ____X___, ________, __X__X_X,
+  XXXX____, _____X_X, ________, __XXX__X,
+  XXXX_X__, ____X_XX, __XXX_X_, _X___X_X,
+  XXXXXXXX, ________, _XXXXXXX, X_______
 };
 
 // [Graphics] Faces
@@ -731,6 +1489,10 @@ const u8 bitmap_faces[FACEBYTES * NFACES] = {
   0x30, 0x70, 0x70, 0x28,
 };
 
+// [Graphics] Street lamps etc.
+//
+// TODO
+
 /* ----------------------------------------------------------------------- */
 
 // $81DD
@@ -755,6 +1517,7 @@ const u8 chatterblk_tony_hold_on[3] = {
   CHATTERCMD_STOP
 };
 
+// Conv: Chatter strings from two locations are combined into this table.
 const char *chatter_strings[CHATTERSTR__LIMIT] = {
   // $81EC
   "GIDDY UP BOY!",
@@ -791,8 +1554,6 @@ const char *chatter_strings[CHATTERSTR__LIMIT] = {
   "YOU'RE A MEDIOCRE DRIVER, BROTHER!",
   "SEE YOU LATER."
 };
-
-#define TWOBYTES(addr) (addr) & 0xFF, (addr) >> 8
 
 // $82A6
 const u8 attract_messages[37] = {
@@ -856,6 +1617,48 @@ const u8 copyright_messages[92] = {
   TWOBYTES(0x5A86),
   'A', 'L', 'L', ' ', 'R', 'I', 'G', 'H', 'T', 'S', ' ', 'R', 'E', 'S', 'E', 'R', 'V', 'E', 'D' | STREND,
   3,
+  0
+};
+
+// TODO Hoist to ChaseHQ.h?
+typedef struct {
+  u16       road_pos;
+  const u8 *curvature;
+  const u8 *height;
+  const u8 *lanes;
+  const u8 *rightside;
+  const u8 *leftside;
+  const u8 *hazard;
+} scenedata_t;
+
+// $871A
+const scenedata_t escape_scene_data = {
+  0x134,
+  &perp_escape_curvature[-1],
+  &perp_escape_height[-1],
+  &perp_escape_lanes[-1],
+  &perp_escape_hazards[5],
+  &perp_escape_hazards[5],
+  &perp_escape_hazards[-1],
+};
+
+const hazard_t escape_scene_perp = {
+  HAZARD_UNUSED,
+  1,      // distance
+  0,
+  0,
+  0,
+  0x4C,   // horz_pos_on_road
+  0,
+  0,
+  0x2C,
+  0x0000, // lod_addr
+  0xADF9, // hit_handler (ptr!)
+  250,    // speed
+  0,
+  0,
+  0,
+  0,
   0
 };
 
@@ -1967,6 +2770,123 @@ const u8 minifont[31 * 6] = {
   ________,
   ________,
   ________
+};
+
+/* ----------------------------------------------------------------------- */
+
+// $E2A4
+const u8 perp_escape_hazards[6] = {
+  MAP_WAIT(27),
+  MAP_CMD_START_TWO_BARRIERS,
+  MAP_WAIT(1),
+  MAP_CMD_STOP_BARRIERS
+};
+
+// $E2AA
+const u8 perp_escape_curvature[5] = {
+  MAP_CURVE_STRAIGHT(15),
+  MAP_CMD_GOTO(0xE2AA) // loop
+};
+
+// $E2AF
+const u8 perp_escape_height[5] = {
+  MAP_HEIGHT_LEVEL(15),
+  MAP_CMD_GOTO(0xE2AF) // loop
+};
+
+// $E2B4
+const u8 perp_escape_lanes[4] = {
+  MAP_LANES(53, MAP_LANES_3L),
+  MAP_LANES(255, MAP_LANES_TUNNEL),
+};
+
+// $E2B8
+const u8 fork_hazards[8] = {
+  MAP_WAIT(12),
+  MAP_CMD_ARROW_OFF,
+  MAP_WAIT(255),
+  MAP_CMD_GOTO(0xE2B8) // loop
+};
+
+// $E2C0
+const u8 fork_leftrightobjs[6] = {
+  MAP_OBJECTS(1, MAP_OBJ_NONE),
+  MAP_OBJECTS(15, MAP_OBJ_SHORT_POLE),
+  MAP_CMD_GOTO(0xE2C1) // loop (skipping the None object)
+};
+
+// $E2C6
+const u8 forked_road_curvature[6] = {
+  MAP_CURVE_STRAIGHT(1),
+  MAP_CURVE_LEFT_HARD(15),
+  MAP_CMD_GOTO(0xE2C7) // loop (skipping)
+};
+
+// $E2CC
+const u8 forked_road_height[5] = {
+  MAP_CURVE_LEFT_HARD(15),
+  MAP_CMD_GOTO(0xE2CC) // loop
+};
+
+// $E2D1
+const u8 forked_road_lanes[2] = {
+  MAP_LANES(255, MAP_LANES_FORKED)
+};
+
+// $ED23
+const u8 forked_road_exit_hazards[3] = {
+  MAP_WAIT(18),
+  MAP_CMD_FORK_END
+};
+
+// $ED26
+const u8 forked_road_exit_rightobjs[4] = {
+  MAP_OBJECTS(5, MAP_OBJ_SHORT_POLE),
+  MAP_OBJECTS(13, MAP_OBJ_NONE),
+  MAP_CMD_FORK_END
+};
+
+// $E2DA
+const u8 forked_road_exit_leftobjs[4] = {
+  MAP_OBJECTS(5, MAP_OBJ_NONE),
+  MAP_OBJECTS(13, MAP_OBJ_NONE),
+  MAP_CMD_FORK_END
+};
+
+// $E2DE
+const u8 forked_road_exit_curvature[5] = {
+  MAP_CURVE_STRAIGHT(15), // 15 is max
+  MAP_CURVE_STRAIGHT(15),
+  MAP_CURVE_STRAIGHT(6),
+  MAP_CMD_FORK_END
+};
+
+// $E2E3
+const u8 forked_road_exit_height[5] = {
+  MAP_HEIGHT_LEVEL(15),
+  MAP_HEIGHT_LEVEL(15),
+  MAP_HEIGHT_LEVEL(6),
+  MAP_CMD_FORK_END
+};
+
+// $E2E8
+const u8 forked_road_exit_left_lanes[12] = {
+  MAP_LANES(10, MAP_LANES_2L),
+  MAP_LANES(2, MAP_LANES_2TO3L),
+  MAP_LANES(10, MAP_LANES_3L),
+  MAP_LANES(2, MAP_LANES_3TO4L),
+  MAP_LANES(12, MAP_LANES_4),
+  MAP_CMD_FORK_END
+};
+
+// $E2F4
+const u8 forked_road_exit_right_lanes[12] = {
+  MAP_LANES(10, MAP_LANES_2R),
+  MAP_LANES(2, MAP_LANES_2TO3R),
+  MAP_LANES(10, MAP_LANES_3R),
+  MAP_LANES(2, MAP_LANES_3TO4R),
+  MAP_LANES(12, MAP_LANES_4),
+  MAP_CMD_FORK_END
 };
 
 /* ----------------------------------------------------------------------- */

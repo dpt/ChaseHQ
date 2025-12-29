@@ -18,6 +18,27 @@
 const u8 stage1[16 * 512];
 
 const u8 bitmap_turbospin[TURBOWIDTH / 8 * 2 * TURBOHEIGHT * TURBOFRAMES];
+
+const u8 pre_game_messages[64];
+const u8 pregame_data[207];
+const u8 pregame_tiles[45 * 8];
+
+const u8 bitmap_smoke1[4 * 13];
+const u8 bitmap_smoke2[4 * 11];
+const u8 bitmap_smoke3[4 * 9];
+const u8 bitmap_smoke4[2 * 7];
+const u8 bitmap_smoke5[2 * 5];
+const u8 bitmap_smoke6[2 * 3];
+
+const u8 bitmap_fire1[4 * 16];
+const u8 bitmap_fire2[4 * 16];
+const u8 bitmap_fire3[6 * 8];
+const u8 bitmap_fire4[6 * 8];
+const u8 bitmap_fire5[4 * 5];
+const u8 bitmap_fire5s[4 * 5];
+const u8 bitmap_fire6[4 * 6];
+const u8 bitmap_fire6s[4 * 6];
+
 const u8 bitmap_faces[FACEBYTES * NFACES];
 
 const u8 chatterblk_start_stage[4];
@@ -74,6 +95,23 @@ const hazard_t saved_game_state_hazard_0;
 const u8 font[41 * 7];
 const u8 ledfont[10 * 16];
 const u8 minifont[31 * 6];
+
+const u8 perp_escape_hazards[6];
+const u8 perp_escape_curvature[5];
+const u8 perp_escape_height[5];
+const u8 perp_escape_lanes[4];
+const u8 fork_hazards[8];
+const u8 fork_leftrightobjs[6];
+const u8 forked_road_curvature[6];
+const u8 forked_road_height[5];
+const u8 forked_road_lanes[2];
+const u8 forked_road_exit_hazards[3];
+const u8 forked_road_exit_rightobjs[4];
+const u8 forked_road_exit_leftobjs[4];
+const u8 forked_road_exit_curvature[5];
+const u8 forked_road_exit_height[5];
+const u8 forked_road_exit_left_lanes[12];
+const u8 forked_road_exit_right_lanes[12];
 
 const u8 spiral_transition_mask[13 * 8];
 const u8 circle_transition_mask[7 * 8];

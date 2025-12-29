@@ -222,6 +222,20 @@ struct chqstate_s {
   u8        counter_B;
   // $A236
   u8        counter_C;
+  // $A237
+  u8        sfx_index;
+  // $A238
+  u8        sfx_priority;
+  // $A239
+  u8        siren_enabled;
+  // $A23A
+  u8        turbo_sfx_noise_pitch;
+  // $A23B
+  u8        tunnel_sfx;
+  // $A23C
+  u8        var_a23c;
+  // $A23D
+  u8        var_a23d;
 
   // $A23F
   u8        fast_counter;
@@ -229,10 +243,22 @@ struct chqstate_s {
   u8       *road_buffer_offset;
   u8       *road_buffer_start; // additional
   u8       *road_buffer_end; // additional
-
+  // $A242
+  u8        curvature_byte;
+  // $A243
+  u8        height_byte;
+  // $A244
+  u8        leftside_byte;
+  // $A245
+  u8        rightside_byte;
+  // $A246
+  u8        hazards_byte;
+  // $A247
+  u8        lanes_counter_byte;
+  // $A248
+  u8        on_dirt_track;
   // $A249
   u8        fork_taken;
-
   // $A24A
   u16       speed;
   // $A24C
@@ -256,6 +282,30 @@ struct chqstate_s {
   // $A255
   u8        distance_bcd[2];
 
+  // $A258
+  u8        incline;
+  // $A259
+  u8        var_a259;
+  // $A25A
+  u8        var_a25a;
+  // $A25B
+  u8        var_a25b;
+  // $A25C
+  u8        current_curvature;
+  // $A25D
+  u8        horizon_a25d;
+  // $A25E
+  u8        horizon_a25e;
+  // $A25F
+  u8        horizontal_adjust;
+  // $A261
+  u8        var_a261;
+  // $A262
+  u8        var_a262;
+  // $A263
+  u8        right_turn;
+  // $A264
+  u8        left_turn;
   // $A265
   u8        fork_visible;
   // $A266
@@ -270,12 +320,23 @@ struct chqstate_s {
   u8        start_speech;
   // $A26C
   u16       road_pos;
+  // $A26E
   const u8 *road_curvature_ptr;
+  // $A270
   const u8 *road_height_ptr;
+  // $A272
   const u8 *road_lanes_ptr;
+  // $A274
   const u8 *road_rightside_ptr;
+  // $A276
   const u8 *road_leftside_ptr;
+  // $A278
   const u8 *road_hazard_ptr;
+
+  // $BB95
+  const u8 *SM_BB95;
+  // $BBC2
+  const u8 *SM_BBC2;
 
   // $E300
   u8        table_e300[32]; // note: first byte should be $60

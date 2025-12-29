@@ -221,6 +221,79 @@ typedef u8 chatterpriority_t;
 
 /* ----------------------------------------------------------------------- */
 
+#define MAP_ESC                         (0)
+
+#define MAP_WAIT(D)                     (D)
+
+#define MAP_CMD_GOTO(ADDR)              MAP_ESC, (0), (ADDR) & 0xFF, (ADDR) >> 8
+#define MAP_CMD_FORK_END                MAP_ESC, (1)
+#define MAP_CMD_STOP_BARRIERS           MAP_ESC, (3)
+#define MAP_CMD_START_BARRIERS_L        MAP_ESC, (7)
+#define MAP_CMD_START_BARRIERS_R        MAP_ESC, (8)
+#define MAP_CMD_START_TWO_BARRIERS      MAP_ESC, (9)
+#define MAP_CMD_ARROW_OFF               MAP_ESC, (10)
+#define MAP_CMD_ARROW_L                 MAP_ESC, (11)
+#define MAP_CMD_ARROW_R                 MAP_ESC, (12)
+#define MAP_CMD_START_CARS              MAP_ESC, (13)
+#define MAP_CMD_STOP_CARS               MAP_ESC, (14)
+
+// Curvature
+#define MAP_CURVE_STRAIGHT(D)           (((D) << 4) | 0)
+#define MAP_CURVE_RIGHT(D)              (((D) << 4) | 1)
+#define MAP_CURVE_RIGHT_HARD(D)         (((D) << 4) | 2)
+#define MAP_CURVE_RIGHT_VERY_HARD(D)    (((D) << 4) | 3)
+#define MAP_CURVE_LEFT(D)               (((D) << 4) | 9)
+#define MAP_CURVE_LEFT_HARD(D)          (((D) << 4) | 10)
+#define MAP_CURVE_LEFT_VERY_HARD(D)     (((D) << 4) | 11)
+
+// Height
+#define MAP_HEIGHT_UP1(D)               (((D) << 4) | 1)
+#define MAP_HEIGHT_UP3(D)               (((D) << 4) | 3)
+#define MAP_HEIGHT_UP5(D)               (((D) << 4) | 5)
+#define MAP_HEIGHT_UP7(D)               (((D) << 4) | 7)
+#define MAP_HEIGHT_LEVEL(D)             (((D) << 4) | 8)
+#define MAP_HEIGHT_DOWN1(D)             (((D) << 4) | 9)
+#define MAP_HEIGHT_DOWN3(D)             (((D) << 4) | 11)
+#define MAP_HEIGHT_DOWN5(D)             (((D) << 4) | 13)
+#define MAP_HEIGHT_DOWN7(D)             (((D) << 4) | 15)
+
+// Lanes
+#define MAP_LANES(D,T)                  (D), (T)
+
+#define MAP_LANES_4                     (0x00)
+#define MAP_LANES_3L                    (0x81)
+#define MAP_LANES_3R                    (0x82)
+#define MAP_LANES_2L                    (0x01)
+#define MAP_LANES_2M                    (0x02)
+#define MAP_LANES_2R                    (0x03)
+#define MAP_LANES_4TO3L                 (0xBD)
+#define MAP_LANES_4TO3R                 (0x8E)
+#define MAP_LANES_3TO4L                 (0xAD)
+#define MAP_LANES_3TO4R                 (0x9E)
+#define MAP_LANES_3TO2L                 (0x06)
+#define MAP_LANES_3TO2R                 (0x0F)
+#define MAP_LANES_2TO3L                 (0x2D)
+#define MAP_LANES_2TO3R                 (0x1F)
+#define MAP_LANES_TUNNEL                (0x45)
+#define MAP_LANES_DIRTTRACK             (0xC1)
+#define MAP_LANES_FORKED                (0xED)
+
+// Objects (names are valid for Stage 1)
+#define MAP_OBJECTS(D,T)                (((D) << 4) | T)
+
+#define MAP_OBJ_NONE                    (0)
+#define MAP_OBJ_TUNNEL_LIGHT            (1)
+#define MAP_OBJ_UNKNOWN_2               (2)
+#define MAP_OBJ_SHORT_POLE              (3)
+#define MAP_OBJ_TREE                    (4)
+#define MAP_OBJ_BUSH                    (5)
+#define MAP_OBJ_STREET_LAMP             (6)
+#define MAP_OBJ_TELEGRAPH_POLE          (7)
+#define MAP_OBJ_TURN_SIGN_L             (8)
+#define MAP_OBJ_TURN_SIGN_R             (9)
+
+/* ----------------------------------------------------------------------- */
+
 typedef struct hazard_s hazard_t;
 typedef struct stagevars_s stagevars_t;
 typedef struct chqstate_s chqstate_t;
@@ -430,6 +503,7 @@ void draw_screen(chqstate_t *state);
 void clear_playfield_set_attrs(chqstate_t *state);
 
 void read_map(chqstate_t *state);
+void rm_cycle_buffer_offset(chqstate_t *state);
 
 void prepare_tunnel(chqstate_t *state);
 
