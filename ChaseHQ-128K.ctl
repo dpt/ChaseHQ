@@ -1645,7 +1645,7 @@ N $7760 #HTML[#CALL:graphic($7760,16,14,1,1)]
 B $7760,56,4 Masked bitmap data
 b $7798 [Pre-game] Messages
 @ $7798 label=pre_game_messages
-B $7798,1,1 .
+B $7798,1,1 flags? attrs?   text is white
 W $7799,2,2 Back buffer address
 W $779B,2,2 Attributes address
 T $779D,28,27:n1 "CHASE H.Q. MONITORING SYSTEM" text is white
@@ -2901,12 +2901,12 @@ W $8724,2,2 Set road_leftside_ptr to #R$E2AA - 1 (note: reuse of road curvature 
 @ $8726 ssub=DEFW perp_escape_hazards - 1
 W $8726,2,2 Set road_hazard_ptr to #R$E2A4 - 1
 N $8728 20 bytes copied to hazards[0]
-@ $8728 label=escape_scene_hazards
+@ $8728 label=escape_scene_perp
 B $8728,1,1 Hazard used flag (true)
 B $8729,8,8
 W $8731,2,2 Car LOD
 W $8733,2,2 Routine at #R$ADF9 (it's just a RET). Set to perp_behaviour in other places
-W $8735,2,2 Horizontal position
+W $8735,2,2 Speed
 B $8737,5,5
 c $873C Escape scene
 D $873C This runs the scene shown when the perp has escaped.
@@ -2999,7 +2999,7 @@ C $8854,3 Call clear_playfield_set_attrs
 C $8857,6 Point #REGhl at left light's attributes
 C $885D,3 Point #REGhl at right light's attributes then FALL THROUGH
 N $8860 Clear the lights' BRIGHT bit.
-@ $8860 label=sus_clear_lights
+@ $8860 label=sus_reset_lights
 C $8860,2 4 rows
 C $8862,2 5 columns
 C $8864,2 Clear BRIGHT bit
@@ -3532,7 +3532,7 @@ C $8DB9,1 Bank
 C $8DBA,3 HL = <self modified>  -- Self modified by #R$8E1F, and above
 C $8DBD,2 8 chunks
 @ $8DBF label=t_loop
-C $8DBF,1 Load a byte of anim?
+C $8DBF,1 Load a byte of anim
 C $8DC0,1 Unbank
 C $8DC1,1 Get it into #REGe (value ORred in)
 C $8DC2,1 Preserve H in D (which is safe)
@@ -3709,13 +3709,13 @@ C $8EFD,3 Get smash_counter
 C $8F00,3 Jump straight to drawing solid if it's zero (whole bar solid)
 C $8F03,1 Set iterations in #REGc for call
 C $8F04,1 Preserve smash_counter
-C $8F05,3 Call draw_smash_bar_segment
+C $8F05,3 Call draw_smash_bar_segments
 C $8F08,1 Restore smash_counter
 @ $8F09 label=draw_smash_bar_solid_top
 C $8F09,1 Iterations = smash_counter
-C $8F0A,6 B = ~(A * 3) + 63 = amount of solid rows to draw
+C $8F0A,6 B = 62-(A*3) = amount of solid rows to draw
 C $8F10,3 Call draw_smash_bar_solid_bit
-@ $8F13 label=draw_smash_bar_segment
+@ $8F13 label=draw_smash_bar_segments
 C $8F13,2 Set 8 pixels to "X......X"
 N $8F15 Move to next scanline (longer form).
 C $8F15,1 Save for checking in a moment
@@ -3727,7 +3727,7 @@ C $8F1B,3 Put back the bit stolen by rollover
 C $8F1E,4 Move to next chunk of 16 scanlines
 C $8F22,3 Continue if it didn't roll over
 C $8F25,3 Otherwise move to the next chunk of 128 scanlines (would put us outside the back buffer)
-@ $8F28 label=draw_smash_bar_segment2
+@ $8F28 label=draw_smash_bar_segments2
 C $8F28,2 Set 8 pixels to "X......X"
 N $8F2A Move to next scanline (longer form).
 C $8F2A,1 Save for checking in a moment
@@ -3739,7 +3739,7 @@ C $8F30,3 Put back the bit stolen by rollover
 C $8F33,4 Move to next chunk of 16 scanlines
 C $8F37,3 Continue if it didn't roll over
 C $8F3A,3 Otherwise move to the next chunk of 128 scanlines (would put us outside the back buffer)
-@ $8F3D label=draw_smash_bar_segment_cont
+@ $8F3D label=draw_smash_bar_segments_cont
 C $8F3D,2 1 row
 C $8F3F,3 Call draw_smash_bar_solid_bit
 C $8F42,4 Loop while iterations remain
@@ -12278,7 +12278,7 @@ B $E2CD,2,2 Escape, Command 0 (Continue at <Address>)
 W $E2CF,2,2 Loop
 N $E2D1 Road fork, lanes
 @ $E2D1 label=forked_road_lanes
-B $E2D1,2,2 $ED for 255 units
+B $E2D1,2,2 Forked Road for 255 units
 b $E2D3 Data for road fork exits
 D $E2D3 Data used when exiting from road forks.
 N $E2D3 Road fork exit, hazards
@@ -12342,14 +12342,16 @@ u $E34E Unused
 B $E34E,1,1
 b $E34F Data block at E34F
 @ $E34F label=object_positions
-S $E34F,13,$0D 13 entries
-b $E35C Transition masks
-N $E35C Spiral inward animation mask (8x8, 12 frames)
-N $E35C #HTML[#CALL:anim($E364,8,8,0,0,11)]
-N $E35C #HTML[#CALL:graphic($E364,8,11*8,0,0)]
-@ $E35C label=spiral_transition_mask
-B $E35C,96,8
+S $E34F,21,$15 21 entries
+b $E364 Transition masks
+N $E364 Spiral inward animation mask (8x8, 11 frames)
+N $E364 This is not relocated.
+N $E364 #HTML[#CALL:anim($E364,8,8,0,0,11)]
+N $E364 #HTML[#CALL:graphic($E364,8,11*8,0,0)]
+@ $E364 label=spiral_transition_mask
+B $E364,88,8
 N $E3BC Circle expanding animation mask (8x8, 7 frames)
+N $E3BC This is not relocated.
 N $E3BC #HTML[#CALL:anim($E3BC,8,8,0,0,7)]
 N $E3BC #HTML[#CALL:graphic($E3BC,8,7*8,0,0)]
 @ $E3BC label=circle_transition_mask
@@ -12484,11 +12486,13 @@ W $E8A1,2,2
 B $E8A3,1,1
 W $E8A4,2,2
 N $E8A6 Square zoom in animation mask (8x8, 5 frames)
+N $E8A6 This is relocated.
 N $E8A6 #HTML[#CALL:anim($E8A6,8,8,0,0,5)]
 N $E8A6 #HTML[#CALL:graphic($E8A6,8,5*8,0,0)]
 @ $E8A6 label=square_transition_mask
 B $E8A6,40,8
 N $E8CE Diamond zoom in animation mask (8x8, 6 frames)
+N $E8CE This is relocated.
 N $E8CE #HTML[#CALL:anim($E8CE,8,8,0,0,6)]
 N $E8CE #HTML[#CALL:graphic($E8CE,8,6*8,0,0)]
 @ $E8CE label=diamond_transition_mask
