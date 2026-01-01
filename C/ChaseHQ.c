@@ -138,6 +138,29 @@ static const u8 *ptrtostgptr(chqstate_t *state, const u8 *addr)
 
 /* ----------------------------------------------------------------------- */
 
+/// Given a road buffer offset return a wrapped-around buffer index.
+#define ROADBUFINDEX(N) \
+  ((state->road_buffer_offset + (N) - state->road_buffer_start) & 0xFF)
+
+/// Given a road buffer offset return a pointer.
+#define ROADBUFPTR(N) \
+  (&state->road_buffer_start[ROADBUFINDEX(N)])
+
+#define GETNEXTROADBUF(R) \
+  do { \
+    if (++(R) == state->road_buffer_end) \
+      (R) = state->road_buffer_start; \
+  } while (0)
+
+#define ROADBUF_CURVATURE_OFFSET  (0)
+#define ROADBUF_HEIGHT_OFFSET    (32)
+#define ROADBUF_LANES_OFFSET     (64)
+#define ROADBUF_RIGHTOBJS_OFFSET (96)
+#define ROADBUF_LEFTOBJS_OFFSET (128)
+#define ROADBUF_HAZARDS_OFFSET  (160)
+
+/* ----------------------------------------------------------------------- */
+
 // $8014 (copied to that position in the original)
 // $F220 page_in_stage_128k
 void load_stage(chqstate_t *state)
@@ -428,9 +451,7 @@ void set_up_stage(chqstate_t *state, const u8 *stage_data)
   iterations = 32;
   do {
     pfastcounter = &state->fast_counter;
-#if 0
     rm_cycle_buffer_offset(state, pfastcounter);
-#endif
   } while (--iterations > 0);
 
   // Disallow spawning
@@ -2637,6 +2658,41 @@ void spawn_cars(chqstate_t *state)
 {
 }
 
+// $A89C
+//
+// extra - was C - extra buffer offset
+u16 get_spawn_lanes(chqstate_t *state, u8 extra)
+{
+  int carry;
+  u8 *roadbuf;    // was HL
+  u8  lanes;      // was A
+  u8  lanes_copy; // was E
+
+  roadbuf = ROADBUFPTR(ROADBUF_LANES_OFFSET + 2 + extra);
+  lanes = *roadbuf;
+  if (lanes == MAP_LANES_4) // 0
+    return 0x0104;
+  lanes_copy = lanes;
+  lanes &= 0xC1;
+  if (lanes == 0xC1)
+    return 0x0104;
+  if (lanes == 0x41) // tunnel
+    return 0x0103;
+  lanes = lanes_copy & 0x82;
+  carry = lanes & (1 << 7), lanes <<= 1;
+  if (carry) {
+    if (lanes)
+      return 0x0204;
+    else
+      return 0x0103;
+  } else {
+    if (lanes == 0)
+      return 0x0102;
+    else
+      return 0x0304;
+  }
+}
+
 // $A955
 void choose_dirt_and_stones(chqstate_t *state)
 {
@@ -2687,17 +2743,6 @@ void update_road_level(chqstate_t *state)
 {
 }
 
-#define ROADBUF(N) \
-  ((state->road_buffer_offset + (N) - state->road_buffer_start) & 0xFF)
-
-#define GETNEXTROADBUF(R) \
-  do { \
-    if (++(R) == state->road_buffer_end) \
-    (R) = state->road_buffer_start; \
-  } while (0)
-
-#define ROADBUF_LANES_OFFSET (64)
-
 // $B9F4
 void layout_road(chqstate_t *state)
 {
@@ -2727,7 +2772,7 @@ void layout_road(chqstate_t *state)
   u8       *HLunknown;
 
   // point at lane data
-  DElanedata = &state->road_buffer_start[ROADBUF(ROADBUF_LANES_OFFSET)];
+  DElanedata = &state->road_buffer_start[ROADBUFINDEX(ROADBUF_LANES_OFFSET)];
 
   // Count the distance to the forked road.
   Biterations = 20; // iterations
@@ -3114,15 +3159,18 @@ rm_exit:
 /// An add that affects the low byte only.
 #define LO_ADD(t,d) (((t) & ~0xFF) | (((t) + (d)) & 0xFF))
 
-void rm_cycle_buffer_offset(chqstate_t *state)
+// $BE1F
+//
+// pfastcounter - was HL
+void rm_cycle_buffer_offset(chqstate_t *state, u8 *pfastcounter)
 {
-#if 0
   int carry = 0;
   u8 *HL;
   u8  A;
   u8 *DE;
 
-  HL = &state->road_buffer_offset; // Conv: was an INC
+  HL = state->road_buffer_offset; // Conv: was an INC
+#if 0
   A = *HL + 1;
   *HL = A;
   A += 0x5F;
@@ -3167,8 +3215,6 @@ rm_save_curvature_byte:
   state->curvature_byte = A;
 #endif
 }
-
-
 
 // $C0E1
 void prepare_tunnel(chqstate_t *state)
@@ -3231,6 +3277,7 @@ void forked_road_plotter(chqstate_t *state)
 {
 }
 
+// $CBA4
 // mystery_cba4 would go here, if we knew what it did
 
 // $CBC5

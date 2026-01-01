@@ -474,6 +474,8 @@ void cycle_counters(chqstate_t *state);
 
 void spawn_cars(chqstate_t *state);
 
+u16 get_spawn_lanes(chqstate_t *state, u8 extra);
+
 void choose_dirt_and_stones(chqstate_t *state);
 
 void layout_dirt_and_stones(chqstate_t *state);
@@ -503,7 +505,7 @@ void draw_screen(chqstate_t *state);
 void clear_playfield_set_attrs(chqstate_t *state);
 
 void read_map(chqstate_t *state);
-void rm_cycle_buffer_offset(chqstate_t *state);
+void rm_cycle_buffer_offset(chqstate_t *state, u8 *pfastcounter);
 
 void prepare_tunnel(chqstate_t *state);
 
