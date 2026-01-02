@@ -70,7 +70,7 @@
 
 #define QUITSTATE_IDLE                         (0)
 #define QUITSTATE_START                        (1)
-#define QUITSTATE_DONE                         (2) // not sure
+#define QUITSTATE_DONE                         (2)
 
 #define USERINPUT_RIGHT                     (1<<0)
 #define USERINPUT_LEFT                      (1<<1)
@@ -317,12 +317,14 @@ void silence_audio_hook(chqstate_t *state);
 void write_audio_registers_hook(chqstate_t *state);
 void setup_engine_sfx_hook(chqstate_t *state);
 void play_engine_sfx_hook(chqstate_t *state);
-void play_speech_hook(chqstate_t *state);
+void play_speech_hook(chqstate_t *state, u8 A);
 void attract_mode_hook(chqstate_t *state);
 
 void main_loop(chqstate_t *state);
 
 void cpu_driver(chqstate_t *state);
+
+void escape_scene(chqstate_t *state);
 
 void set_up_stage(chqstate_t *state, const u8 *stage_data);
 void reset_lights(u8 *attrptr);

@@ -269,7 +269,7 @@ void play_engine_sfx_hook(chqstate_t *state)
 }
 
 // $83C7
-void play_speech_hook(chqstate_t *state)
+void play_speech_hook(chqstate_t *state, u8 A)
 {
 }
 
@@ -282,20 +282,25 @@ void attract_mode_hook(chqstate_t *state)
 // $8401
 void main_loop(chqstate_t *state)
 {
-  u8 start_speech_index; // was A
+  int carry = 0;
+  u8  start_speech_index; // was A
+  u8  keys;               // was A
+  u8 *pstart_speech;      // was HL
+  u8  quit_state;         // was A
+  u8  start_speech;       // was A
 
 restart:
   load_stage(state);
   if (state->wanted_stage_number != 6)
-    goto ml_not_credits;
+    goto not_credits;
 
   // TODO: Call $5C00
   state->wanted_stage_number = 1;
-  // TODO: load_stage();
+  load_stage(state);
   state->wanted_stage_number = 6; // not sure why
   return;
 
-ml_not_credits:
+not_credits:
   // TODO: Call run_pregame_screen
   set_up_stage(state, stgmap(state, 0x5D1D));
 
@@ -311,7 +316,7 @@ ml_not_credits:
   if (state->mode_128k == 0)
     start_chatter(state, 0xFF, chatterblk_start_stage);
 
-  do {
+  for (;;) {
     drive_sfx(state);
     keyscan(state);
     tick(state);
@@ -356,9 +361,57 @@ ml_not_credits:
     play_engine_or_siren_sfx_hook(state);
     draw_screen(state);
     exit_fork(state);
-  } while (state->test_mode == 0);
 
-  // TODO test mode etc.
+    if (state->test_mode) {
+      keys = 0xFF; // TODO ~state->speccy->in(state->speccy, port_KEYBOARD_12345) & 0x1F;
+      if (keys) {
+        start_sfx(state, EFFECT_BIP, 4);
+        silence_audio_hook(state);
+
+        RR(keys); // Is bit 0 set? (key 1 to restart the level)
+        if (carry)
+          goto restart;
+
+        RR(keys); // Is bit 1 set? (key 2 to load the next level)
+        if (carry) {
+          state->wanted_stage_number++;
+          goto restart;
+        }
+
+        RR(keys); // Is bit 2 set? (key 3 to load the end screen)
+        if (carry) {
+          state->wanted_stage_number = 6; // stage 6
+          goto restart;
+        }
+
+        if (state->credits < 9) // Increment credits unless maxed out at 9
+          state->credits++;
+      }
+    }
+
+    if (state->transition_control == TRANSITIONCONTROL_STOP) {
+      // Play speech when we see a 1-bit shift out of start_speech.
+      pstart_speech = &state->start_speech;
+      SRL(*pstart_speech);
+      if (carry) {
+        start_speech = *pstart_speech;
+        *pstart_speech = 0;
+        play_speech_hook(state, start_speech);
+      } else {
+        quit_state = state->quit_state;
+        if (quit_state > 0) {
+          // Quitting the game is in progress.
+          if (quit_state == QUITSTATE_START) {
+            escape_scene(state); // exit via
+            return;
+          }
+
+          state->quit_state = QUITSTATE_DONE;
+          setup_transition(state, TRANSITIONSTRIDE_FORWARD);
+        }
+      }
+    }
+  }
 }
 
 // $852A
@@ -398,6 +451,11 @@ void cpu_driver(chqstate_t *state)
   check_scenery_collisions(state);
   draw_everything_else(state);
   animate_hero_car(state); // exit via
+}
+
+// $873C
+void escape_scene(chqstate_t *state)
+{
 }
 
 // $87DC
@@ -1889,7 +1947,7 @@ check_time_up:
     return;
 
   state->time_up_state = TIMEUPSTATE_CAR_STOPPED;
-  // TODO play_speech_hook(state, 4);
+  play_speech_hook(state, 4);
 
 check_credits:
   if (state->transition_control > TRANSITIONCONTROL_STOP)
@@ -1922,7 +1980,7 @@ check_restart:
   state->retry_count++;
 
   // play_start_noise:  (code elsewhere jumps to this)
-  // TODO play_speech_hook(state, 5); // exit via
+  play_speech_hook(state, 5); // exit via
   return;
 
 print_continue:

@@ -317,7 +317,7 @@ struct chqstate_s {
   // $A26A
   u8        quit_state;
   // $A26B
-  u8        start_speech;
+  u8        start_speech; // delay
   // $A26C
   u16       road_pos;
   // $A26E
