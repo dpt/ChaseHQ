@@ -28,7 +28,7 @@ struct hazard_s {
   const u8 *lod_addr; // Conv: u16 becomes pointer
   u16       hit_handler;
   u16       speed;
-  u8        TBD15;
+  u8        TBD15; // top bit is set for vehicles
   u8        TBD16;
   u8        TBD17; // perp distance high byte
   u8        TBD18;
@@ -104,19 +104,19 @@ struct chqstate_s {
   // $8D85
   char      credit_n[8]; // initialised to "CREDIT  "
 
-  // $8DA1 (SM)
+  // $8DA1 (SM) in transition
   u8        transition_nframes;
-  // $8DB1 (SM)
+  // $8DB1 (SM) in transition
   s16       transition_frame_stride; // fade step value: 8 or -8
-  // $8DBB (SM)
+  // $8DBB (SM) in transition
   const u8 *transition_mask;
 
-  // $8E43 (SM)
-  const u8 *overlay_message; // in draw_overlay_messages
-  // $8E46 (SM)
-  u8        overlay_count; // in draw_overlay_messages
-  // $8E49 (SM)
-  u8        overlay_delay; // in draw_overlay_messages
+  // $8E43 (SM) in draw_overlay_messages
+  const u8 *overlay_message; //
+  // $8E46 (SM) in draw_overlay_messages
+  u8        overlay_count;
+  // $8E49 (SM) in draw_overlay_messages
+  u8        overlay_delay;
 
   // $9618
   u8        rng_seed[3];
@@ -153,8 +153,8 @@ struct chqstate_s {
   // $9D9B
   char     *SM_address_of_score_digits; // was self modified
 
-  // $9E22
-  u8        SM_9e22; // in plot_turbos_and_scores
+  // $9E22 (SM) in plot_turbos_and_scores
+  u8        SM_9e22;
 
   // $A0D5
   u8        user_input;
@@ -333,9 +333,12 @@ struct chqstate_s {
   // $A278
   const u8 *road_hazard_ptr;
 
-  // $BB95
+  // $A804 (SM) in spawn_cars
+  u8        spawn_counter;
+
+  // $BB95 (SM) in rm_cycle_buffer_offset
   const u8 *SM_BB95;
-  // $BBC2
+  // $BBC2 (SM) in rm_cycle_buffer_offset
   const u8 *SM_BBC2;
 
   // $E300

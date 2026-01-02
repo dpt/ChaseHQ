@@ -1643,7 +1643,7 @@ const scenedata_t escape_scene_data = {
 };
 
 const hazard_t escape_scene_perp = {
-  HAZARD_UNUSED,
+  HAZARD_USED,
   1,      // distance
   0,
   0,
@@ -2388,6 +2388,38 @@ const u8 font[41 * 7] = {
   _XX_____,
   _XXXXXX_
 };
+
+// $A623
+const hazard_t hazard_template = {
+  HAZARD_USED,
+  21, // distance
+  0,
+  0,
+  0,
+  0,
+  0,
+  0,
+  0x28, // TBD8
+  0, // LOD
+  0xA8CD, // routine
+  0, // speed
+  0x80, // TBD15
+  0,
+  0,
+  0,
+  0
+};
+
+/* ----------------------------------------------------------------------- */
+
+// $A7E7
+const u8 hazard_pos_speed[3 * 4] = {
+  5, 80, 148, 216,    // road positions the hazard will align with
+  140, 220, 170, 250, // hazard speed used when perp has not been sighted
+  60, 140, 90, 170    // hazard speed used when perp is sighted
+};
+
+/* ----------------------------------------------------------------------- */
 
 // $DF62
 const u8 ledfont[10 * 16] = {

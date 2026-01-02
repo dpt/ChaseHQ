@@ -50,6 +50,10 @@ const char *chatter_strings[CHATTERSTR__LIMIT];
 const u8 attract_messages[37];
 const u8 credits_messages[84];
 const u8 copyright_messages[92];
+
+// + escape_scene_data
+
+
 const u8 score_messages_template[90];
 const u8 sighting_message[36];
 const u8 pull_over_message[30];
@@ -93,6 +97,11 @@ const stagevars_t saved_game_state;
 const hazard_t saved_game_state_hazard_0;
 
 const u8 font[41 * 7];
+
+const hazard_t hazard_template;
+
+const u8 hazard_pos_speed[3 * 4];
+
 const u8 ledfont[10 * 16];
 const u8 minifont[31 * 6];
 

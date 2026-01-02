@@ -132,7 +132,8 @@ typedef u8 chatterpriority_t;
 #define ROAD_LEFTMOST                     (0x0105)
 #define ROAD_RIGHTMOST                    (0x00F5)
 
-#define HAZARD_UNUSED                       (0xFF)
+#define HAZARD_USED                         (0xFF)
+#define HAZARD_UNUSED                       (0x00)
 
 /* ----------------------------------------------------------------------- */
 
@@ -359,8 +360,8 @@ const u8 *print_message(chqstate_t *state,
 
 void setup_overlay_messages(chqstate_t *state, const u8 *message);
 void setup_overlay_messages_with_transition(chqstate_t *state,
-                                            u8          transition,
-                                            const u8   *message);
+    u8          transition,
+    const u8   *message);
 
 void draw_mugshots(chqstate_t *state);
 

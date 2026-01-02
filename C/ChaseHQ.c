@@ -307,7 +307,7 @@ ml_not_credits:
 
   // Choose the startup speech sample
   state->start_speech = (start_speech_index * 4) | 2;
-  state->hazards[0].used = HAZARD_UNUSED;
+  state->hazards[0].used = HAZARD_USED; // keep perp spawned
   if (state->mode_128k == 0)
     start_chatter(state, 0xFF, chatterblk_start_stage);
 
@@ -1152,8 +1152,8 @@ void setup_overlay_messages(chqstate_t *state, const u8 *message)
 // transition - was A
 // message - was HL
 void setup_overlay_messages_with_transition(chqstate_t *state,
-                                            u8          transition,
-                                            const u8   *message)
+    u8          transition,
+    const u8   *message)
 {
   state->transition_control = transition;
   state->overlay_delay      = *message++;
@@ -2656,6 +2656,94 @@ void cycle_counters(chqstate_t *state)
 // $A7F3
 void spawn_cars(chqstate_t *state)
 {
+  u8        allow_spawning;     // was A
+  u8        random_extra_delay; // was C
+  u8        spawn_delay;        // was A
+  u8        iterations;         // was B
+  u8        cars_seen;          // was C
+  hazard_t *hazard;             // was IX
+  u16       spawn_lanes;        // was BC
+  u8        min_lane;           // was B
+  u8        max_lane;           // was C
+  u8        new_lane;           // was A
+  const u8 *hazard_pos;         // was HL
+  u8        lod_index;          // was C
+
+  // Return without spawning anything if perp_caught_phase is non-zero or the
+  // dont_spawn_cars flag is set.
+  if (state->perp_caught_phase > PERPCAUGHTPHASE_0 || state->dont_spawn_cars)
+    return;
+
+  // Return without spawning anything if allow_spawning is zero.
+  allow_spawning = state->allow_spawning;
+  if (allow_spawning == 0)
+    return;
+
+  // Reduce inline spawn delay counter by the value of allow_spawning (1 or 2
+  // here).
+  state->spawn_counter -= allow_spawning;
+  if (state->spawn_counter > 0)
+    return;
+
+  random_extra_delay = rng(state) & 0x0F;
+
+  spawn_delay = stgword(state, 0x5D1A); // load car_spawn_delay
+  if (state->sighted_flag)
+    // Perp was sighted so increase the spawn delay by 25.
+    spawn_delay += 25;
+  spawn_delay += random_extra_delay;
+  state->spawn_counter = spawn_delay;
+
+  // Now walk the hazards array to find an unused slot.
+  iterations = 5; // iterations
+  cars_seen = 0;  // one bit is set each time a car is seen
+  hazard = &state->hazards[1];
+  do {
+    if (hazard->used == HAZARD_UNUSED)
+      goto fill_in;
+    if (hazard->TBD15 & (1 << 7)) // top bit is set for vehicles
+      cars_seen = (cars_seen << 1) | 1;
+    hazard++;
+  } while (--iterations > 0);
+  return;
+
+fill_in:
+  // Don't spawn if there are three or more cars already spawned.
+  if (cars_seen & (1 << 2))
+    return;
+
+  // Copy template hazard to unused slot.
+  memcpy(hazard, &hazard_template, sizeof(hazard_template));
+
+  // Select a random lane in which to spawn the hazard.
+  spawn_lanes = get_spawn_lanes(state, 20);
+  min_lane = spawn_lanes >> 8;
+  max_lane = spawn_lanes & 0xFF;
+
+  new_lane = rng(state) & 3;
+
+  // Clamp new lane to valid range.
+  new_lane += min_lane;
+  if (new_lane > max_lane)
+    new_lane = max_lane;
+
+  hazard->TBD17 = new_lane;
+  hazard->TBD18 = new_lane;
+
+  // Copy hazard_pos_speed values to hazard position and speed.
+  hazard_pos = &hazard_pos_speed[-1 + new_lane];
+  hazard->horz_pos_on_road = hazard_pos[0];
+  hazard->speed            = hazard_pos[state->sighted_flag ? 8 : 4];
+
+  // Now pick a random car LOD to show.
+  lod_index = rng(state) & 6;
+  // If we've sighted the perp then don't spawn any generic cars (offset 6)
+  // since they look just like the perp's. Instead use offset 4.
+  if (state->sighted_flag && lod_index == 6)
+    lod_index--;
+
+  hazard->lod_addr = stgwordtostgptr(state,
+                                     0x5D12) + lod_index; // 0x5D12 = lods_vehicles
 }
 
 // $A89C
@@ -3518,6 +3606,16 @@ bct_endbit_negative:
 // $CD3A
 void build_height_table(chqstate_t *state)
 {
+  u8 *IY;
+  u8  A;
+  u8  C;
+
+  IY = ROADBUFPTR(ROADBUF_HEIGHT_OFFSET);
+
+  // Read the current height byte
+  C = *IY;
+  A = state->fast_counter & 0xE0;
+
 }
 
 // $CDD6
