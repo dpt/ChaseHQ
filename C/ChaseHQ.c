@@ -2837,7 +2837,7 @@ u16 get_spawn_lanes(chqstate_t *state, u8 extra)
     else
       return 0x0103;
   } else {
-    if (lanes == 0)
+    if (lanes == 0) // note: swapped vs above
       return 0x0102;
     else
       return 0x0304;
@@ -2852,6 +2852,20 @@ void hazard_handler(chqstate_t *state)
 // $A955
 void choose_dirt_and_stones(chqstate_t *state)
 {
+  u8 *table;  // was DE
+
+  if (state->on_dirt_track == 0 || state->allow_spawning == 0)
+    return;
+
+  // TODO: table_ed00 is u16s but this stores two bytes at byte offset 40: a
+  // stone/dirt type and a random position.
+
+  table = (u8 *) &state->table_ed00[40];
+  table[0] = ((s8) rng(state) >= 0) ? 1 : 2; // choose stone or dirt
+  table[1] = rng(state); // choose random position
+  state->SM_A97F = 1;
+  state->SM_C0BC = 1;
+  state->SM_A9DF = 1;
 }
 
 // $A97E
@@ -2891,7 +2905,7 @@ void check_hazard_collisions(chqstate_t *state)
       // TBD15 is a delay of some sort used for hits
       // TBD17 suspected perp distance high byte
       if (hazard->TBD15 == 0xFF && hazard->TBD17)
-          goto chc_continue;
+        goto chc_continue;
 
       // Distance is < 20.
       // There was a collision.
@@ -2919,7 +2933,7 @@ void draw_hazards(chqstate_t *state)
 }
 
 // $ADF9
-// 
+//
 // Conv: Original game used the RET at $ADF9 as a no-op.
 void no_op(chqstate_t *state)
 {

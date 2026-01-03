@@ -19,7 +19,7 @@ struct hazard_s {
   u8                used;
   u8                distance;
   u8                horz_pos;
-  u8                TBD3;    // distance related
+  u8                TBD3;     // distance related
   u8                TBD4;
   u8                horz_pos_on_road;
   u8                TBD6;
@@ -28,9 +28,9 @@ struct hazard_s {
   const u8         *lod_addr; // Conv: u16 becomes pointer
   hazard_handler_t *hit_handler;
   u16               speed;
-  u8                TBD15; // top bit is set for vehicles
+  u8                TBD15;    // top bit is set for vehicles
   u8                TBD16;
-  u8                TBD17; // perp distance high byte
+  u8                TBD17;    // perp distance high byte
   u8                TBD18;
   u8                TBD19;
 };
@@ -336,10 +336,19 @@ struct chqstate_s {
   // $A804 (SM) in spawn_cars
   u8        spawn_counter;
 
+  // $A97F (SM) in layout_dirt_and_stones
+  u8        SM_A97F;
+
+  // $A9DF (SM) in dust_stones_stuff
+  u8        SM_A9DF; // makes dust_stones_stuff run
+
   // $BB95 (SM) in rm_cycle_buffer_offset
   const u8 *SM_BB95;
   // $BBC2 (SM) in rm_cycle_buffer_offset
   const u8 *SM_BBC2;
+
+  // $C0BC (SM) in read_map
+  u8        SM_C0BC;
 
   // $E300
   u8        table_e300[32]; // note: first byte should be $60

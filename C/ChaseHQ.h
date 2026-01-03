@@ -483,7 +483,7 @@ void spawn_cars(chqstate_t *state);
 
 u16 get_spawn_lanes(chqstate_t *state, u8 extra);
 
-hazard_handler_t hazard_handler_t;
+hazard_handler_t hazard_handler;
 
 void choose_dirt_and_stones(chqstate_t *state);
 
