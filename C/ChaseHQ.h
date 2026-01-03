@@ -489,6 +489,10 @@ void drive_helicopter(chqstate_t *state);
 
 void spawn_hazards(chqstate_t *state);
 
+void check_hazard_collisions(chqstate_t *state);
+
+u8 check_collision(chqstate_t *state, u8 D, hazard_t *IX);
+
 void draw_hazards(chqstate_t *state);
 
 void move_hero_car(chqstate_t *state);

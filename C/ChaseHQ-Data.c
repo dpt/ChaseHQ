@@ -1653,7 +1653,7 @@ const hazard_t escape_scene_perp = {
   0,
   0x2C,
   0x0000, // lod_addr
-  0xADF9, // hit_handler (ptr!)
+  (void *) 0xADF9, // hit_handler (ptr!)
   250,    // speed
   0,
   0,
@@ -2047,7 +2047,7 @@ const hazard_t saved_game_state_hazard_0 = {
   0,
   0x2C,
   0x0000,
-  0xA637,
+  (void *) 0xA637,
   0x003C,
   0xFF,
   0,
@@ -2401,7 +2401,7 @@ const hazard_t hazard_template = {
   0,
   0x28, // TBD8
   0, // LOD
-  0xA8CD, // routine
+  (void *) 0xA8CD, // routine
   0, // speed
   0x80, // TBD15
   0,

@@ -15,6 +15,8 @@
 #include "Spectrum.h"
 #include "ChaseHQ.h"
 
+typedef void (hit_handler_t)(chqstate_t *state);
+
 struct hazard_s {
   u8        used;
   u8        distance;
@@ -26,7 +28,7 @@ struct hazard_s {
   u8        TBD7;
   u8        TBD8;
   const u8 *lod_addr; // Conv: u16 becomes pointer
-  u16       hit_handler;
+  hit_handler_t *hit_handler;
   u16       speed;
   u8        TBD15; // top bit is set for vehicles
   u8        TBD16;

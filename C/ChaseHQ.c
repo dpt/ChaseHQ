@@ -2864,6 +2864,54 @@ void spawn_hazards(chqstate_t *state)
 {
 }
 
+// $AD0D
+void check_hazard_collisions(chqstate_t *state)
+{
+  hazard_t *IX;
+  u8        iterations; // was B
+  u8        D;
+
+  if (state->inhibit_collision_detection)
+    return;
+
+  // Iterate over all hazards.
+  IX = &state->hazards[0];
+  iterations = 6;
+  do {
+    if (IX->used == HAZARD_UNUSED)
+      goto chc_continue;
+
+    if (IX->TBD15 == 0xFF) // a delay of some sort used for hits
+      // Otherwise it was zero (IX[15] was $FF => unused/unset?)
+      if (IX->TBD17)
+        goto chc_continue;
+
+    // End this iteration if distance >= 20  -- too far away?
+    if (IX->distance >= 20)
+      goto chc_continue;
+
+    // Distance is < 20.
+    D = check_collision(state, 0, IX);
+    if (D == 0)
+      goto chc_continue;
+
+    // There was a collision.
+    if (IX->TBD15 == 0xFF)
+      goto chc_continue;
+
+    IX->hit_handler(state);
+
+chc_continue:
+    IX++;
+  } while (--iterations > 0);
+}
+
+// $AD51
+u8 check_collision(chqstate_t *state, u8 D, hazard_t *IX)
+{
+  return 0;
+}
+
 // $ADA0
 void draw_hazards(chqstate_t *state)
 {
@@ -3263,43 +3311,33 @@ void clear_playfield_set_attrs(chqstate_t *state)
 // $BDFB
 void read_map(chqstate_t *state)
 {
-#if 0
   int carry = 0;
-  u8  A;
-  u8 *HL;
-  u16 DE;
+  u8 *pfast_counter;  // was HL
+  u16 speed;          // was DE
+  u8  speed_lo;       // was A
+  u8  allow_spawning; // was A
 
   state->var_a23d       = 0;
   state->var_a23c       = 0;
   state->allow_spawning = 0;
-  HL = &state->fast_counter;
-  DE = state->speed;
-  A = DE & 0xFF;
-  RR(D);
-  if (carry) {
+  pfast_counter = &state->fast_counter;
+  speed = state->speed;
+  speed_lo = speed & 0xFF;
+  if (speed > 255) {
     // Otherwise we're going fast. This seems to cause the buffer to be
     // processed twice as often as when in slow mode.
-
-    // PUSH AF
-    // PUSH HL
-    rm_cycle_buffer_offset(state);
-    // POP HL
-    // POP AF
+    rm_cycle_buffer_offset(state, pfast_counter);
   }
 
-rm_check_speed:
-  A += *HL;
-  *HL = A;
-  A = 0; // set flag
-  if (!carry)
-    goto rm_exit;
+  carry = (speed_lo + *pfast_counter) > 255;
+  speed_lo += *pfast_counter; // TODO Set carry
+  *pfast_counter = speed_lo;
+  allow_spawning = 0; // Set flag to disallow car spawning
+  if (carry)
+    rm_cycle_buffer_offset(state, pfast_counter); // was fallthrough
 
-  rm_cycle_buffer_offset(state); // was fallthrough
-
-  // ...
-
-rm_exit:
-#endif
+  state->allow_spawning += allow_spawning;
+  check_hazard_collisions(state); // exit via
 }
 
 /// An add that affects the low byte only.
@@ -3316,15 +3354,15 @@ void rm_cycle_buffer_offset(chqstate_t *state, u8 *pfastcounter)
   u8 *DE;
 
   HL = state->road_buffer_offset; // Conv: was an INC
-#if 0
   A = *HL + 1;
   *HL = A;
   A += 0x5F;
-  HL = 0xEE | A;
+#if 0
+  HL = ROADBUFPTR(A);
   state->var_a23c |= *HL;
-  HL = LO_ADD(HL, 0x20);
+  HL = LO_ADD(HL, 0x20); // ROADBUFPTR(A + 0x20);
   state->var_a23d |= *HL;
-  HL = LO_ADD(HL, -0x60);
+  HL = LO_ADD(HL, -0x60); // ROADBUFPTR(A + 0x40); ?
 
   // -- CURVATURE --
 
@@ -3346,8 +3384,7 @@ rm_curvature_escape_byte:
   HL++;
   if (A == 0)
     goto rm_curvature_jump_command;
-  A--;
-  if (A == 0)
+  if (--A == 0)
     goto rm_curvature_one_command;
   // Otherwise it must be a fork road command (byte == 2).
   state->SM_BB95 = wordat(HL);
@@ -3357,8 +3394,33 @@ rm_curvature_escape_byte:
   HL = &forked_road_curvature[0];
   goto rm_read_curvature;
 
+rm_curvature_one_command:
+  HL = state->SM_something;
+  goto rm_read_curvature;
+
+rm_curvature_jump_command:
+  HLsomething = wordat(HL);
+
+rm_read_curvature:
+  // EX DE,HL
+  A = *DE;
+
+rm_curvature_regular_byte:
+  state->road_curvature_ptr = DE;
+  A -= 16;
+
 rm_save_curvature_byte:
   state->curvature_byte = A;
+  A &= 0x0F;
+  if ((A & (1 << 3)) == 0)
+    goto rm_set_curvature;
+  A &= 0x07;
+  A = -A;
+
+rm_set_curvature:
+  A += A;
+  *HL = A;
+  L += 0x20;
 #endif
 }
 
