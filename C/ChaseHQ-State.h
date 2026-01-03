@@ -15,26 +15,24 @@
 #include "Spectrum.h"
 #include "ChaseHQ.h"
 
-typedef void (hit_handler_t)(chqstate_t *state);
-
 struct hazard_s {
-  u8        used;
-  u8        distance;
-  u8        horz_pos;
-  u8        TBD3;    // distance related
-  u8        TBD4;
-  u8        horz_pos_on_road;
-  u8        TBD6;
-  u8        TBD7;
-  u8        TBD8;
-  const u8 *lod_addr; // Conv: u16 becomes pointer
-  hit_handler_t *hit_handler;
-  u16       speed;
-  u8        TBD15; // top bit is set for vehicles
-  u8        TBD16;
-  u8        TBD17; // perp distance high byte
-  u8        TBD18;
-  u8        TBD19;
+  u8                used;
+  u8                distance;
+  u8                horz_pos;
+  u8                TBD3;    // distance related
+  u8                TBD4;
+  u8                horz_pos_on_road;
+  u8                TBD6;
+  u8                TBD7;
+  u8                TBD8;
+  const u8         *lod_addr; // Conv: u16 becomes pointer
+  hazard_handler_t *hit_handler;
+  u16               speed;
+  u8                TBD15; // top bit is set for vehicles
+  u8                TBD16;
+  u8                TBD17; // perp distance high byte
+  u8                TBD18;
+  u8                TBD19;
 };
 
 // crap name

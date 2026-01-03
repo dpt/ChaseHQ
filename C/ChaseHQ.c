@@ -2711,6 +2711,11 @@ void cycle_counters(chqstate_t *state)
   state->counter_C = (state->counter_C + 1) & 3;
 }
 
+// $A637
+void perp_behaviour(chqstate_t *state)
+{
+}
+
 // $A7F3
 void spawn_cars(chqstate_t *state)
 {
@@ -2839,6 +2844,11 @@ u16 get_spawn_lanes(chqstate_t *state, u8 extra)
   }
 }
 
+// $A8CD
+void hazard_handler(chqstate_t *state)
+{
+}
+
 // $A955
 void choose_dirt_and_stones(chqstate_t *state)
 {
@@ -2867,42 +2877,33 @@ void spawn_hazards(chqstate_t *state)
 // $AD0D
 void check_hazard_collisions(chqstate_t *state)
 {
-  hazard_t *IX;
+  hazard_t *hazard;     // was IX
   u8        iterations; // was B
-  u8        D;
 
   if (state->inhibit_collision_detection)
     return;
 
   // Iterate over all hazards.
-  IX = &state->hazards[0];
+  hazard = &state->hazards[0];
   iterations = 6;
   do {
-    if (IX->used == HAZARD_UNUSED)
-      goto chc_continue;
+    if (hazard->used != HAZARD_UNUSED) {
+      // TBD15 is a delay of some sort used for hits
+      // TBD17 suspected perp distance high byte
+      if (hazard->TBD15 == 0xFF && hazard->TBD17)
+          goto chc_continue;
 
-    if (IX->TBD15 == 0xFF) // a delay of some sort used for hits
-      // Otherwise it was zero (IX[15] was $FF => unused/unset?)
-      if (IX->TBD17)
-        goto chc_continue;
-
-    // End this iteration if distance >= 20  -- too far away?
-    if (IX->distance >= 20)
-      goto chc_continue;
-
-    // Distance is < 20.
-    D = check_collision(state, 0, IX);
-    if (D == 0)
-      goto chc_continue;
-
-    // There was a collision.
-    if (IX->TBD15 == 0xFF)
-      goto chc_continue;
-
-    IX->hit_handler(state);
+      // Distance is < 20.
+      // There was a collision.
+      // TBD15 ?
+      if (hazard->distance < 20 &&
+          check_collision(state, 0, hazard) > 0 &&
+          hazard->TBD15 != 0xFF)
+        hazard->hit_handler(state);
+    }
 
 chc_continue:
-    IX++;
+    hazard++;
   } while (--iterations > 0);
 }
 
@@ -2914,6 +2915,13 @@ u8 check_collision(chqstate_t *state, u8 D, hazard_t *IX)
 
 // $ADA0
 void draw_hazards(chqstate_t *state)
+{
+}
+
+// $ADF9
+// 
+// Conv: Original game used the RET at $ADF9 as a no-op.
+void no_op(chqstate_t *state)
 {
 }
 

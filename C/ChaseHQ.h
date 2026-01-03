@@ -299,6 +299,8 @@ typedef struct hazard_s hazard_t;
 typedef struct stagevars_s stagevars_t;
 typedef struct chqstate_s chqstate_t;
 
+typedef void (hazard_handler_t)(chqstate_t *state);
+
 /* ----------------------------------------------------------------------- */
 
 void chasehq_reset_state(chqstate_t *state);
@@ -475,9 +477,13 @@ void layout_objects(chqstate_t *state);
 
 void cycle_counters(chqstate_t *state);
 
+hazard_handler_t perp_behaviour;
+
 void spawn_cars(chqstate_t *state);
 
 u16 get_spawn_lanes(chqstate_t *state, u8 extra);
+
+hazard_handler_t hazard_handler_t;
 
 void choose_dirt_and_stones(chqstate_t *state);
 
@@ -494,6 +500,8 @@ void check_hazard_collisions(chqstate_t *state);
 u8 check_collision(chqstate_t *state, u8 D, hazard_t *IX);
 
 void draw_hazards(chqstate_t *state);
+
+hazard_handler_t no_op;
 
 void move_hero_car(chqstate_t *state);
 
