@@ -138,6 +138,13 @@ typedef u8 chatterpriority_t;
 #define HAZARD_USED                         (0xFF)
 #define HAZARD_UNUSED                       (0x00)
 
+#define ROADBUF_CURVATURE_OFFSET               (0)
+#define ROADBUF_HEIGHT_OFFSET                 (32)
+#define ROADBUF_LANES_OFFSET                  (64)
+#define ROADBUF_RIGHTOBJS_OFFSET              (96)
+#define ROADBUF_LEFTOBJS_OFFSET              (128)
+#define ROADBUF_HAZARDS_OFFSET               (160)
+
 /* ----------------------------------------------------------------------- */
 
 // Conv: The C version uses IDs for strings and blocks rather than inline

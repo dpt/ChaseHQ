@@ -146,19 +146,6 @@ static const u8 *ptrtostgptr(chqstate_t *state, const u8 *addr)
 #define ROADBUFPTR(N) \
   (&state->road_buffer_start[ROADBUFINDEX(N)])
 
-#define GETNEXTROADBUF(R) \
-  do { \
-    if (++(R) == state->road_buffer_end) \
-      (R) = state->road_buffer_start; \
-  } while (0)
-
-#define ROADBUF_CURVATURE_OFFSET  (0)
-#define ROADBUF_HEIGHT_OFFSET    (32)
-#define ROADBUF_LANES_OFFSET     (64)
-#define ROADBUF_RIGHTOBJS_OFFSET (96)
-#define ROADBUF_LEFTOBJS_OFFSET (128)
-#define ROADBUF_HAZARDS_OFFSET  (160)
-
 /* ----------------------------------------------------------------------- */
 
 // $8014 (copied to that position in the original)
@@ -3052,6 +3039,7 @@ void update_road_level(chqstate_t *state)
 void layout_road(chqstate_t *state)
 {
   int       carry = 0;
+  u8       *DElanedata_base;
   u8       *DElanedata;
   u8        Biterations;
   u8        Lcounter;
@@ -3077,7 +3065,7 @@ void layout_road(chqstate_t *state)
   u8       *HLunknown;
 
   // point at lane data
-  DElanedata = &state->road_buffer_start[ROADBUFINDEX(ROADBUF_LANES_OFFSET)];
+  DElanedata_base = DElanedata = ROADBUFPTR(ROADBUF_LANES_OFFSET);
 
   // Count the distance to the forked road.
   Biterations = 20;
@@ -3085,7 +3073,8 @@ void layout_road(chqstate_t *state)
   do {
     if ((*DElanedata & 0xE1) == 0xE1)
       goto lr_forked_road;
-    GETNEXTROADBUF(DElanedata);
+
+    WRAPPINGINCREMENT(DElanedata, DElanedata_base);
     Lcounter++;
   } while (--Biterations > 0);
 
