@@ -50,7 +50,15 @@
 
 // TODO
 //
+// Stub out all functions.
+//
+// Import all graphic data.
+//
+// Get a sprite plotter going.
+//
 // Copy whole messages that get modified into the state structure.
+//
+// Decide how to drive the main loop(s).
 //
 
 #include <assert.h>
@@ -64,6 +72,7 @@
 #include "Spectrum.h"
 #include "Z80.h"
 #include "ChaseHQ-Data.h"
+#include "ChaseHQ-StageData.h"
 #include "ChaseHQ-State.h"
 #include "ChaseHQ.h"
 
@@ -152,15 +161,6 @@ static const u8 *ptrtostgptr(chqstate_t *state, const u8 *addr)
 // $F220 page_in_stage_128k
 void load_stage(chqstate_t *state)
 {
-  static const u8 *stage_data_locations[6] = {
-    &stage1[0],
-    &stage1[0],
-    &stage1[0],
-    &stage1[0],
-    &stage1[0],
-    &stage1[0]
-  };
-
   u8 wanted; // was A
 
   // Return if the stage is already loaded

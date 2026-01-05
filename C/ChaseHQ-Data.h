@@ -6,8 +6,8 @@
 
 // vim: ts=8 sts=2 sw=2 et
 
-#ifndef DATA_H
-#define DATA_H
+#ifndef CHASEHQ_DATA_H
+#define CHASEHQ_DATA_H
 
 #include <stdint.h>
 
@@ -146,5 +146,5 @@ const u8 marquee_attrs[SCREEN_ATTRIBUTES_WIDTH * MARQUEE_HEIGHT / 8];
 
 const u8 backbufexample[16 * 256];
 
-#endif /* DATA_H */
+#endif /* CHASEHQ_DATA_H */
 
