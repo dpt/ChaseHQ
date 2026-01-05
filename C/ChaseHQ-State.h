@@ -156,6 +156,10 @@ struct chqstate_s {
   // $9E22 (SM) in plot_turbos_and_scores
   u8        SM_9e22;
 
+  // $A0CC
+  u8        kempston_flag;
+  // $A0CD
+  u8        keydefs[8]; // TODO add symbols for these
   // $A0D5
   u8        user_input;
 
@@ -353,7 +357,9 @@ struct chqstate_s {
   // $E300
   u8        table_e300[32]; // note: first byte should be $60
   // $E320
-  u8        table_e320[2];
+  u8        table_e320[20]; // CHECK: unsure of correct size
+  // $E336
+  u8        table_e336[21]; // CHECK: unsure of correct size
   // $E34B
   u8        horizon_table_e34b[3]; // horizon related
   // $E34F

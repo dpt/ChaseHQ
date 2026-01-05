@@ -127,6 +127,7 @@ const u8 circle_transition_mask[7 * 8];
 
 const u16 inward_bend_table[96];
 
+const u8 vertical_e600[8][22];
 const u8 horizontal_e6b0[8][22];
 const u8 horizontal_e760[8][22];
 

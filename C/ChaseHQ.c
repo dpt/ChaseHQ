@@ -1042,7 +1042,7 @@ void transition(chqstate_t *state)
 
   screen  = 0xFF00; // was H=$FF
   maskptr = state->transition_mask;
-  iterations = 8; // iterations
+  iterations = 8;
   do {
     mask = *maskptr;
     screencopy = screen; // Conv: Original just saved H in D
@@ -2275,7 +2275,7 @@ ptas_turbo_setup:
 
   // Scale speed by 82%
   HLdash = 0;
-  Bdash_iterations = 7; // iterations
+  Bdash_iterations = 7;
   Ascale = 82; // speed scale
   do {
     RL(Ascale);
@@ -2532,12 +2532,12 @@ void draw_char(chqstate_t *state,
                u8          stride,    // was DE' e.g. 32 - a stride?
                u8         *attrs)     // was HL'
 {
-  u8        glyphid;  // was C
-  u8        type;     // was C
-  u8        data;     // was A
-  u8        B;        // was B
-  const u8 *fontdata; // was HL
-  u8       *orig;     // was stacked
+  u8        glyphid;    // was C
+  u8        type;       // was C
+  u8        data;       // was A
+  u8        iterations; // was B
+  const u8 *fontdata;   // was HL
+  u8       *orig;       // was stacked
 
   character -= ' ';
   if (character == 0) {
@@ -2582,7 +2582,7 @@ dc_have_single:
 
   // Otherwise it's type 0 or anything else
   orig = screen;
-  B = 4; // iterations
+  iterations = 4;
   do {
     data = *fontdata;
     *screen = data;
@@ -2590,10 +2590,10 @@ dc_have_single:
     *screen = data;
     screen += 256;
     fontdata++;
-  } while (--B > 0);
+  } while (--iterations > 0);
   screen -= 8 * 256;
   screen += 32;
-  B = 3; // iterations
+  iterations = 3;
   do {
     data = *fontdata;
     *screen = data;
@@ -2601,13 +2601,13 @@ dc_have_single:
     *screen = data;
     screen += 256;
     fontdata++;
-  } while (--B > 0);
+  } while (--iterations > 0);
   goto dc_set_double_attrs;
 
   // double height inverted
 dc_double_height_inverted:
   orig = screen;
-  B = 7; // iterations
+  iterations = 7;
   do {
     data = ~*fontdata;
     *screen = data;
@@ -2615,18 +2615,18 @@ dc_double_height_inverted:
     *screen = data;
     screen += 256;
     fontdata++;
-  } while (--B > 0);
+  } while (--iterations > 0);
   goto dc_set_double_attrs;
 
 dc_single_height_inverted:
   orig = screen;
-  B = 7; // iterations
+  iterations = 7;
   do {
     data = ~*fontdata;
     *screen = data;
     fontdata++;
     screen += 256;
-  } while (--B > 0);
+  } while (--iterations > 0);
   goto dc_set_single_attrs;
 
   // Plots double-height glyphs. screen->screen font->glyph def
@@ -2672,7 +2672,7 @@ dc_set_single_attrs:
 
 dc_generic:
   orig = screen;
-  B = 7; // iterations
+  iterations = 7;
   do {
     *screen = *fontdata;
     screen += 256;
@@ -2680,7 +2680,7 @@ dc_generic:
 
     // variation on nextscrrow()
     // screen = nextscrrow(screen); // won't work!
-  } while (--B > 0);
+  } while (--iterations > 0);
   screen = orig + 1; // was POP screen
   return;
 }
@@ -2688,11 +2688,90 @@ dc_generic:
 // $A0D6
 u8 keyscan(chqstate_t *state)
 {
+#if 0
+  u8  Ainput;
+  u8  E;
+  u8 *HL;
+  u8  A;
+
+  if (state->kempston_flag) {
+    Ainput = 0; // TODO state->speccy->in(state->speccy, port_KEMPSTON_JOYSTICK) & 0x1F;
+    E = 0x20;
+    HL = &state->keydefs[0];
+    A = keyscan_a112(state, HL);
+    RRC(A);
+    RRC(A);
+    RRC(A);
+    A &= 0xE0;
+    E = A | Ainput;
+  } else {
+    E = 1;
+    HL = &state->keydefs[0];
+    A = keyscan_a112(state, HL);
+  }
+
+  A &= 3;
+  A = E; // FIX
+  if (A == 3) {
+    A &= 0xFC;
+    E = A;
+  }
+  A &= 0x0C;
+  if (A == 0x0C)
+    A = E; // FIX
+  A &= 0xF3;
+  state->user_input = A;
+#endif
   return 0;
+}
+
+// $A112
+u8 keyscan_a112(chqstate_t *state, u8 *HL)
+{
+#if 0
+  u8 A;
+
+  do {
+    A = *HL++;
+    keyscan_inner(state, A);
+    carry = !carry;
+    RL(E);
+  } while (!carry);
+  return E;
+#endif
+  return 0;
+}
+
+void keyscan_inner(chqstate_t *state, u8 A)
+{
+#if 0
+  C = A;
+  B = (A + 7) + 1; // shift
+  SRL(C);
+  SRL(C);
+  SRL(C);
+  C = 5 - C; // another shift
+  A = 0xFE;
+  do RRC(A);
+  while (--B > 0);
+  A = 0; // TODO state->speccy->in(state->speccy, port_?);
+  do RR(A);
+  while (--C > 0);
+#endif
 }
 
 // $A399
 void check_scenery_collisions(chqstate_t *state)
+{
+}
+
+// $A4B8
+void scenery_hit(chqstate_t *state)
+{
+}
+
+// $A4F6
+void fork_completed(chqstate_t *state)
 {
 }
 
@@ -2758,7 +2837,7 @@ void spawn_cars(chqstate_t *state)
   state->spawn_counter = spawn_delay;
 
   // Now walk the hazards array to find an unused slot.
-  iterations = 5; // iterations
+  iterations = 5;
   cars_seen = 0;  // one bit is set each time a car is seen
   hazard = &state->hazards[1];
   do {
@@ -2870,6 +2949,16 @@ void choose_dirt_and_stones(chqstate_t *state)
 
 // $A97E
 void layout_dirt_and_stones(chqstate_t *state)
+{
+}
+
+// $A9DE
+void dust_stones_stuff(chqstate_t *state)
+{
+}
+
+// $AA38
+void draw_helicopter(chqstate_t *state)
 {
 }
 
@@ -2991,7 +3080,7 @@ void layout_road(chqstate_t *state)
   DElanedata = &state->road_buffer_start[ROADBUFINDEX(ROADBUF_LANES_OFFSET)];
 
   // Count the distance to the forked road.
-  Biterations = 20; // iterations
+  Biterations = 20;
   Lcounter = 0; // counter
   do {
     if ((*DElanedata & 0xE1) == 0xE1)
@@ -3201,11 +3290,11 @@ righthand_14_bytes:
       goto righthand_14_bytes;
 
     if ((bufoffset & (1 << 11)) == 0) {
-      u8 H;
-      u8 A;
-      u8 L;
-      int     res;
-      int     carry, overflow;
+      u8  H;
+      u8  A;
+      u8  L;
+      int res;
+      int carry, overflow;
 
       // Otherwise we've rolled into to the top nibble
 
@@ -3370,6 +3459,7 @@ void read_map(chqstate_t *state)
 // pfastcounter - was HL
 void rm_cycle_buffer_offset(chqstate_t *state, u8 *pfastcounter)
 {
+#if 0
   int carry = 0;
   u8 *HL;
   u8  A;
@@ -3379,7 +3469,6 @@ void rm_cycle_buffer_offset(chqstate_t *state, u8 *pfastcounter)
   A = *HL + 1;
   *HL = A;
   A += 0x5F;
-#if 0
   HL = ROADBUFPTR(A);
   state->var_a23c |= *HL;
   HL = LO_ADD(HL, 0x20); // ROADBUFPTR(A + 0x20);
@@ -3513,6 +3602,11 @@ void forked_road_plotter(chqstate_t *state)
 // $CBC5
 void backdrop_fill_choice(chqstate_t *state)
 {
+//  C = A;
+//  if (A < 80)
+//    goto frp_c915; // inside forked_road_plotter
+//  else
+//    goto dr_start_backdrop_fill; // inside draw_road
 }
 
 // $CBD6 ish
@@ -3520,7 +3614,7 @@ void build_curve_table(chqstate_t *state, int forked)
 {
   u16       *table1, *table2;
   const u8  *road_buffer_ptr_HL; // was HL
-  u8         curvature_C; // was C
+  u8         curvature_C;        // was C
   int        A;
   int        B;
   const u8  *IY;
@@ -3531,7 +3625,7 @@ void build_curve_table(chqstate_t *state, int forked)
   u16        HLdash;
   u16        BCdash;
   int        carry;
-  u16        DEroadpos; // was DE
+  u16        DEroadpos;          // was DE
   u8        *DEe320;
   const u8  *HLe760;
   int        Bdash;
@@ -3669,7 +3763,7 @@ void build_curve_table_sub_cca8(chqstate_t *state,
   u16  HLdash;
 
   IYe300 = &state->table_e300[0]; // was 0xE300; // addr of height table
-  Biterations = 21; // iterations
+  Biterations = 21;
   // (restore SP on exit, load SP with HL)
   SPoutput = HLtableend;
   do {
@@ -3748,16 +3842,106 @@ bct_endbit_negative:
 // $CD3A
 void build_height_table(chqstate_t *state)
 {
-  u8 *IY;
-  u8  A;
-  u8  C;
+  int       carry = 0;
+  u8       *proadbuf_height;      // was IY
+  u8       *proadbuf_height_base; // Conv: added
+  u8        heightbyte;           // was C
+  u8        counter;              // was A
+  u8        orig_counter;         // was B
+  const u8 *pvtab;                // was HL
+  const u8 *pvtabbase;            // Conv: added
+  u8        C;                    // was C
+  u8        iterations;           // was B'
+  u8       *phtab;                // was DE'
+  u8       *phtabbase;            // Conv: added
+  u16       v;                    // was DE
+  u16       result;               // was HL
+  u8        A;                    // was A
+  u8       *pdst;                 // was HL
+  u8       *pdstbase;             // Conv: added
+  const u8 *htab2;                // was DE
+  const u8 *htabbase2;            // Conv: added
+  u8        iterations2;          // was B
 
-  IY = ROADBUFPTR(ROADBUF_HEIGHT_OFFSET);
+  proadbuf_height_base = proadbuf_height = ROADBUFPTR(ROADBUF_HEIGHT_OFFSET);
 
   // Read the current height byte
-  C = *IY;
-  A = state->fast_counter & 0xE0;
+  heightbyte = *proadbuf_height;
+  counter = state->fast_counter & 0xE0;
 
+  // Scale 0..223 (in steps of 16) to 0..153, reducing <counter> by 31.25%,
+  // mapping the incoming value to the 7x22 byte tables. So fast_counter
+  // indexes the rows of the table.
+  orig_counter = counter; // Copy to be a multiplier later
+  counter = counter - (orig_counter >> 2) - (orig_counter >> 4);
+
+  pvtabbase = pvtab = &vertical_e600[counter / 22][1];
+  C = -multiply(orig_counter, heightbyte);
+  // EXX bank
+
+  // This builds the look-up table at $E301. Assuming it's a height table.
+  iterations = 21;
+  phtabbase = phtab = &state->table_e300[1];
+  do {
+    v = *pvtab * 2;
+    result = 0;
+    C = A = C + *proadbuf_height;
+    if (C != 0) {
+      if (C < 0) {
+        v = -v;
+        A = -C;
+      }
+
+      // multiplier
+      A <<= 1; // Throw sign bit away?
+      carry = (A >> 7) & 1; A <<= 1;
+      if (carry) result = v << 1;
+      carry = (A >> 7) & 1; A <<= 1;
+      if (carry) result += v; result <<= 1;
+      carry = (A >> 7) & 1; A <<= 1;
+      if (carry) result += v; result <<= 1;
+      carry = (A >> 7) & 1; A <<= 1;
+      if (carry) result += v; result <<= 1;
+      carry = (A >> 7) & 1; A <<= 1;
+      if (carry) result += v; result <<= 1;
+      carry = (A >> 7) & 1; A <<= 1;
+      if (carry) result += v; result <<= 1;
+      carry = (A >> 7) & 1; A <<= 1;
+      if (carry) result += v; result <<= 1;
+      A = result >> 8;
+    }
+    A += *pvtab;
+    WRAPPINGINCREMENT(pvtab, pvtabbase);
+
+    *phtab = A; // Write #REGa to the table at $E3xx
+    WRAPPINGINCREMENT(phtab, phtabbase);
+    WRAPPINGINCREMENT(proadbuf_height, proadbuf_height_base);
+  } while (--iterations > 0);
+
+  *phtab = 0xA0;
+
+  // Copy the table to $E336 while setting negative values to 96[?]
+  pdstbase  = pdst  = &state->table_e336[0]; // destination
+  htabbase2 = htab2 = &state->table_e300[1]; // src
+  iterations2 = 21;
+  C = 96; // limit/minimum?
+  do {
+    s8 res; // Conv: added
+
+    A = *htab2;
+    res = A - C;
+    if (res < 0)
+      C = A;
+    *pdst = C;
+    WRAPPINGINCREMENT(pdst, pdstbase);
+    WRAPPINGINCREMENT(htab2, htabbase2);
+  } while (--iterations2 > 0);
+
+  C = A = (C + 3) & 0xF8;
+  A -= *pdst;
+  *pdst = C;
+  WRAPPINGINCREMENT(pdst, pdstbase);
+  *pdst = A;
 }
 
 // $CDD6

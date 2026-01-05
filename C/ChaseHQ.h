@@ -39,6 +39,9 @@
 // Return backbuffer[] pointer given byte offset.
 #define OFFSETTOBACKBUF(off)  (&state->backbuffer[off])
 
+// Return ptr incremented modulo 256.
+#define WRAPPINGINCREMENT(ptr, base) &base[((ptr) + 1 - (base)) & 0xFF]
+
 #define STAGEDATA_BASE        (0x5C00)
 #define STAGEDATA_END         (0x76EF) // inclusive
 #define STAGEDATA_LENGTH      (STAGEDATA_END + 1 - STAGEDATA_BASE)
@@ -470,8 +473,14 @@ void draw_char(chqstate_t *state,
                u8         *HLdash);
 
 u8 keyscan(chqstate_t *state);
+u8 keyscan_a112(chqstate_t *state, u8 *HL);
+void keyscan_inner(chqstate_t *state, u8 A);
 
 void check_scenery_collisions(chqstate_t *state);
+
+void scenery_hit(chqstate_t *state);
+
+void fork_completed(chqstate_t *state);
 
 void layout_objects(chqstate_t *state);
 
@@ -488,6 +497,10 @@ hazard_handler_t hazard_handler;
 void choose_dirt_and_stones(chqstate_t *state);
 
 void layout_dirt_and_stones(chqstate_t *state);
+
+void dust_stones_stuff(chqstate_t *state);
+
+void draw_helicopter(chqstate_t *state);
 
 void move_helicopter(chqstate_t *state);
 
