@@ -119,6 +119,19 @@ If you're not interested in the disassembly itself then a nice byproduct is POKE
 `POKE 23796,`&lt;attribute byte&gt;  -- `112` is black on yellow, as for Stage 1. `96` would give black on green.  
 `POKE 23797,`&lt;attribute byte&gt;
 
+* Increase Maximum Speed
+The word at 45461 sets the non-boosted maximum speed. The default internal value is 360 (which gives a max speed readout of 294). So you could try 450:
+
+`POKE 45461,194`
+`POKE 45462,1`
+
+To restore the default of 360:
+
+`POKE 45461,104`
+`POKE 45462,1`
+
+(Turbo speed is 695).
+
 ## Links
 
 Spectrum Computing forums thread: https://spectrumcomputing.co.uk/forums/viewtopic.php?p=113633
