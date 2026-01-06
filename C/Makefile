@@ -1,13 +1,26 @@
-CFLAGS = -Wall -Wno-unused-function #-Wextra -Wpedantic
+CFLAGS = -Wall -Wno-unused-function `sdl2-config --cflags` -g
+#-Wextra -Wpedantic
 
-ChaseHQ: ChaseHQ.c ChaseHQ-Data.c ChaseHQ-StageData.c Main.c
-	gcc $(CFLAGS) `sdl2-config --cflags --libs` -g -o $@ $^
+SRCS = Main.c ChaseHQ.c ChaseHQ-Data.c ChaseHQ-StageData.c
+OBJS := $(SRCS:.c=.o)
+DEPS := $(SRCS:.c=.d)
 
+ChaseHQ: $(OBJS)
+	$(CC) `sdl2-config --libs` -o $@ $^
+
+.PHONY: clean
+clean:
+	$(RM) ChaseHQ $(OBJS) $(DEPS)
+
+.PHONY: fmt
 fmt:
 	astyle --project=.astylerc *.[ch]
 
-clean:
-	rm -f ChaseHQ *.o
+%.d: %.c
+	@set -e; rm -f $@; \
+	 $(CC) -M $(CFLAGS) $< > $@.$$$$; \
+	 sed 's,\($*\)\.o[ :]*,\1.o $@ : ,g' < $@.$$$$ > $@; \
+	 rm -f $@.$$$$
 
-.PHONY:	fmt clean
+-include $(DEPS)
 
