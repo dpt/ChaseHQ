@@ -6,6 +6,7 @@
 
 // vim: ts=8 sts=2 sw=2 et
 
+#include <stddef.h>
 #include <stdint.h>
 
 #include "Types.h"
@@ -22,8 +23,7 @@
 //
 
 // $76F0
-const u8 bitmap_turbospin[TURBOWIDTH / 8 * 2 * TURBOHEIGHT *
-                          TURBOFRAMES] = {
+const u8 bitmap_turbospin[TURBOFRAMELENGTH * TURBOFRAMES] = {
   ________, ________, ___XXXXX, ________,
   ________, _XXXXXXX, ____XXXX, XXX_____,
   ________, _XXXXXXX, _____XXX, XXXX____,
@@ -974,7 +974,275 @@ const u8 bitmap_faces[FACEBYTES * NFACES] = {
 
 // [Graphics] Street lamps etc.
 //
-// TODO
+
+const stretchy_t stretchy_shortpole[3] = {
+  { 2, &shortpole_bottom },
+  { 4, &shortpole_middle },
+  { 1, NULL              } // Conv: NULL added
+};
+
+// why is the first column all zeroes?
+const stretchyset_t shortpole_bottom = {
+  &streetlampbody_bitmaps[0],
+  {
+    { 0x00, OFFSET(0)  },
+    { 0x00, OFFSET(0)  },
+    { 0x00, OFFSET(3)  },
+    { 0x00, OFFSET(3)  },
+    { 0x00, OFFSET(6)  },
+    { 0x00, OFFSET(6)  },
+    { 0x00, OFFSET(9)  },
+    { 0x00, OFFSET(9)  },
+    { 0x00, OFFSET(12) },
+    { 0x00, OFFSET(12) }
+  }
+};
+
+const stretchyset_t shortpole_middle = {
+  &streetlampbody_bitmaps[0],
+  {
+    { 0x00, OFFSET(1)  },
+    { 0x00, OFFSET(1)  },
+    { 0x00, OFFSET(4)  },
+    { 0x00, OFFSET(4)  },
+    { 0x00, OFFSET(7)  },
+    { 0x00, OFFSET(7)  },
+    { 0x00, OFFSET(10) },
+    { 0x00, OFFSET(10) },
+    { 0x00, OFFSET(13) },
+    { 0x00, OFFSET(13) }
+  }
+};
+
+// seems to be shared streetlamp/telegraphpole
+const stretchyset_t streetlampbody_7e38 = {
+  &streetlampbody_bitmaps[0],
+  {
+    { 0x28, OFFSET(0)  },
+    { 0x20, OFFSET(0)  },
+    { 0x18, OFFSET(3)  },
+    { 0x18, OFFSET(3)  },
+    { 0x14, OFFSET(6)  },
+    { 0x14, OFFSET(6)  },
+    { 0x10, OFFSET(9)  },
+    { 0x10, OFFSET(9)  },
+    { 0x0C, OFFSET(12) },
+    { 0x0C, OFFSET(12) }
+  }
+};
+
+const stretchyset_t streetlampbody_7e4e = {
+  &streetlampbody_bitmaps[0],
+  {
+    { 0x28, OFFSET(0)  },
+    { 0x20, OFFSET(0)  },
+    { 0x18, OFFSET(3)  },
+    { 0x18, OFFSET(3)  },
+    { 0x14, OFFSET(6)  },
+    { 0x14, OFFSET(6)  },
+    { 0x10, OFFSET(9)  },
+    { 0x10, OFFSET(9)  },
+    { 0x04, OFFSET(12) },
+    { 0x04, OFFSET(12) }
+  }
+};
+
+const stretchyset_t streetlampbody_7e64 = {
+  &streetlampbody_bitmaps[0],
+  {
+    { 0x28, OFFSET(1)  },
+    { 0x20, OFFSET(1)  },
+    { 0x18, OFFSET(4)  },
+    { 0x18, OFFSET(4)  },
+    { 0x14, OFFSET(7)  },
+    { 0x14, OFFSET(7)  },
+    { 0x10, OFFSET(10) },
+    { 0x10, OFFSET(10) },
+    { 0x0C, OFFSET(13) },
+    { 0x0C, OFFSET(13) }
+  }
+};
+
+const stretchyset_t streetlampbody_7e7a = {
+  &streetlampbody_bitmaps[0],
+  {
+    { 0x28, OFFSET(1)  },
+    { 0x20, OFFSET(1)  },
+    { 0x18, OFFSET(4)  },
+    { 0x18, OFFSET(4)  },
+    { 0x14, OFFSET(7)  },
+    { 0x14, OFFSET(7)  },
+    { 0x10, OFFSET(10) },
+    { 0x10, OFFSET(10) },
+    { 0x04, OFFSET(13) },
+    { 0x04, OFFSET(13) }
+  }
+};
+
+const stretchyset_t streetlampbody_7e90 = {
+  &streetlampbody_bitmaps[0],
+  {
+    { 0x28, OFFSET(2)  },
+    { 0x20, OFFSET(2)  },
+    { 0x18, OFFSET(5)  },
+    { 0x18, OFFSET(5)  },
+    { 0x14, OFFSET(8)  },
+    { 0x14, OFFSET(8)  },
+    { 0x10, OFFSET(11) },
+    { 0x10, OFFSET(11) },
+    { 0x0C, OFFSET(14) },
+    { 0x0C, OFFSET(14) }
+  }
+};
+
+const stretchyset_t streetlampbody_7ea6 = {
+  &streetlampbody_bitmaps[0],
+  {
+    { 0x28, OFFSET(2)  },
+    { 0x20, OFFSET(2)  },
+    { 0x18, OFFSET(5)  },
+    { 0x18, OFFSET(5)  },
+    { 0x14, OFFSET(8)  },
+    { 0x14, OFFSET(8)  },
+    { 0x10, OFFSET(11) },
+    { 0x10, OFFSET(11) },
+    { 0x04, OFFSET(14) },
+    { 0x04, OFFSET(14) }
+  }
+};
+
+const stretchybitmap_t streetlampbody_bitmaps[15] = {
+  { 1, 1, 2, &bitmap_streetlampbody_1[0],  &bitmap_streetlampbody_1[0]   },
+  { 1, 1, 2, &bitmap_streetlampbody_2[0],  &bitmap_streetlampbody_2[0]   },
+  { 1, 1, 2, &bitmap_streetlampbody_3[0],  &bitmap_streetlampbody_3[0]   },
+  { 1, 1, 2, &bitmap_streetlampbody_4[0],  &bitmap_streetlampbody_4[0]   },
+  { 1, 1, 2, &bitmap_streetlampbody_5[0],  &bitmap_streetlampbody_5[0]   },
+  { 1, 1, 2, &bitmap_streetlampbody_6[0],  &bitmap_streetlampbody_6[0]   },
+  { 1, 1, 1, &bitmap_streetlampbody_7[0],  &bitmap_streetlampbody_7s[0]  },
+  { 1, 1, 2, &bitmap_streetlampbody_8[0],  &bitmap_streetlampbody_8s[0]  },
+  { 1, 1, 2, &bitmap_streetlampbody_9[0],  &bitmap_streetlampbody_9s[0]  },
+  { 1, 1, 1, &bitmap_streetlampbody_10[0], &bitmap_streetlampbody_10s[0] },
+  { 1, 1, 2, &bitmap_streetlampbody_11[0], &bitmap_streetlampbody_11s[0] },
+  { 1, 1, 2, &bitmap_streetlampbody_12[0], &bitmap_streetlampbody_12s[0] },
+  { 2, 1, 1, &bitmap_streetlampbody_13[0], &bitmap_streetlampbody_13s[0] },
+  { 2, 1, 2, &bitmap_streetlampbody_14[0], &bitmap_streetlampbody_14s[0] },
+  { 2, 1, 2, &bitmap_streetlampbody_15[0], &bitmap_streetlampbody_15s[0] }
+};
+
+const u8 bitmap_streetlampbody_1[4] = {
+  X______X, _XXXXXX_,
+  _______X, XXX__XX_
+};
+
+const u8 bitmap_streetlampbody_2[4] = {
+  _______X, XX____X_,
+  _______X, X_X___X_
+};
+
+const u8 bitmap_streetlampbody_3[4] = {
+  X_____XX, _XX__X__,
+  X_____XX, _X___X__
+};
+
+const u8 bitmap_streetlampbody_4[4] = {
+  XX____XX, __XXXX__,
+  X______X, _X_X_XX_
+};
+
+const u8 bitmap_streetlampbody_5[4] = {
+  X_____XX, _XX__X__,
+  X_____XX, _X___X__
+};
+
+const u8 bitmap_streetlampbody_6[4] = {
+  X____XXX, _X__X___,
+  X____XXX, _X__X___
+};
+
+const u8 bitmap_streetlampbody_7[2] = {
+  ____XXXX, XXXX____
+};
+
+const u8 bitmap_streetlampbody_8[4] = {
+  ____XXXX, XX_X____,
+  ____XXXX, XX_X____
+};
+
+const u8 bitmap_streetlampbody_9[4] = {
+  ___XXXXX, X_X_____,
+  ___XXXXX, X_X_____
+};
+
+const u8 bitmap_streetlampbody_7s[2] = {
+  XXXX____, ____XXXX
+};
+
+const u8 bitmap_streetlampbody_8s[4] = {
+  XXXX____, ____XX_X,
+  XXXX____, ____XX_X
+};
+
+const u8 bitmap_streetlampbody_9s[4] = {
+  XXXX___X, ____X_X_,
+  XXXX___X, ____X_X_
+};
+
+const u8 bitmap_streetlampbody_10[2] = {
+  XX___XXX, __XXX___
+};
+
+const u8 bitmap_streetlampbody_11[4] = {
+  XX___XXX, __X_X___,
+  XX___XXX, __X_X___
+};
+
+const u8 bitmap_streetlampbody_12[4] = {
+  XX__XXXX, __XX____,
+  XX__XXXX, __XX____
+};
+
+const u8 bitmap_streetlampbody_10s[2] = {
+  XXXX___X, ____XXX_
+};
+
+const u8 bitmap_streetlampbody_11s[4] = {
+  XXXX___X, ____X_X_,
+  XXXX___X, ____X_X_
+};
+
+const u8 bitmap_streetlampbody_12s[4] = {
+  XXXX__XX, ____XX__,
+  XXXX__XX, ____XX__
+};
+
+const u8 bitmap_streetlampbody_13[4] = {
+  XXXXXXX_, _______X,
+  _XXXXXXX, X_______
+};
+
+const u8 bitmap_streetlampbody_14[8] = {
+  XXXXXXX_, _______X, _XXXXXXX, X_______,
+  XXXXXXX_, _______X, _XXXXXXX, X_______
+};
+
+const u8 bitmap_streetlampbody_15[8] = {
+  XXXXXXXX, ________, _XXXXXXX, X_______,
+  XXXXXXXX, ________, _XXXXXXX, X_______
+};
+
+const u8 bitmap_streetlampbody_13s[4] = {
+  XXXXXXXX, ________, XXX__XXX, ___XX___
+};
+
+const u8 bitmap_streetlampbody_14s[8] = {
+  XXXXXXXX, ________, XXX__XXX, ___XX___,
+  XXXXXXXX, ________, XXX__XXX, ___XX___
+};
+
+const u8 bitmap_streetlampbody_15s[8] = {
+  XXXXXXXX, ________, XXXX_XXX, ____X___,
+  XXXXXXXX, ________, XXXX_XXX, ____X___
+};
 
 /* ----------------------------------------------------------------------- */
 

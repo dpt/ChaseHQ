@@ -2,6 +2,9 @@
 //
 // Chase H.Q. code model
 //
+// This file contains only the fixed/engine data from the game in the same
+// order as the original.
+//
 // by dpt
 
 // vim: ts=8 sts=2 sw=2 et
@@ -15,9 +18,7 @@
 #include "ChaseHQ-State.h"
 #include "ChaseHQ.h"
 
-const u8 stage1[16 * 512];
-
-const u8 bitmap_turbospin[TURBOWIDTH / 8 * 2 * TURBOHEIGHT * TURBOFRAMES];
+const u8 bitmap_turbospin[TURBOFRAMELENGTH * TURBOFRAMES];
 
 const u8 pre_game_messages[64];
 const u8 pregame_data[207];
@@ -40,6 +41,41 @@ const u8 bitmap_fire6[4 * 6];
 const u8 bitmap_fire6s[4 * 6];
 
 const u8 bitmap_faces[FACEBYTES * NFACES];
+
+const stretchy_t stretchy_shortpole[3];
+const stretchyset_t shortpole_bottom;
+const stretchyset_t shortpole_middle;
+const stretchyset_t streetlampbody_7e38;
+const stretchyset_t streetlampbody_7e4e;
+const stretchyset_t streetlampbody_7e64;
+const stretchyset_t streetlampbody_7e7a;
+const stretchyset_t streetlampbody_7e90;
+const stretchyset_t streetlampbody_7ea6;
+const stretchybitmap_t streetlampbody_bitmaps[15];
+const u8 bitmap_streetlampbody_1[4];
+const u8 bitmap_streetlampbody_2[4];
+const u8 bitmap_streetlampbody_3[4];
+const u8 bitmap_streetlampbody_4[4];
+const u8 bitmap_streetlampbody_5[4];
+const u8 bitmap_streetlampbody_6[4];
+const u8 bitmap_streetlampbody_7[2];
+const u8 bitmap_streetlampbody_8[4];
+const u8 bitmap_streetlampbody_9[4];
+const u8 bitmap_streetlampbody_7s[2];
+const u8 bitmap_streetlampbody_8s[4];
+const u8 bitmap_streetlampbody_9s[4];
+const u8 bitmap_streetlampbody_10[2];
+const u8 bitmap_streetlampbody_11[4];
+const u8 bitmap_streetlampbody_12[4];
+const u8 bitmap_streetlampbody_10s[2];
+const u8 bitmap_streetlampbody_11s[4];
+const u8 bitmap_streetlampbody_12s[4];
+const u8 bitmap_streetlampbody_13[4];
+const u8 bitmap_streetlampbody_14[8];
+const u8 bitmap_streetlampbody_15[8];
+const u8 bitmap_streetlampbody_13s[4];
+const u8 bitmap_streetlampbody_14s[8];
+const u8 bitmap_streetlampbody_15s[8];
 
 const u8 chatterblk_start_stage[4];
 const u8 chatterblk_tony_giddy_up[3];

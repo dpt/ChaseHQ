@@ -54,10 +54,15 @@
 #define STREND                (1<<7) // string terminating top bit
 
 #define TURBOWIDTH            (16) // pixels
+#define TURBOROWBYTES         (TURBOWIDTH / 8)
 #define TURBOHEIGHT           (14)
+#define TURBOFRAMELENGTH      (TURBOROWBYTES * TURBOHEIGHT * 2) // masked
 #define TURBOFRAMES           (3)
 
-#define FACEBITMAPBYTES       (32 / 8 * 40)
+#define FACEWIDTH             (32)
+#define FACEROWBYTES          (FACEWIDTH / 8)
+#define FACEHEIGHT            (40)
+#define FACEBITMAPBYTES       (FACEROWBYTES * FACEHEIGHT)
 #define FACEATTRBYTES         (4 * 5)
 #define FACEBYTES             (FACEBITMAPBYTES + FACEATTRBYTES)
 #define NFACES                (3)
@@ -310,6 +315,40 @@ typedef struct stagevars_s stagevars_t;
 typedef struct chqstate_s chqstate_t;
 
 typedef void (hazard_handler_t)(chqstate_t *state);
+
+/* ----------------------------------------------------------------------- */
+
+typedef struct {
+  u8        width;  // pixels
+  u8        flags;  // assuming 1=>masked
+  u8        height; // pixels
+  const u8 *bitmap;
+  const u8 *bitmapshifted;
+} stretchybitmap_t;
+
+/// Stretchy Set offset
+/// (7 is sizeof(stretchybitmap_t)) -- use offsetof ?
+#define OFFSET(N) ((N)*7+2)
+
+typedef struct {
+  const stretchybitmap_t *bitmaps; // -> array of bitmaps
+  struct {
+    u8 depth; // something depth-ish
+    u8 offset;
+  } pairs[10]; // maps depths to offsets
+} stretchyset_t;
+
+// root objects (an array of these) used with routine draw_stretchy_object_left/right
+// bottom-most object is given first
+typedef struct {
+  // 1=>end
+  // 2=>
+  // 3=>repeats?
+  // otherwise not sure. the value affects height.
+  u8                   n;
+  const stretchyset_t *set; // Conv: this is always present, can be NULL for
+  // final entry
+} stretchy_t;
 
 /* ----------------------------------------------------------------------- */
 

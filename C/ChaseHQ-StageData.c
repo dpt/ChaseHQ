@@ -3441,10 +3441,10 @@ static const u8 stage5[STAGE_LENGTH] = {
 };
 
 const u8 *stage_data_locations[MAX_STAGES] = {
-    &stage1[0],
-    &stage2[0],
-    &stage3[0],
-    &stage4[0],
-    &stage5[0]
+  &stage1[0],
+  &stage2[0],
+  &stage3[0],
+  &stage4[0],
+  &stage5[0]
 };
 

@@ -60,6 +60,15 @@
 //
 // Decide how to drive the main loop(s).
 //
+// Get the pregame screen going.
+//
+// Decide how to handle having both C struct-defined graphics AND graphics
+// embedded in the original stage data. Essentially two different formats.
+// Two sets of routines?
+//
+// Also stage data needs to refer to original game addresses when defining
+// objects - will need mapping across somewhere.
+//
 
 #include <assert.h>
 #include <stddef.h>
