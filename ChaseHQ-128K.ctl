@@ -102,7 +102,7 @@
 > $4000 ; $5C00..$76EF is the per-stage data:
 > $4000 ; - $5C00..$5CEF is the regular version of the backdrop
 > $4000 ; $8DBB (word) is the address of the current transition animation
-> $4000 ; $E300..$E316 is a height table (22 bytes long)
+> $4000 ; $E300..$E316 is a height table (22? bytes long)
 > $4000 ; $E336..      is TBD
 > $4000 ; $E410..$E4CF is a road edge/markings table
 > $4000 ; $E4D0..$E4FF is road lane markings
@@ -1323,7 +1323,7 @@ N $70E6 #HTML[#CALL:graphic($70E6,16,4,1,1)]
 B $70E6,8,8 Masked bitmap data
 @ $70F6 label=stretchy_tree_right
 B $70EE,9,8,1
-W $70F7,2,2
+W $70F7,2,2 trunk + ground shadow
 B $70F9,1,1
 W $70FA,2,2
 B $70FC,1,1
@@ -1644,7 +1644,7 @@ N $7760 #HTML[#CALL:graphic($7760,16,14,1,1)]
 @ $7760 label=bitmap_turbospin_3
 B $7760,56,4 Masked bitmap data
 b $7798 [Pre-game] Messages
-@ $7798 label=pre_game_messages
+@ $7798 label=pregame_messages
 B $7798,1,1 flags? attrs?   text is white
 W $7799,2,2 Back buffer address
 W $779B,2,2 Attributes address
@@ -1975,7 +1975,7 @@ B $7E08,1,1
 W $7E09,2,2
 B $7E0B,1,1 1 => end
 @ $7E0C label=shortpole_7e0c
-W $7E0C,2,2 -> streetlampbody_lods
+W $7E0C,2,2 -> streetlampbody_bitmaps
 B $7E0E,20,2
 @ $7E22 label=shortpole_7e22
 W $7E22,2,2
@@ -1998,131 +1998,155 @@ B $7E92,20,2
 @ $7EA6 label=streetlampbody_7ea6
 W $7EA6,2,2
 B $7EA8,20,2
-@ $7EBC label=streetlampbody_lods
+@ $7EBC label=streetlampbody_bitmaps
 B $7EBC,1,1 Width (bytes)
-B $7EBD,1,1 Flags
+B $7EBD,1,1 Flags (masked)
 B $7EBE,1,1 Height (pixels)
 W $7EBF,2,2 Bitmap
 W $7EC1,2,2 Pre-shifted bitmap
 B $7EC3,1,1 Width (bytes)
-B $7EC4,1,1 Flags
+B $7EC4,1,1 Flags (masked)
 B $7EC5,1,1 Height (pixels)
 W $7EC6,2,2 Bitmap
 W $7EC8,2,2 Pre-shifted bitmap
 B $7ECA,1,1 Width (bytes)
-B $7ECB,1,1 Flags
+B $7ECB,1,1 Flags (masked)
 B $7ECC,1,1 Height (pixels)
 W $7ECD,2,2 Bitmap
 W $7ECF,2,2 Pre-shifted bitmap
 B $7ED1,1,1 Width (bytes)
-B $7ED2,1,1 Flags
+B $7ED2,1,1 Flags (masked)
 B $7ED3,1,1 Height (pixels)
 W $7ED4,2,2 Bitmap
 W $7ED6,2,2 Pre-shifted bitmap
 B $7ED8,1,1 Width (bytes)
-B $7ED9,1,1 Flags
+B $7ED9,1,1 Flags (masked)
 B $7EDA,1,1 Height (pixels)
 W $7EDB,2,2 Bitmap
 W $7EDD,2,2 Pre-shifted bitmap
 B $7EDF,1,1 Width (bytes)
-B $7EE0,1,1 Flags
+B $7EE0,1,1 Flags (masked)
 B $7EE1,1,1 Height (pixels)
 W $7EE2,2,2 Bitmap
 W $7EE4,2,2 Pre-shifted bitmap
 B $7EE6,1,1 Width (bytes)
-B $7EE7,1,1 Flags
+B $7EE7,1,1 Flags (masked)
 B $7EE8,1,1 Height (pixels)
 W $7EE9,2,2 Bitmap
 W $7EEB,2,2 Pre-shifted bitmap
 B $7EED,1,1 Width (bytes)
-B $7EEE,1,1 Flags
+B $7EEE,1,1 Flags (masked)
 B $7EEF,1,1 Height (pixels)
 W $7EF0,2,2 Bitmap
 W $7EF2,2,2 Pre-shifted bitmap
 B $7EF4,1,1 Width (bytes)
-B $7EF5,1,1 Flags
+B $7EF5,1,1 Flags (masked)
 B $7EF6,1,1 Height (pixels)
 W $7EF7,2,2 Bitmap
 W $7EF9,2,2 Pre-shifted bitmap
 B $7EFB,1,1 Width (bytes)
-B $7EFC,1,1 Flags
+B $7EFC,1,1 Flags (masked)
 B $7EFD,1,1 Height (pixels)
 W $7EFE,2,2 Bitmap
 W $7F00,2,2 Pre-shifted bitmap
 B $7F02,1,1 Width (bytes)
-B $7F03,1,1 Flags
+B $7F03,1,1 Flags (masked)
 B $7F04,1,1 Height (pixels)
 W $7F05,2,2 Bitmap
 W $7F07,2,2 Pre-shifted bitmap
 B $7F09,1,1 Width (bytes)
-B $7F0A,1,1 Flags
+B $7F0A,1,1 Flags (masked)
 B $7F0B,1,1 Height (pixels)
 W $7F0C,2,2 Bitmap
 W $7F0E,2,2 Pre-shifted bitmap
 B $7F10,1,1 Width (bytes)
-B $7F11,1,1 Flags
+B $7F11,1,1 Flags (masked)
 B $7F12,1,1 Height (pixels)
 W $7F13,2,2 Bitmap
 W $7F15,2,2 Pre-shifted bitmap
 B $7F17,1,1 Width (bytes)
-B $7F18,1,1 Flags
+B $7F18,1,1 Flags (masked)
 B $7F19,1,1 Height (pixels)
 W $7F1A,2,2 Bitmap
 W $7F1C,2,2 Pre-shifted bitmap
 B $7F1E,1,1 Width (bytes)
-B $7F1F,1,1 Flags
+B $7F1F,1,1 Flags (masked)
 B $7F20,1,1 Height (pixels)
 W $7F21,2,2 Bitmap
 W $7F23,2,2 Pre-shifted bitmap
 N $7F25 Bottom two rows of largest scale lamppost.
+N $7F25 #HTML[#CALL:graphic($7F25,8,2,1,1)]
 @ $7F25 label=bitmap_streetlampbody_1
 B $7F25,4,4 Masked bitmap data
 N $7F29 Bottom repeating section of largest scale lamppost.
+N $7F29 #HTML[#CALL:graphic($7F29,8,2,1,1)]
 @ $7F29 label=bitmap_streetlampbody_2
 B $7F29,4,4 Masked bitmap data
 N $7F2D Upper repeating section of largest scale lamppost.
+N $7F2D #HTML[#CALL:graphic($7F2D,8,2,1,1)]
 @ $7F2D label=bitmap_streetlampbody_3
 B $7F2D,4,4 Masked bitmap data
+N $7F31 #HTML[#CALL:graphic($7F31,8,2,1,1)]
 @ $7F31 label=bitmap_streetlampbody_4
 B $7F31,4,4 Masked bitmap data
+N $7F35 #HTML[#CALL:graphic($7F35,8,2,1,1)]
 @ $7F35 label=bitmap_streetlampbody_5
 B $7F35,4,4 Masked bitmap data
+N $7F39 #HTML[#CALL:graphic($7F39,8,2,1,1)]
 @ $7F39 label=bitmap_streetlampbody_6
 B $7F39,4,4 Masked bitmap data
+N $7F3D #HTML[#CALL:graphic($7F3D,8,1,1,1)]
 @ $7F3D label=bitmap_streetlampbody_7
 B $7F3D,2,2 Masked bitmap data
+N $7F3F #HTML[#CALL:graphic($7F3F,8,2,1,1)]
 @ $7F3F label=bitmap_streetlampbody_8
 B $7F3F,4,4 Masked bitmap data
+N $7F43 #HTML[#CALL:graphic($7F43,8,2,1,1)]
 @ $7F43 label=bitmap_streetlampbody_9
 B $7F43,4,4 Masked bitmap data
+N $7F47 #HTML[#CALL:graphic($7F47,8,1,1,1)]
 @ $7F47 label=bitmap_streetlampbody_7s
 B $7F47,2,2 Masked bitmap data
+N $7F49 #HTML[#CALL:graphic($7F49,8,2,1,1)]
 @ $7F49 label=bitmap_streetlampbody_8s
 B $7F49,4,4 Masked bitmap data
+N $7F4D #HTML[#CALL:graphic($7F4D,8,2,1,1)]
 @ $7F4D label=bitmap_streetlampbody_9s
 B $7F4D,4,4 Masked bitmap data
+N $7F51 #HTML[#CALL:graphic($7F51,8,1,1,1)]
 @ $7F51 label=bitmap_streetlampbody_10
 B $7F51,2,2 Masked bitmap data
+N $7F53 #HTML[#CALL:graphic($7F53,8,2,1,1)]
 @ $7F53 label=bitmap_streetlampbody_11
 B $7F53,4,4 Masked bitmap data
+N $7F57 #HTML[#CALL:graphic($7F57,8,2,1,1)]
 @ $7F57 label=bitmap_streetlampbody_12
 B $7F57,4,4 Masked bitmap data
+N $7F5B #HTML[#CALL:graphic($7F5B,8,1,1,1)]
 @ $7F5B label=bitmap_streetlampbody_10s
 B $7F5B,2,2 Masked bitmap data
+N $7F5D #HTML[#CALL:graphic($7F5D,8,2,1,1)]
 @ $7F5D label=bitmap_streetlampbody_11s
 B $7F5D,4,4 Masked bitmap data
+N $7F61 #HTML[#CALL:graphic($7F61,8,2,1,1)]
 @ $7F61 label=bitmap_streetlampbody_12s
 B $7F61,4,4 Masked bitmap data
+N $7F65 #HTML[#CALL:graphic($7F65,8,2,1,1)]
 @ $7F65 label=bitmap_streetlampbody_13
 B $7F65,4,4 Masked bitmap data
+N $7F69 #HTML[#CALL:graphic($7F69,16,2,1,1)]
 @ $7F69 label=bitmap_streetlampbody_14
 B $7F69,8,8 Masked bitmap data
+N $7F71 #HTML[#CALL:graphic($7F71,16,2,1,1)]
 @ $7F71 label=bitmap_streetlampbody_15
 B $7F71,8,8 Masked bitmap data
+N $7F79 #HTML[#CALL:graphic($7F79,8,2,1,1)]
 @ $7F79 label=bitmap_streetlampbody_13s
 B $7F79,4,4 Masked bitmap data
+N $7F7D #HTML[#CALL:graphic($7F7D,16,2,1,1)]
 @ $7F7D label=bitmap_streetlampbody_14s
 B $7F7D,8,8 Masked bitmap data
+N $7F85 #HTML[#CALL:graphic($7F85,16,2,1,1)]
 @ $7F85 label=bitmap_streetlampbody_15s
 B $7F85,8,8 Masked bitmap data
 u $7F8D Unused
@@ -2709,7 +2733,7 @@ N $85C0 transition_control is now zero.
 C $85C0,5 Return if chatter_state is idle (zero)
 C $85C5,4 Jump to rps_start_game if chatter_state is stopping (>= 3)
 C $85C9,3 Call keyscan
-C $85CC,4 Loop to rps_start_game unless fire was hit
+C $85CC,4 Loop to rps_loop unless fire was hit
 N $85D0 Fire was hit.
 C $85D0,3 Call drive_chatter_stop
 C $85D3,3 Exit via play_start_noise (will RET for us)
@@ -2759,7 +2783,7 @@ C $8622,1 Decrement counter (max out at 7)
 C $8623,3 Self modify counter in #R$8613
 C $8626,3 Screen attribute (23,16)
 C $8629,3 Call am_set_attrs
-N $862C Update the second meter. Repeats the above.
+N $862C Update the second meter. Essentially duplicates the above code.
 C $862C,3 Generate a random byte
 C $862F,1 Set flags
 C $8630,2 Self modified counter
@@ -2777,13 +2801,13 @@ N $8646 The signal meter bar is seven segments wide. Fill the left hand portion 
 C $8646,1 Set flags from counter in #REGa
 C $8647,2 Jump if zero
 C $8649,1 Copy counter to loop counter
-C $864A,3 Set attribute byte to black ink over green
+C $864A,3 Set attribute byte to bright, black ink over green
 C $864D,2 Loop while #REGb > 0
 @ $864F label=am_set_right_attrs
 C $864F,3 A = 7 - A
 C $8652,1 Return if zero
 C $8653,1 Copy counter to loop counter
-C $8654,3 Set attribute byte to black ink over red
+C $8654,3 Set attribute byte to bright, black ink over red
 C $8657,2 Loop while #REGb > 0
 C $8659,1 Return
 c $865A Draw the pre-game screen
@@ -2843,8 +2867,8 @@ C $86A7,1 Move to next tile row
 C $86A8,1 Move to next scanline
 C $86A9,2 Loop dp_tile_loop
 C $86AB,1 Pop back buffer ptr
-N $86AC Seems to be building an attribute address?
-C $86AC,6 Get bit 3 of Y
+N $86AC Build attribute address from back buffer ptr
+C $86AC,6 Get bit 3 of Y as bit 5
 C $86B2,5 Add to X bits
 C $86B7,4 Get bits 4..6 of Y. Bit 6 goes to carry
 C $86BB,4 Select second third of attributes
@@ -2874,10 +2898,10 @@ C $86E4,1 Restore command pointer
 C $86E5,3 Loop dp_get_command
 @ $86E8 label=dp_print_strings
 C $86E8,2 Four messages to print
-C $86EA,3 Load address of pre_game_messages
+C $86EA,3 Load address of pregame_messages
 @ $86ED label=dp_print_string
 C $86ED,2 Flags TBD
-C $86EF,1 HL--
+C $86EF,1 print_message expects a flags byte at the start, which it skips, so fake one here
 C $86F0,3 Call print_message
 C $86F3,2 Loop to dp_print_string while #REGb > 0
 C $86F5,1 Return
@@ -2917,7 +2941,7 @@ C $873F,3 Load address of escape_scene_data
 C $8742,3 Call set_up_stage
 C $8745,6 Set speed to $FA [speed of the camera]
 C $874B,11 Initialise hazards[0] (the perp)
-@ $8759 ssub=LD (hazard_0 + 1),HL
+@ $8759 ssub=LD (hazard_0 + 9),HL
 C $8756,6 Set $A191 to the perp's car LOD
 C $875C,5 inhibit_collision_detection = $FF  -- Stops #R$AD0D from running
 C $8761,3 Load address of failed_chatter ("wrong job" / "one more try" / "mediocre driver")
@@ -2944,9 +2968,9 @@ C $879C,6 Loop to es_loop unless the tunnel has appeared
 N $87A2 Tunnel has appeared.
 C $87A2,3 reading from tunnel code [15 when tunnel is small, 6 when fills screen]
 C $87A5,4 Loop to es_loop if tunnel code value >= 7
-C $87A9,3 $A189 is hazards 2nd byte
+C $87A9,3 Load hazards[0].distance byte
 C $87AC,4 Jump if it != 5
-C $87B0,11 Activate three hazards? [i.e. the three barriers]
+C $87B0,11 Activate the three barriers
 C $87BB,6 Set speed to zero [speed of camera]
 C $87C1,6 Loop to es_loop while the perp is still active in the hazards
 C $87C7,6 Loop while chatter_state > 0 => chatter is still happening
@@ -3998,13 +4022,13 @@ C $91AD,1 Advance past count byte
 C $91AE,4 Read address of ? data to #REGde, e.g. shortpole_7e0c
 C $91B2,4 Preserve HL, IX, BC
 C $91B6,1 Swap
-C $91B7,3 DE = wordat(HL); HL++  -- this is the LOD pointer e.g. streetlampbody_lods
+C $91B7,3 DE = wordat(HL); HL++  -- this is the LOD pointer e.g. streetlampbody_bitmaps
 N $91BA This seems to be a 0..9 value that selects from the table.
 C $91BA,4 HL += <self modified>  -- by #R$91A0, this is the table offset from earlier
 N $91BE HL now points to an entry in the table. Load it. sampled DE = $717E (-> tree_lods), HL = $713E (first of a byte pair)
 C $91BE,2 A = *HL++  -- e.g. 0
 C $91C0,3 HL = *HL  -- e.g. $56
-C $91C3,1 HL += DE  -- so HL's an offset from streetlampbody_lods
+C $91C3,1 HL += DE  -- so HL's an offset from streetlampbody_bitmaps
 C $91C4,1 Restore BC
 C $91C5,1 B--   -- e.g. cmd byte 2 would be 0 after this
 C $91C6,2 Jump to dispatch for cmd bytes 3+
@@ -4302,8 +4326,8 @@ C $949B,1 fall through
 c $949C Sprite plotter for back buffer, up to 64px wide, 15px high, no mask, no flip
 D $949C Used by the routines at #R$85E4, #R$92E1 and #R$B58E.
 R $949C I:A Width in bytes
-R $949C I:DE' Stride of bitmap data in bytes
 R $949C I:HL Address in back buffer to plot at
+R $949C I:DE' Stride of bitmap data in bytes
 R $949C I:HL' Address of bitmap data
 @ $949C label=plot_sprite
 C $949C,5 Use ps_odd if the bottom bit is set (odd widths)
@@ -4396,8 +4420,8 @@ C $953F,3 Continue
 c $9542 Sprite plotter for back buffer, up to 64px wide, 15px high, no mask, flips
 D $9542 Used by the routines at #R$92E1 and #R$B58E.
 R $9542 I:A Plot (#REGa + 1) * 8 pixels
-R $9542 I:DE' Stride of bitmap data in bytes
 R $9542 I:HL Address in back buffer to plot at
+R $9542 I:DE' Stride of bitmap data in bytes
 R $9542 I:HL' Address of bitmap data
 @ $9542 label=plot_sprite_flipped
 C $9542,4 Advance the back buffer pointer to the end of the first line, so we can draw in reverse
@@ -5614,6 +5638,7 @@ C $A0DC,4 Read Kempston joystick port. Returns 000FUDLR active high
 @ $A0F3 label=ks_keyboard
 @ $A0FB label=ks_common
 C $A111,1 Return
+@ $A112 label=keyscan_a112
 C $A112,1 Outer keyboard loop
 C $A117,1 invert carry
 C $A11A,2 loop while top bit set?
@@ -6418,8 +6443,8 @@ C $A70E,3 Update current_lane
 N $A711 current_lane is 1/2/3/4
 @ $A711 label=pb_reread_current_lane
 C $A711,3 Re-read current_lane [not convinced this is required]
-@ $A714 ssub=LD HL,hazard_lanes - 1
-C $A714,5 Load address of hazard_lanes[current_lane]
+@ $A714 ssub=LD HL,hazard_pos_speed - 1
+C $A714,5 Load address of hazard_pos_speed[current_lane]
 C $A719,4 Compare horizontal position IX[5] with table value
 N $A71D #REGc seems to be a flag that's 1 when changing lane and 0 otherwise. We seem to be bumping the position by +/-10.
 C $A71D,2 Set flag indicating we're changing lane
@@ -6529,10 +6554,10 @@ C $A7DB,3 Point #REGhl at smash_chatter ("BEAR DOWN" / "OH MAN" / etc.)
 C $A7DE,3 Call start_chatter (priority 5)
 C $A7E1,3 Effect 3 (car crash), Priority 1
 C $A7E4,3 Exit via start_sfx
-b $A7E7 Horizontal positions of lanes
+b $A7E7 Horizontal positions and speeds of hazard vehicles
 D $A7E7 Three groups of four horizontal position values. Indexed by lane number [0..3]. Offset +4 is used when spawning cars before the perp is sighted. Offset +8 is used when sighted.
-@ $A7E7 label=hazard_lanes
-B $A7E7,4,4 positions the perp will align with
+@ $A7E7 label=hazard_pos_speed
+B $A7E7,4,4 positions the hazard will align with
 B $A7EB,4,4 used when perp has not been sighted
 B $A7EF,4,4 used when perp is sighted
 > $A7F3 ; a7f0, a7f1, a7ec, a7ef is used by $a875
@@ -6578,7 +6603,7 @@ C $A835,2 Shift is-a-vehicle flag into #REGc
 C $A837,2 Advance to next hazard
 C $A839,2 Loop to sc_loop while #REGb > 0
 C $A83B,1 Return
-N $A83C Don't spawn if there are three or more cars already on-screen.
+N $A83C Don't spawn if there are three or more cars already spawned.
 @ $A83C label=sc_fill_in
 C $A83C,3 Return if bit 2 of flags is set
 N $A83F Copy template hazard to unused slot.
@@ -6599,8 +6624,8 @@ C $A858,1 Otherwise set to maximum lane
 @ $A859 label=sc_set_lane
 C $A859,3 Set IX[17] to new lane
 C $A85C,3 Set IX[18] to new lane  [but what's the difference between the two?]
-N $A85F Copy hazard_lanes[current_lane - 1] to IX[5].
-@ $A85F ssub=LD HL,hazard_lanes - 1
+N $A85F Copy hazard_pos_speed values to hazard position and speed.
+@ $A85F ssub=LD HL,hazard_pos_speed - 1
 C $A85F,3 Load address of #R$A7E7 table (but start a byte earlier so it's 1-indexed)
 C $A862,4 Index the table
 C $A866,1 Load horizontal position from table
@@ -6611,7 +6636,7 @@ C $A870,2 Jump if not sighted
 C $A872,1 Double offset to 8 if sighted
 @ $A873 label=sc_have_offset
 C $A873,2 Add offset to previously computed table address (#REGb is zero)
-C $A875,4 Set (different) horizontal position from table
+C $A875,4 Set speed from table
 N $A879 Now pick a random car LOD to show.
 C $A879,3 Generate a random byte with which we shall select a LOD
 C $A87C,2 Isolate two bits, shifted up by one (giving a valid array byte offset of 0/2/4/6)
@@ -6679,7 +6704,7 @@ C $A8F0,8 If A > C IX[18] = C  -- set max lane if over
 C $A8F8,3 Read back the chosen lane
 C $A8FB,5 Jump to #R$A926 if A == IX[17]  -- lanes equal, no movement choice to be made?
 C $A900,2 shift out?
-@ $A902 ssub=LD HL,hazard_lanes - 1
+@ $A902 ssub=LD HL,hazard_pos_speed - 1
 C $A902,3 HL = $A7E6 -> #R$A7E7 table (1-indexed)
 C $A905,1 C = A  -- copy chosen lane to C
 C $A906,2 Compute HL[A]
@@ -6732,7 +6757,7 @@ C $A962,3 Generate a random byte
 C $A965,8 Store 1 (stone) if it's +ve or zero, or 2 (dirt) if it's -ve
 C $A96D,3 Generate a random byte [could be a position?]
 C $A970,2 Store that random byte
-C $A972,5 Self modify 'LD A' @ #R$A97E to load 1
+C $A972,2 Self modify 'LD A' @ #R$A97E to load 1
 C $A977,3 Self modify 'LD A' @ #R$C0BB to load 1
 C $A97A,3 Self modify 'LD A' @ #R$A9DE to load 1
 C $A97D,1 Return
@@ -9205,13 +9230,13 @@ C $BD99,7 Jump if perp_caught_phase >= 3 (when car stops)
 N $BDA0 Set the smash meter attributes
 C $BDA0,3 Screen attribute (2,11)
 C $BDA3,3 = 32
-C $BDA6,2 Black over bright red
+C $BDA6,2 Bright, black over red
 C $BDA8,4 Set two attrs
-C $BDAC,2 Black over bright magenta
+C $BDAC,2 Bright, black over magenta
 C $BDAE,4 Set two attrs
-C $BDB2,2 Black over bright green
+C $BDB2,2 Bright, black over green
 C $BDB4,4 Set two attrs
-C $BDB8,2 Black over bright white
+C $BDB8,2 Bright, black over white
 C $BDBA,3 Set two attrs
 @ $BDBD label=ds_exit
 C $BDBD,3 Restore original #REGsp (self modified at start of routine)
@@ -11284,14 +11309,14 @@ C $CDAF,1 Increment address of entry in table (wrapping around)
 C $CDB0,2 IYl++ (wrapping around)
 C $CDB2,2 Loop to bht_loop while #REGb
 C $CDB4,3 Final byte is always $A0
-N $CDB7 Copy the table to $E336 while setting negative values to 96.
+N $CDB7 Copy the table to $E336 while setting negative values to 96[?]
 C $CDB7,3 Load address of destination
 C $CDBA,3 Load address of source (height table?)
-C $CDBD,3 B = 21 iterations, C = 96 limit/minimum
+C $CDBD,3 B = 21 iterations, C = 96 limit/minimum?
 @ $CDC0 label=bht_loop2
 C $CDC0,1 Read from table just built
-C $CDC1,4 Jump to bht_write_it if A is positive
-C $CDC5,1 Otherwise it's negative, so use 96
+C $CDC1,4 Jump to bht_write_it if (A - C) is positive
+C $CDC5,1 Otherwise it's negative, so use #REGa
 @ $CDC6 label=bht_write_it
 C $CDC6,1 Write it
 C $CDC7,1 HL++  (wrapping around)

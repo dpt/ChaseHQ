@@ -6,29 +6,46 @@
 #define SCREEN_WIDTH                    (256)
 #define SCREEN_HEIGHT                   (192)
 
-#define ATTRIBUTE_BRIGHT                (1<<6)
+#define ATTR_BLACK                      (0)
+#define ATTR_BLUE                       (1)
+#define ATTR_RED                        (2)
+#define ATTR_MAGENTA                    (3)
+#define ATTR_GREEN                      (4)
+#define ATTR_CYAN                       (5)
+#define ATTR_YELLOW                     (6)
+#define ATTR_WHITE                      (7)
+
+#define ATTR_BRIGHT                     (1<<6)
+
+// With [F]lash, [B]right, [P]aper, [I]nk: 0bFBPPPIII
+#define MKATTR(F,B,P,I) (((F) << 7) | ((B) << 6) | ((P) << 3) | (I))
 
 enum {
-  attribute_BLACK_OVER_BLACK          = 0,
-  attribute_BLUE_OVER_BLACK           = 1,
-  attribute_RED_OVER_BLACK            = 2,
-  attribute_PURPLE_OVER_BLACK         = 3,
-  attribute_GREEN_OVER_BLACK          = 4,
-  attribute_CYAN_OVER_BLACK           = 5,
-  attribute_YELLOW_OVER_BLACK         = 6,
-  attribute_WHITE_OVER_BLACK          = 7,
-  attribute_BRIGHT_BLUE_OVER_BLACK    = 65,
-  attribute_BRIGHT_RED_OVER_BLACK     = 66,
-  attribute_BRIGHT_PURPLE_OVER_BLACK  = 67,
-  attribute_BRIGHT_GREEN_OVER_BLACK   = 68,
-  attribute_BRIGHT_CYAN_OVER_BLACK    = 69,
-  attribute_BRIGHT_YELLOW_OVER_BLACK  = 70,
-  attribute_BRIGHT_WHITE_OVER_BLACK   = 71,
-  attribute_BLACK_OVER_BRIGHT_RED     = 0x50,
-  attribute_BLACK_OVER_BRIGHT_MAGENTA = 0x58,
-  attribute_BLACK_OVER_BRIGHT_GREEN   = 0x60,
-  attribute_BLACK_OVER_BRIGHT_CYAN    = 0x68,
-  attribute_BLACK_OVER_BRIGHT_WHITE   = 0x78
+  attribute_BLACK_OVER_BLACK          = MKATTR(0, 0, ATTR_BLACK, ATTR_BLACK),
+
+  attribute_BLUE_OVER_BLACK           = MKATTR(0, 0, ATTR_BLACK, ATTR_BLUE),
+  attribute_RED_OVER_BLACK            = MKATTR(0, 0, ATTR_BLACK, ATTR_RED),
+  attribute_MAGENTA_OVER_BLACK        = MKATTR(0, 0, ATTR_BLACK, ATTR_MAGENTA),
+  attribute_GREEN_OVER_BLACK          = MKATTR(0, 0, ATTR_BLACK, ATTR_GREEN),
+  attribute_CYAN_OVER_BLACK           = MKATTR(0, 0, ATTR_BLACK, ATTR_CYAN),
+  attribute_YELLOW_OVER_BLACK         = MKATTR(0, 0, ATTR_BLACK, ATTR_YELLOW),
+  attribute_WHITE_OVER_BLACK          = MKATTR(0, 0, ATTR_BLACK, ATTR_WHITE),
+
+  attribute_BRIGHT_BLUE_OVER_BLACK    = MKATTR(0, 1, ATTR_BLACK, ATTR_BLUE),
+  attribute_BRIGHT_RED_OVER_BLACK     = MKATTR(0, 1, ATTR_BLACK, ATTR_RED),
+  attribute_BRIGHT_MAGENTA_OVER_BLACK = MKATTR(0, 1, ATTR_BLACK, ATTR_MAGENTA),
+  attribute_BRIGHT_GREEN_OVER_BLACK   = MKATTR(0, 1, ATTR_BLACK, ATTR_GREEN),
+  attribute_BRIGHT_CYAN_OVER_BLACK    = MKATTR(0, 1, ATTR_BLACK, ATTR_CYAN),
+  attribute_BRIGHT_YELLOW_OVER_BLACK  = MKATTR(0, 1, ATTR_BLACK, ATTR_YELLOW),
+  attribute_BRIGHT_WHITE_OVER_BLACK   = MKATTR(0, 1, ATTR_BLACK, ATTR_WHITE),
+
+  attribute_BRIGHT_BLACK_OVER_BLUE    = MKATTR(0, 1, ATTR_BLUE, ATTR_BLACK),
+  attribute_BRIGHT_BLACK_OVER_RED     = MKATTR(0, 1, ATTR_RED, ATTR_BLACK),
+  attribute_BRIGHT_BLACK_OVER_MAGENTA = MKATTR(0, 1, ATTR_MAGENTA, ATTR_BLACK),
+  attribute_BRIGHT_BLACK_OVER_GREEN   = MKATTR(0, 1, ATTR_GREEN, ATTR_BLACK),
+  attribute_BRIGHT_BLACK_OVER_CYAN    = MKATTR(0, 1, ATTR_CYAN, ATTR_BLACK),
+  attribute_BRIGHT_BLACK_OVER_YELLOW  = MKATTR(0, 1, ATTR_YELLOW, ATTR_BLACK),
+  attribute_BRIGHT_BLACK_OVER_WHITE   = MKATTR(0, 1, ATTR_WHITE, ATTR_BLACK),
 };
 
 /* Memory map */

@@ -20,7 +20,7 @@
 
 const u8 bitmap_turbospin[TURBOFRAMELENGTH * TURBOFRAMES];
 
-const u8 pre_game_messages[64];
+const u8 pregame_messages[64];
 const u8 pregame_data[207];
 const u8 pregame_tiles[45 * 8];
 
@@ -87,8 +87,8 @@ const u8 attract_messages[37];
 const u8 credits_messages[84];
 const u8 copyright_messages[92];
 
-// + escape_scene_data
-
+const scenedata_t escape_scene_data;
+const hazard_t escape_scene_perp;
 
 const u8 score_messages_template[90];
 const u8 sighting_message[36];

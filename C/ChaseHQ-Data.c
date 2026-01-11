@@ -70,25 +70,30 @@ const u8 bitmap_turbospin[TURBOFRAMELENGTH * TURBOFRAMES] = {
   XXXXX___, ________, ________, ________
 };
 
-const u8 pre_game_messages[64] = {
-  0x78,
+// $7798
+const u8 pregame_messages[64] = {
+  attribute_BRIGHT_BLACK_OVER_WHITE,
   TWOBYTES(0xF802),
-  TWOBYTES(0xF922),
+  TWOBYTES(0x5922),
   'C', 'H', 'A', 'S', 'E', ' ', 'H', '.', 'Q', '.', ' ', 'M', 'O', 'N', 'I', 'T', 'O', 'R', 'I', 'N', 'G', ' ', 'S', 'Y', 'S', 'T', 'E', 'M' | STREND,
+
   0x60,
   TWOBYTES(0xF863),
   TWOBYTES(0x59E3),
   'T', 'U', 'N', 'E' | STREND,
+
   0x60,
   TWOBYTES(0xF8A2),
   TWOBYTES(0x5A62),
   'V', 'O', 'L', 'U', 'M', 'E' | STREND,
+
   0x58,
   TWOBYTES(0xF077),
   TWOBYTES(0x59D7),
   'S', 'I', 'G', 'N', 'A', 'L' | STREND
 };
 
+// $77D8
 const u8 pregame_data[207] = {
   0xDC, // Set colour 12 (Bright Green)
   0xE1, // Draw horizontally
@@ -266,6 +271,8 @@ const u8 pregame_data[207] = {
   0x00 // Stop
 };
 
+// $78A7
+//
 // 45 tiles used to draw the pre-game screen.
 const u8 pregame_tiles[45 * 8] = {
   ________,
@@ -677,6 +684,7 @@ const u8 pregame_tiles[45 * 8] = {
 // [Graphics] Smoke and fire graphics
 //
 
+// $7A0F
 const u8 bitmap_smoke1[4 * 13] = {
   XXXX____, ____XXXX, __XXXXXX, XX______,
   XX______, __XXXXXX, _____XXX, XXXXX___,
@@ -692,6 +700,8 @@ const u8 bitmap_smoke1[4 * 13] = {
   XX______, __X____X, ______XX, ___X_X__,
   XXXX____, ____X_X_, ___XXXXX, X_X_____
 };
+
+// $7A43
 const u8 bitmap_smoke2[4 * 11] = {
   XXXXX___, _____XXX, _XXXXXXX, X_______,
   XXX_____, ___XXXXX, ____XXXX, XXXX____,
@@ -705,6 +715,8 @@ const u8 bitmap_smoke2[4 * 11] = {
   XX______, __X_____, ____XXXX, ________,
   XXX____X, ___XX_X_, ____XXXX, X_XX____
 };
+
+// $7A6F
 const u8 bitmap_smoke3[4 * 9] = {
   XXXX____, ____XXXX, __XXXXXX, XX______,
   XXX_____, ___XXXXX, ____XXXX, XXXX____,
@@ -716,6 +728,8 @@ const u8 bitmap_smoke3[4 * 9] = {
   XXX_____, ____X___, ____XXXX, ___X____,
   XXXXX___, ______X_, ___XXXXX, X_X_____
 };
+
+// $7A93
 const u8 bitmap_smoke4[2 * 7] = {
   X_____XX, _XXXXX__,
   ________, XXXXXXXX,
@@ -725,6 +739,8 @@ const u8 bitmap_smoke4[2 * 7] = {
   ________, X______X,
   XX_____X, __X_X_X_
 };
+
+// $7AA1
 const u8 bitmap_smoke5[2 * 5] = {
   XX_____X, __XXXXX_,
   X______X, _XX_XXX_,
@@ -732,12 +748,15 @@ const u8 bitmap_smoke5[2 * 5] = {
   X______X, _X____X_,
   XX____XX, ___X_X__
 };
+
+// $7AAB
 const u8 bitmap_smoke6[2 * 3] = {
   XX____XX, __XXXX__,
   XX____XX, __X__X__,
   XX____XX, __X_X___
 };
 
+// $7AB1
 const u8 bitmap_fire1[4 * 16] = {
   ___XXXX_, XXXXXXXX, XXXXXXXX, XXX_____,
   _______X, ________, ________, _X_XXX__,
@@ -756,6 +775,8 @@ const u8 bitmap_fire1[4 * 16] = {
   _X_X__X_, X__X__X_, __X__X__, _X_X_X__,
   X__X_X__, ____XX__, ___X_X__, __X_____
 };
+
+// $7AF1
 const u8 bitmap_fire2[4 * 16] = {
   ___XXXX_, XXXXXXXX, XXXXXXXX, XXX_____,
   __X____X, ________, ________, _X_XXX__,
@@ -774,6 +795,8 @@ const u8 bitmap_fire2[4 * 16] = {
   ____XX_X, _X_X_X__, _X_X__XX, _X__X__X,
   ________, X___X___, __X____X, X____X_X
 };
+
+// $7B31
 const u8 bitmap_fire3[6 * 8] = {
   XX______, __XXXXXX, ________, XXXXXXXX, ___XXXXX, XXX_____,
   X_______, _X______, ________, ________, ____XXXX, ___X____,
@@ -784,6 +807,8 @@ const u8 bitmap_fire3[6 * 8] = {
   X_____XX, _XX__X__, X_______, _X__X___, ____XXXX, XX_X____,
   XX____XX, __XX_X__, X___X___, _X_X_X_X, X___XXXX, _X_X____
 };
+
+// $7B61
 const u8 bitmap_fire4[6 * 8] = {
   XX____X_, __XXXX_X, ________, XXXXXXXX, ___XXXXX, XXX_____,
   X_______, _X____X_, ________, ________, ____XXXX, __XX____,
@@ -794,6 +819,8 @@ const u8 bitmap_fire4[6 * 8] = {
   ________, X_X__X__, ____X___, XX_X_X_X, ____XXXX, X_XX____,
   X_X_____, _X_X_XX_, ____XX__, XX_X__XX, _XX_XXXX, ___X____
 };
+
+// $7B91
 const u8 bitmap_fire5[4 * 5] = {
   X_______, _XXXXXXX, ___XXXXX, XXX_____,
   ________, X_______, ____XXXX, ___X____,
@@ -801,6 +828,8 @@ const u8 bitmap_fire5[4 * 5] = {
   ________, X_XX_X_X, X___XXXX, _X_X____,
   XXXX_X_X, ____X_X_, XX_XXXXX, __X_____
 };
+
+// $7BA5
 const u8 bitmap_fire5s[4 * 5] = {
   XXXXX___, _____XXX, _______X, XXXXXXX_,
   XXXX____, ____X___, ________, _______X,
@@ -808,6 +837,8 @@ const u8 bitmap_fire5s[4 * 5] = {
   XXXX____, ____X_XX, ____X___, _X_X_X_X,
   XXXXXXXX, ________, _X_XXX_X, X_X___X_
 };
+
+// $7BB9
 const u8 bitmap_fire6[4 * 6] = {
   X_______, _XXXXXXX, __XXXXXX, XX______,
   ________, X_______, ___XXXXX, __X_____,
@@ -816,6 +847,8 @@ const u8 bitmap_fire6[4 * 6] = {
   _X____XX, X_XX_X__, X_X_XXXX, _X_X____,
   XXXX_XXX, ____X___, XXXXXXXX, ________
 };
+
+// $7BD1
 const u8 bitmap_fire6s[4 * 6] = {
   XXXXX___, _____XXX, ______XX, XXXXXX__,
   XXXX____, ____X___, _______X, ______X_,
@@ -1371,20 +1404,9 @@ const u8 copyright_messages[92] = {
   0
 };
 
-// TODO Hoist to ChaseHQ.h?
-typedef struct {
-  u16       road_pos;
-  const u8 *curvature;
-  const u8 *height;
-  const u8 *lanes;
-  const u8 *rightside;
-  const u8 *leftside;
-  const u8 *hazard;
-} scenedata_t;
-
 // $871A
 const scenedata_t escape_scene_data = {
-  0x134,
+  308, // road_pos
   &perp_escape_curvature[-1],
   &perp_escape_height[-1],
   &perp_escape_lanes[-1],

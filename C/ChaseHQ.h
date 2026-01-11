@@ -43,7 +43,7 @@
 #define WRAPPINGINCREMENT(ptr, base) &base[((ptr) + 1 - (base)) & 0xFF]
 
 #define STAGEDATA_BASE        (0x5C00)
-#define STAGEDATA_END         (0x76EF) // inclusive
+#define STAGEDATA_END         (0x7FFF) // inclusive
 #define STAGEDATA_LENGTH      (STAGEDATA_END + 1 - STAGEDATA_BASE)
 
 #define MAXHAZARDS            (6)
@@ -66,6 +66,9 @@
 #define FACEATTRBYTES         (4 * 5)
 #define FACEBYTES             (FACEBITMAPBYTES + FACEATTRBYTES)
 #define NFACES                (3)
+
+#define MINSTAGE              (1)
+#define MAXSTAGE              (5)
 
 /* ----------------------------------------------------------------------- */
 
@@ -149,6 +152,14 @@ typedef u8 chatterpriority_t;
 #define ROADBUF_RIGHTOBJS_OFFSET              (96)
 #define ROADBUF_LEFTOBJS_OFFSET              (128)
 #define ROADBUF_HAZARDS_OFFSET               (160)
+
+#define PREGAMECMD_STOP                     (0x00)
+#define PREGAMECMD_REPEAT                   (0x1F)
+#define PREGAMECMD_SET_BG_0                 (0xD0) // to 0xDF
+#define PREGAMECMD_DRAW_BASE                (0xE0)
+#define PREGAMECMD_DRAW_HZ                  (0xE1)
+#define PREGAMECMD_DRAW_VT                  (0xE2)
+#define PREGAMECMD_SET_ADDR                 (0xF0) // to 0xFF
 
 /* ----------------------------------------------------------------------- */
 
@@ -313,6 +324,7 @@ typedef u8 chatterpriority_t;
 typedef struct hazard_s hazard_t;
 typedef struct stagevars_s stagevars_t;
 typedef struct chqstate_s chqstate_t;
+typedef struct scenedata_s scenedata_t;
 
 typedef void (hazard_handler_t)(chqstate_t *state);
 
@@ -375,9 +387,18 @@ void main_loop(chqstate_t *state);
 
 void cpu_driver(chqstate_t *state);
 
+void run_pregame_screen(chqstate_t *state);
+void reveal_perp_car(chqstate_t *state);
+void animate_meters(chqstate_t *state);
+void am_set_attrs(int counter, u8 *attrs);
+void draw_pregame(chqstate_t *state);
+
 void escape_scene(chqstate_t *state);
 
-void set_up_stage(chqstate_t *state, const u8 *stage_data);
+void set_up_stage(chqstate_t        *state,
+                  const u8          *stage_data,
+                  const scenedata_t *scene_data);
+
 void reset_lights(u8 *attrptr);
 
 void check_user_input(chqstate_t *state);
@@ -408,7 +429,7 @@ void fill_attributes(chqstate_t *state);
 void draw_overlay_messages(chqstate_t *state);
 
 const u8 *print_message(chqstate_t *state,
-                        u8          flags,
+                        u8          style,
                         const u8   *messages);
 
 void setup_overlay_messages(chqstate_t *state, const u8 *message);
@@ -428,6 +449,26 @@ u16 draw_smash_bar_segments(chqstate_t *state, int nsegs, u16 buf);
 u16 draw_smash_bar_solid_bit(chqstate_t *state, int nrows, u16 buf);
 
 void draw_everything_else(chqstate_t *state);
+
+void draw_overhead(chqstate_t *state);
+
+void draw_stretchy_object(chqstate_t *state, int left_or_right);
+
+void draw_tunnel_light(chqstate_t *state, int left_or_right);
+
+void draw_object(chqstate_t *state, int left_or_right);
+
+void plot_sprite(chqstate_t *state,
+                 u8          A_width_bytes,
+                 u8         *HL_backbuf_addr,
+                 u16         DEdash_bitmap_stride,
+                 const u8   *HLdash_bitmap_data);
+
+void plot_sprite_flipped(chqstate_t *state,
+                         u8          A_width_bytes,
+                         u8         *HL_backbuf_addr,
+                         u16         DEdash_bitmap_stride,
+                         const u8   *HLdash_bitmap_data);
 
 u8 rng(chqstate_t *state);
 
@@ -468,6 +509,7 @@ void pmf_go(chqstate_t *state,
 void clear_message_line(chqstate_t *state);
 
 void tick(chqstate_t *state);
+void play_start_noise(chqstate_t *state);
 
 void speed_score(chqstate_t *state);
 
@@ -492,31 +534,31 @@ void ptas_led_digits(chqstate_t *state,
 u8 *ledfont_plot(chqstate_t *state, u8 ord, u8 *screen);
 
 void draw_string_A(chqstate_t *state,
-                   u8          A,
-                   u8         *BCstring,
-                   u8         *DEbackbuf,
-                   const u8   *HLstring,
-                   u8          Adash);
+                   u8          attr,
+                   u8         *attrs,
+                   u8         *backbuf,
+                   const u8   *string,
+                   u8          style);
 void draw_string(chqstate_t *state,
-                 u8          A,
-                 u8         *BCstring,
-                 u8         *DEbackbuf,
-                 const u8   *HLstring);
+                 u8          attrval,
+                 u8         *attrs,
+                 u8         *backbuf,
+                 const u8   *string);
 void draw_string_entry(chqstate_t *state,
-                       u8         *DEscreen,
-                       const u8   *HLstring,
-                       u8          Adash,
-                       u8          Cdash,
-                       u8          DEstride,
-                       u8         *HLattr);
+                       u8         *screen,
+                       const u8   *string,
+                       u8          style,
+                       u8          attrval,
+                       u8          stride,
+                       u8         *attrs);
 
 void draw_char(chqstate_t *state,
-               u8          Achar,
-               u8         *DE,     // screen address
-               u8          Adash,  // draw type
-               u8          Cdash,  // attribute
-               u8          DEdash, // e.g. 32 - a stride?
-               u8         *HLdash);
+               u8          character,
+               u8         *screen,  // screen address
+               u8          style,   // draw style
+               u8          attrval, // attribute
+               u8          stride,  // e.g. 32
+               u8         *attrs);
 
 u8 keyscan(chqstate_t *state);
 u8 keyscan_a112(chqstate_t *state, u8 *HL);

@@ -15,6 +15,23 @@
 #include "Spectrum.h"
 #include "ChaseHQ.h"
 
+struct scenedata_s {
+  // $A26C
+  u16       road_pos;
+  // $A26E
+  const u8 *road_curvature_ptr;
+  // $A270
+  const u8 *road_height_ptr;
+  // $A272
+  const u8 *road_lanes_ptr;
+  // $A274
+  const u8 *road_rightside_ptr;
+  // $A276
+  const u8 *road_leftside_ptr;
+  // $A278
+  const u8 *road_hazard_ptr;
+};
+
 struct hazard_s {
   u8                used;
   u8                distance;
@@ -23,7 +40,7 @@ struct hazard_s {
   u8                TBD4;
   u8                horz_pos_on_road;
   u8                TBD6;
-  u8                TBD7;
+  u8                TBD7;     // activation
   u8                TBD8;
   const u8         *lod_addr; // Conv: u16 becomes pointer
   hazard_handler_t *hit_handler;
@@ -91,8 +108,21 @@ struct chqstate_s {
   // $8277
   u8        SM_8277;
 
-  // $8ABE
-  u8        SM_8ABE;
+  // $85EB (SM) in reveal_perp_car
+  u8        pregame_car_revealed_height;
+
+  // $8614 (SM) in animate_meters
+  s8        meter_1_level;
+  // $8631 (SM) in animate_meters
+  s8        meter_2_level;
+
+  // $86C3 (SM) in draw_pregame
+  u8        draw_pregame_background;
+  // $86C9 (SM) in draw_pregame
+  u8        draw_pregame_direction;
+
+  // $8ABE (SM) in handle_perp_caught
+  u8        handle_perp_caught_delay;
 
 #define SCORE_MESSAGES_BASE   (0x8C58)
 #define SCORE_MESSAGES_LENGTH (0x8CB2 - SCORE_MESSAGES_BASE)
@@ -323,19 +353,7 @@ struct chqstate_s {
   // $A26B
   u8        start_speech; // delay
   // $A26C
-  u16       road_pos;
-  // $A26E
-  const u8 *road_curvature_ptr;
-  // $A270
-  const u8 *road_height_ptr;
-  // $A272
-  const u8 *road_lanes_ptr;
-  // $A274
-  const u8 *road_rightside_ptr;
-  // $A276
-  const u8 *road_leftside_ptr;
-  // $A278
-  const u8 *road_hazard_ptr;
+  scenedata_t scenedata;
 
   // $A804 (SM) in spawn_cars
   u8        spawn_counter;
@@ -353,6 +371,11 @@ struct chqstate_s {
 
   // $C0BC (SM) in read_map
   u8        SM_C0BC;
+
+  // $C15E (SM) in draw_tunnel
+  u8        SM_C15E;
+  // $C161 (SM) in draw_tunnel
+  u8        SM_C161;
 
   // $E300
   u8        table_e300[32]; // note: first byte should be $60

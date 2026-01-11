@@ -11,10 +11,9 @@
 
 #include "Types.h"
 
-#define MAX_STAGES   (5)
-#define STAGE_LENGTH (16 * 512)
+#define MAX_STAGEDATA (5)
 
-const u8 *stage_data_locations[MAX_STAGES];
+const u8 *stage_data_locations[MAX_STAGEDATA];
 
 #endif /* CHASEHQ_STAGEDATA_H */
 

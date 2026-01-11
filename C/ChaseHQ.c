@@ -194,9 +194,9 @@ void attract_mode(chqstate_t *state)
   const u8 *messages;  // was HL
   u8        nmessages; // was B
   u8        A;
-  u8        flags;     // was A
+  u8        style;     // was A
 
-  set_up_stage(state, stgmap(state, 0x5D2B)); // attract_data
+  set_up_stage(state, stgmap(state, 0x5D2B), NULL); // attract_data
   blinker = 0;
   state->speed = 400;
   for (;;) {
@@ -216,8 +216,8 @@ void attract_mode(chqstate_t *state)
 
     // Display 'nmessages' messages
     do {
-      flags = *messages;
-      messages = print_message(state, flags, messages);
+      style = *messages;
+      messages = print_message(state, style, messages);
     } while (--nmessages > 0);
 
     if (state->transition_control == TRANSITIONCONTROL_STOP) {
@@ -297,8 +297,8 @@ restart:
   return;
 
 not_credits:
-  // TODO: Call run_pregame_screen
-  set_up_stage(state, stgmap(state, 0x5D1D));
+  run_pregame_screen(state);
+  set_up_stage(state, stgmap(state, 0x5D1D), NULL);
 
   // Cycle start_speech_cycle 3,2,1 then repeat
   start_speech_index = state->start_speech_cycle - 1;
@@ -418,7 +418,7 @@ void cpu_driver(chqstate_t *state)
   u16 roadpos; // was HL
   u8  input;   // was A
 
-  roadpos = state->road_pos;
+  roadpos = state->scenedata.road_pos;
   input = USERINPUT_UP | USERINPUT_RIGHT;
   if (roadpos < ROAD_LEFTMOST) {
     input = USERINPUT_UP | USERINPUT_LEFT;
@@ -449,16 +449,313 @@ void cpu_driver(chqstate_t *state)
   animate_hero_car(state); // exit via
 }
 
+// $858C
+void run_pregame_screen(chqstate_t *state)
+{
+  set_up_stage(state, stgmap(state, 0x5D1D), NULL);
+
+  state->dont_draw_screen_attrs = 1; // Conv: Was 0xF8.
+  setup_transition(state, TRANSITIONSTRIDE_REVERSE);
+  clear_playfield_set_attrs(state);
+  state->pregame_car_revealed_height = 0; // Reset the counter in #R$85E4 that reveals the perp's car
+  start_chatter(state, 0xFF, stgwordtostgptr(state, 0x5D04));
+
+  for (;;) {
+    draw_pregame(state);
+    drive_chatter(state);
+    reveal_perp_car(state);
+    animate_meters(state);
+    transition(state);
+    draw_screen(state);
+    if (state->transition_control == 0) {
+      if (state->chatter_state == CHATTERSTATE_IDLE)
+        return;
+      if (state->chatter_state < CHATTERSTATE_STOP) {
+        if (keyscan(state) & USERINPUT_FIRE) {
+          drive_chatter_stop(state);
+          play_start_noise(state); // exit via
+          return;
+        }
+      } else {
+        setup_transition(state, TRANSITIONSTRIDE_FORWARD);
+      }
+    }
+  }
+
+  // Conv: Dead code removed
+}
+
+// $85E4
+void reveal_perp_car(chqstate_t *state)
+{
+  u8        revealed_height; // was A
+  const u8 *perp_lod;        // was HL
+  u16       width_bytes;     // was DE
+  u8        height;          // was B
+  const u8 *bitmap;          // was HL
+
+  if (state->wanted_stage_number == MAXSTAGE)
+    return; // perp car is hidden on stage 5
+
+  revealed_height = state->pregame_car_revealed_height + 1;
+  if (revealed_height >= 50) // max height
+    revealed_height--;
+  state->pregame_car_revealed_height = revealed_height;
+
+  perp_lod = stgwordtostgptr(state, 0x5D10);
+  width_bytes = *perp_lod;
+  perp_lod += 2;
+  height = *perp_lod;
+  if (revealed_height > height)
+    height = revealed_height;
+  perp_lod++;
+  bitmap = stgwordtostgptr(state, wordat(perp_lod));
+
+  plot_sprite(state,
+              width_bytes,
+              ADDRTOBACKBUF(0xF4CD),
+              width_bytes,
+              bitmap); // exit via
+}
+
+// $860F
+void animate_meters(chqstate_t *state)
+{
+  s8 random; // was A
+  s8 level;  // was A
+
+  random = (s8) rng(state);
+  level  = state->meter_1_level;
+
+  // Use sign of the random value to enlarge or reduce the apparent meter
+  // level.
+  if (random < 0)
+    if (--level >= 0)
+      goto set_level;
+  if (++level >= 8)
+    --level;
+set_level:
+  state->meter_1_level = level;
+  am_set_attrs(level, ADDRTOSCREEN(0x5A17));
+
+  // Update the second meter. Essentially duplicates the above code.
+  random = (s8) rng(state);
+  level  = state->meter_2_level;
+
+  if (random < 0)
+    if (--level >= 0)
+      goto set_level2;
+  if (++level >= 8)
+    --level;
+set_level2:
+  state->meter_2_level = level;
+  am_set_attrs(level, ADDRTOSCREEN(0x5A57));
+}
+
+// $8646
+//
+// counter - was A
+// attrs - was HL
+void am_set_attrs(int counter, u8 *attrs)
+{
+  int iterations; // was B
+
+  if (counter) {
+    iterations = counter;
+    do
+      *attrs++ = attribute_BRIGHT_BLACK_OVER_GREEN;
+    while (--iterations > 0);
+  }
+
+  counter = 7 - counter;
+  if (counter) {
+    iterations = counter;
+    do
+      *attrs++ = attribute_BRIGHT_BLACK_OVER_RED;
+    while (--iterations > 0);
+  }
+}
+
+// $865A
+void draw_pregame(chqstate_t *state)
+{
+  int       carry = 0;
+  const u8 *cmds;       // was HL
+  u8        cmd;        // was A
+  u16       cmdaddr;    // was DE
+  u8        tileidx;    // was A
+  const u8 *srctile;    // was DE
+  u8       *HLbuf;
+  int       tile_count; // was B
+  int       iterations; // was B
+  u16       bufoffset;  // was BC
+  u8        E;
+  u8        rows;
+  u8        A;
+  const u8 *messages;   // was HL
+  u16       attrs;      // was DE
+
+  cmds = &pregame_data[0];
+dp_get_command:
+  cmd = *cmds;
+  if (cmd != PREGAMECMD_STOP) {
+    cmds++;
+
+    if (cmd < PREGAMECMD_SET_BG_0) // either "Repeat" or "Plot tile"
+      goto dp_repeat_or_plot_tile;
+    if (cmd < PREGAMECMD_DRAW_BASE) // "Set background colour"
+      goto dp_set_bg_colour;
+    if (cmd >= PREGAMECMD_SET_ADDR)
+      goto dp_set_address;
+
+    // Set direction
+    state->draw_pregame_direction = (cmd - PREGAMECMD_DRAW_BASE);
+    goto dp_get_command;
+
+dp_set_bg_colour:
+    state->draw_pregame_background = (cmd - PREGAMECMD_SET_BG_0) << 3;
+    goto dp_get_command;
+
+dp_set_address:
+    cmdaddr = (cmd << 8) | *cmds++; // cmd is 0xF0
+    goto dp_get_command;
+
+    // $00..$CF could be either "Repeat" or "Plot tile".
+dp_repeat_or_plot_tile:
+    tile_count = 1;
+    if (cmd < PREGAMECMD_REPEAT) { // Multiple tiles
+      tile_count = cmd;
+      tileidx = *cmds++;
+    } else {
+      tileidx = cmd;
+    }
+    // EX DE,HL      ; #REGde becomes tile ptr, #REGhl becomes back buffer ptr
+    srctile = &pregame_tiles[(tileidx - PREGAMECMD_REPEAT) * 8];
+    HLbuf  = ADDRTOBACKBUF(cmdaddr);
+    do {
+      // Plot a tile
+      iterations = 8; // 8 rows per tile
+      do {
+        *HLbuf = *srctile++;
+        HLbuf += 256;
+      } while (--iterations > 0);
+
+      // Build attribute address from back buffer ptr
+      bufoffset = BACKBUFTOOFFSET(HLbuf);
+      E = (bufoffset & 0x1F) | ((bufoffset >> 6) & 0x20); // columns + 1 row
+      rows  = (bufoffset & 0xE0);
+      carry = (bufoffset & 0x80) >> 7;
+      rows <<= 1;
+
+      attrs = (SCREEN_ATTRIBUTES_START_ADDRESS + 256) + E; // playfield attrs base
+      if (carry)
+        attrs += 256;
+      attrs += rows;
+
+      A = state->draw_pregame_background; // load attribute
+      if (A)
+        *ADDRTOSCREEN(attrs) = A;
+
+      // dp_direction
+      if (state->draw_pregame_direction != 1) {
+        // vertical
+        if (bufoffset & 0x0F)
+          goto dp_nextone;
+
+        bufoffset = (((bufoffset >> 8) - 16) << 8) | (bufoffset & 0xFF); // H -= 16
+        bufoffset = (bufoffset & 0xFF00) | (((bufoffset & 0xFF) + 32) & 0xFF); // L += 32
+      } else {
+        // horizontal
+        bufoffset++;
+      }
+
+dp_nextone:
+    } while (--tile_count > 0);
+    // EX DE,HL ; #REGde = Back buffer ptr
+    // POP HL ; Restore command pointer
+    goto dp_get_command;
+  } // !CMD_STOP
+
+  // Print strings
+  iterations = 4;
+  messages = &pregame_messages[0];
+  do
+    messages = print_message(state,
+                             DRAWCHAR_TYPE_SINGLE_INVERTED,
+                             messages - 1);
+  while (--iterations > 0);
+}
+
 // $873C
 void escape_scene(chqstate_t *state)
 {
+  silence_audio_hook(state);
+  set_up_stage(state, NULL, &escape_scene_data);
+  state->speed = 250; // speed of camera
+  memcpy(&state->hazards[0], &escape_scene_perp, sizeof(escape_scene_perp));
+  state->hazards[0].lod_addr = stgwordtostgptr(state, 0x5D10);
+  state->inhibit_collision_detection = 0xFF;
+  start_chatter(state, 0xFF, &chatterblk_nancy_berates_hero[0]);
+
+  for (;;) {
+    // Print "GAME OVER" once the transition has completed.
+    if (state->transition_control != TRANSITIONCONTROL_FADE)
+      setup_overlay_messages(state, &game_over_message[0]);
+
+    read_map(state);
+    build_height_table(state);
+    scroll_horizon(state);
+    layout_road(state);
+    draw_road(state);
+    layout_objects(state);
+    prepare_tunnel(state);
+    spawn_hazards(state);
+    draw_hazards(state);
+    draw_everything_else(state);
+    update_scoreboard(state);
+    drive_chatter(state);
+    transition(state);
+    draw_screen(state);
+
+    // Loop to es_loop unless the tunnel has appeared
+    if (state->SM_C161 == 0)
+      continue;
+
+    // Tunnel has appeared.
+    if (state->SM_C15E >= 7)
+      continue;
+
+    if (state->hazards[0].distance == 5) {
+      // Activate the three barriers
+      state->hazards[1].TBD7 =
+        state->hazards[2].TBD7 =
+        state->hazards[3].TBD7 = 0xFF;
+    }
+
+    state->speed = 0; // Set speed to zero [speed of camera]
+
+    if (state->hazards[0].used == HAZARD_USED ||
+        state->chatter_state > CHATTERSTATE_IDLE)
+      continue;
+
+    if (state->transition_control == TRANSITIONCONTROL_STOP)
+      return;
+
+    if (state->transition_control != TRANSITIONCONTROL_FADE)
+      setup_transition(state, TRANSITIONSTRIDE_FORWARD);
+  }
 }
 
 // $87DC
 //
 // stage_data is genuine pointer here since sometimes it's pointed at stage
 // data or attract data and at other times it's the escape scene data.
-void set_up_stage(chqstate_t *state, const u8 *stage_data)
+//
+// stage_data - comes from scene data binary data
+// scene_data - comes from C style structs
+void set_up_stage(chqstate_t        *state,
+                  const u8          *stage_data,
+                  const scenedata_t *scene_data)
 {
   u8  iterations;   // was B
   u8 *pfastcounter; // was HL
@@ -468,13 +765,19 @@ void set_up_stage(chqstate_t *state, const u8 *stage_data)
   state->hazards[0] = saved_game_state_hazard_0;
   memset(&state->hazards[1], 0, sizeof(hazard_t) * (MAXHAZARDS - 1));
 
-  state->road_pos           = wordat(stage_data);
-  state->road_curvature_ptr = ptrtostgptr(state, stage_data +  2);
-  state->road_height_ptr    = ptrtostgptr(state, stage_data +  4);
-  state->road_lanes_ptr     = ptrtostgptr(state, stage_data +  6);
-  state->road_rightside_ptr = ptrtostgptr(state, stage_data +  8);
-  state->road_leftside_ptr  = ptrtostgptr(state, stage_data + 10);
-  state->road_hazard_ptr    = ptrtostgptr(state, stage_data + 12);
+  // Conv: If here to allow for stage_data (coming from binary stage data) or
+  // scene_data.
+  if (stage_data) {
+    state->scenedata.road_pos           = wordat(stage_data);
+    state->scenedata.road_curvature_ptr = ptrtostgptr(state, stage_data +  2);
+    state->scenedata.road_height_ptr    = ptrtostgptr(state, stage_data +  4);
+    state->scenedata.road_lanes_ptr     = ptrtostgptr(state, stage_data +  6);
+    state->scenedata.road_rightside_ptr = ptrtostgptr(state, stage_data +  8);
+    state->scenedata.road_leftside_ptr  = ptrtostgptr(state, stage_data + 10);
+    state->scenedata.road_hazard_ptr    = ptrtostgptr(state, stage_data + 12);
+  } else {
+    state->scenedata = *scene_data;
+  }
 
   pre_shift_backdrop(state);
 
@@ -534,7 +837,7 @@ void reset_lights(u8 *attrptr)
   do {
     cols = MARQUEELIGHTWIDTH;
     do
-      *attrptr++ &= ~ATTRIBUTE_BRIGHT;
+      *attrptr++ &= ~ATTR_BRIGHT;
     while (--cols > 0);
     attrptr += (SCREEN_ATTRIBUTES_ROWBYTES - MARQUEELIGHTWIDTH);
   } while (--rows > 0);
@@ -723,10 +1026,10 @@ phase2:
     goto start_phase_3;
   state->car_y = car_y + 4;
 
-  HLroadpos = state->road_pos + 12;
+  HLroadpos = state->scenedata.road_pos + 12;
   if (HLroadpos >= ROAD_126)
     HLroadpos = ROAD_126;
-  state->road_pos = HLroadpos;
+  state->scenedata.road_pos = HLroadpos;
 
   fastcounter = state->fast_counter + 32;
   if (state->fast_counter + 32 > 255)
@@ -736,13 +1039,13 @@ phase2:
 
 start_phase_3:
   state->perp_caught_phase = 3;
-  state->SM_8ABE = 4;
+  state->handle_perp_caught_delay = 4;
   fill_attributes(state); // exit via
   return 0;
 
 phase3:
-  A = state->SM_8ABE - 1;
-  state->SM_8ABE = A;
+  A = state->handle_perp_caught_delay - 1;
+  state->handle_perp_caught_delay = A;
   if (A)
     return 0;
 
@@ -901,7 +1204,7 @@ change_perp_pos:
 assign_perp_pos:
   A = C;
   state->hazards[0].horz_pos = A;
-  HLroadpos = state->road_pos;
+  HLroadpos = state->scenedata.road_pos;
   // PUSH HLroadpos
   carry = (HLroadpos < ROAD_LEFTMOST); // was SUB
   // POP HLroadpos
@@ -1138,7 +1441,7 @@ void draw_overlay_messages(chqstate_t *state)
   const u8 *message;    // was HL
   u8        iterations; // was B
   u8        delay;      // was A
-  u8        flags;      // was A
+  u8        style;      // was A
 
   message    = state->overlay_message;
   iterations = state->overlay_count;
@@ -1154,11 +1457,11 @@ void draw_overlay_messages(chqstate_t *state)
       iterations++;
     }
 
-    flags = *++message;
-    if (flags == 0)
+    style = *++message;
+    if (style == DRAWCHAR_TYPE_DUNNO) // or possibly a special marker?
       break;
 
-    print_message(state, flags, message);
+    print_message(state, style, message);
   }
 
   state->transition_control = message[-1];
@@ -1166,10 +1469,10 @@ void draw_overlay_messages(chqstate_t *state)
 
 // $8E6C
 //
-// flags - was A
+// style - was A
 // messages - was HL
 const u8 *print_message(chqstate_t *state,
-                        u8          flags,
+                        u8          style,
                         const u8   *messages)
 {
   u8  attr;     // was A
@@ -1186,7 +1489,7 @@ const u8 *print_message(chqstate_t *state,
                 ADDRTOSCREEN(attraddr),
                 ADDRTOBACKBUF(backbuf),
                 messages,
-                flags);
+                style);
 
   return messages;
 }
@@ -1351,6 +1654,46 @@ u16 draw_smash_bar_solid_bit(chqstate_t *state, int nrows, u16 buf)
 
 // $8F5F
 void draw_everything_else(chqstate_t *state)
+{
+}
+
+// $9052
+void draw_overhead(chqstate_t *state)
+{
+}
+
+// $916C
+void draw_stretchy_object(chqstate_t *state, int left_or_right)
+{
+  //dso_common(state, 0x9293);
+  //dso_common(state, 0x92FC);
+}
+
+// $924D
+void draw_tunnel_light(chqstate_t *state, int left_or_right)
+{
+}
+
+// $9278
+void draw_object(chqstate_t *state, int left_or_right)
+{
+}
+
+// $949C
+void plot_sprite(chqstate_t *state,
+                 u8          A_width_bytes,
+                 u8         *HL_backbuf_addr,
+                 u16         DEdash_bitmap_stride,
+                 const u8   *HLdash_bitmap_data)
+{
+}
+
+// $9542
+void plot_sprite_flipped(chqstate_t *state,
+                         u8          A_width_bytes,
+                         u8         *HL_backbuf_addr,
+                         u16         DEdash_bitmap_stride,
+                         const u8   *HLdash_bitmap_data)
 {
 }
 
@@ -1975,8 +2318,7 @@ check_restart:
   state->st.time_bcd        = 0x60; // 60 seconds
   state->retry_count++;
 
-  // play_start_noise:  (code elsewhere jumps to this)
-  play_speech_hook(state, 5); // exit via
+  play_start_noise(state);
   return;
 
 print_continue:
@@ -2014,6 +2356,14 @@ set_digits:
 
   timedigits[0] = hidigit; // write first digit (must be ASCII)
   timedigits[1] = (lodigit + '0') | STREND;
+}
+
+// $9C79
+//
+// Extracted from above
+void play_start_noise(chqstate_t *state)
+{
+  play_speech_hook(state, 5); // exit via
 }
 
 // $9CC2
@@ -2153,7 +2503,7 @@ void toggle_light_brightness(chqstate_t *state, u8 *attrs)
   u8 attr; // was C
 
   rows = 4; // rows
-  attr = ATTRIBUTE_BRIGHT;
+  attr = ATTR_BRIGHT;
   do {
     *attrs++ ^= attr;
     *attrs++ ^= attr;
@@ -2450,18 +2800,18 @@ u8 *ledfont_plot(chqstate_t *state, u8 ord, u8 *screen)
 // attrs - was BC
 // backbuf - was DE
 // string - was HL
-// Adash - was A'
+// style - was A'
 void draw_string_A(chqstate_t *state,
                    u8          attr,
                    u8         *attrs,
                    u8         *backbuf,
                    const u8   *string,
-                   u8          Adash)
+                   u8          style)
 {
   draw_string_entry(state,
                     backbuf,
                     string/*HL*/,
-                    Adash/*Adash*/,
+                    style/*A'*/,
                     attr/*C'*/,
                     32/*DE'*/,
                     attrs/*HL'*/);
@@ -2469,12 +2819,12 @@ void draw_string_A(chqstate_t *state,
 
 // $9FA3
 //
-// attr - was A
+// attrval - was A
 // attrs - was BC
 // backbuf - was DE
 // string - was HL
 void draw_string(chqstate_t *state,
-                 u8          attr,
+                 u8          attrval,
                  u8         *attrs,
                  u8         *backbuf,
                  const u8   *string)
@@ -2482,8 +2832,8 @@ void draw_string(chqstate_t *state,
   draw_string_entry(state,
                     backbuf,
                     string/*HL*/,
-                    1/*Adash*/,
-                    attr/*C'*/,
+                    1/*A'*/, // style
+                    attrval/*C'*/,
                     32/*DE'*/,
                     attrs/*HL'*/);
 }
@@ -2492,15 +2842,15 @@ void draw_string(chqstate_t *state,
 //
 // screen - was DE
 // string - was HL
-// Adash - was A'
-// Cdash - was C'
+// style - was A'
+// attrval - was C'
 // stride - was DE'
 // attrs - was HL'
 void draw_string_entry(chqstate_t *state,
                        u8         *screen,
                        const u8   *string,
-                       u8          Adash,
-                       u8          Cdash,
+                       u8          style,
+                       u8          attrval,
                        u8          stride,
                        u8         *attrs)
 {
@@ -2508,7 +2858,7 @@ void draw_string_entry(chqstate_t *state,
 
   do {
     character = *string & ~STREND;
-    draw_char(state, character, screen, Adash, Cdash, stride, attrs);
+    draw_char(state, character, screen, style, attrval, stride, attrs);
   } while ((character & STREND) == 0);
 }
 
@@ -2516,15 +2866,15 @@ void draw_string_entry(chqstate_t *state,
 //
 // character - was A
 // screen - was DE
-// Adash - was A'
-// Cdash - was C'
+// style - was A'
+// attrval - was C'
 // stride - was DE'
 // attrs - was HL'
 void draw_char(chqstate_t *state,
                u8          character,
                u8         *screen,    // screen address
-               u8          Adash,     // draw type
-               u8          Cdash,     // attribute
+               u8          style,     // draw style
+               u8          attrval,     // attribute
                u8          stride,    // was DE' e.g. 32 - a stride?
                u8         *attrs)     // was HL'
 {
@@ -2569,7 +2919,7 @@ dc_have_range:
 dc_have_single:
   fontdata = &font[glyphid * 7]; // add symbol for glyph height
 
-  type = Adash;
+  type = style;
   if (--type == 0) goto dc_generic; // 1
   if (--type == 0) goto dc_single_height; // 2
   if (--type == 0) goto dc_double_height; // 3
@@ -2642,9 +2992,9 @@ dc_double_height:
 
 dc_set_double_attrs:
   screen = orig + 1; // was POP screen, INC E
-  *attrs |= Cdash;
+  *attrs |= attrval;
   attrs += stride;
-  *attrs |= Cdash;
+  *attrs |= attrval;
   attrs -= stride; // was POP attrs
   attrs++; // was INC L
   return;
@@ -2662,7 +3012,7 @@ dc_single_height: // seems to store 9 rows
 
 dc_set_single_attrs:
   screen = orig + 1; // was POP screen
-  *attrs |= Cdash;
+  *attrs |= attrval;
   attrs++; // was INC L
   return;
 
@@ -3139,7 +3489,7 @@ lr_forked_road:
   if (Aforkinprogress == 0)
     goto lr_check_spawning; // hit fork?
   state->fork_in_progress = -Aforkinprogress; // why negate, is this a counter?
-  DEroadpos = state->road_pos;
+  DEroadpos = state->scenedata.road_pos;
   Aiterations = 1;
   DEroadpos -= 256; // was DEC D
   // Chooses the fork taken based on car's distance from centre
@@ -3197,23 +3547,23 @@ lr_badf:
   if (state->fork_taken - 1 != 0) {
     build_curve_table(state, /*forked=*/0);
     DEforkdistance = HLforkdistance; // was POP DEforkdistance
-    HLroadpos = state->road_pos;
+    HLroadpos = state->scenedata.road_pos;
     HLroadpos_saved = HLroadpos; // was PUSH HLroadpos
     HLroadpos += DEforkdistance;
-    state->road_pos = HLroadpos; // adjust road pos for fork rendering
+    state->scenedata.road_pos = HLroadpos; // adjust road pos for fork rendering
     build_curve_table(state, /*forked=*/1);
   } else {
     build_curve_table(state, /*forked=*/1);
     DEforkdistance = HLforkdistance; // was POP DEforkdistance
-    HLroadpos = state->road_pos;
+    HLroadpos = state->scenedata.road_pos;
     HLroadpos_saved = HLroadpos; // was PUSH HLroadpos
     HLroadpos -= DEforkdistance;
-    state->road_pos = HLroadpos; // adjust road pos for fork rendering
+    state->scenedata.road_pos = HLroadpos; // adjust road pos for fork rendering
     build_curve_table(state, /*forked=*/0);
   }
   // $BB07
   HLroadpos = HLroadpos_saved; // was POP HLroadpos
-  state->road_pos = HLroadpos; // restore normal road pos after fork rendering
+  state->scenedata.road_pos = HLroadpos; // restore normal road pos after fork rendering
   // POP BC
   // (set SP restoring op)
   SProadright = &state->table_ec00[0x30]; // (set SP to $EC30)
@@ -3343,8 +3693,8 @@ draw_attributes:
       DE = (D << 8) | E;
       HLattrs = ADDRTOSCREEN(state->st.horizon_attribute);
       // Set sky colour
-      BCattrs = (attribute_BLACK_OVER_BRIGHT_CYAN << 8) |
-                attribute_BLACK_OVER_BRIGHT_CYAN;
+      BCattrs = (attribute_BRIGHT_BLACK_OVER_CYAN << 8) |
+                attribute_BRIGHT_BLACK_OVER_CYAN;
       // If A was zero then jump (Z => sky, NZ => ground)
       if (D != 0) {
         // Set ground colour
@@ -3368,16 +3718,16 @@ draw_attributes:
 
     HLattrs = ADDRTOSCREEN(0x5962); // attr (2, 11)
 
-    Cattr = attribute_BLACK_OVER_BRIGHT_RED;
+    Cattr = attribute_BRIGHT_BLACK_OVER_RED;
     *HLattrs = Cattr; HLattrs += SCREEN_ATTRIBUTES_WIDTH;
     *HLattrs = Cattr; HLattrs += SCREEN_ATTRIBUTES_WIDTH;
-    Cattr = attribute_BLACK_OVER_BRIGHT_MAGENTA;
+    Cattr = attribute_BRIGHT_BLACK_OVER_MAGENTA;
     *HLattrs = Cattr; HLattrs += SCREEN_ATTRIBUTES_WIDTH;
     *HLattrs = Cattr; HLattrs += SCREEN_ATTRIBUTES_WIDTH;
-    Cattr = attribute_BLACK_OVER_BRIGHT_GREEN;
+    Cattr = attribute_BRIGHT_BLACK_OVER_GREEN;
     *HLattrs = Cattr; HLattrs += SCREEN_ATTRIBUTES_WIDTH;
     *HLattrs = Cattr; HLattrs += SCREEN_ATTRIBUTES_WIDTH;
-    Cattr = attribute_BLACK_OVER_BRIGHT_WHITE;
+    Cattr = attribute_BRIGHT_BLACK_OVER_WHITE;
     *HLattrs = Cattr; HLattrs += SCREEN_ATTRIBUTES_WIDTH;
     *HLattrs = Cattr;
   }
@@ -3481,7 +3831,7 @@ void rm_cycle_buffer_offset(chqstate_t *state, u8 *pfastcounter)
   if (!carry)
     goto rm_save_curvature_byte;
 
-  DE = state->road_curvature_ptr + 1;
+  DE = state->scenedata.road_curvature_ptr + 1;
   A = *DE;
   if (A)
     goto rm_curvature_regular_byte;
@@ -3515,7 +3865,7 @@ rm_read_curvature:
   A = *DE;
 
 rm_curvature_regular_byte:
-  state->road_curvature_ptr = DE;
+  state->scenedata.road_curvature_ptr = DE;
   A -= 16;
 
 rm_save_curvature_byte:
@@ -3656,7 +4006,7 @@ void build_curve_table(chqstate_t *state, int forked)
   DE = &state->table_e320[0];
   B = 20; // iterations
   // EXX Bank
-  DEdash = state->road_pos;
+  DEdash = state->scenedata.road_pos;
   // PUSH DEdash; // save on stack
   // EXX Unbank
 
@@ -3715,7 +4065,7 @@ void build_curve_table(chqstate_t *state, int forked)
     *DE++ = A; // write to table_e320
   } while (--B);
 
-  DEroadpos = state->road_pos; // was POP DE
+  DEroadpos = state->scenedata.road_pos; // was POP DE
   B = 0; // init counter
   // EXX Bank
   build_curve_table_sub_cca8(state,
@@ -4098,10 +4448,10 @@ mdc_have_glyph:
     *DEscreen = 0; // final row always blank?
     // EXX
     HLdash_saved = HLdash; // was just B' saving L'
-    Cdash |= ATTRIBUTE_BRIGHT;
+    Cdash |= ATTR_BRIGHT;
     *HLdash = Cdash; // set with bright set
     HLdash += 32; // move to next attr row
-    Cdash &= ~ATTRIBUTE_BRIGHT; // set with bright clear
+    Cdash &= ~ATTR_BRIGHT; // set with bright clear
     *HLdash = Cdash;
     HLdash = HLdash_saved + 1;
     // EXX
