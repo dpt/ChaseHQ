@@ -72,12 +72,13 @@
 
 /* ----------------------------------------------------------------------- */
 
-#define DRAWCHAR_TYPE_DUNNO                    (0)
-#define DRAWCHAR_TYPE_GENERIC                  (1)
-#define DRAWCHAR_TYPE_SINGLE                   (2)
-#define DRAWCHAR_TYPE_DOUBLE                   (3)
-#define DRAWCHAR_TYPE_SINGLE_INVERTED          (4)
-#define DRAWCHAR_TYPE_DOUBLE_INVERTED          (5)
+#define DRAWCHARSTYLE_DUNNO                    (0)
+#define DRAWCHARSTYLE_GENERIC                  (1)
+#define DRAWCHARSTYLE_SINGLE                   (2)
+#define DRAWCHARSTYLE_DOUBLE                   (3)
+#define DRAWCHARSTYLE_SINGLE_INVERTED          (4)
+#define DRAWCHARSTYLE_DOUBLE_INVERTED          (5)
+#define DRAWCHARSTYLE__LIMIT                   (5)
 
 #define QUITSTATE_IDLE                         (0)
 #define QUITSTATE_START                        (1)
@@ -459,16 +460,30 @@ void draw_tunnel_light(chqstate_t *state, int left_or_right);
 void draw_object(chqstate_t *state, int left_or_right);
 
 void plot_sprite(chqstate_t *state,
-                 u8          A_width_bytes,
-                 u8         *HL_backbuf_addr,
-                 u16         DEdash_bitmap_stride,
-                 const u8   *HLdash_bitmap_data);
+                 u8          width_bytes,
+                 u8          height,
+                 u8         *backbuf_addr,
+                 u16         bitmap_stride,
+                 const u8   *bitmap_data);
+void plot_sprite_even_entry(chqstate_t *state,
+                            int         jump_offset,
+                            u8          height,
+                            u8         *backbuf_addr,
+                            u16         bitmap_stride,
+                            const u8   *bitmap_data);
+void ps_odd(chqstate_t *state,
+            u8          width_bytes,
+            u8          height,
+            u8         *backbuf_addr,
+            u16         bitmap_stride,
+            const u8   *bitmap_data);
 
 void plot_sprite_flipped(chqstate_t *state,
-                         u8          A_width_bytes,
-                         u8         *HL_backbuf_addr,
-                         u16         DEdash_bitmap_stride,
-                         const u8   *HLdash_bitmap_data);
+                         u8          width_bytes,
+                         u8          height,
+                         u8         *backbuf_addr,
+                         u16         bitmap_stride,
+                         const u8   *bitmap_data);
 
 u8 rng(chqstate_t *state);
 
@@ -533,32 +548,34 @@ void ptas_led_digits(chqstate_t *state,
 
 u8 *ledfont_plot(chqstate_t *state, u8 ord, u8 *screen);
 
-void draw_string_A(chqstate_t *state,
-                   u8          attr,
-                   u8         *attrs,
-                   u8         *backbuf,
-                   const u8   *string,
-                   u8          style);
-void draw_string(chqstate_t *state,
-                 u8          attrval,
-                 u8         *attrs,
-                 u8         *backbuf,
-                 const u8   *string);
-void draw_string_entry(chqstate_t *state,
-                       u8         *screen,
-                       const u8   *string,
-                       u8          style,
-                       u8          attrval,
-                       u8          stride,
-                       u8         *attrs);
+const u8 *draw_string_with_style(chqstate_t *state,
+                                 u8          attrval,
+                                 u8         *attrs,
+                                 u8         *backbuf,
+                                 const u8   *string,
+                                 u8          style);
+const u8 *draw_string_generic(chqstate_t *state,
+                              u8          attrval,
+                              u8         *attrs,
+                              u8         *backbuf,
+                              const u8   *string);
+const u8 *draw_string_core(chqstate_t *state,
+                           u8         *backbuf,
+                           const u8   *string,
+                           u8          style,
+                           u8          attrval,
+                           u8          attrsstride,
+                           u8         *attrs);
 
 void draw_char(chqstate_t *state,
                u8          character,
-               u8         *screen,  // screen address
-               u8          style,   // draw style
-               u8          attrval, // attribute
-               u8          stride,  // e.g. 32
-               u8         *attrs);
+               u8         *screen,
+               u8          style,
+               u8          attrval,
+               u8          stride,
+               u8         *attrs,
+               u8        **new_screen,
+               u8        **new_attrs);
 
 u8 keyscan(chqstate_t *state);
 u8 keyscan_a112(chqstate_t *state, u8 *HL);

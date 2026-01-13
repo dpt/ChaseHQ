@@ -1,4 +1,4 @@
-CFLAGS = -Wall -Wno-unused-function `sdl2-config --cflags` -g
+CFLAGS = -Wall -Wno-unused-function `sdl2-config --cflags` -g -fsanitize=address -fno-omit-frame-pointer
 #-Wextra -Wpedantic
 
 SRCS = Main.c ChaseHQ.c ChaseHQ-Data.c ChaseHQ-StageData.c
@@ -6,7 +6,7 @@ OBJS := $(SRCS:.c=.o)
 DEPS := $(SRCS:.c=.d)
 
 ChaseHQ: $(OBJS)
-	$(CC) `sdl2-config --libs` -o $@ $^
+	$(CC) `sdl2-config --libs` -fsanitize=address -o $@ $^
 
 .PHONY: clean
 clean:

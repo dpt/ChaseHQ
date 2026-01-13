@@ -345,7 +345,7 @@ int main(void)
 
       //case SDL_KEYDOWN:
       case SDL_KEYUP: {
-        static const char msg[] = "WOOT, NOW WE HAVE A SMASH BAR";
+        static const char msg[] = "PREGAME SCREEN RENDERING IS WORKING!";
 
         for (int i = 0; i < sizeof(msg) - 1; i++) {
           if (t)
@@ -362,14 +362,20 @@ int main(void)
         //printf("my=%d\n",my);
         // ledfont_plot(state, 1 + my % 10,
         //              &state->screen[(0x4000 + mx / 8) - SCREEN_START_ADDRESS]);
+        state->dont_draw_screen_attrs = 1; // Conv: Was 0xF8.
+        //setup_transition(state, TRANSITIONSTRIDE_REVERSE);
         clear_playfield_set_attrs(state);
-        memcpy(&state->backbuffer[0], backbufexample, sizeof(backbufexample));
-        draw_mugshots(state);
-        state->sighted_flag = 1;
-        state->perp_caught_phase = PERPCAUGHTPHASE_2;
-        state->smash_counter = my / 16;
-        draw_smash_bar(state);
+        //state->pregame_car_revealed_height = 0; // Reset the counter in #R$85E4 that reveals the perp's car
+
+        draw_pregame(state);
+        reveal_perp_car(state);
         transition(state);
+        animate_meters(state);
+        //draw_mugshots(state);
+        //state->sighted_flag = 1;
+        //state->perp_caught_phase = PERPCAUGHTPHASE_2;
+        //state->smash_counter = my / 16;
+        //draw_smash_bar(state);
         draw_screen(state);
         break;
 

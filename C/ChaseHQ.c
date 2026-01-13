@@ -19,6 +19,9 @@
 // all is to use this C conversion to expose problem points and feed those
 // back into the disassembly's description.
 //
+// Some code will unavoidably need to be changed however, such as the stack
+// trick where PUSH and POP are used to accelerate loads and stores.
+//
 // The level data (called "stage" data in this conversion to match the
 // original game) is retained whole in the converted game, including any
 // embedded addresses. This lets us 'page in' levels by copying the original
@@ -47,20 +50,23 @@
 //
 // (SM) means self modified.
 //
+// Remember that much of this code is in progress and untested - or just
+// broken.
+//
 
 // TODO
+//
+// Get the pregame screen going.
+//
+// Get a sprite plotter going.
 //
 // Stub out all functions.
 //
 // Import all graphic data.
 //
-// Get a sprite plotter going.
-//
 // Copy whole messages that get modified into the state structure.
 //
 // Decide how to drive the main loop(s).
-//
-// Get the pregame screen going.
 //
 // Decide how to handle having both C struct-defined graphics AND graphics
 // embedded in the original stage data. Essentially two different formats.
@@ -145,6 +151,7 @@ static const u8 *stgmap(chqstate_t *state, int address)
 // given a Z80 address read a stagedata word and map it to a native pointer into stagedata
 static const u8 *stgwordtostgptr(chqstate_t *state, int address)
 {
+  assert(address >= STAGEDATA_BASE && address <= STAGEDATA_END);
   return stgmap(state, stgword(state, address));
 }
 
@@ -457,10 +464,13 @@ void run_pregame_screen(chqstate_t *state)
   state->dont_draw_screen_attrs = 1; // Conv: Was 0xF8.
   setup_transition(state, TRANSITIONSTRIDE_REVERSE);
   clear_playfield_set_attrs(state);
-  state->pregame_car_revealed_height = 0; // Reset the counter in #R$85E4 that reveals the perp's car
+  state->pregame_car_revealed_height =
+    0; // Reset the counter in #R$85E4 that reveals the perp's car
   start_chatter(state, 0xFF, stgwordtostgptr(state, 0x5D04));
 
   for (;;) {
+    // TODO: Will need to break this infinite loop down.
+
     draw_pregame(state);
     drive_chatter(state);
     reveal_perp_car(state);
@@ -488,6 +498,8 @@ void run_pregame_screen(chqstate_t *state)
 // $85E4
 void reveal_perp_car(chqstate_t *state)
 {
+  const int MaxHeight = 50;
+
   u8        revealed_height; // was A
   const u8 *perp_lod;        // was HL
   u16       width_bytes;     // was DE
@@ -498,21 +510,23 @@ void reveal_perp_car(chqstate_t *state)
     return; // perp car is hidden on stage 5
 
   revealed_height = state->pregame_car_revealed_height + 1;
-  if (revealed_height >= 50) // max height
+  if (revealed_height > MaxHeight)
     revealed_height--;
   state->pregame_car_revealed_height = revealed_height;
 
+  // Get the largest of the perp car LOD
   perp_lod = stgwordtostgptr(state, 0x5D10);
   width_bytes = *perp_lod;
   perp_lod += 2;
   height = *perp_lod;
-  if (revealed_height > height)
+  if (revealed_height < height)
     height = revealed_height;
   perp_lod++;
-  bitmap = stgwordtostgptr(state, wordat(perp_lod));
+  bitmap = ptrtostgptr(state, perp_lod);
 
   plot_sprite(state,
               width_bytes,
+              height,
               ADDRTOBACKBUF(0xF4CD),
               width_bytes,
               bitmap); // exit via
@@ -585,13 +599,13 @@ void draw_pregame(chqstate_t *state)
   u16       cmdaddr;    // was DE
   u8        tileidx;    // was A
   const u8 *srctile;    // was DE
-  u8       *HLbuf;
+  u8       *backbuf;    // was HL
   int       tile_count; // was B
   int       iterations; // was B
   u16       bufoffset;  // was BC
-  u8        E;
-  u8        rows;
-  u8        A;
+  u8        E;          // was E
+  u8        rows;       // was ?
+  u8        bgattr;     // was A
   const u8 *messages;   // was HL
   u16       attrs;      // was DE
 
@@ -629,19 +643,18 @@ dp_repeat_or_plot_tile:
     } else {
       tileidx = cmd;
     }
-    // EX DE,HL      ; #REGde becomes tile ptr, #REGhl becomes back buffer ptr
     srctile = &pregame_tiles[(tileidx - PREGAMECMD_REPEAT) * 8];
-    HLbuf  = ADDRTOBACKBUF(cmdaddr);
+    backbuf = ADDRTOBACKBUF(cmdaddr);
     do {
       // Plot a tile
       iterations = 8; // 8 rows per tile
       do {
-        *HLbuf = *srctile++;
-        HLbuf += 256;
+        *backbuf = *srctile++;
+        backbuf += 256;
       } while (--iterations > 0);
 
       // Build attribute address from back buffer ptr
-      bufoffset = BACKBUFTOOFFSET(HLbuf);
+      bufoffset = BACKBUFTOOFFSET(backbuf - 256 * 8);
       E = (bufoffset & 0x1F) | ((bufoffset >> 6) & 0x20); // columns + 1 row
       rows  = (bufoffset & 0xE0);
       carry = (bufoffset & 0x80) >> 7;
@@ -652,37 +665,39 @@ dp_repeat_or_plot_tile:
         attrs += 256;
       attrs += rows;
 
-      A = state->draw_pregame_background; // load attribute
-      if (A)
-        *ADDRTOSCREEN(attrs) = A;
+      bgattr = state->draw_pregame_background;
+      if (bgattr)
+        *ADDRTOSCREEN(attrs) = bgattr;
 
       // dp_direction
       if (state->draw_pregame_direction != 1) {
+        bufoffset = BACKBUFTOOFFSET(backbuf);
         // vertical
-        if (bufoffset & 0x0F)
-          goto dp_nextone;
-
-        bufoffset = (((bufoffset >> 8) - 16) << 8) | (bufoffset & 0xFF); // H -= 16
-        bufoffset = (bufoffset & 0xFF00) | (((bufoffset & 0xFF) + 32) & 0xFF); // L += 32
+        if ((bufoffset & 0x0F00) == 0) {
+          bufoffset -= 0x1000; // undoing overflow?
+          bufoffset = (bufoffset & 0xFF00) | (((bufoffset & 0xFF) + 0x20) &
+                                              0xFF); // L += 32
+        }
       } else {
         // horizontal
         bufoffset++;
       }
 
-dp_nextone:
+      backbuf = OFFSETTOBACKBUF(bufoffset);
+      srctile -= 8; // was POP
     } while (--tile_count > 0);
-    // EX DE,HL ; #REGde = Back buffer ptr
-    // POP HL ; Restore command pointer
+    cmdaddr = 0xF000 + bufoffset; // was EX DE,HL ; #REGde = Back buffer ptr
     goto dp_get_command;
   } // !CMD_STOP
 
   // Print strings
   iterations = 4;
+  // Conv: Removed (messages-1) adjustment and pregame_messages adjusted.
   messages = &pregame_messages[0];
   do
     messages = print_message(state,
-                             DRAWCHAR_TYPE_SINGLE_INVERTED,
-                             messages - 1);
+                             DRAWCHARSTYLE_SINGLE_INVERTED,
+                             messages);
   while (--iterations > 0);
 }
 
@@ -729,7 +744,7 @@ void escape_scene(chqstate_t *state)
       // Activate the three barriers
       state->hazards[1].TBD7 =
         state->hazards[2].TBD7 =
-        state->hazards[3].TBD7 = 0xFF;
+          state->hazards[3].TBD7 = 0xFF;
     }
 
     state->speed = 0; // Set speed to zero [speed of camera]
@@ -1310,7 +1325,7 @@ void fully_smashed(chqstate_t *state)
 void transition(chqstate_t *state)
 {
   int       iterations; // was B'
-  u16       screen;     // was HL
+  u16       backbuf;    // was HL
   const u8 *maskptr;    // was HL'
   u16       screencopy; // was D
   u8        mask;       // was E
@@ -1339,27 +1354,27 @@ void transition(chqstate_t *state)
     // Advance before use - initial mask points one earlier/later
     state->transition_mask += state->transition_frame_stride;
 
-  screen  = 0xFF00; // was H=$FF
+  backbuf  = 0xFF00; // was H=$FF
   maskptr = state->transition_mask;
   iterations = 8;
   do {
     mask = *maskptr;
-    screencopy = screen; // Conv: Original just saved H in D
-    screen = (screen & 0xFF00) | 0xFE;
-    transition_fade_chunk(state, mask, ADDRTOBACKBUF(screen));
-    screen -= 8 << 8;
-    transition_fade_chunk(state, mask, ADDRTOBACKBUF(screen));
-    screen = screencopy - 256; // restore
+    screencopy = backbuf; // Conv: Original just saved H in D
+    backbuf = (backbuf & 0xFF00) | 0xFE;
+    transition_fade_chunk(state, mask, ADDRTOBACKBUF(backbuf));
+    backbuf -= 8 << 8;
+    transition_fade_chunk(state, mask, ADDRTOBACKBUF(backbuf));
+    backbuf = screencopy - 256; // restore
     maskptr++;
   } while (--iterations > 0);
 }
 
 // $8DD8
-// Overwrite odd/even UDG rows of the screen with a single byte.
+// Overwrite odd/even UDG rows of the back buffer with a single byte.
 //
 // mask - was E
-// screen - was HL
-void transition_fade_chunk(chqstate_t *state, u8 mask, u8 *screen)
+// backbuf - was HL
+void transition_fade_chunk(chqstate_t *state, u8 mask, u8 *backbuf)
 {
   int rows;       // was C
   int iterations; // was B
@@ -1369,13 +1384,13 @@ void transition_fade_chunk(chqstate_t *state, u8 mask, u8 *screen)
     iterations =
       6; // 6 iterations (of 5 ops each in the loop below) = 30 bytes written (~ a scanline)
     do {
-      *screen-- |= mask;
-      *screen-- |= mask;
-      *screen-- |= mask;
-      *screen-- |= mask;
-      *screen-- |= mask;
+      *backbuf-- |= mask;
+      *backbuf-- |= mask;
+      *backbuf-- |= mask;
+      *backbuf-- |= mask;
+      *backbuf-- |= mask;
     } while (--iterations > 0);
-    screen -= 2;
+    backbuf -= 2;
   } while (--rows > 0);
 }
 
@@ -1458,7 +1473,7 @@ void draw_overlay_messages(chqstate_t *state)
     }
 
     style = *++message;
-    if (style == DRAWCHAR_TYPE_DUNNO) // or possibly a special marker?
+    if (style == DRAWCHARSTYLE_DUNNO) // or possibly a special marker?
       break;
 
     print_message(state, style, message);
@@ -1479,19 +1494,18 @@ const u8 *print_message(chqstate_t *state,
   u16 backbuf;  // was DE
   u16 attraddr; // was BC
 
-  attr     = messages[0];
-  backbuf  = (messages[2] << 8) | messages[1];
-  attraddr = (messages[4] << 8) | messages[3];
-  messages += 5;
+  // we ignore flags in messages[0]
+  attr     = messages[1];
+  backbuf  = wordat(messages + 2);
+  attraddr = wordat(messages + 4);
+  messages += 6;
 
-  draw_string_A(state,
-                attr,
-                ADDRTOSCREEN(attraddr),
-                ADDRTOBACKBUF(backbuf),
-                messages,
-                style);
-
-  return messages;
+  return draw_string_with_style(state,
+                                attr,
+                                ADDRTOSCREEN(attraddr),
+                                ADDRTOBACKBUF(backbuf),
+                                messages,
+                                style);
 }
 
 // $8E7E
@@ -1680,20 +1694,149 @@ void draw_object(chqstate_t *state, int left_or_right)
 }
 
 // $949C
+//
+// width_bytes - was A
+// height - was B
+// backbuf_addr - was HL
+// bitmap_stride - was DE'
+// bitmap_data - was HL'
 void plot_sprite(chqstate_t *state,
-                 u8          A_width_bytes,
-                 u8         *HL_backbuf_addr,
-                 u16         DEdash_bitmap_stride,
-                 const u8   *HLdash_bitmap_data)
+                 u8          width_bytes,
+                 u8          height,
+                 u8         *backbuf_addr,
+                 u16         bitmap_stride,
+                 const u8   *bitmap_data)
 {
+  int carry = 0;
+  int jump_offset; // was IX
+
+  SRL(width_bytes);
+  if (carry) {
+    ps_odd(state, width_bytes, height, backbuf_addr, bitmap_stride, bitmap_data);
+    return;
+  }
+
+  // sprite has even width
+
+  jump_offset = 5 * (4 - width_bytes); // 5 bytes/op
+
+  plot_sprite_even_entry(state,
+                         jump_offset,
+                         height,
+                         backbuf_addr,
+                         bitmap_stride,
+                         bitmap_data);
+}
+
+void plot_sprite_even_entry(chqstate_t *state,
+                            int         jump_offset,
+                            u8          height,
+                            u8         *backbuf_addr,
+                            u16         bitmap_stride,
+                            const u8   *bitmap_data)
+{
+  const u8 *SPsrc;
+  u8       *backbuf_orig; //  was A
+
+  // Conv: B & C moved into prevbufrow forward
+  // EXX bank
+  goto ps_even_body;
+
+  for (;;) {
+    // EXX bank
+    if (--height == 0)
+      return;
+
+    bitmap_data += bitmap_stride;
+
+ps_even_body:
+    SPsrc = bitmap_data;
+    // EXX unbank
+    backbuf_orig = backbuf_addr;
+    switch (jump_offset / 5) {
+    default:
+      assert(0);
+    case 0:
+      // Conv: Original uses POP that loads 16 bits at a time
+      *backbuf_addr++ = *SPsrc++;
+      *backbuf_addr++ = *SPsrc++;
+    case 1:
+      *backbuf_addr++ = *SPsrc++;
+      *backbuf_addr++ = *SPsrc++;
+    case 2:
+      *backbuf_addr++ = *SPsrc++;
+      *backbuf_addr++ = *SPsrc++;
+    case 3:
+      *backbuf_addr++ = *SPsrc++;
+      *backbuf_addr = *SPsrc++;
+    }
+    backbuf_addr = OFFSETTOBACKBUF(prevbufrow(BACKBUFTOOFFSET(backbuf_orig)));
+  }
+}
+
+void ps_odd(chqstate_t *state,
+            u8          width_bytes,
+            u8          height,
+            u8         *backbuf_addr,
+            u16         bitmap_stride,
+            const u8   *bitmap_data)
+{
+  int       jump_offset; // was IX
+  const u8 *SPsrc;
+  u8       *backbuf_orig; //  was A
+
+  // sprite has an odd width
+
+  width_bytes++;
+  jump_offset = 5 * (4 - width_bytes); // 5 bytes/op
+
+  // Conv: B & C moved into prevbufrow
+  // EXX bank
+  goto ps_odd_body;
+
+  for (;;) {
+    // EXX bank
+    if (--height == 0)
+      return;
+
+    bitmap_data += bitmap_stride;
+
+ps_odd_body:
+    SPsrc = bitmap_data;
+    // EXX unbank
+    backbuf_orig = backbuf_addr;
+    switch (jump_offset / 5) {
+    default:
+      assert(0);
+    case 0:
+      // Conv: Original uses POP that loads 16 bits at a time
+      *backbuf_addr++ = *SPsrc++;
+      *backbuf_addr++ = *SPsrc++;
+    case 1:
+      *backbuf_addr++ = *SPsrc++;
+      *backbuf_addr++ = *SPsrc++;
+    case 2:
+      *backbuf_addr++ = *SPsrc++;
+      *backbuf_addr++ = *SPsrc++;
+    case 3:
+      *backbuf_addr = *SPsrc++;
+    }
+    backbuf_addr = OFFSETTOBACKBUF(prevbufrow(BACKBUFTOOFFSET(backbuf_orig)));
+  }
 }
 
 // $9542
+//
+// width_bytes - was A
+// backbuf_addr - was HL
+// bitmap_stride - was DE'
+// bitmap_data - was HL'
 void plot_sprite_flipped(chqstate_t *state,
-                         u8          A_width_bytes,
-                         u8         *HL_backbuf_addr,
-                         u16         DEdash_bitmap_stride,
-                         const u8   *HLdash_bitmap_data)
+                         u8          width_bytes,
+                         u8          height,
+                         u8         *backbuf_addr,
+                         u16         bitmap_stride,
+                         const u8   *bitmap_data)
 {
 }
 
@@ -2796,25 +2939,25 @@ u8 *ledfont_plot(chqstate_t *state, u8 ord, u8 *screen)
 
 // $9F99
 //
-// attr - was A
+// attrval - was A
 // attrs - was BC
 // backbuf - was DE
 // string - was HL
 // style - was A'
-void draw_string_A(chqstate_t *state,
-                   u8          attr,
-                   u8         *attrs,
-                   u8         *backbuf,
-                   const u8   *string,
-                   u8          style)
+const u8 *draw_string_with_style(chqstate_t *state,
+                                 u8          attrval,
+                                 u8         *attrs,
+                                 u8         *backbuf,
+                                 const u8   *string,
+                                 u8          style)
 {
-  draw_string_entry(state,
-                    backbuf,
-                    string/*HL*/,
-                    style/*A'*/,
-                    attr/*C'*/,
-                    32/*DE'*/,
-                    attrs/*HL'*/);
+  return draw_string_core(state,
+                          backbuf,
+                          string, /*HL*/
+                          style, /*A'*/
+                          attrval, /*C'*/
+                          32, /*DE'*/
+                          attrs/*HL'*/);
 }
 
 // $9FA3
@@ -2823,74 +2966,90 @@ void draw_string_A(chqstate_t *state,
 // attrs - was BC
 // backbuf - was DE
 // string - was HL
-void draw_string(chqstate_t *state,
-                 u8          attrval,
-                 u8         *attrs,
-                 u8         *backbuf,
-                 const u8   *string)
+const u8 *draw_string_generic(chqstate_t *state,
+                              u8          attrval,
+                              u8         *attrs,
+                              u8         *backbuf,
+                              const u8   *string)
 {
-  draw_string_entry(state,
-                    backbuf,
-                    string/*HL*/,
-                    1/*A'*/, // style
-                    attrval/*C'*/,
-                    32/*DE'*/,
-                    attrs/*HL'*/);
+  return draw_string_core(state,
+                          backbuf,
+                          string, /*HL*/
+                          DRAWCHARSTYLE_GENERIC, /*A'*/
+                          attrval, /*C'*/
+                          32, /*DE'*/
+                          attrs/*HL'*/);
 }
 
 // $9FA6
 //
-// screen - was DE
+// Broken out from above.
+//
+// backbuf - was DE
 // string - was HL
 // style - was A'
 // attrval - was C'
-// stride - was DE'
+// attrsstride - was DE'
 // attrs - was HL'
-void draw_string_entry(chqstate_t *state,
-                       u8         *screen,
-                       const u8   *string,
-                       u8          style,
-                       u8          attrval,
-                       u8          stride,
-                       u8         *attrs)
+const u8 *draw_string_core(chqstate_t *state,
+                           u8         *backbuf,
+                           const u8   *string,
+                           u8          style,
+                           u8          attrval,
+                           u8          attrsstride,
+                           u8         *attrs)
 {
   u8 character; // was A
 
   do {
     character = *string & ~STREND;
-    draw_char(state, character, screen, style, attrval, stride, attrs);
-  } while ((character & STREND) == 0);
+    draw_char(state, character, backbuf, style, attrval, attrsstride, attrs,
+              &backbuf, &attrs);
+  } while ((*string++ & STREND) == 0);
+
+  return string;
 }
 
 // $9FB4
 //
 // character - was A
-// screen - was DE
-// style - was A'
-// attrval - was C'
-// stride - was DE'
+// screen - screen address - was DE
+// style - draw style - was A'
+// attrval - attribute value - was C'
+// attrstride - was DE'
 // attrs - was HL'
+// new_screen - added
+// new_attrs - added
 void draw_char(chqstate_t *state,
                u8          character,
-               u8         *screen,    // screen address
-               u8          style,     // draw style
-               u8          attrval,     // attribute
-               u8          stride,    // was DE' e.g. 32 - a stride?
-               u8         *attrs)     // was HL'
+               u8         *screen,
+               u8          style,
+               u8          attrval,
+               u8          attrstride,
+               u8         *attrs,
+               u8        **new_screen,
+               u8        **new_attrs)
 {
   u8        glyphid;    // was C
-  u8        type;       // was C
   u8        data;       // was A
   u8        iterations; // was B
   const u8 *fontdata;   // was HL
   u8       *orig;       // was stacked
 
+  assert(screen);
+  assert(style <= DRAWCHARSTYLE__LIMIT);
+  assert(BACKBUFTOOFFSET(screen) >= 0);
+  assert(BACKBUFTOOFFSET(screen) < BACKBUFFER_LENGTH);
+  assert(SCREENTOOFFSET(attrs) >= SCREEN_ATTRIBUTES_START_ADDRESS -
+         SCREEN_START_ADDRESS);
+  assert(SCREENTOOFFSET(attrs) < SCREEN_LENGTH);
+
   character -= ' ';
   if (character == 0) {
     // Space
     screen++;
-    attrs++; // FIXME: Do we need to return these?
-    return;
+    attrs++;
+    goto dc_return;
   }
 
   // Map ASCII to glyph IDs
@@ -2919,34 +3078,36 @@ dc_have_range:
 dc_have_single:
   fontdata = &font[glyphid * 7]; // add symbol for glyph height
 
-  type = style;
-  if (--type == 0) goto dc_generic; // 1
-  if (--type == 0) goto dc_single_height; // 2
-  if (--type == 0) goto dc_double_height; // 3
-  if (--type == 0) goto dc_single_height_inverted; // 4
-  if (--type == 0) goto dc_double_height_inverted; // 5
+  /* Conv: if-else ladder replaced with switch. */
+  switch (style) {
+    case 1: goto dc_generic;
+    case 2: goto dc_single_height;
+    case 3: goto dc_double_height;
+    case 4: goto dc_single_height_inverted;
+    case 5: goto dc_double_height_inverted;
+    case 0: break;
+    default: assert(0);
+  }
 
   // Otherwise it's type 0 or anything else
   orig = screen;
   iterations = 4;
   do {
-    data = *fontdata;
+    data = *fontdata++;
     *screen = data;
     screen += 256;
     *screen = data;
     screen += 256;
-    fontdata++;
   } while (--iterations > 0);
   screen -= 8 * 256;
   screen += 32;
   iterations = 3;
   do {
-    data = *fontdata;
+    data = *fontdata++;
     *screen = data;
     screen += 256;
     *screen = data;
     screen += 256;
-    fontdata++;
   } while (--iterations > 0);
   goto dc_set_double_attrs;
 
@@ -2955,12 +3116,11 @@ dc_double_height_inverted:
   orig = screen;
   iterations = 7;
   do {
-    data = ~*fontdata;
+    data = ~*fontdata++;
     *screen = data;
     screen += 256;
     *screen = data;
     screen += 256;
-    fontdata++;
   } while (--iterations > 0);
   goto dc_set_double_attrs;
 
@@ -2968,9 +3128,7 @@ dc_single_height_inverted:
   orig = screen;
   iterations = 7;
   do {
-    data = ~*fontdata;
-    *screen = data;
-    fontdata++;
+    *screen = ~*fontdata++;
     screen += 256;
   } while (--iterations > 0);
   goto dc_set_single_attrs;
@@ -2980,9 +3138,8 @@ dc_double_height:
   orig = screen;
   *screen = 0; // leave gap at top
   screen += 256;
-  for (int i = 0; i < 7; i++) { // Conv: rolled
-    data = *fontdata;
-    *screen = data;
+  for (int i = 0; i < 7; i++) { // Conv: rolled up
+    *screen = *fontdata;
     screen += 256;
     *screen++ = *fontdata++; // was LDI, could reuse A
     screen--; // was DEC E, could remove if screen++ above is dropped
@@ -2993,17 +3150,17 @@ dc_double_height:
 dc_set_double_attrs:
   screen = orig + 1; // was POP screen, INC E
   *attrs |= attrval;
-  attrs += stride;
+  attrs += attrstride;
   *attrs |= attrval;
-  attrs -= stride; // was POP attrs
+  attrs -= attrstride; // was POP attrs
   attrs++; // was INC L
-  return;
+  goto dc_return;
 
 dc_single_height: // seems to store 9 rows
   orig = screen;
   *screen = 0; // leave gap at top
   screen += 256;
-  for (int i = 0; i < 7; i++) { // Conv: rolled
+  for (int i = 0; i < 7; i++) { // Conv: rolled up
     *screen++ = *fontdata++;
     screen--; // could drop
     screen += 256;
@@ -3011,24 +3168,26 @@ dc_single_height: // seems to store 9 rows
   *screen = 0; // leave gap at bottom
 
 dc_set_single_attrs:
-  screen = orig + 1; // was POP screen
+  screen = orig + 1; // was POP screen, INC E
   *attrs |= attrval;
   attrs++; // was INC L
-  return;
+  goto dc_return;
 
 dc_generic:
   orig = screen;
   iterations = 7;
   do {
-    *screen = *fontdata;
+    *screen = *fontdata++;
     screen += 256;
-    fontdata++;
-
+    assert(0);
     // variation on nextscrrow()
     // screen = nextscrrow(screen); // won't work!
   } while (--iterations > 0);
   screen = orig + 1; // was POP screen
-  return;
+
+dc_return:
+  *new_screen = screen;
+  *new_attrs  = attrs;
 }
 
 // $A0D6
@@ -3563,7 +3722,8 @@ lr_badf:
   }
   // $BB07
   HLroadpos = HLroadpos_saved; // was POP HLroadpos
-  state->scenedata.road_pos = HLroadpos; // restore normal road pos after fork rendering
+  state->scenedata.road_pos =
+    HLroadpos; // restore normal road pos after fork rendering
   // POP BC
   // (set SP restoring op)
   SProadright = &state->table_ec00[0x30]; // (set SP to $EC30)

@@ -20,7 +20,7 @@
 
 const u8 bitmap_turbospin[TURBOFRAMELENGTH * TURBOFRAMES];
 
-const u8 pregame_messages[64];
+const u8 pregame_messages[68];
 const u8 pregame_data[207];
 const u8 pregame_tiles[45 * 8];
 
@@ -179,8 +179,6 @@ const u8 diamond_transition_mask[6 * 8];
 
 const u8 marquee_initial[SCREEN_BITMAP_ROWBYTES * MARQUEE_HEIGHT];
 const u8 marquee_attrs[SCREEN_ATTRIBUTES_WIDTH * MARQUEE_HEIGHT / 8];
-
-const u8 backbufexample[16 * 256];
 
 #endif /* CHASEHQ_DATA_H */
 
