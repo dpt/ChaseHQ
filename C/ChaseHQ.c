@@ -4026,14 +4026,14 @@ void pre_shift_backdrop(chqstate_t *state)
   memcpy(preshifted, source, BACKDROP_LENGTH);
 
   // Shift it in-place by a nibble
-  endptr = &preshifted[BACKDROP_WIDTH - 1]; // final scanline nibble rolls around to start
+  endptr = &preshifted[BACKDROP_WIDTH -
+                       1]; // final scanline nibble rolls around to start
   bmptr  = &preshifted[0];
   row    = BACKDROP_HEIGHT;
   do {
     col = BACKDROP_WIDTH;
     pix = *endptr;
     do {
-      fprintf(stderr,"$");
       assert(bmptr >= &state->pre_shifted_backdrop[0]);
       assert(bmptr < &state->pre_shifted_backdrop[BACKDROP_LENGTH]);
       RRD(pix, bmptr);

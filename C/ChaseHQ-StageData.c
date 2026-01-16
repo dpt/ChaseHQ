@@ -11,11 +11,22 @@
 
 #include "Types.h"
 #include "Pixels.h"
+#include "Spectrum.h"
 #include "ChaseHQ.h"
 
 #include "ChaseHQ-StageData.h"
 
+/* ----------------------------------------------------------------------- */
+
 static const u8 face_ralph[FACEBYTES];
+static const lod_t car_lods[6];
+static const u8 bitmap_car_1[6 * 31];
+static const u8 bitmap_car_2[5 * 22];
+static const u8 bitmap_car_3[3 * 16];
+static const u8 bitmap_car_4[3 * 2 * 9];
+static const u8 bitmap_car_4s[3 * 2 * 9];
+
+/* ----------------------------------------------------------------------- */
 
 // $5CF0
 static const stage_t stage1 = {
@@ -47,7 +58,7 @@ static const stage_t stage1 = {
   },
   &face_ralph[FACEBITMAPBYTES],
   NULL,
-  0x7070,
+  attribute_BRIGHT_YELLOW_OVER_BLACK | (attribute_BRIGHT_YELLOW_OVER_BLACK << 8),
   NULL, // addrof_hittable_objects
   NULL, // addrof_right_hand_handlers
   NULL, // addrof_right_hand_objects
@@ -59,6 +70,35 @@ static const stage_t stage1 = {
   NULL, // addrof_arrest_messages
   NULL, // addrof_helicopter_stuff_1
   NULL, // addrof_helicopter_stuff_2
+
+  NULL, // lods_stones
+  NULL, // lods_dust
+  &car_lods[0], // lods_perp_car
+  { NULL, NULL, NULL, &car_lods[0] },
+
+  20, // car_spawn_delay
+  0x50, // smash_5d1b
+  0x5A, // smash_perp_delay
+
+  {
+    0xEA,
+    NULL, //&map_start_curvature[-1],
+    NULL, //&map_start_height[-1],
+    NULL, //&map_start_lanes[-1],
+    NULL, //&map_start_rightobjs[-1],
+    NULL, //&map_start_leftobjs[-1],
+    NULL, //&map_start_hazards[-1]
+  },
+
+  {
+    0xEA,
+    NULL, //&map_loop_curvature[-1],
+    NULL, //&map_loop_height[-1],
+    NULL, //&map_loop_lanes[-1],
+    NULL, //&map_loop_rightobjs[-1],
+    NULL, //&map_loop_leftobjs[-1],
+    NULL, //&map_loop_hazards[-1]
+  },
 };
 
 // $642A
@@ -110,6 +150,123 @@ static const u8 face_ralph[FACEBYTES] = {
   0x78, 0x70, 0x30, 0x30,
   0x70, 0x70, 0x30, 0x28
 };
+
+// $6492
+static const lod_t car_lods[6] = {
+  { 6, LOD_NOMASK, 31, &bitmap_car_1[0], &bitmap_car_1[0]  },
+  { 5, LOD_NOMASK, 22, &bitmap_car_2[0], &bitmap_car_2[0]  },
+  { 3, LOD_NOMASK, 16, &bitmap_car_3[0], &bitmap_car_3[0]  },
+  { 3, LOD_NOMASK, 16, &bitmap_car_3[0], &bitmap_car_3[0]  },
+  { 3, LOD_MASKED,  9, &bitmap_car_4[0], &bitmap_car_4s[0] },
+  { 3, LOD_MASKED,  9, &bitmap_car_4[0], &bitmap_car_4s[0] },
+};
+
+// $67C2
+static const u8 bitmap_car_1[6 * 31] = {
+  ________, __XXXXXX, XXXXXXXX, XXXXXXXX, XXXX____, ________,
+  ____XXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXX_____,
+  _XXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXX__,
+  _XXXXX__, X_X_XXXX, XXXXXXXX, XXXXXXXX, XXX_X_X_, _XXXXX__,
+  XXXXX_XX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, X_XXXXX_,
+  XXXXX_XX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, X_XXXXX_,
+  XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXX_,
+  _XX_X_X_, X_X_X_X_, X_X_X_X_, X_X_X_X_, X_X_X_X_, X_X_XXX_,
+  _XXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXX__,
+  _X______, ________, ________, ________, ________, _____X__,
+  _X______, ________, ________, ________, ________, _____X__,
+  __XXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXX___,
+  __X_____, ________, ________, ________, ________, ____X___,
+  _XXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXX__,
+  _X__XXXX, _XXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXX_X, XXX__X__,
+  _X__XXXX, _X_X_X_X, _X______, _____X_X, _X_X_X_X, XXX__X__,
+  _X__XXXX, __X_X_X_, XX______, _____XX_, X_X_X_X_, XXX__X__,
+  __XXXXX_, _X_X_X_X, _X______, _____X_X, _X_X_X__, XXXXXX__,
+  __XXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXX___,
+  __X_XX__, ________, ________, ________, ________, _XX_X___,
+  ___X_XXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XX_X____,
+  __X_XX__, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXX_, _XX_X___,
+  _X___XX_, ________, ________, ________, ________, XX___X__,
+  _X____XX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, X____X__,
+  __XXXXXX, X_X_____, ________, ___XXXXX, ____X_XX, XXXXX___,
+  _______X, XX_X____, ________, __XXXXXX, ___X_XXX, ________,
+  ________, XX__X___, ________, __XXXXXX, __X__XX_, ________,
+  ________, _XX__XX_, ________, ___XXXX_, XX__XX__, ________,
+  ________, ___X___X, XXXXXXXX, XXXXXXXX, ___XX___, ________,
+  ________, ____XX__, ________, ________, _XX_____, ________,
+  ________, ______XX, XXXXXXXX, XXXXXXXX, X_______, ________
+};
+
+// $687C
+static const u8 bitmap_car_2[5 * 22] = {
+  ________, _XXXXXXX, XXXXXXXX, XXXXX___, ________,
+  _____XXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXX_____,
+  __XXXX__, X_XXXXXX, XXXXXXXX, XXXXX_X_, _XXXX___,
+  _XXXX_XX, XXXXXXXX, XXXXXXXX, XXXXXXXX, X_XXXX__,
+  _XXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXX__,
+  __XX_X_X, _X_X_X_X, _X_X_X_X, _X_X_X_X, _X_XXX__,
+  __XXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXX___,
+  __X_____, ________, ________, ________, ____X___,
+  ___X_X_X, _X_X_X_X, _X_X_X_X, _X_X_X_X, _X_X____,
+  __XXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXX___,
+  __X__XX_, XXXXXXXX, XXXXXXXX, XXXXXXX_, XX__X___,
+  __X__XX_, _X_X_X__, ________, XX_X_X__, XX__X___,
+  ___XXXX_, X_X_XX__, ________, X_X_X_X_, XXXXX___,
+  ___XXX_X, _X_X_X_X, _X_X_X_X, _X_X_X_X, _XXX____,
+  ____XXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXX_____,
+  ___X_X__, XXXXXXXX, XXXXXXXX, XXXXXXX_, _X_X____,
+  __X__XXX, X_______, ________, ______XX, XX__X___,
+  ___XXXXX, _X______, ______XX, XX___X_X, XXXX____,
+  _______X, X_X_____, _____XXX, XX__X_XX, ________,
+  ________, XX_XX___, ______XX, X_XX_XX_, ________,
+  ________, __X__XXX, XXXXXXXX, XX__X___, ________,
+  ________, ___XXXXX, XXXXXXXX, XXXX____, ________,
+};
+
+// $68EA
+static const u8 bitmap_car_3[3 * 16] = {
+  _____XXX, XXXXXXXX, XXX_____,
+  _XXXXXXX, XXXXXXXX, XXXXXXX_,
+  XXX__XXX, XXXXXXXX, XXX__XXX,
+  XX_XXXXX, XXXXXXXX, XXXXX_XX,
+  _XX_X_X_, X_XX_X_X, _X_X_XX_,
+  X_______, ________, _______X,
+  _XX_XXXX, XXXXXXXX, XXXX_XX_,
+  X_XXX_X_, X______X, _X_XXX_X,
+  X_XX_X_X, _X_XX_X_, X_X_XX_X,
+  _XXXXXXX, XXXXXXXX, XXXXXXX_,
+  _XX_XXXX, XXXXXXXX, XXXXX_X_,
+  _X_X____, ________, _____X_X,
+  __XXX_X_, ______XX, __X_XXX_,
+  ____XX_X, _____XXX, _X_XX___,
+  _____XX_, _XXXXXXX, __XX____,
+  _______X, XXXXXXXX, XX______,
+};
+
+// $69DA
+static const u8 bitmap_car_4[3 * 2 * 9] = {
+  ________, XXXXXXXX, _______X, XXXXXXX_, XXXXXXXX, ________,
+  X_______, _XXXXXXX, ______XX, XXXXXX__, XXXXXXXX, ________,
+  ________, XX_XXX_X, _______X, _X_XXXX_, XXXXXXXX, ________,
+  ________, X_XX_XXX, _______X, XXX_XXX_, XXXXXXXX, ________,
+  ________, X_X__XX_, _______X, X_X__XX_, XXXXXXXX, ________,
+  X_______, _X_XXXXX, ______XX, XXXXXX__, XXXXXXXX, ________,
+  _X______, X_XXX_X_, _____X_X, X_XXX_X_, XXXXXXXX, ________,
+  ________, XXXXXXXX, _______X, XXXXXXX_, XXXXXXXX, ________,
+};
+
+// $6A10
+static const u8 bitmap_car_4s[3 * 2 * 9] = {
+  XXXX____, ____XXXX, ________, XXXXXXXX, ___XXXXX, XXX_____,
+  XXXXX___, _____XXX, ________, XXXXXXXX, __XXXXXX, XX______,
+  XXXX____, ____XX_X, ________, XX_X_X_X, ___XXXXX, XXX_____,
+  XXXX____, ____X_XX, ________, _XXXXXX_, ___XXXXX, XXX_____,
+  XXXX____, ____X_X_, ________, _XX_X_X_, ___XXXXX, _XX_____,
+  XXXXX___, _____X_X, ________, XXXXXXXX, __XXXXXX, XX______,
+  XXXX_X__, ____X_XX, ________, X_X_X_XX, _X_XXXXX, X_X_____,
+  XXXX____, ____XXXX, ________, XXXXXXXX, ___XXXXX, XXX_____,
+};
+
+/* ----------------------------------------------------------------------- */
 
 const stage_t *stages[MAX_STAGEDATA] = {
   &stage1,
