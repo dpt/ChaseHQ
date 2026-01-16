@@ -56,7 +56,7 @@
 
 // TODO
 //
-// Get the pregame screen going.
+// Get the pregame screen going. [drawing done]
 //
 // Get a sprite plotter going.
 //
@@ -121,46 +121,6 @@ static u16 wordat(const u8 *addr)
   return (addr[0] << 0) | (addr[1] << 8);
 }
 
-// given a Z80 address read a stagedata byte
-static u16 stgbyte(chqstate_t *state, int address)
-{
-  int offset;
-  assert(address >= STAGEDATA_BASE && address <= STAGEDATA_END);
-  offset = address - STAGEDATA_BASE;
-  return state->stagedata[offset];
-}
-
-// given a Z80 address read a stagedata word
-static u16 stgword(chqstate_t *state, int address)
-{
-  int offset;
-  assert(address >= STAGEDATA_BASE && address <= STAGEDATA_END);
-  offset = address - STAGEDATA_BASE;
-  return wordat(&state->stagedata[offset]);
-}
-
-// map a Z80 address to a stagedata pointer
-static const u8 *stgmap(chqstate_t *state, int address)
-{
-  if (address == 0)
-    return NULL;
-  assert(address >= STAGEDATA_BASE && address <= STAGEDATA_END);
-  return &state->stagedata[address - STAGEDATA_BASE];
-}
-
-// given a Z80 address read a stagedata word and map it to a native pointer into stagedata
-static const u8 *stgwordtostgptr(chqstate_t *state, int address)
-{
-  assert(address >= STAGEDATA_BASE && address <= STAGEDATA_END);
-  return stgmap(state, stgword(state, address));
-}
-
-// given a native pointer read a word and map it to a native pointer into stagedata
-static const u8 *ptrtostgptr(chqstate_t *state, const u8 *addr)
-{
-  return stgmap(state, wordat(addr));
-}
-
 /* ----------------------------------------------------------------------- */
 
 /// Given a road buffer offset return a wrapped-around buffer index.
@@ -186,10 +146,7 @@ void load_stage(chqstate_t *state)
 
   state->current_stage_number = wanted;
 
-  // Copy the stage data from source to stagedata[]
-  memcpy((u8 *) stgmap(state, STAGEDATA_BASE),
-         stage_data_locations[wanted],
-         STAGEDATA_LENGTH);
+  state->stage = stages[wanted];
 }
 
 // $8258
@@ -203,7 +160,7 @@ void attract_mode(chqstate_t *state)
   u8        A;
   u8        style;     // was A
 
-  set_up_stage(state, stgmap(state, 0x5D2B), NULL); // attract_data
+  set_up_stage(state, &state->stage->attract_data);
   blinker = 0;
   state->speed = 400;
   for (;;) {
@@ -305,7 +262,7 @@ restart:
 
 not_credits:
   run_pregame_screen(state);
-  set_up_stage(state, stgmap(state, 0x5D1D), NULL);
+  set_up_stage(state, &state->stage->stage_data);
 
   // Cycle start_speech_cycle 3,2,1 then repeat
   start_speech_index = state->start_speech_cycle - 1;
@@ -459,40 +416,45 @@ void cpu_driver(chqstate_t *state)
 // $858C
 void run_pregame_screen(chqstate_t *state)
 {
-  set_up_stage(state, stgmap(state, 0x5D1D), NULL);
+  set_up_stage(state, &state->stage->stage_data);
 
   state->dont_draw_screen_attrs = 1; // Conv: Was 0xF8.
   setup_transition(state, TRANSITIONSTRIDE_REVERSE);
   clear_playfield_set_attrs(state);
-  state->pregame_car_revealed_height =
-    0; // Reset the counter in #R$85E4 that reveals the perp's car
-  start_chatter(state, 0xFF, stgwordtostgptr(state, 0x5D04));
+  // Reset the counter in #R$85E4 that reveals the perp's car
+  state->pregame_car_revealed_height = 0;
+  // PROBLEM: This passes stage data into start_chatter which expects the
+  // altered format...
+  start_chatter(state, 0xFF, state->stage->addrof_perp_description);
 
-  for (;;) {
-    // TODO: Will need to break this infinite loop down.
+  // Conv: Loop factored out
 
-    draw_pregame(state);
-    drive_chatter(state);
-    reveal_perp_car(state);
-    animate_meters(state);
-    transition(state);
-    draw_screen(state);
-    if (state->transition_control == 0) {
-      if (state->chatter_state == CHATTERSTATE_IDLE)
-        return;
-      if (state->chatter_state < CHATTERSTATE_STOP) {
-        if (keyscan(state) & USERINPUT_FIRE) {
-          drive_chatter_stop(state);
-          play_start_noise(state); // exit via
-          return;
-        }
-      } else {
-        setup_transition(state, TRANSITIONSTRIDE_FORWARD);
+  // Conv: Dead code removed
+}
+
+int run_pregame_screen_loop(chqstate_t *state)
+{
+  draw_pregame(state);
+  drive_chatter(state);
+  reveal_perp_car(state);
+  animate_meters(state);
+  transition(state);
+  draw_screen(state);
+  if (state->transition_control == 0) {
+    if (state->chatter_state == CHATTERSTATE_IDLE)
+      return 0; // stop
+    if (state->chatter_state < CHATTERSTATE_STOP) {
+      if (keyscan(state) & USERINPUT_FIRE) {
+        drive_chatter_stop(state);
+        play_start_noise(state); // exit via
+        return 0; // stop
       }
+    } else {
+      setup_transition(state, TRANSITIONSTRIDE_FORWARD);
     }
   }
 
-  // Conv: Dead code removed
+  return 1; // loop
 }
 
 // $85E4
@@ -500,11 +462,11 @@ void reveal_perp_car(chqstate_t *state)
 {
   const int MaxHeight = 50;
 
-  u8        revealed_height; // was A
-  const u8 *perp_lod;        // was HL
-  u16       width_bytes;     // was DE
-  u8        height;          // was B
-  const u8 *bitmap;          // was HL
+  u8           revealed_height; // was A
+  const lod_t *perp_lod;        // was HL
+  u16          width_bytes;     // was DE
+  u8           height;          // was B
+  const u8    *bitmap;          // was HL
 
   if (state->wanted_stage_number == MAXSTAGE)
     return; // perp car is hidden on stage 5
@@ -515,14 +477,12 @@ void reveal_perp_car(chqstate_t *state)
   state->pregame_car_revealed_height = revealed_height;
 
   // Get the largest of the perp car LOD
-  perp_lod = stgwordtostgptr(state, 0x5D10);
-  width_bytes = *perp_lod;
-  perp_lod += 2;
-  height = *perp_lod;
+  perp_lod = state->stage->lods_perp_car;
+  width_bytes = perp_lod->width_bytes;
+  height      = perp_lod->height;
   if (revealed_height < height)
     height = revealed_height;
-  perp_lod++;
-  bitmap = ptrtostgptr(state, perp_lod);
+  bitmap = perp_lod->bitmap;
 
   plot_sprite(state,
               width_bytes,
@@ -705,10 +665,10 @@ dp_repeat_or_plot_tile:
 void escape_scene(chqstate_t *state)
 {
   silence_audio_hook(state);
-  set_up_stage(state, NULL, &escape_scene_data);
+  set_up_stage(state, &escape_scene_data);
   state->speed = 250; // speed of camera
   memcpy(&state->hazards[0], &escape_scene_perp, sizeof(escape_scene_perp));
-  state->hazards[0].lod_addr = stgwordtostgptr(state, 0x5D10);
+  state->hazards[0].lod_addr = state->stage->lods_perp_car;
   state->inhibit_collision_detection = 0xFF;
   start_chatter(state, 0xFF, &chatterblk_nancy_berates_hero[0]);
 
@@ -762,14 +722,7 @@ void escape_scene(chqstate_t *state)
 }
 
 // $87DC
-//
-// stage_data is genuine pointer here since sometimes it's pointed at stage
-// data or attract data and at other times it's the escape scene data.
-//
-// stage_data - comes from scene data binary data
-// scene_data - comes from C style structs
 void set_up_stage(chqstate_t        *state,
-                  const u8          *stage_data,
                   const scenedata_t *scene_data)
 {
   u8  iterations;   // was B
@@ -780,19 +733,7 @@ void set_up_stage(chqstate_t        *state,
   state->hazards[0] = saved_game_state_hazard_0;
   memset(&state->hazards[1], 0, sizeof(hazard_t) * (MAXHAZARDS - 1));
 
-  // Conv: If here to allow for stage_data (coming from binary stage data) or
-  // scene_data.
-  if (stage_data) {
-    state->scenedata.road_pos           = wordat(stage_data);
-    state->scenedata.road_curvature_ptr = ptrtostgptr(state, stage_data +  2);
-    state->scenedata.road_height_ptr    = ptrtostgptr(state, stage_data +  4);
-    state->scenedata.road_lanes_ptr     = ptrtostgptr(state, stage_data +  6);
-    state->scenedata.road_rightside_ptr = ptrtostgptr(state, stage_data +  8);
-    state->scenedata.road_leftside_ptr  = ptrtostgptr(state, stage_data + 10);
-    state->scenedata.road_hazard_ptr    = ptrtostgptr(state, stage_data + 12);
-  } else {
-    state->scenedata = *scene_data;
-  }
+  state->scenedata = *scene_data;
 
   pre_shift_backdrop(state);
 
@@ -815,7 +756,7 @@ void set_up_stage(chqstate_t        *state,
   state->SM_C058 = 0; // ?
   state->SM_B063 = 0;
 #endif
-  state->hazards[0].lod_addr = stgwordtostgptr(state, 0x5D10);
+  state->hazards[0].lod_addr = state->stage->lods_perp_car;
 
   // Conv: Duplicate work removed.
 
@@ -1065,7 +1006,7 @@ phase3:
     return 0;
 
   state->perp_caught_phase = PERPCAUGHTPHASE_4;
-  HLmessages = stgwordtostgptr(state, 0x5D06); // addrof_arrest_messages
+  HLmessages = state->stage->addrof_arrest_messages;
   setup_overlay_messages_with_transition(state,
                                          TRANSITIONCONTROL_DRAW_MUGSHOTS,
                                          HLmessages); // was exit via
@@ -1403,7 +1344,7 @@ void setup_transition(chqstate_t *state, u8 stride)
   const transition_t *transitions;  // was DE
   const transition_t *transition;   // was HL
 
-  assert(stride == 8 || stride == 0xF8); // 8 or -8
+  assert(stride == 8 || (s8) stride == -8);
 
   frame_stride = stride;
   // Conv: Points at non-relocated table.
@@ -1538,7 +1479,7 @@ void draw_mugshots(chqstate_t *state)
   draw_mugshot(state,
                0x48A5,
                0xFF88,
-               stgwordtostgptr(state, 0x5CF0));
+               state->stage->addrof_perp_mugshot_attributes);
   draw_mugshot(state,
                0x48B4,
                0xFF97,
@@ -2001,10 +1942,11 @@ void print_chatter(chqstate_t *state)
   const u8 *face;    // was HL
 
   chatter = state->chatterblk_ptr;
+  assert(chatter);
   for (;;) {
     cmd = *chatter++; // read a command ($FC) or speaking character's ID
     if (cmd != CHATTERCMD_RANDOM)
-      goto pc_plot_character; // use break instead?
+      break;
 
     // Random choice
     rnd = rng(state);
@@ -2014,12 +1956,13 @@ void print_chatter(chqstate_t *state)
         chatter += 2;
     }
     /* Conv: This is an index, not an address */
+    assert(*chatter < CHATTERBLK__LIMIT);
     chatter = chatter_blocks[*chatter];
   }
 
-pc_plot_character:
   // cmd is now the character ID
-  face = stgwordtostgptr(state, 0x5CF2);
+  assert(cmd <= CHATTERCHR_TONY);
+  face = state->stage->addrof_perp_mugshot_bitmap;
   if (cmd != CHATTERCHR_PILOT)
     face = &bitmap_faces[cmd * FACEBYTES]; // Conv: Simplified
 
@@ -2033,12 +1976,13 @@ pc_plot_character:
 // chatter - was HL
 void pc_chatter_message(chqstate_t *state, const u8 *chatter)
 {
-  const char *chatterblk; // was DE
+  const char *string; // was DE
 
   // Conv: Original game loads an address directly here.
-  chatterblk = chatter_strings[*chatter++];
+  assert(*chatter < CHATTERSTR__LIMIT);
+  string = chatter_strings[*chatter++];
   state->chatterblk_ptr = chatter;
-  state->next_character = chatterblk;
+  state->next_character = string;
   pc_clear_line(state, 0); // was FALLTHROUGH
 }
 
@@ -2056,6 +2000,7 @@ void pc_clear_line(chqstate_t *state, u8 x)
   nextch = state->next_character;
   assert(nextch);
   character = *nextch & ~STREND; // remove any terminator
+  assert(character > ' ' && character < 'Z');
   plot_mini_font_cursor_on(state, x, character);
   if (*nextch++ & STREND) // if terminated
     state->chatter_delay = 10; // pause at end of string
@@ -2307,6 +2252,7 @@ void pmf_go(chqstate_t *state,
   gid++;
   if (ascii2 == '\'') goto pmf_have_glyph_id;
   if (ascii2 >= ';') { sgid = ascii2; goto pmf_have_ascii; }
+  assert(0);
   gid += ascii2 - '/'; // not convinced this is ever used in the game
 
 pmf_have_glyph_id:
@@ -3080,13 +3026,13 @@ dc_have_single:
 
   /* Conv: if-else ladder replaced with switch. */
   switch (style) {
-    case 1: goto dc_generic;
-    case 2: goto dc_single_height;
-    case 3: goto dc_double_height;
-    case 4: goto dc_single_height_inverted;
-    case 5: goto dc_double_height_inverted;
-    case 0: break;
-    default: assert(0);
+  case 1: goto dc_generic;
+  case 2: goto dc_single_height;
+  case 3: goto dc_double_height;
+  case 4: goto dc_single_height_inverted;
+  case 5: goto dc_double_height_inverted;
+  case 0: break;
+  default: assert(0);
   }
 
   // Otherwise it's type 0 or anything else
@@ -3334,7 +3280,7 @@ void spawn_cars(chqstate_t *state)
 
   random_extra_delay = rng(state) & 0x0F;
 
-  spawn_delay = stgword(state, 0x5D1A); // load car_spawn_delay
+  spawn_delay = state->stage->car_spawn_delay;
   if (state->sighted_flag)
     // Perp was sighted so increase the spawn delay by 25.
     spawn_delay += 25;
@@ -3387,10 +3333,9 @@ fill_in:
   // If we've sighted the perp then don't spawn any generic cars (offset 6)
   // since they look just like the perp's. Instead use offset 4.
   if (state->sighted_flag && lod_index == 6)
-    lod_index--;
+    lod_index -= 2; // 6 -> 4
 
-  hazard->lod_addr = stgwordtostgptr(state,
-                                     0x5D12) + lod_index; // 0x5D12 = lods_vehicles
+  hazard->lod_addr = state->stage->lods_vehicles[lod_index / 2];
 }
 
 // $A89C
@@ -3858,7 +3803,7 @@ draw_attributes:
       // If A was zero then jump (Z => sky, NZ => ground)
       if (D != 0) {
         // Set ground colour
-        BCattrs = stgword(state, 0x5CF4); // load stage's ground_colour (pair of attrs)
+        BCattrs = state->stage->ground_colour;
         HLattrs += DE;
       }
 
@@ -3914,7 +3859,7 @@ void clear_playfield_set_attrs(chqstate_t *state)
 
   // Clear the next 11 rows to the current ground colour
   // Note: Only using the bottom byte of ground_colour (as orig).
-  memset(ADDRTOSCREEN(0x59A0), stgbyte(state, 0x5CF4), 0x160); // CHECK
+  memset(ADDRTOSCREEN(0x59A0), state->stage->ground_colour, 0x160);
 
   // Clear the edges of the playfield to black on black
   screen = ADDRTOSCREEN(0x5900);
@@ -4063,9 +4008,6 @@ void draw_road(chqstate_t *state)
 {
 }
 
-#define BACKDROPWIDTH  (10) // bytes
-#define BACKDROPHEIGHT (24) // rows
-
 // $C8BE
 void pre_shift_backdrop(chqstate_t *state)
 {
@@ -4079,19 +4021,21 @@ void pre_shift_backdrop(chqstate_t *state)
   u8        pix;        // was A
 
   // Copy whole source bitmap to destination
-  source     = stgmap(state, STAGEDATA_BASE);
+  source     = &state->stage->backdrop[0];
   preshifted = &state->pre_shifted_backdrop[0];
-  memcpy(preshifted, source, BACKDROPWIDTH * BACKDROPHEIGHT);
+  memcpy(preshifted, source, BACKDROP_LENGTH);
 
   // Shift it in-place by a nibble
-  endptr = &source[BACKDROPWIDTH -
-                   1]; // final scanline nibble rolls around to start
-  bmptr  = preshifted;
-  row    = BACKDROPHEIGHT;
+  endptr = &preshifted[BACKDROP_WIDTH - 1]; // final scanline nibble rolls around to start
+  bmptr  = &preshifted[0];
+  row    = BACKDROP_HEIGHT;
   do {
-    col = BACKDROPWIDTH;
+    col = BACKDROP_WIDTH;
     pix = *endptr;
     do {
+      fprintf(stderr,"$");
+      assert(bmptr >= &state->pre_shifted_backdrop[0]);
+      assert(bmptr < &state->pre_shifted_backdrop[BACKDROP_LENGTH]);
       RRD(pix, bmptr);
       bmptr++;
       endptr++; // TODO: Not used in inner loop - could hoist

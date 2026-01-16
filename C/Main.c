@@ -335,6 +335,7 @@ int main(void)
   state->current_stage_number = -1; // force load
   state->wanted_stage_number = 0;
   load_stage(state);
+  run_pregame_screen(state);
 
   while (!quit) {
     while (SDL_PollEvent(&event)) {
@@ -362,21 +363,24 @@ int main(void)
         //printf("my=%d\n",my);
         // ledfont_plot(state, 1 + my % 10,
         //              &state->screen[(0x4000 + mx / 8) - SCREEN_START_ADDRESS]);
-        state->dont_draw_screen_attrs = 1; // Conv: Was 0xF8.
+        //state->dont_draw_screen_attrs = 1; // Conv: Was 0xF8.
         //setup_transition(state, TRANSITIONSTRIDE_REVERSE);
-        clear_playfield_set_attrs(state);
+        //clear_playfield_set_attrs(state);
         //state->pregame_car_revealed_height = 0; // Reset the counter in #R$85E4 that reveals the perp's car
 
-        draw_pregame(state);
-        reveal_perp_car(state);
-        transition(state);
-        animate_meters(state);
+        //draw_pregame(state);
+        //reveal_perp_car(state);
+        //transition(state);
+        //animate_meters(state);
+
+        run_pregame_screen_loop(state);
+
         //draw_mugshots(state);
         //state->sighted_flag = 1;
         //state->perp_caught_phase = PERPCAUGHTPHASE_2;
         //state->smash_counter = my / 16;
         //draw_smash_bar(state);
-        draw_screen(state);
+        //draw_screen(state);
         break;
 
       case SDL_MOUSEBUTTONUP:

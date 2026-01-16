@@ -70,7 +70,6 @@
   do {                                          \
     tmp = *addr & 0x0F;                         \
     *addr = (*addr >> 4) | ((acc & 0x0F) << 4); \
-    addr++;                                     \
     acc = (acc & 0xF0) | tmp;                   \
   } while (0)
 

@@ -46,6 +46,10 @@
 #define STAGEDATA_END         (0x7FFF) // inclusive
 #define STAGEDATA_LENGTH      (STAGEDATA_END + 1 - STAGEDATA_BASE)
 
+#define BACKDROP_WIDTH        (10) // bytes
+#define BACKDROP_HEIGHT       (24) // rows
+#define BACKDROP_LENGTH       (BACKDROP_WIDTH * BACKDROP_HEIGHT)
+
 #define MAXHAZARDS            (6)
 
 #define MARQUEELIGHTWIDTH     (5)
@@ -331,6 +335,27 @@ typedef void (hazard_handler_t)(chqstate_t *state);
 
 /* ----------------------------------------------------------------------- */
 
+// exposed for stage data to use
+
+struct scenedata_s {
+  // $A26C
+  u16       road_pos;
+  // $A26E
+  const u8 *road_curvature_ptr;
+  // $A270
+  const u8 *road_height_ptr;
+  // $A272
+  const u8 *road_lanes_ptr;
+  // $A274
+  const u8 *road_rightside_ptr;
+  // $A276
+  const u8 *road_leftside_ptr;
+  // $A278
+  const u8 *road_hazard_ptr;
+};
+
+/* ----------------------------------------------------------------------- */
+
 typedef struct {
   u8        width;  // pixels
   u8        flags;  // assuming 1=>masked
@@ -389,6 +414,7 @@ void main_loop(chqstate_t *state);
 void cpu_driver(chqstate_t *state);
 
 void run_pregame_screen(chqstate_t *state);
+int run_pregame_screen_loop(chqstate_t *state);
 void reveal_perp_car(chqstate_t *state);
 void animate_meters(chqstate_t *state);
 void am_set_attrs(int counter, u8 *attrs);
@@ -397,7 +423,6 @@ void draw_pregame(chqstate_t *state);
 void escape_scene(chqstate_t *state);
 
 void set_up_stage(chqstate_t        *state,
-                  const u8          *stage_data,
                   const scenedata_t *scene_data);
 
 void reset_lights(u8 *attrptr);

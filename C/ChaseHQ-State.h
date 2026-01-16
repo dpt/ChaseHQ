@@ -14,23 +14,7 @@
 #include "Types.h"
 #include "Spectrum.h"
 #include "ChaseHQ.h"
-
-struct scenedata_s {
-  // $A26C
-  u16       road_pos;
-  // $A26E
-  const u8 *road_curvature_ptr;
-  // $A270
-  const u8 *road_height_ptr;
-  // $A272
-  const u8 *road_lanes_ptr;
-  // $A274
-  const u8 *road_rightside_ptr;
-  // $A276
-  const u8 *road_leftside_ptr;
-  // $A278
-  const u8 *road_hazard_ptr;
-};
+#include "ChaseHQ-StageData.h"
 
 struct hazard_s {
   u8                used;
@@ -42,7 +26,7 @@ struct hazard_s {
   u8                TBD6;
   u8                TBD7;     // activation
   u8                TBD8;
-  const u8         *lod_addr; // Conv: u16 becomes pointer
+  const lod_t      *lod_addr; // Conv: u16 becomes pointer
   hazard_handler_t *hit_handler;
   u16               speed;
   u8                TBD15;    // top bit is set for vehicles
@@ -89,7 +73,7 @@ struct chqstate_s {
   u8        screen[SCREEN_LENGTH];
 
   // $5B00
-  u8        pre_shifted_backdrop[10 * 24]; // occupies 256 bytes in real game?
+  u8        pre_shifted_backdrop[BACKDROP_LENGTH]; // occupies 256 bytes in real game?
 
   // $8000
   u8        test_mode;
@@ -103,7 +87,7 @@ struct chqstate_s {
   u8        wanted_stage_number;
 
   // $5C00..$76EF
-  u8        stagedata[STAGEDATA_LENGTH];
+  const stage_t *stage;
 
   // $8277
   u8        SM_8277;
