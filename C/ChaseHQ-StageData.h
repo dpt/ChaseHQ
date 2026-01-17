@@ -51,6 +51,8 @@ typedef struct stage {
 
   scenedata_t   stage_data;
   scenedata_t   attract_data;
+
+  const char  **chatter_strings; // Conv: additional
 } stage_t;
 
 #define MAX_STAGEDATA (5)

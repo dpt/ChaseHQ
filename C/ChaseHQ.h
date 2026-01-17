@@ -67,7 +67,9 @@
 #define FACEROWBYTES          (FACEWIDTH / 8)
 #define FACEHEIGHT            (40)
 #define FACEBITMAPBYTES       (FACEROWBYTES * FACEHEIGHT)
-#define FACEATTRBYTES         (4 * 5)
+#define FACEATTRWIDTH         (FACEWIDTH / 8)
+#define FACEATTRHEIGHT        (5)
+#define FACEATTRBYTES         (FACEATTRWIDTH * FACEATTRHEIGHT)
 #define FACEBYTES             (FACEBITMAPBYTES + FACEATTRBYTES)
 #define NFACES                (3)
 
@@ -214,7 +216,11 @@ typedef u8 chatterpriority_t;
 #define CHATTERSTR_ONE_MORE_TRY               (29)
 #define CHATTERSTR_MEDIOCRE_DRIVER            (30)
 #define CHATTERSTR_SEE_YOU_LATER              (31)
-#define CHATTERSTR__LIMIT                     (32)
+#define CHATTERSTR_PERP_DESC_1                (32)
+#define CHATTERSTR_PERP_DESC_2                (33)
+#define CHATTERSTR_PERP_DESC_3                (34)
+#define CHATTERSTR_PERP_DESC_4                (35)
+#define CHATTERSTR__LIMIT                     (36)
 
 /// Chatter block indices
 #define CHATTERBLK_START_STAGE                 (0)

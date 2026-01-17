@@ -81,7 +81,7 @@ const u8 chatterblk_start_stage[4];
 const u8 chatterblk_tony_giddy_up[3];
 const u8 chatterblk_tony_hold_on[3];
 
-const char *chatter_strings[CHATTERSTR__LIMIT];
+const char *common_chatter_strings[CHATTERSTR__LIMIT];
 
 const u8 attract_messages[37];
 const u8 credits_messages[84];

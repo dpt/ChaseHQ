@@ -795,7 +795,7 @@ void reset_lights(u8 *attrptr)
     do
       *attrptr++ &= ~ATTR_BRIGHT;
     while (--cols > 0);
-    attrptr += (SCREEN_ATTRIBUTES_ROWBYTES - MARQUEELIGHTWIDTH);
+    attrptr += SCREEN_ATTRIBUTES_ROWBYTES - MARQUEELIGHTWIDTH;
   } while (--rows > 0);
 }
 
@@ -1810,6 +1810,8 @@ void start_chatter(chqstate_t       *state,
 {
   u8 chatter_state; // was A
 
+  assert(chatterblk);
+
   chatter_state = state->chatter_state;
   if (chatter_state != CHATTERSTATE_IDLE &&
       chatter_state < CHATTERSTATE_STOP)
@@ -1964,7 +1966,7 @@ void print_chatter(chqstate_t *state)
   assert(cmd <= CHATTERCHR_TONY);
   face = state->stage->addrof_perp_mugshot_bitmap;
   if (cmd != CHATTERCHR_PILOT)
-    face = &bitmap_faces[cmd * FACEBYTES]; // Conv: Simplified
+    face = &bitmap_faces[(cmd - 1) * FACEBYTES]; // Conv: Simplified
 
   plot_face(state, 0x4036, face); // Set plot address to (176,8)
 
@@ -1976,11 +1978,19 @@ void print_chatter(chqstate_t *state)
 // chatter - was HL
 void pc_chatter_message(chqstate_t *state, const u8 *chatter)
 {
+  u8          index;
   const char *string; // was DE
 
   // Conv: Original game loads an address directly here.
   assert(*chatter < CHATTERSTR__LIMIT);
-  string = chatter_strings[*chatter++];
+  index = *chatter++;
+  if (index < CHATTERSTR_PERP_DESC_1)
+    string = common_chatter_strings[index];
+  else {
+    assert(index < CHATTERSTR__LIMIT);
+    string = state->stage->chatter_strings[index - CHATTERSTR_PERP_DESC_1];
+  }
+  assert(string);
   state->chatterblk_ptr = chatter;
   state->next_character = string;
   pc_clear_line(state, 0); // was FALLTHROUGH
@@ -2000,7 +2010,7 @@ void pc_clear_line(chqstate_t *state, u8 x)
   nextch = state->next_character;
   assert(nextch);
   character = *nextch & ~STREND; // remove any terminator
-  assert(character > ' ' && character < 'Z');
+  assert(character >= ' ' && character < 'Z');
   plot_mini_font_cursor_on(state, x, character);
   if (*nextch++ & STREND) // if terminated
     state->chatter_delay = 10; // pause at end of string
@@ -2067,7 +2077,7 @@ void noise_effect_9a5c(chqstate_t *state, u8 counter)
     do {
       A = *noisebytes - B;
       *noisebytes++ = A;
-      RRC(A); // FIXME should be RLC(A);
+      RLC(A);
       A += *noisebytes;
       *noisebytes = A;
       state->screen[DEscreen - SCREEN_START_ADDRESS] = A;
@@ -2077,7 +2087,7 @@ void noise_effect_9a5c(chqstate_t *state, u8 counter)
     DEscreen = nextscrrow(DEscreen);
   } while (--C > 0);
 
-  ne_plot_attrs(state, 0x47); // BRIGHT + white over black
+  ne_plot_attrs(state, attribute_BRIGHT_WHITE_OVER_BLACK);
   // was FALLTHROUGH
 }
 
@@ -2086,21 +2096,16 @@ void noise_effect_9a5c(chqstate_t *state, u8 counter)
 // attr - was A
 void ne_plot_attrs(chqstate_t *state, u8 attr)
 {
-  u16 addr;       // was HL
-  u8  iterations; // was B
-  u16 skip;       // was DE
+  int addr;       // was HL
+  int iterations; // was B
 
-  addr       = 0x5836 -
-               0x5800; // Screen attribute (22,1) (Conv: address -> offset)
-  iterations = 5; // 5 rows
-  skip       = 32 - 3;
+  // Screen attribute (22,1) (Conv: address -> offset)
+  addr       = 0x5836 - SCREEN_START_ADDRESS;
+  iterations = FACEATTRHEIGHT; // 5 rows
   do {
     // Conv: Screen write now goes via state.
-    state->screen[addr++] = attr;
-    state->screen[addr++] = attr;
-    state->screen[addr++] = attr;
-    state->screen[addr  ] = attr;
-    addr += skip;
+    memset(&state->screen[addr], attr, FACEATTRWIDTH);
+    addr += SCREEN_ATTRIBUTES_WIDTH;
   } while (--iterations > 0);
 }
 
@@ -2109,14 +2114,17 @@ void ne_plot_attrs(chqstate_t *state, u8 attr)
 // screen - was DE
 // face - was HL
 void plot_face(chqstate_t *state,
-               u16         screen,
+               u16         screen, // Z80 address
                const u8   *face)
 {
-  u16 DEscreen_saved;
-  u16 counter; // was BC
+  u16 saved_screen; // was stack
+  u16 counter;      // was BC
+
+  assert(screen >= SCREEN_START_ADDRESS && screen < SCREEN_END_ADDRESS);
+  assert(face);
 
   counter = FACEBITMAPBYTES;
-  DEscreen_saved = screen;
+  saved_screen = screen;
   screen -= SCREEN_START_ADDRESS; // Conv: address -> offset
   for (;;) {
     state->screen[screen++] = *face++; counter--;
@@ -2129,7 +2137,7 @@ void plot_face(chqstate_t *state,
     screen = nextscrrow(screen);
   }
 
-  plot_face_attributes(state, DEscreen_saved, face); // was fallthrough
+  plot_face_attributes(state, saved_screen, face); // was fallthrough
 }
 
 // $9ACE
@@ -2588,10 +2596,10 @@ void update_scoreboard(chqstate_t *state)
 // attrs - was HL
 void toggle_light_brightness(chqstate_t *state, u8 *attrs)
 {
-  u8 rows; // was B
-  u8 attr; // was C
+  int rows; // was B
+  u8  attr; // was C
 
-  rows = 4; // rows
+  rows = MARQUEELIGHTHEIGHT;
   attr = ATTR_BRIGHT;
   do {
     *attrs++ ^= attr;
@@ -2599,7 +2607,7 @@ void toggle_light_brightness(chqstate_t *state, u8 *attrs)
     *attrs++ ^= attr;
     *attrs++ ^= attr;
     *attrs   ^= attr;
-    attrs += (SCREEN_ATTRIBUTES_WIDTH - 5);
+    attrs += SCREEN_ATTRIBUTES_ROWBYTES - (MARQUEELIGHTWIDTH - 1);
   } while (--rows > 0);
 }
 
@@ -2748,9 +2756,9 @@ ptas_turbo_setup:
   A--; // correct for starting early
 
   // Plot speed digits
-  ledfont_plot(state, Ddash, DEscreen); // draw 10,000s
-  ledfont_plot(state, Edash, DEscreen); // draw  1,000s
-  ledfont_plot(state, A,     DEscreen); // draw    100s
+  DEscreen = ledfont_plot(state, Ddash, DEscreen); // draw 10,000s
+  DEscreen = ledfont_plot(state, Edash, DEscreen); // draw  1,000s
+  (void) ledfont_plot(state, A, DEscreen); // draw    100s
 
   // Time
   // EXX
@@ -2842,12 +2850,12 @@ ptas_led_next_whole:
 
 ptas_led_plot_1st:
   *stored = Adigits;
-  ledfont_plot(state, Adigits, screen);
+  screen = ledfont_plot(state, Adigits, screen);
   goto ptas_led_next_half;
 
 ptas_led_plot_2nd:
   *stored = Adigits;
-  ledfont_plot(state, Adigits, screen);
+  screen = ledfont_plot(state, Adigits, screen);
   goto ptas_led_next_whole;
 }
 
@@ -2864,22 +2872,22 @@ u8 *ledfont_plot(chqstate_t *state, u8 ord, u8 *screen)
 
   font = &ledfont[ord * LEDFONT_HEIGHT];
   screen_copy = screen;
-  *screen = *font++; screen += 256;
-  *screen = *font++; screen += 256;
-  *screen = *font++; screen += 256;
-  *screen = *font++; screen += 256;
-  *screen = *font++; screen += 256;
-  *screen = *font++; screen += 256;
-  *screen = *font++; screen += 256;
-  screen = screen_copy - 256 + 32 - 1;
-  *screen = *font++; screen += 256;
-  *screen = *font++; screen += 256;
-  *screen = *font++; screen += 256;
-  *screen = *font++; screen += 256;
-  *screen = *font++; screen += 256;
-  *screen = *font++; screen += 256;
-  *screen = *font++; screen += 256;
-  *screen = *font++; screen += 256;
+  //*screen = *font++; screen += 256;
+  //*screen = *font++; screen += 256;
+  //*screen = *font++; screen += 256;
+  //*screen = *font++; screen += 256;
+  //*screen = *font++; screen += 256;
+  //*screen = *font++; screen += 256;
+  //*screen = *font++;
+  ////screen = screen_copy + 32;
+  ////*screen = *font++; screen += 256;
+  //*screen = *font++; screen += 256;
+  //*screen = *font++; screen += 256;
+  //*screen = *font++; screen += 256;
+  //*screen = *font++; screen += 256;
+  //*screen = *font++; screen += 256;
+  //*screen = *font++; screen += 256;
+  //*screen = *font++;
   return screen_copy + 1; // move to next column
 }
 

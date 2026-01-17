@@ -18,6 +18,8 @@
 
 /* ----------------------------------------------------------------------- */
 
+static const u8 perp_description[7];
+static const char *stage_chatter_strings[4];
 static const u8 face_ralph[FACEBYTES];
 static const lod_t car_lods[6];
 static const u8 bitmap_car_1[6 * 31];
@@ -66,7 +68,7 @@ static const stage_t stage1 = {
   NULL, // addrof_left_hand_handlers
   NULL, // addrof_left_hand_objects
   NULL, // addrof_left_hand_short_pole_object
-  NULL, // addrof_perp_description
+  perp_description,
   NULL, // addrof_arrest_messages
   NULL, // addrof_helicopter_stuff_1
   NULL, // addrof_helicopter_stuff_2
@@ -99,6 +101,26 @@ static const stage_t stage1 = {
     NULL, //&map_loop_leftobjs[-1],
     NULL, //&map_loop_hazards[-1]
   },
+
+  stage_chatter_strings
+};
+
+// $5D39
+static const u8 perp_description[7] = {
+  CHATTERCHR_NANCY,
+  CHATTERSTR_PERP_DESC_1,
+  CHATTERSTR_PERP_DESC_2,
+  CHATTERSTR_PERP_DESC_3,
+  CHATTERSTR_PERP_DESC_4,
+  CHATTERCMD_PAUSE,
+  CHATTERBLK_HEROES_ACKNOWLEDGE
+};
+
+static const char *stage_chatter_strings[4] = {
+  "THIS IS NANCY AT CHASE H.Q. WE'VE GOT A\xCE",
+  "EMERGENCY HERE. RALPH THE IDAHO SLASHER\xAC",
+  "IS FLEEING TOWARDS THE SUBURBS. THE TARGE\xD4",
+  "VEHICLE IS A WHITE BRITISH SPORTS CAR... OVER\xAE"
 };
 
 // $642A
