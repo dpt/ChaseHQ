@@ -67,4 +67,3 @@ enum {
 #define SCREEN_ATTRIBUTES_END_ADDRESS   SCREEN_END_ADDRESS
 
 #endif /* SPECTRUM_H */
-

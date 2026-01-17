@@ -9,15 +9,11 @@
 #include <assert.h>
 #include <stdint.h>
 #include <stdio.h>
-#include <string.h>
+#include <stdlib.h>
 
 #include "SDL.h"
 
-#include "Types.h"
-#include "Pixels.h"
 #include "Spectrum.h"
-#include "Z80.h"
-#include "ChaseHQ-Data.h"
 #include "ChaseHQ-State.h"
 #include "ChaseHQ.h"
 
@@ -346,9 +342,11 @@ int main(void)
 
       //case SDL_KEYDOWN:
       case SDL_KEYUP: {
+        int i;
+
         static const char msg[] = "PREGAME SCREEN RENDERING IS WORKING!";
 
-        for (int i = 0; i < sizeof(msg) - 1; i++) {
+        for (i = 0; i < sizeof(msg) - 1; i++) {
           if (t)
             plot_mini_font_cursor_off(state, i, msg[i]);
           else

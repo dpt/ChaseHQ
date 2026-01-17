@@ -9,8 +9,6 @@
 #ifndef CHASEHQ_STATE_H
 #define CHASEHQ_STATE_H
 
-#include <stdint.h>
-
 #include "Types.h"
 #include "Spectrum.h"
 #include "ChaseHQ.h"

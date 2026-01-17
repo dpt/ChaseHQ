@@ -78,7 +78,6 @@
 
 #include <assert.h>
 #include <stddef.h>
-#include <stdint.h>
 #include <stdio.h>
 #include <string.h>
 
@@ -953,18 +952,26 @@ int handle_perp_caught(chqstate_t *state)
   u8        Cflag;
 
   phase = state->perp_caught_phase;
-  if (phase == PERPCAUGHTPHASE_0)
-    return 0;
-
-  if (--phase == 0) goto move_perp;
-  if (--phase == 0) goto phase2;
-  if (--phase == 0) goto phase3;
-  if (--phase == 0) goto phase4;
+  switch (phase) {
+    case PERPCAUGHTPHASE_0:
+      return 0;
+    case PERPCAUGHTPHASE_1:
+      goto move_perp;
+    case PERPCAUGHTPHASE_2:
+      goto phase2;
+    case PERPCAUGHTPHASE_3:
+      goto phase3;
+    case PERPCAUGHTPHASE_4:
+      goto phase4;
+    default:
+      break;
+  }
 
   // Otherwise 5/6
   if (state->transition_control)
     return 0;
-  if (--phase == 0) goto phase5;
+  if (phase == PERPCAUGHTPHASE_5)
+    goto phase5;
 
   // Must be 6
   silence_audio_hook(state);
@@ -2989,6 +2996,7 @@ void draw_char(chqstate_t *state,
   u8        iterations; // was B
   const u8 *fontdata;   // was HL
   u8       *orig;       // was stacked
+  int       i;          // additional
 
   assert(screen);
   assert(style <= DRAWCHARSTYLE__LIMIT);
@@ -3092,7 +3100,7 @@ dc_double_height:
   orig = screen;
   *screen = 0; // leave gap at top
   screen += 256;
-  for (int i = 0; i < 7; i++) { // Conv: rolled up
+  for (i = 0; i < 7; i++) { // Conv: rolled up
     *screen = *fontdata;
     screen += 256;
     *screen++ = *fontdata++; // was LDI, could reuse A
@@ -3114,7 +3122,7 @@ dc_single_height: // seems to store 9 rows
   orig = screen;
   *screen = 0; // leave gap at top
   screen += 256;
-  for (int i = 0; i < 7; i++) { // Conv: rolled up
+  for (i = 0; i < 7; i++) { // Conv: rolled up
     *screen++ = *fontdata++;
     screen--; // could drop
     screen += 256;
@@ -4502,6 +4510,7 @@ void menu_draw_char(chqstate_t *state,
   u8       *DEscreen;     // was DE
   u8        Cglyphid;     // was C
   u8       *HLdash_saved; // was B'
+  int       i;            // additional
 
   Achar -= ' ';
   if (Achar == 0) {
@@ -4544,14 +4553,14 @@ mdc_have_glyph:
   DEscreen = DEdash;
   if (!Fdash) { // checking banked carry here
     // double height
-    for (int i = 0; i < 4; i++) { // Conv: rolled
+    for (i = 0; i < 4; i++) { // Conv: rolled
       *DEscreen = *HLfont;
       DEscreen += 256;
       *DEscreen = *HLfont++;
       DEscreen += 256;
     }
     DEscreen += 0xF81F;
-    for (int i = 0; i < 3; i++) { // Conv: rolled
+    for (i = 0; i < 3; i++) { // Conv: rolled
       *DEscreen = *HLfont;
       DEscreen += 256;
       *DEscreen = *HLfont++;
@@ -4569,7 +4578,7 @@ mdc_have_glyph:
     // EXX
   } else {
     // single height
-    for (int i = 0; i < 7; i++) { // Conv: rolled
+    for (i = 0; i < 7; i++) { // Conv: rolled
       *DEscreen = *HLfont++;
       DEscreen += 256;
     }

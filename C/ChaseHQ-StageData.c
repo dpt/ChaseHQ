@@ -7,7 +7,6 @@
 // vim: ts=8 sts=2 sw=2 et
 
 #include <stddef.h>
-#include <stdint.h>
 
 #include "Types.h"
 #include "Pixels.h"
