@@ -2595,7 +2595,7 @@ void update_scoreboard(chqstate_t *state)
 {
   toggle_light_brightness(state, ADDRTOSCREEN(0x5820));
   toggle_light_brightness(state, ADDRTOSCREEN(0x583B));
-  plot_turbos_and_scores(state);
+  plot_turbos_and_digits(state);
 }
 
 // $9DF4
@@ -2619,7 +2619,7 @@ void toggle_light_brightness(chqstate_t *state, u8 *attrs)
 }
 
 // $9E11
-void plot_turbos_and_scores(chqstate_t *state)
+void plot_turbos_and_digits(chqstate_t *state)
 {
   int        carry = 0;
   u8         Aturbos;
@@ -2815,6 +2815,8 @@ ptas_turbo_setup:
                   &state->st.distance_digits[3],
                   ADDRTOSCREEN(0x4191)); // was fallthrough
 
+  // Score
+
   ptas_led_digits(state, 4, &state->score_bcd[3], &state->st.score_digits[7],
                   ADDRTOSCREEN(0x4126)); // was fallthrough
 }
@@ -2838,10 +2840,11 @@ void ptas_led_digits(chqstate_t *state,
     Adigits = *digits;
     Cdigits = Adigits; //tmp copy
 
-    Adigits = Adigits >> 4;
+    Adigits >>= 4;
     if (Adigits != *stored)
       goto ptas_led_plot_1st;
     screen++; // move screen pos
+
 ptas_led_next_half:
     stored--;
     Adigits = Cdigits & 0x0F;
@@ -2851,7 +2854,7 @@ ptas_led_next_half:
 
 ptas_led_next_whole:
     stored--;
-    screen--;
+    digits--;
   } while (--iterations > 0);
   return;
 
@@ -2879,24 +2882,26 @@ u8 *ledfont_plot(chqstate_t *state, u8 ord, u8 *screen)
 
   font = &ledfont[ord * LEDFONT_HEIGHT];
   screen_copy = screen;
-  //*screen = *font++; screen += 256;
-  //*screen = *font++; screen += 256;
-  //*screen = *font++; screen += 256;
-  //*screen = *font++; screen += 256;
-  //*screen = *font++; screen += 256;
-  //*screen = *font++; screen += 256;
-  //*screen = *font++;
-  ////screen = screen_copy + 32;
-  ////*screen = *font++; screen += 256;
-  //*screen = *font++; screen += 256;
-  //*screen = *font++; screen += 256;
-  //*screen = *font++; screen += 256;
-  //*screen = *font++; screen += 256;
-  //*screen = *font++; screen += 256;
-  //*screen = *font++; screen += 256;
-  //*screen = *font++;
+  *screen = *font++; screen += 256;
+  *screen = *font++; screen += 256;
+  *screen = *font++; screen += 256;
+  *screen = *font++; screen += 256;
+  *screen = *font++; screen += 256;
+  *screen = *font++; screen += 256;
+  *screen = *font++;
+  screen = screen_copy - 256 + 32;
+  *screen = *font++; screen += 256;
+  *screen = *font++; screen += 256;
+  *screen = *font++; screen += 256;
+  *screen = *font++; screen += 256;
+  *screen = *font++; screen += 256;
+  *screen = *font++; screen += 256;
+  *screen = *font++; screen += 256;
+  *screen = *font++;
   return screen_copy + 1; // move to next column
 }
+
+//0b_010BBLLL_RRRCCCCC (B = band, L = scanline, R = row (group), C = column)
 
 // $9F99
 //

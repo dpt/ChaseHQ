@@ -570,7 +570,7 @@ void update_scoreboard(chqstate_t *state);
 
 void toggle_light_brightness(chqstate_t *state, u8 *attrs);
 
-void plot_turbos_and_scores(chqstate_t *state);
+void plot_turbos_and_digits(chqstate_t *state);
 void ptas_led_digits(chqstate_t *state,
                      u8          iterations,
                      const u8   *digits,
