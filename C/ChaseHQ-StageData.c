@@ -12,20 +12,33 @@
 #include "Pixels.h"
 #include "Spectrum.h"
 #include "ChaseHQ.h"
+#include "ChaseHQ-Data.h"
 
 #include "ChaseHQ-StageData.h"
 
 /* ----------------------------------------------------------------------- */
 
-static const u8 perp_description[7];
-static const char *stage_chatter_strings[4];
-static const u8 face_ralph[FACEBYTES];
-static const lod_t car_lods[6];
-static const u8 bitmap_car_1[6 * 31];
-static const u8 bitmap_car_2[5 * 22];
-static const u8 bitmap_car_3[3 * 16];
-static const u8 bitmap_car_4[3 * 2 * 9];
-static const u8 bitmap_car_4s[3 * 2 * 9];
+static const u8 stage1_perp_description[7];
+static const char *stage1_chatter_strings[4];
+static const hitable_t stage1_hitable_object_defs[2];
+static const u8 stage1_perp_face[FACEBYTES];
+static const lod_t stage1_car_lods[6];
+static const u8 stage1_bitmap_car_1[6 * 31];
+static const u8 stage1_bitmap_car_2[5 * 22];
+static const u8 stage1_bitmap_car_3[3 * 16];
+static const u8 stage1_bitmap_car_4[3 * 2 * 9];
+static const u8 stage1_bitmap_car_4s[3 * 2 * 9];
+static const lod_t stage1_tumbleweed_lods[6];
+static const u8 stage1_bitmap_tumbleweed_1[2 * 16];
+static const u8 stage1_bitmap_tumbleweed_2[2 * 11];
+static const u8 stage1_bitmap_tumbleweed_3[1 * 9];
+static const u8 stage1_bitmap_tumbleweed_4[1 * 7];
+static const lod_t stage1_barrier_lods[6];
+static const u8 stage1_bitmap_barrier_1[4 * 17];
+static const u8 stage1_bitmap_barrier_2[3 * 13];
+static const u8 stage1_bitmap_barrier_3[2 * 9];
+static const u8 stage1_bitmap_barrier_4[2 * 2 * 7];
+static const u8 stage1_bitmap_barrier_4s[2 * 2 * 7];
 
 /* ----------------------------------------------------------------------- */
 
@@ -57,25 +70,25 @@ static const stage_t stage1 = {
     X_X____X, XXX_____, ________, ________, ________, ________, ________, ________, ________, ________,
     ___X_XXX, ________, ________, ________, ________, ________, ________, ________, ________, ________
   },
-  &face_ralph[FACEBITMAPBYTES],
-  NULL,
+  &stage1_perp_face[FACEBITMAPBYTES],
+  NULL, // no bitmap given on this level
   attribute_BRIGHT_YELLOW_OVER_BLACK | (attribute_BRIGHT_YELLOW_OVER_BLACK << 8),
-  NULL, // addrof_hittable_objects
-  NULL, // addrof_right_hand_handlers
-  NULL, // addrof_right_hand_objects
-  NULL, // addrof_right_hand_short_pole_object
-  NULL, // addrof_left_hand_handlers
-  NULL, // addrof_left_hand_objects
-  NULL, // addrof_left_hand_short_pole_object
-  perp_description,
+  &stage1_hitable_object_defs[0],
+  NULL, // &stage1_right_hand_handlers[0],
+  NULL, // &stage1_right_hand_objects[0],
+  NULL, // &stage1_right_hand_short_pole_object[0],
+  NULL, // &stage1_left_hand_handlers[0],
+  NULL, // &stage1_left_hand_objects[0],
+  NULL, // &stage1_left_hand_short_pole_object[0],
+  stage1_perp_description,
   NULL, // addrof_arrest_messages
   NULL, // addrof_helicopter_stuff_1
   NULL, // addrof_helicopter_stuff_2
 
   NULL, // lods_stones
   NULL, // lods_dust
-  &car_lods[0], // lods_perp_car
-  { NULL, NULL, NULL, &car_lods[0] },
+  &stage1_car_lods[0], // lods_perp_car
+  { NULL, NULL, NULL, &stage1_car_lods[0] },
 
   20, // car_spawn_delay
   0x50, // smash_5d1b
@@ -101,11 +114,13 @@ static const stage_t stage1 = {
     NULL, //&map_loop_hazards[-1]
   },
 
-  stage_chatter_strings
+  stage1_chatter_strings
 };
 
+/* ----------------------------------------------------------------------- */
+
 // $5D39
-static const u8 perp_description[7] = {
+static const u8 stage1_perp_description[7] = {
   CHATTERCHR_NANCY,
   CHATTERSTR_PERP_DESC_1,
   CHATTERSTR_PERP_DESC_2,
@@ -115,15 +130,52 @@ static const u8 perp_description[7] = {
   CHATTERBLK_HEROES_ACKNOWLEDGE
 };
 
-static const char *stage_chatter_strings[4] = {
+// Conv: Additional
+static const char *stage1_chatter_strings[4] = {
   "THIS IS NANCY AT CHASE H.Q. WE'VE GOT A\xCE",
   "EMERGENCY HERE. RALPH THE IDAHO SLASHER\xAC",
   "IS FLEEING TOWARDS THE SUBURBS. THE TARGE\xD4",
   "VEHICLE IS A WHITE BRITISH SPORTS CAR... OVER\xAE"
 };
 
+/* ----------------------------------------------------------------------- */
+
+// $5E40
+static const hitable_t stage1_hitable_object_defs[2] = {
+  { 0x10, &stage1_tumbleweed_lods[0] },
+  { 0x20, &stage1_barrier_lods[0] },
+};
+
+// $5E46
+static const obj_t stage1_right_hand_graphics_defs[9] = {
+  { 111, 41, 80, &tunnellight, draw_tunnel_light_right },
+  {   0,  0,  0, NULL, NULL },
+  //{ 144, 92, 40, stretchy_shortpole, draw_stretchy_object_right },
+  //{  94, 36, 60, stretchy_tree_right, draw_stretchy_object_right },
+  //{ 110, 49, 80, stretchy_tree_left, draw_stretchy_object_right },
+  //{ 110, 53, 80, stretchy_streetlamp_right, draw_stretchy_object_right },
+  //{ 110, 53, 80, stretchy_telegraphpole_right, draw_stretchy_object_right },
+  //{ 100, 24, 70, turn_sign_left, draw_object_right },
+  //{ 100, 24, 70, turn_sign_right, draw_object_right }
+};
+
+// $5E85
+static const obj_t stage1_left_hand_objects[9] = {
+  { 126, 188, 80, &tunnellight, draw_tunnel_light_left },
+  {   0,  0,  0,  NULL, NULL },
+  //{  96, 144, 40, stretchy_shortpole, draw_stretchy_object_left },
+  //{ 140, 196, 60, stretchy_tree_right, draw_stretchy_object_left },
+  //{ 124, 208, 80, stretchy_tree_left, draw_stretchy_object_left },
+  //{ 132, 182, 80, stretchy_streetlamp_left, draw_stretchy_object_left },
+  //{ 132, 182, 80, stretchy_telegraphpole_left, draw_stretchy_object_left },
+  //{ 129, 182, 70, turn_sign_left, draw_object_left },
+  //{ 129, 200, 70, turn_sign_right, draw_object_left },
+};
+
+/* ----------------------------------------------------------------------- */
+
 // $642A
-static const u8 face_ralph[FACEBYTES] = {
+static const u8 stage1_perp_face[FACEBYTES] = {
   XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX,
   X__XXXXX, X__XXXX_, __XXX___, ___XXX_X,
   X__XXXXX, XXX___XX, XXX_____, ____XX_X,
@@ -172,18 +224,20 @@ static const u8 face_ralph[FACEBYTES] = {
   0x70, 0x70, 0x30, 0x28
 };
 
+/* ----------------------------------------------------------------------- */
+
 // $6492
-static const lod_t car_lods[6] = {
-  { 6, LOD_NOMASK, 31, &bitmap_car_1[0], &bitmap_car_1[0]  },
-  { 5, LOD_NOMASK, 22, &bitmap_car_2[0], &bitmap_car_2[0]  },
-  { 3, LOD_NOMASK, 16, &bitmap_car_3[0], &bitmap_car_3[0]  },
-  { 3, LOD_NOMASK, 16, &bitmap_car_3[0], &bitmap_car_3[0]  },
-  { 3, LOD_MASKED,  9, &bitmap_car_4[0], &bitmap_car_4s[0] },
-  { 3, LOD_MASKED,  9, &bitmap_car_4[0], &bitmap_car_4s[0] },
+static const lod_t stage1_car_lods[6] = {
+  { 6, LOD_NOMASK, 31, &stage1_bitmap_car_1[0], &stage1_bitmap_car_1[0]  },
+  { 5, LOD_NOMASK, 22, &stage1_bitmap_car_2[0], &stage1_bitmap_car_2[0]  },
+  { 3, LOD_NOMASK, 16, &stage1_bitmap_car_3[0], &stage1_bitmap_car_3[0]  },
+  { 3, LOD_NOMASK, 16, &stage1_bitmap_car_3[0], &stage1_bitmap_car_3[0]  },
+  { 3, LOD_MASKED,  9, &stage1_bitmap_car_4[0], &stage1_bitmap_car_4s[0] },
+  { 3, LOD_MASKED,  9, &stage1_bitmap_car_4[0], &stage1_bitmap_car_4s[0] },
 };
 
 // $67C2
-static const u8 bitmap_car_1[6 * 31] = {
+static const u8 stage1_bitmap_car_1[6 * 31] = {
   ________, __XXXXXX, XXXXXXXX, XXXXXXXX, XXXX____, ________,
   ____XXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXX_____,
   _XXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXX__,
@@ -218,7 +272,7 @@ static const u8 bitmap_car_1[6 * 31] = {
 };
 
 // $687C
-static const u8 bitmap_car_2[5 * 22] = {
+static const u8 stage1_bitmap_car_2[5 * 22] = {
   ________, _XXXXXXX, XXXXXXXX, XXXXX___, ________,
   _____XXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXX_____,
   __XXXX__, X_XXXXXX, XXXXXXXX, XXXXX_X_, _XXXX___,
@@ -244,7 +298,7 @@ static const u8 bitmap_car_2[5 * 22] = {
 };
 
 // $68EA
-static const u8 bitmap_car_3[3 * 16] = {
+static const u8 stage1_bitmap_car_3[3 * 16] = {
   _____XXX, XXXXXXXX, XXX_____,
   _XXXXXXX, XXXXXXXX, XXXXXXX_,
   XXX__XXX, XXXXXXXX, XXX__XXX,
@@ -264,7 +318,7 @@ static const u8 bitmap_car_3[3 * 16] = {
 };
 
 // $69DA
-static const u8 bitmap_car_4[3 * 2 * 9] = {
+static const u8 stage1_bitmap_car_4[3 * 2 * 9] = {
   ________, XXXXXXXX, _______X, XXXXXXX_, XXXXXXXX, ________,
   X_______, _XXXXXXX, ______XX, XXXXXX__, XXXXXXXX, ________,
   ________, XX_XXX_X, _______X, _X_XXXX_, XXXXXXXX, ________,
@@ -276,7 +330,7 @@ static const u8 bitmap_car_4[3 * 2 * 9] = {
 };
 
 // $6A10
-static const u8 bitmap_car_4s[3 * 2 * 9] = {
+static const u8 stage1_bitmap_car_4s[3 * 2 * 9] = {
   XXXX____, ____XXXX, ________, XXXXXXXX, ___XXXXX, XXX_____,
   XXXXX___, _____XXX, ________, XXXXXXXX, __XXXXXX, XX______,
   XXXX____, ____XX_X, ________, XX_X_X_X, ___XXXXX, XXX_____,
@@ -289,6 +343,156 @@ static const u8 bitmap_car_4s[3 * 2 * 9] = {
 
 /* ----------------------------------------------------------------------- */
 
+// $6D82
+static const lod_t stage1_tumbleweed_lods[6] = {
+  { 2, LOD_NOMASK, 16, &stage1_bitmap_tumbleweed_1[0], &stage1_bitmap_tumbleweed_1[0] },
+  { 2, LOD_NOMASK, 11, &stage1_bitmap_tumbleweed_2[0], &stage1_bitmap_tumbleweed_2[0] },
+  { 1, LOD_NOMASK,  9, &stage1_bitmap_tumbleweed_3[0], &stage1_bitmap_tumbleweed_3[0] },
+  { 1, LOD_NOMASK,  9, &stage1_bitmap_tumbleweed_3[0], &stage1_bitmap_tumbleweed_3[0] },
+  { 1, LOD_NOMASK,  7, &stage1_bitmap_tumbleweed_4[0], &stage1_bitmap_tumbleweed_4[0] },
+  { 1, LOD_NOMASK,  7, &stage1_bitmap_tumbleweed_4[0], &stage1_bitmap_tumbleweed_4[0] }
+};
+
+static const u8 stage1_bitmap_tumbleweed_1[2 * 16] = {
+  ___XX___, _X_XX___,
+  ____XXXX, XXXX____,
+  ___XXXXX, XXXXX___,
+  __XXXXXX, XXXXXX__,
+  __XXXXXX, XX_XXX__,
+  _XXXXXXX, XXXXXXX_,
+  _X_XX_XX, X_XXX_X_,
+  __XX_X__, XX_XXX__,
+  __X_X_X_, X_X_XXX_,
+  _X_X_X_X, X_X_X_X_,
+  __XX_XX_, X_X_XX__,
+  ___XX_X_, __X_XX__,
+  ___XX_XX, _XX_X___,
+  __XX_XXX, XX_XX___,
+  _____X__, X__X____,
+  ________, X_XX____,
+};
+
+static const u8 stage1_bitmap_tumbleweed_2[2 * 11] = {
+  ____X__X, __XX____,
+  _____XXX, XXX_____,
+  ____XXXX, XXXX____,
+  ____XXXX, X_XXX___,
+  ____XXX_, XXXXX___,
+  ___XXXX_, X_X_X___,
+  ___X_X_X, _X_X____,
+  _____XX_, X_XX____,
+  ______XX, X_X_____,
+  ____XX_X, _XX_____,
+  ________, X_X_____,
+};
+
+static const u8 stage1_bitmap_tumbleweed_3[1 * 9] = {
+  __XXXXX_,
+  _XXXXXXX,
+  XXXXXXXX,
+  XXX__XXX,
+  XXX_X_XX,
+  _X_X__X_,
+  _XXX_XX_,
+  __X_X_X_,
+  __X__X__,
+};
+
+static const u8 stage1_bitmap_tumbleweed_4[1 * 7] = {
+  __XXXX__,
+  _XXXXXX_,
+  _XXX_XX_,
+  _XX__XX_,
+  __X_XX__,
+  __XX_X__,
+  ___XX___,
+};
+
+/* ----------------------------------------------------------------------- */
+
+// $6DF2
+static const lod_t stage1_barrier_lods[6] = {
+  { 4, LOD_NOMASK, 17, &stage1_bitmap_barrier_1[0], &stage1_bitmap_barrier_1[0] },
+  { 4, LOD_NOMASK, 17, &stage1_bitmap_barrier_1[0], &stage1_bitmap_barrier_1[0] },
+  { 3, LOD_NOMASK, 13, &stage1_bitmap_barrier_2[0], &stage1_bitmap_barrier_2[0] },
+  { 2, LOD_NOMASK,  9, &stage1_bitmap_barrier_3[0], &stage1_bitmap_barrier_3[0] },
+  { 2, LOD_MASKED,  9, &stage1_bitmap_barrier_3[0], &stage1_bitmap_barrier_3[0] },
+  { 2, LOD_MASKED,  7, &stage1_bitmap_barrier_4[0], &stage1_bitmap_barrier_4s[0] }
+};
+
+// $6E1C
+static const u8 stage1_bitmap_barrier_1[4 * 17] = {
+  ___XXXXX, XX______, ______XX, XXXXX___,
+  ___XXXX_, _X____XX, XX____XX, _X__X___,
+  ____XX_X, __X___XX, _X___XX_, X__X____,
+  ____XXX_, X_X___XX, XX___XXX, _X_X____,
+  _____XXX, _X_X__XX, _X__XXX_, X_X_____,
+  _____XX_, X__X_XX_, X_X_XX_X, __X_____,
+  ______XX, _X__XXXX, __XXX_X_, _X______,
+  ______XX, X_X_XXX_, X_XXXX_X, _X______,
+  XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX,
+  XXXXXX_X, _XXXXXX_, _XXXXXX_, X_XXXXXX,
+  XXXXX___, _XXXXX__, __XXXXX_, ___XXXXX,
+  XXXXX___, _XXXXX__, __XXXXX_, ___XXXXX,
+  XXXXX___, _XXXXX__, __XXXXX_, ___XXXXX,
+  XXXXX___, _XXXXX__, __XXXXX_, ___XXXXX,
+  X_X_X___, _X_X_X__, __X_X_X_, ___X_X_X,
+  XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX,
+  ________, ____XXXX, XXXXX___, ________,
+};
+
+// $6E60
+static const u8 stage1_bitmap_barrier_2[3 * 13] = {
+  __XXXXXX, ________, XXXXXX__,
+  __XXX_XX, ___XXX__, XX_X_X__,
+  ___XXX_X, X__X_X_X, X_X_X___,
+  ___XX_X_, X_XX_X_X, XX__X___,
+  ____XX_X, X_X_X_XX, X__X____,
+  ____XXX_, _XXXXXXX, XX_X____,
+  XXXXXXXX, XXXXXXXX, XXXXXXXX,
+  XXXXX_XX, XXXX_XXX, X_X_XXXX,
+  XXXX___X, XXX__XXX, X___XXXX,
+  XXXX___X, XXX__XXX, X___XXXX,
+  X__X___X, __X__X__, X___X__X,
+  XXXXXXXX, XXXXXXXX, XXXXXXXX,
+  ________, _XXXXXX_, ________,
+};
+
+// $6E87
+static const u8 stage1_bitmap_barrier_3[2 * 9] = {
+  _XXXX___, ___XXXX_,
+  _XX_X__X, X__XX_X_,
+  __XX_X_X, X_XX_X__,
+  __XXXX_X, X_XXXX__,
+  XXXXXXXX, XXXXXXXX,
+  XXX__XXX, __XXX__X,
+  X_X__X_X, __X_X__X,
+  XXXXXXXX, XXXXXXXX,
+  ______XX, XX______,
+};
+
+static const u8 stage1_bitmap_barrier_4[2 * 2 * 7] = {
+  X__XXXXX, _XX_____, X__XXXXX, _XX_____,
+  X___X__X, _XXX_XX_, ___XXXXX, XXX_____,
+  XX______, __XXXXXX, __XXXXXX, XX______,
+  ________, XXXXXXXX, ____XXXX, XXXX____,
+  ________, X__XX__X, ____XXXX, X__X____,
+  ________, XXXXXXXX, ____XXXX, XXXX____,
+  XXXX____, ____XXXX, XXXXXXXX, ________,
+};
+
+static const u8 stage1_bitmap_barrier_4s[2 * 2 * 7] = {
+  XXXXX__X, _____XX_, XXXXX__X, _____XX_,
+  XXXXX___, _____XXX, X__X___X, _XX_XXX_,
+  XXXXXX__, ______XX, ______XX, XXXXXX__,
+  XXXX____, ____XXXX, ________, XXXXXXXX,
+  XXXX____, ____X__X, ________, X__XX__X,
+  XXXX____, ____XXXX, ________, XXXXXXXX,
+  XXXXXXXX, ________, ____XXXX, XXXX____,
+};
+
+/* ----------------------------------------------------------------------- */
+
 const stage_t *stages[MAX_STAGEDATA] = {
   &stage1,
   &stage1,
@@ -296,4 +500,3 @@ const stage_t *stages[MAX_STAGEDATA] = {
   &stage1,
   &stage1
 };
-

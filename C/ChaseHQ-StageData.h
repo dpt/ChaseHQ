@@ -12,28 +12,30 @@
 #include "Types.h"
 #include "ChaseHQ.h"
 
-#define LOD_NOMASK (0 << 0)
-#define LOD_MASKED (1 << 0)
+struct hitable {
+  u8           unknown;
+  const lod_t *lods;
+};
 
-typedef struct lod {
-  u8        width_bytes;
-  u8        flags;
-  u8        height;
-  const u8 *bitmap;
-  const u8 *shifted;
-} lod_t;
+struct obj {
+  u8            hit_max;
+  u8            hit_min;
+  u8            hit_something;
+  const void   *arg;
+  void         *handler;
+};
 
 typedef struct stage {
   u8            backdrop[BACKDROP_LENGTH];
   const u8     *addrof_perp_mugshot_attributes;
   const u8     *addrof_perp_mugshot_bitmap;
   u16           ground_colour;
-  const u8     *addrof_hittable_objects;
+  const hitable_t *addrof_hittable_objects;
   const u8     *addrof_right_hand_handlers;
-  const u8     *addrof_right_hand_objects;
+  const obj_t  *addrof_right_hand_objects;
   const u8     *addrof_right_hand_short_pole_object;
   const u8     *addrof_left_hand_handlers;
-  const u8     *addrof_left_hand_objects;
+  const obj_t  *addrof_left_hand_objects;
   const u8     *addrof_left_hand_short_pole_object;
   const u8     *addrof_perp_description;
   const u8     *addrof_arrest_messages;

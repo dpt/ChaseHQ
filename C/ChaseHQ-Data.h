@@ -141,6 +141,16 @@ const u8 hazard_pos_speed[3 * 4];
 const u8 ledfont[10 * 16];
 const u8 minifont[31 * 6];
 
+const light_t tunnellight;
+const lod_t tunnellight_lods[6];
+const u8 bitmap_tunnellight_1[2 * 16];
+const u8 bitmap_tunnellight_2[2 * 12];
+const u8 bitmap_tunnellight_3[1 * 8];
+const u8 bitmap_tunnellight_4[1 * 6];
+const u8 bitmap_tunnellight_5[1 * 5];
+const u8 bitmap_tunnellight_6[2 * 2 * 6];
+const u8 bitmap_tunnellight_6s[2 * 2 * 6];
+
 const u8 perp_escape_hazards[6];
 const u8 perp_escape_curvature[5];
 const u8 perp_escape_height[5];

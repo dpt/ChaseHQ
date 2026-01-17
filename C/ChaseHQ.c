@@ -788,13 +788,13 @@ void reset_lights(u8 *attrptr)
   int rows; // was C
   int cols; // was B
 
-  rows = MARQUEELIGHTHEIGHT;
+  rows = MARQUEELIGHT_HEIGHT;
   do {
-    cols = MARQUEELIGHTWIDTH;
+    cols = MARQUEELIGHT_WIDTH;
     do
       *attrptr++ &= ~ATTR_BRIGHT;
     while (--cols > 0);
-    attrptr += SCREEN_ATTRIBUTES_ROWBYTES - MARQUEELIGHTWIDTH;
+    attrptr += SCREEN_ATTRIBUTES_ROWBYTES - MARQUEELIGHT_WIDTH;
   } while (--rows > 0);
 }
 
@@ -953,18 +953,18 @@ int handle_perp_caught(chqstate_t *state)
 
   phase = state->perp_caught_phase;
   switch (phase) {
-    case PERPCAUGHTPHASE_0:
-      return 0;
-    case PERPCAUGHTPHASE_1:
-      goto move_perp;
-    case PERPCAUGHTPHASE_2:
-      goto phase2;
-    case PERPCAUGHTPHASE_3:
-      goto phase3;
-    case PERPCAUGHTPHASE_4:
-      goto phase4;
-    default:
-      break;
+  case PERPCAUGHTPHASE_0:
+    return 0;
+  case PERPCAUGHTPHASE_1:
+    goto move_perp;
+  case PERPCAUGHTPHASE_2:
+    goto phase2;
+  case PERPCAUGHTPHASE_3:
+    goto phase3;
+  case PERPCAUGHTPHASE_4:
+    goto phase4;
+  default:
+    break;
   }
 
   // Otherwise 5/6
@@ -1625,14 +1625,22 @@ void draw_overhead(chqstate_t *state)
 }
 
 // $916C
-void draw_stretchy_object(chqstate_t *state, int left_or_right)
+void draw_stretchy_object_left(chqstate_t *state)
 {
-  //dso_common(state, 0x9293);
-  //dso_common(state, 0x92FC);
+}
+
+// $9171
+void draw_stretchy_object_right(chqstate_t *state)
+{
 }
 
 // $924D
-void draw_tunnel_light(chqstate_t *state, int left_or_right)
+void draw_tunnel_light_left(chqstate_t *state)
+{
+}
+
+// $9252
+void draw_tunnel_light_right(chqstate_t *state)
 {
 }
 
@@ -2418,8 +2426,8 @@ check_restart:
   state->st.user_input_mask = USERINPUTMASK_ALLOW_ALL;
   state->gear_lockout       = 3;
   state->transition_control = TRANSITIONCONTROL_FILL_ATTRIBUTES;
-  state->st.turbos          = 3;
-  state->st.time_bcd        = 0x60; // 60 seconds
+  state->st.turbos          = MAXTURBOS;
+  state->st.time_bcd        = RESTART_TIME_BCD;
   state->retry_count++;
 
   play_start_noise(state);
@@ -2606,7 +2614,7 @@ void toggle_light_brightness(chqstate_t *state, u8 *attrs)
   int rows; // was B
   u8  attr; // was C
 
-  rows = MARQUEELIGHTHEIGHT;
+  rows = MARQUEELIGHT_HEIGHT;
   attr = ATTR_BRIGHT;
   do {
     *attrs++ ^= attr;
@@ -2614,7 +2622,7 @@ void toggle_light_brightness(chqstate_t *state, u8 *attrs)
     *attrs++ ^= attr;
     *attrs++ ^= attr;
     *attrs   ^= attr;
-    attrs += SCREEN_ATTRIBUTES_ROWBYTES - (MARQUEELIGHTWIDTH - 1);
+    attrs += SCREEN_ATTRIBUTES_ROWBYTES - (MARQUEELIGHT_WIDTH - 1);
   } while (--rows > 0);
 }
 
@@ -3482,7 +3490,9 @@ chc_continue:
 }
 
 // $AD51
-u8 check_collision(chqstate_t *state, u8 D, hazard_t *IX)
+//
+// hazard - was IX
+u8 check_collision(chqstate_t *state, u8 D, hazard_t *hazard)
 {
   return 0;
 }
@@ -3869,22 +3879,25 @@ void clear_playfield_set_attrs(chqstate_t *state)
   clear_playfield(state);
 
   // Clear the playfield pixels to $FF (bug: duplicates work just done)
-  memset(ADDRTOSCREEN(0x4800), 0xFF, 0x1000);
+  memset(ADDRTOSCREEN(0x4800), 0xFF, PLAYFIELD_HEIGHT * SCREEN_BITMAP_ROWBYTES);
 
   // Clear the playfield attributes to $28 (black over cyan) - first two
   // rows only
-  memset(ADDRTOSCREEN(0x5900), 0x28, 2 * 32);
+  memset(ADDRTOSCREEN(0x5900), attribute_BLACK_OVER_CYAN,
+         2 * SCREEN_ATTRIBUTES_ROWBYTES);
 
-  // Clear the next three rows to $68 (black over bright cyan)
-  memset(ADDRTOSCREEN(0x5940), 0x68, 3 * 32);
+  // Clear the next three rows to $68 (bright, black over cyan)
+  memset(ADDRTOSCREEN(0x5940), attribute_BRIGHT_BLACK_OVER_CYAN,
+         3 * SCREEN_ATTRIBUTES_ROWBYTES);
 
   // Clear the next 11 rows to the current ground colour
   // Note: Only using the bottom byte of ground_colour (as orig).
-  memset(ADDRTOSCREEN(0x59A0), state->stage->ground_colour, 0x160);
+  memset(ADDRTOSCREEN(0x59A0), state->stage->ground_colour,
+         11 * SCREEN_ATTRIBUTES_ROWBYTES);
 
   // Clear the edges of the playfield to black on black
   screen = ADDRTOSCREEN(0x5900);
-  stride = 0x1F;
+  stride = SCREEN_BITMAP_ROWBYTES - 1;
   iterations = 16;
   do {
     *screen = attribute_BLACK_OVER_BLACK;

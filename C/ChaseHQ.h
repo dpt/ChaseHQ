@@ -52,8 +52,11 @@
 
 #define MAXHAZARDS            (6)
 
-#define MARQUEELIGHTWIDTH     (5)
-#define MARQUEELIGHTHEIGHT    (4)
+#define MAXTURBOS             (3)
+#define RESTART_TIME_BCD      (0x60) // seconds in BCD
+
+#define MARQUEELIGHT_WIDTH    (5)
+#define MARQUEELIGHT_HEIGHT   (4)
 
 #define STREND                (1<<7) // string terminating top bit
 
@@ -332,10 +335,12 @@ typedef u8 chatterpriority_t;
 
 /* ----------------------------------------------------------------------- */
 
-typedef struct hazard_s hazard_t;
-typedef struct stagevars_s stagevars_t;
-typedef struct chqstate_s chqstate_t;
-typedef struct scenedata_s scenedata_t;
+typedef struct hazard hazard_t;
+typedef struct scenedata scenedata_t;
+typedef struct hitable hitable_t;
+typedef struct obj obj_t;
+typedef struct stagevars stagevars_t;
+typedef struct chqstate chqstate_t;
 
 typedef void (hazard_handler_t)(chqstate_t *state);
 
@@ -343,7 +348,7 @@ typedef void (hazard_handler_t)(chqstate_t *state);
 
 // exposed for stage data to use
 
-struct scenedata_s {
+struct scenedata {
   // $A26C
   u16       road_pos;
   // $A26E
@@ -359,6 +364,27 @@ struct scenedata_s {
   // $A278
   const u8 *road_hazard_ptr;
 };
+
+/* ----------------------------------------------------------------------- */
+
+#define LOD_NOMASK (0 << 0)
+#define LOD_MASKED (1 << 0)
+
+// Always given in groups of six?
+typedef struct lod {
+  u8        width_bytes;
+  u8        flags;
+  u8        height;
+  const u8 *bitmap;
+  const u8 *shifted;
+} lod_t;
+
+/* ----------------------------------------------------------------------- */
+
+typedef struct {
+  const lod_t *lods;
+  u8           values[20]; // TBD
+} light_t;
 
 /* ----------------------------------------------------------------------- */
 
@@ -484,9 +510,11 @@ void draw_everything_else(chqstate_t *state);
 
 void draw_overhead(chqstate_t *state);
 
-void draw_stretchy_object(chqstate_t *state, int left_or_right);
+void draw_stretchy_object_left(chqstate_t *state);
+void draw_stretchy_object_right(chqstate_t *state);
 
-void draw_tunnel_light(chqstate_t *state, int left_or_right);
+void draw_tunnel_light_left(chqstate_t *state);
+void draw_tunnel_light_right(chqstate_t *state);
 
 void draw_object(chqstate_t *state, int left_or_right);
 
@@ -646,7 +674,7 @@ void spawn_hazards(chqstate_t *state);
 
 void check_hazard_collisions(chqstate_t *state);
 
-u8 check_collision(chqstate_t *state, u8 D, hazard_t *IX);
+u8 check_collision(chqstate_t *state, u8 D, hazard_t *hazard);
 
 void draw_hazards(chqstate_t *state);
 

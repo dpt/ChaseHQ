@@ -14,7 +14,7 @@
 #include "ChaseHQ.h"
 #include "ChaseHQ-StageData.h"
 
-struct hazard_s {
+struct hazard {
   u8                used;
   u8                distance;
   u8                horz_pos;
@@ -35,7 +35,7 @@ struct hazard_s {
 };
 
 // crap name
-struct stagevars_s {
+struct stagevars {
   // $A16D
   u8        var_a16d;
   // $A16E
@@ -66,7 +66,7 @@ struct stagevars_s {
   u16       horizon_attribute;
 };
 
-struct chqstate_s {
+struct chqstate {
   // $4000
   u8        screen[SCREEN_LENGTH];
 
@@ -386,8 +386,6 @@ struct chqstate_s {
   // $EF00
   u8        flipped[256];
 
-  // MUST ALIGN THIS
-  u8        padding[3990];
   // $F000
   u8        backbuffer[BACKBUFFER_LENGTH];
 };

@@ -320,10 +320,7 @@ int main(void)
     return 1;
   }
 
-  posix_memalign((void **) &state, 4096, sizeof(*state));
-
-  uintptr_t p = (1 << 12) - ((uintptr_t)&state->backbuffer[0] & ((1 << 12) -1));
-  printf("state=%p backbuffer=%p p=%ld\n", state, &state->backbuffer[0], p);
+  state = calloc(sizeof(*state), 1);
 
   chasehq_reset_state(state);
   entrypt_128k(state);
@@ -358,27 +355,7 @@ int main(void)
       case SDL_MOUSEMOTION:
         mx = event.motion.x;
         my = event.motion.y;
-        //printf("my=%d\n",my);
-        // ledfont_plot(state, 1 + my % 10,
-        //              &state->screen[(0x4000 + mx / 8) - SCREEN_START_ADDRESS]);
-        //state->dont_draw_screen_attrs = 1; // Conv: Was 0xF8.
-        //setup_transition(state, TRANSITIONSTRIDE_REVERSE);
-        //clear_playfield_set_attrs(state);
-        //state->pregame_car_revealed_height = 0; // Reset the counter in #R$85E4 that reveals the perp's car
-
-        //draw_pregame(state);
-        //reveal_perp_car(state);
-        //transition(state);
-        //animate_meters(state);
-
         run_pregame_screen_loop(state);
-
-        //draw_mugshots(state);
-        //state->sighted_flag = 1;
-        //state->perp_caught_phase = PERPCAUGHTPHASE_2;
-        //state->smash_counter = my / 16;
-        //draw_smash_bar(state);
-        //draw_screen(state);
         break;
 
       case SDL_MOUSEBUTTONUP:
@@ -389,12 +366,6 @@ int main(void)
           setup_transition(state, 8);
         }
         break;
-
-        // main_loop(state);
-
-        //plot_face(state, 0x4036, &bitmap_faces[FACEBYTES*0]);
-        //plot_face(state, 0x4836, &bitmap_faces[FACEBYTES*1]);
-        //plot_face(state, 0x5036, &bitmap_faces[FACEBYTES*2]);
 
 #if 0
         // Handle mouse motion event

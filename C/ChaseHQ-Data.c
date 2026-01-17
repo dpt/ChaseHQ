@@ -2584,6 +2584,120 @@ const u8 minifont[31 * 6] = {
 
 /* ----------------------------------------------------------------------- */
 
+// $E1E9
+const light_t tunnellight = {
+  &tunnellight_lods[0],
+  0x1C, 0x00,
+  0x14, 0x07,
+  0x10, 0x07,
+  0x10, 0x0E,
+  0x0C, 0x0E,
+  0x0C, 0x15,
+  0x0C, 0x15,
+  0x08, 0x1C,
+  0x08, 0x1C,
+  0x08, 0x23
+};
+
+// $E1FF
+const lod_t tunnellight_lods[6] = {
+  { 2, LOD_NOMASK, 16, &bitmap_tunnellight_1[0], &bitmap_tunnellight_1[0]  },
+  { 2, LOD_NOMASK, 12, &bitmap_tunnellight_2[0], &bitmap_tunnellight_2[0]  },
+  { 1, LOD_NOMASK,  8, &bitmap_tunnellight_3[0], &bitmap_tunnellight_3[0]  },
+  { 1, LOD_NOMASK,  6, &bitmap_tunnellight_4[0], &bitmap_tunnellight_4[0]  },
+  { 1, LOD_NOMASK,  5, &bitmap_tunnellight_5[0], &bitmap_tunnellight_5[0]  },
+  { 2, LOD_MASKED,  6, &bitmap_tunnellight_6[0], &bitmap_tunnellight_6s[0] },
+};
+
+// $E229
+const u8 bitmap_tunnellight_1[2 * 16] = {
+  XXXXXXXX, _XXXXXXX,
+  XX_XXXX_, _XXXXXXX,
+  XXX_X_X_, _X_XXXXX,
+  XXX__X__, __XXX__X,
+  XXXX____, _X_X__XX,
+  X_X_X___, __X__XXX,
+  XX_X____, ____X_XX,
+  ________, _____XXX,
+  XX______, ________,
+  X_X_____, ____X_XX,
+  XX_X____, ___X_XXX,
+  X_X_____, ____X_XX,
+  XX___X__, __X__XXX,
+  X__XX_X_, _X_X__XX,
+  XXXXXXX_, XXXXX_XX,
+  XXXXXXX_, XXXXXXXX,
+};
+
+// $E249
+const u8 bitmap_tunnellight_2[2 * 12] = {
+  XXXXX_XX, XXXXXXXX,
+  X_XXX_XX, X_XXXXXX,
+  XX_X___X, _XXXXXXX,
+  XXX_____, _X_XXXXX,
+  X_______, __XXXXXX,
+  XX______, ____XXXX,
+  ________, __XXXXXX,
+  XX______, ___XXXXX,
+  XX______, __XXXXXX,
+  X_XX____, XX_XXXXX,
+  XXX_X_XX, _XXXXXXX,
+  XXXXX_XX, XXXXXXXX,
+};
+
+// $E261
+const u8 bitmap_tunnellight_3[1 * 8] = {
+  XXX_XXXX,
+  X_X_X_XX,
+  XX_____X,
+  ______XX,
+  XX______,
+  X_____XX,
+  XX_X_X_X,
+  X_XX_XXX,
+};
+
+// $E269
+const u8 bitmap_tunnellight_4[1 * 6] = {
+  XXXXXXXX,
+  _X_X_XXX,
+  X___XXXX,
+  _____XXX,
+  X___XXXX,
+  _X_X_XXX,
+};
+
+// $E26F
+const u8 bitmap_tunnellight_5[1 * 5] = {
+  XX_XXXXX,
+  X___XXXX,
+  _____XXX,
+  X___XXXX,
+  XX_XXXXX,
+};
+
+// $E274
+const u8 bitmap_tunnellight_6[2 * 2 * 6] = {
+  XX__XXXX, __XX____, XXXXXXXX, ________,
+  X____XXX, _X__X___, XXXXXXXX, ________,
+  ______XX, X____X__, XXXXXXXX, ________,
+  ______XX, X____X__, XXXXXXXX, ________,
+  X____XXX, _X__X___, XXXXXXXX, ________,
+  XX__XXXX, __XX____, XXXXXXXX, ________,
+};
+
+// $E28C
+const u8 bitmap_tunnellight_6s[2 * 2 * 6] = {
+  XXXXXX__, ______XX, XXXXXXXX, ________,
+  XXXXX___, _____X__, _XXXXXXX, X_______,
+  XXXX____, ____X___, __XXXXXX, _X______,
+  XXXX____, ____X___, __XXXXXX, _X______,
+  XXXXX___, _____X__, _XXXXXXX, X_______,
+  XXXXXX__, ______XX, XXXXXXXX, ________,
+};
+
+/* ----------------------------------------------------------------------- */
+
 // $E2A4
 const u8 perp_escape_hazards[6] = {
   MAP_WAIT(27),
