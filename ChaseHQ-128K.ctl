@@ -385,7 +385,7 @@ W $5D3A,2,2 Points at "THIS IS NANCY..."
 W $5D3C,2,2 Points at "EMERGENCY HERE..."
 W $5D3E,2,2 Points at "IS FLEEING ..."
 W $5D40,2,2 Points at "VEHICLE IS..."
-B $5D42,1,1 (pause?)
+B $5D42,1,1 Pause
 W $5D43,2,2 -> Random choice of ("WE READ..." / "ROGER!" / "GOTCHA...")
 @ $5D45 label=perp_description_1
 T $5D45,40,39:n1 "THIS IS NANCY AT CHASE H.Q. WE'VE GOT AN"
@@ -417,11 +417,10 @@ W $5E34,2,2 Back buffer address
 W $5E36,2,2 Attribute address
 T $5E38,6,5:n1 "MURDER"
 B $5E3E,1,1 Frame delay until next message?
-b $5E3F [Stage 1] Graphics definitions
-D $5E3F All are stored inverted except where noted.
-@ $5E3F label=graphics_defs
-B $5E3F,1,1 Pointed to by #R$5CFA
-N $5E40 Hittable hazards: tumbleweed and barrier.
+B $5E3F,1,1 End marker?
+b $5E40 [Stage 1] Graphics definitions
+D $5E40 All are stored inverted except where noted.
+D $5E40 Hittable hazards: tumbleweed and barrier.
 @ $5E40 label=hittable_objects_defs
 B $5E40,1,1 Pointed to by #R$5CF6
 W $5E41,2,2 Address of tumbleweed_lods table
@@ -993,11 +992,11 @@ N $6CFE Turn right sign (16x13) pre-shifted
 N $6CFE #HTML[#CALL:graphic($6CFE,16,13,1,1)]
 @ $6CFE label=bitmap_turnsign_5s
 B $6CFE,52,2 Masked bitmap data
-N $6D32 Turn right sign (16x10)
+N $6D32 Turn right sign (16x10) unused?
 N $6D32 #HTML[#CALL:graphic($6D32,16,10,1,1)]
 @ $6D32 label=bitmap_turnsign_6
 B $6D32,40,4 Masked bitmap data
-N $6D5A Turn right sign (16x10) pre-shifted
+N $6D5A Turn right sign (16x10) pre-shifted, unused?
 N $6D5A #HTML[#CALL:graphic($6D5A,16,10,1,1)]
 @ $6D5A label=bitmap_turnsign_6s
 B $6D5A,40,4 Masked bitmap data
@@ -1132,10 +1131,10 @@ W $6EE5,2,2
 B $6EE7,1,1
 W $6EE8,2,2
 B $6EEA,1,1
-@ $6EEB label=streetlamptop_6eeb
+@ $6EEB label=streetlamptop_right
 W $6EEB,2,2 Address of another LOD table
 B $6EED,20,2
-@ $6F01 label=streetlamptop_flipped_6f01
+@ $6F01 label=streetlamptop_left
 W $6F01,2,2 Address of another LOD table
 B $6F03,20,2
 N $6F17 Street lamp LOD 1
@@ -1250,10 +1249,10 @@ W $6FEA,2,2
 B $6FEC,1,1
 W $6FED,2,2
 B $6FEF,1,1
-@ $6FF0 label=telegraphpoletop_6ff0
+@ $6FF0 label=telegraphpoletop_left
 W $6FF0,2,2
 B $6FF2,20,2
-@ $7006 label=telegraphpoletop_7006
+@ $7006 label=telegraphpoletop_right
 W $7006,2,2
 B $7008,20,2
 @ $701C label=telegraphpoletop_lods
@@ -1543,8 +1542,8 @@ N $73A5 #HTML[#CALL:graphic($73A5,32,3,0,1)]
 @ $73A5 label=bitmap_tree_bottom_32x3
 B $73A5,12,8,4
 N $73B1 Tree shadow (16x2)
-N $73B1 #HTML[#CALL:graphic($73B1,16,2,0,1)]
-@ $73B1 label=bitmap_tree_shadow_16x2
+N $73B1 #HTML[#CALL:graphic($73B1,32,2,0,1)]
+@ $73B1 label=bitmap_tree_shadow_32x2
 B $73B1,8,8
 N $73B9 Tree middle (24x7)
 N $73B9 #HTML[#CALL:graphic($73B9,24,7,0,1)]
@@ -1974,28 +1973,28 @@ W $7E06,2,2
 B $7E08,1,1
 W $7E09,2,2
 B $7E0B,1,1 1 => end
-@ $7E0C label=shortpole_7e0c
+@ $7E0C label=shortpole_bottom
 W $7E0C,2,2 -> streetlampbody_bitmaps
 B $7E0E,20,2
-@ $7E22 label=shortpole_7e22
+@ $7E22 label=shortpole_middle
 W $7E22,2,2
 B $7E24,20,2
-@ $7E38 label=streetlampbody_7e38
+@ $7E38 label=streetlampbottom_left
 W $7E38,2,2
 B $7E3A,20,2
-@ $7E4E label=streetlampbody_7e4e
+@ $7E4E label=streetlampbottom_right
 W $7E4E,2,2
 B $7E50,20,2
-@ $7E64 label=streetlampbody_7e64
+@ $7E64 label=streetlampmiddle2_left
 W $7E64,2,2
 B $7E66,20,2
-@ $7E7A label=streetlampbody_7e7a
+@ $7E7A label=streetlampmiddle2_right
 W $7E7A,2,2
 B $7E7C,20,2
-@ $7E90 label=streetlampbody_7e90
+@ $7E90 label=streetlampmiddle_left
 W $7E90,2,2
 B $7E92,20,2
-@ $7EA6 label=streetlampbody_7ea6
+@ $7EA6 label=streetlampmiddle_right
 W $7EA6,2,2
 B $7EA8,20,2
 @ $7EBC label=streetlampbody_bitmaps
@@ -3655,7 +3654,7 @@ C $8E6F,2 Load attribute byte into #REGa
 C $8E71,4 Load back buffer address into #REGde
 C $8E75,4 Load attribute address into #REGbc
 N $8E79 #REGhl now points at the string.
-C $8E79,3 Call alt draw_string entry point
+C $8E79,3 Call alt draw_string_generic entry point
 C $8E7C,1 Restore #REGbc
 C $8E7D,1 Return
 c $8E7E Setup overlay messages
@@ -4019,7 +4018,7 @@ C $91A7,3 Self modify 'LD D,x' @ #R$933D to load A
 C $91AA,2 B = *HL - 1  -- read count byte from graphic stream, e.g. stretchy_shortpole + 0
 C $91AC,1 Return if count byte was 1 (terminator)
 C $91AD,1 Advance past count byte
-C $91AE,4 Read address of ? data to #REGde, e.g. shortpole_7e0c
+C $91AE,4 Read address of ? data to #REGde, e.g. shortpole_bottom
 C $91B2,4 Preserve HL, IX, BC
 C $91B6,1 Swap
 C $91B7,3 DE = wordat(HL); HL++  -- this is the LOD pointer e.g. streetlampbody_bitmaps
@@ -4272,17 +4271,17 @@ C $93E3,2 A >>= 1
 C $93E8,4 #REGix = Base of jump table
 C $93EC,3 (~#REGa + 5) is (4 - #REGa)
 C $93EF,9 IX += A * 5
-C $93F8,3 BC = &plot_sprite_entry
+C $93F8,3 BC = &plot_sprite_even_entry
 C $93FB,4 Self modify CALL at $940F
 C $93FF,4 Self modify JP at $941D
 C $9404,3 A = <self modified> - B
 C $940B,3 Self modify 'LD A,x' @ #R$9404
-C $940F,3 Call <self modified> [e.g. plot_sprite_entry]
+C $940F,3 Call <self modified> [e.g. plot_sprite_even_entry]
 C $9412,3 HL = <self modified by $93A1>
 C $9415,2 B = <self modified by $9239>
 C $941A,1 A += B
 C $941B,1 B = A
-C $941D,3 Exit via <self modified> [e.g. plot_sprite_entry]
+C $941D,3 Exit via <self modified> [e.g. plot_sprite_even_entry]
 @ $9420 label=plot_sprite_xxx_odd
 C $9420,1 Increment #REGa for upcoming calculation
 C $9421,4 Point #REGix at start of plot instructions
@@ -4326,6 +4325,7 @@ C $949B,1 fall through
 c $949C Sprite plotter for back buffer, up to 64px wide, 15px high, no mask, no flip
 D $949C Used by the routines at #R$85E4, #R$92E1 and #R$B58E.
 R $949C I:A Width in bytes
+R $949C height is wherw?
 R $949C I:HL Address in back buffer to plot at
 R $949C I:DE' Stride of bitmap data in bytes
 R $949C I:HL' Address of bitmap data
@@ -4337,14 +4337,13 @@ C $94A8,4 Multiply #REGa by 5: the length of an individual plot operation
 C $94AC,3 Move result to #REGbc
 C $94AF,2 Add it to #REGix to complete the jump target
 N $94B1 This entry point is used by the routine at #R$92E1.
-@ $94B1 label=*plot_sprite_entry
+@ $94B1 label=*plot_sprite_even_entry
 C $94B1,4 Save #REGsp to restore on exit (self modify)
 C $94B5,3 #REGb = 15 rows to draw, #REGc = 16, an increment value used later
 C $94B8,1 Bank
 C $94B9,2 Jump into body of loop
-@ $94BB label=ps_even_loop
+@ $94BB label=ps_even_unbank_continue
 C $94BB,1 Bank
-@ $94BC label=ps_even_continue
 C $94BC,2 Next scanline
 C $94BE,3 Restore original #REGsp (self modified)
 C $94C1,1 Return
@@ -4352,7 +4351,8 @@ C $94C1,1 Return
 C $94C2,1 Calculate address of next bitmap scanline
 @ $94C3 label=ps_even_body
 C $94C3,1 Put it in #REGsp (so we can use PUSH for speed)
-C $94C4,2 Unbank
+C $94C4,1 Unbank
+C $94C5,1 Preserve row start address
 C $94C6,2 Jump into table
 @ $94C8 label=ps_even_jumptable
 C $94C8,5 Transfer two bitmap bytes (16 pixels) from the "stack" to screen buffer
@@ -4395,7 +4395,8 @@ C $9513,1 Return
 C $9514,1 Calculate address of next bitmap scanline
 @ $9515 label=ps_odd_body
 C $9515,1 Put it in #REGsp (so we can use PUSH for speed)
-C $9516,2 Unbank
+C $9516,1 Unbank
+C $9517,1 Preserve row start address
 C $9518,2 Jump into table
 @ $951A label=ps_odd_jumptable
 C $951A,5 Transfer two bitmap bytes (16 pixels) from the "stack" to screen buffer
@@ -5248,12 +5249,12 @@ C $9DD9,3 Draw string
 @ $9DDC label=us_lights
 C $9DDC,4 C = sighted_flag
 C $9DE0,3 A = <counter_B>
-C $9DE3,3 If (<sighted> AND <counter_B>) is zero jump to plot_turbos_and_scores
+C $9DE3,3 If (<sighted> AND <counter_B>) is zero jump to plot_turbos_and_digits
 C $9DE6,3 Point #REGhl at left light's attributes
 C $9DE9,3 Toggle its brightness
 C $9DEC,3 Point #REGhl at right light's attributes
 C $9DEF,3 Toggle its brightness
-C $9DF2,2 Exit via plot_turbos_and_scores
+C $9DF2,2 Exit via plot_turbos_and_digits
 c $9DF4 Toggle the light's BRIGHT bit (#REGhl -> attrs)
 D $9DF4 Used by the routines at #R$9D51 and #R$B4CC.
 R $9DF4 I:HL Address of light to toggle.
@@ -5262,9 +5263,9 @@ C $9DF4,3 B = 4, C = $40 (BRIGHT bit)
 C $9DF7,19 Toggle attribute byte on five successive locations
 C $9E0A,4 Move to next attribute row
 C $9E0E,3 Repeat for four rows
-c $9E11 Draws the turbo sprites and updates the displayed scores
+c $9E11 Draws the turbo sprites and updates the displayed speed, time, distance and score
 D $9E11 Used by the routine at #R$9D51.
-@ $9E11 label=plot_turbos_and_scores
+@ $9E11 label=plot_turbos_and_digits
 C $9E11,6 If no turbo boosts remain, jump to plot_scores_only
 C $9E17,1 Preserve number of turbo boosts in #REGc
 C $9E18,4 Read boost time remaining and set flags
@@ -5466,27 +5467,29 @@ c $9F99 Another draw string entry point?
 D $9F99 Used by the routine at #R$8E6C.
 R $9F99 I:A ...
 R $9F99 I:BC Attribute address
-@ $9F99 label=draw_string_A
+@ $9F99 label=draw_string_with_style
 C $9F99,1 Push attribute address
 C $9F9A,1 Bank
 C $9F9B,1 HL' = BC
 C $9F9C,3 DE' = 32
 C $9F9F,1 C' = A
 C $9FA0,1 Bank
-C $9FA1,2 goto draw_string_entry
+C $9FA1,2 goto draw_string_core
 N $9FA3 The string is terminated by setting the topmost bit of the final character.
-@ $9FA3 label=*draw_string
+@ $9FA3 label=*draw_string_generic
 C $9FA3,3 A' = 1  Set drawing type (single height, plots to real screen)
-@ $9FA6 label=*draw_string_entry
+@ $9FA6 label=*draw_string_core
 C $9FA6,8 Load a byte and isolate the text part
 C $9FAE,6 Was bit 7 set?, quit if so, otherwise loop
 c $9FB4 Draws a character (to buffer or screen?)
 D $9FB4 Input font definitions are only seven rows high so gaps are left when drawing.
 D $9FB4 Used by the routine at #R$9F99.
 R $9FB4 I:A Character to draw (ASCII)
-R $9FB4 I:A' Rendering type (double height, invert, etc.)
-R $9FB4 I:HL ...
 R $9FB4 I:DE Screen address
+R $9FB4 I:A' Rendering type (double height, invert, etc.)
+R $9FB4 I:C' Attribute
+R $9FB4 I:DE' Stride
+R $9FB4 I:HL' Attribute address
 R $9FB4 O:HL ...
 R $9FB4 O:DE Screen address moved to next column
 @ $9FB4 label=draw_char
@@ -9215,7 +9218,7 @@ C $BD6B,3 E = A * 4
 C $BD6E,1 A = $FF if carry set, zero otherwise (sign extending?)
 C $BD6F,1 D = A
 C $BD70,3 Load the address of the first line of ground attributes (+ 31)
-C $BD73,3 Set the sky colour screen attributes (always black over bright cyan)
+C $BD73,3 Set the sky colour screen attributes (always bright, black over cyan)
 C $BD76,2 If A was zero then jump (Z => sky, NZ => ground)
 C $BD78,4 Load the ground colour screen attributes (varies per level)
 @ $BD7D label=ds_bd7d
@@ -9248,7 +9251,7 @@ R $BDC1 Used by the routines at #R$8014, #R$858C and #R$87DC.
 C $BDC1,3 Call clear_playfield_screen
 C $BDC4,13 Clear the game screen pixels to $FF (bug: duplicates work just done)
 C $BDD1,12 Clear the game screen attributes to $28 (black over cyan) - first two rows only
-C $BDDD,6 Clear the next three rows to $68 (black over bright cyan)
+C $BDDD,6 Clear the next three rows to $68 (bright, black over cyan)
 C $BDE3,9 Clear the next 11 rows to the current ground colour
 @ $BDF4 label=cpsa_clear_edges_loop
 C $BDEC,14 Clear the edges of the game screen to black on black
