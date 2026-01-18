@@ -20,7 +20,10 @@
 
 static const u8 stage1_perp_description[7];
 static const char *stage1_chatter_strings[4];
+static const u8 stage1_arrest_messages[83];
 static const hitable_t stage1_hitable_object_defs[2];
+static const obj_t stage1_right_hand_graphics_defs[9];
+static const obj_t stage1_left_hand_graphics_defs[9];
 static const u8 stage1_perp_face[FACEBYTES];
 static const lod_t stage1_car_lods[6];
 static const u8 stage1_bitmap_car_1[6 * 31];
@@ -28,6 +31,15 @@ static const u8 stage1_bitmap_car_2[5 * 22];
 static const u8 stage1_bitmap_car_3[3 * 16];
 static const u8 stage1_bitmap_car_4[3 * 2 * 9];
 static const u8 stage1_bitmap_car_4s[3 * 2 * 9];
+static const stretchyset_t stage1_turn_sign_right;
+static const stretchyset_t stage1_turn_sign_left;
+static const lod_t stage1_turn_sign_lods[];
+static const u8 stage1_bitmap_turnsign_1[4 * 40];
+static const u8 stage1_bitmap_turnsign_2[3 * 30];
+static const u8 stage1_bitmap_turnsign_3[2 * 20];
+static const u8 stage1_bitmap_turnsign_4[2 * 2 * 16];
+static const u8 stage1_bitmap_turnsign_5[2 * 2 * 13];
+static const u8 stage1_bitmap_turnsign_5s[2 * 2 * 13];
 static const lod_t stage1_tumbleweed_lods[6];
 static const u8 stage1_bitmap_tumbleweed_1[2 * 16];
 static const u8 stage1_bitmap_tumbleweed_2[2 * 11];
@@ -39,6 +51,71 @@ static const u8 stage1_bitmap_barrier_2[3 * 13];
 static const u8 stage1_bitmap_barrier_3[2 * 9];
 static const u8 stage1_bitmap_barrier_4[2 * 2 * 7];
 static const u8 stage1_bitmap_barrier_4s[2 * 2 * 7];
+static const stretchy_t stage1_stretchy_streetlamp_right[5];
+static const stretchy_t stage1_stretchy_streetlamp_left[5];
+static const stretchyset_t stage1_streetlamptop_right;
+static const stretchyset_t stage1_streetlamptop_left;
+static const lod_t stage1_streetlamptop_lods[5];
+static const lod_t stage1_streetlamptop_flipped_lods[5];
+static const u8 stage1_bitmap_streetlamptop_1[4 * 8];
+static const u8 stage1_bitmap_streetlamptop_2[3 * 5];
+static const u8 stage1_bitmap_streetlamptop_3[3 * 4];
+static const u8 stage1_bitmap_streetlamptop_3s[3 * 4];
+static const u8 stage1_bitmap_streetlamptop_4[2 * 2 * 4];
+static const u8 stage1_bitmap_streetlamptop_4s[2 * 2 * 4];
+static const u8 stage1_bitmap_streetlamptop_5[2 * 2 * 4];
+static const u8 stage1_bitmap_streetlamptop_5s[2 * 2 * 3];
+static const stretchy_t stage1_stretchy_telegraphpole_right[5];
+static const stretchy_t stage1_stretchy_telegraphpole_left[5];
+static const stretchyset_t stage1_telegraphpoletop_left;
+static const stretchyset_t stage1_telegraphpoletop_right;
+static const lod_t stage1_telegraphpoletop_lods[5];
+static const u8 stage1_bitmap_telegraphpoletop_1[3 * 13];
+static const u8 stage1_bitmap_telegraphpoletop_2[3 * 10];
+static const u8 stage1_bitmap_telegraphpoletop_3[3 * 7];
+static const u8 stage1_bitmap_telegraphpoletop_3s[3 * 7];
+static const u8 stage1_bitmap_telegraphpoletop_4[2 * 2 * 5];
+static const u8 stage1_bitmap_telegraphpoletop_4s[2 * 2 * 5];
+static const u8 stage1_bitmap_telegraphpoletop_5[2 * 2 * 4];
+static const u8 stage1_bitmap_telegraphpoletop_5s[2 * 2 * 4];
+static const stretchy_t stage1_stretchy_tree_right[6];
+static const stretchy_t stage1_stretchy_tree_left[4];
+static const stretchyset_t stage1_tree_7110;
+static const stretchyset_t stage1_tree_7126;
+static const stretchyset_t stage1_tree_713c;
+static const stretchyset_t stage1_tree_7152;
+static const stretchyset_t stage1_tree_7168;
+static const lod_t stage1_tree_lods[25];
+static const u8 stage1_bitmap_tree_middle_64x16[8 * 16];
+static const u8 stage1_bitmap_tree_bottom_64x5[8 * 5];
+static const u8 stage1_bitmap_tree_trunk_16x8[2 * 8];
+static const u8 stage1_bitmap_tree_shadow_64x5[8 * 5];
+static const u8 stage1_bitmap_tree_middle_48x12[6 * 12];
+static const u8 stage1_bitmap_tree_bottom_48x4[6 * 4];
+static const u8 stage1_bitmap_tree_shadow_48x4[6 * 4];
+static const u8 stage1_bitmap_tree_middle_32x8[4 * 8];
+static const u8 stage1_bitmap_tree_bottom_32x3[4 * 3];
+static const u8 stage1_bitmap_tree_shadow_32x2[4 * 2];
+static const u8 stage1_bitmap_tree_middle_24x7[3 * 7];
+static const u8 stage1_bitmap_tree_bottom_24x2[3 * 2];
+static const u8 stage1_bitmap_tree_trunk_8x4[1 * 4];
+static const u8 stage1_bitmap_tree_shadow_24x2[3 * 2];
+static const u8 stage1_bitmap_tree_top_64x13[8 * 2 * 13];
+static const u8 stage1_bitmap_tree_top_48x10[6 * 2 * 10];
+static const u8 stage1_bitmap_tree_top_32x5[4 * 2 * 5];
+static const u8 stage1_bitmap_tree_top_24x4[3 * 2 * 4];
+static const u8 stage1_bitmap_tree_top_24x3[3 * 2 * 3];
+static const u8 stage1_bitmap_tree_top_24x3s[3 * 2 * 3];
+static const u8 stage1_bitmap_tree_trunk_16x6[2 * 2 * 6];
+static const u8 stage1_bitmap_tree_trunk_16x4[2 * 2 * 4];
+static const u8 stage1_bitmap_tree_middle_24x5[3 * 2 * 5];
+static const u8 stage1_bitmap_tree_bottom_24x2_another[3 * 2 * 2];
+static const u8 stage1_bitmap_tree_trunk_24x3[3 * 2 * 3];
+static const u8 stage1_bitmap_tree_shadow_24x1[3 * 2 * 1];
+static const u8 stage1_bitmap_tree_middle_24x5s[3 * 2 * 5];
+static const u8 stage1_bitmap_tree_bottom_24x2s[3 * 2 * 2];
+static const u8 stage1_bitmap_tree_trunk_24x3s[3 * 2 * 3];
+static const u8 stage1_bitmap_tree_shadow_24x1s[3 * 2 * 1];
 
 /* ----------------------------------------------------------------------- */
 
@@ -75,15 +152,15 @@ static const stage_t stage1 = {
   attribute_BRIGHT_YELLOW_OVER_BLACK | (attribute_BRIGHT_YELLOW_OVER_BLACK << 8),
   &stage1_hitable_object_defs[0],
   NULL, // &stage1_right_hand_handlers[0],
-  NULL, // &stage1_right_hand_objects[0],
-  NULL, // &stage1_right_hand_short_pole_object[0],
+  &stage1_right_hand_graphics_defs[-1],
+  &stage1_right_hand_graphics_defs[2], // short pole
   NULL, // &stage1_left_hand_handlers[0],
-  NULL, // &stage1_left_hand_objects[0],
-  NULL, // &stage1_left_hand_short_pole_object[0],
+  &stage1_left_hand_graphics_defs[-1],
+  &stage1_left_hand_graphics_defs[2], // short pole
   stage1_perp_description,
-  NULL, // addrof_arrest_messages
-  NULL, // addrof_helicopter_stuff_1
-  NULL, // addrof_helicopter_stuff_2
+  &stage1_arrest_messages[0],
+  NULL, // not on this level - addrof_helicopter_stuff_1
+  NULL, // not on this level - addrof_helicopter_stuff_2 - Conv: was &000C
 
   NULL, // lods_stones
   NULL, // lods_dust
@@ -140,36 +217,62 @@ static const char *stage1_chatter_strings[4] = {
 
 /* ----------------------------------------------------------------------- */
 
+static const u8 stage1_arrest_messages[83] = {
+  6,
+  6,
+  2,
+  0,
+  TWOBYTES(0xF802),
+  TWOBYTES(0x5922),
+  'O', 'K', '!', ' ', 'Y', 'O', 'U', ' ', 'A', 'R', 'E', ' ', 'U', 'N', 'D', 'E', 'R', ' ', 'A', 'R', 'R', 'E', 'S', 'T', ' ', 'O', 'N' | STREND,
+  6,
+  2,
+  0,
+  TWOBYTES(0xF023),
+  TWOBYTES(0x5943),
+  'S', 'U', 'S', 'P', 'I', 'C', 'I', 'O', 'N', ' ', 'O', 'F', ' ', 'F', 'I', 'R', 'S', 'T', ' ', 'D', 'E', 'G', 'R', 'E', 'E', ' ' | STREND,
+  0x2d,
+  2,
+  0,
+  TWOBYTES(0xF82C),
+  TWOBYTES(0x596C),
+  'M', 'U', 'R', 'D', 'E', 'R' | STREND,
+  3,
+  0
+};
+
+/* ----------------------------------------------------------------------- */
+
 // $5E40
 static const hitable_t stage1_hitable_object_defs[2] = {
   { 0x10, &stage1_tumbleweed_lods[0] },
-  { 0x20, &stage1_barrier_lods[0] },
+  { 0x20, &stage1_barrier_lods[0]    },
 };
 
 // $5E46
 static const obj_t stage1_right_hand_graphics_defs[9] = {
-  { 111, 41, 80, &tunnellight, draw_tunnel_light_right },
-  {   0,  0,  0, NULL, NULL },
-  //{ 144, 92, 40, stretchy_shortpole, draw_stretchy_object_right },
-  //{  94, 36, 60, stretchy_tree_right, draw_stretchy_object_right },
-  //{ 110, 49, 80, stretchy_tree_left, draw_stretchy_object_right },
-  //{ 110, 53, 80, stretchy_streetlamp_right, draw_stretchy_object_right },
-  //{ 110, 53, 80, stretchy_telegraphpole_right, draw_stretchy_object_right },
-  //{ 100, 24, 70, turn_sign_left, draw_object_right },
-  //{ 100, 24, 70, turn_sign_right, draw_object_right }
+  { 111, 41, 80, &tunnellight,                         draw_tunnel_light_right    },
+  {   0,  0,  0, NULL,                                 NULL },
+  { 144, 92, 40, &stretchy_shortpole,                  draw_stretchy_object_right },
+  {  94, 36, 60, &stage1_stretchy_tree_right,          draw_stretchy_object_right },
+  { 110, 49, 80, &stage1_stretchy_tree_left,           draw_stretchy_object_right },
+  { 110, 53, 80, &stage1_stretchy_streetlamp_right,    draw_stretchy_object_right },
+  { 110, 53, 80, &stage1_stretchy_telegraphpole_right, draw_stretchy_object_right },
+  { 100, 24, 70, &stage1_turn_sign_left,               draw_object_right          },
+  { 100, 24, 70, &stage1_turn_sign_right,              draw_object_right          }
 };
 
 // $5E85
-static const obj_t stage1_left_hand_objects[9] = {
-  { 126, 188, 80, &tunnellight, draw_tunnel_light_left },
-  {   0,  0,  0,  NULL, NULL },
-  //{  96, 144, 40, stretchy_shortpole, draw_stretchy_object_left },
-  //{ 140, 196, 60, stretchy_tree_right, draw_stretchy_object_left },
-  //{ 124, 208, 80, stretchy_tree_left, draw_stretchy_object_left },
-  //{ 132, 182, 80, stretchy_streetlamp_left, draw_stretchy_object_left },
-  //{ 132, 182, 80, stretchy_telegraphpole_left, draw_stretchy_object_left },
-  //{ 129, 182, 70, turn_sign_left, draw_object_left },
-  //{ 129, 200, 70, turn_sign_right, draw_object_left },
+static const obj_t stage1_left_hand_graphics_defs[9] = {
+  { 126, 188, 80, &tunnellight,                        draw_tunnel_light_left    },
+  {   0,  0,  0,  NULL,                                NULL },
+  {  96, 144, 40, &stretchy_shortpole,                 draw_stretchy_object_left },
+  { 140, 196, 60, &stage1_stretchy_tree_right,         draw_stretchy_object_left },
+  { 124, 208, 80, &stage1_stretchy_tree_left,          draw_stretchy_object_left },
+  { 132, 182, 80, &stage1_stretchy_streetlamp_left,    draw_stretchy_object_left },
+  { 132, 182, 80, &stage1_stretchy_telegraphpole_left, draw_stretchy_object_left },
+  { 129, 182, 70, &stage1_turn_sign_left,              draw_object_left          },
+  { 129, 200, 70, &stage1_turn_sign_right,             draw_object_left          },
 };
 
 /* ----------------------------------------------------------------------- */
@@ -228,12 +331,12 @@ static const u8 stage1_perp_face[FACEBYTES] = {
 
 // $6492
 static const lod_t stage1_car_lods[6] = {
-  { 6, LOD_NOMASK, 31, &stage1_bitmap_car_1[0], &stage1_bitmap_car_1[0]  },
-  { 5, LOD_NOMASK, 22, &stage1_bitmap_car_2[0], &stage1_bitmap_car_2[0]  },
-  { 3, LOD_NOMASK, 16, &stage1_bitmap_car_3[0], &stage1_bitmap_car_3[0]  },
-  { 3, LOD_NOMASK, 16, &stage1_bitmap_car_3[0], &stage1_bitmap_car_3[0]  },
-  { 3, LOD_MASKED,  9, &stage1_bitmap_car_4[0], &stage1_bitmap_car_4s[0] },
-  { 3, LOD_MASKED,  9, &stage1_bitmap_car_4[0], &stage1_bitmap_car_4s[0] },
+  { 6, LODFLAG_DEFAULT, 31, &stage1_bitmap_car_1[0], &stage1_bitmap_car_1[0]  },
+  { 5, LODFLAG_DEFAULT, 22, &stage1_bitmap_car_2[0], &stage1_bitmap_car_2[0]  },
+  { 3, LODFLAG_DEFAULT, 16, &stage1_bitmap_car_3[0], &stage1_bitmap_car_3[0]  },
+  { 3, LODFLAG_DEFAULT, 16, &stage1_bitmap_car_3[0], &stage1_bitmap_car_3[0]  },
+  { 3, LODFLAG_MASKED,   9, &stage1_bitmap_car_4[0], &stage1_bitmap_car_4s[0] },
+  { 3, LODFLAG_MASKED,   9, &stage1_bitmap_car_4[0], &stage1_bitmap_car_4s[0] },
 };
 
 // $67C2
@@ -343,16 +446,251 @@ static const u8 stage1_bitmap_car_4s[3 * 2 * 9] = {
 
 /* ----------------------------------------------------------------------- */
 
-// $6D82
-static const lod_t stage1_tumbleweed_lods[6] = {
-  { 2, LOD_NOMASK, 16, &stage1_bitmap_tumbleweed_1[0], &stage1_bitmap_tumbleweed_1[0] },
-  { 2, LOD_NOMASK, 11, &stage1_bitmap_tumbleweed_2[0], &stage1_bitmap_tumbleweed_2[0] },
-  { 1, LOD_NOMASK,  9, &stage1_bitmap_tumbleweed_3[0], &stage1_bitmap_tumbleweed_3[0] },
-  { 1, LOD_NOMASK,  9, &stage1_bitmap_tumbleweed_3[0], &stage1_bitmap_tumbleweed_3[0] },
-  { 1, LOD_NOMASK,  7, &stage1_bitmap_tumbleweed_4[0], &stage1_bitmap_tumbleweed_4[0] },
-  { 1, LOD_NOMASK,  7, &stage1_bitmap_tumbleweed_4[0], &stage1_bitmap_tumbleweed_4[0] }
+// Unsure if this is a stretchyset_t. It's an argument to draw_object_right/left.
+
+// $6AF6
+static const stretchyset_t stage1_turn_sign_right = {
+  &stage1_turn_sign_lods[0],
+  {
+    0x24, 0x00,
+    0x1C, 0x00,
+    0x18, 0x07,
+    0x18, 0x07,
+    0x14, 0x0E,
+    0x14, 0x0E,
+    0x14, 0x15,
+    0x10, 0x15,
+    0x10, 0x1C,
+    0x10, 0x1C
+  }
 };
 
+// $6B0C
+static const stretchyset_t stage1_turn_sign_left = {
+  &stage1_turn_sign_lods[0],
+  {
+    0x24, 0x23,
+    0x1C, 0x23,
+    0x18, 0x2A,
+    0x18, 0x2A,
+    0x14, 0x31,
+    0x14, 0x31,
+    0x14, 0x38,
+    0x10, 0x38,
+    0x10, 0x3F,
+    0x10, 0x3F
+  }
+};
+
+// $6B22
+static const lod_t stage1_turn_sign_lods[] = {
+  { 4, LODFLAG_DEFAULT,                  40, stage1_bitmap_turnsign_1, stage1_bitmap_turnsign_1  },
+  { 3, LODFLAG_DEFAULT,                  30, stage1_bitmap_turnsign_2, stage1_bitmap_turnsign_2  },
+  { 2, LODFLAG_DEFAULT,                  20, stage1_bitmap_turnsign_3, stage1_bitmap_turnsign_3  },
+  { 2, LODFLAG_MASKED,                   16, stage1_bitmap_turnsign_4, stage1_bitmap_turnsign_4  },
+  { 2, LODFLAG_MASKED,                   13, stage1_bitmap_turnsign_5, stage1_bitmap_turnsign_5s },
+  { 4, LODFLAG_FLIPPED,                  40, stage1_bitmap_turnsign_1, stage1_bitmap_turnsign_1  },
+  { 3, LODFLAG_FLIPPED,                  30, stage1_bitmap_turnsign_2, stage1_bitmap_turnsign_2  },
+  { 2, LODFLAG_FLIPPED,                  20, stage1_bitmap_turnsign_3, stage1_bitmap_turnsign_3  },
+  { 2, LODFLAG_FLIPPED,                  16, stage1_bitmap_turnsign_4, stage1_bitmap_turnsign_4  },
+  { 2, LODFLAG_FLIPPED | LODFLAG_MASKED, 13, stage1_bitmap_turnsign_5, stage1_bitmap_turnsign_5s }
+};
+
+// $6B68
+static const u8 stage1_bitmap_turnsign_1[4 * 40] = {
+  ____XXXX, XXXXXXXX, XXXXXXXX, XXXX____,
+  _XXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXX_,
+  XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX,
+  XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX,
+  _XX____X, XXXXXXXX, XXXXXXXX, X_X_XXX_,
+  __X__X_X, ________, ________, XX_X_X__,
+  __X_X_XX, ________, ________, X_X_XX__,
+  __XXXXXX, ________, ________, XXXXXX__,
+  XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX,
+  XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX,
+  XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX,
+  XXX_____, _______X, _X_X_X_X, _X_X_XXX,
+  XXX_____, ________, ______X_, X_X_XXXX,
+  XXX_____, ___XXX__, ________, ___X_XXX,
+  XXX_____, ___XXX__, ________, ____XXXX,
+  XXX_____, ___XXX__, ________, ___X_XXX,
+  XXX_____, ___XXX__, ________, ____XXXX,
+  XXX_____, ___XXX__, ________, ___X_XXX,
+  XXX_____, ___XXX__, ________, ____XXXX,
+  XXX_____, ___XXX__, ________, ___X_XXX,
+  XXX_____, ___XXX__, ________, ____XXXX,
+  XXX_____, ___XXX__, ________, _____XXX,
+  XXX_____, ___XXX__, ________, ____XXXX,
+  X_X_____, ___XXX__, ________, _____XXX,
+  XXX_____, ____XXX_, ________, ____XXXX,
+  XXX_____, ____XXX_, ________, _____XXX,
+  X_X_____, ____XXX_, ________, _____XXX,
+  XXX_____, _____XXX, ________, _____XXX,
+  X_X_____, _____XXX, __XX____, _____XXX,
+  X_X_X___, ______XX, XXXX____, _____XXX,
+  XXX_____, _______X, XXXX____, _____XXX,
+  X_X_X___, ______XX, XXXXX___, _____XXX,
+  X_X_____, _____XXX, XXXXX___, _____XXX,
+  X_X_X___, ________, XXXXXX__, _____XXX,
+  XXX_____, ________, ____XXX_, _____XXX,
+  X_X_X_X_, X_X_____, ________, _____XXX,
+  X_X_____, ________, ________, _____XXX,
+  X_XXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX,
+  X____X__, _X__X_XX, _XXXXXXX, XXXXXXXX,
+  XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX,
+};
+
+// $6C08
+static const u8 stage1_bitmap_turnsign_2[3 * 30] = {
+  __XXXXXX, XXXXXXXX, XXXXXX__,
+  XXXXXXXX, XXXXXXXX, XXXXXXXX,
+  XXXXXXXX, XXXXXXXX, XXXXXXXX,
+  _XX__XXX, XXXXXXXX, XXXX_XX_,
+  __X_XX__, ________, __X_XX__,
+  __XXXX__, ________, __XX_X__,
+  XXXXXXXX, XXXXXXXX, XXXXXXXX,
+  XXXXXXXX, XXXXXXXX, XXXXXXXX,
+  XX______, ____X_X_, X_X_X_XX,
+  XX______, ________, _X_X_XXX,
+  XX______, XX______, ____X_XX,
+  XX______, XX______, _____XXX,
+  XX______, XX______, ____X_XX,
+  XX______, XX______, _____XXX,
+  XX______, XX______, ____X_XX,
+  XX______, XX______, _____XXX,
+  XX______, XX______, ______XX,
+  XX______, XXX_____, _____XXX,
+  XX______, _XX_____, ______XX,
+  XX______, _XX_____, ______XX,
+  XX______, _XXX____, ______XX,
+  XX______, __XX__X_, ______XX,
+  XX_X____, ___XXXX_, ______XX,
+  XX______, ___XXXXX, ______XX,
+  X__X____, __XXXXXX, ______XX,
+  XX______, _____XXX, X_____XX,
+  X__X_X_X, _______X, XX____XX,
+  XX______, ________, ______XX,
+  X_X_X_XX, _XXXXXXX, XXXXXXXX,
+  XXXXXXXX, XXXXXXXX, XXXXXXXX,
+};
+
+// $6C62
+static const u8 stage1_bitmap_turnsign_3[2 * 20] = {
+  _XXXXXXX, XXXXXXX_,
+  XXXXXXXX, XXXXXXXX,
+  _X__XXXX, XXXXX_X_,
+  _X_X____, ____XXX_,
+  XXXXXXXX, XXXXXXXX,
+  X______X, _X_X_X_X,
+  X_______, ______XX,
+  X_____X_, _______X,
+  X_____X_, ______XX,
+  X_____X_, _______X,
+  X_____X_, ______XX,
+  X_____X_, _______X,
+  X______X, ______XX,
+  X______X, _______X,
+  X_______, XXX____X,
+  XX_____X, XXX____X,
+  X_______, XXX____X,
+  XX______, __XX___X,
+  X_X_X___, _______X,
+  XXXXXXXX, XXXXXXXX,
+};
+
+// $6C8A
+static const u8 stage1_bitmap_turnsign_4[2 * 2 * 16] = {
+  X_______, _XXXXXXX, ____XXXX, XXXX____,
+  ________, XXXXXXXX, _____XXX, XXXXX___,
+  ________, X_XXXXXX, _____XXX, XXXXX___,
+  ________, XXXXXXXX, _____XXX, XXXXX___,
+  ________, X_____X_, _____XXX, X_X_X___,
+  ________, X___X___, _____XXX, ___XX___,
+  ________, X___X___, _____XXX, ____X___,
+  ________, X___X___, _____XXX, ___XX___,
+  ________, X___X___, _____XXX, ____X___,
+  ________, X____X__, _____XXX, ___XX___,
+  ________, XX___X__, _____XXX, ____X___,
+  ________, X_____XX, _____XXX, ____X___,
+  ________, X____XXX, _____XXX, X___X___,
+  ________, XX_____X, _____XXX, X___X___,
+  ________, X_X__X__, _____XXX, ____X___,
+  ________, XXXXXXXX, _____XXX, XXXXX___,
+};
+
+// $6CCA
+static const u8 stage1_bitmap_turnsign_5[2 * 2 * 13] = {
+  X_______, _XXXXXXX,
+  _XXXXXXX, X_______,
+  ________, XXXXXXXX,
+  __XXXXXX, XX______,
+  ________, XXXXXXXX,
+  __XXXXXX, XX______,
+  ________, XXXXXXXX,
+  __XXXXXX, XX______,
+  ________, X___X_X_,
+  __XXXXXX, XX______,
+  ________, X__X____,
+  __XXXXXX, _X______,
+  ________, X__X____,
+  __XXXXXX, XX______,
+  ________, X__X____,
+  __XXXXXX, _X______,
+  ________, X___X___,
+  __XXXXXX, XX______,
+  ________, X___XX__,
+  __XXXXXX, _X______,
+  ________, X____XX_,
+  __XXXXXX, _X______,
+  ________, X_______,
+  __XXXXXX, _X______,
+  ________, XXXXXXXX,
+  __XXXXXX, XX______,
+};
+
+// $6CFE
+static const u8 stage1_bitmap_turnsign_5s[2 * 2 * 13] = {
+  XXXXX___, _____XXX,
+  _____XXX, XXXXX___,
+  XXXX____, ____XXXX,
+  ______XX, XXXXXX__,
+  XXXX____, ____XXXX,
+  ______XX, XXXXXX__,
+  XXXX____, ____XXXX,
+  ______XX, XXXXXX__,
+  XXXX____, ____X___,
+  ______XX, X_X_XX__,
+  XXXX____, ____X__X,
+  ______XX, _____X__,
+  XXXX____, ____X__X,
+  ______XX, ____XX__,
+  XXXX____, ____X__X,
+  ______XX, _____X__,
+  XXXX____, ____X___,
+  ______XX, X___XX__,
+  XXXX____, ____X___,
+  ______XX, XX___X__,
+  XXXX____, ____X___,
+  ______XX, _XX__X__,
+  XXXX____, ____X___,
+  ______XX, _____X__,
+  XXXX____, ____XXXX,
+  ______XX, XXXXXX__,
+};
+
+/* ----------------------------------------------------------------------- */
+
+// $6D82
+static const lod_t stage1_tumbleweed_lods[6] = {
+  { 2, LODFLAG_DEFAULT, 16, &stage1_bitmap_tumbleweed_1[0], &stage1_bitmap_tumbleweed_1[0] },
+  { 2, LODFLAG_DEFAULT, 11, &stage1_bitmap_tumbleweed_2[0], &stage1_bitmap_tumbleweed_2[0] },
+  { 1, LODFLAG_DEFAULT,  9, &stage1_bitmap_tumbleweed_3[0], &stage1_bitmap_tumbleweed_3[0] },
+  { 1, LODFLAG_DEFAULT,  9, &stage1_bitmap_tumbleweed_3[0], &stage1_bitmap_tumbleweed_3[0] },
+  { 1, LODFLAG_DEFAULT,  7, &stage1_bitmap_tumbleweed_4[0], &stage1_bitmap_tumbleweed_4[0] },
+  { 1, LODFLAG_DEFAULT,  7, &stage1_bitmap_tumbleweed_4[0], &stage1_bitmap_tumbleweed_4[0] }
+};
+
+// $6DAC
 static const u8 stage1_bitmap_tumbleweed_1[2 * 16] = {
   ___XX___, _X_XX___,
   ____XXXX, XXXX____,
@@ -372,6 +710,7 @@ static const u8 stage1_bitmap_tumbleweed_1[2 * 16] = {
   ________, X_XX____,
 };
 
+// $6DCC
 static const u8 stage1_bitmap_tumbleweed_2[2 * 11] = {
   ____X__X, __XX____,
   _____XXX, XXX_____,
@@ -386,6 +725,7 @@ static const u8 stage1_bitmap_tumbleweed_2[2 * 11] = {
   ________, X_X_____,
 };
 
+// $6DE2
 static const u8 stage1_bitmap_tumbleweed_3[1 * 9] = {
   __XXXXX_,
   _XXXXXXX,
@@ -398,6 +738,7 @@ static const u8 stage1_bitmap_tumbleweed_3[1 * 9] = {
   __X__X__,
 };
 
+// $6DEB
 static const u8 stage1_bitmap_tumbleweed_4[1 * 7] = {
   __XXXX__,
   _XXXXXX_,
@@ -412,12 +753,12 @@ static const u8 stage1_bitmap_tumbleweed_4[1 * 7] = {
 
 // $6DF2
 static const lod_t stage1_barrier_lods[6] = {
-  { 4, LOD_NOMASK, 17, &stage1_bitmap_barrier_1[0], &stage1_bitmap_barrier_1[0] },
-  { 4, LOD_NOMASK, 17, &stage1_bitmap_barrier_1[0], &stage1_bitmap_barrier_1[0] },
-  { 3, LOD_NOMASK, 13, &stage1_bitmap_barrier_2[0], &stage1_bitmap_barrier_2[0] },
-  { 2, LOD_NOMASK,  9, &stage1_bitmap_barrier_3[0], &stage1_bitmap_barrier_3[0] },
-  { 2, LOD_MASKED,  9, &stage1_bitmap_barrier_3[0], &stage1_bitmap_barrier_3[0] },
-  { 2, LOD_MASKED,  7, &stage1_bitmap_barrier_4[0], &stage1_bitmap_barrier_4s[0] }
+  { 4, LODFLAG_DEFAULT, 17, &stage1_bitmap_barrier_1[0], &stage1_bitmap_barrier_1[0]  },
+  { 4, LODFLAG_DEFAULT, 17, &stage1_bitmap_barrier_1[0], &stage1_bitmap_barrier_1[0]  },
+  { 3, LODFLAG_DEFAULT, 13, &stage1_bitmap_barrier_2[0], &stage1_bitmap_barrier_2[0]  },
+  { 2, LODFLAG_DEFAULT,  9, &stage1_bitmap_barrier_3[0], &stage1_bitmap_barrier_3[0]  },
+  { 2, LODFLAG_MASKED,   9, &stage1_bitmap_barrier_3[0], &stage1_bitmap_barrier_3[0]  },
+  { 2, LODFLAG_MASKED,   7, &stage1_bitmap_barrier_4[0], &stage1_bitmap_barrier_4s[0] }
 };
 
 // $6E1C
@@ -471,6 +812,7 @@ static const u8 stage1_bitmap_barrier_3[2 * 9] = {
   ______XX, XX______,
 };
 
+// $6E99
 static const u8 stage1_bitmap_barrier_4[2 * 2 * 7] = {
   X__XXXXX, _XX_____, X__XXXXX, _XX_____,
   X___X__X, _XXX_XX_, ___XXXXX, XXX_____,
@@ -481,6 +823,7 @@ static const u8 stage1_bitmap_barrier_4[2 * 2 * 7] = {
   XXXX____, ____XXXX, XXXXXXXX, ________,
 };
 
+// $6EB5
 static const u8 stage1_bitmap_barrier_4s[2 * 2 * 7] = {
   XXXXX__X, _____XX_, XXXXX__X, _____XX_,
   XXXXX___, _____XXX, X__X___X, _XX_XXX_,
@@ -489,6 +832,728 @@ static const u8 stage1_bitmap_barrier_4s[2 * 2 * 7] = {
   XXXX____, ____X__X, ________, X__XX__X,
   XXXX____, ____XXXX, ________, XXXXXXXX,
   XXXXXXXX, ________, ____XXXX, XXXX____,
+};
+
+/* ----------------------------------------------------------------------- */
+
+// $6ED1
+static const stretchy_t stage1_stretchy_streetlamp_right[5] = {
+  { 2, &streetlampbottom_right  },
+  { 4, &streetlampmiddle2_right },
+  { 5, &streetlampmiddle_right  },
+  { 2, &stage1_streetlamptop_right     },
+  { 1, NULL                     }
+};
+
+// $6EDE
+static const stretchy_t stage1_stretchy_streetlamp_left[5] = {
+  { 2, &streetlampbottom_left  },
+  { 4, &streetlampmiddle2_left },
+  { 5, &streetlampmiddle_left  },
+  { 2, &stage1_streetlamptop_left     },
+  { 1, NULL                    }
+};
+
+// $6EEB
+static const stretchyset_t stage1_streetlamptop_right = {
+  &stage1_streetlamptop_lods[0],
+  {
+    0x10, 0x02,
+    0x08, 0x02,
+    0x08, 0x09,
+    0x08, 0x09,
+    0x04, 0x10,
+    0x04, 0x10,
+    0x08, 0x17,
+    0x08, 0x17,
+    0x04, 0x1E,
+    0x04, 0x1E
+  }
+};
+
+// $6F01
+static const stretchyset_t stage1_streetlamptop_left = {
+  &stage1_streetlamptop_flipped_lods[0],
+  {
+    0x18, 0x02,
+    0x10, 0x02,
+    0x10, 0x09,
+    0x10, 0x09,
+    0x0C, 0x10,
+    0x0C, 0x10,
+    0x10, 0x17,
+    0x10, 0x17,
+    0x0C, 0x1E,
+    0x0C, 0x1E
+  }
+};
+
+// $6F17
+static const lod_t stage1_streetlamptop_lods[5] = {
+  { 4, LODFLAG_DEFAULT, 8, stage1_bitmap_streetlamptop_1, stage1_bitmap_streetlamptop_1  },
+  { 3, LODFLAG_DEFAULT, 5, stage1_bitmap_streetlamptop_2, stage1_bitmap_streetlamptop_2  },
+  { 3, LODFLAG_DEFAULT, 4, stage1_bitmap_streetlamptop_3, stage1_bitmap_streetlamptop_3s },
+  { 2, LODFLAG_MASKED,  4, stage1_bitmap_streetlamptop_4, stage1_bitmap_streetlamptop_4s },
+  { 2, LODFLAG_MASKED,  3, stage1_bitmap_streetlamptop_5, stage1_bitmap_streetlamptop_5s }
+};
+
+// $6F3A
+static const lod_t stage1_streetlamptop_flipped_lods[5] = {
+  { 4, LODFLAG_FLIPPED, 8, stage1_bitmap_streetlamptop_1, stage1_bitmap_streetlamptop_1  },
+  { 3, LODFLAG_FLIPPED, 5, stage1_bitmap_streetlamptop_2, stage1_bitmap_streetlamptop_2  },
+  { 3, LODFLAG_FLIPPED, 4, stage1_bitmap_streetlamptop_3, stage1_bitmap_streetlamptop_3s },
+  { 2, LODFLAG_MASKED | LODFLAG_FLIPPED, 4, stage1_bitmap_streetlamptop_4, stage1_bitmap_streetlamptop_4s },
+  { 2, LODFLAG_MASKED | LODFLAG_FLIPPED, 3, stage1_bitmap_streetlamptop_5, stage1_bitmap_streetlamptop_5s }
+};
+
+// $6F5D
+static const u8 stage1_bitmap_streetlamptop_1[4 * 8] = {
+  ________, ________, ________, XXX__X__,
+  ___XXXXX, XXXXXXX_, _______X, X_X__X__,
+  __X_____, _______X, _____XXX, __X__X__,
+  __X_____, _______X, __XXXX__, XX___X__,
+  _XX_X_X_, X_X_X_XX, XXX___XX, _X___X__,
+  X_XXXXXX, XXXXXXX_, ___XXX__, _XX_XX__,
+  XX______, _______X, XXX_____, __XXX___,
+  __XXXXXX, XXXXXXX_, ________, ________
+};
+
+// $6F7D
+static const u8 stage1_bitmap_streetlamptop_2[3 * 5] = {
+  _XXXXXXX, XX_____X, X_X_X___,
+  X_______, __X__XX_, _X__X___,
+  X_______, _XXXX__X, XX__X___,
+  X_X_X_X_, X____XX_, _X__X___,
+  _XXXXXXX, XXXXX___, __XX____
+};
+
+// $6F8C
+static const u8 stage1_bitmap_streetlamptop_3[3 * 4] = {
+  ______XX, XXXX___X, _XX_____,
+  _____X__, ____XXX_, X_X_____,
+  ____X_X_, _____X_X, _XX_____,
+  _____XXX, XXXXXXX_, ________
+};
+
+// $6F98
+static const u8 stage1_bitmap_streetlamptop_3s[3 * 4] = {
+  ________, __XXXXXX, ___X_XX_,
+  ________, _X______, XXX_X_X_,
+  ________, X_X_____, _X_X_XX_,
+  ________, _XXXXXXX, XXX_____
+};
+
+// $6FA4
+static const u8 stage1_bitmap_streetlamptop_4[2 * 2 * 4] = {
+  XXXXXXXX, ________,
+  X___XXXX, _XXX____,
+  ______X_, XX_XXX_X,
+  ____XXXX, X_XX____,
+  ________, X____XX_,
+  _X__XXXX, X_XX____,
+  X____XXX, _XXXX___,
+  XXXXXXXX, ________
+};
+
+// $6FB4
+static const u8 stage1_bitmap_streetlamptop_4s[2 * 2 * 4] = {
+  XXXXXXXX, ________,
+  XXX___XX, ___XXX__,
+  XX______, __XX_XXX,
+  X_____XX, _XX_XX__,
+  XX______, __X____X,
+  ___X__XX, X_X_XX__,
+  XXX____X, ___XXXX_,
+  XXXXXXXX, ________
+};
+
+// $6FC4
+static const u8 stage1_bitmap_streetlamptop_5[2 * 2 * 4] = {
+  XXXXXXX_, _______X,
+  _XXXXXXX, X_______,
+  ________, X___XXXX,
+  _XXXXXXX, X_______,
+  ____XXXX, XXXX____,
+  XXXXXXXX, ________
+};
+
+// $6FD0
+static const u8 stage1_bitmap_streetlamptop_5s[2 * 2 * 3] = {
+  XXXXXXXX, ________,
+  XXX__XXX, ___XX___,
+  XXXX____, ____X___,
+  _____XXX, XXXXX___,
+  XXXX____, ____XXXX,
+  XXXXXXXX, ________
+};
+
+/* ----------------------------------------------------------------------- */
+
+// $6FDC
+static const stretchy_t stage1_stretchy_telegraphpole_right[5] = {
+  { 2, &streetlampbottom_right },
+  { 5, &streetlampmiddle_right },
+  { 2, &stage1_telegraphpoletop_right },
+  { 1, NULL }
+};
+
+// $6FE6
+static const stretchy_t stage1_stretchy_telegraphpole_left[5] = {
+  { 2, &streetlampbottom_left },
+  { 5, &streetlampmiddle_left },
+  { 2, &stage1_telegraphpoletop_left },
+  { 1, NULL }
+};
+
+// $6FF0
+static const stretchyset_t stage1_telegraphpoletop_left = {
+  &stage1_telegraphpoletop_lods[0],
+  {
+    0x20, 0x02,
+    0x18, 0x02,
+    0x10, 0x09,
+    0x10, 0x09,
+    0x0C, 0x10,
+    0x0C, 0x10,
+    0x10, 0x17,
+    0x10, 0x17,
+    0x0C, 0x1E,
+    0x0C, 0x1E
+  }
+};
+
+// $7006
+static const stretchyset_t stage1_telegraphpoletop_right = {
+  &stage1_telegraphpoletop_lods[0],
+  {
+    0x20, 0x02,
+    0x18, 0x02,
+    0x10, 0x09,
+    0x10, 0x09,
+    0x0C, 0x10,
+    0x0C, 0x10,
+    0x08, 0x17,
+    0x08, 0x17,
+    0x04, 0x1E,
+    0x04, 0x1E
+  }
+};
+
+// $701C
+static const lod_t stage1_telegraphpoletop_lods[5] = {
+  { 3, LODFLAG_DEFAULT, 13, stage1_bitmap_telegraphpoletop_1, stage1_bitmap_telegraphpoletop_1  },
+  { 3, LODFLAG_DEFAULT, 10, stage1_bitmap_telegraphpoletop_2, stage1_bitmap_telegraphpoletop_2  },
+  { 3, LODFLAG_DEFAULT,  7, stage1_bitmap_telegraphpoletop_3, stage1_bitmap_telegraphpoletop_3s },
+  { 2, LODFLAG_MASKED,   5, stage1_bitmap_telegraphpoletop_4, stage1_bitmap_telegraphpoletop_4s },
+  { 2, LODFLAG_MASKED,   4, stage1_bitmap_telegraphpoletop_5, stage1_bitmap_telegraphpoletop_5s }
+};
+
+// $703F
+static const u8 stage1_bitmap_telegraphpoletop_1[3 * 13] = {
+  ____XXXX, XXX__XXX, XXX_____,
+  ___X____, ___X_XX_, ___X____,
+  ___XXXXX, XXX__XXX, XXXX____,
+  ____X_X_, _X___X__, X_X_____,
+  ____X_X_, _XX__X__, X_X_____,
+  _____X__, _XX__X__, _X______,
+  _XXXXXXX, XXXX_XXX, XXXXXX__,
+  X_______, ___X_XX_, X_____X_,
+  XXXXXXXX, XXX__XXX, XXXXXXX_,
+  _X_XX_X_, _X___X__, X_XX_X__,
+  _X_XX_X_, _XX__X__, X_XX_X__,
+  __X__X__, _X___X__, _X__X___,
+  ________, _XXXXX__, ________
+};
+
+// $7066
+static const u8 stage1_bitmap_telegraphpoletop_2[3 * 10] = {
+  ______XX, XX__XXXX, X_______,
+  _____X__, __X_XX__, X_______,
+  _____X_X, XX__XXX_, X_______,
+  ______XX, _X__X__X, ________,
+  ________, _XX_X___, ________,
+  ____XXXX, XXX_XXXX, XX______,
+  ___X____, __X_XX__, __X_____,
+  ___X_X_X, XX__X_X_, X_X_____,
+  ___X_X_X, _X__X_X_, X_X_____,
+  ____X_X_, _XXXX__X, _X______
+};
+
+// $7084
+static const u8 stage1_bitmap_telegraphpoletop_3[3 * 7] = {
+  ______XX, XXXXXX__, ________,
+  _____X__, __X__X__, ________,
+  _____X_X, X_XX_X__, ________,
+  _____XXX, XXXXXXX_, ________,
+  ____X___, __XXX__X, ________,
+  ____X_XX, X_XXXX_X, ________,
+  _____X__, XXX___X_, ________
+};
+
+// $7099
+static const u8 stage1_bitmap_telegraphpoletop_3s[3 * 7] = {
+  ________, __XXXXXX, XX______,
+  ________, _X____X_, _X______,
+  ________, _X_XX_XX, _X______,
+  ________, _XXXXXXX, XXX_____,
+  ________, X_____XX, X__X____,
+  ________, X_XXX_XX, XX_X____,
+  ________, _X__XXX_, __X_____
+};
+
+// $70AE
+static const u8 stage1_bitmap_telegraphpoletop_4[2 * 2 * 5] = {
+  XXXXXXX_, _______X, ______XX, XX_XXX__,
+  XXXXXXX_, _______X, ______XX, _X_X_X__,
+  XXXXXXXX, ________, XX__XXXX, ___X____,
+  XXXXXX__, ______XX, ______XX, XX_XXX__,
+  XXXXXX__, ______X_, ______XX, X___X___
+};
+
+// $70C2
+static const u8 stage1_bitmap_telegraphpoletop_4s[2 * 2 * 5] = {
+  XXXXXXXX, ________, X_______, _XXX_XXX,
+  XXXXXXXX, ________, X_______, _X_X_X_X,
+  XXXXXXXX, ________, XXXX__XX, _____X__,
+  XXXXXXXX, ________, ________, XXXX_XXX,
+  XXXXXXXX, ________, ________, X_X___X_
+};
+
+// $70D6
+static const u8 stage1_bitmap_telegraphpoletop_5[2 * 2 * 4] = {
+  XXXXXX__, ______XX, ___XXXXX, XXX_____,
+  XXXXXX__, ______XX, ___XXXXX, __X_____,
+  XXXXX___, _____XXX, ____XXXX, _XXX____,
+  XXXXX___, _____X_X, ____XXXX, __XX____
+};
+
+// $70E6
+static const u8 stage1_bitmap_telegraphpoletop_5s[2 * 2 * 4] = {
+  XXXXXXXX, ________, XX_____X, __XXXXX_,
+  XXXXXXXX, ________, XX_____X, __XX__X_,
+  XXXXXXXX, ________, X_______, _XXX_XXX,
+  XXXXXXXX, ________, X_______, _X_X__XX
+};
+
+/* ----------------------------------------------------------------------- */
+
+// $70F6
+static const stretchy_t stage1_stretchy_tree_right[6] = {
+  { 2, &stage1_tree_7110 },
+  { 6, &stage1_tree_7126 },
+  { 2, &stage1_tree_713c },
+  { 5, &stage1_tree_7152 },
+  { 2, &stage1_tree_7168 },
+  { 1, NULL       }
+};
+
+// $7106
+//
+// Note: Two fewer elements than the right version.
+static const stretchy_t stage1_stretchy_tree_left[4] = {
+  { 2, &stage1_tree_713c },
+  { 6, &stage1_tree_7152 },
+  { 2, &stage1_tree_7168 },
+  { 1, NULL       }
+};
+
+// $7110
+static const stretchyset_t stage1_tree_7110 = {
+  &stage1_tree_lods[0],
+  {
+    0x1C, 0x17,
+    0x14, 0x17,
+    0x10, 0x2C,
+    0x10, 0x2C,
+    0x0C, 0x41,
+    0x0C, 0x41,
+    0x0C, 0x5D,
+    0x08, 0x5D,
+    0x08, 0xAA,
+    0x08, 0xAA
+  }
+};
+
+// $7126
+static const stretchyset_t stage1_tree_7126 = {
+  &stage1_tree_lods[0],
+  {
+    0x34, 0x10,
+    0x2C, 0x10,
+    0x20, 0x87,
+    0x20, 0x87,
+    0x14, 0x8E,
+    0x14, 0x8E,
+    0x14, 0x56,
+    0x10, 0x56,
+    0x08, 0xA3,
+    0x08, 0xA3
+  }
+};
+
+// $713C
+static const stretchyset_t stage1_tree_713c = {
+  &stage1_tree_lods[0],
+  {
+    0x1C, 0x09,
+    0x14, 0x09,
+    0x10, 0x25,
+    0x10, 0x25,
+    0x0C, 0x3A,
+    0x0C, 0x3A,
+    0x0C, 0x4F,
+    0x08, 0x4F,
+    0x08, 0x9C,
+    0x08, 0x9C
+  }
+};
+
+// $7152
+static const stretchyset_t stage1_tree_7152 = {
+  &stage1_tree_lods[0],
+  {
+    0x1C, 0x02,
+    0x14, 0x02,
+    0x10, 0x1E,
+    0x10, 0x1E,
+    0x0C, 0x33,
+    0x0C, 0x33,
+    0x0C, 0x48,
+    0x08, 0x48,
+    0x08, 0x95,
+    0x08, 0x95
+  }
+};
+
+// $7168
+static const stretchyset_t stage1_tree_7168 = {
+  &stage1_tree_lods[0],
+  {
+    0x1C, 0x64,
+    0x14, 0x64,
+    0x10, 0x6B,
+    0x10, 0x6B,
+    0x0C, 0x72,
+    0x0C, 0x72,
+    0x0C, 0x79,
+    0x08, 0x79,
+    0x08, 0x80,
+    0x08, 0x80
+  }
+};
+
+// $717E
+static const lod_t stage1_tree_lods[25] = {
+  { 8, LODFLAG_DEFAULT, 16, &stage1_bitmap_tree_middle_64x16[0],        &stage1_bitmap_tree_middle_64x16[0] },
+  { 8, LODFLAG_DEFAULT,  5, &stage1_bitmap_tree_bottom_64x5[0],         &stage1_bitmap_tree_bottom_64x5[0]  },
+  { 2, LODFLAG_DEFAULT,  8, &stage1_bitmap_tree_trunk_16x8[0],          &stage1_bitmap_tree_trunk_16x8[0]   },
+  { 8, LODFLAG_DEFAULT,  5, &stage1_bitmap_tree_shadow_64x5[0],         &stage1_bitmap_tree_shadow_64x5[0]  },
+  { 6, LODFLAG_DEFAULT, 12, &stage1_bitmap_tree_middle_48x12[0],        &stage1_bitmap_tree_middle_48x12[0] },
+  { 6, LODFLAG_DEFAULT,  4, &stage1_bitmap_tree_bottom_48x4[0],         &stage1_bitmap_tree_bottom_48x4[0]  },
+  { 6, LODFLAG_DEFAULT,  4, &stage1_bitmap_tree_shadow_48x4[0],         &stage1_bitmap_tree_shadow_48x4[0]  },
+  { 4, LODFLAG_DEFAULT,  8, &stage1_bitmap_tree_middle_32x8[0],         &stage1_bitmap_tree_middle_32x8[0]  },
+  { 4, LODFLAG_DEFAULT,  3, &stage1_bitmap_tree_bottom_32x3[0],         &stage1_bitmap_tree_bottom_32x3[0]  },
+  { 4, LODFLAG_DEFAULT,  2, &stage1_bitmap_tree_shadow_32x2[0],         &stage1_bitmap_tree_shadow_32x2[0]  },
+  { 3, LODFLAG_DEFAULT,  7, &stage1_bitmap_tree_middle_24x7[0],         &stage1_bitmap_tree_middle_24x7[0]  },
+  { 3, LODFLAG_DEFAULT,  2, &stage1_bitmap_tree_bottom_24x2[0],         &stage1_bitmap_tree_bottom_24x2[0]  },
+  { 1, LODFLAG_DEFAULT,  4, &stage1_bitmap_tree_trunk_8x4[0],           &stage1_bitmap_tree_trunk_8x4[0]    },
+  { 3, LODFLAG_DEFAULT,  2, &stage1_bitmap_tree_shadow_24x2[0],         &stage1_bitmap_tree_shadow_24x2[0]  },
+  { 8, LODFLAG_MASKED,  13, &stage1_bitmap_tree_top_64x13[0],           &stage1_bitmap_tree_top_64x13[0]    },
+  { 6, LODFLAG_MASKED,  10, &stage1_bitmap_tree_top_48x10[0],           &stage1_bitmap_tree_top_48x10[0]    },
+  { 4, LODFLAG_MASKED,   5, &stage1_bitmap_tree_top_32x5[0],            &stage1_bitmap_tree_top_32x5[0]     },
+  { 3, LODFLAG_MASKED,   4, &stage1_bitmap_tree_top_24x4[0],            &stage1_bitmap_tree_top_24x4[0]     },
+  { 3, LODFLAG_MASKED,   3, &stage1_bitmap_tree_top_24x3[0],            &stage1_bitmap_tree_top_24x3s[0]     },
+  { 2, LODFLAG_MASKED,   6, &stage1_bitmap_tree_trunk_16x6[0],          &stage1_bitmap_tree_trunk_16x6[0]   },
+  { 2, LODFLAG_MASKED,   4, &stage1_bitmap_tree_trunk_16x4[0],          &stage1_bitmap_tree_trunk_16x4[0]   },
+  { 3, LODFLAG_MASKED,   5, &stage1_bitmap_tree_middle_24x5[0],         &stage1_bitmap_tree_middle_24x5s[0] },
+  { 3, LODFLAG_MASKED,   2, &stage1_bitmap_tree_bottom_24x2_another[0], &stage1_bitmap_tree_bottom_24x2s[0] },
+  { 3, LODFLAG_MASKED,   3, &stage1_bitmap_tree_trunk_24x3[0],          &stage1_bitmap_tree_trunk_24x3s[0]  },
+  { 3, LODFLAG_MASKED,   1, &stage1_bitmap_tree_shadow_24x1[0],         &stage1_bitmap_tree_shadow_24x1s[0] }
+};
+
+// $722D
+static const u8 stage1_bitmap_tree_middle_64x16[8 * 16] = {
+  _XXXXXX_, X_XXXXXX, XXXXXXXX, XXX_X_XX, XX__X_XX, _X_XXXX_, X_X_XXXX, XXXXXX__,
+  XXXX_XXX, XXX_XXXX, _X_XXX_X, XX_X_X_X, X____XX_, X_X_X_XX, _X_XXXXX, X_XXX___,
+  _XX_XXX_, XX_X_XX_, X_X_XXXX, _XX___XX, XXX_XXXX, _X_XXXXX, XXXX_XXX, XX_XXXX_,
+  XXXXXX_X, X___XXXX, XX_XXXXX, XX_X_XXX, XX_X_XXX, XXXXX_X_, XX_XXX_X, XXXXXXX_,
+  XXXXXXXX, XX_X_X_X, XXXXXX_X, XXXXXX_X, XXXXXX_X, XXX_XX_X, XXXXX_X_, XXXX_XXX,
+  XXX_XXXX, X_X_XXXX, _XX_X_X_, X_X_XXXX, XX_XXXXX, _X_X__X_, XXX_XX_X, X_XXXXX_,
+  _XXXXXX_, XXXXXXX_, __XXXX_X, _XXXX_XX, _XX_X_X_, XXX____X, _XXXX_X_, XXXX_XX_,
+  __XX_XXX, XX_XXX_X, _X_XX_X_, __XX_X_X, XX_XXXXX, XX_X__X_, XXXX_X_X, XX_XXX__,
+  ___XXXX_, X_XXXXX_, X_X_XX_X, _XXXX_XX, X_X_XXXX, _XXX_X_X, XX_XXXXX, XXXXXXX_,
+  __XXX_XX, _X_XXX_X, _XXXXXXX, XXXXXXXX, ___XX_XX, XX_XXXXX, X_XXXXX_, XXXX_XX_,
+  ___XXXX_, __X_XXX_, XXXXXXX_, XX_X_XXX, X_XX_X_X, _XXXXXXX, XXXX_XXX, X_X_XX__,
+  ____X_X_, X_XXX_XX, XXX_XX_X, __X_XX_X, XX_XX___, X_X_XX_X, _XX_XXXX, XXXXXX__,
+  ____XXXX, _X_XXX__, X_XXXXX_, X__X_XX_, XXXX_X__, _X_XX_X_, XXXX_XXX, _XX_XX__,
+  ___XXXXX, X_XXX_X_, __XXX_X_, __X_XXXX, X_XXX_X_, X_XXX__X, _XXXXXXX, XXXX_XX_,
+  ___XXXX_, XXXX_X__, _X_XXXXX, _X_XXX_X, _X_XXXXX, XXXX_X__, XX_X_XX_, XXXXXXX_,
+  ____XXXX, XXXXX_X_, X_XX_X_X, XXXXXXXX, X_XX_XXX, XXXXX_XX, X_X_X_XX, XX_XXX__,
+};
+
+// $72AD
+static const u8 stage1_bitmap_tree_bottom_64x5[8 * 5] = {
+  ________, ____X__X, __X__X_X, XXX_X_X_, X_X____X, _X___X__, X___X__X, ________,
+  ______XX, X_XXXX_X, _XX__XXX, XXXX_XXX, _XX_X___, X__X___X, _X_XX_X_, X_X_____,
+  ____X_X_, XXXX_XX_, XX_XX_X_, XXXXXXXX, X_XXXXX_, _XX_XXXX, _XXX_XXX, X__X____,
+  _X__XXXX, XXXXXXXX, XXXXXXXX, X_XXXX_X, XXXXXXXX, ___XXXXX, XXXXXXX_, XXXX_X__,
+  _X_XXXX_, XX_X_XXX, X_XXXXX_, XXX_XXXX, XXXX_XXX, XXXXX_XX, X_XXX_XX, XX_XXXX_,
+};
+
+// $72D5
+static const u8 stage1_bitmap_tree_trunk_16x8[2 * 8] = {
+  X_X__X_X, _X_XX__X,
+  XX__XX_X, __X__X_X,
+  _XX__X__, X_X_X__X,
+  _X_X_X__, __X__XX_,
+  X_XX__X_, X___X_X_,
+  XX_X_X__, X_X__XX_,
+  X_X__X__, X_X_X__X,
+  XX_X_X_X, __X__X_X,
+};
+
+// $72E5
+static const u8 stage1_bitmap_tree_shadow_64x5[8 * 5] = {
+  ________, __XXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, X_______,
+  __XXXXXX, XXXXXXXX, XXXXXXXX, XX_XXXXX, XXXX__XX, XXXXXXXX, XXXXXXXX, XXXXX___,
+  XXXXXXXX, XXXXXXXX, XXXXX__X, XX__XXX_, X_X__X_X, X_XXXXXX, XXXXXXXX, XXXXXXXX,
+  ______XX, XXXXXXXX, XXXXXX__, XXX___XX, _X__X_X_, _XXXXXXX, XXXXXXXX, XXX_____,
+  ________, ___XXXXX, XXXXXXXX, ___X__X_, X_______, XXXXXXXX, XXXX____, ________,
+};
+
+// $730D
+static const u8 stage1_bitmap_tree_middle_48x12[6 * 12] = {
+  _XXXX_XX, XXXXXXXX, XXXX_XXX, XX_XXX__, XXX_XX_X, XXXXXX__,
+  XXX_XXX_, XX_X__XX, _XX____X, X___X_XX, _XXX__XX, XXX_XX__,
+  XX_X_XXX, __XXX_XX, XXX_X_XX, X_X_XXXX, XXX_X_XX, _XXXXXX_,
+  XXXXXXX_, X__XXXXX, _XXX_X_X, XXXX_XXX, _X_XXXXX, X_XXX_XX,
+  XX_XXXXX, _XXX_X_X, X_XXXXXX, X_XXXX__, X_X_XX_X, _XXXXXX_,
+  _XX_XX_X, XX_X__XX, X__XX_XX, X_XXXXX_, XX__XXX_, _XX_XX__,
+  __XXX_XX, XXX_XX_X, _X_XXX_X, XX_XXXXX, X_XXX_X_, XXXXXXX_,
+  _XXXXXX_, XX_X_XXX, XXXX_XXX, __XXXXX_, XXXXXXXX, X_XXX_X_,
+  ___XX_XX, XXXXXXXX, _X_XXX_X, X_XX__XX, _X_X_X_X, XXXXXX__,
+  ___XXXXX, XX__XXXX, X_X_XXX_, XXX__X__, XXX_XXX_, XX_X_X__,
+  __XX_XXX, _XX__XXX, ___XXX_X, XXXXX_XX, XX_X_XXX, XXXXX_X_,
+  ___XXXXX, XXX_XXX_, _XXXXXXX, XXX_XXXX, XXXXXX_X, XXX_XX__,
+};
+
+// $7355
+static const u8 stage1_bitmap_tree_bottom_48x4[6 * 4] = {
+  ______X_, _X_X_X__, _XXX_X__, X____X__, __X____X, _X______,
+  ____XXXX, XX_XXX__, XXXXX_XX, _XXX__X_, X__X__XX, X_XX____,
+  ___XX_XX, X_XXX_XX, X_XXXXXX, XXXXX__X, _XXX_XX_, XXXXX___,
+  __XXXXX_, XXXXXXXX, X_XXX_XX, XXX_XXXX, X_XXXXXX, XXX_XXX_,
+};
+
+// $736D
+static const u8 stage1_bitmap_tree_shadow_48x4[6 * 4] = {
+  _______X, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXX_____,
+  _XXXXXXX, XXXXXXXX, XXX_XXXX, XXX_XXXX, XXXXXXXX, XXXXXX__,
+  ____XXXX, XXXXXXXX, ___X__X_, ___XX__X, XXXXXXXX, XXXX____,
+  ________, __XXXXXX, XXX____X, _____XXX, XXXXXXX_, ________,
+};
+
+// $7385
+static const u8 stage1_bitmap_tree_middle_32x8[4 * 8] = {
+  XXXXXXXX, __X_XX__, X__X_XXX, XXXX_XXX,
+  XXX_X_XX, X_XXX__X, X_XXXXXX, X_XXXXX_,
+  XXXXXXXX, _XXXXXX_, XXXX_X_X, XXX_XXXX,
+  _X_XX_X_, __XX_XXX, X_XXX__X, XX_XX_X_,
+  XXXX__XX, _XXXXXX_, _XXXX_XX, XXX_XX_X,
+  __XXXXX_, XXX_XX_X, __X_XXXX, _XXXXXX_,
+  _XXX_XXX, _XX__XX_, XXXXXXX_, XXXXXX_X,
+  __XXXXXX, XX_XXXXX, X_XXX_XX, _XX_XXX_,
+};
+
+// $73A5
+static const u8 stage1_bitmap_tree_bottom_32x3[4 * 3] = {
+  _X_X__X_, _X__XX_X, XX_XX___, X_X_____,
+  __XXXX_X, X_XXXXXX, XXXX_XX_, XX_XX___,
+  _XXXX__X, XXXXXXXX, XX_XXXXX, XXXXX_XX,
+};
+
+// $73B1
+static const u8 stage1_bitmap_tree_shadow_32x2[4 * 2] = {
+  _XXXXXXX, XXXXX_XX, XXX_XXXX, XXXXXXX_,
+  ___XXXXX, XXX_XX_X, _X_X_XXX, XXXXXX__,
+};
+
+// $73B9
+static const u8 stage1_bitmap_tree_middle_24x7[3 * 7] = {
+  _XXXXXX_, XXXXX__X, XX_XXXX_,
+  XXX_X_XX, XX_XX_XX, _XXX_XXX,
+  _XXXXXXX, X_XXXXX_, _XXXXX_X,
+  XXX_XX_X, XX_XX_XX, XX__XXXX,
+  XX_XX_XX, _XXXXXX_, X_X_XX_X,
+  _X__XXXX, __XX_X__, XXXXXXXX,
+  _XXX_XX_, _X_XX_XX, XX_XX_XX,
+};
+
+// $73CE
+static const u8 stage1_bitmap_tree_bottom_24x2[3 * 2] = {
+  ___X_XX_, XX_X__XX, __X_XX__,
+  _XXXXXXX, X_X_XXX_, XXXXX_X_,
+};
+
+// $73D4
+static const u8 stage1_bitmap_tree_trunk_8x4[1 * 4] = {
+  _X_X_XX_,
+  _XX_X_X_,
+  _X__X_X_,
+  _XX___X_,
+};
+
+// $73D8
+static const u8 stage1_bitmap_tree_shadow_24x2[3 * 2] = {
+  XXXXXXXX, X_XXXX_X, XXXXXXXX,
+  __XXXXXX, _X_X__X_, XXXXXXX_,
+};
+
+// $73DE
+static const u8 stage1_bitmap_tree_top_64x13[8 * 2 * 13] = {
+  XXXX____, ____XX_X, ________, X___XXXX, ________, XX_XXXXX, ________, XX_X_XXX,
+  ________, XX_X_XXX, ________, XXXXX_X_, ________, XX_XXX_X, _____XXX, XXXXX___,
+  XXXX____, ____XXXX, ________, XX_X_X_X, ________, XXXXXX_X, ________, XXXXXX_X,
+  ________, XXXXXX_X, ________, XXX_XX_X, ________, XXXXX_X_, ____XXXX, XXXX____,
+  XXXXX___, _____XXX, ________, X_X_XXXX, ________, _XX_X_X_, ________, X_X_XXXX,
+  ________, XX_XXXXX, ________, _X_X__X_, ________, XXX_XX_X, ___XXXXX, X_X_____,
+  XXXXXXXX, ________, ________, XXXXXXX_, ________, __XXXX_X, ________, _XXXX_XX,
+  ________, _XX_X_X_, ________, XXX____X, ________, _XXXX_X_, __XXXXXX, XX______,
+  XXXXXXXX, ________, XXX_____, ___XXX_X, ________, _X_XX_X_, ________, __XX_X_X,
+  ________, XX_XXXXX, ________, XX_X__X_, ________, XXXX_XXX, _XXXXXXX, X_______,
+  XXXXXXXX, ________, XXXX____, ____XXX_, ________, X_X_XX_X, ________, _XXXX_XX,
+  ________, X_X_XXXX, ________, _XXX_X_X, ______XX, XX_XXX__, XXXXXXXX, ________,
+  XXXXXXXX, ________, XXXX____, ____XX_X, ________, _XXXXXXX, ________, XXXXXXXX,
+  ________, ___XX_XX, ________, XX_XXXXX, ______XX, X_XXXX__, XXXXXXXX, ________,
+  XXXXXXXX, ________, XXXXX___, _____XX_, ________, XXXX_XX_, ________, XX_X_XXX,
+  ________, X_XX_X_X, ________, _XXXXXXX, ____XXXX, _X_X____, XXXXXXXX, ________,
+  XXXXXXXX, ________, XXXXXX__, ______XX, ________, X_X_XX_X, ________, __X_XX_X,
+  ________, XX_XX___, ________, X_X_XX__, ___XXXXX, XXX_____, XXXXXXXX, ________,
+  XXXXXXXX, ________, XXXXXXXX, ________, ________, XXXXXXX_, ________, X__X_XX_,
+  ________, XXXX_X__, ________, _X_XXXXX, _XXXXXXX, X_______, XXXXXXXX, ________,
+  XXXXXXXX, ________, XXXXXXXX, ________, XXXXXX__, ______X_, ________, __X_XXXX,
+  _X______, X_XXX_X_, _____XXX, X_XXX___, XXXXXXXX, ________, XXXXXXXX, ________,
+  XXXXXXXX, ________, XXXXXXXX, ________, XXXXXXX_, _______X, ______XX, _X_XXX__,
+  XXXX____, ____XXXX, ____XXXX, XXXX____, XXXXXXXX, ________, XXXXXXXX, ________,
+  XXXXXXXX, ________, XXXXXXXX, ________, XXXXXXXX, ________, _____XXX, XXXXX___,
+  XXXXXX__, ______XX, ___XXXXX, XXX_____, XXXXXXXX, ________, XXXXXXXX, ________,
+};
+
+// $74AE
+static const u8 stage1_bitmap_tree_top_48x10[6 * 2 * 10] = {
+  XXX_____, ___XXXXX, ________, __X_X__X, ________, XXXX__XX, ________, __X_XXXX, ________, XXX_X_XX, ______XX, _XXXXX__,
+  XXX_____, ___XX_X_, ________, X__XXXXX, ________, _XX_XX_X, ________, XXXX_XXX, ________, _X_XXXXX, _____XXX, X_X_X___,
+  XXXX____, ____XXXX, ________, _XXX_X_X, ________, X_XXXXXX, ________, X_XXXX_X, ________, __X_XX_X, ____XXXX, _XXX____,
+  XXXXXX__, ______XX, ________, XX_X__XX, ________, X__XX_XX, ________, X__XXXX_, ________, _X_XXXX_, ___XXXXX, XXX_____,
+  XXXXXXXX, ________, ________, XXX_XX_X, ________, _X_XXX_X, ________, XX_X_X_X, ________, X_XXXXXX, XXXXXXXX, ________,
+  XXXXXXXX, ________, X_______, _X_X_XXX, ________, XXXXXXXX, ________, __XXX_XX, ________, XXXX_XXX, XXXXXXXX, ________,
+  XXXXXXXX, ________, XX______, __XXXX_X, ________, XX_X_XXX, ________, X_XXXXXX, ______XX, _X__XX__, XXXXXXXX, ________,
+  XXXXXXXX, ________, XXXX____, ____XXXX, ________, X___X_X_, ________, XXX__X__, _____XXX, XXXXX___, XXXXXXXX, ________,
+  XXXXXXXX, ________, XXXXXXXX, ________, ________, XX_X_XXX, ________, XXXXX__X, __XXXXXX, XX______, XXXXXXXX, ________,
+  XXXXXXXX, ________, XXXXXXXX, ________, XX____XX, __XXXX__, XXXX____, ____XXXX, XXXXXXXX, ________, XXXXXXXX, ________,
+};
+
+// $7526
+static const u8 stage1_bitmap_tree_top_32x5[4 * 2 * 5] = {
+  XXXXX___, _____X_X, ________, _XXXXX_X, ________, XXXX_X_X, ____XXXX, X_XX____,
+  XXXXX___, _____XX_, ________, X_X_XXXX, ________, X_XXXXXX, __XXXXXX, XX______,
+  XXXXXX__, ______XX, ________, XXXX_X_X, ________, XX_X___X, _XXXXXXX, X_______,
+  XXXXXXXX, ________, XX______, __X_X_XX, _______X, XXX__XX_, XXXXXXXX, ________,
+  XXXXXXXX, ________, XXX___XX, ___XXX__, XX___XXX, __XXX___, XXXXXXXX, ________,
+};
+
+// $754E
+static const u8 stage1_bitmap_tree_top_24x4[3 * 2 * 4] = {
+  XX______, __XXXXXX, ________, _XXX_XXX, _______X, XXXXX_X_,
+  XXXX____, ____X_X_, ________, XXXXXX_X, ______XX, _XX_XX__,
+  XXXXX___, _____XXX, ________, X_X_XX__, ____XXXX, XXXX____,
+  XXXXXXX_, _______X, ____X___, XXXX_XXX, _XXXXXXX, X_______,
+};
+
+// $7566
+static const u8 stage1_bitmap_tree_top_24x3[3 * 2 * 3] = {
+  XXX_____, ___XX_XX, ________, _XXX_XXX, XXXXXXXX, ________,
+  XXXX____, ____XXXX, _______X, XX_XXXX_, XXXXXXXX, ________,
+  XXXXXX__, ______XX, XX___XXX, __XXX___, XXXXXXXX, ________,
+};
+
+// $7578
+static const u8 stage1_bitmap_tree_top_24x3s[3 * 2 * 3] = {
+  XXXXXXX_, _______X, ________, X_XX_XXX, ____XXXX, _XXX____,
+  XXXXXXXX, ________, ________, XXXXXX_X, ___XXXXX, XXX_____,
+  XXXXXXXX, ________, XX__XX__, __XX__XX, _XXXXXXX, X_______,
+};
+
+// $758A
+static const u8 stage1_bitmap_tree_trunk_16x6[2 * 2 * 6] = {
+  XXX_____, ___X___X, _____XXX, __XXX___,
+  XXX_____, ___X_X_X, _____XXX, _X__X___,
+  XXX_____, ___XX_X_, ____XXXX, _X_X____,
+  XX______, __X_X_X_, ____XXXX, X__X____,
+  XX______, __X_X___, _____XXX, X_X_X___,
+  XX______, __X_X__X, _____XXX, _X__X___,
+};
+
+// $75A2
+static const u8 stage1_bitmap_tree_trunk_16x4[2 * 2 * 4] = {
+  XXXX____, ____XX_X, ____XXXX, _X_X____,
+  XXXX____, ____XX_X, ____XXXX, ___X____,
+  XXXX____, ____X___, ____XXXX, _X_X____,
+  XXXX____, ____XX_X, ____XXXX, _X_X____,
+};
+
+// $75B2
+static const u8 stage1_bitmap_tree_middle_24x5[3 * 2 * 5] = {
+  X_______, _XX_XXXX, ________, X_XXXXXX, ___XXXXX, _XX_____,
+  ________, XX_XX_X_, ________, XXX_XX_X, __XXXXXX, XX______,
+  ________, XXXXXX_X, ________, X_XXXXXX, ___XXXXX, XXX_____,
+  X_______, _X_XXXXX, ________, XXXX_XX_, ___XXXXX, XXX_____,
+  X_______, _XXX_XXX, ________, _XX_XXXX, __XXXXXX, XX______,
+};
+
+// $75D0
+static const u8 stage1_bitmap_tree_bottom_24x2_another[3 * 2 * 2] = {
+  XX_X_XX_, __X_X__X, ____XX_X, XX_X__X_, _XXXXXXX, X_______,
+  X_______, _X_XXXX_, ________, XXXX_XXX, __XXXXXX, _X______,
+};
+
+// $75DC
+static const u8 stage1_bitmap_tree_trunk_24x3[3 * 2 * 3] = {
+  XXXXXXXX, ________, ____XXXX, X__X____, XXXXXXXX, ________,
+  XXXXXXX_, _______X, ____XXXX, X_XX____, XXXXXXXX, ________,
+  XXXXXXX_, _______X, ____XXXX, _X_X____, XXXXXXXX, ________,
+};
+
+// $75EE
+static const u8 stage1_bitmap_tree_shadow_24x1[3 * 2 * 1] = {
+  ________, XXXXXXX_, ________, _XX_XXXX, ____XXXX, XXXX____,
+};
+
+// $75F4
+static const u8 stage1_bitmap_tree_middle_24x5s[3 * 2 * 5] = {
+  XXXXX___, _____XX_, ________, XXXXX_XX, _______X, XXXX_XX_,
+  XXXX____, ____XX_X, ________, X_X_XXX_, ______XX, XX_XXX__,
+  XXXX____, ____XXXX, ________, XX_XX_XX, _______X, XXXXXXX_,
+  XXXXX___, _____X_X, ________, XXXXXXXX, _______X, _XX_XXX_,
+  XXXXX___, _____XXX, ________, _XXX_XX_, ______XX, XXXXXX__,
+};
+
+// $7612
+static const u8 stage1_bitmap_tree_bottom_24x2s[3 * 2 * 2] = {
+  XXXXXX_X, ______X_, _XX_____, X__XXX_X, XX_X_XXX, __X_X___,
+  XXXXX___, _____X_X, ________, XXX_XXXX, ______XX, _XXX_X__,
+};
+
+// $761E
+static const u8 stage1_bitmap_tree_trunk_24x3s[3 * 2 * 3] = {
+  XXXXXXXX, ________, XXXX____, ____X__X, XXXXXXXX, ________,
+  XXXXXXXX, ________, XXX_____, ___XX_XX, XXXXXXXX, ________,
+  XXXXXXXX, ________, XXX_____, ___X_X_X, XXXXXXXX, ________,
+};
+
+// $7630
+static const u8 stage1_bitmap_tree_shadow_24x1s[3 * 2 * 1] = {
+  XXXX____, ____XXXX, ________, XXX__XX_, ________, XXXXXXXX,
 };
 
 /* ----------------------------------------------------------------------- */

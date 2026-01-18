@@ -14,8 +14,6 @@
 
 #include "ChaseHQ-Data.h"
 
-#define TWOBYTES(addr) (addr) & 0xFF, (addr) >> 8
-
 /* ----------------------------------------------------------------------- */
 
 // [Graphics] Turbo icons
@@ -1019,7 +1017,9 @@ const stretchy_t stretchy_shortpole[3] = {
   { 1, NULL              } // Conv: NULL added
 };
 
-// why is the first column all zeroes?
+// $7E0C
+//
+// Why is the first column all zeroes?
 const stretchyset_t shortpole_bottom = {
   &streetlampbody_bitmaps[0],
   {
@@ -1036,6 +1036,7 @@ const stretchyset_t shortpole_bottom = {
   }
 };
 
+// $7E22
 const stretchyset_t shortpole_middle = {
   &streetlampbody_bitmaps[0],
   {
@@ -1052,8 +1053,10 @@ const stretchyset_t shortpole_middle = {
   }
 };
 
+// $7E38
+//
 // seems to be shared streetlamp/telegraphpole
-const stretchyset_t streetlampbody_7e38 = {
+const stretchyset_t streetlampbottom_left = {
   &streetlampbody_bitmaps[0],
   {
     { 0x28, OFFSET(0)  },
@@ -1069,7 +1072,8 @@ const stretchyset_t streetlampbody_7e38 = {
   }
 };
 
-const stretchyset_t streetlampbody_7e4e = {
+// $7E4E
+const stretchyset_t streetlampbottom_right = {
   &streetlampbody_bitmaps[0],
   {
     { 0x28, OFFSET(0)  },
@@ -1085,7 +1089,8 @@ const stretchyset_t streetlampbody_7e4e = {
   }
 };
 
-const stretchyset_t streetlampbody_7e64 = {
+// $7E64
+const stretchyset_t streetlampmiddle2_left = {
   &streetlampbody_bitmaps[0],
   {
     { 0x28, OFFSET(1)  },
@@ -1101,7 +1106,8 @@ const stretchyset_t streetlampbody_7e64 = {
   }
 };
 
-const stretchyset_t streetlampbody_7e7a = {
+// $7E7A
+const stretchyset_t streetlampmiddle2_right = {
   &streetlampbody_bitmaps[0],
   {
     { 0x28, OFFSET(1)  },
@@ -1117,7 +1123,8 @@ const stretchyset_t streetlampbody_7e7a = {
   }
 };
 
-const stretchyset_t streetlampbody_7e90 = {
+// $7E90
+const stretchyset_t streetlampmiddle_left = {
   &streetlampbody_bitmaps[0],
   {
     { 0x28, OFFSET(2)  },
@@ -1133,7 +1140,8 @@ const stretchyset_t streetlampbody_7e90 = {
   }
 };
 
-const stretchyset_t streetlampbody_7ea6 = {
+// $7EA6
+const stretchyset_t streetlampmiddle_right = {
   &streetlampbody_bitmaps[0],
   {
     { 0x28, OFFSET(2)  },
@@ -1149,7 +1157,8 @@ const stretchyset_t streetlampbody_7ea6 = {
   }
 };
 
-const stretchybitmap_t streetlampbody_bitmaps[15] = {
+// $7EBC
+const lod_t streetlampbody_bitmaps[15] = {
   { 1, 1, 2, &bitmap_streetlampbody_1[0],  &bitmap_streetlampbody_1[0]   },
   { 1, 1, 2, &bitmap_streetlampbody_2[0],  &bitmap_streetlampbody_2[0]   },
   { 1, 1, 2, &bitmap_streetlampbody_3[0],  &bitmap_streetlampbody_3[0]   },
@@ -1167,116 +1176,140 @@ const stretchybitmap_t streetlampbody_bitmaps[15] = {
   { 2, 1, 2, &bitmap_streetlampbody_15[0], &bitmap_streetlampbody_15s[0] }
 };
 
+// $7F25
 const u8 bitmap_streetlampbody_1[4] = {
   X______X, _XXXXXX_,
   _______X, XXX__XX_
 };
 
+// $7F29
 const u8 bitmap_streetlampbody_2[4] = {
   _______X, XX____X_,
   _______X, X_X___X_
 };
 
+// $7F2D
 const u8 bitmap_streetlampbody_3[4] = {
   X_____XX, _XX__X__,
   X_____XX, _X___X__
 };
 
+// $7F31
 const u8 bitmap_streetlampbody_4[4] = {
   XX____XX, __XXXX__,
   X______X, _X_X_XX_
 };
 
+// $7F35
 const u8 bitmap_streetlampbody_5[4] = {
   X_____XX, _XX__X__,
   X_____XX, _X___X__
 };
 
+// $7F39
 const u8 bitmap_streetlampbody_6[4] = {
   X____XXX, _X__X___,
   X____XXX, _X__X___
 };
 
+// $7F3D
 const u8 bitmap_streetlampbody_7[2] = {
   ____XXXX, XXXX____
 };
 
+// $7F3F
 const u8 bitmap_streetlampbody_8[4] = {
   ____XXXX, XX_X____,
   ____XXXX, XX_X____
 };
 
+// $7F43
 const u8 bitmap_streetlampbody_9[4] = {
   ___XXXXX, X_X_____,
   ___XXXXX, X_X_____
 };
 
+// $7F47
 const u8 bitmap_streetlampbody_7s[2] = {
   XXXX____, ____XXXX
 };
 
+// $7F49
 const u8 bitmap_streetlampbody_8s[4] = {
   XXXX____, ____XX_X,
   XXXX____, ____XX_X
 };
 
+// $7F4D
 const u8 bitmap_streetlampbody_9s[4] = {
   XXXX___X, ____X_X_,
   XXXX___X, ____X_X_
 };
 
+// $7F51
 const u8 bitmap_streetlampbody_10[2] = {
   XX___XXX, __XXX___
 };
 
+// $7F53
 const u8 bitmap_streetlampbody_11[4] = {
   XX___XXX, __X_X___,
   XX___XXX, __X_X___
 };
 
+// $7F57
 const u8 bitmap_streetlampbody_12[4] = {
   XX__XXXX, __XX____,
   XX__XXXX, __XX____
 };
 
+// $7F5B
 const u8 bitmap_streetlampbody_10s[2] = {
   XXXX___X, ____XXX_
 };
 
+// $7F5D
 const u8 bitmap_streetlampbody_11s[4] = {
   XXXX___X, ____X_X_,
   XXXX___X, ____X_X_
 };
 
+// $7F61
 const u8 bitmap_streetlampbody_12s[4] = {
   XXXX__XX, ____XX__,
   XXXX__XX, ____XX__
 };
 
+// $7F65
 const u8 bitmap_streetlampbody_13[4] = {
   XXXXXXX_, _______X,
   _XXXXXXX, X_______
 };
 
+// $7F69
 const u8 bitmap_streetlampbody_14[8] = {
   XXXXXXX_, _______X, _XXXXXXX, X_______,
   XXXXXXX_, _______X, _XXXXXXX, X_______
 };
 
+// $7F71
 const u8 bitmap_streetlampbody_15[8] = {
   XXXXXXXX, ________, _XXXXXXX, X_______,
   XXXXXXXX, ________, _XXXXXXX, X_______
 };
 
+// $7F79
 const u8 bitmap_streetlampbody_13s[4] = {
   XXXXXXXX, ________, XXX__XXX, ___XX___
 };
 
+// $7F7D
 const u8 bitmap_streetlampbody_14s[8] = {
   XXXXXXXX, ________, XXX__XXX, ___XX___,
   XXXXXXXX, ________, XXX__XXX, ___XX___
 };
 
+// $7F85
 const u8 bitmap_streetlampbody_15s[8] = {
   XXXXXXXX, ________, XXXX_XXX, ____X___,
   XXXXXXXX, ________, XXXX_XXX, ____X___
@@ -2601,12 +2634,12 @@ const light_t tunnellight = {
 
 // $E1FF
 const lod_t tunnellight_lods[6] = {
-  { 2, LOD_NOMASK, 16, &bitmap_tunnellight_1[0], &bitmap_tunnellight_1[0]  },
-  { 2, LOD_NOMASK, 12, &bitmap_tunnellight_2[0], &bitmap_tunnellight_2[0]  },
-  { 1, LOD_NOMASK,  8, &bitmap_tunnellight_3[0], &bitmap_tunnellight_3[0]  },
-  { 1, LOD_NOMASK,  6, &bitmap_tunnellight_4[0], &bitmap_tunnellight_4[0]  },
-  { 1, LOD_NOMASK,  5, &bitmap_tunnellight_5[0], &bitmap_tunnellight_5[0]  },
-  { 2, LOD_MASKED,  6, &bitmap_tunnellight_6[0], &bitmap_tunnellight_6s[0] },
+  { 2, LODFLAG_DEFAULT, 16, &bitmap_tunnellight_1[0], &bitmap_tunnellight_1[0]  },
+  { 2, LODFLAG_DEFAULT, 12, &bitmap_tunnellight_2[0], &bitmap_tunnellight_2[0]  },
+  { 1, LODFLAG_DEFAULT,  8, &bitmap_tunnellight_3[0], &bitmap_tunnellight_3[0]  },
+  { 1, LODFLAG_DEFAULT,  6, &bitmap_tunnellight_4[0], &bitmap_tunnellight_4[0]  },
+  { 1, LODFLAG_DEFAULT,  5, &bitmap_tunnellight_5[0], &bitmap_tunnellight_5[0]  },
+  { 2, LODFLAG_MASKED,  6, &bitmap_tunnellight_6[0], &bitmap_tunnellight_6s[0] },
 };
 
 // $E229

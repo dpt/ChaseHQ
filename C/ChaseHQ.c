@@ -1645,7 +1645,12 @@ void draw_tunnel_light_right(chqstate_t *state)
 }
 
 // $9278
-void draw_object(chqstate_t *state, int left_or_right)
+void draw_object_left(chqstate_t *state)
+{
+}
+
+// $92E1
+void draw_object_right(chqstate_t *state)
 {
 }
 

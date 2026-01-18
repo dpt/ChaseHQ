@@ -18,6 +18,12 @@
 #include "ChaseHQ-State.h"
 #include "ChaseHQ.h"
 
+/* ----------------------------------------------------------------------- */
+
+#define TWOBYTES(addr) (addr) & 0xFF, (addr) >> 8
+
+/* ----------------------------------------------------------------------- */
+
 const u8 bitmap_turbospin[TURBOFRAMELENGTH * TURBOFRAMES];
 
 const u8 pregame_messages[68];
@@ -45,13 +51,13 @@ const u8 bitmap_faces[FACEBYTES * NFACES];
 const stretchy_t stretchy_shortpole[3];
 const stretchyset_t shortpole_bottom;
 const stretchyset_t shortpole_middle;
-const stretchyset_t streetlampbody_7e38;
-const stretchyset_t streetlampbody_7e4e;
-const stretchyset_t streetlampbody_7e64;
-const stretchyset_t streetlampbody_7e7a;
-const stretchyset_t streetlampbody_7e90;
-const stretchyset_t streetlampbody_7ea6;
-const stretchybitmap_t streetlampbody_bitmaps[15];
+const stretchyset_t streetlampbottom_left;
+const stretchyset_t streetlampbottom_right;
+const stretchyset_t streetlampmiddle2_left;
+const stretchyset_t streetlampmiddle2_right;
+const stretchyset_t streetlampmiddle_left;
+const stretchyset_t streetlampmiddle_right;
+const lod_t streetlampbody_bitmaps[15];
 const u8 bitmap_streetlampbody_1[4];
 const u8 bitmap_streetlampbody_2[4];
 const u8 bitmap_streetlampbody_3[4];
@@ -189,6 +195,8 @@ const u8 diamond_transition_mask[6 * 8];
 
 const u8 marquee_initial[SCREEN_BITMAP_ROWBYTES * MARQUEE_HEIGHT];
 const u8 marquee_attrs[SCREEN_ATTRIBUTES_WIDTH * MARQUEE_HEIGHT / 8];
+
+/* ----------------------------------------------------------------------- */
 
 #endif /* CHASEHQ_DATA_H */
 

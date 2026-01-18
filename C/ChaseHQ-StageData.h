@@ -33,10 +33,10 @@ typedef struct stage {
   const hitable_t *addrof_hittable_objects;
   const u8     *addrof_right_hand_handlers;
   const obj_t  *addrof_right_hand_objects;
-  const u8     *addrof_right_hand_short_pole_object;
+  const obj_t  *addrof_right_hand_short_pole_object;
   const u8     *addrof_left_hand_handlers;
   const obj_t  *addrof_left_hand_objects;
-  const u8     *addrof_left_hand_short_pole_object;
+  const obj_t  *addrof_left_hand_short_pole_object;
   const u8     *addrof_perp_description;
   const u8     *addrof_arrest_messages;
   const u8     *addrof_helicopter_stuff_1;

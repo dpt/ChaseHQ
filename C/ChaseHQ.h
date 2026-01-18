@@ -367,10 +367,11 @@ struct scenedata {
 
 /* ----------------------------------------------------------------------- */
 
-#define LOD_NOMASK (0 << 0)
-#define LOD_MASKED (1 << 0)
+#define LODFLAG_DEFAULT  (0 << 0)
+#define LODFLAG_MASKED   (1 << 0)
+#define LODFLAG_FLIPPED  (2 << 0)
 
-// Always given in groups of six?
+// Are LODs always given in groups of five or six?
 typedef struct lod {
   u8        width_bytes;
   u8        flags;
@@ -388,20 +389,12 @@ typedef struct {
 
 /* ----------------------------------------------------------------------- */
 
-typedef struct {
-  u8        width;  // pixels
-  u8        flags;  // assuming 1=>masked
-  u8        height; // pixels
-  const u8 *bitmap;
-  const u8 *bitmapshifted;
-} stretchybitmap_t;
-
 /// Stretchy Set offset
 /// (7 is sizeof(stretchybitmap_t)) -- use offsetof ?
 #define OFFSET(N) ((N)*7+2)
 
 typedef struct {
-  const stretchybitmap_t *bitmaps; // -> array of bitmaps
+  const lod_t *bitmaps; // -> array of bitmaps
   struct {
     u8 depth; // something depth-ish
     u8 offset;
@@ -516,7 +509,8 @@ void draw_stretchy_object_right(chqstate_t *state);
 void draw_tunnel_light_left(chqstate_t *state);
 void draw_tunnel_light_right(chqstate_t *state);
 
-void draw_object(chqstate_t *state, int left_or_right);
+void draw_object_left(chqstate_t *state);
+void draw_object_right(chqstate_t *state);
 
 void plot_sprite(chqstate_t *state,
                  u8          width_bytes,
