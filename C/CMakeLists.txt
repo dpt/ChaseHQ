@@ -3,6 +3,8 @@ project(ChaseHQ C)
 
 set(CMAKE_C_STANDARD 90)
 
+set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fsanitize=address")
+
 find_package(SDL2 REQUIRED)
 
 set(SOURCE_FILES Main.c ChaseHQ.c ChaseHQ-Data.c ChaseHQ-StageData.c)
