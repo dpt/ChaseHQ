@@ -68,4 +68,13 @@ enum {
 #define SCREEN_END_ADDRESS              (SCREEN_START_ADDRESS + SCREEN_LENGTH - 1)
 #define SCREEN_ATTRIBUTES_END_ADDRESS   SCREEN_END_ADDRESS
 
+/**
+ * Bounding box.
+ */
+typedef struct zxbox
+{
+  int x0, y0, x1, y1;
+}
+zxbox_t;
+
 #endif /* SPECTRUM_H */

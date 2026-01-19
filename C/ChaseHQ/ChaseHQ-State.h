@@ -4,15 +4,14 @@
 //
 // by dpt
 
-// vim: ts=8 sts=2 sw=2 et
-
 #ifndef CHASEHQ_STATE_H
 #define CHASEHQ_STATE_H
 
+#include "../ZXSpectrum/Spectrum.h"
+
 #include "Types.h"
-#include "Spectrum.h"
 #include "ChaseHQ.h"
-#include "ChaseHQ-StageData.h"
+#include "ChaseHQ-Stages.h"
 
 struct hazard {
   u8                used;

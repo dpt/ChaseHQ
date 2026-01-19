@@ -1,13 +1,11 @@
-// ChaseHQ-StageData.h
+// ChaseHQ-Stages.h
 //
 // Chase H.Q. code model
 //
 // by dpt
 
-// vim: ts=8 sts=2 sw=2 et
-
-#ifndef CHASEHQ_STAGEDATA_H
-#define CHASEHQ_STAGEDATA_H
+#ifndef CHASEHQ_STAGES_H
+#define CHASEHQ_STAGES_H
 
 #include "Types.h"
 #include "ChaseHQ.h"
@@ -31,10 +29,10 @@ typedef struct stage {
   const u8     *addrof_perp_mugshot_bitmap;
   u16           ground_colour;
   const hitable_t *addrof_hittable_objects;
-  const u8     *addrof_right_hand_handlers;
+  const void   *addrof_right_hand_handlers;
   const obj_t  *addrof_right_hand_objects;
   const obj_t  *addrof_right_hand_short_pole_object;
-  const u8     *addrof_left_hand_handlers;
+  const void   *addrof_left_hand_handlers;
   const obj_t  *addrof_left_hand_objects;
   const obj_t  *addrof_left_hand_short_pole_object;
   const u8     *addrof_perp_description;
@@ -57,9 +55,9 @@ typedef struct stage {
   const char  **chatter_strings; // Conv: additional
 } stage_t;
 
-#define MAX_STAGEDATA (5)
+#define MAX_STAGES (5)
 
-const stage_t *stages[MAX_STAGEDATA];
+const stage_t *stages[MAX_STAGES];
 
-#endif /* CHASEHQ_STAGEDATA_H */
+#endif /* CHASEHQ_STAGES_H */
 

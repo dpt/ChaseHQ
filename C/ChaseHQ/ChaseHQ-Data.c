@@ -4,14 +4,12 @@
 //
 // by dpt
 
-// vim: ts=8 sts=2 sw=2 et
-
 #include <stddef.h>
+
+#include "../ZXSpectrum/Pixels.h"
 
 #include "Types.h"
 #include "ChaseHQ.h"
-#include "Pixels.h"
-
 #include "ChaseHQ-Data.h"
 
 /* ----------------------------------------------------------------------- */

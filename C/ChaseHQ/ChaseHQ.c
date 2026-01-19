@@ -4,8 +4,6 @@
 //
 // by dpt
 
-// vim: ts=8 sts=2 sw=2 et
-
 // Notes
 //
 // As with my conversion of The Great Escape to C we model the game as if
@@ -72,12 +70,13 @@
 #include <stdio.h>
 #include <string.h>
 
+#include "../ZXSpectrum/Pixels.h"
+#include "../ZXSpectrum/Spectrum.h"
+#include "../ZXSpectrum/Z80.h"
+
 #include "Types.h"
-#include "Pixels.h"
-#include "Spectrum.h"
-#include "Z80.h"
 #include "ChaseHQ-Data.h"
-#include "ChaseHQ-StageData.h"
+#include "ChaseHQ-Stages.h"
 #include "ChaseHQ-State.h"
 #include "ChaseHQ.h"
 

@@ -1,20 +1,19 @@
-// ChaseHQ-StageData.c
+// ChaseHQ-Stage1.c
 //
 // Chase H.Q. code model
 //
 // by dpt
 
-// vim: ts=8 sts=2 sw=2 et
-
 #include <stddef.h>
 
+#include "../ZXSpectrum/Pixels.h"
+#include "../ZXSpectrum/Spectrum.h"
+
 #include "Types.h"
-#include "Pixels.h"
-#include "Spectrum.h"
 #include "ChaseHQ.h"
 #include "ChaseHQ-Data.h"
 
-#include "ChaseHQ-StageData.h"
+#include "ChaseHQ-Stage1.h"
 
 /* ----------------------------------------------------------------------- */
 
@@ -145,7 +144,7 @@ static const u8 stage1_bitmap_tree_shadow_24x1s[3 * 2 * 1];
 /* ----------------------------------------------------------------------- */
 
 // $5CF0
-static const stage_t stage1 = {
+const stage_t stage1 = {
   {
     XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX,
     XXXX____, __X__X_X, _X_XXX_X, _XXXXXXX, _X_XXXXX, XXXXXXXX, XXXXXXXX, X_X_XXXX, ____XXX_, X_X__X_X,
@@ -176,10 +175,10 @@ static const stage_t stage1 = {
   NULL, // no bitmap given on this level
   attribute_BRIGHT_YELLOW_OVER_BLACK | (attribute_BRIGHT_YELLOW_OVER_BLACK << 8),
   &stage1_hitable_object_defs[0],
-  NULL, // &stage1_right_hand_handlers[0],
+  &stage1_right_hand_graphics_defs[-1].arg,
   &stage1_right_hand_graphics_defs[-1],
   &stage1_right_hand_graphics_defs[2], // short pole
-  NULL, // &stage1_left_hand_handlers[0],
+  &stage1_left_hand_graphics_defs[-1].arg,
   &stage1_left_hand_graphics_defs[-1],
   &stage1_left_hand_graphics_defs[2], // short pole
   &stage1_perp_description[0],
@@ -1930,14 +1929,4 @@ static const u8 stage1_bitmap_tree_trunk_24x3s[3 * 2 * 3] = {
 // $7630
 static const u8 stage1_bitmap_tree_shadow_24x1s[3 * 2 * 1] = {
   XXXX____, ____XXXX, ________, XXX__XX_, ________, XXXXXXXX,
-};
-
-/* ----------------------------------------------------------------------- */
-
-const stage_t *stages[MAX_STAGEDATA] = {
-  &stage1,
-  &stage1,
-  &stage1,
-  &stage1,
-  &stage1
 };
