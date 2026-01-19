@@ -56,8 +56,6 @@
 
 // TODO
 //
-// Get the pregame screen going. [drawing done]
-//
 // Get a sprite plotter going.
 //
 // Stub out all functions.
@@ -67,13 +65,6 @@
 // Copy whole messages that get modified into the state structure.
 //
 // Decide how to drive the main loop(s).
-//
-// Decide how to handle having both C struct-defined graphics AND graphics
-// embedded in the original stage data. Essentially two different formats.
-// Two sets of routines?
-//
-// Also stage data needs to refer to original game addresses when defining
-// objects - will need mapping across somewhere.
 //
 
 #include <assert.h>
@@ -3719,7 +3710,7 @@ lr_badf:
     // EXX Bank for inner loop
     DEdash = *SMroadleft;
     HLdash = *SProadright++; // POP HLdash // read from $ECxx
-    *SMroadcentre      = (HLdash + DEdash) / 2; // (right+left)/2 = new road centre)
+    *SMroadcentre      = (HLdash + DEdash) / 2; // (right+left)/2 = new road centre
     *SMroadcentreleft  = (HLdash + DEdash) / 2; // new road centre left
 
     DEdash = *SMveryright;
@@ -3729,7 +3720,7 @@ lr_badf:
 
     Aiterations += 2;
     // EXX Unbank
-  } while (Biterations > 0);
+  } while (--Aiterations > 0);
   SProadright = &state->table_ec00[Aiterations];
   goto lr_calc_single_lane; // jump into no_fork code
 }

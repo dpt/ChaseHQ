@@ -40,7 +40,7 @@
 #define OFFSETTOBACKBUF(off)  (&state->backbuffer[off])
 
 // Return ptr incremented modulo 256.
-#define WRAPPINGINCREMENT(ptr, base) &base[((ptr) + 1 - (base)) & 0xFF]
+#define WRAPPINGINCREMENT(ptr, base) &(base)[((ptr) + 1 - (base)) & 0xFF]
 
 #define STAGEDATA_BASE        (0x5C00)
 #define STAGEDATA_END         (0x7FFF) // inclusive
@@ -320,7 +320,7 @@ typedef u8 chatterpriority_t;
 #define MAP_LANES_FORKED                (0xED)
 
 // Objects (names are valid for Stage 1)
-#define MAP_OBJECTS(D,T)                (((D) << 4) | T)
+#define MAP_OBJECTS(D,T)                (((D) << 4) | (T))
 
 #define MAP_OBJ_NONE                    (0)
 #define MAP_OBJ_TUNNEL_LIGHT            (1)
@@ -471,7 +471,7 @@ void hpc_set_perp_speed(chqstate_t *state, u16 speed);
 void fully_smashed(chqstate_t *state);
 
 void transition(chqstate_t *state);
-void transition_fade_chunk(chqstate_t *state, u8 mask, u8 *screen);
+void transition_fade_chunk(chqstate_t *state, u8 mask, u8 *backbuf);
 
 void setup_transition(chqstate_t *state, u8 stride);
 
