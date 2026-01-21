@@ -2,7 +2,6 @@ cmake_minimum_required(VERSION 4.1)
 project(ChaseHQ C)
 
 set(CMAKE_C_STANDARD 90)
-
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fsanitize=address")
 
 find_package(SDL2 REQUIRED)

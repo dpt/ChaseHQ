@@ -2228,7 +2228,7 @@ void pmf_go(chqstate_t *state,
   u8        gid;      // was C
   u8        sgid;     // was A
   u16       screen;   // was DE
-  const u8 *font;     // was DE
+  const u8 *fontdata; // was DE
   u16       HLscreen; // was HL
 
 #define MFWIDTH  (5)
@@ -2277,7 +2277,7 @@ pmf_have_glyph_id:
   sgid = gid + 'A'; // Turn the glyph ID in #REGc into ASCII in #REGa
 
 pmf_have_ascii:
-  font = &minifont[(sgid - 'A') * MFHEIGHT];
+  fontdata = &minifont[(sgid - 'A') * MFHEIGHT];
   HLscreen = screen; // was EX
   row = MFHEIGHT;
   do {
@@ -2285,7 +2285,7 @@ pmf_have_ascii:
     u8 bm1; // was B
 
     bm2 = extra2;
-    bm1 = *font | extra1; // first pixel written
+    bm1 = *fontdata | extra1; // first pixel written
 
     if (0) {
       switch (rotate) {
@@ -2311,7 +2311,7 @@ pmf_have_ascii:
     u8 *screen = ADDRTOSCREEN(HLscreen); // Conv: added
     screen[0] = (mask & screen[0]) | bm1;
     screen[1] = bm2;
-    font++;
+    fontdata++;
     HLscreen = nextscrrow(HLscreen);
   } while (--row > 0);
 }
@@ -2878,29 +2878,29 @@ ptas_led_plot_2nd:
 //
 // ord - was A
 // screen - was DE'
-u8 *ledfont_plot(chqstate_t *state, u8 ord, u8 *screen)
+u8 *ledfont_plot(chqstate_t *state, int ord, u8 *screen)
 {
-  const u8 *font;        // was HL
+  const u8 *src;         // was HL
   u8       *screen_copy; // was stacked
 
-  font = &ledfont[ord * LEDFONT_HEIGHT];
+  src = &ledfont[ord * LEDFONT_HEIGHT];
   screen_copy = screen;
-  *screen = *font++; screen += 256;
-  *screen = *font++; screen += 256;
-  *screen = *font++; screen += 256;
-  *screen = *font++; screen += 256;
-  *screen = *font++; screen += 256;
-  *screen = *font++; screen += 256;
-  *screen = *font++;
+  *screen = *src++; screen += 256;
+  *screen = *src++; screen += 256;
+  *screen = *src++; screen += 256;
+  *screen = *src++; screen += 256;
+  *screen = *src++; screen += 256;
+  *screen = *src++; screen += 256;
+  *screen = *src++;
   screen = screen_copy - 256 + 32;
-  *screen = *font++; screen += 256;
-  *screen = *font++; screen += 256;
-  *screen = *font++; screen += 256;
-  *screen = *font++; screen += 256;
-  *screen = *font++; screen += 256;
-  *screen = *font++; screen += 256;
-  *screen = *font++; screen += 256;
-  *screen = *font++;
+  *screen = *src++; screen += 256;
+  *screen = *src++; screen += 256;
+  *screen = *src++; screen += 256;
+  *screen = *src++; screen += 256;
+  *screen = *src++; screen += 256;
+  *screen = *src++; screen += 256;
+  *screen = *src++; screen += 256;
+  *screen = *src++;
   return screen_copy + 1; // move to next column
 }
 

@@ -598,7 +598,7 @@ void ptas_led_digits(chqstate_t *state,
                      u8         *stored,
                      u8         *screen);
 
-u8 *ledfont_plot(chqstate_t *state, u8 ord, u8 *screen);
+u8 *ledfont_plot(chqstate_t *state, int ord, u8 *screen);
 
 const u8 *draw_string_with_style(chqstate_t *state,
                                  u8          attrval,
