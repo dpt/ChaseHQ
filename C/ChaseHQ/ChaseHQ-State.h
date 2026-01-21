@@ -86,8 +86,17 @@ struct chqstate {
   // $5C00..$76EF
   const stage_t *stage;
 
-  // $8277
-  u8        SM_8277;
+  // $823B (SM) in play_engine_sfx_48k
+  u8        engine_sfx_counter;
+  // $8244 (SM) in play_engine_sfx_48k
+  u8        engine_sfx_nloops;
+  // $8249 (SM) in play_engine_sfx_48k
+  u8        engine_sfx_off_cycle;
+  // $8251 (SM) in play_engine_sfx_48k
+  u8        engine_sfx_on_cycle;
+
+  // $8277 (SM) in attract_mode
+  u8        attract_blinker;
 
   // $85EB (SM) in reveal_perp_car
   u8        pregame_car_revealed_height;

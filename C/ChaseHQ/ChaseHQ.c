@@ -88,7 +88,7 @@ void chasehq_reset_state(chqstate_t *state)
 
   state->wanted_stage_number = 1;
 
-  state->SM_8277 = 0xF0; // attract mode blinker
+  state->attract_blinker = 0xF0; // attract mode blinker
 
   memcpy(state->time_nn, "TIME 1\xB0", 7);
   memcpy(state->credit_n, "CREDIT \xA0", 8);
@@ -138,16 +138,68 @@ void load_stage(chqstate_t *state)
   state->stage = stages[wanted];
 }
 
+// $80B9 tape_load_to_5c00
+
+// $81DD start_stage_chatter - was hoisted
+
+// $8204
+void setup_engine_sfx_48k(chqstate_t *state)
+{
+  int nloops;    // was L
+  int off_cycle; // was H
+
+  nloops = ((~(state->speed >> 1)) >> 2) | 1;
+  off_cycle = 3;
+
+  if (state->gear == 0)
+    nloops >>= 1;
+
+  if (state->tunnel_sfx)
+    off_cycle = 1;
+
+  state->engine_sfx_nloops    = nloops;
+  state->engine_sfx_off_cycle = off_cycle;
+  state->engine_sfx_on_cycle  = 5 - off_cycle;
+
+  play_engine_sfx_48k(state);
+}
+
+// $8234
+void play_engine_sfx_48k(chqstate_t *state)
+{
+  u8  phase;   // was A
+  int counter; // was A
+  int nloops;  // was C
+  int c;       // was B
+
+  phase = state->perp_caught_phase;
+  if (phase >= PERPCAUGHTPHASE_3)
+    return;
+
+  counter = (state->engine_sfx_counter + 1) & 3;
+  state->engine_sfx_counter = counter;
+  if (counter)
+    return;
+
+  nloops = state->engine_sfx_nloops;
+  {
+    // OUT $(FE),0 // output zero
+    c = state->engine_sfx_off_cycle; do {/*idle*/} while(--c);
+    // OUT $(FE),24 // output EAR+MIC
+    c = state->engine_sfx_on_cycle; do {/*idle*/} while(--c);
+  } while (--nloops > 0);
+}
+
 // $8258
 void attract_mode(chqstate_t *state)
 {
   int       carry = 0;
-  u8        blinker;   // was $828C (SM)
-  u8        keys;      // was A
-  const u8 *messages;  // was HL
-  u8        nmessages; // was B
-  u8        A;
-  u8        style;     // was A
+  u8        blinker;         // was $828C (SM)
+  u8        keys;            // was A
+  const u8 *messages;        // was HL
+  u8        nmessages;       // was B
+  u8        attract_blinker; // was A
+  u8        style;           // was A
 
   set_up_stage(state, &state->stage->attract_data);
   blinker = 0;
@@ -161,9 +213,9 @@ void attract_mode(chqstate_t *state)
 
     messages  = &attract_messages[0];
     nmessages = 1;
-    A = state->SM_8277;
-    RRC(A);
-    state->SM_8277 = A;
+    attract_blinker = state->attract_blinker;
+    RRC(attract_blinker);
+    state->attract_blinker = attract_blinker;
     if (!carry)
       nmessages++;
 
@@ -190,36 +242,43 @@ void attract_mode(chqstate_t *state)
 // $83B5
 void start_siren_hook(chqstate_t *state)
 {
+  // NOP
 }
 
 // $83B8
 void play_engine_or_siren_sfx_hook(chqstate_t *state)
 {
+  play_engine_sfx_48k(state);
 }
 
 // $83BB
 void silence_audio_hook(chqstate_t *state)
 {
+  // NOP
 }
 
 // $83BE
 void write_audio_registers_hook(chqstate_t *state)
 {
+  // NOP
 }
 
 // $83C1
 void setup_engine_sfx_hook(chqstate_t *state)
 {
+  // NOP
 }
 
 // $83C4
 void play_engine_sfx_hook(chqstate_t *state)
 {
+  setup_engine_sfx_48k(state);
 }
 
 // $83C7
 void play_speech_hook(chqstate_t *state, u8 A)
 {
+  // NOP
 }
 
 // $83CA
@@ -2308,9 +2367,9 @@ pmf_have_ascii:
       bm2 = bm & 0xff;
     }
 
-    u8 *screen = ADDRTOSCREEN(HLscreen); // Conv: added
-    screen[0] = (mask & screen[0]) | bm1;
-    screen[1] = bm2;
+    u8 *screen2 = ADDRTOSCREEN(HLscreen); // Conv: added
+    screen2[0] = (mask & screen2[0]) | bm1;
+    screen2[1] = bm2;
     fontdata++;
     HLscreen = nextscrrow(HLscreen);
   } while (--row > 0);

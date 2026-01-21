@@ -422,6 +422,9 @@ void chasehq_reset_state(chqstate_t *state);
 
 void load_stage(chqstate_t *state);
 
+void setup_engine_sfx_48k(chqstate_t *state);
+void play_engine_sfx_48k(chqstate_t *state);
+
 void attract_mode(chqstate_t *state);
 
 void start_siren_hook(chqstate_t *state);

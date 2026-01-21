@@ -724,15 +724,15 @@ W $64B8,2,2 Bitmap
 W $64BA,2,2 Pre-shifted bitmap
 N $64BC Bitmap: Lamborghini_1 (48x30)
 N $64BC #HTML[#CALL:graphic($64BC,48,30,0,1)]
-@ $64BC label=bitmap_lamborghini_1
+@ $64BC label=bitmap_lambo_1
 B $64BC,180,6 Bitmap data
 N $6570 Bitmap: Lamborghini_2 (40x22)
 N $6570 #HTML[#CALL:graphic($6570,40,22,0,1)]
-@ $6570 label=bitmap_lamborghini_2
+@ $6570 label=bitmap_lambo_2
 B $6570,110,5 Bitmap data
 N $65DE Bitmap: Lamborghini_3 (24x15)
 N $65DE #HTML[#CALL:graphic($65DE,24,15,0,1)]
-@ $65DE label=bitmap_lamborghini_3
+@ $65DE label=bitmap_lambo_3
 B $65DE,45,3 Bitmap data
 N $660B Bitmap: Truck_1 (48x39)
 N $660B #HTML[#CALL:graphic($660B,48,39,0,1)]
@@ -760,11 +760,11 @@ N $68EA #HTML[#CALL:graphic($68EA,24,16,0,1)]
 B $68EA,48,3 Bitmap data
 N $691A Bitmap: Lamborghini_4 (24x8)
 N $691A #HTML[#CALL:graphic($691A,24,8,1,1)]
-@ $691A label=bitmap_lamborghini_4
+@ $691A label=bitmap_lambo_4
 B $691A,48,6 Masked bitmap data
 N $694A Bitmap: Lamborghini_4 (24x8) pre-shifted
 N $694A #HTML[#CALL:graphic($694A,24,8,1,1)]
-@ $694A label=bitmap_lamborghini_4s
+@ $694A label=bitmap_lambo_4s
 B $694A,48,6 Masked bitmap data
 N $697A Bitmap: Truck_4 (16x12)
 N $697A #HTML[#CALL:graphic($697A,16,12,1,1)]
@@ -2395,9 +2395,9 @@ C $8225,4 Self modify iterations -- L
 C $8229,4 Self modify delay loop -- H
 C $822D,7 Self modify delay loop -- (5 - A)
 N $8234 This entry point is used by the routine at #R$83B5.
-@ $8234 label=play_engine_sfx
+@ $8234 label=play_engine_sfx_48k
 C $8234,6 Return if perp_caught_phase is >= 3 (when car stops)
-C $823A,8 Self modifying counter produces 0,1,2
+C $823A,8 Self modifying counter produces 0,1,2,3
 C $8242,1 Return if nonzero
 N $8243 This produces the engine sound effect.
 C $8243,2 <Self modified> iterations
@@ -2502,7 +2502,7 @@ N $83B5 Used by the routine at #R$B4CC.
 C $83B5,3 No-op when in 48K mode
 N $83B8 This entry point is used by the routines at #R$8401 and #R$8903.
 @ $83B8 label=play_engine_or_siren_sfx_hook
-C $83B8,3 Call play_engine_sfx when in 48K mode
+C $83B8,3 Call play_engine_sfx_48k when in 48K mode
 N $83BB This entry point is used by the routines at #R$8401, #R$873C, #R$87DC, #R$8876, #R$8A57 and #R$F220.
 @ $83BB label=silence_audio_hook
 C $83BB,3 No-op when in 48K mode
