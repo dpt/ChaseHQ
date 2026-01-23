@@ -111,6 +111,12 @@ struct chqstate {
   // $86C9 (SM) in draw_pregame
   u8        draw_pregame_direction;
 
+  // $897C
+  u8        sfx_crash_table[93];
+
+  // $8A0F (SM) in sfx_cornering
+  u8        SM_8A0F;
+
   // $8ABE (SM) in handle_perp_caught
   u8        handle_perp_caught_delay;
 
@@ -137,6 +143,13 @@ struct chqstate {
   u8        overlay_count;
   // $8E49 (SM) in draw_overlay_messages
   u8        overlay_delay;
+
+  // $8F82 (SM) in draw_everything_else
+  u8        SM_8F82; // draw tunnel call
+  // $8FA4 (SM) in draw_everything_else
+  u8        SM_8FA4; // draw helicopter call
+  // $8FA7 (SM) in draw_everything_else
+  u8        SM_8FA7; // draw tunnel call
 
   // $9618
   u8        rng_seed[3];
@@ -354,11 +367,16 @@ struct chqstate {
   // $A9DF (SM) in dust_stones_stuff
   u8        SM_A9DF; // makes dust_stones_stuff run
 
+  // $B063 (SM) in move_hero_car
+  u8        SM_B063; // jump counter
+
   // $BB95 (SM) in rm_cycle_buffer_offset
   const u8 *SM_BB95;
   // $BBC2 (SM) in rm_cycle_buffer_offset
   const u8 *SM_BBC2;
 
+  // $C058 (SM) in read_map
+  u8        SM_C058; // current hazard command
   // $C0BC (SM) in read_map
   u8        SM_C0BC;
 

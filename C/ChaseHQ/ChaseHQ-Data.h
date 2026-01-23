@@ -92,6 +92,8 @@ const u8 copyright_messages[92];
 const scenedata_t escape_scene_data;
 const hazard_t escape_scene_perp;
 
+const u8 sfx_crash_table[93];
+
 const u8 score_messages_template[90];
 const u8 sighting_message[36];
 const u8 pull_over_message[30];

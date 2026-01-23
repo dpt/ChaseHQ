@@ -90,6 +90,8 @@ void chasehq_reset_state(chqstate_t *state)
 
   state->attract_blinker = 0xF0; // attract mode blinker
 
+  memcpy(&state->sfx_crash_table[0], sfx_crash_table, sizeof(sfx_crash_table));
+
   memcpy(state->time_nn, "TIME 1\xB0", 7);
   memcpy(state->credit_n, "CREDIT \xA0", 8);
 
@@ -121,6 +123,11 @@ static u16 wordat(const u8 *addr)
   (&state->road_buffer_start[ROADBUFINDEX(N)])
 
 /* ----------------------------------------------------------------------- */
+
+// $5C00
+void end_screen(chqstate_t *state)
+{
+}
 
 // $8014 (copied to that position in the original)
 // $F220 page_in_stage_128k
@@ -184,14 +191,16 @@ void play_engine_sfx_48k(chqstate_t *state)
   nloops = state->engine_sfx_nloops;
   {
     // OUT $(FE),0 // output zero
-    c = state->engine_sfx_off_cycle; do {/*idle*/} while(--c);
+    c = state->engine_sfx_off_cycle;
+    do {/*idle*/} while (--c);
     // OUT $(FE),24 // output EAR+MIC
-    c = state->engine_sfx_on_cycle; do {/*idle*/} while(--c);
+    c = state->engine_sfx_on_cycle;
+    do {/*idle*/} while (--c);
   } while (--nloops > 0);
 }
 
 // $8258
-void attract_mode(chqstate_t *state)
+void attract_mode_48k(chqstate_t *state)
 {
   int       carry = 0;
   u8        blinker;         // was $828C (SM)
@@ -284,7 +293,7 @@ void play_speech_hook(chqstate_t *state, u8 A)
 // $83CA
 void attract_mode_hook(chqstate_t *state)
 {
-  attract_mode(state);
+  attract_mode_48k(state);
 }
 
 // $8401
@@ -297,125 +306,124 @@ void main_loop(chqstate_t *state)
   u8  quit_state;         // was A
   u8  start_speech;       // was A
 
-restart:
-  load_stage(state);
-  if (state->wanted_stage_number != 6)
-    goto not_credits;
-
-  // TODO: Call $5C00
-  state->wanted_stage_number = 1;
-  load_stage(state);
-  state->wanted_stage_number = 6; // not sure why
-  return;
-
-not_credits:
-  run_pregame_screen(state);
-  set_up_stage(state, &state->stage->stage_data);
-
-  // Cycle start_speech_cycle 3,2,1 then repeat
-  start_speech_index = state->start_speech_cycle - 1;
-  if (start_speech_index == 0)
-    start_speech_index = 3;
-  state->start_speech_cycle = start_speech_index;
-
-  // Choose the startup speech sample
-  state->start_speech = (start_speech_index * 4) | 2;
-  state->hazards[0].used = HAZARD_USED; // keep perp spawned
-  if (state->mode_128k == 0)
-    start_chatter(state, 0xFF, chatterblk_start_stage);
-
   for (;;) {
-    drive_sfx(state);
-    keyscan(state);
-    tick(state);
-    check_user_input(state);
-    read_map(state);
-    if (handle_perp_caught(state))
-      goto restart; // Conv: hpc would POP and goto main_loop to cause a
-    // restart
-    move_hero_car(state);
-    spawn_cars(state);
-    cycle_counters(state);
-    play_engine_or_siren_sfx_hook(state);
-    build_height_table(state);
-    scroll_horizon(state);
-    play_engine_or_siren_sfx_hook(state);
-    layout_road(state);
-    play_engine_or_siren_sfx_hook(state);
-    draw_road(state);
-    play_engine_or_siren_sfx_hook(state);
-    layout_objects(state);
-    prepare_tunnel(state);
-    spawn_hazards(state);
-    drive_helicopter(state);
-    choose_dirt_and_stones(state);
-    play_engine_or_siren_sfx_hook(state);
-    draw_hazards(state);
-    layout_dirt_and_stones(state);
-    play_engine_or_siren_sfx_hook(state);
-    move_helicopter(state);
-    check_scenery_collisions(state);
-    play_engine_or_siren_sfx_hook(state);
-    draw_everything_else(state);
-    play_engine_or_siren_sfx_hook(state);
-    animate_hero_car(state);
-    speed_score(state);
-    update_scoreboard(state);
-    calc_overtake_bonus(state);
-    play_engine_or_siren_sfx_hook(state);
-    drive_chatter(state);
-    draw_smash_bar(state);
-    transition(state);
-    play_engine_or_siren_sfx_hook(state);
-    draw_screen(state);
-    exit_fork(state);
+    load_stage(state);
 
-    if (state->test_mode) {
-      keys = 0xFF; // TODO ~state->speccy->in(state->speccy, port_KEYBOARD_12345) & 0x1F;
-      if (keys) {
-        start_sfx(state, EFFECT_BIP, 4);
-        silence_audio_hook(state);
-
-        RR(keys); // Is bit 0 set? (key 1 to restart the level)
-        if (carry)
-          goto restart;
-
-        RR(keys); // Is bit 1 set? (key 2 to load the next level)
-        if (carry) {
-          state->wanted_stage_number++;
-          goto restart;
-        }
-
-        RR(keys); // Is bit 2 set? (key 3 to load the end screen)
-        if (carry) {
-          state->wanted_stage_number = 6; // stage 6
-          goto restart;
-        }
-
-        if (state->credits < 9) // Increment credits unless maxed out at 9
-          state->credits++;
-      }
+    if (state->wanted_stage_number == 6) {
+      end_screen(state);
+      state->wanted_stage_number = 1;
+      load_stage(state);
+      state->wanted_stage_number = 6; // not sure why
+      return;
     }
 
-    if (state->transition_control == TRANSITIONCONTROL_STOP) {
-      // Play speech when we see a 1-bit shift out of start_speech.
-      pstart_speech = &state->start_speech;
-      SRL(*pstart_speech);
-      if (carry) {
-        start_speech = *pstart_speech;
-        *pstart_speech = 0;
-        play_speech_hook(state, start_speech);
-      } else {
-        quit_state = state->quit_state;
-        if (quit_state > 0) {
-          // Quitting the game is in progress.
-          if (quit_state == QUITSTATE_START) {
-            escape_scene(state); // exit via
-            return;
+    run_pregame_screen(state);
+    set_up_stage(state, &state->stage->stage_data);
+
+    // Cycle start_speech_cycle 3,2,1 then repeat
+    start_speech_index = state->start_speech_cycle - 1;
+    if (start_speech_index == 0)
+      start_speech_index = 3;
+    state->start_speech_cycle = start_speech_index;
+
+    // Choose the startup speech sample
+    state->start_speech = (start_speech_index * 4) | 2;
+    state->hazards[0].used = HAZARD_USED; // keep perp spawned
+    if (state->mode_128k == 0)
+      start_chatter(state, 0xFF, chatterblk_start_stage);
+
+    for (;;) {
+      drive_sfx(state);
+      keyscan(state);
+      tick(state);
+      check_user_input(state);
+      read_map(state);
+      if (handle_perp_caught(state))
+        break; // Conv: Original would POP and goto main_loop to cause a restart
+      move_hero_car(state);
+      spawn_cars(state);
+      cycle_counters(state);
+      play_engine_or_siren_sfx_hook(state);
+      build_height_table(state);
+      scroll_horizon(state);
+      play_engine_or_siren_sfx_hook(state);
+      layout_road(state);
+      play_engine_or_siren_sfx_hook(state);
+      draw_road(state);
+      play_engine_or_siren_sfx_hook(state);
+      layout_objects(state);
+      prepare_tunnel(state);
+      spawn_hazards(state);
+      drive_helicopter(state);
+      choose_dirt_and_stones(state);
+      play_engine_or_siren_sfx_hook(state);
+      draw_hazards(state);
+      layout_dirt_and_stones(state);
+      play_engine_or_siren_sfx_hook(state);
+      move_helicopter(state);
+      check_scenery_collisions(state);
+      play_engine_or_siren_sfx_hook(state);
+      draw_everything_else(state);
+      play_engine_or_siren_sfx_hook(state);
+      animate_hero_car(state);
+      speed_score(state);
+      update_scoreboard(state);
+      calc_overtake_bonus(state);
+      play_engine_or_siren_sfx_hook(state);
+      drive_chatter(state);
+      draw_smash_bar(state);
+      transition(state);
+      play_engine_or_siren_sfx_hook(state);
+      draw_screen(state);
+      exit_fork(state);
+
+      if (state->test_mode) {
+        keys = 0; // TODO ~state->speccy->in(state->speccy, port_KEYBOARD_12345) & 0x1F;
+        if (keys) {
+          start_sfx(state, EFFECT_BIP, 4); /* priority 4 */
+          silence_audio_hook(state);
+
+          RR(keys); // Is bit 0 set? (key 1 to restart the level)
+          if (carry)
+            break;
+
+          RR(keys); // Is bit 1 set? (key 2 to load the next level)
+          if (carry) {
+            state->wanted_stage_number++;
+            break;
           }
 
-          state->quit_state = QUITSTATE_DONE;
-          setup_transition(state, TRANSITIONSTRIDE_FORWARD);
+          RR(keys); // Is bit 2 set? (key 3 to load the end screen)
+          if (carry) {
+            state->wanted_stage_number = 6; // stage 6
+            break;
+          }
+
+          if (state->credits < 9) // Increment credits unless maxed out at 9
+            state->credits++;
+        }
+      }
+
+      if (state->transition_control == TRANSITIONCONTROL_STOP) {
+        // Play speech when we see a 1-bit shift out of start_speech.
+        pstart_speech = &state->start_speech;
+        SRL(*pstart_speech);
+        if (carry) {
+          start_speech = *pstart_speech;
+          *pstart_speech = 0;
+          play_speech_hook(state, start_speech);
+        } else {
+          quit_state = state->quit_state;
+          if (quit_state > 0) {
+            // Quitting the game is in progress.
+            if (quit_state == QUITSTATE_START) {
+              escape_scene(state); // exit via
+              return;
+            }
+
+            state->quit_state = QUITSTATE_DONE;
+            setup_transition(state, TRANSITIONSTRIDE_FORWARD);
+          }
         }
       }
     }
@@ -471,15 +479,14 @@ void run_pregame_screen(chqstate_t *state)
   clear_playfield_set_attrs(state);
   // Reset the counter in #R$85E4 that reveals the perp's car
   state->pregame_car_revealed_height = 0;
-  // PROBLEM: This passes stage data into start_chatter which expects the
-  // altered format...
   start_chatter(state, 0xFF, state->stage->addrof_perp_description);
 
-  // Conv: Loop factored out
+  // Conv: Pregame loop extracted (below)
 
   // Conv: Dead code removed
 }
 
+// $85A8
 int run_pregame_screen_loop(chqstate_t *state)
 {
   draw_pregame(state);
@@ -740,20 +747,15 @@ void escape_scene(chqstate_t *state)
     transition(state);
     draw_screen(state);
 
-    // Loop to es_loop unless the tunnel has appeared
-    if (state->SM_C161 == 0)
+    // Loop unless the tunnel has appeared - and is right size?
+    if (state->SM_C161 == 0 || state->SM_C15E >= 7)
       continue;
 
-    // Tunnel has appeared.
-    if (state->SM_C15E >= 7)
-      continue;
-
-    if (state->hazards[0].distance == 5) {
-      // Activate the three barriers
+    // Activate the three barriers once close enough
+    if (state->hazards[0].distance == 5)
       state->hazards[1].TBD7 =
         state->hazards[2].TBD7 =
           state->hazards[3].TBD7 = 0xFF;
-    }
 
     state->speed = 0; // Set speed to zero [speed of camera]
 
@@ -774,7 +776,6 @@ void set_up_stage(chqstate_t        *state,
                   const scenedata_t *scene_data)
 {
   u8  iterations;   // was B
-  u8 *pfastcounter; // was HL
 
   memset(&state->road_buffer[0], 0, 256);
   state->st         = saved_game_state;
@@ -791,29 +792,23 @@ void set_up_stage(chqstate_t        *state,
     0; // initialised strangely, presumed to be zero (needs checking)
   state->horizon_table_e34b[2] = 0;
 
-#if 0
-  // NOP some things TBD
-  state->SM_8F82 = 0;
-  //$8F83 = 0; // first one covers it all
-  //$8F84 = 0;
-
-  // NOP heli and tunnel drawing calls
+  // Disable the helicopter and tunnel drawing calls in draw_everything_else
+  state->SM_8F82 = 0; // draw tunnel call
   state->SM_8FA4 = 0; // draw heli call
   state->SM_8FA7 = 0; // draw tunnel call
 
-  state->SM_C058 = 0; // ?
-  state->SM_B063 = 0;
-#endif
+  state->SM_C058 = 0; // clear current hazard?
+  state->SM_B063 = 0; // clear jump counter?
+
   state->hazards[0].lod_addr = state->stage->lods_perp_car;
 
   // Conv: Duplicate work removed.
 
   // Run the map reader 32 times [enough to draw the screen?]
   iterations = 32;
-  do {
-    pfastcounter = &state->fast_counter;
-    rm_cycle_buffer_offset(state, pfastcounter);
-  } while (--iterations > 0);
+  do
+    rm_cycle_buffer_offset(state, &state->fast_counter);
+  while (--iterations > 0);
 
   // Disallow spawning
   state->allow_spawning = 0;
@@ -822,8 +817,8 @@ void set_up_stage(chqstate_t        *state,
 
   clear_playfield_set_attrs(state);
   // Clear the lights' BRIGHT bit
-  reset_lights(ADDRTOSCREEN(0x5820));
-  reset_lights(ADDRTOSCREEN(0x583B));
+  set_up_stage_reset_lights(ADDRTOSCREEN(0x5820));
+  set_up_stage_reset_lights(ADDRTOSCREEN(0x583B));
 
   silence_audio_hook(state);
   update_scoreboard(state); // exit via
@@ -832,7 +827,7 @@ void set_up_stage(chqstate_t        *state,
 // $8860 (pulled out of set_up_stage above)
 //
 // attrptr - was HL
-void reset_lights(u8 *attrptr)
+void set_up_stage_reset_lights(u8 *attrptr)
 {
   int rows; // was C
   int cols; // was B
@@ -873,7 +868,7 @@ void check_user_input(chqstate_t *state)
   }
 
   if ((input & USERINPUT_PAUSE) == 0) {
-    // Turbo pressed
+    // (If it's not pause it's...) Turbo pressed
     pboost = &state->boost;
     if (*pboost > 0 || state->st.turbos == 0)
       return; // already boosting or no turbos remain
@@ -934,41 +929,181 @@ void clear_playfield(chqstate_t *state)
 // priority - was C
 void start_sfx(chqstate_t *state, u8 index, u8 priority)
 {
+  u8 curr_priority; // was A
+
+  curr_priority = state->sfx_priority;
+  if (curr_priority == 0 || curr_priority >= priority) {
+    state->sfx_index    = index;
+    state->sfx_priority = priority;
+  }
 }
 
 // $8903
 void drive_sfx(chqstate_t *state)
 {
+  // $893C
+  static const struct sfxtab {
+    u8     arg1;
+    u8     arg2;
+    void (*handler)(chqstate_t *state, u8 arg1, u8 arg2);
+  } sfx_table[9] = {
+    { 0x64, 0x01, sfx_cornering            },
+    { 0x08, 0x00, sfx_thud                 },
+    { 0x08, 0x00, sfx_crash                },
+    { 0x0C, 0x00, sfx_crash                },
+    { 0x03, 0x00, sfx_thud                 },
+    { 0x1A, 0x04, sfx_cornering_loop_outer },
+    { 0x04, 0x78, sfx_cornering_loop_outer },
+    { 0x78, 0x78, sfx_bipbow               },
+    { 0xC8, 0xC8, sfx_bipbow               },
+  };
+
+  int                  index; // was A
+  const struct sfxtab *tab;   // was HL
+
+  if (state->tunnel_sfx == 0) {
+    state->var_a23d |= state->var_a23c;
+    if (state->var_a23d)
+      start_sfx(state, EFFECT_CORNERING, 4); /* priority 4 */
+  }
+
+  play_engine_sfx_hook(state);
+  play_engine_or_siren_sfx_hook(state);
+  write_audio_registers_hook(state);
+
+  if (state->sfx_index == 0)
+    return;
+
+  state->sfx_index    = 0;
+  state->sfx_priority = 0;
+
+  tab = &sfx_table[index - 1];
+  tab->handler(state, tab->arg1, tab->arg2);
 }
 
 // $8960
 //
-// param - was D
-void sfx_crash(chqstate_t *state, u8 param)
+// param1 - was D
+// param2 - was E
+void sfx_crash(chqstate_t *state, u8 param1, u8 param2)
 {
+  int  carry = 0;
+  u8  *tab; // was HL
+  int  C;   // was C
+  int  B;   // was B
+  int  A;   // was A
+
+  tab = &state->sfx_crash_table[0];
+  C  = 93; // NELEMS(sfx_crash_table);
+  do {
+    B = param1;
+    do {
+      A = 1 << 4; // EAR bit
+      if (*tab & (1 << 7))
+        A &= ~(1 << 4);
+      // OUT ($FE),A
+      RLC(*tab);
+      // NOP (twice)
+    } while (--B > 0);
+    tab++;
+  } while (--C > 0);
 }
 
 // $89D9
 //
-// param - was D
-void sfx_thud(chqstate_t *state, u8 param)
+// param1 - was D
+// param2 - was E
+void sfx_thud(chqstate_t *state, u8 param1, u8 param2)
 {
+  // $89EF
+  static const u8 sfx_thud_table[32] = {
+    0x02, 0x07, 0x05, 0x02, 0x04, 0x0A, 0x01, 0x04,
+    0x09, 0x09, 0x06, 0x45, 0x01, 0x01, 0x04, 0x03,
+    0x01, 0x03, 0x31, 0x04, 0x25, 0x02, 0x01, 0xBD,
+    0x8E, 0xED, 0x01, 0x01, 0x01, 0x06, 0x07, 0x01
+  };
+
+  int       C;
+  const u8 *HL;
+  u8        A;
+  u8        B;
+  u8        E;
+
+  C = 32; // NELEMS(sfx_thud_table);
+  HL = &sfx_thud_table[0];
+  A = 0;
+  do {
+    B = *HL;
+    do {
+      // OUT $(FE),A
+      E = param1;
+      do {/*delay*/} while (--E > 0);
+    } while (--B > 0);
+    A ^= 16; // EAR bit
+    HL++;
+  } while (--C > 0);
 }
 
 // $8A0F
 //
-// param - was D
+// param1 - was D
 // param2 - was E
-void sfx_cornering(chqstate_t *state, u8 param, u8 param2)
+void sfx_cornering(chqstate_t *state, u8 param1, u8 param2)
 {
+  u8 A;
+
+  A = state->SM_8A0F ^ 1;
+  state->SM_8A0F = A;
+  if (A)
+    return;
+
+  sfx_cornering_loop_outer(state, param1, param2); // was fallthrough
+}
+
+void sfx_cornering_loop_outer(chqstate_t *state, u8 param1, u8 param2)
+{
+  u8 C;
+  u8 B;
+
+  do {
+    C = param2;
+    do {
+      if (rng(state) & (1 << 4)) {
+        B = 24 - param1;
+        do {/*delay*/} while (--B > 0);
+        // OUT ($FE),8 + 16; // EAR + MIC bits
+        B = param1;
+        do {/*delay*/} while (--B > 0);
+        // OUT ($FE),0
+      }
+    } while (--C > 0);
+  } while (--param1 > 0);
 }
 
 // $8A36
 //
-// param - was D
+// param1 - was D
 // param2 - was E
-void sfx_bipbow(chqstate_t *state, u8 param, u8 param2)
+void sfx_bipbow(chqstate_t *state, u8 param1, u8 param2)
 {
+  u8 C;
+  u8 H;
+  u8 L;
+  u8 B;
+
+  C = 20;
+  H = L = 5;
+  do {
+    do {
+      do {/* delay */} while (--param1);
+      param1 = param2;
+      B = 24 - C; do {/* delay */} while (--B);
+      // OUT ($FE),8 + 16; // EAR + MIC bits
+      B = C; do {/* delay */} while (--B);
+      // OUT ($FE),0
+    } while (--H > 0);
+    H = L;
+  } while (--C > 0);
 }
 
 // $8A57
@@ -2499,7 +2634,7 @@ print_continue:
   A = L;
   RR(A);
   effect = (carry) ? EFFECT_BIP : EFFECT_BOW;
-  start_sfx(state, effect, 1);  // 1 for high priority
+  start_sfx(state, effect, 1); /* priority 1 => high */
   A = L;
   if (A == 0) {
     state->quit_state    = QUITSTATE_START;

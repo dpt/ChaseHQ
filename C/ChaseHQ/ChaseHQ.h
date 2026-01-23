@@ -420,12 +420,14 @@ void chasehq_reset_state(chqstate_t *state);
 
 // TODO: Ideally all of these will become static in the long run.
 
+void end_screen(chqstate_t *state);
+
 void load_stage(chqstate_t *state);
 
 void setup_engine_sfx_48k(chqstate_t *state);
 void play_engine_sfx_48k(chqstate_t *state);
 
-void attract_mode(chqstate_t *state);
+void attract_mode_48k(chqstate_t *state);
 
 void start_siren_hook(chqstate_t *state);
 void play_engine_or_siren_sfx_hook(chqstate_t *state);
@@ -451,8 +453,7 @@ void escape_scene(chqstate_t *state);
 
 void set_up_stage(chqstate_t        *state,
                   const scenedata_t *scene_data);
-
-void reset_lights(u8 *attrptr);
+void set_up_stage_reset_lights(u8 *attrptr);
 
 void check_user_input(chqstate_t *state);
 void check_user_input_quit_key(chqstate_t *state);
@@ -462,10 +463,11 @@ void clear_playfield(chqstate_t *state);
 
 void start_sfx(chqstate_t *state, u8 index, u8 priority);
 void drive_sfx(chqstate_t *state);
-void sfx_crash(chqstate_t *state, u8 param);
-void sfx_thud(chqstate_t *state, u8 param);
-void sfx_cornering(chqstate_t *state, u8 param, u8 param2);
-void sfx_bipbow(chqstate_t *state, u8 param, u8 param2);
+void sfx_crash(chqstate_t *state, u8 param1, u8 param2);
+void sfx_thud(chqstate_t *state, u8 param1, u8 param2);
+void sfx_cornering(chqstate_t *state, u8 param1, u8 param2);
+void sfx_cornering_loop_outer(chqstate_t *state, u8 param1, u8 param2);
+void sfx_bipbow(chqstate_t *state, u8 param1, u8 param2);
 
 int handle_perp_caught(chqstate_t *state);
 void hpc_set_perp_speed(chqstate_t *state, u16 speed);

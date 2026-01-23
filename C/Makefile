@@ -14,7 +14,7 @@ clean:
 
 .PHONY: fmt
 fmt:
-	astyle --project=.astylerc *.[ch]
+	astyle --project=.astylerc --recursive *.c,*.h
 
 %.d: %.c
 	@set -e; rm -f $@; \
