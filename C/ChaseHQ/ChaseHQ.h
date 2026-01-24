@@ -32,6 +32,8 @@
 #define SCREENTOOFFSET(ptr)   ((ptr) - &state->screen[0])
 // Return byte offset of backbuffer[] pointer.
 #define BACKBUFTOOFFSET(ptr)  ((ptr) - &state->backbuffer[0])
+// Return a Z80 address of backbuffer[] pointer.
+#define BACKBUFTOADDR(ptr)    (BACKBUFFER_START_ADDRESS + BACKBUFTOOFFSET(ptr))
 
 // Return screen[] pointer given byte offset.
 #define OFFSETTOSCREEN(off)   (&state->screen[off])
@@ -507,14 +509,14 @@ void draw_everything_else(chqstate_t *state);
 
 void draw_overhead(chqstate_t *state);
 
-void draw_stretchy_object_left(chqstate_t *state);
-void draw_stretchy_object_right(chqstate_t *state);
+void draw_stretchy_object_left(chqstate_t *state, const void *arg);
+void draw_stretchy_object_right(chqstate_t *state, const void *arg);
 
-void draw_tunnel_light_left(chqstate_t *state);
-void draw_tunnel_light_right(chqstate_t *state);
+void draw_tunnel_light_left(chqstate_t *state, const void *arg);
+void draw_tunnel_light_right(chqstate_t *state, const void *arg);
 
-void draw_object_left(chqstate_t *state);
-void draw_object_right(chqstate_t *state);
+void draw_object_left(chqstate_t *state, const void *arg);
+void draw_object_right(chqstate_t *state, const void *arg);
 
 void plot_sprite(chqstate_t *state,
                  u8          width_bytes,
@@ -675,12 +677,49 @@ void check_hazard_collisions(chqstate_t *state);
 u8 check_collision(chqstate_t *state, u8 D, hazard_t *hazard);
 
 void draw_hazards(chqstate_t *state);
+void dh_aecf(chqstate_t *state);
 
 hazard_handler_t no_op;
 
 void move_hero_car(chqstate_t *state);
 
 void animate_hero_car(chqstate_t *state);
+
+void start_chase(chqstate_t *state);
+
+void smash(chqstate_t *state);
+
+void draw_debris(chqstate_t *state);
+
+void draw_car(chqstate_t *state);
+
+void draw_car_part(chqstate_t *state);
+
+void draw_smoke(chqstate_t *state);
+
+void draw_cherry(chqstate_t *state);
+
+void draw_crash(chqstate_t *state);
+
+void draw_part(chqstate_t *state);
+void draw_part_entry2(chqstate_t *state,
+                      u8          height,
+                      u8          width,
+                      u8          y,
+                      u8          x,
+                      const u8   *bitmap,
+                      u8          flags);
+void draw_part_entry3(chqstate_t *state);
+
+void plot_masked_sprite(chqstate_t *state);
+
+void pms_entry(chqstate_t *state);
+
+void plot_masked_sprite_flipped(chqstate_t *state);
+
+void plot_masked_sprite_flipped_entry2(chqstate_t *state);
+
+void plot_masked_sprite_variant(chqstate_t *state);
 
 void scroll_horizon(chqstate_t *state);
 

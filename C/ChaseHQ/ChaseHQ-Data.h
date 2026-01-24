@@ -145,6 +145,17 @@ const u8 hazard_pos_speed[3 * 4];
 const u8 ledfont[10 * 16];
 const u8 minifont[31 * 6];
 
+const lod_t fire1_defns[6];
+const lod_t fire2_defns[6];
+const lod_t fire3_defns[6];
+const lod_t fire4_defns[6];
+const lod_t fire5_defns[6];
+const lod_t fire6_defns[6];
+const lod_t smoke_defns[6];
+const lod_t floating_arrow_here_defn;
+const lod_t floating_arrow_left_defn;
+const lod_t floating_arrow_right_defn;
+
 const light_t tunnellight;
 const lod_t tunnellight_lods[6];
 const u8 bitmap_tunnellight_1[2 * 16];

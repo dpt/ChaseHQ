@@ -2247,6 +2247,881 @@ const u8 hazard_pos_speed[3 * 4] = {
 
 /* ----------------------------------------------------------------------- */
 
+const u8 bitmap_arrow[3 * 2 * 28] = {
+  XXXXX___, _____XXX, _______X, XXXXXXX_, XXXXXXXX, ________,
+  XX______, _____XXX, ______XX, XXXXXX__, XXXXXXXX, ________,
+  XX______, ___XXXXX, ________, XXXXXXXX, XXXXXXXX, ________,
+  XX______, ___X____, _______X, _____XX_, XXXXXXXX, ________,
+  XX______, ___X____, ______XX, ____XX__, XXXXXXXX, ________,
+  XX______, ___X____, _______X, ___XXXX_, XXXXXXXX, ________,
+  XX______, ___X____, ________, __XXXXXX, XXXXXXXX, ________,
+  XX______, ___X____, ________, ___XXXXX, _XXXXXXX, X_______,
+  XX______, ___X____, ________, ____XXXX, __XXXXXX, XX______,
+  XX______, ___X___X, ________, _____XXX, ___XXXXX, XXX_____,
+  XX______, ___X__XX, ________, X_____XX, ____XXXX, XXXX____,
+  XX______, ___X_XX_, ________, XX_____X, _____XXX, XXXXX___,
+  XX_____X, ___XXX__, ________, _XX_____, ____XXXX, XXXX____,
+  XX____XX, ___XX___, X_______, __XX____, ____XXXX, _XX_____,
+  XX___XXX, ___X____, XX______, ___XX___, _____XXX, __XX____,
+  XX__XXXX, ________, XXX_____, ____XX__, ______XX, ___XX___,
+  XX_XXXXX, ________, XXXX____, _____XX_, _______X, ____XX__,
+  XXXXXXXX, ________, XXXXX___, ______XX, ______XX, ___XX___,
+  XXXXXXXX, ________, XXXXXX__, _______X, _____XXX, X_XX____,
+  XXXXXXXX, ________, XXXXXXX_, ________, ____XXXX, XXX_____,
+  XXXXXXXX, ________, XXXXXXXX, ________, ___XXXXX, _X______,
+  XX__X_X_, ________, __X__X_X, ________, ___X_XXX, ________,
+  X_______, __XX_X_X, ________, XX_XX_X_, ______XX, XXX_X___,
+  X_______, __XX_X_X, ________, X__XXXX_, ___X__XX, XX______,
+  X_______, __XXXX_X, ________, XX_XXX__, _______X, XXX__X__,
+  X_______, __XX_X_X, ________, X__XX_X_, ___X____, XX___XX_,
+  X_______, __XX_X_X, ________, XX_XXXX_, ________, XXX__XX_,
+  XX__X_X_, ________, __X____X, ________, ___XX__X, ________
+};
+
+const u8 bitmap_cherry_light[1 * 2 * 7] = {
+  ________, _X____X_,
+  ________, _XXXXXX_,
+  ________, _XX_X_X_,
+  ________, _X_X_XX_,
+  ________, _XX_X_X_,
+  X______X, __XXXX__,
+  XX____XX, ________
+};
+
+const u8 bitmap_cherry_light_lit[3 * 2 * 14] = {
+  XXXXXXXX, ________, XXXX_XXX, ____X___, XXXXXXXX, ________,
+  XXXXXXXX, ________, XXX___XX, ___X_X__, XXXXXXXX, ________,
+  XXXXXXXX, ________, XX____XX, __XX_X__, XXXXXXXX, ________,
+  XXXXXXXX, ________, X______X, _X_X__X_, XXXXXXXX, ________,
+  XXXXXXXX, ________, X______X, _XXX_XX_, XXXXXXXX, ________,
+  XXXXX___, _____XXX, ________, XXX____X, ____XXXX, XXXX____,
+  XXXX____, ____X_X_, ________, ________, _____XXX, __X_X___,
+  XXXXX___, _____XXX, ________, XXX___XX, ____XXXX, XXXX____,
+  XXXXXXXX, ________, XX_____X, __XX_XX_, XXXXXXXX, ________,
+  XXXXXXXX, ________, XXX___XX, ___X_X__, XXXXXXXX, ________,
+  XXXXXXXX, ________, XXX___XX, ___X_X__, XXXXXXXX, ________,
+  XXXXXXXX, ________, XXX___XX, ___XXX__, XXXXXXXX, ________,
+  XXXXXXXX, ________, XXX___XX, ___X_X__, XXXXXXXX, ________,
+  XXXXXXXX, ________, XXXX_XXX, ____X___, XXXXXXXX, ________
+};
+
+const u8 bitmap_spark[3 * 2 * 20] = {
+  XXXXXXX_, _______X, XXX___XX, ___X_X__, XX_XXXXX, __X_____,
+  XXXXXX__, ______X_, __X___X_, XX_XXX_X, X___XXXX, _X_X____,
+  XXXXX_X_, _____X_X, ________, X_X_X_X_, _X_XXXXX, X_X_____,
+  XXXX___X, ____X_X_, ________, XX_X_X_X, _X_XX_XX, X_X__X__,
+  XXX_X___, ___X_XXX, ________, _X__X_X_, _______X, _X_XX_X_,
+  _X______, X_X_XX_X, ________, ________, ___X__XX, X_X_XX__,
+  ____X___, _XXX_XX_, ________, _____X__, ______XX, ___X_X__,
+  ________, XX_XX_X_, ________, _______X, ___X_X_X, _XX_X_X_,
+  XX_X____, __X_XX__, ________, ________, ____X___, ___X_X_X,
+  X_X_____, _X_X_X__, ________, X_______, _____X_X, _XX_X_X_,
+  _____X__, X_XXX_X_, ________, _____X__, ____XX_X, __XX__X_,
+  X_______, _XX_XX__, ________, _X______, ____X___, X__X_X_X,
+  XXX_XX__, ___X__X_, ________, X__X___X, _____X_X, _XX_X_X_,
+  _XXX_X__, X___X_X_, ________, _XX__X__, __X_X_XX, XX_X_X__,
+  __X_____, _X_X_X_X, ________, XX__XX_X, _______X, X_XXX_X_,
+  _XXX_X__, X___X_XX, ________, _XX_XXX_, ______XX, XXX_XX__,
+  XXX_X___, ___X_X_X, ________, XX_XX_XX, ____XXXX, X_XX____,
+  XX___X_X, __X_X_X_, _X__X___, X_XX_XX_, ___XXXXX, XXX_____,
+  XXX_XXX_, ___X___X, _____XX_, _XX_X__X, X___XXXX, _X_X____,
+  XXXXXXXX, ________, _XX_XXXX, X__X____, XX_XXXXX, __X_____
+};
+
+const u8 bitmap_cherryout_1[2 * 2 * 4] = {
+  XXXXXX__, ______XX, ___XXXXX, XXX_____,
+  XXXXXXX_, _______X, X___XXXX, _XXX____,
+  XXXXXXXX, ________, ____XXXX, XXXX____,
+  XXXXXXXX, ________, ___XXXXX, XXX_____
+};
+
+const u8 bitmap_cherryout_2[2 * 2 * 9] = {
+  XXXXXXX_, _______X, ___X_XXX, XXX_____,
+  XXXXXX_X, ______X_, ______XX, XXXXX___,
+  XXXXXXX_, _______X, ______XX, XXXXX___,
+  XXXXXXXX, ________, XX_____X, ___XXX__,
+  XXXXXXXX, ________, XXX____X, ____XX__,
+  XXXXXXXX, ________, XXX_____, ____X_X_,
+  XXXXXXXX, ________, XXXX____, ______X_,
+  XXXXXXXX, ________, XXXX___X, _____X__,
+  XXXXXXXX, ________, XXXXX_XX, ________
+};
+
+const u8 bitmap_cherryout_3[1 * 2 * 12] = {
+  _____XXX, XXXXX___,
+  ______XX, XXXXX___,
+  XX_____X, __XXXX__,
+  XX_____X, __XXXX__,
+  XX______, ___XXXX_,
+  XX______, ___XXXX_,
+  XXX____X, ____XX__,
+  XX_____X, ____XX__,
+  X______X, __XXXX__,
+  X_____XX, ___XX___,
+  _____XXX, _XXX____,
+  X___XXXX, ________
+};
+
+const u8 bitmap_turbo_1[4 * 2 * 16] = {
+  XX___XXX, __XXX___, XXXXXXXX, ________, XXXXXXXX, ________, XXXXXXXX, ________,
+  X_______, _X__XXXX, ___XXXXX, XXX_____, XXXXXXXX, ________, XXXXXXXX, ________,
+  ________, X______X, ______XX, _XXXXX__, ____XX__, XXXX__XX, _XXXXXXX, X_______,
+  ________, X___X___, ________, __XX_XXX, ________, _XXXXXXX, ___XXXXX, XXX_____,
+  X_______, _XXX____, ________, _X__XX__, ________, ____XXX_, ____XXXX, _XXX____,
+  XXXX____, ____X_X_, ________, ____X___, ________, ______XX, _____XXX, __X_X___,
+  XXXXX___, _____X__, ________, ________, ________, _______X, _____XXX, ____X___,
+  XXXXXX__, ______X_, ________, __X_____, ________, _______X, _____XXX, ____X___,
+  XXXXXX__, ______X_, ________, _X______, ________, ________, ____XXXX, __XX____,
+  XXXXXXX_, _______X, ________, X___X___, ________, ________, ___XXXXX, __X_____,
+  XXXXXXXX, ________, X_______, _XXX____, ________, ________, ____XXXX, ___X____,
+  XXXXXXXX, ________, XXX_____, ___X____, ________, _______X, ____XXXX, ___X____,
+  XXXXXXXX, ________, XXXX____, ____X__X, ________, X____XX_, ___XXXXX, X_X_____,
+  XXXXXXXX, ________, XXXXX__X, _____XX_, ________, X__XX___, __XXXXXX, XX______,
+  XXXXXXXX, ________, XXXXXXXX, ________, X_______, _XX___XX, XXXXXXXX, ________,
+  XXXXXXXX, ________, XXXXXXXX, ________, XXX___XX, ___XXX__, XXXXXXXX, ________
+};
+
+const u8 bitmap_turbo_2[4 * 2 * 16] = {
+  XX___XXX, __XXX___, XXXXXXXX, ________, XXXXXXXX, ________, XXXXXXXX, ________,
+  X_______, _X___XXX, X__XXXXX, _XX_____, XXXX____, ____XXXX, XXXXXXXX, ________,
+  ________, X_______, ______XX, X__XXX__, ________, XXXX___X, ____XXXX, XXXX____,
+  ________, X____X__, ________, __XX_XXX, ________, XX______, _____XXX, XXXXX___,
+  X_______, _XXXX___, ________, __X___XX, ________, ________, ______XX, _X_X_X__,
+  XXXXX___, _____XX_, ________, _______X, ________, ________, ______XX, _X___X__,
+  XXXXXX__, ______X_, ________, _X_____X, ________, ________, ______XX, _____X__,
+  XXXXXXX_, _______X, ________, X_______, ________, X_______, ______XX, ____XX__,
+  XXXXXXXX, ________, ________, XX______, ________, ________, _____XXX, __XXX___,
+  XXXXXXXX, ________, XX______, __X_____, ________, ________, ____XXXX, ___X____,
+  XXXXXXXX, ________, X_______, _X______, ________, ________, ____XXXX, ___X____,
+  XXXXXXXX, ________, X_______, _X___X__, ________, _______X, _____XXX, ____X___,
+  XXXXXXXX, ________, XX______, __XXX___, _______X, _____XX_, _____XXX, X___X___,
+  XXXXXXXX, ________, XXXXX___, _____XX_, ________, X__X___X, ____XXXX, X__X____,
+  XXXXXXXX, ________, XXXXXXX_, _______X, X__X___X, _XX_XXX_, ___XXXXX, XXX_____,
+  XXXXXXXX, ________, XXXXXXXX, ________, XXXXXXXX, ________, XXXXXXXX, ________
+};
+
+const u8 bitmap_turbo_3[4 * 2 * 16] = {
+  XX___XXX, __XXX___, XXXXXXXX, ________, XXXXXXXX, ________, XXXXXXXX, ________,
+  X______X, _X___XX_, _X__XXXX, X_XX____, XXXXXXXX, ________, XXXXXXXX, ________,
+  ________, X______X, ______XX, XXXXXX__, ___X___X, XXX_XXX_, ___XXXXX, XXX_____,
+  ________, X__X____, ________, ___XXXXX, ________, _XXX___X, _____XXX, XXXXX___,
+  X__X____, _XX_X_X_, ________, _____X__, ________, __X_____, ______XX, __XX_X__,
+  XXXXX___, _____XX_, ________, ____X___, ________, __X_____, _______X, ___X__X_,
+  XXXXXX__, ______X_, ________, _X__X___, ________, ________, _______X, ______X_,
+  XXXXXXX_, _______X, ________, X_______, ________, ________, ______XX, _____X__,
+  XXXXXXXX, ________, X_______, _X______, ________, ________, _______X, _____XX_,
+  XXXXXXXX, ________, X_______, _X______, ________, ________, _______X, ______X_,
+  XXXXXXXX, ________, XX______, __XX____, ________, ________, _______X, ______X_,
+  XXXXXXXX, ________, XXX_____, ___X___X, ________, X__XX__X, ______XX, ___XXX__,
+  XXXXXXXX, ________, XXXX____, ____XXXX, ________, _____XX_, ______XX, X_XXXX__,
+  XXXXXXXX, ________, XXXXXXXX, ________, ________, XX___X_X, _______X, XX____X_,
+  XXXXXXXX, ________, XXXXXXXX, ________, XX___X_X, __XXX_X_, XX_____X, __XX__X_,
+  XXXXXXXX, ________, XXXXXXXX, ________, XXXXXXXX, ________, XXX___XX, ___XXX__
+};
+
+const u8 bitmap_turbo_4[4 * 2 * 16] = {
+  XX___XXX, __XXX___, XXXXXXXX, ________, XXXXXXXX, ________, XXXXXXXX, ________,
+  X_______, _X__XXXX, ___XXXXX, XXX_____, XXXXXXXX, ________, XXXXXXXX, ________,
+  ________, X______X, ______XX, _XXXXX__, ____XX__, XXXX__XX, __XXXXXX, XX______,
+  ________, X_______, ________, _X___XXX, ________, __XXXXXX, ____XXXX, XXXX____,
+  X_______, _XXX_X__, ________, ____XX__, ________, XX_____X, _____XXX, XXX_X___,
+  XXXX____, ____X___, ________, ____X___, ________, X_______, ______XX, X____X__,
+  XXXXX___, _____XXX, ________, X_______, ________, ________, ______XX, X____X__,
+  XXXXXXX_, _______X, ________, ________, ________, ________, ______XX, _____X__,
+  XXXXXXXX, ________, ________, X__X____, ________, ________, _____XXX, __XXX___,
+  XXXXXXXX, ________, ________, XXX_____, ________, ________, ___XXXXX, __X_____,
+  XXXXXXXX, ________, X_______, _XX_X___, ________, ____X___, ____XXXX, ___X____,
+  XXXXXXXX, ________, XXX_____, ___XX___, ________, _X_XXX_X, ____XXXX, ___X____,
+  XXXXXXXX, ________, XXXXX___, _____X__, ________, X___XXXX, ___XX__X, X_X__XX_,
+  XXXXXXXX, ________, XXXXXX__, ______XX, X______X, _XXX__X_, __XX____, XX__X__X,
+  XXXXXXXX, ________, XXXXXXXX, ________, XXX___XX, ___XXX__, XXXXX___, _____X_X,
+  XXXXXXXX, ________, XXXXXXXX, ________, XXXXXXXX, ________, XXXXXX_X, ______X_
+};
+
+const u8 bitmap_hero_centre_straight[5 * 14] = {
+  XXXXXXXX, XXXXXXX_, ________, __XXXXXX, XXXXXXXX,
+  XXXXXXXX, XXXXXXX_, ________, __XXXXXX, XXXXXXXX,
+  XXXXXXXX, XXXXXXX_, ________, __XXXXXX, XXXXXXXX,
+  XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX,
+  XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX,
+  X_______, ___XXXXX, XXXXXXXX, XXXXXX__, ________,
+  _X_X_XXX, XX_XXXXX, XXXXXXXX, XXXXXX_X, XXXX_X_X,
+  X_X_X___, __XXXXXX, XXX_X_XX, XXXXXXX_, ____X_X_,
+  _X_XX___, __XXXXXX, XXX___XX, XXXXXXX_, ____XX_X,
+  XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX,
+  XXXXX_XX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXX_XXXX,
+  XXXXX__X, XXXXXXXX, XXXXXXXX, XXXXXXXX, XX__XXXX,
+  XXXXX___, ________, ________, ________, ____XXXX,
+  __XX_XXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXX_XX_
+};
+
+const u8 bitmap_hero_centre_straight_right[5 * 17] = {
+  XXXXXXX_, XX__XXXX, XXXXXXXX, XX_XX__X, XXXXXXXX,
+  XXXXXXXX, ___XX___, ________, XXX___XX, XXXXXXXX,
+  XXXXXXXX, XXXXX___, ________, XXXXXXXX, XXXXXXXX,
+  XXXXXXXX, XXXXX___, ________, XXXXXXXX, XXXXXXXX,
+  XXXXXXXX, XXXXX___, ________, XXXXXXXX, XXXXXXXX,
+  XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX,
+  XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX,
+  ________, _XXXXXXX, XXXXXXXX, XXXX____, ______XX,
+  _X_XXXXX, _XXXXXXX, XXXXXXXX, XXXX_XXX, XX_X_X_X,
+  X_X_____, XXXXXXXX, X_X_XXXX, XXXXX___, __X_X_XX,
+  _XX_____, XXXXXXXX, X___XXXX, XXXXX___, __XX_X_X,
+  XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX,
+  XXX_XXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, X_XXXXXX,
+  XXX___XX, XXXXXXXX, XXXXXXXX, XXXXXXXX, X_XXXXXX,
+  XXX_____, ________, ________, ________, __XXXXXX,
+  _XXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXX_,
+  ___XXXXX, _XXXXXXX, XX__X_X_, XXXXXXXX, ___XX___
+};
+
+const u8 bitmap_hero_centre_straight_right_hard[5 * 16] = {
+  XXXX_XX_, _XXXXXXX, XXXXXXX_, XX___XXX, XXXXXXXX,
+  XXXXX___, XXX_____, ______XX, ____XXXX, XXXXXXXX,
+  XXXXXXXX, XXX_____, ______XX, XXXXXXXX, XXXXXXXX,
+  XXXXXXXX, XXX_____, ______XX, XXXXXXXX, XXXXXXXX,
+  XXXXXXXX, XXX_____, ______XX, XXXXXXXX, XXXXXXXX,
+  XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX,
+  XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX,
+  _______X, XXXXXXXX, XXXXXXXX, XX______, ____XXXX,
+  _XXXXX_X, XXXXXXXX, XXXXXXXX, XX_XXXXX, _X_X_XXX,
+  X_____XX, XXXXXXX_, X_XXXXXX, XXX_____, X_X_XXXX,
+  X_____XX, XXXXXXX_, __XXXXXX, XXX_____, XX_X_XXX,
+  XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX,
+  X__XXXXX, XXXXXXXX, XXXXXXXX, XXXXXXX_, XXXXXXXX,
+  X____XXX, XXXXXXXX, XXXXXXXX, XXXXXXX_, _XXXXXXX,
+  X_______, ________, ________, ________, _XXXXXXX,
+  _XXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXX__XXX
+};
+
+const u8 bitmap_hero_centre_up[5 * 14] = {
+  XXXXXXXX, XXXXXXX_, ________, __XXXXXX, XXXXXXXX,
+  XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX,
+  XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX,
+  X_______, ___XXXXX, XXXXXXXX, XXXXXX__, ________,
+  _X_X_XXX, XX_XXXXX, XXXXXXXX, XXXXXX_X, XXXX_X_X,
+  X_X_X___, __XXXXXX, XXX_X_XX, XXXXXXX_, ____X_X_,
+  _X_XX___, __XXXXXX, XXX___XX, XXXXXXX_, ____XX_X,
+  XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX,
+  XXXXX_XX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXX_XXXX,
+  XXXXX_XX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXX_XXXX,
+  XXXXX___, ________, ________, ________, ____XXXX,
+  XXXXXX__, ________, ________, ________, ___XXXXX,
+  XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX,
+  __XXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXX_
+};
+
+const u8 bitmap_hero_centre_up_right[5 * 17] = {
+  XXXXXXXX, X__XX___, ________, XXXX__XX, XXXXXXXX,
+  XXXXXXXX, XXXXX___, ________, XXXXXXXX, XXXXXXXX,
+  XXXXXXXX, XXXXX___, ________, XXXXXXXX, XXXXXXXX,
+  XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX,
+  XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX,
+  ________, _XXXXXXX, XXXXXXXX, XXXX____, ______XX,
+  _X_XXXXX, _XXXXXXX, XXXXXXXX, XXXX_XXX, XX_X_X_X,
+  X_X_____, XXXXXXXX, X_X_XXXX, XXXXX___, __X_X_XX,
+  _XX_____, XXXXXXXX, X___XXXX, XXXXX___, __XX_X_X,
+  XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX,
+  XXX_XXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, X_XXXXXX,
+  XXX__XXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, X_XXXXXX,
+  XXX_____, ________, ________, ________, __XXXXXX,
+  XXXX____, ________, ________, ________, __XXXXXX,
+  XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX,
+  _XXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX,
+  ___XXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XX_XXX__
+};
+
+const u8 bitmap_hero_centre_up_right_hard[5 * 15] = {
+  XXXXXXXX, XXX_____, ______XX, XXXXXXXX, XXXXXXXX,
+  XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX,
+  XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX,
+  _______X, XXXXXXXX, XXXXXXXX, XX______, ____XXXX,
+  _XXXXX_X, XXXXXXXX, XXXXXXXX, XX_XXXXX, _X_X_XXX,
+  X_____XX, XXXXXXX_, X_XXXXXX, XXX_____, X_X_XXXX,
+  X_____XX, XXXXXXX_, __XXXXXX, XXX_____, XX_X_XXX,
+  XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX,
+  X_XXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXX_, XXXXXXXX,
+  X___XXXX, XXXXXXXX, XXXXXXXX, XXXXXXX_, XXXXXXXX,
+  X_______, ________, ________, ________, _XXXXXXX,
+  XXX_____, ________, ________, ________, _XXXXXXX,
+  _XXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX,
+  ___XXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XX__XXXX,
+  ____XXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XX__XXX_
+};
+
+const u8 bitmap_hero_centre_down[5 * 14] = {
+  XXXXXXXX, X____XXX, XXXXXXXX, XXXX____, XXXXXXXX,
+  XXXXXXXX, X_XX_XX_, ________, __XX_XX_, XXXXXXXX,
+  XXXXXXXX, XX__XXX_, ________, __XXX__X, XXXXXXXX,
+  XXXXXXXX, XXXXXXX_, ________, __XXXXXX, XXXXXXXX,
+  XXXXXXXX, XXXXXXX_, ________, __XXXXXX, XXXXXXXX,
+  XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX,
+  XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX,
+  X_______, ___XXXXX, XXXXXXXX, XXXXXX__, ________,
+  _X_X_XXX, XX_XXXXX, XXXXXXXX, XXXXXX_X, XXXX_X_X,
+  X_X_X___, __XXXXXX, XXX_X_XX, XXXXXXX_, ____X_X_,
+  _X_XX___, __XXXXXX, XXX___XX, XXXXXXX_, ____XX_X,
+  XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX,
+  XXXXX_XX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XX_XXXXX,
+  __XXX__X, XXXXXXXX, XXXXXXXX, XXXXXXXX, X__XXXX_
+};
+
+const u8 bitmap_hero_centre_down_right[5 * 16] = {
+  XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX,
+  XXXXXXXX, X__XXXXX, XXXXXXXX, XXXX__XX, XXXXXXXX,
+  XXXXXXXX, ____XXXX, XXXXXXXX, XXX____X, XXXXXXXX,
+  XXXXXXX_, XX_XX___, ________, XX_XX_XX, XXXXXXXX,
+  XXXXXXXX, __XXX___, ________, XXX__XXX, XXXXXXXX,
+  XXXXXXXX, XXXXX___, ________, XXXXXXXX, XXXXXXXX,
+  XXXXXXXX, XXXXX___, ________, XXXXXXXX, XXXXXXXX,
+  XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX,
+  XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX,
+  ________, _XXXXXXX, XXXXXXXX, XXXX____, ______XX,
+  _X_XXXXX, _XXXXXXX, XXXXXXXX, XXXX_XXX, XX_X_X_X,
+  X_X_____, XXXXXXXX, X_X_XXXX, XXXXX___, __X_X_XX,
+  _XX_____, XXXXXXXX, X___XXXX, XXXXX___, __XX_X_X,
+  XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX,
+  XXX_XXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, X_XXXXXX,
+  _XX___XX, XXXXXXXX, XXXXXXXX, XXXXXXXX, X_XXXX__
+};
+
+const u8 bitmap_hero_centre_down_right_hard[5 * 16] = {
+  XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX,
+  XXXXXXX_, _XXXXXXX, XXXXXXXX, XX__XXXX, XXXXXXXX,
+  XXXXX___, __XXXXXX, XXXXXXXX, _____XXX, XXXXXXXX,
+  XXXX_XX_, _XX_____, ______X_, XX__XXXX, XXXXXXXX,
+  XXXXX___, XXX_____, ______XX, ___XXXXX, XXXXXXXX,
+  XXXXXXXX, XXX_____, ______XX, XXXXXXXX, XXXXXXXX,
+  XXXXXXXX, XXX_____, ______XX, XXXXXXXX, XXXXXXXX,
+  XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX,
+  XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX,
+  _______X, XXXXXXXX, XXXXXXXX, XX______, ____XXXX,
+  _XXXXX_X, XXXXXXXX, XXXXXXXX, XX_XXXXX, _X_X_XXX,
+  X_____XX, XXXXXXX_, X_XXXXXX, XXX_____, X_X_XXXX,
+  X_____XX, XXXXXXX_, __XXXXXX, XXX_____, XX_X_XXX,
+  XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX,
+  X__XXXXX, XXXXXXXX, XXXXXXXX, XXXXXXX_, _XXXXXXX,
+  X____XXX, XXXXXXXX, XXXXXXXX, XXXXXXX_, _XXXXXXX
+};
+
+const u8 bitmap_hero_top_straight[5 * 2 * 9] = {
+  XX__XX__, ___X__XX, XX______, __XXXXXX, __X_X_X_, XX_X_X_X, _______X, XXXXXXX_, X__XX__X, _XX__X__,
+  XXX__X__, ____X_XX, XXX_____, ___XXXXX, XXXXXXXX, ________, X_____XX, _XXXXX__, X__X__XX, _XX_X___,
+  XXX__XX_, ____X__X, _XX_____, X__XXXXX, _XXXXXXX, X_______, ______XX, XXXXXX__, __XX__XX, XX__X___,
+  XXXX__X_, _____X_X, _XX_____, X__XXXXX, _X_____X, X_XXXXX_, ______XX, XXXXXX__, __X__XXX, XX_X____,
+  XXXXX__X, ______X_, __X_____, XX_XXXXX, _X_____X, X_XXXXX_, ______X_, XXXXXX_X, _X__XXXX, X_X_____,
+  XXXXXX__, _______X, ___X____, XXX_XXXX, XXXX_XXX, ____X___, X____X__, _XXXX_XX, ___XXXXX, XX______,
+  XXXXXXX_, ________, ________, _XXXXXXX, ________, XXXXXXXX, ________, XXXXXXXX, __XXXXXX, ________,
+  XXXXXXXX, ________, X_______, ___XXXXX, ________, XXXXXXXX, ________, XXXXXX__, XXXXXXXX, ________,
+  XXXXXXXX, ________, XXX_____, ________, ________, ________, ______XX, ________, XXXXXXXX, ________
+};
+
+const u8 bitmap_hero_bottom_straight[5 * 2 * 6] = {
+  XXX_____, ___XXXXX, XXXXXXXX, ________, XXXXXXXX, ________, XXXXXXXX, ________, X_____XX, _XXXXX__,
+  XX______, __X_____, _XXXXXXX, X_______, XXXXXXXX, ________, XXXXXXXX, ________, _______X, X_____X_,
+  X_______, _X_X_X_X, ____XXXX, _XXX____, XXXXXXXX, ________, XXXXX___, _____XXX, ________, _X_X_X_X,
+  X_______, _XXXXXXX, _____XXX, XX__X___, XXXXXXXX, ________, XXXX____, ____X__X, ________, XXXXXXXX,
+  X_______, _XXXXXXX, ________, X_XX_XXX, ________, XXXXXXXX, ________, XXXX_XX_, ________, XXXXXXXX,
+  X_______, _XXXXXXX, ________, XX__XXX_, ________, ________, ________, __XXX__X, ________, XXXXXXXX
+};
+
+const u8 bitmap_hero_left_straight[1 * 2 * 14] = {
+  XXXXXXX_, ________,
+  XXXXXXX_, ________,
+  XXXXXX__, _______X,
+  XXXXXX__, _______X,
+  XXXXX___, ______XX,
+  XXXXX___, ______XX,
+  XXXXX___, ______XX,
+  XXXXX___, ______XX,
+  XXXXX___, ______XX,
+  XXXXX___, ______XX,
+  XXXXXX__, _______X,
+  XXXXXX__, _______X,
+  XXXXXXX_, ________,
+  XXXXXXXX, ________
+};
+
+const u8 bitmap_hero_right_straight[1 * 2 * 14] = {
+  __XXXXXX, X_______,
+  __XXXXXX, X_______,
+  ___XXXXX, XX______,
+  ___XXXXX, XX______,
+  ____XXXX, XXX_____,
+  ____XXXX, XXX_____,
+  ____XXXX, _XX_____,
+  ____XXXX, XXX_____,
+  ____XXXX, _XX_____,
+  ____XXXX, XXX_____,
+  ___XXXXX, XX______,
+  ___XXXXX, XX______,
+  __XXXXXX, X_______,
+  _XXXXXXX, ________
+};
+
+const u8 bitmap_hero_top_straight_right[5 * 2 * 8] = {
+  XXX___XX, ____XX__, XXX_____, ___XXXXX, _XXXXXXX, X_______, XX____XX, __XXXX__, XXX__XXX, ___X____,
+  XXXX__XX, _____X__, XXXX____, ____XXXX, _XXXXXXX, X_______, X______X, _XXXXXX_, XX___XXX, __XX____,
+  XXXXX__X, ______X_, XXXX____, ____XXXX, __XX____, XX__XXXX, _______X, XXXXXXX_, XX__XXXX, __X_____,
+  XXXXXX__, _______X, XXXX____, ____XXXX, __XX____, XX__XXXX, _______X, XXXXXXX_, X__XXXXX, _X______,
+  XXXXXXX_, ________, _XXXX___, X____XXX, _XXXXX_X, X_____X_, XX____XX, __XXXX__, __XXXXXX, X_______,
+  XXXXXXXX, ________, ________, _XXXXXXX, ________, XXXXXXXX, ________, XXXXXXXX, _XXXXXXX, ________,
+  XXXXXXXX, ________, X_______, ___XXXXX, ________, XXXXXXXX, ________, XXXXXX__, XXXXXXXX, ________,
+  XXXXXXXX, ________, XXX_____, ________, ________, ________, ______XX, ________, XXXXXXXX, ________
+};
+
+const u8 bitmap_hero_bottom_straight_right[5 * 2 * 4] = {
+  XX_____X, __XXXXX_, XXXXXXXX, ________, XXXXXXXX, ________, XXXXXXXX, ________, _____XXX, XXXXX___,
+  X_______, _X_____X, XXXXXXXX, ________, XXXXXXXX, ________, XXXXXXX_, _______X, ______XX, _____X__,
+  ________, X_X_X_XX, ___XXXXX, XXX_____, XXXXXXXX, ________, XXX_____, ___XXXX_, _______X, X_X_XXX_,
+  ________, XXXXXXXX, ____XXXX, ___X____, XXXXXXXX, ________, XX______, __X___XX, _______X, XXXXXXX_
+};
+
+const u8 bitmap_hero_left_straight_left[1 * 2 * 13] = {
+  XXXXXXX_, ________,
+  XXXXXX__, _______X,
+  XXXXXX__, _______X,
+  XXXXX___, ______XX,
+  XXXXX___, ______X_,
+  XXXXX___, _______X,
+  XXXXX___, ______X_,
+  XXXXX___, _______X,
+  XXXXX___, ______XX,
+  XXXXXX__, _______X,
+  XXXXXX__, _______X,
+  XXXXXXX_, ________,
+  XXXXXXXX, ________
+};
+
+const u8 bitmap_hero_right_straight_right[1 * 2 * 13] = {
+  __XXXXXX, X_______,
+  ___XXXXX, XX______,
+  ____XXXX, XXX_____,
+  _____XXX, XXXX____,
+  _____XXX, XXXX____,
+  _____XXX, XXXX____,
+  _____XXX, XXXX____,
+  _____XXX, XXXX____,
+  _____XXX, XXXX____,
+  ____XXXX, XXX_____,
+  ____XXXX, XXX_____,
+  ___XXXXX, XX______,
+  __XXXXXX, ________
+};
+
+const u8 bitmap_hero_top_straight_right_hard[5 * 2 * 9] = {
+  X_______, ___XXXXX, ________, XXXXXXXX, ______X_, XXXXXX_X, X_X_____, _X_XXXXX, ___XX___, XXX__XX_,
+  XXX____X, _____XX_, X_XXXX__, _X____XX, ____XXXX, XXXX____, XXXXX___, _____XXX, __XXX__X, XX___X__,
+  XXXXX__X, ______X_, X_XXXXX_, _X_____X, ____XXXX, XXXX____, XXXXX___, _____XXX, __XX__XX, XX__X___,
+  XXXXXX__, _______X, XX_XXXX_, __X____X, _____XX_, XXXXX__X, ________, XXXXXXXX, __X__XXX, XX_X____,
+  XXXXXXX_, ________, _X_XXXX_, X_X____X, _____XX_, XXXXX__X, ________, XXXXXXXX, _X__XXXX, X_X_____,
+  XXXXXXXX, ________, ____XXXX, _XXX____, ____XXXX, XXXX____, X_XXX___, _X___XXX, X__XXXXX, _X______,
+  XXXXXXXX, ________, X_______, __XXXXXX, ________, XXXXXXXX, ________, XXXXXXXX, __XXXXXX, X_______,
+  XXXXXXXX, ________, XX______, ____XXXX, ________, XXXXXXXX, ________, XXXXXXXX, _XXXXXXX, ________,
+  XXXXXXXX, ________, XXXX____, ________, ________, ________, ________, ________, XXXXXXXX, ________
+};
+
+const u8 bitmap_hero_bottom_straight_right_hard[5 * 2 * 4] = {
+  XX____XX, __XXXX__, XXXXXXXX, ________, XXXXXXXX, ________, XXXXXXX_, _______X, ____XXXX, XXXX____,
+  X______X, _X____X_, XXXXXXXX, ________, XXXXXXXX, ________, XXXXXX__, ______X_, _____XXX, ____X___,
+  ________, X_X_XXXX, XXXXXXXX, ________, XXXXXXXX, ________, ____X___, XXXX_X_X, ______XX, _X_XXX__,
+  ________, XXXXX___, _XXXXXXX, X_______, XXXXXXX_, _______X, ________, ____XXXX, ______XX, XXXXXX__
+};
+
+const u8 bitmap_hero_left_straight_right_hard[1 * 2 * 12] = {
+  XXXXXXX_, ________,
+  XXXXXX__, _______X,
+  XXXXXX__, _______X,
+  XXXXX___, ______XX,
+  XXXXX___, ________,
+  XXXXX___, _______X,
+  XXXXX___, ______X_,
+  XXXXX___, _______X,
+  XXXXX___, ______XX,
+  XXXXX___, ______XX,
+  XXXXXX__, _______X,
+  XXXXXXX_, ________
+};
+
+const u8 bitmap_hero_right_straight_right_hard[1 * 2 * 15] = {
+  _XXXXXXX, X_______,
+  ___XXXXX, XX______,
+  ____XXXX, XXX_____,
+  _____XXX, XXXX____,
+  _____XXX, XXXX____,
+  ______XX, XXXXX___,
+  ______XX, XXXXX___,
+  ______XX, XXXXX___,
+  ______XX, XXXXX___,
+  ______XX, XXXXX___,
+  ______XX, XXXXX___,
+  ______XX, XXXXX___,
+  _____XXX, XXXX____,
+  ____XXXX, XXX_____,
+  ___XXXXX, ________
+};
+
+const u8 bitmap_hero_top_up[5 * 2 * 10] = {
+  XX___XX_, ___XX__X, ________, XXXXXXXX, ________, XXXXXXXX, ________, XXXXXXXX, __XX___X, XX__XX__,
+  XXX___X_, _____X_X, _X______, X_XXXXXX, __X_X_X_, XX_X_X_X, _______X, XXXXXXX_, __X___XX, XX_X____,
+  XXXX__X_, _____X_X, _X______, X_XXXXXX, XXXXXXXX, ________, X_____X_, _XXXXX_X, _XX__XXX, X__X____,
+  XXXXX___, ______XX, _XX_____, X__XXXXX, XXXXXXXX, ________, X_____XX, _XXXXX__, _X__XXXX, X_X_____,
+  XXXXX___, ______XX, _XX_____, X__XXXXX, _X_____X, X_XXXXX_, ______XX, XXXXXX__, ____XXXX, XXX_____,
+  XXXXXX__, _______X, __X_____, XX_XXXXX, _X_____X, X_XXXXX_, ______XX, XXXXXX__, ___XXXXX, XX______,
+  XXXXXXX_, ________, ________, XXXXXXXX, ________, XXXXXXXX, ______X_, XXXXXX_X, __XXXXXX, X_______,
+  XXXXXXXX, ________, ________, _XXXXXXX, ________, XXXXXXXX, ________, XXXXXXXX, _XXXXXXX, ________,
+  XXXXXXXX, ________, X_______, ___XXXXX, ________, XXXXXXXX, ________, XXXXXX__, XXXXXXXX, ________,
+  XXXXXXXX, ________, XXX_____, ________, ________, ________, ______XX, ________, XXXXXXXX, ________
+};
+
+const u8 bitmap_hero_bottom_up[5 * 2 * 6] = {
+  XXX_____, ___XXXXX, _X__XXXX, X_XX____, XXXXXXXX, ________, XXXXX__X, _____XX_, ______XX, XXXXXX__,
+  XX______, __X_____, ______XX, XX__XX__, XXXXXXXX, ________, XXXX____, ____X__X, _______X, X_____X_,
+  X_______, _X_X_X_X, ________, X_XX_XXX, ________, XXXXXXXX, ________, XXXX_XX_, ________, XX_X_X_X,
+  X_______, _XXXXXXX, ________, X____XX_, ________, ________, ________, __XX____, ________, XXXXXXXX,
+  X_______, _XXXXXXX, ________, XX__XXX_, ________, ________, ________, __XXX__X, ________, XXXXXXXX,
+  X_______, _XXXXXXX, ________, XXXXXXX_, ________, ________, ________, __XXXXXX, ________, XXXXXXXX
+};
+
+const u8 bitmap_hero_left_up[1 * 2 * 13] = {
+  XXXXXXX_, ________,
+  XXXXXX__, _______X,
+  XXXXXX__, _______X,
+  XXXXXX__, _______X,
+  XXXXX___, ______XX,
+  XXXXX___, ______XX,
+  XXXXX___, ______XX,
+  XXXXX___, ______XX,
+  XXXXX___, ______XX,
+  XXXXX___, ______XX,
+  XXXXXX__, _______X,
+  XXXXXX__, _______X,
+  XXXXXXX_, ________
+};
+
+const u8 bitmap_hero_right_up[1 * 2 * 14] = {
+  __XXXXXX, X_______,
+  ___XXXXX, XX______,
+  ___XXXXX, XX______,
+  ____XXXX, XXX_____,
+  ____XXXX, _XX_____,
+  ____XXXX, XXX_____,
+  ____XXXX, _XX_____,
+  ____XXXX, XXX_____,
+  ____XXXX, XXX_____,
+  ____XXXX, XXX_____,
+  ___XXXXX, XX______,
+  ___XXXXX, XX______,
+  __XXXXXX, X_______,
+  _XXXXXXX, ________
+};
+
+const u8 bitmap_hero_top_right[5 * 2 * 9] = {
+  XXX_____, _____XXX, ________, XXXXXXXX, ____X_X_, XXXX_X_X, X_______, _XXXXXXX, XXX___XX, ___X____,
+  XXXX__XX, _____X__, XXX_____, ___XXXXX, _XXXXXXX, X_______, XX____XX, __XXXX__, XX__XXXX, __X_____,
+  XXXXX__X, ______X_, XXXX____, ____XXXX, _XXXXXXX, X_______, X______X, _XXXXXX_, XX__XXXX, __X_____,
+  XXXXXX__, _______X, XXXX____, ____XXXX, __XX____, XX__XXXX, _______X, XXXXXXX_, X__XXXXX, _X______,
+  XXXXXXX_, ________, _XXX____, X___XXXX, __XX____, XX__XXXX, ________, XXXXXXXX, __XXXXXX, X_______,
+  XXXXXXXX, ________, ________, _XXXXXXX, ________, XXXXXXXX, ________, XXXXXXXX, _XXXXXXX, ________,
+  XXXXXXXX, ________, X_______, ___XXXXX, ________, XXXXXXXX, ________, XXXXXXX_, XXXXXXXX, ________,
+  XXXXXXXX, ________, XXX_____, ______XX, ________, XXXXXXXX, _______X, XXXXX___, XXXXXXXX, ________,
+  XXXXXXXX, ________, XXXXXX__, ________, ________, ________, _____XXX, ________, XXXXXXXX, ________
+};
+
+const u8 bitmap_hero_bottom_right[5 * 2 * 4] = {
+  XX______, __XXXXXX, ___XXXXX, XXX_____, XXXXXXXX, ________, XXX_____, ___XXXXX, _____XXX, XXXXX___,
+  X_______, _X_____X, ____XXXX, ___X____, XXXXXXXX, ________, XX______, __X___XX, ______XX, _____X__,
+  ________, X_X_X_X_, ________, XX__XXXX, ________, XXXXXXXX, ________, XX_XX__X, _______X, X_X_XXX_,
+  ________, XXXXXXXX, ________, ____X___, ________, ________, ________, XXX____X, _______X, XXXXXXX_
+};
+
+const u8 bitmap_hero_left_right[1 * 2 * 12] = {
+  XXXXXXX_, ________,
+  XXXXXX__, _______X,
+  XXXXXX__, ________,
+  XXXXX___, _______X,
+  XXXXX___, ______X_,
+  XXXXX___, _______X,
+  XXXXX___, ______XX,
+  XXXXX___, ______XX,
+  XXXXX___, ______XX,
+  XXXXXX__, _______X,
+  XXXXXX__, _______X,
+  XXXXXXX_, ________
+};
+
+const u8 bitmap_hero_right_right[1 * 2 * 14] = {
+  __XXXXXX, X_______,
+  ___XXXXX, XX______,
+  ____XXXX, XXX_____,
+  ____XXXX, XXX_____,
+  _____XXX, XXXX____,
+  _____XXX, XXXX____,
+  _____XXX, XXXX____,
+  _____XXX, XXXX____,
+  _____XXX, XXXX____,
+  _____XXX, XXXX____,
+  ____XXXX, XXX_____,
+  ____XXXX, XXX_____,
+  ___XXXXX, XX______,
+  __XXXXXX, ________
+};
+
+const u8 bitmap_hero_up_right_hard[5 * 2 * 9] = {
+  XXXX____, _____XXX, ________, XXXXXXXX, ______X_, XXXXXX_X, X_X_____, _X_XXXXX, _XXX___X, X___X___,
+  XXXXX__X, ______X_, X_XXXX__, _X____XX, ____XXXX, XXXX____, XXXXX___, _____XXX, _XXX__XX, X___X___,
+  XXXXXX__, _______X, X_XXXXX_, _X_____X, ____XXXX, XXXX____, XXXXX___, _____XXX, _XX__XXX, X__X____,
+  XXXXXXX_, ________, _X_XXXX_, X_X____X, _____XX_, XXXXX__X, ________, XXXXXXXX, XX__XXXX, __X_____,
+  XXXXXXXX, ________, ___XXXX_, _XX____X, _____XX_, XXXXX__X, ________, XXXXXXXX, X__XXXXX, _X______,
+  XXXXXXXX, ________, X_______, __XXXXXX, ________, XXXXXXXX, ________, XXXXXXXX, ___XXXXX, XX______,
+  XXXXXXXX, ________, XX______, ____XXXX, ________, XXXXXXXX, ________, XXXXXXXX, __XXXXXX, ________,
+  XXXXXXXX, ________, XXXX____, ________, ________, XXXXXXXX, ________, XXXXX___, XXXXXXXX, ________,
+  XXXXXXXX, ________, XXXXXXXX, ________, ________, ________, _____XXX, ________, XXXXXXXX, ________
+};
+
+const u8 bitmap_hero_bottom_right_hard[5 * 2 * 6] = {
+  XX__X___, __XX_XXX, XXXXXXXX, ________, XXXXXXXX, ________, ___XXXX_, XXX____X, ____XXXX, XXXX____,
+  X_______, _X__X___, __XXXXXX, XX______, XXXXXXX_, _______X, ________, ___XXXX_, _____XXX, ____X___,
+  ________, X_XX_XX_, ________, __XXXXXX, ________, XXXXXXX_, ________, XX___X_X, ______XX, _X_XXX__,
+  ________, XXXXX___, ________, __X_____, ________, ______XX, ________, _____XXX, ______XX, XXXXXX__,
+  ________, XXXXXXX_, ________, _XX_____, ________, ______XX, ________, XX__XXXX, _______X, XXXXXXX_,
+  ________, XXXXXXXX, ________, XXX_____, ________, ______XX, ________, XXXXXXXX, ________, XXXXXXXX
+};
+
+const u8 bitmap_hero_left_right_hard[1 * 2 * 11] = {
+  XXXXXXX_, ________,
+  XXXXXX__, _______X,
+  XXXXXX__, ________,
+  XXXXX___, _______X,
+  XXXXX___, ______X_,
+  XXXXX___, _______X,
+  XXXXX___, ______XX,
+  XXXXX___, ______XX,
+  XXXXX___, ______XX,
+  XXXXXX__, _______X,
+  XXXXXXX_, ________
+};
+
+const u8 bitmap_hero_right_right_hard[1 * 2 * 15] = {
+  ___XXXXX, XX______,
+  ____XXXX, XXX_____,
+  _____XXX, XXXX____,
+  _____XXX, XXXX____,
+  ______XX, XXXXX___,
+  ______XX, XXXXX___,
+  ______XX, XXXXX___,
+  ______XX, XXXXX___,
+  ______XX, XXXXX___,
+  ______XX, XXXXX___,
+  ______XX, XXXXX___,
+  ______XX, XXXXX___,
+  _____XXX, XXXX____,
+  ____XXXX, XX______,
+  __XXXXXX, ________
+};
+
+const u8 bitmap_hero_top_down[5 * 2 * 8] = {
+  XX______, ___XXX__, ________, ________, ________, ________, ________, ________, _______X, __XXXX__,
+  XXX_____, ____XXXX, ________, XXXXXXXX, ________, XXXXXXXX, ________, XXXXXXXX, ______XX, XXXXX___,
+  XXXX__X_, _____X_X, _XX_____, X__XXXXX, _X_____X, X_XXXXX_, _____XXX, XXXXX___, __X__XXX, XX_X____,
+  XXXXX__X, ______X_, __XX____, XX__XXXX, XXXX_XXX, ____X___, X___XXX_, _XXX___X, _X__XXXX, X_X_____,
+  XXXXXX__, _______X, ___X____, XXX_XXXX, ________, XXXXXXXX, _____X__, XXXXX_XX, ___XXXXX, XX______,
+  XXXXXXX_, ________, ________, XXXXXXXX, ________, XXXXXXXX, ________, XXXXXXXX, __XXXXXX, X_______,
+  XXXXXXXX, ________, ________, ___XXXXX, ________, XXXXXXXX, ________, XXXXXX__, _XXXXXXX, ________,
+  XXXXXXXX, ________, XXX_____, ________, ________, ________, ______XX, ________, XXXXXXXX, ________
+};
+
+const u8 bitmap_hero_bottom_down[5 * 2 * 6] = {
+  XXX_____, ___XXXXX, XXXXXXXX, ________, XXXXXXXX, ________, XXXXXXXX, ________, X_____XX, _XXXXX__,
+  XX______, __X_____, _XXXXXXX, X_______, XXXXXXXX, ________, XXXXXXXX, ________, _______X, X_____X_,
+  X_______, _X_X_X_X, __XXXXXX, _X______, XXXXXXXX, ________, XXXXXXX_, _______X, ________, _X_X_X_X,
+  X_______, _XXXXXXX, ____XXXX, XXXX____, XXXXXXXX, ________, XXXXX___, _____XXX, ________, XXXXXXXX,
+  X_______, _XXXXXXX, ________, XXXXXXXX, ________, XXXXXXXX, ________, XXXXXXXX, ________, XXXXXXXX,
+  X_______, _XXXXXXX, ________, XX__XXXX, ________, XXXXXXXX, ________, XXXXX__X, ________, XXXXXXXX
+};
+
+const u8 bitmap_hero_left_down[1 * 2 * 13] = {
+  XXXXXXX_, ________,
+  XXXXXXX_, ________,
+  XXXXXX__, _______X,
+  XXXXXX__, _______X,
+  XXXXX___, ______XX,
+  XXXXX___, ______XX,
+  XXXXX___, ______XX,
+  XXXXX___, ______XX,
+  XXXXX___, ______XX,
+  XXXXX___, ______XX,
+  XXXXXX__, _______X,
+  XXXXXX__, _______X,
+  XXXXXXX_, ________
+};
+
+const u8 bitmap_hero_right_down[1 * 2 * 14] = {
+  __XXXXXX, X_______,
+  __XXXXXX, X_______,
+  ___XXXXX, XX______,
+  ___XXXXX, XX______,
+  ____XXXX, XXX_____,
+  ____XXXX, XXX_____,
+  ____XXXX, XXX_____,
+  ____XXXX, XXX_____,
+  ____XXXX, _XX_____,
+  ____XXXX, XXX_____,
+  ___XXXXX, _X______,
+  ___XXXXX, XX______,
+  __XXXXXX, X_______,
+  _XXXXXXX, ________
+};
+
+const u8 bitmap_hero_top_down_right[5 * 2 * 8] = {
+  X_______, ___X____, ________, ________, ________, ________, ________, ________, ______XX, __XXX___,
+  XXX_____, ____XXXX, ________, XXXXXXXX, ________, XXXXXXXX, ________, XXXXXXXX, _____XXX, XXX_____,
+  XXXX___X, ______X_, XXXX____, ____XXXX, __XX____, XX__XXXX, ________, XXXXXXXX, XX__XXXX, __X_____,
+  XXXXXX__, _______X, XXXX____, ____XXXX, __XX____, XX__XXXX, _______X, XXXXXXX_, X__XXXXX, _X______,
+  XXXXXXX_, ________, _XXXX___, X____XXX, _XXXXX_X, X_____X_, XX_____X, __XXXXX_, __XXXXXX, X_______,
+  XXXXXXXX, ________, ________, _XXXXXXX, ________, XXXXXXXX, ________, XXXXXXXX, _XXXXXXX, ________,
+  XXXXXXXX, ________, X_______, ___XXXXX, ________, XXXXXXXX, ________, XXXXX___, XXXXXXXX, ________,
+  XXXXXXXX, ________, XXX_____, ________, ________, ________, _____XXX, ________, XXXXXXXX, ________
+};
+
+const u8 bitmap_hero_bottom_down_right[5 * 2 * 4] = {
+  XX_____X, __XXXXX_, XXXXXXXX, ________, XXXXXXXX, ________, XXXXXXXX, ________, _____XXX, XXXXX___,
+  X_______, _X_____X, XXXXXXXX, ________, XXXXXXXX, ________, XXXXXXX_, _______X, ______XX, _____X__,
+  ________, X_X_X_XX, _XXXXXXX, X_______, XXXXXXXX, ________, XXXXXX__, ______X_, _______X, X_X_XXX_,
+  ________, XXXXXXXX, ___XXXXX, XXX_____, XXXXXXXX, ________, XXXX____, ____XXXX, _______X, XXXXXXX_
+};
+
+const u8 bitmap_hero_left_down_right[1 * 2 * 13] = {
+  XXXXXXX_, ________,
+  XXXXXX__, _______X,
+  XXXXXX__, _______X,
+  XXXXX___, ______XX,
+  XXXXX___, ______XX,
+  XXXXX___, ______XX,
+  XXXXX___, ______X_,
+  XXXXX___, _______X,
+  XXXXX___, ______X_,
+  XXXXX___, _______X,
+  XXXXX___, ______XX,
+  XXXXXX__, _______X,
+  XXXXXXX_, ________
+};
+
+const u8 bitmap_hero_right_down_right[1 * 2 * 13] = {
+  __XXXXXX, ________,
+  ___XXXXX, XX______,
+  ____XXXX, XXX_____,
+  _____XXX, XXXX____,
+  _____XXX, XXXX____,
+  _____XXX, XXXX____,
+  _____XXX, XXXX____,
+  _____XXX, XXXX____,
+  _____XXX, XXXX____,
+  ____XXXX, XXX_____,
+  ____XXXX, XXX_____,
+  ___XXXXX, XX______,
+  __XXXXXX, ________
+};
+
+const u8 bitmap_hero_top_down_right_hard[5 * 2 * 8] = {
+  ________, X_______, ________, ________, ________, ________, ________, ________, ___XX___, XXX__XX_,
+  ________, _XXXXXXX, ________, XXXXXXXX, ________, XXXXXXXX, ________, XXXXXXXX, ___XX__X, XXX__X__,
+  X______X, ______X_, X_XXXXX_, _X_____X, _____XX_, XXXXX__X, ________, XXXXXXXX, _XXX__XX, X___X___,
+  XXXXXX__, _______X, XX_XXXX_, __X____X, _____XX_, XXXXX__X, ________, XXXXXXXX, _XX__XXX, X__X____,
+  XXXXXXX_, ________, _X_XXXXX, X_X_____, _____XXX, XXXXX___, X_XX____, _X__XXXX, X___XXXX, _XX_____,
+  XXXXXXXX, ________, ________, _XXXXXXX, ________, XXXXXXXX, ________, XXXXXXXX, ___XXXXX, X_______,
+  XXXXXXXX, ________, X_______, ___XXXXX, ________, XXXXXXXX, ________, XXXXXXXX, _XXXXXXX, ________,
+  XXXXXXXX, ________, XXX_____, ________, ________, ________, ________, ________, XXXXXXXX, ________
+};
+
+const u8 bitmap_hero_bottom_down_right_hard[5 * 2 * 4] = {
+  XX____XX, __XXXX__, XXXXXXXX, ________, XXXXXXXX, ________, XXXXXXX_, _______X, ____XXXX, XXXX____,
+  X______X, _X____X_, XXXXXXXX, ________, XXXXXXXX, ________, XXXXXX__, ______X_, _____XXX, ____X___,
+  _______X, X_X_XXX_, XXXXXXXX, ________, XXXXXXXX, ________, XXXXX___, _____X_X, ______XX, _X_XXX__,
+  ________, XXXXXXXX, ___XXXXX, XXX_____, XXXXXXXX, ________, XX______, __XXXXXX, ______XX, XXXXXX__
+};
+
+const u8 bitmap_hero_left_down_right_hard[1 * 2 * 13] = {
+  XXXXXXX_, ________,
+  XXXXXX__, _______X,
+  XXXXXX__, _______X,
+  XXXXX___, ______XX,
+  XXXXX___, ______XX,
+  XXXXX___, ______XX,
+  XXXXX___, ________,
+  XXXXX___, _______X,
+  XXXXX___, ______X_,
+  XXXXX___, _______X,
+  XXXXX___, ______XX,
+  XXXXXX__, _______X,
+  XXXXXXX_, ________
+};
+
+const u8 bitmap_hero_right_down_right_hard[1 * 2 * 15] = {
+  __XXXXXX, XX______,
+  ____XXXX, XXX_____,
+  _____XXX, XXXX____,
+  ______XX, XXXXX___,
+  ______XX, XXXXX___,
+  ______XX, XXXXX___,
+  ______XX, XXXXX___,
+  ______XX, XXXXX___,
+  ______XX, XXXXX___,
+  ______XX, XXXXX___,
+  ______XX, XXXXX___,
+  _____XXX, XXXX____,
+  ____XXXX, XXX_____,
+  ___XXXXX, X_______,
+  _XXXXXXX, ________
+};
+
+const u8 bitmap_shadow_straight[7 * 2 * 12] = {
+  XXXXXX__, ______XX, ________, XXXXXXXX, ________, XXXXXXXX, ________, XXXXXXXX, ________, XXXXXXXX, ________, XXXXXXXX, ___XXXXX, XXX_____,
+  XXXX____, ____XXXX, ________, XXXXXXXX, ________, XXXXXXXX, ________, XXXXXXXX, ________, XXXXXXXX, ________, XXXXXXXX, _____XXX, XXXXX___,
+  XXX_____, ___XXXXX, ________, XXXXXXXX, ________, XXXXXXXX, ________, XXXXXXXX, ________, XXXXXXXX, ________, XXXXXXXX, ______XX, XXXXXX__,
+  XXX_____, ___XXXXX, ________, XXXXXXXX, ________, XXXXXXXX, ________, XXXXXXXX, ________, XXXXXXXX, ________, XXXXXXXX, ______XX, XXXXXX__,
+  XXXX____, ____XXXX, ________, XXXXXXXX, ________, XXXXXXXX, ________, XXXXXXXX, ________, XXXXXXXX, ________, XXXXXXXX, _____XXX, XXXXX___,
+  XXXX____, ____XXXX, ________, XXXXXXXX, ________, XXXXXXXX, ________, XXXXXXXX, ________, XXXXXXXX, ________, XXXXXXXX, _____XXX, XXXXX___,
+  XXXXX___, _____XXX, ________, XXXXXXXX, ________, XXXXXXXX, ________, XXXXXXXX, ________, XXXXXXXX, ________, XXXXXXXX, ____XXXX, XXXX____,
+  XXXXX___, _____XXX, ________, XXXXXXXX, ________, XXXXXXXX, ________, XXXXXXXX, ________, XXXXXXXX, ________, XXXXXXXX, ____XXXX, XXXX____,
+  XXXXXX__, ______XX, ________, XXXXXXXX, ________, XXXXXXXX, ________, XXXXXXXX, ________, XXXXXXXX, ________, XXXXXXXX, ___XXXXX, XXX_____,
+  XXXXXX__, ______XX, ________, XXXXXXXX, ________, XXXXXXXX, ________, XXXXXXXX, ________, XXXXXXXX, ________, XXXXXXXX, ___XXXXX, XXX_____,
+  XXXXXXX_, _______X, ________, XXXXXXXX, ________, XXXXXXXX, ________, XXXXXXXX, ________, XXXXXXXX, ________, XXXXXXXX, __XXXXXX, XX______,
+  XXXXXXXX, ________, X_______, _XXXXXXX, ________, XXXXXXXX, ________, XXXXXXXX, ________, XXXXXXXX, ________, XXXXXXXX, XXXXXXXX, ________
+};
+
+const u8 bitmap_shadow_turn_right[7 * 2 * 12] = {
+  XXXX____, ____XXXX, ________, XXXXXXXX, ________, XXXXXXXX, ________, XXXXXXXX, ________, XXXXXXXX, ________, XXXXXXXX, ___XXXXX, XXX_____,
+  XXX_____, ___XXXXX, ________, XXXXXXXX, ________, XXXXXXXX, ________, XXXXXXXX, ________, XXXXXXXX, ________, XXXXXXXX, ____XXXX, XXXX____,
+  XXX_____, ___XXXXX, ________, XXXXXXXX, ________, XXXXXXXX, ________, XXXXXXXX, ________, XXXXXXXX, ________, XXXXXXXX, _____XXX, XXXXX___,
+  XXX_____, ___XXXXX, ________, XXXXXXXX, ________, XXXXXXXX, ________, XXXXXXXX, ________, XXXXXXXX, ________, XXXXXXXX, _____XXX, XXXXX___,
+  XXXX____, ____XXXX, ________, XXXXXXXX, ________, XXXXXXXX, ________, XXXXXXXX, ________, XXXXXXXX, ________, XXXXXXXX, _____XXX, XXXXX___,
+  XXXXX___, _____XXX, ________, XXXXXXXX, ________, XXXXXXXX, ________, XXXXXXXX, ________, XXXXXXXX, ________, XXXXXXXX, _____XXX, XXXXX___,
+  XXXXXX__, ______XX, ________, XXXXXXXX, ________, XXXXXXXX, ________, XXXXXXXX, ________, XXXXXXXX, ________, XXXXXXXX, _____XXX, XXXXX___,
+  XXXXXXX_, _______X, ________, XXXXXXXX, ________, XXXXXXXX, ________, XXXXXXXX, ________, XXXXXXXX, ________, XXXXXXXX, _____XXX, XXXXX___,
+  XXXXXXXX, ________, ________, XXXXXXXX, ________, XXXXXXXX, ________, XXXXXXXX, ________, XXXXXXXX, ________, XXXXXXXX, _____XXX, XXXXX___,
+  XXXXXXXX, ________, X_______, _XXXXXXX, ________, XXXXXXXX, ________, XXXXXXXX, ________, XXXXXXXX, ________, XXXXXXXX, _____XXX, XXXXX___,
+  XXXXXXXX, ________, XX______, __XXXXXX, ________, XXXXXXXX, ________, XXXXXXXX, ________, XXXXXXXX, ________, XXXXXXXX, ____XXXX, XXXX____,
+  XXXXXXXX, ________, XXXX____, ____XXXX, ________, XXXXXXXX, ________, XXXXXXXX, ________, XXXXXXXX, ________, XXXXXXXX, ___XXXXX, XXX_____
+};
+
+const u8 bitmap_shadow_turn_right_hard[7 * 2 * 12] = {
+  XXXXXX__, ______XX, ________, XXXXXXXX, ________, XXXXXXXX, ________, XXXXXXXX, ________, XXXXXXXX, ________, XXXXXXXX, XXXXXXXX, ________,
+  XXXX____, ____XXXX, ________, XXXXXXXX, ________, XXXXXXXX, ________, XXXXXXXX, ________, XXXXXXXX, ________, XXXXXXXX, __XXXXXX, XX______,
+  XXX_____, ___XXXXX, ________, XXXXXXXX, ________, XXXXXXXX, ________, XXXXXXXX, ________, XXXXXXXX, ________, XXXXXXXX, ___XXXXX, XXX_____,
+  XXX_____, ___XXXXX, ________, XXXXXXXX, ________, XXXXXXXX, ________, XXXXXXXX, ________, XXXXXXXX, ________, XXXXXXXX, ____XXXX, XXXX____,
+  XXXX____, ____XXXX, ________, XXXXXXXX, ________, XXXXXXXX, ________, XXXXXXXX, ________, XXXXXXXX, ________, XXXXXXXX, _____XXX, XXXXX___,
+  XXXXX___, _____XXX, ________, XXXXXXXX, ________, XXXXXXXX, ________, XXXXXXXX, ________, XXXXXXXX, ________, XXXXXXXX, _____XXX, XXXXX___,
+  XXXXXXX_, _______X, ________, XXXXXXXX, ________, XXXXXXXX, ________, XXXXXXXX, ________, XXXXXXXX, ________, XXXXXXXX, ______XX, XXXXXX__,
+  XXXXXXXX, ________, X_______, _XXXXXXX, ________, XXXXXXXX, ________, XXXXXXXX, ________, XXXXXXXX, ________, XXXXXXXX, ______XX, XXXXXX__,
+  XXXXXXXX, ________, XXX_____, ___XXXXX, ________, XXXXXXXX, ________, XXXXXXXX, ________, XXXXXXXX, ________, XXXXXXXX, _______X, XXXXXXX_,
+  XXXXXXXX, ________, XXXXX___, _____XXX, ________, XXXXXXXX, ________, XXXXXXXX, ________, XXXXXXXX, ________, XXXXXXXX, _______X, XXXXXXX_,
+  XXXXXXXX, ________, XXXXXXX_, _______X, ________, XXXXXXXX, ________, XXXXXXXX, ________, XXXXXXXX, ________, XXXXXXXX, _______X, XXXXXXX_,
+  XXXXXXXX, ________, XXXXXXXX, ________, X_______, _XXXXXXX, ________, XXXXXXXX, ________, XXXXXXXX, ________, XXXXXXXX, ______XX, XXXXXX__
+};
+
+/* ----------------------------------------------------------------------- */
+
 // $DF62
 const u8 ledfont[10 * 16] = {
   _XXXXX__,
@@ -2628,6 +3503,95 @@ const u8 minifont[31 * 6] = {
   ________,
   ________,
   ________
+};
+
+/* ----------------------------------------------------------------------- */
+
+// $E0B2
+const lod_t fire1_defns[6] = {
+  { 4, LODFLAG_DEFAULT, 16, bitmap_fire1,      bitmap_fire1       },
+  { 3, LODFLAG_MASKED,   8, bitmap_fire3,      bitmap_fire3       },
+  { 2, LODFLAG_MASKED,   5, bitmap_fire5,      bitmap_fire5s      },
+  { 2, LODFLAG_MASKED,   4, bitmap_fire5 + 4,  bitmap_fire5s + 4  },
+  { 2, LODFLAG_MASKED,   3, bitmap_fire5 + 8,  bitmap_fire5s + 8  },
+  { 2, LODFLAG_MASKED,   2, bitmap_fire5 + 12, bitmap_fire5s + 12 }
+};
+
+// $E0DC
+const lod_t fire2_defns[6] = {
+  { 4, LODFLAG_DEFAULT, 16, bitmap_fire2,      bitmap_fire2       },
+  { 3, LODFLAG_MASKED,   8, bitmap_fire4,      bitmap_fire4       },
+  { 2, LODFLAG_MASKED,   6, bitmap_fire6,      bitmap_fire6s      },
+  { 2, LODFLAG_MASKED,   5, bitmap_fire6 + 4,  bitmap_fire6s + 4  },
+  { 2, LODFLAG_MASKED,   4, bitmap_fire6 + 8,  bitmap_fire6s + 8  },
+  { 2, LODFLAG_MASKED,   3, bitmap_fire6 + 12, bitmap_fire6s + 12 }
+};
+
+// $E106
+const lod_t fire3_defns[6] = {
+  { 4, LODFLAG_DEFAULT, 11, bitmap_fire1 + 20, bitmap_fire1 + 20  },
+  { 3, LODFLAG_MASKED,   6, bitmap_fire3 + 12, bitmap_fire3 + 12  },
+  { 2, LODFLAG_MASKED,   4, bitmap_fire5 + 4,  bitmap_fire5s + 4  },
+  { 2, LODFLAG_MASKED,   3, bitmap_fire5 + 8,  bitmap_fire5s + 8  },
+  { 2, LODFLAG_MASKED,   2, bitmap_fire5 + 12, bitmap_fire5s + 12 },
+  { 2, LODFLAG_MASKED,   1, bitmap_fire5 + 16, bitmap_fire5s + 12 }
+};
+
+// $E130
+const lod_t fire4_defns[6] = {
+  { 4, LODFLAG_DEFAULT, 11, bitmap_fire2 + 20, bitmap_fire2 + 20  },
+  { 3, LODFLAG_MASKED,   6, bitmap_fire4 + 12, bitmap_fire4 + 12  },
+  { 2, LODFLAG_MASKED,   5, bitmap_fire6 + 4,  bitmap_fire6s + 4  },
+  { 2, LODFLAG_MASKED,   4, bitmap_fire6 + 8,  bitmap_fire6s + 8  },
+  { 2, LODFLAG_MASKED,   3, bitmap_fire6 + 12, bitmap_fire6s + 12 },
+  { 2, LODFLAG_MASKED,   2, bitmap_fire6 + 16, bitmap_fire6s + 16 }
+};
+
+// $E15A
+const lod_t fire5_defns[6] = {
+  { 4, LODFLAG_DEFAULT,  6, bitmap_fire1 + 40, bitmap_fire1 + 40  },
+  { 3, LODFLAG_MASKED,   3, bitmap_fire3 + 40, bitmap_fire3 + 40  },
+  { 2, LODFLAG_MASKED,   3, bitmap_fire5 + 8,  bitmap_fire5s + 8  },
+  { 2, LODFLAG_MASKED,   2, bitmap_fire5 + 12, bitmap_fire5s + 12 },
+  { 2, LODFLAG_MASKED,   1, bitmap_fire5 + 16, bitmap_fire5s + 16 },
+  { 2, LODFLAG_MASKED,   1, bitmap_fire5 + 16, bitmap_fire5s + 16 }
+};
+
+// $E184
+const lod_t fire6_defns[6] = {
+  { 4, LODFLAG_DEFAULT, 6, bitmap_fire2 + 40, bitmap_fire2 + 40  },
+  { 3, LODFLAG_MASKED,  3, bitmap_fire4 + 40, bitmap_fire4 + 40  },
+  { 2, LODFLAG_MASKED,  3, bitmap_fire6 + 12, bitmap_fire6s + 12 },
+  { 2, LODFLAG_MASKED,  2, bitmap_fire6 + 16, bitmap_fire6s + 16 },
+  { 2, LODFLAG_MASKED,  1, bitmap_fire6 + 20, bitmap_fire6s + 20 },
+  { 2, LODFLAG_MASKED,  1, bitmap_fire6 + 20, bitmap_fire6s + 20 }
+};
+
+// $E1AE
+const lod_t smoke_defns[6] = {
+  { 2, LODFLAG_MASKED, 13, bitmap_smoke1, bitmap_smoke1 },
+  { 2, LODFLAG_MASKED, 11, bitmap_smoke2, bitmap_smoke2 },
+  { 2, LODFLAG_MASKED,  9, bitmap_smoke3, bitmap_smoke3 },
+  { 1, LODFLAG_MASKED,  7, bitmap_smoke4, bitmap_smoke4 },
+  { 1, LODFLAG_MASKED,  5, bitmap_smoke5, bitmap_smoke5 },
+  { 1, LODFLAG_MASKED,  3, bitmap_smoke6, bitmap_smoke6 }
+};
+
+// $E1D8
+const lod_t floating_arrow_here_defn = {
+  3, LODFLAG_MASKED, 28, bitmap_arrow, bitmap_arrow
+};
+
+// Conv: Made these lod_t's and used NULL for the pre-shifted bitmap field.
+
+// $E1DF
+const lod_t floating_arrow_left_defn = {
+  3, LODFLAG_MASKED, 21, bitmap_arrow, NULL
+};
+
+// $E1E4
+const lod_t floating_arrow_right_defn = {
+  3, LODFLAG_MASKED | LODFLAG_FLIPPED, 21, bitmap_arrow, NULL
 };
 
 /* ----------------------------------------------------------------------- */

@@ -793,9 +793,9 @@ void set_up_stage(chqstate_t        *state,
   state->horizon_table_e34b[2] = 0;
 
   // Disable the helicopter and tunnel drawing calls in draw_everything_else
-  state->SM_8F82 = 0; // draw tunnel call
-  state->SM_8FA4 = 0; // draw heli call
-  state->SM_8FA7 = 0; // draw tunnel call
+  state->dee_draw_tunnel_1 = 0; // draw tunnel call
+  state->dee_draw_helicopter = 0; // draw heli call
+  state->dee_draw_tunnel_2 = 0; // draw tunnel call
 
   state->SM_C058 = 0; // clear current hazard?
   state->SM_B063 = 0; // clear jump counter?
@@ -1097,9 +1097,11 @@ void sfx_bipbow(chqstate_t *state, u8 param1, u8 param2)
     do {
       do {/* delay */} while (--param1);
       param1 = param2;
-      B = 24 - C; do {/* delay */} while (--B);
+      B = 24 - C;
+      do {/* delay */} while (--B);
       // OUT ($FE),8 + 16; // EAR + MIC bits
-      B = C; do {/* delay */} while (--B);
+      B = C;
+      do {/* delay */} while (--B);
       // OUT ($FE),0
     } while (--H > 0);
     H = L;
@@ -1680,7 +1682,7 @@ void draw_mugshots(chqstate_t *state)
                0xFF9C,
                &bitmap_faces[1 * FACEBYTES + FACEBITMAPBYTES]);
 
-  // TODO: Removed draw_overlay_messages(state);
+  draw_overlay_messages(state);
 }
 
 // Returns the previous row for the back buffer (visually upwards).
@@ -1692,15 +1694,19 @@ static u16 prevbufrow(u16 backbuf)
 {
   int orig;
 
+  assert(backbuf >= BACKBUFFER_START_ADDRESS);
+
   orig = backbuf;
   backbuf -= 256;
-  if ((orig & 0x0F00) == 0) {
-    backbuf += 0x1000; // re-add borrow?
-    int t = (backbuf & 0xFF) - 32;
+  if ((orig & 0x0F00) == 0) { // LLLL was zero on entry
+    backbuf += 0x1000; // 1110 -> 1111
+    int t = (backbuf & 0xFF) - 32; // decrement RRR
     backbuf = (backbuf & 0xFF00) | (t & 0xFF);
-    if (t >= 0x0100) // did carry
+    if (t < 0) // did carry - unsure if happens in practice
       backbuf -= 0x1000;
   }
+
+  assert(backbuf >= BACKBUFFER_START_ADDRESS);
   return backbuf;
 }
 
@@ -1720,12 +1726,13 @@ void draw_mugshot(chqstate_t *state,
   orig_mugshot = mugshot;
   mugshot--; // step back from attributes start to bitmap data end
   counter = FACEBITMAPBYTES;
-  backbuf -= BACKBUFFER_START_ADDRESS; // Conv: address -> offset
   for (;;) {
+    backbuf -= BACKBUFFER_START_ADDRESS; // Conv: address -> offset
     state->backbuffer[backbuf--] = *mugshot--; counter--;
     state->backbuffer[backbuf--] = *mugshot--; counter--;
     state->backbuffer[backbuf--] = *mugshot--; counter--;
     state->backbuffer[backbuf--] = *mugshot--; counter--;
+    backbuf += BACKBUFFER_START_ADDRESS; // Conv: offset -> address
     backbuf += 4; // Conv: replaces register stash
     if (counter == 0)
       break;
@@ -1801,6 +1808,116 @@ u16 draw_smash_bar_solid_bit(chqstate_t *state, int nrows, u16 buf)
 // $8F5F
 void draw_everything_else(chqstate_t *state)
 {
+  u8          *HLtable;        // was HL
+  u8          *DEtable;        // was DE
+  int          iterations;     // was B
+  u8          *IY;             // was IY
+  u8          *roadbuf;        // was HL
+  u16         *IX;             // was IX
+  u8           floating_arrow; // was A
+  u8           A;              // was A
+  const lod_t *arrow_defn;     // was HL
+  u8           Ex;             // was E
+  u8           Dy;             // was D
+  u8           Cwidth;         // was C
+  u8           Bflags;         // was B
+  u8           Edash;          // was E
+  u8           Cdash;          // was C
+  u8           Bheight;        // was B
+  const u8    *HLbitmap;       // was HL
+  u8           E;              // was E
+  const obj_t *HLobj;          // was HL
+
+  state->SM_A9E2 = &state->table_ed00[20];
+  state->SM_AECF = &state->table_e900[0];
+
+  HLtable = &state->table_e300[1]; // table of objects?
+  DEtable = &state->table_e336[0];
+  iterations = 21;
+  do {
+    *HLtable++ += 32;
+    *DEtable++ += 32;
+  } while (--iterations > 0);
+
+  IY = &state->table_e300[21];
+  if (state->dee_draw_tunnel_1)
+    draw_tunnel(state, IY);
+  IY--;
+
+  roadbuf = ROADBUFPTR(115);
+
+  IX = &state->table_ea00[88];
+  iterations = 20; // iterations
+  do {
+    if (state->n_hazards)
+      dh_aecf(state);
+
+    dust_stones_stuff(state);
+
+    if (state->dee_draw_helicopter)
+      draw_helicopter(state);
+
+    if (state->dee_draw_tunnel_2)
+      draw_tunnel(state, IY);
+
+    A = *HLtable; // fetch (object?) from right hand side
+    if (A)
+      goto right_hand_stuff;
+continue_after_right_hand_done:
+    IX += 2;
+    HLtable += 32; // FIXME needs to wrap?
+
+    A = *HLtable; // fetch (object?) from left hand side
+    if (A)
+      goto left_hand_stuff;
+continue_after_left_hand_done:
+    IX += 2;
+    HLtable -= 33; // FIXME needs to wrap
+
+    IY--;
+  } while (--iterations > 0);
+
+  if (state->dee_draw_helicopter)
+    return;
+
+  floating_arrow = state->floating_arrow;
+  if (floating_arrow == 0)
+    return;
+
+  // Draw the floating arrow
+  arrow_defn = &floating_arrow_left_defn;
+  Ex = 120; // horz pos
+  if (floating_arrow != 1) {
+    arrow_defn = &floating_arrow_right_defn;
+    Ex = 128;
+  }
+  Dy       = 48; // vert pos
+  Cwidth   = arrow_defn->width_bytes;
+  Bflags   = arrow_defn->flags >> 1; // goes in B'
+  Edash    = Cdash;
+  Cdash    = 0; // this must be passed in
+  Bheight  = arrow_defn->height;
+  HLbitmap = arrow_defn->bitmap;
+  draw_part_entry2(state, Bheight, Cwidth, Dy, Ex, HLbitmap, Bflags); // exit via
+  return;
+
+right_hand_stuff:
+  E = A;
+  if (IX[1]) // buffer offset/distance
+    goto continue_after_right_hand_done;
+
+  HLobj = &state->stage->addrof_right_hand_objects[E];
+  HLobj->handler(state, HLobj->arg);
+  goto continue_after_right_hand_done;
+
+left_hand_stuff:
+  E = A;
+  if (A != 2 && IX[1])
+    goto continue_after_left_hand_done;
+
+  HLobj = &state->stage->addrof_left_hand_objects[E];
+  HLobj->handler(state, HLobj->arg);
+  goto continue_after_left_hand_done;
 }
 
 // $9052
@@ -1809,32 +1926,32 @@ void draw_overhead(chqstate_t *state)
 }
 
 // $916C
-void draw_stretchy_object_left(chqstate_t *state)
+void draw_stretchy_object_left(chqstate_t *state, const void *arg)
 {
 }
 
 // $9171
-void draw_stretchy_object_right(chqstate_t *state)
+void draw_stretchy_object_right(chqstate_t *state, const void *arg)
 {
 }
 
 // $924D
-void draw_tunnel_light_left(chqstate_t *state)
+void draw_tunnel_light_left(chqstate_t *state, const void *arg)
 {
 }
 
 // $9252
-void draw_tunnel_light_right(chqstate_t *state)
+void draw_tunnel_light_right(chqstate_t *state, const void *arg)
 {
 }
 
 // $9278
-void draw_object_left(chqstate_t *state)
+void draw_object_left(chqstate_t *state, const void *arg)
 {
 }
 
 // $92E1
-void draw_object_right(chqstate_t *state)
+void draw_object_right(chqstate_t *state, const void *arg)
 {
 }
 
@@ -1915,7 +2032,7 @@ ps_even_body:
       *backbuf_addr++ = *SPsrc++;
       *backbuf_addr = *SPsrc++;
     }
-    backbuf_addr = OFFSETTOBACKBUF(prevbufrow(BACKBUFTOOFFSET(backbuf_orig)));
+    backbuf_addr = ADDRTOBACKBUF(prevbufrow(BACKBUFTOADDR(backbuf_orig)));
   }
 }
 
@@ -3690,6 +3807,9 @@ u8 check_collision(chqstate_t *state, u8 D, hazard_t *hazard)
 void draw_hazards(chqstate_t *state)
 {
 }
+void dh_aecf(chqstate_t *state)
+{
+}
 
 // $ADF9
 //
@@ -3705,6 +3825,92 @@ void move_hero_car(chqstate_t *state)
 
 // $B318
 void animate_hero_car(chqstate_t *state)
+{
+}
+
+// $B4CC
+void start_chase(chqstate_t *state)
+{
+}
+
+// $B4F0
+void smash(chqstate_t *state)
+{
+}
+
+// $B549
+void draw_debris(chqstate_t *state)
+{
+}
+
+// $B58E
+void draw_car(chqstate_t *state)
+{
+}
+
+// $B627
+void draw_car_part(chqstate_t *state)
+{
+}
+
+// $B648
+void draw_smoke(chqstate_t *state)
+{
+}
+
+// $B67C
+void draw_cherry(chqstate_t *state)
+{
+}
+
+// $B69E
+void draw_crash(chqstate_t *state)
+{
+}
+
+// $B6D6
+void draw_part(chqstate_t *state)
+{
+}
+
+// $B6DD
+void draw_part_entry2(chqstate_t *state,
+                      u8          height,
+                      u8          width,
+                      u8          y,
+                      u8          x,
+                      const u8   *bitmap,
+                      u8          flags)
+{
+}
+
+// $B701
+void draw_part_entry3(chqstate_t *state)
+{
+}
+
+// $B716
+void plot_masked_sprite(chqstate_t *state)
+{
+}
+
+// $B724
+void pms_entry(chqstate_t *state)
+{
+}
+
+// $B76C
+void plot_masked_sprite_flipped(chqstate_t *state)
+{
+}
+
+// $B770
+void plot_masked_sprite_flipped_entry2(chqstate_t *state)
+{
+}
+
+// $B7EF
+void plot_masked_sprite_variant(chqstate_t *state)
 {
 }
 

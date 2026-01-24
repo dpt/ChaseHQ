@@ -145,11 +145,11 @@ struct chqstate {
   u8        overlay_delay;
 
   // $8F82 (SM) in draw_everything_else
-  u8        SM_8F82; // draw tunnel call
+  u8        dee_draw_tunnel_1;
   // $8FA4 (SM) in draw_everything_else
-  u8        SM_8FA4; // draw helicopter call
+  u8        dee_draw_helicopter;
   // $8FA7 (SM) in draw_everything_else
-  u8        SM_8FA7; // draw tunnel call
+  u8        dee_draw_tunnel_2;
 
   // $9618
   u8        rng_seed[3];
@@ -366,6 +366,11 @@ struct chqstate {
 
   // $A9DF (SM) in dust_stones_stuff
   u8        SM_A9DF; // makes dust_stones_stuff run
+  // $A9E2 (SM) in dust_stones_stuff
+  u16      *SM_A9E2;
+
+  // $AED0 (SM) in draw_hazards
+  u16      *SM_AECF;
 
   // $B063 (SM) in move_hero_car
   u8        SM_B063; // jump counter
