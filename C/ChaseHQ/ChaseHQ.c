@@ -1921,8 +1921,133 @@ left_hand_stuff:
 }
 
 // $9052
-void draw_overhead(chqstate_t *state)
+//
+// B -
+// C -
+// DElod -
+// IX -
+void draw_overhead(chqstate_t  *state,
+                   u8           B,
+                   u8           C,
+                   const lod_t *DElod,
+                   u8          *IX)
 {
+#if 0
+  int          carry = 0;
+  const lod_t *HLlod;      // was HL
+  u16          DE;
+  u8           counter;    // was A
+  int          iterations; // was B
+  u8          *HLdst;
+  u8          *DEsrc;
+  u8 A;
+  const u8 *HL;
+  u8 D,E,H,L;
+  u16 IY;
+
+  // PUSH IX/DE/BC
+  if (IX[1] == 0) // buffer offset/distance
+    draw_stretchy_object_left(state, DElod);
+  // POP BC/HL/IX
+
+  HLlod = DElod; // e.g. $6F26 in Stage 3's data, loads $6F2D
+  HLlod++;
+  DE = wordat(HLlod) + 2;
+
+  counter = state->fast_counter & 0xE0;
+
+  // Scale down pattern.
+  counter = (counter - (counter >> 2) - (counter >> 4));
+  HL = &vertical_e600[counter / 22][B];
+
+  C = IY[0] - IY[0x35];
+  A = *HL;
+  L = A;
+  SRL(A);
+  A = A + L - C;
+  state->SM_90F1 = A; // Self modify 'SUB x' at $90F1
+  A = B - 1;
+  if (A >= 10)
+    A = 9;
+
+  B = A;
+  HL = DE + A * 2;
+  C = *HL;
+  HL = DE + B * 3 + 20;
+
+  D = 1;
+  A = IX[1]; // buffer offset/distance
+  if (A < 0)
+    goto do_90c4;
+  if (A)
+    return;
+
+  A = IX[0] + 24 - C;
+  if (carry)
+    goto do_90c4;
+  A -= 8;
+  if (carry)
+    goto do_90c4;
+  if (A < 8)
+    goto do_90c4;
+
+  D = A >> 3;
+
+do_90c4:
+  IX -= 2;
+  E = 0x1F;
+  A = IX[1]; // buffer offset/distance
+  if (A < 0)
+    return;
+  if (A)
+    goto do_90e4;
+
+  A = IX[0] + C;
+  if (carry)
+    goto do_90e4;
+  if (A == 0)
+    goto do_90e4;
+  if (A >= 0xF7) // -8
+    goto do_90e4;
+
+  E = A >> 3;
+
+do_90e4:
+  C = D;
+  state->SM_9115 = ~((E - C) * 2) + 61;
+
+  A = IY[0x35] - state->SM_90F1;
+  if (A < 0)
+    return;
+
+  // PUSH AF
+  A++;
+  B = *HL;
+  A -= B;
+  if (carry) {
+    A += B;
+    B = A;
+  }
+  HL++;
+  DEsrc = wordat(HL); // load bitmap?
+  // POP AF
+
+  // Build dst
+  H = (L & 0x0F) + 0xF0;
+  L = (L & 0x70) * 2 + C;
+  goto do_draw;
+
+do_continue:
+  DEsrc++;
+  if (--iterations == 0)
+    return;
+
+do_draw: // draws a span
+  memset(HLdst, *DEsrc, state->SM_9115 / 2);
+  HLdst = ADDRTOBACKBUF(prevbufrow(BACKBUFTOADDR(HLdst)));
+
+  goto do_continue;
+#endif
 }
 
 // $916C
@@ -4754,7 +4879,7 @@ void build_height_table(chqstate_t *state)
   // mapping the incoming value to the 7x22 byte tables. So fast_counter
   // indexes the rows of the table.
   orig_counter = counter; // Copy to be a multiplier later
-  counter = counter - (orig_counter >> 2) - (orig_counter >> 4);
+  counter = counter - (counter >> 2) - (counter >> 4);
 
   pvtabbase = pvtab = &vertical_e600[counter / 22][1];
   C = -multiply(orig_counter, heightbyte);

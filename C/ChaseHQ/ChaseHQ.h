@@ -507,7 +507,11 @@ u16 draw_smash_bar_solid_bit(chqstate_t *state, int nrows, u16 buf);
 
 void draw_everything_else(chqstate_t *state);
 
-void draw_overhead(chqstate_t *state);
+void draw_overhead(chqstate_t  *state,
+                   u8           B,
+                   u8           C,
+                   const lod_t *DElod,
+                   u8          *IX);
 
 void draw_stretchy_object_left(chqstate_t *state, const void *arg);
 void draw_stretchy_object_right(chqstate_t *state, const void *arg);

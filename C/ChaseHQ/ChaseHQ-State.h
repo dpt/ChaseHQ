@@ -151,6 +151,11 @@ struct chqstate {
   // $8FA7 (SM) in draw_everything_else
   u8        dee_draw_tunnel_2;
 
+  // $90F1 (SM) in draw_overhead
+  u8        SM_90F1;
+  // $9115 (SM) in draw_overhead
+  u8        SM_9115;
+
   // $9618
   u8        rng_seed[3];
 
