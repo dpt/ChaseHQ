@@ -20,7 +20,7 @@ struct obj {
   u8                hit_min;
   u8                hit_something;
   const void       *arg;
-  void (*handler)(struct chqstate *state, const void *arg);
+  obj_handler_t    *handler;
 };
 
 typedef struct stage {

@@ -55,8 +55,8 @@ static const u8 stage1_bitmap_stones_5[1 * 2 * 1];
 static const u8 stage1_bitmap_stones_5s[1 * 2 * 1];
 static const u8 stage1_bitmap_dust_1[1 * 2 * 1];
 static const u8 stage1_bitmap_dust_1s[1 * 2 * 1];
-static const stretchyset_t stage1_turn_sign_right;
-static const stretchyset_t stage1_turn_sign_left;
+static const depthset_t stage1_turn_sign_right;
+static const depthset_t stage1_turn_sign_left;
 static const lod_t stage1_turn_sign_lods[];
 static const u8 stage1_bitmap_turnsign_1[4 * 40];
 static const u8 stage1_bitmap_turnsign_2[3 * 30];
@@ -77,8 +77,8 @@ static const u8 stage1_bitmap_barrier_4[2 * 2 * 7];
 static const u8 stage1_bitmap_barrier_4s[2 * 2 * 7];
 static const stretchy_t stage1_stretchy_streetlamp_right[5];
 static const stretchy_t stage1_stretchy_streetlamp_left[5];
-static const stretchyset_t stage1_streetlamptop_right;
-static const stretchyset_t stage1_streetlamptop_left;
+static const depthset_t stage1_streetlamptop_right;
+static const depthset_t stage1_streetlamptop_left;
 static const lod_t stage1_streetlamptop_lods[5];
 static const lod_t stage1_streetlamptop_flipped_lods[5];
 static const u8 stage1_bitmap_streetlamptop_1[4 * 8];
@@ -91,8 +91,8 @@ static const u8 stage1_bitmap_streetlamptop_5[2 * 2 * 4];
 static const u8 stage1_bitmap_streetlamptop_5s[2 * 2 * 3];
 static const stretchy_t stage1_stretchy_telegraphpole_right[5];
 static const stretchy_t stage1_stretchy_telegraphpole_left[5];
-static const stretchyset_t stage1_telegraphpoletop_left;
-static const stretchyset_t stage1_telegraphpoletop_right;
+static const depthset_t stage1_telegraphpoletop_left;
+static const depthset_t stage1_telegraphpoletop_right;
 static const lod_t stage1_telegraphpoletop_lods[5];
 static const u8 stage1_bitmap_telegraphpoletop_1[3 * 13];
 static const u8 stage1_bitmap_telegraphpoletop_2[3 * 10];
@@ -104,11 +104,11 @@ static const u8 stage1_bitmap_telegraphpoletop_5[2 * 2 * 4];
 static const u8 stage1_bitmap_telegraphpoletop_5s[2 * 2 * 4];
 static const stretchy_t stage1_stretchy_tree_right[6];
 static const stretchy_t stage1_stretchy_tree_left[4];
-static const stretchyset_t stage1_tree_bottom;
-static const stretchyset_t stage1_tree_bottommiddle;
-static const stretchyset_t stage1_tree_middle;
-static const stretchyset_t stage1_tree_topmiddle;
-static const stretchyset_t stage1_tree_top;
+static const depthset_t stage1_tree_bottom;
+static const depthset_t stage1_tree_bottommiddle;
+static const depthset_t stage1_tree_middle;
+static const depthset_t stage1_tree_topmiddle;
+static const depthset_t stage1_tree_top;
 static const lod_t stage1_tree_lods[25];
 static const u8 stage1_bitmap_tree_middle_64x16[8 * 16];
 static const u8 stage1_bitmap_tree_bottom_64x5[8 * 5];
@@ -824,7 +824,7 @@ static const u8 stage1_bitmap_dust_1s[1 * 2 * 1] = {
 // Unsure if this is a stretchyset_t. It's an argument to draw_object_right/left.
 
 // $6AF6
-static const stretchyset_t stage1_turn_sign_right = {
+static const depthset_t stage1_turn_sign_right = {
   &stage1_turn_sign_lods[0],
   {
     0x24, 0x00,
@@ -841,7 +841,7 @@ static const stretchyset_t stage1_turn_sign_right = {
 };
 
 // $6B0C
-static const stretchyset_t stage1_turn_sign_left = {
+static const depthset_t stage1_turn_sign_left = {
   &stage1_turn_sign_lods[0],
   {
     0x24, 0x23,
@@ -1230,7 +1230,7 @@ static const stretchy_t stage1_stretchy_streetlamp_left[5] = {
 };
 
 // $6EEB
-static const stretchyset_t stage1_streetlamptop_right = {
+static const depthset_t stage1_streetlamptop_right = {
   &stage1_streetlamptop_lods[0],
   {
     0x10, 0x02,
@@ -1247,7 +1247,7 @@ static const stretchyset_t stage1_streetlamptop_right = {
 };
 
 // $6F01
-static const stretchyset_t stage1_streetlamptop_left = {
+static const depthset_t stage1_streetlamptop_left = {
   &stage1_streetlamptop_flipped_lods[0],
   {
     0x18, 0x02,
@@ -1381,7 +1381,7 @@ static const stretchy_t stage1_stretchy_telegraphpole_left[5] = {
 };
 
 // $6FF0
-static const stretchyset_t stage1_telegraphpoletop_left = {
+static const depthset_t stage1_telegraphpoletop_left = {
   &stage1_telegraphpoletop_lods[0],
   {
     0x20, 0x02,
@@ -1398,7 +1398,7 @@ static const stretchyset_t stage1_telegraphpoletop_left = {
 };
 
 // $7006
-static const stretchyset_t stage1_telegraphpoletop_right = {
+static const depthset_t stage1_telegraphpoletop_right = {
   &stage1_telegraphpoletop_lods[0],
   {
     0x20, 0x02,
@@ -1533,7 +1533,7 @@ static const stretchy_t stage1_stretchy_tree_left[4] = {
 };
 
 // $7110
-static const stretchyset_t stage1_tree_bottom = {
+static const depthset_t stage1_tree_bottom = {
   &stage1_tree_lods[0],
   {
     0x1C, 0x17,
@@ -1550,7 +1550,7 @@ static const stretchyset_t stage1_tree_bottom = {
 };
 
 // $7126
-static const stretchyset_t stage1_tree_bottommiddle = {
+static const depthset_t stage1_tree_bottommiddle = {
   &stage1_tree_lods[0],
   {
     0x34, 0x10,
@@ -1567,7 +1567,7 @@ static const stretchyset_t stage1_tree_bottommiddle = {
 };
 
 // $713C
-static const stretchyset_t stage1_tree_middle = {
+static const depthset_t stage1_tree_middle = {
   &stage1_tree_lods[0],
   {
     0x1C, 0x09,
@@ -1584,7 +1584,7 @@ static const stretchyset_t stage1_tree_middle = {
 };
 
 // $7152
-static const stretchyset_t stage1_tree_topmiddle = {
+static const depthset_t stage1_tree_topmiddle = {
   &stage1_tree_lods[0],
   {
     0x1C, 0x02,
@@ -1601,7 +1601,7 @@ static const stretchyset_t stage1_tree_topmiddle = {
 };
 
 // $7168
-static const stretchyset_t stage1_tree_top = {
+static const depthset_t stage1_tree_top = {
   &stage1_tree_lods[0],
   {
     0x1C, 0x64,

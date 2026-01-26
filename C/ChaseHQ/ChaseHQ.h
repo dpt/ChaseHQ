@@ -383,24 +383,19 @@ typedef struct lod {
 
 /* ----------------------------------------------------------------------- */
 
-typedef struct {
-  const lod_t *lods;
-  u8           values[20]; // TBD
-} light_t;
-
-/* ----------------------------------------------------------------------- */
-
-/// Stretchy Set offset
-/// (7 is sizeof(stretchybitmap_t)) -- use offsetof ?
+/// Depth Set offset
+/// (7 is sizeof(lod_t)) -- use offsetof ?
 #define OFFSET(N) ((N)*7+2)
 
+#define DEPTHSET_MAX (10)
+
 typedef struct {
-  const lod_t *bitmaps; // -> array of bitmaps
+  const lod_t *lods; // -> array of lods
   struct {
     u8 depth; // something depth-ish
-    u8 offset;
-  } pairs[10]; // maps depths to offsets
-} stretchyset_t;
+    u8 offset; // byte offset from 'lods'
+  } pairs[DEPTHSET_MAX]; // maps depths to offsets
+} depthset_t;
 
 // root objects (an array of these) used with routine draw_stretchy_object_left/right
 // bottom-most object is given first
@@ -409,8 +404,8 @@ typedef struct {
   // 2=>
   // 3=>repeats?
   // otherwise not sure. the value affects height.
-  u8                   n;
-  const stretchyset_t *set; // Conv: this is always present, can be NULL for
+  u8                n;
+  const depthset_t *set; // Conv: this is always present, can be NULL for
   // final entry
 } stretchy_t;
 
@@ -513,14 +508,59 @@ void draw_overhead(chqstate_t  *state,
                    const lod_t *DElod,
                    u8          *IX);
 
-void draw_stretchy_object_left(chqstate_t *state, const void *arg);
-void draw_stretchy_object_right(chqstate_t *state, const void *arg);
+typedef void obj_handler_t(struct chqstate *state,
+                           u8               Bheight_perhaps,
+                           const void      *arg,
+                           const u16       *IX,
+                           const u8        *IY);
+typedef void dso_callback_t(chqstate_t *state, u8 B, const lod_t *HL, const u16 *IX);
 
-void draw_tunnel_light_left(chqstate_t *state, const void *arg);
-void draw_tunnel_light_right(chqstate_t *state, const void *arg);
+typedef void draw_object_entrypt_t(chqstate_t *state,
+                                   u8          A,
+                                   u8          B,
+                                   const depthset_t *DE,
+                                   const u16  *IX);
 
-void draw_object_left(chqstate_t *state, const void *arg);
-void draw_object_right(chqstate_t *state, const void *arg);
+obj_handler_t draw_stretchy_object_left;
+obj_handler_t draw_stretchy_object_right;
+void draw_stretchy_object_common(chqstate_t     *state,
+                                 u8              B,
+                                 const void     *DEarg,
+                                 dso_callback_t *HLcallback,
+                                 const u16      *IX,
+                                 const u8       *IY);
+
+obj_handler_t draw_tunnel_light_left;
+obj_handler_t draw_tunnel_light_right;
+void draw_tunnel_light_common(chqstate_t            *state,
+                              u8                     B,
+                              const depthset_t      *DElight,
+                              draw_object_entrypt_t *HLcallback,
+                              const u16             *IX);
+
+obj_handler_t draw_object_left;
+void draw_object_left_entrypt(chqstate_t       *state,
+                              u8                A,
+                              u8                B,
+                              const depthset_t *DEarg,
+                              const u16        *IX);
+void draw_object_left_stretchy_entrypt(chqstate_t *state, u8 B, const lod_t *HL, const u16 *IX);
+void draw_object_left_helicopter_entrypt(chqstate_t *state, u8 A, const lod_t *HLlod);
+
+obj_handler_t draw_object_right;
+void draw_object_right_entrypt(chqstate_t      *state,
+                              u8                A,
+                              u8                B,
+                              const depthset_t *DEarg,
+                              const u16        *IX);
+void draw_object_right_stretchy_entrypt(chqstate_t *state, u8 B, const lod_t *HL, const u16 *IX);
+void draw_object_right_helicopter_entrypt(chqstate_t *state, u8 A, const lod_t *HLlod);
+
+void draw_object_930e_entrypt(chqstate_t *state);
+
+void draw_object_common(chqstate_t *state, u8 A, const lod_t *HLlod);
+
+void draw_object_9333(chqstate_t *state, int carry, u8 C, u8 E, u8 *HL, u8 *IY);
 
 void plot_sprite(chqstate_t *state,
                  u8          width_bytes,
@@ -534,12 +574,12 @@ void plot_sprite_even_entry(chqstate_t *state,
                             u8         *backbuf_addr,
                             u16         bitmap_stride,
                             const u8   *bitmap_data);
-void ps_odd(chqstate_t *state,
-            u8          width_bytes,
-            u8          height,
-            u8         *backbuf_addr,
-            u16         bitmap_stride,
-            const u8   *bitmap_data);
+void plot_sprite_odd(chqstate_t *state,
+                     u8          width_bytes,
+                     u8          height,
+                     u8         *backbuf_addr,
+                     u16         bitmap_stride,
+                     const u8   *bitmap_data);
 
 void plot_sprite_flipped(chqstate_t *state,
                          u8          width_bytes,
@@ -547,6 +587,12 @@ void plot_sprite_flipped(chqstate_t *state,
                          u8         *backbuf_addr,
                          u16         bitmap_stride,
                          const u8   *bitmap_data);
+void plot_sprite_flipped_odd(chqstate_t *state,
+                             u8          width_bytes,
+                             u8          height,
+                             u8         *backbuf_addr,
+                             u16         bitmap_stride,
+                             const u8   *bitmap_data);
 
 u8 rng(chqstate_t *state);
 

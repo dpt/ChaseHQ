@@ -1907,7 +1907,7 @@ right_hand_stuff:
     goto continue_after_right_hand_done;
 
   HLobj = &state->stage->addrof_right_hand_objects[E];
-  HLobj->handler(state, HLobj->arg);
+  HLobj->handler(state, Bheight, HLobj->arg, IX, IY);
   goto continue_after_right_hand_done;
 
 left_hand_stuff:
@@ -1916,7 +1916,7 @@ left_hand_stuff:
     goto continue_after_left_hand_done;
 
   HLobj = &state->stage->addrof_left_hand_objects[E];
-  HLobj->handler(state, HLobj->arg);
+  HLobj->handler(state, Bheight, HLobj->arg, IX, IY);
   goto continue_after_left_hand_done;
 }
 
@@ -1942,7 +1942,7 @@ void draw_overhead(chqstate_t  *state,
   u8          *DEsrc;
   u8 A;
   const u8 *HL;
-  u8 D,E,H,L;
+  u8 D, E, H, L;
   u16 IY;
 
   // PUSH IX/DE/BC
@@ -2051,33 +2051,613 @@ do_draw: // draws a span
 }
 
 // $916C
-void draw_stretchy_object_left(chqstate_t *state, const void *arg)
+void draw_stretchy_object_left(chqstate_t *state,
+                               u8          B,
+                               const void *arg,
+                               const u16  *IX,
+                               const u8   *IY)
 {
+  draw_stretchy_object_common(state,
+                              B,
+                              arg,
+                              draw_object_left_stretchy_entrypt,
+                              IX,
+                              IY);
 }
 
 // $9171
-void draw_stretchy_object_right(chqstate_t *state, const void *arg)
+void draw_stretchy_object_right(chqstate_t *state,
+                                u8          B,
+                                const void *arg,
+                                const u16  *IX,
+                                const u8   *IY)
 {
+  draw_stretchy_object_common(state,
+                              B,
+                              arg,
+                              draw_object_right_stretchy_entrypt,
+                              IX,
+                              IY);
+}
+
+// $9174
+//
+// B - was B
+// DEarg - was DE
+// HLcallback - was HL
+void draw_stretchy_object_common(chqstate_t     *state,
+                                 u8              B,
+                                 const void     *DEarg, // lod?
+                                 dso_callback_t *HLcallback,
+                                 const u16      *IX,
+                                 const u8       *IY)
+{
+#if 0
+  dso_callback_t *SM_91CD = HLcallback;
+  dso_callback_t *SM_9244 = HLcallback; // probably don't need these
+
+  int       carry = 0;
+  u8        counter; // was A
+  const u8 *HL;
+  u8        A;
+  u8        SM_91DB;
+  u16       DE;
+  u8        C;
+  u16       SM_91BA;
+  u16       BC;
+
+  counter = state->fast_counter & 0xE0;
+  counter = (counter - (counter >> 2) - (counter >> 4));
+  HL = &vertical_e600[counter / 22][0];
+  A = *HL;
+  SM_91DB = A;
+  // EX DE,HL
+  A = B;
+  if (A >= DEPTHSET_MAX)
+    A = DEPTHSET_MAX;
+  DE = A * 2 - 1;
+  C = 0;
+  SM_91BA = DE;
+
+dso_loop:
+  A = -C;
+  state->SM_933D = A;
+  B = *HL - 1;
+  if (B == 0)
+    return;
+  HL++;
+  DE = wordat(HL);
+  HL += 2;
+  // PUSH HL/IX/BC
+  // EX DE,HL
+  DE = wordat(HL); // read LOD ptr
+  BC = SM_91BA;
+  HL += BC;
+  A = *HL++;
+  HL = *HL;
+  HL += DE;
+  // POP BC
+  if (--B)
+    goto dso_dispatch;
+
+  // Zero path
+  B = *HL - 2;
+  // PUSH BC
+  B = A;
+  SM_91CD(state, B, HL, IX);
+
+dso_loop_perhaps:
+  // POP BC
+  C += B;
+  // POP IX/HL
+  goto dso_loop;
+
+dso_dispatch:
+  // EX AF,AF'
+  A = SM_91DB;
+  // Dispatch ladder
+  if (--B == 0) goto dso_case_150pc; // jump if 3
+  if (--B == 0) goto dso_case_50pc;  // jump if 4
+  if (--B == 0) goto dso_case_113pc; // jump if 5
+  if (--B == 0) goto dso_case_38pc;  // jump if 6
+  if (--B == 0) goto dso_case_75pc;  // jump if 7
+  if (--B == 0) goto dso_case_25pc;  // jump if 8
+  if (--B == 0) goto dso_continue;   // jump if 9
+  A += A;
+  goto dso_continue;
+
+dso_case_25pc:
+  // Scale A to 25%
+  A >>= 2;
+  goto dso_continue;
+
+dso_case_75pc:
+  // Scale A to 75%
+  A = (A >> 1) + (A >> 2);
+  goto dso_continue;
+
+dso_case_38pc:
+  // Scale A to 37.5%
+  A = (A >> 1) - (A >> 3);
+  goto dso_continue;
+
+dso_case_113pc:
+  // Scale A to 112.5%
+  A += (A >> 3);
+  goto dso_continue;
+
+dso_case_50pc:
+  // Scale A to 50%
+  A = (A >> 1);
+  goto dso_continue;
+
+dso_case_150pc:
+  // Scale A to 150%
+  A += (A >> 1);
+
+dso_continue:
+  A -= C;
+  if (A == 0)
+    goto dso_9224;
+  if (!carry)
+    goto dso_9226;
+
+dso_9224:
+  A = 1;
+
+dso_9226:
+  B = A;
+  // PUSH BC
+  A = IY[53] + 1 - C - B;
+  if (!carry)
+    goto dso_9232;
+  A += B;
+  B = A;
+
+dso_9232:
+  state->SM_9404 = B;
+  state->SM_9415 = *HL - 2;
+  state->SM_93C0 = 2;
+  // EX AF,AF'
+  B = A;
+  SM_9244(state, B, HL, IX);
+  state->SM_93C0 = 0;
+  goto dso_loop_perhaps;
+#endif
 }
 
 // $924D
-void draw_tunnel_light_left(chqstate_t *state, const void *arg)
+void draw_tunnel_light_left(chqstate_t  *state,
+                             u8          B,
+                             const void *DEarg,
+                             const u16  *IX,
+                             const u8   *IY)
 {
+  draw_tunnel_light_common(state, B, DEarg, draw_object_left_entrypt, IX);
 }
 
 // $9252
-void draw_tunnel_light_right(chqstate_t *state, const void *arg)
+void draw_tunnel_light_right(chqstate_t *state,
+                             u8          B,
+                             const void *DEarg,
+                             const u16  *IX,
+                             const u8   *IY)
 {
+  draw_tunnel_light_common(state, B, DEarg, draw_object_right_entrypt, IX);
+}
+
+void draw_tunnel_light_common(chqstate_t            *state,
+                              u8                     B,
+                              const depthset_t      *DElight,
+                              draw_object_entrypt_t *HLcallback,
+                              const u16             *IX)
+{
+  u8 counter; // was A
+  u8 A;
+
+  if (B >= 16)
+    return;
+
+  counter = state->fast_counter & 0xE0;
+  counter = counter - (counter >> 2) - (counter >> 4);
+  A = vertical_e600[counter / 22][B];
+  A = (A >> 2) - A;
+
+  // callback must need to take A
+  HLcallback(state, A, B, DElight, IX); // e.g. calls draw_object_left_entrypt
 }
 
 // $9278
-void draw_object_left(chqstate_t *state, const void *arg)
+void draw_object_left(chqstate_t *state,
+                      u8          B,
+                      const void *DEarg, // a depthset_t *
+                      const u16  *IX,
+                      const u8   *IY)
 {
+  draw_object_left_entrypt(state, 0, B, DEarg, IX);
+}
+
+
+// DEarg is e.g. turn_sign_left (a depthset_t)
+void draw_object_left_entrypt(chqstate_t       *state,
+                              u8                A,
+                              u8                B,
+                              const depthset_t *DEarg,
+                              const u16        *IX)
+{
+  const depthset_t *ds;    // was HL
+  const lod_t      *lods;  // was DE
+  u8                depth; // was B
+  const lod_t      *lod;   // was HL
+
+  state->SM_933D = A;
+
+  if (B >= DEPTHSET_MAX)
+    B = DEPTHSET_MAX;
+
+  ds = DEarg; // EX DE,HL - save arg address
+
+  lods  = ds->lods; // loads address of e.g. turn_sign_lods
+  depth = ds->pairs[B].depth;
+  lod   = &lods[ds->pairs[B].offset / 7];
+
+  draw_object_left_stretchy_entrypt(state, depth, lod, IX);
+}
+
+void draw_object_left_stretchy_entrypt(chqstate_t *state, u8 B, const lod_t *HL, const u16 *IX)
+{
+  u8 A;
+
+  A = IX[0] + 16 - B;
+  if ((s8) A < 0) // carry?
+    return;
+
+  draw_object_left_helicopter_entrypt(state, A, HL);
+}
+
+void draw_object_left_helicopter_entrypt(chqstate_t *state, u8 A, const lod_t *HLlod)
+{
+#if 0
+  int carry = 0;
+  u8  C;
+  u8  E;
+  u16 BC;
+  u8  B;
+  u8  D;
+
+  if (A < 8)
+    return;
+
+  C = 0;
+  E = HLlod->width_bytes << 3;
+  A -= E;
+  if (!carry) {
+    if (A >= 8) {
+      draw_object_930e_entrypt(state); // exit via
+      return;
+    }
+
+    E = HLlod->width_bytes;
+    A >>= 2;
+    state->SM_9396 = A;
+    A = E - 1;
+    BC = 0x0101;
+  } else {
+    E = HLlod->width_bytes;
+    A = (A & 0xFC) >> 2;
+    state->SM_9396 = A;
+    RR(A);
+    B = A;
+    A += E - 33;
+    if (carry || A == 0)
+      return;
+
+    D = A;
+    C = E - A;
+    A = D;
+    B = 1;
+  }
+
+  D = HLlod->flags >> 1; // checking LODFLAG_FLIPPED?
+  if (D == 0) { // was JP Z - check
+    draw_object_9333(state, carry, C, E, HLlod, IY); // exit via
+    return;
+  }
+
+  B--;
+  A++;
+  C = 0;
+  // EX AF,AF'
+  draw_object_common(state, A, HLlod);
+#endif
 }
 
 // $92E1
-void draw_object_right(chqstate_t *state, const void *arg)
+void draw_object_right(chqstate_t *state,
+                       u8          B,
+                       const void *DEarg,
+                       const u16  *IX,
+                       const u8   *IY)
 {
+  draw_object_right_entrypt(state, 0, B, DEarg, IX);
+}
+
+void draw_object_right_entrypt(chqstate_t      *state,
+                              u8                A,
+                              u8                B,
+                              const depthset_t *DEarg,
+                              const u16        *IX)
+{
+}
+
+void draw_object_right_stretchy_entrypt(chqstate_t *state, u8 B, const lod_t *HL, const u16 *IX)
+{
+}
+
+void draw_object_right_helicopter_entrypt(chqstate_t *state, u8 A, const lod_t *HLlod)
+{
+}
+
+void draw_object_930e_entrypt(chqstate_t *state)
+{
+}
+
+void draw_object_common(chqstate_t *state, u8 A, const lod_t *HLlod)
+{
+#if 0
+  int carry = 0;
+  u8  Adash;
+
+  A = ~state->SM_9396;
+  state->SM_9396 = A;
+
+  Adash = A; // EX AF,AF'
+
+  draw_object_9333(state, carry, C, E, HLlod, IY);
+#endif
+}
+
+void draw_object_9333(chqstate_t *state, int carry, u8 C, u8 E, u8 *HL, u8 *IY)
+{
+#if 0
+  u8 D;
+  u8 A;
+
+  if (carry) {
+    // EX AF,AF'
+    SLA(C);
+    SLA(E);
+    // EX AF,AF'
+  }
+
+  // EX AF,AF'
+_933d:
+  D = state->SM_933D;
+  A = IY[0] - IY[53];
+  if (A)
+    goto _9359;
+
+_9347:
+  A = IY[53] + D;
+  if (M)
+    return;
+  // PUSH AF
+  A++;
+  D = *HL;
+  A -= D;
+  if (carry)
+    _9353;
+  A = 0;
+
+_9353:
+  A += D;
+  HL++;
+  D = 1;
+  goto _9390;
+
+_9359:
+  if ((D & (1 << 7)) == 0)
+    A -= D;
+  else
+    A += D;
+
+  D = A;
+  if ((s8) A <= 0)
+    goto _9347;
+
+  A = IY[53];
+  // PUSH AF
+  A = *HL - 1 - D;
+  if (!carry)
+    goto _938d;
+  // POP AF
+  A = state->SM_93C0; // set to 0 or 2
+  if (A == 0)
+    return;
+
+  A = state->SM_933D;
+  D = *HL;
+  A -= D;
+  if (P)
+    return;
+  state->SM_933D = A;
+  A = state->SM_9404 - D;
+  if (C || Z)
+    return;
+  state->SM_9404 = A;
+  goto _933d;
+
+_938d:
+  A++;
+  D++;
+  HL++;
+
+_9390:
+  // PUSH BC,DE
+  D = A;
+  B = 0;
+  A = state->SM_9395;
+  RR(A);
+  if (!carry)
+    goto _939c;
+  HL += 2;
+_939c:
+  HL += BC;
+  state->SM_9412 = HL;
+  C = E;
+  // POP AF
+  A--;
+  if (A) { // multiplier
+    do
+      HL += BC;
+    while (--A > 0);
+  }
+
+  B = D;
+  D = 0;
+  // EXX
+  // POP BC,AF
+  D = A;
+  H = (A & 0x0F) + 0xF0;
+  A = D;
+  L = (A & 0x70) * 2 + B;
+  A = state->SM_93C0; // set to 0 or 2
+  if (A == 0)
+    goto _93d0;
+  A--;
+  if (A)
+    goto _93df;
+  // EX AF,AF'
+  if (carry)
+    goto plot_masked_sprite_variant; // exit via
+  goto _9479;
+
+_93d0:
+  // EX AF,AF'
+  if (Z) {
+    if (carry)
+      draw_part_entry3(...); // exit via
+    else
+      plot_sprite(...); // exit via
+  } else {
+    if (carry)
+      plot_masked_sprite_flipped(...); // exit via
+    else
+      plot_sprite_flipped(...); // exit via
+  }
+  return;
+
+_93df:
+  // EX AF,AF
+  if (carry)
+    goto _9436;
+  SRL(A);
+  if (carry)
+    goto _9420;
+
+  IX = 0x94C8; // base of jump table in plot_sprite...
+  A = 4 - A;
+  IX += A * 5;
+  BC = plot_sprite_even_entry;
+
+do_set_callbacks:
+  state->SM_940F = BC;
+  state->SM_941D = BC;
+  // EXX
+
+_9404:
+  A = state->SM_9404 - B;
+  if (A == 0 || carry)
+    goto _941a;
+  state->SM_9494 = A;
+  // EXX
+
+  // call e.g. plot_sprite_even_entry
+  state->SM_940F(state, IX, B, HL, DEdash, HLdash);
+
+  HL = state->SM_9412;
+  B  = state->SM_9415;
+  goto _9404; // loop
+
+_941a:
+  A += B;
+  B = A;
+  // EXX
+  goto _94b1;
+
+plot_sprite_xxx_odd:
+  A++;
+  IX = 0x951a; // ps_odd_jumptable
+  A = 4 - A;
+  BC = 5 * A;
+  IX += BC;
+  BC = plot_sprite_odd_entry;
+  goto do_set_callbacks;
+
+_9436:
+  IX = pms_jumptable;
+  A = 8 - A;
+  IX += A * 6;
+  BC = state->SM_9412;
+  state->SM_946C = BC;
+
+  state->SM_946F = state->SM_9415;
+  state->SM_945F = state->SM_9404;
+
+  Bdash = 0xF; // mask
+  // EXX
+  D = 0;
+_945f:
+  A = state->SM_945F - B;
+  if (C || Z) // maybe ((s8) A <= 0))
+    goto _9474;
+  state->SM_945F = A;
+
+  plot_masked_sprite(state, ...); // call
+
+  HL = state->SM_946C;
+  B  = 0;
+  goto _945f; // loop
+
+_9474:
+  B += A;
+  plot_masked_sprite(sprite, ...); // exit via
+  return;
+
+_9479:
+  // EX AF,AF'
+  // EXX
+  D = 0;
+  // PUSH BC,HL
+  H = D;
+  L = D;
+  A = B;
+  B = 5;
+  A--;
+  A <<= 2;
+
+  do {
+    RL(A);
+    if (carry)
+      HL += DE;
+    HL <<= 1;
+  } while (--B > 0);
+
+  RL(A);
+  if (carry)
+    HL += DE;
+
+  // POP BC
+  HL += BC;
+  // POP BC
+  D--;
+  E = -E;
+  // EXX
+  // EX AF,AF'
+
+  plot_sprite(state, Awidth_bytes, Bheight, HLbackbuf_addr,
+              DEdash_bitmap_stride, HLdash_bitmap_data);
+#endif
 }
 
 // $949C
@@ -2099,7 +2679,12 @@ void plot_sprite(chqstate_t *state,
 
   SRL(width_bytes);
   if (carry) {
-    ps_odd(state, width_bytes, height, backbuf_addr, bitmap_stride, bitmap_data);
+    plot_sprite_odd(state,
+                    width_bytes,
+                    height,
+                    backbuf_addr,
+                    bitmap_stride,
+                    bitmap_data);
     return;
   }
 
@@ -2127,7 +2712,7 @@ void plot_sprite_even_entry(chqstate_t *state,
 
   // Conv: B & C moved into prevbufrow forward
   // EXX bank
-  goto ps_even_body;
+  goto plot_sprite_even_start;
 
   for (;;) {
     // EXX bank
@@ -2136,7 +2721,7 @@ void plot_sprite_even_entry(chqstate_t *state,
 
     bitmap_data += bitmap_stride;
 
-ps_even_body:
+plot_sprite_even_start:
     SPsrc = bitmap_data;
     // EXX unbank
     backbuf_orig = backbuf_addr;
@@ -2161,12 +2746,12 @@ ps_even_body:
   }
 }
 
-void ps_odd(chqstate_t *state,
-            u8          width_bytes,
-            u8          height,
-            u8         *backbuf_addr,
-            u16         bitmap_stride,
-            const u8   *bitmap_data)
+void plot_sprite_odd(chqstate_t *state,
+                     u8          width_bytes,
+                     u8          height,
+                     u8         *backbuf_addr,
+                     u16         bitmap_stride,
+                     const u8   *bitmap_data)
 {
   int       jump_offset; // was IX
   const u8 *SPsrc;
@@ -2179,7 +2764,7 @@ void ps_odd(chqstate_t *state,
 
   // Conv: B & C moved into prevbufrow
   // EXX bank
-  goto ps_odd_body;
+  goto plot_sprite_odd_start;
 
   for (;;) {
     // EXX bank
@@ -2188,7 +2773,7 @@ void ps_odd(chqstate_t *state,
 
     bitmap_data += bitmap_stride;
 
-ps_odd_body:
+plot_sprite_odd_start:
     SPsrc = bitmap_data;
     // EXX unbank
     backbuf_orig = backbuf_addr;
@@ -2215,6 +2800,7 @@ ps_odd_body:
 // $9542
 //
 // width_bytes - was A
+// height - was B
 // backbuf_addr - was HL
 // bitmap_stride - was DE'
 // bitmap_data - was HL'
@@ -2225,6 +2811,124 @@ void plot_sprite_flipped(chqstate_t *state,
                          u16         bitmap_stride,
                          const u8   *bitmap_data)
 {
+  int carry = 0;
+  int jump_offset; // was IX
+
+  backbuf_addr += width_bytes;
+
+  SRL(width_bytes);
+  if (carry) {
+    plot_sprite_flipped_odd(state, width_bytes, height, backbuf_addr,
+            bitmap_stride, bitmap_data);
+    return;
+  }
+
+  // sprite has even width
+
+  jump_offset = 9 * (4 - width_bytes); // 9 bytes/op
+
+#if 0
+  D' = 0xEF;
+  // EXX bank
+  D = 0;
+#endif
+
+  // -- split here? (creating plot_sprite_flipped_even)
+
+  const u8 *SPsrc;
+  u8       *backbuf_orig; //  was A
+
+  goto plot_sprite_flipped_even_start;
+
+  for (;;) {
+    // EXX bank
+    if (--height == 0)
+      return;
+
+    bitmap_data += bitmap_stride;
+
+plot_sprite_flipped_even_start:
+    SPsrc = bitmap_data;
+    // EXX unbank
+    backbuf_orig = backbuf_addr;
+    switch (jump_offset / 9) {
+    default:
+      assert(0);
+    case 0:
+      // Conv: Original uses POP that loads 16 bits at a time
+      *backbuf_addr-- = state->flipped[*SPsrc++ & 0xFF];
+      *backbuf_addr-- = state->flipped[*SPsrc++ >> 8];
+    case 1:
+      *backbuf_addr-- = state->flipped[*SPsrc++ & 0xFF];
+      *backbuf_addr-- = state->flipped[*SPsrc++ >> 8];
+    case 2:
+      *backbuf_addr-- = state->flipped[*SPsrc++ & 0xFF];
+      *backbuf_addr-- = state->flipped[*SPsrc++ >> 8];
+    case 3:
+      *backbuf_addr-- = state->flipped[*SPsrc++ & 0xFF];
+      *backbuf_addr-- = state->flipped[*SPsrc++ >> 8];
+    }
+    backbuf_addr = ADDRTOBACKBUF(prevbufrow(BACKBUFTOADDR(backbuf_orig)));
+  }
+}
+
+void plot_sprite_flipped_odd(chqstate_t *state,
+                             u8          width_bytes,
+                             u8          height,
+                             u8         *backbuf_addr,
+                             u16         bitmap_stride,
+                             const u8   *bitmap_data)
+{
+  int       jump_offset; // was IX
+  const u8 *SPsrc;
+  u8       *backbuf_orig; //  was A
+
+  // sprite has an odd width
+
+  width_bytes++;
+  jump_offset = 9 * (4 - width_bytes); // 9 bytes/op
+
+#if 0
+  D' = 0xEF;
+  // EXX bank
+  D = 0;
+#endif
+
+  // -- split here ?
+
+  // Conv: B & C moved into prevbufrow
+  // EXX bank
+  goto psf_odd_body;
+
+  for (;;) {
+    // EXX bank
+    if (--height == 0)
+      return;
+
+    bitmap_data += bitmap_stride;
+
+psf_odd_body:
+    SPsrc = bitmap_data;
+    // EXX unbank
+    backbuf_orig = backbuf_addr;
+    switch (jump_offset / 9) {
+    default:
+      assert(0);
+    case 0:
+      // Conv: Original uses POP that loads 16 bits at a time
+      *backbuf_addr-- = state->flipped[*SPsrc++ & 0xFF];
+      *backbuf_addr-- = state->flipped[*SPsrc++ >> 8];
+    case 1:
+      *backbuf_addr-- = state->flipped[*SPsrc++ & 0xFF];
+      *backbuf_addr-- = state->flipped[*SPsrc++ >> 8];
+    case 2:
+      *backbuf_addr-- = state->flipped[*SPsrc++ & 0xFF];
+      *backbuf_addr-- = state->flipped[*SPsrc++ >> 8];
+    case 3:
+      *backbuf_addr-- = state->flipped[*SPsrc++ & 0xFF];
+    }
+    backbuf_addr = OFFSETTOBACKBUF(prevbufrow(BACKBUFTOOFFSET(backbuf_orig)));
+  }
 }
 
 // $961B

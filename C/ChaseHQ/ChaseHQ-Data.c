@@ -1018,7 +1018,7 @@ const stretchy_t stretchy_shortpole[3] = {
 // $7E0C
 //
 // Why is the first column all zeroes?
-const stretchyset_t shortpole_bottom = {
+const depthset_t shortpole_bottom = {
   &streetlampbody_bitmaps[0],
   {
     { 0x00, OFFSET(0)  },
@@ -1035,7 +1035,7 @@ const stretchyset_t shortpole_bottom = {
 };
 
 // $7E22
-const stretchyset_t shortpole_middle = {
+const depthset_t shortpole_middle = {
   &streetlampbody_bitmaps[0],
   {
     { 0x00, OFFSET(1)  },
@@ -1054,7 +1054,7 @@ const stretchyset_t shortpole_middle = {
 // $7E38
 //
 // seems to be shared streetlamp/telegraphpole
-const stretchyset_t streetlampbottom_left = {
+const depthset_t streetlampbottom_left = {
   &streetlampbody_bitmaps[0],
   {
     { 0x28, OFFSET(0)  },
@@ -1071,7 +1071,7 @@ const stretchyset_t streetlampbottom_left = {
 };
 
 // $7E4E
-const stretchyset_t streetlampbottom_right = {
+const depthset_t streetlampbottom_right = {
   &streetlampbody_bitmaps[0],
   {
     { 0x28, OFFSET(0)  },
@@ -1088,7 +1088,7 @@ const stretchyset_t streetlampbottom_right = {
 };
 
 // $7E64
-const stretchyset_t streetlampmiddle2_left = {
+const depthset_t streetlampmiddle2_left = {
   &streetlampbody_bitmaps[0],
   {
     { 0x28, OFFSET(1)  },
@@ -1105,7 +1105,7 @@ const stretchyset_t streetlampmiddle2_left = {
 };
 
 // $7E7A
-const stretchyset_t streetlampmiddle2_right = {
+const depthset_t streetlampmiddle2_right = {
   &streetlampbody_bitmaps[0],
   {
     { 0x28, OFFSET(1)  },
@@ -1122,7 +1122,7 @@ const stretchyset_t streetlampmiddle2_right = {
 };
 
 // $7E90
-const stretchyset_t streetlampmiddle_left = {
+const depthset_t streetlampmiddle_left = {
   &streetlampbody_bitmaps[0],
   {
     { 0x28, OFFSET(2)  },
@@ -1139,7 +1139,7 @@ const stretchyset_t streetlampmiddle_left = {
 };
 
 // $7EA6
-const stretchyset_t streetlampmiddle_right = {
+const depthset_t streetlampmiddle_right = {
   &streetlampbody_bitmaps[0],
   {
     { 0x28, OFFSET(2)  },
@@ -3597,7 +3597,7 @@ const lod_t floating_arrow_right_defn = {
 /* ----------------------------------------------------------------------- */
 
 // $E1E9
-const light_t tunnellight = {
+const depthset_t tunnellight = {
   &tunnellight_lods[0],
   0x1C, 0x00,
   0x14, 0x07,

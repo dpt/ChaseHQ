@@ -138,7 +138,7 @@ struct chqstate {
   const u8 *transition_mask;
 
   // $8E43 (SM) in draw_overlay_messages
-  const u8 *overlay_message; //
+  const u8 *overlay_message;
   // $8E46 (SM) in draw_overlay_messages
   u8        overlay_count;
   // $8E49 (SM) in draw_overlay_messages
@@ -155,6 +155,17 @@ struct chqstate {
   u8        SM_90F1;
   // $9115 (SM) in draw_overhead
   u8        SM_9115;
+
+  // $9396 (SM) in draw_object_common
+  u8        SM_9396;
+  // $933D (SM) in draw_object_common
+  u8        SM_933D;
+  // $93C0 (SM) in draw_object_common
+  u8        SM_93C0;
+  // $9404 (SM) in draw_object_common
+  u8        SM_9404;
+  // $9415 (SM) in draw_object_common
+  u8        SM_9415;
 
   // $9618
   u8        rng_seed[3];
