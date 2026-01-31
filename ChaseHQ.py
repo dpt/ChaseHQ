@@ -59,16 +59,205 @@ class ChaseHQWriter:
     pass
 
 
-class ChaseHQHtmlWriter(HtmlWriter, ChaseHQWriter):
-    def init(self):
-        self.font = {}
+class ChaseHQDecoders:
+    def decode_nibble_rle(self, snapshot, base, actions, showlength, follow, gather):
+        """Decodes nibble counted map data (used for curvature, height, left and right tables)."""
+        output = actions['start'](base)
+        runlength = 0
+        lasttype = -1
+        totallength = 0
+        basep = base
+        while 1:
+            b = snapshot[basep]
+            basep = basep + 1
+            if b == 0:  # Escape
+                if lasttype != -1:
+                    output += actions['item'](lasttype, runlength)
+                    totallength += runlength
+                b = snapshot[basep]
+                basep = basep + 1
+                if b == 0:  # Jump
+                    loopdest = snapshot[basep + 0] + snapshot[basep + 1] * 256
+                    if loopdest == base:
+                        output += actions['loop'](loopdest)
+                        if showlength:
+                            output += actions['total-length'](totallength)
+                    else:
+                        output += actions['jump'](loopdest)
+                        if showlength:
+                            output += actions['total-length'](totallength)
+                        if follow:
+                            output += actions['jump-title']()
+                            output += self.decode_nibble_rle(
+                                snapshot, loopdest, actions, showlength, follow, gather
+                            )
+                elif b == 1:  # Fork End
+                    output += actions['fork-end']()
+                elif b == 2:  # Split
+                    leftdest = snapshot[basep + 0] + snapshot[basep + 1] * 256
+                    rightdest = (
+                        snapshot[basep + 2] + snapshot[basep + 3] * 256
+                    )
+                    output += actions['split'](leftdest, rightdest)
+                    if showlength:
+                        output += actions['total-length'](totallength)
+                    if follow:
+                        output += actions['left-split-title']()
+                        output += self.decode_nibble_rle(
+                            snapshot, leftdest, actions, showlength, follow, gather
+                        )
+                        output += actions['right-split-title']()
+                        output += self.decode_nibble_rle(
+                            snapshot, rightdest, actions, showlength, follow, gather
+                        )
+                else:
+                    output += actions['bad-command']()
+                return output
+            else:
+                count = (b & 0xF0) >> 4
+                type_ = b & 0x0F
+                if lasttype == -1 or (gather and type_ == lasttype):
+                    lasttype = type_
+                    runlength += count
+                else:
+                    output += actions['item'](lasttype, runlength)
+                    totallength += runlength
+                    runlength = count
+                    lasttype = type_
 
-    def decode_pregame_screen(self, cwd, base):
+    def decode_counted_rle(self, snapshot, base, actions, showlength, follow, gather):
+        """Decodes byte counted map data (used for lanes data)."""
+        output = actions['start'](base)
+        runlength = 0
+        lasttype = -1
+        totallength = 0
+        basep = base
+        while 1:
+            b = snapshot[basep]
+            basep = basep + 1
+            if b == 0:  # Escape
+                if lasttype != -1:
+                    output += actions['item'](lasttype, runlength)
+                    totallength += runlength
+                b = snapshot[basep]
+                basep = basep + 1
+                if b == 0:  # Jump
+                    loopdest = snapshot[basep + 0] + snapshot[basep + 1] * 256
+                    if loopdest == base:
+                        output += actions['loop'](loopdest)
+                        if showlength:
+                            output += actions['total-length'](totallength)
+                    else:
+                        output += actions['jump'](loopdest)
+                        if showlength:
+                            output += actions['total-length'](totallength)
+                        if follow:
+                            output += actions['jump-title']()
+                            output += self.decode_counted_rle(
+                                snapshot, loopdest, actions, showlength, follow, gather
+                            )
+                elif b == 1:  # Fork End
+                    output += actions['fork-end']()
+                elif b == 2:  # Split
+                    leftdest = snapshot[basep + 0] + snapshot[basep + 1] * 256
+                    rightdest = (
+                        snapshot[basep + 2] + snapshot[basep + 3] * 256
+                    )
+                    output += actions['split'](leftdest, rightdest)
+                    if showlength:
+                        output += actions['total-length'](totallength)
+                    if follow:
+                        output += actions['left-split-title']()
+                        output += self.decode_counted_rle(
+                            snapshot, leftdest, actions, showlength, follow, gather
+                        )
+                        output += actions['right-split-title']()
+                        output += self.decode_counted_rle(
+                            snapshot, rightdest, actions, showlength, follow, gather
+                        )
+                else:
+                    output += actions['bad-command']()
+                return output
+            else:
+                count = b
+                type_ = snapshot[basep]
+                basep = basep + 1
+                if lasttype == -1 or (gather and type_ == lasttype):
+                    lasttype = type_
+                    runlength += count
+                else:
+                    output += actions['item'](lasttype, runlength)
+                    totallength += runlength
+                    runlength = count
+                    lasttype = type_
+
+    def decode_hazards(self, snapshot, base, actions, showlength, follow, gather):
+        """Decodes hazards map data."""
+        output = actions['start'](base)
+        count = 0
+        totallength = 0
+        basep = base
+        while 1:
+            b = snapshot[basep]
+            basep = basep + 1
+            if b == 0:  # Escape
+                if count > 0:
+                    output += actions['wait'](count)
+                    totallength += count
+                b = snapshot[basep]
+                basep = basep + 1
+                if b == 0:  # Jump
+                    loopdest = snapshot[basep + 0] + snapshot[basep + 1] * 256
+                    if loopdest == base:
+                        output += actions['loop'](loopdest)
+                        if showlength:
+                            output += actions['total-length'](totallength)
+                    else:
+                        output += actions['jump'](loopdest)
+                        if showlength:
+                            output += actions['total-length'](totallength)
+                        if follow:
+                            output += actions['jump-title']()
+                            output += self.decode_hazards(
+                                snapshot, loopdest, actions, showlength, follow, gather
+                            )
+                elif b == 1:  # Fork End
+                    output += actions['fork-end']()
+                elif b == 2:  # Split
+                    leftdest = snapshot[basep + 0] + snapshot[basep + 1] * 256
+                    rightdest = (
+                        snapshot[basep + 2] + snapshot[basep + 3] * 256
+                    )
+                    output += actions['split'](leftdest, rightdest)
+                    if showlength:
+                        output += actions['total-length'](totallength)
+                    if follow:
+                        output += actions['left-split-title']()
+                        output += self.decode_hazards(
+                            snapshot, leftdest, actions, showlength, follow, gather
+                        )
+                        output += actions['right-split-title']()
+                        output += self.decode_hazards(
+                            snapshot, rightdest, actions, showlength, follow, gather
+                        )
+                else:
+                    output += actions['byte'](b)
+
+                if b <= 2:
+                    return output
+            else:
+                count = b
+                output += actions['wait'](count)
+                totallength += count
+                count = 0
+        return output
+
+    def decode_pregame_screen(self, snapshot, base):
         """Decodes the instructions used to draw the CHASE HQ MONITORING SYSTEM screen."""
         output = ""
         basep = base
         while 1:
-            b = self.snapshot[basep]
+            b = snapshot[basep]
             basep = basep + 1
             if b == 0x00:
                 output += "Stop<br/>\n"
@@ -85,7 +274,7 @@ class ChaseHQHtmlWriter(HtmlWriter, ChaseHQWriter):
             elif b == 0xE2:
                 output += "Draw vertically<br/>\n"
             elif b >= 0xF0 and b <= 0xFF:
-                b = (b << 8) | self.snapshot[basep]
+                b = (b << 8) | snapshot[basep]
                 basep = basep + 1
                 x = b & 0x1F
                 y = ((b & 0x00D0) | ((b & 0x0F00) >> 7)) >> 4
@@ -94,74 +283,29 @@ class ChaseHQHtmlWriter(HtmlWriter, ChaseHQWriter):
                 output += f"Unknown {b:X}<br/>\n"
         return output
 
-    def decode_nibble_rle(self, cwd, base, typename, names, showlength, follow):
-        output = f"Start of {typename} data at ${base:X} (nibble counted)<br/>"
-        runlength = 0
-        lasttype = -1
-        totallength = 0
-        basep = base
-        while 1:
-            b = self.snapshot[basep]
-            basep = basep + 1
-            if b == 0:  # Escape
-                if lasttype != -1:
-                    output += "- %s for %d units<br/>" % (names[lasttype], runlength)
-                    totallength += runlength
-                b = self.snapshot[basep]
-                basep = basep + 1
-                if b == 0:  # Jump
-                    loopdest = self.snapshot[basep + 0] + self.snapshot[basep + 1] * 256
-                    if loopdest == base:
-                        output += "- Loop<br/>"
-                        if showlength:
-                            output += "+ Total length = %d<br/>" % (totallength)
-                    else:
-                        output += f"- Jump to ${loopdest:X}<br/>"
-                        if showlength:
-                            output += "+ Total length = %d<br/>" % (totallength)
-                        if follow:
-                            output += "<strong>Jump</strong><br/>"
-                            output += self.decode_nibble_rle(
-                                cwd, loopdest, typename, names, showlength, follow
-                            )
-                elif b == 1:  # Fork End
-                    output += "- Fork End<br/>"
-                elif b == 2:  # Split
-                    leftdest = self.snapshot[basep + 0] + self.snapshot[basep + 1] * 256
-                    rightdest = (
-                        self.snapshot[basep + 2] + self.snapshot[basep + 3] * 256
-                    )
-                    output += (
-                        f"- Split to; left = ${leftdest:X}, right = ${rightdest:X}<br/>"
-                    )
-                    if showlength:
-                        output += "+ Total length = %d<br/>" % (totallength)
-                    if follow:
-                        output += "<strong>Left Split</strong><br/>"
-                        output += self.decode_nibble_rle(
-                            cwd, leftdest, typename, names, showlength, follow
-                        )
-                        output += "<strong>Right Split</strong><br/>"
-                        output += self.decode_nibble_rle(
-                            cwd, rightdest, typename, names, showlength, follow
-                        )
-                else:
-                    output += "- Bad command!<br/>"
-                return output
-            else:
-                count = (b & 0xF0) >> 4
-                type_ = b & 0x0F
-                if type_ == lasttype or lasttype == -1:
-                    lasttype = type_
-                    runlength += count
-                else:
-                    output += "- %s for %d units<br/>" % (names[lasttype], runlength)
-                    totallength += runlength
-                    runlength = count
-                    lasttype = type_
+
+class ChaseHQHtmlWriter(HtmlWriter, ChaseHQWriter):
+    def init(self):
+        self.font = {}
+        self.decoders = ChaseHQDecoders()
+
+    def decode_pregame_screen(self, cwd, base):
+        self.decoders.decode_pregame_screen(self.snapshot, base)
+
+    common_actions = {
+        'loop': lambda d: f"- Loop to ${d:X}<br/>",
+        'total-length': lambda l: f"+ Total length = {l}<br/>",
+        'jump': lambda d: f"- Jump to ${d:X}<br/>",
+        'jump-title': lambda: "<strong>Jump</strong><br/>",
+        'fork-end': lambda: "- Fork End<br/>",
+        'split': lambda l,r: f"- Split to; left = ${l:X}, right = ${r:X}<br/>",
+        'left-split-title': lambda: "<strong>Left Split</strong><br/>",
+        'right-split-title': lambda: "<strong>Right Split</strong><br/>",
+        'bad-command': lambda: "- Bad command!<br/>",
+    }
 
     def map_curvature(self, cwd, base):
-        curvemap = {
+        curvenames = {
             0: "Curve Straight",
             1: "Curve Right",
             2: "Curve Right Hard",
@@ -179,15 +323,22 @@ class ChaseHQHtmlWriter(HtmlWriter, ChaseHQWriter):
             14: "Curve 14 XXX",
             15: "Curve 15 XXX",
         }
-        return self.decode_nibble_rle(
-            cwd, base, "curvature", curvemap, showlength=True, follow=True
+
+        actions = {
+            'start': lambda b: f"Start of curvature data at ${b:X} (nibble counted)<br/>",
+            'item': lambda t,l: f"- {curvenames[t]} for {l} units<br/>",
+        } | self.common_actions
+
+        return self.decoders.decode_nibble_rle(
+            self.snapshot, base, actions, showlength=True, follow=True,
+            gather=True
         )
 
     # 1/3/5/7 are used - why not the others?
     # "Up 5" and "Down 5" seem to be the most extreme used.
     # Level changes are smoothed in terms of map data?
     def map_height(self, cwd, base):
-        heightmap = {
+        heightnames = {
             0: "Going Up 8 XXX",
             1: "Going Up 7",
             2: "Going Up 6 XXX",
@@ -205,82 +356,15 @@ class ChaseHQHtmlWriter(HtmlWriter, ChaseHQWriter):
             14: "Going Down 6 XXX",
             15: "Going Down 7",
         }
-        return self.decode_nibble_rle(
-            cwd, base, "height", heightmap, showlength=True, follow=True
-        )
 
-    def decode_count_rle(self, cwd, base, typename, names, showlength, follow):
-        output = f"Start of {typename} data at ${base:X} (byte counted)<br/>"
-        runlength = 0
-        lasttype = -1
-        totallength = 0
-        basep = base
-        while 1:
-            b = self.snapshot[basep]
-            basep = basep + 1
-            if b == 0:  # Escape
-                if lasttype != -1:
-                    output += "- %s for %d units<br/>" % (
-                        names.get(lasttype, f"[{lasttype:2X}]"),
-                        runlength,
-                    )
-                    totallength += runlength
-                b = self.snapshot[basep]
-                basep = basep + 1
-                if b == 0:  # Jump
-                    loopdest = self.snapshot[basep + 0] + self.snapshot[basep + 1] * 256
-                    if loopdest == base:
-                        output += "- Loop<br/>"
-                        if showlength:
-                            output += "+ Total length = %d<br/>" % (totallength)
-                    else:
-                        output += f"- Jump to ${loopdest:X}<br/>"
-                        if showlength:
-                            output += "+ Total length = %d<br/>" % (totallength)
-                        if follow:
-                            output += "<strong>Jump</strong><br/>"
-                            output += self.decode_count_rle(
-                                cwd, loopdest, typename, names, showlength, follow
-                            )
-                elif b == 1:  # Fork End
-                    output += "- Fork End<br/>"
-                elif b == 2:  # Split
-                    leftdest = self.snapshot[basep + 0] + self.snapshot[basep + 1] * 256
-                    rightdest = (
-                        self.snapshot[basep + 2] + self.snapshot[basep + 3] * 256
-                    )
-                    output += (
-                        f"- Split to; left = ${leftdest:X}, right = ${rightdest:X}<br/>"
-                    )
-                    if showlength:
-                        output += "+ Total length = %d<br/>" % (totallength)
-                    if follow:
-                        output += "<strong>Left Split</strong><br/>"
-                        output += self.decode_count_rle(
-                            cwd, leftdest, typename, names, showlength, follow
-                        )
-                        output += "<strong>Right Split</strong><br/>"
-                        output += self.decode_count_rle(
-                            cwd, rightdest, typename, names, showlength, follow
-                        )
-                else:
-                    output += "- Bad command!<br/>"
-                return output
-            else:
-                count = b
-                type_ = self.snapshot[basep]
-                basep = basep + 1
-                if type_ == lasttype or lasttype == -1:
-                    lasttype = type_
-                    runlength += count
-                else:
-                    output += "- %s for %d units<br/>" % (
-                        names.get(lasttype, f"[{lasttype:2X}]"),
-                        runlength,
-                    )
-                    totallength += runlength
-                    runlength = count
-                    lasttype = type_
+        actions = {
+            'start': lambda b: f"Start of height data at ${b:X} (nibble counted)<br/>",
+            'item': lambda t,l: f"- {heightnames[t]} for {l} units<br/>",
+        } | self.common_actions
+
+        return self.decoders.decode_nibble_rle(
+            self.snapshot, base, actions, showlength=True, follow=True, gather=True
+        )
 
     def map_lanes(self, cwd, base):
         # L/M/R is the left/middle/right alignment of the road with respect to
@@ -291,7 +375,7 @@ class ChaseHQHtmlWriter(HtmlWriter, ChaseHQWriter):
         # assumptions, e.g. get_spawn_lanes.
         #
         #                                     [  * ] is the car's default position  CHECK
-        lanesmap = {
+        lanesnames = {
             0b00000000: "4 Lanes              [||||] {00}",
 
             0b00000001: "2 Lanes L            [||]   {01}",  # Poke
@@ -318,11 +402,19 @@ class ChaseHQHtmlWriter(HtmlWriter, ChaseHQWriter):
             0b11000011: "2 Lanes dirt track R   [||] {C3}",  # Poke (but stones appear on verge)
 
             0b11101101: "Forked road                 {ED}",  # During forks
+
+            0b11111111: "Unknown                     {FF}",  # Escape scene padding?
         }
         # Bits 0+1 set the left hand offset (0/1 is leftmost, 2, 3).
         # Bit 6 indicates tunnel or dirt track. Where 6 is set, bit 7 indicates tunnel.
-        return self.decode_count_rle(
-            cwd, base, "lanes", lanesmap, showlength=True, follow=True
+
+        actions = {
+            'start': lambda b: f"Start of lanes data at ${b:X} (byte counted)<br/>",
+            'item': lambda t,l: f"- {lanesnames[t]} for {l} units<br/>",
+        } | self.common_actions
+
+        return self.decoders.decode_counted_rle(
+            self.snapshot, base, actions, showlength=True, follow=True, gather=True
         )
 
 # Build the tree of possibilities from get_spawn_lanes decoder.
@@ -346,90 +438,32 @@ class ChaseHQHtmlWriter(HtmlWriter, ChaseHQWriter):
 #        else:
 #            print (byte, "2 lanes", 3,4)
 
-    def decode_hazards(self, cwd, base, typename, names, showlength, follow):
-
-        output = f"Start of {typename} data at ${base:X} (bytes)<br/>"
-        count = 0
-        totallength = 0
-        basep = base
-        while 1:
-            b = self.snapshot[basep]
-            basep = basep + 1
-            if b == 0:  # Escape
-                if count > 0:
-                    output += "- Wait for %d units<br/>" % (count)
-                    totallength += count
-                b = self.snapshot[basep]
-                basep = basep + 1
-                if b == 0:  # Jump
-                    loopdest = self.snapshot[basep + 0] + self.snapshot[basep + 1] * 256
-                    if loopdest == base:
-                        output += "- Loop<br/>"
-                        if showlength:
-                            output += "+ Total length = %d<br/>" % (totallength)
-                    else:
-                        output += f"- Jump to ${loopdest:X}<br/>"
-                        if showlength:
-                            output += "+ Total length = %d<br/>" % (totallength)
-                        if follow:
-                            output += "<strong>Jump</strong><br/>"
-                            output += self.decode_hazards(
-                                cwd, loopdest, typename, names, showlength, follow
-                            )
-                elif b == 1:  # Fork End
-                    output += "- Fork End<br/>"
-                elif b == 2:  # Split
-                    leftdest = self.snapshot[basep + 0] + self.snapshot[basep + 1] * 256
-                    rightdest = (
-                        self.snapshot[basep + 2] + self.snapshot[basep + 3] * 256
-                    )
-                    output += (
-                        f"- Split to; left = ${leftdest:X}, right = ${rightdest:X}<br/>"
-                    )
-                    if showlength:
-                        output += "+ Total length = %d<br/>" % (totallength)
-                    if follow:
-                        output += "<strong>Left Split</strong><br/>"
-                        output += self.decode_hazards(
-                            cwd, leftdest, typename, names, showlength, follow
-                        )
-                        output += "<strong>Right Split</strong><br/>"
-                        output += self.decode_hazards(
-                            cwd, rightdest, typename, names, showlength, follow
-                        )
-                else:
-                    map = {
-                        3: "Stop Spawning Barriers",
-                        6: "TBD Start Spawning Barriers?",
-                        7: "Start Spawning Barriers Left",
-                        8: "Start Spawning Barriers Right",
-                        9: "Start Spawning Two Barriers",
-                        10: "Set Floating Arrow Off",
-                        11: "Set Floating Arrow to Left",
-                        12: "Set Floating Arrow to Right",
-                        13: "Enable Car Spawning",
-                        14: "Disable Car Spawning",
-                    }
-
-                    output += f"- {map.get(b, f"Unknown command ${b:X}")}<br/>"
-
-                if b <= 2:
-                    return output
-            else:
-                count = b
-                output += "- Wait for %d units<br/>" % (count)
-                totallength += count
-                count = 0
-        return output
-
     def map_hazards(self, cwd, base):
-        hmap = {0x00: "xxx"}
-        return self.decode_hazards(
-            cwd, base, "hazards", hmap, showlength=True, follow=True
+        hazardnames = {
+            3: "Stop Spawning Barriers",
+            6: "TBD Start Spawning Barriers?",
+            7: "Start Spawning Barriers Left",
+            8: "Start Spawning Barriers Right",
+            9: "Start Spawning Two Barriers",
+            10: "Set Floating Arrow Off",
+            11: "Set Floating Arrow to Left",
+            12: "Set Floating Arrow to Right",
+            13: "Enable Car Spawning",
+            14: "Disable Car Spawning",
+        }
+
+        actions = {
+            'start': lambda b: f"Start of hazards data at ${b:X} (wait bytes)<br/>",
+            'byte': lambda b: f"- {hazardnames.get(b, f"Unknown command ${b:X}")}<br/>",
+            'wait': lambda c: "- Wait for %d units<br/>" % (c)
+        } | self.common_actions
+
+        return self.decoders.decode_hazards(
+            self.snapshot, base, actions, showlength=True, follow=True, gather=True
         )
 
     def map_left_objects(self, cwd, base):
-        omap = {
+        objnames = {
             0: "Nothing",
             1: "Tunnel Light",
             2: "Unknown (2)",
@@ -447,12 +481,18 @@ class ChaseHQHtmlWriter(HtmlWriter, ChaseHQWriter):
             14: "Unknown (14)",
             15: "Unknown (15)",
         }
-        return self.decode_nibble_rle(
-            cwd, base, "left objects", omap, showlength=True, follow=True
+
+        actions = {
+            'start': lambda b: f"Start of left object data at ${b:X} (nibble counted)<br/>",
+            'item': lambda t,l: f"- {objnames[t]} for {l} units<br/>",
+        } | self.common_actions
+
+        return self.decoders.decode_nibble_rle(
+            self.snapshot, base, actions, showlength=True, follow=True, gather=True
         )
 
     def map_right_objects(self, cwd, base):
-        omap = {
+        objnames = {
             0: "Nothing",
             1: "Tunnel Light",
             2: "Unknown (2)",
@@ -470,8 +510,14 @@ class ChaseHQHtmlWriter(HtmlWriter, ChaseHQWriter):
             14: "Unknown (14)",
             15: "Unknown (15)",
         }
-        return self.decode_nibble_rle(
-            cwd, base, "right objects", omap, showlength=True, follow=True
+
+        actions = {
+            'start': lambda b: f"Start of right object data at ${b:X} (nibble counted)<br/>",
+            'item': lambda t,l: f"- {objnames[t]} for {l} units<br/>",
+        } | self.common_actions
+
+        return self.decoders.decode_nibble_rle(
+            self.snapshot, base, actions, showlength=True, follow=True, gather=True
         )
 
     def _make_empty_udg_array(self, width_udgs: int, height_udgs: int):
