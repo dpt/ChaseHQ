@@ -3732,8 +3732,8 @@ const u8 perp_escape_height[5] = {
 
 // $E2B4
 const u8 perp_escape_lanes[4] = {
-  MAP_LANES(53, MAP_LANES_3L),
-  MAP_LANES(255, MAP_LANES_TUNNEL),
+  MAP_LANES_3L(53),
+  MAP_LANES_TUNNEL(255),
 };
 
 // $E2B8
@@ -3746,9 +3746,7 @@ const u8 fork_hazards[8] = {
 
 // $E2C0
 const u8 fork_leftrightobjs[6] = {
-  MAP_OBJECTS(1, MAP_OBJ_NONE),
-  MAP_OBJECTS(15, MAP_OBJ_SHORT_POLE),
-  MAP_CMD_GOTO(0xE2C1) // loop (skipping the None object)
+
 };
 
 // $E2C6
@@ -3766,7 +3764,7 @@ const u8 forked_road_height[5] = {
 
 // $E2D1
 const u8 forked_road_lanes[2] = {
-  MAP_LANES(255, MAP_LANES_FORKED)
+  MAP_LANES_FORKED(255)
 };
 
 // $ED23
@@ -3777,16 +3775,12 @@ const u8 forked_road_exit_hazards[3] = {
 
 // $ED26
 const u8 forked_road_exit_rightobjs[4] = {
-  MAP_OBJECTS(5, MAP_OBJ_SHORT_POLE),
-  MAP_OBJECTS(13, MAP_OBJ_NONE),
-  MAP_CMD_FORK_END
+
 };
 
 // $E2DA
 const u8 forked_road_exit_leftobjs[4] = {
-  MAP_OBJECTS(5, MAP_OBJ_NONE),
-  MAP_OBJECTS(13, MAP_OBJ_NONE),
-  MAP_CMD_FORK_END
+
 };
 
 // $E2DE
@@ -3807,21 +3801,21 @@ const u8 forked_road_exit_height[5] = {
 
 // $E2E8
 const u8 forked_road_exit_left_lanes[12] = {
-  MAP_LANES(10, MAP_LANES_2L),
-  MAP_LANES(2, MAP_LANES_2TO3L),
-  MAP_LANES(10, MAP_LANES_3L),
-  MAP_LANES(2, MAP_LANES_3TO4L),
-  MAP_LANES(12, MAP_LANES_4),
+  MAP_LANES_2L(10),
+  MAP_LANES_2TO3L(2),
+  MAP_LANES_3L(10),
+  MAP_LANES_3TO4L(2),
+  MAP_LANES_4(12),
   MAP_CMD_FORK_END
 };
 
 // $E2F4
 const u8 forked_road_exit_right_lanes[12] = {
-  MAP_LANES(10, MAP_LANES_2R),
-  MAP_LANES(2, MAP_LANES_2TO3R),
-  MAP_LANES(10, MAP_LANES_3R),
-  MAP_LANES(2, MAP_LANES_3TO4R),
-  MAP_LANES(12, MAP_LANES_4),
+  MAP_LANES_2R(10),
+  MAP_LANES_2TO3R(2),
+  MAP_LANES_3R(10),
+  MAP_LANES_3TO4R(2),
+  MAP_LANES_4(12),
   MAP_CMD_FORK_END
 };
 

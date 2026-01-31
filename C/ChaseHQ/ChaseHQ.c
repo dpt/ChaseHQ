@@ -4518,7 +4518,7 @@ u16 get_spawn_lanes(chqstate_t *state, u8 extra)
 
   roadbuf = ROADBUFPTR(ROADBUF_LANES_OFFSET + 2 + extra);
   lanes = *roadbuf;
-  if (lanes == MAP_LANES_4) // 0
+  if (lanes == MAP_LANES_4_VAL) // 0
     return 0x0104;
   lanes_copy = lanes;
   lanes &= 0xC1;

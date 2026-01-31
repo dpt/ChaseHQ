@@ -324,14 +324,47 @@ class ChaseHQHtmlWriter(HtmlWriter, ChaseHQWriter):
             15: "Curve 15 XXX",
         }
 
-        actions = {
+        actions = self.common_actions | {
             'start': lambda b: f"Start of curvature data at ${b:X} (nibble counted)<br/>",
             'item': lambda t,l: f"- {curvenames[t]} for {l} units<br/>",
-        } | self.common_actions
+        }
 
         return self.decoders.decode_nibble_rle(
             self.snapshot, base, actions, showlength=True, follow=True,
             gather=True
+        )
+
+    c_common_actions = {
+        'loop': lambda d: f"MAP_CMD_GOTO(0x{d:X})<br/>",
+        'total-length': lambda l: "",
+        'jump': lambda d: f"MAP_CMD_GOTO(0x{d:X})<br/>",
+        'jump-title': lambda: "",
+        'fork-end': lambda: "",
+        'split': lambda l,r: f"MAP_CMD_SPLIT(0x{l:X}, 0x{r:X})<br/>",
+        'left-split-title': lambda: "",
+        'right-split-title': lambda: "",
+        'bad-command': lambda: "",
+        'start': lambda b: "",
+    }
+
+    def curvature_for_c(self, cwd, base):
+        names = {
+            0: "STRAIGHT",
+            1: "RIGHT",
+            2: "RIGHT_HARD",
+            3: "RIGHT_VERY_HARD",
+            9: "LEFT",
+            10: "LEFT_HARD",
+            11: "LEFT_VERY_HARD",
+        }
+
+        actions = self.c_common_actions | {
+            'item': lambda t,l: f"MAP_CURVE_{names[t]}({l}),<br/>",
+        }
+
+        return self.decoders.decode_nibble_rle(
+            self.snapshot, base, actions, showlength=False, follow=False,
+            gather=False
         )
 
     # 1/3/5/7 are used - why not the others?
@@ -357,13 +390,35 @@ class ChaseHQHtmlWriter(HtmlWriter, ChaseHQWriter):
             15: "Going Down 7",
         }
 
-        actions = {
+        actions = self.common_actions | {
             'start': lambda b: f"Start of height data at ${b:X} (nibble counted)<br/>",
             'item': lambda t,l: f"- {heightnames[t]} for {l} units<br/>",
-        } | self.common_actions
+        }
 
         return self.decoders.decode_nibble_rle(
             self.snapshot, base, actions, showlength=True, follow=True, gather=True
+        )
+
+    def height_for_c(self, cwd, base):
+        names = {
+            1: "UP7",
+            3: "UP5",
+            5: "UP3",
+            7: "UP1",
+            8: "LEVEL",
+            9: "DOWN1",
+            11: "DOWN3",
+            13: "DOWN5",
+            15: "DOWN7",
+        }
+
+        actions = self.c_common_actions | {
+            'item': lambda t,l: f"MAP_HEIGHT_{names[t]}({l}),<br/>",
+        }
+
+        return self.decoders.decode_nibble_rle(
+            self.snapshot, base, actions, showlength=False, follow=False,
+            gather=False
         )
 
     def map_lanes(self, cwd, base):
@@ -384,7 +439,7 @@ class ChaseHQHtmlWriter(HtmlWriter, ChaseHQWriter):
 
             0b10000001: "3 Lanes L            [|||]  {81}",
             0b10000010: "3 Lanes R             [|||] {82}",
-            
+
             0b00000110: "3-2 Narrowing L      [/||]  {06}",  # Poke
             0b00001101: "3-2 Narrowing X     [/||]   {0D}",  # Poke - Invalid: left side flickers
             0b00001111: "3-2 Narrowing R       [/||] {0F}",
@@ -394,27 +449,64 @@ class ChaseHQHtmlWriter(HtmlWriter, ChaseHQWriter):
             0b10011110: "3-4 Widening R       [`|||] {9E}",
             0b10101101: "3-4 Widening L       [|||/] {AD}",
             0b10111101: "4-3 Narrowing L      [|||`] {BD}",
-            
+
             0b01000101: "Tunnel               [|||]  {45}",  # Tunnel always three lanes
             0b01011001: "Tunnel exit          [|||]  {59}",
             0b11000001: "4 Lanes dirt track   [||||] {C1}",
             0b11000010: "3 Lanes dirt track R  [|||] {C2}",  # Poke
             0b11000011: "2 Lanes dirt track R   [||] {C3}",  # Poke (but stones appear on verge)
 
-            0b11101101: "Forked road                 {ED}",  # During forks
+            0b11101101: "Forked road                 {ED}",  # Used during forks
 
-            0b11111111: "Unknown                     {FF}",  # Escape scene padding?
+            0b11111111: "Unknown                     {FF}",  # Escape scene padding value
         }
         # Bits 0+1 set the left hand offset (0/1 is leftmost, 2, 3).
         # Bit 6 indicates tunnel or dirt track. Where 6 is set, bit 7 indicates tunnel.
 
-        actions = {
+        actions = self.common_actions | {
             'start': lambda b: f"Start of lanes data at ${b:X} (byte counted)<br/>",
             'item': lambda t,l: f"- {lanesnames[t]} for {l} units<br/>",
-        } | self.common_actions
+        }
 
         return self.decoders.decode_counted_rle(
             self.snapshot, base, actions, showlength=True, follow=True, gather=True
+        )
+
+    def lanes_for_c(self, cwd, base):
+        names = {
+            0x00: "4",
+
+            0x01: "2L",
+            0x02: "2M",
+            0x03: "2R",
+
+            0x81: "3L",
+            0x82: "3R",
+
+            0x06: "3TO2L",
+            0x0F: "3TO2R",
+            0x1F: "2TO3R",
+            0x2D: "2TO3L",
+            0x8E: "4TO3R",
+            0x9E: "3TO4R",
+            0xAD: "3TO4L",
+            0xBD: "4TO3L",
+
+            0x45: "TUNNEL",
+            0x59: "TUNNEL_EXIT",
+            0xC1: "DIRTTRACK",
+
+            0xED: "FORKED",
+
+            0xFF: "ESCAPE_PADDING",
+        }
+
+        actions = self.c_common_actions | {
+            'item': lambda t,l: f"MAP_LANES_{names[t]}({l}),<br/>",
+        }
+
+        return self.decoders.decode_counted_rle(
+            self.snapshot, base, actions, showlength=False, follow=False, gather=False
         )
 
 # Build the tree of possibilities from get_spawn_lanes decoder.
@@ -452,14 +544,37 @@ class ChaseHQHtmlWriter(HtmlWriter, ChaseHQWriter):
             14: "Disable Car Spawning",
         }
 
-        actions = {
+        actions = self.common_actions | {
             'start': lambda b: f"Start of hazards data at ${b:X} (wait bytes)<br/>",
             'byte': lambda b: f"- {hazardnames.get(b, f"Unknown command ${b:X}")}<br/>",
-            'wait': lambda c: "- Wait for %d units<br/>" % (c)
-        } | self.common_actions
+            'wait': lambda c: f"- Wait for {c} units<br/>"
+        }
 
         return self.decoders.decode_hazards(
             self.snapshot, base, actions, showlength=True, follow=True, gather=True
+        )
+
+    def hazards_for_c(self, cwd, base):
+        names = {
+             3: "STOP_BARRIERS",
+             6: "UNKNOWN_HAZARD_6",
+             7: "START_BARRIERS_L",
+             8: "START_BARRIERS_R",
+             9: "START_TWO_BARRIERS",
+            10: "ARROW_OFF",
+            11: "ARROW_L",
+            12: "ARROW_R",
+            13: "START_CARS",
+            14: "STOP_CARS",
+        }
+
+        actions = self.c_common_actions | {
+            'byte': lambda b: f"MAP_CMD_{names[b]},<br/>",
+            'wait': lambda c: f"MAP_HAZARD_WAIT({c}),<br/>",
+        }
+
+        return self.decoders.decode_hazards(
+            self.snapshot, base, actions, showlength=False, follow=False, gather=False
         )
 
     def map_left_objects(self, cwd, base):
@@ -482,13 +597,35 @@ class ChaseHQHtmlWriter(HtmlWriter, ChaseHQWriter):
             15: "Unknown (15)",
         }
 
-        actions = {
+        actions = self.common_actions | {
             'start': lambda b: f"Start of left object data at ${b:X} (nibble counted)<br/>",
             'item': lambda t,l: f"- {objnames[t]} for {l} units<br/>",
-        } | self.common_actions
+        }
 
         return self.decoders.decode_nibble_rle(
             self.snapshot, base, actions, showlength=True, follow=True, gather=True
+        )
+
+    def objects_for_c(self, cwd, base):
+        names = {
+            0: "NONE",
+            1: "TUNNEL_LIGHT",
+            2: "UNKNOWN_2",
+            3: "SHORT_POLE",
+            4: "TREE",
+            5: "BUSH",
+            6: "STREET_LAMP",
+            7: "TELEGRAPH_POLE",
+            8: "TURN_SIGN_L",
+            9: "TURN_SIGN_R",
+        }
+
+        actions = self.c_common_actions | {
+            'item': lambda t,l: f"MAP_OBJ_S1_{names[t]}({l}),<br/>",
+        }
+
+        return self.decoders.decode_nibble_rle(
+            self.snapshot, base, actions, showlength=False, follow=False, gather=False
         )
 
     def map_right_objects(self, cwd, base):
@@ -511,10 +648,10 @@ class ChaseHQHtmlWriter(HtmlWriter, ChaseHQWriter):
             15: "Unknown (15)",
         }
 
-        actions = {
+        actions = self.common_actions | {
             'start': lambda b: f"Start of right object data at ${b:X} (nibble counted)<br/>",
             'item': lambda t,l: f"- {objnames[t]} for {l} units<br/>",
-        } | self.common_actions
+        }
 
         return self.decoders.decode_nibble_rle(
             self.snapshot, base, actions, showlength=True, follow=True, gather=True
