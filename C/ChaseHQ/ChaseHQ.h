@@ -269,6 +269,7 @@ typedef u8 chatterpriority_t;
 
 #define MAP_CMD_GOTO(ADDR)              MAP_ESC, (0), (ADDR) & 0xFF, (ADDR) >> 8
 #define MAP_CMD_FORK_END                MAP_ESC, (1)
+#define MAP_CMD_SPLIT(LADDR,RADDR)      MAP_ESC, (2), (LADDR) & 0xFF, (LADDR) >> 8, (RADDR) & 0xFF, (RADDR) >> 8
 #define MAP_CMD_STOP_BARRIERS           MAP_ESC, (3)
 #define MAP_CMD_START_BARRIERS_L        MAP_ESC, (7)
 #define MAP_CMD_START_BARRIERS_R        MAP_ESC, (8)
@@ -289,10 +290,10 @@ typedef u8 chatterpriority_t;
 #define MAP_CURVE_LEFT_VERY_HARD(D)     (((D) << 4) | 11)
 
 // Height
-#define MAP_HEIGHT_UP1(D)               (((D) << 4) | 1)
-#define MAP_HEIGHT_UP3(D)               (((D) << 4) | 3)
-#define MAP_HEIGHT_UP5(D)               (((D) << 4) | 5)
-#define MAP_HEIGHT_UP7(D)               (((D) << 4) | 7)
+#define MAP_HEIGHT_UP7(D)               (((D) << 4) | 1)
+#define MAP_HEIGHT_UP5(D)               (((D) << 4) | 3)
+#define MAP_HEIGHT_UP3(D)               (((D) << 4) | 5)
+#define MAP_HEIGHT_UP1(D)               (((D) << 4) | 7)
 #define MAP_HEIGHT_LEVEL(D)             (((D) << 4) | 8)
 #define MAP_HEIGHT_DOWN1(D)             (((D) << 4) | 9)
 #define MAP_HEIGHT_DOWN3(D)             (((D) << 4) | 11)
@@ -320,19 +321,24 @@ typedef u8 chatterpriority_t;
 #define MAP_LANES_DIRTTRACK             (0xC1)
 #define MAP_LANES_FORKED                (0xED)
 
+#define MAP_HAZARD_WAIT(T)              (T)
+
 // Objects (names are valid for Stage 1)
 #define MAP_OBJECTS(D,T)                (((D) << 4) | (T))
 
-#define MAP_OBJ_NONE                    (0)
-#define MAP_OBJ_TUNNEL_LIGHT            (1)
-#define MAP_OBJ_UNKNOWN_2               (2)
-#define MAP_OBJ_SHORT_POLE              (3)
-#define MAP_OBJ_TREE                    (4)
-#define MAP_OBJ_BUSH                    (5)
-#define MAP_OBJ_STREET_LAMP             (6)
-#define MAP_OBJ_TELEGRAPH_POLE          (7)
-#define MAP_OBJ_TURN_SIGN_L             (8)
-#define MAP_OBJ_TURN_SIGN_R             (9)
+#define MAP_OBJ_NONE                    (0) // common to all?
+#define MAP_OBJ_SHORT_POLE              (3) // common to all?
+
+#define MAP_OBJ_S1_NONE                 (0) // common to all?
+#define MAP_OBJ_S1_TUNNEL_LIGHT         (1)
+#define MAP_OBJ_S1_UNKNOWN_2            (2)
+#define MAP_OBJ_S1_SHORT_POLE           (3) // common to all?
+#define MAP_OBJ_S1_TREE                 (4)
+#define MAP_OBJ_S1_BUSH                 (5)
+#define MAP_OBJ_S1_STREET_LAMP          (6)
+#define MAP_OBJ_S1_TELEGRAPH_POLE       (7)
+#define MAP_OBJ_S1_TURN_SIGN_L          (8)
+#define MAP_OBJ_S1_TURN_SIGN_R          (9)
 
 /* ----------------------------------------------------------------------- */
 
@@ -372,7 +378,7 @@ struct scenedata {
 #define LODFLAG_MASKED   (1 << 0)
 #define LODFLAG_FLIPPED  (2 << 0)
 
-// Are LODs always given in groups of five or six?
+// Are LODs always given in groups of five or six? Or ten?
 typedef struct lod {
   u8        width_bytes;
   u8        flags;
@@ -385,17 +391,20 @@ typedef struct lod {
 
 /// Depth Set offset
 /// (7 is sizeof(lod_t)) -- use offsetof ?
-#define OFFSET(N) ((N)*7+2)
+/// M is a bodge factor since the streetlamp values seem to be +2.
+#define DEPTHSET_OFFSET(N,M) ((N) * 7 + (M))
 
 #define DEPTHSET_MAX (10)
 
 typedef struct {
   const lod_t *lods; // -> array of lods
   struct {
-    u8 depth; // something depth-ish
+    u8 depth;
     u8 offset; // byte offset from 'lods'
   } pairs[DEPTHSET_MAX]; // maps depths to offsets
 } depthset_t;
+
+/* ----------------------------------------------------------------------- */
 
 // root objects (an array of these) used with routine draw_stretchy_object_left/right
 // bottom-most object is given first
@@ -513,7 +522,8 @@ typedef void obj_handler_t(struct chqstate *state,
                            const void      *arg,
                            const u16       *IX,
                            const u8        *IY);
-typedef void dso_callback_t(chqstate_t *state, u8 B, const lod_t *HL, const u16 *IX);
+typedef void dso_callback_t(chqstate_t *state, u8 B, const lod_t *HL,
+                            const u16 *IX);
 
 typedef void draw_object_entrypt_t(chqstate_t *state,
                                    u8          A,
@@ -544,17 +554,21 @@ void draw_object_left_entrypt(chqstate_t       *state,
                               u8                B,
                               const depthset_t *DEarg,
                               const u16        *IX);
-void draw_object_left_stretchy_entrypt(chqstate_t *state, u8 B, const lod_t *HL, const u16 *IX);
-void draw_object_left_helicopter_entrypt(chqstate_t *state, u8 A, const lod_t *HLlod);
+void draw_object_left_stretchy_entrypt(chqstate_t *state, u8 B, const lod_t *HL,
+                                       const u16 *IX);
+void draw_object_left_helicopter_entrypt(chqstate_t *state, u8 A,
+    const lod_t *HLlod);
 
 obj_handler_t draw_object_right;
 void draw_object_right_entrypt(chqstate_t      *state,
-                              u8                A,
-                              u8                B,
-                              const depthset_t *DEarg,
-                              const u16        *IX);
-void draw_object_right_stretchy_entrypt(chqstate_t *state, u8 B, const lod_t *HL, const u16 *IX);
-void draw_object_right_helicopter_entrypt(chqstate_t *state, u8 A, const lod_t *HLlod);
+                               u8                A,
+                               u8                B,
+                               const depthset_t *DEarg,
+                               const u16        *IX);
+void draw_object_right_stretchy_entrypt(chqstate_t *state, u8 B,
+                                        const lod_t *HL, const u16 *IX);
+void draw_object_right_helicopter_entrypt(chqstate_t *state, u8 A,
+    const lod_t *HLlod);
 
 void draw_object_930e_entrypt(chqstate_t *state);
 

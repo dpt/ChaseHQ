@@ -2228,10 +2228,10 @@ dso_9232:
 
 // $924D
 void draw_tunnel_light_left(chqstate_t  *state,
-                             u8          B,
-                             const void *DEarg,
-                             const u16  *IX,
-                             const u8   *IY)
+                            u8          B,
+                            const void *DEarg,
+                            const u16  *IX,
+                            const u8   *IY)
 {
   draw_tunnel_light_common(state, B, DEarg, draw_object_left_entrypt, IX);
 }
@@ -2304,7 +2304,8 @@ void draw_object_left_entrypt(chqstate_t       *state,
   draw_object_left_stretchy_entrypt(state, depth, lod, IX);
 }
 
-void draw_object_left_stretchy_entrypt(chqstate_t *state, u8 B, const lod_t *HL, const u16 *IX)
+void draw_object_left_stretchy_entrypt(chqstate_t *state, u8 B, const lod_t *HL,
+                                       const u16 *IX)
 {
   u8 A;
 
@@ -2315,7 +2316,8 @@ void draw_object_left_stretchy_entrypt(chqstate_t *state, u8 B, const lod_t *HL,
   draw_object_left_helicopter_entrypt(state, A, HL);
 }
 
-void draw_object_left_helicopter_entrypt(chqstate_t *state, u8 A, const lod_t *HLlod)
+void draw_object_left_helicopter_entrypt(chqstate_t *state, u8 A,
+    const lod_t *HLlod)
 {
 #if 0
   int carry = 0;
@@ -2383,18 +2385,20 @@ void draw_object_right(chqstate_t *state,
 }
 
 void draw_object_right_entrypt(chqstate_t      *state,
-                              u8                A,
-                              u8                B,
-                              const depthset_t *DEarg,
-                              const u16        *IX)
+                               u8                A,
+                               u8                B,
+                               const depthset_t *DEarg,
+                               const u16        *IX)
 {
 }
 
-void draw_object_right_stretchy_entrypt(chqstate_t *state, u8 B, const lod_t *HL, const u16 *IX)
+void draw_object_right_stretchy_entrypt(chqstate_t *state, u8 B,
+                                        const lod_t *HL, const u16 *IX)
 {
 }
 
-void draw_object_right_helicopter_entrypt(chqstate_t *state, u8 A, const lod_t *HLlod)
+void draw_object_right_helicopter_entrypt(chqstate_t *state, u8 A,
+    const lod_t *HLlod)
 {
 }
 
@@ -2753,9 +2757,9 @@ void plot_sprite_odd(chqstate_t *state,
                      u16         bitmap_stride,
                      const u8   *bitmap_data)
 {
-  int       jump_offset; // was IX
+  int       jump_offset;  // was IX
   const u8 *SPsrc;
-  u8       *backbuf_orig; //  was A
+  u8       *backbuf_orig; // was A
 
   // sprite has an odd width
 
@@ -2819,7 +2823,7 @@ void plot_sprite_flipped(chqstate_t *state,
   SRL(width_bytes);
   if (carry) {
     plot_sprite_flipped_odd(state, width_bytes, height, backbuf_addr,
-            bitmap_stride, bitmap_data);
+                            bitmap_stride, bitmap_data);
     return;
   }
 
@@ -2841,44 +2845,44 @@ void plot_sprite_flipped(chqstate_t *state,
   goto plot_sprite_flipped_even_start;
 
   for (;;) {
-    // EXX bank
-    if (--height == 0)
-      return;
+  // EXX bank
+  if (--height == 0)
+  return;
 
-    bitmap_data += bitmap_stride;
+  bitmap_data += bitmap_stride;
 
-plot_sprite_flipped_even_start:
-    SPsrc = bitmap_data;
-    // EXX unbank
-    backbuf_orig = backbuf_addr;
-    switch (jump_offset / 9) {
-    default:
-      assert(0);
-    case 0:
-      // Conv: Original uses POP that loads 16 bits at a time
-      *backbuf_addr-- = state->flipped[*SPsrc++ & 0xFF];
-      *backbuf_addr-- = state->flipped[*SPsrc++ >> 8];
-    case 1:
-      *backbuf_addr-- = state->flipped[*SPsrc++ & 0xFF];
-      *backbuf_addr-- = state->flipped[*SPsrc++ >> 8];
-    case 2:
-      *backbuf_addr-- = state->flipped[*SPsrc++ & 0xFF];
-      *backbuf_addr-- = state->flipped[*SPsrc++ >> 8];
-    case 3:
-      *backbuf_addr-- = state->flipped[*SPsrc++ & 0xFF];
-      *backbuf_addr-- = state->flipped[*SPsrc++ >> 8];
-    }
-    backbuf_addr = ADDRTOBACKBUF(prevbufrow(BACKBUFTOADDR(backbuf_orig)));
-  }
+  plot_sprite_flipped_even_start:
+  SPsrc = bitmap_data;
+  // EXX unbank
+  backbuf_orig = backbuf_addr;
+  switch (jump_offset / 9) {
+  default:
+  assert(0);
+  case 0:
+  // Conv: Original uses POP that loads 16 bits at a time
+  *backbuf_addr-- = state->flipped[*SPsrc++ & 0xFF];
+  *backbuf_addr-- = state->flipped[*SPsrc++ >> 8];
+  case 1:
+  *backbuf_addr-- = state->flipped[*SPsrc++ & 0xFF];
+  *backbuf_addr-- = state->flipped[*SPsrc++ >> 8];
+  case 2:
+  *backbuf_addr-- = state->flipped[*SPsrc++ & 0xFF];
+  *backbuf_addr-- = state->flipped[*SPsrc++ >> 8];
+  case 3:
+  *backbuf_addr-- = state->flipped[*SPsrc++ & 0xFF];
+  *backbuf_addr-- = state->flipped[*SPsrc++ >> 8];
+}
+  backbuf_addr = ADDRTOBACKBUF(prevbufrow(BACKBUFTOADDR(backbuf_orig)));
+}
 }
 
-void plot_sprite_flipped_odd(chqstate_t *state,
-                             u8          width_bytes,
-                             u8          height,
-                             u8         *backbuf_addr,
-                             u16         bitmap_stride,
-                             const u8   *bitmap_data)
-{
+  void plot_sprite_flipped_odd(chqstate_t *state,
+  u8          width_bytes,
+  u8          height,
+  u8         *backbuf_addr,
+  u16         bitmap_stride,
+  const u8   *bitmap_data)
+  {
   int       jump_offset; // was IX
   const u8 *SPsrc;
   u8       *backbuf_orig; //  was A

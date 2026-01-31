@@ -1021,16 +1021,16 @@ const stretchy_t stretchy_shortpole[3] = {
 const depthset_t shortpole_bottom = {
   &streetlampbody_bitmaps[0],
   {
-    { 0x00, OFFSET(0)  },
-    { 0x00, OFFSET(0)  },
-    { 0x00, OFFSET(3)  },
-    { 0x00, OFFSET(3)  },
-    { 0x00, OFFSET(6)  },
-    { 0x00, OFFSET(6)  },
-    { 0x00, OFFSET(9)  },
-    { 0x00, OFFSET(9)  },
-    { 0x00, OFFSET(12) },
-    { 0x00, OFFSET(12) }
+    { 0x00, DEPTHSET_OFFSET(0, 2) },
+    { 0x00, DEPTHSET_OFFSET(0, 2) },
+    { 0x00, DEPTHSET_OFFSET(3, 2) },
+    { 0x00, DEPTHSET_OFFSET(3, 2) },
+    { 0x00, DEPTHSET_OFFSET(6, 2) },
+    { 0x00, DEPTHSET_OFFSET(6, 2) },
+    { 0x00, DEPTHSET_OFFSET(9, 2) },
+    { 0x00, DEPTHSET_OFFSET(9, 2) },
+    { 0x00, DEPTHSET_OFFSET(12, 2) },
+    { 0x00, DEPTHSET_OFFSET(12, 2) }
   }
 };
 
@@ -1038,16 +1038,16 @@ const depthset_t shortpole_bottom = {
 const depthset_t shortpole_middle = {
   &streetlampbody_bitmaps[0],
   {
-    { 0x00, OFFSET(1)  },
-    { 0x00, OFFSET(1)  },
-    { 0x00, OFFSET(4)  },
-    { 0x00, OFFSET(4)  },
-    { 0x00, OFFSET(7)  },
-    { 0x00, OFFSET(7)  },
-    { 0x00, OFFSET(10) },
-    { 0x00, OFFSET(10) },
-    { 0x00, OFFSET(13) },
-    { 0x00, OFFSET(13) }
+    { 0x00, DEPTHSET_OFFSET(1, 2) },
+    { 0x00, DEPTHSET_OFFSET(1, 2) },
+    { 0x00, DEPTHSET_OFFSET(4, 2) },
+    { 0x00, DEPTHSET_OFFSET(4, 2) },
+    { 0x00, DEPTHSET_OFFSET(7, 2) },
+    { 0x00, DEPTHSET_OFFSET(7, 2) },
+    { 0x00, DEPTHSET_OFFSET(10, 2) },
+    { 0x00, DEPTHSET_OFFSET(10, 2) },
+    { 0x00, DEPTHSET_OFFSET(13, 2) },
+    { 0x00, DEPTHSET_OFFSET(13, 2) }
   }
 };
 
@@ -1057,16 +1057,16 @@ const depthset_t shortpole_middle = {
 const depthset_t streetlampbottom_left = {
   &streetlampbody_bitmaps[0],
   {
-    { 0x28, OFFSET(0)  },
-    { 0x20, OFFSET(0)  },
-    { 0x18, OFFSET(3)  },
-    { 0x18, OFFSET(3)  },
-    { 0x14, OFFSET(6)  },
-    { 0x14, OFFSET(6)  },
-    { 0x10, OFFSET(9)  },
-    { 0x10, OFFSET(9)  },
-    { 0x0C, OFFSET(12) },
-    { 0x0C, OFFSET(12) }
+    { 0x28, DEPTHSET_OFFSET(0, 2) },
+    { 0x20, DEPTHSET_OFFSET(0, 2) },
+    { 0x18, DEPTHSET_OFFSET(3, 2) },
+    { 0x18, DEPTHSET_OFFSET(3, 2) },
+    { 0x14, DEPTHSET_OFFSET(6, 2) },
+    { 0x14, DEPTHSET_OFFSET(6, 2) },
+    { 0x10, DEPTHSET_OFFSET(9, 2) },
+    { 0x10, DEPTHSET_OFFSET(9, 2) },
+    { 0x0C, DEPTHSET_OFFSET(12, 2) },
+    { 0x0C, DEPTHSET_OFFSET(12, 2) }
   }
 };
 
@@ -1074,16 +1074,16 @@ const depthset_t streetlampbottom_left = {
 const depthset_t streetlampbottom_right = {
   &streetlampbody_bitmaps[0],
   {
-    { 0x28, OFFSET(0)  },
-    { 0x20, OFFSET(0)  },
-    { 0x18, OFFSET(3)  },
-    { 0x18, OFFSET(3)  },
-    { 0x14, OFFSET(6)  },
-    { 0x14, OFFSET(6)  },
-    { 0x10, OFFSET(9)  },
-    { 0x10, OFFSET(9)  },
-    { 0x04, OFFSET(12) },
-    { 0x04, OFFSET(12) }
+    { 0x28, DEPTHSET_OFFSET(0, 2) },
+    { 0x20, DEPTHSET_OFFSET(0, 2) },
+    { 0x18, DEPTHSET_OFFSET(3, 2) },
+    { 0x18, DEPTHSET_OFFSET(3, 2) },
+    { 0x14, DEPTHSET_OFFSET(6, 2) },
+    { 0x14, DEPTHSET_OFFSET(6, 2) },
+    { 0x10, DEPTHSET_OFFSET(9, 2) },
+    { 0x10, DEPTHSET_OFFSET(9, 2) },
+    { 0x04, DEPTHSET_OFFSET(12, 2) },
+    { 0x04, DEPTHSET_OFFSET(12, 2) }
   }
 };
 
@@ -1091,16 +1091,16 @@ const depthset_t streetlampbottom_right = {
 const depthset_t streetlampmiddle2_left = {
   &streetlampbody_bitmaps[0],
   {
-    { 0x28, OFFSET(1)  },
-    { 0x20, OFFSET(1)  },
-    { 0x18, OFFSET(4)  },
-    { 0x18, OFFSET(4)  },
-    { 0x14, OFFSET(7)  },
-    { 0x14, OFFSET(7)  },
-    { 0x10, OFFSET(10) },
-    { 0x10, OFFSET(10) },
-    { 0x0C, OFFSET(13) },
-    { 0x0C, OFFSET(13) }
+    { 0x28, DEPTHSET_OFFSET(1, 2) },
+    { 0x20, DEPTHSET_OFFSET(1, 2) },
+    { 0x18, DEPTHSET_OFFSET(4, 2) },
+    { 0x18, DEPTHSET_OFFSET(4, 2) },
+    { 0x14, DEPTHSET_OFFSET(7, 2) },
+    { 0x14, DEPTHSET_OFFSET(7, 2) },
+    { 0x10, DEPTHSET_OFFSET(10, 2) },
+    { 0x10, DEPTHSET_OFFSET(10, 2) },
+    { 0x0C, DEPTHSET_OFFSET(13, 2) },
+    { 0x0C, DEPTHSET_OFFSET(13, 2) }
   }
 };
 
@@ -1108,16 +1108,16 @@ const depthset_t streetlampmiddle2_left = {
 const depthset_t streetlampmiddle2_right = {
   &streetlampbody_bitmaps[0],
   {
-    { 0x28, OFFSET(1)  },
-    { 0x20, OFFSET(1)  },
-    { 0x18, OFFSET(4)  },
-    { 0x18, OFFSET(4)  },
-    { 0x14, OFFSET(7)  },
-    { 0x14, OFFSET(7)  },
-    { 0x10, OFFSET(10) },
-    { 0x10, OFFSET(10) },
-    { 0x04, OFFSET(13) },
-    { 0x04, OFFSET(13) }
+    { 0x28, DEPTHSET_OFFSET(1, 2) },
+    { 0x20, DEPTHSET_OFFSET(1, 2) },
+    { 0x18, DEPTHSET_OFFSET(4, 2) },
+    { 0x18, DEPTHSET_OFFSET(4, 2) },
+    { 0x14, DEPTHSET_OFFSET(7, 2) },
+    { 0x14, DEPTHSET_OFFSET(7, 2) },
+    { 0x10, DEPTHSET_OFFSET(10, 2) },
+    { 0x10, DEPTHSET_OFFSET(10, 2) },
+    { 0x04, DEPTHSET_OFFSET(13, 2) },
+    { 0x04, DEPTHSET_OFFSET(13, 2) }
   }
 };
 
@@ -1125,16 +1125,16 @@ const depthset_t streetlampmiddle2_right = {
 const depthset_t streetlampmiddle_left = {
   &streetlampbody_bitmaps[0],
   {
-    { 0x28, OFFSET(2)  },
-    { 0x20, OFFSET(2)  },
-    { 0x18, OFFSET(5)  },
-    { 0x18, OFFSET(5)  },
-    { 0x14, OFFSET(8)  },
-    { 0x14, OFFSET(8)  },
-    { 0x10, OFFSET(11) },
-    { 0x10, OFFSET(11) },
-    { 0x0C, OFFSET(14) },
-    { 0x0C, OFFSET(14) }
+    { 0x28, DEPTHSET_OFFSET(2, 2) },
+    { 0x20, DEPTHSET_OFFSET(2, 2) },
+    { 0x18, DEPTHSET_OFFSET(5, 2) },
+    { 0x18, DEPTHSET_OFFSET(5, 2) },
+    { 0x14, DEPTHSET_OFFSET(8, 2) },
+    { 0x14, DEPTHSET_OFFSET(8, 2) },
+    { 0x10, DEPTHSET_OFFSET(11, 2) },
+    { 0x10, DEPTHSET_OFFSET(11, 2) },
+    { 0x0C, DEPTHSET_OFFSET(14, 2) },
+    { 0x0C, DEPTHSET_OFFSET(14, 2) }
   }
 };
 
@@ -1142,16 +1142,16 @@ const depthset_t streetlampmiddle_left = {
 const depthset_t streetlampmiddle_right = {
   &streetlampbody_bitmaps[0],
   {
-    { 0x28, OFFSET(2)  },
-    { 0x20, OFFSET(2)  },
-    { 0x18, OFFSET(5)  },
-    { 0x18, OFFSET(5)  },
-    { 0x14, OFFSET(8)  },
-    { 0x14, OFFSET(8)  },
-    { 0x10, OFFSET(11) },
-    { 0x10, OFFSET(11) },
-    { 0x04, OFFSET(14) },
-    { 0x04, OFFSET(14) }
+    { 0x28, DEPTHSET_OFFSET(2, 2) },
+    { 0x20, DEPTHSET_OFFSET(2, 2) },
+    { 0x18, DEPTHSET_OFFSET(5, 2) },
+    { 0x18, DEPTHSET_OFFSET(5, 2) },
+    { 0x14, DEPTHSET_OFFSET(8, 2) },
+    { 0x14, DEPTHSET_OFFSET(8, 2) },
+    { 0x10, DEPTHSET_OFFSET(11, 2) },
+    { 0x10, DEPTHSET_OFFSET(11, 2) },
+    { 0x04, DEPTHSET_OFFSET(14, 2) },
+    { 0x04, DEPTHSET_OFFSET(14, 2) }
   }
 };
 
@@ -1859,7 +1859,7 @@ const stagevars_t saved_game_state = {
   { 0xFF, 0xFF }, // time_digits
   { 0xFF, 0xFF, 0xFF, 0xFF }, // distance_digits
   1, // no_objects_counter
-  0x59BF, // horizon_attribute
+  0x59BF // horizon_attribute
 };
 
 const hazard_t saved_game_state_hazard_0 = {
@@ -3599,16 +3599,16 @@ const lod_t floating_arrow_right_defn = {
 // $E1E9
 const depthset_t tunnellight = {
   &tunnellight_lods[0],
-  0x1C, 0x00,
-  0x14, 0x07,
-  0x10, 0x07,
-  0x10, 0x0E,
-  0x0C, 0x0E,
-  0x0C, 0x15,
-  0x0C, 0x15,
-  0x08, 0x1C,
-  0x08, 0x1C,
-  0x08, 0x23
+  0x1C, DEPTHSET_OFFSET(0, 0),
+  0x14, DEPTHSET_OFFSET(1, 0),
+  0x10, DEPTHSET_OFFSET(1, 0),
+  0x10, DEPTHSET_OFFSET(2, 0),
+  0x0C, DEPTHSET_OFFSET(2, 0),
+  0x0C, DEPTHSET_OFFSET(3, 0),
+  0x0C, DEPTHSET_OFFSET(3, 0),
+  0x08, DEPTHSET_OFFSET(4, 0),
+  0x08, DEPTHSET_OFFSET(4, 0),
+  0x08, DEPTHSET_OFFSET(5, 0)
 };
 
 // $E1FF
@@ -3618,7 +3618,7 @@ const lod_t tunnellight_lods[6] = {
   { 1, LODFLAG_DEFAULT,  8, &bitmap_tunnellight_3[0], &bitmap_tunnellight_3[0]  },
   { 1, LODFLAG_DEFAULT,  6, &bitmap_tunnellight_4[0], &bitmap_tunnellight_4[0]  },
   { 1, LODFLAG_DEFAULT,  5, &bitmap_tunnellight_5[0], &bitmap_tunnellight_5[0]  },
-  { 2, LODFLAG_MASKED,  6, &bitmap_tunnellight_6[0], &bitmap_tunnellight_6s[0] },
+  { 2, LODFLAG_MASKED,   6, &bitmap_tunnellight_6[0], &bitmap_tunnellight_6s[0] }
 };
 
 // $E229
