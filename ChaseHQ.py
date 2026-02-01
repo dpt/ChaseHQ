@@ -339,7 +339,7 @@ class ChaseHQHtmlWriter(HtmlWriter, ChaseHQWriter):
         'total-length': lambda l: "",
         'jump': lambda d: f"MAP_CMD_GOTO(0x{d:X})<br/>",
         'jump-title': lambda: "",
-        'fork-end': lambda: "",
+        'fork-end': lambda: "MAP_CMD_FORK_END<br/>",
         'split': lambda l,r: f"MAP_CMD_SPLIT(0x{l:X}, 0x{r:X})<br/>",
         'left-split-title': lambda: "",
         'right-split-title': lambda: "",

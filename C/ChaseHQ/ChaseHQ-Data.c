@@ -3712,9 +3712,9 @@ const u8 bitmap_tunnellight_6s[2 * 2 * 6] = {
 
 // $E2A4
 const u8 perp_escape_hazards[6] = {
-  MAP_WAIT(27),
+  MAP_HAZARD_WAIT(27),
   MAP_CMD_START_TWO_BARRIERS,
-  MAP_WAIT(1),
+  MAP_HAZARD_WAIT(1),
   MAP_CMD_STOP_BARRIERS
 };
 
@@ -3733,20 +3733,22 @@ const u8 perp_escape_height[5] = {
 // $E2B4
 const u8 perp_escape_lanes[4] = {
   MAP_LANES_3L(53),
-  MAP_LANES_TUNNEL(255),
+  MAP_LANES_TUNNEL(255) // no explicit stop
 };
 
 // $E2B8
 const u8 fork_hazards[8] = {
-  MAP_WAIT(12),
+  MAP_HAZARD_WAIT(12),
   MAP_CMD_ARROW_OFF,
-  MAP_WAIT(255),
+  MAP_HAZARD_WAIT(255),
   MAP_CMD_GOTO(0xE2B8) // loop
 };
 
 // $E2C0
 const u8 fork_leftrightobjs[6] = {
-
+  MAP_OBJ_S1_NONE(1),
+  MAP_OBJ_S1_SHORT_POLE(15),
+  MAP_CMD_GOTO(0xE2C1) // loop (skipping)
 };
 
 // $E2C6
@@ -3769,18 +3771,22 @@ const u8 forked_road_lanes[2] = {
 
 // $ED23
 const u8 forked_road_exit_hazards[3] = {
-  MAP_WAIT(18),
+  MAP_HAZARD_WAIT(18),
   MAP_CMD_FORK_END
 };
 
 // $ED26
 const u8 forked_road_exit_rightobjs[4] = {
-
+  MAP_OBJ_S1_SHORT_POLE(5),
+  MAP_OBJ_S1_NONE(13),
+  MAP_CMD_FORK_END
 };
 
 // $E2DA
 const u8 forked_road_exit_leftobjs[4] = {
-
+  MAP_OBJ_S1_NONE(5),
+  MAP_OBJ_S1_NONE(13),
+  MAP_CMD_FORK_END
 };
 
 // $E2DE

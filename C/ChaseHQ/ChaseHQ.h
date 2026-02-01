@@ -265,8 +265,6 @@ typedef u8 chatterpriority_t;
 
 #define MAP_ESC                         (0)
 
-#define MAP_WAIT(D)                     (D)
-
 #define MAP_CMD_GOTO(ADDR)              MAP_ESC, (0), (ADDR) & 0xFF, (ADDR) >> 8
 #define MAP_CMD_FORK_END                MAP_ESC, (1)
 #define MAP_CMD_SPLIT(LADDR,RADDR)      MAP_ESC, (2), (LADDR) & 0xFF, (LADDR) >> 8, (RADDR) & 0xFF, (RADDR) >> 8
@@ -405,7 +403,7 @@ struct scenedata {
 
 #define LODFLAG_DEFAULT  (0 << 0)
 #define LODFLAG_MASKED   (1 << 0)
-#define LODFLAG_FLIPPED  (2 << 0)
+#define LODFLAG_FLIPPED  (1 << 1)
 
 // Are LODs always given in groups of five or six? Or ten?
 typedef struct lod {
