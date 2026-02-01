@@ -15,6 +15,8 @@
 
 #include "ChaseHQ-Stage1.h"
 
+#include <assert.h>
+
 /* ----------------------------------------------------------------------- */
 
 static const u8 stage1_perp_description[7];
@@ -3167,3 +3169,37 @@ static const u8 stage1_bitmap_tree_trunk_24x3s[3 * 2 * 3] = {
 static const u8 stage1_bitmap_tree_shadow_24x1s[3 * 2 * 1] = {
   XXXX____, ____XXXX, ________, XXX__XX_, ________, XXXXXXXX,
 };
+
+/* ----------------------------------------------------------------------- */
+
+const void *stage1_lookup_map_goto(chqstate_t *state, u16 z80)
+{
+  switch (z80) {
+    case 0x5FD2: return &map_left_curvature[0];
+    case 0x5FE6: return &map_left_height[0];
+    case 0x6003: return &map_left_lanes[0];
+    case 0x6009: return &map_left_hazards[0];
+    case 0x6011: return &map_left_leftobjs[0];
+    case 0x6052: return &map_left_rightobjs[0];
+    case 0x6088: return &map_right_curvature[0];
+    case 0x60A3: return &map_right_height[0];
+    case 0x60E5: return &map_right_lanes[0];
+    case 0x60EF: return &map_right_hazards[0];
+    case 0x6109: return &map_right_leftobjs[0];
+    case 0x6143: return &map_right_rightobjs[0];
+    case 0x6173: return &map_tunnel_curvature[0];
+    case 0x6189: return &map_tunnel_height[0];
+    case 0x61A5: return &map_tunnel_lanes[0];
+    case 0x61B9: return &map_tunnel_hazards[0];
+    case 0x61BE: return &map_tunnel_leftobjs[0];
+    case 0x61C9: return &map_tunnel_rightobjs[0];
+    case 0x61D4: return &map_loop_curvature[0];
+    case 0x6209: return &map_loop_height[0];
+    case 0x625D: return &map_loop_lanes[0];
+    case 0x6277: return &map_loop_hazards[0];
+    case 0x6294: return &map_loop_leftobjs[0];
+    case 0x6314: return &map_loop_rightobjs[0];
+    default:
+      assert("Unknown Z80 address (stage 1)" == NULL);
+  }
+}

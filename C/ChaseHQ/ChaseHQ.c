@@ -77,6 +77,7 @@
 #include "Types.h"
 #include "ChaseHQ-Data.h"
 #include "ChaseHQ-Stages.h"
+#include "ChaseHQ-Stage1.h"
 #include "ChaseHQ-State.h"
 #include "ChaseHQ.h"
 
@@ -5885,3 +5886,21 @@ void bootstrap(chqstate_t *state)
   }
 }
 
+/// For looking up Z80 pointers (that I've decided to leave in-place for now)
+/// and returning the C pointer equivalent.
+const void *lookup_map_goto(chqstate_t *state, u16 z80)
+{
+  switch (z80) {
+    case 0xE2AA: return &perp_escape_curvature[0];
+    case 0xE2AF: return &perp_escape_height[0];
+    case 0xE2B8: return &fork_hazards[0];
+    case 0xE2C7: return &forked_road_curvature[1]; // forked_road_curvature_loop
+    case 0xE2CC: return &forked_road_height[0];
+    default:
+      switch (state->current_stage_number) {
+      case 1: return stage1_lookup_map_goto(state, z80);
+      default:
+          assert("Unknown stage" == NULL);
+      }
+  }
+}
