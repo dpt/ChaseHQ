@@ -25,37 +25,36 @@ static const u8 stage1_arrest_messages[83];
 static const hitable_t stage1_hitable_object_defs[2];
 static const obj_t stage1_right_hand_graphics_defs[9];
 static const obj_t stage1_left_hand_graphics_defs[9];
-static const u8 map_start_curvature[32];
-static const u8 map_start_height[43];
-static const u8 map_start_lanes[14];
-static const u8 map_start_hazards[13];
-static const u8 map_start_leftobjs[78];
-static const u8 map_start_rightobjs[90];
-static const u8 map_left_curvature[];
-static const u8 map_left_height[];
-static const u8 map_left_lanes[];
-static const u8 map_left_hazards[];
-static const u8 map_left_leftobjs[];
-static const u8 map_left_rightobjs[];
-static const u8 map_right_curvature[];
-static const u8 map_right_height[];
-static const u8 map_right_lanes[];
-static const u8 map_right_hazards[];
-static const u8 map_right_leftobjs[];
-static const u8 map_right_rightobjs[];
-static const u8 map_tunnel_curvature[];
-static const u8 map_tunnel_height[];
-static const u8 map_tunnel_lanes[];
-static const u8 map_tunnel_hazards[];
-static const u8 map_tunnel_leftobjs[];
-static const u8 map_tunnel_rightobjs[];
-static const u8 map_loop_curvature[];
-static const u8 map_loop_height[];
-static const u8 map_loop_lanes[];
-static const u8 map_loop_hazards[];
-static const u8 map_loop_leftobjs[];
-static const u8 map_loop_rightobjs[];
-
+static const u8 stage1_map_start_curvature[32];
+static const u8 stage1_map_start_height[43];
+static const u8 stage1_map_start_lanes[14];
+static const u8 stage1_map_start_hazards[13];
+static const u8 stage1_map_start_leftobjs[78];
+static const u8 stage1_map_start_rightobjs[90];
+static const u8 stage1_map_left_curvature[];
+static const u8 stage1_map_left_height[];
+static const u8 stage1_map_left_lanes[];
+static const u8 stage1_map_left_hazards[];
+static const u8 stage1_map_left_leftobjs[];
+static const u8 stage1_map_left_rightobjs[];
+static const u8 stage1_map_right_curvature[];
+static const u8 stage1_map_right_height[];
+static const u8 stage1_map_right_lanes[];
+static const u8 stage1_map_right_hazards[];
+static const u8 stage1_map_right_leftobjs[];
+static const u8 stage1_map_right_rightobjs[];
+static const u8 stage1_map_tunnel_curvature[];
+static const u8 stage1_map_tunnel_height[];
+static const u8 stage1_map_tunnel_lanes[];
+static const u8 stage1_map_tunnel_hazards[];
+static const u8 stage1_map_tunnel_leftobjs[];
+static const u8 stage1_map_tunnel_rightobjs[];
+static const u8 stage1_map_loop_curvature[];
+static const u8 stage1_map_loop_height[];
+static const u8 stage1_map_loop_lanes[];
+static const u8 stage1_map_loop_hazards[];
+static const u8 stage1_map_loop_leftobjs[];
+static const u8 stage1_map_loop_rightobjs[];
 static const u8 stage1_perp_face[FACEBYTES];
 static const lod_t stage1_lambo_lods[6];
 static const lod_t stage1_truck_lods[6];
@@ -235,22 +234,22 @@ const stage_t stage1 = {
 
   {
     234,
-    &map_start_curvature[-1],
-    &map_start_height[-1],
-    &map_start_lanes[-1],
-    &map_start_rightobjs[-1],
-    &map_start_leftobjs[-1],
-    &map_start_hazards[-1]
+    &stage1_map_start_curvature[-1],
+    &stage1_map_start_height[-1],
+    &stage1_map_start_lanes[-1],
+    &stage1_map_start_rightobjs[-1],
+    &stage1_map_start_leftobjs[-1],
+    &stage1_map_start_hazards[-1]
   },
 
   {
     234,
-    &map_loop_curvature[-1],
-    &map_loop_height[-1],
-    &map_loop_lanes[-1],
-    &map_loop_rightobjs[-1],
-    &map_loop_leftobjs[-1],
-    &map_loop_hazards[-1]
+    &stage1_map_loop_curvature[-1],
+    &stage1_map_loop_height[-1],
+    &stage1_map_loop_lanes[-1],
+    &stage1_map_loop_rightobjs[-1],
+    &stage1_map_loop_leftobjs[-1],
+    &stage1_map_loop_hazards[-1]
   },
 
   stage1_chatter_strings
@@ -341,7 +340,7 @@ static const obj_t stage1_left_hand_graphics_defs[9] = {
 /* ----------------------------------------------------------------------- */
 
 // $5EC4
-static const u8 map_start_curvature[32] = {
+static const u8 stage1_map_start_curvature[32] = {
   MAP_CURVE_STRAIGHT(15),
   MAP_CURVE_STRAIGHT(15),
   MAP_CURVE_LEFT(15),
@@ -372,7 +371,7 @@ static const u8 map_start_curvature[32] = {
 };
 
 // 0x5EE4
-static const u8 map_start_height[43] = {
+static const u8 stage1_map_start_height[43] = {
   MAP_HEIGHT_LEVEL(15),
   MAP_HEIGHT_LEVEL(15),
   MAP_HEIGHT_LEVEL(15),
@@ -414,7 +413,7 @@ static const u8 map_start_height[43] = {
 };
 
 // 0x5F0F
-static const u8 map_start_lanes[14] = {
+static const u8 stage1_map_start_lanes[14] = {
   MAP_LANES_3L(30),
   MAP_LANES_3TO4L(2),
   MAP_LANES_4(254),
@@ -423,7 +422,7 @@ static const u8 map_start_lanes[14] = {
 };
 
 // 0x5F1D
-static const u8 map_start_hazards[13] = {
+static const u8 stage1_map_start_hazards[13] = {
   MAP_HAZARD_WAIT(147),
   MAP_CMD_STOP_CARS,
   MAP_HAZARD_WAIT(12),
@@ -433,7 +432,7 @@ static const u8 map_start_hazards[13] = {
 };
 
 // 0x5F2A
-static const u8 map_start_leftobjs[78] = {
+static const u8 stage1_map_start_leftobjs[78] = {
   MAP_OBJ_S1_BUSH(1),
   MAP_OBJ_S1_NONE(1),
   MAP_OBJ_S1_BUSH(1),
@@ -510,7 +509,7 @@ static const u8 map_start_leftobjs[78] = {
 };
 
 // 0x5F78
-static const u8 map_start_rightobjs[90] = {
+static const u8 stage1_map_start_rightobjs[90] = {
   MAP_OBJ_S1_TREE(1),
   MAP_OBJ_S1_NONE(3),
   MAP_OBJ_S1_TREE(1),
@@ -601,7 +600,7 @@ static const u8 map_start_rightobjs[90] = {
 /* ----------------------------------------------------------------------- */
 
 // $5FD2
-static const u8 map_left_curvature[] = {
+static const u8 stage1_map_left_curvature[] = {
   MAP_CURVE_STRAIGHT(15),
   MAP_CURVE_STRAIGHT(15),
   MAP_CURVE_STRAIGHT(15),
@@ -622,7 +621,7 @@ static const u8 map_left_curvature[] = {
 };
 
 // 0x5FE6
-static const u8 map_left_height[] = {
+static const u8 stage1_map_left_height[] = {
   MAP_HEIGHT_LEVEL(13),
   MAP_HEIGHT_UP1(4),
   MAP_HEIGHT_UP3(4),
@@ -652,13 +651,13 @@ static const u8 map_left_height[] = {
 };
 
 // 0x6003
-static const u8 map_left_lanes[] = {
+static const u8 stage1_map_left_lanes[] = {
   MAP_LANES_4(210),
   MAP_CMD_GOTO(0x61A5) // map_tunnel_lanes
 };
 
 // 0x6009
-static const u8 map_left_hazards[] = {
+static const u8 stage1_map_left_hazards[] = {
   MAP_HAZARD_WAIT(10),
   MAP_CMD_START_CARS,
   MAP_HAZARD_WAIT(95),
@@ -666,7 +665,7 @@ static const u8 map_left_hazards[] = {
 };
 
 // 0x6011
-static const u8 map_left_leftobjs[] = {
+static const u8 stage1_map_left_leftobjs[] = {
   MAP_OBJ_S1_NONE(4),
   MAP_OBJ_S1_TREE(1),
   MAP_OBJ_S1_NONE(1),
@@ -732,7 +731,7 @@ static const u8 map_left_leftobjs[] = {
 };
 
 // 0x6052
-static const u8 map_left_rightobjs[] = {
+static const u8 stage1_map_left_rightobjs[] = {
   MAP_OBJ_S1_NONE(15),
   MAP_OBJ_S1_NONE(15),
   MAP_OBJ_S1_NONE(1),
@@ -789,7 +788,7 @@ static const u8 map_left_rightobjs[] = {
 /* ----------------------------------------------------------------------- */
 
 // 0x6088
-static const u8 map_right_curvature[] = {
+static const u8 stage1_map_right_curvature[] = {
   MAP_CURVE_STRAIGHT(15),
   MAP_CURVE_STRAIGHT(8),
   MAP_CURVE_LEFT(15),
@@ -817,7 +816,7 @@ static const u8 map_right_curvature[] = {
 };
 
 // $60A3
-static const u8 map_right_height[] = {
+static const u8 stage1_map_right_height[] = {
   MAP_HEIGHT_LEVEL(15),
   MAP_HEIGHT_LEVEL(5),
   MAP_HEIGHT_UP3(5),
@@ -884,7 +883,7 @@ static const u8 map_right_height[] = {
 };
 
 // $60E5
-static const u8 map_right_lanes[] = {
+static const u8 stage1_map_right_lanes[] = {
   MAP_LANES_4(20),
   MAP_LANES_DIRTTRACK(178),
   MAP_LANES_4(12),
@@ -892,7 +891,7 @@ static const u8 map_right_lanes[] = {
 };
 
 // $60EF
-static const u8 map_right_hazards[] = {
+static const u8 stage1_map_right_hazards[] = {
   MAP_HAZARD_WAIT(10),
   MAP_CMD_START_TWO_BARRIERS,
   MAP_HAZARD_WAIT(1),
@@ -912,7 +911,7 @@ static const u8 map_right_hazards[] = {
 };
 
 // $6109
-static const u8 map_right_leftobjs[] = {
+static const u8 stage1_map_right_leftobjs[] = {
   MAP_OBJ_S1_NONE(10),
   MAP_OBJ_S1_SHORT_POLE(1),
   MAP_OBJ_S1_NONE(7),
@@ -971,7 +970,7 @@ static const u8 map_right_leftobjs[] = {
 };
 
 // $6143
-static const u8 map_right_rightobjs[] = {
+static const u8 stage1_map_right_rightobjs[] = {
   MAP_OBJ_S1_STREET_LAMP(1),
   MAP_OBJ_S1_NONE(3),
   MAP_OBJ_S1_STREET_LAMP(1),
@@ -1022,7 +1021,7 @@ static const u8 map_right_rightobjs[] = {
 /* ----------------------------------------------------------------------- */
 
 // $6173
-static const u8 map_tunnel_curvature[] = {
+static const u8 stage1_map_tunnel_curvature[] = {
   MAP_CURVE_STRAIGHT(15),
   MAP_CURVE_STRAIGHT(15),
   MAP_CURVE_STRAIGHT(5),
@@ -1045,7 +1044,7 @@ static const u8 map_tunnel_curvature[] = {
 };
 
 // $6189
-static const u8 map_tunnel_height[] = {
+static const u8 stage1_map_tunnel_height[] = {
   MAP_HEIGHT_DOWN5(15),
   MAP_HEIGHT_DOWN3(3),
   MAP_HEIGHT_LEVEL(4),
@@ -1074,7 +1073,7 @@ static const u8 map_tunnel_height[] = {
 };
 
 // $61A5
-static const u8 map_tunnel_lanes[] = {
+static const u8 stage1_map_tunnel_lanes[] = {
   MAP_LANES_4(44),
   MAP_LANES_4TO3L(2),
   MAP_LANES_3L(12),
@@ -1087,13 +1086,13 @@ static const u8 map_tunnel_lanes[] = {
 };
 
 // $61B9
-static const u8 map_tunnel_hazards[] = {
+static const u8 stage1_map_tunnel_hazards[] = {
   MAP_HAZARD_WAIT(95),
   MAP_CMD_GOTO(0x6277)
 };
 
 // $61BE
-static const u8 map_tunnel_leftobjs[] = {
+static const u8 stage1_map_tunnel_leftobjs[] = {
   MAP_OBJ_S1_NONE(15),
   MAP_OBJ_S1_NONE(15),
   MAP_OBJ_S1_TUNNEL_LIGHT(15),
@@ -1105,7 +1104,7 @@ static const u8 map_tunnel_leftobjs[] = {
 };
 
 // $61C9
-static const u8 map_tunnel_rightobjs[] = {
+static const u8 stage1_map_tunnel_rightobjs[] = {
   MAP_OBJ_S1_NONE(15),
   MAP_OBJ_S1_NONE(15),
   MAP_OBJ_S1_TUNNEL_LIGHT(15),
@@ -1119,7 +1118,7 @@ static const u8 map_tunnel_rightobjs[] = {
 /* ----------------------------------------------------------------------- */
 
 // $61D4
-static const u8 map_loop_curvature[] = {
+static const u8 stage1_map_loop_curvature[] = {
   MAP_CURVE_STRAIGHT(3),
   MAP_CURVE_LEFT(15),
   MAP_CURVE_LEFT(8),
@@ -1173,7 +1172,7 @@ static const u8 map_loop_curvature[] = {
 };
 
 // $6209
-static const u8 map_loop_height[] = {
+static const u8 stage1_map_loop_height[] = {
   MAP_HEIGHT_LEVEL(15),
   MAP_HEIGHT_LEVEL(15),
   MAP_HEIGHT_LEVEL(15),
@@ -1258,7 +1257,7 @@ static const u8 map_loop_height[] = {
 };
 
 // $625D
-static const u8 map_loop_lanes[] = {
+static const u8 stage1_map_loop_lanes[] = {
   MAP_LANES_4(254),
   MAP_LANES_4(36),
   MAP_LANES_4TO3R(34),
@@ -1274,7 +1273,7 @@ static const u8 map_loop_lanes[] = {
 };
 
 // 6277
-static const u8 map_loop_hazards[] = {
+static const u8 stage1_map_loop_hazards[] = {
   MAP_HAZARD_WAIT(42),
   MAP_CMD_START_BARRIERS_L,
   MAP_HAZARD_WAIT(2),
@@ -1296,7 +1295,7 @@ static const u8 map_loop_hazards[] = {
 };
 
 // $6294
-static const u8 map_loop_leftobjs[] = {
+static const u8 stage1_map_loop_leftobjs[] = {
   MAP_OBJ_S1_NONE(3),
   MAP_OBJ_S1_STREET_LAMP(1),
   MAP_OBJ_S1_NONE(1),
@@ -1425,7 +1424,7 @@ static const u8 map_loop_leftobjs[] = {
 };
 
 // $6314
-static const u8 map_loop_rightobjs[] = {
+static const u8 stage1_map_loop_rightobjs[] = {
   MAP_OBJ_S1_NONE(2),
   MAP_OBJ_S1_TURN_SIGN_L(1),
   MAP_OBJ_S1_NONE(1),
@@ -3175,30 +3174,30 @@ static const u8 stage1_bitmap_tree_shadow_24x1s[3 * 2 * 1] = {
 const void *stage1_lookup_map_goto(chqstate_t *state, u16 z80)
 {
   switch (z80) {
-    case 0x5FD2: return &map_left_curvature[0];
-    case 0x5FE6: return &map_left_height[0];
-    case 0x6003: return &map_left_lanes[0];
-    case 0x6009: return &map_left_hazards[0];
-    case 0x6011: return &map_left_leftobjs[0];
-    case 0x6052: return &map_left_rightobjs[0];
-    case 0x6088: return &map_right_curvature[0];
-    case 0x60A3: return &map_right_height[0];
-    case 0x60E5: return &map_right_lanes[0];
-    case 0x60EF: return &map_right_hazards[0];
-    case 0x6109: return &map_right_leftobjs[0];
-    case 0x6143: return &map_right_rightobjs[0];
-    case 0x6173: return &map_tunnel_curvature[0];
-    case 0x6189: return &map_tunnel_height[0];
-    case 0x61A5: return &map_tunnel_lanes[0];
-    case 0x61B9: return &map_tunnel_hazards[0];
-    case 0x61BE: return &map_tunnel_leftobjs[0];
-    case 0x61C9: return &map_tunnel_rightobjs[0];
-    case 0x61D4: return &map_loop_curvature[0];
-    case 0x6209: return &map_loop_height[0];
-    case 0x625D: return &map_loop_lanes[0];
-    case 0x6277: return &map_loop_hazards[0];
-    case 0x6294: return &map_loop_leftobjs[0];
-    case 0x6314: return &map_loop_rightobjs[0];
+    case 0x5FD2: return &stage1_map_left_curvature[0];
+    case 0x5FE6: return &stage1_map_left_height[0];
+    case 0x6003: return &stage1_map_left_lanes[0];
+    case 0x6009: return &stage1_map_left_hazards[0];
+    case 0x6011: return &stage1_map_left_leftobjs[0];
+    case 0x6052: return &stage1_map_left_rightobjs[0];
+    case 0x6088: return &stage1_map_right_curvature[0];
+    case 0x60A3: return &stage1_map_right_height[0];
+    case 0x60E5: return &stage1_map_right_lanes[0];
+    case 0x60EF: return &stage1_map_right_hazards[0];
+    case 0x6109: return &stage1_map_right_leftobjs[0];
+    case 0x6143: return &stage1_map_right_rightobjs[0];
+    case 0x6173: return &stage1_map_tunnel_curvature[0];
+    case 0x6189: return &stage1_map_tunnel_height[0];
+    case 0x61A5: return &stage1_map_tunnel_lanes[0];
+    case 0x61B9: return &stage1_map_tunnel_hazards[0];
+    case 0x61BE: return &stage1_map_tunnel_leftobjs[0];
+    case 0x61C9: return &stage1_map_tunnel_rightobjs[0];
+    case 0x61D4: return &stage1_map_loop_curvature[0];
+    case 0x6209: return &stage1_map_loop_height[0];
+    case 0x625D: return &stage1_map_loop_lanes[0];
+    case 0x6277: return &stage1_map_loop_hazards[0];
+    case 0x6294: return &stage1_map_loop_leftobjs[0];
+    case 0x6314: return &stage1_map_loop_rightobjs[0];
     default:
       assert("Unknown Z80 address (stage 1)" == NULL);
   }
