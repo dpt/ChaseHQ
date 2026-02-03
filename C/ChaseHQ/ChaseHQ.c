@@ -963,8 +963,8 @@ void drive_sfx(chqstate_t *state)
   const struct sfxtab *tab;   // was HL
 
   if (state->tunnel_sfx == 0) {
-    state->var_a23d |= state->var_a23c;
-    if (state->var_a23d)
+    state->trigger_lane_change_sfx |= state->trigger_passed_object_sfx;
+    if (state->trigger_lane_change_sfx)
       start_sfx(state, EFFECT_CORNERING, 4); /* priority 4 */
   }
 
@@ -4383,11 +4383,226 @@ void keyscan_inner(chqstate_t *state, u8 A)
 // $A399
 void check_scenery_collisions(chqstate_t *state)
 {
+  int          carry = 0;
+  u16          HL;
+  u16          DE;
+  u8           fork_countdown; // was A
+  s16          pos;            // was HL'
+  u8           offroad;        // was A
+  u8           Cdash;
+  u8          *bufptr;         // was HL'
+  u8           lanes;          // was A
+  int          Z;
+  u8           A;
+  u8           C;
+  u8           Adash;
+  u8           Aflip;
+  u16          HLdash;
+  u16          DEdash;
+  u16          BCdash;
+  const obj_t *HLobj;
+  u8           Edash;
+  u8           obj;
+
+  HL = 72;
+  DE = 472; // road centre?
+
+  // EXX - bank
+
+  if (state->fork_visible) {
+    fork_countdown = state->fork_countdown;
+    if (fork_countdown == 0) {
+      fork_completed(state); // exit via
+      return;
+    }
+
+    if (--fork_countdown == 0)
+      return;
+  }
+
+  // Check left hand side
+  //
+  // "pos" here is (something like) a positive offset from the left edge of
+  // the screen to the object. It's approx -186 .. 176 for (object fully
+  // off-screen on the left to on-screen centred(?)).
+  //
+  // Note that is where an object *could be*. There's not necessarily an
+  // object always there.
+  pos = state->table_ea00[127]; // signed
+  if ((pos >> 8) != 0) {
+    // object is visible(?)
+    if (pos >= 64) {
+      // reasonably close to hero car?
+      if (pos < 106)
+        goto check_right_hand; // not close enough to be off-road
+      // how far off-road are we? partially/fully off-road is 1/2
+      offroad = (pos < 133) ? 1 : 2;
+      goto store_off_road;
+    }
+  }
+
+  // If we don't arrive here we're close to the left hand object
+  state->trigger_lane_change_sfx = 0;
+
+  // Check right hand side
+check_right_hand:
+  // "pos" here is approx 75..368 for (centred .. off-screen on the right).
+  pos = state->table_ea00[126];
+  offroad = 0;
+  if ((pos >> 8) != 0) {
+    if (pos < 190) {
+      if (pos < 142)
+        offroad = (pos < 124) ? 1 : 2; // as above
+      goto store_off_road;
+    }
+  }
+
+  // If we don't arrive here we're close to the right hand object
+  state->trigger_passed_object_sfx = 0;
+
+store_off_road:
+  state->off_road = offroad; // 0/1/2 => on-road/one wheel off-road/both wheels off-road
+  Cdash = 0;
+  if (offroad == 0)
+    goto csc_a43b;
+
+  // Otherwise we're off-road.
+
+  bufptr = ROADBUFPTR(ROADBUF_LANES_OFFSET);
+  lanes = *bufptr;
+  if ((lanes & (1<<6)) == 0) // tunnel??
+    goto csc_a43b;
+  RL(lanes); // test bit 7
+  if (carry)
+    goto csc_a43b;
+  Z = ((lanes & (1<<3)) == 0); // Test bit 3 (was bit 2 before RLA)
+  A = state->scenedata.road_pos >> 8;
+  if (!Z) {
+    C = A; // save road_pos
+    Adash = 20;
+    // EX AF,AF'
+    Aflip = C & 1;
+    scenery_hit(state, Aflip, Adash); // exit via
+    return;
+  }
+
+  HLdash = 209;
+  DEdash = 405;
+  // EXX - unbank
+  C = (A) ? 2 : 1;
+
+  // Hit tunnel wall.
+  start_sfx(state, EFFECT_WALL_HIT, 4); /* priority 4 */
+
+csc_a43b:
+  A = C;
+  state->SM_B3DB = A;
+  // EXX - bank
+  state->SM_B395 = HLdash;
+  state->SM_B3A3 = DEdash;
+  if (A)
+    return;
+
+  // -- RIGHT SIDE OBJECT HIT CHECKING --
+  bufptr = ROADBUFPTR(ROADBUF_RIGHTOBJS_OFFSET);
+  // EX AF,AF' // FIXME stash road buffer offset here
+
+  A = ROADBUFINDEX(0);
+  RL(A);
+  obj = *bufptr; // Read a right side object data byte
+  if (carry)
+    bufptr++; // FIXME needs wraparound
+  obj |= *bufptr;
+  if (obj == 0) // no object
+    goto csc_check_left;
+
+  HLobj = &state->stage->addrof_right_hand_objects[obj];
+  // Read collision values.
+  Cdash = HLobj->hit_max_or_min;
+  Edash = HLobj->hit_min_or_max;
+  A     = HLobj->hit_something;
+
+  DEdash = Edash;
+  BCdash = Cdash;
+
+  // Check for collisions with scenery (right hand side).
+  pos = state->table_ea00[126]; // read pos
+  if (pos >= BCdash)
+      goto csc_check_left;
+  if (pos < DEdash)
+      goto csc_check_left;
+  // EX AF,AF'  unbank(?) road buf offset
+  Aflip = 0;
+  goto hit_scenery;
+
+csc_check_left:
+  // EX AF,AF'  Unbank road buffer offset or/and bank mystery value in A
+
+  // -- LEFT SIDE OBJECT HIT CHECKING --
+  bufptr = ROADBUFPTR(ROADBUF_LEFTOBJS_OFFSET);
+
+  A = ROADBUFINDEX(0);
+  RL(A);
+  obj = *bufptr; // Read a left side object data byte
+  if (carry)
+    bufptr++; // FIXME needs wraparound
+  obj |= *bufptr;
+  if (obj == 0) // no object
+    return;
+
+  HLobj = &state->stage->addrof_left_hand_objects[obj];
+  // Read collision values.
+  Cdash = HLobj->hit_max_or_min;
+  Edash = HLobj->hit_min_or_max;
+  A = HLobj->hit_something;
+
+  DEdash = Edash;
+  BCdash = Cdash;
+
+  // Check for collisions with scenery (left hand side).
+  pos = state->table_ea00[127];
+  if (pos < BCdash || pos >= DEdash)
+    return;
+  // EX AF,AF'
+  Aflip = 1; // likely an arg for scenery_hit()
+
+  // Arrive here if hit scenery, e.g. drove into a tree or a lamp post.
+hit_scenery:
+  start_sfx(state, EFFECT_SCENERY_HIT, 3); /* priority 3 */
+  scenery_hit(state, Aflip, Adash);
 }
 
 // $A4B8
-void scenery_hit(chqstate_t *state)
+void scenery_hit(chqstate_t *state, u8 Aflip, u8 Adash)
 {
+  int speed;      // was HL
+  int A;
+  int HL;
+  int L;
+  int DE;
+
+  if (state->ahc_crashed_flag)
+    return; // already crashed
+
+  state->ahc_crashed_flag = 1;
+  state->ahc_flip_flag    = Aflip;
+  state->SM_B38D          = ++Aflip;
+  state->ahc_delay        = 5;
+
+  speed = state->speed;
+  A = (speed >> 4) + 16;
+  // i.e. speed = max(24, A);
+  L = 24; // minimum?
+  if (A >= L)
+    L = A;
+  state->SM_B356 = (speed & ~0xFF) | L;
+
+  // i.e. HL = min(Adash, state->speed);
+  HL = Adash;
+  DE = state->speed;
+  if (HL >= DE)
+    HL = DE;
+  state->SM_B32E = HL;
 }
 
 // $A4F6
@@ -5144,9 +5359,9 @@ void read_map(chqstate_t *state)
   u8  speed_lo;       // was A
   u8  allow_spawning; // was A
 
-  state->var_a23d       = 0;
-  state->var_a23c       = 0;
-  state->allow_spawning = 0;
+  state->trigger_lane_change_sfx   = 0;
+  state->trigger_passed_object_sfx = 0;
+  state->allow_spawning            = 0;
   pfast_counter = &state->fast_counter;
   speed = state->speed;
   speed_lo = speed & 0xFF;
@@ -5186,9 +5401,9 @@ void rm_cycle_buffer_offset(chqstate_t *state, u8 *pfastcounter)
   *HL = A;
   A += 0x5F;
   HL = ROADBUFPTR(A);
-  state->var_a23c |= *HL;
+  state->trigger_passed_object_sfx |= *HL;
   HL = LO_ADD(HL, 0x20); // ROADBUFPTR(A + 0x20);
-  state->var_a23d |= *HL;
+  state->trigger_lane_change_sfx |= *HL;
   HL = LO_ADD(HL, -0x60); // ROADBUFPTR(A + 0x40); ?
 
   // -- CURVATURE --

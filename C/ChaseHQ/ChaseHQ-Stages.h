@@ -16,8 +16,8 @@ struct hitable {
 };
 
 struct obj {
-  u8                hit_max;
-  u8                hit_min;
+  u8                hit_max_or_min; // max for RIGHT? min for LEFT?
+  u8                hit_min_or_max;
   u8                hit_something;
   const void       *arg;
   obj_handler_t    *handler;

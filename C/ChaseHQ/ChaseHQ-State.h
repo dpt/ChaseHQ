@@ -286,10 +286,11 @@ struct chqstate {
   // $A23B
   u8        tunnel_sfx;
   // $A23C
-  u8        var_a23c;
+  u8        trigger_passed_object_sfx;
   // $A23D
-  u8        var_a23d;
-
+  u8        trigger_lane_change_sfx;
+  // $A23E
+  u8        off_road;
   // $A23F
   u8        fast_counter;
   // $A240
@@ -391,6 +392,25 @@ struct chqstate {
   // $B063 (SM) in move_hero_car
   u8        SM_B063; // jump counter
 
+  // $B325 (SM) in animate_hero_car
+  u16       ahc_crashed_flag; // crashed flag
+  // $B32E (SM) in animate_hero_car
+  u16       SM_B32E; // set when crashed
+  // $B356 (SM) in animate_hero_car
+  u16       SM_B356; // perhaps a speed
+  // $B36E (SM) in animate_hero_car
+  u8        ahc_flip_flag; // flip flag
+  // $B384 (SM) in animate_hero_car
+  u8        ahc_delay; // delay counter, set to 5
+  // $B38D (SM) in animate_hero_car
+  u8        SM_B38D; // (flip flag + 1)
+  // $B395 (SM) in animate_hero_car
+  u8        SM_B395;
+  // $B3A3 (SM) in animate_hero_car
+  u8        SM_B3A3;
+  // $B3DB (SM) in animate_hero_car
+  u8        SM_B3DB; // controls flipping
+
   // $BB95 (SM) in rm_cycle_buffer_offset
   const u8 *SM_BB95;
   // $BBC2 (SM) in rm_cycle_buffer_offset
@@ -421,7 +441,7 @@ struct chqstate {
   // $E900
   u16       table_e900[128];
   // $EA00
-  u16       table_ea00[128];
+  u16       table_ea00[128]; // perhaps s16
   // $EB00
   u16       table_eb00[128];
   // $EC00

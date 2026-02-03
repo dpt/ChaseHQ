@@ -733,7 +733,7 @@ void keyscan_inner(chqstate_t *state, u8 A);
 
 void check_scenery_collisions(chqstate_t *state);
 
-void scenery_hit(chqstate_t *state);
+void scenery_hit(chqstate_t *state, u8 Aflip, u8 Adash);
 
 void fork_completed(chqstate_t *state);
 

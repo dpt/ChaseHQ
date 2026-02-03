@@ -306,7 +306,7 @@ W $5CF6,2,2 Loaded by #R$AC1F. Address of table of LODs for tumbleweeds, barrier
 @ $5CF8 ssub=DEFW right_hand_handlers - 7
 W $5CF8,2,2 Loaded by #R$900F. Address of an array of 7 byte entries. Points 7 bytes earlier to permit 1-indexing.
 @ $5CFA label=addrof_right_hand_objects
-@ $5CFA ssub=DEFW right_hand_graphics_defs - 7
+@ $5CFA ssub=DEFW right_hand_object_defs - 7
 W $5CFA,2,2 Loaded by #R$A465. Address of graphics entry 1. Points 7 bytes earlier to permit 1-indexing.
 @ $5CFC label=addrof_right_hand_short_pole_object
 W $5CFC,2,2 Loaded by #R$A53F. Address of graphics entry 3.
@@ -314,7 +314,7 @@ W $5CFC,2,2 Loaded by #R$A53F. Address of graphics entry 3.
 @ $5CFE ssub=DEFW left_hand_handlers - 7
 W $5CFE,2,2 Address of turn sign arg and handler address. Points 7 bytes earlier to permit 1-indexing.
 @ $5D00 label=addrof_left_hand_objects
-@ $5D00 ssub=DEFW left_hand_graphics_defs - 7
+@ $5D00 ssub=DEFW left_hand_object_defs - 7
 W $5D00,2,2 Loaded by #R$A490. Address of graphics entry 10. Points 7 bytes earlier to permit 1-indexing.
 @ $5D02 label=addrof_left_hand_short_pole_object
 W $5D02,2,2 Loaded by #R$A55C. Address of graphics entry 12.
@@ -428,7 +428,7 @@ B $5E43,1,1 ?
 W $5E44,2,2 Address of barrier_lods table
 N $5E46 Right hand side objects.
 N $5E46 Entry 1 (tunnel light)
-@ $5E46 label=right_hand_graphics_defs
+@ $5E46 label=right_hand_object_defs
 B $5E46,3,3 (hit coord max, hit coord min, ?)
 @ $5E49 label=right_hand_handlers
 W $5E49,2,2 Arg for routine passed in DE
@@ -467,7 +467,7 @@ W $5E81,2,2 -> -> turn_sign_lods
 W $5E83,2,2 -> Routine at #R$92E1
 N $5E85 Left hand side objects.
 N $5E85 Entry 10 (tunnel light)
-@ $5E85 label=left_hand_graphics_defs
+@ $5E85 label=left_hand_object_defs
 B $5E85,3,3 (hit coord min, hit coord max, ?)  -- note reversed order
 @ $5E88 label=left_hand_handlers
 W $5E88,2,2 Arg for routine passed in DE
@@ -3114,11 +3114,11 @@ c $8903 Drives sound effects
 D $8903 Used by the routine at #R$8401.
 @ $8903 label=drive_sfx
 C $8903,6 Jump if tunnel_sfx
-N $8909 If var_a23d or var_a23c is set then play effect 7 ("tit-tit").
-C $8909,3 Load var_a23c
-C $890C,3 Load address of var_a23d
+N $8909 If trigger_passed_object_sfx or trigger_lane_change_sfx is set then play effect 7 ("tit").
+C $8909,3 Load trigger_passed_object_sfx
+C $890C,3 Load address of trigger_lane_change_sfx
 C $890F,1 OR together vars and set flags
-C $8910,3 Effect 7 (tit-tit), Priority 4
+C $8910,3 Effect 7 (tit), Priority 4
 C $8913,3 Call start_sfx if non-zero
 @ $8916 label=drs_skip_effect_no7
 C $8916,3 Call play_engine_sfx_hook
@@ -3149,7 +3149,7 @@ N $894C Effect 5 - Hazard hit (high thump)
 W $894C,4,2
 N $8950 Effect 6 - Tunnel wall hit
 W $8950,4,2
-N $8954 Effect 7 - Cornering ("tit-tit")
+N $8954 Effect 7 - Cornering ("tit")
 W $8954,4,2
 N $8958 Effect 8 - Time running out high ("bip")
 W $8958,4,2
@@ -5872,10 +5872,10 @@ B $A239,1,1 Enables siren. Used by #R$F265 [128K]
 B $A23A,1,1 Copy of noise pitch. Used by #R$F2F6 [128K]
 @ $A23B label=tunnel_sfx
 B $A23B,1,1 Set to 5 when we're in a tunnel. Used to modulate sfx.
-@ $A23C label=var_a23c
-B $A23C,1,1 #R$8909, #R$BE28 reads  #R$A3FA, #R$BDFF, #R$BE2C writes
-@ $A23D label=var_a23d
-B $A23D,1,1 #R$BE33 reads  #R$890F, #R$A3D2, #R$BDFC, #R$BE37 writes
+@ $A23C label=trigger_passed_object_sfx
+B $A23C,1,1 #R$8909, #R$BE28 reads. #R$A3FA, #R$BDFF, #R$BE2C writes.
+@ $A23D label=trigger_lane_change_sfx
+B $A23D,1,1 Set whenever an object passes the hero's car. #R$BE33 reads. #R$890F, #R$A3D2, #R$BDFC, #R$BE37 writes.
 @ $A23E label=off_road
 B $A23E,1,1 0 => Fully on-road, 1 => One wheel off-road, 2 => Both wheels off-road [samples: #R$B104, #R$B40C reads  #R$A3FD, #R$A52A, #R$B07D, #R$B322, #R$B404, #R$B443 writes]
 @ $A23F label=fast_counter
@@ -6028,30 +6028,31 @@ C $A3A4,2 Jump to csc_fork_not_visible_or_fork_in_progress if zero
 N $A3A6 The fork is visible.
 C $A3A6,3 Load fork_countdown
 C $A3A9,1 Set flags
-C $A3AA,3 Jump to csc_fork_completed if zero
+C $A3AA,3 Exit via fork_completed if zero
 N $A3AD Currently forking.
-C $A3AD,1 Decrement the fork_countdown
+C $A3AD,1 Decrement the fork_countdown value
 C $A3AE,1 Return if zero  -- can't collide immediately before fork?
 N $A3AF Check left hand side of car. This reads the position of the road from generated data at $EAFE. The values as seen in the debugger vibrate so it's hard to tell exactly what the buffer is. Presumably it's a dual-use buffer and I need to know what it's being used for at this instant to make a clear statement here.
 @ $A3AF label=csc_fork_not_visible_or_fork_in_progress
 C $A3AF,3 Read signed word at $EAFE
+N $A3B2 When car off road left       ~  176 When car half off road left  ~  133 When car in lane 1           ~  85 When car in lane 2           ~  38 When car in lane 3           ~ -36 When car in lane 4           ~ -84 When car half off road right ~ -153 When car off road right      ~ -186
 C $A3B2,2 Set flags from sign of word: 0 when hero car on left side, 255 if right
 C $A3B4,2 Jump to #R$A3D1 if non-zero  -- right side
 N $A3B6 Otherwise left side.
 C $A3B6,9 Jump to #R$A3D1 if HL < 64
 C $A3BF,8 Jump to #R$A3D5 if HL < 106
 C $A3C7,4 HL -= 133
-C $A3CB,1 A++  -- A == 1 => partially off-road
-C $A3CC,2 Jump to csc_store_off_road if A was 255
+C $A3CB,1 A++  -- A == 1 => partially off-road (note: A is zero here)
+C $A3CC,2 Jump to csc_store_off_road if HL < 133 (note: INC A doesn't affect carry)
 C $A3CE,1 A++  -- A == 2 => fully off-road
 C $A3CF,2 Jump to csc_store_off_road
 @ $A3D1 label=csc_clear_var_a23d
-C $A3D1,4 var_a23d = 0  -- offroad/sfx flag perhaps?
-N $A3D5 Check right hand side of car.
-@ $A3D5 label=csc_a3d5
-C $A3D5,3 Read signed word at $EAFC
+C $A3D1,4 trigger_lane_change_sfx = 0  -- offroad/sfx flag perhaps?
+N $A3D5 Check right hand side of car. Car off road left       ~ (not hit!) Car half off road left  ~ 0x170 ish Car in lane 1           ~ 0x164 Car in lane 2           ~ 0x117 Car in lane 3           ~ 0xe0 Car in lane 4           ~ 0x98 Car half off road right ~ 0x4e Car off road right      ~ 0x4b
+@ $A3D5 label=csc_check_right_hand
+C $A3D5,3 Read signed word at $EAFC [ how is this different to $EAFE? ]
 C $A3D8,2 Set flags from sign of word: 1 when hero car on left side, 0 if right
-C $A3DA,2 var_a23c = 0
+C $A3DA,2 Init value for trigger_passed_object_sfx  -- this must stop the passed object sfx from playing
 C $A3DC,2 Jump to #R$A3FA if non-zero
 C $A3DE,9 Jump to #R$A3FA if HL >= 190
 C $A3E7,9 Jump to #R$A3FD if HL >= 142
@@ -6060,8 +6061,8 @@ C $A3F4,1 A++  -- A == 1 => partially off-road
 C $A3F5,2 Jump to csc_store_off_road if no carry
 C $A3F7,1 A++  -- A == 2 => fully off-road
 C $A3F8,2 Jump to csc_store_off_road
-@ $A3FA label=csc_store_var_a23c
-C $A3FA,3 var_a23c = A
+@ $A3FA label=csc_store_sfx_trigger
+C $A3FA,3 trigger_passed_object_sfx = A
 @ $A3FD label=csc_store_off_road
 C $A3FD,3 off_road = A  -- 0/1/2 => on-road/one wheel off-road/both wheels off-road
 C $A400,1 Set flags
@@ -6176,15 +6177,15 @@ C $A4C0,4 *$B36F = A++  -- set flip flag (0/1 = right/left)
 C $A4C4,3 *$B38E = A
 C $A4C7,5 *$B385 = 5
 C $A4CC,3 Load speed into #REGhl
-C $A4CF,1 Preserve HL
-C $A4D0,2 H >>= 1
-C $A4D2,1 A = L
-C $A4D5,8 A = (A << 3) + 16
+C $A4CF,1 Preserve speed
+C $A4D0,5 A = HL >> 1
+C $A4D5,8 A = (A >> 3) + 16
 C $A4DD,2 L = 24
 C $A4E2,1 L = A
 @ $A4E3 label=sch_a4e3
 C $A4E3,3 Self modify 'LD HL,$xxxx' @ #R$B356
-C $A4E7,3 HL = A
+C $A4E7,3 HL = A'
+C $A4EA,1 Restore speed
 C $A4EC,2 HL -= DE
 @ $A4F2 label=sch_a4f2
 C $A4F2,3 Self modify 'LD BC' @ #R$B32E to load HL
@@ -8085,7 +8086,7 @@ C $B38F,3 *$B3DC = A  (below)
 N $B392 Arrive here if not crashed.
 @ $B392 label=ahc_not_crashed
 C $B392,3 Load road_pos
-C $B395,3 DE = 72
+C $B395,3 DE = <self modified>
 C $B398,1 A = H
 C $B399,1 Set flags
 C $B39A,3 Jump if top bit is set?
@@ -8094,7 +8095,7 @@ N $B39F Otherwise it was zero.
 C $B39F,1 A = L
 C $B3A0,1 A -= E
 C $B3A1,2 Jump if E > L
-C $B3A3,3 DE = $01D8
+C $B3A3,3 DE = <self modified>
 C $B3A6,1 A = H
 C $B3A8,2 Jump if D > H
 C $B3AC,1 A = L
@@ -9297,8 +9298,8 @@ c $BDFB Map reader
 D $BDFB Used by the routines at #R$8401, #R$852A and #R$873C.
 @ $BDFB label=read_map
 C $BDFB,1 Prepare to clear
-C $BDFC,3 Clear var_a23d
-C $BDFF,3 Clear var_a23c
+C $BDFC,3 Clear trigger_lane_change_sfx
+C $BDFF,3 Clear trigger_passed_object_sfx
 C $BE02,3 Clear allow_spawning
 C $BE05,3 Load address of fast_counter
 C $BE08,4 Load speed
@@ -9317,9 +9318,9 @@ N $BE1F This entry point is used by the routine at #R$87DC.
 C $BE1F,1 Set #REGhl to address of road_buffer_offset
 C $BE20,3 Load, increment and update road_buffer_offset.lo (wrapping around)
 C $BE23,5 HL = $EE00 | (A + 95)  -- calculate final byte of lanes data
-C $BE28,7 var_a23c |= *HL  -- final lanes byte
+C $BE28,7 trigger_passed_object_sfx |= *HL  -- final lanes byte
 C $BE2F,4 L += 32    -- offset 128... or 127?
-C $BE33,7 var_a23d |= *HL
+C $BE33,7 trigger_lane_change_sfx |= *HL
 C $BE3A,4 L -= 96    -- offset 32... or 31?
 N $BE3E -- CURVATURE --
 N $BE3E The top nibble of each byte is a counter. The bottom nibble is curvature data.
