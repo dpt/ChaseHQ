@@ -6028,7 +6028,7 @@ C $A3A4,2 Jump to csc_fork_not_visible_or_fork_in_progress if zero
 N $A3A6 The fork is visible.
 C $A3A6,3 Load fork_countdown
 C $A3A9,1 Set flags
-C $A3AA,3 Exit via fork_completed if zero
+C $A3AA,3 Exit via check_fork_scenery_collisions if zero
 N $A3AD Currently forking.
 C $A3AD,1 Decrement the fork_countdown value
 C $A3AE,1 Return if zero  -- can't collide immediately before fork?
@@ -6192,7 +6192,7 @@ C $A4F2,3 Self modify 'LD BC' @ #R$B32E to load HL
 C $A4F5,1 Return
 c $A4F6 Fork completed
 D $A4F6 Used by the routine at #R$A399.
-@ $A4F6 label=fork_completed
+@ $A4F6 label=check_fork_scenery_collisions
 C $A4F6,3 HL = *$E8FE  -- checking the final word of the road drawing (left) table
 C $A4F9,1 A = H  (0 or 255)
 C $A4FA,1 Set flags
@@ -6221,7 +6221,7 @@ C $A52D,4 *$B3DC = 0
 C $A532,3 *$B396 = HL
 C $A535,4 *$B3A4 = DE
 C $A539,6 Jump to #R$A55C if fork_taken was 1 (right fork taken)
-C $A53F,3 HL = *$5CFC
+C $A53F,3 Get address of right hand short pole object
 C $A542,2 C = *HL++  -- max object boundary
 C $A544,2 E = *HL++  -- min object boundary
 C $A546,1 A = *HL

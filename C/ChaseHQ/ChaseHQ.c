@@ -4412,7 +4412,7 @@ void check_scenery_collisions(chqstate_t *state)
   if (state->fork_visible) {
     fork_countdown = state->fork_countdown;
     if (fork_countdown == 0) {
-      fork_completed(state); // exit via
+      check_fork_scenery_collisions(state, HL, DE); // exit via
       return;
     }
 
@@ -4531,9 +4531,10 @@ csc_a43b:
       goto csc_check_left;
   if (pos < DEdash)
       goto csc_check_left;
-  // EX AF,AF'  unbank(?) road buf offset
+  Adash = A; // EX AF,AF'  unbank(?) road buf offset
   Aflip = 0;
-  goto hit_scenery;
+  csc_hit_scenery(state, Aflip, Adash); // exit via
+  return;
 
 csc_check_left:
   // EX AF,AF'  Unbank road buffer offset or/and bank mystery value in A
@@ -4565,9 +4566,13 @@ csc_check_left:
     return;
   // EX AF,AF'
   Aflip = 1; // likely an arg for scenery_hit()
+  csc_hit_scenery(state, Aflip, Adash); // was fallthrough
+}
 
+// $A4B0
+void csc_hit_scenery(chqstate_t *state, u8 Aflip, u8 Adash)
+{
   // Arrive here if hit scenery, e.g. drove into a tree or a lamp post.
-hit_scenery:
   start_sfx(state, EFFECT_SCENERY_HIT, 3); /* priority 3 */
   scenery_hit(state, Aflip, Adash);
 }
@@ -4606,8 +4611,59 @@ void scenery_hit(chqstate_t *state, u8 Aflip, u8 Adash)
 }
 
 // $A4F6
-void fork_completed(chqstate_t *state)
+void check_fork_scenery_collisions(chqstate_t *state, u16 DEdash, u16 HLdash)
 {
+  u16          pos;            // was HL
+  u8           off_road;       // was A
+  const obj_t *shortpoleobj;   // was HL
+  u16          hit_max_or_min; // was BC'
+  u16          hit_min_or_max; // was DE'
+  u8           A;              // was A
+  u16          pos2;           // was HL'
+
+  pos = state->table_e800[127];
+  off_road = 0;
+  if ((pos >> 8) == 0) {
+    if (pos >= 0x6A)
+      off_road = (pos >= 0x85) ? 1 : 2;
+    goto set_off_road;
+  }
+
+  pos = state->table_ed00[126];
+  off_road = 0;
+  if ((pos >> 8) == 0)
+    if (pos < 0x8E)
+      off_road = (pos >= 0x7C) ? 1 : 2;
+
+set_off_road:
+  state->off_road = off_road;
+  state->SM_B3DB  = 0;
+  state->SM_B395  = HLdash;
+  state->SM_B3A3  = DEdash;
+  if (state->fork_taken == 0) {
+    // Left fork was taken, short pole object is on right hand of road.
+    shortpoleobj = state->stage->addrof_right_hand_short_pole_object;
+
+    // Read collision values
+    hit_max_or_min = shortpoleobj->hit_max_or_min; // max
+    hit_min_or_max = shortpoleobj->hit_min_or_max; // min
+    A              = shortpoleobj->hit_something;  // unused it seems
+
+    pos2 = state->table_ea00[127];
+    if (pos2 < hit_max_or_min && pos2 >= hit_min_or_max)
+      csc_hit_scenery(state, 0, 0x8C); // exit via
+  } else {
+    // Right fork was taken, short pole object is on left hand of road.
+    shortpoleobj = state->stage->addrof_left_hand_short_pole_object;
+
+    // Read collision values
+    hit_max_or_min = shortpoleobj->hit_max_or_min; // min
+    hit_min_or_max = shortpoleobj->hit_min_or_max; // max
+
+    pos2 = state->table_ea00[126];
+    if (pos2 >= hit_max_or_min && pos2 < hit_min_or_max)
+      csc_hit_scenery(state, 1, 0x8C); // exit via
+  }
 }
 
 // $A579
