@@ -4461,7 +4461,8 @@ check_right_hand:
   state->trigger_passed_object_sfx = 0;
 
 store_off_road:
-  state->off_road = offroad; // 0/1/2 => on-road/one wheel off-road/both wheels off-road
+  state->off_road =
+    offroad; // 0/1/2 => on-road/one wheel off-road/both wheels off-road
   Cdash = 0;
   if (offroad == 0)
     goto csc_a43b;
@@ -4470,12 +4471,12 @@ store_off_road:
 
   bufptr = ROADBUFPTR(ROADBUF_LANES_OFFSET);
   lanes = *bufptr;
-  if ((lanes & (1<<6)) == 0) // tunnel??
+  if ((lanes & (1 << 6)) == 0) // tunnel??
     goto csc_a43b;
   RL(lanes); // test bit 7
   if (carry)
     goto csc_a43b;
-  Z = ((lanes & (1<<3)) == 0); // Test bit 3 (was bit 2 before RLA)
+  Z = ((lanes & (1 << 3)) == 0); // Test bit 3 (was bit 2 before RLA)
   A = state->scenedata.road_pos >> 8;
   if (!Z) {
     C = A; // save road_pos
@@ -4528,9 +4529,9 @@ csc_a43b:
   // Check for collisions with scenery (right hand side).
   pos = state->table_ea00[126]; // read pos
   if (pos >= BCdash)
-      goto csc_check_left;
+    goto csc_check_left;
   if (pos < DEdash)
-      goto csc_check_left;
+    goto csc_check_left;
   Adash = A; // EX AF,AF'  unbank(?) road buf offset
   Aflip = 0;
   csc_hit_scenery(state, Aflip, Adash); // exit via
@@ -4669,6 +4670,117 @@ set_off_road:
 // $A579
 void layout_objects(chqstate_t *state)
 {
+  int       carry = 0;
+  u8       *objpos;       // was HL
+  u8        iterations;   // was B
+  u8        total;        // was A
+  u16      *SP;
+  u8       *bufptr;       // was DE
+  const u8 *objpos2;      // was IY
+  u8        countdown;    // was A
+  u8        lanesbyte;    // was A
+  u8        lanesbyte2;   // was E'
+  u8        Ldash;
+  u8        laneoffset;   // was A
+  u16      *tabptr;       // was HL'
+  u8        laneshift;    // was A
+  u8        L;
+  u8        A;
+
+  objpos = &state->object_positions[0];
+  iterations = 21; // iterations
+  total = 0;
+  do {
+    total += *objpos;
+    *objpos++ = total;
+  } while (--iterations > 0);
+
+  SP = &state->table_eb00[0]; // OR should this be ea00[256] ?
+  bufptr = ROADBUFPTR(ROADBUF_LANES_OFFSET);
+  objpos2 = &state->object_positions[0];
+  iterations = 21; // iterations
+  if (state->fork_visible == 0)
+    goto positions_loop;
+
+  countdown = state->fork_countdown;
+  if (countdown > 0) {
+    iterations = countdown;
+    do {
+positions_loop:
+      lanesbyte = *bufptr;
+      // EXX
+      lanesbyte2 = lanesbyte;
+      Ldash = ~(*objpos2 * 2);
+
+      // Read left hand offset bits (0+1).
+      laneoffset = lanesbyte2 & 3;
+      if (laneoffset == 0) {
+        // Otherwise no left hand offset is set.
+        --SP; *SP = state->table_e800[Ldash];
+set_right_hand:
+        tabptr = &state->table_ec00[Ldash];
+        goto load_and_store_right;
+      }
+
+      // The left hand position of the road in #REGa is 1/2/3 here. Use that to
+      // select table $E8xx/$E9xx/$EAxx.
+      // Not sure if I trust structure layout, so using a switch here.
+      switch (laneoffset) {
+      case 1: tabptr = &state->table_e800[Ldash]; break;
+      case 2: tabptr = &state->table_e900[Ldash]; break;
+      case 3: tabptr = &state->table_ea00[Ldash]; break;
+      default: assert(0);
+      }
+      --SP; *SP = *tabptr;
+
+      RL(lanesbyte2); // Shift bit 7 of lanes byte into carry (checked later)
+      if ((lanesbyte2 & (1 << 7)) != 0) {
+        if (carry)
+          goto set_right_hand; // dirt track or fork
+        // Otherwise it's a tunnel piece.
+        laneshift = 3;
+      } else {
+        // Normal road
+        laneshift = 3;
+        if (!carry)
+          // It's 2 lane or 2/3 lane widening/narrowing.
+          laneshift--;
+        // Otherwise it's 3 lane or 3/4 lane widening/narrowing
+      }
+
+      switch (laneshift) {
+      case 1: tabptr = &state->table_e800[Ldash]; break;
+      case 2: tabptr = &state->table_e900[Ldash]; break;
+      case 3: tabptr = &state->table_ea00[Ldash]; break;
+      default: assert(0);
+      }
+
+load_and_store_right:
+      --SP; *SP = *tabptr;
+
+      // EXX
+      objpos2++;
+      WRAPPINGINCREMENT(bufptr, state->road_buffer_start);
+    } while (--iterations > 0);
+
+    // $EB00 now contains pairs of 16-bit left,right object positions.
+    countdown = state->fork_countdown;
+    if (countdown == 0)
+      return; // no fork
+  }
+
+  // Forking
+  A = 21 - countdown;
+  if (A == 0)
+    return; // no fork, or not about to fork?
+
+  iterations = A;
+  do {
+    L = ~(*objpos2 * 2);
+    --SP; *SP = state->table_ea00[L - 1];
+    --SP; *SP = state->table_eb00[L - 1];
+    objpos2++;
+  } while (--iterations > 0);
 }
 
 // $A60E
@@ -6162,16 +6274,16 @@ void bootstrap(chqstate_t *state)
 const void *lookup_map_goto(chqstate_t *state, u16 z80)
 {
   switch (z80) {
-    case 0xE2AA: return &perp_escape_curvature[0];
-    case 0xE2AF: return &perp_escape_height[0];
-    case 0xE2B8: return &fork_hazards[0];
-    case 0xE2C7: return &forked_road_curvature[1]; // forked_road_curvature_loop
-    case 0xE2CC: return &forked_road_height[0];
+  case 0xE2AA: return &perp_escape_curvature[0];
+  case 0xE2AF: return &perp_escape_height[0];
+  case 0xE2B8: return &fork_hazards[0];
+  case 0xE2C7: return &forked_road_curvature[1]; // forked_road_curvature_loop
+  case 0xE2CC: return &forked_road_height[0];
+  default:
+    switch (state->current_stage_number) {
+    case 1: return stage1_lookup_map_goto(state, z80);
     default:
-      switch (state->current_stage_number) {
-      case 1: return stage1_lookup_map_goto(state, z80);
-      default:
-          assert("Unknown stage" == NULL);
-      }
+      assert("Unknown stage" == NULL);
+    }
   }
 }
