@@ -6,47 +6,52 @@
 
 // Notes
 //
-// As with my conversion of The Great Escape to C we model the game as if
-// it's still running on a ZX Spectrum, including a Spectrum screen layout
-// etc. This avoids a full rewrite of the original code and leaving (some)
-// Z80-specific micro-optimisations in place. This means the code remains a
-// useful basis for comparison and lowers the risk of translation errors.
-// Although it's very tempting to rewrite all the code to be fully idiomatic
-// C, the more different the code is made from the original disassembly, the
-// harder it gets to refer back to it and spot our mistakes. The goal after
-// all is to use this C conversion to expose problem points and feed those
-// back into the disassembly's description.
+// Like with my conversion of The Great Escape to C we model the game as if
+// it's still running on a ZX Spectrum, including a Spectrum screen memory
+// layout and IO world. This avoids a full rewrite of the original code and
+// means that we leave some of the Z80-specific micro-optimisations in place.
+// This allows the code to remain a useful basis for comparison and lowers
+// the risk of translation errors. Although it's very tempting to rewrite all
+// the code to be fully idiomatic C the greater the difference from the
+// original disassembly the harder it gets to refer back to it and spot our
+// mistakes.  The goal after all is to use this C conversion to expose
+// problem points and feed those back into the disassembly's description.
 //
 // Some code will unavoidably need to be changed however, such as the stack
 // trick where PUSH and POP are used to accelerate loads and stores.
 //
-// The level data (called "stage" data in this conversion to match the
-// original game) is retained whole in the converted game, including any
-// embedded addresses. This lets us 'page in' levels by copying the original
-// game data into the game's state structure. This also means that any new or
-// adjusted levels produced by means of this conversion will be compatible
-// with the original game. It will be interesting to see, but unlikely, if
-// the Sinclair User demo version of the game uses the same level format. The
-// Amstrad CPC version will no doubt be considerably different but perhaps
-// familiar.
+// My original intention was to retain the level data (called "stage" data in
+// this conversion to match the original game) whole in the converted game,
+// including any embedded addresses. I wanted to 'page in' levels by copying
+// the original game data into the game's state structure. This would also
+// mean that any new or adjusted levels produced by means of this conversion
+// would be compatible with the original game. However it turned out that
+// allowing binary compatibility would have meant duplicating some core
+// functions where the data structures exist in both the engine part and the
+// stage data. So I gave up on that. Having the stage data in C does make it
+// more tweakable, which is good. Long term it would be nice if the stages -
+// at least the map portion - were expressible with a concise text format.
 //
-// Generic code (code not interacting with stage data) will be converted to
-// use native pointers. This means that some word-sized values will need to
-// be indirected through new tables. For example see the "chatter" code: the
-// code that prints the messages on-screen as the game runs. It previously
+// Pointers present a problem. The original game data uses 16-bit pointers
+// sometimes embedded in byte data but the converted code could be using 32-
+// or 64-bit ones. Instead of embedding huge pointers we'll either use byte
+// tokens or leave the original values in place and indrect them through new
+// tables or switch lookups. For example see the "chatter" code: the code
+// that prints the messages on-screen as the game runs. It previously
 // embedded addresses inline in chatter structures. These are replaced with
 // single bytes that reference a new tables of pointers.
 //
 // Like with TGE a game state structure is added to encapsulate the complete
 // game state. It is passed to every state-accessing function in the game.
+// Globals are banned.
 //
 // Screen handling in the original game assumes the alignment of the screen
 // and the back buffer. That can't be guaranteed in a portable conversion. We
-// can address this by using posix_memalign to align the state structure and
-// also by converting pointers to offsets when we need to perform address
-// arithmetic.
+// can address this by converting pointers to offsets when we need to perform
+// address arithmetic.
 //
-// (SM) means self modified.
+// (SM) means self modified. There is a _lot_ of self-modified code in the
+// game.
 //
 // Remember that much of this code is in progress and untested - or just
 // broken.
