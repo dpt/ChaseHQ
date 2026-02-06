@@ -4794,8 +4794,331 @@ void cycle_counters(chqstate_t *state)
 }
 
 // $A637
-void perp_behaviour(chqstate_t *state)
+void perp_behaviour(chqstate_t *state, hazard_t *IX) // const IX?
 {
+  int       carry = 0;
+  u8        A;
+  u8        Cperp_distance;
+  u8        B;
+  hazard_t *IY;
+  u16       DE;
+  u16       HL;
+  const u8 *HLtab;
+  u8        C;
+  u8        Acurrlane;
+  u16       BCspawn_lanes;
+  u8        D;
+  u8        E;
+  u8        Aflip;
+  u8        Adash;
+
+  if (state->perp_caught_phase > 0)
+    return;
+
+  // Start the chase if required (enables flashing lights, smash bar, sirens,
+  // etc.)
+  if (state->sighted_flag == 0)
+    start_chase(state);
+
+  // Reading a hit counter here? It starts at $FC (set at #R$A78A) and is
+  // incremented. This seems like it might speed the perp car up when it's
+  // hit.
+  A = IX->TBD7; // Read IX[7] e.g. $A18F  -- a hit counter
+  if (A == 0)
+    goto pb_is_zero; // Jump if zero  -- delay finished?
+  if (A > 0)
+    goto pb_set_delay; // Jump to set delay if positive
+
+  // Otherwise #REGa is negative.
+
+  // This line gets hit 4 times when we smash into the perp's car - matching
+  // the $FC value it's reset to.
+  if (++IX->TBD7)
+    return;
+
+  // IX[7] must be zero to arrive here. We now iterate over all non-perp
+  // hazards.
+pb_is_zero:
+  // PUSH IY
+  Cperp_distance =
+    IX->distance; // Read perp's distance (buffer offset) into #REGc
+  B = 5; // iterations
+  IY = &state->hazards[1];
+  DE = 20; // stride
+  do {
+    RLC(IY->used);
+    if (carry) // hazard active
+      goto pb_ensure_vehicle;
+
+pb_find_unused_hazard_continue:
+    IY++; // Move to next hazard
+  } while (--B > 0);
+  // POP IY
+  goto pb_check_changing_lane_flag;
+
+pb_ensure_vehicle:
+  // It's $80 for vehicles, 0+ for hazards or $FF if unused
+  if ((IY->TBD15 & (1 << 7)) == 0) // it's not a vehicle, continue to next hazard
+    goto pb_find_unused_hazard_continue;
+
+  // Calculate distance between current hazard-car and the perp.
+  A = IY->distance - Cperp_distance;
+  if ((s8) A < 0)
+    // Otherwise hazard-car is behind perp...
+    A += 2; // move it two lanes away?
+  else
+    A -= 3;
+
+pb_a680:
+  if (!carry) // FIXME out of range?
+    goto pb_find_unused_hazard_continue;
+
+  // compare to perp's lane
+  if (IY->TBD17 != IX->current_lane)
+    goto pb_find_unused_hazard_continue;
+
+  // So the lanes match.
+  // POP IY
+  goto pb_random_move_left_or_right;
+
+pb_check_changing_lane_flag:
+  A = state->SM_A68F; // load "changing lane" flag that appears to be set to
+  // 1 when the perp changes lane
+  if (A)
+    goto pb_check_lane;
+
+  // Otherwise not changing lane?
+  A = IX->distance;
+  if (A >= 7)
+    goto pb_check_lane;
+
+  // I'm failing to understand what the following section does. It's a
+  // countdown that, when it hits zero, picks a new random countdown value
+  // summed with smash_5d1b. I can only think that it's a delay loop between
+  // lane changes.
+  //
+  // In-place decrementing counter.
+  A = state->SM_A69B - 1;
+  if (A)
+    goto pb_update_counter;
+
+  // When it hits zero we pick a random number...
+  A = state->stage->smash_5d1b + (rng(state) & 31);
+
+pb_update_counter:
+  state->SM_A69B = A;
+
+  // This smells like it's detecting position and turning that into lanes.
+  // The values are like those used by get_spawn_lanes.
+
+  HL = state->scenedata.road_pos - 164;
+  B = 4; C = 4;
+  if ((s16) HL < 0) // carried, HL < 164
+    goto pb_a6cf;
+  DE = 70;
+  B = 3;
+  HL -= DE;
+  if ((s16) HL < 0) // carried, HL < 70
+    goto pb_a6cf;
+  B = 2; C = 3;
+  HL -= DE;
+  if ((s16) HL < 0) // carried, HL < 70
+    goto pb_a6cf;
+  B = 1; C = 2;
+  HL -= DE;
+  if ((s16) HL < 0) // carried, HL < 70
+    goto pb_a6cf;
+  C = 1;
+
+pb_a6cf:
+  A = IX->current_lane;
+  if (A == C)
+    goto pb_random_move_left_or_right;
+  if (A != B)
+    goto pb_check_lane;
+
+pb_random_move_left_or_right:
+  C = IX->current_lane; // current_lane
+  C = ((s8) rng(state) >= 0) ? C + 1 : C - 1;
+
+pb_clamping:
+  Acurrlane = C;
+  C = 2; // lane delta
+  if (Acurrlane != 0) {
+    if (Acurrlane < 5) // lane is reasonable?
+      goto pb_set_current_lane;
+
+    // Arrive here if the updated current_lane is >= 5.
+    C = -2; // delta -2
+  }
+  Acurrlane += C;
+
+pb_set_current_lane:
+  IX->current_lane = Acurrlane; // Update current_lane
+
+pb_check_lane:
+  BCspawn_lanes = get_spawn_lanes(state, IX->distance);
+  // FIXME separate to B,C
+
+  Acurrlane = IX->current_lane; // read current_lane
+  if (Acurrlane >= B)
+    goto pb_min_lane_set;
+
+  // Otherwise the (perp?) needs to move right to stay on the road.
+  Acurrlane += 2; // Move right by two lanes [why two?]
+  IX->current_lane = Acurrlane;
+
+pb_min_lane_set:
+  if (Acurrlane <= C)
+    goto pb_reread_current_lane;
+
+  // Otherwise the (perp?) needs to move left to stay on the road.
+
+  Acurrlane -= 2; // Move left by two lanes
+  IX->current_lane = Acurrlane;
+
+  // current_lane is 1/2/3/4
+
+pb_reread_current_lane:
+  Acurrlane =
+    IX->current_lane; // Re-read current_lane [not convinced this is required]
+  HLtab = &hazard_pos_speed[Acurrlane - 1];
+  A = IX->horz_pos_on_road;
+  // #REGc seems to be a flag that's 1 when changing lane and 0 otherwise. We
+  // seem to be bumping the position by +/-10.
+  C = 1; // changing lane
+
+pb_check_low:
+  if (A == *HLtab)
+    goto pb_set_lane_from_table_2;
+  if (A < *HLtab)
+    goto pb_check_high;
+  A -= 10;
+  if ((s8) A < 0) // carried?
+    goto pb_set_lane_from_table_1;
+
+  if (A >= *HLtab)
+    goto pb_set_horz_pos;
+
+  // Redundant code path; jump to pb_set_lane_from_table_2 instead.
+
+pb_set_lane_from_table_1:
+  C--; // Decrement 1 to 0 so we're not changing lane
+  A = *HLtab;
+  goto pb_set_horz_pos;
+
+pb_check_high:
+  A += 10;
+  if (A < 10) // carried
+    goto pb_set_lane_from_table_2;
+  if (A < *HLtab)
+    goto pb_set_horz_pos;
+
+pb_set_lane_from_table_2:
+  C--;
+  A = *HLtab;
+
+pb_set_horz_pos:
+  IX->horz_pos_on_road = A;
+  state->SM_A68F = C;
+  A = state->SM_A73E; // load delay counter
+
+  DE = 0x1E; // multiplicand
+  HL = 0xE6; // base
+  if (A)
+    goto pb_bypass;
+
+  // Countdown+rng stuff again... as at #R$A69B
+
+  // In-place decrementing counter.
+  A = state->SM_A749 - 1;
+  state->SM_A749 = A;
+  if (A)
+    goto pb_a776;
+
+  // When it hits zero we pick a random number...
+
+  C = rng(state) & 0xF;
+  A = state->stage->smash_perp_delay + C;
+
+  state->SM_A749 = A;
+  A = 10; // reset the delay loop
+
+  // Count down outer delay loop.
+pb_bypass:
+  A--;
+  state->SM_A73E = A;
+  if (A)
+    goto pb_a776;
+
+  A = IX->distance;
+  if (A >= 13)
+    goto pb_a776;
+
+  // Distance to perp is 12 or less.
+  // .
+  // HL += (13 - A) * DE    HL is 230, DE is 30
+  // .
+  // This seems to be using the distance to the perp as a scale by which to adjust
+  // its horizontal position.
+
+  HL += (13 - A) * DE;
+
+pb_a776:
+  A = IX->distance - 6;
+  if ((s8) A >= 0)
+    goto pb_store_exit;
+
+  // Distance to perp is 5 or less.
+  A = (A + 5) * 8;
+  // Bug? And then we do nothing with #REGa...
+  HL += DE;
+
+pb_store_exit:
+  IX->speed = HL;
+  return;
+
+  // If I meddle with this value the perp seems to race off too fast to catch.
+pb_set_delay:
+  IX->TBD7 = 0xFC;
+  if (A < 3)
+    // PUSH AF
+    goto pb_check_boost;
+  A -= 3;
+
+pb_check_boost:
+  Adash = (state->boost == 0) ? 200 : 230;
+  scenery_hit(state, Aflip, Adash);
+
+  state->SM_B32E += 40;
+
+  D = 0; // Zero bonus middle digit
+
+// POP AF  ; Restore #REGa which holds IX[7] and flags from earlier
+// LD HL,$B4F0     ; {Put a call to 'smash' on the stack
+// PUSH HL         ; }
+// JR NC,$A7BE     ; Jump if no carry
+// CP $02          ; {Jump if A == 2
+// JR Z,$A7BE      ; }
+// PUSH HL         ; Put another call to smash on the stack
+
+  D = 4; // Set bonus middle digit to 4
+pb_a7be:
+  D += state->wanted_stage_number;
+  E = 0;
+  if (state->retry_count) {
+    A = D;
+    D = E;
+    RLC(A);
+    RLC(A);
+    RLC(A);
+    RLC(A);
+    E = A;
+  }
+  add_bonus(state, 0, E, D);
+  state->SM_A73E = 5; // set delay counter to 5 turns
+  start_chatter(state, 5, &chatterblk_raymond_smash[0]);
+  start_sfx(state, EFFECT_CAR_HIT, 1); /* priority 1 */ // exit via
 }
 
 // $A7F3
@@ -4873,7 +5196,7 @@ fill_in:
     new_lane = max_lane;
 
   hazard->TBD17 = new_lane;
-  hazard->TBD18 = new_lane;
+  hazard->current_lane = new_lane;
 
   // Copy hazard_pos_speed values to hazard position and speed.
   hazard_pos = &hazard_pos_speed[-1 + new_lane];
@@ -4926,7 +5249,7 @@ u16 get_spawn_lanes(chqstate_t *state, u8 extra)
 }
 
 // $A8CD
-void hazard_handler(chqstate_t *state)
+void hazard_handler(chqstate_t *state, hazard_t *IX)
 {
 }
 
@@ -5004,7 +5327,7 @@ void check_hazard_collisions(chqstate_t *state)
       if (hazard->distance < 20 &&
           check_collision(state, 0, hazard) > 0 &&
           hazard->TBD15 != 0xFF)
-        hazard->hit_handler(state);
+        hazard->hit_handler(state, hazard);
     }
 
 chc_continue:
@@ -5031,7 +5354,7 @@ void dh_aecf(chqstate_t *state)
 // $ADF9
 //
 // Conv: Original game used the RET at $ADF9 as a no-op.
-void no_op(chqstate_t *state)
+void no_op(chqstate_t *state, hazard_t *IX)
 {
 }
 

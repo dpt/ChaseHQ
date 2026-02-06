@@ -376,7 +376,7 @@ typedef struct obj obj_t;
 typedef struct stagevars stagevars_t;
 typedef struct chqstate chqstate_t;
 
-typedef void (hazard_handler_t)(chqstate_t *state);
+typedef void (hazard_handler_t)(chqstate_t *state, hazard_t *IX);
 
 /* ----------------------------------------------------------------------- */
 

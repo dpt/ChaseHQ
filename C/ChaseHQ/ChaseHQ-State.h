@@ -29,7 +29,7 @@ struct hazard {
   u8                TBD15;    // top bit is set for vehicles
   u8                TBD16;
   u8                TBD17;    // perp distance high byte
-  u8                TBD18;
+  u8                current_lane;
   u8                TBD19;
 };
 
@@ -374,6 +374,15 @@ struct chqstate {
   u8        start_speech; // delay
   // $A26C
   scenedata_t scenedata;
+
+  // $A68F (SM) in perp_behaviour
+  u8        SM_A68F; // changing lane flag
+  // $A69B (SM) in perp_behaviour
+  u8        SM_A69B;
+  // $A73E (SM) in perp_behaviour
+  u8        SM_A73E; // delay
+  // $A749 (SM) in perp_behaviour
+  u8        SM_A749; // delay
 
   // $A804 (SM) in spawn_cars
   u8        spawn_counter;
