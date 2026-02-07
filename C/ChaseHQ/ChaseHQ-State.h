@@ -21,7 +21,7 @@ struct hazard {
   u8                TBD4;
   u8                horz_pos_on_road;
   u8                TBD6;
-  u8                TBD7;     // activation
+  s8                TBD7;     // activation / delay; set to $FC when perp hit
   u8                TBD8;
   const lod_t      *lod_addr; // Conv: u16 becomes pointer
   hazard_handler_t *hit_handler;
@@ -376,11 +376,11 @@ struct chqstate {
   scenedata_t scenedata;
 
   // $A68F (SM) in perp_behaviour
-  u8        SM_A68F; // changing lane flag
+  u8        pb_changing_lane; // changing lane flag
   // $A69B (SM) in perp_behaviour
   u8        SM_A69B;
   // $A73E (SM) in perp_behaviour
-  u8        SM_A73E; // delay
+  u8        pb_delay;
   // $A749 (SM) in perp_behaviour
   u8        SM_A749; // delay
 
@@ -419,6 +419,10 @@ struct chqstate {
   u8        SM_B3A3;
   // $B3DB (SM) in animate_hero_car
   u8        SM_B3DB; // controls flipping
+  // $B476 (SM) in animate_hero_car
+  u8        SM_B476; // hand flag?
+  // $B478 (SM) in animate_hero_car
+  u8        SM_B478; // hand animation frame?
 
   // $BB95 (SM) in rm_cycle_buffer_offset
   const u8 *SM_BB95;

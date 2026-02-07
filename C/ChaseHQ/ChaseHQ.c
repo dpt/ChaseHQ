@@ -69,6 +69,8 @@
 //
 // Decide how to drive the main loop(s).
 //
+// Promote variables to int from u8/s8/u16/s16 where possible,
+//
 
 #include <assert.h>
 #include <stddef.h>
@@ -456,6 +458,7 @@ void cpu_driver(chqstate_t *state)
     input |= USERINPUT_FIRE;
 
   state->user_input = input;
+
   read_map(state);
   spawn_cars(state);
   cycle_counters(state);
@@ -1338,8 +1341,7 @@ score_store_low:
     DE--;
   } while (--Biterations > 0);
 
-  HLscore--;
-  *HLscore |= STREND;
+  *--HLscore |= STREND;
 
   setup_overlay_messages(state, &state->score_messages[0]); // was exit via
   return 0;
@@ -1356,18 +1358,16 @@ move_perp:
 change_perp_pos:
   C = A + Bdelta;
 
-assign_perp_pos:
+assign_perp_pos: // is this in the right place?
   A = C;
   state->hazards[0].horz_pos = A;
   HLroadpos = state->scenedata.road_pos;
-  // PUSH HLroadpos
-  carry = (HLroadpos < ROAD_LEFTMOST); // was SUB
-  // POP HLroadpos
+  carry = (HLroadpos < ROAD_LEFTMOST); // was PUSH/SUB/POP
   Ainput = USERINPUT_UP | USERINPUT_RIGHT;
   if (!carry)
     goto assign_hero_pos;
 
-  HLroadpos -= ROAD_RIGHTMOST;
+  HLroadpos -= ROAD_RIGHTMOST; // FIXME set carry here?
   Ainput = USERINPUT_UP | USERINPUT_LEFT;
   if (carry)
     goto assign_hero_pos;
@@ -1464,11 +1464,11 @@ void fully_smashed(chqstate_t *state)
 // $8D8F
 void transition(chqstate_t *state)
 {
-  int       iterations; // was B'
-  u16       backbuf;    // was HL
-  const u8 *maskptr;    // was HL'
-  u16       screencopy; // was D
-  u8        mask;       // was E
+  int       iterations;  // was B'
+  u16       backbuf;     // was HL
+  const u8 *maskptr;     // was HL'
+  u16       backbufcopy; // was D
+  u8        mask;        // was E
 
   switch (state->transition_control) {
   case TRANSITIONCONTROL_STOP:
@@ -1499,12 +1499,12 @@ void transition(chqstate_t *state)
   iterations = 8;
   do {
     mask = *maskptr;
-    screencopy = backbuf; // Conv: Original just saved H in D
-    backbuf = (backbuf & 0xFF00) | 0xFE;
+    backbufcopy = backbuf; // Conv: Original just saved H in D
+    backbuf = (backbuf & ~0xFF) | 0xFE;
     transition_fade_chunk(state, mask, ADDRTOBACKBUF(backbuf));
     backbuf -= 8 << 8;
     transition_fade_chunk(state, mask, ADDRTOBACKBUF(backbuf));
-    backbuf = screencopy - 256; // restore
+    backbuf = backbufcopy - 256; // restore
     maskptr++;
   } while (--iterations > 0);
 }
@@ -1537,7 +1537,7 @@ void transition_fade_chunk(chqstate_t *state, u8 mask, u8 *backbuf)
 // $8DF9
 //
 // stride - was A
-void setup_transition(chqstate_t *state, u8 stride)
+void setup_transition(chqstate_t *state, u8 stride) // u8 stride could become (s8)
 {
   s16                 frame_stride; // was BC
   const transition_t *transitions;  // was DE
@@ -1549,7 +1549,7 @@ void setup_transition(chqstate_t *state, u8 stride)
   // Conv: Points at non-relocated table.
   transitions = &transitions_e88e[0];
   if ((s8) stride < 0) { // reversed
-    frame_stride |= 0xFF00; // widen -8 to 16 bits
+    frame_stride |= 0xFF00; // widen -8 to 16 bits [could just assign (s8)stride]
     transitions = &transitions_e88e[4]; // second half of table
   }
 
@@ -4799,23 +4799,39 @@ void cycle_counters(chqstate_t *state)
 }
 
 // $A637
-void perp_behaviour(chqstate_t *state, hazard_t *IX) // const IX?
+void perp_behaviour(chqstate_t *state, hazard_t *IX)
 {
   int       carry = 0;
-  u8        A;
-  u8        Cperp_distance;
-  u8        B;
-  hazard_t *IY;
+  s8        Atbd7;              // was A
+  u8        Cperp_distance;     // was C
+  hazard_t *IYhazard;
   u16       DE;
   u16       HL;
-  const u8 *HLtab;
-  u8        C;
-  u8        Acurrlane;
-  u16       BCspawn_lanes;
-  u8        D;
-  u8        E;
-  u8        Aflip;
-  u8        Adash;
+  const u8 *HLtab;              // was HL
+  u8        Acurrlane;          // was A
+  u16       BCspawn_lanes;      // was BC
+  u8        Adash;              // was A'
+
+  u16       HLspeed;            // was HL
+  int       smash_twice;        // Additional
+  int       Bmin_spawn_lane;    // was B
+  int       Cmax_spawn_lane;    // was C
+  u8        Ccurrentlane;       // was C
+  u8        Cnewlane;           // was C
+  u8        Cdelta;             // was C
+  u8        changing_lane;      // was C
+  u8        Ahorzpos;           // was A
+  u8        A;
+  u8        Biterations;        // was B
+  u8        Adelay;             // was A
+  u8        Adistance;          // was A
+  u8        Acounter;           // was A
+  u16       DEspeedmult;        // was DE
+  u8        Adistancediff;      // was A
+  u8        Dbonus_hi;          // was D
+  u8        Ebonus_mid;         // was E
+  u8        Bmin_lane;          // was B
+  u8        Cmax_lane;          // was C
 
   if (state->perp_caught_phase > 0)
     return;
@@ -4828,67 +4844,65 @@ void perp_behaviour(chqstate_t *state, hazard_t *IX) // const IX?
   // Reading a hit counter here? It starts at $FC (set at #R$A78A) and is
   // incremented. This seems like it might speed the perp car up when it's
   // hit.
-  A = IX->TBD7; // Read IX[7] e.g. $A18F  -- a hit counter
-  if (A == 0)
-    goto pb_is_zero; // Jump if zero  -- delay finished?
-  if (A > 0)
+  Atbd7 = IX->TBD7; // Read IX[7] e.g. $A18F  -- a hit counter/delay
+  if (Atbd7 == 0)
+    goto pb_tbd7_is_zero; // Jump if zero  -- delay finished, perp can be hit again?
+  else if (Atbd7 > 0)
     goto pb_set_delay; // Jump to set delay if positive
-
   // Otherwise #REGa is negative.
 
   // This line gets hit 4 times when we smash into the perp's car - matching
   // the $FC value it's reset to.
   if (++IX->TBD7)
-    return;
+    return; // do nothing
 
   // IX[7] must be zero to arrive here. We now iterate over all non-perp
   // hazards.
-pb_is_zero:
+pb_tbd7_is_zero:
   // PUSH IY
   Cperp_distance =
     IX->distance; // Read perp's distance (buffer offset) into #REGc
-  B = 5; // iterations
-  IY = &state->hazards[1];
-  DE = 20; // stride
+  Biterations = 5; // iterations
+  IYhazard = &state->hazards[1];
   do {
-    RLC(IY->used);
-    if (carry) // hazard active
+    if (IYhazard->used) // (was RLC) hazard active
       goto pb_ensure_vehicle;
 
 pb_find_unused_hazard_continue:
-    IY++; // Move to next hazard
-  } while (--B > 0);
+    IYhazard++; // Move to next hazard
+  } while (--Biterations > 0);
   // POP IY
+
   goto pb_check_changing_lane_flag;
 
 pb_ensure_vehicle:
   // It's $80 for vehicles, 0+ for hazards or $FF if unused
-  if ((IY->TBD15 & (1 << 7)) == 0) // it's not a vehicle, continue to next hazard
+  if ((IYhazard->TBD15 & (1 << 7)) == 0) // it's not a vehicle, continue to next hazard
     goto pb_find_unused_hazard_continue;
 
   // Calculate distance between current hazard-car and the perp.
-  A = IY->distance - Cperp_distance;
-  if ((s8) A < 0)
+  Adistancediff = IYhazard->distance - Cperp_distance;
+  if ((s8) Adistancediff < 0)
     // Otherwise hazard-car is behind perp...
-    A += 2; // move it two lanes away?
+    Adistancediff += 2; // move it two lanes away?
   else
-    A -= 3;
+    Adistancediff -= 3;
 
-pb_a680:
   if (!carry) // FIXME out of range?
     goto pb_find_unused_hazard_continue;
 
   // compare to perp's lane
-  if (IY->TBD17 != IX->current_lane)
+  if (IYhazard->TBD17 != IX->current_lane)
     goto pb_find_unused_hazard_continue;
 
-  // So the lanes match.
+  // So the lanes match
   // POP IY
   goto pb_random_move_left_or_right;
 
 pb_check_changing_lane_flag:
-  A = state->SM_A68F; // load "changing lane" flag that appears to be set to
-  // 1 when the perp changes lane
+  // load "changing lane" flag that appears to be set to 1 when the perp
+  // changes lane
+  A = state->pb_changing_lane;
   if (A)
     goto pb_check_lane;
 
@@ -4917,56 +4931,56 @@ pb_update_counter:
   // The values are like those used by get_spawn_lanes.
 
   HL = state->scenedata.road_pos - 164;
-  B = 4; C = 4;
+  Bmin_lane = 4; Cmax_lane = 4;
   if ((s16) HL < 0) // carried, HL < 164
     goto pb_a6cf;
   DE = 70;
-  B = 3;
+  Bmin_lane = 3;
   HL -= DE;
   if ((s16) HL < 0) // carried, HL < 70
     goto pb_a6cf;
-  B = 2; C = 3;
+  Bmin_lane = 2; Cmax_lane = 3;
   HL -= DE;
   if ((s16) HL < 0) // carried, HL < 70
     goto pb_a6cf;
-  B = 1; C = 2;
+  Bmin_lane = 1; Cmax_lane = 2;
   HL -= DE;
   if ((s16) HL < 0) // carried, HL < 70
     goto pb_a6cf;
-  C = 1;
+  Cmax_lane = 1;
 
 pb_a6cf:
   A = IX->current_lane;
-  if (A == C)
+  if (A == Cmax_lane)
     goto pb_random_move_left_or_right;
-  if (A != B)
+  if (A != Bmin_lane)
     goto pb_check_lane;
 
 pb_random_move_left_or_right:
-  C = IX->current_lane; // current_lane
-  C = ((s8) rng(state) >= 0) ? C + 1 : C - 1;
+  Ccurrentlane = IX->current_lane; // current_lane
+  Cnewlane = ((s8) rng(state) >= 0) ? Ccurrentlane + 1 : Ccurrentlane - 1;
 
-pb_clamping:
-  Acurrlane = C;
-  C = 2; // lane delta
+  Acurrlane = Cnewlane;
+  Cdelta = 2; // lane delta
   if (Acurrlane != 0) {
     if (Acurrlane < 5) // lane is reasonable?
       goto pb_set_current_lane;
 
     // Arrive here if the updated current_lane is >= 5.
-    C = -2; // delta -2
+    Cdelta = -2; // delta -2
   }
-  Acurrlane += C;
+  Acurrlane += Cdelta;
 
 pb_set_current_lane:
   IX->current_lane = Acurrlane; // Update current_lane
 
 pb_check_lane:
   BCspawn_lanes = get_spawn_lanes(state, IX->distance);
-  // FIXME separate to B,C
+  Bmin_spawn_lane = BCspawn_lanes >> 8; // Conv: added unpacking
+  Cmax_spawn_lane = BCspawn_lanes & 0xFF;
 
   Acurrlane = IX->current_lane; // read current_lane
-  if (Acurrlane >= B)
+  if (Acurrlane >= Bmin_spawn_lane)
     goto pb_min_lane_set;
 
   // Otherwise the (perp?) needs to move right to stay on the road.
@@ -4974,7 +4988,7 @@ pb_check_lane:
   IX->current_lane = Acurrlane;
 
 pb_min_lane_set:
-  if (Acurrlane <= C)
+  if (Acurrlane <= Cmax_spawn_lane)
     goto pb_reread_current_lane;
 
   // Otherwise the (perp?) needs to move left to stay on the road.
@@ -4988,76 +5002,72 @@ pb_reread_current_lane:
   Acurrlane =
     IX->current_lane; // Re-read current_lane [not convinced this is required]
   HLtab = &hazard_pos_speed[Acurrlane - 1];
-  A = IX->horz_pos_on_road;
+  Ahorzpos = IX->horz_pos_on_road;
   // #REGc seems to be a flag that's 1 when changing lane and 0 otherwise. We
   // seem to be bumping the position by +/-10.
-  C = 1; // changing lane
+  changing_lane = 1; // changing lane flag
 
-pb_check_low:
-  if (A == *HLtab)
+  if (Ahorzpos == *HLtab)
     goto pb_set_lane_from_table_2;
-  if (A < *HLtab)
+  if (Ahorzpos < *HLtab)
     goto pb_check_high;
-  A -= 10;
-  if ((s8) A < 0) // carried?
+  Ahorzpos -= 10;
+  if ((s8) Ahorzpos < 0) // carried?
     goto pb_set_lane_from_table_1;
 
-  if (A >= *HLtab)
+  if (Ahorzpos >= *HLtab)
     goto pb_set_horz_pos;
 
   // Redundant code path; jump to pb_set_lane_from_table_2 instead.
 
 pb_set_lane_from_table_1:
-  C--; // Decrement 1 to 0 so we're not changing lane
-  A = *HLtab;
+  changing_lane--; // Decrement 1 to 0 so we're not changing lane
+  Ahorzpos = *HLtab;
   goto pb_set_horz_pos;
 
 pb_check_high:
-  A += 10;
-  if (A < 10) // carried
+  Ahorzpos += 10;
+  if (Ahorzpos < 10) // carried
     goto pb_set_lane_from_table_2;
-  if (A < *HLtab)
+  if (Ahorzpos < *HLtab)
     goto pb_set_horz_pos;
 
 pb_set_lane_from_table_2:
-  C--;
-  A = *HLtab;
+  changing_lane--;
+  Ahorzpos = *HLtab;
 
 pb_set_horz_pos:
-  IX->horz_pos_on_road = A;
-  state->SM_A68F = C;
-  A = state->SM_A73E; // load delay counter
+  IX->horz_pos_on_road = Ahorzpos;
+  state->pb_changing_lane = changing_lane;
+  Adelay = state->pb_delay; // load delay counter
 
-  DE = 0x1E; // multiplicand
-  HL = 0xE6; // base
-  if (A)
+  DEspeedmult = 30; // multiplicand
+  HLspeed = 230; // base speed
+  if (Adelay)
     goto pb_bypass;
 
   // Countdown+rng stuff again... as at #R$A69B
 
   // In-place decrementing counter.
-  A = state->SM_A749 - 1;
-  state->SM_A749 = A;
-  if (A)
+  Acounter = state->SM_A749 - 1;
+  state->SM_A749 = Acounter;
+  if (Acounter)
     goto pb_a776;
 
   // When it hits zero we pick a random number...
+  Adelay = state->stage->smash_perp_delay + (rng(state) & 0xF);
 
-  C = rng(state) & 0xF;
-  A = state->stage->smash_perp_delay + C;
-
-  state->SM_A749 = A;
-  A = 10; // reset the delay loop
+  state->SM_A749 = Adelay;
+  Adelay = 10; // reset the delay loop
 
   // Count down outer delay loop.
 pb_bypass:
-  A--;
-  state->SM_A73E = A;
-  if (A)
+  state->pb_delay = --Adelay;
+  if (Adelay)
     goto pb_a776;
 
-  A = IX->distance;
-  if (A >= 13)
+  Adistance = IX->distance;
+  if (Adistance >= 13)
     goto pb_a776;
 
   // Distance to perp is 12 or less.
@@ -5067,63 +5077,61 @@ pb_bypass:
   // This seems to be using the distance to the perp as a scale by which to adjust
   // its horizontal position.
 
-  HL += (13 - A) * DE;
+  HLspeed += (13 - A) * DEspeedmult;
 
 pb_a776:
   A = IX->distance - 6;
-  if ((s8) A >= 0)
-    goto pb_store_exit;
-
-  // Distance to perp is 5 or less.
-  A = (A + 5) * 8;
-  // Bug? And then we do nothing with #REGa...
-  HL += DE;
-
-pb_store_exit:
-  IX->speed = HL;
+  if ((s8) A < 0) {
+    // Distance to perp is 5 or less
+    A = (A + 5) * 8; // Bug? we do nothing with #REGa...
+    HLspeed += DEspeedmult;
+  }
+  IX->speed = HLspeed;
   return;
 
   // If I meddle with this value the perp seems to race off too fast to catch.
 pb_set_delay:
-  IX->TBD7 = 0xFC;
-  if (A < 3)
-    // PUSH AF
-    goto pb_check_boost;
-  A -= 3;
+  IX->TBD7 = -4; // $FC
+  // PUSH AF // Atbd7
+  if (Atbd7 >= 3)
+    Atbd7 -= 3;
 
-pb_check_boost:
   Adash = (state->boost == 0) ? 200 : 230;
-  scenery_hit(state, Aflip, Adash);
+  scenery_hit(state, Atbd7, Adash);
 
   state->SM_B32E += 40;
 
-  D = 0; // Zero bonus middle digit
+  Dbonus_hi = 0; // Zero bonus high digit
 
-// POP AF  ; Restore #REGa which holds IX[7] and flags from earlier
-// LD HL,$B4F0     ; {Put a call to 'smash' on the stack
-// PUSH HL         ; }
-// JR NC,$A7BE     ; Jump if no carry
-// CP $02          ; {Jump if A == 2
-// JR Z,$A7BE      ; }
-// PUSH HL         ; Put another call to smash on the stack
+  smash_twice = 0;
 
-  D = 4; // Set bonus middle digit to 4
+  // POP AF  Restore Atbd7 which holds IX[7] and flags from earlier
+  if (!carry || Atbd7 == 2)
+    goto pb_a7be;
+
+  smash_twice = 1; // was PUSH HL -- Put another call to smash on the stack
+
+  Dbonus_hi = 4; // Set bonus high digit to 4
 pb_a7be:
-  D += state->wanted_stage_number;
-  E = 0;
+  Dbonus_hi += state->wanted_stage_number;
+  Ebonus_mid = 0;
   if (state->retry_count) {
-    A = D;
-    D = E;
+    A = Dbonus_hi;
+    Dbonus_hi = Ebonus_mid;
     RLC(A);
     RLC(A);
     RLC(A);
     RLC(A);
-    E = A;
+    Ebonus_mid = A;
   }
-  add_bonus(state, 0, E, D);
-  state->SM_A73E = 5; // set delay counter to 5 turns
+  add_bonus(state, 0, Ebonus_mid, Dbonus_hi);
+  state->pb_delay = 5; // set delay counter to 5 turns
   start_chatter(state, 5, &chatterblk_raymond_smash[0]);
   start_sfx(state, EFFECT_CAR_HIT, 1); /* priority 1 */ // exit via
+
+  smash(state); // Conv: Direct call rather than stack push
+  if (smash_twice)
+    smash(state);
 }
 
 // $A7F3
@@ -5376,6 +5384,24 @@ void animate_hero_car(chqstate_t *state)
 // $B4CC
 void start_chase(chqstate_t *state)
 {
+  state->SM_B476      = 0;
+  // Starts the animation that puts the cherry light on the roof
+  state->hand_flag    = 1;
+  // Enable flashing lights and smash bar
+  state->sighted_flag = 1;
+  // This is animation frame related?
+  state->SM_B478      = 2;
+
+  state->st.time_sixteenths = 15;
+  state->st.time_bcd        = 0x60;
+
+  // Toggle the left light's brightness
+  toggle_light_brightness(state, ADDRTOSCREEN(0x5820));
+
+  // Show the "SIGHTING OF TARGET VEHICLE" message
+  setup_overlay_messages(state, &sighting_message[0]);
+
+  start_siren_hook(state); // exit via
 }
 
 // $B4F0

@@ -135,10 +135,10 @@ typedef u8 chatterpriority_t;
 #define PERPCAUGHTPHASE_0                      (0)
 #define PERPCAUGHTPHASE_1                      (1)
 #define PERPCAUGHTPHASE_2                      (2)
-#define PERPCAUGHTPHASE_3                      (3)
+#define PERPCAUGHTPHASE_3                      (3) // car has stopped; engine off; smash bar is removed
 #define PERPCAUGHTPHASE_4                      (4)
 #define PERPCAUGHTPHASE_5                      (5)
-#define PERPCAUGHTPHASE_6                      (6)
+#define PERPCAUGHTPHASE_6                      (6) // transition
 
 #define TRANSITIONCONTROL_STOP                 (0)
 #define TRANSITIONCONTROL_DRAW_MUGSHOTS        (1)
