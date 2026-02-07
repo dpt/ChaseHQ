@@ -5265,56 +5265,53 @@ u16 get_spawn_lanes(chqstate_t *state, u8 extra)
 void hazard_handler(chqstate_t *state, hazard_t *IX)
 {
   int       carry = 0;
-  u16       BCspawn_lanes;  // was BC
-  u8        Bmin_lane;
-  u8        Cmax_lane;
-  u8        Atbd17;
-  u8        Acurrent_lane;
-  u8        Ahorz_pos;
-  u8        Atbd7;
-  u8        Ccurrent_lane;
-  const u8 *HLhazard_pos_speed;
-  u8        Adash;
+  u16       spawn_lanes;        // was BC
+  u8        min_lane;           // was B
+  u8        max_lane;           // was C
+  u8        tbd17;              // was A
+  u8        current_lane;       // was A
+  u8        horz_pos;           // was A
+  u8        tbd7;               // was A
+  const u8 *phazard_pos_speed;  // was HL
 
   if (state->perp_caught_phase != 0 || state->dont_spawn_cars != 0)
     IX->speed = 0x1FF;
 
-  BCspawn_lanes = get_spawn_lanes(state, IX->distance);
-  Bmin_lane = BCspawn_lanes >> 8;
-  Cmax_lane = BCspawn_lanes & 0xFF;
+  spawn_lanes = get_spawn_lanes(state, IX->distance);
+  min_lane = spawn_lanes >> 8;
+  max_lane = spawn_lanes & 0xFF;
 
-  Atbd17 = IX->TBD17;
-  if (Atbd17 < Bmin_lane)
-    IX->current_lane = Bmin_lane;
-  if (Atbd17 > Cmax_lane)
-    IX->current_lane = Cmax_lane;
+  tbd17 = IX->TBD17;
+  if (tbd17 < min_lane)
+    IX->current_lane = min_lane;
+  if (tbd17 > max_lane)
+    IX->current_lane = max_lane;
 
-  Acurrent_lane = IX->current_lane;
-  if (Acurrent_lane != IX->TBD17) {
-    RL(Bmin_lane);
-    Ccurrent_lane = Acurrent_lane;
-    HLhazard_pos_speed = &hazard_pos_speed[Acurrent_lane];
-    Ahorz_pos = IX->horz_pos_on_road;
-    RR(Bmin_lane);
+  current_lane = IX->current_lane;
+  if (current_lane != IX->TBD17) {
+    RL(min_lane); // I'm not understanding these rotates
+    phazard_pos_speed = &hazard_pos_speed[current_lane];
+    horz_pos = IX->horz_pos_on_road;
+    RR(min_lane);
     if (carry) {
-      Ahorz_pos -= 5;
-      if (Ahorz_pos < *HLhazard_pos_speed) {
-        Ahorz_pos = *HLhazard_pos_speed;
-        IX->TBD17 = Ccurrent_lane;
+      horz_pos -= 5;
+      if (horz_pos < *phazard_pos_speed) {
+        horz_pos = *phazard_pos_speed;
+        IX->TBD17 = current_lane;
       }
     } else {
-      Ahorz_pos += 5;
-      if (Ahorz_pos < *HLhazard_pos_speed) {
-        Ahorz_pos = *HLhazard_pos_speed;
-        IX->TBD17 = Ccurrent_lane;
+      horz_pos += 5;
+      if (horz_pos >= *phazard_pos_speed) {
+        horz_pos = *phazard_pos_speed;
+        IX->TBD17 = current_lane;
       }
     }
 
-    IX->horz_pos_on_road = Ahorz_pos;
+    IX->horz_pos_on_road = horz_pos;
   }
 
-  Atbd7 = IX->TBD7;
-  if (Atbd7 == 0)
+  tbd7 = IX->TBD7;
+  if (tbd7 == 0)
     return;
 
   IX->TBD7 = 0;
@@ -5325,13 +5322,11 @@ void hazard_handler(chqstate_t *state, hazard_t *IX)
   IX->used = HAZARD_UNUSED;
   state->overtake_bonus_bcd = 0;
 
-  Adash = 0x96;
-
-  if (Atbd7 >= 3)
-    Atbd7 -= 3;
+  if (tbd7 >= 3)
+    tbd7 -= 3;
 
   // Crashed
-  scenery_hit(state, Atbd7, Adash);
+  scenery_hit(state, tbd7, 0x96);
   start_chatter(state, 3, &chatterblk_raymond_random_yelps[0]);
   start_sfx(state, EFFECT_CAR_HIT, 2); /* priority 2 */ // exit via
 }
