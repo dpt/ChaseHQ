@@ -4804,7 +4804,7 @@ void perp_behaviour(chqstate_t *state, hazard_t *IX)
   int       carry = 0;
   s8        Atbd7;              // was A
   u8        Cperp_distance;     // was C
-  hazard_t *IYhazard;
+  hazard_t *IYhazard;           // was IY
   u16       DE;
   u16       HL;
   const u8 *HLtab;              // was HL
@@ -5264,6 +5264,76 @@ u16 get_spawn_lanes(chqstate_t *state, u8 extra)
 // $A8CD
 void hazard_handler(chqstate_t *state, hazard_t *IX)
 {
+  int       carry = 0;
+  u16       BCspawn_lanes;  // was BC
+  u8        Bmin_lane;
+  u8        Cmax_lane;
+  u8        Atbd17;
+  u8        Acurrent_lane;
+  u8        Ahorz_pos;
+  u8        Atbd7;
+  u8        Ccurrent_lane;
+  const u8 *HLhazard_pos_speed;
+  u8        Adash;
+
+  if (state->perp_caught_phase != 0 || state->dont_spawn_cars != 0)
+    IX->speed = 0x1FF;
+
+  BCspawn_lanes = get_spawn_lanes(state, IX->distance);
+  Bmin_lane = BCspawn_lanes >> 8;
+  Cmax_lane = BCspawn_lanes & 0xFF;
+
+  Atbd17 = IX->TBD17;
+  if (Atbd17 < Bmin_lane)
+    IX->current_lane = Bmin_lane;
+  if (Atbd17 > Cmax_lane)
+    IX->current_lane = Cmax_lane;
+
+  Acurrent_lane = IX->current_lane;
+  if (Acurrent_lane != IX->TBD17) {
+    RL(Bmin_lane);
+    Ccurrent_lane = Acurrent_lane;
+    HLhazard_pos_speed = &hazard_pos_speed[Acurrent_lane];
+    Ahorz_pos = IX->horz_pos_on_road;
+    RR(Bmin_lane);
+    if (carry) {
+      Ahorz_pos -= 5;
+      if (Ahorz_pos < *HLhazard_pos_speed) {
+        Ahorz_pos = *HLhazard_pos_speed;
+        IX->TBD17 = Ccurrent_lane;
+      }
+    } else {
+      Ahorz_pos += 5;
+      if (Ahorz_pos < *HLhazard_pos_speed) {
+        Ahorz_pos = *HLhazard_pos_speed;
+        IX->TBD17 = Ccurrent_lane;
+      }
+    }
+
+    IX->horz_pos_on_road = Ahorz_pos;
+  }
+
+  Atbd7 = IX->TBD7;
+  if (Atbd7 == 0)
+    return;
+
+  IX->TBD7 = 0;
+
+  if (state->ahc_crashed_flag)
+    return; // already crashed
+
+  IX->used = HAZARD_UNUSED;
+  state->overtake_bonus_bcd = 0;
+
+  Adash = 0x96;
+
+  if (Atbd7 >= 3)
+    Atbd7 -= 3;
+
+  // Crashed
+  scenery_hit(state, Atbd7, Adash);
+  start_chatter(state, 3, &chatterblk_raymond_random_yelps[0]);
+  start_sfx(state, EFFECT_CAR_HIT, 2); /* priority 2 */ // exit via
 }
 
 // $A955

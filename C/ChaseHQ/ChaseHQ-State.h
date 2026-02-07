@@ -28,7 +28,7 @@ struct hazard {
   u16               speed;
   u8                TBD15;    // top bit is set for vehicles
   u8                TBD16;
-  u8                TBD17;    // perp distance high byte
+  u8                TBD17;    // perp distance high byte OR a hazard's lane
   u8                current_lane;
   u8                TBD19;
 };
