@@ -157,15 +157,15 @@ struct chqstate {
   u8        SM_9115;
 
   // $9396 (SM) in draw_object_common
-  u8        SM_9396;
+  u8        doc_SM_9396;
   // $933D (SM) in draw_object_common
-  u8        SM_933D;
+  u8        doc_SM_933D;
   // $93C0 (SM) in draw_object_common
-  u8        SM_93C0;
+  u8        doc_SM_93C0;
   // $9404 (SM) in draw_object_common
-  u8        SM_9404;
+  u8        doc_SM_9404;
   // $9415 (SM) in draw_object_common
-  u8        SM_9415;
+  u8        doc_SM_9415;
 
   // $9618
   u8        rng_seed[3];
@@ -387,16 +387,16 @@ struct chqstate {
   // $A804 (SM) in spawn_cars
   u8        spawn_counter;
 
-  // $A97F (SM) in layout_dirt_and_stones
-  u8        SM_A97F;
+  // $A97E (SM) in layout_dirt_and_stones
+  u8        ldas_enabled; // makes layout_dirt_and_stones run
 
-  // $A9DF (SM) in dust_stones_stuff
-  u8        SM_A9DF; // makes dust_stones_stuff run
+  // $A9DE (SM) in dust_stones_stuff
+  u8        dss_enabled; // makes dust_stones_stuff run
   // $A9E2 (SM) in dust_stones_stuff
-  u16      *SM_A9E2;
+  u16      *dss_SM_A9E2; // a table ptr e.g. $ED28
 
   // $AED0 (SM) in draw_hazards
-  u16      *SM_AECF;
+  u16      *dh_SM_AECF;
 
   // $B063 (SM) in move_hero_car
   u8        SM_B063; // jump counter
@@ -430,9 +430,9 @@ struct chqstate {
   const u8 *SM_BBC2;
 
   // $C058 (SM) in read_map
-  u8        SM_C058; // current hazard command
-  // $C0BC (SM) in read_map
-  u8        SM_C0BC;
+  u8        rm_SM_C058; // current hazard command
+  // $C0BB (SM) in read_map
+  u8        rm_SM_C0BB; // hazard related
 
   // $C15E (SM) in draw_tunnel
   u8        SM_C15E;

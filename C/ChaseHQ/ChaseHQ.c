@@ -4,6 +4,12 @@
 //
 // by dpt
 
+// Important Note
+//
+// While this code _looks_ plausible and compiles in its current state know
+// that it's all sorts of broken!
+//
+
 // Notes
 //
 // Like with my conversion of The Great Escape to C we model the game as if
@@ -25,7 +31,7 @@
 // including any embedded addresses. I wanted to 'page in' levels by copying
 // the original game data into the game's state structure. This would also
 // mean that any new or adjusted levels produced by means of this conversion
-// would be compatible with the original game. However it turned out that
+// would be compatible with the original game. However, it turned out that
 // allowing binary compatibility would have meant duplicating some core
 // functions where the data structures exist in both the engine part and the
 // stage data. So I gave up on that. Having the stage data in C does make it
@@ -806,7 +812,7 @@ void set_up_stage(chqstate_t        *state,
   state->dee_draw_helicopter = 0; // draw heli call
   state->dee_draw_tunnel_2 = 0; // draw tunnel call
 
-  state->SM_C058 = 0; // clear current hazard?
+  state->rm_SM_C058 = 0; // clear current hazard?
   state->SM_B063 = 0; // clear jump counter?
 
   state->hazards[0].lod_addr = state->stage->lods_perp_car;
@@ -1814,73 +1820,75 @@ u16 draw_smash_bar_solid_bit(chqstate_t *state, int nrows, u16 buf)
 // $8F5F
 void draw_everything_else(chqstate_t *state)
 {
-  u8          *HLtable;        // was HL
-  u8          *DEtable;        // was DE
+  u8          *HL_table_e300;  // was HL
+  u8          *table_e336;     // was DE
   int          iterations;     // was B
-  u8          *IY;             // was IY
+  u8          *IY_table_e300;  // was IY
   u8          *roadbuf;        // was HL
-  u16         *IX;             // was IX
+  u16         *IX_table_ea00;  // was IX
   u8           floating_arrow; // was A
-  u8           A;              // was A
+  u8           Aobj;           // was A
   const lod_t *arrow_defn;     // was HL
-  u8           Ex;             // was E
-  u8           Dy;             // was D
-  u8           Cwidth;         // was C
-  u8           Bflags;         // was B
+  u8           x;              // was E
+  u8           y;              // was D
+  u8           width_bytes;    // was C
+  u8           flags;          // was B
   u8           Edash;          // was E
   u8           Cdash;          // was C
-  u8           Bheight;        // was B
-  const u8    *HLbitmap;       // was HL
-  u8           E;              // was E
+  u8           height;         // was B
+  const u8    *bitmap;         // was HL
+  u8           Eobj;           // was E
   const obj_t *HLobj;          // was HL
 
-  state->SM_A9E2 = &state->table_ed00[20];
-  state->SM_AECF = &state->table_e900[0];
+  state->dss_SM_A9E2 = &state->table_ed00[20]; // $ED28
+  state->dh_SM_AECF  = &state->table_e900[0];
 
-  HLtable = &state->table_e300[1]; // table of objects?
-  DEtable = &state->table_e336[0];
+  HL_table_e300 = &state->table_e300[1]; // table of objects?
+  table_e336 = &state->table_e336[0];
   iterations = 21;
   do {
-    *HLtable++ += 32;
-    *DEtable++ += 32;
+    *HL_table_e300++ += 32;
+    *table_e336++ += 32;
   } while (--iterations > 0);
 
-  IY = &state->table_e300[21];
+  IY_table_e300 = &state->table_e300[21];
   if (state->dee_draw_tunnel_1)
-    draw_tunnel(state, IY);
-  IY--;
+    draw_tunnel(state, IY_table_e300);
+  IY_table_e300--;
 
-  roadbuf = ROADBUFPTR(115);
+  roadbuf = ROADBUFPTR(115); // right side objects
 
-  IX = &state->table_ea00[88];
+  IX_table_ea00 = &state->table_ea00[88]; // $EAB0
   iterations = 20; // iterations
   do {
     if (state->n_hazards)
       dh_aecf(state);
 
-    dust_stones_stuff(state);
+    dust_stones_stuff(state, iterations);
 
     if (state->dee_draw_helicopter)
       draw_helicopter(state);
 
     if (state->dee_draw_tunnel_2)
-      draw_tunnel(state, IY);
+      draw_tunnel(state, IY_table_e300);
 
-    A = *HLtable; // fetch (object?) from right hand side
-    if (A)
+    Aobj = *HL_table_e300; // fetch (object?) from right hand side
+    if (Aobj)
       goto right_hand_stuff;
+
 continue_after_right_hand_done:
-    IX += 2;
-    HLtable += 32; // FIXME needs to wrap?
+    IX_table_ea00 += 2;
+    HL_table_e300 += 32; // FIXME needs to wrap?
 
-    A = *HLtable; // fetch (object?) from left hand side
-    if (A)
+    Aobj = *HL_table_e300; // fetch (object?) from left hand side
+    if (Aobj)
       goto left_hand_stuff;
-continue_after_left_hand_done:
-    IX += 2;
-    HLtable -= 33; // FIXME needs to wrap
 
-    IY--;
+continue_after_left_hand_done:
+    IX_table_ea00 += 2;
+    HL_table_e300 -= 33; // FIXME needs to wrap
+
+    IY_table_e300--;
   } while (--iterations > 0);
 
   if (state->dee_draw_helicopter)
@@ -1892,37 +1900,35 @@ continue_after_left_hand_done:
 
   // Draw the floating arrow
   arrow_defn = &floating_arrow_left_defn;
-  Ex = 120; // horz pos
+  x = 120; // horz pos
   if (floating_arrow != 1) {
     arrow_defn = &floating_arrow_right_defn;
-    Ex = 128;
+    x = 128;
   }
-  Dy       = 48; // vert pos
-  Cwidth   = arrow_defn->width_bytes;
-  Bflags   = arrow_defn->flags >> 1; // goes in B'
-  Edash    = Cdash;
-  Cdash    = 0; // this must be passed in
-  Bheight  = arrow_defn->height;
-  HLbitmap = arrow_defn->bitmap;
-  draw_part_entry2(state, Bheight, Cwidth, Dy, Ex, HLbitmap, Bflags); // exit via
+  y           = 48; // vert pos
+  width_bytes = arrow_defn->width_bytes;
+  flags       = arrow_defn->flags >> 1; // goes in B'
+  Edash       = width_bytes;
+  Cdash       = 0; // this must be passed in
+  height      = arrow_defn->height;
+  bitmap      = arrow_defn->bitmap;
+  draw_part_entry2(state, height, width_bytes, y, x, bitmap, flags); // exit via
   return;
 
 right_hand_stuff:
-  E = A;
-  if (IX[1]) // buffer offset/distance
-    goto continue_after_right_hand_done;
-
-  HLobj = &state->stage->addrof_right_hand_objects[E];
-  HLobj->handler(state, Bheight, HLobj->arg, IX, IY);
+  Eobj = Aobj;
+  if (IX_table_ea00[1] == 0) { // buffer offset/distance
+    HLobj = &state->stage->addrof_right_hand_objects[Eobj];
+    HLobj->handler(state, height, HLobj->arg, IX_table_ea00, IY_table_e300);
+  }
   goto continue_after_right_hand_done;
 
 left_hand_stuff:
-  E = A;
-  if (A != 2 && IX[1])
-    goto continue_after_left_hand_done;
-
-  HLobj = &state->stage->addrof_left_hand_objects[E];
-  HLobj->handler(state, Bheight, HLobj->arg, IX, IY);
+  Eobj = Aobj;
+  if (Aobj != 2 && IX_table_ea00[1]) {
+    HLobj = &state->stage->addrof_left_hand_objects[Eobj];
+    HLobj->handler(state, height, HLobj->arg, IX_table_ea00, IY_table_e300);
+  }
   goto continue_after_left_hand_done;
 }
 
@@ -2127,7 +2133,7 @@ void draw_stretchy_object_common(chqstate_t     *state,
 
 dso_loop:
   A = -C;
-  state->SM_933D = A;
+  state->doc_SM_933D = A;
   B = *HL - 1;
   if (B == 0)
     return;
@@ -2221,13 +2227,13 @@ dso_9226:
   B = A;
 
 dso_9232:
-  state->SM_9404 = B;
-  state->SM_9415 = *HL - 2;
-  state->SM_93C0 = 2;
+  state->doc_SM_9404 = B;
+  state->doc_SM_9415 = *HL - 2;
+  state->doc_SM_93C0 = 2;
   // EX AF,AF'
   B = A;
   SM_9244(state, B, HL, IX);
-  state->SM_93C0 = 0;
+  state->doc_SM_93C0 = 0;
   goto dso_loop_perhaps;
 #endif
 }
@@ -2296,7 +2302,7 @@ void draw_object_left_entrypt(chqstate_t       *state,
   u8                depth; // was B
   const lod_t      *lod;   // was HL
 
-  state->SM_933D = A;
+  state->doc_SM_933D = A;
 
   if (B >= DEPTHSET_MAX)
     B = DEPTHSET_MAX;
@@ -2347,13 +2353,13 @@ void draw_object_left_helicopter_entrypt(chqstate_t *state, u8 A,
 
     E = HLlod->width_bytes;
     A >>= 2;
-    state->SM_9396 = A;
+    state->doc_SM_9396 = A;
     A = E - 1;
     BC = 0x0101;
   } else {
     E = HLlod->width_bytes;
     A = (A & 0xFC) >> 2;
-    state->SM_9396 = A;
+    state->doc_SM_9396 = A;
     RR(A);
     B = A;
     A += E - 33;
@@ -2418,8 +2424,8 @@ void draw_object_common(chqstate_t *state, u8 A, const lod_t *HLlod)
   int carry = 0;
   u8  Adash;
 
-  A = ~state->SM_9396;
-  state->SM_9396 = A;
+  A = ~state->doc_SM_9396;
+  state->doc_SM_9396 = A;
 
   Adash = A; // EX AF,AF'
 
@@ -2442,7 +2448,7 @@ void draw_object_9333(chqstate_t *state, int carry, u8 C, u8 E, u8 *HL, u8 *IY)
 
   // EX AF,AF'
 _933d:
-  D = state->SM_933D;
+  D = state->doc_SM_933D;
   A = IY[0] - IY[53];
   if (A)
     goto _9359;
@@ -2481,20 +2487,20 @@ _9359:
   if (!carry)
     goto _938d;
   // POP AF
-  A = state->SM_93C0; // set to 0 or 2
+  A = state->doc_SM_93C0; // set to 0 or 2
   if (A == 0)
     return;
 
-  A = state->SM_933D;
+  A = state->doc_SM_933D;
   D = *HL;
   A -= D;
   if (P)
     return;
-  state->SM_933D = A;
-  A = state->SM_9404 - D;
+  state->doc_SM_933D = A;
+  A = state->doc_SM_9404 - D;
   if (C || Z)
     return;
-  state->SM_9404 = A;
+  state->doc_SM_9404 = A;
   goto _933d;
 
 _938d:
@@ -2531,7 +2537,7 @@ _939c:
   H = (A & 0x0F) + 0xF0;
   A = D;
   L = (A & 0x70) * 2 + B;
-  A = state->SM_93C0; // set to 0 or 2
+  A = state->doc_SM_93C0; // set to 0 or 2
   if (A == 0)
     goto _93d0;
   A--;
@@ -2576,7 +2582,7 @@ do_set_callbacks:
   // EXX
 
 _9404:
-  A = state->SM_9404 - B;
+  A = state->doc_SM_9404 - B;
   if (A == 0 || carry)
     goto _941a;
   state->SM_9494 = A;
@@ -2586,7 +2592,7 @@ _9404:
   state->SM_940F(state, IX, B, HL, DEdash, HLdash);
 
   HL = state->SM_9412;
-  B  = state->SM_9415;
+  B  = state->doc_SM_9415;
   goto _9404; // loop
 
 _941a:
@@ -2611,8 +2617,8 @@ _9436:
   BC = state->SM_9412;
   state->SM_946C = BC;
 
-  state->SM_946F = state->SM_9415;
-  state->SM_945F = state->SM_9404;
+  state->SM_946F = state->doc_SM_9415;
+  state->SM_945F = state->doc_SM_9404;
 
   Bdash = 0xF; // mask
   // EXX
@@ -2851,35 +2857,35 @@ void plot_sprite_flipped(chqstate_t *state,
   goto plot_sprite_flipped_even_start;
 
   for (;;) {
-  // EXX bank
-  if (--height == 0)
-  return;
+    // EXX bank
+    if (--height == 0)
+      return;
 
-  bitmap_data += bitmap_stride;
+    bitmap_data += bitmap_stride;
 
-  plot_sprite_flipped_even_start:
-  SPsrc = bitmap_data;
-  // EXX unbank
-  backbuf_orig = backbuf_addr;
-  switch (jump_offset / 9) {
-  default:
-  assert(0);
-  case 0:
-  // Conv: Original uses POP that loads 16 bits at a time
-  *backbuf_addr-- = state->flipped[*SPsrc++ & 0xFF];
-  *backbuf_addr-- = state->flipped[*SPsrc++ >> 8];
-  case 1:
-  *backbuf_addr-- = state->flipped[*SPsrc++ & 0xFF];
-  *backbuf_addr-- = state->flipped[*SPsrc++ >> 8];
-  case 2:
-  *backbuf_addr-- = state->flipped[*SPsrc++ & 0xFF];
-  *backbuf_addr-- = state->flipped[*SPsrc++ >> 8];
-  case 3:
-  *backbuf_addr-- = state->flipped[*SPsrc++ & 0xFF];
-  *backbuf_addr-- = state->flipped[*SPsrc++ >> 8];
-}
-  backbuf_addr = ADDRTOBACKBUF(prevbufrow(BACKBUFTOADDR(backbuf_orig)));
-}
+    plot_sprite_flipped_even_start:
+    SPsrc = bitmap_data;
+    // EXX unbank
+    backbuf_orig = backbuf_addr;
+    switch (jump_offset / 9) {
+      default:
+        assert(0);
+      case 0:
+        // Conv: Original uses POP that loads 16 bits at a time
+        *backbuf_addr-- = state->flipped[*SPsrc++ & 0xFF];
+        *backbuf_addr-- = state->flipped[*SPsrc++ >> 8];
+      case 1:
+        *backbuf_addr-- = state->flipped[*SPsrc++ & 0xFF];
+        *backbuf_addr-- = state->flipped[*SPsrc++ >> 8];
+      case 2:
+        *backbuf_addr-- = state->flipped[*SPsrc++ & 0xFF];
+        *backbuf_addr-- = state->flipped[*SPsrc++ >> 8];
+      case 3:
+        *backbuf_addr-- = state->flipped[*SPsrc++ & 0xFF];
+        *backbuf_addr-- = state->flipped[*SPsrc++ >> 8];
+    }
+    backbuf_addr = ADDRTOBACKBUF(prevbufrow(BACKBUFTOADDR(backbuf_orig)));
+  }
 }
 
   void plot_sprite_flipped_odd(chqstate_t *state,
@@ -3502,6 +3508,7 @@ void tick(chqstate_t *state)
   ptimebcd = &state->st.time_bcd;
   timeupstate = state->time_up_state;
   switch (timeupstate) {
+  default: assert(0);
   case TIMEUPSTATE_CHECK_TIME_UP: goto check_time_up;
   case TIMEUPSTATE_CAR_STOPPED:   goto check_credits;
   case TIMEUPSTATE_CHECK_RESTART: goto check_restart;
@@ -5345,19 +5352,158 @@ void choose_dirt_and_stones(chqstate_t *state)
   table = (u8 *) &state->table_ed00[40];
   table[0] = ((s8) rng(state) >= 0) ? 1 : 2; // choose stone or dirt
   table[1] = rng(state); // choose random position
-  state->SM_A97F = 1;
-  state->SM_C0BC = 1;
-  state->SM_A9DF = 1;
+  state->ldas_enabled = 1;
+  state->rm_SM_C0BB   = 1;
+  state->dss_enabled  = 1;
 }
 
 // $A97E
 void layout_dirt_and_stones(chqstate_t *state)
 {
+  int       carry = 0;
+  const u8 *obj_pos;             // was IY
+  u8        iterations;          // was B
+  u8        total;               // was C
+  u16      *table_ed00;          // was HL
+  u8        A;                   // was A
+  u8        Ldash;
+  u16       val_from_table_e800;
+  u16       val_from_table_ec00; // was HL'
+  u16       result;              // was HL'
+  u8        iterations2;         // was B'
+  u8        Cdash;
+
+  if (state->ldas_enabled == 0)
+    return;
+
+  obj_pos = &state->object_positions[18];
+  iterations = 20;
+  total = 0;
+  table_ed00 = &state->table_ed00[0x28 / 2]; // is this pairs?
+  do {
+    // FIXME increment + advance will be wrong since ed00 is u16s
+    if (*table_ed00++)
+      goto ldas_do_work;
+    table_ed00 += 3;
+loop1_continue:
+    obj_pos--;
+  } while (--iterations > 0);
+
+  if (total == 0) {
+    state->ldas_enabled = 0;
+    state->rm_SM_C0BB   = 0;
+    state->dss_enabled  = 0;
+  }
+  return;
+
+ldas_do_work:
+  A = *table_ed00++; // multiplicand?
+  total++;
+
+  // EXX
+
+  // EX AF,AF'
+  Ldash = ~(obj_pos[1] * 2);
+  val_from_table_e800 = state->table_e800[Ldash / 2]; // FIXME Probably off by one here?
+  val_from_table_ec00 = state->table_ec00[(Ldash - 1) / 2];
+
+  // PUSH DEdash
+  // Calc width of road?
+  val_from_table_e800 = val_from_table_ec00 - val_from_table_e800; // multiplier?
+  result = 0; // result
+  // EX AF,AF'
+
+  // Multiplier
+  iterations2 = 8; // iterations
+  do {
+    RL(A);
+    if (carry)
+      result += val_from_table_e800;
+    result <<= 1;
+  } while (--iterations2 > 0);
+
+  A = result & 0xFF;
+  RR(A);
+  Cdash = A;
+  // POP result // HLdash
+  result += Cdash; // was BCdash but B is zero here
+  // PUSH result // HLdash
+
+  // EXX
+
+  // POP result to DE
+  *table_ed00++ = result; // Conv: 16-bit write
+
+  goto loop1_continue;
 }
 
 // $A9DE
-void dust_stones_stuff(chqstate_t *state)
+void dust_stones_stuff(chqstate_t *state, u8 Biterations)
 {
+  int           carry = 0;
+  u8            A;
+  u16          *HLtable;
+  const lod_t (*DElods)[6];
+  const lod_t  *HLlod;
+
+  u8            C;
+  u8            E;
+  u8            saved_A;
+
+  if (state->dss_enabled == 0)
+    return;
+
+  HLtable = state->dss_SM_A9E2; // table ptr
+  A = *HLtable & 0xFF;
+  HLtable++; // halved advance since table is words
+  if (A)
+    goto dss_lods;
+
+  HLtable++;
+  state->dss_SM_A9E2 = HLtable;
+  return;
+
+dss_lods:
+  DElods = state->stage->lods_stones;
+  if (--A)
+    DElods = state->stage->lods_dust;
+
+  C = *HLtable++;
+  A = *HLtable++;
+  // EX AF,AF'
+  state->dss_SM_A9E2 = HLtable;
+  state->doc_SM_933D = 0;
+  // H = 0;
+  A = Biterations - 1;
+  if (A > 10)
+    A = 10;
+
+  SRL(A);
+  HLlod = DElods[A];
+  E = HLlod->width_bytes * 8;
+
+  // EX AF,AF'
+  saved_A = A;
+  A = C;
+  C = 0;
+  if (saved_A >= 0) {
+    if (saved_A)
+      return;
+
+    // So it's zero
+    if (A >= 128) {
+      draw_object_right_helicopter_entrypt(state, A, HLlod); // exit via
+    } else {
+      A += E;
+      draw_object_left_helicopter_entrypt(state, A, HLlod); // exit via
+    }
+  } else {
+    A += E;
+    if (A >= E) //carry? check
+      return;
+
+    draw_object_left_helicopter_entrypt(state, A, HLlod);  // exit via
+  }
 }
 
 // $AA38

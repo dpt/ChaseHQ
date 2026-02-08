@@ -3825,7 +3825,7 @@ C $8F71,3 B = 21 iterations, C = 32 (added to table entries)
 @ $8F74 label=dee_first_loop
 C $8F74,3 *HL += 32
 C $8F77,3 *DE += 32
-N $8F7A Do these wrap around?
+N $8F7A Do these wrap around? (prob not)
 C $8F7A,1 DE++
 C $8F7B,1 HL++
 C $8F7C,2 Loop while #REGb > 0
@@ -6224,7 +6224,7 @@ C $A539,6 Jump to #R$A55C if fork_taken was 1 (right fork taken)
 C $A53F,3 Get address of right hand short pole object
 C $A542,2 C = *HL++  -- max object boundary
 C $A544,2 E = *HL++  -- min object boundary
-C $A546,1 A = *HL
+C $A546,1 A = *HL  -- unused
 C $A547,2 B = 0
 C $A549,1 D = B
 C $A54A,3 HL = *$EAFE
@@ -6398,7 +6398,7 @@ C $A66A,2 Jump to #R$A68F
 @ $A66C label=pb_ensure_vehicle
 C $A66C,3 Read IY[15]. It's $80 for vehicles, 0+ for hazards or $FF if unused
 C $A66F,4 If the top bit is clear then it's not a vehicle, continue to next hazard
-N $A673 Calculate distance between this car/hazard and the perp.
+N $A673 Calculate distance between current hazard and the perp.
 C $A673,4 A = IY[1] - <perp distance>
 C $A677,3 Jump to pb_a67e if car/hazard further than perp
 N $A67A Otherwise car is behind perp...
@@ -6413,7 +6413,7 @@ C $A685,3 Compare to IX[18]  -- compare to perp's lane
 C $A688,3 Jump if not equal - continue to next hazard
 N $A68B So the lanes match.
 C $A68B,2 Restore #REGiy pushed at #R$A650
-C $A68D,2 Jump to pb_random_move
+C $A68D,2 Jump to pb_random_move_left_or_right
 @ $A68F label=pb_check_changing_lane_flag
 C $A68F,2 A = <self modified>  -- load "changing lane" flag that appears to be set to 1 when the perp changes lane
 C $A691,3 Jump to pb_check_lane if non-zero
@@ -6448,8 +6448,8 @@ C $A6CC,2 Jump to #R$A6CF if HL < 70
 C $A6CE,1 BC = $0101
 @ $A6CF label=pb_a6cf
 C $A6CF,3 Read current_lane
-C $A6D2,3 Jump to pb_random_move if A == C
-C $A6D5,3 Jump to pb_check_lane if A == B
+C $A6D2,3 Jump to pb_random_move_left_or_right if A == C
+C $A6D5,3 Jump to pb_check_lane if A != B
 @ $A6D8 label=pb_random_move_left_or_right
 C $A6D8,3 Read current_lane
 C $A6DB,3 Generate a random byte
@@ -6570,21 +6570,21 @@ C $A7A1,3 Call scenery_hit
 C $A7A4,3 Read #REGhl from 'LD BC,x' @ #R$B32E  -- a value set when crashed
 C $A7A7,4 Add 40 to it
 C $A7AB,3 Self modify 'LD BC,x' @ #R$B32E
-C $A7AE,2 Zero bonus middle digit
+C $A7AE,2 Zero bonus high digit
 C $A7B0,1 Restore #REGa which holds IX[7] and flags from earlier
 C $A7B1,4 Put a call to 'smash' on the stack
 C $A7B5,2 Jump if no carry
 C $A7B7,4 Jump if A == 2
 C $A7BB,1 Put another call to smash on the stack
 N $A7BC Break?
-C $A7BC,2 Set bonus middle digit to 4
+C $A7BC,2 Set bonus high digit to 4
 @ $A7BE label=pb_a7be
 C $A7BE,5 Add wanted_stage_number to #REGd (could be 0 or 4)
-C $A7C3,2 Zero bonus top digit(s)
+C $A7C3,2 Zero bonus middle digit(s)
 C $A7C5,6 Jump if retry_count is zero
-C $A7CB,1 Middle digit(s) of bonus
+C $A7CB,1 High digit(s) of bonus
 C $A7CC,1 Set top two digits of bonus
-C $A7CD,4 Move middle digit into position
+C $A7CD,4 Move digit into position
 C $A7D1,1 Set middle digits of bonus
 @ $A7D2 label=pb_retry_was_zero
 C $A7D2,1 Clear low digits of bonus
@@ -6744,7 +6744,7 @@ C $A8F0,8 If A > C IX[18] = C  -- set max lane if over
 @ $A8F8 label=hzh_test_chosen_lane
 C $A8F8,3 Read back the chosen lane
 C $A8FB,5 Jump to #R$A926 if A == IX[17]  -- lanes equal, no movement choice to be made?
-C $A900,2 shift out?
+C $A900,2 Shift min lane?
 @ $A902 ssub=LD HL,hazard_pos_speed - 1
 C $A902,3 HL = $A7E6 -> #R$A7E7 table (1-indexed)
 C $A905,1 C = A  -- copy chosen lane to C
@@ -6754,15 +6754,15 @@ C $A908,3 A = IX[5]  e.g. $A19C[5]
 C $A90B,2 test bottom bit? top bit? could be testing sign
 C $A90D,2 jump if clear
 C $A90F,2 A -= 5
-C $A911,1 CP *HL   -- comparing (IX[5]-5) to entry from A7E7 table
-C $A912,2 jump if (IX[5]-5) > entry
+C $A911,1 CP *HL   -- comparing (IX[5] - 5) to entry from A7E7 table
+C $A912,2 jump if (IX[5] - 5) > entry
 C $A914,1 load entry
 C $A915,3 IX[17] = C  -- set chosen lane
 C $A918,2 Jump to #R$A923
 @ $A91A label=hzh_check_max
-C $A91A,2 compute (IX[5]+5)
+C $A91A,2 compute (IX[5] + 5)
 C $A91C,1 compare to (same) entry from A7E7 table
-C $A91D,2 jump if (IX[5]+5) < entry
+C $A91D,2 jump if (IX[5] + 5) < entry
 C $A91F,1 load entry
 C $A920,3 IX[17] = C  -- set chosen lane
 @ $A923 label=hzh_set_ix_5
@@ -6827,6 +6827,7 @@ C $A99D,3 Self modify LD A @ #R$A97E
 C $A9A0,3 Self modify LD A @ #R$C0BB
 C $A9A3,3 Self modify LD A @ #R$A9DE
 C $A9A6,1 Return
+@ $A9A7 label=ldas_do_work
 C $A9A7,2 A = *HL++
 C $A9A9,1 C++
 C $A9AB,1 Bank A
@@ -6840,7 +6841,7 @@ C $A9B9,1 A = *HL
 C $A9BA,1 L++
 C $A9BB,1 H = *HL
 C $A9BC,1 L = A
-C $A9BD,1 Set flags
+C $A9BD,1 Clear carry flag
 C $A9BF,2 HL -= DE
 C $A9C2,3 HL = $0000 [not self modified]
 C $A9C5,1 Unbank A
@@ -6882,7 +6883,7 @@ C $AA00,1 HL++
 C $AA01,3 Self modify 'LD HL,x' @ #R$A9E2 to load HL
 C $AA04,1 A = 0
 C $AA05,3 Self modify 'LD D,x' @ #R$933D to load zero
-C $AA08,1 H = A
+C $AA08,1 H = 0
 C $AA09,2 A = B - 1
 C $AA0B,6 If A > 10 A = 10
 @ $AA11 label=dss_aa11

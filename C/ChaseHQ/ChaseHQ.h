@@ -754,7 +754,7 @@ void choose_dirt_and_stones(chqstate_t *state);
 
 void layout_dirt_and_stones(chqstate_t *state);
 
-void dust_stones_stuff(chqstate_t *state);
+void dust_stones_stuff(chqstate_t *state, u8 Biterations);
 
 void draw_helicopter(chqstate_t *state);
 
