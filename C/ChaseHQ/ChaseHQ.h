@@ -373,6 +373,8 @@ typedef struct hazard hazard_t;
 typedef struct scenedata scenedata_t;
 typedef struct hitable hitable_t;
 typedef struct obj obj_t;
+typedef struct heli_lod heli_lod_t;
+typedef struct heli_lod_inner heli_lod_inner_t;
 typedef struct stagevars stagevars_t;
 typedef struct chqstate chqstate_t;
 
@@ -756,7 +758,8 @@ void layout_dirt_and_stones(chqstate_t *state);
 
 void dust_stones_stuff(chqstate_t *state, u8 Biterations);
 
-void draw_helicopter(chqstate_t *state);
+void draw_helicopter(chqstate_t *state, u8 Biterations, u8 *IY);
+void dhl_aa94(chqstate_t *state, u8 A, const heli_lod_inner_t *DElod);
 
 void move_helicopter(chqstate_t *state);
 

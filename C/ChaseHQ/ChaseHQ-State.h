@@ -395,6 +395,16 @@ struct chqstate {
   // $A9E2 (SM) in dust_stones_stuff
   u16      *dss_SM_A9E2; // a table ptr e.g. $ED28
 
+  // $AA5A (SM) in draw_helicopter
+  u8        SM_AA5A;
+  // $AA76 (SM) in draw_helicopter
+  u8        SM_AA76;
+  // $AA8C (SM) in draw_helicopter
+  u8        SM_AA8C;
+
+  // $AA94 (SM) in dhl_aa94
+  u16       SM_AA94;
+
   // $AED0 (SM) in draw_hazards
   u16      *dh_SM_AECF;
 

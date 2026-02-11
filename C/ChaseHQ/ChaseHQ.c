@@ -1867,7 +1867,7 @@ void draw_everything_else(chqstate_t *state)
     dust_stones_stuff(state, iterations);
 
     if (state->dee_draw_helicopter)
-      draw_helicopter(state);
+      draw_helicopter(state, iterations, IY_table_e300);
 
     if (state->dee_draw_tunnel_2)
       draw_tunnel(state, IY_table_e300);
@@ -5507,8 +5507,103 @@ dss_lods:
 }
 
 // $AA38
-void draw_helicopter(chqstate_t *state)
+void draw_helicopter(chqstate_t *state, u8 Biterations, u8 *IY)
 {
+  int                carry = 0;
+  u16                diff;         // was DE
+  u16                total;        // was HL
+  u8                 fast_counter; // was A
+  u8                 Biterations2; // was B
+  u8                 Atotal;       // was A
+  u8                 frame;        // was A
+  const heli_lod_t (*helilods)[6]; // was HL
+  const heli_lod_t  *helilod;      // was DE
+
+  if (Biterations != 3)
+    return;
+
+  diff = IY[0x4F] - IY[0x4E]; // in the $E315 buffer?
+  total = 0;
+  fast_counter = state->fast_counter & 0xE0;
+  Biterations2 = 8;
+  // Multiplier
+  do {
+    RL(fast_counter);
+    if (carry)
+      total += diff;
+    total <<= 1;
+  } while (--Biterations2 > 0);
+
+  Atotal = total >> 8;
+  RR(Atotal); // halve?
+  state->SM_AA8C = Atotal;
+
+  state->SM_AA76 = state->SM_AA5A - IY[0x4E];
+
+  Biterations2 = 5; // iterations (draw first five)
+  frame = state->counter_A & 1; // heli frame
+
+  helilods = state->stage->addrof_helicopter_stuff_1;
+  if (frame != 0)
+    helilods = state->stage->addrof_helicopter_stuff_2;
+
+  do {
+    helilod = *helilods++;
+    dhl_aa94(state, helilod->tbd1 + state->SM_AA76, &helilod->inner);
+  } while (--Biterations2 > 0);
+
+  // BUT final entry seems to be a different format, so this can't be right.
+
+  helilod = *helilods;
+  // A = 0; // an apparently useless op
+  dhl_aa94(state, state->SM_AA8C, &helilod->inner);
+}
+
+#define ADD_CARRIED(a,b) (a+b>255)
+
+void dhl_aa94(chqstate_t *state, u8 A, const heli_lod_inner_t *DEinnerlod)
+{
+  int          carry;
+  u16          BC;
+  u16          HLtbd2;
+  u16          DEtbd2;
+  const lod_t *HLlod;
+  u8           Bwidth;
+  s8           Atop;
+  u8           Abot;
+  u8           C;
+
+  BC = state->SM_AA94; // signed?
+  state->doc_SM_933D = -A; // in draw_object_common
+
+  HLtbd2 = (s8) DEinnerlod->tbd2 + BC; // loads byte and widens
+
+  DEtbd2 = HLtbd2;
+  HLlod  = &DEinnerlod->lod; // Conv: Ops shuffled a bit
+
+  Bwidth = HLlod->width_bytes * 8;
+  Atop = DEtbd2 >> 8;
+  // AND Atop  set flags here
+  Abot = DEtbd2 & 0xFF;
+  C = 0; // can't see what's using this
+  if (Atop >= 0) {
+    if (Atop != 0)
+      return;
+
+    if (Abot >= 0x80) { // or -ve?
+      draw_object_right_helicopter_entrypt(state, Abot, HLlod); // exit via
+    } else {
+      Abot += Bwidth;
+      draw_object_left_helicopter_entrypt(state, Abot, HLlod); // exit via
+    }
+  } else {
+    carry = (Abot + Bwidth) > 255;
+    Abot += Bwidth;
+    if (!carry)
+      return;
+
+    draw_object_left_helicopter_entrypt(state, Abot, HLlod); // exit via
+  }
 }
 
 // $AAC6

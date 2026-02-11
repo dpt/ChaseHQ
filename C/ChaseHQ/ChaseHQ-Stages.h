@@ -23,6 +23,16 @@ struct obj {
   obj_handler_t    *handler;
 };
 
+struct heli_lod_inner {
+  u8                tbd2; // might be s8
+  lod_t             lod;
+};
+
+struct heli_lod {
+  u8                tbd1;
+  heli_lod_inner_t    inner;
+};
+
 typedef struct stage {
   u8                backdrop[BACKDROP_LENGTH];
   const u8         *addrof_perp_mugshot_attributes;
@@ -37,8 +47,8 @@ typedef struct stage {
   const obj_t      *addrof_left_hand_short_pole_object;
   const u8         *addrof_perp_description;
   const u8         *addrof_arrest_messages;
-  const u8         *addrof_helicopter_stuff_1;
-  const u8         *addrof_helicopter_stuff_2;
+  const heli_lod_t (*addrof_helicopter_stuff_1)[6];
+  const heli_lod_t (*addrof_helicopter_stuff_2)[6];
 
   const lod_t     (*lods_stones)[6];
   const lod_t     (*lods_dust)[6];
