@@ -763,7 +763,7 @@ void escape_scene(chqstate_t *state)
     draw_screen(state);
 
     // Loop unless the tunnel has appeared - and is right size?
-    if (state->SM_C161 == 0 || state->SM_C15E >= 7)
+    if (state->dt_SM_C161 == 0 || state->dt_SM_C15E >= 7)
       continue;
 
     // Activate the three barriers once close enough
@@ -813,7 +813,7 @@ void set_up_stage(chqstate_t        *state,
   state->dee_draw_tunnel_2 = 0; // draw tunnel call
 
   state->rm_SM_C058 = 0; // clear current hazard?
-  state->SM_B063 = 0; // clear jump counter?
+  state->mhc_SM_B063 = 0; // clear jump counter?
 
   state->hazards[0].lod_addr = state->stage->lods_perp_car;
 
@@ -1067,8 +1067,8 @@ void sfx_cornering(chqstate_t *state, u8 param1, u8 param2)
 {
   u8 A;
 
-  A = state->SM_8A0F ^ 1;
-  state->SM_8A0F = A;
+  A = state->sfx_SM_8A0F ^ 1;
+  state->sfx_SM_8A0F = A;
   if (A)
     return;
 
@@ -1977,7 +1977,7 @@ void draw_overhead(chqstate_t  *state,
   L = A;
   SRL(A);
   A = A + L - C;
-  state->SM_90F1 = A; // Self modify 'SUB x' at $90F1
+  state->do_SM_90F1 = A; // Self modify 'SUB x' at $90F1
   A = B - 1;
   if (A >= 10)
     A = 9;
@@ -2026,9 +2026,9 @@ do_90c4:
 
 do_90e4:
   C = D;
-  state->SM_9115 = ~((E - C) * 2) + 61;
+  state->do_SM_9115 = ~((E - C) * 2) + 61;
 
-  A = IY[0x35] - state->SM_90F1;
+  A = IY[0x35] - state->do_SM_90F1;
   if (A < 0)
     return;
 
@@ -2055,7 +2055,7 @@ do_continue:
     return;
 
 do_draw: // draws a span
-  memset(HLdst, *DEsrc, state->SM_9115 / 2);
+  memset(HLdst, *DEsrc, state->do_SM_9115 / 2);
   HLdst = ADDRTOBACKBUF(prevbufrow(BACKBUFTOADDR(HLdst)));
 
   goto do_continue;
@@ -4509,10 +4509,10 @@ store_off_road:
 
 csc_a43b:
   A = C;
-  state->SM_B3DB = A;
+  state->ahc_SM_B3DB = A;
   // EXX - bank
-  state->SM_B395 = HLdash;
-  state->SM_B3A3 = DEdash;
+  state->ahc_SM_B395 = HLdash;
+  state->ahc_SM_B3A3 = DEdash;
   if (A)
     return;
 
@@ -4604,7 +4604,7 @@ void scenery_hit(chqstate_t *state, u8 Aflip, u8 Adash)
 
   state->ahc_crashed_flag = 1;
   state->ahc_flip_flag    = Aflip;
-  state->SM_B38D          = ++Aflip;
+  state->ahc_SM_B38D          = ++Aflip;
   state->ahc_delay        = 5;
 
   speed = state->speed;
@@ -4613,14 +4613,14 @@ void scenery_hit(chqstate_t *state, u8 Aflip, u8 Adash)
   L = 24; // minimum?
   if (A >= L)
     L = A;
-  state->SM_B356 = (speed & ~0xFF) | L;
+  state->ahc_SM_B356 = (speed & ~0xFF) | L;
 
   // i.e. HL = min(Adash, state->speed);
   HL = Adash;
   DE = state->speed;
   if (HL >= DE)
     HL = DE;
-  state->SM_B32E = HL;
+  state->ahc_SM_B32E = HL;
 }
 
 // $A4F6
@@ -4650,9 +4650,9 @@ void check_fork_scenery_collisions(chqstate_t *state, u16 DEdash, u16 HLdash)
 
 set_off_road:
   state->off_road = off_road;
-  state->SM_B3DB  = 0;
-  state->SM_B395  = HLdash;
-  state->SM_B3A3  = DEdash;
+  state->ahc_SM_B3DB  = 0;
+  state->ahc_SM_B395  = HLdash;
+  state->ahc_SM_B3A3  = DEdash;
   if (state->fork_taken == 0) {
     // Left fork was taken, short pole object is on right hand of road.
     shortpoleobj = state->stage->addrof_right_hand_short_pole_object;
@@ -4924,7 +4924,7 @@ pb_check_changing_lane_flag:
   // lane changes.
   //
   // In-place decrementing counter.
-  A = state->SM_A69B - 1;
+  A = state->pb_SM_A69B - 1;
   if (A)
     goto pb_update_counter;
 
@@ -4932,7 +4932,7 @@ pb_check_changing_lane_flag:
   A = state->stage->smash_5d1b + (rng(state) & 31);
 
 pb_update_counter:
-  state->SM_A69B = A;
+  state->pb_SM_A69B = A;
 
   // This smells like it's detecting position and turning that into lanes.
   // The values are like those used by get_spawn_lanes.
@@ -5056,15 +5056,15 @@ pb_set_horz_pos:
   // Countdown+rng stuff again... as at #R$A69B
 
   // In-place decrementing counter.
-  Acounter = state->SM_A749 - 1;
-  state->SM_A749 = Acounter;
+  Acounter = state->pb_SM_A749 - 1;
+  state->pb_SM_A749 = Acounter;
   if (Acounter)
     goto pb_a776;
 
   // When it hits zero we pick a random number...
   Adelay = state->stage->smash_perp_delay + (rng(state) & 0xF);
 
-  state->SM_A749 = Adelay;
+  state->pb_SM_A749 = Adelay;
   Adelay = 10; // reset the delay loop
 
   // Count down outer delay loop.
@@ -5106,7 +5106,7 @@ pb_set_delay:
   Adash = (state->boost == 0) ? 200 : 230;
   scenery_hit(state, Atbd7, Adash);
 
-  state->SM_B32E += 40;
+  state->ahc_SM_B32E += 40;
 
   Dbonus_hi = 0; // Zero bonus high digit
 
@@ -5169,8 +5169,8 @@ void spawn_cars(chqstate_t *state)
 
   // Reduce inline spawn delay counter by the value of allow_spawning (1 or 2
   // here).
-  state->spawn_counter -= allow_spawning;
-  if (state->spawn_counter > 0)
+  state->sc_spawn_counter -= allow_spawning;
+  if (state->sc_spawn_counter > 0)
     return;
 
   random_extra_delay = rng(state) & 0x0F;
@@ -5180,7 +5180,7 @@ void spawn_cars(chqstate_t *state)
     // Perp was sighted so increase the spawn delay by 25.
     spawn_delay += 25;
   spawn_delay += random_extra_delay;
-  state->spawn_counter = spawn_delay;
+  state->sc_spawn_counter = spawn_delay;
 
   // Now walk the hazards array to find an unused slot.
   iterations = 5;
@@ -5536,9 +5536,9 @@ void draw_helicopter(chqstate_t *state, u8 Biterations, u8 *IY)
 
   Atotal = total >> 8;
   RR(Atotal); // halve?
-  state->SM_AA8C = Atotal;
+  state->dh_SM_AA8C = Atotal;
 
-  state->SM_AA76 = state->SM_AA5A - IY[0x4E];
+  state->dh_SM_AA76 = state->dh_SM_AA5A - IY[0x4E];
 
   Biterations2 = 5; // iterations (draw first five)
   frame = state->counter_A & 1; // heli frame
@@ -5549,19 +5549,17 @@ void draw_helicopter(chqstate_t *state, u8 Biterations, u8 *IY)
 
   do {
     helilod = *helilods++;
-    dhl_aa94(state, helilod->tbd1 + state->SM_AA76, &helilod->inner);
+    draw_helicoper_part(state, helilod->tbd1 + state->dh_SM_AA76, &helilod->inner);
   } while (--Biterations2 > 0);
 
   // BUT final entry seems to be a different format, so this can't be right.
 
   helilod = *helilods;
   // A = 0; // an apparently useless op
-  dhl_aa94(state, state->SM_AA8C, &helilod->inner);
+  draw_helicoper_part(state, state->dh_SM_AA8C, &helilod->inner);
 }
 
-#define ADD_CARRIED(a,b) (a+b>255)
-
-void dhl_aa94(chqstate_t *state, u8 A, const heli_lod_inner_t *DEinnerlod)
+void draw_helicoper_part(chqstate_t *state, u8 A, const heli_lod_inner_t *DEinnerlod)
 {
   int          carry;
   u16          BC;
@@ -5573,7 +5571,7 @@ void dhl_aa94(chqstate_t *state, u8 A, const heli_lod_inner_t *DEinnerlod)
   u8           Abot;
   u8           C;
 
-  BC = state->SM_AA94; // signed?
+  BC = state->dhl_helipos; // signed?
   state->doc_SM_933D = -A; // in draw_object_common
 
   HLtbd2 = (s8) DEinnerlod->tbd2 + BC; // loads byte and widens
@@ -5609,6 +5607,59 @@ void dhl_aa94(chqstate_t *state, u8 A, const heli_lod_inner_t *DEinnerlod)
 // $AAC6
 void move_helicopter(chqstate_t *state)
 {
+  u8  height;     // was A & C
+  u8  direction;  // was A
+  u8  offset;     // was A
+  u16 helipos;    // was HL
+  u16 newhelipos; // was HL
+  u16 centre;     // was DE
+
+  if (state->helicopter_control == 0)
+    return;
+
+  // Helicopter descends while moving to height 97 (smaller = lower).
+  height = state->mh_height;
+  if (height != 97)
+    height -= 2;
+  state->mh_height = height;
+
+  // Animate
+  state->mh_animframe = (state->mh_animframe + 1) & 3;
+
+  // Switch direction at the end of each cycle
+  direction = state->mh_direction;
+  if (state->mh_animframe == 0)
+    direction = -direction;
+  state->mh_direction = direction;
+
+  offset = direction + state->mh_offset;
+  state->mh_offset = offset;
+
+  state->dh_SM_AA5A = offset + height;
+
+  helipos = state->scenedata.road_pos - state->mh_prevroadpos; // delta
+  state->mh_prevroadpos = state->scenedata.road_pos; // update
+
+  helipos += state->dhl_helipos;
+  centre = 112; // const
+  if (helipos != centre) {
+    newhelipos = helipos + (helipos > centre ? -8 : 8);
+    if (newhelipos >= centre) {
+      if (helipos > centre) //  note:rechecking earlier calc
+        goto set_newpos;
+      else
+        goto set_centre;
+    }
+    if (helipos > centre) { // note: rechecking earlier calc
+set_centre:
+	    newhelipos = centre;
+    }
+  } else {
+    newhelipos = helipos; // Conv: added
+  }
+
+set_newpos:
+  state->dhl_helipos = newhelipos;
 }
 
 // $AB33
@@ -5690,13 +5741,13 @@ void animate_hero_car(chqstate_t *state)
 // $B4CC
 void start_chase(chqstate_t *state)
 {
-  state->SM_B476      = 0;
+  state->ahc_SM_B476      = 0;
   // Starts the animation that puts the cherry light on the roof
   state->hand_flag    = 1;
   // Enable flashing lights and smash bar
   state->sighted_flag = 1;
   // This is animation frame related?
-  state->SM_B478      = 2;
+  state->ahc_SM_B478      = 2;
 
   state->st.time_sixteenths = 15;
   state->st.time_bcd        = 0x60;
@@ -6257,9 +6308,9 @@ rm_curvature_escape_byte:
   if (--A == 0)
     goto rm_curvature_one_command;
   // Otherwise it must be a fork road command (byte == 2).
-  state->SM_BB95 = wordat(HL);
+  state->rm_SM_BB95 = wordat(HL);
   HL += 2;
-  state->SM_BBC2 = wordat(HL);
+  state->rm_SM_BBC2 = wordat(HL);
 
   HL = &forked_road_curvature[0];
   goto rm_read_curvature;

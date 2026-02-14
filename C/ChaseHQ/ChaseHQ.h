@@ -759,7 +759,7 @@ void layout_dirt_and_stones(chqstate_t *state);
 void dust_stones_stuff(chqstate_t *state, u8 Biterations);
 
 void draw_helicopter(chqstate_t *state, u8 Biterations, u8 *IY);
-void dhl_aa94(chqstate_t *state, u8 A, const heli_lod_inner_t *DElod);
+void draw_helicoper_part(chqstate_t *state, u8 A, const heli_lod_inner_t *DEinnerlod);
 
 void move_helicopter(chqstate_t *state);
 

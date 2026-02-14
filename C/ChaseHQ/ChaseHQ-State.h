@@ -23,7 +23,7 @@ struct hazard {
   u8                TBD6;
   s8                TBD7;     // activation / delay; set to $FC when perp hit
   u8                TBD8;
-  const lod_t      *lod_addr; // Conv: u16 becomes pointer
+  const lod_t      *lod_addr; // Conv: u16 made a pointer
   hazard_handler_t *hit_handler;
   u16               speed;
   u8                TBD15;    // top bit is set for vehicles
@@ -115,7 +115,7 @@ struct chqstate {
   u8        sfx_crash_table[93];
 
   // $8A0F (SM) in sfx_cornering
-  u8        SM_8A0F;
+  u8        sfx_SM_8A0F;
 
   // $8ABE (SM) in handle_perp_caught
   u8        handle_perp_caught_delay;
@@ -152,9 +152,9 @@ struct chqstate {
   u8        dee_draw_tunnel_2;
 
   // $90F1 (SM) in draw_overhead
-  u8        SM_90F1;
+  u8        do_SM_90F1;
   // $9115 (SM) in draw_overhead
-  u8        SM_9115;
+  u8        do_SM_9115;
 
   // $9396 (SM) in draw_object_common
   u8        doc_SM_9396;
@@ -378,14 +378,14 @@ struct chqstate {
   // $A68F (SM) in perp_behaviour
   u8        pb_changing_lane; // changing lane flag
   // $A69B (SM) in perp_behaviour
-  u8        SM_A69B;
+  u8        pb_SM_A69B;
   // $A73E (SM) in perp_behaviour
   u8        pb_delay;
   // $A749 (SM) in perp_behaviour
-  u8        SM_A749; // delay
+  u8        pb_SM_A749; // delay
 
   // $A804 (SM) in spawn_cars
-  u8        spawn_counter;
+  u8        sc_spawn_counter;
 
   // $A97E (SM) in layout_dirt_and_stones
   u8        ldas_enabled; // makes layout_dirt_and_stones run
@@ -396,48 +396,59 @@ struct chqstate {
   u16      *dss_SM_A9E2; // a table ptr e.g. $ED28
 
   // $AA5A (SM) in draw_helicopter
-  u8        SM_AA5A;
+  u8        dh_SM_AA5A; // y position?
   // $AA76 (SM) in draw_helicopter
-  u8        SM_AA76;
+  u8        dh_SM_AA76;
   // $AA8C (SM) in draw_helicopter
-  u8        SM_AA8C;
+  u8        dh_SM_AA8C;
 
   // $AA94 (SM) in dhl_aa94
-  u16       SM_AA94;
+  u16       dhl_helipos;
+
+  // $AACB (SM) in move_helicopter
+  u8        mh_height; // height
+  // $AAD7 (SM) in move_helicopter
+  u8        mh_animframe; // animation counter (0..3)
+  // $AADF (SM) in move_helicopter
+  u8        mh_direction; // direction (-1 or 1)
+  // $AAE8 (SM) in move_helicopter
+  u8        mh_offset; // horizontal pos/offset
+  // $AAF6 (SM) in move_helicopter
+  u16       mh_prevroadpos; // previous road pos
 
   // $AED0 (SM) in draw_hazards
   u16      *dh_SM_AECF;
 
   // $B063 (SM) in move_hero_car
-  u8        SM_B063; // jump counter
+  u8        mhc_SM_B063; // jump counter
 
   // $B325 (SM) in animate_hero_car
   u16       ahc_crashed_flag; // crashed flag
   // $B32E (SM) in animate_hero_car
-  u16       SM_B32E; // set when crashed
+  u16       ahc_SM_B32E; // set when crashed
   // $B356 (SM) in animate_hero_car
-  u16       SM_B356; // perhaps a speed
+  u16       ahc_SM_B356; // perhaps a speed
   // $B36E (SM) in animate_hero_car
   u8        ahc_flip_flag; // flip flag
   // $B384 (SM) in animate_hero_car
   u8        ahc_delay; // delay counter, set to 5
   // $B38D (SM) in animate_hero_car
-  u8        SM_B38D; // (flip flag + 1)
+  u8        ahc_SM_B38D; // (flip flag + 1)
   // $B395 (SM) in animate_hero_car
-  u8        SM_B395;
+  u8        ahc_SM_B395;
   // $B3A3 (SM) in animate_hero_car
-  u8        SM_B3A3;
+  u8        ahc_SM_B3A3;
   // $B3DB (SM) in animate_hero_car
-  u8        SM_B3DB; // controls flipping
+  u8        ahc_SM_B3DB; // controls flipping
   // $B476 (SM) in animate_hero_car
-  u8        SM_B476; // hand flag?
+  u8        ahc_SM_B476; // hand flag?
   // $B478 (SM) in animate_hero_car
-  u8        SM_B478; // hand animation frame?
+  u8        ahc_SM_B478; // hand animation frame?
 
   // $BB95 (SM) in rm_cycle_buffer_offset
-  const u8 *SM_BB95;
+  const u8 *rm_SM_BB95;
   // $BBC2 (SM) in rm_cycle_buffer_offset
-  const u8 *SM_BBC2;
+  const u8 *rm_SM_BBC2;
 
   // $C058 (SM) in read_map
   u8        rm_SM_C058; // current hazard command
@@ -445,9 +456,9 @@ struct chqstate {
   u8        rm_SM_C0BB; // hazard related
 
   // $C15E (SM) in draw_tunnel
-  u8        SM_C15E;
+  u8        dt_SM_C15E;
   // $C161 (SM) in draw_tunnel
-  u8        SM_C161;
+  u8        dt_SM_C161;
 
   // $E300
   u8        table_e300[32]; // note: first byte should be $60

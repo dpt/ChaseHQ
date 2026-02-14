@@ -30,7 +30,7 @@ struct heli_lod_inner {
 
 struct heli_lod {
   u8                tbd1;
-  heli_lod_inner_t    inner;
+  heli_lod_inner_t  inner;
 };
 
 typedef struct stage {
