@@ -403,7 +403,7 @@ struct chqstate {
   u8        dh_SM_AA8C;
 
   // $AA94 (SM) in dhl_aa94
-  u16       dhl_helipos;
+  u16       dhl_helipos; // signed?
 
   // $AACB (SM) in move_helicopter
   u8        mh_height; // height
@@ -415,6 +415,8 @@ struct chqstate {
   u8        mh_offset; // horizontal pos/offset
   // $AAF6 (SM) in move_helicopter
   u16       mh_prevroadpos; // previous road pos
+  // $AB06 (SM) in move_helicopter
+  u16       mh_SM_AB06;
 
   // $AED0 (SM) in draw_hazards
   u16      *dh_SM_AECF;

@@ -5652,7 +5652,7 @@ void move_helicopter(chqstate_t *state)
     }
     if (helipos > centre) { // note: rechecking earlier calc
 set_centre:
-	    newhelipos = centre;
+      newhelipos = centre;
     }
   } else {
     newhelipos = helipos; // Conv: added
@@ -5663,8 +5663,66 @@ set_newpos:
 }
 
 // $AB33
-void drive_helicopter(chqstate_t *state)
-{
+void drive_helicopter(chqstate_t *state) {
+  u8        heli_ctl;     // was A
+  u8        helipos;      // was A
+  u8        draw_heli;    // was A
+  u8        new_heli_ctl; // was A
+  u16       HL;
+  const u8 *chatterblk;   // was HL
+
+  heli_ctl = state->helicopter_control;
+  if (heli_ctl == 0)
+    return;
+
+  if (--heli_ctl == 0) // 1
+    goto hc_1;
+
+  if (--heli_ctl) // 3+
+    goto hc_pick_direction;
+
+  // Otherwise helicopter_control is 2.
+
+  helipos = state->dhl_helipos; // Conv: Original only checks low byte
+  if (helipos == 0)
+    return;
+
+  draw_heli = 0; // false
+  new_heli_ctl = 0; // New value for helicopter_control is 0
+  goto hc_exit;
+
+  hc_1:
+    HL = -56;
+  new_heli_ctl = 2; // New value for helicopter_control is 2
+  goto hc_set_draw;
+
+hc_pick_direction:
+  heli_ctl--;
+
+  chatterblk = &chatterblk_pilot_turn_left[0];
+  if (heli_ctl) {
+    if (--heli_ctl)
+      return;
+
+    chatterblk = &chatterblk_pilot_turn_right[0];
+  }
+
+  state->mh_prevroadpos = state->scenedata.road_pos;
+  state->dhl_helipos    = -24;
+  state->mh_animframe   = 0;
+  state->mh_offset      = 0;
+  state->mh_direction   = 1;
+  start_chatter(state, 15, chatterblk);
+  HL = 112;
+  // Set starting vertical position of the helicopter.
+  state->mh_height = 133;
+  new_heli_ctl = 5; // New value for helicopter_control is 5
+hc_set_draw:
+  state->mh_SM_AB06 = HL;
+  draw_heli = 1; // true
+hc_exit:
+  state->dee_draw_helicopter = draw_heli;
+  state->helicopter_control = new_heli_ctl;
 }
 
 // $AB9A
