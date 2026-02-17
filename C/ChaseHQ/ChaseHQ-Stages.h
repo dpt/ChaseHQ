@@ -11,7 +11,7 @@
 #include "ChaseHQ.h"
 
 struct hitable {
-  u8                unknown;
+  u8                width;
   const lod_t      *lods;
 };
 

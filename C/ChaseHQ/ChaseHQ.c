@@ -5948,10 +5948,61 @@ chc_continue:
 
 // $AD51
 //
+// default_retval - was D
 // hazard - was IX
-u8 check_collision(chqstate_t *state, u8 D, hazard_t *hazard)
+u8 check_collision(chqstate_t *state, u8 default_retval, hazard_t *hazard)
 {
-  return 0;
+  u8 horz_pos;      // was L
+  u8 tbd15;         // was A
+  u8 distance;      // was A
+  u8 max_distance;  // was C
+  s8 new_tbd7;      // was E
+  u8 fast_counter;  // was A
+  u8 Ahorz_pos;     // was A
+
+  if (hazard->TBD7) // hit counter / delay thing
+    return default_retval;
+
+  horz_pos = hazard->horz_pos;
+
+  if (hazard->TBD3) // distance related
+    return default_retval;
+
+  tbd15 = hazard->TBD15 + 1; // just for compare
+  distance = hazard->distance;
+  max_distance = (tbd15 != 0) ? 3 : 2;
+  if (distance >= max_distance)
+    return default_retval;
+
+  new_tbd7 = 4;
+  distance--;
+  fast_counter = state->fast_counter;
+  if (distance == 0) {
+    if ((s8) fast_counter < 0) // was JP P - why treating fast_counter as signed?
+      new_tbd7 = 1;
+  } else {
+    if ((s8) fast_counter >= 0) // was RET P - why treating fast_counter as signed?
+      return default_retval;
+  }
+
+  // Check horizontal position
+  Ahorz_pos = horz_pos & 0xF8;
+  if (Ahorz_pos >= 144)
+    return default_retval;
+
+  Ahorz_pos += hazard->hitable.width;
+  if (Ahorz_pos <= 112)
+    return default_retval;
+
+  Ahorz_pos -= hazard->hitable.width;
+  if (Ahorz_pos >= 104) {
+    new_tbd7--;
+    if (Ahorz_pos >= 120)
+      new_tbd7 += 2;
+  }
+
+  hazard->TBD7 = new_tbd7;
+  return 1;
 }
 
 // $ADA0
@@ -5965,7 +6016,7 @@ void dh_aecf(chqstate_t *state)
 // $ADF9
 //
 // Conv: Original game used the RET at $ADF9 as a no-op.
-void no_op(chqstate_t *state, hazard_t *IX)
+void no_op(chqstate_t *state, hazard_t *hazard)
 {
 }
 

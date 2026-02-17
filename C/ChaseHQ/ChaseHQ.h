@@ -776,7 +776,7 @@ hazard_handler_t hazard_hit;
 
 void check_hazard_collisions(chqstate_t *state);
 
-u8 check_collision(chqstate_t *state, u8 D, hazard_t *hazard);
+u8 check_collision(chqstate_t *state, u8 default_retval, hazard_t *hazard);
 
 void draw_hazards(chqstate_t *state);
 void dh_aecf(chqstate_t *state);
