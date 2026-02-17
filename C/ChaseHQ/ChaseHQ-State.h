@@ -21,9 +21,8 @@ struct hazard {
   u8                TBD4;
   u8                horz_pos_on_road;
   u8                TBD6;
-  s8                TBD7;     // activation / delay; set to $FC when perp hit
-  u8                TBD8;
-  const lod_t      *lod_addr; // Conv: u16 made a pointer
+  s8                TBD7;     // activation / delay / hit counter; set to $FC when perp hit
+  hitable_t         hitable;
   hazard_handler_t *hit_handler;
   u16               speed;
   u8                TBD15;    // top bit is set for vehicles

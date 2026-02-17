@@ -759,13 +759,20 @@ void layout_dirt_and_stones(chqstate_t *state);
 void dust_stones_stuff(chqstate_t *state, u8 Biterations);
 
 void draw_helicopter(chqstate_t *state, u8 Biterations, u8 *IY);
-void draw_helicoper_part(chqstate_t *state, u8 A, const heli_lod_inner_t *DEinnerlod);
+void draw_helicoper_part(chqstate_t *state, u8 A,
+                         const heli_lod_inner_t *DEinnerlod);
 
 void move_helicopter(chqstate_t *state);
 
 void drive_helicopter(chqstate_t *state);
 
 void spawn_hazards(chqstate_t *state);
+int sh_find_free(chqstate_t *state,
+                 u8          Bhorz_pos,
+                 u8          Cdistance,
+                 u16         DEhitable_offset);
+
+hazard_handler_t hazard_hit;
 
 void check_hazard_collisions(chqstate_t *state);
 

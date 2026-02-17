@@ -738,7 +738,7 @@ void escape_scene(chqstate_t *state)
   set_up_stage(state, &escape_scene_data);
   state->speed = 250; // speed of camera
   memcpy(&state->hazards[0], &escape_scene_perp, sizeof(escape_scene_perp));
-  state->hazards[0].lod_addr = state->stage->lods_perp_car;
+  state->hazards[0].hitable.lods = state->stage->lods_perp_car;
   state->inhibit_collision_detection = 0xFF;
   start_chatter(state, 0xFF, &chatterblk_nancy_berates_hero[0]);
 
@@ -815,7 +815,7 @@ void set_up_stage(chqstate_t        *state,
   state->rm_SM_C058 = 0; // clear current hazard?
   state->mhc_SM_B063 = 0; // clear jump counter?
 
-  state->hazards[0].lod_addr = state->stage->lods_perp_car;
+  state->hazards[0].hitable.lods = state->stage->lods_perp_car;
 
   // Conv: Duplicate work removed.
 
@@ -1543,7 +1543,8 @@ void transition_fade_chunk(chqstate_t *state, u8 mask, u8 *backbuf)
 // $8DF9
 //
 // stride - was A
-void setup_transition(chqstate_t *state, u8 stride) // u8 stride could become (s8)
+void setup_transition(chqstate_t *state,
+                      u8 stride) // u8 stride could become (s8)
 {
   s16                 frame_stride; // was BC
   const transition_t *transitions;  // was DE
@@ -2868,21 +2869,21 @@ void plot_sprite_flipped(chqstate_t *state,
     // EXX unbank
     backbuf_orig = backbuf_addr;
     switch (jump_offset / 9) {
-      default:
-        assert(0);
-      case 0:
-        // Conv: Original uses POP that loads 16 bits at a time
-        *backbuf_addr-- = state->flipped[*SPsrc++ & 0xFF];
-        *backbuf_addr-- = state->flipped[*SPsrc++ >> 8];
-      case 1:
-        *backbuf_addr-- = state->flipped[*SPsrc++ & 0xFF];
-        *backbuf_addr-- = state->flipped[*SPsrc++ >> 8];
-      case 2:
-        *backbuf_addr-- = state->flipped[*SPsrc++ & 0xFF];
-        *backbuf_addr-- = state->flipped[*SPsrc++ >> 8];
-      case 3:
-        *backbuf_addr-- = state->flipped[*SPsrc++ & 0xFF];
-        *backbuf_addr-- = state->flipped[*SPsrc++ >> 8];
+    default:
+      assert(0);
+    case 0:
+      // Conv: Original uses POP that loads 16 bits at a time
+      *backbuf_addr-- = state->flipped[*SPsrc++ & 0xFF];
+      *backbuf_addr-- = state->flipped[*SPsrc++ >> 8];
+    case 1:
+      *backbuf_addr-- = state->flipped[*SPsrc++ & 0xFF];
+      *backbuf_addr-- = state->flipped[*SPsrc++ >> 8];
+    case 2:
+      *backbuf_addr-- = state->flipped[*SPsrc++ & 0xFF];
+      *backbuf_addr-- = state->flipped[*SPsrc++ >> 8];
+    case 3:
+      *backbuf_addr-- = state->flipped[*SPsrc++ & 0xFF];
+      *backbuf_addr-- = state->flipped[*SPsrc++ >> 8];
     }
     backbuf_addr = ADDRTOBACKBUF(prevbufrow(BACKBUFTOADDR(backbuf_orig)));
   }
@@ -4872,7 +4873,7 @@ pb_tbd7_is_zero:
   Biterations = 5; // iterations
   IYhazard = &state->hazards[1];
   do {
-    if (IYhazard->used) // (was RLC) hazard active
+    if (IYhazard->used == HAZARD_USED) // (was RLC) hazard active
       goto pb_ensure_vehicle;
 
 pb_find_unused_hazard_continue:
@@ -4884,7 +4885,8 @@ pb_find_unused_hazard_continue:
 
 pb_ensure_vehicle:
   // It's $80 for vehicles, 0+ for hazards or $FF if unused
-  if ((IYhazard->TBD15 & (1 << 7)) == 0) // it's not a vehicle, continue to next hazard
+  if ((IYhazard->TBD15 & (1 << 7)) ==
+      0) // it's not a vehicle, continue to next hazard
     goto pb_find_unused_hazard_continue;
 
   // Calculate distance between current hazard-car and the perp.
@@ -5215,7 +5217,7 @@ fill_in:
   if (new_lane > max_lane)
     new_lane = max_lane;
 
-  hazard->TBD17 = new_lane;
+  hazard->TBD17        = new_lane;
   hazard->current_lane = new_lane;
 
   // Copy hazard_pos_speed values to hazard position and speed.
@@ -5230,7 +5232,7 @@ fill_in:
   if (state->sighted_flag && lod_index == 6)
     lod_index -= 2; // 6 -> 4
 
-  hazard->lod_addr = state->stage->lods_vehicles[lod_index / 2];
+  hazard->hitable.lods = state->stage->lods_vehicles[lod_index / 2];
 }
 
 // $A89C
@@ -5404,7 +5406,8 @@ ldas_do_work:
 
   // EX AF,AF'
   Ldash = ~(obj_pos[1] * 2);
-  val_from_table_e800 = state->table_e800[Ldash / 2]; // FIXME Probably off by one here?
+  val_from_table_e800 = state->table_e800[Ldash /
+                                          2]; // FIXME Probably off by one here?
   val_from_table_ec00 = state->table_ec00[(Ldash - 1) / 2];
 
   // PUSH DEdash
@@ -5559,7 +5562,8 @@ void draw_helicopter(chqstate_t *state, u8 Biterations, u8 *IY)
   draw_helicoper_part(state, state->dh_SM_AA8C, &helilod->inner);
 }
 
-void draw_helicoper_part(chqstate_t *state, u8 A, const heli_lod_inner_t *DEinnerlod)
+void draw_helicoper_part(chqstate_t *state, u8 A,
+                         const heli_lod_inner_t *DEinnerlod)
 {
   int          carry;
   u16          BC;
@@ -5663,7 +5667,8 @@ set_newpos:
 }
 
 // $AB33
-void drive_helicopter(chqstate_t *state) {
+void drive_helicopter(chqstate_t *state)
+{
   u8        heli_ctl;     // was A
   u8        helipos;      // was A
   u8        draw_heli;    // was A
@@ -5691,8 +5696,8 @@ void drive_helicopter(chqstate_t *state) {
   new_heli_ctl = 0; // New value for helicopter_control is 0
   goto hc_exit;
 
-  hc_1:
-    HL = -56;
+hc_1:
+  HL = -56;
   new_heli_ctl = 2; // New value for helicopter_control is 2
   goto hc_set_draw;
 
@@ -5728,6 +5733,184 @@ hc_exit:
 // $AB9A
 void spawn_hazards(chqstate_t *state)
 {
+  u8  allow_spawning;   // was A
+  u8  Cdistance;        // was C
+  u8 *roadbuf;          // was HL
+  u8  hazard;           // was A
+  u16 DEhitable_offset; // was DE
+  u8  horz_pos;         // was B
+
+  allow_spawning = state->allow_spawning;
+  if (allow_spawning == 0)
+    return;
+
+  // Calculate a spawning distance.
+  Cdistance = 20 - allow_spawning;
+
+  // Point #REGhl at hazards data.
+  roadbuf = ROADBUFPTR(160 + Cdistance);
+
+  // Do we have a hazard?
+  hazard = *roadbuf;
+  if (hazard == 0)
+    return; // no hazard?
+
+  DEhitable_offset = 0; // index 0
+  if (hazard >= 4) {
+    DEhitable_offset = 3; // index 1, times sizeof(hitable)
+    hazard -= 3;
+  }
+
+  horz_pos = 50; // x coord
+  if (--hazard == 0)
+    goto sh_add_hazards_done; // if 1, add one barrier?
+
+  horz_pos = 220;
+  if (--hazard == 0)
+    goto sh_add_hazards_done; // if 2
+
+  roadbuf += 2; // FIXME Use WRAPPINGINCREMENT here
+  *roadbuf = DEhitable_offset >> 8; // D is zero
+
+  roadbuf += 2; // FIXME Use WRAPPINGINCREMENT here
+  *roadbuf = DEhitable_offset >> 8; // D is zero
+
+  hazard = DEhitable_offset & 0xFF;
+  if (hazard != 3)
+    goto sh_add_two_tumbleweeds;
+
+  // Use inhibit_collision_detection to choose between two or three barriers?
+  // Seems odd
+
+  hazard = state->inhibit_collision_detection;
+  if (hazard == 0)
+    goto sh_add_two_barriers;
+
+  // Flag was set.
+
+  // Populate hazards with three barriers (e.g. for perp escape screen).
+  // Conv: POP HL used in original code to cause
+  // spawn_hazards to return when the hazards table is full.
+  // We have to specifically check in the C port.
+  if (sh_find_free(state, 32, Cdistance, DEhitable_offset)) return;
+  if (sh_find_free(state, 86, Cdistance, DEhitable_offset)) return;
+  horz_pos = 140;
+  goto sh_add_hazards_done;
+
+  // Populate hazards with two barriers (e.g. for dirt track).
+sh_add_two_barriers:
+  if (sh_find_free(state, 80, Cdistance, DEhitable_offset)) return;
+  horz_pos = 160;
+  goto sh_add_hazards_done;
+
+  // Populate hazards with two tumbleweeds (e.g. for dirt track).
+sh_add_two_tumbleweeds:
+  if (sh_find_free(state, 70, Cdistance, DEhitable_offset)) return;
+  horz_pos = 180;
+
+sh_add_hazards_done:
+  (void) sh_find_free(state, horz_pos, Cdistance, DEhitable_offset);
+}
+
+int sh_find_free(chqstate_t *state,
+                 u8          Bhorz_pos,
+                 u8          Cdistance,
+                 u16         DEhitable_offset)
+{
+  int              iterations;  // was B
+  hazard_t        *hazard;      // was HL
+  hazard_t        *IXhazard;    // was IX
+  const hitable_t *hitable;     // was HL
+
+  iterations = 6;
+  hazard = &state->hazards[0];
+  do {
+    if (hazard->used == HAZARD_UNUSED)
+      goto sh_found_free;
+    hazard++;
+  } while (--iterations > 0);
+  return 1; // cause an exit (Conv: was POP HL)
+
+sh_found_free:
+  IXhazard = hazard;
+  memset(hazard, 0, sizeof(*hazard));
+  IXhazard->hit_handler = hazard_hit;
+  // orig sizeof(hitable) is 3
+  IXhazard->hitable          = state->stage->addrof_hittable_objects[DEhitable_offset / 3];
+  IXhazard->horz_pos_on_road = Bhorz_pos;
+  IXhazard->distance         = Cdistance;
+  IXhazard->used             = HAZARD_USED;
+  return 0;
+}
+
+// $AC3C
+void hazard_hit(chqstate_t *state, hazard_t *IX)
+{
+  static const u8 table_acdb[] = {
+    0x19, 0x28, 0x32, 0x37, 0x39, 0x37, 0x32, 0x28,
+    0x19, 0x00, 0x0F, 0x19, 0x1F, 0x22, 0x24, 0x22,
+    0x1F, 0x19, 0x0F, 0x00, 0x0A, 0x10, 0x13, 0x15,
+    0x13, 0x10, 0x0A, 0x00, 0x06, 0x09, 0x0B, 0x09,
+    0x06, 0x00, 0x02, 0x00, 0x02, 0x00, 0x01, 0x00
+  };
+
+  static const u8 table_ad03[] = {
+    0x06, 0x22,
+    0x0C, 0x1C,
+    0x0E, 0x14,
+    0x12, 0x0A,
+    0x14, 0x00
+  };
+
+  int       carry;
+  u8        tbd15;    // was A
+  s8        tbd7;     // was A
+  u16       speed;    // was DE, BC
+  int       index;    // added
+  const u8 *ptable;   // was HL
+
+  tbd15 = IX->TBD15;
+  if (tbd15 == 0) {
+    tbd7 = IX->TBD7;
+    if (tbd7 == 0)
+      return;
+
+    // If we arrive here then a hit has occurred.
+    speed = state->speed;
+    if (tbd7 < 0)
+      speed = 280;
+
+    index = ((speed >> 7) & 3) + (speed & 1); // CHECK - not convinced
+    ptable = &table_ad03[index * 2];
+
+    IX->TBD17        = *ptable++;
+    IX->current_lane = *ptable;
+
+    speed *= 2;
+    if ((speed >> 8) >= 2) // checking speed >= 512?
+      speed = 350;
+    IX->speed = (IX->speed & 0xFF00) | (speed & 0x00FF); // set bottom byte only (weird)
+    if (++IX->TBD7) // hit counter
+      IX->speed = (IX->speed & 0x00FF) | (speed & 0xFF00); // set top byte only
+    IX->distance++;
+
+    start_sfx(state, EFFECT_HAZARD_HIT, 3);
+
+    IX->TBD15 = 2;
+  }
+
+  if (--tbd15 == 0)
+    return;
+
+  IX->TBD16 = table_acdb[IX->TBD17++];
+  IX->speed -= IX->speed / 32;
+  IX->TBD19 ^= 1;
+  if (--IX->current_lane)
+    return;
+
+  IX->speed = 0;
+  IX->TBD19 = 1;
+  IX->TBD15 = 1;
 }
 
 // $AD0D
