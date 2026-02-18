@@ -24,7 +24,7 @@ struct hazard {
   s8                TBD7;     // activation / delay / hit counter; set to $FC when perp hit
   hitable_t         hitable;
   hazard_handler_t *hit_handler;
-  u16               speed;
+  u16               speed;    // 13 & 14
   u8                TBD15;    // top bit is set for vehicles
   u8                TBD16;
   u8                TBD17;    // perp distance high byte OR a hazard's lane
@@ -417,8 +417,21 @@ struct chqstate {
   // $AB06 (SM) in move_helicopter
   u16       mh_SM_AB06;
 
+  // $AE70 (SM) in dh_draw_one_hazard
+  u16       SM_AE70;
+
   // $AED0 (SM) in draw_hazards
-  u16      *dh_SM_AECF;
+  u16      *dh_SM_AECF; // points to table e900 for example
+
+  // $AFFB (SM) in dh_aecf
+  u8        SM_AFFB; // (smoke) speed factor?
+
+  // $B023 (SM) in ...
+  u8        SM_B023;
+  // $B029 (SM) in ...
+  u8        SM_B029;
+  // $B02C (SM) in ...
+  u8        SM_B02C;
 
   // $B063 (SM) in move_hero_car
   u8        mhc_SM_B063; // jump counter
@@ -460,6 +473,13 @@ struct chqstate {
   u8        dt_SM_C15E;
   // $C161 (SM) in draw_tunnel
   u8        dt_SM_C161;
+
+  // $CE0C
+  u8        smoke_ce0c[13];
+  // $CE19
+  u8        smoke_ce19[13];
+  // $CE26
+  u8        smoke_ce26[13];
 
   // $E300
   u8        table_e300[32]; // note: first byte should be $60

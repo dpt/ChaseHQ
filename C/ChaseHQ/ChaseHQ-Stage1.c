@@ -307,8 +307,8 @@ static const u8 stage1_arrest_messages[83] = {
 
 // $5E40
 static const hitable_t stage1_hitable_object_defs[2] = {
-  { 0x10, &stage1_tumbleweed_lods[0] },
-  { 0x20, &stage1_barrier_lods[0]    },
+  { 16, &stage1_tumbleweed_lods[0] },
+  { 32, &stage1_barrier_lods[0]    },
 };
 
 // $5E46

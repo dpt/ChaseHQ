@@ -98,24 +98,46 @@
 
 void chasehq_reset_state(chqstate_t *state)
 {
+  // Clear the entire state
   memset(state, 0, sizeof(*state));
 
+  // $8007
   state->wanted_stage_number = 1;
 
-  state->attract_blinker = 0xF0; // attract mode blinker
+  // $8277
+  state->attract_blinker = 0xF0;
 
-  memcpy(&state->sfx_crash_table[0], sfx_crash_table, sizeof(sfx_crash_table));
+  // $897C
+  memcpy(&state->sfx_crash_table[0], &sfx_crash_table[0], sizeof(sfx_crash_table));
 
+  // $8C58
+  memcpy(&state->score_messages[0],  &score_messages_template[0], sizeof(score_messages_template));
+
+  // $8D18
+  // memcpy(&state->continue_messages[0], &continue_messages[0], sizeof(continue_messages));
+
+  // $8D77
   memcpy(state->time_nn, "TIME 1\xB0", 7);
+
+  // $8D85
   memcpy(state->credit_n, "CREDIT \xA0", 8);
 
+  // $9618
   state->rng_seed[0] = 0x7B;
   state->rng_seed[1] = 0x2D;
   state->rng_seed[2] = 0xE9;
 
+  // $A240
   state->road_buffer_offset = &state->road_buffer[0];
   state->road_buffer_start  = &state->road_buffer[0];
   state->road_buffer_end    = &state->road_buffer[256];
+
+  // $CE0C
+  memcpy(&state->smoke_ce0c[0], &smoke_ce0c_template[0], sizeof(smoke_ce0c_template));
+  // $CE0C
+  memcpy(&state->smoke_ce19[0], &smoke_ce19_template[0], sizeof(smoke_ce19_template));
+  // $CE0C
+  memcpy(&state->smoke_ce26[0], &smoke_ce26_template[0], sizeof(smoke_ce26_template));
 }
 
 /* ----------------------------------------------------------------------- */
@@ -371,7 +393,7 @@ void main_loop(chqstate_t *state)
       drive_helicopter(state);
       choose_dirt_and_stones(state);
       play_engine_or_siren_sfx_hook(state);
-      draw_hazards(state);
+      draw_all_hazards(state);
       layout_dirt_and_stones(state);
       play_engine_or_siren_sfx_hook(state);
       move_helicopter(state);
@@ -477,7 +499,7 @@ void cpu_driver(chqstate_t *state)
   spawn_hazards(state);
   choose_dirt_and_stones(state);
   layout_dirt_and_stones(state);
-  draw_hazards(state);
+  draw_all_hazards(state);
   move_hero_car(state);
   check_scenery_collisions(state);
   draw_everything_else(state);
@@ -755,7 +777,7 @@ void escape_scene(chqstate_t *state)
     layout_objects(state);
     prepare_tunnel(state);
     spawn_hazards(state);
-    draw_hazards(state);
+    draw_all_hazards(state);
     draw_everything_else(state);
     update_scoreboard(state);
     drive_chatter(state);
@@ -1863,7 +1885,7 @@ void draw_everything_else(chqstate_t *state)
   iterations = 20; // iterations
   do {
     if (state->n_hazards)
-      dh_aecf(state);
+      dh_aecf(state, iterations);
 
     dust_stones_stuff(state, iterations);
 
@@ -5817,10 +5839,9 @@ int sh_find_free(chqstate_t *state,
                  u8          Cdistance,
                  u16         DEhitable_offset)
 {
-  int              iterations;  // was B
-  hazard_t        *hazard;      // was HL
-  hazard_t        *IXhazard;    // was IX
-  const hitable_t *hitable;     // was HL
+  int       iterations; // was B
+  hazard_t *hazard;     // was HL
+  hazard_t *IXhazard;   // was IX
 
   iterations = 6;
   hazard = &state->hazards[0];
@@ -5846,6 +5867,7 @@ sh_found_free:
 // $AC3C
 void hazard_hit(chqstate_t *state, hazard_t *IX)
 {
+  // $ACDB
   static const u8 table_acdb[] = {
     0x19, 0x28, 0x32, 0x37, 0x39, 0x37, 0x32, 0x28,
     0x19, 0x00, 0x0F, 0x19, 0x1F, 0x22, 0x24, 0x22,
@@ -5854,6 +5876,7 @@ void hazard_hit(chqstate_t *state, hazard_t *IX)
     0x06, 0x00, 0x02, 0x00, 0x02, 0x00, 0x01, 0x00
   };
 
+  // $AD03
   static const u8 table_ad03[] = {
     0x06, 0x22,
     0x0C, 0x1C,
@@ -5862,7 +5885,6 @@ void hazard_hit(chqstate_t *state, hazard_t *IX)
     0x14, 0x00
   };
 
-  int       carry;
   u8        tbd15;    // was A
   s8        tbd7;     // was A
   u16       speed;    // was DE, BC
@@ -5936,7 +5958,7 @@ void check_hazard_collisions(chqstate_t *state)
       // There was a collision.
       // TBD15 ?
       if (hazard->distance < 20 &&
-          check_collision(state, 0, hazard) > 0 &&
+          check_collision(state, 0, 0, hazard, NULL) > 0 &&
           hazard->TBD15 != 0xFF)
         hazard->hit_handler(state, hazard);
     }
@@ -5950,9 +5972,10 @@ chc_continue:
 //
 // default_retval - was D
 // hazard - was IX
-u8 check_collision(chqstate_t *state, u8 default_retval, hazard_t *hazard)
+u8 check_collision(chqstate_t *state, u8 default_retval, u16 HL, hazard_t *hazard, u16 *HLout)
 {
   u8 horz_pos;      // was L
+  u8 tbd3;          // was H
   u8 tbd15;         // was A
   u8 distance;      // was A
   u8 max_distance;  // was C
@@ -5960,10 +5983,14 @@ u8 check_collision(chqstate_t *state, u8 default_retval, hazard_t *hazard)
   u8 fast_counter;  // was A
   u8 Ahorz_pos;     // was A
 
+  *HLout = HL;
+
   if (hazard->TBD7) // hit counter / delay thing
     return default_retval;
 
   horz_pos = hazard->horz_pos;
+  tbd3     = hazard->TBD3;
+  *HLout = (tbd3 << 8) | horz_pos;
 
   if (hazard->TBD3) // distance related
     return default_retval;
@@ -6006,11 +6033,482 @@ u8 check_collision(chqstate_t *state, u8 default_retval, hazard_t *hazard)
 }
 
 // $ADA0
-void draw_hazards(chqstate_t *state)
+void draw_all_hazards(chqstate_t *state)
 {
+  const u8 *table_e300; // was IY
+  hazard_t *hazard;     // was IX
+  int       iterations; // was B
+
+  state->n_hazards = 0;
+  table_e300 = &state->table_e300[0];
+  hazard = &state->hazards[0];
+  iterations = 6;
+  do {
+    if (hazard->used == HAZARD_USED)
+      dh_draw_one_hazard(state, hazard, table_e300); // called with regs banked
+    hazard++;
+  } while (--iterations > 0);
 }
-void dh_aecf(chqstate_t *state)
+
+// $ADBE
+void dh_draw_one_hazard(chqstate_t *state, hazard_t *IXhazard, const u8 *IYbase)
 {
+  // $CDF4
+  static const lod_t *fire_lods[6] = {
+    &fire5_defns[0],
+    &fire6_defns[0],
+    &fire3_defns[0],
+    &fire4_defns[0],
+    &fire1_defns[0],
+    &fire2_defns[0]
+  };
+
+  // $CE00
+  //
+  // 6 pair of X,Y
+  static const u8 smoke_offsets[6 * 2] = {
+    0xEE, 0x08,
+    0xF3, 0x08,
+    0xF8, 0x08,
+    0xFA, 0x04,
+    0xFC, 0x00,
+    0xFE, 0x00
+  };
+
+  int       carry = 0;
+  u8        C;
+  u8        Atbd15;
+  u8        A;
+  u8        B;
+  u16       BC;
+  u16       DE;
+  u16       HL;
+  u8        Biterations;
+  u8       *HLp_n_hazards;
+  u8        An_hazards;
+  u16      *HLtable;
+  const u8 *IY;
+  u8        D;
+  u8        E;
+  hazard_t *DEhazard;
+  u16       HLresult;
+
+  C = IXhazard->speed >> 8; // top byte of horz position or accel?
+  IXhazard->TBD4 -= IXhazard->speed & 0xFF;
+  if ((s8) IXhazard->TBD4 < 0) // carried
+    C++;
+  C += IXhazard->distance;
+  Atbd15 = IXhazard->TBD15 + 1;
+  if (Atbd15 == 0) {
+    A = IXhazard->TBD17;
+    if (C < IXhazard->distance) { // carried
+      A++;
+      if (A >= 5) {
+        A--;
+        C = 0xFF;
+      }
+      IXhazard->TBD17 = A;
+    }
+    int is_zero = (A == 0);
+    A = C;
+    if (is_zero)
+      goto dh_adfa;
+    IXhazard->distance = A;
+    return;
+  }
+
+  A = C;
+  if (A < 23)
+    goto dh_adfa;
+
+  // Hazard gone
+  IXhazard->used = HAZARD_UNUSED;
+  return;
+
+dh_adfa:
+  IXhazard->distance = A;
+  if (A >= 20)
+    return;
+
+  if (--A == 0) {
+    A = ~(state->fast_counter & 0xE0);
+    if (A < IXhazard->TBD4) {
+      B = IXhazard->TBD15 + 1;
+      if (B) {
+        // Wipe the hazard because car overtaken?
+        IXhazard->used = HAZARD_UNUSED;
+        RL(B);
+        if (carry)
+          state->overtake_bonus_counter++;
+        return;
+      }
+      IXhazard->TBD4 = A;
+    }
+    A = 0;
+  }
+  A += 0x4E;
+
+  IY = &IYbase[A];
+  C = IY[1];
+  A = C - IY[0];
+
+  // This is probably equivalent to HLresult = IXhazard->TBD4 * A;
+  DE = A; // multiplier
+  HLresult = 0; // result
+  A = IXhazard->TBD4; // multiplicand
+  Biterations = 8;
+  do {
+    RL(A);
+    if (carry)
+      HLresult += DE;
+    HLresult <<= 1;
+  } while (--Biterations > 0);
+  A = HLresult >> 8; // high part of result
+  RR(A);
+
+  IXhazard->TBD6 = A;
+  A = ~((C - A) << 1);
+
+  // Would this fetch from the wrong position?
+  // It's loading D, moving down, then loading E...
+  HLtable = &state->table_e800[A / 2]; // road drawing left
+  DE = *HLtable;
+  HLtable = &state->table_ec00[A / 2];
+  HL = *HLtable;
+
+  state->SM_AE70 = DE;
+
+  // This is probably equivalent to HLresult = IXhazard->horz_pos_on_road * DE;
+  DE = HL - DE; // might be road width
+  HLresult = 0; // result
+  A = IXhazard->horz_pos_on_road;
+  Biterations = 8;
+  do {
+    RL(A);
+    if (carry)
+      HLresult += DE;
+    HLresult <<= 1;
+  } while (--Biterations > 0);
+  A = HLresult >> 8; // high part of result
+  RR(A);
+
+  HL = state->SM_AE70 + A;
+  (void) check_collision(state, /*D*/0, HL, IXhazard, &HL); // This modifies HL, not sure how to handle
+  IXhazard->distance = HL & 0xFF;
+  IXhazard->TBD3     = HL >> 8;
+  D = IXhazard->distance;
+  E = IXhazard->TBD4;
+
+  HLp_n_hazards = &state->n_hazards;
+  An_hazards = *HLp_n_hazards;
+  (*HLp_n_hazards)++;
+
+  HLtable = &state->table_e900[0]; // road centre left?
+  if (An_hazards) {
+    Biterations = An_hazards;
+    do {
+      A = D;
+      HLtable++;
+      if (A >= HLtable[-1]) { // these offsets are bound to be wrong
+        if (A != HLtable[-1])
+          goto dh_aeab;
+
+        A = E;
+        if (A < *HLtable)
+          goto dh_aeab;
+      }
+      HLtable += 3;
+    } while (--Biterations > 0);
+  }
+
+  // no hazards
+
+  *HLtable++ = E | (D << 8); // big endian store?
+  DEhazard = IXhazard;
+  *HLtable++ = E; // why would we store a hazard ptr here?
+  *HLtable = D;
+
+  goto dh_call_handler;
+
+dh_aeab:
+  // PUSH DE
+  A = B * 4;
+  BC = A;
+#if 0
+  A += 2 + L;
+  E = A;
+  A -= 4;
+  L = A;
+  D = H;
+  do { *HL-- = *DE--; } while (--BC > 0); // memcpy(HL - BC, DE - BC, BC); ?
+  // EX DE,HL
+  DEhazard = IXhazard;
+  *HL-- = D; // storing hazard ptr? gah
+  *HL-- = E;
+  // POP DE
+  *HL-- = E;
+  *HL = D;
+#endif
+
+dh_call_handler:
+  IXhazard->hit_handler(state, IXhazard);
+}
+
+// $AECF
+void dh_aecf(chqstate_t *state, u8 Biterations)
+{
+  // $CDEC
+  //
+  // 4 pair of X,Y
+  static const u8 arrow_offsets[4 * 2] = {
+    0xDE, 0x30,
+    0xE6, 0x20,
+    0xEA, 0x18,
+    0xEE, 0x10
+  };
+
+  u16         *HLtable;       // was HL
+  u8           A;
+  u16          DE;
+  u8          *pn_hazards;    // was HL
+  u8           Asmash_level;  // was A
+  u16          DElodoffset;   // was DE
+  const lod_t *HLlodbase;     // was HL
+  const lod_t *HLlod;         // was HL
+  u8           Ewidth_bits;   // was E
+  u16          IX;
+
+  HLtable = state->dh_SM_AECF; // table_e900 ptr for example
+  A = Biterations;
+  if (A != *HLtable) // this is a word, original tested a byte, use *HLptr & 0xFF  perhaps?
+    return;
+
+  if (--A >= 11)
+    A = 10;
+  A >>= 1;
+  state->SM_AFFB = A; // speed factor?
+
+#if 0
+  DElodoffset = A * 7;
+  do {
+    HLtable++; // Conv: halved
+    IX = wordat(HLtable); HLtable++;
+    // PUSH HLptr,BC,DE
+    HLlodbase = wordat(IX + 9); // must be a LOD base ptr
+    HLlod = &HLlodbase[DElodoffset / 7];
+
+    Ewidth_bits = HLlod->width_bytes << 3;
+    state->doc_SM_933D = IX[6] - IX[16];
+    state->doc_SM_93C0 = IX[19];
+
+    if (IX[15] + 1 == 0)
+      goto dh_af50;
+
+    A3 = IX[3];
+    // AND A3
+    A2 = IX[2];
+    if ((s8) A3 < 0)
+      goto dh_af2f;
+    if (A3 != 0)
+      goto dh_draw_done_1;
+    if (A2 >= 128)
+      goto dh_draw_right_1;
+
+    A += Ewidth_bits;
+    goto dh_draw_left_1;
+
+dh_af2f:
+    A += Ewidth_bits;
+    if (A + Ewidth_bits < 0x100) // no carry
+      goto dh_draw_done_1;
+
+dh_draw_left_1:
+    draw_object_left_helicopter_entrypt(state, A, HLlod);
+    goto dh_draw_done_1;
+
+dh_draw_right_1:
+    draw_object_right_helicopter_entrypt(state, A, HLlod);
+
+dh_draw_done_1:
+    // POP DE, BC
+
+    state->doc_SM_93C0 = 0;
+
+    pn_hazards = &state->n_hazards;
+    (*pn_hazards)--;
+    if (*pn_hazards == 0)
+      // POP HLptr
+      return; // no more hazards
+  } while (*HLtable == Biterations); // again, test low byte only here?
+
+  state->dh_SM_AECF = HLtable;
+  return;
+
+dh_af50:
+  A = IX[3];
+  state->SM_B029 = A;
+  // set flags
+  state->SM_B02C = IX[2];
+  if (M)
+    goto dh_af6c;
+  if (NZ)
+    goto dh_draw_done_1;
+
+  if (A >= 128)
+    goto dh_draw_right_2;
+
+  A += E;
+  goto dh_draw_left_2;
+
+dh_af6c:
+  A += E;
+  if (NC)
+    goto dh_draw_done_1;
+
+dh_draw_left_2:
+  draw_object_left_helicopter_entrypt(state, A, HLlod);
+  goto dh_done_draw_object;
+
+dh_draw_right_2:
+  draw_object_right_helicopter_entrypt(state, A, HLlod);
+
+dh_done_draw_object:
+  state->SM_B023 = state->doc_SM_933D;
+
+  if (state->smash_level >= 5)
+    goto dh_smash_level;
+
+  A = state->SM_AFFB;
+  if (A >= 4)
+    goto dh_smash_level;
+
+  HL = &arrow_offsets[A]; // Conv: scaling accounted for
+  Bx = *HL++; // x offset
+  Cy = *HL;   // y offset
+
+  dh_draw_lod(state, Bx, Cy, &floating_arrow_here_defn[0]);
+
+dh_smash_level:
+  Asmash_level = state->smash_level;
+  if (Asmash_level < 4)
+    goto dh_check_smash_level;
+
+  Adash = (Asmash_level - 4) * 4;
+  DE = state->SM_AFFB * 2;
+  HL = &smoke_offsets[0];
+  HL += DE;
+  Bx = *HL++;
+  Cy = *HL;
+
+  // EX AF,AF' Unbank
+  E = A;
+  HLlods = &table_car_on_fire_LOD_ptrs[0];
+  A = (state->counter_C & 1) * 2;
+  E += A;
+  HL += DE;
+  A = *HL++;
+  H = *HL;
+  L = A;
+
+  // POP DE
+  // PUSH DE
+
+  // DE is offset, HL is base of graphic defns
+  dh_draw(state, Bx, Cy, DE, HLlods);
+
+dh_check_smash_level:
+  A = state->smash_level;
+  if (A == 0)
+    goto dh_draw_done_1;
+  if (--A == 0)
+    goto dh_draw_smoke_3; // draw one lot
+  if (--A == 0)
+    goto dh_draw_smoke_2; // draw two lots
+                          // Otherwise draw all 3 lots.
+  dh_smoke(state, &state->smoke_ce26[0]);
+dh_draw_smoke_2:
+  dh_smoke(state, &state->smoke_ce0c[0]);
+dh_draw_smoke_3:
+  dh_smoke(state, &state->smoke_ce19[0]);
+  goto dh_draw_done_1;
+#endif
+}
+
+// $AFF1
+//
+// Decrements a counter 5..1 then repeats this must be the car-on-fire animation
+void dh_smoke(chqstate_t *state, u8 *HLsmoke)
+{
+  u8 counter;   // was A, E
+  u8 index;     // was A
+  u8 newindex;  // was A, C, D
+  u8 x;         // was B
+  u8 y;         // was C
+
+  counter = HLsmoke[0] - 1;
+  if (counter <= 0)
+    counter = 5; // It became zero, reset to 5
+  HLsmoke[0] = counter;
+
+  index = state->SM_AFFB; // smoke animation index
+  newindex = index + counter;
+  if (newindex >= 6)
+    return;
+
+  x = HLsmoke[1 + index * 2] - counter;
+  y = HLsmoke[1 + index * 2 + 1];
+  dh_draw(state, x, y, newindex * 7, &smoke_defns[0]); // was fallthrough
+}
+
+// $B01B
+//
+// B,C = x,y offset/position? HL -> graphic definition
+void dh_draw(chqstate_t *state, u8 Bx, u8 Cy, u16 DEoffset, const lod_t *HLlods)
+{
+  const lod_t *HLlod;
+
+  HLlod = &HLlods[DEoffset / 7];
+  dh_draw_lod(state, Bx, Cy, HLlod);
+}
+
+// $B01C
+void dh_draw_lod(chqstate_t *state, u8 Bx, u8 Cy, const lod_t *HLlod)
+{
+  u8 Ewidth_bits;
+  u8 A1;
+  u8 A2;
+
+  Ewidth_bits = HLlod->width_bytes * 8;
+  state->doc_SM_933D = state->SM_B023 + Bx;
+  A1 = state->SM_B029;
+  // Set flags for A here
+  A2 = state->SM_B02C;
+  if ((s8) A1 < 0)
+    goto dh_exit_2;
+  if (A1)
+    return;
+
+  A2 += Cy;
+  if (A2 < Cy) // carried
+    return;
+  if (A2 >= 128) {
+    draw_object_right_helicopter_entrypt(state, A2, HLlod); // was exit via
+    return;
+  }
+
+dh_exit_1:
+  A2 += Ewidth_bits; // add pixel width
+  draw_object_left_helicopter_entrypt(state, A2, HLlod); // was exit via
+  return;
+
+dh_exit_2:
+  A2 += Cy;
+  if (A2 < Cy) // carried
+    goto dh_exit_1;
+
+  A2 += Ewidth_bits;
+  if (A2 > Ewidth_bits) // carried
+    draw_object_left_helicopter_entrypt(state, A2, HLlod); // was exit via
 }
 
 // $ADF9

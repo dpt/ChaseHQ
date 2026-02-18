@@ -776,10 +776,14 @@ hazard_handler_t hazard_hit;
 
 void check_hazard_collisions(chqstate_t *state);
 
-u8 check_collision(chqstate_t *state, u8 default_retval, hazard_t *hazard);
+u8 check_collision(chqstate_t *state, u8 default_retval, u16 HL, hazard_t *hazard, u16 *HLout);
 
-void draw_hazards(chqstate_t *state);
-void dh_aecf(chqstate_t *state);
+void draw_all_hazards(chqstate_t *state);
+void dh_draw_one_hazard(chqstate_t *state, hazard_t *IXhazard, const u8 *IY);
+void dh_aecf(chqstate_t *state, u8 Biterations);
+void dh_smoke(chqstate_t *state, u8 *HLsmoke);
+void dh_draw(chqstate_t *state, u8 Bx, u8 Cy, u16 DEoffset, const lod_t *HLlods);
+void dh_draw_lod(chqstate_t *state, u8 Bx, u8 Cy, const lod_t *HLlod);
 
 hazard_handler_t no_op;
 

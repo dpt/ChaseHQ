@@ -2247,6 +2247,24 @@ const u8 hazard_pos_speed[3 * 4] = {
 
 /* ----------------------------------------------------------------------- */
 
+// $CE0C
+const u8 smoke_ce0c_template[13] = {
+  0x03, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00
+};
+
+// $CE19
+const u8 smoke_ce19_template[13] = {
+  0x02, 0xF4, 0x10, 0xF8, 0x08, 0xFA, 0x08, 0xFC, 0x08, 0xFD, 0x08, 0xFE, 0x00
+};
+
+// $CE26
+const u8 smoke_ce26_template[13] = {
+  0x05, 0xF8, 0x20, 0xFA, 0x18, 0xFC, 0x10, 0xFE, 0x10, 0xFF, 0x08, 0x00, 0x08
+};
+
+/* ----------------------------------------------------------------------- */
+
+// $D03F
 const u8 bitmap_arrow[3 * 2 * 28] = {
   XXXXX___, _____XXX, _______X, XXXXXXX_, XXXXXXXX, ________,
   XX______, _____XXX, ______XX, XXXXXX__, XXXXXXXX, ________,

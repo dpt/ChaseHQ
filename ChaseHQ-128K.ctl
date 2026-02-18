@@ -2632,7 +2632,7 @@ C $847D,3 Call spawn_hazards
 C $8480,3 Call drive_helicopter
 C $8483,3 Call choose_dirt_and_stones
 C $8486,3 Call play_engine_or_siren_sfx_hook
-C $8489,3 Call draw_hazards
+C $8489,3 Call draw_all_hazards
 C $848C,3 Call layout_dirt_and_stones
 C $848F,3 Call play_engine_or_siren_sfx_hook
 C $8492,3 Call move_helicopter
@@ -2732,7 +2732,7 @@ C $8571,3 Call prepare_tunnel
 C $8574,3 Call spawn_hazards
 C $8577,3 Call choose_dirt_and_stones
 C $857A,3 Call layout_dirt_and_stones
-C $857D,3 Call draw_hazards
+C $857D,3 Call draw_all_hazards
 C $8580,3 Call move_hero_car
 C $8583,3 Call check_scenery_collisions
 C $8586,3 Call draw_everything_else
@@ -2987,7 +2987,7 @@ C $877E,3 Call draw_road
 C $8781,3 Call layout_objects
 C $8784,3 Call prepare_tunnel
 C $8787,3 Call spawn_hazards
-C $878A,3 Call draw_hazards
+C $878A,3 Call draw_all_hazards
 C $878D,3 Call draw_everything_else
 C $8790,3 Call update_scoreboard
 C $8793,3 Call drive_chatter
@@ -3840,7 +3840,7 @@ C $8F8F,4 IX = $EAB0
 C $8F93,3 Counter #REGb = 20, Stride #REGc = 32
 @ $8F96 label=dee_second_loop
 C $8F96,4 Preserve IX, HL, BC
-C $8F9A,7 Call (somewhere in draw_hazards) if n_hazards is set
+C $8F9A,7 Call (somewhere in draw_all_hazards) if n_hazards is set
 C $8FA1,3 Call dust_stones_stuff
 C $8FA4,3 Self modified: either CALL draw_helicopter, or NOPs
 C $8FA7,3 Self modified: either CALL draw_tunnel, or NOPs
@@ -6932,7 +6932,7 @@ C $AA5F,3 Self modify 'ADD A' @ #R$AA76 (below)
 C $AA62,2 5 iterations
 C $AA64,5 A = counter_A & 1  -- counter used for turbo smoke and helicopter blades
 C $AA69,3 Load addrof_helicopter_stuff_1
-C $AA6C,2 If A was set
+C $AA6C,2 Jump if A was zero
 C $AA6E,3 Kiad addrof_helicopter_stuff_2
 @ $AA71 label=dhl_aa71
 C $AA71,4 DE = wordat(HL); HL += 2
@@ -6944,7 +6944,7 @@ C $AA7D,3 Call dhl_aa94
 C $AA80,4 Restore IY, HL, BC
 C $AA84,2 Loop loop_aa71 while #REGb > 0
 C $AA86,3 DE = wordat(HL); HL++
-C $AA89,1 A = 0
+C $AA89,1 A = 0  [can't see a reason for this]
 C $AA8A,2 Preserve IY
 C $AA8C,2 A = <self modified> -- Self modified by #R$AA57 (above)
 C $AA8E,3 Call dhl_aa94
@@ -6955,9 +6955,8 @@ C $AA94,3 BC = <self modified> -- Self modified by #R$AB00, #R$AB2F + others
 C $AA97,2 A = -A
 C $AA99,3 Self modify 'LD D,x' @ #R$933D to load A
 C $AA9C,5 HL = *DE++
-C $AAA1,1 Set flags
-C $AAA5,1 H--
-@ $AAA6 label=dhl_aaa6
+C $AAA1,5 Make widened value negative
+@ $AAA6 label=dhl_widened
 C $AAA6,1 HL += BC
 C $AAA8,1 B = *HL
 C $AAA9,6 B <<= 3
@@ -7004,9 +7003,9 @@ C $AAFC,4 Self modify 'LD BC' above to load DE
 C $AB00,4 Load DE from 'LD BC' @ #R$AA94
 C $AB04,1 HL += DE
 C $AB05,1 Preserve HL
-C $AB06,3 DE = $0070
-C $AB09,2 B = 0
-C $AB0B,1 Set flags
+C $AB06,3 Set #REGde to <self modified>
+C $AB09,2 Clear top of #REGbc
+C $AB0B,1 Clear carry
 C $AB0C,2 HL -= DE
 C $AB0E,1 Restore HL
 C $AB11,2 A = 8
@@ -7016,11 +7015,12 @@ C $AB18,2 A = -A
 C $AB1A,1 C = A
 C $AB1B,1 HL += BC
 C $AB1C,1 Preserve HL
-C $AB1D,1 Set flags
+C $AB1D,1 Clear carry
 C $AB1E,2 HL -= DE
 C $AB20,1 Restore HL
 C $AB24,1 Restore AF
 C $AB2A,1 Restore AF
+C $AB2E,1 Put #REGde centre value into #REGhl
 C $AB2F,3 Self modify 'LD BC' @ #R$AA94
 C $AB32,1 Return
 c $AB33 Helicopter
@@ -7033,9 +7033,10 @@ N $AB3E Otherwise helicopter_control is 2.
 C $AB3E,3 Read from 'LD BC' @ #R$AA94
 C $AB41,1 Set flags
 C $AB42,1 Return if zero
-C $AB43,1 A = 0  -- NOP
+C $AB43,1 New value for helicopter_control is 0
 C $AB44,2 DE = 0  -- NOPs
-C $AB46,2 New value for helicopter_control is 0
+C $AB46,1 Bank A
+C $AB47,1 A = 0  -- NOP
 C $AB48,2 Jump to hc_exit
 @ $AB4A label=hc_1
 C $AB4A,3 HL = $FFC8 (-56)
@@ -7264,6 +7265,8 @@ D $AD51 Used by the routines at #R$AD0D and #R$ADA0.
 R $AD51 I:D Initialised to zero (when return value is required)
 R $AD51 I:IX Address of a hazard structure
 R $AD51 O:D Return value
+R $AD51 O:L Hazard[2]
+R $AD51 O:H Hazard[3]
 @ $AD51 label=check_collision
 C $AD51,5 Return if hit counter is non-zero
 N $AD56 Otherwise we're... ?
@@ -7277,8 +7280,8 @@ C $AD6A,2 C = 2
 @ $AD6C label=ccl_1
 C $AD6C,2 Return if distance >= C
 C $AD6E,2 E = 4
-C $AD70,1 A--
-C $AD71,3 A = fast_counter
+C $AD70,1 Reduce distance by 1
+C $AD71,3 Load fast_counter
 C $AD74,2 Jump if A-- was non-zero
 C $AD76,1 Set flags for fast_counter
 C $AD77,3 Jump if positive
@@ -7302,10 +7305,10 @@ C $AD98,2 E += 2
 C $AD9A,3 IX[7] (hit counter) = E
 C $AD9D,2 D = 1  -- perhaps a "was hit" flag
 C $AD9F,1 Return
-c $ADA0 Draws hazards
+c $ADA0 Draws all hazards
 D $ADA0 This includes all cars, barriers, tumbleweeds, etc.
 D $ADA0 Used by the routines at #R$8401, #R$852A and #R$873C.
-@ $ADA0 label=draw_hazards
+@ $ADA0 label=draw_all_hazards
 C $ADA0,4 n_hazards = 0
 C $ADA4,3 IY = $E3xx
 C $ADA7,4 Point #REGix at hazards[0]
@@ -7329,7 +7332,7 @@ C $ADCD,5 C += IX[1]  -- buffer offset/distance
 C $ADD2,4 A = IX[15] + 1  -- counter?
 C $ADD6,2 Jump to dh_adf0 if non-zero
 C $ADD8,3 A = IX[17]  -- byte that indexes #R$ACDB
-C $ADDB,2 Jump if no carry (from earlier)
+C $ADDB,2 Jump if no carry (carry not set by INC A, but ADD A,C)
 C $ADDD,5 Jump if ++A < 4
 C $ADE2,1 A--
 C $ADE3,2 C = $FF  -- gets put in distance related field
@@ -7342,7 +7345,7 @@ C $ADEF,1 Return
 @ $ADF0 label=dh_adf0
 C $ADF0,1 A = C
 C $ADF1,4 Jump if A < 23  -- still visible?
-N $ADF5 Wipe the hazard because it's gone?
+N $ADF5 Wipe the hazard
 C $ADF5,4 IX[0] = 0  -- hazard slot now spare
 @ $ADF9 label=dh_exit
 C $ADF9,1 Return (used as just a RET elsewhere)
@@ -7393,7 +7396,7 @@ C $AE52,1 A = *HL
 C $AE53,1 L++
 C $AE54,1 H = *HL
 C $AE55,1 L = A
-C $AE56,1 Set flags
+C $AE56,1 Clear carry
 C $AE57,4 Self modify 'LD HL,xxxx' @ #R$AE70
 C $AE5B,2 HL -= DE
 C $AE5D,1 Swap
@@ -7454,10 +7457,10 @@ C $AEC4,1 Restore DE
 C $AEC5,1 *HL = E
 C $AEC6,1 L--
 C $AEC7,1 *HL = D
-@ $AEC8 label=dh_aec8
+@ $AEC8 label=dh_call_handler
 C $AEC8,6 HL = wordat(IX + 11)
 C $AECE,1 Jump there
-N $AECF This entry point is used by the routine at #R$8F5F.
+c $AECF This entry point is used by the routine at #R$8F5F.
 @ $AECF label=dh_aecf
 C $AECF,3 HL = <self modified>
 C $AED2,1 A = B
@@ -7469,7 +7472,7 @@ C $AEDA,2 A = 10
 C $AEDC,2 A >>= 1
 C $AEDE,3 Self modify 'LD A,x' @ #R$AFFB  -- possible speed factor
 C $AEE1,1 E = A
-C $AEE2,3 A <<= 3
+C $AEE2,3 A ss= 3
 C $AEE5,1 A -= E
 C $AEE6,3 DE = A
 @ $AEE9 label=dh_equal
@@ -7497,12 +7500,12 @@ C $AF2C,3 Jump
 @ $AF2F label=dh_af2f
 C $AF2F,1 A += E
 C $AF30,2 Jump if no carry
-@ $AF32 label=dh_af32
+@ $AF32 label=dh_draw_left_1
 C $AF32,3 Call draw_object_left_helicopter_entrypt
 C $AF35,3 Jump over next CALL
-@ $AF38 label=dh_af38
+@ $AF38 label=dh_draw_right_1
 C $AF38,3 Call draw_object_right_helicopter_entrypt
-@ $AF3B label=dh_af3b
+@ $AF3B label=dh_draw_done_1
 C $AF3B,2 Restore DE, BC
 C $AF3D,4 Self modify 'LD A,x' @ #R$93C0 to load 0
 C $AF41,3 Load address of n_hazards
@@ -7527,10 +7530,10 @@ C $AF69,3 Jump
 @ $AF6C label=dh_af6c
 C $AF6C,1 A = E
 C $AF6D,2 -- checking result of test at #R$AF56?
-@ $AF6F label=dh_draw_left
+@ $AF6F label=dh_draw_left_2
 C $AF6F,3 Call draw_object_left_helicopter_entrypt
 C $AF72,3 Jump
-@ $AF75 label=dh_draw_right
+@ $AF75 label=dh_draw_right_2
 C $AF75,3 Call draw_object_right_helicopter_entrypt
 @ $AF78 label=dh_done_draw_object
 C $AF78,3 Read A from 'LD D,x' @ #R$933D
@@ -7566,7 +7569,7 @@ C $AFC2,3 Double it so it's a table offset
 C $AFC5,1 Form table entry pointer
 C $AFC6,4 HL = wordat(HL)   Load table entry (a pointer) into #REGhl
 C $AFCA,2 Retrieve #REGde from stack
-N $AFCC DE is offset, HL is base of graphic defns
+N $AFCC DE is offset, HL is base of graphic defns, B/C is x/y
 C $AFCC,3 Draw
 @ $AFCF label=dh_check_smash_level
 C $AFCF,3 Get smash_level (should be 0..6)
@@ -7587,7 +7590,7 @@ C $AFE8,3 Smoke data
 C $AFEB,3 Call #R$AFF1
 C $AFEE,3 Continue
 N $AFF1 Decrements a counter 5..1 then repeats this must be the car-on-fire animation index is it just the smoke?
-@ $AFF1 label=dh_aff1
+@ $AFF1 label=dh_smoke
 C $AFF1,2 Load counter and decrement it
 C $AFF3,3 Jump if +ve
 C $AFF6,2 It became zero, reset to 5
@@ -11392,7 +11395,7 @@ C $CDE3,8 Divide by 8 with rounding
 C $CDEB,1 Return
 b $CDEC Data block at CDEC
 @ $CDEC label=arrow_offsets
-B $CDEC,2,2 x,y
+B $CDEC,2,2 4 pairs of (x,y)
 B $CDEE,6,6
 w $CDF4 Pointers to car-on-fire LODs
 @ $CDF4 label=table_car_on_fire_LOD_ptrs
