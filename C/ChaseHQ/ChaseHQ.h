@@ -82,7 +82,8 @@
 
 /* ----------------------------------------------------------------------- */
 
-#define DRAWCHARSTYLE_DUNNO                    (0)
+#define DRAWOVERLAY_STOP                       (0)
+
 #define DRAWCHARSTYLE_GENERIC                  (1)
 #define DRAWCHARSTYLE_SINGLE                   (2)
 #define DRAWCHARSTYLE_DOUBLE                   (3)
@@ -524,8 +525,8 @@ const u8 *print_message(chqstate_t *state,
 
 void setup_overlay_messages(chqstate_t *state, const u8 *message);
 void setup_overlay_messages_with_transition(chqstate_t *state,
-    u8          transition,
-    const u8   *message);
+                                            u8          transition,
+                                            const u8   *message);
 
 void draw_mugshots(chqstate_t *state);
 

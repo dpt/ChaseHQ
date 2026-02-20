@@ -1619,42 +1619,66 @@ void fill_attributes(chqstate_t *state)
   state->transition_control = TRANSITIONCONTROL_STOP;
 }
 
-// $8E42
+/**
+ * $8E42: Progresively draw overlay messages to the back buffer
+ *
+ * Overlay messages are, for example, the messages shown when the perp has
+ * been arrested.
+ *
+ * This function draws the overlay_message currently set in state to the back
+ * buffer. The initial count is 1 so that the messages are made to
+ * progressively appear. Once all messages are drawn the delay value is
+ * checked and decremented. While the delay is non-zero the routine returns.
+ * When the delay is zero a new delay is set and the number of messages
+ * increased. The first message pointed to is the second byte of the message
+ * (delay).
+ *
+ * \param[in] state Pointer to game state.
+ */
 void draw_overlay_messages(chqstate_t *state)
 {
-  const u8 *message;    // was HL
-  u8        iterations; // was B
-  u8        delay;      // was A
-  u8        style;      // was A
+  const u8 *message; // was HL
+  u8        count;   // was B
+  u8        style;   // was A
 
-  message    = state->overlay_message;
-  iterations = state->overlay_count;
+  message = state->overlay_message;
+  count   = state->overlay_count;
   for (;;) {
-    if (--iterations == 0) {
-      delay = state->overlay_delay - 1;
-      state->overlay_delay = delay;
-      if (delay)
+    if (--count == 0) {
+      if (--state->overlay_delay)
         return;
 
       state->overlay_delay = *message; // set new delay
       state->overlay_count++;
-      iterations++;
+      count++;
     }
 
     style = *++message;
-    if (style == DRAWCHARSTYLE_DUNNO) // or possibly a special marker?
+    if (style == DRAWOVERLAY_STOP) // special marker (rename)
       break;
 
-    print_message(state, style, message);
+    message = print_message(state, style, message);
   }
 
   state->transition_control = message[-1];
 }
 
-// $8E6C
-//
-// style - was A
-// messages - was HL
+/**
+ * $8E6C: Print a message on the back buffer
+ *
+ * This function draws a message to the back buffer using the specified
+ * drawing style and message data. The message data includes attributes, the
+ * destination back buffer address and attribute address.
+ *
+ * Note that the attribute bytes are drawn directly to the real screen since
+ * there is no equivalent of the attributes for the back buffer. The user may
+ * briefly see attribute changes prior to the back buffer arriving on-screen.
+ *
+ * \param[in] state    Pointer to game state.
+ * \param[in] style    Message draw style (e.g. DRAWCHARSTYLE_SINGLE). (was A)
+ * \param[in] messages Pointer to message data. (was HL)
+ * \return Next byte of message data. (was HL)
+ */
 const u8 *print_message(chqstate_t *state,
                         u8          style,
                         const u8   *messages)
@@ -1663,7 +1687,7 @@ const u8 *print_message(chqstate_t *state,
   u16 backbuf;  // was DE
   u16 attraddr; // was BC
 
-  // we ignore flags in messages[0]
+  // The style in messages[0] is ignored.
   attr     = messages[1];
   backbuf  = wordat(messages + 2);
   attraddr = wordat(messages + 4);
@@ -1692,12 +1716,12 @@ void setup_overlay_messages(chqstate_t *state, const u8 *message)
 // transition - was A
 // message - was HL
 void setup_overlay_messages_with_transition(chqstate_t *state,
-    u8          transition,
-    const u8   *message)
+                                            u8          transition,
+                                            const u8   *message)
 {
   state->transition_control = transition;
-  state->overlay_delay      = *message++;
-  state->overlay_message    = message;
+  state->overlay_delay      = message[0];
+  state->overlay_message    = &message[1];
   state->overlay_count      = 1;
 }
 
@@ -4616,7 +4640,7 @@ void csc_hit_scenery(chqstate_t *state, u8 Aflip, u8 Adash)
 // $A4B8
 void scenery_hit(chqstate_t *state, u8 Aflip, u8 Adash)
 {
-  int speed;      // was HL
+  int speed;  // was HL
   int A;
   int HL;
   int L;
@@ -4627,7 +4651,7 @@ void scenery_hit(chqstate_t *state, u8 Aflip, u8 Adash)
 
   state->ahc_crashed_flag = 1;
   state->ahc_flip_flag    = Aflip;
-  state->ahc_SM_B38D          = ++Aflip;
+  state->ahc_SM_B38D      = ++Aflip;
   state->ahc_delay        = 5;
 
   speed = state->speed;
@@ -4672,7 +4696,7 @@ void check_fork_scenery_collisions(chqstate_t *state, u16 DEdash, u16 HLdash)
       off_road = (pos >= 0x7C) ? 1 : 2;
 
 set_off_road:
-  state->off_road = off_road;
+  state->off_road     = off_road;
   state->ahc_SM_B3DB  = 0;
   state->ahc_SM_B395  = HLdash;
   state->ahc_SM_B3A3  = DEdash;
