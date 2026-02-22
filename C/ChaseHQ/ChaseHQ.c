@@ -3533,14 +3533,23 @@ void clear_message_line(chqstate_t *state)
   } while (--rows);
 }
 
-// $9BCF
+/**
+ * $9BCF: Handle "time up", countdown and continue.
+ *
+ * This function handles timed events. When 15s or less remain then Nancy warns
+ * that our heroes are running of time. When they do run out of time, and
+ * sufficient credits remain, a 10s coundown timer and restart query are
+ * presented along with a tick-tock sound effect. If restart is initiated the
+ * game is part reset and continues.
+ *
+ * \param[in] state    Pointer to game state.
+ */
 void tick(chqstate_t *state)
 {
-  int   carry = 0;
-  u8   *ptimebcd;             // was HL
-  u8    timeupstate;          // was A
+  u8   *ptime_bcd;            // was HL
+  u8    time_up_state;        // was A
   u8    time_bcd;             // was A
-  char *timedigits;           // was DE
+  char *time_digits;          // was DE
   u8    effect;               // was B
   u8    remaining_subseconds; // was H
   u8    remaining_seconds_x2; // was L
@@ -3552,9 +3561,9 @@ void tick(chqstate_t *state)
       state->transition_control == TRANSITIONCONTROL_FADE)
     return;
 
-  ptimebcd = &state->st.time_bcd;
-  timeupstate = state->time_up_state;
-  switch (timeupstate) {
+  ptime_bcd = &state->st.time_bcd;
+  time_up_state = state->time_up_state;
+  switch (time_up_state) {
   default: assert(0);
   case TIMEUPSTATE_CHECK_TIME_UP: goto check_time_up;
   case TIMEUPSTATE_CAR_STOPPED:   goto check_credits;
@@ -3564,7 +3573,7 @@ void tick(chqstate_t *state)
 
   // Otherwise it's state 0
 
-  if (*ptimebcd == 0) {
+  if (*ptime_bcd == 0) {
     // Ran out of time
     state->time_up_state      = TIMEUPSTATE_CHECK_TIME_UP;
     // Stop acceleration/brake/turbo/pause
@@ -3587,7 +3596,7 @@ update_remaining_time:
   return;
 
 check_time_up:
-  if (*ptimebcd != 0) {
+  if (*ptime_bcd != 0) {
     state->time_up_state      = TIMEUPSTATE_INIT;
     state->st.user_input_mask = USERINPUTMASK_ALLOW_ALL;
     goto update_remaining_time;
@@ -3610,7 +3619,7 @@ check_credits:
     state->credits--;
     state->credit_n[7]   = (state->credits + '0') | STREND;
     state->time_up_state = TIMEUPSTATE_CHECK_RESTART;
-    state->tick_remaining_seconds_x2 = 21; // 10 second countdown, doubled, plus 1
+    state->tick_remaining_seconds_x2 = 21; // a 10 second countdown, doubled, plus 1
     state->tick_remaining_subseconds = 1;  // force an initial decrement
   }
   return;
@@ -3641,6 +3650,7 @@ check_restart:
     remaining_subseconds = 6; // game timing dependent
     --remaining_seconds_x2;
 
+    // Play a "bip" or a "bow" sound effect every half second (this is why we double the countdown)
     effect = (remaining_seconds_x2 & 1) ? EFFECT_BIP : EFFECT_BOW;
     start_sfx(state, effect, 1); /* priority 1 => high */
 
@@ -3655,7 +3665,7 @@ check_restart:
 
   seconds = remaining_seconds_x2 >> 1;
 
-  timedigits = &state->time_nn[5]; // Load address of nn in "TIME nn"
+  time_digits = &state->time_nn[5]; // Load address of nn in "TIME nn"
   if (seconds == 10) {
     hidigit = '1'; // ASCII
     lodigit = 0;   // integer
@@ -3664,8 +3674,8 @@ check_restart:
     hidigit = ' ';     // ASCII
   }
 
-  timedigits[0] = hidigit; // write first digit (must be ASCII)
-  timedigits[1] = (lodigit + '0') | STREND;
+  time_digits[0] = hidigit; // write first digit (must be ASCII)
+  time_digits[1] = (lodigit + '0') | STREND;
 }
 
 // $9C79

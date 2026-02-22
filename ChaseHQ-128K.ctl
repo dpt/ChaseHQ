@@ -5016,8 +5016,9 @@ C $9BB9,16 Move to next scanline
 C $9BCA,1 Decrement row counter
 C $9BCB,3 Loop while rows remain to clear
 C $9BCE,1 Return
-c $9BCF Time up / Countdown / Continue
-D $9BCF Used by the routine at #R$8401.
+c $9BCF Handle "time up", countdown and continue.
+D $9BCF This function handles timed events. When 15s or less remain then Nancy warns that our heroes are running of time. When they do run out of time, and sufficient credits remain, a 10s coundown timer and restart query are presented along with a tick-tock sound effect. If restart is initiated the game is part reset and continues.
+R $9BCF Used by the routine at #R$8401.
 @ $9BCF label=tick
 C $9BCF,5 Return if perp_caught_phase > 0
 C $9BD4,6 Return if transition_control == 4 -- don't tick while transitions are running
