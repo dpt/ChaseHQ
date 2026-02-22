@@ -51,7 +51,7 @@ struct stagevars {
   // $A175
   u8        score_digits[8];
   // $A17D
-  u8        time_sixteenths;
+  u8        time_sixteenths; // is this sixteenths or fifteenths since we reset to 15?
   // $A17E
   u8        time_bcd;
   // $A17F
@@ -190,10 +190,10 @@ struct chqstate {
   // $9982 (SM)
   u8        chatter_cursor_blink;
 
-  // $9C85
-  u8        SM_9c85;
-  // $9C86
-  u8        SM_9c86;
+  // $9C85 (SM) in tick
+  u8        tick_remaining_seconds_x2; // seconds, doubled // Conv: 16-bit load was split
+  // $9C86 (SM) in tick
+  u8        tick_remaining_subseconds; // delay factor - approx sixths of a second // Conv: 16-bit load was split
 
   // $9D51
   char      bonus_string[6];

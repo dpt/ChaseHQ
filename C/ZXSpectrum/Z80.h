@@ -87,7 +87,8 @@ static uint8_t DAA(uint8_t v, int *carry_out)
   if (lo >= 10) { lo -= 10; hi++; }
   if (hi >= 10) { hi -= 10; carry++; }
 
-  *carry_out = carry;
+  if (carry_out)
+    *carry_out = carry;
   return (hi << 4) | (lo << 0);
 }
 

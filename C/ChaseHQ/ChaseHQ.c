@@ -3537,19 +3537,19 @@ void clear_message_line(chqstate_t *state)
 void tick(chqstate_t *state)
 {
   int   carry = 0;
-  u8   *ptimebcd;    // was HL
-  u8    timeupstate; // was A
-  u8    timebcd;     // was A
-  char *timedigits;  // was DE
-  u8    effect;      // was B
-  u8    H;           // was H
-  u8    L;           // was L
-  u8    A;           // was A
-  u8    hidigit;     // was A
-  u8    lodigit;     // was L
+  u8   *ptimebcd;             // was HL
+  u8    timeupstate;          // was A
+  u8    time_bcd;             // was A
+  char *timedigits;           // was DE
+  u8    effect;               // was B
+  u8    remaining_subseconds; // was H
+  u8    remaining_seconds_x2; // was L
+  u8    seconds;              // was A
+  u8    hidigit;              // was A
+  u8    lodigit;              // was L
 
-  if (state->perp_caught_phase > PERPCAUGHTPHASE_0
-      || state->transition_control == TRANSITIONCONTROL_FADE)
+  if (state->perp_caught_phase > PERPCAUGHTPHASE_0 ||
+      state->transition_control == TRANSITIONCONTROL_FADE)
     return;
 
   ptimebcd = &state->st.time_bcd;
@@ -3562,7 +3562,7 @@ void tick(chqstate_t *state)
   case TIMEUPSTATE_WAITING:       return;
   }
 
-  // otherwise it's state 0
+  // Otherwise it's state 0
 
   if (*ptimebcd == 0) {
     // Ran out of time
@@ -3577,12 +3577,13 @@ update_remaining_time:
   if (--state->st.time_sixteenths > 0)
     return;
 
-  state->st.time_sixteenths =
-    15; // is this sixteenths or fifteenths since we reset to 15?
-  state->st.time_bcd = timebcd = DAA(state->st.time_bcd - 1, &carry);
-  if (timebcd == 0x15)
-    // suss: passes timebcd(A) as priority...
-    start_chatter(state, timebcd, chatterblk_nancy_time_running_out); // exit via
+  state->st.time_sixteenths = 15;
+  state->st.time_bcd = time_bcd = DAA(state->st.time_bcd - 1, NULL);
+
+  // When 15s remain Nancy warns that time is running out.
+  if (time_bcd == 0x15)
+    // Note: This passes time_bcd as the priority which is 21.
+    start_chatter(state, time_bcd, chatterblk_nancy_time_running_out); // exit via
   return;
 
 check_time_up:
@@ -3609,60 +3610,58 @@ check_credits:
     state->credits--;
     state->credit_n[7]   = (state->credits + '0') | STREND;
     state->time_up_state = TIMEUPSTATE_CHECK_RESTART;
-    state->SM_9c85       = 0x15; // seconds remaining BCD?
-    state->SM_9c86       = 0x01; // causes set_digits to run once?
+    state->tick_remaining_seconds_x2 = 21; // 10 second countdown, doubled, plus 1
+    state->tick_remaining_subseconds = 1;  // force an initial decrement
   }
   return;
 
 check_restart:
-  if ((state->user_input & USERINPUT_FIRE) == 0)
-    goto print_continue;
+  if (state->user_input & USERINPUT_FIRE) {
+    // Reset mission
+    state->time_up_state      = TIMEUPSTATE_INIT;
+    state->smash_level        = 0;
+    state->smash_counter      = 0;
+    state->st.user_input_mask = USERINPUTMASK_ALLOW_ALL;
+    state->gear_lockout       = 3;
+    state->transition_control = TRANSITIONCONTROL_FILL_ATTRIBUTES;
+    state->st.turbos          = MAXTURBOS;
+    state->st.time_bcd        = RESTART_TIME_BCD;
+    state->retry_count++;
 
-  // Resetting mission code.
-  state->time_up_state      = TIMEUPSTATE_INIT;
-  state->smash_level        = 0;
-  state->smash_counter      = 0;
-  state->st.user_input_mask = USERINPUTMASK_ALLOW_ALL;
-  state->gear_lockout       = 3;
-  state->transition_control = TRANSITIONCONTROL_FILL_ATTRIBUTES;
-  state->st.turbos          = MAXTURBOS;
-  state->st.time_bcd        = RESTART_TIME_BCD;
-  state->retry_count++;
-
-  play_start_noise(state);
-  return;
-
-print_continue:
-  setup_overlay_messages(state, &continue_messages[0]);
-  L = state->SM_9c85;
-  H = state->SM_9c86 - 1;
-  if (H != 0)
-    goto set_digits;
-
-  H = 6; // reset to 6 for when storeda - delay?
-  L--;
-  A = L;
-  RR(A);
-  effect = (carry) ? EFFECT_BIP : EFFECT_BOW;
-  start_sfx(state, effect, 1); /* priority 1 => high */
-  A = L;
-  if (A == 0) {
-    state->quit_state    = QUITSTATE_START;
-    state->time_up_state = TIMEUPSTATE_WAITING;
+    play_start_noise(state);
+    return;
   }
 
-set_digits:
-  state->SM_9c85 = L;
-  state->SM_9c86 = H;
-  A = L;
-  SRL(A);
+  setup_overlay_messages(state, &continue_messages[0]);
+
+  // Conv: Original loads these two vars at once.
+  remaining_seconds_x2 = state->tick_remaining_seconds_x2;
+  remaining_subseconds = state->tick_remaining_subseconds;
+  if (--remaining_subseconds == 0) {
+    remaining_subseconds = 6; // game timing dependent
+    --remaining_seconds_x2;
+
+    effect = (remaining_seconds_x2 & 1) ? EFFECT_BIP : EFFECT_BOW;
+    start_sfx(state, effect, 1); /* priority 1 => high */
+
+    if (remaining_seconds_x2 == 0) {
+      state->quit_state    = QUITSTATE_START;
+      state->time_up_state = TIMEUPSTATE_WAITING;
+    }
+  }
+
+  state->tick_remaining_seconds_x2 = remaining_seconds_x2;
+  state->tick_remaining_subseconds = remaining_subseconds;
+
+  seconds = remaining_seconds_x2 >> 1;
+
   timedigits = &state->time_nn[5]; // Load address of nn in "TIME nn"
-  if (A == 10) {
+  if (seconds == 10) {
     hidigit = '1'; // ASCII
     lodigit = 0;   // integer
   } else {
-    lodigit = A;   // integer
-    hidigit = ' '; // ASCII
+    lodigit = seconds; // integer
+    hidigit = ' ';     // ASCII
   }
 
   timedigits[0] = hidigit; // write first digit (must be ASCII)

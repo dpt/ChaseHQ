@@ -5041,7 +5041,7 @@ C $9BFC,2 Reset time_sixteenths to 15
 C $9BFE,6 Decrement time_bcd [POKE $9C01 for Infinite time]
 C $9C04,3 Return if <> 15s remain
 C $9C07,3 Nancy berating us running out of time message
-C $9C0A,3 Exit via start_chatter (priority 21)
+C $9C0A,3 Exit via start_chatter (Bug? Priority is 21)
 @ $9C0D label=tick_check_time_up
 C $9C0D,4 Is time_bcd zero? Jump to time_up if so
 C $9C11,4 time_up_state = 0
@@ -5089,7 +5089,9 @@ C $9C87,1 H--
 C $9C8A,2 H = 6
 C $9C8C,1 L--
 C $9C8D,1 A = L
+C $9C8E,1 Set carry to even/odd seconds
 C $9C8F,3 Effect 8 (bip), Priority 1
+C $9C92,2 Jump if carry clear (even seconds)
 C $9C94,1 Effect 9 (bow)
 @ $9C95 label=tick_play_sfx
 C $9C95,3 Call start_sfx
@@ -7509,8 +7511,8 @@ C $AF38,3 Call draw_object_right_helicopter_entrypt
 C $AF3B,2 Restore DE, BC
 C $AF3D,4 Self modify 'LD A,x' @ #R$93C0 to load 0
 C $AF41,3 Load address of n_hazards
-C $AF44,1 (*HL)--
-C $AF45,1 Restore HL
+C $AF44,1 Decrement n_hazards
+C $AF45,1 Restore HL (which?)
 C $AF46,1 Return if zero
 C $AF47,1 A = *HL
 C $AF48,4 Jump if A == B
@@ -7550,7 +7552,7 @@ C $AF95,1 Load x offset
 C $AF96,1 Advance
 C $AF97,1 Load y offset
 C $AF98,3 Address of floating_arrow_here_defn (incl. "HERE!")
-C $AF9B,3 Call dh_draw_hl_setup
+C $AF9B,3 Call dh_draw_lod
 @ $AF9E label=dh_smash_level
 C $AF9E,3 Get smash_level
 C $AFA1,4 Jump if it's < 4
@@ -7620,7 +7622,7 @@ N $B01B Similar code to $AA19 (in dust/stones code). Does plotting.
 @ $B01B label=dh_draw
 C $B01B,1 HL += DE  -- find graphic definition entry
 N $B01C B,C = x,y offset/position? HL -> graphic definition
-@ $B01C label=dh_draw_hl_setup
+@ $B01C label=dh_draw_lod
 C $B01C,1 Fetch byte width
 C $B01D,6 Multiply it by 8 yielding the pixel width
 C $B023,3 A = <self modified by #R$AF7B> + B
@@ -8253,7 +8255,7 @@ N $B4D4 Enable flashing lights and smash bar
 C $B4D4,3 Set sighted_flag to 1
 N $B4D7 This is animation frame related?
 C $B4D7,4 Self modify 'LD A' @ #R$B478 to load 2
-C $B4DB,6 Set time_sixteenths to 15 and time_bcd to 96
+C $B4DB,6 Set time_sixteenths to 15 and time_bcd to $60
 C $B4E1,6 Toggle the left light's brightness
 C $B4E7,6 Show the "SIGHTING OF TARGET VEHICLE" message
 C $B4ED,3 Exit via start_siren_hook
