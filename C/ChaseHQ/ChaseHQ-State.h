@@ -34,6 +34,7 @@ struct hazard {
 
 // crap name
 struct stagevars {
+
   // $A16D
   u8        var_a16d;
   // $A16E
@@ -434,7 +435,9 @@ struct chqstate {
   u8        SM_B02C;
 
   // $B063 (SM) in move_hero_car
-  u8        mhc_SM_B063; // jump counter
+  u8        mhc_y_offset; // jump counter
+  // $B079 (SM) in move_hero_car
+  u8       *mhc_jump_data; // jump data table entry
 
   // $B325 (SM) in animate_hero_car
   u16       ahc_crashed_flag; // crashed flag
@@ -458,6 +461,11 @@ struct chqstate {
   u8        ahc_SM_B476; // hand flag?
   // $B478 (SM) in animate_hero_car
   u8        ahc_SM_B478; // hand animation frame?
+
+  // $B5AA (SM) in draw_car
+  u8        dc_y_offset;
+  // $B5AF (SM) in draw_car
+  u8        dc_pitch; // car's pitch (0/3/6 = level/up/down)
 
   // $BB95 (SM) in rm_cycle_buffer_offset
   const u8 *rm_SM_BB95;

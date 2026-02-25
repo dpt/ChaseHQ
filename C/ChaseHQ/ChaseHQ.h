@@ -676,7 +676,7 @@ void pmf_go(chqstate_t *state,
 
 void clear_message_line(chqstate_t *state);
 
-void tick(chqstate_t *state);
+void check_time_up(chqstate_t *state);
 void play_start_noise(chqstate_t *state);
 
 void speed_score(chqstate_t *state);

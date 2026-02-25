@@ -20,9 +20,11 @@
 // the risk of translation errors. Although it's very tempting to rewrite all
 // the code to be fully idiomatic C the greater the difference from the
 // original disassembly the harder it gets to refer back to it and spot our
-// mistakes.  The goal after all is to use this C conversion to expose
+// mistakes. The goal after all is to use this C conversion to expose
 // problem points and feed those back into the disassembly's description.
 //
+// Ideally the ordering of the code will be preserved such that the original
+// game code and this reimplementation have broadly the same structure.
 // Some code will unavoidably need to be changed however, such as the stack
 // trick where PUSH and POP are used to accelerate loads and stores.
 //
@@ -83,6 +85,7 @@
 #include <stdio.h>
 #include <string.h>
 
+#include "../ZXSpectrum/Macros.h"
 #include "../ZXSpectrum/Pixels.h"
 #include "../ZXSpectrum/Spectrum.h"
 #include "../ZXSpectrum/Z80.h"
@@ -371,7 +374,7 @@ void main_loop(chqstate_t *state)
     for (;;) {
       drive_sfx(state);
       keyscan(state);
-      tick(state);
+      check_time_up(state);
       check_user_input(state);
       read_map(state);
       if (handle_perp_caught(state))
@@ -835,7 +838,7 @@ void set_up_stage(chqstate_t        *state,
   state->dee_draw_tunnel_2 = 0; // draw tunnel call
 
   state->rm_SM_C058 = 0; // clear current hazard?
-  state->mhc_SM_B063 = 0; // clear jump counter?
+  state->mhc_y_offset = 0; // clear jump counter?
 
   state->hazards[0].hitable.lods = state->stage->lods_perp_car;
 
@@ -3542,9 +3545,9 @@ void clear_message_line(chqstate_t *state)
  * presented along with a tick-tock sound effect. If restart is initiated the
  * game is part reset and continues.
  *
- * \param[in] state    Pointer to game state.
+ * \param[in] state Pointer to game state.
  */
-void tick(chqstate_t *state)
+void check_time_up(chqstate_t *state)
 {
   u8   *ptime_bcd;            // was HL
   u8    time_up_state;        // was A
@@ -3715,47 +3718,49 @@ void speed_score(chqstate_t *state)
 // md - was E
 // hi - was D
 //
-// Bug: As soon as a non-zero->zero transition is seen the routine finishes so
-// you can only have a single run of zeroes in the bonus.
+// Bug/Limitation: As soon as a non-zero->zero transition is seen the routine
+// finishes so you can only have a single run of zeroes in the bonus.
 void add_bonus(chqstate_t *state, u8 lo, u8 md, u8 hi)
 {
-  char *output;      // was HL
-  u8    nonzeroflag; // was C - used to track if a zero has been emitted.
+  char *output;   // was HL
+  u8    zeroflag; // was C
 
   output = &state->bonus_string[6]; // points to byte after buffer
-  nonzeroflag = 0xFF; // flag (zero not seen)
-  (void) bonus_digit(lo >> 0,
-                     &nonzeroflag,
-                     &output); // always runs since flag > 0
+  zeroflag = 0xFF; // true until non-zero seen
+  // This always runs since zeroflag is set
+  (void) bonus_digit(lo >> 0, &zeroflag, &output);
   *output |= STREND; // terminate string
 
+  // Conv: ab_high_nibble inlined in calls.
   // Using lazy evaluation here to avoid having a load of gotos
-  (void)(bonus_digit(lo >> 4, &nonzeroflag, &output) >= 0 &&
-         bonus_digit(md >> 0, &nonzeroflag, &output) >= 0 &&
-         bonus_digit(md >> 4, &nonzeroflag, &output) >= 0 &&
-         bonus_digit(hi >> 0, &nonzeroflag, &output) >= 0 &&
-         bonus_digit(hi >> 4, &nonzeroflag, &output) >= 0);
+  (void)(bonus_digit(lo >> 4, &zeroflag, &output) >= 0 &&
+         bonus_digit(md >> 0, &zeroflag, &output) >= 0 &&
+         bonus_digit(md >> 4, &zeroflag, &output) >= 0 &&
+         bonus_digit(hi >> 0, &zeroflag, &output) >= 0 &&
+         bonus_digit(hi >> 4, &zeroflag, &output) >= 0);
 
   state->SM_address_of_score_digits = output;
   state->trigger_bonus_flag = 1;
   increment_score(state, lo, md, hi); // was fallthrough
 }
 
+// $9CFC
+//
 // Subroutine of above broken out
-int bonus_digit(u8 digit, u8 *nonzeroflag, char **poutput)
+int bonus_digit(u8 digit, u8 *zeroflag, char **poutput)
 {
   digit &= 0x0F;
 
   if (digit != 0)
     goto non_zero;
-  else if (*nonzeroflag != 0)
+  else if (*zeroflag != 0)
     goto store;
   else
     // Conv: Was a POP+JP to cause exit.
-    return -1; // We saw a non-zero-to-zero transition, so terminate.
+    return -1; // Non-zero-to-zero transition
 
 non_zero:
-  *nonzeroflag = 0; // Set flag to zero now we've seen a non-zero digit
+  *zeroflag = 0; // Clear flag: non-zero digit seen
 store:
   (*poutput)--;
   **poutput = digit + '0';
@@ -3766,18 +3771,13 @@ store:
 void increment_score(chqstate_t *state, u8 lo, u8 md, u8 hi)
 {
   int carry = 0;
-  u8 *scorebcd; // was HL
-  u8  A;        // was A
+  u8 *score_bcd; // was HL
 
-  scorebcd = &state->score_bcd[0];
-  A = lo + *scorebcd;
-  *scorebcd++ = DAA(A, &carry);
-  A = md + *scorebcd + carry;
-  *scorebcd++ = DAA(A, &carry);
-  A = hi + *scorebcd + carry;
-  *scorebcd++ = DAA(A, &carry);
-  A = *scorebcd + carry;
-  *scorebcd = DAA(A, &carry);
+  score_bcd  = &state->score_bcd[0];
+  *score_bcd = DAA(lo + *score_bcd,         &carry); score_bcd++;
+  *score_bcd = DAA(md + *score_bcd + carry, &carry); score_bcd++;
+  *score_bcd = DAA(hi + *score_bcd + carry, &carry); score_bcd++;
+  *score_bcd = DAA(     *score_bcd + carry, NULL);
 }
 
 // $9D2E
@@ -6457,7 +6457,7 @@ dh_check_smash_level:
     goto dh_draw_smoke_3; // draw one lot
   if (--A == 0)
     goto dh_draw_smoke_2; // draw two lots
-                          // Otherwise draw all 3 lots.
+  // Otherwise draw all 3 lots.
   dh_smoke(state, &state->smoke_ce26[0]);
 dh_draw_smoke_2:
   dh_smoke(state, &state->smoke_ce0c[0]);
@@ -6554,6 +6554,308 @@ void no_op(chqstate_t *state, hazard_t *hazard)
 // $B063
 void move_hero_car(chqstate_t *state)
 {
+  // TODO Sort these decls by use
+  u8        y_offset;             // was A
+  u8       *jump_data;            // was HL
+  u8        boost;                // was A
+  u8        Cinput;               // was C
+  u8        Ainput;               // was A
+  u8       *pgear;                // was HL
+  u8        smoke;                // was A
+  u8        gear_lockout;         // was A
+  u8        gear;                 // was A
+  u16       speed;                // was HL
+  u8        off_road;             // was A
+  u16       BCmax_speed;          // was BC
+  u16       BCspeed_diff;         // was BC
+  u8        Ainclined;            // was A
+  u8        Apitch;               // was A
+  u8        Cleft_turn;           // was C
+  u8        Hinput;               // was H
+  u8        Bright_turn;          // was B
+  u16       BCpitch_speed_delta;  // was BC
+  u16       DEoldspeed;           // was DE
+  u8        Bturn_speed;          // was B
+  u8        Dflip_car;            // was D
+  u8        Acornering;           // was A
+  u8        Acurrent_curvature;   // was A
+  const u8 *HLhorizon_table;      // was HL
+  u8        saved_Cleft_turn;     // was C
+  u8        saved_Bright_turn;    // was B
+  u8        Acrashedflag;         // was A
+  u8        Aturn_speed;          // was A
+  u8        Bcount;               // was B
+  u8        Cvar_a261;            // was C
+  u8        Enegative_scrolling;  // was E
+  u8        Avar_a261;            // was A
+  u8        Acounter;             // was A'
+  u8        Chorz_tab_value;      // was C
+  u8        Acount;               // was A'
+  u16       BCcount_scaled;       // was BC
+  u16       HLhorizontal_adjust;  // was HL
+  u16       DEadjust;             // was DE
+
+  y_offset = state->mhc_y_offset; // load jump counter, highest is 8
+  if (y_offset) {
+    state->mhc_y_offset = --y_offset;
+    if (y_offset == 0) {
+      // Hero car has landed
+      state->smoke = 3;
+      start_sfx(state, EFFECT_LANDING, 3); /* priority 3 */
+    }
+
+    // Hero car is in mid-air, or has just landed
+    jump_data = state->mhc_jump_data; // points into hero_car_jump_table
+    state->off_road = 0;
+    state->user_input &= ~(USERINPUT_RIGHT | USERINPUT_LEFT | USERINPUT_DOWN | USERINPUT_UP);
+    state->dc_pitch = jump_data[0];
+    y_offset = state->dc_y_offset + jump_data[1];
+    state->mhc_jump_data = jump_data + 2;
+  }
+
+  state->dc_y_offset = y_offset;
+
+  if (state->boost && --state->boost == 0) // Conv: Uses state directly
+    state->st.turbos--;
+
+  // Handle smoke effect
+  if (state->smoke) // Conv: Uses state directly
+    state->smoke--;
+
+  // Handle gear changes
+  Cinput = state->user_input;
+  if (state->ahc_crashed_flag)
+    Cinput &= USERINPUT_FIRE;
+
+  Ainput = Cinput;
+  // PUSH Ainput (PUSH AF)
+  const int fire_pressed = (Ainput & USERINPUT_FIRE);
+  pgear = &state->gear; // could use state
+  if (fire_pressed != 0 && state->gear_lockout == 0) {
+    *pgear ^= 1; // Toggle gear flag
+    smoke = gear_lockout = 4;
+    if (*pgear)
+      state->smoke = smoke;
+  } else {
+    gear_lockout = 0; // Conv: Added
+  }
+
+  if ((s8) --gear_lockout >= 0)
+    state->gear_lockout = gear_lockout;
+
+  gear = *pgear;
+  // EX AF,AF
+  speed = state->speed;
+  if (speed < 120 &&
+      state->perp_caught_phase == 0 &&
+      --state->st.idle_timer == 0) {
+    state->st.idle_timer = 100;
+    start_chatter(state, 10, &chatterblk_raymond_get_moving[0]);
+  }
+  // DEspeed = HLspeed; // might not need
+  off_road = state->off_road;
+  if (off_road) {
+    // Handle off-road (Aoff_road can be 1 or 2 here)
+    BCmax_speed = (off_road == 1) ? 110 : 120;
+    if (speed >= BCmax_speed) {
+      // Conv: Removed RR/RLA sequence.
+      BCspeed_diff = -(((speed >> 5) & 0x0F) | 1);
+      goto mhc_check_brake;
+    }
+  }
+
+  boost = state->boost;
+  // EX AF,AF'
+  if (!gear) {
+    BCmax_speed = 470;
+    // EX AF,AF' (unbank boost+flags)
+    if (!boost) // No turbo boost
+      BCmax_speed = 230;
+
+mhc_low_gear_slowing:
+    if (speed < BCmax_speed)
+      BCspeed_diff = ((-speed >> 4) & 0x3F) | 1;
+    else
+      BCspeed_diff = -(((speed >> 4) & 0x1F) | 1);
+  } else {
+    if (speed < 220) { // mhc_high_gear_slowing
+      BCmax_speed = 470;
+      // EX AF,AF' (unbank boost+flags)
+      if (!boost)
+        BCspeed_diff = ((speed >> 4) | 1) & 0x1F;
+    } else {
+      BCmax_speed = 695;
+      // EX AF,AF' (unbank boost+flags)
+      if (!boost)
+        BCmax_speed = 360;
+    }
+    goto mhc_low_gear_slowing; // jumps backwards!
+  }
+
+mhc_check_brake:
+  Ainput = Cinput; // Conv: was POP AF-PUSH AF
+  if (Ainput & USERINPUT_DOWN) // checks BRAKE key
+    BCspeed_diff = -20; // braking
+  else if ((Ainput & USERINPUT_UP) == 0) // accelerate NOT pressed
+    BCspeed_diff = -10; // slow down at half the speed of braking
+
+  speed += BCspeed_diff;
+  if ((s16) speed < 0)
+    speed = 0; // clamp to zero
+
+  Ainclined = state->inclined - 1;
+  if ((s8) Ainclined < 0) {
+    Apitch = state->dc_pitch;
+    if (Apitch == 0 || speed == 0) {
+      Ainclined = 0; // don't adjust speed if car's halted?
+    } else {
+      // New speed is non-zero
+      BCpitch_speed_delta = (Apitch - 5) | 1; // 0/3/6 in Cpitch => -5/-1/1
+      DEoldspeed = speed;
+      speed += BCpitch_speed_delta;
+      if (speed >= 695) // seems high?
+        speed = DEoldspeed; // clamp to max
+      Ainclined = 3;
+    }
+  }
+  state->inclined = Ainclined;
+  state->speed = MIN(speed, 511); // clamp to 511 max
+
+  Hinput = Cinput; // was POP HL (get user input)
+  Bright_turn = state->right_turn;
+  Cleft_turn  = state->left_turn;
+  if (state->mhc_y_offset == 0) { // if not in the air?
+    if (Hinput & USERINPUT_RIGHT)
+      goto mhc_turning_right;
+    if (Hinput & USERINPUT_LEFT)
+      goto mhc_turning_left;
+
+    // User input is not left or right
+
+    // Reduce left turning force
+    Cleft_turn  = MAX(Cleft_turn - 9, 0);
+    // Reduce right turning force:
+    Bright_turn = MAX(Bright_turn - 9, 0);
+    goto mhc_handle_speed;
+
+mhc_turning_right:
+    // = MIN(36, B + 4) -- 36 is the max turning force
+    Bright_turn = ((Bright_turn + 4 >= 36) ? 36 : Bright_turn + 4);
+    // = MAX(C - B, 0)
+    Cleft_turn  = ((Cleft_turn >= Bright_turn) ? Cleft_turn - Bright_turn : 0);
+    goto mhc_handle_speed;
+
+mhc_turning_left:
+    // = MIN(36, C + 4)
+    Cleft_turn  = ((Cleft_turn + 4 >= 36) ? 36 : Cleft_turn + 4);
+    // = MAX(B - C, 0)
+    Bright_turn = ((Bright_turn >= Cleft_turn) ? Bright_turn - Cleft_turn : 0);
+
+mhc_handle_speed:
+    speed = state->speed >> 3; // a new use of 'speed'
+    Aturn_speed = speed + (speed >> 1);
+    if (Aturn_speed < Bright_turn)
+      Bright_turn = Aturn_speed;
+    if (Aturn_speed < Cleft_turn)
+      Cleft_turn = Aturn_speed;
+  }
+
+  // Store turning forces for later (was PUSH BC)
+  saved_Bright_turn = Bright_turn;
+  saved_Cleft_turn  = Cleft_turn;
+
+  // initing Bcount and BCcount_scaled here
+  Bcount = BCcount_scaled = Enegative_scrolling = 0;
+  Acurrent_curvature = state->current_curvature;
+  if (Acurrent_curvature) {
+    if (Acurrent_curvature < 0) {
+      // Negative scroll => scroll horizon right.
+      Enegative_scrolling++; // 0 -> 1
+      Acurrent_curvature = -Acurrent_curvature;
+    }
+
+    // Positive scroll => scroll horizon left. (or negative - it falls through)
+    // unclear if this table is bytes or words
+    HLhorizon_table = &horizon_table[Acurrent_curvature - 1]; // -1 since it's 1-indexed
+    Cvar_a261 = Avar_a261 = state->var_a261;
+    // EX AF,AF'
+    Acounter = state->fast_counter - Cvar_a261;
+    if (Acounter) {
+      Chorz_tab_value = *HLhorizon_table;
+      for (;;) {
+        Acounter -= Chorz_tab_value;
+        if ((s8) Acounter < 0)
+          break;
+        Bcount++;
+        // EX AF,AF'
+        Avar_a261 += Chorz_tab_value;
+        // EX AF,AF'
+      }
+
+      Acount = Bcount; // could perhaps merge Acount and Bcount
+      if (Acount) {
+        state->var_a262 += Acount;
+
+        BCcount_scaled = Bcount * 3; // was A and B
+        if (Enegative_scrolling)
+          BCcount_scaled = -BCcount_scaled;
+      }
+
+      // EX AF,AF'
+      state->var_a261 = Avar_a261;
+    }
+  }
+
+  // No curvature - No scroll required?
+  HLhorizontal_adjust = state->horizontal_adjust + BCcount_scaled;
+  DEadjust = 0;
+  state->horizontal_adjust = 0;
+  Acrashedflag = state->ahc_crashed_flag;
+  if (Acrashedflag) {
+    // was EX DE,HL
+    DEadjust = HLhorizontal_adjust & 0xFF;
+    HLhorizontal_adjust = 0;
+  }
+
+  state->right_turn = saved_Bright_turn; // was POP BC
+  state->left_turn  = saved_Cleft_turn;
+  Acrashedflag -= saved_Bright_turn; // Seems odd
+  if ((s8) Acrashedflag < 0)
+    DEadjust = 0xFF00;
+  DEadjust = (DEadjust & 0xFF00) | (Acrashedflag >> 1); // was SRA
+  HLhorizontal_adjust += DEadjust;
+  if (Acrashedflag && (s8) Acrashedflag < 0)
+    Acrashedflag = -Acrashedflag;
+
+  Acornering = 0;
+  if (Acrashedflag >= 17) {
+    if ((s16) HLhorizontal_adjust < 0) {
+      if ((s16) DEadjust < 0)
+        goto mhc_set_cornering;
+      // Conv: Removed duplicated test from here.
+    } else {
+      if ((s16) DEadjust >= 0 || (s16) HLhorizontal_adjust < 0)
+        goto mhc_set_cornering;
+    }
+    Acornering = 1;
+  }
+
+mhc_set_cornering:
+  state->cornering = Acornering;
+  state->scenedata.road_pos += HLhorizontal_adjust;
+  Dflip_car = 1;
+  if (Enegative_scrolling < 0) {
+    Dflip_car = 0;
+    Acornering = -Acornering;
+  }
+
+  // This could be replaced with a division by six.
+  Bturn_speed = (Acornering < 12) ? (Acornering < 6) ? 0 : 1 : 2; // straight/turn/turn-hard
+
+  state->turn_speed = Bturn_speed; // should be 0/1/2
+  state->flip_car   = Dflip_car;   // should be 0/1
+  if (state->mhc_y_offset)
+    state->cornering = 0; // reset cornering if jumping
 }
 
 // $B318
@@ -6564,13 +6866,13 @@ void animate_hero_car(chqstate_t *state)
 // $B4CC
 void start_chase(chqstate_t *state)
 {
-  state->ahc_SM_B476      = 0;
+  state->ahc_SM_B476        = 0;
   // Starts the animation that puts the cherry light on the roof
-  state->hand_flag    = 1;
+  state->hand_flag          = 1;
   // Enable flashing lights and smash bar
-  state->sighted_flag = 1;
+  state->sighted_flag       = 1;
   // This is animation frame related?
-  state->ahc_SM_B478      = 2;
+  state->ahc_SM_B478        = 2;
 
   state->st.time_sixteenths = 15;
   state->st.time_bcd        = 0x60;
