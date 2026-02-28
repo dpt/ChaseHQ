@@ -7133,21 +7133,20 @@ void smash(chqstate_t *state) {
   }
   if (hits == 19)
     start_chatter(state, 10, &chatterblk_raymond_one_more_time[0]);
-
   state->smash_counter = hits;
 
   level = 0;
-  if (counter != 0) {
+  if (hits != 0) {
     level++;
-    if (counter >= 4) {
+    if (hits >= 4) {
       level++;
-      if (counter >= 7) {
+      if (hits >= 7) {
         level++;
-        if (counter >= 11) {
+        if (hits >= 11) {
           level++;
-          if (counter >= 14) {
+          if (hits >= 14) {
             level++;
-            if (counter >= 17) {
+            if (hits >= 17) {
               level++;
             }
           }
