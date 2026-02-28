@@ -791,6 +791,7 @@ hazard_handler_t no_op;
 void move_hero_car(chqstate_t *state);
 
 void animate_hero_car(chqstate_t *state);
+void ahc_check_hand_flag(chqstate_t *state);
 
 void start_chase(chqstate_t *state);
 
@@ -798,15 +799,16 @@ void smash(chqstate_t *state);
 
 void draw_debris(chqstate_t *state);
 
-void draw_car(chqstate_t *state);
+void draw_car(chqstate_t *state, u8 Aturn_speed, u8 Bwobble);
 
 void draw_car_part(chqstate_t *state);
 
-void draw_smoke(chqstate_t *state);
+void draw_smoke(chqstate_t *state, u8 Aanim_frame, u8 Adash_flip_flag);
 
-void draw_cherry(chqstate_t *state);
+void draw_cherry_light(chqstate_t *state, u8 A, u8 B, u8 C);
+void draw_cherry_b699(chqstate_t *state, u8 A);
 
-void draw_crash(chqstate_t *state);
+void draw_crash(chqstate_t *state, u8 A);
 
 void draw_part(chqstate_t *state);
 void draw_part_entry2(chqstate_t *state,

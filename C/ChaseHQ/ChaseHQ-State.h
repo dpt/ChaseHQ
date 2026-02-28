@@ -442,7 +442,7 @@ struct chqstate {
   // $B325 (SM) in animate_hero_car
   u16       ahc_crashed_flag; // crashed flag
   // $B32E (SM) in animate_hero_car
-  u16       ahc_SM_B32E; // set when crashed
+  u16       ahc_SM_B32E; // set when crashed (a speed)
   // $B356 (SM) in animate_hero_car
   u16       ahc_SM_B356; // perhaps a speed
   // $B36E (SM) in animate_hero_car
@@ -450,17 +450,17 @@ struct chqstate {
   // $B384 (SM) in animate_hero_car
   u8        ahc_delay; // delay counter, set to 5
   // $B38D (SM) in animate_hero_car
-  u8        ahc_SM_B38D; // (flip flag + 1)
+  u8        ahc_SM_B38D_flippingish; // (flip flag + 1)
   // $B395 (SM) in animate_hero_car
-  u8        ahc_SM_B395;
+  u16       ahc_SM_B395_road_pos; // a road position
   // $B3A3 (SM) in animate_hero_car
-  u8        ahc_SM_B3A3;
+  u8        ahc_SM_B3A3_road_pos; // a road position
   // $B3DB (SM) in animate_hero_car
-  u8        ahc_SM_B3DB; // controls flipping
+  u8        ahc_SM_B3DB_flipping; // controls flipping
   // $B476 (SM) in animate_hero_car
-  u8        ahc_SM_B476; // hand flag?
+  u8        ahc_SM_B476_hand_flag; // hand flag?
   // $B478 (SM) in animate_hero_car
-  u8        ahc_SM_B478; // hand animation frame?
+  u8        ahc_SM_B478_hand_frame; // hand animation frame?
 
   // $B5AA (SM) in draw_car
   u8        dc_y_offset;

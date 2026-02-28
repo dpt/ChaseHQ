@@ -4565,10 +4565,10 @@ store_off_road:
 
 csc_a43b:
   A = C;
-  state->ahc_SM_B3DB = A;
+  state->ahc_SM_B3DB_flipping = A;
   // EXX - bank
-  state->ahc_SM_B395 = HLdash;
-  state->ahc_SM_B3A3 = DEdash;
+  state->ahc_SM_B395_road_pos = HLdash;
+  state->ahc_SM_B3A3_road_pos = DEdash;
   if (A)
     return;
 
@@ -4660,7 +4660,7 @@ void scenery_hit(chqstate_t *state, u8 Aflip, u8 Adash)
 
   state->ahc_crashed_flag = 1;
   state->ahc_flip_flag    = Aflip;
-  state->ahc_SM_B38D      = ++Aflip;
+  state->ahc_SM_B38D_flippingish      = ++Aflip;
   state->ahc_delay        = 5;
 
   speed = state->speed;
@@ -4706,9 +4706,9 @@ void check_fork_scenery_collisions(chqstate_t *state, u16 DEdash, u16 HLdash)
 
 set_off_road:
   state->off_road     = off_road;
-  state->ahc_SM_B3DB  = 0;
-  state->ahc_SM_B395  = HLdash;
-  state->ahc_SM_B3A3  = DEdash;
+  state->ahc_SM_B3DB_flipping  = 0;
+  state->ahc_SM_B395_road_pos  = HLdash;
+  state->ahc_SM_B3A3_road_pos  = DEdash;
   if (state->fork_taken == 0) {
     // Left fork was taken, short pole object is on right hand of road.
     shortpoleobj = state->stage->addrof_right_hand_short_pole_object;
@@ -6861,18 +6861,245 @@ mhc_set_cornering:
 // $B318
 void animate_hero_car(chqstate_t *state)
 {
+  u16 HLspeed;            // was HL
+  u8  Acrashed_flag;      // was A
+  u8  Aturn_speed;        // was A
+  u16 HL_b356;            // was HL
+  u16 DE_b356;            // was DE
+  u16 HLroad_pos;         // was HL
+  u8  Cflip_flag;         // was C
+  u8  Adelay;             // was A
+  u16 DEother_road_pos;   // was DE
+  u8  A;                  // was A
+  u8  Aperp_caught_phase; // was A
+  u8  Aflipping;          // was A
+  u8  Cflipping;          // was C
+  u8  Acounter_A;         // was A
+  u8  Bdash_anim_counter; // was B
+  u8  Cdash;              // was A
+  u8  Bwobble;            // was B
+  u8  Bsmoke_anim_frame;  // was B
+
+  HLspeed = state->speed;
+  if (HLspeed > 0) {
+    state->ahc_SM_B3DB_flipping = 0;
+    state->off_road    = 0;
+  }
+
+  Acrashed_flag = state->ahc_crashed_flag;
+  if (Acrashed_flag) {
+    state->cornering = Acrashed_flag;
+    if (HLspeed < state->ahc_SM_B32E)
+      goto ahc_speed_less_or_eq;
+
+    HLspeed -= (HLspeed >> 2) | 3;
+    if (HLspeed == 0)
+      goto ahc_speed_less_or_eq;
+
+    Aturn_speed = 2; // fastest
+    if ((s16) HLspeed < 0) {
+ahc_speed_less_or_eq:
+      // Otherwise HLspeed < 0
+      state->ahc_crashed_flag = 0;
+      Aturn_speed = 1;
+    } else {
+      state->speed = HLspeed;
+    }
+
+    state->turn_speed = Aturn_speed;
+
+    HL_b356 = state->ahc_SM_B356 - (state->ahc_SM_B356 >> 4);
+    state->ahc_SM_B356 = HL_b356;
+    DE_b356 = HL_b356; // was EX DE,HL
+
+    HLroad_pos = state->scenedata.road_pos;
+    Cflip_flag = state->ahc_flip_flag;
+    state->flip_car = Cflip_flag & 1;
+    if (Cflip_flag != 1) {
+      if (Cflip_flag != 2)
+        HLroad_pos += DE_b356; // presumably zero
+    } else {
+      HLroad_pos -= DE_b356; // case 1
+    }
+    state->scenedata.road_pos = HLroad_pos;
+
+    // Decrement this counter
+    Adelay = state->ahc_delay;
+    if (Adelay) {
+      state->ahc_delay = --Adelay;
+      Adelay = state->ahc_SM_B38D_flippingish;
+    }
+    state->ahc_SM_B3DB_flipping = Adelay;
+  }
+
+  // Arrive here if not crashed
+  HLroad_pos = state->scenedata.road_pos;
+  DEother_road_pos = state->ahc_SM_B395_road_pos;
+  A = HLroad_pos >> 8;
+  if ((s8) A >= 0) {
+    if (A == 0) {
+      A = (HLroad_pos & 0xFF) - (DEother_road_pos & 0xFF); // low diff
+      if ((s8) A < 0)
+        goto ahc_b3b0;
+    }
+
+    DEother_road_pos = state->ahc_SM_B3A3_road_pos;
+    A = HLroad_pos >> 8;
+    if (A >= (DEother_road_pos >> 8)) { // carry
+      if (A == 0) {
+        A = (HLroad_pos & 0xFF) - (DEother_road_pos & 0xFF); // low diff
+        if ((s8) A < 0)
+          goto ahc_assign_road_pos_2;
+      }
+
+ahc_b3b0:
+      // EX DE,HLroad_pos
+      HLroad_pos = DEother_road_pos;
+    }
+  }
+
+ahc_assign_road_pos_2:
+  state->scenedata.road_pos = HLroad_pos;
+  if (state->cornering || state->smoke)
+    start_sfx(state, EFFECT_SQUEAL, 5); /* priority 5 */
+
+  Aperp_caught_phase = state->perp_caught_phase;
+  if (Aperp_caught_phase) {
+    if (--Aperp_caught_phase == 0) // was 1
+      goto ahc_load_flip_flag;
+    if (Aperp_caught_phase >= 2)
+      Aturn_speed = 2;
+
+    state->turn_speed = Aturn_speed;
+    state->flip_car   = 1;
+  }
+
+  draw_debris(state);
+
+ahc_load_flip_flag:
+  Aflipping = state->ahc_SM_B3DB_flipping;
+  if (Aflipping) {
+    Cflipping = Aflipping * 3 + 24;
+    Aturn_speed = state->turn_speed;
+    if (Aturn_speed >= 2) {
+      if (state->flip_car)
+        Cflipping++; // 2 -> 3
+      Cflipping++; // 2/3 -> 3/4
+    }
+
+    // EXX bank
+    Acounter_A = state->counter_A;
+    Bdash_anim_counter = Acounter_A & 1; // animation counter
+    Cdash = Acounter_A << 1; // assigned but not used?
+    // EXX unbank
+    draw_crash(state, Cflipping);
+    state->off_road = 0;
+  }
+
+  ahc_check_hand_flag(state);
+
+  // Make the car bounce up and down when it goes off-road
+  Bwobble = 0;
+  if (state->off_road - 1 == 0)
+    Bwobble = (state->counter_C & 1) * 3; // half rate counter
+
+  draw_car(state, state->turn_speed, Bwobble);
+  if (state->cherry_light)
+    draw_cherry_light(state, 0, 1, 2);
+
+  // Check to see if smoke needs drawing
+  Bsmoke_anim_frame = state->counter_A;
+  if (state->cornering == 0) {
+    // Not cornering
+    Bsmoke_anim_frame = state->counter_C;
+    if (state->boost == 0 && state->smoke == 0 && state->off_road != 2)
+      return; // Return if no boost, no smoke and not fully off-road
+  }
+
+  draw_smoke(state, Bsmoke_anim_frame, 0); // right hand
+  draw_smoke(state, Bsmoke_anim_frame, 1); // left hand; exit via
+}
+
+void ahc_check_hand_flag(chqstate_t *state)
+{
+  u8  Ahand_flag;   // was A
+  u16 BCdash;       // was BC
+  u8  Chand_flag;   // was C
+  u8  Ahand_frame;  // was A
+  u8  Bhand_frame;  // was B
+  u8  Chand_frame;  // was C
+
+  Ahand_flag = state->hand_flag;
+  if (Ahand_flag == 0)
+    return;
+
+  if (--Ahand_flag) {
+    // Show the "stop" hand
+    // EXX
+    BCdash = Ahand_flag; // assigned but not used - possibly an arg for draw_part
+    // EXX
+
+    // Avoid the hand animation if turning hard?
+    if (state->turn_speed != 2)
+      draw_crash(state, 36); // exit via
+    else
+      // Otherwise turn_speed is 2 (turn hard).
+      draw_crash(state, state->flip_car + 37); // exit via
+    return;
+  }
+
+  // Start the animation
+  Chand_flag  = state->ahc_SM_B476_hand_flag; // zeroed in start_chase
+  Ahand_frame = state->ahc_SM_B478_hand_frame - 1; // hand animation frame
+  state->ahc_SM_B478_hand_frame = Ahand_frame;
+  if (Ahand_frame == 0) {
+    Bhand_frame = 2;
+    Ahand_frame = ++Chand_flag;
+    if (Ahand_frame < 4) {
+      Chand_flag = ++Ahand_frame;
+      if (Ahand_frame == 2)
+        Bhand_frame++;
+    }
+    state->ahc_SM_B478_hand_frame = Bhand_frame;
+  }
+  state->ahc_SM_B476_hand_flag = Chand_flag;
+
+  if (Ahand_frame >= 7) {
+    // Hide the "stop" hand
+    state->hand_flag = 0;
+    return;
+  }
+
+  if (state->turn_speed != 2)
+    Ahand_frame = 6;
+  else
+    Ahand_frame = (state->flip_car * 7) + 13;
+
+  Ahand_frame += Chand_flag;
+  // PUSH AF
+  draw_cherry_b699(state, Ahand_frame);
+  // POP AF
+  Chand_frame = Ahand_frame;
+  Ahand_flag = state->ahc_SM_B476_hand_flag;
+  if (Ahand_flag < 4) {
+    // A < 4
+    Ahand_flag = ++Chand_frame;
+    draw_cherry_b699(state, Ahand_flag); // exit via
+  } else {
+    state->cherry_light = 1;
+  }
 }
 
 // $B4CC
 void start_chase(chqstate_t *state)
 {
-  state->ahc_SM_B476        = 0;
+  state->ahc_SM_B476_hand_flag = 0;
   // Starts the animation that puts the cherry light on the roof
-  state->hand_flag          = 1;
+  state->hand_flag = 1;
   // Enable flashing lights and smash bar
-  state->sighted_flag       = 1;
+  state->sighted_flag = 1;
   // This is animation frame related?
-  state->ahc_SM_B478        = 2;
+  state->ahc_SM_B478_hand_frame = 2;
 
   state->st.time_sixteenths = 15;
   state->st.time_bcd        = 0x60;
@@ -6897,7 +7124,7 @@ void draw_debris(chqstate_t *state)
 }
 
 // $B58E
-void draw_car(chqstate_t *state)
+void draw_car(chqstate_t *state, u8 Aturn_speed, u8 Bwobble)
 {
 }
 
@@ -6907,17 +7134,20 @@ void draw_car_part(chqstate_t *state)
 }
 
 // $B648
-void draw_smoke(chqstate_t *state)
+void draw_smoke(chqstate_t *state, u8 Aanim_frame, u8 Adash_flip_flag)
 {
 }
 
 // $B67C
-void draw_cherry(chqstate_t *state)
+void draw_cherry_light(chqstate_t *state, u8 A, u8 B, u8 C)
+{
+}
+void draw_cherry_b699(chqstate_t *state, u8 A)
 {
 }
 
 // $B69E
-void draw_crash(chqstate_t *state)
+void draw_crash(chqstate_t *state, u8 A)
 {
 }
 
