@@ -7114,8 +7114,48 @@ void start_chase(chqstate_t *state)
 }
 
 // $B4F0
-void smash(chqstate_t *state)
-{
+void smash(chqstate_t *state) {
+  u8 counter; // was A
+  u8 hits;    // was A
+  u8 level;   // was C
+
+  counter = (state->smash_cycling_counter + 1) & 3;
+  state->smash_cycling_counter = counter;
+
+  // Setup debris_table entry in draw_debris
+  state->dd_debris_subtable_ptr = debris_table[counter * 3];
+  state->dd_SM_B549 = 9; // set counter
+
+  hits = state->smash_counter + 1;
+  if (hits >= 20) {
+    fully_smashed(state); // exit via
+    return;
+  }
+  if (hits == 19)
+    start_chatter(state, 10, &chatterblk_raymond_one_more_time[0]);
+
+  state->smash_counter = hits;
+
+  level = 0;
+  if (counter != 0) {
+    level++;
+    if (counter >= 4) {
+      level++;
+      if (counter >= 7) {
+        level++;
+        if (counter >= 11) {
+          level++;
+          if (counter >= 14) {
+            level++;
+            if (counter >= 17) {
+              level++;
+            }
+          }
+        }
+      }
+    }
+  }
+  state->smash_level = level;
 }
 
 // $B549

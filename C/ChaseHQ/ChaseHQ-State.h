@@ -462,6 +462,14 @@ struct chqstate {
   // $B478 (SM) in animate_hero_car
   u8        ahc_SM_B478_hand_frame; // hand animation frame?
 
+  // $B4F0 (SM) in smash
+  u8        smash_cycling_counter;
+
+  // $B549 (SM) in draw_debris
+  u8        dd_SM_B549;
+  // $B55B (SM) in draw_debris
+  const u8 *dd_debris_subtable_ptr;
+
   // $B5AA (SM) in draw_car
   u8        dc_y_offset;
   // $B5AF (SM) in draw_car
