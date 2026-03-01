@@ -82,6 +82,7 @@
 
 #include <assert.h>
 #include <stddef.h>
+#include <stddef.h>
 #include <stdio.h>
 #include <string.h>
 
@@ -101,29 +102,53 @@
 
 void chasehq_reset_state(chqstate_t *state)
 {
+  static const struct {
+    size_t      dstoff;
+    const void *src;
+    size_t      n;
+  } copies[] = {
+    // $897C
+    { offsetof(chqstate_t, sfx_crash_table), &sfx_crash_table[0], sizeof(sfx_crash_table) },
+    // $8C58
+    { offsetof(chqstate_t, score_messages), &score_messages_template[0], sizeof(score_messages_template) },
+    // $8D18
+    // memcpy(&state->continue_messages[0], &continue_messages[0], sizeof(continue_messages));
+    // $8D77
+    { offsetof(chqstate_t, time_nn), "TIME 1\xB0", 7 },
+    // $8D85
+    { offsetof(chqstate_t, credit_n), "CREDIT \xA0", 8 },
+    // $CE0C
+    { offsetof(chqstate_t, smoke_ce0c), &smoke_ce0c_template[0], sizeof(smoke_ce0c_template) },
+    // $CE0C
+    { offsetof(chqstate_t, smoke_ce19), &smoke_ce19_template[0], sizeof(smoke_ce19_template) },
+    // $CE0C
+    { offsetof(chqstate_t, smoke_ce26), &smoke_ce26_template[0], sizeof(smoke_ce26_template) },
+    // $CE4B
+    { offsetof(chqstate_t, debris_subtable_1), &debris_subtable_1_template[0], sizeof(debris_subtable_1_template) },
+    // $CE5E
+    { offsetof(chqstate_t, debris_subtable_2), &debris_subtable_2_template[0], sizeof(debris_subtable_2_template) },
+    // $CE71
+    { offsetof(chqstate_t, debris_subtable_3), &debris_subtable_3_template[0], sizeof(debris_subtable_3_template) },
+    // $CE84
+    { offsetof(chqstate_t, debris_subtable_4), &debris_subtable_4_template[0], sizeof(debris_subtable_4_template) },
+    // $CE97
+    { offsetof(chqstate_t, debris_subtable_5), &debris_subtable_5_template[0], sizeof(debris_subtable_5_template) },
+  };
+
+  int i;
+
   // Clear the entire state
   memset(state, 0, sizeof(*state));
+
+  // Copy various blocks into place in state
+  for (i = 0; i < sizeof(copies) / sizeof(copies[0]); i++)
+    memcpy((char *) state + copies[i].dstoff, copies[i].src, copies[i].n);
 
   // $8007
   state->wanted_stage_number = 1;
 
   // $8277
   state->attract_blinker = 0xF0;
-
-  // $897C
-  memcpy(&state->sfx_crash_table[0], &sfx_crash_table[0], sizeof(sfx_crash_table));
-
-  // $8C58
-  memcpy(&state->score_messages[0],  &score_messages_template[0], sizeof(score_messages_template));
-
-  // $8D18
-  // memcpy(&state->continue_messages[0], &continue_messages[0], sizeof(continue_messages));
-
-  // $8D77
-  memcpy(state->time_nn, "TIME 1\xB0", 7);
-
-  // $8D85
-  memcpy(state->credit_n, "CREDIT \xA0", 8);
 
   // $9618
   state->rng_seed[0] = 0x7B;
@@ -135,12 +160,19 @@ void chasehq_reset_state(chqstate_t *state)
   state->road_buffer_start  = &state->road_buffer[0];
   state->road_buffer_end    = &state->road_buffer[256];
 
-  // $CE0C
-  memcpy(&state->smoke_ce0c[0], &smoke_ce0c_template[0], sizeof(smoke_ce0c_template));
-  // $CE0C
-  memcpy(&state->smoke_ce19[0], &smoke_ce19_template[0], sizeof(smoke_ce19_template));
-  // $CE0C
-  memcpy(&state->smoke_ce26[0], &smoke_ce26_template[0], sizeof(smoke_ce26_template));
+  // $CE33
+  state->debris_table[0]  = &state->debris_subtable_1[0];
+  state->debris_table[1]  = &state->debris_subtable_2[0];
+  state->debris_table[2]  = &state->debris_subtable_3[0];
+  state->debris_table[3]  = &state->debris_subtable_5[0];
+  state->debris_table[4]  = &state->debris_subtable_3[0];
+  state->debris_table[5]  = &state->debris_subtable_4[0];
+  state->debris_table[6]  = &state->debris_subtable_1[0];
+  state->debris_table[7]  = &state->debris_subtable_2[0];
+  state->debris_table[8]  = &state->debris_subtable_5[0];
+  state->debris_table[9]  = &state->debris_subtable_3[0];
+  state->debris_table[10] = &state->debris_subtable_4[0];
+  state->debris_table[11] = &state->debris_subtable_1[0];
 }
 
 /* ----------------------------------------------------------------------- */
@@ -7123,8 +7155,8 @@ void smash(chqstate_t *state) {
   state->smash_cycling_counter = counter;
 
   // Setup debris_table entry in draw_debris
-  state->dd_debris_subtable_ptr = debris_table[counter * 3];
-  state->dd_SM_B549 = 9; // set counter
+  state->dd_debris_subtables_start = &state->debris_table[counter * 3];
+  state->dd_SM_B549_frame_counter = 9; // set counter
 
   hits = state->smash_counter + 1;
   if (hits >= 20) {
@@ -7160,6 +7192,61 @@ void smash(chqstate_t *state) {
 // $B549
 void draw_debris(chqstate_t *state)
 {
+  u8        Aframe_counter; // was A
+  u8        Biterations;    // was B
+  u8      **HLsubtables;    // was HL
+  u8       *DEsubtable;     // was DE
+  u8        Cframe_offset;  // was C
+  u16       HLoffset;       // was HL
+  u16       BCframe_offset; // was BC
+  u8       *HLsubtable;     // was HL
+  u8        Dy;             // was D
+  u8        Ex;             // was E
+  const u8 *HLbitmap;       // was HL
+  u8        Bheight;        // was B
+  u8        Cwidth_bytes;   // was C
+  u16       BCdash;         // was BC
+  u8        Edash;          // was E
+
+  Aframe_counter = state->dd_SM_B549_frame_counter;
+  if (Aframe_counter == 0)
+    return;
+  state->dd_SM_B549_frame_counter = --Aframe_counter;
+
+  state->dd_SM_B570_offset = Aframe_counter * 2;
+
+  Biterations = 3;
+  HLsubtables = state->dd_debris_subtables_start;
+  do {
+    // PUSH BC
+    DEsubtable = *HLsubtables++;
+    // PUSH HL
+
+    // First sub-table byte seems to be a 0..3 counter
+    Aframe_counter = (*DEsubtable + 1) & 3;
+    *DEsubtable++ = Aframe_counter;
+
+    BCframe_offset = Aframe_counter * 12; // sizeof bitmap_debris images
+    HLoffset = state->dd_SM_B570_offset;
+
+    // BCframe_offset = Cframe_offset;
+    HLsubtable = DEsubtable + HLoffset;
+    Dy = *HLsubtable++;
+    Ex = *HLsubtable;
+
+    HLbitmap = &bitmap_debris_1[0] + BCframe_offset;
+
+    Bheight = 6; // rows
+    Cwidth_bytes = 1; // 1 byte wide masked?
+    // EXX bank
+    BCdash = 0;
+    Edash = 1;
+    // EXX unbank
+    draw_part_entry2(state, Bheight, Cwidth_bytes, Dy, Ex, HLbitmap, 0/*flags??*/);
+
+    // POP HL // addr
+    // POP BC // iterations
+  } while (--Biterations > 0);
 }
 
 // $B58E
@@ -7191,7 +7278,19 @@ void draw_crash(chqstate_t *state, u8 A)
 }
 
 // $B6D6
-void draw_part(chqstate_t *state)
+//
+// B - height
+// C - width
+// D - y
+// E - x
+// HL - bitmap
+// ? - flags
+void draw_part(chqstate_t *state,
+                      u8          height,
+                      u8          width,
+                      u8          y,
+                      u8          x,
+                      const u8   *bitmap)
 {
 }
 

@@ -150,12 +150,16 @@ const u8 smoke_ce0c_template[13];
 const u8 smoke_ce19_template[13];
 const u8 smoke_ce26_template[13];
 
-const u8 *debris_table[12];
-const u8 debris_subtable_1[19];
-const u8 debris_subtable_2[19];
-const u8 debris_subtable_3[19];
-const u8 debris_subtable_4[19];
-const u8 debris_subtable_5[19];
+const u8 debris_subtable_1_template[19];
+const u8 debris_subtable_2_template[19];
+const u8 debris_subtable_3_template[19];
+const u8 debris_subtable_4_template[19];
+const u8 debris_subtable_5_template[19];
+
+const u8 bitmap_debris_1[2 * 6];
+const u8 bitmap_debris_2[2 * 6];
+const u8 bitmap_debris_3[2 * 6];
+const u8 bitmap_debris_4[2 * 6];
 
 const u8 bitmap_arrow[3 * 2 * 28];
 const u8 bitmap_cherry_light[1 * 2 * 7];

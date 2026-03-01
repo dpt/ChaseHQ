@@ -810,7 +810,12 @@ void draw_cherry_b699(chqstate_t *state, u8 A);
 
 void draw_crash(chqstate_t *state, u8 A);
 
-void draw_part(chqstate_t *state);
+void draw_part(chqstate_t *state,
+                      u8          height,
+                      u8          width,
+                      u8          y,
+                      u8          x,
+                      const u8   *bitmap);
 void draw_part_entry2(chqstate_t *state,
                       u8          height,
                       u8          width,

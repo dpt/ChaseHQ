@@ -454,7 +454,7 @@ struct chqstate {
   // $B395 (SM) in animate_hero_car
   u16       ahc_SM_B395_road_pos; // a road position
   // $B3A3 (SM) in animate_hero_car
-  u8        ahc_SM_B3A3_road_pos; // a road position
+  u8        ahc_SM_B3A3_road_pos; // another road position
   // $B3DB (SM) in animate_hero_car
   u8        ahc_SM_B3DB_flipping; // controls flipping
   // $B476 (SM) in animate_hero_car
@@ -466,9 +466,11 @@ struct chqstate {
   u8        smash_cycling_counter;
 
   // $B549 (SM) in draw_debris
-  u8        dd_SM_B549;
+  u8        dd_SM_B549_frame_counter; // frame counter, set to 9 by smash
   // $B55B (SM) in draw_debris
-  const u8 *dd_debris_subtable_ptr;
+  u8      **dd_debris_subtables_start;
+  // $B570 (SM) in draw_debris
+  u16       dd_SM_B570_offset; // (might not need to be a state var)
 
   // $B5AA (SM) in draw_car
   u8        dc_y_offset;
@@ -496,6 +498,20 @@ struct chqstate {
   u8        smoke_ce19[13];
   // $CE26
   u8        smoke_ce26[13];
+
+  // $CE33
+  u8       *debris_table[12];
+  // TODO Make these an array?
+  // $CE4B
+  u8        debris_subtable_1[19];
+  // $CE5E
+  u8        debris_subtable_2[19];
+  // $CE71
+  u8        debris_subtable_3[19];
+  // $CE84
+  u8        debris_subtable_4[19];
+  // $CE97
+  u8        debris_subtable_5[19];
 
   // $E300
   u8        table_e300[32]; // note: first byte should be $60
