@@ -612,12 +612,12 @@ void plot_sprite(chqstate_t *state,
                  u8         *backbuf_addr,
                  u16         bitmap_stride,
                  const u8   *bitmap_data);
-void plot_sprite_even_entry(chqstate_t *state,
-                            int         jump_offset,
-                            u8          height,
-                            u8         *backbuf_addr,
-                            u16         bitmap_stride,
-                            const u8   *bitmap_data);
+void plot_sprite_even(chqstate_t *state,
+                      int         jump_offset,
+                      u8          height,
+                      u8         *backbuf_addr,
+                      u16         bitmap_stride,
+                      const u8   *bitmap_data);
 void plot_sprite_odd(chqstate_t *state,
                      u8          width_bytes,
                      u8          height,
@@ -825,15 +825,30 @@ void draw_part_entry2(chqstate_t *state,
                       u8          flags);
 void draw_part_entry3(chqstate_t *state);
 
-void plot_masked_sprite(chqstate_t *state);
+void plot_masked_sprite(chqstate_t *state,
+                        int         jump_offset,
+                        u8          height,
+                        u16         bitmap_stride,
+                        const u8   *bitmap,
+                        u8         *backbuf);
 
 void pms_entry(chqstate_t *state);
 
-void plot_masked_sprite_flipped(chqstate_t *state);
+void plot_masked_sprite_flipped(chqstate_t *state,
+                                u8          width_bytes,
+                                u8          height,
+                                u8         *backbuf_addr,
+                                u16         bitmap_stride,
+                                const u8   *bitmap_data);
 
 void plot_masked_sprite_flipped_entry2(chqstate_t *state);
 
-void plot_masked_sprite_variant(chqstate_t *state);
+void plot_masked_sprite_inverted(chqstate_t *state,
+                                 u8          A_lefthand,
+                                 u8         *HL_backbuf,
+                                 u8          Bdash_height,
+                                 u16         DEdash_bitmap_stride,
+                                 const u8   *HLdash_bitmap_data);
 
 void scroll_horizon(chqstate_t *state);
 

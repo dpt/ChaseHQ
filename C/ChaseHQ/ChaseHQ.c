@@ -2528,7 +2528,7 @@ void draw_object_9333(chqstate_t *state, int carry, u8 C, u8 E, u8 *HL, u8 *IY)
     // EX AF,AF'
   }
 
-  // EX AF,AF'
+  // EX AF,AF'  - possibly banking the sprite width
 _933d:
   D = state->doc_SM_933D;
   A = IY[0] - IY[53];
@@ -2620,28 +2620,28 @@ _939c:
   A = D;
   L = (A & 0x70) * 2 + B;
   A = state->doc_SM_93C0; // set to 0 or 2
-  if (A == 0)
-    goto _93d0;
-  A--;
-  if (A)
-    goto _93df;
-  // EX AF,AF'
-  if (carry)
-    goto plot_masked_sprite_variant; // exit via
-  goto _9479;
+  if (A) {
+    if (--A)
+      goto _93df;
+    // EX AF,AF'
+    if (carry) {
+      plot_masked_sprite_inverted(state, A=width_bytes...); // exit via
+      return;
+    }
+    goto _9479;
+  }
 
-_93d0:
   // EX AF,AF'
   if (Z) {
     if (carry)
-      draw_part_entry3(...); // exit via
+      draw_part_entry3(state, ...); // exit via
     else
-      plot_sprite(...); // exit via
+      plot_sprite(state, ...); // exit via
   } else {
     if (carry)
-      plot_masked_sprite_flipped(...); // exit via
+      plot_masked_sprite_flipped(state, ...); // exit via
     else
-      plot_sprite_flipped(...); // exit via
+      plot_sprite_flipped(state, ...); // exit via
   }
   return;
 
@@ -2656,7 +2656,7 @@ _93df:
   IX = 0x94C8; // base of jump table in plot_sprite...
   A = 4 - A;
   IX += A * 5;
-  BC = plot_sprite_even_entry;
+  BC = plot_sprite_even;
 
 do_set_callbacks:
   state->SM_940F = BC;
@@ -2670,7 +2670,7 @@ _9404:
   state->SM_9494 = A;
   // EXX
 
-  // call e.g. plot_sprite_even_entry
+  // call e.g. plot_sprite_even
   state->SM_940F(state, IX, B, HL, DEdash, HLdash);
 
   HL = state->SM_9412;
@@ -2711,7 +2711,13 @@ _945f:
     goto _9474;
   state->SM_945F = A;
 
-  plot_masked_sprite(state, ...); // call
+  // call
+  plot_masked_sprite(state,
+                     IX, // jump_offset
+                     B, // height
+                     DE, // bitmap_stride
+                     HL, // bitmap
+                     HLdash); // backbuf
 
   HL = state->SM_946C;
   B  = 0;
@@ -2719,7 +2725,12 @@ _945f:
 
 _9474:
   B += A;
-  plot_masked_sprite(sprite, ...); // exit via
+  plot_masked_sprite(state,
+                     IX, // jump_offset
+                     B, // height
+                     DE, // bitmap_stride
+                     HL, // bitmap
+                     HLdash /* backbuf */); // exit via
   return;
 
 _9479:
@@ -2758,13 +2769,18 @@ _9479:
 #endif
 }
 
-// $949C
-//
-// width_bytes - was A
-// height - was B
-// backbuf_addr - was HL
-// bitmap_stride - was DE'
-// bitmap_data - was HL'
+/**
+ * $949C: Plot an unmasked sprite
+ *
+ * This function draws the given bitmap to the back buffer.
+ *
+ * \param[in] state         Pointer to game state.
+ * \param[in] width_bytes   Byte width of bitmap data. (was A)
+ * \param[in] height        Number of rows. (was B)
+ * \param[in] backbuf_addr  Back buffer address to draw at. (was HL)
+ * \param[in] bitmap_stride Byte width of bitmap data. (was DE')
+ * \param[in] bitmap_data   Source bitmap data. (was HL')
+ */
 void plot_sprite(chqstate_t *state,
                  u8          width_bytes,
                  u8          height,
@@ -2772,56 +2788,65 @@ void plot_sprite(chqstate_t *state,
                  u16         bitmap_stride,
                  const u8   *bitmap_data)
 {
-  int carry = 0;
+  int odd;         // was carry
   int jump_offset; // was IX
 
-  SRL(width_bytes);
-  if (carry) {
+  odd = width_bytes & 1;
+  width_bytes >>= 1;
+  if (odd) {
     plot_sprite_odd(state,
                     width_bytes,
                     height,
                     backbuf_addr,
                     bitmap_stride,
                     bitmap_data);
-    return;
+  } else {
+    jump_offset = 5 * (4 - width_bytes); // 5 bytes/op
+    plot_sprite_even(state,
+                     jump_offset,
+                     height,
+                     backbuf_addr,
+                     bitmap_stride,
+                     bitmap_data);
   }
-
-  // sprite has even width
-
-  jump_offset = 5 * (4 - width_bytes); // 5 bytes/op
-
-  plot_sprite_even_entry(state,
-                         jump_offset,
-                         height,
-                         backbuf_addr,
-                         bitmap_stride,
-                         bitmap_data);
 }
 
-void plot_sprite_even_entry(chqstate_t *state,
-                            int         jump_offset,
-                            u8          height,
-                            u8         *backbuf_addr,
-                            u16         bitmap_stride,
-                            const u8   *bitmap_data)
+/**
+ * $94B1: Plot an unmasked sprite (for even widths)
+ *
+ * This function draws the given bitmap to the back buffer.
+ *
+ * \param[in] state         Pointer to game state.
+ * \param[in] jump_offset   Jump table byte offset (e.g. N * 5). (was IX)
+ * \param[in] height        Number of rows. (was B)
+ * \param[in] backbuf_addr  Back buffer address to draw at. (was HL)
+ * \param[in] bitmap_stride Byte width of bitmap data. (was DE')
+ * \param[in] bitmap_data   Source bitmap data. (was HL')
+ */
+void plot_sprite_even(chqstate_t *state,
+                      int         jump_offset,
+                      u8          height,
+                      u8         *backbuf_addr,
+                      u16         bitmap_stride,
+                      const u8   *bitmap_data)
 {
   const u8 *SPsrc;
-  u8       *backbuf_orig; //  was A
+  u8       *backbuf_orig; // was A
 
   // Conv: B & C moved into prevbufrow forward
-  // EXX bank
+  // EXX - bank
   goto plot_sprite_even_start;
 
   for (;;) {
-    // EXX bank
+    // EXX - bank
     if (--height == 0)
       return;
 
-    bitmap_data += bitmap_stride;
+    bitmap_data += bitmap_stride; // Advance to start of next row
 
 plot_sprite_even_start:
     SPsrc = bitmap_data;
-    // EXX unbank
+    // EXX - unbank
     backbuf_orig = backbuf_addr;
     switch (jump_offset / 5) {
     default:
@@ -2844,6 +2869,18 @@ plot_sprite_even_start:
   }
 }
 
+/**
+ * $94F2: Plot an unmasked sprite (for odd widths)
+ *
+ * This function draws the given bitmap to the back buffer.
+ *
+ * \param[in] state         Pointer to game state.
+ * \param[in] width_bytes   Byte width of bitmap data. (was A)
+ * \param[in] height        Number of rows. (was B)
+ * \param[in] backbuf_addr  Back buffer address to draw at. (was HL)
+ * \param[in] bitmap_stride Byte width of bitmap data. (was DE')
+ * \param[in] bitmap_data   Source bitmap data. (was HL')
+ */
 void plot_sprite_odd(chqstate_t *state,
                      u8          width_bytes,
                      u8          height,
@@ -2855,17 +2892,15 @@ void plot_sprite_odd(chqstate_t *state,
   const u8 *SPsrc;
   u8       *backbuf_orig; // was A
 
-  // sprite has an odd width
-
   width_bytes++;
   jump_offset = 5 * (4 - width_bytes); // 5 bytes/op
 
   // Conv: B & C moved into prevbufrow
-  // EXX bank
+  // EXX - bank
   goto plot_sprite_odd_start;
 
   for (;;) {
-    // EXX bank
+    // EXX - bank
     if (--height == 0)
       return;
 
@@ -2873,7 +2908,7 @@ void plot_sprite_odd(chqstate_t *state,
 
 plot_sprite_odd_start:
     SPsrc = bitmap_data;
-    // EXX unbank
+    // EXX - unbank
     backbuf_orig = backbuf_addr;
     switch (jump_offset / 5) {
     default:
@@ -2895,13 +2930,18 @@ plot_sprite_odd_start:
   }
 }
 
-// $9542
-//
-// width_bytes - was A
-// height - was B
-// backbuf_addr - was HL
-// bitmap_stride - was DE'
-// bitmap_data - was HL'
+/**
+ * $9542: Plot a flipped sprite
+ *
+ * This function draws the given bitmap to the back buffer.
+ *
+ * \param[in] state         Pointer to game state.
+ * \param[in] width_bytes   Byte width of bitmap data. (was A)
+ * \param[in] height        Number of rows. (was B)
+ * \param[in] backbuf_addr  Back buffer address to draw at. (was HL)
+ * \param[in] bitmap_stride Byte width of bitmap data. (was DE')
+ * \param[in] bitmap_data   Source bitmap data. (was HL')
+ */
 void plot_sprite_flipped(chqstate_t *state,
                          u8          width_bytes,
                          u8          height,
@@ -2909,13 +2949,14 @@ void plot_sprite_flipped(chqstate_t *state,
                          u16         bitmap_stride,
                          const u8   *bitmap_data)
 {
-  int carry = 0;
+  int odd;         // was carry
   int jump_offset; // was IX
 
   backbuf_addr += width_bytes;
 
-  SRL(width_bytes);
-  if (carry) {
+  odd = width_bytes & 1;
+  width_bytes >>= 1;
+  if (odd) {
     plot_sprite_flipped_odd(state, width_bytes, height, backbuf_addr,
                             bitmap_stride, bitmap_data);
     return;
@@ -2927,7 +2968,7 @@ void plot_sprite_flipped(chqstate_t *state,
 
 #if 0
   D' = 0xEF;
-  // EXX bank
+  // EXX - bank
   D = 0;
 #endif
 
@@ -2939,15 +2980,15 @@ void plot_sprite_flipped(chqstate_t *state,
   goto plot_sprite_flipped_even_start;
 
   for (;;) {
-    // EXX bank
+    // EXX - bank
     if (--height == 0)
       return;
 
     bitmap_data += bitmap_stride;
 
-    plot_sprite_flipped_even_start:
+plot_sprite_flipped_even_start:
     SPsrc = bitmap_data;
-    // EXX unbank
+    // EXX - unbank
     backbuf_orig = backbuf_addr;
     switch (jump_offset / 9) {
     default:
@@ -2970,13 +3011,13 @@ void plot_sprite_flipped(chqstate_t *state,
   }
 }
 
-  void plot_sprite_flipped_odd(chqstate_t *state,
-  u8          width_bytes,
-  u8          height,
-  u8         *backbuf_addr,
-  u16         bitmap_stride,
-  const u8   *bitmap_data)
-  {
+void plot_sprite_flipped_odd(chqstate_t *state,
+                             u8          width_bytes,
+                             u8          height,
+                             u8         *backbuf_addr,
+                             u16         bitmap_stride,
+                             const u8   *bitmap_data)
+{
   int       jump_offset; // was IX
   const u8 *SPsrc;
   u8       *backbuf_orig; //  was A
@@ -2988,18 +3029,18 @@ void plot_sprite_flipped(chqstate_t *state,
 
 #if 0
   D' = 0xEF;
-  // EXX bank
+  // EXX - bank
   D = 0;
 #endif
 
   // -- split here ?
 
   // Conv: B & C moved into prevbufrow
-  // EXX bank
+  // EXX - bank
   goto psf_odd_body;
 
   for (;;) {
-    // EXX bank
+    // EXX - bank
     if (--height == 0)
       return;
 
@@ -3007,7 +3048,7 @@ void plot_sprite_flipped(chqstate_t *state,
 
 psf_odd_body:
     SPsrc = bitmap_data;
-    // EXX unbank
+    // EXX - unbank
     backbuf_orig = backbuf_addr;
     switch (jump_offset / 9) {
     default:
@@ -7019,11 +7060,11 @@ ahc_load_flip_flag:
       Cflipping++; // 2/3 -> 3/4
     }
 
-    // EXX bank
+    // EXX - bank
     Acounter_A = state->counter_A;
     Bdash_anim_counter = Acounter_A & 1; // animation counter
     Cdash = Acounter_A << 1; // assigned but not used?
-    // EXX unbank
+    // EXX - unbank
     draw_crash(state, Cflipping);
     state->off_road = 0;
   }
@@ -7238,10 +7279,10 @@ void draw_debris(chqstate_t *state)
 
     Bheight = 6; // rows
     Cwidth_bytes = 1; // 1 byte wide masked?
-    // EXX bank
+    // EXX - bank
     BCdash = 0;
     Edash = 1;
-    // EXX unbank
+    // EXX - unbank
     draw_part_entry2(state, Bheight, Cwidth_bytes, Dy, Ex, HLbitmap, 0/*flags??*/);
 
     // POP HL // addr
@@ -7284,17 +7325,23 @@ void draw_crash(chqstate_t *state, u8 A)
 // D - y
 // E - x
 // HL - bitmap
-// ? - flags
 void draw_part(chqstate_t *state,
-                      u8          height,
-                      u8          width,
-                      u8          y,
-                      u8          x,
-                      const u8   *bitmap)
+               u8          height,
+               u8          width,
+               u8          y,
+               u8          x,
+               const u8   *bitmap)
 {
 }
 
 // $B6DD
+//
+// B - height
+// C - width
+// D - y
+// E - x
+// HL - bitmap
+// ? - flags
 void draw_part_entry2(chqstate_t *state,
                       u8          height,
                       u8          width,
@@ -7310,29 +7357,206 @@ void draw_part_entry3(chqstate_t *state)
 {
 }
 
-// $B716
-void plot_masked_sprite(chqstate_t *state)
+/**
+ * $B716: Plot a masked sprite
+ *
+ * This function draws the given bitmap to the back buffer.
+ *
+ * \param[in] state         Pointer to game state.
+ * \param[in] jump_offset   Jump table byte offset (e.g. N * 6). (was IX)
+ * \param[in] height        Number of rows. (was B)
+ * \param[in] bitmap_stride Byte width of bitmap data. (was DE)
+ * \param[in] bitmap        Source bitmap data. (was HL)
+ * \param[in] backbuf       Back buffer address to draw at. (was HL')
+ */
+void plot_masked_sprite(chqstate_t *state,
+                        int         jump_offset,
+                        u8          height,
+                        u16         bitmap_stride,
+                        const u8   *bitmap,
+                        u8         *backbuf)
 {
+  const u8 *src;          // was SP
+  u8       *backbuf_orig; // was C
+  u8        mask;         // was E
+  u8        data;         // was D
+
+  goto pms_entry;
+
+  for (;;) {
+    // EXX - unbank
+    if (--height == 0)
+      return;
+
+    bitmap += bitmap_stride; // Advance to start of next row
+
+    // TODO This entry point pms_entry is used directly. In this C version it's just the same as calling the function.
+pms_entry:
+    src = bitmap;
+    // EXX - bank
+    backbuf_orig = backbuf; // Preserve start address
+    switch (jump_offset / 6) {
+    default:
+      assert(0);
+    case 0:
+      // Conv: Original uses POP that loads 16 bits at a time
+      mask = *src++, data = *src++, *backbuf = (*backbuf & mask) | data, backbuf++;
+    case 1:
+      mask = *src++, data = *src++, *backbuf = (*backbuf & mask) | data, backbuf++;
+    case 2:
+      mask = *src++, data = *src++, *backbuf = (*backbuf & mask) | data, backbuf++;
+    case 3:
+      mask = *src++, data = *src++, *backbuf = (*backbuf & mask) | data, backbuf++;
+    case 4:
+      mask = *src++, data = *src++, *backbuf = (*backbuf & mask) | data, backbuf++;
+    case 5:
+      mask = *src++, data = *src++, *backbuf = (*backbuf & mask) | data, backbuf++;
+    case 6:
+      mask = *src++, data = *src++, *backbuf = (*backbuf & mask) | data, backbuf++;
+    case 7:
+      mask = *src++, data = *src++, *backbuf = (*backbuf & mask) | data, backbuf++;
+    }
+    backbuf = backbuf_orig; // Restore row start address
+
+    // CHECK is prevbufrow the right form?
+    backbuf = ADDRTOBACKBUF(prevbufrow(BACKBUFTOADDR(backbuf)));
+  }
 }
 
-// $B724
-void pms_entry(chqstate_t *state)
+/**
+ * $B76C: Plot a flipped and masked sprite
+ *
+ * This function draws the given bitmap to the back buffer.
+ *
+ * \param[in] state         Pointer to game state.
+ * \param[in] width_bytes   Byte width of bitmap data. (was A)
+ * \param[in] height        Number of rows. (was B)
+ * \param[in] backbuf_addr  Back buffer address to draw at. (was HL)
+ * \param[in] bitmap_stride Byte width of bitmap data. (was DE)
+ * \param[in] bitmap_data   Source bitmap data. (was HL)
+ */
+void plot_masked_sprite_flipped(chqstate_t *state,
+                                u8          width_bytes,
+                                u8          height,
+                                u8         *backbuf_addr,
+                                u16         bitmap_stride,
+                                const u8   *bitmap_data)
 {
-}
+  u8       *backbuf_addr2;  // was DE
+  int       jump_offset;    // was IX   aka left hand clip?
+  u8        Ddash;          // was D
+  const u8 *src;            // was SP
+  u8       *Adash;          // was A'
+  u8        mask;           // was C
+  u8        data;           // was B
 
-// $B76C
-void plot_masked_sprite_flipped(chqstate_t *state)
-{
+  backbuf_addr2 = backbuf_addr + width_bytes; // moving dst ptr to end
+
+plot_masked_sprite_flipped_entry2:
+  jump_offset = (width_bytes - 8) * 8; // len of jump table seq
+
+  // EXX - bank
+  Ddash = 0; // clear top byte of DE'? not sure
+  goto pmsf_start;
+
+pmsf_reset_next:
+  // EX AF,AF' - unbank
+  backbuf_addr2 = Adash; // dst.lo = Adash  (reset scanline ptr)
+
+pmsf_next:
+  // EX AF,AF' - bank
+  // EXX - unbank
+  if (--height == 0)
+    return;
+
+  bitmap_data += bitmap_stride;
+
+pmsf_start:
+  src = bitmap_data;
+  // EXX - unbank
+  Adash = backbuf_addr2; // Adash = dst.lo
+  // EX AF,AF' - unbank
+pmsf_jumptable:
+  switch (jump_offset / 8) {
+  case 0: mask = *src++, data = *src++, *backbuf_addr2 = (*backbuf_addr2 & state->flipped[mask]) | state->flipped[data], backbuf_addr2--;
+  case 1: mask = *src++, data = *src++, *backbuf_addr2 = (*backbuf_addr2 & state->flipped[mask]) | state->flipped[data], backbuf_addr2--;
+  case 2: mask = *src++, data = *src++, *backbuf_addr2 = (*backbuf_addr2 & state->flipped[mask]) | state->flipped[data], backbuf_addr2--;
+  case 3: mask = *src++, data = *src++, *backbuf_addr2 = (*backbuf_addr2 & state->flipped[mask]) | state->flipped[data], backbuf_addr2--;
+  case 4: mask = *src++, data = *src++, *backbuf_addr2 = (*backbuf_addr2 & state->flipped[mask]) | state->flipped[data], backbuf_addr2--;
+  case 5: mask = *src++, data = *src++, *backbuf_addr2 = (*backbuf_addr2 & state->flipped[mask]) | state->flipped[data], backbuf_addr2--;
+  case 6: mask = *src++, data = *src++, *backbuf_addr2 = (*backbuf_addr2 & state->flipped[mask]) | state->flipped[data], backbuf_addr2--;
+  case 7: mask = *src++, data = *src++, *backbuf_addr2 = (*backbuf_addr2 & state->flipped[mask]) | state->flipped[data], backbuf_addr2--;
+  }
+
+  // routine has another different form of this?
+  backbuf_addr2 = ADDRTOBACKBUF(prevbufrow(BACKBUFTOADDR(backbuf_addr2)));
+  goto pmsf_next;
 }
 
 // $B770
 void plot_masked_sprite_flipped_entry2(chqstate_t *state)
 {
+  // draw_part calls this
+  // goto plot_masked_sprite_flipped_entry2;
 }
 
 // $B7EF
-void plot_masked_sprite_variant(chqstate_t *state)
+//
+// likely an inverted variation
+// hit when barriers are flipped over
+//
+// sampled
+// A = 0, BC = $1000, DE = $2DFF, HL = $FD50  backbuf
+// A' = 0, BC' = $0704  B'=height, DE' = $0004, HL' = $6EB5  bitmap_barrier_4s (which is 2bytes x 2 x 7)
+void plot_masked_sprite_inverted(chqstate_t *state,
+                                 u8          A_lefthand,
+                                 u8         *HL_backbuf,
+                                 u8          Bdash_height, // what's in C'?
+                                 u16         DEdash_bitmap_stride,
+                                 const u8   *HLdash_bitmap_data)
 {
+  int       carry = 0;
+  int       jump_offset;              // was IX
+  u16       HLdash_bitmap_offset;     // was HL'
+  u8        A;                        // was A
+  u8        iterations;               // was B'
+  const u8 *HLdash_bitmap_data_final; // was HL'
+
+  // Conv: Setting SP restore removed
+  jump_offset = (8 - A_lefthand) * 6; // jump table index * entry size
+  // Conv: Removed setting B to 15 for line stepping
+  // EXX - Bank
+  DEdash_bitmap_stride &= 0x00FF; // why clearing?
+  // PUSH Bdash_height -- and C' too
+  // PUSH HLdash_bitmap_data
+
+  // Multiplier
+  HLdash_bitmap_offset = 0; // multiplier // total/result
+  A = (Bdash_height - 1) << 2; // multiplicand // shift up so loop can shift to carry
+  iterations = 5; // iterations
+  do {
+    RL(A);
+    if (carry)
+      HLdash_bitmap_offset += DEdash_bitmap_stride;
+    HLdash_bitmap_offset <<= 1;
+  } while (--iterations > 0);
+  RL(A);
+  if (carry)
+    HLdash_bitmap_offset += DEdash_bitmap_stride;
+
+  // POP BCdash -- HL' on entry (bitmap data ptr)
+  HLdash_bitmap_data_final = HLdash_bitmap_offset + HLdash_bitmap_data;
+  // POP BCdash -- BC' on entry - height
+
+  DEdash_bitmap_stride = -DEdash_bitmap_stride;
+
+  // spot that the EXX is unpaired so we end up using the 'other' bank here
+  plot_masked_sprite(state,
+                     jump_offset,
+                     Bdash_height,
+                     DEdash_bitmap_stride,
+                     HLdash_bitmap_data_final,
+                     HL_backbuf); // was exit via pms_entry
 }
 
 // $B848
@@ -8179,7 +8403,7 @@ void build_height_table(chqstate_t *state)
 
   pvtabbase = pvtab = &vertical_e600[counter / 22][1];
   C = -multiply(orig_counter, heightbyte);
-  // EXX bank
+  // EXX - bank
 
   // This builds the look-up table at $E301. Assuming it's a height table.
   iterations = 21;
