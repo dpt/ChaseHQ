@@ -6628,45 +6628,45 @@ void no_op(chqstate_t *state, hazard_t *hazard)
 void move_hero_car(chqstate_t *state)
 {
   // TODO Sort these decls by use
-  u8        y_offset;             // was A
-  u8       *jump_data;            // was HL
-  u8        boost;                // was A
-  u8        Cinput;               // was C
-  u8        Ainput;               // was A
-  u8       *pgear;                // was HL
-  u8        smoke;                // was A
-  u8        gear_lockout;         // was A
-  u8        gear;                 // was A
-  u16       speed;                // was HL
-  u8        off_road;             // was A
-  u16       BCmax_speed;          // was BC
-  u16       BCspeed_diff;         // was BC
-  u8        Ainclined;            // was A
-  u8        Apitch;               // was A
-  u8        Cleft_turn;           // was C
-  u8        Hinput;               // was H
-  u8        Bright_turn;          // was B
-  u16       BCpitch_speed_delta;  // was BC
-  u16       DEoldspeed;           // was DE
-  u8        Bturn_speed;          // was B
-  u8        Dflip_car;            // was D
-  u8        Acornering;           // was A
-  u8        Acurrent_curvature;   // was A
-  const u8 *HLhorizon_table;      // was HL
-  u8        saved_Cleft_turn;     // was C
-  u8        saved_Bright_turn;    // was B
-  u8        Acrashedflag;         // was A
-  u8        Aturn_speed;          // was A
-  u8        Bcount;               // was B
-  u8        Cvar_a261;            // was C
-  u8        Enegative_scrolling;  // was E
-  u8        Avar_a261;            // was A
-  u8        Acounter;             // was A'
-  u8        Chorz_tab_value;      // was C
-  u8        Acount;               // was A'
-  u16       BCcount_scaled;       // was BC
-  u16       HLhorizontal_adjust;  // was HL
-  u16       DEadjust;             // was DE
+  u8         y_offset;             // was A
+  u8        *jump_data;            // was HL
+  u8         boost;                // was A
+  u8         Cinput;               // was C
+  u8         Ainput;               // was A
+  u8        *pgear;                // was HL
+  u8         smoke;                // was A
+  u8         gear_lockout;         // was A
+  u8         gear;                 // was A
+  u16        speed;                // was HL
+  u8         off_road;             // was A
+  u16        BCmax_speed;          // was BC
+  u16        BCspeed_diff;         // was BC
+  u8         Ainclined;            // was A
+  u8         Apitch;               // was A
+  u8         Cleft_turn;           // was C
+  u8         Hinput;               // was H
+  u8         Bright_turn;          // was B
+  u16        BCpitch_speed_delta;  // was BC
+  u16        DEoldspeed;           // was DE
+  u8         Bturn_speed;          // was B
+  u8         Dflip_car;            // was D
+  u8         Acornering;           // was A
+  u8         Acurrent_curvature;   // was A
+  const u16 *HLhorizon_table;      // was HL
+  u8         saved_Cleft_turn;     // was C
+  u8         saved_Bright_turn;    // was B
+  u8         Acrashedflag;         // was A
+  u8         Aturn_speed;          // was A
+  u8         Bcount;               // was B
+  u8         Cvar_a261;            // was C
+  u8         Enegative_scrolling;  // was E
+  u8         Avar_a261;            // was A
+  u8         Acounter;             // was A'
+  u8         Chorz_tab_value;      // was C
+  u8         Acount;               // was A'
+  u16        BCcount_scaled;       // was BC
+  u16        HLhorizontal_adjust;  // was HL
+  u16        DEadjust;             // was DE
 
   y_offset = state->mhc_y_offset; // load jump counter, highest is 8
   if (y_offset) {
@@ -6776,7 +6776,7 @@ mhc_check_brake:
   if ((s16) speed < 0)
     speed = 0; // clamp to zero
 
-  Ainclined = state->inclined - 1;
+  Ainclined = state->inclined_counter - 1;
   if ((s8) Ainclined < 0) {
     Apitch = state->dc_pitch;
     if (Apitch == 0 || speed == 0) {
@@ -6791,7 +6791,7 @@ mhc_check_brake:
       Ainclined = 3;
     }
   }
-  state->inclined = Ainclined;
+  state->inclined_counter = Ainclined;
   state->speed = MIN(speed, 511); // clamp to 511 max
 
   Hinput = Cinput; // was POP HL (get user input)
@@ -6849,7 +6849,8 @@ mhc_handle_speed:
 
     // Positive scroll => scroll horizon left. (or negative - it falls through)
     // unclear if this table is bytes or words
-    HLhorizon_table = &horizon_table[Acurrent_curvature - 1]; // -1 since it's 1-indexed
+    // -1 since it's 1-indexed (but now it's words so can this work?)
+    HLhorizon_table = &horizon_table[Acurrent_curvature - 1];
     Cvar_a261 = Avar_a261 = state->var_a261;
     // EX AF,AF'
     Acounter = state->fast_counter - Cvar_a261;
@@ -7562,6 +7563,102 @@ void plot_masked_sprite_inverted(chqstate_t *state,
 // $B848
 void scroll_horizon(chqstate_t *state)
 {
+  int        carry = 0;
+  u16        speed;                     // was HL
+  u8         current_curvature;         // was A
+  u8         Adash;                     // was A'
+  const u16 *HLhorizon_table;           // was HL
+  u16        BChorizon_table_value;     // was BC
+  u8         Aregular;                  // was A
+  u8         Aincline;                  // was A
+  u8         Adiff;                     // was A
+  u8         Bcounter;                  // was C
+  u8         Eset_if_incline_negative;  // was C
+  u8         Chorizon_table_value;      // was C
+  u8         Avar_a25a_delta;           // was A
+  u16        BCcounter;                 // was BC
+
+  if ((speed = state->speed) == 0)
+    return;
+
+  // Horizontal scrolling
+  //
+
+  if ((current_curvature = state->current_curvature) != 0) {
+    // A' is used here uninitialised. The original game may be relying on it
+    // being last set in move_hero_car at $B296. Or it might be a bug.
+    //
+
+    // EX AF,AF'
+    carry = (speed >> 8) & 1;
+    RL(Adash);
+    RL(Adash);
+    RL(Adash);
+    Adash &= 6; // get top two bits of speed, scaled up by 2
+    BChorizon_table_value = horizon_table[(state->horizon_a25d + Adash) / 2]; // CHECK scaling / offset
+    BChorizon_table_value = (BChorizon_table_value >> 8) | (BChorizon_table_value << 8); // Conv: Swap
+
+    // Decrement horizon_a25e
+    if (--state->horizon_x_scroll == 0) {
+      state->horizon_x_scroll = BChorizon_table_value >> 8;
+      // EX AF,AF' - bank so we can keep Aregular
+      Aregular = BChorizon_table_value & 0xFF;
+      if ((s8) Aregular < 0)
+        Aregular = -Aregular;
+
+      Aregular += state->dr_horizon_x_scroll; // 0..19
+      if ((s8) Aregular < 0)
+        Aregular += 20;
+      if (Aregular >= 20)
+        Aregular -= 20;
+      state->dr_horizon_x_scroll = Aregular;
+    }
+  }
+
+  Avar_a25a_delta = 0;
+  Bcounter = 0;
+  Eset_if_incline_negative = 0;
+
+  // Vertical scrolling
+  //
+
+  // EX AF,AF' - bank zeroed Aregular, unbank Aincline from earlier
+  if ((Aincline = state->incline) == 0)
+    return; // flat road
+
+  if (Aincline < 0) {
+    Eset_if_incline_negative = 1; // was INC E
+    Aincline = -Aincline;
+  }
+
+  HLhorizon_table = &horizon_table[(-1 + Aincline) / 2]; // CHECK: Scaling / offset
+  Adiff = state->fast_counter - state->var_a25b;
+  if (Adiff)
+    return;
+
+  Chorizon_table_value = *HLhorizon_table & 0xFF; // load BYTE from horizon_table
+  for (;;) {
+    carry = Adiff < Chorizon_table_value; // added
+    Adiff -= Chorizon_table_value;
+    if (carry)
+      break;
+    Bcounter++;
+    // EX AF,AF'
+    Avar_a25a_delta += Chorizon_table_value;
+    // EX AF,AF'
+  }
+  if (Bcounter == 0)
+    return;
+
+  state->var_a25a += Avar_a25a_delta;
+
+  // Sign extend based on low bit of Eset_if_incline_negative
+  BCcounter = (Eset_if_incline_negative) ? -Bcounter : Bcounter;
+
+  // Adjust horizon_level
+  state->st.horizon_level += BCcounter;
+  // EX AF,AF'
+  state->var_a25b += Bcounter;
 }
 
 // $B8D2

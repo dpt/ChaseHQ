@@ -316,7 +316,7 @@ struct chqstate {
   // $A24A
   u16       speed;
   // $A24C
-  u8        inclined;
+  u8        inclined_counter;
   // $A24D
   u8        cornering;
   // $A24E
@@ -337,7 +337,7 @@ struct chqstate {
   u8        distance_bcd[2];
 
   // $A258
-  u8        incline;
+  u8        incline; // $FD..$03 = climbing/level/descending
   // $A259
   u8        var_a259;
   // $A25A
@@ -349,7 +349,7 @@ struct chqstate {
   // $A25D
   u8        horizon_a25d;
   // $A25E
-  u8        horizon_a25e;
+  u8        horizon_x_scroll; // cycles 4..1 or similar when roads curve
   // $A25F
   u8        horizontal_adjust;
   // $A261
@@ -491,6 +491,9 @@ struct chqstate {
   u8        dt_SM_C15E;
   // $C161 (SM) in draw_tunnel
   u8        dt_SM_C161;
+
+  // $C7E7 (SM) in draw_road
+  u8        dr_horizon_x_scroll;
 
   // $CE0C
   u8        smoke_ce0c[13];

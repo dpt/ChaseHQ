@@ -144,7 +144,7 @@ const u8 hazard_pos_speed[3 * 4];
 
 const u8 hero_car_jump_table[10 * 2];
 
-const u8 horizon_table[32];
+const u16 horizon_table[16];
 
 const u8 smoke_ce0c_template[13];
 const u8 smoke_ce19_template[13];
