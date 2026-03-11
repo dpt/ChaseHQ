@@ -5897,10 +5897,10 @@ void spawn_hazards(chqstate_t *state)
   if (--hazard == 0)
     goto sh_add_hazards_done; // if 2
 
-  roadbuf += 2; // FIXME Use WRAPPINGINCREMENT here
+  WRAPPING(roadbuf, 2, state->road_buffer_start);
   *roadbuf = DEhitable_offset >> 8; // D is zero
 
-  roadbuf += 2; // FIXME Use WRAPPINGINCREMENT here
+  WRAPPING(roadbuf, 2, state->road_buffer_start);
   *roadbuf = DEhitable_offset >> 8; // D is zero
 
   hazard = DEhitable_offset & 0xFF;
@@ -6629,7 +6629,7 @@ void move_hero_car(chqstate_t *state)
 {
   // TODO Sort these decls by use
   u8         y_offset;             // was A
-  u8        *jump_data;            // was HL
+  const u8  *jump_data;            // was HL
   u8         boost;                // was A
   u8         Cinput;               // was C
   u8         Ainput;               // was A
@@ -7575,7 +7575,7 @@ void scroll_horizon(chqstate_t *state)
   u8         Bcounter;                  // was C
   u8         Eset_if_incline_negative;  // was C
   u8         Chorizon_table_value;      // was C
-  u8         Avar_a25a_delta;           // was A
+  u8         Ahorizon_y_a25a_delta;           // was A
   u16        BCcounter;                 // was BC
 
   if ((speed = state->speed) == 0)
@@ -7589,7 +7589,7 @@ void scroll_horizon(chqstate_t *state)
     // being last set in move_hero_car at $B296. Or it might be a bug.
     //
 
-    // EX AF,AF'
+    // EX AF,AF'  (suspect this should be LD A,L)
     carry = (speed >> 8) & 1;
     RL(Adash);
     RL(Adash);
@@ -7615,7 +7615,7 @@ void scroll_horizon(chqstate_t *state)
     }
   }
 
-  Avar_a25a_delta = 0;
+  Ahorizon_y_a25a_delta = 0;
   Bcounter = 0;
   Eset_if_incline_negative = 0;
 
@@ -7632,7 +7632,7 @@ void scroll_horizon(chqstate_t *state)
   }
 
   HLhorizon_table = &horizon_table[(-1 + Aincline) / 2]; // CHECK: Scaling / offset
-  Adiff = state->fast_counter - state->var_a25b;
+  Adiff = state->fast_counter - state->horizon_y_a25b;
   if (Adiff)
     return;
 
@@ -7644,13 +7644,13 @@ void scroll_horizon(chqstate_t *state)
       break;
     Bcounter++;
     // EX AF,AF'
-    Avar_a25a_delta += Chorizon_table_value;
+    Ahorizon_y_a25a_delta += Chorizon_table_value;
     // EX AF,AF'
   }
   if (Bcounter == 0)
     return;
 
-  state->var_a25a += Avar_a25a_delta;
+  state->horizon_y_a25a += Ahorizon_y_a25a_delta;
 
   // Sign extend based on low bit of Eset_if_incline_negative
   BCcounter = (Eset_if_incline_negative) ? -Bcounter : Bcounter;
@@ -7658,12 +7658,151 @@ void scroll_horizon(chqstate_t *state)
   // Adjust horizon_level
   state->st.horizon_level += BCcounter;
   // EX AF,AF'
-  state->var_a25b += Bcounter;
+  state->horizon_y_a25b += Bcounter;
 }
 
 // $B8D2
-void update_road_level(chqstate_t *state)
-{
+void update_road_level(chqstate_t *state) {
+  int       carry = 0;
+  u8        Bvar_a25a;          // was B
+  u8        Cnegate_flag;       // was C
+  s8        Aincline;           // was A
+  const u8 *HLroadbuf;          // was HL
+  s8        Aheight;            // was A
+  u8        Cheight;            // was C
+  u8        Bpitch;             // was B
+  u8       *HLvar_a259;         // was HL
+  u8        Avar_a259;          // was A
+  u8        Bvar_a259;          // was B
+  u8        Ay_offset;          // was A
+  u8        Adiff;              // was A
+  const u8 *HLptable_b059;      // was HL
+  u8        Eoffset;            // was E
+  u8        Acurrent_curvature; // was A
+  u8        Afork_visible;      // was A
+  u8        Acurvature_byte;    // was A
+  u8        Afork_taken;        // was A
+  u8        Bcurvature_byte;    // was B
+  u8        Ax_scroll;          // was A
+  u8        Bvar_a262;          // was B
+  u8        C;                  // was C
+  u8        A;                  // was A
+  u8        B;                  // was B
+
+  Bvar_a25a = state->horizon_y_a25a; // load and widen
+  Cnegate_flag = 0;
+  Aincline = state->incline;
+  if (Aincline < 0) { // if road climbing
+    Aincline = -Aincline;
+    Cnegate_flag = 1; // was INC C
+  }
+
+  Aincline -= Bvar_a25a;
+  if (Aincline)
+    state->st.horizon_level += (Cnegate_flag) ? -Aincline : Aincline;
+
+  HLroadbuf = ROADBUFPTR(ROADBUF_HEIGHT_OFFSET + 2);
+
+  state->horizon_y_a25b = state->horizon_y_a25a = 0;
+
+  Aheight = *HLroadbuf >> 1;
+  if (Aheight < 0)
+    Aheight++;
+  state->incline = Aheight;
+
+  WRAPPING(HLroadbuf, -2, state->road_buffer_start);
+  Cheight = Aheight = (s8) *HLroadbuf;
+  // OR A
+  Bpitch = 0;
+  if (Aheight) {
+    Bpitch = 6;
+    if (Aheight < 0) {
+      Aheight = -Aheight;
+      Bpitch = 3;
+    }
+    if (Aheight < 3)
+      Bpitch = 0;
+  }
+  state->dc_pitch = Bpitch;
+
+  HLvar_a259 = &state->var_a259;
+  Avar_a259 = *HLvar_a259;
+  if ((s8) Avar_a259 < 0) { // could combine exprs
+    if ((Cheight & (1<<7)) == 0) { // ie. positive
+      Avar_a259 = -Avar_a259;
+      carry = Avar_a259 < 2, Avar_a259 -= 2;
+      if (!carry) {
+        Bvar_a259 = Avar_a259;
+        Ay_offset = state->mhc_y_offset;
+        if (Ay_offset) {
+          Adiff = Bvar_a259 - (3 - ((state->speed >> 7) & 3)); // result = 1..5? // folded a lot here
+          if ((s8) Adiff > 0) { // was !C && !Z
+            // PUSH HLvar_a259
+            HLptable_b059 = &table_b059[(Adiff * 2) - 1]; // use of DE removed, RLC folded in
+            Eoffset = *HLptable_b059++; // an offset
+            state->mhc_y_offset = *HLptable_b059;
+            state->mhc_jump_data = &hero_car_jump_table[Eoffset];
+            // POP HLvar_a259
+          }
+        }
+      }
+    }
+  }
+  *HLvar_a259 = Cheight;
+
+  Acurrent_curvature = state->current_curvature;
+  // EX AF,AF' - bank Acurrent_curvature
+  HLroadbuf = ROADBUFPTR(ROADBUF_CURVATURE_OFFSET);
+  Afork_visible = state->fork_visible;
+  Acurvature_byte = *HLroadbuf; // load a curvature byte
+  if (Afork_visible && state->fork_in_progress) {
+    Afork_taken = state->fork_taken;
+    Acurvature_byte = *HLroadbuf;
+    if (Afork_taken)
+      Acurvature_byte = -Acurvature_byte;
+  }
+
+  state->current_curvature = Acurvature_byte;
+  // Ecurvature_byte = Acurvature_byte; // removed presumed unused
+  if (Acurvature_byte) {
+    // Eone_or_two = 1; // removed presumed unused
+    if ((s8) Acurvature_byte < 0) {
+      // Eone_or_two = 2; // was RL(E) // removed presumed unused
+      Acurvature_byte = -Acurvature_byte;
+    }
+    // Dcurvature_byte = Acurvature_byte; // removed presumed unused
+    Acurvature_byte <<= 2;
+    state->horizon_a25d = Acurvature_byte;
+    Bcurvature_byte = Acurvature_byte;
+    if (state->horizon_x_scroll)
+      goto url_B9C5;
+
+    Ax_scroll = horizon_table[((state->speed >> 6) & 6) + Bcurvature_byte]; // use of BC removed
+  } else {
+    Ax_scroll = Acurvature_byte; // Conv: added
+  }
+  state->horizon_x_scroll = Ax_scroll;
+
+url_B9C5:
+  Bvar_a262 = state->var_a262;
+  C = 0;
+  // EX AF,AF' - unbank Acurrent_curvature
+  if ((s8) Acurrent_curvature < 0) {
+    Acurrent_curvature = -Acurrent_curvature;
+    C++;
+  }
+
+  A = Acurrent_curvature - Bvar_a262;
+  if ((s8) A > 0) {
+    A = (A << 2) + (A >> 1);
+    B = 0;
+    if (C & 1) { // invert BA
+      B = 0xFF; // was DEC B
+      A = -A;
+    }
+    state->horizontal_adjust = (B << 8) | A;
+  }
+  state->var_a261 = state->var_a262 = 0;
 }
 
 // $B9F4

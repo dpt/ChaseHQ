@@ -41,7 +41,8 @@
 #define OFFSETTOBACKBUF(off)  (&state->backbuffer[off])
 
 // Return ptr incremented modulo 256.
-#define WRAPPINGINCREMENT(ptr, base) &(base)[((ptr) + 1 - (base)) & 0xFF]
+#define WRAPPING(ptr, delta, base) &(base)[((ptr) + delta - (base)) & 0xFF]
+#define WRAPPINGINCREMENT(ptr, base) WRAPPING(ptr, 1, base)
 
 #define STAGEDATA_BASE        (0x5C00)
 #define STAGEDATA_END         (0x7FFF) // inclusive

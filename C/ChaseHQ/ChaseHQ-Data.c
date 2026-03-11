@@ -2261,6 +2261,17 @@ const u8 hero_car_jump_table[10 * 2] = {
   0x06, 0xF3  // Pitch Down,  Delta -13
 };
 
+// $B059
+//
+// pairs of (offset into hero_car_jump_table, y_offset)
+const u8 table_b059[5 * 2] = {
+  0x08, 0x02,
+  0x06, 0x04,
+  0x04, 0x06,
+  0x02, 0x08,
+  0x00, 0x0A
+};
+
 // $B828
 //
 // This must map curvature to scroll rate.

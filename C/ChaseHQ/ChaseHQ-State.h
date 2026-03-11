@@ -337,13 +337,14 @@ struct chqstate {
   u8        distance_bcd[2];
 
   // $A258
-  u8        incline; // $FD..$03 = climbing/level/descending
+  // TODO check signed use of incline
+  s8        incline; // $FD..$03 = climbing/level/descending
   // $A259
   u8        var_a259;
   // $A25A
-  u8        var_a25a;
+  u8        horizon_y_a25a; // related to changes in incline (goes 0/1/2)
   // $A25B
-  u8        var_a25b;
+  u8        horizon_y_a25b;
   // $A25C
   u8        current_curvature;
   // $A25D
@@ -351,7 +352,7 @@ struct chqstate {
   // $A25E
   u8        horizon_x_scroll; // cycles 4..1 or similar when roads curve
   // $A25F
-  u8        horizontal_adjust;
+  u16       horizontal_adjust;
   // $A261
   u8        var_a261;
   // $A262
@@ -437,7 +438,7 @@ struct chqstate {
   // $B063 (SM) in move_hero_car
   u8        mhc_y_offset; // jump counter
   // $B079 (SM) in move_hero_car
-  u8       *mhc_jump_data; // jump data table entry
+  const u8 *mhc_jump_data; // jump data table entry
 
   // $B325 (SM) in animate_hero_car
   u16       ahc_crashed_flag; // crashed flag
