@@ -596,12 +596,16 @@ void draw_object_right_entrypt(chqstate_t      *state,
                                u8                B,
                                const depthset_t *DEarg,
                                const u16        *IX);
-void draw_object_right_stretchy_entrypt(chqstate_t *state, u8 B,
-                                        const lod_t *HL, const u16 *IX);
+void draw_object_right_stretchy_entrypt(chqstate_t  *state,
+                                        u8           B,
+                                        const lod_t *HLlod,
+                                        const u16   *IX);
 void draw_object_right_helicopter_entrypt(chqstate_t *state, u8 A,
     const lod_t *HLlod);
 
-void draw_object_930e_entrypt(chqstate_t *state);
+void draw_object_930e_entrypt(chqstate_t  *state,
+                              u8           A,
+                              const lod_t *HLlod);
 
 void draw_object_common(chqstate_t *state, u8 A, const lod_t *HLlod);
 

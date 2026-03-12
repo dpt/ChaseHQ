@@ -2398,22 +2398,25 @@ void draw_object_left_entrypt(chqstate_t       *state,
   draw_object_left_stretchy_entrypt(state, depth, lod, IX);
 }
 
-void draw_object_left_stretchy_entrypt(chqstate_t *state, u8 B, const lod_t *HL,
-                                       const u16 *IX)
+void draw_object_left_stretchy_entrypt(chqstate_t  *state,
+                                       u8           B,
+                                       const lod_t *HL,
+                                       const u16   *IX)
 {
   u8 A;
 
-  A = IX[0] + 16 - B;
-  if ((s8) A < 0) // carry?
+  A = IX[0] + 16;
+  if (A < B)
     return;
+  A -= B;
 
   draw_object_left_helicopter_entrypt(state, A, HL);
 }
 
-void draw_object_left_helicopter_entrypt(chqstate_t *state, u8 A,
-    const lod_t *HLlod)
+void draw_object_left_helicopter_entrypt(chqstate_t  *state,
+                                         u8           A,
+                                         const lod_t *HLlod)
 {
-#if 0
   int carry = 0;
   u8  C;
   u8  E;
@@ -2429,7 +2432,7 @@ void draw_object_left_helicopter_entrypt(chqstate_t *state, u8 A,
   A -= E;
   if (!carry) {
     if (A >= 8) {
-      draw_object_930e_entrypt(state); // exit via
+      draw_object_930e_entrypt(state, A, HLlod); // exit via
       return;
     }
 
@@ -2445,7 +2448,7 @@ void draw_object_left_helicopter_entrypt(chqstate_t *state, u8 A,
     RR(A);
     B = A;
     A += E - 33;
-    if (carry || A == 0)
+    if (carry || A == 0) // FIX carry
       return;
 
     D = A;
@@ -2456,7 +2459,8 @@ void draw_object_left_helicopter_entrypt(chqstate_t *state, u8 A,
 
   D = HLlod->flags >> 1; // checking LODFLAG_FLIPPED?
   if (D == 0) { // was JP Z - check
-    draw_object_9333(state, carry, C, E, HLlod, IY); // exit via
+    // FIX IY
+    // draw_object_9333(state, carry, C, E, HLlod, IY); // exit via
     return;
   }
 
@@ -2465,44 +2469,112 @@ void draw_object_left_helicopter_entrypt(chqstate_t *state, u8 A,
   C = 0;
   // EX AF,AF'
   draw_object_common(state, A, HLlod);
-#endif
 }
 
 // $92E1
 void draw_object_right(chqstate_t *state,
                        u8          B,
-                       const void *DEarg,
+                       const void *DEarg, // a depthset_t *
                        const u16  *IX,
                        const u8   *IY)
 {
   draw_object_right_entrypt(state, 0, B, DEarg, IX);
 }
 
-void draw_object_right_entrypt(chqstate_t      *state,
+void draw_object_right_entrypt(chqstate_t       *state,
                                u8                A,
                                u8                B,
                                const depthset_t *DEarg,
                                const u16        *IX)
 {
+  const depthset_t *ds;    // was HL
+  const lod_t      *lods;  // was DE
+  u8                depth; // was B
+  const lod_t      *lod;   // was HL
+
+  state->doc_SM_933D = A;
+
+  if (B >= DEPTHSET_MAX)
+    B = DEPTHSET_MAX;
+
+  ds = DEarg; // EX DE,HL
+
+  lods  = ds->lods; // loads address of e.g. turn_sign_lods
+  depth = ds->pairs[B].depth;
+  lod   = &lods[ds->pairs[B].offset / 7];
+
+  draw_object_right_stretchy_entrypt(state, depth, lod, IX);
 }
 
-void draw_object_right_stretchy_entrypt(chqstate_t *state, u8 B,
-                                        const lod_t *HL, const u16 *IX)
+void draw_object_right_stretchy_entrypt(chqstate_t  *state,
+                                        u8           B,
+                                        const lod_t *HLlod,
+                                        const u16   *IX)
 {
+  u8 A;
+
+  A = IX[0];
+  if ((s8) B < 0) {
+    A += B;
+  } else {
+    if (A < B)
+      return;
+    A += B;
+  }
+  if (A == 0)
+    return;
+
+  draw_object_right_helicopter_entrypt(state, A, HLlod);
 }
 
-void draw_object_right_helicopter_entrypt(chqstate_t *state, u8 A,
-    const lod_t *HLlod)
+void draw_object_right_helicopter_entrypt(chqstate_t  *state,
+                                          u8           A,
+                                          const lod_t *HLlod)
 {
+  u8 C;
+
+  if (A >= 247)
+    return;
+
+  C = 0;
+
+  draw_object_930e_entrypt(state, A, HLlod); // ARGS
 }
 
-void draw_object_930e_entrypt(chqstate_t *state)
+void draw_object_930e_entrypt(chqstate_t  *state,
+                              u8           A,
+                              const lod_t *HLlod)
 {
+  u8 B;
+  u8 E;
+  u8 D;
+  u8 C;
+
+  A = (A & 0xFC) >> 2;
+  state->doc_SM_9396 = A; // should be doc_SM_9395
+  A >>= 1; // was RRA
+  B = A;
+  E = HLlod->width_bytes; // CHECK
+  A = 31 - A;
+  if (E >= A)
+    A = E;
+  //HLlod++;
+  D = HLlod->flags >> 1;
+  if (D == 0) {
+    // FIX HLlod will need advancing
+    // draw_object_9333(state, carry, C, E, HLlod, IY);
+    return;
+  }
+
+  C = A;
+  // EX AF,AF'
+  C = E - C;
+
+  draw_object_common(state, A, HLlod);
 }
 
 void draw_object_common(chqstate_t *state, u8 A, const lod_t *HLlod)
 {
-#if 0
   int carry = 0;
   u8  Adash;
 
@@ -2511,6 +2583,7 @@ void draw_object_common(chqstate_t *state, u8 A, const lod_t *HLlod)
 
   Adash = A; // EX AF,AF'
 
+#if 0
   draw_object_9333(state, carry, C, E, HLlod, IY);
 #endif
 }
@@ -2967,7 +3040,7 @@ void plot_sprite_flipped(chqstate_t *state,
   jump_offset = 9 * (4 - width_bytes); // 9 bytes/op
 
 #if 0
-  D' = 0xEF;
+  Ddash = 0xEF;
   // EXX - bank
   D = 0;
 #endif
@@ -3028,7 +3101,7 @@ void plot_sprite_flipped_odd(chqstate_t *state,
   jump_offset = 9 * (4 - width_bytes); // 9 bytes/op
 
 #if 0
-  D' = 0xEF;
+  Ddash = 0xEF;
   // EXX - bank
   D = 0;
 #endif
@@ -8649,7 +8722,7 @@ void build_height_table(chqstate_t *state)
     result = 0;
     C = A = C + *proadbuf_height;
     if (C != 0) {
-      if (C < 0) {
+      if ((s8) C < 0) {
         v = -v;
         A = -C;
       }
@@ -8668,7 +8741,7 @@ void build_height_table(chqstate_t *state)
       if (carry) result += v; result <<= 1;
       carry = (A >> 7) & 1; A <<= 1;
       if (carry) result += v; result <<= 1;
-      carry = (A >> 7) & 1; A <<= 1;
+      carry = (A >> 7) & 1; //A <<= 1;
       if (carry) result += v; result <<= 1;
       A = result >> 8;
     }
