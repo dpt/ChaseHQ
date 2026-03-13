@@ -3126,7 +3126,7 @@ void plot_sprite_flipped_odd(chqstate_t *state,
 {
   int       jump_offset;  // was IX
   const u8 *src;          // was SP
-  u8       *backbuf_orig; //  was A
+  u8       *backbuf_orig; // was A
 
   width_bytes++;
   jump_offset = 9 * (4 - width_bytes); // 9 bytes/op
@@ -5798,14 +5798,14 @@ void draw_helicoper_part(chqstate_t *state, u8 A,
                          const heli_lod_inner_t *DEinnerlod)
 {
   int          carry;
-  u16          BC;
-  u16          HLtbd2;
-  u16          DEtbd2;
-  const lod_t *HLlod;
-  u8           Bwidth;
-  s8           Atop;
-  u8           Abot;
-  u8           C;
+  u16          BC;     // was BC
+  u16          HLtbd2; // was HL
+  u16          DEtbd2; // was DE
+  const lod_t *HLlod;  // was HL
+  u8           Bwidth; // was B
+  s8           Atop;   // was A
+  u8           Abot;   // was A
+  u8           C;      // was C
 
   BC = state->dhl_helipos; // signed?
   state->doc_SM_933D = -A; // in draw_object_common
@@ -5881,10 +5881,9 @@ void move_helicopter(chqstate_t *state)
   if (helipos != centre) {
     newhelipos = helipos + (helipos > centre ? -8 : 8);
     if (newhelipos >= centre) {
-      if (helipos > centre) //  note:rechecking earlier calc
+      if (helipos > centre) // note: rechecking earlier calc
         goto set_newpos;
-      else
-        goto set_centre;
+      goto set_centre;
     }
     if (helipos > centre) { // note: rechecking earlier calc
 set_centre:
@@ -5905,7 +5904,7 @@ void drive_helicopter(chqstate_t *state)
   u8        helipos;      // was A
   u8        draw_heli;    // was A
   u8        new_heli_ctl; // was A
-  u16       HL;
+  u16       HL_ab06;      // was HL
   const u8 *chatterblk;   // was HL
 
   heli_ctl = state->helicopter_control;
@@ -5929,7 +5928,7 @@ void drive_helicopter(chqstate_t *state)
   goto hc_exit;
 
 hc_1:
-  HL = -56;
+  HL_ab06 = -56;
   new_heli_ctl = 2; // New value for helicopter_control is 2
   goto hc_set_draw;
 
@@ -5950,12 +5949,12 @@ hc_pick_direction:
   state->mh_offset      = 0;
   state->mh_direction   = 1;
   start_chatter(state, 15, chatterblk);
-  HL = 112;
+  HL_ab06 = 112;
   // Set starting vertical position of the helicopter.
   state->mh_height = 133;
   new_heli_ctl = 5; // New value for helicopter_control is 5
 hc_set_draw:
-  state->mh_SM_AB06 = HL;
+  state->mh_SM_AB06 = HL_ab06;
   draw_heli = 1; // true
 hc_exit:
   state->dee_draw_helicopter = draw_heli;
