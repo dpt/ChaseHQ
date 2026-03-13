@@ -2885,7 +2885,7 @@ void plot_sprite(chqstate_t *state,
 }
 
 /**
- * $94B1: Plot an unmasked sprite (for even widths)
+ * $94B1: Plot an unmasked sprite (for even byte widths)
  *
  * This function draws the given bitmap to the back buffer.
  *
@@ -2903,10 +2903,10 @@ void plot_sprite_even(chqstate_t *state,
                       u16         bitmap_stride,
                       const u8   *bitmap_data)
 {
-  const u8 *SPsrc;
+  const u8 *src;          // was SP
   u8       *backbuf_orig; // was A
 
-  // Conv: B & C moved into prevbufrow forward
+  // Conv: B & C moved into prevbufrow
   // EXX - bank
   goto plot_sprite_even_start;
 
@@ -2918,7 +2918,7 @@ void plot_sprite_even(chqstate_t *state,
     bitmap_data += bitmap_stride; // Advance to start of next row
 
 plot_sprite_even_start:
-    SPsrc = bitmap_data;
+    src = bitmap_data;
     // EXX - unbank
     backbuf_orig = backbuf_addr;
     switch (jump_offset / 5) {
@@ -2926,24 +2926,24 @@ plot_sprite_even_start:
       assert(0);
     case 0:
       // Conv: Original uses POP that loads 16 bits at a time
-      *backbuf_addr++ = *SPsrc++;
-      *backbuf_addr++ = *SPsrc++;
+      *backbuf_addr++ = *src++;
+      *backbuf_addr++ = *src++;
     case 1:
-      *backbuf_addr++ = *SPsrc++;
-      *backbuf_addr++ = *SPsrc++;
+      *backbuf_addr++ = *src++;
+      *backbuf_addr++ = *src++;
     case 2:
-      *backbuf_addr++ = *SPsrc++;
-      *backbuf_addr++ = *SPsrc++;
+      *backbuf_addr++ = *src++;
+      *backbuf_addr++ = *src++;
     case 3:
-      *backbuf_addr++ = *SPsrc++;
-      *backbuf_addr = *SPsrc++;
+      *backbuf_addr++ = *src++;
+      *backbuf_addr = *src++;
     }
     backbuf_addr = ADDRTOBACKBUF(prevbufrow(BACKBUFTOADDR(backbuf_orig)));
   }
 }
 
 /**
- * $94F2: Plot an unmasked sprite (for odd widths)
+ * $94F2: Plot an unmasked sprite (for odd byte widths)
  *
  * This function draws the given bitmap to the back buffer.
  *
@@ -2962,7 +2962,7 @@ void plot_sprite_odd(chqstate_t *state,
                      const u8   *bitmap_data)
 {
   int       jump_offset;  // was IX
-  const u8 *SPsrc;
+  const u8 *src;          // was SP
   u8       *backbuf_orig; // was A
 
   width_bytes++;
@@ -2980,7 +2980,7 @@ void plot_sprite_odd(chqstate_t *state,
     bitmap_data += bitmap_stride;
 
 plot_sprite_odd_start:
-    SPsrc = bitmap_data;
+    src = bitmap_data;
     // EXX - unbank
     backbuf_orig = backbuf_addr;
     switch (jump_offset / 5) {
@@ -2988,16 +2988,16 @@ plot_sprite_odd_start:
       assert(0);
     case 0:
       // Conv: Original uses POP that loads 16 bits at a time
-      *backbuf_addr++ = *SPsrc++;
-      *backbuf_addr++ = *SPsrc++;
+      *backbuf_addr++ = *src++;
+      *backbuf_addr++ = *src++;
     case 1:
-      *backbuf_addr++ = *SPsrc++;
-      *backbuf_addr++ = *SPsrc++;
+      *backbuf_addr++ = *src++;
+      *backbuf_addr++ = *src++;
     case 2:
-      *backbuf_addr++ = *SPsrc++;
-      *backbuf_addr++ = *SPsrc++;
+      *backbuf_addr++ = *src++;
+      *backbuf_addr++ = *src++;
     case 3:
-      *backbuf_addr = *SPsrc++;
+      *backbuf_addr = *src++;
     }
     backbuf_addr = OFFSETTOBACKBUF(prevbufrow(BACKBUFTOOFFSET(backbuf_orig)));
   }
@@ -3006,7 +3006,7 @@ plot_sprite_odd_start:
 /**
  * $9542: Plot a flipped sprite
  *
- * This function draws the given bitmap to the back buffer.
+ * This function draws the given bitmap to the back buffer while flipping it horizontally.
  *
  * \param[in] state         Pointer to game state.
  * \param[in] width_bytes   Byte width of bitmap data. (was A)
@@ -3045,10 +3045,31 @@ void plot_sprite_flipped(chqstate_t *state,
   D = 0;
 #endif
 
-  // -- split here? (creating plot_sprite_flipped_even)
+  plot_sprite_flipped_even(state, jump_offset, height, backbuf_addr,
+                           bitmap_stride, bitmap_data); // was fallthrough
+}
 
-  const u8 *SPsrc;
-  u8       *backbuf_orig; //  was A
+/**
+ * $9565: Plot a flipped sprite (for even byte widths)
+ *
+ * This function draws the given bitmap to the back buffer while flipping it horizontally.
+ *
+ * \param[in] state         Pointer to game state.
+ * \param[in] jump_offset   Jump table byte offset (e.g. N * 9). (was IX)
+ * \param[in] height        Number of rows. (was B)
+ * \param[in] backbuf_addr  Back buffer address to draw at. (was HL)
+ * \param[in] bitmap_stride Byte width of bitmap data. (was DE')
+ * \param[in] bitmap_data   Source bitmap data. (was HL')
+ */
+void plot_sprite_flipped_even(chqstate_t *state,
+                              u8          jump_offset,
+                              u8          height,
+                              u8         *backbuf_addr,
+                              u16         bitmap_stride,
+                              const u8   *bitmap_data)
+{
+  const u8 *src;          // was SP
+  u8       *backbuf_orig; // was A
 
   goto plot_sprite_flipped_even_start;
 
@@ -3060,7 +3081,7 @@ void plot_sprite_flipped(chqstate_t *state,
     bitmap_data += bitmap_stride;
 
 plot_sprite_flipped_even_start:
-    SPsrc = bitmap_data;
+    src = bitmap_data;
     // EXX - unbank
     backbuf_orig = backbuf_addr;
     switch (jump_offset / 9) {
@@ -3068,22 +3089,34 @@ plot_sprite_flipped_even_start:
       assert(0);
     case 0:
       // Conv: Original uses POP that loads 16 bits at a time
-      *backbuf_addr-- = state->flipped[*SPsrc++ & 0xFF];
-      *backbuf_addr-- = state->flipped[*SPsrc++ >> 8];
+      *backbuf_addr-- = state->flipped[*src++ & 0xFF];
+      *backbuf_addr-- = state->flipped[*src++ >> 8];
     case 1:
-      *backbuf_addr-- = state->flipped[*SPsrc++ & 0xFF];
-      *backbuf_addr-- = state->flipped[*SPsrc++ >> 8];
+      *backbuf_addr-- = state->flipped[*src++ & 0xFF];
+      *backbuf_addr-- = state->flipped[*src++ >> 8];
     case 2:
-      *backbuf_addr-- = state->flipped[*SPsrc++ & 0xFF];
-      *backbuf_addr-- = state->flipped[*SPsrc++ >> 8];
+      *backbuf_addr-- = state->flipped[*src++ & 0xFF];
+      *backbuf_addr-- = state->flipped[*src++ >> 8];
     case 3:
-      *backbuf_addr-- = state->flipped[*SPsrc++ & 0xFF];
-      *backbuf_addr-- = state->flipped[*SPsrc++ >> 8];
+      *backbuf_addr-- = state->flipped[*src++ & 0xFF];
+      *backbuf_addr-- = state->flipped[*src++ >> 8];
     }
     backbuf_addr = ADDRTOBACKBUF(prevbufrow(BACKBUFTOADDR(backbuf_orig)));
   }
 }
 
+/**
+ * $95B3: Plot a flipped sprite (for odd byte widths)
+ *
+ * This function draws the given bitmap to the back buffer while flipping it horizontally.
+ *
+ * \param[in] state         Pointer to game state.
+ * \param[in] width_bytes   Byte width of bitmap data. (was A)
+ * \param[in] height        Number of rows. (was B)
+ * \param[in] backbuf_addr  Back buffer address to draw at. (was HL)
+ * \param[in] bitmap_stride Byte width of bitmap data. (was DE')
+ * \param[in] bitmap_data   Source bitmap data. (was HL')
+ */
 void plot_sprite_flipped_odd(chqstate_t *state,
                              u8          width_bytes,
                              u8          height,
@@ -3091,11 +3124,9 @@ void plot_sprite_flipped_odd(chqstate_t *state,
                              u16         bitmap_stride,
                              const u8   *bitmap_data)
 {
-  int       jump_offset; // was IX
-  const u8 *SPsrc;
+  int       jump_offset;  // was IX
+  const u8 *src;          // was SP
   u8       *backbuf_orig; //  was A
-
-  // sprite has an odd width
 
   width_bytes++;
   jump_offset = 9 * (4 - width_bytes); // 9 bytes/op
@@ -3120,7 +3151,7 @@ void plot_sprite_flipped_odd(chqstate_t *state,
     bitmap_data += bitmap_stride;
 
 psf_odd_body:
-    SPsrc = bitmap_data;
+    src = bitmap_data;
     // EXX - unbank
     backbuf_orig = backbuf_addr;
     switch (jump_offset / 9) {
@@ -3128,16 +3159,16 @@ psf_odd_body:
       assert(0);
     case 0:
       // Conv: Original uses POP that loads 16 bits at a time
-      *backbuf_addr-- = state->flipped[*SPsrc++ & 0xFF];
-      *backbuf_addr-- = state->flipped[*SPsrc++ >> 8];
+      *backbuf_addr-- = state->flipped[*src++ & 0xFF];
+      *backbuf_addr-- = state->flipped[*src++ >> 8];
     case 1:
-      *backbuf_addr-- = state->flipped[*SPsrc++ & 0xFF];
-      *backbuf_addr-- = state->flipped[*SPsrc++ >> 8];
+      *backbuf_addr-- = state->flipped[*src++ & 0xFF];
+      *backbuf_addr-- = state->flipped[*src++ >> 8];
     case 2:
-      *backbuf_addr-- = state->flipped[*SPsrc++ & 0xFF];
-      *backbuf_addr-- = state->flipped[*SPsrc++ >> 8];
+      *backbuf_addr-- = state->flipped[*src++ & 0xFF];
+      *backbuf_addr-- = state->flipped[*src++ >> 8];
     case 3:
-      *backbuf_addr-- = state->flipped[*SPsrc++ & 0xFF];
+      *backbuf_addr-- = state->flipped[*src++ & 0xFF];
     }
     backbuf_addr = OFFSETTOBACKBUF(prevbufrow(BACKBUFTOOFFSET(backbuf_orig)));
   }
@@ -7434,7 +7465,7 @@ void draw_part_entry3(chqstate_t *state)
 /**
  * $B716: Plot a masked sprite
  *
- * This function draws the given bitmap to the back buffer.
+ * This function draws the given masked bitmap to the back buffer.
  *
  * \param[in] state         Pointer to game state.
  * \param[in] jump_offset   Jump table byte offset (e.g. N * 6). (was IX)
@@ -7500,7 +7531,7 @@ pms_entry:
 /**
  * $B76C: Plot a flipped and masked sprite
  *
- * This function draws the given bitmap to the back buffer.
+ * This function draws the given masked bitmap to the back buffer while flipping it horizontally.
  *
  * \param[in] state         Pointer to game state.
  * \param[in] width_bytes   Byte width of bitmap data. (was A)

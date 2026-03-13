@@ -636,6 +636,12 @@ void plot_sprite_flipped(chqstate_t *state,
                          u8         *backbuf_addr,
                          u16         bitmap_stride,
                          const u8   *bitmap_data);
+void plot_sprite_flipped_even(chqstate_t *state,
+                              u8          jump_offset,
+                              u8          height,
+                              u8         *backbuf_addr,
+                              u16         bitmap_stride,
+                              const u8   *bitmap_data);
 void plot_sprite_flipped_odd(chqstate_t *state,
                              u8          width_bytes,
                              u8          height,
