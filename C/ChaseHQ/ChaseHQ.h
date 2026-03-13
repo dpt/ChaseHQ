@@ -373,7 +373,7 @@ typedef u8 chatterpriority_t;
 
 typedef struct hazard hazard_t;
 typedef struct scenedata scenedata_t;
-typedef struct hitable hitable_t;
+typedef struct hittable hittable_t;
 typedef struct obj obj_t;
 typedef struct heli_lod heli_lod_t;
 typedef struct heli_lod_inner heli_lod_inner_t;
@@ -782,7 +782,7 @@ void spawn_hazards(chqstate_t *state);
 int sh_find_free(chqstate_t *state,
                  u8          Bhorz_pos,
                  u8          Cdistance,
-                 u16         DEhitable_offset);
+                 u16         DEhittable_offset);
 
 hazard_handler_t hazard_hit;
 

@@ -795,7 +795,7 @@ void escape_scene(chqstate_t *state)
   set_up_stage(state, &escape_scene_data);
   state->speed = 250; // speed of camera
   memcpy(&state->hazards[0], &escape_scene_perp, sizeof(escape_scene_perp));
-  state->hazards[0].hitable.lods = state->stage->lods_perp_car;
+  state->hazards[0].hittable.lods = state->stage->lods_perp_car;
   state->inhibit_collision_detection = 0xFF;
   start_chatter(state, 0xFF, &chatterblk_nancy_berates_hero[0]);
 
@@ -872,7 +872,7 @@ void set_up_stage(chqstate_t        *state,
   state->rm_SM_C058 = 0; // clear current hazard?
   state->mhc_y_offset = 0; // clear jump counter?
 
-  state->hazards[0].hitable.lods = state->stage->lods_perp_car;
+  state->hazards[0].hittable.lods = state->stage->lods_perp_car;
 
   // Conv: Duplicate work removed.
 
@@ -5464,7 +5464,7 @@ fill_in:
   if (state->sighted_flag && lod_index == 6)
     lod_index -= 2; // 6 -> 4
 
-  hazard->hitable.lods = state->stage->lods_vehicles[lod_index / 2];
+  hazard->hittable.lods = state->stage->lods_vehicles[lod_index / 2];
 }
 
 // $A89C
@@ -5964,12 +5964,12 @@ hc_exit:
 // $AB9A
 void spawn_hazards(chqstate_t *state)
 {
-  u8  allow_spawning;   // was A
-  u8  Cdistance;        // was C
-  u8 *roadbuf;          // was HL
-  u8  hazard;           // was A
-  u16 DEhitable_offset; // was DE
-  u8  horz_pos;         // was B
+  u8  allow_spawning;    // was A
+  u8  Cdistance;         // was C
+  u8 *roadbuf;           // was HL
+  u8  hazard;            // was A
+  u16 DEhittable_offset; // was DE
+  u8  horz_pos;          // was B
 
   allow_spawning = state->allow_spawning;
   if (allow_spawning == 0)
@@ -5986,9 +5986,9 @@ void spawn_hazards(chqstate_t *state)
   if (hazard == 0)
     return; // no hazard?
 
-  DEhitable_offset = 0; // index 0
+  DEhittable_offset = 0; // index 0
   if (hazard >= 4) {
-    DEhitable_offset = 3; // index 1, times sizeof(hitable)
+    DEhittable_offset = 3; // index 1, times sizeof(hittable)
     hazard -= 3;
   }
 
@@ -6001,12 +6001,12 @@ void spawn_hazards(chqstate_t *state)
     goto sh_add_hazards_done; // if 2
 
   WRAPPING(roadbuf, 2, state->road_buffer_start);
-  *roadbuf = DEhitable_offset >> 8; // D is zero
+  *roadbuf = DEhittable_offset >> 8; // D is zero
 
   WRAPPING(roadbuf, 2, state->road_buffer_start);
-  *roadbuf = DEhitable_offset >> 8; // D is zero
+  *roadbuf = DEhittable_offset >> 8; // D is zero
 
-  hazard = DEhitable_offset & 0xFF;
+  hazard = DEhittable_offset & 0xFF;
   if (hazard != 3)
     goto sh_add_two_tumbleweeds;
 
@@ -6023,30 +6023,30 @@ void spawn_hazards(chqstate_t *state)
   // Conv: POP HL used in original code to cause
   // spawn_hazards to return when the hazards table is full.
   // We have to specifically check in the C port.
-  if (sh_find_free(state, 32, Cdistance, DEhitable_offset)) return;
-  if (sh_find_free(state, 86, Cdistance, DEhitable_offset)) return;
+  if (sh_find_free(state, 32, Cdistance, DEhittable_offset)) return;
+  if (sh_find_free(state, 86, Cdistance, DEhittable_offset)) return;
   horz_pos = 140;
   goto sh_add_hazards_done;
 
   // Populate hazards with two barriers (e.g. for dirt track).
 sh_add_two_barriers:
-  if (sh_find_free(state, 80, Cdistance, DEhitable_offset)) return;
+  if (sh_find_free(state, 80, Cdistance, DEhittable_offset)) return;
   horz_pos = 160;
   goto sh_add_hazards_done;
 
   // Populate hazards with two tumbleweeds (e.g. for dirt track).
 sh_add_two_tumbleweeds:
-  if (sh_find_free(state, 70, Cdistance, DEhitable_offset)) return;
+  if (sh_find_free(state, 70, Cdistance, DEhittable_offset)) return;
   horz_pos = 180;
 
 sh_add_hazards_done:
-  (void) sh_find_free(state, horz_pos, Cdistance, DEhitable_offset);
+  (void) sh_find_free(state, horz_pos, Cdistance, DEhittable_offset);
 }
 
 int sh_find_free(chqstate_t *state,
                  u8          Bhorz_pos,
                  u8          Cdistance,
-                 u16         DEhitable_offset)
+                 u16         DEhittable_offset)
 {
   int       iterations; // was B
   hazard_t *hazard;     // was HL
@@ -6065,8 +6065,8 @@ sh_found_free:
   IXhazard = hazard;
   memset(hazard, 0, sizeof(*hazard));
   IXhazard->hit_handler = hazard_hit;
-  // orig sizeof(hitable) is 3
-  IXhazard->hitable          = state->stage->addrof_hittable_objects[DEhitable_offset / 3];
+  // orig sizeof(hittable) is 3
+  IXhazard->hittable          = state->stage->addrof_hittable_objects[DEhittable_offset / 3];
   IXhazard->horz_pos_on_road = Bhorz_pos;
   IXhazard->distance         = Cdistance;
   IXhazard->used             = HAZARD_USED;
@@ -6226,11 +6226,11 @@ u8 check_collision(chqstate_t *state, u8 default_retval, u16 HL, hazard_t *hazar
   if (Ahorz_pos >= 144)
     return default_retval;
 
-  Ahorz_pos += hazard->hitable.width;
+  Ahorz_pos += hazard->hittable.width;
   if (Ahorz_pos <= 112)
     return default_retval;
 
-  Ahorz_pos -= hazard->hitable.width;
+  Ahorz_pos -= hazard->hittable.width;
   if (Ahorz_pos >= 104) {
     new_tbd7--;
     if (Ahorz_pos >= 120)

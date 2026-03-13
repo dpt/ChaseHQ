@@ -22,7 +22,7 @@ struct hazard {
   u8                horz_pos_on_road;
   u8                TBD6;
   s8                TBD7;     // activation / delay / hit counter; set to $FC when perp hit
-  hitable_t         hitable;
+  hittable_t        hittable;
   hazard_handler_t *hit_handler;
   u16               speed;    // 13 & 14
   u8                TBD15;    // top bit is set for vehicles

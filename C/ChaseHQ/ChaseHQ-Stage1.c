@@ -22,7 +22,7 @@
 static const u8 stage1_perp_description[7];
 static const char *stage1_chatter_strings[4];
 static const u8 stage1_arrest_messages[83];
-static const hitable_t stage1_hitable_object_defs[2];
+static const hittable_t stage1_hittable_object_defs[2];
 static const obj_t stage1_right_hand_graphics_defs[9];
 static const obj_t stage1_left_hand_graphics_defs[9];
 static const u8 stage1_map_start_curvature[32];
@@ -206,7 +206,7 @@ const stage_t stage1 = {
   &stage1_perp_face[FACEBITMAPBYTES],
   NULL, // no bitmap given on this level
   attribute_BRIGHT_YELLOW_OVER_BLACK | (attribute_BRIGHT_YELLOW_OVER_BLACK << 8),
-  &stage1_hitable_object_defs[0],
+  &stage1_hittable_object_defs[0],
   &stage1_right_hand_graphics_defs[-1].arg,
   &stage1_right_hand_graphics_defs[-1],
   &stage1_right_hand_graphics_defs[2], // short pole
@@ -310,7 +310,7 @@ static const u8 stage1_arrest_messages[83] = {
 /* ----------------------------------------------------------------------- */
 
 // $5E40
-static const hitable_t stage1_hitable_object_defs[2] = {
+static const hittable_t stage1_hittable_object_defs[2] = {
   { 16, &stage1_tumbleweed_lods[0] },
   { 32, &stage1_barrier_lods[0]    },
 };

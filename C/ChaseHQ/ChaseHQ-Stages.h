@@ -10,7 +10,7 @@
 #include "Types.h"
 #include "ChaseHQ.h"
 
-struct hitable {
+struct hittable {
   u8                width;
   const lod_t      *lods;
 };
@@ -38,7 +38,7 @@ typedef struct stage {
   const u8         *addrof_perp_mugshot_attributes;
   const u8         *addrof_perp_mugshot_bitmap;
   u16               ground_colour;
-  const hitable_t  *addrof_hittable_objects;
+  const hittable_t  *addrof_hittable_objects;
   const void       *addrof_right_hand_handlers;
   const obj_t      *addrof_right_hand_objects;
   const obj_t      *addrof_right_hand_short_pole_object;
