@@ -16,7 +16,8 @@ set(SOURCE_FILES
         ZXSpectrum/Kempston.c
         ZXSpectrum/Keyboard.c
         ZXSpectrum/Screen.c
-        ZXSpectrum/Spectrum.c)
+        ZXSpectrum/Spectrum.c
+        ChaseHQ/ChaseHQ-Create.c)
 
 add_executable(ChaseHQ ${SOURCE_FILES})
 target_compile_definitions(ChaseHQ PRIVATE TGE_SDL)

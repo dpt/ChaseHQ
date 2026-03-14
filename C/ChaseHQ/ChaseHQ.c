@@ -100,83 +100,6 @@
 
 /* ----------------------------------------------------------------------- */
 
-void chasehq_reset_state(chqstate_t *state)
-{
-  static const struct {
-    size_t      dstoff;
-    const void *src;
-    size_t      n;
-  } copies[] = {
-    // $897C
-    { offsetof(chqstate_t, sfx_crash_table), &sfx_crash_table[0], sizeof(sfx_crash_table) },
-    // $8C58
-    { offsetof(chqstate_t, score_messages), &score_messages_template[0], sizeof(score_messages_template) },
-    // $8D18
-    // memcpy(&state->continue_messages[0], &continue_messages[0], sizeof(continue_messages));
-    // $8D77
-    { offsetof(chqstate_t, time_nn), "TIME 1\xB0", 7 },
-    // $8D85
-    { offsetof(chqstate_t, credit_n), "CREDIT \xA0", 8 },
-    // $CE0C
-    { offsetof(chqstate_t, smoke_ce0c), &smoke_ce0c_template[0], sizeof(smoke_ce0c_template) },
-    // $CE0C
-    { offsetof(chqstate_t, smoke_ce19), &smoke_ce19_template[0], sizeof(smoke_ce19_template) },
-    // $CE0C
-    { offsetof(chqstate_t, smoke_ce26), &smoke_ce26_template[0], sizeof(smoke_ce26_template) },
-    // $CE4B
-    { offsetof(chqstate_t, debris_subtable_1), &debris_subtable_1_template[0], sizeof(debris_subtable_1_template) },
-    // $CE5E
-    { offsetof(chqstate_t, debris_subtable_2), &debris_subtable_2_template[0], sizeof(debris_subtable_2_template) },
-    // $CE71
-    { offsetof(chqstate_t, debris_subtable_3), &debris_subtable_3_template[0], sizeof(debris_subtable_3_template) },
-    // $CE84
-    { offsetof(chqstate_t, debris_subtable_4), &debris_subtable_4_template[0], sizeof(debris_subtable_4_template) },
-    // $CE97
-    { offsetof(chqstate_t, debris_subtable_5), &debris_subtable_5_template[0], sizeof(debris_subtable_5_template) },
-  };
-
-  int i;
-
-  // Clear the entire state
-  memset(state, 0, sizeof(*state));
-
-  // Copy various blocks into place in state
-  for (i = 0; i < sizeof(copies) / sizeof(copies[0]); i++)
-    memcpy((char *) state + copies[i].dstoff, copies[i].src, copies[i].n);
-
-  // $8007
-  state->wanted_stage_number = 1;
-
-  // $8277
-  state->attract_blinker = 0xF0;
-
-  // $9618
-  state->rng_seed[0] = 0x7B;
-  state->rng_seed[1] = 0x2D;
-  state->rng_seed[2] = 0xE9;
-
-  // $A240
-  state->road_buffer_offset = &state->road_buffer[0];
-  state->road_buffer_start  = &state->road_buffer[0];
-  state->road_buffer_end    = &state->road_buffer[256];
-
-  // $CE33
-  state->debris_table[0]  = &state->debris_subtable_1[0];
-  state->debris_table[1]  = &state->debris_subtable_2[0];
-  state->debris_table[2]  = &state->debris_subtable_3[0];
-  state->debris_table[3]  = &state->debris_subtable_5[0];
-  state->debris_table[4]  = &state->debris_subtable_3[0];
-  state->debris_table[5]  = &state->debris_subtable_4[0];
-  state->debris_table[6]  = &state->debris_subtable_1[0];
-  state->debris_table[7]  = &state->debris_subtable_2[0];
-  state->debris_table[8]  = &state->debris_subtable_5[0];
-  state->debris_table[9]  = &state->debris_subtable_3[0];
-  state->debris_table[10] = &state->debris_subtable_4[0];
-  state->debris_table[11] = &state->debris_subtable_1[0];
-}
-
-/* ----------------------------------------------------------------------- */
-
 // read an arbitrary native word
 static u16 wordat(const u8 *addr)
 {
@@ -498,6 +421,8 @@ void main_loop(chqstate_t *state)
         }
       }
     }
+
+    break; // perhaps temporary
   }
 }
 
@@ -3501,7 +3426,7 @@ void draw_noise_effect(chqstate_t *state, u8 counter)
       RLC(A);
       A += *noisebytes;
       *noisebytes = A;
-      state->screen[DEscreen - SCREEN_START_ADDRESS] = A;
+      state->speccy->screen.pixels[DEscreen - SCREEN_START_ADDRESS] = A;
       DEscreen++; // was E++
     } while (--B > 0);
     DEscreen = DEscreen_saved; // was POP - restore row ptr
@@ -3528,7 +3453,7 @@ void ne_plot_attrs(chqstate_t *state, u8 attr)
   iterations = FACEATTRHEIGHT; // 5 rows
   do {
     // Conv: Screen write now goes via state.
-    memset(&state->screen[addr], attr, FACEATTRWIDTH);
+    memset(&state->speccy->screen.pixels[addr], attr, FACEATTRWIDTH);
     addr += SCREEN_ATTRIBUTES_WIDTH;
   } while (--iterations > 0);
 }
@@ -3554,10 +3479,10 @@ void plot_face(chqstate_t *state,
   saved_screen = screen;
   screen -= SCREEN_START_ADDRESS; // Conv: address -> offset
   for (;;) {
-    state->screen[screen++] = *face++; counter--;
-    state->screen[screen++] = *face++; counter--;
-    state->screen[screen++] = *face++; counter--;
-    state->screen[screen++] = *face++; counter--;
+    state->speccy->screen.pixels[screen++] = *face++; counter--;
+    state->speccy->screen.pixels[screen++] = *face++; counter--;
+    state->speccy->screen.pixels[screen++] = *face++; counter--;
+    state->speccy->screen.pixels[screen++] = *face++; counter--;
     screen -= 4; // replaces PUSH/POP
     if (counter == 0)
       break;
@@ -3592,10 +3517,10 @@ void plot_face_attributes(chqstate_t *state,
   screen -= SCREEN_START_ADDRESS; // Conv: address -> offset
   counter = FACEATTRBYTES;
   for (;;) {
-    state->screen[screen++] = *face++; counter--;
-    state->screen[screen++] = *face++; counter--;
-    state->screen[screen++] = *face++; counter--;
-    state->screen[screen++] = *face++; counter--;
+    state->speccy->screen.pixels[screen++] = *face++; counter--;
+    state->speccy->screen.pixels[screen++] = *face++; counter--;
+    state->speccy->screen.pixels[screen++] = *face++; counter--;
+    state->speccy->screen.pixels[screen++] = *face++; counter--;
     if (counter == 0)
       break;
 
@@ -4653,6 +4578,8 @@ int keyscan_inner(const chqstate_t *state, u8 Ainput)
   u8  Aport;       /* was A */
   u8  keys;        /* was A */
 
+  assert(state->speccy);
+
   // Ainput = %RRRRRPPP where P is port shift and R is result shift (key)
   Bport_shift = (Ainput & 7) + 1;
   Ckey_shift  = 5 - (Ainput >> 3);
@@ -4660,7 +4587,7 @@ int keyscan_inner(const chqstate_t *state, u8 Ainput)
   do
     RRC(Aport);
   while (--Bport_shift > 0);
-  keys = state->speccy->in(state->speccy, Aport | 0xFE);
+  keys = state->speccy->in(state->speccy, (Aport << 8 ) | 0xFE);
   do
     RR(keys);
   while (--Ckey_shift > 0);
@@ -8239,7 +8166,7 @@ righthand_14_bytes:
 draw_attributes:
     // Attributes
     if (state->dont_draw_screen_attrs)
-      return;
+      goto exit;
 
     A = state->horizon_table_e34b[1]; // -> horizon table?
     E = state->horizon_table_e34b[2]; // current value?
@@ -8288,6 +8215,10 @@ draw_attributes:
     *HLattrs = Cattr; HLattrs += SCREEN_ATTRIBUTES_WIDTH;
     *HLattrs = Cattr;
   }
+
+exit:
+  /* Redraw the whole screen. */
+  state->speccy->draw(state->speccy, NULL); // Conv: Added
 }
 
 // $BDC1
@@ -9095,4 +9026,22 @@ const void *lookup_map_goto(chqstate_t *state, u16 z80)
       assert("Unknown stage" == NULL);
     }
   }
+}
+
+/* ----------------------------------------------------------------------- */
+
+CHQ_API void chq_setup(chqstate_t *state)
+{
+  entrypt_128k(state);
+
+  state->current_stage_number = -1; // force load
+  state->wanted_stage_number = 0;
+  load_stage(state);
+  run_pregame_screen(state);
+}
+
+CHQ_API void chq_main(chqstate_t *state)
+{
+  // This should eventually call main_loop(state);
+  run_pregame_screen_loop(state);
 }

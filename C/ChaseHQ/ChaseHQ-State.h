@@ -80,14 +80,11 @@ struct chqstate {
   /**
    * Virtual ZX Spectrum hardware we're driving.
    */
-  zxspectrum_t   *speccy;
+  zxspectrum_t *speccy;
 
   /* ------------------------------------------------------------------------
    * State variables as per the original, ordered by memory location.
    * --------------------------------------------------------------------- */
-
-  // $4000
-  u8        screen[SCREEN_LENGTH];
 
   // $5B00
   u8        pre_shifted_backdrop[BACKDROP_LENGTH]; // occupies 256 bytes in real game?

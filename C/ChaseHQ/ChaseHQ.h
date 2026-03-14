@@ -12,6 +12,57 @@
 
 /* ----------------------------------------------------------------------- */
 
+#define CHQ_API
+
+/* ----------------------------------------------------------------------- */
+
+/* Exports go here... */
+
+/**
+ * Holds the current state of the game.
+ */
+typedef struct chqstate chqstate_t;
+
+/**
+ * Create a game instance.
+ */
+CHQ_API chqstate_t *chq_create(zxspectrum_t *speccy);
+
+/**
+ * Destroy a game instance.
+ */
+CHQ_API void chq_destroy(chqstate_t *state);
+
+/**
+ * Prepare the game screen.
+ */
+CHQ_API void chq_setup(chqstate_t *state);
+
+// /**
+//  * Run the game menu.
+//  *
+//  * Call this repeatedly until it returns > 0.
+//  *
+//  * \return > 0 when it's time to continue on to chq_setup2.
+//  */
+// chq_API int chq_menu(chqstate_t *state);
+//
+// /**
+//  * Prepare the game proper.
+//  */
+// chq_API void chq_setup2(chqstate_t *state);
+
+/**
+ * Invoke the game instance.
+ *
+ * Call this repeatedly.
+ */
+CHQ_API void chq_main(chqstate_t *state);
+
+/* ----------------------------------------------------------------------- */
+
+/* All the below stuff should get made internal at some point. */
+
 #define MARQUEE_HEIGHT        (8 * 8) // rows
 #define PLAYFIELD_HEIGHT      (16 * 8) // rows
 
@@ -23,19 +74,19 @@
 #define BACKBUFFER_END_ADDRESS (BACKBUFFER_START_ADDRESS + BACKBUFFER_LENGTH)
 
 // Return screen[] pointer given a Z80 address.
-#define ADDRTOSCREEN(addr)    (&state->screen[(addr) - SCREEN_START_ADDRESS])
+#define ADDRTOSCREEN(addr)    (&state->speccy->screen.pixels[(addr) - SCREEN_START_ADDRESS])
 // Return backbuffer[] pointer given a Z80 address.
 #define ADDRTOBACKBUF(addr)   (&state->backbuffer[(addr) - BACKBUFFER_START_ADDRESS])
 
 // Return byte offset of screen[] pointer.
-#define SCREENTOOFFSET(ptr)   ((ptr) - &state->screen[0])
+#define SCREENTOOFFSET(ptr)   ((ptr) - &state->speccy->screen.pixels[0])
 // Return byte offset of backbuffer[] pointer.
 #define BACKBUFTOOFFSET(ptr)  ((ptr) - &state->backbuffer[0])
 // Return a Z80 address of backbuffer[] pointer.
 #define BACKBUFTOADDR(ptr)    (BACKBUFFER_START_ADDRESS + BACKBUFTOOFFSET(ptr))
 
 // Return screen[] pointer given byte offset.
-#define OFFSETTOSCREEN(off)   (&state->screen[off])
+#define OFFSETTOSCREEN(off)   (&state->speccy->screen.pixels[off])
 // Return backbuffer[] pointer given byte offset.
 #define OFFSETTOBACKBUF(off)  (&state->backbuffer[off])
 
@@ -377,7 +428,6 @@ typedef struct obj obj_t;
 typedef struct heli_lod heli_lod_t;
 typedef struct heli_lod_inner heli_lod_inner_t;
 typedef struct stagevars stagevars_t;
-typedef struct chqstate chqstate_t;
 
 typedef void (hazard_handler_t)(chqstate_t *state, hazard_t *IX);
 
@@ -447,10 +497,6 @@ typedef struct {
   const depthset_t *set; // Conv: this is always present, can be NULL for
   // final entry
 } stretchy_t;
-
-/* ----------------------------------------------------------------------- */
-
-void chasehq_reset_state(chqstate_t *state);
 
 /* ----------------------------------------------------------------------- */
 
