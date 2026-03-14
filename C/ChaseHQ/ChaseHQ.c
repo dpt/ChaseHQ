@@ -3607,7 +3607,13 @@ void plot_face_attributes(chqstate_t *state,
   }
 }
 
-// $9AEC
+/**
+ * $9AEC: Plot a character at horizontal position X with no cursor block.
+ *
+ * \param[in] state     Pointer to game state.
+ * \param[in] x         X position. (was A)
+ * \param[in] character Character to draw. (was D)
+ */
 void plot_mini_font_cursor_off(chqstate_t *state,
                                u8          x,
                                char        character)
@@ -3615,7 +3621,13 @@ void plot_mini_font_cursor_off(chqstate_t *state,
   pmf_go(state, x, character, ________, ________);
 }
 
-// $9AF1
+/**
+ * $9AF1: Plot a character at horizontal position X with a cursor block.
+ *
+ * \param[in] state     Pointer to game state.
+ * \param[in] x         X position. (was A)
+ * \param[in] character Character to draw. (was D)
+ */
 void plot_mini_font_cursor_on(chqstate_t *state,
                               u8          x,
                               char        character)
@@ -3623,12 +3635,15 @@ void plot_mini_font_cursor_on(chqstate_t *state,
   pmf_go(state, x, character, _____XXX, X_______);
 }
 
-// $9AF4
-//
-// x - was A
-// ascii - was D
-// extrabm1 - was B
-// extrabm2 - was C
+/**
+ * $9AF4: Plot a character.
+ *
+ * \param[in] state    Pointer to game state.
+ * \param[in] x        X position. (was A)
+ * \param[in] ascii    Character to draw. (was D)
+ * \param[in] extrabm1 Additional bitmap data to draw. (was B)
+ * \param[in] extrabm2 Additional bitmap data to draw. (was C)
+ */
 void pmf_go(chqstate_t *state,
             u8          x,
             char        ascii,
@@ -3736,7 +3751,11 @@ pmf_have_ascii:
   } while (--row > 0);
 }
 
-// $9BA7
+/**
+ * $9BA7: Clear the message line.
+ *
+ * \param[in] state Pointer to game state.
+ */
 void clear_message_line(chqstate_t *state)
 {
   u16 screen; // was HL
@@ -3757,7 +3776,7 @@ void clear_message_line(chqstate_t *state)
  * that our heroes are running of time. When they do run out of time, and
  * sufficient credits remain, a 10s coundown timer and restart query are
  * presented along with a tick-tock sound effect. If restart is initiated the
- * game is part reset and continues.
+ * game is partially reset and then continues.
  *
  * \param[in] state Pointer to game state.
  */
