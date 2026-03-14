@@ -3006,7 +3006,8 @@ plot_sprite_odd_start:
 /**
  * $9542: Plot a flipped sprite
  *
- * This function draws the given bitmap to the back buffer while flipping it horizontally.
+ * This function draws the given bitmap to the back buffer while flipping it
+ * horizontally.
  *
  * \param[in] state         Pointer to game state.
  * \param[in] width_bytes   Byte width of bitmap data. (was A)
@@ -3052,7 +3053,8 @@ void plot_sprite_flipped(chqstate_t *state,
 /**
  * $9565: Plot a flipped sprite (for even byte widths)
  *
- * This function draws the given bitmap to the back buffer while flipping it horizontally.
+ * This function draws the given bitmap to the back buffer while flipping it
+ * horizontally.
  *
  * \param[in] state         Pointer to game state.
  * \param[in] jump_offset   Jump table byte offset (e.g. N * 9). (was IX)
@@ -3108,7 +3110,8 @@ plot_sprite_flipped_even_start:
 /**
  * $95B3: Plot a flipped sprite (for odd byte widths)
  *
- * This function draws the given bitmap to the back buffer while flipping it horizontally.
+ * This function draws the given bitmap to the back buffer while flipping it
+ * horizontally.
  *
  * \param[in] state         Pointer to game state.
  * \param[in] width_bytes   Byte width of bitmap data. (was A)
@@ -3131,16 +3134,10 @@ void plot_sprite_flipped_odd(chqstate_t *state,
   width_bytes++;
   jump_offset = 9 * (4 - width_bytes); // 9 bytes/op
 
-#if 0
-  Ddash = 0xEF;
+  // Conv: Removed D' the flipped bytes table ptr
   // EXX - bank
-  D = 0;
-#endif
+  // D = 0; can't see a reason for this
 
-  // -- split here ?
-
-  // Conv: B & C moved into prevbufrow
-  // EXX - bank
   goto psf_odd_body;
 
   for (;;) {
@@ -3174,10 +3171,15 @@ psf_odd_body:
   }
 }
 
-// $961B
+/**
+ * $961B: Pseduo-random number generator
+ *
+ * \param[in] state Pointer to game state.
+ * \return Pseduo-random byte
+ */
 u8 rng(chqstate_t *state)
 {
-  int carry = 0;
+  int carry;
   u8 *seed; // was HL
   u8  A;
 
@@ -3193,10 +3195,13 @@ u8 rng(chqstate_t *state)
   return A;
 }
 
-// $9945
-//
-// priority - was A
-// chatterblk - was HL
+/**
+ * $9945: Start chatter
+ *
+ * \param[in] state      Pointer to game state.
+ * \param[in] priority   Priority of this chatter (higher wins). (was A)
+ * \param[in] chatterblk Pointer to chatter data block. (was HL)
+ */
 void start_chatter(chqstate_t       *state,
                    chatterpriority_t priority,
                    const u8         *chatterblk)
@@ -3217,7 +3222,11 @@ void start_chatter(chqstate_t       *state,
   state->chatter_state    = CHATTERSTATE_START;
 }
 
-// $9965
+/**
+ * $9965: Drive chatter
+ *
+ * \param[in] state Pointer to game state.
+ */
 void drive_chatter(chqstate_t *state)
 {
   int          carry = 0;
@@ -3227,7 +3236,7 @@ void drive_chatter(chqstate_t *state)
   u8           delay;         // was A
   u8           x;             // was A
   u8           B;
-  const char  *HL;
+  const char  *HLnextchar;    // was HL
   const u8    *chatterblk;    // was HL
   u8           chattercmd;    // was A
 
@@ -3241,7 +3250,7 @@ void drive_chatter(chqstate_t *state)
 
   if (--chatter_state == 0) { // stopping (3)
     if (--state->noise_counter != 0) {
-      noise_effect(state, state->noise_counter); // exit via
+      drive_noise_effect(state, state->noise_counter); // exit via
       return;
     }
 
@@ -3265,7 +3274,7 @@ void drive_chatter(chqstate_t *state)
 
 do_noise_effect:
   if (state->noise_counter) {
-    noise_effect(state, state->noise_counter); // exit via
+    drive_noise_effect(state, state->noise_counter); // exit via
     return;
   }
   delay = state->chatter_delay;
@@ -3276,8 +3285,8 @@ do_noise_effect:
   B = state->chatter_delay;
   if (delay == 0)
     goto read_message;
-  HL = state->next_character - 1; // addr of next char
-  character = *HL & ~STREND; // load char and clear any terminator
+  HLnextchar = state->next_character - 1; // addr of next char
+  character = *HLnextchar & ~STREND; // load char and clear any terminator
   x = state->message_x - 1;
   RR(B);
   if (carry)
@@ -3316,11 +3325,14 @@ starting:
 
 clear:
   clear_message_line(state);
-  noise_effect(state, 4); // exit via
+  drive_noise_effect(state, 4); // exit via
 }
 
-// $99D3
-// Factored out from above, since other routines call it.
+/**
+ * $99D3: Stop chatter
+ *
+ * \param[in] state Pointer to game state.
+ */
 void drive_chatter_stop(chqstate_t *state)
 {
   state->noise_counter = 4;
@@ -3328,7 +3340,11 @@ void drive_chatter_stop(chqstate_t *state)
   clear_message_line(state); // exit via
 }
 
-// $99EC
+/**
+ * $99EC: Print chatter
+ *
+ * \param[in] state Pointer to game state.
+ */
 void print_chatter(chqstate_t *state)
 {
   const u8 *chatter; // was HL
@@ -3366,32 +3382,38 @@ void print_chatter(chqstate_t *state)
   pc_chatter_message(state, chatter); // was FALLTHROUGH
 }
 
-// $9A24
-//
-// chatter - was HL
-void pc_chatter_message(chqstate_t *state, const u8 *chatter)
+/**
+ * $9A24: Print chatter
+ *
+ * \param[in] state      Pointer to game state.
+ * \param[in] chatterblk Pointer to chatter data block. (was HL)
+ */
+void pc_chatter_message(chqstate_t *state, const u8 *chatterblk)
 {
-  u8          index;
+  u8          index;  // Conv: additional
   const char *string; // was DE
 
   // Conv: Original game loads an address directly here.
-  assert(*chatter < CHATTERSTR__LIMIT);
-  index = *chatter++;
-  if (index < CHATTERSTR_PERP_DESC_1)
+  assert(*chatterblk < CHATTERSTR__LIMIT);
+  index = *chatterblk++;
+  if (index < CHATTERSTR_PERP_DESC_1) {
     string = common_chatter_strings[index];
-  else {
+  } else {
     assert(index < CHATTERSTR__LIMIT);
     string = state->stage->chatter_strings[index - CHATTERSTR_PERP_DESC_1];
   }
   assert(string);
-  state->chatterblk_ptr = chatter;
+  state->chatterblk_ptr = chatterblk;
   state->next_character = string;
   pc_clear_line(state, 0); // was FALLTHROUGH
 }
 
-// $9A30
-//
-// x - was A
+/**
+ * $9A30: Clear the chatter line
+ *
+ * \param[in] state Pointer to game state.
+ * \param[in] x     X position. (was A)
+ */
 void pc_clear_line(chqstate_t *state, u8 x)
 {
   const char *nextch;    // was HL
@@ -3411,16 +3433,19 @@ void pc_clear_line(chqstate_t *state, u8 x)
   state->next_character = nextch;
 }
 
-// $9A55
-//
-// counter - was A
-void noise_effect(chqstate_t *state, u8 counter)
+/**
+ * $9A55: Drive the noise effect
+ *
+ * \param[in] state   Pointer to game state.
+ * \param[in] counter Noise counter. (was A)
+ */
+void drive_noise_effect(chqstate_t *state, u8 counter)
 {
   state->noise_counter = --counter;
   if (counter == 0)
     print_chatter(state); // exit via
   else
-    noise_effect_9a5c(state, counter); // was FALLTHROUGH
+    draw_noise_effect(state, counter); // was FALLTHROUGH
 }
 
 // Move to next screen row (downwards)
@@ -3439,10 +3464,13 @@ static u16 nextscrrow(u16 screen)
   return screen;
 }
 
-// $9A5C
-//
-// counter - was A
-void noise_effect_9a5c(chqstate_t *state, u8 counter)
+/**
+ * $9A5C: Draw the noise effect
+ *
+ * \param[in] state   Pointer to game state.
+ * \param[in] counter Noise counter. (was A)
+ */
+void draw_noise_effect(chqstate_t *state, u8 counter)
 {
   int   carry = 0;
   u8    x;              // was A
@@ -3484,9 +3512,12 @@ void noise_effect_9a5c(chqstate_t *state, u8 counter)
   // was FALLTHROUGH
 }
 
-// $9A98
-//
-// attr - was A
+/**
+ * $9A98: Set the noise attribute bytes
+ *
+ * \param[in] state Pointer to game state.
+ * \param[in] attr  Attribute byte. (was A)
+ */
 void ne_plot_attrs(chqstate_t *state, u8 attr)
 {
   int addr;       // was HL
@@ -3502,12 +3533,15 @@ void ne_plot_attrs(chqstate_t *state, u8 attr)
   } while (--iterations > 0);
 }
 
-// $9AAB
-//
-// screen - was DE
-// face - was HL
+/**
+ * $9AAB: Draw the given face
+ *
+ * \param[in] state  Pointer to game state.
+ * \param[in] screen Screen address to draw at - a Z80 address, always 0x4036. (was DE)
+ * \param[in] face   Face data to draw. (was HL)
+ */
 void plot_face(chqstate_t *state,
-               u16         screen, // Z80 address
+               u16         screen,
                const u8   *face)
 {
   u16 saved_screen; // was stack
@@ -3533,15 +3567,18 @@ void plot_face(chqstate_t *state,
   plot_face_attributes(state, saved_screen, face); // was fallthrough
 }
 
-// $9ACE
-//
-// screen - was POP DE
-// face - HL
+/**
+ * $9ACE: Set the face attribute bytes
+ *
+ * \param[in] state  Pointer to game state.
+ * \param[in] screen Screen address to draw at. (was stack)
+ * \param[in] face   Face data to draw. (was HL)
+ */
 void plot_face_attributes(chqstate_t *state,
                           u16         screen,
                           const u8   *face)
 {
-  int carry = 0;
+  int carry;
   u8  A;       // was A
   u16 counter; // was BC
 
@@ -3726,16 +3763,16 @@ void clear_message_line(chqstate_t *state)
  */
 void check_time_up(chqstate_t *state)
 {
-  u8   *ptime_bcd;            // was HL
-  u8    time_up_state;        // was A
-  u8    time_bcd;             // was A
-  char *time_digits;          // was DE
-  u8    effect;               // was B
-  u8    remaining_subseconds; // was H
-  u8    remaining_seconds_x2; // was L
-  u8    seconds;              // was A
-  u8    hidigit;              // was A
-  u8    lodigit;              // was L
+  const u8 *ptime_bcd;            // was HL
+  u8        time_up_state;        // was A
+  u8        time_bcd;             // was A
+  char     *time_digits;          // was DE
+  u8        effect;               // was B
+  u8        remaining_subseconds; // was H
+  u8        remaining_seconds_x2; // was L
+  u8        seconds;              // was A
+  u8        hidigit;              // was A
+  u8        lodigit;              // was L
 
   if (state->perp_caught_phase > PERPCAUGHTPHASE_0 ||
       state->transition_control == TRANSITIONCONTROL_FADE)

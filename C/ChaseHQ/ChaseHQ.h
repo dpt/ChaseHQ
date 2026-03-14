@@ -659,11 +659,11 @@ void drive_chatter(chqstate_t *state);
 void drive_chatter_stop(chqstate_t *state);
 
 void print_chatter(chqstate_t *state);
-void pc_chatter_message(chqstate_t *state, const u8 *chatter);
+void pc_chatter_message(chqstate_t *state, const u8 *chatterblk);
 void pc_clear_line(chqstate_t *state, u8 x);
 
-void noise_effect(chqstate_t *state, u8 counter);
-void noise_effect_9a5c(chqstate_t *state, u8 counter);
+void drive_noise_effect(chqstate_t *state, u8 counter);
+void draw_noise_effect(chqstate_t *state, u8 counter);
 void ne_plot_attrs(chqstate_t *state, u8 attr);
 
 void plot_face(chqstate_t *state,
