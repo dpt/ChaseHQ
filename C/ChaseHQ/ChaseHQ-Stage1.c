@@ -6,10 +6,10 @@
 
 #include <stddef.h>
 
-#include "../ZXSpectrum/Pixels.h"
-#include "../ZXSpectrum/Spectrum.h"
+#include "C99/Types.h"
+#include "ZXSpectrum/Pixels.h"
+#include "ZXSpectrum/Spectrum.h"
 
-#include "Types.h"
 #include "ChaseHQ.h"
 #include "ChaseHQ-Data.h"
 

@@ -86,12 +86,12 @@
 #include <stdio.h>
 #include <string.h>
 
-#include "../ZXSpectrum/Macros.h"
-#include "../ZXSpectrum/Pixels.h"
-#include "../ZXSpectrum/Spectrum.h"
-#include "../ZXSpectrum/Z80.h"
+#include "C99/Types.h"
+#include "ZXSpectrum/Macros.h"
+#include "ZXSpectrum/Pixels.h"
+#include "ZXSpectrum/Spectrum.h"
+#include "ZXSpectrum/Z80.h"
 
-#include "Types.h"
 #include "ChaseHQ-Data.h"
 #include "ChaseHQ-Stages.h"
 #include "ChaseHQ-Stage1.h"
@@ -4080,7 +4080,7 @@ void plot_turbos_and_digits(chqstate_t *state)
   const u16 *SM_9e45;
   u8         A;
   const u16 *SPbitmap;
-  u8        *HLscreen;
+  u8        *HLbackbuf;
   u16        DEbitmap;
   u8        *DEscreen;
   u16        DEdash_speed;
@@ -4125,7 +4125,7 @@ ptas_turbo_setup:
       if (Cturbos == 0)
         SPbitmap = SM_9e45;
       Cturbos++;
-      HLscreen = ADDRTOBACKBUF(0xFE00 | A);
+      HLbackbuf = ADDRTOBACKBUF(0xFE00 | A);
       // EX AF,AF'
       B = TURBOHEIGHT;
       do {
@@ -4134,32 +4134,14 @@ ptas_turbo_setup:
         DEbitmap = *SPbitmap++; // POP DEbitmap
         Emask = DEbitmap & 0xFF;
         Dbitmap = DEbitmap >> 8;
-        *HLscreen = (*HLscreen & Emask) | Dbitmap;
-        HLscreen++;
+        *HLbackbuf = (*HLbackbuf & Emask) | Dbitmap, HLbackbuf++;
 
         DEbitmap = *SPbitmap++; // POP DEbitmap
         Emask = DEbitmap & 0xFF;
         Dbitmap = DEbitmap >> 8;
-        *HLscreen = (*HLscreen & Emask) | Dbitmap;
-        HLscreen--;
+        *HLbackbuf = (*HLbackbuf & Emask) | Dbitmap, HLbackbuf--;
 
-        // Is this advancing a screen or a backbuffer pointer?
-
-        // FIXME row advance
-        //A = H;
-        //H--;
-        //A &= 15;
-        //JP NZ;
-        //A = H;
-        //A += 0x10;
-        //H = A;
-        //A = L;
-        //A -= 0x20;
-        //L = A;
-        //JP NC;
-        //A = H;
-        //A -= 0x10;
-        //H = A;
+        HLbackbuf = ADDRTOBACKBUF(prevbufrow(BACKBUFTOADDR(HLbackbuf)));
       } while (--B > 0);
       // EX AF,AF'
       A += 2;
@@ -4609,7 +4591,7 @@ dc_return:
 // $A0D6
 u8 keyscan(chqstate_t *state)
 {
-#if 0
+  int carry = 0;
   u8  Ainput;
   u8  E;
   u8 *HL;
@@ -4619,7 +4601,7 @@ u8 keyscan(chqstate_t *state)
     Ainput = 0; // TODO state->speccy->in(state->speccy, port_KEMPSTON_JOYSTICK) & 0x1F;
     E = 0x20;
     HL = &state->keydefs[0];
-    A = keyscan_a112(state, HL);
+    A = keyscan_a112(state, HL, E);
     RRC(A);
     RRC(A);
     RRC(A);
@@ -4628,7 +4610,7 @@ u8 keyscan(chqstate_t *state)
   } else {
     E = 1;
     HL = &state->keydefs[0];
-    A = keyscan_a112(state, HL);
+    A = keyscan_a112(state, HL, E);
   }
 
   A &= 3;
@@ -4642,43 +4624,47 @@ u8 keyscan(chqstate_t *state)
     A = E; // FIX
   A &= 0xF3;
   state->user_input = A;
-#endif
   return 0;
 }
 
 // $A112
-u8 keyscan_a112(chqstate_t *state, u8 *HL)
+u8 keyscan_a112(chqstate_t *state, const u8 *HL, u8 E)
 {
-#if 0
-  u8 A;
+  int carry = 0;
+  u8  A;
 
   do {
     A = *HL++;
-    keyscan_inner(state, A);
-    carry = !carry;
+    carry = !keyscan_inner(state, A); // active low<>high
     RL(E);
   } while (!carry);
   return E;
-#endif
   return 0;
 }
 
-void keyscan_inner(chqstate_t *state, u8 A)
+/* Rotate right an 8-bit value `v` by `sh` bits */
+#define ROR_8(v,sh) (((v) >> (sh)) | ((v) << (8 - (sh)))
+
+int keyscan_inner(const chqstate_t *state, u8 Ainput)
 {
-#if 0
-  C = A;
-  B = (A + 7) + 1; // shift
-  SRL(C);
-  SRL(C);
-  SRL(C);
-  C = 5 - C; // another shift
-  A = 0xFE;
-  do RRC(A);
-  while (--B > 0);
-  A = 0; // TODO state->speccy->in(state->speccy, port_?);
-  do RR(A);
-  while (--C > 0);
-#endif
+  int carry = 0;
+  u8  Bport_shift; /* was B */
+  u8  Ckey_shift;  /* was C */
+  u8  Aport;       /* was A */
+  u8  keys;        /* was A */
+
+  // Ainput = %RRRRRPPP where P is port shift and R is result shift (key)
+  Bport_shift = (Ainput & 7) + 1;
+  Ckey_shift  = 5 - (Ainput >> 3);
+  Aport = 0xFE;
+  do
+    RRC(Aport);
+  while (--Bport_shift > 0);
+  keys = state->speccy->in(state->speccy, Aport | 0xFE);
+  do
+    RR(keys);
+  while (--Ckey_shift > 0);
+  return carry;
 }
 
 // $A399

@@ -7,7 +7,7 @@
 #ifndef CHASEHQ_STAGES_H
 #define CHASEHQ_STAGES_H
 
-#include "Types.h"
+#include "C99/Types.h"
 #include "ChaseHQ.h"
 
 struct hittable {

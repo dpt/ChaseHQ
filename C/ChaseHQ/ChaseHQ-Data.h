@@ -10,7 +10,7 @@
 #ifndef CHASEHQ_DATA_H
 #define CHASEHQ_DATA_H
 
-#include "Types.h"
+#include "C99/Types.h"
 #include "ChaseHQ-State.h"
 #include "ChaseHQ.h"
 

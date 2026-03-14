@@ -7,9 +7,8 @@
 #ifndef CHASEHQ_H
 #define CHASEHQ_H
 
-#include "../ZXSpectrum/Spectrum.h"
-
-#include "Types.h"
+#include "C99/Types.h"
+#include "ZXSpectrum/Spectrum.h"
 
 /* ----------------------------------------------------------------------- */
 
@@ -742,8 +741,8 @@ void draw_char(chqstate_t *state,
                u8        **new_attrs);
 
 u8 keyscan(chqstate_t *state);
-u8 keyscan_a112(chqstate_t *state, u8 *HL);
-void keyscan_inner(chqstate_t *state, u8 A);
+u8 keyscan_a112(chqstate_t *state, const u8 *HL, u8 E);
+int keyscan_inner(const chqstate_t *state, u8 Ainput);
 
 void check_scenery_collisions(chqstate_t *state);
 void csc_hit_scenery(chqstate_t *state, u8 Aflip, u8 Adash);

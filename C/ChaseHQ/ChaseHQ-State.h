@@ -7,11 +7,13 @@
 #ifndef CHASEHQ_STATE_H
 #define CHASEHQ_STATE_H
 
-#include "../ZXSpectrum/Spectrum.h"
+#include "C99/Types.h"
+#include "ZXSpectrum/Spectrum.h"
 
-#include "Types.h"
 #include "ChaseHQ.h"
 #include "ChaseHQ-Stages.h"
+
+/* ----------------------------------------------------------------------- */
 
 struct hazard {
   u8                used;
@@ -65,7 +67,25 @@ struct stagevars {
   u16       horizon_attribute;
 };
 
+/* ----------------------------------------------------------------------- */
+
+/**
+ * Holds the current state of the game.
+ */
 struct chqstate {
+  /* ------------------------------------------------------------------------
+   * State variables additional to the original game.
+   * --------------------------------------------------------------------- */
+
+  /**
+   * Virtual ZX Spectrum hardware we're driving.
+   */
+  zxspectrum_t   *speccy;
+
+  /* ------------------------------------------------------------------------
+   * State variables as per the original, ordered by memory location.
+   * --------------------------------------------------------------------- */
+
   // $4000
   u8        screen[SCREEN_LENGTH];
 
