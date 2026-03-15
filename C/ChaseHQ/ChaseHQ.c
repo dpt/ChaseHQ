@@ -416,7 +416,7 @@ void main_loop(chqstate_t *state)
       exit_fork(state);
 
       if (state->test_mode) {
-        keys = 0; // TODO ~state->speccy->in(state->speccy, port_KEYBOARD_12345) & 0x1F;
+        keys = ~state->speccy->in(state->speccy, port_KEYBOARD_12345) & 0x1F;
         if (keys) {
           start_sfx(state, EFFECT_BIP, 4); /* priority 4 */
           silence_audio_hook(state);
@@ -4542,7 +4542,7 @@ u8 keyscan(chqstate_t *state)
   u8  A;
 
   if (state->kempston_flag) {
-    Ainput = 0; // TODO state->speccy->in(state->speccy, port_KEMPSTON_JOYSTICK) & 0x1F;
+    Ainput = state->speccy->in(state->speccy, port_KEMPSTON_JOYSTICK) & 0x1F;
     E = 0x20;
     HL = &state->keydefs[0];
     A = keyscan_a112(state, HL, E);
