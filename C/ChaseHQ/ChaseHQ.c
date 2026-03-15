@@ -100,10 +100,54 @@
 
 /* ----------------------------------------------------------------------- */
 
-// read an arbitrary native word
+// Read an arbitrary native word
 static u16 wordat(const u8 *addr)
 {
   return (addr[0] << 0) | (addr[1] << 8);
+}
+
+// Returns the previous row for the back buffer (visually upwards).
+//
+// Back buffer addresses are of the form 0b_1111_LLLL_RRRC_CCCC
+//
+// Conv: Extracted to function.
+static u16 prevbufrow(u16 backbuf)
+{
+  int orig;
+
+  assert(backbuf >= BACKBUFFER_START_ADDRESS);
+
+  orig = backbuf;
+  backbuf -= 256;
+  if ((orig & 0x0F00) == 0) { // LLLL was zero on entry
+    backbuf += 0x1000; // 1110 -> 1111
+    int t = (backbuf & 0xFF) - 32; // decrement RRR
+    backbuf = (backbuf & 0xFF00) | (t & 0xFF);
+    if (t < 0) // did carry - unsure if happens in practice
+      backbuf -= 0x1000;
+  }
+
+  assert(backbuf >= BACKBUFFER_START_ADDRESS);
+  return backbuf;
+}
+
+/// For looking up Z80 pointers (that I've decided to leave in-place for now)
+/// and returning the C pointer equivalent.
+static const void *lookup_map_goto(chqstate_t *state, u16 z80)
+{
+  switch (z80) {
+    case 0xE2AA: return &perp_escape_curvature[0];
+    case 0xE2AF: return &perp_escape_height[0];
+    case 0xE2B8: return &fork_hazards[0];
+    case 0xE2C7: return &forked_road_curvature[1]; // forked_road_curvature_loop
+    case 0xE2CC: return &forked_road_height[0];
+    default:
+      switch (state->current_stage_number) {
+      case 1: return stage1_lookup_map_goto(state, z80);
+      default:
+          assert("Unknown stage" == NULL);
+      }
+  }
 }
 
 /* ----------------------------------------------------------------------- */
@@ -1702,31 +1746,6 @@ void draw_mugshots(chqstate_t *state)
                &bitmap_faces[1 * FACEBYTES + FACEBITMAPBYTES]);
 
   draw_overlay_messages(state);
-}
-
-// Returns the previous row for the back buffer (visually upwards).
-//
-// Back buffer addresses are of the form 0b_1111_LLLL_RRRC_CCCC
-//
-// Conv: Extracted to function.
-static u16 prevbufrow(u16 backbuf)
-{
-  int orig;
-
-  assert(backbuf >= BACKBUFFER_START_ADDRESS);
-
-  orig = backbuf;
-  backbuf -= 256;
-  if ((orig & 0x0F00) == 0) { // LLLL was zero on entry
-    backbuf += 0x1000; // 1110 -> 1111
-    int t = (backbuf & 0xFF) - 32; // decrement RRR
-    backbuf = (backbuf & 0xFF00) | (t & 0xFF);
-    if (t < 0) // did carry - unsure if happens in practice
-      backbuf -= 0x1000;
-  }
-
-  assert(backbuf >= BACKBUFFER_START_ADDRESS);
-  return backbuf;
 }
 
 // $8EB7
@@ -9006,25 +9025,6 @@ void bootstrap(chqstate_t *state)
     // Call the 128K/bank 3 ?bootstrap routine.
     //TODO if (state->mode_128k)
     //TODO   call_bank_3_128k(0xC003);
-  }
-}
-
-/// For looking up Z80 pointers (that I've decided to leave in-place for now)
-/// and returning the C pointer equivalent.
-const void *lookup_map_goto(chqstate_t *state, u16 z80)
-{
-  switch (z80) {
-  case 0xE2AA: return &perp_escape_curvature[0];
-  case 0xE2AF: return &perp_escape_height[0];
-  case 0xE2B8: return &fork_hazards[0];
-  case 0xE2C7: return &forked_road_curvature[1]; // forked_road_curvature_loop
-  case 0xE2CC: return &forked_road_height[0];
-  default:
-    switch (state->current_stage_number) {
-    case 1: return stage1_lookup_map_goto(state, z80);
-    default:
-      assert("Unknown stage" == NULL);
-    }
   }
 }
 
