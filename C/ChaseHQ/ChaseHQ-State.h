@@ -491,9 +491,9 @@ struct chqstate {
   u16       dd_SM_B570_offset; // (might not need to be a state var)
 
   // $B5AA (SM) in draw_car
-  u8        dc_y_offset;
+  u8        dhc_y_offset;
   // $B5AF (SM) in draw_car
-  u8        dc_pitch; // car's pitch (0/3/6 = level/up/down)
+  u8        dhc_pitch; // car's pitch (0/3/6 = level/up/down)
 
   // $BB95 (SM) in rm_cycle_buffer_offset
   const u8 *rm_SM_BB95;

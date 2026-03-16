@@ -2381,6 +2381,251 @@ const u8 bitmap_debris_4[2 * 6] = {
 
 /* ----------------------------------------------------------------------- */
 
+// $CEDA
+const carpart_t hero_car_parts[9][5] = {
+  {
+    {  6, 14, bitmap_hero_centre_straight },
+    { 20,  9, bitmap_hero_top_straight    },
+    {  0,  6, bitmap_hero_bottom_straight },
+    {  6, 14, bitmap_hero_left_straight   },
+    {  6, 14, bitmap_hero_right_straight  }
+  },
+  {
+    {  4, 17, bitmap_hero_centre_straight_right },
+    { 21,  8, bitmap_hero_top_straight_right    },
+    {  0,  4, bitmap_hero_bottom_straight_right },
+    {  7, 13, bitmap_hero_left_straight_left    },
+    {  7, 13, bitmap_hero_right_straight_right  }
+  },
+  {
+    {  4, 16, bitmap_hero_centre_straight_right_hard },
+    { 20,  9, bitmap_hero_top_straight_right_hard    },
+    {  0,  4, bitmap_hero_bottom_straight_right_hard },
+    {  7, 12, bitmap_hero_left_straight_right_hard   },
+    {  5, 15, bitmap_hero_right_straight_right_hard  }
+  },
+  {
+    {  6, 14, bitmap_hero_centre_up },
+    { 20, 10, bitmap_hero_top_up    },
+    {  0,  6, bitmap_hero_bottom_up },
+    {  6, 13, bitmap_hero_left_up   },
+    {  6, 14, bitmap_hero_right_up  }
+  },
+  {
+    {  4, 17, bitmap_hero_centre_up_right },
+    { 21,  9, bitmap_hero_top_right       },
+    {  0,  4, bitmap_hero_bottom_right    },
+    {  7, 12, bitmap_hero_left_right      },
+    {  6, 14, bitmap_hero_right_right     }
+  },
+  {
+    {  6, 15, bitmap_hero_centre_up_right_hard },
+    { 21,  9, bitmap_hero_up_right_hard        },
+    {  0,  6, bitmap_hero_bottom_right_hard    },
+    {  7, 11, bitmap_hero_left_right_hard      },
+    {  6, 15, bitmap_hero_right_right_hard     }
+  },
+  {
+    {  6, 14, bitmap_hero_centre_down },
+    { 20,  8, bitmap_hero_top_down    },
+    {  0,  6, bitmap_hero_bottom_down },
+    {  6, 13, bitmap_hero_left_down   },
+    {  6, 14, bitmap_hero_right_down  }
+  },
+  {
+    {  4, 16, bitmap_hero_centre_down_right },
+    { 20,  8, bitmap_hero_top_down_right    },
+    {  0,  4, bitmap_hero_bottom_down_right },
+    {  7, 13, bitmap_hero_left_down_right   },
+    {  6, 13, bitmap_hero_right_down_right  }
+  },
+  {
+    {  4, 16, bitmap_hero_centre_down_right_hard },
+    { 20,  8, bitmap_hero_top_down_right_hard    },
+    {  0,  4, bitmap_hero_bottom_down_right_hard },
+    {  7, 13, bitmap_hero_left_down_right_hard   },
+    {  5, 15, bitmap_hero_right_down_right_hard  }
+  }
+};
+
+// $CF8E
+const carpart_t hero_car_shadow[3] = {
+  { 0, 12, bitmap_shadow_straight        },
+  { 0, 12, bitmap_shadow_turn_right      },
+  { 0, 12, bitmap_shadow_turn_right_hard }
+};
+
+// $CF9A
+const carsmokeframe_t hero_car_turbo_smoke[4] = {
+  {
+    16, 4,
+    16, 0xD8,
+    &bitmap_turbo_1[0]
+  },
+  {
+    16, 4,
+    16, 0xD8,
+    &bitmap_turbo_2[0]
+  },
+  {
+    16, 4,
+    16, 0xD8,
+    &bitmap_turbo_3[0]
+  },
+  {
+    16, 4,
+    16, 0xD8,
+    &bitmap_turbo_4[0]
+  }
+};
+
+/* ----------------------------------------------------------------------- */
+
+#if 0
+; Car graphic anim/adornment table
+;
+; TBD Groups of 3 bytes ref'd by #R$B6A6. 3rd byte is byte offset into
+; car_adornments.
+@label=unknown_cfb2
+b$CFB2 DEFB $E1,$00,$00                                             ; Cherry
+                                                                    ; light
+ $CFB5 DEFB $E4,$F8,$04                                             ; Flashing
+                                                                    ; cherry
+                                                                    ; light
+ $CFB8 DEFB $E1,$00,$00                                             ; Cherry
+                                                                    ; light
+ $CFBB DEFB $E4,$F8,$04                                             ; Flashing
+                                                                    ; cherry
+                                                                    ; light
+ $CFBE DEFB $E1,$F8,$00                                             ; Cherry
+                                                                    ; light
+ $CFC1 DEFB $E4,$F0,$04                                             ; Flashing
+                                                                    ; cherry
+                                                                    ; light
+ $CFC4 DEFB $E8,$00,$0C                                             ; Putting-cherry-on-roof
+                                                                    ; anim frame
+                                                                    ; 1
+ $CFC7 DEFB $E3,$08,$00                                             ; Cherry
+                                                                    ; light
+ $CFCA DEFB $E8,$00,$10                                             ; Putting-cherry-on-roof
+                                                                    ; anim frame
+                                                                    ; 2
+ $CFCD DEFB $E0,$08,$00                                             ; Cherry
+                                                                    ; light
+ $CFD0 DEFB $E8,$08,$14                                             ; Putting-cherry-on-roof
+                                                                    ; anim frame
+                                                                    ; 3
+ $CFD3 DEFB $E8,$00,$10                                             ; Putting-cherry-on-roof
+                                                                    ; anim frame
+                                                                    ; 2
+ $CFD6 DEFB $E8,$00,$0C                                             ; Putting-cherry-on-roof
+                                                                    ; anim frame
+                                                                    ; 1
+ $CFD9 DEFB $E8,$00,$0C                                             ; Putting-cherry-on-roof
+                                                                    ; anim frame
+                                                                    ; 1
+ $CFDC DEFB $E3,$08,$00                                             ; Cherry
+                                                                    ; light
+ $CFDF DEFB $E8,$00,$10                                             ; Putting-cherry-on-roof
+                                                                    ; anim frame
+                                                                    ; 2
+ $CFE2 DEFB $E0,$08,$00                                             ; Cherry
+                                                                    ; light
+ $CFE5 DEFB $E8,$08,$14                                             ; Putting-cherry-on-roof
+                                                                    ; anim frame
+                                                                    ; 3
+ $CFE8 DEFB $E8,$00,$10                                             ; Putting-cherry-on-roof
+                                                                    ; anim frame
+                                                                    ; 2
+ $CFEB DEFB $E8,$00,$0C                                             ; Putting-cherry-on-roof
+                                                                    ; anim frame
+                                                                    ; 1
+ $CFEE DEFB $E8,$F8,$0C                                             ; Putting-cherry-on-roof
+                                                                    ; anim frame
+                                                                    ; 1
+ $CFF1 DEFB $E3,$00,$00                                             ; Cherry
+                                                                    ; light
+ $CFF4 DEFB $E8,$F8,$10                                             ; Putting-cherry-on-roof
+                                                                    ; anim frame
+                                                                    ; 2
+ $CFF7 DEFB $E0,$00,$00                                             ; Cherry
+                                                                    ; light
+ $CFFA DEFB $E8,$00,$14                                             ; Putting-cherry-on-roof
+                                                                    ; anim frame
+                                                                    ; 3
+ $CFFD DEFB $E8,$F8,$10                                             ; Putting-cherry-on-roof
+                                                                    ; anim frame
+                                                                    ; 2
+ $D000 DEFB $E8,$F8,$0C                                             ; Putting-cherry-on-roof
+                                                                    ; anim frame
+                                                                    ; 1
+ $D003 DEFB $EC,$00,$08                                             ; Crash/spark
+ $D006 DEFB $F0,$08,$08                                             ; Crash/spark
+ $D009 DEFB $EE,$F8,$08                                             ; Crash/spark
+ $D00C DEFB $EC,$E0,$08                                             ; Crash/spark
+ $D00F DEFB $EE,$E8,$08                                             ; Crash/spark
+ $D012 DEFB $F0,$D8,$08                                             ; Crash/spark
+ $D015 DEFB $EC,$F0,$08                                             ; Crash/spark
+ $D018 DEFB $EE,$F8,$08                                             ; Crash/spark
+ $D01B DEFB $EE,$E8,$08                                             ; Crash/spark
+ $D01E DEFB $E8,$F0,$10                                             ; Putting-cherry-on-roof
+                                                                    ; anim frame
+                                                                    ; 2
+ $D021 DEFB $E8,$F8,$10                                             ; Putting-cherry-on-roof
+                                                                    ; anim frame
+                                                                    ; 2
+ $D024 DEFB $E8,$F0,$10                                             ; Putting-cherry-on-roof
+                                                                    ; anim frame
+                                                                    ; 2
+; Entries of 4 bytes.
+@label=car_adornments
+ $D027 DEFB $07                                                     ; 7 rows
+                                                                    ; high
+ $D028 DEFB $01                                                     ; 1 byte
+                                                                    ; wide
+ $D029 DEFW $D0E7                                                   ; -> Cherry
+                                                                    ; light (8x7
+                                                                    ; masked
+                                                                    ; data)
+ $D02B DEFB $0E                                                     ; 14 rows
+                                                                    ; high
+ $D02C DEFB $03                                                     ; 3 bytes
+                                                                    ; wide
+ $D02D DEFW $D0F5                                                   ; ->
+                                                                    ; Flashing
+                                                                    ; cherry
+                                                                    ; light
+                                                                    ; (24x14
+                                                                    ; masked
+                                                                    ; data)
+; Crash/spark
+ $D02F DEFB $14                                                     ; 20 rows
+                                                                    ; high
+ $D030 DEFB $03                                                     ; 3 bytes
+                                                                    ; wide
+ $D031 DEFW $D149                                                   ; ->
+                                                                    ; Crash/spark
+                                                                    ; data
+; Putting-cherry-on-roof anim
+ $D033 DEFB $04                                                     ; 4 rows
+                                                                    ; high
+ $D034 DEFB $02                                                     ; 2 bytes
+                                                                    ; wide
+ $D035 DEFW $D1C1                                                   ; -> Frame 1
+ $D037 DEFB $09                                                     ; 9 rows
+                                                                    ; high
+ $D038 DEFB $02                                                     ; 2 bytes
+                                                                    ; wide
+ $D039 DEFW $D1D1                                                   ; -> Frame 2
+ $D03B DEFB $0C                                                     ; 12 rows
+                                                                    ; high
+ $D03C DEFB $01                                                     ; 1 bytes
+                                                                    ; wide
+ $D03D DEFW $D1F5                                                   ; -> Frame 3
+#endif
+
+/* ----------------------------------------------------------------------- */
+
 // $D03F
 const u8 bitmap_arrow[3 * 2 * 28] = {
   XXXXX___, _____XXX, _______X, XXXXXXX_, XXXXXXXX, ________,
@@ -2413,6 +2658,7 @@ const u8 bitmap_arrow[3 * 2 * 28] = {
   XX__X_X_, ________, __X____X, ________, ___XX__X, ________
 };
 
+// $D0E7
 const u8 bitmap_cherry_light[1 * 2 * 7] = {
   ________, _X____X_,
   ________, _XXXXXX_,
@@ -2423,6 +2669,7 @@ const u8 bitmap_cherry_light[1 * 2 * 7] = {
   XX____XX, ________
 };
 
+// $D0F5
 const u8 bitmap_cherry_light_lit[3 * 2 * 14] = {
   XXXXXXXX, ________, XXXX_XXX, ____X___, XXXXXXXX, ________,
   XXXXXXXX, ________, XXX___XX, ___X_X__, XXXXXXXX, ________,
@@ -2440,6 +2687,7 @@ const u8 bitmap_cherry_light_lit[3 * 2 * 14] = {
   XXXXXXXX, ________, XXXX_XXX, ____X___, XXXXXXXX, ________
 };
 
+// $D149
 const u8 bitmap_spark[3 * 2 * 20] = {
   XXXXXXX_, _______X, XXX___XX, ___X_X__, XX_XXXXX, __X_____,
   XXXXXX__, ______X_, __X___X_, XX_XXX_X, X___XXXX, _X_X____,
@@ -2463,6 +2711,7 @@ const u8 bitmap_spark[3 * 2 * 20] = {
   XXXXXXXX, ________, _XX_XXXX, X__X____, XX_XXXXX, __X_____
 };
 
+// $D1C1
 const u8 bitmap_cherryout_1[2 * 2 * 4] = {
   XXXXXX__, ______XX, ___XXXXX, XXX_____,
   XXXXXXX_, _______X, X___XXXX, _XXX____,
@@ -2470,6 +2719,7 @@ const u8 bitmap_cherryout_1[2 * 2 * 4] = {
   XXXXXXXX, ________, ___XXXXX, XXX_____
 };
 
+// $D1D1
 const u8 bitmap_cherryout_2[2 * 2 * 9] = {
   XXXXXXX_, _______X, ___X_XXX, XXX_____,
   XXXXXX_X, ______X_, ______XX, XXXXX___,
@@ -2482,6 +2732,7 @@ const u8 bitmap_cherryout_2[2 * 2 * 9] = {
   XXXXXXXX, ________, XXXXX_XX, ________
 };
 
+// $D1F5
 const u8 bitmap_cherryout_3[1 * 2 * 12] = {
   _____XXX, XXXXX___,
   ______XX, XXXXX___,
@@ -2497,6 +2748,7 @@ const u8 bitmap_cherryout_3[1 * 2 * 12] = {
   X___XXXX, ________
 };
 
+// $D20D
 const u8 bitmap_turbo_1[4 * 2 * 16] = {
   XX___XXX, __XXX___, XXXXXXXX, ________, XXXXXXXX, ________, XXXXXXXX, ________,
   X_______, _X__XXXX, ___XXXXX, XXX_____, XXXXXXXX, ________, XXXXXXXX, ________,
@@ -2516,6 +2768,7 @@ const u8 bitmap_turbo_1[4 * 2 * 16] = {
   XXXXXXXX, ________, XXXXXXXX, ________, XXX___XX, ___XXX__, XXXXXXXX, ________
 };
 
+// $D28D
 const u8 bitmap_turbo_2[4 * 2 * 16] = {
   XX___XXX, __XXX___, XXXXXXXX, ________, XXXXXXXX, ________, XXXXXXXX, ________,
   X_______, _X___XXX, X__XXXXX, _XX_____, XXXX____, ____XXXX, XXXXXXXX, ________,
@@ -2535,6 +2788,7 @@ const u8 bitmap_turbo_2[4 * 2 * 16] = {
   XXXXXXXX, ________, XXXXXXXX, ________, XXXXXXXX, ________, XXXXXXXX, ________
 };
 
+// $D30D
 const u8 bitmap_turbo_3[4 * 2 * 16] = {
   XX___XXX, __XXX___, XXXXXXXX, ________, XXXXXXXX, ________, XXXXXXXX, ________,
   X______X, _X___XX_, _X__XXXX, X_XX____, XXXXXXXX, ________, XXXXXXXX, ________,
@@ -2554,6 +2808,7 @@ const u8 bitmap_turbo_3[4 * 2 * 16] = {
   XXXXXXXX, ________, XXXXXXXX, ________, XXXXXXXX, ________, XXX___XX, ___XXX__
 };
 
+// $D38D
 const u8 bitmap_turbo_4[4 * 2 * 16] = {
   XX___XXX, __XXX___, XXXXXXXX, ________, XXXXXXXX, ________, XXXXXXXX, ________,
   X_______, _X__XXXX, ___XXXXX, XXX_____, XXXXXXXX, ________, XXXXXXXX, ________,
@@ -2573,6 +2828,7 @@ const u8 bitmap_turbo_4[4 * 2 * 16] = {
   XXXXXXXX, ________, XXXXXXXX, ________, XXXXXXXX, ________, XXXXXX_X, ______X_
 };
 
+// $D40D
 const u8 bitmap_hero_centre_straight[5 * 14] = {
   XXXXXXXX, XXXXXXX_, ________, __XXXXXX, XXXXXXXX,
   XXXXXXXX, XXXXXXX_, ________, __XXXXXX, XXXXXXXX,
@@ -2590,6 +2846,7 @@ const u8 bitmap_hero_centre_straight[5 * 14] = {
   __XX_XXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXX_XX_
 };
 
+// $D453
 const u8 bitmap_hero_centre_straight_right[5 * 17] = {
   XXXXXXX_, XX__XXXX, XXXXXXXX, XX_XX__X, XXXXXXXX,
   XXXXXXXX, ___XX___, ________, XXX___XX, XXXXXXXX,
@@ -2610,6 +2867,7 @@ const u8 bitmap_hero_centre_straight_right[5 * 17] = {
   ___XXXXX, _XXXXXXX, XX__X_X_, XXXXXXXX, ___XX___
 };
 
+// $D4A8
 const u8 bitmap_hero_centre_straight_right_hard[5 * 16] = {
   XXXX_XX_, _XXXXXXX, XXXXXXX_, XX___XXX, XXXXXXXX,
   XXXXX___, XXX_____, ______XX, ____XXXX, XXXXXXXX,
@@ -2629,6 +2887,7 @@ const u8 bitmap_hero_centre_straight_right_hard[5 * 16] = {
   _XXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXX__XXX
 };
 
+// $D4F8
 const u8 bitmap_hero_centre_up[5 * 14] = {
   XXXXXXXX, XXXXXXX_, ________, __XXXXXX, XXXXXXXX,
   XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX,
@@ -2646,6 +2905,7 @@ const u8 bitmap_hero_centre_up[5 * 14] = {
   __XXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXX_
 };
 
+// $D53E
 const u8 bitmap_hero_centre_up_right[5 * 17] = {
   XXXXXXXX, X__XX___, ________, XXXX__XX, XXXXXXXX,
   XXXXXXXX, XXXXX___, ________, XXXXXXXX, XXXXXXXX,
@@ -2666,6 +2926,7 @@ const u8 bitmap_hero_centre_up_right[5 * 17] = {
   ___XXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XX_XXX__
 };
 
+// $D593
 const u8 bitmap_hero_centre_up_right_hard[5 * 15] = {
   XXXXXXXX, XXX_____, ______XX, XXXXXXXX, XXXXXXXX,
   XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX,
@@ -2684,6 +2945,7 @@ const u8 bitmap_hero_centre_up_right_hard[5 * 15] = {
   ____XXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XX__XXX_
 };
 
+// $D5DE
 const u8 bitmap_hero_centre_down[5 * 14] = {
   XXXXXXXX, X____XXX, XXXXXXXX, XXXX____, XXXXXXXX,
   XXXXXXXX, X_XX_XX_, ________, __XX_XX_, XXXXXXXX,
@@ -2701,6 +2963,7 @@ const u8 bitmap_hero_centre_down[5 * 14] = {
   __XXX__X, XXXXXXXX, XXXXXXXX, XXXXXXXX, X__XXXX_
 };
 
+// $D624
 const u8 bitmap_hero_centre_down_right[5 * 16] = {
   XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX,
   XXXXXXXX, X__XXXXX, XXXXXXXX, XXXX__XX, XXXXXXXX,
@@ -2720,6 +2983,7 @@ const u8 bitmap_hero_centre_down_right[5 * 16] = {
   _XX___XX, XXXXXXXX, XXXXXXXX, XXXXXXXX, X_XXXX__
 };
 
+// $D674
 const u8 bitmap_hero_centre_down_right_hard[5 * 16] = {
   XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX,
   XXXXXXX_, _XXXXXXX, XXXXXXXX, XX__XXXX, XXXXXXXX,
@@ -2739,6 +3003,7 @@ const u8 bitmap_hero_centre_down_right_hard[5 * 16] = {
   X____XXX, XXXXXXXX, XXXXXXXX, XXXXXXX_, _XXXXXXX
 };
 
+// $D6C4
 const u8 bitmap_hero_top_straight[5 * 2 * 9] = {
   XX__XX__, ___X__XX, XX______, __XXXXXX, __X_X_X_, XX_X_X_X, _______X, XXXXXXX_, X__XX__X, _XX__X__,
   XXX__X__, ____X_XX, XXX_____, ___XXXXX, XXXXXXXX, ________, X_____XX, _XXXXX__, X__X__XX, _XX_X___,
@@ -2751,6 +3016,7 @@ const u8 bitmap_hero_top_straight[5 * 2 * 9] = {
   XXXXXXXX, ________, XXX_____, ________, ________, ________, ______XX, ________, XXXXXXXX, ________
 };
 
+// $D71E
 const u8 bitmap_hero_bottom_straight[5 * 2 * 6] = {
   XXX_____, ___XXXXX, XXXXXXXX, ________, XXXXXXXX, ________, XXXXXXXX, ________, X_____XX, _XXXXX__,
   XX______, __X_____, _XXXXXXX, X_______, XXXXXXXX, ________, XXXXXXXX, ________, _______X, X_____X_,
@@ -2760,6 +3026,7 @@ const u8 bitmap_hero_bottom_straight[5 * 2 * 6] = {
   X_______, _XXXXXXX, ________, XX__XXX_, ________, ________, ________, __XXX__X, ________, XXXXXXXX
 };
 
+// $D75A
 const u8 bitmap_hero_left_straight[1 * 2 * 14] = {
   XXXXXXX_, ________,
   XXXXXXX_, ________,
@@ -2777,6 +3044,7 @@ const u8 bitmap_hero_left_straight[1 * 2 * 14] = {
   XXXXXXXX, ________
 };
 
+// $D776
 const u8 bitmap_hero_right_straight[1 * 2 * 14] = {
   __XXXXXX, X_______,
   __XXXXXX, X_______,
@@ -2794,6 +3062,7 @@ const u8 bitmap_hero_right_straight[1 * 2 * 14] = {
   _XXXXXXX, ________
 };
 
+// $D792
 const u8 bitmap_hero_top_straight_right[5 * 2 * 8] = {
   XXX___XX, ____XX__, XXX_____, ___XXXXX, _XXXXXXX, X_______, XX____XX, __XXXX__, XXX__XXX, ___X____,
   XXXX__XX, _____X__, XXXX____, ____XXXX, _XXXXXXX, X_______, X______X, _XXXXXX_, XX___XXX, __XX____,
@@ -2805,6 +3074,7 @@ const u8 bitmap_hero_top_straight_right[5 * 2 * 8] = {
   XXXXXXXX, ________, XXX_____, ________, ________, ________, ______XX, ________, XXXXXXXX, ________
 };
 
+// $D7E2
 const u8 bitmap_hero_bottom_straight_right[5 * 2 * 4] = {
   XX_____X, __XXXXX_, XXXXXXXX, ________, XXXXXXXX, ________, XXXXXXXX, ________, _____XXX, XXXXX___,
   X_______, _X_____X, XXXXXXXX, ________, XXXXXXXX, ________, XXXXXXX_, _______X, ______XX, _____X__,
@@ -2812,6 +3082,7 @@ const u8 bitmap_hero_bottom_straight_right[5 * 2 * 4] = {
   ________, XXXXXXXX, ____XXXX, ___X____, XXXXXXXX, ________, XX______, __X___XX, _______X, XXXXXXX_
 };
 
+// $D80A
 const u8 bitmap_hero_left_straight_left[1 * 2 * 13] = {
   XXXXXXX_, ________,
   XXXXXX__, _______X,
@@ -2828,6 +3099,7 @@ const u8 bitmap_hero_left_straight_left[1 * 2 * 13] = {
   XXXXXXXX, ________
 };
 
+// $D824
 const u8 bitmap_hero_right_straight_right[1 * 2 * 13] = {
   __XXXXXX, X_______,
   ___XXXXX, XX______,
@@ -2844,6 +3116,7 @@ const u8 bitmap_hero_right_straight_right[1 * 2 * 13] = {
   __XXXXXX, ________
 };
 
+// $D83E
 const u8 bitmap_hero_top_straight_right_hard[5 * 2 * 9] = {
   X_______, ___XXXXX, ________, XXXXXXXX, ______X_, XXXXXX_X, X_X_____, _X_XXXXX, ___XX___, XXX__XX_,
   XXX____X, _____XX_, X_XXXX__, _X____XX, ____XXXX, XXXX____, XXXXX___, _____XXX, __XXX__X, XX___X__,
@@ -2856,6 +3129,7 @@ const u8 bitmap_hero_top_straight_right_hard[5 * 2 * 9] = {
   XXXXXXXX, ________, XXXX____, ________, ________, ________, ________, ________, XXXXXXXX, ________
 };
 
+// $D898
 const u8 bitmap_hero_bottom_straight_right_hard[5 * 2 * 4] = {
   XX____XX, __XXXX__, XXXXXXXX, ________, XXXXXXXX, ________, XXXXXXX_, _______X, ____XXXX, XXXX____,
   X______X, _X____X_, XXXXXXXX, ________, XXXXXXXX, ________, XXXXXX__, ______X_, _____XXX, ____X___,
@@ -2863,6 +3137,7 @@ const u8 bitmap_hero_bottom_straight_right_hard[5 * 2 * 4] = {
   ________, XXXXX___, _XXXXXXX, X_______, XXXXXXX_, _______X, ________, ____XXXX, ______XX, XXXXXX__
 };
 
+// $D8C0
 const u8 bitmap_hero_left_straight_right_hard[1 * 2 * 12] = {
   XXXXXXX_, ________,
   XXXXXX__, _______X,
@@ -2878,6 +3153,7 @@ const u8 bitmap_hero_left_straight_right_hard[1 * 2 * 12] = {
   XXXXXXX_, ________
 };
 
+// $D8D8
 const u8 bitmap_hero_right_straight_right_hard[1 * 2 * 15] = {
   _XXXXXXX, X_______,
   ___XXXXX, XX______,
@@ -2896,6 +3172,7 @@ const u8 bitmap_hero_right_straight_right_hard[1 * 2 * 15] = {
   ___XXXXX, ________
 };
 
+// $D8F6
 const u8 bitmap_hero_top_up[5 * 2 * 10] = {
   XX___XX_, ___XX__X, ________, XXXXXXXX, ________, XXXXXXXX, ________, XXXXXXXX, __XX___X, XX__XX__,
   XXX___X_, _____X_X, _X______, X_XXXXXX, __X_X_X_, XX_X_X_X, _______X, XXXXXXX_, __X___XX, XX_X____,
@@ -2909,6 +3186,7 @@ const u8 bitmap_hero_top_up[5 * 2 * 10] = {
   XXXXXXXX, ________, XXX_____, ________, ________, ________, ______XX, ________, XXXXXXXX, ________
 };
 
+// $D95A
 const u8 bitmap_hero_bottom_up[5 * 2 * 6] = {
   XXX_____, ___XXXXX, _X__XXXX, X_XX____, XXXXXXXX, ________, XXXXX__X, _____XX_, ______XX, XXXXXX__,
   XX______, __X_____, ______XX, XX__XX__, XXXXXXXX, ________, XXXX____, ____X__X, _______X, X_____X_,
@@ -2918,6 +3196,7 @@ const u8 bitmap_hero_bottom_up[5 * 2 * 6] = {
   X_______, _XXXXXXX, ________, XXXXXXX_, ________, ________, ________, __XXXXXX, ________, XXXXXXXX
 };
 
+// $D996
 const u8 bitmap_hero_left_up[1 * 2 * 13] = {
   XXXXXXX_, ________,
   XXXXXX__, _______X,
@@ -2934,6 +3213,7 @@ const u8 bitmap_hero_left_up[1 * 2 * 13] = {
   XXXXXXX_, ________
 };
 
+// $D9B0
 const u8 bitmap_hero_right_up[1 * 2 * 14] = {
   __XXXXXX, X_______,
   ___XXXXX, XX______,
@@ -2951,6 +3231,7 @@ const u8 bitmap_hero_right_up[1 * 2 * 14] = {
   _XXXXXXX, ________
 };
 
+// $D9CC
 const u8 bitmap_hero_top_right[5 * 2 * 9] = {
   XXX_____, _____XXX, ________, XXXXXXXX, ____X_X_, XXXX_X_X, X_______, _XXXXXXX, XXX___XX, ___X____,
   XXXX__XX, _____X__, XXX_____, ___XXXXX, _XXXXXXX, X_______, XX____XX, __XXXX__, XX__XXXX, __X_____,
@@ -2963,6 +3244,7 @@ const u8 bitmap_hero_top_right[5 * 2 * 9] = {
   XXXXXXXX, ________, XXXXXX__, ________, ________, ________, _____XXX, ________, XXXXXXXX, ________
 };
 
+// $DA26
 const u8 bitmap_hero_bottom_right[5 * 2 * 4] = {
   XX______, __XXXXXX, ___XXXXX, XXX_____, XXXXXXXX, ________, XXX_____, ___XXXXX, _____XXX, XXXXX___,
   X_______, _X_____X, ____XXXX, ___X____, XXXXXXXX, ________, XX______, __X___XX, ______XX, _____X__,
@@ -2970,6 +3252,7 @@ const u8 bitmap_hero_bottom_right[5 * 2 * 4] = {
   ________, XXXXXXXX, ________, ____X___, ________, ________, ________, XXX____X, _______X, XXXXXXX_
 };
 
+// $DA4E
 const u8 bitmap_hero_left_right[1 * 2 * 12] = {
   XXXXXXX_, ________,
   XXXXXX__, _______X,
@@ -2985,6 +3268,7 @@ const u8 bitmap_hero_left_right[1 * 2 * 12] = {
   XXXXXXX_, ________
 };
 
+// $DA66
 const u8 bitmap_hero_right_right[1 * 2 * 14] = {
   __XXXXXX, X_______,
   ___XXXXX, XX______,
@@ -3002,6 +3286,7 @@ const u8 bitmap_hero_right_right[1 * 2 * 14] = {
   __XXXXXX, ________
 };
 
+// $DA82
 const u8 bitmap_hero_up_right_hard[5 * 2 * 9] = {
   XXXX____, _____XXX, ________, XXXXXXXX, ______X_, XXXXXX_X, X_X_____, _X_XXXXX, _XXX___X, X___X___,
   XXXXX__X, ______X_, X_XXXX__, _X____XX, ____XXXX, XXXX____, XXXXX___, _____XXX, _XXX__XX, X___X___,
@@ -3014,6 +3299,7 @@ const u8 bitmap_hero_up_right_hard[5 * 2 * 9] = {
   XXXXXXXX, ________, XXXXXXXX, ________, ________, ________, _____XXX, ________, XXXXXXXX, ________
 };
 
+// $DADC
 const u8 bitmap_hero_bottom_right_hard[5 * 2 * 6] = {
   XX__X___, __XX_XXX, XXXXXXXX, ________, XXXXXXXX, ________, ___XXXX_, XXX____X, ____XXXX, XXXX____,
   X_______, _X__X___, __XXXXXX, XX______, XXXXXXX_, _______X, ________, ___XXXX_, _____XXX, ____X___,
@@ -3023,6 +3309,7 @@ const u8 bitmap_hero_bottom_right_hard[5 * 2 * 6] = {
   ________, XXXXXXXX, ________, XXX_____, ________, ______XX, ________, XXXXXXXX, ________, XXXXXXXX
 };
 
+// $DB18
 const u8 bitmap_hero_left_right_hard[1 * 2 * 11] = {
   XXXXXXX_, ________,
   XXXXXX__, _______X,
@@ -3037,6 +3324,7 @@ const u8 bitmap_hero_left_right_hard[1 * 2 * 11] = {
   XXXXXXX_, ________
 };
 
+// $DB2E
 const u8 bitmap_hero_right_right_hard[1 * 2 * 15] = {
   ___XXXXX, XX______,
   ____XXXX, XXX_____,
@@ -3055,6 +3343,7 @@ const u8 bitmap_hero_right_right_hard[1 * 2 * 15] = {
   __XXXXXX, ________
 };
 
+// $DB4C
 const u8 bitmap_hero_top_down[5 * 2 * 8] = {
   XX______, ___XXX__, ________, ________, ________, ________, ________, ________, _______X, __XXXX__,
   XXX_____, ____XXXX, ________, XXXXXXXX, ________, XXXXXXXX, ________, XXXXXXXX, ______XX, XXXXX___,
@@ -3066,6 +3355,7 @@ const u8 bitmap_hero_top_down[5 * 2 * 8] = {
   XXXXXXXX, ________, XXX_____, ________, ________, ________, ______XX, ________, XXXXXXXX, ________
 };
 
+// $DB9C
 const u8 bitmap_hero_bottom_down[5 * 2 * 6] = {
   XXX_____, ___XXXXX, XXXXXXXX, ________, XXXXXXXX, ________, XXXXXXXX, ________, X_____XX, _XXXXX__,
   XX______, __X_____, _XXXXXXX, X_______, XXXXXXXX, ________, XXXXXXXX, ________, _______X, X_____X_,
@@ -3075,6 +3365,7 @@ const u8 bitmap_hero_bottom_down[5 * 2 * 6] = {
   X_______, _XXXXXXX, ________, XX__XXXX, ________, XXXXXXXX, ________, XXXXX__X, ________, XXXXXXXX
 };
 
+// $DBD8
 const u8 bitmap_hero_left_down[1 * 2 * 13] = {
   XXXXXXX_, ________,
   XXXXXXX_, ________,
@@ -3091,6 +3382,7 @@ const u8 bitmap_hero_left_down[1 * 2 * 13] = {
   XXXXXXX_, ________
 };
 
+// $DBF2
 const u8 bitmap_hero_right_down[1 * 2 * 14] = {
   __XXXXXX, X_______,
   __XXXXXX, X_______,
@@ -3108,6 +3400,7 @@ const u8 bitmap_hero_right_down[1 * 2 * 14] = {
   _XXXXXXX, ________
 };
 
+// $DC0E
 const u8 bitmap_hero_top_down_right[5 * 2 * 8] = {
   X_______, ___X____, ________, ________, ________, ________, ________, ________, ______XX, __XXX___,
   XXX_____, ____XXXX, ________, XXXXXXXX, ________, XXXXXXXX, ________, XXXXXXXX, _____XXX, XXX_____,
@@ -3119,6 +3412,7 @@ const u8 bitmap_hero_top_down_right[5 * 2 * 8] = {
   XXXXXXXX, ________, XXX_____, ________, ________, ________, _____XXX, ________, XXXXXXXX, ________
 };
 
+// $DC5E
 const u8 bitmap_hero_bottom_down_right[5 * 2 * 4] = {
   XX_____X, __XXXXX_, XXXXXXXX, ________, XXXXXXXX, ________, XXXXXXXX, ________, _____XXX, XXXXX___,
   X_______, _X_____X, XXXXXXXX, ________, XXXXXXXX, ________, XXXXXXX_, _______X, ______XX, _____X__,
@@ -3126,6 +3420,7 @@ const u8 bitmap_hero_bottom_down_right[5 * 2 * 4] = {
   ________, XXXXXXXX, ___XXXXX, XXX_____, XXXXXXXX, ________, XXXX____, ____XXXX, _______X, XXXXXXX_
 };
 
+// $DC86
 const u8 bitmap_hero_left_down_right[1 * 2 * 13] = {
   XXXXXXX_, ________,
   XXXXXX__, _______X,
@@ -3142,6 +3437,7 @@ const u8 bitmap_hero_left_down_right[1 * 2 * 13] = {
   XXXXXXX_, ________
 };
 
+// $DCA0
 const u8 bitmap_hero_right_down_right[1 * 2 * 13] = {
   __XXXXXX, ________,
   ___XXXXX, XX______,
@@ -3158,6 +3454,7 @@ const u8 bitmap_hero_right_down_right[1 * 2 * 13] = {
   __XXXXXX, ________
 };
 
+// $DCBA
 const u8 bitmap_hero_top_down_right_hard[5 * 2 * 8] = {
   ________, X_______, ________, ________, ________, ________, ________, ________, ___XX___, XXX__XX_,
   ________, _XXXXXXX, ________, XXXXXXXX, ________, XXXXXXXX, ________, XXXXXXXX, ___XX__X, XXX__X__,
@@ -3169,6 +3466,7 @@ const u8 bitmap_hero_top_down_right_hard[5 * 2 * 8] = {
   XXXXXXXX, ________, XXX_____, ________, ________, ________, ________, ________, XXXXXXXX, ________
 };
 
+// $DD0A
 const u8 bitmap_hero_bottom_down_right_hard[5 * 2 * 4] = {
   XX____XX, __XXXX__, XXXXXXXX, ________, XXXXXXXX, ________, XXXXXXX_, _______X, ____XXXX, XXXX____,
   X______X, _X____X_, XXXXXXXX, ________, XXXXXXXX, ________, XXXXXX__, ______X_, _____XXX, ____X___,
@@ -3176,6 +3474,7 @@ const u8 bitmap_hero_bottom_down_right_hard[5 * 2 * 4] = {
   ________, XXXXXXXX, ___XXXXX, XXX_____, XXXXXXXX, ________, XX______, __XXXXXX, ______XX, XXXXXX__
 };
 
+// $DD32
 const u8 bitmap_hero_left_down_right_hard[1 * 2 * 13] = {
   XXXXXXX_, ________,
   XXXXXX__, _______X,
@@ -3192,6 +3491,7 @@ const u8 bitmap_hero_left_down_right_hard[1 * 2 * 13] = {
   XXXXXXX_, ________
 };
 
+// $DD4C
 const u8 bitmap_hero_right_down_right_hard[1 * 2 * 15] = {
   __XXXXXX, XX______,
   ____XXXX, XXX_____,
@@ -3210,6 +3510,7 @@ const u8 bitmap_hero_right_down_right_hard[1 * 2 * 15] = {
   _XXXXXXX, ________
 };
 
+// $DD6A
 const u8 bitmap_shadow_straight[7 * 2 * 12] = {
   XXXXXX__, ______XX, ________, XXXXXXXX, ________, XXXXXXXX, ________, XXXXXXXX, ________, XXXXXXXX, ________, XXXXXXXX, ___XXXXX, XXX_____,
   XXXX____, ____XXXX, ________, XXXXXXXX, ________, XXXXXXXX, ________, XXXXXXXX, ________, XXXXXXXX, ________, XXXXXXXX, _____XXX, XXXXX___,
@@ -3225,6 +3526,7 @@ const u8 bitmap_shadow_straight[7 * 2 * 12] = {
   XXXXXXXX, ________, X_______, _XXXXXXX, ________, XXXXXXXX, ________, XXXXXXXX, ________, XXXXXXXX, ________, XXXXXXXX, XXXXXXXX, ________
 };
 
+// $DE12
 const u8 bitmap_shadow_turn_right[7 * 2 * 12] = {
   XXXX____, ____XXXX, ________, XXXXXXXX, ________, XXXXXXXX, ________, XXXXXXXX, ________, XXXXXXXX, ________, XXXXXXXX, ___XXXXX, XXX_____,
   XXX_____, ___XXXXX, ________, XXXXXXXX, ________, XXXXXXXX, ________, XXXXXXXX, ________, XXXXXXXX, ________, XXXXXXXX, ____XXXX, XXXX____,
@@ -3240,6 +3542,7 @@ const u8 bitmap_shadow_turn_right[7 * 2 * 12] = {
   XXXXXXXX, ________, XXXX____, ____XXXX, ________, XXXXXXXX, ________, XXXXXXXX, ________, XXXXXXXX, ________, XXXXXXXX, ___XXXXX, XXX_____
 };
 
+// $DEBA
 const u8 bitmap_shadow_turn_right_hard[7 * 2 * 12] = {
   XXXXXX__, ______XX, ________, XXXXXXXX, ________, XXXXXXXX, ________, XXXXXXXX, ________, XXXXXXXX, ________, XXXXXXXX, XXXXXXXX, ________,
   XXXX____, ____XXXX, ________, XXXXXXXX, ________, XXXXXXXX, ________, XXXXXXXX, ________, XXXXXXXX, ________, XXXXXXXX, __XXXXXX, XX______,

@@ -3204,5 +3204,6 @@ const void *stage1_lookup_map_goto(chqstate_t *state, u16 z80)
   case 0x6314: return &stage1_map_loop_rightobjs[0];
   default:
     assert("Unknown Z80 address (stage 1)" == NULL);
+    return NULL;
   }
 }

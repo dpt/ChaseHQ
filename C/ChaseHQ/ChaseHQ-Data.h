@@ -161,6 +161,10 @@ const u8 bitmap_debris_2[2 * 6];
 const u8 bitmap_debris_3[2 * 6];
 const u8 bitmap_debris_4[2 * 6];
 
+const carpart_t hero_car_parts[9][5];
+const carpart_t hero_car_shadow[3];
+const carsmokeframe_t hero_car_turbo_smoke[4];
+
 const u8 bitmap_arrow[3 * 2 * 28];
 const u8 bitmap_cherry_light[1 * 2 * 7];
 const u8 bitmap_cherry_light_lit[3 * 2 * 14];

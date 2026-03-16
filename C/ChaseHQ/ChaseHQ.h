@@ -73,8 +73,10 @@ CHQ_API void chq_main(chqstate_t *state);
 #define BACKBUFFER_START_ADDRESS ((u16) 0xF000)
 #define BACKBUFFER_END_ADDRESS (BACKBUFFER_START_ADDRESS + BACKBUFFER_LENGTH)
 
-// Return screen[] pointer given a Z80 address.
+// Return screen pointer given a Z80 address.
 #define ADDRTOSCREEN(addr)    (&state->speccy->screen.pixels[(addr) - SCREEN_START_ADDRESS])
+// Return attributes pointer given a Z80 address.
+#define ADDRTOATTRS(addr)    (&state->speccy->screen.attributes[(addr) - SCREEN_ATTRIBUTES_START_ADDRESS])
 // Return backbuffer[] pointer given a Z80 address.
 #define ADDRTOBACKBUF(addr)   (&state->backbuffer[(addr) - BACKBUFFER_START_ADDRESS])
 
@@ -500,6 +502,22 @@ typedef struct {
 
 /* ----------------------------------------------------------------------- */
 
+typedef struct {
+  u8        y;
+  u8        rows;
+  const u8 *bitmap;
+} carpart_t;
+
+typedef struct {
+  u8        width;
+  u8        height;
+  u8        flipped_x; // bit of a guess
+  u8        unflipped_x;
+  const u8 *bitmap;
+} carsmokeframe_t;
+
+/* ----------------------------------------------------------------------- */
+
 // TODO: Ideally all of these will become static in the long run.
 
 void end_screen(chqstate_t *state);
@@ -658,39 +676,39 @@ void draw_object_9333(chqstate_t *state, int carry, u8 C, u8 E, u8 *HL, u8 *IY);
 
 void plot_sprite(chqstate_t *state,
                  u8          width_bytes,
-                 u8          height,
                  u8         *backbuf_addr,
+                 u8          height,
                  u16         bitmap_stride,
                  const u8   *bitmap_data);
 void plot_sprite_even(chqstate_t *state,
                       int         jump_offset,
-                      u8          height,
                       u8         *backbuf_addr,
+                      u8          height,
                       u16         bitmap_stride,
                       const u8   *bitmap_data);
 void plot_sprite_odd(chqstate_t *state,
                      u8          width_bytes,
-                     u8          height,
                      u8         *backbuf_addr,
+                     u8          height,
                      u16         bitmap_stride,
                      const u8   *bitmap_data);
 
 void plot_sprite_flipped(chqstate_t *state,
                          u8          width_bytes,
-                         u8          height,
                          u8         *backbuf_addr,
+                         u8          height,
                          u16         bitmap_stride,
                          const u8   *bitmap_data);
 void plot_sprite_flipped_even(chqstate_t *state,
                               u8          jump_offset,
-                              u8          height,
                               u8         *backbuf_addr,
+                              u8          height,
                               u16         bitmap_stride,
                               const u8   *bitmap_data);
 void plot_sprite_flipped_odd(chqstate_t *state,
                              u8          width_bytes,
-                             u8          height,
                              u8         *backbuf_addr,
+                             u8          height,
                              u16         bitmap_stride,
                              const u8   *bitmap_data);
 
@@ -855,9 +873,13 @@ void smash(chqstate_t *state);
 
 void draw_debris(chqstate_t *state);
 
-void draw_car(chqstate_t *state, u8 Aturn_speed, u8 Bwobble);
+void draw_hero_car(chqstate_t *state, u8 Aturn_speed, u8 Bwobble);
 
-void draw_car_part(chqstate_t *state);
+const carpart_t *draw_hero_car_part(chqstate_t      *state,
+                                    u8               Cwidth_bytes,
+                                    u8               Dy,
+                                    u8               Ex,
+                                    const carpart_t *HLpart);
 
 void draw_smoke(chqstate_t *state, u8 Aanim_frame, u8 Adash_flip_flag);
 
@@ -867,43 +889,57 @@ void draw_cherry_b699(chqstate_t *state, u8 A);
 void draw_crash(chqstate_t *state, u8 A);
 
 void draw_part(chqstate_t *state,
-                      u8          height,
-                      u8          width,
-                      u8          y,
-                      u8          x,
-                      const u8   *bitmap);
+               u8          height,
+               u8          width,
+               u8          y,
+               u8          x,
+               const u8   *bitmap,
+               u8          Bdash_flags,
+               u8          Cdash,
+               u8          Edash_bitmap_stride);
 void draw_part_entry2(chqstate_t *state,
-                      u8          height,
-                      u8          width,
-                      u8          y,
-                      u8          x,
-                      const u8   *bitmap,
-                      u8          flags);
-void draw_part_entry3(chqstate_t *state);
+                      u8          Bheight,
+                      u8          Cwidth_bytes,
+                      u8          Dy,
+                      u8          Ex,
+                      const u8   *HLbitmap_data,
+                      u8          Bdash_flags,
+                      u8          Cdash,
+                      u8          Edash_bitmap_stride);
+void draw_part_entry3(chqstate_t *state,
+                      u8          Awidth_bytes,
+                      u8          Bheight,
+                      u16         Ebitmap_stride,
+                      const u8   *HLbitmap_data,
+                      u8         *HLdash_backbuf);
 
 void plot_masked_sprite(chqstate_t *state,
                         int         jump_offset,
                         u8          height,
                         u16         bitmap_stride,
-                        const u8   *bitmap,
+                        const u8   *bitmap_data,
                         u8         *backbuf);
 
 void pms_entry(chqstate_t *state);
 
 void plot_masked_sprite_flipped(chqstate_t *state,
                                 u8          width_bytes,
-                                u8          height,
                                 u8         *backbuf_addr,
+                                u8          height,
                                 u16         bitmap_stride,
                                 const u8   *bitmap_data);
-
-void plot_masked_sprite_flipped_entry2(chqstate_t *state);
+void plot_masked_sprite_flipped_entry2(chqstate_t *state,
+                                       u8          width_bytes,
+                                       u8         *backbuf_addr,
+                                       u8          height,
+                                       u16         bitmap_stride,
+                                       const u8   *bitmap_data);
 
 void plot_masked_sprite_inverted(chqstate_t *state,
                                  u8          A_lefthand,
                                  u8         *HL_backbuf,
                                  u8          Bdash_height,
-                                 u16         DEdash_bitmap_stride,
+                                 u16         Edash_bitmap_stride,
                                  const u8   *HLdash_bitmap_data);
 
 void scroll_horizon(chqstate_t *state);
