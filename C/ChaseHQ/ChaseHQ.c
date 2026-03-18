@@ -1670,13 +1670,13 @@ void draw_overlay_messages(chqstate_t *state)
 /**
  * $8E6C: Print a message on the back buffer
  *
- * This function draws a message to the back buffer using the specified
- * drawing style and message data. The message data includes attributes, the
- * destination back buffer address and attribute address.
+ * This function draws a message to the back buffer using the specified drawing
+ * style and message data. The message data includes attributes, the
+ * destination back buffer address and screen attribute address.
  *
- * Note that the attribute bytes are drawn directly to the real screen since
- * there is no equivalent of the attributes for the back buffer. The user may
- * briefly see attribute changes prior to the back buffer arriving on-screen.
+ * Note that the screen attribute bytes are drawn directly to the real screen
+ * since they have no parallel in the back buffer. The user may briefly see
+ * attribute changes prior to the back buffer arriving on-screen.
  *
  * \param[in] state    Pointer to game state.
  * \param[in] style    Message draw style (e.g. DRAWCHARSTYLE_SINGLE). (was A)
@@ -1687,9 +1687,9 @@ const u8 *print_message(chqstate_t *state,
                         u8          style,
                         const u8   *messages)
 {
-  u8  attr;     // was A
-  u16 backbuf;  // was DE
-  u16 attraddr; // was BC
+  u8  attr;     /* was A */
+  u16 backbuf;  /* was DE */
+  u16 attraddr; /* was BC */
 
   // The style in messages[0] is ignored.
   attr     = messages[1];
@@ -1729,7 +1729,13 @@ void setup_overlay_messages_with_transition(chqstate_t *state,
   state->overlay_count      = 1;
 }
 
-// $8E91
+/**
+ * $8E91: Draws the three mugshots to the back buffer
+ *
+ * Used when the perp is caught.
+ *
+ * \param[in] state Pointer to game state.
+ */
 void draw_mugshots(chqstate_t *state)
 {
   draw_mugshot(state,
@@ -1748,13 +1754,16 @@ void draw_mugshots(chqstate_t *state)
   draw_overlay_messages(state);
 }
 
-// $8EB7
-//
-// screenpos - was BC
-// backbuf - was DE
-// mugshot - was HL
+/**
+ * $8EB7: Draws a single mugshot to the back buffer
+ *
+ * \param[in] state   Pointer to game state.
+ * \param[in] attrs   Screen address at which to set attributes. (was BC)
+ * \param[in] backbuf Back buffer address at which to draw. (was DE)
+ * \param[in] mugshot Mugshot data attributes address. Bitmap data precedes. (was HL)
+ */
 void draw_mugshot(chqstate_t *state,
-                  u16         screenpos,
+                  u16         attrs,
                   u16         backbuf,
                   const u8   *mugshot)
 {
@@ -1778,10 +1787,14 @@ void draw_mugshot(chqstate_t *state,
     backbuf = prevbufrow(backbuf);
   }
 
-  plot_face_attributes(state, screenpos, orig_mugshot); // exit via
+  plot_face_attributes(state, attrs, orig_mugshot); // exit via
 }
 
-// $8EE7
+/**
+ * $8EE7: Draws the smash bar
+ *
+ * \param[in] state Pointer to game state.
+ */
 void draw_smash_bar(chqstate_t *state)
 {
   const int MaxSegments    = 20;
@@ -1789,9 +1802,9 @@ void draw_smash_bar(chqstate_t *state)
   const int BorderHeight   = 2;
   const int TotalBarHeight = MaxSegments * SegmentHeight * BorderHeight * 2;
 
-  u16 buf;        // was HL
-  u8  nsmashsegs; // was A
-  u8  nsolid;     // was B
+  u16 backbuf;    /* was HL */
+  u8  nsmashsegs; /* was A */
+  u8  nsolid;     /* was B */
 
   if (state->sighted_flag == 0)
     return; // Return if the perp has not yet been sighted
@@ -1799,48 +1812,56 @@ void draw_smash_bar(chqstate_t *state)
   if (state->perp_caught_phase >= PERPCAUGHTPHASE_3)
     return; // Return if perp_caught_phase is >= 3 (car has stopped)
 
-  buf = 0xF7A2; // Back buffer address of bottom of bar
+  backbuf = 0xF7A2; // Back buffer address of bottom of bar
   // Conv: D & E moved into prevbufrow forward
 
   // Draws bottom two rows
-  buf = draw_smash_bar_solid_bit(state, BorderHeight, buf);
+  backbuf = draw_smash_bar_solid_bit(state, BorderHeight, backbuf);
 
   nsmashsegs = state->smash_counter;
   if (nsmashsegs > 0)
-    buf = draw_smash_bar_segments(state, nsmashsegs, buf);
+    backbuf = draw_smash_bar_segments(state, nsmashsegs, backbuf);
 
   nsolid = TotalBarHeight - BorderHeight - nsmashsegs *
            SegmentHeight; // Number of solid rows to draw at the top
-  (void) draw_smash_bar_solid_bit(state, nsolid, buf); // exit via
+  (void) draw_smash_bar_solid_bit(state, nsolid, backbuf); // exit via
 }
 
-// $8F13
-//
-// nsegs - was C
-// buf - was HL
-u16 draw_smash_bar_segments(chqstate_t *state, int nsegs, u16 buf)
+/**
+ * $8F13: Draws the specified number of smash bar segments
+ *
+ * Each segment is three rows high, the last of which is solid.
+ *
+ * \param[in] state   Pointer to game state.
+ * \param[in] nsegs   Number of segments to draw. (was C)
+ * \param[in] backbuf Back buffer address at which to draw. (was HL)
+ */
+u16 draw_smash_bar_segments(chqstate_t *state, int nsegs, u16 backbuf)
 {
   do {
-    *ADDRTOBACKBUF(buf) = X______X; // Set 8 pixels
-    buf = prevbufrow(buf);
-    *ADDRTOBACKBUF(buf) = X______X; // Set 8 pixels
-    buf = prevbufrow(buf);
-    buf = draw_smash_bar_solid_bit(state, 1, buf); // 1 row gap
+    *ADDRTOBACKBUF(backbuf) = X______X; // Set 8 pixels
+    backbuf = prevbufrow(backbuf);
+    *ADDRTOBACKBUF(backbuf) = X______X; // Set 8 pixels
+    backbuf = prevbufrow(backbuf);
+    backbuf = draw_smash_bar_solid_bit(state, 1, backbuf); // 1 row gap
   } while (--nsegs > 0);
-  return buf;
+  return backbuf;
 }
 
-// $8F47
-//
-// nrows - was B
-// buf - was HL
-u16 draw_smash_bar_solid_bit(chqstate_t *state, int nrows, u16 buf)
+/**
+ * $8F47: Draws the specified number of smash bar solid rows
+ *
+ * \param[in] state   Pointer to game state.
+ * \param[in] nrows   Number of segments to draw. (was B)
+ * \param[in] backbuf Back buffer address at which to draw. (was HL)
+ */
+u16 draw_smash_bar_solid_bit(chqstate_t *state, int nrows, u16 backbuf)
 {
   do {
-    *ADDRTOBACKBUF(buf) = XXXXXXXX; // Set 8 pixels
-    buf = prevbufrow(buf);
+    *ADDRTOBACKBUF(backbuf) = XXXXXXXX; // Set 8 pixels
+    backbuf = prevbufrow(backbuf);
   } while (--nrows > 0);
-  return buf;
+  return backbuf;
 }
 
 // $8F5F
@@ -2794,7 +2815,7 @@ _9479:
  * \param[in] state         Pointer to game state.
  * \param[in] width_bytes   Draw width of bitmap data, in bytes. (was A)
  * \param[in] backbuf_addr  Back buffer address to draw at. (was HL)
- * \param[in] height        Number of rows. (was B')
+ * \param[in] height        Number of rows to draw. (was B')
  * \param[in] bitmap_stride Stride of bitmap data, in bytes. (was DE')
  * \param[in] bitmap_data   Source bitmap data. (was HL')
  */
@@ -2805,8 +2826,8 @@ void plot_sprite(chqstate_t *state,
                  u16         bitmap_stride,
                  const u8   *bitmap_data)
 {
-  int odd;         // was carry
-  int jump_offset; // was IX
+  int odd;         /* was carry */
+  int jump_offset; /* was IX */
 
   odd = width_bytes & 1;
   width_bytes >>= 1;
@@ -2836,7 +2857,7 @@ void plot_sprite(chqstate_t *state,
  * \param[in] state         Pointer to game state.
  * \param[in] jump_offset   Jump table byte offset (e.g. N * 5). (was IX)
  * \param[in] backbuf_addr  Back buffer address to draw at. (was HL)
- * \param[in] height        Number of rows. (was B)
+ * \param[in] height        Number of rows to draw. (was B)
  * \param[in] bitmap_stride Stride of bitmap data, in bytes. (was DE')
  * \param[in] bitmap_data   Source bitmap data. (was HL')
  */
@@ -2847,8 +2868,8 @@ void plot_sprite_even(chqstate_t *state,
                       u16         bitmap_stride,
                       const u8   *bitmap_data)
 {
-  const u8 *src;          // was SP
-  u8       *backbuf_orig; // was A
+  const u8 *src;          /* was SP */
+  u8       *backbuf_orig; /* was A */
 
   // Conv: B & C moved into prevbufrow
   // EXX - bank
@@ -2894,7 +2915,7 @@ plot_sprite_even_start:
  * \param[in] state         Pointer to game state.
  * \param[in] width_bytes   Draw width of bitmap data, in bytes. (was A)
  * \param[in] backbuf_addr  Back buffer address to draw at. (was HL)
- * \param[in] height        Number of rows. (was B)
+ * \param[in] height        Number of rows to draw. (was B')
  * \param[in] bitmap_stride Stride of bitmap data, in bytes. (was DE')
  * \param[in] bitmap_data   Source bitmap data. (was HL')
  */
@@ -2905,9 +2926,9 @@ void plot_sprite_odd(chqstate_t *state,
                      u16         bitmap_stride,
                      const u8   *bitmap_data)
 {
-  int       jump_offset;  // was IX
-  const u8 *src;          // was SP
-  u8       *backbuf_orig; // was A
+  int       jump_offset;  /* was IX */
+  const u8 *src;          /* was SP */
+  u8       *backbuf_orig; /* was A */
 
   width_bytes++;
   jump_offset = 5 * (4 - width_bytes); // 5 bytes/op
@@ -2956,19 +2977,19 @@ plot_sprite_odd_start:
  * \param[in] state         Pointer to game state.
  * \param[in] width_bytes   Draw width of bitmap data, in bytes. (was A)
  * \param[in] backbuf_addr  Back buffer address to draw at. (was HL)
- * \param[in] height        Number of rows. (was B')
- * \param[in] bitmap_stride Stride of bitmap data, in bytes. (was DE')
+ * \param[in] height        Number of rows to draw. (was B')
+ * \param[in] bitmap_stride Stride of bitmap data, in bytes. (was E')
  * \param[in] bitmap_data   Source bitmap data. (was HL')
  */
 void plot_sprite_flipped(chqstate_t *state,
                          u8          width_bytes,
                          u8         *backbuf_addr,
                          u8          height,
-                         u16         bitmap_stride,
+                         u8          bitmap_stride,
                          const u8   *bitmap_data)
 {
-  int odd;         // was carry
-  int jump_offset; // was IX
+  int odd;         /* was carry */
+  int jump_offset; /* was IX */
 
   backbuf_addr += width_bytes;
 
@@ -2987,7 +3008,7 @@ void plot_sprite_flipped(chqstate_t *state,
 #if 0
   Ddash = 0xEF; // flip table ptr
   // EXX - bank
-  D = 0;
+  Ddash = 0; // widen E' to DE'
 #endif
 
   plot_sprite_flipped_even(state, jump_offset, backbuf_addr, height,
@@ -3003,7 +3024,7 @@ void plot_sprite_flipped(chqstate_t *state,
  * \param[in] state         Pointer to game state.
  * \param[in] jump_offset   Jump table byte offset (e.g. N * 9). (was IX)
  * \param[in] backbuf_addr  Back buffer address to draw at. (was HL)
- * \param[in] height        Number of rows. (was B')
+ * \param[in] height        Number of rows to draw. (was B')
  * \param[in] bitmap_stride Stride of bitmap data, in bytes. (was DE')
  * \param[in] bitmap_data   Source bitmap data. (was HL')
  */
@@ -3014,8 +3035,8 @@ void plot_sprite_flipped_even(chqstate_t *state,
                               u16         bitmap_stride,
                               const u8   *bitmap_data)
 {
-  const u8 *src;          // was SP
-  u8       *backbuf_orig; // was A
+  const u8 *src;          /* was SP */
+  u8       *backbuf_orig; /* was A */
 
   goto plot_sprite_flipped_even_start;
 
@@ -3060,27 +3081,27 @@ plot_sprite_flipped_even_start:
  * \param[in] state         Pointer to game state.
  * \param[in] width_bytes   Draw width of bitmap data, in bytes. (was A)
  * \param[in] backbuf_addr  Back buffer address to draw at. (was HL)
- * \param[in] height        Number of rows. (was B')
- * \param[in] bitmap_stride Stride of bitmap data, in bytes. (was DE')
+ * \param[in] height        Number of rows to draw. (was B')
+ * \param[in] bitmap_stride Stride of bitmap data, in bytes. (was E')
  * \param[in] bitmap_data   Source bitmap data. (was HL')
  */
 void plot_sprite_flipped_odd(chqstate_t *state,
                              u8          width_bytes,
                              u8         *backbuf_addr,
                              u8          height,
-                             u16         bitmap_stride,
+                             u8          bitmap_stride,
                              const u8   *bitmap_data)
 {
-  int       jump_offset;  // was IX
-  const u8 *src;          // was SP
-  u8       *backbuf_orig; // was A
+  int       jump_offset;  /* was IX */
+  const u8 *src;          /* was SP */
+  u8       *backbuf_orig; /* was A */
 
   width_bytes++;
   jump_offset = 9 * (4 - width_bytes); // 9 bytes/op
 
   // Conv: Removed D' the flipped bytes table ptr
   // EXX - bank
-  // D = 0; can't see a reason for this
+  // Ddash = 0;  widen bitmap_stride to DE'
 
   goto psf_odd_body;
 
@@ -3124,7 +3145,7 @@ psf_odd_body:
 u8 rng(chqstate_t *state)
 {
   int carry;
-  u8 *seed; // was HL
+  u8 *seed; /* was HL */
   u8  A;
 
   seed = &state->rng_seed[0];

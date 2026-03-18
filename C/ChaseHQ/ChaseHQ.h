@@ -595,13 +595,13 @@ void setup_overlay_messages_with_transition(chqstate_t *state,
 void draw_mugshots(chqstate_t *state);
 
 void draw_mugshot(chqstate_t *state,
-                  u16         screenpos,
+                  u16         attrs,
                   u16         backbuf,
                   const u8   *mugshot);
 
 void draw_smash_bar(chqstate_t *state);
-u16 draw_smash_bar_segments(chqstate_t *state, int nsegs, u16 buf);
-u16 draw_smash_bar_solid_bit(chqstate_t *state, int nrows, u16 buf);
+u16 draw_smash_bar_segments(chqstate_t *state, int nsegs, u16 backbuf);
+u16 draw_smash_bar_solid_bit(chqstate_t *state, int nrows, u16 backbuf);
 
 void draw_everything_else(chqstate_t *state);
 
@@ -697,7 +697,7 @@ void plot_sprite_flipped(chqstate_t *state,
                          u8          width_bytes,
                          u8         *backbuf_addr,
                          u8          height,
-                         u16         bitmap_stride,
+                         u8          bitmap_stride,
                          const u8   *bitmap_data);
 void plot_sprite_flipped_even(chqstate_t *state,
                               u8          jump_offset,
@@ -709,7 +709,7 @@ void plot_sprite_flipped_odd(chqstate_t *state,
                              u8          width_bytes,
                              u8         *backbuf_addr,
                              u8          height,
-                             u16         bitmap_stride,
+                             u8          bitmap_stride,
                              const u8   *bitmap_data);
 
 u8 rng(chqstate_t *state);
