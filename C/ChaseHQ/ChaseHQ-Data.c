@@ -2459,22 +2459,22 @@ const carpart_t hero_car_shadow[3] = {
 const carsmokeframe_t hero_car_turbo_smoke[4] = {
   {
     16, 4,
-    16, 0xD8,
+    16, 216,
     &bitmap_turbo_1[0]
   },
   {
     16, 4,
-    16, 0xD8,
+    16, 216,
     &bitmap_turbo_2[0]
   },
   {
     16, 4,
-    16, 0xD8,
+    16, 216,
     &bitmap_turbo_3[0]
   },
   {
     16, 4,
-    16, 0xD8,
+    16, 216,
     &bitmap_turbo_4[0]
   }
 };

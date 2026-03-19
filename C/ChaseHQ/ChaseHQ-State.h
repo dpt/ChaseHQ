@@ -491,7 +491,7 @@ struct chqstate {
   u16       dd_SM_B570_offset; // (might not need to be a state var)
 
   // $B5AA (SM) in draw_car
-  u8        dhc_y_offset;
+  u8        dhc_jump_y; // height of car in the air - leaving shadow on the ground
   // $B5AF (SM) in draw_car
   u8        dhc_pitch; // car's pitch (0/3/6 = level/up/down)
 

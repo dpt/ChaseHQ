@@ -92,6 +92,8 @@ CHQ_API void chq_main(chqstate_t *state);
 // Return backbuffer[] pointer given byte offset.
 #define OFFSETTOBACKBUF(off)  (&state->backbuffer[off])
 
+#define VALID_BACKBUF(ptr)    (((ptr) >= &state->backbuffer[0]) && ((ptr) < &state->backbuffer[BACKBUFFER_LENGTH]))
+
 // Return ptr incremented modulo 256.
 #define WRAPPING(ptr, delta, base) &(base)[((ptr) + delta - (base)) & 0xFF]
 #define WRAPPINGINCREMENT(ptr, base) WRAPPING(ptr, 1, base)
@@ -509,10 +511,10 @@ typedef struct {
 } carpart_t;
 
 typedef struct {
-  u8        width;
   u8        height;
-  u8        flipped_x; // bit of a guess
+  u8        width;
   u8        unflipped_x;
+  u8        flipped_x;
   const u8 *bitmap;
 } carsmokeframe_t;
 
@@ -894,7 +896,7 @@ void draw_part(chqstate_t *state,
                u8          y,
                u8          x,
                const u8   *bitmap,
-               u8          Bdash_flags,
+               u8          Bdash_flip_flag,
                u8          Cdash,
                u8          Edash_bitmap_stride);
 void draw_part_entry2(chqstate_t *state,
@@ -903,7 +905,7 @@ void draw_part_entry2(chqstate_t *state,
                       u8          Dy,
                       u8          Ex,
                       const u8   *HLbitmap_data,
-                      u8          Bdash_flags,
+                      u8          Bdash_flip_flag,
                       u8          Cdash,
                       u8          Edash_bitmap_stride);
 void draw_part_entry3(chqstate_t *state,
@@ -918,7 +920,7 @@ void plot_masked_sprite(chqstate_t *state,
                         u8          height,
                         u16         bitmap_stride,
                         const u8   *bitmap_data,
-                        u8         *backbuf);
+                        u8         *backbuf_addr);
 
 void pms_entry(chqstate_t *state);
 

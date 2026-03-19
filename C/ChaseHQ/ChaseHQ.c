@@ -85,6 +85,7 @@
 #include <stddef.h>
 #include <stdio.h>
 #include <string.h>
+#include <stdlib.h>
 
 #include "C99/Types.h"
 #include "ZXSpectrum/Macros.h"
@@ -104,6 +105,22 @@
 static u16 wordat(const u8 *addr)
 {
   return (addr[0] << 0) | (addr[1] << 8);
+}
+
+// Move to next screen row (downwards)
+// Conv: added
+static u16 nextscrrow(u16 screen)
+{
+  screen += 256;
+  if (((screen >> 8) & 7) == 0) {
+    int t = (screen & 0xFF) + 32;
+    screen = (screen & 0xFF00) | (t & 0xFF);
+    if (t < 0x100) { // didn't carry
+      t = (screen >> 8) - 8; // reduce?
+      screen = (t << 8) | (screen & 0xFF);
+    }
+  }
+  return screen;
 }
 
 // Returns the previous row for the back buffer (visually upwards).
@@ -535,6 +552,76 @@ int run_pregame_screen_loop(chqstate_t *state)
   reveal_perp_car(state);
   animate_meters(state);
   transition(state);
+
+  memset(&state->speccy->screen.attributes[256], attribute_BRIGHT_BLACK_OVER_GREEN, 512);
+  memset(&state->backbuffer[0], 0, 4096);
+  {
+    static int turnitude = 0;
+    static int wobble    = 0;
+    static int pitch     = 0;
+    static int frame     = 0;
+    static int y         = 0;
+    static int yi        = 0;
+    static int boosting  = 0;
+
+    int do_turn  = (rand() % 100) < 20;
+    int turn_rt  = (rand() % 100) < 50;
+    int ch_ptch  = (rand() % 100) < 20;
+    int go_up    = (rand() % 100) < 20;
+    int st_jump  = (rand() % 100) < 1;
+    int st_boost = (rand() % 100) < 10;
+
+    if (do_turn) {
+      if (turn_rt) {
+        if (++turnitude > 2) turnitude = 2;
+      } else {
+        if (--turnitude < -2) turnitude = -2;
+      }
+    }
+
+    if (ch_ptch) {
+      if (go_up) {
+        pitch = (pitch == 0) ? 3 : (pitch == 6) ? 0 : pitch;
+      } else {
+        pitch = (pitch == 0) ? 6 : (pitch == 3) ? 0 : pitch;
+      }
+    }
+
+    if (st_jump && yi == 0) {
+      yi = 5;
+    } else {
+      if (y >= 25)
+        yi = -9;
+    }
+
+    y += yi;
+    if (y < 0) {
+      y = 0;
+      yi = 0;
+    }
+
+    if (st_boost && boosting == 0) {
+      boosting = 20;
+    }
+
+    state->car_y      = 0;
+    state->flip_car   = (turnitude < 0) ? 1 : 0;
+    state->dhc_pitch  = pitch;
+    state->dhc_jump_y = y;
+
+    draw_hero_car(state, abs(turnitude), wobble);
+
+    state->mhc_y_offset = 0;
+
+    if (y == 0 && boosting) {
+      draw_smoke(state, frame % 4, 0); // right hand
+      draw_smoke(state, frame % 4, 1); // left hand
+      boosting--;
+    }
+
+    frame++;
+  }
+
   draw_screen(state);
   if (state->transition_control == 0) {
     if (state->chatter_state == CHATTERSTATE_IDLE)
@@ -2964,7 +3051,7 @@ plot_sprite_odd_start:
     case 3:
       *backbuf_addr = *src++;
     }
-    backbuf_addr = OFFSETTOBACKBUF(prevbufrow(BACKBUFTOOFFSET(backbuf_orig)));
+    backbuf_addr = ADDRTOBACKBUF(prevbufrow(BACKBUFTOADDR(backbuf_orig)));
   }
 }
 
@@ -3097,7 +3184,7 @@ void plot_sprite_flipped_odd(chqstate_t *state,
   u8       *backbuf_orig; /* was A */
 
   width_bytes++;
-  jump_offset = 9 * (4 - width_bytes); // 9 bytes/op
+  jump_offset = 4 - width_bytes; // 9 bytes/op mult - removed
 
   // Conv: Removed D' the flipped bytes table ptr
   // EXX - bank
@@ -3116,23 +3203,23 @@ psf_odd_body:
     src = bitmap_data;
     // EXX - unbank
     backbuf_orig = backbuf_addr;
-    switch (jump_offset / 9) {
+    switch (jump_offset) {
     default:
       assert(0);
     case 0:
       // Conv: Original uses POP that loads 16 bits at a time
-      *backbuf_addr-- = state->flipped[*src++ & 0xFF];
-      *backbuf_addr-- = state->flipped[*src++ >> 8];
+      *backbuf_addr-- = state->flipped[*src++];
+      *backbuf_addr-- = state->flipped[*src++];
     case 1:
-      *backbuf_addr-- = state->flipped[*src++ & 0xFF];
-      *backbuf_addr-- = state->flipped[*src++ >> 8];
+      *backbuf_addr-- = state->flipped[*src++];
+      *backbuf_addr-- = state->flipped[*src++];
     case 2:
-      *backbuf_addr-- = state->flipped[*src++ & 0xFF];
-      *backbuf_addr-- = state->flipped[*src++ >> 8];
+      *backbuf_addr-- = state->flipped[*src++];
+      *backbuf_addr-- = state->flipped[*src++];
     case 3:
-      *backbuf_addr-- = state->flipped[*src++ & 0xFF];
+      *backbuf_addr-- = state->flipped[*src++];
     }
-    backbuf_addr = OFFSETTOBACKBUF(prevbufrow(BACKBUFTOOFFSET(backbuf_orig)));
+    backbuf_addr = ADDRTOBACKBUF(prevbufrow(BACKBUFTOADDR(backbuf_orig)));
   }
 }
 
@@ -3411,22 +3498,6 @@ void drive_noise_effect(chqstate_t *state, u8 counter)
     print_chatter(state); // exit via
   else
     draw_noise_effect(state, counter); // was FALLTHROUGH
-}
-
-// Move to next screen row (downwards)
-// Conv: added
-static u16 nextscrrow(u16 screen)
-{
-  screen += 256;
-  if (((screen >> 8) & 7) == 0) {
-    int t = (screen & 0xFF) + 32;
-    screen = (screen & 0xFF00) | (t & 0xFF);
-    if (t < 0x100) { // didn't carry
-      t = (screen >> 8) - 8; // reduce?
-      screen = (t << 8) | (screen & 0xFF);
-    }
-  }
-  return screen;
 }
 
 /**
@@ -4846,7 +4917,7 @@ void scenery_hit(chqstate_t *state, u8 Aflip, u8 Adash)
 
   state->ahc_crashed_flag = 1;
   state->ahc_flip_flag    = Aflip;
-  state->ahc_SM_B38D_flippingish      = ++Aflip;
+  state->ahc_SM_B38D_flippingish = ++Aflip;
   state->ahc_delay        = 5;
 
   speed = state->speed;
@@ -6794,11 +6865,11 @@ void move_hero_car(chqstate_t *state)
     state->off_road = 0;
     state->user_input &= ~(USERINPUT_RIGHT | USERINPUT_LEFT | USERINPUT_DOWN | USERINPUT_UP);
     state->dhc_pitch = jump_data[0];
-    y_offset = state->dhc_y_offset + jump_data[1];
+    y_offset = state->dhc_jump_y + jump_data[1];
     state->mhc_jump_data = jump_data + 2;
   }
 
-  state->dhc_y_offset = y_offset;
+  state->dhc_jump_y = y_offset;
 
   if (state->boost && --state->boost == 0) // Conv: Uses state directly
     state->st.turbos--;
@@ -7443,7 +7514,7 @@ void draw_hero_car(chqstate_t *state, u8 Aturn_speed, u8 Bwobble)
   // POP BC -- restore
 
   /* 117 is the car's default vertical position. Smaller values make it move higher. */
-  Dy = 117 - state->dhc_y_offset;
+  Dy = 117 - state->dhc_jump_y;
 
   /* Build an index into hero_car_parts[]. Valid indices are 0 to 8 inclusive. */
   Acar_direction = Cturn_speed + Bwobble + state->dhc_pitch;
@@ -7474,7 +7545,7 @@ void draw_hero_car(chqstate_t *state, u8 Aturn_speed, u8 Bwobble)
     // EX AF,AF' -- #REGa is (width in bytes)
     plot_sprite(state,
                 Awidth_bytes,
-                OFFSETTOBACKBUF(HLdash_backbuf_addr),
+                ADDRTOBACKBUF(HLdash_backbuf_addr),
                 Bdash_height,
                 DEbitmap_stride,
                 HLbitmap_data);
@@ -7483,7 +7554,7 @@ void draw_hero_car(chqstate_t *state, u8 Aturn_speed, u8 Bwobble)
     HLdash_backbuf_addr--; // Adjust back buffer plot address to be a byte earlier
     plot_sprite_flipped(state,
                         Awidth_bytes,
-                        OFFSETTOBACKBUF(HLdash_backbuf_addr),
+                        ADDRTOBACKBUF(HLdash_backbuf_addr),
                         Bdash_height,
                         DEbitmap_stride,
                         HLbitmap_data);
@@ -7491,7 +7562,7 @@ void draw_hero_car(chqstate_t *state, u8 Aturn_speed, u8 Bwobble)
 
   // POP HL herocarpart ptr
   // POP DE car vert pos
-  // INC HL advance to next car part
+  HLcarpart++; // INC HL advance to next car part
 
   // Draw the windscreen (top) part
   HLcarpart = draw_hero_car_part(state, 5, Dy, 104, HLcarpart);
@@ -7500,14 +7571,14 @@ void draw_hero_car(chqstate_t *state, u8 Aturn_speed, u8 Bwobble)
   // Draw left hand side
   HLcarpart = draw_hero_car_part(state, 1, Dy, (!state->flip_car) ? 96 : 144, HLcarpart);
   // Draw right hand side
-  (void) draw_hero_car_part(state, 1, Dy, (!state->flip_car) ? 96 : 144, HLcarpart); // was FALLTHROUGH
+  (void) draw_hero_car_part(state, 1, Dy, (state->flip_car) ? 96 : 144, HLcarpart); // was FALLTHROUGH
 }
 
 /**
  * $B627: Draw a portion of the hero car
  *
  * \param[in] state        Pointer to game state.
- * \param[in] Cwidth_bytes Byte width (drawing or stride?)
+ * \param[in] Cwidth_bytes Byte width (drawing and/or stride?)
  * \param[in] Dy           Y position (in rows)
  * \param[in] Ex           X position (in pixels)
  * \param[in] HLpart       Car part
@@ -7519,28 +7590,26 @@ const carpart_t *draw_hero_car_part(chqstate_t      *state,
                                     u8               Ex,
                                     const carpart_t *HLpart)
 {
-  u8        Ay;
-  u8        Dnew_y;
-  const u8 *HLbitmap;
-  u8        Aflip_car;
-  u8        Bheight;
-  u8        Bdash_flags;
-  u8        Edash_width_bytes;
-  u8        Cdash;
+  u8        Ay;                   /* was A */
+  u8        Dnew_y;               /* was D */
+  const u8 *HLbitmap;             /* was HL */
+  u8        Bheight;              /* was B */
+  u8        Bdash_flip_flag;      /* was B' */
+  u8        Edash_bitmap_stride;  /* was E' */
+  u8        Cdash;                /* was C' */
 
   Ay = Dy;
-  // PUSH DE // preserve x,y until return
+  // PUSH DE -- preserve x,y until return
   Dnew_y = Ay - HLpart->y;
   Bheight = HLpart->rows;
-  // PUSH HLpart  orig stacks HLpart+1
+  // PUSH HLpart -- orig stacks HLpart+1
   HLbitmap = HLpart->bitmap;
-  // PUSH BC  pres byte width
+  // PUSH BC -- pres byte width
   // EXX BANK
-  // POP BC  restore byte width
-  Aflip_car = state->flip_car;
-  Bdash_flags = Aflip_car;
-  Edash_width_bytes = Cwidth_bytes;
-  Cdash = (Aflip_car) ? Cwidth_bytes - 1 : 0; // flipped start offset or something?
+  // POP BC -- restore byte width
+  Bdash_flip_flag = state->flip_car;
+  Edash_bitmap_stride = Cwidth_bytes; // width and stride always the same here?
+  Cdash = (Bdash_flip_flag) ? Cwidth_bytes - 1 : 0; // flipped start offset or something?
   // EXX UNBANK
   draw_part(state,
             Bheight,
@@ -7548,11 +7617,11 @@ const carpart_t *draw_hero_car_part(chqstate_t      *state,
             Dnew_y,
             Ex,
             HLbitmap,
-            Bdash_flags,
+            Bdash_flip_flag,
             Cdash,
-            Edash_width_bytes);
+            Edash_bitmap_stride);
   // POP HLpart
-  // POP DE // restore x,y
+  // POP DE -- restore x,y
   return HLpart + 1; // return next row
 }
 
@@ -7560,23 +7629,23 @@ const carpart_t *draw_hero_car_part(chqstate_t      *state,
 void draw_smoke(chqstate_t *state, u8 Aanim_frame, u8 Adash_flip_flag)
 {
   const carsmokeframe_t *HLframe;
-  u8                  Cwidth;
-  u8                  Bheight;
-  u8                  Dflipped_x;
-  u8                  Eunflipped_x;
-  const u8           *HLbitmap;
-  u8                  Cdash;
-  u8                  Bdash_flip_flag;
-  u8                  Edash_width_bytes;
-  u8                  Ax;
+  u8                     Cwidth;
+  u8                     Bheight;
+  u8                     Dflipped_x;
+  u8                     Eunflipped_x;
+  const u8              *HLbitmap;
+  u8                     Cdash;
+  u8                     Bdash_flip_flag;
+  u8                     Edash_width_bytes;
+  u8                     Ax;
 
   HLframe = &hero_car_turbo_smoke[Aanim_frame];
 
-  // Don't draw smoke if car's mid-jump
+  /* Don't draw smoke if car's mid-jump */
   if (state->mhc_y_offset)
     return;
 
-  // Load dimensions, positions and frame bitmap data pointer
+  /* Load dimensions, positions and frame bitmap data pointer */
   Cwidth       = HLframe->width;
   Bheight      = HLframe->height;
   Dflipped_x   = HLframe->flipped_x;
@@ -7631,7 +7700,7 @@ void draw_crash(chqstate_t *state, u8 A)
  * \param[in] y                   (was D)
  * \param[in] x                   (was E)
  * \param[in] bitmap              (was HL)
- * \param[in] Bdash_flags         (was B')
+ * \param[in] Bdash_flip_flag     (was B')
  * \param[in] Cdash               (was C')
  * \param[in] Edash_bitmap_stride (was E')
  */
@@ -7641,7 +7710,7 @@ void draw_part(chqstate_t *state,
                u8          y,
                u8          x,
                const u8   *bitmap,
-               u8          Bdash_flags,
+               u8          Bdash_flip_flag,
                u8          Cdash,
                u8          Edash_bitmap_stride)
 {
@@ -7651,7 +7720,7 @@ void draw_part(chqstate_t *state,
                    y - state->car_y,
                    x,
                    bitmap,
-                   Bdash_flags,
+                   Bdash_flip_flag,
                    Cdash,
                    Edash_bitmap_stride); // was FALLTHROUGH
 }
@@ -7664,8 +7733,8 @@ void draw_part(chqstate_t *state,
  * \param[in] Cwidth_bytes        (was C)
  * \param[in] Dy                  (was D)
  * \param[in] Ex                  (was E)
- * \param[in] HLbitmap_data            (was HL)
- * \param[in] Bdash_flags         (was B')
+ * \param[in] HLbitmap_data       (was HL)
+ * \param[in] Bdash_flip_flag     (was B')
  * \param[in] Cdash               (was C')
  * \param[in] Edash_bitmap_stride (was E')
  */
@@ -7675,18 +7744,18 @@ void draw_part_entry2(chqstate_t *state,
                       u8          Dy,
                       u8          Ex,
                       const u8   *HLbitmap_data,
-                      u8          Bdash_flags,
+                      u8          Bdash_flip_flag,
                       u8          Cdash,
                       u8          Edash_bitmap_stride)
 {
-  int carry;
+  int carry_flip_flag;
   u8  DElo;           /* was E */
   u8  Ay;             /* was A */
   u8  DEhi;           /* was D */
   u16 DEbackbuf;      /* was DE */
+  u8  Estride;        /* was E */
   u16 HLdash_backbuf; /* was HL */
   u8  Awidth_bytes;   /* was A */
-  u8 Estride; /* was E */
 
   DElo = (Ex & 0xF8) >> 3;
   Ay = Dy;
@@ -7699,14 +7768,14 @@ void draw_part_entry2(chqstate_t *state,
   // EXX - Bank
   HLdash_backbuf = DEbackbuf; // was POP HLdash_backbuf
   Awidth_bytes = Edash_bitmap_stride;
-  carry = Bdash_flags & 1; // was shift (and zeroes the register)
+  carry_flip_flag = Bdash_flip_flag & 1; // was shift (and zeroes the register)
   // EX AF,AF'  -- unbanking for flags?
-  HLdash_backbuf += Cdash; // was BCdash but B always zero here?
+  HLdash_backbuf += Cdash; // was BCdash - B always zero here
   // EX AF,AF'
-  if (carry)
+  if (carry_flip_flag)
     plot_masked_sprite_flipped_entry2(state,
                                       Awidth_bytes,
-                                      OFFSETTOBACKBUF(HLdash_backbuf),
+                                      ADDRTOBACKBUF(HLdash_backbuf),
                                       Bheight,
                                       Estride,
                                       HLbitmap_data);
@@ -7716,7 +7785,7 @@ void draw_part_entry2(chqstate_t *state,
                      Bheight,
                      Estride,
                      HLbitmap_data,
-                     OFFSETTOBACKBUF(HLdash_backbuf)); // was FALLTHROUGH
+                     ADDRTOBACKBUF(HLdash_backbuf)); // was FALLTHROUGH
 }
 
 // $B701
@@ -7753,19 +7822,23 @@ void draw_part_entry3(chqstate_t *state,
  * \param[in] height        Number of rows. (was B)
  * \param[in] bitmap_stride Draw width of bitmap data, in bytes. (was DE)
  * \param[in] bitmap_data   Source bitmap data. (was HL)
- * \param[in] backbuf       Back buffer address to draw at. (was HL')
+ * \param[in] backbuf_addr  Back buffer address to draw at. (was HL')
  */
 void plot_masked_sprite(chqstate_t *state,
                         int         jump_offset,
                         u8          height,
                         u16         bitmap_stride,
                         const u8   *bitmap_data,
-                        u8         *backbuf)
+                        u8         *backbuf_addr)
 {
-  const u8 *src;          // was SP
-  u8       *backbuf_orig; // was C
-  u8        mask;         // was E
-  u8        data;         // was D
+  const u8 *src;          /* was SP */
+  u8       *backbuf_orig; /* was C */
+  u8        mask;         /* was E */
+  u8        data;         /* was D */
+
+  assert(jump_offset/6 >= 0);
+  assert(jump_offset/6 <= 7);
+  assert(VALID_BACKBUF(backbuf_addr));
 
   goto pms_entry;
 
@@ -7781,32 +7854,28 @@ void plot_masked_sprite(chqstate_t *state,
 pms_entry:
     src = bitmap_data;
     // EXX - Bank
-    backbuf_orig = backbuf; // Preserve start address
+    backbuf_orig = backbuf_addr; // Preserve start address
     switch (jump_offset / 6) {
-    default:
-      assert(0);
+    default: printf("%d\n", jump_offset); assert(0);
     case 0:
       // Conv: Original uses POP that loads 16 bits at a time
-      mask = *src++, data = *src++, *backbuf = (*backbuf & mask) | data, backbuf++;
+      mask = *src++, data = *src++, *backbuf_addr = (*backbuf_addr & mask) | data, backbuf_addr++;
     case 1:
-      mask = *src++, data = *src++, *backbuf = (*backbuf & mask) | data, backbuf++;
+      mask = *src++, data = *src++, *backbuf_addr = (*backbuf_addr & mask) | data, backbuf_addr++;
     case 2:
-      mask = *src++, data = *src++, *backbuf = (*backbuf & mask) | data, backbuf++;
+      mask = *src++, data = *src++, *backbuf_addr = (*backbuf_addr & mask) | data, backbuf_addr++;
     case 3:
-      mask = *src++, data = *src++, *backbuf = (*backbuf & mask) | data, backbuf++;
+      mask = *src++, data = *src++, *backbuf_addr = (*backbuf_addr & mask) | data, backbuf_addr++;
     case 4:
-      mask = *src++, data = *src++, *backbuf = (*backbuf & mask) | data, backbuf++;
+      mask = *src++, data = *src++, *backbuf_addr = (*backbuf_addr & mask) | data, backbuf_addr++;
     case 5:
-      mask = *src++, data = *src++, *backbuf = (*backbuf & mask) | data, backbuf++;
+      mask = *src++, data = *src++, *backbuf_addr = (*backbuf_addr & mask) | data, backbuf_addr++;
     case 6:
-      mask = *src++, data = *src++, *backbuf = (*backbuf & mask) | data, backbuf++;
+      mask = *src++, data = *src++, *backbuf_addr = (*backbuf_addr & mask) | data, backbuf_addr++;
     case 7:
-      mask = *src++, data = *src++, *backbuf = (*backbuf & mask) | data, backbuf++;
+      mask = *src++, data = *src++, *backbuf_addr = (*backbuf_addr & mask) | data, backbuf_addr++;
     }
-    backbuf = backbuf_orig; // Restore row start address
-
-    // CHECK is prevbufrow the right form?
-    backbuf = ADDRTOBACKBUF(prevbufrow(BACKBUFTOADDR(backbuf)));
+    backbuf_addr = ADDRTOBACKBUF(prevbufrow(BACKBUFTOADDR(backbuf_orig))); // Restore row start address
   }
 }
 
@@ -7856,11 +7925,12 @@ void plot_masked_sprite_flipped_entry2(chqstate_t *state,
                                        const u8   *bitmap_data)
 {
   int       jump_offset;   // was IX   aka left hand clip?
-  // u8        Ddash;         // was D
   const u8 *src;           // was SP
-  // u8       *Adash;         // was A'
+  u8       *backbuf_orig;  // was A'??
   u8        mask;          // was C
   u8        data;          // was B
+
+  assert(VALID_BACKBUF(backbuf_addr));
 
   // EX DE,HL  -- move backbuffer ptr to DE?
   jump_offset = 8 - width_bytes; // Conv: Multiplication removed
@@ -7870,39 +7940,33 @@ void plot_masked_sprite_flipped_entry2(chqstate_t *state,
   // Ddash = 0; // clearing hi byte of DE'? not sure why
   goto pmsf_start;
 
-// unused for now
-// pmsf_reset_next:
-//   // EX AF,AF' - Unbank
-//   backbuf_addr = Adash; // was LD E,A (reset scanline ptr)
+  for (;;) {
+    // EX AF,AF' - Unbank
+    // EXX - Bank
+    if (--height == 0)
+      return;
 
-pmsf_next:
-  // EX AF,AF' - Unbank
-  // EXX - Bank
-  if (--height == 0)
-    return;
-
-  bitmap_data += bitmap_stride; // must be of same bank
+    bitmap_data += bitmap_stride; // Advance to start of next row
 
 pmsf_start:
-  src = bitmap_data;
-  // EXX - Unbank
-  // Adash = backbuf_addr; // Adash = dst.lo
-  // EX AF,AF' - Bank
-  switch (jump_offset) { // TODO: roll
-  case 0: mask = *src++, data = *src++, *backbuf_addr = (*backbuf_addr & state->flipped[mask]) | state->flipped[data], backbuf_addr--;
-  case 1: mask = *src++, data = *src++, *backbuf_addr = (*backbuf_addr & state->flipped[mask]) | state->flipped[data], backbuf_addr--;
-  case 2: mask = *src++, data = *src++, *backbuf_addr = (*backbuf_addr & state->flipped[mask]) | state->flipped[data], backbuf_addr--;
-  case 3: mask = *src++, data = *src++, *backbuf_addr = (*backbuf_addr & state->flipped[mask]) | state->flipped[data], backbuf_addr--;
-  case 4: mask = *src++, data = *src++, *backbuf_addr = (*backbuf_addr & state->flipped[mask]) | state->flipped[data], backbuf_addr--;
-  case 5: mask = *src++, data = *src++, *backbuf_addr = (*backbuf_addr & state->flipped[mask]) | state->flipped[data], backbuf_addr--;
-  case 6: mask = *src++, data = *src++, *backbuf_addr = (*backbuf_addr & state->flipped[mask]) | state->flipped[data], backbuf_addr--;
-  case 7: mask = *src++, data = *src++, *backbuf_addr = (*backbuf_addr & state->flipped[mask]) | state->flipped[data], backbuf_addr--;
-  default: assert(0);
+    src = bitmap_data;
+    // EXX - Unbank
+    backbuf_orig = backbuf_addr; // Preserve start address
+    // EX AF,AF' - Bank
+    switch (jump_offset) {
+      default: assert(0);
+        // Conv: Original uses POP that loads 16 bits at a time
+      case 0: mask = *src++; data = *src++; *backbuf_addr = (*backbuf_addr & state->flipped[mask]) | state->flipped[data]; backbuf_addr--;
+      case 1: mask = *src++; data = *src++; *backbuf_addr = (*backbuf_addr & state->flipped[mask]) | state->flipped[data]; backbuf_addr--;
+      case 2: mask = *src++; data = *src++; *backbuf_addr = (*backbuf_addr & state->flipped[mask]) | state->flipped[data]; backbuf_addr--;
+      case 3: mask = *src++; data = *src++; *backbuf_addr = (*backbuf_addr & state->flipped[mask]) | state->flipped[data]; backbuf_addr--;
+      case 4: mask = *src++; data = *src++; *backbuf_addr = (*backbuf_addr & state->flipped[mask]) | state->flipped[data]; backbuf_addr--;
+      case 5: mask = *src++; data = *src++; *backbuf_addr = (*backbuf_addr & state->flipped[mask]) | state->flipped[data]; backbuf_addr--;
+      case 6: mask = *src++; data = *src++; *backbuf_addr = (*backbuf_addr & state->flipped[mask]) | state->flipped[data]; backbuf_addr--;
+      case 7: mask = *src++; data = *src++; *backbuf_addr = (*backbuf_addr & state->flipped[mask]) | state->flipped[data]; backbuf_addr--;
+    }
+    backbuf_addr = ADDRTOBACKBUF(prevbufrow(BACKBUFTOADDR(backbuf_orig))); // Restore row start address
   }
-
-  // routine has another different form of this...
-  backbuf_addr = ADDRTOBACKBUF(prevbufrow(BACKBUFTOADDR(backbuf_addr)));
-  goto pmsf_next; // or ...
 }
 
 // $B7EF
@@ -7981,7 +8045,7 @@ void scroll_horizon(chqstate_t *state)
   u8         Bcounter;                  // was C
   u8         Eset_if_incline_negative;  // was C
   u8         Chorizon_table_value;      // was C
-  u8         Ahorizon_y_a25a_delta;           // was A
+  u8         Ahorizon_y_a25a_delta;     // was A
   u16        BCcounter;                 // was BC
 
   if ((speed = state->speed) == 0)
@@ -9299,24 +9363,24 @@ mdc_have_glyph:
 void bootstrap(chqstate_t *state)
 {
   for (;;) {
-    int carry = 0;
-    u8 *HL;
-    int B;
-    u8  A;
-    u8  Aorig;
-    u8  C = 0; // Conv: Original doesn't initialise C.
+    int  carry = 0;
+    u8  *HLflipped;   /* was HL */
+    int  Biterations; /* was B */
+    u8   Aindex;      /* was A */
+    u8   Cresult;     /* was C */
 
-    // Build a table of flipped bytes at $EF00.
-    HL = &state->flipped[0];
+    /* Build a table of flipped bytes at "$EF00" */
+    Cresult = 0; // Conv: Original didn't initialise C
+    HLflipped = &state->flipped[0];
     do {
-      B = 8;
-      Aorig = A = HL - &state->flipped[0];
+      Biterations = 8;
+      Aindex = HLflipped - &state->flipped[0];
       do {
-        RLC(A);
-        RR(C);
-      } while (--B > 0);
-      *HL++ = C;
-    } while (Aorig);
+        RLC(Aindex);
+        RR(Cresult);
+      } while (--Biterations > 0);
+      *HLflipped++ = Cresult;
+    } while (HLflipped < &state->flipped[256]);
 
     // Conv: Returning here - may have to split this routine up for
     // conversion.
