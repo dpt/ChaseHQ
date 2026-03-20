@@ -3301,8 +3301,8 @@ void drive_chatter(chqstate_t *state)
     goto do_noise_effect;
 
   if (--chatter_state == 0) { // stopping (3)
-    if (--state->noise_counter != 0) {
-      drive_noise_effect(state, state->noise_counter); // exit via
+    if (--state->noise_counter) {
+      draw_noise_effect(state, state->noise_counter); // exit via
       return;
     }
 
