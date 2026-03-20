@@ -567,7 +567,7 @@ int run_pregame_screen_loop(chqstate_t *state)
     int do_turn  = (rand() % 100) < 20;
     int turn_rt  = (rand() % 100) < 50;
     int ch_ptch  = (rand() % 100) < 20;
-    int go_up    = (rand() % 100) < 20;
+    int go_up    = (rand() % 100) < 50;
     int st_jump  = (rand() % 100) < 1;
     int st_boost = (rand() % 100) < 10;
 
@@ -3282,24 +3282,21 @@ void start_chatter(chqstate_t       *state,
 void drive_chatter(chqstate_t *state)
 {
   int          carry = 0;
-  u8           chatter_state; // was A
-  char         character;     // was D
-  u8           rotating;      // was A
-  u8           delay;         // was A
-  u8           x;             // was A
+  u8           chatter_state; /* was A */
+  char         character;     /* was D */
+  u8           rotating;      /* was A */
+  u8           delay;         /* was A */
+  u8           x;             /* was A */
   u8           B;
-  const char  *HLnextchar;    // was HL
-  const u8    *chatterblk;    // was HL
-  u8           chattercmd;    // was A
+  const char  *HLnextchar;    /* was HL */
+  const u8    *chatterblk;    /* was HL */
+  u8           chattercmd;    /* was A */
 
   chatter_state = state->chatter_state;
-
   if (--chatter_state == 0) // starting (1)
     goto starting;
-
   if (--chatter_state == 0) // displaying (2)
     goto do_noise_effect;
-
   if (--chatter_state == 0) { // stopping (3)
     if (--state->noise_counter) {
       draw_noise_effect(state, state->noise_counter); // exit via
@@ -3395,43 +3392,51 @@ void drive_chatter_stop(chqstate_t *state)
 /**
  * $99EC: Print chatter
  *
+ * This function examines the current chatter block to determine which
+ * character is speaking, handling random choice logic for three-way
+ * selections. It calculates and displays the appropriate character mugshot
+ * at screen position (176,8) based on the character ID, with special handling
+ * for the pilot character. Finally, it outputs the associated message using
+ * the processed chatter block data.
+ *
  * \param[in] state Pointer to game state.
  */
 void print_chatter(chqstate_t *state)
 {
-  const u8 *chatter; // was HL
-  u8        cmd;     // was A
-  u8        rnd;     // was A
-  const u8 *face;    // was HL
+  const u8 *chatterblk; /* was HL */
+  u8        cmd;        /* was A */
+  u8        rnd;        /* was A */
+  const u8 *face;       /* was HL */
 
-  chatter = state->chatterblk_ptr;
-  assert(chatter);
+  chatterblk = state->chatterblk_ptr;
+  assert(chatterblk);
+
   for (;;) {
-    cmd = *chatter++; // read a command ($FC) or speaking character's ID
+    cmd = *chatterblk++; /* read a command (0xFC) or speaking character's ID */
     if (cmd != CHATTERCMD_RANDOM)
       break;
 
-    // Random choice
+    /* Three-way random choice */
     rnd = rng(state);
     if (rnd >= 0x55) {
-      chatter += 2;
+      chatterblk += 2;
       if (rnd >= 0xAA)
-        chatter += 2;
+        chatterblk += 2;
     }
-    /* Conv: This is an index, not an address */
-    assert(*chatter < CHATTERBLK__LIMIT);
-    chatter = chatter_blocks[*chatter];
+    /* Conv: This is now an index and no longer an address */
+    assert(*chatterblk < CHATTERBLK__LIMIT);
+    chatterblk = chatter_blocks[*chatterblk];
   }
 
-  // cmd is now the character ID
+  /* cmd is now the character ID */
   assert(cmd <= CHATTERCHR_TONY);
   face = state->stage->addrof_perp_mugshot_bitmap;
   if (cmd != CHATTERCHR_PILOT)
     face = &bitmap_faces[(cmd - 1) * FACEBYTES]; // Conv: Simplified
 
-  plot_face(state, 0x4036, face); // Set plot address to (176,8)
+  plot_face(state, 0x4036, face); /* Set screen plot address to (176,8) */
 
-  pc_chatter_message(state, chatter); // was FALLTHROUGH
+  pc_chatter_message(state, chatterblk); // was FALLTHROUGH
 }
 
 /**
