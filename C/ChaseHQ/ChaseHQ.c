@@ -7331,6 +7331,7 @@ ahc_load_flip_flag:
   draw_smoke(state, Bsmoke_anim_frame, 1); // left hand; exit via
 }
 
+// $B457
 void ahc_check_hand_flag(chqstate_t *state)
 {
   u8  Ahand_flag;  /* was A */

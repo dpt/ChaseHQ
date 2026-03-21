@@ -2611,7 +2611,7 @@ C $8441,3 Call start_chatter if not in 128K mode (priority $FF)
 @ $8444 label=ml_loop
 C $8444,3 Call drive_sfx
 C $8447,3 Call keyscan
-C $844A,3 Call tick
+C $844A,3 Call check_time_up
 C $844D,3 Call check_user_input
 C $8450,3 Call read_map
 C $8453,3 Call handle_perp_caught
@@ -4361,8 +4361,8 @@ C $949B,1 fall through
 c $949C Sprite plotter for back buffer, up to 64px wide, 15px high, no mask, no flip
 D $949C Used by the routines at #R$85E4, #R$92E1 and #R$B58E.
 R $949C I:A Width in bytes
-R $949C height is wherw?
 R $949C I:HL Address in back buffer to plot at
+R $949C I:B' Height in rows
 R $949C I:DE' Stride of bitmap data in bytes
 R $949C I:HL' Address of bitmap data
 @ $949C label=plot_sprite
@@ -4373,7 +4373,7 @@ C $94A8,4 Multiply #REGa by 5: the length of an individual plot operation
 C $94AC,3 Move result to #REGbc
 C $94AF,2 Add it to #REGix to complete the jump target
 N $94B1 This entry point is used by the routine at #R$92E1.
-@ $94B1 label=*plot_sprite_even_entry
+@ $94B1 label=*plot_sprite_even
 C $94B1,4 Save #REGsp to restore on exit (self modify)
 C $94B5,3 #REGb = 15 rows to draw, #REGc = 16, an increment value used later
 C $94B8,1 Bank
@@ -4382,7 +4382,7 @@ C $94B9,2 Jump into body of loop
 C $94BB,1 Bank
 C $94BC,2 Next scanline
 C $94BE,3 Restore original #REGsp (self modified)
-C $94C1,1 Return
+C $94C1,1 Return (banked...)
 @ $94C2 label=ps_even_next
 C $94C2,1 Calculate address of next bitmap scanline
 @ $94C3 label=plot_sprite_even_start
@@ -4472,6 +4472,9 @@ C $955B,3 Move result to #REGbc
 C $955E,2 Add it to #REGix to complete the jump target
 C $9560,2 Point #REGde at table of flipped bytes at $EF00
 C $9562,1 Bank
+E $9542 FALLTHROUGH
+c $9565
+@ $9565 label=plot_sprite_flipped_even
 C $9565,2 Jump into body of loop
 @ $9567 label=psf_even_continue
 C $9567,1 Bank
@@ -4764,7 +4767,7 @@ C $996E,3 If chatter_state was not 3 (stopping) it must be 0 (idle) so jump to d
 N $9971 Otherwise chatter_state is 3 (stopping).
 C $9971,4 Decrement noise_counter in-place
 C $9975,1 Load noise_counter
-C $9976,3 Jump into noise_effect if it was non-zero
+C $9976,3 Jump to draw_noise_effect if it was non-zero
 C $9979,3 New chatter_state is 0 (idle)
 C $997C,3 Call ne_plot_attrs to clear to black
 N $997F This is the flashing cursor.
@@ -4775,7 +4778,7 @@ C $9987,2 (flag?)
 C $9989,3 Exit via plot_mini_font_cursor_on if carry set
 C $998C,3 Otherwise exit via plot_mini_font_cursor_off
 @ $998F label=drive_chatter_do_noise_effect
-C $998F,7 If noise_counter > 0 exit via noise_effect
+C $998F,7 If noise_counter > 0 exit via drive_noise_effect
 C $9996,6 If chatter_delay is zero jump to drive_chatter_clear_line
 C $999C,4 Otherwise decrement chatter_delay
 C $99A0,1 Copy chatter_delay for later
@@ -4812,7 +4815,7 @@ C $99DF,5 chatter_state = 2 (displaying)
 @ $99E4 label=drive_chatter_clear
 C $99E4,3 Call clear_message_line
 C $99E7,2 Set noise effect counter to 4
-C $99E9,3 Exit via noise_effect
+C $99E9,3 Exit via drive_noise_effect
 c $99EC Shows the chatter - the alerts and remarks from the game's characters
 D $99EC Used by the routine at #R$9A55.
 @ $99EC label=print_chatter
@@ -4875,11 +4878,11 @@ C $9A54,1 Return
 c $9A55 Noise in/out effect used for mugshots
 D $9A55 Used by the routine at #R$9965.
 R $9A55 I:A Noise effect counter
-@ $9A55 label=noise_effect
+@ $9A55 label=drive_noise_effect
 C $9A55,4 Decrement noise_counter
 C $9A59,3 Exit via print_chatter if it's zero, otherwise fallthrough
 N $9A5C This entry point is used by the routine at #R$9965.
-@ $9A5C label=ne_9a5c
+@ $9A5C label=draw_noise_effect
 C $9A5C,1 Shift A's bottom bit into carry
 C $9A5D,2 A = 255  -- plot_mini_font_cursor_off flag?
 C $9A5F,2 D = 32  -- ASCII character for plot_mini_font*
@@ -5019,9 +5022,9 @@ C $9BCE,1 Return
 c $9BCF Handle "time up", countdown and continue.
 D $9BCF This function handles timed events. When 15s or less remain then Nancy warns that our heroes are running of time. When they do run out of time, and sufficient credits remain, a 10s coundown timer and restart query are presented along with a tick-tock sound effect. If restart is initiated the game is part reset and continues.
 R $9BCF Used by the routine at #R$8401.
-@ $9BCF label=tick
+@ $9BCF label=check_time_up
 C $9BCF,5 Return if perp_caught_phase > 0
-C $9BD4,6 Return if transition_control == 4 -- don't tick while transitions are running
+C $9BD4,6 Return if transition_control == 4 -- don't check while transitions are running
 C $9BDA,3 Point #REGhl at time_bcd
 C $9BDD,6 Jump to #R$9C0D if time_up_state was 1 - out of time
 C $9BE3,3 Jump to #R$9C31 if time_up_state was 2 - show "TIME UP" message
@@ -5145,22 +5148,22 @@ C $9CD6,1 Preserve #REGa
 C $9CD7,3 -> Byte after bonus digits buffer
 C $9CDA,2 Flag, set to $FF while digits are zero
 C $9CDC,1 Needless move
-C $9CDD,3 Call ab_digit  -- final digit first
+C $9CDD,3 Call bonus_digit  -- final digit first
 C $9CE0,2 Top-bit terminate the bonus string
 C $9CE2,1 Load lowest digit
 C $9CE3,3 Call ab_high_nibble
 C $9CE6,1 Load middle digits
-C $9CE7,3 Call ab_digit
+C $9CE7,3 Call bonus_digit
 C $9CEA,1 Load middle digits
 C $9CEB,3 Call ab_high_nibble
 C $9CEE,1 Load high digits
-C $9CEF,3 Call ab_digit
+C $9CEF,3 Call bonus_digit
 C $9CF2,1 Load high digits
 C $9CF3,3 Call ab_high_nibble
 C $9CF6,2 Exit via ab_exit
 @ $9CF8 label=ab_high_nibble
 C $9CF8,4 Shift the high digit down
-@ $9CFC label=ab_digit
+@ $9CFC label=bonus_digit
 C $9CFC,2 Isolate low nibble
 C $9CFE,2 If #REGa is not zero goto ab_non_zero
 N $9D00 Digit is zero.
@@ -5688,7 +5691,7 @@ C $A11A,2 loop while top bit set?
 C $A11D,1 Return
 @ $A11E label=keyscan_inner
 C $A11E,1 Inner keyboard loop.... what's in #REGa?
-C $A11F,14 B=(A&7)+1, C=5-(A>>3)
+C $A11F,14 B=(A&7)+1, C=5-(C>>3)
 C $A12D,5 A = $FE ROR B
 C $A132,2 Port $FE is the AND of all columns/rows? This is the main keyboard access
 C $A134,4 C = A ROR C
@@ -5903,7 +5906,7 @@ B $A248,1,1 Set to 1 when on dirt track. [#R$A955 reads #R$C457,#R$C526 writes]
 B $A249,1,1 Set to 0 if no fork, or the left fork was taken, or 1 if the right fork was taken. [$A539,$B988,$BAE0,$BB6E reads #R$BA89,#R$BC2C writes]
 @ $A24A label=speed
 W $A24A,2,2 Speed (0..511). Max when in low gear =~ $E6 (230), high gear =~ $168 (360), turbo =~ $1FF (511). In practice I see maximums of 188 / 295 / 419 (82% of original value...)
-@ $A24C label=inclined
+@ $A24C label=inclined_counter
 B $A24C,1,1 Counts 3/2/1/0 when the hero car is ascending or descending. #R$B1B7 reads  #R$B1E4 writes
 @ $A24D label=cornering
 B $A24D,1,1 Likely a cornering force flag. Used to trigger smoke. #R$B3B4, #R$B432 reads  #R$B2E5, #R$B314, #R$B32A writes
@@ -5937,7 +5940,7 @@ B $A25B,1,1 Changes often? when the backdrop Y changes. ($00/$55/$7F/$AA/?)
 B $A25C,1,1 This holds the road curvature byte at the position of the hero car. -ve when curving left or +ve when curving right. $FA..$06 in multiples of two.
 @ $A25D label=horizon_a25d
 B $A25D,1,1 Seems to be added to the index for the horizon_table. Saw: 8/16/24.
-@ $A25E label=horizon_a25e
+@ $A25E label=horizon_x_scroll
 B $A25E,1,1 Seems to cycle 4-3-2-1 / 3-2-1 / 2-1 when the roads are curving. Must be the horizon scroll/shift/roll value.
 @ $A25F label=horizontal_adjust
 W $A25F,2,2 Repeatedly set to zero in mhc_straight_road. If altered this changes the car's position on the road. It's mainly zero but occasionally gets set to one. +ve shifts the hero car left, -ve shifts it right.
@@ -7666,7 +7669,7 @@ c $B063 Hero car jumps; gear changing; turbos; off road checks; speed adjustment
 D $B063 Used by the routines at #R$8401 and #R$852A.
 @ $B063 label=move_hero_car
 C $B063,2 Load jump counter. Self modified by #R$8827 and #R$B965. Highest is 8.
-C $B065,3 Jump to mhc_not_jumping if the jump counter is zero
+C $B065,3 Jump to mhc_set_jump_offset if the jump counter is zero
 N $B068 Hero car is jumping.
 @ $B068 label=mhc_jumping
 C $B068,4 Decrement the jump counter in (self modified) #R$B063
@@ -7678,14 +7681,14 @@ C $B073,3 Effect 2 (car landing), Priority 3
 C $B076,3 Call start_sfx
 N $B079 Hero car is in mid-air, or has just landed.
 @ $B079 label=mhc_midair
-C $B079,3 Point #REGhl at entry in jump table. Self modified by #R$B96C and #R$B092. Default is $B055.
+C $B079,3 Point #REGhl at entry in jump(ing) table. Self modified by #R$B96C and #R$B092. Default is $B055.
 C $B07C,1 off_road = 0
 C $B07D,3 }
 C $B080,8 Clear up/down/left/right bits of user input (stop the player from turning when in mid-air)
 N $B088 The low bytes of the hero_car_jump_table entries are the car's pitch (0/3/6).
 C $B088,5 Self modify the 'ADD A,x' at #$B5AF to load the car's pitch
 N $B08D The high bytes of the entries are the car's jump offset (-13..13).
-C $B08D,5 A = *$B5AB + *HL++  -- Self modified value in draw_car
+C $B08D,5 A = *$B5AB + *HL++  -- Self modified value in draw_hero_car
 C $B092,3 Update #REGhl jump table entry address above @ #R$B079
 @ $B095 label=mhc_set_jump_offset
 C $B095,3 Self modify 'SUB x' @ #R$B5AA to be the new car jump offset
@@ -7722,7 +7725,7 @@ C $B0D2,2 Jump if low gear
 C $B0D4,3 Set smoke counter
 @ $B0D7 label=mhc_b0d7
 C $B0D7,2 Decrement A  [why write it as a SUB 1?]
-C $B0D9,2 Jump if positive result
+C $B0D9,2 Jump if negative result
 C $B0DB,3 gear_lockout = A
 @ $B0DE label=mhc_b0de
 C $B0DE,1 Read current gear flag
@@ -7803,7 +7806,6 @@ C $B175,2 Jump if current speed (HL) < max speed (DE)
 C $B177,3 BC = 470 -- max speed?
 C $B17A,1 Unbank turbo boost with flags
 C $B17B,2 Jump if turbo boost in effect -- Uses banked flags
-@ $B17D label=mhc_something2
 C $B17D,10 A = DE >> 4
 C $B187,5 C = (A | 1) & $1F
 C $B18C,2 Jump to mhc_check_brake
@@ -7834,10 +7836,10 @@ N $B1B4 Cope with speed going negative
 C $B1B4,3 HL = $0000
 N $B1B7 HL = new speed
 @ $B1B7 label=mhc_speed_set
-C $B1B7,5 A = inclined - 1  (hasn't used DEC A here... possibly left for tweaking)
+C $B1B7,5 A = inclined_counter - 1  (hasn't used DEC A here... possibly left for tweaking)
 C $B1BC,2 Jump if A is now >= 0
 N $B1BE "inclined" counter went -ve
-C $B1BE,3 A = $B5B0  -- read self modified value in draw_car that sets the car's pitch (0/3/6)
+C $B1BE,3 A = $B5B0  -- read self modified value in draw_hero_car that sets the car's pitch (0/3/6)
 C $B1C1,3 Jump if zero (pitch is level)
 C $B1C4,1 C = A  -- temp save A
 C $B1C5,4 Jump if HL (new speed) is zero
@@ -7854,9 +7856,9 @@ C $B1DC,2 Reduce speed by threshold
 C $B1DE,1 Restore it
 C $B1DF,2 Jump if speed < 695  -- surely always the case?!
 @ $B1E2 label=mhc_b1e2
-C $B1E2,2 A = 3  -- reset A24C to 3
+C $B1E2,2 Set inclined to 3
 @ $B1E4 label=mhc_set_inclined
-C $B1E4,3 inclined = A
+C $B1E4,3 inclined_counter = A
 C $B1E7,1 A = H
 C $B1E8,2 CP 2
 C $B1EC,3 Cap speed to $1FF
@@ -7912,7 +7914,7 @@ C $B23C,3 Load speed into #REGhl
 C $B23F,1 Speed low byte
 C $B240,2 Bottom bit of #REGh moves to carry (#REGh now unused)
 C $B242,1 Halve speed, shifting carry in as MSB
-N $B243 Divide by 2.666 but not quite right?
+N $B243 Divide by 2.666 but not quite right? Or is it twice that?
 C $B243,4 A >>= 2
 C $B247,1 L = A
 C $B248,2 L >>= 1
@@ -7946,12 +7948,12 @@ C $B26F,4 A = fast_counter - C
 C $B273,1 Set flags
 C $B274,2 Jump if zero
 C $B276,1 C = *HL
-@ $B277 label=mhc_b277
+@ $B277 label=mhc_b277_loop
 C $B277,1 A -= C
 C $B278,2 Jump if carry
 C $B27A,1 B++
 C $B27C,1 A += C
-C $B27E,2 Jump to mhc_b277 (above)  -- loop?
+C $B27E,2 Jump to mhc_b277_loop (above)
 @ $B280 label=mhc_b280
 C $B280,1 A = B
 C $B281,3 Jump to mhc_b295 if A is zero
@@ -8025,7 +8027,7 @@ C $B306,4 turn_speed = B  -- should be 0/1/2
 C $B30A,4 flip_car = D  -- should be 0/1
 C $B30E,3 A = *$B064  -- Read jump counter [self modified]
 C $B311,2 Return if zero
-C $B313,4 cornering = 0  -- reset cornering if not jumping
+C $B313,4 cornering = 0  -- reset cornering if jumping
 C $B317,1 Return
 c $B318 Animates the hero car
 D $B318 Used by the routines at #R$8401 and #R$852A.
@@ -8061,7 +8063,7 @@ C $B34E,2 Jump to set turn speed
 @ $B350 label=ahc_assign_speed
 C $B350,3 Set speed to #REGhl
 @ $B353 label=ahc_assign_turn_speed
-C $B353,3 Set turn_speed to #REGa -- could be 0, 1 or 2
+C $B353,3 Set turn_speed to #REGa -- could be 0?, 1 or 2
 N $B356 This value is set by #R$A4E3, then decremented by 1/16 each time we pass here.
 C $B356,3 HL = <self modified below>
 N $B359 Divide HL by 16.
@@ -8089,6 +8091,7 @@ C $B386,3 Jump if zero
 C $B389,1 Decrement
 C $B38A,3 Self modify 'LD A,x' @ #R$B384 (above) to x = A
 C $B38D,2 A = <self modified>  -- gets set to (flip flag + 1)
+@ $B38F label=ahc_b38f
 C $B38F,3 *$B3DC = A  (below)
 N $B392 Arrive here if not crashed.
 @ $B392 label=ahc_not_crashed
@@ -8102,12 +8105,14 @@ N $B39F Otherwise it was zero.
 C $B39F,1 A = L
 C $B3A0,1 A -= E
 C $B3A1,2 Jump if E > L
+@ $B3A3 label=ahc_b3a3
 C $B3A3,3 DE = <self modified>
 C $B3A6,1 A = H
-C $B3A8,2 Jump if D > H
+C $B3A8,2 Jump if
 C $B3AC,1 A = L
 C $B3AD,1 A -= E
 C $B3AE,2 Jump if E > L
+@ $B3B0 label=ahc_b3b0
 @ $B3B1 label=ahc_assign_road_pos_2
 C $B3B1,3 Set road_pos to #REGhl
 C $B3B4,7 A = cornering | smoke
@@ -8118,15 +8123,17 @@ C $B3C7,3 Jump if perp_caught_phase is 1 (starts the pull over sequence)
 N $B3CA New turn speed = MIN(A,2)
 C $B3CA,4 Jump if A < 2
 C $B3CE,2 Else A = 2
+@ $B3D0 label=ahc_b3d0
 C $B3D0,3 turn_speed = A
 C $B3D3,5 flip_car = 1
 @ $B3D8 label=ahc_debris
 C $B3D8,3 Draw debris
 @ $B3DB label=ahc_load_flip_flag
 C $B3DB,2 A = <self modified>  -- flip flag + 1
-C $B3DD,3 Jump if zero (not flipped?)
-N $B3E0 Otherwise ...
+C $B3DD,3 Jump if not flipped
+N $B3E0 Otherwise it's flipped.
 C $B3E0,1 C = A
+C $B3E1,1 A *= 2
 C $B3E2,3 A += C + 24
 C $B3E5,1 C = A
 C $B3E6,3 Load turn_speed
@@ -8138,26 +8145,27 @@ C $B3F3,1 2 -> 3
 @ $B3F4 label=ahc_b3f4
 C $B3F4,1 2/3 -> 3/4
 @ $B3F5 label=ahc_b3f5
-C $B3F5,1 Bank/unbank
-C $B3F6,6 B = counter_A & 1  -- animation counter
-C $B3FD,1 C = A
+C $B3F5,1 Bank
+C $B3F6,6 B' = counter_A & 1  -- animation counter
+C $B3FC,2 C' = A << 1
+C $B3FE,1 Unbank
 C $B3FF,1 A = C
 C $B400,3 Draw crash
 C $B403,4 off_road = 0
 @ $B407 label=ahc_b407
 C $B407,3 Call ahc_check_hand_flag
 N $B40A Make the car bounce up and down when it goes off-road.
-C $B40A,2 Default bounce of zero to pass to draw_car. It should be either 0 or 3.
+C $B40A,2 Default bounce of zero to pass to draw_hero_car. It should be either 0 or 3.
 C $B40C,6 Add the bounce only when one wheel is off-road (if off_road == 1)
 C $B412,9 New bounce = (counter_C & 1) * 3  -- half rate counter 0/1/2/3
 @ $B41B label=ahc_draw_car
 C $B41B,3 Load turn_speed
-C $B41E,3 Call draw_car
+C $B41E,3 Call draw_hero_car
 C $B421,6 Jump if cherry_light is zero
 N $B427 Draw the cherry light.
 C $B427,1 A = 0  -- parameter TBD
 C $B428,3 BC = $0102  -- parameters TBD
-C $B42B,3 Call draw_cherry
+C $B42B,3 Call draw_cherry_light
 N $B42E Check to see if smoke needs drawing.
 @ $B42E label=ahc_need_smoke
 C $B42E,4 Load counter_A (0/1/2/3 full rate) into #REGb  -- animate smoke fast if cornering
@@ -8183,6 +8191,7 @@ C $B44D,3 Call draw_smoke - for the right hand side
 C $B450,3 A' = 1  -- flip?
 C $B453,1 Restore smoke anim index
 C $B454,3 Exit via draw_smoke - for the left hand side
+c $B457
 @ $B457 label=ahc_check_hand_flag
 C $B457,5 Return if hand_flag is zero
 N $B45C Start the hand animation.
@@ -8220,17 +8229,17 @@ C $B48E,1 Increment B
 C $B48F,4 Self modify 'LD A' @ #R$B478 (above) to load B
 @ $B493 label=ahc_b493
 C $B493,4 Self modify 'LD C' @ #R$B476 (above) to load C
-C $B497,4 Jump if >= 7
+C $B497,4 Jump if < 7
 N $B49B Hide the "stop" hand.
 C $B49B,4 hand_flag = 0
 C $B49F,1 Return
-@ $B4A0 label=ahc_ge_7
+@ $B4A0 label=ahc_b4a0
 C $B4A0,3 Load turn_speed
 C $B4A3,2 Turning hard?
 C $B4A5,4 Jump if not turning hard with A = 6
 C $B4A9,10 A = (flip_car * 7) + 13
 @ $B4B3 label=ahc_b4b3
-C $B4B3,1 A += C  -- C is?
+C $B4B3,1 A += C  -- C is as $B493
 C $B4B4,1 Preserve A
 C $B4B5,3 Call draw_cherry_b699
 C $B4B8,1 Restore A
@@ -8309,7 +8318,7 @@ C $B564,5 Cycle this byte 0-1-2-3
 C $B569,6 Multiply it by 12 (stride of bitmap_debris_1/2/3/4)
 C $B56F,1 Advance to next byte in table
 C $B570,3 Load frame counter turned into offset <self modified> above
-C $B573,1 BC = C since #REGh is always zero here
+C $B573,1 BC = C since #REGc is set and #REGh is always zero here
 C $B574,1 Add table address to offset
 C $B575,1 Load vertical position
 C $B576,2 Load horizontal position
@@ -8328,14 +8337,14 @@ c $B58E Draws the car
 D $B58E Used by the routine at #R$B318.
 R $B58E I:A Turn speed. 0/1/2 => Straight/Turning/Turning hard.
 R $B58E I:B 0/3 to make the car wobble when off-road.
-@ $B58E label=draw_car
+@ $B58E label=draw_hero_car
 C $B58E,6 If not turning (turn speed zero) then flip_car = 0
 @ $B594 label=dc_draw_shadow
 C $B594,2 Preserve turn speed argument
 C $B596,9 Point #REGhl at hero_car_shadow [array of 3 x 4 bytes] then add (#REGa * 4)
 C $B59F,3 D = 120 (vertical position in rows), E = 96 (horizontal position in pixels)
 C $B5A2,2 C = 7 (56 pixels wide)
-C $B5A4,3 Call draw_car_part to draw the shadow
+C $B5A4,3 Call draw_hero_car_part to draw the shadow
 C $B5A7,1 Restore turn speed to #REGc
 N $B5A8 117 is the car's usual vertical position. Smaller values make it move higher.
 C $B5A8,5 D = 117 - <self modified car jump offset @ $B5AB>
@@ -8377,11 +8386,11 @@ C $B5FD,1 Advance to ?
 N $B5FE Draw the windscreen
 C $B5FE,2 Set (horz pos in px) to 104
 C $B600,2 Set (byte width) to 5
-C $B602,3 Call draw_car_part
+C $B602,3 Call draw_hero_car_part
 N $B605 Draw the wheels
 C $B605,2 Set (horz pos in px) to 104
 C $B607,2 Set (byte width) to 5
-C $B609,3 Call draw_car_part
+C $B609,3 Call draw_hero_car_part
 N $B60C Draw left hand side
 C $B60C,4 Check flip_car flag
 C $B610,2 Set (byte width) to 1
@@ -8405,7 +8414,7 @@ R $B627 I:HL Address of graphic def (y_offset, nrows, data address)
 R $B627 O:D Preserved
 R $B627 O:E Preserved
 R $B627 O:HL Address of next graphic def
-@ $B627 label=draw_car_part
+@ $B627 label=draw_hero_car_part
 C $B627,1 A = Y
 C $B628,1 Preserve X,Y
 C $B629,2 D = Y - y_offset
@@ -8418,7 +8427,7 @@ N $B634 D = y_offset, B = nrows, HL -> data
 C $B634,1 Bank
 C $B635,1 Restore byte width
 C $B636,4 Load flip_car into #REGb
-C $B63A,1 E = byte width  -- becomes E' which is <source data stride>?
+C $B63A,1 E = byte width  -- becomes E' which is source data stride
 C $B63B,1 C = byte width - 1
 C $B63C,4 Test flip_car flag, if clear then C = 0 else C = (byte width - 1)
 @ $B640 label=dcp_cont
@@ -8474,20 +8483,20 @@ D $B67C Used by the routine at #R$B318.
 R $B67C I:A ? (seems to always be zero)
 R $B67C I:B ? (gets compared to turn_speed) e.g. 1
 R $B67C I:C ? (used wrt flipping)           e.g. 2
-@ $B67C label=draw_cherry
+@ $B67C label=draw_cherry_light
 C $B67C,7 Take the bottom bit of the half rate counter_C (counts 0/1/2/3 then repeats) and add it to #REGa
 C $B683,1 Bank A
 C $B684,6 Jump to #R$B698 if turn_speed < #REGb
 C $B68A,3 Load flip_car
 C $B68D,1 Set flags
 C $B68E,2 A = 0
-C $B690,2 Jump to draw_cherry_no_flip if flip_car is zero
+C $B690,2 Jump to dcl_no_flip if flip_car is zero
 C $B692,1 A += C
-@ $B693 label=draw_cherry_no_flip
+@ $B693 label=dcl_no_flip
 C $B693,1 A += C
 C $B694,1 C = A
 C $B695,3 A' += C
-@ $B698 label=draw_cherry_b698
+@ $B698 label=dcl_b698
 N $B699 This entry point is used by the routine at #R$B318.
 @ $B699 label=draw_cherry_b699
 C $B699,5 BC' = 0   -- not self modified
@@ -8510,7 +8519,7 @@ C $B6C0,1 Get byte width in #REGa
 C $B6C1,3 Bank byte width in #REGe'
 C $B6C4,3 Read car jump offset from 'SUB x' @ #R$B5AA
 C $B6C7,4 D -= A  -- vert pos/offset - car jump offset
-C $B6CB,3 Read self modified value in draw_car that sets the car's pitch (0/3/6)
+C $B6CB,3 Read self modified value in draw_hero_car that sets the car's pitch (0/3/6)
 C $B6CE,2 0 -> 0, 3 -> 1, 6 -> 3
 C $B6D0,2 Jump to #R$B6D6 if zero
 N $B6D2 Otherwise pitch was 3/6.
@@ -8524,9 +8533,9 @@ R $B6D6 I:D Vertical position (rows)
 R $B6D6 I:E Horizontal position (pixels)
 R $B6D6 I:HL Address of bitmap data
 R $B6D6 I:B' ?
-R $B6D6 I:C' ?
+R $B6D6 I:C' 0 ?
 R $B6D6 I:D' ?
-R $B6D6 I:E' ?
+R $B6D6 I:E' Byte width ?
 @ $B6D6 label=draw_part
 C $B6D6,7 Subtract car_y from vertical position
 N $B6DD This entry point is used by the routines at #R$8F5F and #R$B549.
@@ -8611,15 +8620,22 @@ N $B770 This entry point is used by the routine at #R$B67C.
 @ $B770 label=*plot_masked_sprite_flipped_entry2
 C $B771,4 Save #REGsp to be restored on exit
 C $B775,4 Point #REGix at jump table
-C $B779,3 Subtract 8
+C $B779,3 Subtract #REGa from 8
 C $B77C,3 Multiply by 8  -- length of jump table sequences
 C $B77F,5 Add to IX
-C $B784,2 H = $EF
+C $B784,2 HL = $EFxx
+C $B786,1 Bank
+C $B787,2 DE' = $00xx  -- unsure why
+C $B789,2 goto pmsf_start
+@ $B78B label=pmsf_reset_next
+@ $B78D label=pmsf_next
 C $B78E,1 Bank
 C $B78F,2 Next scanline
 C $B791,3 Restore original #REGsp (self modified)
 C $B794,1 Return
+@ $B795 label=pmsf_next_scanline
 C $B795,1 Calculate address of next bitmap scanline
+@ $B796 label=pmsf_start
 C $B796,1 Put it in #REGsp (so we can use PUSH for speed)
 C $B797,1 Unbank
 C $B798,2 Bank #REGe for next-scanline code below
@@ -8644,24 +8660,25 @@ N $B7DB Move to next scanline (shorter form).
 C $B7DB,1 Save for checking in a moment
 C $B7DC,1 Move to next scanline (visually upwards)
 C $B7DD,2 Would it have rolled over into the top nibble?
-C $B7DF,3 No - continue
+C $B7DF,3 No - continue (resetting scanline)
 N $B7E2 It rolled over.
 C $B7E2,4 Move to next chunk of 16 scanlines
-C $B7E6,2 Carry set if CCC field was zero - don't compensate 1111 field and continue
+C $B7E6,2 Carry set if CCC field was zero - don't compensate 1111 field and continue (not resetting)
 N $B7E8 Otherwise have to compensate 1111 field.
 C $B7E8,4 Put back the bit stolen since BAAA field was zero
-C $B7EC,3 Loop
-c $B7EF Masked sprite plotter variant TBD
+C $B7EC,3 Loop (not resetting)
+c $B7EF Masked + inverted sprite plotter
 D $B7EF Used by the routine at #R$92E1.
 R $B7EF I:BC'
 R $B7EF I:HL'
 R $B7EF I:E' this value is multiplied
-@ $B7EF label=plot_masked_sprite_variant
+@ $B7EF label=plot_masked_sprite_inverted
 C $B7EF,4 Self modify #R$B71F - exit of plot_masked_sprite to be #REGsp to be restored on exit
 C $B7F3,4 Point #REGix at pms_jumptable
 C $B7F7,3 A = 8 - A  -- jump table index
 C $B7FA,9 IX += A * 6  -- jump table entry size
-C $B803,3 B' = $0F
+C $B803,2 B = $0F -- mask for line stepper
+C $B805,1 Bank
 C $B806,2 D = 0
 C $B808,1 pushing banked-on-entry BC
 C $B809,1 pushing banked-on-entry HL
@@ -8683,8 +8700,7 @@ C $B81C,1 HL += DE
 @ $B81D label=pmsv_3
 C $B81D,2 pop and add banked-on-entry BC
 C $B81F,1 pop banked-on-entry HL
-C $B820,1 D--  -- always setting D to 255?
-C $B821,4 E = -E
+C $B820,5 Negate #REGde
 N $B825 HL -> graphic data here
 C $B825,3 Exit via pms_entry
 b $B828 Horizon image related
@@ -8704,14 +8720,14 @@ N $B854 current_curvature is non-zero here.
 @ $B854 label=sh_curved_road
 C $B854,1 Bank current_curvature (and unbank what?)
 C $B855,2 Bottom bit of #REGh (speed.hi) moves to carry (#REGh now unused)
-N $B857 A here must be the banked A'... it must be passed in. This doesn't make much sense to me.
+N $B857 A here must be the banked A'... it must be passed in. This doesn't make much sense to me. Where was it last banked? $B296?
 C $B857,5 A = ((A << 3) + (carry << 2)) & 6
 C $B85C,8 BC = horizon_a25d + A
 C $B864,3 16 word horizon table at #R$B828
 C $B867,1 HL += BC
-C $B868,3 BC = wordat(HL)
-N $B86B Decrement horizon_a25e.
-C $B86B,3 HL = &horizon_a25e
+C $B868,3 BC = wordat(HL) - wrong way around! needs to swap
+N $B86B Decrement horizon_x_scroll.
+C $B86B,3 HL = &horizon_x_scroll
 C $B86E,1 *HL--
 C $B86F,2 Jump if non-zero
 N $B871 It became zero.
@@ -8724,7 +8740,7 @@ C $B877,2 A = -A
 C $B879,3 Load address of operand in 'LD A,x' @ #R$C7E7 (horizon's horizontal shift value 0..19)
 C $B87C,1 A += *HL
 C $B87D,3 Jump if positive
-N $B880 Otherwise negative (or zero).
+N $B880 Otherwise negative (or zero?).
 C $B880,2 A += 20  -- wrap around?
 @ $B882 label=sh_reduce
 C $B882,6 If A >= 20 then A -= 20
@@ -8732,11 +8748,12 @@ C $B882,6 If A >= 20 then A -= 20
 C $B888,1 Store new horizontal shift value
 @ $B889 label=sh_straight_road
 C $B889,3 Zero #REGa, #REGb, #REGe
-C $B88C,1 Bank zeroed #REGa
+C $B88C,1 Bank zeroed #REGa, unbank other one
 C $B88D,5 Return if incline is zero (flat road)
 C $B892,3 Jump if positive
 N $B895 Otherwise negative.
-C $B895,3 E = -(E + 1)
+C $B895,1 E++
+C $B896,2 A = -A
 @ $B898 label=sh_not_flat_road
 @ $B898 ssub=LD HL,horizon_table - 1
 C $B898,3 16 word horizon table at #R$B828
@@ -8744,7 +8761,7 @@ C $B89B,1 BC = A (B is zeroed earlier)
 C $B89C,1 HL += BC
 C $B89D,8 A = fast_counter - var_a25b
 C $B8A5,1 Set flags
-C $B8A6,1 Return if non-zero
+C $B8A6,1 Return if zero
 C $B8A7,1 C = *HL  -- loading from horizon table
 @ $B8A8 label=sh_b8a8_loop
 C $B8A8,1 A -= C
@@ -8794,7 +8811,7 @@ N $B8EB Otherwise negative value.
 C $B8EB,2 A = -A  -- invert incline again?
 C $B8ED,1 B = $FF
 @ $B8EE label=url_alter_horizon_level
-C $B8EE,3 Point #REGhl at horizon_level
+C $B8EE,3 Load #REGhl from horizon_level
 C $B8F1,1 C = A
 C $B8F2,1 HL += BC
 C $B8F3,3 Store horizon_level
@@ -8828,11 +8845,11 @@ C $B928,3 Self modify 'ADD A,x' @ #R$B5AF
 C $B92B,3 Load address of var_a259
 C $B92E,1 Read var_a259
 C $B92F,1 Set flags
-C $B930,3 Jump if positive
-N $B933 Else negative or zero.
+C $B930,3 Jump if positive (or zero)
+N $B933 Else negative.
 C $B933,2 Test bit 7
 C $B935,2 Jump if non-zero
-N $B937 Else zero.
+N $B937 Else unset.
 C $B937,4 A = -A - 2
 C $B93B,2 Jump if carry  (-A < 2)
 N $B93D Else ?
@@ -8882,11 +8899,11 @@ C $B99A,3 Jump if positive
 N $B99D Otherwise negative
 C $B99F,2 A = -A  -- make positive
 @ $B9A1 label=url_b9a1
-C $B9A1,1 D = A
+C $B9A1,1 D = A -- this doesn't appear to be used
 C $B9A2,2 A *= 4
 C $B9A4,3 horizon_a25d = A
 C $B9A7,1 B = A
-C $B9A8,6 Jump if horizon_a25e is non-zero
+C $B9A8,6 Jump if horizon_x_scroll is non-zero
 C $B9AE,3 Load speed into #REGhl
 C $B9B1,1 Speed low byte
 C $B9B2,2 Bottom bit of #REGh moves to carry (#REGh now unused)
@@ -8895,11 +8912,12 @@ C $B9B9,1 A += B
 C $B9BA,3 BC = A
 C $B9BD,4 HL = horizon_table + BC
 C $B9C1,1 A = *HL
-@ $B9C2 label=url_b9c2
-C $B9C2,3 horizon_a25e = A
+@ $B9C2 label=url_set_x_scroll
+C $B9C2,3 horizon_x_scroll = A
 @ $B9C5 label=url_b9c5
 C $B9C5,3 A = var_a262
 C $B9C8,3 BC = A
+C $B9CB,1 Unbank current curvature
 C $B9CC,1 Set flags
 C $B9CD,3 Jump if positive
 N $B9D0 Otherwise negative
@@ -11461,6 +11479,7 @@ B $CED0,10,2
 b $CEDA [Graphics] Hero car drawing data
 D $CEDA Built of 9 entries of 20 bytes per entry. In turn composed of five entries of four bytes: (y_offset, n_rows, address).
 N $CEDA #HTML[#CALL:herocar($CEDA)]
+@ $CEDA label=hero_car_parts
 @ $CEDA label=hero_car_straight
 B $CEDA,1,1 y_offset
 B $CEDB,1,1 14 rows
@@ -11623,7 +11642,7 @@ W $CF94,2,2 -> bitmap_shadow_turn_right
 B $CF96,1,1 y_offset
 B $CF97,1,1 12 rows
 W $CF98,2,2 -> bitmap_shadow_turn_right_hard
-@ $CF9A label=hero_car_turbo smoke
+@ $CF9A label=hero_car_turbo_smoke
 W $CF9A,4,2
 W $CF9E,2,2 -> Turbo smoke plume data frame 1
 W $CFA0,4,2
