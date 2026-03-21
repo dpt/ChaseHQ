@@ -351,6 +351,54 @@ void attract_mode_hook(chqstate_t *state)
   attract_mode_48k(state);
 }
 
+// $83CD
+void bootstrap(chqstate_t *state)
+{
+  for (;;) {
+    int  carry = 0;
+    u8  *HLflipped;   /* was HL */
+    int  Biterations; /* was B */
+    u8   Aindex;      /* was A */
+    u8   Cresult;     /* was C */
+
+    /* Build a table of flipped bytes at "$EF00" */
+    Cresult = 0; // Conv: Original didn't initialise C
+    HLflipped = &state->flipped[0];
+    do {
+      Biterations = 8;
+      Aindex = HLflipped - &state->flipped[0];
+      do {
+        RLC(Aindex);
+        RR(Cresult);
+      } while (--Biterations > 0);
+      *HLflipped++ = Cresult;
+    } while (HLflipped < &state->flipped[256]);
+
+    // Conv: Returning here - may have to split this routine up for
+    // conversion.
+    return;
+
+    // Start attract mode.
+    attract_mode_hook(state);
+
+    // When attract mode yields then we set up the game.
+    state->overtake_bonus_bcd = 0;
+
+    // Clear score_bcd and retry_count.
+    memset(&state->score_bcd[0], 0, sizeof(state->score_bcd));
+    state->retry_count = 0;
+
+    // Reset wanted_stage_number and credits.
+    state->wanted_stage_number = 1;
+    state->credits = 2;
+    main_loop(state);
+
+    // Call the 128K/bank 3 ?bootstrap routine.
+    //TODO if (state->mode_128k)
+    //TODO   call_bank_3_128k(0xC003);
+  }
+}
+
 // $8401
 void main_loop(chqstate_t *state)
 {
@@ -9364,53 +9412,83 @@ mdc_have_glyph:
   *DEdash_out = DEdash;
 }
 
-// $EF00
-void bootstrap(chqstate_t *state)
-{
-  for (;;) {
-    int  carry = 0;
-    u8  *HLflipped;   /* was HL */
-    int  Biterations; /* was B */
-    u8   Aindex;      /* was A */
-    u8   Cresult;     /* was C */
+// $ECDA
+// clear_screen
 
-    /* Build a table of flipped bytes at "$EF00" */
-    Cresult = 0; // Conv: Original didn't initialise C
-    HLflipped = &state->flipped[0];
-    do {
-      Biterations = 8;
-      Aindex = HLflipped - &state->flipped[0];
-      do {
-        RLC(Aindex);
-        RR(Cresult);
-      } while (--Biterations > 0);
-      *HLflipped++ = Cresult;
-    } while (HLflipped < &state->flipped[256]);
+// $ECF3
+// redefine_keys_48k
 
-    // Conv: Returning here - may have to split this routine up for
-    // conversion.
-    return;
+// $ED4D
+// keyscan_all
 
-    // Start attract mode.
-    attract_mode_hook(state);
+// $ED6D
+// define_a_key
 
-    // When attract mode yields then we set up the game.
-    state->overtake_bonus_bcd = 0;
+// $EE40
+// setup_interrupts
 
-    // Clear score_bcd and retry_count.
-    memset(&state->score_bcd[0], 0, sizeof(state->score_bcd));
-    state->retry_count = 0;
+// $EE5E
+// reset_music
 
-    // Reset wanted_stage_number and credits.
-    state->wanted_stage_number = 1;
-    state->credits = 2;
-    main_loop(state);
+// $EE6E
+// next_pattern
 
-    // Call the 128K/bank 3 ?bootstrap routine.
-    //TODO if (state->mode_128k)
-    //TODO   call_bank_3_128k(0xC003);
-  }
-}
+// $EE9E
+// play_music_48k
+
+// $EF19
+// interrupt_entry
+
+// $EF22
+// playdrum_2
+
+// $FC06
+// noise
+
+// $F220
+// load_stage_128k
+
+// $F251
+// start_siren_128k
+
+// $F269
+// play_siren_sfx_128k
+
+// $F29D
+// silence_audio_128k
+
+// $F2A2
+// write_audio_registers_128k
+
+// $F2B6
+// engine_sfx_from_speed_128k
+
+// $F2F1
+// setup_turbo_sfx_128k
+
+// $F2FA
+// play_turbo_sfx_128k
+
+// $F32E
+// speech_samples_table
+
+// $F342
+// play_speech_128k
+
+// $F39F
+// handle_perp_caught_128k
+
+// $F3B6
+// call_bank_3_128k
+
+// $F3E2
+// page_128k
+
+// $F414
+// reset_paging_128k
+
+// $F41B
+// attract_mode_128k
 
 /* ----------------------------------------------------------------------- */
 
