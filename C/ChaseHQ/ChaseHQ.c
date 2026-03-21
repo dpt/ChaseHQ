@@ -2014,7 +2014,7 @@ void draw_everything_else(chqstate_t *state)
   u8           x;                   // was E
   u8           y;                   // was D
   u8           width_bytes;         // was C
-  u8           Bdash_flags;         // was B
+  u8           Bdash_flip_flag;     // was B
   u8           Edash_bitmap_stride; // was E
   u8           Cdash;               // was C
   u8           height;              // was B
@@ -2089,12 +2089,12 @@ continue_after_left_hand_done:
   }
   y           = 48; // vert pos
   width_bytes = arrow_defn->width_bytes;
-  Bdash_flags = arrow_defn->flags >> 1; // goes in B'
+  Bdash_flip_flag = arrow_defn->flags >> 1; // goes in B'
   Edash_bitmap_stride = width_bytes;
   Cdash       = 0; // this must be passed in
   height      = arrow_defn->height;
   bitmap      = arrow_defn->bitmap;
-  draw_part_entry2(state, height, width_bytes, y, x, bitmap, Bdash_flags, Cdash, Edash_bitmap_stride); // exit via
+  draw_part_entry2(state, height, width_bytes, y, x, bitmap, Bdash_flip_flag, Cdash, Edash_bitmap_stride); // exit via
   return;
 
 right_hand_stuff:
@@ -7193,7 +7193,7 @@ void animate_hero_car(chqstate_t *state)
   HLspeed = state->speed;
   if (HLspeed > 0) {
     state->ahc_SM_B3DB_flipping = 0;
-    state->off_road    = 0;
+    state->off_road = 0;
   }
 
   Acrashed_flag = state->ahc_crashed_flag;
@@ -7294,15 +7294,16 @@ ahc_load_flip_flag:
     if (Aturn_speed >= 2) {
       if (state->flip_car)
         Cflipping++; // 2 -> 3
-      Cflipping++; // 2/3 -> 3/4
+      Cflipping++; // 2/3 -> 3/4 // FIXME This isn't used...
     }
 
     // EXX - bank
     Acounter_A = state->counter_A;
-    Bdash_anim_counter = Acounter_A & 1; // animation counter
-    Cdash = Acounter_A << 1; // assigned but not used?
+    Bdash_anim_counter = Acounter_A & 1; // animation counter OR flip flag, not sure
+    Cdash = Acounter_A << 1;
     // EXX - unbank
-    draw_crash(state, Cflipping);
+
+    draw_crash(state, Acounter_A, Bdash_anim_counter, Cdash);
     state->off_road = 0;
   }
 
@@ -7332,12 +7333,13 @@ ahc_load_flip_flag:
 
 void ahc_check_hand_flag(chqstate_t *state)
 {
-  u8  Ahand_flag;   // was A
-  u16 BCdash;       // was BC
-  u8  Chand_flag;   // was C
-  u8  Ahand_frame;  // was A
-  u8  Bhand_frame;  // was B
-  u8  Chand_frame;  // was C
+  u8  Ahand_flag;  /* was A */
+  u8  Bdash;       /* was B */
+  u8  Cdash;       /* was C */
+  u8  Chand_flag;  /* was C */
+  u8  Ahand_frame; /* was A */
+  u8  Bhand_frame; /* was B */
+  u8  Chand_frame; /* was C */
 
   Ahand_flag = state->hand_flag;
   if (Ahand_flag == 0)
@@ -7346,15 +7348,16 @@ void ahc_check_hand_flag(chqstate_t *state)
   if (--Ahand_flag) {
     // Show the "stop" hand
     // EXX
-    BCdash = Ahand_flag; // assigned but not used - possibly an arg for draw_part
+    Bdash = Ahand_flag;
+    Cdash = Ahand_flag;
     // EXX
 
     // Avoid the hand animation if turning hard?
     if (state->turn_speed != 2)
-      draw_crash(state, 36); // exit via
+      draw_crash(state, 36, Bdash, Cdash); // exit via
     else
       // Otherwise turn_speed is 2 (turn hard).
-      draw_crash(state, state->flip_car + 37); // exit via
+      draw_crash(state, state->flip_car + 37, Bdash, Cdash); // exit via
     return;
   }
 
@@ -7512,7 +7515,7 @@ void draw_debris(chqstate_t *state)
     Dy = *HLsubtable++;
     Ex = *HLsubtable;
 
-    HLbitmap = &bitmap_debris_1[0] + BCframe_offset;
+    HLbitmap = &bitmap_debris_1[0] + BCframe_offset; // TODO: Make bitmap_debris_X an array
 
     Bheight = 6; // rows
     Cwidth_bytes = 1; // 1 byte wide masked?
@@ -7526,7 +7529,7 @@ void draw_debris(chqstate_t *state)
                      Dy,
                      Ex,
                      HLbitmap,
-                     BCdash >> 0,
+                     BCdash >> 8,
                      BCdash & 0xFF,
                      Edash_width_bytes);
 
@@ -7732,16 +7735,67 @@ void draw_smoke(chqstate_t *state, u8 Aanim_frame, u8 Adash_flip_flag)
 }
 
 // $B67C
-void draw_cherry_light(chqstate_t *state, u8 A, u8 B, u8 C)
+void draw_cherry_light(chqstate_t *state, u8 Aframe_index, u8 Bturn_limit, u8 Cturn_delta)
 {
+  u8 Aturn_speed; /* was A */
+  u8 Cturn_speed; /* was C */
+
+  Aframe_index += state->counter_C & 1;
+
+  // EX AF,AF'
+  if (state->turn_speed >= Bturn_limit) {
+    Aturn_speed = 0;
+    if (state->flip_car)
+      Aturn_speed += Cturn_delta;
+    Aturn_speed += Cturn_delta;
+    Cturn_speed = Aturn_speed;
+    // EX AF,AF'
+    Aframe_index += Cturn_speed;
+    // EX AF,AF'
+  }
+  // EX AF,AF'
+  draw_cherry_b699(state, Aframe_index); // was FALLTHROUGH
 }
-void draw_cherry_b699(chqstate_t *state, u8 A)
+
+// $B699
+void draw_cherry_b699(chqstate_t *state, u8 Aframe_index)
 {
+  draw_crash(state, Aframe_index, 0, 0); // was FALLTHROUGH
 }
 
 // $B69E
-void draw_crash(chqstate_t *state, u8 A)
+void draw_crash(chqstate_t *state, u8 Aframe_index, u8 Bdash_flip_flag, u8 Cdash)
 {
+  u8                    x;             /* was E */
+  const carframe_t     *frame;         /* was HL */
+  u8                    y;             /* was D */
+  const caradornment_t *adornment;     /* was HL */
+  u8                    height;        /* was B */
+  u8                    width;         /* was C */
+  const u8             *bitmap;        /* was HL */
+  u8                    bitmap_stride; /* was E */
+  u8                    pitch;         /* was A */
+
+  x = 128;
+  frame = &car_frames[Aframe_index];
+  y = frame->y + 121; /* vertical */
+  x += frame->x; /* horizontal */
+  adornment = &car_adornments[frame->index / 4];
+  height = adornment->height;
+  width  = adornment->width;
+  bitmap = adornment->bitmap;
+  // EXX
+  bitmap_stride = width;
+  // EXX
+
+  y -= state->dhc_jump_y;
+
+  pitch = state->dhc_pitch >> 1; // 0/3/6 -> 0/1/3
+  if (pitch)
+    // Otherwise pitch was 3/6
+    y += pitch - 2; // make v.shift -1/1
+
+  draw_part(state, height, width, y, x, bitmap, Bdash_flip_flag, Cdash, bitmap_stride); // was FALLTHROUGH
 }
 
 /**
@@ -7833,21 +7887,21 @@ void draw_part_entry2(chqstate_t *state,
                                       Estride,
                                       HLbitmap_data);
   else
-    draw_part_entry3(state,
-                     Awidth_bytes,
-                     Bheight,
-                     Estride,
-                     HLbitmap_data,
-                     ADDRTOBACKBUF(HLdash_backbuf)); // was FALLTHROUGH
+    draw_part_plot_masked_sprite(state,
+                                 Awidth_bytes,
+                                 Bheight,
+                                 Estride,
+                                 HLbitmap_data,
+                                 ADDRTOBACKBUF(HLdash_backbuf)); // was FALLTHROUGH
 }
 
 // $B701
-void draw_part_entry3(chqstate_t *state,
-                      u8          Awidth_bytes,
-                      u8          Bheight,
-                      u16         Ebitmap_stride,
-                      const u8   *HLbitmap_data,
-                      u8         *HLdash_backbuf)
+void draw_part_plot_masked_sprite(chqstate_t *state,
+                                  u8          Awidth_bytes,
+                                  u8          Bheight,
+                                  u16         Ebitmap_stride,
+                                  const u8   *HLbitmap_data,
+                                  u8         *HLdash_backbuf)
 {
   int IXjump_offset;
   u16 DEbitmap_stride;

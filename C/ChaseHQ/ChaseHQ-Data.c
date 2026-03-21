@@ -2481,148 +2481,58 @@ const carsmokeframe_t hero_car_turbo_smoke[4] = {
 
 /* ----------------------------------------------------------------------- */
 
-#if 0
-; Car graphic anim/adornment table
-;
-; TBD Groups of 3 bytes ref'd by #R$B6A6. 3rd byte is byte offset into
-; car_adornments.
-@label=unknown_cfb2
-b$CFB2 DEFB $E1,$00,$00                                             ; Cherry
-                                                                    ; light
- $CFB5 DEFB $E4,$F8,$04                                             ; Flashing
-                                                                    ; cherry
-                                                                    ; light
- $CFB8 DEFB $E1,$00,$00                                             ; Cherry
-                                                                    ; light
- $CFBB DEFB $E4,$F8,$04                                             ; Flashing
-                                                                    ; cherry
-                                                                    ; light
- $CFBE DEFB $E1,$F8,$00                                             ; Cherry
-                                                                    ; light
- $CFC1 DEFB $E4,$F0,$04                                             ; Flashing
-                                                                    ; cherry
-                                                                    ; light
- $CFC4 DEFB $E8,$00,$0C                                             ; Putting-cherry-on-roof
-                                                                    ; anim frame
-                                                                    ; 1
- $CFC7 DEFB $E3,$08,$00                                             ; Cherry
-                                                                    ; light
- $CFCA DEFB $E8,$00,$10                                             ; Putting-cherry-on-roof
-                                                                    ; anim frame
-                                                                    ; 2
- $CFCD DEFB $E0,$08,$00                                             ; Cherry
-                                                                    ; light
- $CFD0 DEFB $E8,$08,$14                                             ; Putting-cherry-on-roof
-                                                                    ; anim frame
-                                                                    ; 3
- $CFD3 DEFB $E8,$00,$10                                             ; Putting-cherry-on-roof
-                                                                    ; anim frame
-                                                                    ; 2
- $CFD6 DEFB $E8,$00,$0C                                             ; Putting-cherry-on-roof
-                                                                    ; anim frame
-                                                                    ; 1
- $CFD9 DEFB $E8,$00,$0C                                             ; Putting-cherry-on-roof
-                                                                    ; anim frame
-                                                                    ; 1
- $CFDC DEFB $E3,$08,$00                                             ; Cherry
-                                                                    ; light
- $CFDF DEFB $E8,$00,$10                                             ; Putting-cherry-on-roof
-                                                                    ; anim frame
-                                                                    ; 2
- $CFE2 DEFB $E0,$08,$00                                             ; Cherry
-                                                                    ; light
- $CFE5 DEFB $E8,$08,$14                                             ; Putting-cherry-on-roof
-                                                                    ; anim frame
-                                                                    ; 3
- $CFE8 DEFB $E8,$00,$10                                             ; Putting-cherry-on-roof
-                                                                    ; anim frame
-                                                                    ; 2
- $CFEB DEFB $E8,$00,$0C                                             ; Putting-cherry-on-roof
-                                                                    ; anim frame
-                                                                    ; 1
- $CFEE DEFB $E8,$F8,$0C                                             ; Putting-cherry-on-roof
-                                                                    ; anim frame
-                                                                    ; 1
- $CFF1 DEFB $E3,$00,$00                                             ; Cherry
-                                                                    ; light
- $CFF4 DEFB $E8,$F8,$10                                             ; Putting-cherry-on-roof
-                                                                    ; anim frame
-                                                                    ; 2
- $CFF7 DEFB $E0,$00,$00                                             ; Cherry
-                                                                    ; light
- $CFFA DEFB $E8,$00,$14                                             ; Putting-cherry-on-roof
-                                                                    ; anim frame
-                                                                    ; 3
- $CFFD DEFB $E8,$F8,$10                                             ; Putting-cherry-on-roof
-                                                                    ; anim frame
-                                                                    ; 2
- $D000 DEFB $E8,$F8,$0C                                             ; Putting-cherry-on-roof
-                                                                    ; anim frame
-                                                                    ; 1
- $D003 DEFB $EC,$00,$08                                             ; Crash/spark
- $D006 DEFB $F0,$08,$08                                             ; Crash/spark
- $D009 DEFB $EE,$F8,$08                                             ; Crash/spark
- $D00C DEFB $EC,$E0,$08                                             ; Crash/spark
- $D00F DEFB $EE,$E8,$08                                             ; Crash/spark
- $D012 DEFB $F0,$D8,$08                                             ; Crash/spark
- $D015 DEFB $EC,$F0,$08                                             ; Crash/spark
- $D018 DEFB $EE,$F8,$08                                             ; Crash/spark
- $D01B DEFB $EE,$E8,$08                                             ; Crash/spark
- $D01E DEFB $E8,$F0,$10                                             ; Putting-cherry-on-roof
-                                                                    ; anim frame
-                                                                    ; 2
- $D021 DEFB $E8,$F8,$10                                             ; Putting-cherry-on-roof
-                                                                    ; anim frame
-                                                                    ; 2
- $D024 DEFB $E8,$F0,$10                                             ; Putting-cherry-on-roof
-                                                                    ; anim frame
-                                                                    ; 2
-; Entries of 4 bytes.
-@label=car_adornments
- $D027 DEFB $07                                                     ; 7 rows
-                                                                    ; high
- $D028 DEFB $01                                                     ; 1 byte
-                                                                    ; wide
- $D029 DEFW $D0E7                                                   ; -> Cherry
-                                                                    ; light (8x7
-                                                                    ; masked
-                                                                    ; data)
- $D02B DEFB $0E                                                     ; 14 rows
-                                                                    ; high
- $D02C DEFB $03                                                     ; 3 bytes
-                                                                    ; wide
- $D02D DEFW $D0F5                                                   ; ->
-                                                                    ; Flashing
-                                                                    ; cherry
-                                                                    ; light
-                                                                    ; (24x14
-                                                                    ; masked
-                                                                    ; data)
-; Crash/spark
- $D02F DEFB $14                                                     ; 20 rows
-                                                                    ; high
- $D030 DEFB $03                                                     ; 3 bytes
-                                                                    ; wide
- $D031 DEFW $D149                                                   ; ->
-                                                                    ; Crash/spark
-                                                                    ; data
-; Putting-cherry-on-roof anim
- $D033 DEFB $04                                                     ; 4 rows
-                                                                    ; high
- $D034 DEFB $02                                                     ; 2 bytes
-                                                                    ; wide
- $D035 DEFW $D1C1                                                   ; -> Frame 1
- $D037 DEFB $09                                                     ; 9 rows
-                                                                    ; high
- $D038 DEFB $02                                                     ; 2 bytes
-                                                                    ; wide
- $D039 DEFW $D1D1                                                   ; -> Frame 2
- $D03B DEFB $0C                                                     ; 12 rows
-                                                                    ; high
- $D03C DEFB $01                                                     ; 1 bytes
-                                                                    ; wide
- $D03D DEFW $D1F5                                                   ; -> Frame 3
-#endif
+// $CFB2
+const carframe_t car_frames[39] = {
+  { 0xE1, 0x00, 0x00 }, // Cherry light
+  { 0xE4, 0xF8, 0x04 }, // Flashing cherry light
+  { 0xE1, 0x00, 0x00 }, // Cherry light
+  { 0xE4, 0xF8, 0x04 }, // Flashing cherry light
+  { 0xE1, 0xF8, 0x00 }, // Cherry light
+  { 0xE4, 0xF0, 0x04 }, // Flashing cherry light
+  { 0xE8, 0x00, 0x0C }, // Putting-cherry-on-roof anim frame 1
+  { 0xE3, 0x08, 0x00 }, // Cherry light
+  { 0xE8, 0x00, 0x10 }, // Putting-cherry-on-roof anim frame 2
+  { 0xE0, 0x08, 0x00 }, // Cherry light
+  { 0xE8, 0x08, 0x14 }, // Putting-cherry-on-roof anim frame 3
+  { 0xE8, 0x00, 0x10 }, // Putting-cherry-on-roof anim frame 2
+  { 0xE8, 0x00, 0x0C }, // Putting-cherry-on-roof anim frame 1
+  { 0xE8, 0x00, 0x0C }, // Putting-cherry-on-roof anim frame 1
+  { 0xE3, 0x08, 0x00 }, // Cherry light
+  { 0xE8, 0x00, 0x10 }, // Putting-cherry-on-roof anim frame 2
+  { 0xE0, 0x08, 0x00 }, // Cherry light
+  { 0xE8, 0x08, 0x14 }, // Putting-cherry-on-roof anim frame 3
+  { 0xE8, 0x00, 0x10 }, // Putting-cherry-on-roof anim frame 2
+  { 0xE8, 0x00, 0x0C }, // Putting-cherry-on-roof anim frame 1
+  { 0xE8, 0xF8, 0x0C }, // Putting-cherry-on-roof anim frame 1
+  { 0xE3, 0x00, 0x00 }, // Cherry light
+  { 0xE8, 0xF8, 0x10 }, // Putting-cherry-on-roof anim frame 2
+  { 0xE0, 0x00, 0x00 }, // Cherry light
+  { 0xE8, 0x00, 0x14 }, // Putting-cherry-on-roof anim frame 3
+  { 0xE8, 0xF8, 0x10 }, // Putting-cherry-on-roof anim frame 2
+  { 0xE8, 0xF8, 0x0C }, // Putting-cherry-on-roof anim frame 1
+  { 0xEC, 0x00, 0x08 }, // Crash/spark
+  { 0xF0, 0x08, 0x08 }, // Crash/spark
+  { 0xEE, 0xF8, 0x08 }, // Crash/spark
+  { 0xEC, 0xE0, 0x08 }, // Crash/spark
+  { 0xEE, 0xE8, 0x08 }, // Crash/spark
+  { 0xF0, 0xD8, 0x08 }, // Crash/spark
+  { 0xEC, 0xF0, 0x08 }, // Crash/spark
+  { 0xEE, 0xF8, 0x08 }, // Crash/spark
+  { 0xEE, 0xE8, 0x08 }, // Crash/spark
+  { 0xE8, 0xF0, 0x10 }, // Putting-cherry-on-roof anim frame 2
+  { 0xE8, 0xF8, 0x10 }, // Putting-cherry-on-roof anim frame 2
+  { 0xE8, 0xF0, 0x10 }  // Putting-cherry-on-roof anim frame 2
+};
+
+// $CFB2
+const caradornment_t car_adornments[6] = {
+  {  7, 1, &bitmap_cherry_light[0] },
+  { 14, 3, &bitmap_cherry_light_lit[0] },
+  { 20, 3, &bitmap_spark[0] },
+  {  4, 2, &bitmap_cherryout_1[0] },
+  {  9, 2, &bitmap_cherryout_2[0] },
+  { 12, 1, &bitmap_cherryout_3[0] }
+};
 
 /* ----------------------------------------------------------------------- */
 

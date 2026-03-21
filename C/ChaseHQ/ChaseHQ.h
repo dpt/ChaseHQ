@@ -518,6 +518,18 @@ typedef struct {
   const u8 *bitmap;
 } carsmokeframe_t;
 
+typedef struct {
+  u8        y;
+  u8        x;
+  u8        index;
+} carframe_t;
+
+typedef struct {
+  u8        height;
+  u8        width;
+  const u8 *bitmap;
+} caradornment_t;
+
 /* ----------------------------------------------------------------------- */
 
 // TODO: Ideally all of these will become static in the long run.
@@ -885,10 +897,10 @@ const carpart_t *draw_hero_car_part(chqstate_t      *state,
 
 void draw_smoke(chqstate_t *state, u8 Aanim_frame, u8 Adash_flip_flag);
 
-void draw_cherry_light(chqstate_t *state, u8 A, u8 B, u8 C);
-void draw_cherry_b699(chqstate_t *state, u8 A);
+void draw_cherry_light(chqstate_t *state, u8 Aframe_index, u8 Bturn_limit, u8 Cturn_delta);
+void draw_cherry_b699(chqstate_t *state, u8 Aframe_index);
 
-void draw_crash(chqstate_t *state, u8 A);
+void draw_crash(chqstate_t *state, u8 Aframe_index, u8 Bdash_flip_flag, u8 Cdash);
 
 void draw_part(chqstate_t *state,
                u8          height,
@@ -908,7 +920,7 @@ void draw_part_entry2(chqstate_t *state,
                       u8          Bdash_flip_flag,
                       u8          Cdash,
                       u8          Edash_bitmap_stride);
-void draw_part_entry3(chqstate_t *state,
+void draw_part_plot_masked_sprite(chqstate_t *state,
                       u8          Awidth_bytes,
                       u8          Bheight,
                       u16         Ebitmap_stride,
