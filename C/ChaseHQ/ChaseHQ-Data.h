@@ -288,6 +288,11 @@ const transition_t transitions_e88e[8];
 const u8 square_transition_mask[5 * 8];
 const u8 diamond_transition_mask[6 * 8];
 
+const u8 press_gear_messages[17];
+const u8 enter_for_options_messages[23];
+const u8 credits_messages_128[98];
+const u8 best_officers[163];
+
 const u8 marquee_initial[SCREEN_BITMAP_ROWBYTES * MARQUEE_HEIGHT];
 const u8 marquee_attrs[SCREEN_ATTRIBUTES_WIDTH * MARQUEE_HEIGHT / 8];
 

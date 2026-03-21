@@ -1009,9 +1009,11 @@ void menu_draw_char(chqstate_t *state,
                     u8   **DEdash_out,
                     u8   **HLdash_out);
 
+u8 call_bank_3_128k(chqstate_t *state, u16 HL);
+void attract_mode_128k(chqstate_t *state);
+
 void bootstrap(chqstate_t *state);
 
 /* ----------------------------------------------------------------------- */
 
 #endif /* CHASEHQ_H */
-

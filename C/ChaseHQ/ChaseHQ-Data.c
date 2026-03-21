@@ -4614,6 +4614,94 @@ const u8 diamond_transition_mask[6 * 8] = {
 
 /* ----------------------------------------------------------------------- */
 
+// $F491
+const u8 press_gear_messages[17] = {
+  DRAWCHARSTYLE_SINGLE,
+  attribute_BLACK_OVER_BLACK,
+  TWOBYTES(0xF84B),
+  TWOBYTES(0x59AB),
+  'P', 'R', 'E', 'S', 'S', ' ', ' ', 'G', 'E', 'A', 'R' | STREND
+};
+
+// $F4A2
+const u8 enter_for_options_messages[23] = {
+  DRAWCHARSTYLE_SINGLE,
+  attribute_BLACK_OVER_BLACK,
+  TWOBYTES(0xF848),
+  TWOBYTES(0x59A8),
+  'E', 'N', 'T', 'E', 'R', ' ', 'F', 'O', 'R', ' ', 'O', 'P', 'T', 'I', 'O', 'N', 'S' | STREND
+};
+
+// $F4B9
+const u8 credits_messages_128[98] = {
+  10,
+  8,
+  DRAWCHARSTYLE_DOUBLE,
+  attribute_BLACK_OVER_BLACK,
+  TWOBYTES(0xF02D),
+  TWOBYTES(0x594D),
+  'C', 'R', 'E', 'D', 'I', 'T', 'S' | STREND,
+  8,
+  DRAWCHARSTYLE_SINGLE,
+  attribute_RED_OVER_BLACK,
+  TWOBYTES(0xF086),
+  TWOBYTES(0x5A06),
+  'P', 'R', 'O', 'G', 'R', 'A', 'M', ' ', ' ', ' ', ' ', ' ', ' ', 'J', 'O', 'B', 'B', 'E', 'E', 'E' | STREND,
+  8,
+  DRAWCHARSTYLE_SINGLE,
+  attribute_RED_OVER_BLACK,
+  TWOBYTES(0xF0A6),
+  TWOBYTES(0x5A46),
+  'G', 'R', 'A', 'P', 'H', 'I', 'C', 'S', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', 'B', 'I', 'L', 'L' | STREND,
+  0x50,
+  DRAWCHARSTYLE_SINGLE,
+  attribute_RED_OVER_BLACK,
+  TWOBYTES(0xF0C6),
+  TWOBYTES(0x5A86),
+  'M', 'U', 'S', 'I', 'C', ' ', ' ', ' ', ' ', ' ', ' ', ' ', 'J', 'O', 'N', ' ', 'D', 'U', 'N', 'N' | STREND,
+  3,
+  0
+};
+
+// $F51B
+const u8 best_officers[163] = {
+  10,
+  8,
+  DRAWCHARSTYLE_DOUBLE,
+  attribute_BLACK_OVER_BLACK,
+  TWOBYTES(0xF02A),
+  TWOBYTES(0x594A),
+  'B', 'E', 'S', 'T', ' ', 'O', 'F', 'F', 'I', 'C', 'E', 'R', 'S' | STREND,
+  8,
+  DRAWCHARSTYLE_SINGLE,
+  attribute_RED_OVER_BLACK,
+  TWOBYTES(0xF082),
+  TWOBYTES(0x5A02),
+  'R', 'A', 'N', 'K', ' ', ' ', 'S', 'C', 'O', 'R', 'E', ' ', ' ', 'S', 'T', 'A', 'G', 'E', ' ', 'P', 'L', 'A', 'Y', ' ', 'N', 'A', 'M', 'E' | STREND,
+  8,
+  DRAWCHARSTYLE_SINGLE,
+  attribute_RED_OVER_BLACK,
+  TWOBYTES(0xF0A2),
+  TWOBYTES(0x5A42),
+  '1', 'S', 'T', ' ', ' ', '5', '6', '7', '8', '4', '0', '1', '0', ' ', ' ', 'A', 'L', 'L', ' ', ' ', ' ', ' ', '1', ' ', ' ', 'J', 'O', 'B' | STREND,
+  8,
+  DRAWCHARSTYLE_SINGLE,
+  attribute_RED_OVER_BLACK,
+  TWOBYTES(0xF0C2),
+  TWOBYTES(0x5A82),
+  '2', 'N', 'D', ' ', ' ', '3', '5', '6', '7', '8', '0', '0', '0', ' ', ' ', ' ', '4', ' ', ' ', ' ', ' ', ' ', '1', ' ', ' ', 'A', 'B', 'C' | STREND,
+  0x50,
+  DRAWCHARSTYLE_SINGLE,
+  attribute_RED_OVER_BLACK,
+  TWOBYTES(0xF0E2),
+  TWOBYTES(0x5AC2),
+  '3', 'R', 'D', ' ', ' ', ' ', '4', '3', '4', '0', '3', '0', '0', ' ', ' ', ' ', '3', ' ', ' ', ' ', ' ', ' ', '2', ' ', ' ', 'D', 'E', 'F' | STREND,
+  3,
+  0
+};
+
+/* ----------------------------------------------------------------------- */
+
 // $F5BE
 const u8 marquee_initial[SCREEN_BITMAP_ROWBYTES * MARQUEE_HEIGHT] = {
   0x00, 0x00, 0x00, 0x00, 0x00, 0x03, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xC0, 0x00, 0x00, 0x00, 0x00, 0x00,

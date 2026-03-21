@@ -112,6 +112,11 @@ struct chqstate {
   // $8251 (SM) in play_engine_sfx_48k
   u8        engine_sfx_on_cycle;
 
+  // $824B (SM) in attract_mode_128k (relocated)
+  u8        attract_mode_128k_SM_824B;
+  // $825D (SM) in attract_mode_128k (relocated)
+  u8        attract_mode_128k_SM_825D;
+
   // $8277 (SM) in attract_mode
   u8        attract_blinker;
 

@@ -9536,7 +9536,10 @@ mdc_have_glyph:
 // handle_perp_caught_128k
 
 // $F3B6
-// call_bank_3_128k
+u8 call_bank_3_128k(chqstate_t *state, u16 HL)
+{
+  return 1;
+}
 
 // $F3E2
 // page_128k
@@ -9545,7 +9548,73 @@ mdc_have_glyph:
 // reset_paging_128k
 
 // $F41B
-// attract_mode_128k
+void attract_mode_128k(chqstate_t *state)
+{
+  int       carry;
+  u16       HLroutine;           /* was HL */
+  u8        Aresult;             /* was A */
+  u8        Aattract_cycle;      /* was A */
+  const u8 *DEmessages;          /* was DE */
+  const u8 *HLmessages;          /* was HL */
+  u8        Atransition_control; /* was A */
+  u8        Adelay;              /* was A */
+
+attract_mode_128k_start:
+  HLroutine = 0xC000;
+attract_mode_128k_8281:
+  Aresult = call_bank_3_128k(state, HLroutine);
+  if (Aresult == 0)
+    return;
+
+  set_up_stage(state, &state->stage->attract_data);
+
+  state->attract_mode_128k_SM_825D = 2; // two runs through?
+  state->speed = 400;
+  for (;;) {
+    cpu_driver(state);
+
+    Aattract_cycle = state->attract_cycle;
+    DEmessages = &enter_for_options_messages[0];
+    if (Aattract_cycle) {
+      if (keyscan(state) & USERINPUT_FIRE) {
+        play_start_noise(state);
+        return;
+      }
+      DEmessages = &press_gear_messages[0];
+    }
+
+    carry = ~state->speccy->in(state->speccy, port_KEYBOARD_ENTERLKJH) & 1; // was IN+RRA
+    HLroutine = 0xC009;
+    if (carry)
+      goto attract_mode_128k_8281;
+
+    HLmessages = DEmessages;
+    // must be a flashing delay
+    RRC(state->attract_mode_128k_SM_824B); // FIXME: needs init
+    if (carry)
+      print_message(state, *HLmessages, HLmessages);
+
+    Atransition_control = state->transition_control;
+    if (Atransition_control == 0) {
+      Adelay = state->attract_mode_128k_SM_825D;
+      if ((s8) Adelay < 0)
+        goto attract_mode_128k_start;
+      Adelay--;
+      state->attract_mode_128k_SM_825D = Adelay;
+      if ((s8) Adelay < 0) {
+        setup_transition(state, TRANSITIONSTRIDE_FORWARD);
+      } else {
+        HLmessages = &credits_messages_128[0];
+        if (Adelay == 0)
+          HLmessages = &best_officers[0];
+        setup_overlay_messages(state, HLmessages);
+      }
+    }
+
+    transition(state);
+    draw_screen(state);
+  }
+}
 
 /* ----------------------------------------------------------------------- */
 
