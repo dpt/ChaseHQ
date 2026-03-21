@@ -921,11 +921,11 @@ void draw_part_entry2(chqstate_t *state,
                       u8          Cdash,
                       u8          Edash_bitmap_stride);
 void draw_part_plot_masked_sprite(chqstate_t *state,
-                      u8          Awidth_bytes,
-                      u8          Bheight,
-                      u16         Ebitmap_stride,
-                      const u8   *HLbitmap_data,
-                      u8         *HLdash_backbuf);
+                                  u8          Awidth_bytes,
+                                  u8          Bheight,
+                                  u16         Ebitmap_stride,
+                                  const u8   *HLbitmap_data,
+                                  u8         *HLdash_backbuf);
 
 void plot_masked_sprite(chqstate_t *state,
                         int         jump_offset,

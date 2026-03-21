@@ -7334,13 +7334,13 @@ ahc_load_flip_flag:
 // $B457
 void ahc_check_hand_flag(chqstate_t *state)
 {
-  u8  Ahand_flag;  /* was A */
-  u8  Bdash;       /* was B */
-  u8  Cdash;       /* was C */
-  u8  Chand_flag;  /* was C */
-  u8  Ahand_frame; /* was A */
-  u8  Bhand_frame; /* was B */
-  u8  Chand_frame; /* was C */
+  u8 Ahand_flag;  /* was A */
+  u8 Bdash;       /* was B */
+  u8 Cdash;       /* was C */
+  u8 Chand_flag;  /* was C */
+  u8 Ahand_frame; /* was A */
+  u8 Bhand_frame; /* was B */
+  u8 Chand_frame; /* was C */
 
   Ahand_flag = state->hand_flag;
   if (Ahand_flag == 0)
@@ -7428,7 +7428,8 @@ void start_chase(chqstate_t *state)
 }
 
 // $B4F0
-void smash(chqstate_t *state) {
+void smash(chqstate_t *state)
+{
   u8 counter; // was A
   u8 hits;    // was A
   u8 level;   // was C
@@ -7944,8 +7945,8 @@ void plot_masked_sprite(chqstate_t *state,
   u8        mask;         /* was E */
   u8        data;         /* was D */
 
-  assert(jump_offset/6 >= 0);
-  assert(jump_offset/6 <= 7);
+  assert(jump_offset / 6 >= 0);
+  assert(jump_offset / 6 <= 7);
   assert(VALID_BACKBUF(backbuf_addr));
 
   goto pms_entry;
@@ -8240,7 +8241,8 @@ void scroll_horizon(chqstate_t *state)
 }
 
 // $B8D2
-void update_road_level(chqstate_t *state) {
+void update_road_level(chqstate_t *state)
+{
   int       carry = 0;
   u8        Bvar_a25a;          // was B
   u8        Cnegate_flag;       // was C
@@ -8306,7 +8308,7 @@ void update_road_level(chqstate_t *state) {
   HLvar_a259 = &state->var_a259;
   Avar_a259 = *HLvar_a259;
   if ((s8) Avar_a259 < 0) { // could combine exprs
-    if ((Cheight & (1<<7)) == 0) { // ie. positive
+    if ((Cheight & (1 << 7)) == 0) { // ie. positive
       Avar_a259 = -Avar_a259;
       carry = Avar_a259 < 2, Avar_a259 -= 2;
       if (!carry) {
