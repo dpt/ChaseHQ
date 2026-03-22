@@ -1,8 +1,19 @@
-// ChaseHQ.c
-//
-// Chase H.Q. code model
-//
-// by dpt
+/**
+ * ChaseHQ.c
+ *
+ * This file is part of "Chase H.Q. in C".
+ *
+ * This project recreates the ZX Spectrum version of the chase-and-smash game
+ * "Chase H.Q." in portable C code. It is free software provided without
+ * warranty in the interests of education and software preservation.
+ *
+ * The arcade original was created by Taito Corporation in 1988. It was then
+ * ported to the ZX Spectrum by Ocean Software Limited and released in 1989.
+ *
+ * The original game and design is copyright (c) 1988 Taito Corporation
+ * The ZX Spectrum version is copyright (c) 1989 Ocean Software Limited
+ * The recreated version is copyright (c) 2023-2026 David Thomas
+ */
 
 // Important Note
 //
@@ -86,9 +97,9 @@
 #include "ZXSpectrum/Spectrum.h"
 #include "ZXSpectrum/Z80.h"
 
-#include "ChaseHQ-Data.h"
+#include "ChaseHQ-CommonData.h"
 #include "ChaseHQ-Stages.h"
-#include "ChaseHQ-Stage1.h"
+#include "ChaseHQ-Stage1Data.h"
 #include "ChaseHQ-State.h"
 #include "ChaseHQ.h"
 
@@ -295,13 +306,13 @@ static const void *lookup_map_goto(chqstate_t *state, u16 z80)
 
 typedef void dso_callback_t(chqstate_t  *state,
                             u8           B,
-                            const lod_t *HL,
+                            const lod_t *HLlod,
                             const u16   *IX);
 
 typedef void draw_object_entrypt_t(chqstate_t       *state,
                                    u8                A,
                                    u8                B,
-                                   const depthset_t *DE,
+                                   const depthset_t *DEdepthset,
                                    const u16        *IX);
 
 /* ----------------------------------------------------------------------- */

@@ -9,15 +9,16 @@ find_package(SDL2 REQUIRED)
 set(SOURCE_FILES
         Main.c
         ChaseHQ/ChaseHQ.c
-        ChaseHQ/ChaseHQ-Data.c
+        ChaseHQ/ChaseHQ-CommonData.c
         ChaseHQ/ChaseHQ-Stages.c
-        ChaseHQ/ChaseHQ-Stage1.c
-        ChaseHQ/ChaseHQ-Stage1.h
+        ChaseHQ/ChaseHQ-Stage1Data.c
+        ChaseHQ/ChaseHQ-Stage1Data.h
         ZXSpectrum/Kempston.c
         ZXSpectrum/Keyboard.c
         ZXSpectrum/Screen.c
         ZXSpectrum/Spectrum.c
-        ChaseHQ/ChaseHQ-Create.c)
+        ChaseHQ/ChaseHQ-Create.c
+        ChaseHQ/ChaseHQ-Internal.h)
 
 add_executable(ChaseHQ ${SOURCE_FILES})
 target_compile_definitions(ChaseHQ PRIVATE TGE_SDL)

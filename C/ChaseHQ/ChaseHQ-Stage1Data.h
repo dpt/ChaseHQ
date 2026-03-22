@@ -1,5 +1,5 @@
 /**
- * ChaseHQ-Stages.c
+ * ChaseHQ-Stage1Data.h
  *
  * This file is part of "Chase H.Q. in C".
  *
@@ -15,14 +15,12 @@
  * The recreated version is copyright (c) 2023-2026 David Thomas
  */
 
-#include "ChaseHQ-Stage1Data.h"
+#ifndef CHASEHQ_STAGE1DATA_H
+#define CHASEHQ_STAGE1DATA_H
 
 #include "ChaseHQ-Stages.h"
 
-const stage_t *stages[MAX_STAGES] = {
-  &stage1,
-  &stage1,
-  &stage1,
-  &stage1,
-  &stage1
-};
+const stage_t stage1;
+const void *stage1_lookup_map_goto(chqstate_t *state, u16 z80);
+
+#endif /* CHASEHQ_STAGE1DATA_H */
