@@ -7171,24 +7171,24 @@ mhc_set_cornering:
 // $B318
 void animate_hero_car(chqstate_t *state)
 {
-  u16 HLspeed;            // was HL
-  u8  Acrashed_flag;      // was A
-  u8  Aturn_speed;        // was A
-  u16 HL_b356;            // was HL
-  u16 DE_b356;            // was DE
-  u16 HLroad_pos;         // was HL
-  u8  Cflip_flag;         // was C
-  u8  Adelay;             // was A
-  u16 DEother_road_pos;   // was DE
-  u8  A;                  // was A
-  u8  Aperp_caught_phase; // was A
-  u8  Aflipping;          // was A
-  u8  Cflipping;          // was C
-  u8  Acounter_A;         // was A
-  u8  Bdash_anim_counter; // was B
-  u8  Cdash;              // was A
-  u8  Bwobble;            // was B
-  u8  Bsmoke_anim_frame;  // was B
+  u16 HLspeed;            /* was HL */
+  u8  Acrashed_flag;      /* was A */
+  u8  Aturn_speed;        /* was A */
+  u16 HL_b356;            /* was HL */
+  u16 DE_b356;            /* was DE */
+  u16 HLroad_pos;         /* was HL */
+  u8  Cflip_flag;         /* was C */
+  u8  Adelay;             /* was A */
+  u16 DEother_road_pos;   /* was DE */
+  u8  A;                  /* was A */
+  u8  Aperp_caught_phase; /* was A */
+  u8  Aflipping;          /* was A */
+  u8  Cflipping;          /* was C */
+  u8  Acounter_A;         /* was A */
+  u8  Bdash_anim_counter; /* was B */
+  u8  Cdash;              /* was A */
+  u8  Bwobble;            /* was B */
+  u8  Bsmoke_anim_frame;  /* was B */
 
   HLspeed = state->speed;
   if (HLspeed > 0) {
@@ -7311,10 +7311,11 @@ ahc_load_flip_flag:
 
   // Make the car bounce up and down when it goes off-road
   Bwobble = 0;
-  if (state->off_road - 1 == 0)
+  if (state->off_road == 1)
     Bwobble = (state->counter_C & 1) * 3; // half rate counter
 
   draw_hero_car(state, state->turn_speed, Bwobble);
+
   if (state->cherry_light)
     draw_cherry_light(state, 0, 1, 2);
 
@@ -7322,7 +7323,7 @@ ahc_load_flip_flag:
   Bsmoke_anim_frame = state->counter_A;
   if (state->cornering == 0) {
     // Not cornering
-    Bsmoke_anim_frame = state->counter_C;
+    Bsmoke_anim_frame = state->counter_C; // could move down
     if (state->boost == 0 && state->smoke == 0 && state->off_road != 2)
       return; // Return if no boost, no smoke and not fully off-road
   }
@@ -9590,7 +9591,7 @@ attract_mode_128k_8281:
 
     HLmessages = DEmessages;
     // must be a flashing delay
-    RRC(state->attract_mode_128k_SM_824B); // FIXME: needs init
+    RRC(state->attract_mode_128k_SM_824B);
     if (carry)
       print_message(state, *HLmessages, HLmessages);
 
