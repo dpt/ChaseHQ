@@ -65,19 +65,12 @@
 // broken.
 //
 
-// TODO
-//
-// Get a sprite plotter going.
-//
-// Stub out all functions.
-//
-// Import all graphic data.
-//
-// Copy whole messages that get modified into the state structure.
-//
-// Decide how to drive the main loop(s).
-//
-// Promote variables to int from u8/s8/u16/s16 where possible,
+// TODOs
+// - Stub out all functions.
+// - Import all graphic data.
+// - Copy whole messages that get modified into the state structure.
+// - Decide how to drive the main loop(s).
+// - Promote variables to int from u8/s8/u16/s16 where possible,
 //
 
 #include <assert.h>
@@ -780,7 +773,7 @@ static void end_screen(chqstate_t *state)
 // $F220 page_in_stage_128k
 static void load_stage(chqstate_t *state)
 {
-  u8 wanted; // was A
+  u8 wanted; /* was A */
 
   // Return if the stage is already loaded
   wanted = state->wanted_stage_number;
@@ -799,8 +792,8 @@ static void load_stage(chqstate_t *state)
 // $8204
 static void setup_engine_sfx_48k(chqstate_t *state)
 {
-  int nloops;    // was L
-  int off_cycle; // was H
+  int nloops;    /* was L */
+  int off_cycle; /* was H */
 
   nloops = ((~(state->speed >> 1)) >> 2) | 1;
   off_cycle = 3;
@@ -821,10 +814,10 @@ static void setup_engine_sfx_48k(chqstate_t *state)
 // $8234
 static void play_engine_sfx_48k(chqstate_t *state)
 {
-  u8  phase;   // was A
-  int counter; // was A
-  int nloops;  // was C
-  int c;       // was B
+  u8  phase;   /* was A */
+  int counter; /* was A */
+  int nloops;  /* was C */
+  int c;       /* was B */
 
   phase = state->perp_caught_phase;
   if (phase >= PERPCAUGHTPHASE_3)
@@ -850,12 +843,12 @@ static void play_engine_sfx_48k(chqstate_t *state)
 static void attract_mode_48k(chqstate_t *state)
 {
   int       carry = 0;
-  u8        blinker;         // was $828C (SM)
-  u8        keys;            // was A
-  const u8 *messages;        // was HL
-  u8        nmessages;       // was B
-  u8        attract_blinker; // was A
-  u8        style;           // was A
+  u8        blinker;         /* was $828C (SM) */
+  u8        keys;            /* was A */
+  const u8 *messages;        /* was HL */
+  u8        nmessages;       /* was B */
+  u8        attract_blinker; /* was A */
+  u8        style;           /* was A */
 
   set_up_stage(state, &state->stage->attract_data);
   blinker = 0;
@@ -995,11 +988,11 @@ static void bootstrap(chqstate_t *state)
 static void main_loop(chqstate_t *state)
 {
   int carry = 0;
-  u8  start_speech_index; // was A
-  u8  keys;               // was A
-  u8 *pstart_speech;      // was HL
-  u8  quit_state;         // was A
-  u8  start_speech;       // was A
+  u8  start_speech_index; /* was A */
+  u8  keys;               /* was A */
+  u8 *pstart_speech;      /* was HL */
+  u8  quit_state;         /* was A */
+  u8  start_speech;       /* was A */
 
   for (;;) {
     load_stage(state);
@@ -1132,8 +1125,8 @@ static void cpu_driver(chqstate_t *state)
 {
   const u8 MinSpeed = 150;
 
-  u16 roadpos; // was HL
-  u8  input;   // was A
+  u16 roadpos; /* was HL */
+  u8  input;   /* was A */
 
   roadpos = state->scenedata.road_pos;
   input = USERINPUT_UP | USERINPUT_RIGHT;
@@ -1285,11 +1278,11 @@ static void reveal_perp_car(chqstate_t *state)
 {
   const int MaxHeight = 50;
 
-  u8           revealed_height; // was A
-  const lod_t *perp_lod;        // was HL
-  u16          width_bytes;     // was DE
-  u8           height;          // was B (banked?)
-  const u8    *bitmap;          // was HL (banked?)
+  u8           revealed_height; /* was A */
+  const lod_t *perp_lod;        /* was HL */
+  u16          width_bytes;     /* was DE */
+  u8           height;          /* was B (banked?) */
+  const u8    *bitmap;          /* was HL (banked?) */
 
   if (state->wanted_stage_number == MAXSTAGE)
     return; // perp car is hidden on stage 5
@@ -1318,8 +1311,8 @@ static void reveal_perp_car(chqstate_t *state)
 // $860F
 static void animate_meters(chqstate_t *state)
 {
-  s8 random; // was A
-  s8 level;  // was A
+  s8 random; /* was A */
+  s8 level;  /* was A */
 
   random = (s8) rng(state);
   level  = state->meter_1_level;
@@ -1355,7 +1348,7 @@ set_level2:
 // attrs - was HL
 static void am_set_attrs(int counter, u8 *attrs)
 {
-  int iterations; // was B
+  int iterations; /* was B */
 
   if (counter) {
     iterations = counter;
@@ -1377,20 +1370,20 @@ static void am_set_attrs(int counter, u8 *attrs)
 static void draw_pregame(chqstate_t *state)
 {
   int       carry = 0;
-  const u8 *cmds;       // was HL
-  u8        cmd;        // was A
-  u16       cmdaddr;    // was DE
-  u8        tileidx;    // was A
-  const u8 *srctile;    // was DE
-  u8       *backbuf;    // was HL
-  int       tile_count; // was B
-  int       iterations; // was B
-  u16       bufoffset;  // was BC
-  u8        E;          // was E
-  u8        rows;       // was ?
-  u8        bgattr;     // was A
-  const u8 *messages;   // was HL
-  u16       attrs;      // was DE
+  const u8 *cmds;       /* was HL */
+  u8        cmd;        /* was A */
+  u16       cmdaddr;    /* was DE */
+  u8        tileidx;    /* was A */
+  const u8 *srctile;    /* was DE */
+  u8       *backbuf;    /* was HL */
+  int       tile_count; /* was B */
+  int       iterations; /* was B */
+  u16       bufoffset;  /* was BC */
+  u8        E;          /* was E */
+  u8        rows;       /* was ? */
+  u8        bgattr;     /* was A */
+  const u8 *messages;   /* was HL */
+  u16       attrs;      /* was DE */
 
   cmds = &pregame_data[0];
 dp_get_command:
@@ -1467,9 +1460,9 @@ dp_repeat_or_plot_tile:
       }
 
       backbuf = OFFSETTOBACKBUF(bufoffset);
-      srctile -= 8; // was POP
+      srctile -= 8; /* was POP */
     } while (--tile_count > 0);
-    cmdaddr = 0xF000 + bufoffset; // was EX DE,HL ; #REGde = Back buffer ptr
+    cmdaddr = 0xF000 + bufoffset; /* was EX DE,HL ; #REGde = Back buffer ptr */
     goto dp_get_command;
   } // !CMD_STOP
 
@@ -1543,7 +1536,7 @@ static void escape_scene(chqstate_t *state)
 static void set_up_stage(chqstate_t        *state,
                          const scenedata_t *scene_data)
 {
-  u8  iterations;   // was B
+  u8  iterations;   /* was B */
 
   memset(&state->road_buffer[0], 0, 256);
   state->st         = saved_game_state;
@@ -1597,8 +1590,8 @@ static void set_up_stage(chqstate_t        *state,
 // attrptr - was HL
 static void set_up_stage_reset_lights(u8 *attrptr)
 {
-  int rows; // was C
-  int cols; // was B
+  int rows; /* was C */
+  int cols; /* was B */
 
   rows = MARQUEELIGHT_HEIGHT;
   do {
@@ -1613,11 +1606,11 @@ static void set_up_stage_reset_lights(u8 *attrptr)
 // $8876
 static void check_user_input(chqstate_t *state)
 {
-  u8  transctl;   // was A
-  u8 *puserinput; // was HL
-  u8  input;      // was A
-  u8 *pboost;     // was HL
-  u8  keys;       // was A
+  u8  transctl;   /* was A */
+  u8 *puserinput; /* was HL */
+  u8  input;      /* was A */
+  u8 *pboost;     /* was HL */
+  u8  keys;       /* was A */
 
   transctl = state->transition_control;
   puserinput = &state->user_input;
@@ -1697,7 +1690,7 @@ static void clear_playfield(chqstate_t *state)
 // priority - was C
 static void start_sfx(chqstate_t *state, u8 index, u8 priority)
 {
-  u8 curr_priority; // was A
+  u8 curr_priority; /* was A */
 
   curr_priority = state->sfx_priority;
   if (curr_priority == 0 || curr_priority >= priority) {
@@ -1726,8 +1719,7 @@ static void drive_sfx(chqstate_t *state)
     { 0xC8, 0xC8, sfx_bipbow               },
   };
 
-  int                  index; // was A
-  const struct sfxtab *tab;   // was HL
+  const struct sfxtab *sfx; /* was HL */
 
   if (state->tunnel_sfx == 0) {
     state->trigger_lane_change_sfx |= state->trigger_passed_object_sfx;
@@ -1745,8 +1737,8 @@ static void drive_sfx(chqstate_t *state)
   state->sfx_index    = 0;
   state->sfx_priority = 0;
 
-  tab = &sfx_table[index - 1];
-  tab->handler(state, tab->arg1, tab->arg2);
+  sfx = &sfx_table[state->sfx_index - 1];
+  sfx->handler(state, sfx->arg1, sfx->arg2);
 }
 
 // $8960
@@ -1756,10 +1748,10 @@ static void drive_sfx(chqstate_t *state)
 static void sfx_crash(chqstate_t *state, u8 param1, u8 param2)
 {
   int  carry = 0;
-  u8  *tab; // was HL
-  int  C;   // was C
-  int  B;   // was B
-  int  A;   // was A
+  u8  *tab; /* was HL */
+  int  C;   /* was C */
+  int  B;   /* was B */
+  int  A;   /* was A */
 
   tab = &state->sfx_crash_table[0];
   C  = 93; // NELEMS(sfx_crash_table);
@@ -1825,7 +1817,7 @@ static void sfx_cornering(chqstate_t *state, u8 param1, u8 param2)
   if (A)
     return;
 
-  sfx_cornering_loop_outer(state, param1, param2); // was fallthrough
+  sfx_cornering_loop_outer(state, param1, param2); /* was fallthrough */
 }
 
 static void sfx_cornering_loop_outer(chqstate_t *state, u8 param1, u8 param2)
@@ -1881,9 +1873,9 @@ static int handle_perp_caught(chqstate_t *state)
 {
   int       carry = 0;
   int       zero  = 0;
-  u8        phase;       // was A
-  u8        car_y;       // was A
-  u8        fastcounter; // was A
+  u8        phase;       /* was A */
+  u8        car_y;       /* was A */
+  u8        fastcounter; /* was A */
   u8        A;
   u8        Ainput;
   u8        H;
@@ -1934,7 +1926,7 @@ static int handle_perp_caught(chqstate_t *state)
 
 phase5:
   state->perp_caught_phase = PERPCAUGHTPHASE_6;
-  setup_transition(state, TRANSITIONSTRIDE_FORWARD); // was exit via
+  setup_transition(state, TRANSITIONSTRIDE_FORWARD); /* was exit via */
   return 0;
 
 phase2:
@@ -1970,7 +1962,7 @@ phase3:
   HLmessages = state->stage->addrof_arrest_messages;
   setup_overlay_messages_with_transition(state,
                                          TRANSITIONCONTROL_DRAW_MUGSHOTS,
-                                         HLmessages); // was exit via
+                                         HLmessages); /* was exit via */
   return 0;
 
 phase4:
@@ -2102,7 +2094,7 @@ score_store_low:
 
   *--HLscore |= STREND;
 
-  setup_overlay_messages(state, &state->score_messages[0]); // was exit via
+  setup_overlay_messages(state, &state->score_messages[0]); /* was exit via */
   return 0;
 
 move_perp:
@@ -2121,7 +2113,7 @@ assign_perp_pos: // is this in the right place?
   A = C;
   state->hazards[0].horz_pos = A;
   HLroadpos = state->scenedata.road_pos;
-  carry = (HLroadpos < ROAD_LEFTMOST); // was PUSH/SUB/POP
+  carry = (HLroadpos < ROAD_LEFTMOST); /* was PUSH/SUB/POP */
   Ainput = USERINPUT_UP | USERINPUT_RIGHT;
   if (!carry)
     goto assign_hero_pos;
@@ -2197,7 +2189,7 @@ perp_too_far_away:
   DEspeed = HLspeed;
 
 set_perp_speed:
-  hpc_set_perp_speed(state, DEspeed); // was fallthrough
+  hpc_set_perp_speed(state, DEspeed); /* was fallthrough */
   return 0;
 }
 
@@ -2223,11 +2215,11 @@ static void fully_smashed(chqstate_t *state)
 // $8D8F
 static void transition(chqstate_t *state)
 {
-  int       iterations;  // was B'
-  u16       backbuf;     // was HL
-  const u8 *maskptr;     // was HL'
-  u16       backbufcopy; // was D
-  u8        mask;        // was E
+  int       iterations;  /* was B' */
+  u16       backbuf;     /* was HL */
+  const u8 *maskptr;     /* was HL' */
+  u16       backbufcopy; /* was D */
+  u8        mask;        /* was E */
 
   switch (state->transition_control) {
   case TRANSITIONCONTROL_STOP:
@@ -2253,7 +2245,7 @@ static void transition(chqstate_t *state)
     // Advance before use - initial mask points one earlier/later
     state->transition_mask += state->transition_frame_stride;
 
-  backbuf  = 0xFF00; // was H=$FF
+  backbuf  = 0xFF00; /* was H=$FF */
   maskptr = state->transition_mask;
   iterations = 8;
   do {
@@ -2275,8 +2267,8 @@ static void transition(chqstate_t *state)
 // backbuf - was HL
 static void transition_fade_chunk(chqstate_t *state, u8 mask, u8 *backbuf)
 {
-  int rows;       // was C
-  int iterations; // was B
+  int rows;       /* was C */
+  int iterations; /* was B */
 
   rows = 8; // rows
   do {
@@ -2298,9 +2290,9 @@ static void transition_fade_chunk(chqstate_t *state, u8 mask, u8 *backbuf)
 // stride - was A -- u8 stride could become (s8)
 static void setup_transition(chqstate_t *state, u8 stride)
 {
-  s16                 frame_stride; // was BC
-  const transition_t *transitions;  // was DE
-  const transition_t *transition;   // was HL
+  s16                 frame_stride; /* was BC */
+  const transition_t *transitions;  /* was DE */
+  const transition_t *transition;   /* was HL */
 
   assert(stride == 8 || (s8) stride == -8);
 
@@ -2325,10 +2317,10 @@ static void setup_transition(chqstate_t *state, u8 stride)
 // $8E29
 static void fill_attributes(chqstate_t *state)
 {
-  u8 *src;     // was HL
-  u8 *dst;     // was DE
-  int rows;    // was A
-  int columns; // was BC
+  u8 *src;     /* was HL */
+  u8 *dst;     /* was DE */
+  int rows;    /* was A */
+  int columns; /* was BC */
 
   src = ADDRTOATTRS(0x5901); // (1,8)
   rows = 16; // rows
@@ -2337,7 +2329,7 @@ static void fill_attributes(chqstate_t *state)
       // As original code
       dst = src + 1;
       columns = 28;
-      do { *dst++ = *src++; } while (--columns > 0); // was LDIR
+      do { *dst++ = *src++; } while (--columns > 0); /* was LDIR */
       src += 32 - 28;
     } else {
       // Conv: Alternative that uses memset
@@ -2367,9 +2359,9 @@ static void fill_attributes(chqstate_t *state)
  */
 static void draw_overlay_messages(chqstate_t *state)
 {
-  const u8 *message; // was HL
-  u8        count;   // was B
-  u8        style;   // was A
+  const u8 *message; /* was HL */
+  u8        count;   /* was B */
+  u8        style;   /* was A */
 
   message = state->overlay_message;
   count   = state->overlay_count;
@@ -2493,8 +2485,8 @@ static void draw_mugshot(chqstate_t *state,
                          u16         backbuf,
                          const u8   *mugshot)
 {
-  const u8 *orig_mugshot; // was PUSH-POP
-  u16       counter;      // was BC
+  const u8 *orig_mugshot; /* was PUSH-POP */
+  u16       counter;      /* was BC */
 
   orig_mugshot = mugshot;
   mugshot--; // step back from attributes start to bitmap data end
@@ -2593,25 +2585,25 @@ static u16 draw_smash_bar_solid_bit(chqstate_t *state, int nrows, u16 backbuf)
 // $8F5F
 static void draw_everything_else(chqstate_t *state)
 {
-  u8          *HL_table_e300;       // was HL
-  u8          *table_e336;          // was DE
-  int          iterations;          // was B
-  u8          *IY_table_e300;       // was IY
-  u8          *roadbuf;             // was HL
-  u16         *IX_table_ea00;       // was IX
-  u8           floating_arrow;      // was A
-  u8           Aobj;                // was A
-  const lod_t *arrow_defn;          // was HL
-  u8           x;                   // was E
-  u8           y;                   // was D
-  u8           width_bytes;         // was C
-  u8           Bdash_flip_flag;     // was B
-  u8           Edash_bitmap_stride; // was E
-  u8           Cdash;               // was C
-  u8           height;              // was B
-  const u8    *bitmap;              // was HL
-  u8           Eobj;                // was E
-  const obj_t *HLobj;               // was HL
+  u8          *HL_table_e300;       /* was HL */
+  u8          *table_e336;          /* was DE */
+  int          iterations;          /* was B */
+  u8          *IY_table_e300;       /* was IY */
+  u8          *roadbuf;             /* was HL */
+  u16         *IX_table_ea00;       /* was IX */
+  u8           floating_arrow;      /* was A */
+  u8           Aobj;                /* was A */
+  const lod_t *arrow_defn;          /* was HL */
+  u8           x;                   /* was E */
+  u8           y;                   /* was D */
+  u8           width_bytes;         /* was C */
+  u8           Bdash_flip_flag;     /* was B */
+  u8           Edash_bitmap_stride; /* was E */
+  u8           Cdash;               /* was C */
+  u8           height;              /* was B */
+  const u8    *bitmap;              /* was HL */
+  u8           Eobj;                /* was E */
+  const obj_t *HLobj;               /* was HL */
 
   state->dss_SM_A9E2 = &state->table_ed00[20]; // $ED28
   state->dh_SM_AECF  = &state->table_e900[0];
@@ -2719,10 +2711,10 @@ static void draw_overhead(chqstate_t  *state,
 {
 #if 0
   int          carry = 0;
-  const lod_t *HLlod;      // was HL
+  const lod_t *HLlod;      /* was HL */
   u16          DE;
-  u8           counter;    // was A
-  int          iterations; // was B
+  u8           counter;    /* was A */
+  int          iterations; /* was B */
   u8          *HLdst;
   u8          *DEsrc;
   u8 A;
@@ -2882,7 +2874,7 @@ static void draw_stretchy_object_common(chqstate_t     *state,
   dso_callback_t *SM_9244 = HLcallback; // probably don't need these
 
   int       carry = 0;
-  u8        counter; // was A
+  u8        counter; /* was A */
   const u8 *HL;
   u8        A;
   u8        SM_91DB;
@@ -3037,7 +3029,7 @@ static void draw_tunnel_light_common(chqstate_t            *state,
                                      draw_object_entrypt_t *HLcallback,
                                      const u16             *IX)
 {
-  u8 counter; // was A
+  u8 counter; /* was A */
   u8 A;
 
   if (B >= 16)
@@ -3070,14 +3062,14 @@ static void draw_object_left_entrypt(chqstate_t       *state,
                                      const depthset_t *DEarg,
                                      const u16        *IX)
 {
-  const depthset_t *ds;    // was HL
-  const lod_t      *lods;  // was DE
-  u8                depth; // was B
-  const lod_t      *lod;   // was HL
+  const depthset_t *ds;    /* was HL */
+  const lod_t      *lods;  /* was DE */
+  u8                depth; /* was B */
+  const lod_t      *lod;   /* was HL */
 
   state->doc_SM_933D = A;
 
-  if (B >= DEPTHSET_MAX)
+  if (B >= DEPTHSET_MAX) // FIXME should be just greater than?
     B = DEPTHSET_MAX;
 
   ds = DEarg; // EX DE,HL - save arg address
@@ -3149,7 +3141,7 @@ static void draw_object_left_helicopter_entrypt(chqstate_t  *state,
   }
 
   D = HLlod->flags >> 1; // checking LODFLAG_FLIPPED?
-  if (D == 0) { // was JP Z - check
+  if (D == 0) { /* was JP Z - check */
     // FIX IY
     // draw_object_9333(state, carry, C, E, HLlod, IY); // exit via
     return;
@@ -3178,14 +3170,14 @@ static void draw_object_right_entrypt(chqstate_t       *state,
                                       const depthset_t *DEarg,
                                       const u16        *IX)
 {
-  const depthset_t *ds;    // was HL
-  const lod_t      *lods;  // was DE
-  u8                depth; // was B
-  const lod_t      *lod;   // was HL
+  const depthset_t *ds;    /* was HL */
+  const lod_t      *lods;  /* was DE */
+  u8                depth; /* was B */
+  const lod_t      *lod;   /* was HL */
 
   state->doc_SM_933D = A;
 
-  if (B >= DEPTHSET_MAX)
+  if (B >= DEPTHSET_MAX) // FIXME should be just greater than?
     B = DEPTHSET_MAX;
 
   ds = DEarg; // EX DE,HL
@@ -3243,7 +3235,7 @@ static void draw_object_930e_entrypt(chqstate_t  *state,
 
   A = (A & 0xFC) >> 2;
   state->doc_SM_9396 = A; // should be doc_SM_9395
-  A >>= 1; // was RRA
+  A >>= 1; /* was RRA */
   B = A;
   E = HLlod->width_bytes; // CHECK
   A = 31 - A;
@@ -3738,7 +3730,7 @@ static void plot_sprite_flipped(chqstate_t *state,
 #endif
 
   plot_sprite_flipped_even(state, jump_offset, backbuf_addr, height,
-                           bitmap_stride, bitmap_data); // was fallthrough
+                           bitmap_stride, bitmap_data); /* was fallthrough */
 }
 
 /**
@@ -3897,7 +3889,7 @@ static void start_chatter(chqstate_t       *state,
                           chatterpriority_t priority,
                           const u8         *chatterblk)
 {
-  u8 chatter_state; // was A
+  u8 chatter_state; /* was A */
 
   assert(chatterblk);
 
@@ -4075,7 +4067,7 @@ static void print_chatter(chqstate_t *state)
 
   plot_face(state, 0x4036, face); /* Set screen plot address to (176,8) */
 
-  pc_chatter_message(state, chatterblk); // was FALLTHROUGH
+  pc_chatter_message(state, chatterblk); /* was FALLTHROUGH */
 }
 
 /**
@@ -4087,7 +4079,7 @@ static void print_chatter(chqstate_t *state)
 static void pc_chatter_message(chqstate_t *state, const u8 *chatterblk)
 {
   u8          index;  // Conv: additional
-  const char *string; // was DE
+  const char *string; /* was DE */
 
   // Conv: Original game loads an address directly here.
   assert(*chatterblk < CHATTERSTR__LIMIT);
@@ -4101,7 +4093,7 @@ static void pc_chatter_message(chqstate_t *state, const u8 *chatterblk)
   assert(string);
   state->chatterblk_ptr = chatterblk;
   state->next_character = string;
-  pc_clear_line(state, 0); // was FALLTHROUGH
+  pc_clear_line(state, 0); /* was FALLTHROUGH */
 }
 
 /**
@@ -4112,8 +4104,8 @@ static void pc_chatter_message(chqstate_t *state, const u8 *chatterblk)
  */
 static void pc_clear_line(chqstate_t *state, u8 x)
 {
-  const char *nextch;    // was HL
-  char        character; // was D
+  const char *nextch;    /* was HL */
+  char        character; /* was D */
 
   if (x == 0)
     clear_message_line(state);
@@ -4141,7 +4133,7 @@ static void drive_noise_effect(chqstate_t *state, u8 counter)
   if (counter == 0)
     print_chatter(state); // exit via
   else
-    draw_noise_effect(state, counter); // was FALLTHROUGH
+    draw_noise_effect(state, counter); /* was FALLTHROUGH */
 }
 
 /**
@@ -4153,14 +4145,14 @@ static void drive_noise_effect(chqstate_t *state, u8 counter)
 static void draw_noise_effect(chqstate_t *state, u8 counter)
 {
   int   carry = 0;
-  u8    x;              // was A
-  char  character;      // was D
-  u16   DEscreen;       // was DE
-  u8    C;              // was C
-  u8    B;              // was B
-  u16   DEscreen_saved; // was stack?
-  u8   *noisebytes;     // was HL
-  u8    A;              // was A
+  u8    x;              /* was A */
+  char  character;      /* was D */
+  u16   DEscreen;       /* was DE */
+  u8    C;              /* was C */
+  u8    B;              /* was B */
+  u16   DEscreen_saved; /* was stack? */
+  u8   *noisebytes;     /* was HL */
+  u8    A;              /* was A */
 
   RR(counter);
   x = 0xFF;
@@ -4173,7 +4165,7 @@ static void draw_noise_effect(chqstate_t *state, u8 counter)
   C = 40; // rows
   do {
     B = 4; // columns
-    DEscreen_saved = DEscreen; // was PUSH
+    DEscreen_saved = DEscreen; /* was PUSH */
     noisebytes = &state->noise_bytes[0];
     do {
       A = *noisebytes - B;
@@ -4182,14 +4174,14 @@ static void draw_noise_effect(chqstate_t *state, u8 counter)
       A += *noisebytes;
       *noisebytes = A;
       state->speccy->screen.pixels[DEscreen - SCREEN_START_ADDRESS] = A;
-      DEscreen++; // was E++
+      DEscreen++; /* was E++ */
     } while (--B > 0);
-    DEscreen = DEscreen_saved; // was POP - restore row ptr
+    DEscreen = DEscreen_saved; /* was POP - restore row ptr */
     DEscreen = nextscrrow(DEscreen);
   } while (--C > 0);
 
   ne_plot_attrs(state, attribute_BRIGHT_WHITE_OVER_BLACK);
-  // was FALLTHROUGH
+  /* was FALLTHROUGH */
 }
 
 /**
@@ -4200,8 +4192,8 @@ static void draw_noise_effect(chqstate_t *state, u8 counter)
  */
 static void ne_plot_attrs(chqstate_t *state, u8 attr)
 {
-  int addr;       // was HL
-  int iterations; // was B
+  int addr;       /* was HL */
+  int iterations; /* was B */
 
   // Screen attribute (22,1) (Conv: address -> offset)
   addr       = 0x5836 - SCREEN_START_ADDRESS;
@@ -4224,8 +4216,8 @@ static void plot_face(chqstate_t *state,
                       u16         screen,
                       const u8   *face)
 {
-  u16 saved_screen; // was stack
-  u16 counter;      // was BC
+  u16 saved_screen; /* was stack */
+  u16 counter;      /* was BC */
 
   assert(screen >= SCREEN_START_ADDRESS && screen < SCREEN_END_ADDRESS);
   assert(face);
@@ -4244,7 +4236,7 @@ static void plot_face(chqstate_t *state,
     screen = nextscrrow(screen);
   }
 
-  plot_face_attributes(state, saved_screen, face); // was fallthrough
+  plot_face_attributes(state, saved_screen, face); /* was fallthrough */
 }
 
 /**
@@ -4259,8 +4251,8 @@ static void plot_face_attributes(chqstate_t *state,
                                  const u8   *face)
 {
   int carry;
-  u8  A;       // was A
-  u16 counter; // was BC
+  u8  A;       /* was A */
+  u16 counter; /* was BC */
 
   A = screen >> 8;
   RRC(A);
@@ -4332,19 +4324,19 @@ static void pmf_go(chqstate_t *state,
 {
   int       carry = 0;
 
-  u8        extra2;   // was self modified $9B61 - right extra bitmap
-  u8        extra1;   // was self modified $9B64 - left extra bitmap
-  u8        mask;     // was self modified $9B89
-  u8        rotate;   // was self modified $96B7
+  u8        extra2;   /* was self modified $9B61 - right extra bitmap */
+  u8        extra1;   /* was self modified $9B64 - left extra bitmap */
+  u8        mask;     /* was self modified $9B89 */
+  u8        rotate;   /* was self modified $96B7 */
 
-  u8        A;        // was A
-  u8        ascii2;   // was A
-  u8        row;      // was A
-  u8        gid;      // was C
-  u8        sgid;     // was A
-  u16       screen;   // was DE
-  const u8 *fontdata; // was DE
-  u16       HLscreen; // was HL
+  u8        A;        /* was A */
+  u8        ascii2;   /* was A */
+  u8        row;      /* was A */
+  u8        gid;      /* was C */
+  u8        sgid;     /* was A */
+  u16       screen;   /* was DE */
+  const u8 *fontdata; /* was DE */
+  u16       HLscreen; /* was HL */
 
 #define MFWIDTH  (5)
 #define MFHEIGHT (6)
@@ -4362,7 +4354,7 @@ static void pmf_go(chqstate_t *state,
 
   // find rotate/shift by reducing scaled-x (A) until it's less than 8 bits
   do {
-    screen++; // was E++
+    screen++; /* was E++ */
     carry = 8 > A;
     A -= 8;
   } while (!carry);
@@ -4393,11 +4385,11 @@ pmf_have_glyph_id:
 
 pmf_have_ascii:
   fontdata = &minifont[(sgid - 'A') * MFHEIGHT];
-  HLscreen = screen; // was EX
+  HLscreen = screen; /* was EX */
   row = MFHEIGHT;
   do {
-    u8 bm2; // was C
-    u8 bm1; // was B
+    u8 bm2; /* was C */
+    u8 bm1; /* was B */
 
     bm2 = extra2;
     bm1 = *fontdata | extra1; // first pixel written
@@ -4438,8 +4430,8 @@ pmf_have_ascii:
  */
 static void clear_message_line(chqstate_t *state)
 {
-  u16 screen; // was HL
-  u8  rows;   // was A
+  u16 screen; /* was HL */
+  u8  rows;   /* was A */
 
   screen = 0x45C1; // Screen coordinate (8,53)
   rows   = 6;      // Clear six rows
@@ -4462,16 +4454,16 @@ static void clear_message_line(chqstate_t *state)
  */
 static void check_time_up(chqstate_t *state)
 {
-  const u8 *ptime_bcd;            // was HL
-  u8        time_up_state;        // was A
-  u8        time_bcd;             // was A
-  char     *time_digits;          // was DE
-  u8        effect;               // was B
-  u8        remaining_subseconds; // was H
-  u8        remaining_seconds_x2; // was L
-  u8        seconds;              // was A
-  u8        hidigit;              // was A
-  u8        lodigit;              // was L
+  const u8 *ptime_bcd;            /* was HL */
+  u8        time_up_state;        /* was A */
+  u8        time_bcd;             /* was A */
+  char     *time_digits;          /* was DE */
+  u8        effect;               /* was B */
+  u8        remaining_subseconds; /* was H */
+  u8        remaining_seconds_x2; /* was L */
+  u8        seconds;              /* was A */
+  u8        hidigit;              /* was A */
+  u8        lodigit;              /* was L */
 
   if (state->perp_caught_phase > PERPCAUGHTPHASE_0 ||
       state->transition_control == TRANSITIONCONTROL_FADE)
@@ -4606,7 +4598,7 @@ static void play_start_noise(chqstate_t *state)
 static void speed_score(chqstate_t *state)
 {
   int carry = 0;
-  u16 speed; // was HL
+  u16 speed; /* was HL */
   u8  A;
   u8  H;
 
@@ -4635,8 +4627,8 @@ static void speed_score(chqstate_t *state)
 // finishes so you can only have a single run of zeroes in the bonus.
 static void add_bonus(chqstate_t *state, u8 lo, u8 md, u8 hi)
 {
-  char *output;   // was HL
-  u8    zeroflag; // was C
+  char *output;   /* was HL */
+  u8    zeroflag; /* was C */
 
   output = &state->bonus_string[6]; // points to byte after buffer
   zeroflag = 0xFF; // true until non-zero seen
@@ -4654,7 +4646,7 @@ static void add_bonus(chqstate_t *state, u8 lo, u8 md, u8 hi)
 
   state->SM_address_of_score_digits = output;
   state->trigger_bonus_flag = 1;
-  increment_score(state, lo, md, hi); // was fallthrough
+  increment_score(state, lo, md, hi); /* was fallthrough */
 }
 
 // $9CFC
@@ -4684,7 +4676,7 @@ store:
 static void increment_score(chqstate_t *state, u8 lo, u8 md, u8 hi)
 {
   int carry = 0;
-  u8 *score_bcd; // was HL
+  u8 *score_bcd; /* was HL */
 
   score_bcd  = &state->score_bcd[0];
   *score_bcd = DAA(lo + *score_bcd,         &carry); score_bcd++;
@@ -4697,9 +4689,9 @@ static void increment_score(chqstate_t *state, u8 lo, u8 md, u8 hi)
 static void calc_overtake_bonus(chqstate_t *state)
 {
   int carry = 0;
-  u8  counter;    // was A
-  u8  iterations; // was B
-  u8 *bcd;        // was HL
+  u8  counter;    /* was A */
+  u8  iterations; /* was B */
+  u8 *bcd;        /* was HL */
 
   counter = state->overtake_bonus_counter;
   if (counter == 0)
@@ -4732,8 +4724,8 @@ static void update_scoreboard(chqstate_t *state)
 // attrs - was HL
 static void toggle_light_brightness(chqstate_t *state, u8 *attrs)
 {
-  int rows; // was B
-  u8  attr; // was C
+  int rows; /* was B */
+  u8  attr; /* was C */
 
   rows = MARQUEELIGHT_HEIGHT;
   attr = ATTR_BRIGHT;
@@ -4924,12 +4916,12 @@ ptas_turbo_setup:
 
   ptas_led_digits(state, 2, &state->distance_bcd[1],
                   &state->st.distance_digits[3],
-                  ADDRTOSCREEN(0x4191)); // was fallthrough
+                  ADDRTOSCREEN(0x4191)); /* was fallthrough */
 
   // Score
 
   ptas_led_digits(state, 4, &state->score_bcd[3], &state->st.score_digits[7],
-                  ADDRTOSCREEN(0x4126)); // was fallthrough
+                  ADDRTOSCREEN(0x4126)); /* was fallthrough */
 }
 
 // $9F1E
@@ -4988,8 +4980,8 @@ ptas_led_plot_2nd:
 // screen - was DE'
 static u8 *ledfont_plot(chqstate_t *state, int ord, u8 *screen)
 {
-  const u8 *src;         // was HL
-  u8       *screen_copy; // was stacked
+  const u8 *src;         /* was HL */
+  u8       *screen_copy; /* was stacked */
 
   src = &ledfont[ord * LEDFONT_HEIGHT];
   screen_copy = screen;
@@ -5076,7 +5068,7 @@ static const u8 *draw_string_core(chqstate_t *state,
                                   u8          attrsstride,
                                   u8         *attrs)
 {
-  u8 character; // was A
+  u8 character; /* was A */
 
   do {
     character = *string & ~STREND;
@@ -5107,11 +5099,11 @@ static void draw_char(chqstate_t *state,
                       u8        **new_screen,
                       u8        **new_attrs)
 {
-  u8        glyphid;    // was C
-  u8        data;       // was A
-  u8        iterations; // was B
-  const u8 *fontdata;   // was HL
-  u8       *orig;       // was stacked
+  u8        glyphid;    /* was C */
+  u8        data;       /* was A */
+  u8        iterations; /* was B */
+  const u8 *fontdata;   /* was HL */
+  u8       *orig;       /* was stacked */
   int       i;          // additional
 
   assert(screen);
@@ -5219,19 +5211,19 @@ dc_double_height:
   for (i = 0; i < 7; i++) { // Conv: rolled up
     *screen = *fontdata;
     screen += 256;
-    *screen++ = *fontdata++; // was LDI, could reuse A
-    screen--; // was DEC E, could remove if screen++ above is dropped
+    *screen++ = *fontdata++; /* was LDI, could reuse A */
+    screen--; /* was DEC E, could remove if screen++ above is dropped */
     screen += 256;
   }
   *screen = 0; // leave gap at bottom
 
 dc_set_double_attrs:
-  screen = orig + 1; // was POP screen, INC E
+  screen = orig + 1; /* was POP screen, INC E */
   *attrs |= attrval;
   attrs += attrstride;
   *attrs |= attrval;
-  attrs -= attrstride; // was POP attrs
-  attrs++; // was INC L
+  attrs -= attrstride; /* was POP attrs */
+  attrs++; /* was INC L */
   goto dc_return;
 
 dc_single_height: // seems to store 9 rows
@@ -5246,9 +5238,9 @@ dc_single_height: // seems to store 9 rows
   *screen = 0; // leave gap at bottom
 
 dc_set_single_attrs:
-  screen = orig + 1; // was POP screen, INC E
+  screen = orig + 1; /* was POP screen, INC E */
   *attrs |= attrval;
-  attrs++; // was INC L
+  attrs++; /* was INC L */
   goto dc_return;
 
 dc_generic:
@@ -5261,7 +5253,7 @@ dc_generic:
     // variation on nextscrrow()
     // screen = nextscrrow(screen); // won't work!
   } while (--iterations > 0);
-  screen = orig + 1; // was POP screen
+  screen = orig + 1; /* was POP screen */
 
 dc_return:
   *new_screen = screen;
@@ -5352,12 +5344,12 @@ static void check_scenery_collisions(chqstate_t *state)
   int          carry = 0;
   u16          HL;
   u16          DE;
-  u8           fork_countdown; // was A
-  s16          pos;            // was HL'
-  u8           offroad;        // was A
+  u8           fork_countdown; /* was A */
+  s16          pos;            /* was HL' */
+  u8           offroad;        /* was A */
   u8           Cdash;
-  u8          *bufptr;         // was HL'
-  u8           lanes;          // was A
+  u8          *bufptr;         /* was HL' */
+  u8           lanes;          /* was A */
   int          Z;
   u8           A;
   u8           C;
@@ -5533,7 +5525,7 @@ csc_check_left:
     return;
   // EX AF,AF'
   Aflip = 1; // likely an arg for scenery_hit()
-  csc_hit_scenery(state, Aflip, Adash); // was fallthrough
+  csc_hit_scenery(state, Aflip, Adash); /* was fallthrough */
 }
 
 // $A4B0
@@ -5547,7 +5539,7 @@ static void csc_hit_scenery(chqstate_t *state, u8 Aflip, u8 Adash)
 // $A4B8
 static void scenery_hit(chqstate_t *state, u8 Aflip, u8 Adash)
 {
-  int speed;  // was HL
+  int speed;  /* was HL */
   int A;
   int HL;
   int L;
@@ -5580,13 +5572,13 @@ static void scenery_hit(chqstate_t *state, u8 Aflip, u8 Adash)
 // $A4F6
 static void check_fork_scenery_collisions(chqstate_t *state, u16 DEdash, u16 HLdash)
 {
-  u16          pos;            // was HL
-  u8           off_road;       // was A
-  const obj_t *shortpoleobj;   // was HL
-  u16          hit_max_or_min; // was BC'
-  u16          hit_min_or_max; // was DE'
-  u8           A;              // was A
-  u16          pos2;           // was HL'
+  u16          pos;            /* was HL */
+  u8           off_road;       /* was A */
+  const obj_t *shortpoleobj;   /* was HL */
+  u16          hit_max_or_min; /* was BC' */
+  u16          hit_min_or_max; /* was DE' */
+  u8           A;              /* was A */
+  u16          pos2;           /* was HL' */
 
   pos = state->table_e800[127];
   off_road = 0;
@@ -5637,19 +5629,19 @@ set_off_road:
 static void layout_objects(chqstate_t *state)
 {
   int       carry = 0;
-  u8       *objpos;       // was HL
-  u8        iterations;   // was B
-  u8        total;        // was A
+  u8       *objpos;       /* was HL */
+  u8        iterations;   /* was B */
+  u8        total;        /* was A */
   u16      *SP;
-  u8       *bufptr;       // was DE
-  const u8 *objpos2;      // was IY
-  u8        countdown;    // was A
-  u8        lanesbyte;    // was A
-  u8        lanesbyte2;   // was E'
+  u8       *bufptr;       /* was DE */
+  const u8 *objpos2;      /* was IY */
+  u8        countdown;    /* was A */
+  u8        lanesbyte;    /* was A */
+  u8        lanesbyte2;   /* was E' */
   u8        Ldash;
-  u8        laneoffset;   // was A
-  u16      *tabptr;       // was HL'
-  u8        laneshift;    // was A
+  u8        laneoffset;   /* was A */
+  u16      *tabptr;       /* was HL' */
+  u8        laneshift;    /* was A */
   u8        L;
   u8        A;
 
@@ -5763,36 +5755,36 @@ static void cycle_counters(chqstate_t *state)
 void perp_behaviour(chqstate_t *state, hazard_t *IX)
 {
   int       carry = 0;
-  s8        Atbd7;              // was A
-  u8        Cperp_distance;     // was C
-  hazard_t *IYhazard;           // was IY
+  s8        Atbd7;              /* was A */
+  u8        Cperp_distance;     /* was C */
+  hazard_t *IYhazard;           /* was IY */
   u16       DE;
   u16       HL;
-  const u8 *HLtab;              // was HL
-  u8        Acurrlane;          // was A
-  u16       BCspawn_lanes;      // was BC
-  u8        Adash;              // was A'
+  const u8 *HLtab;              /* was HL */
+  u8        Acurrlane;          /* was A */
+  u16       BCspawn_lanes;      /* was BC */
+  u8        Adash;              /* was A' */
 
-  u16       HLspeed;            // was HL
+  u16       HLspeed;            /* was HL */
   int       smash_twice;        // Additional
-  int       Bmin_spawn_lane;    // was B
-  int       Cmax_spawn_lane;    // was C
-  u8        Ccurrentlane;       // was C
-  u8        Cnewlane;           // was C
-  u8        Cdelta;             // was C
-  u8        changing_lane;      // was C
-  u8        Ahorzpos;           // was A
+  int       Bmin_spawn_lane;    /* was B */
+  int       Cmax_spawn_lane;    /* was C */
+  u8        Ccurrentlane;       /* was C */
+  u8        Cnewlane;           /* was C */
+  u8        Cdelta;             /* was C */
+  u8        changing_lane;      /* was C */
+  u8        Ahorzpos;           /* was A */
   u8        A;
-  u8        Biterations;        // was B
-  u8        Adelay;             // was A
-  u8        Adistance;          // was A
-  u8        Acounter;           // was A
-  u16       DEspeedmult;        // was DE
-  u8        Adistancediff;      // was A
-  u8        Dbonus_hi;          // was D
-  u8        Ebonus_mid;         // was E
-  u8        Bmin_lane;          // was B
-  u8        Cmax_lane;          // was C
+  u8        Biterations;        /* was B */
+  u8        Adelay;             /* was A */
+  u8        Adistance;          /* was A */
+  u8        Acounter;           /* was A */
+  u16       DEspeedmult;        /* was DE */
+  u8        Adistancediff;      /* was A */
+  u8        Dbonus_hi;          /* was D */
+  u8        Ebonus_mid;         /* was E */
+  u8        Bmin_lane;          /* was B */
+  u8        Cmax_lane;          /* was C */
 
   if (state->perp_caught_phase > 0)
     return;
@@ -6071,7 +6063,7 @@ pb_set_delay:
   if (!carry || Atbd7 == 2)
     goto pb_a7be;
 
-  smash_twice = 1; // was PUSH HL -- Put another call to smash on the stack
+  smash_twice = 1; /* was PUSH HL -- Put another call to smash on the stack */
 
   Dbonus_hi = 4; // Set bonus high digit to 4
 pb_a7be:
@@ -6099,18 +6091,18 @@ pb_a7be:
 // $A7F3
 static void spawn_cars(chqstate_t *state)
 {
-  u8        allow_spawning;     // was A
-  u8        random_extra_delay; // was C
-  u8        spawn_delay;        // was A
-  u8        iterations;         // was B
-  u8        cars_seen;          // was C
-  hazard_t *hazard;             // was IX
-  u16       spawn_lanes;        // was BC
-  u8        min_lane;           // was B
-  u8        max_lane;           // was C
-  u8        new_lane;           // was A
-  const u8 *hazard_pos;         // was HL
-  u8        lod_index;          // was C
+  u8        allow_spawning;     /* was A */
+  u8        random_extra_delay; /* was C */
+  u8        spawn_delay;        /* was A */
+  u8        iterations;         /* was B */
+  u8        cars_seen;          /* was C */
+  hazard_t *hazard;             /* was IX */
+  u16       spawn_lanes;        /* was BC */
+  u8        min_lane;           /* was B */
+  u8        max_lane;           /* was C */
+  u8        new_lane;           /* was A */
+  const u8 *hazard_pos;         /* was HL */
+  u8        lod_index;          /* was C */
 
   // Return without spawning anything if perp_caught_phase is non-zero or the
   // dont_spawn_cars flag is set.
@@ -6194,9 +6186,9 @@ fill_in:
 static u16 get_spawn_lanes(chqstate_t *state, u8 extra)
 {
   int carry;
-  u8 *roadbuf;    // was HL
-  u8  lanes;      // was A
-  u8  lanes_copy; // was E
+  u8 *roadbuf;    /* was HL */
+  u8  lanes;      /* was A */
+  u8  lanes_copy; /* was E */
 
   roadbuf = ROADBUFPTR(ROADBUF_LANES_OFFSET + 2 + extra);
   lanes = *roadbuf;
@@ -6227,14 +6219,14 @@ static u16 get_spawn_lanes(chqstate_t *state, u8 extra)
 void hazard_handler(chqstate_t *state, hazard_t *IX)
 {
   int       carry = 0;
-  u16       spawn_lanes;        // was BC
-  u8        min_lane;           // was B
-  u8        max_lane;           // was C
-  u8        tbd17;              // was A
-  u8        current_lane;       // was A
-  u8        horz_pos;           // was A
-  u8        tbd7;               // was A
-  const u8 *phazard_pos_speed;  // was HL
+  u16       spawn_lanes;        /* was BC */
+  u8        min_lane;           /* was B */
+  u8        max_lane;           /* was C */
+  u8        tbd17;              /* was A */
+  u8        current_lane;       /* was A */
+  u8        horz_pos;           /* was A */
+  u8        tbd7;               /* was A */
+  const u8 *phazard_pos_speed;  /* was HL */
 
   if (state->perp_caught_phase != 0 || state->dont_spawn_cars != 0)
     IX->speed = 0x1FF;
@@ -6296,7 +6288,7 @@ void hazard_handler(chqstate_t *state, hazard_t *IX)
 // $A955
 static void choose_dirt_and_stones(chqstate_t *state)
 {
-  u8 *table;  // was DE
+  u8 *table;  /* was DE */
 
   if (state->on_dirt_track == 0 || state->allow_spawning == 0)
     return;
@@ -6316,16 +6308,16 @@ static void choose_dirt_and_stones(chqstate_t *state)
 static void layout_dirt_and_stones(chqstate_t *state)
 {
   int       carry = 0;
-  const u8 *obj_pos;             // was IY
-  u8        iterations;          // was B
-  u8        total;               // was C
-  u16      *table_ed00;          // was HL
-  u8        A;                   // was A
+  const u8 *obj_pos;             /* was IY */
+  u8        iterations;          /* was B */
+  u8        total;               /* was C */
+  u16      *table_ed00;          /* was HL */
+  u8        A;                   /* was A */
   u8        Ldash;
   u16       val_from_table_e800;
-  u16       val_from_table_ec00; // was HL'
-  u16       result;              // was HL'
-  u8        iterations2;         // was B'
+  u16       val_from_table_ec00; /* was HL' */
+  u16       result;              /* was HL' */
+  u8        iterations2;         /* was B' */
   u8        Cdash;
 
   if (state->ldas_enabled == 0)
@@ -6382,7 +6374,7 @@ ldas_do_work:
   RR(A);
   Cdash = A;
   // POP result // HLdash
-  result += Cdash; // was BCdash but B is zero here
+  result += Cdash; /* was BCdash but B is zero here */
   // PUSH result // HLdash
 
   // EXX
@@ -6466,14 +6458,14 @@ dss_lods:
 static void draw_helicopter(chqstate_t *state, u8 Biterations, u8 *IY)
 {
   int                carry = 0;
-  u16                diff;         // was DE
-  u16                total;        // was HL
-  u8                 fast_counter; // was A
-  u8                 Biterations2; // was B
-  u8                 Atotal;       // was A
-  u8                 frame;        // was A
-  const heli_lod_t (*helilods)[6]; // was HL
-  const heli_lod_t  *helilod;      // was DE
+  u16                diff;         /* was DE */
+  u16                total;        /* was HL */
+  u8                 fast_counter; /* was A */
+  u8                 Biterations2; /* was B */
+  u8                 Atotal;       /* was A */
+  u8                 frame;        /* was A */
+  const heli_lod_t (*helilods)[6]; /* was HL */
+  const heli_lod_t  *helilod;      /* was DE */
 
   if (Biterations != 3)
     return;
@@ -6520,14 +6512,14 @@ static void draw_helicoper_part(chqstate_t             *state,
                                 const heli_lod_inner_t *DEinnerlod)
 {
   int          carry;
-  u16          BC;     // was BC
-  u16          HLtbd2; // was HL
-  u16          DEtbd2; // was DE
-  const lod_t *HLlod;  // was HL
-  u8           Bwidth; // was B
-  s8           Atop;   // was A
-  u8           Abot;   // was A
-  u8           C;      // was C
+  u16          BC;     /* was BC */
+  u16          HLtbd2; /* was HL */
+  u16          DEtbd2; /* was DE */
+  const lod_t *HLlod;  /* was HL */
+  u8           Bwidth; /* was B */
+  s8           Atop;   /* was A */
+  u8           Abot;   /* was A */
+  u8           C;      /* was C */
 
   BC = state->dhl_helipos; // signed?
   state->doc_SM_933D = -A; // in draw_object_common
@@ -6565,12 +6557,12 @@ static void draw_helicoper_part(chqstate_t             *state,
 // $AAC6
 static void move_helicopter(chqstate_t *state)
 {
-  u8  height;     // was A & C
-  u8  direction;  // was A
-  u8  offset;     // was A
-  u16 helipos;    // was HL
-  u16 newhelipos; // was HL
-  u16 centre;     // was DE
+  u8  height;     /* was A & C */
+  u8  direction;  /* was A */
+  u8  offset;     /* was A */
+  u16 helipos;    /* was HL */
+  u16 newhelipos; /* was HL */
+  u16 centre;     /* was DE */
 
   if (state->helicopter_control == 0)
     return;
@@ -6622,12 +6614,12 @@ set_newpos:
 // $AB33
 static void drive_helicopter(chqstate_t *state)
 {
-  u8        heli_ctl;     // was A
-  u8        helipos;      // was A
-  u8        draw_heli;    // was A
-  u8        new_heli_ctl; // was A
-  u16       HL_ab06;      // was HL
-  const u8 *chatterblk;   // was HL
+  u8        heli_ctl;     /* was A */
+  u8        helipos;      /* was A */
+  u8        draw_heli;    /* was A */
+  u8        new_heli_ctl; /* was A */
+  u16       HL_ab06;      /* was HL */
+  const u8 *chatterblk;   /* was HL */
 
   heli_ctl = state->helicopter_control;
   if (heli_ctl == 0)
@@ -6686,12 +6678,12 @@ hc_exit:
 // $AB9A
 static void spawn_hazards(chqstate_t *state)
 {
-  u8  allow_spawning;    // was A
-  u8  Cdistance;         // was C
-  u8 *roadbuf;           // was HL
-  u8  hazard;            // was A
-  u16 DEhittable_offset; // was DE
-  u8  horz_pos;          // was B
+  u8  allow_spawning;    /* was A */
+  u8  Cdistance;         /* was C */
+  u8 *roadbuf;           /* was HL */
+  u8  hazard;            /* was A */
+  u16 DEhittable_offset; /* was DE */
+  u8  horz_pos;          /* was B */
 
   allow_spawning = state->allow_spawning;
   if (allow_spawning == 0)
@@ -6770,9 +6762,9 @@ static int sh_find_free(chqstate_t *state,
                         u8          Cdistance,
                         u16         DEhittable_offset)
 {
-  int       iterations; // was B
-  hazard_t *hazard;     // was HL
-  hazard_t *IXhazard;   // was IX
+  int       iterations; /* was B */
+  hazard_t *hazard;     /* was HL */
+  hazard_t *IXhazard;   /* was IX */
 
   iterations = 6;
   hazard = &state->hazards[0];
@@ -6816,11 +6808,11 @@ static void hazard_hit(chqstate_t *state, hazard_t *IX)
     0x14, 0x00
   };
 
-  u8        tbd15;    // was A
-  s8        tbd7;     // was A
-  u16       speed;    // was DE, BC
+  u8        tbd15;    /* was A */
+  s8        tbd7;     /* was A */
+  u16       speed;    /* was DE, BC */
   int       index;    // added
-  const u8 *ptable;   // was HL
+  const u8 *ptable;   /* was HL */
 
   tbd15 = IX->TBD15;
   if (tbd15 == 0) {
@@ -6869,8 +6861,8 @@ static void hazard_hit(chqstate_t *state, hazard_t *IX)
 // $AD0D
 static void check_hazard_collisions(chqstate_t *state)
 {
-  hazard_t *hazard;     // was IX
-  u8        iterations; // was B
+  hazard_t *hazard;     /* was IX */
+  u8        iterations; /* was B */
 
   if (state->inhibit_collision_detection)
     return;
@@ -6909,14 +6901,14 @@ static u8 check_collision(chqstate_t *state,
                           hazard_t   *hazard,
                           u16        *HLout)
 {
-  u8 horz_pos;      // was L
-  u8 tbd3;          // was H
-  u8 tbd15;         // was A
-  u8 distance;      // was A
-  u8 max_distance;  // was C
-  s8 new_tbd7;      // was E
-  u8 fast_counter;  // was A
-  u8 Ahorz_pos;     // was A
+  u8 horz_pos;      /* was L */
+  u8 tbd3;          /* was H */
+  u8 tbd15;         /* was A */
+  u8 distance;      /* was A */
+  u8 max_distance;  /* was C */
+  s8 new_tbd7;      /* was E */
+  u8 fast_counter;  /* was A */
+  u8 Ahorz_pos;     /* was A */
 
   *HLout = HL;
 
@@ -6940,10 +6932,10 @@ static u8 check_collision(chqstate_t *state,
   distance--;
   fast_counter = state->fast_counter;
   if (distance == 0) {
-    if ((s8) fast_counter < 0) // was JP P - why treating fast_counter as signed?
+    if ((s8) fast_counter < 0) /* was JP P - why treating fast_counter as signed? */
       new_tbd7 = 1;
   } else {
-    if ((s8) fast_counter >= 0) // was RET P - why treating fast_counter as signed?
+    if ((s8) fast_counter >= 0) /* was RET P - why treating fast_counter as signed? */
       return default_retval;
   }
 
@@ -6970,9 +6962,9 @@ static u8 check_collision(chqstate_t *state,
 // $ADA0
 static void draw_all_hazards(chqstate_t *state)
 {
-  const u8 *table_e300; // was IY
-  hazard_t *hazard;     // was IX
-  int       iterations; // was B
+  const u8 *table_e300; /* was IY */
+  hazard_t *hazard;     /* was IX */
+  int       iterations; /* was B */
 
   state->n_hazards = 0;
   table_e300 = &state->table_e300[0];
@@ -7202,15 +7194,15 @@ static void dh_aecf(chqstate_t *state, u8 Biterations)
     0xEE, 0x10
   };
 
-  u16         *HLtable;       // was HL
+  u16         *HLtable;       /* was HL */
   u8           A;
   u16          DE;
-  u8          *pn_hazards;    // was HL
-  u8           Asmash_level;  // was A
-  u16          DElodoffset;   // was DE
-  const lod_t *HLlodbase;     // was HL
-  const lod_t *HLlod;         // was HL
-  u8           Ewidth_bits;   // was E
+  u8          *pn_hazards;    /* was HL */
+  u8           Asmash_level;  /* was A */
+  u16          DElodoffset;   /* was DE */
+  const lod_t *HLlodbase;     /* was HL */
+  const lod_t *HLlod;         /* was HL */
+  u8           Ewidth_bits;   /* was E */
   u16          IX;
 
   HLtable = state->dh_SM_AECF; // table_e900 ptr for example
@@ -7374,11 +7366,11 @@ dh_draw_smoke_3:
 // Decrements a counter 5..1 then repeats this must be the car-on-fire animation
 static void dh_smoke(chqstate_t *state, u8 *HLsmoke)
 {
-  u8 counter;   // was A, E
-  u8 index;     // was A
-  u8 newindex;  // was A, C, D
-  u8 x;         // was B
-  u8 y;         // was C
+  u8 counter;   /* was A, E */
+  u8 index;     /* was A */
+  u8 newindex;  /* was A, C, D */
+  u8 x;         /* was B */
+  u8 y;         /* was C */
 
   counter = HLsmoke[0] - 1;
   if (counter <= 0)
@@ -7392,7 +7384,7 @@ static void dh_smoke(chqstate_t *state, u8 *HLsmoke)
 
   x = HLsmoke[1 + index * 2] - counter;
   y = HLsmoke[1 + index * 2 + 1];
-  dh_draw(state, x, y, newindex * 7, &smoke_defns[0]); // was fallthrough
+  dh_draw(state, x, y, newindex * 7, &smoke_defns[0]); /* was fallthrough */
 }
 
 // $B01B
@@ -7427,13 +7419,13 @@ static void dh_draw_lod(chqstate_t *state, u8 Bx, u8 Cy, const lod_t *HLlod)
   if (A2 < Cy) // carried
     return;
   if (A2 >= 128) {
-    draw_object_right_helicopter_entrypt(state, A2, HLlod); // was exit via
+    draw_object_right_helicopter_entrypt(state, A2, HLlod); /* was exit via */
     return;
   }
 
 dh_exit_1:
   A2 += Ewidth_bits; // add pixel width
-  draw_object_left_helicopter_entrypt(state, A2, HLlod); // was exit via
+  draw_object_left_helicopter_entrypt(state, A2, HLlod); /* was exit via */
   return;
 
 dh_exit_2:
@@ -7443,7 +7435,7 @@ dh_exit_2:
 
   A2 += Ewidth_bits;
   if (A2 > Ewidth_bits) // carried
-    draw_object_left_helicopter_entrypt(state, A2, HLlod); // was exit via
+    draw_object_left_helicopter_entrypt(state, A2, HLlod); /* was exit via */
 }
 
 // $ADF9
@@ -7457,45 +7449,45 @@ void no_op(chqstate_t *state, hazard_t *hazard)
 static void move_hero_car(chqstate_t *state)
 {
   // TODO Sort these decls by use
-  u8         y_offset;             // was A
-  const u8  *jump_data;            // was HL
-  u8         boost;                // was A
-  u8         Cinput;               // was C
-  u8         Ainput;               // was A
-  u8        *pgear;                // was HL
-  u8         smoke;                // was A
-  u8         gear_lockout;         // was A
-  u8         gear;                 // was A
-  u16        speed;                // was HL
-  u8         off_road;             // was A
-  u16        BCmax_speed;          // was BC
-  u16        BCspeed_diff;         // was BC
-  u8         Ainclined;            // was A
-  u8         Apitch;               // was A
-  u8         Cleft_turn;           // was C
-  u8         Hinput;               // was H
-  u8         Bright_turn;          // was B
-  u16        BCpitch_speed_delta;  // was BC
-  u16        DEoldspeed;           // was DE
-  u8         Bturn_speed;          // was B
-  u8         Dflip_car;            // was D
-  u8         Acornering;           // was A
-  u8         Acurrent_curvature;   // was A
-  const u16 *HLhorizon_table;      // was HL
-  u8         saved_Cleft_turn;     // was C
-  u8         saved_Bright_turn;    // was B
-  u8         Acrashedflag;         // was A
-  u8         Aturn_speed;          // was A
-  u8         Bcount;               // was B
-  u8         Cvar_a261;            // was C
-  u8         Enegative_scrolling;  // was E
-  u8         Avar_a261;            // was A
-  u8         Acounter;             // was A'
-  u8         Chorz_tab_value;      // was C
-  u8         Acount;               // was A'
-  u16        BCcount_scaled;       // was BC
-  u16        HLhorizontal_adjust;  // was HL
-  u16        DEadjust;             // was DE
+  u8         y_offset;             /* was A */
+  const u8  *jump_data;            /* was HL */
+  u8         boost;                /* was A */
+  u8         Cinput;               /* was C */
+  u8         Ainput;               /* was A */
+  u8        *pgear;                /* was HL */
+  u8         smoke;                /* was A */
+  u8         gear_lockout;         /* was A */
+  u8         gear;                 /* was A */
+  u16        speed;                /* was HL */
+  u8         off_road;             /* was A */
+  u16        BCmax_speed;          /* was BC */
+  u16        BCspeed_diff;         /* was BC */
+  u8         Ainclined;            /* was A */
+  u8         Apitch;               /* was A */
+  u8         Cleft_turn;           /* was C */
+  u8         Hinput;               /* was H */
+  u8         Bright_turn;          /* was B */
+  u16        BCpitch_speed_delta;  /* was BC */
+  u16        DEoldspeed;           /* was DE */
+  u8         Bturn_speed;          /* was B */
+  u8         Dflip_car;            /* was D */
+  u8         Acornering;           /* was A */
+  u8         Acurrent_curvature;   /* was A */
+  const u16 *HLhorizon_table;      /* was HL */
+  u8         saved_Cleft_turn;     /* was C */
+  u8         saved_Bright_turn;    /* was B */
+  u8         Acrashedflag;         /* was A */
+  u8         Aturn_speed;          /* was A */
+  u8         Bcount;               /* was B */
+  u8         Cvar_a261;            /* was C */
+  u8         Enegative_scrolling;  /* was E */
+  u8         Avar_a261;            /* was A */
+  u8         Acounter;             /* was A' */
+  u8         Chorz_tab_value;      /* was C */
+  u8         Acount;               /* was A' */
+  u16        BCcount_scaled;       /* was BC */
+  u16        HLhorizontal_adjust;  /* was HL */
+  u16        DEadjust;             /* was DE */
 
   y_offset = state->mhc_y_offset; // load jump counter, highest is 8
   if (y_offset) {
@@ -7623,7 +7615,7 @@ mhc_check_brake:
   state->inclined_counter = Ainclined;
   state->speed = MIN(speed, 511); // clamp to 511 max
 
-  Hinput = Cinput; // was POP HL (get user input)
+  Hinput = Cinput; /* was POP HL (get user input) */
   Bright_turn = state->right_turn;
   Cleft_turn  = state->left_turn;
   if (state->mhc_y_offset == 0) { // if not in the air?
@@ -7699,7 +7691,7 @@ mhc_handle_speed:
       if (Acount) {
         state->var_a262 += Acount;
 
-        BCcount_scaled = Bcount * 3; // was A and B
+        BCcount_scaled = Bcount * 3; /* was A and B */
         if (Enegative_scrolling)
           BCcount_scaled = -BCcount_scaled;
       }
@@ -7715,17 +7707,17 @@ mhc_handle_speed:
   state->horizontal_adjust = 0;
   Acrashedflag = state->ahc_crashed_flag;
   if (Acrashedflag) {
-    // was EX DE,HL
+    /* was EX DE,HL */
     DEadjust = HLhorizontal_adjust & 0xFF;
     HLhorizontal_adjust = 0;
   }
 
-  state->right_turn = saved_Bright_turn; // was POP BC
+  state->right_turn = saved_Bright_turn; /* was POP BC */
   state->left_turn  = saved_Cleft_turn;
   Acrashedflag -= saved_Bright_turn; // Seems odd
   if ((s8) Acrashedflag < 0)
     DEadjust = 0xFF00;
-  DEadjust = (DEadjust & 0xFF00) | (Acrashedflag >> 1); // was SRA
+  DEadjust = (DEadjust & 0xFF00) | (Acrashedflag >> 1); /* was SRA */
   HLhorizontal_adjust += DEadjust;
   if (Acrashedflag && (s8) Acrashedflag < 0)
     Acrashedflag = -Acrashedflag;
@@ -7813,7 +7805,7 @@ ahc_speed_less_or_eq:
 
     HL_b356 = state->ahc_SM_B356 - (state->ahc_SM_B356 >> 4);
     state->ahc_SM_B356 = HL_b356;
-    DE_b356 = HL_b356; // was EX DE,HL
+    DE_b356 = HL_b356; /* was EX DE,HL */
 
     HLroad_pos = state->scenedata.road_pos;
     Cflip_flag = state->ahc_flip_flag;
@@ -7868,7 +7860,7 @@ ahc_assign_road_pos_2:
 
   Aperp_caught_phase = state->perp_caught_phase;
   if (Aperp_caught_phase) {
-    if (--Aperp_caught_phase == 0) // was 1
+    if (--Aperp_caught_phase == 0) /* was 1 */
       goto ahc_load_flip_flag;
     if (Aperp_caught_phase >= 2)
       Aturn_speed = 2;
@@ -8024,9 +8016,9 @@ static void start_chase(chqstate_t *state)
 // $B4F0
 static void smash(chqstate_t *state)
 {
-  u8 counter; // was A
-  u8 hits;    // was A
-  u8 level;   // was C
+  u8 counter; /* was A */
+  u8 hits;    /* was A */
+  u8 level;   /* was C */
 
   counter = (state->smash_cycling_counter + 1) & 3;
   state->smash_cycling_counter = counter;
@@ -8069,21 +8061,21 @@ static void smash(chqstate_t *state)
 // $B549
 static void draw_debris(chqstate_t *state)
 {
-  u8        Aframe_counter;    // was A
-  u8        Biterations;       // was B
-  u8      **HLsubtables;       // was HL
-  u8       *DEsubtable;        // was DE
-  u8        Cframe_offset;     // was C
-  u16       HLoffset;          // was HL
-  u16       BCframe_offset;    // was BC
-  u8       *HLsubtable;        // was HL
-  u8        Dy;                // was D
-  u8        Ex;                // was E
-  const u8 *HLbitmap;          // was HL
-  u8        Bheight;           // was B
-  u8        Cwidth_bytes;      // was C
-  u16       BCdash;            // was BC
-  u8        Edash_width_bytes; // was E
+  u8        Aframe_counter;    /* was A */
+  u8        Biterations;       /* was B */
+  u8      **HLsubtables;       /* was HL */
+  u8       *DEsubtable;        /* was DE */
+  u8        Cframe_offset;     /* was C */
+  u16       HLoffset;          /* was HL */
+  u16       BCframe_offset;    /* was BC */
+  u8       *HLsubtable;        /* was HL */
+  u8        Dy;                /* was D */
+  u8        Ex;                /* was E */
+  const u8 *HLbitmap;          /* was HL */
+  u8        Bheight;           /* was B */
+  u8        Cwidth_bytes;      /* was C */
+  u16       BCdash;            /* was BC */
+  u8        Edash_width_bytes; /* was E */
 
   Aframe_counter = state->dd_SM_B549_frame_counter;
   if (Aframe_counter == 0)
@@ -8190,7 +8182,7 @@ static void draw_hero_car(chqstate_t *state, u8 Aturn_speed, u8 Bwobble)
   Awidth_bytes = 5; // width & stride
   DEbitmap_stride = 5;
   // EXX - Bank for plot_sprite (DE' = stride, HL' = address of bitmap data)
-  HLdash_backbuf_addr = DEbackbuf_addr; // was POP HLbackbuf_addr  -- backbuffer plotaddr
+  HLdash_backbuf_addr = DEbackbuf_addr; /* was POP HLbackbuf_addr  -- backbuffer plotaddr */
   // EX AF,AF'
   Adash_flip_car = state->flip_car; // reuse later perhaps?
   if (!Adash_flip_car) {
@@ -8223,7 +8215,7 @@ static void draw_hero_car(chqstate_t *state, u8 Aturn_speed, u8 Bwobble)
   // Draw left hand side
   HLcarpart = draw_hero_car_part(state, 1, Dy, (!state->flip_car) ? 96 : 144, HLcarpart);
   // Draw right hand side
-  (void) draw_hero_car_part(state, 1, Dy, (state->flip_car) ? 96 : 144, HLcarpart); // was FALLTHROUGH
+  (void) draw_hero_car_part(state, 1, Dy, (state->flip_car) ? 96 : 144, HLcarpart); /* was FALLTHROUGH */
 }
 
 /**
@@ -8307,7 +8299,7 @@ static void draw_smoke(chqstate_t *state, u8 Aanim_frame, u8 Adash_flip_flag)
   // PUSH BC -- preserve width/height
   // EXX - Bank
   // EX AF,AF' - Bank
-  Cdash = Cwidth; // was POP BCdash -- restore width/height
+  Cdash = Cwidth; /* was POP BCdash -- restore width/height */
   Bdash_flip_flag = Adash_flip_flag;
   Edash_width_bytes = Cdash;
   Cdash--; // used if flipped
@@ -8353,13 +8345,13 @@ static void draw_cherry_light(chqstate_t *state,
     // EX AF,AF'
   }
   // EX AF,AF'
-  draw_cherry_b699(state, Aframe_index); // was FALLTHROUGH
+  draw_cherry_b699(state, Aframe_index); /* was FALLTHROUGH */
 }
 
 // $B699
 static void draw_cherry_b699(chqstate_t *state, u8 Aframe_index)
 {
-  draw_crash(state, Aframe_index, 0, 0); // was FALLTHROUGH
+  draw_crash(state, Aframe_index, 0, 0); /* was FALLTHROUGH */
 }
 
 // $B69E
@@ -8397,7 +8389,7 @@ static void draw_crash(chqstate_t *state,
     // Otherwise pitch was 3/6
     y += pitch - 2; // make v.shift -1/1
 
-  draw_part(state, height, width, y, x, bitmap, Bdash_flip_flag, Cdash, bitmap_stride); // was FALLTHROUGH
+  draw_part(state, height, width, y, x, bitmap, Bdash_flip_flag, Cdash, bitmap_stride); /* was FALLTHROUGH */
 }
 
 /**
@@ -8431,7 +8423,7 @@ static void draw_part(chqstate_t *state,
                    bitmap,
                    Bdash_flip_flag,
                    Cdash,
-                   Edash_bitmap_stride); // was FALLTHROUGH
+                   Edash_bitmap_stride); /* was FALLTHROUGH */
 }
 
 /**
@@ -8472,14 +8464,14 @@ static void draw_part_entry2(chqstate_t *state,
   DEhi = (Dy & 0x0F) + 0xF0; // note: this address building pattern uses OR elsewhere
   // EX AF,AF'
   DElo += (Ay & 0x70) * 2;
-  DEbackbuf = (DEhi << 8) | DElo; // was PUSH DEbackbuf
+  DEbackbuf = (DEhi << 8) | DElo; /* was PUSH DEbackbuf */
   Estride = Cwidth_bytes << 1;
   // EXX - Bank
-  HLdash_backbuf = DEbackbuf; // was POP HLdash_backbuf
+  HLdash_backbuf = DEbackbuf; /* was POP HLdash_backbuf */
   Awidth_bytes = Edash_bitmap_stride;
-  carry_flip_flag = Bdash_flip_flag & 1; // was shift (and zeroes the register)
+  carry_flip_flag = Bdash_flip_flag & 1; /* was shift (and zeroes the register) */
   // EX AF,AF'  -- unbanking for flags?
-  HLdash_backbuf += Cdash; // was BCdash - B always zero here
+  HLdash_backbuf += Cdash; /* was BCdash - B always zero here */
   // EX AF,AF'
   if (carry_flip_flag)
     plot_masked_sprite_flipped_entry2(state,
@@ -8494,7 +8486,7 @@ static void draw_part_entry2(chqstate_t *state,
                                  Bheight,
                                  Estride,
                                  HLbitmap_data,
-                                 ADDRTOBACKBUF(HLdash_backbuf)); // was FALLTHROUGH
+                                 ADDRTOBACKBUF(HLdash_backbuf)); /* was FALLTHROUGH */
 }
 
 // $B701
@@ -8518,7 +8510,7 @@ static void draw_part_plot_masked_sprite(chqstate_t *state,
                      Bheight,
                      DEbitmap_stride,
                      HLbitmap_data,
-                     HLdash_backbuf); // was FALLTHROUGH
+                     HLdash_backbuf); /* was FALLTHROUGH */
 }
 
 /**
@@ -8613,7 +8605,7 @@ static void plot_masked_sprite_flipped(chqstate_t *state,
                                     backbuf_addr + width_bytes, // moving dst ptr to end
                                     height,
                                     bitmap_stride,
-                                    bitmap_data); // was FALLTHROUGH
+                                    bitmap_data); /* was FALLTHROUGH */
 }
 
 /**
@@ -8633,11 +8625,11 @@ static void plot_masked_sprite_flipped_entry2(chqstate_t *state,
                                               u16         bitmap_stride,
                                               const u8   *bitmap_data)
 {
-  int       jump_offset;   // was IX   aka left hand clip?
-  const u8 *src;           // was SP
-  u8       *backbuf_orig;  // was A'??
-  u8        mask;          // was C
-  u8        data;          // was B
+  int       jump_offset;   /* was IX   aka left hand clip? */
+  const u8 *src;           /* was SP */
+  u8       *backbuf_orig;  /* was A'?? */
+  u8        mask;          /* was C */
+  u8        data;          /* was B */
 
   assert(VALID_BACKBUF(backbuf_addr));
 
@@ -8726,7 +8718,7 @@ static void plot_masked_sprite_inverted(chqstate_t *state,
 
   // POP BCdash -- HL' on entry (bitmap data ptr)
   HLdash_bitmap_data_final = HLdash_bitmap_offset + HLdash_bitmap_data;
-  Bheight = Bdash_height; // was POP BCdash -- BC' on entry - height
+  Bheight = Bdash_height; /* was POP BCdash -- BC' on entry - height */
 
   DEdash_bitmap_stride = -DEdash_bitmap_stride;
 
@@ -8736,26 +8728,26 @@ static void plot_masked_sprite_inverted(chqstate_t *state,
                      Bheight,
                      DEdash_bitmap_stride,
                      HLdash_bitmap_data_final,
-                     HL_backbuf); // was exit via pms_entry
+                     HL_backbuf); /* was exit via pms_entry */
 }
 
 // $B848
 static void scroll_horizon(chqstate_t *state)
 {
   int        carry = 0;
-  u16        speed;                     // was HL
-  u8         current_curvature;         // was A
-  u8         Adash;                     // was A'
-  const u16 *HLhorizon_table;           // was HL
-  u16        BChorizon_table_value;     // was BC
-  u8         Aregular;                  // was A
-  u8         Aincline;                  // was A
-  u8         Adiff;                     // was A
-  u8         Bcounter;                  // was C
-  u8         Eset_if_incline_negative;  // was C
-  u8         Chorizon_table_value;      // was C
-  u8         Ahorizon_y_a25a_delta;     // was A
-  u16        BCcounter;                 // was BC
+  u16        speed;                     /* was HL */
+  u8         current_curvature;         /* was A */
+  u8         Adash;                     /* was A' */
+  const u16 *HLhorizon_table;           /* was HL */
+  u16        BChorizon_table_value;     /* was BC */
+  u8         Aregular;                  /* was A */
+  u8         Aincline;                  /* was A */
+  u8         Adiff;                     /* was A */
+  u8         Bcounter;                  /* was C */
+  u8         Eset_if_incline_negative;  /* was C */
+  u8         Chorizon_table_value;      /* was C */
+  u8         Ahorizon_y_a25a_delta;     /* was A */
+  u16        BCcounter;                 /* was BC */
 
   if ((speed = state->speed) == 0)
     return;
@@ -8806,7 +8798,7 @@ static void scroll_horizon(chqstate_t *state)
     return; // flat road
 
   if (Aincline < 0) {
-    Eset_if_incline_negative = 1; // was INC E
+    Eset_if_incline_negative = 1; /* was INC E */
     Aincline = -Aincline;
   }
 
@@ -8844,37 +8836,37 @@ static void scroll_horizon(chqstate_t *state)
 static void update_road_level(chqstate_t *state)
 {
   int       carry = 0;
-  u8        Bvar_a25a;          // was B
-  u8        Cnegate_flag;       // was C
-  s8        Aincline;           // was A
-  const u8 *HLroadbuf;          // was HL
-  s8        Aheight;            // was A
-  u8        Cheight;            // was C
-  u8        Bpitch;             // was B
-  u8       *HLvar_a259;         // was HL
-  u8        Avar_a259;          // was A
-  u8        Bvar_a259;          // was B
-  u8        Ay_offset;          // was A
-  u8        Adiff;              // was A
-  const u8 *HLptable_b059;      // was HL
-  u8        Eoffset;            // was E
-  u8        Acurrent_curvature; // was A
-  u8        Afork_visible;      // was A
-  u8        Acurvature_byte;    // was A
-  u8        Afork_taken;        // was A
-  u8        Bcurvature_byte;    // was B
-  u8        Ax_scroll;          // was A
-  u8        Bvar_a262;          // was B
-  u8        C;                  // was C
-  u8        A;                  // was A
-  u8        B;                  // was B
+  u8        Bvar_a25a;          /* was B */
+  u8        Cnegate_flag;       /* was C */
+  s8        Aincline;           /* was A */
+  const u8 *HLroadbuf;          /* was HL */
+  s8        Aheight;            /* was A */
+  u8        Cheight;            /* was C */
+  u8        Bpitch;             /* was B */
+  u8       *HLvar_a259;         /* was HL */
+  u8        Avar_a259;          /* was A */
+  u8        Bvar_a259;          /* was B */
+  u8        Ay_offset;          /* was A */
+  u8        Adiff;              /* was A */
+  const u8 *HLptable_b059;      /* was HL */
+  u8        Eoffset;            /* was E */
+  u8        Acurrent_curvature; /* was A */
+  u8        Afork_visible;      /* was A */
+  u8        Acurvature_byte;    /* was A */
+  u8        Afork_taken;        /* was A */
+  u8        Bcurvature_byte;    /* was B */
+  u8        Ax_scroll;          /* was A */
+  u8        Bvar_a262;          /* was B */
+  u8        C;                  /* was C */
+  u8        A;                  /* was A */
+  u8        B;                  /* was B */
 
   Bvar_a25a = state->horizon_y_a25a; // load and widen
   Cnegate_flag = 0;
   Aincline = state->incline;
   if (Aincline < 0) { // if road climbing
     Aincline = -Aincline;
-    Cnegate_flag = 1; // was INC C
+    Cnegate_flag = 1; /* was INC C */
   }
 
   Aincline -= Bvar_a25a;
@@ -8916,7 +8908,7 @@ static void update_road_level(chqstate_t *state)
         Ay_offset = state->mhc_y_offset;
         if (Ay_offset) {
           Adiff = Bvar_a259 - (3 - ((state->speed >> 7) & 3)); // result = 1..5? // folded a lot here
-          if ((s8) Adiff > 0) { // was !C && !Z
+          if ((s8) Adiff > 0) { /* was !C && !Z */
             // PUSH HLvar_a259
             HLptable_b059 = &table_b059[(Adiff * 2) - 1]; // use of DE removed, RLC folded in
             Eoffset = *HLptable_b059++; // an offset
@@ -8947,7 +8939,7 @@ static void update_road_level(chqstate_t *state)
   if (Acurvature_byte) {
     // Eone_or_two = 1; // removed presumed unused
     if ((s8) Acurvature_byte < 0) {
-      // Eone_or_two = 2; // was RL(E) // removed presumed unused
+      // Eone_or_two = 2; /* was RL(E) // removed presumed unused */
       Acurvature_byte = -Acurvature_byte;
     }
     // Dcurvature_byte = Acurvature_byte; // removed presumed unused
@@ -8977,7 +8969,7 @@ url_B9C5:
     A = (A << 2) + (A >> 1);
     B = 0;
     if (C & 1) { // invert BA
-      B = 0xFF; // was DEC B
+      B = 0xFF; /* was DEC B */
       A = -A;
     }
     state->horizontal_adjust = (B << 8) | A;
@@ -9082,7 +9074,7 @@ lr_forked_road:
   state->fork_in_progress = -Aforkinprogress; // why negate, is this a counter?
   DEroadpos = state->scenedata.road_pos;
   Aiterations = 1;
-  DEroadpos -= 256; // was DEC D
+  DEroadpos -= 256; /* was DEC D */
   // Chooses the fork taken based on car's distance from centre
   if ((DEroadpos >> 8) < 128) { // possibly redundant check
     if (DEroadpos < 12) { // checking full word - car close to centre?
@@ -9137,23 +9129,23 @@ lr_badf:
   // PUSH HLforkdistance
   if (state->fork_taken - 1 != 0) {
     build_curve_table(state, /*forked=*/0);
-    DEforkdistance = HLforkdistance; // was POP DEforkdistance
+    DEforkdistance = HLforkdistance; /* was POP DEforkdistance */
     HLroadpos = state->scenedata.road_pos;
-    HLroadpos_saved = HLroadpos; // was PUSH HLroadpos
+    HLroadpos_saved = HLroadpos; /* was PUSH HLroadpos */
     HLroadpos += DEforkdistance;
     state->scenedata.road_pos = HLroadpos; // adjust road pos for fork rendering
     build_curve_table(state, /*forked=*/1);
   } else {
     build_curve_table(state, /*forked=*/1);
-    DEforkdistance = HLforkdistance; // was POP DEforkdistance
+    DEforkdistance = HLforkdistance; /* was POP DEforkdistance */
     HLroadpos = state->scenedata.road_pos;
-    HLroadpos_saved = HLroadpos; // was PUSH HLroadpos
+    HLroadpos_saved = HLroadpos; /* was PUSH HLroadpos */
     HLroadpos -= DEforkdistance;
     state->scenedata.road_pos = HLroadpos; // adjust road pos for fork rendering
     build_curve_table(state, /*forked=*/0);
   }
   // $BB07
-  HLroadpos = HLroadpos_saved; // was POP HLroadpos
+  HLroadpos = HLroadpos_saved; /* was POP HLroadpos */
   state->scenedata.road_pos =
     HLroadpos; // restore normal road pos after fork rendering
   // POP BC
@@ -9196,8 +9188,8 @@ static void exit_fork(chqstate_t *state)
 // $BC3E
 static void draw_screen(chqstate_t *state)
 {
-  u8  *scr;       // was HL
-  u8  *buf;       // was HL'
+  u8  *scr;       /* was HL */
+  u8  *buf;       /* was HL' */
   u16  bufoffset; // Conv: added
 
   scr = ADDRTOSCREEN(0x4811); // (136, 64)
@@ -9281,7 +9273,7 @@ draw_attributes:
     state->horizon_table_e34b[2] = A;
     if (E != 0) { // if moved? some sort of previous/current behaviour here
       E = A * 4;
-      D = (A * 4 >= 256) ? 0xFF : 0; // was SBC A,A - must be sign extending
+      D = (A * 4 >= 256) ? 0xFF : 0; /* was SBC A,A - must be sign extending */
       DE = (D << 8) | E;
       HLattrs = ADDRTOSCREEN(state->st.horizon_attribute);
       // Set sky colour
@@ -9332,9 +9324,9 @@ exit:
 // $BDC1
 static void clear_playfield_set_attrs(chqstate_t *state)
 {
-  u8 *screen;     // was HL
-  u16 stride;     // was DE
-  int iterations; // was B
+  u8 *screen;     /* was HL */
+  u16 stride;     /* was DE */
+  int iterations; /* was B */
 
   clear_playfield(state);
 
@@ -9370,10 +9362,10 @@ static void clear_playfield_set_attrs(chqstate_t *state)
 static void read_map(chqstate_t *state)
 {
   int carry = 0;
-  u8 *pfast_counter;  // was HL
-  u16 speed;          // was DE
-  u8  speed_lo;       // was A
-  u8  allow_spawning; // was A
+  u8 *pfast_counter;  /* was HL */
+  u16 speed;          /* was DE */
+  u8  speed_lo;       /* was A */
+  u8  allow_spawning; /* was A */
 
   state->trigger_lane_change_sfx   = 0;
   state->trigger_passed_object_sfx = 0;
@@ -9392,7 +9384,7 @@ static void read_map(chqstate_t *state)
   *pfast_counter = speed_lo;
   allow_spawning = 0; // Set flag to disallow car spawning
   if (carry)
-    rm_cycle_buffer_offset(state, pfast_counter); // was fallthrough
+    rm_cycle_buffer_offset(state, pfast_counter); /* was fallthrough */
 
   state->allow_spawning += allow_spawning;
   check_hazard_collisions(state); // exit via
@@ -9503,13 +9495,13 @@ static void draw_road(chqstate_t *state)
 static void pre_shift_backdrop(chqstate_t *state)
 {
   int       tmp;        // for RRD()
-  const u8 *source;     // was HL
-  u8       *preshifted; // was DE
-  const u8 *endptr;     // was DE
-  u8       *bmptr;      // was HL
-  u8        row;        // was C
-  u8        col;        // was B
-  u8        pix;        // was A
+  const u8 *source;     /* was HL */
+  u8       *preshifted; /* was DE */
+  const u8 *endptr;     /* was DE */
+  u8       *bmptr;      /* was HL */
+  u8        row;        /* was C */
+  u8        col;        /* was B */
+  u8        pix;        /* was A */
 
   // Copy whole source bitmap to destination
   source     = &state->stage->backdrop[0];
@@ -9556,8 +9548,8 @@ static void backdrop_fill_choice(chqstate_t *state)
 static void build_curve_table(chqstate_t *state, int forked)
 {
   u16       *table1, *table2;
-  const u8  *road_buffer_ptr_HL; // was HL
-  u8         curvature_C;        // was C
+  const u8  *road_buffer_ptr_HL; /* was HL */
+  u8         curvature_C;        /* was C */
   int        A;
   int        B;
   const u8  *IY;
@@ -9568,18 +9560,18 @@ static void build_curve_table(chqstate_t *state, int forked)
   u16        HLdash;
   u16        BCdash;
   int        carry;
-  u16        DEroadpos;          // was DE
+  u16        DEroadpos;          /* was DE */
   u8        *DEe320;
   const u8  *HLe760;
   int        Bdash;
 
   // Set up table pointer to *end* of tables we're building.
   if (forked) {
-    table1 = &state->table_ed00[128]; // was $EE00
-    table2 = &state->table_eb00[128]; // was $EC00 - centre right table?
+    table1 = &state->table_ed00[128]; /* was $EE00 */
+    table2 = &state->table_eb00[128]; /* was $EC00 - centre right table? */
   } else {
-    table1 = &state->table_ec00[128]; // was $ED00 - right table
-    table2 = &state->table_e800[128]; // was $E900 - left table
+    table1 = &state->table_ec00[128]; /* was $ED00 - right table */
+    table2 = &state->table_e800[128]; /* was $E900 - left table */
   }
 
   road_buffer_ptr_HL = state->road_buffer_offset;
@@ -9660,7 +9652,7 @@ static void build_curve_table(chqstate_t *state, int forked)
     *DE++ = A; // write to table_e320
   } while (--B);
 
-  DEroadpos = state->scenedata.road_pos; // was POP DE
+  DEroadpos = state->scenedata.road_pos; /* was POP DE */
   B = 0; // init counter
   // EXX Bank
   build_curve_table_sub_cca8(state,
@@ -9705,7 +9697,7 @@ static void build_curve_table_sub_cca8(chqstate_t *state,
   int  Atotal;
   u16  HLdash;
 
-  IYe300 = &state->table_e300[0]; // was 0xE300; // addr of height table
+  IYe300 = &state->table_e300[0]; /* was 0xE300; // addr of height table */
   Biterations = 21;
   // (restore SP on exit, load SP with HL)
   SPoutput = HLtableend;
@@ -9717,7 +9709,7 @@ static void build_curve_table_sub_cca8(chqstate_t *state,
     A += 2;
     state->object_positions[IYe300 - 1 - &state->table_e300[0]] =
       A; // must write to $E34F+ which is object_positions
-    A -= Bdash;
+    A -= Bdash_alwayszero;
     Bdash = A;
     Cdash = A;
     Ldash = state->table_e320[IYe300 - 1 -
@@ -9777,7 +9769,7 @@ bct_endbit_negative:
   //Hdash = -carry; //sign ext
   HLdash = (s8) A;
   HLdash += DEroadpos;
-  DEroadpos = HLdash; // was EX
+  DEroadpos = HLdash; /* was EX */
   SPoutput--; *SPoutput = DEroadpos; // PUSH to output table
   goto bct_continue;
 }
@@ -9786,25 +9778,25 @@ bct_endbit_negative:
 static void build_height_table(chqstate_t *state)
 {
   int       carry = 0;
-  u8       *proadbuf_height;      // was IY
+  u8       *proadbuf_height;      /* was IY */
   u8       *proadbuf_height_base; // Conv: added
-  u8        heightbyte;           // was C
-  u8        counter;              // was A
-  u8        orig_counter;         // was B
-  const u8 *pvtab;                // was HL
+  u8        heightbyte;           /* was C */
+  u8        counter;              /* was A */
+  u8        orig_counter;         /* was B */
+  const u8 *pvtab;                /* was HL */
   const u8 *pvtabbase;            // Conv: added
-  u8        C;                    // was C
-  u8        iterations;           // was B'
-  u8       *phtab;                // was DE'
+  u8        C;                    /* was C */
+  u8        iterations;           /* was B' */
+  u8       *phtab;                /* was DE' */
   u8       *phtabbase;            // Conv: added
-  u16       v;                    // was DE
-  u16       result;               // was HL
-  u8        A;                    // was A
-  u8       *pdst;                 // was HL
+  u16       v;                    /* was DE */
+  u16       result;               /* was HL */
+  u8        A;                    /* was A */
+  u8       *pdst;                 /* was HL */
   u8       *pdstbase;             // Conv: added
-  const u8 *htab2;                // was DE
+  const u8 *htab2;                /* was DE */
   const u8 *htabbase2;            // Conv: added
-  u8        iterations2;          // was B
+  u8        iterations2;          /* was B */
 
   proadbuf_height_base = proadbuf_height = ROADBUFPTR(ROADBUF_HEIGHT_OFFSET);
 
@@ -9945,8 +9937,8 @@ static void entrypt_common(chqstate_t *state, u8 Amode_128k, u8 Bnrelocs)
     // { 0xE876, 0x83B5, 24 },  // copies hooks_128k
   };
 
-  const struct Relocations *reloc; // was HL
-  u8                   iterations; // was BC
+  const struct Relocations *reloc; /* was HL */
+  u8                   iterations; /* was BC */
 #endif
 
   state->mode_128k = Amode_128k;
@@ -9981,10 +9973,10 @@ static void menu_draw_char(chqstate_t *state,
                            u8        **DEdash_out,
                            u8        **HLdash_out)
 {
-  const u8 *HLfont;       // was HL
-  u8       *DEscreen;     // was DE
-  u8        Cglyphid;     // was C
-  u8       *HLdash_saved; // was B'
+  const u8 *HLfont;       /* was HL */
+  u8       *DEscreen;     /* was DE */
+  u8        Cglyphid;     /* was C */
+  u8       *HLdash_saved; /* was B' */
   int       i;            // additional
 
   Achar -= ' ';
@@ -10022,7 +10014,7 @@ mdc_have_glyph:
   HLfont = &font[Cglyphid * 7]; // add symbol for glyph height
   // EXX
   // PUSH DEdash
-  DEdash++; // was INC E
+  DEdash++; /* was INC E */
   // EXX
   // POP DE
   DEscreen = DEdash;
@@ -10043,7 +10035,7 @@ mdc_have_glyph:
     }
     *DEscreen = 0; // final row always blank?
     // EXX
-    HLdash_saved = HLdash; // was just B' saving L'
+    HLdash_saved = HLdash; /* was just B' saving L' */
     Cdash |= ATTR_BRIGHT;
     *HLdash = Cdash; // set with bright set
     HLdash += 32; // move to next attr row
@@ -10180,7 +10172,7 @@ attract_mode_128k_8281:
       DEmessages = &press_gear_messages[0];
     }
 
-    carry = ~state->speccy->in(state->speccy, port_KEYBOARD_ENTERLKJH) & 1; // was IN+RRA
+    carry = ~state->speccy->in(state->speccy, port_KEYBOARD_ENTERLKJH) & 1; /* was IN+RRA */
     HLroutine = 0xC009;
     if (carry)
       goto attract_mode_128k_8281;

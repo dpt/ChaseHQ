@@ -138,29 +138,29 @@ typedef u8 chatterpriority_t;
 typedef struct stagevars stagevars_t;
 
 typedef struct carpart {
-    u8        y;
-    u8        rows;
-    const u8 *bitmap;
+  u8        y;
+  u8        rows;
+  const u8 *bitmap;
 } carpart_t;
 
 typedef struct carsmokefram {
-    u8        height;
-    u8        width;
-    u8        unflipped_x;
-    u8        flipped_x;
-    const u8 *bitmap;
+  u8        height;
+  u8        width;
+  u8        unflipped_x;
+  u8        flipped_x;
+  const u8 *bitmap;
 } carsmokeframe_t;
 
 typedef struct carframe {
-    u8        y;
-    u8        x;
-    u8        index;
+  u8        y;
+  u8        x;
+  u8        index;
 } carframe_t;
 
 typedef struct aradornment {
-    u8        height;
-    u8        width;
-    const u8 *bitmap;
+  u8        height;
+  u8        width;
+  const u8 *bitmap;
 } caradornment_t;
 
 /* ----------------------------------------------------------------------- */
