@@ -10217,21 +10217,15 @@ static void setup_turbo_sfx_128k(chqstate_t *state)
 // $F2FA
 static void play_turbo_sfx_128k(chqstate_t *state)
 {
-  u8  A;
-  u8 *HLpitch;
-
-  A = state->turbo_sfx_noise_pitch;
-  if (A == 0) {
+  if (state->turbo_sfx_noise_pitch == 0) {
     engine_sfx_from_speed_128k(state); // exit via
     return;
   }
-  if (--A == 0)
+  if (--state->turbo_sfx_noise_pitch == 0)
     return;
 
-  HLpitch = &state->ay_noise_pitch;
-  (*HLpitch)--;
-  if (*HLpitch) {
-    state->ay_chan_c_pitch = *HLpitch + 10;
+  if (--state->ay_noise_pitch) {
+    state->ay_chan_c_pitch = state->ay_noise_pitch + 10;
     state->ay_mixer &= 0x1B; // Set mixer to enable Tone C and Noise C
     state->ay_chan_c_vol = 13;
     return;
