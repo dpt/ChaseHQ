@@ -88,8 +88,8 @@
 #include <stddef.h>
 #include <stddef.h>
 #include <stdio.h>
-#include <string.h>
 #include <stdlib.h>
+#include <string.h>
 
 #include "C99/Types.h"
 #include "ZXSpectrum/Macros.h"
@@ -97,11 +97,12 @@
 #include "ZXSpectrum/Spectrum.h"
 #include "ZXSpectrum/Z80.h"
 
-#include "ChaseHQ-CommonData.h"
-#include "ChaseHQ-Stages.h"
-#include "ChaseHQ-Stage1Data.h"
-#include "ChaseHQ-State.h"
 #include "ChaseHQ.h"
+#include "ChaseHQ-CommonData.h"
+#include "ChaseHQ-SoundSamples.h"
+#include "ChaseHQ-Stage1Data.h"
+#include "ChaseHQ-Stages.h"
+#include "ChaseHQ-State.h"
 
 /* ----------------------------------------------------------------------- */
 
@@ -10236,13 +10237,102 @@ static void play_turbo_sfx_128k(chqstate_t *state)
   engine_sfx_from_speed_128k(state); // exit via
 }
 
-// $F32E
-// speech_samples_table
-
 // $F342
 static void play_speech_128k(chqstate_t *state, u8 Aindex)
 {
-  // TODO
+  // $F32E
+  static const struct {
+    u16 length;
+    u16 data;
+  } speech_samples_table[5] = {
+    { 0x0A8C, 0xC000 },
+    { 0x14E6, 0xCA8C },
+    { 0x0A5A, 0xDF72 },
+    { 0x0ABE, 0xE9CC },
+    { 0x0ADC, 0xF48A }
+  };
+
+  int       carry;
+  u8        Cport_lo;
+  u8        Hff;
+  u8        Lbf;
+  u8        Deight;
+  u16       DEdash_length;
+  const u8 *HLdash_data;
+  u8        Cdash;
+  u8        Asample;
+  u8        Bport_hi;
+  u8        Aregno;
+
+  // EX AF,AF' - Bank Aindex
+  silence_audio_128k(state);
+  state->speccy->out(state->speccy, 0x7FFD, 4);
+
+  Cport_lo = 0xFD;
+  Hff      = 0xFF;
+  Lbf      = 0xBF;
+  Deight        = 8; // Channel A volume register
+  // EXX - Bank
+  // EX AF,AF' - Unbank Aindex
+  DEdash_length = speech_samples_table[Aindex].length;
+  HLdash_data   = &sound_samples[speech_samples_table[Aindex].data];
+
+  // There are two samples per byte so we iterate here.
+  do {
+    Cdash = 2;
+    Asample = *HLdash_data;
+    // Get high nibble
+    RR(Asample);
+    RR(Asample);
+    RR(Asample);
+    RR(Asample);
+    do {
+      Asample &= 0x0F;
+      // EX AF,AF' - Bank Asample
+      // EXX - Unbank
+
+      // Write sample as Channel A volume.
+
+      Bport_hi = Hff; // Load $FF into #REGb to set high byte of port
+      Aregno = Deight; // Load 8 into #REGa
+      state->speccy->out(state->speccy, (Bport_hi << 8) | Cport_lo, Aregno); // OUT (C),A -- Write to $FFFD to select register 8: Channel A volume
+      Bport_hi = Lbf; // Load $BF into #REGb
+      // EX AF,AF' - Unbank sample
+      state->speccy->out(state->speccy, (Bport_hi << 8) | Cport_lo, Asample); // OUT (C),A -- Write to $BFFD to write volume register
+      // EX AF,AF' - Bank sample again
+
+      // Write sample as Channel B volume.
+
+      Aregno++; // Increment #REGa from 8 to 9
+      Bport_hi = Hff; // Load $FF into #REGb to set high byte of port
+      state->speccy->out(state->speccy, (Bport_hi << 8) | Cport_lo, Aregno); // OUT (C),A -- Write to $FFFD to select register 9: Channel B volume
+      Bport_hi = Lbf; // Load $BF into #REGb
+      // EX AF,AF' - Unbank sample
+      state->speccy->out(state->speccy, (Bport_hi << 8) | Cport_lo, Asample); // OUT (C),A -- Write to $BFFD to write volume register
+      // EX AF,AF' - Bank sample again
+
+      // Write sample as Channel C volume.
+
+      Aregno++; // Increment #REGa from 9 to 10
+      Bport_hi = Hff; // Load $FF into #REGb to set high byte of port
+      state->speccy->out(state->speccy, (Bport_hi << 8) | Cport_lo, Aregno); // OUT (C),A -- Write to $FFFD to select register 10: Channel C volume
+      Bport_hi = Lbf; // Load $BF into #REGb
+      // EX AF,AF' - Unbank sample
+      state->speccy->out(state->speccy, (Bport_hi << 8) | Cport_lo, Asample); // OUT (C),A -- Write to $BFFD to write volume register
+      // EXX - Bank
+
+      // Delay for 19 DJNZ's.
+      state->speccy->stamp(state->speccy);
+      state->speccy->sleep(state->speccy, 19); // Delay loop (lower value => higher frequency)  TODO work out what 19 DJNZ's would take
+
+      Asample = *HLdash_data; // Load next sample (same byte, but next nibble)
+    }
+    while (--Cdash > 0); // Decrement nibble counter
+    HLdash_data++; // Advance to next byte of sample data
+  }
+  while (--DEdash_length > 0);
+
+  reset_paging_128k(state); // exit via
 }
 
 // $F39F
