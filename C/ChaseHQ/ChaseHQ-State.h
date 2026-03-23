@@ -262,6 +262,17 @@ struct chqstate {
   // $A188
   hazard_t  hazards[MAXHAZARDS];
 
+  // $A213
+  u16       ay_chan_a_pitch;
+  u16       ay_chan_b_pitch;
+  u16       ay_chan_c_pitch;
+  u8        ay_noise_pitch;
+  u8        ay_mixer;
+  u8        ay_chan_a_vol;
+  u8        ay_chan_b_vol;
+  u8        ay_chan_c_vol;
+  u8        ay_env_fine;
+
   // $A220
   u8        dont_draw_screen_attrs;
   // $A221

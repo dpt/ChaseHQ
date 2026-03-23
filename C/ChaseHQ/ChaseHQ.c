@@ -233,6 +233,11 @@
 #define PREGAMECMD_DRAW_VT                  (0xE2)
 #define PREGAMECMD_SET_ADDR                 (0xF0) // to 0xFF
 
+#define BANK3_ROUTINE_0                   (0xC000) /* ... */
+#define BANK3_ROUTINE_3                   (0xC003) /* bootstrap */
+#define BANK3_ROUTINE_6                   (0xC006) /* success music */
+#define BANK3_ROUTINE_9                   (0xC009) /* ... */
+
 /* ----------------------------------------------------------------------- */
 
 // Read an arbitrary native word
@@ -335,6 +340,7 @@ static void play_engine_sfx_hook(chqstate_t *state);
 static void play_speech_hook(chqstate_t *state, u8 A);
 static void attract_mode_hook(chqstate_t *state);
 
+static void bootstrap(chqstate_t *state);
 static void main_loop(chqstate_t *state);
 
 static void cpu_driver(chqstate_t *state);
@@ -768,16 +774,41 @@ static void menu_draw_char(chqstate_t *state,
                            u8   **DEdash_out,
                            u8   **HLdash_out);
 
-static u8 call_bank_3_128k(chqstate_t *state, u16 HL);
-static void attract_mode_128k(chqstate_t *state);
+static void clear_screen(chqstate_t *state);
 
-static void bootstrap(chqstate_t *state);
+static void redefine_keys_48k(chqstate_t *state);
+static void keyscan_all(chqstate_t *state);
+static void define_a_key(chqstate_t *state);
+
+static void setup_interrupts(chqstate_t *state);
+static void reset_music(chqstate_t *state);
+static void next_pattern(chqstate_t *state);
+static void play_music_48k(chqstate_t *state);
+static void interrupt_entry(chqstate_t *state);
+static void playdrum_2(chqstate_t *state);
+static void noise(chqstate_t *state);
+
+static void load_stage_128k(chqstate_t *state);
+static void start_siren_128k(chqstate_t *state);
+static void play_siren_sfx_128k(chqstate_t *state);
+static void silence_audio_128k(chqstate_t *state);
+static void write_audio_registers_128k(chqstate_t *state);
+static void engine_sfx_from_speed_128k(chqstate_t *state);
+static void setup_turbo_sfx_128k(chqstate_t *state);
+static void play_turbo_sfx_128k(chqstate_t *state);
+static void play_speech_128k(chqstate_t *state, u8 Aindex);
+static void handle_perp_caught_128k(chqstate_t *state);
+static u8 call_bank_3_128k(chqstate_t *state, u16 HLroutine);
+static void page_128k(chqstate_t *state);
+static void reset_paging_128k(chqstate_t *state);
+static void attract_mode_128k(chqstate_t *state);
 
 /* ----------------------------------------------------------------------- */
 
 // $5C00
 static void end_screen(chqstate_t *state)
 {
+  // TODO
 }
 
 // $8014 (copied to that position in the original)
@@ -990,8 +1021,8 @@ static void bootstrap(chqstate_t *state)
     main_loop(state);
 
     // Call the 128K/bank 3 ?bootstrap routine.
-    //TODO if (state->mode_128k)
-    //TODO   call_bank_3_128k(0xC003);
+    if (state->mode_128k)
+      call_bank_3_128k(state, BANK3_ROUTINE_3);
   }
 }
 
@@ -9191,6 +9222,7 @@ lr_badf:
 // $BB69
 static void exit_fork(chqstate_t *state)
 {
+  // TODO
 }
 
 // The screen has the format 0b010BBLLLRRRCCCCC (B = band, L = scanline, R = row (group), C = column)
@@ -9485,21 +9517,25 @@ rm_set_curvature:
 // $C0E1
 static void prepare_tunnel(chqstate_t *state)
 {
+  // TODO
 }
 
 // $C15B
 static void draw_tunnel(chqstate_t *state, u8 *IY)
 {
+  // TODO
 }
 
 // $C2E7
 static void draw_road_scene_change(chqstate_t *state, u8 *IX, u8 *IY)
 {
+  // TODO
 }
 
 // $C452
 static void draw_road(chqstate_t *state)
 {
+  // TODO
 }
 
 // $C8BE
@@ -9540,6 +9576,7 @@ static void pre_shift_backdrop(chqstate_t *state)
 // $C8E3
 static void forked_road_plotter(chqstate_t *state)
 {
+  // TODO (enormous...)
 }
 
 // $CBA4
@@ -10070,82 +10107,195 @@ mdc_have_glyph:
 }
 
 // $ECDA
-// clear_screen
+static void clear_screen(chqstate_t *state)
+{
+  // TODO
+}
 
 // $ECF3
-// redefine_keys_48k
+static void redefine_keys_48k(chqstate_t *state)
+{
+  // TODO
+}
 
 // $ED4D
-// keyscan_all
+static void keyscan_all(chqstate_t *state)
+{
+  // TODO
+}
 
 // $ED6D
-// define_a_key
+static void define_a_key(chqstate_t *state)
+{
+  // TODO
+}
 
 // $EE40
-// setup_interrupts
+static void setup_interrupts(chqstate_t *state)
+{
+  // TODO
+}
 
 // $EE5E
-// reset_music
+static void reset_music(chqstate_t *state)
+{
+  // TODO
+}
 
 // $EE6E
-// next_pattern
+static void next_pattern(chqstate_t *state)
+{
+  // TODO
+}
 
 // $EE9E
-// play_music_48k
+static void play_music_48k(chqstate_t *state)
+{
+  // TODO
+}
 
 // $EF19
-// interrupt_entry
+static void interrupt_entry(chqstate_t *state)
+{
+  // TODO
+}
 
 // $EF22
-// playdrum_2
+static void playdrum_2(chqstate_t *state)
+{
+  // TODO
+}
 
 // $FC06
-// noise
+static void noise(chqstate_t *state)
+{
+  // TODO
+}
 
 // $F220
-// load_stage_128k
+static void load_stage_128k(chqstate_t *state)
+{
+  // TODO
+}
 
 // $F251
-// start_siren_128k
+static void start_siren_128k(chqstate_t *state)
+{
+  // TODO
+}
 
 // $F269
-// play_siren_sfx_128k
+static void play_siren_sfx_128k(chqstate_t *state)
+{
+  // TODO
+}
 
 // $F29D
-// silence_audio_128k
+static void silence_audio_128k(chqstate_t *state)
+{
+  // TODO
+}
 
 // $F2A2
-// write_audio_registers_128k
+static void write_audio_registers_128k(chqstate_t *state)
+{
+  // TODO
+}
 
 // $F2B6
-// engine_sfx_from_speed_128k
+static void engine_sfx_from_speed_128k(chqstate_t *state)
+{
+  // TODO
+}
 
 // $F2F1
-// setup_turbo_sfx_128k
+static void setup_turbo_sfx_128k(chqstate_t *state)
+{
+  // TODO
+}
 
 // $F2FA
-// play_turbo_sfx_128k
+static void play_turbo_sfx_128k(chqstate_t *state)
+{
+  u8  A;
+  u8 *HLpitch;
+
+  A = state->turbo_sfx_noise_pitch;
+  if (A == 0) {
+    engine_sfx_from_speed_128k(state); // exit via
+    return;
+  }
+  if (--A == 0)
+    return;
+
+  HLpitch = &state->ay_noise_pitch;
+  (*HLpitch)--;
+  if (*HLpitch) {
+    state->ay_chan_c_pitch = *HLpitch + 10;
+    state->ay_mixer &= 0x1B; // Set mixer to enable Tone C and Noise C
+    state->ay_chan_c_vol = 13;
+    return;
+  }
+
+  state->ay_mixer |= 0x24; // Set mixer to disable Tone C and Noise C
+  state->turbo_sfx_noise_pitch = 0;
+  engine_sfx_from_speed_128k(state); // exit via
+}
 
 // $F32E
 // speech_samples_table
 
 // $F342
-// play_speech_128k
+static void play_speech_128k(chqstate_t *state, u8 Aindex)
+{
+  // TODO
+}
 
 // $F39F
-// handle_perp_caught_128k
+static void handle_perp_caught_128k(chqstate_t *state)
+{
+  u8 Adelay;
+
+  Adelay = state->overlay_delay;
+  if (Adelay < 42)
+    return;
+
+  silence_audio_hook(state);
+
+  state->siren_enabled         = 0;
+  state->turbo_sfx_noise_pitch = 1;
+  state->overlay_delay         = 1;
+
+  call_bank_3_128k(state, BANK3_ROUTINE_6); /* was FALLTHROUGH */
+}
 
 // $F3B6
-static u8 call_bank_3_128k(chqstate_t *state, u16 HL)
+static u8 call_bank_3_128k(chqstate_t *state, u16 HLroutine)
 {
+  switch (HLroutine) {
+  case BANK3_ROUTINE_0:
+    break;
+  case BANK3_ROUTINE_3:
+    break;
+  case BANK3_ROUTINE_6:
+    break;
+  case BANK3_ROUTINE_9:
+    break;
+  }
   return 1;
 }
 
 // $F3E2
-// page_128k
+static void page_128k(chqstate_t *state)
+{
+  // Conv: Removed
+}
 
 // $F414
-// reset_paging_128k
+static void reset_paging_128k(chqstate_t *state)
+{
+  // Conv: Removed
+}
 
 // $F41B
 static void attract_mode_128k(chqstate_t *state)
