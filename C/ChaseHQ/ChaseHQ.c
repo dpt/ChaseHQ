@@ -10182,37 +10182,104 @@ static void load_stage_128k(chqstate_t *state)
 // $F251
 static void start_siren_128k(chqstate_t *state)
 {
-  // TODO
+  state->ay_chan_a_pitch = 140; // setting whole reg here
+  state->ay_chan_a_vol   = 14;
+  state->ay_chan_b_vol   = 12;
+  state->siren_pattern   = 0xAA;
+  state->siren_enabled   = 0xAA;
 }
 
 // $F269
 static void play_siren_sfx_128k(chqstate_t *state)
 {
-  // TODO
+  int carry = 0;
+  u8  pitch;   /* was A */
+  u8  pattern; /* was B */
+
+  if (state->siren_enabled == 0)
+    return;
+
+  pitch = state->ay_chan_a_pitch & 0xFF;
+  pattern = state->siren_pattern;
+  RLC(pattern);
+  if (!carry) {
+    // Decreasing
+    pitch -= 3;
+    if (pitch >= 90)
+      goto set_regs;
+  } else {
+    // Increasing
+    pitch += 3;
+    if (pitch < 140)
+      goto set_regs;
+  }
+  // Arrive here if new fine pitch is outside of 90..139.
+  state->siren_pattern = pattern;
+
+set_regs:
+  // Arrive here if new fine pitch is 90..139.
+  // CHECK Need to preserve high byte?
+  state->ay_chan_a_pitch = (state->ay_chan_a_pitch & 0xFF00) | pitch;
+  state->ay_chan_b_pitch = (state->ay_chan_b_pitch & 0xFF00) | (pitch - 4);
+  state->ay_mixer &= 0x3C; // enable tone A & B
+  write_audio_registers_128k(state); // exit via
 }
 
 // $F29D
 static void silence_audio_128k(chqstate_t *state)
 {
-  // TODO
+  state->ay_mixer = 0x3F; // all noise and tone channels disabled
+  write_audio_registers_128k(state); // was FALLTHROUGH
 }
 
 // $F2A2
 static void write_audio_registers_128k(chqstate_t *state)
 {
-  // TODO
+  const u8 *values; /* was HL */
+  u8        regno;  /* was A */
+
+  zxspectrum_t *speccy = state->speccy;
+
+  values = &state->ay_env_fine; // final AY reg soft copy
+  regno = 11; // reg 11
+  do {
+    speccy->out(speccy, 0xFFFD, regno);
+    speccy->out(speccy, 0xBFFD, *values--); // was OUTD
+  } while ((s8) --regno >= 0);
 }
 
 // $F2B6
 static void engine_sfx_from_speed_128k(chqstate_t *state)
 {
-  // TODO
+  u16 pitch;  /* was HL */
+  u16 delta;  /* was DE */
+  u8  volume; /* was A */
+
+  pitch = ~(state->speed >> 1);
+  // This is now part of the pitch divisor that we'll set later
+  if (state->gear)
+    // We're in high gear.
+      pitch <<= 1; // Double divisor in #REGhl to lower the pitch
+  pitch <<= 2; // Quadruple divisor in #REGhl to lower the pitch more
+  if (!state->tunnel_sfx) { // Conv: moved
+    delta = 0x190; // Not-in-tunnel base divisor (~277Hz)
+    volume = 15; // Not-in-tunnel volume
+  } else {
+    // We're in the tunnel
+    delta = 0x258; // In-tunnel base divisor (~185Hz)
+    volume = 12; // In-tunnel volume
+  }
+  pitch += delta; // Add speed divisor to base divisor
+  state->ay_chan_c_pitch = pitch; // Set Channel C pitch divisor (12-bit combined, fine and coarse registers)
+  state->ay_chan_c_vol = volume; // Set Channel C volume
+  state->ay_mixer &= 0x3B;
 }
 
 // $F2F1
 static void setup_turbo_sfx_128k(chqstate_t *state)
 {
-  // TODO
+  state->ay_noise_pitch        = 0x3C;
+  state->turbo_sfx_noise_pitch = 0x3C;
 }
 
 // $F2FA
@@ -10252,35 +10319,36 @@ static void play_speech_128k(chqstate_t *state, u8 Aindex)
     { 0x0ADC, 0xF48A }
   };
 
-  int       carry;
-  u8        Cport_lo;
-  u8        Hff;
-  u8        Lbf;
-  u8        Deight;
-  u16       DEdash_length;
-  const u8 *HLdash_data;
-  u8        Cdash;
-  u8        Asample;
-  u8        Bport_hi;
-  u8        Aregno;
+  zxspectrum_t *speccy = state->speccy;
+  int           carry = 0;
+  u8            Cport_lo;
+  u8            Hff;
+  u8            Lbf;
+  u8            Deight;
+  u16           DEdash_length;
+  const u8     *HLdash_samples;
+  u8            Cdash_iterations;
+  u8            Asample;
+  u8            Bport_hi;
+  u8            Aregno;
 
   // EX AF,AF' - Bank Aindex
   silence_audio_128k(state);
-  state->speccy->out(state->speccy, 0x7FFD, 4);
+  speccy->out(speccy, 0x7FFD, 4);
 
   Cport_lo = 0xFD;
   Hff      = 0xFF;
   Lbf      = 0xBF;
-  Deight        = 8; // Channel A volume register
+  Deight   = 8; // Channel A volume register
   // EXX - Bank
   // EX AF,AF' - Unbank Aindex
-  DEdash_length = speech_samples_table[Aindex].length;
-  HLdash_data   = &sound_samples[speech_samples_table[Aindex].data];
+  DEdash_length  = speech_samples_table[Aindex].length;
+  HLdash_samples = &sound_samples[speech_samples_table[Aindex].data];
 
   // There are two samples per byte so we iterate here.
   do {
-    Cdash = 2;
-    Asample = *HLdash_data;
+    Cdash_iterations = 2;
+    Asample = *HLdash_samples;
     // Get high nibble
     RR(Asample);
     RR(Asample);
@@ -10295,40 +10363,41 @@ static void play_speech_128k(chqstate_t *state, u8 Aindex)
 
       Bport_hi = Hff; // Load $FF into #REGb to set high byte of port
       Aregno = Deight; // Load 8 into #REGa
-      state->speccy->out(state->speccy, (Bport_hi << 8) | Cport_lo, Aregno); // OUT (C),A -- Write to $FFFD to select register 8: Channel A volume
+      speccy->out(speccy, (Bport_hi << 8) | Cport_lo, Aregno); // OUT (C),A -- Write to $FFFD to select register 8: Channel A volume
       Bport_hi = Lbf; // Load $BF into #REGb
       // EX AF,AF' - Unbank sample
-      state->speccy->out(state->speccy, (Bport_hi << 8) | Cport_lo, Asample); // OUT (C),A -- Write to $BFFD to write volume register
+      speccy->out(speccy, (Bport_hi << 8) | Cport_lo, Asample); // OUT (C),A -- Write to $BFFD to write volume register
       // EX AF,AF' - Bank sample again
 
       // Write sample as Channel B volume.
 
       Aregno++; // Increment #REGa from 8 to 9
       Bport_hi = Hff; // Load $FF into #REGb to set high byte of port
-      state->speccy->out(state->speccy, (Bport_hi << 8) | Cport_lo, Aregno); // OUT (C),A -- Write to $FFFD to select register 9: Channel B volume
+      speccy->out(speccy, (Bport_hi << 8) | Cport_lo, Aregno); // OUT (C),A -- Write to $FFFD to select register 9: Channel B volume
       Bport_hi = Lbf; // Load $BF into #REGb
       // EX AF,AF' - Unbank sample
-      state->speccy->out(state->speccy, (Bport_hi << 8) | Cport_lo, Asample); // OUT (C),A -- Write to $BFFD to write volume register
+      speccy->out(speccy, (Bport_hi << 8) | Cport_lo, Asample); // OUT (C),A -- Write to $BFFD to write volume register
       // EX AF,AF' - Bank sample again
 
       // Write sample as Channel C volume.
 
       Aregno++; // Increment #REGa from 9 to 10
       Bport_hi = Hff; // Load $FF into #REGb to set high byte of port
-      state->speccy->out(state->speccy, (Bport_hi << 8) | Cport_lo, Aregno); // OUT (C),A -- Write to $FFFD to select register 10: Channel C volume
+      speccy->out(speccy, (Bport_hi << 8) | Cport_lo, Aregno); // OUT (C),A -- Write to $FFFD to select register 10: Channel C volume
       Bport_hi = Lbf; // Load $BF into #REGb
       // EX AF,AF' - Unbank sample
-      state->speccy->out(state->speccy, (Bport_hi << 8) | Cport_lo, Asample); // OUT (C),A -- Write to $BFFD to write volume register
+      speccy->out(speccy, (Bport_hi << 8) | Cport_lo, Asample); // OUT (C),A -- Write to $BFFD to write volume register
       // EXX - Bank
 
+      // TODO Sort out delay handling
       // Delay for 19 DJNZ's.
-      state->speccy->stamp(state->speccy);
-      state->speccy->sleep(state->speccy, 19); // Delay loop (lower value => higher frequency)  TODO work out what 19 DJNZ's would take
+      speccy->stamp(speccy); // stamp at start of loop?
+      speccy->sleep(speccy, 19); // Delay loop (lower value => higher frequency)
 
-      Asample = *HLdash_data; // Load next sample (same byte, but next nibble)
+      Asample = *HLdash_samples; // Load next sample (same byte, but next nibble)
     }
-    while (--Cdash > 0); // Decrement nibble counter
-    HLdash_data++; // Advance to next byte of sample data
+    while (--Cdash_iterations > 0); // Decrement nibble counter
+    HLdash_samples++; // Advance to next byte of sample data
   }
   while (--DEdash_length > 0);
 

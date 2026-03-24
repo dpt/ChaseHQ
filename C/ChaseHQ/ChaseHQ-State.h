@@ -114,6 +114,9 @@ struct chqstate {
   // $5C00..$76EF
   const stage_t *stage;
 
+  // $8066 (SM) in play_siren_sfx_128k (relocated)
+  u8        siren_pattern;
+
   // $823B (SM) in play_engine_sfx_48k
   u8        engine_sfx_counter;
   // $8244 (SM) in play_engine_sfx_48k
