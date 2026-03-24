@@ -295,6 +295,17 @@ const transition_t transitions_e88e[8];
 const u8 square_transition_mask[5 * 8];
 const u8 diamond_transition_mask[6 * 8];
 
+const u8 messages_stop_the_tape[45];
+const u8 messages_input_methods[112];
+const u8 messages_redefine_keys[138];
+const u8 messages_test_mode[151];
+const u8 messages_cannot_be_remodified[127];
+
+const u8 key_names[10 * 8];
+const u8 sinclair_joy[5];
+const u8 cursor_joy[5];
+const u8 shocked[8];
+
 const u8 press_gear_messages[17];
 const u8 enter_for_options_messages[23];
 const u8 credits_messages_128[98];

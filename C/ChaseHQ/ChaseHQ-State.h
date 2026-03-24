@@ -591,6 +591,11 @@ struct chqstate {
   // $EF00
   u8        flipped[256];
 
+  // $EADC
+  u8        messages_key_string[5];
+  // $EE38
+  u8        temp_keydefs[8];
+
   // $F000
   u8        backbuffer[BACKBUFFER_LENGTH];
 };

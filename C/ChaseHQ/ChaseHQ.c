@@ -127,22 +127,32 @@
 // Return screen pointer given a Z80 address.
 #define ADDRTOSCREEN(addr)    (&state->speccy->screen.pixels[(addr) - SCREEN_START_ADDRESS])
 // Return attributes pointer given a Z80 address.
-#define ADDRTOATTRS(addr)    (&state->speccy->screen.attributes[(addr) - SCREEN_ATTRIBUTES_START_ADDRESS])
+#define ADDRTOATTRS(addr)     (&state->speccy->screen.attributes[(addr) - SCREEN_ATTRIBUTES_START_ADDRESS])
 // Return backbuffer[] pointer given a Z80 address.
 #define ADDRTOBACKBUF(addr)   (&state->backbuffer[(addr) - BACKBUFFER_START_ADDRESS])
 
-// Return byte offset of screen[] pointer.
-#define SCREENTOOFFSET(ptr)   ((ptr) - &state->speccy->screen.pixels[0])
-// Return byte offset of backbuffer[] pointer.
-#define BACKBUFTOOFFSET(ptr)  ((ptr) - &state->backbuffer[0])
+// Return a Z80 address of a screen[] pointer.
+#define SCREENTOADDR(ptr)     (SCREEN_START_ADDRESS + SCREENTOOFFSET(ptr))
+// Return a Z80 address of an attributes[] pointer.
+#define ATTRSTOADDR(ptr)      (SCREEN_ATTRIBUTES_START_ADDRESS + ATTRSTOFFSET(ptr))
 // Return a Z80 address of backbuffer[] pointer.
 #define BACKBUFTOADDR(ptr)    (BACKBUFFER_START_ADDRESS + BACKBUFTOOFFSET(ptr))
 
+// Return byte offset of a screen[] pointer.
+#define SCREENTOOFFSET(ptr)   ((ptr) - &state->speccy->screen.pixels[0])
+// Return byte offset of an attributes[] pointer.
+#define ATTRSTOOFFSET(ptr)    ((ptr) - &state->speccy->screen.attributes[0])
+// Return byte offset of a backbuffer[] pointer.
+#define BACKBUFTOOFFSET(ptr)  ((ptr) - &state->backbuffer[0])
+
 // Return screen[] pointer given byte offset.
 #define OFFSETTOSCREEN(off)   (&state->speccy->screen.pixels[off])
+// Return attributes[] pointer given byte offset.
+#define OFFSETTOATTRS(off)    (&state->speccy->screen.attributes[off])
 // Return backbuffer[] pointer given byte offset.
 #define OFFSETTOBACKBUF(off)  (&state->backbuffer[off])
 
+// Return if the given pointer is a valid backbuffer pointer.
 #define VALID_BACKBUF(ptr)    (((ptr) >= &state->backbuffer[0]) && ((ptr) < &state->backbuffer[BACKBUFFER_LENGTH]))
 
 // Return ptr incremented modulo 256.
@@ -245,6 +255,13 @@
 static u16 wordat(const u8 *addr)
 {
   return (addr[0] << 0) | (addr[1] << 8);
+}
+
+// Write an arbitrary native word
+static void setwordat(u8 *addr, u16 value)
+{
+  addr[0] = value;
+  addr[1] = value >> 8;
 }
 
 // Move to next screen row (downwards)
@@ -766,20 +783,24 @@ static void entrypt_48k(chqstate_t *state);
 static void entrypt_128k(chqstate_t *state);
 static void entrypt_common(chqstate_t *state, u8 Amode_128k, u8 Bnrelocs);
 
-static void menu_draw_char(chqstate_t *state,
-                           u8     Achar,
-                           u8     Fdash,
-                           u8     Cdash,
-                           u8    *DEdash,
-                           u8    *HLdash,
-                           u8   **DEdash_out,
-                           u8   **HLdash_out);
+void stop_the_tape_48k(chqstate_t *state);
+
+void menu_draw_strings(chqstate_t *state, const u8 *strings);
+const u8 *menu_draw_string(chqstate_t *state, const u8 *HLstring);
+static void menu_draw_char(u8   Achar,
+                           u8   Fdash,
+                           u8   Cdash,
+                           u8  *DEdash,
+                           u8  *HLdash,
+                           u8 **DEdash_out,
+                           u8 **HLdash_out);
 
 static void clear_screen(chqstate_t *state);
 
 static void redefine_keys_48k(chqstate_t *state);
-static void keyscan_all(chqstate_t *state);
-static void define_a_key(chqstate_t *state);
+static int keyscan_all(chqstate_t *state, u8 *Dkeydef_out);
+static void define_a_key(chqstate_t *state, u8 Bindex, u8 Cindex, u16 DEscreen);
+static u16 dak_move_down(u16 DE);
 
 static void setup_interrupts(chqstate_t *state);
 static void reset_music(chqstate_t *state);
@@ -10012,15 +10033,103 @@ static void entrypt_common(chqstate_t *state, u8 Amode_128k, u8 Bnrelocs)
   bootstrap(state);
 }
 
-// $EC2C
-static void menu_draw_char(chqstate_t *state,
-                           u8          Achar,  // ASCII
-                           u8          Fdash,  // dbl height if carry set
-                           u8          Cdash,  // attribute byte
-                           u8         *DEdash, // screen address
-                           u8         *HLdash, // attribute address
-                           u8        **DEdash_out,
-                           u8        **HLdash_out)
+/**
+ * $E8FE: "Stop the tape" handler (48K mode only)
+ *
+ * \param[in] state Pointer to game state.
+ */
+void stop_the_tape_48k(chqstate_t *state)
+{
+  // TODO
+}
+
+/**
+ * $EBF7: Draws menu strings until it hits a NUL byte.
+ *
+ * \param[in] state   Pointer to game state.
+ * \param[in] strings List of menu strings to draw. NUL terminated. (was HL)
+ */
+void menu_draw_strings(chqstate_t *state, const u8 *strings)
+{
+  do
+    strings = menu_draw_string(state, strings);
+  while (*strings != 0);
+}
+
+/**
+ * $EBFF: Draws a menu string
+ *
+ * A menu string has the structure: (byte: attribute byte, word: destination screen address, bytes: top bit set terminated ASCII string).
+ *
+ * \param[in] state    Pointer to game state.
+ * \param[in] HLstring Menu string to draw. (was HL)
+ * \return Address of next unconsumed byte.
+ */
+const u8 *menu_draw_string(chqstate_t *state, const u8 *HLstring)
+{
+  int carry = 0;
+  int banked_carry = 0;
+  u8  Cattribute;
+  u16 DEscr;
+  u16 HLattr;
+  u8  Aascii;
+
+  Cattribute = *HLstring;
+  RL(Cattribute); // left shift topmost bit to carry (double height flag)
+  banked_carry = carry;
+  // EX AF,AF' - Bank
+  SRL(Cattribute); // right
+  HLstring++;
+  DEscr = wordat(HLstring);
+  HLstring += 2;
+  // PUSH HLstring
+
+  /* Calculate attribute address from screen address */
+  HLattr = (0x5800 + ((DEscr >> 3) & 0x0300)) | (DEscr & 0xFF);
+  // EXX - Bank
+  // EX (SP),HLstring
+  // PUSH DEdash, BCdash
+  do {
+    Aascii = *HLstring & 0x7F;
+    // PUSH HLstring
+    u8 *scr = ADDRTOSCREEN(DEscr);
+    u8 *attr = ADDRTOATTRS(HLattr);
+    menu_draw_char(Aascii,
+                   banked_carry,
+                   Cattribute,
+                   scr,
+                   attr,
+                   &scr,
+                   &attr);
+    DEscr = SCREENTOADDR(scr);
+    HLattr = SCREENTOADDR(attr);
+    // POP HLstring
+  } while ((*HLstring++ & STREND) == 0);
+  // EXX - Unbank
+  // POP BC, DE, HLstring
+  // EXX - Bank
+
+  return HLstring;
+}
+
+/**
+ * $EC2C: Draw a character (menu system)
+ *
+ * \param[in]  Achar      ASCII character to draw
+ * \param[in]  Fdash      Double height if carry set
+ * \param[in]  Cdash      Attribute byte
+ * \param[in]  DEdash     Screen address
+ * \param[in]  HLdash     Attribute address
+ * \param[out] DEdash_out ...
+ * \param[out] HLdash_out ...
+ */
+static void menu_draw_char(u8   Achar,
+                           u8   Fdash,
+                           u8   Cdash,
+                           u8  *DEdash,
+                           u8  *HLdash,
+                           u8 **DEdash_out,
+                           u8 **HLdash_out)
 {
   const u8 *HLfont;       /* was HL */
   u8       *DEscreen;     /* was DE */
@@ -10110,25 +10219,190 @@ mdc_have_glyph:
 // $ECDA
 static void clear_screen(chqstate_t *state)
 {
-  // TODO
+  memset(ADDRTOATTRS(0x5900), 0, 0x200);
+  memset(ADDRTOSCREEN(0x4800), 0, 0x1000);
 }
 
 // $ECF3
 static void redefine_keys_48k(chqstate_t *state)
 {
-  // TODO
+  u16       DEscr;
+  u8        Biterations;
+  u8        Cindex;
+  u8        A;
+  const u8 *DEshocked;
+  const u8 *HLthing;
+
+  for (;;) {
+    clear_screen(state);
+
+    menu_draw_strings(state, &messages_redefine_keys[0]);
+
+    DEscr = 0x48D6;
+    Biterations = 8;
+    Cindex = 1;
+    do {
+      do {
+        // PUSH HL,DE,BC
+        play_music_48k(state);
+        // POP BC,DE,HL
+
+        // Wait for the keyboard to clear
+        A = ~state->speccy->in(state->speccy, port_BORDER_EAR_MIC) & 0x1F;
+      } while (A);
+
+      define_a_key(state, Biterations, Cindex, DEscr);
+      Cindex++;
+      // HL++; might be stray code
+    }
+    while (--Biterations > 0);
+
+    // All keys are now defined
+    Biterations = 20;
+    do
+      // PUSH BC
+      play_music_48k(state);
+      // POP BC
+    while (--Biterations > 0);
+
+    // Test if keys are "SHOCKED<ENTER>"
+    Biterations = 8;
+    DEshocked = &shocked[0];
+    HLthing = &state->temp_keydefs[0];
+    do
+      if (*DEshocked++ != *HLthing++)
+        return;
+    while (--Biterations > 0);
+
+    // Matched: Show the test mode screen
+    state->test_mode = 1;
+    clear_screen(state);
+    menu_draw_strings(state, &messages_test_mode[0]);
+
+    // Wait for any key
+    for (;;) {
+      play_music_48k(state);
+      A = ~state->speccy->in(state->speccy, port_BORDER_EAR_MIC) & 0x1F;
+      if (A)
+        break;
+    }
+  }
 }
 
-// $ED4D
-static void keyscan_all(chqstate_t *state)
+/**
+ * $ED4D: Keyscan
+ *
+ * \param[in]  state Pointer to game state.
+ * \param[out] Dkeydef_out A keydef of the form 0bkkkkkrrr (k=key, r=row).
+ * \return Non-zero if keys are pressed. Zero otherwise.
+ */
+static int keyscan_all(chqstate_t *state, u8 *Dkeydef_out)
 {
-  // TODO
+  int carry = 0;
+  u8  Dflag;
+  u8  Ekeyandrow;
+  u8  Bport_hi;
+  u8  Cport_lo;
+  u8  Akeys;
+  u8  Hkeys;
+  u8  A;
+
+  Dflag      = 0xFF;
+  Ekeyandrow = 0x2F; // first keydef to try?
+  Bport_hi   = 0xFE;
+  Cport_lo   = 0xFE;
+
+  do {
+    Akeys = ~state->speccy->in(state->speccy, (Bport_hi << 8) | Cport_lo) & 0x1F;
+    if (Akeys) {
+      if (++Dflag)
+        return 1; // Keys were pressed
+
+      Hkeys = Akeys;
+      A = Ekeyandrow;
+      do {
+        A -= 8;
+        SRL(Hkeys);
+      } while (carry);
+      if (A)
+        return 1; // Additional bits are set
+
+      Dflag = A;
+    }
+    Ekeyandrow--;
+    RLC(Bport_hi);
+  } while (carry);
+
+  return 0; // No keys were pressed
 }
 
-// $ED6D
-static void define_a_key(chqstate_t *state)
+/**
+ * $ED6D: Defines a single key
+ *
+ * \param[in] state Pointer to game state.
+ * \param[in] Bindex Index of ?.
+ * \param[in] Cindex Key index we're defining.
+ * \param[in] DEscreen Screen address to draw at.
+ */
+static void define_a_key(chqstate_t *state, u8 Bindex, u8 Cindex, u16 DEscreen)
 {
-  // TODO
+  int       carry;
+  u8        Dkeydef;
+  u8       *HLtmpkeys;
+  const u8 *HLkeynames;
+  int       Biterations;
+  u8        Akeydef;
+
+  // PUSH DEscreen,BC -- index
+dak_loop1:
+  do {
+    do {
+      play_music_48k(state);
+      carry = keyscan_all(state, &Dkeydef);
+    } while (carry);
+    Dkeydef++;
+  } while (Dkeydef == 0);
+  Dkeydef--;
+  Akeydef = Dkeydef;
+  // POP BC -- get Cindex back
+  // PUSH BC -- save index in Cindex
+  HLtmpkeys = &state->temp_keydefs[0];
+  Biterations = Cindex - 1;
+  // Checking for existing uses of that key
+  if (Biterations)
+    do {
+      if (Akeydef == *HLtmpkeys)
+        goto dak_loop1; // Already used - try again
+      HLtmpkeys++;
+    } while (--Biterations > 0);
+  // POP BC -- get Cindex back
+  // PUSH BC -- retrieve index
+  state->temp_keydefs[Cindex] = Akeydef;
+  HLkeynames = &key_names[(Akeydef & 7) * 10 + (Akeydef >> 3) * 2]; // row + key
+  // POP BC,DE
+  // PUSH BC,DE
+  state->messages_key_string[0] = 0xC7; // Conv: added
+  setwordat(&state->messages_key_string[1], DEscreen); // was $EADD
+  state->messages_key_string[3] = *HLkeynames++;
+  state->messages_key_string[4] = *HLkeynames | STREND;
+  menu_draw_string(state, &state->messages_key_string[0]);
+  // POP DE
+  DEscreen = dak_move_down(DEscreen);
+  // POP BC
+  if (Bindex == 4)
+    DEscreen = dak_move_down(DEscreen);
+}
+
+// $EDCC
+static u16 dak_move_down(u16 DE)
+{
+  u8 E;
+  u8 D;
+
+  E = (DE & 0xFF) + 32;
+  D = (DE >> 8)   + 8;
+
+  return (D << 8) | E;
 }
 
 // $EE40

@@ -4625,6 +4625,165 @@ const u8 diamond_transition_mask[6 * 8] = {
 
 /* ----------------------------------------------------------------------- */
 
+// $E9B4
+const u8 messages_stop_the_tape[45] = {
+  attribute_GREEN_OVER_BLACK,
+  TWOBYTES(0x488A),
+  'S', 'T', 'O', 'P', ' ', 'T', 'H', 'E', ' ', 'T', 'A', 'P', 'E' | STREND,
+  attribute_CYAN_OVER_BLACK,
+  TWOBYTES(0x5044),
+  'P', 'R', 'E', 'S', 'S', ' ', 'A', 'N', 'Y', ' ', 'K', 'E', 'Y', ' ', 'T', 'O', ' ', 'C', 'O', 'N', 'T', 'I', 'N', 'U', 'E' | STREND,
+  0 // end marker
+};
+
+// $E9E1
+const u8 messages_input_methods[112] = {
+  attribute_GREEN_OVER_BLACK,
+  TWOBYTES(0x484B),
+  'C', 'H', 'A', 'S', 'E', ' ', 'H', '.', 'Q', '.' | STREND,
+  attribute_CYAN_OVER_BLACK,
+  TWOBYTES(0x48C6),
+  '1', '.', ' ', 'S', 'I', 'N', 'C', 'L', 'A', 'I', 'R', ' ', 'J', 'O', 'Y', 'S', 'T', 'I', 'C', 'K' | STREND,
+  attribute_CYAN_OVER_BLACK,
+  TWOBYTES(0x5006),
+  '2', '.', ' ', 'C', 'U', 'R', 'S', 'O', 'R', ' ', 'J', 'O', 'Y', 'S', 'T', 'I', 'C', 'K' | STREND,
+  attribute_CYAN_OVER_BLACK,
+  TWOBYTES(0x5046),
+  '3', '.', ' ', 'K', 'E', 'M', 'P', 'S', 'T', 'O', 'N', ' ', 'J', 'O', 'Y', 'S', 'T', 'I', 'C', 'K' | STREND,
+  attribute_CYAN_OVER_BLACK,
+  TWOBYTES(0x5086),
+  '4', '.', ' ', 'K', 'E', 'Y', 'B', 'O', 'A', 'R', 'D' | STREND,
+  attribute_CYAN_OVER_BLACK,
+  TWOBYTES(0x50C6),
+  '5', '.', ' ', 'D', 'E', 'F', 'I', 'N', 'E', ' ', 'K', 'E', 'Y', 'S' | STREND,
+  0 // end marker
+};
+
+// $EA52
+const u8 messages_redefine_keys[138] = {
+  attribute_RED_OVER_BLACK,
+  TWOBYTES(0x4849),
+  'R', 'E', 'D', 'E', 'F', 'I', 'N', 'E', ' ', ' ', 'K', 'E', 'Y', 'S' | STREND,
+  0xC6,  //attribute_BRIGHT_YELLOW_OVER_BLACK + single height bit
+  TWOBYTES(0x48C9),
+  'G', 'E', 'A', 'R', '.', '.', '.', '.', '.', '.', '.', '.' | STREND,
+  0xC6,
+  TWOBYTES(0x48E9),
+  'A', 'C', 'C', 'E', 'L', 'E', 'R', 'A', 'T', 'E', '.', '.' | STREND,
+  0xC6,
+  TWOBYTES(0x5009),
+  'B', 'R', 'A', 'K', 'E', '.', '.', '.', '.', '.', '.', '.' | STREND,
+  0xC6,
+  TWOBYTES(0x5029),
+  'L', 'E', 'F', 'T', '.', '.', '.', '.', '.', '.', '.', '.' | STREND,
+  0xC6,
+  TWOBYTES(0x5049),
+  'R', 'I', 'G', 'H', 'T', '.', '.', '.', '.', '.', '.', '.' | STREND,
+  0xC4,
+  TWOBYTES(0x5089),
+  'Q', 'U', 'I', 'T', '.', '.', '.', '.', '.', '.', '.', '.' | STREND,
+  0xC4,
+  TWOBYTES(0x50A9),
+  'P', 'A', 'U', 'S', 'E', '.', '.', '.', '.', '.', '.', '.' | STREND,
+  0xC4,
+  TWOBYTES(0x50C9),
+  'T', 'U', 'R', 'B', 'O', '.', '.', '.', '.', '.', '.', '.' | STREND,
+  0
+};
+
+// $EAE1
+const u8 messages_test_mode[151] = {
+  0xC1,
+  TWOBYTES(0x4000),
+  'T', 'E', 'S', 'T' | STREND,
+  attribute_RED_OVER_BLACK,
+  TWOBYTES(0x4824),
+  'C', 'H', 'A', 'S', 'E', ' ', 'H', '.', 'Q', '.', ' ', ' ', ' ', ' ', ' ', 'T', 'E', 'S', 'T', ' ', 'M', 'O', 'D', 'E' | STREND,
+  0xC5,
+  TWOBYTES(0x5000),
+  'I', 'N', ' ', 'G', 'A', 'M', 'E', '.', '.', '.' | STREND,
+  0xC4,
+  TWOBYTES(0x5041),
+  'P', 'R', 'E', 'S', 'S', ' ', '1', '.', '.', '.', '.', '.', '.', '.', ' ', 'R', 'E', 'S', 'T', 'A', 'R', 'T', ' ', 'L', 'E', 'V', 'E', 'L', '.' | STREND,
+  0xC4,
+  TWOBYTES(0x5067),
+  '2', '.', '.', '.', '.', '.', '.', '.', ' ', 'N', 'E', 'X', 'T', ' ', 'L', 'E', 'V', 'E', 'L', '.' | STREND,
+  0xC4,
+  TWOBYTES(0x5087),
+  '3', '.', '.', '.', '.', '.', '.', '.', ' ', 'E', 'N', 'D', ' ', 'S', 'C', 'R', 'E', 'E', 'N', '.' | STREND,
+  0xC4,
+  TWOBYTES(0x50A7),
+  '4', '.', '.', '.', '.', '.', '.', '.', ' ', 'E', 'X', 'T', 'R', 'A', ' ', 'C', 'R', 'E', 'D', 'I', 'T', '.' | STREND,
+  0
+};
+
+// $EB78
+const u8 messages_cannot_be_remodified[127] = {
+  attribute_RED_OVER_BLACK,
+  TWOBYTES(0x484B),
+  'C', 'H', 'A', 'S', 'E', ' ', ' ', 'H', '.', 'Q', '.' | STREND,
+  0xC6,
+  TWOBYTES(0x48C2),
+  'P', 'L', 'E', 'A', 'S', 'E', ' ', 'N', 'O', 'T', 'E', ' ', 'C', 'O', 'N', 'T', 'R', 'O', 'L', ' ', 'O', 'P', 'T', 'I', 'O', 'N', 'S' | STREND,
+  0xC6,
+  TWOBYTES(0x48E5),
+  'C', 'A', 'N', 'N', 'O', 'T', ' ', 'B', 'E', ' ', 'R', 'E', 'M', 'O', 'D', 'I', 'F', 'I', 'E', 'D', '.' | STREND,
+  0xC5,
+  TWOBYTES(0x5041),
+  'A', 'R', 'E', ' ', 'Y', 'O', 'U', ' ', 'H', 'A', 'P', 'P', 'Y', ' ', 'W', 'I', 'T', 'H', ' ', 'Y', 'O', 'U', 'R', ' ', 'C', 'H', 'O', 'I', 'C', 'E', '.' | STREND,
+  0x07,
+  TWOBYTES(0x5085),
+  'P', 'R', 'E', 'S', 'S', ' ', 'Y', 'E', 'S', '(', 'Y', ')', ' ', 'O', 'R', ' ', 'N', 'O', '(', 'N', ')' | STREND,
+  0
+};
+
+/* ----------------------------------------------------------------------- */
+
+#define KEYDEF(key, row) (((key) << 3) | (row))
+
+// $EDD6
+const u8 key_names[10 * 8] =
+  "B N M SYSP"
+  "H J K L EN"
+  "Y U I O P "
+  "6 7 8 9 0 "
+  "5 4 3 2 1 "
+  "T R E W Q "
+  "G F D S A "
+  "V C X Z CP";
+
+// $EE26
+const u8 sinclair_joy[5] = {
+  KEYDEF(4, 3), // 0
+  KEYDEF(3, 3), // 9
+  KEYDEF(2, 3), // 8
+  KEYDEF(0, 3), // 6
+  KEYDEF(1, 3)  // 7
+};
+
+// $EE2B
+const u8 cursor_joy[5] = {
+  KEYDEF(4, 3), // 0
+  KEYDEF(1, 3), // 7
+  KEYDEF(0, 3), // 6
+  KEYDEF(0, 4), // 5
+  KEYDEF(2, 3)  // 8
+};
+
+// $EE30
+const u8 shocked[8] = {
+  KEYDEF(3,6), // S
+  KEYDEF(0,1), // H
+  KEYDEF(3,2), // O
+  KEYDEF(1,7), // C
+  KEYDEF(2,1), // K
+  KEYDEF(2,5), // E
+  KEYDEF(2,6), // D
+  KEYDEF(4,1)  // <ENTER>
+};
+
+/* ----------------------------------------------------------------------- */
+
 // $F491
 const u8 press_gear_messages[17] = {
   DRAWCHARSTYLE_SINGLE,
