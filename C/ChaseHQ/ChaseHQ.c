@@ -798,17 +798,23 @@ static void menu_draw_char(u8   Achar,
 static void clear_screen(chqstate_t *state);
 
 static void redefine_keys_48k(chqstate_t *state);
-static int keyscan_all(chqstate_t *state, u8 *Dkeydef_out);
+static u8 keyscan_all(chqstate_t *state, u8 *Dkeydef_out);
 static void define_a_key(chqstate_t *state, u8 Bindex, u8 Cindex, u16 DEscreen);
 static u16 dak_move_down(u16 DE);
 
 static void setup_interrupts(chqstate_t *state);
 static void reset_music(chqstate_t *state);
 static void next_pattern(chqstate_t *state);
+static void next_pattern_at_addr(chqstate_t *state, const u8 *HLpataddr);
 static void play_music_48k(chqstate_t *state);
+static void pm_wait_for_interrupt(chqstate_t *state);
 static void interrupt_entry(chqstate_t *state);
-static void playdrum_2(chqstate_t *state);
-static void noise(chqstate_t *state);
+static void playdrum_2(chqstate_t *state, u8 Aspeed);
+static void playdrum_1(chqstate_t *state, u8 Aspeed);
+static void playdrum_start(chqstate_t *state, u8 Aspeed, u8 Dlength, const u8 *HLdata);
+static void playdrum_bank_go(chqstate_t *state, u8 Ddash_length, const u8 *HLdash_data);
+static void playdrum_go(chqstate_t *state, u8 Dlength, const u8 *HLdata);
+static void noise(chqstate_t *state, u8 Aparam);
 
 static void load_stage_128k(chqstate_t *state);
 static void start_siren_128k(chqstate_t *state);
@@ -834,7 +840,7 @@ static void end_screen(chqstate_t *state)
 }
 
 // $8014 (copied to that position in the original)
-// $F220 page_in_stage_128k
+// $F220 load_stage_128k
 static void load_stage(chqstate_t *state)
 {
   u8 wanted; /* was A */
@@ -1169,7 +1175,7 @@ static void main_loop(chqstate_t *state)
           if (quit_state > 0) {
             // Quitting the game is in progress.
             if (quit_state == QUITSTATE_START) {
-              escape_scene(state); // exit via
+              escape_scene(state); /* exit via */
               return;
             }
 
@@ -1221,7 +1227,7 @@ static void cpu_driver(chqstate_t *state)
   move_hero_car(state);
   check_scenery_collisions(state);
   draw_everything_else(state);
-  animate_hero_car(state); // exit via
+  animate_hero_car(state); /* exit via */
 }
 
 // $858C
@@ -1326,7 +1332,7 @@ static int run_pregame_screen_loop(chqstate_t *state)
     if (state->chatter_state < CHATTERSTATE_STOP) {
       if (keyscan(state) & USERINPUT_FIRE) {
         drive_chatter_stop(state);
-        play_start_noise(state); // exit via
+        play_start_noise(state); /* exit via */
         return 0; // stop
       }
     } else {
@@ -1369,7 +1375,7 @@ static void reveal_perp_car(chqstate_t *state)
               ADDRTOBACKBUF(0xF4CD),
               height,
               width_bytes,
-              bitmap); // exit via
+              bitmap); /* exit via */
 }
 
 // $860F
@@ -1646,7 +1652,7 @@ static void set_up_stage(chqstate_t        *state,
   set_up_stage_reset_lights(ADDRTOATTRS(0x583B));
 
   silence_audio_hook(state);
-  update_scoreboard(state); // exit via
+  update_scoreboard(state); /* exit via */
 }
 
 // $8860 (pulled out of set_up_stage above)
@@ -1701,7 +1707,7 @@ static void check_user_input(chqstate_t *state)
     *pboost = 60; // set 60 ticks of boost
 
     start_chatter(state, 2, &chatterblk_turbo[0]);
-    setup_engine_sfx_hook(state); // exit via
+    setup_engine_sfx_hook(state); /* exit via */
   } else {
     // Conv: check_user_input_quit_key hoisted out from here.
 
@@ -2013,7 +2019,7 @@ phase2:
 start_phase_3:
   state->perp_caught_phase = 3;
   state->handle_perp_caught_delay = 4;
-  fill_attributes(state); // exit via
+  fill_attributes(state); /* exit via */
   return 0;
 
 phase3:
@@ -2569,7 +2575,7 @@ static void draw_mugshot(chqstate_t *state,
     backbuf = prevbufrow(backbuf);
   }
 
-  plot_face_attributes(state, attrs, orig_mugshot); // exit via
+  plot_face_attributes(state, attrs, orig_mugshot); /* exit via */
 }
 
 /**
@@ -2606,7 +2612,7 @@ static void draw_smash_bar(chqstate_t *state)
 
   nsolid = TotalBarHeight - BorderHeight - nsmashsegs *
            SegmentHeight; // Number of solid rows to draw at the top
-  (void) draw_smash_bar_solid_bit(state, nsolid, backbuf); // exit via
+  (void) draw_smash_bar_solid_bit(state, nsolid, backbuf); /* exit via */
 }
 
 /**
@@ -2741,7 +2747,7 @@ continue_after_left_hand_done:
   Cdash       = 0; // this must be passed in
   height      = arrow_defn->height;
   bitmap      = arrow_defn->bitmap;
-  draw_part_entry2(state, height, width_bytes, y, x, bitmap, Bdash_flip_flag, Cdash, Edash_bitmap_stride); // exit via
+  draw_part_entry2(state, height, width_bytes, y, x, bitmap, Bdash_flip_flag, Cdash, Edash_bitmap_stride); /* exit via */
   return;
 
 right_hand_stuff:
@@ -3179,7 +3185,7 @@ static void draw_object_left_helicopter_entrypt(chqstate_t  *state,
   A -= E;
   if (!carry) {
     if (A >= 8) {
-      draw_object_930e_entrypt(state, A, HLlod); // exit via
+      draw_object_930e_entrypt(state, A, HLlod); /* exit via */
       return;
     }
 
@@ -3207,7 +3213,7 @@ static void draw_object_left_helicopter_entrypt(chqstate_t  *state,
   D = HLlod->flags >> 1; // checking LODFLAG_FLIPPED?
   if (D == 0) { /* was JP Z - check */
     // FIX IY
-    // draw_object_9333(state, carry, C, E, HLlod, IY); // exit via
+    // draw_object_9333(state, carry, C, E, HLlod, IY); /* exit via */
     return;
   }
 
@@ -3445,7 +3451,7 @@ _939c:
       goto _93df;
     // EX AF,AF'
     if (carry) {
-      plot_masked_sprite_inverted(state, A=width_bytes...); // exit via
+      plot_masked_sprite_inverted(state, A=width_bytes...); /* exit via */
       return;
     }
     goto _9479;
@@ -3454,14 +3460,14 @@ _939c:
   // EX AF,AF'
   if (Z) {
     if (carry)
-      draw_part_entry3(state, ...); // exit via
+      draw_part_entry3(state, ...); /* exit via */
     else
-      plot_sprite(state, ...); // exit via
+      plot_sprite(state, ...); /* exit via */
   } else {
     if (carry)
-      plot_masked_sprite_flipped(state, ...); // exit via
+      plot_masked_sprite_flipped(state, ...); /* exit via */
     else
-      plot_sprite_flipped(state, ...); // exit via
+      plot_sprite_flipped(state, ...); /* exit via */
   }
   return;
 
@@ -3550,7 +3556,7 @@ _9474:
                      B, // height
                      DE, // bitmap_stride
                      HL, // bitmap
-                     HLdash /* backbuf */); // exit via
+                     HLdash /* backbuf */); /* exit via */
   return;
 
 _9479:
@@ -3931,7 +3937,7 @@ static u8 rng(chqstate_t *state)
   u8  A;
 
   seed = &state->rng_seed[0];
-  A = *seed - 0x8D;
+  A = *seed - 141;
   *seed++ = A;
   *seed += 3;
   A += *seed++;
@@ -3994,7 +4000,7 @@ static void drive_chatter(chqstate_t *state)
     goto do_noise_effect;
   if (--chatter_state == 0) { // stopping (3)
     if (--state->noise_counter) {
-      draw_noise_effect(state, state->noise_counter); // exit via
+      draw_noise_effect(state, state->noise_counter); /* exit via */
       return;
     }
 
@@ -4011,14 +4017,14 @@ static void drive_chatter(chqstate_t *state)
   state->chatter_cursor_blink = rotating;
   x = 0xFF; // ie -1
   if (carry)
-    plot_mini_font_cursor_on(state, x, character); // exit via
+    plot_mini_font_cursor_on(state, x, character); /* exit via */
   else
-    plot_mini_font_cursor_off(state, x, character); // exit via
+    plot_mini_font_cursor_off(state, x, character); /* exit via */
   return;
 
 do_noise_effect:
   if (state->noise_counter) {
-    drive_noise_effect(state, state->noise_counter); // exit via
+    drive_noise_effect(state, state->noise_counter); /* exit via */
     return;
   }
   delay = state->chatter_delay;
@@ -4034,15 +4040,15 @@ do_noise_effect:
   x = state->message_x - 1;
   RR(B);
   if (carry)
-    plot_mini_font_cursor_on(state, x, character); // exit via
+    plot_mini_font_cursor_on(state, x, character); /* exit via */
   else
-    plot_mini_font_cursor_off(state, x, character); // exit via
+    plot_mini_font_cursor_off(state, x, character); /* exit via */
   return;
 
 clear_line:
   x = state->message_x;
   if (x) {
-    pc_clear_line(state, x); // exit via
+    pc_clear_line(state, x); /* exit via */
     return;
   }
 
@@ -4054,7 +4060,7 @@ read_message:
     return;
   }
   if (chattercmd != CHATTERCMD_PAUSE) {
-    pc_chatter_message(state, chatterblk); // exit via
+    pc_chatter_message(state, chatterblk); /* exit via */
     return;
   }
   // Conv: The next byte is no longer an address but an index into table of
@@ -4069,7 +4075,7 @@ starting:
 
 clear:
   clear_message_line(state);
-  drive_noise_effect(state, 4); // exit via
+  drive_noise_effect(state, 4); /* exit via */
 }
 
 /**
@@ -4081,7 +4087,7 @@ static void drive_chatter_stop(chqstate_t *state)
 {
   state->noise_counter = 4;
   state->chatter_state = CHATTERSTATE_STOP;
-  clear_message_line(state); // exit via
+  clear_message_line(state); /* exit via */
 }
 
 /**
@@ -4195,7 +4201,7 @@ static void drive_noise_effect(chqstate_t *state, u8 counter)
 {
   state->noise_counter = --counter;
   if (counter == 0)
-    print_chatter(state); // exit via
+    print_chatter(state); /* exit via */
   else
     draw_noise_effect(state, counter); /* was FALLTHROUGH */
 }
@@ -4564,7 +4570,7 @@ update_remaining_time:
   // When 15s remain Nancy warns that time is running out.
   if (time_bcd == 0x15)
     // Note: This passes time_bcd as the priority which is 21.
-    start_chatter(state, time_bcd, chatterblk_nancy_time_running_out); // exit via
+    start_chatter(state, time_bcd, chatterblk_nancy_time_running_out); /* exit via */
   return;
 
 check_time_up:
@@ -4586,7 +4592,7 @@ check_credits:
     return;
 
   if (state->credits == 0) {
-    check_user_input_quit_key(state); // exit via
+    check_user_input_quit_key(state); /* exit via */
   } else {
     state->credits--;
     state->credit_n[7]   = (state->credits + '0') | STREND;
@@ -4655,7 +4661,7 @@ check_restart:
 // Extracted from above
 static void play_start_noise(chqstate_t *state)
 {
-  play_speech_hook(state, 5); // exit via
+  play_speech_hook(state, 5); /* exit via */
 }
 
 // $9CC2
@@ -4678,7 +4684,7 @@ static void speed_score(chqstate_t *state)
   // E = A;
   A += carry;
   DAA(A, &carry);
-  increment_score(state, A, 0, 0); // exit via
+  increment_score(state, A, 0, 0); /* exit via */
 }
 
 // $9CD6
@@ -5434,7 +5440,7 @@ static void check_scenery_collisions(chqstate_t *state)
   if (state->fork_visible) {
     fork_countdown = state->fork_countdown;
     if (fork_countdown == 0) {
-      check_fork_scenery_collisions(state, HL, DE); // exit via
+      check_fork_scenery_collisions(state, HL, DE); /* exit via */
       return;
     }
 
@@ -5505,7 +5511,7 @@ store_off_road:
     Adash = 20;
     // EX AF,AF'
     Aflip = C & 1;
-    scenery_hit(state, Aflip, Adash); // exit via
+    scenery_hit(state, Aflip, Adash); /* exit via */
     return;
   }
 
@@ -5556,7 +5562,7 @@ csc_a43b:
     goto csc_check_left;
   Adash = A; // EX AF,AF'  unbank(?) road buf offset
   Aflip = 0;
-  csc_hit_scenery(state, Aflip, Adash); // exit via
+  csc_hit_scenery(state, Aflip, Adash); /* exit via */
   return;
 
 csc_check_left:
@@ -5674,7 +5680,7 @@ set_off_road:
 
     pos2 = state->table_ea00[127];
     if (pos2 < hit_max_or_min && pos2 >= hit_min_or_max)
-      csc_hit_scenery(state, 0, 0x8C); // exit via
+      csc_hit_scenery(state, 0, 0x8C); /* exit via */
   } else {
     // Right fork was taken, short pole object is on left hand of road.
     shortpoleobj = state->stage->addrof_left_hand_short_pole_object;
@@ -5685,7 +5691,7 @@ set_off_road:
 
     pos2 = state->table_ea00[126];
     if (pos2 >= hit_max_or_min && pos2 < hit_min_or_max)
-      csc_hit_scenery(state, 1, 0x8C); // exit via
+      csc_hit_scenery(state, 1, 0x8C); /* exit via */
   }
 }
 
@@ -6145,7 +6151,7 @@ pb_a7be:
   add_bonus(state, 0, Ebonus_mid, Dbonus_hi);
   state->pb_delay = 5; // set delay counter to 5 turns
   start_chatter(state, 5, &chatterblk_raymond_smash[0]);
-  start_sfx(state, EFFECT_CAR_HIT, 1); /* priority 1 */ // exit via
+  start_sfx(state, EFFECT_CAR_HIT, 1); /* priority 1 */ /* exit via */
 
   smash(state); // Conv: Direct call rather than stack push
   if (smash_twice)
@@ -6346,7 +6352,7 @@ void hazard_handler(chqstate_t *state, hazard_t *IX)
   // Crashed
   scenery_hit(state, tbd7, 0x96);
   start_chatter(state, 3, &chatterblk_raymond_random_yelps[0]);
-  start_sfx(state, EFFECT_CAR_HIT, 2); /* priority 2 */ // exit via
+  start_sfx(state, EFFECT_CAR_HIT, 2); /* priority 2 */ /* exit via */
 }
 
 // $A955
@@ -6504,17 +6510,17 @@ dss_lods:
 
     // So it's zero
     if (A >= 128) {
-      draw_object_right_helicopter_entrypt(state, A, HLlod); // exit via
+      draw_object_right_helicopter_entrypt(state, A, HLlod); /* exit via */
     } else {
       A += E;
-      draw_object_left_helicopter_entrypt(state, A, HLlod); // exit via
+      draw_object_left_helicopter_entrypt(state, A, HLlod); /* exit via */
     }
   } else {
     A += E;
     if (A >= E) //carry? check
       return;
 
-    draw_object_left_helicopter_entrypt(state, A, HLlod);  // exit via
+    draw_object_left_helicopter_entrypt(state, A, HLlod);  /* exit via */
   }
 }
 
@@ -6603,10 +6609,10 @@ static void draw_helicoper_part(chqstate_t             *state,
       return;
 
     if (Abot >= 0x80) { // or -ve?
-      draw_object_right_helicopter_entrypt(state, Abot, HLlod); // exit via
+      draw_object_right_helicopter_entrypt(state, Abot, HLlod); /* exit via */
     } else {
       Abot += Bwidth;
-      draw_object_left_helicopter_entrypt(state, Abot, HLlod); // exit via
+      draw_object_left_helicopter_entrypt(state, Abot, HLlod); /* exit via */
     }
   } else {
     carry = (Abot + Bwidth) > 255;
@@ -6614,7 +6620,7 @@ static void draw_helicoper_part(chqstate_t             *state,
     if (!carry)
       return;
 
-    draw_object_left_helicopter_entrypt(state, Abot, HLlod); // exit via
+    draw_object_left_helicopter_entrypt(state, Abot, HLlod); /* exit via */
   }
 }
 
@@ -8005,10 +8011,10 @@ static void ahc_check_hand_flag(chqstate_t *state)
 
     // Avoid the hand animation if turning hard?
     if (state->turn_speed != 2)
-      draw_crash(state, 36, Bdash, Cdash); // exit via
+      draw_crash(state, 36, Bdash, Cdash); /* exit via */
     else
       // Otherwise turn_speed is 2 (turn hard).
-      draw_crash(state, state->flip_car + 37, Bdash, Cdash); // exit via
+      draw_crash(state, state->flip_car + 37, Bdash, Cdash); /* exit via */
     return;
   }
 
@@ -8048,7 +8054,7 @@ static void ahc_check_hand_flag(chqstate_t *state)
   if (Ahand_flag < 4) {
     // A < 4
     Ahand_flag = ++Chand_frame;
-    draw_cherry_b699(state, Ahand_flag); // exit via
+    draw_cherry_b699(state, Ahand_flag); /* exit via */
   } else {
     state->cherry_light = 1;
   }
@@ -8074,7 +8080,7 @@ static void start_chase(chqstate_t *state)
   // Show the "SIGHTING OF TARGET VEHICLE" message
   setup_overlay_messages(state, &sighting_message[0]);
 
-  start_siren_hook(state); // exit via
+  start_siren_hook(state); /* exit via */
 }
 
 // $B4F0
@@ -8093,7 +8099,7 @@ static void smash(chqstate_t *state)
 
   hits = state->smash_counter + 1;
   if (hits >= 20) {
-    fully_smashed(state); // exit via
+    fully_smashed(state); /* exit via */
     return;
   }
   if (hits == 19)
@@ -8383,7 +8389,7 @@ static void draw_smoke(chqstate_t *state, u8 Aanim_frame, u8 Adash_flip_flag)
             HLbitmap,
             Bdash_flip_flag,
             Cdash,
-            Edash_width_bytes); // exit via
+            Edash_width_bytes); /* exit via */
 }
 
 // $B67C
@@ -9452,7 +9458,7 @@ static void read_map(chqstate_t *state)
     rm_cycle_buffer_offset(state, pfast_counter); /* was fallthrough */
 
   state->allow_spawning += allow_spawning;
-  check_hazard_collisions(state); // exit via
+  check_hazard_collisions(state); /* exit via */
 }
 
 // $BE1F
@@ -10292,20 +10298,20 @@ static void redefine_keys_48k(chqstate_t *state)
 /**
  * $ED4D: Keyscan
  *
- * \param[in]  state Pointer to game state.
- * \param[out] Dkeydef_out A keydef of the form 0bkkkkkrrr (k=key, r=row).
+ * \param[in] state Pointer to game state.
+ * \param[out] Dkeydef_out A keydef of the binary form kkkkkrrr (where k=key, r=row).
  * \return Non-zero if keys are pressed. Zero otherwise.
  */
-static int keyscan_all(chqstate_t *state, u8 *Dkeydef_out)
+static u8 keyscan_all(chqstate_t *state, u8 *Dkeydef_out)
 {
   int carry = 0;
-  u8  Dflag;
-  u8  Ekeyandrow;
-  u8  Bport_hi;
-  u8  Cport_lo;
-  u8  Akeys;
-  u8  Hkeys;
-  u8  A;
+  u8  Dflag;      /* was D */
+  u8  Ekeyandrow; /* was E */
+  u8  Bport_hi;   /* was B */
+  u8  Cport_lo;   /* was C */
+  u8  Akeys;      /* was A */
+  u8  Hkeys;      /* was H */
+  u8  A;          /* was A */
 
   Dflag      = 0xFF;
   Ekeyandrow = 0x2F; // first keydef to try?
@@ -10340,18 +10346,18 @@ static int keyscan_all(chqstate_t *state, u8 *Dkeydef_out)
  * $ED6D: Defines a single key
  *
  * \param[in] state Pointer to game state.
- * \param[in] Bindex Index of ?.
- * \param[in] Cindex Key index we're defining.
- * \param[in] DEscreen Screen address to draw at.
+ * \param[in] Bindex Index of ?. (was B)
+ * \param[in] Cindex Key index we're defining. (was C)
+ * \param[in] DEscreen Screen address to draw at - a Z80 address. (was DE)
  */
 static void define_a_key(chqstate_t *state, u8 Bindex, u8 Cindex, u16 DEscreen)
 {
   int       carry;
-  u8        Dkeydef;
-  u8       *HLtmpkeys;
-  const u8 *HLkeynames;
-  int       Biterations;
-  u8        Akeydef;
+  u8        Dkeydef;     /* was D */
+  u8       *HLtmpkeys;   /* was HL */
+  const u8 *HLkeynames;  /* was HL */
+  int       Biterations; /* was B */
+  u8        Akeydef;     /* was A */
 
   // PUSH DEscreen,BC -- index
 dak_loop1:
@@ -10382,7 +10388,7 @@ dak_loop1:
   // POP BC,DE
   // PUSH BC,DE
   state->messages_key_string[0] = 0xC7; // Conv: added
-  setwordat(&state->messages_key_string[1], DEscreen); // was $EADD
+  setwordat(&state->messages_key_string[1], DEscreen);
   state->messages_key_string[3] = *HLkeynames++;
   state->messages_key_string[4] = *HLkeynames | STREND;
   menu_draw_string(state, &state->messages_key_string[0]);
@@ -10408,55 +10414,249 @@ static u16 dak_move_down(u16 DE)
 // $EE40
 static void setup_interrupts(chqstate_t *state)
 {
-  // TODO
+  // Conv: no equivalent in C
 }
 
 // $EE5E
 static void reset_music(chqstate_t *state)
 {
-  // TODO
+  state->SM_EF0D_drum_flag = 0;
+  state->SM_EF00 = 0;
+  state->SM_EEA2_reset_pattern_if_zero = 0;
+  next_pattern_at_addr(state, &music_patterns[0]); /* was FALLTHROUGH */
 }
 
 // $EE6E
 static void next_pattern(chqstate_t *state)
 {
-  // TODO
+  if (--state->SM_EE6E_repeats)
+    return;
+  next_pattern_at_addr(state, state->SM_EE75_pattern_addr); /* was FALLTHROUGH */
+}
+
+static void next_pattern_at_addr(chqstate_t *state, const u8 *HLpataddr)
+{
+  u8        An_repeats; /* was A */
+  u8        Coffset;    /* was C */
+  const u8 *HLdata;     /* was HL */
+
+  for (;;) {
+    An_repeats = *HLpataddr++;
+    if (An_repeats != 0xFF) {
+      // not end of pattern(s)
+      state->SM_EE6E_repeats = An_repeats;
+      Coffset = *HLpataddr++;
+      state->SM_EE75_pattern_addr = HLpataddr;
+
+      // Calculate address of music data
+      HLdata = &music_data[Coffset];
+      state->SM_EEB9_delay = state->SM_EEAD_delay = *HLdata++;
+      state->SM_EEC9_music_data_ptr = HLdata;
+      return;
+    } else {
+      // Restart
+      HLpataddr = &music_patterns[wordat(HLpataddr) - 0xF0FE];
+    }
+  }
 }
 
 // $EE9E
 static void play_music_48k(chqstate_t *state)
 {
-  // TODO
+  u8        Adelay;
+  const u8 *HL;
+  u8        A;
+  u8        D;
+  u8        B;
+  u8        Aparam;
+
+  state->SM_EF13_interrupt_flag = 0;
+
+  if (state->SM_EEA2_reset_pattern_if_zero == 0) {
+    state->SM_EEA2_reset_pattern_if_zero = 1;
+    goto pm_reset_pattern;
+  }
+
+  // delay?
+  Adelay = state->SM_EEAD_delay - 1;
+  if (Adelay) {
+    state->SM_EEAD_delay = Adelay;
+  } else {
+    state->SM_EEAD_delay = state->SM_EEB9_delay;
+    HL = state->SM_EEBE_music_data_ptr;
+
+    // Fetch a byte of the form 0bdaaaaiii (d is delay bit, aaaa is
+    // argument, iii is instrument index)
+    for (;;) {
+      A = *HL - 1;
+      if (A)
+        break;
+
+      next_pattern(state);
+
+pm_reset_pattern:
+      HL = state->SM_EEC9_music_data_ptr;
+      state->SM_EEBE_music_data_ptr = HL; // not required
+    }
+
+    //pm_continue_pattern:
+    state->SM_EEBE_music_data_ptr = ++HL;
+    if (++A > 128) {
+      // A byte of the form 0b1aaaaiii (1 is delay bit)
+      A &= 0x7F;
+      // EX AF,AF' bank
+      state->SM_EEAD_delay = 1;
+      state->SM_EF00 = 1;
+      // EX AF,AF' unbank
+    }
+
+    D = A;
+    B = D & 7;
+    if (B) {
+      Aparam = D >> 3; // general parameter
+      // the call-return setup needs analysing here
+      if (B == 1) { playdrum_2(state, Aparam); return; }
+      if (B == 2) { playdrum_1(state, Aparam); return; }
+      if (B == 3) { noise(state, Aparam); return; }
+    }
+  }
+
+  if (state->SM_EF00) {
+    state->SM_EEAD_delay--;
+    state->SM_EF00--;
+  }
+
+  if (state->SM_EF0D_drum_flag == 1) {
+    // FIXME playdrum_bank_go(state, Ddash_length, HLdash_data); /* exit via */
+  } else
+    pm_wait_for_interrupt(state); /* was FALLTHROUGH */
+}
+
+static void pm_wait_for_interrupt(chqstate_t *state)
+{
+  while (state->SM_EF13_interrupt_flag == 0)
+    ;
 }
 
 // $EF19
 static void interrupt_entry(chqstate_t *state)
 {
-  // TODO
+  state->SM_EF13_interrupt_flag = 0xFF;
 }
 
 // $EF22
-static void playdrum_2(chqstate_t *state)
+static void playdrum_2(chqstate_t *state, u8 Aspeed)
 {
-  // TODO
+  playdrum_start(state, Aspeed, 108, &drum2[0]); /* exit via */
+}
+
+// $EF29
+static void playdrum_1(chqstate_t *state, u8 Aspeed)
+{
+  playdrum_start(state, Aspeed, 252, &drum1[0]); /* was FALLTHROUGH */
+}
+
+// $EF2E
+static void playdrum_start(chqstate_t *state, u8 Aspeed, u8 Dlength, const u8 *HLdata)
+{
+  state->SM_EF39_drum_speed = Aspeed;
+  state->SM_EF0D_drum_flag  = 1;
+  playdrum_bank_go(state, Dlength, HLdata); /* was FALLTHROUGH */
+}
+
+// $EF38
+static void playdrum_bank_go(chqstate_t *state, u8 Ddash_length, const u8 *HLdash_data)
+{
+  // EXX
+  playdrum_go(state, Ddash_length, HLdash_data);
+}
+
+// $EF39
+static void playdrum_go(chqstate_t *state, u8 Dlength, const u8 *HLdata)
+{
+  u8 Bdash_iterations;
+  u8 A;
+
+  do {
+    Bdash_iterations = state->SM_EF39_drum_speed; // aka speed
+    do {
+      A = port_MASK_EAR; // speaker bit
+      // NOP
+      if ((*HLdata & (1 << 7)) == 0)
+        A = 0;
+      state->speccy->out(state->speccy, port_BORDER_EAR_MIC, A);
+      // FIXME This rotates the sample byte in-place ... RLC(*HLdata);
+    } while (--Bdash_iterations > 0);
+    HLdata++;
+    if (--Dlength == 0)
+      goto pd_end_of_sample;
+    A = state->SM_EF13_interrupt_flag;
+  } while (A == 0);
+  // EXX unbank
+  return;
+
+pd_end_of_sample:
+  state->SM_EF0D_drum_flag = 0;
+  pm_wait_for_interrupt(state);
 }
 
 // $FC06
-static void noise(chqstate_t *state)
+static void noise(chqstate_t *state, u8 Aparam)
 {
-  // TODO
+  int carry = 0;
+  u8  Eduration;   /* was E */
+  u8  Dinner;      /* was D */
+  u8 *seed;        /* was HL */
+  u8  B;
+  u8  A;
+  u8  Biterations; /* was B */
+
+  Eduration = Aparam; // duration counter
+  do {
+    Dinner = 50;
+    do {
+      // Note that this is a different order of operations than in rng().
+      seed = &state->rng_seed[0];
+      *seed += 3;
+      B = *seed++;
+      A = *seed - 141;
+      *seed = A;
+      A += B;
+      seed++;
+      RLC(A);
+      RRC(*seed);
+      A += *seed;
+      *seed = A;
+      if (A & (1 << 4)) {
+        Biterations = 24 - Eduration;
+        while (--Biterations)
+          ;
+        state->speccy->out(state->speccy,
+            port_BORDER_EAR_MIC,
+            port_MASK_EAR | port_MASK_MIC);
+        Biterations = Eduration;
+        while (--Biterations)
+          ;
+        state->speccy->out(state->speccy, port_BORDER_EAR_MIC, 0);
+      }
+    } while (--Dinner > 0);
+
+    // This whole interrupt check is redundant since AND A + RET C results in the
+    // return never being taken. Should it be RET NZ instead? (RET Z messed things
+    // up when I tried it.)
+    A = state->SM_EF13_interrupt_flag;
+    if (0)
+      return;
+  } while (--Eduration > 0);
+  pm_wait_for_interrupt(state);
 }
 
-// $F220
-static void load_stage_128k(chqstate_t *state)
-{
-  // TODO
-}
+// $F220 - load_stage_128k - merged into load_stage
 
 // $F251
 static void start_siren_128k(chqstate_t *state)
 {
-  state->ay_chan_a_pitch = 140; // setting whole reg here
+  state->ay_chan_a_pitch = 140; /* Conv: this sets the whole register, original just did the low byte */
   state->ay_chan_a_vol   = 14;
   state->ay_chan_b_vol   = 12;
   state->siren_pattern   = 0xAA;
@@ -10477,17 +10677,18 @@ static void play_siren_sfx_128k(chqstate_t *state)
   pattern = state->siren_pattern;
   RLC(pattern);
   if (!carry) {
-    // Decreasing
+    /* Decreasing */
     pitch -= 3;
     if (pitch >= 90)
       goto set_regs;
   } else {
-    // Increasing
+    /* Increasing */
     pitch += 3;
     if (pitch < 140)
       goto set_regs;
   }
-  // Arrive here if new fine pitch is outside of 90..139.
+
+  /* Arrive here if new fine pitch is outside of 90..139. */
   state->siren_pattern = pattern;
 
 set_regs:
@@ -10496,14 +10697,14 @@ set_regs:
   state->ay_chan_a_pitch = (state->ay_chan_a_pitch & 0xFF00) | pitch;
   state->ay_chan_b_pitch = (state->ay_chan_b_pitch & 0xFF00) | (pitch - 4);
   state->ay_mixer &= 0x3C; // enable tone A & B
-  write_audio_registers_128k(state); // exit via
+  write_audio_registers_128k(state); /* exit via */
 }
 
 // $F29D
 static void silence_audio_128k(chqstate_t *state)
 {
   state->ay_mixer = 0x3F; // all noise and tone channels disabled
-  write_audio_registers_128k(state); // was FALLTHROUGH
+  write_audio_registers_128k(state); /* was FALLTHROUGH */
 }
 
 // $F2A2
@@ -10533,7 +10734,7 @@ static void engine_sfx_from_speed_128k(chqstate_t *state)
   // This is now part of the pitch divisor that we'll set later
   if (state->gear)
     // We're in high gear.
-      pitch <<= 1; // Double divisor in #REGhl to lower the pitch
+    pitch <<= 1; // Double divisor in #REGhl to lower the pitch
   pitch <<= 2; // Quadruple divisor in #REGhl to lower the pitch more
   if (!state->tunnel_sfx) { // Conv: moved
     delta = 0x190; // Not-in-tunnel base divisor (~277Hz)
@@ -10560,7 +10761,7 @@ static void setup_turbo_sfx_128k(chqstate_t *state)
 static void play_turbo_sfx_128k(chqstate_t *state)
 {
   if (state->turbo_sfx_noise_pitch == 0) {
-    engine_sfx_from_speed_128k(state); // exit via
+    engine_sfx_from_speed_128k(state); /* exit via */
     return;
   }
   if (--state->turbo_sfx_noise_pitch == 0)
@@ -10575,7 +10776,7 @@ static void play_turbo_sfx_128k(chqstate_t *state)
 
   state->ay_mixer |= 0x24; // Set mixer to disable Tone C and Noise C
   state->turbo_sfx_noise_pitch = 0;
-  engine_sfx_from_speed_128k(state); // exit via
+  engine_sfx_from_speed_128k(state); /* exit via */
 }
 
 // $F342
@@ -10669,13 +10870,11 @@ static void play_speech_128k(chqstate_t *state, u8 Aindex)
       speccy->sleep(speccy, 19); // Delay loop (lower value => higher frequency)
 
       Asample = *HLdash_samples; // Load next sample (same byte, but next nibble)
-    }
-    while (--Cdash_iterations > 0); // Decrement nibble counter
+    } while (--Cdash_iterations > 0); // Decrement nibble counter
     HLdash_samples++; // Advance to next byte of sample data
-  }
-  while (--DEdash_length > 0);
+  } while (--DEdash_length > 0);
 
-  reset_paging_128k(state); // exit via
+  reset_paging_128k(state); /* exit via */
 }
 
 // $F39F

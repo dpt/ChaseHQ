@@ -306,6 +306,12 @@ const u8 sinclair_joy[5];
 const u8 cursor_joy[5];
 const u8 shocked[8];
 
+const u8 drum1[252];
+const u8 drum2[108];
+
+const u8 music_patterns[19];
+const u8 music_data[271];
+
 const u8 press_gear_messages[17];
 const u8 enter_for_options_messages[23];
 const u8 credits_messages_128[98];

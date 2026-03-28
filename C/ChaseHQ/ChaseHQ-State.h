@@ -596,6 +596,20 @@ struct chqstate {
   // $EE38
   u8        temp_keydefs[8];
 
+  // $EE6E (SM) in next_pattern
+  u8        SM_EE6E_repeats; // pattern repeat counter
+  const u8 *SM_EE75_pattern_addr; // current pattern address
+
+  u8        SM_EEA2_reset_pattern_if_zero;
+  u8        SM_EEAD_delay;
+  u8        SM_EEB9_delay;
+  const u8 *SM_EEBE_music_data_ptr;
+  const u8 *SM_EEC9_music_data_ptr;
+  u8        SM_EF00;
+  u8        SM_EF0D_drum_flag; // drum playing flag
+  u8        SM_EF13_interrupt_flag; // interrupt flag
+  u8        SM_EF39_drum_speed;
+
   // $F000
   u8        backbuffer[BACKBUFFER_LENGTH];
 };
