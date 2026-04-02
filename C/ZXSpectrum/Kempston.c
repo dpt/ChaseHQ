@@ -5,9 +5,6 @@
  * Copyright (c) David Thomas, 2017-2020. <dave@davespace.co.uk>
  */
 
-#include <assert.h>
-#include <ctype.h>
-
 #ifdef _WIN32
 #include <windows.h>
 #endif
