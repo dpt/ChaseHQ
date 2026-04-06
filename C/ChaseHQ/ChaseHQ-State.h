@@ -26,7 +26,10 @@
 
 /* ----------------------------------------------------------------------- */
 
+typedef void (dr_callback)(chqstate_t *state, u8 B, u8 D);
+
 struct hazard {
+
   u8                used;
   u8                distance;
   u8                horz_pos;
@@ -535,13 +538,63 @@ struct chqstate {
   // $C0BB (SM) in read_map
   u8        rm_SM_C0BB; // hazard related
 
-  // $C15E (SM) in draw_tunnel
-  u8        dt_SM_C15E;
-  // $C161 (SM) in draw_tunnel
-  u8        dt_SM_C161;
+  // $C15D (SM) in draw_tunnel
+  u8        dt_SM_C15D_tunnel_distance; // size related [15 when tunnel is small, 6 when fills screen]
+  // $C160 (SM) in draw_tunnel
+  u8        dt_SM_C160_tunnel_visible; // 0 if not visible; vibrates 1 if visible; 2 if in tunnel
+  // $C21C (SM) in draw_tunnel
+  u16       dt_SM_C21C_pattern;
+  // $C221 (SM) in draw_tunnel
+  u8        dt_SM_C221; // jump table target
+  // $C236 (SM) in draw_tunnel
+  u8        dt_SM_C236; // jump table target
+  // $C2B8 (SM) in draw_tunnel
+  u8        dt_SM_C2B8;
 
+  // $C4B2 (SM) in draw_road
+  dr_callback *dr_SM_C4B2_callback;
+  // $C56D (SM) in draw_road
+  u16       dr_SM_C56D;
+  // $C5AC (SM) in draw_road
+  u8        dr_SM_C5AC;
+  // $C5B3 (SM) in draw_road
+  u8        dr_SM_C5B3_left_hand_table; // table hi byte
+  // $C5D9 (SM) in draw_road
+  u8        dr_SM_C5D9_right_hand_table;
+  // $C5F9 (SM) in draw_road
+  u8        dr_SM_C5F9;
+  // $C60A (SM) in draw_road
+  u8        dr_SM_C60A;
+  // $C61B (SM) in draw_road
+  u8        dr_SM_C61B;
+  // $C62C (SM) in draw_road
+  u8        dr_SM_C62C;
+  // $C642 (SM) in draw_road
+  u8        dr_SM_C642_left_hand_table; // table hi byte
+  // $C651 (SM) in draw_road
+  u8        dr_SM_C651;
+  // $C677 (SM) in draw_road
+  u8        dr_SM_C677;
+  // $C68B (SM) in draw_road
+  u8        dr_SM_C68A_right_hand_table;
+  // $C698 (SM) in draw_road
+  u8        dr_SM_C698;
+  // $C6AD (SM) in draw_road
+  dr_callback *dr_SM_C6AD;
+  // $C6B2 (SM) in draw_road
+  u8        dr_SM_C6B2; // inital road stripe state
+  // $C6BC (SM) in draw_road
+  u8        dr_SM_C6BC_fill_pattern;
+  // $C6D3 (SM) in draw_road
+  u8        dr_SM_C6D3_xor;
+  // $C6D8 (SM) in draw_road
+  u8        dr_SM_C6D8; // road edge line thickness
   // $C7E7 (SM) in draw_road
   u8        dr_horizon_x_scroll;
+  // $C80A (SM) in draw_road
+  u8        dr_SM_C80A;
+  // $C88F (SM) in draw_road
+  u8        dr_SM_C88F_in_tunnel;
 
   // $CE0C
   u8        smoke_ce0c[13];
