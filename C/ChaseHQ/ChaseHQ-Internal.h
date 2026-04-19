@@ -66,9 +66,9 @@
 #define USERINPUTMASK_ALLOW_NONE            (0x00)
 #define USERINPUTMASK_ALLOW_ALL             (0xFF)
 
-#define LODFLAG_DEFAULT                   (0 << 0)
-#define LODFLAG_MASKED                    (1 << 0)
-#define LODFLAG_FLIPPED                   (1 << 1)
+#define BITMAPFLAG_DEFAULT                (0 << 0)
+#define BITMAPFLAG_MASKED                 (1 << 0)
+#define BITMAPFLAG_FLIPPED                (1 << 1)
 
 #define TRANSITIONCONTROL_STOP                 (0)
 #define TRANSITIONCONTROL_DRAW_MUGSHOTS        (1)
@@ -77,6 +77,16 @@
 #define TRANSITIONCONTROL_FADE                 (4)
 
 #define DRAWOVERLAY_STOP                       (0)
+
+#define STRETCHY_TYPE_END                      (1)
+#define STRETCHY_TYPE_2                        (2)
+#define STRETCHY_TYPE_3                        (3)
+#define STRETCHY_TYPE_4                        (4)
+#define STRETCHY_TYPE_5                        (5)
+#define STRETCHY_TYPE_6                        (6)
+#define STRETCHY_TYPE_7                        (7)
+#define STRETCHY_TYPE_8                        (8)
+#define STRETCHY_TYPE_9                        (9)
 
 /* ----------------------------------------------------------------------- */
 

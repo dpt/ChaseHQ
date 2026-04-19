@@ -228,53 +228,55 @@
 
 /* ----------------------------------------------------------------------- */
 
-// Are LODs always given in groups of five or six? Or ten?
-typedef struct lod {
+// Are bitmaps always given in groups of five or six? Or ten?
+typedef struct bitmap {
   u8        width_bytes;
   u8        flags;
   u8        height;
-  const u8 *bitmap;
+  const u8 *data;
   const u8 *shifted;
-} lod_t;
+} bitmap_t;
 
 typedef struct hittable {
-  u8           width;
-  const lod_t *lods;
+  u8              width;
+  const bitmap_t *bitmaps;
 } hittable_t;
 
-typedef struct heli_lod_inner {
-  u8    tbd2; // might be s8
-  lod_t lod;
-} heli_lod_inner_t;
+typedef struct heli_bitmap_inner {
+  u8       tbd2; // might be s8
+  bitmap_t bm;
+} heli_bitmap_inner_t;
 
-typedef struct heli_lod {
-  u8               tbd1;
-  heli_lod_inner_t inner;
-} heli_lod_t;
+typedef struct heli_bitmap {
+  u8                  tbd1;
+  heli_bitmap_inner_t inner;
+} heli_bitmap_t;
 
 /// Depth Set offset
-/// (7 is sizeof(lod_t)) -- use offsetof ?
+/// (7 is original game sizeof(bitmap_t))
 /// M is a bodge factor since the streetlamp values seem to be +2.
 #define DEPTHSET_OFFSET(N,M) ((N) * 7 + (M))
 
 #define DEPTHSET_MAX (10)
 
+typedef struct depthset_pair {
+  u8 depth;
+  u8 offset; // byte offset from 'bitmaps'
+} depthset_pair_t;
+
 typedef struct depthset {
-  const lod_t *lods; // -> array of lods
-  struct {
-    u8 depth;
-    u8 offset; // byte offset from 'lods'
-  } pairs[DEPTHSET_MAX]; // maps depths to offsets
+  const bitmap_t *bitmaps; // -> array of bitmaps
+  depthset_pair_t pairs[DEPTHSET_MAX]; // maps depths to offsets
 } depthset_t;
 
 // root objects (an array of these) used with routine draw_stretchy_object_left/right
 // bottom-most object is given first
 typedef struct stretchy {
-  // 1=>end
-  // 2=>
-  // 3=>repeats?
+  // 1 => end
+  // 2 =>
+  // 3 => repeats?
   // otherwise not sure. the value affects height.
-  u8                n;
+  u8                type;
   const depthset_t *set; // Conv: this is always present, can be NULL for
   // final entry
 } stretchy_t;
@@ -320,13 +322,13 @@ typedef struct stage {
   const obj_t      *addrof_left_hand_short_pole_object;
   const u8         *addrof_perp_description;
   const u8         *addrof_arrest_messages;
-  const heli_lod_t (*addrof_helicopter_stuff_1)[6];
-  const heli_lod_t (*addrof_helicopter_stuff_2)[6];
+  const heli_bitmap_t (*addrof_helicopter_stuff_1)[6];
+  const heli_bitmap_t (*addrof_helicopter_stuff_2)[6];
 
-  const lod_t     (*lods_stones)[6];
-  const lod_t     (*lods_dust)[6];
-  const lod_t      *lods_perp_car;
-  const lod_t      *lods_vehicles[4];
+  const bitmap_t  (*bitmaps_stones)[6];
+  const bitmap_t  (*bitmaps_dust)[6];
+  const bitmap_t   *bitmaps_perp_car;
+  const bitmap_t   *bitmaps_vehicles[4];
 
   u8                car_spawn_delay;
   u8                smash_5d1b;

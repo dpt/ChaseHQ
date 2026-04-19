@@ -66,9 +66,9 @@ static const u8 stage1_map_loop_hazards[];
 static const u8 stage1_map_loop_leftobjs[];
 static const u8 stage1_map_loop_rightobjs[];
 static const u8 stage1_perp_face[FACEBYTES];
-static const lod_t stage1_lambo_lods[6];
-static const lod_t stage1_truck_lods[6];
-static const lod_t stage1_car_lods[6];
+static const bitmap_t stage1_lambo_bitmaps[6];
+static const bitmap_t stage1_truck_bitmaps[6];
+static const bitmap_t stage1_car_bitmaps[6];
 static const u8 stage1_bitmap_lambo_1[6 * 30];
 static const u8 stage1_bitmap_lambo_2[5 * 22];
 static const u8 stage1_bitmap_lambo_3[3 * 15];
@@ -84,8 +84,8 @@ static const u8 stage1_bitmap_truck_4[2 * 2 * 12];
 static const u8 stage1_bitmap_truck_4s[2 * 2 * 12];
 static const u8 stage1_bitmap_car_4[3 * 2 * 9];
 static const u8 stage1_bitmap_car_4s[3 * 2 * 9];
-static const lod_t stage1_stones_lods[6];
-static const lod_t stage1_dust_lods[6];
+static const bitmap_t stage1_stones_bitmaps[6];
+static const bitmap_t stage1_dust_bitmaps[6];
 static const u8 stage1_bitmap_stones_1[2 * 2 * 5];
 static const u8 stage1_bitmap_stones_2[2 * 2 * 4];
 static const u8 stage1_bitmap_stones_2s[2 * 2 * 4];
@@ -99,19 +99,19 @@ static const u8 stage1_bitmap_dust_1[1 * 2 * 1];
 static const u8 stage1_bitmap_dust_1s[1 * 2 * 1];
 static const depthset_t stage1_turn_sign_right;
 static const depthset_t stage1_turn_sign_left;
-static const lod_t stage1_turn_sign_lods[];
+static const bitmap_t stage1_turn_sign_bitmaps[];
 static const u8 stage1_bitmap_turnsign_1[4 * 40];
 static const u8 stage1_bitmap_turnsign_2[3 * 30];
 static const u8 stage1_bitmap_turnsign_3[2 * 20];
 static const u8 stage1_bitmap_turnsign_4[2 * 2 * 16];
 static const u8 stage1_bitmap_turnsign_5[2 * 2 * 13];
 static const u8 stage1_bitmap_turnsign_5s[2 * 2 * 13];
-static const lod_t stage1_tumbleweed_lods[6];
+static const bitmap_t stage1_tumbleweed_bitmaps[6];
 static const u8 stage1_bitmap_tumbleweed_1[2 * 16];
 static const u8 stage1_bitmap_tumbleweed_2[2 * 11];
 static const u8 stage1_bitmap_tumbleweed_3[1 * 9];
 static const u8 stage1_bitmap_tumbleweed_4[1 * 7];
-static const lod_t stage1_barrier_lods[6];
+static const bitmap_t stage1_barrier_bitmaps[6];
 static const u8 stage1_bitmap_barrier_1[4 * 17];
 static const u8 stage1_bitmap_barrier_2[3 * 13];
 static const u8 stage1_bitmap_barrier_3[2 * 9];
@@ -121,8 +121,8 @@ static const stretchy_t stage1_stretchy_streetlamp_right[5];
 static const stretchy_t stage1_stretchy_streetlamp_left[5];
 static const depthset_t stage1_streetlamptop_right;
 static const depthset_t stage1_streetlamptop_left;
-static const lod_t stage1_streetlamptop_lods[5];
-static const lod_t stage1_streetlamptop_flipped_lods[5];
+static const bitmap_t stage1_streetlamptop_bitmaps[5];
+static const bitmap_t stage1_streetlamptop_flipped_bitmaps[5];
 static const u8 stage1_bitmap_streetlamptop_1[4 * 8];
 static const u8 stage1_bitmap_streetlamptop_2[3 * 5];
 static const u8 stage1_bitmap_streetlamptop_3[3 * 4];
@@ -135,7 +135,7 @@ static const stretchy_t stage1_stretchy_telegraphpole_right[5];
 static const stretchy_t stage1_stretchy_telegraphpole_left[5];
 static const depthset_t stage1_telegraphpoletop_left;
 static const depthset_t stage1_telegraphpoletop_right;
-static const lod_t stage1_telegraphpoletop_lods[5];
+static const bitmap_t stage1_telegraphpoletop_bitmaps[5];
 static const u8 stage1_bitmap_telegraphpoletop_1[3 * 13];
 static const u8 stage1_bitmap_telegraphpoletop_2[3 * 10];
 static const u8 stage1_bitmap_telegraphpoletop_3[3 * 7];
@@ -151,7 +151,7 @@ static const depthset_t stage1_tree_bottommiddle;
 static const depthset_t stage1_tree_middle;
 static const depthset_t stage1_tree_topmiddle;
 static const depthset_t stage1_tree_top;
-static const lod_t stage1_tree_lods[25];
+static const bitmap_t stage1_tree_bitmaps[25];
 static const u8 stage1_bitmap_tree_middle_64x16[8 * 16];
 static const u8 stage1_bitmap_tree_bottom_64x5[8 * 5];
 static const u8 stage1_bitmap_tree_trunk_16x8[2 * 8];
@@ -228,14 +228,14 @@ const stage_t stage1 = {
   NULL, // unused on this level - addrof_helicopter_stuff_1
   NULL, // unused on this level - addrof_helicopter_stuff_2 - Conv: was &000C
 
-  &stage1_stones_lods,
-  &stage1_dust_lods,
-  &stage1_car_lods[0],
+  &stage1_stones_bitmaps,
+  &stage1_dust_bitmaps,
+  &stage1_car_bitmaps[0],
   {
-    &stage1_lambo_lods[0],
-    &stage1_truck_lods[0],
-    &stage1_lambo_lods[0],
-    &stage1_car_lods[0]
+    &stage1_lambo_bitmaps[0],
+    &stage1_truck_bitmaps[0],
+    &stage1_lambo_bitmaps[0],
+    &stage1_car_bitmaps[0]
   },
 
   20, // car_spawn_delay
@@ -321,8 +321,8 @@ static const u8 stage1_arrest_messages[83] = {
 
 // $5E40
 static const hittable_t stage1_hittable_object_defs[2] = {
-  { 16, &stage1_tumbleweed_lods[0] },
-  { 32, &stage1_barrier_lods[0]    },
+  { 16, &stage1_tumbleweed_bitmaps[0] },
+  { 32, &stage1_barrier_bitmaps[0]    },
 };
 
 // $5E46
@@ -1611,33 +1611,33 @@ static const u8 stage1_perp_face[FACEBYTES] = {
 /* ----------------------------------------------------------------------- */
 
 // $643E
-static const lod_t stage1_lambo_lods[6] = {
-  { 6, LODFLAG_DEFAULT, 30, &stage1_bitmap_lambo_1[0], &stage1_bitmap_lambo_1[0]  },
-  { 5, LODFLAG_DEFAULT, 22, &stage1_bitmap_lambo_2[0], &stage1_bitmap_lambo_2[0]  },
-  { 3, LODFLAG_DEFAULT, 15, &stage1_bitmap_lambo_3[0], &stage1_bitmap_lambo_3[0]  },
-  { 3, LODFLAG_DEFAULT, 15, &stage1_bitmap_lambo_3[0], &stage1_bitmap_lambo_3[0]  },
-  { 3, LODFLAG_MASKED,   8, &stage1_bitmap_lambo_4[0], &stage1_bitmap_lambo_4[0]  },
-  { 3, LODFLAG_MASKED,   8, &stage1_bitmap_lambo_4[0], &stage1_bitmap_lambo_4s[0] },
+static const bitmap_t stage1_lambo_bitmaps[6] = {
+  { 6, BITMAPFLAG_DEFAULT, 30, &stage1_bitmap_lambo_1[0], &stage1_bitmap_lambo_1[0]  },
+  { 5, BITMAPFLAG_DEFAULT, 22, &stage1_bitmap_lambo_2[0], &stage1_bitmap_lambo_2[0]  },
+  { 3, BITMAPFLAG_DEFAULT, 15, &stage1_bitmap_lambo_3[0], &stage1_bitmap_lambo_3[0]  },
+  { 3, BITMAPFLAG_DEFAULT, 15, &stage1_bitmap_lambo_3[0], &stage1_bitmap_lambo_3[0]  },
+  { 3, BITMAPFLAG_MASKED,   8, &stage1_bitmap_lambo_4[0], &stage1_bitmap_lambo_4[0]  },
+  { 3, BITMAPFLAG_MASKED,   8, &stage1_bitmap_lambo_4[0], &stage1_bitmap_lambo_4s[0] },
 };
 
 // $6468
-static const lod_t stage1_truck_lods[6] = {
-  { 6, LODFLAG_DEFAULT, 39, &stage1_bitmap_truck_1[0], &stage1_bitmap_truck_1[0]  },
-  { 5, LODFLAG_DEFAULT, 29, &stage1_bitmap_truck_2[0], &stage1_bitmap_truck_2[0]  },
-  { 3, LODFLAG_DEFAULT, 20, &stage1_bitmap_truck_3[0], &stage1_bitmap_truck_3[0]  },
-  { 3, LODFLAG_DEFAULT, 20, &stage1_bitmap_truck_3[0], &stage1_bitmap_truck_3[0]  },
-  { 2, LODFLAG_MASKED,  12, &stage1_bitmap_truck_4[0], &stage1_bitmap_truck_4s[0] },
-  { 2, LODFLAG_MASKED,  12, &stage1_bitmap_truck_4[0], &stage1_bitmap_truck_4s[0] },
+static const bitmap_t stage1_truck_bitmaps[6] = {
+  { 6, BITMAPFLAG_DEFAULT, 39, &stage1_bitmap_truck_1[0], &stage1_bitmap_truck_1[0]  },
+  { 5, BITMAPFLAG_DEFAULT, 29, &stage1_bitmap_truck_2[0], &stage1_bitmap_truck_2[0]  },
+  { 3, BITMAPFLAG_DEFAULT, 20, &stage1_bitmap_truck_3[0], &stage1_bitmap_truck_3[0]  },
+  { 3, BITMAPFLAG_DEFAULT, 20, &stage1_bitmap_truck_3[0], &stage1_bitmap_truck_3[0]  },
+  { 2, BITMAPFLAG_MASKED,  12, &stage1_bitmap_truck_4[0], &stage1_bitmap_truck_4s[0] },
+  { 2, BITMAPFLAG_MASKED,  12, &stage1_bitmap_truck_4[0], &stage1_bitmap_truck_4s[0] },
 };
 
 // $6492
-static const lod_t stage1_car_lods[6] = {
-  { 6, LODFLAG_DEFAULT, 31, &stage1_bitmap_car_1[0], &stage1_bitmap_car_1[0]  },
-  { 5, LODFLAG_DEFAULT, 22, &stage1_bitmap_car_2[0], &stage1_bitmap_car_2[0]  },
-  { 3, LODFLAG_DEFAULT, 16, &stage1_bitmap_car_3[0], &stage1_bitmap_car_3[0]  },
-  { 3, LODFLAG_DEFAULT, 16, &stage1_bitmap_car_3[0], &stage1_bitmap_car_3[0]  },
-  { 3, LODFLAG_MASKED,   9, &stage1_bitmap_car_4[0], &stage1_bitmap_car_4s[0] },
-  { 3, LODFLAG_MASKED,   9, &stage1_bitmap_car_4[0], &stage1_bitmap_car_4s[0] },
+static const bitmap_t stage1_car_bitmaps[6] = {
+  { 6, BITMAPFLAG_DEFAULT, 31, &stage1_bitmap_car_1[0], &stage1_bitmap_car_1[0]  },
+  { 5, BITMAPFLAG_DEFAULT, 22, &stage1_bitmap_car_2[0], &stage1_bitmap_car_2[0]  },
+  { 3, BITMAPFLAG_DEFAULT, 16, &stage1_bitmap_car_3[0], &stage1_bitmap_car_3[0]  },
+  { 3, BITMAPFLAG_DEFAULT, 16, &stage1_bitmap_car_3[0], &stage1_bitmap_car_3[0]  },
+  { 3, BITMAPFLAG_MASKED,   9, &stage1_bitmap_car_4[0], &stage1_bitmap_car_4s[0] },
+  { 3, BITMAPFLAG_MASKED,   9, &stage1_bitmap_car_4[0], &stage1_bitmap_car_4s[0] },
 };
 
 // $64BC
@@ -1982,22 +1982,22 @@ static const u8 stage1_bitmap_car_4s[3 * 2 * 9] = {
 
 /* ----------------------------------------------------------------------- */
 
-static const lod_t stage1_stones_lods[6] = {
-  { 2, LODFLAG_MASKED, 5, &stage1_bitmap_stones_1[0], &stage1_bitmap_stones_1[0] },
-  { 2, LODFLAG_MASKED, 4, &stage1_bitmap_stones_2[0], &stage1_bitmap_stones_2s[0] },
-  { 2, LODFLAG_MASKED, 3, &stage1_bitmap_stones_3[0], &stage1_bitmap_stones_3s[0] },
-  { 1, LODFLAG_MASKED, 2, &stage1_bitmap_stones_4[0], &stage1_bitmap_stones_4s[0] },
-  { 1, LODFLAG_MASKED, 2, &stage1_bitmap_stones_4[0], &stage1_bitmap_stones_4s[0] },
-  { 1, LODFLAG_MASKED, 1, &stage1_bitmap_stones_5[0], &stage1_bitmap_stones_5s[0] }
+static const bitmap_t stage1_stones_bitmaps[6] = {
+  { 2, BITMAPFLAG_MASKED, 5, &stage1_bitmap_stones_1[0], &stage1_bitmap_stones_1[0] },
+  { 2, BITMAPFLAG_MASKED, 4, &stage1_bitmap_stones_2[0], &stage1_bitmap_stones_2s[0] },
+  { 2, BITMAPFLAG_MASKED, 3, &stage1_bitmap_stones_3[0], &stage1_bitmap_stones_3s[0] },
+  { 1, BITMAPFLAG_MASKED, 2, &stage1_bitmap_stones_4[0], &stage1_bitmap_stones_4s[0] },
+  { 1, BITMAPFLAG_MASKED, 2, &stage1_bitmap_stones_4[0], &stage1_bitmap_stones_4s[0] },
+  { 1, BITMAPFLAG_MASKED, 1, &stage1_bitmap_stones_5[0], &stage1_bitmap_stones_5s[0] }
 };
 
-static const lod_t stage1_dust_lods[6] = {
-  { 1, LODFLAG_MASKED, 1, &stage1_bitmap_dust_1[0], &stage1_bitmap_dust_1s[0] },
-  { 1, LODFLAG_MASKED, 1, &stage1_bitmap_dust_1[0], &stage1_bitmap_dust_1s[0] },
-  { 1, LODFLAG_MASKED, 1, &stage1_bitmap_dust_1[0], &stage1_bitmap_dust_1s[0] },
-  { 1, LODFLAG_MASKED, 1, &stage1_bitmap_dust_1[0], &stage1_bitmap_dust_1s[0] },
-  { 1, LODFLAG_MASKED, 1, &stage1_bitmap_dust_1[0], &stage1_bitmap_dust_1s[0] },
-  { 1, LODFLAG_MASKED, 1, &stage1_bitmap_dust_1[0], &stage1_bitmap_dust_1s[0] }
+static const bitmap_t stage1_dust_bitmaps[6] = {
+  { 1, BITMAPFLAG_MASKED, 1, &stage1_bitmap_dust_1[0], &stage1_bitmap_dust_1s[0] },
+  { 1, BITMAPFLAG_MASKED, 1, &stage1_bitmap_dust_1[0], &stage1_bitmap_dust_1s[0] },
+  { 1, BITMAPFLAG_MASKED, 1, &stage1_bitmap_dust_1[0], &stage1_bitmap_dust_1s[0] },
+  { 1, BITMAPFLAG_MASKED, 1, &stage1_bitmap_dust_1[0], &stage1_bitmap_dust_1s[0] },
+  { 1, BITMAPFLAG_MASKED, 1, &stage1_bitmap_dust_1[0], &stage1_bitmap_dust_1s[0] },
+  { 1, BITMAPFLAG_MASKED, 1, &stage1_bitmap_dust_1[0], &stage1_bitmap_dust_1s[0] }
 };
 
 // $6A9A
@@ -2077,7 +2077,7 @@ static const u8 stage1_bitmap_dust_1s[1 * 2 * 1] = {
 
 // $6AF6
 static const depthset_t stage1_turn_sign_right = {
-  &stage1_turn_sign_lods[0],
+  &stage1_turn_sign_bitmaps[0],
   {
     0x24, 0x00,
     0x1C, 0x00,
@@ -2094,7 +2094,7 @@ static const depthset_t stage1_turn_sign_right = {
 
 // $6B0C
 static const depthset_t stage1_turn_sign_left = {
-  &stage1_turn_sign_lods[0],
+  &stage1_turn_sign_bitmaps[0],
   {
     0x24, 0x23,
     0x1C, 0x23,
@@ -2110,17 +2110,17 @@ static const depthset_t stage1_turn_sign_left = {
 };
 
 // $6B22
-static const lod_t stage1_turn_sign_lods[] = {
-  { 4, LODFLAG_DEFAULT,                  40, stage1_bitmap_turnsign_1, stage1_bitmap_turnsign_1  },
-  { 3, LODFLAG_DEFAULT,                  30, stage1_bitmap_turnsign_2, stage1_bitmap_turnsign_2  },
-  { 2, LODFLAG_DEFAULT,                  20, stage1_bitmap_turnsign_3, stage1_bitmap_turnsign_3  },
-  { 2, LODFLAG_MASKED,                   16, stage1_bitmap_turnsign_4, stage1_bitmap_turnsign_4  },
-  { 2, LODFLAG_MASKED,                   13, stage1_bitmap_turnsign_5, stage1_bitmap_turnsign_5s },
-  { 4, LODFLAG_FLIPPED,                  40, stage1_bitmap_turnsign_1, stage1_bitmap_turnsign_1  },
-  { 3, LODFLAG_FLIPPED,                  30, stage1_bitmap_turnsign_2, stage1_bitmap_turnsign_2  },
-  { 2, LODFLAG_FLIPPED,                  20, stage1_bitmap_turnsign_3, stage1_bitmap_turnsign_3  },
-  { 2, LODFLAG_FLIPPED,                  16, stage1_bitmap_turnsign_4, stage1_bitmap_turnsign_4  },
-  { 2, LODFLAG_FLIPPED | LODFLAG_MASKED, 13, stage1_bitmap_turnsign_5, stage1_bitmap_turnsign_5s }
+static const bitmap_t stage1_turn_sign_bitmaps[] = {
+  { 4, BITMAPFLAG_DEFAULT,                  40, stage1_bitmap_turnsign_1, stage1_bitmap_turnsign_1  },
+  { 3, BITMAPFLAG_DEFAULT,                  30, stage1_bitmap_turnsign_2, stage1_bitmap_turnsign_2  },
+  { 2, BITMAPFLAG_DEFAULT,                  20, stage1_bitmap_turnsign_3, stage1_bitmap_turnsign_3  },
+  { 2, BITMAPFLAG_MASKED,                   16, stage1_bitmap_turnsign_4, stage1_bitmap_turnsign_4  },
+  { 2, BITMAPFLAG_MASKED,                   13, stage1_bitmap_turnsign_5, stage1_bitmap_turnsign_5s },
+  { 4, BITMAPFLAG_FLIPPED,                  40, stage1_bitmap_turnsign_1, stage1_bitmap_turnsign_1  },
+  { 3, BITMAPFLAG_FLIPPED,                  30, stage1_bitmap_turnsign_2, stage1_bitmap_turnsign_2  },
+  { 2, BITMAPFLAG_FLIPPED,                  20, stage1_bitmap_turnsign_3, stage1_bitmap_turnsign_3  },
+  { 2, BITMAPFLAG_FLIPPED,                  16, stage1_bitmap_turnsign_4, stage1_bitmap_turnsign_4  },
+  { 2, BITMAPFLAG_FLIPPED | BITMAPFLAG_MASKED, 13, stage1_bitmap_turnsign_5, stage1_bitmap_turnsign_5s }
 };
 
 // $6B68
@@ -2308,13 +2308,13 @@ static const u8 stage1_bitmap_turnsign_5s[2 * 2 * 13] = {
 /* ----------------------------------------------------------------------- */
 
 // $6D82
-static const lod_t stage1_tumbleweed_lods[6] = {
-  { 2, LODFLAG_DEFAULT, 16, &stage1_bitmap_tumbleweed_1[0], &stage1_bitmap_tumbleweed_1[0] },
-  { 2, LODFLAG_DEFAULT, 11, &stage1_bitmap_tumbleweed_2[0], &stage1_bitmap_tumbleweed_2[0] },
-  { 1, LODFLAG_DEFAULT,  9, &stage1_bitmap_tumbleweed_3[0], &stage1_bitmap_tumbleweed_3[0] },
-  { 1, LODFLAG_DEFAULT,  9, &stage1_bitmap_tumbleweed_3[0], &stage1_bitmap_tumbleweed_3[0] },
-  { 1, LODFLAG_DEFAULT,  7, &stage1_bitmap_tumbleweed_4[0], &stage1_bitmap_tumbleweed_4[0] },
-  { 1, LODFLAG_DEFAULT,  7, &stage1_bitmap_tumbleweed_4[0], &stage1_bitmap_tumbleweed_4[0] }
+static const bitmap_t stage1_tumbleweed_bitmaps[6] = {
+  { 2, BITMAPFLAG_DEFAULT, 16, &stage1_bitmap_tumbleweed_1[0], &stage1_bitmap_tumbleweed_1[0] },
+  { 2, BITMAPFLAG_DEFAULT, 11, &stage1_bitmap_tumbleweed_2[0], &stage1_bitmap_tumbleweed_2[0] },
+  { 1, BITMAPFLAG_DEFAULT,  9, &stage1_bitmap_tumbleweed_3[0], &stage1_bitmap_tumbleweed_3[0] },
+  { 1, BITMAPFLAG_DEFAULT,  9, &stage1_bitmap_tumbleweed_3[0], &stage1_bitmap_tumbleweed_3[0] },
+  { 1, BITMAPFLAG_DEFAULT,  7, &stage1_bitmap_tumbleweed_4[0], &stage1_bitmap_tumbleweed_4[0] },
+  { 1, BITMAPFLAG_DEFAULT,  7, &stage1_bitmap_tumbleweed_4[0], &stage1_bitmap_tumbleweed_4[0] }
 };
 
 // $6DAC
@@ -2379,13 +2379,13 @@ static const u8 stage1_bitmap_tumbleweed_4[1 * 7] = {
 /* ----------------------------------------------------------------------- */
 
 // $6DF2
-static const lod_t stage1_barrier_lods[6] = {
-  { 4, LODFLAG_DEFAULT, 17, &stage1_bitmap_barrier_1[0], &stage1_bitmap_barrier_1[0]  },
-  { 4, LODFLAG_DEFAULT, 17, &stage1_bitmap_barrier_1[0], &stage1_bitmap_barrier_1[0]  },
-  { 3, LODFLAG_DEFAULT, 13, &stage1_bitmap_barrier_2[0], &stage1_bitmap_barrier_2[0]  },
-  { 2, LODFLAG_DEFAULT,  9, &stage1_bitmap_barrier_3[0], &stage1_bitmap_barrier_3[0]  },
-  { 2, LODFLAG_MASKED,   9, &stage1_bitmap_barrier_3[0], &stage1_bitmap_barrier_3[0]  },
-  { 2, LODFLAG_MASKED,   7, &stage1_bitmap_barrier_4[0], &stage1_bitmap_barrier_4s[0] }
+static const bitmap_t stage1_barrier_bitmaps[6] = {
+  { 4, BITMAPFLAG_DEFAULT, 17, &stage1_bitmap_barrier_1[0], &stage1_bitmap_barrier_1[0]  },
+  { 4, BITMAPFLAG_DEFAULT, 17, &stage1_bitmap_barrier_1[0], &stage1_bitmap_barrier_1[0]  },
+  { 3, BITMAPFLAG_DEFAULT, 13, &stage1_bitmap_barrier_2[0], &stage1_bitmap_barrier_2[0]  },
+  { 2, BITMAPFLAG_DEFAULT,  9, &stage1_bitmap_barrier_3[0], &stage1_bitmap_barrier_3[0]  },
+  { 2, BITMAPFLAG_MASKED,   9, &stage1_bitmap_barrier_3[0], &stage1_bitmap_barrier_3[0]  },
+  { 2, BITMAPFLAG_MASKED,   7, &stage1_bitmap_barrier_4[0], &stage1_bitmap_barrier_4s[0] }
 };
 
 // $6E1C
@@ -2465,25 +2465,25 @@ static const u8 stage1_bitmap_barrier_4s[2 * 2 * 7] = {
 
 // $6ED1
 static const stretchy_t stage1_stretchy_streetlamp_right[5] = {
-  { 2, &streetlampbottom_right     },
-  { 4, &streetlampmiddle2_right    },
-  { 5, &streetlampmiddle_right     },
-  { 2, &stage1_streetlamptop_right },
-  { 1, NULL                        }
+  { STRETCHY_TYPE_2, &streetlampbottom_right     },
+  { STRETCHY_TYPE_4, &streetlampmiddle2_right    },
+  { STRETCHY_TYPE_5, &streetlampmiddle_right     },
+  { STRETCHY_TYPE_2, &stage1_streetlamptop_right },
+  { STRETCHY_TYPE_END, NULL }
 };
 
 // $6EDE
 static const stretchy_t stage1_stretchy_streetlamp_left[5] = {
-  { 2, &streetlampbottom_left     },
-  { 4, &streetlampmiddle2_left    },
-  { 5, &streetlampmiddle_left     },
-  { 2, &stage1_streetlamptop_left },
-  { 1, NULL                       }
+  { STRETCHY_TYPE_2, &streetlampbottom_left     },
+  { STRETCHY_TYPE_4, &streetlampmiddle2_left    },
+  { STRETCHY_TYPE_5, &streetlampmiddle_left     },
+  { STRETCHY_TYPE_2, &stage1_streetlamptop_left },
+  { STRETCHY_TYPE_END, NULL }
 };
 
 // $6EEB
 static const depthset_t stage1_streetlamptop_right = {
-  &stage1_streetlamptop_lods[0],
+  &stage1_streetlamptop_bitmaps[0],
   {
     0x10, 0x02,
     0x08, 0x02,
@@ -2500,7 +2500,7 @@ static const depthset_t stage1_streetlamptop_right = {
 
 // $6F01
 static const depthset_t stage1_streetlamptop_left = {
-  &stage1_streetlamptop_flipped_lods[0],
+  &stage1_streetlamptop_flipped_bitmaps[0],
   {
     0x18, 0x02,
     0x10, 0x02,
@@ -2516,21 +2516,21 @@ static const depthset_t stage1_streetlamptop_left = {
 };
 
 // $6F17
-static const lod_t stage1_streetlamptop_lods[5] = {
-  { 4, LODFLAG_DEFAULT, 8, stage1_bitmap_streetlamptop_1, stage1_bitmap_streetlamptop_1  },
-  { 3, LODFLAG_DEFAULT, 5, stage1_bitmap_streetlamptop_2, stage1_bitmap_streetlamptop_2  },
-  { 3, LODFLAG_DEFAULT, 4, stage1_bitmap_streetlamptop_3, stage1_bitmap_streetlamptop_3s },
-  { 2, LODFLAG_MASKED,  4, stage1_bitmap_streetlamptop_4, stage1_bitmap_streetlamptop_4s },
-  { 2, LODFLAG_MASKED,  3, stage1_bitmap_streetlamptop_5, stage1_bitmap_streetlamptop_5s }
+static const bitmap_t stage1_streetlamptop_bitmaps[5] = {
+  { 4, BITMAPFLAG_DEFAULT, 8, stage1_bitmap_streetlamptop_1, stage1_bitmap_streetlamptop_1  },
+  { 3, BITMAPFLAG_DEFAULT, 5, stage1_bitmap_streetlamptop_2, stage1_bitmap_streetlamptop_2  },
+  { 3, BITMAPFLAG_DEFAULT, 4, stage1_bitmap_streetlamptop_3, stage1_bitmap_streetlamptop_3s },
+  { 2, BITMAPFLAG_MASKED,  4, stage1_bitmap_streetlamptop_4, stage1_bitmap_streetlamptop_4s },
+  { 2, BITMAPFLAG_MASKED,  3, stage1_bitmap_streetlamptop_5, stage1_bitmap_streetlamptop_5s }
 };
 
 // $6F3A
-static const lod_t stage1_streetlamptop_flipped_lods[5] = {
-  { 4, LODFLAG_FLIPPED, 8, stage1_bitmap_streetlamptop_1, stage1_bitmap_streetlamptop_1  },
-  { 3, LODFLAG_FLIPPED, 5, stage1_bitmap_streetlamptop_2, stage1_bitmap_streetlamptop_2  },
-  { 3, LODFLAG_FLIPPED, 4, stage1_bitmap_streetlamptop_3, stage1_bitmap_streetlamptop_3s },
-  { 2, LODFLAG_MASKED | LODFLAG_FLIPPED, 4, stage1_bitmap_streetlamptop_4, stage1_bitmap_streetlamptop_4s },
-  { 2, LODFLAG_MASKED | LODFLAG_FLIPPED, 3, stage1_bitmap_streetlamptop_5, stage1_bitmap_streetlamptop_5s }
+static const bitmap_t stage1_streetlamptop_flipped_bitmaps[5] = {
+  { 4, BITMAPFLAG_FLIPPED, 8, stage1_bitmap_streetlamptop_1, stage1_bitmap_streetlamptop_1  },
+  { 3, BITMAPFLAG_FLIPPED, 5, stage1_bitmap_streetlamptop_2, stage1_bitmap_streetlamptop_2  },
+  { 3, BITMAPFLAG_FLIPPED, 4, stage1_bitmap_streetlamptop_3, stage1_bitmap_streetlamptop_3s },
+  { 2, BITMAPFLAG_MASKED | BITMAPFLAG_FLIPPED, 4, stage1_bitmap_streetlamptop_4, stage1_bitmap_streetlamptop_4s },
+  { 2, BITMAPFLAG_MASKED | BITMAPFLAG_FLIPPED, 3, stage1_bitmap_streetlamptop_5, stage1_bitmap_streetlamptop_5s }
 };
 
 // $6F5D
@@ -2618,23 +2618,23 @@ static const u8 stage1_bitmap_streetlamptop_5s[2 * 2 * 3] = {
 
 // $6FDC
 static const stretchy_t stage1_stretchy_telegraphpole_right[5] = {
-  { 2, &streetlampbottom_right },
-  { 5, &streetlampmiddle_right },
-  { 2, &stage1_telegraphpoletop_right },
-  { 1, NULL }
+  { STRETCHY_TYPE_2, &streetlampbottom_right },
+  { STRETCHY_TYPE_5, &streetlampmiddle_right },
+  { STRETCHY_TYPE_2, &stage1_telegraphpoletop_right },
+  { STRETCHY_TYPE_END, NULL }
 };
 
 // $6FE6
 static const stretchy_t stage1_stretchy_telegraphpole_left[5] = {
-  { 2, &streetlampbottom_left },
-  { 5, &streetlampmiddle_left },
-  { 2, &stage1_telegraphpoletop_left },
-  { 1, NULL }
+  { STRETCHY_TYPE_2, &streetlampbottom_left },
+  { STRETCHY_TYPE_5, &streetlampmiddle_left },
+  { STRETCHY_TYPE_2, &stage1_telegraphpoletop_left },
+  { STRETCHY_TYPE_END, NULL }
 };
 
 // $6FF0
 static const depthset_t stage1_telegraphpoletop_left = {
-  &stage1_telegraphpoletop_lods[0],
+  &stage1_telegraphpoletop_bitmaps[0],
   {
     0x20, 0x02,
     0x18, 0x02,
@@ -2651,7 +2651,7 @@ static const depthset_t stage1_telegraphpoletop_left = {
 
 // $7006
 static const depthset_t stage1_telegraphpoletop_right = {
-  &stage1_telegraphpoletop_lods[0],
+  &stage1_telegraphpoletop_bitmaps[0],
   {
     0x20, 0x02,
     0x18, 0x02,
@@ -2667,12 +2667,12 @@ static const depthset_t stage1_telegraphpoletop_right = {
 };
 
 // $701C
-static const lod_t stage1_telegraphpoletop_lods[5] = {
-  { 3, LODFLAG_DEFAULT, 13, stage1_bitmap_telegraphpoletop_1, stage1_bitmap_telegraphpoletop_1  },
-  { 3, LODFLAG_DEFAULT, 10, stage1_bitmap_telegraphpoletop_2, stage1_bitmap_telegraphpoletop_2  },
-  { 3, LODFLAG_DEFAULT,  7, stage1_bitmap_telegraphpoletop_3, stage1_bitmap_telegraphpoletop_3s },
-  { 2, LODFLAG_MASKED,   5, stage1_bitmap_telegraphpoletop_4, stage1_bitmap_telegraphpoletop_4s },
-  { 2, LODFLAG_MASKED,   4, stage1_bitmap_telegraphpoletop_5, stage1_bitmap_telegraphpoletop_5s }
+static const bitmap_t stage1_telegraphpoletop_bitmaps[5] = {
+  { 3, BITMAPFLAG_DEFAULT, 13, stage1_bitmap_telegraphpoletop_1, stage1_bitmap_telegraphpoletop_1  },
+  { 3, BITMAPFLAG_DEFAULT, 10, stage1_bitmap_telegraphpoletop_2, stage1_bitmap_telegraphpoletop_2  },
+  { 3, BITMAPFLAG_DEFAULT,  7, stage1_bitmap_telegraphpoletop_3, stage1_bitmap_telegraphpoletop_3s },
+  { 2, BITMAPFLAG_MASKED,   5, stage1_bitmap_telegraphpoletop_4, stage1_bitmap_telegraphpoletop_4s },
+  { 2, BITMAPFLAG_MASKED,   4, stage1_bitmap_telegraphpoletop_5, stage1_bitmap_telegraphpoletop_5s }
 };
 
 // $703F
@@ -2766,27 +2766,27 @@ static const u8 stage1_bitmap_telegraphpoletop_5s[2 * 2 * 4] = {
 
 // $70F6
 static const stretchy_t stage1_stretchy_tree_right[6] = {
-  { 2, &stage1_tree_bottom       },
-  { 6, &stage1_tree_bottommiddle },
-  { 2, &stage1_tree_middle       },
-  { 5, &stage1_tree_topmiddle    },
-  { 2, &stage1_tree_top          },
-  { 1, NULL }
+  { STRETCHY_TYPE_2, &stage1_tree_bottom       },
+  { STRETCHY_TYPE_6, &stage1_tree_bottommiddle },
+  { STRETCHY_TYPE_2, &stage1_tree_middle       },
+  { STRETCHY_TYPE_5, &stage1_tree_topmiddle    },
+  { STRETCHY_TYPE_2, &stage1_tree_top          },
+  { STRETCHY_TYPE_END, NULL }
 };
 
 // $7106
 //
 // Note: Two fewer elements than the right version (smaller/bush?)
 static const stretchy_t stage1_stretchy_tree_left[4] = {
-  { 2, &stage1_tree_middle    },
-  { 6, &stage1_tree_topmiddle },
-  { 2, &stage1_tree_top       },
-  { 1, NULL }
+  { STRETCHY_TYPE_2, &stage1_tree_middle    },
+  { STRETCHY_TYPE_6, &stage1_tree_topmiddle },
+  { STRETCHY_TYPE_2, &stage1_tree_top       },
+  { STRETCHY_TYPE_END, NULL }
 };
 
 // $7110
 static const depthset_t stage1_tree_bottom = {
-  &stage1_tree_lods[0],
+  &stage1_tree_bitmaps[0],
   {
     0x1C, 0x17,
     0x14, 0x17,
@@ -2803,7 +2803,7 @@ static const depthset_t stage1_tree_bottom = {
 
 // $7126
 static const depthset_t stage1_tree_bottommiddle = {
-  &stage1_tree_lods[0],
+  &stage1_tree_bitmaps[0],
   {
     0x34, 0x10,
     0x2C, 0x10,
@@ -2820,7 +2820,7 @@ static const depthset_t stage1_tree_bottommiddle = {
 
 // $713C
 static const depthset_t stage1_tree_middle = {
-  &stage1_tree_lods[0],
+  &stage1_tree_bitmaps[0],
   {
     0x1C, 0x09,
     0x14, 0x09,
@@ -2837,7 +2837,7 @@ static const depthset_t stage1_tree_middle = {
 
 // $7152
 static const depthset_t stage1_tree_topmiddle = {
-  &stage1_tree_lods[0],
+  &stage1_tree_bitmaps[0],
   {
     0x1C, 0x02,
     0x14, 0x02,
@@ -2854,7 +2854,7 @@ static const depthset_t stage1_tree_topmiddle = {
 
 // $7168
 static const depthset_t stage1_tree_top = {
-  &stage1_tree_lods[0],
+  &stage1_tree_bitmaps[0],
   {
     0x1C, 0x64,
     0x14, 0x64,
@@ -2870,32 +2870,32 @@ static const depthset_t stage1_tree_top = {
 };
 
 // $717E
-static const lod_t stage1_tree_lods[25] = {
-  { 8, LODFLAG_DEFAULT, 16, &stage1_bitmap_tree_middle_64x16[0],        &stage1_bitmap_tree_middle_64x16[0] },
-  { 8, LODFLAG_DEFAULT,  5, &stage1_bitmap_tree_bottom_64x5[0],         &stage1_bitmap_tree_bottom_64x5[0]  },
-  { 2, LODFLAG_DEFAULT,  8, &stage1_bitmap_tree_trunk_16x8[0],          &stage1_bitmap_tree_trunk_16x8[0]   },
-  { 8, LODFLAG_DEFAULT,  5, &stage1_bitmap_tree_shadow_64x5[0],         &stage1_bitmap_tree_shadow_64x5[0]  },
-  { 6, LODFLAG_DEFAULT, 12, &stage1_bitmap_tree_middle_48x12[0],        &stage1_bitmap_tree_middle_48x12[0] },
-  { 6, LODFLAG_DEFAULT,  4, &stage1_bitmap_tree_bottom_48x4[0],         &stage1_bitmap_tree_bottom_48x4[0]  },
-  { 6, LODFLAG_DEFAULT,  4, &stage1_bitmap_tree_shadow_48x4[0],         &stage1_bitmap_tree_shadow_48x4[0]  },
-  { 4, LODFLAG_DEFAULT,  8, &stage1_bitmap_tree_middle_32x8[0],         &stage1_bitmap_tree_middle_32x8[0]  },
-  { 4, LODFLAG_DEFAULT,  3, &stage1_bitmap_tree_bottom_32x3[0],         &stage1_bitmap_tree_bottom_32x3[0]  },
-  { 4, LODFLAG_DEFAULT,  2, &stage1_bitmap_tree_shadow_32x2[0],         &stage1_bitmap_tree_shadow_32x2[0]  },
-  { 3, LODFLAG_DEFAULT,  7, &stage1_bitmap_tree_middle_24x7[0],         &stage1_bitmap_tree_middle_24x7[0]  },
-  { 3, LODFLAG_DEFAULT,  2, &stage1_bitmap_tree_bottom_24x2[0],         &stage1_bitmap_tree_bottom_24x2[0]  },
-  { 1, LODFLAG_DEFAULT,  4, &stage1_bitmap_tree_trunk_8x4[0],           &stage1_bitmap_tree_trunk_8x4[0]    },
-  { 3, LODFLAG_DEFAULT,  2, &stage1_bitmap_tree_shadow_24x2[0],         &stage1_bitmap_tree_shadow_24x2[0]  },
-  { 8, LODFLAG_MASKED,  13, &stage1_bitmap_tree_top_64x13[0],           &stage1_bitmap_tree_top_64x13[0]    },
-  { 6, LODFLAG_MASKED,  10, &stage1_bitmap_tree_top_48x10[0],           &stage1_bitmap_tree_top_48x10[0]    },
-  { 4, LODFLAG_MASKED,   5, &stage1_bitmap_tree_top_32x5[0],            &stage1_bitmap_tree_top_32x5[0]     },
-  { 3, LODFLAG_MASKED,   4, &stage1_bitmap_tree_top_24x4[0],            &stage1_bitmap_tree_top_24x4[0]     },
-  { 3, LODFLAG_MASKED,   3, &stage1_bitmap_tree_top_24x3[0],            &stage1_bitmap_tree_top_24x3s[0]    },
-  { 2, LODFLAG_MASKED,   6, &stage1_bitmap_tree_trunk_16x6[0],          &stage1_bitmap_tree_trunk_16x6[0]   },
-  { 2, LODFLAG_MASKED,   4, &stage1_bitmap_tree_trunk_16x4[0],          &stage1_bitmap_tree_trunk_16x4[0]   },
-  { 3, LODFLAG_MASKED,   5, &stage1_bitmap_tree_middle_24x5[0],         &stage1_bitmap_tree_middle_24x5s[0] },
-  { 3, LODFLAG_MASKED,   2, &stage1_bitmap_tree_bottom_24x2_another[0], &stage1_bitmap_tree_bottom_24x2s[0] },
-  { 3, LODFLAG_MASKED,   3, &stage1_bitmap_tree_trunk_24x3[0],          &stage1_bitmap_tree_trunk_24x3s[0]  },
-  { 3, LODFLAG_MASKED,   1, &stage1_bitmap_tree_shadow_24x1[0],         &stage1_bitmap_tree_shadow_24x1s[0] }
+static const bitmap_t stage1_tree_bitmaps[25] = {
+  { 8, BITMAPFLAG_DEFAULT, 16, &stage1_bitmap_tree_middle_64x16[0],        &stage1_bitmap_tree_middle_64x16[0] },
+  { 8, BITMAPFLAG_DEFAULT,  5, &stage1_bitmap_tree_bottom_64x5[0],         &stage1_bitmap_tree_bottom_64x5[0]  },
+  { 2, BITMAPFLAG_DEFAULT,  8, &stage1_bitmap_tree_trunk_16x8[0],          &stage1_bitmap_tree_trunk_16x8[0]   },
+  { 8, BITMAPFLAG_DEFAULT,  5, &stage1_bitmap_tree_shadow_64x5[0],         &stage1_bitmap_tree_shadow_64x5[0]  },
+  { 6, BITMAPFLAG_DEFAULT, 12, &stage1_bitmap_tree_middle_48x12[0],        &stage1_bitmap_tree_middle_48x12[0] },
+  { 6, BITMAPFLAG_DEFAULT,  4, &stage1_bitmap_tree_bottom_48x4[0],         &stage1_bitmap_tree_bottom_48x4[0]  },
+  { 6, BITMAPFLAG_DEFAULT,  4, &stage1_bitmap_tree_shadow_48x4[0],         &stage1_bitmap_tree_shadow_48x4[0]  },
+  { 4, BITMAPFLAG_DEFAULT,  8, &stage1_bitmap_tree_middle_32x8[0],         &stage1_bitmap_tree_middle_32x8[0]  },
+  { 4, BITMAPFLAG_DEFAULT,  3, &stage1_bitmap_tree_bottom_32x3[0],         &stage1_bitmap_tree_bottom_32x3[0]  },
+  { 4, BITMAPFLAG_DEFAULT,  2, &stage1_bitmap_tree_shadow_32x2[0],         &stage1_bitmap_tree_shadow_32x2[0]  },
+  { 3, BITMAPFLAG_DEFAULT,  7, &stage1_bitmap_tree_middle_24x7[0],         &stage1_bitmap_tree_middle_24x7[0]  },
+  { 3, BITMAPFLAG_DEFAULT,  2, &stage1_bitmap_tree_bottom_24x2[0],         &stage1_bitmap_tree_bottom_24x2[0]  },
+  { 1, BITMAPFLAG_DEFAULT,  4, &stage1_bitmap_tree_trunk_8x4[0],           &stage1_bitmap_tree_trunk_8x4[0]    },
+  { 3, BITMAPFLAG_DEFAULT,  2, &stage1_bitmap_tree_shadow_24x2[0],         &stage1_bitmap_tree_shadow_24x2[0]  },
+  { 8, BITMAPFLAG_MASKED,  13, &stage1_bitmap_tree_top_64x13[0],           &stage1_bitmap_tree_top_64x13[0]    },
+  { 6, BITMAPFLAG_MASKED,  10, &stage1_bitmap_tree_top_48x10[0],           &stage1_bitmap_tree_top_48x10[0]    },
+  { 4, BITMAPFLAG_MASKED,   5, &stage1_bitmap_tree_top_32x5[0],            &stage1_bitmap_tree_top_32x5[0]     },
+  { 3, BITMAPFLAG_MASKED,   4, &stage1_bitmap_tree_top_24x4[0],            &stage1_bitmap_tree_top_24x4[0]     },
+  { 3, BITMAPFLAG_MASKED,   3, &stage1_bitmap_tree_top_24x3[0],            &stage1_bitmap_tree_top_24x3s[0]    },
+  { 2, BITMAPFLAG_MASKED,   6, &stage1_bitmap_tree_trunk_16x6[0],          &stage1_bitmap_tree_trunk_16x6[0]   },
+  { 2, BITMAPFLAG_MASKED,   4, &stage1_bitmap_tree_trunk_16x4[0],          &stage1_bitmap_tree_trunk_16x4[0]   },
+  { 3, BITMAPFLAG_MASKED,   5, &stage1_bitmap_tree_middle_24x5[0],         &stage1_bitmap_tree_middle_24x5s[0] },
+  { 3, BITMAPFLAG_MASKED,   2, &stage1_bitmap_tree_bottom_24x2_another[0], &stage1_bitmap_tree_bottom_24x2s[0] },
+  { 3, BITMAPFLAG_MASKED,   3, &stage1_bitmap_tree_trunk_24x3[0],          &stage1_bitmap_tree_trunk_24x3s[0]  },
+  { 3, BITMAPFLAG_MASKED,   1, &stage1_bitmap_tree_shadow_24x1[0],         &stage1_bitmap_tree_shadow_24x1s[0] }
 };
 
 // $722D

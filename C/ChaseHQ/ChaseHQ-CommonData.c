@@ -1023,7 +1023,7 @@ const u8 bitmap_faces[FACEBYTES * NFACES] = {
 const stretchy_t stretchy_shortpole[3] = {
   { 2, &shortpole_bottom },
   { 4, &shortpole_middle },
-  { 1, NULL              } // Conv: NULL added
+  { STRETCHY_TYPE_END, NULL } // Conv: NULL added
 };
 
 // $7E0C
@@ -1167,7 +1167,7 @@ const depthset_t streetlampmiddle_right = {
 };
 
 // $7EBC
-const lod_t streetlampbody_bitmaps[15] = {
+const bitmap_t streetlampbody_bitmaps[15] = {
   { 1, 1, 2, &bitmap_streetlampbody_1[0],  &bitmap_streetlampbody_1[0]   },
   { 1, 1, 2, &bitmap_streetlampbody_2[0],  &bitmap_streetlampbody_2[0]   },
   { 1, 1, 2, &bitmap_streetlampbody_3[0],  &bitmap_streetlampbody_3[0]   },
@@ -1471,8 +1471,10 @@ const hazard_t escape_scene_perp = {
   0x4C,   // horz_pos_on_road
   0,
   0,
-  0x2C,
-  0x0000, // lod_addr
+  {
+    0x2C,
+    NULL,
+  },
   no_op,  // hit_handler (ptr!)
   250,    // speed
   0,
@@ -2236,8 +2238,7 @@ const hazard_t hazard_template = {
   0,
   0,
   0,
-  0x28, // TBD8
-  0, // LOD
+  { 0x28, NULL },
   hazard_handler,
   0, // speed
   0x80, // TBD15
@@ -3867,97 +3868,97 @@ const u8 minifont[31 * 6] = {
 /* ----------------------------------------------------------------------- */
 
 // $E0B2
-const lod_t fire1_defns[6] = {
-  { 4, LODFLAG_DEFAULT, 16, bitmap_fire1,      bitmap_fire1       },
-  { 3, LODFLAG_MASKED,   8, bitmap_fire3,      bitmap_fire3       },
-  { 2, LODFLAG_MASKED,   5, bitmap_fire5,      bitmap_fire5s      },
-  { 2, LODFLAG_MASKED,   4, bitmap_fire5 + 4,  bitmap_fire5s + 4  },
-  { 2, LODFLAG_MASKED,   3, bitmap_fire5 + 8,  bitmap_fire5s + 8  },
-  { 2, LODFLAG_MASKED,   2, bitmap_fire5 + 12, bitmap_fire5s + 12 }
+const bitmap_t fire1_defns[6] = {
+  { 4, BITMAPFLAG_DEFAULT, 16, bitmap_fire1,      bitmap_fire1       },
+  { 3, BITMAPFLAG_MASKED,   8, bitmap_fire3,      bitmap_fire3       },
+  { 2, BITMAPFLAG_MASKED,   5, bitmap_fire5,      bitmap_fire5s      },
+  { 2, BITMAPFLAG_MASKED,   4, bitmap_fire5 + 4,  bitmap_fire5s + 4  },
+  { 2, BITMAPFLAG_MASKED,   3, bitmap_fire5 + 8,  bitmap_fire5s + 8  },
+  { 2, BITMAPFLAG_MASKED,   2, bitmap_fire5 + 12, bitmap_fire5s + 12 }
 };
 
 // $E0DC
-const lod_t fire2_defns[6] = {
-  { 4, LODFLAG_DEFAULT, 16, bitmap_fire2,      bitmap_fire2       },
-  { 3, LODFLAG_MASKED,   8, bitmap_fire4,      bitmap_fire4       },
-  { 2, LODFLAG_MASKED,   6, bitmap_fire6,      bitmap_fire6s      },
-  { 2, LODFLAG_MASKED,   5, bitmap_fire6 + 4,  bitmap_fire6s + 4  },
-  { 2, LODFLAG_MASKED,   4, bitmap_fire6 + 8,  bitmap_fire6s + 8  },
-  { 2, LODFLAG_MASKED,   3, bitmap_fire6 + 12, bitmap_fire6s + 12 }
+const bitmap_t fire2_defns[6] = {
+  { 4, BITMAPFLAG_DEFAULT, 16, bitmap_fire2,      bitmap_fire2       },
+  { 3, BITMAPFLAG_MASKED,   8, bitmap_fire4,      bitmap_fire4       },
+  { 2, BITMAPFLAG_MASKED,   6, bitmap_fire6,      bitmap_fire6s      },
+  { 2, BITMAPFLAG_MASKED,   5, bitmap_fire6 + 4,  bitmap_fire6s + 4  },
+  { 2, BITMAPFLAG_MASKED,   4, bitmap_fire6 + 8,  bitmap_fire6s + 8  },
+  { 2, BITMAPFLAG_MASKED,   3, bitmap_fire6 + 12, bitmap_fire6s + 12 }
 };
 
 // $E106
-const lod_t fire3_defns[6] = {
-  { 4, LODFLAG_DEFAULT, 11, bitmap_fire1 + 20, bitmap_fire1 + 20  },
-  { 3, LODFLAG_MASKED,   6, bitmap_fire3 + 12, bitmap_fire3 + 12  },
-  { 2, LODFLAG_MASKED,   4, bitmap_fire5 + 4,  bitmap_fire5s + 4  },
-  { 2, LODFLAG_MASKED,   3, bitmap_fire5 + 8,  bitmap_fire5s + 8  },
-  { 2, LODFLAG_MASKED,   2, bitmap_fire5 + 12, bitmap_fire5s + 12 },
-  { 2, LODFLAG_MASKED,   1, bitmap_fire5 + 16, bitmap_fire5s + 12 }
+const bitmap_t fire3_defns[6] = {
+  { 4, BITMAPFLAG_DEFAULT, 11, bitmap_fire1 + 20, bitmap_fire1 + 20  },
+  { 3, BITMAPFLAG_MASKED,   6, bitmap_fire3 + 12, bitmap_fire3 + 12  },
+  { 2, BITMAPFLAG_MASKED,   4, bitmap_fire5 + 4,  bitmap_fire5s + 4  },
+  { 2, BITMAPFLAG_MASKED,   3, bitmap_fire5 + 8,  bitmap_fire5s + 8  },
+  { 2, BITMAPFLAG_MASKED,   2, bitmap_fire5 + 12, bitmap_fire5s + 12 },
+  { 2, BITMAPFLAG_MASKED,   1, bitmap_fire5 + 16, bitmap_fire5s + 12 }
 };
 
 // $E130
-const lod_t fire4_defns[6] = {
-  { 4, LODFLAG_DEFAULT, 11, bitmap_fire2 + 20, bitmap_fire2 + 20  },
-  { 3, LODFLAG_MASKED,   6, bitmap_fire4 + 12, bitmap_fire4 + 12  },
-  { 2, LODFLAG_MASKED,   5, bitmap_fire6 + 4,  bitmap_fire6s + 4  },
-  { 2, LODFLAG_MASKED,   4, bitmap_fire6 + 8,  bitmap_fire6s + 8  },
-  { 2, LODFLAG_MASKED,   3, bitmap_fire6 + 12, bitmap_fire6s + 12 },
-  { 2, LODFLAG_MASKED,   2, bitmap_fire6 + 16, bitmap_fire6s + 16 }
+const bitmap_t fire4_defns[6] = {
+  { 4, BITMAPFLAG_DEFAULT, 11, bitmap_fire2 + 20, bitmap_fire2 + 20  },
+  { 3, BITMAPFLAG_MASKED,   6, bitmap_fire4 + 12, bitmap_fire4 + 12  },
+  { 2, BITMAPFLAG_MASKED,   5, bitmap_fire6 + 4,  bitmap_fire6s + 4  },
+  { 2, BITMAPFLAG_MASKED,   4, bitmap_fire6 + 8,  bitmap_fire6s + 8  },
+  { 2, BITMAPFLAG_MASKED,   3, bitmap_fire6 + 12, bitmap_fire6s + 12 },
+  { 2, BITMAPFLAG_MASKED,   2, bitmap_fire6 + 16, bitmap_fire6s + 16 }
 };
 
 // $E15A
-const lod_t fire5_defns[6] = {
-  { 4, LODFLAG_DEFAULT,  6, bitmap_fire1 + 40, bitmap_fire1 + 40  },
-  { 3, LODFLAG_MASKED,   3, bitmap_fire3 + 40, bitmap_fire3 + 40  },
-  { 2, LODFLAG_MASKED,   3, bitmap_fire5 + 8,  bitmap_fire5s + 8  },
-  { 2, LODFLAG_MASKED,   2, bitmap_fire5 + 12, bitmap_fire5s + 12 },
-  { 2, LODFLAG_MASKED,   1, bitmap_fire5 + 16, bitmap_fire5s + 16 },
-  { 2, LODFLAG_MASKED,   1, bitmap_fire5 + 16, bitmap_fire5s + 16 }
+const bitmap_t fire5_defns[6] = {
+  { 4, BITMAPFLAG_DEFAULT,  6, bitmap_fire1 + 40, bitmap_fire1 + 40  },
+  { 3, BITMAPFLAG_MASKED,   3, bitmap_fire3 + 40, bitmap_fire3 + 40  },
+  { 2, BITMAPFLAG_MASKED,   3, bitmap_fire5 + 8,  bitmap_fire5s + 8  },
+  { 2, BITMAPFLAG_MASKED,   2, bitmap_fire5 + 12, bitmap_fire5s + 12 },
+  { 2, BITMAPFLAG_MASKED,   1, bitmap_fire5 + 16, bitmap_fire5s + 16 },
+  { 2, BITMAPFLAG_MASKED,   1, bitmap_fire5 + 16, bitmap_fire5s + 16 }
 };
 
 // $E184
-const lod_t fire6_defns[6] = {
-  { 4, LODFLAG_DEFAULT, 6, bitmap_fire2 + 40, bitmap_fire2 + 40  },
-  { 3, LODFLAG_MASKED,  3, bitmap_fire4 + 40, bitmap_fire4 + 40  },
-  { 2, LODFLAG_MASKED,  3, bitmap_fire6 + 12, bitmap_fire6s + 12 },
-  { 2, LODFLAG_MASKED,  2, bitmap_fire6 + 16, bitmap_fire6s + 16 },
-  { 2, LODFLAG_MASKED,  1, bitmap_fire6 + 20, bitmap_fire6s + 20 },
-  { 2, LODFLAG_MASKED,  1, bitmap_fire6 + 20, bitmap_fire6s + 20 }
+const bitmap_t fire6_defns[6] = {
+  { 4, BITMAPFLAG_DEFAULT, 6, bitmap_fire2 + 40, bitmap_fire2 + 40  },
+  { 3, BITMAPFLAG_MASKED,  3, bitmap_fire4 + 40, bitmap_fire4 + 40  },
+  { 2, BITMAPFLAG_MASKED,  3, bitmap_fire6 + 12, bitmap_fire6s + 12 },
+  { 2, BITMAPFLAG_MASKED,  2, bitmap_fire6 + 16, bitmap_fire6s + 16 },
+  { 2, BITMAPFLAG_MASKED,  1, bitmap_fire6 + 20, bitmap_fire6s + 20 },
+  { 2, BITMAPFLAG_MASKED,  1, bitmap_fire6 + 20, bitmap_fire6s + 20 }
 };
 
 // $E1AE
-const lod_t smoke_defns[6] = {
-  { 2, LODFLAG_MASKED, 13, bitmap_smoke1, bitmap_smoke1 },
-  { 2, LODFLAG_MASKED, 11, bitmap_smoke2, bitmap_smoke2 },
-  { 2, LODFLAG_MASKED,  9, bitmap_smoke3, bitmap_smoke3 },
-  { 1, LODFLAG_MASKED,  7, bitmap_smoke4, bitmap_smoke4 },
-  { 1, LODFLAG_MASKED,  5, bitmap_smoke5, bitmap_smoke5 },
-  { 1, LODFLAG_MASKED,  3, bitmap_smoke6, bitmap_smoke6 }
+const bitmap_t smoke_defns[6] = {
+  { 2, BITMAPFLAG_MASKED, 13, bitmap_smoke1, bitmap_smoke1 },
+  { 2, BITMAPFLAG_MASKED, 11, bitmap_smoke2, bitmap_smoke2 },
+  { 2, BITMAPFLAG_MASKED,  9, bitmap_smoke3, bitmap_smoke3 },
+  { 1, BITMAPFLAG_MASKED,  7, bitmap_smoke4, bitmap_smoke4 },
+  { 1, BITMAPFLAG_MASKED,  5, bitmap_smoke5, bitmap_smoke5 },
+  { 1, BITMAPFLAG_MASKED,  3, bitmap_smoke6, bitmap_smoke6 }
 };
 
 // $E1D8
-const lod_t floating_arrow_here_defn = {
-  3, LODFLAG_MASKED, 28, bitmap_arrow, bitmap_arrow
+const bitmap_t floating_arrow_here_defn = {
+  3, BITMAPFLAG_MASKED, 28, bitmap_arrow, bitmap_arrow
 };
 
-// Conv: Made these lod_t's and used NULL for the pre-shifted bitmap field.
+// Conv: Made these bitmap_t's and used NULL for the pre-shifted bitmap field.
 
 // $E1DF
-const lod_t floating_arrow_left_defn = {
-  3, LODFLAG_MASKED, 21, bitmap_arrow, NULL
+const bitmap_t floating_arrow_left_defn = {
+  3, BITMAPFLAG_MASKED, 21, bitmap_arrow, NULL
 };
 
 // $E1E4
-const lod_t floating_arrow_right_defn = {
-  3, LODFLAG_MASKED | LODFLAG_FLIPPED, 21, bitmap_arrow, NULL
+const bitmap_t floating_arrow_right_defn = {
+  3, BITMAPFLAG_MASKED | BITMAPFLAG_FLIPPED, 21, bitmap_arrow, NULL
 };
 
 /* ----------------------------------------------------------------------- */
 
 // $E1E9
 const depthset_t tunnellight = {
-  &tunnellight_lods[0],
+  &tunnellight_bitmaps[0],
   0x1C, DEPTHSET_OFFSET(0, 0),
   0x14, DEPTHSET_OFFSET(1, 0),
   0x10, DEPTHSET_OFFSET(1, 0),
@@ -3971,13 +3972,13 @@ const depthset_t tunnellight = {
 };
 
 // $E1FF
-const lod_t tunnellight_lods[6] = {
-  { 2, LODFLAG_DEFAULT, 16, &bitmap_tunnellight_1[0], &bitmap_tunnellight_1[0]  },
-  { 2, LODFLAG_DEFAULT, 12, &bitmap_tunnellight_2[0], &bitmap_tunnellight_2[0]  },
-  { 1, LODFLAG_DEFAULT,  8, &bitmap_tunnellight_3[0], &bitmap_tunnellight_3[0]  },
-  { 1, LODFLAG_DEFAULT,  6, &bitmap_tunnellight_4[0], &bitmap_tunnellight_4[0]  },
-  { 1, LODFLAG_DEFAULT,  5, &bitmap_tunnellight_5[0], &bitmap_tunnellight_5[0]  },
-  { 2, LODFLAG_MASKED,   6, &bitmap_tunnellight_6[0], &bitmap_tunnellight_6s[0] }
+const bitmap_t tunnellight_bitmaps[6] = {
+  { 2, BITMAPFLAG_DEFAULT, 16, &bitmap_tunnellight_1[0], &bitmap_tunnellight_1[0]  },
+  { 2, BITMAPFLAG_DEFAULT, 12, &bitmap_tunnellight_2[0], &bitmap_tunnellight_2[0]  },
+  { 1, BITMAPFLAG_DEFAULT,  8, &bitmap_tunnellight_3[0], &bitmap_tunnellight_3[0]  },
+  { 1, BITMAPFLAG_DEFAULT,  6, &bitmap_tunnellight_4[0], &bitmap_tunnellight_4[0]  },
+  { 1, BITMAPFLAG_DEFAULT,  5, &bitmap_tunnellight_5[0], &bitmap_tunnellight_5[0]  },
+  { 2, BITMAPFLAG_MASKED,   6, &bitmap_tunnellight_6[0], &bitmap_tunnellight_6s[0] }
 };
 
 // $E229
