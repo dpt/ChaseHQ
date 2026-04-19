@@ -335,13 +335,15 @@ static const void *lookup_map_goto(chqstate_t *state, u16 z80)
 typedef void dso_callback_t(chqstate_t     *state,
                             u8              B,
                             const bitmap_t *HLbitmap,
-                            const u16      *IX);
+                            const u16      *IX,
+                            const u8       *IY);
 
 typedef void draw_object_entrypt_t(chqstate_t       *state,
                                    u8                A,
                                    u8                B,
                                    const depthset_t *DEdepthset,
-                                   const u16        *IX);
+                                   const u16        *IX,
+                                   const u8         *IY);
 
 /* ----------------------------------------------------------------------- */
 
@@ -448,41 +450,49 @@ static void draw_tunnel_light_common(chqstate_t            *state,
                                      u8                     B,
                                      const depthset_t      *DElight,
                                      draw_object_entrypt_t *HLcallback,
-                                     const u16             *IX);
+                                     const u16             *IX,
+                                     const u8              *IY);
 
 static void draw_object_left_entrypt(chqstate_t       *state,
                                      u8                A,
                                      u8                B,
                                      const depthset_t *DEarg,
-                                     const u16        *IX);
+                                     const u16        *IX,
+                                     const u8         *IY);
 static void draw_object_left_stretchy_entrypt(chqstate_t     *state,
                                               u8              B,
                                               const bitmap_t *HLbitmap,
-                                              const u16      *IX);
+                                              const u16      *IX,
+                                              const u8       *IY);
 static void draw_object_left_helicopter_entrypt(chqstate_t     *state,
                                                 u8              A,
-                                                const bitmap_t *HLbitmap);
+                                                const bitmap_t *HLbitmap,
+                                                const u8       *IY);
 
 static void draw_object_right_entrypt(chqstate_t       *state,
                                       u8                A,
                                       u8                B,
                                       const depthset_t *DEarg,
-                                      const u16        *IX);
+                                      const u16        *IX,
+                                      const u8         *IY);
 static void draw_object_right_stretchy_entrypt(chqstate_t     *state,
                                                u8              B,
                                                const bitmap_t *HLbitmap,
-                                               const u16      *IX);
+                                               const u16      *IX,
+                                               const u8       *IY);
 static void draw_object_right_helicopter_entrypt(chqstate_t     *state,
                                                  u8              A,
-                                                 const bitmap_t *HLbitmap);
+                                                 const bitmap_t *HLbitmap,
+                                                 const u8       *IY);
 
 static void draw_object_930e_entrypt(chqstate_t     *state,
                                      u8              A,
-                                     const bitmap_t *HLbitmap);
+                                     const bitmap_t *HLbitmap,
+                                     const u8       *IY);
 
 static void draw_object_common(chqstate_t *state, u8 A, const bitmap_t *HLbitmap);
 
-static void draw_object_9333(chqstate_t *state, int carry, u8 C, u8 E, u8 *HL, u8 *IY);
+static void draw_object_9333(chqstate_t *state, int carry, u8 C, u8 E, const bitmap_t *HL, const u8 *IY);
 
 static void plot_sprite(chqstate_t *state,
                         u8          width_bytes,
@@ -637,12 +647,13 @@ static void choose_dirt_and_stones(chqstate_t *state);
 
 static void layout_dirt_and_stones(chqstate_t *state);
 
-static void dust_stones_stuff(chqstate_t *state, u8 Biterations);
+static void dust_stones_stuff(chqstate_t *state, u8 Biterations, const u8 *IY);
 
 static void draw_helicopter(chqstate_t *state, u8 Biterations, u8 *IY);
 static void draw_helicoper_part(chqstate_t                *state,
                                 u8                         A,
-                                const heli_bitmap_inner_t *DEinnerbitmap);
+                                const heli_bitmap_inner_t *DEinnerbitmap,
+                                const u8                  *IY);
 
 static void move_helicopter(chqstate_t *state);
 
@@ -663,9 +674,14 @@ static u8 check_collision(chqstate_t *state, u8 default_retval, u16 HL, hazard_t
 static void draw_all_hazards(chqstate_t *state);
 static void dh_draw_one_hazard(chqstate_t *state, hazard_t *IXhazard, const u8 *IYbase);
 static void dh_aecf(chqstate_t *state, u8 Biterations);
-static void dh_smoke(chqstate_t *state, u8 *HLsmoke);
-static void dh_draw(chqstate_t *state, u8 Bx, u8 Cy, u16 DEoffset, const bitmap_t *HLbitmaps);
-static void dh_draw_bitmap(chqstate_t *state, u8 Bx, u8 Cy, const bitmap_t *HLbitmap);
+static void dh_smoke(chqstate_t *state, u8 *HLsmoke, const u8 *IY);
+static void dh_draw(chqstate_t     *state,
+                    u8              Bx,
+                    u8              Cy,
+                    u16             DEoffset,
+                    const bitmap_t *HLbitmaps,
+                    const u8       *IY);
+static void dh_draw_bitmap(chqstate_t *state, u8 Bx, u8 Cy, const bitmap_t *HLbitmap, const u8 *IY);
 
 static void move_hero_car(chqstate_t *state);
 
@@ -2712,7 +2728,7 @@ static void draw_everything_else(chqstate_t *state)
     if (state->n_hazards)
       dh_aecf(state, iterations);
 
-    dust_stones_stuff(state, iterations);
+    dust_stones_stuff(state, iterations, IY_table_e300);
 
     if (state->dee_draw_helicopter)
       draw_helicopter(state, iterations, IY_table_e300);
@@ -3022,7 +3038,7 @@ static void draw_stretchy_object_common(chqstate_t     *state,
     Bwidthbytes = HLbitmap->width_bytes - 2;
     // PUSH (Bwidthbytes,C_total)
     Bdepth = Adepth;
-    SM_91CD_callback(state, Bdepth, HLbitmap, IX);
+    SM_91CD_callback(state, Bdepth, HLbitmap, IX, IY);
 
 dso_loop_continue:
     // POP (Bwidthbytes,C_total)
@@ -3094,7 +3110,7 @@ dso_continue:
   // EX AF,AF' -- restore Adepth
 
   Bdepth = Adepth; // might be Bwidthbytes?
-  SM_9244_callback(state, Bdepth, HLbitmap, IX); // does this update B?
+  SM_9244_callback(state, Bdepth, HLbitmap, IX, IY); // does this update B?
   Bwidthbytes = 0; // Conv: added this - TODO will need to test this behaviour since B is used to advance Ctotal
   state->doc_SM_93C0 = 0;
   goto dso_loop_continue;
@@ -3107,7 +3123,7 @@ void draw_tunnel_light_left(chqstate_t *state,
                             const u16  *IX,
                             const u8   *IY)
 {
-  draw_tunnel_light_common(state, B, DEarg, draw_object_left_entrypt, IX);
+  draw_tunnel_light_common(state, B, DEarg, draw_object_left_entrypt, IX, IY);
 }
 
 // $9252
@@ -3117,14 +3133,15 @@ void draw_tunnel_light_right(chqstate_t *state,
                              const u16  *IX,
                              const u8   *IY)
 {
-  draw_tunnel_light_common(state, B, DEarg, draw_object_right_entrypt, IX);
+  draw_tunnel_light_common(state, B, DEarg, draw_object_right_entrypt, IX, IY);
 }
 
 static void draw_tunnel_light_common(chqstate_t            *state,
                                      u8                     B,
                                      const depthset_t      *DElight,
                                      draw_object_entrypt_t *HLcallback,
-                                     const u16             *IX)
+                                     const u16             *IX,
+                                     const u8              *IY)
 {
   u8 counter; /* was A */
   u8 A;
@@ -3138,7 +3155,7 @@ static void draw_tunnel_light_common(chqstate_t            *state,
   A = (A >> 2) - A;
 
   // callback must need to take A
-  HLcallback(state, A, B, DElight, IX); // e.g. calls draw_object_left_entrypt
+  HLcallback(state, A, B, DElight, IX, IY); // e.g. calls draw_object_left_entrypt
 }
 
 // $9278
@@ -3148,7 +3165,7 @@ void draw_object_left(chqstate_t *state,
                       const u16  *IX,
                       const u8   *IY)
 {
-  draw_object_left_entrypt(state, 0, B, DEarg, IX);
+  draw_object_left_entrypt(state, 0, B, DEarg, IX, IY);
 }
 
 
@@ -3157,12 +3174,13 @@ static void draw_object_left_entrypt(chqstate_t       *state,
                                      u8                A,
                                      u8                B,
                                      const depthset_t *DEarg,
-                                     const u16        *IX)
+                                     const u16        *IX,
+                                     const u8         *IY)
 {
-  const depthset_t *ds;    /* was HL */
-  const bitmap_t   *bitmaps;  /* was DE */
-  u8                depth; /* was B */
-  const bitmap_t   *bitmap;   /* was HL */
+  const depthset_t *ds;      /* was HL */
+  const bitmap_t   *bitmaps; /* was DE */
+  u8                depth;   /* was B */
+  const bitmap_t   *bitmap;  /* was HL */
 
   state->doc_SM_933D = A;
 
@@ -3175,13 +3193,14 @@ static void draw_object_left_entrypt(chqstate_t       *state,
   depth   = ds->pairs[B].depth;
   bitmap  = &bitmaps[ds->pairs[B].offset / 7];
 
-  draw_object_left_stretchy_entrypt(state, depth, bitmap, IX);
+  draw_object_left_stretchy_entrypt(state, depth, bitmap, IX, IY);
 }
 
 static void draw_object_left_stretchy_entrypt(chqstate_t     *state,
                                               u8              B,
                                               const bitmap_t *HLbitmap,
-                                              const u16      *IX)
+                                              const u16      *IX,
+                                              const u8       *IY)
 {
   u8 A;
 
@@ -3190,12 +3209,13 @@ static void draw_object_left_stretchy_entrypt(chqstate_t     *state,
     return;
   A -= B;
 
-  draw_object_left_helicopter_entrypt(state, A, HLbitmap); /* was FALLTHROUGH */
+  draw_object_left_helicopter_entrypt(state, A, HLbitmap, IY); /* was FALLTHROUGH */
 }
 
 static void draw_object_left_helicopter_entrypt(chqstate_t     *state,
                                                 u8              A,
-                                                const bitmap_t *HLbitmap)
+                                                const bitmap_t *HLbitmap,
+                                                const u8       *IY)
 {
   int carry = 0;
   u8  C;
@@ -3211,7 +3231,7 @@ static void draw_object_left_helicopter_entrypt(chqstate_t     *state,
   A -= E;
   if (!carry) {
     if (A >= 8) {
-      draw_object_930e_entrypt(state, A, HLbitmap); /* exit via */
+      draw_object_930e_entrypt(state, A, HLbitmap, IY); /* exit via */
       return;
     }
 
@@ -3239,8 +3259,7 @@ static void draw_object_left_helicopter_entrypt(chqstate_t     *state,
 
   D = HLbitmap->flags >> 1; // checking BITMAPFLAG_FLIPPED?
   if (D == 0) { /* was JP Z - check */
-    // FIX IY
-    // draw_object_9333(state, carry, C, E, HLbitmap, IY); /* exit via */
+    draw_object_9333(state, carry, C, E, HLbitmap, IY); /* exit via */
     return;
   }
 
@@ -3258,14 +3277,15 @@ void draw_object_right(chqstate_t *state,
                        const u16  *IX,
                        const u8   *IY)
 {
-  draw_object_right_entrypt(state, 0, B, DEarg, IX);
+  draw_object_right_entrypt(state, 0, B, DEarg, IX, IY);
 }
 
 static void draw_object_right_entrypt(chqstate_t       *state,
                                       u8                A,
                                       u8                B,
                                       const depthset_t *DEarg,
-                                      const u16        *IX)
+                                      const u16        *IX,
+                                      const u8         *IY)
 {
   const depthset_t *ds;      /* was HL */
   const bitmap_t   *bitmaps; /* was DE */
@@ -3283,13 +3303,14 @@ static void draw_object_right_entrypt(chqstate_t       *state,
   depth   = ds->pairs[B].depth;
   bitmap  = &bitmaps[ds->pairs[B].offset / 7];
 
-  draw_object_right_stretchy_entrypt(state, depth, bitmap, IX);
+  draw_object_right_stretchy_entrypt(state, depth, bitmap, IX, IY);
 }
 
 static void draw_object_right_stretchy_entrypt(chqstate_t     *state,
                                                u8              B,
                                                const bitmap_t *HLbitmap,
-                                               const u16      *IX)
+                                               const u16      *IX,
+                                               const u8       *IY)
 {
   u8 A;
 
@@ -3304,12 +3325,13 @@ static void draw_object_right_stretchy_entrypt(chqstate_t     *state,
   if (A == 0)
     return;
 
-  draw_object_right_helicopter_entrypt(state, A, HLbitmap);
+  draw_object_right_helicopter_entrypt(state, A, HLbitmap, IY);
 }
 
 static void draw_object_right_helicopter_entrypt(chqstate_t     *state,
                                                  u8              A,
-                                                 const bitmap_t *HLbitmap)
+                                                 const bitmap_t *HLbitmap,
+                                                 const u8       *IY)
 {
   u8 C;
 
@@ -3318,13 +3340,15 @@ static void draw_object_right_helicopter_entrypt(chqstate_t     *state,
 
   C = 0;
 
-  draw_object_930e_entrypt(state, A, HLbitmap); // ARGS
+  draw_object_930e_entrypt(state, A, HLbitmap, IY); // ARGS
 }
 
 static void draw_object_930e_entrypt(chqstate_t     *state,
                                      u8              A,
-                                     const bitmap_t *HLbitmap)
+                                     const bitmap_t *HLbitmap,
+                                     const u8       *IY)
 {
+  int carry = 0;
   u8 B;
   u8 E;
   u8 D;
@@ -3342,7 +3366,7 @@ static void draw_object_930e_entrypt(chqstate_t     *state,
   D = HLbitmap->flags >> 1;
   if (D == 0) {
     // FIX HLbitmap will need advancing
-    // draw_object_9333(state, carry, C, E, HLbitmap, IY);
+    draw_object_9333(state, carry, C, E, HLbitmap, IY);
     return;
   }
 
@@ -3368,7 +3392,7 @@ static void draw_object_common(chqstate_t *state, u8 A, const bitmap_t *HLbitmap
 #endif
 }
 
-static void draw_object_9333(chqstate_t *state, int carry, u8 C, u8 E, u8 *HL, u8 *IY)
+static void draw_object_9333(chqstate_t *state, int carry, u8 C, u8 E, const bitmap_t *HL, const u8 *IY)
 {
 #if 0
   u8 D;
@@ -6483,7 +6507,7 @@ ldas_do_work:
 }
 
 // $A9DE
-static void dust_stones_stuff(chqstate_t *state, u8 Biterations)
+static void dust_stones_stuff(chqstate_t *state, u8 Biterations, const u8 *IY)
 {
   int              carry = 0;
   u8               A;
@@ -6491,9 +6515,9 @@ static void dust_stones_stuff(chqstate_t *state, u8 Biterations)
   const bitmap_t (*DEbitmaps)[6];
   const bitmap_t  *HLbitmap;
 
-  u8            C;
-  u8            E;
-  u8            saved_A;
+  u8               C;
+  u8               E;
+  u8               saved_A;
 
   if (state->dss_enabled == 0)
     return;
@@ -6537,17 +6561,17 @@ dss_bitmaps:
 
     // So it's zero
     if (A >= 128) {
-      draw_object_right_helicopter_entrypt(state, A, HLbitmap); /* exit via */
+      draw_object_right_helicopter_entrypt(state, A, HLbitmap, IY); /* exit via */
     } else {
       A += E;
-      draw_object_left_helicopter_entrypt(state, A, HLbitmap); /* exit via */
+      draw_object_left_helicopter_entrypt(state, A, HLbitmap, IY); /* exit via */
     }
   } else {
     A += E;
     if (A >= E) //carry? check
       return;
 
-    draw_object_left_helicopter_entrypt(state, A, HLbitmap);  /* exit via */
+    draw_object_left_helicopter_entrypt(state, A, HLbitmap, IY);  /* exit via */
   }
 }
 
@@ -6594,19 +6618,20 @@ static void draw_helicopter(chqstate_t *state, u8 Biterations, u8 *IY)
 
   do {
     helibitmap = *helibitmaps++;
-    draw_helicoper_part(state, helibitmap->tbd1 + state->dh_SM_AA76, &helibitmap->inner);
+    draw_helicoper_part(state, helibitmap->tbd1 + state->dh_SM_AA76, &helibitmap->inner, IY);
   } while (--Biterations2 > 0);
 
   // BUT final entry seems to be a different format, so this can't be right.
 
   helibitmap = *helibitmaps;
   // A = 0; // an apparently useless op
-  draw_helicoper_part(state, state->dh_SM_AA8C, &helibitmap->inner);
+  draw_helicoper_part(state, state->dh_SM_AA8C, &helibitmap->inner, IY);
 }
 
 static void draw_helicoper_part(chqstate_t                *state,
                                 u8                         A,
-                                const heli_bitmap_inner_t *DEinnerbitmap)
+                                const heli_bitmap_inner_t *DEinnerbitmap,
+                                const u8                  *IY)
 {
   int             carry;
   u16             BC;     /* was BC */
@@ -6636,10 +6661,10 @@ static void draw_helicoper_part(chqstate_t                *state,
       return;
 
     if (Abot >= 0x80) { // or -ve?
-      draw_object_right_helicopter_entrypt(state, Abot, HLbitmap); /* exit via */
+      draw_object_right_helicopter_entrypt(state, Abot, HLbitmap, IY); /* exit via */
     } else {
       Abot += Bwidth;
-      draw_object_left_helicopter_entrypt(state, Abot, HLbitmap); /* exit via */
+      draw_object_left_helicopter_entrypt(state, Abot, HLbitmap, IY); /* exit via */
     }
   } else {
     carry = (Abot + Bwidth) > 255;
@@ -6647,7 +6672,7 @@ static void draw_helicoper_part(chqstate_t                *state,
     if (!carry)
       return;
 
-    draw_object_left_helicopter_entrypt(state, Abot, HLbitmap); /* exit via */
+    draw_object_left_helicopter_entrypt(state, Abot, HLbitmap, IY); /* exit via */
   }
 }
 
@@ -7461,7 +7486,7 @@ dh_draw_smoke_3:
 // $AFF1
 //
 // Decrements a counter 5..1 then repeats this must be the car-on-fire animation
-static void dh_smoke(chqstate_t *state, u8 *HLsmoke)
+static void dh_smoke(chqstate_t *state, u8 *HLsmoke, const u8 *IY)
 {
   u8 counter;   /* was A, E */
   u8 index;     /* was A */
@@ -7481,22 +7506,27 @@ static void dh_smoke(chqstate_t *state, u8 *HLsmoke)
 
   x = HLsmoke[1 + index * 2] - counter;
   y = HLsmoke[1 + index * 2 + 1];
-  dh_draw(state, x, y, newindex * 7, &smoke_defns[0]); /* was fallthrough */
+  dh_draw(state, x, y, newindex * 7, &smoke_defns[0], IY); /* was fallthrough */
 }
 
 // $B01B
 //
 // B,C = x,y offset/position? HL -> graphic definition
-static void dh_draw(chqstate_t *state, u8 Bx, u8 Cy, u16 DEoffset, const bitmap_t *HLbitmaps)
+static void dh_draw(chqstate_t     *state,
+                    u8              Bx,
+                    u8              Cy,
+                    u16             DEoffset,
+                    const bitmap_t *HLbitmaps,
+                    const u8       *IY)
 {
   const bitmap_t *HLbitmap;
 
   HLbitmap = &HLbitmaps[DEoffset / 7];
-  dh_draw_bitmap(state, Bx, Cy, HLbitmap);
+  dh_draw_bitmap(state, Bx, Cy, HLbitmap, IY);
 }
 
 // $B01C
-static void dh_draw_bitmap(chqstate_t *state, u8 Bx, u8 Cy, const bitmap_t *HLbitmap)
+static void dh_draw_bitmap(chqstate_t *state, u8 Bx, u8 Cy, const bitmap_t *HLbitmap, const u8 *IY)
 {
   u8 Ewidth_bits;
   u8 A1;
@@ -7516,13 +7546,13 @@ static void dh_draw_bitmap(chqstate_t *state, u8 Bx, u8 Cy, const bitmap_t *HLbi
   if (A2 < Cy) // carried
     return;
   if (A2 >= 128) {
-    draw_object_right_helicopter_entrypt(state, A2, HLbitmap); /* was exit via */
+    draw_object_right_helicopter_entrypt(state, A2, HLbitmap, IY); /* was exit via */
     return;
   }
 
 dh_exit_1:
   A2 += Ewidth_bits; // add pixel width
-  draw_object_left_helicopter_entrypt(state, A2, HLbitmap); /* was exit via */
+  draw_object_left_helicopter_entrypt(state, A2, HLbitmap, IY); /* was exit via */
   return;
 
 dh_exit_2:
@@ -7532,7 +7562,7 @@ dh_exit_2:
 
   A2 += Ewidth_bits;
   if (A2 > Ewidth_bits) // carried
-    draw_object_left_helicopter_entrypt(state, A2, HLbitmap); /* was exit via */
+    draw_object_left_helicopter_entrypt(state, A2, HLbitmap, IY); /* was exit via */
 }
 
 // $ADF9
