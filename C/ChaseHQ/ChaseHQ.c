@@ -433,22 +433,23 @@ static u16 draw_smash_bar_solid_bit(chqstate_t *state, int nrows, u16 backbuf);
 
 static void draw_everything_else(chqstate_t *state);
 
-static void draw_overhead(chqstate_t     *state,
-                          u8              B,
-                          u8              C,
-                          const bitmap_t *DEbitmap,
-                          u8             *IX);
+static void draw_overhead(chqstate_t       *state,
+                          u8                B,
+                          u8                C,
+                          const stretchy_t *DEstretchy,
+                          const u16        *IX,
+                          const u8         *IY);
 
-static void draw_stretchy_object_common(chqstate_t     *state,
-                                        u8              B,
-                                        const void     *DEarg,
-                                        dso_callback_t *HLcallback,
-                                        const u16      *IX,
-                                        const u8       *IY);
+static void draw_stretchy_object_common(chqstate_t       *state,
+                                        u8                B,
+                                        const stretchy_t *DEstretchy,
+                                        dso_callback_t   *HLcallback,
+                                        const u16        *IX,
+                                        const u8         *IY);
 
 static void draw_tunnel_light_common(chqstate_t            *state,
                                      u8                     B,
-                                     const depthset_t      *DElight,
+                                     const depthset_t      *DEdepthset,
                                      draw_object_entrypt_t *HLcallback,
                                      const u16             *IX,
                                      const u8              *IY);
@@ -456,7 +457,7 @@ static void draw_tunnel_light_common(chqstate_t            *state,
 static void draw_object_left_entrypt(chqstate_t       *state,
                                      u8                A,
                                      u8                B,
-                                     const depthset_t *DEarg,
+                                     const depthset_t *DEdepthset,
                                      const u16        *IX,
                                      const u8         *IY);
 static void draw_object_left_stretchy_entrypt(chqstate_t     *state,
@@ -472,7 +473,7 @@ static void draw_object_left_helicopter_entrypt(chqstate_t     *state,
 static void draw_object_right_entrypt(chqstate_t       *state,
                                       u8                A,
                                       u8                B,
-                                      const depthset_t *DEarg,
+                                      const depthset_t *DEdepthset,
                                       const u16        *IX,
                                       const u8         *IY);
 static void draw_object_right_stretchy_entrypt(chqstate_t     *state,
@@ -681,7 +682,11 @@ static void dh_draw(chqstate_t     *state,
                     u16             DEoffset,
                     const bitmap_t *HLbitmaps,
                     const u8       *IY);
-static void dh_draw_bitmap(chqstate_t *state, u8 Bx, u8 Cy, const bitmap_t *HLbitmap, const u8 *IY);
+static void dh_draw_bitmap(chqstate_t     *state,
+                           u8              Bx,
+                           u8              Cy,
+                           const bitmap_t *HLbitmap,
+                           const u8       *IY);
 
 static void move_hero_car(chqstate_t *state);
 
@@ -2800,130 +2805,120 @@ left_hand_stuff:
 //
 // B -
 // C -
-// DEbitmap -
+// DEstretchy -
 // IX -
-static void draw_overhead(chqstate_t     *state,
-                          u8              B,
-                          u8              C,
-                          const bitmap_t *DEbitmap,
-                          u8             *IX)
+// IY -
+static void draw_overhead(chqstate_t       *state,
+                          u8                B,
+                          u8                C,
+                          const stretchy_t *DEstretchy, // TODO: Should this be a void * ?
+                          const u16        *IX,
+                          const u8         *IY)
 {
-#if 0
-  int             carry = 0;
-  const bitmap_t *HLbitmap;      /* was HL */
-  u16             DE;
-  u8              counter;    /* was A */
-  int             iterations; /* was B */
-  u8             *HLdst;
-  u8             *DEsrc;
-  u8              A;
-  const u8       *HL;
-  u8              D, E, H, L;
-  u16             IY;
+  const stretchy_t      *HLstretchy;  /* was HL */
+  const depthset_pair_t *DEpairs;
+  u8                     counter;     /* was A */
+  int                    iterations;  /* was B */
+  u8                    *HLdst;
+  u8                    *DEsrc;
+  u8                     Avertical;
+  u8                     A;
+  const u8              *HLvertical;  /* was HL */
+  u8                     D, E, H, L;
+  const depthset_pair_t *HLpair;
+  u8                     Cdepth;
+  const u8              *HL;
 
   // PUSH IX/DE/BC
   if (IX[1] == 0) // buffer offset/distance
-    draw_stretchy_object_left(state, DEbitmap);
+    draw_stretchy_object_left(state, B, DEstretchy, IX, IY);
   // POP BC/HL/IX
 
-  HLbitmap = DEbitmap; // e.g. $6F26 in Stage 3's data, loads $6F2D
-  HLbitmap++;
-  DE = wordat(HLbitmap) + 2;
+  HLstretchy = DEstretchy; // e.g. $6F26 in Stage 3's data, loads $6F2D
+  //HLstretchy++; - accounted for
+  DEpairs = &HLstretchy->set->pairs[0];
 
+  // "Scale down" pattern
   counter = state->fast_counter & 0xE0;
-
-  // Scale down pattern.
   counter = (counter - (counter >> 2) - (counter >> 4));
-  HL = &vertical_e600[counter / 22][B];
+  HLvertical = &vertical_e600[counter / 22][B];
 
   C = IY[0] - IY[0x35];
-  A = *HL;
-  L = A;
-  SRL(A);
-  A = A + L - C;
+  Avertical = *HLvertical;
+  A = (Avertical >> 1) + Avertical - C; // Conv: removed use of L
   state->do_SM_90F1 = A; // Self modify 'SUB x' at $90F1
-  A = B - 1;
-  if (A >= 10)
-    A = 9;
-
+  A = MIN(B - 1, 9);
   B = A;
-  HL = DE + A * 2;
-  C = *HL;
-  HL = DE + B * 3 + 20;
+  HLpair = &DEpairs[A];
+  Cdepth = HLpair->depth;
+  HL = (const u8 *) &DEpairs[10] + B * 3; // depthsets seem to have more data than expected...
 
   D = 1;
   A = IX[1]; // buffer offset/distance
-  if (A < 0)
-    goto do_90c4;
-  if (A)
-    return;
+  if ((s8) A >= 0) {
+    if (A)
+      return;
+    A = IX[0] + 24 - C;
+    if ((s8) A >= 0) {
+      A -= 8;
+      if ((s8) A >= 0) {
+        if (A >= 8)
+          D = A >> 3;
+      }
+    }
+  }
 
-  A = IX[0] + 24 - C;
-  if (carry)
-    goto do_90c4;
-  A -= 8;
-  if (carry)
-    goto do_90c4;
-  if (A < 8)
-    goto do_90c4;
-
-  D = A >> 3;
-
-do_90c4:
   IX -= 2;
+
   E = 0x1F;
   A = IX[1]; // buffer offset/distance
-  if (A < 0)
+  if ((s8) A < 0)
     return;
-  if (A)
-    goto do_90e4;
+  if (A == 0) {
+    A = IX[0] + C;
+    if ((s8) A >= 0) {
+      if (A) {
+        if (A < 0xF7) // -8
+          E = A >> 3;
+      }
+    }
+  }
 
-  A = IX[0] + C;
-  if (carry)
-    goto do_90e4;
-  if (A == 0)
-    goto do_90e4;
-  if (A >= 0xF7) // -8
-    goto do_90e4;
-
-  E = A >> 3;
-
-do_90e4:
   C = D;
   state->do_SM_9115 = ~((E - C) * 2) + 61;
 
   A = IY[0x35] - state->do_SM_90F1;
-  if (A < 0)
+  if ((s8) A < 0)
     return;
 
   // PUSH AF
   A++;
   B = *HL;
   A -= B;
-  if (carry) {
+  if ((s8) A < 0) {
     A += B;
     B = A;
   }
   HL++;
+#if 0
   DEsrc = wordat(HL); // load bitmap?
   // POP AF
 
   // Build dst
-  H = (L & 0x0F) + 0xF0;
-  L = (L & 0x70) * 2 + C;
-  goto do_draw;
-
-do_continue:
-  DEsrc++;
-  if (--iterations == 0)
-    return;
-
-do_draw: // draws a span
-  memset(HLdst, *DEsrc, state->do_SM_9115 / 2);
-  HLdst = ADDRTOBACKBUF(prevbufrow(BACKBUFTOADDR(HLdst)));
-
-  goto do_continue;
+  Hdst = (Ldst & 0x0F) + 0xF0;
+  Ldst = (Ldst & 0x70) * 2 + C;
 #endif
+  goto do_draw_span;
+
+  for (;;) {
+    DEsrc++;
+    if (--B == 0) // iterations
+      return;
+
+do_draw_span:
+    memset(HLdst, *DEsrc, state->do_SM_9115 / 2);
+    HLdst = ADDRTOBACKBUF(prevbufrow(BACKBUFTOADDR(HLdst)));
+  }
 }
 
 // $916C
@@ -2959,19 +2954,19 @@ void draw_stretchy_object_right(chqstate_t *state,
 /**
  * $9174 - Draws stretchy objects, such as trees
  *
- * \param[in] state Pointer to game state.
- * \param[in] B - was B
- * \param[in] DEarg An array of stretchy_t. (was DE)
- * \param[in] HLcallback - was HL
- * \param[in] IX - was IX
- * \param[in] IY - was IY
+ * \param[in] state       Pointer to game state.
+ * \param[in] B           - was B
+ * \param[in] DEstretchy  An array of stretchy_t. (was DE)
+ * \param[in] HLcallback  - was HL
+ * \param[in] IX          - was IX
+ * \param[in] IY          - was IY
  */
-static void draw_stretchy_object_common(chqstate_t     *state,
-                                        u8              B,
-                                        const void     *DEarg,
-                                        dso_callback_t *HLcallback,
-                                        const u16      *IX,
-                                        const u8       *IY)
+static void draw_stretchy_object_common(chqstate_t       *state,
+                                        u8                B,
+                                        const stretchy_t *DEstretchy,
+                                        dso_callback_t   *HLcallback,
+                                        const u16        *IX,
+                                        const u8         *IY)
 {
   dso_callback_t        *SM_91CD_callback;      /* was $91CD (SM) */
   dso_callback_t        *SM_9244_callback;      /* was $9244 (SM) */
@@ -3006,7 +3001,7 @@ static void draw_stretchy_object_common(chqstate_t     *state,
   // the table.
   counter = counter - (counter >> 2) - (counter >> 4);
   SM_91DB_vertical = vertical_e600[counter / 22][0];
-  HLstretchy = DEarg; // EX DE,HL  -- put DEarg in HLstretchy
+  HLstretchy = DEstretchy; // was EX DE,HL
   DEbitmapoffset = MIN(B, DEPTHSET_MAX) * 2 - 1; // prob 1-indexed so the -1 is +1
   C_total = 0; // increases with loop
   SM_91BA_bitmap_offset = DEbitmapoffset;
@@ -3138,7 +3133,7 @@ void draw_tunnel_light_right(chqstate_t *state,
 
 static void draw_tunnel_light_common(chqstate_t            *state,
                                      u8                     B,
-                                     const depthset_t      *DElight,
+                                     const depthset_t      *DEdepthset,
                                      draw_object_entrypt_t *HLcallback,
                                      const u16             *IX,
                                      const u8              *IY)
@@ -3149,13 +3144,14 @@ static void draw_tunnel_light_common(chqstate_t            *state,
   if (B >= 16)
     return;
 
+  // "Scale down" pattern
   counter = state->fast_counter & 0xE0;
   counter = counter - (counter >> 2) - (counter >> 4);
   A = vertical_e600[counter / 22][B];
   A = (A >> 2) - A;
 
   // callback must need to take A
-  HLcallback(state, A, B, DElight, IX, IY); // e.g. calls draw_object_left_entrypt
+  HLcallback(state, A, B, DEdepthset, IX, IY); // e.g. calls draw_object_left_entrypt
 }
 
 // $9278
@@ -3173,7 +3169,7 @@ void draw_object_left(chqstate_t *state,
 static void draw_object_left_entrypt(chqstate_t       *state,
                                      u8                A,
                                      u8                B,
-                                     const depthset_t *DEarg,
+                                     const depthset_t *DEdepthset,
                                      const u16        *IX,
                                      const u8         *IY)
 {
@@ -3187,7 +3183,7 @@ static void draw_object_left_entrypt(chqstate_t       *state,
   if (B >= DEPTHSET_MAX) // FIXME should be just greater than?
     B = DEPTHSET_MAX;
 
-  ds = DEarg; // EX DE,HL - save arg address
+  ds = DEdepthset; // EX DE,HL - save arg address
 
   bitmaps = ds->bitmaps; // loads address of e.g. turn_sign_bitmaps
   depth   = ds->pairs[B].depth;
@@ -3283,7 +3279,7 @@ void draw_object_right(chqstate_t *state,
 static void draw_object_right_entrypt(chqstate_t       *state,
                                       u8                A,
                                       u8                B,
-                                      const depthset_t *DEarg,
+                                      const depthset_t *DEdepthset,
                                       const u16        *IX,
                                       const u8         *IY)
 {
@@ -3297,7 +3293,7 @@ static void draw_object_right_entrypt(chqstate_t       *state,
   if (B >= DEPTHSET_MAX) // FIXME should be just greater than?
     B = DEPTHSET_MAX;
 
-  ds = DEarg; // EX DE,HL
+  ds = DEdepthset; // EX DE,HL
 
   bitmaps = ds->bitmaps; // loads address of e.g. turn_sign_bitmaps
   depth   = ds->pairs[B].depth;
@@ -7526,7 +7522,11 @@ static void dh_draw(chqstate_t     *state,
 }
 
 // $B01C
-static void dh_draw_bitmap(chqstate_t *state, u8 Bx, u8 Cy, const bitmap_t *HLbitmap, const u8 *IY)
+static void dh_draw_bitmap(chqstate_t     *state,
+                           u8              Bx,
+                           u8              Cy,
+                           const bitmap_t *HLbitmap,
+                           const u8       *IY)
 {
   u8 Ewidth_bits;
   u8 A1;
@@ -11137,6 +11137,8 @@ static void build_height_table(chqstate_t *state)
 
   // Read the current height byte
   heightbyte = *proadbuf_height;
+
+  // "Scale down" pattern
   counter = state->fast_counter & 0xE0;
 
   // Scale 0..223 (in steps of 16) to 0..153, reducing <counter> by 31.25%,
