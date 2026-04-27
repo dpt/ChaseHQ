@@ -26,7 +26,14 @@
 
 /* ----------------------------------------------------------------------- */
 
-typedef void (dr_callback)(chqstate_t *state, u8 B, u8 D);
+typedef void (dr_callback_t)(chqstate_t *state, u8 B, u8 D);
+
+typedef void (plot_sprite_cb_t)(chqstate_t *state,
+                                int         IXjump_offset,
+                                u8         *HLbackbuf_addr,
+                                u8          Bdash_height,
+                                u16         DEdash_bitmap_stride,
+                                const u8   *HLdash_bitmap_data);
 
 struct hazard {
 
@@ -196,15 +203,27 @@ struct chqstate {
   u8        do_SM_9115;
 
   // $9396 (SM) in draw_object_common
-  u8        doc_SM_9396;
+  u8        doc_SM_9395;
   // $933D (SM) in draw_object_common
   u8        doc_SM_933D;
   // $93C0 (SM) in draw_object_common
-  u8        doc_SM_93C0;
+  u8        doc_SM_93C0_inverted; // controls sprite plotting (2 => inverted, 1 => ?, 0 => ?)
   // $9404 (SM) in draw_object_common
-  u8        doc_SM_9404;
+  u8        doc_SM_9404_y;
+  // $940F (SM) in draw_object_common
+  plot_sprite_cb_t *doc_SM_940F_callback;
+  // $9412 (SM) in draw_object_common
+  const u8 *doc_SM_9412_bitmap_ptr;
   // $9415 (SM) in draw_object_common
-  u8        doc_SM_9415;
+  u8        doc_SM_9415_y;
+  // $941D (SM) in draw_object_common
+  plot_sprite_cb_t *doc_SM_941D_callback;
+  // $945F (SM) in draw_object_common
+  u8       doc_SM_945F_y;
+  // $946C (SM) in draw_object_common
+  const u8 *doc_SM_946C_bitmap_ptr; // bitmap data ptr
+  // $946F (SM) in draw_object_common
+  u8       doc_SM_946F;
 
   // $9618
   u8        rng_seed[3];
@@ -552,7 +571,7 @@ struct chqstate {
   u8        dt_SM_C2B8;
 
   // $C4B2 (SM) in draw_road
-  dr_callback *dr_SM_C4B2_callback;
+  dr_callback_t *dr_SM_C4B2_callback;
   // $C56D (SM) in draw_road
   u16       dr_SM_C56D;
   // $C5AC (SM) in draw_road
@@ -580,7 +599,7 @@ struct chqstate {
   // $C698 (SM) in draw_road
   u8        dr_SM_C698;
   // $C6AD (SM) in draw_road
-  dr_callback *dr_SM_C6AD;
+  dr_callback_t *dr_SM_C6AD;
   // $C6B2 (SM) in draw_road
   u8        dr_SM_C6B2; // inital road stripe state
   // $C6BC (SM) in draw_road
