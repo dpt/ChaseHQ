@@ -466,7 +466,7 @@ static void draw_object_left_stretchy_entrypt(chqstate_t     *state,
                                               const u16      *IX,
                                               const u8       *IY);
 static void draw_object_left_helicopter_entrypt(chqstate_t     *state,
-                                                u8              A,
+                                                u8              Awidth_bytes,
                                                 const bitmap_t *HLbitmap,
                                                 const u8       *IY);
 
@@ -2712,25 +2712,25 @@ static u16 draw_smash_bar_solid_bit(chqstate_t *state, int nrows, u16 backbuf)
 // $8F5F
 static void draw_everything_else(chqstate_t *state)
 {
-  u8          *HL_table_e300;       /* was HL */
-  u8          *table_e336;          /* was DE */
-  int          iterations;          /* was B */
-  u8          *IY_table_e300;       /* was IY */
-  u8          *roadbuf;             /* was HL */
-  u16         *IX_table_ea00;       /* was IX */
-  u8           floating_arrow;      /* was A */
-  u8           Aobj;                /* was A */
+  u8             *HL_table_e300;       /* was HL */
+  u8             *table_e336;          /* was DE */
+  int             iterations;          /* was B */
+  u8             *IY_table_e300;       /* was IY */
+  u8             *roadbuf;             /* was HL */
+  u16            *IX_table_ea00;       /* was IX */
+  u8              floating_arrow;      /* was A */
+  u8              Aobj;                /* was A */
   const bitmap_t *arrow_defn;          /* was HL */
-  u8           x;                   /* was E */
-  u8           y;                   /* was D */
-  u8           width_bytes;         /* was C */
-  u8           Bdash_flip_flag;     /* was B */
-  u8           Edash_bitmap_stride; /* was E */
-  u8           Cdash;               /* was C */
-  u8           height;              /* was B */
-  const u8    *bitmap;              /* was HL */
-  u8           Eobj;                /* was E */
-  const obj_t *HLobj;               /* was HL */
+  u8              x;                   /* was E */
+  u8              y;                   /* was D */
+  u8              width_bytes;         /* was C */
+  u8              Bdash_flip_flag;     /* was B */
+  u8              Edash_bitmap_stride; /* was E */
+  u8              Cdash;               /* was C */
+  u8              height;              /* was B */
+  const u8       *bitmap;              /* was HL */
+  u8              Eobj;                /* was E */
+  const obj_t    *HLobj;               /* was HL */
 
   state->dss_SM_A9E2 = &state->table_ed00[20]; // $ED28
   state->dh_SM_AECF  = &state->table_e900[0];
@@ -2804,7 +2804,15 @@ continue_after_left_hand_done:
   Cdash       = 0; // this must be passed in
   height      = arrow_defn->height;
   bitmap      = arrow_defn->data;
-  draw_part_entry2(state, height, width_bytes, y, x, bitmap, Bdash_flip_flag, Cdash, Edash_bitmap_stride); /* exit via */
+  draw_part_entry2(state,
+                   height,
+                   width_bytes,
+                   y,
+                   x,
+                   bitmap,
+                   Bdash_flip_flag,
+                   Cdash,
+                   Edash_bitmap_stride); /* exit via */
   return;
 
 right_hand_stuff:
@@ -3235,53 +3243,53 @@ static void draw_object_left_stretchy_entrypt(chqstate_t     *state,
 
 // $929A
 static void draw_object_left_helicopter_entrypt(chqstate_t     *state,
-                                                u8              A,
+                                                u8              Awidth_bytes,
                                                 const bitmap_t *HLbitmap,
                                                 const u8       *IY)
 {
   int zero;
   int carry;
   u8  Cpadding;
-  u8  Ewidth_bytes;
-  u8  B;
-  u8  D;
+  u8  Ebitmap_stride;
+  u8  Bheight;
+  u8  Dwidth_bytes;
   u8  Adash;
   int Fdash_zero;
   int Fdash_carry;
 
-  if (A < 8)
+  if (Awidth_bytes < 8)
     return;
 
   Cpadding = 0;
-  Ewidth_bytes = HLbitmap->width_bytes << 3; // width in pixels?
-  A -= Ewidth_bytes;
-  if ((s8) A >= 0) {
-    if (A >= 8) {
-      draw_object_930e_entrypt(state, A, Cpadding, HLbitmap, IY); /* exit via */
+  Ebitmap_stride = HLbitmap->width_bytes << 3;
+  Awidth_bytes -= Ebitmap_stride;
+  if ((s8) Awidth_bytes >= 0) {
+    if (Awidth_bytes >= 8) {
+      draw_object_930e_entrypt(state, Awidth_bytes, Cpadding, HLbitmap, IY); /* exit via */
       return;
     }
 
-    Ewidth_bytes = HLbitmap->width_bytes;
-    A >>= 2;
-    state->doc_SM_9395 = A;
-    A = Ewidth_bytes - 1;
-    B = 1;
+    Ebitmap_stride = HLbitmap->width_bytes;
+    Awidth_bytes >>= 2;
+    state->doc_SM_9395 = Awidth_bytes;
+    Awidth_bytes = Ebitmap_stride - 1;
+    Bheight = 1;
     Cpadding = 1;
   } else {
-    Ewidth_bytes = HLbitmap->width_bytes;
-    A = (A & 0xFC) >> 2;
-    state->doc_SM_9395 = A;
-    carry = 0; RR(A);
-    B = A;
-    A += Ewidth_bytes;
-    A -= 33;
-    if ((s8) A <= 0)
+    Ebitmap_stride = HLbitmap->width_bytes;
+    Awidth_bytes = (Awidth_bytes & 0xFC) >> 2;
+    state->doc_SM_9395 = Awidth_bytes;
+    carry = 0; RR(Awidth_bytes);
+    Bheight = Awidth_bytes;
+    Awidth_bytes += Ebitmap_stride;
+    Awidth_bytes -= 33;
+    if ((s8) Awidth_bytes <= 0)
       return;
 
-    D = A;
-    Cpadding = Ewidth_bytes - A;
-    A = D;
-    B = 1;
+    Dwidth_bytes = Awidth_bytes;
+    Cpadding = Ebitmap_stride - Awidth_bytes;
+    Awidth_bytes = Dwidth_bytes;
+    Bheight = 1;
   }
 
   carry = HLbitmap->flags & BITMAPFLAG_MASKED; /* gets bit 0 */
@@ -3290,21 +3298,21 @@ static void draw_object_left_helicopter_entrypt(chqstate_t     *state,
     draw_object_common_9333(state,
                             zero,
                             carry,
-                            A,
-                            B,
+                            Awidth_bytes,
+                            Bheight,
                             Cpadding,
-                            Ewidth_bytes,
+                            Ebitmap_stride,
                             HLbitmap,
                             IY); /* exit via */
   } else {
-    B--; // B's not used - suss
-    A++; // this goes into banked A which we're not passing - also suss
+    Bheight--; // B's not used - suss
+    Awidth_bytes++; // this goes into banked A which we're not passing - also suss
     Cpadding = 0;
-    Adash = A; Fdash_zero = zero; Fdash_carry = carry; // was EX AF,AF' -- bank A & carry?
+    Adash = Awidth_bytes; Fdash_zero = zero; Fdash_carry = carry; // was EX AF,AF' -- bank A & carry?
     draw_object_common_flipped(state,
-                               B,
+                               Bheight,
                                Cpadding,
-                               Ewidth_bytes,
+                               Ebitmap_stride,
                                HLbitmap,
                                Adash,
                                Fdash_zero,
