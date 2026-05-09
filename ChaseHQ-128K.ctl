@@ -290,7 +290,7 @@ D $5BD7 Bytes to pad this section out to $5C00. These bytes do get touched by e.
 S $5BD7,31,$1F
 B $5BF6,10,10
 b $5C00 [Stage 1] Horizon graphic
-D $5C00 #HTML[#CALL:graphic($5C00,80,24,0,1)]
+D $5C00 #HTML[#CALL(graphic($5C00,80,24,0,1))]
 @ $5C00 label=bitmap_horizon
 B $5C00,240,8 Horizon backdrop (80x24). Non-masked, inverted, bitmap data. Varies per stage.
 b $5CF0 [Stage 1] Per-stage data
@@ -507,133 +507,133 @@ W $5EC2,2,2 -> Routine at #R$9278
 b $5EC4 [Stage 1] Map: Start stretch
 N $5EC4 Start stretch
 N $5EC4 Start stretch, curvature
-N $5EC4 #HTML[#CALL:curvature_for_c($5EC4)]
+N $5EC4 #HTML[#CALL(curvature_for_c($5EC4))]
 @ $5EC4 label=map_start_curvature
 B $5EC4,32,8
 N $5EE4 Start stretch, height
-N $5EE4 #HTML[#CALL:height_for_c($5EE4)]
+N $5EE4 #HTML[#CALL(height_for_c($5EE4))]
 @ $5EE4 label=map_start_height
 B $5EE4,43,8*5,3
 N $5F0F Start stretch, lanes
-N $5F0F #HTML[#CALL:lanes_for_c($5F0F)]
+N $5F0F #HTML[#CALL(lanes_for_c($5F0F))]
 @ $5F0F label=map_start_lanes
 B $5F0F,14,8,6
 N $5F1D Start stretch, hazards
-N $5F1D #HTML[#CALL:hazards_for_c($5F1D)]
+N $5F1D #HTML[#CALL(hazards_for_c($5F1D))]
 @ $5F1D label=map_start_hazards
 B $5F1D,13,8,5
 N $5F2A Start stretch, left-side objects
-N $5F2A #HTML[#CALL:objects_for_c($5F2A)]
+N $5F2A #HTML[#CALL(objects_for_c($5F2A))]
 @ $5F2A label=map_start_leftobjs
 B $5F2A,78,8*9,6
 N $5F78 Start stretch, right-side objects
-N $5F78 #HTML[#CALL:objects_for_c($5F78)]
+N $5F78 #HTML[#CALL(objects_for_c($5F78))]
 @ $5F78 label=map_start_rightobjs
 B $5F78,90,8*11,2
 b $5FD2 [Stage 1] Map: Left fork (wrong way)
 N $5FD2 Left fork
 N $5FD2 Left fork, curvature
-N $5FD2 #HTML[#CALL:curvature_for_c($5FD2)]
+N $5FD2 #HTML[#CALL(curvature_for_c($5FD2))]
 @ $5FD2 label=map_left_curvature
 B $5FD2,20,8*2,4
 N $5FE6 Left fork, height
-N $5FE6 #HTML[#CALL:height_for_c($5FE6)]
+N $5FE6 #HTML[#CALL(height_for_c($5FE6))]
 @ $5FE6 label=map_left_height
 B $5FE6,29,8*3,5
 N $6003 Left fork, lanes
-N $6003 #HTML[#CALL:lanes_for_c($6003)]
+N $6003 #HTML[#CALL(lanes_for_c($6003))]
 @ $6003 label=map_left_lanes
 B $6003,6,6
 N $6009 Left fork, hazards
-N $6009 #HTML[#CALL:hazards_for_c($6009)]
+N $6009 #HTML[#CALL(hazards_for_c($6009))]
 @ $6009 label=map_left_hazards
 B $6009,8,8
 N $6011 Left fork, left-side objects
-N $6011 #HTML[#CALL:objects_for_c($6011)]
+N $6011 #HTML[#CALL(objects_for_c($6011))]
 @ $6011 label=map_left_leftobjs
 B $6011,65,8*8,1
 N $6052 Left fork, right-side objects
-N $6052 #HTML[#CALL:objects_for_c($6052)]
+N $6052 #HTML[#CALL(objects_for_c($6052))]
 @ $6052 label=map_left_rightobjs
 B $6052,54,8*6,6
 b $6088 [Stage 1] Map: Right fork (correct way - dirt track)
 N $6088 Right fork (dirt track), curvature
-N $6088 #HTML[#CALL:curvature_for_c($6088)]
+N $6088 #HTML[#CALL(curvature_for_c($6088))]
 @ $6088 label=map_right_curvature
 B $6088,27,8*3,3
 N $60A3 Right fork (dirt track), height
-N $60A3 #HTML[#CALL:height_for_c($60A3)]
+N $60A3 #HTML[#CALL(height_for_c($60A3))]
 @ $60A3 label=map_right_height
 B $60A3,66,8*8,2
 N $60E5 Right fork (dirt track), lanes
-N $60E5 #HTML[#CALL:lanes_for_c($60E5)]
+N $60E5 #HTML[#CALL(lanes_for_c($60E5))]
 @ $60E5 label=map_right_lanes
 B $60E5,10,8,2
 N $60EF Right fork (dirt track), hazards
-N $60EF #HTML[#CALL:hazards_for_c($60EF)]
+N $60EF #HTML[#CALL(hazards_for_c($60EF))]
 @ $60EF label=map_right_hazards
 B $60EF,26,8*3,2
 N $6109 Right fork (dirt track), left-side objects
-N $6109 #HTML[#CALL:objects_for_c($6109)]
+N $6109 #HTML[#CALL(objects_for_c($6109))]
 @ $6109 label=map_right_leftobjs
 B $6109,58,8*7,2
 N $6143 Right fork (dirt track), right-side objects
-N $6143 #HTML[#CALL:objects_for_c($6143)]
+N $6143 #HTML[#CALL(objects_for_c($6143))]
 @ $6143 label=map_right_rightobjs
 B $6143,48,8
 b $6173 [Stage 1] Map: Tunnel section
 N $6173 Tunnel section, curvature
-N $6173 #HTML[#CALL:curvature_for_c($6173)]
+N $6173 #HTML[#CALL(curvature_for_c($6173))]
 @ $6173 label=map_tunnel_curvature
 B $6173,22,8*2,6
 N $6189 Tunnel section, height
-N $6189 #HTML[#CALL:height_for_c($6189)]
+N $6189 #HTML[#CALL(height_for_c($6189))]
 @ $6189 label=map_tunnel_height
 B $6189,28,8*3,4
 N $61A5 Tunnel section, lanes
-N $61A5 #HTML[#CALL:lanes_for_c($61A5)]
+N $61A5 #HTML[#CALL(lanes_for_c($61A5))]
 @ $61A5 label=map_tunnel_lanes
 B $61A5,20,8*2,4
 N $61B9 Tunnel section, hazards
-N $61B9 #HTML[#CALL:hazards_for_c($61B9)]
+N $61B9 #HTML[#CALL(hazards_for_c($61B9))]
 @ $61B9 label=map_tunnel_hazards
 B $61B9,5,5
 N $61BE Tunnel section, left-side objects
-N $61BE #HTML[#CALL:objects_for_c($61BE)]
+N $61BE #HTML[#CALL(objects_for_c($61BE))]
 @ $61BE label=map_tunnel_leftobjs
 B $61BE,11,8,3
 N $61C9 Tunnel section, right-side objects
-N $61C9 #HTML[#CALL:objects_for_c($61C9)]
+N $61C9 #HTML[#CALL(objects_for_c($61C9))]
 @ $61C9 label=map_tunnel_rightobjs
 B $61C9,11,8,3
 b $61D4 [Stage 1] Map: Loop section
 N $61D4 Loop section, curvature
-N $61D4 #HTML[#CALL:curvature_for_c($61D4)]
+N $61D4 #HTML[#CALL(curvature_for_c($61D4))]
 @ $61D4 label=map_loop_curvature
 B $61D4,53,8*6,5
 N $6209 Loop section, height
-N $6209 #HTML[#CALL:height_for_c($6209)]
+N $6209 #HTML[#CALL(height_for_c($6209))]
 @ $6209 label=map_loop_height
 B $6209,84,8*10,4
 N $625D Loop section, lanes
-N $625D #HTML[#CALL:lanes_for_c($625D)]
+N $625D #HTML[#CALL(lanes_for_c($625D))]
 @ $625D label=map_loop_lanes
 B $625D,26,8*3,2
 N $6277 Loop section, hazards
-N $6277 #HTML[#CALL:hazards_for_c($6277)]
+N $6277 #HTML[#CALL(hazards_for_c($6277))]
 @ $6277 label=map_loop_hazards
 B $6277,29,8*3,5
 N $6294 Loop section, left-side objects
-N $6294 #HTML[#CALL:objects_for_c($6294)]
+N $6294 #HTML[#CALL(objects_for_c($6294))]
 @ $6294 label=map_loop_leftobjs
 B $6294,128,8
 N $6314 Loop section, right-side objects
-N $6314 #HTML[#CALL:objects_for_c($6314)]
+N $6314 #HTML[#CALL(objects_for_c($6314))]
 @ $6314 label=map_loop_rightobjs
 B $6314,118,8*14,6
 b $638A [Stage 1] Ralph the Idaho Slasher's mugshot
 N $638A Bitmap data for Ralph the Idaho Slasher's mugshot (32x40). Stored top-down.
-N $638A #HTML[#CALL:face($638A)]
+N $638A #HTML[#CALL(face($638A))]
 @ $638A label=bitmap_ralph
 B $638A,160,4
 N $642A Attribute data for Ralph the Idaho Slasher's mugshot (4x5). Stored top-down.
@@ -753,63 +753,63 @@ B $64B7,1,1 Height (pixels)
 W $64B8,2,2 Bitmap
 W $64BA,2,2 Pre-shifted bitmap
 N $64BC Bitmap: Lamborghini_1 (48x30)
-N $64BC #HTML[#CALL:graphic($64BC,48,30,0,1)]
+N $64BC #HTML[#CALL(graphic($64BC,48,30,0,1))]
 @ $64BC label=bitmap_lambo_1
 B $64BC,180,6 Bitmap data
 N $6570 Bitmap: Lamborghini_2 (40x22)
-N $6570 #HTML[#CALL:graphic($6570,40,22,0,1)]
+N $6570 #HTML[#CALL(graphic($6570,40,22,0,1))]
 @ $6570 label=bitmap_lambo_2
 B $6570,110,5 Bitmap data
 N $65DE Bitmap: Lamborghini_3 (24x15)
-N $65DE #HTML[#CALL:graphic($65DE,24,15,0,1)]
+N $65DE #HTML[#CALL(graphic($65DE,24,15,0,1))]
 @ $65DE label=bitmap_lambo_3
 B $65DE,45,3 Bitmap data
 N $660B Bitmap: Truck_1 (48x39)
-N $660B #HTML[#CALL:graphic($660B,48,39,0,1)]
+N $660B #HTML[#CALL(graphic($660B,48,39,0,1))]
 @ $660B label=bitmap_truck_1
 B $660B,234,6 Bitmap data
 N $66F5 Bitmap: Truck_2 (40x29)
-N $66F5 #HTML[#CALL:graphic($66F5,40,29,0,1)]
+N $66F5 #HTML[#CALL(graphic($66F5,40,29,0,1))]
 @ $66F5 label=bitmap_truck_2
 B $66F5,145,5 Bitmap data
 N $6786 Bitmap: Truck_3 (24x20)
-N $6786 #HTML[#CALL:graphic($6786,24,20,0,1)]
+N $6786 #HTML[#CALL(graphic($6786,24,20,0,1))]
 @ $6786 label=bitmap_truck_3
 B $6786,60,3 Bitmap data
 N $67C2 Bitmap: Car_1 (48x31)
-N $67C2 #HTML[#CALL:graphic($67C2,48,31,0,1)]
+N $67C2 #HTML[#CALL(graphic($67C2,48,31,0,1))]
 @ $67C2 label=bitmap_car_1
 B $67C2,186,6 Bitmap data
 N $687C Bitmap: Car_2 (40x22)
-N $687C #HTML[#CALL:graphic($687C,40,22,0,1)]
+N $687C #HTML[#CALL(graphic($687C,40,22,0,1))]
 @ $687C label=bitmap_car_2
 B $687C,110,5 Bitmap data
 N $68EA Bitmap: Car_3 (24x16)
-N $68EA #HTML[#CALL:graphic($68EA,24,16,0,1)]
+N $68EA #HTML[#CALL(graphic($68EA,24,16,0,1))]
 @ $68EA label=bitmap_car_3
 B $68EA,48,3 Bitmap data
 N $691A Bitmap: Lamborghini_4 (24x8)
-N $691A #HTML[#CALL:graphic($691A,24,8,1,1)]
+N $691A #HTML[#CALL(graphic($691A,24,8,1,1))]
 @ $691A label=bitmap_lambo_4
 B $691A,48,6 Masked bitmap data
 N $694A Bitmap: Lamborghini_4 (24x8) pre-shifted
-N $694A #HTML[#CALL:graphic($694A,24,8,1,1)]
+N $694A #HTML[#CALL(graphic($694A,24,8,1,1))]
 @ $694A label=bitmap_lambo_4s
 B $694A,48,6 Masked bitmap data
 N $697A Bitmap: Truck_4 (16x12)
-N $697A #HTML[#CALL:graphic($697A,16,12,1,1)]
+N $697A #HTML[#CALL(graphic($697A,16,12,1,1))]
 @ $697A label=bitmap_truck_4
 B $697A,48,4 Masked bitmap data
 N $69AA Bitmap: Truck_4 (16x12) pre-shifted
-N $69AA #HTML[#CALL:graphic($69AA,16,12,1,1)]
+N $69AA #HTML[#CALL(graphic($69AA,16,12,1,1))]
 @ $69AA label=bitmap_truck_4s
 B $69AA,48,4 Masked bitmap data
 N $69DA Bitmap: Car_4 (24x9)
-N $69DA #HTML[#CALL:graphic($69DA,24,9,1,1)]
+N $69DA #HTML[#CALL(graphic($69DA,24,9,1,1))]
 @ $69DA label=bitmap_car_4
 B $69DA,54,6 Masked bitmap data
 N $6A10 Bitmap: Car_4 (24x9) pre-shifted
-N $6A10 #HTML[#CALL:graphic($6A10,24,9,1,1)]
+N $6A10 #HTML[#CALL(graphic($6A10,24,9,1,1))]
 @ $6A10 label=bitmap_car_4s
 B $6A10,54,6 Masked bitmap data
 N $6A46 Stones LOD 1
@@ -887,47 +887,47 @@ B $6A95,1,1 Height (pixels)
 W $6A96,2,2 Bitmap
 W $6A98,2,2 Pre-shifted bitmap
 N $6A9A Bitmap: Stones (16x5)
-N $6A9A #HTML[#CALL:graphic($6A9A,16,5,1,1)]
+N $6A9A #HTML[#CALL(graphic($6A9A,16,5,1,1))]
 @ $6A9A label=bitmap_stones_1
 B $6A9A,20,4 Masked bitmap data
 N $6AAE Bitmap: Stones (16x4)
-N $6AAE #HTML[#CALL:graphic($6AAE,16,4,1,1)]
+N $6AAE #HTML[#CALL(graphic($6AAE,16,4,1,1))]
 @ $6AAE label=bitmap_stones_2
 B $6AAE,16,4 Masked bitmap data
 N $6ABE Bitmap: Stones (16x4) pre-shifted
-N $6ABE #HTML[#CALL:graphic($6ABE,16,4,1,1)]
+N $6ABE #HTML[#CALL(graphic($6ABE,16,4,1,1))]
 @ $6ABE label=bitmap_stones_2s
 B $6ABE,16,4 Masked bitmap data
 N $6ACE Bitmap: Stones (16x3)
-N $6ACE #HTML[#CALL:graphic($6ACE,16,3,1,1)]
+N $6ACE #HTML[#CALL(graphic($6ACE,16,3,1,1))]
 @ $6ACE label=bitmap_stones_3
 B $6ACE,12,4 Masked bitmap data
 N $6ADA Bitmap: Stones (16x3) pre-shifted
-N $6ADA #HTML[#CALL:graphic($6ADA,16,3,1,1)]
+N $6ADA #HTML[#CALL(graphic($6ADA,16,3,1,1))]
 @ $6ADA label=bitmap_stones_3s
 B $6ADA,12,4 Masked bitmap data
 N $6AE6 Bitmap: Stones (8x2)
-N $6AE6 #HTML[#CALL:graphic($6AE6,8,2,1,1)]
+N $6AE6 #HTML[#CALL(graphic($6AE6,8,2,1,1))]
 @ $6AE6 label=bitmap_stones_4
 B $6AE6,4,2 Masked bitmap data
 N $6AEA Bitmap: Stones (8x2) pre-shifted
-N $6AEA #HTML[#CALL:graphic($6AEA,8,2,1,1)]
+N $6AEA #HTML[#CALL(graphic($6AEA,8,2,1,1))]
 @ $6AEA label=bitmap_stones_4s
 B $6AEA,4,2 Masked bitmap data
 N $6AEE Bitmap: Stones (8x1)
-N $6AEE #HTML[#CALL:graphic($6AEE,8,1,1,1)]
+N $6AEE #HTML[#CALL(graphic($6AEE,8,1,1,1))]
 @ $6AEE label=bitmap_stones_5
 B $6AEE,2,2 Masked bitmap data
 N $6AF0 Bitmap: Stones (8x1) pre-shifted
-N $6AF0 #HTML[#CALL:graphic($6AF0,8,1,1,1)]
+N $6AF0 #HTML[#CALL(graphic($6AF0,8,1,1,1))]
 @ $6AF0 label=bitmap_stones_5s
 B $6AF0,2,2 Masked bitmap data
 N $6AF2 Bitmap: Dust (8x1)
-N $6AF2 #HTML[#CALL:graphic($6AF2,8,1,1,1)]
+N $6AF2 #HTML[#CALL(graphic($6AF2,8,1,1,1))]
 @ $6AF2 label=bitmap_dust_1
 B $6AF2,2,2 Masked bitmap data
 N $6AF4 Bitmap: Dust (8x1) pre-shifted
-N $6AF4 #HTML[#CALL:graphic($6AF4,8,1,1,1)]
+N $6AF4 #HTML[#CALL(graphic($6AF4,8,1,1,1))]
 @ $6AF4 label=bitmap_dust_1s
 B $6AF4,2,2 Masked bitmap data
 @ $6AF6 label=turn_sign_right
@@ -999,35 +999,35 @@ B $6B63,1,1 Height (pixels)
 W $6B64,2,2 Bitmap
 W $6B66,2,2 Pre-shifted bitmap
 N $6B68 Turn right sign (32x40)
-N $6B68 #HTML[#CALL:graphic($6B68,32,40,0,1)]
+N $6B68 #HTML[#CALL(graphic($6B68,32,40,0,1))]
 @ $6B68 label=bitmap_turnsign_1
 B $6B68,160,4 Bitmap data
 N $6C08 Turn right sign (24x30)
-N $6C08 #HTML[#CALL:graphic($6C08,24,30,0,1)]
+N $6C08 #HTML[#CALL(graphic($6C08,24,30,0,1))]
 @ $6C08 label=bitmap_turnsign_2
 B $6C08,90,3 Bitmap data
 N $6C62 Turn right sign (16x20)
-N $6C62 #HTML[#CALL:graphic($6C62,16,20,0,1)]
+N $6C62 #HTML[#CALL(graphic($6C62,16,20,0,1))]
 @ $6C62 label=bitmap_turnsign_3
 B $6C62,40,2 Bitmap data
 N $6C8A Turn right sign (16x16)
-N $6C8A #HTML[#CALL:graphic($6C8A,16,16,1,1)]
+N $6C8A #HTML[#CALL(graphic($6C8A,16,16,1,1))]
 @ $6C8A label=bitmap_turnsign_4
 B $6C8A,64,4 Masked bitmap data
 N $6CCA Turn right sign (16x13)
-N $6CCA #HTML[#CALL:graphic($6CCA,16,13,1,1)]
+N $6CCA #HTML[#CALL(graphic($6CCA,16,13,1,1))]
 @ $6CCA label=bitmap_turnsign_5
 B $6CCA,52,2 Masked bitmap data
 N $6CFE Turn right sign (16x13) pre-shifted
-N $6CFE #HTML[#CALL:graphic($6CFE,16,13,1,1)]
+N $6CFE #HTML[#CALL(graphic($6CFE,16,13,1,1))]
 @ $6CFE label=bitmap_turnsign_5s
 B $6CFE,52,2 Masked bitmap data
 N $6D32 Turn right sign (16x10) unused?
-N $6D32 #HTML[#CALL:graphic($6D32,16,10,1,1)]
+N $6D32 #HTML[#CALL(graphic($6D32,16,10,1,1))]
 @ $6D32 label=bitmap_turnsign_6
 B $6D32,40,4 Masked bitmap data
 N $6D5A Turn right sign (16x10) pre-shifted, unused?
-N $6D5A #HTML[#CALL:graphic($6D5A,16,10,1,1)]
+N $6D5A #HTML[#CALL(graphic($6D5A,16,10,1,1))]
 @ $6D5A label=bitmap_turnsign_6s
 B $6D5A,40,4 Masked bitmap data
 N $6D82 Tumbleweed LOD 1
@@ -1068,19 +1068,19 @@ B $6DA7,1,1 Height (pixels)
 W $6DA8,2,2 Bitmap
 W $6DAA,2,2 Pre-shifted bitmap
 N $6DAC Bitmap: Tumbleweed_1 (16x16)
-N $6DAC #HTML[#CALL:graphic($6DAC,16,16,0,1)]
+N $6DAC #HTML[#CALL(graphic($6DAC,16,16,0,1))]
 @ $6DAC label=bitmap_tumbleweed_1
 B $6DAC,32,2 Bitmap data
 N $6DCC Bitmap: Tumbleweed_2 (16x11)
-N $6DCC #HTML[#CALL:graphic($6DCC,16,11,0,1)]
+N $6DCC #HTML[#CALL(graphic($6DCC,16,11,0,1))]
 @ $6DCC label=bitmap_tumbleweed_2
 B $6DCC,22,2 Bitmap data
 N $6DE2 Bitmap: Tumbleweed_3 (8x9)
-N $6DE2 #HTML[#CALL:graphic($6DE2,8,9,0,1)]
+N $6DE2 #HTML[#CALL(graphic($6DE2,8,9,0,1))]
 @ $6DE2 label=bitmap_tumbleweed_3
 B $6DE2,9,1 Bitmap data
 N $6DEB Bitmap: Tumbleweed_4 (8x7)
-N $6DEB #HTML[#CALL:graphic($6DEB,8,7,0,1)]
+N $6DEB #HTML[#CALL(graphic($6DEB,8,7,0,1))]
 @ $6DEB label=bitmap_tumbleweed_4
 B $6DEB,7,1 Bitmap data
 N $6DF2 Barrier LOD 1
@@ -1121,23 +1121,23 @@ B $6E17,1,1 Height (pixels)
 W $6E18,2,2 Bitmap
 W $6E1A,2,2 Pre-shifted bitmap
 N $6E1C Bitmap: Barrier (32x17)
-N $6E1C #HTML[#CALL:graphic($6E1C,32,17,0,1)]
+N $6E1C #HTML[#CALL(graphic($6E1C,32,17,0,1))]
 @ $6E1C label=bitmap_barrier_1
 B $6E1C,68,4 Bitmap data
 N $6E60 Bitmap: Barrier (24x13)
-N $6E60 #HTML[#CALL:graphic($6E60,24,13,0,1)]
+N $6E60 #HTML[#CALL(graphic($6E60,24,13,0,1))]
 @ $6E60 label=bitmap_barrier_2
 B $6E60,39,3 Bitmap data
 N $6E87 Bitmap: Barrier (16x9)
-N $6E87 #HTML[#CALL:graphic($6E87,16,9,0,1)]
+N $6E87 #HTML[#CALL(graphic($6E87,16,9,0,1))]
 @ $6E87 label=bitmap_barrier_3
 B $6E87,18,2 Bitmap data
 N $6E99 Bitmap: Barrier (16x7)
-N $6E99 #HTML[#CALL:graphic($6E99,16,7,1,1)]
+N $6E99 #HTML[#CALL(graphic($6E99,16,7,1,1))]
 @ $6E99 label=bitmap_barrier_4
 B $6E99,28,4 Masked bitmap data
 N $6EB5 Bitmap: Barrier (16x7) pre-shifted
-N $6EB5 #HTML[#CALL:graphic($6EB5,16,7,1,1)]
+N $6EB5 #HTML[#CALL(graphic($6EB5,16,7,1,1))]
 @ $6EB5 label=bitmap_barrier_4s
 B $6EB5,28,4 Masked bitmap data
 @ $6ED1 label=stretchy_streetlamp_right
@@ -1230,35 +1230,35 @@ B $6F58,1,1 Height
 W $6F59,2,2 Bitmap
 W $6F5B,2,2 Pre-shifted bitmap
 N $6F5D Street lamp top (32x8)
-N $6F5D #HTML[#CALL:graphic($6F5D,32,8,0,1)]
+N $6F5D #HTML[#CALL(graphic($6F5D,32,8,0,1))]
 @ $6F5D label=bitmap_streetlamptop_1
 B $6F5D,32,4 Bitmap data
 N $6F7D Street lamp top (24x5)
-N $6F7D #HTML[#CALL:graphic($6F7D,24,5,0,1)]
+N $6F7D #HTML[#CALL(graphic($6F7D,24,5,0,1))]
 @ $6F7D label=bitmap_streetlamptop_2
 B $6F7D,15,3 Bitmap data
 N $6F8C Street lamp top (24x4)
-N $6F8C #HTML[#CALL:graphic($6F8C,24,4,0,1)]
+N $6F8C #HTML[#CALL(graphic($6F8C,24,4,0,1))]
 @ $6F8C label=bitmap_streetlamptop_3
 B $6F8C,12,3 Bitmap data
 N $6F98 Street lamp top (24x4) pre-shifted
-N $6F98 #HTML[#CALL:graphic($6F98,24,4,0,1)]
+N $6F98 #HTML[#CALL(graphic($6F98,24,4,0,1))]
 @ $6F98 label=bitmap_streetlamptop_3s
 B $6F98,12,3 Bitmap data
 N $6FA4 Street lamp top (16x4)
-N $6FA4 #HTML[#CALL:graphic($6FA4,16,4,1,1)]
+N $6FA4 #HTML[#CALL(graphic($6FA4,16,4,1,1))]
 @ $6FA4 label=bitmap_streetlamptop_4
 B $6FA4,16,2 Masked bitmap data
 N $6FB4 Street lamp top (16x4) pre-shifted
-N $6FB4 #HTML[#CALL:graphic($6FB4,16,4,1,1)]
+N $6FB4 #HTML[#CALL(graphic($6FB4,16,4,1,1))]
 @ $6FB4 label=bitmap_streetlamptop_4s
 B $6FB4,16,2 Masked bitmap data
 N $6FC4 Street lamp top (16x3)
-N $6FC4 #HTML[#CALL:graphic($6FC4,16,3,1,1)]
+N $6FC4 #HTML[#CALL(graphic($6FC4,16,3,1,1))]
 @ $6FC4 label=bitmap_streetlamptop_5
 B $6FC4,12,2 Masked bitmap data
 N $6FD0 Street lamp top (16x3) pre-shifted
-N $6FD0 #HTML[#CALL:graphic($6FD0,16,3,1,1)]
+N $6FD0 #HTML[#CALL(graphic($6FD0,16,3,1,1))]
 @ $6FD0 label=bitmap_streetlamptop_5s
 B $6FD0,12,2 Masked bitmap data
 N $6FDC Referenced by graphic entry 7
@@ -1312,42 +1312,42 @@ B $703A,1,1 Height
 W $703B,2,2 Bitmap
 W $703D,2,2 Pre-shifted bitmap
 N $703F Top of telegraph pole (24x13)
-N $703F #HTML[#CALL:graphic($703F,24,13,0,1)]
+N $703F #HTML[#CALL(graphic($703F,24,13,0,1))]
 @ $703F label=bitmap_telegraphpoletop_1
 B $703F,8,8 Bitmap data
 B $7047,31,8*3,7
 N $7066 Top of telegraph pole (24x10)
-N $7066 #HTML[#CALL:graphic($7066,24,10,0,1)]
+N $7066 #HTML[#CALL(graphic($7066,24,10,0,1))]
 @ $7066 label=bitmap_telegraphpoletop_2
 B $7066,8,8 Bitmap data
 B $706E,22,8*2,6
 N $7084 Top of telegraph pole (24x7)
-N $7084 #HTML[#CALL:graphic($7084,24,7,0,1)]
+N $7084 #HTML[#CALL(graphic($7084,24,7,0,1))]
 @ $7084 label=bitmap_telegraphpoletop_3
 B $7084,8,8 Bitmap data
 B $708C,13,8,5
 N $7099 Top of telegraph pole (24x7) pre-shifted
-N $7099 #HTML[#CALL:graphic($7099,24,7,0,1)]
+N $7099 #HTML[#CALL(graphic($7099,24,7,0,1))]
 @ $7099 label=bitmap_telegraphpoletop_3s
 B $7099,8,8 Bitmap data
 B $70A1,13,8,5
 N $70AE Top of telegraph pole (16x5) masked
-N $70AE #HTML[#CALL:graphic($70AE,16,5,1,1)]
+N $70AE #HTML[#CALL(graphic($70AE,16,5,1,1))]
 @ $70AE label=bitmap_telegraphpoletop_4
 B $70AE,8,8 Masked bitmap data
 B $70B6,12,8,4
 N $70C2 Top of telegraph pole (16x5) pre-shifted and masked
-N $70C2 #HTML[#CALL:graphic($70C2,16,5,1,1)]
+N $70C2 #HTML[#CALL(graphic($70C2,16,5,1,1))]
 @ $70C2 label=bitmap_telegraphpoletop_4s
 B $70C2,8,8 Masked bitmap data
 B $70CA,12,8,4
 N $70D6 Top of telegraph pole (16x4)
-N $70D6 #HTML[#CALL:graphic($70D6,16,4,1,1)]
+N $70D6 #HTML[#CALL(graphic($70D6,16,4,1,1))]
 @ $70D6 label=bitmap_telegraphpoletop_5
 B $70D6,8,8 Masked bitmap data
 B $70DE,8,8
 N $70E6 Top of telegraph pole (16x4) pre-shifted and masked
-N $70E6 #HTML[#CALL:graphic($70E6,16,4,1,1)]
+N $70E6 #HTML[#CALL(graphic($70E6,16,4,1,1))]
 @ $70E6 label=bitmap_telegraphpoletop_5s
 B $70E6,8,8 Masked bitmap data
 @ $70F6 label=stretchy_tree_right
@@ -1536,140 +1536,140 @@ B $7228,1,1 Height
 W $7229,2,2 Bitmap
 W $722B,2,2 Pre-shifted bitmap
 N $722D Tree middle (64x16)
-N $722D #HTML[#CALL:graphic($722D,64,16,0,1)]
+N $722D #HTML[#CALL(graphic($722D,64,16,0,1))]
 @ $722D label=bitmap_tree_middle_64x16
 B $722D,128,8
 N $72AD Tree bottom (64x5)
-N $72AD #HTML[#CALL:graphic($72AD,64,5,0,1)]
+N $72AD #HTML[#CALL(graphic($72AD,64,5,0,1))]
 @ $72AD label=bitmap_tree_bottom_64x5
 B $72AD,40,8
 N $72D5 Tree trunk (16x8)
-N $72D5 #HTML[#CALL:graphic($72D5,16,8,0,1)]
+N $72D5 #HTML[#CALL(graphic($72D5,16,8,0,1))]
 @ $72D5 label=bitmap_tree_trunk_16x8
 B $72D5,16,8
 N $72E5 Tree shadow (64x5)
-N $72E5 #HTML[#CALL:graphic($72E5,64,5,0,1)]
+N $72E5 #HTML[#CALL(graphic($72E5,64,5,0,1))]
 @ $72E5 label=bitmap_tree_shadow_64x5
 B $72E5,40,8
 N $730D Tree middle (48x12)
-N $730D #HTML[#CALL:graphic($730D,48,12,0,1)]
+N $730D #HTML[#CALL(graphic($730D,48,12,0,1))]
 @ $730D label=bitmap_tree_middle_48x12
 B $730D,72,8
 N $7355 Tree bottom (48x4)
-N $7355 #HTML[#CALL:graphic($7355,48,4,0,1)]
+N $7355 #HTML[#CALL(graphic($7355,48,4,0,1))]
 @ $7355 label=bitmap_tree_bottom_48x4
 B $7355,24,8
 N $736D Tree shadow (48x4)
-N $736D #HTML[#CALL:graphic($736D,48,4,0,1)]
+N $736D #HTML[#CALL(graphic($736D,48,4,0,1))]
 @ $736D label=bitmap_tree_shadow_48x4
 B $736D,24,8
 N $7385 Tree middle (32x8)
-N $7385 #HTML[#CALL:graphic($7385,32,8,0,1)]
+N $7385 #HTML[#CALL(graphic($7385,32,8,0,1))]
 @ $7385 label=bitmap_tree_middle_32x8
 B $7385,32,8
 N $73A5 Tree bottom (32x3)
-N $73A5 #HTML[#CALL:graphic($73A5,32,3,0,1)]
+N $73A5 #HTML[#CALL(graphic($73A5,32,3,0,1))]
 @ $73A5 label=bitmap_tree_bottom_32x3
 B $73A5,12,8,4
 N $73B1 Tree shadow (16x2)
-N $73B1 #HTML[#CALL:graphic($73B1,32,2,0,1)]
+N $73B1 #HTML[#CALL(graphic($73B1,32,2,0,1))]
 @ $73B1 label=bitmap_tree_shadow_32x2
 B $73B1,8,8
 N $73B9 Tree middle (24x7)
-N $73B9 #HTML[#CALL:graphic($73B9,24,7,0,1)]
+N $73B9 #HTML[#CALL(graphic($73B9,24,7,0,1))]
 @ $73B9 label=bitmap_tree_middle_24x7
 B $73B9,21,8*2,5
 N $73CE Tree bottom (24x2)
-N $73CE #HTML[#CALL:graphic($73CE,24,2,0,1)]
+N $73CE #HTML[#CALL(graphic($73CE,24,2,0,1))]
 @ $73CE label=bitmap_tree_bottom_24x2
 B $73CE,6,6
 N $73D4 Tree trunk (8x4)
-N $73D4 #HTML[#CALL:graphic($73D4,8,4,0,1)]
+N $73D4 #HTML[#CALL(graphic($73D4,8,4,0,1))]
 @ $73D4 label=bitmap_tree_trunk_8x4
 B $73D4,4,4
 N $73D8 Tree shadow (24x2)
-N $73D8 #HTML[#CALL:graphic($73D8,24,2,0,1)]
+N $73D8 #HTML[#CALL(graphic($73D8,24,2,0,1))]
 @ $73D8 label=bitmap_tree_shadow_24x2
 B $73D8,6,6
 N $73DE Tree top (64x13)
-N $73DE #HTML[#CALL:graphic($73DE,64,13,1,1)]
+N $73DE #HTML[#CALL(graphic($73DE,64,13,1,1))]
 @ $73DE label=bitmap_tree_top_64x13
 B $73DE,208,8 Masked bitmap data
 N $74AE Tree top (48x10)
-N $74AE #HTML[#CALL:graphic($74AE,48,10,1,1)]
+N $74AE #HTML[#CALL(graphic($74AE,48,10,1,1))]
 @ $74AE label=bitmap_tree_top_48x10
 B $74AE,120,12 Masked bitmap data
 N $7526 Tree top (32x5)
-N $7526 #HTML[#CALL:graphic($7526,32,5,1,1)]
+N $7526 #HTML[#CALL(graphic($7526,32,5,1,1))]
 @ $7526 label=bitmap_tree_top_32x5
 B $7526,40,8 Masked bitmap data
 N $754E Tree top (24x4)
-N $754E #HTML[#CALL:graphic($754E,24,4,1,1)]
+N $754E #HTML[#CALL(graphic($754E,24,4,1,1))]
 @ $754E label=bitmap_tree_top_24x4
 B $754E,24,6 Masked bitmap data
 N $7566 Tree top (24x3)
-N $7566 #HTML[#CALL:graphic($7566,24,3,1,1)]
+N $7566 #HTML[#CALL(graphic($7566,24,3,1,1))]
 @ $7566 label=bitmap_tree_top_24x3
 B $7566,18,6 Masked bitmap data
 N $7578 Tree top (24x3) pre-shifted
-N $7578 #HTML[#CALL:graphic($7578,24,3,1,1)]
+N $7578 #HTML[#CALL(graphic($7578,24,3,1,1))]
 @ $7578 label=bitmap_tree_top_24x3s
 B $7578,18,6 Masked bitmap data
 N $758A Tree trunk (16x6)
-N $758A #HTML[#CALL:graphic($758A,16,6,1,1)]
+N $758A #HTML[#CALL(graphic($758A,16,6,1,1))]
 @ $758A label=bitmap_tree_trunk_16x6
 B $758A,24,4 Masked bitmap data
 N $75A2 Tree trunk (16x4)
-N $75A2 #HTML[#CALL:graphic($75A2,16,4,1,1)]
+N $75A2 #HTML[#CALL(graphic($75A2,16,4,1,1))]
 @ $75A2 label=bitmap_tree_trunk_16x4
 B $75A2,16,4 Masked bitmap data
 N $75B2 Tree middle (24x5)
-N $75B2 #HTML[#CALL:graphic($75B2,24,5,1,1)]
+N $75B2 #HTML[#CALL(graphic($75B2,24,5,1,1))]
 @ $75B2 label=bitmap_tree_middle_24x5
 B $75B2,30,6 Masked bitmap data
 N $75D0 Tree bottom (24x2)
-N $75D0 #HTML[#CALL:graphic($75D0,24,2,1,1)]
+N $75D0 #HTML[#CALL(graphic($75D0,24,2,1,1))]
 @ $75D0 label=bitmap_tree_bottom_24x2_another
 B $75D0,12,6 Masked bitmap data
 N $75DC Tree trunk (24x3)
-N $75DC #HTML[#CALL:graphic($75DC,24,3,1,1)]
+N $75DC #HTML[#CALL(graphic($75DC,24,3,1,1))]
 @ $75DC label=bitmap_tree_trunk_24x3
 B $75DC,18,6 Masked bitmap data
 N $75EE Tree shadow (24x1)
-N $75EE #HTML[#CALL:graphic($75EE,24,1,1,1)]
+N $75EE #HTML[#CALL(graphic($75EE,24,1,1,1))]
 @ $75EE label=bitmap_tree_shadow_24x1
 B $75EE,6,6 Masked bitmap data
 N $75F4 Tree middle (24x5) pre-shifted
-N $75F4 #HTML[#CALL:graphic($75F4,24,5,1,1)]
+N $75F4 #HTML[#CALL(graphic($75F4,24,5,1,1))]
 @ $75F4 label=bitmap_tree_middle_24x5s
 B $75F4,30,6 Masked bitmap data
 N $7612 Tree bottom (24x2) pre-shifted
-N $7612 #HTML[#CALL:graphic($7612,24,2,1,1)]
+N $7612 #HTML[#CALL(graphic($7612,24,2,1,1))]
 @ $7612 label=bitmap_tree_bottom_24x2s
 B $7612,12,6 Masked bitmap data
 N $761E Tree trunk (24x3) pre-shifted
-N $761E #HTML[#CALL:graphic($761E,24,3,1,1)]
+N $761E #HTML[#CALL(graphic($761E,24,3,1,1))]
 @ $761E label=bitmap_tree_trunk_24x3s
 B $761E,18,6 Masked bitmap data
 N $7630 Tree shadow (24x1) pre-shifted
-N $7630 #HTML[#CALL:graphic($7630,24,1,1,1)]
+N $7630 #HTML[#CALL(graphic($7630,24,1,1,1))]
 @ $7630 label=bitmap_tree_shadow_24x1s
 B $7630,6,6 Masked bitmap data
 u $7636 [Stage 1] Spare space
 D $7636 This is the end of the per-stage data.
 S $7636,186,$BA
 b $76F0 [Graphics] Turbo icons
-D $76F0 #HTML[#CALL:anim($76F0,16,14,1,1,3)]
+D $76F0 #HTML[#CALL(anim($76F0,16,14,1,1,3))]
 N $76F0 Frame 1 (16x14)
-N $76F0 #HTML[#CALL:graphic($76F0,16,14,1,1)]
+N $76F0 #HTML[#CALL(graphic($76F0,16,14,1,1))]
 @ $76F0 label=bitmap_turbospin_1
 B $76F0,56,4 Masked bitmap data
 N $7728 Frame 2 (16x14)
-N $7728 #HTML[#CALL:graphic($7728,16,14,1,1)]
+N $7728 #HTML[#CALL(graphic($7728,16,14,1,1))]
 @ $7728 label=bitmap_turbospin_2
 B $7728,56,4 Masked bitmap data
 N $7760 Frame 3 (16x14)
-N $7760 #HTML[#CALL:graphic($7760,16,14,1,1)]
+N $7760 #HTML[#CALL(graphic($7760,16,14,1,1))]
 @ $7760 label=bitmap_turbospin_3
 B $7760,56,4 Masked bitmap data
 b $7798 [Pre-game] Messages
@@ -1691,7 +1691,7 @@ W $77CE,2,2 Back buffer address
 W $77D0,2,2 Attributes address
 T $77D2,6,5:n1 "SIGNAL"
 b $77D8 [Pre-game] Drawing commands for the pre-game screen
-N $77D8 #HTML[#CALL:decode_pregame_screen($77D8)]
+N $77D8 #HTML[#CALL(decode_pregame_screen($77D8))]
 @ $77D8 label=pregame_data
 B $77D8,1,1 Set colour 12 (Bright Green)
 B $77D9,1,1 Draw horizontally
@@ -1902,95 +1902,95 @@ B $78A5,1,1 Plot tile 21
 B $78A6,1,1 Stop
 N $78A7 45 tiles used to draw the pre-game screen.
 @ $78A7 label=pregame_tiles
-B $78A7,8,8 Tile 0 #HTML[#CALL:graphic($78A7,8,8,0,0)]
-B $78AF,8,8 Tile 1 #HTML[#CALL:graphic($78AF,8,8,0,0)]
-B $78B7,8,8 Tile 2 #HTML[#CALL:graphic($78B7,8,8,0,0)]
-B $78BF,8,8 Tile 3 #HTML[#CALL:graphic($78BF,8,8,0,0)]
-B $78C7,8,8 Tile 4 #HTML[#CALL:graphic($78C7,8,8,0,0)]
-B $78CF,8,8 Tile 5 #HTML[#CALL:graphic($78CF,8,8,0,0)]
-B $78D7,8,8 Tile 6 #HTML[#CALL:graphic($78D7,8,8,0,0)]
-B $78DF,8,8 Tile 7 #HTML[#CALL:graphic($78DF,8,8,0,0)]
-B $78E7,8,8 Tile 8 #HTML[#CALL:graphic($78E7,8,8,0,0)]
-B $78EF,8,8 Tile 9 #HTML[#CALL:graphic($78EF,8,8,0,0)]
-B $78F7,8,8 Tile 10 #HTML[#CALL:graphic($78F7,8,8,0,0)]
-B $78FF,8,8 Tile 11 #HTML[#CALL:graphic($78FF,8,8,0,0)]
-B $7907,8,8 Tile 12 #HTML[#CALL:graphic($7907,8,8,0,0)]
-B $790F,8,8 Tile 13 #HTML[#CALL:graphic($790F,8,8,0,0)]
-B $7917,8,8 Tile 14 #HTML[#CALL:graphic($7917,8,8,0,0)]
-B $791F,8,8 Tile 15 #HTML[#CALL:graphic($791F,8,8,0,0)]
-B $7927,8,8 Tile 16 #HTML[#CALL:graphic($7927,8,8,0,0)]
-B $792F,8,8 Tile 17 #HTML[#CALL:graphic($792F,8,8,0,0)]
-B $7937,8,8 Tile 18 #HTML[#CALL:graphic($7937,8,8,0,0)]
-B $793F,8,8 Tile 19 #HTML[#CALL:graphic($793F,8,8,0,0)]
-B $7947,8,8 Tile 20 #HTML[#CALL:graphic($7947,8,8,0,0)]
-B $794F,8,8 Tile 21 #HTML[#CALL:graphic($794F,8,8,0,0)]
-B $7957,8,8 Tile 22 #HTML[#CALL:graphic($7957,8,8,0,0)]
-B $795F,8,8 Tile 23 #HTML[#CALL:graphic($795F,8,8,0,0)]
-B $7967,8,8 Tile 24 #HTML[#CALL:graphic($7967,8,8,0,0)]
-B $796F,8,8 Tile 25 #HTML[#CALL:graphic($796F,8,8,0,0)]
-B $7977,8,8 Tile 26 #HTML[#CALL:graphic($7977,8,8,0,0)]
-B $797F,8,8 Tile 27 #HTML[#CALL:graphic($797F,8,8,0,0)]
-B $7987,8,8 Tile 28 #HTML[#CALL:graphic($7987,8,8,0,0)]
-B $798F,8,8 Tile 29 #HTML[#CALL:graphic($798F,8,8,0,0)]
-B $7997,8,8 Tile 30 #HTML[#CALL:graphic($7997,8,8,0,0)]
-B $799F,8,8 Tile 31 #HTML[#CALL:graphic($799F,8,8,0,0)]
-B $79A7,8,8 Tile 32 #HTML[#CALL:graphic($79A7,8,8,0,0)]
-B $79AF,8,8 Tile 33 #HTML[#CALL:graphic($79AF,8,8,0,0)]
-B $79B7,8,8 Tile 34 #HTML[#CALL:graphic($79B7,8,8,0,0)]
-B $79BF,8,8 Tile 35 #HTML[#CALL:graphic($79BF,8,8,0,0)]
-B $79C7,8,8 Tile 36 #HTML[#CALL:graphic($79C7,8,8,0,0)]
-B $79CF,8,8 Tile 37 #HTML[#CALL:graphic($79CF,8,8,0,0)]
-B $79D7,8,8 Tile 38 #HTML[#CALL:graphic($79D7,8,8,0,0)]
-B $79DF,8,8 Tile 39 #HTML[#CALL:graphic($79DF,8,8,0,0)]
-B $79E7,8,8 Tile 40 #HTML[#CALL:graphic($79E7,8,8,0,0)]
-B $79EF,8,8 Tile 41 #HTML[#CALL:graphic($79EF,8,8,0,0)]
-B $79F7,8,8 Tile 42 #HTML[#CALL:graphic($79F7,8,8,0,0)]
-B $79FF,8,8 Tile 43 #HTML[#CALL:graphic($79FF,8,8,0,0)]
-B $7A07,8,8 Tile 44 #HTML[#CALL:graphic($7A07,8,8,0,0)]
+B $78A7,8,8 Tile 0 #HTML[#CALL(graphic($78A7,8,8,0,0))]
+B $78AF,8,8 Tile 1 #HTML[#CALL(graphic($78AF,8,8,0,0))]
+B $78B7,8,8 Tile 2 #HTML[#CALL(graphic($78B7,8,8,0,0))]
+B $78BF,8,8 Tile 3 #HTML[#CALL(graphic($78BF,8,8,0,0))]
+B $78C7,8,8 Tile 4 #HTML[#CALL(graphic($78C7,8,8,0,0))]
+B $78CF,8,8 Tile 5 #HTML[#CALL(graphic($78CF,8,8,0,0))]
+B $78D7,8,8 Tile 6 #HTML[#CALL(graphic($78D7,8,8,0,0))]
+B $78DF,8,8 Tile 7 #HTML[#CALL(graphic($78DF,8,8,0,0))]
+B $78E7,8,8 Tile 8 #HTML[#CALL(graphic($78E7,8,8,0,0))]
+B $78EF,8,8 Tile 9 #HTML[#CALL(graphic($78EF,8,8,0,0))]
+B $78F7,8,8 Tile 10 #HTML[#CALL(graphic($78F7,8,8,0,0))]
+B $78FF,8,8 Tile 11 #HTML[#CALL(graphic($78FF,8,8,0,0))]
+B $7907,8,8 Tile 12 #HTML[#CALL(graphic($7907,8,8,0,0))]
+B $790F,8,8 Tile 13 #HTML[#CALL(graphic($790F,8,8,0,0))]
+B $7917,8,8 Tile 14 #HTML[#CALL(graphic($7917,8,8,0,0))]
+B $791F,8,8 Tile 15 #HTML[#CALL(graphic($791F,8,8,0,0))]
+B $7927,8,8 Tile 16 #HTML[#CALL(graphic($7927,8,8,0,0))]
+B $792F,8,8 Tile 17 #HTML[#CALL(graphic($792F,8,8,0,0))]
+B $7937,8,8 Tile 18 #HTML[#CALL(graphic($7937,8,8,0,0))]
+B $793F,8,8 Tile 19 #HTML[#CALL(graphic($793F,8,8,0,0))]
+B $7947,8,8 Tile 20 #HTML[#CALL(graphic($7947,8,8,0,0))]
+B $794F,8,8 Tile 21 #HTML[#CALL(graphic($794F,8,8,0,0))]
+B $7957,8,8 Tile 22 #HTML[#CALL(graphic($7957,8,8,0,0))]
+B $795F,8,8 Tile 23 #HTML[#CALL(graphic($795F,8,8,0,0))]
+B $7967,8,8 Tile 24 #HTML[#CALL(graphic($7967,8,8,0,0))]
+B $796F,8,8 Tile 25 #HTML[#CALL(graphic($796F,8,8,0,0))]
+B $7977,8,8 Tile 26 #HTML[#CALL(graphic($7977,8,8,0,0))]
+B $797F,8,8 Tile 27 #HTML[#CALL(graphic($797F,8,8,0,0))]
+B $7987,8,8 Tile 28 #HTML[#CALL(graphic($7987,8,8,0,0))]
+B $798F,8,8 Tile 29 #HTML[#CALL(graphic($798F,8,8,0,0))]
+B $7997,8,8 Tile 30 #HTML[#CALL(graphic($7997,8,8,0,0))]
+B $799F,8,8 Tile 31 #HTML[#CALL(graphic($799F,8,8,0,0))]
+B $79A7,8,8 Tile 32 #HTML[#CALL(graphic($79A7,8,8,0,0))]
+B $79AF,8,8 Tile 33 #HTML[#CALL(graphic($79AF,8,8,0,0))]
+B $79B7,8,8 Tile 34 #HTML[#CALL(graphic($79B7,8,8,0,0))]
+B $79BF,8,8 Tile 35 #HTML[#CALL(graphic($79BF,8,8,0,0))]
+B $79C7,8,8 Tile 36 #HTML[#CALL(graphic($79C7,8,8,0,0))]
+B $79CF,8,8 Tile 37 #HTML[#CALL(graphic($79CF,8,8,0,0))]
+B $79D7,8,8 Tile 38 #HTML[#CALL(graphic($79D7,8,8,0,0))]
+B $79DF,8,8 Tile 39 #HTML[#CALL(graphic($79DF,8,8,0,0))]
+B $79E7,8,8 Tile 40 #HTML[#CALL(graphic($79E7,8,8,0,0))]
+B $79EF,8,8 Tile 41 #HTML[#CALL(graphic($79EF,8,8,0,0))]
+B $79F7,8,8 Tile 42 #HTML[#CALL(graphic($79F7,8,8,0,0))]
+B $79FF,8,8 Tile 43 #HTML[#CALL(graphic($79FF,8,8,0,0))]
+B $7A07,8,8 Tile 44 #HTML[#CALL(graphic($7A07,8,8,0,0))]
 b $7A0F [Graphics] Smoke and fire graphics
 @ $7A0F label=bitmap_smoke1
-B $7A0F,52,8*6,4 16x13 pixels, masked #HTML[#CALL:graphic($7A0F,16,13,1,1)]
+B $7A0F,52,8*6,4 16x13 pixels, masked #HTML[#CALL(graphic($7A0F,16,13,1,1))]
 @ $7A43 label=bitmap_smoke2
-B $7A43,44,8*5,4 16x11 pixels, masked #HTML[#CALL:graphic($7A43,16,11,1,1)]
+B $7A43,44,8*5,4 16x11 pixels, masked #HTML[#CALL(graphic($7A43,16,11,1,1))]
 @ $7A6F label=bitmap_smoke3
-B $7A6F,36,8*4,4 16x9 pixels, masked #HTML[#CALL:graphic($7A6F,16,9,1,1)]
+B $7A6F,36,8*4,4 16x9 pixels, masked #HTML[#CALL(graphic($7A6F,16,9,1,1))]
 @ $7A93 label=bitmap_smoke4
-B $7A93,14,8,6 8x7 pixels, masked #HTML[#CALL:graphic($7A93,8,7,1,1)]
+B $7A93,14,8,6 8x7 pixels, masked #HTML[#CALL(graphic($7A93,8,7,1,1))]
 @ $7AA1 label=bitmap_smoke5
-B $7AA1,10,8,2 8x5 pixels, masked #HTML[#CALL:graphic($7AA1,8,5,1,1)]
+B $7AA1,10,8,2 8x5 pixels, masked #HTML[#CALL(graphic($7AA1,8,5,1,1))]
 @ $7AAB label=bitmap_smoke6
-B $7AAB,6,6 8x3 pixels, masked #HTML[#CALL:graphic($7AAB,8,3,1,1)]
+B $7AAB,6,6 8x3 pixels, masked #HTML[#CALL(graphic($7AAB,8,3,1,1))]
 @ $7AB1 label=bitmap_fire1
-B $7AB1,64,4 32x16 pixels #HTML[#CALL:graphic($7AB1,32,16,0,1)]
+B $7AB1,64,4 32x16 pixels #HTML[#CALL(graphic($7AB1,32,16,0,1))]
 @ $7AF1 label=bitmap_fire2
-B $7AF1,64,4 32x16 pixels #HTML[#CALL:graphic($7AF1,32,16,0,1)]
+B $7AF1,64,4 32x16 pixels #HTML[#CALL(graphic($7AF1,32,16,0,1))]
 @ $7B31 label=bitmap_fire3
-B $7B31,48,3 24x8 pixels, masked #HTML[#CALL:graphic($7B31,24,8,1,1)]
+B $7B31,48,3 24x8 pixels, masked #HTML[#CALL(graphic($7B31,24,8,1,1))]
 @ $7B61 label=bitmap_fire4
-B $7B61,48,3 24x8 pixels, masked #HTML[#CALL:graphic($7B61,24,8,1,1)]
+B $7B61,48,3 24x8 pixels, masked #HTML[#CALL(graphic($7B61,24,8,1,1))]
 @ $7B91 label=bitmap_fire5
-B $7B91,20,4 16x5 pixels, masked #HTML[#CALL:graphic($7B91,16,5,1,1)]
+B $7B91,20,4 16x5 pixels, masked #HTML[#CALL(graphic($7B91,16,5,1,1))]
 @ $7BA5 label=bitmap_fire5s
-B $7BA5,20,4 16x5 pixels, masked #HTML[#CALL:graphic($7BA5,16,5,1,1)]
+B $7BA5,20,4 16x5 pixels, masked #HTML[#CALL(graphic($7BA5,16,5,1,1))]
 @ $7BB9 label=bitmap_fire6
-B $7BB9,24,4 16x6 pixels, masked #HTML[#CALL:graphic($7BB9,16,6,1,1)]
+B $7BB9,24,4 16x6 pixels, masked #HTML[#CALL(graphic($7BB9,16,6,1,1))]
 @ $7BD1 label=bitmap_fire6s
-B $7BD1,24,4 16x6 pixels, masked #HTML[#CALL:graphic($7BD1,16,6,1,1)]
+B $7BD1,24,4 16x6 pixels, masked #HTML[#CALL(graphic($7BD1,16,6,1,1))]
 b $7BE9 [Graphics] Faces
 N $7BE9 Nancy's face (32x40)
-N $7BE9 #HTML[#CALL:face($7BE9)]
+N $7BE9 #HTML[#CALL(face($7BE9))]
 @ $7BE9 label=bitmap_nancy
 B $7BE9,160,4 Bitmap data, top-down format
 @ $7C89 label=attrs_nancy
 B $7C89,20,4 Attribute data for above
 N $7C9D Raymond's face (32x40)
-N $7C9D #HTML[#CALL:face($7C9D)]
+N $7C9D #HTML[#CALL(face($7C9D))]
 @ $7C9D label=bitmap_raymond
 B $7C9D,160,4 Bitmap data, top-down format
 @ $7D3D label=attrs_raymond
 B $7D3D,20,4 Attribute data for above
 N $7D51 Tony's face (32x40)
-N $7D51 #HTML[#CALL:face($7D51)]
+N $7D51 #HTML[#CALL(face($7D51))]
 @ $7D51 label=bitmap_tony
 B $7D51,160,4 Bitmap data, top-down format
 @ $7DF1 label=attrs_tony
@@ -2104,78 +2104,78 @@ B $7F20,1,1 Height (pixels)
 W $7F21,2,2 Bitmap
 W $7F23,2,2 Pre-shifted bitmap
 N $7F25 Bottom two rows of largest scale lamppost.
-N $7F25 #HTML[#CALL:graphic($7F25,8,2,1,1)]
+N $7F25 #HTML[#CALL(graphic($7F25,8,2,1,1))]
 @ $7F25 label=bitmap_streetlampbody_1
 B $7F25,4,4 Masked bitmap data
 N $7F29 Bottom repeating section of largest scale lamppost.
-N $7F29 #HTML[#CALL:graphic($7F29,8,2,1,1)]
+N $7F29 #HTML[#CALL(graphic($7F29,8,2,1,1))]
 @ $7F29 label=bitmap_streetlampbody_2
 B $7F29,4,4 Masked bitmap data
 N $7F2D Upper repeating section of largest scale lamppost.
-N $7F2D #HTML[#CALL:graphic($7F2D,8,2,1,1)]
+N $7F2D #HTML[#CALL(graphic($7F2D,8,2,1,1))]
 @ $7F2D label=bitmap_streetlampbody_3
 B $7F2D,4,4 Masked bitmap data
-N $7F31 #HTML[#CALL:graphic($7F31,8,2,1,1)]
+N $7F31 #HTML[#CALL(graphic($7F31,8,2,1,1))]
 @ $7F31 label=bitmap_streetlampbody_4
 B $7F31,4,4 Masked bitmap data
-N $7F35 #HTML[#CALL:graphic($7F35,8,2,1,1)]
+N $7F35 #HTML[#CALL(graphic($7F35,8,2,1,1))]
 @ $7F35 label=bitmap_streetlampbody_5
 B $7F35,4,4 Masked bitmap data
-N $7F39 #HTML[#CALL:graphic($7F39,8,2,1,1)]
+N $7F39 #HTML[#CALL(graphic($7F39,8,2,1,1))]
 @ $7F39 label=bitmap_streetlampbody_6
 B $7F39,4,4 Masked bitmap data
-N $7F3D #HTML[#CALL:graphic($7F3D,8,1,1,1)]
+N $7F3D #HTML[#CALL(graphic($7F3D,8,1,1,1))]
 @ $7F3D label=bitmap_streetlampbody_7
 B $7F3D,2,2 Masked bitmap data
-N $7F3F #HTML[#CALL:graphic($7F3F,8,2,1,1)]
+N $7F3F #HTML[#CALL(graphic($7F3F,8,2,1,1))]
 @ $7F3F label=bitmap_streetlampbody_8
 B $7F3F,4,4 Masked bitmap data
-N $7F43 #HTML[#CALL:graphic($7F43,8,2,1,1)]
+N $7F43 #HTML[#CALL(graphic($7F43,8,2,1,1))]
 @ $7F43 label=bitmap_streetlampbody_9
 B $7F43,4,4 Masked bitmap data
-N $7F47 #HTML[#CALL:graphic($7F47,8,1,1,1)]
+N $7F47 #HTML[#CALL(graphic($7F47,8,1,1,1))]
 @ $7F47 label=bitmap_streetlampbody_7s
 B $7F47,2,2 Masked bitmap data
-N $7F49 #HTML[#CALL:graphic($7F49,8,2,1,1)]
+N $7F49 #HTML[#CALL(graphic($7F49,8,2,1,1))]
 @ $7F49 label=bitmap_streetlampbody_8s
 B $7F49,4,4 Masked bitmap data
-N $7F4D #HTML[#CALL:graphic($7F4D,8,2,1,1)]
+N $7F4D #HTML[#CALL(graphic($7F4D,8,2,1,1))]
 @ $7F4D label=bitmap_streetlampbody_9s
 B $7F4D,4,4 Masked bitmap data
-N $7F51 #HTML[#CALL:graphic($7F51,8,1,1,1)]
+N $7F51 #HTML[#CALL(graphic($7F51,8,1,1,1))]
 @ $7F51 label=bitmap_streetlampbody_10
 B $7F51,2,2 Masked bitmap data
-N $7F53 #HTML[#CALL:graphic($7F53,8,2,1,1)]
+N $7F53 #HTML[#CALL(graphic($7F53,8,2,1,1))]
 @ $7F53 label=bitmap_streetlampbody_11
 B $7F53,4,4 Masked bitmap data
-N $7F57 #HTML[#CALL:graphic($7F57,8,2,1,1)]
+N $7F57 #HTML[#CALL(graphic($7F57,8,2,1,1))]
 @ $7F57 label=bitmap_streetlampbody_12
 B $7F57,4,4 Masked bitmap data
-N $7F5B #HTML[#CALL:graphic($7F5B,8,1,1,1)]
+N $7F5B #HTML[#CALL(graphic($7F5B,8,1,1,1))]
 @ $7F5B label=bitmap_streetlampbody_10s
 B $7F5B,2,2 Masked bitmap data
-N $7F5D #HTML[#CALL:graphic($7F5D,8,2,1,1)]
+N $7F5D #HTML[#CALL(graphic($7F5D,8,2,1,1))]
 @ $7F5D label=bitmap_streetlampbody_11s
 B $7F5D,4,4 Masked bitmap data
-N $7F61 #HTML[#CALL:graphic($7F61,8,2,1,1)]
+N $7F61 #HTML[#CALL(graphic($7F61,8,2,1,1))]
 @ $7F61 label=bitmap_streetlampbody_12s
 B $7F61,4,4 Masked bitmap data
-N $7F65 #HTML[#CALL:graphic($7F65,8,2,1,1)]
+N $7F65 #HTML[#CALL(graphic($7F65,8,2,1,1))]
 @ $7F65 label=bitmap_streetlampbody_13
 B $7F65,4,4 Masked bitmap data
-N $7F69 #HTML[#CALL:graphic($7F69,16,2,1,1)]
+N $7F69 #HTML[#CALL(graphic($7F69,16,2,1,1))]
 @ $7F69 label=bitmap_streetlampbody_14
 B $7F69,8,8 Masked bitmap data
-N $7F71 #HTML[#CALL:graphic($7F71,16,2,1,1)]
+N $7F71 #HTML[#CALL(graphic($7F71,16,2,1,1))]
 @ $7F71 label=bitmap_streetlampbody_15
 B $7F71,8,8 Masked bitmap data
-N $7F79 #HTML[#CALL:graphic($7F79,8,2,1,1)]
+N $7F79 #HTML[#CALL(graphic($7F79,8,2,1,1))]
 @ $7F79 label=bitmap_streetlampbody_13s
 B $7F79,4,4 Masked bitmap data
-N $7F7D #HTML[#CALL:graphic($7F7D,16,2,1,1)]
+N $7F7D #HTML[#CALL(graphic($7F7D,16,2,1,1))]
 @ $7F7D label=bitmap_streetlampbody_14s
 B $7F7D,8,8 Masked bitmap data
-N $7F85 #HTML[#CALL:graphic($7F85,16,2,1,1)]
+N $7F85 #HTML[#CALL(graphic($7F85,16,2,1,1))]
 @ $7F85 label=bitmap_streetlampbody_15s
 B $7F85,8,8 Masked bitmap data
 u $7F8D Unused
@@ -5979,7 +5979,7 @@ W $A276,2,2 Address of the previous left object data byte
 @ $A278 label=road_hazard_ptr
 W $A278,2,2 Address of the previous hazard object data byte
 b $A27A [Graphics] 8x7 bitmap font
-D $A27A #HTML[#CALL:graphic($A27A,8,41*7,0,0)]
+D $A27A #HTML[#CALL(graphic($A27A,8,41*7,0,0))]
 @ $A27A label=font
 B $A27A,7,7 Exclamation mark
 B $A281,7,7 Open bracket
@@ -11465,20 +11465,20 @@ B $CE98,18,18
 b $CEAA [Graphics] Debris
 D $CEAA Used by #R$B578 4 frames, all 8x6 masked
 @ $CEAA label=bitmap_debris_1
-B $CEAA,2,2 #HTML[#CALL:graphic($CEAA,8,6,1,1)]
+B $CEAA,2,2 #HTML[#CALL(graphic($CEAA,8,6,1,1))]
 B $CEAC,10,2
 @ $CEB6 label=bitmap_debris_2
-B $CEB6,2,2 #HTML[#CALL:graphic($CEB6,8,6,1,1)]
+B $CEB6,2,2 #HTML[#CALL(graphic($CEB6,8,6,1,1))]
 B $CEB8,10,2
 @ $CEC2 label=bitmap_debris_3
-B $CEC2,2,2 #HTML[#CALL:graphic($CEC2,8,6,1,1)]
+B $CEC2,2,2 #HTML[#CALL(graphic($CEC2,8,6,1,1))]
 B $CEC4,10,2
 @ $CECE label=bitmap_debris_4
-B $CECE,2,2 #HTML[#CALL:graphic($CECE,8,6,1,1)]
+B $CECE,2,2 #HTML[#CALL(graphic($CECE,8,6,1,1))]
 B $CED0,10,2
 b $CEDA [Graphics] Hero car drawing data
 D $CEDA Built of 9 entries of 20 bytes per entry. In turn composed of five entries of four bytes: (y_offset, n_rows, address).
-N $CEDA #HTML[#CALL:herocar($CEDA)]
+N $CEDA #HTML[#CALL(herocar($CEDA))]
 @ $CEDA label=hero_car_parts
 @ $CEDA label=hero_car_straight
 B $CEDA,1,1 y_offset
@@ -11496,7 +11496,7 @@ W $CEE8,2,2 -> left graphic
 B $CEEA,1,1 y_offset
 B $CEEB,1,1 14 rows
 W $CEEC,2,2 -> right graphic
-N $CEEE #HTML[#CALL:herocar($CEEE)]
+N $CEEE #HTML[#CALL(herocar($CEEE))]
 @ $CEEE label=hero_car_turn
 B $CEEE,1,1 y_offset
 B $CEEF,1,1 17 rows
@@ -11513,7 +11513,7 @@ W $CEFC,2,2 -> left graphic
 B $CEFE,1,1 y_offset
 B $CEFF,1,1 13 rows
 W $CF00,2,2 -> right graphic
-N $CF02 #HTML[#CALL:herocar($CF02)]
+N $CF02 #HTML[#CALL(herocar($CF02))]
 @ $CF02 label=hero_car_turn_hard
 B $CF02,1,1 y_offset
 B $CF03,1,1 16 rows
@@ -11530,7 +11530,7 @@ W $CF10,2,2 -> left graphic
 B $CF12,1,1 y_offset
 B $CF13,1,1 15 rows
 W $CF14,2,2 -> right graphic
-N $CF16 #HTML[#CALL:herocar($CF16)]
+N $CF16 #HTML[#CALL(herocar($CF16))]
 @ $CF16 label=hero_car_up
 B $CF16,1,1 y_offset
 B $CF17,1,1 14 rows
@@ -11547,7 +11547,7 @@ W $CF24,2,2 -> left graphic
 B $CF26,1,1 y_offset
 B $CF27,1,1 14 rows
 W $CF28,2,2 -> right graphic
-N $CF2A #HTML[#CALL:herocar($CF2A)]
+N $CF2A #HTML[#CALL(herocar($CF2A))]
 @ $CF2A label=hero_car_up_turn
 B $CF2A,1,1 y_offset
 B $CF2B,1,1 17 rows
@@ -11564,7 +11564,7 @@ W $CF38,2,2 -> left graphic
 B $CF3A,1,1 y_offset
 B $CF3B,1,1 14 rows
 W $CF3C,2,2 -> right graphic
-N $CF3E #HTML[#CALL:herocar($CF3E)]
+N $CF3E #HTML[#CALL(herocar($CF3E))]
 @ $CF3E label=hero_car_up_turn_hard
 B $CF3E,1,1 y_offset
 B $CF3F,1,1 15 rows
@@ -11581,7 +11581,7 @@ W $CF4C,2,2 -> left graphic
 B $CF4E,1,1 y_offset
 B $CF4F,1,1 15 rows
 W $CF50,2,2 -> right graphic
-N $CF52 #HTML[#CALL:herocar($CF52)]
+N $CF52 #HTML[#CALL(herocar($CF52))]
 @ $CF52 label=hero_car_down
 B $CF52,1,1 y_offset
 B $CF53,1,1 14 rows
@@ -11598,7 +11598,7 @@ W $CF60,2,2 -> left graphic
 B $CF62,1,1 y_offset
 B $CF63,1,1 14 rows
 W $CF64,2,2 -> right graphic
-N $CF66 #HTML[#CALL:herocar($CF66)]
+N $CF66 #HTML[#CALL(herocar($CF66))]
 @ $CF66 label=hero_car_down_turn
 B $CF66,1,1 y_offset
 B $CF67,1,1 16 rows
@@ -11615,7 +11615,7 @@ W $CF74,2,2 -> left graphic
 B $CF76,1,1 y_offset
 B $CF77,1,1 13 rows
 W $CF78,2,2 -> right graphic
-N $CF7A #HTML[#CALL:herocar($CF7A)]
+N $CF7A #HTML[#CALL(herocar($CF7A))]
 @ $CF7A label=hero_car_down_turn_hard
 B $CF7A,1,1 y_offset
 B $CF7B,1,1 16 rows
@@ -11716,549 +11716,549 @@ B $D03B,1,1 12 rows high
 B $D03C,1,1 1 bytes wide
 W $D03D,2,2 -> Frame 3
 N $D03F Arrow graphic (24x21)
-N $D03F #HTML[#CALL:graphic($D03F,24,21,1,1)]
+N $D03F #HTML[#CALL(graphic($D03F,24,21,1,1))]
 @ $D03F label=bitmap_arrow
 B $D03F,126,6 Masked bitmap data
 N $D0BD "HERE!" graphic (24x7)
-N $D0BD #HTML[#CALL:graphic($D0BD,24,7,1,1)]
+N $D0BD #HTML[#CALL(graphic($D0BD,24,7,1,1))]
 @ $D0BD label=bitmap_here
 B $D0BD,42,6 Masked bitmap data
 N $D0E7 Cherry light (sits on roof of car) (8x7)
-N $D0E7 #HTML[#CALL:graphic($D0E7,8,7,1,1)]
+N $D0E7 #HTML[#CALL(graphic($D0E7,8,7,1,1))]
 @ $D0E7 label=bitmap_cherry_light
 B $D0E7,14,2 Masked bitmap data
 N $D0F5 Illuminated cherry light (24x14)
-N $D0F5 #HTML[#CALL:graphic($D0F5,24,14,1,1)]
+N $D0F5 #HTML[#CALL(graphic($D0F5,24,14,1,1))]
 @ $D0F5 label=bitmap_cherry_light_lit
 B $D0F5,84,6 Masked bitmap data
 N $D149 Crash/spark (24x20)
-N $D149 #HTML[#CALL:graphic($D149,24,20,1,1)]
+N $D149 #HTML[#CALL(graphic($D149,24,20,1,1))]
 @ $D149 label=bitmap_spark
 B $D149,120,6 Masked bitmap data
 N $D1C1 Putting-cherry-on-roof anim frame 1 (16x4)
-N $D1C1 #HTML[#CALL:graphic($D1C1,16,4,1,1)]
+N $D1C1 #HTML[#CALL(graphic($D1C1,16,4,1,1))]
 @ $D1C1 label=bitmap_cherryout_1
 B $D1C1,16,4 Masked bitmap data
 N $D1D1 Putting-cherry-on-roof anim frame 2 (16x9)
-N $D1D1 #HTML[#CALL:graphic($D1D1,16,9,1,1)]
+N $D1D1 #HTML[#CALL(graphic($D1D1,16,9,1,1))]
 @ $D1D1 label=bitmap_cherryout_2
 B $D1D1,36,4 Masked bitmap data
 N $D1F5 Putting-cherry-on-roof anim frame 3 (8x12)
-N $D1F5 #HTML[#CALL:graphic($D1F5,8,12,1,1)]
+N $D1F5 #HTML[#CALL(graphic($D1F5,8,12,1,1))]
 @ $D1F5 label=bitmap_cherryout_3
 B $D1F5,24,2 Masked bitmap data
 N $D20D Turbo smoke plume animation
 N $D20D (32x16) masked per frame. 4 frames.
-N $D20D #HTML[#CALL:anim($D20D,32,16,1,1,4)]
+N $D20D #HTML[#CALL(anim($D20D,32,16,1,1,4))]
 N $D20D Turbo smoke plume data frame 1
-N $D20D #HTML[#CALL:graphic($D20D,32,16,1,1)]
+N $D20D #HTML[#CALL(graphic($D20D,32,16,1,1))]
 @ $D20D label=bitmap_turbo_1
 B $D20D,128,8 Masked bitmap data
 N $D28D Turbo smoke plume data frame 2
-N $D28D #HTML[#CALL:graphic($D28D,32,16,1,1)]
+N $D28D #HTML[#CALL(graphic($D28D,32,16,1,1))]
 @ $D28D label=bitmap_turbo_2
 B $D28D,128,8 Masked bitmap data
 N $D30D Turbo smoke plume data frame 3
-N $D30D #HTML[#CALL:graphic($D30D,32,16,1,1)]
+N $D30D #HTML[#CALL(graphic($D30D,32,16,1,1))]
 @ $D30D label=bitmap_turbo_3
 B $D30D,128,8 Masked bitmap data
 N $D38D Turbo smoke plume data frame 4
-N $D38D #HTML[#CALL:graphic($D38D,32,16,1,1)]
+N $D38D #HTML[#CALL(graphic($D38D,32,16,1,1))]
 @ $D38D label=bitmap_turbo_4
 B $D38D,128,8 Masked bitmap data
 N $D40D Hero car graphics
 N $D40D 9 sets
 N $D40D Centre parts
 N $D40D Straight (40x14)
-N $D40D #HTML[#CALL:graphic($D40D,40,14,0,1)]
+N $D40D #HTML[#CALL(graphic($D40D,40,14,0,1))]
 @ $D40D label=bitmap_hero_centre_straight
 B $D40D,70,5 Non-masked, inverted bitmap data
 N $D453 Straight + Turn right (40x17)
-N $D453 #HTML[#CALL:graphic($D453,40,17,0,1)]
+N $D453 #HTML[#CALL(graphic($D453,40,17,0,1))]
 @ $D453 label=bitmap_hero_centre_straight_right
 B $D453,85,5 Non-masked, inverted bitmap data
 N $D4A8 Straight + Turn right hard (40x16)
-N $D4A8 #HTML[#CALL:graphic($D4A8,40,16,0,1)]
+N $D4A8 #HTML[#CALL(graphic($D4A8,40,16,0,1))]
 @ $D4A8 label=bitmap_hero_centre_straight_right_hard
 B $D4A8,80,5 Non-masked, inverted bitmap data
 N $D4F8 Up (40x14)
-N $D4F8 #HTML[#CALL:graphic($D4F8,40,14,0,1)]
+N $D4F8 #HTML[#CALL(graphic($D4F8,40,14,0,1))]
 @ $D4F8 label=bitmap_hero_centre_up
 B $D4F8,70,5 Non-masked, inverted bitmap data
 N $D53E Up + Turn right (40x17)
-N $D53E #HTML[#CALL:graphic($D53E,40,17,0,1)]
+N $D53E #HTML[#CALL(graphic($D53E,40,17,0,1))]
 @ $D53E label=bitmap_hero_centre_up_right
 B $D53E,85,5 Non-masked, inverted bitmap data
 N $D593 Up + Turn right hard (40x15)
-N $D593 #HTML[#CALL:graphic($D593,40,15,0,1)]
+N $D593 #HTML[#CALL(graphic($D593,40,15,0,1))]
 @ $D593 label=bitmap_hero_centre_up_right_hard
 B $D593,75,5 Non-masked, inverted bitmap data
 N $D5DE Down (40x14)
-N $D5DE #HTML[#CALL:graphic($D5DE,40,14,0,1)]
+N $D5DE #HTML[#CALL(graphic($D5DE,40,14,0,1))]
 @ $D5DE label=bitmap_hero_centre_down
 B $D5DE,70,5 Non-masked, inverted bitmap data
 N $D624 Down + Turn right (40x16)
-N $D624 #HTML[#CALL:graphic($D624,40,16,0,1)]
+N $D624 #HTML[#CALL(graphic($D624,40,16,0,1))]
 @ $D624 label=bitmap_hero_centre_down_right
 B $D624,80,5 Non-masked, inverted bitmap data
 N $D674 Down + Turn right hard (40x16)
-N $D674 #HTML[#CALL:graphic($D674,40,16,0,1)]
+N $D674 #HTML[#CALL(graphic($D674,40,16,0,1))]
 @ $D674 label=bitmap_hero_centre_down_right_hard
 B $D674,80,5 Non-masked, inverted bitmap data
 N $D6C4 Straight parts
 N $D6C4 Top of car (40x9)
-N $D6C4 #HTML[#CALL:graphic($D6C4,40,9,1,1)]
+N $D6C4 #HTML[#CALL(graphic($D6C4,40,9,1,1))]
 @ $D6C4 label=bitmap_hero_top_straight
 B $D6C4,90,10 Masked, inverted bitmap data
 N $D71E Bottom of car (40x6)
-N $D71E #HTML[#CALL:graphic($D71E,40,6,1,1)]
+N $D71E #HTML[#CALL(graphic($D71E,40,6,1,1))]
 @ $D71E label=bitmap_hero_bottom_straight
 B $D71E,60,10 Masked, inverted bitmap data
 N $D75A Left of car (8x14)
-N $D75A #HTML[#CALL:graphic($D75A,8,14,1,1)]
+N $D75A #HTML[#CALL(graphic($D75A,8,14,1,1))]
 @ $D75A label=bitmap_hero_left_straight
 B $D75A,28,2 Masked, inverted bitmap data
 N $D776 Right of car (8x14)
-N $D776 #HTML[#CALL:graphic($D776,8,14,1,1)]
+N $D776 #HTML[#CALL(graphic($D776,8,14,1,1))]
 @ $D776 label=bitmap_hero_right_straight
 B $D776,28,2 Masked, inverted bitmap data
 N $D792 Straight + Turn right parts
 N $D792 Top of car (40x9)
-N $D792 #HTML[#CALL:graphic($D792,40,8,1,1)]
+N $D792 #HTML[#CALL(graphic($D792,40,8,1,1))]
 @ $D792 label=bitmap_hero_top_straight_right
 B $D792,80,10 Masked, inverted bitmap data
 N $D7E2 Bottom of car (40x6)
-N $D7E2 #HTML[#CALL:graphic($D7E2,40,4,1,1)]
+N $D7E2 #HTML[#CALL(graphic($D7E2,40,4,1,1))]
 @ $D7E2 label=bitmap_hero_bottom_straight_right
 B $D7E2,40,10 Masked, inverted bitmap data
 N $D80A Left of car (8x13)
-N $D80A #HTML[#CALL:graphic($D80A,8,13,1,1)]
+N $D80A #HTML[#CALL(graphic($D80A,8,13,1,1))]
 @ $D80A label=bitmap_hero_left_straight_left
 B $D80A,26,2 Masked, inverted bitmap data
 N $D824 Right of car (8x13)
-N $D824 #HTML[#CALL:graphic($D824,8,13,1,1)]
+N $D824 #HTML[#CALL(graphic($D824,8,13,1,1))]
 @ $D824 label=bitmap_hero_right_straight_right
 B $D824,26,2 Masked, inverted bitmap data
 N $D83E Straight + Turn right hard parts
 N $D83E Top of car (40x9)
-N $D83E #HTML[#CALL:graphic($D83E,40,9,1,1)]
+N $D83E #HTML[#CALL(graphic($D83E,40,9,1,1))]
 @ $D83E label=bitmap_hero_top_straight_right_hard
 B $D83E,90,10 Masked, inverted bitmap data
 N $D898 Bottom of car (40x4)
-N $D898 #HTML[#CALL:graphic($D898,40,4,1,1)]
+N $D898 #HTML[#CALL(graphic($D898,40,4,1,1))]
 @ $D898 label=bitmap_hero_bottom_straight_right_hard
 B $D898,40,10 Masked, inverted bitmap data
 N $D8C0 Left of car (8x12)
-N $D8C0 #HTML[#CALL:graphic($D8C0,8,12,1,1)]
+N $D8C0 #HTML[#CALL(graphic($D8C0,8,12,1,1))]
 @ $D8C0 label=bitmap_hero_left_straight_right_hard
 B $D8C0,24,2 Masked, inverted bitmap data
 N $D8D8 Right of car (8x15)
-N $D8D8 #HTML[#CALL:graphic($D8D8,8,15,1,1)]
+N $D8D8 #HTML[#CALL(graphic($D8D8,8,15,1,1))]
 @ $D8D8 label=bitmap_hero_right_straight_right_hard
 B $D8D8,30,2 Masked, inverted bitmap data
 N $D8F6 Up parts
 N $D8F6 Top of car (40x10)
-N $D8F6 #HTML[#CALL:graphic($D8F6,40,10,1,1)]
+N $D8F6 #HTML[#CALL(graphic($D8F6,40,10,1,1))]
 @ $D8F6 label=bitmap_hero_top_up
 B $D8F6,100,10 Masked, inverted bitmap data
 N $D95A Bottom of car (40x6)
-N $D95A #HTML[#CALL:graphic($D95A,40,6,1,1)]
+N $D95A #HTML[#CALL(graphic($D95A,40,6,1,1))]
 @ $D95A label=bitmap_hero_bottom_up
 B $D95A,60,10 Masked, inverted bitmap data
 N $D996 Left of car (8x13)
-N $D996 #HTML[#CALL:graphic($D996,8,13,1,1)]
+N $D996 #HTML[#CALL(graphic($D996,8,13,1,1))]
 @ $D996 label=bitmap_hero_left_up
 B $D996,26,2 Masked, inverted bitmap data
 N $D9B0 Right of car (8x14)
-N $D9B0 #HTML[#CALL:graphic($D9B0,8,14,1,1)]
+N $D9B0 #HTML[#CALL(graphic($D9B0,8,14,1,1))]
 @ $D9B0 label=bitmap_hero_right_up
 B $D9B0,28,2 Masked, inverted bitmap data
 N $D9CC Up + Turn right parts
 N $D9CC Top of car (40x9)
-N $D9CC #HTML[#CALL:graphic($D9CC,40,9,1,1)]
+N $D9CC #HTML[#CALL(graphic($D9CC,40,9,1,1))]
 @ $D9CC label=bitmap_hero_top_right
 B $D9CC,90,10 Masked, inverted bitmap data
 N $DA26 Bottom of car (40x4)
-N $DA26 #HTML[#CALL:graphic($DA26,40,4,1,1)]
+N $DA26 #HTML[#CALL(graphic($DA26,40,4,1,1))]
 @ $DA26 label=bitmap_hero_bottom_right
 B $DA26,40,10 Masked, inverted bitmap data
 N $DA4E Left of car (8x12)
-N $DA4E #HTML[#CALL:graphic($DA4E,8,12,1,1)]
+N $DA4E #HTML[#CALL(graphic($DA4E,8,12,1,1))]
 @ $DA4E label=bitmap_hero_left_right
 B $DA4E,24,2 Masked, inverted bitmap data
 N $DA66 Right of car (8x14)
-N $DA66 #HTML[#CALL:graphic($DA66,8,14,1,1)]
+N $DA66 #HTML[#CALL(graphic($DA66,8,14,1,1))]
 @ $DA66 label=bitmap_hero_right_right
 B $DA66,28,2 Masked, inverted bitmap data
 N $DA82 Up + Turn right hard parts
 N $DA82 Top of car (40x9)
-N $DA82 #HTML[#CALL:graphic($DA82,40,9,1,1)]
+N $DA82 #HTML[#CALL(graphic($DA82,40,9,1,1))]
 @ $DA82 label=bitmap_hero_up_right_hard
 B $DA82,90,10 Masked, inverted bitmap data
 N $DADC Bottom of car (40x6)
-N $DADC #HTML[#CALL:graphic($DADC,40,6,1,1)]
+N $DADC #HTML[#CALL(graphic($DADC,40,6,1,1))]
 @ $DADC label=bitmap_hero_bottom_right_hard
 B $DADC,60,10 Masked, inverted bitmap data
 N $DB18 Left of car (8x11)
-N $DB18 #HTML[#CALL:graphic($DB18,8,11,1,1)]
+N $DB18 #HTML[#CALL(graphic($DB18,8,11,1,1))]
 @ $DB18 label=bitmap_hero_left_right_hard
 B $DB18,22,2 Masked, inverted bitmap data
 N $DB2E Right of car (8x15)
-N $DB2E #HTML[#CALL:graphic($DB2E,8,15,1,1)]
+N $DB2E #HTML[#CALL(graphic($DB2E,8,15,1,1))]
 @ $DB2E label=bitmap_hero_right_right_hard
 B $DB2E,30,2 Masked, inverted bitmap data
 N $DB4C Down parts
 N $DB4C Top of car (40x8)
-N $DB4C #HTML[#CALL:graphic($DB4C,40,8,1,1)]
+N $DB4C #HTML[#CALL(graphic($DB4C,40,8,1,1))]
 @ $DB4C label=bitmap_hero_top_down
 B $DB4C,80,10 Masked, inverted bitmap data
 N $DB9C Bottom of car (40x6)
-N $DB9C #HTML[#CALL:graphic($DB9C,40,6,1,1)]
+N $DB9C #HTML[#CALL(graphic($DB9C,40,6,1,1))]
 @ $DB9C label=bitmap_hero_bottom_down
 B $DB9C,60,10 Masked, inverted bitmap data
 N $DBD8 Left of car (8x13)
-N $DBD8 #HTML[#CALL:graphic($DBD8,8,13,1,1)]
+N $DBD8 #HTML[#CALL(graphic($DBD8,8,13,1,1))]
 @ $DBD8 label=bitmap_hero_left_down
 B $DBD8,26,2 Masked, inverted bitmap data
 N $DBF2 Right of car (8x14)
-N $DBF2 #HTML[#CALL:graphic($DBF2,8,14,1,1)]
+N $DBF2 #HTML[#CALL(graphic($DBF2,8,14,1,1))]
 @ $DBF2 label=bitmap_hero_right_down
 B $DBF2,28,2 Masked, inverted bitmap data
 N $DC0E Down + Turn right parts
 N $DC0E Top of car (40x8)
-N $DC0E #HTML[#CALL:graphic($DC0E,40,8,1,1)]
+N $DC0E #HTML[#CALL(graphic($DC0E,40,8,1,1))]
 @ $DC0E label=bitmap_hero_top_down_right
 B $DC0E,80,10 Masked, inverted bitmap data
 N $DC5E Bottom of car (40x4)
-N $DC5E #HTML[#CALL:graphic($DC5E,40,4,1,1)]
+N $DC5E #HTML[#CALL(graphic($DC5E,40,4,1,1))]
 @ $DC5E label=bitmap_hero_bottom_down_right
 B $DC5E,40,10 Masked, inverted bitmap data
 N $DC86 Left of car (8x13)
-N $DC86 #HTML[#CALL:graphic($DC86,8,13,1,1)]
+N $DC86 #HTML[#CALL(graphic($DC86,8,13,1,1))]
 @ $DC86 label=bitmap_hero_left_down_right
 B $DC86,26,2 Masked, inverted bitmap data
 N $DCA0 Right of car (8x13)
-N $DCA0 #HTML[#CALL:graphic($DCA0,8,13,1,1)]
+N $DCA0 #HTML[#CALL(graphic($DCA0,8,13,1,1))]
 @ $DCA0 label=bitmap_hero_right_down_right
 B $DCA0,26,2 Masked, inverted bitmap data
 N $DCBA Down + Turn right hard parts
 N $DCBA Top of car (40x8)
-N $DCBA #HTML[#CALL:graphic($DCBA,40,8,1,1)]
+N $DCBA #HTML[#CALL(graphic($DCBA,40,8,1,1))]
 @ $DCBA label=bitmap_hero_top_down_right_hard
 B $DCBA,80,10 Masked, inverted bitmap data
 N $DD0A Bottom of car (40x4)
-N $DD0A #HTML[#CALL:graphic($DD0A,40,4,1,1)]
+N $DD0A #HTML[#CALL(graphic($DD0A,40,4,1,1))]
 @ $DD0A label=bitmap_hero_bottom_down_right_hard
 B $DD0A,40,10 Masked, inverted bitmap data
 N $DD32 Left of car (8x13)
-N $DD32 #HTML[#CALL:graphic($DD32,8,13,1,1)]
+N $DD32 #HTML[#CALL(graphic($DD32,8,13,1,1))]
 @ $DD32 label=bitmap_hero_left_down_right_hard
 B $DD32,26,2 Masked, inverted bitmap data
 N $DD4C Right of car (8x15)
-N $DD4C #HTML[#CALL:graphic($DD4C,8,15,1,1)]
+N $DD4C #HTML[#CALL(graphic($DD4C,8,15,1,1))]
 @ $DD4C label=bitmap_hero_right_down_right_hard
 B $DD4C,30,2 Masked, inverted bitmap data
 N $DD6A Shadow parts
 N $DD6A Shadow + Straight (56x12)
-N $DD6A #HTML[#CALL:graphic($DD6A,56,12,1,1)]
+N $DD6A #HTML[#CALL(graphic($DD6A,56,12,1,1))]
 @ $DD6A label=bitmap_shadow_straight
 B $DD6A,168,14 Masked, inverted bitmap data
 N $DE12 Shadow + Turn right (56x12)
-N $DE12 #HTML[#CALL:graphic($DE12,56,12,1,1)]
+N $DE12 #HTML[#CALL(graphic($DE12,56,12,1,1))]
 @ $DE12 label=bitmap_shadow_turn_right
 B $DE12,168,14 Masked, inverted bitmap data
 N $DEBA Shadow + Turn right hard (56x12)
-N $DEBA #HTML[#CALL:graphic($DEBA,56,12,1,1)]
+N $DEBA #HTML[#CALL(graphic($DEBA,56,12,1,1))]
 @ $DEBA label=bitmap_shadow_turn_right_hard
 B $DEBA,168,14 Masked, inverted bitmap data
 b $DF62 [Graphics] LED style numeric font used for scores
 D $DF62 8x15 pixels, digits 0..9 only
-D $DF62 #HTML[#CALL:graphic($DF62,8,10*15,0,0)]
+D $DF62 #HTML[#CALL(graphic($DF62,8,10*15,0,0))]
 @ $DF62 label=ledfont
 B $DF62,150,15
 b $DFF8 [Graphics] Mini font used for in-game messages
 D $DFF8 8x6 pixels, though the digits are thinner than 8, A-Z + five symbols.
-D $DFF8 #HTML[#CALL:graphic($DFF8,8,31*6,0,0)]
+D $DFF8 #HTML[#CALL(graphic($DFF8,8,31*6,0,0))]
 @ $DFF8 label=minifont
 B $DFF8,186,6
 b $E0B2 Graphics defns <Byte width, Flags, Height, Ptr, Ptr>
 D $E0B2 Note: The definitions may use subsections of graphic data.
 N $E0B2 TODO: Ensure these graphic calls don't clash with other emissions.
-N $E0B2 Regular: #HTML[#CALL:graphic($7AB1,16,16,0,1)]
+N $E0B2 Regular: #HTML[#CALL(graphic($7AB1,16,16,0,1))]
 @ $E0B2 label=fire1_defns
 B $E0B2,1,1 Width (bytes)
 B $E0B3,1,1 Flags
 B $E0B4,1,1 Height (pixels)
 W $E0B5,2,2 Bitmap
 W $E0B7,2,2 Pre-shifted bitmap
-N $E0B9 Regular: #HTML[#CALL:graphic($7B31,24,8,1,1)]
+N $E0B9 Regular: #HTML[#CALL(graphic($7B31,24,8,1,1))]
 B $E0B9,1,1 Width (bytes)
 B $E0BA,1,1 Flags
 B $E0BB,1,1 Height (pixels)
 W $E0BC,2,2 Bitmap
 W $E0BE,2,2 Pre-shifted bitmap
-N $E0C0 Regular: #HTML[#CALL:graphic($7B91,16,5,1,1)] Pre-shifted: #HTML[#CALL:graphic($7BA5,16,5,1,1)]
+N $E0C0 Regular: #HTML[#CALL(graphic($7B91,16,5,1,1))] Pre-shifted: #HTML[#CALL(graphic($7BA5,16,5,1,1))]
 B $E0C0,1,1 Width (bytes)
 B $E0C1,1,1 Flags
 B $E0C2,1,1 Height (pixels)
 W $E0C3,2,2 Bitmap
 W $E0C5,2,2 Pre-shifted bitmap
-N $E0C7 Regular: #HTML[#CALL:graphic($7B95,16,4,1,1)] Pre-shifted: #HTML[#CALL:graphic($7BA9,16,4,1,1)]
+N $E0C7 Regular: #HTML[#CALL(graphic($7B95,16,4,1,1))] Pre-shifted: #HTML[#CALL(graphic($7BA9,16,4,1,1))]
 B $E0C7,1,1 Width (bytes)
 B $E0C8,1,1 Flags
 B $E0C9,1,1 Height (pixels)
 W $E0CA,2,2 Bitmap
 W $E0CC,2,2 Pre-shifted bitmap
-N $E0CE Regular: #HTML[#CALL:graphic($7B99,16,3,1,1)] Pre-shifted: #HTML[#CALL:graphic($7BAD,16,3,1,1)]
+N $E0CE Regular: #HTML[#CALL(graphic($7B99,16,3,1,1))] Pre-shifted: #HTML[#CALL(graphic($7BAD,16,3,1,1))]
 B $E0CE,1,1 Width (bytes)
 B $E0CF,1,1 Flags
 B $E0D0,1,1 Height (pixels)
 W $E0D1,2,2 Bitmap
 W $E0D3,2,2 Pre-shifted bitmap
-N $E0D5 Regular: #HTML[#CALL:graphic($7B9D,16,2,1,1)] Pre-shifted: #HTML[#CALL:graphic($7BB1,16,2,1,1)]
+N $E0D5 Regular: #HTML[#CALL(graphic($7B9D,16,2,1,1))] Pre-shifted: #HTML[#CALL(graphic($7BB1,16,2,1,1))]
 B $E0D5,1,1 Width (bytes)
 B $E0D6,1,1 Flags
 B $E0D7,1,1 Height (pixels)
 W $E0D8,2,2 Bitmap
 W $E0DA,2,2 Pre-shifted bitmap
-N $E0DC Regular: #HTML[#CALL:graphic($7AF1,32,16,0,1)]
+N $E0DC Regular: #HTML[#CALL(graphic($7AF1,32,16,0,1))]
 @ $E0DC label=fire2_defns
 B $E0DC,1,1 Width (bytes)
 B $E0DD,1,1 Flags
 B $E0DE,1,1 Height (pixels)
 W $E0DF,2,2 Bitmap
 W $E0E1,2,2 Pre-shifted bitmap
-N $E0E3 Regular: #HTML[#CALL:graphic($7B61,24,8,1,1)]
+N $E0E3 Regular: #HTML[#CALL(graphic($7B61,24,8,1,1))]
 B $E0E3,1,1 Width (bytes)
 B $E0E4,1,1 Flags
 B $E0E5,1,1 Height (pixels)
 W $E0E6,2,2 Bitmap
 W $E0E8,2,2 Pre-shifted bitmap
-N $E0EA Regular: #HTML[#CALL:graphic($7BB9,16,6,1,1)] Pre-shifted: #HTML[#CALL:graphic($7BD1,16,6,1,1)]
+N $E0EA Regular: #HTML[#CALL(graphic($7BB9,16,6,1,1))] Pre-shifted: #HTML[#CALL(graphic($7BD1,16,6,1,1))]
 B $E0EA,1,1 Width (bytes)
 B $E0EB,1,1 Flags
 B $E0EC,1,1 Height (pixels)
 W $E0ED,2,2 Bitmap
 W $E0EF,2,2 Pre-shifted bitmap
-N $E0F1 Regular: #HTML[#CALL:graphic($7BBD,16,5,1,1)] Pre-shifted: #HTML[#CALL:graphic($7BD5,16,5,1,1)]
+N $E0F1 Regular: #HTML[#CALL(graphic($7BBD,16,5,1,1))] Pre-shifted: #HTML[#CALL(graphic($7BD5,16,5,1,1))]
 B $E0F1,1,1 Width (bytes)
 B $E0F2,1,1 Flags
 B $E0F3,1,1 Height (pixels)
 W $E0F4,2,2 Bitmap
 W $E0F6,2,2 Pre-shifted bitmap
-N $E0F8 Regular: #HTML[#CALL:graphic($7BC1,16,4,1,1)] Pre-shifted: #HTML[#CALL:graphic($7BD9,16,4,1,1)]
+N $E0F8 Regular: #HTML[#CALL(graphic($7BC1,16,4,1,1))] Pre-shifted: #HTML[#CALL(graphic($7BD9,16,4,1,1))]
 B $E0F8,1,1 Width (bytes)
 B $E0F9,1,1 Flags
 B $E0FA,1,1 Height (pixels)
 W $E0FB,2,2 Bitmap
 W $E0FD,2,2 Pre-shifted bitmap
-N $E0FF Regular: #HTML[#CALL:graphic($7BC5,16,3,1,1)] Pre-shifted: #HTML[#CALL:graphic($7BDD,16,3,1,1)]
+N $E0FF Regular: #HTML[#CALL(graphic($7BC5,16,3,1,1))] Pre-shifted: #HTML[#CALL(graphic($7BDD,16,3,1,1))]
 B $E0FF,1,1 Width (bytes)
 B $E100,1,1 Flags
 B $E101,1,1 Height (pixels)
 W $E102,2,2 Bitmap
 W $E104,2,2 Pre-shifted bitmap
-N $E106 Regular: #HTML[#CALL:graphic($7AC5,32,11,0,1)]
+N $E106 Regular: #HTML[#CALL(graphic($7AC5,32,11,0,1))]
 @ $E106 label=fire3_defns
 B $E106,1,1 Width (bytes)
 B $E107,1,1 Flags
 B $E108,1,1 Height (pixels)
 W $E109,2,2 Bitmap
 W $E10B,2,2 Pre-shifted bitmap
-N $E10D Regular: #HTML[#CALL:graphic($7B3D,24,6,1,1)]
+N $E10D Regular: #HTML[#CALL(graphic($7B3D,24,6,1,1))]
 B $E10D,1,1 Width (bytes)
 B $E10E,1,1 Flags
 B $E10F,1,1 Height (pixels)
 W $E110,2,2 Bitmap
 W $E112,2,2 Pre-shifted bitmap
-N $E114 Regular: #HTML[#CALL:graphic($7B3D,16,4,1,1)] Pre-shifted: #HTML[#CALL:graphic($7BA9,16,4,1,1)]
+N $E114 Regular: #HTML[#CALL(graphic($7B3D,16,4,1,1))] Pre-shifted: #HTML[#CALL(graphic($7BA9,16,4,1,1))]
 B $E114,1,1 Width (bytes)
 B $E115,1,1 Flags
 B $E116,1,1 Height (pixels)
 W $E117,2,2 Bitmap
 W $E119,2,2 Pre-shifted bitmap
-N $E11B Regular: #HTML[#CALL:graphic($7B99,16,3,1,1)] Pre-shifted: #HTML[#CALL:graphic($7BAD,16,3,1,1)]
+N $E11B Regular: #HTML[#CALL(graphic($7B99,16,3,1,1))] Pre-shifted: #HTML[#CALL(graphic($7BAD,16,3,1,1))]
 B $E11B,1,1 Width (bytes)
 B $E11C,1,1 Flags
 B $E11D,1,1 Height (pixels)
 W $E11E,2,2 Bitmap
 W $E120,2,2 Pre-shifted bitmap
-N $E122 Regular: #HTML[#CALL:graphic($7B9D,16,2,1,1)] Pre-shifted: #HTML[#CALL:graphic($7BB1,16,2,1,1)]
+N $E122 Regular: #HTML[#CALL(graphic($7B9D,16,2,1,1))] Pre-shifted: #HTML[#CALL(graphic($7BB1,16,2,1,1))]
 B $E122,1,1 Width (bytes)
 B $E123,1,1 Flags
 B $E124,1,1 Height (pixels)
 W $E125,2,2 Bitmap
 W $E127,2,2 Pre-shifted bitmap
-N $E129 Regular: #HTML[#CALL:graphic($7BA1,16,1,1,1)] Pre-shifted: #HTML[#CALL:graphic($7BB5,16,1,1,1)]
+N $E129 Regular: #HTML[#CALL(graphic($7BA1,16,1,1,1))] Pre-shifted: #HTML[#CALL(graphic($7BB5,16,1,1,1))]
 B $E129,1,1 Width (bytes)
 B $E12A,1,1 Flags
 B $E12B,1,1 Height (pixels)
 W $E12C,2,2 Bitmap
 W $E12E,2,2 Pre-shifted bitmap
-N $E130 Regular: #HTML[#CALL:graphic($7B05,32,11,0,1)]
+N $E130 Regular: #HTML[#CALL(graphic($7B05,32,11,0,1))]
 @ $E130 label=fire4_defns
 B $E130,1,1 Width (bytes)
 B $E131,1,1 Flags
 B $E132,1,1 Height (pixels)
 W $E133,2,2 Bitmap
 W $E135,2,2 Pre-shifted bitmap
-N $E137 Regular: #HTML[#CALL:graphic($7B6D,24,6,1,1)]
+N $E137 Regular: #HTML[#CALL(graphic($7B6D,24,6,1,1))]
 B $E137,1,1 Width (bytes)
 B $E138,1,1 Flags
 B $E139,1,1 Height (pixels)
 W $E13A,2,2 Bitmap
 W $E13C,2,2 Pre-shifted bitmap
-N $E13E Regular: #HTML[#CALL:graphic($7BA1,16,5,1,1)] Pre-shifted: #HTML[#CALL:graphic($7BB5,16,5,1,1)]
+N $E13E Regular: #HTML[#CALL(graphic($7BA1,16,5,1,1))] Pre-shifted: #HTML[#CALL(graphic($7BB5,16,5,1,1))]
 B $E13E,1,1 Width (bytes)
 B $E13F,1,1 Flags
 B $E140,1,1 Height (pixels)
 W $E141,2,2 Bitmap
 W $E143,2,2 Pre-shifted bitmap
-N $E145 Regular: #HTML[#CALL:graphic($7BC1,16,4,1,1)] Pre-shifted: #HTML[#CALL:graphic($7BD9,16,4,1,1)]
+N $E145 Regular: #HTML[#CALL(graphic($7BC1,16,4,1,1))] Pre-shifted: #HTML[#CALL(graphic($7BD9,16,4,1,1))]
 B $E145,1,1 Width (bytes)
 B $E146,1,1 Flags
 B $E147,1,1 Height (pixels)
 W $E148,2,2 Bitmap
 W $E14A,2,2 Pre-shifted bitmap
-N $E14C Regular: #HTML[#CALL:graphic($7BC5,16,3,1,1)] Pre-shifted: #HTML[#CALL:graphic($7BDD,16,3,1,1)]
+N $E14C Regular: #HTML[#CALL(graphic($7BC5,16,3,1,1))] Pre-shifted: #HTML[#CALL(graphic($7BDD,16,3,1,1))]
 B $E14C,1,1 Width (bytes)
 B $E14D,1,1 Flags
 B $E14E,1,1 Height (pixels)
 W $E14F,2,2 Bitmap
 W $E151,2,2 Pre-shifted bitmap
-N $E153 Regular: #HTML[#CALL:graphic($7BC9,16,2,1,1)] Pre-shifted: #HTML[#CALL:graphic($7BE1,16,2,1,1)]
+N $E153 Regular: #HTML[#CALL(graphic($7BC9,16,2,1,1))] Pre-shifted: #HTML[#CALL(graphic($7BE1,16,2,1,1))]
 B $E153,1,1 Width (bytes)
 B $E154,1,1 Flags
 B $E155,1,1 Height (pixels)
 W $E156,2,2 Bitmap
 W $E158,2,2 Pre-shifted bitmap
-N $E15A Regular: #HTML[#CALL:graphic($7AD9,32,6,0,1)]
+N $E15A Regular: #HTML[#CALL(graphic($7AD9,32,6,0,1))]
 @ $E15A label=fire5_defns
 B $E15A,1,1 Width (bytes)
 B $E15B,1,1 Flags
 B $E15C,1,1 Height (pixels)
 W $E15D,2,2 Bitmap
 W $E15F,2,2 Pre-shifted bitmap
-N $E161 Regular: #HTML[#CALL:graphic($7B4F,24,3,1,1)]
+N $E161 Regular: #HTML[#CALL(graphic($7B4F,24,3,1,1))]
 B $E161,1,1 Width (bytes)
 B $E162,1,1 Flags
 B $E163,1,1 Height (pixels)
 W $E164,2,2 Bitmap
 W $E166,2,2 Pre-shifted bitmap
-N $E168 Regular: #HTML[#CALL:graphic($7B99,16,3,1,1)] Pre-shifted: #HTML[#CALL:graphic($7BAD,16,3,1,1)]
+N $E168 Regular: #HTML[#CALL(graphic($7B99,16,3,1,1))] Pre-shifted: #HTML[#CALL(graphic($7BAD,16,3,1,1))]
 B $E168,1,1 Width (bytes)
 B $E169,1,1 Flags
 B $E16A,1,1 Height (pixels)
 W $E16B,2,2 Bitmap
 W $E16D,2,2 Pre-shifted bitmap
-N $E16F Regular: #HTML[#CALL:graphic($7B9D,16,2,1,1)] Pre-shifted: #HTML[#CALL:graphic($7BB1,16,2,1,1)]
+N $E16F Regular: #HTML[#CALL(graphic($7B9D,16,2,1,1))] Pre-shifted: #HTML[#CALL(graphic($7BB1,16,2,1,1))]
 B $E16F,1,1 Width (bytes)
 B $E170,1,1 Flags
 B $E171,1,1 Height (pixels)
 W $E172,2,2 Bitmap
 W $E174,2,2 Pre-shifted bitmap
-N $E176 Regular: #HTML[#CALL:graphic($7BA1,16,1,1,1)] Pre-shifted: #HTML[#CALL:graphic($7BB5,16,1,1,1)]
+N $E176 Regular: #HTML[#CALL(graphic($7BA1,16,1,1,1))] Pre-shifted: #HTML[#CALL(graphic($7BB5,16,1,1,1))]
 B $E176,1,1 Width (bytes)
 B $E177,1,1 Flags
 B $E178,1,1 Height (pixels)
 W $E179,2,2 Bitmap
 W $E17B,2,2 Pre-shifted bitmap
-N $E17D Regular: #HTML[#CALL:graphic($7BA1,16,1,1,1)] Pre-shifted: #HTML[#CALL:graphic($7BB5,16,1,1,1)]
+N $E17D Regular: #HTML[#CALL(graphic($7BA1,16,1,1,1))] Pre-shifted: #HTML[#CALL(graphic($7BB5,16,1,1,1))]
 B $E17D,1,1 Width (bytes)
 B $E17E,1,1 Flags
 B $E17F,1,1 Height (pixels)
 W $E180,2,2 Bitmap
 W $E182,2,2 Pre-shifted bitmap
-N $E184 Regular: #HTML[#CALL:graphic($7B19,32,6,0,1)]
+N $E184 Regular: #HTML[#CALL(graphic($7B19,32,6,0,1))]
 @ $E184 label=fire6_defns
 B $E184,1,1 Width (bytes)
 B $E185,1,1 Flags
 B $E186,1,1 Height (pixels)
 W $E187,2,2 Bitmap
 W $E189,2,2 Pre-shifted bitmap
-N $E18B Regular: #HTML[#CALL:graphic($7B7F,24,3,1,1)]
+N $E18B Regular: #HTML[#CALL(graphic($7B7F,24,3,1,1))]
 B $E18B,1,1 Width (bytes)
 B $E18C,1,1 Flags
 B $E18D,1,1 Height (pixels)
 W $E18E,2,2 Bitmap
 W $E190,2,2 Pre-shifted bitmap
-N $E192 Regular: #HTML[#CALL:graphic($7BC5,16,3,1,1)] Pre-shifted: #HTML[#CALL:graphic($7BDD,16,3,1,1)]
+N $E192 Regular: #HTML[#CALL(graphic($7BC5,16,3,1,1))] Pre-shifted: #HTML[#CALL(graphic($7BDD,16,3,1,1))]
 B $E192,1,1 Width (bytes)
 B $E193,1,1 Flags
 B $E194,1,1 Height (pixels)
 W $E195,2,2 Bitmap
 W $E197,2,2 Pre-shifted bitmap
-N $E199 Regular: #HTML[#CALL:graphic($7BC9,16,2,1,1)] Pre-shifted: #HTML[#CALL:graphic($7BE1,16,2,1,1)]
+N $E199 Regular: #HTML[#CALL(graphic($7BC9,16,2,1,1))] Pre-shifted: #HTML[#CALL(graphic($7BE1,16,2,1,1))]
 B $E199,1,1 Width (bytes)
 B $E19A,1,1 Flags
 B $E19B,1,1 Height (pixels)
 W $E19C,2,2 Bitmap
 W $E19E,2,2 Pre-shifted bitmap
-N $E1A0 Regular: #HTML[#CALL:graphic($7BCD,16,1,1,1)] Pre-shifted: #HTML[#CALL:graphic($7BE5,16,1,1,1)]
+N $E1A0 Regular: #HTML[#CALL(graphic($7BCD,16,1,1,1))] Pre-shifted: #HTML[#CALL(graphic($7BE5,16,1,1,1))]
 B $E1A0,1,1 Width (bytes)
 B $E1A1,1,1 Flags
 B $E1A2,1,1 Height (pixels)
 W $E1A3,2,2 Bitmap
 W $E1A5,2,2 Pre-shifted bitmap
-N $E1A7 Regular: #HTML[#CALL:graphic($7BCD,16,1,1,1)] Pre-shifted: #HTML[#CALL:graphic($7BE5,16,1,1,1)]
+N $E1A7 Regular: #HTML[#CALL(graphic($7BCD,16,1,1,1))] Pre-shifted: #HTML[#CALL(graphic($7BE5,16,1,1,1))]
 B $E1A7,1,1 Width (bytes)
 B $E1A8,1,1 Flags
 B $E1A9,1,1 Height (pixels)
 W $E1AA,2,2 Bitmap
 W $E1AC,2,2 Pre-shifted bitmap
 N $E1AE Smoke graphics (drawn over perp's car when smashed)
-N $E1AE #HTML[#CALL:graphic($7A0F,16,13,1,1)]
+N $E1AE #HTML[#CALL(graphic($7A0F,16,13,1,1))]
 @ $E1AE label=smoke_defns
 B $E1AE,1,1 Width (bytes)
 B $E1AF,1,1 Flags
 B $E1B0,1,1 Height (pixels)
 W $E1B1,2,2 Bitmap
 W $E1B3,2,2 Pre-shifted bitmap
-N $E1B5 #HTML[#CALL:graphic($7A43,16,11,1,1)]
+N $E1B5 #HTML[#CALL(graphic($7A43,16,11,1,1))]
 B $E1B5,1,1 Width (bytes)
 B $E1B6,1,1 Flags
 B $E1B7,1,1 Height (pixels)
 W $E1B8,2,2 Bitmap
 W $E1BA,2,2 Pre-shifted bitmap
-N $E1BC #HTML[#CALL:graphic($7A6F,16,9,1,1)]
+N $E1BC #HTML[#CALL(graphic($7A6F,16,9,1,1))]
 B $E1BC,1,1 Width (bytes)
 B $E1BD,1,1 Flags
 B $E1BE,1,1 Height (pixels)
 W $E1BF,2,2 Bitmap
 W $E1C1,2,2 Pre-shifted bitmap
-N $E1C3 #HTML[#CALL:graphic($7A93,8,7,1,1)]
+N $E1C3 #HTML[#CALL(graphic($7A93,8,7,1,1))]
 B $E1C3,1,1 Width (bytes)
 B $E1C4,1,1 Flags
 B $E1C5,1,1 Height (pixels)
 W $E1C6,2,2 Bitmap
 W $E1C8,2,2 Pre-shifted bitmap
-N $E1CA #HTML[#CALL:graphic($7AA1,8,5,1,1)]
+N $E1CA #HTML[#CALL(graphic($7AA1,8,5,1,1))]
 B $E1CA,1,1 Width (bytes)
 B $E1CB,1,1 Flags
 B $E1CC,1,1 Height (pixels)
 W $E1CD,2,2 Bitmap
 W $E1CF,2,2 Pre-shifted bitmap
-N $E1D1 #HTML[#CALL:graphic($7AAB,8,3,1,1)]
+N $E1D1 #HTML[#CALL(graphic($7AAB,8,3,1,1))]
 B $E1D1,1,1 Width (bytes)
 B $E1D2,1,1 Flags
 B $E1D3,1,1 Height (pixels)
 W $E1D4,2,2 Bitmap
 W $E1D6,2,2 Pre-shifted bitmap
 N $E1D8 Arrow graphic (incl. HERE!)
-N $E1D8 #HTML[#CALL:graphic($D03F,24,28,1,1)]
+N $E1D8 #HTML[#CALL(graphic($D03F,24,28,1,1))]
 @ $E1D8 label=floating_arrow_here_defn
 B $E1D8,1,1 Width (bytes)
 B $E1D9,1,1 Flags
 B $E1DA,1,1 Height (pixels)
 W $E1DB,2,2 Bitmap
 W $E1DD,2,2 Pre-shifted bitmap
-N $E1DF #HTML[#CALL:graphic($D03F,24,21,1,1)]
+N $E1DF #HTML[#CALL(graphic($D03F,24,21,1,1))]
 @ $E1DF label=floating_arrow_left_defn
 B $E1DF,1,1 Width (bytes)
 B $E1E0,1,1 Flags
 B $E1E1,1,1 Height (pixels)
 W $E1E2,2,2 Bitmap
-N $E1E4 #HTML[#CALL:graphic($D03F,24,21,1,1)] (but should be flipped L-R)
+N $E1E4 #HTML[#CALL(graphic($D03F,24,21,1,1))] (but should be flipped L-R)
 @ $E1E4 label=floating_arrow_right_defn
 B $E1E4,1,1 Width (bytes)
 B $E1E5,1,1 Flags
@@ -12300,60 +12300,60 @@ B $E224,1,1 Height (pixels)
 W $E225,2,2 Bitmap
 W $E227,2,2 Pre-shifted bitmap
 N $E229 Tunnel light (16x16)
-N $E229 #HTML[#CALL:graphic($E229,16,16,0,1)]
+N $E229 #HTML[#CALL(graphic($E229,16,16,0,1))]
 @ $E229 label=bitmap_tunnellight_1
 B $E229,32,8 Bitmap data
 N $E249 Tunnel light (16x12)
-N $E249 #HTML[#CALL:graphic($E249,16,12,0,1)]
+N $E249 #HTML[#CALL(graphic($E249,16,12,0,1))]
 @ $E249 label=bitmap_tunnellight_2
 B $E249,24,8 Bitmap data
-N $E261 #HTML[#CALL:graphic($E261,8,8,0,1)]
+N $E261 #HTML[#CALL(graphic($E261,8,8,0,1))]
 N $E261 Tunnel light (8x8)
 @ $E261 label=bitmap_tunnellight_3
 B $E261,8,8 Bitmap data
-N $E269 #HTML[#CALL:graphic($E269,8,6,0,1)]
+N $E269 #HTML[#CALL(graphic($E269,8,6,0,1))]
 N $E269 Tunnel light (8x6)
 @ $E269 label=bitmap_tunnellight_4
 B $E269,6,6 Bitmap data
-N $E26F #HTML[#CALL:graphic($E26F,8,5,0,1)]
+N $E26F #HTML[#CALL(graphic($E26F,8,5,0,1))]
 N $E26F Tunnel light (8x5)
 @ $E26F label=bitmap_tunnellight_5
 B $E26F,5,5 Bitmap data
-N $E274 #HTML[#CALL:graphic($E274,16,6,1,1)]
+N $E274 #HTML[#CALL(graphic($E274,16,6,1,1))]
 N $E274 Tunnel light masked (16x6)
 @ $E274 label=tunnellight_6
 B $E274,24,8 Masked bitmap data
 N $E28C Tunnel light masked shifted (16x6)
-N $E28C #HTML[#CALL:graphic($E28C,16,6,1,1)]
+N $E28C #HTML[#CALL(graphic($E28C,16,6,1,1))]
 @ $E28C label=tunnellight_6s
 B $E28C,24,8 Masked bitmap data
 b $E2A4 Data for perp escape scene
 N $E2A4 Perp escape scene, hazards
-N $E2A4 #HTML[#CALL:hazards_for_c($E2A4)]
+N $E2A4 #HTML[#CALL(hazards_for_c($E2A4))]
 @ $E2A4 label=perp_escape_hazards
 B $E2A4,1,1 Wait for 27 units
 B $E2A5,2,2 Escape, Command 9 (Start Spawning Two Barriers)
 B $E2A7,1,1 Wait for 1 unit
 B $E2A8,2,2 Escape, Command 3 (Stop Spawning Barriers)
 N $E2AA Perp escape scene, curvature
-N $E2AA #HTML[#CALL:curvature_for_c($E2AA)]
+N $E2AA #HTML[#CALL(curvature_for_c($E2AA))]
 @ $E2AA label=perp_escape_curvature
 B $E2AA,1,1 Straight for 15 units
 B $E2AB,2,2 Escape, Command 0 (Continue at <Address>)
 W $E2AD,2,2 Loop
 N $E2AF Perp escape scene, height
-N $E2AF #HTML[#CALL:height_for_c($E2AF)]
+N $E2AF #HTML[#CALL(height_for_c($E2AF))]
 @ $E2AF label=perp_escape_height
 B $E2AF,1,1 Level Road for 15 units
 B $E2B0,2,2 Escape, Command 0 (Continue at <Address>)
 W $E2B2,2,2 Loop
 N $E2B4 Perp escape scene, lanes
-N $E2B4 #HTML[#CALL:lanes_for_c($E2B4)]
+N $E2B4 #HTML[#CALL(lanes_for_c($E2B4))]
 @ $E2B4 label=perp_escape_lanes
 B $E2B4,2,2 53 units of 3 Lanes L
 B $E2B6,2,2 255 units of Tunnel  -- Is no explicit stop required here since the camera stops?
 N $E2B8 Fork scene, hazards
-N $E2B8 #HTML[#CALL:hazards_for_c($E2B8)]
+N $E2B8 #HTML[#CALL(hazards_for_c($E2B8))]
 @ $E2B8 label=fork_hazards
 B $E2B8,1,1 Wait for 12
 B $E2B9,2,2 Escape, Command 10 (Set Floating Arrow Off)
@@ -12361,7 +12361,7 @@ B $E2BB,1,1 Wait for 255
 B $E2BC,2,2 Escape, Command 0 (Continue at <Address>)
 W $E2BE,2,2 Loop
 N $E2C0 Fork scene, left and right hand objects This first byte of the data is only used when drawing objects on the left hand side. Perhaps to stop the initial pole drawing twice?
-N $E2C0 #HTML[#CALL:objects_for_c($E2C0)]
+N $E2C0 #HTML[#CALL(objects_for_c($E2C0))]
 @ $E2C0 label=fork_leftrightobjs
 B $E2C0,1,1 1 units of Nothing
 @ $E2C1 label=fork_leftrightobjs_loop
@@ -12370,7 +12370,7 @@ B $E2C2,2,2 Escape, Command 0 (Continue at <Address>)
 W $E2C4,2,2 Loop
 b $E2C6 Data for road forks
 N $E2C6 Road fork, curvature
-N $E2C6 #HTML[#CALL:curvature_for_c($E2C6)]
+N $E2C6 #HTML[#CALL(curvature_for_c($E2C6))]
 @ $E2C6 label=forked_road_curvature
 B $E2C6,1,1 Straight for 1 unit
 @ $E2C7 label=forked_road_curvature_loop
@@ -12378,7 +12378,7 @@ B $E2C7,1,1 Curve Left Hard for 15 units
 B $E2C8,2,2 Escape, Command 0 (Continue at <Address>)
 W $E2CA,2,2 Loop
 N $E2CC Road fork, height
-N $E2CC #HTML[#CALL:height_for_c($E2CC)]
+N $E2CC #HTML[#CALL(height_for_c($E2CC))]
 @ $E2CC label=forked_road_height
 B $E2CC,1,1 Level Road for 15 units
 B $E2CD,2,2 Escape, Command 0 (Continue at <Address>)
@@ -12390,38 +12390,38 @@ B $E2D1,2,2 Forked Road for 255 units
 b $E2D3 Data for road fork exits
 D $E2D3 Data used when exiting from road forks.
 N $E2D3 Road fork exit, hazards
-N $E2D3 #HTML[#CALL:hazards_for_c($E2D3)]
+N $E2D3 #HTML[#CALL(hazards_for_c($E2D3))]
 @ $E2D3 label=forked_road_exit_hazards
 B $E2D3,1,1 Wait for 18 units
 B $E2D4,2,2 Escape, Command 1 (Fork End)
 N $E2D6 Road fork exit, right objects
-N $E2D6 #HTML[#CALL:objects_for_c($E2D6)]
+N $E2D6 #HTML[#CALL(objects_for_c($E2D6))]
 @ $E2D6 label=forked_road_exit_rightobjs
 B $E2D6,1,1 Short Pole for 5 units
 B $E2D7,1,1 Nothing for 13 units
 B $E2D8,2,2 Escape, Command 1 (Fork End)
 N $E2DA Road fork exit, left objects
-N $E2DA #HTML[#CALL:objects_for_c($E2DA)]
+N $E2DA #HTML[#CALL(objects_for_c($E2DA))]
 @ $E2DA label=forked_road_exit_leftobjs
 B $E2DA,1,1 Nothing for 5 units
 B $E2DB,1,1 Nothing for 13 units
 B $E2DC,2,2 Escape, Command 1 (Fork End)
 N $E2DE Road fork exit, curvature
-N $E2DE #HTML[#CALL:curvature_for_c($E2DE)]
+N $E2DE #HTML[#CALL(curvature_for_c($E2DE))]
 @ $E2DE label=forked_road_exit_curvature
 B $E2DE,1,1 Straight for 15 units
 B $E2DF,1,1 Straight for 15 units
 B $E2E0,1,1 Straight for 6 units
 B $E2E1,2,2 Escape, Command 1 (Fork End)
 N $E2E3 Road fork exit, height
-N $E2E3 #HTML[#CALL:height_for_c($E2E3)]
+N $E2E3 #HTML[#CALL(height_for_c($E2E3))]
 @ $E2E3 label=forked_road_exit_height
 B $E2E3,1,1 Level Road for 15 units
 B $E2E4,1,1 Level Road for 15 units
 B $E2E5,1,1 Level Road for 6 units
 B $E2E6,2,2 Escape, Command 1 (Fork End)
 N $E2E8 Road fork exit, lanes (left fork)
-N $E2E8 #HTML[#CALL:lanes_for_c($E2E8)]
+N $E2E8 #HTML[#CALL(lanes_for_c($E2E8))]
 @ $E2E8 label=forked_road_exit_left_lanes
 B $E2E8,2,2 2 Lanes L for 10 units
 B $E2EA,2,2 2-3 Widening L for 2 units
@@ -12430,7 +12430,7 @@ B $E2EE,2,2 3-4 Widening L for 2 units
 B $E2F0,2,2 4 Lanes for 12 units
 B $E2F2,2,2 Escape, Command 1 (Fork End)
 N $E2F4 Road fork exit, lanes (right fork)
-N $E2F4 #HTML[#CALL:lanes_for_c($E2F4)]
+N $E2F4 #HTML[#CALL(lanes_for_c($E2F4))]
 @ $E2F4 label=forked_road_exit_right_lanes
 B $E2F4,2,2 2 Lanes R for 10 units
 B $E2F6,2,2 2-3 Widening R for 2 units
@@ -12461,49 +12461,49 @@ S $E34F,21,$15 21 entries
 b $E364 Transition masks
 N $E364 Spiral inward animation mask (8x8, 11 frames)
 N $E364 This is not relocated.
-N $E364 #HTML[#CALL:anim($E364,8,8,0,0,11)]
-N $E364 #HTML[#CALL:graphic($E364,8,11*8,0,0)]
+N $E364 #HTML[#CALL(anim($E364,8,8,0,0,11))]
+N $E364 #HTML[#CALL(graphic($E364,8,11*8,0,0))]
 @ $E364 label=spiral_transition_mask
 B $E364,88,8
 N $E3BC Circle expanding animation mask (8x8, 7 frames)
 N $E3BC This is not relocated.
-N $E3BC #HTML[#CALL:anim($E3BC,8,8,0,0,7)]
-N $E3BC #HTML[#CALL:graphic($E3BC,8,7*8,0,0)]
+N $E3BC #HTML[#CALL(anim($E3BC,8,8,0,0,7))]
+N $E3BC #HTML[#CALL(graphic($E3BC,8,7*8,0,0))]
 @ $E3BC label=circle_transition_mask
 B $E3BC,56,8
 u $E3F4 Unused
 B $E3F4,28,8*3,4
 b $E410 [Graphics] Road edge markings
 D $E410 Six sets of 16x8 pixels. Masked. Stored bottom up. 32 bytes each.
-N $E410 #HTML[#CALL:graphic($E410,16,8,1,1)]
+N $E410 #HTML[#CALL(graphic($E410,16,8,1,1))]
 @ $E410 label=edge_markings
 B $E410,8,8 Widest edge. White.
 B $E418,24,8
-N $E430 #HTML[#CALL:graphic($E430,16,8,1,1)]
+N $E430 #HTML[#CALL(graphic($E430,16,8,1,1))]
 B $E430,8,8 Widest edge. Black.
 B $E438,24,8
-N $E450 #HTML[#CALL:graphic($E450,16,8,1,1)]
+N $E450 #HTML[#CALL(graphic($E450,16,8,1,1))]
 B $E450,8,8 Middle edge. White.
 B $E458,24,8
-N $E470 #HTML[#CALL:graphic($E470,16,8,1,1)]
+N $E470 #HTML[#CALL(graphic($E470,16,8,1,1))]
 B $E470,8,8 Middle edge. Black.
 B $E478,24,8
-N $E490 #HTML[#CALL:graphic($E490,16,8,1,1)]
+N $E490 #HTML[#CALL(graphic($E490,16,8,1,1))]
 B $E490,8,8 Thinnest edge. White.
 B $E498,24,8
-N $E4B0 #HTML[#CALL:graphic($E4B0,16,8,1,1)]
+N $E4B0 #HTML[#CALL(graphic($E4B0,16,8,1,1))]
 B $E4B0,8,8 Thinnest edge. Black.
 B $E4B8,24,8
 b $E4D0 [Graphics] Road lane markings
 D $E4D0 Three sets of 16x8 pixels. Unmasked. Stored bottom up. 16 bytes each.
-N $E4D0 #HTML[#CALL:graphic($E4D0,16,8,0,1)]
+N $E4D0 #HTML[#CALL(graphic($E4D0,16,8,0,1))]
 @ $E4D0 label=lane_markings
 B $E4D0,8,8 Widest marking.
 B $E4D8,8,8
-N $E4E0 #HTML[#CALL:graphic($E4E0,16,8,0,1)]
+N $E4E0 #HTML[#CALL(graphic($E4E0,16,8,0,1))]
 B $E4E0,8,8 Middle marking.
 B $E4E8,8,8
-N $E4F0 #HTML[#CALL:graphic($E4F0,16,8,0,1)]
+N $E4F0 #HTML[#CALL(graphic($E4F0,16,8,0,1))]
 B $E4F0,8,8 Thinnest marking.
 B $E4F8,8,8
 b $E500 Outward bend table
@@ -12602,14 +12602,14 @@ B $E8A3,1,1
 W $E8A4,2,2
 N $E8A6 Square zoom in animation mask (8x8, 5 frames)
 N $E8A6 This is relocated.
-N $E8A6 #HTML[#CALL:anim($E8A6,8,8,0,0,5)]
-N $E8A6 #HTML[#CALL:graphic($E8A6,8,5*8,0,0)]
+N $E8A6 #HTML[#CALL(anim($E8A6,8,8,0,0,5))]
+N $E8A6 #HTML[#CALL(graphic($E8A6,8,5*8,0,0))]
 @ $E8A6 label=square_transition_mask
 B $E8A6,40,8
 N $E8CE Diamond zoom in animation mask (8x8, 6 frames)
 N $E8CE This is relocated.
-N $E8CE #HTML[#CALL:anim($E8CE,8,8,0,0,6)]
-N $E8CE #HTML[#CALL:graphic($E8CE,8,6*8,0,0)]
+N $E8CE #HTML[#CALL(anim($E8CE,8,8,0,0,6))]
+N $E8CE #HTML[#CALL(graphic($E8CE,8,6*8,0,0))]
 @ $E8CE label=diamond_transition_mask
 B $E8CE,48,8
 c $E8FE "Stop the tape" handler (48K mode only)
