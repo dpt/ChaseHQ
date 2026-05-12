@@ -482,7 +482,7 @@ static void draw_object_right_stretchy_entrypt(chqstate_t     *state,
                                                const u16      *IX,
                                                const u8       *IY);
 static void draw_object_right_helicopter_entrypt(chqstate_t     *state,
-                                                 u8              A,
+                                                 u8              Awidth_bytes,
                                                  const bitmap_t *HLbitmap,
                                                  const u8       *IY);
 
@@ -696,8 +696,12 @@ static void check_hazard_collisions(chqstate_t *state);
 static u8 check_collision(chqstate_t *state, u8 default_retval, u16 HL, hazard_t *hazard, u16 *HLout);
 
 static void draw_all_hazards(chqstate_t *state);
-static void dh_draw_one_hazard(chqstate_t *state, hazard_t *IXhazard, const u8 *IYbase);
-static void dh_aecf(chqstate_t *state, u8 Biterations);
+static void dh_draw_one_hazard(chqstate_t *state,
+                               hazard_t   *IXhazard,
+                               const u8   *IYbase);
+static void draw_arrow_fire_smoke(chqstate_t *state,
+                                  u8          Biterations,
+                                  const u8   *IY);
 static void dh_smoke(chqstate_t *state, u8 *HLsmoke, const u8 *IY);
 static void dh_draw(chqstate_t     *state,
                     u8              Bx,
@@ -2733,7 +2737,7 @@ static void draw_everything_else(chqstate_t *state)
   const obj_t    *HLobj;               /* was HL */
 
   state->dss_SM_A9E2 = &state->table_ed00[20]; // $ED28
-  state->dh_SM_AECF  = &state->table_e900[0];
+  state->dh_SM_AECF_table  = &state->table_e900[0];
 
   HL_table_e300 = &state->table_e300[1]; // table of objects?
   table_e336 = &state->table_e336[0];
@@ -2754,7 +2758,7 @@ static void draw_everything_else(chqstate_t *state)
   iterations = 20; // iterations
   do {
     if (state->n_hazards)
-      dh_aecf(state, iterations);
+      draw_arrow_fire_smoke(state, iterations, IY_table_e300);
 
     dust_stones_stuff(state, iterations, IY_table_e300);
 
@@ -3381,12 +3385,12 @@ static void draw_object_right_stretchy_entrypt(chqstate_t     *state,
 
 // $9309
 static void draw_object_right_helicopter_entrypt(chqstate_t     *state,
-                                                 u8              A,
+                                                 u8              Awidth_bytes,
                                                  const bitmap_t *HLbitmap,
                                                  const u8       *IY)
 {
-  if (A < 247)
-    draw_object_930e_entrypt(state, A, 0, HLbitmap, IY);
+  if (Awidth_bytes < 247)
+    draw_object_930e_entrypt(state, Awidth_bytes, 0, HLbitmap, IY);
 }
 
 // $930E
@@ -7263,30 +7267,10 @@ static void draw_all_hazards(chqstate_t *state)
 }
 
 // $ADBE
-static void dh_draw_one_hazard(chqstate_t *state, hazard_t *IXhazard, const u8 *IYbase)
+static void dh_draw_one_hazard(chqstate_t *state,
+                               hazard_t   *IXhazard,
+                               const u8   *IYbase)
 {
-  // $CDF4
-  static const bitmap_t *fire_bitmaps[6] = {
-    &fire5_defns[0],
-    &fire6_defns[0],
-    &fire3_defns[0],
-    &fire4_defns[0],
-    &fire1_defns[0],
-    &fire2_defns[0]
-  };
-
-  // $CE00
-  //
-  // 6 pair of X,Y
-  static const u8 smoke_offsets[6 * 2] = {
-    0xEE, 0x08,
-    0xF3, 0x08,
-    0xF8, 0x08,
-    0xFA, 0x04,
-    0xFC, 0x00,
-    0xFE, 0x00
-  };
-
   int       carry = 0;
   u8        C;
   u8        Atbd15;
@@ -7467,11 +7451,13 @@ dh_call_handler:
 }
 
 // $AECF
-static void dh_aecf(chqstate_t *state, u8 Biterations)
+static void draw_arrow_fire_smoke(chqstate_t *state,
+                                  u8          Biterations,
+                                  const u8   *IY)
 {
   // $CDEC
   //
-  // 4 pair of X,Y
+  // 4 pair of X,Y - are these signed?
   static const u8 arrow_offsets[4 * 2] = {
     0xDE, 0x30,
     0xE6, 0x20,
@@ -7479,110 +7465,139 @@ static void dh_aecf(chqstate_t *state, u8 Biterations)
     0xEE, 0x10
   };
 
-  u16            *HLtable;        /* was HL */
-  u8              A;
-  u16             DE;
-  u8             *pn_hazards;     /* was HL */
-  u8              Asmash_level;   /* was A */
-  u16             DEbitmapoffset; /* was DE */
-  const bitmap_t *HLbitmapbase;   /* was HL */
-  const bitmap_t *HLbitmap;       /* was HL */
-  u8              Ewidth_bits;    /* was E */
-  u16             IX;
+  // $CDF4
+  static const bitmap_t *fire_bitmaps[6] = {
+    &fire5_defns[0],
+    &fire6_defns[0],
+    &fire3_defns[0],
+    &fire4_defns[0],
+    &fire1_defns[0],
+    &fire2_defns[0]
+  };
 
-  HLtable = state->dh_SM_AECF; // table_e900 ptr for example
+  // $CE00
+  //
+  // 6 pair of X,Y - are these signed?
+  static const u8 smoke_offsets[6 * 2] = {
+    0xEE, 0x08,
+    0xF3, 0x08,
+    0xF8, 0x08,
+    0xFA, 0x04,
+    0xFC, 0x00,
+    0xFE, 0x00
+  };
+
+  u16            *HLtable;             /* was HL */
+  u8              A;                   /* was A */
+  u8              Awidth_bytes;        /* was A */
+  u8              Asmash_level;        /* was A */
+  u16             DEbitmapoffset;      /* was DE */
+  const bitmap_t *HLbitmap;            /* was HL */
+  u8              Ewidth_bits;         /* was E */
+  hazard_t       *IXhazard;            /* was IX */
+  u8              Bx;                  /* was B */
+  u8              Cy;                  /* was C */
+  u8              A3;                  /* was A */
+  const u8       *HLarrows;            /* was HL */
+  const u8       *HLsmokes;            /* was HL */
+  u8              Aix2;                /* was A */
+  u8              Asmash_level_scaled; /* was A */
+
+  // is $E900 pairs of (data-word, hazard-ptr) ?
+
+  HLtable = state->dh_SM_AECF_table; // sampled = $E900
   A = Biterations;
-  if (A != *HLtable) // this is a word, original tested a byte, use *HLptr & 0xFF  perhaps?
+  if (A != *HLtable) // this is a word, original tested a byte, use *HLtable & 0xFF perhaps?
     return;
 
   if (--A >= 11)
     A = 10;
   A >>= 1;
-  state->SM_AFFB = A; // speed factor?
+  state->SM_AFFB_smoke_offset = A; // speed factor?
 
-#if 0
   DEbitmapoffset = A * 7;
   do {
     HLtable++; // Conv: halved
-    IX = wordat(HLtable); HLtable++;
-    // PUSH HLptr,BC,DE
-    HLbitmapbase = wordat(IX + 9); // must be a bitmap base ptr
-    HLbitmap = &HLbitmapbase[DEbitmapoffset / 7];
+    // TODO: This is a temporary cast until the originating code is adjusted to
+    // store an offset or index.
+    IXhazard = (const hazard_t *) *HLtable++; // sampled = $A19C/hazard_1 $A1B0/hazard_2
+
+    // PUSH HL (HLtable), BC (Biterations), DE (DEbitmapoffset)
+
+    HLbitmap = &IXhazard->hittable.bitmaps[DEbitmapoffset / 7];
 
     Ewidth_bits = HLbitmap->width_bytes << 3;
-    state->doc_SM_933D = IX[6] - IX[16];
-    state->doc_SM_93C0_inverted = IX[19];
+    state->doc_SM_933D = IXhazard->TBD6 - IXhazard->TBD16;
+    state->doc_SM_93C0_inverted = IXhazard->TBD19;
 
-    if (IX[15] + 1 == 0)
+    if (IXhazard->TBD15 + 1 == 0)
       goto dh_af50;
 
-    A3 = IX[3];
+    A3 = IXhazard->TBD3;
     // AND A3
-    A2 = IX[2];
+    Aix2 = IXhazard->horz_pos;
     if ((s8) A3 < 0)
       goto dh_af2f;
     if (A3 != 0)
       goto dh_draw_done_1;
-    if (A2 >= 128)
+    if (Aix2 >= 128)
       goto dh_draw_right_1;
 
-    A += Ewidth_bits;
+    Aix2 += Ewidth_bits;
     goto dh_draw_left_1;
 
 dh_af2f:
-    A += Ewidth_bits;
-    if (A + Ewidth_bits < 0x100) // no carry
+    Aix2 += Ewidth_bits;
+    if (Aix2 + Ewidth_bits < 0x100) // no carry
       goto dh_draw_done_1;
 
 dh_draw_left_1:
-    draw_object_left_helicopter_entrypt(state, A, HLbitmap);
+    draw_object_left_helicopter_entrypt(state, Aix2, HLbitmap, IY);
     goto dh_draw_done_1;
 
 dh_draw_right_1:
-    draw_object_right_helicopter_entrypt(state, A, HLbitmap);
+    draw_object_right_helicopter_entrypt(state, Aix2, HLbitmap, IY);
 
 dh_draw_done_1:
-    // POP DE, BC
+    // POP DE (DEbitmapoffset), BC (Biterations)   ??
 
     state->doc_SM_93C0_inverted = 0;
 
-    pn_hazards = &state->n_hazards;
-    (*pn_hazards)--;
-    if (*pn_hazards == 0)
-      // POP HLptr
+    if (--state->n_hazards == 0)
       return; // no more hazards
+
+    // POP HL (HLtable)
   } while (*HLtable == Biterations); // again, test low byte only here?
 
-  state->dh_SM_AECF = HLtable;
+  state->dh_SM_AECF_table = HLtable;
   return;
 
 dh_af50:
-  A = IX[3];
-  state->SM_B029 = A;
-  // set flags
-  state->SM_B02C = IX[2];
-  if (M)
+  Awidth_bytes = IXhazard->TBD3;
+  state->SM_B029 = Awidth_bytes;
+  // set flags from A here
+  Aix2 = IXhazard->horz_pos;
+  state->SM_B02C = Aix2;
+  if ((s8) Awidth_bytes < 0)
     goto dh_af6c;
-  if (NZ)
+  if (Awidth_bytes)
     goto dh_draw_done_1;
-
-  if (A >= 128)
+  if (Aix2 >= 128)
     goto dh_draw_right_2;
-
-  A += E;
+  Awidth_bytes += Ewidth_bits;
   goto dh_draw_left_2;
 
 dh_af6c:
-  A += E;
-  if (NC)
+  Awidth_bytes += Ewidth_bits;
+  if ((s8) Awidth_bytes < 0)
     goto dh_draw_done_1;
 
 dh_draw_left_2:
-  draw_object_left_helicopter_entrypt(state, A, HLbitmap);
+  draw_object_left_helicopter_entrypt(state, Awidth_bytes, HLbitmap, IY);
   goto dh_done_draw_object;
 
 dh_draw_right_2:
-  draw_object_right_helicopter_entrypt(state, A, HLbitmap);
+  draw_object_right_helicopter_entrypt(state, Awidth_bytes, HLbitmap, IY);
 
 dh_done_draw_object:
   state->SM_B023 = state->doc_SM_933D;
@@ -7590,60 +7605,53 @@ dh_done_draw_object:
   if (state->smash_level >= 5)
     goto dh_smash_level;
 
-  A = state->SM_AFFB;
+  A = state->SM_AFFB_smoke_offset;
   if (A >= 4)
     goto dh_smash_level;
 
-  HL = &arrow_offsets[A]; // Conv: scaling accounted for
-  Bx = *HL++; // x offset
-  Cy = *HL;   // y offset
-
-  dh_draw_bitmap(state, Bx, Cy, &floating_arrow_here_defn[0]);
+  HLarrows = &arrow_offsets[A]; // Conv: scaling accounted for
+  Bx = HLarrows[0]; // x offset
+  Cy = HLarrows[1]; // y offset
+  dh_draw_bitmap(state, Bx, Cy, &floating_arrow_here_defn, IY);
 
 dh_smash_level:
   Asmash_level = state->smash_level;
   if (Asmash_level < 4)
     goto dh_check_smash_level;
 
-  Adash = (Asmash_level - 4) * 4;
-  DE = state->SM_AFFB * 2;
-  HL = &smoke_offsets[0];
-  HL += DE;
-  Bx = *HL++;
-  Cy = *HL;
+  Asmash_level_scaled = (Asmash_level - 4) * 4;
 
-  // EX AF,AF' Unbank
-  E = A;
-  HLbitmaps = &table_car_on_fire_bitmap_ptrs[0];
-  A = (state->counter_C & 1) * 2;
-  E += A;
-  HL += DE;
-  A = *HL++;
-  H = *HL;
-  L = A;
+  // EX AF,AF' Bank Asmash_level_scaled
 
-  // POP DE
-  // PUSH DE
+  HLsmokes = &smoke_offsets[state->SM_AFFB_smoke_offset * 2];
+  Bx = HLsmokes[0];
+  Cy = HLsmokes[1];
 
-  // DE is offset, HL is base of graphic defns
-  dh_draw(state, Bx, Cy, DE, HLbitmaps);
+  // EX AF,AF' Unbank Asmash_level_scaled
+
+  // Conv: shuffled around
+  Asmash_level_scaled += (state->counter_C & 1) * 2;
+  HLbitmap = fire_bitmaps[Asmash_level_scaled / 2];
+
+  // POP DE (DEbitmapoffset)
+  // PUSH DE (DEbitmapoffset)
+
+  dh_draw(state, Bx, Cy, DEbitmapoffset, HLbitmap, IY);
 
 dh_check_smash_level:
-  A = state->smash_level;
-  if (A == 0)
+  /* Conv: Converted to switch */
+  switch (state->smash_level) {
+  case 3:
+    dh_smoke(state, &state->smoke_3[0], IY);
+  case 2:
+    dh_smoke(state, &state->smoke_1[0], IY);
+  case 1:
+    dh_smoke(state, &state->smoke_2[0], IY);
+  case 0:
     goto dh_draw_done_1;
-  if (--A == 0)
-    goto dh_draw_smoke_3; // draw one lot
-  if (--A == 0)
-    goto dh_draw_smoke_2; // draw two lots
-  // Otherwise draw all 3 lots.
-  dh_smoke(state, &state->smoke_ce26[0]);
-dh_draw_smoke_2:
-  dh_smoke(state, &state->smoke_ce0c[0]);
-dh_draw_smoke_3:
-  dh_smoke(state, &state->smoke_ce19[0]);
-  goto dh_draw_done_1;
-#endif
+  default:
+    assert(0);
+  }
 }
 
 // $AFF1
@@ -7662,7 +7670,7 @@ static void dh_smoke(chqstate_t *state, u8 *HLsmoke, const u8 *IY)
     counter = 5; // It became zero, reset to 5
   HLsmoke[0] = counter;
 
-  index = state->SM_AFFB; // smoke animation index
+  index = state->SM_AFFB_smoke_offset; // smoke animation index
   newindex = index + counter;
   if (newindex >= 6)
     return;

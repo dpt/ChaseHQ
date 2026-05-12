@@ -36,7 +36,6 @@ typedef void (plot_sprite_cb_t)(chqstate_t *state,
                                 const u8   *HLdash_bitmap_data);
 
 struct hazard {
-
   u8                used;
   u8                distance;
   u8                horz_pos;
@@ -492,10 +491,10 @@ struct chqstate {
   u16       SM_AE70;
 
   // $AED0 (SM) in draw_hazards
-  u16      *dh_SM_AECF; // points to table e900 for example
+  u16      *dh_SM_AECF_table; // points to table e900 for example
 
   // $AFFB (SM) in dh_aecf
-  u8        SM_AFFB; // (smoke) speed factor?
+  u8        SM_AFFB_smoke_offset; // (smoke) speed factor?
 
   // $B023 (SM) in ...
   u8        SM_B023;
@@ -616,11 +615,11 @@ struct chqstate {
   u8        dr_SM_C88F_in_tunnel;
 
   // $CE0C
-  u8        smoke_ce0c[13];
+  u8        smoke_1[13];
   // $CE19
-  u8        smoke_ce19[13];
+  u8        smoke_2[13];
   // $CE26
-  u8        smoke_ce26[13];
+  u8        smoke_3[13];
 
   // $CE33
   u8       *debris_table[12];

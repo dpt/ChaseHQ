@@ -4473,7 +4473,7 @@ C $955E,2 Add it to #REGix to complete the jump target
 C $9560,2 Point #REGde at table of flipped bytes at $EF00
 C $9562,1 Bank
 E $9542 FALLTHROUGH
-c $9565
+c $9565 Routine at 9565
 @ $9565 label=plot_sprite_flipped_even
 C $9565,2 Jump into body of loop
 @ $9567 label=psf_even_continue
@@ -4511,6 +4511,7 @@ C $95A5,4 Move to next chunk of 16 scanlines
 C $95A9,3 Continue if it didn't roll over
 C $95AC,4 Otherwise move to the next chunk of 128 scanlines (would put us outside the back buffer)
 C $95B0,3 Loop back to psf_even_continue
+N $95B3 This entry point is used by the routine at #R$9542.
 @ $95B3 label=plot_sprite_flipped_odd
 C $95B3,1 Increment #REGa for upcoming calculation
 C $95B4,4 Save #REGsp to restore on exit (self modify) [in a different position to others]
@@ -6054,7 +6055,7 @@ C $A3CE,1 A++  -- A == 2 => fully off-road
 C $A3CF,2 Jump to csc_store_off_road
 @ $A3D1 label=csc_clear_var_a23d
 C $A3D1,4 trigger_lane_change_sfx = 0  -- offroad/sfx flag perhaps?
-N $A3D5 Check right hand side of car. Car off road left       ~ (not hit!) Car half off road left  ~ 0x170 ish Car in lane 1           ~ 0x164 Car in lane 2           ~ 0x117 Car in lane 3           ~ 0xe0 Car in lane 4           ~ 0x98 Car half off road right ~ 0x4e Car off road right      ~ 0x4b
+N $A3D5 Check right hand side of car. Car off road left       ~ (not hit!) Car half off road left  ~ 0x170 ish Car in lane 1           ~ 0x164 Car in lane 2 ~ 0x117 Car in lane 3           ~ 0xe0 Car in lane 4           ~ 0x98 Car half off road right ~ 0x4e Car off road right      ~ 0x4b
 @ $A3D5 label=csc_check_right_hand
 C $A3D5,3 Read signed word at $EAFC [ how is this different to $EAFE? ]
 C $A3D8,2 Set flags from sign of word: 1 when hero car on left side, 0 if right
@@ -7467,7 +7468,8 @@ C $AEC7,1 *HL = D
 C $AEC8,6 HL = wordat(IX + 11)
 C $AECE,1 Jump there
 c $AECF This entry point is used by the routine at #R$8F5F.
-@ $AECF label=dh_aecf
+D $AECF Used by the routine at #R$8F5F.
+@ $AECF label=draw_arrow_fire_smoke
 C $AECF,3 HL = <self modified>
 C $AED2,1 A = B
 C $AED3,2 Return if A != *HL
@@ -7478,7 +7480,7 @@ C $AEDA,2 A = 10
 C $AEDC,2 A >>= 1
 C $AEDE,3 Self modify 'LD A,x' @ #R$AFFB  -- possible speed factor
 C $AEE1,1 E = A
-C $AEE2,3 A ss= 3
+C $AEE2,3 A <<= 3
 C $AEE5,1 A -= E
 C $AEE6,3 DE = A
 @ $AEE9 label=dh_equal
@@ -7561,14 +7563,14 @@ C $AF9B,3 Call dh_draw_lod
 C $AF9E,3 Get smash_level
 C $AFA1,4 Jump if it's < 4
 C $AFA5,4 Compute (smash_level - 4) * 4
-C $AFA9,1 Bank result
+C $AFA9,1 Bank scaled smash level
 C $AFAA,3 A = x in 'LD A,x' @ #R$AFFB
 C $AFAD,1 *= 2
 C $AFAE,3 DE = A
 C $AFB1,4 HL = #R$CE00 + DE  -- index smoke_offsets
 C $AFB5,3 BC = wordat(HL); HL++
-C $AFB8,1 Unbank
-C $AFB9,1 E = A  -- this must be a distance value?
+C $AFB8,1 Unbank scaled smash level
+C $AFB9,1 E = A
 C $AFBA,3 Load address of table of car-on-fire LODs (six entries long)
 C $AFBD,5 Take half-rate counter_C (counts 0/1/2/3) and make it 0/1/0/1 (this is the animation frame)
 C $AFC2,3 Double it so it's a table offset
@@ -8191,7 +8193,8 @@ C $B44D,3 Call draw_smoke - for the right hand side
 C $B450,3 A' = 1  -- flip?
 C $B453,1 Restore smoke anim index
 C $B454,3 Exit via draw_smoke - for the left hand side
-c $B457
+c $B457 Routine at B457
+D $B457 Used by the routine at #R$B318.
 @ $B457 label=ahc_check_hand_flag
 C $B457,5 Return if hand_flag is zero
 N $B45C Start the hand animation.
