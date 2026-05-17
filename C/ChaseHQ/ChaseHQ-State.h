@@ -49,9 +49,9 @@ struct hazard {
   u16               speed;    // 13 & 14
   u8                TBD15;    // top bit is set for vehicles
   u8                TBD16;
-  u8                TBD17;    // perp distance high byte OR a hazard's lane
+  u8                hazard_lane_OR_perp_dist_hi; // perp distance high byte OR a hazard's lane
   u8                current_lane;
-  u8                TBD19;
+  u8                inverted; // controls sprite plotting (2 => inverted, 1 => ?, 0 => ?)
 };
 
 // crap name
@@ -527,7 +527,7 @@ struct chqstate {
   // $B3DB (SM) in animate_hero_car
   u8        ahc_SM_B3DB_flipping; // controls flipping
   // $B476 (SM) in animate_hero_car
-  u8        ahc_SM_B476_hand_flag; // hand flag?
+  u8        ahc_SM_B476_hand_flag;
   // $B478 (SM) in animate_hero_car
   u8        ahc_SM_B478_hand_frame; // hand animation frame?
 
@@ -547,9 +547,9 @@ struct chqstate {
   u8        dhc_pitch; // car's pitch (0/3/6 = level/up/down)
 
   // $BB95 (SM) in rm_cycle_buffer_offset
-  const u8 *rm_SM_BB95;
+  u16       rm_SM_BB95_leftfork; // a Z80 addr
   // $BBC2 (SM) in rm_cycle_buffer_offset
-  const u8 *rm_SM_BBC2;
+  u16       rm_SM_BBC2_rightfork; // a Z80 addr
 
   // $C058 (SM) in read_map
   u8        rm_SM_C058; // current hazard command

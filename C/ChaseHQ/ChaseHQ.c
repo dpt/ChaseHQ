@@ -114,13 +114,17 @@
 
 /* ----------------------------------------------------------------------- */
 
-/// Given a road buffer offset return a wrapped-around buffer index.
-#define ROADBUFINDEX(N) \
-  ((state->road_buffer_offset + (N) - state->road_buffer_start) & 0xFF)
+/// Given a road buffer pointer return a new wrapped-around buffer index.
+#define ROADBUF_PTR2IDX(PTR) \
+  (((PTR) - state->road_buffer_start) & 0xFF)
 
-/// Given a road buffer offset return a pointer.
-#define ROADBUFPTR(N) \
-  (&state->road_buffer_start[ROADBUFINDEX(N)])
+/// Given a road buffer delta return a new wrapped-around buffer index.
+#define ROADBUF_FWD2IDX(N) \
+  ROADBUF_PTR2IDX(state->road_buffer_offset + N)
+
+/// Given a road buffer delta return a pointer.
+#define ROADBUF_FWD2PTR(N) \
+  (&state->road_buffer_start[ROADBUF_FWD2IDX(N)])
 
 /* ----------------------------------------------------------------------- */
 
@@ -545,6 +549,7 @@ static void plot_sprite_flipped(chqstate_t *state,
                                 const u8   *bitmap_data);
 static void plot_sprite_flipped_even(chqstate_t *state,
                                      int         jump_offset,
+                                     const u8   *flip_table,
                                      u8         *backbuf_addr,
                                      u8          height,
                                      u16         bitmap_stride,
@@ -761,10 +766,10 @@ static void draw_part_entry2(chqstate_t *state,
                              u8          Edash_bitmap_stride);
 static void draw_part_plot_masked_sprite(chqstate_t *state,
                                          u8          Awidth_bytes,
+                                         u8         *HLbackbuf_addr,
                                          u8          Bdash_height,
                                          u8          Edash_bitmap_stride,
-                                         const u8   *HLdash_bitmap_data,
-                                         u8         *HLbackbuf_addr);
+                                         const u8   *HLdash_bitmap_data);
 
 static void plot_masked_sprite(chqstate_t *state,
                                int         jump_offset,
@@ -2752,7 +2757,7 @@ static void draw_everything_else(chqstate_t *state)
     draw_tunnel(state, IY_table_e300);
   IY_table_e300--;
 
-  roadbuf = ROADBUFPTR(115); // right side objects
+  roadbuf = ROADBUF_FWD2PTR(115); // right side objects
 
   IX_table_ea00 = &state->table_ea00[88]; // $EAB0
   iterations = 20; // iterations
@@ -3135,7 +3140,7 @@ dso_continue:
 
   state->doc_SM_9404_y = Bvertical;
   state->doc_SM_9415_y = HLbitmap->width_bytes - 2;
-  state->doc_SM_93C0_inverted = 2;
+  state->doc_SM_93C0_inverted = 2; // inverted
 
   // EX AF,AF' -- restore Adepth
 
@@ -3497,6 +3502,7 @@ static void draw_object_common_9333(chqstate_t     *state,
   u8                Ay;
   u8                D;
   u16               BCpadding;
+  int               carry_shifted;
   u8                Adash_9395;
   const u8         *HLbitmap_data;
   u16               BCwidth_bytes;
@@ -3520,7 +3526,7 @@ static void draw_object_common_9333(chqstate_t     *state,
     // EX AF,AF'  - restore
   }
 
-  // EX AF,AF'  - bank A & carry
+  // EX AF,AF'  - bank Awidth_bytes & carry_masked
   // INC HL  - removed
 
   for (;;) {
@@ -3568,6 +3574,8 @@ doc_9359:
     if (state->doc_SM_93C0_inverted == 0) // set to 0 or 2
       return;
 
+    // inverted
+
     Adash933D = state->doc_SM_933D;
     Dheight = HLbitmap->height; // reads bitmap.height again
     Adash933D -= Dheight;
@@ -3592,8 +3600,8 @@ doc_9390:
   D = Adash1; // heightish value
   BCpadding = Cpadding; // was B = 0
   Adash_9395 = state->doc_SM_9395;
-  carry = Adash_9395 & 1; Adash_9395 >>= 1;
-  HLbitmap_data = (carry) ? HLbitmap->shifted : HLbitmap->data;
+  carry_shifted = Adash_9395 & 1; Adash_9395 >>= 1;
+  HLbitmap_data = (carry_shifted) ? HLbitmap->shifted : HLbitmap->data;
   // was HL += 2; Conv: removed - points HL at bitmap.shifted
 
   HLbitmap_data += BCpadding;
@@ -3610,7 +3618,7 @@ doc_9390:
   Bdash_height = Bheight; // was POP BC,AF  (restoring what was BC and the AF which is IY[53])
 
   // 0b_1111_LLLL_RRRC_CCCC so A holds ?RRRLLLL and B holds ???CCCCC
-  HLdash_backbuf_addr = OFFSETTOBACKBUF(((Awidth_bytes & 0x0F) << 8) | ((Awidth_bytes & 0x70) * 2 + Bdash_height)); // might this overflow?
+  HLdash_backbuf_addr = OFFSETTOBACKBUF(((Awidth_bytes & 0x0F) << 8) | (((Awidth_bytes & 0x70) << 1) + Bdash_height)); // might this overflow?
   assert(VALID_BACKBUF(HLdash_backbuf_addr));
 
   Adash_type = state->doc_SM_93C0_inverted; // set to 0 or 2
@@ -3635,10 +3643,10 @@ doc_9390:
     if (carry_masked)
       draw_part_plot_masked_sprite(state,
                                    Awidth_bytes,
+                                   HLdash_backbuf_addr,
                                    Bdash_height,
                                    DEbitmap_stride & 0xFF, /* Conv: Original only used E' */
-                                   HLbitmap_data,
-                                   HLdash_backbuf_addr); /* exit via */
+                                   HLbitmap_data); /* exit via */
     else
       plot_sprite(state,
                   Awidth_bytes,
@@ -3647,7 +3655,7 @@ doc_9390:
                   DEbitmap_stride,
                   HLbitmap_data); /* exit via */
   } else {
-    if (carry)
+    if (carry_masked)
       plot_masked_sprite_flipped(state,
                                  Awidth_bytes,
                                  HLdash_backbuf_addr,
@@ -3668,7 +3676,7 @@ doc_93df:
   // EX AF,AF'  -- unbank flags (carry => masked) and Awidth_bytes
   if (carry_masked)
     goto doc_9436;
-  SRL(Awidth_bytes);
+  SRL(Awidth_bytes); // carry set if odd
   if (carry)
     goto plot_sprite_xxx_odd;
 
@@ -4010,15 +4018,13 @@ static void plot_sprite_flipped(chqstate_t *state,
   // sprite has even width
 
   jump_offset = 9 * (4 - width_bytes); // 9 bytes/op
-
-#if 0
-  Ddash = 0xEF; // flip table ptr
-  // EXX - bank
-  Ddash = 0; // widen E' to DE'
-#endif
-
-  plot_sprite_flipped_even(state, jump_offset, backbuf_addr, height,
-                           bitmap_stride, bitmap_data); /* was fallthrough */
+  plot_sprite_flipped_even(state,
+                           jump_offset,
+                           state->flipped,
+                           backbuf_addr,
+                           height,
+                           bitmap_stride,
+                           bitmap_data); /* was fallthrough */
 }
 
 /**
@@ -4029,6 +4035,7 @@ static void plot_sprite_flipped(chqstate_t *state,
  *
  * \param[in] state         Pointer to game state.
  * \param[in] jump_offset   Jump table byte offset (e.g. N * 9). (was IX)
+ * \param[in] flip_table    Flipped byte look-up table. (was DE)
  * \param[in] backbuf_addr  Back buffer address to draw at. (was HL)
  * \param[in] height        Number of rows to draw. (was B')
  * \param[in] bitmap_stride Stride of bitmap data, in bytes. (was DE')
@@ -4036,6 +4043,7 @@ static void plot_sprite_flipped(chqstate_t *state,
  */
 static void plot_sprite_flipped_even(chqstate_t *state,
                                      int         jump_offset,
+                                     const u8   *flip_table,
                                      u8         *backbuf_addr,
                                      u8          height,
                                      u16         bitmap_stride,
@@ -4047,7 +4055,7 @@ static void plot_sprite_flipped_even(chqstate_t *state,
   goto plot_sprite_flipped_even_start;
 
   for (;;) {
-    // EXX - bank
+    // EXX - UNBANK
     if (--height == 0)
       return;
 
@@ -4055,25 +4063,27 @@ static void plot_sprite_flipped_even(chqstate_t *state,
 
 plot_sprite_flipped_even_start:
     src = bitmap_data;
-    // EXX - unbank
+    // EXX - BANK
     backbuf_orig = backbuf_addr;
+    // EX AF,AF' - BANK
     switch (jump_offset / 9) {
     default:
       assert(0);
     case 0:
       // Conv: Original uses POP that loads 16 bits at a time
-      *backbuf_addr-- = state->flipped[*src++ & 0xFF];
-      *backbuf_addr-- = state->flipped[*src++ >> 8];
+      *backbuf_addr-- = flip_table[*src++ & 0xFF];
+      *backbuf_addr-- = flip_table[*src++ >> 8];
     case 1:
-      *backbuf_addr-- = state->flipped[*src++ & 0xFF];
-      *backbuf_addr-- = state->flipped[*src++ >> 8];
+      *backbuf_addr-- = flip_table[*src++ & 0xFF];
+      *backbuf_addr-- = flip_table[*src++ >> 8];
     case 2:
-      *backbuf_addr-- = state->flipped[*src++ & 0xFF];
-      *backbuf_addr-- = state->flipped[*src++ >> 8];
+      *backbuf_addr-- = flip_table[*src++ & 0xFF];
+      *backbuf_addr-- = flip_table[*src++ >> 8];
     case 3:
-      *backbuf_addr-- = state->flipped[*src++ & 0xFF];
-      *backbuf_addr-- = state->flipped[*src++ >> 8];
+      *backbuf_addr-- = flip_table[*src++ & 0xFF];
+      *backbuf_addr-- = flip_table[*src++ >> 8];
     }
+    // EX AF,AF' - UNBANK
     backbuf_addr = ADDRTOBACKBUF(prevbufrow(BACKBUFTOADDR(backbuf_orig)));
   }
 }
@@ -5167,7 +5177,7 @@ ptas_turbo_setup:
 
   DEbcd = &state->distance_bcd[1];
   // TBD17 is the high byte of the distance
-  HLdistance = (state->hazards[0].TBD17 << 8) | state->hazards[0].distance;
+  HLdistance = (state->hazards[0].hazard_lane_OR_perp_dist_hi << 8) | state->hazards[0].distance;
 
   // Count 1,000s (no loop required)
   BCdivisor = 1000;
@@ -5715,7 +5725,7 @@ store_off_road:
 
   // Otherwise we're off-road.
 
-  bufptr = ROADBUFPTR(ROADBUF_LANES_OFFSET);
+  bufptr = ROADBUF_FWD2PTR(ROADBUF_LANES_OFFSET);
   lanes = *bufptr;
   if ((lanes & (1 << 6)) == 0) // tunnel??
     goto csc_a43b;
@@ -5751,10 +5761,10 @@ csc_a43b:
     return;
 
   // -- RIGHT SIDE OBJECT HIT CHECKING --
-  bufptr = ROADBUFPTR(ROADBUF_RIGHTOBJS_OFFSET);
+  bufptr = ROADBUF_FWD2PTR(ROADBUF_RIGHTOBJS_OFFSET);
   // EX AF,AF' // FIXME stash road buffer offset here
 
-  A = ROADBUFINDEX(0);
+  A = ROADBUF_FWD2IDX(0);
   RL(A);
   obj = *bufptr; // Read a right side object data byte
   if (carry)
@@ -5787,9 +5797,9 @@ csc_check_left:
   // EX AF,AF'  Unbank road buffer offset or/and bank mystery value in A
 
   // -- LEFT SIDE OBJECT HIT CHECKING --
-  bufptr = ROADBUFPTR(ROADBUF_LEFTOBJS_OFFSET);
+  bufptr = ROADBUF_FWD2PTR(ROADBUF_LEFTOBJS_OFFSET);
 
-  A = ROADBUFINDEX(0);
+  A = ROADBUF_FWD2IDX(0);
   RL(A);
   obj = *bufptr; // Read a left side object data byte
   if (carry)
@@ -5942,7 +5952,7 @@ static void layout_objects(chqstate_t *state)
   } while (--iterations > 0);
 
   SP = &state->table_eb00[0]; // OR should this be ea00[256] ?
-  bufptr = ROADBUFPTR(ROADBUF_LANES_OFFSET);
+  bufptr = ROADBUF_FWD2PTR(ROADBUF_LANES_OFFSET);
   objpos2 = &state->object_positions[0];
   iterations = 21; // iterations
   if (state->fork_visible == 0)
@@ -6134,7 +6144,7 @@ pb_ensure_vehicle:
     goto pb_find_unused_hazard_continue;
 
   // compare to perp's lane
-  if (IYhazard->TBD17 != IX->current_lane)
+  if (IYhazard->hazard_lane_OR_perp_dist_hi != IX->current_lane)
     goto pb_find_unused_hazard_continue;
 
   // So the lanes match
@@ -6450,8 +6460,8 @@ fill_in:
   if (new_lane > max_lane)
     new_lane = max_lane;
 
-  hazard->TBD17        = new_lane;
-  hazard->current_lane = new_lane;
+  hazard->hazard_lane_OR_perp_dist_hi = new_lane;
+  hazard->current_lane                = new_lane;
 
   // Copy hazard_pos_speed values to hazard position and speed.
   hazard_pos = &hazard_pos_speed[-1 + new_lane];
@@ -6478,7 +6488,7 @@ static u16 get_spawn_lanes(chqstate_t *state, u8 extra)
   u8  lanes;      /* was A */
   u8  lanes_copy; /* was E */
 
-  roadbuf = ROADBUFPTR(ROADBUF_LANES_OFFSET + 2 + extra);
+  roadbuf = ROADBUF_FWD2PTR(ROADBUF_LANES_OFFSET + 2 + extra);
   lanes = *roadbuf;
   if (lanes == MAP_LANES_4_VAL) // 0
     return 0x0104;
@@ -6523,14 +6533,14 @@ void hazard_handler(chqstate_t *state, hazard_t *IX)
   min_lane = spawn_lanes >> 8;
   max_lane = spawn_lanes & 0xFF;
 
-  tbd17 = IX->TBD17;
+  tbd17 = IX->hazard_lane_OR_perp_dist_hi;
   if (tbd17 < min_lane)
     IX->current_lane = min_lane;
   if (tbd17 > max_lane)
     IX->current_lane = max_lane;
 
   current_lane = IX->current_lane;
-  if (current_lane != IX->TBD17) {
+  if (current_lane != IX->hazard_lane_OR_perp_dist_hi) {
     RL(min_lane); // I'm not understanding these rotates
     phazard_pos_speed = &hazard_pos_speed[current_lane];
     horz_pos = IX->horz_pos_on_road;
@@ -6539,13 +6549,13 @@ void hazard_handler(chqstate_t *state, hazard_t *IX)
       horz_pos -= 5;
       if (horz_pos < *phazard_pos_speed) {
         horz_pos = *phazard_pos_speed;
-        IX->TBD17 = current_lane;
+        IX->hazard_lane_OR_perp_dist_hi = current_lane;
       }
     } else {
       horz_pos += 5;
       if (horz_pos >= *phazard_pos_speed) {
         horz_pos = *phazard_pos_speed;
-        IX->TBD17 = current_lane;
+        IX->hazard_lane_OR_perp_dist_hi = current_lane;
       }
     }
 
@@ -6982,7 +6992,7 @@ static void spawn_hazards(chqstate_t *state)
   Cdistance = 20 - allow_spawning;
 
   // Point #REGhl at hazards data.
-  roadbuf = ROADBUFPTR(160 + Cdistance);
+  roadbuf = ROADBUF_FWD2PTR(160 + Cdistance);
 
   // Do we have a hazard?
   hazard = *roadbuf;
@@ -7077,7 +7087,7 @@ sh_found_free:
 }
 
 // $AC3C
-static void hazard_hit(chqstate_t *state, hazard_t *IX)
+static void hazard_hit(chqstate_t *state, hazard_t *IXhazard)
 {
   // $ACDB
   static const u8 table_acdb[] = {
@@ -7089,7 +7099,10 @@ static void hazard_hit(chqstate_t *state, hazard_t *IX)
   };
 
   // $AD03
-  static const u8 table_ad03[] = {
+  //
+  // pairs of (TBD17, current_lane) for different speed ranges and hit types (normal vs fast)?
+  // current lane byte isn't a lanes byte though
+  static const u8 table_ad03[5 * 2] = {
     0x06, 0x22,
     0x0C, 0x1C,
     0x0E, 0x14,
@@ -7103,9 +7116,9 @@ static void hazard_hit(chqstate_t *state, hazard_t *IX)
   int       index;    // added
   const u8 *ptable;   /* was HL */
 
-  tbd15 = IX->TBD15;
+  tbd15 = IXhazard->TBD15;
   if (tbd15 == 0) {
-    tbd7 = IX->TBD7;
+    tbd7 = IXhazard->TBD7;
     if (tbd7 == 0)
       return;
 
@@ -7117,34 +7130,34 @@ static void hazard_hit(chqstate_t *state, hazard_t *IX)
     index = ((speed >> 7) & 3) + (speed & 1); // CHECK - not convinced
     ptable = &table_ad03[index * 2];
 
-    IX->TBD17        = *ptable++;
-    IX->current_lane = *ptable;
+    IXhazard->hazard_lane_OR_perp_dist_hi        = ptable[0];
+    IXhazard->current_lane = ptable[1];
 
     speed *= 2;
     if ((speed >> 8) >= 2) // checking speed >= 512?
       speed = 350;
-    IX->speed = (IX->speed & 0xFF00) | (speed & 0x00FF); // set bottom byte only (weird)
-    if (++IX->TBD7) // hit counter
-      IX->speed = (IX->speed & 0x00FF) | (speed & 0xFF00); // set top byte only
-    IX->distance++;
+    IXhazard->speed = (IXhazard->speed & 0xFF00) | (speed & 0x00FF); // set bottom byte only (weird)
+    if (++IXhazard->TBD7) // hit counter
+      IXhazard->speed = (IXhazard->speed & 0x00FF) | (speed & 0xFF00); // set top byte only
+    IXhazard->distance++;
 
     start_sfx(state, EFFECT_HAZARD_HIT, 3);
 
-    IX->TBD15 = 2;
+    IXhazard->TBD15 = 2;
   }
 
   if (--tbd15 == 0)
     return;
 
-  IX->TBD16 = table_acdb[IX->TBD17++];
-  IX->speed -= IX->speed / 32;
-  IX->TBD19 ^= 1;
-  if (--IX->current_lane)
+  IXhazard->TBD16 = table_acdb[IXhazard->hazard_lane_OR_perp_dist_hi++];
+  IXhazard->speed -= IXhazard->speed / 32;
+  IXhazard->inverted ^= 1;
+  if (--IXhazard->current_lane)
     return;
 
-  IX->speed = 0;
-  IX->TBD19 = 1;
-  IX->TBD15 = 1;
+  IXhazard->speed    = 0;
+  IXhazard->inverted = 1;
+  IXhazard->TBD15    = 1;
 }
 
 // $AD0D
@@ -7163,7 +7176,7 @@ static void check_hazard_collisions(chqstate_t *state)
     if (hazard->used != HAZARD_UNUSED) {
       // TBD15 is a delay of some sort used for hits
       // TBD17 suspected perp distance high byte
-      if (hazard->TBD15 == 0xFF && hazard->TBD17)
+      if (hazard->TBD15 == 0xFF && hazard->hazard_lane_OR_perp_dist_hi)
         goto chc_continue;
 
       // Distance is < 20.
@@ -7284,10 +7297,11 @@ static void dh_draw_one_hazard(chqstate_t *state,
   u8        An_hazards;
   u16      *HLtable;
   const u8 *IY;
-  u8        D;
-  u8        E;
-  hazard_t *DEhazard;
+  // u8        D;
+  // u8        E;
   u16       HLresult;
+  u8        Ddistance;
+  u8        Etbd4;
 
   C = IXhazard->speed >> 8; // top byte of horz position or accel?
   IXhazard->TBD4 -= IXhazard->speed & 0xFF;
@@ -7296,14 +7310,14 @@ static void dh_draw_one_hazard(chqstate_t *state,
   C += IXhazard->distance;
   Atbd15 = IXhazard->TBD15 + 1;
   if (Atbd15 == 0) {
-    A = IXhazard->TBD17;
+    A = IXhazard->hazard_lane_OR_perp_dist_hi;
     if (C < IXhazard->distance) { // carried
       A++;
       if (A >= 5) {
         A--;
         C = 0xFF;
       }
-      IXhazard->TBD17 = A;
+      IXhazard->hazard_lane_OR_perp_dist_hi = A;
     }
     int is_zero = (A == 0);
     A = C;
@@ -7392,8 +7406,8 @@ dh_adfa:
   (void) check_collision(state, /*D*/0, HL, IXhazard, &HL); // This modifies HL, not sure how to handle
   IXhazard->distance = HL & 0xFF;
   IXhazard->TBD3     = HL >> 8;
-  D = IXhazard->distance;
-  E = IXhazard->TBD4;
+  Ddistance = IXhazard->distance;
+  Etbd4     = IXhazard->TBD4;
 
   HLp_n_hazards = &state->n_hazards;
   An_hazards = *HLp_n_hazards;
@@ -7403,13 +7417,13 @@ dh_adfa:
   if (An_hazards) {
     Biterations = An_hazards;
     do {
-      A = D;
+      A = Ddistance;
       HLtable++;
-      if (A >= HLtable[-1]) { // these offsets are bound to be wrong
+      if (A >= HLtable[-1]) { // these offsets are bound to be wrong due to byte/word
         if (A != HLtable[-1])
           goto dh_aeab;
 
-        A = E;
+        A = Etbd4;
         if (A < *HLtable)
           goto dh_aeab;
       }
@@ -7419,31 +7433,31 @@ dh_adfa:
 
   // no hazards
 
-  *HLtable++ = E | (D << 8); // big endian store?
-  DEhazard = IXhazard;
-  *HLtable++ = E; // why would we store a hazard ptr here?
-  *HLtable = D;
+  *HLtable++ = Etbd4 | (Ddistance << 8); // big endian store?
+#if 0
+  *HLtable++ = IXhazard & 0xFF; // FIXME storing hazard ptr (convert to offset)
+  *HLtable = IXhazard >> 8;
 
   goto dh_call_handler;
+#endif
 
-dh_aeab:
-  // PUSH DE
-  A = B * 4;
-  BC = A;
+dh_aeab: // deleting a hazard by shuffling the array down?
+  // PUSH DE - Ddistance, Etbd4
+  A = Biterations * 4; // sizeof hazard entry
+  BC = A; // bytes to shift
 #if 0
-  A += 2 + L;
+  A = A + 2 + L; // L is lo byte of HLtable
   E = A;
   A -= 4;
   L = A;
-  D = H;
+  D = H; // hi byte of HLtable
   do { *HL-- = *DE--; } while (--BC > 0); // memcpy(HL - BC, DE - BC, BC); ?
-  // EX DE,HL
-  DEhazard = IXhazard;
-  *HL-- = D; // storing hazard ptr? gah
-  *HL-- = E;
-  // POP DE
-  *HL-- = E;
-  *HL = D;
+  HL = DE; // was EX DE,HL
+  *HL-- = IXhazard >> 8; // FIXME storing hazard ptr (convert to offset)
+  *HL-- = IXhazard & 0xFF;
+  // POP DE - Ddistance, Etbd4
+  *HL-- = Etbd4
+  *HL = Ddistance;
 #endif
 
 dh_call_handler:
@@ -7497,10 +7511,10 @@ static void draw_arrow_fire_smoke(chqstate_t *state,
   hazard_t       *IXhazard;            /* was IX */
   u8              Bx;                  /* was B */
   u8              Cy;                  /* was C */
-  u8              A3;                  /* was A */
+  u8              Atbd3;               /* was A */
   const u8       *HLarrows;            /* was HL */
   const u8       *HLsmokes;            /* was HL */
-  u8              Aix2;                /* was A */
+  u8              Ahorz_pos;           /* was A */
   u8              Asmash_level_scaled; /* was A */
 
   // is $E900 pairs of (data-word, hazard-ptr) ?
@@ -7528,35 +7542,35 @@ static void draw_arrow_fire_smoke(chqstate_t *state,
 
     Ewidth_bits = HLbitmap->width_bytes << 3;
     state->doc_SM_933D = IXhazard->TBD6 - IXhazard->TBD16;
-    state->doc_SM_93C0_inverted = IXhazard->TBD19;
+    state->doc_SM_93C0_inverted = IXhazard->inverted;
 
     if (IXhazard->TBD15 + 1 == 0)
       goto dh_af50;
 
-    A3 = IXhazard->TBD3;
+    Atbd3 = IXhazard->TBD3;
     // AND A3
-    Aix2 = IXhazard->horz_pos;
-    if ((s8) A3 < 0)
+    Ahorz_pos = IXhazard->horz_pos;
+    if ((s8) Atbd3 < 0)
       goto dh_af2f;
-    if (A3 != 0)
+    if (Atbd3 != 0)
       goto dh_draw_done_1;
-    if (Aix2 >= 128)
+    if (Ahorz_pos >= 128)
       goto dh_draw_right_1;
 
-    Aix2 += Ewidth_bits;
+    Ahorz_pos += Ewidth_bits;
     goto dh_draw_left_1;
 
 dh_af2f:
-    Aix2 += Ewidth_bits;
-    if (Aix2 + Ewidth_bits < 0x100) // no carry
+    Ahorz_pos += Ewidth_bits;
+    if (Ahorz_pos + Ewidth_bits < 0x100) // no carry
       goto dh_draw_done_1;
 
 dh_draw_left_1:
-    draw_object_left_helicopter_entrypt(state, Aix2, HLbitmap, IY);
+    draw_object_left_helicopter_entrypt(state, Ahorz_pos, HLbitmap, IY);
     goto dh_draw_done_1;
 
 dh_draw_right_1:
-    draw_object_right_helicopter_entrypt(state, Aix2, HLbitmap, IY);
+    draw_object_right_helicopter_entrypt(state, Ahorz_pos, HLbitmap, IY);
 
 dh_draw_done_1:
     // POP DE (DEbitmapoffset), BC (Biterations)   ??
@@ -7576,13 +7590,13 @@ dh_af50:
   Awidth_bytes = IXhazard->TBD3;
   state->SM_B029 = Awidth_bytes;
   // set flags from A here
-  Aix2 = IXhazard->horz_pos;
-  state->SM_B02C = Aix2;
+  Ahorz_pos = IXhazard->horz_pos;
+  state->SM_B02C = Ahorz_pos;
   if ((s8) Awidth_bytes < 0)
     goto dh_af6c;
   if (Awidth_bytes)
     goto dh_draw_done_1;
-  if (Aix2 >= 128)
+  if (Ahorz_pos >= 128)
     goto dh_draw_right_2;
   Awidth_bytes += Ewidth_bits;
   goto dh_draw_left_2;
@@ -8222,31 +8236,32 @@ ahc_load_flip_flag:
 // $B457
 static void ahc_check_hand_flag(chqstate_t *state)
 {
-  u8 Ahand_flag;  /* was A */
-  u8 Bdash;       /* was B */
-  u8 Cdash;       /* was C */
-  u8 Chand_flag;  /* was C */
-  u8 Ahand_frame; /* was A */
-  u8 Bhand_frame; /* was B */
-  u8 Chand_frame; /* was C */
+  u8 Ahand_flag;      /* was A */
+  u8 Bdash_flip_flag; /* was B */
+  u8 Cdash;           /* was C */
+  u8 Chand_flag;      /* was C */
+  u8 Ahand_frame;     /* was A */
+  u8 Bhand_frame;     /* was B */
+  u8 Chand_frame;     /* was C */
 
   Ahand_flag = state->hand_flag;
   if (Ahand_flag == 0)
     return;
 
-  if (--Ahand_flag) {
+  if (Ahand_flag != 1) {
     // Show the "stop" hand
-    // EXX
-    Bdash = Ahand_flag;
+
+    // EXX BANK
+    Bdash_flip_flag = Ahand_flag;
     Cdash = Ahand_flag;
-    // EXX
+    // EXX UNBANK
 
     // Avoid the hand animation if turning hard?
     if (state->turn_speed != 2)
-      draw_crash(state, 36, Bdash, Cdash); /* exit via */
+      draw_crash(state, 36, Bdash_flip_flag, Cdash); /* exit via */
     else
       // Otherwise turn_speed is 2 (turn hard).
-      draw_crash(state, state->flip_car + 37, Bdash, Cdash); /* exit via */
+      draw_crash(state, state->flip_car + 37, Bdash_flip_flag, Cdash); /* exit via */
     return;
   }
 
@@ -8751,28 +8766,28 @@ static void draw_part_entry2(chqstate_t *state,
                              u8          Cdash,
                              u8          Edash_bitmap_stride)
 {
-  int carry_flip_flag;
-  u8  DElo;           /* was E */
-  u8  Ay;             /* was A */
-  u8  DEhi;           /* was D */
-  u16 DEbackbuf;      /* was DE */
-  u8  Estride;        /* was E */
-  u16 HLdash_backbuf; /* was HL */
-  u8  Awidth_bytes;   /* was A */
+  int carry_flip_flag; /* was carry */
+  u8  Ay;              /* was A */
+  u16 DEbackbuf;       /* was DE */
+  u8  Estride;         /* was E */
+  u16 HLdash_backbuf;  /* was HL' */
+  u8  Awidth_bytes;    /* was A */
 
-  DElo = (Ex & 0xF8) >> 3;
-  Ay = Dy;
-  // EX AF,AF' - bank to use A as temp
-  DEhi = (Dy & 0x0F) + 0xF0; // note: this address building pattern uses OR elsewhere
+  // The buffer has the format 0b1111LLLLRRRCCCCC (L = scanline, R = row (group))
+
+  DEbackbuf = (Ex & 0xF8) >> 3; // x pixel pos to field CCCCC
+  Ay = Dy; // we make a temp copy but then bank - odd
+  // EX AF,AF' - bank to use A as temp, or to preserve something like carry?
+  DEbackbuf |= ((Dy & 0x0F) << 8) | 0xF000; // y pixel pos (bottom nibble) to field LLLL
   // EX AF,AF'
-  DElo += (Ay & 0x70) * 2;
-  DEbackbuf = (DEhi << 8) | DElo; /* was PUSH DEbackbuf */
+  DEbackbuf |= (Ay & 0x70) << 1; // y pixel pos (remaining bits) to field RRR
+  /* removed PUSH DEbackbuf */
   Estride = Cwidth_bytes << 1;
   // EXX - Bank
   HLdash_backbuf = DEbackbuf; /* was POP HLdash_backbuf */
   Awidth_bytes = Edash_bitmap_stride;
   carry_flip_flag = Bdash_flip_flag & 1; /* was shift (and zeroes the register) */
-  // EX AF,AF'  -- unbanking for flags?
+  // EX AF,AF'  -- preserve carry_flip_flag
   HLdash_backbuf += Cdash; /* was BCdash - B always zero here */
   // EX AF,AF'
   if (carry_flip_flag)
@@ -8785,19 +8800,19 @@ static void draw_part_entry2(chqstate_t *state,
   else
     draw_part_plot_masked_sprite(state,
                                  Awidth_bytes,
+                                 ADDRTOBACKBUF(HLdash_backbuf),
                                  Bheight,
                                  Estride,
-                                 HLbitmap_data,
-                                 ADDRTOBACKBUF(HLdash_backbuf)); /* was FALLTHROUGH */
+                                 HLbitmap_data); /* was FALLTHROUGH */
 }
 
 // $B701
 static void draw_part_plot_masked_sprite(chqstate_t *state,
                                          u8          Awidth_bytes,
+                                         u8         *HLbackbuf_addr,
                                          u8          Bdash_height,
                                          u8          Edash_bitmap_stride,
-                                         const u8   *HLdash_bitmap_data,
-                                         u8         *HLbackbuf_addr)
+                                         const u8   *HLdash_bitmap_data)
 {
   int IXjump_offset;
 
@@ -9173,7 +9188,7 @@ static void update_road_level(chqstate_t *state)
   if (Aincline)
     state->st.horizon_level += (Cnegate_flag) ? -Aincline : Aincline;
 
-  HLroadbuf = ROADBUFPTR(ROADBUF_HEIGHT_OFFSET + 2);
+  HLroadbuf = ROADBUF_FWD2PTR(ROADBUF_HEIGHT_OFFSET + 2);
 
   state->horizon_y_a25b = state->horizon_y_a25a = 0;
 
@@ -9224,7 +9239,7 @@ static void update_road_level(chqstate_t *state)
 
   Acurrent_curvature = state->current_curvature;
   // EX AF,AF' - bank Acurrent_curvature
-  HLroadbuf = ROADBUFPTR(ROADBUF_CURVATURE_OFFSET);
+  HLroadbuf = ROADBUF_FWD2PTR(ROADBUF_CURVATURE_OFFSET);
   Afork_visible = state->fork_visible;
   Acurvature_byte = *HLroadbuf; // load a curvature byte
   if (Afork_visible && state->fork_in_progress) {
@@ -9307,7 +9322,7 @@ static void layout_road(chqstate_t *state)
   u8       *HLunknown;
 
   // point at lane data
-  DElanedata_base = DElanedata = ROADBUFPTR(ROADBUF_LANES_OFFSET);
+  DElanedata_base = DElanedata = ROADBUF_FWD2PTR(ROADBUF_LANES_OFFSET);
 
   // Count the distance to the forked road.
   Biterations = 20;
@@ -9696,80 +9711,78 @@ static void read_map(chqstate_t *state)
 // pfastcounter - was HL
 static void rm_cycle_buffer_offset(chqstate_t *state, u8 *pfastcounter)
 {
-  int carry = 0;
-  u8 *HL;
-  u8  A;
-  u8 *DE;
+  u8       *HLlanesptr;
+  u8        Acurvebyte;
+  const u8 *DEcurveptr;
+  const u8 *HLcurveptr;
 
-  HL = state->road_buffer_offset; // Conv: was an INC
-  A = *HL + 1;
-  *HL = A;
-  A += 0x5F;
-  HL = ROADBUFPTR(A);
-  state->trigger_passed_object_sfx |= *HL;
-#if 0
-  HL = LO_ADD(HL, 0x20); // ROADBUFPTR(A + 0x20);
-  state->trigger_lane_change_sfx |= *HL;
-  HL = LO_ADD(HL, -0x60); // ROADBUFPTR(A + 0x40); ?
+  state->road_buffer_offset = ROADBUF_FWD2PTR(1); // step the offset
+  HLlanesptr = ROADBUF_FWD2PTR(95); // calc final byte of lanes data
+  state->trigger_passed_object_sfx |= *HLlanesptr; // final lanes byte
+
+  HLlanesptr = state->road_buffer_start + ROADBUF_PTR2IDX(HLlanesptr + 32);
+  state->trigger_lane_change_sfx |= *HLlanesptr;
+
+  HLlanesptr = state->road_buffer_start + ROADBUF_PTR2IDX(HLlanesptr - 96);
 
   // -- CURVATURE --
 
-  A = state->curvature_byte;
-  carry = A < 16;
-  A -= 16;
-  if (!carry)
+  // The top nibble of each byte is a counter. The bottom nibble is curvature
+  // data.
+
+  Acurvebyte = state->curvature_byte - 16;
+  if (Acurvebyte < 240) // if didn't carry
     goto rm_save_curvature_byte;
 
-  DE = state->scenedata.road_curvature_ptr + 1;
-  A = *DE;
-  if (A)
+  // The counter ran out so load a new curvature byte.
+  DEcurveptr = state->scenedata.road_curvature_ptr + 1;
+  Acurvebyte = *DEcurveptr;
+  if (Acurvebyte)
     goto rm_curvature_regular_byte;
 
-rm_curvature_escape_byte:
-  // EX DE,HL
-  HL++;
-  A = *HL;
-  HL++;
-  if (A == 0)
+  // It's an escape byte (0)
+  HLcurveptr = DEcurveptr; DElanesptr = HLlanesptr; // was EX DE,HL
+  Acurvebyte = *++HLcurveptr; // read cmd byte
+  HLcurveptr++;
+  if (Acurvebyte == 0)
     goto rm_curvature_jump_command;
-  if (--A == 0)
+  if (Acurvebyte == 1) // was DEC
     goto rm_curvature_one_command;
-  // Otherwise it must be a fork road command (byte == 2).
-  state->rm_SM_BB95 = wordat(HL);
-  HL += 2;
-  state->rm_SM_BBC2 = wordat(HL);
 
-  HL = &forked_road_curvature[0];
+  // Otherwise it must be a fork road command (byte == 2).
+  state->rm_SM_BB95_leftfork  = wordat(HLcurveptr + 0);
+  state->rm_SM_BBC2_rightfork = wordat(HLcurveptr + 2);
+
+  HLcurveptr = &forked_road_curvature[0];
   goto rm_read_curvature;
 
 rm_curvature_one_command:
-  HL = state->SM_something;
+  HLcurveptr = state->SM_something;
   goto rm_read_curvature;
 
 rm_curvature_jump_command:
-  HLsomething = wordat(HL);
+  HLcurveptr = wordat(HLcurveptr);
 
 rm_read_curvature:
-  // EX DE,HL
-  A = *DE;
+  DEcurveptr = HLcurveptr; HLlanesptr = DElanesptr; // was EX DE,HL
+  Acurvebyte = *DEcurveptr;
 
 rm_curvature_regular_byte:
-  state->scenedata.road_curvature_ptr = DE;
-  A -= 16;
+  state->scenedata.road_curvature_ptr = DEcurveptr;
+  Acurvebyte -= 16;
 
 rm_save_curvature_byte:
-  state->curvature_byte = A;
-  A &= 0x0F;
-  if ((A & (1 << 3)) == 0)
+  state->curvature_byte = Acurvebyte;
+  Amaskedcurvebyte = Acurvebyte & 0x0F;
+  if ((Amaskedcurvebyte & (1 << 3)) == 0)
     goto rm_set_curvature;
-  A &= 0x07;
-  A = -A;
+  Amaskedcurvebyte &= 0x07;
+  A = -Amaskedcurvebyte;
 
 rm_set_curvature:
-  A += A;
-  *HL = A;
+  A = Amaskedcurvebyte << 1; // getting carry or just shifting?
+  *HLlanesptr = A;
   L += 0x20;
-#endif
 }
 
 // $C0E1
@@ -10156,8 +10169,8 @@ static void draw_road(chqstate_t *state)
 
   IY = &state->table_e300[1]; // height table
   C = 96 - *IY;
-  bufptr = ROADBUFPTR(ROADBUF_LANES_OFFSET);
-  Bfill = bufptr - ROADBUFPTR(0); // copy of lane data offset
+  bufptr = ROADBUF_FWD2PTR(ROADBUF_LANES_OFFSET);
+  Bfill = bufptr - ROADBUF_FWD2PTR(0); // copy of lane data offset
 
   // Set initial road stripe state
   state->dr_SM_C6B2 = Bfill & 1;
@@ -11306,7 +11319,7 @@ static void build_height_table(chqstate_t *state)
   const u8 *htabbase2;            // Conv: added
   u8        iterations2;          /* was B */
 
-  proadbuf_height_base = proadbuf_height = ROADBUFPTR(ROADBUF_HEIGHT_OFFSET);
+  proadbuf_height_base = proadbuf_height = ROADBUF_FWD2PTR(ROADBUF_HEIGHT_OFFSET);
 
   // Read the current height byte
   heightbyte = *proadbuf_height;
