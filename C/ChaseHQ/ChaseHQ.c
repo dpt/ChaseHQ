@@ -1250,9 +1250,9 @@ static void main_loop(chqstate_t *state)
           }
         }
       }
+      break; //  temporary
     }
-
-    break; // perhaps temporary
+    break; // temporary
   }
 }
 
@@ -11521,9 +11521,10 @@ static void build_curve_table(chqstate_t *state, int forked)
 
     // EXX Bank
 
-    int offset = (IX - &inward_bend_table[0]) * 2;
-    offset = (offset & ~0xFF) + curvature_A; // - 0x40; ?
-    IX = &inward_bend_table[offset / 2];
+    // Z80: ADD A,IXl; LD IXl,A  -- IXl accumulates curvature; table at $E540 = $40 into page
+    int IXl = (IX - &inward_bend_table[0]) * 2 + 0x40;
+    IXl = (IXl + curvature_A) & 0xFF;
+    IX = &inward_bend_table[(IXl - 0x40) / 2];
     assert(IX >= &inward_bend_table[0] && IX < &inward_bend_table[96]);
 
     HLdash = 0; // Initialise a multiplier result
