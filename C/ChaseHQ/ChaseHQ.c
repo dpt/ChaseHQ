@@ -2749,6 +2749,8 @@ static void draw_everything_else(chqstate_t *state)
   u8              Eobj;                /* was E */
   const obj_t    *HLobj;               /* was HL */
 
+  assert(state->stage != NULL);
+
   state->dss_SM_A9E2 = &state->table_ed00[20]; // $ED28
   state->dh_SM_AECF_table  = &state->table_e900[0];
 
@@ -2756,6 +2758,8 @@ static void draw_everything_else(chqstate_t *state)
   table_e336 = &state->table_e336[0];
   iterations = 21;
   do {
+    assert(HL_table_e300 >= &state->table_e300[0] && HL_table_e300 < &state->table_e300[22]);
+    assert(table_e336 >= &state->table_e336[0] && table_e336 < &state->table_e336[21]);
     *HL_table_e300++ += 32;
     *table_e336++ += 32;
   } while (--iterations > 0);
@@ -2770,6 +2774,9 @@ static void draw_everything_else(chqstate_t *state)
   IX_table_ea00 = &state->table_ea00[88]; // $EAB0
   iterations = 20; // iterations
   do {
+    assert(IY_table_e300 >= &state->table_e300[0] && IY_table_e300 < &state->table_e300[22]);
+    assert(IX_table_ea00 >= &state->table_ea00[0] && IX_table_ea00 < &state->table_ea00[128]);
+
     if (state->n_hazards)
       draw_arrow_fire_smoke(state, iterations, IY_table_e300);
 
@@ -2781,21 +2788,21 @@ static void draw_everything_else(chqstate_t *state)
     if (state->dee_draw_tunnel_2)
       draw_tunnel(state, IY_table_e300);
 
-    Aobj = *HL_table_e300; // fetch (object?) from right hand side
+    Aobj = *roadbuf; // fetch right side object from road buffer
     if (Aobj)
       goto right_hand_stuff;
 
 continue_after_right_hand_done:
-    IX_table_ea00 += 2;
-    HL_table_e300 += 32; // FIXME needs to wrap?
+    IX_table_ea00 += 1; // Z80: ADD IX,2 = advance 2 bytes = 1 u16
+    roadbuf = WRAPPING(roadbuf, 32, state->road_buffer_start); // advance to left-side column
 
-    Aobj = *HL_table_e300; // fetch (object?) from left hand side
+    Aobj = *roadbuf; // fetch left side object from road buffer
     if (Aobj)
       goto left_hand_stuff;
 
 continue_after_left_hand_done:
-    IX_table_ea00 += 2;
-    HL_table_e300 -= 33; // FIXME needs to wrap
+    IX_table_ea00 += 1; // Z80: ADD IX,2 = advance 2 bytes = 1 u16
+    roadbuf = WRAPPING(roadbuf, -33, state->road_buffer_start); // retreat one row
 
     IY_table_e300--;
   } while (--iterations > 0);
@@ -2834,16 +2841,20 @@ continue_after_left_hand_done:
 
 right_hand_stuff:
   Eobj = Aobj;
-  if (IX_table_ea00[1] == 0) { // buffer offset/distance
+  assert(Eobj >= 1 && Eobj <= 9); // valid index range given base ptr at [-1] of a 9-element array
+  if (((u8 *)IX_table_ea00)[1] == 0) { // Z80: LD A,(IX+1) -- buffer offset/distance (high byte of road pos)
     HLobj = &state->stage->addrof_right_hand_objects[Eobj];
+    assert(HLobj->handler != NULL);
     HLobj->handler(state, height, HLobj->arg, IX_table_ea00, IY_table_e300);
   }
   goto continue_after_right_hand_done;
 
 left_hand_stuff:
   Eobj = Aobj;
-  if (Aobj != 2 && IX_table_ea00[1]) {
+  assert(Eobj >= 1 && Eobj <= 9); // valid index range given base ptr at [-1] of a 9-element array
+  if (Aobj != 2 && ((u8 *)IX_table_ea00)[1]) { // Z80: LD A,(IX+1) -- buffer offset/distance
     HLobj = &state->stage->addrof_left_hand_objects[Eobj];
+    assert(HLobj->handler != NULL);
     HLobj->handler(state, height, HLobj->arg, IX_table_ea00, IY_table_e300);
   }
   goto continue_after_left_hand_done;

@@ -662,11 +662,11 @@ struct chqstate {
   u8        debris_subtable_5[19];
 
   // $E300
-  u8        table_e300[32]; // note: first byte should be $60
+  u8        table_e300[32]; // height table: [0]=$60 sentinel, [1..21]=heights, [22]=$A0 terminal, [23..31]=unused
   // $E320
-  u8        table_e320[20]; // CHECK: unsure of correct size
+  u8        table_e320[22]; // road curvature/position table (CTL: 22 entries; confirmed by 22-iteration write loop)
   // $E336
-  u8        table_e336[21]; // CHECK: unsure of correct size
+  u8        table_e336[21]; // clamped copy of height table
   // $E34B
   u8        horizon_table_e34b[3]; // horizon related
   // $E34F
