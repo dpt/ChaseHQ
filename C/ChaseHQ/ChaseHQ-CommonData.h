@@ -235,8 +235,10 @@ const u8 bitmap_shadow_straight[7 * 2 * 12];
 const u8 bitmap_shadow_turn_right[7 * 2 * 12];
 const u8 bitmap_shadow_turn_right_hard[7 * 2 * 12];
 
-const u8 ledfont[10 * 16];
-const u8 minifont[31 * 6];
+#define LEDFONT_HEIGHT (15) // 15 rows/char
+const u8 ledfont[10 * LEDFONT_HEIGHT];
+#define MINIFONT_HEIGHT (6) // 6 rows/char
+const u8 minifont[31 * MINIFONT_HEIGHT];
 
 const bitmap_t fire1_defns[6];
 const bitmap_t fire2_defns[6];

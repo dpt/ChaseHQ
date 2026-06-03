@@ -3483,7 +3483,7 @@ const u8 bitmap_shadow_turn_right_hard[7 * 2 * 12] = {
 /* ----------------------------------------------------------------------- */
 
 // $DF62
-const u8 ledfont[10 * 16] = {
+const u8 ledfont[10 * LEDFONT_HEIGHT] = {
   _XXXXX__,
   X_XXX_X_,
   XX___XX_,
@@ -3646,7 +3646,7 @@ const u8 ledfont[10 * 16] = {
 };
 
 // $DFF8
-const u8 minifont[31 * 6] = {
+const u8 minifont[31 * MINIFONT_HEIGHT] = {
   _XX_____,
   X__X____,
   X__X____,

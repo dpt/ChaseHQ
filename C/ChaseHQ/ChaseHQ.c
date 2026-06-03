@@ -5283,8 +5283,6 @@ ptas_led_plot_2nd:
   goto ptas_led_next_whole;
 }
 
-#define LEDFONT_HEIGHT (16) // stride in ledfont[10*16]; each char is 15 rows + 1 blank separator
-
 // $9F47
 //
 // ord - was A
