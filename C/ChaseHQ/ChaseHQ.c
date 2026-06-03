@@ -899,14 +899,21 @@ static void attract_mode_128k(chqstate_t *state);
 
 /* ----------------------------------------------------------------------- */
 
-// $5C00
+/**
+ * $5C00: End screen
+ *
+ * \param[in] state Pointer to game state.
+ */
 static void end_screen(chqstate_t *state)
 {
   // TODO
 }
 
-// $8014 (copied to that position in the original)
-// $F220 load_stage_128k
+/**
+ * $8014: Load stage
+ *
+ * \param[in] state Pointer to game state.
+ */
 static void load_stage(chqstate_t *state)
 {
   u8 wanted; /* was A */
@@ -925,7 +932,11 @@ static void load_stage(chqstate_t *state)
 
 // $81DD start_stage_chatter - was hoisted
 
-// $8204
+/**
+ * $8204: Setup engine SFX 48K
+ *
+ * \param[in] state Pointer to game state.
+ */
 static void setup_engine_sfx_48k(chqstate_t *state)
 {
   int nloops;    /* was L */
@@ -947,7 +958,11 @@ static void setup_engine_sfx_48k(chqstate_t *state)
   play_engine_sfx_48k(state);
 }
 
-// $8234
+/**
+ * $8234: Play engine SFX 48K
+ *
+ * \param[in] state Pointer to game state.
+ */
 static void play_engine_sfx_48k(chqstate_t *state)
 {
   u8  phase;   /* was A */
@@ -975,7 +990,11 @@ static void play_engine_sfx_48k(chqstate_t *state)
   } while (--nloops > 0);
 }
 
-// $8258
+/**
+ * $8258: Attract mode 48K
+ *
+ * \param[in] state Pointer to game state.
+ */
 static void attract_mode_48k(chqstate_t *state)
 {
   int       carry = 0;
@@ -1024,55 +1043,92 @@ static void attract_mode_48k(chqstate_t *state)
   }
 }
 
-// $83B5
+/**
+ * $83B5: Start siren hook
+ *
+ * \param[in] state Pointer to game state.
+ */
 static void start_siren_hook(chqstate_t *state)
 {
   // NOP
 }
 
-// $83B8
+/**
+ * $83B8: Play engine or siren SFX hook
+ *
+ * \param[in] state Pointer to game state.
+ */
 static void play_engine_or_siren_sfx_hook(chqstate_t *state)
 {
   play_engine_sfx_48k(state);
 }
 
-// $83BB
+/**
+ * $83BB: Silence audio hook
+ *
+ * \param[in] state Pointer to game state.
+ */
 static void silence_audio_hook(chqstate_t *state)
 {
   // NOP
 }
 
-// $83BE
+/**
+ * $83BE: Write audio registers hook
+ *
+ * \param[in] state Pointer to game state.
+ */
 static void write_audio_registers_hook(chqstate_t *state)
 {
   // NOP
 }
 
-// $83C1
+/**
+ * $83C1: Setup engine SFX hook
+ *
+ * \param[in] state Pointer to game state.
+ */
 static void setup_engine_sfx_hook(chqstate_t *state)
 {
   // NOP
 }
 
-// $83C4
+/**
+ * $83C4: Play engine SFX hook
+ *
+ * \param[in] state Pointer to game state.
+ */
 static void play_engine_sfx_hook(chqstate_t *state)
 {
   setup_engine_sfx_48k(state);
 }
 
-// $83C7
+/**
+ * $83C7: Play speech hook
+ *
+ * \param[in] state Pointer to game state.
+ * \param[in] A     Parameter.
+ */
 static void play_speech_hook(chqstate_t *state, u8 A)
 {
   // NOP
 }
 
-// $83CA
+/**
+ * $83CA: Attract mode hook
+ *
+ * \param[in] state Pointer to game state.
+ */
 static void attract_mode_hook(chqstate_t *state)
 {
   attract_mode_48k(state);
 }
 
-// $83CD
+/**
+ * $83CD: Bootstrap
+ *
+ * \param[in] state Pointer to game state.
+ */
 static void bootstrap(chqstate_t *state)
 {
   for (;;) {
@@ -1120,7 +1176,11 @@ static void bootstrap(chqstate_t *state)
   }
 }
 
-// $8401
+/**
+ * $8401: Main loop
+ *
+ * \param[in] state Pointer to game state.
+ */
 static void main_loop(chqstate_t *state)
 {
   int carry = 0;
@@ -1256,7 +1316,11 @@ static void main_loop(chqstate_t *state)
   }
 }
 
-// $852A
+/**
+ * $852A: CPU driver
+ *
+ * \param[in] state Pointer to game state.
+ */
 static void cpu_driver(chqstate_t *state)
 {
   const u8 MinSpeed = 150;
@@ -1296,9 +1360,11 @@ static void cpu_driver(chqstate_t *state)
   animate_hero_car(state); /* exit via */
 }
 
-// $858C
-//
-// Pre-game radio screen ("CHASE HQ MONITORING SYSTEM").
+/**
+ * $858C: Pre-game radio screen ("CHASE HQ MONITORING SYSTEM")
+ *
+ * \param[in] state Pointer to game state.
+ */
 static void run_pregame_screen(chqstate_t *state)
 {
   set_up_stage(state, &state->stage->stage_data);
@@ -1315,7 +1381,12 @@ static void run_pregame_screen(chqstate_t *state)
   // Conv: Dead code removed
 }
 
-// $85A8
+/**
+ * $85A8: Run pregame screen loop
+ *
+ * \param[in] state Pointer to game state.
+ * \return Non-zero on success.
+ */
 static int run_pregame_screen_loop(chqstate_t *state)
 {
   draw_pregame(state);
@@ -1324,7 +1395,7 @@ static int run_pregame_screen_loop(chqstate_t *state)
   animate_meters(state);
   transition(state);
 
-  if (0)
+  if (1)
   {
     memset(&state->speccy->screen.attributes[256], attribute_BRIGHT_BLACK_OVER_GREEN, 512);
     memset(&state->backbuffer[0], 0, 4096);
@@ -1413,7 +1484,11 @@ static int run_pregame_screen_loop(chqstate_t *state)
   return 1; // loop
 }
 
-// $85E4
+/**
+ * $85E4: Reveal perp car
+ *
+ * \param[in] state Pointer to game state.
+ */
 static void reveal_perp_car(chqstate_t *state)
 {
   const int MaxHeight = 50;
@@ -1448,7 +1523,11 @@ static void reveal_perp_car(chqstate_t *state)
               bitmap); /* exit via */
 }
 
-// $860F
+/**
+ * $860F: Animate meters
+ *
+ * \param[in] state Pointer to game state.
+ */
 static void animate_meters(chqstate_t *state)
 {
   s8 random; /* was A */
@@ -1482,10 +1561,12 @@ set_level2:
   am_set_attrs(level, ADDRTOATTRS(0x5A57));
 }
 
-// $8646
-//
-// counter - was A
-// attrs - was HL
+/**
+ * $8646: AM set attrs
+ *
+ * \param[in] counter Count. (was A)
+ * \param[in] attrs   Attribute address. (was HL)
+ */
 static void am_set_attrs(int counter, u8 *attrs)
 {
   int iterations; /* was B */
@@ -1506,7 +1587,11 @@ static void am_set_attrs(int counter, u8 *attrs)
   }
 }
 
-// $865A
+/**
+ * $865A: Draw pregame
+ *
+ * \param[in] state Pointer to game state.
+ */
 static void draw_pregame(chqstate_t *state)
 {
   int       carry = 0;
@@ -1617,7 +1702,11 @@ dp_repeat_or_plot_tile:
   while (--iterations > 0);
 }
 
-// $873C
+/**
+ * $873C: Escape scene
+ *
+ * \param[in] state Pointer to game state.
+ */
 static void escape_scene(chqstate_t *state)
 {
   silence_audio_hook(state);
@@ -1672,7 +1761,12 @@ static void escape_scene(chqstate_t *state)
   }
 }
 
-// $87DC
+/**
+ * $87DC: Set up stage
+ *
+ * \param[in] state      Pointer to game state.
+ * \param[in] scene_data Source bitmap data.
+ */
 static void set_up_stage(chqstate_t        *state,
                          const scenedata_t *scene_data)
 {
@@ -1725,9 +1819,11 @@ static void set_up_stage(chqstate_t        *state,
   update_scoreboard(state); /* exit via */
 }
 
-// $8860 (pulled out of set_up_stage above)
-//
-// attrptr - was HL
+/**
+ * $8860: Set up stage reset lights
+ *
+ * \param[in] attrptr Screen attribute address. (was HL)
+ */
 static void set_up_stage_reset_lights(u8 *attrptr)
 {
   int rows; /* was C */
@@ -1743,7 +1839,11 @@ static void set_up_stage_reset_lights(u8 *attrptr)
   } while (--rows > 0);
 }
 
-// $8876
+/**
+ * $8876: Check user input
+ *
+ * \param[in] state Pointer to game state.
+ */
 static void check_user_input(chqstate_t *state)
 {
   u8  transctl;   /* was A */
@@ -1794,7 +1894,11 @@ static void check_user_input(chqstate_t *state)
   }
 }
 
-// $88A9
+/**
+ * $88A9: Check user input quit key
+ *
+ * \param[in] state Pointer to game state.
+ */
 static void check_user_input_quit_key(chqstate_t *state)
 {
   if (state->quit_state != QUITSTATE_IDLE)
@@ -1807,7 +1911,11 @@ static void check_user_input_quit_key(chqstate_t *state)
   state->quit_state         = QUITSTATE_START;
 }
 
-// $88D5
+/**
+ * $88D5: Clear playfield attrs
+ *
+ * \param[in] state Pointer to game state.
+ */
 static void clear_playfield_attrs(chqstate_t *state)
 {
   memset(ADDRTOATTRS(0x5900),
@@ -1815,7 +1923,11 @@ static void clear_playfield_attrs(chqstate_t *state)
          SCREEN_ATTRIBUTES_ROWBYTES * PLAYFIELD_HEIGHT / 8);
 }
 
-// $88E2
+/**
+ * $88E2: Clear playfield
+ *
+ * \param[in] state Pointer to game state.
+ */
 static void clear_playfield(chqstate_t *state)
 {
   clear_playfield_attrs(state);
@@ -1824,10 +1936,13 @@ static void clear_playfield(chqstate_t *state)
          SCREEN_BITMAP_ROWBYTES * PLAYFIELD_HEIGHT);
 }
 
-// $88F2
-//
-// index - was B
-// priority - was C
+/**
+ * $88F2: Start SFX
+ *
+ * \param[in] state    Pointer to game state.
+ * \param[in] index    Sound effect index. (was B)
+ * \param[in] priority Priority; higher value wins. (was C)
+ */
 static void start_sfx(chqstate_t *state, u8 index, u8 priority)
 {
   u8 curr_priority; /* was A */
@@ -1839,7 +1954,11 @@ static void start_sfx(chqstate_t *state, u8 index, u8 priority)
   }
 }
 
-// $8903
+/**
+ * $8903: Drive SFX
+ *
+ * \param[in] state Pointer to game state.
+ */
 static void drive_sfx(chqstate_t *state)
 {
   // $893C
@@ -1881,10 +2000,13 @@ static void drive_sfx(chqstate_t *state)
   sfx->handler(state, sfx->arg1, sfx->arg2);
 }
 
-// $8960
-//
-// param1 - was D
-// param2 - was E
+/**
+ * $8960: SFX crash
+ *
+ * \param[in] state  Pointer to game state.
+ * \param[in] param1 First SFX parameter. (was D)
+ * \param[in] param2 Second SFX parameter. (was E)
+ */
 static void sfx_crash(chqstate_t *state, u8 param1, u8 param2)
 {
   int  carry = 0;
@@ -1909,10 +2031,13 @@ static void sfx_crash(chqstate_t *state, u8 param1, u8 param2)
   } while (--C > 0);
 }
 
-// $89D9
-//
-// param1 - was D
-// param2 - was E
+/**
+ * $89D9: SFX thud
+ *
+ * \param[in] state  Pointer to game state.
+ * \param[in] param1 First SFX parameter. (was D)
+ * \param[in] param2 Second SFX parameter. (was E)
+ */
 static void sfx_thud(chqstate_t *state, u8 param1, u8 param2)
 {
   // $89EF
@@ -1944,10 +2069,13 @@ static void sfx_thud(chqstate_t *state, u8 param1, u8 param2)
   } while (--C > 0);
 }
 
-// $8A0F
-//
-// param1 - was D
-// param2 - was E
+/**
+ * $8A0F: SFX cornering
+ *
+ * \param[in] state  Pointer to game state.
+ * \param[in] param1 First SFX parameter. (was D)
+ * \param[in] param2 Second SFX parameter. (was E)
+ */
 static void sfx_cornering(chqstate_t *state, u8 param1, u8 param2)
 {
   u8 A;
@@ -1980,10 +2108,13 @@ static void sfx_cornering_loop_outer(chqstate_t *state, u8 param1, u8 param2)
   } while (--param1 > 0);
 }
 
-// $8A36
-//
-// param1 - was D
-// param2 - was E
+/**
+ * $8A36: SFX bipbow
+ *
+ * \param[in] state  Pointer to game state.
+ * \param[in] param1 First SFX parameter. (was D)
+ * \param[in] param2 Second SFX parameter. (was E)
+ */
 static void sfx_bipbow(chqstate_t *state, u8 param1, u8 param2)
 {
   u8 C;
@@ -2008,7 +2139,12 @@ static void sfx_bipbow(chqstate_t *state, u8 param1, u8 param2)
   } while (--C > 0);
 }
 
-// $8A57
+/**
+ * $8A57: Handle perp caught
+ *
+ * \param[in] state Pointer to game state.
+ * \return Non-zero on success.
+ */
 static int handle_perp_caught(chqstate_t *state)
 {
   int       carry = 0;
@@ -2331,15 +2467,22 @@ set_perp_speed:
   return 0;
 }
 
-// $8C35
-//
-// speed - was DE
+/**
+ * $8C35: HPC set perp speed
+ *
+ * \param[in] state Pointer to game state.
+ * \param[in] speed Speed value. (was DE)
+ */
 static void hpc_set_perp_speed(chqstate_t *state, u16 speed)
 {
   state->hazards[0].speed = speed;
 }
 
-// $8C3A
+/**
+ * $8C3A: Fully smashed
+ *
+ * \param[in] state Pointer to game state.
+ */
 static void fully_smashed(chqstate_t *state)
 {
   state->perp_caught_phase  = PERPCAUGHTPHASE_1;
@@ -2350,7 +2493,11 @@ static void fully_smashed(chqstate_t *state)
   hpc_set_perp_speed(state, 400);
 }
 
-// $8D8F
+/**
+ * $8D8F: Transition
+ *
+ * \param[in] state Pointer to game state.
+ */
 static void transition(chqstate_t *state)
 {
   int       iterations;  /* was B' */
@@ -2398,11 +2545,13 @@ static void transition(chqstate_t *state)
   } while (--iterations > 0);
 }
 
-// $8DD8
-// Overwrite odd/even UDG rows of the back buffer with a single byte.
-//
-// mask - was E
-// backbuf - was HL
+/**
+ * $8DD8: Overwrite odd/even UDG rows of the back buffer with a single byte
+ *
+ * \param[in] state   Pointer to game state.
+ * \param[in] mask    Mask. (was E)
+ * \param[in] backbuf Back buffer address. (was HL)
+ */
 static void transition_fade_chunk(chqstate_t *state, u8 mask, u8 *backbuf)
 {
   int rows;       /* was C */
@@ -2423,9 +2572,12 @@ static void transition_fade_chunk(chqstate_t *state, u8 mask, u8 *backbuf)
   } while (--rows > 0);
 }
 
-// $8DF9
-//
-// stride - was A -- u8 stride could become (s8)
+/**
+ * $8DF9: Setup transition
+ *
+ * \param[in] state  Pointer to game state.
+ * \param[in] stride Stride of bitmap data, in bytes. (was A)
+ */
 static void setup_transition(chqstate_t *state, u8 stride)
 {
   s16                 frame_stride; /* was BC */
@@ -2452,7 +2604,11 @@ static void setup_transition(chqstate_t *state, u8 stride)
   state->transition_control = TRANSITIONCONTROL_FADE;
 }
 
-// $8E29
+/**
+ * $8E29: Fill attributes
+ *
+ * \param[in] state Pointer to game state.
+ */
 static void fill_attributes(chqstate_t *state)
 {
   u8 *src;     /* was HL */
@@ -2561,9 +2717,12 @@ static const u8 *print_message(chqstate_t *state,
                                 style);
 }
 
-// $8E7E
-//
-// message - was HL
+/**
+ * $8E7E: Setup overlay messages
+ *
+ * \param[in] state   Pointer to game state.
+ * \param[in] message Message data pointer. (was HL)
+ */
 static void setup_overlay_messages(chqstate_t *state, const u8 *message)
 {
   setup_overlay_messages_with_transition(state,
@@ -2571,10 +2730,13 @@ static void setup_overlay_messages(chqstate_t *state, const u8 *message)
                                          message);
 }
 
-// $8E80
-//
-// transition - was A
-// message - was HL
+/**
+ * $8E80: Setup overlay messages with transition
+ *
+ * \param[in] state      Pointer to game state.
+ * \param[in] transition Transition. (was A)
+ * \param[in] message    Message. (was HL)
+ */
 static void setup_overlay_messages_with_transition(chqstate_t *state,
                                                    u8          transition,
                                                    const u8   *message)
@@ -2720,7 +2882,11 @@ static u16 draw_smash_bar_solid_bit(chqstate_t *state, int nrows, u16 backbuf)
   return backbuf;
 }
 
-// $8F5F
+/**
+ * $8F5F: Draw everything else
+ *
+ * \param[in] state Pointer to game state.
+ */
 static void draw_everything_else(chqstate_t *state)
 {
   u8             *HL_table_e300;       /* was HL */
@@ -2854,13 +3020,21 @@ left_hand_stuff:
   goto continue_after_left_hand_done;
 }
 
-// $9052
-//
-// B -
-// C -
-// DEstretchy -
-// IX -
-// IY -
+/**
+ * $9052: B -
+ *
+ * C -.
+ * DEstretchy -.
+ * IX -.
+ * IY -.
+ *
+ * \param[in] state      Pointer to game state.
+ * \param[in] B          Parameter.
+ * \param[in] C          C.
+ * \param[in] DEstretchy Destretchy.
+ * \param[in] IX         IX register value.
+ * \param[in] IY         IY register value.
+ */
 static void draw_overhead(chqstate_t       *state,
                           u8                B,
                           u8                C,
@@ -2974,7 +3148,15 @@ do_draw_span:
   }
 }
 
-// $916C
+/**
+ * $916C: Draw stretchy object left
+ *
+ * \param[in] state Pointer to game state.
+ * \param[in] B     Parameter.
+ * \param[in] arg   Object data pointer.
+ * \param[in] IX    IX register value.
+ * \param[in] IY    IY register value.
+ */
 void draw_stretchy_object_left(chqstate_t *state,
                                u8          B,
                                const void *arg,
@@ -2989,7 +3171,15 @@ void draw_stretchy_object_left(chqstate_t *state,
                               IY);
 }
 
-// $9171
+/**
+ * $9171: Draw stretchy object right
+ *
+ * \param[in] state Pointer to game state.
+ * \param[in] B     Parameter.
+ * \param[in] arg   Object data pointer.
+ * \param[in] IX    IX register value.
+ * \param[in] IY    IY register value.
+ */
 void draw_stretchy_object_right(chqstate_t *state,
                                 u8          B,
                                 const void *arg,
@@ -3005,14 +3195,14 @@ void draw_stretchy_object_right(chqstate_t *state,
 }
 
 /**
- * $9174 - Draws stretchy objects, such as trees
+ * $9174: Draws stretchy objects, such as trees
  *
  * \param[in] state       Pointer to game state.
- * \param[in] B           - was B
+ * \param[in] B           Depth scale index. (was B)
  * \param[in] DEstretchy  An array of stretchy_t. (was DE)
- * \param[in] HLcallback  - was HL
- * \param[in] IX          - was IX
- * \param[in] IY          - was IY
+ * \param[in] HLcallback  Per-object draw callback. (was HL)
+ * \param[in] IX          Height-offset table pointer. (was IX)
+ * \param[in] IY          Road-table pointer. (was IY)
  */
 static void draw_stretchy_object_common(chqstate_t       *state,
                                         u8                B,
@@ -3164,7 +3354,15 @@ dso_continue:
   goto dso_loop_continue;
 }
 
-// $924D
+/**
+ * $924D: Draw tunnel light left
+ *
+ * \param[in] state Pointer to game state.
+ * \param[in] B     Parameter.
+ * \param[in] DEarg Dearg.
+ * \param[in] IX    IX register value.
+ * \param[in] IY    IY register value.
+ */
 void draw_tunnel_light_left(chqstate_t *state,
                             u8          B,
                             const void *DEarg,
@@ -3174,7 +3372,15 @@ void draw_tunnel_light_left(chqstate_t *state,
   draw_tunnel_light_common(state, B, DEarg, draw_object_left_entrypt, IX, IY);
 }
 
-// $9252
+/**
+ * $9252: Draw tunnel light right
+ *
+ * \param[in] state Pointer to game state.
+ * \param[in] B     Parameter.
+ * \param[in] DEarg Dearg.
+ * \param[in] IX    IX register value.
+ * \param[in] IY    IY register value.
+ */
 void draw_tunnel_light_right(chqstate_t *state,
                              u8          B,
                              const void *DEarg,
@@ -3184,7 +3390,16 @@ void draw_tunnel_light_right(chqstate_t *state,
   draw_tunnel_light_common(state, B, DEarg, draw_object_right_entrypt, IX, IY);
 }
 
-// $9255
+/**
+ * $9255: Draw tunnel light common
+ *
+ * \param[in] state      Pointer to game state.
+ * \param[in] B          Parameter.
+ * \param[in] DEdepthset Dedepthset.
+ * \param[in] HLcallback Hlcallback.
+ * \param[in] IX         IX register value.
+ * \param[in] IY         IY register value.
+ */
 static void draw_tunnel_light_common(chqstate_t            *state,
                                      u8                     B,
                                      const depthset_t      *DEdepthset,
@@ -3208,7 +3423,15 @@ static void draw_tunnel_light_common(chqstate_t            *state,
   HLcallback(state, A, B, DEdepthset, IX, IY); // e.g. calls draw_object_left_entrypt
 }
 
-// $9278
+/**
+ * $9278: Draw object left
+ *
+ * \param[in] state Pointer to game state.
+ * \param[in] B     Parameter.
+ * \param[in] DEarg Dearg.
+ * \param[in] IX    IX register value.
+ * \param[in] IY    IY register value.
+ */
 void draw_object_left(chqstate_t *state,
                       u8          B,
                       const void *DEarg, // a depthset_t *
@@ -3218,8 +3441,16 @@ void draw_object_left(chqstate_t *state,
   draw_object_left_entrypt(state, 0, B, DEarg, IX, IY);
 }
 
-// $9279
-// DEarg is e.g. turn_sign_left (a depthset_t)
+/**
+ * $9279: DEarg is e.g. turn_sign_left (a depthset_t)
+ *
+ * \param[in] state      Pointer to game state.
+ * \param[in] A          Parameter.
+ * \param[in] B          Parameter.
+ * \param[in] DEdepthset Dedepthset.
+ * \param[in] IX         IX register value.
+ * \param[in] IY         IY register value.
+ */
 static void draw_object_left_entrypt(chqstate_t       *state,
                                      u8                A,
                                      u8                B,
@@ -3246,7 +3477,15 @@ static void draw_object_left_entrypt(chqstate_t       *state,
   draw_object_left_stretchy_entrypt(state, depth, bitmap, IX, IY);
 }
 
-// $9293
+/**
+ * $9293: Draw object left stretchy entrypt
+ *
+ * \param[in] state    Pointer to game state.
+ * \param[in] B        Parameter.
+ * \param[in] HLbitmap Source bitmap data.
+ * \param[in] IX       IX register value.
+ * \param[in] IY       IY register value.
+ */
 static void draw_object_left_stretchy_entrypt(chqstate_t     *state,
                                               u8              B,
                                               const bitmap_t *HLbitmap,
@@ -3263,7 +3502,14 @@ static void draw_object_left_stretchy_entrypt(chqstate_t     *state,
   draw_object_left_helicopter_entrypt(state, A, HLbitmap, IY); /* was FALLTHROUGH */
 }
 
-// $929A
+/**
+ * $929A: Draw object left helicopter entrypt
+ *
+ * \param[in] state        Pointer to game state.
+ * \param[in] Awidth_bytes Bitmap byte width.
+ * \param[in] HLbitmap     Source bitmap data.
+ * \param[in] IY           IY register value.
+ */
 static void draw_object_left_helicopter_entrypt(chqstate_t     *state,
                                                 u8              Awidth_bytes,
                                                 const bitmap_t *HLbitmap,
@@ -3343,7 +3589,15 @@ static void draw_object_left_helicopter_entrypt(chqstate_t     *state,
   }
 }
 
-// $92E1
+/**
+ * $92E1: Draw object right
+ *
+ * \param[in] state Pointer to game state.
+ * \param[in] B     Parameter.
+ * \param[in] DEarg Dearg.
+ * \param[in] IX    IX register value.
+ * \param[in] IY    IY register value.
+ */
 void draw_object_right(chqstate_t *state,
                        u8          B,
                        const void *DEarg, // a depthset_t *
@@ -3353,7 +3607,16 @@ void draw_object_right(chqstate_t *state,
   draw_object_right_entrypt(state, 0, B, DEarg, IX, IY);
 }
 
-// $92E2
+/**
+ * $92E2: Draw object right entrypt
+ *
+ * \param[in] state      Pointer to game state.
+ * \param[in] A          Parameter.
+ * \param[in] B          Parameter.
+ * \param[in] DEdepthset Dedepthset.
+ * \param[in] IX         IX register value.
+ * \param[in] IY         IY register value.
+ */
 static void draw_object_right_entrypt(chqstate_t       *state,
                                       u8                A,
                                       u8                B,
@@ -3380,7 +3643,15 @@ static void draw_object_right_entrypt(chqstate_t       *state,
   draw_object_right_stretchy_entrypt(state, depth, bitmap, IX, IY);
 }
 
-// $92FC
+/**
+ * $92FC: Draw object right stretchy entrypt
+ *
+ * \param[in] state    Pointer to game state.
+ * \param[in] B        Parameter.
+ * \param[in] HLbitmap Source bitmap data.
+ * \param[in] IX       IX register value.
+ * \param[in] IY       IY register value.
+ */
 static void draw_object_right_stretchy_entrypt(chqstate_t     *state,
                                                u8              B,
                                                const bitmap_t *HLbitmap,
@@ -3401,7 +3672,14 @@ static void draw_object_right_stretchy_entrypt(chqstate_t     *state,
     draw_object_right_helicopter_entrypt(state, A, HLbitmap, IY);
 }
 
-// $9309
+/**
+ * $9309: Draw object right helicopter entrypt
+ *
+ * \param[in] state        Pointer to game state.
+ * \param[in] Awidth_bytes Bitmap byte width.
+ * \param[in] HLbitmap     Source bitmap data.
+ * \param[in] IY           IY register value.
+ */
 static void draw_object_right_helicopter_entrypt(chqstate_t     *state,
                                                  u8              Awidth_bytes,
                                                  const bitmap_t *HLbitmap,
@@ -3411,7 +3689,15 @@ static void draw_object_right_helicopter_entrypt(chqstate_t     *state,
     draw_object_930e_entrypt(state, Awidth_bytes, 0, HLbitmap, IY);
 }
 
-// $930E
+/**
+ * $930E: Draw object 930e entrypt
+ *
+ * \param[in] state        Pointer to game state.
+ * \param[in] Awidth_bytes Bitmap byte width.
+ * \param[in] Cpadding     Cpadding.
+ * \param[in] HLbitmap     Source bitmap data.
+ * \param[in] IY           IY register value.
+ */
 static void draw_object_930e_entrypt(chqstate_t     *state,
                                      u8              Awidth_bytes,
                                      u8              Cpadding,
@@ -3463,7 +3749,19 @@ static void draw_object_930e_entrypt(chqstate_t     *state,
   }
 }
 
-// $932B
+/**
+ * $932B: Draw object common flipped
+ *
+ * \param[in] state             Pointer to game state.
+ * \param[in] Bheight           Number of rows.
+ * \param[in] Cpadding          Cpadding.
+ * \param[in] Ebitmap_stride    Source bitmap data.
+ * \param[in] HLbitmap          Source bitmap data.
+ * \param[in] Adash_width_bytes Bitmap byte width.
+ * \param[in] Fdash_zero        Fdash zero.
+ * \param[in] Fdash_carry       Fdash carry.
+ * \param[in] IY                IY register value.
+ */
 static void draw_object_common_flipped(chqstate_t     *state,
                                        u8              Bheight,
                                        u8              Cpadding,
@@ -3493,7 +3791,19 @@ static void draw_object_common_flipped(chqstate_t     *state,
                           IY);
 }
 
-// $9333
+/**
+ * $9333: Draw object common 9333
+ *
+ * \param[in] state          Pointer to game state.
+ * \param[in] zero_flipped   Zero flipped.
+ * \param[in] carry_masked   Carry masked.
+ * \param[in] Awidth_bytes   Bitmap byte width.
+ * \param[in] Bheight        Number of rows.
+ * \param[in] Cpadding       Cpadding.
+ * \param[in] Ebitmap_stride Source bitmap data.
+ * \param[in] HLbitmap       Source bitmap data.
+ * \param[in] IY             IY register value.
+ */
 static void draw_object_common_9333(chqstate_t     *state,
                                     int             zero_flipped,
                                     int             carry_masked,
@@ -4591,7 +4901,7 @@ static void plot_face_attributes(chqstate_t *state,
 }
 
 /**
- * $9AEC: Plot a character at horizontal position X with no cursor block.
+ * $9AEC: Plot a character at horizontal position X with no cursor block
  *
  * \param[in] state     Pointer to game state.
  * \param[in] x         X position. (was A)
@@ -4605,7 +4915,7 @@ static void plot_mini_font_cursor_off(chqstate_t *state,
 }
 
 /**
- * $9AF1: Plot a character at horizontal position X with a cursor block.
+ * $9AF1: Plot a character at horizontal position X with a cursor block
  *
  * \param[in] state     Pointer to game state.
  * \param[in] x         X position. (was A)
@@ -4619,7 +4929,7 @@ static void plot_mini_font_cursor_on(chqstate_t *state,
 }
 
 /**
- * $9AF4: Plot a character.
+ * $9AF4: Plot a character
  *
  * \param[in] state    Pointer to game state.
  * \param[in] x        X position. (was A)
@@ -4735,7 +5045,7 @@ pmf_have_ascii:
 }
 
 /**
- * $9BA7: Clear the message line.
+ * $9BA7: Clear the message line
  *
  * \param[in] state Pointer to game state.
  */
@@ -4753,7 +5063,7 @@ static void clear_message_line(chqstate_t *state)
 }
 
 /**
- * $9BCF: Handle "time up", countdown and continue.
+ * $9BCF: Handle "time up", countdown and continue
  *
  * This function handles timed events. When 15s or less remain then Nancy warns
  * that our heroes are running of time. When they do run out of time, and
@@ -4898,15 +5208,21 @@ check_restart:
   time_digits[1] = (lodigit + '0') | STREND;
 }
 
-// $9C79
-//
-// Extracted from above
+/**
+ * $9C79: Extracted from above
+ *
+ * \param[in] state Pointer to game state.
+ */
 static void play_start_noise(chqstate_t *state)
 {
   play_speech_hook(state, 5); /* exit via */
 }
 
-// $9CC2
+/**
+ * $9CC2: Speed score
+ *
+ * \param[in] state Pointer to game state.
+ */
 static void speed_score(chqstate_t *state)
 {
   int carry = 0;
@@ -4929,14 +5245,17 @@ static void speed_score(chqstate_t *state)
   increment_score(state, A, 0, 0); /* exit via */
 }
 
-// $9CD6
-//
-// lo - was A
-// md - was E
-// hi - was D
-//
-// Bug/Limitation: As soon as a non-zero->zero transition is seen the routine
-// finishes so you can only have a single run of zeroes in the bonus.
+/**
+ * $9CD6: Add bonus
+ *
+ * Bug/Limitation: As soon as a non-zero->zero transition is seen the routine.
+ * finishes so you can only have a single run of zeroes in the bonus.
+ *
+ * \param[in] state Pointer to game state.
+ * \param[in] lo    Lo. (was A)
+ * \param[in] md    Md. (was E)
+ * \param[in] hi    Hi. (was D)
+ */
 static void add_bonus(chqstate_t *state, u8 lo, u8 md, u8 hi)
 {
   char *output;   /* was HL */
@@ -4961,9 +5280,14 @@ static void add_bonus(chqstate_t *state, u8 lo, u8 md, u8 hi)
   increment_score(state, lo, md, hi); /* was fallthrough */
 }
 
-// $9CFC
-//
-// Subroutine of above broken out
+/**
+ * $9CFC: Subroutine of above broken out
+ *
+ * \param[in] digit    Digit.
+ * \param[in] zeroflag Zeroflag.
+ * \param[in] poutput  Poutput.
+ * \return Non-zero on success.
+ */
 static int bonus_digit(u8 digit, u8 *zeroflag, char **poutput)
 {
   digit &= 0x0F;
@@ -4984,7 +5308,14 @@ store:
   return 0;
 }
 
-// $9D17
+/**
+ * $9D17: Increment score
+ *
+ * \param[in] state Pointer to game state.
+ * \param[in] lo    Lo.
+ * \param[in] md    Md.
+ * \param[in] hi    Hi.
+ */
 static void increment_score(chqstate_t *state, u8 lo, u8 md, u8 hi)
 {
   int carry = 0;
@@ -4997,7 +5328,11 @@ static void increment_score(chqstate_t *state, u8 lo, u8 md, u8 hi)
   *score_bcd = DAA(     *score_bcd + carry, NULL);
 }
 
-// $9D2E
+/**
+ * $9D2E: Calc overtake bonus
+ *
+ * \param[in] state Pointer to game state.
+ */
 static void calc_overtake_bonus(chqstate_t *state)
 {
   int carry = 0;
@@ -5023,7 +5358,11 @@ static void calc_overtake_bonus(chqstate_t *state)
   state->overtake_bonus_counter = 0;
 }
 
-// $9D62
+/**
+ * $9D62: Update scoreboard
+ *
+ * \param[in] state Pointer to game state.
+ */
 static void update_scoreboard(chqstate_t *state)
 {
   toggle_light_brightness(state, ADDRTOATTRS(0x5820));
@@ -5031,9 +5370,12 @@ static void update_scoreboard(chqstate_t *state)
   plot_turbos_and_digits(state);
 }
 
-// $9DF4
-//
-// attrs - was HL
+/**
+ * $9DF4: Toggle light brightness
+ *
+ * \param[in] state Pointer to game state.
+ * \param[in] attrs Attribute address. (was HL)
+ */
 static void toggle_light_brightness(chqstate_t *state, u8 *attrs)
 {
   int rows; /* was B */
@@ -5051,7 +5393,11 @@ static void toggle_light_brightness(chqstate_t *state, u8 *attrs)
   } while (--rows > 0);
 }
 
-// $9E11
+/**
+ * $9E11: Plot turbos and digits
+ *
+ * \param[in] state Pointer to game state.
+ */
 static void plot_turbos_and_digits(chqstate_t *state)
 {
   int        carry = 0;
@@ -5235,12 +5581,15 @@ ptas_turbo_setup:
                   ADDRTOSCREEN(0x4126)); /* was fallthrough */
 }
 
-// $9F1E
-//
-// iterations - was B
-// digits - was DE
-// stored - was HL
-// screen - was DE'
+/**
+ * $9F1E: Ptas led digits
+ *
+ * \param[in] state      Pointer to game state.
+ * \param[in] iterations Iterations. (was B)
+ * \param[in] digits     Digits. (was DE)
+ * \param[in] stored     Stored. (was HL)
+ * \param[in] screen     Screen address. (was DE')
+ */
 static void ptas_led_digits(chqstate_t *state,
                             u8          iterations,
                             const u8   *digits,
@@ -5283,10 +5632,14 @@ ptas_led_plot_2nd:
   goto ptas_led_next_whole;
 }
 
-// $9F47
-//
-// ord - was A
-// screen - was DE'
+/**
+ * $9F47: Plot an LED font character
+ *
+ * \param[in] state  Pointer to game state.
+ * \param[in] ord    Digit index 0..9. (was A)
+ * \param[in] screen Back buffer screen address. (was DE')
+ * \return Back buffer address of next character column.
+ */
 static u8 *ledfont_plot(chqstate_t *state, int ord, u8 *screen)
 {
   const u8 *src;         /* was HL */
@@ -5315,13 +5668,17 @@ static u8 *ledfont_plot(chqstate_t *state, int ord, u8 *screen)
 
 //0b_010BBLLL_RRRCCCCC (B = band, L = scanline, R = row (group), C = column)
 
-// $9F99
-//
-// attrval - was A
-// attrs - was BC
-// backbuf - was DE
-// string - was HL
-// style - was A'
+/**
+ * $9F99: Draw string with style
+ *
+ * \param[in] state   Pointer to game state.
+ * \param[in] attrval Attribute value. (was A)
+ * \param[in] attrs   Attribute address. (was BC)
+ * \param[in] backbuf Back buffer address. (was DE)
+ * \param[in] string  String data pointer. (was HL)
+ * \param[in] style   Draw style. (was A')
+ * \return Pointer past last character written.
+ */
 static const u8 *draw_string_with_style(chqstate_t *state,
                                         u8          attrval,
                                         u8         *attrs,
@@ -5338,12 +5695,16 @@ static const u8 *draw_string_with_style(chqstate_t *state,
                           attrs/*HL'*/);
 }
 
-// $9FA3
-//
-// attrval - was A
-// attrs - was BC
-// backbuf - was DE
-// string - was HL
+/**
+ * $9FA3: Draw string
+ *
+ * \param[in] state   Pointer to game state.
+ * \param[in] attrval Attribute value. (was A)
+ * \param[in] attrs   Attribute address. (was BC)
+ * \param[in] backbuf Back buffer address. (was DE)
+ * \param[in] string  String data pointer. (was HL)
+ * \return Pointer past last character written.
+ */
 static const u8 *draw_string_generic(chqstate_t *state,
                                      u8          attrval,
                                      u8         *attrs,
@@ -5359,16 +5720,20 @@ static const u8 *draw_string_generic(chqstate_t *state,
                           attrs/*HL'*/);
 }
 
-// $9FA6
-//
-// Broken out from above.
-//
-// backbuf - was DE
-// string - was HL
-// style - was A'
-// attrval - was C'
-// attrsstride - was DE'
-// attrs - was HL'
+/**
+ * $9FA6: Draw string core
+ *
+ * Broken out from above.
+ *
+ * \param[in] state       Pointer to game state.
+ * \param[in] backbuf     Back buffer address. (was DE)
+ * \param[in] string      String data pointer. (was HL)
+ * \param[in] style       Draw style. (was A')
+ * \param[in] attrval     Attribute value. (was C')
+ * \param[in] attrsstride Attribute stride. (was DE')
+ * \param[in] attrs       Attribute address. (was HL')
+ * \return Pointer past last character written.
+ */
 static const u8 *draw_string_core(chqstate_t *state,
                                   u8         *backbuf,
                                   const u8   *string,
@@ -5388,16 +5753,25 @@ static const u8 *draw_string_core(chqstate_t *state,
   return string;
 }
 
-// $9FB4
-//
-// character - was A
-// screen - screen address - was DE
-// style - draw style - was A'
-// attrval - attribute value - was C'
-// attrstride - was DE'
-// attrs - was HL'
-// new_screen - added
-// new_attrs - added
+/**
+ * $9FB4: Draw char
+ *
+ * screen - screen address - was DE.
+ * style - draw style - was A'.
+ * attrval - attribute value - was C'.
+ * new_screen - added.
+ * new_attrs - added.
+ *
+ * \param[in] state      Pointer to game state.
+ * \param[in] character  Character. (was A)
+ * \param[in] screen     Screen address.
+ * \param[in] style      Style.
+ * \param[in] attrval    Attribute address.
+ * \param[in] attrstride Attribute address. (was DE')
+ * \param[in] attrs      Attribute address. (was HL')
+ * \param[in] new_screen Screen address.
+ * \param[in] new_attrs  Attribute address.
+ */
 static void draw_char(chqstate_t *state,
                       u8          character,
                       u8         *screen,
@@ -5569,7 +5943,12 @@ dc_return:
   *new_attrs  = attrs;
 }
 
-// $A0D6
+/**
+ * $A0D6: Keyscan
+ *
+ * \param[in] state Pointer to game state.
+ * \return Non-zero on success.
+ */
 static u8 keyscan(chqstate_t *state)
 {
   int carry = 0;
@@ -5608,7 +5987,14 @@ static u8 keyscan(chqstate_t *state)
   return 0;
 }
 
-// $A112
+/**
+ * $A112: Keyscan a112
+ *
+ * \param[in] state Pointer to game state.
+ * \param[in] HL    Hl.
+ * \param[in] E     E.
+ * \return Non-zero on success.
+ */
 static u8 keyscan_a112(chqstate_t *state, const u8 *HL, u8 E)
 {
   int carry = 0;
@@ -5647,7 +6033,11 @@ static int keyscan_inner(const chqstate_t *state, u8 Ainput)
   return carry;
 }
 
-// $A399
+/**
+ * $A399: Check scenery collisions
+ *
+ * \param[in] state Pointer to game state.
+ */
 static void check_scenery_collisions(chqstate_t *state)
 {
   int          carry = 0;
@@ -5837,7 +6227,13 @@ csc_check_left:
   csc_hit_scenery(state, Aflip, Adash); /* was fallthrough */
 }
 
-// $A4B0
+/**
+ * $A4B0: Csc hit scenery
+ *
+ * \param[in] state Pointer to game state.
+ * \param[in] Aflip Aflip.
+ * \param[in] Adash Adash.
+ */
 static void csc_hit_scenery(chqstate_t *state, u8 Aflip, u8 Adash)
 {
   // Arrive here if hit scenery, e.g. drove into a tree or a lamp post.
@@ -5845,7 +6241,13 @@ static void csc_hit_scenery(chqstate_t *state, u8 Aflip, u8 Adash)
   scenery_hit(state, Aflip, Adash);
 }
 
-// $A4B8
+/**
+ * $A4B8: Scenery hit
+ *
+ * \param[in] state Pointer to game state.
+ * \param[in] Aflip Aflip.
+ * \param[in] Adash Adash.
+ */
 static void scenery_hit(chqstate_t *state, u8 Aflip, u8 Adash)
 {
   int speed;  /* was HL */
@@ -5878,7 +6280,13 @@ static void scenery_hit(chqstate_t *state, u8 Aflip, u8 Adash)
   state->ahc_SM_B32E = HL;
 }
 
-// $A4F6
+/**
+ * $A4F6: Check fork scenery collisions
+ *
+ * \param[in] state  Pointer to game state.
+ * \param[in] DEdash Dedash.
+ * \param[in] HLdash Hldash.
+ */
 static void check_fork_scenery_collisions(chqstate_t *state, u16 DEdash, u16 HLdash)
 {
   u16          pos;            /* was HL */
@@ -5934,7 +6342,11 @@ set_off_road:
   }
 }
 
-// $A579
+/**
+ * $A579: Layout objects
+ *
+ * \param[in] state Pointer to game state.
+ */
 static void layout_objects(chqstate_t *state)
 {
   int       carry = 0;
@@ -6050,7 +6462,11 @@ load_and_store_right:
   } while (--iterations > 0);
 }
 
-// $A60E
+/**
+ * $A60E: Cycle counters
+ *
+ * \param[in] state Pointer to game state.
+ */
 static void cycle_counters(chqstate_t *state)
 {
   state->counter_A = (state->counter_A + 1) & 3;
@@ -6060,7 +6476,12 @@ static void cycle_counters(chqstate_t *state)
   state->counter_C = (state->counter_C + 1) & 3;
 }
 
-// $A637
+/**
+ * $A637: Perp behaviour
+ *
+ * \param[in] state Pointer to game state.
+ * \param[in] IX    IX register value.
+ */
 void perp_behaviour(chqstate_t *state, hazard_t *IX)
 {
   int       carry = 0;
@@ -6397,7 +6818,11 @@ pb_a7be:
     smash(state);
 }
 
-// $A7F3
+/**
+ * $A7F3: Spawn cars
+ *
+ * \param[in] state Pointer to game state.
+ */
 static void spawn_cars(chqstate_t *state)
 {
   u8        allow_spawning;     /* was A */
@@ -6489,9 +6914,13 @@ fill_in:
   hazard->hittable.bitmaps = state->stage->bitmaps_vehicles[bitmap_index / 2];
 }
 
-// $A89C
-//
-// extra - was C - extra buffer offset
+/**
+ * $A89C: Get spawn lanes
+ *
+ * \param[in] state Pointer to game state.
+ * \param[in] extra Extra. (was C)
+ * \return Non-zero on success.
+ */
 static u16 get_spawn_lanes(chqstate_t *state, u8 extra)
 {
   int carry;
@@ -6524,7 +6953,12 @@ static u16 get_spawn_lanes(chqstate_t *state, u8 extra)
   }
 }
 
-// $A8CD
+/**
+ * $A8CD: Hazard handler
+ *
+ * \param[in] state Pointer to game state.
+ * \param[in] IX    IX register value.
+ */
 void hazard_handler(chqstate_t *state, hazard_t *IX)
 {
   int       carry = 0;
@@ -6594,7 +7028,11 @@ void hazard_handler(chqstate_t *state, hazard_t *IX)
   start_sfx(state, EFFECT_CAR_HIT, 2); /* priority 2 */ /* exit via */
 }
 
-// $A955
+/**
+ * $A955: Choose dirt and stones
+ *
+ * \param[in] state Pointer to game state.
+ */
 static void choose_dirt_and_stones(chqstate_t *state)
 {
   u8 *table;  /* was DE */
@@ -6613,7 +7051,11 @@ static void choose_dirt_and_stones(chqstate_t *state)
   state->dss_enabled  = 1;
 }
 
-// $A97E
+/**
+ * $A97E: Layout dirt and stones
+ *
+ * \param[in] state Pointer to game state.
+ */
 static void layout_dirt_and_stones(chqstate_t *state)
 {
   int       carry = 0;
@@ -6694,7 +7136,13 @@ ldas_do_work:
   goto loop1_continue;
 }
 
-// $A9DE
+/**
+ * $A9DE: Dust stones stuff
+ *
+ * \param[in] state       Pointer to game state.
+ * \param[in] Biterations Biterations.
+ * \param[in] IY          IY register value.
+ */
 static void dust_stones_stuff(chqstate_t *state, u8 Biterations, const u8 *IY)
 {
   int              carry = 0;
@@ -6763,7 +7211,13 @@ dss_bitmaps:
   }
 }
 
-// $AA38
+/**
+ * $AA38: Draw helicopter
+ *
+ * \param[in] state       Pointer to game state.
+ * \param[in] Biterations Biterations.
+ * \param[in] IY          IY register value.
+ */
 static void draw_helicopter(chqstate_t *state, u8 Biterations, u8 *IY)
 {
   int                   carry = 0;
@@ -6864,7 +7318,11 @@ static void draw_helicoper_part(chqstate_t                *state,
   }
 }
 
-// $AAC6
+/**
+ * $AAC6: Move helicopter
+ *
+ * \param[in] state Pointer to game state.
+ */
 static void move_helicopter(chqstate_t *state)
 {
   u8  height;     /* was A & C */
@@ -6921,7 +7379,11 @@ set_newpos:
   state->dhl_helipos = newhelipos;
 }
 
-// $AB33
+/**
+ * $AB33: Drive helicopter
+ *
+ * \param[in] state Pointer to game state.
+ */
 static void drive_helicopter(chqstate_t *state)
 {
   u8        heli_ctl;     /* was A */
@@ -6985,7 +7447,11 @@ hc_exit:
   state->helicopter_control = new_heli_ctl;
 }
 
-// $AB9A
+/**
+ * $AB9A: Spawn hazards
+ *
+ * \param[in] state Pointer to game state.
+ */
 static void spawn_hazards(chqstate_t *state)
 {
   u8  allow_spawning;    /* was A */
@@ -7097,7 +7563,12 @@ sh_found_free:
   return 0;
 }
 
-// $AC3C
+/**
+ * $AC3C: Hazard hit
+ *
+ * \param[in] state    Pointer to game state.
+ * \param[in] IXhazard Ixhazard.
+ */
 static void hazard_hit(chqstate_t *state, hazard_t *IXhazard)
 {
   // $ACDB
@@ -7171,7 +7642,11 @@ static void hazard_hit(chqstate_t *state, hazard_t *IXhazard)
   IXhazard->TBD15    = 1;
 }
 
-// $AD0D
+/**
+ * $AD0D: Check hazard collisions
+ *
+ * \param[in] state Pointer to game state.
+ */
 static void check_hazard_collisions(chqstate_t *state)
 {
   hazard_t *hazard;     /* was IX */
@@ -7204,10 +7679,16 @@ chc_continue:
   } while (--iterations > 0);
 }
 
-// $AD51
-//
-// default_retval - was D
-// hazard - was IX
+/**
+ * $AD51: Check collision
+ *
+ * \param[in] state          Pointer to game state.
+ * \param[in] default_retval Default retval. (was D)
+ * \param[in] HL             Hl.
+ * \param[in] hazard         Hazard. (was IX)
+ * \param[in] HLout          Hlout.
+ * \return Non-zero on success.
+ */
 static u8 check_collision(chqstate_t *state,
                           u8          default_retval,
                           u16         HL,
@@ -7272,7 +7753,11 @@ static u8 check_collision(chqstate_t *state,
   return 1;
 }
 
-// $ADA0
+/**
+ * $ADA0: Draw all hazards
+ *
+ * \param[in] state Pointer to game state.
+ */
 static void draw_all_hazards(chqstate_t *state)
 {
   const u8 *table_e300; /* was IY */
@@ -7290,7 +7775,13 @@ static void draw_all_hazards(chqstate_t *state)
   } while (--iterations > 0);
 }
 
-// $ADBE
+/**
+ * $ADBE: DH draw one hazard
+ *
+ * \param[in] state    Pointer to game state.
+ * \param[in] IXhazard Ixhazard.
+ * \param[in] IYbase   Iybase.
+ */
 static void dh_draw_one_hazard(chqstate_t *state,
                                hazard_t   *IXhazard,
                                const u8   *IYbase)
@@ -7475,7 +7966,13 @@ dh_call_handler:
   IXhazard->hit_handler(state, IXhazard);
 }
 
-// $AECF
+/**
+ * $AECF: Draw arrow fire smoke
+ *
+ * \param[in] state       Pointer to game state.
+ * \param[in] Biterations Biterations.
+ * \param[in] IY          IY register value.
+ */
 static void draw_arrow_fire_smoke(chqstate_t *state,
                                   u8          Biterations,
                                   const u8   *IY)
@@ -7679,9 +8176,15 @@ dh_check_smash_level:
   }
 }
 
-// $AFF1
-//
-// Decrements a counter 5..1 then repeats this must be the car-on-fire animation
+/**
+ * $AFF1: DH smoke
+ *
+ * Decrements a counter 5..1 then repeats this must be the car-on-fire animation.
+ *
+ * \param[in] state   Pointer to game state.
+ * \param[in] HLsmoke Hlsmoke.
+ * \param[in] IY      IY register value.
+ */
 static void dh_smoke(chqstate_t *state, u8 *HLsmoke, const u8 *IY)
 {
   u8 counter;   /* was A, E */
@@ -7705,9 +8208,18 @@ static void dh_smoke(chqstate_t *state, u8 *HLsmoke, const u8 *IY)
   dh_draw(state, x, y, newindex * 7, &smoke_defns[0], IY); /* was fallthrough */
 }
 
-// $B01B
-//
-// B,C = x,y offset/position? HL -> graphic definition
+/**
+ * $B01B: DH draw
+ *
+ * B,C = x,y offset/position? HL -> graphic definition.
+ *
+ * \param[in] state     Pointer to game state.
+ * \param[in] Bx        Bx.
+ * \param[in] Cy        Cy.
+ * \param[in] DEoffset  Deoffset.
+ * \param[in] HLbitmaps Source bitmap data.
+ * \param[in] IY        IY register value.
+ */
 static void dh_draw(chqstate_t     *state,
                     u8              Bx,
                     u8              Cy,
@@ -7721,7 +8233,15 @@ static void dh_draw(chqstate_t     *state,
   dh_draw_bitmap(state, Bx, Cy, HLbitmap, IY);
 }
 
-// $B01C
+/**
+ * $B01C: DH draw bitmap
+ *
+ * \param[in] state    Pointer to game state.
+ * \param[in] Bx       Bx.
+ * \param[in] Cy       Cy.
+ * \param[in] HLbitmap Source bitmap data.
+ * \param[in] IY       IY register value.
+ */
 static void dh_draw_bitmap(chqstate_t     *state,
                            u8              Bx,
                            u8              Cy,
@@ -7765,14 +8285,21 @@ dh_exit_2:
     draw_object_left_helicopter_entrypt(state, A2, HLbitmap, IY); /* was exit via */
 }
 
-// $ADF9
-//
-// Conv: Original game used the RET at $ADF9 as a no-op.
+/**
+ * $ADF9: Conv: Original game used the RET at $ADF9 as a no-op
+ *
+ * \param[in] state  Pointer to game state.
+ * \param[in] hazard Hazard.
+ */
 void no_op(chqstate_t *state, hazard_t *hazard)
 {
 }
 
-// $B063
+/**
+ * $B063: Move hero car
+ *
+ * \param[in] state Pointer to game state.
+ */
 static void move_hero_car(chqstate_t *state)
 {
   // TODO Sort these decls by use
@@ -8080,7 +8607,11 @@ mhc_set_cornering:
     state->cornering = 0; // reset cornering if jumping
 }
 
-// $B318
+/**
+ * $B318: Animate hero car
+ *
+ * \param[in] state Pointer to game state.
+ */
 static void animate_hero_car(chqstate_t *state)
 {
   u16 HLspeed;            /* was HL */
@@ -8244,7 +8775,11 @@ ahc_load_flip_flag:
   draw_smoke(state, Bsmoke_anim_frame, 1); // left hand; exit via
 }
 
-// $B457
+/**
+ * $B457: AHC check hand flag
+ *
+ * \param[in] state Pointer to game state.
+ */
 static void ahc_check_hand_flag(chqstate_t *state)
 {
   u8 Ahand_flag;      /* was A */
@@ -8318,7 +8853,11 @@ static void ahc_check_hand_flag(chqstate_t *state)
   }
 }
 
-// $B4CC
+/**
+ * $B4CC: Start chase
+ *
+ * \param[in] state Pointer to game state.
+ */
 static void start_chase(chqstate_t *state)
 {
   state->ahc_SM_B476_hand_flag = 0;
@@ -8341,7 +8880,11 @@ static void start_chase(chqstate_t *state)
   start_siren_hook(state); /* exit via */
 }
 
-// $B4F0
+/**
+ * $B4F0: Smash
+ *
+ * \param[in] state Pointer to game state.
+ */
 static void smash(chqstate_t *state)
 {
   u8 counter; /* was A */
@@ -8386,7 +8929,11 @@ static void smash(chqstate_t *state)
   state->smash_level = level;
 }
 
-// $B549
+/**
+ * $B549: Draw debris
+ *
+ * \param[in] state Pointer to game state.
+ */
 static void draw_debris(chqstate_t *state)
 {
   u8        Aframe_counter;    /* was A */
@@ -8454,7 +9001,13 @@ static void draw_debris(chqstate_t *state)
   } while (--Biterations > 0);
 }
 
-// $B58E
+/**
+ * $B58E: Draw hero car
+ *
+ * \param[in] state       Pointer to game state.
+ * \param[in] Aturn_speed Speed value.
+ * \param[in] Bwobble     Bwobble.
+ */
 static void draw_hero_car(chqstate_t *state, u8 Aturn_speed, u8 Bwobble)
 {
   u8               Cturn_speed;
@@ -8550,11 +9103,11 @@ static void draw_hero_car(chqstate_t *state, u8 Aturn_speed, u8 Bwobble)
  * $B627: Draw a portion of the hero car
  *
  * \param[in] state        Pointer to game state.
- * \param[in] Cwidth_bytes Byte width (drawing and/or stride?)
- * \param[in] Dy           Y position (in rows)
- * \param[in] Ex           X position (in pixels)
- * \param[in] HLpart       Car part
- * \return Next car part
+ * \param[in] Cwidth_bytes Byte width (drawing and/or stride?). (was C)
+ * \param[in] Dy           Y position (in rows). (was D)
+ * \param[in] Ex           X position (in pixels). (was E)
+ * \param[in] HLpart       Car part to draw. (was HL)
+ * \return Next car part. (was HL)
  */
 static const carpart_t *draw_hero_car_part(chqstate_t      *state,
                                            u8               Cwidth_bytes,
@@ -8597,7 +9150,13 @@ static const carpart_t *draw_hero_car_part(chqstate_t      *state,
   return HLpart + 1; // return next row
 }
 
-// $B648
+/**
+ * $B648: Draw smoke
+ *
+ * \param[in] state         Pointer to game state.
+ * \param[in] Aanim_frame   Animation frame index. (was A)
+ * \param[in] Adash_flip_flag Non-zero to draw flipped. (was A')
+ */
 static void draw_smoke(chqstate_t *state, u8 Aanim_frame, u8 Adash_flip_flag)
 {
   const carsmokeframe_t *HLframe;
@@ -8650,7 +9209,14 @@ static void draw_smoke(chqstate_t *state, u8 Aanim_frame, u8 Adash_flip_flag)
             Edash_width_bytes); /* exit via */
 }
 
-// $B67C
+/**
+ * $B67C: Draw cherry light
+ *
+ * \param[in] state        Pointer to game state.
+ * \param[in] Aframe_index Sound effect index.
+ * \param[in] Bturn_limit  Bturn limit.
+ * \param[in] Cturn_delta  Cturn delta.
+ */
 static void draw_cherry_light(chqstate_t *state,
                               u8          Aframe_index,
                               u8          Bturn_limit,
@@ -8676,13 +9242,25 @@ static void draw_cherry_light(chqstate_t *state,
   draw_cherry_b699(state, Aframe_index); /* was FALLTHROUGH */
 }
 
-// $B699
+/**
+ * $B699: Draw cherry b699
+ *
+ * \param[in] state        Pointer to game state.
+ * \param[in] Aframe_index Sound effect index.
+ */
 static void draw_cherry_b699(chqstate_t *state, u8 Aframe_index)
 {
   draw_crash(state, Aframe_index, 0, 0); /* was FALLTHROUGH */
 }
 
-// $B69E
+/**
+ * $B69E: Draw crash
+ *
+ * \param[in] state           Pointer to game state.
+ * \param[in] Aframe_index    Sound effect index.
+ * \param[in] Bdash_flip_flag Bdash flip flag.
+ * \param[in] Cdash           Cdash.
+ */
 static void draw_crash(chqstate_t *state,
                        u8          Aframe_index,
                        u8          Bdash_flip_flag,
@@ -8721,17 +9299,17 @@ static void draw_crash(chqstate_t *state,
 }
 
 /**
- * $B6D6: Reduces y by car_y then falls through to draw_part_entry2.
+ * $B6D6: Reduces y by car_y then falls through to draw_part_entry2
  *
- * \param[in] state  Pointer to game state.
- * \param[in] height              (was B)
- * \param[in] width               (was C)
- * \param[in] y                   (was D)
- * \param[in] x                   (was E)
- * \param[in] bitmap              (was HL)
- * \param[in] Bdash_flip_flag     (was B')
- * \param[in] Cdash               (was C')
- * \param[in] Edash_bitmap_stride (was E')
+ * \param[in] state               Pointer to game state.
+ * \param[in] height              Number of rows to draw. (was B)
+ * \param[in] width               Bitmap byte width. (was C)
+ * \param[in] y                   Y position. (was D)
+ * \param[in] x                   X position. (was E)
+ * \param[in] bitmap              Source bitmap data. (was HL)
+ * \param[in] Bdash_flip_flag     Non-zero to draw flipped horizontally. (was B')
+ * \param[in] Cdash               Horizontal start offset. (was C')
+ * \param[in] Edash_bitmap_stride Stride of bitmap data, in bytes. (was E')
  */
 static void draw_part(chqstate_t *state,
                       u8          height,
@@ -8755,17 +9333,17 @@ static void draw_part(chqstate_t *state,
 }
 
 /**
- * $B6DD: Second entry point into draw_part.
+ * $B6DD: Second entry point into draw_part
  *
  * \param[in] state               Pointer to game state.
- * \param[in] Bheight             (was B)
- * \param[in] Cwidth_bytes        (was C)
- * \param[in] Dy                  (was D)
- * \param[in] Ex                  (was E)
- * \param[in] HLbitmap_data       (was HL)
- * \param[in] Bdash_flip_flag     (was B')
- * \param[in] Cdash               (was C')
- * \param[in] Edash_bitmap_stride (was E')
+ * \param[in] Bheight             Number of rows to draw. (was B)
+ * \param[in] Cwidth_bytes        Bitmap byte width. (was C)
+ * \param[in] Dy                  Y position. (was D)
+ * \param[in] Ex                  X position. (was E)
+ * \param[in] HLbitmap_data       Source bitmap data. (was HL)
+ * \param[in] Bdash_flip_flag     Non-zero to draw flipped horizontally. (was B')
+ * \param[in] Cdash               Horizontal start offset. (was C')
+ * \param[in] Edash_bitmap_stride Stride of bitmap data, in bytes. (was E')
  */
 static void draw_part_entry2(chqstate_t *state,
                              u8          Bheight,
@@ -8817,7 +9395,16 @@ static void draw_part_entry2(chqstate_t *state,
                                  HLbitmap_data); /* was FALLTHROUGH */
 }
 
-// $B701
+/**
+ * $B701: Draw part plot masked sprite
+ *
+ * \param[in] state               Pointer to game state.
+ * \param[in] Awidth_bytes        Bitmap byte width.
+ * \param[in] HLbackbuf_addr      Back buffer address.
+ * \param[in] Bdash_height        Number of rows.
+ * \param[in] Edash_bitmap_stride Source bitmap data.
+ * \param[in] HLdash_bitmap_data  Source bitmap data.
+ */
 static void draw_part_plot_masked_sprite(chqstate_t *state,
                                          u8          Awidth_bytes,
                                          u8         *HLbackbuf_addr,
@@ -8996,14 +9583,20 @@ pmsf_start:
   }
 }
 
-// $B7EF
-//
-// likely an inverted variation
-// hit when barriers are flipped over
-//
-// sampled
-// A = 0, BC = $1000, DE = $2DFF, HL = $FD50  backbuf
-// A' = 0, BC' = $0704  B'=height, DE' = $0004, HL' = $6EB5  bitmap_barrier_4s (which is 2bytes x 2 x 7)
+/**
+ * $B7EF: likely an inverted variation
+ *
+ * hit when barriers are flipped over.
+ * sampled.
+ * A' = 0, BC' = $0704  B'=height, DE' = $0004, HL' = $6EB5  bitmap_barrier_4s (which is 2bytes x 2 x 7).
+ *
+ * \param[in] state               Pointer to game state.
+ * \param[in] Awidth_bytes        Bitmap byte width.
+ * \param[in] HLbackbuf_addr      Back buffer address.
+ * \param[in] Bdash_height        Number of rows.
+ * \param[in] Edash_bitmap_stride Source bitmap data.
+ * \param[in] HLdash_bitmap_data  Source bitmap data.
+ */
 static void plot_masked_sprite_inverted(chqstate_t *state,
                                         u8          Awidth_bytes,
                                         u8         *HLbackbuf_addr,
@@ -9057,7 +9650,11 @@ static void plot_masked_sprite_inverted(chqstate_t *state,
                      HLbackbuf_addr); /* was exit via pms_entry */
 }
 
-// $B848
+/**
+ * $B848: Scroll horizon
+ *
+ * \param[in] state Pointer to game state.
+ */
 static void scroll_horizon(chqstate_t *state)
 {
   int        carry = 0;
@@ -9158,7 +9755,11 @@ static void scroll_horizon(chqstate_t *state)
   state->horizon_y_a25b += Bcounter;
 }
 
-// $B8D2
+/**
+ * $B8D2: Update road level
+ *
+ * \param[in] state Pointer to game state.
+ */
 static void update_road_level(chqstate_t *state)
 {
   int       carry = 0;
@@ -9303,7 +9904,11 @@ url_B9C5:
   state->var_a261 = state->var_a262 = 0;
 }
 
-// $B9F4
+/**
+ * $B9F4: Layout road
+ *
+ * \param[in] state Pointer to game state.
+ */
 static void layout_road(chqstate_t *state)
 {
   int       carry = 0;
@@ -9503,7 +10108,11 @@ lr_badf:
   goto lr_calc_single_lane; // jump into no_fork code
 }
 
-// $BB69
+/**
+ * $BB69: Exit fork
+ *
+ * \param[in] state Pointer to game state.
+ */
 static void exit_fork(chqstate_t *state)
 {
   // TODO
@@ -9512,7 +10121,11 @@ static void exit_fork(chqstate_t *state)
 // The screen has the format 0b010BBLLLRRRCCCCC (B = band, L = scanline, R = row (group), C = column)
 // The buffer has the format 0b1111LLLLRRRCCCCC (L = scanline, R = row (group))
 
-// $BC3E
+/**
+ * $BC3E: Draw screen
+ *
+ * \param[in] state Pointer to game state.
+ */
 static void draw_screen(chqstate_t *state)
 {
   u8  *scr;       /* was HL */
@@ -9648,7 +10261,11 @@ exit:
   state->speccy->draw(state->speccy, NULL); // Conv: Added
 }
 
-// $BDC1
+/**
+ * $BDC1: Clear playfield set attrs
+ *
+ * \param[in] state Pointer to game state.
+ */
 static void clear_playfield_set_attrs(chqstate_t *state)
 {
   u8 *screen;     /* was HL */
@@ -9685,7 +10302,11 @@ static void clear_playfield_set_attrs(chqstate_t *state)
   } while (--iterations > 0);
 }
 
-// $BDFB
+/**
+ * $BDFB: Read map
+ *
+ * \param[in] state Pointer to game state.
+ */
 static void read_map(chqstate_t *state)
 {
   int carry = 0;
@@ -9717,9 +10338,12 @@ static void read_map(chqstate_t *state)
   check_hazard_collisions(state); /* exit via */
 }
 
-// $BE1F
-//
-// pfastcounter - was HL (unused in body; caller uses it to read fast_counter)
+/**
+ * $BE1F: Rm cycle buffer offset
+ *
+ * \param[in] state        Pointer to game state.
+ * \param[in] pfastcounter Pfastcounter. (was HL)
+ */
 static void rm_cycle_buffer_offset(chqstate_t *state, u8 *pfastcounter)
 {
   // TODO: Sort
@@ -10176,7 +10800,11 @@ rm_all_hazards: // $C05C (also entered from skip path with no_objects_counter=1)
   state->allow_spawning++; // JP $AD0D is handled by caller (read_map)
 }
 
-// $C0E1
+/**
+ * $C0E1: Prepare tunnel
+ *
+ * \param[in] state Pointer to game state.
+ */
 static void prepare_tunnel(chqstate_t *state)
 {
   int  carry;
@@ -10249,7 +10877,12 @@ static void prepare_tunnel(chqstate_t *state)
   state->dee_draw_tunnel_1 = state->dee_draw_tunnel_2 = 0xCD; // opcode of CALL
 }
 
-// $C15B
+/**
+ * $C15B: Draw tunnel
+ *
+ * \param[in] state Pointer to game state.
+ * \param[in] IY    IY register value.
+ */
 static void draw_tunnel(chqstate_t *state, u8 *IY)
 {
   int       carry = 0;
@@ -10531,13 +11164,23 @@ dt_exit:
   // Conv: SP restore removed
 }
 
-// $C2E7
+/**
+ * $C2E7: Draw road scene change
+ *
+ * \param[in] state Pointer to game state.
+ * \param[in] IX    IX register value.
+ * \param[in] IY    IY register value.
+ */
 static void draw_road_scene_change(chqstate_t *state, u8 *IX, u8 *IY)
 {
   // TODO
 }
 
-// $C452
+/**
+ * $C452: Draw road
+ *
+ * \param[in] state Pointer to game state.
+ */
 static void draw_road(chqstate_t *state)
 {
   int carry;
@@ -10592,7 +11235,13 @@ dr_stripe_state_set:
   dr_read_lanes(state, bufptr, IY); // was FALLTHROUGH
 }
 
-// $C4AD
+/**
+ * $C4AD: DR read lanes
+ *
+ * \param[in] state Pointer to game state.
+ * \param[in] IX    IX register value.
+ * \param[in] IY    IY register value.
+ */
 static void dr_read_lanes(chqstate_t *state, u8 *IX, u8 *IY)
 {
   int            carry = 0;
@@ -10708,7 +11357,13 @@ dr_c526:
   return;
 }
 
-// $C534
+/**
+ * $C534: DR four lane highway
+ *
+ * \param[in] state Pointer to game state.
+ * \param[in] B     Parameter.
+ * \param[in] D     D.
+ */
 static void dr_four_lane_highway(chqstate_t *state, u8 B, u8 D)
 {
   u8 A;
@@ -10727,7 +11382,14 @@ static void dr_four_lane_highway(chqstate_t *state, u8 B, u8 D)
   dr_c54d(state, B, D, dr_c551); // was FALLTHROUGH
 }
 
-// $C54D
+/**
+ * $C54D: DR c54d
+ *
+ * \param[in] state Pointer to game state.
+ * \param[in] B     Parameter.
+ * \param[in] D     D.
+ * \param[in] HL    Hl.
+ */
 static void dr_c54d(chqstate_t *state, u8 B, u8 D, dr_callback_t *HL)
 {
   state->dr_SM_C4B2_callback = HL;
@@ -10735,7 +11397,13 @@ static void dr_c54d(chqstate_t *state, u8 B, u8 D, dr_callback_t *HL)
   dr_c551(state, B, D); // was FALLTHROUGH
 }
 
-// $C551
+/**
+ * $C551: DR c551
+ *
+ * \param[in] state Pointer to game state.
+ * \param[in] B     Parameter.
+ * \param[in] D     D.
+ */
 static void dr_c551(chqstate_t *state, u8 B, u8 D)
 {
   u8 A;
@@ -10754,7 +11422,13 @@ static void dr_c551(chqstate_t *state, u8 B, u8 D)
   dr_c55f(state, B, D); // was FALLTHROUGH
 }
 
-// $C55F
+/**
+ * $C55F: DR c55f
+ *
+ * \param[in] state Pointer to game state.
+ * \param[in] B     Parameter.
+ * \param[in] D     D.
+ */
 static void dr_c55f(chqstate_t *state, u8 B, u8 D)
 {
   u8 A;
@@ -10772,7 +11446,12 @@ static void dr_c55f(chqstate_t *state, u8 B, u8 D)
 #endif
 }
 
-// $C565
+/**
+ * $C565: DR c565
+ *
+ * \param[in] state Pointer to game state.
+ * \param[in] DE    Value.
+ */
 static void dr_c565(chqstate_t *state, u16 DE)
 {
   u8 B;
@@ -10791,7 +11470,11 @@ static void dr_c565(chqstate_t *state, u16 DE)
 #endif
 }
 
-// $C57C
+/**
+ * $C57C: DR scanline rollover 2
+ *
+ * \param[in] state Pointer to game state.
+ */
 static void dr_scanline_rollover_2(chqstate_t *state)
 {
 #if 0
@@ -10802,7 +11485,11 @@ static void dr_scanline_rollover_2(chqstate_t *state)
 #endif
 }
 
-// $C58A
+/**
+ * $C58A: DR scanline rollover 1
+ *
+ * \param[in] state Pointer to game state.
+ */
 static void dr_scanline_rollover_1(chqstate_t *state)
 {
 #if 0
@@ -10813,7 +11500,11 @@ static void dr_scanline_rollover_1(chqstate_t *state)
 #endif
 }
 
-// $C598
+/**
+ * $C598: DR c598
+ *
+ * \param[in] state Pointer to game state.
+ */
 static void dr_c598(chqstate_t *state)
 {
 #if 0
@@ -10833,7 +11524,12 @@ static void dr_c598(chqstate_t *state)
 #endif
 }
 
-// $C5A7
+/**
+ * $C5A7: DR c5a7
+ *
+ * \param[in] state Pointer to game state.
+ * \param[in] DE    Value.
+ */
 static void dr_c5a7(chqstate_t *state, u16 DE)
 {
 #if 0
@@ -11402,7 +12098,11 @@ dr_sky_fill_scanline:
 #endif
 }
 
-// $C8BE
+/**
+ * $C8BE: Pre shift backdrop
+ *
+ * \param[in] state Pointer to game state.
+ */
 static void pre_shift_backdrop(chqstate_t *state)
 {
   int       tmp;        // for RRD()
@@ -11437,7 +12137,11 @@ static void pre_shift_backdrop(chqstate_t *state)
   } while (--row > 0);
 }
 
-// $C8E3
+/**
+ * $C8E3: Forked road plotter
+ *
+ * \param[in] state Pointer to game state.
+ */
 static void forked_road_plotter(chqstate_t *state)
 {
   // TODO (enormous...)
@@ -11446,7 +12150,11 @@ static void forked_road_plotter(chqstate_t *state)
 // $CBA4
 // mystery_cba4 would go here, if we knew what it did
 
-// $CBC5
+/**
+ * $CBC5: Backdrop fill choice
+ *
+ * \param[in] state Pointer to game state.
+ */
 static void backdrop_fill_choice(chqstate_t *state)
 {
 //  C = A;
@@ -11456,7 +12164,12 @@ static void backdrop_fill_choice(chqstate_t *state)
 //    goto dr_start_backdrop_fill; // inside draw_road
 }
 
-// $CBD6 ish
+/**
+ * $CBD6: Build curve table
+ *
+ * \param[in] state  Pointer to game state.
+ * \param[in] forked Non-zero if road is forked.
+ */
 static void build_curve_table(chqstate_t *state, int forked)
 {
   u16       *table1, *table2;
@@ -11686,7 +12399,11 @@ bct_endbit_negative:
   goto bct_continue;
 }
 
-// $CD3A
+/**
+ * $CD3A: Build height table
+ *
+ * \param[in] state Pointer to game state.
+ */
 static void build_height_table(chqstate_t *state)
 {
   int       carry = 0;
@@ -11793,7 +12510,13 @@ static void build_height_table(chqstate_t *state)
   *pdst = A;
 }
 
-// $CDD6
+/**
+ * $CDD6: Multiply
+ *
+ * \param[in] a     Parameter.
+ * \param[in] c     C.
+ * \return Non-zero on success.
+ */
 static int8_t multiply(int8_t a, int8_t c)
 {
 #if 1
@@ -11822,20 +12545,34 @@ static int8_t multiply(int8_t a, int8_t c)
 #endif
 }
 
-// $E810
+/**
+ * $E810: Entrypt 48K
+ *
+ * \param[in] state Pointer to game state.
+ */
 static void entrypt_48k(chqstate_t *state)
 {
   entrypt_common(state, 0, 3);
 }
 
-// $E816
+/**
+ * $E816: Entrypt 128K
+ *
+ * \param[in] state Pointer to game state.
+ */
 static void entrypt_128k(chqstate_t *state)
 {
   clear_playfield_attrs(state);
   entrypt_common(state, 1, 5);
 }
 
-// $E81D
+/**
+ * $E81D: Entrypt common
+ *
+ * \param[in] state      Pointer to game state.
+ * \param[in] Amode_128k Amode 128k.
+ * \param[in] Bnrelocs   Bnrelocs.
+ */
 static void entrypt_common(chqstate_t *state, u8 Amode_128k, u8 Bnrelocs)
 {
 #if 0
@@ -11888,7 +12625,7 @@ void stop_the_tape_48k(chqstate_t *state)
 }
 
 /**
- * $EBF7: Draws menu strings until it hits a NUL byte.
+ * $EBF7: Draws menu strings until it hits a NUL byte
  *
  * \param[in] state   Pointer to game state.
  * \param[in] strings List of menu strings to draw. NUL terminated. (was HL)
@@ -11959,13 +12696,13 @@ const u8 *menu_draw_string(chqstate_t *state, const u8 *HLstring)
 /**
  * $EC2C: Draw a character (menu system)
  *
- * \param[in]  Achar      ASCII character to draw
- * \param[in]  Fdash      Double height if carry set
- * \param[in]  Cdash      Attribute byte
- * \param[in]  DEdash     Screen address
- * \param[in]  HLdash     Attribute address
- * \param[out] DEdash_out ...
- * \param[out] HLdash_out ...
+ * \param[in]  Achar      ASCII character to draw. (was A)
+ * \param[in]  Fdash      Double height flag; if set draw as double height. (was F')
+ * \param[in]  Cdash      Screen attribute byte. (was C')
+ * \param[in]  DEdash     Screen pixel address. (was DE')
+ * \param[in]  HLdash     Screen attribute address. (was HL')
+ * \param[out] DEdash_out Updated screen pixel address. (was DE')
+ * \param[out] HLdash_out Updated screen attribute address. (was HL')
  */
 static void menu_draw_char(u8   Achar,
                            u8   Fdash,
@@ -12060,14 +12797,22 @@ mdc_have_glyph:
   *DEdash_out = DEdash;
 }
 
-// $ECDA
+/**
+ * $ECDA: Clear screen
+ *
+ * \param[in] state Pointer to game state.
+ */
 static void clear_screen(chqstate_t *state)
 {
   memset(ADDRTOATTRS(0x5900), 0, 0x200);
   memset(ADDRTOSCREEN(0x4800), 0, 0x1000);
 }
 
-// $ECF3
+/**
+ * $ECF3: Redefine keys 48K
+ *
+ * \param[in] state Pointer to game state.
+ */
 static void redefine_keys_48k(chqstate_t *state)
 {
   u16       DEscr;
@@ -12237,7 +12982,12 @@ dak_loop1:
     DEscreen = dak_move_down(DEscreen);
 }
 
-// $EDCC
+/**
+ * $EDCC: Dak move down
+ *
+ * \param[in] DE    Value.
+ * \return Non-zero on success.
+ */
 static u16 dak_move_down(u16 DE)
 {
   u8 E;
@@ -12249,13 +12999,21 @@ static u16 dak_move_down(u16 DE)
   return (D << 8) | E;
 }
 
-// $EE40
+/**
+ * $EE40: Setup interrupts
+ *
+ * \param[in] state Pointer to game state.
+ */
 static void setup_interrupts(chqstate_t *state)
 {
   // Conv: no equivalent in C
 }
 
-// $EE5E
+/**
+ * $EE5E: Reset music
+ *
+ * \param[in] state Pointer to game state.
+ */
 static void reset_music(chqstate_t *state)
 {
   state->SM_EF0D_drum_flag = 0;
@@ -12264,7 +13022,11 @@ static void reset_music(chqstate_t *state)
   next_pattern_at_addr(state, &music_patterns[0]); /* was FALLTHROUGH */
 }
 
-// $EE6E
+/**
+ * $EE6E: Next pattern
+ *
+ * \param[in] state Pointer to game state.
+ */
 static void next_pattern(chqstate_t *state)
 {
   if (--state->SM_EE6E_repeats)
@@ -12298,7 +13060,11 @@ static void next_pattern_at_addr(chqstate_t *state, const u8 *HLpataddr)
   }
 }
 
-// $EE9E
+/**
+ * $EE9E: Play music 48K
+ *
+ * \param[in] state Pointer to game state.
+ */
 static void play_music_48k(chqstate_t *state)
 {
   u8        Adelay;
@@ -12376,25 +13142,46 @@ static void pm_wait_for_interrupt(chqstate_t *state)
     ;
 }
 
-// $EF19
+/**
+ * $EF19: Interrupt entry
+ *
+ * \param[in] state Pointer to game state.
+ */
 static void interrupt_entry(chqstate_t *state)
 {
   state->SM_EF13_interrupt_flag = 0xFF;
 }
 
-// $EF22
+/**
+ * $EF22: Playdrum 2
+ *
+ * \param[in] state  Pointer to game state.
+ * \param[in] Aspeed Speed value.
+ */
 static void playdrum_2(chqstate_t *state, u8 Aspeed)
 {
   playdrum_start(state, Aspeed, 108, &drum2[0]); /* exit via */
 }
 
-// $EF29
+/**
+ * $EF29: Playdrum 1
+ *
+ * \param[in] state  Pointer to game state.
+ * \param[in] Aspeed Speed value.
+ */
 static void playdrum_1(chqstate_t *state, u8 Aspeed)
 {
   playdrum_start(state, Aspeed, 252, &drum1[0]); /* was FALLTHROUGH */
 }
 
-// $EF2E
+/**
+ * $EF2E: Playdrum start
+ *
+ * \param[in] state   Pointer to game state.
+ * \param[in] Aspeed  Speed value.
+ * \param[in] Dlength Dlength.
+ * \param[in] HLdata  Source bitmap data.
+ */
 static void playdrum_start(chqstate_t *state, u8 Aspeed, u8 Dlength, const u8 *HLdata)
 {
   state->SM_EF39_drum_speed = Aspeed;
@@ -12402,14 +13189,26 @@ static void playdrum_start(chqstate_t *state, u8 Aspeed, u8 Dlength, const u8 *H
   playdrum_bank_go(state, Dlength, HLdata); /* was FALLTHROUGH */
 }
 
-// $EF38
+/**
+ * $EF38: Playdrum bank go
+ *
+ * \param[in] state        Pointer to game state.
+ * \param[in] Ddash_length Ddash length.
+ * \param[in] HLdash_data  Source bitmap data.
+ */
 static void playdrum_bank_go(chqstate_t *state, u8 Ddash_length, const u8 *HLdash_data)
 {
   // EXX
   playdrum_go(state, Ddash_length, HLdash_data);
 }
 
-// $EF39
+/**
+ * $EF39: Playdrum go
+ *
+ * \param[in] state   Pointer to game state.
+ * \param[in] Dlength Dlength.
+ * \param[in] HLdata  Source bitmap data.
+ */
 static void playdrum_go(chqstate_t *state, u8 Dlength, const u8 *HLdata)
 {
   u8 Bdash_iterations;
@@ -12438,7 +13237,12 @@ pd_end_of_sample:
   pm_wait_for_interrupt(state);
 }
 
-// $FC06
+/**
+ * $FC06: Noise
+ *
+ * \param[in] state  Pointer to game state.
+ * \param[in] Aparam Aparam.
+ */
 static void noise(chqstate_t *state, u8 Aparam)
 {
   int carry = 0;
@@ -12491,7 +13295,11 @@ static void noise(chqstate_t *state, u8 Aparam)
 
 // $F220 - load_stage_128k - merged into load_stage
 
-// $F251
+/**
+ * $F251: Start siren 128K
+ *
+ * \param[in] state Pointer to game state.
+ */
 static void start_siren_128k(chqstate_t *state)
 {
   state->ay_chan_a_pitch = 140; /* Conv: this sets the whole register, original just did the low byte */
@@ -12501,7 +13309,11 @@ static void start_siren_128k(chqstate_t *state)
   state->siren_enabled   = 0xAA;
 }
 
-// $F269
+/**
+ * $F269: Play siren SFX 128K
+ *
+ * \param[in] state Pointer to game state.
+ */
 static void play_siren_sfx_128k(chqstate_t *state)
 {
   int carry = 0;
@@ -12538,14 +13350,22 @@ set_regs:
   write_audio_registers_128k(state); /* exit via */
 }
 
-// $F29D
+/**
+ * $F29D: Silence audio 128K
+ *
+ * \param[in] state Pointer to game state.
+ */
 static void silence_audio_128k(chqstate_t *state)
 {
   state->ay_mixer = 0x3F; // all noise and tone channels disabled
   write_audio_registers_128k(state); /* was FALLTHROUGH */
 }
 
-// $F2A2
+/**
+ * $F2A2: Write audio registers 128K
+ *
+ * \param[in] state Pointer to game state.
+ */
 static void write_audio_registers_128k(chqstate_t *state)
 {
   const u8 *values; /* was HL */
@@ -12561,7 +13381,11 @@ static void write_audio_registers_128k(chqstate_t *state)
   } while ((s8) --regno >= 0);
 }
 
-// $F2B6
+/**
+ * $F2B6: Engine SFX from speed 128K
+ *
+ * \param[in] state Pointer to game state.
+ */
 static void engine_sfx_from_speed_128k(chqstate_t *state)
 {
   u16 pitch;  /* was HL */
@@ -12588,14 +13412,22 @@ static void engine_sfx_from_speed_128k(chqstate_t *state)
   state->ay_mixer &= 0x3B;
 }
 
-// $F2F1
+/**
+ * $F2F1: Setup turbo SFX 128K
+ *
+ * \param[in] state Pointer to game state.
+ */
 static void setup_turbo_sfx_128k(chqstate_t *state)
 {
   state->ay_noise_pitch        = 0x3C;
   state->turbo_sfx_noise_pitch = 0x3C;
 }
 
-// $F2FA
+/**
+ * $F2FA: Play turbo SFX 128K
+ *
+ * \param[in] state Pointer to game state.
+ */
 static void play_turbo_sfx_128k(chqstate_t *state)
 {
   if (state->turbo_sfx_noise_pitch == 0) {
@@ -12617,7 +13449,12 @@ static void play_turbo_sfx_128k(chqstate_t *state)
   engine_sfx_from_speed_128k(state); /* exit via */
 }
 
-// $F342
+/**
+ * $F342: Play speech 128K
+ *
+ * \param[in] state  Pointer to game state.
+ * \param[in] Aindex Sound effect index.
+ */
 static void play_speech_128k(chqstate_t *state, u8 Aindex)
 {
   // $F32E
@@ -12715,7 +13552,11 @@ static void play_speech_128k(chqstate_t *state, u8 Aindex)
   reset_paging_128k(state); /* exit via */
 }
 
-// $F39F
+/**
+ * $F39F: Handle perp caught 128K
+ *
+ * \param[in] state Pointer to game state.
+ */
 static void handle_perp_caught_128k(chqstate_t *state)
 {
   u8 Adelay;
@@ -12733,7 +13574,13 @@ static void handle_perp_caught_128k(chqstate_t *state)
   call_bank_3_128k(state, BANK3_ROUTINE_6); /* was FALLTHROUGH */
 }
 
-// $F3B6
+/**
+ * $F3B6: Call bank 3 128K
+ *
+ * \param[in] state     Pointer to game state.
+ * \param[in] HLroutine Hlroutine.
+ * \return Non-zero on success.
+ */
 static u8 call_bank_3_128k(chqstate_t *state, u16 HLroutine)
 {
   switch (HLroutine) {
@@ -12749,19 +13596,31 @@ static u8 call_bank_3_128k(chqstate_t *state, u16 HLroutine)
   return 1;
 }
 
-// $F3E2
+/**
+ * $F3E2: Page 128K
+ *
+ * \param[in] state Pointer to game state.
+ */
 static void page_128k(chqstate_t *state)
 {
   // Conv: Removed
 }
 
-// $F414
+/**
+ * $F414: Reset paging 128K
+ *
+ * \param[in] state Pointer to game state.
+ */
 static void reset_paging_128k(chqstate_t *state)
 {
   // Conv: Removed
 }
 
-// $F41B
+/**
+ * $F41B: Attract mode 128K
+ *
+ * \param[in] state Pointer to game state.
+ */
 static void attract_mode_128k(chqstate_t *state)
 {
   int       carry;
