@@ -84,6 +84,9 @@ static void chq_initialise(chqstate_t *state)
   state->rng_seed[1] = 0x2D;
   state->rng_seed[2] = 0xE9;
 
+  // $E300
+  state->table_e300[0] = 0x60; // sentinel, hardcoded in Z80 RAM
+
   // $A240
   state->road_buffer_offset = &state->road_buffer[0];
   state->road_buffer_start  = &state->road_buffer[0];

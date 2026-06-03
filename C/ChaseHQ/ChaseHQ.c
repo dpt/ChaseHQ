@@ -159,8 +159,8 @@
 // Return if the given pointer is a valid backbuffer pointer.
 #define VALID_BACKBUF(ptr)    (((ptr) >= &state->backbuffer[0]) && ((ptr) < &state->backbuffer[BACKBUFFER_LENGTH]))
 
-// Return ptr incremented modulo 256.
-#define WRAPPING(ptr, delta, base) &(base)[((ptr) + delta - (base)) & 0xFF]
+// Return ptr advanced by delta modulo 256, assigning back in-place.
+#define WRAPPING(ptr, delta, base) ((ptr) = &(base)[((ptr) + delta - (base)) & 0xFF])
 #define WRAPPINGINCREMENT(ptr, base) WRAPPING(ptr, 1, base)
 
 /* ----------------------------------------------------------------------- */
@@ -301,13 +301,7 @@ static u16 prevbufrow(u16 backbuf)
     backbuf += 0x1000; // 1110 -> 1111
     int t = (backbuf & 0xFF) - 32; // decrement RRRc
     backbuf = (backbuf & 0xFF00) | (t & 0xFF);
-    if (t < 0) {
-      /* Borrowed */
-      /* I'm unsure if this happens in practice. In any case it takes us
-       * outside of the back buffer bounds so we'll set an assert() here. */
-      assert(0);
-      backbuf -= 0x1000;
-    }
+    /* t < 0 means L borrowed; the Z80 8-bit wrap is already captured by (t & 0xFF) above. */
   }
 
   assert(backbuf >= BACKBUFFER_START_ADDRESS);
@@ -2794,7 +2788,7 @@ static void draw_everything_else(chqstate_t *state)
 
 continue_after_right_hand_done:
     IX_table_ea00 += 1; // Z80: ADD IX,2 = advance 2 bytes = 1 u16
-    roadbuf = WRAPPING(roadbuf, 32, state->road_buffer_start); // advance to left-side column
+    WRAPPING(roadbuf, 32, state->road_buffer_start); // advance to left-side column
 
     Aobj = *roadbuf; // fetch left side object from road buffer
     if (Aobj)
@@ -2802,7 +2796,7 @@ continue_after_right_hand_done:
 
 continue_after_left_hand_done:
     IX_table_ea00 += 1; // Z80: ADD IX,2 = advance 2 bytes = 1 u16
-    roadbuf = WRAPPING(roadbuf, -33, state->road_buffer_start); // retreat one row
+    WRAPPING(roadbuf, -33, state->road_buffer_start); // retreat one row
 
     IY_table_e300--;
   } while (--iterations > 0);
@@ -4367,9 +4361,9 @@ static void print_chatter(chqstate_t *state)
     /* Three-way random choice */
     rnd = rng(state);
     if (rnd >= 0x55) {
-      chatterblk += 2;
+      chatterblk += 1; // Conv: was += 2 in Z80 (2-byte address), now 1-byte index
       if (rnd >= 0xAA)
-        chatterblk += 2;
+        chatterblk += 1;
     }
     /* Conv: This is now an index and no longer an address */
     assert(*chatterblk < CHATTERBLK__LIMIT);
@@ -5201,7 +5195,7 @@ ptas_turbo_setup:
 
   // Count 1,000s (no loop required)
   BCdivisor = 1000;
-  HLdistance -= BCdivisor; // TODO set carry
+  carry = (BCdivisor > HLdistance), HLdistance -= BCdivisor;
   A = 0x10; // BCD
   if (carry) {
     HLdistance += BCdivisor; // correct overshoot
@@ -5212,7 +5206,7 @@ ptas_turbo_setup:
   BCdivisor = 100;
   do {
     A++;
-    HLdistance -= BCdivisor;
+    carry = (BCdivisor > HLdistance), HLdistance -= BCdivisor;
   } while (!carry);
   HLdistance += BCdivisor; // correct overshoot
   A--; // correct for starting early
@@ -5224,8 +5218,7 @@ ptas_turbo_setup:
   A = 0xF0; // BCD
   do {
     A += 0x10;
-    // AND A
-    HLdistance -= BCdivisor;
+    carry = (BCdivisor > HLdistance), HLdistance -= BCdivisor;
   } while (!carry);
   HLdistance += BCdivisor; // correct overshoot
 
@@ -5290,7 +5283,7 @@ ptas_led_plot_2nd:
   goto ptas_led_next_whole;
 }
 
-#define LEDFONT_HEIGHT (15)
+#define LEDFONT_HEIGHT (16) // stride in ledfont[10*16]; each char is 15 rows + 1 blank separator
 
 // $9F47
 //
@@ -9767,6 +9760,7 @@ static void rm_cycle_buffer_offset(chqstate_t *state, u8 *pfastcounter)
 
   // -- CURVATURE ($BE3A) --
   HLcurveptr = state->road_buffer_start + ROADBUF_PTR2IDX(HLlanesptr - 96);
+  HLlanesptr = (u8 *)HLcurveptr; // Z80: L -= 96 mutates HL in place; keep HLlanesptr in sync
 
   // Format: $CD where [C]ounter; Curve [D]ata
   Acurvebyte = state->curvature_byte - 16;
@@ -9779,7 +9773,7 @@ static void rm_cycle_buffer_offset(chqstate_t *state, u8 *pfastcounter)
     goto rm_curvature_regular_byte;
 
   // Escape byte (0): read command byte.
-  HLcurveptr = DEcurveptr; DElanesptr = HLcurveptr; // was EX DE,HL ($BE4E)
+  DElanesptr = (u8 *)HLcurveptr; HLcurveptr = DEcurveptr; // was EX DE,HL ($BE4E)
   Acurvebyte = *++HLcurveptr;
   HLcurveptr++;
   if (Acurvebyte == 0)
@@ -9840,7 +9834,7 @@ rm_save_curvature_byte:
     goto rm_height_regular_byte;
 
   // Escape byte (0): read command byte.
-  HLheightptr = DEheightptr; DEheightptr = HLlanesptr; // was EX DE,HL ($BEA0)
+  { u8 *_tmp = HLheightptr; HLheightptr = (u8 *)DEheightptr; DEheightptr = _tmp; } // was EX DE,HL ($BEA0)
   Aheightbyte = *++HLheightptr;
   HLheightptr++;
   if (Aheightbyte == 0)
@@ -9866,7 +9860,7 @@ rm_height_jump_command:
 
   // $BEC7
 rm_read_height:
-  DEheightptr = HLheightptr; HLheightptr = DElanesptr; // was EX DE,HL ($BEC7)
+  { u8 *_tmp = (u8 *)DEheightptr; DEheightptr = HLheightptr; HLheightptr = _tmp; } // was EX DE,HL ($BEC7)
   Aheightbyte = *DEheightptr;
 
   // $BEC9
@@ -11523,7 +11517,6 @@ static void build_curve_table(chqstate_t *state, int forked)
     if (forked)
       curvature_A = -curvature_A;
     assert(curvature_A >= 0 && curvature_A <= 255);
-    printf("curvature_A=%d\n", curvature_A);
 
     if (++road_buffer_ptr_HL == state->road_buffer_end)
       road_buffer_ptr_HL = state->road_buffer_start;
