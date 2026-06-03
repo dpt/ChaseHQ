@@ -547,33 +547,33 @@ struct chqstate {
   u8        dhc_pitch; // car's pitch (0/3/6 = level/up/down)
 
   // $BB8B (SM) in rm_cycle_buffer_offset
-  u16       rm_SM_BB8B; // hazards left-fork Z80 addr
+  u16       rm_SM_BB8B_leftfork_hazards; // hazards left-fork Z80 addr
   // $BB8E (SM) in rm_cycle_buffer_offset
-  u16       rm_SM_BB8E; // rightside left-fork Z80 addr
+  u16       rm_SM_BB8E_leftfork_rightside; // rightside left-fork Z80 addr
   // $BB91 (SM) in rm_cycle_buffer_offset
-  u16       rm_SM_BB91; // leftside left-fork Z80 addr
+  u16       rm_SM_BB91_leftfork_leftside; // leftside left-fork Z80 addr
   // $BB95 (SM) in rm_cycle_buffer_offset
-  u16       rm_SM_BB95_leftfork; // curvature left-fork Z80 addr
+  u16       rm_SM_BB95_leftfork_curve; // curvature left-fork Z80 addr
   // $BB98 (SM) in rm_cycle_buffer_offset
-  u16       rm_SM_BB98; // height left-fork Z80 addr
+  u16       rm_SM_BB98_leftfork_height; // height left-fork Z80 addr
   // $BB9B (SM) in rm_cycle_buffer_offset
-  u16       rm_SM_BB9B; // lanes left-fork Z80 addr
+  u16       rm_SM_BB9B_leftfork_lanes; // lanes left-fork Z80 addr
   // $BBB8 (SM) in rm_cycle_buffer_offset
-  u16       rm_SM_BBB8; // hazards right-fork Z80 addr
+  u16       rm_SM_BBB8_rightfork_hazards; // hazards right-fork Z80 addr
   // $BBBB (SM) in rm_cycle_buffer_offset
-  u16       rm_SM_BBBB; // rightside right-fork Z80 addr
+  u16       rm_SM_BBBB_rightfork_rightside; // rightside right-fork Z80 addr
   // $BBBE (SM) in rm_cycle_buffer_offset
-  u16       rm_SM_BBBE; // leftside right-fork Z80 addr
+  u16       rm_SM_BBBE_rightfork_leftside; // leftside right-fork Z80 addr
   // $BBC2 (SM) in rm_cycle_buffer_offset
-  u16       rm_SM_BBC2_rightfork; // curvature right-fork Z80 addr
+  u16       rm_SM_BBC2_rightfork_curve; // curvature right-fork Z80 addr
   // $BBC5 (SM) in rm_cycle_buffer_offset
-  u16       rm_SM_BBC5; // height right-fork Z80 addr
+  u16       rm_SM_BBC5_rightfork_height; // height right-fork Z80 addr
   // $BBC8 (SM) in rm_cycle_buffer_offset
-  u16       rm_SM_BBC8; // lanes right-fork Z80 addr
+  u16       rm_SM_BBC8_rightfork_lanes; // lanes right-fork Z80 addr
   // $BE6D (SM) in rm_cycle_buffer_offset
-  const u8 *rm_SM_BE6D; // curvature one_command ptr
+  const u8 *rm_SM_BE6D_curvature_one_command_ptr; // curvature one_command ptr
   // $BEBF (SM) in rm_cycle_buffer_offset
-  const u8 *rm_SM_BEBF; // height one_command ptr
+  const u8 *rm_SM_BEBF_height_one_command_ptr; // height one_command ptr
   // $BF2D (SM) in rm_cycle_buffer_offset
   u8        rm_SM_BF2D; // lanes current value
 
