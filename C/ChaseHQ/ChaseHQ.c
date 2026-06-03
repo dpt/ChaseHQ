@@ -4789,11 +4789,12 @@ static void check_time_up(chqstate_t *state)
   ptime_bcd = &state->st.time_bcd;
   time_up_state = state->time_up_state;
   switch (time_up_state) {
-  default: assert(0);
+  case TIMEUPSTATE_INIT:          break;
   case TIMEUPSTATE_CHECK_TIME_UP: goto check_time_up;
   case TIMEUPSTATE_CAR_STOPPED:   goto check_credits;
   case TIMEUPSTATE_CHECK_RESTART: goto check_restart;
   case TIMEUPSTATE_WAITING:       return;
+  default: assert(0);
   }
 
   // Otherwise it's state 0
