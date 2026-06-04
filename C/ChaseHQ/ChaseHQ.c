@@ -1122,6 +1122,7 @@ static void play_speech_hook(chqstate_t *state, u8 A)
 static void attract_mode_hook(chqstate_t *state)
 {
   attract_mode_48k(state);
+  // or... attract_mode_128k(state);
 }
 
 /**
@@ -1152,6 +1153,9 @@ static void bootstrap(chqstate_t *state)
     } while (HLflipped < &state->flipped[256]);
 
 
+    // Load stage data before attract mode (state->stage must not be NULL).
+    load_stage(state);
+
     // Start attract mode.
     attract_mode_hook(state);
 
@@ -1159,7 +1163,7 @@ static void bootstrap(chqstate_t *state)
     // conversion.
     // return;
 
-    
+
     // When attract mode yields then we set up the game.
     state->overtake_bonus_bcd = 0;
 
@@ -3292,16 +3296,17 @@ dso_loop_continue:
   // EX AF,AF' -- save Adepth
 
   Avertical = SM_91DB_vertical;
-  // Conv: Dispatch ladder converted to switch
+  // Conv: Dispatch ladder converted to switch.
+  // Bstretchy_type = data_type - 2 (two decrements already applied).
   switch (Bstretchy_type) {
   default: assert(0);
-  case STRETCHY_TYPE_3: goto dso_case_150pc;
-  case STRETCHY_TYPE_4: goto dso_case_50pc;
-  case STRETCHY_TYPE_5: goto dso_case_113pc;
-  case STRETCHY_TYPE_6: goto dso_case_38pc;
-  case STRETCHY_TYPE_7: goto dso_case_75pc;
-  case STRETCHY_TYPE_8: goto dso_case_25pc;
-  case STRETCHY_TYPE_9: goto dso_continue;
+  case 1: goto dso_case_150pc;  /* data type STRETCHY_TYPE_3 */
+  case 2: goto dso_case_50pc;   /* data type STRETCHY_TYPE_4 */
+  case 3: goto dso_case_113pc;  /* data type STRETCHY_TYPE_5 */
+  case 4: goto dso_case_38pc;   /* data type STRETCHY_TYPE_6 */
+  case 5: goto dso_case_75pc;   /* data type STRETCHY_TYPE_7 */
+  case 6: goto dso_case_25pc;   /* data type STRETCHY_TYPE_8 */
+  case 7: goto dso_continue;    /* data type STRETCHY_TYPE_9 */
   }
   Avertical *= 2;
   goto dso_continue;
