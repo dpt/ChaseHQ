@@ -1151,13 +1151,15 @@ static void bootstrap(chqstate_t *state)
       *HLflipped++ = Cresult;
     } while (HLflipped < &state->flipped[256]);
 
-    // Conv: Returning here - may have to split this routine up for
-    // conversion.
-    return;
 
     // Start attract mode.
     attract_mode_hook(state);
 
+    // Conv: Returning here - may have to split this routine up for
+    // conversion.
+    // return;
+
+    
     // When attract mode yields then we set up the game.
     state->overtake_bonus_bcd = 0;
 
@@ -1202,6 +1204,9 @@ static void main_loop(chqstate_t *state)
     }
 
     run_pregame_screen(state);
+    while (run_pregame_screen_loop(state)) /* Conv: Split out */
+      ;
+
     set_up_stage(state, &state->stage->stage_data);
 
     // Cycle start_speech_cycle 3,2,1 then repeat
@@ -1395,7 +1400,7 @@ static int run_pregame_screen_loop(chqstate_t *state)
   animate_meters(state);
   transition(state);
 
-  if (1)
+  if (0)
   {
     memset(&state->speccy->screen.attributes[256], attribute_BRIGHT_BLACK_OVER_GREEN, 512);
     memset(&state->backbuffer[0], 0, 4096);
@@ -13695,14 +13700,15 @@ CHQ_API void chq_setup(chqstate_t *state)
 {
   entrypt_128k(state);
 
-  state->current_stage_number = -1; // force load
-  state->wanted_stage_number = 0;
-  load_stage(state);
-  run_pregame_screen(state);
+  // state->current_stage_number = -1; // force load
+  // state->wanted_stage_number = 0;
+  // load_stage(state);
+  // run_pregame_screen(state);
 }
 
 CHQ_API void chq_main(chqstate_t *state)
 {
   main_loop(state);
-  //run_pregame_screen_loop(state);
+
+  // run_pregame_screen_loop(state);
 }
