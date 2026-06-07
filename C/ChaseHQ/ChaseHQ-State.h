@@ -688,18 +688,18 @@ struct chqstate {
   // backward from table_e800 and can overflow past [0]; in Z80 this landed in
   // the gap. Replicate that gap so the overrun stays harmless.
   u8        _gap_e364[0x800 - 0x364]; // 1180 bytes
-  // $E800
-  u16       table_e800[128];
-  // $E900
-  u16       table_e900[128];
-  // $EA00
-  u16       table_ea00[128]; // perhaps s16
-  // $EB00
-  u16       table_eb00[128];
-  // $EC00
-  u16       table_ec00[128];
-  // $ED00
-  u16       table_ed00[128];
+  // $E800 - Left outer edge (verge/road boundary)
+  u16       xpos_road_left[128];
+  // $E900 - Left inner edge / centre-left
+  u16       xpos_road_centre_left[128];
+  // $EA00 - Road centre line
+  u16       xpos_road_centre[128]; // perhaps s16
+  // $EB00 - Right inner edge / centre-right
+  u16       xpos_road_centre_right[128];
+  // $EC00 - Right outer edge (road/verge boundary)
+  u16       xpos_road_right[128];
+  // $ED00 - Right outer edge of right fork (forked roads only); also reused as dirt/stone layout data on dirt tracks
+  u16       xpos_road_fork_right[128];
   // $EE00
   u8        road_buffer[256];
   // $EF00

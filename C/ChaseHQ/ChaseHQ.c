@@ -2980,12 +2980,12 @@ static void draw_everything_else(chqstate_t *state)
   assert(state->road_buffer_start == &state->road_buffer[0]);
   assert(state->road_buffer_end   == &state->road_buffer[256]);
 
-  state->dss_SM_A9E2 = &state->table_ed00[20]; // $ED28
-  state->dh_SM_AECF_table = &state->table_e900[0];
-  assert(state->dss_SM_A9E2 >= &state->table_ed00[0] &&
-         state->dss_SM_A9E2 < &state->table_ed00[128]);
-  assert(state->dh_SM_AECF_table >= &state->table_e900[0] &&
-         state->dh_SM_AECF_table < &state->table_e900[128]);
+  state->dss_SM_A9E2 = &state->xpos_road_fork_right[20]; // $ED28
+  state->dh_SM_AECF_table = &state->xpos_road_centre_left[0];
+  assert(state->dss_SM_A9E2 >= &state->xpos_road_fork_right[0] &&
+         state->dss_SM_A9E2 < &state->xpos_road_fork_right[128]);
+  assert(state->dh_SM_AECF_table >= &state->xpos_road_centre_left[0] &&
+         state->dh_SM_AECF_table < &state->xpos_road_centre_left[128]);
 
   HLtable_e300 = &state->table_e300[1]; // table of objects?
   DEtable_e336 = &state->table_e336[0];
@@ -3009,14 +3009,14 @@ static void draw_everything_else(chqstate_t *state)
   HLroadbuf = ROADBUF_FWD2PTR(115); // right side objects
   assert(HLroadbuf >= state->road_buffer_start && HLroadbuf < state->road_buffer_end);
 
-  IXtable_ea00 = &state->table_ea00[88]; // $EAB0
-  assert(IXtable_ea00 == &state->table_ea00[88]);
+  IXtable_ea00 = &state->xpos_road_centre[88]; // $EAB0
+  assert(IXtable_ea00 == &state->xpos_road_centre[88]);
   Biterations = 20; // iterations
   do {
     assert(Biterations >= 1 && Biterations <= 20);
     assert(HLroadbuf >= state->road_buffer_start && HLroadbuf < state->road_buffer_end);
     assert(IYtable_e300 >= &state->table_e300[0] && IYtable_e300 < &state->table_e300[22]);
-    assert(IXtable_ea00 >= &state->table_ea00[0] && IXtable_ea00 < &state->table_ea00[128]);
+    assert(IXtable_ea00 >= &state->xpos_road_centre[0] && IXtable_ea00 < &state->xpos_road_centre[128]);
 
     if (state->n_hazards)
       draw_arrow_fire_smoke(state, Biterations, IYtable_e300);
@@ -3052,7 +3052,7 @@ continue_after_left_hand_done:
     IYtable_e300--;
   } while (--Biterations > 0);
   assert(IYtable_e300 == &state->table_e300[0]);
-  assert(IXtable_ea00 == &state->table_ea00[128]); // one-past-end after 20*2 advances from [88]
+  assert(IXtable_ea00 == &state->xpos_road_centre[128]); // one-past-end after 20*2 advances from [88]
 
   if (state->dee_draw_helicopter)
     return;
@@ -6185,7 +6185,7 @@ static void check_scenery_collisions(chqstate_t *state)
   //
   // Note that is where an object *could be*. There's not necessarily an
   // object always there.
-  pos = state->table_ea00[127]; // signed
+  pos = state->xpos_road_centre[127]; // signed
   if ((pos >> 8) != 0) {
     // object is visible(?)
     if (pos >= 64) {
@@ -6204,7 +6204,7 @@ static void check_scenery_collisions(chqstate_t *state)
   // Check right hand side
 check_right_hand:
   // "pos" here is approx 75..368 for (centred .. off-screen on the right).
-  pos = state->table_ea00[126];
+  pos = state->xpos_road_centre[126];
   offroad = 0;
   if ((pos >> 8) != 0) {
     if (pos < 190) {
@@ -6284,7 +6284,7 @@ csc_a43b:
   BCdash = Cdash;
 
   // Check for collisions with scenery (right hand side).
-  pos = state->table_ea00[126]; // read pos
+  pos = state->xpos_road_centre[126]; // read pos
   if (pos >= BCdash)
     goto csc_check_left;
   if (pos < DEdash)
@@ -6319,7 +6319,7 @@ csc_check_left:
   BCdash = Cdash;
 
   // Check for collisions with scenery (left hand side).
-  pos = state->table_ea00[127];
+  pos = state->xpos_road_centre[127];
   if (pos < BCdash || pos >= DEdash)
     return;
   // EX AF,AF'
@@ -6397,7 +6397,7 @@ static void check_fork_scenery_collisions(chqstate_t *state, u16 DEdash, u16 HLd
   u8           A;              /* was A */
   u16          pos2;           /* was HL' */
 
-  pos = state->table_e800[127];
+  pos = state->xpos_road_left[127];
   off_road = 0;
   if ((pos >> 8) == 0) {
     if (pos >= 0x6A)
@@ -6405,7 +6405,7 @@ static void check_fork_scenery_collisions(chqstate_t *state, u16 DEdash, u16 HLd
     goto set_off_road;
   }
 
-  pos = state->table_ed00[126];
+  pos = state->xpos_road_fork_right[126];
   off_road = 0;
   if ((pos >> 8) == 0)
     if (pos < 0x8E)
@@ -6425,7 +6425,7 @@ set_off_road:
     hit_min_or_max = shortpoleobj->hit_min_or_max; // min
     A              = shortpoleobj->hit_something;  // unused it seems
 
-    pos2 = state->table_ea00[127];
+    pos2 = state->xpos_road_centre[127];
     if (pos2 < hit_max_or_min && pos2 >= hit_min_or_max)
       csc_hit_scenery(state, 0, 0x8C); /* exit via */
   } else {
@@ -6436,7 +6436,7 @@ set_off_road:
     hit_max_or_min = shortpoleobj->hit_max_or_min; // min
     hit_min_or_max = shortpoleobj->hit_min_or_max; // max
 
-    pos2 = state->table_ea00[126];
+    pos2 = state->xpos_road_centre[126];
     if (pos2 >= hit_max_or_min && pos2 < hit_min_or_max)
       csc_hit_scenery(state, 1, 0x8C); /* exit via */
   }
@@ -6474,7 +6474,7 @@ static void layout_objects(chqstate_t *state)
     *objpos++ = total;
   } while (--iterations > 0);
 
-  SP = &state->table_eb00[0]; // OR should this be ea00[256] ?
+  SP = &state->xpos_road_centre_right[0]; // OR should this be ea00[256] ?
   bufptr = ROADBUF_FWD2PTR(ROADBUF_LANES_OFFSET);
   objpos2 = &state->object_positions[0];
   iterations = 21; // iterations
@@ -6495,9 +6495,9 @@ positions_loop:
       laneoffset = lanesbyte2 & 3;
       if (laneoffset == 0) {
         // Otherwise no left hand offset is set.
-        --SP; *SP = state->table_e800[Ldash];
+        --SP; *SP = state->xpos_road_left[Ldash];
 set_right_hand:
-        tabptr = &state->table_ec00[Ldash];
+        tabptr = &state->xpos_road_right[Ldash];
         goto load_and_store_right;
       }
 
@@ -6505,9 +6505,9 @@ set_right_hand:
       // select table $E8xx/$E9xx/$EAxx.
       // Not sure if I trust structure layout, so using a switch here.
       switch (laneoffset) {
-      case 1: tabptr = &state->table_e800[Ldash]; break;
-      case 2: tabptr = &state->table_e900[Ldash]; break;
-      case 3: tabptr = &state->table_ea00[Ldash]; break;
+      case 1: tabptr = &state->xpos_road_left[Ldash]; break;
+      case 2: tabptr = &state->xpos_road_centre_left[Ldash]; break;
+      case 3: tabptr = &state->xpos_road_centre[Ldash]; break;
       default: assert(0);
       }
       --SP; *SP = *tabptr;
@@ -6528,9 +6528,9 @@ set_right_hand:
       }
 
       switch (laneshift) {
-      case 1: tabptr = &state->table_e800[Ldash]; break;
-      case 2: tabptr = &state->table_e900[Ldash]; break;
-      case 3: tabptr = &state->table_ea00[Ldash]; break;
+      case 1: tabptr = &state->xpos_road_left[Ldash]; break;
+      case 2: tabptr = &state->xpos_road_centre_left[Ldash]; break;
+      case 3: tabptr = &state->xpos_road_centre[Ldash]; break;
       default: assert(0);
       }
 
@@ -6556,8 +6556,8 @@ load_and_store_right:
   iterations = A;
   do {
     L = ~(*objpos2 * 2);
-    --SP; *SP = state->table_ea00[L - 1];
-    --SP; *SP = state->table_eb00[L - 1];
+    --SP; *SP = state->xpos_road_centre[L - 1];
+    --SP; *SP = state->xpos_road_centre_right[L - 1];
     objpos2++;
   } while (--iterations > 0);
 }
@@ -7143,7 +7143,7 @@ static void choose_dirt_and_stones(chqstate_t *state)
   // TODO: table_ed00 is u16s but this stores two bytes at byte offset 40: a
   // stone/dirt type and a random position.
 
-  table = (u8 *) &state->table_ed00[40];
+  table = (u8 *) &state->xpos_road_fork_right[40];
   table[0] = ((s8) rng(state) >= 0) ? 1 : 2; // choose stone or dirt
   table[1] = rng(state); // choose random position
   state->ldas_enabled = 1;
@@ -7177,7 +7177,7 @@ static void layout_dirt_and_stones(chqstate_t *state)
   obj_pos = &state->object_positions[18];
   iterations = 20;
   total = 0;
-  table_ed00 = &state->table_ed00[0x28 / 2]; // is this pairs?
+  table_ed00 = &state->xpos_road_fork_right[0x28 / 2]; // is this pairs?
   do {
     // FIXME increment + advance will be wrong since ed00 is u16s
     if (*table_ed00++)
@@ -7202,9 +7202,9 @@ ldas_do_work:
 
   // EX AF,AF'
   Ldash = ~(obj_pos[1] * 2);
-  val_from_table_e800 = state->table_e800[Ldash /
+  val_from_table_e800 = state->xpos_road_left[Ldash /
                                           2]; // FIXME Probably off by one here?
-  val_from_table_ec00 = state->table_ec00[(Ldash - 1) / 2];
+  val_from_table_ec00 = state->xpos_road_right[(Ldash - 1) / 2];
 
   // PUSH DEdash
   // Calc width of road?
@@ -7981,9 +7981,9 @@ dh_adfa:
 
   // Would this fetch from the wrong position?
   // It's loading D, moving down, then loading E...
-  HLtable = &state->table_e800[A / 2]; // road drawing left
+  HLtable = &state->xpos_road_left[A / 2]; // road drawing left
   DE = *HLtable;
-  HLtable = &state->table_ec00[A / 2];
+  HLtable = &state->xpos_road_right[A / 2];
   HL = *HLtable;
 
   state->SM_AE70 = DE;
@@ -8013,7 +8013,7 @@ dh_adfa:
   An_hazards = *HLp_n_hazards;
   (*HLp_n_hazards)++;
 
-  HLtable = &state->table_e900[0]; // road centre left?
+  HLtable = &state->xpos_road_centre_left[0]; // road centre left?
   if (An_hazards) {
     Biterations = An_hazards;
     do {
@@ -10036,14 +10036,14 @@ static void layout_road(chqstate_t *state)
   // No forked road found.
   build_curve_table(state, /*forked=*/0);
   // $E800 now contains the left edges and $EC00 contains the right edges.
-  SProadright = &state->table_ec00[0x30];
+  SProadright = &state->xpos_road_right[0x30];
   Aiterations = 0x30; // 48..256 in steps of 2 = 104 iterations
 lr_calc_single_lane:
   do {
-    SMroadcentre      = &state->table_ea00[Aiterations];
-    SMroadcentreright = &state->table_eb00[Aiterations];
-    SMroadcentreleft  = &state->table_e900[Aiterations];
-    SMroadleft        = &state->table_e800[Aiterations];
+    SMroadcentre      = &state->xpos_road_centre[Aiterations];
+    SMroadcentreright = &state->xpos_road_centre_right[Aiterations];
+    SMroadcentreleft  = &state->xpos_road_centre_left[Aiterations];
+    SMroadleft        = &state->xpos_road_left[Aiterations];
 
     // EXX Bank
 
@@ -10163,15 +10163,15 @@ lr_badf:
     HLroadpos; // restore normal road pos after fork rendering
   // POP BC
   // (set SP restoring op)
-  SProadright = &state->table_ec00[0x30]; // (set SP to $EC30)
+  SProadright = &state->xpos_road_right[0x30]; // (set SP to $EC30)
   Aiterations = 0x30; // 48..256 in steps of 2 = 104 iterations
   do {
-    SMroadcentre      = &state->table_ea00[Aiterations];
-    SMroadcentreleft  = &state->table_e900[Aiterations];
-    SMroadleft        = &state->table_e800[Aiterations];
-    SMveryright       = &state->table_ed00[Aiterations]; // output right?
-    SMroadcentreright = &state->table_eb00[Aiterations]; // output left?
-    SMroadright       = &state->table_ec00[Aiterations];
+    SMroadcentre      = &state->xpos_road_centre[Aiterations];
+    SMroadcentreleft  = &state->xpos_road_centre_left[Aiterations];
+    SMroadleft        = &state->xpos_road_left[Aiterations];
+    SMveryright       = &state->xpos_road_fork_right[Aiterations]; // output right?
+    SMroadcentreright = &state->xpos_road_centre_right[Aiterations]; // output left?
+    SMroadright       = &state->xpos_road_right[Aiterations];
     // EXX Bank for inner loop
     DEdash = *SMroadleft;
     HLdash = *SProadright++; // POP HLdash // read from $ECxx
@@ -10186,7 +10186,7 @@ lr_badf:
     Aiterations += 2;
     // EXX Unbank
   } while (--Aiterations > 0);
-  SProadright = &state->table_ec00[Aiterations];
+  SProadright = &state->xpos_road_right[Aiterations];
   goto lr_calc_single_lane; // jump into no_fork code
 }
 
@@ -10958,7 +10958,7 @@ rm_all_hazards: // $C05C (also entered from skip path with no_objects_counter=1)
 
   // $C0BB: copy block if rm_SM_C0BB is set
   if (state->rm_SM_C0BB) {
-    u8 *tbl = (u8 *)state->table_ed00;
+    u8 *tbl = (u8 *)state->xpos_road_fork_right;
     u8 *HL = tbl + 0x73;
     u8 *DE = tbl + 0x77;
     int BC = 0x26;
@@ -11011,12 +11011,12 @@ static void prepare_tunnel(chqstate_t *state)
 
     /* Tunnel has appeared */
     state->tunnel_sfx = 5; // This quietens sfx when in the tunnel
-    HLtable = &state->table_ea00[0xF3 / 2]; // somewhere in road height data table
+    HLtable = &state->xpos_road_centre[0xF3 / 2]; // somewhere in road height data table
     BCtablevalue1 = *HLtable;
     HLtable -= 4 / 2;
 
     // EXX - Bank
-    HLdash_table = &state->table_ea00[0xF1 / 2];
+    HLdash_table = &state->xpos_road_centre[0xF1 / 2];
     DEdash_tablevalue2 = *HLdash_table;
     HLdash_table -= 4 / 2;
 
@@ -11092,7 +11092,7 @@ static void draw_tunnel(chqstate_t *state, u8 *IY)
 
   L = ~((IY[0x4E] - 2) << 1);
   C = 0;
-  HL = &state->table_eb00[L / 2];
+  HL = &state->xpos_road_centre_right[L / 2];
   A = *HL & 0xFF; // original loads byte here
   if (A == 0)
     goto dt_c18e;
@@ -11116,7 +11116,7 @@ dt_c18e:
   D = A;
 
 dt_c19c:
-  HL = &state->table_e800[L / 2];
+  HL = &state->xpos_road_left[L / 2];
   A = *HL & 0xFF; // original loads byte here
   if (A == 0)
     goto dt_c1aa;
@@ -11344,12 +11344,12 @@ dt_exit:
 static u8 *drsc_tbl(chqstate_t *state, u8 H)
 {
   switch (H) {
-  case 0xE7: return (u8 *)state->table_e800 - 256; /* within _gap_e364 */
-  case 0xE8: return (u8 *)state->table_e800;
-  case 0xE9: return (u8 *)state->table_e900;
-  case 0xEA: return (u8 *)state->table_ea00;
-  case 0xEB: return (u8 *)state->table_eb00;
-  default:   return (u8 *)state->table_ec00;        /* $EC */
+  case 0xE7: return (u8 *)state->xpos_road_left - 256; /* within _gap_e364 */
+  case 0xE8: return (u8 *)state->xpos_road_left;
+  case 0xE9: return (u8 *)state->xpos_road_centre_left;
+  case 0xEA: return (u8 *)state->xpos_road_centre;
+  case 0xEB: return (u8 *)state->xpos_road_centre_right;
+  default:   return (u8 *)state->xpos_road_right;        /* $EC */
   }
 }
 
@@ -12634,7 +12634,7 @@ frp_c969: /* $C969: 5-zone fork scanline render */
   /* $C973: H = $E8 → read zone widths from road tables $E8/$E9/$EA/$EC */
 
   /* ---- Zone 5: lefthand verge (table $E800) ---- */
-  tbl = (const u8 *)state->table_e800;
+  tbl = (const u8 *)state->xpos_road_left;
   A   = tbl[L];
   if (A != 0) {
     pos_E8 = (A & 0x80) ? 0 : 15;
@@ -12647,7 +12647,7 @@ frp_c969: /* $C969: 5-zone fork scanline render */
   }
 
   /* ---- Zone 4: lefthand road (table $E900) ---- */
-  tbl = (const u8 *)state->table_e900;
+  tbl = (const u8 *)state->xpos_road_centre_left;
   A   = tbl[L];
   if (A != 0) {
     pos_E9 = (A & 0x80) ? 0 : 15;
@@ -12658,7 +12658,7 @@ frp_c969: /* $C969: 5-zone fork scanline render */
   }
 
   /* ---- Zone 3: middle verge (table $EA00) ---- */
-  tbl = (const u8 *)state->table_ea00;
+  tbl = (const u8 *)state->xpos_road_centre;
   A   = tbl[L];
   if (A != 0) {
     pos_EA = (A & 0x80) ? 0 : 15;
@@ -12671,7 +12671,7 @@ frp_c969: /* $C969: 5-zone fork scanline render */
   }
 
   /* ---- Zone 2+1: righthand road + verge (table $EC00, H skips $EB) ---- */
-  tbl = (const u8 *)state->table_ec00;
+  tbl = (const u8 *)state->xpos_road_right;
   A   = tbl[L];
   if (A != 0) {
     pos_EC = (A & 0x80) ? 0 : 15;
@@ -12860,11 +12860,11 @@ static void build_curve_table(chqstate_t *state, int forked)
 
   // Set up table pointer to *end* of tables we're building.
   if (forked) {
-    table1 = &state->table_ed00[128]; /* was $EE00 */
-    table2 = &state->table_eb00[128]; /* was $EC00 - centre right table? */
+    table1 = &state->xpos_road_fork_right[128]; /* was $EE00 */
+    table2 = &state->xpos_road_centre_right[128]; /* was $EC00 - centre right table? */
   } else {
-    table1 = &state->table_ec00[128]; /* was $ED00 - right table */
-    table2 = &state->table_e800[128]; /* was $E900 - left table */
+    table1 = &state->xpos_road_right[128]; /* was $ED00 - right table */
+    table2 = &state->xpos_road_left[128]; /* was $E900 - left table */
   }
 
   road_buffer_ptr_HL = state->road_buffer_offset;
