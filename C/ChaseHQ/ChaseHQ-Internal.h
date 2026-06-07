@@ -28,6 +28,10 @@
 #define BACKBUFFER_LENGTH     (BACKBUFFER_ROWBYTES * BACKBUFFER_HEIGHT)
 #define BACKBUFFER_START_ADDRESS ((u16) 0xF000)
 #define BACKBUFFER_END_ADDRESS (BACKBUFFER_START_ADDRESS + BACKBUFFER_LENGTH)
+// draw_char writes rows at stride 256; addresses near the end of the buffer
+// overflow past 0xFFFF in Z80 address space, wrapping into ROM (harmless).
+// In C there is no wrap, so pad the allocation to absorb those writes.
+#define BACKBUFFER_OVERFLOW   (BACKBUFFER_LENGTH)
 
 #define MAXHAZARDS            (6)
 

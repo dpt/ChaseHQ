@@ -68,7 +68,8 @@ static void chq_initialise(chqstate_t *state)
     memcpy((char *) state + copies[i].dstoff, copies[i].src, copies[i].n);
 
   // $8007
-  state->wanted_stage_number = 1;
+  state->wanted_stage_number   = 1;
+  state->current_stage_number  = 1;
 
   // $824B
   state->attract_mode_128k_SM_824B = 0xF0;

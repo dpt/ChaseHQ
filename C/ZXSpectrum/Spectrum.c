@@ -11,6 +11,7 @@
 #include <stdlib.h>
 #include <string.h>
 
+
 #include "C99/Types.h"
 
 #include "ZXSpectrum/Screen.h"
@@ -321,6 +322,7 @@ zxspectrum_t *zxspectrum_create(const zxconfig_t *config)
   zxbox_invalidate(&prv->dirty);
 
   prv->prev_border = ~0;
+
 
   return &prv->pub;
 }

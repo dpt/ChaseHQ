@@ -1388,7 +1388,7 @@ const char *common_chatter_strings[CHATTERSTR__LIMIT] = {
 };
 
 // $82A6
-const u8 attract_messages[37] = {
+const u8 attract_messages[38] = {
   DRAWCHARSTYLE_DOUBLE,
   attribute_BLACK_OVER_BLACK, // zero
   TWOBYTES(0xF02C), // back buffer addr
@@ -1399,7 +1399,7 @@ const u8 attract_messages[37] = {
   attribute_BLACK_OVER_BLACK, // zero
   TWOBYTES(0xF847),
   TWOBYTES(0x59A7),
-  'P', 'R', 'E', 'S', 'S', ' ', 'G', 'E', 'A', 'R', ' ', 'T', 'O',  'P', 'L', 'A', 'Y' | STREND
+  'P', 'R', 'E', 'S', 'S', ' ', 'G', 'E', 'A', 'R', ' ', 'T', 'O', ' ', 'P', 'L', 'A', 'Y' | STREND
 };
 
 // $82CC
@@ -2287,13 +2287,25 @@ const u8 table_b059[5 * 2] = {
 
 // $B828
 //
-// This must map curvature to scroll rate.
-// Top byte is x scroll, bottom is ?
-const u16 horizon_table[16] = {
-  0x7FFF, 0x3F55, 0x2A33, 0x1F24,
-  0x0104, 0x0103, 0x0102, 0x0101,
-  0x0103, 0x0102, 0x0101, 0x0201,
-  0x0103, 0x0102, 0x0101, 0x0201
+// Byte table: scroll_horizon ($B265) reads HL=($B827+curvature) as a byte;
+// update_road_level ($B9BD) reads HL=($B828+speed_part+abs_curvature*4) as byte.
+const u8 horizon_table[32] = {
+  0xFF, 0x7F,  /* $B828: from DEFW $7FFF */
+  0x55, 0x3F,  /* $B82A: from DEFW $3F55 */
+  0x33, 0x2A,  /* $B82C: from DEFW $2A33 */
+  0x24, 0x1F,  /* $B82E: from DEFW $1F24 */
+  0x04, 0x01,  /* $B830: from DEFW $0104 */
+  0x03, 0x01,  /* $B832: from DEFW $0103 */
+  0x02, 0x01,  /* $B834: from DEFW $0102 */
+  0x01, 0x01,  /* $B836: from DEFW $0101 */
+  0x03, 0x01,  /* $B838: from DEFW $0103 */
+  0x02, 0x01,  /* $B83A: from DEFW $0102 */
+  0x01, 0x01,  /* $B83C: from DEFW $0101 */
+  0x01, 0x02,  /* $B83E: from DEFW $0201 */
+  0x03, 0x01,  /* $B840: from DEFW $0103 */
+  0x02, 0x01,  /* $B842: from DEFW $0102 */
+  0x01, 0x01,  /* $B844: from DEFW $0101 */
+  0x01, 0x02   /* $B846: from DEFW $0201 */
 };
 
 /* ----------------------------------------------------------------------- */

@@ -15,8 +15,11 @@
  * The recreated version is copyright (c) 2023-2026 David Thomas
  */
 
+#include <assert.h>
 #include <stdint.h>
 #include <stdio.h>
+#include <sys/time.h>
+#include <unistd.h>
 
 #include "SDL.h"
 
@@ -43,6 +46,8 @@
 #define WINDOWWIDTH   (SCALEDWIDTH  + (SCALEDBORDER * 2))
 #define WINDOWHEIGHT  (SCALEDHEIGHT + (SCALEDBORDER * 2))
 
+#define MAXSTAMPS       (4)     // max depth of timestamps stack
+
 // -----------------------------------------------------------------------------
 
 typedef struct
@@ -53,12 +58,15 @@ typedef struct
   zxkeyset_t    keys;
   zxkempston_t  kempston;
 
+  int           quit; // bool
   int           paused; // bool
 
-  int           quit; // bool
+  struct timeval stamps[MAXSTAMPS];
+  int            nstamps;
 
   SDL_Renderer *renderer;
   SDL_Texture  *texture;
+  SDL_Thread   *game_thread;
   // int           menu; // bool
 
   int           sleep_us; // us to sleep for on the next loop
@@ -70,35 +78,90 @@ state_t;
 static void draw_handler(const zxbox_t *dirty,
                          void          *opaque)
 {
-  state_t  *state = opaque;
-  uint32_t *pixels;
-
-  pixels = zxspectrum_claim_screen(state->zx);
-  SDL_UpdateTexture(state->texture, NULL, pixels, GAMEWIDTH * 4);
-  zxspectrum_release_screen(state->zx);
+  // SDL_UpdateTexture must be called from the main thread (Metal requirement).
+  // The main loop picks up changes via zxspectrum_claim_screen.
+  (void) dirty;
+  (void) opaque;
 }
 
 static void stamp_handler(void *opaque)
 {
   state_t *state = opaque;
 
-  // TODO: Save timestamps.
+  // Stack timestamps as they arrive
+  assert(state->nstamps < MAXSTAMPS);
+  if (state->nstamps >= MAXSTAMPS)
+    return;
+  gettimeofday(&state->stamps[state->nstamps++], NULL);
 }
 
 static int sleep_handler(int durationTStates, void *opaque)
 {
   state_t *state = opaque;
+  int      paused;
 
-  // TODO: Sleep.
-  //
-  //usleep(durationTStates * 1000000 / 3500000);
-  //emscripten_sleep(durationTStates * 1000000 / 3500000);
-  //
-  // Note that we can't sleep here: in this single-threaded model it would
-  // stall the UI.  Instead we could store the timing details here and apply
-  // them in the main_loop. Though that would still create lumpy effects due
-  // to the way the game does not currently yield to its caller during
-  // periods when it wants to sleep.
+  // Unstack timestamps (even if we're paused)
+  assert(state->nstamps > 0);
+  if (state->nstamps <= 0)
+    return state->quit;
+  --state->nstamps;
+
+  // Quit straight away if signalled
+  if (state->quit)
+    return 1;
+
+  paused = state->paused;
+  if (paused)
+  {
+    // If paused, sit in this loop, checking twice per second for unpausing
+    for (;;)
+    {
+      paused = state->paused;
+      if (!paused)
+        break;
+
+      usleep(500000); // 0.5s
+    }
+  }
+  else
+  {
+    // A Spectrum 48K has 69,888 T-states per frame and its Z80 runs at
+    // 3.5MHz (~50Hz) for a total of 3,500,000 T-states per second.
+    const double          tstatesPerSec = 3.5e6;
+
+    struct timeval        now;
+    double                duration; // seconds
+    const struct timeval *then;
+    struct timeval        delta;
+    double                consumed; // seconds
+
+    gettimeofday(&now, NULL); // get time now before anything else
+
+    {
+      // 'duration' tells us how long the operation should take since the previous mark call.
+      // Turn T-state duration into seconds
+      duration = durationTStates / tstatesPerSec;
+      // Adjust the game speed
+      //duration = duration * 100 / state->speed;
+
+      then = &state->stamps[state->nstamps];
+    }
+
+    delta.tv_sec  = now.tv_sec  - then->tv_sec;
+    delta.tv_usec = now.tv_usec - then->tv_usec;
+
+    consumed = delta.tv_sec + delta.tv_usec / 1e6;
+    if (consumed < duration)
+    {
+      double     delay; // seconds
+      useconds_t udelay;
+
+      // We didn't take enough time - sleep for the remainder of our duration
+      delay = duration - consumed;
+      udelay = delay * 1e6;
+      usleep(udelay);
+    }
+  }
 
   return 0;
 }
@@ -125,6 +188,14 @@ static void speaker_handler(int on_off, void *opaque)
   state_t *state = opaque;
 
   // TODO: All sound.
+}
+
+static int game_thread_fn(void *opaque)
+{
+  state_t *state = opaque;
+
+  chq_setup(state->game);
+  return 0;
 }
 
 /* ----------------------------------------------------------------------- */
@@ -221,11 +292,18 @@ static void my_main_loop(void *opaque)
     //   }
     // }
     // else
-    {
-      chq_main(state->game);
-    }
+    // {
+    //   chq_main(state->game);
+    // }
 
-    /* Update the texture and render it */
+    /* Update the texture from the game's converted screen buffer. */
+    {
+      uint32_t *pixels;
+
+      pixels = zxspectrum_claim_screen(state->zx);
+      SDL_UpdateTexture(state->texture, NULL, pixels, GAMEWIDTH * 4);
+      zxspectrum_release_screen(state->zx);
+    }
 
     /* Clear screen */
     // TODO: This ought to be the border colour, but CHQ's is always black.
@@ -320,10 +398,18 @@ int main(void)
   if (state.game == NULL)
     goto failure;
 
-  chq_setup(state.game);
+  state.game_thread = SDL_CreateThread(game_thread_fn, "game", &state);
+  if (state.game_thread == NULL)
+  {
+    fprintf(stderr, "Error: SDL_CreateThread: %s\n", SDL_GetError());
+    goto failure;
+  }
 
   while (!state.quit)
     my_main_loop(&state);
+
+  chq_stop(state.game);
+  SDL_WaitThread(state.game_thread, NULL);
 
   chq_destroy(state.game);
   zxspectrum_destroy(state.zx);

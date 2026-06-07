@@ -92,7 +92,7 @@ const u8 chatterblk_tony_hold_on[3];
 
 const char *common_chatter_strings[CHATTERSTR__LIMIT];
 
-const u8 attract_messages[37];
+const u8 attract_messages[38];
 const u8 credits_messages[84];
 const u8 copyright_messages[92];
 
@@ -151,7 +151,7 @@ const u8 hazard_pos_speed[3 * 4];
 
 const u8 hero_car_jump_table[10 * 2];
 const u8 table_b059[5 * 2];
-const u16 horizon_table[16];
+const u8  horizon_table[32]; // byte table; Z80 $B828
 
 const u8 smoke_ce0c_template[13];
 const u8 smoke_ce19_template[13];

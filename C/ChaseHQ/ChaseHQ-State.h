@@ -18,6 +18,8 @@
 #ifndef CHASEHQ_STATE_H
 #define CHASEHQ_STATE_H
 
+#include <setjmp.h>
+
 #include "C99/Types.h"
 #include "ZXSpectrum/Spectrum.h"
 
@@ -26,7 +28,7 @@
 
 /* ----------------------------------------------------------------------- */
 
-typedef void (dr_callback_t)(chqstate_t *state, u8 B, u8 D);
+typedef void (dr_callback_t)(chqstate_t *state, u8 B, u16 DE);
 
 typedef void (plot_sprite_cb_t)(chqstate_t *state,
                                 int         IXjump_offset,
@@ -84,7 +86,7 @@ struct stagevars {
   // $A185
   u8        no_objects_counter;
   // $A186
-  u16       horizon_attribute;
+  u16       horizon_attribute; // Z80 address
 };
 
 /* ----------------------------------------------------------------------- */
@@ -101,6 +103,9 @@ struct chqstate {
    * Virtual ZX Spectrum hardware we're driving.
    */
   zxspectrum_t *speccy;
+
+  jmp_buf      host_quit_jmp;
+  volatile int host_quit;
 
   /* ------------------------------------------------------------------------
    * State variables as per the original, ordered by memory location.
@@ -199,7 +204,7 @@ struct chqstate {
   // $90F1 (SM) in draw_overhead
   u8        do_SM_90F1;
   // $9115 (SM) in draw_overhead
-  u8        do_SM_9115;
+  u8        do_SM_9115_spanwidthwords;
 
   // $9396 (SM) in draw_object_common
   u8        doc_SM_9395;
@@ -574,8 +579,16 @@ struct chqstate {
   const u8 *rm_SM_BE6D_curvature_one_command_ptr; // curvature one_command ptr
   // $BEBF (SM) in rm_cycle_buffer_offset
   const u8 *rm_SM_BEBF_height_one_command_ptr; // height one_command ptr
+  // $BF0A (SM) in rm_cycle_buffer_offset
+  const u8 *rm_SM_BF0A_lanes_one_command_ptr; // lanes one_command ptr
   // $BF2D (SM) in rm_cycle_buffer_offset
   u8        rm_SM_BF2D; // lanes current value
+  // $BF84 (SM) in rm_cycle_buffer_offset
+  const u8 *rm_SM_BF84_rightside_one_command_ptr; // rightside one_command ptr
+  // $BFCD (SM) in rm_cycle_buffer_offset
+  const u8 *rm_SM_BFCD_leftside_one_command_ptr; // leftside one_command ptr
+  // $C046 (SM) in rm_cycle_buffer_offset
+  const u8 *rm_SM_C046_hazards_one_command_ptr; // hazards one_command ptr
 
   // $C058 (SM) in read_map
   u8        rm_SM_C058; // current hazard command
@@ -668,9 +681,13 @@ struct chqstate {
   // $E336
   u8        table_e336[21]; // clamped copy of height table
   // $E34B
-  u8        horizon_table_e34b[3]; // horizon related
+  u8        horizon_table_e34b[3]; // horizon level related
   // $E34F
   u8        object_positions[21];
+  // Conv: Z80 gap $E364-$E7FF (1180 bytes). build_curve_table_sub_cca8 writes
+  // backward from table_e800 and can overflow past [0]; in Z80 this landed in
+  // the gap. Replicate that gap so the overrun stays harmless.
+  u8        _gap_e364[0x800 - 0x364]; // 1180 bytes
   // $E800
   u16       table_e800[128];
   // $E900
@@ -708,7 +725,7 @@ struct chqstate {
   u8        SM_EF39_drum_speed;
 
   // $F000
-  u8        backbuffer[BACKBUFFER_LENGTH];
+  u8        backbuffer[BACKBUFFER_LENGTH + BACKBUFFER_OVERFLOW];
 };
 
 #endif /* CHASEHQ_STATE_H */
