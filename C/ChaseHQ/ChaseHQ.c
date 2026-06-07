@@ -3172,7 +3172,7 @@ static void draw_overhead(chqstate_t       *state,
   // "Scale down" pattern
   counter = state->fast_counter & 0xE0;
   counter = (counter - (counter >> 2) - (counter >> 4));
-  HLvertical = &vertical_e600[counter / 22][Bparam];
+  HLvertical = &persp_y_scale[counter / 22][Bparam];
 
   Cparam = IY[0] - IY[0x35];
   Avertical = *HLvertical;
@@ -3341,7 +3341,7 @@ static void draw_stretchy_object_common(chqstate_t       *state,
   // incoming value to the 8x22 byte tables. So fast_counter indexes the rows of
   // the table.
   counter = counter - (counter >> 2) - (counter >> 4);
-  SM_91DB_vertical = vertical_e600[counter / 22][0];
+  SM_91DB_vertical = persp_y_scale[counter / 22][0];
   HLstretchy = DEstretchy; // was EX DE,HL
   DEbitmapoffset = MIN(Bdepth, DEPTHSET_MAX) * 2 - 1; // prob 1-indexed so the -1 is +1
   C_total = 0; // increases with loop
@@ -3515,7 +3515,7 @@ static void draw_tunnel_light_common(chqstate_t            *state,
   // "Scale down" pattern
   counter = state->fast_counter & 0xE0;
   counter = counter - (counter >> 2) - (counter >> 4);
-  A = vertical_e600[counter / 22][B];
+  A = persp_y_scale[counter / 22][B];
   A = (A >> 2) - A;
 
   // callback must need to take A
@@ -11167,7 +11167,7 @@ dt_c1c8:
   E = state->fast_counter & 0xE0;
   A = A - (E >> 2) - (E >> 4); // map (0,32,64,96,...,224) to (0,22,44,66,...,154)
   A += (IY - &state->table_e300[0]); // was IYl
-  DE = &vertical_e600[A / 22][A % 22];
+  DE = &persp_y_scale[A / 22][A % 22];
   B = *IY - B;
   A = *DE;
   E = A;
@@ -12872,10 +12872,10 @@ static void build_curve_table(chqstate_t *state, int forked)
 
   A = state->fast_counter & 0xE0;
   A = A - (A >> 2) - (A >> 4); // map (0,32,64,96,...,224) to (0,22,44,66,...,154)
-  IY = &horizontal_e6b0[A / 22][0];
+  IY = &persp_x_scale_right[A / 22][0];
 
   // now need high byte of offset from base of struct, seems to be $E6 or $E7
-  A = 0xE6 + ((IY - &horizontal_e6b0[0][0]) >> 8);
+  A = 0xE6 + ((IY - &persp_x_scale_right[0][0]) >> 8);
   A = multiply(A, curvature_C);
   A = (128 - A) & 0xFE; // 0xFE must round to whole word
   // A expecting $7C to $82 depending on curvature (7C if bending right?)
@@ -12960,7 +12960,7 @@ static void build_curve_table(chqstate_t *state, int forked)
   A = state->fast_counter & 0xE0;
   A = A - (A >> 2) - (A >> 4); // map (0,32,64,96,...,224) to (0,22,44,66,...,154)
 
-  HLe760 = &horizontal_e760[A / 22][0];
+  HLe760 = &persp_x_delta_left[A / 22][0];
   DEe320 = &state->table_e320[0];
   for (Bdash = 22; Bdash > 0; Bdash--)
     *DEe320++ += *HLe760++;
@@ -13111,7 +13111,7 @@ static void build_height_table(chqstate_t *state)
   orig_counter = counter; // Copy to be a multiplier later
   counter = counter - (counter >> 2) - (counter >> 4);
 
-  pvtabbase = pvtab = &vertical_e600[counter / 22][1];
+  pvtabbase = pvtab = &persp_y_scale[counter / 22][1];
   C = -multiply(orig_counter, heightbyte);
   // EXX - bank
 

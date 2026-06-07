@@ -283,9 +283,9 @@ const u8 circle_transition_mask[7 * 8];
 
 const u16 inward_bend_table[96];
 
-const u8 vertical_e600[8][22];
-const u8 horizontal_e6b0[8][22];
-const u8 horizontal_e760[8][22];
+const u8 persp_y_scale[8][22];
+const u8 persp_x_scale_right[8][22];
+const u8 persp_x_delta_left[8][22];
 
 typedef struct {
   u8        nframes;  // stores nframes+1
