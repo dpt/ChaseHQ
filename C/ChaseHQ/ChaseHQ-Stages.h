@@ -178,6 +178,8 @@
 #define MAP_LANES_DIRTTRACK_VAL         (0xC1)
 #define MAP_LANES_FORKED_VAL            (0xED)
 
+#define MAP_LANES_LEFT_OFFSET_MASK      (0x03)
+
 #define MAP_LANES_4(D)                  (D), (MAP_LANES_4_VAL)
 #define MAP_LANES_3L(D)                 (D), (MAP_LANES_3L_VAL)
 #define MAP_LANES_3R(D)                 (D), (MAP_LANES_3R_VAL)

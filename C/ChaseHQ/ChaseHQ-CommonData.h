@@ -150,7 +150,7 @@ const hazard_t hazard_template;
 const u8 hazard_pos_speed[3 * 4];
 
 const u8 hero_car_jump_table[10 * 2];
-const u8 table_b059[5 * 2];
+const u8 car_jump_resume_params[5 * 2];
 const u8  horizon_table[32]; // byte table; Z80 $B828
 
 const u8 smoke_ce0c_template[13];
@@ -281,7 +281,7 @@ const u8 forked_road_exit_right_lanes[12];
 const u8 spiral_transition_mask[13 * 8];
 const u8 circle_transition_mask[7 * 8];
 
-const u16 inward_bend_table[96];
+const u16 curvature_to_xpos[96];
 
 const u8 persp_y_scale[8][22];
 const u8 persp_x_scale_right[8][22];

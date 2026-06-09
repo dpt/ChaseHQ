@@ -2276,8 +2276,8 @@ const u8 hero_car_jump_table[10 * 2] = {
 
 // $B059
 //
-// pairs of (offset into hero_car_jump_table, y_offset)
-const u8 table_b059[5 * 2] = {
+// Five pairs of (jump_arc_offset, y_height)
+const u8 car_jump_resume_params[5 * 2] = {
   0x08, 0x02,
   0x06, 0x04,
   0x04, 0x06,
@@ -4379,8 +4379,9 @@ const u8 circle_transition_mask[7 * 8] = {
 
 /* ----------------------------------------------------------------------- */
 
-// $E540
-const u16 inward_bend_table[96] = {
+// $E540 - Converts a curvature to a road X position
+// Approx? v[i] = round(128 * (1 + tan((i − 32) · π/128)))
+const u16 curvature_to_xpos[96] = {
   0x0000,
   0x0006,
   0x000C,

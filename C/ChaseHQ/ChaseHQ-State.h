@@ -28,7 +28,7 @@
 
 /* ----------------------------------------------------------------------- */
 
-typedef void (dr_callback_t)(chqstate_t *state, u8 B, u16 DE);
+typedef void (dr_callback_t)(chqstate_t *state, u8 Bfill_pattern, u16 DEscreen_ptr, u8 L);
 
 typedef void (plot_sprite_cb_t)(chqstate_t *state,
                                 int         IXjump_offset,
@@ -611,15 +611,15 @@ struct chqstate {
   // $C4B2 (SM) in draw_road
   dr_callback_t *dr_SM_C4B2_callback;
   // $C56D (SM) in draw_road
-  u16       dr_SM_C56D;
+  u16       dr_SM_C56D_screen_ptr_maybe;
   // $C5AC (SM) in draw_road
-  u8        dr_SM_C5AC;
+  s8        dr_SM_C5AC_neg_lane_count;
   // $C5B3 (SM) in draw_road
-  u8        dr_SM_C5B3_left_hand_table; // table hi byte
+  u8        dr_SM_C5B3_left_hand_table_hi; // table hi byte
   // $C5D9 (SM) in draw_road
-  u8        dr_SM_C5D9_right_hand_table;
+  u8        dr_SM_C5D9_right_hand_table_hi;
   // $C5F9 (SM) in draw_road
-  u8        dr_SM_C5F9;
+  u8        dr_SM_C5F9_backbuf_ptr;
   // $C60A (SM) in draw_road
   u8        dr_SM_C60A;
   // $C61B (SM) in draw_road
@@ -627,23 +627,23 @@ struct chqstate {
   // $C62C (SM) in draw_road
   u8        dr_SM_C62C;
   // $C642 (SM) in draw_road
-  u8        dr_SM_C642_left_hand_table; // table hi byte
+  u8        dr_SM_C642_left_hand_table_hi; // table hi byte
   // $C651 (SM) in draw_road
   u8        dr_SM_C651;
   // $C677 (SM) in draw_road
-  u8        dr_SM_C677;
+  u8        dr_SM_C677_ret_nc_or_nop;
   // $C68B (SM) in draw_road
-  u8        dr_SM_C68A_right_hand_table;
+  u8        dr_SM_C68A_right_hand_table_hi;
   // $C698 (SM) in draw_road
   u8        dr_SM_C698;
   // $C6AD (SM) in draw_road
   dr_callback_t *dr_SM_C6AD;
   // $C6B2 (SM) in draw_road
-  u8        dr_SM_C6B2; // inital road stripe state
+  u8        dr_SM_C6B2_initial_stripe_state; // inital road stripe state
   // $C6BC (SM) in draw_road
   u8        dr_SM_C6BC_fill_pattern;
   // $C6D3 (SM) in draw_road
-  u8        dr_SM_C6D3_xor;
+  u8        dr_SM_C6D3_ret_nc_or_nop;
   // $C6D8 (SM) in draw_road
   u8        dr_SM_C6D8; // road edge line thickness
   // $C7E7 (SM) in draw_road
