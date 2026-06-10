@@ -838,15 +838,15 @@ static void draw_road_scene_change(chqstate_t *state, u8 *IX, u8 *IY);
 static void draw_road(chqstate_t *state);
 static void dr_read_lanes(chqstate_t *state, u8 *IXplanes, u8 *IYpheight, u8 Bfill_pattern, u8 C, u16 DEbackbuf, u8 L);
 static void dr_four_lane_highway(chqstate_t *state, u8 Bfill_pattern, u16 DEbackbuf, u8 L);
-static void dr_c54d(chqstate_t *state, u8 Bdash, u16 DEdash, u8 Ldash, dr_callback_t *HLcallback);
+static void dr_c54d(chqstate_t *state, u8 Bfill_pattern, u16 DEdash, u8 Ldash, dr_callback_t *HLcallback);
 static void dr_c551(chqstate_t *state, u8 Bfill_pattern, u16 DEbackbuf, u8 L);
-static void dr_c55f_unfilled_path(chqstate_t *state, u8 Bfill_pattern, u16 DEbackbuf, u8 L);
+static void dr_c55f_unfilled_path(chqstate_t *state, u16 DEbackbuf, u8 L, u8 Adash_fill);
 static void dr_c565_unfilled_path(chqstate_t *state, u16 DEbackbuf);
-static void dr_scanline_rollover_2(chqstate_t *state, u16 DEbackbuf, u8 L);
+static void dr_scanline_rollover_2(chqstate_t *state, u16 DEbackbuf, u8 L, u8 Adash_fill);
 static void dr_scanline_rollover_1(chqstate_t *state, u16 DEbackbuf);
-static void dr_c598_filled_path(chqstate_t *state, u8 Bfill_pattern, u16 DEbackbuf, u8 L);
-static void dr_c5a1(chqstate_t *state, u8 Bfill_pattern, u16 DEbackbuf, u8 L);
-static void dr_c5a7(chqstate_t *state, u16 DEbackbuf, u8 L);
+static void dr_c598_filled_path(chqstate_t *state, u16 DEbackbuf, u8 L, u8 Adash_fill);
+static void dr_c5a1(chqstate_t *state, u16 DEbackbuf, u8 L, u8 Adash_fill);
+static void dr_fill(chqstate_t *state, u16 DEbackbuf, u8 L, u8 Adash_fill);
 
 static void pre_shift_backdrop(chqstate_t *state);
 
@@ -11544,7 +11544,7 @@ c439:
   IY++; /* $C439: INC IY -- advance height pointer for next iteration */
 c43b:
   state->dr_SM_C4B2_callback = dr_four_lane_highway;
-  dr_c551(state, 0, 0, 0);
+  dr_c551(state, 0, 0, 0); // FIXME - must be crap
 }
 
 /**
@@ -11766,8 +11766,11 @@ static void dr_c54d(chqstate_t *state, u8 Bfill_pattern, u16 DEbackbuf, u8 L, dr
  */
 static void dr_c551(chqstate_t *state, u8 Bfill_pattern, u16 DEbackbuf, u8 L)
 {
-  if (Bfill_pattern) { // Conv: removed use of A
-    dr_c598_filled_path(state, Bfill_pattern, DEbackbuf, L); // exit via
+  u8 Afill_pattern;
+
+  Afill_pattern = Bfill_pattern;
+  if (Afill_pattern) {
+    dr_c598_filled_path(state, DEbackbuf, L, Afill_pattern); // exit via
     return;
   }
 
@@ -11775,7 +11778,7 @@ static void dr_c551(chqstate_t *state, u8 Bfill_pattern, u16 DEbackbuf, u8 L)
   state->dr_SM_C6AD = dr_c55f_unfilled_path;
   // EXX
   // EX AF,AF'
-  dr_c55f_unfilled_path(state, Bfill_pattern, DEbackbuf, L); // was FALLTHROUGH
+  dr_c55f_unfilled_path(state, DEbackbuf, L, Afill_pattern); // was FALLTHROUGH
 }
 
 /**
@@ -11786,7 +11789,7 @@ static void dr_c551(chqstate_t *state, u8 Bfill_pattern, u16 DEbackbuf, u8 L)
  * \param[in] DEbackbuf     Pointer into backbuffer.
  * \param[in] L             Value
  */
-static void dr_c55f_unfilled_path(chqstate_t *state, u8 Bfill_pattern, u16 DEbackbuf, u8 L)
+static void dr_c55f_unfilled_path(chqstate_t *state, u16 DEbackbuf, u8 L, u8 Adash_fill)
 {
   u8 Ahi;
 
@@ -11817,10 +11820,12 @@ static void dr_c565_unfilled_path(chqstate_t *state, u16 DEbackbuf)
   u16 HLdash_fill;
   u8  Cdash;
 
-  state->dr_SM_C56D_screen_ptr_maybe = DEbackbuf;
+  state->dr_SM_C56D_backbuf_ptr = DEbackbuf;
   B = 0xFF;
+
   // EXX - BANK
-  DEdash = state->dr_SM_C56D_screen_ptr_maybe;
+
+  DEdash = state->dr_SM_C56D_backbuf_ptr;
   Ldash = (DEdash & 0xFF) + 31;
   Hdash = DEdash >> 8;
   SPoutput = ADDRTOBACKBUF((Hdash << 8) | Ldash);
@@ -11838,12 +11843,12 @@ static void dr_c565_unfilled_path(chqstate_t *state, u16 DEbackbuf)
  * \param[in] DEbackbuf Pointer into backbuffer.
  * \param[in] L         Value
  */
-static void dr_scanline_rollover_2(chqstate_t *state, u16 DEbackbuf, u8 L)
+static void dr_scanline_rollover_2(chqstate_t *state, u16 DEbackbuf, u8 L, u8 Adash_fill)
 {
   LO_ADD(DEbackbuf, 32);
   if ((DEbackbuf & 0xFF) >= 32) // no carry
     HI_ADD(DEbackbuf, 16);
-  dr_c5a7(state, DEbackbuf, L); // exit via
+  dr_fill(state, DEbackbuf, L, Adash_fill); // exit via
 }
 
 /**
@@ -11863,121 +11868,122 @@ static void dr_scanline_rollover_1(chqstate_t *state, u16 DEbackbuf)
 /**
  * $C598: draw_road: c598
  *
- * \param[in] state         Pointer to game state.
- * \param[in] Bfill_pattern Fill pattern.
- * \param[in] DEbackbuf     Pointer into backbuffer.
- * \param[in] L             Value
+ * \param[in] state      Pointer to game state.
+ * \param[in] DEbackbuf  Pointer into backbuffer.
+ * \param[in] L          Value
+ * \param[in] Adash_fill Fill pattern.
  */
-static void dr_c598_filled_path(chqstate_t *state, u8 Bfill_pattern, u16 DEbackbuf, u8 L)
+static void dr_c598_filled_path(chqstate_t *state, u16 DEbackbuf, u8 L, u8 Adash_fill)
 {
   // EXX
   state->dr_SM_C6AD = dr_c5a1;
   // EXX
   // EX AF,AF'
-  dr_c5a1(state, Bfill_pattern, DEbackbuf, L); // was FALLTHROUGH
+  dr_c5a1(state, DEbackbuf, L, Adash_fill); // was FALLTHROUGH
 }
 
 /**
  * $C5A1: draw_road: c5a1
  *
- * \param[in] state         Pointer to game state.
- * \param[in] Bfill_pattern Fill pattern.
- * \param[in] DEbackbuf     Pointer into backbuffer.
- * \param[in] L             Value
+ * \param[in] state      Pointer to game state.
+ * \param[in] DEbackbuf  Pointer into backbuffer.
+ * \param[in] L          Value
+ * \param[in] Adash_fill ...
  */
-static void dr_c5a1(chqstate_t *state, u8 Bfill_pattern, u16 DEbackbuf, u8 L)
+static void dr_c5a1(chqstate_t *state, u16 DEbackbuf, u8 L, u8 Adash_fill)
 {
   u8 A;
 
   A = DEbackbuf >> 8;
   HI_DEC(DEbackbuf);
   if ((A & 0x0F) == 0) {
-    dr_scanline_rollover_2(state, DEbackbuf, L); // exit via
+    dr_scanline_rollover_2(state, DEbackbuf, L, Adash_fill); // exit via
     return;
   }
 
-  dr_c5a7(state, DEbackbuf, L); // was FALLTHROUGH
+  dr_fill(state, DEbackbuf, L, Adash_fill); // was FALLTHROUGH
 }
 
 /**
- * $C5A7: draw_road: c5a7
+ * $C5A7: draw_road: fill
  *
- * \param[in] state     Pointer to game state.
- * \param[in] DEbackbuf Pointer into backbuffer.
- * \param[in] L         TBD
+ * \param[in] state      Pointer to game state.
+ * \param[in] DEbackbuf  Pointer into backbuffer.
+ * \param[in] L          TBD
+ * \param[in] Adash_fill TBD
  */
-static void dr_c5a7(chqstate_t *state, u16 DEbackbuf, u8 L)
+static void dr_fill(chqstate_t *state, u16 DEbackbuf, u8 L, u8 Adash_fill)
 {
-  int carry = 0;
-  u8  A;
-  u8  B;
-  u8  Cmask;
+  int  carry = 0;
+  u8   A;
+  u8   Bneg_lane_count;
+  u8   Ldash;
+  u8   Bdash_holds_16;
+  u8   Cdash_mask;
+  u16 *HLdash;
+  u8   Aleftval;
+  u8   Anewvar;
+  u8   Edash;
+  u8   Arightval;
+  u16  DEdash_backbuf;
+  u8   Hdash;
+  u8  *SPoutput;
 
   state->dr_SM_C5F9_backbuf_ptr = DEbackbuf;
-  A = L;
-  B = state->dr_SM_C5AC_neg_lane_count;
-  // EXX - BANK?
-#if 0
-  L = A;
-  B = 16;
-  Cmask = 0xF8;
-  H = 0xE8; // left hand table
-  A = *HL;
-  // AND A
-  if (A) {
-    A = 0;
-    if (A was < 0)
-      goto dr_c5d3;
-    A = 15;
-    goto dr_c5d3;
+  A = L; // presumed lane mask... can't be right can it? must be the current offset
+  Bneg_lane_count = state->dr_SM_C5AC_neg_lane_count;
+
+  // EXX - BANK
+
+  Ldash = A;
+  Bdash_holds_16 = 16;
+  Cdash_mask = 0xF8; // propagate forward?
+
+  // reading words or bytes here? low or high byte?
+  HLdash = &state->xpos_road_left[Ldash]; // was Hdash = 0xE8; // left hand table
+  Aleftval = *HLdash;
+  if (Aleftval) {
+    Anewvar = ((s8) Aleftval < 0) ? 0 : 15;
+  } else {
+    Anewvar = (HLdash[-1] & Cdash_mask) >> 3;
+    RR(Anewvar);
+    Anewvar += carry;
+    if (A >= Bdash_holds_16)
+      A--;
   }
+  Edash = Anewvar;
+  Anewvar = ~Edash + Bdash_holds_16;
+  state->dr_SM_C62C_left_stripe_width = Anewvar;
 
-dr_c5c4:
-  A = (HL[-1] & Cmask) >> 3;
-  RR(A);
-  A += carry;
-  if (A >= B)
-    A--;
-
-dr_c5d3:
-  E = A;
-  A = ~E + B;
-  state->dr_SM_C62C = A;
-  H = 0xEC; // right hand table
-  A = *HL;
-  // AND A
-  if (A = 0)
-    goto dr_calc_righthand_width;
-  A = 15;
-  if (A was > 0)
-    goto dr_set_righthand_jump_table_target;
-  X = 0;
-  goto dr_set_righthand_jump_table_target;
-
-dr_calc_righthand_width:
-  L--;
-  A = (HL[-1] & Cmask) >> 3;
-  RR(A);
-
-dr_set_righthand_jump_table_target:
-  state->dr_SM_C60A = A;
+  HLdash = &state->xpos_road_right[Ldash]; // was Hdash = 0xEC; // right hand table
+  Arightval = *HLdash;
+  if (Arightval) {
+    Anewvar = ((s8) Arightval < 0) ? 0 : 15;
+  } else {
+    Anewvar = (HLdash[-1] & Cdash_mask) >> 3;
+    RR(Anewvar);
+  }
+  state->dr_SM_C60A_right_stripe_width = Anewvar;
 
   /* Calculate road jump table target */
-  state->dr_SM_C61B = ~A + B + E;
+  state->dr_SM_C61B_road_width = ~A + Bdash_holds_16 + Edash;
 
-  DEbackbuf = state->dr_SM_C5F9_backbuf_ptr;
-  L = E + 31;
-  H = D;
-  SPoutput = HL;
+  DEdash_backbuf = state->dr_SM_C5F9_backbuf_ptr;
+  Ldash = (DEdash_backbuf & 0xFF) + 31;
+  Hdash = DEdash_backbuf >> 8;
+  SPoutput = ADDRTOBACKBUF((Hdash << 8) | Ldash);
+
   // EX AF,AF' - unbank Afill
-  RLC(Afill);
+
+  RLC(Adash_fill);
+#if 0
   HLfill = Afill + (Afill << 8); // Widen stripe fill byte to whole word
   // EX AF,AF' - bank Afill
   BCzerofill = 0x0000; // Set road fill to zero
 
   /*  Fill right hand road stripes - starting from right hand side. */
 dr_righthand_jumptable:
-  switch (state->dr_SM_C60A / DIVIDER) {
+  switch (state->dr_SM_C60A_right_stripe_width / DIVIDER) {
   case  0: SPoutput -= 2; *SPoutput = HLfill;
   case  1: SPoutput -= 2; *SPoutput = HLfill;
   case  2: SPoutput -= 2; *SPoutput = HLfill;
@@ -11997,7 +12003,7 @@ dr_righthand_jumptable:
 
 dr_road_jumptable:
   /* Fill blank road surface - continuing from the right hand side. */
-  switch (state->dr_SM_C61B / DIVIDER) {
+  switch (state->dr_SM_C61B_road_width / DIVIDER) {
   case  0: SPoutput -= 2; *SPoutput = BCzerofill;
   case  1: SPoutput -= 2; *SPoutput = BCzerofill;
   case  2: SPoutput -= 2; *SPoutput = BCzerofill;
@@ -12016,7 +12022,7 @@ dr_road_jumptable:
   }
 
 dr_lefthand_jumptable:
-  switch (state->dr_SM_C62C / DIVIDER) {
+  switch (state->dr_SM_C62C_left_stripe_width / DIVIDER) {
 dr_c62e: // NEED TO SPLIT HERE
   case  0: SPoutput -= 2; *SPoutput = HLfill;
   case  1: SPoutput -= 2; *SPoutput = HLfill;
@@ -12046,7 +12052,8 @@ dr_c62e: // NEED TO SPLIT HERE
 
   // Otherwise zero.
   A = HL[-1];
-  // EXX bank/unbank
+
+  // EXX UNBANK
 
   /* Build address of road edge marking graphic. */
   Eindex = A; // save index
@@ -12057,7 +12064,7 @@ dr_c62e: // NEED TO SPLIT HERE
 
   // Top five bits select screen buffer addr?
   // If I break this it seems to affect the left hand side only.
-  E = ((Eindex >> 3) & 31) + B;
+  E = ((Eindex >> 3) & 31) + Bneg_lane_count;
 
   // AND-OR masking here. #REGde is address of screen buffer byte. #REGhl is
   // address of mask byte, followed by bitmap byte [then again since the edges are
@@ -12581,8 +12588,8 @@ static void forked_road_plotter(chqstate_t *state, u8 *IX, u8 *IY)
    * In Z80 the shadow context holds the screen address and counters.
    * In C we approximate from available state; exact values require the
    * full EXX infrastructure to be implemented in draw_road. */
-  D = (u8)(state->dr_SM_C56D_screen_ptr_maybe >> 8);   /* screen high byte */
-  E = (u8)(state->dr_SM_C56D_screen_ptr_maybe & 0xFF); /* screen low byte */
+  D = (u8)(state->dr_SM_C56D_backbuf_ptr >> 8);   /* screen high byte */
+  E = (u8)(state->dr_SM_C56D_backbuf_ptr & 0xFF); /* screen low byte */
   B = 0;                               /* 0 on first call (banked B uninit) */
   C = 0xF8;                            /* scan-block count ($F8 = 248) */
   /* Banked L: set by draw_road at $C5B0 as 'LD L,C' where C = 96 - IY[0] */

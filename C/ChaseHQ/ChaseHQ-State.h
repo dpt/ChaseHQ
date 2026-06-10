@@ -611,7 +611,7 @@ struct chqstate {
   // $C4B2 (SM) in draw_road
   dr_callback_t *dr_SM_C4B2_callback;
   // $C56D (SM) in draw_road
-  u16       dr_SM_C56D_screen_ptr_maybe;
+  u16       dr_SM_C56D_backbuf_ptr;
   // $C5AC (SM) in draw_road
   s8        dr_SM_C5AC_neg_lane_count;
   // $C5B3 (SM) in draw_road
@@ -619,13 +619,13 @@ struct chqstate {
   // $C5D9 (SM) in draw_road
   u8        dr_SM_C5D9_right_hand_table_hi;
   // $C5F9 (SM) in draw_road
-  u8        dr_SM_C5F9_backbuf_ptr;
+  u16       dr_SM_C5F9_backbuf_ptr;
   // $C60A (SM) in draw_road
-  u8        dr_SM_C60A;
+  u8        dr_SM_C60A_right_stripe_width;
   // $C61B (SM) in draw_road
-  u8        dr_SM_C61B;
+  u8        dr_SM_C61B_road_width;
   // $C62C (SM) in draw_road
-  u8        dr_SM_C62C;
+  u8        dr_SM_C62C_left_stripe_width;
   // $C642 (SM) in draw_road
   u8        dr_SM_C642_left_hand_table_hi; // table hi byte
   // $C651 (SM) in draw_road
@@ -637,7 +637,7 @@ struct chqstate {
   // $C698 (SM) in draw_road
   u8        dr_SM_C698;
   // $C6AD (SM) in draw_road
-  dr_callback_t *dr_SM_C6AD;
+  void    (*dr_SM_C6AD)(chqstate_t *state, u16 DEbackbuf, u8 L, u8 Adash_fill);
   // $C6B2 (SM) in draw_road
   u8        dr_SM_C6B2_initial_stripe_state; // inital road stripe state
   // $C6BC (SM) in draw_road
