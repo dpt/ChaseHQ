@@ -631,7 +631,7 @@ struct chqstate {
   // $C651 (SM) in draw_road
   u8        dr_SM_C651;
   // $C677 (SM) in draw_road
-  u8        dr_SM_C677_ret_nc_or_nop;
+  u8        dr_SM_C677_stripe_table_offset;
   // $C68B (SM) in draw_road
   u8        dr_SM_C68A_right_hand_table_hi;
   // $C698 (SM) in draw_road
@@ -643,7 +643,7 @@ struct chqstate {
   // $C6BC (SM) in draw_road
   u8        dr_SM_C6BC_fill_pattern;
   // $C6D3 (SM) in draw_road
-  u8        dr_SM_C6D3_ret_nc_or_nop;
+  u8        dr_SM_C6D3_stripe_xor_base;
   // $C6D8 (SM) in draw_road
   u8        dr_SM_C6D8; // road edge line thickness
   // $C7E7 (SM) in draw_road
