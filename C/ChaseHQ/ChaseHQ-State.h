@@ -38,27 +38,25 @@ typedef void (plot_sprite_cb_t)(chqstate_t *state,
                                 const u8   *HLdash_bitmap_data);
 
 struct hazard {
-  u8                used;
-  u8                distance;
-  u8                horz_pos;
-  u8                horz_clip;     // distance related
-  u8                dist_frac;
-  u8                horz_pos_on_road;
-  u8                persp_col;
-  s8                hit_timer;     // activation / delay / hit counter; set to $FC when perp hit
+  u8                used;              // HAZARD_USED (0xFF) or HAZARD_UNUSED (0x00)
+  u8                distance;          // approach counter (21..0); also reused as road-col low byte during draw
+  u8                horz_pos;          // horizontal screen position
+  u8                horz_clip;         // high byte of computed road X: 0=on screen, <0=clip left, >0=clip right
+  u8                dist_frac;         // fixed-point fractional distance; decremented by speed, carry advances distance
+  u8                horz_pos_on_road;  // lane/road position (0..255 across road width)
+  u8                persp_col;         // perspective-scaled column: (dist_frac * scale) >> 8; used for sprite column and road-edge row lookup
+  s8                hit_timer;         // hit sequence timer: 0=clear, >0=vehicle hit in progress, <0=perp hit cooldown ($FC=-4, counts to 0)
   hittable_t        hittable;
   hazard_handler_t *hit_handler;
-  u16               speed;    // 13 & 14
-  u8                hazard_flags;    // top bit is set for vehicles
-  u8                hit_wobble;
-  u8                hazard_lane_OR_perp_dist_hi; // perp distance high byte OR a hazard's lane
-  u8                current_lane;
-  u8                inverted; // controls sprite plotting (2 => inverted, 1 => ?, 0 => ?)
+  u16               speed;             // fixed-point approach rate: high byte = whole distance units/frame added to distance counter; low byte = fractional units/frame subtracted from dist_frac (carry advances distance)
+  u8                hazard_flags;      // 0x80=spawned vehicle; 0xFF=perp car; 1/2=post-hit damage state; bit 7 = is vehicle
+  u8                hit_wobble;        // horizontal wobble offset from hit animation table (table_acdb), subtracted from persp_col
+  u8                hazard_lane_OR_perp_dist_hi; // perp: high byte of distance; hazard: current lane index
+  u8                current_lane;      // target lane (counts down to 0 during lane-change animation)
+  u8                inverted;          // sprite plot mode: 0=normal, 1=stopped/neutral, 2=inverted
 };
 
-// crap name
 struct stagevars {
-
   // $A16D
   u8        spawn_accumulator;
   // $A16E
