@@ -6697,18 +6697,15 @@ pb_check_changing_lane_flag:
   if (A >= 7)
     goto pb_check_lane;
 
-  // I'm failing to understand what the following section does. It's a
-  // countdown that, when it hits zero, picks a new random countdown value
-  // summed with smash_5d1b. I can only think that it's a delay loop between
-  // lane changes.
-  //
+  // Delay between perp lane changes: pb_lane_change_timer counts down; on
+  // zero it resets to perp_lane_change_base + (rng & 31).
   // In-place decrementing counter.
   A = state->pb_lane_change_timer - 1;
   if (A)
     goto pb_update_counter;
 
   // When it hits zero we pick a random number...
-  A = state->stage->smash_5d1b + (rng(state) & 31);
+  A = state->stage->perp_lane_change_base + (rng(state) & 31);
 
 pb_update_counter:
   state->pb_lane_change_timer = A;
@@ -11898,7 +11895,7 @@ static void dr_c598_filled_path(chqstate_t *state, u16 DEbackbuf, u8 L, u8 Adash
  * \param[in] state      Pointer to game state.
  * \param[in] DEbackbuf  Pointer into backbuffer.
  * \param[in] L          Value
- * \param[in] Adash_fill ...
+ * \param[in] Adash_fill Fill pattern.
  */
 static void dr_c5a1(chqstate_t *state, u16 DEbackbuf, u8 L, u8 Adash_fill)
 {
@@ -11923,7 +11920,7 @@ static void dr_c5a1(chqstate_t *state, u16 DEbackbuf, u8 L, u8 Adash_fill)
  * \param[in] state      Pointer to game state.
  * \param[in] DEbackbuf  Pointer into backbuffer.
  * \param[in] L          TBD
- * \param[in] Adash_fill TBD
+ * \param[in] Adash_fill Fill pattern.
  */
 static void dr_fill(chqstate_t *state, u16 DEbackbuf, u8 L, u8 Adash_fill)
 {

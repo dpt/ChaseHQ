@@ -239,7 +239,7 @@ const stage_t stage1 = {
   },
 
   20, // car_spawn_delay
-  80, // smash_5d1b
+  80, // perp_lane_change_base
   90, // smash_perp_delay
 
   {

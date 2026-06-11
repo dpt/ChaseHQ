@@ -341,7 +341,7 @@ typedef struct stage {
   const bitmap_t   *bitmaps_vehicles[4];
 
   u8                car_spawn_delay;
-  u8                smash_5d1b;
+  u8                perp_lane_change_base;
   u8                smash_perp_delay;
 
   scenedata_t       stage_data;
