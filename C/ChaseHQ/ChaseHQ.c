@@ -7389,7 +7389,7 @@ static void draw_helicoper_part(chqstate_t                *state,
   u8              Abot;   /* was A */
   u8              C;      /* was C */
 
-  BC = state->dhl_helipos; // signed?
+  BC = state->dhl_helipos;
   state->doc_SM_933D_col_pos = -A; // in draw_object_common
 
   screen_pos = (s8) DEinnerbitmap->horz_offset + BC; // loads byte and widens
@@ -7430,10 +7430,10 @@ static void draw_helicoper_part(chqstate_t                *state,
 static void move_helicopter(chqstate_t *state)
 {
   u8  height;     /* was A & C */
-  u8  direction;  /* was A */
+  s8  direction;  /* was A */
   u8  offset;     /* was A */
-  u16 helipos;    /* was HL */
-  u16 newhelipos; /* was HL */
+  s16 helipos;    /* was HL */
+  s16 newhelipos; /* was HL */
   u16 centre;     /* was DE */
 
   if (state->helicopter_control == 0)
@@ -8106,7 +8106,7 @@ static void draw_arrow_fire_smoke(chqstate_t *state,
   const hazard_t *IXhazard;            /* was IX */
   u8              Bx;                  /* was B */
   u8              Cy;                  /* was C */
-  u8              Ahorz_clip;               /* was A */
+  s8              Ahorz_clip;               /* was A */
   const u8       *HLarrows;            /* was HL */
   const u8       *HLsmokes;            /* was HL */
   u8              Ahorz_pos;           /* was A */
@@ -8144,7 +8144,7 @@ static void draw_arrow_fire_smoke(chqstate_t *state,
     Ahorz_clip = IXhazard->horz_clip;
     // AND A3
     Ahorz_pos = IXhazard->horz_pos;
-    if ((s8) Ahorz_clip < 0)
+    if (Ahorz_clip < 0)
       goto dh_af2f;
     if (Ahorz_clip != 0)
       goto dh_draw_done_1;
@@ -8335,7 +8335,7 @@ static void dh_draw_bitmap(chqstate_t     *state,
                            const u8       *IY)
 {
   u8 Ewidth_bits;
-  u8 A1;
+  s8 A1;
   u8 A2;
 
   Ewidth_bits = HLbitmap->width_bytes * 8;
@@ -8343,7 +8343,7 @@ static void dh_draw_bitmap(chqstate_t     *state,
   A1 = state->dh_SM_B029_horz_clip;
   // Set flags for A here
   A2 = state->dh_SM_B02C_horz_pos;
-  if ((s8) A1 < 0)
+  if (A1 < 0)
     goto dh_exit_2;
   if (A1)
     return;

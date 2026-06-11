@@ -44,7 +44,7 @@ struct hazard {
   u8                used;              // HAZARD_USED (0xFF) or HAZARD_UNUSED (0x00)
   u8                distance;          // approach counter (21..0); also reused as road-col low byte during draw
   u8                horz_pos;          // horizontal screen position
-  u8                horz_clip;         // high byte of computed road X: 0=on screen, <0=clip left, >0=clip right
+  s8                horz_clip;         // high byte of computed road X: 0=on screen, <0=clip left, >0=clip right
   u8                dist_frac;         // fixed-point fractional distance; decremented by speed, carry advances distance
   u8                horz_pos_on_road;  // lane/road position (0..255 across road width)
   u8                persp_col;         // perspective-scaled column: (dist_frac * scale) >> 8; used for sprite column and road-edge row lookup
@@ -426,7 +426,7 @@ struct chqstate {
   // $A25E
   u8        horizon_x_scroll; // cycles 4..1 or similar when roads curve
   // $A25F
-  u16       horizontal_adjust;
+  s16       horizontal_adjust;
   // $A261
   u8        horizon_scroll_sub;
   // $A262
@@ -478,14 +478,14 @@ struct chqstate {
   u8        dh_heli_rotor_pos;
 
   // $AA94 (SM) in dhl_aa94
-  u16       dhl_helipos; // signed?
+  s16       dhl_helipos;
 
   // $AACB (SM) in move_helicopter
   u8        mh_height; // height
   // $AAD7 (SM) in move_helicopter
   u8        mh_animframe; // animation counter (0..3)
   // $AADF (SM) in move_helicopter
-  u8        mh_direction; // direction (-1 or 1)
+  s8        mh_direction; // direction (-1 or 1)
   // $AAE8 (SM) in move_helicopter
   u8        mh_offset; // horizontal pos/offset
   // $AAF6 (SM) in move_helicopter
@@ -505,7 +505,7 @@ struct chqstate {
   // $B023 (SM) in ...
   u8        dh_SM_B023_col_pos;
   // $B029 (SM) in ...
-  u8        dh_SM_B029_horz_clip;
+  s8        dh_SM_B029_horz_clip;
   // $B02C (SM) in ...
   u8        dh_SM_B02C_horz_pos;
 

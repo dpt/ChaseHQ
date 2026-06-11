@@ -236,7 +236,9 @@
 
 /* ----------------------------------------------------------------------- */
 
-// Are bitmaps always given in groups of five or six? Or ten?
+// No. 5 per depth level for depthset objects (×sub-components: 15, 25 etc.).
+// 6 for directly-indexed objects: four size bands where 2–3 share data, 4–5
+// are an unshifted/shifted pair. Turn signs: 10 = 5 unflipped + 5 flipped.
 typedef struct bitmap {
   u8        width_bytes;
   u8        flags;
