@@ -60,7 +60,7 @@ struct hazard {
 struct stagevars {
 
   // $A16D
-  u8        var_a16d;
+  u8        spawn_accumulator;
   // $A16E
   u8        idle_timer;
   // $A16F
@@ -207,9 +207,9 @@ struct chqstate {
   u8        do_SM_9115_spanwidthwords;
 
   // $9396 (SM) in draw_object_common
-  u8        doc_SM_9395;
+  u8        doc_SM_9395_shift_select;
   // $933D (SM) in draw_object_common
-  u8        doc_SM_933D;
+  u8        doc_SM_933D_col_pos;
   // $93C0 (SM) in draw_object_common
   u8        doc_SM_93C0_inverted; // controls sprite plotting (2 => inverted, 1 => ?, 0 => ?)
   // $9404 (SM) in draw_object_common
@@ -227,7 +227,7 @@ struct chqstate {
   // $946C (SM) in draw_object_common
   const u8 *doc_SM_946C_bitmap_ptr; // bitmap data ptr
   // $946F (SM) in draw_object_common
-  u8       doc_SM_946F;
+  u8       doc_SM_946F_y;
 
   // $9618
   u8        rng_seed[3];
@@ -265,7 +265,7 @@ struct chqstate {
   char     *SM_address_of_score_digits; // was self modified
 
   // $9E22 (SM) in plot_turbos_and_scores
-  u8        SM_9e22;
+  u8        turbo_spin_frame;
 
   // $A0CC
   u8        kempston_flag;
@@ -413,7 +413,7 @@ struct chqstate {
   // TODO check signed use of incline
   s8        incline; // $FD..$03 = climbing/level/descending
   // $A259
-  u8        var_a259;
+  u8        prev_road_height;
   // $A25A
   u8        horizon_y_a25a; // related to changes in incline (goes 0/1/2)
   // $A25B
@@ -427,9 +427,9 @@ struct chqstate {
   // $A25F
   u16       horizontal_adjust;
   // $A261
-  u8        var_a261;
+  u8        horizon_scroll_sub;
   // $A262
-  u8        var_a262;
+  u8        curvature_ticks;
   // $A263
   u8        right_turn;
   // $A264
@@ -452,11 +452,11 @@ struct chqstate {
   // $A68F (SM) in perp_behaviour
   u8        pb_changing_lane; // changing lane flag
   // $A69B (SM) in perp_behaviour
-  u8        pb_SM_A69B;
+  u8        pb_lane_change_timer;
   // $A73E (SM) in perp_behaviour
   u8        pb_delay;
   // $A749 (SM) in perp_behaviour
-  u8        pb_SM_A749; // delay
+  u8        pb_approach_timer; // delay
 
   // $A804 (SM) in spawn_cars
   u8        sc_spawn_counter;
@@ -470,11 +470,11 @@ struct chqstate {
   u16      *dss_SM_A9E2; // a table ptr e.g. $ED28
 
   // $AA5A (SM) in draw_helicopter
-  u8        dh_SM_AA5A; // y position?
+  u8        dh_heli_vert_base; // y position?
   // $AA76 (SM) in draw_helicopter
-  u8        dh_SM_AA76;
+  u8        dh_heli_body_y_offset;
   // $AA8C (SM) in draw_helicopter
-  u8        dh_SM_AA8C;
+  u8        dh_heli_rotor_pos;
 
   // $AA94 (SM) in dhl_aa94
   u16       dhl_helipos; // signed?
@@ -490,10 +490,10 @@ struct chqstate {
   // $AAF6 (SM) in move_helicopter
   u16       mh_prevroadpos; // previous road pos
   // $AB06 (SM) in move_helicopter
-  u16       mh_SM_AB06;
+  u16       mh_heli_centre_y;
 
   // $AE70 (SM) in dh_draw_one_hazard
-  u16       SM_AE70;
+  u16       dh_SM_AE70_road_left_xpos;
 
   // $AED0 (SM) in draw_hazards
   u16      *dh_SM_AECF_table; // points to table e900 for example
@@ -502,11 +502,11 @@ struct chqstate {
   u8        SM_AFFB_smoke_offset; // (smoke) speed factor?
 
   // $B023 (SM) in ...
-  u8        SM_B023;
+  u8        dh_SM_B023_col_pos;
   // $B029 (SM) in ...
-  u8        SM_B029;
+  u8        dh_SM_B029_tbd3;
   // $B02C (SM) in ...
-  u8        SM_B02C;
+  u8        dh_SM_B02C_horz_pos;
 
   // $B063 (SM) in move_hero_car
   u8        mhc_y_offset; // jump counter
@@ -516,9 +516,9 @@ struct chqstate {
   // $B325 (SM) in animate_hero_car
   u16       ahc_crashed_flag; // crashed flag
   // $B32E (SM) in animate_hero_car
-  u16       ahc_SM_B32E; // set when crashed (a speed)
+  u16       ahc_crash_speed_threshold; // set when crashed (a speed)
   // $B356 (SM) in animate_hero_car
-  u16       ahc_SM_B356; // perhaps a speed
+  u16       ahc_crash_spin_speed; // perhaps a speed
   // $B36E (SM) in animate_hero_car
   u8        ahc_flip_flag; // flip flag
   // $B384 (SM) in animate_hero_car
@@ -591,9 +591,9 @@ struct chqstate {
   const u8 *rm_SM_C046_hazards_one_command_ptr; // hazards one_command ptr
 
   // $C058 (SM) in read_map
-  u8        rm_SM_C058; // current hazard command
+  u8        rm_SM_C058_hazard_type; // current hazard command
   // $C0BB (SM) in read_map
-  u8        rm_SM_C0BB; // hazard related
+  u8        rm_SM_C0BB_fork_copy_pending; // hazard related
 
   // $C15D (SM) in draw_tunnel
   u8        dt_SM_C15D_tunnel_distance; // size related [15 when tunnel is small, 6 when fills screen]
@@ -606,7 +606,7 @@ struct chqstate {
   // $C236 (SM) in draw_tunnel
   u8        dt_SM_C236; // jump table target
   // $C2B8 (SM) in draw_tunnel
-  u8        dt_SM_C2B8;
+  u8        dt_SM_C2B8_far_wall_mode;
 
   // $C4B2 (SM) in draw_road
   dr_callback_t *dr_SM_C4B2_callback;
@@ -629,13 +629,13 @@ struct chqstate {
   // $C642 (SM) in draw_road
   u8        dr_SM_C642_left_hand_table_hi; // table hi byte
   // $C651 (SM) in draw_road
-  u8        dr_SM_C651;
+  u8        dr_SM_C651_edge_graphic_offset;
   // $C677 (SM) in draw_road
   u8        dr_SM_C677_stripe_table_offset;
   // $C68B (SM) in draw_road
   u8        dr_SM_C68A_right_hand_table_hi;
   // $C698 (SM) in draw_road
-  u8        dr_SM_C698;
+  u8        dr_SM_C698_right_edge_offset;
   // $C6AD (SM) in draw_road
   void    (*dr_SM_C6AD)(chqstate_t *state, u16 DEbackbuf, u8 L, u8 Adash_fill);
   // $C6B2 (SM) in draw_road
@@ -645,11 +645,11 @@ struct chqstate {
   // $C6D3 (SM) in draw_road
   u8        dr_SM_C6D3_stripe_xor_base;
   // $C6D8 (SM) in draw_road
-  u8        dr_SM_C6D8; // road edge line thickness
+  u8        dr_SM_C6D8_edge_thickness; // road edge line thickness
   // $C7E7 (SM) in draw_road
   u8        dr_horizon_x_scroll;
   // $C80A (SM) in draw_road
-  u8        dr_SM_C80A;
+  u8        dr_SM_C80A_sky_rows;
   // $C88F (SM) in draw_road
   u8        dr_SM_C88F_in_tunnel;
 
