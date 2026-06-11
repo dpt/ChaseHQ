@@ -37,6 +37,9 @@ typedef void (plot_sprite_cb_t)(chqstate_t *state,
                                 u16         DEdash_bitmap_stride,
                                 const u8   *HLdash_bitmap_data);
 
+/// A hazard in Chase HQ is something that's on the road. It might be a moving
+/// object like the perp or NPC cars, or a fixed item like a barrier or a
+/// tumbleweed.
 struct hazard {
   u8                used;              // HAZARD_USED (0xFF) or HAZARD_UNUSED (0x00)
   u8                distance;          // approach counter (21..0); also reused as road-col low byte during draw
@@ -502,7 +505,7 @@ struct chqstate {
   // $B023 (SM) in ...
   u8        dh_SM_B023_col_pos;
   // $B029 (SM) in ...
-  u8        dh_SM_B029_tbd3;
+  u8        dh_SM_B029_horz_clip;
   // $B02C (SM) in ...
   u8        dh_SM_B02C_horz_pos;
 

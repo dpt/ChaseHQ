@@ -6590,7 +6590,7 @@ static void cycle_counters(chqstate_t *state)
 void perp_behaviour(chqstate_t *state, hazard_t *IX)
 {
   int       carry = 0;
-  s8        Atbd7;              /* was A */
+  s8        Ahit_timer;              /* was A */
   u8        Cperp_distance;     /* was C */
   hazard_t *IYhazard;           /* was IY */
   u16       DE;
@@ -6632,10 +6632,10 @@ void perp_behaviour(chqstate_t *state, hazard_t *IX)
   // Reading a hit counter here? It starts at $FC (set at #R$A78A) and is
   // incremented. This seems like it might speed the perp car up when it's
   // hit.
-  Atbd7 = IX->hit_timer; // Read IX[7] e.g. $A18F  -- a hit counter/delay
-  if (Atbd7 == 0)
-    goto pb_tbd7_is_zero; // Jump if zero  -- delay finished, perp can be hit again?
-  else if (Atbd7 > 0)
+  Ahit_timer = IX->hit_timer; // Read IX[7] e.g. $A18F  -- a hit counter/delay
+  if (Ahit_timer == 0)
+    goto pb_hit_timer_clear; // Jump if zero  -- delay finished, perp can be hit again?
+  else if (Ahit_timer > 0)
     goto pb_set_delay; // Jump to set delay if positive
   // Otherwise #REGa is negative.
 
@@ -6646,7 +6646,7 @@ void perp_behaviour(chqstate_t *state, hazard_t *IX)
 
   // IX[7] must be zero to arrive here. We now iterate over all non-perp
   // hazards.
-pb_tbd7_is_zero:
+pb_hit_timer_clear:
   // PUSH IY
   Cperp_distance =
     IX->distance; // Read perp's distance (buffer offset) into #REGc
@@ -6881,12 +6881,12 @@ pb_a776:
   // If I meddle with this value the perp seems to race off too fast to catch.
 pb_set_delay:
   IX->hit_timer = -4; // $FC
-  // PUSH AF // Atbd7
-  if (Atbd7 >= 3)
-    Atbd7 -= 3;
+  // PUSH AF // Ahit_timer
+  if (Ahit_timer >= 3)
+    Ahit_timer -= 3;
 
   Adash = (state->boost == 0) ? 200 : 230;
-  scenery_hit(state, Atbd7, Adash);
+  scenery_hit(state, Ahit_timer, Adash);
 
   state->ahc_crash_speed_threshold += 40;
 
@@ -6894,8 +6894,8 @@ pb_set_delay:
 
   smash_twice = 0;
 
-  // POP AF  Restore Atbd7 which holds IX[7] and flags from earlier
-  if (!carry || Atbd7 == 2)
+  // POP AF  Restore Ahit_timer which holds IX[7] and flags from earlier
+  if (!carry || Ahit_timer == 2)
     goto pb_a7be;
 
   smash_twice = 1; /* was PUSH HL -- Put another call to smash on the stack */
@@ -7070,10 +7070,10 @@ void hazard_handler(chqstate_t *state, hazard_t *IX)
   u16       spawn_lanes;        /* was BC */
   u8        min_lane;           /* was B */
   u8        max_lane;           /* was C */
-  u8        tbd17;              /* was A */
+  u8        lane;              /* was A */
   u8        current_lane;       /* was A */
   u8        horz_pos;           /* was A */
-  u8        tbd7;               /* was A */
+  u8        hit_timer;               /* was A */
   const u8 *phazard_pos_speed;  /* was HL */
 
   if (state->perp_caught_phase != 0 || state->dont_spawn_cars != 0)
@@ -7083,10 +7083,10 @@ void hazard_handler(chqstate_t *state, hazard_t *IX)
   min_lane = spawn_lanes >> 8;
   max_lane = spawn_lanes & 0xFF;
 
-  tbd17 = IX->hazard_lane_OR_perp_dist_hi;
-  if (tbd17 < min_lane)
+  lane = IX->hazard_lane_OR_perp_dist_hi;
+  if (lane < min_lane)
     IX->current_lane = min_lane;
-  if (tbd17 > max_lane)
+  if (lane > max_lane)
     IX->current_lane = max_lane;
 
   current_lane = IX->current_lane;
@@ -7112,8 +7112,8 @@ void hazard_handler(chqstate_t *state, hazard_t *IX)
     IX->horz_pos_on_road = horz_pos;
   }
 
-  tbd7 = IX->hit_timer;
-  if (tbd7 == 0)
+  hit_timer = IX->hit_timer;
+  if (hit_timer == 0)
     return;
 
   IX->hit_timer = 0;
@@ -7124,11 +7124,11 @@ void hazard_handler(chqstate_t *state, hazard_t *IX)
   IX->used = HAZARD_UNUSED;
   state->overtake_bonus_bcd = 0;
 
-  if (tbd7 >= 3)
-    tbd7 -= 3;
+  if (hit_timer >= 3)
+    hit_timer -= 3;
 
   // Crashed
-  scenery_hit(state, tbd7, 0x96);
+  scenery_hit(state, hit_timer, 0x96);
   start_chatter(state, 3, &chatterblk_raymond_random_yelps[0]);
   start_sfx(state, EFFECT_CAR_HIT, 2); /* priority 2 */ /* exit via */
 }
@@ -7365,7 +7365,7 @@ static void draw_helicopter(chqstate_t *state, u8 Biterations, u8 *IY)
 
   do {
     helibitmap = *helibitmaps++;
-    draw_helicoper_part(state, helibitmap->tbd1 + state->dh_heli_body_y_offset, &helibitmap->inner, IY);
+    draw_helicoper_part(state, helibitmap->y_offset + state->dh_heli_body_y_offset, &helibitmap->inner, IY);
   } while (--Biterations2 > 0);
 
   // BUT final entry seems to be a different format, so this can't be right.
@@ -7382,8 +7382,7 @@ static void draw_helicoper_part(chqstate_t                *state,
 {
   int             carry;
   u16             BC;     /* was BC */
-  u16             HLtbd2; /* was HL */
-  u16             DEtbd2; /* was DE */
+  u16             screen_pos; /* was HL/DE */
   const bitmap_t *HLbitmap;  /* was HL */
   u8              Bwidth; /* was B */
   s8              Atop;   /* was A */
@@ -7393,15 +7392,15 @@ static void draw_helicoper_part(chqstate_t                *state,
   BC = state->dhl_helipos; // signed?
   state->doc_SM_933D_col_pos = -A; // in draw_object_common
 
-  HLtbd2 = (s8) DEinnerbitmap->tbd2 + BC; // loads byte and widens
+  screen_pos = (s8) DEinnerbitmap->horz_offset + BC; // loads byte and widens
 
-  DEtbd2 = HLtbd2;
+
   HLbitmap  = &DEinnerbitmap->bm; // Conv: Ops shuffled a bit
 
   Bwidth = HLbitmap->width_bytes * 8;
-  Atop = DEtbd2 >> 8;
+  Atop = screen_pos >> 8;
   // AND Atop  set flags here
-  Abot = DEtbd2 & 0xFF;
+  Abot = screen_pos & 0xFF;
   C = 0; // can't see what's using this
   if (Atop >= 0) {
     if (Atop != 0)
@@ -7697,21 +7696,21 @@ static void hazard_hit(chqstate_t *state, hazard_t *IXhazard)
     0x14, 0x00
   };
 
-  u8        tbd15;    /* was A */
-  s8        tbd7;     /* was A */
+  u8        flags;    /* was A */
+  s8        hit_timer;     /* was A */
   u16       speed;    /* was DE, BC */
   int       index;    // added
   const u8 *ptable;   /* was HL */
 
-  tbd15 = IXhazard->hazard_flags;
-  if (tbd15 == 0) {
-    tbd7 = IXhazard->hit_timer;
-    if (tbd7 == 0)
+  flags = IXhazard->hazard_flags;
+  if (flags == 0) {
+    hit_timer = IXhazard->hit_timer;
+    if (hit_timer == 0)
       return;
 
     // If we arrive here then a hit has occurred.
     speed = state->speed;
-    if (tbd7 < 0)
+    if (hit_timer < 0)
       speed = 280;
 
     index = ((speed >> 7) & 3) + (speed & 1); // CHECK - not convinced
@@ -7733,7 +7732,7 @@ static void hazard_hit(chqstate_t *state, hazard_t *IXhazard)
     IXhazard->hazard_flags = 2;
   }
 
-  if (--tbd15 == 0)
+  if (--flags == 0)
     return;
 
   IXhazard->hit_wobble = table_acdb[IXhazard->hazard_lane_OR_perp_dist_hi++];
@@ -7801,11 +7800,11 @@ static u8 check_collision(chqstate_t *state,
                           u16        *HLout)
 {
   u8 horz_pos;      /* was L */
-  u8 tbd3;          /* was H */
-  u8 tbd15;         /* was A */
+  u8 horz_clip;          /* was H */
+  u8 flags;         /* was A */
   u8 distance;      /* was A */
   u8 max_distance;  /* was C */
-  s8 new_tbd7;      /* was E */
+  s8 new_hit_timer;      /* was E */
   u8 fast_counter;  /* was A */
   u8 Ahorz_pos;     /* was A */
 
@@ -7815,24 +7814,24 @@ static u8 check_collision(chqstate_t *state,
     return default_retval;
 
   horz_pos = hazard->horz_pos;
-  tbd3     = hazard->horz_clip;
-  if (HLout) *HLout = (tbd3 << 8) | horz_pos;
+  horz_clip     = hazard->horz_clip;
+  if (HLout) *HLout = (horz_clip << 8) | horz_pos;
 
   if (hazard->horz_clip) // distance related
     return default_retval;
 
-  tbd15 = hazard->hazard_flags + 1; // just for compare
+  flags = hazard->hazard_flags + 1; // just for compare
   distance = hazard->distance;
-  max_distance = (tbd15 != 0) ? 3 : 2;
+  max_distance = (flags != 0) ? 3 : 2;
   if (distance >= max_distance)
     return default_retval;
 
-  new_tbd7 = 4;
+  new_hit_timer = 4;
   distance--;
   fast_counter = state->fast_counter;
   if (distance == 0) {
     if ((s8) fast_counter < 0) /* was JP P - why treating fast_counter as signed? */
-      new_tbd7 = 1;
+      new_hit_timer = 1;
   } else {
     if ((s8) fast_counter >= 0) /* was RET P - why treating fast_counter as signed? */
       return default_retval;
@@ -7849,12 +7848,12 @@ static u8 check_collision(chqstate_t *state,
 
   Ahorz_pos -= hazard->hittable.width;
   if (Ahorz_pos >= 104) {
-    new_tbd7--;
+    new_hit_timer--;
     if (Ahorz_pos >= 120)
-      new_tbd7 += 2;
+      new_hit_timer += 2;
   }
 
-  hazard->hit_timer = new_tbd7;
+  hazard->hit_timer = new_hit_timer;
   return 1;
 }
 
@@ -7893,7 +7892,7 @@ static void dh_draw_one_hazard(chqstate_t *state,
 {
   int       carry = 0;
   u8        C;
-  u8        Atbd15;
+  u8        Aflags;
   u8        A;
   u8        B;
   u16       BCwords;
@@ -7906,7 +7905,7 @@ static void dh_draw_one_hazard(chqstate_t *state,
   const u8 *IY;
   u16       HLresult;
   u8        Ddistance;
-  u8        Etbd4;
+  u8        Edist_frac;
   u16      *DEtable;
 
   C = IXhazard->speed >> 8; // top byte of horz position or accel?
@@ -7914,8 +7913,8 @@ static void dh_draw_one_hazard(chqstate_t *state,
   if ((s8) IXhazard->dist_frac < 0) // carried
     C++;
   C += IXhazard->distance;
-  Atbd15 = IXhazard->hazard_flags + 1;
-  if (Atbd15 == 0) {
+  Aflags = IXhazard->hazard_flags + 1;
+  if (Aflags == 0) {
     A = IXhazard->hazard_lane_OR_perp_dist_hi;
     if (C < IXhazard->distance) { // carried
       A++;
@@ -8012,7 +8011,7 @@ dh_adfa:
   IXhazard->distance = HL & 0xFF;
   IXhazard->horz_clip     = HL >> 8;
   Ddistance = IXhazard->distance;
-  Etbd4     = IXhazard->dist_frac;
+  Edist_frac     = IXhazard->dist_frac;
 
   HLp_n_hazards = &state->n_hazards;
   An_hazards = *HLp_n_hazards;
@@ -8027,7 +8026,7 @@ dh_adfa:
         if (Ddistance != HLtable[-1])
           goto dh_insert;
 
-        if (Etbd4 < *HLtable)
+        if (Edist_frac < *HLtable)
           goto dh_insert;
       }
       HLtable += 3;
@@ -8035,20 +8034,20 @@ dh_adfa:
   }
 
   // Add/store hazard
-  *HLtable++ = Etbd4 | (Ddistance << 8); // big endian store?
+  *HLtable++ = Edist_frac | (Ddistance << 8); // big endian store?
   *HLtable++ = IXhazard - &state->hazards[0]; // Conv: now stores an offset, not a ptr
   goto dh_call_handler;
 
 dh_insert: // deleting or inserting a new hazard?
-  // PUSH DE - Ddistance, Etbd4
+  // PUSH DE - Ddistance, Edist_frac
   BCwords = Biterations * 2; // entries * sizeof hazard entry (Conv: WORDS to shift down)
   DEtable = HLtable + BCwords + 1;
   HLtable = HLtable + BCwords - 1;
   do { *HLtable-- = *DEtable--; } while (--BCwords > 0);
   HLtable = DEtable; // was EX DE,HL
   *HLtable-- = IXhazard - &state->hazards[0]; // Conv: now stores an offset, not a ptr
-  // POP DE - Ddistance, Etbd4
-  *HLtable-- = Etbd4 | (Ddistance << 8); // big endian store?
+  // POP DE - Ddistance, Edist_frac
+  *HLtable-- = Edist_frac | (Ddistance << 8); // big endian store?
 
 dh_call_handler:
   IXhazard->hit_handler(state, IXhazard);
@@ -8107,7 +8106,7 @@ static void draw_arrow_fire_smoke(chqstate_t *state,
   const hazard_t *IXhazard;            /* was IX */
   u8              Bx;                  /* was B */
   u8              Cy;                  /* was C */
-  u8              Atbd3;               /* was A */
+  u8              Ahorz_clip;               /* was A */
   const u8       *HLarrows;            /* was HL */
   const u8       *HLsmokes;            /* was HL */
   u8              Ahorz_pos;           /* was A */
@@ -8142,12 +8141,12 @@ static void draw_arrow_fire_smoke(chqstate_t *state,
     if (IXhazard->hazard_flags + 1 == 0)
       goto dh_af50;
 
-    Atbd3 = IXhazard->horz_clip;
+    Ahorz_clip = IXhazard->horz_clip;
     // AND A3
     Ahorz_pos = IXhazard->horz_pos;
-    if ((s8) Atbd3 < 0)
+    if ((s8) Ahorz_clip < 0)
       goto dh_af2f;
-    if (Atbd3 != 0)
+    if (Ahorz_clip != 0)
       goto dh_draw_done_1;
     if (Ahorz_pos >= 128)
       goto dh_draw_right_1;
@@ -8183,7 +8182,7 @@ dh_draw_done_1:
 
 dh_af50:
   Awidth_bytes = IXhazard->horz_clip;
-  state->dh_SM_B029_tbd3 = Awidth_bytes;
+  state->dh_SM_B029_horz_clip = Awidth_bytes;
   // set flags from A here
   Ahorz_pos = IXhazard->horz_pos;
   state->dh_SM_B02C_horz_pos = Ahorz_pos;
@@ -8341,7 +8340,7 @@ static void dh_draw_bitmap(chqstate_t     *state,
 
   Ewidth_bits = HLbitmap->width_bytes * 8;
   state->doc_SM_933D_col_pos = state->dh_SM_B023_col_pos + Bx;
-  A1 = state->dh_SM_B029_tbd3;
+  A1 = state->dh_SM_B029_horz_clip;
   // Set flags for A here
   A2 = state->dh_SM_B02C_horz_pos;
   if ((s8) A1 < 0)
