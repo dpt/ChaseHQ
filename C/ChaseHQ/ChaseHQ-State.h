@@ -142,9 +142,9 @@ struct chqstate {
   u8        engine_sfx_on_cycle;
 
   // $824B (SM) in attract_mode_128k (relocated)
-  u8        attract_mode_128k_SM_824B;
+  u8        attract_mode_128k_blink;
   // $825D (SM) in attract_mode_128k (relocated)
-  u8        attract_mode_128k_SM_825D;
+  u8        attract_mode_128k_countdown;
 
   // $8277 (SM) in attract_mode
   u8        attract_blinker;
@@ -166,7 +166,7 @@ struct chqstate {
   u8        sfx_crash_table[93];
 
   // $8A0F (SM) in sfx_cornering
-  u8        sfx_SM_8A0F;
+  u8        sfx_cornering_toggle;
 
   // $8ABE (SM) in handle_perp_caught
   u8        handle_perp_caught_delay;
@@ -203,9 +203,9 @@ struct chqstate {
   u8        dee_draw_tunnel_2;
 
   // $90F1 (SM) in draw_overhead
-  u8        do_SM_90F1;
+  u8        do_vert_sub;
   // $9115 (SM) in draw_overhead
-  u8        do_SM_9115_spanwidthwords;
+  u8        do_span_width_words;
 
   // $9396 (SM) in draw_object_common
   u8        doc_SM_9395_shift_select;
@@ -468,7 +468,7 @@ struct chqstate {
   // $A9DE (SM) in dust_stones_stuff
   u8        dss_enabled; // makes dust_stones_stuff run
   // $A9E2 (SM) in dust_stones_stuff
-  u16      *dss_SM_A9E2; // a table ptr e.g. $ED28
+  u16      *dss_fork_xpos_ptr; // a table ptr e.g. $ED28
 
   // $AA5A (SM) in draw_helicopter
   u8        dh_heli_vert_base; // y position?
@@ -500,7 +500,7 @@ struct chqstate {
   u16      *dh_SM_AECF_table; // points to table e900 for example
 
   // $AFFB (SM) in dh_aecf
-  u8        SM_AFFB_smoke_offset; // (smoke) speed factor?
+  u8        smoke_bitmap_index; // (smoke) speed factor?
 
   // $B023 (SM) in ...
   u8        dh_SM_B023_col_pos;
@@ -525,17 +525,17 @@ struct chqstate {
   // $B384 (SM) in animate_hero_car
   u8        ahc_delay; // delay counter, set to 5
   // $B38D (SM) in animate_hero_car
-  u8        ahc_SM_B38D_flippingish; // (flip flag + 1)
+  u8        ahc_crash_flip_count; // (flip flag + 1)
   // $B395 (SM) in animate_hero_car
-  u16       ahc_SM_B395_road_pos; // a road position
+  u16       ahc_road_pos_a; // a road position
   // $B3A3 (SM) in animate_hero_car
-  u8        ahc_SM_B3A3_road_pos; // another road position
+  u8        ahc_road_pos_b; // another road position
   // $B3DB (SM) in animate_hero_car
-  u8        ahc_SM_B3DB_flipping; // controls flipping
+  u8        ahc_crash_spin; // controls flipping
   // $B476 (SM) in animate_hero_car
-  u8        ahc_SM_B476_hand_flag;
+  u8        ahc_hand_step;
   // $B478 (SM) in animate_hero_car
-  u8        ahc_SM_B478_hand_frame; // hand animation frame?
+  u8        ahc_hand_delay; // hand animation frame?
 
   // $B4F0 (SM) in smash
   u8        smash_cycling_counter;
@@ -545,7 +545,7 @@ struct chqstate {
   // $B55B (SM) in draw_debris
   u8      **dd_debris_subtables_start;
   // $B570 (SM) in draw_debris
-  u16       dd_SM_B570_offset; // (might not need to be a state var)
+  u16       dd_frame_offset; // (might not need to be a state var)
 
   // $B5AA (SM) in draw_car
   u8        dhc_jump_y; // height of car in the air - leaving shadow on the ground
@@ -583,7 +583,7 @@ struct chqstate {
   // $BF0A (SM) in rm_cycle_buffer_offset
   const u8 *rm_SM_BF0A_lanes_one_command_ptr; // lanes one_command ptr
   // $BF2D (SM) in rm_cycle_buffer_offset
-  u8        rm_SM_BF2D; // lanes current value
+  u8        rm_lanes_byte; // lanes current value
   // $BF84 (SM) in rm_cycle_buffer_offset
   const u8 *rm_SM_BF84_rightside_one_command_ptr; // rightside one_command ptr
   // $BFCD (SM) in rm_cycle_buffer_offset
@@ -601,11 +601,11 @@ struct chqstate {
   // $C160 (SM) in draw_tunnel
   u8        dt_SM_C160_tunnel_visible; // 0 if not visible; vibrates 1 if visible; 2 if in tunnel
   // $C21C (SM) in draw_tunnel
-  u16       dt_SM_C21C_pattern;
+  u16       dt_fill_pattern;
   // $C221 (SM) in draw_tunnel
-  u8        dt_SM_C221; // jump table target
+  u8        dt_fill_start_a; // jump table target
   // $C236 (SM) in draw_tunnel
-  u8        dt_SM_C236; // jump table target
+  u8        dt_fill_start_b; // jump table target
   // $C2B8 (SM) in draw_tunnel
   u8        dt_SM_C2B8_far_wall_mode;
 

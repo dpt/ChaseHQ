@@ -2151,11 +2151,8 @@ static void sfx_thud(chqstate_t *state, u8 param1, u8 param2)
  */
 static void sfx_cornering(chqstate_t *state, u8 param1, u8 param2)
 {
-  u8 A;
-
-  A = state->sfx_SM_8A0F ^ 1;
-  state->sfx_SM_8A0F = A;
-  if (A)
+  state->sfx_cornering_toggle ^= 1;
+  if (state->sfx_cornering_toggle)
     return;
 
   sfx_cornering_loop_outer(state, param1, param2); /* was fallthrough */
@@ -2985,10 +2982,10 @@ static void draw_everything_else(chqstate_t *state)
   assert(state->road_buffer_start == &state->road_buffer[0]);
   assert(state->road_buffer_end   == &state->road_buffer[256]);
 
-  state->dss_SM_A9E2 = &state->xpos_road_fork_right[20]; // $ED28
+  state->dss_fork_xpos_ptr = &state->xpos_road_fork_right[20]; // $ED28
   state->dh_SM_AECF_table = &state->xpos_road_centre_left[0];
-  assert(state->dss_SM_A9E2 >= &state->xpos_road_fork_right[0] &&
-         state->dss_SM_A9E2 < &state->xpos_road_fork_right[128]);
+  assert(state->dss_fork_xpos_ptr >= &state->xpos_road_fork_right[0] &&
+         state->dss_fork_xpos_ptr < &state->xpos_road_fork_right[128]);
   assert(state->dh_SM_AECF_table >= &state->xpos_road_centre_left[0] &&
          state->dh_SM_AECF_table < &state->xpos_road_centre_left[128]);
 
@@ -3182,7 +3179,7 @@ static void draw_overhead(chqstate_t       *state,
   Cparam = IY[0] - IY[0x35];
   Avertical = *HLvertical;
   A = (Avertical >> 1) + Avertical - Cparam; // Conv: removed use of L
-  state->do_SM_90F1 = A; // Self modify 'SUB x' at $90F1
+  state->do_vert_sub = A; // Self modify 'SUB x' at $90F1
   Aminheight = MIN(Bparam - 1, 9);
   Bminheight = Aminheight;
   HLpair = &DEpairs[Aminheight];
@@ -3221,9 +3218,9 @@ static void draw_overhead(chqstate_t       *state,
   }
 
   Cparam = D;
-  state->do_SM_9115_spanwidthwords = ~((E - Cparam) * 2) + 61;
+  state->do_span_width_words = ~((E - Cparam) * 2) + 61;
 
-  A = IY[0x35] - state->do_SM_90F1;
+  A = IY[0x35] - state->do_vert_sub;
   if ((s8) A < 0)
     return;
 
@@ -3246,7 +3243,7 @@ static void draw_overhead(chqstate_t       *state,
       return;
 
 do_draw_span:
-    memset(HLdst, *DEsrc, state->do_SM_9115_spanwidthwords / 2);
+    memset(HLdst, *DEsrc, state->do_span_width_words / 2);
     HLdst = ADDRTOBACKBUF(prevbufrow(BACKBUFTOADDR(HLdst)));
   }
 }
@@ -6259,10 +6256,10 @@ store_off_road:
 
 csc_a43b:
   A = C;
-  state->ahc_SM_B3DB_flipping = A;
+  state->ahc_crash_spin = A;
   // EXX - bank
-  state->ahc_SM_B395_road_pos = HLdash;
-  state->ahc_SM_B3A3_road_pos = DEdash;
+  state->ahc_road_pos_a = HLdash;
+  state->ahc_road_pos_b = DEdash;
   if (A)
     return;
 
@@ -6366,7 +6363,7 @@ static void scenery_hit(chqstate_t *state, u8 Aflip, u8 Adash)
 
   state->ahc_crashed_flag = 1;
   state->ahc_flip_flag    = Aflip;
-  state->ahc_SM_B38D_flippingish = ++Aflip;
+  state->ahc_crash_flip_count = ++Aflip;
   state->ahc_delay        = 5;
 
   speed = state->speed;
@@ -6418,9 +6415,9 @@ static void check_fork_scenery_collisions(chqstate_t *state, u16 DEdash, u16 HLd
 
 set_off_road:
   state->off_road     = off_road;
-  state->ahc_SM_B3DB_flipping  = 0;
-  state->ahc_SM_B395_road_pos  = HLdash;
-  state->ahc_SM_B3A3_road_pos  = DEdash;
+  state->ahc_crash_spin  = 0;
+  state->ahc_road_pos_a  = HLdash;
+  state->ahc_road_pos_b  = DEdash;
   if (state->fork_taken == 0) {
     // Left fork was taken, short pole object is on right hand of road.
     shortpoleobj = state->stage->addrof_right_hand_short_pole_object;
@@ -7263,14 +7260,14 @@ static void dust_stones_stuff(chqstate_t *state, u8 Biterations, const u8 *IY)
   if (state->dss_enabled == 0)
     return;
 
-  HLtable = state->dss_SM_A9E2; // table ptr
+  HLtable = state->dss_fork_xpos_ptr; // table ptr
   A = *HLtable & 0xFF;
   HLtable++; // halved advance since table is words
   if (A)
     goto dss_bitmaps;
 
   HLtable++;
-  state->dss_SM_A9E2 = HLtable;
+  state->dss_fork_xpos_ptr = HLtable;
   return;
 
 dss_bitmaps:
@@ -7281,7 +7278,7 @@ dss_bitmaps:
   C = *HLtable++;
   A = *HLtable++;
   // EX AF,AF'
-  state->dss_SM_A9E2 = HLtable;
+  state->dss_fork_xpos_ptr = HLtable;
   state->doc_SM_933D_col_pos = 0;
   // H = 0;
   A = Biterations - 1;
@@ -8122,7 +8119,7 @@ static void draw_arrow_fire_smoke(chqstate_t *state,
   if (--A >= 11)
     A = 10;
   A >>= 1;
-  state->SM_AFFB_smoke_offset = A; // speed factor?
+  state->smoke_bitmap_index = A; // speed factor?
 
   DEbitmapoffset = A * 7;
   do {
@@ -8213,7 +8210,7 @@ dh_done_draw_object:
   if (state->smash_level >= 5)
     goto dh_smash_level;
 
-  A = state->SM_AFFB_smoke_offset;
+  A = state->smoke_bitmap_index;
   if (A >= 4)
     goto dh_smash_level;
 
@@ -8231,7 +8228,7 @@ dh_smash_level:
 
   // EX AF,AF' Bank Asmash_level_scaled
 
-  HLsmokes = &smoke_offsets[state->SM_AFFB_smoke_offset * 2];
+  HLsmokes = &smoke_offsets[state->smoke_bitmap_index * 2];
   Bx = HLsmokes[0];
   Cy = HLsmokes[1];
 
@@ -8284,7 +8281,7 @@ static void dh_smoke(chqstate_t *state, u8 *HLsmoke, const u8 *IY)
     counter = 5; // It became zero, reset to 5
   HLsmoke[0] = counter;
 
-  index = state->SM_AFFB_smoke_offset; // smoke animation index
+  index = state->smoke_bitmap_index; // smoke animation index
   newindex = index + counter;
   if (newindex >= 6)
     return;
@@ -8721,7 +8718,7 @@ static void animate_hero_car(chqstate_t *state)
 
   HLspeed = state->speed;
   if (HLspeed > 0) {
-    state->ahc_SM_B3DB_flipping = 0;
+    state->ahc_crash_spin = 0;
     state->off_road = 0;
   }
 
@@ -8766,14 +8763,14 @@ ahc_speed_less_or_eq:
     Adelay = state->ahc_delay;
     if (Adelay) {
       state->ahc_delay = --Adelay;
-      Adelay = state->ahc_SM_B38D_flippingish;
+      Adelay = state->ahc_crash_flip_count;
     }
-    state->ahc_SM_B3DB_flipping = Adelay;
+    state->ahc_crash_spin = Adelay;
   }
 
   // Arrive here if not crashed
   HLroad_pos = state->scenedata.road_pos;
-  DEother_road_pos = state->ahc_SM_B395_road_pos;
+  DEother_road_pos = state->ahc_road_pos_a;
   A = HLroad_pos >> 8;
   if ((s8) A >= 0) {
     if (A == 0) {
@@ -8782,7 +8779,7 @@ ahc_speed_less_or_eq:
         goto ahc_b3b0;
     }
 
-    DEother_road_pos = state->ahc_SM_B3A3_road_pos;
+    DEother_road_pos = state->ahc_road_pos_b;
     A = HLroad_pos >> 8;
     if (A >= (DEother_road_pos >> 8)) { // carry
       if (A == 0) {
@@ -8816,7 +8813,7 @@ ahc_assign_road_pos_2:
   draw_debris(state);
 
 ahc_load_flip_flag:
-  Aflipping = state->ahc_SM_B3DB_flipping;
+  Aflipping = state->ahc_crash_spin;
   if (Aflipping) {
     Cflipping = Aflipping * 3 + 24;
     Aturn_speed = state->turn_speed;
@@ -8898,9 +8895,9 @@ static void ahc_check_hand_flag(chqstate_t *state)
   }
 
   // Start the animation
-  Chand_flag  = state->ahc_SM_B476_hand_flag; // zeroed in start_chase
-  Ahand_frame = state->ahc_SM_B478_hand_frame - 1; // hand animation frame
-  state->ahc_SM_B478_hand_frame = Ahand_frame;
+  Chand_flag  = state->ahc_hand_step; // zeroed in start_chase
+  Ahand_frame = state->ahc_hand_delay - 1; // hand animation frame
+  state->ahc_hand_delay = Ahand_frame;
   if (Ahand_frame == 0) {
     Bhand_frame = 2;
     Ahand_frame = ++Chand_flag;
@@ -8909,9 +8906,9 @@ static void ahc_check_hand_flag(chqstate_t *state)
       if (Ahand_frame == 2)
         Bhand_frame++;
     }
-    state->ahc_SM_B478_hand_frame = Bhand_frame;
+    state->ahc_hand_delay = Bhand_frame;
   }
-  state->ahc_SM_B476_hand_flag = Chand_flag;
+  state->ahc_hand_step = Chand_flag;
 
   if (Ahand_frame >= 7) {
     // Hide the "stop" hand
@@ -8929,7 +8926,7 @@ static void ahc_check_hand_flag(chqstate_t *state)
   draw_cherry_b699(state, Ahand_frame);
   // POP AF
   Chand_frame = Ahand_frame;
-  Ahand_flag = state->ahc_SM_B476_hand_flag;
+  Ahand_flag = state->ahc_hand_step;
   if (Ahand_flag < 4) {
     // A < 4
     Ahand_flag = ++Chand_frame;
@@ -8946,13 +8943,13 @@ static void ahc_check_hand_flag(chqstate_t *state)
  */
 static void start_chase(chqstate_t *state)
 {
-  state->ahc_SM_B476_hand_flag = 0;
+  state->ahc_hand_step = 0;
   // Starts the animation that puts the cherry light on the roof
   state->hand_flag = 1;
   // Enable flashing lights and smash bar
   state->sighted_flag = 1;
   // This is animation frame related?
-  state->ahc_SM_B478_hand_frame = 2;
+  state->ahc_hand_delay = 2;
 
   state->session.time_sixteenths = 15;
   state->session.time_bcd        = 0x60;
@@ -9043,7 +9040,7 @@ static void draw_debris(chqstate_t *state)
     return;
   state->dd_SM_B549_frame_counter = --Aframe_counter;
 
-  state->dd_SM_B570_offset = Aframe_counter * 2;
+  state->dd_frame_offset = Aframe_counter * 2;
 
   Biterations = 3;
   HLsubtables = state->dd_debris_subtables_start;
@@ -9057,7 +9054,7 @@ static void draw_debris(chqstate_t *state)
     *DEsubtable++ = Aframe_counter;
 
     BCframe_offset = Aframe_counter * 12; // sizeof bitmap_debris images
-    HLoffset = state->dd_SM_B570_offset;
+    HLoffset = state->dd_frame_offset;
 
     // BCframe_offset = Cframe_offset;
     HLsubtable = DEsubtable + HLoffset;
@@ -10720,14 +10717,14 @@ rm_lanes_regular_byte: // $BF14
   DElaneptr++;
   state->scenedata.road_lanes_ptr = DElaneptr;
   *HLlanesptr = *DElaneptr & 0xF7;
-  state->rm_SM_BF2D = *DElaneptr & 0xFB;
+  state->rm_lanes_byte = *DElaneptr & 0xFB;
   goto rm_lanes_done;
 
 rm_lanes_count_resume: // $BF29
   state->lanes_counter_byte = Alanes;
-  Clanes = state->rm_SM_BF2D;
+  Clanes = state->rm_lanes_byte;
   if (Clanes & 0x0C)
-    state->rm_SM_BF2D = Clanes & 0xF3;
+    state->rm_lanes_byte = Clanes & 0xF3;
   *HLlanesptr = Clanes;
 
 rm_lanes_done: // $BF3A
@@ -11091,7 +11088,7 @@ static void draw_tunnel(chqstate_t *state, u8 *IY)
   if (--Avisible)
     Dfill = 0xFF; // Set fill value to use for (much of) tunnel interior
 
-  state->dt_SM_C21C_pattern = Dfill * 0x0101; // Widen fill value to $EEEE or $FFFF
+  state->dt_fill_pattern = Dfill * 0x0101; // Widen fill value to $EEEE or $FFFF
   // Conv: Removed SP store
 
   L = ~((IY[0x4E] - 2) << 1);
@@ -11155,8 +11152,8 @@ dt_c1c7:
   C = A;
 
 dt_c1c8:
-  state->dt_SM_C221 = D; // jump table target
-  state->dt_SM_C236 = E; // jump table target
+  state->dt_fill_start_a = D; // jump table target
+  state->dt_fill_start_b = E; // jump table target
 
   A = IY[0x35];
   B = A;
@@ -11196,11 +11193,11 @@ dt_c21a:
 
   // Pixels of tunnel loaded here. Top byte, D, seems to affect bottom row? Bottom
   // byte, E, affects whole pattern. The LD E,D later would explain that.
-  DEfill = state->dt_SM_C21C_pattern; // pixels of tunnel
+  DEfill = state->dt_fill_pattern; // pixels of tunnel
   do {
     SPoutput = HLbackbuf;
     A = L; // Preserve destination?
-    switch (state->dt_SM_C221) {
+    switch (state->dt_fill_start_a) {
       default: assert(0);
       case  0: SPoutput -= 2; *SPoutput = DEfill;
       case  1: SPoutput -= 2; *SPoutput = DEfill;
@@ -11222,7 +11219,7 @@ dt_c21a:
     A -= C;
     L = A; // restore HLbackbuf dest?
     SPoutput = HLbackbuf;
-    switch (state->dt_SM_C236) {
+    switch (state->dt_fill_start_b) {
       default: assert(0);
       case  0: SPoutput -= 2; *SPoutput = DEfill;
       case  1: SPoutput -= 2; *SPoutput = DEfill;
@@ -11280,7 +11277,7 @@ dt_c285:
   C = 0x0F;
   do {
     SPoutput = HLbackbuf;
-    switch (state->dt_SM_C236) {
+    switch (state->dt_fill_start_b) {
       default: assert(0);
       case  0: SPoutput -= 2; *SPoutput = DEfill;
       case  1: SPoutput -= 2; *SPoutput = DEfill;
@@ -11319,7 +11316,7 @@ dt_c285:
 dt_c2c1:
   do {
     SPoutput = HLbackbuf;
-    switch (state->dt_SM_C236) {
+    switch (state->dt_fill_start_b) {
       default: assert(0);
       case  0: SPoutput -= 2; *SPoutput = DEfill;
       case  1: SPoutput -= 2; *SPoutput = DEfill;
@@ -14371,7 +14368,7 @@ attract_mode_128k_8281:
 
   set_up_stage(state, &state->stage->attract_data);
 
-  state->attract_mode_128k_SM_825D = 2; // two runs through?
+  state->attract_mode_128k_countdown = 2; // two runs through?
   state->speed = 400;
   for (;;) {
     cpu_driver(state);
@@ -14393,17 +14390,17 @@ attract_mode_128k_8281:
 
     HLmessages = DEmessages;
     // must be a flashing delay
-    RRC(state->attract_mode_128k_SM_824B);
+    RRC(state->attract_mode_128k_blink);
     if (carry)
       print_message(state, *HLmessages, HLmessages);
 
     Atransition_control = state->transition_control;
     if (Atransition_control == 0) {
-      Adelay = state->attract_mode_128k_SM_825D;
+      Adelay = state->attract_mode_128k_countdown;
       if ((s8) Adelay < 0)
         goto attract_mode_128k_start;
       Adelay--;
-      state->attract_mode_128k_SM_825D = Adelay;
+      state->attract_mode_128k_countdown = Adelay;
       if ((s8) Adelay < 0) {
         setup_transition(state, TRANSITIONSTRIDE_FORWARD);
       } else {

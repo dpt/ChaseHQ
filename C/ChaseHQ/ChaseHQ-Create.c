@@ -72,10 +72,10 @@ static void chq_initialise(chqstate_t *state)
   state->current_stage_number  = 1;
 
   // $824B
-  state->attract_mode_128k_SM_824B = 0xF0;
+  state->attract_mode_128k_blink = 0xF0;
 
   // $825D
-  state->attract_mode_128k_SM_825D = 0;
+  state->attract_mode_128k_countdown = 0;
 
   // $8277
   state->attract_blinker = 0xF0;
