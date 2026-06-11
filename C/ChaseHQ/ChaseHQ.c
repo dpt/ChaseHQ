@@ -6280,7 +6280,7 @@ csc_a43b:
   // Read collision values.
   Cdash = HLobj->hit_max_or_min;
   Edash = HLobj->hit_min_or_max;
-  A     = HLobj->hit_something;
+  A     = HLobj->impact_speed_cap;
 
   DEdash = Edash;
   BCdash = Cdash;
@@ -6315,7 +6315,7 @@ csc_check_left:
   // Read collision values.
   Cdash = HLobj->hit_max_or_min;
   Edash = HLobj->hit_min_or_max;
-  A = HLobj->hit_something;
+  A = HLobj->impact_speed_cap;
 
   DEdash = Edash;
   BCdash = Cdash;
@@ -6425,7 +6425,7 @@ set_off_road:
     // Read collision values
     hit_max_or_min = shortpoleobj->hit_max_or_min; // max
     hit_min_or_max = shortpoleobj->hit_min_or_max; // min
-    A              = shortpoleobj->hit_something;  // unused it seems
+    A              = shortpoleobj->impact_speed_cap;  // overridden to 0x8C in the call below
 
     pos2 = state->xpos_road_centre[127];
     if (pos2 < hit_max_or_min && pos2 >= hit_min_or_max)

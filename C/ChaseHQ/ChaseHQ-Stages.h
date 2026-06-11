@@ -292,9 +292,12 @@ typedef struct stretchy {
 } stretchy_t;
 
 typedef struct obj {
-  u8             hit_max_or_min; // max for RIGHT? min for LEFT?
+  // Together these define the hit zone [lo, hi). Which field is lo and which
+  // is hi swaps between sides: for right-hand objects field1=hi, field2=lo;
+  // for left-hand objects field1=lo, field2=hi.
+  u8             hit_max_or_min;
   u8             hit_min_or_max;
-  u8             hit_something;
+  u8             impact_speed_cap; // capped with speed → ahc_crash_speed_threshold
   const void    *arg;
   obj_handler_t *handler;
 } obj_t;
