@@ -23,13 +23,13 @@
 
 /* ----------------------------------------------------------------------- */
 
-#define EOS                (1<<7) // string terminating top bit
+#define EOS (1<<7) // End of String - string terminator bit
 
 /* ----------------------------------------------------------------------- */
 
-#define BACKDROP_WIDTH        (10) // bytes
-#define BACKDROP_HEIGHT       (24) // rows
-#define BACKDROP_LENGTH       (BACKDROP_WIDTH * BACKDROP_HEIGHT)
+#define BACKDROP_WIDTH  (10) // bytes
+#define BACKDROP_HEIGHT (24) // rows
+#define BACKDROP_LENGTH (BACKDROP_WIDTH * BACKDROP_HEIGHT)
 
 /* ----------------------------------------------------------------------- */
 
@@ -123,8 +123,10 @@
 
 /* ----------------------------------------------------------------------- */
 
+// Map escape byte
 #define MAP_ESC                         (0)
 
+// Map commands
 #define MAP_CMD_GOTO(ADDR)              MAP_ESC, (0), (ADDR) & 0xFF, (ADDR) >> 8
 #define MAP_CMD_FORK_END                MAP_ESC, (1)
 #define MAP_CMD_SPLIT(LADDR,RADDR)      MAP_ESC, (2), (LADDR) & 0xFF, (LADDR) >> 8, (RADDR) & 0xFF, (RADDR) >> 8
@@ -139,7 +141,7 @@
 #define MAP_CMD_START_CARS              MAP_ESC, (13)
 #define MAP_CMD_STOP_CARS               MAP_ESC, (14)
 
-// Curvature
+// Map curvatures
 #define MAP_CURVE_STRAIGHT(D)           (((D) << 4) | 0)
 #define MAP_CURVE_RIGHT(D)              (((D) << 4) | 1)
 #define MAP_CURVE_RIGHT_HARD(D)         (((D) << 4) | 2)
@@ -148,7 +150,7 @@
 #define MAP_CURVE_LEFT_HARD(D)          (((D) << 4) | 10)
 #define MAP_CURVE_LEFT_VERY_HARD(D)     (((D) << 4) | 11)
 
-// Height
+// Map heights
 #define MAP_HEIGHT_UP7(D)               (((D) << 4) | 1)
 #define MAP_HEIGHT_UP5(D)               (((D) << 4) | 3)
 #define MAP_HEIGHT_UP3(D)               (((D) << 4) | 5)
@@ -159,7 +161,7 @@
 #define MAP_HEIGHT_DOWN5(D)             (((D) << 4) | 13)
 #define MAP_HEIGHT_DOWN7(D)             (((D) << 4) | 15)
 
-// Lanes
+// Map lanes
 #define MAP_LANES_4_VAL                 (0x00)
 #define MAP_LANES_3L_VAL                (0x81)
 #define MAP_LANES_3R_VAL                (0x82)
@@ -200,17 +202,20 @@
 #define MAP_LANES_DIRTTRACK(D)          (D), (MAP_LANES_DIRTTRACK_VAL)
 #define MAP_LANES_FORKED(D)             (D), (MAP_LANES_FORKED_VAL)
 
+// Map hazards
 #define MAP_HAZARD_WAIT(T)              (T)
 
-// Objects (names are valid for Stage 1)
-
+// Objects
+//
+// These names are valid for Stage 1 but I'm not yet sure which ones are the
+// same across all stages.
 #define MAP_OBJ_NONE_VAL                (0) // common to all stages?
 #define MAP_OBJ_SHORT_POLE_VAL          (3) // common to all stages?
 
-#define MAP_OBJ_S1_NONE_VAL             (0)
+#define MAP_OBJ_S1_NONE_VAL             (0) // perhaps a dupe
 #define MAP_OBJ_S1_TUNNEL_LIGHT_VAL     (1)
 #define MAP_OBJ_S1_UNKNOWN_2_VAL        (2)
-#define MAP_OBJ_S1_SHORT_POLE_VAL       (3)
+#define MAP_OBJ_S1_SHORT_POLE_VAL       (3) // perhaps a dupe
 #define MAP_OBJ_S1_TREE_VAL             (4)
 #define MAP_OBJ_S1_BUSH_VAL             (5)
 #define MAP_OBJ_S1_STREET_LAMP_VAL      (6)
