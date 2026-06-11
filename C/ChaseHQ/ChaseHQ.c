@@ -7386,7 +7386,7 @@ static void draw_helicoper_part(chqstate_t                *state,
   BC = state->dhl_helipos;
   state->doc_col_pos = -A; // in draw_object_common
 
-  screen_pos = (s8) DEinnerbitmap->horz_offset + BC; // loads byte and widens
+  screen_pos = DEinnerbitmap->horz_offset + BC;
 
 
   HLbitmap  = &DEinnerbitmap->bm; // Conv: Ops shuffled a bit

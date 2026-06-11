@@ -253,7 +253,7 @@ typedef struct hittable {
 } hittable_t;
 
 typedef struct heli_bitmap_inner {
-  u8       horz_offset; // might be s8
+  s8       horz_offset;
   bitmap_t bm;
 } heli_bitmap_inner_t;
 
