@@ -23,7 +23,7 @@
 
 /* ----------------------------------------------------------------------- */
 
-#define STREND                (1<<7) // string terminating top bit
+#define EOS                (1<<7) // string terminating top bit
 
 /* ----------------------------------------------------------------------- */
 
@@ -36,6 +36,7 @@
 // Conv: The C version uses IDs for strings and blocks rather than inline
 // addresses.
 
+/// Chatter commands
 #define CHATTERCMD_RANDOM                   (0xFC) // Followed by three chatterblock indices
 #define CHATTERCMD_PAUSE                    (0xFE) // Followed by a single chatterblock index
 #define CHATTERCMD_STOP                     (0xFF)

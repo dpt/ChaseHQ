@@ -2439,7 +2439,7 @@ score_store_low:
     DE--;
   } while (--Biterations > 0);
 
-  *--HLscore |= STREND;
+  *--HLscore |= EOS;
 
   setup_overlay_messages(state, &state->score_messages[0]); /* was exit via */
   return 0;
@@ -4691,7 +4691,7 @@ do_noise_effect:
   if (delay == 0)
     goto read_message;
   HLnextchar = state->next_character - 1; // addr of next char
-  character = *HLnextchar & ~STREND; // load char and clear any terminator
+  character = *HLnextchar & ~EOS; // load char and clear any terminator
   x = state->message_x - 1;
   RR(B);
   if (carry)
@@ -4837,10 +4837,10 @@ static void pc_clear_line(chqstate_t *state, u8 x)
 
   nextch = state->next_character;
   assert(nextch);
-  character = *nextch & ~STREND; // remove any terminator
+  character = *nextch & ~EOS; // remove any terminator
   assert(character >= ' ' && character < 'Z');
   plot_mini_font_cursor_on(state, x, character);
-  if (*nextch++ & STREND) // if terminated
+  if (*nextch++ & EOS) // if terminated
     state->chatter_delay = 10; // pause at end of string
   state->message_x = x + 1;
   state->next_character = nextch;
@@ -5251,7 +5251,7 @@ check_credits:
     check_user_input_quit_key(state); /* exit via */
   } else {
     state->credits--;
-    state->credit_n[7]   = (state->credits + '0') | STREND;
+    state->credit_n[7]   = (state->credits + '0') | EOS;
     state->time_up_state = TIMEUPSTATE_CHECK_RESTART;
     state->tick_remaining_seconds_x2 = 21; // a 10 second countdown, doubled, plus 1
     state->tick_remaining_subseconds = 1;  // force an initial decrement
@@ -5309,7 +5309,7 @@ check_restart:
   }
 
   time_digits[0] = hidigit; // write first digit (must be ASCII)
-  time_digits[1] = (lodigit + '0') | STREND;
+  time_digits[1] = (lodigit + '0') | EOS;
 }
 
 /**
@@ -5369,7 +5369,7 @@ static void add_bonus(chqstate_t *state, u8 lo, u8 md, u8 hi)
   zeroflag = 0xFF; // true until non-zero seen
   // This always runs since zeroflag is set
   (void) bonus_digit(lo >> 0, &zeroflag, &output);
-  *output |= STREND; // terminate string
+  *output |= EOS; // terminate string
 
   // Conv: ab_high_nibble inlined in calls.
   // Using lazy evaluation here to avoid having a load of gotos
@@ -5849,10 +5849,10 @@ static const u8 *draw_string_core(chqstate_t *state,
   u8 character; /* was A */
 
   do {
-    character = *string & ~STREND;
+    character = *string & ~EOS;
     draw_char(state, character, backbuf, style, attrval, attrsstride, attrs,
               &backbuf, &attrs);
-  } while ((*string++ & STREND) == 0);
+  } while ((*string++ & EOS) == 0);
 
   return string;
 }
@@ -13415,7 +13415,7 @@ const u8 *menu_draw_string(chqstate_t *state, const u8 *HLstring)
     DEscr = SCREENTOADDR(scr);
     HLattr = SCREENTOADDR(attr);
     // POP HLstring
-  } while ((*HLstring++ & STREND) == 0);
+  } while ((*HLstring++ & EOS) == 0);
   // EXX - Unbank
   // POP BC, DE, HLstring
   // EXX - Bank
@@ -13703,7 +13703,7 @@ dak_loop1:
   state->messages_key_string[0] = 0xC7; // Conv: added
   setwordat(&state->messages_key_string[1], DEscreen);
   state->messages_key_string[3] = *HLkeynames++;
-  state->messages_key_string[4] = *HLkeynames | STREND;
+  state->messages_key_string[4] = *HLkeynames | EOS;
   menu_draw_string(state, &state->messages_key_string[0]);
   // POP DE
   DEscreen = dak_move_down(DEscreen);

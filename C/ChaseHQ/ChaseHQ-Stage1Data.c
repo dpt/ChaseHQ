@@ -297,21 +297,21 @@ static const u8 stage1_arrest_messages[83] = {
   0, // partial attribute?
   TWOBYTES(0xF802), // backbuf (16,8)
   TWOBYTES(0x5922), // attr (2,9)
-  'O', 'K', '!', ' ', 'Y', 'O', 'U', ' ', 'A', 'R', 'E', ' ', 'U', 'N', 'D', 'E', 'R', ' ', 'A', 'R', 'R', 'E', 'S', 'T', ' ', 'O', 'N' | STREND,
+  'O', 'K', '!', ' ', 'Y', 'O', 'U', ' ', 'A', 'R', 'E', ' ', 'U', 'N', 'D', 'E', 'R', ' ', 'A', 'R', 'R', 'E', 'S', 'T', ' ', 'O', 'N' | EOS,
 
   6, // delay
   DRAWCHARSTYLE_SINGLE,
   0, // partial attribute?
   TWOBYTES(0xF023), // backbuf (24,16)
   TWOBYTES(0x5943), // attr (3,10)
-  'S', 'U', 'S', 'P', 'I', 'C', 'I', 'O', 'N', ' ', 'O', 'F', ' ', 'F', 'I', 'R', 'S', 'T', ' ', 'D', 'E', 'G', 'R', 'E', 'E', ' ' | STREND,
+  'S', 'U', 'S', 'P', 'I', 'C', 'I', 'O', 'N', ' ', 'O', 'F', ' ', 'F', 'I', 'R', 'S', 'T', ' ', 'D', 'E', 'G', 'R', 'E', 'E', ' ' | EOS,
 
   45, // delay
   DRAWCHARSTYLE_SINGLE,
   0, // partial attribute?
   TWOBYTES(0xF82C), // backbuf (96,24)
   TWOBYTES(0x596C), // attr (12,11)
-  'M', 'U', 'R', 'D', 'E', 'R' | STREND,
+  'M', 'U', 'R', 'D', 'E', 'R' | EOS,
 
   TRANSITIONCONTROL_FILL_ATTRIBUTES, // new value for transition_control
   DRAWOVERLAY_STOP // terminator
