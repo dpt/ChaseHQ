@@ -1021,8 +1021,8 @@ const u8 bitmap_faces[FACEBYTES * NFACES] = {
 //
 
 const stretchy_t stretchy_shortpole[3] = {
-  { 2, &shortpole_bottom },
-  { 4, &shortpole_middle },
+  { STRETCHY_TYPE_FIXED, &shortpole_bottom },
+  { STRETCHY_TYPE_50PC,  &shortpole_middle },
   { STRETCHY_TYPE_END, NULL } // Conv: NULL added
 };
 

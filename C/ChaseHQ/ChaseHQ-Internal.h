@@ -82,15 +82,15 @@
 
 #define DRAWOVERLAY_STOP                       (0)
 
-#define STRETCHY_TYPE_END                      (1)
-#define STRETCHY_TYPE_2                        (2)
-#define STRETCHY_TYPE_3                        (3)
-#define STRETCHY_TYPE_4                        (4)
-#define STRETCHY_TYPE_5                        (5)
-#define STRETCHY_TYPE_6                        (6)
-#define STRETCHY_TYPE_7                        (7)
-#define STRETCHY_TYPE_8                        (8)
-#define STRETCHY_TYPE_9                        (9)
+#define STRETCHY_TYPE_END                      (1) // terminator (set=NULL)
+#define STRETCHY_TYPE_FIXED                    (2) // height = bitmap->width_bytes - 2, no perspective scaling
+#define STRETCHY_TYPE_150PC                    (3) // height = 150% of perspective scale
+#define STRETCHY_TYPE_50PC                     (4) // height =  50%
+#define STRETCHY_TYPE_113PC                    (5) // height = 112.5%
+#define STRETCHY_TYPE_38PC                     (6) // height =  37.5%
+#define STRETCHY_TYPE_75PC                     (7) // height =  75%
+#define STRETCHY_TYPE_25PC                     (8) // height =  25%
+#define STRETCHY_TYPE_100PC                    (9) // height = 100%
 
 /* ----------------------------------------------------------------------- */
 

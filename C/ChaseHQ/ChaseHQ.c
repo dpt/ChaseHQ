@@ -3391,13 +3391,13 @@ dso_loop_continue:
   // Bstretchy_type = data_type - 2 (two decrements already applied).
   switch (Bstretchy_type) {
   default: assert(0);
-  case 1: goto dso_case_150pc;  /* data type STRETCHY_TYPE_3 */
-  case 2: goto dso_case_50pc;   /* data type STRETCHY_TYPE_4 */
-  case 3: goto dso_case_113pc;  /* data type STRETCHY_TYPE_5 */
-  case 4: goto dso_case_38pc;   /* data type STRETCHY_TYPE_6 */
-  case 5: goto dso_case_75pc;   /* data type STRETCHY_TYPE_7 */
-  case 6: goto dso_case_25pc;   /* data type STRETCHY_TYPE_8 */
-  case 7: goto dso_continue;    /* data type STRETCHY_TYPE_9 */
+  case 1: goto dso_case_150pc;  /* data type STRETCHY_TYPE_150PC */
+  case 2: goto dso_case_50pc;   /* data type STRETCHY_TYPE_50PC */
+  case 3: goto dso_case_113pc;  /* data type STRETCHY_TYPE_113PC */
+  case 4: goto dso_case_38pc;   /* data type STRETCHY_TYPE_38PC */
+  case 5: goto dso_case_75pc;   /* data type STRETCHY_TYPE_75PC */
+  case 6: goto dso_case_25pc;   /* data type STRETCHY_TYPE_25PC */
+  case 7: goto dso_continue;    /* data type STRETCHY_TYPE_100PC */
   }
   Avertical *= 2;
   goto dso_continue;

@@ -271,7 +271,7 @@ typedef struct heli_bitmap {
 
 typedef struct depthset_pair {
   u8 depth;
-  u8 offset; // byte offset from 'bitmaps'
+  u8 offset; // byte offset from 'bitmaps' in parent structure
 } depthset_pair_t;
 
 typedef struct depthset {
@@ -282,10 +282,9 @@ typedef struct depthset {
 // root objects (an array of these) used with routine draw_stretchy_object_left/right
 // bottom-most object is given first
 typedef struct stretchy {
-  // 1 => end
-  // 2 =>
-  // 3 => repeats?
-  // otherwise not sure. the value affects height.
+  // STRETCHY_TYPE_END:   terminator
+  // STRETCHY_TYPE_FIXED: draw at height = bitmap->width_bytes - 2 (no perspective scaling)
+  // STRETCHY_TYPE_*PC:   draw at given % of the perspective height
   u8                type;
   const depthset_t *set; // Conv: this is always present, can be NULL for
   // final entry

@@ -2465,19 +2465,19 @@ static const u8 stage1_bitmap_barrier_4s[2 * 2 * 7] = {
 
 // $6ED1
 static const stretchy_t stage1_stretchy_streetlamp_right[5] = {
-  { STRETCHY_TYPE_2, &streetlampbottom_right     },
-  { STRETCHY_TYPE_4, &streetlampmiddle2_right    },
-  { STRETCHY_TYPE_5, &streetlampmiddle_right     },
-  { STRETCHY_TYPE_2, &stage1_streetlamptop_right },
+  { STRETCHY_TYPE_FIXED, &streetlampbottom_right     },
+  { STRETCHY_TYPE_50PC, &streetlampmiddle2_right    },
+  { STRETCHY_TYPE_113PC, &streetlampmiddle_right     },
+  { STRETCHY_TYPE_FIXED, &stage1_streetlamptop_right },
   { STRETCHY_TYPE_END, NULL }
 };
 
 // $6EDE
 static const stretchy_t stage1_stretchy_streetlamp_left[5] = {
-  { STRETCHY_TYPE_2, &streetlampbottom_left     },
-  { STRETCHY_TYPE_4, &streetlampmiddle2_left    },
-  { STRETCHY_TYPE_5, &streetlampmiddle_left     },
-  { STRETCHY_TYPE_2, &stage1_streetlamptop_left },
+  { STRETCHY_TYPE_FIXED, &streetlampbottom_left     },
+  { STRETCHY_TYPE_50PC, &streetlampmiddle2_left    },
+  { STRETCHY_TYPE_113PC, &streetlampmiddle_left     },
+  { STRETCHY_TYPE_FIXED, &stage1_streetlamptop_left },
   { STRETCHY_TYPE_END, NULL }
 };
 
@@ -2618,17 +2618,17 @@ static const u8 stage1_bitmap_streetlamptop_5s[2 * 2 * 3] = {
 
 // $6FDC
 static const stretchy_t stage1_stretchy_telegraphpole_right[5] = {
-  { STRETCHY_TYPE_2, &streetlampbottom_right },
-  { STRETCHY_TYPE_5, &streetlampmiddle_right },
-  { STRETCHY_TYPE_2, &stage1_telegraphpoletop_right },
+  { STRETCHY_TYPE_FIXED, &streetlampbottom_right },
+  { STRETCHY_TYPE_113PC, &streetlampmiddle_right },
+  { STRETCHY_TYPE_FIXED, &stage1_telegraphpoletop_right },
   { STRETCHY_TYPE_END, NULL }
 };
 
 // $6FE6
 static const stretchy_t stage1_stretchy_telegraphpole_left[5] = {
-  { STRETCHY_TYPE_2, &streetlampbottom_left },
-  { STRETCHY_TYPE_5, &streetlampmiddle_left },
-  { STRETCHY_TYPE_2, &stage1_telegraphpoletop_left },
+  { STRETCHY_TYPE_FIXED, &streetlampbottom_left },
+  { STRETCHY_TYPE_113PC, &streetlampmiddle_left },
+  { STRETCHY_TYPE_FIXED, &stage1_telegraphpoletop_left },
   { STRETCHY_TYPE_END, NULL }
 };
 
@@ -2766,11 +2766,11 @@ static const u8 stage1_bitmap_telegraphpoletop_5s[2 * 2 * 4] = {
 
 // $70F6
 static const stretchy_t stage1_stretchy_tree_right[6] = {
-  { STRETCHY_TYPE_2, &stage1_tree_bottom       },
-  { STRETCHY_TYPE_6, &stage1_tree_bottommiddle },
-  { STRETCHY_TYPE_2, &stage1_tree_middle       },
-  { STRETCHY_TYPE_5, &stage1_tree_topmiddle    },
-  { STRETCHY_TYPE_2, &stage1_tree_top          },
+  { STRETCHY_TYPE_FIXED, &stage1_tree_bottom       },
+  { STRETCHY_TYPE_38PC, &stage1_tree_bottommiddle },
+  { STRETCHY_TYPE_FIXED, &stage1_tree_middle       },
+  { STRETCHY_TYPE_113PC, &stage1_tree_topmiddle    },
+  { STRETCHY_TYPE_FIXED, &stage1_tree_top          },
   { STRETCHY_TYPE_END, NULL }
 };
 
@@ -2778,9 +2778,9 @@ static const stretchy_t stage1_stretchy_tree_right[6] = {
 //
 // Note: Two fewer elements than the right version (smaller/bush?)
 static const stretchy_t stage1_stretchy_tree_left[4] = {
-  { STRETCHY_TYPE_2, &stage1_tree_middle    },
-  { STRETCHY_TYPE_6, &stage1_tree_topmiddle },
-  { STRETCHY_TYPE_2, &stage1_tree_top       },
+  { STRETCHY_TYPE_FIXED, &stage1_tree_middle    },
+  { STRETCHY_TYPE_38PC, &stage1_tree_topmiddle },
+  { STRETCHY_TYPE_FIXED, &stage1_tree_top       },
   { STRETCHY_TYPE_END, NULL }
 };
 
