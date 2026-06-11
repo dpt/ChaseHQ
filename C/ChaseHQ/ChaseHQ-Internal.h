@@ -106,7 +106,7 @@ typedef void (hazard_handler_t)(chqstate_t *state, hazard_t *IX);
 
 typedef u8 chatterpriority_t;
 
-typedef struct stagevars stagevars_t;
+typedef struct session session_t;
 
 typedef struct carpart {
   u8        y;

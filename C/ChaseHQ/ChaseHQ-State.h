@@ -56,7 +56,7 @@ struct hazard {
   u8                inverted;          // sprite plot mode: 0=normal, 1=stopped/neutral, 2=inverted
 };
 
-struct stagevars {
+struct session {
   // $A16D
   u8        spawn_accumulator;
   // $A16E
@@ -284,7 +284,7 @@ struct chqstate {
   u8        credits;
 
   // $A16D
-  stagevars_t st;
+  session_t session;
 
   // $A188
   hazard_t  hazards[MAXHAZARDS];

@@ -1859,7 +1859,7 @@ const u8 *chatter_blocks[CHATTERBLK__LIMIT] = {
 /* ----------------------------------------------------------------------- */
 
 // $A13E
-const stagevars_t saved_game_state = {
+const session_t saved_game_state = {
   1, // spawn_accumulator
   100, // idle_timer
   USERINPUTMASK_ALLOW_ALL,

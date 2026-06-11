@@ -140,7 +140,7 @@ const u8 chatterblk_tony_lets_go[3];
 
 const u8 *chatter_blocks[CHATTERBLK__LIMIT];
 
-const stagevars_t saved_game_state;
+const session_t saved_game_state;
 const hazard_t saved_game_state_hazard_0;
 
 const u8 font[41 * 7];

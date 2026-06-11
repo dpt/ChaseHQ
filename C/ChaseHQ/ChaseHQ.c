@@ -1846,7 +1846,7 @@ static void set_up_stage(chqstate_t        *state,
   u8  iterations;   /* was B */
 
   memset(&state->road_buffer[0], 0, 256);
-  state->st         = saved_game_state;
+  state->session         = saved_game_state;
   state->hazards[0] = saved_game_state_hazard_0;
   memset(&state->hazards[1], 0, sizeof(hazard_t) * (MAXHAZARDS - 1));
 
@@ -1932,7 +1932,7 @@ static void check_user_input(chqstate_t *state)
     return;
   }
 
-  *puserinput = input = (state->st.user_input_mask & *puserinput);
+  *puserinput = input = (state->session.user_input_mask & *puserinput);
   if ((input & (USERINPUT_QUIT | USERINPUT_PAUSE | USERINPUT_TURBO)) == 0)
     return;
 
@@ -1944,7 +1944,7 @@ static void check_user_input(chqstate_t *state)
   if ((input & USERINPUT_PAUSE) == 0) {
     // (If it's not pause it's...) Turbo pressed
     pboost = &state->boost;
-    if (*pboost > 0 || state->st.turbos == 0)
+    if (*pboost > 0 || state->session.turbos == 0)
       return; // already boosting or no turbos remain
 
     *pboost = 60; // set 60 ticks of boost
@@ -1980,7 +1980,7 @@ static void check_user_input_quit_key(chqstate_t *state)
   drive_chatter_stop(state);
   fill_attributes(state);
 
-  state->st.user_input_mask = USERINPUTMASK_ALLOW_NONE;
+  state->session.user_input_mask = USERINPUTMASK_ALLOW_NONE;
   state->quit_state         = QUITSTATE_START;
 }
 
@@ -2350,7 +2350,7 @@ phase4:
   RLC(D);
   increment_score(state, 0, 0, D);
 
-  A = state->st.time_bcd;
+  A = state->session.time_bcd;
   state->score_messages[0x8C8A - SCORE_MESSAGES_BASE] =
     A; // Write to TIME BONUS line
   C = A;
@@ -2480,7 +2480,7 @@ assign_hero_pos:
   if (state->hazards[0].distance >= 3)
     goto perp_too_far_away;
 
-  HLphc = &state->st.perp_halt_counter;
+  HLphc = &state->session.perp_halt_counter;
   (*HLphc)--;
   if (*HLphc)
     goto perp_too_far_away;
@@ -2561,7 +2561,7 @@ static void fully_smashed(chqstate_t *state)
   state->perp_caught_phase  = PERPCAUGHTPHASE_1;
   state->hand_flag          = 2; // TODO: Add a symbol for this
   state->smash_counter      = 20;
-  state->st.user_input_mask = USERINPUT_PAUSE | USERINPUT_QUIT;
+  state->session.user_input_mask = USERINPUT_PAUSE | USERINPUT_QUIT;
   setup_overlay_messages(state, &pull_over_message[0]);
   hpc_set_perp_speed(state, 400);
 }
@@ -5194,7 +5194,7 @@ static void check_time_up(chqstate_t *state)
       state->transition_control == TRANSITIONCONTROL_FADE)
     return;
 
-  ptime_bcd = &state->st.time_bcd;
+  ptime_bcd = &state->session.time_bcd;
   time_up_state = state->time_up_state;
   switch (time_up_state) {
   case TIMEUPSTATE_INIT:          break;
@@ -5211,17 +5211,17 @@ static void check_time_up(chqstate_t *state)
     // Ran out of time
     state->time_up_state      = TIMEUPSTATE_CHECK_TIME_UP;
     // Stop acceleration/brake/turbo/pause
-    state->st.user_input_mask = USERINPUT_RIGHT | USERINPUT_LEFT | USERINPUT_FIRE |
+    state->session.user_input_mask = USERINPUT_RIGHT | USERINPUT_LEFT | USERINPUT_FIRE |
                                 USERINPUT_QUIT;
     return;
   }
 
 update_remaining_time:
-  if (--state->st.time_sixteenths > 0)
+  if (--state->session.time_sixteenths > 0)
     return;
 
-  state->st.time_sixteenths = 15;
-  state->st.time_bcd = time_bcd = DAA(state->st.time_bcd - 1, NULL);
+  state->session.time_sixteenths = 15;
+  state->session.time_bcd = time_bcd = DAA(state->session.time_bcd - 1, NULL);
 
   // When 15s remain Nancy warns that time is running out.
   if (time_bcd == 0x15)
@@ -5232,7 +5232,7 @@ update_remaining_time:
 check_time_up:
   if (*ptime_bcd != 0) {
     state->time_up_state      = TIMEUPSTATE_INIT;
-    state->st.user_input_mask = USERINPUTMASK_ALLOW_ALL;
+    state->session.user_input_mask = USERINPUTMASK_ALLOW_ALL;
     goto update_remaining_time;
   }
 
@@ -5264,11 +5264,11 @@ check_restart:
     state->time_up_state      = TIMEUPSTATE_INIT;
     state->smash_level        = 0;
     state->smash_counter      = 0;
-    state->st.user_input_mask = USERINPUTMASK_ALLOW_ALL;
+    state->session.user_input_mask = USERINPUTMASK_ALLOW_ALL;
     state->gear_lockout       = 3;
     state->transition_control = TRANSITIONCONTROL_FILL_ATTRIBUTES;
-    state->st.turbos          = MAXTURBOS;
-    state->st.time_bcd        = RESTART_TIME_BCD;
+    state->session.turbos          = MAXTURBOS;
+    state->session.time_bcd        = RESTART_TIME_BCD;
     state->retry_count++;
 
     play_start_noise(state);
@@ -5528,7 +5528,7 @@ static void plot_turbos_and_digits(chqstate_t *state)
   u16        HLdistance;
   u16        BCdivisor;
 
-  Aturbos = state->st.turbos;
+  Aturbos = state->session.turbos;
   if (Aturbos) {
 
     Cturbos = Aturbos;
@@ -5634,7 +5634,7 @@ ptas_turbo_setup:
 
   // Time
   // EXX
-  ptas_led_digits(state, 1, &state->st.time_bcd, &state->st.time_digits[1],
+  ptas_led_digits(state, 1, &state->session.time_bcd, &state->session.time_digits[1],
                   ADDRTOSCREEN(0x412F)); // (120,9)
 
   // Distance (to perp)
@@ -5676,12 +5676,12 @@ ptas_turbo_setup:
   DEbcd[-1] = A;
 
   ptas_led_digits(state, 2, &state->distance_bcd[1],
-                  &state->st.distance_digits[3],
+                  &state->session.distance_digits[3],
                   ADDRTOSCREEN(0x4191)); /* was fallthrough */
 
   // Score
 
-  ptas_led_digits(state, 4, &state->score_bcd[3], &state->st.score_digits[7],
+  ptas_led_digits(state, 4, &state->score_bcd[3], &state->session.score_digits[7],
                   ADDRTOSCREEN(0x4126)); /* was fallthrough */
 }
 
@@ -8451,7 +8451,7 @@ static void move_hero_car(chqstate_t *state)
   state->dhc_jump_y = y_offset;
 
   if (state->boost && --state->boost == 0) // Conv: Uses state directly
-    state->st.turbos--;
+    state->session.turbos--;
 
   // Handle smoke effect
   if (state->smoke) // Conv: Uses state directly
@@ -8483,8 +8483,8 @@ static void move_hero_car(chqstate_t *state)
   speed = state->speed;
   if (speed < 120 &&
       state->perp_caught_phase == 0 &&
-      --state->st.idle_timer == 0) {
-    state->st.idle_timer = 100;
+      --state->session.idle_timer == 0) {
+    state->session.idle_timer = 100;
     start_chatter(state, 10, &chatterblk_raymond_get_moving[0]);
   }
   // DEspeed = HLspeed; // might not need
@@ -8955,8 +8955,8 @@ static void start_chase(chqstate_t *state)
   // This is animation frame related?
   state->ahc_SM_B478_hand_frame = 2;
 
-  state->st.time_sixteenths = 15;
-  state->st.time_bcd        = 0x60;
+  state->session.time_sixteenths = 15;
+  state->session.time_bcd        = 0x60;
 
   // Toggle the left light's brightness
   toggle_light_brightness(state, ADDRTOATTRS(0x5820));
@@ -9837,7 +9837,7 @@ static void scroll_horizon(chqstate_t *state)
   BCcounter = (Eset_if_incline_negative) ? -Bcounter : Bcounter;
 
   // Adjust horizon_level
-  state->st.horizon_level += BCcounter;
+  state->session.horizon_level += BCcounter;
   // EX AF,AF'
   state->horizon_y_a25b += Bcounter;
 }
@@ -9885,7 +9885,7 @@ static void update_road_level(chqstate_t *state)
 
   Aincline -= Bvar_a25a;
   if (Aincline)
-    state->st.horizon_level += (Cnegate_flag) ? -Aincline : Aincline;
+    state->session.horizon_level += (Cnegate_flag) ? -Aincline : Aincline;
 
   HLroadbuf = ROADBUF_FWD2PTR(ROADBUF_HEIGHT_OFFSET + 2);
 
@@ -10123,7 +10123,7 @@ lr_check_spawning:
   Aiterations = state->allow_spawning;
   if (Aiterations == 0)
     goto lr_no_car_spawning;
-  Aiterations += state->st.spawn_accumulator;
+  Aiterations += state->session.spawn_accumulator;
   Ca16d = Aiterations; // new value for $A16D
   Aiterations -= 2;
   if (Aiterations >= 256 - 2) // carried?
@@ -10132,9 +10132,9 @@ lr_check_spawning:
   HLforkdistance += 16;
   state->fork_distance = HLforkdistance;
 lr_set_var_a16d_from_c:
-  state->st.spawn_accumulator = Ca16d;
+  state->session.spawn_accumulator = Ca16d;
 lr_no_car_spawning:
-  carry = state->st.spawn_accumulator & 1; // CHECK
+  carry = state->session.spawn_accumulator & 1; // CHECK
   Aiterations = state->fast_counter;
   RL(Aiterations);
   RL(Aiterations);
@@ -10264,8 +10264,8 @@ static void exit_fork(chqstate_t *state)
   state->fork_in_progress       = 0;
   state->fork_taken             = 0;
   state->fork_visible           = 0;
-  state->st.no_objects_counter  = 1;
-  state->st.spawn_accumulator            = 1;
+  state->session.no_objects_counter  = 1;
+  state->session.spawn_accumulator            = 1;
   state->fork_distance          = 0;
 }
 
@@ -10386,9 +10386,9 @@ draw_attributes:
       D = (A >= 64) ? 0xFF : 0x00; /* was SBC A,A - must be sign extending */
       DElevel = (D << 8) | E;
 
-      assert(state->st.horizon_attribute != 0);
+      assert(state->session.horizon_attribute != 0);
 
-      HLattrs = ADDRTOATTRS(state->st.horizon_attribute);
+      HLattrs = ADDRTOATTRS(state->session.horizon_attribute);
       printf("d1: %ld %d\n", HLattrs - &state->speccy->screen.attributes[0], DElevel);
       if (!VALID_ATTRS(HLattrs))
         return;
@@ -10412,7 +10412,7 @@ draw_attributes:
         HLattrs += DElevel;
       if (!VALID_ATTRS(HLattrs))
         return;
-      state->st.horizon_attribute = ATTRSTOADDR(HLattrs);
+      state->session.horizon_attribute = ATTRSTOADDR(HLattrs);
     }
 
     /* Draw smash meter attributes */
@@ -10737,13 +10737,13 @@ rm_lanes_done: // $BF3A
   // -- SKIP CHECK ($BF3E) --
   // Every other call, rightside/leftside/hazards are skipped.
 
-  if (state->st.no_objects_counter != 1) {
+  if (state->session.no_objects_counter != 1) {
     *HLlanesptr = 0; // rightside slot
     HLlanesptr = state->road_buffer_start + ROADBUF_PTR2IDX(HLlanesptr + 32);
     *HLlanesptr = 0; // leftside slot
     HLlanesptr = state->road_buffer_start + ROADBUF_PTR2IDX(HLlanesptr + 32);
     *HLlanesptr = 0; // hazards slot
-    state->st.no_objects_counter = 1;
+    state->session.no_objects_counter = 1;
     goto rm_all_hazards;
   }
 
@@ -10918,7 +10918,7 @@ rm_hazards_regular_byte: // $C050
 rm_no_hazards: // $C055
   state->hazards_byte = Ahazards;
   *HLlanesptr = state->rm_SM_C058_hazard_type;
-  state->st.no_objects_counter = 2;
+  state->session.no_objects_counter = 2;
 
 rm_all_hazards: // $C05C (also entered from skip path with no_objects_counter=1)
   update_road_level(state);
@@ -12340,7 +12340,7 @@ dr_start_backdrop_fill:
 
   C = D & 15;
   B = ~((E >> 1) + C) + 0x80;
-  HLhorzlvl = state->st.horizon_level;
+  HLhorzlvl = state->session.horizon_level;
   C = 24;
   A = H;
   if ((s8) A < 0)
