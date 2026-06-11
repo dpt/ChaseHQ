@@ -196,11 +196,11 @@ struct chqstate {
   u8        overlay_delay;
 
   // $8F82 (SM) in draw_everything_else
-  u8        dee_draw_tunnel_1;
+  u8        dee_tunnel_1;
   // $8FA4 (SM) in draw_everything_else
-  u8        dee_draw_helicopter;
+  u8        dee_helicopter;
   // $8FA7 (SM) in draw_everything_else
-  u8        dee_draw_tunnel_2;
+  u8        dee_tunnel_2;
 
   // $90F1 (SM) in draw_overhead
   u8        do_vert_sub;
@@ -344,11 +344,11 @@ struct chqstate {
   // $A233
   u8        smash_counter;
   // $A234
-  u8        counter_A;
+  u8        anim_counter;
   // $A235
-  u8        counter_B;
+  u8        frame_toggle;
   // $A236
-  u8        counter_C;
+  u8        slow_anim_counter;
   // $A237
   u8        sfx_index;
   // $A238
@@ -416,13 +416,13 @@ struct chqstate {
   // $A259
   u8        prev_road_height;
   // $A25A
-  u8        horizon_y_a25a; // related to changes in incline (goes 0/1/2)
+  u8        horizon_y_accum; // related to changes in incline (goes 0/1/2)
   // $A25B
-  u8        horizon_y_a25b;
+  u8        horizon_y_step;
   // $A25C
   u8        current_curvature;
   // $A25D
-  u8        horizon_a25d;
+  u8        horizon_curve_index;
   // $A25E
   u8        horizon_x_scroll; // cycles 4..1 or similar when roads curve
   // $A25F
@@ -712,18 +712,18 @@ struct chqstate {
   u8        temp_keydefs[8];
 
   // $EE6E (SM) in next_pattern
-  u8        SM_EE6E_repeats; // pattern repeat counter
-  const u8 *SM_EE75_pattern_addr; // current pattern address
+  u8        music_pattern_repeats; // pattern repeat counter
+  const u8 *music_pattern_addr; // current pattern address
 
-  u8        SM_EEA2_reset_pattern_if_zero;
-  u8        SM_EEAD_delay;
-  u8        SM_EEB9_delay;
-  const u8 *SM_EEBE_music_data_ptr;
-  const u8 *SM_EEC9_music_data_ptr;
-  u8        SM_EF00;
-  u8        SM_EF0D_drum_flag; // drum playing flag
-  u8        SM_EF13_interrupt_flag; // interrupt flag
-  u8        SM_EF39_drum_speed;
+  u8        music_started;
+  u8        music_note_delay;
+  u8        music_note_delay_reload;
+  const u8 *music_data_ptr;
+  const u8 *music_pattern_start_ptr;
+  u8        music_extra_delay;
+  u8        music_drum_active; // drum playing flag
+  u8        music_irq_flag; // interrupt flag
+  u8        music_drum_speed;
 
   // $F000
   u8        backbuffer[BACKBUFFER_LENGTH + BACKBUFFER_OVERFLOW];

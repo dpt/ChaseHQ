@@ -1861,9 +1861,9 @@ static void set_up_stage(chqstate_t        *state,
   state->horizon_table_e34b[2] = 0;
 
   // Disable the helicopter and tunnel drawing calls in draw_everything_else
-  state->dee_draw_tunnel_1 = 0; // draw tunnel call
-  state->dee_draw_helicopter = 0; // draw heli call
-  state->dee_draw_tunnel_2 = 0; // draw tunnel call
+  state->dee_tunnel_1 = 0; // draw tunnel call
+  state->dee_helicopter = 0; // draw heli call
+  state->dee_tunnel_2 = 0; // draw tunnel call
 
   state->rm_SM_C058_hazard_type = 0; // clear current hazard?
   state->mhc_y_offset = 0; // clear jump counter?
@@ -3003,7 +3003,7 @@ static void draw_everything_else(chqstate_t *state)
 
   IYtable_e300 = &state->table_e300[21];
   assert(IYtable_e300 == &state->table_e300[21]);
-  if (state->dee_draw_tunnel_1)
+  if (state->dee_tunnel_1)
     draw_tunnel(state, IYtable_e300);
   IYtable_e300--;
   assert(IYtable_e300 == &state->table_e300[20]);
@@ -3025,10 +3025,10 @@ static void draw_everything_else(chqstate_t *state)
 
     dust_stones_stuff(state, Biterations, IYtable_e300);
 
-    if (state->dee_draw_helicopter)
+    if (state->dee_helicopter)
       draw_helicopter(state, Biterations, IYtable_e300);
 
-    if (state->dee_draw_tunnel_2)
+    if (state->dee_tunnel_2)
       draw_tunnel(state, IYtable_e300);
 
     Aobj = *HLroadbuf; // fetch right side object from road buffer
@@ -3056,7 +3056,7 @@ continue_after_left_hand_done:
   assert(IYtable_e300 == &state->table_e300[0]);
   assert(IXtable_ea00 == &state->xpos_road_centre[128]); // one-past-end after 20*2 advances from [88]
 
-  if (state->dee_draw_helicopter)
+  if (state->dee_helicopter)
     return;
 
   Afloating_arrow = state->floating_arrow;
@@ -6571,11 +6571,11 @@ load_and_store_right:
  */
 static void cycle_counters(chqstate_t *state)
 {
-  state->counter_A = (state->counter_A + 1) & 3;
-  state->counter_B = (state->counter_B + 1) & 1;
-  if (state->counter_B == 0)
+  state->anim_counter = (state->anim_counter + 1) & 3;
+  state->frame_toggle = (state->frame_toggle + 1) & 1;
+  if (state->frame_toggle == 0)
     return;
-  state->counter_C = (state->counter_C + 1) & 3;
+  state->slow_anim_counter = (state->slow_anim_counter + 1) & 3;
 }
 
 /**
@@ -7351,7 +7351,7 @@ static void draw_helicopter(chqstate_t *state, u8 Biterations, u8 *IY)
   state->dh_heli_body_y_offset = state->dh_heli_vert_base - IY[0x4E];
 
   Biterations2 = 5; // iterations (draw first five)
-  frame = state->counter_A & 1; // heli frame
+  frame = state->anim_counter & 1; // heli frame
 
   helibitmaps = state->stage->addrof_helicopter_stuff_1;
   if (frame != 0)
@@ -7541,7 +7541,7 @@ hc_set_draw:
   state->mh_heli_centre_y = HL_ab06;
   draw_heli = 1; // true
 hc_exit:
-  state->dee_draw_helicopter = draw_heli;
+  state->dee_helicopter = draw_heli;
   state->helicopter_control = new_heli_ctl;
 }
 
@@ -8232,7 +8232,7 @@ dh_smash_level:
   // EX AF,AF' Unbank Asmash_level_scaled
 
   // Conv: shuffled around
-  Asmash_level_scaled += (state->counter_C & 1) * 2;
+  Asmash_level_scaled += (state->slow_anim_counter & 1) * 2;
   HLbitmap = fire_bitmaps[Asmash_level_scaled / 2];
 
   // POP DE (DEbitmapoffset)
@@ -8821,7 +8821,7 @@ ahc_load_flip_flag:
     }
 
     // EXX - bank
-    Acounter_A = state->counter_A;
+    Acounter_A = state->anim_counter;
     Bdash_anim_counter = Acounter_A & 1; // animation counter OR flip flag, not sure
     Cdash = Acounter_A << 1;
     // EXX - unbank
@@ -8835,7 +8835,7 @@ ahc_load_flip_flag:
   // Make the car bounce up and down when it goes off-road
   Bwobble = 0;
   if (state->off_road == 1)
-    Bwobble = (state->counter_C & 1) * 3; // half rate counter
+    Bwobble = (state->slow_anim_counter & 1) * 3; // half rate counter
 
   draw_hero_car(state, state->turn_speed, Bwobble);
 
@@ -8843,10 +8843,10 @@ ahc_load_flip_flag:
     draw_cherry_light(state, 0, 1, 2);
 
   // Check to see if smoke needs drawing
-  Bsmoke_anim_frame = state->counter_A;
+  Bsmoke_anim_frame = state->anim_counter;
   if (state->cornering == 0) {
     // Not cornering
-    Bsmoke_anim_frame = state->counter_C; // could move down
+    Bsmoke_anim_frame = state->slow_anim_counter; // could move down
     if (state->boost == 0 && state->smoke == 0 && state->off_road != 2)
       return; // Return if no boost, no smoke and not fully off-road
   }
@@ -9305,7 +9305,7 @@ static void draw_cherry_light(chqstate_t *state,
   u8 Aturn_speed; /* was A */
   u8 Cturn_speed; /* was C */
 
-  Aframe_index += state->counter_C & 1;
+  Aframe_index += state->slow_anim_counter & 1;
 
   // EX AF,AF'
   if (state->turn_speed >= Bturn_limit) {
@@ -9769,7 +9769,7 @@ static void scroll_horizon(chqstate_t *state)
     RL(Adash);
     RL(Adash);
     Adash &= 6; // get top two bits of speed, scaled up by 2
-    BChorizon_table_value = horizon_table[(state->horizon_a25d + Adash) / 2]; // CHECK scaling / offset
+    BChorizon_table_value = horizon_table[(state->horizon_curve_index + Adash) / 2]; // CHECK scaling / offset
     BChorizon_table_value = (BChorizon_table_value >> 8) | (BChorizon_table_value << 8); // Conv: Swap
 
     // Decrement horizon_a25e
@@ -9806,7 +9806,7 @@ static void scroll_horizon(chqstate_t *state)
   }
 
   HLhorizon_table = &horizon_table[(-1 + Aincline) / 2]; // CHECK: Scaling / offset
-  Adiff = state->fast_counter - state->horizon_y_a25b;
+  Adiff = state->fast_counter - state->horizon_y_step;
   if (Adiff)
     return;
 
@@ -9824,7 +9824,7 @@ static void scroll_horizon(chqstate_t *state)
   if (Bcounter == 0)
     return;
 
-  state->horizon_y_a25a += Ahorizon_y_a25a_delta;
+  state->horizon_y_accum += Ahorizon_y_a25a_delta;
 
   // Sign extend based on low bit of Eset_if_incline_negative
   BCcounter = (Eset_if_incline_negative) ? -Bcounter : Bcounter;
@@ -9832,7 +9832,7 @@ static void scroll_horizon(chqstate_t *state)
   // Adjust horizon_level
   state->session.horizon_level += BCcounter;
   // EX AF,AF'
-  state->horizon_y_a25b += Bcounter;
+  state->horizon_y_step += Bcounter;
 }
 
 /**
@@ -9868,7 +9868,7 @@ static void update_road_level(chqstate_t *state)
   u8        A;                  /* was A */
   u8        B;                  /* was B */
 
-  Bvar_a25a = state->horizon_y_a25a; // load and widen
+  Bvar_a25a = state->horizon_y_accum; // load and widen
   Cnegate_flag = 0;
   Aincline = state->incline;
   if (Aincline < 0) { // if road climbing
@@ -9882,7 +9882,7 @@ static void update_road_level(chqstate_t *state)
 
   HLroadbuf = ROADBUF_FWD2PTR(ROADBUF_HEIGHT_OFFSET + 2);
 
-  state->horizon_y_a25b = state->horizon_y_a25a = 0;
+  state->horizon_y_step = state->horizon_y_accum = 0;
 
   Aheight = (s8)*HLroadbuf >> 1;
   if (Aheight < 0)
@@ -9951,7 +9951,7 @@ static void update_road_level(chqstate_t *state)
     }
     // Dcurvature_byte = Acurvature_byte; // removed presumed unused
     Acurvature_byte <<= 2;
-    state->horizon_a25d = Acurvature_byte;
+    state->horizon_curve_index = Acurvature_byte;
     Bcurvature_byte = Acurvature_byte;
     if (state->horizon_x_scroll)
       goto url_B9C5;
@@ -11002,8 +11002,8 @@ static void prepare_tunnel(chqstate_t *state)
       state->tunnel_sfx = 0;
 
       /* NOP out draw_tunnel calls */
-      state->dee_draw_tunnel_1 = 0; /* NOP [$8F83/4 setting removed] */
-      state->dee_draw_tunnel_2 = 0; /* NOP [$8FA8/9 setting removed] */
+      state->dee_tunnel_1 = 0; /* NOP [$8F83/4 setting removed] */
+      state->dee_tunnel_2 = 0; /* NOP [$8FA8/9 setting removed] */
       return;
     }
 
@@ -11048,7 +11048,7 @@ static void prepare_tunnel(chqstate_t *state)
   state->dt_far_wall_mode = A_in_tunnel ^ 1;
 
   /* Self modify #R$8F82 and #R$8FA7 to be CALL draw_tunnel. */
-  state->dee_draw_tunnel_1 = state->dee_draw_tunnel_2 = 0xCD; // opcode of CALL
+  state->dee_tunnel_1 = state->dee_tunnel_2 = 0xCD; // opcode of CALL
 }
 
 /**
@@ -13740,9 +13740,9 @@ static void setup_interrupts(chqstate_t *state)
  */
 static void reset_music(chqstate_t *state)
 {
-  state->SM_EF0D_drum_flag = 0;
-  state->SM_EF00 = 0;
-  state->SM_EEA2_reset_pattern_if_zero = 0;
+  state->music_drum_active = 0;
+  state->music_extra_delay = 0;
+  state->music_started = 0;
   next_pattern_at_addr(state, &music_patterns[0]); /* was FALLTHROUGH */
 }
 
@@ -13753,9 +13753,9 @@ static void reset_music(chqstate_t *state)
  */
 static void next_pattern(chqstate_t *state)
 {
-  if (--state->SM_EE6E_repeats)
+  if (--state->music_pattern_repeats)
     return;
-  next_pattern_at_addr(state, state->SM_EE75_pattern_addr); /* was FALLTHROUGH */
+  next_pattern_at_addr(state, state->music_pattern_addr); /* was FALLTHROUGH */
 }
 
 static void next_pattern_at_addr(chqstate_t *state, const u8 *HLpataddr)
@@ -13768,14 +13768,14 @@ static void next_pattern_at_addr(chqstate_t *state, const u8 *HLpataddr)
     An_repeats = *HLpataddr++;
     if (An_repeats != 0xFF) {
       // not end of pattern(s)
-      state->SM_EE6E_repeats = An_repeats;
+      state->music_pattern_repeats = An_repeats;
       Coffset = *HLpataddr++;
-      state->SM_EE75_pattern_addr = HLpataddr;
+      state->music_pattern_addr = HLpataddr;
 
       // Calculate address of music data
       HLdata = &music_data[Coffset];
-      state->SM_EEB9_delay = state->SM_EEAD_delay = *HLdata++;
-      state->SM_EEC9_music_data_ptr = HLdata;
+      state->music_note_delay_reload = state->music_note_delay = *HLdata++;
+      state->music_pattern_start_ptr = HLdata;
       return;
     } else {
       // Restart
@@ -13798,20 +13798,20 @@ static void play_music_48k(chqstate_t *state)
   u8        B;
   u8        Aparam;
 
-  state->SM_EF13_interrupt_flag = 0;
+  state->music_irq_flag = 0;
 
-  if (state->SM_EEA2_reset_pattern_if_zero == 0) {
-    state->SM_EEA2_reset_pattern_if_zero = 1;
+  if (state->music_started == 0) {
+    state->music_started = 1;
     goto pm_reset_pattern;
   }
 
   // delay?
-  Adelay = state->SM_EEAD_delay - 1;
+  Adelay = state->music_note_delay - 1;
   if (Adelay) {
-    state->SM_EEAD_delay = Adelay;
+    state->music_note_delay = Adelay;
   } else {
-    state->SM_EEAD_delay = state->SM_EEB9_delay;
-    HL = state->SM_EEBE_music_data_ptr;
+    state->music_note_delay = state->music_note_delay_reload;
+    HL = state->music_data_ptr;
 
     // Fetch a byte of the form 0bdaaaaiii (d is delay bit, aaaa is
     // argument, iii is instrument index)
@@ -13823,18 +13823,18 @@ static void play_music_48k(chqstate_t *state)
       next_pattern(state);
 
 pm_reset_pattern:
-      HL = state->SM_EEC9_music_data_ptr;
-      state->SM_EEBE_music_data_ptr = HL; // not required
+      HL = state->music_pattern_start_ptr;
+      state->music_data_ptr = HL; // not required
     }
 
     //pm_continue_pattern:
-    state->SM_EEBE_music_data_ptr = ++HL;
+    state->music_data_ptr = ++HL;
     if (++A > 128) {
       // A byte of the form 0b1aaaaiii (1 is delay bit)
       A &= 0x7F;
       // EX AF,AF' bank
-      state->SM_EEAD_delay = 1;
-      state->SM_EF00 = 1;
+      state->music_note_delay = 1;
+      state->music_extra_delay = 1;
       // EX AF,AF' unbank
     }
 
@@ -13849,12 +13849,12 @@ pm_reset_pattern:
     }
   }
 
-  if (state->SM_EF00) {
-    state->SM_EEAD_delay--;
-    state->SM_EF00--;
+  if (state->music_extra_delay) {
+    state->music_note_delay--;
+    state->music_extra_delay--;
   }
 
-  if (state->SM_EF0D_drum_flag == 1) {
+  if (state->music_drum_active == 1) {
     // FIXME playdrum_bank_go(state, Ddash_length, HLdash_data); /* exit via */
   } else
     pm_wait_for_interrupt(state); /* was FALLTHROUGH */
@@ -13862,7 +13862,7 @@ pm_reset_pattern:
 
 static void pm_wait_for_interrupt(chqstate_t *state)
 {
-  while (state->SM_EF13_interrupt_flag == 0)
+  while (state->music_irq_flag == 0)
     ;
 }
 
@@ -13873,7 +13873,7 @@ static void pm_wait_for_interrupt(chqstate_t *state)
  */
 static void interrupt_entry(chqstate_t *state)
 {
-  state->SM_EF13_interrupt_flag = 0xFF;
+  state->music_irq_flag = 0xFF;
 }
 
 /**
@@ -13908,8 +13908,8 @@ static void playdrum_1(chqstate_t *state, u8 Aspeed)
  */
 static void playdrum_start(chqstate_t *state, u8 Aspeed, u8 Dlength, const u8 *HLdata)
 {
-  state->SM_EF39_drum_speed = Aspeed;
-  state->SM_EF0D_drum_flag  = 1;
+  state->music_drum_speed = Aspeed;
+  state->music_drum_active  = 1;
   playdrum_bank_go(state, Dlength, HLdata); /* was FALLTHROUGH */
 }
 
@@ -13939,7 +13939,7 @@ static void playdrum_go(chqstate_t *state, u8 Dlength, const u8 *HLdata)
   u8 A;
 
   do {
-    Bdash_iterations = state->SM_EF39_drum_speed; // aka speed
+    Bdash_iterations = state->music_drum_speed; // aka speed
     do {
       A = port_MASK_EAR; // speaker bit
       // NOP
@@ -13951,13 +13951,13 @@ static void playdrum_go(chqstate_t *state, u8 Dlength, const u8 *HLdata)
     HLdata++;
     if (--Dlength == 0)
       goto pd_end_of_sample;
-    A = state->SM_EF13_interrupt_flag;
+    A = state->music_irq_flag;
   } while (A == 0);
   // EXX unbank
   return;
 
 pd_end_of_sample:
-  state->SM_EF0D_drum_flag = 0;
+  state->music_drum_active = 0;
   pm_wait_for_interrupt(state);
 }
 
@@ -14010,7 +14010,7 @@ static void noise(chqstate_t *state, u8 Aparam)
     // This whole interrupt check is redundant since AND A + RET C results in the
     // return never being taken. Should it be RET NZ instead? (RET Z messed things
     // up when I tried it.)
-    A = state->SM_EF13_interrupt_flag;
+    A = state->music_irq_flag;
     if (0)
       return;
   } while (--Eduration > 0);
