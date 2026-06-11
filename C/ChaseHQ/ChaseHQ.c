@@ -5640,7 +5640,7 @@ ptas_turbo_setup:
   // Distance (to perp)
 
   DEbcd = &state->distance_bcd[1];
-  // TBD17 is the high byte of the distance
+  // hazard_lane_OR_perp_dist_hi is the high byte of the perp's distance
   HLdistance = (state->hazards[0].hazard_lane_OR_perp_dist_hi << 8) | state->hazards[0].distance;
 
   // Count 1,000s (no loop required)
@@ -7686,8 +7686,8 @@ static void hazard_hit(chqstate_t *state, hazard_t *IXhazard)
 
   // $AD03
   //
-  // pairs of (TBD17, current_lane) for different speed ranges and hit types (normal vs fast)?
-  // current lane byte isn't a lanes byte though
+  // pairs of (hazard_lane_OR_perp_dist_hi, current_lane) for different speed ranges and hit types (normal vs fast)?
+  // current_lane byte isn't a lanes byte though
   static const u8 table_ad03[5 * 2] = {
     0x06, 0x22,
     0x0C, 0x1C,
@@ -7765,7 +7765,7 @@ static void check_hazard_collisions(chqstate_t *state)
   do {
     if (hazard->used != HAZARD_UNUSED) {
       // hazard_flags is a delay of some sort used for hits
-      // TBD17 suspected perp distance high byte
+      // hazard_lane_OR_perp_dist_hi is the perp distance high byte when hazard_flags==0xFF
       if (hazard->hazard_flags == 0xFF && hazard->hazard_lane_OR_perp_dist_hi)
         goto chc_continue;
 
@@ -8419,9 +8419,9 @@ static void move_hero_car(chqstate_t *state)
   u8         Acrashedflag;         /* was A */
   u8         Aturn_speed;          /* was A */
   u8         Bcount;               /* was B */
-  u8         Cvar_a261;            /* was C */
+  u8         Chorizon_scroll_sub;            /* was C */
   u8         Enegative_scrolling;  /* was E */
-  u8         Avar_a261;            /* was A */
+  u8         Ahorizon_scroll_sub;            /* was A */
   u8         Acounter;             /* was A' */
   u8         Chorz_tab_value;      /* was C */
   u8         Acount;               /* was A' */
@@ -8612,9 +8612,9 @@ mhc_handle_speed:
     // unclear if this table is bytes or words
     // -1 since it's 1-indexed (but now it's words so can this work?)
     HLhorizon_table = &horizon_table[Acurrent_curvature - 1];
-    Cvar_a261 = Avar_a261 = state->horizon_scroll_sub;
+    Chorizon_scroll_sub = Ahorizon_scroll_sub = state->horizon_scroll_sub;
     // EX AF,AF'
-    Acounter = state->fast_counter - Cvar_a261;
+    Acounter = state->fast_counter - Chorizon_scroll_sub;
     if (Acounter) {
       Chorz_tab_value = *HLhorizon_table;
       for (;;) {
@@ -8623,7 +8623,7 @@ mhc_handle_speed:
           break;
         Bcount++;
         // EX AF,AF'
-        Avar_a261 += Chorz_tab_value;
+        Ahorizon_scroll_sub += Chorz_tab_value;
         // EX AF,AF'
       }
 
@@ -8637,7 +8637,7 @@ mhc_handle_speed:
       }
 
       // EX AF,AF'
-      state->horizon_scroll_sub = Avar_a261;
+      state->horizon_scroll_sub = Ahorizon_scroll_sub;
     }
   }
 
@@ -9856,9 +9856,9 @@ static void update_road_level(chqstate_t *state)
   s8        Aheight;            /* was A */
   u8        Cheight;            /* was C */
   u8        Bpitch;             /* was B */
-  u8       *HLvar_a259;         /* was HL */
-  u8        Avar_a259;          /* was A */
-  u8        Bvar_a259;          /* was B */
+  u8       *HLprev_road_height;         /* was HL */
+  u8        Aprev_road_height;          /* was A */
+  u8        Bprev_road_height;          /* was B */
   u8        Ay_offset;          /* was A */
   u8        Adiff;              /* was A */
   const u8 *HLptable_b059;      /* was HL */
@@ -9869,7 +9869,7 @@ static void update_road_level(chqstate_t *state)
   u8        Afork_taken;        /* was A */
   u8        Bcurvature_byte;    /* was B */
   u8        Ax_scroll;          /* was A */
-  u8        Bvar_a262;          /* was B */
+  u8        Bcurvature_ticks;          /* was B */
   u8        C;                  /* was C */
   u8        A;                  /* was A */
   u8        B;                  /* was B */
@@ -9910,30 +9910,30 @@ static void update_road_level(chqstate_t *state)
   }
   state->dhc_pitch = Bpitch;
 
-  HLvar_a259 = &state->prev_road_height;
-  Avar_a259 = *HLvar_a259;
-  if ((s8) Avar_a259 < 0) { // could combine exprs
+  HLprev_road_height = &state->prev_road_height;
+  Aprev_road_height = *HLprev_road_height;
+  if ((s8) Aprev_road_height < 0) { // could combine exprs
     if ((Cheight & (1 << 7)) == 0) { // ie. positive
-      Avar_a259 = -Avar_a259;
-      carry = Avar_a259 < 2, Avar_a259 -= 2;
+      Aprev_road_height = -Aprev_road_height;
+      carry = Aprev_road_height < 2, Aprev_road_height -= 2;
       if (!carry) {
-        Bvar_a259 = Avar_a259;
+        Bprev_road_height = Aprev_road_height;
         Ay_offset = state->mhc_y_offset;
         if (Ay_offset) {
-          Adiff = Bvar_a259 - (3 - ((state->speed >> 7) & 3)); // result = 1..5? // folded a lot here
+          Adiff = Bprev_road_height - (3 - ((state->speed >> 7) & 3)); // result = 1..5? // folded a lot here
           if ((s8) Adiff > 0) { /* was !C && !Z */
-            // PUSH HLvar_a259
+            // PUSH HLprev_road_height
             HLptable_b059 = &car_jump_resume_params[(Adiff * 2) - 1]; // use of DE removed, RLC folded in
             Eoffset = *HLptable_b059++; // an offset
             state->mhc_y_offset = *HLptable_b059;
             state->mhc_jump_data = &hero_car_jump_table[Eoffset];
-            // POP HLvar_a259
+            // POP HLprev_road_height
           }
         }
       }
     }
   }
-  *HLvar_a259 = Cheight;
+  *HLprev_road_height = Cheight;
 
   Acurrent_curvature = state->current_curvature;
   // EX AF,AF' - bank Acurrent_curvature
@@ -9969,7 +9969,7 @@ static void update_road_level(chqstate_t *state)
   state->horizon_x_scroll = Ax_scroll;
 
 url_B9C5:
-  Bvar_a262 = state->curvature_ticks;
+  Bcurvature_ticks = state->curvature_ticks;
   C = 0;
   // EX AF,AF' - unbank Acurrent_curvature
   if ((s8) Acurrent_curvature < 0) {
@@ -9977,7 +9977,7 @@ url_B9C5:
     C++;
   }
 
-  A = Acurrent_curvature - Bvar_a262;
+  A = Acurrent_curvature - Bcurvature_ticks;
   if ((s8) A > 0) {
     A = (A << 2) + (A >> 1);
     B = 0;
