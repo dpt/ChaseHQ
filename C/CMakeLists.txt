@@ -29,6 +29,8 @@ set(SOURCE_FILES
         ChaseHQ/ChaseHQ-SoundSamples.h
         ChaseHQ/ChaseHQ-Stage1Data.c
         ChaseHQ/ChaseHQ-Stage1Data.h
+        ChaseHQ/ChaseHQ-Stage2Data.c
+        ChaseHQ/ChaseHQ-Stage2Data.h
         ChaseHQ/ChaseHQ-Stages.c
         ChaseHQ/ChaseHQ-Stages.h)
 

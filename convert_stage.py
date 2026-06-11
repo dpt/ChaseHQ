@@ -131,16 +131,24 @@ def parse_skool(path: str) -> Tuple[List[SkoolRecord], List[str]]:
                 continue
 
             # Section header comment.
-            # Only update pending_section if it's a [Stage N] header (highest
-            # priority), or if pending_section is currently empty/trivial.
+            # Update pending_section based on priority:
+            #  - [Stage N] headers always win
+            #  - Non-trivial comments that classify to a DIFFERENT type overwrite
+            #  - Non-trivial comments set pending if it is currently empty
             if line.startswith('; '):
                 txt = line[2:].strip()
                 trivial = txt in ('', '.', '}', '{', ';', 'LOD')
                 is_stage_hdr = bool(re.match(r'\[Stage \d+\]', txt))
                 if is_stage_hdr:
                     pending_section = txt
-                elif not trivial and not pending_section:
-                    pending_section = txt
+                elif not trivial:
+                    if not pending_section:
+                        pending_section = txt
+                    else:
+                        new_type = classify_section(txt)
+                        cur_type = classify_section(pending_section)
+                        if new_type != cur_type:
+                            pending_section = txt
                 continue
 
             # Labelled byte data: b$ADDR DEFB ...
@@ -446,15 +454,19 @@ def split_into_sections(records: List[SkoolRecord],
     sections: List[Section] = []
     cur: Optional[Section] = None
     prev_type = None
+    prev_cmt = None
 
     for rec, cmt in zip(records, section_comments):
         stype = classify_section(cmt)
-        # A new labelled address with a non-empty section comment starts a new section
-        if cmt and stype != prev_type:
+        # Start a new section when the comment is non-empty AND either:
+        #   - the type has changed, OR
+        #   - the comment itself has changed (e.g. two consecutive lod_tables)
+        if cmt and (stype != prev_type or cmt != prev_cmt):
             if cur is not None:
                 sections.append(cur)
             cur = Section(stype or 'unknown', rec.addr, cmt)
             prev_type = stype
+            prev_cmt = cmt
         if cur is None:
             cur = Section('unknown', rec.addr, cmt)
         cur.records.append(rec)
