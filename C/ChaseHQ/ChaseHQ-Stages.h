@@ -342,7 +342,7 @@ typedef struct stage {
 
   u8                car_spawn_delay;
   u8                perp_lane_change_base;
-  u8                smash_perp_delay;
+  u8                perp_approach_base;
 
   scenedata_t       stage_data;
   scenedata_t       attract_data;

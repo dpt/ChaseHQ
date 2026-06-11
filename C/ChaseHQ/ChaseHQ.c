@@ -6838,7 +6838,7 @@ pb_set_horz_pos:
     goto pb_a776;
 
   // When it hits zero we pick a random number...
-  Adelay = state->stage->smash_perp_delay + (rng(state) & 0xF);
+  Adelay = state->stage->perp_approach_base + (rng(state) & 0xF);
 
   state->pb_approach_timer = Adelay;
   Adelay = 10; // reset the delay loop
