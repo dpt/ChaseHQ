@@ -1816,9 +1816,9 @@ static void escape_scene(chqstate_t *state)
 
     // Activate the three barriers once close enough
     if (state->hazards[0].distance == 5)
-      state->hazards[1].TBD7 =
-        state->hazards[2].TBD7 =
-          state->hazards[3].TBD7 = 0xFF;
+      state->hazards[1].hit_timer =
+        state->hazards[2].hit_timer =
+          state->hazards[3].hit_timer = 0xFF;
 
     state->speed = 0; // Set speed to zero [speed of camera]
 
@@ -2486,7 +2486,7 @@ assign_hero_pos:
     goto perp_too_far_away;
 
   state->speed = 0;
-  state->hazards[0].TBD4 = 0;
+  state->hazards[0].dist_frac = 0;
   state->hazards[0].distance = 1;
   state->perp_caught_phase = PERPCAUGHTPHASE_2;
   state->smoke = 3;
@@ -6632,7 +6632,7 @@ void perp_behaviour(chqstate_t *state, hazard_t *IX)
   // Reading a hit counter here? It starts at $FC (set at #R$A78A) and is
   // incremented. This seems like it might speed the perp car up when it's
   // hit.
-  Atbd7 = IX->TBD7; // Read IX[7] e.g. $A18F  -- a hit counter/delay
+  Atbd7 = IX->hit_timer; // Read IX[7] e.g. $A18F  -- a hit counter/delay
   if (Atbd7 == 0)
     goto pb_tbd7_is_zero; // Jump if zero  -- delay finished, perp can be hit again?
   else if (Atbd7 > 0)
@@ -6641,7 +6641,7 @@ void perp_behaviour(chqstate_t *state, hazard_t *IX)
 
   // This line gets hit 4 times when we smash into the perp's car - matching
   // the $FC value it's reset to.
-  if (++IX->TBD7)
+  if (++IX->hit_timer)
     return; // do nothing
 
   // IX[7] must be zero to arrive here. We now iterate over all non-perp
@@ -6665,7 +6665,7 @@ pb_find_unused_hazard_continue:
 
 pb_ensure_vehicle:
   // It's $80 for vehicles, 0+ for hazards or $FF if unused
-  if ((IYhazard->TBD15 & (1 << 7)) ==
+  if ((IYhazard->hazard_flags & (1 << 7)) ==
       0) // it's not a vehicle, continue to next hazard
     goto pb_find_unused_hazard_continue;
 
@@ -6880,7 +6880,7 @@ pb_a776:
 
   // If I meddle with this value the perp seems to race off too fast to catch.
 pb_set_delay:
-  IX->TBD7 = -4; // $FC
+  IX->hit_timer = -4; // $FC
   // PUSH AF // Atbd7
   if (Atbd7 >= 3)
     Atbd7 -= 3;
@@ -6975,7 +6975,7 @@ static void spawn_cars(chqstate_t *state)
   do {
     if (hazard->used == HAZARD_UNUSED)
       goto fill_in;
-    if (hazard->TBD15 & (1 << 7)) // top bit is set for vehicles
+    if (hazard->hazard_flags & (1 << 7)) // top bit is set for vehicles
       cars_seen = (cars_seen << 1) | 1;
     hazard++;
   } while (--iterations > 0);
@@ -7112,11 +7112,11 @@ void hazard_handler(chqstate_t *state, hazard_t *IX)
     IX->horz_pos_on_road = horz_pos;
   }
 
-  tbd7 = IX->TBD7;
+  tbd7 = IX->hit_timer;
   if (tbd7 == 0)
     return;
 
-  IX->TBD7 = 0;
+  IX->hit_timer = 0;
 
   if (state->ahc_crashed_flag)
     return; // already crashed
@@ -7703,9 +7703,9 @@ static void hazard_hit(chqstate_t *state, hazard_t *IXhazard)
   int       index;    // added
   const u8 *ptable;   /* was HL */
 
-  tbd15 = IXhazard->TBD15;
+  tbd15 = IXhazard->hazard_flags;
   if (tbd15 == 0) {
-    tbd7 = IXhazard->TBD7;
+    tbd7 = IXhazard->hit_timer;
     if (tbd7 == 0)
       return;
 
@@ -7724,19 +7724,19 @@ static void hazard_hit(chqstate_t *state, hazard_t *IXhazard)
     if ((speed >> 8) >= 2) // checking speed >= 512?
       speed = 350;
     IXhazard->speed = (IXhazard->speed & 0xFF00) | (speed & 0x00FF); // set bottom byte only (weird)
-    if (++IXhazard->TBD7) // hit counter
+    if (++IXhazard->hit_timer) // hit counter
       IXhazard->speed = (IXhazard->speed & 0x00FF) | (speed & 0xFF00); // set top byte only
     IXhazard->distance++;
 
     start_sfx(state, EFFECT_HAZARD_HIT, 3);
 
-    IXhazard->TBD15 = 2;
+    IXhazard->hazard_flags = 2;
   }
 
   if (--tbd15 == 0)
     return;
 
-  IXhazard->TBD16 = table_acdb[IXhazard->hazard_lane_OR_perp_dist_hi++];
+  IXhazard->hit_wobble = table_acdb[IXhazard->hazard_lane_OR_perp_dist_hi++];
   IXhazard->speed -= IXhazard->speed / 32;
   IXhazard->inverted ^= 1;
   if (--IXhazard->current_lane)
@@ -7744,7 +7744,7 @@ static void hazard_hit(chqstate_t *state, hazard_t *IXhazard)
 
   IXhazard->speed    = 0;
   IXhazard->inverted = 1;
-  IXhazard->TBD15    = 1;
+  IXhazard->hazard_flags    = 1;
 }
 
 /**
@@ -7765,17 +7765,17 @@ static void check_hazard_collisions(chqstate_t *state)
   iterations = 6;
   do {
     if (hazard->used != HAZARD_UNUSED) {
-      // TBD15 is a delay of some sort used for hits
+      // hazard_flags is a delay of some sort used for hits
       // TBD17 suspected perp distance high byte
-      if (hazard->TBD15 == 0xFF && hazard->hazard_lane_OR_perp_dist_hi)
+      if (hazard->hazard_flags == 0xFF && hazard->hazard_lane_OR_perp_dist_hi)
         goto chc_continue;
 
       // Distance is < 20.
       // There was a collision.
-      // TBD15 ?
+      // hazard_flags ?
       if (hazard->distance < 20 &&
           check_collision(state, 0, 0, hazard, NULL) > 0 &&
-          hazard->TBD15 != 0xFF)
+          hazard->hazard_flags != 0xFF)
         hazard->hit_handler(state, hazard);
     }
 
@@ -7811,17 +7811,17 @@ static u8 check_collision(chqstate_t *state,
 
   if (HLout) *HLout = HL;
 
-  if (hazard->TBD7) // hit counter / delay thing
+  if (hazard->hit_timer) // hit counter / delay thing
     return default_retval;
 
   horz_pos = hazard->horz_pos;
-  tbd3     = hazard->TBD3;
+  tbd3     = hazard->horz_clip;
   if (HLout) *HLout = (tbd3 << 8) | horz_pos;
 
-  if (hazard->TBD3) // distance related
+  if (hazard->horz_clip) // distance related
     return default_retval;
 
-  tbd15 = hazard->TBD15 + 1; // just for compare
+  tbd15 = hazard->hazard_flags + 1; // just for compare
   distance = hazard->distance;
   max_distance = (tbd15 != 0) ? 3 : 2;
   if (distance >= max_distance)
@@ -7854,7 +7854,7 @@ static u8 check_collision(chqstate_t *state,
       new_tbd7 += 2;
   }
 
-  hazard->TBD7 = new_tbd7;
+  hazard->hit_timer = new_tbd7;
   return 1;
 }
 
@@ -7910,11 +7910,11 @@ static void dh_draw_one_hazard(chqstate_t *state,
   u16      *DEtable;
 
   C = IXhazard->speed >> 8; // top byte of horz position or accel?
-  IXhazard->TBD4 -= IXhazard->speed & 0xFF;
-  if ((s8) IXhazard->TBD4 < 0) // carried
+  IXhazard->dist_frac -= IXhazard->speed & 0xFF;
+  if ((s8) IXhazard->dist_frac < 0) // carried
     C++;
   C += IXhazard->distance;
-  Atbd15 = IXhazard->TBD15 + 1;
+  Atbd15 = IXhazard->hazard_flags + 1;
   if (Atbd15 == 0) {
     A = IXhazard->hazard_lane_OR_perp_dist_hi;
     if (C < IXhazard->distance) { // carried
@@ -7947,8 +7947,8 @@ dh_adfa:
 
   if (--A == 0) {
     A = ~(state->fast_counter & 0xE0);
-    if (A < IXhazard->TBD4) {
-      B = IXhazard->TBD15 + 1;
+    if (A < IXhazard->dist_frac) {
+      B = IXhazard->hazard_flags + 1;
       if (B) {
         // Wipe the hazard because car overtaken?
         IXhazard->used = HAZARD_UNUSED;
@@ -7957,7 +7957,7 @@ dh_adfa:
           state->overtake_bonus_counter++;
         return;
       }
-      IXhazard->TBD4 = A;
+      IXhazard->dist_frac = A;
     }
     A = 0;
   }
@@ -7967,10 +7967,10 @@ dh_adfa:
   C = IY[1];
   A = C - IY[0];
 
-  // This is probably equivalent to HLresult = IXhazard->TBD4 * A;
+  // This is probably equivalent to HLresult = IXhazard->dist_frac * A;
   DE = A; // multiplier
   HLresult = 0; // result
-  A = IXhazard->TBD4; // multiplicand
+  A = IXhazard->dist_frac; // multiplicand
   Biterations = 8;
   do {
     RL(A);
@@ -7981,7 +7981,7 @@ dh_adfa:
   A = HLresult >> 8; // high part of result
   RR(A);
 
-  IXhazard->TBD6 = A;
+  IXhazard->persp_col = A;
   A = ~((C - A) << 1);
 
   // Would this fetch from the wrong position?
@@ -8010,9 +8010,9 @@ dh_adfa:
   HL = state->dh_SM_AE70_road_left_xpos + A;
   (void) check_collision(state, /*D*/0, HL, IXhazard, &HL); // This modifies HL, not sure how to handle
   IXhazard->distance = HL & 0xFF;
-  IXhazard->TBD3     = HL >> 8;
+  IXhazard->horz_clip     = HL >> 8;
   Ddistance = IXhazard->distance;
-  Etbd4     = IXhazard->TBD4;
+  Etbd4     = IXhazard->dist_frac;
 
   HLp_n_hazards = &state->n_hazards;
   An_hazards = *HLp_n_hazards;
@@ -8136,13 +8136,13 @@ static void draw_arrow_fire_smoke(chqstate_t *state,
     HLbitmap = &IXhazard->hittable.bitmaps[DEbitmapoffset / 7];
 
     Ewidth_bits = HLbitmap->width_bytes << 3;
-    state->doc_SM_933D_col_pos = IXhazard->TBD6 - IXhazard->TBD16;
+    state->doc_SM_933D_col_pos = IXhazard->persp_col - IXhazard->hit_wobble;
     state->doc_SM_93C0_inverted = IXhazard->inverted;
 
-    if (IXhazard->TBD15 + 1 == 0)
+    if (IXhazard->hazard_flags + 1 == 0)
       goto dh_af50;
 
-    Atbd3 = IXhazard->TBD3;
+    Atbd3 = IXhazard->horz_clip;
     // AND A3
     Ahorz_pos = IXhazard->horz_pos;
     if ((s8) Atbd3 < 0)
@@ -8182,7 +8182,7 @@ dh_draw_done_1:
   return;
 
 dh_af50:
-  Awidth_bytes = IXhazard->TBD3;
+  Awidth_bytes = IXhazard->horz_clip;
   state->dh_SM_B029_tbd3 = Awidth_bytes;
   // set flags from A here
   Ahorz_pos = IXhazard->horz_pos;
@@ -10933,8 +10933,8 @@ rm_all_hazards: // $C05C (also entered from skip path with no_objects_counter=1)
       continue;
 
     // rm_c080: bit 7 was set (hazard is active)
-    Aloop = IXhazard->TBD15 + 1;
-    if (Aloop == 0) { // TBD15 was 0xFF: rm_c096
+    Aloop = IXhazard->hazard_flags + 1;
+    if (Aloop == 0) { // hazard_flags was 0xFF: rm_c096
       Aloop = IXhazard->distance;
       if (Aloop == 0) { // rm_c0b2: distance was 0
         IXhazard->hazard_lane_OR_perp_dist_hi--;
@@ -10948,15 +10948,15 @@ rm_all_hazards: // $C05C (also entered from skip path with no_objects_counter=1)
       if (IXhazard->hazard_lane_OR_perp_dist_hi != 0)
         continue;
       IXhazard->distance = 1;
-      IXhazard->TBD4 = 0xFF;
+      IXhazard->dist_frac = 0xFF;
       continue;
     }
 
-    // TBD15 != 0xFF: decrement distance
+    // hazard_flags != 0xFF: decrement distance
     if (--IXhazard->distance != 0)
       continue;
     IXhazard->used = 0; // mark unused
-    if ((u8)(IXhazard->TBD15 + 1) & 0x80) // RLA carry: TBD15 >= 0x7F
+    if ((u8)(IXhazard->hazard_flags + 1) & 0x80) // RLA carry: hazard_flags >= 0x7F
       Covertake_bonus_counter++;
   }
   state->overtake_bonus_counter = Covertake_bonus_counter;

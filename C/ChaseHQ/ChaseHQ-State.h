@@ -41,16 +41,16 @@ struct hazard {
   u8                used;
   u8                distance;
   u8                horz_pos;
-  u8                TBD3;     // distance related
-  u8                TBD4;
+  u8                horz_clip;     // distance related
+  u8                dist_frac;
   u8                horz_pos_on_road;
-  u8                TBD6;
-  s8                TBD7;     // activation / delay / hit counter; set to $FC when perp hit
+  u8                persp_col;
+  s8                hit_timer;     // activation / delay / hit counter; set to $FC when perp hit
   hittable_t        hittable;
   hazard_handler_t *hit_handler;
   u16               speed;    // 13 & 14
-  u8                TBD15;    // top bit is set for vehicles
-  u8                TBD16;
+  u8                hazard_flags;    // top bit is set for vehicles
+  u8                hit_wobble;
   u8                hazard_lane_OR_perp_dist_hi; // perp distance high byte OR a hazard's lane
   u8                current_lane;
   u8                inverted; // controls sprite plotting (2 => inverted, 1 => ?, 0 => ?)

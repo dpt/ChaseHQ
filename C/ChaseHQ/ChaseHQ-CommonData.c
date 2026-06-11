@@ -2242,7 +2242,7 @@ const hazard_t hazard_template = {
   { 0x28, NULL },
   hazard_handler,
   0, // speed
-  0x80, // TBD15
+  0x80, // hazard_flags
   0,
   0,
   0,
