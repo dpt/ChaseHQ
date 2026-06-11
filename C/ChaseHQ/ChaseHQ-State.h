@@ -208,27 +208,27 @@ struct chqstate {
   u8        do_span_width_words;
 
   // $9396 (SM) in draw_object_common
-  u8        doc_SM_9395_shift_select;
+  u8        doc_shift_select;
   // $933D (SM) in draw_object_common
-  u8        doc_SM_933D_col_pos;
+  u8        doc_col_pos;
   // $93C0 (SM) in draw_object_common
-  u8        doc_SM_93C0_inverted; // controls sprite plotting (2 => inverted, 1 => ?, 0 => ?)
+  u8        doc_inverted; // controls sprite plotting (2 => inverted, 1 => ?, 0 => ?)
   // $9404 (SM) in draw_object_common
-  u8        doc_SM_9404_y;
+  u8        doc_rows_main;
   // $940F (SM) in draw_object_common
-  plot_sprite_cb_t *doc_SM_940F_callback;
+  plot_sprite_cb_t *doc_plot_fn;
   // $9412 (SM) in draw_object_common
-  const u8 *doc_SM_9412_bitmap_ptr;
+  const u8 *doc_bitmap_ptr;
   // $9415 (SM) in draw_object_common
-  u8        doc_SM_9415_y;
+  u8        doc_rows_2nd;
   // $941D (SM) in draw_object_common
-  plot_sprite_cb_t *doc_SM_941D_callback;
+  plot_sprite_cb_t *doc_plot_fn_2;
   // $945F (SM) in draw_object_common
-  u8       doc_SM_945F_y;
+  u8       doc_mask_rows_main;
   // $946C (SM) in draw_object_common
-  const u8 *doc_SM_946C_bitmap_ptr; // bitmap data ptr
+  const u8 *doc_mask_bitmap_ptr; // bitmap data ptr
   // $946F (SM) in draw_object_common
-  u8       doc_SM_946F_y;
+  u8       doc_mask_rows_2nd;
 
   // $9618
   u8        rng_seed[3];
@@ -494,16 +494,16 @@ struct chqstate {
   u16       mh_heli_centre_y;
 
   // $AE70 (SM) in dh_draw_one_hazard
-  u16       dh_SM_AE70_road_left_xpos;
+  u16       dh_road_left_xpos;
 
   // $AED0 (SM) in draw_hazards
-  u16      *dh_SM_AECF_table; // points to table e900 for example
+  u16      *dh_xpos_table; // points to table e900 for example
 
   // $AFFB (SM) in dh_aecf
   u8        smoke_bitmap_index; // (smoke) speed factor?
 
   // $B023 (SM) in ...
-  u8        dh_SM_B023_col_pos;
+  u8        dh_col_pos;
   // $B029 (SM) in ...
   s8        dh_SM_B029_horz_clip;
   // $B02C (SM) in ...
@@ -597,9 +597,9 @@ struct chqstate {
   u8        rm_SM_C0BB_fork_copy_pending; // hazard related
 
   // $C15D (SM) in draw_tunnel
-  u8        dt_SM_C15D_tunnel_distance; // size related [15 when tunnel is small, 6 when fills screen]
+  u8        dt_tunnel_distance; // size related [15 when tunnel is small, 6 when fills screen]
   // $C160 (SM) in draw_tunnel
-  u8        dt_SM_C160_tunnel_visible; // 0 if not visible; vibrates 1 if visible; 2 if in tunnel
+  u8        dt_tunnel_visible; // 0 if not visible; vibrates 1 if visible; 2 if in tunnel
   // $C21C (SM) in draw_tunnel
   u16       dt_fill_pattern;
   // $C221 (SM) in draw_tunnel
@@ -607,52 +607,52 @@ struct chqstate {
   // $C236 (SM) in draw_tunnel
   u8        dt_fill_start_b; // jump table target
   // $C2B8 (SM) in draw_tunnel
-  u8        dt_SM_C2B8_far_wall_mode;
+  u8        dt_far_wall_mode;
 
   // $C4B2 (SM) in draw_road
-  dr_callback_t *dr_SM_C4B2_callback;
+  dr_callback_t *dr_callback;
   // $C56D (SM) in draw_road
-  u16       dr_SM_C56D_backbuf_ptr;
+  u16       dr_backbuf_1;
   // $C5AC (SM) in draw_road
-  s8        dr_SM_C5AC_neg_lane_count;
+  s8        dr_neg_lane_count;
   // $C5B3 (SM) in draw_road
-  u8        dr_SM_C5B3_left_hand_table_hi; // table hi byte
+  u8        dr_left_table_hi_2; // table hi byte
   // $C5D9 (SM) in draw_road
-  u8        dr_SM_C5D9_right_hand_table_hi;
+  u8        dr_right_table_hi_2;
   // $C5F9 (SM) in draw_road
-  u16       dr_SM_C5F9_backbuf_ptr;
+  u16       dr_backbuf_2;
   // $C60A (SM) in draw_road
-  u8        dr_SM_C60A_right_stripe_width;
+  u8        dr_right_stripe_width;
   // $C61B (SM) in draw_road
-  u8        dr_SM_C61B_road_width;
+  u8        dr_road_width;
   // $C62C (SM) in draw_road
-  u8        dr_SM_C62C_left_stripe_width;
+  u8        dr_left_stripe_width;
   // $C642 (SM) in draw_road
-  u8        dr_SM_C642_left_hand_table_hi; // table hi byte
+  u8        dr_left_table_hi; // table hi byte
   // $C651 (SM) in draw_road
-  u8        dr_SM_C651_edge_graphic_offset;
+  u8        dr_edge_graphic_offset;
   // $C677 (SM) in draw_road
-  u8        dr_SM_C677_stripe_table_offset;
+  u8        dr_stripe_table_offset;
   // $C68B (SM) in draw_road
-  u8        dr_SM_C68A_right_hand_table_hi;
+  u8        dr_right_table_hi;
   // $C698 (SM) in draw_road
-  u8        dr_SM_C698_right_edge_offset;
+  u8        dr_right_edge_offset;
   // $C6AD (SM) in draw_road
-  void    (*dr_SM_C6AD)(chqstate_t *state, u16 DEbackbuf, u8 L, u8 Adash_fill);
+  void    (*dr_fill_fn)(chqstate_t *state, u16 DEbackbuf, u8 L, u8 Adash_fill);
   // $C6B2 (SM) in draw_road
-  u8        dr_SM_C6B2_initial_stripe_state; // inital road stripe state
+  u8        dr_initial_stripe_state; // inital road stripe state
   // $C6BC (SM) in draw_road
-  u8        dr_SM_C6BC_fill_pattern;
+  u8        dr_fill_pattern;
   // $C6D3 (SM) in draw_road
-  u8        dr_SM_C6D3_stripe_xor_base;
+  u8        dr_stripe_xor_base;
   // $C6D8 (SM) in draw_road
-  u8        dr_SM_C6D8_edge_thickness; // road edge line thickness
+  u8        dr_edge_thickness; // road edge line thickness
   // $C7E7 (SM) in draw_road
   u8        dr_horizon_x_scroll;
   // $C80A (SM) in draw_road
-  u8        dr_SM_C80A_sky_rows;
+  u8        dr_sky_rows;
   // $C88F (SM) in draw_road
-  u8        dr_SM_C88F_in_tunnel;
+  u8        dr_in_tunnel;
 
   // $CE0C
   u8        smoke_1[13];

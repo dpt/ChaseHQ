@@ -1811,7 +1811,7 @@ static void escape_scene(chqstate_t *state)
     draw_screen(state);
 
     // Loop unless the tunnel has appeared - and is right size?
-    if (state->dt_SM_C160_tunnel_visible == 0 || state->dt_SM_C15D_tunnel_distance >= 7)
+    if (state->dt_tunnel_visible == 0 || state->dt_tunnel_distance >= 7)
       continue;
 
     // Activate the three barriers once close enough
@@ -2983,11 +2983,11 @@ static void draw_everything_else(chqstate_t *state)
   assert(state->road_buffer_end   == &state->road_buffer[256]);
 
   state->dss_fork_xpos_ptr = &state->xpos_road_fork_right[20]; // $ED28
-  state->dh_SM_AECF_table = &state->xpos_road_centre_left[0];
+  state->dh_xpos_table = &state->xpos_road_centre_left[0];
   assert(state->dss_fork_xpos_ptr >= &state->xpos_road_fork_right[0] &&
          state->dss_fork_xpos_ptr < &state->xpos_road_fork_right[128]);
-  assert(state->dh_SM_AECF_table >= &state->xpos_road_centre_left[0] &&
-         state->dh_SM_AECF_table < &state->xpos_road_centre_left[128]);
+  assert(state->dh_xpos_table >= &state->xpos_road_centre_left[0] &&
+         state->dh_xpos_table < &state->xpos_road_centre_left[128]);
 
   HLtable_e300 = &state->table_e300[1]; // table of objects?
   DEtable_e336 = &state->table_e336[0];
@@ -3350,7 +3350,7 @@ static void draw_stretchy_object_common(chqstate_t       *state,
   SM_91BA_bitmap_offset = DEbitmapoffset;
 
   for (;;) {
-    state->doc_SM_933D_col_pos = -C_total;
+    state->doc_col_pos = -C_total;
     // read "n" count byte from graphic stream, e.g. stretchy_shortpole + 0
     Bstretchy_type = HLstretchy->type - 1;
     if (Bstretchy_type == 0)
@@ -3442,16 +3442,16 @@ dso_continue:
   if (A < Bvertical) // was carry
     Bvertical += A;
 
-  state->doc_SM_9404_y = Bvertical;
-  state->doc_SM_9415_y = HLbitmap->width_bytes - 2;
-  state->doc_SM_93C0_inverted = 2; // inverted
+  state->doc_rows_main = Bvertical;
+  state->doc_rows_2nd = HLbitmap->width_bytes - 2;
+  state->doc_inverted = 2; // inverted
 
   // EX AF,AF' -- restore Adepth
 
   Bpairdepth = Apairdepth; // might be Bwidthbytes?
   SM_9244_callback(state, Bpairdepth, HLbitmap, IX, IY); // does this update B?
   Bwidthbytes = 0; // Conv: added this - TODO will need to test this behaviour since B is used to advance Ctotal
-  state->doc_SM_93C0_inverted = 0;
+  state->doc_inverted = 0;
   goto dso_loop_continue;
 }
 
@@ -3564,7 +3564,7 @@ static void draw_object_left_entrypt(chqstate_t       *state,
   u8                depth;   /* was B */
   const bitmap_t   *bitmap;  /* was HL */
 
-  state->doc_SM_933D_col_pos = A;
+  state->doc_col_pos = A;
 
   if (B >= DEPTHSET_MAX) // FIXME should be just greater than?
     B = DEPTHSET_MAX;
@@ -3640,14 +3640,14 @@ static void draw_object_left_helicopter_entrypt(chqstate_t     *state,
 
     Ebitmap_stride = HLbitmap->width_bytes;
     Awidth_bytes >>= 2;
-    state->doc_SM_9395_shift_select = Awidth_bytes;
+    state->doc_shift_select = Awidth_bytes;
     Awidth_bytes = Ebitmap_stride - 1;
     Bheight = 1;
     Cpadding = 1;
   } else {
     Ebitmap_stride = HLbitmap->width_bytes;
     Awidth_bytes = (Awidth_bytes & 0xFC) >> 2;
-    state->doc_SM_9395_shift_select = Awidth_bytes;
+    state->doc_shift_select = Awidth_bytes;
     carry = 0; RR(Awidth_bytes);
     Bheight = Awidth_bytes;
     Awidth_bytes += Ebitmap_stride;
@@ -3730,7 +3730,7 @@ static void draw_object_right_entrypt(chqstate_t       *state,
   u8                depth;   /* was B */
   const bitmap_t   *bitmap;  /* was HL */
 
-  state->doc_SM_933D_col_pos = A;
+  state->doc_col_pos = A;
 
   if (B >= DEPTHSET_MAX) // FIXME should be just greater than?
     B = DEPTHSET_MAX;
@@ -3815,7 +3815,7 @@ static void draw_object_930e_entrypt(chqstate_t     *state,
   u8  Fdash_carry;
 
   Awidth_bytes >>= 2; /* was AND-RRCA-RRCA */
-  state->doc_SM_9395_shift_select = Awidth_bytes;
+  state->doc_shift_select = Awidth_bytes;
   Awidth_bytes >>= 1; /* was RRA */
   Bheight = Awidth_bytes;
   Ebitmap_stride = HLbitmap->width_bytes;
@@ -3877,7 +3877,7 @@ static void draw_object_common_flipped(chqstate_t     *state,
   int zero;
   int carry;
 
-  state->doc_SM_9395_shift_select = ~state->doc_SM_9395_shift_select;
+  state->doc_shift_select = ~state->doc_shift_select;
 
   Awidth_bytes = Adash_width_bytes; zero = Fdash_zero; carry = Fdash_carry; // was EX AF,AF' -- unbank A & carry? carry might be a is-masked flag
 
@@ -3954,7 +3954,7 @@ static void draw_object_common_9333(chqstate_t     *state,
   // INC HL  - removed
 
   for (;;) {
-    D_933D = state->doc_SM_933D_col_pos;
+    D_933D = state->doc_col_pos;
     Adash_iy_diff = IY[0] - IY[53];
     if (Adash_iy_diff)
       goto doc_9359;
@@ -3995,22 +3995,22 @@ doc_9359:
       break; // was goto _938d
     // POP AF - pop IY[53] to discard it?
 
-    if (state->doc_SM_93C0_inverted == 0) // set to 0 or 2
+    if (state->doc_inverted == 0) // set to 0 or 2
       return;
 
     // inverted
 
-    Adash933D = state->doc_SM_933D_col_pos;
+    Adash933D = state->doc_col_pos;
     Dheight = HLbitmap->height; // reads bitmap.height again
     Adash933D -= Dheight;
     if ((s8) Adash933D >= 0)
       return;
-    state->doc_SM_933D_col_pos = Adash933D;
+    state->doc_col_pos = Adash933D;
 
-    Ay = state->doc_SM_9404_y - Dheight;
+    Ay = state->doc_rows_main - Dheight;
     if ((s8) Ay <= 0)
       return;
-    state->doc_SM_9404_y = Ay;
+    state->doc_rows_main = Ay;
   }
 
   // AF is pushed here
@@ -4023,13 +4023,13 @@ doc_9390:
   // PUSH BC,DE
   D = Adash1; // heightish value
   BCpadding = Cpadding; // was B = 0
-  Adash_9395 = state->doc_SM_9395_shift_select;
+  Adash_9395 = state->doc_shift_select;
   carry_shifted = Adash_9395 & 1; Adash_9395 >>= 1;
   HLbitmap_data = (carry_shifted) ? HLbitmap->shifted : HLbitmap->data;
   // was HL += 2; Conv: removed - points HL at bitmap.shifted
 
   HLbitmap_data += BCpadding;
-  state->doc_SM_9412_bitmap_ptr = HLbitmap_data;
+  state->doc_bitmap_ptr = HLbitmap_data;
   BCwidth_bytes = Ebitmap_stride;
   Adash3 = D; // was POP AF  (restoring what was DE)
   HLbitmap_data += BCwidth_bytes * Adash3; // Conv: multiplier routine replaced with single mul
@@ -4045,7 +4045,7 @@ doc_9390:
   HLdash_backbuf_addr = OFFSETTOBACKBUF(((Awidth_bytes & 0x0F) << 8) | (((Awidth_bytes & 0x70) << 1) + Bdash_height)); // might this overflow?
   assert(VALID_BACKBUF(HLdash_backbuf_addr));
 
-  Adash_type = state->doc_SM_93C0_inverted; // set to 0 or 2
+  Adash_type = state->doc_inverted; // set to 0 or 2
   if (Adash_type) {
     if (--Adash_type)
       goto doc_93df;
@@ -4108,30 +4108,30 @@ doc_93df:
   BCdash_callback = plot_sprite_even;
 
 doc_do_set_callbacks:
-  state->doc_SM_940F_callback = BCdash_callback;
-  state->doc_SM_941D_callback = BCdash_callback;
+  state->doc_plot_fn = BCdash_callback;
+  state->doc_plot_fn_2 = BCdash_callback;
 
   // EXX - UNBANK
 
   for (;;) {
-    Awidth_bytes = state->doc_SM_9404_y - By;
+    Awidth_bytes = state->doc_rows_main - By;
     if ((s8) Awidth_bytes <= 0)
       break;
 
-    state->doc_SM_9404_y = Awidth_bytes;
+    state->doc_rows_main = Awidth_bytes;
 
     // EXX - BANK
 
     // call e.g. plot_sprite_even
-    state->doc_SM_940F_callback(state,
+    state->doc_plot_fn(state,
                                 IXjump_offset,
                                 HLdash_backbuf_addr,
                                 Bheight,
                                 DEbitmap_stride,
                                 HLbitmap_data);
 
-    HLbitmap_data = state->doc_SM_9412_bitmap_ptr;
-    By = state->doc_SM_9415_y;
+    HLbitmap_data = state->doc_bitmap_ptr;
+    By = state->doc_rows_2nd;
   }
 
   Bdash_height = Awidth_bytes + By;
@@ -4154,10 +4154,10 @@ plot_sprite_xxx_odd:
 
 doc_9436:
   IXjump_offset = (8 - Awidth_bytes) * 6; // plot_masked_sprite needs * 6
-  state->doc_SM_946C_bitmap_ptr = state->doc_SM_9412_bitmap_ptr;
+  state->doc_mask_bitmap_ptr = state->doc_bitmap_ptr;
 
-  state->doc_SM_946F_y   = state->doc_SM_9415_y;
-  state->doc_SM_945F_y = state->doc_SM_9404_y;
+  state->doc_mask_rows_2nd   = state->doc_rows_2nd;
+  state->doc_mask_rows_main = state->doc_rows_main;
 
   // Bdash = 0xF; // mask [commented out - I can't see why this exists]
 
@@ -4165,9 +4165,9 @@ doc_9436:
 
   DEbitmap_stride &= 0xFF; // clear top of DEbitmap_stride
   for (;;) {
-    Ay = state->doc_SM_945F_y - Bheight; // y offset?
+    Ay = state->doc_mask_rows_main - Bheight; // y offset?
     if ((s8) Ay > 0) {
-      state->doc_SM_945F_y = Ay;
+      state->doc_mask_rows_main = Ay;
 
       plot_masked_sprite(state,
                          IXjump_offset,
@@ -4176,7 +4176,7 @@ doc_9436:
                          HLbitmap_data,
                          HLdash_backbuf_addr);
 
-      HLbitmap_data = state->doc_SM_946C_bitmap_ptr;
+      HLbitmap_data = state->doc_mask_bitmap_ptr;
       Bheight = 0;
     } else {
       Bheight += Ay;
@@ -7276,7 +7276,7 @@ dss_bitmaps:
   A = *HLtable++;
   // EX AF,AF'
   state->dss_fork_xpos_ptr = HLtable;
-  state->doc_SM_933D_col_pos = 0;
+  state->doc_col_pos = 0;
   // H = 0;
   A = Biterations - 1;
   if (A > 10)
@@ -7384,7 +7384,7 @@ static void draw_helicoper_part(chqstate_t                *state,
   u8              C;      /* was C */
 
   BC = state->dhl_helipos;
-  state->doc_SM_933D_col_pos = -A; // in draw_object_common
+  state->doc_col_pos = -A; // in draw_object_common
 
   screen_pos = (s8) DEinnerbitmap->horz_offset + BC; // loads byte and widens
 
@@ -7984,7 +7984,7 @@ dh_adfa:
   HLtable = &state->xpos_road_right[A / 2];
   HL = *HLtable;
 
-  state->dh_SM_AE70_road_left_xpos = DE;
+  state->dh_road_left_xpos = DE;
 
   // This is probably equivalent to HLresult = IXhazard->horz_pos_on_road * DE;
   DE = HL - DE; // might be road width
@@ -8000,7 +8000,7 @@ dh_adfa:
   A = HLresult >> 8; // high part of result
   RR(A);
 
-  HL = state->dh_SM_AE70_road_left_xpos + A;
+  HL = state->dh_road_left_xpos + A;
   (void) check_collision(state, /*D*/0, HL, IXhazard, &HL); // This modifies HL, not sure how to handle
   IXhazard->distance = HL & 0xFF;
   IXhazard->horz_clip     = HL >> 8;
@@ -8108,7 +8108,7 @@ static void draw_arrow_fire_smoke(chqstate_t *state,
 
   // is $E900 pairs of (data-word, hazard-ptr) ?
 
-  HLtable = state->dh_SM_AECF_table; // sampled = $E900
+  HLtable = state->dh_xpos_table; // sampled = $E900
   A = Biterations;
   if (A != *HLtable) // this is a word, original tested a byte, use *HLtable & 0xFF perhaps?
     return;
@@ -8129,8 +8129,8 @@ static void draw_arrow_fire_smoke(chqstate_t *state,
     HLbitmap = &IXhazard->hittable.bitmaps[DEbitmapoffset / 7];
 
     Ewidth_bits = HLbitmap->width_bytes << 3;
-    state->doc_SM_933D_col_pos = IXhazard->persp_col - IXhazard->hit_wobble;
-    state->doc_SM_93C0_inverted = IXhazard->inverted;
+    state->doc_col_pos = IXhazard->persp_col - IXhazard->hit_wobble;
+    state->doc_inverted = IXhazard->inverted;
 
     if (IXhazard->hazard_flags + 1 == 0)
       goto dh_af50;
@@ -8163,7 +8163,7 @@ dh_draw_right_1:
 dh_draw_done_1:
     // POP DE (DEbitmapoffset), BC (Biterations)   ??
 
-    state->doc_SM_93C0_inverted = 0;
+    state->doc_inverted = 0;
 
     if (--state->n_hazards == 0)
       return; // no more hazards
@@ -8171,7 +8171,7 @@ dh_draw_done_1:
     // POP HL (HLtable)
   } while (*HLtable == Biterations); // again, test low byte only here?
 
-  state->dh_SM_AECF_table = HLtable;
+  state->dh_xpos_table = HLtable;
   return;
 
 dh_af50:
@@ -8202,7 +8202,7 @@ dh_draw_right_2:
   draw_object_right_helicopter_entrypt(state, Awidth_bytes, HLbitmap, IY);
 
 dh_done_draw_object:
-  state->dh_SM_B023_col_pos = state->doc_SM_933D_col_pos;
+  state->dh_col_pos = state->doc_col_pos;
 
   if (state->smash_level >= 5)
     goto dh_smash_level;
@@ -8333,7 +8333,7 @@ static void dh_draw_bitmap(chqstate_t     *state,
   u8 A2;
 
   Ewidth_bits = HLbitmap->width_bytes * 8;
-  state->doc_SM_933D_col_pos = state->dh_SM_B023_col_pos + Bx;
+  state->doc_col_pos = state->dh_col_pos + Bx;
   A1 = state->dh_SM_B029_horz_clip;
   // Set flags for A here
   A2 = state->dh_SM_B02C_horz_pos;
@@ -10993,9 +10993,9 @@ static void prepare_tunnel(chqstate_t *state)
   u16  saved_DE;            /* was stack */
   u16  BCdash_tablevalue4;
 
-  A_c160 = state->dt_SM_C160_tunnel_visible;
+  A_c160 = state->dt_tunnel_visible;
   c160_is_zero = (A_c160 == 0);
-  A_in_tunnel = state->dr_SM_C88F_in_tunnel;
+  A_in_tunnel = state->dr_in_tunnel;
   if (c160_is_zero) {
     /* Tunnel hasn't appeared */
     if (A_in_tunnel == 0) {
@@ -11040,12 +11040,12 @@ static void prepare_tunnel(chqstate_t *state)
       DEdash_tablevalue2 = BCdash_tablevalue4;
     } while (--A_in_tunnel);
 
-    state->dt_SM_C15D_tunnel_distance = 9 - A_in_tunnel;
+    state->dt_tunnel_distance = 9 - A_in_tunnel;
     A_in_tunnel = 2; // set so it falls through
-    state->dt_SM_C160_tunnel_visible = A_in_tunnel;
+    state->dt_tunnel_visible = A_in_tunnel;
   }
 
-  state->dt_SM_C2B8_far_wall_mode = A_in_tunnel ^ 1;
+  state->dt_far_wall_mode = A_in_tunnel ^ 1;
 
   /* Self modify #R$8F82 and #R$8FA7 to be CALL draw_tunnel. */
   state->dee_draw_tunnel_1 = state->dee_draw_tunnel_2 = 0xCD; // opcode of CALL
@@ -11077,10 +11077,10 @@ static void draw_tunnel(chqstate_t *state, u8 *IY)
   u8       *SPoutput;
 
   Adistance = IY - &state->table_e300[0];
-  if (Adistance != state->dt_SM_C15D_tunnel_distance)
+  if (Adistance != state->dt_tunnel_distance)
     return;
 
-  Avisible = state->dt_SM_C160_tunnel_visible;
+  Avisible = state->dt_tunnel_visible;
   Dfill = 0xEE; // Set fill value to use for striped tunnel entrance
   if (--Avisible)
     Dfill = 0xFF; // Set fill value to use for (much of) tunnel interior
@@ -11303,7 +11303,7 @@ dt_c285:
 
   B = ~A + 0x82;
   DE = 0x0000;
-  A = state->dt_SM_C2B8_far_wall_mode;
+  A = state->dt_far_wall_mode;
   if (A == 0)
     goto dt_c2c1;
   A--;
@@ -11537,7 +11537,7 @@ c3ee:
 c439:
   IY++; /* $C439: INC IY -- advance height pointer for next iteration */
 c43b:
-  state->dr_SM_C4B2_callback = dr_four_lane_highway;
+  state->dr_callback = dr_four_lane_highway;
   dr_c551(state, 0, 0, 0); // FIXME - must be crap
 }
 
@@ -11563,12 +11563,12 @@ static void draw_road(chqstate_t *state)
   u16 DEbackbuf;       /* was DE */  // OR is this a *buffer* offset?
 
   state->on_dirt_track = 0;
-  state->dt_SM_C160_tunnel_visible = 0;
-  state->dr_SM_C88F_in_tunnel = 0;
+  state->dt_tunnel_visible = 0;
+  state->dr_in_tunnel = 0;
 
   // This affects the thickness of the road edges and lane markings with
   // increasing distance. Larger value => Lines remain thick into distance.
-  state->dr_SM_C6D8_edge_thickness = 3;
+  state->dr_edge_thickness = 3;
 
   IYpheight = &state->table_e300[1]; // height table
   Chorizon = 96 - *IYpheight; /* 96 = horizon row offset */
@@ -11576,7 +11576,7 @@ static void draw_road(chqstate_t *state)
 
   // Set initial road stripe state
   Blanedataoffset = IXplanes - &state->road_buffer_start[0];
-  state->dr_SM_C6B2_initial_stripe_state = Blanedataoffset & 1;
+  state->dr_initial_stripe_state = Blanedataoffset & 1;
   carry_stripe = !!(Blanedataoffset & (1 << 1)); // test bit 1 + ensure boolity
 
   Htable_offset = 0xD0;
@@ -11589,14 +11589,14 @@ static void draw_road(chqstate_t *state)
     Bfill_pattern = ________; // empty fill pattern
   }
 
-  state->dr_SM_C6D3_stripe_xor_base = Axor_base; // always $D0
-  state->dr_SM_C677_stripe_table_offset = Htable_offset; // $D0 or $00
-  state->dr_SM_C651_edge_graphic_offset = Lstripe_height; // 16 or 48
-  state->dr_SM_C698_right_edge_offset = Lstripe_height + 1; // 17 or 49
-  state->dr_SM_C4B2_callback = dr_four_lane_highway;
+  state->dr_stripe_xor_base = Axor_base; // always $D0
+  state->dr_stripe_table_offset = Htable_offset; // $D0 or $00
+  state->dr_edge_graphic_offset = Lstripe_height; // 16 or 48
+  state->dr_right_edge_offset = Lstripe_height + 1; // 17 or 49
+  state->dr_callback = dr_four_lane_highway;
   Llane_mask = 0xFF;
   DEbackbuf = 0x0100; // Z80 address - beyond the end of the buffer - must be decremented before first write
-  state->dr_SM_C6BC_fill_pattern = Bfill_pattern;
+  state->dr_fill_pattern = Bfill_pattern;
 
   // passing L to HL arg here - not clear just now if all of HL required or just L
   assert(DEbackbuf >= 0xF000 || DEbackbuf <= 0x0100);
@@ -11633,7 +11633,7 @@ static void dr_read_lanes(chqstate_t *state, u8 *IXplanes, u8 *IYpheight, u8 Bfi
     // no left side calcs required in this case?
     // callback here is e.g. dr_four_lane_highway
   assert(DEbackbuf >= 0xF000 || DEbackbuf <= 0x0100);
-    state->dr_SM_C4B2_callback(state, Bfill_pattern, DEbackbuf, L); // exit via
+    state->dr_callback(state, Bfill_pattern, DEbackbuf, L); // exit via
     return;
   }
 
@@ -11642,8 +11642,8 @@ static void dr_read_lanes(chqstate_t *state, u8 *IXplanes, u8 *IYpheight, u8 Bfi
   Ldash_lanes = *IXplanes; // reload lanes byte
   // convert left hand pos (1+) to table hi byte ($E8+)
   Aleft_hand_table_hi = 0xE7 + Aleft_offset;
-  state->dr_SM_C642_left_hand_table_hi = Aleft_hand_table_hi;
-  state->dr_SM_C5B3_left_hand_table_hi = Aleft_hand_table_hi;
+  state->dr_left_table_hi = Aleft_hand_table_hi;
+  state->dr_left_table_hi_2 = Aleft_hand_table_hi;
   //Hdash_left_hand_table_hi = Aleft_hand_table_hi; // I can't see this used...
   SLA(Ldash_lanes);
   if ((Ldash_lanes & (1 << 7)) == 0) {
@@ -11659,10 +11659,10 @@ static void dr_read_lanes(chqstate_t *state, u8 *IXplanes, u8 *IYpheight, u8 Bfi
       Cdash_C5AC = -2;
     }
 
-    state->dr_SM_C5D9_right_hand_table_hi = Aleft_hand_table_hi;
-    state->dr_SM_C68A_right_hand_table_hi = Aleft_hand_table_hi;
+    state->dr_right_table_hi_2 = Aleft_hand_table_hi;
+    state->dr_right_table_hi = Aleft_hand_table_hi;
 
-    state->dr_SM_C5AC_neg_lane_count = Cdash_C5AC; // Conv: A removed
+    state->dr_neg_lane_count = Cdash_C5AC; // Conv: A removed
 
     draw_road_scene_change(state, IXplanes, IYpheight); // exit via
     return;
@@ -11675,7 +11675,7 @@ static void dr_read_lanes(chqstate_t *state, u8 *IXplanes, u8 *IYpheight, u8 Bfi
     Hdash_in_tunnel_flag = 1;
     if ((Ldash_lanes & (3 << 3)) != 0) {
       // Tunnel transition
-      state->dt_SM_C15D_tunnel_distance = IYpheight - &state->table_e300[0];
+      state->dt_tunnel_distance = IYpheight - &state->table_e300[0];
       A_tunnel_visible = 1;
       Cdash = 0; // was INC C
       if ((Ldash_lanes & (1 << 5)) != 0) {
@@ -11684,13 +11684,13 @@ static void dr_read_lanes(chqstate_t *state, u8 *IXplanes, u8 *IYpheight, u8 Bfi
         A_tunnel_visible = 2; // was INC A
         Hdash_in_tunnel_flag = 0; // was DEC H
       }
-      state->dt_SM_C160_tunnel_visible = A_tunnel_visible;
+      state->dt_tunnel_visible = A_tunnel_visible;
     }
 
-    state->dr_SM_C88F_in_tunnel = Hdash_in_tunnel_flag;
-    state->dr_SM_C5D9_right_hand_table_hi = 0xEB;
-    state->dr_SM_C68A_right_hand_table_hi = 0xEB;
-    state->dr_SM_C5AC_neg_lane_count = -1;
+    state->dr_in_tunnel = Hdash_in_tunnel_flag;
+    state->dr_right_table_hi_2 = 0xEB;
+    state->dr_right_table_hi = 0xEB;
+    state->dr_neg_lane_count = -1;
     Acopy_of_cdash = Cdash;
 
     // EXX - UNBANK
@@ -11710,7 +11710,7 @@ static void dr_read_lanes(chqstate_t *state, u8 *IXplanes, u8 *IYpheight, u8 Bfi
 
   /* Dirt track check */
   state->on_dirt_track = ((Ldash_lanes & 0x18) == 0) ? 1 : 0;
-  state->dr_SM_C5AC_neg_lane_count = -1;
+  state->dr_neg_lane_count = -1;
   assert(DEbackbuf >= 0xF000 || DEbackbuf <= 0x0100);
   dr_c54d(state, Bfill_pattern, DEbackbuf, L, dr_four_lane_highway); // exit via
 }
@@ -11728,12 +11728,12 @@ static void dr_four_lane_highway(chqstate_t *state, u8 Bfill_pattern, u16 DEback
   // EXX - UNBANK (we enter banked)
 
   // Set left/right hand road position to leftmost/rightmost
-  state->dr_SM_C642_left_hand_table_hi  = 0xE8;
-  state->dr_SM_C5B3_left_hand_table_hi  = 0xE8;
-  state->dr_SM_C68A_right_hand_table_hi = 0xEC;
-  state->dr_SM_C5D9_right_hand_table_hi = 0xEC;
+  state->dr_left_table_hi  = 0xE8;
+  state->dr_left_table_hi_2  = 0xE8;
+  state->dr_right_table_hi = 0xEC;
+  state->dr_right_table_hi_2 = 0xEC;
 
-  state->dr_SM_C5AC_neg_lane_count = -4;
+  state->dr_neg_lane_count = -4;
 
     assert(DEbackbuf >= 0xF000 || DEbackbuf <= 0x0100);
 dr_c54d(state, Bfill_pattern, DEbackbuf, L, dr_c551); // was FALLTHROUGH
@@ -11750,7 +11750,7 @@ dr_c54d(state, Bfill_pattern, DEbackbuf, L, dr_c551); // was FALLTHROUGH
  */
 static void dr_c54d(chqstate_t *state, u8 Bfill_pattern, u16 DEbackbuf, u8 L, dr_callback_t *HLdash_callback)
 {
-  state->dr_SM_C4B2_callback = HLdash_callback;
+  state->dr_callback = HLdash_callback;
   // EXX - UNBANK (we enter banked)
    assert(DEbackbuf >= 0xF000 || DEbackbuf <= 0x0100);
  dr_c551(state, Bfill_pattern, DEbackbuf, L); // was FALLTHROUGH
@@ -11776,7 +11776,7 @@ dr_c598_filled_path(state, DEbackbuf, L, Afill_pattern); // exit via
   }
 
   // EXX
-  state->dr_SM_C6AD = dr_c55f_unfilled_path;
+  state->dr_fill_fn = dr_c55f_unfilled_path;
   // EXX
   // EX AF,AF'
   assert(DEbackbuf >= 0xF000 || DEbackbuf <= 0x0100);
@@ -11825,12 +11825,12 @@ static void dr_c565_unfilled_path(chqstate_t *state, u16 DEbackbuf)
   u8  Cdash;
 
   assert(DEbackbuf >= 0xF000 || DEbackbuf <= 0x0100);
-  state->dr_SM_C56D_backbuf_ptr = DEbackbuf;
+  state->dr_backbuf_1 = DEbackbuf;
   B = 0xFF;
 
   // EXX - BANK
 
-  DEdash_backbuf = state->dr_SM_C56D_backbuf_ptr;
+  DEdash_backbuf = state->dr_backbuf_1;
   Ldash = (DEdash_backbuf & 0xFF) + 31;
   Hdash = DEdash_backbuf >> 8;
   SPoutput = ADDRTOBACKBUF((Hdash << 8) | Ldash);
@@ -11882,7 +11882,7 @@ static void dr_scanline_rollover_1(chqstate_t *state, u16 DEbackbuf)
 static void dr_c598_filled_path(chqstate_t *state, u16 DEbackbuf, u8 L, u8 Adash_fill)
 {
   // EXX
-  state->dr_SM_C6AD = dr_c5a1;
+  state->dr_fill_fn = dr_c5a1;
   // EXX
   // EX AF,AF'
   assert(DEbackbuf >= 0xF000 || DEbackbuf <= 0x0100);
@@ -11943,9 +11943,9 @@ static void dr_fill(chqstate_t *state, u16 DEbackbuf, u8 L, u8 Adash_fill)
   u16  BCzerofill;
 
   assert(DEbackbuf >= 0xF000 || DEbackbuf <= 0x0100);
-  state->dr_SM_C5F9_backbuf_ptr = DEbackbuf;
+  state->dr_backbuf_2 = DEbackbuf;
   A = L; // presumed lane mask... can't be right can it? must be the current offset
-  Bneg_lane_count = state->dr_SM_C5AC_neg_lane_count;
+  Bneg_lane_count = state->dr_neg_lane_count;
 
   // EXX - BANK
 
@@ -11967,7 +11967,7 @@ static void dr_fill(chqstate_t *state, u16 DEbackbuf, u8 L, u8 Adash_fill)
   }
   Edash = Anewvar;
   Anewvar = ~Edash + Bdash_holds_16;
-  state->dr_SM_C62C_left_stripe_width = Anewvar;
+  state->dr_left_stripe_width = Anewvar;
 
   HLdash = &state->xpos_road_right[Ldash]; // was Hdash = 0xEC; // right hand table
   Arightval = *HLdash;
@@ -11977,12 +11977,12 @@ static void dr_fill(chqstate_t *state, u16 DEbackbuf, u8 L, u8 Adash_fill)
     Anewvar = (HLdash[-1] & Cdash_mask) >> 3;
     RR(Anewvar);
   }
-  state->dr_SM_C60A_right_stripe_width = Anewvar;
+  state->dr_right_stripe_width = Anewvar;
 
   /* Calculate road jump table target */
-  state->dr_SM_C61B_road_width = ~A + Bdash_holds_16 + Edash;
+  state->dr_road_width = ~A + Bdash_holds_16 + Edash;
 
-  DEdash_backbuf = state->dr_SM_C5F9_backbuf_ptr;
+  DEdash_backbuf = state->dr_backbuf_2;
   assert(DEdash_backbuf >= 0xF000 || DEdash_backbuf <= 0x0100);
   Ldash_backbuf = (DEdash_backbuf & 0xFF) + 31;
   Hdash_backbuf = DEdash_backbuf >> 8;
@@ -11998,7 +11998,7 @@ static void dr_fill(chqstate_t *state, u16 DEbackbuf, u8 L, u8 Adash_fill)
   BCzerofill = 0x0000; // Set road fill to zero
 
   /*  Fill right hand road stripes - starting from right hand side. */
-  switch (state->dr_SM_C60A_right_stripe_width / 1) {
+  switch (state->dr_right_stripe_width / 1) {
     default: assert(0);
     case  0: SPoutput -= 2; *SPoutput = HLfill;
     case  1: SPoutput -= 2; *SPoutput = HLfill;
@@ -12018,7 +12018,7 @@ static void dr_fill(chqstate_t *state, u16 DEbackbuf, u8 L, u8 Adash_fill)
   }
 
   /* Fill blank road surface - continuing from the right hand side. */
-  switch (state->dr_SM_C61B_road_width / 1) {
+  switch (state->dr_road_width / 1) {
     default: assert(0);
     case  0: SPoutput -= 2; *SPoutput = BCzerofill;
     case  1: SPoutput -= 2; *SPoutput = BCzerofill;
@@ -12037,7 +12037,7 @@ static void dr_fill(chqstate_t *state, u16 DEbackbuf, u8 L, u8 Adash_fill)
     case 14: SPoutput -= 2; *SPoutput = BCzerofill;
   }
 
-  dr_c62e(state, SPoutput, state->dr_SM_C62C_left_stripe_width / 1, DEbackbuf, HLfill); // FALLTHROUGH
+  dr_c62e(state, SPoutput, state->dr_left_stripe_width / 1, DEbackbuf, HLfill); // FALLTHROUGH
 }
 
 static void dr_c62e(chqstate_t *state, u8 *SPoutput, u8 jump_index, u16 DEbackbuf, u16 HLfill)
@@ -12072,8 +12072,8 @@ static void dr_c62e(chqstate_t *state, u8 *SPoutput, u8 jump_index, u16 DEbackbu
 
   // EXX - bank/unbank
 
-  // was H = state->dr_SM_C642_left_hand_table_hi;
-  switch (state->dr_SM_C642_left_hand_table_hi) {
+  // was H = state->dr_left_table_hi;
+  switch (state->dr_left_table_hi) {
   default: assert(0);
   case 0xE8: HLxpos = &state->xpos_road_left[L]; break;
   case 0xE9: HLxpos = &state->xpos_road_centre_left[L]; break;
@@ -12091,7 +12091,7 @@ static void dr_c62e(chqstate_t *state, u8 *SPoutput, u8 jump_index, u16 DEbackbu
     Eindex = A; // save index
     A &= 7; // select row number 0..7
     A <<= 2; // Turn into a scanline offset (4 bytes per row)
-    A += state->dr_SM_C651_edge_graphic_offset; // Add offset of current edge marking graphic ($10,$30,$50,$70,$90,$B0)
+    A += state->dr_edge_graphic_offset; // Add offset of current edge marking graphic ($10,$30,$50,$70,$90,$B0)
     L = A; // Set #REGhl to road edge marking address
 
     // Top five bits select screen buffer addr?
@@ -12121,7 +12121,7 @@ static void dr_c62e(chqstate_t *state, u8 *SPoutput, u8 jump_index, u16 DEbackbu
     A = HL[-1]; // CHECK needs wraparound?
     // EXX
     E = A;
-    L = ((A & 7) << 1) + state->dr_SM_C677_stripe_table_offset;
+    L = ((A & 7) << 1) + state->dr_stripe_table_offset;
     E = ((E >> 3) & 31) + B;
     *DEbackbuf++ = *HL++, BC--;
 
@@ -12131,7 +12131,7 @@ static void dr_c62e(chqstate_t *state, u8 *SPoutput, u8 jump_index, u16 DEbackbu
   }
 
 dr_c68a:
-  H = state->dr_SM_C68A_right_hand_table_hi; // eg. $EC
+  H = state->dr_right_table_hi; // eg. $EC
   A = *HL;
   L--;
   if (A)
@@ -12141,7 +12141,7 @@ dr_c68a:
   E = A;
 
   /* Must be the right hand edge handling */
-  L = ((A & 7) << 2) + state->dr_SM_C698_right_edge_offset; // - as above but * 4
+  L = ((A & 7) << 2) + state->dr_right_edge_offset; // - as above but * 4
   E = ((E >> 3) & 31) + B;
   *DEbackbuf++ = *HL++, BC--;
 
@@ -12155,7 +12155,7 @@ dr_c6ab:
   L--;
   C--;
   if (NZ) {
-    state->dr_SM_C6AD(state, B, D);
+    state->dr_fill_fn(state, B, D);
     return;
   }
   // EX AF,AF'
@@ -12163,43 +12163,43 @@ dr_c6ab:
 
   /* This causes the alternating road stripes */
 dr_set_stripes:
-  A = state->dr_SM_C6B2_initial_stripe_state ^ 1; // loads (<lanes data offset> & 1) and toggles
-  state->dr_SM_C6B2_initial_stripe_state = A;
+  A = state->dr_initial_stripe_state ^ 1; // loads (<lanes data offset> & 1) and toggles
+  state->dr_initial_stripe_state = A;
   if (A)
     goto dr_stripe_perhaps_on;
 
 dr_stripe_perhaps_off:
-  A = state->dr_SM_C6BC_fill_pattern ^ 0x55; // toggle fill pattern
-  state->dr_SM_C6BC_fill_pattern = A;
+  A = state->dr_fill_pattern ^ 0x55; // toggle fill pattern
+  state->dr_fill_pattern = A;
 
   B = A; // copy stripe fill
   /* This causes the road edge stripes. */
-  state->dr_SM_C651_edge_graphic_offset ^= 0x20; // switch between adjacent edge graphics (that are 32 bytes each)
-  state->dr_SM_C698_right_edge_offset = A + 1; // ?advance past a mask byte (guess)?
-  state->dr_SM_C677_stripe_table_offset ^= state->dr_SM_C6D3_stripe_xor_base;
+  state->dr_edge_graphic_offset ^= 0x20; // switch between adjacent edge graphics (that are 32 bytes each)
+  state->dr_right_edge_offset = A + 1; // ?advance past a mask byte (guess)?
+  state->dr_stripe_table_offset ^= state->dr_stripe_xor_base;
 
 dr_stripe_perhaps_on:
-  A = state->dr_SM_C6D8_edge_thickness - 1; // load edge width value & decrement
-  state->dr_SM_C6D8_edge_thickness = A;
+  A = state->dr_edge_thickness - 1; // load edge width value & decrement
+  state->dr_edge_thickness = A;
   if (A)
     goto dr_edge_width_handled;
 
   /* Otherwise edge width value was zero */
-  A = state->dr_SM_C6D3_stripe_xor_base + 16;
+  A = state->dr_stripe_xor_base + 16;
   if (carry)
     goto dr_edge_width_handled;
 
-  state->dr_SM_C6D3_stripe_xor_base = A;
+  state->dr_stripe_xor_base = A;
   C = A;
-  A = state->dr_SM_C677_stripe_table_offset;
+  A = state->dr_stripe_table_offset;
   if (A == 0)
     goto dr_c6f6;
   A = C;
-  state->dr_SM_C677_stripe_table_offset = A;
+  state->dr_stripe_table_offset = A;
 
 dr_c6f6:
-  state->dr_SM_C651_edge_graphic_offset += 64; // next road edge graphic?
-  state->dr_SM_C6D8_edge_thickness = 5;
+  state->dr_edge_graphic_offset += 64; // next road edge graphic?
+  state->dr_edge_thickness = 5;
 
   // Sampled IY = $E301..$E315
 
@@ -12236,7 +12236,7 @@ dr_c715:
     goto dr_c740;
 
   A = IY.low;
-  state->dt_SM_C15D_tunnel_distance = A;
+  state->dt_tunnel_distance = A;
   A = 1;
   B++;
   old_C = C;
@@ -12249,11 +12249,11 @@ dr_c715:
   C--;
 
 dr_c73c:
-  state->dt_SM_C160_tunnel_visible = A;
+  state->dt_tunnel_visible = A;
   A = C;
 
 dr_c740:
-  state->dr_SM_C88F_in_tunnel = A;
+  state->dr_in_tunnel = A;
   goto dr_set_stripes;
 
 
@@ -12273,7 +12273,7 @@ dr_c746:
     goto dr_c770;
 
   A = IY.low; // load distance
-  state->dt_SM_C15D_tunnel_distance = A;
+  state->dt_tunnel_distance = A;
 
   A = 1;
   B++;
@@ -12287,11 +12287,11 @@ dr_c746:
   C--;
 
 dr_c76c:
-  state->dt_SM_C160_tunnel_visible = A;
+  state->dt_tunnel_visible = A;
   A = C;
 
 dr_c770:
-  state->dr_SM_C88F_in_tunnel = A;
+  state->dr_in_tunnel = A;
   // EX AF,AF'
 
 dr_c774:
@@ -12324,8 +12324,8 @@ dr_c794:
   //  This entry point is used by the routines at #R$CBA4 and #R$CBC5.
 dr_start_backdrop_fill:
   E++;
-  HL = &state->dt_SM_C160_tunnel_visible; // Load address of x in 'LD A,x' @ #R$C160 (in draw_tunnel)
-  A = state->dr_SM_C88F_in_tunnel; // Read 'LD A,x' @ #R$C88F (tunnel related)
+  HL = &state->dt_tunnel_visible; // Load address of x in 'LD A,x' @ #R$C160 (in draw_tunnel)
+  A = state->dr_in_tunnel; // Read 'LD A,x' @ #R$C88F (tunnel related)
   A |= *HL;
   RR(A);
   if (carry)
@@ -12353,12 +12353,12 @@ dr_start_backdrop_fill:
 
 dr_c7ca:
   A = C;
-  state->dr_SM_C80A_sky_rows = A; // Self modify xx in 'LD BC,$xxyy' @ #R$C80A
+  state->dr_sky_rows = A; // Self modify xx in 'LD BC,$xxyy' @ #R$C80A
   A += B;
   if ((s8) >= 0)
     goto dr_c7db;
   A = -(A - 127) + C;
-  state->dr_SM_C80A_sky_rows = A;
+  state->dr_sky_rows = A;
   C = A;
 
 dr_c7db:
@@ -12378,7 +12378,7 @@ dr_c7f2:
   state->dr_SM_C86C = A;
   memcpy(&state->dr_c82d_instrs[0], &backdrop_shifting_instrs[A], 18);
 
-  BC = (state->dr_SM_C80A_sky_rows << 8) + 10;
+  BC = (state->dr_sky_rows << 8) + 10;
   // EXX
   A = L;
   // EX AF,AF'
@@ -12465,7 +12465,7 @@ dr_start_sky_fill:
   DEfill = 0; // Fill value for blank sky
   /* The following value is tunnel related: 1 if in tunnel, 0 if not. */
   // It alternates fast when there is a partial tunnel on screen.
-  if (state->dr_SM_C88F_in_tunnel)
+  if (state->dr_in_tunnel)
     /* In tunnel. Draw black scanlines for the sky instead of coloured. */
     DEfill--; /* $0000 -> $FFFF */
 
@@ -12606,23 +12606,23 @@ static void forked_road_plotter(chqstate_t *state, u8 *IX, u8 *IY)
   /* $C8E4-$C912: Copy SM operands from draw_road's current SM state.
    * In Z80 these are absolute self-modifying writes to the $CA/$CB region.
    * In C we hold them as locals since they are re-initialised every call. */
-  sm_CB65  = state->dr_SM_C6D8_edge_thickness;
-  sm_CB36  = state->dr_SM_C6B2_initial_stripe_state;
-  sm_CB5D  = state->dr_SM_C6D3_stripe_xor_base;
-  sm_CA9D  = state->dr_SM_C677_stripe_table_offset;
-  sm_CB00  = state->dr_SM_C677_stripe_table_offset;
-  sm_CA7A  = state->dr_SM_C651_edge_graphic_offset;
-  sm_CADC  = state->dr_SM_C651_edge_graphic_offset;
-  sm_CB1C  = (u8)(state->dr_SM_C651_edge_graphic_offset + 1);
-  sm_CABB  = (u8)(state->dr_SM_C651_edge_graphic_offset + 1);
-  sm_CB40  = state->dr_SM_C6BC_fill_pattern;
+  sm_CB65  = state->dr_edge_thickness;
+  sm_CB36  = state->dr_initial_stripe_state;
+  sm_CB5D  = state->dr_stripe_xor_base;
+  sm_CA9D  = state->dr_stripe_table_offset;
+  sm_CB00  = state->dr_stripe_table_offset;
+  sm_CA7A  = state->dr_edge_graphic_offset;
+  sm_CADC  = state->dr_edge_graphic_offset;
+  sm_CB1C  = (u8)(state->dr_edge_graphic_offset + 1);
+  sm_CABB  = (u8)(state->dr_edge_graphic_offset + 1);
+  sm_CB40  = state->dr_fill_pattern;
 
   /* EXX: restore banked register context (draw_road shadow registers).
    * In Z80 the shadow context holds the screen address and counters.
    * In C we approximate from available state; exact values require the
    * full EXX infrastructure to be implemented in draw_road. */
-  D = (u8)(state->dr_SM_C56D_backbuf_ptr >> 8);   /* screen high byte */
-  E = (u8)(state->dr_SM_C56D_backbuf_ptr & 0xFF); /* screen low byte */
+  D = (u8)(state->dr_backbuf_1 >> 8);   /* screen high byte */
+  E = (u8)(state->dr_backbuf_1 & 0xFF); /* screen low byte */
   B = 0;                               /* 0 on first call (banked B uninit) */
   C = 0xF8;                            /* scan-block count ($F8 = 248) */
   /* Banked L: set by draw_road at $C5B0 as 'LD L,C' where C = 96 - IY[0] */
