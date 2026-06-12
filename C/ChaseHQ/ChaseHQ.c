@@ -123,7 +123,7 @@
 #define COUNTER_TO_PERSP_Y_ROW(x) ((x) - ((x) >> 2) - ((x) >> 4))
 
 /** Return `t`+`d` but only alter the low byte. */
-#define LO_ADD(t,d) (((t) & ~0xFF) | (((t) + (d)) & 0xFF))
+#define LO_ADD(t,d) ((t) = (((t) & ~0xFF) | (((t) + (d)) & 0xFF)))
 
 /** Add `d` to the high byte of a 16-bit word `v` */
 #define HI_ADD(v,d) ((v) += ((d) << 8))
@@ -11816,8 +11816,8 @@ static void dr_c55f_unfilled_path(chqstate_t *state, u16 DEbackbuf, u8 Llane_mas
 {
   int Ahi;
 
-  Ahi = DEbackbuf >> 8;
   HI_DEC(DEbackbuf);
+  Ahi = DEbackbuf >> 8;
   Ahi &= 0x0F;
   if (Ahi == 0) {
   assert(DEbackbuf >= 0xF000 || DEbackbuf <= 0x0100);
@@ -11871,7 +11871,7 @@ static void dr_c565_unfilled_path(chqstate_t *state, u16 DEbackbuf)
 static void dr_scanline_rollover_2(chqstate_t *state, u16 DEbackbuf, u8 Llane_mask, u8 Adash_fill)
 {
   LO_ADD(DEbackbuf, 32);
-  if ((DEbackbuf & 0xFF) >= 32) // no carry
+  if ((DEbackbuf & 0xFF) < 32) // carry (low byte wrapped)
     HI_ADD(DEbackbuf, 16);
   assert(DEbackbuf >= 0xF000 || DEbackbuf <= 0x0100);
   dr_fill(state, DEbackbuf, Llane_mask, Adash_fill); // exit via
@@ -11886,8 +11886,7 @@ static void dr_scanline_rollover_2(chqstate_t *state, u16 DEbackbuf, u8 Llane_ma
 static void dr_scanline_rollover_1(chqstate_t *state, u16 DEbackbuf)
 {
   LO_ADD(DEbackbuf, 32);
-  if ((DEbackbuf & 0xFF) >= 32) // no carry
-    HI_ADD(DEbackbuf, 16);
+  if ((DEbackbuf & 0xFF) < 32) // carry (low byte wrapped)
   assert(DEbackbuf >= 0xF000 || DEbackbuf <= 0x0100);
   dr_c565_unfilled_path(state, DEbackbuf); // exit via
 }
@@ -14438,6 +14437,10 @@ attract_mode_128k_8281:
 
 CHQ_API void chq_setup(chqstate_t *state)
 {
+  run_pregame_screen_loop(state);
+  return;
+
+
   if (setjmp(state->host_quit_jmp) == 0)
     entrypt_128k(state);
 
@@ -14456,8 +14459,6 @@ CHQ_API void chq_main(chqstate_t *state)
 {
   assert(0); // shouldn't get called rn
   main_loop(state);
-
-  // run_pregame_screen_loop(state);
 }
 
 /* ----------------------------------------------------------------------- */

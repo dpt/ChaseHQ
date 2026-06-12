@@ -176,11 +176,12 @@ static void test_layout_road_populates_tables(void)
  * must write some non-zero content into the back buffer and must reset the
  * four road-state flags.
  *
- * NOTE: draw_road is partially implemented.  The Ahi-ordering bug in
- * dr_c55f_unfilled_path (reads high byte before HI_DEC instead of after)
- * causes an invalid backbuffer address when called with the initial sentinel
- * DEbackbuf = 0x0100.  This test will abort at the VALID_BACKBUF assertion
- * in dr_c62e until that is fixed.
+ * NOTE: draw_road is partially implemented.  On the first call the sentinel
+ * DEbackbuf = 0x0100 decrement-and-rollover path produces DEbackbuf = 0x0020
+ * (D=0x00, E=0x20), which is outside the valid backbuffer range.  The missing
+ * piece is initialisation of dr_backbuf_1 to the first valid row address
+ * (0xFF20) by stage-setup code not yet ported.  Until that is added this test
+ * aborts at the VALID_BACKBUF assertion in dr_c62e.
  */
 static void test_draw_road_writes_backbuffer(void)
 {
