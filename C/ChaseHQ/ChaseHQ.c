@@ -236,13 +236,13 @@
 #define CHATTERSTATE_RUN                       (2)
 #define CHATTERSTATE_STOP                      (3)
 
-#define PERPCAUGHTPHASE_0                      (0)
-#define PERPCAUGHTPHASE_1                      (1)
-#define PERPCAUGHTPHASE_2                      (2)
-#define PERPCAUGHTPHASE_3                      (3) // car has stopped; engine off; smash bar is removed
-#define PERPCAUGHTPHASE_4                      (4)
-#define PERPCAUGHTPHASE_5                      (5)
-#define PERPCAUGHTPHASE_6                      (6) // transition
+#define PERPCAUGHTPHASE_NONE                   (0)
+#define PERPCAUGHTPHASE_ALIGNING               (1)
+#define PERPCAUGHTPHASE_STOPPING               (2)
+#define PERPCAUGHTPHASE_STOPPED                (3) // car has stopped; engine off; smash bar is removed
+#define PERPCAUGHTPHASE_SCORE                  (4)
+#define PERPCAUGHTPHASE_FADING                 (5)
+#define PERPCAUGHTPHASE_ADVANCING              (6) // transition
 
 #define TRANSITIONSTRIDE_FORWARD            (0x08)
 #define TRANSITIONSTRIDE_REVERSE            (0xF8)
@@ -992,7 +992,7 @@ static void play_engine_sfx_48k(chqstate_t *state)
   int c;       /* was B */
 
   phase = state->perp_caught_phase;
-  if (phase >= PERPCAUGHTPHASE_3)
+  if (phase >= PERPCAUGHTPHASE_STOPPED)
     return;
 
   counter = (state->engine_sfx_counter + 1) & 3;
@@ -2246,15 +2246,15 @@ static int handle_perp_caught(chqstate_t *state)
 
   phase = state->perp_caught_phase;
   switch (phase) {
-  case PERPCAUGHTPHASE_0:
+  case PERPCAUGHTPHASE_NONE:
     return 0;
-  case PERPCAUGHTPHASE_1:
+  case PERPCAUGHTPHASE_ALIGNING:
     goto move_perp;
-  case PERPCAUGHTPHASE_2:
+  case PERPCAUGHTPHASE_STOPPING:
     goto phase2;
-  case PERPCAUGHTPHASE_3:
+  case PERPCAUGHTPHASE_STOPPED:
     goto phase3;
-  case PERPCAUGHTPHASE_4:
+  case PERPCAUGHTPHASE_SCORE:
     goto phase4;
   default:
     break;
@@ -2263,7 +2263,7 @@ static int handle_perp_caught(chqstate_t *state)
   // Otherwise 5/6
   if (state->transition_control)
     return 0;
-  if (phase == PERPCAUGHTPHASE_5)
+  if (phase == PERPCAUGHTPHASE_FADING)
     goto phase5;
 
   // Must be 6
@@ -2272,7 +2272,7 @@ static int handle_perp_caught(chqstate_t *state)
   return 1; // Conv: signal to bypass remainder of main loop
 
 phase5:
-  state->perp_caught_phase = PERPCAUGHTPHASE_6;
+  state->perp_caught_phase = PERPCAUGHTPHASE_ADVANCING;
   setup_transition(state, TRANSITIONSTRIDE_FORWARD); /* was exit via */
   return 0;
 
@@ -2305,7 +2305,7 @@ phase3:
   if (A)
     return 0;
 
-  state->perp_caught_phase = PERPCAUGHTPHASE_4;
+  state->perp_caught_phase = PERPCAUGHTPHASE_SCORE;
   HLmessages = state->stage->addrof_arrest_messages;
   setup_overlay_messages_with_transition(state,
                                          TRANSITIONCONTROL_DRAW_MUGSHOTS,
@@ -2320,7 +2320,7 @@ phase4:
   if (state->mode_128k)
     handle_perp_caught_128k(state);
 
-  state->perp_caught_phase = PERPCAUGHTPHASE_5;
+  state->perp_caught_phase = PERPCAUGHTPHASE_FADING;
 
   // Calc bonus
 
@@ -2486,7 +2486,7 @@ assign_hero_pos:
   state->speed = 0;
   state->hazards[0].dist_frac = 0;
   state->hazards[0].distance = 1;
-  state->perp_caught_phase = PERPCAUGHTPHASE_2;
+  state->perp_caught_phase = PERPCAUGHTPHASE_STOPPING;
   state->smoke = 3;
   DEspeed = 0; // Conv
   goto set_perp_speed;
@@ -2556,7 +2556,7 @@ static void hpc_set_perp_speed(chqstate_t *state, u16 speed)
  */
 static void fully_smashed(chqstate_t *state)
 {
-  state->perp_caught_phase  = PERPCAUGHTPHASE_1;
+  state->perp_caught_phase  = PERPCAUGHTPHASE_ALIGNING;
   state->hand_flag          = 2; // TODO: Add a symbol for this
   state->smash_counter      = 20;
   state->session.user_input_mask = USERINPUT_PAUSE | USERINPUT_QUIT;
@@ -2897,7 +2897,7 @@ static void draw_smash_bar(chqstate_t *state)
   if (state->sighted_flag == 0)
     return; // Return if the perp has not yet been sighted
 
-  if (state->perp_caught_phase >= PERPCAUGHTPHASE_3)
+  if (state->perp_caught_phase >= PERPCAUGHTPHASE_STOPPED)
     return; // Return if perp_caught_phase is >= 3 (car has stopped)
 
   backbuf = 0xF7A2; // Back buffer address of bottom of bar
@@ -5183,7 +5183,7 @@ static void check_time_up(chqstate_t *state)
   int       hidigit;              /* was A */
   int       lodigit;              /* was L */
 
-  if (state->perp_caught_phase > PERPCAUGHTPHASE_0 ||
+  if (state->perp_caught_phase > PERPCAUGHTPHASE_NONE ||
       state->transition_control == TRANSITIONCONTROL_FADE)
     return;
 
@@ -6935,7 +6935,7 @@ static void spawn_cars(chqstate_t *state)
 
   // Return without spawning anything if perp_caught_phase is non-zero or the
   // dont_spawn_cars flag is set.
-  if (state->perp_caught_phase > PERPCAUGHTPHASE_0 || state->dont_spawn_cars)
+  if (state->perp_caught_phase > PERPCAUGHTPHASE_NONE || state->dont_spawn_cars)
     return;
 
   // Return without spawning anything if allow_spawning is zero.
@@ -10406,7 +10406,7 @@ draw_attributes:
 
     /* Draw smash meter attributes */
 
-    if (state->sighted_flag == 0 || state->perp_caught_phase >= PERPCAUGHTPHASE_3)
+    if (state->sighted_flag == 0 || state->perp_caught_phase >= PERPCAUGHTPHASE_STOPPED)
       goto exit;
 
     HLattrs = ADDRTOATTRS(0x5962); // attr (2, 11)
