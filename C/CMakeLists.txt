@@ -44,3 +44,26 @@ add_executable(ChaseHQ ${SOURCE_FILES})
 target_compile_definitions(ChaseHQ PRIVATE TGE_SDL)
 target_include_directories(ChaseHQ PRIVATE ${SDL2_INCLUDE_DIRS} .)
 target_link_libraries(ChaseHQ ${SDL2_LIBRARIES})
+
+# ---- Unit tests (no SDL2 dependency) ------------------------------------
+
+set(TEST_SOURCE_FILES
+        Tests/TestDrawRoad.c
+        ZXSpectrum/Kempston.c
+        ZXSpectrum/Keyboard.c
+        ZXSpectrum/Screen.c
+        ZXSpectrum/Spectrum.c
+        ChaseHQ/ChaseHQ.c
+        ChaseHQ/ChaseHQ-CommonData.c
+        ChaseHQ/ChaseHQ-Create.c
+        ChaseHQ/ChaseHQ-SoundSamples.c
+        ChaseHQ/ChaseHQ-Stage1Data.c
+        ChaseHQ/ChaseHQ-Stage2Data.c
+        ChaseHQ/ChaseHQ-Stage3Data.c
+        ChaseHQ/ChaseHQ-Stage4Data.c
+        ChaseHQ/ChaseHQ-Stage5Data.c
+        ChaseHQ/ChaseHQ-Stages.c)
+
+add_executable(ChaseHQ_Tests ${TEST_SOURCE_FILES})
+target_compile_definitions(ChaseHQ_Tests PRIVATE CHQ_TESTS)
+target_include_directories(ChaseHQ_Tests PRIVATE .)

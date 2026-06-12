@@ -2509,6 +2509,7 @@ perp_too_far_away:
   Aperpdistance = state->hazards[0].distance;
   HLspeed = SPEED_PERP_CHASE;
   if (Aperpdistance < 15) {
+    // multiply-reduce loop
     Biterations = 16 - Aperpdistance;
     do
       HLspeed -= 20;
@@ -14458,3 +14459,42 @@ CHQ_API void chq_main(chqstate_t *state)
 
   // run_pregame_screen_loop(state);
 }
+
+/* ----------------------------------------------------------------------- */
+
+#ifdef CHQ_TESTS
+
+#include "ChaseHQ/ChaseHQ-Tests.h"
+
+void chq_test_load_stage(chqstate_t *state)
+{
+  load_stage(state);
+}
+
+void chq_test_set_up_stage(chqstate_t *state)
+{
+  set_up_stage(state, &state->stage->stage_data);
+}
+
+void chq_test_prime_road(chqstate_t *state, int iterations)
+{
+  while (iterations-- > 0)
+    rm_cycle_buffer_offset(state, &state->fast_counter);
+}
+
+void chq_test_build_height_table(chqstate_t *state)
+{
+  build_height_table(state);
+}
+
+void chq_test_layout_road(chqstate_t *state)
+{
+  layout_road(state);
+}
+
+void chq_test_draw_road(chqstate_t *state)
+{
+  draw_road(state);
+}
+
+#endif /* CHQ_TESTS */
