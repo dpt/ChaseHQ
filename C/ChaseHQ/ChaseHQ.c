@@ -236,6 +236,10 @@
 #define CHATTERSTATE_RUN                       (2)
 #define CHATTERSTATE_STOP                      (3)
 
+#define HANDFLAG_NONE                          (0) // no hand visible
+#define HANDFLAG_ANIMATING                     (1) // cherry light animating onto roof
+#define HANDFLAG_STOP                          (2) // static "stop" hand
+
 #define PERPCAUGHTPHASE_NONE                   (0)
 #define PERPCAUGHTPHASE_ALIGNING               (1)
 #define PERPCAUGHTPHASE_STOPPING               (2)
@@ -2557,7 +2561,7 @@ static void hpc_set_perp_speed(chqstate_t *state, u16 speed)
 static void fully_smashed(chqstate_t *state)
 {
   state->perp_caught_phase  = PERPCAUGHTPHASE_ALIGNING;
-  state->hand_flag          = 2; // TODO: Add a symbol for this
+  state->hand_flag          = HANDFLAG_STOP;
   state->smash_counter      = 20;
   state->session.user_input_mask = USERINPUT_PAUSE | USERINPUT_QUIT;
   setup_overlay_messages(state, &pull_over_message[0]);
@@ -8867,10 +8871,10 @@ static void ahc_check_hand_flag(chqstate_t *state)
   int Chand_frame;     /* was C */
 
   Ahand_flag = state->hand_flag;
-  if (Ahand_flag == 0)
+  if (Ahand_flag == HANDFLAG_NONE)
     return;
 
-  if (Ahand_flag != 1) {
+  if (Ahand_flag != HANDFLAG_ANIMATING) {
     // Show the "stop" hand
 
     // EXX BANK
@@ -8905,7 +8909,7 @@ static void ahc_check_hand_flag(chqstate_t *state)
 
   if (Ahand_frame >= 7) {
     // Hide the "stop" hand
-    state->hand_flag = 0;
+    state->hand_flag = HANDFLAG_NONE;
     return;
   }
 
@@ -8938,7 +8942,7 @@ static void start_chase(chqstate_t *state)
 {
   state->ahc_hand_step = 0;
   // Starts the animation that puts the cherry light on the roof
-  state->hand_flag = 1;
+  state->hand_flag = HANDFLAG_ANIMATING;
   // Enable flashing lights and smash bar
   state->sighted_flag = 1;
   // This is animation frame related?
