@@ -240,6 +240,8 @@
 #define HANDFLAG_ANIMATING                     (1) // cherry light animating onto roof
 #define HANDFLAG_STOP                          (2) // static "stop" hand
 
+#define SMASHCOUNTER_MAX                       (20) // fully smashed; also the smash bar segment count
+
 #define PERPCAUGHTPHASE_NONE                   (0)
 #define PERPCAUGHTPHASE_ALIGNING               (1)
 #define PERPCAUGHTPHASE_STOPPING               (2)
@@ -2562,7 +2564,7 @@ static void fully_smashed(chqstate_t *state)
 {
   state->perp_caught_phase  = PERPCAUGHTPHASE_ALIGNING;
   state->hand_flag          = HANDFLAG_STOP;
-  state->smash_counter      = 20;
+  state->smash_counter      = SMASHCOUNTER_MAX;
   state->session.user_input_mask = USERINPUT_PAUSE | USERINPUT_QUIT;
   setup_overlay_messages(state, &pull_over_message[0]);
   hpc_set_perp_speed(state, 400);
@@ -2889,7 +2891,7 @@ static void draw_mugshot(chqstate_t *state,
  */
 static void draw_smash_bar(chqstate_t *state)
 {
-  const int MaxSegments    = 20;
+  const int MaxSegments    = SMASHCOUNTER_MAX;
   const int SegmentHeight  = 3;
   const int BorderHeight   = 2;
   const int TotalBarHeight = MaxSegments * SegmentHeight * BorderHeight * 2;
@@ -8979,11 +8981,11 @@ static void smash(chqstate_t *state)
   state->dd_SM_B549_frame_counter = 9; // set counter
 
   hits = state->smash_counter + 1;
-  if (hits >= 20) {
+  if (hits >= SMASHCOUNTER_MAX) {
     fully_smashed(state); /* exit via */
     return;
   }
-  if (hits == 19)
+  if (hits == SMASHCOUNTER_MAX - 1)
     start_chatter(state, 10, &chatterblk_raymond_one_more_time[0]);
   state->smash_counter = hits;
 
