@@ -26,7 +26,7 @@
 #define BACKBUFFER_ROWBYTES   (BACKBUFFER_WIDTH / 8)
 #define BACKBUFFER_HEIGHT     (128)
 #define BACKBUFFER_LENGTH     (BACKBUFFER_ROWBYTES * BACKBUFFER_HEIGHT)
-#define BACKBUFFER_START_ADDRESS ((u16) 0xF000)
+#define BACKBUFFER_START_ADDRESS 0xF000
 #define BACKBUFFER_END_ADDRESS (BACKBUFFER_START_ADDRESS + BACKBUFFER_LENGTH)
 // draw_char writes rows at stride 256; addresses near the end of the buffer
 // overflow past 0xFFFF in Z80 address space, wrapping into ROM (harmless).

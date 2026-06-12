@@ -8556,7 +8556,7 @@ mhc_check_brake:
     BCspeed_diff = -10; // slow down at half the speed of braking
 
   speed += BCspeed_diff;
-  if ((s16) speed < 0)
+  if (speed < 0)
     speed = 0; // clamp to zero
 
   Ainclined = state->inclined_counter - 1;
@@ -11458,8 +11458,8 @@ static void draw_road_scene_change(chqstate_t *state, u8 *IXlanes, u8 *IYheight)
     goto c439;
   L_sp    = (u8)(~((u8)(0x60 - IYheight[0]) << 1));
   tbl     = drsc_tbl(state, H_de);
-  DE_road = (u16)tbl[L_sp - 1] | ((u16)tbl[L_sp] << 8);
-  DE_road = (u16)(DE_road - (u8)(((state->fast_counter & 0xE0) >> 3) + addval));
+  DE_road = tbl[L_sp - 1] | (tbl[L_sp] << 8);
+  DE_road = (u16)(DE_road - (((state->fast_counter & 0xE0) >> 3) + addval));
   goto c3ee;
 
 c357:
@@ -11471,7 +11471,7 @@ c357:
     goto c439;
   L_sp    = (u8)(~((u8)(0x60 - IYheight[0]) << 1));
   tbl     = drsc_tbl(state, H_de);
-  DE_road = (u16)tbl[L_sp - 1] | ((u16)tbl[L_sp] << 8);
+  DE_road = tbl[L_sp - 1] | (tbl[L_sp] << 8);
   goto c3ee;
 
 c37e:
@@ -11489,8 +11489,8 @@ c37e:
     goto c439;
   L_sp    = (u8)(~((u8)(0x60 - IYheight[0]) << 1));
   tbl     = drsc_tbl(state, H_de);
-  DE_road = (u16)tbl[L_sp - 1] | ((u16)tbl[L_sp] << 8);
-  DE_road = (u16)(DE_road + (u8)(((state->fast_counter & 0xE0) >> 3) + addval));
+  DE_road = tbl[L_sp - 1] | (tbl[L_sp] << 8);
+  DE_road = (u16)(DE_road + (((state->fast_counter & 0xE0) >> 3) + addval));
   goto c3ee;
 
 c3ca:
@@ -11502,20 +11502,20 @@ c3ca:
     goto c439;
   L_sp    = (u8)(~((u8)(0x60 - IYheight[0]) << 1));
   tbl     = drsc_tbl(state, H_de);
-  DE_road = (u16)tbl[L_sp - 1] | ((u16)tbl[L_sp] << 8);
+  DE_road = tbl[L_sp - 1] | (tbl[L_sp] << 8);
   /* no offset -- fall through to c3ee */
 
 c3ee:
   /* $C3EE-$C405: read second table value, compute clamped displacement */
   L_adj        = (u8)(L_sp - (u8)(range << 1));
   tbl          = drsc_tbl(state, H_clamp);
-  HL_clamp_val = (u16)tbl[L_adj - 1] | ((u16)tbl[L_adj] << 8);
-  sbc          = (s16)HL_clamp_val - (s16)DE_road;
-  L_low        = (u8)(sbc & 0xFF);
+  HL_clamp_val = tbl[L_adj - 1] | (tbl[L_adj] << 8);
+  sbc          = HL_clamp_val - DE_road;
+  L_low        = sbc & 0xFF;
   if (sbc < 0)
     displacement = (L_low >= 0x80) ? (s8)L_low : (s8)0x81;
   else
-    displacement = (L_low <  0x80) ? (s8)L_low : (s8)0x7F;
+    displacement = (L_low <  0x80) ? (s8)L_low : 0x7F;
 
   /* $C407-$C412: set up SP output pointer */
   H_sp   = (lane_flags & 0x20) ? (u8)(H - 1) : H;
@@ -12640,20 +12640,20 @@ static void forked_road_plotter(chqstate_t *state, u8 *IXlanes, u8 *IYheight)
   sm_CB00  = state->dr_stripe_table_offset;
   sm_CA7A  = state->dr_edge_graphic_offset;
   sm_CADC  = state->dr_edge_graphic_offset;
-  sm_CB1C  = (u8)(state->dr_edge_graphic_offset + 1);
-  sm_CABB  = (u8)(state->dr_edge_graphic_offset + 1);
+  sm_CB1C  = state->dr_edge_graphic_offset + 1;
+  sm_CABB  = state->dr_edge_graphic_offset + 1;
   sm_CB40  = state->dr_fill_pattern;
 
   /* EXX: restore banked register context (draw_road shadow registers).
    * In Z80 the shadow context holds the screen address and counters.
    * In C we approximate from available state; exact values require the
    * full EXX infrastructure to be implemented in draw_road. */
-  D = (u8)(state->dr_backbuf_1 >> 8);   /* screen high byte */
-  E = (u8)(state->dr_backbuf_1 & 0xFF); /* screen low byte */
+  D = state->dr_backbuf_1 >> 8;    /* screen high byte */
+  E = state->dr_backbuf_1 & 0xFF;  /* screen low byte */
   B = 0;                               /* 0 on first call (banked B uninit) */
   C = 0xF8;                            /* scan-block count ($F8 = 248) */
   /* Banked L: set by draw_road at $C5B0 as 'LD L,C' where C = 96 - IYheight[0] */
-  L = (u8)(0x60 - *IYheight);
+  L = 0x60 - *IYheight;
 
   af_prime = sm_CB40; /* EX AF,AF': current scanline fill pattern */
 
@@ -12680,16 +12680,16 @@ frp_c929: /* $C929: zero-fill scanline (inner road, pre-fork area) */
    * HL = DE+$1F, SP = HL, HL = 0, C = E+$1F
    * JP $CA57: 15 x PUSH HL (fills 30 bytes with 0) */
 #endif
-  C = (u8)(E + 0x1F);
+  C = E + 0x1F;
   B = E;  /* $CA66: LD B,E */
   C--;    /* $CA67: DEC C */
   goto frp_after_marking;
 
 frp_next_scanline_c929: /* $C94C */
   carry = (E < 0x20);
-  E     = (u8)(E - 0x20);
+  E     = E - 0x20;
   if (!carry)
-    D = (u8)(D + 0x10);
+    D = D + 0x10;
   goto frp_c929;
 
 frp_c95a: /* $C95A: B != 0 -- set jump target to frp_c963 (5-zone path) */
@@ -12825,7 +12825,7 @@ frp_after_marking: /* $CB2F */
 
 frp_loop: /* $CB36 */
   {
-    u8 tog = (u8)(sm_CB36 ^ 1);
+    u8 tog = sm_CB36 ^ 1;
     sm_CB36 = tog;
     if (tog != 0)
       goto frp_cb65;
@@ -12833,34 +12833,34 @@ frp_loop: /* $CB36 */
 
   /* sm_CB36 == 0: update fill pattern and ADD operands */
   {
-    u8 newpat = (u8)(sm_CB40 ^ 0x55);
+    u8 newpat = sm_CB40 ^ 0x55;
     sm_CB40 = newpat;
     B       = newpat;
-    sm_CA7A = (u8)(sm_CA7A ^ 0x20);   /* $CB4D: XOR $20 */
+    sm_CA7A = sm_CA7A ^ 0x20;          /* $CB4D: XOR $20 */
     sm_CADC = sm_CA7A;                 /* $CB50 */
-    sm_CB1C = (u8)(sm_CA7A + 1);       /* $CB54 */
+    sm_CB1C = sm_CA7A + 1;             /* $CB54 */
     sm_CABB = sm_CB1C;                 /* $CB57 */
     {
-      u8 nca9d = (u8)(sm_CA9D ^ sm_CB5D); /* $CB5D: XOR <sm_CB5D> */
+      u8 nca9d = sm_CA9D ^ sm_CB5D; /* $CB5D: XOR <sm_CB5D> */
       sm_CA9D = nca9d;                    /* $CB5F */
       sm_CB00 = nca9d;                    /* $CB62 */
     }
   }
 
 frp_cb65: /* $CB65 */
-  sm_CB65 = (u8)(sm_CB65 - 1);
+  sm_CB65--;
   if (sm_CB65 != 0)
     goto frp_cb90;
 
   /* sm_CB65 reached zero: advance XOR operand ($CB6E-$CB8D) */
   {
-    u8 newxor = (u8)(sm_CB5D + 0x10);
+    u8 newxor = sm_CB5D + 0x10;
     if (newxor < sm_CB5D) /* carry: $CB73 JR C,$CB90 */
       goto frp_cb90;
     sm_CB5D = newxor;             /* $CB75 */
     if (sm_CA9D != 0)             /* $CB7C: AND A; JR Z,$CB83 */
       sm_CA9D = newxor;           /* $CB80 */
-    sm_CA7A = (u8)(sm_CA7A + 0x40); /* $CB86: ADD A,$40 */
+    sm_CA7A = sm_CA7A + 0x40; /* $CB86: ADD A,$40 */
     sm_CB65 = 5;                  /* $CB8D: reset thickness countdown */
   }
 
@@ -12871,7 +12871,7 @@ frp_cb90: /* $CB90 */
     WRAPPINGINCREMENT(IXlanes, state->road_buffer_start);
     A = (u8)(old_h - *IYheight);  /* $CB97: SUB (IYheight+$00) */
     if (A == 0) {           /* $CB9A: JR Z,$CB9F */
-      L = (u8)(L - 2);
+      L -= 2;
       goto frp_loop;
     }
     if ((s8)A > 0) {        /* $CB9C: JP P,$CBC5 */
@@ -12887,9 +12887,9 @@ frp_cb90: /* $CB90 */
 
 frp_next_scanline_c969: /* $C93E */
   carry = (E < 0x20);
-  E     = (u8)(E - 0x20);
+  E     = E - 0x20;
   if (!carry)
-    D = (u8)(D + 0x10);
+    D = D + 0x10;
   goto frp_c969;
 }
 
