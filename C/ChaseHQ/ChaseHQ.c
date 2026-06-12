@@ -839,7 +839,7 @@ static void layout_road(chqstate_t *state);
 
 static void exit_fork(chqstate_t *state);
 
-static void draw_screen(chqstate_t *state);
+static void update_screen(chqstate_t *state);
 
 static void clear_playfield_set_attrs(chqstate_t *state);
 
@@ -1088,8 +1088,8 @@ static void attract_mode_48k(chqstate_t *state)
 
     transition(state);
     CHKDRAW_AM("transition");
-    draw_screen(state);
-    CHKDRAW_AM("draw_screen");
+    update_screen(state);
+    CHKDRAW_AM("update_screen");
   }
 #undef CHKDRAW_AM
 }
@@ -1313,7 +1313,7 @@ static void main_loop(chqstate_t *state)
       draw_smash_bar(state);
       transition(state);
       play_engine_or_siren_sfx_hook(state);
-      draw_screen(state);
+      update_screen(state);
       exit_fork(state);
       state->speccy->sleep(state->speccy, 100000); // guess
 
@@ -1557,7 +1557,7 @@ static int run_pregame_screen_loop(chqstate_t *state)
   transition(state);
   if (1)
     test(state);
-  draw_screen(state);
+  update_screen(state);
   if (state->transition_control == 0) {
     if (state->chatter_state == CHATTERSTATE_IDLE)
       return 0; // stop
@@ -1828,7 +1828,7 @@ static void escape_scene(chqstate_t *state)
     update_scoreboard(state);
     drive_chatter(state);
     transition(state);
-    draw_screen(state);
+    update_screen(state);
 
     // Loop unless the tunnel has appeared - and is right size?
     if (state->dt_tunnel_visible == 0 || state->dt_tunnel_distance >= 7)
@@ -10294,57 +10294,44 @@ static void exit_fork(chqstate_t *state)
 // The buffer has the format 0b1111LLLLRRRCCCCC (L = scanline, R = row (group))
 
 /**
- * $BC3E: Draw screen
+ * $BC3E: Copy the backbuf to the real screen
  *
  * \param[in] state Pointer to game state.
  */
-static void draw_screen(chqstate_t *state)
+static void update_screen(chqstate_t *state)
 {
   u8        *scr;       /* was HL */
   u8        *buf;       /* was HL' */
   u16        bufoffset; // Conv: added
   ptrdiff_t  scroff;    // Conv: for safe bounds checking
 
-  // ASAN_POISON_RANGE(&state->speccy->draw, sizeof(state->speccy->draw));
-
   scr = ADDRTOSCREEN(0x4811); // (136, 64)
   buf = ADDRTOBACKBUF(0xF001); // (8, 1)
 
-#define SCRCHK(n, tag) do { \
-  ptrdiff_t _off = (ptrdiff_t)(scr - &state->speccy->screen.pixels[0]); \
-  if (_off < (n)) { \
-    fprintf(stderr, "draw_screen: scr-" #n " underflow at %s: scr=%td\n", tag, _off); \
-    abort(); \
-  } \
-} while(0)
-
   for (;;) {
     // First do left hand side (original reads forwards, stores backwards)
-lefthand_16_bytes:
-    SCRCHK(16, "LH1"); memcpy(scr - 16, buf, 16); scr += 256; buf += 256;
-    SCRCHK(16, "LH2"); memcpy(scr - 16, buf, 16); scr += 256; buf += 256;
-    SCRCHK(16, "LH3"); memcpy(scr - 16, buf, 16); scr += 256; buf += 256;
-    SCRCHK(16, "LH4"); memcpy(scr - 16, buf, 16); scr += 256; buf += 256;
-    bufoffset = BACKBUFTOOFFSET(buf); // Conv: convert back to offset
-    // Loop on the first pass (4 lines of 8 done) but not the second
-    if (bufoffset & (1 << 10))
-      goto lefthand_16_bytes;
+    do {
+      memcpy(scr - 16, buf, 16); scr += 256; buf += 256;
+      memcpy(scr - 16, buf, 16); scr += 256; buf += 256;
+      memcpy(scr - 16, buf, 16); scr += 256; buf += 256;
+      memcpy(scr - 16, buf, 16); scr += 256; buf += 256;
+      bufoffset = BACKBUFTOOFFSET(buf); // Conv: convert back to offset
+      // Loop on the first pass (4 lines of 8 done) but not the second
+    } while (bufoffset & (1 << 10));
 
     // Now move over to the right hand side
     // e.g. (0xF001 + 8*256 - 0x7F0) == 0xF011 on the first pass
     buf = OFFSETTOBACKBUF(bufoffset - 0x07F0);
     scroff = SCREENTOOFFSET(scr) - 0x07F2;
-    if (scroff < 0) { fprintf(stderr, "draw_screen: scr underflow in LH->RH transition: scroff=%td\n", scroff); abort(); }
     scr = OFFSETTOSCREEN(scroff);
-righthand_14_bytes:
-    SCRCHK(14, "RH1"); memcpy(scr - 14, buf, 14); scr += 256; buf += 256;
-    SCRCHK(14, "RH2"); memcpy(scr - 14, buf, 14); scr += 256; buf += 256;
-    SCRCHK(14, "RH3"); memcpy(scr - 14, buf, 14); scr += 256; buf += 256;
-    SCRCHK(14, "RH4"); memcpy(scr - 14, buf, 14); scr += 256; buf += 256;
-    bufoffset = BACKBUFTOOFFSET(buf); // Conv: convert back to offset
-    // Loop on the first pass (4 lines of 8 done) but not the second
-    if (bufoffset & (1 << 10))
-      goto righthand_14_bytes;
+    do {
+      memcpy(scr - 14, buf, 14); scr += 256; buf += 256;
+      memcpy(scr - 14, buf, 14); scr += 256; buf += 256;
+      memcpy(scr - 14, buf, 14); scr += 256; buf += 256;
+      memcpy(scr - 14, buf, 14); scr += 256; buf += 256;
+      bufoffset = BACKBUFTOOFFSET(buf); // Conv: convert back to offset
+      // Loop on the first pass (4 lines of 8 done) but not the second
+    } while (bufoffset & (1 << 10));
 
     if ((bufoffset & (1 << 11)) == 0) {
       u8  H;
@@ -10364,13 +10351,12 @@ righthand_14_bytes:
       L        = res; // truncates
 
       if (!carry)
-        goto draw_attributes; // bitmap copy complete
+        break; // bitmap copy complete
 
       buf = ADDRTOBACKBUF((H << 8) | L);
 
       if (!overflow) {
         scroff = SCREENTOOFFSET(scr) - 0x07EE;
-        if (scroff < 0) { fprintf(stderr, "draw_screen: RH->next underflow no-overflow: scroff=%td\n", scroff); abort(); }
         scr = OFFSETTOSCREEN(scroff);
       } else {
         // Start of second half
@@ -10378,13 +10364,12 @@ righthand_14_bytes:
       }
     } else {
       scroff = SCREENTOOFFSET(scr) - 0x07EE;
-      if (scroff < 0) { fprintf(stderr, "draw_screen: RH->next underflow else: scroff=%td\n", scroff); abort(); }
       scr = OFFSETTOSCREEN(scroff);
       buf -= 16;
     }
   }
-#undef SCRCHK
 
+  /* Draw the screen attributes */
   {
     u8   A;
     u8   E;
@@ -10394,9 +10379,8 @@ righthand_14_bytes:
     u16  BCattrs;
     u8   Cattr;
 
-draw_attributes:
     // Don't update the attributes if the level intro screen is being shown
-    if (1 || state->dont_draw_screen_attrs)
+    if (state->dont_draw_screen_attrs)
       goto exit;
 
     A = state->horizon_table_e34b[1];
@@ -10410,9 +10394,6 @@ draw_attributes:
       assert(state->session.horizon_attribute != 0);
 
       HLattrs = ADDRTOATTRS(state->session.horizon_attribute);
-      printf("d1: %ld %d\n", HLattrs - &state->speccy->screen.attributes[0], DElevel);
-      if (!VALID_ATTRS(HLattrs))
-        return;
 
       // Set sky colour by default
       BCattrs = (attribute_BRIGHT_BLACK_OVER_CYAN << 8) | attribute_BRIGHT_BLACK_OVER_CYAN;
@@ -10420,10 +10401,7 @@ draw_attributes:
       if (DElevel < 0) {
         // Set ground colour
         BCattrs = state->stage->ground_colour;
-        printf("d2: %ld %d\n", HLattrs - &state->speccy->screen.attributes[0], DElevel);
         HLattrs += DElevel;
-        if (!VALID_ATTRS(HLattrs))
-          return;
       }
 
       // Fill 30 bytes - length of attribute line minus the two blank edges
@@ -10431,8 +10409,6 @@ draw_attributes:
       memset(HLattrs, BCattrs & 0xFF, 30);
       if (DElevel >= 0)
         HLattrs += DElevel;
-      if (!VALID_ATTRS(HLattrs))
-        return;
       state->session.horizon_attribute = ATTRSTOADDR(HLattrs);
     }
 
@@ -10458,8 +10434,7 @@ draw_attributes:
   }
 
 exit:
-  /* Redraw the whole screen. */
-  // ASAN_UNPOISON_RANGE(&state->speccy->draw, sizeof(state->speccy->draw));
+  /* Redraw the whole screen (TODO: just the playfield). */
   state->speccy->draw(state->speccy, NULL); // Conv: Added
 }
 
@@ -14438,7 +14413,7 @@ attract_mode_128k_8281:
     }
 
     transition(state);//seems to run all the time?
-    draw_screen(state);
+    update_screen(state);
   }
 }
 

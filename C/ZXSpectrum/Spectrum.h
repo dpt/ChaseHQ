@@ -172,7 +172,7 @@ struct zxspectrum
   /**
    * The game calls this when screen memory has changed.
    *
-   * \param[in] dirty Dirty region.
+   * \param[in] dirty Dirty region. (NULL => whole screen)
    */
   void (*draw)(zxspectrum_t *state, const zxbox_t *dirty);
 
