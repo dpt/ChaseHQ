@@ -148,7 +148,8 @@ def parse_skool(path: str) -> Tuple[List[SkoolRecord], List[str]]:
             # Section header comment.
             # Update pending_section based on priority:
             #  - [Stage N] headers always win
-            #  - Non-trivial comments that classify to a DIFFERENT type overwrite
+            #  - Non-trivial comments that classify to a recognised type
+            #    (not 'unknown') overwrite when type or text changes
             #  - Non-trivial comments set pending if it is currently empty
             if line.startswith('; '):
                 txt = line[2:].strip()
@@ -162,7 +163,8 @@ def parse_skool(path: str) -> Tuple[List[SkoolRecord], List[str]]:
                     else:
                         new_type = classify_section(txt)
                         cur_type = classify_section(pending_section)
-                        if new_type != cur_type:
+                        if (new_type != 'unknown' and
+                                (new_type != cur_type or txt != pending_section)):
                             pending_section = txt
                 continue
 
@@ -607,6 +609,19 @@ def emit_map_section(stage: int, stype: str, sec: Section,
     return lines, goto_map
 
 
+def resolve_bitmap_ref(abs_addr: int, bitmap_names: Dict[int, str],
+                       stage: int) -> str:
+    """Return a C expression (&array[offset]) for a bitmap at abs_addr."""
+    if abs_addr in bitmap_names:
+        return f'&{bitmap_names[abs_addr]}[0]'
+    candidates = [(base, name) for base, name in bitmap_names.items()
+                  if base <= abs_addr]
+    if candidates:
+        base, name = max(candidates, key=lambda x: x[0])
+        return f'&{name}[{abs_addr - base}]'
+    return f'&stage{stage}_bitmap_{abs_addr:04X}[0]'
+
+
 def emit_lod_table(stage: int, sec: Section, bank_offset: int,
                    bitmap_names: Dict[int, str]) -> Tuple[List[str], int]:
     """
@@ -628,6 +643,17 @@ def emit_lod_table(stage: int, sec: Section, bank_offset: int,
             return emit_raw_array(array_name(stage, 'lod_table', sec.start_addr),
                                   data, 7, sec.start_addr), 0
 
+    # Cap at first entry with invalid flags (valid: 0=default, 1=masked,
+    # 2=flipped, 3=both). Bitmap bytes mixed into the section can have
+    # spurious Width(bytes) annotations, so we stop at garbage entries.
+    valid_lods = 0
+    for j in range(n_lods):
+        off = j * 7
+        if off + 1 >= len(data) or data[off + 1] not in (0, 1, 2, 3):
+            break
+        valid_lods += 1
+    n_lods = valid_lods
+
     lod_end = n_lods * 7
     name = array_name(stage, 'lod_table', sec.start_addr)
     lines = [f'// ${sec.start_addr:04X}']
@@ -644,10 +670,10 @@ def emit_lod_table(stage: int, sec: Section, bank_offset: int,
         data_abs = data_raw + bank_offset
         shft_abs = shft_raw + bank_offset
         flag_str = BITMAP_FLAGS.get(flags, f'0x{flags:02X}')
-        d_name = bitmap_names.get(data_abs, f'stage{stage}_bitmap_{data_abs:04X}')
-        s_name = bitmap_names.get(shft_abs, f'stage{stage}_bitmap_{shft_abs:04X}')
+        d_ref = resolve_bitmap_ref(data_abs, bitmap_names, stage)
+        s_ref = resolve_bitmap_ref(shft_abs, bitmap_names, stage)
         lines.append(f'  {{ {width}, {flag_str}, {height},'
-                     f' &{d_name}[0], &{s_name}[0] }},  // [{i}]')
+                     f' {d_ref}, {s_ref} }},  // [{i}]')
     lines.append('};')
 
     # Emit any remaining data (bitmap bytes that follow the LOD entries)
@@ -780,6 +806,32 @@ def convert(skool_path: str, stage: int, obj_names: List[str]) -> None:
             bname = array_name(stage, 'bitmap', sec.start_addr)
             bitmap_names[sec.start_addr] = bname
 
+    # Also pre-register the remainder blobs that lod_table sections will emit,
+    # so that earlier LOD tables can resolve offsets into later-defined blobs.
+    # Collect forward declarations for those blobs too.
+    lod_remainder_fwd: List[str] = []
+    for sec in sections:
+        if sec.stype != 'lod_table':
+            continue
+        data = sec.bytes_flat
+        n = sum(1 for rec in sec.records
+                if 'width (bytes)' in rec.comment.lower())
+        if n == 0:
+            n = len(data) // 7 if len(data) % 7 == 0 else 0
+        valid = 0
+        for j in range(n):
+            off = j * 7
+            if off + 1 >= len(data) or data[off + 1] not in (0, 1, 2, 3):
+                break
+            valid += 1
+        lod_end = valid * 7
+        if lod_end < len(data):
+            rem_addr = sec.start_addr + lod_end
+            rem_name = f'stage{stage}_bitmap_{rem_addr:04X}'
+            rem_size = len(data) - lod_end
+            bitmap_names[rem_addr] = rem_name
+            lod_remainder_fwd.append(f'static const u8 {rem_name}[{rem_size}];')
+
     # ── Header ───────────────────────────────────────────────────────────────
     print(f'/**')
     print(f' * ChaseHQ-Stage{stage}Data.c  (generated by convert_stage.py)')
@@ -896,6 +948,8 @@ def convert(skool_path: str, stage: int, obj_names: List[str]) -> None:
     # ── Emit forward declarations ─────────────────────────────────────────────
     print('/* Forward declarations */')
     for d in fwd_decls:
+        print(d)
+    for d in lod_remainder_fwd:
         print(d)
     print()
     print('/* ----------------------------------------------------------------------- */')
