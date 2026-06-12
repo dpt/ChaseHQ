@@ -33,6 +33,10 @@ set(SOURCE_FILES
         ChaseHQ/ChaseHQ-Stage2Data.h
         ChaseHQ/ChaseHQ-Stage3Data.c
         ChaseHQ/ChaseHQ-Stage3Data.h
+        ChaseHQ/ChaseHQ-Stage4Data.c
+        ChaseHQ/ChaseHQ-Stage4Data.h
+        ChaseHQ/ChaseHQ-Stage5Data.c
+        ChaseHQ/ChaseHQ-Stage5Data.h
         ChaseHQ/ChaseHQ-Stages.c
         ChaseHQ/ChaseHQ-Stages.h)
 
