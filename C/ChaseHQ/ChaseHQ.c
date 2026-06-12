@@ -442,7 +442,7 @@ static void fully_smashed(chqstate_t *state);
 static void transition(chqstate_t *state);
 static void transition_fade_chunk(chqstate_t *state, u8 mask, u8 *backbuf);
 
-static void setup_transition(chqstate_t *state, u8 stride);
+static void setup_transition(chqstate_t *state, s8 stride);
 
 static void fill_attributes(chqstate_t *state);
 
@@ -943,7 +943,7 @@ static void attract_mode_128k(chqstate_t *state);
  */
 static void end_screen(chqstate_t *state)
 {
-  // TODO
+  // TODO: Write this.
 }
 
 /**
@@ -2669,15 +2669,15 @@ static void transition_fade_chunk(chqstate_t *state, u8 mask, u8 *backbuf)
  * \param[in] state  Pointer to game state.
  * \param[in] stride Stride of bitmap data, in bytes. (was A)
  */
-static void setup_transition(chqstate_t *state, u8 stride)
+static void setup_transition(chqstate_t *state, s8 stride)
 {
   int                 frame_stride; /* was BC */
   const transition_t *transitions;  /* was DE */
   const transition_t *transition;   /* was HL */
 
-  assert(stride == 8 || (s8) stride == -8);
+  assert(stride == 8 || stride == -8);
 
-  frame_stride = (s8) stride;
+  frame_stride = stride;
   // Conv: Points at non-relocated table.
   transitions = &transitions_e88e[0];
   if (frame_stride < 0) // reversed
@@ -3267,10 +3267,10 @@ do_draw_span:
 /**
  * $916C: Draw stretchy object left
  *
- * \param[in] state  Pointer to game state.
- * \param[in] Bdepth Parameter.
- * \param[in] arg    Object data pointer.
- * \param[in] IXxpos  X-position table pointer. (was IX)
+ * \param[in] state    Pointer to game state.
+ * \param[in] Bdepth   Parameter.
+ * \param[in] arg      Object data pointer.
+ * \param[in] IXxpos   X-position table pointer. (was IX)
  * \param[in] IYheight Height table pointer. (was IY)
  */
 void draw_stretchy_object_left(chqstate_t *state,
@@ -3290,11 +3290,11 @@ void draw_stretchy_object_left(chqstate_t *state,
 /**
  * $9171: Draw stretchy object right
  *
- * \param[in] state  Pointer to game state.
- * \param[in] Bdepth Parameter.
- * \param[in] arg    Object data pointer.
- * \param[in] IXxpos     IXxpos register value.
- * \param[in] IYheight     IYheight register value.
+ * \param[in] state    Pointer to game state.
+ * \param[in] Bdepth   Parameter.
+ * \param[in] arg      Object data pointer.
+ * \param[in] IXxpos   IXxpos register value.
+ * \param[in] IYheight IYheight register value.
  */
 void draw_stretchy_object_right(chqstate_t *state,
                                 u8          Bdepth,
@@ -3313,12 +3313,12 @@ void draw_stretchy_object_right(chqstate_t *state,
 /**
  * $9174: Draws stretchy objects, such as trees
  *
- * \param[in] state       Pointer to game state.
- * \param[in] Bdepth      Depth scale index. (was B)
- * \param[in] DEstretchy  An array of stretchy_t. (was DE)
- * \param[in] HLcallback  Per-object draw callback. (was HL)
- * \param[in] IXxpos          Height-offset table pointer. (was IXxpos)
- * \param[in] IYheight          Road-table pointer. (was IYheight)
+ * \param[in] state      Pointer to game state.
+ * \param[in] Bdepth     Depth scale index. (was B)
+ * \param[in] DEstretchy An array of stretchy_t. (was DE)
+ * \param[in] HLcallback Per-object draw callback. (was HL)
+ * \param[in] IXxpos     Height-offset table pointer. (was IXxpos)
+ * \param[in] IYheight   Road-table pointer. (was IYheight)
  */
 static void draw_stretchy_object_common(chqstate_t       *state,
                                         u8                Bdepth,
@@ -3474,48 +3474,48 @@ dso_continue:
 /**
  * $924D: Draw tunnel light (left)
  *
- * \param[in] state Pointer to game state.
- * \param[in] B     Parameter.
- * \param[in] DEarg Parameter to pass in DE.
- * \param[in] IXxpos  X-position table pointer. (was IX)
+ * \param[in] state    Pointer to game state.
+ * \param[in] Bdepth   Parameter.
+ * \param[in] DEarg    Parameter to pass in DE.
+ * \param[in] IXxpos   X-position table pointer. (was IX)
  * \param[in] IYheight Height table pointer. (was IY)
  */
 void draw_tunnel_light_left(chqstate_t *state,
-                            u8          B,
+                            u8          Bdepth,
                             const void *DEarg,
                             const u16  *IXxpos,
                             const u8   *IYheight)
 {
-  draw_tunnel_light_common(state, B, DEarg, draw_object_left_entrypt, IXxpos, IYheight);
+  draw_tunnel_light_common(state, Bdepth, DEarg, draw_object_left_entrypt, IXxpos, IYheight);
 }
 
 /**
  * $9252: Draw tunnel light (right)
  *
- * \param[in] state Pointer to game state.
- * \param[in] B     Parameter.
- * \param[in] DEarg Parameter to pass in DE.
- * \param[in] IXxpos    IXxpos register value.
- * \param[in] IYheight    IYheight register value.
+ * \param[in] state    Pointer to game state.
+ * \param[in] Bdepth   Parameter.
+ * \param[in] DEarg    Parameter to pass in DE.
+ * \param[in] IXxpos   IXxpos register value.
+ * \param[in] IYheight IYheight register value.
  */
 void draw_tunnel_light_right(chqstate_t *state,
-                             u8          B,
+                             u8          Bdepth,
                              const void *DEarg,
                              const u16  *IXxpos,
                              const u8   *IYheight)
 {
-  draw_tunnel_light_common(state, B, DEarg, draw_object_right_entrypt, IXxpos, IYheight);
+  draw_tunnel_light_common(state, Bdepth, DEarg, draw_object_right_entrypt, IXxpos, IYheight);
 }
 
 /**
  * $9255: Draw tunnel light common
  *
  * \param[in] state      Pointer to game state.
- * \param[in] B          Parameter.
+ * \param[in] Bdepth     Parameter.
  * \param[in] DEdepthset A depth set.
  * \param[in] HLcallback Object drawing callback.
- * \param[in] IXxpos         IXxpos register value.
- * \param[in] IYheight         IYheight register value.
+ * \param[in] IXxpos     IXxpos register value.
+ * \param[in] IYheight   IYheight register value.
  */
 static void draw_tunnel_light_common(chqstate_t            *state,
                                      u8                     Bdepth,
@@ -3543,30 +3543,30 @@ static void draw_tunnel_light_common(chqstate_t            *state,
 /**
  * $9278: Draw object (left)
  *
- * \param[in] state Pointer to game state.
- * \param[in] B     Parameter.
- * \param[in] DEarg Parameter to pass in DE.
- * \param[in] IXxpos  X-position table pointer. (was IX)
- * \param[in] IYheight Height table pointer. (was IY)
+ * \param[in] state      Pointer to game state.
+ * \param[in] Bdepth     Parameter.
+ * \param[in] DEdepthset Parameter to pass in DE.
+ * \param[in] IXxpos     X-position table pointer. (was IX)
+ * \param[in] IYheight   Height table pointer. (was IY)
  */
 void draw_object_left(chqstate_t *state,
-                      u8          B,
-                      const void *DEarg, // a depthset_t *
+                      u8          Bdepth,
+                      const void *DEdepthset, // a depthset_t *
                       const u16  *IXxpos,
                       const u8   *IYheight)
 {
-  draw_object_left_entrypt(state, 0, B, DEarg, IXxpos, IYheight);
+  draw_object_left_entrypt(state, 0, Bdepth, DEdepthset, IXxpos, IYheight);
 }
 
 /**
  * $9279: Draw object (left) entry point
  *
- * \param[in] state      Pointer to game state.
- * \param[in] A          Parameter.
- * \param[in] B          Parameter.
- * \param[in] DEdepthset A depth set, e.g. turn_sign_left (a depthset_t)
- * \param[in] IXxpos         IXxpos register value.
- * \param[in] IYheight         IYheight register value.
+ * \param[in] state       Pointer to game state.
+ * \param[in] Acol_offset Parameter.
+ * \param[in] Bdepth      Parameter.
+ * \param[in] DEdepthset  A depth set, e.g. turn_sign_left (a depthset_t)
+ * \param[in] IXxpos      IXxpos register value.
+ * \param[in] IYheight    IYheight register value.
  */
 static void draw_object_left_entrypt(chqstate_t       *state,
                                      u8                Acol_offset,
@@ -3598,10 +3598,10 @@ static void draw_object_left_entrypt(chqstate_t       *state,
  * $9293: Draw object left stretchy entrypt
  *
  * \param[in] state    Pointer to game state.
- * \param[in] B        Parameter.
+ * \param[in] Bdepth   Parameter.
  * \param[in] HLbitmap Source bitmap data.
- * \param[in] IXxpos       IXxpos register value.
- * \param[in] IYheight       IYheight register value.
+ * \param[in] IXxpos   IXxpos register value.
+ * \param[in] IYheight IYheight register value.
  */
 static void draw_object_left_stretchy_entrypt(chqstate_t     *state,
                                               u8              Bdepth,
@@ -3625,7 +3625,7 @@ static void draw_object_left_stretchy_entrypt(chqstate_t     *state,
  * \param[in] state        Pointer to game state.
  * \param[in] Awidth_bytes Bitmap byte width.
  * \param[in] HLbitmap     Source bitmap data.
- * \param[in] IYheight Height table pointer. (was IY)
+ * \param[in] IYheight     Height table pointer. (was IY)
  */
 static void draw_object_left_helicopter_entrypt(chqstate_t     *state,
                                                 u8              Awidth_bytes,
@@ -3709,30 +3709,30 @@ static void draw_object_left_helicopter_entrypt(chqstate_t     *state,
 /**
  * $92E1: Draw object (right)
  *
- * \param[in] state Pointer to game state.
- * \param[in] B     Parameter.
- * \param[in] DEarg Parameter to pass in DE.
- * \param[in] IXxpos  X-position table pointer. (was IX)
- * \param[in] IYheight Height table pointer. (was IY)
+ * \param[in] state      Pointer to game state.
+ * \param[in] Bdepth     Parameter.
+ * \param[in] DEdepthset Parameter to pass in DE.
+ * \param[in] IXxpos     X-position table pointer. (was IX)
+ * \param[in] IYheight   Height table pointer. (was IY)
  */
 void draw_object_right(chqstate_t *state,
-                       u8          B,
-                       const void *DEarg,
+                       u8          Bdepth,
+                       const void *DEdepthset,
                        const u16  *IXxpos,
                        const u8   *IYheight)
 {
-  draw_object_right_entrypt(state, 0, B, DEarg, IXxpos, IYheight);
+  draw_object_right_entrypt(state, 0, Bdepth, DEdepthset, IXxpos, IYheight);
 }
 
 /**
  * $92E2: Draw object (right) entry point
  *
- * \param[in] state      Pointer to game state.
- * \param[in] A          Parameter.
- * \param[in] B          Parameter.
- * \param[in] DEdepthset A depth set, e.g. turn_sign_right (a depthset_t)
- * \param[in] IXxpos         IXxpos register value.
- * \param[in] IYheight         IYheight register value.
+ * \param[in] state       Pointer to game state.
+ * \param[in] Acol_offset Parameter.
+ * \param[in] Bdepth      Parameter.
+ * \param[in] DEdepthset  A depth set, e.g. turn_sign_right (a depthset_t)
+ * \param[in] IXxpos      IXxpos register value.
+ * \param[in] IYheight    IYheight register value.
  */
 static void draw_object_right_entrypt(chqstate_t       *state,
                                       u8                Acol_offset,
@@ -3764,10 +3764,10 @@ static void draw_object_right_entrypt(chqstate_t       *state,
  * $92FC: Draw object (right) stretchy entry point
  *
  * \param[in] state    Pointer to game state.
- * \param[in] B        Parameter.
+ * \param[in] Bdepth   Parameter.
  * \param[in] HLbitmap Source bitmap data.
- * \param[in] IXxpos       IXxpos register value.
- * \param[in] IYheight       IYheight register value.
+ * \param[in] IXxpos   IXxpos register value.
+ * \param[in] IYheight IYheight register value.
  */
 static void draw_object_right_stretchy_entrypt(chqstate_t     *state,
                                                u8              Bdepth,
@@ -3775,18 +3775,18 @@ static void draw_object_right_stretchy_entrypt(chqstate_t     *state,
                                                const u16      *IXxpos,
                                                const u8       *IYheight)
 {
-  int A;
+  int Awidth_bytes;
 
-  A = IXxpos[0];
+  Awidth_bytes = IXxpos[0];
   if ((s8) Bdepth < 0) {
-    A += Bdepth;
+    Awidth_bytes += Bdepth;
   } else {
-    if (A < Bdepth)
+    if (Awidth_bytes < Bdepth)
       return;
-    A += Bdepth;
+    Awidth_bytes += Bdepth;
   }
-  if (A)
-    draw_object_right_helicopter_entrypt(state, A, HLbitmap, IYheight);
+  if (Awidth_bytes)
+    draw_object_right_helicopter_entrypt(state, Awidth_bytes, HLbitmap, IYheight);
 }
 
 /**
@@ -3795,7 +3795,7 @@ static void draw_object_right_stretchy_entrypt(chqstate_t     *state,
  * \param[in] state        Pointer to game state.
  * \param[in] Awidth_bytes Bitmap byte width.
  * \param[in] HLbitmap     Source bitmap data.
- * \param[in] IYheight           IYheight register value.
+ * \param[in] IYheight     IYheight register value.
  */
 static void draw_object_right_helicopter_entrypt(chqstate_t     *state,
                                                  u8              Awidth_bytes,
@@ -3813,7 +3813,7 @@ static void draw_object_right_helicopter_entrypt(chqstate_t     *state,
  * \param[in] Awidth_bytes Bitmap byte width.
  * \param[in] Cpadding     Cpadding.
  * \param[in] HLbitmap     Source bitmap data.
- * \param[in] IYheight Height table pointer. (was IY)
+ * \param[in] IYheight     Height table pointer. (was IY)
  */
 static void draw_object_930e_entrypt(chqstate_t     *state,
                                      u8              Awidth_bytes,
@@ -3824,7 +3824,7 @@ static void draw_object_930e_entrypt(chqstate_t     *state,
   int carry = 0;
   int Bheight;
   int Ebitmap_stride;
-  int Z_flipped;
+  int Zflipped;
   int Cwidth_bytes;
   int Adash;
   int Fdash_zero;
@@ -3839,10 +3839,10 @@ static void draw_object_930e_entrypt(chqstate_t     *state,
   if (Ebitmap_stride >= Awidth_bytes)
     Awidth_bytes = Ebitmap_stride;
   // Conv: HLbitmap++ removed, now passed as-is into draw_object_common/_9333
-  Z_flipped = HLbitmap->flags >> 1;
-  if (Z_flipped == 0) {
+  Zflipped = HLbitmap->flags >> 1;
+  if (Zflipped == 0) {
     draw_object_common_9333(state,
-                            Z_flipped,
+                            Zflipped,
                             carry,
                             Awidth_bytes,
                             Bheight,
@@ -3852,7 +3852,7 @@ static void draw_object_930e_entrypt(chqstate_t     *state,
                             IYheight);
   } else {
     Cwidth_bytes = Awidth_bytes;
-    Adash = Awidth_bytes; Fdash_zero = Z_flipped; Fdash_carry = carry; // was EX AF,AF' -- banking A & carry
+    Adash = Awidth_bytes; Fdash_zero = Zflipped; Fdash_carry = carry; // was EX AF,AF' -- banking A & carry
     Cpadding = Ebitmap_stride - Cwidth_bytes;
     draw_object_common_flipped(state,
                                Bheight,
@@ -3877,7 +3877,7 @@ static void draw_object_930e_entrypt(chqstate_t     *state,
  * \param[in] Adash_width_bytes Bitmap byte width.
  * \param[in] Fdash_zero        Fdash zero.
  * \param[in] Fdash_carry       Fdash carry.
- * \param[in] IYheight                IYheight register value.
+ * \param[in] IYheight          IYheight register value.
  */
 static void draw_object_common_flipped(chqstate_t     *state,
                                        u8              Bheight,
@@ -3919,7 +3919,7 @@ static void draw_object_common_flipped(chqstate_t     *state,
  * \param[in] Cpadding       Cpadding.
  * \param[in] Ebitmap_stride Source bitmap data.
  * \param[in] HLbitmap       Source bitmap data.
- * \param[in] IYheight             IYheight register value.
+ * \param[in] IYheight       IYheight register value.
  */
 static void draw_object_common_9333(chqstate_t     *state,
                                     int             zero_flipped,
@@ -4140,11 +4140,11 @@ doc_do_set_callbacks:
 
     // call e.g. plot_sprite_even
     state->doc_plot_fn(state,
-                                IXjump_offset,
-                                HLdash_backbuf_addr,
-                                Bheight,
-                                DEbitmap_stride,
-                                HLbitmap_data);
+                       IXjump_offset,
+                       HLdash_backbuf_addr,
+                       Bheight,
+                       DEbitmap_stride,
+                       HLbitmap_data);
 
     HLbitmap_data = state->doc_bitmap_ptr;
     By = state->doc_rows_2nd;
@@ -5222,10 +5222,12 @@ static void check_time_up(chqstate_t *state)
 
   if (*ptime_bcd == 0) {
     // Ran out of time
-    state->time_up_state      = TIMEUPSTATE_CHECK_TIME_UP;
+    state->time_up_state = TIMEUPSTATE_CHECK_TIME_UP;
     // Stop acceleration/brake/turbo/pause
-    state->session.user_input_mask = USERINPUT_RIGHT | USERINPUT_LEFT | USERINPUT_FIRE |
-                                USERINPUT_QUIT;
+    state->session.user_input_mask = USERINPUT_RIGHT |
+                                     USERINPUT_LEFT |
+                                     USERINPUT_FIRE |
+                                     USERINPUT_QUIT;
     return;
   }
 
@@ -5244,7 +5246,7 @@ update_remaining_time:
 
 check_time_up:
   if (*ptime_bcd != 0) {
-    state->time_up_state      = TIMEUPSTATE_INIT;
+    state->time_up_state = TIMEUPSTATE_INIT;
     state->session.user_input_mask = USERINPUTMASK_ALLOW_ALL;
     goto update_remaining_time;
   }
@@ -5264,7 +5266,7 @@ check_credits:
     check_user_input_quit_key(state); /* exit via */
   } else {
     state->credits--;
-    state->credit_n[7]   = (state->credits + '0') | EOS;
+    state->credit_n[7] = (state->credits + '0') | EOS;
     state->time_up_state = TIMEUPSTATE_CHECK_RESTART;
     state->tick_remaining_seconds_x2 = 21; // a 10 second countdown, doubled, plus 1
     state->tick_remaining_subseconds = 1;  // force an initial decrement
@@ -5274,12 +5276,12 @@ check_credits:
 check_restart:
   if (state->user_input & USERINPUT_FIRE) {
     // Reset mission
-    state->time_up_state      = TIMEUPSTATE_INIT;
-    state->smash_level        = 0;
-    state->smash_counter      = 0;
+    state->time_up_state           = TIMEUPSTATE_INIT;
+    state->smash_level             = 0;
+    state->smash_counter           = 0;
     state->session.user_input_mask = USERINPUTMASK_ALLOW_ALL;
-    state->gear_lockout       = 3;
-    state->transition_control = TRANSITIONCONTROL_FILL_ATTRIBUTES;
+    state->gear_lockout            = 3;
+    state->transition_control      = TRANSITIONCONTROL_FILL_ATTRIBUTES;
     state->session.turbos          = MAXTURBOS;
     state->session.time_bcd        = RESTART_TIME_BCD;
     state->retry_count++;
@@ -5429,9 +5431,9 @@ store:
  * $9D17: Increment score
  *
  * \param[in] state Pointer to game state.
- * \param[in] lo    Lo.
- * \param[in] md    Md.
- * \param[in] hi    Hi.
+ * \param[in] lo    Low digits.
+ * \param[in] md    Middle digits.
+ * \param[in] hi    High digits.
  */
 static void increment_score(chqstate_t *state, u8 lo, u8 md, u8 hi)
 {
@@ -10693,7 +10695,7 @@ rm_height_regular_byte:
   // $BECF
 rm_save_height_byte:
   state->height_byte = Aheightbyte;
-  *HLheightptr = (Aheightbyte & 0xF) - 8;
+  *HLheightptr = (Aheightbyte & 0xF) - 8; // problem: this writes through a ptr that should be const...
 
   // -- LANES ($BEDB) --
   HLlanesptr = state->road_buffer_start + ROADBUF_PTR2IDX(HLheightptr + 32);
@@ -11520,7 +11522,7 @@ c3ee:
   SP_out = (u16 *)(drsc_tbl(state, H_sp) + (u8)(L_sp + 1));
 
   /* $C413-$C420: derive step and direction */
-  if ((s8)displacement < 0) {
+  if (displacement < 0) {
     step = (u8)(-(s8)displacement);
     dir  = 0xFFFF; /* DEC DE */
   } else {
@@ -11658,7 +11660,7 @@ static void dr_read_lanes(chqstate_t *state, u8 *IXplanes, u8 *IYpheight, u8 Bfi
   if (Aleft_offset == 0) {
     // no left side calcs required in this case?
     // callback here is e.g. dr_four_lane_highway
-  assert(DEbackbuf >= 0xF000 || DEbackbuf <= 0x0100);
+    assert(DEbackbuf >= 0xF000 || DEbackbuf <= 0x0100);
     state->dr_callback(state, Bfill_pattern, DEbackbuf, L); // exit via
     return;
   }
@@ -11722,7 +11724,7 @@ static void dr_read_lanes(chqstate_t *state, u8 *IXplanes, u8 *IYpheight, u8 Bfi
     // EXX - UNBANK
 
     Bcopy_of_cdash = Acopy_of_cdash;
-  assert(DEbackbuf >= 0xF000 || DEbackbuf <= 0x0100);
+    assert(DEbackbuf >= 0xF000 || DEbackbuf <= 0x0100);
     dr_c551(state, Bcopy_of_cdash, DEbackbuf, L); // was exit via
     return;
   }
@@ -13370,7 +13372,6 @@ static void entrypt_common(chqstate_t *state, u8 Amode_128k, u8 Bnrelocs)
  */
 void stop_the_tape_48k(chqstate_t *state)
 {
-  // TODO
 }
 
 /**
@@ -14333,6 +14334,9 @@ static void handle_perp_caught_128k(chqstate_t *state)
 static u8 call_bank_3_128k(chqstate_t *state, u16 HLroutine)
 {
   switch (HLroutine) {
+  default:
+    assert(0);
+    break;
   case BANK3_ROUTINE_0:
     break;
   case BANK3_ROUTINE_3:
