@@ -21,7 +21,7 @@
 
 #include "ChaseHQ/ChaseHQ.h"
 
-#include "ChaseHQ/ChaseHQ-CommonData.h"
+#include "ChaseHQ/Data/ChaseHQ-CommonData.h"
 #include "ChaseHQ/ChaseHQ-State.h"
 
 /* ----------------------------------------------------------------------- */

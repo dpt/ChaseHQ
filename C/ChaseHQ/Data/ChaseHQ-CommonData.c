@@ -20,7 +20,7 @@
 #include "ZXSpectrum/Pixels.h"
 
 #include "C99/Types.h"
-#include "ChaseHQ.h"
+#include "../ChaseHQ.h"
 #include "ChaseHQ-CommonData.h"
 
 /* ----------------------------------------------------------------------- */

@@ -15,11 +15,11 @@
  * The recreated version is copyright (c) 2023-2026 David Thomas
  */
 
-#include "ChaseHQ-Stage1Data.h"
-#include "ChaseHQ-Stage2Data.h"
-#include "ChaseHQ-Stage3Data.h"
-#include "ChaseHQ-Stage4Data.h"
-#include "ChaseHQ-Stage5Data.h"
+#include "Data/ChaseHQ-Stage1Data.h"
+#include "Data/ChaseHQ-Stage2Data.h"
+#include "Data/ChaseHQ-Stage3Data.h"
+#include "Data/ChaseHQ-Stage4Data.h"
+#include "Data/ChaseHQ-Stage5Data.h"
 
 #include "ChaseHQ-Stages.h"
 

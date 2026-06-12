@@ -22,7 +22,7 @@
 #include "ZXSpectrum/Pixels.h"
 #include "ZXSpectrum/Spectrum.h"
 
-#include "ChaseHQ.h"
+#include "../ChaseHQ.h"
 #include "ChaseHQ-CommonData.h"
 
 #include "ChaseHQ-Stage1Data.h"

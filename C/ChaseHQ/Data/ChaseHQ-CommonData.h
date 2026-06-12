@@ -19,7 +19,7 @@
 #define CHASEHQ_COMMONDATA_H
 
 #include "C99/Types.h"
-#include "ChaseHQ-State.h"
+#include "../ChaseHQ-State.h"
 
 /* ----------------------------------------------------------------------- */
 

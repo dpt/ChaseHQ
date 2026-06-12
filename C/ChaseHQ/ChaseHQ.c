@@ -105,9 +105,9 @@
 #include "ZXSpectrum/Z80.h"
 
 #include "ChaseHQ.h"
-#include "ChaseHQ-CommonData.h"
-#include "ChaseHQ-SoundSamples.h"
-#include "ChaseHQ-Stage1Data.h"
+#include "Data/ChaseHQ-CommonData.h"
+#include "Data/ChaseHQ-SoundSamples.h"
+#include "Data/ChaseHQ-Stage1Data.h"
 #include "ChaseHQ-Stages.h"
 #include "ChaseHQ-State.h"
 
