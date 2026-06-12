@@ -90,6 +90,21 @@ HAZARD_CMDS = {
 BITMAP_FLAGS = {0: 'BITMAPFLAG_DEFAULT', 1: 'BITMAPFLAG_MASKED',
                 2: 'BITMAPFLAG_FLIPPED', 3: 'BITMAPFLAG_MASKED|BITMAPFLAG_FLIPPED'}
 
+# Fields of stage_t that come from perstage words 3..13.
+PERSTAGE_PTR_FIELDS = [
+    'addrof_hittable_objects',
+    'addrof_right_hand_handlers',
+    'addrof_right_hand_objects',
+    'addrof_right_hand_short_pole_object',
+    'addrof_left_hand_handlers',
+    'addrof_left_hand_objects',
+    'addrof_left_hand_short_pole_object',
+    'addrof_perp_description',
+    'addrof_arrest_messages',
+    'addrof_helicopter_stuff_1',
+    'addrof_helicopter_stuff_2',
+]
+
 # ── Skool parser ─────────────────────────────────────────────────────────────
 
 def parse_hex(s: str) -> int:
@@ -647,6 +662,110 @@ def emit_lod_table(stage: int, sec: Section, bank_offset: int,
     return lines, n_lods
 
 
+# ── Stage struct emitter ──────────────────────────────────────────────────────
+
+def emit_stage_struct(stage: int, sections: List[Section],
+                      abs_to_name: Dict[int, str],
+                      bank_offset: int) -> List[str]:
+    """Emit const stage_t stageN = { ... };"""
+
+    def find_first(stype: str) -> Optional[Section]:
+        return next((s for s in sections if s.stype == stype), None)
+
+    backdrop_sec    = find_first('backdrop')
+    perstage_sec    = find_first('perstage')
+    difficulty_sec  = find_first('difficulty')
+    setupdata_sec   = find_first('setupdata')
+    attractdata_sec = find_first('attractdata')
+    pilot_sec       = find_first('pilot_mugshot')
+
+    lines: List[str] = []
+    addr = backdrop_sec.start_addr if backdrop_sec else 0
+    lines.append(f'// ${addr:04X}')
+    lines.append(f'const stage_t stage{stage} = {{')
+
+    # Backdrop – embedded inline
+    if backdrop_sec:
+        data = backdrop_sec.bytes_flat
+        lines.append(f'  /* ${backdrop_sec.start_addr:04X} backdrop */')
+        lines.append('  {')
+        for i in range(0, len(data), 10):
+            row = data[i:i + 10]
+            lines.append('    ' + ', '.join(f'0x{b:02X}' for b in row) + ',')
+        lines.append('  },')
+    else:
+        lines.append('  { 0 },  /* TODO: backdrop */')
+
+    # perstage: perp face attributes, pilot mugshot, ground colour
+    perstage_addr = perstage_sec.start_addr if perstage_sec else 0
+    lines.append(f'  /* ${perstage_addr:04X} perstage */')
+    lines.append(f'  &stage{stage}_perp_face[FACEBITMAPBYTES],')
+    if pilot_sec:
+        lines.append(f'  &stage{stage}_pilot_mugshot[0],')
+    else:
+        lines.append(f'  NULL,  /* no pilot mugshot on this stage */')
+    if perstage_sec:
+        pws = perstage_sec.words_with_annots
+        gc = pws[2][0] if len(pws) > 2 else 0
+        lines.append(f'  0x{gc:04X},')
+    else:
+        lines.append('  0,  /* TODO: ground_colour */')
+
+    # NULL pointer fields (perstage words 3..13)
+    pws = perstage_sec.words_with_annots if perstage_sec else []
+    for i, field in enumerate(PERSTAGE_PTR_FIELDS):
+        abs_a = pws[i + 3][1] if i + 3 < len(pws) else -1
+        hint = f' (${abs_a:04X})' if abs_a >= 0 else ''
+        lines.append(f'  NULL,  /* TODO: {field}{hint} */')
+
+    lines.append('')
+    lines.append('  NULL,  /* TODO: bitmaps_stones */')
+    lines.append('  NULL,  /* TODO: bitmaps_dust */')
+    lines.append('  NULL,  /* TODO: bitmaps_perp_car */')
+    lines.append('  { NULL, NULL, NULL, NULL },  /* TODO: bitmaps_vehicles */')
+    lines.append('')
+
+    # Difficulty: car_spawn_delay, perp_lane_change_base, perp_approach_base
+    if difficulty_sec:
+        diff = difficulty_sec.bytes_flat
+        lines.append(f'  /* ${difficulty_sec.start_addr:04X} difficulty */')
+        lines.append(f'  {diff[0] if diff else 0},  /* car_spawn_delay */')
+        lines.append(f'  {diff[1] if len(diff) > 1 else 0},  /* perp_lane_change_base */')
+        lines.append(f'  {diff[2] if len(diff) > 2 else 0},  /* perp_approach_base */')
+    else:
+        lines.append('  0,  /* TODO: car_spawn_delay */')
+        lines.append('  0,  /* TODO: perp_lane_change_base */')
+        lines.append('  0,  /* TODO: perp_approach_base */')
+    lines.append('')
+
+    def emit_scenedata(sec: Optional[Section], label: str) -> List[str]:
+        if not sec:
+            return [f'  {{ 0 }},  /* TODO: {label} */']
+        ws = sec.words_with_annots
+        sl = [f'  /* ${sec.start_addr:04X} {label} */', '  {']
+        sl.append(f'    {ws[0][0] if ws else 0},')
+        for idx in range(1, 7):
+            if idx < len(ws):
+                raw_w, abs_a, _ = ws[idx]
+                if abs_a < 0:
+                    abs_a = raw_w + bank_offset
+                nm = abs_to_name.get(abs_a + 1)
+                sl.append(f'    &{nm}[-1],' if nm
+                          else f'    NULL,  /* TODO: ${abs_a + 1:04X} */')
+            else:
+                sl.append(f'    NULL,  /* TODO: missing word {idx} */')
+        sl.append('  },')
+        return sl
+
+    lines.extend(emit_scenedata(setupdata_sec, 'setupdata'))
+    lines.append('')
+    lines.extend(emit_scenedata(attractdata_sec, 'attractdata'))
+    lines.append('')
+    lines.append('  NULL  /* TODO: chatter_strings */')
+    lines.append('};')
+    return lines
+
+
 # ── Main conversion ───────────────────────────────────────────────────────────
 
 def convert(skool_path: str, stage: int, obj_names: List[str]) -> None:
@@ -665,7 +784,7 @@ def convert(skool_path: str, stage: int, obj_names: List[str]) -> None:
     print(f'/**')
     print(f' * ChaseHQ-Stage{stage}Data.c  (generated by convert_stage.py)')
     print(f' *')
-    print(f' * Review all /* TODO */ comments before use.')
+    print(f' * Review all TODO comments before use.')
     print(f' */')
     print()
     print('#include <assert.h>')
@@ -721,11 +840,7 @@ def convert(skool_path: str, stage: int, obj_names: List[str]) -> None:
             fwd_decls.append(f'static const u8 {nm}[];')
 
         elif sec.stype == 'backdrop':
-            data = sec.bytes_flat
-            nm = f'stage{stage}_backdrop'
-            all_lines.extend(emit_raw_array(nm, data, 10, sec.start_addr))
-            all_lines.append('')
-            fwd_decls.append(f'// backdrop declared inline in stage struct')
+            fwd_decls.append('// backdrop declared inline in stage struct')
 
         elif sec.stype in ('perp_mugshot', 'pilot_mugshot'):
             data = sec.bytes_flat
@@ -786,21 +901,9 @@ def convert(skool_path: str, stage: int, obj_names: List[str]) -> None:
     print('/* ----------------------------------------------------------------------- */')
     print()
 
-    # ── Stage struct TODO ─────────────────────────────────────────────────────
-    print(f'/* TODO: fill in const stage_t stage{stage} = {{ ... }}; */')
-    print(f'/* See stage1 in ChaseHQ-Stage1Data.c for the template. */')
-    print(f'/* Fields: backdrop, addrof_perp_mugshot_attributes, addrof_perp_mugshot_bitmap,')
-    print(f'           ground_colour, addrof_hittable_objects,')
-    print(f'           addrof_right_hand_handlers, addrof_right_hand_objects,')
-    print(f'           addrof_right_hand_short_pole_object,')
-    print(f'           addrof_left_hand_handlers, addrof_left_hand_objects,')
-    print(f'           addrof_left_hand_short_pole_object,')
-    print(f'           addrof_perp_description, addrof_arrest_messages,')
-    print(f'           addrof_helicopter_stuff_1, addrof_helicopter_stuff_2,')
-    print(f'           bitmaps_stones, bitmaps_dust, bitmaps_perp_car,')
-    print(f'           bitmaps_vehicles[4],')
-    print(f'           car_spawn_delay, perp_lane_change_base, perp_approach_base,')
-    print(f'           start_data, attract_data, chatter_strings */')
+    # ── Stage struct ──────────────────────────────────────────────────────────
+    for line in emit_stage_struct(stage, sections, abs_to_name, bank_offset):
+        print(line)
     print()
     print('/* ----------------------------------------------------------------------- */')
     print()
