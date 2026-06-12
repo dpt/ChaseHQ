@@ -369,8 +369,8 @@ struct chqstate {
   u8        fast_counter;
   // $A240
   u8       *road_buffer_offset;
-  u8       *road_buffer_start; // additional
-  u8       *road_buffer_end; // additional
+  u8       *road_buffer_start; // Conv: additional
+  u8       *road_buffer_end; // Conv: additional
   // $A242
   u8        curvature_byte;
   // $A243

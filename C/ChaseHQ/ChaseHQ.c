@@ -118,6 +118,9 @@
 /** Return an 8-bit value `v` rotated right by `sh` bits */
 #define ROR_8(v,sh) (((v) >> (sh)) | ((v) << (8 - (sh)))
 
+/** Scale a raw speed counter (multiples of 32) to a persp_y_scale row offset (multiples of 22). */
+#define COUNTER_TO_PERSP_Y_ROW(x) ((x) - ((x) >> 2) - ((x) >> 4))
+
 /** Return `t`+`d` but only alter the low byte. */
 #define LO_ADD(t,d) (((t) & ~0xFF) | (((t) + (d)) & 0xFF))
 
@@ -3124,12 +3127,7 @@ left_hand_stuff:
 }
 
 /**
- * $9052: B -
- *
- * C -.
- * DEstretchy -.
- * IX -.
- * IY -.
+ * $9052: Draws overhead objects
  *
  * \param[in] state      Pointer to game state.
  * \param[in] Bparam     Parameter.
@@ -3173,7 +3171,7 @@ static void draw_overhead(chqstate_t       *state,
 
   // "Scale down" pattern
   counter = state->fast_counter & 0xE0;
-  counter = (counter - (counter >> 2) - (counter >> 4));
+  counter = COUNTER_TO_PERSP_Y_ROW(counter);
   HLvertical = &persp_y_scale[counter / 22][Bparam];
 
   Cparam = IY[0] - IY[0x35];
@@ -3342,7 +3340,7 @@ static void draw_stretchy_object_common(chqstate_t       *state,
   // Scale 0..223 (in steps of 16) to 0..153, reducing A by 31.25%, mapping the
   // incoming value to the 8x22 byte tables. So fast_counter indexes the rows of
   // the table.
-  counter = counter - (counter >> 2) - (counter >> 4);
+  counter = COUNTER_TO_PERSP_Y_ROW(counter);
   SM_91DB_vertical = persp_y_scale[counter / 22][0];
   HLstretchy = DEstretchy; // was EX DE,HL
   DEbitmapoffset = MIN(Bdepth, DEPTHSET_MAX) * 2 - 1; // prob 1-indexed so the -1 is +1
@@ -3516,7 +3514,7 @@ static void draw_tunnel_light_common(chqstate_t            *state,
 
   // "Scale down" pattern
   counter = state->fast_counter & 0xE0;
-  counter = counter - (counter >> 2) - (counter >> 4);
+  counter = COUNTER_TO_PERSP_Y_ROW(counter);
   A = persp_y_scale[counter / 22][B];
   A = (A >> 2) - A;
 
@@ -11831,7 +11829,7 @@ static void dr_c565_unfilled_path(chqstate_t *state, u16 DEbackbuf)
   // EXX - BANK
 
   DEdash_backbuf = state->dr_backbuf_1;
-  Ldash = (DEdash_backbuf & 0xFF) + 31;
+  Ldash = ((DEdash_backbuf & 0xFF) + 31) & 0xFF; // being explicit
   Hdash = DEdash_backbuf >> 8;
   SPoutput = ADDRTOBACKBUF((Hdash << 8) | Ldash);
   HLdash_fill = 0; // fill value
@@ -13160,7 +13158,7 @@ static void build_height_table(chqstate_t *state)
   // mapping the incoming value to the 7x22 byte tables. So fast_counter
   // indexes the rows of the table.
   orig_counter = counter; // Copy to be a multiplier later
-  counter = counter - (counter >> 2) - (counter >> 4);
+  counter = COUNTER_TO_PERSP_Y_ROW(counter);
 
   pvtabbase = pvtab = &persp_y_scale[counter / 22][1];
   C = -multiply(orig_counter, heightbyte);
