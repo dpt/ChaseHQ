@@ -194,6 +194,10 @@
 #define MAXTURBOS                              (3)
 #define RESTART_TIME_BCD                    (0x60) // seconds in BCD
 
+#define SPEED_ATTRACT                        (400) // scripted drive speed: attract mode camera, perp post-arrest
+#define SPEED_PERP_CHASE                     (350) // perp's base chase speed; also hazard speed cap after impact
+#define SPEED_PERP_MIN                        (70) // perp slow-down threshold in handle_perp_caught
+
 #define MARQUEELIGHT_WIDTH                     (5)
 #define MARQUEELIGHT_HEIGHT                    (4)
 #define MARQUEELIGHT_LEFT_ATTR_ADDR            (0x5820)
@@ -1046,7 +1050,7 @@ static void attract_mode_48k(chqstate_t *state)
 
   set_up_stage(state, &state->stage->attract_data);
   blinker = 0;
-  state->speed = 400;
+  state->speed = SPEED_ATTRACT;
   for (;;) {
     keys = keyscan(state);
     CHKDRAW_AM("keyscan");
@@ -2504,7 +2508,7 @@ assign_hero_pos:
 
 perp_too_far_away:
   Aperpdistance = state->hazards[0].distance;
-  HLspeed = 350;
+  HLspeed = SPEED_PERP_CHASE;
   if (Aperpdistance < 15) {
     Biterations = 16 - Aperpdistance;
     do
@@ -2533,7 +2537,7 @@ perp_too_far_away:
 
   HLspeed = state->hazards[0].speed;
   HLspeedpushed = HLspeed; // PUSH HL
-  DEspeed = 70;
+  DEspeed = SPEED_PERP_MIN;
   carry = (HLspeed < DEspeed);
   HLspeed -= DEspeed;
   zero = (HLspeed == 0);
@@ -2572,7 +2576,7 @@ static void fully_smashed(chqstate_t *state)
   state->smash_counter      = SMASHCOUNTER_MAX;
   state->session.user_input_mask = USERINPUT_PAUSE | USERINPUT_QUIT;
   setup_overlay_messages(state, &pull_over_message[0]);
-  hpc_set_perp_speed(state, 400);
+  hpc_set_perp_speed(state, SPEED_ATTRACT);
 }
 
 /**
@@ -7722,7 +7726,7 @@ static void hazard_hit(chqstate_t *state, hazard_t *IXhazard)
 
     speed *= 2;
     if ((speed >> 8) >= 2) // checking speed >= 512?
-      speed = 350;
+      speed = SPEED_PERP_CHASE;
     IXhazard->speed = (IXhazard->speed & 0xFF00) | (speed & 0x00FF); // set bottom byte only (weird)
     if (++IXhazard->hit_timer) // hit counter
       IXhazard->speed = (IXhazard->speed & 0x00FF) | (speed & 0xFF00); // set top byte only
@@ -14373,7 +14377,7 @@ attract_mode_128k_8281:
   set_up_stage(state, &state->stage->attract_data);
 
   state->attract_mode_128k_countdown = 2; // two runs through?
-  state->speed = 400;
+  state->speed = SPEED_ATTRACT;
   for (;;) {
     cpu_driver(state);
 
