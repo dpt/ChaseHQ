@@ -638,7 +638,7 @@ static void play_start_noise(chqstate_t *state);
 static void speed_score(chqstate_t *state);
 
 static void add_bonus(chqstate_t *state, u8 lo, u8 md, u8 hi);
-static int bonus_digit(u8 digit, u8 *zeroflag, char **poutput);
+static int bonus_digit(u8 digit, int *zeroflag, char **poutput);
 
 static void increment_score(chqstate_t *state, u8 lo, u8 md, u8 hi);
 
@@ -1469,6 +1469,77 @@ static void run_pregame_screen(chqstate_t *state)
   // Conv: Dead code removed
 }
 
+static void test(chqstate_t *state)
+{
+  memset(&state->speccy->screen.attributes[256], attribute_BRIGHT_BLACK_OVER_GREEN, 512);
+  memset(&state->backbuffer[0], 0, 4096);
+
+  static int turnitude = 0;
+  static int wobble    = 0;
+  static int pitch     = 0;
+  static int frame     = 0;
+  static int y         = 0;
+  static int yi        = 0;
+  static int boosting  = 0;
+
+  int do_turn  = (rand() % 100) < 20;
+  int turn_rt  = (rand() % 100) < 50;
+  int ch_ptch  = (rand() % 100) < 20;
+  int go_up    = (rand() % 100) < 50;
+  int st_jump  = (rand() % 100) < 1;
+  int st_boost = (rand() % 100) < 10;
+
+  if (do_turn) {
+    if (turn_rt) {
+      if (++turnitude > 2) turnitude = 2;
+    } else {
+      if (--turnitude < -2) turnitude = -2;
+    }
+  }
+
+  if (ch_ptch) {
+    if (go_up) {
+      pitch = (pitch == 0) ? 3 : (pitch == 6) ? 0 : pitch;
+    } else {
+      pitch = (pitch == 0) ? 6 : (pitch == 3) ? 0 : pitch;
+    }
+  }
+
+  if (st_jump && yi == 0) {
+    yi = 5;
+  } else {
+    if (y >= 25)
+      yi = -9;
+  }
+
+  y += yi;
+  if (y < 0) {
+    y = 0;
+    yi = 0;
+  }
+
+  if (st_boost && boosting == 0) {
+    boosting = 20;
+  }
+
+  state->car_y      = 0;
+  state->flip_car   = (turnitude < 0) ? 1 : 0;
+  state->dhc_pitch  = pitch;
+  state->dhc_jump_y = y;
+
+  draw_hero_car(state, abs(turnitude), wobble);
+
+  state->mhc_y_offset = 0;
+
+  if (y == 0 && boosting) {
+    draw_smoke(state, frame % 4, 0); // right hand
+    draw_smoke(state, frame % 4, 1); // left hand
+    boosting--;
+  }
+
+  frame++;
+}
+
 /**
  * $85A8: Run pregame screen loop
  *
@@ -1477,83 +1548,15 @@ static void run_pregame_screen(chqstate_t *state)
  */
 static int run_pregame_screen_loop(chqstate_t *state)
 {
+  state->speccy->stamp(state->speccy);
+
   draw_pregame(state);
   drive_chatter(state);
   reveal_perp_car(state);
   animate_meters(state);
   transition(state);
-
   if (1)
-  {
-    memset(&state->speccy->screen.attributes[256], attribute_BRIGHT_BLACK_OVER_GREEN, 512);
-    memset(&state->backbuffer[0], 0, 4096);
-
-    static int turnitude = 0;
-    static int wobble    = 0;
-    static int pitch     = 0;
-    static int frame     = 0;
-    static int y         = 0;
-    static int yi        = 0;
-    static int boosting  = 0;
-
-    int do_turn  = (rand() % 100) < 20;
-    int turn_rt  = (rand() % 100) < 50;
-    int ch_ptch  = (rand() % 100) < 20;
-    int go_up    = (rand() % 100) < 50;
-    int st_jump  = (rand() % 100) < 1;
-    int st_boost = (rand() % 100) < 10;
-
-    if (do_turn) {
-      if (turn_rt) {
-        if (++turnitude > 2) turnitude = 2;
-      } else {
-        if (--turnitude < -2) turnitude = -2;
-      }
-    }
-
-    if (ch_ptch) {
-      if (go_up) {
-        pitch = (pitch == 0) ? 3 : (pitch == 6) ? 0 : pitch;
-      } else {
-        pitch = (pitch == 0) ? 6 : (pitch == 3) ? 0 : pitch;
-      }
-    }
-
-    if (st_jump && yi == 0) {
-      yi = 5;
-    } else {
-      if (y >= 25)
-        yi = -9;
-    }
-
-    y += yi;
-    if (y < 0) {
-      y = 0;
-      yi = 0;
-    }
-
-    if (st_boost && boosting == 0) {
-      boosting = 20;
-    }
-
-    state->car_y      = 0;
-    state->flip_car   = (turnitude < 0) ? 1 : 0;
-    state->dhc_pitch  = pitch;
-    state->dhc_jump_y = y;
-
-    draw_hero_car(state, abs(turnitude), wobble);
-
-    state->mhc_y_offset = 0;
-
-    if (y == 0 && boosting) {
-      draw_smoke(state, frame % 4, 0); // right hand
-      draw_smoke(state, frame % 4, 1); // left hand
-      boosting--;
-    }
-
-    frame++;
-  }
-
+    test(state);
   draw_screen(state);
   if (state->transition_control == 0) {
     if (state->chatter_state == CHATTERSTATE_IDLE)
@@ -1568,6 +1571,8 @@ static int run_pregame_screen_loop(chqstate_t *state)
       setup_transition(state, TRANSITIONSTRIDE_FORWARD);
     }
   }
+
+  state->speccy->sleep(state->speccy, 250000); // wild guess
 
   return 1; // loop
 }
@@ -5400,7 +5405,7 @@ static void add_bonus(chqstate_t *state, u8 lo, u8 md, u8 hi)
  * \param[in] poutput  Poutput.
  * \return Non-zero on success.
  */
-static int bonus_digit(u8 digit, u8 *zeroflag, char **poutput)
+static int bonus_digit(u8 digit, int *zeroflag, char **poutput)
 {
   digit &= 0x0F;
 
@@ -7902,7 +7907,7 @@ static void dh_draw_one_hazard(chqstate_t *state,
   u8        B;
   int       BCwords;
   int       DE;
-  int       HL;
+  u16       HL;
   int       Biterations;
   u8       *HLp_n_hazards;
   int       An_hazards;
@@ -14435,19 +14440,25 @@ attract_mode_128k_8281:
 
 /* ----------------------------------------------------------------------- */
 
+#define RUN_FULL_GAME 0
+
 CHQ_API void chq_setup(chqstate_t *state)
 {
-  run_pregame_screen_loop(state);
-  return;
-
-
-  if (setjmp(state->host_quit_jmp) == 0)
-    entrypt_128k(state);
-
-  // state->current_stage_number = -1; // force load
-  // state->wanted_stage_number = 0;
-  // load_stage(state);
-  // run_pregame_screen(state);
+  if (RUN_FULL_GAME) {
+    // try to run the full game
+    if (setjmp(state->host_quit_jmp) == 0)
+      entrypt_128k(state);
+  } else {
+    // run the pregame screen only
+    memcpy(ADDRTOSCREEN(SCREEN_START_ADDRESS), marquee_initial,
+           sizeof(marquee_initial));
+    memcpy(ADDRTOSCREEN(SCREEN_ATTRIBUTES_START_ADDRESS), marquee_attrs,
+           sizeof(marquee_attrs));
+    state->current_stage_number = -1; // force load
+    state->wanted_stage_number = 0;
+    load_stage(state);
+    run_pregame_screen(state);
+  }
 }
 
 CHQ_API void chq_stop(chqstate_t *state)
@@ -14457,8 +14468,13 @@ CHQ_API void chq_stop(chqstate_t *state)
 
 CHQ_API void chq_main(chqstate_t *state)
 {
-  assert(0); // shouldn't get called rn
-  main_loop(state);
+  if (RUN_FULL_GAME) {
+    assert(0); // shouldn't get called rn
+    main_loop(state);
+  } else {
+    while (run_pregame_screen_loop(state)) /* Conv: Split out */
+      ;
+  }
 }
 
 /* ----------------------------------------------------------------------- */

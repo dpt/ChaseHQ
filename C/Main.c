@@ -195,6 +195,8 @@ static int game_thread_fn(void *opaque)
   state_t *state = opaque;
 
   chq_setup(state->game);
+  chq_main(state->game);
+  state->quit = 1;
   return 0;
 }
 
@@ -307,7 +309,7 @@ static void my_main_loop(void *opaque)
 
     /* Clear screen */
     // TODO: This ought to be the border colour, but CHQ's is always black.
-    SDL_SetRenderDrawColor(state->renderer, 0x00, 0x00, 0x00, 0xFF);
+    SDL_SetRenderDrawColor(state->renderer, 0x1F, 0x1F, 0x1F, 0xFF);
     SDL_RenderClear(state->renderer);
 
     /* Offset the image */
