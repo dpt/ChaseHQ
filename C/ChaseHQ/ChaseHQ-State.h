@@ -676,13 +676,13 @@ struct chqstate {
   u8        debris_subtable_5[19];
 
   // $E300
-  u8        table_e300[32]; // height table: [0]=$60 sentinel, [1..21]=heights, [22]=$A0 terminal, [23..31]=unused
+  u8        height_table[32]; // [0]=$60 sentinel, [1..21]=perspective heights, [22]=$A0 terminal, [23..31]=unused
   // $E320
-  u8        table_e320[22]; // road curvature/position table (CTL: 22 entries; confirmed by 22-iteration write loop)
+  u8        curvature_table[22]; // per-depth curvature adjustment (22 entries); built by build_curve_table
   // $E336
-  u8        table_e336[21]; // clamped copy of height table
+  u8        clamped_heights[21]; // running-minimum clamp of height_table[1..21]; built by build_height_table
   // $E34B
-  u8        horizon_table_e34b[3]; // horizon level related
+  u8        horizon_attr[3]; // horizon attribute scroll state: [0]=initial delta, [1]=current level, [2]=previous level
   // $E34F
   u8        object_positions[21];
   // Conv: Z80 gap $E364-$E7FF (1180 bytes). build_curve_table_sub_cca8 writes

@@ -116,8 +116,8 @@ static int backbuf_has_content(const chqstate_t *state)
 /* ----------------------------------------------------------------------- */
 
 /*
- * build_height_table must write non-sentinel values into table_e300[1..21]
- * for a road with non-zero height data, and leave table_e300[0] unchanged.
+ * build_height_table must write non-sentinel values into height_table[1..21]
+ * for a road with non-zero height data, and leave height_table[0] unchanged.
  */
 static void test_build_height_table_writes_table(void)
 {
@@ -126,21 +126,21 @@ static void test_build_height_table_writes_table(void)
   int         i;
 
   /* Sentinel must not be overwritten. */
-  uint8_t sentinel = state->table_e300[0];
+  uint8_t sentinel = state->height_table[0];
 
   chq_test_build_height_table(state);
 
-  assert(state->table_e300[0] == sentinel);
+  assert(state->height_table[0] == sentinel);
 
   /* At least some entries should differ from zero. */
   for (i = 1; i <= 21; i++)
-    if (state->table_e300[i] != 0)
+    if (state->height_table[i] != 0)
       changed++;
 
   assert(changed > 0);
 
   chq_destroy(state);
-  printf("PASS  build_height_table writes table_e300\n");
+  printf("PASS  build_height_table writes height_table\n");
 }
 
 /*

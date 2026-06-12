@@ -1875,10 +1875,10 @@ static void set_up_stage(chqstate_t        *state,
   pre_shift_backdrop(state);
 
   // Set backdrop position in horizon table (used to draw attributes)
-  state->horizon_table_e34b[0] = 8;
-  state->horizon_table_e34b[1] =
+  state->horizon_attr[0] = 8;
+  state->horizon_attr[1] =
     0; // initialised strangely, presumed to be zero (needs checking)
-  state->horizon_table_e34b[2] = 0;
+  state->horizon_attr[2] = 0;
 
   // Disable the helicopter and tunnel drawing calls in draw_everything_else
   state->dee_tunnel_1 = 0; // draw tunnel call
@@ -2979,10 +2979,10 @@ static u16 draw_smash_bar_solid_bit(chqstate_t *state, int nrows, u16 backbuf)
  */
 static void draw_everything_else(chqstate_t *state)
 {
-  u8             *HLtable_e300;        /* was HL */
-  u8             *DEtable_e336;        /* was DE */
+  u8             *HLheight_table;        /* was HL */
+  u8             *DEclamped_heights;        /* was DE */
   int             Biterations;         /* was B */
-  u8             *IYtable_e300;        /* was IY */
+  u8             *IYheight_table;        /* was IY */
   u8             *HLroadbuf;           /* was HL */
   u16            *IXtable_ea00;        /* was IX */
   int             Afloating_arrow;     /* was A */
@@ -3010,24 +3010,24 @@ static void draw_everything_else(chqstate_t *state)
   assert(state->dh_xpos_table >= &state->xpos_road_centre_left[0] &&
          state->dh_xpos_table < &state->xpos_road_centre_left[128]);
 
-  HLtable_e300 = &state->table_e300[1]; // table of objects?
-  DEtable_e336 = &state->table_e336[0];
+  HLheight_table = &state->height_table[1]; // table of objects?
+  DEclamped_heights = &state->clamped_heights[0];
   Biterations = 21;
   do {
-    assert(HLtable_e300 >= &state->table_e300[0] && HLtable_e300 < &state->table_e300[22]);
-    assert(DEtable_e336 >= &state->table_e336[0] && DEtable_e336 < &state->table_e336[21]);
-    *HLtable_e300++ += 32;
-    *DEtable_e336++ += 32;
+    assert(HLheight_table >= &state->height_table[0] && HLheight_table < &state->height_table[22]);
+    assert(DEclamped_heights >= &state->clamped_heights[0] && DEclamped_heights < &state->clamped_heights[21]);
+    *HLheight_table++ += 32;
+    *DEclamped_heights++ += 32;
   } while (--Biterations > 0);
-  assert(HLtable_e300 == &state->table_e300[22]);
-  assert(DEtable_e336 == &state->table_e336[21]);
+  assert(HLheight_table == &state->height_table[22]);
+  assert(DEclamped_heights == &state->clamped_heights[21]);
 
-  IYtable_e300 = &state->table_e300[21];
-  assert(IYtable_e300 == &state->table_e300[21]);
+  IYheight_table = &state->height_table[21];
+  assert(IYheight_table == &state->height_table[21]);
   if (state->dee_tunnel_1)
-    draw_tunnel(state, IYtable_e300);
-  IYtable_e300--;
-  assert(IYtable_e300 == &state->table_e300[20]);
+    draw_tunnel(state, IYheight_table);
+  IYheight_table--;
+  assert(IYheight_table == &state->height_table[20]);
 
   HLroadbuf = ROADBUF_FWD2PTR(115); // right side objects
   assert(HLroadbuf >= state->road_buffer_start && HLroadbuf < state->road_buffer_end);
@@ -3038,19 +3038,19 @@ static void draw_everything_else(chqstate_t *state)
   do {
     assert(Biterations >= 1 && Biterations <= 20);
     assert(HLroadbuf >= state->road_buffer_start && HLroadbuf < state->road_buffer_end);
-    assert(IYtable_e300 >= &state->table_e300[0] && IYtable_e300 < &state->table_e300[22]);
+    assert(IYheight_table >= &state->height_table[0] && IYheight_table < &state->height_table[22]);
     assert(IXtable_ea00 >= &state->xpos_road_centre[0] && IXtable_ea00 < &state->xpos_road_centre[128]);
 
     if (state->n_hazards)
-      draw_arrow_fire_smoke(state, Biterations, IYtable_e300);
+      draw_arrow_fire_smoke(state, Biterations, IYheight_table);
 
-    dust_stones_stuff(state, Biterations, IYtable_e300);
+    dust_stones_stuff(state, Biterations, IYheight_table);
 
     if (state->dee_helicopter)
-      draw_helicopter(state, Biterations, IYtable_e300);
+      draw_helicopter(state, Biterations, IYheight_table);
 
     if (state->dee_tunnel_2)
-      draw_tunnel(state, IYtable_e300);
+      draw_tunnel(state, IYheight_table);
 
     Aobj = *HLroadbuf; // fetch right side object from road buffer
     assert(Aobj <= 9); // object indices are 0..9
@@ -3072,9 +3072,9 @@ continue_after_left_hand_done:
     WRAPPING(HLroadbuf, -33, state->road_buffer_start); // retreat one row
     assert(HLroadbuf >= state->road_buffer_start && HLroadbuf < state->road_buffer_end);
 
-    IYtable_e300--;
+    IYheight_table--;
   } while (--Biterations > 0);
-  assert(IYtable_e300 == &state->table_e300[0]);
+  assert(IYheight_table == &state->height_table[0]);
   assert(IXtable_ea00 == &state->xpos_road_centre[128]); // one-past-end after 20*2 advances from [88]
 
   if (state->dee_helicopter)
@@ -3127,7 +3127,7 @@ right_hand_stuff:
   if (((u8 *)IXtable_ea00)[1] == 0) { // Z80: LD A,(IX+1) -- buffer offset/distance (high byte of road pos)
     HLobj = &state->stage->addrof_right_hand_objects[Eobj];
     assert(HLobj->handler != NULL);
-    HLobj->handler(state, Biterations, HLobj->arg, IXtable_ea00, IYtable_e300);
+    HLobj->handler(state, Biterations, HLobj->arg, IXtable_ea00, IYheight_table);
   }
   goto continue_after_right_hand_done;
 
@@ -3139,7 +3139,7 @@ left_hand_stuff:
   if (Aobj != 2 && ((u8 *)IXtable_ea00)[1]) { // Z80: LD A,(IX+1) -- buffer offset/distance
     HLobj = &state->stage->addrof_left_hand_objects[Eobj];
     assert(HLobj->handler != NULL);
-    HLobj->handler(state, Biterations, HLobj->arg, IXtable_ea00, IYtable_e300);
+    HLobj->handler(state, Biterations, HLobj->arg, IXtable_ea00, IYheight_table);
   }
   goto continue_after_left_hand_done;
 }
@@ -7876,17 +7876,17 @@ static u8 check_collision(chqstate_t *state,
  */
 static void draw_all_hazards(chqstate_t *state)
 {
-  const u8 *table_e300; /* was IY */
+  const u8 *height_table; /* was IY */
   hazard_t *hazard;     /* was IX */
   int       iterations; /* was B */
 
   state->n_hazards = 0;
-  table_e300 = &state->table_e300[0];
+  height_table = &state->height_table[0];
   hazard = &state->hazards[0];
   iterations = 6;
   do {
     if (hazard->used == HAZARD_USED)
-      dh_draw_one_hazard(state, hazard, table_e300); // called with regs banked
+      dh_draw_one_hazard(state, hazard, height_table); // called with regs banked
     hazard++;
   } while (--iterations > 0);
 }
@@ -10097,7 +10097,7 @@ lr_calc_single_lane:
 
 lr_forked_road:
   state->fork_countdown = Lcounter;
-  HLunknown = &state->table_e300[Lcounter];
+  HLunknown = &state->height_table[Lcounter];
   Aiterations = 96;
   state->fork_visible = Aiterations; // just a flag AFACIT
   Aiterations = 106 - (Aiterations - *HLunknown);
@@ -10340,26 +10340,47 @@ static void update_screen(chqstate_t *state)
       int res;
       int carry, overflow;
 
-      // Otherwise we've rolled into to the top nibble
-
-      // TODO: This is magic that I cannot yet explain.
+      /* buf has advanced past a 0x1000 boundary (bit 11 just cleared),
+       * meaning another 16 backbuffer rows have been written and it is
+       * time to advance to the next row-group.
+       *
+       * This is a Z80 "SUB H" on the low byte of bufoffset, using H set
+       * to 0xF0 — the high byte of BACKBUFFER_START_ADDRESS.  Each time
+       * the magic fires, A holds successive low bytes of the end-of-group
+       * bufoffset: 0x11, 0x31, 0x51, 0x71, 0x91, 0xB1, 0xD1, 0xF1.
+       *
+       * carry    (unsigned A < H = 0xF0): set for the first seven groups
+       *          (A = 0x11..0xD1); clear at A = 0xF1, meaning all eight
+       *          groups of 16 rows (128 rows total) are done → break.
+       *
+       * overflow (signed 8-bit overflow of A - H): fires when A + 16
+       *          exceeds +127, i.e. the first time A = 0x71.  That is
+       *          exactly the 64-row midpoint of the backbuffer, which
+       *          corresponds to the boundary between the ZX Spectrum
+       *          screen's middle third (rows 64-127, starting at 0x4811)
+       *          and its bottom third (rows 128-191, starting at 0x5011).
+       *
+       * L = (A - H) & 0xFF is the low byte of the next row-group's
+       * backbuffer start address, so ADDRTOBACKBUF(0xF000 | L) resets
+       * buf to the beginning of the next group.
+       */
       H        = 0xF0;
       A        = bufoffset & 0xFF;
       res      = A - H;
-      carry    = (A < H); // treating as unsigned
-      overflow = ((H ^ A) & (res ^ A)) >> 7;
-      L        = res; // truncates
+      carry    = (A < H); // unsigned: set while rows remain
+      overflow = ((H ^ A) & (res ^ A)) >> 7; // Z80 V-flag formula
+      L        = res; // low byte of next group start
 
       if (!carry)
-        break; // bitmap copy complete
+        break; // A >= 0xF0: all 128 rows written
 
-      buf = ADDRTOBACKBUF((H << 8) | L);
+      buf = ADDRTOBACKBUF((H << 8) | L); // reposition to next row-group
 
       if (!overflow) {
         scroff = SCREENTOOFFSET(scr) - 0x07EE;
         scr = OFFSETTOSCREEN(scroff);
       } else {
-        // Start of second half
+        // 64-row midpoint: jump to the ZX screen's bottom third
         scr = ADDRTOSCREEN(0x5011); // (136, 128)
       }
     } else {
@@ -10369,7 +10390,7 @@ static void update_screen(chqstate_t *state)
     }
   }
 
-  /* Draw the screen attributes */
+  /* Set screen attributes */
   {
     u8   A;
     u8   E;
@@ -10383,9 +10404,9 @@ static void update_screen(chqstate_t *state)
     if (state->dont_draw_screen_attrs)
       goto exit;
 
-    A = state->horizon_table_e34b[1];
-    E = state->horizon_table_e34b[2]; // current value?
-    state->horizon_table_e34b[2] = A;
+    A = state->horizon_attr[1];
+    E = state->horizon_attr[2]; // current value?
+    state->horizon_attr[2] = A;
     if (E != 0) { // if moved? some sort of previous/current behaviour here. is table holding deltas?
       E = (A << 2);
       D = (A >= 64) ? 0xFF : 0x00; /* was SBC A,A - must be sign extending */
@@ -10412,7 +10433,7 @@ static void update_screen(chqstate_t *state)
       state->session.horizon_attribute = ATTRSTOADDR(HLattrs);
     }
 
-    /* Draw smash meter attributes */
+    /* Set smash meter attributes */
 
     if (state->sighted_flag == 0 || state->perp_caught_phase >= PERPCAUGHTPHASE_STOPPED)
       goto exit;
@@ -11079,7 +11100,7 @@ static void draw_tunnel(chqstate_t *state, u8 *IYheight)
   u8       *HLbackbuf;
   u8       *SPoutput;
 
-  Adistance = IYheight - &state->table_e300[0];
+  Adistance = IYheight - &state->height_table[0];
   if (Adistance != state->dt_tunnel_distance)
     return;
 
@@ -11167,12 +11188,12 @@ dt_c1c8:
   // EX AF,AF'
   E = state->fast_counter & 0xE0;
   A = A - (E >> 2) - (E >> 4); // map (0,32,64,96,...,224) to (0,22,44,66,...,154)
-  A += (IYheight - &state->table_e300[0]); // was IYl
+  A += (IYheight - &state->height_table[0]); // was IYl
   DE = &persp_y_scale[A / 22][A % 22];
   B = *IYheight - B;
   A = *DE;
   E = A;
-  A = (16 - (IYheight - &state->table_e300[0])) + E; // was IYl
+  A = (16 - (IYheight - &state->height_table[0])) + E; // was IYl
   // EXX
   B = A;
   // EXX
@@ -11366,11 +11387,11 @@ static u8 *drsc_tbl(chqstate_t *state, u8 Htable_page)
  *
  * \param[in] state Pointer to game state.
  * \param[in] IX    Pointer into road buffer lane data.
- * \param[in] IY    Pointer into height table (table_e300).
+ * \param[in] IY    Pointer into height table (height_table).
  */
 static void draw_road_scene_change(chqstate_t *state, u8 *IXlanes, u8 *IYheight)
 {
-  u8   dist;         /* IYl = byte offset of IYheight within table_e300 */
+  u8   dist;         /* IYl = byte offset of IYheight within height_table */
   u8   H;            /* left-hand table hi byte ($E8/$E9/$EA/$EB/$EC) */
   u8   lane_flags;   /* IXlanes[0] */
   u8   L_sp;         /* L = ~((0x60 - IYheight[0]) << 1) -- always odd */
@@ -11397,7 +11418,7 @@ static void draw_road_scene_change(chqstate_t *state, u8 *IXlanes, u8 *IYheight)
 
   /* $C2E7: load H = left-hand table hi byte from IXlanes[0] bits 0-1 */
   H    = (u8)((IXlanes[0] & 3) + 0xE7);
-  dist = (u8)(IYheight - &state->table_e300[0]);
+  dist = (u8)(IYheight - &state->height_table[0]);
   if (dist >= 19)
     goto c43b;
 
@@ -11573,7 +11594,7 @@ static void draw_road(chqstate_t *state)
   // increasing distance. Larger value => Lines remain thick into distance.
   state->dr_edge_thickness = 3;
 
-  IYpheight = &state->table_e300[1]; // height table
+  IYpheight = &state->height_table[1]; // height table
   Chorizon = 96 - *IYpheight; /* 96 = horizon row offset */
   IXplanes = ROADBUF_FWD2PTR(ROADBUF_LANES_OFFSET);
 
@@ -11678,7 +11699,7 @@ static void dr_read_lanes(chqstate_t *state, u8 *IXplanes, u8 *IYpheight, u8 Bfi
     Hdash_in_tunnel_flag = 1;
     if ((Ldash_lanes & (3 << 3)) != 0) {
       // Tunnel transition
-      state->dt_tunnel_distance = IYpheight - &state->table_e300[0];
+      state->dt_tunnel_distance = IYpheight - &state->height_table[0];
       A_tunnel_visible = 1;
       Cdash = 0; // was INC C
       if ((Ldash_lanes & (1 << 5)) != 0) {
@@ -12565,7 +12586,7 @@ static void pre_shift_backdrop(chqstate_t *state)
  *
  * \param[in] state Pointer to game state.
  * \param[in] IX    Lanes buffer pointer.
- * \param[in] IY    Height table pointer (into state->table_e300).
+ * \param[in] IY    Height table pointer (into state->height_table).
  */
 static void forked_road_plotter(chqstate_t *state, u8 *IXlanes, u8 *IYheight)
 {
@@ -12907,7 +12928,7 @@ static void build_curve_table(chqstate_t *state, int forked)
   int        BCdash;
   int        carry;
   int        DEroadpos;          /* was DE */
-  u8        *DEe320;
+  u8        *DEcurvature;
   const u8  *HLe760;
   int        Bdash;
 
@@ -12936,14 +12957,14 @@ static void build_curve_table(chqstate_t *state, int forked)
   assert(A >= 0 && A <= 95);
   IXlanes = &curvature_to_xpos[A]; // table is 16-bit
 
-  DE = &state->table_e320[0];
+  DE = &state->curvature_table[0];
   B = 20; // iterations
   // EXX Bank
   DEdash = state->scenedata.road_pos;
   // PUSH DEdash; // save on stack
   // EXX Unbank
 
-  // Calculate table_e320
+  // Calculate curvature_table
   do {
     curvature_A = *road_buffer_ptr_HL;
     if (forked)
@@ -12997,7 +13018,7 @@ static void build_curve_table(chqstate_t *state, int forked)
 
     // EXX Unbank
 
-    *DE++ = A; // write to table_e320
+    *DE++ = A; // write to curvature_table
   } while (--B);
 
   DEroadpos = state->scenedata.road_pos; /* was POP DE */
@@ -13014,9 +13035,9 @@ static void build_curve_table(chqstate_t *state, int forked)
   A = A - (A >> 2) - (A >> 4); // map (0,32,64,96,...,224) to (0,22,44,66,...,154)
 
   HLe760 = &persp_x_delta_left[A / 22][0];
-  DEe320 = &state->table_e320[0];
+  DEcurvature = &state->curvature_table[0];
   for (Bdash = 22; Bdash > 0; Bdash--)
-    *DEe320++ += *HLe760++;
+    *DEcurvature++ += *HLe760++;
 
   DEroadpos = DEroadpos - 295; // vanishing point config (for left hand)
 
@@ -13034,7 +13055,7 @@ static void build_curve_table_sub_cca8(chqstate_t *state,
                                        u16        *HLtableend,
                                        u16         DEroadpos)
 {
-  u8  *IYe300;
+  u8  *IYheight_table;
   int  Biterations;
   u16 *SPoutput;
   int  A;
@@ -13045,23 +13066,23 @@ static void build_curve_table_sub_cca8(chqstate_t *state,
   int  Atotal;
   u16  HLdash;
 
-  IYe300 = &state->table_e300[0]; /* was 0xE300; // addr of height table */
+  IYheight_table = &state->height_table[0]; /* was 0xE300; // addr of height table */
   Biterations = 21;
   // (restore SP on exit, load SP with HL)
   SPoutput = HLtableend;
   do {
     // EXX Bank
-    A = (Bdash_alwayszero - 2 + IYe300[0] - IYe300[1]) & 0xFF;
-    IYe300++;
+    A = (Bdash_alwayszero - 2 + IYheight_table[0] - IYheight_table[1]) & 0xFF;
+    IYheight_table++;
     if (A > 128) goto bct_endbit_negative; // if A is negative
     A += 2;
-    state->object_positions[IYe300 - 1 - &state->table_e300[0]] =
+    state->object_positions[IYheight_table - 1 - &state->height_table[0]] =
       A; // must write to $E34F+ which is object_positions
     A -= Bdash_alwayszero;
     Bdash = A;
     Cdash = A;
-    Ldash = state->table_e320[IYe300 - 1 -
-                              &state->table_e300[0]]; // IY[$1F]; // $E320+
+    Ldash = state->curvature_table[IYheight_table - 1 -
+                              &state->height_table[0]]; // IY[$1F]; // $E320+
     if ((Ldash & (1 << 7)) != 0) {
       Ldash = -Ldash & 0xFF; // mask here to fix neg?
       Aopcode = 0x1B; // Opcode for DEC DE
@@ -13108,10 +13129,10 @@ bct_endbit_A:
   goto bct_continue;
 
 bct_endbit_negative:
-  state->object_positions[IYe300 - 1 - &state->table_e300[0]] = 1;
+  state->object_positions[IYheight_table - 1 - &state->height_table[0]] = 1;
   if (++A != 0) A++;
   Bdash = A;
-  A = state->table_e320[IYe300 - 1 - &state->table_e300[0]]; // IY[$1F]; // $E320+
+  A = state->curvature_table[IYheight_table - 1 - &state->height_table[0]]; // IY[$1F]; // $E320+
   //Ldash = A;
   //carry = (A & (1<<7) != 0;
   //Hdash = -carry; //sign ext
@@ -13170,7 +13191,7 @@ static void build_height_table(chqstate_t *state)
 
   // This builds the look-up table at $E301. Assuming it's a height table.
   iterations = 21;
-  phtabbase = phtab = &state->table_e300[1];
+  phtabbase = phtab = &state->height_table[1];
   do {
     v = *pvtab * 2;
     result = 0;
@@ -13210,8 +13231,8 @@ static void build_height_table(chqstate_t *state)
   *phtab = 0xA0;
 
   // Copy the table to $E336 while setting negative values to 96[?]
-  pdstbase  = pdst  = &state->table_e336[0]; // destination
-  htabbase2 = htab2 = &state->table_e300[1]; // src
+  pdstbase  = pdst  = &state->clamped_heights[0]; // destination
+  htabbase2 = htab2 = &state->height_table[1]; // src
   iterations2 = 21;
   C = 96; // limit/minimum?
   do {
