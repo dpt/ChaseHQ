@@ -654,12 +654,8 @@ struct chqstate {
   // $C88F (SM) in draw_road
   u8        dr_in_tunnel;
 
-  // $CE0C
-  u8        smoke_1[13];
-  // $CE19
-  u8        smoke_2[13];
-  // $CE26
-  u8        smoke_3[13];
+  // $CE0C–$CE32
+  u8        smokes[3][13]; // three 13-byte smoke animation buffers, indexed 0..2
 
   // $CE33
   u8       *debris_table[12];

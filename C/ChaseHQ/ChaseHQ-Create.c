@@ -44,11 +44,11 @@ static void chq_initialise(chqstate_t *state)
     // $8D85
     { offsetof(chqstate_t, credit_n), "CREDIT \xA0", 8 },
     // $CE0C
-    { offsetof(chqstate_t, smoke_1), &smoke_ce0c_template[0], sizeof(smoke_ce0c_template) },
-    // $CE0C
-    { offsetof(chqstate_t, smoke_2), &smoke_ce19_template[0], sizeof(smoke_ce19_template) },
-    // $CE0C
-    { offsetof(chqstate_t, smoke_3), &smoke_ce26_template[0], sizeof(smoke_ce26_template) },
+    { offsetof(chqstate_t, smokes[0]), &smoke_ce0c_template[0], sizeof(smoke_ce0c_template) },
+    // $CE19
+    { offsetof(chqstate_t, smokes[1]), &smoke_ce19_template[0], sizeof(smoke_ce19_template) },
+    // $CE26
+    { offsetof(chqstate_t, smokes[2]), &smoke_ce26_template[0], sizeof(smoke_ce26_template) },
     // $CE4B
     { offsetof(chqstate_t, debris_subtables[0]), &debris_subtable_1_template[0], sizeof(debris_subtable_1_template) },
     // $CE5E

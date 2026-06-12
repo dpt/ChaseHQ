@@ -8262,11 +8262,11 @@ dh_check_smash_level:
   /* Conv: Converted to switch */
   switch (state->smash_level) {
   case 3:
-    dh_smoke(state, &state->smoke_3[0], IYheight);
+    dh_smoke(state, state->smokes[2], IYheight);
   case 2:
-    dh_smoke(state, &state->smoke_1[0], IYheight);
+    dh_smoke(state, state->smokes[0], IYheight);
   case 1:
-    dh_smoke(state, &state->smoke_2[0], IYheight);
+    dh_smoke(state, state->smokes[1], IYheight);
   case 0:
     goto dh_draw_done_1;
   default:
