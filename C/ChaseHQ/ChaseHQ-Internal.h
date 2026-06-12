@@ -95,14 +95,14 @@
 /* ----------------------------------------------------------------------- */
 
 typedef void obj_handler_t(chqstate_t *state,
-                           u8          Bheight_perhaps,
+                           u8          Biterations,
                            const void *arg,
-                           const u16  *IX,
-                           const u8   *IY);
+                           const u16  *IXxpos,
+                           const u8   *IYheight);
 
 typedef struct hazard hazard_t;
 
-typedef void (hazard_handler_t)(chqstate_t *state, hazard_t *IX);
+typedef void (hazard_handler_t)(chqstate_t *state, hazard_t *IXhazard);
 
 typedef u8 chatterpriority_t;
 
