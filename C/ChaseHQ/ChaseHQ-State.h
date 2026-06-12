@@ -663,17 +663,8 @@ struct chqstate {
 
   // $CE33
   u8       *debris_table[12];
-  // TODO Make these an array?
-  // $CE4B
-  u8        debris_subtable_1[19];
-  // $CE5E
-  u8        debris_subtable_2[19];
-  // $CE71
-  u8        debris_subtable_3[19];
-  // $CE84
-  u8        debris_subtable_4[19];
-  // $CE97
-  u8        debris_subtable_5[19];
+  // $CE4B–$CEAA
+  u8        debris_subtables[5][19]; // five 19-byte subtables, indexed 0..4
 
   // $E300
   u8        height_table[32]; // [0]=$60 sentinel, [1..21]=perspective heights, [22]=$A0 terminal, [23..31]=unused

@@ -50,15 +50,15 @@ static void chq_initialise(chqstate_t *state)
     // $CE0C
     { offsetof(chqstate_t, smoke_3), &smoke_ce26_template[0], sizeof(smoke_ce26_template) },
     // $CE4B
-    { offsetof(chqstate_t, debris_subtable_1), &debris_subtable_1_template[0], sizeof(debris_subtable_1_template) },
+    { offsetof(chqstate_t, debris_subtables[0]), &debris_subtable_1_template[0], sizeof(debris_subtable_1_template) },
     // $CE5E
-    { offsetof(chqstate_t, debris_subtable_2), &debris_subtable_2_template[0], sizeof(debris_subtable_2_template) },
+    { offsetof(chqstate_t, debris_subtables[1]), &debris_subtable_2_template[0], sizeof(debris_subtable_2_template) },
     // $CE71
-    { offsetof(chqstate_t, debris_subtable_3), &debris_subtable_3_template[0], sizeof(debris_subtable_3_template) },
+    { offsetof(chqstate_t, debris_subtables[2]), &debris_subtable_3_template[0], sizeof(debris_subtable_3_template) },
     // $CE84
-    { offsetof(chqstate_t, debris_subtable_4), &debris_subtable_4_template[0], sizeof(debris_subtable_4_template) },
+    { offsetof(chqstate_t, debris_subtables[3]), &debris_subtable_4_template[0], sizeof(debris_subtable_4_template) },
     // $CE97
-    { offsetof(chqstate_t, debris_subtable_5), &debris_subtable_5_template[0], sizeof(debris_subtable_5_template) },
+    { offsetof(chqstate_t, debris_subtables[4]), &debris_subtable_5_template[0], sizeof(debris_subtable_5_template) },
   };
 
   int i;
@@ -94,18 +94,18 @@ static void chq_initialise(chqstate_t *state)
   state->road_buffer_end    = &state->road_buffer[256];
 
   // $CE33
-  state->debris_table[0]  = &state->debris_subtable_1[0];
-  state->debris_table[1]  = &state->debris_subtable_2[0];
-  state->debris_table[2]  = &state->debris_subtable_3[0];
-  state->debris_table[3]  = &state->debris_subtable_5[0];
-  state->debris_table[4]  = &state->debris_subtable_3[0];
-  state->debris_table[5]  = &state->debris_subtable_4[0];
-  state->debris_table[6]  = &state->debris_subtable_1[0];
-  state->debris_table[7]  = &state->debris_subtable_2[0];
-  state->debris_table[8]  = &state->debris_subtable_5[0];
-  state->debris_table[9]  = &state->debris_subtable_3[0];
-  state->debris_table[10] = &state->debris_subtable_4[0];
-  state->debris_table[11] = &state->debris_subtable_1[0];
+  state->debris_table[0]  = state->debris_subtables[0];
+  state->debris_table[1]  = state->debris_subtables[1];
+  state->debris_table[2]  = state->debris_subtables[2];
+  state->debris_table[3]  = state->debris_subtables[4];
+  state->debris_table[4]  = state->debris_subtables[2];
+  state->debris_table[5]  = state->debris_subtables[3];
+  state->debris_table[6]  = state->debris_subtables[0];
+  state->debris_table[7]  = state->debris_subtables[1];
+  state->debris_table[8]  = state->debris_subtables[4];
+  state->debris_table[9]  = state->debris_subtables[2];
+  state->debris_table[10] = state->debris_subtables[3];
+  state->debris_table[11] = state->debris_subtables[0];
 }
 
 /* ----------------------------------------------------------------------- */
