@@ -116,7 +116,10 @@
 /** Return an 8-bit value `v` rotated right by `sh` bits */
 #define ROR_8(v,sh) (((v) >> (sh)) | ((v) << (8 - (sh)))
 
-/** Scale a raw speed counter (multiples of 32) to a persp_y_scale row offset (multiples of 22). */
+/** Number of columns in each perspective scaling table (persp_y_scale, persp_x_scale_right, persp_x_delta_left). */
+#define PERSP_TABLE_COLS (22)
+
+/** Scale a raw speed counter (multiples of 32) to a persp_y_scale row offset (multiples of PERSP_TABLE_COLS). */
 #define COUNTER_TO_PERSP_Y_ROW(x) ((x) - ((x) >> 2) - ((x) >> 4))
 
 /** Return `t`+`d` but only alter the low byte. */
@@ -193,6 +196,8 @@
 
 #define MARQUEELIGHT_WIDTH                     (5)
 #define MARQUEELIGHT_HEIGHT                    (4)
+#define MARQUEELIGHT_LEFT_ATTR_ADDR            (0x5820)
+#define MARQUEELIGHT_RIGHT_ATTR_ADDR           (0x583B)
 
 #define MINSTAGE                               (1)
 #define MAXSTAGE                               (5)
@@ -1892,8 +1897,8 @@ static void set_up_stage(chqstate_t        *state,
 
   clear_playfield_set_attrs(state);
   // Clear the lights' BRIGHT bit
-  set_up_stage_reset_lights(ADDRTOATTRS(0x5820));
-  set_up_stage_reset_lights(ADDRTOATTRS(0x583B));
+  set_up_stage_reset_lights(ADDRTOATTRS(MARQUEELIGHT_LEFT_ATTR_ADDR));
+  set_up_stage_reset_lights(ADDRTOATTRS(MARQUEELIGHT_RIGHT_ATTR_ADDR));
 
   silence_audio_hook(state);
   update_scoreboard(state); /* exit via */
@@ -1998,7 +2003,7 @@ static void check_user_input_quit_key(chqstate_t *state)
  */
 static void clear_playfield_attrs(chqstate_t *state)
 {
-  memset(ADDRTOATTRS(0x5900),
+  memset(ADDRTOATTRS(SCREEN_PLAYFIELD_ATTRS_ADDR),
          attribute_BLACK_OVER_BLACK,
          SCREEN_ATTRIBUTES_ROWBYTES * PLAYFIELD_HEIGHT / 8);
 }
@@ -2011,7 +2016,7 @@ static void clear_playfield_attrs(chqstate_t *state)
 static void clear_playfield(chqstate_t *state)
 {
   clear_playfield_attrs(state);
-  memset(ADDRTOSCREEN(0x4800),
+  memset(ADDRTOSCREEN(SCREEN_PLAYFIELD_BITMAP_ADDR),
          ________,
          SCREEN_BITMAP_ROWBYTES * PLAYFIELD_HEIGHT);
 }
@@ -5468,8 +5473,8 @@ static void calc_overtake_bonus(chqstate_t *state)
  */
 static void update_scoreboard(chqstate_t *state)
 {
-  toggle_light_brightness(state, ADDRTOATTRS(0x5820));
-  toggle_light_brightness(state, ADDRTOATTRS(0x583B));
+  toggle_light_brightness(state, ADDRTOATTRS(MARQUEELIGHT_LEFT_ATTR_ADDR));
+  toggle_light_brightness(state, ADDRTOATTRS(MARQUEELIGHT_RIGHT_ATTR_ADDR));
   plot_turbos_and_digits(state);
 }
 
@@ -8954,7 +8959,7 @@ static void start_chase(chqstate_t *state)
   state->session.time_bcd        = 0x60;
 
   // Toggle the left light's brightness
-  toggle_light_brightness(state, ADDRTOATTRS(0x5820));
+  toggle_light_brightness(state, ADDRTOATTRS(MARQUEELIGHT_LEFT_ATTR_ADDR));
 
   // Show the "SIGHTING OF TARGET VEHICLE" message
   setup_overlay_messages(state, &sighting_message[0]);
@@ -10451,11 +10456,11 @@ static void clear_playfield_set_attrs(chqstate_t *state)
   clear_playfield(state);
 
   // Clear the playfield pixels to $FF (bug: duplicates work just done)
-  memset(ADDRTOSCREEN(0x4800), 0xFF, PLAYFIELD_HEIGHT * SCREEN_BITMAP_ROWBYTES);
+  memset(ADDRTOSCREEN(SCREEN_PLAYFIELD_BITMAP_ADDR), 0xFF, PLAYFIELD_HEIGHT * SCREEN_BITMAP_ROWBYTES);
 
   // Clear the playfield attributes to $28 (black over cyan) - first two
   // rows only
-  memset(ADDRTOATTRS(0x5900), attribute_BLACK_OVER_CYAN,
+  memset(ADDRTOATTRS(SCREEN_PLAYFIELD_ATTRS_ADDR), attribute_BLACK_OVER_CYAN,
          2 * SCREEN_ATTRIBUTES_ROWBYTES);
 
   // Clear the next three rows to $68 (bright, black over cyan)
@@ -10468,7 +10473,7 @@ static void clear_playfield_set_attrs(chqstate_t *state)
          11 * SCREEN_ATTRIBUTES_ROWBYTES);
 
   // Clear the edges of the playfield to black on black
-  screen = ADDRTOATTRS(0x5900);
+  screen = ADDRTOATTRS(SCREEN_PLAYFIELD_ATTRS_ADDR);
   stride = SCREEN_BITMAP_ROWBYTES - 1;
   iterations = 16;
   do {
@@ -13530,8 +13535,8 @@ mdc_have_glyph:
  */
 static void clear_screen(chqstate_t *state)
 {
-  memset(ADDRTOATTRS(0x5900), 0, 0x200);
-  memset(ADDRTOSCREEN(0x4800), 0, 0x1000);
+  memset(ADDRTOATTRS(SCREEN_PLAYFIELD_ATTRS_ADDR), 0, 0x200);
+  memset(ADDRTOSCREEN(SCREEN_PLAYFIELD_BITMAP_ADDR), 0, 0x1000);
 }
 
 /**

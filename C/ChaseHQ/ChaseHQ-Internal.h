@@ -56,6 +56,8 @@
 
 #define MARQUEE_HEIGHT                     (8 * 8) // rows
 #define PLAYFIELD_HEIGHT                  (16 * 8) // rows
+#define SCREEN_PLAYFIELD_BITMAP_ADDR      (0x4800) // first playfield scan line (char row 8)
+#define SCREEN_PLAYFIELD_ATTRS_ADDR       (0x5900) // first playfield attribute (char row 8)
 
 #define DRAWCHARSTYLE_GENERIC                  (1)
 #define DRAWCHARSTYLE_SINGLE                   (2)
