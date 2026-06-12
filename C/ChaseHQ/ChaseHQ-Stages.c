@@ -16,13 +16,17 @@
  */
 
 #include "ChaseHQ-Stage1Data.h"
+#include "ChaseHQ-Stage2Data.h"
+#include "ChaseHQ-Stage3Data.h"
+#include "ChaseHQ-Stage4Data.h"
+#include "ChaseHQ-Stage5Data.h"
 
 #include "ChaseHQ-Stages.h"
 
 const stage_t *stages[MAX_STAGES] = {
   &stage1,
-  &stage1,
-  &stage1,
-  &stage1,
-  &stage1
+  &stage2,
+  &stage3,
+  &stage4,
+  &stage5
 };
