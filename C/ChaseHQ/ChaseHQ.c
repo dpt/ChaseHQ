@@ -197,6 +197,7 @@
 #define SPEED_ATTRACT                        (400) // scripted drive speed: attract mode camera, perp post-arrest
 #define SPEED_PERP_CHASE                     (350) // perp's base chase speed; also hazard speed cap after impact
 #define SPEED_PERP_MIN                        (70) // perp slow-down threshold in handle_perp_caught
+#define SPEED_GEAR_CHANGE                    (150) // gear-change threshold: low gear below, high gear at or above
 
 #define MARQUEELIGHT_WIDTH                     (5)
 #define MARQUEELIGHT_HEIGHT                    (4)
@@ -1385,8 +1386,6 @@ static void cpu_driver(chqstate_t *state)
   if (d != draw_saved) { fprintf(stderr, "DRAW CORRUPT after %s: %p\n", tag, d); abort(); } \
 } while(0)
 
-  const int MinSpeed = 150;
-
   int roadpos; /* was HL */
   int input;   /* was A */
 
@@ -1403,7 +1402,7 @@ static void cpu_driver(chqstate_t *state)
       input = USERINPUT_UP;
   }
 
-  if (state->gear != (state->speed < MinSpeed))
+  if (state->gear != (state->speed < SPEED_GEAR_CHANGE))
     input |= USERINPUT_FIRE;
 
   state->user_input = input;
@@ -2528,9 +2527,9 @@ perp_too_far_away:
       Cinput |= USERINPUT_DOWN;
   }
   HLspeed = HLspeedpushed; // POP HL
-  carry = (HLspeed > 150);
-  HLspeed -= 150;
-  A = state->gear - carry; // set low speed if speed<150
+  carry = (HLspeed > SPEED_GEAR_CHANGE);
+  HLspeed -= SPEED_GEAR_CHANGE;
+  A = state->gear - carry; // set low speed if speed<SPEED_GEAR_CHANGE
   if (A == 0)
     Cinput |= USERINPUT_FIRE; // change gear
   state->user_input = Cinput;
@@ -8393,6 +8392,16 @@ void no_op(chqstate_t *state, hazard_t *hazard)
  */
 static void move_hero_car(chqstate_t *state)
 {
+  // Gear-speed thresholds
+  const int SpeedIdleChatter  = 120; // trigger "get moving" chatter below this speed
+  const int SpeedOffRoad1     = 110; // max speed with one wheel off-road
+  const int SpeedOffRoad2     = 120; // max speed with both wheels off-road
+  const int SpeedHighGearMin  = 220; // high gear uses two different max speeds above/below this
+  const int SpeedLowGear      = 230; // low gear max without boost; high gear max below SpeedHighGearMin
+  const int SpeedBoosted      = 470; // max speed with boost active (low gear, or high gear < SpeedHighGearMin)
+  const int SpeedHighGear     = 360; // high gear max without boost
+  const int SpeedHighGearBoosted = 695; // high gear max with boost
+
   // TODO Sort these decls by use
   int        y_offset;             /* was A */
   const u8  *jump_data;            /* was HL */
@@ -8485,7 +8494,7 @@ static void move_hero_car(chqstate_t *state)
   gear = *pgear;
   // EX AF,AF
   speed = state->speed;
-  if (speed < 120 &&
+  if (speed < SpeedIdleChatter &&
       state->perp_caught_phase == 0 &&
       --state->session.idle_timer == 0) {
     state->session.idle_timer = 100;
@@ -8495,7 +8504,7 @@ static void move_hero_car(chqstate_t *state)
   off_road = state->off_road;
   if (off_road) {
     // Handle off-road (Aoff_road can be 1 or 2 here)
-    BCmax_speed = (off_road == 1) ? 110 : 120;
+    BCmax_speed = (off_road == 1) ? SpeedOffRoad1 : SpeedOffRoad2;
     if (speed >= BCmax_speed) {
       // Conv: Removed RR/RLA sequence.
       BCspeed_diff = -(((speed >> 5) & 0x0F) | 1);
@@ -8506,10 +8515,10 @@ static void move_hero_car(chqstate_t *state)
   boost = state->boost;
   // EX AF,AF'
   if (!gear) {
-    BCmax_speed = 470;
+    BCmax_speed = SpeedBoosted;
     // EX AF,AF' (unbank boost+flags)
     if (!boost) // No turbo boost
-      BCmax_speed = 230;
+      BCmax_speed = SpeedLowGear;
 
 mhc_low_gear_slowing:
     if (speed < BCmax_speed)
@@ -8517,16 +8526,16 @@ mhc_low_gear_slowing:
     else
       BCspeed_diff = -(((speed >> 4) & 0x1F) | 1);
   } else {
-    if (speed < 220) { // mhc_high_gear_slowing
-      BCmax_speed = 470;
+    if (speed < SpeedHighGearMin) { // mhc_high_gear_slowing
+      BCmax_speed = SpeedBoosted;
       // EX AF,AF' (unbank boost+flags)
       if (!boost)
         BCspeed_diff = ((speed >> 4) | 1) & 0x1F;
     } else {
-      BCmax_speed = 695;
+      BCmax_speed = SpeedHighGearBoosted;
       // EX AF,AF' (unbank boost+flags)
       if (!boost)
-        BCmax_speed = 360;
+        BCmax_speed = SpeedHighGear;
     }
     goto mhc_low_gear_slowing; // jumps backwards!
   }
