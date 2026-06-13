@@ -2627,13 +2627,8 @@ assign_hero_pos:
 perp_too_far_away:
   Aperpdistance = state->hazards[0].distance;
   HLspeed = SPEED_PERP_CHASE;
-  if (Aperpdistance < 15) {
-    // multiply-reduce loop
-    Biterations = 16 - Aperpdistance;
-    do
-      HLspeed -= 20;
-    while (--Biterations > 0);
-  }
+  if (Aperpdistance < 15)
+    HLspeed -= 20 * (16 - Aperpdistance);
   DEspeed = HLspeed; // perp's adjusted speed
   HLspeed = state->speed; // our speed
   HLspeedpushed = HLspeed; // PUSH HL
@@ -5704,9 +5699,7 @@ static void plot_turbos_and_digits(chqstate_t *state)
     if (Aframe == 0)
       goto ptas_turbo_setup;
 
-    // Calculate the frame address
-    B = Aframe;
-    do { HLbitmap += 56; } while (--B > 0);
+    HLbitmap += 56 * Aframe;
 
 ptas_turbo_setup:
     SM_9e45 = (const u16 *) HLbitmap; // local
