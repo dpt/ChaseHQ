@@ -262,10 +262,9 @@
 #define EFFECT_BIP                             (8)
 #define EFFECT_BOW                             (9)
 
-// TODO: These state names need clarification
 #define TIMEUPSTATE_INIT                       (0)
 #define TIMEUPSTATE_CHECK_TIME_UP              (1)
-#define TIMEUPSTATE_CAR_STOPPED                (2)
+#define TIMEUPSTATE_CHECK_CREDITS              (2)
 #define TIMEUPSTATE_CHECK_RESTART              (3)
 #define TIMEUPSTATE_WAITING                    (4)
 
@@ -5266,7 +5265,7 @@ static void check_time_up(chqstate_t *state)
   switch (time_up_state) {
   case TIMEUPSTATE_INIT:          break;
   case TIMEUPSTATE_CHECK_TIME_UP: goto check_time_up;
-  case TIMEUPSTATE_CAR_STOPPED:   goto check_credits;
+  case TIMEUPSTATE_CHECK_CREDITS: goto check_credits;
   case TIMEUPSTATE_CHECK_RESTART: goto check_restart;
   case TIMEUPSTATE_WAITING:       return;
   default: assert(0);
@@ -5309,7 +5308,7 @@ check_time_up:
   if (state->speed > 0)
     return;
 
-  state->time_up_state = TIMEUPSTATE_CAR_STOPPED;
+  state->time_up_state = TIMEUPSTATE_CHECK_CREDITS;
   play_speech_hook(state, 4);
 
 check_credits:
