@@ -192,7 +192,6 @@ static void test_draw_road_writes_backbuffer(void)
   chq_test_build_height_table(state);
   chq_test_layout_road(state);
 
-  /* Poison flags to ensure draw_road writes them. */
   state->on_dirt_track     = 0xFF;
   state->dt_tunnel_visible = 0xFF;
   state->dr_in_tunnel      = 0xFF;

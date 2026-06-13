@@ -37,7 +37,7 @@
 #define GAMEWIDTH     256
 #define GAMEHEIGHT    192
 #define BORDER        32
-#define GAMESCALE     4
+#define GAMESCALE     2
 
 #define SCALEDWIDTH   (GAMEWIDTH  * GAMESCALE)
 #define SCALEDHEIGHT  (GAMEHEIGHT * GAMESCALE)
@@ -60,6 +60,7 @@ typedef struct
 
   int           quit; // bool
   int           paused; // bool
+  // int           menu; // bool
 
   struct timeval stamps[MAXSTAMPS];
   int            nstamps;
@@ -67,7 +68,6 @@ typedef struct
   SDL_Renderer *renderer;
   SDL_Texture  *texture;
   SDL_Thread   *game_thread;
-  // int           menu; // bool
 
   int           sleep_us; // us to sleep for on the next loop
 }
@@ -285,17 +285,19 @@ static void my_main_loop(void *opaque)
     if (state->quit)
       return;
 
+    // This was the TGE loop setup:
+    //
     // if (state->menu)
     // {
-    //   if (chq_menu(state->game) > 0)
+    //   if (run_menu(state->game) > 0)
     //   {
-    //     chq_setup2(state->game);
+    //     ruin_setup2(state->game);
     //     state->menu = 0;
     //   }
     // }
     // else
     // {
-    //   chq_main(state->game);
+    //   run_main(state->game);
     // }
 
     /* Update the texture from the game's converted screen buffer. */

@@ -15,72 +15,72 @@
  * The recreated version is copyright (c) 2023-2026 David Thomas
  */
 
-// Important Note
-//
-// While this code _looks_ plausible and compiles in its current state know
-// that it's all sorts of broken!
-//
+/* Important Note
+ *
+ * While this code _looks_ plausible and compiles in its current state know
+ * that it's all sorts of broken!
+ */
 
-// Notes
-//
-// Like with my conversion of The Great Escape to C we model the game as if
-// it's still running on a ZX Spectrum, including a Spectrum screen memory
-// layout and IO world. This avoids a full rewrite of the original code and
-// means that we leave some of the Z80-specific micro-optimisations in place.
-// This allows the code to remain a useful basis for comparison and lowers
-// the risk of translation errors. Although it's very tempting to rewrite all
-// the code to be fully idiomatic C the greater the difference from the
-// original disassembly the harder it gets to refer back to it and spot our
-// mistakes. The goal after all is to use this C conversion to expose
-// problem points and feed those back into the disassembly's description.
-//
-// Ideally the ordering of the code will be preserved such that the original
-// game code and this reimplementation have broadly the same structure.
-// Some code will unavoidably need to be changed however, such as the stack
-// trick where PUSH and POP are used to accelerate loads and stores.
-//
-// My original intention was to retain the level data (called "stage" data in
-// this conversion to match the original game) whole in the converted game,
-// including any embedded addresses. I wanted to 'page in' levels by copying
-// the original game data into the game's state structure. This would also
-// mean that any new or adjusted levels produced by means of this conversion
-// would be compatible with the original game. However, it turned out that
-// allowing binary compatibility would have meant duplicating some core
-// functions where the data structures exist in both the engine part and the
-// stage data. So I gave up on that. Having the stage data in C does make it
-// more tweakable, which is good. Long term it would be nice if the stages -
-// at least the map portion - were expressible with a concise text format.
-//
-// Pointers present a problem. The original game data uses 16-bit pointers
-// sometimes embedded in byte data but the converted code could be using 32-
-// or 64-bit ones. Instead of embedding huge pointers we'll either use byte
-// tokens or leave the original values in place and indrect them through new
-// tables or switch lookups. For example see the "chatter" code: the code
-// that prints the messages on-screen as the game runs. It previously
-// embedded addresses inline in chatter structures. These are replaced with
-// single bytes that reference a new tables of pointers.
-//
-// Like with TGE a game state structure is added to encapsulate the complete
-// game state. It is passed to every state-accessing function in the game.
-// Globals are banned.
-//
-// Screen handling in the original game assumes the alignment of the screen
-// and the back buffer. That can't be guaranteed in a portable conversion. We
-// can address this by converting pointers to offsets when we need to perform
-// address arithmetic.
-//
-// (SM) means self modified. There is a _lot_ of self-modified code in the
-// game.
-//
-// Remember that much of this code is in progress and untested - or just
-// broken.
-//
+/* Notes
+ *
+ * Like with my conversion of The Great Escape to C we model the game as if
+ * it's still running on a ZX Spectrum, including a Spectrum screen memory
+ * layout and IO world. This avoids a full rewrite of the original code and
+ * means that we leave some of the Z80-specific micro-optimisations in place.
+ * This allows the code to remain a useful basis for comparison and lowers
+ * the risk of translation errors. Although it's very tempting to rewrite all
+ * the code to be fully idiomatic C the greater the difference from the
+ * original disassembly the harder it gets to refer back to it and spot our
+ * mistakes. The goal after all is to use this C conversion to expose
+ * problem points and feed those back into the disassembly's description.
+ *
+ * Ideally the ordering of the code will be preserved such that the original
+ * game code and this reimplementation have broadly the same structure.
+ * Some code will unavoidably need to be changed however, such as the stack
+ * trick where PUSH and POP are used to accelerate loads and stores.
+ *
+ * My original intention was to retain the level data (called "stage" data in
+ * this conversion to match the original game) whole in the converted game,
+ * including any embedded addresses. I wanted to 'page in' levels by copying
+ * the original game data into the game's state structure. This would also
+ * mean that any new or adjusted levels produced by means of this conversion
+ * would be compatible with the original game. However, it turned out that
+ * allowing binary compatibility would have meant duplicating some core
+ * functions where the data structures exist in both the engine part and the
+ * stage data. So I gave up on that. Having the stage data in C does make it
+ * more tweakable, which is good. Long term it would be nice if the stages -
+ * at least the map portion - were expressible with a concise text format.
+ *
+ * Pointers present a problem. The original game data uses 16-bit pointers
+ * sometimes embedded in byte data but the converted code could be using 32-
+ * or 64-bit ones. Instead of embedding huge pointers we'll either use byte
+ * tokens or leave the original values in place and indrect them through new
+ * tables or switch lookups. For example see the "chatter" code: the code
+ * that prints the messages on-screen as the game runs. It previously
+ * embedded addresses inline in chatter structures. These are replaced with
+ * single bytes that reference a new tables of pointers.
+ *
+ * Like with TGE a game state structure is added to encapsulate the complete
+ * game state. It is passed to every state-accessing function in the game.
+ * Globals are banned.
+ *
+ * Screen handling in the original game assumes the alignment of the screen
+ * and the back buffer. That can't be guaranteed in a portable conversion. We
+ * can address this by converting pointers to offsets when we need to perform
+ * address arithmetic.
+ *
+ * (SM) means self modified. There is a _lot_ of self-modified code in the
+ * game.
+ *
+ * Remember that much of this code is in progress and untested - or just
+ * broken.
+ */
 
-// TODOs
-// - Copy whole messages that get modified into the state structure.
-// - Decide how to drive the main loop(s).
-// - Promote variables to int from u8/s8/u16/s16 where possible,
-//
+/* TODOs
+ * - Copy whole messages that get modified into the state structure.
+ * - Decide how to drive the main loop(s).
+ * - Promote variables to int from u8/s8/u16/s16 where possible,
+ */
 
 #include <assert.h>
 #include <stddef.h>
@@ -89,14 +89,6 @@
 #include <stdlib.h>
 #include <string.h>
 
-#if defined(__has_feature) && __has_feature(address_sanitizer)
-#include <sanitizer/asan_interface.h>
-#define ASAN_POISON_RANGE(addr, sz)   __asan_poison_memory_region((addr), (sz))
-#define ASAN_UNPOISON_RANGE(addr, sz) __asan_unpoison_memory_region((addr), (sz))
-#else
-#define ASAN_POISON_RANGE(addr, sz)   ((void)0)
-#define ASAN_UNPOISON_RANGE(addr, sz) ((void)0)
-#endif
 
 #include "C99/Types.h"
 #include "ZXSpectrum/Macros.h"
@@ -113,14 +105,10 @@
 
 /* ----------------------------------------------------------------------- */
 
+/* Z80 ish macros */
+
 /** Return an 8-bit value `v` rotated right by `sh` bits */
 #define ROR_8(v,sh) (((v) >> (sh)) | ((v) << (8 - (sh)))
-
-/** Number of columns in each perspective scaling table (persp_y_scale, persp_x_scale_right, persp_x_delta_left). */
-#define PERSP_TABLE_COLS (22)
-
-/** Scale a raw speed counter (multiples of 32) to a persp_y_scale row offset (multiples of PERSP_TABLE_COLS). */
-#define COUNTER_TO_PERSP_Y_ROW(x) ((x) - ((x) >> 2) - ((x) >> 4))
 
 /** Return `t`+`d` but only alter the low byte. */
 #define LO_ADD(t,d) ((t) = (((t) & ~0xFF) | (((t) + (d)) & 0xFF)))
@@ -131,98 +119,138 @@
 /** Decrement the high byte of a 16-bit word `v` */
 #define HI_DEC(v) ((v) -= 0x0100)
 
+/** Return ptr advanced by delta modulo 256, assigning back in-place. */
+#define WRAPPING(ptr, delta, base) \
+  ((ptr) = &(base)[((ptr) + delta - (base)) & 0xFF])
+
+/** Return ptr advanced by 1 modulo 256. */
+#define WRAPPINGINCREMENT(ptr, base) \
+  WRAPPING(ptr, 1, base)
+
 /* ----------------------------------------------------------------------- */
 
-/// Given a road buffer pointer return a new wrapped-around buffer index.
+/* Screen, attributes and backbuffer macros */
+
+/** Return screen pointer given a Z80 address. */
+#define ADDRTOSCREEN(addr) \
+  (&state->speccy->screen.pixels[(addr) - SCREEN_START_ADDRESS])
+
+/** Return attributes pointer given a Z80 address. */
+#define ADDRTOATTRS(addr) \
+  (&state->speccy->screen.attributes[(addr) - SCREEN_ATTRIBUTES_START_ADDRESS])
+
+/** Return backbuffer[] pointer given a Z80 address. */
+#define ADDRTOBACKBUF(addr) \
+  (&state->backbuffer[(addr) - BACKBUFFER_START_ADDRESS])
+
+/** Return a Z80 address of a screen[] pointer. */
+#define SCREENTOADDR(ptr) \
+  (SCREEN_START_ADDRESS + SCREENTOOFFSET(ptr))
+
+/** Return a Z80 address of an attributes[] pointer. */
+#define ATTRSTOADDR(ptr) \
+  (SCREEN_ATTRIBUTES_START_ADDRESS + ATTRSTOOFFSET(ptr))
+
+/** Return a Z80 address of backbuffer[] pointer. */
+#define BACKBUFTOADDR(ptr) \
+  (BACKBUFFER_START_ADDRESS + BACKBUFTOOFFSET(ptr))
+
+/** Return byte offset of a screen[] pointer. */
+#define SCREENTOOFFSET(ptr) \
+  ((ptr) - &state->speccy->screen.pixels[0])
+
+/** Return byte offset of an attributes[] pointer. */
+#define ATTRSTOOFFSET(ptr) \
+  ((ptr) - &state->speccy->screen.attributes[0])
+
+/** Return byte offset of a backbuffer[] pointer. */
+#define BACKBUFTOOFFSET(ptr) \
+  ((ptr) - &state->backbuffer[0])
+
+/** Return screen[] pointer given byte offset. */
+#define OFFSETTOSCREEN(off) \
+  (&state->speccy->screen.pixels[off])
+
+/** Return attributes[] pointer given byte offset. */
+#define OFFSETTOATTRS(off) \
+  (&state->speccy->screen.attributes[off])
+
+/** Return backbuffer[] pointer given byte offset. */
+#define OFFSETTOBACKBUF(off) \
+  (&state->backbuffer[off])
+
+/** Return if the given pointer is a valid screen attributes pointer. */
+#define VALID_ATTRS(ptr) \
+  ((ptr) >= &state->speccy->screen.attributes[0] && (ptr) < &state->speccy->screen.attributes[SCREEN_ATTRIBUTES_LENGTH])
+
+/** Return if the given pointer is a valid backbuffer pointer. */
+#define VALID_BACKBUF_PTR(ptr) \
+  ((ptr) >= &state->backbuffer[0] && (ptr) < &state->backbuffer[BACKBUFFER_LENGTH])
+
+/** Return if the given Z80 address is a valid backbuffer address. */
+#define VALID_BACKBUF_ADDR(addr) \
+  ((addr) >= BACKBUFFER_START_ADDRESS && (addr) < BACKBUFFER_END_ADDRESS)
+
+/* ----------------------------------------------------------------------- */
+
+/* Road buffer macros */
+
+/** Given a road buffer pointer return a new wrapped-around buffer index. */
 #define ROADBUF_PTR2IDX(PTR) \
   (((PTR) - state->road_buffer_start) & 0xFF)
 
-/// Given a road buffer delta return a new wrapped-around buffer index.
+/** Given a road buffer delta return a new wrapped-around buffer index. */
 #define ROADBUF_FWD2IDX(N) \
   ROADBUF_PTR2IDX(state->road_buffer_offset + N)
 
-/// Given a road buffer delta return a pointer.
+/** Given a road buffer delta return a pointer. */
 #define ROADBUF_FWD2PTR(N) \
   (&state->road_buffer_start[ROADBUF_FWD2IDX(N)])
 
 /* ----------------------------------------------------------------------- */
 
-// Return screen pointer given a Z80 address.
-#define ADDRTOSCREEN(addr)    (&state->speccy->screen.pixels[(addr) - SCREEN_START_ADDRESS])
-// Return attributes pointer given a Z80 address.
-#define ADDRTOATTRS(addr)     (&state->speccy->screen.attributes[(addr) - SCREEN_ATTRIBUTES_START_ADDRESS])
-// Return backbuffer[] pointer given a Z80 address.
-#define ADDRTOBACKBUF(addr)   (&state->backbuffer[(addr) - BACKBUFFER_START_ADDRESS])
-
-// Return a Z80 address of a screen[] pointer.
-#define SCREENTOADDR(ptr)     (SCREEN_START_ADDRESS + SCREENTOOFFSET(ptr))
-// Return a Z80 address of an attributes[] pointer.
-#define ATTRSTOADDR(ptr)      (SCREEN_ATTRIBUTES_START_ADDRESS + ATTRSTOOFFSET(ptr))
-// Return a Z80 address of backbuffer[] pointer.
-#define BACKBUFTOADDR(ptr)    (BACKBUFFER_START_ADDRESS + BACKBUFTOOFFSET(ptr))
-
-// Return byte offset of a screen[] pointer.
-#define SCREENTOOFFSET(ptr)   ((ptr) - &state->speccy->screen.pixels[0])
-// Return byte offset of an attributes[] pointer.
-#define ATTRSTOOFFSET(ptr)    ((ptr) - &state->speccy->screen.attributes[0])
-// Return byte offset of a backbuffer[] pointer.
-#define BACKBUFTOOFFSET(ptr)  ((ptr) - &state->backbuffer[0])
-
-// Return screen[] pointer given byte offset.
-#define OFFSETTOSCREEN(off)   (&state->speccy->screen.pixels[off])
-// Return attributes[] pointer given byte offset.
-#define OFFSETTOATTRS(off)    (&state->speccy->screen.attributes[off])
-// Return backbuffer[] pointer given byte offset.
-#define OFFSETTOBACKBUF(off)  (&state->backbuffer[off])
-
-// Return if the given pointer is a valid screen attributes pointer.
-#define VALID_ATTRS(ptr)      ((ptr) >= &state->speccy->screen.attributes[0] && (ptr) < &state->speccy->screen.attributes[SCREEN_ATTRIBUTES_LENGTH])
-
-// Return if the given pointer is a valid backbuffer pointer.
-#define VALID_BACKBUF(ptr)    ((ptr) >= &state->backbuffer[0] && (ptr) < &state->backbuffer[BACKBUFFER_LENGTH])
-
-// Return ptr advanced by delta modulo 256, assigning back in-place.
-#define WRAPPING(ptr, delta, base) ((ptr) = &(base)[((ptr) + delta - (base)) & 0xFF])
-#define WRAPPINGINCREMENT(ptr, base) WRAPPING(ptr, 1, base)
-
-/* ----------------------------------------------------------------------- */
-
-#define STAGEDATA_BASE                    (0x5C00)
-#define STAGEDATA_END                     (0x7FFF) // inclusive
-#define STAGEDATA_LENGTH                  (STAGEDATA_END + 1 - STAGEDATA_BASE)
+/* Configuration constants */
 
 #define MAXTURBOS                              (3)
-#define RESTART_TIME_BCD                    (0x60) // seconds in BCD
 
-#define SPEED_ATTRACT                        (400) // scripted drive speed: attract mode camera, perp post-arrest
-#define SPEED_PERP_CHASE                     (350) // perp's base chase speed; also hazard speed cap after impact
-#define SPEED_PERP_MIN                        (70) // perp slow-down threshold in handle_perp_caught
-#define SPEED_GEAR_CHANGE                    (150) // gear-change threshold: low gear below, high gear at or above
+#define RESTART_TIME_BCD                    (0x60) /* seconds in BCD */
+
+#define SPEED_PERP_MIN                        (70) /* perp slow-down threshold in handle_perp_caught */
+#define SPEED_GEAR_CHANGE                    (150) /* gear-change threshold: low gear below, high gear at or above */
+#define SPEED_PERP_CHASE                     (350) /* perp's base chase speed; also hazard speed cap after impact */
+#define SPEED_ATTRACT                        (400) /* scripted drive speed: attract mode camera, perp post-arrest */
 
 #define MARQUEELIGHT_WIDTH                     (5)
 #define MARQUEELIGHT_HEIGHT                    (4)
-#define MARQUEELIGHT_LEFT_ATTR_ADDR            (0x5820)
-#define MARQUEELIGHT_RIGHT_ATTR_ADDR           (0x583B)
 
 #define MINSTAGE                               (1)
 #define MAXSTAGE                               (5)
 
+#define SMASHCOUNTER_MAX                      (20) /* fully smashed; also the smash bar segment count */
+
 /* ----------------------------------------------------------------------- */
+
+/* Memory constants */
+
+#define STAGEDATA_BASE                    (0x5C00)
+#define STAGEDATA_END                     (0x7FFF) /* inclusive */
+#define STAGEDATA_LENGTH                  (STAGEDATA_END + 1 - STAGEDATA_BASE)
+
+#define MARQUEELIGHT_LEFT_ATTR_ADDR       (0x5820)
+#define MARQUEELIGHT_RIGHT_ATTR_ADDR      (0x583B)
+
+#define BANK3_ROUTINE_0                   (0xC000)
+#define BANK3_ROUTINE_3                   (0xC003) /* bootstrap */
+#define BANK3_ROUTINE_6                   (0xC006) /* success music */
+#define BANK3_ROUTINE_9                   (0xC009)
+
+/* ----------------------------------------------------------------------- */
+
+/* Enumeration constants */
 
 #define QUITSTATE_IDLE                         (0)
 #define QUITSTATE_START                        (1)
 #define QUITSTATE_DONE                         (2)
-
-#define USERINPUT_RIGHT                     (1<<0)
-#define USERINPUT_LEFT                      (1<<1)
-#define USERINPUT_DOWN                      (1<<2) // aka brake
-#define USERINPUT_UP                        (1<<3) // aka accelerate
-#define USERINPUT_FIRE                      (1<<4) // aka gear
-#define USERINPUT_TURBO                     (1<<5)
-#define USERINPUT_PAUSE                     (1<<6)
-#define USERINPUT_QUIT                      (1<<7)
-#define USERINPUT_NOT_QUIT                  (0x7F)
-#define USERINPUT_NONE                      (0x00)
 
 #define EFFECT_SQUEAL                          (1)
 #define EFFECT_LANDING                         (2)
@@ -246,27 +274,44 @@
 #define CHATTERSTATE_RUN                       (2)
 #define CHATTERSTATE_STOP                      (3)
 
-#define HANDFLAG_NONE                          (0) // no hand visible
-#define HANDFLAG_ANIMATING                     (1) // cherry light animating onto roof
-#define HANDFLAG_STOP                          (2) // static "stop" hand
-
-#define SMASHCOUNTER_MAX                       (20) // fully smashed; also the smash bar segment count
+#define HANDFLAG_NONE                          (0) /* no hand visible */
+#define HANDFLAG_ANIMATING                     (1) /* cherry light animating onto roof */
+#define HANDFLAG_STOP                          (2) /* static "stop" hand */
 
 #define PERPCAUGHTPHASE_NONE                   (0)
 #define PERPCAUGHTPHASE_ALIGNING               (1)
 #define PERPCAUGHTPHASE_STOPPING               (2)
-#define PERPCAUGHTPHASE_STOPPED                (3) // car has stopped; engine off; smash bar is removed
+#define PERPCAUGHTPHASE_STOPPED                (3) /* car has stopped; engine off; smash bar is removed */
 #define PERPCAUGHTPHASE_SCORE                  (4)
 #define PERPCAUGHTPHASE_FADING                 (5)
-#define PERPCAUGHTPHASE_ADVANCING              (6) // transition
+#define PERPCAUGHTPHASE_ADVANCING              (6) /* transition */
 
-#define TRANSITIONSTRIDE_FORWARD            (0x08)
-#define TRANSITIONSTRIDE_REVERSE            (0xF8)
+/* ----------------------------------------------------------------------- */
+
+/* Flag constants */
+
+#define USERINPUT_RIGHT                     (1<<0)
+#define USERINPUT_LEFT                      (1<<1)
+#define USERINPUT_DOWN                      (1<<2) /* aka brake */
+#define USERINPUT_UP                        (1<<3) /* aka accelerate */
+#define USERINPUT_FIRE                      (1<<4) /* aka gear */
+#define USERINPUT_TURBO                     (1<<5)
+#define USERINPUT_PAUSE                     (1<<6)
+#define USERINPUT_QUIT                      (1<<7)
+#define USERINPUT_NOT_QUIT                  (0x7F)
+#define USERINPUT_NONE                      (0x00)
+
+/* ----------------------------------------------------------------------- */
+
+/* Other constants */
+
+#define TRANSITIONSTRIDE_FORWARD               (8)
+#define TRANSITIONSTRIDE_REVERSE              (-8)
 
 // Note: road_pos left..right is high..low
-#define ROAD_126                          (0x0126)
-#define ROAD_LEFTMOST                     (0x0105)
 #define ROAD_RIGHTMOST                    (0x00F5)
+#define ROAD_LEFTMOST                     (0x0105)
+#define ROAD_126                          (0x0126)
 
 #define ROADBUF_CURVATURE_OFFSET               (0)
 #define ROADBUF_HEIGHT_OFFSET                 (32)
@@ -277,69 +322,79 @@
 
 #define PREGAMECMD_STOP                     (0x00)
 #define PREGAMECMD_REPEAT                   (0x1F)
-#define PREGAMECMD_SET_BG_0                 (0xD0) // to 0xDF
+#define PREGAMECMD_SET_BG_0                 (0xD0) /* up to 0xDF */
 #define PREGAMECMD_DRAW_BASE                (0xE0)
 #define PREGAMECMD_DRAW_HZ                  (0xE1)
 #define PREGAMECMD_DRAW_VT                  (0xE2)
-#define PREGAMECMD_SET_ADDR                 (0xF0) // to 0xFF
-
-#define BANK3_ROUTINE_0                   (0xC000) /* ... */
-#define BANK3_ROUTINE_3                   (0xC003) /* bootstrap */
-#define BANK3_ROUTINE_6                   (0xC006) /* success music */
-#define BANK3_ROUTINE_9                   (0xC009) /* ... */
+#define PREGAMECMD_SET_ADDR                 (0xF0) /* up to 0xFF */
 
 /* ----------------------------------------------------------------------- */
 
-// Read an arbitrary native word
+/* Perspective table stuff */
+
+/** Number of columns in each perspective scaling table (persp_y_scale,
+ * persp_x_scale_right, persp_x_delta_left). */
+#define PERSP_TABLE_COLS (22)
+
+/** Scale a raw speed counter (multiples of 32) to a persp_y_scale row offset
+ * (multiples of PERSP_TABLE_COLS). */
+#define COUNTER_TO_PERSP_Y_ROW(x) ((x) - ((x) >> 2) - ((x) >> 4))
+
+/* ----------------------------------------------------------------------- */
+
+/* Read an arbitrary native word */
 static u16 wordat(const u8 *addr)
 {
   return (addr[0] << 0) | (addr[1] << 8);
 }
 
-// Write an arbitrary native word
+/* Write an arbitrary native word */
 static void setwordat(u8 *addr, u16 value)
 {
   addr[0] = value;
   addr[1] = value >> 8;
 }
 
-// Move to next screen row (downwards)
-// Conv: added
+/* Move to next screen row (downwards)
+ *
+ * Conv: Extracted to function.
+ */
 static u16 nextscrrow(u16 screen)
 {
   screen += 256;
   if (((screen >> 8) & 7) == 0) {
     int t = (screen & 0xFF) + 32;
     screen = (screen & 0xFF00) | (t & 0xFF);
-    if (t < 0x100) { // didn't carry
-      t = (screen >> 8) - 8; // reduce?
+    if (t < 0x100) { /* didn't carry */
+      t = (screen >> 8) - 8; /* reduce? */
       screen = (t << 8) | (screen & 0xFF);
     }
   }
   return screen;
 }
 
-// Returns the previous row for the back buffer (visually upwards).
-//
-// Back buffer addresses are of the form 0b_1111_LLLL_RRRC_CCCC
-//
-// Conv: Extracted to function.
+/* Returns the previous row for the back buffer (visually upwards)
+ *
+ * Back buffer addresses are of the form 0b_1111_LLLL_RRRC_CCCC.
+ *
+ * Conv: Extracted to function.
+ */
 static u16 prevbufrow(u16 backbuf)
 {
   int orig;
 
-  assert(backbuf >= BACKBUFFER_START_ADDRESS);
+  assert(VALID_BACKBUF_ADDR(backbuf));
 
   orig = backbuf;
   backbuf -= 0x0100;
-  if ((orig & 0x0F00) == 0) { // LLLL was zero on entry
-    backbuf += 0x1000; // 1110 -> 1111
-    int t = (backbuf & 0xFF) - 32; // decrement RRRc
+  if ((orig & 0x0F00) == 0) { /* field LLLL was zero on entry */
+    backbuf += 0x1000; /* 1110 -> 1111 */
+    int t = (backbuf & 0xFF) - 32; /* decrement field RRRC */
     backbuf = (backbuf & 0xFF00) | (t & 0xFF);
-    /* t < 0 means L borrowed; the Z80 8-bit wrap is already captured by (t & 0xFF) above. */
+    // DPT: Claude deleted this bit here and I don't trust it.
+    /* t < 0 means L borrowed; the Z80 8-bit wrap is already captured by (t & 0xFF) above */
   }
-
-  assert(backbuf >= BACKBUFFER_START_ADDRESS);
+  assert(VALID_BACKBUF_ADDR(backbuf));
   return backbuf;
 }
 
@@ -4059,7 +4114,7 @@ doc_9390:
 
   // 0b_1111_LLLL_RRRC_CCCC so A holds ?RRRLLLL and B holds ???CCCCC
   HLdash_backbuf_addr = OFFSETTOBACKBUF(((Awidth_bytes & 0x0F) << 8) | (((Awidth_bytes & 0x70) << 1) + Bdash_height)); // might this overflow?
-  assert(VALID_BACKBUF(HLdash_backbuf_addr));
+  assert(VALID_BACKBUF_PTR(HLdash_backbuf_addr));
 
   Adash_type = state->doc_inverted; // set to 0 or 2
   if (Adash_type) {
@@ -9559,7 +9614,7 @@ static void plot_masked_sprite(chqstate_t *state,
 
   assert(jump_offset / 6 >= 0);
   assert(jump_offset / 6 <= 7);
-  assert(VALID_BACKBUF(backbuf_addr));
+  assert(VALID_BACKBUF_PTR(backbuf_addr));
 
   goto plot_masked_sprite_entry;
 
@@ -9651,7 +9706,7 @@ static void plot_masked_sprite_flipped_entry2(chqstate_t *state,
   u8        mask;          /* was C */
   u8        data;          /* was B */
 
-  assert(VALID_BACKBUF(backbuf_addr));
+  assert(VALID_BACKBUF_PTR(backbuf_addr));
 
   // EX DE,HL  -- move backbuffer ptr to DE?
   jump_offset = 8 - width_bytes; // Conv: Multiplication removed
@@ -12010,7 +12065,7 @@ static void dr_fill(chqstate_t *state, u16 DEbackbuf, u8 Llane_mask, u8 Adash_fi
   Hdash_backbuf = DEdash_backbuf >> 8;
   printf("(%x,%x)\n", Hdash_backbuf, Ldash_backbuf);
   SPoutput = ADDRTOBACKBUF((Hdash_backbuf << 8) | Ldash_backbuf);
-  assert(VALID_BACKBUF(SPoutput));
+  assert(VALID_BACKBUF_PTR(SPoutput));
 
   // EX AF,AF' - unbank Afill
 
@@ -12066,7 +12121,7 @@ static void dr_c62e(chqstate_t *state, u8 *SPoutput, u8 jump_index, u16 DEbackbu
 {
   // CHECK Are we banked on entry?
 
-  assert(VALID_BACKBUF(SPoutput));
+  assert(VALID_BACKBUF_PTR(SPoutput));
 
   switch (jump_index) {
   default: assert(0);
