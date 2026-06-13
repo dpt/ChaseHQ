@@ -153,6 +153,25 @@ static uint8_t zx_in(zxspectrum_t *state, uint16_t address)
   case port_KEMPSTON_JOYSTICK:
     return prv->config.key(address, prv->config.opaque);
 
+  case port_BORDER_EAR_MIC:
+    {
+      /* Address 0x00FE: all row-select lines active simultaneously.
+       * On real hardware this returns the AND of every keyboard row. */
+      static const uint16_t rows[] = {
+        port_KEYBOARD_SHIFTZXCV,       port_KEYBOARD_ASDFG,
+        port_KEYBOARD_QWERT,           port_KEYBOARD_12345,
+        port_KEYBOARD_09876,           port_KEYBOARD_POIUY,
+        port_KEYBOARD_ENTERLKJH,       port_KEYBOARD_SPACESYMSHFTMNB,
+      };
+      int result;
+      int i;
+
+      result = 0xFF;
+      for (i = 0; i < (int) NELEMS(rows); i++)
+        result &= prv->config.key(rows[i], prv->config.opaque);
+      return result;
+    }
+
   default:
     assert("zx_in not implemented for that port" == NULL);
     return 0x00;
