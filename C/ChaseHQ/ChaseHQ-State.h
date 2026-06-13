@@ -28,13 +28,13 @@
 
 /* ----------------------------------------------------------------------- */
 
-typedef void (dr_callback_t)(chqstate_t *state, u8 Bfill_pattern, u16 DEscreen_ptr, u8 L);
+typedef void (dr_callback_t)(chqstate_t *state, int Bfill_pattern, int DEscreen_ptr, int L);
 
 typedef void (plot_sprite_cb_t)(chqstate_t *state,
                                 int         IXjump_offset,
                                 u8         *HLbackbuf_addr,
-                                u8          Bdash_height,
-                                u16         DEdash_bitmap_stride,
+                                int         Bdash_height,
+                                int         DEdash_bitmap_stride,
                                 const u8   *HLdash_bitmap_data);
 
 /// A hazard in Chase HQ is something that's on the road. It might be a moving
@@ -638,7 +638,7 @@ struct chqstate {
   // $C698 (SM) in draw_road
   u8        dr_right_edge_offset;
   // $C6AD (SM) in draw_road
-  void    (*dr_fill_fn)(chqstate_t *state, u16 DEbackbuf, u8 L, u8 Adash_fill);
+  void    (*dr_fill_fn)(chqstate_t *state, int DEbackbuf, int L, int Adash_fill);
   // $C6B2 (SM) in draw_road
   u8        dr_initial_stripe_state; // inital road stripe state
   // $C6BC (SM) in draw_road

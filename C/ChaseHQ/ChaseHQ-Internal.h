@@ -97,7 +97,7 @@
 /* ----------------------------------------------------------------------- */
 
 typedef void obj_handler_t(chqstate_t *state,
-                           u8          Biterations,
+                           int         Biterations,
                            const void *arg,
                            const u16  *IXxpos,
                            const u8   *IYheight);
