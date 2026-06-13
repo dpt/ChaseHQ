@@ -110,7 +110,7 @@
 /* ----------------------------------------------------------------------- */
 
 // Test rigging enable
-#define RUN_FULL_GAME 0
+#define RUN_FULL_GAME 1
 
 /* ----------------------------------------------------------------------- */
 
@@ -932,24 +932,24 @@ static void draw_road_scene_change(chqstate_t *state, u8 *IXlanes,
 
 static void draw_road(chqstate_t *state);
 static void dr_read_lanes(chqstate_t *state, u8 *IXplanes, u8 *IYpheight,
-                          int Bfill_pattern, int Chorizon, int DEbackbuf, int Llane_mask);
+                          int Bfill_pattern, int Chorizon, int DEbackbuf, int Lrow);
 static void dr_four_lane_highway(chqstate_t *state, int Bfill_pattern,
-                                 int DEbackbuf, int Llane_mask);
+                                 int DEbackbuf, int Lrow);
 static void dr_c54d(chqstate_t *state, int Bfill_pattern, int DEbackbuf,
-                    int Llane_mask, dr_callback_t *HLdash_callback);
+                    int Lrow, dr_callback_t *HLdash_callback);
 static void dr_c551(chqstate_t *state, int Bfill_pattern, int DEbackbuf,
-                    int Llane_mask);
+                    int Lrow);
 static void dr_c55f_unfilled_path(chqstate_t *state, int DEbackbuf,
-                                  int Llane_mask, int Adash_fill);
+                                  int Lrow, int Adash_fill);
 static void dr_c565_unfilled_path(chqstate_t *state, int DEbackbuf);
 static void dr_scanline_rollover_2(chqstate_t *state, int DEbackbuf,
-                                   int Llane_mask, int Adash_fill);
+                                   int Lrow, int Adash_fill);
 static void dr_scanline_rollover_1(chqstate_t *state, int DEbackbuf);
 static void dr_c598_filled_path(chqstate_t *state, int DEbackbuf,
-                                int Llane_mask, int Adash_fill);
-static void dr_c5a1(chqstate_t *state, int DEbackbuf, int Llane_mask,
+                                int Lrow, int Adash_fill);
+static void dr_c5a1(chqstate_t *state, int DEbackbuf, int Lrow,
                     int Adash_fill);
-static void dr_fill(chqstate_t *state, int DEbackbuf, int Llane_mask,
+static void dr_fill(chqstate_t *state, int DEbackbuf, int Lrow,
                     int Adash_fill);
 static void dr_c62e(chqstate_t *state, u8 *SPoutput, int jump_index,
                     int DEbackbuf, int HLfill);
@@ -11777,7 +11777,7 @@ static void draw_road(chqstate_t *state)
   int Lstripe_height;  /* was L */
   int Axor_base;       /* was A */
   u8  Bfill_pattern;   /* was B */
-  u8  Llane_mask;      /* was L */
+  u8  Lrow;      /* was L */
   u16 DEbackbuf;       /* was DE */  // OR is this a *buffer* offset?
 
   state->on_dirt_track = 0;
@@ -11812,7 +11812,7 @@ static void draw_road(chqstate_t *state)
   state->dr_edge_graphic_offset = Lstripe_height; // 16 or 48
   state->dr_right_edge_offset = Lstripe_height + 1; // 17 or 49
   state->dr_callback = dr_four_lane_highway;
-  Llane_mask = 0xFF;
+  Lrow = 0xFF;
   DEbackbuf =
     0x0100; // Z80 address - beyond the end of the buffer - must be decremented before first write
   state->dr_fill_pattern = Bfill_pattern;
@@ -11820,7 +11820,7 @@ static void draw_road(chqstate_t *state)
   // passing L to HL arg here - not clear just now if all of HL required or just L
   assert(DEbackbuf >= 0xF000 || DEbackbuf <= 0x0100);
   dr_read_lanes(state, IXplanes, IYpheight, Bfill_pattern, Chorizon, DEbackbuf,
-                Llane_mask); // was FALLTHROUGH
+                Lrow); // was FALLTHROUGH
 }
 
 /**
@@ -11832,7 +11832,7 @@ static void draw_road(chqstate_t *state)
  * \param[in] Bfill_pattern Fill pattern.
  * \param[in] Chorizon      TBD - FIXME needs passing to sub-function somewhere
  * \param[in] DEbackbuf     Pointer into backbuffer.
- * \param[in] L             TBD
+ * \param[in] Lrow          Byte offset within road table page (0xFF = bottom scanline).
  */
 static void dr_read_lanes(chqstate_t *state, u8 *IXplanes, u8 *IYpheight,
                           int Bfill_pattern, int Chorizon, int DEbackbuf, int L)
@@ -11942,10 +11942,10 @@ static void dr_read_lanes(chqstate_t *state, u8 *IXplanes, u8 *IYpheight,
  * \param[in] state         Pointer to game state.
  * \param[in] Bfill_pattern Fill pattern.
  * \param[in] DEbackbuf     Pointer into backbuffer.
- * \param[in] L             TBD.
+ * \param[in] Lrow          Byte offset within road table page (row index).
  */
 static void dr_four_lane_highway(chqstate_t *state, int Bfill_pattern,
-                                 int DEbackbuf, int Llane_mask)
+                                 int DEbackbuf, int Lrow)
 {
   // EXX - UNBANK (we enter banked)
 
@@ -11958,7 +11958,7 @@ static void dr_four_lane_highway(chqstate_t *state, int Bfill_pattern,
   state->dr_neg_lane_count = -4;
 
   assert(DEbackbuf >= 0xF000 || DEbackbuf <= 0x0100);
-  dr_c54d(state, Bfill_pattern, DEbackbuf, Llane_mask,
+  dr_c54d(state, Bfill_pattern, DEbackbuf, Lrow,
           dr_c551); // was FALLTHROUGH
 }
 
@@ -11968,16 +11968,16 @@ static void dr_four_lane_highway(chqstate_t *state, int Bfill_pattern,
  * \param[in] state           Pointer to game state.
  * \param[in] Bfill_pattern   Fill pattern.
  * \param[in] DEbackbuf       Pointer into backbuffer.
- * \param[in] L               TBD
+ * \param[in] Lrow          Byte offset within road table page (row index).
  * \param[in] HLdash_callback TBD
  */
 static void dr_c54d(chqstate_t *state, int Bfill_pattern, int DEbackbuf,
-                    int Llane_mask, dr_callback_t *HLdash_callback)
+                    int Lrow, dr_callback_t *HLdash_callback)
 {
   state->dr_callback = HLdash_callback;
   // EXX - UNBANK (we enter banked)
   assert(DEbackbuf >= 0xF000 || DEbackbuf <= 0x0100);
-  dr_c551(state, Bfill_pattern, DEbackbuf, Llane_mask); // was FALLTHROUGH
+  dr_c551(state, Bfill_pattern, DEbackbuf, Lrow); // was FALLTHROUGH
 }
 
 /**
@@ -11986,17 +11986,17 @@ static void dr_c54d(chqstate_t *state, int Bfill_pattern, int DEbackbuf,
  * \param[in] state         Pointer to game state.
  * \param[in] Bfill_pattern Fill pattern.
  * \param[in] DEbackbuf     Pointer into backbuffer.
- * \param[in] L             TBD
+ * \param[in] Lrow          Byte offset within road table page (row index).
  */
 static void dr_c551(chqstate_t *state, int Bfill_pattern, int DEbackbuf,
-                    int Llane_mask)
+                    int Lrow)
 {
   int Afill_pattern;
 
   Afill_pattern = Bfill_pattern;
   if (Afill_pattern) {
     assert(DEbackbuf >= 0xF000 || DEbackbuf <= 0x0100);
-    dr_c598_filled_path(state, DEbackbuf, Llane_mask, Afill_pattern); // exit via
+    dr_c598_filled_path(state, DEbackbuf, Lrow, Afill_pattern); // exit via
     return;
   }
 
@@ -12005,7 +12005,7 @@ static void dr_c551(chqstate_t *state, int Bfill_pattern, int DEbackbuf,
   // EXX
   // EX AF,AF'
   assert(DEbackbuf >= 0xF000 || DEbackbuf <= 0x0100);
-  dr_c55f_unfilled_path(state, DEbackbuf, Llane_mask,
+  dr_c55f_unfilled_path(state, DEbackbuf, Lrow,
                         Afill_pattern); // was FALLTHROUGH
 }
 
@@ -12018,7 +12018,7 @@ static void dr_c551(chqstate_t *state, int Bfill_pattern, int DEbackbuf,
  * \param[in] L             Value
  */
 static void dr_c55f_unfilled_path(chqstate_t *state, int DEbackbuf,
-                                  int Llane_mask, int Adash_fill)
+                                  int Lrow, int Adash_fill)
 {
   int Ahi;
 
@@ -12075,13 +12075,13 @@ static void dr_c565_unfilled_path(chqstate_t *state, int DEbackbuf)
  * \param[in] Adash_fill Value
  */
 static void dr_scanline_rollover_2(chqstate_t *state, int DEbackbuf,
-                                   int Llane_mask, int Adash_fill)
+                                   int Lrow, int Adash_fill)
 {
   LO_ADD(DEbackbuf, 32);
   if ((DEbackbuf & 0xFF) < 32) // carry (low byte wrapped)
     HI_ADD(DEbackbuf, 16);
   assert(DEbackbuf >= 0xF000 || DEbackbuf <= 0x0100);
-  dr_fill(state, DEbackbuf, Llane_mask, Adash_fill); // exit via
+  dr_fill(state, DEbackbuf, Lrow, Adash_fill); // exit via
 }
 
 /**
@@ -12107,14 +12107,14 @@ static void dr_scanline_rollover_1(chqstate_t *state, int DEbackbuf)
  * \param[in] Adash_fill Fill pattern.
  */
 static void dr_c598_filled_path(chqstate_t *state, int DEbackbuf,
-                                int Llane_mask, int Adash_fill)
+                                int Lrow, int Adash_fill)
 {
   // EXX
   state->dr_fill_fn = dr_c5a1;
   // EXX
   // EX AF,AF'
   assert(DEbackbuf >= 0xF000 || DEbackbuf <= 0x0100);
-  dr_c5a1(state, DEbackbuf, Llane_mask, Adash_fill); // was FALLTHROUGH
+  dr_c5a1(state, DEbackbuf, Lrow, Adash_fill); // was FALLTHROUGH
 }
 
 /**
@@ -12125,7 +12125,7 @@ static void dr_c598_filled_path(chqstate_t *state, int DEbackbuf,
  * \param[in] L          Value
  * \param[in] Adash_fill Fill pattern.
  */
-static void dr_c5a1(chqstate_t *state, int DEbackbuf, int Llane_mask,
+static void dr_c5a1(chqstate_t *state, int DEbackbuf, int Lrow,
                     int Adash_fill)
 {
   int A;
@@ -12135,12 +12135,12 @@ static void dr_c5a1(chqstate_t *state, int DEbackbuf, int Llane_mask,
   HI_DEC(DEbackbuf);
   if ((A & 0x0F) == 0) {
     assert(DEbackbuf >= 0xF000 || DEbackbuf <= 0x0100);
-    dr_scanline_rollover_2(state, DEbackbuf, Llane_mask, Adash_fill); // exit via
+    dr_scanline_rollover_2(state, DEbackbuf, Lrow, Adash_fill); // exit via
     return;
   }
 
   assert(DEbackbuf >= 0xF000 || DEbackbuf <= 0x0100);
-  dr_fill(state, DEbackbuf, Llane_mask, Adash_fill); // was FALLTHROUGH
+  dr_fill(state, DEbackbuf, Lrow, Adash_fill); // was FALLTHROUGH
 }
 
 /**
@@ -12148,10 +12148,10 @@ static void dr_c5a1(chqstate_t *state, int DEbackbuf, int Llane_mask,
  *
  * \param[in] state      Pointer to game state.
  * \param[in] DEbackbuf  Pointer into backbuffer.
- * \param[in] L          TBD
+ * \param[in] Lrow       Byte offset within road table page (row index); used as index into xpos_road tables.
  * \param[in] Adash_fill Fill pattern.
  */
-static void dr_fill(chqstate_t *state, int DEbackbuf, int Llane_mask,
+static void dr_fill(chqstate_t *state, int DEbackbuf, int Lrow,
                     int Adash_fill)
 {
   int  carry = 0;
@@ -12174,7 +12174,7 @@ static void dr_fill(chqstate_t *state, int DEbackbuf, int Llane_mask,
 
   assert(DEbackbuf >= 0xF000 || DEbackbuf <= 0x0100);
   state->dr_backbuf_2 = DEbackbuf;
-  A = Llane_mask; // presumed lane mask... can't be right can it? must be the current offset
+  A = Lrow; // byte offset within road table page (0xFF = bottom scanline)
   Bneg_lane_count = state->dr_neg_lane_count;
 
   // EXX - BANK
@@ -12183,7 +12183,8 @@ static void dr_fill(chqstate_t *state, int DEbackbuf, int Llane_mask,
   Bdash_holds_16 = 16;
   Cdash_mask = 0xF8; // propagate forward?
 
-  // reading words or bytes here? low or high byte?
+  // FIXME: Lrow is a byte offset into the 256-byte Z80 table page; xpos_road_left is u16[128],
+  // so the correct C index is Ldash/2 (or Ldash>>1), not Ldash. With Ldash=0xFF this is OOB.
   HLdash = &state->xpos_road_left[Ldash]; // was Hdash = 0xE8; // left hand table
   Aleftval = *HLdash;
   if (Aleftval) {
@@ -12199,7 +12200,7 @@ static void dr_fill(chqstate_t *state, int DEbackbuf, int Llane_mask,
   Anewvar = ~Edash + Bdash_holds_16;
   state->dr_left_stripe_width = Anewvar;
 
-  HLdash = &state->xpos_road_right[Ldash]; // was Hdash = 0xEC; // right hand table
+  HLdash = &state->xpos_road_right[Ldash]; // FIXME: same OOB issue as left table above; should be Ldash>>1
   Arightval = *HLdash;
   if (Arightval) {
     Anewvar = ((s8) Arightval < 0) ? 0 : 15;
