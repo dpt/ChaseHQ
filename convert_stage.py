@@ -40,7 +40,6 @@ What the script generates:
 What requires manual completion:
   - obj_t / hittable_t graphic definition arrays (typed structs)
   - stretchy_t / depthset_t tables (typed structs)
-  - chatter_strings
 """
 
 import sys
@@ -246,6 +245,67 @@ def compute_bank_offset(records: List[SkoolRecord]) -> int:
             if 0 < diff < 0x10000:
                 return diff
     return 0
+
+
+def parse_defm_text(rest: str) -> str:
+    """Convert a DEFM operand (e.g. "HI THERE",$CE) to a C string literal."""
+    # Strip inline comment, respecting quotes
+    in_q = False
+    for i, ch in enumerate(rest):
+        if ch == '"':
+            in_q = not in_q
+        elif ch == ';' and not in_q:
+            rest = rest[:i]
+            break
+    rest = rest.strip()
+
+    c_chars: List[str] = []
+    i = 0
+    while i < len(rest):
+        if rest[i] == '"':
+            i += 1
+            while i < len(rest) and rest[i] != '"':
+                c = rest[i]
+                if c == '\\':
+                    c_chars.append('\\\\')
+                elif c == '"':
+                    c_chars.append('\\"')
+                else:
+                    c_chars.append(c)
+                i += 1
+            i += 1  # skip closing quote
+        elif rest[i] in (' ', ','):
+            i += 1
+        elif rest[i] == '$':
+            b = int(rest[i + 1:i + 3], 16)
+            c_chars.append(f'\\x{b:02X}')
+            i += 3
+        elif rest[i].isdigit():
+            j = i
+            while j < len(rest) and rest[j].isdigit():
+                j += 1
+            c_chars.append(f'\\x{int(rest[i:j]):02X}')
+            i = j
+        else:
+            i += 1
+    return '"' + ''.join(c_chars) + '"'
+
+
+def parse_defm_strings(path: str) -> Dict[int, str]:
+    """Scan a skool file and return addr → C string literal for each DEFM line.
+
+    Skool address labels are already absolute, so no bank offset is applied.
+    """
+    result: Dict[int, str] = {}
+    with open(path, encoding='utf-8', errors='replace') as f:
+        for line in f:
+            line = line.rstrip()
+            m = re.match(r'^[bcw]?\$([0-9A-Fa-f]+)\s+DEFM\s+(.*)', line)
+            if not m:
+                m = re.match(r'^\s+\$([0-9A-Fa-f]+)\s+DEFM\s+(.*)', line)
+            if m:
+                result[int(m.group(1), 16)] = parse_defm_text(m.group(2))
+    return result
 
 
 # ── Map data decoders ─────────────────────────────────────────────────────────
@@ -849,7 +909,7 @@ def emit_stage_struct(stage: int, sections: List[Section],
     lines.append('')
     lines.extend(emit_scenedata(attractdata_sec, 'attractdata'))
     lines.append('')
-    lines.append('  NULL  /* TODO: chatter_strings */')
+    lines.append(f'  stage{stage}_chatter_strings')
     lines.append('};')
     return lines
 
@@ -859,6 +919,7 @@ def emit_stage_struct(stage: int, sections: List[Section],
 def convert(skool_path: str, stage: int, obj_names: List[str]) -> None:
     records, section_comments = parse_skool(skool_path)
     bank_offset = compute_bank_offset(records)
+    defm_strings = parse_defm_strings(skool_path)
     sections = split_into_sections(records, section_comments)
 
     # First pass: collect all bitmap section names so LOD tables can reference them
@@ -1004,6 +1065,20 @@ def convert(skool_path: str, stage: int, obj_names: List[str]) -> None:
             all_lines.extend(emit_raw_array(nm, data, 8, sec.start_addr))
             all_lines.append('')
             fwd_decls.append(f'static const u8 {nm}[{len(data)}];')
+
+            # The first four DEFW words in the header are pointers to the
+            # chatter strings (DEFM lines).  Resolve each via defm_strings.
+            ws = sec.words_with_annots
+            strings = [defm_strings[w[1]]
+                       for w in ws[:4] if w[1] >= 0 and w[1] in defm_strings]
+            if strings:
+                chat_nm = f'stage{stage}_chatter_strings'
+                all_lines.append(f'static const char *{chat_nm}[{len(strings)}] = {{')
+                for s in strings:
+                    all_lines.append(f'  {s},')
+                all_lines.append('};')
+                all_lines.append('')
+                fwd_decls.append(f'static const char *{chat_nm}[{len(strings)}];')
 
         elif sec.stype == 'hazard_lods':
             data = sec.bytes_flat

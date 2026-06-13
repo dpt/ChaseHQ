@@ -59,6 +59,7 @@
 // backdrop declared inline in stage struct
 static const u8 stage5_lod_addrs_C10C[14];
 static const u8 stage5_perp_description[12];
+static const char *stage5_chatter_strings[4];
 static const u8 stage5_arrest_messages_C1E6[24];
 static const u8 stage5_hazard_lods_C239[6];
 static const u8 stage5_obj_defs_C23F[7];
@@ -216,7 +217,7 @@ const stage_t stage5 = {
     &stage5_map_hazards_C6D1[-1],
   },
 
-  NULL  /* TODO: chatter_strings */
+  stage5_chatter_strings
 };
 
 /* ----------------------------------------------------------------------- */
@@ -236,6 +237,13 @@ static const u8 stage5_lod_addrs_C10C[14] = {
 static const u8 stage5_perp_description[12] = {
   0x01, 0x45, 0x5D, 0x6D, 0x5D, 0x96, 0x5D, 0xC0,
   0x5D, 0xFE, 0xBD, 0x98,
+};
+
+static const char *stage5_chatter_strings[4] = {
+  "THIS IS NANCY AT CHASE H.Q. WE'VE GOT A\xCE",
+  "EMERGENCY HERE. THE EASTERN BLOC SPY FRO\xCD",
+  "WASHINGTON IS FLEEING TOWARDS THE SUBURBS\xAE",
+  "THE TARGET VEHICLE IS UNKNOWN... OVER\xAE",
 };
 
 // $C1E6

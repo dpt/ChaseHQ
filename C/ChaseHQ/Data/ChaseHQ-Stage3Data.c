@@ -59,6 +59,7 @@
 // backdrop declared inline in stage struct
 static const u8 stage3_lod_addrs_C10C[14];
 static const u8 stage3_perp_description[12];
+static const char *stage3_chatter_strings[4];
 static const u8 stage3_arrest_messages_C1E8[17];
 static const u8 stage3_hazard_lods_C22E[6];
 static const u8 stage3_obj_defs_C234[7];
@@ -210,7 +211,7 @@ const stage_t stage3 = {
     &stage3_map_hazards_C6FC[-1],
   },
 
-  NULL  /* TODO: chatter_strings */
+  stage3_chatter_strings
 };
 
 /* ----------------------------------------------------------------------- */
@@ -230,6 +231,13 @@ static const u8 stage3_lod_addrs_C10C[14] = {
 static const u8 stage3_perp_description[12] = {
   0x01, 0x45, 0x5D, 0x6D, 0x5D, 0x96, 0x5D, 0xC1,
   0x5D, 0xFE, 0xBD, 0x98,
+};
+
+static const char *stage3_chatter_strings[4] = {
+  "THIS IS NANCY AT CHASE H.Q. WE'VE GOT A\xCE",
+  "EMERGENCY HERE. A GANG OF CHICAGO PUSHER\xD3",
+  "ARE FLEEING TOWARDS THE SUBURBS. THE TARGE\xD4",
+  "VEHICLE IS A GERMAN SPORTS CAR... OVER\xAE",
 };
 
 // $C1E8

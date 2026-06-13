@@ -59,6 +59,7 @@
 // backdrop declared inline in stage struct
 static const u8 stage2_lod_addrs_E10C[14];
 static const u8 stage2_perp_description[12];
+static const char *stage2_chatter_strings[4];
 static const u8 stage2_arrest_messages_E1DD[17];
 static const u8 stage2_hazard_lods_E224[6];
 static const u8 stage2_obj_defs_E22A[7];
@@ -211,7 +212,7 @@ const stage_t stage2 = {
     &stage2_map_hazards_E6F0[-1],
   },
 
-  NULL  /* TODO: chatter_strings */
+  stage2_chatter_strings
 };
 
 /* ----------------------------------------------------------------------- */
@@ -231,6 +232,13 @@ static const u8 stage2_lod_addrs_E10C[14] = {
 static const u8 stage2_perp_description[12] = {
   0x01, 0x45, 0x5D, 0x6D, 0x5D, 0x91, 0x5D, 0xB4,
   0x5D, 0xFE, 0xBD, 0x98,
+};
+
+static const char *stage2_chatter_strings[4] = {
+  "THIS IS NANCY AT CHASE H.Q. WE'VE GOT A\xCE",
+  "EMERGENCY HERE. CARLOS, THE NEW YOR\xCB",
+  "ARMED ROBBER, HAS BEEN SPOTTED IN \xC1",
+  "YELLOW SPORTS CAR ON THE FREEWAY... OVER\xAE",
 };
 
 // $E1DD

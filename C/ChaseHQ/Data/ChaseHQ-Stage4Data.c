@@ -59,6 +59,7 @@
 // backdrop declared inline in stage struct
 static const u8 stage4_lod_addrs_E10C[14];
 static const u8 stage4_perp_description[12];
+static const char *stage4_chatter_strings[4];
 static const u8 stage4_arrest_messages_E1D5[17];
 static const u8 stage4_hazard_lods_E218[6];
 static const u8 stage4_obj_defs_E21E[7];
@@ -211,7 +212,7 @@ const stage_t stage4 = {
     &stage4_map_hazards_E5FB[-1],
   },
 
-  NULL  /* TODO: chatter_strings */
+  stage4_chatter_strings
 };
 
 /* ----------------------------------------------------------------------- */
@@ -231,6 +232,13 @@ static const u8 stage4_lod_addrs_E10C[14] = {
 static const u8 stage4_perp_description[12] = {
   0x01, 0x45, 0x5D, 0x6D, 0x5D, 0x92, 0x5D, 0xB8,
   0x5D, 0xFE, 0xBD, 0x98,
+};
+
+static const char *stage4_chatter_strings[4] = {
+  "THIS IS NANCY AT CHASE H.Q. WE'VE GOT A\xCE",
+  "EMERGENCY HERE, THE L.A. KIDNAPPER I\xD3",
+  "SPEEDING TOWARDS THE OUTSKIRTS OF TOW\xCE",
+  "IN A BLUE TWO SEATER... OVER\xAE",
 };
 
 // $E1D5
