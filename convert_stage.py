@@ -145,7 +145,10 @@ ATTRIBUTE_MAP: Dict[int, str] = {
     _mkattr(0, 1, 5, 0): 'attribute_BRIGHT_BLACK_OVER_CYAN',
     _mkattr(0, 1, 6, 0): 'attribute_BRIGHT_BLACK_OVER_YELLOW',
     _mkattr(0, 1, 7, 0): 'attribute_BRIGHT_BLACK_OVER_WHITE',
+    _mkattr(0, 0, 4, 0): 'attribute_BLACK_OVER_GREEN',
     _mkattr(0, 0, 5, 0): 'attribute_BLACK_OVER_CYAN',
+    _mkattr(0, 0, 6, 0): 'attribute_BLACK_OVER_YELLOW',
+    _mkattr(0, 0, 7, 0): 'attribute_BLACK_OVER_WHITE',
 }
 
 
