@@ -347,6 +347,8 @@ int main(void)
 
   printf("Initialising...\n");
 
+  memset(&state, 0, sizeof(state));
+
   zxkeyset_clear(&state.keys);
   state.kempston  = 0;
   state.paused    = 0;

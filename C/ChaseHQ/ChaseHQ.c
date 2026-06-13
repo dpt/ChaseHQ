@@ -1391,8 +1391,10 @@ static void main_loop(chqstate_t *state)
       check_time_up(state);
       check_user_input(state);
       read_map(state);
-      if (handle_perp_caught(state))
+      if (handle_perp_caught(state)) {
+        state->speccy->sleep(state->speccy, 0); // balance the stamp above
         break; // Conv: Original would POP and goto main_loop to cause a restart
+      }
       move_hero_car(state);
       spawn_cars(state);
       cycle_counters(state);
@@ -1663,6 +1665,8 @@ static void test_car_anim(chqstate_t *state)
  */
 static int run_pregame_screen_loop(chqstate_t *state)
 {
+  int rc = 1; // loop
+
   state->speccy->stamp(state->speccy);
 
   draw_pregame(state);
@@ -1678,22 +1682,25 @@ static int run_pregame_screen_loop(chqstate_t *state)
   transition(state);
   update_screen(state);
   if (state->transition_control == 0) {
-    if (state->chatter_state == CHATTERSTATE_IDLE)
-      return 0; // stop
+    if (state->chatter_state == CHATTERSTATE_IDLE) {
+      rc = 0; // stop
+      goto exit;
+    }
     if (state->chatter_state < CHATTERSTATE_STOP) {
       if (keyscan(state) & USERINPUT_FIRE) {
         drive_chatter_stop(state);
         play_start_noise(state); /* exit via */
-        return 0; // stop
+        rc = 0; // stop
+        goto exit;
       }
     } else {
       setup_transition(state, TRANSITIONSTRIDE_FORWARD);
     }
   }
 
+exit:
   state->speccy->sleep(state->speccy, 250000); // wild guess
-
-  return 1; // loop
+  return rc; // loop
 }
 
 /**
