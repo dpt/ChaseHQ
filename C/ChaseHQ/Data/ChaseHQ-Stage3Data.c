@@ -60,7 +60,7 @@
 static const u8 stage3_lod_addrs_C10C[14];
 static const u8 stage3_perp_description[7];
 static const char *stage3_chatter_strings[4];
-static const u8 stage3_arrest_messages_C1E8[17];
+static const u8 stage3_arrest_messages_C1E8[70];
 static const u8 stage3_hazard_lods_C22E[6];
 static const u8 stage3_obj_defs_C234[7];
 static const u8 stage3_obj_defs_C23B[7];
@@ -246,11 +246,28 @@ static const char *stage3_chatter_strings[4] = {
 };
 
 // $C1E8
-static const u8 stage3_arrest_messages_C1E8[17] = {
-  0x06, 0x06, 0x02, 0x00, 0x02, 0xF8, 0x22, 0x59,
-  0x2D, 0x02, 0x00, 0x23, 0xF0, 0x43, 0x59, 0x03,
-  0x00,
+// clang-format off
+static const u8 stage3_arrest_messages_C1E8[70] = {
+  6,  // initial delay
+
+  6,  // delay
+  DRAWCHARSTYLE_SINGLE,
+  0,  // attribute
+  TWOBYTES(0xF802),  // backbuf
+  TWOBYTES(0x5922),  // attr
+  'O', 'K', '!', ' ', 'Y', 'O', 'U', ' ', 'A', 'R', 'E', ' ', 'U', 'N', 'D', 'E', 'R', ' ', 'A', 'R', 'R', 'E', 'S', 'T', ' ', 'O', 'N' | EOS,
+
+  45,  // delay
+  DRAWCHARSTYLE_SINGLE,
+  0,  // attribute
+  TWOBYTES(0xF023),  // backbuf
+  TWOBYTES(0x5943),  // attr
+  'S', 'U', 'S', 'P', 'I', 'C', 'I', 'O', 'N', ' ', 'O', 'F', ' ', 'S', 'E', 'L', 'L', 'I', 'N', 'G', ' ', 'D', 'R', 'U', 'G', 'S' | EOS,
+
+  TRANSITIONCONTROL_FILL_ATTRIBUTES,  // transition_control
+  DRAWOVERLAY_STOP
 };
+// clang-format on
 
 // $C22E
 static const u8 stage3_hazard_lods_C22E[6] = {

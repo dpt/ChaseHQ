@@ -97,6 +97,22 @@ CHATTERCHR_NAMES = {
     2: 'CHATTERCHR_RAYMOND', 3: 'CHATTERCHR_TONY',
 }
 
+DRAWCHARSTYLE_NAMES = {
+    1: 'DRAWCHARSTYLE_GENERIC',
+    2: 'DRAWCHARSTYLE_SINGLE',
+    3: 'DRAWCHARSTYLE_DOUBLE',
+    4: 'DRAWCHARSTYLE_SINGLE_INVERTED',
+    5: 'DRAWCHARSTYLE_DOUBLE_INVERTED',
+}
+
+TRANSITIONCONTROL_NAMES = {
+    0: 'TRANSITIONCONTROL_STOP',
+    1: 'TRANSITIONCONTROL_DRAW_MUGSHOTS',
+    2: 'TRANSITIONCONTROL_OVERLAY_MESSAGES',
+    3: 'TRANSITIONCONTROL_FILL_ATTRIBUTES',
+    4: 'TRANSITIONCONTROL_FADE',
+}
+
 CHATTERCMD_NAMES = {
     0xFC: 'CHATTERCMD_RANDOM',
     0xFE: 'CHATTERCMD_PAUSE',
@@ -302,12 +318,50 @@ def parse_defm_text(rest: str) -> str:
     return '"' + ''.join(c_chars) + '"'
 
 
-def parse_defm_strings(path: str) -> Dict[int, str]:
-    """Scan a skool file and return addr → C string literal for each DEFM line.
+def _parse_defm_raw(rest: str) -> List[int]:
+    """Parse a DEFM operand to raw byte values."""
+    in_q = False
+    for i, ch in enumerate(rest):
+        if ch == '"':
+            in_q = not in_q
+        elif ch == ';' and not in_q:
+            rest = rest[:i]
+            break
+    rest = rest.strip()
+    result = []
+    i = 0
+    while i < len(rest):
+        if rest[i] == '"':
+            i += 1
+            while i < len(rest) and rest[i] != '"':
+                result.append(ord(rest[i]))
+                i += 1
+            i += 1
+        elif rest[i] in (' ', ','):
+            i += 1
+        elif rest[i] == '$':
+            result.append(int(rest[i + 1:i + 3], 16))
+            i += 3
+        elif rest[i].isdigit():
+            j = i
+            while j < len(rest) and rest[j].isdigit():
+                j += 1
+            result.append(int(rest[i:j]))
+            i = j
+        else:
+            i += 1
+    return result
 
-    Skool address labels are already absolute, so no bank offset is applied.
+
+def parse_defm_map(path: str) -> Tuple[Dict[int, str], Dict[int, List[int]]]:
+    """Scan a skool file for DEFM lines in a single pass.
+
+    Returns (strings, bytemap) where strings maps addr → C string literal
+    and bytemap maps addr → raw byte list.  Skool label addresses are
+    already absolute so no bank offset is applied.
     """
-    result: Dict[int, str] = {}
+    strings:  Dict[int, str]       = {}
+    bytemap:  Dict[int, List[int]] = {}
     with open(path, encoding='utf-8', errors='replace') as f:
         for line in f:
             line = line.rstrip()
@@ -315,8 +369,11 @@ def parse_defm_strings(path: str) -> Dict[int, str]:
             if not m:
                 m = re.match(r'^\s+\$([0-9A-Fa-f]+)\s+DEFM\s+(.*)', line)
             if m:
-                result[int(m.group(1), 16)] = parse_defm_text(m.group(2))
-    return result
+                addr = int(m.group(1), 16)
+                rest = m.group(2)
+                strings[addr] = parse_defm_text(rest)
+                bytemap[addr] = _parse_defm_raw(rest)
+    return strings, bytemap
 
 
 # ── Map data decoders ─────────────────────────────────────────────────────────
@@ -828,6 +885,85 @@ def emit_lod_table(stage: int, sec: Section, bank_offset: int,
     return lines, n_lods
 
 
+def emit_arrest_messages(stage: int, sec: Section,
+                         defm_bytes: Dict[int, List[int]]) -> Tuple[List[str], int]:
+    """Decode an arrest_msgs section using delay/DRAWCHARSTYLE/TWOBYTES/EOS macros.
+
+    Returns (C lines, total byte count including embedded DEFM text).
+    """
+    nm = f'stage{stage}_arrest_messages_{sec.start_addr:04X}'
+    recs = sec.records
+    n = len(recs)
+    content: List[str] = []
+    total = 0
+
+    def val(r: SkoolRecord) -> int:
+        return r.values[0] if r.values else 0
+
+    def emit_text(data: List[int]) -> None:
+        nonlocal total
+        parts = []
+        for j, b in enumerate(data):
+            if j == len(data) - 1:           # last byte carries EOS in top bit
+                base = b & 0x7F
+                lit = f"'{chr(base)}'" if 0x20 <= base <= 0x7E and chr(base) not in ("'", '\\') \
+                      else f'0x{base:02X}'
+                parts.append(f'{lit} | EOS')
+            else:
+                parts.append(f"'{chr(b)}'" if 0x20 <= b <= 0x7E and chr(b) not in ("'", '\\')
+                             else f'0x{b:02X}')
+        content.append('  ' + ', '.join(parts) + ',')
+        total += len(data)
+
+    i = 0
+    # Initial delay
+    if i < n and recs[i].rtype == 'B':
+        content.append(f'  {val(recs[i])},  // initial delay')
+        total += 1
+        i += 1
+
+    while i < n:
+        # Message block: DEFB delay, DEFB flags, DEFB attr, DEFW backbuf, DEFW attr_addr
+        if (i + 4 < n
+                and recs[i].rtype == 'B'
+                and recs[i + 1].rtype == 'B'
+                and recs[i + 2].rtype == 'B'
+                and recs[i + 3].rtype == 'W'
+                and recs[i + 4].rtype == 'W'):
+            style = DRAWCHARSTYLE_NAMES.get(val(recs[i + 1]), str(val(recs[i + 1])))
+            defm_addr = recs[i + 4].addr + 2
+            content.append('')
+            content.append(f'  {val(recs[i])},  // delay')
+            content.append(f'  {style},')
+            content.append(f'  {val(recs[i + 2])},  // attribute')
+            content.append(f'  TWOBYTES(0x{val(recs[i + 3]):04X}),  // backbuf')
+            content.append(f'  TWOBYTES(0x{val(recs[i + 4]):04X}),  // attr')
+            total += 7   # 3 × DEFB + 2 × DEFW
+            if defm_addr in defm_bytes:
+                emit_text(defm_bytes[defm_addr])
+            i += 5
+        else:
+            # End markers: first byte = TRANSITIONCONTROL, last = DRAWOVERLAY_STOP
+            content.append('')
+            end_bytes = [b for r in recs[i:] for b in r.values]
+            for k, b in enumerate(end_bytes):
+                if k < len(end_bytes) - 1:
+                    name = TRANSITIONCONTROL_NAMES.get(b, str(b))
+                    content.append(f'  {name},  // transition_control')
+                else:
+                    content.append(f'  DRAWOVERLAY_STOP')
+                total += 1
+            break
+
+    lines = [f'// ${sec.start_addr:04X}',
+             '// clang-format off',
+             f'static const u8 {nm}[{total}] = {{']
+    lines.extend(content)
+    lines.append('};')
+    lines.append('// clang-format on')
+    return lines, total
+
+
 # ── Stage struct emitter ──────────────────────────────────────────────────────
 
 def emit_stage_struct(stage: int, sections: List[Section],
@@ -959,7 +1095,7 @@ def emit_stage_struct(stage: int, sections: List[Section],
 def convert(skool_path: str, stage: int, obj_names: List[str]) -> None:
     records, section_comments = parse_skool(skool_path)
     bank_offset = compute_bank_offset(records)
-    defm_strings = parse_defm_strings(skool_path)
+    defm_strings, defm_bytes = parse_defm_map(skool_path)
     sections = split_into_sections(records, section_comments)
 
     # First pass: collect all bitmap section names so LOD tables can reference them
@@ -1093,11 +1229,11 @@ def convert(skool_path: str, stage: int, obj_names: List[str]) -> None:
                 fwd_decls.append(f'static const u8 {nm}[{len(sec.bytes_flat)}];')
 
         elif sec.stype == 'arrest_msgs':
-            data = sec.bytes_flat
-            nm = array_name(stage, 'arrest_msgs', sec.start_addr)
-            all_lines.extend(emit_raw_array(nm, data, 8, sec.start_addr))
+            lines, total = emit_arrest_messages(stage, sec, defm_bytes)
+            all_lines.extend(lines)
             all_lines.append('')
-            fwd_decls.append(f'static const u8 {nm}[{len(data)}];')
+            nm = array_name(stage, 'arrest_msgs', sec.start_addr)
+            fwd_decls.append(f'static const u8 {nm}[{total}];')
 
         elif sec.stype == 'perp_desc':
             all_lines.extend(emit_perp_description(stage, sec))
