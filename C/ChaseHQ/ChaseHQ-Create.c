@@ -85,13 +85,30 @@ static void chq_initialise(chqstate_t *state)
   state->rng_seed[1] = 0x2D;
   state->rng_seed[2] = 0xE9;
 
-  // $E300
-  state->height_table[0] = 0x60; // sentinel, hardcoded in Z80 RAM
+  // $A13B
+  state->start_speech_cycle = 4;
 
   // $A240
   state->road_buffer_offset = &state->road_buffer[0];
   state->road_buffer_start  = &state->road_buffer[0];
   state->road_buffer_end    = &state->road_buffer[256];
+
+  // $CE33
+  state->debris_table[0]  = state->debris_subtables[0];
+  state->debris_table[1]  = state->debris_subtables[1];
+  state->debris_table[2]  = state->debris_subtables[2];
+  state->debris_table[3]  = state->debris_subtables[4];
+  state->debris_table[4]  = state->debris_subtables[2];
+  state->debris_table[5]  = state->debris_subtables[3];
+  state->debris_table[6]  = state->debris_subtables[0];
+  state->debris_table[7]  = state->debris_subtables[1];
+  state->debris_table[8]  = state->debris_subtables[4];
+  state->debris_table[9]  = state->debris_subtables[2];
+  state->debris_table[10] = state->debris_subtables[3];
+  state->debris_table[11] = state->debris_subtables[0];
+
+  // $E300
+  state->height_table[0] = 0x60; // sentinel, hardcoded in Z80 RAM
 
   /* $EF00: Build bit-reversal lookup table (done in bootstrap() in the full game) */
   {
@@ -108,20 +125,6 @@ static void chq_initialise(chqstate_t *state)
       state->flipped[i] = r;
     }
   }
-
-  // $CE33
-  state->debris_table[0]  = state->debris_subtables[0];
-  state->debris_table[1]  = state->debris_subtables[1];
-  state->debris_table[2]  = state->debris_subtables[2];
-  state->debris_table[3]  = state->debris_subtables[4];
-  state->debris_table[4]  = state->debris_subtables[2];
-  state->debris_table[5]  = state->debris_subtables[3];
-  state->debris_table[6]  = state->debris_subtables[0];
-  state->debris_table[7]  = state->debris_subtables[1];
-  state->debris_table[8]  = state->debris_subtables[4];
-  state->debris_table[9]  = state->debris_subtables[2];
-  state->debris_table[10] = state->debris_subtables[3];
-  state->debris_table[11] = state->debris_subtables[0];
 }
 
 /* ----------------------------------------------------------------------- */

@@ -1555,7 +1555,7 @@ static void cpu_driver(chqstate_t *state)
   CHKDRAW("move_hero_car");
   check_scenery_collisions(state);
   CHKDRAW("check_scenery_collisions");
-  draw_everything_else(state);
+  //draw_everything_else(state);
   animate_hero_car(state); /* exit via */
   CHKDRAW("animate_hero_car");
 
@@ -14738,8 +14738,10 @@ CHQ_API void chq_stop(chqstate_t *state)
 
 CHQ_API void chq_main(chqstate_t *state)
 {
+  // There's no point calling this function yet. Not until the game logic is
+  // teased apart. The real game logic hangs off of 'bootstrap'.
+  assert(0);
   if (RUN_FULL_GAME) {
-    assert(0); // shouldn't get called rn
     main_loop(state);
   } else {
     while (run_pregame_screen_loop(state)) /* Conv: Split out */
