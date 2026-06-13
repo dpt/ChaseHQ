@@ -409,6 +409,14 @@ static u16 prevbufrow(int backbuf)
  */
 static const void *lookup_map_goto(chqstate_t *state, int z80)
 {
+  static const void *(*const stage_lookup_fns[])(chqstate_t *, u16) = {
+    stage1_lookup_map_goto,
+    stage2_lookup_map_goto,
+    stage3_lookup_map_goto,
+    stage4_lookup_map_goto,
+    stage5_lookup_map_goto,
+  };
+
   switch (z80) {
   case 0xE2AA: return &perp_escape_curvature[0];
   case 0xE2AF: return &perp_escape_height[0];
@@ -420,16 +428,9 @@ static const void *lookup_map_goto(chqstate_t *state, int z80)
   case 0xE2CC: return &forked_road_height[0];
   case 0xE2D1: return &forked_road_lanes[0];
   default:
-    switch (state->current_stage_number) {
-    case 1: return stage1_lookup_map_goto(state, z80);
-    case 2: return stage2_lookup_map_goto(state, z80);
-    case 3: return stage3_lookup_map_goto(state, z80);
-    case 4: return stage4_lookup_map_goto(state, z80);
-    case 5: return stage5_lookup_map_goto(state, z80);
-    default:
-      assert("Unknown stage" == NULL);
-      return NULL;
-    }
+    assert(state->current_stage_number >= 1 &&
+           state->current_stage_number < (int)NELEMS(stage_lookup_fns));
+    return stage_lookup_fns[state->current_stage_number - 1](state, z80);
   }
 }
 
@@ -1554,7 +1555,7 @@ static void run_pregame_screen(chqstate_t *state)
   // Conv: Dead code removed
 }
 
-static void test(chqstate_t *state)
+static void test_car_anim(chqstate_t *state)
 {
   memset(&state->speccy->screen.attributes[256],
          attribute_BRIGHT_BLACK_OVER_GREEN, 512);
@@ -1638,11 +1639,15 @@ static int run_pregame_screen_loop(chqstate_t *state)
 
   draw_pregame(state);
   drive_chatter(state);
-  reveal_perp_car(state);
-  animate_meters(state);
+  if (0) {
+    // forcing the pregame screen loop to do other stuff for now
+    update_scoreboard(state);
+    test_car_anim(state);
+  } else {
+    reveal_perp_car(state);
+    animate_meters(state);
+  }
   transition(state);
-  if (1)
-    test(state);
   update_screen(state);
   if (state->transition_control == 0) {
     if (state->chatter_state == CHATTERSTATE_IDLE)
