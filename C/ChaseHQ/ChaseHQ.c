@@ -109,6 +109,11 @@
 
 /* ----------------------------------------------------------------------- */
 
+// Test rigging enable
+#define RUN_FULL_GAME 0
+
+/* ----------------------------------------------------------------------- */
+
 /* Z80 ish macros */
 
 /** Return an 8-bit value `v` rotated right by `sh` bits */
@@ -1662,7 +1667,7 @@ static int run_pregame_screen_loop(chqstate_t *state)
 
   draw_pregame(state);
   drive_chatter(state);
-  if (0) {
+  if (!RUN_FULL_GAME) {
     // forcing the pregame screen loop to do other stuff for now
     update_scoreboard(state);
     test_car_anim(state);
@@ -14649,8 +14654,6 @@ attract_mode_128k_8281:
 }
 
 /* ----------------------------------------------------------------------- */
-
-#define RUN_FULL_GAME 0
 
 CHQ_API void chq_setup(chqstate_t *state)
 {
