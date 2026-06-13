@@ -935,23 +935,23 @@ static void dr_read_lanes(chqstate_t *state, u8 *IXplanes, u8 *IYpheight,
                           int Bfill_pattern, int Chorizon, int DEbackbuf, int Lrow);
 static void dr_four_lane_highway(chqstate_t *state, int Bfill_pattern,
                                  int DEbackbuf, int Lrow);
-static void dr_c54d(chqstate_t *state, int Bfill_pattern, int DEbackbuf,
+static void dr_set_lane_callback(chqstate_t *state, int Bfill_pattern, int DEbackbuf,
                     int Lrow, dr_callback_t *HLdash_callback);
-static void dr_c551(chqstate_t *state, int Bfill_pattern, int DEbackbuf,
+static void dr_dispatch_fill(chqstate_t *state, int Bfill_pattern, int DEbackbuf,
                     int Lrow);
-static void dr_c55f_unfilled_path(chqstate_t *state, int DEbackbuf,
+static void dr_advance_unfilled(chqstate_t *state, int DEbackbuf,
                                   int Lrow, int Adash_fill);
-static void dr_c565_unfilled_path(chqstate_t *state, int DEbackbuf);
-static void dr_scanline_rollover_2(chqstate_t *state, int DEbackbuf,
+static void dr_write_scanline_unfilled(chqstate_t *state, int DEbackbuf);
+static void dr_rollover_filled(chqstate_t *state, int DEbackbuf,
                                    int Lrow, int Adash_fill);
-static void dr_scanline_rollover_1(chqstate_t *state, int DEbackbuf);
-static void dr_c598_filled_path(chqstate_t *state, int DEbackbuf,
+static void dr_rollover_unfilled(chqstate_t *state, int DEbackbuf);
+static void dr_enter_filled(chqstate_t *state, int DEbackbuf,
                                 int Lrow, int Adash_fill);
-static void dr_c5a1(chqstate_t *state, int DEbackbuf, int Lrow,
+static void dr_advance_filled(chqstate_t *state, int DEbackbuf, int Lrow,
                     int Adash_fill);
 static void dr_fill(chqstate_t *state, int DEbackbuf, int Lrow,
                     int Adash_fill);
-static void dr_c62e(chqstate_t *state, u8 *SPoutput, int jump_index,
+static void dr_fill_left_stripe(chqstate_t *state, u8 *SPoutput, int jump_index,
                     int DEbackbuf, int HLfill);
 
 static void pre_shift_backdrop(chqstate_t *state);
@@ -11756,7 +11756,7 @@ c439:
   IYheight++; /* $C439: INC IYheight -- advance height pointer for next iteration */
 c43b:
   state->dr_callback = dr_four_lane_highway;
-  dr_c551(state, 0, 0, 0); // FIXME - must be crap
+  dr_dispatch_fill(state, 0, 0, 0); // FIXME - must be crap
 }
 
 /**
@@ -11918,7 +11918,7 @@ static void dr_read_lanes(chqstate_t *state, u8 *IXplanes, u8 *IYpheight,
 
     Bcopy_of_cdash = Acopy_of_cdash;
     assert(DEbackbuf >= 0xF000 || DEbackbuf <= 0x0100);
-    dr_c551(state, Bcopy_of_cdash, DEbackbuf, L); // was exit via
+    dr_dispatch_fill(state, Bcopy_of_cdash, DEbackbuf, L); // was exit via
     return;
   }
 
@@ -11933,7 +11933,7 @@ static void dr_read_lanes(chqstate_t *state, u8 *IXplanes, u8 *IYpheight,
   state->on_dirt_track = ((Ldash_lanes & 0x18) == 0) ? 1 : 0;
   state->dr_neg_lane_count = -1;
   assert(DEbackbuf >= 0xF000 || DEbackbuf <= 0x0100);
-  dr_c54d(state, Bfill_pattern, DEbackbuf, L, dr_four_lane_highway); // exit via
+  dr_set_lane_callback(state, Bfill_pattern, DEbackbuf, L, dr_four_lane_highway); // exit via
 }
 
 /**
@@ -11958,12 +11958,12 @@ static void dr_four_lane_highway(chqstate_t *state, int Bfill_pattern,
   state->dr_neg_lane_count = -4;
 
   assert(DEbackbuf >= 0xF000 || DEbackbuf <= 0x0100);
-  dr_c54d(state, Bfill_pattern, DEbackbuf, Lrow,
-          dr_c551); // was FALLTHROUGH
+  dr_set_lane_callback(state, Bfill_pattern, DEbackbuf, Lrow,
+          dr_dispatch_fill); // was FALLTHROUGH
 }
 
 /**
- * $C54D: draw_road: c54d
+ * $C54D: draw_road: set lane callback and enter fill dispatch
  *
  * \param[in] state           Pointer to game state.
  * \param[in] Bfill_pattern   Fill pattern.
@@ -11971,24 +11971,24 @@ static void dr_four_lane_highway(chqstate_t *state, int Bfill_pattern,
  * \param[in] Lrow          Byte offset within road table page (row index).
  * \param[in] HLdash_callback TBD
  */
-static void dr_c54d(chqstate_t *state, int Bfill_pattern, int DEbackbuf,
+static void dr_set_lane_callback(chqstate_t *state, int Bfill_pattern, int DEbackbuf,
                     int Lrow, dr_callback_t *HLdash_callback)
 {
   state->dr_callback = HLdash_callback;
   // EXX - UNBANK (we enter banked)
   assert(DEbackbuf >= 0xF000 || DEbackbuf <= 0x0100);
-  dr_c551(state, Bfill_pattern, DEbackbuf, Lrow); // was FALLTHROUGH
+  dr_dispatch_fill(state, Bfill_pattern, DEbackbuf, Lrow); // was FALLTHROUGH
 }
 
 /**
- * $C551: draw_road: c551
+ * $C551: draw_road: dispatch to filled or unfilled path
  *
  * \param[in] state         Pointer to game state.
  * \param[in] Bfill_pattern Fill pattern.
  * \param[in] DEbackbuf     Pointer into backbuffer.
  * \param[in] Lrow          Byte offset within road table page (row index).
  */
-static void dr_c551(chqstate_t *state, int Bfill_pattern, int DEbackbuf,
+static void dr_dispatch_fill(chqstate_t *state, int Bfill_pattern, int DEbackbuf,
                     int Lrow)
 {
   int Afill_pattern;
@@ -11996,28 +11996,28 @@ static void dr_c551(chqstate_t *state, int Bfill_pattern, int DEbackbuf,
   Afill_pattern = Bfill_pattern;
   if (Afill_pattern) {
     assert(DEbackbuf >= 0xF000 || DEbackbuf <= 0x0100);
-    dr_c598_filled_path(state, DEbackbuf, Lrow, Afill_pattern); // exit via
+    dr_enter_filled(state, DEbackbuf, Lrow, Afill_pattern); // exit via
     return;
   }
 
   // EXX
-  state->dr_fill_fn = dr_c55f_unfilled_path;
+  state->dr_fill_fn = dr_advance_unfilled;
   // EXX
   // EX AF,AF'
   assert(DEbackbuf >= 0xF000 || DEbackbuf <= 0x0100);
-  dr_c55f_unfilled_path(state, DEbackbuf, Lrow,
+  dr_advance_unfilled(state, DEbackbuf, Lrow,
                         Afill_pattern); // was FALLTHROUGH
 }
 
 /**
- * $C55F: draw_road: c55f
+ * $C55F: draw_road: advance backbuffer and rollover check (unfilled path)
  *
  * \param[in] state         Pointer to game state.
  * \param[in] Bfill_pattern Fill pattern.
  * \param[in] DEbackbuf     Pointer into backbuffer.
  * \param[in] L             Value
  */
-static void dr_c55f_unfilled_path(chqstate_t *state, int DEbackbuf,
+static void dr_advance_unfilled(chqstate_t *state, int DEbackbuf,
                                   int Lrow, int Adash_fill)
 {
   int Ahi;
@@ -12027,21 +12027,21 @@ static void dr_c55f_unfilled_path(chqstate_t *state, int DEbackbuf,
   Ahi &= 0x0F;
   if (Ahi == 0) {
     assert(DEbackbuf >= 0xF000 || DEbackbuf <= 0x0100);
-    dr_scanline_rollover_1(state, DEbackbuf); // was exit via
+    dr_rollover_unfilled(state, DEbackbuf); // was exit via
     return;
   }
 
   assert(DEbackbuf >= 0xF000 || DEbackbuf <= 0x0100);
-  dr_c565_unfilled_path(state, DEbackbuf); // was FALLTHROUGH
+  dr_write_scanline_unfilled(state, DEbackbuf); // was FALLTHROUGH
 }
 
 /**
- * $C565: draw_road: c565
+ * $C565: draw_road: write unfilled (zero) road scanline
  *
  * \param[in] state     Pointer to game state.
  * \param[in] DEbackbuf Pointer into backbuffer.
  */
-static void dr_c565_unfilled_path(chqstate_t *state, int DEbackbuf)
+static void dr_write_scanline_unfilled(chqstate_t *state, int DEbackbuf)
 {
   int B;
   u16 DEdash_backbuf;
@@ -12063,18 +12063,18 @@ static void dr_c565_unfilled_path(chqstate_t *state, int DEbackbuf)
   SPoutput = ADDRTOBACKBUF((Hdash << 8) | Ldash);
   HLdash_fill = 0; // fill value
   Cdash = Ldash;
-  dr_c62e(state, SPoutput, 0 /* index */, DEdash_backbuf, HLdash_fill);
+  dr_fill_left_stripe(state, SPoutput, 0 /* index */, DEdash_backbuf, HLdash_fill);
 }
 
 /**
- * $C57C: draw_road: scanline rollover 2
+ * $C57C: draw_road: backbuffer row advance with rollover (filled path)
  *
  * \param[in] state      Pointer to game state.
  * \param[in] DEbackbuf  Pointer into backbuffer.
  * \param[in] L          Value
  * \param[in] Adash_fill Value
  */
-static void dr_scanline_rollover_2(chqstate_t *state, int DEbackbuf,
+static void dr_rollover_filled(chqstate_t *state, int DEbackbuf,
                                    int Lrow, int Adash_fill)
 {
   LO_ADD(DEbackbuf, 32);
@@ -12085,47 +12085,47 @@ static void dr_scanline_rollover_2(chqstate_t *state, int DEbackbuf,
 }
 
 /**
- * $C58A: draw_road: scanline rollover 1
+ * $C58A: draw_road: backbuffer row advance with rollover (unfilled path)
  *
  * \param[in] state     Pointer to game state.
  * \param[in] DEbackbuf Pointer into backbuffer.
  */
-static void dr_scanline_rollover_1(chqstate_t *state, int DEbackbuf)
+static void dr_rollover_unfilled(chqstate_t *state, int DEbackbuf)
 {
   LO_ADD(DEbackbuf, 32);
   if ((DEbackbuf & 0xFF) < 32) // carry (low byte wrapped)
     assert(DEbackbuf >= 0xF000 || DEbackbuf <= 0x0100);
-  dr_c565_unfilled_path(state, DEbackbuf); // exit via
+  dr_write_scanline_unfilled(state, DEbackbuf); // exit via
 }
 
 /**
- * $C598: draw_road: c598
+ * $C598: draw_road: enter filled path (set fill_fn and start advance)
  *
  * \param[in] state      Pointer to game state.
  * \param[in] DEbackbuf  Pointer into backbuffer.
  * \param[in] L          Value
  * \param[in] Adash_fill Fill pattern.
  */
-static void dr_c598_filled_path(chqstate_t *state, int DEbackbuf,
+static void dr_enter_filled(chqstate_t *state, int DEbackbuf,
                                 int Lrow, int Adash_fill)
 {
   // EXX
-  state->dr_fill_fn = dr_c5a1;
+  state->dr_fill_fn = dr_advance_filled;
   // EXX
   // EX AF,AF'
   assert(DEbackbuf >= 0xF000 || DEbackbuf <= 0x0100);
-  dr_c5a1(state, DEbackbuf, Lrow, Adash_fill); // was FALLTHROUGH
+  dr_advance_filled(state, DEbackbuf, Lrow, Adash_fill); // was FALLTHROUGH
 }
 
 /**
- * $C5A1: draw_road: c5a1
+ * $C5A1: draw_road: advance backbuffer and rollover check (filled path)
  *
  * \param[in] state      Pointer to game state.
  * \param[in] DEbackbuf  Pointer into backbuffer.
  * \param[in] L          Value
  * \param[in] Adash_fill Fill pattern.
  */
-static void dr_c5a1(chqstate_t *state, int DEbackbuf, int Lrow,
+static void dr_advance_filled(chqstate_t *state, int DEbackbuf, int Lrow,
                     int Adash_fill)
 {
   int A;
@@ -12135,7 +12135,7 @@ static void dr_c5a1(chqstate_t *state, int DEbackbuf, int Lrow,
   HI_DEC(DEbackbuf);
   if ((A & 0x0F) == 0) {
     assert(DEbackbuf >= 0xF000 || DEbackbuf <= 0x0100);
-    dr_scanline_rollover_2(state, DEbackbuf, Lrow, Adash_fill); // exit via
+    dr_rollover_filled(state, DEbackbuf, Lrow, Adash_fill); // exit via
     return;
   }
 
@@ -12266,11 +12266,11 @@ static void dr_fill(chqstate_t *state, int DEbackbuf, int Lrow,
   case 14: SPoutput -= 2; *SPoutput = BCzerofill;
   }
 
-  dr_c62e(state, SPoutput, state->dr_left_stripe_width / 1, DEbackbuf,
+  dr_fill_left_stripe(state, SPoutput, state->dr_left_stripe_width / 1, DEbackbuf,
           HLfill); // FALLTHROUGH
 }
 
-static void dr_c62e(chqstate_t *state, u8 *SPoutput, int jump_index,
+static void dr_fill_left_stripe(chqstate_t *state, u8 *SPoutput, int jump_index,
                     int DEbackbuf, int HLfill)
 {
   // CHECK Are we banked on entry?
