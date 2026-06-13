@@ -461,7 +461,7 @@ static void play_engine_sfx_48k(chqstate_t *state);
 static void attract_mode_48k(chqstate_t *state);
 
 static void start_siren_hook(chqstate_t *state);
-static void play_engine_or_siren_sfx_hook(chqstate_t *state);
+static void play_regular_sfx_hook(chqstate_t *state);
 static void silence_audio_hook(chqstate_t *state);
 static void write_audio_registers_hook(chqstate_t *state);
 static void setup_engine_sfx_hook(chqstate_t *state);
@@ -1187,7 +1187,10 @@ static void attract_mode_48k(chqstate_t *state)
  */
 static void start_siren_hook(chqstate_t *state)
 {
-  // NOP
+  if (state->mode_128k)
+    play_siren_sfx_128k(state);
+  else
+    start_siren_128k(state);
 }
 
 /**
@@ -1195,9 +1198,12 @@ static void start_siren_hook(chqstate_t *state)
  *
  * \param[in] state Pointer to game state.
  */
-static void play_engine_or_siren_sfx_hook(chqstate_t *state)
+static void play_regular_sfx_hook(chqstate_t *state)
 {
-  play_engine_sfx_48k(state);
+  if (state->mode_128k)
+    play_siren_sfx_128k(state);
+  else
+    play_engine_sfx_48k(state);
 }
 
 /**
@@ -1207,8 +1213,11 @@ static void play_engine_or_siren_sfx_hook(chqstate_t *state)
  */
 static void silence_audio_hook(chqstate_t *state)
 {
-  // NOP
-}
+  if (state->mode_128k)
+    silence_audio_128k(state);
+  else
+    ; // NOP
+  }
 
 /**
  * $83BE: Write audio registers hook
@@ -1217,7 +1226,10 @@ static void silence_audio_hook(chqstate_t *state)
  */
 static void write_audio_registers_hook(chqstate_t *state)
 {
-  // NOP
+  if (state->mode_128k)
+    write_audio_registers_128k(state);
+  else
+    ; // NOP
 }
 
 /**
@@ -1227,7 +1239,10 @@ static void write_audio_registers_hook(chqstate_t *state)
  */
 static void setup_engine_sfx_hook(chqstate_t *state)
 {
-  // NOP
+  if (state->mode_128k)
+    setup_turbo_sfx_128k(state);
+  else
+    ; // NOP
 }
 
 /**
@@ -1237,18 +1252,24 @@ static void setup_engine_sfx_hook(chqstate_t *state)
  */
 static void play_engine_sfx_hook(chqstate_t *state)
 {
-  setup_engine_sfx_48k(state);
+  if (state->mode_128k)
+    play_turbo_sfx_128k(state);
+  else
+    setup_engine_sfx_48k(state);
 }
 
 /**
  * $83C7: Play speech hook
  *
- * \param[in] state Pointer to game state.
- * \param[in] A     Parameter.
+ * \param[in] state  Pointer to game state.
+ * \param[in] sample Index of sample to play. (was A)
  */
-static void play_speech_hook(chqstate_t *state, int Asample)
+static void play_speech_hook(chqstate_t *state, int sample)
 {
-  // NOP
+  if (state->mode_128k)
+    play_speech_128k(state, sample);
+  else
+    ; // NOP
 }
 
 /**
@@ -1258,8 +1279,10 @@ static void play_speech_hook(chqstate_t *state, int Asample)
  */
 static void attract_mode_hook(chqstate_t *state)
 {
-  // attract_mode_48k(state);
-  attract_mode_128k(state);
+  if (state->mode_128k)
+    attract_mode_128k(state);
+  else
+    attract_mode_48k(state);
 }
 
 /**
@@ -1368,37 +1391,37 @@ static void main_loop(chqstate_t *state)
       move_hero_car(state);
       spawn_cars(state);
       cycle_counters(state);
-      play_engine_or_siren_sfx_hook(state);
+      play_regular_sfx_hook(state);
       build_height_table(state);
       scroll_horizon(state);
-      play_engine_or_siren_sfx_hook(state);
+      play_regular_sfx_hook(state);
       layout_road(state);
-      play_engine_or_siren_sfx_hook(state);
+      play_regular_sfx_hook(state);
       draw_road(state);
-      play_engine_or_siren_sfx_hook(state);
+      play_regular_sfx_hook(state);
       layout_objects(state);
       prepare_tunnel(state);
       spawn_hazards(state);
       drive_helicopter(state);
       choose_dirt_and_stones(state);
-      play_engine_or_siren_sfx_hook(state);
+      play_regular_sfx_hook(state);
       draw_all_hazards(state);
       layout_dirt_and_stones(state);
-      play_engine_or_siren_sfx_hook(state);
+      play_regular_sfx_hook(state);
       move_helicopter(state);
       check_scenery_collisions(state);
-      play_engine_or_siren_sfx_hook(state);
+      play_regular_sfx_hook(state);
       draw_everything_else(state);
-      play_engine_or_siren_sfx_hook(state);
+      play_regular_sfx_hook(state);
       animate_hero_car(state);
       speed_score(state);
       update_scoreboard(state);
       calc_overtake_bonus(state);
-      play_engine_or_siren_sfx_hook(state);
+      play_regular_sfx_hook(state);
       drive_chatter(state);
       draw_smash_bar(state);
       transition(state);
-      play_engine_or_siren_sfx_hook(state);
+      play_regular_sfx_hook(state);
       update_screen(state);
       exit_fork(state);
       state->speccy->sleep(state->speccy, 100000); // guess
@@ -2171,7 +2194,7 @@ static void drive_sfx(chqstate_t *state)
   }
 
   play_engine_sfx_hook(state);
-  play_engine_or_siren_sfx_hook(state);
+  play_regular_sfx_hook(state);
   write_audio_registers_hook(state);
 
   if (state->sfx_index == 0)
