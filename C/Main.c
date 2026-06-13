@@ -190,6 +190,13 @@ static void chq_speaker_handler(int on_off, void *opaque)
   // TODO: All sound.
 }
 
+static void chq_ay_out_handler(uint16_t port, uint8_t byte, void *opaque)
+{
+  chq_sdl_state_t *state = opaque;
+
+  // TODO: AY-3-8912 audio.
+}
+
 static int chq_game_thread(void *opaque)
 {
   chq_sdl_state_t *state = opaque;
@@ -384,6 +391,7 @@ int main(void)
   zxconfig.key      = &chq_key_handler;
   zxconfig.border   = &chq_border_handler;
   zxconfig.speaker  = &chq_speaker_handler;
+  zxconfig.ay_out   = &chq_ay_out_handler;
   zxconfig.bgr_pixels = (Rmask < Bmask); /* R in lower byte = BGR format */
 
   state.zx = zxspectrum_create(&zxconfig);

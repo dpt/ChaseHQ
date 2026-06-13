@@ -91,6 +91,10 @@ enum
 
   port_BORDER_EAR_MIC           = 0x00FE, /* Border, Ear, Mic */
 
+  port_128K_PAGING              = 0x7FFD, /* 128K memory bank select */
+  port_AY_REGISTER              = 0xFFFD, /* AY-3-8912 register select */
+  port_AY_DATA                  = 0xBFFD, /* AY-3-8912 register write */
+
   port_KEYBOARD_SHIFTZXCV       = 0xFEFE, /* 11111110 */
   port_KEYBOARD_ASDFG           = 0xFDFE, /* 11111101 */
   port_KEYBOARD_QWERT           = 0xFBFE, /* 11111011 */
@@ -224,6 +228,10 @@ typedef struct zxconfig
 
   /** App callback called to sound the speaker. */
   void (*speaker)(int on_off, void *opaque);
+
+  /** App callback for AY-3-8912 register select (port_AY_REGISTER) and
+   *  data write (port_AY_DATA). May be NULL. */
+  void (*ay_out)(uint16_t port, uint8_t byte, void *opaque);
 
   /** Non-zero to output 0x00BBGGRR pixels (ABGR8888); zero for 0x00RRGGBB (ARGB8888). */
   int bgr_pixels;

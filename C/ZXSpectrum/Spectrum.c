@@ -185,6 +185,16 @@ static void zx_out(zxspectrum_t *state, uint16_t address, uint8_t byte)
     }
     break;
 
+  case port_128K_PAGING:
+    /* Memory bank selection: no-op in the C port (no physical paging). */
+    break;
+
+  case port_AY_REGISTER:
+  case port_AY_DATA:
+    if (prv->config.ay_out)
+      prv->config.ay_out(address, byte, prv->config.opaque);
+    break;
+
   default:
     assert("zx_out not implemented for that port" == NULL);
     break;
