@@ -507,9 +507,10 @@ def array_name(stage: int, stype: str, addr: int) -> str:
         'rightobjs':   f'stage{stage}_map_robjs_{addr:04X}',
         'perp_mugshot': f'stage{stage}_perp_face',
         'pilot_mugshot': f'stage{stage}_pilot_mugshot',
-        'bitmap':      f'stage{stage}_bitmap_{addr:04X}',
-        'lod_table':   f'stage{stage}_lods_{addr:04X}',
-        'hazard_lods': f'stage{stage}_hazard_lods_{addr:04X}',
+        'bitmap':       f'stage{stage}_bitmap_{addr:04X}',
+        'lod_table':    f'stage{stage}_lods_{addr:04X}',
+        'hazard_lods':  f'stage{stage}_hazard_lods_{addr:04X}',
+        'arrest_msgs':  f'stage{stage}_arrest_messages_{addr:04X}',
     }
     return prefixes.get(stype, f'stage{stage}_data_{addr:04X}')
 
@@ -741,8 +742,15 @@ def emit_stage_struct(stage: int, sections: List[Section],
     pws = perstage_sec.words_with_annots if perstage_sec else []
     for i, field in enumerate(PERSTAGE_PTR_FIELDS):
         abs_a = pws[i + 3][1] if i + 3 < len(pws) else -1
-        hint = f' (${abs_a:04X})' if abs_a >= 0 else ''
-        lines.append(f'  NULL,  /* TODO: {field}{hint} */')
+        if field == 'addrof_arrest_messages' and abs_a >= 0:
+            nm = abs_to_name.get(abs_a)
+            if nm:
+                lines.append(f'  &{nm}[0],')
+            else:
+                lines.append(f'  NULL,  /* TODO: {field} (${abs_a:04X}) */')
+        else:
+            hint = f' (${abs_a:04X})' if abs_a >= 0 else ''
+            lines.append(f'  NULL,  /* TODO: {field}{hint} */')
 
     lines.append('')
     lines.append('  NULL,  /* TODO: bitmaps_stones */')
@@ -846,7 +854,7 @@ def convert(skool_path: str, stage: int, obj_names: List[str]) -> None:
     print('#include "ZXSpectrum/Pixels.h"')
     print('#include "ZXSpectrum/Spectrum.h"')
     print()
-    print('#include "ChaseHQ.h"')
+    print('#include "../ChaseHQ.h"')
     print('#include "ChaseHQ-CommonData.h"')
     print()
     print(f'#include "ChaseHQ-Stage{stage}Data.h"')
@@ -872,7 +880,7 @@ def convert(skool_path: str, stage: int, obj_names: List[str]) -> None:
     map_stypes = {'curvature', 'height', 'lanes', 'hazards', 'leftobjs', 'rightobjs'}
     abs_to_name: Dict[int, str] = {}
     for sec in sections:
-        if sec.stype in map_stypes:
+        if sec.stype in map_stypes or sec.stype == 'arrest_msgs':
             abs_to_name[sec.start_addr] = array_name(stage, sec.stype, sec.start_addr)
 
     # ── Generate code for each section ───────────────────────────────────────
@@ -923,8 +931,15 @@ def convert(skool_path: str, stage: int, obj_names: List[str]) -> None:
             else:
                 fwd_decls.append(f'static const u8 {nm}[{len(sec.bytes_flat)}];')
 
+        elif sec.stype == 'arrest_msgs':
+            data = sec.bytes_flat
+            nm = array_name(stage, 'arrest_msgs', sec.start_addr)
+            all_lines.extend(emit_raw_array(nm, data, 8, sec.start_addr))
+            all_lines.append('')
+            fwd_decls.append(f'static const u8 {nm}[{len(data)}];')
+
         elif sec.stype in ('perstage', 'difficulty', 'setupdata', 'attractdata',
-                           'lodaddrs', 'obj_defs', 'hittable', 'arrest_msgs',
+                           'lodaddrs', 'obj_defs', 'hittable',
                            'perp_desc', 'stretchy', 'helicopter', 'hazard_lods',
                            'unknown'):
             all_lines.append(f'/* TODO: ${sec.start_addr:04X} [{sec.stype}]')

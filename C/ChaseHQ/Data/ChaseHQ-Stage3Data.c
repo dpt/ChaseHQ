@@ -57,6 +57,7 @@
 
 /* Forward declarations */
 // backdrop declared inline in stage struct
+static const u8 stage3_arrest_messages_C1E8[17];
 static const u8 stage3_map_curv_C288[];
 static const u8 stage3_map_height_C2AC[];
 static const u8 stage3_map_lanes_C2CD[];
@@ -88,13 +89,13 @@ static const u8 stage3_map_hazards_C6FC[];
 static const u8 stage3_map_lobjs_C71F[];
 static const u8 stage3_map_robjs_C7AD[];
 static const u8 stage3_perp_face[180];
-static const bitmap_t stage3_lods_C8E0[SPRITE_FRAMES];
-static const bitmap_t stage3_lods_C90A[SPRITE_FRAMES];
-static const bitmap_t stage3_lods_C934[SPRITE_FRAMES];
+static const bitmap_t stage3_lods_C8E0[6];
+static const bitmap_t stage3_lods_C90A[6];
+static const bitmap_t stage3_lods_C934[6];
 static const bitmap_t stage3_lods_CDF1[12];
 static const bitmap_t stage3_lods_CEED[5];
 static const bitmap_t stage3_lods_D2EE[5];
-static const bitmap_t stage3_lods_D64F[SPRITE_FRAMES];
+static const bitmap_t stage3_lods_D64F[6];
 static const bitmap_t stage3_lods_D7DE[5];
 static const bitmap_t stage3_lods_DA16[5];
 static const u8 stage3_bitmap_C95E[1171];
@@ -148,7 +149,7 @@ const stage_t stage3 = {
   NULL,  /* TODO: addrof_left_hand_objects ($C257) */
   NULL,  /* TODO: addrof_left_hand_short_pole_object ($C26C) */
   NULL,  /* TODO: addrof_perp_description ($C139) */
-  NULL,  /* TODO: addrof_arrest_messages ($C1E8) */
+  &stage3_arrest_messages_C1E8[0],
   NULL,  /* TODO: addrof_helicopter_stuff_1 */
   NULL,  /* TODO: addrof_helicopter_stuff_2 */
 
@@ -259,14 +260,12 @@ const stage_t stage3 = {
    $C143: DEFW $98BD  (out-of-bounds)
 */
 
-/* TODO: $C1E8 [arrest_msgs]
-   [Stage 3] Arrest messages
-   Raw: 0x06 0x06 0x02 0x00 0x02 0xF8 0x22 0x59 0x2D 0x02 0x00 0x23 0xF0 0x43 0x59 0x03 0x00
-   $C1EC: DEFW $F802  (out-of-bounds)
-   $C1EE: DEFW $5922  (out-of-bounds)
-   $C20E: DEFW $F023  (out-of-bounds)
-   $C210: DEFW $5943  (out-of-bounds)
-*/
+// $C1E8
+static const u8 stage3_arrest_messages_C1E8[17] = {
+  0x06, 0x06, 0x02, 0x00, 0x02, 0xF8, 0x22, 0x59,
+  0x2D, 0x02, 0x00, 0x23, 0xF0, 0x43, 0x59, 0x03,
+  0x00,
+};
 
 /* TODO: $C22E [hazard_lods]
    [Stage 3] Hittable hazards
@@ -1821,7 +1820,7 @@ static const u8 stage3_perp_face[180] = {
 };
 
 // $C8E0
-static const bitmap_t stage3_lods_C8E0[SPRITE_FRAMES] = {
+static const bitmap_t stage3_lods_C8E0[6] = {
   { 6, BITMAPFLAG_DEFAULT, 30, &stage3_bitmap_C95E[0], &stage3_bitmap_C95E[0] },  // [0]
   { 4, BITMAPFLAG_DEFAULT, 20, &stage3_bitmap_C95E[180], &stage3_bitmap_C95E[180] },  // [1]
   { 3, BITMAPFLAG_DEFAULT, 13, &stage3_bitmap_C95E[260], &stage3_bitmap_C95E[260] },  // [2]
@@ -1831,7 +1830,7 @@ static const bitmap_t stage3_lods_C8E0[SPRITE_FRAMES] = {
 };
 
 // $C90A
-static const bitmap_t stage3_lods_C90A[SPRITE_FRAMES] = {
+static const bitmap_t stage3_lods_C90A[6] = {
   { 6, BITMAPFLAG_DEFAULT, 29, &stage3_bitmap_C95E[363], &stage3_bitmap_C95E[363] },  // [0]
   { 4, BITMAPFLAG_DEFAULT, 19, &stage3_bitmap_C95E[537], &stage3_bitmap_C95E[537] },  // [1]
   { 3, BITMAPFLAG_DEFAULT, 14, &stage3_bitmap_C95E[613], &stage3_bitmap_C95E[613] },  // [2]
@@ -1841,7 +1840,7 @@ static const bitmap_t stage3_lods_C90A[SPRITE_FRAMES] = {
 };
 
 // $C934
-static const bitmap_t stage3_lods_C934[SPRITE_FRAMES] = {
+static const bitmap_t stage3_lods_C934[6] = {
   { 6, BITMAPFLAG_DEFAULT, 31, &stage3_bitmap_C95E[719], &stage3_bitmap_C95E[719] },  // [0]
   { 5, BITMAPFLAG_DEFAULT, 22, &stage3_bitmap_C95E[905], &stage3_bitmap_C95E[905] },  // [1]
   { 3, BITMAPFLAG_DEFAULT, 16, &stage3_bitmap_C95E[1015], &stage3_bitmap_C95E[1015] },  // [2]
@@ -2339,7 +2338,7 @@ static const u8 stage3_bitmap_D311[830] = {
 };
 
 // $D64F
-static const bitmap_t stage3_lods_D64F[SPRITE_FRAMES] = {
+static const bitmap_t stage3_lods_D64F[6] = {
   { 2, BITMAPFLAG_DEFAULT, 16, &stage3_bitmap_D679[0], &stage3_bitmap_D679[0] },  // [0]
   { 2, BITMAPFLAG_DEFAULT, 11, &stage3_bitmap_D679[32], &stage3_bitmap_D679[32] },  // [1]
   { 1, BITMAPFLAG_DEFAULT, 9, &stage3_bitmap_D679[54], &stage3_bitmap_D679[54] },  // [2]

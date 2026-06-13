@@ -57,6 +57,7 @@
 
 /* Forward declarations */
 // backdrop declared inline in stage struct
+static const u8 stage5_arrest_messages_C1E6[24];
 static const u8 stage5_map_curv_C2A1[];
 static const u8 stage5_map_height_C2C9[];
 static const u8 stage5_map_lanes_C2FB[];
@@ -88,12 +89,12 @@ static const u8 stage5_map_hazards_C6D1[];
 static const u8 stage5_map_lobjs_C6EE[];
 static const u8 stage5_map_robjs_C7A5[];
 static const u8 stage5_perp_face[180];
-static const bitmap_t stage5_lods_C8E2[SPRITE_FRAMES];
-static const bitmap_t stage5_lods_C90C[SPRITE_FRAMES];
-static const bitmap_t stage5_lods_C936[SPRITE_FRAMES];
+static const bitmap_t stage5_lods_C8E2[6];
+static const bitmap_t stage5_lods_C90C[6];
+static const bitmap_t stage5_lods_C936[6];
 static const bitmap_t stage5_lods_CF5B[10];
 static const bitmap_t stage5_lods_D2BF[5];
-static const bitmap_t stage5_lods_D620[SPRITE_FRAMES];
+static const bitmap_t stage5_lods_D620[6];
 static const bitmap_t stage5_lods_D7B3[5];
 static const bitmap_t stage5_lods_D918[5];
 static const bitmap_t stage5_lods_DA0F[5];
@@ -148,7 +149,7 @@ const stage_t stage5 = {
   NULL,  /* TODO: addrof_left_hand_objects ($C269) */
   NULL,  /* TODO: addrof_left_hand_short_pole_object ($C27E) */
   NULL,  /* TODO: addrof_perp_description ($C139) */
-  NULL,  /* TODO: addrof_arrest_messages ($C1E6) */
+  &stage5_arrest_messages_C1E6[0],
   NULL,  /* TODO: addrof_helicopter_stuff_1 */
   NULL,  /* TODO: addrof_helicopter_stuff_2 */
 
@@ -259,16 +260,12 @@ const stage_t stage5 = {
    $C143: DEFW $98BD  (out-of-bounds)
 */
 
-/* TODO: $C1E6 [arrest_msgs]
-   [Stage 5] Arrest messages
-   Raw: 0x06 0x06 0x02 0x00 0x02 0xF8 0x22 0x59 0x06 0x02 0x00 0x23 0xF0 0x43 0x59 0x2D 0x02 0x00 0x2C 0xF8 0x6C 0x59 0x03 0x00
-   $C1EA: DEFW $F802  (out-of-bounds)
-   $C1EC: DEFW $5922  (out-of-bounds)
-   $C20C: DEFW $F023  (out-of-bounds)
-   $C20E: DEFW $5943  (out-of-bounds)
-   $C22D: DEFW $F82C  (out-of-bounds)
-   $C22F: DEFW $596C  (out-of-bounds)
-*/
+// $C1E6
+static const u8 stage5_arrest_messages_C1E6[24] = {
+  0x06, 0x06, 0x02, 0x00, 0x02, 0xF8, 0x22, 0x59,
+  0x06, 0x02, 0x00, 0x23, 0xF0, 0x43, 0x59, 0x2D,
+  0x02, 0x00, 0x2C, 0xF8, 0x6C, 0x59, 0x03, 0x00,
+};
 
 /* TODO: $C239 [hazard_lods]
    [Stage 5] Hittable hazards
@@ -1803,7 +1800,7 @@ static const u8 stage5_perp_face[180] = {
 };
 
 // $C8E2
-static const bitmap_t stage5_lods_C8E2[SPRITE_FRAMES] = {
+static const bitmap_t stage5_lods_C8E2[6] = {
   { 6, BITMAPFLAG_DEFAULT, 30, &stage5_bitmap_C960[0], &stage5_bitmap_C960[0] },  // [0]
   { 5, BITMAPFLAG_DEFAULT, 22, &stage5_bitmap_C960[180], &stage5_bitmap_C960[180] },  // [1]
   { 3, BITMAPFLAG_DEFAULT, 15, &stage5_bitmap_C960[290], &stage5_bitmap_C960[290] },  // [2]
@@ -1813,7 +1810,7 @@ static const bitmap_t stage5_lods_C8E2[SPRITE_FRAMES] = {
 };
 
 // $C90C
-static const bitmap_t stage5_lods_C90C[SPRITE_FRAMES] = {
+static const bitmap_t stage5_lods_C90C[6] = {
   { 6, BITMAPFLAG_DEFAULT, 39, &stage5_bitmap_C960[431], &stage5_bitmap_C960[431] },  // [0]
   { 5, BITMAPFLAG_DEFAULT, 29, &stage5_bitmap_C960[665], &stage5_bitmap_C960[665] },  // [1]
   { 3, BITMAPFLAG_DEFAULT, 20, &stage5_bitmap_C960[810], &stage5_bitmap_C960[810] },  // [2]
@@ -1823,7 +1820,7 @@ static const bitmap_t stage5_lods_C90C[SPRITE_FRAMES] = {
 };
 
 // $C936
-static const bitmap_t stage5_lods_C936[SPRITE_FRAMES] = {
+static const bitmap_t stage5_lods_C936[6] = {
   { 6, BITMAPFLAG_DEFAULT, 30, &stage5_bitmap_C960[966], &stage5_bitmap_C960[966] },  // [0]
   { 4, BITMAPFLAG_DEFAULT, 20, &stage5_bitmap_C960[1146], &stage5_bitmap_C960[1146] },  // [1]
   { 3, BITMAPFLAG_DEFAULT, 13, &stage5_bitmap_C960[1226], &stage5_bitmap_C960[1226] },  // [2]
@@ -2321,7 +2318,7 @@ static const u8 stage5_bitmap_D2E2[830] = {
 };
 
 // $D620
-static const bitmap_t stage5_lods_D620[SPRITE_FRAMES] = {
+static const bitmap_t stage5_lods_D620[6] = {
   { 4, BITMAPFLAG_DEFAULT, 17, &stage5_bitmap_D64A[0], &stage5_bitmap_D64A[0] },  // [0]
   { 4, BITMAPFLAG_DEFAULT, 17, &stage5_bitmap_D64A[0], &stage5_bitmap_D64A[0] },  // [1]
   { 3, BITMAPFLAG_DEFAULT, 13, &stage5_bitmap_D64A[68], &stage5_bitmap_D64A[68] },  // [2]

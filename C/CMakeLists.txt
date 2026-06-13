@@ -68,6 +68,30 @@ add_executable(ChaseHQ_Tests ${TEST_SOURCE_FILES})
 target_compile_definitions(ChaseHQ_Tests PRIVATE CHQ_TESTS)
 target_include_directories(ChaseHQ_Tests PRIVATE .)
 
+# ---- Stage data generation --------------------------------------------------
+# Regenerate committed .c files from their skool sources.
+# Usage: cmake --build <dir> --target convert_stages
+
+set(CONVERT_SCRIPT ${CMAKE_SOURCE_DIR}/../convert_stage.py)
+set(SKOOL_DIR      ${CMAKE_SOURCE_DIR}/..)
+set(DATA_DIR       ${CMAKE_SOURCE_DIR}/ChaseHQ/Data)
+
+add_custom_target(convert_stages
+  COMMAND sh -c "python3 ${CONVERT_SCRIPT} ${SKOOL_DIR}/Stage2.skool 2\
+ --obj-names NONE,TUNNEL_LIGHT,OBJ2,SHORT_POLE,HUGE_ROCK,PALM_TREE,LEAVES,DOUBLE_LAMP,OBJ8\
+ > ${DATA_DIR}/ChaseHQ-Stage2Data.c"
+  COMMAND sh -c "python3 ${CONVERT_SCRIPT} ${SKOOL_DIR}/Stage3.skool 3\
+ --obj-names NONE,TUNNEL_LIGHT,OVERHEAD_BRIDGE,SHORT_POLE,TOWER_BLOCK,SPEED_LIMIT_SIGN,TELEGRAPH_POLE,OBJ7\
+ > ${DATA_DIR}/ChaseHQ-Stage3Data.c"
+  COMMAND sh -c "python3 ${CONVERT_SCRIPT} ${SKOOL_DIR}/Stage4.skool 4\
+ --obj-names NONE,TUNNEL_LIGHT,OBJ2,SHORT_POLE,NEAR_COLUMN,FAR_COLUMN,PILE_OF_ROCKS,STREET_LAMP,TURN_SIGN_POINTING_LEFT,TURN_SIGN_POINTING_RIGHT\
+ > ${DATA_DIR}/ChaseHQ-Stage4Data.c"
+  COMMAND sh -c "python3 ${CONVERT_SCRIPT} ${SKOOL_DIR}/Stage5.skool 5\
+ --obj-names NONE,TUNNEL_LIGHT,OVERHEAD_BRIDGE,OBJ3,CACTUS,DOUBLE_STREET_LAMP,HUGE_ROCK,TELEGRAPH_POLE\
+ > ${DATA_DIR}/ChaseHQ-Stage5Data.c"
+  COMMENT "Regenerating stage 2-5 data from skool files"
+  VERBATIM)
+
 # ---- Formatting -------------------------------------------------------------
 
 find_program(CLANG_FORMAT clang-format)
