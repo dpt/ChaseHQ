@@ -1555,7 +1555,7 @@ static void cpu_driver(chqstate_t *state)
   CHKDRAW("move_hero_car");
   check_scenery_collisions(state);
   CHKDRAW("check_scenery_collisions");
-  // draw_everything_else(state); // bust
+  draw_everything_else(state);
   animate_hero_car(state); /* exit via */
   CHKDRAW("animate_hero_car");
 
@@ -10158,7 +10158,7 @@ static void update_road_level(chqstate_t *state)
       goto url_B9C5;
 
     Ax_scroll = horizon_table[((state->speed >> 6) & 6) +
-                              Bcurvature_byte]; // use of BC removed
+                              (Bcurvature_byte & 0xFF)]; // use of BC removed
   } else {
     Ax_scroll = Acurvature_byte; // Conv: added
   }
@@ -12060,7 +12060,16 @@ static void dr_write_scanline_unfilled(chqstate_t *state, int DEbackbuf)
   DEdash_backbuf = state->dr_backbuf_1;
   Ldash = ((DEdash_backbuf & 0xFF) + 31) & 0xFF; // being explicit
   Hdash = DEdash_backbuf >> 8;
-  SPoutput = ADDRTOBACKBUF((Hdash << 8) | Ldash);
+  SPoutput = OFFSETTOBACKBUF((Hdash << 8) | Ldash);
+
+
+  if (SPoutput < &state->backbuffer[0])
+    printf("before backbuf by %d bytes\n", &state->backbuffer[0] - SPoutput);
+  else if (SPoutput > &state->backbuffer[BACKBUFFER_LENGTH])
+    printf("after backbuf by %d bytes\n", SPoutput - &state->backbuffer[BACKBUFFER_LENGTH]);
+  assert(VALID_BACKBUF_PTR(SPoutput));
+
+
   HLdash_fill = 0; // fill value
   Cdash = Ldash;
   dr_fill_left_stripe(state, SPoutput, 0 /* index */, DEdash_backbuf, HLdash_fill);
@@ -12144,26 +12153,26 @@ static void dr_advance_filled(chqstate_t *state, int DEbackbuf, int Lrow,
 }
 
 /**
- * $C5A7: draw_road: fill
+ * $C5A7: draw_road: Setup and draw right and centre spans
  *
  * \param[in] state      Pointer to game state.
  * \param[in] DEbackbuf  Pointer into backbuffer.
  * \param[in] Lrow       Byte offset within road table page (row index); used as index into xpos_road tables.
  * \param[in] Adash_fill Fill pattern.
  */
-static void dr_fill(chqstate_t *state, int DEbackbuf, int Lrow,
-                    int Adash_fill)
+static void dr_fill(chqstate_t *state, int DEbackbuf, int Lrow, int Adash_fill)
 {
   int  carry = 0;
-  int  A;
+  int  Arow;
   int  Bneg_lane_count;
-  int  Ldash;
+  int  Ldash_row;
   int  Ldash_backbuf;
   int  Bdash_holds_16;
   int  Cdash_mask;
   u8  *HLdash;
   int  Aleftval;
-  u8   Anewvar;
+  u8   Aleft_stripe_width;
+  u8   Aright_stripe_width;
   int  Edash;
   int  Arightval;
   u16  DEdash_backbuf;
@@ -12174,49 +12183,47 @@ static void dr_fill(chqstate_t *state, int DEbackbuf, int Lrow,
 
   assert(DEbackbuf >= 0xF000 || DEbackbuf <= 0x0100);
   state->dr_backbuf_2 = DEbackbuf;
-  A = Lrow; // byte offset within road table page (0xFF = bottom scanline)
-  Bneg_lane_count = state->dr_neg_lane_count;
+  Arow = Lrow; // byte offset within road table page (0xFF = bottom scanline)
+  Bneg_lane_count = state->dr_neg_lane_count; // assigned but not used?
 
   // EXX - BANK
 
-  Ldash = A;
+  Ldash_row = Arow;
   Bdash_holds_16 = 16;
   Cdash_mask = 0xF8; // propagate forward?
 
-  HLdash = (u8 *)state->xpos_road_left + Ldash; // byte read: Ldash is a byte offset, not a u16 index
+  HLdash = (u8 *)state->xpos_road_left + Ldash_row; // byte read: Ldash is a byte offset, not a u16 index
   Aleftval = *HLdash;
   if (Aleftval) {
-    Anewvar = ((s8) Aleftval < 0) ? 0 : 15;
+    Aleft_stripe_width = ((s8) Aleftval < 0) ? 0 : 15;
   } else {
-    Anewvar = (HLdash[-1] & Cdash_mask) >> 3;
-    RR(Anewvar);
-    Anewvar += carry;
-    if (A >= Bdash_holds_16)
-      A--;
+    Aleft_stripe_width = (HLdash[-1] & Cdash_mask) >> 3;
+    RR(Aleft_stripe_width);
+    Aleft_stripe_width += carry;
+    if (Aleft_stripe_width >= Bdash_holds_16)
+      Aleft_stripe_width--;
   }
-  Edash = Anewvar;
-  Anewvar = ~Edash + Bdash_holds_16;
-  state->dr_left_stripe_width = Anewvar;
+  Edash = Aleft_stripe_width;
+  Aleft_stripe_width = ~Edash + Bdash_holds_16;
+  state->dr_left_stripe_width = Aleft_stripe_width;
 
-  HLdash = (u8 *)state->xpos_road_right + Ldash; // byte read: Ldash is a byte offset, not a u16 index
+  HLdash = (u8 *)state->xpos_road_right + Ldash_row; // byte read: Ldash is a byte offset, not a u16 index
   Arightval = *HLdash;
   if (Arightval) {
-    Anewvar = ((s8) Arightval < 0) ? 0 : 15;
+    Aright_stripe_width = ((s8) Arightval < 0) ? 0 : 15;
   } else {
-    Anewvar = (HLdash[-1] & Cdash_mask) >> 3;
-    RR(Anewvar);
+    Aright_stripe_width = (HLdash[-1] & Cdash_mask) >> 3;
+    RR(Aright_stripe_width);
   }
-  state->dr_right_stripe_width = Anewvar;
+  state->dr_right_stripe_width = Aright_stripe_width;
 
   /* Calculate road jump table target */
-  state->dr_road_width = ~A + Bdash_holds_16 + Edash;
+  state->dr_road_width = ~Aright_stripe_width + Bdash_holds_16 + Edash;
 
   DEdash_backbuf = state->dr_backbuf_2;
-  assert(DEdash_backbuf >= 0xF000 || DEdash_backbuf <= 0x0100);
   Ldash_backbuf = (DEdash_backbuf & 0xFF) + 31;
   Hdash_backbuf = DEdash_backbuf >> 8;
-  printf("(%x,%x)\n", Hdash_backbuf, Ldash_backbuf);
-  SPoutput = ADDRTOBACKBUF((Hdash_backbuf << 8) | Ldash_backbuf);
+  SPoutput = OFFSETTOBACKBUF((Hdash_backbuf << 8) | Ldash_backbuf);
   assert(VALID_BACKBUF_PTR(SPoutput));
 
   // EX AF,AF' - unbank Afill
@@ -12244,6 +12251,7 @@ static void dr_fill(chqstate_t *state, int DEbackbuf, int Lrow,
   case 12: SPoutput -= 2; *SPoutput = HLfill;
   case 13: SPoutput -= 2; *SPoutput = HLfill;
   case 14: SPoutput -= 2; *SPoutput = HLfill;
+  case 15: break; // does this happen in practice?
   }
 
   /* Fill blank road surface - continuing from the right hand side. */
@@ -12264,6 +12272,7 @@ static void dr_fill(chqstate_t *state, int DEbackbuf, int Lrow,
   case 12: SPoutput -= 2; *SPoutput = BCzerofill;
   case 13: SPoutput -= 2; *SPoutput = BCzerofill;
   case 14: SPoutput -= 2; *SPoutput = BCzerofill;
+  case 15: break; // does this happen in practice?
   }
 
   dr_fill_left_stripe(state, SPoutput, state->dr_left_stripe_width / 1, DEbackbuf,
@@ -12294,6 +12303,7 @@ static void dr_fill_left_stripe(chqstate_t *state, u8 *SPoutput, int jump_index,
   case 12: SPoutput -= 2; *SPoutput = HLfill;
   case 13: SPoutput -= 2; *SPoutput = HLfill;
   case 14: SPoutput -= 2; *SPoutput = HLfill;
+  case 15: break;
   }
 
 #if 0
