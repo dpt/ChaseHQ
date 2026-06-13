@@ -1018,7 +1018,7 @@ static void write_audio_registers_128k(chqstate_t *state);
 static void engine_sfx_from_speed_128k(chqstate_t *state);
 static void setup_turbo_sfx_128k(chqstate_t *state);
 static void play_turbo_sfx_128k(chqstate_t *state);
-static void play_speech_128k(chqstate_t *state, int Aindex);
+static void play_speech_128k(chqstate_t *state, int index);
 static void handle_perp_caught_128k(chqstate_t *state);
 static u8 call_bank_3_128k(chqstate_t *state, int HLroutine);
 static void page_128k(chqstate_t *state);
@@ -5419,7 +5419,7 @@ check_time_up:
     return;
 
   state->time_up_state = TIMEUPSTATE_CHECK_CREDITS;
-  play_speech_hook(state, 4);
+  play_speech_hook(state, SAMPLE_TIME_UP);
 
 check_credits:
   if (state->transition_control > TRANSITIONCONTROL_STOP)
@@ -5497,7 +5497,7 @@ check_restart:
  */
 static void play_start_noise(chqstate_t *state)
 {
-  play_speech_hook(state, 5); /* exit via */
+  play_speech_hook(state, SAMPLE_START); /* exit via */
 }
 
 /**
@@ -14461,10 +14461,10 @@ static void play_turbo_sfx_128k(chqstate_t *state)
 /**
  * $F342: Play speech 128K
  *
- * \param[in] state  Pointer to game state.
- * \param[in] Aindex Sound effect index.
+ * \param[in] state Pointer to game state.
+ * \param[in] index Sound effect index. (was A)
  */
-static void play_speech_128k(chqstate_t *state, int Aindex)
+static void play_speech_128k(chqstate_t *state, int index)
 {
   // $F32E
   static const struct {
@@ -14491,7 +14491,9 @@ static void play_speech_128k(chqstate_t *state, int Aindex)
   int           Bport_hi;
   int           Aregno;
 
-  // EX AF,AF' - Bank Aindex
+  assert(index >= 1 && index < SAMPLE__LIMIT); // 1-indexed, matching Z80 $F32E
+
+  // EX AF,AF' - Bank index
   silence_audio_128k(state);
   speccy->out(speccy, 0x7FFD, 4);
 
@@ -14500,9 +14502,9 @@ static void play_speech_128k(chqstate_t *state, int Aindex)
   Lbf      = 0xBF;
   Deight   = 8; // Channel A volume register
   // EXX - Bank
-  // EX AF,AF' - Unbank Aindex
-  DEdash_length  = speech_samples_table[Aindex].length;
-  HLdash_samples = &sound_samples[speech_samples_table[Aindex].data];
+  // EX AF,AF' - Unbank index
+  DEdash_length  = speech_samples_table[index - 1].length;
+  HLdash_samples = &sound_samples[speech_samples_table[index - 1].data];
 
   // There are two samples per byte so we iterate here.
   do {
