@@ -4390,6 +4390,11 @@ static void plot_sprite(chqstate_t *state,
   int odd;         /* was carry */
   int jump_offset; /* was IX */
 
+  assert(width_bytes >= 1);
+  assert(VALID_BACKBUF_PTR(backbuf_addr));
+  assert(height >= 1);
+  assert(bitmap_data != NULL);
+
   odd = width_bytes & 1;
   width_bytes >>= 1;
   if (odd) {
@@ -4431,6 +4436,12 @@ static void plot_sprite_even(chqstate_t *state,
 {
   const u8 *src;          /* was SP */
   u8       *backbuf_orig; /* was A */
+
+  assert(jump_offset % 5 == 0);
+  assert(jump_offset / 5 >= 0 && jump_offset / 5 <= 3);
+  assert(VALID_BACKBUF_PTR(backbuf_addr));
+  assert(height >= 1);
+  assert(bitmap_data != NULL);
 
   // Conv: B & C moved into prevbufrow
   // EXX - bank
@@ -4489,6 +4500,11 @@ static void plot_sprite_odd(chqstate_t *state,
 {
   int jump_offset; /* was IX */
 
+  assert(width_bytes >= 0 && width_bytes <= 3);
+  assert(VALID_BACKBUF_PTR(backbuf_addr));
+  assert(height >= 1);
+  assert(bitmap_data != NULL);
+
   jump_offset = 5 * (3 - width_bytes); // 5 bytes/op
 
   plot_sprite_odd_entry(state,
@@ -4509,6 +4525,12 @@ static void plot_sprite_odd_entry(chqstate_t *state,
 {
   const u8 *src;          /* was SP */
   u8       *backbuf_orig; /* was A */
+
+  assert(jump_offset % 5 == 0);
+  assert(jump_offset / 5 >= 0 && jump_offset / 5 <= 3);
+  assert(VALID_BACKBUF_PTR(backbuf_addr));
+  assert(height >= 1);
+  assert(bitmap_data != NULL);
 
   // Conv: B & C moved into prevbufrow
   // EXX - bank
@@ -4569,6 +4591,11 @@ static void plot_sprite_flipped(chqstate_t *state,
   int odd;         /* was carry */
   int jump_offset; /* was IX */
 
+  assert(width_bytes >= 1);
+  assert(VALID_BACKBUF_PTR(backbuf_addr));
+  assert(height >= 1);
+  assert(bitmap_data != NULL);
+
   backbuf_addr += width_bytes;
 
   odd = width_bytes & 1;
@@ -4615,6 +4642,13 @@ static void plot_sprite_flipped_even(chqstate_t *state,
 {
   const u8 *src;          /* was SP */
   u8       *backbuf_orig; /* was A */
+
+  assert(jump_offset % 9 == 0);
+  assert(jump_offset / 9 >= 0 && jump_offset / 9 <= 3);
+  assert(flip_table != NULL);
+  assert(VALID_BACKBUF_PTR(backbuf_addr));
+  assert(height >= 1);
+  assert(bitmap_data != NULL);
 
   goto plot_sprite_flipped_even_start;
 
@@ -4674,6 +4708,11 @@ static void plot_sprite_flipped_odd(chqstate_t *state,
   int       jump_offset;  /* was IX */
   const u8 *src;          /* was SP */
   u8       *backbuf_orig; /* was A */
+
+  assert(width_bytes >= 0 && width_bytes <= 3);
+  assert(VALID_BACKBUF_PTR(backbuf_addr));
+  assert(height >= 1);
+  assert(bitmap_data != NULL);
 
   width_bytes++;
   jump_offset = 4 - width_bytes; // 9 bytes/op mult - removed
