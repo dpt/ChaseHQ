@@ -352,7 +352,8 @@ uint32_t *zxspectrum_claim_screen(zxspectrum_t *state)
 #ifdef __riscos
     zxscreen_convert16(prv->screen_copy.pixels, prv->converted, &prv->dirty);
 #else
-    zxscreen_convert(prv->screen_copy.pixels, prv->converted, &prv->dirty);
+    zxscreen_convert(prv->screen_copy.pixels, prv->converted, &prv->dirty,
+                     prv->config.bgr_pixels);
 #endif
 
     /* Invalidate the dirty region once complete */

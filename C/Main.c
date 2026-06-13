@@ -71,12 +71,12 @@ typedef struct
 
   int           sleep_us; // us to sleep for on the next loop
 }
-state_t;
+chq_sdl_state_t;
 
 /* ----------------------------------------------------------------------- */
 
-static void draw_handler(const zxbox_t *dirty,
-                         void          *opaque)
+static void chq_draw_handler(const zxbox_t *dirty,
+                             void          *opaque)
 {
   // SDL_UpdateTexture must be called from the main thread (Metal requirement).
   // The main loop picks up changes via zxspectrum_claim_screen.
@@ -84,9 +84,9 @@ static void draw_handler(const zxbox_t *dirty,
   (void) opaque;
 }
 
-static void stamp_handler(void *opaque)
+static void chq_stamp_handler(void *opaque)
 {
-  state_t *state = opaque;
+  chq_sdl_state_t *state = opaque;
 
   // Stack timestamps as they arrive
   assert(state->nstamps < MAXSTAMPS);
@@ -95,10 +95,10 @@ static void stamp_handler(void *opaque)
   gettimeofday(&state->stamps[state->nstamps++], NULL);
 }
 
-static int sleep_handler(int durationTStates, void *opaque)
+static int chq_sleep_handler(int durationTStates, void *opaque)
 {
-  state_t *state = opaque;
-  int      paused;
+  chq_sdl_state_t *state = opaque;
+  int              paused;
 
   // Unstack timestamps (even if we're paused)
   assert(state->nstamps > 0);
@@ -166,9 +166,9 @@ static int sleep_handler(int durationTStates, void *opaque)
   return 0;
 }
 
-static int key_handler(uint16_t port, void *opaque)
+static int chq_key_handler(uint16_t port, void *opaque)
 {
-  state_t *state = opaque;
+  chq_sdl_state_t *state = opaque;
 
   if (port == port_KEMPSTON_JOYSTICK)
     return state->kempston;
@@ -176,23 +176,23 @@ static int key_handler(uint16_t port, void *opaque)
     return zxkeyset_for_port(port, &state->keys);
 }
 
-static void border_handler(int colour, void *opaque)
+static void chq_border_handler(int colour, void *opaque)
 {
-  state_t *state = opaque;
+  chq_sdl_state_t *state = opaque;
 
   // TODO: Set border colour.
 }
 
-static void speaker_handler(int on_off, void *opaque)
+static void chq_speaker_handler(int on_off, void *opaque)
 {
-  state_t *state = opaque;
+  chq_sdl_state_t *state = opaque;
 
   // TODO: All sound.
 }
 
-static int game_thread_fn(void *opaque)
+static int chq_game_thread(void *opaque)
 {
-  state_t *state = opaque;
+  chq_sdl_state_t *state = opaque;
 
   chq_setup(state->game);
   chq_main(state->game);
@@ -202,7 +202,8 @@ static int game_thread_fn(void *opaque)
 
 /* ----------------------------------------------------------------------- */
 
-static void sdl_key_pressed(state_t *state, const SDL_KeyboardEvent *k)
+static void chq_sdl_key_pressed(chq_sdl_state_t         *state,
+                                const SDL_KeyboardEvent *k)
 {
   SDL_Keycode  sym;
   int          down;
@@ -238,11 +239,11 @@ static void sdl_key_pressed(state_t *state, const SDL_KeyboardEvent *k)
 }
 
 // type: em_arg_callback_func
-static void my_main_loop(void *opaque)
+static void chq_sdl_main_loop(void *opaque)
 {
   static const SDL_Rect dstrect = { SCALEDBORDER, SCALEDBORDER, SCALEDWIDTH, SCALEDHEIGHT };
 
-  state_t *state = opaque;
+  chq_sdl_state_t *state = opaque;
 
   {
     SDL_Event event;
@@ -263,7 +264,7 @@ static void my_main_loop(void *opaque)
 
         case SDL_KEYDOWN:
         case SDL_KEYUP:
-          sdl_key_pressed(state, &event.key);
+          chq_sdl_key_pressed(state, &event.key);
           break;
 
         case SDL_TEXTEDITING:
@@ -326,19 +327,13 @@ static void my_main_loop(void *opaque)
 
 int main(void)
 {
-  state_t          state;
-  const zxconfig_t zxconfig =
-  {
-    GAMEWIDTH / 8, GAMEHEIGHT / 8,
-    &state, /* opaque */
-    &draw_handler,
-    &stamp_handler,
-    &sleep_handler,
-    &key_handler,
-    &border_handler,
-    &speaker_handler
-  };
+  chq_sdl_state_t  state;
+  zxconfig_t       zxconfig;
   SDL_Window      *window;
+  SDL_RendererInfo rinfo;
+  Uint32           native_fmt;
+  Uint32           Rmask, Gmask, Bmask, Amask;
+  int              bpp;
 
   printf("CHASE H.Q.\n");
   printf("==========\n");
@@ -350,10 +345,6 @@ int main(void)
   state.paused    = 0;
   state.quit      = 0;
   // state.menu      = 1;
-
-  state.zx = zxspectrum_create(&zxconfig);
-  if (state.zx == NULL)
-    goto failure;
 
   if (SDL_Init(SDL_INIT_VIDEO) < 0)
   {
@@ -380,10 +371,27 @@ int main(void)
     goto failure;
   }
 
-  // native_format = SDL_GetWindowPixelFormat(window);
+  SDL_GetRendererInfo(state.renderer, &rinfo);
+  native_fmt = rinfo.texture_formats[0];
+  SDL_PixelFormatEnumToMasks(native_fmt, &bpp, &Rmask, &Gmask, &Bmask, &Amask);
+
+  zxconfig.width    = GAMEWIDTH / 8;
+  zxconfig.height   = GAMEHEIGHT / 8;
+  zxconfig.opaque   = &state;
+  zxconfig.draw     = &chq_draw_handler;
+  zxconfig.stamp    = &chq_stamp_handler;
+  zxconfig.sleep    = &chq_sleep_handler;
+  zxconfig.key      = &chq_key_handler;
+  zxconfig.border   = &chq_border_handler;
+  zxconfig.speaker  = &chq_speaker_handler;
+  zxconfig.bgr_pixels = (Rmask < Bmask); /* R in lower byte = BGR format */
+
+  state.zx = zxspectrum_create(&zxconfig);
+  if (state.zx == NULL)
+    goto failure;
 
   state.texture = SDL_CreateTexture(state.renderer,
-                                    SDL_PIXELFORMAT_ARGB8888, // fastest?
+                                    native_fmt,
                                     SDL_TEXTUREACCESS_STREAMING,
                                     GAMEWIDTH, GAMEHEIGHT);
   if (state.texture == NULL)
@@ -402,7 +410,7 @@ int main(void)
   if (state.game == NULL)
     goto failure;
 
-  state.game_thread = SDL_CreateThread(game_thread_fn, "game", &state);
+  state.game_thread = SDL_CreateThread(chq_game_thread, "game", &state);
   if (state.game_thread == NULL)
   {
     fprintf(stderr, "Error: SDL_CreateThread: %s\n", SDL_GetError());
@@ -410,7 +418,7 @@ int main(void)
   }
 
   while (!state.quit)
-    my_main_loop(&state);
+    chq_sdl_main_loop(&state);
 
   chq_stop(state.game);
   SDL_WaitThread(state.game_thread, NULL);

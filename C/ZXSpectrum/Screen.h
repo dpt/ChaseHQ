@@ -16,16 +16,18 @@ extern "C"
 #endif
 
 /**
- * Convert the given ZX Spectrum format screen into 0x00BBGGRR pixel format
- * (or 0x00RRGGBB on Windows).
+ * Convert the given ZX Spectrum format screen into output pixels.
  *
  * \param[in] screen ZX Spectrum screen data.
  * \param[in] output Output screen pixels.
  * \param[in] dirty  Dirty rectangle in cartesian space - (0,0) is bottom left.
+ * \param[in] bgr    Non-zero to output 0x00BBGGRR (e.g. ABGR8888),
+ *                   zero to output 0x00RRGGBB (e.g. ARGB8888).
  */
 void zxscreen_convert(const void    *screen,
                       unsigned int  *output,
-                      const zxbox_t *dirty);
+                      const zxbox_t *dirty,
+                      int            bgr);
 
 // 4bpp variant
 void zxscreen_convert16(const void    *vscr,

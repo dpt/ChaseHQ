@@ -224,6 +224,9 @@ typedef struct zxconfig
 
   /** App callback called to sound the speaker. */
   void (*speaker)(int on_off, void *opaque);
+
+  /** Non-zero to output 0x00BBGGRR pixels (ABGR8888); zero for 0x00RRGGBB (ARGB8888). */
+  int bgr_pixels;
 }
 zxconfig_t;
 

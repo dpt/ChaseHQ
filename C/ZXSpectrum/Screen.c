@@ -15,55 +15,6 @@
 /* Define to highlight dirty rectangles when they're drawn. */
 //#define SHOW_DIRTY_RECTS
 
-/* Ideally, hoist this test out. */
-#if defined(_WIN32) || defined(TGE_SDL)
-#define RGB
-#endif
-
-#ifdef RGB
-/* 0x00RRGGBB */
-#define BK_ 0x00000000
-#define RD_ 0x00010000
-#define GR_ 0x00000100
-#define YL_ 0x00010100
-#define BL_ 0x00000001
-#define MG_ 0x00010001
-#define CY_ 0x00000101
-#define WH_ 0x00010101
-#else
-/* 0x00BBGGRR */
-#define BK_ 0x00000000
-#define RD_ 0x00000001
-#define GR_ 0x00000100
-#define YL_ 0x00000101
-#define BL_ 0x00010000
-#define MG_ 0x00010001
-#define CY_ 0x00010100
-#define WH_ 0x00010101
-#endif
-
-#define NORMAL(C) (C * 0xCD)
-#define BRIGHT(C) (C * 0xFF)
-
-/* BRIGHT 0 */
-#define BKd NORMAL(BK_)
-#define RDd NORMAL(RD_)
-#define GRd NORMAL(GR_)
-#define YLd NORMAL(YL_)
-#define BLd NORMAL(BL_)
-#define MGd NORMAL(MG_)
-#define CYd NORMAL(CY_)
-#define WHd NORMAL(WH_)
-/* BRIGHT 1 */
-#define BKb BRIGHT(BK_)
-#define RDb BRIGHT(RD_)
-#define GRb BRIGHT(GR_)
-#define YLb BRIGHT(YL_)
-#define BLb BRIGHT(BL_)
-#define MGb BRIGHT(MG_)
-#define CYb BRIGHT(CY_)
-#define WHb BRIGHT(WH_)
-
 /* Given a set of tokens: A, B, C, which have permutations:
  *   (AA, AB, AC, BA, BB, BC, CA, CB, CC)
  * They can be written out contiguously as:
@@ -78,28 +29,44 @@
  * The following palette is laid out in a De Bruijn sequence in a vain attempt
  * to improve performance.
  */
-static const unsigned int palette[66 + 65] =
-{
-  BKd, BKd, BLd, BKd, RDd, BKd, MGd, BKd,
-  GRd, BKd, CYd, BKd, YLd, BKd, WHd, BLd,
-  BLd, RDd, BLd, MGd, BLd, GRd, BLd, CYd,
-  BLd, YLd, BLd, WHd, RDd, RDd, MGd, RDd,
-  GRd, RDd, CYd, RDd, YLd, RDd, WHd, MGd,
-  MGd, GRd, MGd, CYd, MGd, YLd, MGd, WHd,
-  GRd, GRd, CYd, GRd, YLd, GRd, WHd, CYd,
-  CYd, YLd, CYd, WHd, YLd, YLd, WHd, BKd,
-  WHd, WHd,
+#define PALETTE_ENTRIES(BKd,BLd,RDd,MGd,GRd,CYd,YLd,WHd, \
+                        BKb,BLb,RDb,MGb,GRb,CYb,YLb,WHb)  \
+  BKd, BKd, BLd, BKd, RDd, BKd, MGd, BKd, \
+  GRd, BKd, CYd, BKd, YLd, BKd, WHd, BLd, \
+  BLd, RDd, BLd, MGd, BLd, GRd, BLd, CYd, \
+  BLd, YLd, BLd, WHd, RDd, RDd, MGd, RDd, \
+  GRd, RDd, CYd, RDd, YLd, RDd, WHd, MGd, \
+  MGd, GRd, MGd, CYd, MGd, YLd, MGd, WHd, \
+  GRd, GRd, CYd, GRd, YLd, GRd, WHd, CYd, \
+  CYd, YLd, CYd, WHd, YLd, YLd, WHd, BKd, \
+  WHd, WHd,                                 \
+  /* The zeroth bright entry is shared. */  \
+       BKb, BLb, BKb, RDb, BKb, MGb, BKb, \
+  GRb, BKb, CYb, BKb, YLb, BKb, WHb, BLb, \
+  BLb, RDb, BLb, MGb, BLb, GRb, BLb, CYb, \
+  BLb, YLb, BLb, WHb, RDb, RDb, MGb, RDb, \
+  GRb, RDb, CYb, RDb, YLb, RDb, WHb, MGb, \
+  MGb, GRb, MGb, CYb, MGb, YLb, MGb, WHb, \
+  GRb, GRb, CYb, GRb, YLb, GRb, WHb, CYb, \
+  CYb, YLb, CYb, WHb, YLb, YLb, WHb, BKb, \
+  WHb, WHb
 
-  /* The zeroth bright entry is shared. */
-       BKb, BLb, BKb, RDb, BKb, MGb, BKb,
-  GRb, BKb, CYb, BKb, YLb, BKb, WHb, BLb,
-  BLb, RDb, BLb, MGb, BLb, GRb, BLb, CYb,
-  BLb, YLb, BLb, WHb, RDb, RDb, MGb, RDb,
-  GRb, RDb, CYb, RDb, YLb, RDb, WHb, MGb,
-  MGb, GRb, MGb, CYb, MGb, YLb, MGb, WHb,
-  GRb, GRb, CYb, GRb, YLb, GRb, WHb, CYb,
-  CYb, YLb, CYb, WHb, YLb, YLb, WHb, BKb,
-  WHb, WHb,
+/* 0x00RRGGBB: for SDL_PIXELFORMAT_ARGB8888 and similar (R in bits 23-16) */
+static const unsigned int palette_argb[66 + 65] = {
+  PALETTE_ENTRIES(
+    0x00000000, 0x000000CD, 0x00CD0000, 0x00CD00CD,
+    0x0000CD00, 0x0000CDCD, 0x00CDCD00, 0x00CDCDCD,
+    0x00000000, 0x000000FF, 0x00FF0000, 0x00FF00FF,
+    0x0000FF00, 0x0000FFFF, 0x00FFFF00, 0x00FFFFFF)
+};
+
+/* 0x00BBGGRR: for SDL_PIXELFORMAT_ABGR8888 and similar (R in bits 7-0) */
+static const unsigned int palette_abgr[66 + 65] = {
+  PALETTE_ENTRIES(
+    0x00000000, 0x00CD0000, 0x000000CD, 0x00CD00CD,
+    0x0000CD00, 0x00CDCD00, 0x0000CDCD, 0x00CDCDCD,
+    0x00000000, 0x00FF0000, 0x000000FF, 0x00FF00FF,
+    0x0000FF00, 0x00FFFF00, 0x0000FFFF, 0x00FFFFFF)
 };
 
 static const unsigned char offsets[66 + 65] =
@@ -122,17 +89,17 @@ static const unsigned char offsets[66 + 65] =
   127,  79,  92, 103, 112, 119, 124, 129,
 };
 
-#define WRITE8PIX(shift)                            \
-do {                                                \
-  pal = &palette[offsets[(attrs >> shift) & 0x7F]]; \
-  *poutput++ = pal[(input >> (shift + 7)) & 1];     \
-  *poutput++ = pal[(input >> (shift + 6)) & 1];     \
-  *poutput++ = pal[(input >> (shift + 5)) & 1];     \
-  *poutput++ = pal[(input >> (shift + 4)) & 1];     \
-  *poutput++ = pal[(input >> (shift + 3)) & 1];     \
-  *poutput++ = pal[(input >> (shift + 2)) & 1];     \
-  *poutput++ = pal[(input >> (shift + 1)) & 1];     \
-  *poutput++ = pal[(input >> (shift + 0)) & 1];     \
+#define WRITE8PIX(shift)                                   \
+do {                                                       \
+  pal = &base_palette[offsets[(attrs >> shift) & 0x7F]];  \
+  *poutput++ = pal[(input >> (shift + 7)) & 1];           \
+  *poutput++ = pal[(input >> (shift + 6)) & 1];           \
+  *poutput++ = pal[(input >> (shift + 5)) & 1];           \
+  *poutput++ = pal[(input >> (shift + 4)) & 1];           \
+  *poutput++ = pal[(input >> (shift + 3)) & 1];           \
+  *poutput++ = pal[(input >> (shift + 2)) & 1];           \
+  *poutput++ = pal[(input >> (shift + 1)) & 1];           \
+  *poutput++ = pal[(input >> (shift + 0)) & 1];           \
 } while (0)
 
 /* For reference:
@@ -146,8 +113,10 @@ do {                                                \
 
 void zxscreen_convert(const void    *vscr,
                       unsigned int  *poutput,
-                      const zxbox_t *dirty)
+                      const zxbox_t *dirty,
+                      int            bgr)
 {
+  const unsigned int  *base_palette;
   zxbox_t              box;
   int                  height;
   const unsigned int  *pattrs;
@@ -157,6 +126,8 @@ void zxscreen_convert(const void    *vscr,
   unsigned int         input;
   unsigned int         attrs;
   const unsigned int  *pal;
+
+  base_palette = bgr ? palette_abgr : palette_argb;
 
   assert(dirty);
 
