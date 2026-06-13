@@ -240,19 +240,19 @@ const u8 ledfont[10 * LEDFONT_HEIGHT];
 #define MINIFONT_HEIGHT (6) // 6 rows/char
 const u8 minifont[31 * MINIFONT_HEIGHT];
 
-const bitmap_t fire1_defns[6];
-const bitmap_t fire2_defns[6];
-const bitmap_t fire3_defns[6];
-const bitmap_t fire4_defns[6];
-const bitmap_t fire5_defns[6];
-const bitmap_t fire6_defns[6];
-const bitmap_t smoke_defns[6];
+const bitmap_t fire1_defns[SPRITE_FRAMES];
+const bitmap_t fire2_defns[SPRITE_FRAMES];
+const bitmap_t fire3_defns[SPRITE_FRAMES];
+const bitmap_t fire4_defns[SPRITE_FRAMES];
+const bitmap_t fire5_defns[SPRITE_FRAMES];
+const bitmap_t fire6_defns[SPRITE_FRAMES];
+const bitmap_t smoke_defns[SPRITE_FRAMES];
 const bitmap_t floating_arrow_here_defn;
 const bitmap_t floating_arrow_left_defn;
 const bitmap_t floating_arrow_right_defn;
 
 const depthset_t tunnellight;
-const bitmap_t tunnellight_bitmaps[6];
+const bitmap_t tunnellight_bitmaps[SPRITE_FRAMES];
 const u8 bitmap_tunnellight_1[2 * 16];
 const u8 bitmap_tunnellight_2[2 * 12];
 const u8 bitmap_tunnellight_3[1 * 8];

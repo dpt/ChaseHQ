@@ -82,13 +82,13 @@ static const u8 stage4_map_hazards_E5FB[];
 static const u8 stage4_map_lobjs_E624[];
 static const u8 stage4_map_robjs_E6B7[];
 static const u8 stage4_perp_face[180];
-static const bitmap_t stage4_lods_E7F2[6];
-static const bitmap_t stage4_lods_E81C[6];
-static const bitmap_t stage4_lods_E846[6];
+static const bitmap_t stage4_lods_E7F2[SPRITE_FRAMES];
+static const bitmap_t stage4_lods_E81C[SPRITE_FRAMES];
+static const bitmap_t stage4_lods_E846[SPRITE_FRAMES];
 static const u8 stage4_pilot_mugshot[180];
 static const bitmap_t stage4_lods_F081[5];
 static const bitmap_t stage4_lods_F30E[5];
-static const bitmap_t stage4_lods_F4D8[6];
+static const bitmap_t stage4_lods_F4D8[SPRITE_FRAMES];
 static const bitmap_t stage4_lods_F73A[10];
 static const bitmap_t stage4_lods_F82B[10];
 static const u8 stage4_bitmap_E870[1022];
@@ -1579,7 +1579,7 @@ static const u8 stage4_perp_face[180] = {
 };
 
 // $E7F2
-static const bitmap_t stage4_lods_E7F2[6] = {
+static const bitmap_t stage4_lods_E7F2[SPRITE_FRAMES] = {
   { 6, BITMAPFLAG_DEFAULT, 30, &stage4_bitmap_E870[0], &stage4_bitmap_E870[0] },  // [0]
   { 4, BITMAPFLAG_DEFAULT, 22, &stage4_bitmap_E870[180], &stage4_bitmap_E870[180] },  // [1]
   { 2, BITMAPFLAG_DEFAULT, 12, &stage4_bitmap_E870[268], &stage4_bitmap_E870[268] },  // [2]
@@ -1589,7 +1589,7 @@ static const bitmap_t stage4_lods_E7F2[6] = {
 };
 
 // $E81C
-static const bitmap_t stage4_lods_E81C[6] = {
+static const bitmap_t stage4_lods_E81C[SPRITE_FRAMES] = {
   { 6, BITMAPFLAG_DEFAULT, 30, &stage4_bitmap_E870[356], &stage4_bitmap_E870[356] },  // [0]
   { 4, BITMAPFLAG_DEFAULT, 22, &stage4_bitmap_E870[536], &stage4_bitmap_E870[536] },  // [1]
   { 3, BITMAPFLAG_DEFAULT, 15, &stage4_bitmap_E870[624], &stage4_bitmap_E870[624] },  // [2]
@@ -1599,7 +1599,7 @@ static const bitmap_t stage4_lods_E81C[6] = {
 };
 
 // $E846
-static const bitmap_t stage4_lods_E846[6] = {
+static const bitmap_t stage4_lods_E846[SPRITE_FRAMES] = {
   { 6, BITMAPFLAG_DEFAULT, 29, &stage4_bitmap_E870[669], &stage4_bitmap_E870[669] },  // [0]
   { 4, BITMAPFLAG_DEFAULT, 19, &stage4_bitmap_E870[843], &stage4_bitmap_E870[843] },  // [1]
   { 3, BITMAPFLAG_DEFAULT, 13, &stage4_bitmap_E870[919], &stage4_bitmap_E870[919] },  // [2]
@@ -2048,7 +2048,7 @@ static const u8 stage4_bitmap_F331[423] = {
 };
 
 // $F4D8
-static const bitmap_t stage4_lods_F4D8[6] = {
+static const bitmap_t stage4_lods_F4D8[SPRITE_FRAMES] = {
   { 3, BITMAPFLAG_DEFAULT, 21, &stage4_bitmap_F502[0], &stage4_bitmap_F502[0] },  // [0]
   { 2, BITMAPFLAG_DEFAULT, 16, &stage4_bitmap_F502[63], &stage4_bitmap_F502[63] },  // [1]
   { 2, BITMAPFLAG_MASKED, 11, &stage4_bitmap_F502[95], &stage4_bitmap_F502[139] },  // [2]

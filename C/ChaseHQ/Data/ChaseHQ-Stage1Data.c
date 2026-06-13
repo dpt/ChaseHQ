@@ -66,9 +66,9 @@ static const u8 stage1_map_loop_hazards[];
 static const u8 stage1_map_loop_leftobjs[];
 static const u8 stage1_map_loop_rightobjs[];
 static const u8 stage1_perp_face[FACEBYTES];
-static const bitmap_t stage1_lambo_bitmaps[6];
-static const bitmap_t stage1_truck_bitmaps[6];
-static const bitmap_t stage1_car_bitmaps[6];
+static const bitmap_t stage1_lambo_bitmaps[SPRITE_FRAMES];
+static const bitmap_t stage1_truck_bitmaps[SPRITE_FRAMES];
+static const bitmap_t stage1_car_bitmaps[SPRITE_FRAMES];
 static const u8 stage1_bitmap_lambo_1[6 * 30];
 static const u8 stage1_bitmap_lambo_2[5 * 22];
 static const u8 stage1_bitmap_lambo_3[3 * 15];
@@ -84,8 +84,8 @@ static const u8 stage1_bitmap_truck_4[2 * 2 * 12];
 static const u8 stage1_bitmap_truck_4s[2 * 2 * 12];
 static const u8 stage1_bitmap_car_4[3 * 2 * 9];
 static const u8 stage1_bitmap_car_4s[3 * 2 * 9];
-static const bitmap_t stage1_stones_bitmaps[6];
-static const bitmap_t stage1_dust_bitmaps[6];
+static const bitmap_t stage1_stones_bitmaps[SPRITE_FRAMES];
+static const bitmap_t stage1_dust_bitmaps[SPRITE_FRAMES];
 static const u8 stage1_bitmap_stones_1[2 * 2 * 5];
 static const u8 stage1_bitmap_stones_2[2 * 2 * 4];
 static const u8 stage1_bitmap_stones_2s[2 * 2 * 4];
@@ -106,12 +106,12 @@ static const u8 stage1_bitmap_turnsign_3[2 * 20];
 static const u8 stage1_bitmap_turnsign_4[2 * 2 * 16];
 static const u8 stage1_bitmap_turnsign_5[2 * 2 * 13];
 static const u8 stage1_bitmap_turnsign_5s[2 * 2 * 13];
-static const bitmap_t stage1_tumbleweed_bitmaps[6];
+static const bitmap_t stage1_tumbleweed_bitmaps[SPRITE_FRAMES];
 static const u8 stage1_bitmap_tumbleweed_1[2 * 16];
 static const u8 stage1_bitmap_tumbleweed_2[2 * 11];
 static const u8 stage1_bitmap_tumbleweed_3[1 * 9];
 static const u8 stage1_bitmap_tumbleweed_4[1 * 7];
-static const bitmap_t stage1_barrier_bitmaps[6];
+static const bitmap_t stage1_barrier_bitmaps[SPRITE_FRAMES];
 static const u8 stage1_bitmap_barrier_1[4 * 17];
 static const u8 stage1_bitmap_barrier_2[3 * 13];
 static const u8 stage1_bitmap_barrier_3[2 * 9];
@@ -144,7 +144,7 @@ static const u8 stage1_bitmap_telegraphpoletop_4[2 * 2 * 5];
 static const u8 stage1_bitmap_telegraphpoletop_4s[2 * 2 * 5];
 static const u8 stage1_bitmap_telegraphpoletop_5[2 * 2 * 4];
 static const u8 stage1_bitmap_telegraphpoletop_5s[2 * 2 * 4];
-static const stretchy_t stage1_stretchy_tree_right[6];
+static const stretchy_t stage1_stretchy_tree_right[SPRITE_FRAMES];
 static const stretchy_t stage1_stretchy_tree_left[4];
 static const depthset_t stage1_tree_bottom;
 static const depthset_t stage1_tree_bottommiddle;
@@ -1611,7 +1611,7 @@ static const u8 stage1_perp_face[FACEBYTES] = {
 /* ----------------------------------------------------------------------- */
 
 // $643E
-static const bitmap_t stage1_lambo_bitmaps[6] = {
+static const bitmap_t stage1_lambo_bitmaps[SPRITE_FRAMES] = {
   { 6, BITMAPFLAG_DEFAULT, 30, &stage1_bitmap_lambo_1[0], &stage1_bitmap_lambo_1[0]  },
   { 5, BITMAPFLAG_DEFAULT, 22, &stage1_bitmap_lambo_2[0], &stage1_bitmap_lambo_2[0]  },
   { 3, BITMAPFLAG_DEFAULT, 15, &stage1_bitmap_lambo_3[0], &stage1_bitmap_lambo_3[0]  },
@@ -1621,7 +1621,7 @@ static const bitmap_t stage1_lambo_bitmaps[6] = {
 };
 
 // $6468
-static const bitmap_t stage1_truck_bitmaps[6] = {
+static const bitmap_t stage1_truck_bitmaps[SPRITE_FRAMES] = {
   { 6, BITMAPFLAG_DEFAULT, 39, &stage1_bitmap_truck_1[0], &stage1_bitmap_truck_1[0]  },
   { 5, BITMAPFLAG_DEFAULT, 29, &stage1_bitmap_truck_2[0], &stage1_bitmap_truck_2[0]  },
   { 3, BITMAPFLAG_DEFAULT, 20, &stage1_bitmap_truck_3[0], &stage1_bitmap_truck_3[0]  },
@@ -1631,7 +1631,7 @@ static const bitmap_t stage1_truck_bitmaps[6] = {
 };
 
 // $6492
-static const bitmap_t stage1_car_bitmaps[6] = {
+static const bitmap_t stage1_car_bitmaps[SPRITE_FRAMES] = {
   { 6, BITMAPFLAG_DEFAULT, 31, &stage1_bitmap_car_1[0], &stage1_bitmap_car_1[0]  },
   { 5, BITMAPFLAG_DEFAULT, 22, &stage1_bitmap_car_2[0], &stage1_bitmap_car_2[0]  },
   { 3, BITMAPFLAG_DEFAULT, 16, &stage1_bitmap_car_3[0], &stage1_bitmap_car_3[0]  },
@@ -1982,7 +1982,7 @@ static const u8 stage1_bitmap_car_4s[3 * 2 * 9] = {
 
 /* ----------------------------------------------------------------------- */
 
-static const bitmap_t stage1_stones_bitmaps[6] = {
+static const bitmap_t stage1_stones_bitmaps[SPRITE_FRAMES] = {
   { 2, BITMAPFLAG_MASKED, 5, &stage1_bitmap_stones_1[0], &stage1_bitmap_stones_1[0] },
   { 2, BITMAPFLAG_MASKED, 4, &stage1_bitmap_stones_2[0], &stage1_bitmap_stones_2s[0] },
   { 2, BITMAPFLAG_MASKED, 3, &stage1_bitmap_stones_3[0], &stage1_bitmap_stones_3s[0] },
@@ -1991,7 +1991,7 @@ static const bitmap_t stage1_stones_bitmaps[6] = {
   { 1, BITMAPFLAG_MASKED, 1, &stage1_bitmap_stones_5[0], &stage1_bitmap_stones_5s[0] }
 };
 
-static const bitmap_t stage1_dust_bitmaps[6] = {
+static const bitmap_t stage1_dust_bitmaps[SPRITE_FRAMES] = {
   { 1, BITMAPFLAG_MASKED, 1, &stage1_bitmap_dust_1[0], &stage1_bitmap_dust_1s[0] },
   { 1, BITMAPFLAG_MASKED, 1, &stage1_bitmap_dust_1[0], &stage1_bitmap_dust_1s[0] },
   { 1, BITMAPFLAG_MASKED, 1, &stage1_bitmap_dust_1[0], &stage1_bitmap_dust_1s[0] },
@@ -2308,7 +2308,7 @@ static const u8 stage1_bitmap_turnsign_5s[2 * 2 * 13] = {
 /* ----------------------------------------------------------------------- */
 
 // $6D82
-static const bitmap_t stage1_tumbleweed_bitmaps[6] = {
+static const bitmap_t stage1_tumbleweed_bitmaps[SPRITE_FRAMES] = {
   { 2, BITMAPFLAG_DEFAULT, 16, &stage1_bitmap_tumbleweed_1[0], &stage1_bitmap_tumbleweed_1[0] },
   { 2, BITMAPFLAG_DEFAULT, 11, &stage1_bitmap_tumbleweed_2[0], &stage1_bitmap_tumbleweed_2[0] },
   { 1, BITMAPFLAG_DEFAULT,  9, &stage1_bitmap_tumbleweed_3[0], &stage1_bitmap_tumbleweed_3[0] },
@@ -2379,7 +2379,7 @@ static const u8 stage1_bitmap_tumbleweed_4[1 * 7] = {
 /* ----------------------------------------------------------------------- */
 
 // $6DF2
-static const bitmap_t stage1_barrier_bitmaps[6] = {
+static const bitmap_t stage1_barrier_bitmaps[SPRITE_FRAMES] = {
   { 4, BITMAPFLAG_DEFAULT, 17, &stage1_bitmap_barrier_1[0], &stage1_bitmap_barrier_1[0]  },
   { 4, BITMAPFLAG_DEFAULT, 17, &stage1_bitmap_barrier_1[0], &stage1_bitmap_barrier_1[0]  },
   { 3, BITMAPFLAG_DEFAULT, 13, &stage1_bitmap_barrier_2[0], &stage1_bitmap_barrier_2[0]  },
@@ -2765,7 +2765,7 @@ static const u8 stage1_bitmap_telegraphpoletop_5s[2 * 2 * 4] = {
 /* ----------------------------------------------------------------------- */
 
 // $70F6
-static const stretchy_t stage1_stretchy_tree_right[6] = {
+static const stretchy_t stage1_stretchy_tree_right[SPRITE_FRAMES] = {
   { STRETCHY_TYPE_FIXED, &stage1_tree_bottom       },
   { STRETCHY_TYPE_38PC, &stage1_tree_bottommiddle },
   { STRETCHY_TYPE_FIXED, &stage1_tree_middle       },

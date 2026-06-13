@@ -88,13 +88,13 @@ static const u8 stage3_map_hazards_C6FC[];
 static const u8 stage3_map_lobjs_C71F[];
 static const u8 stage3_map_robjs_C7AD[];
 static const u8 stage3_perp_face[180];
-static const bitmap_t stage3_lods_C8E0[6];
-static const bitmap_t stage3_lods_C90A[6];
-static const bitmap_t stage3_lods_C934[6];
+static const bitmap_t stage3_lods_C8E0[SPRITE_FRAMES];
+static const bitmap_t stage3_lods_C90A[SPRITE_FRAMES];
+static const bitmap_t stage3_lods_C934[SPRITE_FRAMES];
 static const bitmap_t stage3_lods_CDF1[12];
 static const bitmap_t stage3_lods_CEED[5];
 static const bitmap_t stage3_lods_D2EE[5];
-static const bitmap_t stage3_lods_D64F[6];
+static const bitmap_t stage3_lods_D64F[SPRITE_FRAMES];
 static const bitmap_t stage3_lods_D7DE[5];
 static const bitmap_t stage3_lods_DA16[5];
 static const u8 stage3_bitmap_C95E[1171];
@@ -1821,7 +1821,7 @@ static const u8 stage3_perp_face[180] = {
 };
 
 // $C8E0
-static const bitmap_t stage3_lods_C8E0[6] = {
+static const bitmap_t stage3_lods_C8E0[SPRITE_FRAMES] = {
   { 6, BITMAPFLAG_DEFAULT, 30, &stage3_bitmap_C95E[0], &stage3_bitmap_C95E[0] },  // [0]
   { 4, BITMAPFLAG_DEFAULT, 20, &stage3_bitmap_C95E[180], &stage3_bitmap_C95E[180] },  // [1]
   { 3, BITMAPFLAG_DEFAULT, 13, &stage3_bitmap_C95E[260], &stage3_bitmap_C95E[260] },  // [2]
@@ -1831,7 +1831,7 @@ static const bitmap_t stage3_lods_C8E0[6] = {
 };
 
 // $C90A
-static const bitmap_t stage3_lods_C90A[6] = {
+static const bitmap_t stage3_lods_C90A[SPRITE_FRAMES] = {
   { 6, BITMAPFLAG_DEFAULT, 29, &stage3_bitmap_C95E[363], &stage3_bitmap_C95E[363] },  // [0]
   { 4, BITMAPFLAG_DEFAULT, 19, &stage3_bitmap_C95E[537], &stage3_bitmap_C95E[537] },  // [1]
   { 3, BITMAPFLAG_DEFAULT, 14, &stage3_bitmap_C95E[613], &stage3_bitmap_C95E[613] },  // [2]
@@ -1841,7 +1841,7 @@ static const bitmap_t stage3_lods_C90A[6] = {
 };
 
 // $C934
-static const bitmap_t stage3_lods_C934[6] = {
+static const bitmap_t stage3_lods_C934[SPRITE_FRAMES] = {
   { 6, BITMAPFLAG_DEFAULT, 31, &stage3_bitmap_C95E[719], &stage3_bitmap_C95E[719] },  // [0]
   { 5, BITMAPFLAG_DEFAULT, 22, &stage3_bitmap_C95E[905], &stage3_bitmap_C95E[905] },  // [1]
   { 3, BITMAPFLAG_DEFAULT, 16, &stage3_bitmap_C95E[1015], &stage3_bitmap_C95E[1015] },  // [2]
@@ -2339,7 +2339,7 @@ static const u8 stage3_bitmap_D311[830] = {
 };
 
 // $D64F
-static const bitmap_t stage3_lods_D64F[6] = {
+static const bitmap_t stage3_lods_D64F[SPRITE_FRAMES] = {
   { 2, BITMAPFLAG_DEFAULT, 16, &stage3_bitmap_D679[0], &stage3_bitmap_D679[0] },  // [0]
   { 2, BITMAPFLAG_DEFAULT, 11, &stage3_bitmap_D679[32], &stage3_bitmap_D679[32] },  // [1]
   { 1, BITMAPFLAG_DEFAULT, 9, &stage3_bitmap_D679[54], &stage3_bitmap_D679[54] },  // [2]

@@ -88,12 +88,12 @@ static const u8 stage5_map_hazards_C6D1[];
 static const u8 stage5_map_lobjs_C6EE[];
 static const u8 stage5_map_robjs_C7A5[];
 static const u8 stage5_perp_face[180];
-static const bitmap_t stage5_lods_C8E2[6];
-static const bitmap_t stage5_lods_C90C[6];
-static const bitmap_t stage5_lods_C936[6];
+static const bitmap_t stage5_lods_C8E2[SPRITE_FRAMES];
+static const bitmap_t stage5_lods_C90C[SPRITE_FRAMES];
+static const bitmap_t stage5_lods_C936[SPRITE_FRAMES];
 static const bitmap_t stage5_lods_CF5B[10];
 static const bitmap_t stage5_lods_D2BF[5];
-static const bitmap_t stage5_lods_D620[6];
+static const bitmap_t stage5_lods_D620[SPRITE_FRAMES];
 static const bitmap_t stage5_lods_D7B3[5];
 static const bitmap_t stage5_lods_D918[5];
 static const bitmap_t stage5_lods_DA0F[5];
@@ -1803,7 +1803,7 @@ static const u8 stage5_perp_face[180] = {
 };
 
 // $C8E2
-static const bitmap_t stage5_lods_C8E2[6] = {
+static const bitmap_t stage5_lods_C8E2[SPRITE_FRAMES] = {
   { 6, BITMAPFLAG_DEFAULT, 30, &stage5_bitmap_C960[0], &stage5_bitmap_C960[0] },  // [0]
   { 5, BITMAPFLAG_DEFAULT, 22, &stage5_bitmap_C960[180], &stage5_bitmap_C960[180] },  // [1]
   { 3, BITMAPFLAG_DEFAULT, 15, &stage5_bitmap_C960[290], &stage5_bitmap_C960[290] },  // [2]
@@ -1813,7 +1813,7 @@ static const bitmap_t stage5_lods_C8E2[6] = {
 };
 
 // $C90C
-static const bitmap_t stage5_lods_C90C[6] = {
+static const bitmap_t stage5_lods_C90C[SPRITE_FRAMES] = {
   { 6, BITMAPFLAG_DEFAULT, 39, &stage5_bitmap_C960[431], &stage5_bitmap_C960[431] },  // [0]
   { 5, BITMAPFLAG_DEFAULT, 29, &stage5_bitmap_C960[665], &stage5_bitmap_C960[665] },  // [1]
   { 3, BITMAPFLAG_DEFAULT, 20, &stage5_bitmap_C960[810], &stage5_bitmap_C960[810] },  // [2]
@@ -1823,7 +1823,7 @@ static const bitmap_t stage5_lods_C90C[6] = {
 };
 
 // $C936
-static const bitmap_t stage5_lods_C936[6] = {
+static const bitmap_t stage5_lods_C936[SPRITE_FRAMES] = {
   { 6, BITMAPFLAG_DEFAULT, 30, &stage5_bitmap_C960[966], &stage5_bitmap_C960[966] },  // [0]
   { 4, BITMAPFLAG_DEFAULT, 20, &stage5_bitmap_C960[1146], &stage5_bitmap_C960[1146] },  // [1]
   { 3, BITMAPFLAG_DEFAULT, 13, &stage5_bitmap_C960[1226], &stage5_bitmap_C960[1226] },  // [2]
@@ -2321,7 +2321,7 @@ static const u8 stage5_bitmap_D2E2[830] = {
 };
 
 // $D620
-static const bitmap_t stage5_lods_D620[6] = {
+static const bitmap_t stage5_lods_D620[SPRITE_FRAMES] = {
   { 4, BITMAPFLAG_DEFAULT, 17, &stage5_bitmap_D64A[0], &stage5_bitmap_D64A[0] },  // [0]
   { 4, BITMAPFLAG_DEFAULT, 17, &stage5_bitmap_D64A[0], &stage5_bitmap_D64A[0] },  // [1]
   { 3, BITMAPFLAG_DEFAULT, 13, &stage5_bitmap_D64A[68], &stage5_bitmap_D64A[68] },  // [2]

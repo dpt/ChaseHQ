@@ -7265,7 +7265,7 @@ static void dust_stones_stuff(chqstate_t *state, u8 Biterations, const u8 *IYhei
   int              carry = 0;
   u8               A;
   u16             *HLtable;
-  const bitmap_t (*DEbitmaps)[6];
+  const bitmap_t (*DEbitmaps)[SPRITE_FRAMES];
   const bitmap_t  *HLbitmap;
 
   int              C;
@@ -7344,7 +7344,7 @@ static void draw_helicopter(chqstate_t *state, u8 Biterations, u8 *IYheight)
   int                   Biterations2;    /* was B */
   u8                    Atotal;          /* was A */
   int                   frame;           /* was A */
-  const heli_bitmap_t (*helibitmaps)[6]; /* was HL */
+  const heli_bitmap_t (*helibitmaps)[SPRITE_FRAMES]; /* was HL */
   const heli_bitmap_t  *helibitmap;      /* was DE */
 
   if (Biterations != 3)
@@ -8087,7 +8087,7 @@ static void draw_arrow_fire_smoke(chqstate_t *state,
   };
 
   // $CDF4
-  static const bitmap_t *fire_bitmaps[6] = {
+  static const bitmap_t *fire_bitmaps[SPRITE_FRAMES] = {
     &fire5_defns[0],
     &fire6_defns[0],
     &fire3_defns[0],

@@ -320,6 +320,8 @@ typedef struct scenedata {
 
 /* ----------------------------------------------------------------------- */
 
+#define SPRITE_FRAMES 6   /* bitmaps per sprite sequence (distance LODs / animation frames) */
+
 typedef struct stage {
   u8                backdrop[BACKDROP_LENGTH];
   const u8         *addrof_perp_mugshot_attributes;
@@ -334,11 +336,11 @@ typedef struct stage {
   const obj_t      *addrof_left_hand_short_pole_object;
   const u8         *addrof_perp_description;
   const u8         *addrof_arrest_messages;
-  const heli_bitmap_t (*addrof_helicopter_stuff_1)[6];
-  const heli_bitmap_t (*addrof_helicopter_stuff_2)[6];
+  const heli_bitmap_t (*addrof_helicopter_stuff_1)[SPRITE_FRAMES];
+  const heli_bitmap_t (*addrof_helicopter_stuff_2)[SPRITE_FRAMES];
 
-  const bitmap_t  (*bitmaps_stones)[6];
-  const bitmap_t  (*bitmaps_dust)[6];
+  const bitmap_t  (*bitmaps_stones)[SPRITE_FRAMES];
+  const bitmap_t  (*bitmaps_dust)[SPRITE_FRAMES];
   const bitmap_t   *bitmaps_perp_car;
   const bitmap_t   *bitmaps_vehicles[4];
 
@@ -354,7 +356,7 @@ typedef struct stage {
 
 /* ----------------------------------------------------------------------- */
 
-#define MAX_STAGES (5)
+#define MAX_STAGES    5
 const stage_t *stages[MAX_STAGES];
 
 /* ----------------------------------------------------------------------- */

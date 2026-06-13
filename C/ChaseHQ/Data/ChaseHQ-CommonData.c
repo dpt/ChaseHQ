@@ -3881,7 +3881,7 @@ const u8 minifont[31 * MINIFONT_HEIGHT] = {
 /* ----------------------------------------------------------------------- */
 
 // $E0B2
-const bitmap_t fire1_defns[6] = {
+const bitmap_t fire1_defns[SPRITE_FRAMES] = {
   { 4, BITMAPFLAG_DEFAULT, 16, bitmap_fire1,      bitmap_fire1       },
   { 3, BITMAPFLAG_MASKED,   8, bitmap_fire3,      bitmap_fire3       },
   { 2, BITMAPFLAG_MASKED,   5, bitmap_fire5,      bitmap_fire5s      },
@@ -3891,7 +3891,7 @@ const bitmap_t fire1_defns[6] = {
 };
 
 // $E0DC
-const bitmap_t fire2_defns[6] = {
+const bitmap_t fire2_defns[SPRITE_FRAMES] = {
   { 4, BITMAPFLAG_DEFAULT, 16, bitmap_fire2,      bitmap_fire2       },
   { 3, BITMAPFLAG_MASKED,   8, bitmap_fire4,      bitmap_fire4       },
   { 2, BITMAPFLAG_MASKED,   6, bitmap_fire6,      bitmap_fire6s      },
@@ -3901,7 +3901,7 @@ const bitmap_t fire2_defns[6] = {
 };
 
 // $E106
-const bitmap_t fire3_defns[6] = {
+const bitmap_t fire3_defns[SPRITE_FRAMES] = {
   { 4, BITMAPFLAG_DEFAULT, 11, bitmap_fire1 + 20, bitmap_fire1 + 20  },
   { 3, BITMAPFLAG_MASKED,   6, bitmap_fire3 + 12, bitmap_fire3 + 12  },
   { 2, BITMAPFLAG_MASKED,   4, bitmap_fire5 + 4,  bitmap_fire5s + 4  },
@@ -3911,7 +3911,7 @@ const bitmap_t fire3_defns[6] = {
 };
 
 // $E130
-const bitmap_t fire4_defns[6] = {
+const bitmap_t fire4_defns[SPRITE_FRAMES] = {
   { 4, BITMAPFLAG_DEFAULT, 11, bitmap_fire2 + 20, bitmap_fire2 + 20  },
   { 3, BITMAPFLAG_MASKED,   6, bitmap_fire4 + 12, bitmap_fire4 + 12  },
   { 2, BITMAPFLAG_MASKED,   5, bitmap_fire6 + 4,  bitmap_fire6s + 4  },
@@ -3921,7 +3921,7 @@ const bitmap_t fire4_defns[6] = {
 };
 
 // $E15A
-const bitmap_t fire5_defns[6] = {
+const bitmap_t fire5_defns[SPRITE_FRAMES] = {
   { 4, BITMAPFLAG_DEFAULT,  6, bitmap_fire1 + 40, bitmap_fire1 + 40  },
   { 3, BITMAPFLAG_MASKED,   3, bitmap_fire3 + 40, bitmap_fire3 + 40  },
   { 2, BITMAPFLAG_MASKED,   3, bitmap_fire5 + 8,  bitmap_fire5s + 8  },
@@ -3931,7 +3931,7 @@ const bitmap_t fire5_defns[6] = {
 };
 
 // $E184
-const bitmap_t fire6_defns[6] = {
+const bitmap_t fire6_defns[SPRITE_FRAMES] = {
   { 4, BITMAPFLAG_DEFAULT, 6, bitmap_fire2 + 40, bitmap_fire2 + 40  },
   { 3, BITMAPFLAG_MASKED,  3, bitmap_fire4 + 40, bitmap_fire4 + 40  },
   { 2, BITMAPFLAG_MASKED,  3, bitmap_fire6 + 12, bitmap_fire6s + 12 },
@@ -3941,7 +3941,7 @@ const bitmap_t fire6_defns[6] = {
 };
 
 // $E1AE
-const bitmap_t smoke_defns[6] = {
+const bitmap_t smoke_defns[SPRITE_FRAMES] = {
   { 2, BITMAPFLAG_MASKED, 13, bitmap_smoke1, bitmap_smoke1 },
   { 2, BITMAPFLAG_MASKED, 11, bitmap_smoke2, bitmap_smoke2 },
   { 2, BITMAPFLAG_MASKED,  9, bitmap_smoke3, bitmap_smoke3 },
@@ -3985,7 +3985,7 @@ const depthset_t tunnellight = {
 };
 
 // $E1FF
-const bitmap_t tunnellight_bitmaps[6] = {
+const bitmap_t tunnellight_bitmaps[SPRITE_FRAMES] = {
   { 2, BITMAPFLAG_DEFAULT, 16, &bitmap_tunnellight_1[0], &bitmap_tunnellight_1[0]  },
   { 2, BITMAPFLAG_DEFAULT, 12, &bitmap_tunnellight_2[0], &bitmap_tunnellight_2[0]  },
   { 1, BITMAPFLAG_DEFAULT,  8, &bitmap_tunnellight_3[0], &bitmap_tunnellight_3[0]  },
