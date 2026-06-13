@@ -18,26 +18,29 @@ Options:
   --turn-signs
         Stage has turn signs (objects 8 and 9).
 
-The script generates C code to stdout. Sections it cannot fully convert
-are emitted as /* TODO */ comments with the raw hex data.
+The script generates C code to stdout. Sections it cannot fully decode
+are emitted as raw u8 arrays; sections that are truly unresolvable are
+emitted as /* TODO */ comments with raw hex.
 
 What the script generates:
-  - Backdrop (u8 array)
+  - Backdrop (u8 array inline in stage_t, Pixels.h macro names)
   - All map data sections (curvature/height/lanes/hazards/leftobjs/rightobjs)
     decoded into MAP_ macros
-  - Vehicle/hazard bitmap data (u8 arrays from DEFB lines under bitmap comments)
+  - Vehicle/hazard bitmap data (u8 arrays, Pixels.h macro names)
   - LOD table entries (bitmap_t arrays from 7-byte LOD records)
-  - Mugshot/face data (u8 arrays)
-  - Helicopter bitmap data (u8 arrays)
+  - Mugshot/face data (u8 arrays, Pixels.h macro names)
+  - Perp description, arrest messages (raw u8 arrays)
+  - Helicopter data, object definitions, hazard LODs (raw u8 arrays)
+  - LOD address table (raw u8 array)
+  - Stretchy graphic data (raw u8 arrays)
   - Forward declarations for all generated arrays
+  - const stage_t stageN = { ... } initialiser (partially filled)
   - stageN_lookup_map_goto() switch body
-  - TODO skeletons for stage_t struct, object defs, stretchy objects
 
 What requires manual completion:
-  - const stage_t stageN = { ... } initialiser
-  - hittable_t and obj_t graphic definition arrays
-  - Perp description / chatter strings / arrest messages
-  - Stretchy object depthset_t and stretchy_t tables
+  - obj_t / hittable_t graphic definition arrays (typed structs)
+  - stretchy_t / depthset_t tables (typed structs)
+  - chatter_strings
 """
 
 import sys
@@ -515,6 +518,7 @@ def array_name(stage: int, stype: str, addr: int) -> str:
         'obj_defs':     f'stage{stage}_obj_defs_{addr:04X}',
         'helicopter':   f'stage{stage}_helicopter_{addr:04X}',
         'lodaddrs':     f'stage{stage}_lod_addrs_{addr:04X}',
+        'stretchy':     f'stage{stage}_stretchy_{addr:04X}',
     }
     return prefixes.get(stype, f'stage{stage}_data_{addr:04X}')
 
@@ -740,6 +744,7 @@ def emit_stage_struct(stage: int, sections: List[Section],
     setupdata_sec   = find_first('setupdata')
     attractdata_sec = find_first('attractdata')
     pilot_sec       = find_first('pilot_mugshot')
+    lodaddrs_sec    = find_first('lodaddrs')
 
     lines: List[str] = []
     addr = backdrop_sec.start_addr if backdrop_sec else 0
@@ -788,10 +793,24 @@ def emit_stage_struct(stage: int, sections: List[Section],
         lines.append(f'  NULL,  /* TODO: {field}{hint} */')
 
     lines.append('')
-    lines.append('  NULL,  /* TODO: bitmaps_stones */')
-    lines.append('  NULL,  /* TODO: bitmaps_dust */')
-    lines.append('  NULL,  /* TODO: bitmaps_perp_car */')
-    lines.append('  { NULL, NULL, NULL, NULL },  /* TODO: bitmaps_vehicles */')
+    lws = lodaddrs_sec.words_with_annots if lodaddrs_sec else []
+
+    def lod_ref(idx: int) -> str:
+        if idx >= len(lws):
+            return 'NULL'
+        raw_w, abs_a, _ = lws[idx]
+        if raw_w == 0:
+            return 'NULL'
+        if abs_a < 0:
+            abs_a = raw_w + bank_offset
+        ref = resolve_section_ptr(abs_a, abs_to_name)
+        return ref if ref else f'NULL  /* TODO: ${abs_a:04X} */'
+
+    lines.append(f'  {lod_ref(0)},  /* bitmaps_stones */')
+    lines.append(f'  {lod_ref(1)},  /* bitmaps_dust */')
+    lines.append(f'  {lod_ref(2)},  /* bitmaps_perp_car */')
+    vehicles = ', '.join(lod_ref(3 + j) for j in range(4))
+    lines.append(f'  {{ {vehicles} }},  /* bitmaps_vehicles */')
     lines.append('')
 
     # Difficulty: car_spawn_delay, perp_lane_change_base, perp_approach_base
@@ -915,7 +934,7 @@ def convert(skool_path: str, stage: int, obj_names: List[str]) -> None:
     map_stypes = {'curvature', 'height', 'lanes', 'hazards', 'leftobjs', 'rightobjs'}
     named_stypes = map_stypes | {
         'arrest_msgs', 'perp_desc', 'hazard_lods',
-        'helicopter', 'obj_defs', 'lodaddrs',
+        'helicopter', 'obj_defs', 'lodaddrs', 'lod_table',
     }
     abs_to_name: Dict[int, str] = {}
     for sec in sections:
@@ -1014,10 +1033,17 @@ def convert(skool_path: str, stage: int, obj_names: List[str]) -> None:
             all_lines.append('')
             fwd_decls.append(f'static const u8 {nm}[{len(data)}];')
 
+        elif sec.stype == 'stretchy':
+            data = sec.bytes_flat
+            nm = array_name(stage, 'stretchy', sec.start_addr)
+            all_lines.extend(emit_raw_array(nm, data, 8, sec.start_addr))
+            all_lines.append('')
+            fwd_decls.append(f'static const u8 {nm}[{len(data)}];')
+
         elif sec.stype in ('perstage', 'difficulty', 'setupdata', 'attractdata'):
             pass  # data inlined into stage_t struct by emit_stage_struct
 
-        elif sec.stype in ('hittable', 'stretchy', 'unknown'):
+        elif sec.stype in ('hittable', 'unknown'):
             all_lines.append(f'/* TODO: ${sec.start_addr:04X} [{sec.stype}]')
             all_lines.append(f'   {sec.header_comment}')
             # Emit raw hex as a comment
