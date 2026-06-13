@@ -595,7 +595,7 @@ static void draw_object_right_helicopter_entrypt(chqstate_t     *state,
     const bitmap_t *HLbitmap,
     const u8       *IYheight);
 
-static void draw_object_930e_entrypt(chqstate_t     *state,
+static void draw_object_perspective_entrypt(chqstate_t     *state,
                                      int              Awidth_bytes,
                                      int              Cpadding,
                                      const bitmap_t *HLbitmap,
@@ -611,7 +611,7 @@ static void draw_object_common_flipped(chqstate_t     *state,
                                        int             Fdash_carry,
                                        const u8       *IYheight);
 
-static void draw_object_common_9333(chqstate_t     *state,
+static void draw_object_clipped(chqstate_t     *state,
                                     int             zero_flipped,
                                     int             carry_masked,
                                     int              Awidth_bytes,
@@ -759,7 +759,7 @@ static void draw_char(chqstate_t *state,
                       u8        **new_attrs);
 
 static u8 keyscan(chqstate_t *state);
-static u8 keyscan_a112(chqstate_t *state, const u8 *HLkeydefs, int Eresult);
+static u8 keyscan_keydefs(chqstate_t *state, const u8 *HLkeydefs, int Eresult);
 static int keyscan_inner(const chqstate_t *state, int Ainput);
 
 static void check_scenery_collisions(chqstate_t *state);
@@ -851,7 +851,7 @@ static void draw_smoke(chqstate_t *state, int Aanim_frame, int Adash_flip_flag);
 
 static void draw_cherry_light(chqstate_t *state, int Aframe_index,
                               int Bturn_limit, int Cturn_delta);
-static void draw_cherry_b699(chqstate_t *state, int Aframe_index);
+static void draw_crash_unflipped(chqstate_t *state, int Aframe_index);
 
 static void draw_crash(chqstate_t *state, int Aframe_index, int Bdash_flip_flag,
                        int Cdash);
@@ -961,7 +961,7 @@ static void forked_road_plotter(chqstate_t *state, u8 *IXlanes, u8 *IYheight);
 static void backdrop_fill_choice(chqstate_t *state);
 
 static void build_curve_table(chqstate_t *state, int forked);
-static void build_curve_table_sub_cca8(chqstate_t *state,
+static void build_curve_table_fill(chqstate_t *state,
                                        int          Bdash_alwayszero,
                                        u16        *HLtableend,
                                        int         DEroadpos);
@@ -3794,7 +3794,7 @@ static void draw_object_left_helicopter_entrypt(chqstate_t     *state,
   Awidth_bytes -= Ebitmap_stride;
   if ((s8) Awidth_bytes >= 0) {
     if (Awidth_bytes >= 8) {
-      draw_object_930e_entrypt(state, Awidth_bytes, Cpadding, HLbitmap,
+      draw_object_perspective_entrypt(state, Awidth_bytes, Cpadding, HLbitmap,
                                IYheight); /* exit via */
       return;
     }
@@ -3825,7 +3825,7 @@ static void draw_object_left_helicopter_entrypt(chqstate_t     *state,
   carry = HLbitmap->flags & BITMAPFLAG_MASKED; /* gets bit 0 */
   zero  = (HLbitmap->flags >> 1) == 0;
   if (zero) { /* check if not BITMAPFLAG_FLIPPED */
-    draw_object_common_9333(state,
+    draw_object_clipped(state,
                             zero,
                             carry,
                             Awidth_bytes,
@@ -3949,11 +3949,11 @@ static void draw_object_right_helicopter_entrypt(chqstate_t     *state,
     const u8       *IYheight)
 {
   if (Awidth_bytes < 247)
-    draw_object_930e_entrypt(state, Awidth_bytes, 0, HLbitmap, IYheight);
+    draw_object_perspective_entrypt(state, Awidth_bytes, 0, HLbitmap, IYheight);
 }
 
 /**
- * $930E: Draw object 930e entrypt
+ * $930E: Draw object: compute perspective height/width and dispatch
  *
  * \param[in] state        Pointer to game state.
  * \param[in] Awidth_bytes Bitmap byte width.
@@ -3961,7 +3961,7 @@ static void draw_object_right_helicopter_entrypt(chqstate_t     *state,
  * \param[in] HLbitmap     Source bitmap data.
  * \param[in] IYheight     Height table pointer. (was IY)
  */
-static void draw_object_930e_entrypt(chqstate_t     *state,
+static void draw_object_perspective_entrypt(chqstate_t     *state,
                                      int              Awidth_bytes,
                                      int              Cpadding,
                                      const bitmap_t *HLbitmap,
@@ -3987,7 +3987,7 @@ static void draw_object_930e_entrypt(chqstate_t     *state,
   // Conv: HLbitmap++ removed, now passed as-is into draw_object_common/_9333
   Zflipped = (HLbitmap->flags >> 1) == 0;
   if (Zflipped == 0) {
-    draw_object_common_9333(state,
+    draw_object_clipped(state,
                             Zflipped,
                             carry,
                             Awidth_bytes,
@@ -4045,7 +4045,7 @@ static void draw_object_common_flipped(chqstate_t     *state,
   Awidth_bytes = Adash_width_bytes; zero = Fdash_zero;
   carry = Fdash_carry; // was EX AF,AF' -- unbank A & carry? carry might be a is-masked flag
 
-  draw_object_common_9333(state,
+  draw_object_clipped(state,
                           zero,
                           carry,
                           Awidth_bytes,
@@ -4057,7 +4057,7 @@ static void draw_object_common_flipped(chqstate_t     *state,
 }
 
 /**
- * $9333: Draw object common 9333
+ * $9333: Draw object: clip to visible area and dispatch to plot function
  *
  * \param[in] state          Pointer to game state.
  * \param[in] zero_flipped   Zero flipped.
@@ -4069,7 +4069,7 @@ static void draw_object_common_flipped(chqstate_t     *state,
  * \param[in] HLbitmap       Source bitmap data.
  * \param[in] IYheight       IYheight register value.
  */
-static void draw_object_common_9333(chqstate_t     *state,
+static void draw_object_clipped(chqstate_t     *state,
                                     int             zero_flipped,
                                     int             carry_masked,
                                     int              Awidth_bytes,
@@ -6244,7 +6244,7 @@ static u8 keyscan(chqstate_t *state)
     Ainput = state->speccy->in(state->speccy, port_KEMPSTON_JOYSTICK) & 0x1F;
     E = 0x20;
     HL = &state->keydefs[0];
-    A = keyscan_a112(state, HL, E);
+    A = keyscan_keydefs(state, HL, E);
     RRC(A);
     RRC(A);
     RRC(A);
@@ -6253,7 +6253,7 @@ static u8 keyscan(chqstate_t *state)
   } else {
     E = 1;
     HL = &state->keydefs[0];
-    A = keyscan_a112(state, HL, E);
+    A = keyscan_keydefs(state, HL, E);
   }
 
   A &= 3;
@@ -6271,14 +6271,14 @@ static u8 keyscan(chqstate_t *state)
 }
 
 /**
- * $A112: Keyscan a112
+ * $A112: Scan a key-definition list, rotating each result into an accumulator
  *
  * \param[in] state Pointer to game state.
  * \param[in] HL    Hl.
  * \param[in] E     E.
  * \return Non-zero on success.
  */
-static u8 keyscan_a112(chqstate_t *state, const u8 *HLkeydefs, int Eresult)
+static u8 keyscan_keydefs(chqstate_t *state, const u8 *HLkeydefs, int Eresult)
 {
   int carry = 0;
   int A;
@@ -9143,14 +9143,14 @@ static void ahc_check_hand_flag(chqstate_t *state)
 
   Ahand_frame += Chand_flag;
   // PUSH AF
-  draw_cherry_b699(state, Ahand_frame);
+  draw_crash_unflipped(state, Ahand_frame);
   // POP AF
   Chand_frame = Ahand_frame;
   Ahand_flag = state->ahc_hand_step;
   if (Ahand_flag < 4) {
     // A < 4
     Ahand_flag = ++Chand_frame;
-    draw_cherry_b699(state, Ahand_flag); /* exit via */
+    draw_crash_unflipped(state, Ahand_flag); /* exit via */
   } else {
     state->cherry_light = 1;
   }
@@ -9548,16 +9548,16 @@ static void draw_cherry_light(chqstate_t *state,
     // EX AF,AF'
   }
   // EX AF,AF'
-  draw_cherry_b699(state, Aframe_index); /* was FALLTHROUGH */
+  draw_crash_unflipped(state, Aframe_index); /* was FALLTHROUGH */
 }
 
 /**
- * $B699: Draw cherry b699
+ * $B699: Draw crash frame with no flip and no extra offset (calls draw_crash defaults)
  *
  * \param[in] state        Pointer to game state.
  * \param[in] Aframe_index Sound effect index.
  */
-static void draw_cherry_b699(chqstate_t *state, int Aframe_index)
+static void draw_crash_unflipped(chqstate_t *state, int Aframe_index)
 {
   draw_crash(state, Aframe_index, 0, 0); /* was FALLTHROUGH */
 }
@@ -13281,7 +13281,7 @@ static void build_curve_table(chqstate_t *state, int forked)
   DEroadpos = state->scenedata.road_pos; /* was POP DE */
   B = 0; // init counter
   // EXX Bank
-  build_curve_table_sub_cca8(state,
+  build_curve_table_fill(state,
                              B,
                              table1, // table1 is $EE00 or $ED00 (right hand table)
                              DEroadpos);
@@ -13300,14 +13300,14 @@ static void build_curve_table(chqstate_t *state, int forked)
 
   Bdash = 0; // init counter
   // EXX Unbank
-  build_curve_table_sub_cca8(state,
+  build_curve_table_fill(state,
                              Bdash,
                              table2, // table2 is $EC00 or $E900 (left hand table)
                              DEroadpos);
 }
 
 // HL -> points past end of destination table we're filling
-static void build_curve_table_sub_cca8(chqstate_t *state,
+static void build_curve_table_fill(chqstate_t *state,
                                        int          Bdash_alwayszero,
                                        u16        *HLtableend,
                                        int         DEroadpos)
