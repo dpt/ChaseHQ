@@ -248,10 +248,10 @@
 #define MARQUEELIGHT_LEFT_ATTR_ADDR  (0x5820) /* screen attribute address of left marquee light */
 #define MARQUEELIGHT_RIGHT_ATTR_ADDR (0x583B) /* screen attribute address of right marquee light */
 
-#define BANK3_ROUTINE_0         (0xC000)
+#define BANK3_BOUNCY_LOGO       (0xC000)
 #define BANK3_ROUTINE_3         (0xC003) /* bootstrap */
 #define BANK3_ROUTINE_6         (0xC006) /* success music */
-#define BANK3_ROUTINE_9         (0xC009)
+#define BANK3_INPUT_SELECTION   (0xC009)
 
 /* ----------------------------------------------------------------------- */
 
@@ -14604,13 +14604,13 @@ static u8 call_bank_3_128k(chqstate_t *state, int HLroutine)
   default:
     assert(0);
     break;
-  case BANK3_ROUTINE_0:
+  case BANK3_BOUNCY_LOGO:
     break;
   case BANK3_ROUTINE_3:
     break;
   case BANK3_ROUTINE_6:
     break;
-  case BANK3_ROUTINE_9:
+  case BANK3_INPUT_SELECTION:
     break;
   }
   return 1;
@@ -14644,31 +14644,32 @@ static void reset_paging_128k(chqstate_t *state)
 static void attract_mode_128k(chqstate_t *state)
 {
   int       carry;
-  int       HLroutine;           /* was HL */
-  int       Aresult;             /* was A */
-  int       Aattract_cycle;      /* was A */
+  int       enter_pressed;       /* was carry */
+  int       routine;             /* was HL */
+  int       result;              /* was A */
+  int       attract_cycle;       /* was A */
   const u8 *DEmessages;          /* was DE */
   const u8 *HLmessages;          /* was HL */
   int       Atransition_control; /* was A */
   int       Adelay;              /* was A */
 
 attract_mode_128k_start:
-  HLroutine = 0xC000;
-attract_mode_128k_8281:
-  Aresult = call_bank_3_128k(state, HLroutine);
-  if (Aresult == 0)
+  routine = BANK3_BOUNCY_LOGO;
+call_bank_3:
+  result = call_bank_3_128k(state, routine);
+  if (result == 0)
     return;
 
   set_up_stage(state, &state->stage->attract_data);
 
-  state->attract_mode_128k_countdown = 2; // two runs through?
+  state->attract_mode_128k_countdown = 2; // two runs through
   state->speed = SPEED_ATTRACT;
   for (;;) {
     cpu_driver(state);
 
-    Aattract_cycle = state->attract_cycle;
+    attract_cycle = state->attract_cycle;
     DEmessages = &enter_for_options_messages[0];
-    if (Aattract_cycle) {
+    if (attract_cycle) {
       if (keyscan(state) & USERINPUT_FIRE) {
         play_start_noise(state);
         return;
@@ -14676,11 +14677,11 @@ attract_mode_128k_8281:
       DEmessages = &press_gear_messages[0];
     }
 
-    carry = ~state->speccy->in(state->speccy,
-                               port_KEYBOARD_ENTERLKJH) & 1; /* was IN+RRA */
-    HLroutine = 0xC009;
-    if (carry)
-      goto attract_mode_128k_8281;
+    enter_pressed = ~state->speccy->in(state->speccy,
+                                       port_KEYBOARD_ENTERLKJH) & 1; /* Conv: was IN+RRA */
+    routine = BANK3_INPUT_SELECTION;
+    if (enter_pressed)
+      goto call_bank_3;
 
     HLmessages = DEmessages;
     // must be a flashing delay
@@ -14691,21 +14692,16 @@ attract_mode_128k_8281:
     Atransition_control = state->transition_control;
     if (Atransition_control == 0) {
       Adelay = state->attract_mode_128k_countdown;
-      if ((s8) Adelay < 0)
+      if (Adelay < 0)
         goto attract_mode_128k_start;
-      Adelay--;
-      state->attract_mode_128k_countdown = Adelay;
-      if ((s8) Adelay < 0) {
+      state->attract_mode_128k_countdown = --Adelay;
+      if (Adelay < 0)
         setup_transition(state, TRANSITIONSTRIDE_FORWARD);
-      } else {
-        HLmessages = &credits_messages_128[0];
-        if (Adelay == 0)
-          HLmessages = &best_officers[0];
-        setup_overlay_messages(state, HLmessages);
-      }
+      else
+        setup_overlay_messages(state, (Adelay > 0) ? &credits_messages_128[0] : &best_officers[0]);
     }
 
-    transition(state);//seems to run all the time?
+    transition(state);
     update_screen(state);
   }
 }

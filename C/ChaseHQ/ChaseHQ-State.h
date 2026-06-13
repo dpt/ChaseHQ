@@ -144,7 +144,7 @@ struct chqstate {
   // $824B (SM) in attract_mode_128k (relocated)
   u8        attract_mode_128k_blink;
   // $825D (SM) in attract_mode_128k (relocated)
-  u8        attract_mode_128k_countdown;
+  s8        attract_mode_128k_countdown;
 
   // $8277 (SM) in attract_mode
   u8        attract_blinker;
