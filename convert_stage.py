@@ -1413,21 +1413,25 @@ def convert(skool_path: str, stage: int, obj_names: List[str]) -> None:
         print(line)
 
     # ── lookup_map_goto ───────────────────────────────────────────────────────
-    print(f'const void *stage{stage}_lookup_map_goto(chqstate_t *state, u16 z80)')
-    print('{')
-    print('  switch (z80) {')
-    # Build a set of raw addresses that have names
+    tname = f'stage{stage}_map_goto_table'
+    print(f'static const struct {{ u16 z80; const void *ptr; }} {tname}[] = {{')
     for raw_addr, name in sorted(goto_map.items()):
         if name:
-            print(f'  case 0x{raw_addr:04X}: return &{name}[0];')
+            print(f'  {{ 0x{raw_addr:04X}, &{name}[0] }},')
         else:
-            # Compute raw from absolute if we know the bank offset
             raw = raw_addr - bank_offset if raw_addr > bank_offset else raw_addr
-            print(f'  /* TODO: case 0x{raw:04X} -> find array name for abs ${raw_addr:04X} */')
-    print(f'  default:')
-    print(f'    assert("Unknown Z80 address (stage {stage})" == NULL);')
-    print(f'    return NULL;')
-    print('  }')
+            print(f'  /* TODO: 0x{raw:04X} -> find array name for abs ${raw_addr:04X} */')
+    print('};')
+    print()
+    print(f'const void *stage{stage}_lookup_map_goto(chqstate_t *state, u16 z80)')
+    print('{')
+    print('  size_t i;')
+    print()
+    print(f'  for (i = 0; i < sizeof({tname}) / sizeof({tname}[0]); i++)')
+    print(f'    if ({tname}[i].z80 == z80)')
+    print(f'      return {tname}[i].ptr;')
+    print(f'  assert("Unknown Z80 address (stage {stage})" == NULL);')
+    print('  return NULL;')
     print('}')
 
 

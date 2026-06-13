@@ -2476,29 +2476,34 @@ static const u8 stage4_bitmap_F871[1935] = {
 };
 // clang-format on
 
+static const struct { u16 z80; const void *ptr; } stage4_map_goto_table[] = {
+  { 0x6042, &stage4_map_curv_E442[0] },
+  { 0x605A, &stage4_map_height_E45A[0] },
+  { 0x606C, &stage4_map_lanes_E46C[0] },
+  { 0x6080, &stage4_map_hazards_E480[0] },
+  { 0x608B, &stage4_map_lobjs_E48B[0] },
+  { 0x60B4, &stage4_map_robjs_E4B4[0] },
+  { 0x60C4, &stage4_map_curv_E4C4[0] },
+  { 0x60DA, &stage4_map_height_E4DA[0] },
+  { 0x60EC, &stage4_map_lanes_E4EC[0] },
+  { 0x6100, &stage4_map_hazards_E500[0] },
+  { 0x610B, &stage4_map_lobjs_E50B[0] },
+  { 0x614D, &stage4_map_robjs_E54D[0] },
+  { 0x6177, &stage4_map_curv_E577[0] },
+  { 0x619A, &stage4_map_height_E59A[0] },
+  { 0x61D3, &stage4_map_lanes_E5D3[0] },
+  { 0x61FB, &stage4_map_hazards_E5FB[0] },
+  { 0x6224, &stage4_map_lobjs_E624[0] },
+  { 0x62B7, &stage4_map_robjs_E6B7[0] },
+};
+
 const void *stage4_lookup_map_goto(chqstate_t *state, u16 z80)
 {
-  switch (z80) {
-  case 0x6042: return &stage4_map_curv_E442[0];
-  case 0x605A: return &stage4_map_height_E45A[0];
-  case 0x606C: return &stage4_map_lanes_E46C[0];
-  case 0x6080: return &stage4_map_hazards_E480[0];
-  case 0x608B: return &stage4_map_lobjs_E48B[0];
-  case 0x60B4: return &stage4_map_robjs_E4B4[0];
-  case 0x60C4: return &stage4_map_curv_E4C4[0];
-  case 0x60DA: return &stage4_map_height_E4DA[0];
-  case 0x60EC: return &stage4_map_lanes_E4EC[0];
-  case 0x6100: return &stage4_map_hazards_E500[0];
-  case 0x610B: return &stage4_map_lobjs_E50B[0];
-  case 0x614D: return &stage4_map_robjs_E54D[0];
-  case 0x6177: return &stage4_map_curv_E577[0];
-  case 0x619A: return &stage4_map_height_E59A[0];
-  case 0x61D3: return &stage4_map_lanes_E5D3[0];
-  case 0x61FB: return &stage4_map_hazards_E5FB[0];
-  case 0x6224: return &stage4_map_lobjs_E624[0];
-  case 0x62B7: return &stage4_map_robjs_E6B7[0];
-  default:
-    assert("Unknown Z80 address (stage 4)" == NULL);
-    return NULL;
-  }
+  size_t i;
+
+  for (i = 0; i < sizeof(stage4_map_goto_table) / sizeof(stage4_map_goto_table[0]); i++)
+    if (stage4_map_goto_table[i].z80 == z80)
+      return stage4_map_goto_table[i].ptr;
+  assert("Unknown Z80 address (stage 4)" == NULL);
+  return NULL;
 }

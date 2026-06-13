@@ -2681,35 +2681,40 @@ static const u8 stage2_bitmap_FA39[1479] = {
 };
 // clang-format on
 
+static const struct { u16 z80; const void *ptr; } stage2_map_goto_table[] = {
+  { 0x6039, &stage2_map_curv_E439[0] },
+  { 0x604F, &stage2_map_height_E44F[0] },
+  { 0x6074, &stage2_map_lanes_E474[0] },
+  { 0x6088, &stage2_map_hazards_E488[0] },
+  { 0x60A8, &stage2_map_lobjs_E4A8[0] },
+  { 0x60F9, &stage2_map_robjs_E4F9[0] },
+  { 0x613C, &stage2_map_curv_E53C[0] },
+  { 0x614F, &stage2_map_height_E54F[0] },
+  { 0x6161, &stage2_map_lanes_E561[0] },
+  { 0x617B, &stage2_map_hazards_E57B[0] },
+  { 0x6192, &stage2_map_lobjs_E592[0] },
+  { 0x61D0, &stage2_map_robjs_E5D0[0] },
+  { 0x620B, &stage2_map_curv_E60B[0] },
+  { 0x621E, &stage2_map_height_E61E[0] },
+  { 0x622F, &stage2_map_lanes_E62F[0] },
+  { 0x6243, &stage2_map_hazards_E643[0] },
+  { 0x6248, &stage2_map_lobjs_E648[0] },
+  { 0x6268, &stage2_map_robjs_E668[0] },
+  { 0x6274, &stage2_map_curv_E674[0] },
+  { 0x629C, &stage2_map_height_E69C[0] },
+  { 0x62E0, &stage2_map_lanes_E6E0[0] },
+  { 0x62F0, &stage2_map_hazards_E6F0[0] },
+  { 0x6313, &stage2_map_lobjs_E713[0] },
+  { 0x639B, &stage2_map_robjs_E79B[0] },
+};
+
 const void *stage2_lookup_map_goto(chqstate_t *state, u16 z80)
 {
-  switch (z80) {
-  case 0x6039: return &stage2_map_curv_E439[0];
-  case 0x604F: return &stage2_map_height_E44F[0];
-  case 0x6074: return &stage2_map_lanes_E474[0];
-  case 0x6088: return &stage2_map_hazards_E488[0];
-  case 0x60A8: return &stage2_map_lobjs_E4A8[0];
-  case 0x60F9: return &stage2_map_robjs_E4F9[0];
-  case 0x613C: return &stage2_map_curv_E53C[0];
-  case 0x614F: return &stage2_map_height_E54F[0];
-  case 0x6161: return &stage2_map_lanes_E561[0];
-  case 0x617B: return &stage2_map_hazards_E57B[0];
-  case 0x6192: return &stage2_map_lobjs_E592[0];
-  case 0x61D0: return &stage2_map_robjs_E5D0[0];
-  case 0x620B: return &stage2_map_curv_E60B[0];
-  case 0x621E: return &stage2_map_height_E61E[0];
-  case 0x622F: return &stage2_map_lanes_E62F[0];
-  case 0x6243: return &stage2_map_hazards_E643[0];
-  case 0x6248: return &stage2_map_lobjs_E648[0];
-  case 0x6268: return &stage2_map_robjs_E668[0];
-  case 0x6274: return &stage2_map_curv_E674[0];
-  case 0x629C: return &stage2_map_height_E69C[0];
-  case 0x62E0: return &stage2_map_lanes_E6E0[0];
-  case 0x62F0: return &stage2_map_hazards_E6F0[0];
-  case 0x6313: return &stage2_map_lobjs_E713[0];
-  case 0x639B: return &stage2_map_robjs_E79B[0];
-  default:
-    assert("Unknown Z80 address (stage 2)" == NULL);
-    return NULL;
-  }
+  size_t i;
+
+  for (i = 0; i < sizeof(stage2_map_goto_table) / sizeof(stage2_map_goto_table[0]); i++)
+    if (stage2_map_goto_table[i].z80 == z80)
+      return stage2_map_goto_table[i].ptr;
+  assert("Unknown Z80 address (stage 2)" == NULL);
+  return NULL;
 }
