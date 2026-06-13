@@ -71,7 +71,7 @@ CHQ_API void chq_setup(chqstate_t *state);
 /**
  * Invoke the game instance.
  *
- * Call this repeatedly.
+ * Call this repeatedly. [This will depend on the choices made on how to break the game loops up].
  */
 CHQ_API void chq_main(chqstate_t *state);
 

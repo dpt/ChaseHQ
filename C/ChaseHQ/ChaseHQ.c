@@ -211,121 +211,121 @@
 
 /* Configuration constants */
 
-#define MAXTURBOS                              (3)
+#define MAXTURBOS                    (3) /* max turbo boosts player starts each stage with */
 
-#define RESTART_TIME_BCD                    (0x60) /* seconds in BCD */
+#define RESTART_TIME_BCD          (0x60) /* seconds in BCD */
 
-#define SPEED_PERP_MIN                        (70) /* perp slow-down threshold in handle_perp_caught */
-#define SPEED_GEAR_CHANGE                    (150) /* gear-change threshold: low gear below, high gear at or above */
-#define SPEED_PERP_CHASE                     (350) /* perp's base chase speed; also hazard speed cap after impact */
-#define SPEED_ATTRACT                        (400) /* scripted drive speed: attract mode camera, perp post-arrest */
+#define SPEED_PERP_MIN              (70) /* perp slow-down threshold in handle_perp_caught */
+#define SPEED_GEAR_CHANGE          (150) /* gear-change threshold: low gear below, high gear at or above */
+#define SPEED_PERP_CHASE           (350) /* perp's base chase speed; also hazard speed cap after impact */
+#define SPEED_ATTRACT              (400) /* scripted drive speed: attract mode camera, perp post-arrest */
 
-#define MARQUEELIGHT_WIDTH                     (5)
-#define MARQUEELIGHT_HEIGHT                    (4)
+#define MARQUEELIGHT_WIDTH           (5) /* attribute cells */
+#define MARQUEELIGHT_HEIGHT          (4) /* attribute cells */
 
-#define MINSTAGE                               (1)
-#define MAXSTAGE                               (5)
+#define MINSTAGE                     (1)
+#define MAXSTAGE                     (5)
 
-#define SMASHCOUNTER_MAX                      (20) /* fully smashed; also the smash bar segment count */
+#define SMASHCOUNTER_MAX            (20) /* fully smashed; also the smash bar segment count */
 
 /* ----------------------------------------------------------------------- */
 
 /* Memory constants */
 
-#define STAGEDATA_BASE                    (0x5C00)
-#define STAGEDATA_END                     (0x7FFF) /* inclusive */
-#define STAGEDATA_LENGTH                  (STAGEDATA_END + 1 - STAGEDATA_BASE)
+#define STAGEDATA_BASE          (0x5C00) /* first byte of paged stage data in Z80 address space */
+#define STAGEDATA_END           (0x7FFF) /* last byte of paged stage data, inclusive */
+#define STAGEDATA_LENGTH        (STAGEDATA_END + 1 - STAGEDATA_BASE)
 
-#define MARQUEELIGHT_LEFT_ATTR_ADDR       (0x5820)
-#define MARQUEELIGHT_RIGHT_ATTR_ADDR      (0x583B)
+#define MARQUEELIGHT_LEFT_ATTR_ADDR  (0x5820) /* screen attribute address of left marquee light */
+#define MARQUEELIGHT_RIGHT_ATTR_ADDR (0x583B) /* screen attribute address of right marquee light */
 
-#define BANK3_ROUTINE_0                   (0xC000)
-#define BANK3_ROUTINE_3                   (0xC003) /* bootstrap */
-#define BANK3_ROUTINE_6                   (0xC006) /* success music */
-#define BANK3_ROUTINE_9                   (0xC009)
+#define BANK3_ROUTINE_0         (0xC000)
+#define BANK3_ROUTINE_3         (0xC003) /* bootstrap */
+#define BANK3_ROUTINE_6         (0xC006) /* success music */
+#define BANK3_ROUTINE_9         (0xC009)
 
 /* ----------------------------------------------------------------------- */
 
 /* Enumeration constants */
 
-#define QUITSTATE_IDLE                         (0)
-#define QUITSTATE_START                        (1)
-#define QUITSTATE_DONE                         (2)
+#define QUITSTATE_IDLE               (0)
+#define QUITSTATE_START              (1)
+#define QUITSTATE_DONE               (2)
 
-#define EFFECT_SQUEAL                          (1)
-#define EFFECT_LANDING                         (2)
-#define EFFECT_CAR_HIT                         (3)
-#define EFFECT_SCENERY_HIT                     (4)
-#define EFFECT_HAZARD_HIT                      (5)
-#define EFFECT_WALL_HIT                        (6)
-#define EFFECT_CORNERING                       (7)
-#define EFFECT_BIP                             (8)
-#define EFFECT_BOW                             (9)
+#define EFFECT_SQUEAL                (1)
+#define EFFECT_LANDING               (2) /* hero car landing after a jump */
+#define EFFECT_CAR_HIT               (3)
+#define EFFECT_SCENERY_HIT           (4)
+#define EFFECT_HAZARD_HIT            (5)
+#define EFFECT_WALL_HIT              (6)
+#define EFFECT_CORNERING             (7) /* tyre screech when cornering */
+#define EFFECT_BIP                   (8) /* high-pitched countdown beep */
+#define EFFECT_BOW                   (9) /* low-pitched countdown beep */
 
-#define TIMEUPSTATE_INIT                       (0)
-#define TIMEUPSTATE_CHECK_TIME_UP              (1)
-#define TIMEUPSTATE_CHECK_CREDITS              (2)
-#define TIMEUPSTATE_CHECK_RESTART              (3)
-#define TIMEUPSTATE_WAITING                    (4)
+#define TIMEUPSTATE_INIT             (0)
+#define TIMEUPSTATE_CHECK_TIME_UP    (1)
+#define TIMEUPSTATE_CHECK_CREDITS    (2)
+#define TIMEUPSTATE_CHECK_RESTART    (3)
+#define TIMEUPSTATE_WAITING          (4) /* game-over countdown running; waiting to expire */
 
-#define CHATTERSTATE_IDLE                      (0)
-#define CHATTERSTATE_START                     (1)
-#define CHATTERSTATE_RUN                       (2)
-#define CHATTERSTATE_STOP                      (3)
+#define CHATTERSTATE_IDLE            (0)
+#define CHATTERSTATE_START           (1)
+#define CHATTERSTATE_RUN             (2)
+#define CHATTERSTATE_STOP            (3)
 
-#define HANDFLAG_NONE                          (0) /* no hand visible */
-#define HANDFLAG_ANIMATING                     (1) /* cherry light animating onto roof */
-#define HANDFLAG_STOP                          (2) /* static "stop" hand */
+#define HANDFLAG_NONE                (0) /* no hand visible */
+#define HANDFLAG_ANIMATING           (1) /* cherry light animating onto roof */
+#define HANDFLAG_STOP                (2) /* static "stop" hand */
 
-#define PERPCAUGHTPHASE_NONE                   (0)
-#define PERPCAUGHTPHASE_ALIGNING               (1)
-#define PERPCAUGHTPHASE_STOPPING               (2)
-#define PERPCAUGHTPHASE_STOPPED                (3) /* car has stopped; engine off; smash bar is removed */
-#define PERPCAUGHTPHASE_SCORE                  (4)
-#define PERPCAUGHTPHASE_FADING                 (5)
-#define PERPCAUGHTPHASE_ADVANCING              (6) /* transition */
+#define PERPCAUGHTPHASE_NONE         (0)
+#define PERPCAUGHTPHASE_ALIGNING     (1)
+#define PERPCAUGHTPHASE_STOPPING     (2)
+#define PERPCAUGHTPHASE_STOPPED      (3) /* car has stopped; engine off; smash bar is removed */
+#define PERPCAUGHTPHASE_SCORE        (4)
+#define PERPCAUGHTPHASE_FADING       (5)
+#define PERPCAUGHTPHASE_ADVANCING    (6) /* transition */
 
 /* ----------------------------------------------------------------------- */
 
 /* Flag constants */
 
-#define USERINPUT_RIGHT                     (1<<0)
-#define USERINPUT_LEFT                      (1<<1)
-#define USERINPUT_DOWN                      (1<<2) /* aka brake */
-#define USERINPUT_UP                        (1<<3) /* aka accelerate */
-#define USERINPUT_FIRE                      (1<<4) /* aka gear */
-#define USERINPUT_TURBO                     (1<<5)
-#define USERINPUT_PAUSE                     (1<<6)
-#define USERINPUT_QUIT                      (1<<7)
-#define USERINPUT_NOT_QUIT                  (0x7F)
-#define USERINPUT_NONE                      (0x00)
+#define USERINPUT_RIGHT           (1<<0)
+#define USERINPUT_LEFT            (1<<1)
+#define USERINPUT_DOWN            (1<<2) /* aka brake */
+#define USERINPUT_UP              (1<<3) /* aka accelerate */
+#define USERINPUT_FIRE            (1<<4) /* aka gear */
+#define USERINPUT_TURBO           (1<<5)
+#define USERINPUT_PAUSE           (1<<6)
+#define USERINPUT_QUIT            (1<<7)
+#define USERINPUT_NOT_QUIT        (0x7F) /* mask of all input bits except QUIT */
+#define USERINPUT_NONE            (0x00)
 
 /* ----------------------------------------------------------------------- */
 
 /* Other constants */
 
-#define TRANSITIONSTRIDE_FORWARD               (8)
-#define TRANSITIONSTRIDE_REVERSE              (-8)
+#define TRANSITIONSTRIDE_FORWARD     (8) /* screen wipe step: attribute rows per frame, top-to-bottom */
+#define TRANSITIONSTRIDE_REVERSE    (-8) /* screen wipe step: attribute rows per frame, bottom-to-top */
 
 // Note: road_pos left..right is high..low
-#define ROAD_RIGHTMOST                    (0x00F5)
-#define ROAD_LEFTMOST                     (0x0105)
-#define ROAD_126                          (0x0126)
+#define ROAD_RIGHTMOST          (0x00F5) /* road_pos value at rightmost road edge */
+#define ROAD_LEFTMOST           (0x0105) /* road_pos value at leftmost road edge */
+#define ROAD_126                (0x0126) /* road_pos cap applied during car bounce */
 
-#define ROADBUF_CURVATURE_OFFSET               (0)
-#define ROADBUF_HEIGHT_OFFSET                 (32)
-#define ROADBUF_LANES_OFFSET                  (64)
-#define ROADBUF_RIGHTOBJS_OFFSET              (96)
-#define ROADBUF_LEFTOBJS_OFFSET              (128)
-#define ROADBUF_HAZARDS_OFFSET               (160)
+#define ROADBUF_CURVATURE_OFFSET     (0)
+#define ROADBUF_HEIGHT_OFFSET       (32)
+#define ROADBUF_LANES_OFFSET        (64)
+#define ROADBUF_RIGHTOBJS_OFFSET    (96)
+#define ROADBUF_LEFTOBJS_OFFSET    (128)
+#define ROADBUF_HAZARDS_OFFSET     (160)
 
-#define PREGAMECMD_STOP                     (0x00)
-#define PREGAMECMD_REPEAT                   (0x1F)
-#define PREGAMECMD_SET_BG_0                 (0xD0) /* up to 0xDF */
-#define PREGAMECMD_DRAW_BASE                (0xE0)
-#define PREGAMECMD_DRAW_HZ                  (0xE1)
-#define PREGAMECMD_DRAW_VT                  (0xE2)
-#define PREGAMECMD_SET_ADDR                 (0xF0) /* up to 0xFF */
+#define PREGAMECMD_STOP           (0x00)
+#define PREGAMECMD_REPEAT         (0x1F) /* repeat previous command */
+#define PREGAMECMD_SET_BG_0       (0xD0) /* set background colour; low nibble = index (0xD0..0xDF) */
+#define PREGAMECMD_DRAW_BASE      (0xE0) /* draw base sprite */
+#define PREGAMECMD_DRAW_HZ        (0xE1) /* draw horizontal element */
+#define PREGAMECMD_DRAW_VT        (0xE2) /* draw vertical element */
+#define PREGAMECMD_SET_ADDR       (0xF0) /* set draw address; low nibble = index (0xF0..0xFF) */
 
 /* ----------------------------------------------------------------------- */
 
