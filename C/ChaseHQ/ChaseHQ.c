@@ -13762,9 +13762,9 @@ static void setup_interrupts(chqstate_t *state)
  */
 static void reset_music(chqstate_t *state)
 {
-  state->music_drum_active = 0;
-  state->music_extra_delay = 0;
-  state->music_started = 0;
+  state->music.drum_active = 0;
+  state->music.extra_delay = 0;
+  state->music.started = 0;
   next_pattern_at_addr(state, &music_patterns[0]); /* was FALLTHROUGH */
 }
 
@@ -13775,9 +13775,9 @@ static void reset_music(chqstate_t *state)
  */
 static void next_pattern(chqstate_t *state)
 {
-  if (--state->music_pattern_repeats)
+  if (--state->music.pattern_repeats)
     return;
-  next_pattern_at_addr(state, state->music_pattern_addr); /* was FALLTHROUGH */
+  next_pattern_at_addr(state, state->music.pattern_addr); /* was FALLTHROUGH */
 }
 
 static void next_pattern_at_addr(chqstate_t *state, const u8 *HLpataddr)
@@ -13790,14 +13790,14 @@ static void next_pattern_at_addr(chqstate_t *state, const u8 *HLpataddr)
     An_repeats = *HLpataddr++;
     if (An_repeats != 0xFF) {
       // not end of pattern(s)
-      state->music_pattern_repeats = An_repeats;
+      state->music.pattern_repeats = An_repeats;
       Coffset = *HLpataddr++;
-      state->music_pattern_addr = HLpataddr;
+      state->music.pattern_addr = HLpataddr;
 
       // Calculate address of music data
       HLdata = &music_data[Coffset];
-      state->music_note_delay_reload = state->music_note_delay = *HLdata++;
-      state->music_pattern_start_ptr = HLdata;
+      state->music.note_delay_reload = state->music.note_delay = *HLdata++;
+      state->music.pattern_start_ptr = HLdata;
       return;
     } else {
       // Restart
@@ -13820,20 +13820,20 @@ static void play_music_48k(chqstate_t *state)
   int       B;
   int       Aparam;
 
-  state->music_irq_flag = 0;
+  state->music.irq_flag = 0;
 
-  if (state->music_started == 0) {
-    state->music_started = 1;
+  if (state->music.started == 0) {
+    state->music.started = 1;
     goto pm_reset_pattern;
   }
 
   // delay?
-  Adelay = state->music_note_delay - 1;
+  Adelay = state->music.note_delay - 1;
   if (Adelay) {
-    state->music_note_delay = Adelay;
+    state->music.note_delay = Adelay;
   } else {
-    state->music_note_delay = state->music_note_delay_reload;
-    HL = state->music_data_ptr;
+    state->music.note_delay = state->music.note_delay_reload;
+    HL = state->music.data_ptr;
 
     // Fetch a byte of the form 0bdaaaaiii (d is delay bit, aaaa is
     // argument, iii is instrument index)
@@ -13845,18 +13845,18 @@ static void play_music_48k(chqstate_t *state)
       next_pattern(state);
 
 pm_reset_pattern:
-      HL = state->music_pattern_start_ptr;
-      state->music_data_ptr = HL; // not required
+      HL = state->music.pattern_start_ptr;
+      state->music.data_ptr = HL; // not required
     }
 
     //pm_continue_pattern:
-    state->music_data_ptr = ++HL;
+    state->music.data_ptr = ++HL;
     if (++A > 128) {
       // A byte of the form 0b1aaaaiii (1 is delay bit)
       A &= 0x7F;
       // EX AF,AF' bank
-      state->music_note_delay = 1;
-      state->music_extra_delay = 1;
+      state->music.note_delay = 1;
+      state->music.extra_delay = 1;
       // EX AF,AF' unbank
     }
 
@@ -13871,12 +13871,12 @@ pm_reset_pattern:
     }
   }
 
-  if (state->music_extra_delay) {
-    state->music_note_delay--;
-    state->music_extra_delay--;
+  if (state->music.extra_delay) {
+    state->music.note_delay--;
+    state->music.extra_delay--;
   }
 
-  if (state->music_drum_active == 1) {
+  if (state->music.drum_active == 1) {
     // FIXME playdrum_bank_go(state, Ddash_length, HLdash_data); /* exit via */
   } else
     pm_wait_for_interrupt(state); /* was FALLTHROUGH */
@@ -13884,7 +13884,7 @@ pm_reset_pattern:
 
 static void pm_wait_for_interrupt(chqstate_t *state)
 {
-  while (state->music_irq_flag == 0)
+  while (state->music.irq_flag == 0)
     ;
 }
 
@@ -13895,7 +13895,7 @@ static void pm_wait_for_interrupt(chqstate_t *state)
  */
 static void interrupt_entry(chqstate_t *state)
 {
-  state->music_irq_flag = 0xFF;
+  state->music.irq_flag = 0xFF;
 }
 
 /**
@@ -13930,8 +13930,8 @@ static void playdrum_1(chqstate_t *state, u8 Aspeed)
  */
 static void playdrum_start(chqstate_t *state, u8 Aspeed, u8 Dlength, const u8 *HLdata)
 {
-  state->music_drum_speed = Aspeed;
-  state->music_drum_active  = 1;
+  state->music.drum_speed = Aspeed;
+  state->music.drum_active  = 1;
   playdrum_bank_go(state, Dlength, HLdata); /* was FALLTHROUGH */
 }
 
@@ -13961,7 +13961,7 @@ static void playdrum_go(chqstate_t *state, u8 Dlength, const u8 *HLdata)
   int A;
 
   do {
-    Bdash_iterations = state->music_drum_speed; // aka speed
+    Bdash_iterations = state->music.drum_speed; // aka speed
     do {
       A = port_MASK_EAR; // speaker bit
       // NOP
@@ -13973,13 +13973,13 @@ static void playdrum_go(chqstate_t *state, u8 Dlength, const u8 *HLdata)
     HLdata++;
     if (--Dlength == 0)
       goto pd_end_of_sample;
-    A = state->music_irq_flag;
+    A = state->music.irq_flag;
   } while (A == 0);
   // EXX unbank
   return;
 
 pd_end_of_sample:
-  state->music_drum_active = 0;
+  state->music.drum_active = 0;
   pm_wait_for_interrupt(state);
 }
 
@@ -14032,7 +14032,7 @@ static void noise(chqstate_t *state, u8 Aparam)
     // This whole interrupt check is redundant since AND A + RET C results in the
     // return never being taken. Should it be RET NZ instead? (RET Z messed things
     // up when I tried it.)
-    A = state->music_irq_flag;
+    A = state->music.irq_flag;
     if (0)
       return;
   } while (--Eduration > 0);

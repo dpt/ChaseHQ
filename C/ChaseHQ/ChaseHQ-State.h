@@ -698,19 +698,20 @@ struct chqstate {
   // $EE38
   u8        temp_keydefs[8];
 
-  // $EE6E (SM) in next_pattern
-  u8        music_pattern_repeats; // pattern repeat counter
-  const u8 *music_pattern_addr; // current pattern address
-
-  u8        music_started;
-  u8        music_note_delay;
-  u8        music_note_delay_reload;
-  const u8 *music_data_ptr;
-  const u8 *music_pattern_start_ptr;
-  u8        music_extra_delay;
-  u8        music_drum_active; // drum playing flag
-  u8        music_irq_flag; // interrupt flag
-  u8        music_drum_speed;
+  // $EE6E
+  struct {
+    u8        pattern_repeats; // (SM) in next_pattern; pattern repeat counter
+    const u8 *pattern_addr;   // current pattern address
+    u8        started;
+    u8        note_delay;
+    u8        note_delay_reload;
+    const u8 *data_ptr;
+    const u8 *pattern_start_ptr;
+    u8        extra_delay;
+    u8        drum_active; // drum playing flag
+    u8        irq_flag;    // interrupt flag
+    u8        drum_speed;
+  } music;
 
   // $F000
   u8        backbuffer[BACKBUFFER_LENGTH + BACKBUFFER_OVERFLOW];
