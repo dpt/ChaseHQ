@@ -1,0 +1,52 @@
+---
+BasedOnStyle: LLVM
+Language: C
+
+# Indentation
+IndentWidth: 2
+TabWidth: 2
+UseTab: Never
+ColumnLimit: 80
+
+# K&R braces: function-definition braces on a new line, control-flow on the same line
+BreakBeforeBraces: Linux
+
+# switch case labels indented one level inside the switch
+IndentCaseLabels: true
+
+# Pointer/reference declarator sticks to the name: int *p, void *opaque
+PointerAlignment: Right
+
+# Align runs of consecutive declarations, assignments, and #define values
+# (preserves the column-table style used throughout the codebase)
+AlignConsecutiveAssignments:
+  Enabled: true
+  AcrossEmptyLines: false
+  AcrossComments: false
+  AlignCompound: true
+  PadOperators: true
+AlignConsecutiveDeclarations:
+  Enabled: true
+  AcrossEmptyLines: false
+  AcrossComments: false
+AlignConsecutiveMacros:
+  Enabled: true
+  AcrossEmptyLines: false
+  AcrossComments: false
+
+# Align wrapped parameters under the opening parenthesis
+AlignAfterOpenBracket: Align
+BinPackParameters: false
+BinPackArguments: false
+
+# Don't reorder the hand-grouped #include blocks
+SortIncludes: Never
+
+# Don't reflow carefully wrapped block comments and Z80 address annotations
+ReflowComments: false
+
+# No collapsed single-line bodies
+AllowShortFunctionsOnASingleLine: None
+AllowShortIfStatementsOnASingleLine: Never
+AllowShortLoopsOnASingleLine: false
+AllowShortBlocksOnASingleLine: Never

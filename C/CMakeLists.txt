@@ -67,3 +67,17 @@ set(TEST_SOURCE_FILES
 add_executable(ChaseHQ_Tests ${TEST_SOURCE_FILES})
 target_compile_definitions(ChaseHQ_Tests PRIVATE CHQ_TESTS)
 target_include_directories(ChaseHQ_Tests PRIVATE .)
+
+# ---- Formatting -------------------------------------------------------------
+
+find_program(CLANG_FORMAT clang-format)
+if(CLANG_FORMAT)
+  set(ALL_SOURCE_FILES ${SOURCE_FILES} ${TEST_SOURCE_FILES})
+  list(FILTER ALL_SOURCE_FILES INCLUDE REGEX "\\.(c|h)$")
+  list(REMOVE_DUPLICATES ALL_SOURCE_FILES)
+  add_custom_target(format
+    COMMAND ${CLANG_FORMAT} -i ${ALL_SOURCE_FILES}
+    WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+    COMMENT "Formatting sources with clang-format"
+    VERBATIM)
+endif()
