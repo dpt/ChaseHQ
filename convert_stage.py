@@ -519,17 +519,34 @@ def array_name(stage: int, stype: str, addr: int) -> str:
     return prefixes.get(stype, f'stage{stage}_data_{addr:04X}')
 
 
+def byte_to_pixel(b: int) -> str:
+    """Return the Pixels.h macro name for b (e.g. 0xA5 → 'X_X__X_X')."""
+    return ''.join('X' if (b >> (7 - i)) & 1 else '_' for i in range(8))
+
+
 def emit_raw_array(name: str, data: List[int], per_row: int = 8,
-                   z80_addr: int = 0) -> List[str]:
-    """Emit a 'static const u8 name[] = { ... };' array."""
+                   z80_addr: int = 0, use_pixels: bool = False) -> List[str]:
+    """Emit a 'static const u8 name[] = { ... };' array.
+
+    When use_pixels is True the bytes are written using the Pixels.h macro
+    names (e.g. X_X__X_X) instead of hex, and the block is wrapped in
+    clang-format off/on so the visual rows are not reformatted.
+    """
     lines = []
     lines.append(f'// ${z80_addr:04X}')
+    if use_pixels:
+        lines.append('// clang-format off')
     lines.append(f'static const u8 {name}[{len(data)}] = {{')
     for i in range(0, len(data), per_row):
         chunk = data[i:i + per_row]
-        row = ', '.join(f'0x{b:02X}' for b in chunk)
+        if use_pixels:
+            row = ', '.join(byte_to_pixel(b) for b in chunk)
+        else:
+            row = ', '.join(f'0x{b:02X}' for b in chunk)
         lines.append(f'  {row},')
     lines.append('};')
+    if use_pixels:
+        lines.append('// clang-format on')
     return lines
 
 
@@ -700,7 +717,8 @@ def emit_lod_table(stage: int, sec: Section, bank_offset: int,
         rem_addr = sec.start_addr + lod_end
         rem_name = f'stage{stage}_bitmap_{rem_addr:04X}'
         lines.append('')
-        lines.extend(emit_raw_array(rem_name, remainder, 8, rem_addr))
+        lines.extend(emit_raw_array(rem_name, remainder, 8, rem_addr,
+                                    use_pixels=True))
         bitmap_names[rem_addr] = rem_name  # register for cross-references
 
     return lines, n_lods
@@ -732,11 +750,13 @@ def emit_stage_struct(stage: int, sections: List[Section],
     if backdrop_sec:
         data = backdrop_sec.bytes_flat
         lines.append(f'  /* ${backdrop_sec.start_addr:04X} backdrop */')
+        lines.append('  // clang-format off')
         lines.append('  {')
         for i in range(0, len(data), 10):
             row = data[i:i + 10]
-            lines.append('    ' + ', '.join(f'0x{b:02X}' for b in row) + ',')
+            lines.append('    ' + ', '.join(byte_to_pixel(b) for b in row) + ',')
         lines.append('  },')
+        lines.append('  // clang-format on')
     else:
         lines.append('  { 0 },  /* TODO: backdrop */')
 
@@ -924,7 +944,8 @@ def convert(skool_path: str, stage: int, obj_names: List[str]) -> None:
         elif sec.stype in ('perp_mugshot', 'pilot_mugshot'):
             data = sec.bytes_flat
             nm = array_name(stage, sec.stype, sec.start_addr)
-            all_lines.extend(emit_raw_array(nm, data, 4, sec.start_addr))
+            all_lines.extend(emit_raw_array(nm, data, 4, sec.start_addr,
+                                            use_pixels=True))
             all_lines.append('')
             fwd_decls.append(f'static const u8 {nm}[{len(data)}];')
 
@@ -935,7 +956,8 @@ def convert(skool_path: str, stage: int, obj_names: List[str]) -> None:
             m = re.search(r'(\d+)\s+bytes?\s+x\s+(\d+)', sec.header_comment, re.I)
             per = int(m.group(1)) * 2 if m and 'masked' in sec.header_comment.lower() else \
                   int(m.group(1)) if m else 8
-            all_lines.extend(emit_raw_array(nm, data, per, sec.start_addr))
+            all_lines.extend(emit_raw_array(nm, data, per, sec.start_addr,
+                                            use_pixels=True))
             all_lines.append('')
             fwd_decls.append(f'static const u8 {nm}[{len(data)}];')
             bitmap_sections.append((nm, sec.start_addr))
