@@ -511,6 +511,10 @@ def array_name(stage: int, stype: str, addr: int) -> str:
         'lod_table':    f'stage{stage}_lods_{addr:04X}',
         'hazard_lods':  f'stage{stage}_hazard_lods_{addr:04X}',
         'arrest_msgs':  f'stage{stage}_arrest_messages_{addr:04X}',
+        'perp_desc':    f'stage{stage}_perp_description',
+        'obj_defs':     f'stage{stage}_obj_defs_{addr:04X}',
+        'helicopter':   f'stage{stage}_helicopter_{addr:04X}',
+        'lodaddrs':     f'stage{stage}_lod_addrs_{addr:04X}',
     }
     return prefixes.get(stype, f'stage{stage}_data_{addr:04X}')
 
@@ -608,6 +612,19 @@ def emit_map_section(stage: int, stype: str, sec: Section,
         lines.append(f'  {cl}')
     lines.append('};')
     return lines, goto_map
+
+
+def resolve_section_ptr(abs_addr: int,
+                        abs_to_name: Dict[int, str]) -> Optional[str]:
+    """Resolve abs_addr to &array[offset] using registered section starts."""
+    if abs_addr in abs_to_name:
+        return f'&{abs_to_name[abs_addr]}[0]'
+    candidates = [(base, nm) for base, nm in abs_to_name.items()
+                  if base <= abs_addr]
+    if candidates:
+        base, nm = max(candidates, key=lambda x: x[0])
+        return f'&{nm}[{abs_addr - base}]'
+    return None
 
 
 def resolve_bitmap_ref(abs_addr: int, bitmap_names: Dict[int, str],
@@ -738,19 +755,17 @@ def emit_stage_struct(stage: int, sections: List[Section],
     else:
         lines.append('  0,  /* TODO: ground_colour */')
 
-    # NULL pointer fields (perstage words 3..13)
+    # Pointer fields (perstage words 3..13)
     pws = perstage_sec.words_with_annots if perstage_sec else []
     for i, field in enumerate(PERSTAGE_PTR_FIELDS):
         abs_a = pws[i + 3][1] if i + 3 < len(pws) else -1
-        if field == 'addrof_arrest_messages' and abs_a >= 0:
-            nm = abs_to_name.get(abs_a)
-            if nm:
-                lines.append(f'  &{nm}[0],')
-            else:
-                lines.append(f'  NULL,  /* TODO: {field} (${abs_a:04X}) */')
-        else:
-            hint = f' (${abs_a:04X})' if abs_a >= 0 else ''
-            lines.append(f'  NULL,  /* TODO: {field}{hint} */')
+        if abs_a >= 0:
+            ref = resolve_section_ptr(abs_a, abs_to_name)
+            if ref:
+                lines.append(f'  {ref},  /* {field} */')
+                continue
+        hint = f' (${abs_a:04X})' if abs_a >= 0 else ''
+        lines.append(f'  NULL,  /* TODO: {field}{hint} */')
 
     lines.append('')
     lines.append('  NULL,  /* TODO: bitmaps_stones */')
@@ -878,9 +893,13 @@ def convert(skool_path: str, stage: int, obj_names: List[str]) -> None:
 
     # ── First pass: build abs_addr → array_name map ──────────────────────────
     map_stypes = {'curvature', 'height', 'lanes', 'hazards', 'leftobjs', 'rightobjs'}
+    named_stypes = map_stypes | {
+        'arrest_msgs', 'perp_desc', 'hazard_lods',
+        'helicopter', 'obj_defs', 'lodaddrs',
+    }
     abs_to_name: Dict[int, str] = {}
     for sec in sections:
-        if sec.stype in map_stypes or sec.stype == 'arrest_msgs':
+        if sec.stype in named_stypes:
             abs_to_name[sec.start_addr] = array_name(stage, sec.stype, sec.start_addr)
 
     # ── Generate code for each section ───────────────────────────────────────
@@ -938,10 +957,45 @@ def convert(skool_path: str, stage: int, obj_names: List[str]) -> None:
             all_lines.append('')
             fwd_decls.append(f'static const u8 {nm}[{len(data)}];')
 
-        elif sec.stype in ('perstage', 'difficulty', 'setupdata', 'attractdata',
-                           'lodaddrs', 'obj_defs', 'hittable',
-                           'perp_desc', 'stretchy', 'helicopter', 'hazard_lods',
-                           'unknown'):
+        elif sec.stype == 'perp_desc':
+            data = sec.bytes_flat
+            nm = array_name(stage, 'perp_desc', sec.start_addr)
+            all_lines.extend(emit_raw_array(nm, data, 8, sec.start_addr))
+            all_lines.append('')
+            fwd_decls.append(f'static const u8 {nm}[{len(data)}];')
+
+        elif sec.stype == 'hazard_lods':
+            data = sec.bytes_flat
+            nm = array_name(stage, 'hazard_lods', sec.start_addr)
+            all_lines.extend(emit_raw_array(nm, data, 3, sec.start_addr))
+            all_lines.append('')
+            fwd_decls.append(f'static const u8 {nm}[{len(data)}];')
+
+        elif sec.stype == 'helicopter':
+            data = sec.bytes_flat
+            nm = array_name(stage, 'helicopter', sec.start_addr)
+            all_lines.extend(emit_raw_array(nm, data, 8, sec.start_addr))
+            all_lines.append('')
+            fwd_decls.append(f'static const u8 {nm}[{len(data)}];')
+
+        elif sec.stype == 'obj_defs':
+            data = sec.bytes_flat
+            nm = array_name(stage, 'obj_defs', sec.start_addr)
+            all_lines.extend(emit_raw_array(nm, data, 7, sec.start_addr))
+            all_lines.append('')
+            fwd_decls.append(f'static const u8 {nm}[{len(data)}];')
+
+        elif sec.stype == 'lodaddrs':
+            data = sec.bytes_flat
+            nm = array_name(stage, 'lodaddrs', sec.start_addr)
+            all_lines.extend(emit_raw_array(nm, data, 2, sec.start_addr))
+            all_lines.append('')
+            fwd_decls.append(f'static const u8 {nm}[{len(data)}];')
+
+        elif sec.stype in ('perstage', 'difficulty', 'setupdata', 'attractdata'):
+            pass  # data inlined into stage_t struct by emit_stage_struct
+
+        elif sec.stype in ('hittable', 'stretchy', 'unknown'):
             all_lines.append(f'/* TODO: ${sec.start_addr:04X} [{sec.stype}]')
             all_lines.append(f'   {sec.header_comment}')
             # Emit raw hex as a comment

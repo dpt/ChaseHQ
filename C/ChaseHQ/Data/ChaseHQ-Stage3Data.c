@@ -57,7 +57,22 @@
 
 /* Forward declarations */
 // backdrop declared inline in stage struct
+static const u8 stage3_lod_addrs_C10C[14];
+static const u8 stage3_perp_description[12];
 static const u8 stage3_arrest_messages_C1E8[17];
+static const u8 stage3_hazard_lods_C22E[6];
+static const u8 stage3_obj_defs_C234[7];
+static const u8 stage3_obj_defs_C23B[7];
+static const u8 stage3_obj_defs_C242[7];
+static const u8 stage3_obj_defs_C249[7];
+static const u8 stage3_obj_defs_C250[7];
+static const u8 stage3_obj_defs_C257[7];
+static const u8 stage3_obj_defs_C25E[7];
+static const u8 stage3_obj_defs_C265[7];
+static const u8 stage3_obj_defs_C26C[7];
+static const u8 stage3_obj_defs_C273[7];
+static const u8 stage3_obj_defs_C27A[7];
+static const u8 stage3_obj_defs_C281[7];
 static const u8 stage3_map_curv_C288[];
 static const u8 stage3_map_height_C2AC[];
 static const u8 stage3_map_lanes_C2CD[];
@@ -141,15 +156,15 @@ const stage_t stage3 = {
   &stage3_perp_face[FACEBITMAPBYTES],
   NULL,  /* no pilot mugshot on this stage */
   0x7070,
-  NULL,  /* TODO: addrof_hittable_objects ($C22E) */
-  NULL,  /* TODO: addrof_right_hand_handlers ($C230) */
-  NULL,  /* TODO: addrof_right_hand_objects ($C22D) */
-  NULL,  /* TODO: addrof_right_hand_short_pole_object ($C242) */
-  NULL,  /* TODO: addrof_left_hand_handlers ($C25A) */
-  NULL,  /* TODO: addrof_left_hand_objects ($C257) */
-  NULL,  /* TODO: addrof_left_hand_short_pole_object ($C26C) */
-  NULL,  /* TODO: addrof_perp_description ($C139) */
-  &stage3_arrest_messages_C1E8[0],
+  &stage3_hazard_lods_C22E[0],  /* addrof_hittable_objects */
+  &stage3_hazard_lods_C22E[2],  /* addrof_right_hand_handlers */
+  &stage3_arrest_messages_C1E8[69],  /* addrof_right_hand_objects */
+  &stage3_obj_defs_C242[0],  /* addrof_right_hand_short_pole_object */
+  &stage3_obj_defs_C257[3],  /* addrof_left_hand_handlers */
+  &stage3_obj_defs_C257[0],  /* addrof_left_hand_objects */
+  &stage3_obj_defs_C26C[0],  /* addrof_left_hand_short_pole_object */
+  &stage3_perp_description[0],  /* addrof_perp_description */
+  &stage3_arrest_messages_C1E8[0],  /* addrof_arrest_messages */
   NULL,  /* TODO: addrof_helicopter_stuff_1 */
   NULL,  /* TODO: addrof_helicopter_stuff_2 */
 
@@ -190,75 +205,22 @@ const stage_t stage3 = {
 
 /* ----------------------------------------------------------------------- */
 
-/* TODO: $C0F0 [perstage]
-   [Stage 3] Per-stage data
-   Raw: 0xCC 0x64 0x00 0x00 0x70 0x70 0x2E 0x5E 0x30 0x5E 0x2D 0x5E 0x42 0x5E 0x5A 0x5E 0x57 0x5E 0x6C 0x5E 0x39 0x5D 0xE8 0x5D 0x00 0x00 0x0C 0x00
-   $C0F0: DEFW $64CC  → $C8CC
-   $C0F2: DEFW $0000  (out-of-bounds)
-   $C0F4: DEFW $7070  → $D470
-   $C0F6: DEFW $5E2E  → $C22E
-   $C0F8: DEFW $5E30  → $C230
-   $C0FA: DEFW $5E2D  → $C22D
-   $C0FC: DEFW $5E42  → $C242
-   $C0FE: DEFW $5E5A  → $C25A
-   $C100: DEFW $5E57  → $C257
-   $C102: DEFW $5E6C  → $C26C
-   $C104: DEFW $5D39  → $C139
-   $C106: DEFW $5DE8  → $C1E8
-   $C108: DEFW $0000  (out-of-bounds)
-   $C10A: DEFW $000C  (out-of-bounds)
-*/
+// $C10C
+static const u8 stage3_lod_addrs_C10C[14] = {
+  0xF1, 0x69,
+  0x1B, 0x6A,
+  0xE0, 0x64,
+  0x34, 0x65,
+  0x0A, 0x65,
+  0x34, 0x65,
+  0xE0, 0x64,
+};
 
-/* TODO: $C10C [lodaddrs]
-   [Stage 3] Table of addresses of LODs
-   Raw: 0xF1 0x69 0x1B 0x6A 0xE0 0x64 0x34 0x65 0x0A 0x65 0x34 0x65 0xE0 0x64
-   $C10C: DEFW $69F1  → $CDF1
-   $C10E: DEFW $6A1B  → $CE1B
-   $C110: DEFW $64E0  → $C8E0
-   $C112: DEFW $6534  → $C934
-   $C114: DEFW $650A  → $C90A
-   $C116: DEFW $6534  → $C934
-   $C118: DEFW $64E0  → $C8E0
-*/
-
-/* TODO: $C11A [difficulty]
-   [Stage 3] Per-stage difficulty settings
-   Raw: 0x0F 0x46 0x55
-*/
-
-/* TODO: $C11D [setupdata]
-   [Stage 3] Per-stage setup data
-   Raw: 0xEA 0x00 0x87 0x5E 0xAB 0x5E 0xCC 0x5E 0x6B 0x5F 0xE7 0x5E 0xDA 0x5E
-   $C11D: DEFW $00EA  (out-of-bounds)
-   $C11F: DEFW $5E87  → $C287
-   $C121: DEFW $5EAB  → $C2AB
-   $C123: DEFW $5ECC  → $C2CC
-   $C125: DEFW $5F6B  → $C36B
-   $C127: DEFW $5EE7  → $C2E7
-   $C129: DEFW $5EDA  → $C2DA
-*/
-
-/* TODO: $C12B [attractdata]
-   [Stage 3] Per-stage attract mode data
-   Raw: 0xEA 0x00 0x76 0x62 0x9C 0x62 0xDB 0x62 0xAC 0x63 0x1E 0x63 0xFB 0x62
-   $C12B: DEFW $00EA  (out-of-bounds)
-   $C12D: DEFW $6276  → $C676
-   $C12F: DEFW $629C  → $C69C
-   $C131: DEFW $62DB  → $C6DB
-   $C133: DEFW $63AC  → $C7AC
-   $C135: DEFW $631E  → $C71E
-   $C137: DEFW $62FB  → $C6FB
-*/
-
-/* TODO: $C139 [perp_desc]
-   [Stage 3] Nancy's perp description
-   Raw: 0x01 0x45 0x5D 0x6D 0x5D 0x96 0x5D 0xC1 0x5D 0xFE 0xBD 0x98
-   $C13A: DEFW $5D45  → $C145
-   $C13C: DEFW $5D6D  → $C16D
-   $C13E: DEFW $5D96  → $C196
-   $C140: DEFW $5DC1  → $C1C1
-   $C143: DEFW $98BD  (out-of-bounds)
-*/
+// $C139
+static const u8 stage3_perp_description[12] = {
+  0x01, 0x45, 0x5D, 0x6D, 0x5D, 0x96, 0x5D, 0xC1,
+  0x5D, 0xFE, 0xBD, 0x98,
+};
 
 // $C1E8
 static const u8 stage3_arrest_messages_C1E8[17] = {
@@ -267,96 +229,71 @@ static const u8 stage3_arrest_messages_C1E8[17] = {
   0x00,
 };
 
-/* TODO: $C22E [hazard_lods]
-   [Stage 3] Hittable hazards
-   Raw: 0x10 0x4F 0x72 0x20 0xBF 0x72
-   $C22F: DEFW $724F  → $D64F
-   $C232: DEFW $72BF  → $D6BF
-*/
+// $C22E
+static const u8 stage3_hazard_lods_C22E[6] = {
+  0x10, 0x4F, 0x72,
+  0x20, 0xBF, 0x72,
+};
 
-/* TODO: $C234 [obj_defs]
-   Graphic definition for object 1 - TUNNEL_LIGHT
-   Raw: 0x6F 0x29 0x50 0xE9 0xE1 0x52 0x92
-   $C237: DEFW $E1E9  (out-of-bounds)
-   $C239: DEFW $9252  (out-of-bounds)
-*/
+// $C234
+static const u8 stage3_obj_defs_C234[7] = {
+  0x6F, 0x29, 0x50, 0xE9, 0xE1, 0x52, 0x92,
+};
 
-/* TODO: $C23B [obj_defs]
-   Graphic definition for object 2 - OVERHEAD_BRIDGE
-   Raw: 0x6F 0x35 0x46 0xBB 0x6E 0x71 0x91
-   $C23E: DEFW $6EBB  → $D2BB
-   $C240: DEFW $9171  (out-of-bounds)
-*/
+// $C23B
+static const u8 stage3_obj_defs_C23B[7] = {
+  0x6F, 0x35, 0x46, 0xBB, 0x6E, 0x71, 0x91,
+};
 
-/* TODO: $C242 [obj_defs]
-   Graphic definition for object 3 - SHORT_POLE
-   Raw: 0x90 0x5C 0x28 0x05 0x7E 0x71 0x91
-   $C245: DEFW $7E05  (out-of-bounds)
-   $C247: DEFW $9171  (out-of-bounds)
-*/
+// $C242
+static const u8 stage3_obj_defs_C242[7] = {
+  0x90, 0x5C, 0x28, 0x05, 0x7E, 0x71, 0x91,
+};
 
-/* TODO: $C249 [obj_defs]
-   Graphic definition for object 4 - TOWER_BLOCK
-   Raw: 0x50 0x10 0x3C 0xA1 0x6A 0x71 0x91
-   $C24C: DEFW $6AA1  → $CEA1
-   $C24E: DEFW $9171  (out-of-bounds)
-*/
+// $C249
+static const u8 stage3_obj_defs_C249[7] = {
+  0x50, 0x10, 0x3C, 0xA1, 0x6A, 0x71, 0x91,
+};
 
-/* TODO: $C250 [obj_defs]
-   Graphic definition for object 5 - SPEED_LIMIT_SIGN
-   Raw: 0x6E 0x35 0x50 0x9E 0x73 0x71 0x91
-   $C253: DEFW $739E  → $D79E
-   $C255: DEFW $9171  (out-of-bounds)
-*/
+// $C250
+static const u8 stage3_obj_defs_C250[7] = {
+  0x6E, 0x35, 0x50, 0x9E, 0x73, 0x71, 0x91,
+};
 
-/* TODO: $C257 [obj_defs]
-   Graphic definition for object 6 - TELEGRAPH_POLE
-   Raw: 0x6E 0x35 0x50 0xD6 0x75 0x71 0x91
-   $C25A: DEFW $75D6  → $D9D6
-   $C25C: DEFW $9171  (out-of-bounds)
-*/
+// $C257
+static const u8 stage3_obj_defs_C257[7] = {
+  0x6E, 0x35, 0x50, 0xD6, 0x75, 0x71, 0x91,
+};
 
-/* TODO: $C25E [obj_defs]
-   Graphic definition for object 1 - TUNNEL_LIGHT
-   Raw: 0x7E 0xBC 0x50 0xE9 0xE1 0x4D 0x92
-   $C261: DEFW $E1E9  (out-of-bounds)
-   $C263: DEFW $924D  (out-of-bounds)
-*/
+// $C25E
+static const u8 stage3_obj_defs_C25E[7] = {
+  0x7E, 0xBC, 0x50, 0xE9, 0xE1, 0x4D, 0x92,
+};
 
-/* TODO: $C265 [obj_defs]
-   Graphic definition for object 2 - OVERHEAD_BRIDGE
-   Raw: 0x78 0x9A 0x46 0x26 0x6F 0x52 0x90
-   $C268: DEFW $6F26  (out-of-bounds)
-   $C26A: DEFW $9052  (out-of-bounds)
-*/
+// $C265
+static const u8 stage3_obj_defs_C265[7] = {
+  0x78, 0x9A, 0x46, 0x26, 0x6F, 0x52, 0x90,
+};
 
-/* TODO: $C26C [obj_defs]
-   Graphic definition for object 3 - SHORT_POLE
-   Raw: 0x60 0x90 0x28 0x05 0x7E 0x6C 0x91
-   $C26F: DEFW $7E05  (out-of-bounds)
-   $C271: DEFW $916C  (out-of-bounds)
-*/
+// $C26C
+static const u8 stage3_obj_defs_C26C[7] = {
+  0x60, 0x90, 0x28, 0x05, 0x7E, 0x6C, 0x91,
+};
 
-/* TODO: $C273 [obj_defs]
-   Graphic definition for object 4 - TOWER_BLOCK
-   Raw: 0xA8 0xF0 0x3C 0xA1 0x6A 0x6C 0x91
-   $C276: DEFW $6AA1  → $CEA1
-   $C278: DEFW $916C  (out-of-bounds)
-*/
+// $C273
+static const u8 stage3_obj_defs_C273[7] = {
+  0xA8, 0xF0, 0x3C, 0xA1, 0x6A, 0x6C, 0x91,
+};
 
-/* TODO: $C27A [obj_defs]
-   Graphic definition for object 5 - SPEED_LIMIT_SIGN
-   Raw: 0x84 0xB6 0x50 0xA8 0x73 0x6C 0x91
-   $C27D: DEFW $73A8  → $D7A8
-   $C27F: DEFW $916C  (out-of-bounds)
-*/
+// $C27A
+static const u8 stage3_obj_defs_C27A[7] = {
+  0x84, 0xB6, 0x50, 0xA8, 0x73, 0x6C, 0x91,
+};
 
-/* TODO: $C281 [obj_defs]
-   Graphic definition for object 6 - TELEGRAPH_POLE
-   Raw: 0x84 0xB6 0x50 0xE0 0x75 0x6C 0x91
-   $C284: DEFW $75E0  → $D9E0
-   $C286: DEFW $916C  (out-of-bounds)
-*/
+// $C281
+static const u8 stage3_obj_defs_C281[7] = {
+  0x84, 0xB6, 0x50, 0xE0, 0x75, 0x6C, 0x91,
+};
 
 // $C288
 static const u8 stage3_map_curv_C288[] = {
