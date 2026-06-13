@@ -1790,11 +1790,12 @@ static const u8 stage3_perp_face[180] = {
   XXX_XXXX, XXXXXXX_, _______X, _______X,
   XX_X_X_X, XXX_X_X_, X_X____X, _______X,
   XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX,
-  _XXX____, _XXX____, _XXX____, _XX_X___,
-  __XX____, _XXX____, _XXX____, _XX_X___,
-  __XX____, __XX____, _XXX____, _XX_X___,
-  _XX_X___, __XX____, _XXX____, _XX_X___,
-  _XX_X___, __XXX___, _XXX____, _XXXX___,
+
+  attribute_BRIGHT_BLACK_OVER_YELLOW, attribute_BRIGHT_BLACK_OVER_YELLOW, attribute_BRIGHT_BLACK_OVER_YELLOW, attribute_BRIGHT_BLACK_OVER_CYAN,
+  MKATTR(0, 0, ATTR_YELLOW, ATTR_BLACK), attribute_BRIGHT_BLACK_OVER_YELLOW, attribute_BRIGHT_BLACK_OVER_YELLOW, attribute_BRIGHT_BLACK_OVER_CYAN,
+  MKATTR(0, 0, ATTR_YELLOW, ATTR_BLACK), MKATTR(0, 0, ATTR_YELLOW, ATTR_BLACK), attribute_BRIGHT_BLACK_OVER_YELLOW, attribute_BRIGHT_BLACK_OVER_CYAN,
+  attribute_BRIGHT_BLACK_OVER_CYAN, MKATTR(0, 0, ATTR_YELLOW, ATTR_BLACK), attribute_BRIGHT_BLACK_OVER_YELLOW, attribute_BRIGHT_BLACK_OVER_CYAN,
+  attribute_BRIGHT_BLACK_OVER_CYAN, MKATTR(0, 0, ATTR_WHITE, ATTR_BLACK), attribute_BRIGHT_BLACK_OVER_YELLOW, attribute_BRIGHT_BLACK_OVER_WHITE,
 };
 // clang-format on
 

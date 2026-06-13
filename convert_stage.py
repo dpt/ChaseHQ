@@ -113,6 +113,84 @@ TRANSITIONCONTROL_NAMES = {
     4: 'TRANSITIONCONTROL_FADE',
 }
 
+ATTR_COLOR_NAMES = {
+    0: 'ATTR_BLACK', 1: 'ATTR_BLUE',    2: 'ATTR_RED',    3: 'ATTR_MAGENTA',
+    4: 'ATTR_GREEN', 5: 'ATTR_CYAN',    6: 'ATTR_YELLOW', 7: 'ATTR_WHITE',
+}
+
+def _mkattr(f: int, b: int, p: int, i: int) -> int:
+    return (f << 7) | (b << 6) | (p << 3) | i
+
+# Maps the byte values of every named enum entry in ZXSpectrum/Spectrum.h
+ATTRIBUTE_MAP: Dict[int, str] = {
+    _mkattr(0, 0, 0, 0): 'attribute_BLACK_OVER_BLACK',
+    _mkattr(0, 0, 0, 1): 'attribute_BLUE_OVER_BLACK',
+    _mkattr(0, 0, 0, 2): 'attribute_RED_OVER_BLACK',
+    _mkattr(0, 0, 0, 3): 'attribute_MAGENTA_OVER_BLACK',
+    _mkattr(0, 0, 0, 4): 'attribute_GREEN_OVER_BLACK',
+    _mkattr(0, 0, 0, 5): 'attribute_CYAN_OVER_BLACK',
+    _mkattr(0, 0, 0, 6): 'attribute_YELLOW_OVER_BLACK',
+    _mkattr(0, 0, 0, 7): 'attribute_WHITE_OVER_BLACK',
+    _mkattr(0, 1, 0, 1): 'attribute_BRIGHT_BLUE_OVER_BLACK',
+    _mkattr(0, 1, 0, 2): 'attribute_BRIGHT_RED_OVER_BLACK',
+    _mkattr(0, 1, 0, 3): 'attribute_BRIGHT_MAGENTA_OVER_BLACK',
+    _mkattr(0, 1, 0, 4): 'attribute_BRIGHT_GREEN_OVER_BLACK',
+    _mkattr(0, 1, 0, 5): 'attribute_BRIGHT_CYAN_OVER_BLACK',
+    _mkattr(0, 1, 0, 6): 'attribute_BRIGHT_YELLOW_OVER_BLACK',
+    _mkattr(0, 1, 0, 7): 'attribute_BRIGHT_WHITE_OVER_BLACK',
+    _mkattr(0, 1, 1, 0): 'attribute_BRIGHT_BLACK_OVER_BLUE',
+    _mkattr(0, 1, 2, 0): 'attribute_BRIGHT_BLACK_OVER_RED',
+    _mkattr(0, 1, 3, 0): 'attribute_BRIGHT_BLACK_OVER_MAGENTA',
+    _mkattr(0, 1, 4, 0): 'attribute_BRIGHT_BLACK_OVER_GREEN',
+    _mkattr(0, 1, 5, 0): 'attribute_BRIGHT_BLACK_OVER_CYAN',
+    _mkattr(0, 1, 6, 0): 'attribute_BRIGHT_BLACK_OVER_YELLOW',
+    _mkattr(0, 1, 7, 0): 'attribute_BRIGHT_BLACK_OVER_WHITE',
+    _mkattr(0, 0, 5, 0): 'attribute_BLACK_OVER_CYAN',
+}
+
+
+def byte_to_attr(b: int) -> str:
+    """Return the attribute_* name for b, or MKATTR(...) if not in the enum."""
+    if b in ATTRIBUTE_MAP:
+        return ATTRIBUTE_MAP[b]
+    f  = (b >> 7) & 1
+    br = (b >> 6) & 1
+    p  = (b >> 3) & 7
+    i  = b & 7
+    return f'MKATTR({f}, {br}, {ATTR_COLOR_NAMES[p]}, {ATTR_COLOR_NAMES[i]})'
+
+
+# Face/mugshot layout constants (must match ChaseHQ-Internal.h)
+FACE_ROW_BYTES   = 4   # FACEROWBYTES  = FACEWIDTH / 8 = 32 / 8
+FACE_BITMAP_ROWS = 40  # FACEHEIGHT
+FACE_ATTR_ROWS   = 5   # FACEATTRHEIGHT
+FACE_BITMAP_BYTES = FACE_ROW_BYTES * FACE_BITMAP_ROWS  # 160
+FACE_ATTR_BYTES   = FACE_ROW_BYTES * FACE_ATTR_ROWS    # 20
+
+
+def emit_face_mugshot_array(name: str, data: List[int],
+                            z80_addr: int) -> List[str]:
+    """Emit a face/mugshot array: pixel names for the bitmap rows, attribute
+    names for the final FACE_ATTR_ROWS rows."""
+    lines = [f'// ${z80_addr:04X}', '// clang-format off',
+             f'static const u8 {name}[{len(data)}] = {{']
+
+    for i in range(0, FACE_BITMAP_BYTES, FACE_ROW_BYTES):
+        chunk = data[i:i + FACE_ROW_BYTES]
+        lines.append('  ' + ', '.join(byte_to_pixel(b) for b in chunk) + ',')
+
+    lines.append('')
+
+    for i in range(FACE_BITMAP_BYTES, FACE_BITMAP_BYTES + FACE_ATTR_BYTES,
+                   FACE_ROW_BYTES):
+        chunk = data[i:i + FACE_ROW_BYTES]
+        lines.append('  ' + ', '.join(byte_to_attr(b) for b in chunk) + ',')
+
+    lines.append('};')
+    lines.append('// clang-format on')
+    return lines
+
+
 CHATTERCMD_NAMES = {
     0xFC: 'CHATTERCMD_RANDOM',
     0xFE: 'CHATTERCMD_PAUSE',
@@ -1200,8 +1278,7 @@ def convert(skool_path: str, stage: int, obj_names: List[str]) -> None:
         elif sec.stype in ('perp_mugshot', 'pilot_mugshot'):
             data = sec.bytes_flat
             nm = array_name(stage, sec.stype, sec.start_addr)
-            all_lines.extend(emit_raw_array(nm, data, 4, sec.start_addr,
-                                            use_pixels=True))
+            all_lines.extend(emit_face_mugshot_array(nm, data, sec.start_addr))
             all_lines.append('')
             fwd_decls.append(f'static const u8 {nm}[{len(data)}];')
 
