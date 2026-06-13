@@ -93,6 +93,22 @@ static void chq_initialise(chqstate_t *state)
   state->road_buffer_start  = &state->road_buffer[0];
   state->road_buffer_end    = &state->road_buffer[256];
 
+  /* $EF00: Build bit-reversal lookup table (done in bootstrap() in the full game) */
+  {
+    int i;
+    for (i = 0; i < 256; i++) {
+      u8 v, r;
+      int b;
+      v = (u8) i;
+      r = 0;
+      for (b = 0; b < 8; b++) {
+        r = (u8) ((r << 1) | (v & 1));
+        v >>= 1;
+      }
+      state->flipped[i] = r;
+    }
+  }
+
   // $CE33
   state->debris_table[0]  = state->debris_subtables[0];
   state->debris_table[1]  = state->debris_subtables[1];

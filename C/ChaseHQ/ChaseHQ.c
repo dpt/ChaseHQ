@@ -3839,7 +3839,7 @@ static void draw_object_930e_entrypt(chqstate_t     *state,
   if (Ebitmap_stride >= Awidth_bytes)
     Awidth_bytes = Ebitmap_stride;
   // Conv: HLbitmap++ removed, now passed as-is into draw_object_common/_9333
-  Zflipped = HLbitmap->flags >> 1;
+  Zflipped = (HLbitmap->flags >> 1) == 0;
   if (Zflipped == 0) {
     draw_object_common_9333(state,
                             Zflipped,
@@ -4510,18 +4510,17 @@ plot_sprite_flipped_even_start:
     default:
       assert(0);
     case 0:
-      // Conv: Original uses POP that loads 16 bits at a time
-      *backbuf_addr-- = flip_table[*src++ & 0xFF];
-      *backbuf_addr-- = flip_table[*src++ >> 8];
+      *backbuf_addr-- = flip_table[*src++];
+      *backbuf_addr-- = flip_table[*src++];
     case 1:
-      *backbuf_addr-- = flip_table[*src++ & 0xFF];
-      *backbuf_addr-- = flip_table[*src++ >> 8];
+      *backbuf_addr-- = flip_table[*src++];
+      *backbuf_addr-- = flip_table[*src++];
     case 2:
-      *backbuf_addr-- = flip_table[*src++ & 0xFF];
-      *backbuf_addr-- = flip_table[*src++ >> 8];
+      *backbuf_addr-- = flip_table[*src++];
+      *backbuf_addr-- = flip_table[*src++];
     case 3:
-      *backbuf_addr-- = flip_table[*src++ & 0xFF];
-      *backbuf_addr-- = flip_table[*src++ >> 8];
+      *backbuf_addr-- = flip_table[*src++];
+      *backbuf_addr-- = flip_table[*src++];
     }
     // EX AF,AF' - UNBANK
     backbuf_addr = ADDRTOBACKBUF(prevbufrow(BACKBUFTOADDR(backbuf_orig)));
@@ -9261,8 +9260,8 @@ static const carpart_t *draw_hero_car_part(chqstate_t      *state,
 /**
  * $B648: Draw smoke
  *
- * \param[in] state         Pointer to game state.
- * \param[in] Aanim_frame   Animation frame index. (was A)
+ * \param[in] state           Pointer to game state.
+ * \param[in] Aanim_frame     Animation frame index. (was A)
  * \param[in] Adash_flip_flag Non-zero to draw flipped. (was A')
  */
 static void draw_smoke(chqstate_t *state, u8 Aanim_frame, u8 Adash_flip_flag)
