@@ -100,6 +100,10 @@
 #include "Data/ChaseHQ-CommonData.h"
 #include "Data/ChaseHQ-SoundSamples.h"
 #include "Data/ChaseHQ-Stage1Data.h"
+#include "Data/ChaseHQ-Stage2Data.h"
+#include "Data/ChaseHQ-Stage3Data.h"
+#include "Data/ChaseHQ-Stage4Data.h"
+#include "Data/ChaseHQ-Stage5Data.h"
 #include "ChaseHQ-Stages.h"
 #include "ChaseHQ-State.h"
 
@@ -397,8 +401,12 @@ static u16 prevbufrow(u16 backbuf)
   return backbuf;
 }
 
-/// For looking up Z80 pointers (that I've decided to leave in-place for now)
-/// and returning the C pointer equivalent.
+/**
+ * Given a ZX Chase HQ Z80 map address return the equivalent C conversion pointer.
+ *
+ * This is for mapping addresses that I've decided to leave in-place for the
+ * time being.
+ */
 static const void *lookup_map_goto(chqstate_t *state, u16 z80)
 {
   switch (z80) {
@@ -414,6 +422,10 @@ static const void *lookup_map_goto(chqstate_t *state, u16 z80)
   default:
     switch (state->current_stage_number) {
     case 1: return stage1_lookup_map_goto(state, z80);
+    case 2: return stage2_lookup_map_goto(state, z80);
+    case 3: return stage3_lookup_map_goto(state, z80);
+    case 4: return stage4_lookup_map_goto(state, z80);
+    case 5: return stage5_lookup_map_goto(state, z80);
     default:
       assert("Unknown stage" == NULL);
       return NULL;
