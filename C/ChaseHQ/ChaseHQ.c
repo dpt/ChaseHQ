@@ -12161,7 +12161,7 @@ static void dr_fill(chqstate_t *state, int DEbackbuf, int Lrow,
   int  Ldash_backbuf;
   int  Bdash_holds_16;
   int  Cdash_mask;
-  u16 *HLdash;
+  u8  *HLdash;
   int  Aleftval;
   u8   Anewvar;
   int  Edash;
@@ -12183,9 +12183,7 @@ static void dr_fill(chqstate_t *state, int DEbackbuf, int Lrow,
   Bdash_holds_16 = 16;
   Cdash_mask = 0xF8; // propagate forward?
 
-  // FIXME: Lrow is a byte offset into the 256-byte Z80 table page; xpos_road_left is u16[128],
-  // so the correct C index is Ldash/2 (or Ldash>>1), not Ldash. With Ldash=0xFF this is OOB.
-  HLdash = &state->xpos_road_left[Ldash]; // was Hdash = 0xE8; // left hand table
+  HLdash = (u8 *)state->xpos_road_left + Ldash; // byte read: Ldash is a byte offset, not a u16 index
   Aleftval = *HLdash;
   if (Aleftval) {
     Anewvar = ((s8) Aleftval < 0) ? 0 : 15;
@@ -12200,7 +12198,7 @@ static void dr_fill(chqstate_t *state, int DEbackbuf, int Lrow,
   Anewvar = ~Edash + Bdash_holds_16;
   state->dr_left_stripe_width = Anewvar;
 
-  HLdash = &state->xpos_road_right[Ldash]; // FIXME: same OOB issue as left table above; should be Ldash>>1
+  HLdash = (u8 *)state->xpos_road_right + Ldash; // byte read: Ldash is a byte offset, not a u16 index
   Arightval = *HLdash;
   if (Arightval) {
     Anewvar = ((s8) Arightval < 0) ? 0 : 15;
