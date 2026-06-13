@@ -3719,7 +3719,7 @@ const void *stage3_lookup_map_goto(chqstate_t *state, u16 z80)
   int lo, hi, mid;
 
   lo  = 0;
-  hi  = (int)(sizeof(stage3_map_goto_table) / sizeof(stage3_map_goto_table[0])) - 1;
+  hi  = (int)NELEMS(stage3_map_goto_table) - 1;
   while (lo <= hi) {
     mid = lo + (hi - lo) / 2;
     if (stage3_map_goto_table[mid].z80 == z80) return stage3_map_goto_table[mid].ptr;

@@ -2713,7 +2713,7 @@ const void *stage2_lookup_map_goto(chqstate_t *state, u16 z80)
   int lo, hi, mid;
 
   lo  = 0;
-  hi  = (int)(sizeof(stage2_map_goto_table) / sizeof(stage2_map_goto_table[0])) - 1;
+  hi  = (int)NELEMS(stage2_map_goto_table) - 1;
   while (lo <= hi) {
     mid = lo + (hi - lo) / 2;
     if (stage2_map_goto_table[mid].z80 == z80) return stage2_map_goto_table[mid].ptr;

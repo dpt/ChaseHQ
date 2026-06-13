@@ -64,7 +64,7 @@ static void chq_initialise(chqstate_t *state)
   int i;
 
   // Copy various blocks into place in state
-  for (i = 0; i < sizeof(copies) / sizeof(copies[0]); i++)
+  for (i = 0; i < NELEMS(copies); i++)
     memcpy((char *) state + copies[i].dstoff, copies[i].src, copies[i].n);
 
   // $8007

@@ -1428,7 +1428,7 @@ def convert(skool_path: str, stage: int, obj_names: List[str]) -> None:
     print('  int lo, hi, mid;')
     print()
     print(f'  lo  = 0;')
-    print(f'  hi  = (int)(sizeof({tname}) / sizeof({tname}[0])) - 1;')
+    print(f'  hi  = (int)NELEMS({tname}) - 1;')
     print(f'  while (lo <= hi) {{')
     print(f'    mid = lo + (hi - lo) / 2;')
     print(f'    if ({tname}[mid].z80 == z80) return {tname}[mid].ptr;')

@@ -21,6 +21,9 @@ typedef signed   int   intptr_t;
 typedef unsigned int   uintptr_t;
 #endif
 
+/* Number of elements in an array */
+#define NELEMS(a) (sizeof(a) / sizeof((a)[0]))
+
 /* Shorthand types */
 typedef int16_t s16;
 typedef int8_t s8;

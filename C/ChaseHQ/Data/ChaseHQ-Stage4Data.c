@@ -2502,7 +2502,7 @@ const void *stage4_lookup_map_goto(chqstate_t *state, u16 z80)
   int lo, hi, mid;
 
   lo  = 0;
-  hi  = (int)(sizeof(stage4_map_goto_table) / sizeof(stage4_map_goto_table[0])) - 1;
+  hi  = (int)NELEMS(stage4_map_goto_table) - 1;
   while (lo <= hi) {
     mid = lo + (hi - lo) / 2;
     if (stage4_map_goto_table[mid].z80 == z80) return stage4_map_goto_table[mid].ptr;
