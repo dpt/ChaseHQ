@@ -3722,11 +3722,16 @@ static const struct { u16 z80; const void *ptr; } stage5_map_goto_table[] = {
 
 const void *stage5_lookup_map_goto(chqstate_t *state, u16 z80)
 {
-  size_t i;
+  int lo, hi, mid;
 
-  for (i = 0; i < sizeof(stage5_map_goto_table) / sizeof(stage5_map_goto_table[0]); i++)
-    if (stage5_map_goto_table[i].z80 == z80)
-      return stage5_map_goto_table[i].ptr;
+  lo  = 0;
+  hi  = (int)(sizeof(stage5_map_goto_table) / sizeof(stage5_map_goto_table[0])) - 1;
+  while (lo <= hi) {
+    mid = lo + (hi - lo) / 2;
+    if (stage5_map_goto_table[mid].z80 == z80) return stage5_map_goto_table[mid].ptr;
+    if (stage5_map_goto_table[mid].z80 < z80)  lo = mid + 1;
+    else                          hi = mid - 1;
+  }
   assert("Unknown Z80 address (stage 5)" == NULL);
   return NULL;
 }
