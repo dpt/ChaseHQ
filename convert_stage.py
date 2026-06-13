@@ -92,6 +92,17 @@ HAZARD_CMDS = {
 BITMAP_FLAGS = {0: 'BITMAPFLAG_DEFAULT', 1: 'BITMAPFLAG_MASKED',
                 2: 'BITMAPFLAG_FLIPPED', 3: 'BITMAPFLAG_MASKED|BITMAPFLAG_FLIPPED'}
 
+CHATTERCHR_NAMES = {
+    0: 'CHATTERCHR_PILOT', 1: 'CHATTERCHR_NANCY',
+    2: 'CHATTERCHR_RAYMOND', 3: 'CHATTERCHR_TONY',
+}
+
+CHATTERCMD_NAMES = {
+    0xFC: 'CHATTERCMD_RANDOM',
+    0xFE: 'CHATTERCMD_PAUSE',
+    0xFF: 'CHATTERCMD_STOP',
+}
+
 # Fields of stage_t that come from perstage words 3..13.
 PERSTAGE_PTR_FIELDS = [
     'addrof_hittable_objects',
@@ -721,6 +732,35 @@ def resolve_bitmap_ref(abs_addr: int, bitmap_names: Dict[int, str],
     return f'&stage{stage}_bitmap_{abs_addr:04X}[0]'
 
 
+def emit_perp_description(stage: int, sec: Section) -> List[str]:
+    """Decode a perp_desc section into CHATTERCHR/CHATTERSTR/CHATTERCMD/CHATTERBLK."""
+    data = sec.bytes_flat
+    nm = f'stage{stage}_perp_description'
+
+    # Expected layout (12 raw bytes):
+    #   [0]      DEFB  char_id
+    #   [1..8]   4 × DEFW  string pointers (replaced by CHATTERSTR_PERP_DESC_1..4)
+    #   [9]      DEFB  command byte
+    #   [10..11] DEFW  next-block address (always CHATTERBLK_HEROES_ACKNOWLEDGE)
+    if len(data) < 12:
+        return emit_raw_array(nm, data, 8, sec.start_addr)
+
+    char_name = CHATTERCHR_NAMES.get(data[0], f'({data[0]})')
+    cmd_name  = CHATTERCMD_NAMES.get(data[9], f'0x{data[9]:02X}')
+
+    lines = [f'// ${sec.start_addr:04X}']
+    lines.append(f'static const u8 {nm}[7] = {{')
+    lines.append(f'  {char_name},')
+    lines.append(f'  CHATTERSTR_PERP_DESC_1,')
+    lines.append(f'  CHATTERSTR_PERP_DESC_2,')
+    lines.append(f'  CHATTERSTR_PERP_DESC_3,')
+    lines.append(f'  CHATTERSTR_PERP_DESC_4,')
+    lines.append(f'  {cmd_name},')
+    lines.append(f'  CHATTERBLK_HEROES_ACKNOWLEDGE')
+    lines.append('};')
+    return lines
+
+
 def emit_lod_table(stage: int, sec: Section, bank_offset: int,
                    bitmap_names: Dict[int, str]) -> Tuple[List[str], int]:
     """
@@ -1060,11 +1100,9 @@ def convert(skool_path: str, stage: int, obj_names: List[str]) -> None:
             fwd_decls.append(f'static const u8 {nm}[{len(data)}];')
 
         elif sec.stype == 'perp_desc':
-            data = sec.bytes_flat
-            nm = array_name(stage, 'perp_desc', sec.start_addr)
-            all_lines.extend(emit_raw_array(nm, data, 8, sec.start_addr))
+            all_lines.extend(emit_perp_description(stage, sec))
             all_lines.append('')
-            fwd_decls.append(f'static const u8 {nm}[{len(data)}];')
+            fwd_decls.append(f'static const u8 stage{stage}_perp_description[7];')
 
             # The first four DEFW words in the header are pointers to the
             # chatter strings (DEFM lines).  Resolve each via defm_strings.
