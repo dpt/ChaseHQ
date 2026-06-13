@@ -4090,10 +4090,7 @@ static void draw_object_common_9333(chqstate_t     *state,
   int               By;
   int               DEbitmap_stride;
   u8               *HLdash_backbuf_addr;
-  u16               HLresult;
-  int               Aheight;
-  int               Biterations;
-  const u8         *BCbase;
+
 
   if (carry_masked) {
     // EX AF,AF'  - preserve carry while we double these args
@@ -4347,34 +4344,9 @@ doc_9436:
   }
 
 unmasked_inverted:
-  // EX AF,AF' - preserve Awidth_bytes
-  // EXX - UNBANK
-
-  // E must be bitmap stride here
-  DEbitmap_stride = Ebitmap_stride; // was D = 0
-  // PUSH BC,HL - push Bheight and HLbase
-  HLresult = 0;
-  Aheight = Bheight;
-  Biterations = 5;
-  Awidth_bytes = (Aheight - 1) * 4;
-  do {
-    RL(Awidth_bytes);
-    if (carry)
-      HLresult += DEbitmap_stride; // remember D is zero
-    HLresult <<= 1;
-  } while (--Biterations > 0);
-  RL(Awidth_bytes);
-  if (carry)
-    HLresult += DEbitmap_stride;
-
-  BCbase = HLbitmap_data; // was POP BC
-  HLbitmap_data = BCbase + HLresult;
-  // POP BC - restore Bheight
-  // adjust DEdash_bitmap_stride (D is zero here so this is just negating E)
-  DEbitmap_stride = -DEbitmap_stride;  // was D=255:E=-E
-
-  // EXX - BANK
-  // EX AF,AF' - restore Awidth_bytes
+  DEbitmap_stride = Ebitmap_stride;
+  HLbitmap_data += (Bheight - 1) * DEbitmap_stride;
+  DEbitmap_stride = -DEbitmap_stride;
 
   plot_sprite(state,
               Awidth_bytes,
@@ -9918,12 +9890,8 @@ static void plot_masked_sprite_inverted(chqstate_t *state,
                                         int         Edash_bitmap_stride,
                                         const u8   *HLdash_bitmap_data)
 {
-  int       carry = 0;
   int       jump_offset;              /* was IX */
   u16       DEdash_bitmap_stride;     /* was DE */
-  u16       HLdash_bitmap_offset;     /* was HL' */
-  u8        A;                        /* was A */
-  int       iterations;               /* was B' */
   const u8 *HLdash_bitmap_data_final; /* was HL' */
   u8        Bheight;                  /* was B */
 
@@ -9931,28 +9899,9 @@ static void plot_masked_sprite_inverted(chqstate_t *state,
   jump_offset = (8 - Awidth_bytes) * 6; // jump table index * entry size
   // Conv: Removed setting B to 15 for line stepping
   // EXX - Bank
-  DEdash_bitmap_stride = Edash_bitmap_stride; // widen E' to DE'
-  // PUSH Bdash_height -- and C' too
-  // PUSH HLdash_bitmap_data
-
-  // Multiplier
-  HLdash_bitmap_offset = 0; // multiplier // total/result
-  A = (Bdash_height - 1) <<
-      2; // multiplicand // shift up so loop can shift to carry
-  iterations = 5; // iterations
-  do {
-    RL(A);
-    if (carry)
-      HLdash_bitmap_offset += DEdash_bitmap_stride;
-    HLdash_bitmap_offset <<= 1;
-  } while (--iterations > 0);
-  RL(A);
-  if (carry)
-    HLdash_bitmap_offset += DEdash_bitmap_stride;
-
-  // POP BCdash -- HL' on entry (bitmap data ptr)
-  HLdash_bitmap_data_final = HLdash_bitmap_offset + HLdash_bitmap_data;
-  Bheight = Bdash_height; /* was POP BCdash -- BC' on entry - height */
+  DEdash_bitmap_stride = Edash_bitmap_stride;
+  HLdash_bitmap_data_final = (Bdash_height - 1) * DEdash_bitmap_stride + HLdash_bitmap_data;
+  Bheight = Bdash_height;
 
   DEdash_bitmap_stride = -DEdash_bitmap_stride;
 
