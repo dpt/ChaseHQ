@@ -11619,14 +11619,15 @@ static u8 *drsc_tbl(chqstate_t *state, int Htable_page)
  * road-edge x-positions between two height-table entries and writes them
  * to the appropriate road table via an SP-based write pointer.
  *
- * \param[in] state Pointer to game state.
- * \param[in] IX    Pointer into road buffer lane data.
- * \param[in] IY    Pointer into height table (height_table).
+ * \param[in] state    Pointer to game state.
+ * \param[in] IXlanes  Pointer into road buffer lane data.
+ * \param[in] IYheight Pointer into height table.
  */
 static void draw_road_scene_change(chqstate_t *state, u8 *IXlanes, u8 *IYheight)
 {
+  u8   Htable_hi;    /* left-hand table hi byte ($E8/$E9/$EA/$EB/$EC) */
   u8   dist;         /* IYl = byte offset of IYheight within height_table */
-  u8   H;            /* left-hand table hi byte ($E8/$E9/$EA/$EB/$EC) */
+
   u8   lane_flags;   /* IXlanes[0] */
   u8   L_sp;         /* L = ~((0x60 - IYheight[0]) << 1) -- always odd */
   u8   range;        /* Bresenham step count = IYheight[0] - C_val */
@@ -11651,27 +11652,27 @@ static void draw_road_scene_change(chqstate_t *state, u8 *IXlanes, u8 *IYheight)
   u8   new_acc;      /* temp for carry-detection in alternate Bresenham */
 
   /* $C2E7: load H = left-hand table hi byte from IXlanes[0] bits 0-1 */
-  H    = (u8)((IXlanes[0] & 3) + 0xE7);
-  dist = (u8)(IYheight - &state->height_table[0]);
+  Htable_hi = (IXlanes[0] & 3) + 0xE7;
+  dist = IYheight - &state->height_table[0];
   if (dist >= 19)
-    goto c43b;
+    goto drsc_exit;
 
   lane_flags = IXlanes[0];
   if ((lane_flags & 0x0C) == 0)
-    goto c43b;
+    goto drsc_exit;
 
   IYheight--;
 
   /* $C2FA-$C304: adjust H based on bits 5 and 7 of IXlanes[0] */
   if (lane_flags & 0x20) {          /* bit 5 set */
-    H = 0xEC;
+    Htable_hi = 0xEC;
     if (!(lane_flags & 0x80))       /* bit 7 clear */
-      H = 0xEB;
+      Htable_hi = 0xEB;
   }
 
   /* Defaults for bit-4-set paths: DE from H, clamp from H-1 */
-  H_de    = H;
-  H_clamp = (u8)(H - 1);
+  H_de    = Htable_hi;
+  H_clamp = (u8)(Htable_hi - 1);
 
   if (!(lane_flags & 0x10))         /* bit 4 clear */
     goto c37e;
@@ -11683,9 +11684,9 @@ static void draw_road_scene_change(chqstate_t *state, u8 *IXlanes, u8 *IYheight)
   /* $C310-$C354: path 1a -- bit4=1, dist<2 */
   addval = (lane_flags & 0x0C) == 4 ? 0x00 : 0x20;
   C_val  = (lane_flags & 0x0C) == 4 ? IYheight[2] : IYheight[1];
-  range  = (u8)(IYheight[0] - C_val);
-  if (range == 0 || (range & 0x80))
+  if (IYheight[0] <= C_val)
     goto c439;
+  range  = (u8)(IYheight[0] - C_val);
   L_sp    = (u8)(~((u8)(0x60 - IYheight[0]) << 1));
   tbl     = drsc_tbl(state, H_de);
   DE_road = tbl[L_sp - 1] | (tbl[L_sp] << 8);
@@ -11696,9 +11697,9 @@ c357:
   /* $C357-$C37B: path 1b -- bit4=1, dist>=2 (must be 4) */
   if (dist != 4)
     goto c439;
-  range = (u8)(IYheight[0] - IYheight[2]);
-  if (range == 0 || (range & 0x80))
+  if (IYheight[0] <= IYheight[2])
     goto c439;
+  range = (u8)(IYheight[0] - IYheight[2]);
   L_sp    = (u8)(~((u8)(0x60 - IYheight[0]) << 1));
   tbl     = drsc_tbl(state, H_de);
   DE_road = tbl[L_sp - 1] | (tbl[L_sp] << 8);
@@ -11706,17 +11707,17 @@ c357:
 
 c37e:
   /* $C37E: bit-4-clear paths: swap table roles */
-  H_de    = (u8)(H - 1);
-  H_clamp = H;
+  H_de    = (u8)(Htable_hi - 1);
+  H_clamp = Htable_hi;
   if (dist >= 2)
     goto c3ca;
 
   /* $C37E-$C3C7: path 2 -- bit4=0, dist<2 */
   addval = (lane_flags & 0x0C) == 4 ? 0x00 : 0x20;
   C_val  = (lane_flags & 0x0C) == 4 ? IYheight[2] : IYheight[1];
-  range  = (u8)(IYheight[0] - C_val);
-  if (range == 0 || (range & 0x80))
+  if (IYheight[0] <= C_val)
     goto c439;
+  range  = (u8)(IYheight[0] - C_val);
   L_sp    = (u8)(~((u8)(0x60 - IYheight[0]) << 1));
   tbl     = drsc_tbl(state, H_de);
   DE_road = tbl[L_sp - 1] | (tbl[L_sp] << 8);
@@ -11727,9 +11728,9 @@ c3ca:
   /* $C3CA-$C3ED: path 3ca -- bit4=0, dist>=2 (must be 4) */
   if (dist != 4)
     goto c439;
-  range = (u8)(IYheight[0] - IYheight[2]);
-  if (range == 0 || (range & 0x80))
+  if (IYheight[0] <= IYheight[2])
     goto c439;
+  range = (u8)(IYheight[0] - IYheight[2]);
   L_sp    = (u8)(~((u8)(0x60 - IYheight[0]) << 1));
   tbl     = drsc_tbl(state, H_de);
   DE_road = tbl[L_sp - 1] | (tbl[L_sp] << 8);
@@ -11748,7 +11749,7 @@ c3ee:
     displacement = (L_low <  0x80) ? (s8)L_low : 0x7F;
 
   /* $C407-$C412: set up SP output pointer */
-  H_sp   = (lane_flags & 0x20) ? (u8)(H - 1) : H;
+  H_sp   = (lane_flags & 0x20) ? (u8)(Htable_hi - 1) : Htable_hi;
   SP_out = (u16 *)(drsc_tbl(state, H_sp) + (u8)(L_sp + 1));
 
   /* $C413-$C420: derive step and direction */
@@ -11794,7 +11795,7 @@ c3ee:
 
 c439:
   IYheight++; /* $C439: INC IYheight -- advance height pointer for next iteration */
-c43b:
+drsc_exit:
   state->dr_callback = dr_four_lane_highway;
   dr_dispatch_fill(state, 0, 0, 0, 0); // FIXME - must be crap
 }
@@ -11976,7 +11977,7 @@ static void dr_read_lanes(chqstate_t *state, u8 *IXlanesptr, u8 *IYheightptr,
 static void dr_four_lane_highway(chqstate_t *state, int Bfill_pattern,
                                  int Chorizon, int DEbackbuf, int Lrow)
 {
-  // EXX - UNBANK (we enter banked)
+  // EXX - BANK (we enter unbanked)
 
   // Set left/right hand road position to leftmost/rightmost
   state->dr_left_table_hi_1 = 0xE8;
