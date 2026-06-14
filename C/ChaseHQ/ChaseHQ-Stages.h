@@ -190,15 +190,15 @@
 //     else if bit 7 clear => 2 / 3-to-2 / 2-to-3 lanes
 // - else if bit 6 set => tunnel, dirt track or forked road
 //   - if bit 7 clear => in tunnel
-//     - if bits 2or3 set => tunnel transition
+//     - if bits 2 or 3 set => tunnel transition
 //       - if bit 4 set => tunnel exit
 //       - else if bit 4 clear => tunnel entrance
-//     - else bits 2or3 clear => tunnel body
+//     - else bits 2 or 3 clear => tunnel body
 //   - else if bit 7 set => forked road or dirt track
 //     - if bit 5 set => forked road
 //     - else if bit 5 clear => dirt track or (unknown)
-//       - if bits 2or3 set => (unknown)
-//       - else if bits 2or3 clear => dirt track
+//       - if bits 2 or 3 set => (unknown)
+//       - else if bits 2 or 3 clear => dirt track
 
 #define MAP_LANES_LEFT_OFFSET_MASK      (0x03)
 

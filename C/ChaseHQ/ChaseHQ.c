@@ -11903,14 +11903,13 @@ static void dr_read_lanes(chqstate_t *state, u8 *IXlanesptr, u8 *IYheightptr,
   state->dr_left_table_hi_1 = state->dr_left_table_hi_2 = Aleft_hand_table_hi;
   SLA(Ldash_lanes);
   if ((Ldash_lanes & (1 << 7)) == 0) {
-    // Bit 6 was clear (NOT tunnel / dirt track / forked road)
+    /* If bit 6 was clear then it's a normal road (not tunnel, dirt track or forked road). */
     if (carry) {
-      // Otherwise bit 7 was set indicating 3 lanes or 3/4 lanes
-      // narrowing/widening.
+      /* If bit 7 was set then it's a 3-lane, 3-to-4 lane or 4-to-3 lane section. */
       Aleft_hand_table_hi += 3; // $E8..$EA becomes $EB..$ED
       Cdash_neg_lane_count = -3;
     } else {
-      // Two lane
+      /* If bit 7 was clear then it's a 2-lane, 2-to-3 lane or 3-to-2 lane section. */
       Aleft_hand_table_hi += 2; // $E8..$EA becomes $EA..$EC
       Cdash_neg_lane_count = -2;
     }
@@ -11918,18 +11917,18 @@ static void dr_read_lanes(chqstate_t *state, u8 *IXlanesptr, u8 *IYheightptr,
     state->dr_neg_lane_count = Cdash_neg_lane_count; // Conv: A removed
     draw_road_scene_change(state, IXlanesptr, IYheightptr); // exit via
   } else {
-    // Tunnel, dirt track or forked road
+    /* If bit 6 was clear then it's a special road (tunnel, dirt track or forked road). */
     if (carry == 0) {
-      /* Otherwise it's a tunnel [confirmed in debugger]. */
+      /* If bit 7 was clear then it's a tunnel section. */
       Cdash_fill_pattern = 0xFF;
       Hdash_in_tunnel = 1;
       if ((Ldash_lanes & (3 << 3)) != 0) { // having trouble understanding this bit
-        // Tunnel transition
+        /* If bits 2 or 3 are set then it's a tunnel transition section. */
         state->dt_tunnel_distance = IYheightptr - &state->height_table[0];
         Atunnel_visible = 1;
         Cdash_fill_pattern = 0x00; // was INC C
         if ((Ldash_lanes & (1 << 5)) != 0) {
-          /* Otherwise it's tunnel exit */
+          /* If bit 4 is set then it's a tunnel exit. */
           Cdash_fill_pattern = 0xFF; // was DEC C
           Atunnel_visible = 2; // was INC A
           Hdash_in_tunnel = 0; // was DEC H
@@ -11946,15 +11945,18 @@ static void dr_read_lanes(chqstate_t *state, u8 *IXlanesptr, u8 *IYheightptr,
 
       dr_dispatch_fill(state, Afill_pattern, Chorizon, DEbackbuf, Lrow); // was exit via
     } else {
-      // STILL BANKED HERE!
+      /* If bit 7 was set then it's a dirt track or forked road. */
+
+      // Note: We're still banked here!
 
       if (Ldash_lanes & (1 << 6)) {
-        // Forked road
+        /* If bit 5 was set then it's a forked road. */
         forked_road_plotter(state, IXlanesptr, IYheightptr); // was exit via
       } else {
-        /* Dirt track check */
-        // there must be other cases that can get here too
-        state->on_dirt_track = ((Ldash_lanes & 0x18) == 0) ? 1 : 0;
+        /* If bit 5 was clear then it's a dirt track section. */
+        /* Note: This is a mystery. There's a check here which sets conditionally
+         * on_dirt_track but I've not yet found any use of this track type. */
+        state->on_dirt_track = ((Ldash_lanes & 0x18) == 0) ? 1 : 0; /* bits 2 or 3 clear => dirt track */
         state->dr_neg_lane_count = -1;
         dr_set_lane_callback(state, Bfill_pattern, Chorizon, DEbackbuf, Lrow, dr_four_lane_highway); // exit via
       }
