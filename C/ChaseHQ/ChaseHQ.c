@@ -11877,13 +11877,14 @@ static void dr_read_lanes(chqstate_t *state, u8 *IXlanesptr, u8 *IYheightptr,
                           int Bfill_pattern, int Chorizon, int DEbackbuf,
                           int Lrow)
 {
-  int carry = 0;
-  int Aleft_offset;         /* was A */
-  u8  Ldash_lanes;          /* was L' */
-  int Aleft_hand_table_hi;  /* was A */
-  int Cdash_neg_lane_count; /* was C' */
-  int Hdash_in_tunnel;      /* was H' */
-  int Atunnel_visible;      /* was A */
+  int carry;
+  int Aleft_offset;             /* was A */
+  u8  Ldash_lanes;              /* was L' */
+  int Aleft_hand_table_hi;      /* was A */
+  int Hdash_left_hand_table_hi; /* was H' */
+  int Cdash_neg_lane_count;     /* was C' */
+  int Hdash_in_tunnel;          /* was H' */
+  int Atunnel_visible;          /* was A */
   int Cdash_fill_pattern;
   int Afill_pattern;
 
@@ -11901,7 +11902,7 @@ static void dr_read_lanes(chqstate_t *state, u8 *IXlanesptr, u8 *IYheightptr,
   // convert left hand pos (1+) to table hi byte ($E8+)
   Aleft_hand_table_hi = 0xE7 + Aleft_offset;
   state->dr_left_table_hi_1 = state->dr_left_table_hi_2 = Aleft_hand_table_hi;
-  //Hdash_left_hand_table_hi = Aleft_hand_table_hi; // I can't see this used...
+  Hdash_left_hand_table_hi = Aleft_hand_table_hi; // I can't see this used...
   SLA(Ldash_lanes);
   if ((Ldash_lanes & (1 << 7)) == 0) {
     // Bit 6 was clear (NOT tunnel / dirt track / forked road)
@@ -11917,54 +11918,50 @@ static void dr_read_lanes(chqstate_t *state, u8 *IXlanesptr, u8 *IYheightptr,
     }
     state->dr_right_table_hi_2 = state->dr_right_table_hi_1 = Aleft_hand_table_hi;
     state->dr_neg_lane_count = Cdash_neg_lane_count; // Conv: A removed
-
     draw_road_scene_change(state, IXlanesptr, IYheightptr); // exit via
-    return;
-  }
-
-  // Tunnel, dirt track or forked road
-  if (carry == 0) {
-    /* Otherwise it's a tunnel [confirmed in debugger]. */
-    Cdash_fill_pattern = 0xFF;
-    Hdash_in_tunnel = 1;
-    if ((Ldash_lanes & (3 << 3)) != 0) {
-      // Tunnel transition
-      state->dt_tunnel_distance = IYheightptr - &state->height_table[0];
-      Atunnel_visible = 1;
-      Cdash_fill_pattern = 0x00; // was INC C
-      if ((Ldash_lanes & (1 << 5)) != 0) {
-        /* Otherwise it's tunnel exit */
-        Cdash_fill_pattern = 0xFF; // was DEC C
-        Atunnel_visible = 2; // was INC A
-        Hdash_in_tunnel = 0; // was DEC H
+  } else {
+    // Tunnel, dirt track or forked road
+    if (carry == 0) {
+      /* Otherwise it's a tunnel [confirmed in debugger]. */
+      Cdash_fill_pattern = 0xFF;
+      Hdash_in_tunnel = 1;
+      if ((Ldash_lanes & (3 << 3)) != 0) { // having trouble understanding this bit
+        // Tunnel transition
+        state->dt_tunnel_distance = IYheightptr - &state->height_table[0];
+        Atunnel_visible = 1;
+        Cdash_fill_pattern = 0x00; // was INC C
+        if ((Ldash_lanes & (1 << 5)) != 0) {
+          /* Otherwise it's tunnel exit */
+          Cdash_fill_pattern = 0xFF; // was DEC C
+          Atunnel_visible = 2; // was INC A
+          Hdash_in_tunnel = 0; // was DEC H
+        }
+        state->dt_tunnel_visible = Atunnel_visible;
       }
-      state->dt_tunnel_visible = Atunnel_visible;
+
+      state->dr_in_tunnel = Hdash_in_tunnel;
+      state->dr_right_table_hi_2 = state->dr_right_table_hi_1 = 0xEB;
+      state->dr_neg_lane_count = -1;
+      Afill_pattern = Cdash_fill_pattern;
+
+      // EXX - UNBANK
+
+      dr_dispatch_fill(state, Afill_pattern, Chorizon, DEbackbuf, Lrow); // was exit via
+    } else {
+      // STILL BANKED HERE!
+
+      if (Ldash_lanes & (1 << 6)) {
+        // Forked road
+        forked_road_plotter(state, IXlanesptr, IYheightptr); // was exit via
+      } else {
+        /* Dirt track check */
+        // there must be other cases that can get here too
+        state->on_dirt_track = ((Ldash_lanes & 0x18) == 0) ? 1 : 0;
+        state->dr_neg_lane_count = -1;
+        dr_set_lane_callback(state, Bfill_pattern, Chorizon, DEbackbuf, Lrow, dr_four_lane_highway); // exit via
+      }
     }
-
-    state->dr_in_tunnel = Hdash_in_tunnel;
-    state->dr_right_table_hi_2 = state->dr_right_table_hi_1 = 0xEB;
-    state->dr_neg_lane_count = -1;
-    Afill_pattern = Cdash_fill_pattern;
-
-    // EXX - UNBANK
-
-    dr_dispatch_fill(state, Afill_pattern, Chorizon, DEbackbuf, Lrow); // was exit via
-    return;
   }
-
-  // STILL BANKED HERE!
-
-  if (Ldash_lanes & (1 << 6)) {
-    // Forked road
-    forked_road_plotter(state, IXlanesptr, IYheightptr); // was exit via
-    return;
-  }
-
-  /* Dirt track check */
-  // there must be other cases that can get here too
-  state->on_dirt_track = ((Ldash_lanes & 0x18) == 0) ? 1 : 0;
-  state->dr_neg_lane_count = -1;
-  dr_set_lane_callback(state, Bfill_pattern, Chorizon, DEbackbuf, Lrow, dr_four_lane_highway); // exit via
 }
 
 /**

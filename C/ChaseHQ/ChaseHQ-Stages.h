@@ -162,24 +162,40 @@
 #define MAP_HEIGHT_DOWN7(D)             (((D) << 4) | 15)
 
 // Map lanes
-#define MAP_LANES_4_VAL                 (0x00)
-#define MAP_LANES_3L_VAL                (0x81)
-#define MAP_LANES_3R_VAL                (0x82)
-#define MAP_LANES_2L_VAL                (0x01)
-#define MAP_LANES_2M_VAL                (0x02)
-#define MAP_LANES_2R_VAL                (0x03)
-#define MAP_LANES_4TO3L_VAL             (0xBD)
-#define MAP_LANES_4TO3R_VAL             (0x8E)
-#define MAP_LANES_3TO4L_VAL             (0xAD)
-#define MAP_LANES_3TO4R_VAL             (0x9E)
-#define MAP_LANES_3TO2L_VAL             (0x06)
-#define MAP_LANES_3TO2R_VAL             (0x0F)
-#define MAP_LANES_2TO3L_VAL             (0x2D)
-#define MAP_LANES_2TO3R_VAL             (0x1F)
-#define MAP_LANES_TUNNEL_VAL            (0x45)
-#define MAP_LANES_TUNNEL_EXIT_VAL       (0x59)
-#define MAP_LANES_DIRTTRACK_VAL         (0xC1)
-#define MAP_LANES_FORKED_VAL            (0xED)
+#define MAP_LANES_4_VAL                 (0x00) // 0000_0000
+#define MAP_LANES_3L_VAL                (0x81) // 1000_0001
+#define MAP_LANES_3R_VAL                (0x82) // 1000_0010
+#define MAP_LANES_2L_VAL                (0x01) // 0000_0001
+#define MAP_LANES_2M_VAL                (0x02) // 0000_0010
+#define MAP_LANES_2R_VAL                (0x03) // 0000_0011
+#define MAP_LANES_4TO3L_VAL             (0xBD) // 1011_1101
+#define MAP_LANES_4TO3R_VAL             (0x8E) // 1000_1110
+#define MAP_LANES_3TO4L_VAL             (0xAD) // 1010_1101
+#define MAP_LANES_3TO4R_VAL             (0x9E) // 1001_1110
+#define MAP_LANES_3TO2L_VAL             (0x06) // 0000_0110
+#define MAP_LANES_3TO2R_VAL             (0x0F) // 0000_1111
+#define MAP_LANES_2TO3L_VAL             (0x2D) // 0010_1101
+#define MAP_LANES_2TO3R_VAL             (0x1F) // 0001_1111
+#define MAP_LANES_TUNNEL_VAL            (0x45) // 0100_1001
+#define MAP_LANES_TUNNEL_EXIT_VAL       (0x59) // 0101_1001
+#define MAP_LANES_DIRTTRACK_VAL         (0xC1) // 1100_0001
+#define MAP_LANES_FORKED_VAL            (0xED) // 1110_1101
+
+// Decoding lanes bits:
+//
+// if all clear => four lane road
+// - if bit 6 clear => normal road
+//   - if bit 7 set => 3 / 4-to-3 / 3-to-4 lanes
+//     else if bit 7 clear => 2 / 3-to-2 / 2-to-3 lanes
+// - else if bit 6 set => tunnel, dirt track or forked road
+//   - if bit 7 clear => in tunnel
+//     - if bits 2or3 set => tunnel transition/start???
+//       - if bit 4 set => tunnel exit
+//   - else if bit 7 clear => forked road or dirt track
+//     - if bit 5 set => forked road
+//     - else if bit 5 clear => dirt track or (something else)???
+//       - if bits 2or3 set => (something else)
+//       - else if bits 2or3 set => dirt track
 
 #define MAP_LANES_LEFT_OFFSET_MASK      (0x03)
 
