@@ -934,11 +934,12 @@ static void draw_road(chqstate_t *state);
 static void dr_read_lanes(chqstate_t *state, u8 *IXlanesptr, u8 *IYheightptr,
                           int Bfill_pattern, int Chorizon, int DEbackbuf, int Lrow);
 static void dr_four_lane_highway(chqstate_t *state, int Bfill_pattern,
-                                 int DEbackbuf, int Lrow);
-static void dr_set_lane_callback(chqstate_t *state, int Bfill_pattern, int DEbackbuf,
-                    int Lrow, dr_callback_t *HLdash_callback);
-static void dr_dispatch_fill(chqstate_t *state, int Bfill_pattern, int DEbackbuf,
-                    int Lrow);
+                                 int Chorizon, int DEbackbuf, int Lrow);
+static void dr_set_lane_callback(chqstate_t *state, int Bfill_pattern,
+                                 int Chorizon, int DEbackbuf, int Lrow,
+                                 dr_callback_t *HLdash_callback);
+static void dr_dispatch_fill(chqstate_t *state, int Bfill_pattern, int Chorizon,
+                             int DEbackbuf, int Lrow);
 static void dr_advance_unfilled(chqstate_t *state, int DEbackbuf,
                                   int Lrow, int Adash_fill);
 static void dr_write_scanline_unfilled(chqstate_t *state, int DEbackbuf);
@@ -11795,7 +11796,7 @@ c439:
   IYheight++; /* $C439: INC IYheight -- advance height pointer for next iteration */
 c43b:
   state->dr_callback = dr_four_lane_highway;
-  dr_dispatch_fill(state, 0, 0, 0); // FIXME - must be crap
+  dr_dispatch_fill(state, 0, 0, 0, 0); // FIXME - must be crap
 }
 
 /**
@@ -11890,7 +11891,7 @@ static void dr_read_lanes(chqstate_t *state, u8 *IXlanesptr, u8 *IYheightptr,
   if (Aleft_offset == 0) {
     // no left side calcs required in this case?
     // callback here is e.g. dr_four_lane_highway
-    state->dr_callback(state, Bfill_pattern, DEbackbuf, Lrow); // exit via
+    state->dr_callback(state, Bfill_pattern, Chorizon, DEbackbuf, Lrow); // exit via
     return;
   }
 
@@ -11899,7 +11900,7 @@ static void dr_read_lanes(chqstate_t *state, u8 *IXlanesptr, u8 *IYheightptr,
   Ldash_lanes = *IXlanesptr; // reload lanes byte
   // convert left hand pos (1+) to table hi byte ($E8+)
   Aleft_hand_table_hi = 0xE7 + Aleft_offset;
-  state->dr_left_table_hi = state->dr_left_table_hi_2 = Aleft_hand_table_hi;
+  state->dr_left_table_hi_1 = state->dr_left_table_hi_2 = Aleft_hand_table_hi;
   //Hdash_left_hand_table_hi = Aleft_hand_table_hi; // I can't see this used...
   SLA(Ldash_lanes);
   if ((Ldash_lanes & (1 << 7)) == 0) {
@@ -11914,7 +11915,7 @@ static void dr_read_lanes(chqstate_t *state, u8 *IXlanesptr, u8 *IYheightptr,
       Aleft_hand_table_hi += 2; // $E8..$EA becomes $EA..$EC
       Cdash_neg_lane_count = -2;
     }
-    state->dr_right_table_hi_2 = state->dr_right_table_hi = Aleft_hand_table_hi;
+    state->dr_right_table_hi_2 = state->dr_right_table_hi_1 = Aleft_hand_table_hi;
     state->dr_neg_lane_count = Cdash_neg_lane_count; // Conv: A removed
 
     draw_road_scene_change(state, IXlanesptr, IYheightptr); // exit via
@@ -11941,13 +11942,13 @@ static void dr_read_lanes(chqstate_t *state, u8 *IXlanesptr, u8 *IYheightptr,
     }
 
     state->dr_in_tunnel = Hdash_in_tunnel;
-    state->dr_right_table_hi_2 = state->dr_right_table_hi = 0xEB;
+    state->dr_right_table_hi_2 = state->dr_right_table_hi_1 = 0xEB;
     state->dr_neg_lane_count = -1;
     Afill_pattern = Cdash_fill_pattern;
 
     // EXX - UNBANK
 
-    dr_dispatch_fill(state, Afill_pattern, DEbackbuf, Lrow); // was exit via
+    dr_dispatch_fill(state, Afill_pattern, Chorizon, DEbackbuf, Lrow); // was exit via
     return;
   }
 
@@ -11963,7 +11964,7 @@ static void dr_read_lanes(chqstate_t *state, u8 *IXlanesptr, u8 *IYheightptr,
   // there must be other cases that can get here too
   state->on_dirt_track = ((Ldash_lanes & 0x18) == 0) ? 1 : 0;
   state->dr_neg_lane_count = -1;
-  dr_set_lane_callback(state, Bfill_pattern, DEbackbuf, Lrow, dr_four_lane_highway); // exit via
+  dr_set_lane_callback(state, Bfill_pattern, Chorizon, DEbackbuf, Lrow, dr_four_lane_highway); // exit via
 }
 
 /**
@@ -11971,25 +11972,24 @@ static void dr_read_lanes(chqstate_t *state, u8 *IXlanesptr, u8 *IYheightptr,
  *
  * \param[in] state         Pointer to game state.
  * \param[in] Bfill_pattern Fill pattern.
+ * \param[in] Chorizon      Horizon level.
  * \param[in] DEbackbuf     Pointer into backbuffer.
  * \param[in] Lrow          Byte offset within road table page (row index).
  */
 static void dr_four_lane_highway(chqstate_t *state, int Bfill_pattern,
-                                 int DEbackbuf, int Lrow)
+                                 int Chorizon, int DEbackbuf, int Lrow)
 {
   // EXX - UNBANK (we enter banked)
 
   // Set left/right hand road position to leftmost/rightmost
-  state->dr_left_table_hi  = 0xE8;
-  state->dr_left_table_hi_2  = 0xE8;
-  state->dr_right_table_hi = 0xEC;
+  state->dr_left_table_hi_1 = 0xE8;
+  state->dr_left_table_hi_2 = 0xE8;
+  state->dr_right_table_hi_1 = 0xEC;
   state->dr_right_table_hi_2 = 0xEC;
-
   state->dr_neg_lane_count = -4;
 
-  assert(DEbackbuf >= 0xF000 || DEbackbuf <= 0x0100);
-  dr_set_lane_callback(state, Bfill_pattern, DEbackbuf, Lrow,
-          dr_dispatch_fill); // was FALLTHROUGH
+  dr_set_lane_callback(state, Bfill_pattern, Chorizon, DEbackbuf, Lrow,
+                       dr_dispatch_fill); // was FALLTHROUGH
 }
 
 /**
@@ -11997,17 +11997,19 @@ static void dr_four_lane_highway(chqstate_t *state, int Bfill_pattern,
  *
  * \param[in] state           Pointer to game state.
  * \param[in] Bfill_pattern   Fill pattern.
+ * \param[in] Chorizon        Horizon level.
  * \param[in] DEbackbuf       Pointer into backbuffer.
- * \param[in] Lrow          Byte offset within road table page (row index).
+ * \param[in] Lrow            Byte offset within road table page (row index).
  * \param[in] HLdash_callback TBD
  */
-static void dr_set_lane_callback(chqstate_t *state, int Bfill_pattern, int DEbackbuf,
-                    int Lrow, dr_callback_t *HLdash_callback)
+static void dr_set_lane_callback(chqstate_t *state, int Bfill_pattern,
+                                 int Chorizon, int DEbackbuf, int Lrow,
+                                 dr_callback_t *HLdash_callback)
 {
   state->dr_callback = HLdash_callback;
   // EXX - UNBANK (we enter banked)
   assert(DEbackbuf >= 0xF000 || DEbackbuf <= 0x0100);
-  dr_dispatch_fill(state, Bfill_pattern, DEbackbuf, Lrow); // was FALLTHROUGH
+  dr_dispatch_fill(state, Bfill_pattern, Chorizon, DEbackbuf, Lrow); // was FALLTHROUGH
 }
 
 /**
@@ -12015,11 +12017,12 @@ static void dr_set_lane_callback(chqstate_t *state, int Bfill_pattern, int DEbac
  *
  * \param[in] state         Pointer to game state.
  * \param[in] Bfill_pattern Fill pattern.
+ * \param[in] Chorizon      Horizon level.
  * \param[in] DEbackbuf     Pointer into backbuffer.
  * \param[in] Lrow          Byte offset within road table page (row index).
  */
-static void dr_dispatch_fill(chqstate_t *state, int Bfill_pattern, int DEbackbuf,
-                    int Lrow)
+static void dr_dispatch_fill(chqstate_t *state, int Bfill_pattern, int Chorizon,
+                             int DEbackbuf, int Lrow)
 {
   int Afill_pattern;
 
@@ -12042,13 +12045,13 @@ static void dr_dispatch_fill(chqstate_t *state, int Bfill_pattern, int DEbackbuf
 /**
  * $C55F: draw_road: advance backbuffer and rollover check (unfilled path)
  *
- * \param[in] state         Pointer to game state.
- * \param[in] Bfill_pattern Fill pattern.
- * \param[in] DEbackbuf     Pointer into backbuffer.
- * \param[in] L             Value
+ * \param[in] state      Pointer to game state.
+ * \param[in] DEbackbuf  Pointer into backbuffer.
+ * \param[in] Lrow       Value
+ * \param[in] Adash_fill Fill pattern.
  */
 static void dr_advance_unfilled(chqstate_t *state, int DEbackbuf,
-                                  int Lrow, int Adash_fill)
+                                int Lrow, int Adash_fill)
 {
   int Ahi;
 
@@ -12343,8 +12346,8 @@ static void dr_fill_left_stripe(chqstate_t *state, u8 *SPoutput, int jump_index,
 
   // EXX - bank/unbank
 
-  // was H = state->dr_left_table_hi;
-  switch (state->dr_left_table_hi) {
+  // was H = state->dr_left_table_hi_1;
+  switch (state->dr_left_table_hi_1) {
   default: assert(0);
   case 0xE8: HLxpos = &state->xpos_road_left[L]; break;
   case 0xE9: HLxpos = &state->xpos_road_centre_left[L]; break;
@@ -12402,7 +12405,7 @@ static void dr_fill_left_stripe(chqstate_t *state, u8 *SPoutput, int jump_index,
   }
 
 dr_c68a:
-  H = state->dr_right_table_hi; // eg. $EC
+  H = state->dr_right_table_hi_1; // eg. $EC
   A = *HL;
   L--;
   if (A)

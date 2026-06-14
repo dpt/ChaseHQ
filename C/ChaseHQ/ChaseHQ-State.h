@@ -28,7 +28,7 @@
 
 /* ----------------------------------------------------------------------- */
 
-typedef void (dr_callback_t)(chqstate_t *state, int Bfill_pattern, int DEscreen_ptr, int L);
+typedef void (dr_callback_t)(chqstate_t *state, int Bfill_pattern, int Chorizon, int DEscreen_ptr, int Lrow);
 
 typedef void (plot_sprite_cb_t)(chqstate_t *state,
                                 int         IXjump_offset,
@@ -628,13 +628,13 @@ struct chqstate {
   // $C62C (SM) in draw_road
   u8        dr_left_stripe_width;
   // $C642 (SM) in draw_road
-  u8        dr_left_table_hi; // table hi byte
+  u8        dr_left_table_hi_1; // table hi byte
   // $C651 (SM) in draw_road
   u8        dr_edge_graphic_offset;
   // $C677 (SM) in draw_road
   u8        dr_stripe_table_offset;
   // $C68B (SM) in draw_road
-  u8        dr_right_table_hi;
+  u8        dr_right_table_hi_1;
   // $C698 (SM) in draw_road
   u8        dr_right_edge_offset;
   // $C6AD (SM) in draw_road
