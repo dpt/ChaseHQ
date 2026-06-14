@@ -176,7 +176,8 @@
 #define MAP_LANES_3TO2R_VAL             (0x0F) // 0000_1111
 #define MAP_LANES_2TO3L_VAL             (0x2D) // 0010_1101
 #define MAP_LANES_2TO3R_VAL             (0x1F) // 0001_1111
-#define MAP_LANES_TUNNEL_VAL            (0x45) // 0100_1001
+#define MAP_LANES_TUNNEL_VAL            (0x41) // 0100_0001 // engine-derived tunnel body value; used in runtime comparisons
+#define MAP_LANES_TUNNEL_ENTRY_VAL      (0x45) // 0100_0101
 #define MAP_LANES_TUNNEL_EXIT_VAL       (0x59) // 0101_1001
 #define MAP_LANES_DIRTTRACK_VAL         (0xC1) // 1100_0001
 #define MAP_LANES_FORKED_VAL            (0xED) // 1110_1101
@@ -189,13 +190,15 @@
 //     else if bit 7 clear => 2 / 3-to-2 / 2-to-3 lanes
 // - else if bit 6 set => tunnel, dirt track or forked road
 //   - if bit 7 clear => in tunnel
-//     - if bits 2or3 set => tunnel transition/start???
+//     - if bits 2or3 set => tunnel transition
 //       - if bit 4 set => tunnel exit
-//   - else if bit 7 clear => forked road or dirt track
+//       - else if bit 4 clear => tunnel entrance
+//     - else bits 2or3 clear => tunnel body
+//   - else if bit 7 set => forked road or dirt track
 //     - if bit 5 set => forked road
-//     - else if bit 5 clear => dirt track or (something else)???
-//       - if bits 2or3 set => (something else)
-//       - else if bits 2or3 set => dirt track
+//     - else if bit 5 clear => dirt track or (unknown)
+//       - if bits 2or3 set => (unknown)
+//       - else if bits 2or3 clear => dirt track
 
 #define MAP_LANES_LEFT_OFFSET_MASK      (0x03)
 
@@ -213,7 +216,7 @@
 #define MAP_LANES_3TO2R(D)              (D), (MAP_LANES_3TO2R_VAL)
 #define MAP_LANES_2TO3L(D)              (D), (MAP_LANES_2TO3L_VAL)
 #define MAP_LANES_2TO3R(D)              (D), (MAP_LANES_2TO3R_VAL)
-#define MAP_LANES_TUNNEL(D)             (D), (MAP_LANES_TUNNEL_VAL)
+#define MAP_LANES_TUNNEL_ENTRY(D)       (D), (MAP_LANES_TUNNEL_ENTRY_VAL)
 #define MAP_LANES_TUNNEL_EXIT(D)        (D), (MAP_LANES_TUNNEL_EXIT_VAL)
 #define MAP_LANES_DIRTTRACK(D)          (D), (MAP_LANES_DIRTTRACK_VAL)
 #define MAP_LANES_FORKED(D)             (D), (MAP_LANES_FORKED_VAL)

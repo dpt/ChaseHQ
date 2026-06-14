@@ -4106,7 +4106,7 @@ const u8 perp_escape_height[5] = {
 // $E2B4
 const u8 perp_escape_lanes[4] = {
   MAP_LANES_3L(53),
-  MAP_LANES_TUNNEL(255) // no explicit stop
+  MAP_LANES_TUNNEL_ENTRY(255) // no explicit stop
 };
 
 // $E2B8

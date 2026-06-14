@@ -7217,10 +7217,10 @@ static u16 get_spawn_lanes(chqstate_t *state, int extra)
   if (lanes == MAP_LANES_4_VAL) // 0
     return 0x0104;
   lanes_copy = lanes;
-  lanes &= 0xC1;
-  if (lanes == 0xC1)
+  lanes &= MAP_LANES_DIRTTRACK_VAL; // mask keeps bits 7,6,0; both DIRTTRACK and FORKED survive
+  if (lanes == MAP_LANES_DIRTTRACK_VAL) // dirt track or forked road: treat as 4-lane
     return 0x0104;
-  if (lanes == 0x41) // tunnel
+  if (lanes == MAP_LANES_TUNNEL_VAL) // tunnel (masked: entry/exit/body all reduce to this)
     return 0x0103;
   lanes = lanes_copy & 0x82;
   carry = lanes & (1 << 7), lanes <<= 1;
@@ -11881,7 +11881,6 @@ static void dr_read_lanes(chqstate_t *state, u8 *IXlanesptr, u8 *IYheightptr,
   int Aleft_offset;             /* was A */
   u8  Ldash_lanes;              /* was L' */
   int Aleft_hand_table_hi;      /* was A */
-  int Hdash_left_hand_table_hi; /* was H' */
   int Cdash_neg_lane_count;     /* was C' */
   int Hdash_in_tunnel;          /* was H' */
   int Atunnel_visible;          /* was A */
@@ -11902,7 +11901,6 @@ static void dr_read_lanes(chqstate_t *state, u8 *IXlanesptr, u8 *IYheightptr,
   // convert left hand pos (1+) to table hi byte ($E8+)
   Aleft_hand_table_hi = 0xE7 + Aleft_offset;
   state->dr_left_table_hi_1 = state->dr_left_table_hi_2 = Aleft_hand_table_hi;
-  Hdash_left_hand_table_hi = Aleft_hand_table_hi; // I can't see this used...
   SLA(Ldash_lanes);
   if ((Ldash_lanes & (1 << 7)) == 0) {
     // Bit 6 was clear (NOT tunnel / dirt track / forked road)

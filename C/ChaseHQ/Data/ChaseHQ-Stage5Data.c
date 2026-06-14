@@ -816,7 +816,7 @@ static const u8 stage5_map_height_C468[] = {
 // $C47A
 static const u8 stage5_map_lanes_C47A[] = {
   MAP_LANES_4TO3L(2),
-  MAP_LANES_TUNNEL(20),
+  MAP_LANES_TUNNEL_ENTRY(20),
   MAP_LANES_TUNNEL_EXIT(2),
   MAP_LANES_3L(4),
   MAP_LANES_3TO4L(2),
@@ -1009,7 +1009,7 @@ static const u8 stage5_map_lanes_C53E[] = {
   MAP_LANES_4(40),
   MAP_LANES_4TO3L(2),
   MAP_LANES_3L(124),
-  MAP_LANES_TUNNEL(20),
+  MAP_LANES_TUNNEL_ENTRY(20),
   MAP_LANES_TUNNEL_EXIT(2),
   MAP_LANES_3L(2),
   MAP_LANES_3TO4L(2),
@@ -1218,7 +1218,7 @@ static const u8 stage5_map_lanes_C614[] = {
   MAP_LANES_4(44),
   MAP_LANES_4TO3L(2),
   MAP_LANES_3L(12),
-  MAP_LANES_TUNNEL(102),
+  MAP_LANES_TUNNEL_ENTRY(102),
   MAP_LANES_TUNNEL_EXIT(2),
   MAP_LANES_3L(18),
   MAP_LANES_3TO4L(2),

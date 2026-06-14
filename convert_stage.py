@@ -64,7 +64,7 @@ LANE_VALS = {
     0x01: '2L',     0x02: '2M',     0x03: '2R',
     0xBD: '4TO3L',  0x8E: '4TO3R',  0xAD: '3TO4L',  0x9E: '3TO4R',
     0x06: '3TO2L',  0x0F: '3TO2R',  0x2D: '2TO3L',  0x1F: '2TO3R',
-    0x45: 'TUNNEL', 0x59: 'TUNNEL_EXIT',
+    0x45: 'TUNNEL_ENTRY', 0x59: 'TUNNEL_EXIT',
     0xC1: 'DIRTTRACK', 0xED: 'FORKED',
 }
 
