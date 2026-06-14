@@ -931,7 +931,7 @@ static void draw_road_scene_change(chqstate_t *state, u8 *IXlanes,
                                    u8 *IYheight);
 
 static void draw_road(chqstate_t *state);
-static void dr_read_lanes(chqstate_t *state, u8 *IXplanes, u8 *IYpheight,
+static void dr_read_lanes(chqstate_t *state, u8 *IXlanesptr, u8 *IYheightptr,
                           int Bfill_pattern, int Chorizon, int DEbackbuf, int Lrow);
 static void dr_four_lane_highway(chqstate_t *state, int Bfill_pattern,
                                  int DEbackbuf, int Lrow);
@@ -11807,17 +11807,17 @@ c43b:
  */
 static void draw_road(chqstate_t *state)
 {
-  u8 *IYpheight;       /* was IY */
-  int Chorizon;        /* was C */
-  u8 *IXplanes;        /* was IX */
-  int Blanedataoffset; /* was B */
-  int carry_stripe;    /* was carry */
-  int Htable_offset;   /* was H */
-  int Lstripe_height;  /* was L */
-  int Axor_base;       /* was A */
-  u8  Bfill_pattern;   /* was B */
-  u8  Lrow;      /* was L */
-  u16 DEbackbuf;       /* was DE */  // OR is this a *buffer* offset?
+  u8 *IYheightptr;      /* was IY */
+  int Chorizon;         /* was C */
+  u8 *IXlanesptr;       /* was IX */
+  int Blanesdataoffset; /* was B */
+  int carry_stripe;     /* was carry */
+  int Htable_offset;    /* was H */
+  int Lstripe_height;   /* was L */
+  int Axor_base;        /* was A */
+  u8  Bfill_pattern;    /* was B */
+  u8  Lrow;             /* was L */
+  u16 DEbackbuf;        /* was DE */  // OR is this a *buffer* offset?
 
   state->on_dirt_track = 0;
   state->dt_tunnel_visible = 0;
@@ -11827,14 +11827,14 @@ static void draw_road(chqstate_t *state)
   // increasing distance. Larger value => Lines remain thick into distance.
   state->dr_edge_thickness = 3;
 
-  IYpheight = &state->height_table[1]; // height table
-  Chorizon = 96 - *IYpheight; /* 96 = horizon row offset */
-  IXplanes = ROADBUF_FWD2PTR(ROADBUF_LANES_OFFSET);
+  IYheightptr = &state->height_table[1];
+  Chorizon = 96 - *IYheightptr; /* 96 = horizon row offset from screen bottom */
+  IXlanesptr = ROADBUF_FWD2PTR(ROADBUF_LANES_OFFSET);
 
   // Set initial road stripe state
-  Blanedataoffset = IXplanes - &state->road_buffer_start[0];
-  state->dr_initial_stripe_state = Blanedataoffset & 1;
-  carry_stripe = !!(Blanedataoffset & (1 << 1)); // test bit 1 + ensure boolity
+  Blanesdataoffset = IXlanesptr - &state->road_buffer_start[0];
+  state->dr_initial_stripe_state = Blanesdataoffset & 1;
+  carry_stripe = !!(Blanesdataoffset & (1 << 1)); // test bit 1 + ensure boolity
 
   Htable_offset = 0xD0;
   Lstripe_height = 16;
@@ -11852,127 +11852,118 @@ static void draw_road(chqstate_t *state)
   state->dr_right_edge_offset = Lstripe_height + 1; // 17 or 49
   state->dr_callback = dr_four_lane_highway;
   Lrow = 0xFF;
-  DEbackbuf =
-    0x0100; // Z80 address - beyond the end of the buffer - must be decremented before first write
+  // This is a Z80 address beyond the end of the buffer (not an offset!) - it
+  // must be decremented before first write.
+  DEbackbuf = 0x0100;
   state->dr_fill_pattern = Bfill_pattern;
 
-  // passing L to HL arg here - not clear just now if all of HL required or just L
-  assert(DEbackbuf >= 0xF000 || DEbackbuf <= 0x0100);
-  dr_read_lanes(state, IXplanes, IYpheight, Bfill_pattern, Chorizon, DEbackbuf,
-                Lrow); // was FALLTHROUGH
+  dr_read_lanes(state, IXlanesptr, IYheightptr, Bfill_pattern, Chorizon,
+                DEbackbuf, Lrow); // was FALLTHROUGH
 }
 
 /**
  * $C4AD: draw_road: read lanes
  *
  * \param[in] state         Pointer to game state.
- * \param[in] IXplanes      Pointer into road buffer lanes bytes.
- * \param[in] IYpheight     IY register value.
+ * \param[in] IXlanesptr    Pointer into road buffer lanes bytes.
+ * \param[in] IYheightptr   IY register value.
  * \param[in] Bfill_pattern Fill pattern.
  * \param[in] Chorizon      TBD - FIXME needs passing to sub-function somewhere
  * \param[in] DEbackbuf     Pointer into backbuffer.
  * \param[in] Lrow          Byte offset within road table page (0xFF = bottom scanline).
  */
-static void dr_read_lanes(chqstate_t *state, u8 *IXplanes, u8 *IYpheight,
-                          int Bfill_pattern, int Chorizon, int DEbackbuf, int L)
+static void dr_read_lanes(chqstate_t *state, u8 *IXlanesptr, u8 *IYheightptr,
+                          int Bfill_pattern, int Chorizon, int DEbackbuf,
+                          int Lrow)
 {
   int carry = 0;
   int Aleft_offset;         /* was A */
   u8  Ldash_lanes;          /* was L' */
   int Aleft_hand_table_hi;  /* was A */
-  int Cdash_C5AC;           /* was C' */
-  int Hdash_in_tunnel_flag; /* was H' */
-  int A_tunnel_visible;     /* was A */
-  int Cdash;
-  int Acopy_of_cdash;
-  int Bcopy_of_cdash;
+  int Cdash_neg_lane_count; /* was C' */
+  int Hdash_in_tunnel;      /* was H' */
+  int Atunnel_visible;      /* was A */
+  int Cdash_fill_pattern;
+  int Afill_pattern;
 
-  // isolate left hand position/shift
-  Aleft_offset = *IXplanes & MAP_LANES_LEFT_OFFSET_MASK;
+  Aleft_offset = *IXlanesptr & MAP_LANES_LEFT_OFFSET_MASK;
   if (Aleft_offset == 0) {
     // no left side calcs required in this case?
     // callback here is e.g. dr_four_lane_highway
-    assert(DEbackbuf >= 0xF000 || DEbackbuf <= 0x0100);
-    state->dr_callback(state, Bfill_pattern, DEbackbuf, L); // exit via
+    state->dr_callback(state, Bfill_pattern, DEbackbuf, Lrow); // exit via
     return;
   }
 
   // EXX - BANK
 
-  Ldash_lanes = *IXplanes; // reload lanes byte
+  Ldash_lanes = *IXlanesptr; // reload lanes byte
   // convert left hand pos (1+) to table hi byte ($E8+)
   Aleft_hand_table_hi = 0xE7 + Aleft_offset;
-  state->dr_left_table_hi = Aleft_hand_table_hi;
-  state->dr_left_table_hi_2 = Aleft_hand_table_hi;
+  state->dr_left_table_hi = state->dr_left_table_hi_2 = Aleft_hand_table_hi;
   //Hdash_left_hand_table_hi = Aleft_hand_table_hi; // I can't see this used...
   SLA(Ldash_lanes);
   if ((Ldash_lanes & (1 << 7)) == 0) {
-    // Bit 6 was clear (NOT tunnel or dirt track)
+    // Bit 6 was clear (NOT tunnel / dirt track / forked road)
     if (carry) {
       // Otherwise bit 7 was set indicating 3 lanes or 3/4 lanes
       // narrowing/widening.
       Aleft_hand_table_hi += 3; // $E8..$EA becomes $EB..$ED
-      Cdash_C5AC = -3;
+      Cdash_neg_lane_count = -3;
     } else {
       // Two lane
       Aleft_hand_table_hi += 2; // $E8..$EA becomes $EA..$EC
-      Cdash_C5AC = -2;
+      Cdash_neg_lane_count = -2;
     }
+    state->dr_right_table_hi_2 = state->dr_right_table_hi = Aleft_hand_table_hi;
+    state->dr_neg_lane_count = Cdash_neg_lane_count; // Conv: A removed
 
-    state->dr_right_table_hi_2 = Aleft_hand_table_hi;
-    state->dr_right_table_hi = Aleft_hand_table_hi;
-
-    state->dr_neg_lane_count = Cdash_C5AC; // Conv: A removed
-
-    draw_road_scene_change(state, IXplanes, IYpheight); // exit via
+    draw_road_scene_change(state, IXlanesptr, IYheightptr); // exit via
     return;
   }
 
-  // Tunnel or dirt track
+  // Tunnel, dirt track or forked road
   if (carry == 0) {
     /* Otherwise it's a tunnel [confirmed in debugger]. */
-    Cdash = -1;
-    Hdash_in_tunnel_flag = 1;
+    Cdash_fill_pattern = 0xFF;
+    Hdash_in_tunnel = 1;
     if ((Ldash_lanes & (3 << 3)) != 0) {
       // Tunnel transition
-      state->dt_tunnel_distance = IYpheight - &state->height_table[0];
-      A_tunnel_visible = 1;
-      Cdash = 0; // was INC C
+      state->dt_tunnel_distance = IYheightptr - &state->height_table[0];
+      Atunnel_visible = 1;
+      Cdash_fill_pattern = 0x00; // was INC C
       if ((Ldash_lanes & (1 << 5)) != 0) {
         /* Otherwise it's tunnel exit */
-        Cdash = -1; // was DEC C
-        A_tunnel_visible = 2; // was INC A
-        Hdash_in_tunnel_flag = 0; // was DEC H
+        Cdash_fill_pattern = 0xFF; // was DEC C
+        Atunnel_visible = 2; // was INC A
+        Hdash_in_tunnel = 0; // was DEC H
       }
-      state->dt_tunnel_visible = A_tunnel_visible;
+      state->dt_tunnel_visible = Atunnel_visible;
     }
 
-    state->dr_in_tunnel = Hdash_in_tunnel_flag;
-    state->dr_right_table_hi_2 = 0xEB;
-    state->dr_right_table_hi = 0xEB;
+    state->dr_in_tunnel = Hdash_in_tunnel;
+    state->dr_right_table_hi_2 = state->dr_right_table_hi = 0xEB;
     state->dr_neg_lane_count = -1;
-    Acopy_of_cdash = Cdash;
+    Afill_pattern = Cdash_fill_pattern;
 
     // EXX - UNBANK
 
-    Bcopy_of_cdash = Acopy_of_cdash;
-    assert(DEbackbuf >= 0xF000 || DEbackbuf <= 0x0100);
-    dr_dispatch_fill(state, Bcopy_of_cdash, DEbackbuf, L); // was exit via
+    dr_dispatch_fill(state, Afill_pattern, DEbackbuf, Lrow); // was exit via
     return;
   }
 
   // STILL BANKED HERE!
 
   if (Ldash_lanes & (1 << 6)) {
-    forked_road_plotter(state, IXplanes, IYpheight); // was exit via
+    // Forked road
+    forked_road_plotter(state, IXlanesptr, IYheightptr); // was exit via
     return;
   }
 
   /* Dirt track check */
+  // there must be other cases that can get here too
   state->on_dirt_track = ((Ldash_lanes & 0x18) == 0) ? 1 : 0;
   state->dr_neg_lane_count = -1;
-  assert(DEbackbuf >= 0xF000 || DEbackbuf <= 0x0100);
-  dr_set_lane_callback(state, Bfill_pattern, DEbackbuf, L, dr_four_lane_highway); // exit via
+  dr_set_lane_callback(state, Bfill_pattern, DEbackbuf, Lrow, dr_four_lane_highway); // exit via
 }
 
 /**

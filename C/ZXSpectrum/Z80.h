@@ -8,10 +8,10 @@
 /**
  * Shift left arithmetic.
  */
-#define SLA(r)        \
-  do {                \
-    carry = (r) >> 7; \
-    (r) <<= 1;        \
+#define SLA(r)              \
+  do {                      \
+    carry = ((r) >> 7) & 1; \
+    (r) <<= 1;              \
   } while (0)
 
 /**
@@ -30,7 +30,7 @@
   do {                          \
     int carry_out;              \
                                 \
-    carry_out = (r) >> 7;       \
+    carry_out = ((r) >> 7) & 1; \
     (r) = ((r) << 1) | (carry); \
     carry = carry_out;          \
   } while (0)
@@ -40,7 +40,7 @@
  */
 #define RLC(r)                        \
   do {                                \
-    carry = (r) >> 7;                 \
+    carry = ((r) >> 7) & 1;           \
     (r) = ((r) << 1) | (carry);       \
   } while (0)
 
