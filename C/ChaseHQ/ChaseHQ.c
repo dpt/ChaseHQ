@@ -11685,12 +11685,12 @@ static void draw_road_scene_change(chqstate_t *state, u8 *IXlanes, u8 *IYheight,
 
   // $C305
   if ((L_lane_flags & (1 << 4)) == 0) /* bit 4 clear */
-    goto c37e;
+    goto bit4_clear;
 
   // EX AF,AF' -- unbank 'dist' / bank Adash_curve_bits
   /* Bit-4-set paths */
   if (A_dist >= 2)
-    goto c357;
+    goto bit4_set_far;
   // EX AF,AF' -- bank 'dist' again / unbank Adash_curve_bits
 
   /* $C310-$C354: path 1a -- bit4=1, dist<2 */
@@ -11702,7 +11702,7 @@ static void draw_road_scene_change(chqstate_t *state, u8 *IXlanes, u8 *IYheight,
   }
   SM_C345_bend_offset = A_curve_step;
   if (IYheight[0] <= C_ref_height)
-    goto c439;
+    goto advance_height;
 
   // $C32B
   C_bresen_range = A_curve_step;
@@ -11722,15 +11722,15 @@ static void draw_road_scene_change(chqstate_t *state, u8 *IXlanes, u8 *IYheight,
   DE_roadpos -= A_anim_offset; // accounted for swap
   // EX DE,HL ; Swap
   HL_xpos_ptr = SM_C351_xpos_ptr;
-  goto c3ee;
+  goto compute_step;
 
-c357:
-  /* $C357-$C37B: path 1b -- bit4=1, dist>=2 (must be 4) */
+bit4_set_far:
+  /* $C357-$C37B: bit4=1, dist>=2 (must be 4): far-boundary setup, no animation offset */
   // EX AF,AF' -- unbank 'dist' / bank Adash_curve_bits
   if (A_dist != 4)
-    goto c439;
+    goto advance_height;
   if (IYheight[0] <= IYheight[2])
-    goto c439;
+    goto advance_height;
 
   C_bresen_range = A_curve_step;
   B_tbl_stride = A_curve_step * 2;
@@ -11742,13 +11742,13 @@ c357:
   L_left_table_lo -= B_tbl_stride;
   H_left_table_hi--;
   HL_xpos_ptr = addr2xpos(state, (H_left_table_hi << 8) | L_left_table_lo);
-  goto c3ee;
+  goto compute_step;
 
-c37e:
-  /* $C37E: bit-4-clear paths: swap table roles */
+bit4_clear:
+  /* $C37E: bit4=0 entry: dispatch to far-boundary or fall through to near-boundary */
   // EX AF,AF' -- unbank 'dist' / bank Adash_curve_bits
   if (A_dist >= 2)
-    goto c3ca;
+    goto bit4_clear_far;
   // EX AF,AF' -- bank 'dist' again / unbank Adash_curve_bits
 
   /* $C37E-$C3C7: path 2 -- bit4=0, dist<2 */
@@ -11760,7 +11760,7 @@ c37e:
   }
   SM_C3BD_bend_offset = A_curve_step;
   if (IYheight[0] <= C_ref_height)
-    goto c439;
+    goto advance_height;
 
   C_bresen_range = A_curve_step;
   B_tbl_stride = A_curve_step * 2;
@@ -11782,15 +11782,15 @@ c37e:
   DE_roadpos += A_anim_offset;
   // EX DE,HL
   HL_xpos_ptr = SM_C3C4_xpos_ptr;
-  goto c3ee;
+  goto compute_step;
 
-c3ca:
-  /* $C3CA-$C3ED: path 3ca -- bit4=0, dist>=2 (must be 4) */
+bit4_clear_far:
+  /* $C3CA-$C3ED: bit4=0, dist>=2 (must be 4): far-boundary setup, no animation offset */
   // EX AF,AF' -- unbank 'dist' / bank Adash_curve_bits
   if (A_dist != 4)
-    goto c439;
+    goto advance_height;
   if (IYheight[0] <= IYheight[2])
-    goto c439;
+    goto advance_height;
 
   C_bresen_range = A_curve_step;
   B_tbl_stride = A_curve_step * 2;
@@ -11805,9 +11805,9 @@ c3ca:
   H_left_table_hi++;
   HL_xpos_ptr = addr2xpos(state, (H_left_table_hi << 8) | L_left_table_lo);
 
-  /* no offset -- fall through to c3ee */
+  /* no offset -- fall through to compute_step */
 
-c3ee:
+compute_step:
   /* $C3EE-$C405: read second table value, compute clamped displacement */
   HL_pos_delta = *HL_xpos_ptr - DE_roadpos;
   A_delta_lo = HL_pos_delta & 0xFF;
@@ -11830,11 +11830,11 @@ c3ee:
     A_range = B_range;
     A_dir_opcode = 0x1B; // DEC DE
     if (A_range < L_step)
-      goto c441;
+      goto steep_step;
   } else {
     A_dir_opcode = 0x13; // INC DE
     if (A_range < L_step)
-      goto c441;
+      goto steep_step;
   }
 
   /* $C42B-$C437: normal Bresenham -- step <= range */
@@ -11849,14 +11849,14 @@ c3ee:
     *--SP_output = DE_roadpos;
   } while (--B_iterations > 0);
 
-c439:
+advance_height:
   IYheight++; /* $C439: INC IYheight -- advance height pointer for next iteration */
 drsc_exit:
   dr_set_lane_callback(state, Bfill_pattern, Chorizon, DEbackbuf, Lrow,
                        dr_four_lane_highway); // exit via
   return;
 
-c441:
+steep_step:
   /* $C441-$C450: alternate Bresenham -- step > range */
   SM_C445_dir_opcode = A_dir_opcode;
   A_accum = 0;
@@ -11870,7 +11870,7 @@ c441:
     A_accum -= L_step;
     *--SP_output = DE_roadpos;
   } while (--B_iterations > 0);
-  goto c439;
+  goto advance_height;
 }
 
 /**
@@ -14845,6 +14845,13 @@ void chq_test_layout_road(chqstate_t *state)
 void chq_test_draw_road(chqstate_t *state)
 {
   draw_road(state);
+}
+
+void chq_test_draw_road_scene_change(chqstate_t *state, u8 lane_flags, int height_offset)
+{
+  draw_road_scene_change(state, &lane_flags, &state->height_table[height_offset],
+                         0 /* fill_pattern */, 0 /* horizon */, 0x0100 /* DEbackbuf */,
+                         0xFF /* Lrow */);
 }
 
 #endif /* CHQ_TESTS */

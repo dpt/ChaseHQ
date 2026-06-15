@@ -38,6 +38,15 @@ void chq_test_layout_road(chqstate_t *state);
 /** Run draw_road in isolation (renders road to back buffer). */
 void chq_test_draw_road(chqstate_t *state);
 
+/**
+ * Call draw_road_scene_change with a synthesised single-byte lanes buffer and
+ * the given height_table index for IYheight.  Uses standard draw_road
+ * parameters for fill_pattern (0), horizon (0), DEbackbuf (0x0100), and Lrow
+ * (0xFF).
+ */
+void chq_test_draw_road_scene_change(chqstate_t *state, u8 lane_flags,
+                                     int height_offset);
+
 #endif /* CHQ_TESTS */
 
 #endif /* CHASEHQ_TESTS_H */
