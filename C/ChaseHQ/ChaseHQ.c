@@ -11632,35 +11632,35 @@ static u16 *addr2xpos(chqstate_t *state, int z80addr)
 static void draw_road_scene_change(chqstate_t *state, u8 *IXlanes, u8 *IYheight,
                                    int Bfill_pattern, int Chorizon, int DEbackbuf, int Lrow)
 {
-  u8   A_dist; /* byte offset of IYheight within height_table (was A) */
-  u8   L_lane_flags; /* IXlanes[0] (was L) */
-  u8   Adash_masked_lane_flags; /* lane_flags & 0x0C (was A') */
-  u8   H_left_table_hi; /* left-hand table hi byte ($E8/$E9/$EA/$EB/$EC) (was H) */
-  u8   A_addval;
-  u8   C_val;
-  u8   SM_C345_addval;
-  u8   C_addval;
-  u8   B_addvalx2;
-  u8   L_left_table_lo;
-  u16 *HL_tbl;
-  u16 *SP_output;
-  u16  DE_roadpos;
-  u8   A_something;
-  u16 *SM_C351_tbl;
-  u8   SM_C3BD_addval;
-  u16 *SM_C3C4_tbl;
-  u16  HL_diff;
-  u8   A_diff_low;
-  u8   A_step;
-  u8   L_step;
-  u8   B_range;
-  u8   A_range;
-  u8   A_opcode;
-  u8   SM_C435_opcode;
-  u8   A_accum;
-  u8   B_iterations;
-  u8   SM_C445_opcode;
-  u8   C_range;
+  u8   A_dist;              /* byte offset of IYheight within height_table (was A) */
+  u8   L_lane_flags;        /* IXlanes[0] (was L) */
+  u8   Adash_curve_bits;    /* lane_flags & 0x0C: bits 2-3 encode curve type (was A') */
+  u8   H_left_table_hi;     /* left-hand table hi byte ($E8/$E9/$EA/$EB/$EC) (was H) */
+  u8   A_curve_step;        /* 0x20 or 0x00: per-curve step magnitude (was A) */
+  u8   C_ref_height;        /* reference height for boundary check (IYheight[1] or [2]) (was C) */
+  u8   SM_C345_bend_offset; /* stored A_curve_step: bend component of animation offset (SM $C345) */
+  u8   C_bresen_range;      /* Bresenham range = A_curve_step (was C) */
+  u8   B_tbl_stride;        /* table pointer stride = A_curve_step * 2 (was B) */
+  u8   L_left_table_lo;     /* low byte of x-position table address (was L) */
+  u16 *HL_xpos_ptr;         /* current pointer into x-position table (was HL) */
+  u16 *SP_output;           /* output pointer into road position buffer (was SP) */
+  u16  DE_roadpos;          /* current road x-position being written (was DE) */
+  u8   A_anim_offset;       /* animation offset: (fast_counter >> 3) & 0x1C + bend_offset (was A) */
+  u16 *SM_C351_xpos_ptr;    /* stored HL_xpos_ptr across EX DE,HL (path 1a) (SM $C351) */
+  u8   SM_C3BD_bend_offset; /* stored A_curve_step: bend offset for path 2 (SM $C3BD) */
+  u16 *SM_C3C4_xpos_ptr;    /* stored HL_xpos_ptr across EX DE,HL (path 2) (SM $C3C4) */
+  u16  HL_pos_delta;        /* delta between two road x-positions (was HL) */
+  u8   A_delta_lo;          /* low byte of HL_pos_delta, clamped to become A_step (was A) */
+  u8   A_step;              /* clamped per-scanline displacement for Bresenham (was A) */
+  u8   L_step;              /* copy of A_step used in Bresenham loop (was L) */
+  u8   B_range;             /* Bresenham range (was B) */
+  u8   A_range;             /* Bresenham range copy for direction comparison (was A) */
+  u8   A_dir_opcode;        /* direction opcode: 0x13 INC DE or 0x1B DEC DE (was A) */
+  u8   SM_C435_dir_opcode;  /* stored direction opcode for normal Bresenham (SM $C435) */
+  u8   A_accum;             /* Bresenham accumulator (was A) */
+  u8   B_iterations;        /* Bresenham iteration count (was B) */
+  u8   SM_C445_dir_opcode;  /* stored direction opcode for alternate Bresenham (SM $C445) */
+  u8   C_range;             /* Bresenham range in c441 path (was C) */
 
   A_dist = IYheight - &state->height_table[0];
   if (A_dist >= 19)
@@ -11669,9 +11669,9 @@ static void draw_road_scene_change(chqstate_t *state, u8 *IXlanes, u8 *IYheight,
   // EX AF,AF' -- bank 'dist'
 
   L_lane_flags = IXlanes[0];
-  Adash_masked_lane_flags = L_lane_flags & 0x0C;
+  Adash_curve_bits = L_lane_flags & 0x0C;
   // Jump if any of the ordinary straight track sections, including dirt track
-  if (Adash_masked_lane_flags == 0)
+  if (Adash_curve_bits == 0)
     goto drsc_exit;
 
   IYheight--;
@@ -11687,134 +11687,134 @@ static void draw_road_scene_change(chqstate_t *state, u8 *IXlanes, u8 *IYheight,
   if ((L_lane_flags & (1 << 4)) == 0) /* bit 4 clear */
     goto c37e;
 
-  // EX AF,AF' -- unbank 'dist' / bank Adash_masked_lane_flags
+  // EX AF,AF' -- unbank 'dist' / bank Adash_curve_bits
   /* Bit-4-set paths */
   if (A_dist >= 2)
     goto c357;
-  // EX AF,AF' -- bank 'dist' again / unbank Adash_masked_lane_flags
+  // EX AF,AF' -- bank 'dist' again / unbank Adash_curve_bits
 
   /* $C310-$C354: path 1a -- bit4=1, dist<2 */
-  A_addval = 0x20;
-  C_val = IYheight[1];
-  if (Adash_masked_lane_flags == 4) {
-    A_addval = 0x00;
-    C_val = IYheight[2];
+  A_curve_step = 0x20;
+  C_ref_height = IYheight[1];
+  if (Adash_curve_bits == 4) {
+    A_curve_step = 0x00;
+    C_ref_height = IYheight[2];
   }
-  SM_C345_addval = A_addval;
-  if (IYheight[0] <= C_val)
+  SM_C345_bend_offset = A_curve_step;
+  if (IYheight[0] <= C_ref_height)
     goto c439;
 
   // $C32B
-  C_addval = A_addval;
-  B_addvalx2 = A_addval * 2;
+  C_bresen_range = A_curve_step;
+  B_tbl_stride = A_curve_step * 2;
   L_left_table_lo = ~((96 - IYheight[0]) << 1); // byte offset
-  HL_tbl = addr2xpos(state, (H_left_table_hi << 8) | L_left_table_lo);
-  SP_output = HL_tbl;
-  DE_roadpos = *HL_tbl;
+  HL_xpos_ptr = addr2xpos(state, (H_left_table_hi << 8) | L_left_table_lo);
+  SP_output = HL_xpos_ptr;
+  DE_roadpos = *HL_xpos_ptr;
 
-  L_left_table_lo -= B_addvalx2;
+  L_left_table_lo -= B_tbl_stride;
   H_left_table_hi--;
-  HL_tbl = addr2xpos(state, (H_left_table_hi << 8) | L_left_table_lo);
+  HL_xpos_ptr = addr2xpos(state, (H_left_table_hi << 8) | L_left_table_lo);
 
-  A_something = ((state->fast_counter >> 3) & 0x1C) + SM_C345_addval;
-  SM_C351_tbl = HL_tbl;
+  A_anim_offset = ((state->fast_counter >> 3) & 0x1C) + SM_C345_bend_offset;
+  SM_C351_xpos_ptr = HL_xpos_ptr;
   // EX DE,HL ; Swap
-  DE_roadpos -= A_something; // accounted for swap
+  DE_roadpos -= A_anim_offset; // accounted for swap
   // EX DE,HL ; Swap
-  HL_tbl = SM_C351_tbl;
+  HL_xpos_ptr = SM_C351_xpos_ptr;
   goto c3ee;
 
 c357:
   /* $C357-$C37B: path 1b -- bit4=1, dist>=2 (must be 4) */
-  // EX AF,AF' -- unbank 'dist' / bank Adash_masked_lane_flags
+  // EX AF,AF' -- unbank 'dist' / bank Adash_curve_bits
   if (A_dist != 4)
     goto c439;
   if (IYheight[0] <= IYheight[2])
     goto c439;
 
-  C_addval = A_addval;
-  B_addvalx2 = A_addval * 2;
+  C_bresen_range = A_curve_step;
+  B_tbl_stride = A_curve_step * 2;
   L_left_table_lo = ~((96 - IYheight[0]) << 1); // byte offset
-  HL_tbl = addr2xpos(state, (H_left_table_hi << 8) | L_left_table_lo);
-  SP_output = HL_tbl;
-  DE_roadpos = *HL_tbl;
+  HL_xpos_ptr = addr2xpos(state, (H_left_table_hi << 8) | L_left_table_lo);
+  SP_output = HL_xpos_ptr;
+  DE_roadpos = *HL_xpos_ptr;
 
-  L_left_table_lo -= B_addvalx2;
+  L_left_table_lo -= B_tbl_stride;
   H_left_table_hi--;
-  HL_tbl = addr2xpos(state, (H_left_table_hi << 8) | L_left_table_lo);
+  HL_xpos_ptr = addr2xpos(state, (H_left_table_hi << 8) | L_left_table_lo);
   goto c3ee;
 
 c37e:
   /* $C37E: bit-4-clear paths: swap table roles */
-  // EX AF,AF' -- unbank 'dist' / bank Adash_masked_lane_flags
+  // EX AF,AF' -- unbank 'dist' / bank Adash_curve_bits
   if (A_dist >= 2)
     goto c3ca;
-  // EX AF,AF' -- bank 'dist' again / unbank Adash_masked_lane_flags
+  // EX AF,AF' -- bank 'dist' again / unbank Adash_curve_bits
 
   /* $C37E-$C3C7: path 2 -- bit4=0, dist<2 */
-  A_addval = 0x20;
-  C_val = IYheight[1];
-  if (Adash_masked_lane_flags == 4) {
-    A_addval = 0x00;
-    C_val = IYheight[2];
+  A_curve_step = 0x20;
+  C_ref_height = IYheight[1];
+  if (Adash_curve_bits == 4) {
+    A_curve_step = 0x00;
+    C_ref_height = IYheight[2];
   }
-  SM_C3BD_addval = A_addval;
-  if (IYheight[0] <= C_val)
+  SM_C3BD_bend_offset = A_curve_step;
+  if (IYheight[0] <= C_ref_height)
     goto c439;
 
-  C_addval = A_addval;
-  B_addvalx2 = A_addval * 2;
+  C_bresen_range = A_curve_step;
+  B_tbl_stride = A_curve_step * 2;
   L_left_table_lo = ~((96 - IYheight[0]) << 1); // byte offset
-  HL_tbl = addr2xpos(state, (H_left_table_hi << 8) | L_left_table_lo);
-  SP_output = HL_tbl;
+  HL_xpos_ptr = addr2xpos(state, (H_left_table_hi << 8) | L_left_table_lo);
+  SP_output = HL_xpos_ptr;
   H_left_table_hi--;
-  HL_tbl = addr2xpos(state, (H_left_table_hi << 8) | L_left_table_lo);
-  DE_roadpos = *HL_tbl;
+  HL_xpos_ptr = addr2xpos(state, (H_left_table_hi << 8) | L_left_table_lo);
+  DE_roadpos = *HL_xpos_ptr;
 
-  L_left_table_lo -= B_addvalx2;
+  L_left_table_lo -= B_tbl_stride;
   H_left_table_hi++;
-  HL_tbl = addr2xpos(state, (H_left_table_hi << 8) | L_left_table_lo);
+  HL_xpos_ptr = addr2xpos(state, (H_left_table_hi << 8) | L_left_table_lo);
 
-  SM_C3C4_tbl = HL_tbl;
+  SM_C3C4_xpos_ptr = HL_xpos_ptr;
 
-  A_something = ((state->fast_counter >> 3) & 0x1C) + SM_C3BD_addval;
+  A_anim_offset = ((state->fast_counter >> 3) & 0x1C) + SM_C3BD_bend_offset;
 
-  DE_roadpos += A_something;
+  DE_roadpos += A_anim_offset;
   // EX DE,HL
-  HL_tbl = SM_C3C4_tbl;
+  HL_xpos_ptr = SM_C3C4_xpos_ptr;
   goto c3ee;
 
 c3ca:
   /* $C3CA-$C3ED: path 3ca -- bit4=0, dist>=2 (must be 4) */
-  // EX AF,AF' -- unbank 'dist' / bank Adash_masked_lane_flags
+  // EX AF,AF' -- unbank 'dist' / bank Adash_curve_bits
   if (A_dist != 4)
     goto c439;
   if (IYheight[0] <= IYheight[2])
     goto c439;
 
-  C_addval = A_addval;
-  B_addvalx2 = A_addval * 2;
+  C_bresen_range = A_curve_step;
+  B_tbl_stride = A_curve_step * 2;
   L_left_table_lo = ~((96 - IYheight[0]) << 1); // byte offset
-  HL_tbl = addr2xpos(state, (H_left_table_hi << 8) | L_left_table_lo);
-  SP_output = HL_tbl;
+  HL_xpos_ptr = addr2xpos(state, (H_left_table_hi << 8) | L_left_table_lo);
+  SP_output = HL_xpos_ptr;
   H_left_table_hi--; // this is different...
-  HL_tbl = addr2xpos(state, (H_left_table_hi << 8) | L_left_table_lo);
-  DE_roadpos = *HL_tbl;
+  HL_xpos_ptr = addr2xpos(state, (H_left_table_hi << 8) | L_left_table_lo);
+  DE_roadpos = *HL_xpos_ptr;
 
-  L_left_table_lo -= B_addvalx2;
+  L_left_table_lo -= B_tbl_stride;
   H_left_table_hi++;
-  HL_tbl = addr2xpos(state, (H_left_table_hi << 8) | L_left_table_lo);
+  HL_xpos_ptr = addr2xpos(state, (H_left_table_hi << 8) | L_left_table_lo);
 
   /* no offset -- fall through to c3ee */
 
 c3ee:
   /* $C3EE-$C405: read second table value, compute clamped displacement */
-  HL_diff = *HL_tbl - DE_roadpos;
-  A_diff_low = HL_diff & 0xFF;
-  if (HL_diff >= 0)
-    A_step = ((s8) A_diff_low  < 0) ? 0x7F : A_diff_low;
+  HL_pos_delta = *HL_xpos_ptr - DE_roadpos;
+  A_delta_lo = HL_pos_delta & 0xFF;
+  if (HL_pos_delta >= 0)
+    A_step = ((s8) A_delta_lo  < 0) ? 0x7F : A_delta_lo;
   else
-    A_step = ((s8) A_diff_low >= 0) ? 0x81 : A_diff_low;
+    A_step = ((s8) A_delta_lo >= 0) ? 0x81 : A_delta_lo;
 
   /* $C407-$C412: set up SP output pointer */
   SP_output++; // FIXME - this is a byte change. is this realigning the SP?
@@ -11823,28 +11823,28 @@ c3ee:
 
   /* $C413-$C420: derive step and direction */
   L_step = A_step;
-  B_range = C_addval;
-  A_range = C_addval;
+  B_range = C_bresen_range;
+  A_range = C_bresen_range;
   if (L_step < 0) {
     L_step = -L_step;
     A_range = B_range;
-    A_opcode = 0x1B; // DEC DE
+    A_dir_opcode = 0x1B; // DEC DE
     if (A_range < L_step)
       goto c441;
   } else {
-    A_opcode = 0x13; // INC DE
+    A_dir_opcode = 0x13; // INC DE
     if (A_range < L_step)
       goto c441;
   }
 
   /* $C42B-$C437: normal Bresenham -- step <= range */
-  SM_C435_opcode = A_opcode;
+  SM_C435_dir_opcode = A_dir_opcode;
   A_accum = B_range >> 1;
   do {
     A_accum += L_step;
     if (A_accum >= B_range) {
       A_accum -= B_range;
-      DE_roadpos += (SM_C435_opcode == 0x13 /*INC_DE*/) ? +1 : -1;
+      DE_roadpos += (SM_C435_dir_opcode == 0x13 /*INC_DE*/) ? +1 : -1;
     }
     *--SP_output = DE_roadpos;
   } while (--B_iterations > 0);
@@ -11858,11 +11858,11 @@ drsc_exit:
 
 c441:
   /* $C441-$C450: alternate Bresenham -- step > range */
-  SM_C445_opcode = A_opcode;
+  SM_C445_dir_opcode = A_dir_opcode;
   A_accum = 0;
   do {
     for (;;) {
-      DE_roadpos += (SM_C445_opcode == 0x13 /*INC_DE*/) ? +1 : -1;
+      DE_roadpos += (SM_C445_dir_opcode == 0x13 /*INC_DE*/) ? +1 : -1;
       A_accum += C_range;
       if (A_accum < C_range || A_accum >= L_step) /* overflow or >= step */
         break;
