@@ -750,7 +750,7 @@ static const u8 *draw_string_core(chqstate_t *state,
 
 static void draw_char(chqstate_t *state,
                       int          character,
-                      u8         *screen,
+                      u8         *backbuf,
                       int          style,
                       int          attrval,
                       int          attrstride,
@@ -1888,7 +1888,7 @@ dp_repeat_or_plot_tile:
 
       bgattr = state->draw_pregame_background;
       if (bgattr)
-        *ADDRTOSCREEN(attrs) = bgattr;
+        *ADDRTOATTRS(attrs) = bgattr;
 
       // dp_direction
       if (state->draw_pregame_direction != 1) {
@@ -2908,7 +2908,7 @@ static void draw_overlay_messages(chqstate_t *state)
  * \return Next byte of message data. (was HL)
  */
 static const u8 *print_message(chqstate_t *state,
-                               int          style,
+                               int         style,
                                const u8   *messages)
 {
   int attr;     /* was A */
@@ -2923,7 +2923,7 @@ static const u8 *print_message(chqstate_t *state,
 
   return draw_string_with_style(state,
                                 attr,
-                                ADDRTOSCREEN(attraddr),
+                                ADDRTOATTRS(attraddr),
                                 ADDRTOBACKBUF(backbuf),
                                 messages,
                                 style);
@@ -5093,15 +5093,15 @@ static void draw_noise_effect(chqstate_t *state, int counter)
  */
 static void ne_plot_attrs(chqstate_t *state, int attr)
 {
-  int addr;       /* was HL */
+  u8 *addr;       /* was HL */
   int iterations; /* was B */
 
   // Screen attribute (22,1) (Conv: address -> offset)
-  addr       = 0x5836 - SCREEN_START_ADDRESS;
+  addr       = ADDRTOATTRS(0x5836);
   iterations = FACEATTRHEIGHT; // 5 rows
   do {
     // Conv: Screen write now goes via state.
-    memset(&state->speccy->screen.pixels[addr], attr, FACEATTRWIDTH);
+    memset(addr, attr, FACEATTRWIDTH);
     addr += SCREEN_ATTRIBUTES_WIDTH;
   } while (--iterations > 0);
 }
@@ -5162,13 +5162,13 @@ static void plot_face_attributes(chqstate_t *state,
   A &= 3; // extract band
   A += 0x58;
   screen = (A << 8) | (screen & 0xFF);
-  screen -= SCREEN_START_ADDRESS; // Conv: address -> offset
+  screen -= SCREEN_ATTRIBUTES_START_ADDRESS; // Conv: address -> offset
   counter = FACEATTRBYTES;
   for (;;) {
-    state->speccy->screen.pixels[screen++] = *face++; counter--;
-    state->speccy->screen.pixels[screen++] = *face++; counter--;
-    state->speccy->screen.pixels[screen++] = *face++; counter--;
-    state->speccy->screen.pixels[screen++] = *face++; counter--;
+    state->speccy->screen.attributes[screen++] = *face++; counter--;
+    state->speccy->screen.attributes[screen++] = *face++; counter--;
+    state->speccy->screen.attributes[screen++] = *face++; counter--;
+    state->speccy->screen.attributes[screen++] = *face++; counter--;
     if (counter == 0)
       break;
 
@@ -5218,10 +5218,10 @@ static void plot_mini_font_cursor_on(chqstate_t *state,
  * \param[in] extrabm2 Additional bitmap data to draw. (was C)
  */
 static void pmf_go(chqstate_t *state,
-                   int          x,
+                   int         x,
                    char        ascii,
-                   int          extrabm1,
-                   int          extrabm2)
+                   int         extrabm1,
+                   int         extrabm2)
 {
   int       carry = 0;
 
@@ -6020,9 +6020,9 @@ static const u8 *draw_string_generic(chqstate_t *state,
 static const u8 *draw_string_core(chqstate_t *state,
                                   u8         *backbuf,
                                   const u8   *string,
-                                  int          style,
-                                  int          attrval,
-                                  int          attrsstride,
+                                  int         style,
+                                  int         attrval,
+                                  int         attrsstride,
                                   u8         *attrs)
 {
   int character; /* was A */
@@ -6039,28 +6039,22 @@ static const u8 *draw_string_core(chqstate_t *state,
 /**
  * $9FB4: Draw char
  *
- * screen - screen address - was DE.
- * style - draw style - was A'.
- * attrval - attribute value - was C'.
- * new_screen - added.
- * new_attrs - added.
- *
  * \param[in] state      Pointer to game state.
  * \param[in] character  Character. (was A)
- * \param[in] screen     Screen address.
- * \param[in] style      Style.
- * \param[in] attrval    Attribute address.
- * \param[in] attrstride Attribute address. (was DE')
+ * \param[in] backbuf     Screen address. (was DE)
+ * \param[in] style      Draw style. (was A')
+ * \param[in] attrval    Attribute value. (was C')
+ * \param[in] attrstride Attribute stride. (was DE')
  * \param[in] attrs      Attribute address. (was HL')
  * \param[in] new_screen Screen address.
  * \param[in] new_attrs  Attribute address.
  */
 static void draw_char(chqstate_t *state,
-                      int          character,
-                      u8         *screen,
-                      int          style,
-                      int          attrval,
-                      int          attrstride,
+                      int         character,
+                      u8         *backbuf,
+                      int         style,
+                      int         attrval,
+                      int         attrstride,
                       u8         *attrs,
                       u8        **new_screen,
                       u8        **new_attrs)
@@ -6072,18 +6066,15 @@ static void draw_char(chqstate_t *state,
   u8       *orig;       /* was stacked */
   int       i;          // additional
 
-  assert(screen);
+  assert(backbuf);
   assert(style <= DRAWCHARSTYLE__LIMIT);
-  assert(BACKBUFTOOFFSET(screen) >= 0);
-  assert(BACKBUFTOOFFSET(screen) < BACKBUFFER_LENGTH);
-  assert(SCREENTOOFFSET(attrs) >= SCREEN_ATTRIBUTES_START_ADDRESS -
-         SCREEN_START_ADDRESS);
-  assert(SCREENTOOFFSET(attrs) < SCREEN_LENGTH);
+  assert(VALID_BACKBUF_PTR(backbuf));
+  assert(VALID_ATTRS(attrs));
 
   character -= ' ';
   if (character == 0) {
     // Space
-    screen++;
+    backbuf++;
     attrs++;
     goto dc_return;
   }
@@ -6126,65 +6117,65 @@ dc_have_single:
   }
 
   // Otherwise it's type 0 or anything else
-  orig = screen;
+  orig = backbuf;
   iterations = 4;
   do {
     data = *fontdata++;
-    *screen = data;
-    screen += 256;
-    *screen = data;
-    screen += 256;
+    *backbuf = data;
+    backbuf += 256;
+    *backbuf = data;
+    backbuf += 256;
   } while (--iterations > 0);
-  screen -= 8 * 256;
-  screen += 32;
+  backbuf -= 8 * 256;
+  backbuf += 32;
   iterations = 3;
   do {
     data = *fontdata++;
-    *screen = data;
-    screen += 256;
-    *screen = data;
-    screen += 256;
+    *backbuf = data;
+    backbuf += 256;
+    *backbuf = data;
+    backbuf += 256;
   } while (--iterations > 0);
   goto dc_set_double_attrs;
 
   // double height inverted
 dc_double_height_inverted:
-  orig = screen;
+  orig = backbuf;
   iterations = 7;
   do {
     data = ~*fontdata++;
-    *screen = data;
-    screen += 256;
-    *screen = data;
-    screen += 256;
+    *backbuf = data;
+    backbuf += 256;
+    *backbuf = data;
+    backbuf += 256;
   } while (--iterations > 0);
   goto dc_set_double_attrs;
 
 dc_single_height_inverted:
-  orig = screen;
+  orig = backbuf;
   iterations = 7;
   do {
-    *screen = ~*fontdata++;
-    screen += 256;
+    *backbuf = ~*fontdata++;
+    backbuf += 256;
   } while (--iterations > 0);
   goto dc_set_single_attrs;
 
-  // Plots double-height glyphs. screen->screen font->glyph def
+  // Plots double-height glyphs. backbuf->backbuf font->glyph def
 dc_double_height:
-  orig = screen;
-  *screen = 0; // leave gap at top
-  screen += 256;
+  orig = backbuf;
+  *backbuf = 0; // leave gap at top
+  backbuf += 256;
   for (i = 0; i < 7; i++) { // Conv: rolled up
-    *screen = *fontdata;
-    screen += 256;
-    *screen++ = *fontdata++; /* was LDI, could reuse A */
-    screen--; /* was DEC E, could remove if screen++ above is dropped */
-    screen += 256;
+    *backbuf = *fontdata;
+    backbuf += 256;
+    *backbuf++ = *fontdata++; /* was LDI, could reuse A */
+    backbuf--; /* was DEC E, could remove if backbuf++ above is dropped */
+    backbuf += 256;
   }
-  *screen = 0; // leave gap at bottom
+  *backbuf = 0; // leave gap at bottom
 
 dc_set_double_attrs:
-  screen = orig + 1; /* was POP screen, INC E */
+  backbuf = orig + 1; /* was POP backbuf, INC E */
   *attrs |= attrval;
   attrs += attrstride;
   *attrs |= attrval;
@@ -6193,36 +6184,36 @@ dc_set_double_attrs:
   goto dc_return;
 
 dc_single_height: // seems to store 9 rows
-  orig = screen;
-  *screen = 0; // leave gap at top
-  screen += 256;
+  orig = backbuf;
+  *backbuf = 0; // leave gap at top
+  backbuf += 256;
   for (i = 0; i < 7; i++) { // Conv: rolled up
-    *screen++ = *fontdata++;
-    screen--; // could drop
-    screen += 256;
+    *backbuf++ = *fontdata++;
+    backbuf--; // could drop
+    backbuf += 256;
   }
-  *screen = 0; // leave gap at bottom
+  *backbuf = 0; // leave gap at bottom
 
 dc_set_single_attrs:
-  screen = orig + 1; /* was POP screen, INC E */
+  backbuf = orig + 1; /* was POP backbuf, INC E */
   *attrs |= attrval;
   attrs++; /* was INC L */
   goto dc_return;
 
 dc_generic:
-  orig = screen;
+  orig = backbuf;
   iterations = 7;
   do {
-    *screen = *fontdata++;
-    screen += 256;
+    *backbuf = *fontdata++;
+    backbuf += 256;
     assert(0);
     // variation on nextscrrow()
-    // screen = nextscrrow(screen); // won't work!
+    // backbuf = nextscrrow(backbuf); // won't work!
   } while (--iterations > 0);
-  screen = orig + 1; /* was POP screen */
+  backbuf = orig + 1; /* was POP backbuf */
 
 dc_return:
-  *new_screen = screen;
+  *new_screen = backbuf;
   *new_attrs  = attrs;
 }
 
@@ -12160,27 +12151,27 @@ static void dr_write_scanline_unfilled(chqstate_t *state, int DEbackbuf)
   u16 HLdash_fill;
   int Cdash;
 
-  assert(DEbackbuf >= 0xF000 || DEbackbuf <= 0x0100);
+  if (DEbackbuf < 0xF000 || DEbackbuf > 0x10000) {
+    printf("dr_write_scanline_unfilled: DEbackbuf out of bounds: %x\n", DEbackbuf);
+    return;
+  }
+
   state->dr_backbuf_1 = DEbackbuf;
-  B = 0xFF;
-
+  B = 0xFF; // NOT PASSED ANYWHERE
   // EXX - BANK
-
   DEdash_backbuf = state->dr_backbuf_1;
-  Ldash = ((DEdash_backbuf & 0xFF) + 31) & 0xFF; // being explicit
+  Ldash = (DEdash_backbuf & 0xFF) + 31;
   Hdash = DEdash_backbuf >> 8;
-  SPoutput = OFFSETTOBACKBUF((Hdash << 8) | Ldash);
-
-
-  if (SPoutput < &state->backbuffer[0])
-    printf("before backbuf by %d bytes\n", &state->backbuffer[0] - SPoutput);
-  else if (SPoutput > &state->backbuffer[BACKBUFFER_LENGTH])
-    printf("after backbuf by %d bytes\n", SPoutput - &state->backbuffer[BACKBUFFER_LENGTH]);
+  SPoutput = ADDRTOBACKBUF((Hdash << 8) | Ldash);
   assert(VALID_BACKBUF_PTR(SPoutput));
 
+  // if (SPoutput < &state->backbuffer[0])
+  //   printf("before backbuf by %ld bytes\n", &state->backbuffer[0] - SPoutput);
+  // else if (SPoutput >= &state->backbuffer[BACKBUFFER_LENGTH])
+  //   printf("after backbuf by %ld bytes\n", SPoutput - &state->backbuffer[BACKBUFFER_LENGTH]);
 
   HLdash_fill = 0; // fill value
-  Cdash = Ldash;
+  Cdash = Ldash; // NOT PASSED ANYWHERE
   dr_fill_left_stripe(state, SPoutput, 0 /* index */, DEdash_backbuf, HLdash_fill);
 }
 
@@ -12265,9 +12256,9 @@ static void dr_advance_filled(chqstate_t *state, int DEbackbuf, int Lrow,
  * $C5A7: draw_road: Setup and draw right and centre spans
  *
  * \param[in] state      Pointer to game state.
- * \param[in] DEbackbuf  Pointer into backbuffer.
- * \param[in] Lrow       Byte offset within road table page (row index); used as index into xpos_road tables.
- * \param[in] Adash_fill Fill pattern.
+ * \param[in] DEbackbuf  Address in backbuffer. (was DE)
+ * \param[in] Lrow       Byte offset within road table page (row index); used as index into xpos_road tables. (was L)
+ * \param[in] Adash_fill Fill pattern. (was A')
  */
 static void dr_fill(chqstate_t *state, int DEbackbuf, int Lrow, int Adash_fill)
 {
@@ -12290,7 +12281,11 @@ static void dr_fill(chqstate_t *state, int DEbackbuf, int Lrow, int Adash_fill)
   u16  HLfill;
   u16  BCzerofill;
 
-  assert(DEbackbuf >= 0xF000 || DEbackbuf <= 0x0100);
+  if (DEbackbuf < 0xF000 || DEbackbuf > 0x10000) {
+    printf("dr_fill: DEbackbuf out of bounds: %x\n", DEbackbuf);
+    return;
+  }
+
   state->dr_backbuf_2 = DEbackbuf;
   Arow = Lrow; // byte offset within road table page (0xFF = bottom scanline)
   Bneg_lane_count = state->dr_neg_lane_count; // assigned but not used?
@@ -12332,7 +12327,7 @@ static void dr_fill(chqstate_t *state, int DEbackbuf, int Lrow, int Adash_fill)
   DEdash_backbuf = state->dr_backbuf_2;
   Ldash_backbuf = (DEdash_backbuf & 0xFF) + 31;
   Hdash_backbuf = DEdash_backbuf >> 8;
-  SPoutput = OFFSETTOBACKBUF((Hdash_backbuf << 8) | Ldash_backbuf);
+  SPoutput = ADDRTOBACKBUF((Hdash_backbuf << 8) | Ldash_backbuf);
   assert(VALID_BACKBUF_PTR(SPoutput));
 
   // EX AF,AF' - unbank Afill
@@ -12388,10 +12383,19 @@ static void dr_fill(chqstate_t *state, int DEbackbuf, int Lrow, int Adash_fill)
           HLfill); // FALLTHROUGH
 }
 
+/**
+ * $C62E: draw_road: ...
+ *
+ * \param[in] state      Pointer to game state.
+ * \param[in] SPoutput   ... (was SP)
+ * \param[in] jump_index ... (was SM)
+ * \param[in] DEbackbuf  Pointer into backbuffer.
+ * \param[in] HLfill     Fill pattern.
+ */
 static void dr_fill_left_stripe(chqstate_t *state, u8 *SPoutput, int jump_index,
-                    int DEbackbuf, int HLfill)
+                                int DEbackbuf, int HLfill)
 {
-  // CHECK Are we banked on entry?
+  // BANKED ON ENTRY
 
   assert(VALID_BACKBUF_PTR(SPoutput));
 
@@ -14788,12 +14792,14 @@ CHQ_API void chq_setup(chqstate_t *state)
     // run the pregame screen only
     memcpy(ADDRTOSCREEN(SCREEN_START_ADDRESS), marquee_initial,
            sizeof(marquee_initial));
-    memcpy(ADDRTOSCREEN(SCREEN_ATTRIBUTES_START_ADDRESS), marquee_attrs,
+    memcpy(ADDRTOATTRS(SCREEN_ATTRIBUTES_START_ADDRESS), marquee_attrs,
            sizeof(marquee_attrs));
     state->current_stage_number = -1; // force load
     state->wanted_stage_number = 0;
     load_stage(state);
     run_pregame_screen(state);
+    while (run_pregame_screen_loop(state)) /* Conv: Split out */
+      ;
   }
 }
 
