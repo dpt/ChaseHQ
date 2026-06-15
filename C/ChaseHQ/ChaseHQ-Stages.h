@@ -182,6 +182,8 @@
 #define MAP_LANES_DIRTTRACK_VAL         (0xC1) // 1100_0001
 #define MAP_LANES_FORKED_VAL            (0xED) // 1110_1101
 
+// Bottom two bits are the left hand offset.
+
 // Decoding lanes bits:
 //
 // if all clear => four lane road

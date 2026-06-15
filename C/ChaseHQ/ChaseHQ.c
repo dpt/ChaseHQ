@@ -927,8 +927,8 @@ static void prepare_tunnel(chqstate_t *state);
 
 static void draw_tunnel(chqstate_t *state, u8 *IYheight);
 
-static void draw_road_scene_change(chqstate_t *state, u8 *IXlanes,
-                                   u8 *IYheight);
+static void draw_road_scene_change(chqstate_t *state, u8 *IXlanes, u8 *IYheight,
+                                   int Bfill_pattern, int Chorizon, int DEbackbuf, int Lrow);
 
 static void draw_road(chqstate_t *state);
 static void dr_read_lanes(chqstate_t *state, u8 *IXlanesptr, u8 *IYheightptr,
@@ -11596,208 +11596,281 @@ dt_exit:
   // Conv: SP restore removed
 }
 
-/** Return byte pointer to the 256-byte Z80 road table at page H ($E7..$EC). */
-static u8 *drsc_tbl(chqstate_t *state, int Htable_page)
+/** Return word pointer to the 256-byte Z80 road table ($E7..$EC) given a Z80 address. */
+static u16 *addr2xpos(chqstate_t *state, int z80addr)
 {
-  switch (Htable_page) {
-  case 0xE7: return (u8 *)state->xpos_road_left - 256; /* within _gap_e364 */
-  case 0xE8: return (u8 *)state->xpos_road_left;
-  case 0xE9: return (u8 *)state->xpos_road_centre_left;
-  case 0xEA: return (u8 *)state->xpos_road_centre;
-  case 0xEB: return (u8 *)state->xpos_road_centre_right;
-  default:   return (u8 *)state->xpos_road_right;        /* $EC */
+  u8 lo;
+
+  lo = (z80addr & 0xFF) >> 1; /* bytes to words */
+  switch (z80addr >> 8) {
+  case 0xE7: return &state->xpos_road_left[lo - 128]; /* within _gap_e364 */
+  case 0xE8: return &state->xpos_road_left[lo];
+  case 0xE9: return &state->xpos_road_centre_left[lo];
+  case 0xEA: return &state->xpos_road_centre[lo];
+  case 0xEB: return &state->xpos_road_centre_right[lo];
+  case 0xEC: return &state->xpos_road_right[lo];
+  default: assert(0);
   }
 }
 
 /**
  * $C2E7: Draw road scene change
  *
- * DPT: Claude generated this - check over
- *
  * Fills road-edge position table entries for a scene-change section (road
  * narrowing or widening). Uses a Bresenham-style algorithm to interpolate
  * road-edge x-positions between two height-table entries and writes them
  * to the appropriate road table via an SP-based write pointer.
  *
- * \param[in] state    Pointer to game state.
- * \param[in] IXlanes  Pointer into road buffer lane data.
- * \param[in] IYheight Pointer into height table.
+ * \param[in] state         Pointer to game state.
+ * \param[in] IXlanes       Pointer into road buffer lane data.
+ * \param[in] IYheight      Pointer into height table.
+ * \param[in] Bfill_pattern Fill pattern.
+ * \param[in] Chorizon      Horizon level.
+ * \param[in] DEbackbuf     Pointer into backbuffer.
+ * \param[in] Lrow          Byte offset within road table page (row index).
  */
-static void draw_road_scene_change(chqstate_t *state, u8 *IXlanes, u8 *IYheight)
+static void draw_road_scene_change(chqstate_t *state, u8 *IXlanes, u8 *IYheight,
+                                   int Bfill_pattern, int Chorizon, int DEbackbuf, int Lrow)
 {
-  u8   Htable_hi;    /* left-hand table hi byte ($E8/$E9/$EA/$EB/$EC) */
-  u8   dist;         /* IYl = byte offset of IYheight within height_table */
+  u8   A_dist; /* byte offset of IYheight within height_table (was A) */
+  u8   L_lane_flags; /* IXlanes[0] (was L) */
+  u8   Adash_masked_lane_flags; /* lane_flags & 0x0C (was A') */
+  u8   H_left_table_hi; /* left-hand table hi byte ($E8/$E9/$EA/$EB/$EC) (was H) */
+  u8   A_addval;
+  u8   C_val;
+  u8   SM_C345_addval;
+  u8   C_addval;
+  u8   B_addvalx2;
+  u8   L_left_table_lo;
+  u16 *HL_tbl;
+  u16 *SP_output;
+  u16  DE_roadpos;
+  u8   A_something;
+  u16 *SM_C351_tbl;
+  u8   SM_C3BD_addval;
+  u16 *SM_C3C4_tbl;
+  u16  HL_diff;
+  u8   A_diff_low;
+  u8   A_step;
+  u8   L_step;
+  u8   B_range;
+  u8   A_range;
+  u8   A_opcode;
+  u8   SM_C435_opcode;
+  u8   A_accum;
+  u8   B_iterations;
+  u8   SM_C445_opcode;
+  u8   C_range;
 
-  u8   lane_flags;   /* IXlanes[0] */
-  u8   L_sp;         /* L = ~((0x60 - IYheight[0]) << 1) -- always odd */
-  u8   range;        /* Bresenham step count = IYheight[0] - C_val */
-  u8   H_de;         /* table page for reading DE_road */
-  u8   H_clamp;      /* table page for reading HL_clamp */
-  u8   H_sp;         /* table page for SP output (after -256 adj) */
-  u8   C_val;        /* C operand for range computation */
-  u8   addval;       /* 0 or 0x20: offset applied to DE_road */
-  u16  DE_road;      /* initial road-edge position from table */
-  u16  HL_clamp_val; /* u16 from clamp-table read */
-  u8   L_adj;        /* adjusted L for clamp read */
-  s16  sbc;          /* HL_clamp_val - DE_road */
-  u8   L_low;        /* low byte of sbc */
-  s8   displacement; /* clamped signed displacement */
-  u8   step;         /* |displacement| */
-  u16  dir;          /* 1 (INC DE) or 0xFFFF (DEC DE) */
-  u16  roadpos;      /* current road position in Bresenham loop */
-  u16 *SP_out;       /* output table pointer */
-  u8   accum;        /* Bresenham accumulator */
-  u8   iters;        /* iteration counter */
-  u8  *tbl;          /* byte table pointer */
-  u8   new_acc;      /* temp for carry-detection in alternate Bresenham */
-
-  /* $C2E7: load H = left-hand table hi byte from IXlanes[0] bits 0-1 */
-  Htable_hi = (IXlanes[0] & 3) + 0xE7;
-  dist = IYheight - &state->height_table[0];
-  if (dist >= 19)
+  A_dist = IYheight - &state->height_table[0];
+  if (A_dist >= 19)
     goto drsc_exit;
 
-  lane_flags = IXlanes[0];
-  if ((lane_flags & 0x0C) == 0)
+  // EX AF,AF' -- bank 'dist'
+
+  L_lane_flags = IXlanes[0];
+  Adash_masked_lane_flags = L_lane_flags & 0x0C;
+  // Jump if any of the ordinary straight track sections, including dirt track
+  if (Adash_masked_lane_flags == 0)
     goto drsc_exit;
 
   IYheight--;
 
-  /* $C2FA-$C304: adjust H based on bits 5 and 7 of IXlanes[0] */
-  if (lane_flags & 0x20) {          /* bit 5 set */
-    Htable_hi = 0xEC;
-    if (!(lane_flags & 0x80))       /* bit 7 clear */
-      Htable_hi = 0xEB;
+  /* $C2FA-$C304: adjust H based on bits 5 and 7 of L_lane_flags */
+  if (L_lane_flags & (1 << 5)) { /* if bit 5 set */
+    H_left_table_hi = 0xEC;
+    if ((L_lane_flags & (1 << 7)) == 0) /* bit 7 clear */
+      H_left_table_hi = 0xEB; // was DEC H
   }
 
-  /* Defaults for bit-4-set paths: DE from H, clamp from H-1 */
-  H_de    = Htable_hi;
-  H_clamp = (u8)(Htable_hi - 1);
-
-  if (!(lane_flags & 0x10))         /* bit 4 clear */
+  // $C305
+  if ((L_lane_flags & (1 << 4)) == 0) /* bit 4 clear */
     goto c37e;
 
+  // EX AF,AF' -- unbank 'dist' / bank Adash_masked_lane_flags
   /* Bit-4-set paths */
-  if (dist >= 2)
+  if (A_dist >= 2)
     goto c357;
+  // EX AF,AF' -- bank 'dist' again / unbank Adash_masked_lane_flags
 
   /* $C310-$C354: path 1a -- bit4=1, dist<2 */
-  addval = (lane_flags & 0x0C) == 4 ? 0x00 : 0x20;
-  C_val  = (lane_flags & 0x0C) == 4 ? IYheight[2] : IYheight[1];
+  A_addval = 0x20;
+  C_val = IYheight[1];
+  if (Adash_masked_lane_flags == 4) {
+    A_addval = 0x00;
+    C_val = IYheight[2];
+  }
+  SM_C345_addval = A_addval;
   if (IYheight[0] <= C_val)
     goto c439;
-  range  = (u8)(IYheight[0] - C_val);
-  L_sp    = (u8)(~((u8)(0x60 - IYheight[0]) << 1));
-  tbl     = drsc_tbl(state, H_de);
-  DE_road = tbl[L_sp - 1] | (tbl[L_sp] << 8);
-  DE_road = (u16)(DE_road - (((state->fast_counter & 0xE0) >> 3) + addval));
+
+  // $C32B
+  C_addval = A_addval;
+  B_addvalx2 = A_addval * 2;
+  L_left_table_lo = ~((96 - IYheight[0]) << 1); // byte offset
+  HL_tbl = addr2xpos(state, (H_left_table_hi << 8) | L_left_table_lo);
+  SP_output = HL_tbl;
+  DE_roadpos = *HL_tbl;
+
+  L_left_table_lo -= B_addvalx2;
+  H_left_table_hi--;
+  HL_tbl = addr2xpos(state, (H_left_table_hi << 8) | L_left_table_lo);
+
+  A_something = ((state->fast_counter >> 3) & 0x1C) + SM_C345_addval;
+  SM_C351_tbl = HL_tbl;
+  // EX DE,HL ; Swap
+  DE_roadpos -= A_something; // accounted for swap
+  // EX DE,HL ; Swap
+  HL_tbl = SM_C351_tbl;
   goto c3ee;
 
 c357:
   /* $C357-$C37B: path 1b -- bit4=1, dist>=2 (must be 4) */
-  if (dist != 4)
+  // EX AF,AF' -- unbank 'dist' / bank Adash_masked_lane_flags
+  if (A_dist != 4)
     goto c439;
   if (IYheight[0] <= IYheight[2])
     goto c439;
-  range = (u8)(IYheight[0] - IYheight[2]);
-  L_sp    = (u8)(~((u8)(0x60 - IYheight[0]) << 1));
-  tbl     = drsc_tbl(state, H_de);
-  DE_road = tbl[L_sp - 1] | (tbl[L_sp] << 8);
+
+  C_addval = A_addval;
+  B_addvalx2 = A_addval * 2;
+  L_left_table_lo = ~((96 - IYheight[0]) << 1); // byte offset
+  HL_tbl = addr2xpos(state, (H_left_table_hi << 8) | L_left_table_lo);
+  SP_output = HL_tbl;
+  DE_roadpos = *HL_tbl;
+
+  L_left_table_lo -= B_addvalx2;
+  H_left_table_hi--;
+  HL_tbl = addr2xpos(state, (H_left_table_hi << 8) | L_left_table_lo);
   goto c3ee;
 
 c37e:
   /* $C37E: bit-4-clear paths: swap table roles */
-  H_de    = (u8)(Htable_hi - 1);
-  H_clamp = Htable_hi;
-  if (dist >= 2)
+  // EX AF,AF' -- unbank 'dist' / bank Adash_masked_lane_flags
+  if (A_dist >= 2)
     goto c3ca;
+  // EX AF,AF' -- bank 'dist' again / unbank Adash_masked_lane_flags
 
   /* $C37E-$C3C7: path 2 -- bit4=0, dist<2 */
-  addval = (lane_flags & 0x0C) == 4 ? 0x00 : 0x20;
-  C_val  = (lane_flags & 0x0C) == 4 ? IYheight[2] : IYheight[1];
+  A_addval = 0x20;
+  C_val = IYheight[1];
+  if (Adash_masked_lane_flags == 4) {
+    A_addval = 0x00;
+    C_val = IYheight[2];
+  }
+  SM_C3BD_addval = A_addval;
   if (IYheight[0] <= C_val)
     goto c439;
-  range  = (u8)(IYheight[0] - C_val);
-  L_sp    = (u8)(~((u8)(0x60 - IYheight[0]) << 1));
-  tbl     = drsc_tbl(state, H_de);
-  DE_road = tbl[L_sp - 1] | (tbl[L_sp] << 8);
-  DE_road = (u16)(DE_road + (((state->fast_counter & 0xE0) >> 3) + addval));
+
+  C_addval = A_addval;
+  B_addvalx2 = A_addval * 2;
+  L_left_table_lo = ~((96 - IYheight[0]) << 1); // byte offset
+  HL_tbl = addr2xpos(state, (H_left_table_hi << 8) | L_left_table_lo);
+  SP_output = HL_tbl;
+  H_left_table_hi--;
+  HL_tbl = addr2xpos(state, (H_left_table_hi << 8) | L_left_table_lo);
+  DE_roadpos = *HL_tbl;
+
+  L_left_table_lo -= B_addvalx2;
+  H_left_table_hi++;
+  HL_tbl = addr2xpos(state, (H_left_table_hi << 8) | L_left_table_lo);
+
+  SM_C3C4_tbl = HL_tbl;
+
+  A_something = ((state->fast_counter >> 3) & 0x1C) + SM_C3BD_addval;
+
+  DE_roadpos += A_something;
+  // EX DE,HL
+  HL_tbl = SM_C3C4_tbl;
   goto c3ee;
 
 c3ca:
   /* $C3CA-$C3ED: path 3ca -- bit4=0, dist>=2 (must be 4) */
-  if (dist != 4)
+  // EX AF,AF' -- unbank 'dist' / bank Adash_masked_lane_flags
+  if (A_dist != 4)
     goto c439;
   if (IYheight[0] <= IYheight[2])
     goto c439;
-  range = (u8)(IYheight[0] - IYheight[2]);
-  L_sp    = (u8)(~((u8)(0x60 - IYheight[0]) << 1));
-  tbl     = drsc_tbl(state, H_de);
-  DE_road = tbl[L_sp - 1] | (tbl[L_sp] << 8);
+
+  C_addval = A_addval;
+  B_addvalx2 = A_addval * 2;
+  L_left_table_lo = ~((96 - IYheight[0]) << 1); // byte offset
+  HL_tbl = addr2xpos(state, (H_left_table_hi << 8) | L_left_table_lo);
+  SP_output = HL_tbl;
+  H_left_table_hi--; // this is different...
+  HL_tbl = addr2xpos(state, (H_left_table_hi << 8) | L_left_table_lo);
+  DE_roadpos = *HL_tbl;
+
+  L_left_table_lo -= B_addvalx2;
+  H_left_table_hi++;
+  HL_tbl = addr2xpos(state, (H_left_table_hi << 8) | L_left_table_lo);
+
   /* no offset -- fall through to c3ee */
 
 c3ee:
   /* $C3EE-$C405: read second table value, compute clamped displacement */
-  L_adj        = (u8)(L_sp - (u8)(range << 1));
-  tbl          = drsc_tbl(state, H_clamp);
-  HL_clamp_val = tbl[L_adj - 1] | (tbl[L_adj] << 8);
-  sbc          = HL_clamp_val - DE_road;
-  L_low        = sbc & 0xFF;
-  if (sbc < 0)
-    displacement = (L_low >= 0x80) ? (s8)L_low : (s8)0x81;
+  HL_diff = *HL_tbl - DE_roadpos;
+  A_diff_low = HL_diff & 0xFF;
+  if (HL_diff >= 0)
+    A_step = ((s8) A_diff_low  < 0) ? 0x7F : A_diff_low;
   else
-    displacement = (L_low <  0x80) ? (s8)L_low : 0x7F;
+    A_step = ((s8) A_diff_low >= 0) ? 0x81 : A_diff_low;
 
   /* $C407-$C412: set up SP output pointer */
-  H_sp   = (lane_flags & 0x20) ? (u8)(Htable_hi - 1) : Htable_hi;
-  SP_out = (u16 *)(drsc_tbl(state, H_sp) + (u8)(L_sp + 1));
+  SP_output++; // FIXME - this is a byte change. is this realigning the SP?
+  if (IXlanes[0] & (1 << 5))
+    SP_output -= 256 / 2; // prob. step back by 256 bytes
 
   /* $C413-$C420: derive step and direction */
-  if (displacement < 0) {
-    step = (u8)(-(s8)displacement);
-    dir  = 0xFFFF; /* DEC DE */
+  L_step = A_step;
+  B_range = C_addval;
+  A_range = C_addval;
+  if (L_step < 0) {
+    L_step = -L_step;
+    A_range = B_range;
+    A_opcode = 0x1B; // DEC DE
+    if (A_range < L_step)
+      goto c441;
   } else {
-    step = (u8)displacement;
-    dir  = 1;      /* INC DE */
+    A_opcode = 0x13; // INC DE
+    if (A_range < L_step)
+      goto c441;
   }
 
-  roadpos = DE_road;
-  iters   = range;
-
-  if (range < step) {
-    /* $C441-$C450: alternate Bresenham -- step > range */
-    accum = 0;
-    do {
-      do {
-        roadpos += dir;
-        new_acc  = (u8)(accum + range);
-        if (new_acc < accum || new_acc >= step) { /* overflow or >= step */
-          accum = new_acc;
-          break;
-        }
-        accum = new_acc;
-      } while (1);
-      accum  = (u8)(accum - step);
-      *--SP_out = roadpos;
-    } while (--iters > 0);
-  } else {
-    /* $C42E-$C437: normal Bresenham -- step <= range */
-    accum = (u8)(range >> 1); /* LD A,B; RRA with carry=0 */
-    do {
-      accum += step;
-      if (accum >= range) {
-        accum  -= range;
-        roadpos += dir;
-      }
-      *--SP_out = roadpos;
-    } while (--iters > 0);
-  }
+  /* $C42B-$C437: normal Bresenham -- step <= range */
+  SM_C435_opcode = A_opcode;
+  A_accum = B_range >> 1;
+  do {
+    A_accum += L_step;
+    if (A_accum >= B_range) {
+      A_accum -= B_range;
+      DE_roadpos += (SM_C435_opcode == 0x13 /*INC_DE*/) ? +1 : -1;
+    }
+    *--SP_output = DE_roadpos;
+  } while (--B_iterations > 0);
 
 c439:
   IYheight++; /* $C439: INC IYheight -- advance height pointer for next iteration */
 drsc_exit:
-  state->dr_callback = dr_four_lane_highway;
-  dr_dispatch_fill(state, 0, 0, 0, 0); // FIXME - must be crap
+  dr_set_lane_callback(state, Bfill_pattern, Chorizon, DEbackbuf, Lrow,
+                       dr_four_lane_highway); // exit via
+  return;
+
+c441:
+  /* $C441-$C450: alternate Bresenham -- step > range */
+  SM_C445_opcode = A_opcode;
+  A_accum = 0;
+  do {
+    for (;;) {
+      DE_roadpos += (SM_C445_opcode == 0x13 /*INC_DE*/) ? +1 : -1;
+      A_accum += C_range;
+      if (A_accum < C_range || A_accum >= L_step) /* overflow or >= step */
+        break;
+    }
+    A_accum -= L_step;
+    *--SP_output = DE_roadpos;
+  } while (--B_iterations > 0);
+  goto c439;
 }
 
 /**
@@ -11916,7 +11989,7 @@ static void dr_read_lanes(chqstate_t *state, u8 *IXlanesptr, u8 *IYheightptr,
     }
     state->dr_right_table_hi_2 = state->dr_right_table_hi_1 = Aleft_hand_table_hi;
     state->dr_neg_lane_count = Cdash_neg_lane_count; // Conv: A removed
-    draw_road_scene_change(state, IXlanesptr, IYheightptr); // exit via
+    draw_road_scene_change(state, IXlanesptr, IYheightptr, Bfill_pattern, Chorizon, DEbackbuf, Lrow); // exit via
   } else {
     /* If bit 6 was clear then it's a special road (tunnel, dirt track or forked road). */
     if (carry == 0) {
