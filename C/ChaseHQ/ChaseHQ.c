@@ -11639,7 +11639,7 @@ static void draw_road_scene_change(chqstate_t *state, u8 *IXlanes, u8 *IYheight,
   u8   A_curve_step;        /* 0x20 or 0x00: per-curve step magnitude (was A) */
   u8   C_ref_height;        /* reference height for boundary check (IYheight[1] or [2]) (was C) */
   u8   SM_C345_bend_offset; /* stored A_curve_step: bend component of animation offset (SM $C345) */
-  u8   C_bresen_range;      /* Bresenham range = A_curve_step (was C) */
+  u8   C_bresen_range;      /* Bresenham range = IYheight[0] - ref_height (was C) */
   u8   B_tbl_stride;        /* table pointer stride = A_curve_step * 2 (was B) */
   u8   L_left_table_lo;     /* low byte of x-position table address (was L) */
   u16 *HL_xpos_ptr;         /* current pointer into x-position table (was HL) */
@@ -11704,9 +11704,9 @@ static void draw_road_scene_change(chqstate_t *state, u8 *IXlanes, u8 *IYheight,
   if (IYheight[0] <= C_ref_height)
     goto advance_height;
 
-  // $C32B
-  C_bresen_range = A_curve_step;
-  B_tbl_stride = A_curve_step * 2;
+  // $C32B: C = IY[0] - ref_height (height span), B = C*2
+  C_bresen_range = IYheight[0] - C_ref_height;
+  B_tbl_stride = C_bresen_range * 2;
   L_left_table_lo = ~((96 - IYheight[0]) << 1); // byte offset
   HL_xpos_ptr = addr2xpos(state, (H_left_table_hi << 8) | L_left_table_lo);
   SP_output = HL_xpos_ptr;
@@ -11732,8 +11732,9 @@ bit4_set_far:
   if (IYheight[0] <= IYheight[2])
     goto advance_height;
 
-  C_bresen_range = A_curve_step;
-  B_tbl_stride = A_curve_step * 2;
+  // $C369: C = IY[0] - IY[2] (height span), B = C*2
+  C_bresen_range = IYheight[0] - IYheight[2];
+  B_tbl_stride = C_bresen_range * 2;
   L_left_table_lo = ~((96 - IYheight[0]) << 1); // byte offset
   HL_xpos_ptr = addr2xpos(state, (H_left_table_hi << 8) | L_left_table_lo);
   SP_output = HL_xpos_ptr;
@@ -11762,8 +11763,9 @@ bit4_clear:
   if (IYheight[0] <= C_ref_height)
     goto advance_height;
 
-  C_bresen_range = A_curve_step;
-  B_tbl_stride = A_curve_step * 2;
+  // $C39F: C = IY[0] - ref_height (height span), B = C*2
+  C_bresen_range = IYheight[0] - C_ref_height;
+  B_tbl_stride = C_bresen_range * 2;
   L_left_table_lo = ~((96 - IYheight[0]) << 1); // byte offset
   HL_xpos_ptr = addr2xpos(state, (H_left_table_hi << 8) | L_left_table_lo);
   SP_output = HL_xpos_ptr;
@@ -11792,8 +11794,9 @@ bit4_clear_far:
   if (IYheight[0] <= IYheight[2])
     goto advance_height;
 
-  C_bresen_range = A_curve_step;
-  B_tbl_stride = A_curve_step * 2;
+  // $C3DB: C = IY[0] - IY[2] (height span), B = C*2
+  C_bresen_range = IYheight[0] - IYheight[2];
+  B_tbl_stride = C_bresen_range * 2;
   L_left_table_lo = ~((96 - IYheight[0]) << 1); // byte offset
   HL_xpos_ptr = addr2xpos(state, (H_left_table_hi << 8) | L_left_table_lo);
   SP_output = HL_xpos_ptr;
