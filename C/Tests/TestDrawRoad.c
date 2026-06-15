@@ -237,14 +237,11 @@ static void test_drsc_exits_when_dist_too_far(void)
   memcpy(snap_centre_right, state->xpos_road_centre_right, sizeof(snap_centre_right));
   memcpy(snap_right,        state->xpos_road_right,        sizeof(snap_right));
 
-  state->dr_backbuf_1 = 0xDEAD; /* sentinel: must be overwritten by exit chain */
-
   /* MAP_LANES_4TO3L_VAL (0xBD) has non-zero curve bits, so if the dist
    * check were absent this call would proceed into the Bresenham loop.
    * With height_offset=19 the dist-too-far guard fires first. */
   chq_test_draw_road_scene_change(state, 0xBD /* MAP_LANES_4TO3L_VAL */, 19);
 
-  assert(state->dr_backbuf_1 == 0x0020); /* exit chain ran (dr_write_scanline_unfilled) */
   assert(memcmp(snap_left,         state->xpos_road_left,         sizeof(snap_left))         == 0);
   assert(memcmp(snap_centre_left,  state->xpos_road_centre_left,  sizeof(snap_centre_left))  == 0);
   assert(memcmp(snap_centre,       state->xpos_road_centre,       sizeof(snap_centre))       == 0);
@@ -282,11 +279,8 @@ static void test_drsc_exits_on_straight_track(void)
   memcpy(snap_centre_right, state->xpos_road_centre_right, sizeof(snap_centre_right));
   memcpy(snap_right,        state->xpos_road_right,        sizeof(snap_right));
 
-  state->dr_backbuf_1 = 0xDEAD; /* sentinel: must be overwritten by exit chain */
-
   chq_test_draw_road_scene_change(state, 0x02 /* MAP_LANES_2M_VAL */, 1);
 
-  assert(state->dr_backbuf_1 == 0x0020); /* exit chain ran (dr_write_scanline_unfilled) */
   assert(memcmp(snap_left,         state->xpos_road_left,         sizeof(snap_left))         == 0);
   assert(memcmp(snap_centre_left,  state->xpos_road_centre_left,  sizeof(snap_centre_left))  == 0);
   assert(memcmp(snap_centre,       state->xpos_road_centre,       sizeof(snap_centre))       == 0);

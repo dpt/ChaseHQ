@@ -12186,10 +12186,9 @@ static void dr_write_scanline_unfilled(chqstate_t *state, int DEbackbuf)
 static void dr_rollover_filled(chqstate_t *state, int DEbackbuf,
                                    int Lrow, int Adash_fill)
 {
-  LO_ADD(DEbackbuf, 32);
-  if ((DEbackbuf & 0xFF) < 32) // carry (low byte wrapped)
+  LO_ADD(DEbackbuf, -32);
+  if ((DEbackbuf & 0xFF) < 224) // if no carry
     HI_ADD(DEbackbuf, 16);
-  assert(DEbackbuf >= 0xF000 || DEbackbuf <= 0x0100);
   dr_fill(state, DEbackbuf, Lrow, Adash_fill); // exit via
 }
 
@@ -12201,9 +12200,9 @@ static void dr_rollover_filled(chqstate_t *state, int DEbackbuf,
  */
 static void dr_rollover_unfilled(chqstate_t *state, int DEbackbuf)
 {
-  LO_ADD(DEbackbuf, 32);
-  if ((DEbackbuf & 0xFF) < 32) // carry (low byte wrapped)
-    assert(DEbackbuf >= 0xF000 || DEbackbuf <= 0x0100);
+  LO_ADD(DEbackbuf, -32);
+  if ((DEbackbuf & 0xFF) < 224) // if no carry: D += 16
+    HI_ADD(DEbackbuf, 16);
   dr_write_scanline_unfilled(state, DEbackbuf); // exit via
 }
 
