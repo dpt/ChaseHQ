@@ -11825,6 +11825,8 @@ compute_step:
   L_step = A_step;
   B_range = C_bresen_range;
   A_range = C_bresen_range;
+  B_iterations = B_range;   /* loop count: B ← C via LD B,C at $C413 */
+  C_range = C_bresen_range; /* inner-loop bound: C unchanged since setup paths */
   if (L_step < 0) {
     L_step = -L_step;
     A_range = B_range;
