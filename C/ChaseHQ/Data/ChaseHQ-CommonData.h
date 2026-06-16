@@ -281,6 +281,10 @@ const u8 forked_road_exit_right_lanes[12];
 const u8 spiral_transition_mask[13 * 8];
 const u8 circle_transition_mask[7 * 8];
 
+const u8 edge_markings[2 * 2 * 8 * 6];
+const u8 lane_markings[2 * 8 * 3];
+
+const u16 outward_bend_table[32];
 const u16 curvature_to_xpos[96];
 
 const u8 persp_y_scale[8][22];
@@ -318,6 +322,11 @@ const u8 press_gear_messages[17];
 const u8 enter_for_options_messages[23];
 const u8 credits_messages_128[98];
 const u8 best_officers[163];
+
+/* $86F6: backdrop blit instruction templates.
+ * Two 18-byte chunks; selected slice is copied to dr_c82d_instrs by
+ * dr_start_backdrop_fill.  0x2C = INC L (skip), 0xED/0xA0 = LDI (copy). */
+extern const u8 backdrop_shifting_instrs[36];
 
 const u8 marquee_initial[SCREEN_BITMAP_ROWBYTES * MARQUEE_HEIGHT];
 const u8 marquee_attrs[SCREEN_ATTRIBUTES_WIDTH * MARQUEE_HEIGHT / 8];

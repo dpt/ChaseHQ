@@ -651,8 +651,16 @@ struct chqstate {
   u8        dr_horizon_x_scroll;
   // $C80A (SM) in draw_road
   u8        dr_sky_rows;
+  // $C86C (SM) in dr_start_backdrop_fill: offset of first LDI in blit stream (0..18)
+  u8        dr_SM_C86C;
+  // $C82D in dr_start_backdrop_fill: runtime-selected 18-byte blit instruction stream
+  u8        dr_c82d_instrs[18];
   // $C88F (SM) in draw_road
   u8        dr_in_tunnel;
+  // IY register persisted across draw_road scanlines
+  const u8 *dr_iy_height_ptr;
+  // IX register (low byte wraps in road_buffer) persisted across draw_road scanlines
+  u8       *dr_ix_lanes_ptr;
 
   // $CE0C–$CE32
   u8        smokes[3][13]; // three 13-byte smoke animation buffers, indexed 0..2

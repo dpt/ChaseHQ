@@ -4379,6 +4379,140 @@ const u8 circle_transition_mask[7 * 8] = {
 
 /* ----------------------------------------------------------------------- */
 
+// $E410 - Road edge markings
+const u8 edge_markings[2 * 2 * 8 * 6] = {
+  // Widest edge. White.
+  ________,_X______, __XXXXXX,X_______,
+  X_______,__X_____, ___XXXXX,_X______,
+  XX______,___X____, ____XXXX,__X_____,
+  XXX_____,____X___, _____XXX,___X____,
+  XXXX____,_____X__, ______XX,____X___,
+  XXXXX___,______X_, _______X,_____X__,
+  XXXXXX__,_______X, ________,______X_,
+  XXXXXXX_,________, ________,X______X,
+
+  // Widest edge. Black.
+  ________,XXXXXXXX, __XXXXXX,X_______,
+  ________,_XXXXXXX, ___XXXXX,XX______,
+  X_______,__XXXXXX, ____XXXX,XXX_____,
+  XX______,___XXXXX, _____XXX,XXXX____,
+  XXX_____,____XXXX, ______XX,XXXXX___,
+  XXXX____,_____XXX, _______X,XXXXXX__,
+  XXXXX___,______XX, ________,XXXXXXX_,
+  XXXXXX__,_______X, ________,XXXXXXXX,
+
+  // Middle edge. White.
+  ________,_X______, _XXXXXXX,________,
+  X_______,__X_____, __XXXXXX,X_______,
+  XX______,___X____, ___XXXXX,_X______,
+  XXX_____,____X___, ____XXXX,__X_____,
+  XXXX____,_____X__, _____XXX,___X____,
+  XXXXX___,______X_, ______XX,____X___,
+  XXXXXX__,_______X, _______X,_____X__,
+  XXXXXXX_,________, ________,X_____X_,
+
+  // Middle edge. Black.
+  ________,_XXXXXXX, _XXXXXXX,________,
+  X_______,__XXXXXX, __XXXXXX,X_______,
+  XX______,___XXXXX, ___XXXXX,XX______,
+  XXX_____,____XXXX, ____XXXX,XXX_____,
+  XXXX____,_____XXX, _____XXX,XXXX____,
+  XXXXX___,______XX, ______XX,XXXXX___,
+  XXXXXX__,_______X, _______X,XXXXXX__,
+  XXXXXXX_,________, ________,XXXXXXX_,
+
+  // Thinnest edge. White.
+  _______X,_X___X__, XXXXXXXX,________,
+  X_______,__X___X_, XXXXXXXX,________,
+  XX______,___X___X, _XXXXXXX,________,
+  XXX_____,____X___, __XXXXXX,X_______,
+  XXXX____,_____X__, ___XXXXX,_X______,
+  XXXXX___,______X_, ____XXXX,__X_____,
+  XXXXXX__,_______X, _____XXX,___X____,
+  XXXXXXX_,________, ______XX,X___X___,
+
+  // Thinnest edge. Black.
+  _______X,_XXXXX__, XXXXXXXX,________,
+  X_______,__XXXXX_, XXXXXXXX,________,
+  XX______,___XXXXX, _XXXXXXX,________,
+  XXX_____,____XXXX, __XXXXXX,X_______,
+  XXXX____,_____XXX, ___XXXXX,XX______,
+  XXXXX___,______XX, ____XXXX,XXX_____,
+  XXXXXX__,_______X, _____XXX,XXXX____,
+  XXXXXXX_,________, ______XX,XXXXX___,
+};
+
+// $E4D0 - Road lane markings
+const u8 lane_markings[2 * 8 * 3] = {
+  // Widest marking
+  __XXX___,________,
+  ___XXX__,________,
+  ____XXX_,________,
+  _____XXX,________,
+  ______XX,X_______,
+  _______X,XX______,
+  ________,XXX_____,
+  ________,_XXX____,
+
+  // Middle marking
+  ___XX___,________,
+  ____XX__,________,
+  _____XX_,________,
+  ______XX,________,
+  _______X,X_______,
+  ________,XX______,
+  ________,_XX_____,
+  ________,__XX____,
+
+  // Thinnest marking
+  ____X___,________,
+  _____X__,________,
+  ______X_,________,
+  _______X,________,
+  ________,X_______,
+  ________,_X______,
+  ________,__X_____,
+  ________,___X____,
+};
+
+/* ----------------------------------------------------------------------- */
+
+// $E500
+const u16 outward_bend_table[32] = {
+  0x0000,
+  0xEC22,
+  0xF653,
+  0xF9B9,
+  0xFB6C,
+  0xFC72,
+  0xFD21,
+  0xFD9E,
+  0xFDFD,
+  0xFE46,
+  0xFE81,
+  0xFEB1,
+  0xFEDA,
+  0xFEFD,
+  0xFF1A,
+  0xFF34,
+  0xFF4B,
+  0xFF5F,
+  0xFF71,
+  0xFF82,
+  0xFF91,
+  0xFF9E,
+  0xFFAA,
+  0xFFB6,
+  0xFFC0,
+  0xFFCA,
+  0xFFD3,
+  0xFFDC,
+  0xFFE4,
+  0xFFEC,
+  0xFFF3,
+  0xFFFA
+};
+
 // $E540 - Converts a curvature to a road X position
 // Approx? v[i] = round(128 * (1 + tan((i − 32) · π/128)))
 const u16 curvature_to_xpos[96] = {
@@ -5101,4 +5235,16 @@ const u8 marquee_attrs[SCREEN_ATTRIBUTES_WIDTH * MARQUEE_HEIGHT / 8] = {
   0x78, 0x78, 0x78, 0x78, 0x78, 0x78, 0x78, 0x78,
   0x78, 0x78, 0x78, 0x78, 0x78, 0x78, 0x78, 0x78,
   0x78, 0x78, 0x78, 0x78, 0x78, 0x78, 0x78, 0x78
+};
+
+/* $86F6: backdrop blit instruction templates (36 bytes, two 18-byte chunks).
+ * Chunk 0 (bytes 0–17):  INC L (0x2C) + NOP (0x00) × 9 — skip backdrop bytes.
+ * Chunk 1 (bytes 18–35): LDI   (0xED, 0xA0) × 9       — copy backdrop bytes.
+ * dr_start_backdrop_fill copies 18 bytes starting at offset dr_SM_C86C into
+ * state->dr_c82d_instrs, which the blit loop then interprets. */
+const u8 backdrop_shifting_instrs[36] = {
+  0x2C, 0x00, 0x2C, 0x00, 0x2C, 0x00, 0x2C, 0x00, 0x2C, 0x00,
+  0x2C, 0x00, 0x2C, 0x00, 0x2C, 0x00, 0x2C, 0x00,
+  0xED, 0xA0, 0xED, 0xA0, 0xED, 0xA0, 0xED, 0xA0, 0xED, 0xA0,
+  0xED, 0xA0, 0xED, 0xA0, 0xED, 0xA0, 0xED, 0xA0
 };

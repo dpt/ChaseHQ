@@ -140,65 +140,271 @@
 
 /* Screen, attributes and backbuffer macros */
 
-/** Return screen pointer given a Z80 address. */
-#define ADDRTOSCREEN(addr) \
+/* Pointer validators */
+
+/** Return if ptr is within the screen bitmap, extended by left/right bytes. */
+#define VALID_SCREEN_LR(ptr, left, right) \
+((ptr) >= &state->speccy->screen.pixels[0] - (left) && (ptr) < &state->speccy->screen.pixels[SCREEN_BITMAP_LENGTH] + (right))
+
+/** Return if ptr is within the screen attributes, extended by left/right bytes. */
+#define VALID_ATTRS_LR(ptr, left, right) \
+((ptr) >= &state->speccy->screen.attributes[0] - (left) && (ptr) < &state->speccy->screen.attributes[SCREEN_ATTRIBUTES_LENGTH] + (right))
+
+/** Return if ptr is within the backbuffer, extended by left/right bytes. */
+#define VALID_BACKBUF_PTR_LR(ptr, left, right) \
+((ptr) >= &state->backbuffer[0] - (left) && (ptr) < &state->backbuffer[BACKBUFFER_LENGTH] + (right))
+
+#define VALID_SCREEN(ptr)       VALID_SCREEN_LR(ptr, 0, 0)
+#define VALID_ATTRS(ptr)        VALID_ATTRS_LR(ptr, 0, 0)
+#define VALID_BACKBUF_PTR(ptr)  VALID_BACKBUF_PTR_LR(ptr, 0, 0)
+
+/* Address validators */
+
+/** Return if addr is within the screen bitmap address range, extended by left/right. */
+#define VALID_SCREEN_ADDR_LR(addr, left, right) \
+((addr) >= SCREEN_START_ADDRESS - (left) && (addr) < SCREEN_START_ADDRESS + SCREEN_BITMAP_LENGTH + (right))
+
+/** Return if addr is within the screen attributes address range, extended by left/right. */
+#define VALID_ATTRS_ADDR_LR(addr, left, right) \
+((addr) >= SCREEN_ATTRIBUTES_START_ADDRESS - (left) && (addr) < SCREEN_ATTRIBUTES_START_ADDRESS + SCREEN_ATTRIBUTES_LENGTH + (right))
+
+/** Return if addr is within the backbuffer address range, extended by left/right. */
+#define VALID_BACKBUF_ADDR_LR(addr, left, right) \
+((addr) >= BACKBUFFER_START_ADDRESS - (left) && (addr) < BACKBUFFER_END_ADDRESS + (right))
+
+#define VALID_SCREEN_ADDR(addr)  VALID_SCREEN_ADDR_LR(addr, 0, 0)
+#define VALID_ATTRS_ADDR(addr)   VALID_ATTRS_ADDR_LR(addr, 0, 0)
+#define VALID_BACKBUF_ADDR(addr) VALID_BACKBUF_ADDR_LR(addr, 0, 0)
+
+/* Offset validators */
+
+/** Return if off is a valid screen bitmap byte offset, extended by left/right. */
+#define VALID_SCREEN_OFFSET_LR(off, left, right) \
+((off) >= -(left) && (off) < SCREEN_BITMAP_LENGTH + (right))
+
+/** Return if off is a valid screen attributes byte offset, extended by left/right. */
+#define VALID_ATTRS_OFFSET_LR(off, left, right) \
+((off) >= -(left) && (off) < SCREEN_ATTRIBUTES_LENGTH + (right))
+
+/** Return if off is a valid backbuffer byte offset, extended by left/right. */
+#define VALID_BACKBUF_OFFSET_LR(off, left, right) \
+((off) >= -(left) && (off) < BACKBUFFER_LENGTH + (right))
+
+#define VALID_SCREEN_OFFSET(off)  VALID_SCREEN_OFFSET_LR(off, 0, 0)
+#define VALID_ATTRS_OFFSET(off)   VALID_ATTRS_OFFSET_LR(off, 0, 0)
+#define VALID_BACKBUF_OFFSET(off) VALID_BACKBUF_OFFSET_LR(off, 0, 0)
+
+
+/* Address-to-pointer converters */
+
+/** Return screen bitmap pointer given a Z80 address. */
+#define ADDRTOSCREEN_M(addr) \
   (&state->speccy->screen.pixels[(addr) - SCREEN_START_ADDRESS])
 
+static u8 *z80addrtoscreen(chqstate_t *state, int addr, int left, int right)
+{
+  u8 *ptr;
+  assert(VALID_SCREEN_ADDR_LR(addr, left, right));
+  ptr = ADDRTOSCREEN_M(addr);
+  assert(VALID_SCREEN_LR(ptr, left, right));
+  return ptr;
+}
+
+#define ADDRTOSCREEN(addr)                 z80addrtoscreen(state, addr, 0, 0)
+#define ADDRTOSCREEN_LR(addr, left, right) z80addrtoscreen(state, addr, left, right)
+
+
 /** Return attributes pointer given a Z80 address. */
-#define ADDRTOATTRS(addr) \
+#define ADDRTOATTRS_M(addr) \
   (&state->speccy->screen.attributes[(addr) - SCREEN_ATTRIBUTES_START_ADDRESS])
 
+static u8 *z80addrtoattrs(chqstate_t *state, int addr, int left, int right)
+{
+  u8 *ptr;
+  assert(VALID_ATTRS_ADDR_LR(addr, left, right));
+  ptr = ADDRTOATTRS_M(addr);
+  assert(VALID_ATTRS_LR(ptr, left, right));
+  return ptr;
+}
+
+#define ADDRTOATTRS(addr)                 z80addrtoattrs(state, addr, 0, 0)
+#define ADDRTOATTRS_LR(addr, left, right) z80addrtoattrs(state, addr, left, right)
+
+
 /** Return backbuffer[] pointer given a Z80 address. */
-#define ADDRTOBACKBUF(addr) \
+#define ADDRTOBACKBUF_M(addr) \
   (&state->backbuffer[(addr) - BACKBUFFER_START_ADDRESS])
 
-/** Return a Z80 address of a screen[] pointer. */
-#define SCREENTOADDR(ptr) \
-  (SCREEN_START_ADDRESS + SCREENTOOFFSET(ptr))
+static u8 *z80addrtobackbuf(chqstate_t *state, int addr, int left, int right)
+{
+  u8 *ptr;
+  assert(VALID_BACKBUF_ADDR_LR(addr, left, right));
+  ptr = ADDRTOBACKBUF_M(addr);
+  assert(VALID_BACKBUF_PTR_LR(ptr, left, right));
+  return ptr;
+}
 
-/** Return a Z80 address of an attributes[] pointer. */
-#define ATTRSTOADDR(ptr) \
-  (SCREEN_ATTRIBUTES_START_ADDRESS + ATTRSTOOFFSET(ptr))
+#define ADDRTOBACKBUF(addr)                 z80addrtobackbuf(state, addr, 0, 0)
+#define ADDRTOBACKBUF_LR(addr, left, right) z80addrtobackbuf(state, addr, left, right)
 
-/** Return a Z80 address of backbuffer[] pointer. */
-#define BACKBUFTOADDR(ptr) \
-  (BACKBUFFER_START_ADDRESS + BACKBUFTOOFFSET(ptr))
+
+/* Pointer-to-offset converters */
 
 /** Return byte offset of a screen[] pointer. */
-#define SCREENTOOFFSET(ptr) \
+#define SCREENTOOFFSET_M(ptr) \
   ((ptr) - &state->speccy->screen.pixels[0])
 
+static int z80screentooffset(chqstate_t *state, const u8 *ptr, int left, int right)
+{
+  int off;
+  assert(VALID_SCREEN_LR(ptr, left, right));
+  off = SCREENTOOFFSET_M(ptr);
+  assert(VALID_SCREEN_OFFSET_LR(off, left, right));
+  return off;
+}
+
+#define SCREENTOOFFSET(ptr)                 z80screentooffset(state, ptr, 0, 0)
+#define SCREENTOOFFSET_LR(ptr, left, right) z80screentooffset(state, ptr, left, right)
+
+
 /** Return byte offset of an attributes[] pointer. */
-#define ATTRSTOOFFSET(ptr) \
+#define ATTRSTOOFFSET_M(ptr) \
   ((ptr) - &state->speccy->screen.attributes[0])
 
+static int z80attrstooffset(chqstate_t *state, const u8 *ptr, int left, int right)
+{
+  int off;
+  assert(VALID_ATTRS_LR(ptr, left, right));
+  off = ATTRSTOOFFSET_M(ptr);
+  assert(VALID_ATTRS_OFFSET_LR(off, left, right));
+  return off;
+}
+
+#define ATTRSTOOFFSET(ptr)                 z80attrstooffset(state, ptr, 0, 0)
+#define ATTRSTOOFFSET_LR(ptr, left, right) z80attrstooffset(state, ptr, left, right)
+
+
 /** Return byte offset of a backbuffer[] pointer. */
-#define BACKBUFTOOFFSET(ptr) \
+#define BACKBUFTOOFFSET_M(ptr) \
   ((ptr) - &state->backbuffer[0])
 
+static int z80backbuftooffset(chqstate_t *state, const u8 *ptr, int left, int right)
+{
+  int off;
+  assert(VALID_BACKBUF_PTR_LR(ptr, left, right));
+  off = BACKBUFTOOFFSET_M(ptr);
+  assert(VALID_BACKBUF_OFFSET_LR(off, left, right));
+  return off;
+}
+
+#define BACKBUFTOOFFSET(ptr)                 z80backbuftooffset(state, ptr, 0, 0)
+#define BACKBUFTOOFFSET_LR(ptr, left, right) z80backbuftooffset(state, ptr, left, right)
+
+
+/* Pointer-to-address converters */
+
+/** Return a Z80 address of a screen[] pointer. */
+#define SCREENTOADDR_M(ptr) \
+  (SCREEN_START_ADDRESS + SCREENTOOFFSET_M(ptr))
+
+static int z80screentoaddr(chqstate_t *state, const u8 *ptr, int left, int right)
+{
+  int addr;
+  assert(VALID_SCREEN_LR(ptr, left, right));
+  addr = SCREENTOADDR_M(ptr);
+  assert(VALID_SCREEN_ADDR_LR(addr, left, right));
+  return addr;
+}
+
+#define SCREENTOADDR(ptr)                 z80screentoaddr(state, ptr, 0, 0)
+#define SCREENTOADDR_LR(ptr, left, right) z80screentoaddr(state, ptr, left, right)
+
+
+/** Return a Z80 address of an attributes[] pointer. */
+#define ATTRSTOADDR_M(ptr) \
+  (SCREEN_ATTRIBUTES_START_ADDRESS + ATTRSTOOFFSET_M(ptr))
+
+static int z80attrstoaddr(chqstate_t *state, const u8 *ptr, int left, int right)
+{
+  int addr;
+  assert(VALID_ATTRS_LR(ptr, left, right));
+  addr = ATTRSTOADDR_M(ptr);
+  assert(VALID_ATTRS_ADDR_LR(addr, left, right));
+  return addr;
+}
+
+#define ATTRSTOADDR(ptr)                 z80attrstoaddr(state, ptr, 0, 0)
+#define ATTRSTOADDR_LR(ptr, left, right) z80attrstoaddr(state, ptr, left, right)
+
+
+/** Return a Z80 address of a backbuffer[] pointer. */
+#define BACKBUFTOADDR_M(ptr) \
+  (BACKBUFFER_START_ADDRESS + BACKBUFTOOFFSET_M(ptr))
+
+static int z80backbuftoaddr(chqstate_t *state, const u8 *ptr, int left, int right)
+{
+  int addr;
+  assert(VALID_BACKBUF_PTR_LR(ptr, left, right));
+  addr = BACKBUFTOADDR_M(ptr);
+  assert(VALID_BACKBUF_ADDR_LR(addr, left, right));
+  return addr;
+}
+
+#define BACKBUFTOADDR(ptr)                 z80backbuftoaddr(state, ptr, 0, 0)
+#define BACKBUFTOADDR_LR(ptr, left, right) z80backbuftoaddr(state, ptr, left, right)
+
+
+/* Offset-to-pointer converters */
+
 /** Return screen[] pointer given byte offset. */
-#define OFFSETTOSCREEN(off) \
+#define OFFSETTOSCREEN_M(off) \
   (&state->speccy->screen.pixels[off])
 
+static u8 *z80offsettoscreen(chqstate_t *state, int off, int left, int right)
+{
+  u8 *ptr;
+  assert(VALID_SCREEN_OFFSET_LR(off, left, right));
+  ptr = OFFSETTOSCREEN_M(off);
+  assert(VALID_SCREEN_LR(ptr, left, right));
+  return ptr;
+}
+
+#define OFFSETTOSCREEN(off)                 z80offsettoscreen(state, off, 0, 0)
+#define OFFSETTOSCREEN_LR(off, left, right) z80offsettoscreen(state, off, left, right)
+
+
 /** Return attributes[] pointer given byte offset. */
-#define OFFSETTOATTRS(off) \
+#define OFFSETTOATTRS_M(off) \
   (&state->speccy->screen.attributes[off])
 
+static u8 *z80offsettoattrs(chqstate_t *state, int off, int left, int right)
+{
+  u8 *ptr;
+  assert(VALID_ATTRS_OFFSET_LR(off, left, right));
+  ptr = OFFSETTOATTRS_M(off);
+  assert(VALID_ATTRS_LR(ptr, left, right));
+  return ptr;
+}
+
+#define OFFSETTOATTRS(off)                 z80offsettoattrs(state, off, 0, 0)
+#define OFFSETTOATTRS_LR(off, left, right) z80offsettoattrs(state, off, left, right)
+
+
 /** Return backbuffer[] pointer given byte offset. */
-#define OFFSETTOBACKBUF(off) \
+#define OFFSETTOBACKBUF_M(off) \
   (&state->backbuffer[off])
 
-/** Return if the given pointer is a valid screen attributes pointer. */
-#define VALID_ATTRS(ptr) \
-  ((ptr) >= &state->speccy->screen.attributes[0] && (ptr) < &state->speccy->screen.attributes[SCREEN_ATTRIBUTES_LENGTH])
+static u8 *z80offsettobackbuf(chqstate_t *state, int off, int left, int right)
+{
+  u8 *ptr;
+  assert(VALID_BACKBUF_OFFSET_LR(off, left, right));
+  ptr = OFFSETTOBACKBUF_M(off);
+  assert(VALID_BACKBUF_PTR_LR(ptr, left, right));
+  return ptr;
+}
 
-/** Return if the given pointer is a valid backbuffer pointer. */
-#define VALID_BACKBUF_PTR(ptr) \
-  ((ptr) >= &state->backbuffer[0] && (ptr) < &state->backbuffer[BACKBUFFER_LENGTH])
-
-/** Return if the given Z80 address is a valid backbuffer address. */
-#define VALID_BACKBUF_ADDR(addr) \
-  ((addr) >= BACKBUFFER_START_ADDRESS && (addr) < BACKBUFFER_END_ADDRESS)
+#define OFFSETTOBACKBUF(off)                 z80offsettobackbuf(state, off, 0, 0)
+#define OFFSETTOBACKBUF_LR(off, left, right) z80offsettobackbuf(state, off, left, right)
 
 /* ----------------------------------------------------------------------- */
 
@@ -942,10 +1148,10 @@ static void dr_dispatch_fill(chqstate_t *state, int Bfill_pattern, int Chorizon,
                              int DEbackbuf, int Lrow);
 static void dr_advance_unfilled(chqstate_t *state, int DEbackbuf,
                                   int Lrow, int Adash_fill);
-static void dr_write_scanline_unfilled(chqstate_t *state, int DEbackbuf);
+static void dr_write_scanline_unfilled(chqstate_t *state, int DEbackbuf, int Lrow);
 static void dr_rollover_filled(chqstate_t *state, int DEbackbuf,
                                    int Lrow, int Adash_fill);
-static void dr_rollover_unfilled(chqstate_t *state, int DEbackbuf);
+static void dr_rollover_unfilled(chqstate_t *state, int DEbackbuf, int Lrow);
 static void dr_enter_filled(chqstate_t *state, int DEbackbuf,
                                 int Lrow, int Adash_fill);
 static void dr_advance_filled(chqstate_t *state, int DEbackbuf, int Lrow,
@@ -953,13 +1159,14 @@ static void dr_advance_filled(chqstate_t *state, int DEbackbuf, int Lrow,
 static void dr_fill(chqstate_t *state, int DEbackbuf, int Lrow,
                     int Adash_fill);
 static void dr_fill_left_stripe(chqstate_t *state, u8 *SPoutput, int jump_index,
-                    int DEbackbuf, int HLfill);
+                    int DEbackbuf, int HLfill, int Lrow);
 
 static void pre_shift_backdrop(chqstate_t *state);
 
 static void forked_road_plotter(chqstate_t *state, u8 *IXlanes, u8 *IYheight);
 
-static void backdrop_fill_choice(chqstate_t *state);
+static void dr_start_backdrop_fill(chqstate_t *state, int DEbackbuf, int Lrow);
+static void backdrop_fill_choice(chqstate_t *state, int DEbackbuf, int Lrow);
 
 static void build_curve_table(chqstate_t *state, int forked);
 static void build_curve_table_fill(chqstate_t *state,
@@ -10534,21 +10741,21 @@ static void update_screen(chqstate_t *state)
       memcpy(scr - 16, buf, 16); scr += 256; buf += 256;
       memcpy(scr - 16, buf, 16); scr += 256; buf += 256;
       memcpy(scr - 16, buf, 16); scr += 256; buf += 256;
-      bufoffset = BACKBUFTOOFFSET(buf); // Conv: convert back to offset
+      bufoffset = BACKBUFTOOFFSET_LR(buf, 0, 256); // Conv: convert back to offset
       // Loop on the first pass (4 lines of 8 done) but not the second
     } while (bufoffset & (1 << 10));
 
     // Now move over to the right hand side
     // e.g. (0xF001 + 8*256 - 0x7F0) == 0xF011 on the first pass
     buf = OFFSETTOBACKBUF(bufoffset - 0x07F0);
-    scroff = SCREENTOOFFSET(scr) - 0x07F2;
+    scroff = SCREENTOOFFSET_LR(scr, 0, 256) - 0x07F2;
     scr = OFFSETTOSCREEN(scroff);
     do {
       memcpy(scr - 14, buf, 14); scr += 256; buf += 256;
       memcpy(scr - 14, buf, 14); scr += 256; buf += 256;
       memcpy(scr - 14, buf, 14); scr += 256; buf += 256;
       memcpy(scr - 14, buf, 14); scr += 256; buf += 256;
-      bufoffset = BACKBUFTOOFFSET(buf); // Conv: convert back to offset
+      bufoffset = BACKBUFTOOFFSET_LR(buf, 0, 256); // Conv: convert back to offset
       // Loop on the first pass (4 lines of 8 done) but not the second
     } while (bufoffset & (1 << 10));
 
@@ -10596,14 +10803,14 @@ static void update_screen(chqstate_t *state)
       buf = ADDRTOBACKBUF((H << 8) | L); // reposition to next row-group
 
       if (!overflow) {
-        scroff = SCREENTOOFFSET(scr) - 0x07EE;
+        scroff = SCREENTOOFFSET_LR(scr, 0, 256) - 0x07EE;
         scr = OFFSETTOSCREEN(scroff);
       } else {
         // 64-row midpoint: jump to the ZX screen's bottom third
         scr = ADDRTOSCREEN(0x5011); // (136, 128)
       }
     } else {
-      scroff = SCREENTOOFFSET(scr) - 0x07EE;
+      scroff = SCREENTOOFFSET_LR(scr, 0, 256) - 0x07EE;
       scr = OFFSETTOSCREEN(scroff);
       buf -= 16;
     }
@@ -11587,21 +11794,27 @@ dt_exit:
   // Conv: SP restore removed
 }
 
-/** Return word pointer to the 256-byte Z80 road table ($E7..$EC) given a Z80 address. */
+/** Return byte pointer to the start of the 256-byte Z80 road-position page ($E7..$ED). */
+static u8 *xpos2addr(chqstate_t *state, int hi)
+{
+  switch (hi) {
+  case 0xE7: return (u8 *)state->xpos_road_left - 256; /* within _gap_e364 */
+  case 0xE8: return (u8 *)state->xpos_road_left;
+  case 0xE9: return (u8 *)state->xpos_road_centre_left;
+  case 0xEA: return (u8 *)state->xpos_road_centre;
+  case 0xEB: return (u8 *)state->xpos_road_centre_right;
+  case 0xEC: return (u8 *)state->xpos_road_right;
+  case 0xED: return (u8 *)state->xpos_road_fork_right;
+  default:   return NULL;
+  }
+}
+
+/** Return word pointer into a road-position table given a Z80 address. */
 static u16 *addr2xpos(chqstate_t *state, int z80addr)
 {
-  u8 lo;
-
-  lo = (z80addr & 0xFF) >> 1; /* bytes to words */
-  switch (z80addr >> 8) {
-  case 0xE7: return &state->xpos_road_left[lo - 128]; /* within _gap_e364 */
-  case 0xE8: return &state->xpos_road_left[lo];
-  case 0xE9: return &state->xpos_road_centre_left[lo];
-  case 0xEA: return &state->xpos_road_centre[lo];
-  case 0xEB: return &state->xpos_road_centre_right[lo];
-  case 0xEC: return &state->xpos_road_right[lo];
-  default: assert(0);
-  }
+  u8 *base = xpos2addr(state, z80addr >> 8);
+  assert(base != NULL);
+  return (u16 *)(base + (z80addr & 0xFE));
 }
 
 /**
@@ -11667,7 +11880,10 @@ static void draw_road_scene_change(chqstate_t *state, u8 *IXlanes, u8 *IYheight,
 
   IYheight--;
 
-  /* $C2FA-$C304: adjust H based on bits 5 and 7 of L_lane_flags */
+  /* $C2FA-$C304: adjust H based on bits 5 and 7 of L_lane_flags.
+   * Z80 $C4C1 LD H,A left H = (IX[0] & 3) + 0xE7, stored by dr_read_lanes in
+   * dr_left_table_hi_1; bit-5-clear path uses that default unchanged. */
+  H_left_table_hi = (u8)state->dr_left_table_hi_1;
   if (L_lane_flags & (1 << 5)) { /* if bit 5 set */
     H_left_table_hi = 0xEC;
     if ((L_lane_flags & (1 << 7)) == 0) /* bit 7 clear */
@@ -11901,6 +12117,8 @@ static void draw_road(chqstate_t *state)
   IYheightptr = &state->height_table[1];
   Chorizon = 96 - *IYheightptr; /* 96 = horizon row offset from screen bottom */
   IXlanesptr = ROADBUF_FWD2PTR(ROADBUF_LANES_OFFSET);
+  state->dr_iy_height_ptr = IYheightptr;
+  state->dr_ix_lanes_ptr  = IXlanesptr;
 
   // Set initial road stripe state
   Blanesdataoffset = IXlanesptr - &state->road_buffer_start[0];
@@ -11923,8 +12141,6 @@ static void draw_road(chqstate_t *state)
   state->dr_right_edge_offset = Lstripe_height + 1; // 17 or 49
   state->dr_callback = dr_four_lane_highway;
   Lrow = 0xFF;
-  // This is a Z80 address beyond the end of the buffer (not an offset!) - it
-  // must be decremented before first write.
   DEbackbuf = 0x0100;
   state->dr_fill_pattern = Bfill_pattern;
 
@@ -12075,7 +12291,6 @@ static void dr_set_lane_callback(chqstate_t *state, int Bfill_pattern,
 {
   state->dr_callback = HLdash_callback;
   // EXX - UNBANK (we enter banked)
-  assert(DEbackbuf >= 0xF000 || DEbackbuf <= 0x0100);
   dr_dispatch_fill(state, Bfill_pattern, Chorizon, DEbackbuf, Lrow); // was FALLTHROUGH
 }
 
@@ -12095,7 +12310,6 @@ static void dr_dispatch_fill(chqstate_t *state, int Bfill_pattern, int Chorizon,
 
   Afill_pattern = Bfill_pattern;
   if (Afill_pattern) {
-    assert(DEbackbuf >= 0xF000 || DEbackbuf <= 0x0100);
     dr_enter_filled(state, DEbackbuf, Lrow, Afill_pattern); // exit via
     return;
   }
@@ -12104,7 +12318,6 @@ static void dr_dispatch_fill(chqstate_t *state, int Bfill_pattern, int Chorizon,
   state->dr_fill_fn = dr_advance_unfilled;
   // EXX
   // EX AF,AF'
-  assert(DEbackbuf >= 0xF000 || DEbackbuf <= 0x0100);
   dr_advance_unfilled(state, DEbackbuf, Lrow,
                         Afill_pattern); // was FALLTHROUGH
 }
@@ -12122,17 +12335,18 @@ static void dr_advance_unfilled(chqstate_t *state, int DEbackbuf,
 {
   int Ahi;
 
+  /* Z80 $C55F-$C563: LD A,D; DEC D; AND $0F; JR Z,rollover.
+   * The rollover check is on the ORIGINAL D (before DEC), matching
+   * dr_advance_filled which does the same via 'A = DEbackbuf >> 8'
+   * before HI_DEC. */
+  Ahi = (DEbackbuf >> 8) & 0x0F;
   HI_DEC(DEbackbuf);
-  Ahi = DEbackbuf >> 8;
-  Ahi &= 0x0F;
   if (Ahi == 0) {
-    assert(DEbackbuf >= 0xF000 || DEbackbuf <= 0x0100);
-    dr_rollover_unfilled(state, DEbackbuf); // was exit via
+    dr_rollover_unfilled(state, DEbackbuf, Lrow); // was exit via
     return;
   }
 
-  assert(DEbackbuf >= 0xF000 || DEbackbuf <= 0x0100);
-  dr_write_scanline_unfilled(state, DEbackbuf); // was FALLTHROUGH
+  dr_write_scanline_unfilled(state, DEbackbuf, Lrow); // was FALLTHROUGH
 }
 
 /**
@@ -12140,16 +12354,15 @@ static void dr_advance_unfilled(chqstate_t *state, int DEbackbuf,
  *
  * \param[in] state     Pointer to game state.
  * \param[in] DEbackbuf Pointer into backbuffer.
+ * \param[in] Lrow      Road table row byte offset.
  */
-static void dr_write_scanline_unfilled(chqstate_t *state, int DEbackbuf)
+static void dr_write_scanline_unfilled(chqstate_t *state, int DEbackbuf, int Lrow)
 {
-  int B;
   u16 DEdash_backbuf;
   u8  Ldash;
   u8  Hdash;
   u8 *SPoutput;
   u16 HLdash_fill;
-  int Cdash;
 
   if (DEbackbuf < 0xF000 || DEbackbuf > 0x10000) {
     printf("dr_write_scanline_unfilled: DEbackbuf out of bounds: %x\n", DEbackbuf);
@@ -12157,22 +12370,15 @@ static void dr_write_scanline_unfilled(chqstate_t *state, int DEbackbuf)
   }
 
   state->dr_backbuf_1 = DEbackbuf;
-  B = 0xFF; // NOT PASSED ANYWHERE
   // EXX - BANK
   DEdash_backbuf = state->dr_backbuf_1;
-  Ldash = (DEdash_backbuf & 0xFF) + 31;
+  Ldash = (DEdash_backbuf & 0xFF) + 31; // screen address of row's rightmost byte
   Hdash = DEdash_backbuf >> 8;
   SPoutput = ADDRTOBACKBUF((Hdash << 8) | Ldash);
   assert(VALID_BACKBUF_PTR(SPoutput));
 
-  // if (SPoutput < &state->backbuffer[0])
-  //   printf("before backbuf by %ld bytes\n", &state->backbuffer[0] - SPoutput);
-  // else if (SPoutput >= &state->backbuffer[BACKBUFFER_LENGTH])
-  //   printf("after backbuf by %ld bytes\n", SPoutput - &state->backbuffer[BACKBUFFER_LENGTH]);
-
-  HLdash_fill = 0; // fill value
-  Cdash = Ldash; // NOT PASSED ANYWHERE
-  dr_fill_left_stripe(state, SPoutput, 0 /* index */, DEdash_backbuf, HLdash_fill);
+  HLdash_fill = 0; // fill value (zeros for unfilled verge)
+  dr_fill_left_stripe(state, SPoutput, 0 /* index */, DEdash_backbuf, HLdash_fill, Lrow);
 }
 
 /**
@@ -12198,12 +12404,12 @@ static void dr_rollover_filled(chqstate_t *state, int DEbackbuf,
  * \param[in] state     Pointer to game state.
  * \param[in] DEbackbuf Pointer into backbuffer.
  */
-static void dr_rollover_unfilled(chqstate_t *state, int DEbackbuf)
+static void dr_rollover_unfilled(chqstate_t *state, int DEbackbuf, int Lrow)
 {
   LO_ADD(DEbackbuf, -32);
   if ((DEbackbuf & 0xFF) < 224) // if no carry: D += 16
     HI_ADD(DEbackbuf, 16);
-  dr_write_scanline_unfilled(state, DEbackbuf); // exit via
+  dr_write_scanline_unfilled(state, DEbackbuf, Lrow); // exit via
 }
 
 /**
@@ -12221,7 +12427,6 @@ static void dr_enter_filled(chqstate_t *state, int DEbackbuf,
   state->dr_fill_fn = dr_advance_filled;
   // EXX
   // EX AF,AF'
-  assert(DEbackbuf >= 0xF000 || DEbackbuf <= 0x0100);
   dr_advance_filled(state, DEbackbuf, Lrow, Adash_fill); // was FALLTHROUGH
 }
 
@@ -12230,7 +12435,7 @@ static void dr_enter_filled(chqstate_t *state, int DEbackbuf,
  *
  * \param[in] state      Pointer to game state.
  * \param[in] DEbackbuf  Pointer into backbuffer.
- * \param[in] L          Value
+ * \param[in] Lrow       Value
  * \param[in] Adash_fill Fill pattern.
  */
 static void dr_advance_filled(chqstate_t *state, int DEbackbuf, int Lrow,
@@ -12238,16 +12443,13 @@ static void dr_advance_filled(chqstate_t *state, int DEbackbuf, int Lrow,
 {
   int A;
 
-  assert(DEbackbuf >= 0xF000 || DEbackbuf <= 0x0100);
   A = DEbackbuf >> 8;
   HI_DEC(DEbackbuf);
   if ((A & 0x0F) == 0) {
-    assert(DEbackbuf >= 0xF000 || DEbackbuf <= 0x0100);
     dr_rollover_filled(state, DEbackbuf, Lrow, Adash_fill); // exit via
     return;
   }
 
-  assert(DEbackbuf >= 0xF000 || DEbackbuf <= 0x0100);
   dr_fill(state, DEbackbuf, Lrow, Adash_fill); // was FALLTHROUGH
 }
 
@@ -12312,16 +12514,32 @@ static void dr_fill(chqstate_t *state, int DEbackbuf, int Lrow, int Adash_fill)
 
   HLdash = (u8 *)state->xpos_road_right + Ldash_row; // byte read: Ldash is a byte offset, not a u16 index
   Arightval = *HLdash;
+  /* Z80 $C5DC: AND A clears carry before the right-stripe path */
+  carry = 0;
   if (Arightval) {
     Aright_stripe_width = ((s8) Arightval < 0) ? 0 : 15;
   } else {
     Aright_stripe_width = (HLdash[-1] & Cdash_mask) >> 3;
-    RR(Aright_stripe_width);
+    RR(Aright_stripe_width); /* carry is 0 as set above */
   }
   state->dr_right_stripe_width = Aright_stripe_width;
 
-  /* Calculate road jump table target */
-  state->dr_road_width = ~Aright_stripe_width + Bdash_holds_16 + Edash;
+  /* Z80 $C5F3-$C5F5: CPL; ADD A,B; ADD A,E — 8-bit arithmetic.
+   * road_width = (~Aright + 16 + Edash) & 0xFF.
+   * Valid road data satisfies Edash <= Aright, giving road_width 0-15.
+   * If road_width > 15 the Z80 JR SM skips the BC (road) sequence and
+   * lands directly in the left-stripe HL sequence, doing
+   * (30 - road_width) left pushes instead.  Model that by clamping road
+   * to 15 (0 road pushes) and subtracting the excess from the left
+   * stripe jump index (fewer left pushes). */
+  state->dr_road_width = (u8)(~Aright_stripe_width + Bdash_holds_16 + Edash);
+  if (state->dr_road_width > 15) {
+    u8 overflow = state->dr_road_width - 15;
+    state->dr_road_width = 15;
+    state->dr_left_stripe_width = (u8)(state->dr_left_stripe_width + overflow);
+    if (state->dr_left_stripe_width > 15)
+      state->dr_left_stripe_width = 15;
+  }
 
   DEdash_backbuf = state->dr_backbuf_2;
   Ldash_backbuf = (DEdash_backbuf & 0xFF) + 31;
@@ -12339,47 +12557,48 @@ static void dr_fill(chqstate_t *state, int DEbackbuf, int Lrow, int Adash_fill)
   /*  Fill right hand road stripes - starting from right hand side. */
   switch (state->dr_right_stripe_width / 1) {
   default: assert(0);
-  case  0: SPoutput -= 2; *SPoutput = HLfill;
-  case  1: SPoutput -= 2; *SPoutput = HLfill;
-  case  2: SPoutput -= 2; *SPoutput = HLfill;
-  case  3: SPoutput -= 2; *SPoutput = HLfill;
-  case  4: SPoutput -= 2; *SPoutput = HLfill;
-  case  5: SPoutput -= 2; *SPoutput = HLfill;
-  case  6: SPoutput -= 2; *SPoutput = HLfill;
-  case  7: SPoutput -= 2; *SPoutput = HLfill;
-  case  8: SPoutput -= 2; *SPoutput = HLfill;
-  case  9: SPoutput -= 2; *SPoutput = HLfill;
-  case 10: SPoutput -= 2; *SPoutput = HLfill;
-  case 11: SPoutput -= 2; *SPoutput = HLfill;
-  case 12: SPoutput -= 2; *SPoutput = HLfill;
-  case 13: SPoutput -= 2; *SPoutput = HLfill;
-  case 14: SPoutput -= 2; *SPoutput = HLfill;
+  case  0: SPoutput -= 2; SPoutput[0] = SPoutput[1] = (u8)HLfill;
+  case  1: SPoutput -= 2; SPoutput[0] = SPoutput[1] = (u8)HLfill;
+  case  2: SPoutput -= 2; SPoutput[0] = SPoutput[1] = (u8)HLfill;
+  case  3: SPoutput -= 2; SPoutput[0] = SPoutput[1] = (u8)HLfill;
+  case  4: SPoutput -= 2; SPoutput[0] = SPoutput[1] = (u8)HLfill;
+  case  5: SPoutput -= 2; SPoutput[0] = SPoutput[1] = (u8)HLfill;
+  case  6: SPoutput -= 2; SPoutput[0] = SPoutput[1] = (u8)HLfill;
+  case  7: SPoutput -= 2; SPoutput[0] = SPoutput[1] = (u8)HLfill;
+  case  8: SPoutput -= 2; SPoutput[0] = SPoutput[1] = (u8)HLfill;
+  case  9: SPoutput -= 2; SPoutput[0] = SPoutput[1] = (u8)HLfill;
+  case 10: SPoutput -= 2; SPoutput[0] = SPoutput[1] = (u8)HLfill;
+  case 11: SPoutput -= 2; SPoutput[0] = SPoutput[1] = (u8)HLfill;
+  case 12: SPoutput -= 2; SPoutput[0] = SPoutput[1] = (u8)HLfill;
+  case 13: SPoutput -= 2; SPoutput[0] = SPoutput[1] = (u8)HLfill;
+  case 14: SPoutput -= 2; SPoutput[0] = SPoutput[1] = (u8)HLfill;
   case 15: break; // does this happen in practice?
   }
 
   /* Fill blank road surface - continuing from the right hand side. */
   switch (state->dr_road_width / 1) {
   default: assert(0);
-  case  0: SPoutput -= 2; *SPoutput = BCzerofill;
-  case  1: SPoutput -= 2; *SPoutput = BCzerofill;
-  case  2: SPoutput -= 2; *SPoutput = BCzerofill;
-  case  3: SPoutput -= 2; *SPoutput = BCzerofill;
-  case  4: SPoutput -= 2; *SPoutput = BCzerofill;
-  case  5: SPoutput -= 2; *SPoutput = BCzerofill;
-  case  6: SPoutput -= 2; *SPoutput = BCzerofill;
-  case  7: SPoutput -= 2; *SPoutput = BCzerofill;
-  case  8: SPoutput -= 2; *SPoutput = BCzerofill;
-  case  9: SPoutput -= 2; *SPoutput = BCzerofill;
-  case 10: SPoutput -= 2; *SPoutput = BCzerofill;
-  case 11: SPoutput -= 2; *SPoutput = BCzerofill;
-  case 12: SPoutput -= 2; *SPoutput = BCzerofill;
-  case 13: SPoutput -= 2; *SPoutput = BCzerofill;
-  case 14: SPoutput -= 2; *SPoutput = BCzerofill;
+  case  0: SPoutput -= 2; SPoutput[0] = SPoutput[1] = (u8)BCzerofill;
+  case  1: SPoutput -= 2; SPoutput[0] = SPoutput[1] = (u8)BCzerofill;
+  case  2: SPoutput -= 2; SPoutput[0] = SPoutput[1] = (u8)BCzerofill;
+  case  3: SPoutput -= 2; SPoutput[0] = SPoutput[1] = (u8)BCzerofill;
+  case  4: SPoutput -= 2; SPoutput[0] = SPoutput[1] = (u8)BCzerofill;
+  case  5: SPoutput -= 2; SPoutput[0] = SPoutput[1] = (u8)BCzerofill;
+  case  6: SPoutput -= 2; SPoutput[0] = SPoutput[1] = (u8)BCzerofill;
+  case  7: SPoutput -= 2; SPoutput[0] = SPoutput[1] = (u8)BCzerofill;
+  case  8: SPoutput -= 2; SPoutput[0] = SPoutput[1] = (u8)BCzerofill;
+  case  9: SPoutput -= 2; SPoutput[0] = SPoutput[1] = (u8)BCzerofill;
+  case 10: SPoutput -= 2; SPoutput[0] = SPoutput[1] = (u8)BCzerofill;
+  case 11: SPoutput -= 2; SPoutput[0] = SPoutput[1] = (u8)BCzerofill;
+  case 12: SPoutput -= 2; SPoutput[0] = SPoutput[1] = (u8)BCzerofill;
+  case 13: SPoutput -= 2; SPoutput[0] = SPoutput[1] = (u8)BCzerofill;
+  case 14: SPoutput -= 2; SPoutput[0] = SPoutput[1] = (u8)BCzerofill;
   case 15: break; // does this happen in practice?
   }
 
+  // Is this Ldash_row not Lrow?
   dr_fill_left_stripe(state, SPoutput, state->dr_left_stripe_width / 1, DEbackbuf,
-          HLfill); // FALLTHROUGH
+          HLfill, Lrow); // FALLTHROUGH
 }
 
 /**
@@ -12388,11 +12607,12 @@ static void dr_fill(chqstate_t *state, int DEbackbuf, int Lrow, int Adash_fill)
  * \param[in] state      Pointer to game state.
  * \param[in] SPoutput   ... (was SP)
  * \param[in] jump_index ... (was SM)
- * \param[in] DEbackbuf  Pointer into backbuffer.
- * \param[in] HLfill     Fill pattern.
+ * \param[in] DEbackbuf  Pointer into backbuffer. (was DE)
+ * \param[in] HLfill     Fill pattern. (was HL)
+ * \param[in] Lrow       Road table row byte offset.
  */
 static void dr_fill_left_stripe(chqstate_t *state, u8 *SPoutput, int jump_index,
-                                int DEbackbuf, int HLfill)
+                                int DEbackbuf, int HLfill, int Lrow)
 {
   // BANKED ON ENTRY
 
@@ -12400,473 +12620,265 @@ static void dr_fill_left_stripe(chqstate_t *state, u8 *SPoutput, int jump_index,
 
   switch (jump_index) {
   default: assert(0);
-  case  0: SPoutput -= 2; *SPoutput = HLfill;
-  case  1: SPoutput -= 2; *SPoutput = HLfill;
-  case  2: SPoutput -= 2; *SPoutput = HLfill;
-  case  3: SPoutput -= 2; *SPoutput = HLfill;
-  case  4: SPoutput -= 2; *SPoutput = HLfill;
-  case  5: SPoutput -= 2; *SPoutput = HLfill;
-  case  6: SPoutput -= 2; *SPoutput = HLfill;
-  case  7: SPoutput -= 2; *SPoutput = HLfill;
-  case  8: SPoutput -= 2; *SPoutput = HLfill;
-  case  9: SPoutput -= 2; *SPoutput = HLfill;
-  case 10: SPoutput -= 2; *SPoutput = HLfill;
-  case 11: SPoutput -= 2; *SPoutput = HLfill;
-  case 12: SPoutput -= 2; *SPoutput = HLfill;
-  case 13: SPoutput -= 2; *SPoutput = HLfill;
-  case 14: SPoutput -= 2; *SPoutput = HLfill;
+  case  0: SPoutput -= 2; SPoutput[0] = SPoutput[1] = (u8)HLfill;
+  case  1: SPoutput -= 2; SPoutput[0] = SPoutput[1] = (u8)HLfill;
+  case  2: SPoutput -= 2; SPoutput[0] = SPoutput[1] = (u8)HLfill;
+  case  3: SPoutput -= 2; SPoutput[0] = SPoutput[1] = (u8)HLfill;
+  case  4: SPoutput -= 2; SPoutput[0] = SPoutput[1] = (u8)HLfill;
+  case  5: SPoutput -= 2; SPoutput[0] = SPoutput[1] = (u8)HLfill;
+  case  6: SPoutput -= 2; SPoutput[0] = SPoutput[1] = (u8)HLfill;
+  case  7: SPoutput -= 2; SPoutput[0] = SPoutput[1] = (u8)HLfill;
+  case  8: SPoutput -= 2; SPoutput[0] = SPoutput[1] = (u8)HLfill;
+  case  9: SPoutput -= 2; SPoutput[0] = SPoutput[1] = (u8)HLfill;
+  case 10: SPoutput -= 2; SPoutput[0] = SPoutput[1] = (u8)HLfill;
+  case 11: SPoutput -= 2; SPoutput[0] = SPoutput[1] = (u8)HLfill;
+  case 12: SPoutput -= 2; SPoutput[0] = SPoutput[1] = (u8)HLfill;
+  case 13: SPoutput -= 2; SPoutput[0] = SPoutput[1] = (u8)HLfill;
+  case 14: SPoutput -= 2; SPoutput[0] = SPoutput[1] = (u8)HLfill;
   case 15: break;
   }
 
-#if 0
-  B = E;
-  C--;
-  H = 0xE4; // Point #REGhl at road edge/markings table at $E4xx
+  /* $C63D-$C6AA: road edge and lane marking writes.
+   *
+   * All three sections use the same Lrow (odd = the high/flag byte of the
+   * u16 xpos entry, always 0).  The actual column+row xpos byte is at
+   * Lrow-1 (the low byte of the same entry).
+   *
+   * $C68D DEC L + $C6AB DEC L: two permanent decrements per scanline,
+   * stepping Lrow by -2 so it stays on odd offsets (high-byte positions). */
+  {
+    int        row_lo  = DEbackbuf & 0xFF;
+    int        row_hi  = DEbackbuf >> 8;
+    int        xpos_hi = state->dr_left_table_hi_1;
+    u8         neg_cnt; /* Z80 B register — must wrap at 8 bits */
+    const u8  *tbl;
+    u8        *dst;
+    int        E, L;
+    u8         xpos;
 
-  // EXX - bank/unbank
+    /* Left outer edge ($C643-$C666): AND-OR blend at E, direct copy at E+1 */
+    tbl = xpos2addr(state, xpos_hi);
+    if (tbl && tbl[Lrow] == 0) {
+      xpos = tbl[(Lrow - 1) & 0xFF];
+      L = ((xpos & 7) << 2) + state->dr_edge_graphic_offset;
+      E = ((xpos >> 3) & 0x1F) + row_lo;
+      dst = ADDRTOBACKBUF((row_hi << 8) | (u8)E);
+      if (VALID_BACKBUF_PTR(dst) && VALID_BACKBUF_PTR(dst + 1)) {
+        int gi = L - 0x10;
+        if (gi >= 0 && gi + 3 < (int)sizeof(edge_markings)) {
+          dst[0] = (dst[0] & edge_markings[gi]) | edge_markings[gi + 1];
+          dst[1] = edge_markings[gi + 3];
+        }
+      }
+    }
 
-  // was H = state->dr_left_table_hi_1;
-  switch (state->dr_left_table_hi_1) {
-  default: assert(0);
-  case 0xE8: HLxpos = &state->xpos_road_left[L]; break;
-  case 0xE9: HLxpos = &state->xpos_road_centre_left[L]; break;
-  case 0xEA: HLxpos = &state->xpos_road_centre[L]; break;
+    /* Inner lane markings ($C667-$C686): two direct copies per boundary.
+     * neg_cnt is u8 to replicate Z80 INC B wrap-at-256 exit semantics. */
+    neg_cnt = (u8)state->dr_neg_lane_count;
+    while (++neg_cnt != 0) { /* $C667 INC B / $C668 JR Z exit */
+      tbl = xpos2addr(state, ++xpos_hi);
+      if (!tbl || tbl[Lrow] != 0) continue;
+      if (!state->dr_stripe_table_offset) continue;
+      xpos = tbl[(Lrow - 1) & 0xFF];
+      L = ((xpos & 7) << 1) + state->dr_stripe_table_offset;
+      E = ((xpos >> 3) & 0x1F) + row_lo;
+      dst = ADDRTOBACKBUF((row_hi << 8) | (u8)E);
+      if (VALID_BACKBUF_PTR(dst) && VALID_BACKBUF_PTR(dst + 1)) {
+        int mi = L - 0xD0;
+        if (mi >= 0 && mi + 1 < (int)sizeof(lane_markings)) {
+          dst[0] = lane_markings[mi];
+          dst[1] = lane_markings[mi + 1];
+        }
+      }
+    }
+
+    /* Right outer edge ($C68A-$C6AA): direct copy at E, AND-OR blend at E+1.
+     * $C68D DEC L happens here: xpos is read from Lrow-1 (even byte). */
+    tbl = xpos2addr(state, state->dr_right_table_hi_1);
+    if (tbl && tbl[Lrow] == 0) {
+      xpos = tbl[(Lrow - 1) & 0xFF];
+      L = ((xpos & 7) << 2) + state->dr_right_edge_offset;
+      E = ((xpos >> 3) & 0x1F) + row_lo;
+      dst = ADDRTOBACKBUF((row_hi << 8) | (u8)E);
+      if (VALID_BACKBUF_PTR(dst) && VALID_BACKBUF_PTR(dst + 1)) {
+        int gi = L - 0x10;
+        if (gi >= 0 && gi + 2 < (int)sizeof(edge_markings)) {
+          dst[0] = edge_markings[gi];
+          dst[1] = (dst[1] & edge_markings[gi + 1]) | edge_markings[gi + 2];
+        }
+      }
+    }
   }
 
-  Axpos = *HLxpos;
-  if (Axpos == 0) {
-    // Otherwise zero.
-    A = HLxpos[-1];
+  /* $C68D + $C6AB: two permanent DEC Ls advance by one u16 entry per scanline */
+  Lrow -= 2;
 
-    // EXX - bank/unbank
-
-    /* Build address of road edge marking graphic. */
-    Eindex = A; // save index
-    A &= 7; // select row number 0..7
-    A <<= 2; // Turn into a scanline offset (4 bytes per row)
-    A += state->dr_edge_graphic_offset; // Add offset of current edge marking graphic ($10,$30,$50,$70,$90,$B0)
-    L = A; // Set #REGhl to road edge marking address
-
-    // Top five bits select screen buffer addr?
-    // If I break this it seems to affect the left hand side only.
-    E = ((Eindex >> 3) & 31) + Bneg_lane_count;
-
-    // AND-OR masking here. #REGde is address of screen buffer byte. #REGhl is
-    // address of mask byte, followed by bitmap byte [then again since the edges are
-    // 16x8]
-    *DEbackbuf = (*DEbackbuf & HL[0]) | HL[1];
-    HL += 3;
-    DEbackbuf++;
-    *DEbackbuf++ = *HL++; BC--; // was LDI
-
-    // EXX - bank/unbank
+  /* $C6B0-$C702: stripe / edge-thickness state update.
+   *
+   * In Z80 this section runs when the banked C counter hits zero.  That
+   * counter is reset on every dr_write_scanline_unfilled call, so in
+   * practice it almost never reaches zero from the main JP-NZ loop.
+   * Instead the stripe alternation is driven here on every scanline pair
+   * via dr_initial_stripe_state, which produces the same net period.
+   *
+   * $C6B2-$C6B9: toggle dr_initial_stripe_state; when it falls to 0
+   * (every other scanline) update the verge fill pattern and offsets. */
+  state->dr_initial_stripe_state ^= 1;
+  if (!state->dr_initial_stripe_state) {
+    state->dr_fill_pattern        ^= 0x55;
+    state->dr_edge_graphic_offset ^= 0x20;
+    /* $C6CC INC A: right_edge_offset = toggled dr_edge_graphic_offset + 1 */
+    state->dr_right_edge_offset    = state->dr_edge_graphic_offset + 1;
+    state->dr_stripe_table_offset ^= state->dr_stripe_xor_base;
   }
 
-  // Perhaps a loop for road lane markings
-  for (;;) {
-    if (++B == 0)
-      break; // exit loop
-
-    HL += 256; // was H++
-    if (*HL) // Read from road left drawing table e.g $E89F
-      continue; // loop if nonzero
-
-    A = HL[-1]; // CHECK needs wraparound?
-    // EXX
-    E = A;
-    L = ((A & 7) << 1) + state->dr_stripe_table_offset;
-    E = ((E >> 3) & 31) + B;
-    *DEbackbuf++ = *HL++, BC--;
-
-    /* This reads an (unmasked) road lane marker bitmap byte from $E4D0+. */
-    *DEbackbuf = *HL;
-    // EXX
+  /* $C6D8-$C702: edge-thickness countdown.  When the counter reaches
+   * zero the stripe_xor_base advances by 16 (thickening the edge over
+   * distance), the edge graphic offset steps forward by 64, and the
+   * counter resets to 5. */
+  if (!--state->dr_edge_thickness) {
+    u8 new_xor = (u8)(state->dr_stripe_xor_base + 0x10);
+    if (new_xor > state->dr_stripe_xor_base) { /* no 8-bit carry */
+      state->dr_stripe_xor_base = new_xor;
+      if (state->dr_stripe_table_offset)
+        state->dr_stripe_table_offset = new_xor;
+    }
+    state->dr_edge_graphic_offset += 0x40;
+    state->dr_edge_thickness = 5;
   }
 
-dr_c68a:
-  H = state->dr_right_table_hi_1; // eg. $EC
-  A = *HL;
-  L--;
-  if (A)
-    goto dr_c6ab;
-  A = *HL;
-  // EXX
-  E = A;
+  /* $C703: IY/IX height-table and lane-pointer advance.
+   *
+   * IY steps through height_table[1..21]; IXl wraps through the road
+   * buffer lanes slot.  Both advance once per rendered scanline (matching
+   * the C port's per-scanline execution of the outer-loop body).
+   *
+   * Guard: dr_iy_height_ptr is NULL if draw_road hasn't run yet (e.g.
+   * in draw_road_scene_change-only test paths). */
+  if (state->dr_iy_height_ptr != NULL &&
+      state->dr_iy_height_ptr < &state->height_table[21]) {
+    u8  A_prev_height; /* height at current IY position before advance (was A) */
+    u8  A_zdiff;       /* (24-bit) height diff as u8 for Z80 signed comparison (was A) */
+    u8  C_lane_byte;   /* lane-flags byte from IX[0] in straight-road check (was C) */
+    int A_tunnel;      /* tunnel dr_in_tunnel value: 1 normal, 0 if bit 4 set (was A) */
+    int C_chorizon;    /* Conv: horizon row for re-dispatch, approx from IY height */
+    u8  C_acc;         /* descent accumulator: running u8 sum of height diffs (was C) */
+    u8  C_lane_c;      /* lane-flags byte from IX[0] in descent loop (was C) */
+    u8  A_prev2;       /* height at IY before advance in descent loop (was A) */
+    u8  A_new_diff;    /* height diff in descent loop = prev2 - IY[0] (was A) */
+    u8  A_acc;         /* sum new_diff + C_acc for descent loop exit test (was A) */
+    int A_tun;         /* tunnel dr_in_tunnel value in descent loop (was A) */
 
-  /* Must be the right hand edge handling */
-  L = ((A & 7) << 2) + state->dr_right_edge_offset; // - as above but * 4
-  E = ((E >> 3) & 31) + B;
-  *DEbackbuf++ = *HL++, BC--;
+    A_prev_height = *state->dr_iy_height_ptr;
+    state->dr_iy_height_ptr++;
+    WRAPPINGINCREMENT(state->dr_ix_lanes_ptr, state->road_buffer_start);
+    A_zdiff = (u8)((int)A_prev_height - (int)*state->dr_iy_height_ptr);
 
-  /* AND-OR masking here. This affects road lines when altered. */
-  A = *DEbackbuf & *HL;
-  L++;
-  *DEbackbuf = A | *HL;
-  // EXX
+    if (A_zdiff == 0) {
+      /* $C715: heights equal — straight road.
+       * Two more DEC Ls (matching Z80 $C715-$C716). */
+      Lrow -= 2;
 
-dr_c6ab:
-  L--;
-  C--;
-  if (NZ) {
-    state->dr_fill_fn(state, B, D);
-    return;
-  }
-  // EX AF,AF'
-  B = A;
+      C_lane_byte = *state->dr_ix_lanes_ptr; /* $C718 LD C,(IX+0) */
+      if (!(C_lane_byte & (1 << 6))) {
+        /* bit 6 clear: normal road — fall through */
+      } else if (C_lane_byte & (1 << 7)) {
+        /* bit 7 set: dirt track — fall through */
+      } else {
+        /* $C724-$C743: tunnel entry/transition.
+         * bit 2: set tunnel-distance SM; bit 4: selects visible value 1 or 2. */
+        A_tunnel = 1;
+        if (C_lane_byte & (1 << 2)) {
+          state->dt_tunnel_distance =
+            (u8)(state->dr_iy_height_ptr - &state->height_table[0]);
+          if (C_lane_byte & (1 << 4)) {
+            state->dt_tunnel_visible = 2;
+            A_tunnel = 0;
+          } else {
+            state->dt_tunnel_visible = 1;
+          }
+        }
+        state->dr_in_tunnel = (u8)A_tunnel;
+      }
+      /* $C71C JP Z,$C6B2 / $C721 JP NZ,$C6B2 / $C743 JP $C6B2:
+       * all fall through to the tail-call below. */
 
-  /* This causes the alternating road stripes */
-dr_set_stripes:
-  A = state->dr_initial_stripe_state ^
-      1; // loads (<lanes data offset> & 1) and toggles
-  state->dr_initial_stripe_state = A;
-  if (A)
-    goto dr_stripe_perhaps_on;
+    } else if ((s8)A_zdiff > 0) {
+      /* $C794: road height increasing (A_zdiff = 0x01..0x7F). */
+      if (A_zdiff < 0x50) {
+        /* $C797 JP C,$C4AD: small rise — re-dispatch lane geometry. */
+        C_chorizon = 96 - (int)*state->dr_iy_height_ptr;
+        dr_read_lanes(state, state->dr_ix_lanes_ptr, (u8 *)state->dr_iy_height_ptr,
+                      state->dr_fill_pattern, C_chorizon, DEbackbuf, Lrow);
+      } else {
+        /* $C79A: large rise — fall through to backdrop fill */
+        dr_start_backdrop_fill(state, DEbackbuf, Lrow);
+      }
+      return;
 
-dr_stripe_perhaps_off:
-  A = state->dr_fill_pattern ^ 0x55; // toggle fill pattern
-  state->dr_fill_pattern = A;
-
-  B = A; // copy stripe fill
-  /* This causes the road edge stripes. */
-  state->dr_edge_graphic_offset ^=
-    0x20; // switch between adjacent edge graphics (that are 32 bytes each)
-  state->dr_right_edge_offset = A + 1; // ?advance past a mask byte (guess)?
-  state->dr_stripe_table_offset ^= state->dr_stripe_xor_base;
-
-dr_stripe_perhaps_on:
-  A = state->dr_edge_thickness - 1; // load edge width value & decrement
-  state->dr_edge_thickness = A;
-  if (A)
-    goto dr_edge_width_handled;
-
-  /* Otherwise edge width value was zero */
-  A = state->dr_stripe_xor_base + 16;
-  if (carry)
-    goto dr_edge_width_handled;
-
-  state->dr_stripe_xor_base = A;
-  C = A;
-  A = state->dr_stripe_table_offset;
-  if (A == 0)
-    goto dr_c6f6;
-  A = C;
-  state->dr_stripe_table_offset = A;
-
-dr_c6f6:
-  state->dr_edge_graphic_offset += 64; // next road edge graphic?
-  state->dr_edge_thickness = 5;
-
-  // Sampled IY = $E301..$E315
-
-dr_edge_width_handled:
-  A = IY[0];
-  IY++;
-
-  // Sampled IX = $EEC5..$EED9
-  IX.low++; // CHECK wrapping
-  A -= IY[0];
-  if (A == 0)
-    goto dr_c715;
-  if ((s8) A >= 0)
-    goto dr_c794;
-  goto dr_c746;
-
-dr_c715:
-  L -= 2;
-
-  // Sampled IX = $EE2C ... EE39 EE45
-
-  C = IX[0]; // Load the lanes flags byte
-  if ((C & (1 << 6)) == 0) // Bit 6 indicates tunnel or dirt track
-    goto dr_set_stripes; // Jump (likely a loop) if clear (neither tunnel nor dirt track)
-
-  /* Tunnel or dirt track. */
-  if (C & (1 << 7))
-    goto dr_set_stripes; // Jump (loop?) if set (dirt track only)
-
-  /* Tunnel */
-  B = 255;
-  A = 1; // Load 1  -- value for (tunnel related)
-  if ((C & (1 << 2)) == 0)  // Bit 2 indicates tunnel start
-    goto dr_c740;
-
-  A = IY.low;
-  state->dt_tunnel_distance = A;
-  A = 1;
-  B++;
-  old_C = C;
-  C = A;
-  if ((old_C & (1 << 4)) == 0)
-    goto dr_c73c;
-
-  B--;
-  A++;
-  C--;
-
-dr_c73c:
-  state->dt_tunnel_visible = A;
-  A = C;
-
-dr_c740:
-  state->dr_in_tunnel = A;
-  goto dr_set_stripes;
-
-
-  /* Variation: */
-
-dr_c746:
-  C = IX[0];
-  if ((C & (1 << 6)) == 0)
-    goto dr_c774;
-  if (C & (1 << 6))
-    goto dr_c774;
-
-  // EX AF,AF'
-  B = 255;
-  A = 1;
-  if ((C & (1 << 2)) == 0)
-    goto dr_c770;
-
-  A = IY.low; // load distance
-  state->dt_tunnel_distance = A;
-
-  A = 1;
-  B++;
-  old_C = C;
-  C = A;
-  if ((old_C & (1 << 4)) == 0)
-    goto dr_c76c;
-
-  B--;
-  A++;
-  C--;
-
-dr_c76c:
-  state->dt_tunnel_visible = A;
-  A = C;
-
-dr_c770:
-  state->dr_in_tunnel = A;
-  // EX AF,AF'
-
-dr_c774:
-  C = A;
-  A = IY[0];
-  IY++;
-  IX.low++;
-  A -= IY[0];
-  if (A >= 0xE0)
-    goto dr_c788;
-  if (A >= 0x50)
-    goto dr_start_backdrop_fill;
-
-dr_c788:
-  L -= 2;
-  A += C;
-  if ((s8) A <= 0)
-    goto dr_c746;
-  C = A;
-  dr_read_lanes(state, IX, IY); // exit via
-  return;
-
-dr_c794:
-  C = A;
-  if (A < 0x50) {
-    dr_read_lanes(state, IX, IY); // exit via
-    return;
+    } else {
+      /* $C746: road height decreasing (A_zdiff = 0x80..0xFF).
+       * Accumulation loop: consume IY/IX entries until running total
+       * resolves to a positive value < 0x50 (re-dispatch) or >= 0x50
+       * (backdrop fill). */
+      C_acc = A_zdiff;
+      for (;;) {
+        C_lane_c = *state->dr_ix_lanes_ptr;
+        /* $C749-$C773: tunnel bits — same logic as $C715 block */
+        if (!(C_lane_c & (1 << 6))) {
+          /* normal road */
+        } else if (C_lane_c & (1 << 7)) {
+          /* dirt track */
+        } else {
+          A_tun = 1;
+          if (C_lane_c & (1 << 2)) {
+            state->dt_tunnel_distance =
+              (u8)(state->dr_iy_height_ptr - &state->height_table[0]);
+            if (C_lane_c & (1 << 4)) {
+              state->dt_tunnel_visible = 2;
+              A_tun = 0;
+            } else {
+              state->dt_tunnel_visible = 1;
+            }
+          }
+          state->dr_in_tunnel = (u8)A_tun;
+        }
+        if (state->dr_iy_height_ptr >= &state->height_table[21])
+          break;
+        A_prev2 = *state->dr_iy_height_ptr;
+        state->dr_iy_height_ptr++;
+        WRAPPINGINCREMENT(state->dr_ix_lanes_ptr, state->road_buffer_start);
+        A_new_diff = A_prev2 - *state->dr_iy_height_ptr;
+        /* $C77F CP $E0: if < 0xE0, check the 0x50 threshold */
+        if (A_new_diff < 0xE0) {
+          if (A_new_diff >= 0x50) {
+            /* $C786 JR NC,$C79A */
+            dr_start_backdrop_fill(state, DEbackbuf, Lrow);
+            return;
+          }
+        }
+        Lrow -= 2; /* $C788 DEC L, DEC L */
+        A_acc = (u8)((int)A_new_diff + (int)C_acc);
+        if (A_acc == 0 || (s8)A_acc < 0) {
+          C_acc = A_acc;
+          continue; /* $C78B JR Z,$C746 / $C78D JP M,$C746 */
+        }
+        /* $C790-$C791: positive — re-dispatch */
+        C_chorizon = 96 - (int)*state->dr_iy_height_ptr;
+        dr_read_lanes(state, state->dr_ix_lanes_ptr, (u8 *)state->dr_iy_height_ptr,
+                      state->dr_fill_pattern, C_chorizon, DEbackbuf, Lrow);
+        return;
+      }
+      return;
+    }
   }
 
-  //  This entry point is used by the routines at #R$CBA4 and #R$CBC5.
-dr_start_backdrop_fill:
-  E++;
-  HL = &state->dt_tunnel_visible; // Load address of x in 'LD A,x' @ #R$C160 (in draw_tunnel)
-  A = state->dr_in_tunnel; // Read 'LD A,x' @ #R$C88F (tunnel related)
-  A |= *HL;
-  RR(A);
-  if (carry)
-    goto dr_start_sky_fill;
+  /* $C6AD equivalent: tail-call the advance function to render the next
+   * scanline above this one.  The recursion unwinds naturally when
+   * dr_write_scanline_unfilled / dr_fill reject an out-of-range
+   * DEbackbuf (backbuffer fully consumed). */
+  state->dr_fill_fn(state, DEbackbuf, Lrow, state->dr_fill_pattern);
 
-  C = D & 15;
-  B = ~((E >> 1) + C) + 0x80;
-  HLhorzlvl = state->session.horizon_level;
-  C = 24;
-  A = H;
-  if ((s8) A < 0)
-    goto dr_start_sky_fill;
-  if (A)
-    goto dr_c7ca;
-
-  A = L - B;
-  if (A >= B)
-    goto dr_c7ca;
-  A += C;
-  if (!carry)
-    goto dr_start_sky_fill;
-  if (A == 0)
-    goto dr_start_sky_fill;
-  C = A;
-
-dr_c7ca:
-  A = C;
-  state->dr_sky_rows = A; // Self modify xx in 'LD BC,$xxyy' @ #R$C80A
-  A += B;
-  if ((s8) >= 0)
-    goto dr_c7db;
-  A = -(A - 127) + C;
-  state->dr_sky_rows = A;
-  C = A;
-
-dr_c7db:
-  BC = (24 - C) * 3; // assuming no overflow from calc of C
-  Ascroll = state->dr_horizon_x_scroll; // Load <self modified> horizon's horizontal shift value (ranges 0..19)
-  // Decide whether to use the pre-shifted or the non-shifted version of the backdrop bitmap.
-  RR(Ascroll);
-  HLbackdropbitmap = &state->pre_shifted_backdrop[0];
-  if (!carry)
-    HLbackdropbitmap = &state->stage->backdrop[0];
-
-dr_c7f2:
-  HL += BC;
-  // EXX - Bank/unbank
-  // #REGa is 0..9 here, turn it back to 0..18 and invert to make jump table target.
-  A = 18 - Ascroll * 2;
-  state->dr_SM_C86C = A;
-  memcpy(&state->dr_c82d_instrs[0], &backdrop_shifting_instrs[A], 18);
-
-  BC = (state->dr_sky_rows << 8) + 10;
-  // EXX
-  A = L;
-  // EX AF,AF'
-  goto dr_c824;
-
-  // Scanline advance pattern.
-dr_c813:
-  E -= 32;
-  if (carry)
-    goto dr_c82a;
-  D -= 16;
-  goto dr_c82a;
-
-dr_c821_apparent_loop_start:
-  // EXX bank/unbank
-  // EX AF,AF'     ; Swap
-  E = A;
-dr_c824:
-  A = D;
-  D--;
-  A &= 0x0F;
-  if (A == 0)
-    goto dr_c813;
-
-  // This entry point is used by the routine at #R$C813.
-dr_c82a:
-  A = E;
-  // EX AF,AF'
-  L = A;
-
-dr_c82d:
-  // 18x NOP here
-
-  *DEbackbuf++ = *HL++; BC--; // was LDI
-  L = A;
-  *DEbackbuf++ = *HL++; BC--; // was LDI
-  *DEbackbuf++ = *HL++; BC--; // was LDI
-  *DEbackbuf++ = *HL++; BC--; // was LDI
-  *DEbackbuf++ = *HL++; BC--; // was LDI
-  *DEbackbuf++ = *HL++; BC--; // was LDI
-  *DEbackbuf++ = *HL++; BC--; // was LDI
-  *DEbackbuf++ = *HL++; BC--; // was LDI
-  *DEbackbuf++ = *HL++; BC--; // was LDI
-  *DEbackbuf++ = *HL++; BC--; // was LDI
-  *DEbackbuf++ = *HL++; BC--; // was LDI
-  L = A;
-  *DEbackbuf++ = *HL++; BC--; // was LDI
-  *DEbackbuf++ = *HL++; BC--; // was LDI
-  *DEbackbuf++ = *HL++; BC--; // was LDI
-  *DEbackbuf++ = *HL++; BC--; // was LDI
-  *DEbackbuf++ = *HL++; BC--; // was LDI
-  *DEbackbuf++ = *HL++; BC--; // was LDI
-  *DEbackbuf++ = *HL++; BC--; // was LDI
-  *DEbackbuf++ = *HL++; BC--; // was LDI
-  *DEbackbuf++ = *HL++; BC--; // was LDI
-  *DEbackbuf++ = *HL++; BC--; // was LDI
-  L = A;
-
-dr_c86c:
-  switch (state->dr_SM_C86C / DIVIDER) {
-  case 0: *DEbackbuf++ = *HL++; BC--; // was LDI
-  case 1: *DEbackbuf++ = *HL++; BC--; // was LDI
-  case 2: *DEbackbuf++ = *HL++; BC--; // was LDI
-  case 3: *DEbackbuf++ = *HL++; BC--; // was LDI
-  case 4: *DEbackbuf++ = *HL++; BC--; // was LDI
-  case 5: *DEbackbuf++ = *HL++; BC--; // was LDI
-  case 6: *DEbackbuf++ = *HL++; BC--; // was LDI
-  case 7: *DEbackbuf++ = *HL++; BC--; // was LDI
-  case 8: *DEbackbuf++ = *HL++; BC--; // was LDI
-  }
-  // EXX
-  A += C;
-  goto dr_c821_apparent_loop_start;
-
-  // EXX
-  // EX AF,AF'
-  E = A;
-
-  // This entry point is used by the routine at #R$C598.
-dr_start_sky_fill:
-  // EX DE,HL
-  L += 30;
-
-  DEfill = 0; // Fill value for blank sky
-  /* The following value is tunnel related: 1 if in tunnel, 0 if not. */
-  // It alternates fast when there is a partial tunnel on screen.
-  if (state->dr_in_tunnel)
-    /* In tunnel. Draw black scanlines for the sky instead of coloured. */
-    DEfill--; /* $0000 -> $FFFF */
-
-  Crowmask = 0x0F; // mask
-
-  /* Decrement the screen address */
-  for (;;) {
-    A = H;
-    H--; // decr row addr
-    A &= Crowmask; // low 4bits of row addr
-    if (A)
-      goto dr_sky_fill_scanline; // easy case
-
-    /* Otherwise it was zero so will need extra work. */
-    L -= 32; // Decrement high three bits of the row address
-    if (!carry)
-      goto dr_sky_fill_fix_address;
-
-    /* Exit. */
-    // (restore SP was here)
-    return;
-
-dr_sky_fill_fix_address:
-    H += 16; // no carry so fixup
-
-    /* Writes #REGde to #REGhl 15 times filling the scanline. Draws the blank upper
-     * part of the sky. DE must always be zero? or what about tunnels? */
-dr_sky_fill_scanline:
-    SPscr = DEfill;
-    SPscr -= 2; *SP = DEfill;
-    SPscr -= 2; *SP = DEfill;
-    SPscr -= 2; *SP = DEfill;
-    SPscr -= 2; *SP = DEfill;
-    SPscr -= 2; *SP = DEfill;
-    SPscr -= 2; *SP = DEfill;
-    SPscr -= 2; *SP = DEfill;
-    SPscr -= 2; *SP = DEfill;
-    SPscr -= 2; *SP = DEfill;
-    SPscr -= 2; *SP = DEfill;
-    SPscr -= 2; *SP = DEfill;
-    SPscr -= 2; *SP = DEfill;
-    SPscr -= 2; *SP = DEfill;
-    SPscr -= 2; *SP = DEfill;
-    SPscr -= 2; *SP = DEfill;
-  }
-#endif
 }
 
 /**
@@ -13123,18 +13135,86 @@ frp_c969: /* $C969: 5-zone fork scanline render */
   B = E;
   C--;
 
-  /* $CA68-$CB2E: Road marking update (reads $E4/$E8/$E9/$EA/$EC tables,
-   * writes road-edge and lane-marking pixels to the back buffer).
-   * Similar to dr_c667_loop in draw_road but for the forked layout. */
-#if 0
-  /* Conv: road markings for the fork path not yet translated */
+  /* $CA68-$CB2E: Road marking update — six fixed boundaries for the fork.
+   * Boundaries step through xpos pages $E8→$ED.  Sections 1 and 4 are
+   * left-edge format (AND-OR blend + LDI copy); sections 3 and 6 are
+   * right-edge format (LDI copy + AND-OR blend); sections 2 and 5 are
+   * lane-marking format (two direct copies).  Section 6 has a permanent
+   * DEC L at $CB11 that precedes the xpos check. */
   {
-    u8 H_mark = 0xE4;
-    /* ... complex EXX+table read+AND-OR-masking chain ... */
-    (void)sm_CA9D; (void)sm_CB00; (void)sm_CA7A;
-    (void)sm_CADC; (void)sm_CB1C; (void)sm_CABB;
+    int        B_row_lo; /* screen address low byte saved from $CA66 LD B,E (was B) */
+    int        D_row_hi; /* screen address high byte (was D) */
+    int        H_xpos_hi; /* current xpos-table page hi byte, $E8→$ED (was H) */
+    const u8  *HLtbl;     /* pointer to the current xpos-position table row (was HL) */
+    u8        *DEmark;    /* backbuffer destination for marking write (was DE) */
+    int        E_col;     /* screen column: (xpos >> 3) & 0x1F + row_lo (was E) */
+    int        L_gfx;     /* graphics address: (xpos & 7) << shift + offset (was L) */
+    int        L_gi;      /* index into edge_markings = L_gfx - 0x10 */
+    int        L_mi;      /* index into lane_markings = L_gfx - 0xD0 */
+    u8         A_xpos;    /* road x-position byte from xpos table (was A) */
+
+    B_row_lo = B;
+    D_row_hi = D;
+    H_xpos_hi = 0xE8;
+
+#define FRP_LEFT_EDGE(off) \
+    HLtbl = xpos2addr(state, H_xpos_hi); \
+    if (HLtbl && HLtbl[L] == 0) { \
+      A_xpos = HLtbl[(L - 1) & 0xFF]; \
+      L_gfx = ((A_xpos & 7) << 2) + (off); \
+      E_col = ((A_xpos >> 3) & 0x1F) + B_row_lo; \
+      DEmark = ADDRTOBACKBUF((D_row_hi << 8) | (u8)E_col); \
+      if (VALID_BACKBUF_PTR(DEmark) && VALID_BACKBUF_PTR(DEmark + 1)) { \
+        L_gi = L_gfx - 0x10; \
+        if (L_gi >= 0 && L_gi + 3 < (int)sizeof(edge_markings)) { \
+          DEmark[0] = (DEmark[0] & edge_markings[L_gi]) | edge_markings[L_gi + 1]; \
+          DEmark[1] = edge_markings[L_gi + 3]; \
+        } \
+      } \
+    }
+#define FRP_LANE_MARK(off) \
+    HLtbl = xpos2addr(state, H_xpos_hi); \
+    if (HLtbl && HLtbl[L] == 0 && (off)) { \
+      A_xpos = HLtbl[(L - 1) & 0xFF]; \
+      L_gfx = ((A_xpos & 7) << 1) + (off); \
+      E_col = ((A_xpos >> 3) & 0x1F) + B_row_lo; \
+      DEmark = ADDRTOBACKBUF((D_row_hi << 8) | (u8)E_col); \
+      if (VALID_BACKBUF_PTR(DEmark) && VALID_BACKBUF_PTR(DEmark + 1)) { \
+        L_mi = L_gfx - 0xD0; \
+        if (L_mi >= 0 && L_mi + 1 < (int)sizeof(lane_markings)) { \
+          DEmark[0] = lane_markings[L_mi]; \
+          DEmark[1] = lane_markings[L_mi + 1]; \
+        } \
+      } \
+    }
+#define FRP_RIGHT_EDGE(off) \
+    HLtbl = xpos2addr(state, H_xpos_hi); \
+    if (HLtbl && HLtbl[L] == 0) { \
+      A_xpos = HLtbl[(L - 1) & 0xFF]; \
+      L_gfx = ((A_xpos & 7) << 2) + (off); \
+      E_col = ((A_xpos >> 3) & 0x1F) + B_row_lo; \
+      DEmark = ADDRTOBACKBUF((D_row_hi << 8) | (u8)E_col); \
+      if (VALID_BACKBUF_PTR(DEmark) && VALID_BACKBUF_PTR(DEmark + 1)) { \
+        L_gi = L_gfx - 0x10; \
+        if (L_gi >= 0 && L_gi + 2 < (int)sizeof(edge_markings)) { \
+          DEmark[0] = edge_markings[L_gi]; \
+          DEmark[1] = (DEmark[1] & edge_markings[L_gi + 1]) | edge_markings[L_gi + 2]; \
+        } \
+      } \
+    }
+
+    FRP_LEFT_EDGE(sm_CA7A)                /* $CA68: H=$E8 */
+    FRP_LANE_MARK(sm_CA9D) H_xpos_hi++;  /* $CA90: H=$E9 */
+    FRP_RIGHT_EDGE(sm_CABB) H_xpos_hi++; /* $CAAD: H=$EA */
+    FRP_LEFT_EDGE(sm_CADC) H_xpos_hi++;  /* $CACE: H=$EB */
+    FRP_LANE_MARK(sm_CB00) H_xpos_hi++;  /* $CAF2: H=$EC */
+    L--;                                  /* $CB11: permanent DEC L before section 6 */
+    FRP_RIGHT_EDGE(sm_CB1C) H_xpos_hi++; /* $CB0F: H=$ED */
+
+#undef FRP_LEFT_EDGE
+#undef FRP_LANE_MARK
+#undef FRP_RIGHT_EDGE
   }
-#endif
 
 frp_after_marking: /* $CB2F */
   L--;  /* $CB2F: DEC L */
@@ -13201,10 +13281,12 @@ frp_cb90: { /* $CB90 */
       goto frp_loop;
     }
     if ((s8)A > 0) {        /* $CB9C: JP P,$CBC5 */
-      /* backdrop_fill_choice ($CBC5) */
-      if (A >= 0x50)
-        return; /* A >= 80: exit to draw_road backdrop fill */
-      goto frp_c915; /* A < 80: re-enter forked road render */
+      /* backdrop_fill_choice ($CBC5): A < 0x50 → re-enter, A >= 0x50 → backdrop fill */
+      if (A >= 0x50) {
+        dr_start_backdrop_fill(state, ((int)D << 8) | E, (int)L); /* $CBCB JP $C79A */
+        return;
+      }
+      goto frp_c915; /* $CBC8 JP C,$C915 */
     }
     /* A < 0 (negative): fall through */
     L = (u8)(L - 2);
@@ -13223,17 +13305,197 @@ frp_next_scanline_c969: /* $C93E */
 // mystery_cba4 would go here, if we knew what it did
 
 /**
- * $CBC5: Backdrop fill choice
+ * $CBC5: Backdrop fill choice — called when height diff >= 0x50 in forked road.
  *
- * \param[in] state Pointer to game state.
+ * The A < 0x50 branch (JP C,$C915) must be handled inline by the caller since
+ * frp_c915 is a label inside forked_road_plotter.  This function handles only
+ * the $CBCB JP $C79A path (diff >= 0x50 → start backdrop fill).
+ *
+ * \param[in] state     Game state.
+ * \param[in] DEbackbuf Screen pointer at call site (D=high, E=low).
+ * \param[in] Lrow      Road table row index at call site.
  */
-static void backdrop_fill_choice(chqstate_t *state)
+static void backdrop_fill_choice(chqstate_t *state, int DEbackbuf, int Lrow)
 {
-//  C = A;
-//  if (A < 80)
-//    goto frp_c915; // inside forked_road_plotter
-//  else
-//    goto dr_start_backdrop_fill; // inside draw_road
+  dr_start_backdrop_fill(state, DEbackbuf, Lrow); /* $CBCB JP $C79A */
+}
+
+/**
+ * $C79A: Backdrop blit + sky fill.
+ *
+ * Blits dr_sky_rows of backdrop data to the ZX screen above the road, then
+ * fills remaining sky rows with 0x00 (open) or 0xFF (tunnel).
+ *
+ * \param[in] state     Game state.
+ * \param[in] DEbackbuf Backbuffer pointer at call site (D=high, E=low).
+ * \param[in] Lrow      Unused here; kept for consistent call signature.
+ */
+static void dr_start_backdrop_fill(chqstate_t *state, int DEbackbuf, int Lrow)
+{
+  int        D;                  /* screen address high byte (was D) */
+  int        E;                  /* screen address low byte after INC E (was E) */
+  int        A;                  /* multi-use accumulator (was A) */
+  int        carry;              /* carry/borrow flag */
+  int        C;                  /* pixel-row nibble → 24 → sky-row count (was C) */
+  int        B;                  /* backdrop bias = ~((E>>1)+C)+0x80 (was B) */
+  int        L_horz;             /* horizon_level low byte for sky-row clamp (was L) */
+  int        BC_backdrop_offset; /* row byte offset into backdrop = (24-C)*10 (was BC) */
+  int        Ascroll;            /* dr_horizon_x_scroll >> 1, selects shift amount (was A) */
+  const u8  *HLbackdrop;         /* pointer to first byte of the current backdrop row (was HL) */
+  int        Bloop;              /* scanline countdown = dr_sky_rows (was B in DJNZ) */
+  int        A_col;              /* backdrop source column; reset per LD L,A via A' (was L/A') */
+  const u8  *HLsrc;              /* backdrop source pointer within the current row (was HL in LDI) */
+  u8        *DEscr;              /* screen destination pointer for backdrop blit (was DE in LDI) */
+  int        n;                  /* LDI count for each fixed and variable blit sub-group */
+  int        i;                  /* byte index into dr_c82d_instrs stream */
+  u8         DE_fill;            /* sky-fill byte: 0x00 open, 0xFF tunnel (was DE = $0000/$FFFF) */
+  u8        *HLscr;              /* screen scanline pointer in sky fill (was HL via SP) */
+
+  (void)Lrow;
+
+  D = (DEbackbuf >> 8) & 0xFF;
+  E = (u8)(DEbackbuf + 1); /* $C79A INC E */
+
+  /* $C79B-$C7A3: tunnel / tunnel-visible check.
+   * RR(dr_in_tunnel | dt_tunnel_visible): carry if LSB set → skip backdrop. */
+  A = (int)state->dr_in_tunnel | (int)state->dt_tunnel_visible;
+  carry = A & 1;
+  if (carry)
+    goto dr_start_sky_fill;
+
+  /* $C7A5: C = D & 0x0F, B = ~((E>>1)+C)+0x80 */
+  C = D & 0x0F;
+  B = (int)(u8)(~((u8)((u8)(E >> 1) + (u8)C)) + 0x80);
+
+  /* $C7AE: load horizon level; H = high byte, L = low byte. */
+  C = 24;
+  A = (int)((state->session.horizon_level >> 8) & 0xFF);
+  if ((s8)(u8)A < 0)
+    goto dr_start_sky_fill;
+  if (A != 0)
+    goto dr_c7ca;
+
+  /* $C7B5-$C7C9: compute sky rows from L vs B */
+  L_horz = (int)(state->session.horizon_level & 0xFF);
+  if ((u8)L_horz >= (u8)B) /* $C7B7 JR NC,$C7CA */
+    goto dr_c7ca;
+  A = (int)(u8)((u8)L_horz - (u8)B) + C; /* $C7B9 ADD A,C */
+  carry = (A > 0xFF);
+  A = (u8)A;
+  if (!carry) goto dr_start_sky_fill; /* $C7BB JR NC */
+  if (A == 0) goto dr_start_sky_fill; /* $C7BD JR Z  */
+  C = A;
+
+dr_c7ca: /* $C7CA */
+  A = C;
+  state->dr_sky_rows = (u8)A;
+  A = (int)(u8)A + (int)(u8)B; /* $C7CE ADD A,B */
+  if ((s8)(u8)A >= 0) goto dr_c7db; /* $C7CF JP P */
+  /* $C7D2-$C7DA: negative sum — clamp sky rows */
+  A = (u8)((u8)A - 127);           /* $C7D2 SUB $7F */
+  A = (u8)(-(int)(s8)(u8)A);       /* $C7D4 NEG      */
+  A = (u8)((int)(u8)A + C);        /* $C7D6 ADD A,C  */
+  state->dr_sky_rows = (u8)A;
+  C = A;
+
+dr_c7db: /* $C7DB */
+  /* $C7DB CPL; ADD $19; RLCA; LD C,A; RLCA; RLCA; ADD A,C → BC = (24-C)*10 */
+  BC_backdrop_offset = (24 - (int)(u8)C) * 10;
+  Ascroll = (int)state->dr_horizon_x_scroll;
+  carry = Ascroll & 1;
+  Ascroll >>= 1; /* $C7E9 RRA */
+  HLbackdrop = carry ? &state->stage->backdrop[0]
+                     : &state->pre_shifted_backdrop[0];
+  HLbackdrop += BC_backdrop_offset; /* $C7F2 ADD HL,BC */
+  A = (u8)(18 - (int)(u8)Ascroll * 2); /* $C7F4-$C7F6 */
+  state->dr_SM_C86C = (u8)A;
+  memcpy(state->dr_c82d_instrs, &backdrop_shifting_instrs[(u8)A], 18);
+
+  /* $C80A: BC = (dr_sky_rows<<8) | 0x0A.  $C80E LD A,L gives backdrop row offset.
+   * In C: HLbackdrop already points to the correct row, so A_col starts at 0
+   * and advances by 10 per scanline (each backdrop row = 10 bytes). */
+  Bloop = (int)state->dr_sky_rows;
+  A_col = 0;
+  goto dr_c824;
+
+  /* $C813: screen pointer row-block advance */
+dr_c813:
+  A = (u8)(E - 32);           /* $C814 SUB $20 */
+  carry = (E < 32);
+  E = A;
+  if (!carry) D = (u8)(D + 16); /* $C81A ADD A,$10 */
+  goto dr_c82a;
+
+dr_c821_blitloop: /* top of per-row blit loop: $C821 EXX; $C822 EX AF,AF'; $C823 LD E,A.
+          * $C823 LD E,A shuttles A_col into E so $C82C LD L,A can pick it up
+          * via the subsequent EX AF,AF'.  E (screen column) stays constant. */
+  ;
+dr_c824: /* $C824: A = D; D--; AND $0F */
+  A = D;
+  D = (u8)(D - 1);
+  if ((A & 0x0F) == 0) goto dr_c813;
+dr_c82a: /* $C82A: A = E; EX AF,AF'; L = A (set backdrop src col to A_col) */
+  /* Blit one screen row.
+   * Source: HLbackdrop + A_col (restarted after each LD L,A).
+   * Dest:   ADDRTOSCREEN(D:E), advancing right per LDI. */
+  DEscr = ADDRTOSCREEN(((u8)D << 8) | (u8)E);
+
+  /* $C82D: 18-byte blit stream (scroll-dependent INC L / LDI mix).
+   * Each slot is 2 bytes: INC L = {0x2C, 0x00}, LDI = {0xED, 0xA0}.
+   * INC L advances the source by 1 (skip); LDI copies one byte. */
+  HLsrc = HLbackdrop + (u8)A_col;
+  for (i = 0; i < 18; ) {
+    if (state->dr_c82d_instrs[i] == 0x2C) {
+      HLsrc++; i += 2;            /* INC L + NOP: skip one source byte */
+    } else {                      /* 0xED 0xA0 = LDI: copy one byte */
+      if (DEscr != NULL) {*DEscr++ = *HLsrc++;} else { DEscr++; HLsrc++; }
+      i += 2;
+    }
+  }
+  /* $C83F: 1 LDI; $C841 LD L,A; $C842-$C854: 10 LDIs */
+  if (DEscr != NULL) {*DEscr++ = *HLsrc++;} else { DEscr++; HLsrc++; }
+  HLsrc = HLbackdrop + (u8)A_col; /* $C841 LD L,A */
+  for (n = 0; n < 10; n++) {
+    if (DEscr != NULL) {*DEscr++ = *HLsrc++;} else { DEscr++; HLsrc++; }
+  }
+  /* $C856 LD L,A; $C857-$C869: 10 LDIs; $C86B LD L,A */
+  HLsrc = HLbackdrop + (u8)A_col; /* $C856 LD L,A */
+  for (n = 0; n < 10; n++) {
+    if (DEscr != NULL) {*DEscr++ = *HLsrc++;} else { DEscr++; HLsrc++; }
+  }
+  HLsrc = HLbackdrop + (u8)A_col; /* $C86B LD L,A */
+  /* $C86C JR (self-modified): JR target = $C86E + dr_SM_C86C →
+   * copies (18 - dr_SM_C86C) / 2 LDIs from the 9-slot variable block.
+   * dr_SM_C86C = 18 - scroll*2: scroll=0 → 0 LDIs, scroll=9 → 9 LDIs. */
+  n = (18 - (int)state->dr_SM_C86C) / 2;
+  for (i = 0; i < n; i++) {
+    if (DEscr != NULL) {*DEscr++ = *HLsrc++;} else { DEscr++; HLsrc++; }
+  }
+  /* $C880 EXX; $C881 ADD A,C (A_col += 10); $C882 DJNZ */
+  A_col = (u8)(A_col + 10);
+  if (--Bloop > 0) goto dr_c821_blitloop;
+
+  /* $C884-$C887: EXX; EX AF,AF'; LD E,A; EX DE,HL — sky fill uses
+   * current screen address (D:E) as HL, with L += 30. */
+dr_start_sky_fill:
+  E = (u8)(E + 30);              /* $C888-$C88B: L += 30 */
+  DE_fill = state->dr_in_tunnel ? 0xFF : 0x00;
+
+  for (;;) {
+    A = D;
+    D = (u8)(D - 1);
+    if ((A & 0x0F) != 0)
+      goto dr_sky_fill_scanline;
+    A = (u8)(E - 32);            /* $C89E SUB $20 */
+    carry = (E < 32);
+    E = A;
+    if (carry) return;           /* $C8A1 JR NC → $C8A3 LD SP,xx; RET */
+    D = (u8)(D + 16);            /* $C8A7-$C8AA: H += 16 */
+dr_sky_fill_scanline:
+    HLscr = ADDRTOATTRS(((u8)D << 8) | (u8)E);
+    if (HLscr - 30 >= &state->speccy->screen.attributes[0])
+      memset(HLscr - 30, DE_fill, 30);
+  }
 }
 
 /**
@@ -13672,7 +13934,7 @@ static void entrypt_common(chqstate_t *state, int Amode_128k, int Bnrelocs)
 
   memcpy(ADDRTOSCREEN(SCREEN_START_ADDRESS), marquee_initial,
          sizeof(marquee_initial));
-  memcpy(ADDRTOSCREEN(SCREEN_ATTRIBUTES_START_ADDRESS), marquee_attrs,
+  memcpy(ADDRTOATTRS(SCREEN_ATTRIBUTES_START_ADDRESS), marquee_attrs,
          sizeof(marquee_attrs));
   if (Amode_128k == 0) {
     // stop_the_tape_48k(state);
