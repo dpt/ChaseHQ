@@ -126,7 +126,7 @@
 #define HI_ADD(v,d) ((v) += ((d) << 8))
 
 /** Decrement the high byte of a 16-bit word `v` */
-#define HI_DEC(v) ((v) -= 0x0100)
+#define HI_DEC(v) ((v) = ((v) - 0x0100) & 0xFFFF)
 
 /** Return ptr advanced by delta modulo 256, assigning back in-place. */
 #define WRAPPING(ptr, delta, base) \
@@ -152,11 +152,12 @@
 
 /** Return if ptr is within the backbuffer, extended by left/right bytes. */
 #define VALID_BACKBUF_PTR_LR(ptr, left, right) \
-((ptr) >= &state->backbuffer[0] - (left) && (ptr) < &state->backbuffer[BACKBUFFER_LENGTH] + (right))
+((ptr) >= &state->backbuffer[-left] && (ptr) < &state->backbuffer[BACKBUFFER_LENGTH + right])
 
 #define VALID_SCREEN(ptr)       VALID_SCREEN_LR(ptr, 0, 0)
 #define VALID_ATTRS(ptr)        VALID_ATTRS_LR(ptr, 0, 0)
 #define VALID_BACKBUF_PTR(ptr)  VALID_BACKBUF_PTR_LR(ptr, 0, 0)
+
 
 /* Address validators */
 
@@ -175,6 +176,7 @@
 #define VALID_SCREEN_ADDR(addr)  VALID_SCREEN_ADDR_LR(addr, 0, 0)
 #define VALID_ATTRS_ADDR(addr)   VALID_ATTRS_ADDR_LR(addr, 0, 0)
 #define VALID_BACKBUF_ADDR(addr) VALID_BACKBUF_ADDR_LR(addr, 0, 0)
+
 
 /* Offset validators */
 
@@ -235,17 +237,19 @@ static u8 *z80addrtoattrs(chqstate_t *state, int addr, int left, int right)
 #define ADDRTOBACKBUF_M(addr) \
   (&state->backbuffer[(addr) - BACKBUFFER_START_ADDRESS])
 
-static u8 *z80addrtobackbuf(chqstate_t *state, int addr, int left, int right)
+static u8 *z80addrtobackbuf(chqstate_t *state, int addr)
 {
   u8 *ptr;
-  assert(VALID_BACKBUF_ADDR_LR(addr, left, right));
-  ptr = ADDRTOBACKBUF_M(addr);
-  assert(VALID_BACKBUF_PTR_LR(ptr, left, right));
+  if (addr < 0x0020) {
+    ptr = ADDRTOBACKBUF_M(0x10000 + addr);
+  } else {
+    assert(addr >= BACKBUFFER_START_ADDRESS && addr < BACKBUFFER_END_ADDRESS);
+    ptr = ADDRTOBACKBUF_M(addr);
+  }
   return ptr;
 }
 
-#define ADDRTOBACKBUF(addr)                 z80addrtobackbuf(state, addr, 0, 0)
-#define ADDRTOBACKBUF_LR(addr, left, right) z80addrtobackbuf(state, addr, left, right)
+#define ADDRTOBACKBUF(addr) z80addrtobackbuf(state, addr)
 
 
 /* Pointer-to-offset converters */
@@ -12374,7 +12378,7 @@ static void dr_write_scanline_unfilled(chqstate_t *state, int DEbackbuf, int Lro
   u8 *SPoutput;
   u16 HLdash_fill;
 
-  if (DEbackbuf < 0xF000 || DEbackbuf > 0x10000) {
+  if (DEbackbuf != 0 && (DEbackbuf < 0xF000 || DEbackbuf > 0x10000)) {
     printf("dr_write_scanline_unfilled: DEbackbuf out of bounds: %x\n", DEbackbuf);
     return;
   }
@@ -12385,7 +12389,6 @@ static void dr_write_scanline_unfilled(chqstate_t *state, int DEbackbuf, int Lro
   Ldash = (DEdash_backbuf & 0xFF) + 31; // screen address of row's rightmost byte
   Hdash = DEdash_backbuf >> 8;
   SPoutput = ADDRTOBACKBUF((Hdash << 8) | Ldash);
-  assert(VALID_BACKBUF_PTR(SPoutput));
 
   HLdash_fill = 0; // fill value (zeros for unfilled verge)
   dr_fill_left_stripe(state, SPoutput, 0 /* index */, DEdash_backbuf, HLdash_fill, Lrow);
@@ -12493,7 +12496,7 @@ static void dr_fill(chqstate_t *state, int DEbackbuf, int Lrow, int Adash_fill)
   u16  BCzerofill;
   u8   overflow;
 
-  if (DEbackbuf < 0xF000 || DEbackbuf > 0x10000) {
+  if (DEbackbuf != 0 && (DEbackbuf < 0xF000 || DEbackbuf > 0x10000)) {
     printf("dr_fill: DEbackbuf out of bounds: %x\n", DEbackbuf);
     return;
   }
@@ -12556,7 +12559,7 @@ static void dr_fill(chqstate_t *state, int DEbackbuf, int Lrow, int Adash_fill)
   Ldash_backbuf = (DEdash_backbuf & 0xFF) + 31;
   Hdash_backbuf = DEdash_backbuf >> 8;
   SPoutput = ADDRTOBACKBUF((Hdash_backbuf << 8) | Ldash_backbuf);
-  assert(VALID_BACKBUF_PTR(SPoutput));
+  assert(VALID_BACKBUF_PTR_LR(SPoutput, 0, 0x20)); // allow $001F
 
   // EX AF,AF' - unbank Afill
 
@@ -12651,7 +12654,7 @@ static void dr_fill_left_stripe(chqstate_t *state, u8 *SPoutput, int jump_index,
 
   // BANKED ON ENTRY
 
-  assert(VALID_BACKBUF_PTR(SPoutput));
+  assert(VALID_BACKBUF_PTR_LR(SPoutput, 0, 0x20)); // allow $001F
 
   switch (jump_index) {
   default: assert(0);
@@ -12826,6 +12829,7 @@ static void dr_fill_left_stripe(chqstate_t *state, u8 *SPoutput, int jump_index,
       if (A_zdiff < 0x50) {
         /* $C797 JP C,$C4AD: small rise — re-dispatch lane geometry. */
         C_chorizon = 96 - (int)*state->dr_iy_height_ptr;
+        // THIS CAUSES RECURSION....
         dr_read_lanes(state, state->dr_ix_lanes_ptr, (u8 *)state->dr_iy_height_ptr,
                       state->dr_fill_pattern, C_chorizon, DEbackbuf, Lrow);
       } else {
