@@ -575,9 +575,11 @@ static void setwordat(u8 *addr, int value)
  */
 static u16 nextscrrow(int screen)
 {
+  int t;
+
   screen += 256;
   if (((screen >> 8) & 7) == 0) {
-    int t = (screen & 0xFF) + 32;
+    t = (screen & 0xFF) + 32;
     screen = (screen & 0xFF00) | (t & 0xFF);
     if (t < 0x100) { /* didn't carry */
       t = (screen >> 8) - 8; /* reduce? */
@@ -596,6 +598,7 @@ static u16 nextscrrow(int screen)
 static u16 prevbufrow(int backbuf)
 {
   int orig;
+  int t;
 
   assert(VALID_BACKBUF_ADDR(backbuf));
 
@@ -603,7 +606,7 @@ static u16 prevbufrow(int backbuf)
   backbuf -= 0x0100;
   if ((orig & 0x0F00) == 0) { /* field LLLL was zero on entry */
     backbuf += 0x1000; /* 1110 -> 1111 */
-    int t = (backbuf & 0xFF) - 32; /* decrement field RRRC */
+    t = (backbuf & 0xFF) - 32; /* decrement field RRRC */
     backbuf = (backbuf & 0xFF00) | (t & 0xFF);
     // DPT: Claude deleted this bit here and I don't trust it.
     /* t < 0 means L borrowed; the Z80 8-bit wrap is already captured by (t & 0xFF) above */
@@ -1505,15 +1508,16 @@ static void attract_mode_hook(chqstate_t *state)
  */
 static void bootstrap(chqstate_t *state)
 {
+  int  carry;
+  u8   Cresult;     /* was C */
+  u8  *HLflipped;   /* was HL */
+  int  Biterations; /* was B */
+  u8   Aindex;      /* was A */
+
   // Bootstrap is itself a loop
   for (;;) {
-    int  carry = 0;
-    u8  *HLflipped;   /* was HL */
-    int  Biterations; /* was B */
-    u8   Aindex;      /* was A */
-    u8   Cresult;     /* was C */
-
     /* Build a table of flipped bytes at "$EF00" */
+    carry = 0;
     Cresult = 0; // Conv: Original didn't initialise C
     HLflipped = &state->flipped[0];
     do {
@@ -5361,6 +5365,7 @@ static void plot_face_attributes(chqstate_t *state,
   int carry;
   u8  A;       /* was A */
   int counter; /* was BC */
+  int t;
 
   A = screen >> 8;
   RRC(A);
@@ -5380,7 +5385,7 @@ static void plot_face_attributes(chqstate_t *state,
       break;
 
     // TODO Hoist to next-attr-row macro?
-    int t = (screen & 0xFF) + 0x1C;
+    t = (screen & 0xFF) + 0x1C;
     screen = (screen & 0xFF00) | (t & 0xFF);
     if (t >= 0x100)
       screen += 256;
@@ -5445,6 +5450,10 @@ static void pmf_go(chqstate_t *state,
   u16       screen;   /* was DE */
   const u8 *fontdata; /* was DE */
   u16       HLscreen; /* was HL */
+  u8        bm2;      /* was C */
+  u8        bm1;      /* was B */
+  unsigned  bm;
+  u8       *screen2;
 
 #define MFWIDTH  (5)
 #define MFHEIGHT (6)
@@ -5496,9 +5505,6 @@ pmf_have_ascii:
   HLscreen = screen; /* was EX */
   row = MFHEIGHT;
   do {
-    u8 bm2; /* was C */
-    u8 bm1; /* was B */
-
     bm2 = extra2;
     bm1 = *fontdata | extra1; // first pixel written
 
@@ -5517,13 +5523,13 @@ pmf_have_ascii:
       }
     } else {
       // Conv: "modern" version
-      unsigned bm = (bm1 << 8) | bm2;
+      bm = (bm1 << 8) | bm2;
       bm >>= (8 - rotate);
       bm1 = bm >> 8;
       bm2 = bm & 0xff;
     }
 
-    u8 *screen2 = ADDRTOSCREEN(HLscreen); // Conv: added
+    screen2 = ADDRTOSCREEN(HLscreen); // Conv: added
     screen2[0] = (mask & screen2[0]) | bm1;
     screen2[1] = bm2;
     fontdata++;
@@ -5902,6 +5908,8 @@ static void plot_turbos_and_digits(chqstate_t *state)
   const u16 *SPbitmap;
   u8        *HLbackbuf;
   int        DEbitmap;
+  int        Emask;
+  int        Dbitmap;
   u8        *DEscreen;
   int        DEdash_speed;
   int        Bdash_iterations;
@@ -5947,8 +5955,6 @@ ptas_turbo_setup:
       // EX AF,AF'
       B = TURBOHEIGHT;
       do {
-        int Emask, Dbitmap;
-
         DEbitmap = *SPbitmap++; // POP DEbitmap
         Emask = DEbitmap & 0xFF;
         Dbitmap = DEbitmap >> 8;
@@ -8297,6 +8303,7 @@ static void dh_draw_one_hazard(chqstate_t *state,
   int       Ddistance;
   int       Edist_frac;
   u16      *DEtable;
+  int       is_zero;
 
   C = IXhazard->speed >> 8; // top byte of horz position or accel?
   IXhazard->dist_frac -= IXhazard->speed & 0xFF;
@@ -8314,7 +8321,7 @@ static void dh_draw_one_hazard(chqstate_t *state,
       }
       IXhazard->hazard_lane_OR_perp_dist_hi = A;
     }
-    int is_zero = (A == 0);
+    is_zero = (A == 0);
     A = C;
     if (is_zero)
       goto dh_adfa;
@@ -10730,6 +10737,18 @@ static void update_screen(chqstate_t *state)
   u8        *buf;       /* was HL' */
   u16        bufoffset; // Conv: added
   ptrdiff_t  scroff;    // Conv: for safe bounds checking
+  u8         H;
+  u8         A;
+  int        res;
+  int        carry;
+  int        overflow;
+  u8         L;
+  u8         E;
+  u8         D;
+  s16        DElevel;
+  u8        *HLattrs;
+  u16        BCattrs;
+  u8         Cattr;
 
   scr = ADDRTOSCREEN(0x4811); // (136, 64)
   buf = ADDRTOBACKBUF(0xF001); // (8, 1)
@@ -10760,12 +10779,6 @@ static void update_screen(chqstate_t *state)
     } while (bufoffset & (1 << 10));
 
     if ((bufoffset & (1 << 11)) == 0) {
-      u8  H;
-      u8  A;
-      u8  L;
-      int res;
-      int carry, overflow;
-
       /* buf has advanced past a 0x1000 boundary (bit 11 just cleared),
        * meaning another 16 backbuffer rows have been written and it is
        * time to advance to the next row-group.
@@ -10818,14 +10831,6 @@ static void update_screen(chqstate_t *state)
 
   /* Set screen attributes */
   {
-    u8   A;
-    u8   E;
-    u8   D;
-    s16  DElevel;
-    u8  *HLattrs;
-    u16  BCattrs;
-    u8   Cattr;
-
     // Don't update the attributes if the level intro screen is being shown
     if (state->dont_draw_screen_attrs)
       goto exit;
@@ -10997,6 +11002,11 @@ static void rm_cycle_buffer_offset(chqstate_t *state, u8 *pfastcounter)
   const u8  *DEheightptr; /* was DE */
   u8        *HLheightptr; /* was HL */
   int        Biterations; /* was B */
+  u8         old_used;
+  u8        *tbl;
+  u8        *HL;
+  u8        *DE;
+  int        BC;
 
   // Advance road_buffer_offset
   state->road_buffer_offset = ROADBUF_FWD2PTR(1);
@@ -11375,7 +11385,7 @@ rm_all_hazards: // $C05C (also entered from skip path with no_objects_counter=1)
   IXhazard = &state->hazards[0];
   Covertake_bonus_counter = 0;
   for (Biterations = 6; Biterations > 0; Biterations--, IXhazard++) {
-    u8 old_used = IXhazard->used;
+    old_used = IXhazard->used;
     IXhazard->used = (u8)((old_used << 1) | (old_used >> 7)); // RLC
     if (!(old_used & 0x80)) // bit 7 was clear → skip
       continue;
@@ -11411,10 +11421,10 @@ rm_all_hazards: // $C05C (also entered from skip path with no_objects_counter=1)
 
   // $C0BB: copy block if rm_SM_C0BB_fork_copy_pending is set
   if (state->rm_SM_C0BB_fork_copy_pending) {
-    u8 *tbl = (u8 *)state->xpos_road_fork_right;
-    u8 *HL = tbl + 0x73;
-    u8 *DE = tbl + 0x77;
-    int BC = 0x26;
+    tbl = (u8 *)state->xpos_road_fork_right;
+    HL = tbl + 0x73;
+    DE = tbl + 0x77;
+    BC = 0x26;
     do {
       HL--; HL--;
       DE--; DE--;
@@ -12481,6 +12491,7 @@ static void dr_fill(chqstate_t *state, int DEbackbuf, int Lrow, int Adash_fill)
   u8  *SPoutput;
   u16  HLfill;
   u16  BCzerofill;
+  u8   overflow;
 
   if (DEbackbuf < 0xF000 || DEbackbuf > 0x10000) {
     printf("dr_fill: DEbackbuf out of bounds: %x\n", DEbackbuf);
@@ -12534,7 +12545,7 @@ static void dr_fill(chqstate_t *state, int DEbackbuf, int Lrow, int Adash_fill)
    * stripe jump index (fewer left pushes). */
   state->dr_road_width = (u8)(~Aright_stripe_width + Bdash_holds_16 + Edash);
   if (state->dr_road_width > 15) {
-    u8 overflow = state->dr_road_width - 15;
+    overflow = state->dr_road_width - 15;
     state->dr_road_width = 15;
     state->dr_left_stripe_width = (u8)(state->dr_left_stripe_width + overflow);
     if (state->dr_left_stripe_width > 15)
@@ -12614,6 +12625,30 @@ static void dr_fill(chqstate_t *state, int DEbackbuf, int Lrow, int Adash_fill)
 static void dr_fill_left_stripe(chqstate_t *state, u8 *SPoutput, int jump_index,
                                 int DEbackbuf, int HLfill, int Lrow)
 {
+  int        row_lo;
+  int        row_hi;
+  int        xpos_hi;
+  u8         neg_cnt;    /* Z80 B register — must wrap at 8 bits */
+  const u8  *tbl;
+  u8        *dst;
+  int        E;
+  int        L;
+  u8         xpos;
+  int        gi;
+  int        mi;
+  u8         new_xor;
+  u8         A_prev_height; /* height at current IY position before advance (was A) */
+  u8         A_zdiff;       /* (24-bit) height diff as u8 for Z80 signed comparison (was A) */
+  u8         C_lane_byte;   /* lane-flags byte from IX[0] in straight-road check (was C) */
+  int        A_tunnel;      /* tunnel dr_in_tunnel value: 1 normal, 0 if bit 4 set (was A) */
+  int        C_chorizon;    /* Conv: horizon row for re-dispatch, approx from IY height */
+  u8         C_acc;         /* descent accumulator: running u8 sum of height diffs (was C) */
+  u8         C_lane_c;      /* lane-flags byte from IX[0] in descent loop (was C) */
+  u8         A_prev2;       /* height at IY before advance in descent loop (was A) */
+  u8         A_new_diff;    /* height diff in descent loop = prev2 - IY[0] (was A) */
+  u8         A_acc;         /* sum new_diff + C_acc for descent loop exit test (was A) */
+  int        A_tun;         /* tunnel dr_in_tunnel value in descent loop (was A) */
+
   // BANKED ON ENTRY
 
   assert(VALID_BACKBUF_PTR(SPoutput));
@@ -12647,14 +12682,9 @@ static void dr_fill_left_stripe(chqstate_t *state, u8 *SPoutput, int jump_index,
    * $C68D DEC L + $C6AB DEC L: two permanent decrements per scanline,
    * stepping Lrow by -2 so it stays on odd offsets (high-byte positions). */
   {
-    int        row_lo  = DEbackbuf & 0xFF;
-    int        row_hi  = DEbackbuf >> 8;
-    int        xpos_hi = state->dr_left_table_hi_1;
-    u8         neg_cnt; /* Z80 B register — must wrap at 8 bits */
-    const u8  *tbl;
-    u8        *dst;
-    int        E, L;
-    u8         xpos;
+    row_lo  = DEbackbuf & 0xFF;
+    row_hi  = DEbackbuf >> 8;
+    xpos_hi = state->dr_left_table_hi_1;
 
     /* Left outer edge ($C643-$C666): AND-OR blend at E, direct copy at E+1 */
     tbl = xpos2addr(state, xpos_hi);
@@ -12664,7 +12694,7 @@ static void dr_fill_left_stripe(chqstate_t *state, u8 *SPoutput, int jump_index,
       E = ((xpos >> 3) & 0x1F) + row_lo;
       dst = ADDRTOBACKBUF((row_hi << 8) | (u8)E);
       if (VALID_BACKBUF_PTR(dst) && VALID_BACKBUF_PTR(dst + 1)) {
-        int gi = L - 0x10;
+        gi = L - 0x10;
         if (gi >= 0 && gi + 3 < (int)sizeof(edge_markings)) {
           dst[0] = (dst[0] & edge_markings[gi]) | edge_markings[gi + 1];
           dst[1] = edge_markings[gi + 3];
@@ -12684,7 +12714,7 @@ static void dr_fill_left_stripe(chqstate_t *state, u8 *SPoutput, int jump_index,
       E = ((xpos >> 3) & 0x1F) + row_lo;
       dst = ADDRTOBACKBUF((row_hi << 8) | (u8)E);
       if (VALID_BACKBUF_PTR(dst) && VALID_BACKBUF_PTR(dst + 1)) {
-        int mi = L - 0xD0;
+        mi = L - 0xD0;
         if (mi >= 0 && mi + 1 < (int)sizeof(lane_markings)) {
           dst[0] = lane_markings[mi];
           dst[1] = lane_markings[mi + 1];
@@ -12701,7 +12731,7 @@ static void dr_fill_left_stripe(chqstate_t *state, u8 *SPoutput, int jump_index,
       E = ((xpos >> 3) & 0x1F) + row_lo;
       dst = ADDRTOBACKBUF((row_hi << 8) | (u8)E);
       if (VALID_BACKBUF_PTR(dst) && VALID_BACKBUF_PTR(dst + 1)) {
-        int gi = L - 0x10;
+        gi = L - 0x10;
         if (gi >= 0 && gi + 2 < (int)sizeof(edge_markings)) {
           dst[0] = edge_markings[gi];
           dst[1] = (dst[1] & edge_markings[gi + 1]) | edge_markings[gi + 2];
@@ -12737,7 +12767,7 @@ static void dr_fill_left_stripe(chqstate_t *state, u8 *SPoutput, int jump_index,
    * distance), the edge graphic offset steps forward by 64, and the
    * counter resets to 5. */
   if (!--state->dr_edge_thickness) {
-    u8 new_xor = (u8)(state->dr_stripe_xor_base + 0x10);
+    new_xor = (u8)(state->dr_stripe_xor_base + 0x10);
     if (new_xor > state->dr_stripe_xor_base) { /* no 8-bit carry */
       state->dr_stripe_xor_base = new_xor;
       if (state->dr_stripe_table_offset)
@@ -12757,18 +12787,6 @@ static void dr_fill_left_stripe(chqstate_t *state, u8 *SPoutput, int jump_index,
    * in draw_road_scene_change-only test paths). */
   if (state->dr_iy_height_ptr != NULL &&
       state->dr_iy_height_ptr < &state->height_table[21]) {
-    u8  A_prev_height; /* height at current IY position before advance (was A) */
-    u8  A_zdiff;       /* (24-bit) height diff as u8 for Z80 signed comparison (was A) */
-    u8  C_lane_byte;   /* lane-flags byte from IX[0] in straight-road check (was C) */
-    int A_tunnel;      /* tunnel dr_in_tunnel value: 1 normal, 0 if bit 4 set (was A) */
-    int C_chorizon;    /* Conv: horizon row for re-dispatch, approx from IY height */
-    u8  C_acc;         /* descent accumulator: running u8 sum of height diffs (was C) */
-    u8  C_lane_c;      /* lane-flags byte from IX[0] in descent loop (was C) */
-    u8  A_prev2;       /* height at IY before advance in descent loop (was A) */
-    u8  A_new_diff;    /* height diff in descent loop = prev2 - IY[0] (was A) */
-    u8  A_acc;         /* sum new_diff + C_acc for descent loop exit test (was A) */
-    int A_tun;         /* tunnel dr_in_tunnel value in descent loop (was A) */
-
     A_prev_height = *state->dr_iy_height_ptr;
     state->dr_iy_height_ptr++;
     WRAPPINGINCREMENT(state->dr_ix_lanes_ptr, state->road_buffer_start);
@@ -12969,6 +12987,21 @@ static void forked_road_plotter(chqstate_t *state, u8 *IXlanes, u8 *IYheight)
   int carry;
   int prev;
   const u8 *tbl;
+  int        B_row_lo;  /* screen address low byte saved from $CA66 LD B,E (was B) */
+  int        D_row_hi;  /* screen address high byte (was D) */
+  int        H_xpos_hi; /* current xpos-table page hi byte, $E8→$ED (was H) */
+  const u8  *HLtbl;     /* pointer to the current xpos-position table row (was HL) */
+  u8        *DEmark;    /* backbuffer destination for marking write (was DE) */
+  int        E_col;     /* screen column: (xpos >> 3) & 0x1F + row_lo (was E) */
+  int        L_gfx;     /* graphics address: (xpos & 7) << shift + offset (was L) */
+  int        L_gi;      /* index into edge_markings = L_gfx - 0x10 */
+  int        L_mi;      /* index into lane_markings = L_gfx - 0xD0 */
+  u8         A_xpos;    /* road x-position byte from xpos table (was A) */
+  u8         tog;
+  u8         newpat;
+  u8         nca9d;
+  u8         newxor;
+  u8         old_h;
 
   /* $C8E4-$C912: Copy SM operands from draw_road's current SM state.
    * In Z80 these are absolute self-modifying writes to the $CA/$CB region.
@@ -13142,17 +13175,6 @@ frp_c969: /* $C969: 5-zone fork scanline render */
    * lane-marking format (two direct copies).  Section 6 has a permanent
    * DEC L at $CB11 that precedes the xpos check. */
   {
-    int        B_row_lo; /* screen address low byte saved from $CA66 LD B,E (was B) */
-    int        D_row_hi; /* screen address high byte (was D) */
-    int        H_xpos_hi; /* current xpos-table page hi byte, $E8→$ED (was H) */
-    const u8  *HLtbl;     /* pointer to the current xpos-position table row (was HL) */
-    u8        *DEmark;    /* backbuffer destination for marking write (was DE) */
-    int        E_col;     /* screen column: (xpos >> 3) & 0x1F + row_lo (was E) */
-    int        L_gfx;     /* graphics address: (xpos & 7) << shift + offset (was L) */
-    int        L_gi;      /* index into edge_markings = L_gfx - 0x10 */
-    int        L_mi;      /* index into lane_markings = L_gfx - 0xD0 */
-    u8         A_xpos;    /* road x-position byte from xpos table (was A) */
-
     B_row_lo = B;
     D_row_hi = D;
     H_xpos_hi = 0xE8;
@@ -13232,7 +13254,7 @@ frp_after_marking: /* $CB2F */
   B = af_prime;
 
 frp_loop: { /* $CB36 */
-    u8 tog = sm_CB36 ^ 1;
+    tog = sm_CB36 ^ 1;
     sm_CB36 = tog;
     if (tog != 0)
       goto frp_cb65;
@@ -13240,7 +13262,7 @@ frp_loop: { /* $CB36 */
 
   /* sm_CB36 == 0: update fill pattern and ADD operands */
   {
-    u8 newpat = sm_CB40 ^ 0x55;
+    newpat = sm_CB40 ^ 0x55;
     sm_CB40 = newpat;
     B       = newpat;
     sm_CA7A = sm_CA7A ^ 0x20;          /* $CB4D: XOR $20 */
@@ -13248,7 +13270,7 @@ frp_loop: { /* $CB36 */
     sm_CB1C = sm_CA7A + 1;             /* $CB54 */
     sm_CABB = sm_CB1C;                 /* $CB57 */
     {
-      u8 nca9d = sm_CA9D ^ sm_CB5D; /* $CB5D: XOR <sm_CB5D> */
+      nca9d = sm_CA9D ^ sm_CB5D; /* $CB5D: XOR <sm_CB5D> */
       sm_CA9D = nca9d;                    /* $CB5F */
       sm_CB00 = nca9d;                    /* $CB62 */
     }
@@ -13261,7 +13283,7 @@ frp_cb65: /* $CB65 */
 
   /* sm_CB65 reached zero: advance XOR operand ($CB6E-$CB8D) */
   {
-    u8 newxor = sm_CB5D + 0x10;
+    newxor = sm_CB5D + 0x10;
     if (newxor < sm_CB5D) /* carry: $CB73 JR C,$CB90 */
       goto frp_cb90;
     sm_CB5D = newxor;             /* $CB75 */
@@ -13272,7 +13294,7 @@ frp_cb65: /* $CB65 */
   }
 
 frp_cb90: { /* $CB90 */
-    u8 old_h = *IYheight;
+    old_h = *IYheight;
     IYheight++;
     WRAPPINGINCREMENT(IXlanes, state->road_buffer_start);
     A = (u8)(old_h - *IYheight);  /* $CB97: SUB (IYheight+$00) */
@@ -13522,6 +13544,7 @@ static void build_curve_table(chqstate_t *state, int forked)
   int        DEroadpos;          /* was DE */
   u8        *DEcurvature;
   const u8  *HLe760;
+  int        IXl;
   int        Bdash;
 
   // Set up table pointer to *end* of tables we're building.
@@ -13571,7 +13594,7 @@ static void build_curve_table(chqstate_t *state, int forked)
     // Z80: ADD A,IXl; LD IXl,A  -- IXl accumulates curvature; table at $E540 = $40 into page
     // Conv: Z80 IXl wraps in 8-bit; values < 0x40 index before the table (adjacent Z80 RAM).
     // Clamp to table bounds rather than letting the pointer escape the array.
-    int IXl = (IXlanes - &curvature_to_xpos[0]) * 2 + 0x40;
+    IXl = (IXlanes - &curvature_to_xpos[0]) * 2 + 0x40;
     IXl = (IXl + curvature_A) & 0xFF;
     if (IXl < 0x40) IXl = 0x40;
     IXlanes = &curvature_to_xpos[(IXl - 0x40) / 2];
@@ -13657,6 +13680,7 @@ static void build_curve_table_fill(chqstate_t *state,
   int  Aopcode;
   int  Atotal;
   u16  HLdash;
+  int  overflow;
 
   IYheight_table =
     &state->height_table[0]; /* was 0xE300; // addr of height table */
@@ -13708,7 +13732,6 @@ bct_endbit_A:
   Aopcode = A;
   Atotal = 0; // Initialise total to zero
   do {
-    int overflow;
     do {
       if (Aopcode == 0x13) DEroadpos++;
       else DEroadpos--;
@@ -13764,6 +13787,7 @@ static void build_height_table(chqstate_t *state)
   const u8 *htab2;                /* was DE */
   const u8 *htabbase2;            // Conv: added
   int       iterations2;          /* was B */
+  s8        res;                  /* Conv: added */
 
   proadbuf_height_base = proadbuf_height = ROADBUF_FWD2PTR(ROADBUF_HEIGHT_OFFSET);
 
@@ -13830,8 +13854,6 @@ static void build_height_table(chqstate_t *state)
   iterations2 = 21;
   C = 96; // limit/minimum?
   do {
-    s8 res; // Conv: added
-
     A = *htab2;
     res = A - C;
     if (res < 0)
@@ -13991,9 +14013,11 @@ const u8 *menu_draw_string(chqstate_t *state, const u8 *HLstring)
   int carry = 0;
   int banked_carry = 0;
   u8  Cattribute;
-  u16 DEscr;
-  u16 HLattr;
-  int Aascii;
+  u16  DEscr;
+  u16  HLattr;
+  int  Aascii;
+  u8  *scr;
+  u8  *attr;
 
   Cattribute = *HLstring;
   RL(Cattribute); // left shift topmost bit to carry (double height flag)
@@ -14013,8 +14037,8 @@ const u8 *menu_draw_string(chqstate_t *state, const u8 *HLstring)
   do {
     Aascii = *HLstring & 0x7F;
     // PUSH HLstring
-    u8 *scr = ADDRTOSCREEN(DEscr);
-    u8 *attr = ADDRTOATTRS(HLattr);
+    scr = ADDRTOSCREEN(DEscr);
+    attr = ADDRTOATTRS(HLattr);
     menu_draw_char(Aascii,
                    banked_carry,
                    Cattribute,
