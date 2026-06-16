@@ -12158,6 +12158,13 @@ static void draw_road(chqstate_t *state)
   DEbackbuf = 0x0100;
   state->dr_fill_pattern = Bfill_pattern;
 
+  /* $C5AE EXX equivalent (first time only): set the banked-C scanline counter.
+   * In Z80 the shadow C register holds Chorizon across all EXX pairs throughout
+   * the render, surviving re-entrant dr_read_lanes / dr_dispatch_fill calls
+   * because CALL/RET preserve it.  We must set it once here and never reset it
+   * inside the loop. */
+  state->dr_C_counter = Chorizon;
+
   dr_read_lanes(state, IXlanesptr, IYheightptr, Bfill_pattern, Chorizon,
                 DEbackbuf, Lrow); // was FALLTHROUGH
 }
@@ -12829,7 +12836,6 @@ static void dr_fill_left_stripe(chqstate_t *state, u8 *SPoutput, int jump_index,
       if (A_zdiff < 0x50) {
         /* $C797 JP C,$C4AD: small rise — re-dispatch lane geometry. */
         C_chorizon = 96 - (int)*state->dr_iy_height_ptr;
-        // THIS CAUSES RECURSION....
         dr_read_lanes(state, state->dr_ix_lanes_ptr, (u8 *)state->dr_iy_height_ptr,
                       state->dr_fill_pattern, C_chorizon, DEbackbuf, Lrow);
       } else {
@@ -12895,11 +12901,12 @@ static void dr_fill_left_stripe(chqstate_t *state, u8 *SPoutput, int jump_index,
     }
   }
 
-  /* $C6AD equivalent: tail-call the advance function to render the next
-   * scanline above this one.  The recursion unwinds naturally when
-   * dr_write_scanline_unfilled / dr_fill reject an out-of-range
-   * DEbackbuf (backbuffer fully consumed). */
-  state->dr_fill_fn(state, DEbackbuf, Lrow, state->dr_fill_pattern);
+  /* $C6AC DEC C; $C6AD JP NZ,<target>
+   * Decrement the banked-C scanline counter (held in state->dr_C_counter to
+   * survive the EXX pairs) and loop only while non-zero.  This matches the
+   * Z80 shadow-register mechanism that counted down Chorizon scanlines. */
+  if (--state->dr_C_counter != 0)
+    state->dr_fill_fn(state, DEbackbuf, Lrow, state->dr_fill_pattern);
 
 }
 
@@ -13463,8 +13470,8 @@ dr_c824: /* $C824: A = D; D--; AND $0F */
 dr_c82a: /* $C82A: A = E; EX AF,AF'; L = A (set backdrop src col to A_col) */
   /* Blit one screen row.
    * Source: HLbackdrop + A_col (restarted after each LD L,A).
-   * Dest:   ADDRTOSCREEN(D:E), advancing right per LDI. */
-  DEscr = ADDRTOSCREEN(((u8)D << 8) | (u8)E);
+   * Dest:   ADDRTOBACKBUF(D:E), advancing right per LDI. */
+  DEscr = ADDRTOBACKBUF(((u8)D << 8) | (u8)E);
 
   /* $C82D: 18-byte blit stream (scroll-dependent INC L / LDI mix).
    * Each slot is 2 bytes: INC L = {0x2C, 0x00}, LDI = {0xED, 0xA0}.
@@ -13518,7 +13525,7 @@ dr_start_sky_fill:
     if (carry) return;           /* $C8A1 JR NC → $C8A3 LD SP,xx; RET */
     D = (u8)(D + 16);            /* $C8A7-$C8AA: H += 16 */
 dr_sky_fill_scanline:
-    HLscr = ADDRTOATTRS(((u8)D << 8) | (u8)E);
+    HLscr = ADDRTOBACKBUF(((u8)D << 8) | (u8)E);
     if (HLscr - 30 >= &state->speccy->screen.attributes[0])
       memset(HLscr - 30, DE_fill, 30);
   }

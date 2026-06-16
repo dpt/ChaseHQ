@@ -637,6 +637,8 @@ struct chqstate {
   u8        dr_right_table_hi_1;
   // $C698 (SM) in draw_road
   u8        dr_right_edge_offset;
+  // $C6AC (banked C shadow) in draw_road: scanline countdown, set to Chorizon
+  int       dr_C_counter;
   // $C6AD (SM) in draw_road
   void    (*dr_fill_fn)(chqstate_t *state, int DEbackbuf, int L, int Adash_fill);
   // $C6B2 (SM) in draw_road
