@@ -28,7 +28,7 @@
 
 /* ----------------------------------------------------------------------- */
 
-typedef void (dr_callback_t)(chqstate_t *state, int Bfill_pattern, int Chorizon, int DEscreen_ptr, int Lrow);
+typedef void (dr_callback_t)(chqstate_t *state, int Bfill_pattern, int Chorizon, int DEscreen_ptr, int Lrow, u8 **IXlanesptr, const u8 **IYheightptr);
 
 typedef void (plot_sprite_cb_t)(chqstate_t *state,
                                 int         IXjump_offset,
@@ -640,7 +640,7 @@ struct chqstate {
   // $C6AC (banked C shadow) in draw_road: scanline countdown, set to Chorizon
   int       dr_C_counter;
   // $C6AD (SM) in draw_road
-  void    (*dr_fill_fn)(chqstate_t *state, int DEbackbuf, int L, int Adash_fill);
+  void    (*dr_fill_fn)(chqstate_t *state, int DEbackbuf, int L, int Adash_fill, u8 **IXlanesptr, const u8 **IYheightptr);
   // $C6B2 (SM) in draw_road
   u8        dr_initial_stripe_state; // inital road stripe state
   // $C6BC (SM) in draw_road
@@ -659,10 +659,6 @@ struct chqstate {
   u8        dr_c82d_instrs[18];
   // $C88F (SM) in draw_road
   u8        dr_in_tunnel;
-  // IY register persisted across draw_road scanlines
-  const u8 *dr_iy_height_ptr;
-  // IX register (low byte wraps in road_buffer) persisted across draw_road scanlines
-  u8       *dr_ix_lanes_ptr;
 
   // $CE0C–$CE32
   u8        smokes[3][13]; // three 13-byte smoke animation buffers, indexed 0..2

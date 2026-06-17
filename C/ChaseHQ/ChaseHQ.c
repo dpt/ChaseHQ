@@ -1140,33 +1140,43 @@ static void prepare_tunnel(chqstate_t *state);
 
 static void draw_tunnel(chqstate_t *state, u8 *IYheight);
 
-static void draw_road_scene_change(chqstate_t *state, u8 *IXlanes, u8 *IYheight,
-                                   int Bfill_pattern, int Chorizon, int DEbackbuf, int Lrow);
+static void draw_road_scene_change(chqstate_t *state, u8 *IXlanes, const u8 *IYheight,
+                                   int Bfill_pattern, int Chorizon, int DEbackbuf, int Lrow,
+                                   u8 **IXlanesptr, const u8 **IYheightptr);
 
 static void draw_road(chqstate_t *state);
 static void dr_read_lanes(chqstate_t *state, u8 *IXlanesptr, u8 *IYheightptr,
                           int Bfill_pattern, int Chorizon, int DEbackbuf, int Lrow);
 static void dr_four_lane_highway(chqstate_t *state, int Bfill_pattern,
-                                 int Chorizon, int DEbackbuf, int Lrow);
+                                 int Chorizon, int DEbackbuf, int Lrow,
+                                 u8 **IXlanesptr, const u8 **IYheightptr);
 static void dr_set_lane_callback(chqstate_t *state, int Bfill_pattern,
                                  int Chorizon, int DEbackbuf, int Lrow,
-                                 dr_callback_t *HLdash_callback);
+                                 dr_callback_t *HLdash_callback,
+                                 u8 **IXlanesptr, const u8 **IYheightptr);
 static void dr_dispatch_fill(chqstate_t *state, int Bfill_pattern, int Chorizon,
-                             int DEbackbuf, int Lrow);
+                             int DEbackbuf, int Lrow,
+                             u8 **IXlanesptr, const u8 **IYheightptr);
 static void dr_advance_unfilled(chqstate_t *state, int DEbackbuf,
-                                  int Lrow, int Adash_fill);
-static void dr_write_scanline_unfilled(chqstate_t *state, int DEbackbuf, int Lrow);
+                                  int Lrow, int Adash_fill,
+                                  u8 **IXlanesptr, const u8 **IYheightptr);
+static void dr_write_scanline_unfilled(chqstate_t *state, int DEbackbuf, int Lrow,
+                                       u8 **IXlanesptr, const u8 **IYheightptr);
 static void dr_rollover_filled(chqstate_t *state, int DEbackbuf,
-                                   int Lrow, int Adash_fill);
-static void dr_rollover_unfilled(chqstate_t *state, int DEbackbuf, int Lrow);
+                                   int Lrow, int Adash_fill,
+                                   u8 **IXlanesptr, const u8 **IYheightptr);
+static void dr_rollover_unfilled(chqstate_t *state, int DEbackbuf, int Lrow,
+                                 u8 **IXlanesptr, const u8 **IYheightptr);
 static void dr_enter_filled(chqstate_t *state, int DEbackbuf,
-                                int Lrow, int Adash_fill);
+                                int Lrow, int Adash_fill,
+                                u8 **IXlanesptr, const u8 **IYheightptr);
 static void dr_advance_filled(chqstate_t *state, int DEbackbuf, int Lrow,
-                    int Adash_fill);
+                    int Adash_fill, u8 **IXlanesptr, const u8 **IYheightptr);
 static void dr_fill(chqstate_t *state, int DEbackbuf, int Lrow,
-                    int Adash_fill);
+                    int Adash_fill, u8 **IXlanesptr, const u8 **IYheightptr);
 static void dr_fill_left_stripe(chqstate_t *state, u8 *SPoutput, int jump_index,
-                    int DEbackbuf, int HLfill, int Lrow);
+                    int DEbackbuf, int HLfill, int Lrow,
+                    u8 **IXlanesptr, const u8 **IYheightptr);
 
 static void pre_shift_backdrop(chqstate_t *state);
 
@@ -11847,8 +11857,9 @@ static u16 *addr2xpos(chqstate_t *state, int z80addr)
  * \param[in] DEbackbuf     Pointer into backbuffer.
  * \param[in] Lrow          Byte offset within road table page (row index).
  */
-static void draw_road_scene_change(chqstate_t *state, u8 *IXlanes, u8 *IYheight,
-                                   int Bfill_pattern, int Chorizon, int DEbackbuf, int Lrow)
+static void draw_road_scene_change(chqstate_t *state, u8 *IXlanes, const u8 *IYheight,
+                                   int Bfill_pattern, int Chorizon, int DEbackbuf, int Lrow,
+                                   u8 **IXlanesptr, const u8 **IYheightptr)
 {
   u8   A_dist;              /* byte offset of IYheight within height_table (was A) */
   u8   L_lane_flags;        /* IXlanes[0] (was L) */
@@ -12079,7 +12090,7 @@ advance_height:
   IYheight++; /* $C439: INC IYheight -- advance height pointer for next iteration */
 drsc_exit:
   dr_set_lane_callback(state, Bfill_pattern, Chorizon, DEbackbuf, Lrow,
-                       dr_four_lane_highway); // exit via
+                       dr_four_lane_highway, IXlanesptr, IYheightptr); // exit via
   return;
 
 steep_step:
@@ -12108,31 +12119,30 @@ steep_step:
  */
 static void draw_road(chqstate_t *state)
 {
-  u8 *IYheightptr;      /* was IY */
-  int Chorizon;         /* was C */
-  u8 *IXlanesptr;       /* was IX */
-  int Blanesdataoffset; /* was B */
-  int carry_stripe;     /* was carry */
-  int Htable_offset;    /* was H */
-  int Lstripe_height;   /* was L */
-  int Axor_base;        /* was A */
-  u8  Bfill_pattern;    /* was B */
-  u8  Lrow;             /* was L */
-  u16 DEbackbuf;        /* was DE */  // OR is this a *buffer* offset?
+  const u8 *IYheightptr;  /* was IY */
+  int       Chorizon;     /* was C */
+  u8       *IXlanesptr;   /* was IX */
+  int       Blanesdataoffset; /* was B */
+  int       carry_stripe;     /* was carry */
+  int       Htable_offset;    /* was H */
+  int       Lstripe_height;   /* was L */
+  int       Axor_base;        /* was A */
+  u8        Bfill_pattern;    /* was B */
+  u8        Lrow;             /* was L */
+  u16       DEbackbuf;        /* was DE */  // OR is this a *buffer* offset?
 
   state->on_dirt_track = 0;
+
   state->dt_tunnel_visible = 0;
   state->dr_in_tunnel = 0;
 
   // This affects the thickness of the road edges and lane markings with
-  // increasing distance. Larger value => Lines remain thick into distance.
+  // increasing distance. A larger value means lines remain thick into distance.
   state->dr_edge_thickness = 3;
 
   IYheightptr = &state->height_table[1];
-  Chorizon = 96 - *IYheightptr; /* 96 = horizon row offset from screen bottom */
+  Chorizon = 96 - *IYheightptr; // FIXME should be 3 - *IYheightptr
   IXlanesptr = ROADBUF_FWD2PTR(ROADBUF_LANES_OFFSET);
-  state->dr_iy_height_ptr = IYheightptr;
-  state->dr_ix_lanes_ptr  = IXlanesptr;
 
   // Set initial road stripe state
   Blanesdataoffset = IXlanesptr - &state->road_buffer_start[0];
@@ -12165,7 +12175,7 @@ static void draw_road(chqstate_t *state)
    * inside the loop. */
   state->dr_C_counter = Chorizon;
 
-  dr_read_lanes(state, IXlanesptr, IYheightptr, Bfill_pattern, Chorizon,
+  dr_read_lanes(state, IXlanesptr, (u8 *)IYheightptr, Bfill_pattern, Chorizon,
                 DEbackbuf, Lrow); // was FALLTHROUGH
 }
 
@@ -12184,6 +12194,8 @@ static void dr_read_lanes(chqstate_t *state, u8 *IXlanesptr, u8 *IYheightptr,
                           int Bfill_pattern, int Chorizon, int DEbackbuf,
                           int Lrow)
 {
+  u8       *local_IX = IXlanesptr;
+  const u8 *local_IY = IYheightptr;
   int carry;
   int Aleft_offset;             /* was A */
   u8  Ldash_lanes;              /* was L' */
@@ -12198,7 +12210,7 @@ static void dr_read_lanes(chqstate_t *state, u8 *IXlanesptr, u8 *IYheightptr,
   if (Aleft_offset == 0) {
     // no left side calcs required in this case?
     // callback here is e.g. dr_four_lane_highway
-    state->dr_callback(state, Bfill_pattern, Chorizon, DEbackbuf, Lrow); // exit via
+    state->dr_callback(state, Bfill_pattern, Chorizon, DEbackbuf, Lrow, &local_IX, &local_IY); // exit via
     return;
   }
 
@@ -12222,7 +12234,7 @@ static void dr_read_lanes(chqstate_t *state, u8 *IXlanesptr, u8 *IYheightptr,
     }
     state->dr_right_table_hi_2 = state->dr_right_table_hi_1 = Aleft_hand_table_hi;
     state->dr_neg_lane_count = Cdash_neg_lane_count; // Conv: A removed
-    draw_road_scene_change(state, IXlanesptr, IYheightptr, Bfill_pattern, Chorizon, DEbackbuf, Lrow); // exit via
+    draw_road_scene_change(state, IXlanesptr, IYheightptr, Bfill_pattern, Chorizon, DEbackbuf, Lrow, &local_IX, &local_IY); // exit via
   } else {
     /* If bit 6 was clear then it's a special road (tunnel, dirt track or forked road). */
     if (carry == 0) {
@@ -12250,7 +12262,7 @@ static void dr_read_lanes(chqstate_t *state, u8 *IXlanesptr, u8 *IYheightptr,
 
       // EXX - UNBANK
 
-      dr_dispatch_fill(state, Afill_pattern, Chorizon, DEbackbuf, Lrow); // was exit via
+      dr_dispatch_fill(state, Afill_pattern, Chorizon, DEbackbuf, Lrow, &local_IX, &local_IY); // was exit via
     } else {
       /* If bit 7 was set then it's a dirt track or forked road. */
 
@@ -12265,7 +12277,7 @@ static void dr_read_lanes(chqstate_t *state, u8 *IXlanesptr, u8 *IYheightptr,
          * on_dirt_track but I've not yet found any use of this track type. */
         state->on_dirt_track = ((Ldash_lanes & 0x18) == 0) ? 1 : 0; /* bits 2 or 3 clear => dirt track */
         state->dr_neg_lane_count = -1;
-        dr_set_lane_callback(state, Bfill_pattern, Chorizon, DEbackbuf, Lrow, dr_four_lane_highway); // exit via
+        dr_set_lane_callback(state, Bfill_pattern, Chorizon, DEbackbuf, Lrow, dr_four_lane_highway, &local_IX, &local_IY); // exit via
       }
     }
   }
@@ -12281,7 +12293,8 @@ static void dr_read_lanes(chqstate_t *state, u8 *IXlanesptr, u8 *IYheightptr,
  * \param[in] Lrow          Byte offset within road table page (row index).
  */
 static void dr_four_lane_highway(chqstate_t *state, int Bfill_pattern,
-                                 int Chorizon, int DEbackbuf, int Lrow)
+                                 int Chorizon, int DEbackbuf, int Lrow,
+                                 u8 **IXlanesptr, const u8 **IYheightptr)
 {
   // EXX - BANK (we enter unbanked)
 
@@ -12293,7 +12306,7 @@ static void dr_four_lane_highway(chqstate_t *state, int Bfill_pattern,
   state->dr_neg_lane_count = -4;
 
   dr_set_lane_callback(state, Bfill_pattern, Chorizon, DEbackbuf, Lrow,
-                       dr_dispatch_fill); // was FALLTHROUGH
+                       dr_dispatch_fill, IXlanesptr, IYheightptr); // was FALLTHROUGH
 }
 
 /**
@@ -12308,11 +12321,12 @@ static void dr_four_lane_highway(chqstate_t *state, int Bfill_pattern,
  */
 static void dr_set_lane_callback(chqstate_t *state, int Bfill_pattern,
                                  int Chorizon, int DEbackbuf, int Lrow,
-                                 dr_callback_t *HLdash_callback)
+                                 dr_callback_t *HLdash_callback,
+                                 u8 **IXlanesptr, const u8 **IYheightptr)
 {
   state->dr_callback = HLdash_callback;
   // EXX - UNBANK (we enter banked)
-  dr_dispatch_fill(state, Bfill_pattern, Chorizon, DEbackbuf, Lrow); // was FALLTHROUGH
+  dr_dispatch_fill(state, Bfill_pattern, Chorizon, DEbackbuf, Lrow, IXlanesptr, IYheightptr); // was FALLTHROUGH
 }
 
 /**
@@ -12325,13 +12339,14 @@ static void dr_set_lane_callback(chqstate_t *state, int Bfill_pattern,
  * \param[in] Lrow          Byte offset within road table page (row index).
  */
 static void dr_dispatch_fill(chqstate_t *state, int Bfill_pattern, int Chorizon,
-                             int DEbackbuf, int Lrow)
+                             int DEbackbuf, int Lrow,
+                             u8 **IXlanesptr, const u8 **IYheightptr)
 {
   int Afill_pattern;
 
   Afill_pattern = Bfill_pattern;
   if (Afill_pattern) {
-    dr_enter_filled(state, DEbackbuf, Lrow, Afill_pattern); // exit via
+    dr_enter_filled(state, DEbackbuf, Lrow, Afill_pattern, IXlanesptr, IYheightptr); // exit via
     return;
   }
 
@@ -12340,7 +12355,7 @@ static void dr_dispatch_fill(chqstate_t *state, int Bfill_pattern, int Chorizon,
   // EXX
   // EX AF,AF'
   dr_advance_unfilled(state, DEbackbuf, Lrow,
-                        Afill_pattern); // was FALLTHROUGH
+                        Afill_pattern, IXlanesptr, IYheightptr); // was FALLTHROUGH
 }
 
 /**
@@ -12352,7 +12367,8 @@ static void dr_dispatch_fill(chqstate_t *state, int Bfill_pattern, int Chorizon,
  * \param[in] Adash_fill Fill pattern.
  */
 static void dr_advance_unfilled(chqstate_t *state, int DEbackbuf,
-                                int Lrow, int Adash_fill)
+                                int Lrow, int Adash_fill,
+                                u8 **IXlanesptr, const u8 **IYheightptr)
 {
   int Ahi;
 
@@ -12363,11 +12379,11 @@ static void dr_advance_unfilled(chqstate_t *state, int DEbackbuf,
   Ahi = (DEbackbuf >> 8) & 0x0F;
   HI_DEC(DEbackbuf);
   if (Ahi == 0) {
-    dr_rollover_unfilled(state, DEbackbuf, Lrow); // was exit via
+    dr_rollover_unfilled(state, DEbackbuf, Lrow, IXlanesptr, IYheightptr); // was exit via
     return;
   }
 
-  dr_write_scanline_unfilled(state, DEbackbuf, Lrow); // was FALLTHROUGH
+  dr_write_scanline_unfilled(state, DEbackbuf, Lrow, IXlanesptr, IYheightptr); // was FALLTHROUGH
 }
 
 /**
@@ -12377,7 +12393,8 @@ static void dr_advance_unfilled(chqstate_t *state, int DEbackbuf,
  * \param[in] DEbackbuf Pointer into backbuffer.
  * \param[in] Lrow      Road table row byte offset.
  */
-static void dr_write_scanline_unfilled(chqstate_t *state, int DEbackbuf, int Lrow)
+static void dr_write_scanline_unfilled(chqstate_t *state, int DEbackbuf, int Lrow,
+                                       u8 **IXlanesptr, const u8 **IYheightptr)
 {
   u16 DEdash_backbuf;
   u8  Ldash;
@@ -12398,7 +12415,7 @@ static void dr_write_scanline_unfilled(chqstate_t *state, int DEbackbuf, int Lro
   SPoutput = ADDRTOBACKBUF((Hdash << 8) | Ldash);
 
   HLdash_fill = 0; // fill value (zeros for unfilled verge)
-  dr_fill_left_stripe(state, SPoutput, 0 /* index */, DEdash_backbuf, HLdash_fill, Lrow);
+  dr_fill_left_stripe(state, SPoutput, 0 /* index */, DEdash_backbuf, HLdash_fill, Lrow, IXlanesptr, IYheightptr);
 }
 
 /**
@@ -12410,12 +12427,13 @@ static void dr_write_scanline_unfilled(chqstate_t *state, int DEbackbuf, int Lro
  * \param[in] Adash_fill Value
  */
 static void dr_rollover_filled(chqstate_t *state, int DEbackbuf,
-                                   int Lrow, int Adash_fill)
+                                   int Lrow, int Adash_fill,
+                                   u8 **IXlanesptr, const u8 **IYheightptr)
 {
   LO_ADD(DEbackbuf, -32);
   if ((DEbackbuf & 0xFF) < 224) // if no carry
     HI_ADD(DEbackbuf, 16);
-  dr_fill(state, DEbackbuf, Lrow, Adash_fill); // exit via
+  dr_fill(state, DEbackbuf, Lrow, Adash_fill, IXlanesptr, IYheightptr); // exit via
 }
 
 /**
@@ -12424,12 +12442,13 @@ static void dr_rollover_filled(chqstate_t *state, int DEbackbuf,
  * \param[in] state     Pointer to game state.
  * \param[in] DEbackbuf Pointer into backbuffer.
  */
-static void dr_rollover_unfilled(chqstate_t *state, int DEbackbuf, int Lrow)
+static void dr_rollover_unfilled(chqstate_t *state, int DEbackbuf, int Lrow,
+                                 u8 **IXlanesptr, const u8 **IYheightptr)
 {
   LO_ADD(DEbackbuf, -32);
   if ((DEbackbuf & 0xFF) < 224) // if no carry: D += 16
     HI_ADD(DEbackbuf, 16);
-  dr_write_scanline_unfilled(state, DEbackbuf, Lrow); // exit via
+  dr_write_scanline_unfilled(state, DEbackbuf, Lrow, IXlanesptr, IYheightptr); // exit via
 }
 
 /**
@@ -12441,13 +12460,14 @@ static void dr_rollover_unfilled(chqstate_t *state, int DEbackbuf, int Lrow)
  * \param[in] Adash_fill Fill pattern.
  */
 static void dr_enter_filled(chqstate_t *state, int DEbackbuf,
-                                int Lrow, int Adash_fill)
+                                int Lrow, int Adash_fill,
+                                u8 **IXlanesptr, const u8 **IYheightptr)
 {
   // EXX
   state->dr_fill_fn = dr_advance_filled;
   // EXX
   // EX AF,AF'
-  dr_advance_filled(state, DEbackbuf, Lrow, Adash_fill); // was FALLTHROUGH
+  dr_advance_filled(state, DEbackbuf, Lrow, Adash_fill, IXlanesptr, IYheightptr); // was FALLTHROUGH
 }
 
 /**
@@ -12459,18 +12479,18 @@ static void dr_enter_filled(chqstate_t *state, int DEbackbuf,
  * \param[in] Adash_fill Fill pattern.
  */
 static void dr_advance_filled(chqstate_t *state, int DEbackbuf, int Lrow,
-                    int Adash_fill)
+                    int Adash_fill, u8 **IXlanesptr, const u8 **IYheightptr)
 {
   int A;
 
   A = DEbackbuf >> 8;
   HI_DEC(DEbackbuf);
   if ((A & 0x0F) == 0) {
-    dr_rollover_filled(state, DEbackbuf, Lrow, Adash_fill); // exit via
+    dr_rollover_filled(state, DEbackbuf, Lrow, Adash_fill, IXlanesptr, IYheightptr); // exit via
     return;
   }
 
-  dr_fill(state, DEbackbuf, Lrow, Adash_fill); // was FALLTHROUGH
+  dr_fill(state, DEbackbuf, Lrow, Adash_fill, IXlanesptr, IYheightptr); // was FALLTHROUGH
 }
 
 /**
@@ -12481,7 +12501,8 @@ static void dr_advance_filled(chqstate_t *state, int DEbackbuf, int Lrow,
  * \param[in] Lrow       Byte offset within road table page (row index); used as index into xpos_road tables. (was L)
  * \param[in] Adash_fill Fill pattern. (was A')
  */
-static void dr_fill(chqstate_t *state, int DEbackbuf, int Lrow, int Adash_fill)
+static void dr_fill(chqstate_t *state, int DEbackbuf, int Lrow, int Adash_fill,
+                    u8 **IXlanesptr, const u8 **IYheightptr)
 {
   int  carry = 0;
   int  Arow;
@@ -12619,7 +12640,7 @@ static void dr_fill(chqstate_t *state, int DEbackbuf, int Lrow, int Adash_fill)
 
   // Is this Ldash_row not Lrow?
   dr_fill_left_stripe(state, SPoutput, state->dr_left_stripe_width / 1, DEbackbuf,
-          HLfill, Lrow); // FALLTHROUGH
+          HLfill, Lrow, IXlanesptr, IYheightptr); // FALLTHROUGH
 }
 
 /**
@@ -12633,7 +12654,8 @@ static void dr_fill(chqstate_t *state, int DEbackbuf, int Lrow, int Adash_fill)
  * \param[in] Lrow       Road table row byte offset.
  */
 static void dr_fill_left_stripe(chqstate_t *state, u8 *SPoutput, int jump_index,
-                                int DEbackbuf, int HLfill, int Lrow)
+                                int DEbackbuf, int HLfill, int Lrow,
+                                u8 **IXlanesptr, const u8 **IYheightptr)
 {
   int        row_lo;
   int        row_hi;
@@ -12793,21 +12815,20 @@ static void dr_fill_left_stripe(chqstate_t *state, u8 *SPoutput, int jump_index,
    * buffer lanes slot.  Both advance once per rendered scanline (matching
    * the C port's per-scanline execution of the outer-loop body).
    *
-   * Guard: dr_iy_height_ptr is NULL if draw_road hasn't run yet (e.g.
+   * Guard: IYheightptr is NULL if draw_road hasn't run yet (e.g.
    * in draw_road_scene_change-only test paths). */
-  if (state->dr_iy_height_ptr != NULL &&
-      state->dr_iy_height_ptr < &state->height_table[21]) {
-    A_prev_height = *state->dr_iy_height_ptr;
-    state->dr_iy_height_ptr++;
-    WRAPPINGINCREMENT(state->dr_ix_lanes_ptr, state->road_buffer_start);
-    A_zdiff = (u8)((int)A_prev_height - (int)*state->dr_iy_height_ptr);
+  if (*IYheightptr != NULL && *IYheightptr < &state->height_table[21]) {
+    A_prev_height = **IYheightptr;
+    (*IYheightptr)++;
+    WRAPPINGINCREMENT(*IXlanesptr, state->road_buffer_start);
+    A_zdiff = (u8)((int)A_prev_height - (int)**IYheightptr);
 
     if (A_zdiff == 0) {
       /* $C715: heights equal — straight road.
        * Two more DEC Ls (matching Z80 $C715-$C716). */
       Lrow -= 2;
 
-      C_lane_byte = *state->dr_ix_lanes_ptr; /* $C718 LD C,(IX+0) */
+      C_lane_byte = **IXlanesptr; /* $C718 LD C,(IX+0) */
       if (!(C_lane_byte & (1 << 6))) {
         /* bit 6 clear: normal road — fall through */
       } else if (C_lane_byte & (1 << 7)) {
@@ -12818,7 +12839,7 @@ static void dr_fill_left_stripe(chqstate_t *state, u8 *SPoutput, int jump_index,
         A_tunnel = 1;
         if (C_lane_byte & (1 << 2)) {
           state->dt_tunnel_distance =
-            (u8)(state->dr_iy_height_ptr - &state->height_table[0]);
+            (u8)(*IYheightptr - &state->height_table[0]);
           if (C_lane_byte & (1 << 4)) {
             state->dt_tunnel_visible = 2;
             A_tunnel = 0;
@@ -12835,8 +12856,8 @@ static void dr_fill_left_stripe(chqstate_t *state, u8 *SPoutput, int jump_index,
       /* $C794: road height increasing (A_zdiff = 0x01..0x7F). */
       if (A_zdiff < 0x50) {
         /* $C797 JP C,$C4AD: small rise — re-dispatch lane geometry. */
-        C_chorizon = 96 - (int)*state->dr_iy_height_ptr;
-        dr_read_lanes(state, state->dr_ix_lanes_ptr, (u8 *)state->dr_iy_height_ptr,
+        C_chorizon = 96 - (int)**IYheightptr;
+        dr_read_lanes(state, *IXlanesptr, (u8 *)*IYheightptr,
                       state->dr_fill_pattern, C_chorizon, DEbackbuf, Lrow);
       } else {
         /* $C79A: large rise — fall through to backdrop fill */
@@ -12851,7 +12872,7 @@ static void dr_fill_left_stripe(chqstate_t *state, u8 *SPoutput, int jump_index,
        * (backdrop fill). */
       C_acc = A_zdiff;
       for (;;) {
-        C_lane_c = *state->dr_ix_lanes_ptr;
+        C_lane_c = **IXlanesptr;
         /* $C749-$C773: tunnel bits — same logic as $C715 block */
         if (!(C_lane_c & (1 << 6))) {
           /* normal road */
@@ -12861,7 +12882,7 @@ static void dr_fill_left_stripe(chqstate_t *state, u8 *SPoutput, int jump_index,
           A_tun = 1;
           if (C_lane_c & (1 << 2)) {
             state->dt_tunnel_distance =
-              (u8)(state->dr_iy_height_ptr - &state->height_table[0]);
+              (u8)(*IYheightptr - &state->height_table[0]);
             if (C_lane_c & (1 << 4)) {
               state->dt_tunnel_visible = 2;
               A_tun = 0;
@@ -12871,12 +12892,12 @@ static void dr_fill_left_stripe(chqstate_t *state, u8 *SPoutput, int jump_index,
           }
           state->dr_in_tunnel = (u8)A_tun;
         }
-        if (state->dr_iy_height_ptr >= &state->height_table[21])
+        if (*IYheightptr >= &state->height_table[21])
           break;
-        A_prev2 = *state->dr_iy_height_ptr;
-        state->dr_iy_height_ptr++;
-        WRAPPINGINCREMENT(state->dr_ix_lanes_ptr, state->road_buffer_start);
-        A_new_diff = A_prev2 - *state->dr_iy_height_ptr;
+        A_prev2 = **IYheightptr;
+        (*IYheightptr)++;
+        WRAPPINGINCREMENT(*IXlanesptr, state->road_buffer_start);
+        A_new_diff = A_prev2 - **IYheightptr;
         /* $C77F CP $E0: if < 0xE0, check the 0x50 threshold */
         if (A_new_diff < 0xE0) {
           if (A_new_diff >= 0x50) {
@@ -12892,8 +12913,8 @@ static void dr_fill_left_stripe(chqstate_t *state, u8 *SPoutput, int jump_index,
           continue; /* $C78B JR Z,$C746 / $C78D JP M,$C746 */
         }
         /* $C790-$C791: positive — re-dispatch */
-        C_chorizon = 96 - (int)*state->dr_iy_height_ptr;
-        dr_read_lanes(state, state->dr_ix_lanes_ptr, (u8 *)state->dr_iy_height_ptr,
+        C_chorizon = 96 - (int)**IYheightptr;
+        dr_read_lanes(state, *IXlanesptr, (u8 *)*IYheightptr,
                       state->dr_fill_pattern, C_chorizon, DEbackbuf, Lrow);
         return;
       }
@@ -12906,7 +12927,7 @@ static void dr_fill_left_stripe(chqstate_t *state, u8 *SPoutput, int jump_index,
    * survive the EXX pairs) and loop only while non-zero.  This matches the
    * Z80 shadow-register mechanism that counted down Chorizon scanlines. */
   if (--state->dr_C_counter != 0)
-    state->dr_fill_fn(state, DEbackbuf, Lrow, state->dr_fill_pattern);
+    state->dr_fill_fn(state, DEbackbuf, Lrow, state->dr_fill_pattern, IXlanesptr, IYheightptr);
 
 }
 
@@ -15156,9 +15177,11 @@ void chq_test_draw_road(chqstate_t *state)
 
 void chq_test_draw_road_scene_change(chqstate_t *state, u8 lane_flags, int height_offset)
 {
+  u8       *local_IX = &lane_flags;
+  const u8 *local_IY = &state->height_table[height_offset];
   draw_road_scene_change(state, &lane_flags, &state->height_table[height_offset],
                          0 /* fill_pattern */, 0 /* horizon */, 0x0100 /* DEbackbuf */,
-                         0xFF /* Lrow */);
+                         0xFF /* Lrow */, &local_IX, &local_IY);
 }
 
 #endif /* CHQ_TESTS */
