@@ -4379,9 +4379,18 @@ const u8 circle_transition_mask[7 * 8] = {
 
 /* ----------------------------------------------------------------------- */
 
-// $E410 - Road edge markings
-const u8 edge_markings[2 * 2 * 8 * 6] = {
-  // Widest edge. White.
+// $E400 - Road edge/lane markings ($E4xx page, 256 bytes)
+// $E400..$E40F: unused zeros (Z80 "draw nothing" state when stripe offset = 0)
+// $E410..$E4CF: edge markings (six 32-byte masked variants)
+// $E4D0..$E4FF: lane markings (three 16-byte unmasked variants)
+const u8 edge_markings[256] = {
+  // $E400..$E40F: unused zeros
+  ________,________,________,________,
+  ________,________,________,________,
+  ________,________,________,________,
+  ________,________,________,________,
+
+  // $E410: Widest edge. White.
   ________,_X______, __XXXXXX,X_______,
   X_______,__X_____, ___XXXXX,_X______,
   XX______,___X____, ____XXXX,__X_____,
@@ -4391,7 +4400,7 @@ const u8 edge_markings[2 * 2 * 8 * 6] = {
   XXXXXX__,_______X, ________,______X_,
   XXXXXXX_,________, ________,X______X,
 
-  // Widest edge. Black.
+  // $E430: Widest edge. Black.
   ________,XXXXXXXX, __XXXXXX,X_______,
   ________,_XXXXXXX, ___XXXXX,XX______,
   X_______,__XXXXXX, ____XXXX,XXX_____,
@@ -4401,7 +4410,7 @@ const u8 edge_markings[2 * 2 * 8 * 6] = {
   XXXXX___,______XX, ________,XXXXXXX_,
   XXXXXX__,_______X, ________,XXXXXXXX,
 
-  // Middle edge. White.
+  // $E450: Middle edge. White.
   ________,_X______, _XXXXXXX,________,
   X_______,__X_____, __XXXXXX,X_______,
   XX______,___X____, ___XXXXX,_X______,
@@ -4411,7 +4420,7 @@ const u8 edge_markings[2 * 2 * 8 * 6] = {
   XXXXXX__,_______X, _______X,_____X__,
   XXXXXXX_,________, ________,X_____X_,
 
-  // Middle edge. Black.
+  // $E470: Middle edge. Black.
   ________,_XXXXXXX, _XXXXXXX,________,
   X_______,__XXXXXX, __XXXXXX,X_______,
   XX______,___XXXXX, ___XXXXX,XX______,
@@ -4421,7 +4430,7 @@ const u8 edge_markings[2 * 2 * 8 * 6] = {
   XXXXXX__,_______X, _______X,XXXXXX__,
   XXXXXXX_,________, ________,XXXXXXX_,
 
-  // Thinnest edge. White.
+  // $E490: Thinnest edge. White.
   _______X,_X___X__, XXXXXXXX,________,
   X_______,__X___X_, XXXXXXXX,________,
   XX______,___X___X, _XXXXXXX,________,
@@ -4431,7 +4440,7 @@ const u8 edge_markings[2 * 2 * 8 * 6] = {
   XXXXXX__,_______X, _____XXX,___X____,
   XXXXXXX_,________, ______XX,X___X___,
 
-  // Thinnest edge. Black.
+  // $E4B0: Thinnest edge. Black.
   _______X,_XXXXX__, XXXXXXXX,________,
   X_______,__XXXXX_, XXXXXXXX,________,
   XX______,___XXXXX, _XXXXXXX,________,
@@ -4440,11 +4449,8 @@ const u8 edge_markings[2 * 2 * 8 * 6] = {
   XXXXX___,______XX, ____XXXX,XXX_____,
   XXXXXX__,_______X, _____XXX,XXXX____,
   XXXXXXX_,________, ______XX,XXXXX___,
-};
 
-// $E4D0 - Road lane markings
-const u8 lane_markings[2 * 8 * 3] = {
-  // Widest marking
+  // $E4D0: Widest lane marking.
   __XXX___,________,
   ___XXX__,________,
   ____XXX_,________,
@@ -4454,7 +4460,7 @@ const u8 lane_markings[2 * 8 * 3] = {
   ________,XXX_____,
   ________,_XXX____,
 
-  // Middle marking
+  // $E4E0: Middle lane marking.
   ___XX___,________,
   ____XX__,________,
   _____XX_,________,
@@ -4464,7 +4470,7 @@ const u8 lane_markings[2 * 8 * 3] = {
   ________,_XX_____,
   ________,__XX____,
 
-  // Thinnest marking
+  // $E4F0: Thinnest lane marking.
   ____X___,________,
   _____X__,________,
   ______X_,________,

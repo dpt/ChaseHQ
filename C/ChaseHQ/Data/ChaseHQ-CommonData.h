@@ -281,8 +281,7 @@ const u8 forked_road_exit_right_lanes[12];
 const u8 spiral_transition_mask[13 * 8];
 const u8 circle_transition_mask[7 * 8];
 
-const u8 edge_markings[2 * 2 * 8 * 6];
-const u8 lane_markings[2 * 8 * 3];
+const u8 edge_markings[256]; /* full $E4xx page: zeros/$E400, edges/$E410, lanes/$E4D0 */
 
 const u16 outward_bend_table[32];
 const u16 curvature_to_xpos[96];

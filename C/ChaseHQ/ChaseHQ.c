@@ -12057,7 +12057,7 @@ compute_step:
   /* $C3EE-$C405: read second table value, compute clamped displacement */
   HL_pos_delta = *HL_xpos_ptr - DE_roadpos;
   A_delta_lo = HL_pos_delta & 0xFF;
-  if (HL_pos_delta >= 0)
+  if ((s8) HL_pos_delta >= 0)
     A_step = ((s8) A_delta_lo  < 0) ? 0x7F : A_delta_lo;
   else
     A_step = ((s8) A_delta_lo >= 0) ? 0x81 : A_delta_lo;
@@ -12667,6 +12667,9 @@ static void dr_fill_left_stripe(chqstate_t *state,
     /* Build address of road edge marking graphic. */
     Ldash = ((Axpos & 7) << 2) + state->dr_edge_graphic_offset;
     HLdash_markingsptr = &edge_markings[((Hdash << 8) | Ldash) - 0xE400];
+    assert(HLdash_markingsptr >= &edge_markings[0]);
+    assert(HLdash_markingsptr + 2 < &edge_markings[256]);
+
     Edash = ((Axpos >> 3) & 31) + Bdash;
     DEdash_backbufptr = ADDRTOBACKBUF((DEdash_backbuf & 0xFF00) | Edash);
 
@@ -12728,7 +12731,7 @@ static void dr_fill_left_stripe(chqstate_t *state,
   }
 
   /* $C6AB - Loop end */
-  Lrow--;
+  Lrow = (Lrow - 1) & 0xFF;
   // Conv: This is a loop in the original but since the C conversion splits
   // draw_road into multiple functions this becomes recursion (!).
   if (--Ccounter > 0)
@@ -12784,7 +12787,7 @@ dr_set_stripes:
 
   /* $C715: Level road */
 dr_level_road:
-  Lrow -= 2;
+  Lrow = (Lrow - 2) & 0xFF;
 
   Clane_byte = **IXlanesptr;
   if ((Clane_byte & (1 << 6)) == 0)
@@ -12851,7 +12854,7 @@ dr_c774:
     goto dr_backdrop;
 
 dr_c788:
-  Lrow -= 2;
+  Lrow = (Lrow - 2) & 0xFF;
   Anew_diff += Cheight_diff;
   if ((s8) Anew_diff <= 0)
     goto dr_decreasing;
@@ -12860,7 +12863,7 @@ dr_c788:
   return;
 
 dr_increasing:
-  Ccounter = Anew_diff;
+  Ccounter = Aheight_diff;
   if (A < 0x50) {
     dr_read_lanes(state, *IXlanesptr, (u8 *)*IYheightptr, Bfill_pattern, Ccounter, DEbackbuf, Lrow); // exit via
     return;
@@ -13144,8 +13147,6 @@ static void forked_road_plotter(chqstate_t *state, u8 *IXlanes, u8 *IYheight)
   u8        *DEmark;    /* backbuffer destination for marking write (was DE) */
   int        E_col;     /* screen column: (xpos >> 3) & 0x1F + row_lo (was E) */
   int        L_gfx;     /* graphics address: (xpos & 7) << shift + offset (was L) */
-  int        L_gi;      /* index into edge_markings = L_gfx - 0x10 */
-  int        L_mi;      /* index into lane_markings = L_gfx - 0xD0 */
   u8         A_xpos;    /* road x-position byte from xpos table (was A) */
   u8         tog;
   u8         newpat;
@@ -13337,25 +13338,23 @@ frp_c969: /* $C969: 5-zone fork scanline render */
       E_col = ((A_xpos >> 3) & 0x1F) + B_row_lo; \
       DEmark = ADDRTOBACKBUF((D_row_hi << 8) | (u8)E_col); \
       if (VALID_BACKBUF_PTR(DEmark) && VALID_BACKBUF_PTR(DEmark + 1)) { \
-        L_gi = L_gfx - 0x10; \
-        if (L_gi >= 0 && L_gi + 3 < (int)sizeof(edge_markings)) { \
-          DEmark[0] = (DEmark[0] & edge_markings[L_gi]) | edge_markings[L_gi + 1]; \
-          DEmark[1] = edge_markings[L_gi + 3]; \
+        if (L_gfx + 3 < (int)sizeof(edge_markings)) { \
+          DEmark[0] = (DEmark[0] & edge_markings[L_gfx]) | edge_markings[L_gfx + 1]; \
+          DEmark[1] = edge_markings[L_gfx + 3]; \
         } \
       } \
     }
 #define FRP_LANE_MARK(off) \
     HLtbl = xpos2addr(state, H_xpos_hi); \
-    if (HLtbl && HLtbl[L] == 0 && (off)) { \
+    if (HLtbl && HLtbl[L] == 0) { \
       A_xpos = HLtbl[(L - 1) & 0xFF]; \
       L_gfx = ((A_xpos & 7) << 1) + (off); \
       E_col = ((A_xpos >> 3) & 0x1F) + B_row_lo; \
       DEmark = ADDRTOBACKBUF((D_row_hi << 8) | (u8)E_col); \
       if (VALID_BACKBUF_PTR(DEmark) && VALID_BACKBUF_PTR(DEmark + 1)) { \
-        L_mi = L_gfx - 0xD0; \
-        if (L_mi >= 0 && L_mi + 1 < (int)sizeof(lane_markings)) { \
-          DEmark[0] = lane_markings[L_mi]; \
-          DEmark[1] = lane_markings[L_mi + 1]; \
+        if (L_gfx + 1 < (int)sizeof(edge_markings)) { \
+          DEmark[0] = edge_markings[L_gfx]; \
+          DEmark[1] = edge_markings[L_gfx + 1]; \
         } \
       } \
     }
@@ -13367,10 +13366,9 @@ frp_c969: /* $C969: 5-zone fork scanline render */
       E_col = ((A_xpos >> 3) & 0x1F) + B_row_lo; \
       DEmark = ADDRTOBACKBUF((D_row_hi << 8) | (u8)E_col); \
       if (VALID_BACKBUF_PTR(DEmark) && VALID_BACKBUF_PTR(DEmark + 1)) { \
-        L_gi = L_gfx - 0x10; \
-        if (L_gi >= 0 && L_gi + 2 < (int)sizeof(edge_markings)) { \
-          DEmark[0] = edge_markings[L_gi]; \
-          DEmark[1] = (DEmark[1] & edge_markings[L_gi + 1]) | edge_markings[L_gi + 2]; \
+        if (L_gfx + 2 < (int)sizeof(edge_markings)) { \
+          DEmark[0] = edge_markings[L_gfx]; \
+          DEmark[1] = (DEmark[1] & edge_markings[L_gfx + 1]) | edge_markings[L_gfx + 2]; \
         } \
       } \
     }
