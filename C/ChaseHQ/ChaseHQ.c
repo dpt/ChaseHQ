@@ -12153,7 +12153,7 @@ static void draw_road(chqstate_t *state)
   state->dr_edge_thickness = 3;
 
   IYheightptr = &state->height_table[1];
-  Ccounter = 3 - *IYheightptr;
+  Ccounter = 0x60 - *IYheightptr;
 
   /* Set initial road stripe state */
   IXlanesptr = ROADBUF_FWD2PTR(ROADBUF_LANES_OFFSET);
