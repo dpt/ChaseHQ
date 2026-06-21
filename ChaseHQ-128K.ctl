@@ -109,6 +109,7 @@
 > $4000 ; $E500        is road bending tables
 > $4000 ; $E600..$E80F is road drawing scaling tables (3x8 groups of 22 bytes)
 > $4000 ; $E830..$E8FF is 104? words for road drawing (left)
+> $4000 ; $E830..$E8FF is 104? words for road drawing (left)
 > $4000 ; $E900        is a curvature? table
 > $4000 ; $E930..$E9FF is 104? words for road drawing (centre left)
 > $4000 ; $EA00..$EA2F is the diamond zoom-in mask
@@ -3565,9 +3566,9 @@ D $8D8F Used by the routines at #R$8014, #R$8258, #R$8401, #R$858C, #R$873C and 
 @ $8D8F label=transition
 C $8D8F,3 Load transition_control
 C $8D92,2 Exit early if it's zero
-C $8D94,4 If transition_control was 1, call draw_mugshots
-C $8D98,4 If transition_control was 2, call draw_overlay_messages
-C $8D9C,4 If transition_control was 3, call fill_attributes
+C $8D94,4 If transition_control was 1, exit via draw_mugshots
+C $8D98,4 If transition_control was 2, exit via draw_overlay_messages
+C $8D9C,4 If transition_control was 3, exit via fill_attributes
 N $8DA0 Otherwise transition_control was 4.
 C $8DA0,3 A = <self modified> - 1  -- Self modified by #R$8E18, and below
 C $8DA3,3 Self modify above
@@ -3825,8 +3826,7 @@ C $8F71,3 B = 21 iterations, C = 32 (added to table entries)
 @ $8F74 label=dee_first_loop
 C $8F74,3 *HL += 32
 C $8F77,3 *DE += 32
-N $8F7A Do these wrap around? (prob not)
-C $8F7A,1 DE++
+C $8F7A,1 DE++ (no wrapping since only 21 iterations)
 C $8F7B,1 HL++
 C $8F7C,2 Loop while #REGb > 0
 N $8F7E Draw tunnel, if configured.
@@ -3840,7 +3840,7 @@ C $8F8F,4 IX = $EAB0
 C $8F93,3 Counter #REGb = 20, Stride #REGc = 32
 @ $8F96 label=dee_second_loop
 C $8F96,4 Preserve IX, HL, BC
-C $8F9A,7 Call (somewhere in draw_all_hazards) if n_hazards is set
+C $8F9A,7 Call draw_arrow_fire_smoke if n_hazards is set
 C $8FA1,3 Call dust_stones_stuff
 C $8FA4,3 Self modified: either CALL draw_helicopter, or NOPs
 C $8FA7,3 Self modified: either CALL draw_tunnel, or NOPs
@@ -3850,13 +3850,13 @@ C $8FAF,3 Jump to right hand stuff if non-zero [why not a CALL?]
 N $8FB2 ...
 @ $8FB2 label=dee_continue_after_right_hand_done
 C $8FB2,4 Advance #REGix by 2
-C $8FB6,3 Advance #REGhl by 32
-C $8FB9,1 A = *HL  -- reading $EE0C down to $EEF9 (wrapping!)
+C $8FB6,3 Advance #REGhl by 32 (wrapping!)
+C $8FB9,1 A = *HL  -- reading $EE0C down to $EEF9
 C $8FBA,1 Set flags
 C $8FBB,2 Jump to #R$9023 if non-zero  -- left hand stuff, it will jump back here so I'm not sure why it's not a CALL
 @ $8FBD label=dee_continue_after_left_hand_done
 C $8FBD,4 Advance #REGix by 2
-C $8FC1,4 Advance #REGhl by -33
+C $8FC1,4 Advance #REGhl by -33 (wrapping!)
 C $8FC5,2 IY--
 C $8FC7,2 Loop to #R$8F96 while #REGb > 0
 N $8FC9 ..
@@ -4477,7 +4477,7 @@ c $9565 Routine at 9565
 @ $9565 label=plot_sprite_flipped_even
 C $9565,2 Jump into body of loop
 @ $9567 label=psf_even_continue
-C $9567,1 Bank
+C $9567,1 UNBANK
 C $9568,2 Next scanline
 C $956A,3 Restore original #REGsp (self modified)
 C $956D,1 Return
@@ -4485,8 +4485,9 @@ C $956D,1 Return
 C $956E,1 Calculate address of next bitmap scanline
 @ $956F label=plot_sprite_flipped_even_start
 C $956F,1 Put it in #REGsp (so we can use PUSH for speed)
-C $9570,1 Unbank
+C $9570,1 BANK
 C $9571,1 [check elsewhere too]
+C $9572,1 BANK
 C $9573,2 Jump into table
 @ $9575 label=psf_even_jumptable
 C $9575,1 Transfer two bitmap bytes (16 pixels) from the "stack" to screen buffer with flipping
@@ -4499,6 +4500,7 @@ C $957D,1 Advance backwards
 C $957E,9 Transfer another 16 pixels
 C $9587,9 Transfer another 16 pixels
 C $9590,8 Transfer another 16 pixels
+C $9598,1 UNBANK
 C $9599,1 Restore #REGhl
 N $959A Move to next scanline (longer form).
 C $959A,1 Save for checking in a moment
@@ -5841,7 +5843,7 @@ B $A227,1,1 Shows the floating left/right arrow (0 => off, 1 => left, 2 => right
 @ $A228 label=cherry_light
 B $A228,1,1 Shows the flashing cherry light on top of the car (0 => off, else on).
 @ $A229 label=time_up_state
-B $A229,1,1 1 => out of time, 2 => "TIME UP" message is printed; 3 => "CONTINUE THIS MISSION" message is printed and a countdown runs 4 => countdown elapsed; 0 otherwise
+B $A229,1,1 1 => out of time; 2 => "TIME UP" message is printed; 3 => "CONTINUE THIS MISSION" message is printed and a countdown runs; 4 => countdown elapsed; 0 otherwise
 @ $A22A label=car_y
 B $A22A,1,1 Car Y offset. Usually zero. Higher values move the car upwards. Used when the car pulls in after catching a perp. Used by #R$B6D6 and others
 @ $A22B label=overtake_bonus_counter
@@ -8552,8 +8554,9 @@ C $B6F3,1 E = C  -- byte width
 C $B6F4,2 E <<= 1
 C $B6F8,1 A = E
 C $B6F9,2 B >>= 1
-C $B6FB,1 Is this EX'ing AF to get the carry flag?
+C $B6FB,1 Preserve carry flag (flip flag)
 C $B6FC,1 HL += BC
+C $B6FD,1 Restore carry flag (flip flag)
 N $B701 This entry point is used by the routine at #R$92E1.
 @ $B701 label=*draw_part_entry3
 C $B701,4 Point #REGix at pms_jumptable
@@ -9284,7 +9287,7 @@ C $BD6B,3 E = A * 4
 C $BD6E,1 A = $FF if carry set, zero otherwise (sign extending?)
 C $BD6F,1 D = A
 C $BD70,3 Load the address of the first line of ground attributes (+ 31)
-C $BD73,3 Set the sky colour screen attributes (always bright, black over cyan)
+C $BD73,3 Set the sky colour screen attributes by default (always bright, black over cyan)
 C $BD76,2 If A was zero then jump (Z => sky, NZ => ground)
 C $BD78,4 Load the ground colour screen attributes (varies per level)
 @ $BD7D label=ds_bd7d
@@ -9347,12 +9350,12 @@ C $BE1F,1 Set #REGhl to address of road_buffer_offset
 C $BE20,3 Load, increment and update road_buffer_offset.lo (wrapping around)
 C $BE23,5 HL = $EE00 | (A + 95)  -- calculate final byte of lanes data
 C $BE28,7 trigger_passed_object_sfx |= *HL  -- final lanes byte
-C $BE2F,4 L += 32    -- offset 128... or 127?
+C $BE2F,4 L += 32    -- offset 127
 C $BE33,7 trigger_lane_change_sfx |= *HL
-C $BE3A,4 L -= 96    -- offset 32... or 31?
-N $BE3E -- CURVATURE --
+N $BE3A -- CURVATURE --
+C $BE3A,4 L -= 96    -- offset 31
 N $BE3E The top nibble of each byte is a counter. The bottom nibble is curvature data.
-C $BE3E,5 A = curvature_byte - 16
+C $BE3E,5 Decrement down the counter nibble
 C $BE43,2 Jump to rm_save_curvature_byte if curvature_byte >= 16
 N $BE45 Load a new curvature byte.
 C $BE45,5 Read and increment address of curvature data
@@ -9392,8 +9395,8 @@ C $BE86,4 A = -(A & 7)  -- Left direction becomes -ve
 N $BE8A Write the direction into the cyclic road buffer.
 @ $BE8A label=rm_set_curvature
 C $BE8A,2 *HL = A * 2  -- Sampled HL: $EEA9 [in cyclic road buffer]
+N $BE8C -- HEIGHT --
 C $BE8C,4 L += 32
-N $BE90 -- HEIGHT --
 N $BE90 The top nibble of each byte is a counter. The bottom nibble is height data.
 C $BE90,5 A = height_byte - 16
 C $BE95,2 Jump to rm_save_height_byte if height_byte >= 16
@@ -9942,19 +9945,19 @@ C $C2E6,1 Return
 c $C2E7 Subroutine of draw_road
 D $C2E7 This seems to get called around changes in scene, e.g. at the start of a level, after a split, before a tunnel, after a tunnel or when the final loop restarts.
 D $C2E7 Used by the routine at #R$C452.
-R $C2E7 I:IX ... sampled: $EE60..
-R $C2E7 I:IY ... sampled: $E301..E315 (height table)
+R $C2E7 I:IX ... sampled: $EE60.. (road buffer lane data pointer)
+R $C2E7 I:IY ... sampled: $E301..E315 (height table pointer)
 @ $C2E7 label=draw_road_scene_change
 C $C2E7,2 Load #REGiy.low (distance)
 C $C2E9,2 Compare to 19
-C $C2EB,3 Jump if >= 19
-C $C2EE,1 Bank
-C $C2EF,3 Load IX[0]  -- lane flags?
+C $C2EB,3 Jump to exit if >= 19
+C $C2EE,1 Bank distance
+C $C2EF,3 Load lane flags from IX[0]
 C $C2F2,1 Copy to #REGl
 C $C2F3,2 Mask with 0b00001100
-C $C2F5,3 Jump if zero
+C $C2F5,3 Jump to exit if zero
 N $C2F8 Otherwise ...
-C $C2F8,2 IY--
+C $C2F8,2 Decrement height table pointer
 C $C2FA,2 Bit 5 of L set?
 C $C2FC,2 Jump if clear
 C $C2FE,2 Bit 7 of L set?
@@ -9964,10 +9967,10 @@ C $C304,1 H = $EB
 @ $C305 label=sub_c2e7_1
 C $C305,2 Bit 4 of L set?
 C $C307,3 Jump if clear
-C $C30A,1 Bank
+C $C30A,1 Unbank distance / bank masked-lane-flags
 C $C30B,2 Compare to 2
 C $C30D,3 Jump if >= 2
-C $C310,1 Bank
+C $C310,1 Bank distance again / unbank masked-lane-flags
 C $C311,2 Compare to 4
 C $C313,2 A = 32
 C $C315,3 C = IY[1]
@@ -9979,12 +9982,10 @@ C $C31E,3 Self modify 'ADD A,x' @ #R$C345
 C $C321,4 A = IY[0] - C
 C $C325,6 Jump if A was <= C
 C $C32B,1 C = A
-C $C32C,2 B = (A << 1)
+C $C32C,2 B = A * 2
 C $C32E,8 L = ~(($60 - IY[0]) << 1)
 C $C336,1 -- why are we copying to SP with no push/pop nearby?
-C $C337,1 D = *HL
-C $C338,1 L--
-C $C339,1 E = *HL
+C $C337,3 DE = wordat(HL - 1);
 C $C33A,2 L = A - B
 C $C33C,1 H--
 C $C33D,8 A = (fast_counter ROR 3) & 0b00011100
@@ -10004,7 +10005,7 @@ C $C35A,3 Jump if non-zero
 C $C35D,6 A = IY[0] - IY[2]
 C $C363,6 Jump if IY[0] was <= IY[2]
 C $C369,1 C = A
-C $C36A,2 B = A << 1
+C $C36A,2 B = A * 2
 C $C36C,8 L = ~(($60 - IY[0]) << 1)
 C $C374,1 -- this pattern again
 C $C375,1 D = *HL
@@ -10016,20 +10017,20 @@ C $C37B,3 Jump
 @ $C37E label=sub_c2e7_4
 C $C37E,1 Bank/unbank
 C $C37F,2 Compare to 2
-N $C381 This entry point is used by the routine at #R$E8CE.
+N $C381 This entry point is used by the routine at #R$E8CE. (PHANTOM)
 C $C381,3 Jump if A >= 2
 C $C384,1 Bank/unbank
 C $C385,2 Compare to 4
 C $C387,2 A = 32
 C $C389,3 C = IY[1]
 C $C38C,2 Jump if non-zero
-C $C38E,1 X = 0
+C $C38E,1 A = 0
 C $C38F,3 C = IY[2]
 @ $C392 label=sub_c2e7_5
 C $C392,3 Self modify 'ADD A,x' @ #R$C3BD below
 C $C395,3 A = IY[0]
 C $C398,1 A -= C
-C $C399,6 Jump if A was >= C
+C $C399,6 Jump if A was <= C
 C $C39F,2 C = A << 1
 C $C3A1,1 B = A
 C $C3A2,8 L = ~(($60 - IY[0]) << 1)
@@ -10089,9 +10090,7 @@ N $C407 Positive case.
 C $C407,1 SP++
 C $C408,4 Bit 5 of IX[0] set?
 C $C40C,2 Jump if clear
-C $C40E,3 HL = $FF00
-C $C411,1 HL += SP
-C $C412,1 SP = HL
+C $C40E,5 Move SP 256 bytes back
 @ $C413 label=sub_c2e7_10
 C $C413,1 L = A
 C $C414,1 B = C
@@ -10135,9 +10134,9 @@ C $C444,1 A = 0  -- init counter
 @ $C445 label=sub_c2e7_18_something_loop
 C $C445,1 <self modified instruction> DE++ or DE--
 C $C446,1 A += C
-C $C447,2 Jump if carry  -- went over?
+C $C447,2 Jump if carry
 C $C449,1 Compare to L
-C $C44A,2 Jump if A < L
+C $C44A,2 Loop if A < L
 @ $C44C label=sub_c2e7_19
 C $C44C,1 A -= L
 C $C44D,1 Stack DE
@@ -10148,27 +10147,26 @@ D $C452 Used by the routines at #R$8401, #R$852A and #R$873C.
 @ $C452 label=draw_road
 C $C452,4 Self modify #REGsp restore instruction
 C $C456,4 Zero on_dirt_track
-C $C45A,3 Self modify 'LD A,x' @ #R$C160 to load zero (in draw_tunnel)
-C $C45D,3 Self modify 'LD A,x' @ #R$C88F to load zero (below, tunnel related)
-N $C460 This affects the thickness of the road edges and lane markings with increasing distance. Larger value => Lines remain thick in distance.
+C $C45A,3 Self modify 'LD A,x' @ #R$C160 to load zero (in draw_tunnel, "tunnel visible")
+C $C45D,3 Self modify 'LD A,x' @ #R$C88F to load zero (below, "in tunnel")
+N $C460 This affects the thickness of the road edges and lane markings with increasing distance. A larger value means lines remain thick into distance.
 C $C460,5 Self modify 'LD A,x' @ #R$C6D8 to load 3 (below)
-C $C465,4 Load address of table $E301 (height table + 1) [height of what?]
-C $C469,6 #REGc = 96 - IY[0]   -- sampled IY[0]: $5D $4F
+C $C465,4 Load address of height table[1]
+C $C469,6 C = $60 - IY[0]
+N $C46F Set initial road stripe state.
 C $C46F,3 Load road_buffer_offset.lo
 C $C472,2 Add 64 so it's the lanes data offset
 C $C474,5 Load address of $EE00[#REGa]
 C $C479,1 Copy lanes data offset to #REGb
-N $C47A Set initial road stripe state.
 C $C47A,5 Self modify 'LD A,x' @ #R$C6B2 (below) to load <lanes data offset> & 1
 C $C47F,4 Shift bit 1 of <lanes data offset> into carry
-N $C483 I'm debating whether $D0 here is an opcode. I'm currently thinking not.
-C $C483,3 Set #REGh to $D0; Set #REGl to 16
-C $C486,1 Copy $D0 to #REGa
+C $C483,3 Set #REGh to $D0 (table offset?); Set #REGl to 16 (stripe height?)
+C $C486,1 Copy $D0 to #REGa (XOR base)
 N $C487 Alter this and the landscape uses that fill pattern, but only half the time.
-C $C487,2 Set #REGb to $55  -- likely "on" fill pattern?
+C $C487,2 Set #REGb to $55  -- "on" fill pattern?
 C $C489,2 If #REGb carried out (earlier) then jump
-C $C48B,3 Set #REGh to 0; Set #REGl to 48
-C $C48E,1 Copy $00 to #REGb  -- likely "off" fill pattern?
+C $C48B,3 Set #REGh to $00 (table offset?); Set #REGl to 48
+C $C48E,1 Copy $00 to #REGb  -- "off" fill pattern
 @ $C48F label=dr_stripe_state_set
 C $C48F,3 Self modify 'XOR x' @ #R$C6D3 to be x = $D0
 C $C492,4 Self modify 'ADD A,x' @ #R$C677 to be x = $D0 or $00
@@ -10193,94 +10191,101 @@ C $C4BE,3 Self modify 'LD H,x' @ #R$C5B3
 C $C4C1,1 Copy
 C $C4C2,2 Shift bit 7 of lanes byte into carry (a flag, undetermined at this point, but perhaps the dirt track flag)
 C $C4C4,2 Test former bit 6; is set for tunnel or for dirt track (carry preserved)
-C $C4C6,2 Jump to dr_tunnel_or_dirt_track if set
+C $C4C6,2 Jump to dr_special_road if set
+N $C4C8 If bit 6 was clear then it's a normal road (not tunnel, dirt track or forked road).
 C $C4C8,2 Jump to dr_two_lane if bit 7 was clear (any of the two-lane roads or 2-to-3 narrowing/widening lane types)
-N $C4CA Otherwise carry/bit 7 was set indicating 3 lanes or 3/4 lanes narrowing/widening.
+N $C4CA If bit 7 was set then it's a 3-lane, 3-to-4 lane or 4-to-3 lane section.
 C $C4CA,2 $E8..$EA becomes $EB..$ED
-C $C4CC,2 Set #REGc to $FD
+C $C4CC,2 Set #REGc to -3
 C $C4CE,3 Jump to dr_setup_scene_change
-N $C4D1 This is hit when on two-lane roads (or 2-to-3 narrowing/widening lane types).
+N $C4D1 If bit 7 was clear then it's a 2-lane, 2-to-3 lane or 3-to-2 lane section.
 @ $C4D1 label=dr_two_lane
 C $C4D1,2 $E8..$EA becomes $EA..$EC
-C $C4D3,2 Set #REGc to $FE
+C $C4D3,2 Set #REGc to -2
 @ $C4D5 label=dr_setup_scene_change
 C $C4D5,3 Self modify 'LD H,x' @ #R$C5D9
 C $C4D8,3 Self modify 'LD H,x' @ #R$C68A
 C $C4DB,1 Set #REGa to $FD or $FE (from #REGc)
 C $C4DC,3 Self modify 'LD B,x' @ #R$C5AC
 C $C4DF,3 Exit via draw_road_scene_change/#R$C2E7  [this is its only caller]
-@ $C4E2 label=dr_tunnel_or_dirt_track
+N $C4E2 If bit 6 was clear then it's a special road (tunnel, dirt track or forked road).
+@ $C4E2 label=dr_special_road
 C $C4E2,2 Jump to dr_dirt_track if carry set (bit 7 of lanes byte - dirt track flag)
-N $C4E4 Otherwise it's a tunnel [confirmed in debugger].
+N $C4E4 If bit 7 was clear then it's a tunnel section.
 C $C4E4,2 Set #REGc to $FF
 C $C4E6,2 Set #REGh to 1
 C $C4E8,4 Jump if former bit 3 of lanes byte set (tunnel exit)
 C $C4EC,4 Jump if former bit 2 of lanes byte clear (also tunnel exit... so that can't be right)
+N $C4F0 If bits 2 or 3 are set then it's a tunnel transition section.
 @ $C4F0 label=dr_tunnel_transition
 C $C4F0,2 Load #REGiy.low (distance)
-C $C4F2,3 Self modify 'CP x' @ #R$C15D (in draw_tunnel)
-C $C4F5,2 Set #REGa to 1
-C $C4F7,1 Set #REGc to 0
-C $C4F8,4 Jump if bit 5 of lanes byte clear (tunnel entrance)
-N $C4FC Otherwise it's tunnel exit.
-C $C4FC,1 Set #REGc to $FF
-C $C4FD,1 Set #REGa to 2
-C $C4FE,1 Set #REGh to 0
-@ $C4FF label=dr_c4ff
+C $C4F2,3 Self modify 'CP x' @ #R$C15D (in draw_tunnel) - tunnel distance
+C $C4F5,2 Set #REGa to 1 - tunnel visible
+C $C4F7,1 Set #REGc to 0 - fill pattern
+C $C4F8,4 Jump if former bit 4 of lanes byte clear (tunnel entrance)
+N $C4FC If bit 4 is set then it's a tunnel exit.
+C $C4FC,1 Set #REGc to $FF -- fill pattern
+C $C4FD,1 Set #REGa to 2 -- tunnel visible
+C $C4FE,1 Set #REGh to 0 -- in-tunnel flag
+@ $C4FF label=dr_set_visible_flag
 C $C4FF,3 Self modify 'LD A,x' @ #R$C160 (in draw_tunnel)
-@ $C502 label=dr_c502
+@ $C502 label=dr_set_inside_flag
 C $C502,1 Set #REGa to 0 (from #REGh)
-C $C503,3 Self modify 'LD A,x' @ #R$C88F (tunnel related)
+C $C503,3 Self modify 'LD A,x' @ #R$C88F (inside tunnel flag)
 C $C506,2 Set #REGa to $EB  -- top byte of table?
 C $C508,3 Self modify 'LD H,x' @ #R$C5D9
 C $C50B,3 Self modify 'LD H,x' @ #R$C68A
-C $C50E,2 Set #REGa to $FF
-C $C510,3 Self modify 'LD B,x' @ #R$C5AC
-C $C513,1 A = C
+C $C50E,2 Set #REGa to -1
+C $C510,3 Self modify 'LD B,x' @ #R$C5AC (-ve lane count)
+C $C513,1 A = C  (fill pattern)
 C $C514,1 Bank/unbank
-C $C515,1 B = A
+C $C515,1 B = A  (fill pattern)
 C $C516,3 Jump
+N $C519 If bit 7 was set then it's a dirt track or forked road.
 @ $C519 label=dr_dirt_track
-C $C519,5 Jump to forked_road_plotter if former bit 5 (not 6 because shifted) of lanes byte is set
-N $C51E Dirt track check.
+C $C519,2 Jump to forked_road_plotter if former bit 5 (not 6
+N $C51B If bit 5 was set then it's a forked road.
+C $C51B,3 because shifted) of lanes byte is set}
+N $C51E If bit 5 was clear then it's a dirt track section.
 C $C51E,3 Set flags of (#REGl & 24)
-C $C521,2 Set new on_dirt_track value to 0  -- not self modified (why not XOR A)
+C $C521,2 Set new on_dirt_track value to 0  -- not self modified (why not XOR A?)
 C $C523,2 Jump if flags non-zero
 C $C525,1 Set new on_dirt_track value to 1
 @ $C526 label=dr_c526
 C $C526,3 Set on_dirt_track to new value
-C $C529,2 Set #REGa to $FF
-C $C52B,3 Self modify 'LD B,x' @ #R$C5AC
+C $C529,2 Set #REGa to -1
+C $C52B,3 Self modify 'LD B,x' @ #R$C5AC (-ve lane count)
 C $C52E,3 -> dr_four_lane_highway
 C $C531,3 Jump forward
 @ $C534 label=dr_four_lane_highway
-C $C534,1 Bank/unbank
-C $C535,2 Set #REGa to $E8  -- set left hand road position to "middle"
+C $C534,1 Bank
+C $C535,2 Set #REGa to $E8  -- set left hand road position to leftmost
 C $C537,3 Self modify 'LD H,x' @ #R$C642
 C $C53A,3 Self modify 'LD H,x' @ #R$C5B3
-C $C53D,2 Set #REGa to $EC  -- set right hand road position to (something)
+C $C53D,2 Set #REGa to $EC  -- set right hand road position to rightmost
 C $C53F,3 Self modify 'LD H,x' @ #R$C68A
 C $C542,3 Self modify 'LD H,x' @ #R$C5D9
-C $C545,2 Set #REGa to $FC
+C $C545,2 Set #REGa to -4
 C $C547,3 Self modify 'LD B,x' @ #R$C5AC
 C $C54A,3 -> dr_c551
 N $C54D This entry point is used by the routine at #R$C2E7. Called for regular roads incl dirt track, but not tunnels or splits.
-@ $C54D label=dr_c54d
+@ $C54D label=dr_set_lane_callback
 C $C54D,3 Self modify 'JP Z,x' @ #R$C4B2
 C $C550,1 Bank/unbank
-@ $C551 label=dr_c551
-C $C551,2 Set flags from #REGb
+@ $C551 label=dr_dispatch_fill
+C $C551,2 Copy fill pattern from #REGb
 C $C553,3 Jump if non-zero
-C $C556,1 Bank/unbank
+C $C556,1 Bank
 C $C557,6 Self modify 'JP NZ,x' @ #R$C6AD to be #R$C55F
-C $C55D,1 Bank/unbank
+C $C55D,1 Unbank
 N $C55F Move to next scanline.
+@ $C55F label=dr_advance_unfilled
 C $C55F,1 Save for checking in a moment
 C $C560,1 Move to next scanline (visually upwards)
 C $C561,2 Would it have rolled over into the top nibble?
 C $C563,2 Jump if zero
 N $C565 This entry point is used by the routine at #R$C58A.
-@ $C565 label=dr_c565
+@ $C565 label=dr_write_scanline_unfilled
 C $C565,4 Self modify 'LD DE,x' @ #R$C56C (below)
 C $C569,2 Set #REGb to $FF
 C $C56B,1 Bank/unbank
@@ -10289,36 +10294,37 @@ C $C56C,3 DE = <self modified>
 C $C56F,4 L = E + 31
 C $C573,1 H = D
 C $C574,1 Put it in #REGsp (so we can use PUSH for speed)
-C $C575,3 HL = 0  [not self modified apparently]
-C $C578,1 C = L
+C $C575,3 HL = 0  [not self modified apparently] -- fill value
+C $C578,1 C = 0
 C $C579,3 Jump into a sequence of 15 PUSH HLs
 N $C57C This is scanline/buffer pointer movement
-@ $C57C label=dr_scanline_rollover_2
+@ $C57C label=dr_rollover_filled
 C $C57C,4 Move to next chunk of 16 scanlines
 C $C580,3 Carry set if CCC field was zero - don't compensate 1111 field and continue
 C $C583,4 Put back the bit stolen since BAAA field was zero
 C $C587,3 jump
 N $C58A This is scanline/buffer pointer movement
-@ $C58A label=dr_scanline_rollover_1
+@ $C58A label=dr_rollover_unfilled
 C $C58A,4 Move to next chunk of 16 scanlines
 C $C58E,3 Carry set if CCC field was zero - don't compensate 1111 field and continue
 C $C591,4 Put back the bit stolen since BAAA field was zero
 C $C595,3 jump
 N $C598 Road and backdrop plotting
-@ $C598 label=dr_c598
+@ $C598 label=dr_dispatch_filled
 C $C598,1 Bank
 C $C599,6 Self modify 'JP NZ,x' @ #R$C6AD to be #R$C5A1
 C $C59F,1 Unbank
 N $C5A1 Move to next scanline.
+@ $C5A1 label=dr_advance_filled
 C $C5A1,1 Save for checking in a moment
 C $C5A2,1 Move to next scanline (visually upwards)
 C $C5A3,2 Would it have rolled over into the top nibble?
 C $C5A5,2 Jump if rolled over
 N $C5A7 This entry point is used by the routine at #R$C57C.
-@ $C5A7 label=dr_c5a7
+@ $C5A7 label=dr_fill
 C $C5A7,4 Self modify 'LD DE,x' @ #R$C5F9
 C $C5AB,1 A = L
-C $C5AC,2 B = <self modified>  e.g. $FC or $FD
+C $C5AC,2 B = <self modified>  e.g. $FC or $FD  -- -ve lane count
 C $C5AE,1 Bank
 C $C5AF,1 L = A
 C $C5B0,3 B = 16, C = $F8 (mask)
@@ -10341,7 +10347,7 @@ C $C5CE,4 Jump if A < B
 C $C5D2,1 A--
 @ $C5D3 label=dr_c5d3
 C $C5D3,1 E = A
-C $C5D4,2 A = ~E + B
+C $C5D4,2 A = ~E + B  -- B is 16
 C $C5D6,3 Self modify 'JR x' @ #R$C62C -- jump table target
 C $C5D9,2 Set high byte of table address to <self modified> e.g. $EC
 C $C5DB,1 Read from table  -- is this 8-bit or a partial 16-bit value?
@@ -10361,14 +10367,14 @@ C $C5EF,1 A >>= 1
 @ $C5F0 label=dr_set_righthand_jump_table_target
 C $C5F0,3 Self modify 'JR x' @ #R$C60A -- righthand jump table target
 N $C5F3 Calculate road jump table target.
-C $C5F3,3 A = ~A + B + E
+C $C5F3,3 A = ~A + B + E (== 15 - A + E)
 C $C5F6,3 Self modify 'JR x' @ #R$C61B -- road jump table target
 C $C5F9,3 DE = <self modified by #$C5A7>
 C $C5FC,4 L = E + 31
 C $C600,1 H = D
 C $C601,1 Put it in #REGsp (so we can use PUSH for speed)
-C $C602,1 Bank
-C $C603,1 A <<= 1
+C $C602,1 Unbank fill byte
+C $C603,1 Rotate fill pattern so we checkerboard
 C $C604,2 Widen stripe fill byte to whole word
 C $C606,1 Unbank
 C $C607,3 Set road fill to zero (but only when drawing stripes)
@@ -10385,10 +10391,10 @@ N $C62C Fill left hand road stripes - continuing from the right hand side.
 @ $C62C label=dr_lefthand_jumptable
 C $C62C,2 Jump table (self modified)
 N $C62E This entry point is used by the routine at #R$C452.
-@ $C62E label=dr_c62e
+@ $C62E label=dr_fill_left_stripe
 N $C63D ...
 C $C63D,1 B = E
-C $C63E,1 C--
+C $C63E,1 0 -> 255
 C $C63F,2 Point #REGhl at road edge/markings table at $E4xx
 C $C641,1 Bank/unbank
 C $C642,2 Load <self modified> top byte of road left hand edge table ($E8/$E9/$EA for left/centre-left/centre)
@@ -10396,7 +10402,7 @@ C $C644,1 Read from left/centre-left/centre hand edge table at $E8xx/$E9xx/$EAxx
 C $C645,3 Jump if non-zero
 N $C648 Otherwise zero.
 C $C648,3 index = HL[-1]  -- Load the byte prior
-C $C64B,1 Bank/unbank
+C $C64B,1 Bank
 N $C64C Build address of road edge marking graphic.
 C $C64C,1 Save index
 C $C64D,2 Bottom three bits select the row number 0..7
@@ -10415,9 +10421,9 @@ C $C660,1 Write the new screen buffer byte
 C $C661,2 L += 2
 C $C663,1 E++
 C $C664,2 *DE++ = *HL++, BC--
-C $C666,1 Bank/unbank
-N $C667 Perhaps a loop for road lane markings.
-@ $C667 label=dr_c667_loop
+C $C666,1 Unbank
+N $C667 Draw road lane markings.
+@ $C667 label=dr_road_lane_marking_loop
 C $C667,1 Increment counter
 C $C668,2 Exit loop if zero
 C $C66A,1 H++
@@ -10425,14 +10431,14 @@ C $C66B,1 Read from road left drawing table e.g $E89F
 C $C66C,1 Set flags
 C $C66D,2 Loop if non-zero
 C $C66F,3 A = HL[-1]  (with wraparound?)
-C $C672,1 Bank/unbank
+C $C672,1 Bank
 C $C673,1 E = A  -- save A
 C $C674,6 L = ((A & 7) << 1) + <self modified>
 C $C67A,8 E = ((E >> 3) & 31) + B
 C $C682,2 *DE++ = *HL++, BC--
 N $C684 This reads an (unmasked) road lane marker bitmap byte from $E4D0+.
 C $C684,2 Copy a byte from $E4D0+ to the buffer
-C $C686,1 Bank/unbank
+C $C686,1 Unbank
 C $C687,3 Loop
 @ $C68A label=dr_c68a
 C $C68A,2 Set high byte of table address to <self modified> e.g. $EC
@@ -10441,7 +10447,7 @@ C $C68D,1 L--
 C $C68E,1 Set flags
 C $C68F,2 Jump if non-zero
 C $C691,1 A = *HL
-C $C692,1 Bank/unbank
+C $C692,1 Bank
 C $C693,1 E = A  -- save A
 N $C694 Must be the right hand edge handling.
 C $C694,7 L = ((A & 7) << 2) + <self modified>   -- as above but * 4
@@ -10451,10 +10457,10 @@ N $C6A5 AND-OR masking here. This affects road lines when altered.
 C $C6A5,2 A = *DE & *HL
 C $C6A7,1 L++
 C $C6A8,2 *DE = A | *HL
-C $C6AA,1 Bank/unbank
+C $C6AA,1 Unbank
 @ $C6AB label=dr_c6ab
 C $C6AB,1 L--
-C $C6AC,1 C--
+C $C6AC,1 C--  -- possible loop counter
 C $C6AD,3 Jump to <self modified> if non-zero
 C $C6B0,1 Swap
 C $C6B1,1 B = A
@@ -10503,7 +10509,7 @@ C $C70A,3 A -= IY[0]
 C $C70D,2 Jump if zero
 C $C70F,3 Jump if positive
 C $C712,3 Jump
-@ $C715 label=dr_c715
+@ $C715 label=dr_level_road
 C $C715,2 L -= 2
 N $C717 Sampled IX = $EE2C ... EE39 EE45
 C $C717,3 Load the lanes flags byte
@@ -10520,7 +10526,7 @@ C $C72A,2 Jump if clear (tunnel cont/end?)
 C $C72C,2 Load #REGiy.low (distance)
 C $C72E,3 Self modify 'CP x' @ #R$C15D  [15 when tunnel is small, 6 when fills screen]
 C $C731,2 A = 1
-C $C733,1 B++
+C $C733,1 255 -> 0
 C $C734,2 Bit 4 of C set?
 C $C736,1 C = A
 C $C737,2 Jump if clear
@@ -11130,8 +11136,8 @@ C $CBF1,1 Move result to #REGb
 N $CBF2 Map #REGb (0,32,64,96,...,224) to (0,22,44,66,...,154)
 C $CBF2,5 Divide by 4 and subtract
 C $CBF7,5 Divide by 16 and subtract
-N $CBFC Index the road animation table horizontal_e6b0.
-C $CBFC,10 #REGiy = horizontal_e6b0 + #REGa
+N $CBFC Index the road animation table persp_x_scale_right.
+C $CBFC,10 #REGiy = persp_x_scale_right + #REGa
 N $CC06 Multiply #REGc by the top three bits of #REGa then divide by 8 (with rounding) on return.
 C $CC06,3 Call multiply (result in #REGa)
 C $CC09,6 A = (128 - A) & $FE
@@ -11156,9 +11162,9 @@ C $CC2F,2 C = A - E
 C $CC31,3 Reads high byte
 C $CC34,2 B = A - D (with carry)
 N $CC36 Sampled IY = $E71E $E71F $E720 ..
-C $CC36,3 Load from somewhere in horizontal_e6b0[]
+C $CC36,3 Load from somewhere in persp_x_scale_right[]
 C $CC39,2 Advance
-N $CC3B This is a multiplier of #REGhl (distance shift value computed above) by #REGa (value from $E600+).
+N $CC3B This is a multiplier of #REGhl (distance shift value computed above) by #REGa (value from $E600Vertical perspective weights — Y scale by speed and distance+).
 C $CC3B,1 Shift left
 C $CC3C,2 Top bit not set
 C $CC3E,2 Copy distance shift value
@@ -11201,20 +11207,20 @@ C $CC7B,1 Move result to #REGb
 N $CC7C Reduce #REGb 0..31 => 0..21.
 C $CC7C,5 Divide by 4 and subtract
 C $CC81,5 Divide by 16 and subtract
-N $CC86 Index the road animation table horizontal_e760.
+N $CC86 Index the road animation table persp_x_delta_left.
 C $CC86,5 HL = $E700 + $60 + A
 C $CC8B,2 Jump if A+$60 had no carry
 C $CC8D,1 Add carry otherwise
-N $CC8E Adds one of the entries somewhere in horizontal_e760 to the 22 bytes at $E320.
+N $CC8E Adds one of the entries somewhere in persp_x_delta_left to the 22 bytes at $E320.
 @ $CC8E label=bct_build_table_e320
 C $CC8E,3 Address of table_e320 (written to)
 C $CC91,2 22 iterations
 @ $CC93 label=bct_build_table_e320_loop
 C $CC93,1 Load an entry from table_e320
-N $CC94 This reads from (somewhere in) horizontal_e760 in sequence.
+N $CC94 This reads from (somewhere in) persp_x_delta_left in sequence.
 C $CC94,1 Increment it by (HL)
 C $CC95,1 Write back to (DE)
-C $CC96,1 Increment entry address in horizontal_e760
+C $CC96,1 Increment entry address in persp_x_delta_left
 C $CC97,1 Increment entry address in table_e320
 C $CC98,2 Loop while #REGb > 0
 N $CC9A This controls the vanishing point. Decrease this value for wider roads - but the road might appear to bend left... Consider that this is $127 but $109 is the centre.
@@ -12520,13 +12526,13 @@ W $E540,192,2
 b $E600 Road/object animation tables
 D $E600 Seems to be 3x8 groups of 22 bytes. Clearly it's a set of scaling tables. E6B0 and E760 used in regular driving... Have only seen a single byte in each row accessed ($E6BB etc.) IGNORE THAT S.A. was leading me astray. 8 animation frames? Set the values to zero you get the road fully flush against the RHS.
 R $E600 vertical = lower moves values UP
-@ $E600 label=vertical_e600
+@ $E600 label=persp_y_scale
 B $E600,176,22
 N $E6B0 horizontal = lower moves the road RIGHT
-@ $E6B0 label=horizontal_e6b0
+@ $E6B0 label=persp_x_scale_right
 B $E6B0,176,22
 N $E760 affects horizontal too = lower moves the road LEFT earlier bytes affect nearest, later bytes affect the distance
-@ $E760 label=horizontal_e760
+@ $E760 label=persp_x_delta_left
 B $E760,176,22
 c $E810 Called once the memory map has been setup
 @ $E810 label=entrypt_48k
