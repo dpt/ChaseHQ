@@ -611,12 +611,12 @@ struct chqstate {
 
   // $C4B2 (SM) in draw_road
   dr_callback_t *dr_callback;
-  // $C56D (SM) in draw_road
+  // $C56C (SM) in draw_road
   u16       dr_backbuf_1;
   // $C5AC (SM) in draw_road
   s8        dr_neg_lane_count;
   // $C5B3 (SM) in draw_road
-  u8        dr_left_table_hi_2; // table hi byte
+  u8        dr_left_table_hi_2;
   // $C5D9 (SM) in draw_road
   u8        dr_right_table_hi_2;
   // $C5F9 (SM) in draw_road
@@ -628,19 +628,17 @@ struct chqstate {
   // $C62C (SM) in draw_road
   u8        dr_left_stripe_width;
   // $C642 (SM) in draw_road
-  u8        dr_left_table_hi_1; // table hi byte
+  u8        dr_left_table_hi_1;
   // $C651 (SM) in draw_road
   u8        dr_edge_graphic_offset;
   // $C677 (SM) in draw_road
   u8        dr_stripe_table_offset;
-  // $C68B (SM) in draw_road
+  // $C68A (SM) in draw_road
   u8        dr_right_table_hi_1;
   // $C698 (SM) in draw_road
   u8        dr_right_edge_offset;
-  // $C6AC (banked C shadow) in draw_road: scanline countdown, set to Chorizon
-  int       dr_C_counter;
   // $C6AD (SM) in draw_road
-  void    (*dr_fill_fn)(chqstate_t *state, int DEbackbuf, int L, int Adash_fill, u8 **IXlanesptr, const u8 **IYheightptr);
+  void    (*dr_fill_fn)(chqstate_t *state, int Ccounter, int DEbackbuf, int L, int Adash_fill, u8 **IXlanesptr, const u8 **IYheightptr);
   // $C6B2 (SM) in draw_road
   u8        dr_initial_stripe_state; // inital road stripe state
   // $C6BC (SM) in draw_road
