@@ -1802,7 +1802,7 @@ static void cpu_driver(chqstate_t *state)
   CHKDRAW("move_hero_car");
   check_scenery_collisions(state);
   CHKDRAW("check_scenery_collisions");
-  //draw_everything_else(state);
+  draw_everything_else(state);
   animate_hero_car(state); /* exit via */
   CHKDRAW("animate_hero_car");
 
@@ -2146,7 +2146,7 @@ dp_repeat_or_plot_tile:
 
       // dp_direction
       if (state->draw_pregame_direction != 1) {
-        bufoffset = BACKBUFTOOFFSET(backbuf);
+        bufoffset = BACKBUFTOOFFSET_LR(backbuf, 0, 256);
         // vertical
         if ((bufoffset & 0x0F00) == 0) {
           bufoffset -= 0x1000; // undoing overflow?
