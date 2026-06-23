@@ -10564,7 +10564,7 @@ static void layout_road(chqstate_t *state)
   int       HLroadpos_saved;
   u8       *HLunknown;
 
-  // point at lane data
+  // Point at lane data
   DElanedata_base = DElanedata = ROADBUF_FWD2PTR(ROADBUF_LANES_OFFSET);
 
   // Count the distance to the forked road.
@@ -12915,7 +12915,7 @@ dr_set_stripes:
   Aheight_diff = Aprev_height - **IYheightptr;
   if (Aheight_diff == 0)
     goto dr_level_road;
-  else if (Aheight_diff > 0)
+  else if ((s8)Aheight_diff > 0) /* $C70F JP P: Sign flag clear = positive */
     goto dr_increasing;
   else goto dr_decreasing;
 
@@ -13802,7 +13802,7 @@ static void build_curve_table_fill(chqstate_t *state,
     // EXX Bank
     A = (Bdash_alwayszero - 2 + IYheight_table[0] - IYheight_table[1]) & 0xFF;
     IYheight_table++;
-    if (A > 128) goto bct_endbit_negative; // if A is negative
+    if (A >= 128) goto bct_endbit_negative; /* $CCBF JP M: Sign flag = bit 7 set */
     A += 2;
     state->object_positions[IYheight_table - 1 - &state->height_table[0]] =
       A; // must write to $E34F+ which is object_positions
