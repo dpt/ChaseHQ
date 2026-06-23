@@ -685,7 +685,7 @@ struct chqstate {
   // $E900 - Left inner edge / centre-left
   u16       xpos_road_centre_left[128];
   // $EA00 - Road centre line
-  u16       xpos_road_centre[128]; // perhaps s16
+  u16       xpos_road_centre[128];
   // $EB00 - Right inner edge / centre-right
   u16       xpos_road_centre_right[128];
   // $EC00 - Right outer edge (road/verge boundary)
