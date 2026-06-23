@@ -10581,14 +10581,14 @@ static void layout_road(chqstate_t *state)
   // No forked road found.
   build_curve_table(state, /*forked=*/0);
   // $E800 now contains the left edges and $EC00 contains the right edges.
-  SProadright = &state->xpos_road_right[0x30];
+  SProadright = &state->xpos_road_right[0x30 >> 1];
   Aiterations = 0x30; // 48..256 in steps of 2 = 104 iterations
 lr_calc_single_lane:
   do {
-    SMroadcentre      = &state->xpos_road_centre[Aiterations];
-    SMroadcentreright = &state->xpos_road_centre_right[Aiterations];
-    SMroadcentreleft  = &state->xpos_road_centre_left[Aiterations];
-    SMroadleft        = &state->xpos_road_left[Aiterations];
+    SMroadcentre      = &state->xpos_road_centre[Aiterations >> 1];
+    SMroadcentreright = &state->xpos_road_centre_right[Aiterations >> 1];
+    SMroadcentreleft  = &state->xpos_road_centre_left[Aiterations >> 1];
+    SMroadleft        = &state->xpos_road_left[Aiterations >> 1];
 
     // EXX Bank
 
@@ -10708,15 +10708,15 @@ lr_badf:
     HLroadpos; // restore normal road pos after fork rendering
   // POP BC
   // (set SP restoring op)
-  SProadright = &state->xpos_road_right[0x30]; // (set SP to $EC30)
+  SProadright = &state->xpos_road_right[0x30 >> 1]; // (set SP to $EC30)
   Aiterations = 0x30; // 48..256 in steps of 2 = 104 iterations
   do {
-    SMroadcentre      = &state->xpos_road_centre[Aiterations];
-    SMroadcentreleft  = &state->xpos_road_centre_left[Aiterations];
-    SMroadleft        = &state->xpos_road_left[Aiterations];
-    SMveryright       = &state->xpos_road_fork_right[Aiterations]; // output right?
-    SMroadcentreright = &state->xpos_road_centre_right[Aiterations]; // output left?
-    SMroadright       = &state->xpos_road_right[Aiterations];
+    SMroadcentre      = &state->xpos_road_centre[Aiterations >> 1];
+    SMroadcentreleft  = &state->xpos_road_centre_left[Aiterations >> 1];
+    SMroadleft        = &state->xpos_road_left[Aiterations >> 1];
+    SMveryright       = &state->xpos_road_fork_right[Aiterations >> 1]; // output right?
+    SMroadcentreright = &state->xpos_road_centre_right[Aiterations >> 1]; // output left?
+    SMroadright       = &state->xpos_road_right[Aiterations >> 1];
     // EXX Bank for inner loop
     DEdash = *SMroadleft;
     HLdash = *SProadright++; // POP HLdash // read from $ECxx
@@ -10731,7 +10731,7 @@ lr_badf:
     Aiterations += 2;
     // EXX Unbank
   } while (--Aiterations > 0);
-  SProadright = &state->xpos_road_right[Aiterations];
+  SProadright = &state->xpos_road_right[Aiterations >> 1];
   goto lr_calc_single_lane; // jump into no_fork code
 }
 
@@ -12246,6 +12246,19 @@ static void draw_road(chqstate_t *state)
   state->dr_initial_stripe_state = Blanesdataoffset & 1;
   carry_stripe = (Blanesdataoffset >> 1) & 1; // test bit 1
 
+  {
+    static int draw_frame = 0;
+    static int filled_frames = 0;
+    if (carry_stripe) filled_frames++;
+    if (++draw_frame <= 10 || (draw_frame % 60) == 0) {
+      fprintf(stderr, "draw_road[%d]: offset=%d carry_stripe=%d Ccounter=%d filled=%d\n",
+              draw_frame, Blanesdataoffset, carry_stripe, Ccounter, filled_frames);
+      if (draw_frame <= 3)
+        fprintf(stderr, "  xR[125..127]= %04x %04x %04x\n",
+                state->xpos_road_right[125], state->xpos_road_right[126], state->xpos_road_right[127]);
+    }
+  }
+
   Htable_offset = 0xD0;
   Lstripe_height = 16;
   Axor_base = 0xD0;
@@ -12466,7 +12479,9 @@ static void dr_write_scanline_unfilled(chqstate_t *state, int Ccounter, int DEba
   u8   Cdash_zerofill;
 
   if (DEbackbuf != 0 && (DEbackbuf < 0xF000 || DEbackbuf > 0x10000)) {
-    printf("dr_write_scanline_unfilled: DEbackbuf out of bounds: %x\n", DEbackbuf);
+    static int oob = 0;
+    if (++oob <= 3)
+      fprintf(stderr, "dr_write_scanline_unfilled: oob[%d]: %x\n", oob, DEbackbuf);
     return;
   }
 
@@ -12594,9 +12609,20 @@ static void dr_fill(chqstate_t *state,
   u16  HLdash_fill;
   u16  BCdash_zerofill;
 
-  if (DEbackbuf != 0 && (DEbackbuf < 0xF000 || DEbackbuf > 0x10000)) {
-    printf("dr_fill: DEbackbuf out of bounds: %x\n", DEbackbuf);
-    return;
+  {
+    static int fill_count = 0;
+    static int oob_count = 0;
+    if (DEbackbuf != 0 && (DEbackbuf < 0xF000 || DEbackbuf > 0x10000)) {
+      oob_count++;
+      if (oob_count == 1)
+        fprintf(stderr, "dr_fill: first oob: DEbackbuf=%04x Lrow=%02x fill_count=%d\n",
+                DEbackbuf, (u8)Lrow, fill_count);
+      return;
+    }
+    if (++fill_count <= 5)
+      fprintf(stderr, "dr_fill[%d]: DEbackbuf=%04x Lrow=%02x\n", fill_count, DEbackbuf, (u8)Lrow);
+    if (fill_count == 200)
+      fprintf(stderr, "dr_fill: 200 fills reached\n");
   }
 
   state->dr_backbuf_2 = DEbackbuf;
@@ -12658,13 +12684,36 @@ static void dr_fill(chqstate_t *state,
   // Conv: use memset
   int n;
   n = (15 - state->dr_right_stripe_width) * 2;
-  assert(n >= 0);
+  if (n < 0) {
+    fprintf(stderr, "dr_fill: n<0 right stripe: right=%d Lrow=%d DEbackbuf=%04x\n",
+            state->dr_right_stripe_width, Lrow, DEbackbuf);
+    n = 0;
+  }
+  {
+    static int sc = 0;
+    if (++sc <= 3) {
+      u8 *rptr = xpos2addr(state, state->dr_right_table_hi_2) + Ldash_row;
+      fprintf(stderr, "dr_fill_w[%d]: SPoff=%d n_right=%d fill=%02x n_road=%d rw=%d rsw=%d lsw=%d xR[%d]=%02x:%02x\n",
+              sc,
+              (int)(SPoutput - state->backbuffer),
+              n, (u8)HLdash_fill,
+              (15 - state->dr_road_width) * 2,
+              state->dr_road_width,
+              state->dr_right_stripe_width,
+              state->dr_left_stripe_width,
+              Ldash_row, (u8)rptr[0], (u8)rptr[-1]);
+    }
+  }
   memset(SPoutput -= n, HLdash_fill, n);
 
   /* Fill blank road surface - continuing from the right hand side. */
   // Conv: use memset
   n = (15 - state->dr_road_width) * 2;
-  assert(n >= 0);
+  if (n < 0) {
+    fprintf(stderr, "dr_fill: n<0 road width: road_width=%d left=%d right=%d Lrow=%d DEbackbuf=%04x\n",
+            state->dr_road_width, state->dr_left_stripe_width, state->dr_right_stripe_width, Lrow, DEbackbuf);
+    n = 0;
+  }
   memset(SPoutput -= n, BCdash_zerofill, n);
 
   dr_fill_left_stripe(state,
@@ -12949,7 +12998,7 @@ dr_c788:
 
 dr_increasing:
   Ccounter = Aheight_diff;
-  if (A < 0x50) {
+  if ((u8)Aheight_diff < 0x50) {
     dr_read_lanes(state, *IXlanesptr, (u8 *)*IYheightptr, Bfill_pattern, Ccounter, DEbackbuf, Lrow); // exit via
     return;
   }
@@ -13737,6 +13786,13 @@ static void build_curve_table_fill(chqstate_t *state,
   u16  HLdash;
   int  overflow;
 
+  {
+    static int bctf_call = 0;
+    if (++bctf_call <= 4)
+      fprintf(stderr, "bctf_start[%d]: DEroadpos=%d tbl_idx=%d\n",
+              bctf_call, DEroadpos,
+              (int)(HLtableend - 128 - &state->xpos_road_left[0]));
+  }
   IYheight_table =
     &state->height_table[0]; /* was 0xE300; // addr of height table */
   Biterations = 21;
@@ -13772,6 +13828,12 @@ static void build_curve_table_fill(chqstate_t *state,
         else DEroadpos--;
       }
       SPoutput--; *SPoutput = DEroadpos; // PUSH to output table
+      {
+        static int bc = 0;
+        if (++bc <= 8)
+          fprintf(stderr, "bctf[%d]: idx=%d val=%d(0x%04x)\n",
+                  bc, (int)(SPoutput - (HLtableend - 128)), (int)*SPoutput, (unsigned)*SPoutput);
+      }
     } while (--Bdash > 0);
 bct_continue:
     // EXX Unbank
