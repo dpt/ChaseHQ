@@ -215,7 +215,7 @@ const stage_t stage1 = {
   },
   &stage1_perp_face[FACEBITMAPBYTES],
   NULL, // no bitmap given on this level
-  attribute_BRIGHT_YELLOW_OVER_BLACK | (attribute_BRIGHT_YELLOW_OVER_BLACK << 8),
+  attribute_BRIGHT_BLACK_OVER_YELLOW | (attribute_BRIGHT_BLACK_OVER_YELLOW << 8),
   &stage1_hittable_object_defs[0],
   &stage1_right_hand_graphics_defs[-1].arg,
   &stage1_right_hand_graphics_defs[-1],
