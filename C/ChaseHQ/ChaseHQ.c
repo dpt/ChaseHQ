@@ -1266,6 +1266,8 @@ static void attract_mode_128k(chqstate_t *state);
 /**
  * $5C00: End screen
  *
+ * Called from main loop.
+ *
  * \param[in] state Pointer to game state.
  */
 static void end_screen(chqstate_t *state)
@@ -1275,6 +1277,8 @@ static void end_screen(chqstate_t *state)
 
 /**
  * $8014: Load stage
+ *
+ * Called from main loop.
  *
  * \param[in] state Pointer to game state.
  */
@@ -1437,6 +1441,8 @@ static void start_siren_hook(chqstate_t *state)
 /**
  * $83B8: Play engine or siren SFX hook
  *
+ * Called from main loop.
+ *
  * \param[in] state Pointer to game state.
  */
 static void play_regular_sfx_hook(chqstate_t *state)
@@ -1449,6 +1455,8 @@ static void play_regular_sfx_hook(chqstate_t *state)
 
 /**
  * $83BB: Silence audio hook
+ *
+ * Called from main loop.
  *
  * \param[in] state Pointer to game state.
  */
@@ -1501,6 +1509,8 @@ static void play_engine_sfx_hook(chqstate_t *state)
 
 /**
  * $83C7: Play speech hook
+ *
+ * Called from main loop.
  *
  * \param[in] state  Pointer to game state.
  * \param[in] sample Index of sample to play. (was A)
@@ -1804,6 +1814,8 @@ static void cpu_driver(chqstate_t *state)
 /**
  * $858C: Pre-game radio screen ("CHASE HQ MONITORING SYSTEM")
  *
+ * Called from main loop.
+ *
  * \param[in] state Pointer to game state.
  */
 static void run_pregame_screen(chqstate_t *state)
@@ -1943,6 +1955,8 @@ exit:
 /**
  * $85E4: Reveal perp car
  *
+ * Called from main loop.
+ *
  * \param[in] state Pointer to game state.
  */
 static void reveal_perp_car(chqstate_t *state)
@@ -1981,6 +1995,8 @@ static void reveal_perp_car(chqstate_t *state)
 
 /**
  * $860F: Animate meters
+ *
+ * Called from main loop.
  *
  * \param[in] state Pointer to game state.
  */
@@ -2045,6 +2061,8 @@ static void am_set_attrs(int counter, u8 *attrs)
 
 /**
  * $865A: Draw pregame
+ *
+ * Called from main loop.
  *
  * \param[in] state Pointer to game state.
  */
@@ -2161,6 +2179,8 @@ dp_repeat_or_plot_tile:
 /**
  * $873C: Escape scene
  *
+ * Called from main loop.
+ *
  * \param[in] state Pointer to game state.
  */
 static void escape_scene(chqstate_t *state)
@@ -2219,6 +2239,8 @@ static void escape_scene(chqstate_t *state)
 
 /**
  * $87DC: Set up stage
+ *
+ * Called from main loop.
  *
  * \param[in] state      Pointer to game state.
  * \param[in] scene_data Source bitmap data.
@@ -2297,6 +2319,8 @@ static void set_up_stage_reset_lights(u8 *attrptr)
 
 /**
  * $8876: Check user input
+ *
+ * Called from main loop.
  *
  * \param[in] state Pointer to game state.
  */
@@ -2395,6 +2419,8 @@ static void clear_playfield(chqstate_t *state)
 /**
  * $88F2: Start SFX
  *
+ * Called from main loop.
+ *
  * \param[in] state    Pointer to game state.
  * \param[in] index    Sound effect index. (was B)
  * \param[in] priority Priority; higher value wins. (was C)
@@ -2412,6 +2438,8 @@ static void start_sfx(chqstate_t *state, int index, int priority)
 
 /**
  * $8903: Drive SFX
+ *
+ * Called from main loop.
  *
  * \param[in] state Pointer to game state.
  */
@@ -2594,6 +2622,8 @@ static void sfx_bipbow(chqstate_t *state, int param1, int param2)
 
 /**
  * $8A57: Handle perp caught
+ *
+ * Called from main loop.
  *
  * \param[in] state Pointer to game state.
  * \return Non-zero on success.
@@ -2945,6 +2975,8 @@ static void fully_smashed(chqstate_t *state)
 /**
  * $8D8F: Transition
  *
+ * Called from main loop.
+ *
  * \param[in] state Pointer to game state.
  */
 static void transition(chqstate_t *state)
@@ -3023,6 +3055,8 @@ static void transition_fade_chunk(chqstate_t *state, int mask, u8 *backbuf)
 
 /**
  * $8DF9: Setup transition
+ *
+ * Called from main loop.
  *
  * \param[in] state  Pointer to game state.
  * \param[in] stride Stride of bitmap data, in bytes. (was A)
@@ -3259,6 +3293,8 @@ static void draw_mugshot(chqstate_t *state,
 /**
  * $8EE7: Draws the smash bar
  *
+ * Called from main loop.
+ *
  * \param[in] state Pointer to game state.
  */
 static void draw_smash_bar(chqstate_t *state)
@@ -3332,6 +3368,8 @@ static u16 draw_smash_bar_solid_bit(chqstate_t *state, int nrows, int backbuf)
 
 /**
  * $8F5F: Draw everything else
+ *
+ * Called from main loop.
  *
  * \param[in] state Pointer to game state.
  */
@@ -5018,6 +5056,8 @@ static u8 rng(chqstate_t *state)
 /**
  * $9945: Start chatter
  *
+ * Called from main loop.
+ *
  * \param[in] state      Pointer to game state.
  * \param[in] priority   Priority of this chatter (higher wins). (was A)
  * \param[in] chatterblk Pointer to chatter data block. (was HL)
@@ -5044,6 +5084,8 @@ static void start_chatter(chqstate_t       *state,
 
 /**
  * $9965: Drive chatter
+ *
+ * Called from main loop.
  *
  * \param[in] state Pointer to game state.
  */
@@ -5147,6 +5189,8 @@ clear:
 
 /**
  * $99D3: Stop chatter
+ *
+ * Called from main loop.
  *
  * \param[in] state Pointer to game state.
  */
@@ -5583,6 +5627,8 @@ static void clear_message_line(chqstate_t *state)
 /**
  * $9BCF: Handle "time up", countdown and continue
  *
+ * Called from main loop.
+ *
  * This function handles timed events. When 15s or less remain then Nancy warns
  * that our heroes are running of time. When they do run out of time, and
  * sufficient credits remain, a 10s coundown timer and restart query are
@@ -5732,6 +5778,8 @@ check_restart:
 /**
  * $9C79: Extracted from above
  *
+ * Called from main loop.
+ *
  * \param[in] state Pointer to game state.
  */
 static void play_start_noise(chqstate_t *state)
@@ -5741,6 +5789,8 @@ static void play_start_noise(chqstate_t *state)
 
 /**
  * $9CC2: Speed score
+ *
+ * Called from main loop.
  *
  * \param[in] state Pointer to game state.
  */
@@ -5852,6 +5902,8 @@ static void increment_score(chqstate_t *state, int lo, int md, int hi)
 /**
  * $9D2E: Calc overtake bonus
  *
+ * Called from main loop.
+ *
  * \param[in] state Pointer to game state.
  */
 static void calc_overtake_bonus(chqstate_t *state)
@@ -5881,6 +5933,8 @@ static void calc_overtake_bonus(chqstate_t *state)
 
 /**
  * $9D62: Update scoreboard
+ *
+ * Called from main loop.
  *
  * \param[in] state Pointer to game state.
  */
@@ -6458,6 +6512,8 @@ dc_return:
 /**
  * $A0D6: Keyscan
  *
+ * Called from main loop.
+ *
  * \param[in] state Pointer to game state.
  * \return Non-zero on success.
  */
@@ -6853,6 +6909,8 @@ set_off_road:
 /**
  * $A579: Layout objects
  *
+ * Called from main loop.
+ *
  * \param[in] state Pointer to game state.
  */
 static void layout_objects(chqstate_t *state)
@@ -6972,6 +7030,8 @@ load_and_store_right:
 
 /**
  * $A60E: Cycle counters
+ *
+ * Called from main loop.
  *
  * \param[in] state Pointer to game state.
  */
@@ -7327,6 +7387,8 @@ pb_a7be:
 /**
  * $A7F3: Spawn cars
  *
+ * Called from main loop.
+ *
  * \param[in] state Pointer to game state.
  */
 static void spawn_cars(chqstate_t *state)
@@ -7537,6 +7599,8 @@ void hazard_handler(chqstate_t *state, hazard_t *IXhazard)
 /**
  * $A955: Choose dirt and stones
  *
+ * Called from main loop.
+ *
  * \param[in] state Pointer to game state.
  */
 static void choose_dirt_and_stones(chqstate_t *state)
@@ -7559,6 +7623,8 @@ static void choose_dirt_and_stones(chqstate_t *state)
 
 /**
  * $A97E: Layout dirt and stones
+ *
+ * Called from main loop.
  *
  * \param[in] state Pointer to game state.
  */
@@ -7835,6 +7901,8 @@ static void draw_helicoper_part(chqstate_t                *state,
 /**
  * $AAC6: Move helicopter
  *
+ * Called from main loop.
+ *
  * \param[in] state Pointer to game state.
  */
 static void move_helicopter(chqstate_t *state)
@@ -7895,6 +7963,8 @@ set_newpos:
 
 /**
  * $AB33: Drive helicopter
+ *
+ * Called from main loop.
  *
  * \param[in] state Pointer to game state.
  */
@@ -7963,6 +8033,8 @@ hc_exit:
 
 /**
  * $AB9A: Spawn hazards
+ *
+ * Called from main loop.
  *
  * \param[in] state Pointer to game state.
  */
@@ -8273,6 +8345,8 @@ static u8 check_collision(chqstate_t *state,
 
 /**
  * $ADA0: Draw all hazards
+ *
+ * Called from main loop.
  *
  * \param[in] state Pointer to game state.
  */
@@ -8809,6 +8883,8 @@ void no_op(chqstate_t *state, hazard_t *hazard)
 /**
  * $B063: Move hero car
  *
+ * Called from main loop.
+ *
  * \param[in] state Pointer to game state.
  */
 static void move_hero_car(chqstate_t *state)
@@ -9136,6 +9212,8 @@ mhc_set_cornering:
 
 /**
  * $B318: Animate hero car
+ *
+ * Called from main loop.
  *
  * \param[in] state Pointer to game state.
  */
@@ -10192,6 +10270,8 @@ static void plot_masked_sprite_inverted(chqstate_t *state,
 /**
  * $B848: Scroll horizon
  *
+ * Called from main loop.
+ *
  * \param[in] state Pointer to game state.
  */
 static void scroll_horizon(chqstate_t *state)
@@ -10452,6 +10532,8 @@ url_B9C5:
 /**
  * $B9F4: Layout road
  *
+ * Called from main loop.
+ *
  * \param[in] state Pointer to game state.
  */
 static void layout_road(chqstate_t *state)
@@ -10656,6 +10738,8 @@ lr_badf:
 /**
  * $BB69: Exit fork
  *
+ * Called from main loop.
+ *
  * \param[in] state Pointer to game state.
  */
 static void exit_fork(chqstate_t *state)
@@ -10746,6 +10830,8 @@ static void exit_fork(chqstate_t *state)
 
 /**
  * $BC3E: Copy the backbuf to the real screen
+ *
+ * Called from main loop.
  *
  * \param[in] state Pointer to game state.
  */
@@ -10954,6 +11040,8 @@ static void clear_playfield_set_attrs(chqstate_t *state)
 
 /**
  * $BDFB: Read map
+ *
+ * Called from main loop.
  *
  * \param[in] state Pointer to game state.
  */
@@ -11459,6 +11547,8 @@ rm_all_hazards: // $C05C (also entered from skip path with no_objects_counter=1)
 
 /**
  * $C0E1: Prepare tunnel
+ *
+ * Called from main loop.
  *
  * \param[in] state Pointer to game state.
  */
@@ -12116,6 +12206,8 @@ steep_step:
 
 /**
  * $C452: Draw road
+ *
+ * Called from main loop.
  *
  * This is the big cheese - the main road drawing function.
  *
@@ -13725,6 +13817,8 @@ bct_endbit_negative:
 
 /**
  * $CD3A: Build height table
+ *
+ * Called from main loop.
  *
  * \param[in] state Pointer to game state.
  */
