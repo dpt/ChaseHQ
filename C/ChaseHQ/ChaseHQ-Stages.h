@@ -126,10 +126,14 @@
 // Map escape byte
 #define MAP_ESC                         (0)
 
+#define MAP_CMDCODE_GOTO                (0)
+#define MAP_CMDCODE_FORK_END            (1)
+#define MAP_CMDCODE_SPLIT               (2)
+
 // Map commands
-#define MAP_CMD_GOTO(ADDR)              MAP_ESC, (0), (ADDR) & 0xFF, (ADDR) >> 8
-#define MAP_CMD_FORK_END                MAP_ESC, (1)
-#define MAP_CMD_SPLIT(LADDR,RADDR)      MAP_ESC, (2), (LADDR) & 0xFF, (LADDR) >> 8, (RADDR) & 0xFF, (RADDR) >> 8
+#define MAP_CMD_GOTO(ADDR)              MAP_ESC, MAP_CMDCODE_GOTO, (ADDR) & 0xFF, (ADDR) >> 8
+#define MAP_CMD_FORK_END                MAP_ESC, MAP_CMDCODE_FORK_END
+#define MAP_CMD_SPLIT(LADDR,RADDR)      MAP_ESC, MAP_CMDCODE_SPLIT, (LADDR) & 0xFF, (LADDR) >> 8, (RADDR) & 0xFF, (RADDR) >> 8
 #define MAP_CMD_STOP_BARRIERS           MAP_ESC, (3)
 #define MAP_CMD_UNKNOWN_HAZARD_6        MAP_ESC, (6)
 #define MAP_CMD_START_BARRIERS_L        MAP_ESC, (7)

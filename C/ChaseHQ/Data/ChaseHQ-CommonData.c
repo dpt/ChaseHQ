@@ -1872,7 +1872,7 @@ const session_t saved_game_state = {
   0x60, // time_bcd
   { 0xFF, 0xFF }, // time_digits
   { 0xFF, 0xFF, 0xFF, 0xFF }, // distance_digits
-  1, // no_objects_counter
+  1, // no_objects_flag
   0x59BF // horizon_attribute
 };
 

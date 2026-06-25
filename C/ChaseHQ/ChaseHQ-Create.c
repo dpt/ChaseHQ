@@ -89,9 +89,9 @@ static void chq_initialise(chqstate_t *state)
   state->start_speech_cycle = 4;
 
   // $A240
-  state->road_buffer_offset = &state->road_buffer[0];
-  state->road_buffer_start  = &state->road_buffer[0];
-  state->road_buffer_end    = &state->road_buffer[256];
+  state->road_buffer_offset = &state->road_buffer[0];   // $EE00
+  state->road_buffer_start  = &state->road_buffer[0];   // $EE00
+  state->road_buffer_end    = &state->road_buffer[256]; // $EF00
 
   // $CE33
   state->debris_table[0]  = state->debris_subtables[0];

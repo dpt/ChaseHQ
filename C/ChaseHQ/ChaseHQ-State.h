@@ -85,7 +85,7 @@ struct session {
   // $A181
   u8        distance_digits[4];
   // $A185
-  u8        no_objects_counter;
+  u8        no_objects_flag; // 1 (default) or 2 (don't spawn objects or hazards)
   // $A186
   u16       horizon_attribute; // Z80 address
 };
@@ -360,9 +360,9 @@ struct chqstate {
   // $A23B
   u8        tunnel_sfx;
   // $A23C
-  u8        trigger_passed_object_sfx;
+  u8        trigger_right_hand_passed_object_sfx;
   // $A23D
-  u8        trigger_lane_change_sfx;
+  u8        trigger_left_hand_passed_object_sfx;
   // $A23E
   u8        off_road;
   // $A23F
@@ -380,7 +380,7 @@ struct chqstate {
   // $A245
   u8        rightside_byte;
   // $A246
-  u8        hazards_byte;
+  u8        hazards_counter_byte; // counter?
   // $A247
   u8        lanes_counter_byte;
   // $A248
@@ -553,48 +553,47 @@ struct chqstate {
   u8        dhc_pitch; // car's pitch (0/3/6 = level/up/down)
 
   // $BB8B (SM) in rm_cycle_buffer_offset
-  u16       rm_SM_BB8B_leftfork_hazards; // hazards left-fork Z80 addr
+  u16       rm_leftfork_hazards; // hazards left-fork Z80 addr
   // $BB8E (SM) in rm_cycle_buffer_offset
-  u16       rm_SM_BB8E_leftfork_rightside; // rightside left-fork Z80 addr
+  u16       rm_leftfork_rightside; // rightside left-fork Z80 addr
   // $BB91 (SM) in rm_cycle_buffer_offset
-  u16       rm_SM_BB91_leftfork_leftside; // leftside left-fork Z80 addr
+  u16       rm_leftfork_leftside; // leftside left-fork Z80 addr
   // $BB95 (SM) in rm_cycle_buffer_offset
-  u16       rm_SM_BB95_leftfork_curve; // curvature left-fork Z80 addr
+  u16       rm_leftfork_curve; // curvature left-fork Z80 addr
   // $BB98 (SM) in rm_cycle_buffer_offset
-  u16       rm_SM_BB98_leftfork_height; // height left-fork Z80 addr
+  u16       rm_leftfork_height; // height left-fork Z80 addr
   // $BB9B (SM) in rm_cycle_buffer_offset
-  u16       rm_SM_BB9B_leftfork_lanes; // lanes left-fork Z80 addr
+  u16       rm_leftfork_lanes; // lanes left-fork Z80 addr
   // $BBB8 (SM) in rm_cycle_buffer_offset
-  u16       rm_SM_BBB8_rightfork_hazards; // hazards right-fork Z80 addr
+  u16       rm_rightfork_hazards; // hazards right-fork Z80 addr
   // $BBBB (SM) in rm_cycle_buffer_offset
-  u16       rm_SM_BBBB_rightfork_rightside; // rightside right-fork Z80 addr
+  u16       rm_rightfork_rightside; // rightside right-fork Z80 addr
   // $BBBE (SM) in rm_cycle_buffer_offset
-  u16       rm_SM_BBBE_rightfork_leftside; // leftside right-fork Z80 addr
+  u16       rm_rightfork_leftside; // leftside right-fork Z80 addr
   // $BBC2 (SM) in rm_cycle_buffer_offset
-  u16       rm_SM_BBC2_rightfork_curve; // curvature right-fork Z80 addr
+  u16       rm_rightfork_curve; // curvature right-fork Z80 addr
   // $BBC5 (SM) in rm_cycle_buffer_offset
-  u16       rm_SM_BBC5_rightfork_height; // height right-fork Z80 addr
+  u16       rm_rightfork_height; // height right-fork Z80 addr
   // $BBC8 (SM) in rm_cycle_buffer_offset
-  u16       rm_SM_BBC8_rightfork_lanes; // lanes right-fork Z80 addr
+  u16       rm_rightfork_lanes; // lanes right-fork Z80 addr
   // $BE6D (SM) in rm_cycle_buffer_offset
-  const u8 *rm_SM_BE6D_curvature_one_command_ptr; // curvature one_command ptr
+  const u8 *rm_curvature_fork_end_ptr; // curvature one_command ptr
   // $BEBF (SM) in rm_cycle_buffer_offset
-  const u8 *rm_SM_BEBF_height_one_command_ptr; // height one_command ptr
+  const u8 *rm_height_fork_end_ptr; // height one_command ptr
   // $BF0A (SM) in rm_cycle_buffer_offset
-  const u8 *rm_SM_BF0A_lanes_one_command_ptr; // lanes one_command ptr
+  const u8 *rm_lanes_fork_end_ptr; // lanes one_command ptr
   // $BF2D (SM) in rm_cycle_buffer_offset
   u8        rm_lanes_byte; // lanes current value
   // $BF84 (SM) in rm_cycle_buffer_offset
-  const u8 *rm_SM_BF84_rightside_one_command_ptr; // rightside one_command ptr
+  const u8 *rm_rightside_fork_end_ptr; // rightside one_command ptr
   // $BFCD (SM) in rm_cycle_buffer_offset
-  const u8 *rm_SM_BFCD_leftside_one_command_ptr; // leftside one_command ptr
+  const u8 *rm_leftside_fork_end_ptr; // leftside one_command ptr
   // $C046 (SM) in rm_cycle_buffer_offset
-  const u8 *rm_SM_C046_hazards_one_command_ptr; // hazards one_command ptr
-
+  const u8 *rm_hazards_fork_end_ptr; // hazards one_command ptr
   // $C058 (SM) in read_map
-  u8        rm_SM_C058_hazard_type; // current hazard command
+  u8        rm_hazard_byte; // current hazard command
   // $C0BB (SM) in read_map
-  u8        rm_SM_C0BB_fork_copy_pending; // hazard related
+  u8        rm_do_dirt_and_stones_thing;
 
   // $C15D (SM) in draw_tunnel
   u8        dt_tunnel_distance; // size related [15 when tunnel is small, 6 when fills screen]

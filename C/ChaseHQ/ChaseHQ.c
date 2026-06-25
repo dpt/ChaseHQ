@@ -531,12 +531,12 @@ static u8 *z80offsettobackbuf(chqstate_t *state, int off, int left, int right)
 #define ROAD_LEFTMOST           (0x0105) /* road_pos value at leftmost road edge */
 #define ROAD_126                (0x0126) /* road_pos cap applied during car bounce */
 
-#define ROADBUF_CURVATURE_OFFSET     (0)
-#define ROADBUF_HEIGHT_OFFSET       (32)
-#define ROADBUF_LANES_OFFSET        (64)
-#define ROADBUF_RIGHTOBJS_OFFSET    (96)
-#define ROADBUF_LEFTOBJS_OFFSET    (128)
-#define ROADBUF_HAZARDS_OFFSET     (160)
+#define ROADBUF_CURVATURE_OFFSET  (0<<5)
+#define ROADBUF_HEIGHT_OFFSET     (1<<5)
+#define ROADBUF_LANES_OFFSET      (2<<5)
+#define ROADBUF_RIGHTOBJS_OFFSET  (3<<5)
+#define ROADBUF_LEFTOBJS_OFFSET   (4<<5)
+#define ROADBUF_HAZARDS_OFFSET    (5<<5)
 
 #define PREGAMECMD_STOP           (0x00)
 #define PREGAMECMD_REPEAT         (0x1F) /* repeat previous command */
@@ -1140,12 +1140,12 @@ static void prepare_tunnel(chqstate_t *state);
 
 static void draw_tunnel(chqstate_t *state, u8 *IYheight);
 
-static void draw_road_scene_change(chqstate_t *state, u8 *IXlanes, const u8 *IYheight,
+static void draw_road_scene_change(chqstate_t *state,
                                    int Bfill_pattern, int Chorizon, int DEbackbuf, int Lrow,
                                    u8 **IXlanesptr, const u8 **IYheightptr);
 
 static void draw_road(chqstate_t *state);
-static void dr_read_lanes(chqstate_t *state, u8 *IXlanesptr, u8 *IYheightptr,
+static void dr_read_lanes(chqstate_t *state, u8 *IXlanesptr, const u8 *IYheightptr,
                           int Bfill_pattern, int Ccounter, int DEbackbuf, int Lrow);
 static void dr_four_lane_highway(chqstate_t *state, int Bfill_pattern,
                                  int Ccounter, int DEbackbuf, int Lrow,
@@ -2270,7 +2270,7 @@ static void set_up_stage(chqstate_t        *state,
   state->dee_helicopter = 0; // draw heli call
   state->dee_tunnel_2 = 0; // draw tunnel call
 
-  state->rm_SM_C058_hazard_type = 0; // clear current hazard?
+  state->rm_hazard_byte = 0; // clear current hazard?
   state->mhc_y_offset = 0; // clear jump counter?
 
   state->hazards[0].hittable.bitmaps = state->stage->bitmaps_perp_car;
@@ -2465,8 +2465,8 @@ static void drive_sfx(chqstate_t *state)
   const struct sfxtab *sfx; /* was HL */
 
   if (state->tunnel_sfx == 0) {
-    state->trigger_lane_change_sfx |= state->trigger_passed_object_sfx;
-    if (state->trigger_lane_change_sfx)
+    state->trigger_left_hand_passed_object_sfx |= state->trigger_right_hand_passed_object_sfx;
+    if (state->trigger_left_hand_passed_object_sfx)
       start_sfx(state, EFFECT_CORNERING, 4); /* priority 4 */
   }
 
@@ -6655,7 +6655,7 @@ static void check_scenery_collisions(chqstate_t *state)
 
   // Check left hand side
   //
-  // high byte ≠ 0, or value < 64 => trigger_lane_change_sfx = 0; fall through to right hand check
+  // high byte ≠ 0, or value < 64 => trigger_left_hand_passed_object_sfx = 0; fall through to right hand check
   // 64 – 105                     => on-road; jump to right hand check
   // 106 – 132                    => off_road = 1 (one wheel left of road)
   // ≥ 133                        => off_road = 2 (both wheels left of road)
@@ -6672,12 +6672,12 @@ static void check_scenery_collisions(chqstate_t *state)
   }
 
   // If we don't arrive here we're close to the left hand object
-  state->trigger_lane_change_sfx = 0;
+  state->trigger_left_hand_passed_object_sfx = 0;
 
   // Check right hand side
   //
-  // high byte ≠ 0 (off-screen right) => trigger_passed_object_sfx = 0; skip off-road
-  // high byte = 0, ≥ 190             => on-road right; trigger_passed_object_sfx = 0
+  // high byte ≠ 0 (off-screen right) => trigger_right_hand_passed_object_sfx = 0; skip off-road
+  // high byte = 0, ≥ 190             => on-road right; trigger_right_hand_passed_object_sfx = 0
   // high byte = 0, 142 – 189         => off_road = 0 (borderline, still on-road), goto store_off_road
   // high byte = 0, 124 – 141         => off_road = 1
   // high byte = 0, < 124             => off_road = 2
@@ -6692,7 +6692,7 @@ check_right_hand:
   }
 
   // If we don't arrive here we're close to the right hand object
-  state->trigger_passed_object_sfx = 0;
+  state->trigger_right_hand_passed_object_sfx = 0;
 
 store_off_road:
   // 0/1/2 => on-road/one wheel off-road/both wheels off-road
@@ -7617,7 +7617,7 @@ static void choose_dirt_and_stones(chqstate_t *state)
   table[0] = ((s8) rng(state) >= 0) ? 1 : 2; // choose stone or dirt
   table[1] = rng(state); // choose random position
   state->ldas_enabled = 1;
-  state->rm_SM_C0BB_fork_copy_pending   = 1;
+  state->rm_do_dirt_and_stones_thing = 1;
   state->dss_enabled  = 1;
 }
 
@@ -7661,8 +7661,8 @@ loop1_continue:
 
   if (total == 0) {
     state->ldas_enabled = 0;
-    state->rm_SM_C0BB_fork_copy_pending   = 0;
-    state->dss_enabled  = 0;
+    state->rm_do_dirt_and_stones_thing = 0;
+    state->dss_enabled = 0;
   }
   return;
 
@@ -10760,18 +10760,18 @@ static void exit_fork(chqstate_t *state)
     state->scenedata.road_leftside_ptr  = &forked_road_exit_rightobjs[-1];
     state->scenedata.road_rightside_ptr = &forked_road_exit_leftobjs[-1];
     state->scenedata.road_lanes_ptr     = &forked_road_exit_right_lanes[-1];
-    state->rm_SM_BE6D_curvature_one_command_ptr = lookup_map_goto(state,
-      state->rm_SM_BBC2_rightfork_curve);
-    state->rm_SM_BEBF_height_one_command_ptr    = lookup_map_goto(state,
-      state->rm_SM_BBC5_rightfork_height);
-    state->rm_SM_BF0A_lanes_one_command_ptr     = lookup_map_goto(state,
-      state->rm_SM_BBC8_rightfork_lanes);
-    state->rm_SM_C046_hazards_one_command_ptr   = lookup_map_goto(state,
-      state->rm_SM_BBB8_rightfork_hazards);
-    state->rm_SM_BF84_rightside_one_command_ptr = lookup_map_goto(state,
-      state->rm_SM_BBBB_rightfork_rightside);
-    state->rm_SM_BFCD_leftside_one_command_ptr  = lookup_map_goto(state,
-      state->rm_SM_BBBE_rightfork_leftside);
+    state->rm_curvature_fork_end_ptr = lookup_map_goto(state,
+      state->rm_rightfork_curve);
+    state->rm_height_fork_end_ptr    = lookup_map_goto(state,
+      state->rm_rightfork_height);
+    state->rm_lanes_fork_end_ptr     = lookup_map_goto(state,
+      state->rm_rightfork_lanes);
+    state->rm_hazards_fork_end_ptr   = lookup_map_goto(state,
+      state->rm_rightfork_hazards);
+    state->rm_rightside_fork_end_ptr = lookup_map_goto(state,
+      state->rm_rightfork_rightside);
+    state->rm_leftside_fork_end_ptr  = lookup_map_goto(state,
+      state->rm_rightfork_leftside);
     obj_offset =
       32; /* rightobjs: ROADBUF_LANES_OFFSET + 32 = ROADBUF_RIGHTOBJS_OFFSET */
   } else {
@@ -10781,18 +10781,18 @@ static void exit_fork(chqstate_t *state)
     state->scenedata.road_leftside_ptr  = &forked_road_exit_leftobjs[-1];
     state->scenedata.road_rightside_ptr = &forked_road_exit_rightobjs[-1];
     state->scenedata.road_lanes_ptr     = &forked_road_exit_left_lanes[-1];
-    state->rm_SM_BE6D_curvature_one_command_ptr = lookup_map_goto(state,
-      state->rm_SM_BB95_leftfork_curve);
-    state->rm_SM_BEBF_height_one_command_ptr    = lookup_map_goto(state,
-      state->rm_SM_BB98_leftfork_height);
-    state->rm_SM_BF0A_lanes_one_command_ptr     = lookup_map_goto(state,
-      state->rm_SM_BB9B_leftfork_lanes);
-    state->rm_SM_C046_hazards_one_command_ptr   = lookup_map_goto(state,
-      state->rm_SM_BB8B_leftfork_hazards);
-    state->rm_SM_BF84_rightside_one_command_ptr = lookup_map_goto(state,
-      state->rm_SM_BB8E_leftfork_rightside);
-    state->rm_SM_BFCD_leftside_one_command_ptr  = lookup_map_goto(state,
-      state->rm_SM_BB91_leftfork_leftside);
+    state->rm_curvature_fork_end_ptr = lookup_map_goto(state,
+      state->rm_leftfork_curve);
+    state->rm_height_fork_end_ptr    = lookup_map_goto(state,
+      state->rm_leftfork_height);
+    state->rm_lanes_fork_end_ptr     = lookup_map_goto(state,
+      state->rm_leftfork_lanes);
+    state->rm_hazards_fork_end_ptr   = lookup_map_goto(state,
+      state->rm_leftfork_hazards);
+    state->rm_rightside_fork_end_ptr = lookup_map_goto(state,
+      state->rm_leftfork_rightside);
+    state->rm_leftside_fork_end_ptr  = lookup_map_goto(state,
+      state->rm_leftfork_leftside);
     obj_offset =
       64; /* leftobjs: ROADBUF_LANES_OFFSET + 64 = ROADBUF_LEFTOBJS_OFFSET */
   }
@@ -10815,13 +10815,13 @@ static void exit_fork(chqstate_t *state)
   state->height_byte            = 0;
   state->leftside_byte          = 0;
   state->rightside_byte         = 0;
-  state->hazards_byte           = 0;
+  state->hazards_counter_byte           = 0;
   state->lanes_counter_byte     = 0;
   state->fork_in_progress       = 0;
   state->fork_taken             = 0;
   state->fork_visible           = 0;
-  state->session.no_objects_counter  = 1;
-  state->session.spawn_accumulator            = 1;
+  state->session.no_objects_flag = 1;
+  state->session.spawn_accumulator = 1;
   state->fork_distance          = 0;
 }
 
@@ -11045,446 +11045,434 @@ static void clear_playfield_set_attrs(chqstate_t *state)
  *
  * \param[in] state Pointer to game state.
  */
-static void read_map(chqstate_t *state)
-{
-  int carry = 0;
+static void read_map(chqstate_t *state) {
   u8 *pfast_counter;  /* was HL */
   int speed;          /* was DE */
   int speed_lo;       /* was A */
   int allow_spawning; /* was A */
 
-  state->trigger_lane_change_sfx   = 0;
-  state->trigger_passed_object_sfx = 0;
-  state->allow_spawning            = 0;
+  state->trigger_left_hand_passed_object_sfx = state->trigger_right_hand_passed_object_sfx = 0;
+  state->allow_spawning = 0;
   pfast_counter = &state->fast_counter;
   speed = state->speed;
   speed_lo = speed & 0xFF;
-  if (speed > 255) {
-    // Otherwise we're going fast. This seems to cause the buffer to be
-    // processed twice as often as when in slow mode.
-    rm_cycle_buffer_offset(state, pfast_counter);
+  if (speed > 255)
+    /* Otherwise we're going fast. This seems to cause the buffer to be
+     * processed twice as often as when in slow mode. */
+      rm_cycle_buffer_offset(state, pfast_counter);
+
+  *pfast_counter += speed_lo;
+  allow_spawning = 0; /* Disallow car spawning */
+  if (*pfast_counter < speed_lo) {
+    /* if carry */
+    rm_cycle_buffer_offset(state, pfast_counter); /* was fallthrough */
+    return;
   }
 
-  carry = (speed_lo + *pfast_counter) > 255;
-  speed_lo += *pfast_counter; // TODO Set carry
-  *pfast_counter = speed_lo;
-  allow_spawning = 0; // Set flag to disallow car spawning
-  if (carry)
-    rm_cycle_buffer_offset(state, pfast_counter); /* was fallthrough */
-
-  state->allow_spawning += allow_spawning;
+  /* Conv: Duplicate of rm_allow_car_spawning - rm_cycle_buffer_offset has its
+   * own copy */
+  state->allow_spawning += allow_spawning; /* always zero here - retained for ref. */
   check_hazard_collisions(state); /* exit via */
 }
 
 /**
- * $BE1F: Rm cycle buffer offset
+ * $BE1F: Read map - cycle buffer offset
  *
  * \param[in] state        Pointer to game state.
  * \param[in] pfastcounter Pfastcounter. (was HL)
  */
 static void rm_cycle_buffer_offset(chqstate_t *state, u8 *pfastcounter)
 {
+  u8        *HLroadbufrightsideptr;   /* was HL */
+  u8        *HLroadbufleftsideptr;    /* was HL */
+
+  u8        *HLroadbufcurveptr;       /* was HL */
+  u8         Amapcurvebyte;           /* was A */
+  const u8  *DEmapcurveptr;           /* was DE */
+
+  u8        *HLroadbufheightptr;      /* was HL */
+  u8         Aheight_byte;            /* was A */
+  const u8  *DEmapheightptr;          /* was DE */
+
+  u8        *HLroadbufhazardsptr;     /* was HL */
+  u8         Ahazards_counter;
+
   // TODO: Sort declarations
-  u8        *HLlanesptr;  /* was HL */
-  u8         Acurvebyte;  /* was A */
-  const u8  *DEcurveptr;  /* was DE */
-  const u8  *HLcurveptr;  /* was HL */
-  u8        *DElanesptr;  /* was DE */
-  u8         Alanes;      /* was A */
-  int        Clanes;      /* was C */
-  const u8  *DElaneptr;   /* was DE */
-  u8         Arightside;  /* was A */
-  const u8  *DErightptr;  /* was DE */
-  u8         Aleftside;   /* was A */
-  const u8  *DEleftptr;   /* was DE */
-  const u8  *HLleftptr;   /* was DE */
-  u8         Ahazards;    /* was A */
-  const u8  *DEhazptr;    /* was DE */
-  int        Covertake_bonus_counter;           /* was C */
-  hazard_t  *IXhazard;    /* was IX */
-  int        Aloop;       /* was A */
-  int        Acurvature;  /* was A */
-  u8         Aheightbyte; /* was A */
-  const u8  *DEheightptr; /* was DE */
-  u8        *HLheightptr; /* was HL */
-  int        Biterations; /* was B */
+  u8        *HLroadbuflanesptr;       /* was HL */
+  u8        *DElanesptr;              /* was DE */
+  u8         Alanes_counter;          /* was A */
+  u8         Alanes_byte;             /* was A */
+  int        Clanes_byte;             /* was C */
+  const u8  *DEmaplaneptr;            /* was DE */
+  u8         Arightside_byte;         /* was A */
+  const u8  *DEmaprightsideptr;       /* was DE */
+  u8         Aleftside_byte;          /* was A */
+  const u8  *DEmapleftsideptr;        /* was DE */
+  const u8  *HLleftobjsptr;           /* was DE */
+  u8         Ahazards_byte;           /* was A */
+  const u8  *DEmaphazardsptr;         /* was DE */
+  int        Covertake_bonus_counter; /* was C */
+  hazard_t  *IXhazard;                /* was IX */
+  int        Aloop;                   /* was A */
+  int        Acurvature;              /* was A */
+  int        Biterations;             /* was B */
   u8         old_used;
   u8        *tbl;
   u8        *HL;
   u8        *DE;
   int        BC;
 
-  // Advance road_buffer_offset
+  /* Advance road_buffer_offset */
   state->road_buffer_offset = ROADBUF_FWD2PTR(1);
 
-  // Read sound effect triggers
-  HLlanesptr = ROADBUF_FWD2PTR(95); // final byte of lanes slot
-  state->trigger_passed_object_sfx |= *HLlanesptr;
-  HLlanesptr = state->road_buffer_start + ROADBUF_PTR2IDX(HLlanesptr + 32);
-  state->trigger_lane_change_sfx |= *HLlanesptr;
+  /* Set sound effect triggers (before we clobber those bytes) */
+  /* We fetch and store these flags separately but the sole user drive_sfx
+   * ultimately just merges them together. */
+  /* offset 96 -> first byte of right hand objects */
+  HLroadbufrightsideptr = ROADBUF_FWD2PTR(95);
+  state->trigger_right_hand_passed_object_sfx |= *HLroadbufrightsideptr;
+  /* offset 128 -> first byte of left hand objects */
+  HLroadbufleftsideptr = &state->road_buffer_start[ROADBUF_PTR2IDX(HLroadbufrightsideptr + 32)];
+  state->trigger_left_hand_passed_object_sfx |= *HLroadbufleftsideptr;
 
-  // -- CURVATURE ($BE3A) --
-  HLcurveptr = state->road_buffer_start + ROADBUF_PTR2IDX(HLlanesptr - 96);
-  HLlanesptr = (u8 *)
-               HLcurveptr; // Z80: L -= 96 mutates HL in place; keep HLlanesptr in sync
+  /* ---------------- *
+   * $BE3A: CURVATURE *
+   * ---------------- */
 
-  // Format: $CD where [C]ounter; Curve [D]ata
-  Acurvebyte = state->curvature_byte - 16;
-  if (Acurvebyte < 240) // JR NC: no carry = counter not yet exhausted
-    goto rm_save_curvature_byte;
+  /* We point at the FINAL byte of curvature data here. */
+  HLroadbufcurveptr = &state->road_buffer_start[ROADBUF_PTR2IDX(HLroadbufleftsideptr - 96)];
 
-  DEcurveptr = state->scenedata.road_curvature_ptr + 1;
-  Acurvebyte = *DEcurveptr;
-  if (Acurvebyte)
-    goto rm_curvature_regular_byte;
+  /* Format: $CT where [C]ounter; Curve [T]ype */
+  Amapcurvebyte = state->curvature_byte - 16;
+  /* If it carries we need to load a new curvature byte */
+  if (Amapcurvebyte >= 240) {
+    DEmapcurveptr = state->scenedata.road_curvature_ptr + 1;
+    Amapcurvebyte = *DEmapcurveptr;
+    if (Amapcurvebyte == 0) {
+      // Escape byte (0): read command byte.
 
-  // Escape byte (0): read command byte.
-  DElanesptr = (u8 *)HLcurveptr; HLcurveptr = DEcurveptr; // was EX DE,HL ($BE4E)
-  Acurvebyte = *++HLcurveptr;
-  HLcurveptr++;
-  if (Acurvebyte == 0)
-    goto rm_curvature_jump_command;
-  if (Acurvebyte == 1)
-    goto rm_curvature_one_command;
+      // Conv: EX DE,HL register swap was folded in from $BE4E here to $BE75 below
 
-  // $BE58
-  // Command byte = fork road (2)
-  state->rm_SM_BB95_leftfork_curve  = wordat(HLcurveptr + 0);
-  state->rm_SM_BBC2_rightfork_curve = wordat(HLcurveptr + 2);
-  HLcurveptr = &forked_road_curvature[0];
-  goto rm_read_curvature;
+      DEmapcurveptr++;
+      Amapcurvebyte = *DEmapcurveptr++;
+      if (Amapcurvebyte != MAP_CMDCODE_GOTO) { /* not 0 */
+        if (Amapcurvebyte != MAP_CMDCODE_FORK_END) { /* not 1 */
+          // $BE58 - Split command (2)
+          state->rm_leftfork_curve  = wordat(DEmapcurveptr + 0);
+          state->rm_rightfork_curve = wordat(DEmapcurveptr + 2);
+          DEmapcurveptr = &forked_road_curvature[0];
+        } else {
+          // $BE6C - Fork end command (1)
+          DEmapcurveptr = state->rm_curvature_fork_end_ptr;
+        }
+      } else {
+        // $BE71 - Goto command (0)
+        DEmapcurveptr = lookup_map_goto(state, wordat(DEmapcurveptr));
+      }
 
-  // $BE6C
-rm_curvature_one_command:
-  HLcurveptr = state->rm_SM_BE6D_curvature_one_command_ptr;
-  goto rm_read_curvature;
+      // $BE75
+      Amapcurvebyte = *DEmapcurveptr;
+    }
 
-  // $BE71
-rm_curvature_jump_command:
-  HLcurveptr = lookup_map_goto(state, wordat(HLcurveptr));
-
-  // $BE75
-rm_read_curvature:
-  DEcurveptr = HLcurveptr; HLlanesptr = DElanesptr; // was EX DE,HL ($BE75)
-  Acurvebyte = *DEcurveptr;
-
-  // $BE77
-rm_curvature_regular_byte:
-  state->scenedata.road_curvature_ptr = DEcurveptr;
-  Acurvebyte -= 16;
-
-  // $BE7D
-rm_save_curvature_byte:
-  state->curvature_byte = Acurvebyte;
-  Acurvature = Acurvebyte & 0x0F;
-  if (Acurvature & 8) {
-    Acurvature &= 7;
-    Acurvature = -Acurvature; // was NEG
+    // $BE77
+    state->scenedata.road_curvature_ptr = DEmapcurveptr;
+    Amapcurvebyte -= 16;
   }
 
-  // $BE8A
-  Acurvature <<= 1;
-  *HLlanesptr = Acurvature;
+  // $BE7D - save curvature byte
+  state->curvature_byte = Amapcurvebyte;
+  Acurvature = Amapcurvebyte & 0x0F;
+  if (Acurvature & 8)
+    Acurvature = -(Acurvature & 7); // was NEG
+  *HLroadbufcurveptr = Acurvature << 1;
 
-  // -- HEIGHT ($BE90) --
-  HLheightptr = state->road_buffer_start + ROADBUF_PTR2IDX(HLlanesptr + 32);
+  /* ------------- *
+   * $BE90: HEIGHT *
+   * ------------- */
 
-  // Format: $CD where [C]ounter; Height [D]ata
-  Aheightbyte = state->height_byte - 16;
-  if (Aheightbyte < 240) // no carry = counter not yet exhausted
-    goto rm_save_height_byte;
+  HLroadbufheightptr = &state->road_buffer_start[ROADBUF_PTR2IDX(HLroadbufcurveptr + 32)];
 
-  DEheightptr = state->scenedata.road_height_ptr + 1;
-  Aheightbyte = *DEheightptr;
-  if (Aheightbyte)
-    goto rm_height_regular_byte;
+  /* Format: $CT where [C]ounter; Height [T]ype */
+  Aheight_byte = state->height_byte - 16;
+  /* If it carries we need to load a new height byte */
+  if (Aheight_byte >= 240) {
+    DEmapheightptr = state->scenedata.road_height_ptr + 1;
+    Aheight_byte = *DEmapheightptr;
+    if (Amapcurvebyte == 0) {
+      // Escape byte (0): read command byte.
 
-  // Escape byte (0): read command byte.
-  { u8 *_tmp = HLheightptr; HLheightptr = (u8 *)DEheightptr; DEheightptr = _tmp; } // was EX DE,HL ($BEA0)
-  Aheightbyte = *++HLheightptr;
-  HLheightptr++;
-  if (Aheightbyte == 0)
-    goto rm_height_jump_command;
-  if (Aheightbyte == 1)
-    goto rm_height_one_command;
+      // Conv: EX DE,HL register swap was folded in from $BE4E here to $BE75 below
 
-  // $BEAA
-  // Command byte = fork road (2)
-  state->rm_SM_BB98_leftfork_height  = wordat(HLheightptr + 0);
-  state->rm_SM_BBC5_rightfork_height = wordat(HLheightptr + 2);
-  HLheightptr = &forked_road_height[0];
-  goto rm_read_height;
+      DEmapheightptr++;
+      Aheight_byte = *DEmapheightptr++;
+      if (Aheight_byte != MAP_CMDCODE_GOTO) { /* not 0 */
+        if (Aheight_byte != MAP_CMDCODE_FORK_END) { /* not 1 */
+          // $BEAA - Split command (2)
+          state->rm_leftfork_height  = wordat(DEmapheightptr + 0);
+          state->rm_rightfork_height = wordat(DEmapheightptr + 2);
+          DEmapheightptr = &forked_road_height[0];
+        } else {
+          // $BEBE - Fork end command (1)
+          DEmapheightptr = state->rm_height_fork_end_ptr;
+        }
+      } else {
+        // $BEC3 - Goto command (0)
+        DEmapheightptr = lookup_map_goto(state, wordat(DEmapheightptr));
+      }
 
-  // $BEBE
-rm_height_one_command:
-  HLheightptr = state->rm_SM_BEBF_height_one_command_ptr;
-  goto rm_read_height;
+      // $BEC7
+      Aheight_byte = *DEmapheightptr;
+    }
 
-  // $BEC3
-rm_height_jump_command:
-  HLheightptr = lookup_map_goto(state, wordat(HLheightptr));
-
-  // $BEC7
-rm_read_height:
-  { u8 *_tmp = (u8 *)DEheightptr; DEheightptr = HLheightptr; HLheightptr = _tmp; } // was EX DE,HL ($BEC7)
-  Aheightbyte = *DEheightptr;
-
-  // $BEC9
-rm_height_regular_byte:
-  state->scenedata.road_height_ptr = DEheightptr;
-  Aheightbyte -= 16;
-
-  // $BECF
-rm_save_height_byte:
-  state->height_byte = Aheightbyte;
-  *HLheightptr = (Aheightbyte & 0xF) -
-                 8; // problem: this writes through a ptr that should be const...
-
-  // -- LANES ($BEDB) --
-  HLlanesptr = state->road_buffer_start + ROADBUF_PTR2IDX(HLheightptr + 32);
-
-  // RLE-counted bytes; counter stored separately.
-  Alanes = state->lanes_counter_byte - 1;
-  if (Alanes != 0xFF) // JR NC: counter was non-zero
-    goto rm_lanes_count_resume;
-
-  DElaneptr = state->scenedata.road_lanes_ptr + 1;
-  Alanes = *DElaneptr;
-  if (Alanes)
-    goto rm_lanes_regular_byte;
-
-  // Escape byte (0): read command byte.
-  HLcurveptr = DElaneptr; DElanesptr = HLlanesptr; // was EX DE,HL ($BEEB)
-  Alanes = *++HLcurveptr;
-  HLcurveptr++;
-  if (Alanes == 0)
-    goto rm_lanes_jump_command;
-  if (Alanes == 1)
-    goto rm_lanes_one_command;
-
-  // $BEF5
-  // Command byte = fork road (2)
-  state->rm_SM_BB9B_leftfork_lanes  = wordat(HLcurveptr + 0);
-  state->rm_SM_BBC8_rightfork_lanes = wordat(HLcurveptr + 2);
-  HLcurveptr = &forked_road_lanes[0];
-  goto rm_read_lanes;
-
-rm_lanes_one_command: // $BF09
-  HLcurveptr = state->rm_SM_BF0A_lanes_one_command_ptr;
-  goto rm_read_lanes;
-
-rm_lanes_jump_command: // $BF0E
-  HLcurveptr = lookup_map_goto(state, wordat(HLcurveptr));
-
-rm_read_lanes: // $BF12
-  DElaneptr = HLcurveptr; HLlanesptr = DElanesptr; // was EX DE,HL
-  Alanes = *DElaneptr;
-
-rm_lanes_regular_byte: // $BF14
-  state->lanes_counter_byte = Alanes - 1; // DEC A; LD ($A247),A
-  DElaneptr++;
-  state->scenedata.road_lanes_ptr = DElaneptr;
-  *HLlanesptr = *DElaneptr & 0xF7;
-  state->rm_lanes_byte = *DElaneptr & 0xFB;
-  goto rm_lanes_done;
-
-rm_lanes_count_resume: // $BF29
-  state->lanes_counter_byte = Alanes;
-  Clanes = state->rm_lanes_byte;
-  if (Clanes & 0x0C)
-    state->rm_lanes_byte = Clanes & 0xF3;
-  *HLlanesptr = Clanes;
-
-rm_lanes_done: // $BF3A
-  HLlanesptr = state->road_buffer_start + ROADBUF_PTR2IDX(HLlanesptr + 32);
-
-  // -- SKIP CHECK ($BF3E) --
-  // Every other call, rightside/leftside/hazards are skipped.
-
-  if (state->session.no_objects_counter != 1) {
-    *HLlanesptr = 0; // rightside slot
-    HLlanesptr = state->road_buffer_start + ROADBUF_PTR2IDX(HLlanesptr + 32);
-    *HLlanesptr = 0; // leftside slot
-    HLlanesptr = state->road_buffer_start + ROADBUF_PTR2IDX(HLlanesptr + 32);
-    *HLlanesptr = 0; // hazards slot
-    state->session.no_objects_counter = 1;
-    goto rm_all_hazards;
+    // $BEC9
+    state->scenedata.road_height_ptr = DEmapheightptr;
+    Aheight_byte -= 16;
   }
 
-  // -- RIGHT-SIDE OBJECTS ($BF55) --
+  // $BECF - save height byte
+  state->height_byte = Aheight_byte;
+  *HLroadbufheightptr = (Aheight_byte & 0x0F) - 8;
 
-  Arightside = state->rightside_byte - 16;
-  if (Arightside < 240) // no carry = counter not yet exhausted
-    goto rm_rightside_count_resume;
+  /* ------------ *
+   * $BEDB: LANES *
+   * ------------ */
 
-  DErightptr = state->scenedata.road_rightside_ptr + 1;
-  Arightside = *DErightptr;
-  if (Arightside)
-    goto rm_rightside_regular_byte;
+  HLroadbuflanesptr = state->road_buffer_start + ROADBUF_PTR2IDX(HLroadbufheightptr + 32);
 
-  // Escape byte (0): read command byte.
-  HLcurveptr = DErightptr; DElanesptr = HLlanesptr; // was EX DE,HL ($BF65)
-  Arightside = *++HLcurveptr;
-  HLcurveptr++;
-  if (Arightside == 0)
-    goto rm_rightside_jump_command;
-  if (Arightside == 1)
-    goto rm_rightside_one_command;
+  /* Format: $CC $TT where [CC]ounter; Lane [TT]ype */
+  Alanes_counter = state->lanes_counter_byte - 1;
+  /* If it runs out we need to load a new lanes byte */
+  if (Alanes_counter == 0xFF) {
+    DEmaplaneptr = state->scenedata.road_lanes_ptr + 1;
+    Alanes_counter = *DEmaplaneptr;
+    if (Alanes_counter == 0) {
+      // Escape byte (0): read command byte.
 
-  // Fork road command (byte == 2): $BF6F
-  state->rm_SM_BB8E_leftfork_rightside  = wordat(HLcurveptr + 0);
-  state->rm_SM_BBBB_rightfork_rightside = wordat(HLcurveptr + 2);
-  HLcurveptr = &fork_leftrightobjs[1]; // $E2C1
-  goto rm_read_rightside;
+      // Conv: EX DE,HL register swap was folded in from $BEEB here to $BF12 below
 
-rm_rightside_one_command: // $BF83
-  HLcurveptr = state->rm_SM_BF84_rightside_one_command_ptr;
-  goto rm_read_rightside;
+      DEmaplaneptr++;
+      Alanes_byte = *DEmaplaneptr++;
+      if (Alanes_byte != MAP_CMDCODE_GOTO) { /* not 0 */
+        if (Alanes_byte != MAP_CMDCODE_FORK_END) { /* not 1 */
+          // $BEF5 - Split command (2)
+          state->rm_leftfork_lanes  = wordat(DEmaplaneptr + 0);
+          state->rm_rightfork_lanes = wordat(DEmaplaneptr + 2);
+          DEmaplaneptr = &forked_road_lanes[0];
+        } else {
+          // $BF09 - Fork end command (1)
+          DEmaplaneptr = state->rm_lanes_fork_end_ptr;
+        }
+      } else {
+        // $BF0E - Goto command (0)
+        DEmaplaneptr = lookup_map_goto(state, wordat(DEmaplaneptr));
+      }
 
-rm_rightside_jump_command: // $BF88
-  HLcurveptr = lookup_map_goto(state, wordat(HLcurveptr));
+      // $BF12
+      Alanes_byte = *DEmaplaneptr;
+    }
 
-rm_read_rightside: // $BF8C
-  DErightptr = HLcurveptr; HLlanesptr = DElanesptr; // was EX DE,HL
-  Arightside = *DErightptr;
+    // $BF14 - save lanes bytes
+    state->lanes_counter_byte = Alanes_counter - 1;
+    DEmaplaneptr++;
+    state->scenedata.road_lanes_ptr = DEmaplaneptr;
+    *HLroadbuflanesptr = *DEmaplaneptr & 0xF7;
+    state->rm_lanes_byte = *DEmaplaneptr & 0xFB;
+  } else {
+    // $BF29 - rm_lanes_count_resume
+    state->lanes_counter_byte = Alanes_counter;
+    Clanes_byte = state->rm_lanes_byte;
+    if (Clanes_byte & 0x0C)
+      state->rm_lanes_byte = Clanes_byte & 0xF3;
+    *HLroadbuflanesptr = Clanes_byte;
+  }
 
-rm_rightside_regular_byte: // $BF8E
-  state->scenedata.road_rightside_ptr = DErightptr;
-  Arightside -= 16;
+  /* ----------------- *
+   * $BF3E: SKIP CHECK *
+   * ----------------- */
 
-rm_rightside_count_resume: // $BF94
-  state->rightside_byte = Arightside;
-  *HLlanesptr = Arightside & 0x0F;
+  // $BF3A - done
+  HLroadbufrightsideptr = state->road_buffer_start + ROADBUF_PTR2IDX(HLroadbuflanesptr + 32);
 
-  // -- LEFT-SIDE OBJECTS ($BF9E) --
-  HLleftptr = state->road_buffer_start + ROADBUF_PTR2IDX(HLlanesptr + 32);
+  if (state->session.no_objects_flag != 1) {
+    *HLroadbufrightsideptr = 0; // rightside slot
+    HLroadbufleftsideptr = state->road_buffer_start + ROADBUF_PTR2IDX(HLroadbufrightsideptr + 32);
+    *HLroadbufleftsideptr = 0; // leftside slot
+    HLroadbufhazardsptr = state->road_buffer_start + ROADBUF_PTR2IDX(HLroadbufleftsideptr + 32);
+    *HLroadbufhazardsptr = 0; // hazards slot
+    state->session.no_objects_flag = 1;
+  } else {
+    /* ------------------------- *
+     * $BF55: RIGHT-SIDE OBJECTS *
+     * ------------------------- */
 
-  Aleftside = state->leftside_byte - 16;
-  if (Aleftside < 240) // no carry = counter not yet exhausted
-    goto rm_leftside_count_resume;
+    /* Format: $CT where [C]ounter; Height [T]ype */
+    Arightside_byte = state->rightside_byte - 16;
+    /* If it carries we need to load a new right hand byte */
+    if (Arightside_byte >= 240) {
+      DEmaprightsideptr = state->scenedata.road_rightside_ptr + 1;
+      Arightside_byte = *DEmaprightsideptr;
+      if (Arightside_byte == 0) {
+        // Escape byte (0): read command byte.
 
-  DEleftptr = state->scenedata.road_leftside_ptr + 1;
-  Aleftside = *DEleftptr;
-  if (Aleftside)
-    goto rm_leftside_regular_byte;
+        // Conv: EX DE,HL register swap was folded in from $BF65 here to $BF8E below
 
-  // Escape byte (0): read command byte.
-  HLleftptr = DEleftptr; DEleftptr = HLleftptr; // was EX DE,HL ($BFAE)
-  Aleftside = *++HLleftptr;
-  HLleftptr++;
-  if (Aleftside == 0)
-    goto rm_leftside_jump_command;
-  if (Aleftside == 1)
-    goto rm_leftside_one_command;
+        DEmaprightsideptr++;
+        Arightside_byte = *DEmaprightsideptr++;
+        if (Arightside_byte != MAP_CMDCODE_GOTO) { /* not 0 */
+          if (Arightside_byte != MAP_CMDCODE_FORK_END) { /* not 1 */
+            // $BF6F - Split command (2)
+            state->rm_leftfork_rightside  = wordat(DEmaprightsideptr + 0);
+            state->rm_rightfork_rightside = wordat(DEmaprightsideptr + 2);
+            DEmaprightsideptr = &fork_leftrightobjs[1]; // $E2C1
+          } else {
+            // $BF83 - Fork end command (1)
+            DEmaprightsideptr = state->rm_rightside_fork_end_ptr;
+          }
+        } else {
+          // $BF88 - Goto command (0)
+          DEmaprightsideptr = lookup_map_goto(state, wordat(DEmaprightsideptr));
+        }
 
-  // Fork road command (byte == 2): $BFB8
-  state->rm_SM_BB91_leftfork_leftside  = wordat(HLleftptr + 0);
-  state->rm_SM_BBBE_rightfork_leftside = wordat(HLleftptr + 2);
-  HLleftptr = &fork_leftrightobjs[0]; // $E2C0
-  goto rm_read_leftside;
+        // $BF8C
+        Arightside_byte = *DEmaprightsideptr;
+      }
 
-rm_leftside_one_command: // $BFCC
-  HLleftptr = state->rm_SM_BFCD_leftside_one_command_ptr;
-  goto rm_read_leftside;
+      // $BF8E
+      state->scenedata.road_rightside_ptr = DEmaprightsideptr;
+      Arightside_byte -= 16;
+    }
 
-rm_leftside_jump_command: // $BFD1
-  HLleftptr = lookup_map_goto(state, wordat(HLleftptr));
+    // $BF94 - save right side byte
+    state->rightside_byte = Arightside_byte;
+    *HLroadbufrightsideptr = Arightside_byte & 0x0F;
 
-rm_read_leftside: // $BFD5
-  DEleftptr = HLleftptr; HLleftptr = DEleftptr; // was EX DE,HL
-  Aleftside = *DEleftptr;
+    /* ------------------------ *
+     * $BF9E: LEFT-SIDE OBJECTS *
+     * ------------------------ */
 
-rm_leftside_regular_byte: // $BFD7
-  state->scenedata.road_leftside_ptr = DEleftptr;
-  Aleftside -= 16;
+    HLroadbufleftsideptr = state->road_buffer_start + ROADBUF_PTR2IDX(HLroadbufrightsideptr + 32);
 
-rm_leftside_count_resume: // $BFDD
-  state->leftside_byte = Aleftside;
-  *HLlanesptr = Aleftside & 0x0F;
-  HLlanesptr = state->road_buffer_start + ROADBUF_PTR2IDX(HLlanesptr + 32);
+    /* Format: $CT where [C]ounter; Height [T]ype */
+    Aleftside_byte = state->leftside_byte - 16;
+    /* If it carries we need to load a new left hand byte */
+    if (Aleftside_byte >= 240) {
+      DEmapleftsideptr = state->scenedata.road_leftside_ptr + 1;
+      Aleftside_byte = *DEmapleftsideptr;
+      if (Aleftside_byte == 0) {
+        // Escape byte (0): read command byte.
 
-  // -- HAZARDS ($BFE7) --
+        // Conv: EX DE,HL register swap was folded in from $BF65 here to $BF8E below
 
-  Ahazards = state->hazards_byte - 1;
-  if (Ahazards != 0xFF) // JR NC: counter was non-zero
-    goto rm_no_hazards;
+        DEmapleftsideptr++;
+        Aleftside_byte = *DEmapleftsideptr++;
+        if (Aleftside_byte != MAP_CMDCODE_GOTO) { /* not 0 */
+          if (Aleftside_byte != MAP_CMDCODE_FORK_END) { /* not 1 */
+            // $BFB8 - Split command (2)
+            state->rm_leftfork_leftside  = wordat(DEmapleftsideptr + 0);
+            state->rm_rightfork_leftside = wordat(DEmapleftsideptr + 2);
+            DEmapleftsideptr = &fork_leftrightobjs[0]; // $E2C0
+          } else {
+            // $BFCC - Fork end command (1)
+            DEmapleftsideptr = state->rm_leftside_fork_end_ptr;
+          }
+        } else {
+          // $BFD1 - Goto command (0)
+          DEmapleftsideptr = lookup_map_goto(state, wordat(DEmapleftsideptr));
+        }
 
-  DEhazptr = state->scenedata.road_hazard_ptr + 1;
+        // $BFD5
+        Aleftside_byte = *DEmapleftsideptr;
+      }
 
-rm_restart_hazards_read: // $BFF3
-  Ahazards = *DEhazptr;
-  if (Ahazards)
-    goto rm_hazards_regular_byte;
+      state->scenedata.road_leftside_ptr = DEmapleftsideptr;
+      Aleftside_byte -= 16;
+    }
 
-  // Escape byte (0): read command byte.
-  HLcurveptr = DEhazptr; DElanesptr = HLlanesptr; // was EX DE,HL ($BFF7)
-  Ahazards = *++HLcurveptr;
-  HLcurveptr++;
-  if (Ahazards == 0)
-    goto rm_hazards_jump_command;
-  Ahazards--;
-  if (Ahazards == 0) // cmd was 1
-    goto rm_hazards_one_command;
-  Ahazards--;
-  if (Ahazards == 0) // cmd was 2
-    goto rm_hazards_fork_road_command;
-  Ahazards--; // A = cmd - 3
-  if (Ahazards < 7) // cmd 3..9
-    goto rm_hazards_set_hazard_command;
-  if (Ahazards < 10) // cmd 10..12
-    goto rm_hazards_set_arrow_command;
-  if (Ahazards < 12) // cmd 13..14
-    goto rm_hazards_spawning_command;
-  // cmd >= 15: helicopter control = cmd - 14
-  state->helicopter_control = Ahazards - 11;
-  goto rm_do_restart;
+    // $BFDD - save left side byte
+    state->leftside_byte = Aleftside_byte;
+    *HLroadbufleftsideptr = Aleftside_byte & 0x0F;
 
-rm_hazards_spawning_command: // $C018: cmd 13/14 → dont_spawn_cars = cmd - 13
-  state->dont_spawn_cars = Ahazards - 10;
-  goto rm_do_restart;
+    /* -------------- *
+     * $BFE7: HAZARDS *
+     * -------------- */
 
-rm_hazards_set_arrow_command: // $C01F: cmd 10/11/12 → floating_arrow = cmd - 10
-  Ahazards -= 7; // floating_arrow = A - 7 (from A = cmd-3)
-  state->floating_arrow = Ahazards;
-  if (Ahazards != 0)
-    state->correct_fork = Ahazards;
-  goto rm_do_restart;
+    HLroadbufhazardsptr = state->road_buffer_start + ROADBUF_PTR2IDX(HLroadbufleftsideptr + 32);
 
-rm_do_restart: // $C029
-  DEhazptr = HLcurveptr; HLlanesptr = DElanesptr; // was EX DE,HL
-  goto rm_restart_hazards_read;
+    /* Format: $CC $TT where [CC]ounter; Hazard [TT]ype */
+    Ahazards_counter = state->hazards_counter_byte - 1;
+    /* If it runs out we need to load a new hazards byte */
+    if (Ahazards_counter == 0xFF) {
+      DEmaphazardsptr = state->scenedata.road_hazard_ptr + 1;
 
-rm_hazards_set_hazard_command: // $C02C: cmd 3..9 → rm_SM_C058_hazard_type = cmd - 3
-  state->rm_SM_C058_hazard_type = Ahazards;
-  goto rm_read_hazards;
+      rm_restart_hazards_read: // $BFF3
+          Ahazards_counter = *DEmaphazardsptr;
+      if (Ahazards_counter == 0) {
+        // Escape byte (0): read command byte.
 
-rm_hazards_fork_road_command: // $C031
-  state->rm_SM_BB8B_leftfork_hazards  = wordat(HLcurveptr + 0);
-  state->rm_SM_BBB8_rightfork_hazards = wordat(HLcurveptr + 2);
-  HLcurveptr = &fork_hazards[0];
-  goto rm_read_hazards;
+        // Conv: EX DE,HL register swap was folded in from $BFF7 here to $C04E below
 
-rm_hazards_one_command: // $C045
-  HLcurveptr = state->rm_SM_C046_hazards_one_command_ptr;
-  goto rm_read_hazards;
+        DEmaphazardsptr++;
+        Ahazards_byte = *DEmaphazardsptr++;
+        if (Ahazards_byte != MAP_CMDCODE_GOTO) { /* not 0 */
+          Ahazards_byte--;
+          if (Ahazards_byte != 0) { /* cmd was 1 */
+            Ahazards_byte--;
+            if (Ahazards_byte != 0) { /* cmd was 2 */
+              Ahazards_byte--; // A = cmd - 3
+              if (Ahazards_byte >= 7) { /* cmd 10+ */
+                if (Ahazards_byte >= 10) { /* cmd 13+ */
+                  if (Ahazards_byte >= 12) /* cmd 15+ */
+                    // cmd >= 15: helicopter control = cmd - 14
+                      state->helicopter_control = Ahazards_byte - 11;
+                  else
+                    // $C018: cmd 13/14 → dont_spawn_cars = cmd - 13
+                      state->dont_spawn_cars = Ahazards_byte - 10;
+                } else {
+                  // $C01F: cmd 10/11/12 → floating_arrow = cmd - 10
+                  Ahazards_byte -= 7; // floating_arrow = A - 7 (from A = cmd-3)
+                  state->floating_arrow = Ahazards_byte;
+                  if (Ahazards_byte != 0)
+                    state->correct_fork = Ahazards_byte;
+                  // $C029
+                  // DEmaphazardsptr = HLroadbufcurveptr; HLroadbuflanesptr = DElanesptr; // was EX DE,HL
+                  goto rm_restart_hazards_read;
+                }
+              } else {
+                // $C02C: cmd 3..9 → rm_hazard_byte = cmd - 3
+                state->rm_hazard_byte = Ahazards_byte;
+              }
+            } else {
+              // $C031 - Split command (2)
+              state->rm_leftfork_hazards  = wordat(DEmaphazardsptr + 0);
+              state->rm_rightfork_hazards = wordat(DEmaphazardsptr + 2);
+              DEmaphazardsptr = &fork_hazards[0];
+            }
+          } else {
+            // $C045 - Fork end command (1)
+            DEmaphazardsptr = state->rm_hazards_fork_end_ptr;
+          }
+        } else {
+          // $C04A - Goto command (0)
+          DEmaphazardsptr = lookup_map_goto(state, wordat(DEmaphazardsptr));
+        }
 
-rm_hazards_jump_command: // $C04A
-  HLcurveptr = lookup_map_goto(state, wordat(HLcurveptr));
+        // $C04E: pointer already set up; byte is always regular here
+        // DEmaphazardsptr = HLroadbufcurveptr; HLroadbuflanesptr = DElanesptr; // was EX DE,HL
+        Ahazards_byte = *DEmaphazardsptr;
+      }
 
-rm_read_hazards: // $C04E: pointer already set up; byte is always regular here
-  DEhazptr = HLcurveptr; HLlanesptr = DElanesptr; // was EX DE,HL
-  Ahazards = *DEhazptr;
+      // $C050
+      state->scenedata.road_hazard_ptr = DEmaphazardsptr;
+      Ahazards_byte--;
+    }
 
-rm_hazards_regular_byte: // $C050
-  state->scenedata.road_hazard_ptr = DEhazptr;
-  Ahazards--;
+    // $C055
+    state->hazards_counter_byte = Ahazards_counter;
+    *HLroadbufhazardsptr = state->rm_hazard_byte;
+    state->session.no_objects_flag = 2;
+  }
 
-rm_no_hazards: // $C055
-  state->hazards_byte = Ahazards;
-  *HLlanesptr = state->rm_SM_C058_hazard_type;
-  state->session.no_objects_counter = 2;
-
-rm_all_hazards: // $C05C (also entered from skip path with no_objects_counter=1)
+  // $C05C (also entered from skip path with no_objects_flag=1)
   update_road_level(state);
 
   // Hazard update loop ($C062): iterate over all 6 hazard slots.
@@ -11517,32 +11505,33 @@ rm_all_hazards: // $C05C (also entered from skip path with no_objects_counter=1)
     }
 
     // hazard_flags != 0xFF: decrement distance
-    if (--IXhazard->distance != 0)
-      continue;
-    IXhazard->used = 0; // mark unused
-    if ((u8)(IXhazard->hazard_flags + 1) & 0x80) // RLA carry: hazard_flags >= 0x7F
-      Covertake_bonus_counter++;
+    if (--IXhazard->distance == 0) {
+      IXhazard->used = 0; // mark unused
+      if ((u8)(IXhazard->hazard_flags + 1) & 0x80) // RLA carry: hazard_flags >= 0x7F
+        Covertake_bonus_counter++;
+    }
   }
   state->overtake_bonus_counter = Covertake_bonus_counter;
 
-  // $C0BB: copy block if rm_SM_C0BB_fork_copy_pending is set
-  if (state->rm_SM_C0BB_fork_copy_pending) {
+  // $C0BB: copy block if rm_do_dirt_and_stones_thing is set
+  if (state->rm_do_dirt_and_stones_thing) {
     tbl = (u8 *)state->xpos_road_fork_right;
     HL = tbl + 0x73;
     DE = tbl + 0x77;
     BC = 0x26;
     do {
-      HL--; HL--;
-      DE--; DE--;
-      *DE = *HL; DE--; HL--; BC--;
-      *DE = *HL; DE--; HL--; BC--;
+      HL -= 2;
+      DE -= 2;
+      *DE-- = *HL--; BC--;
+      *DE-- = *HL--; BC--;
     } while (BC != 0);
     HL++;
     *HL = 0;
   }
 
-  // rm_allow_car_spawning ($C0D7) / rm_inc_spawning ($C0D9)
-  state->allow_spawning++; // JP $AD0D is handled by caller (read_map)
+  // rm_allow_car_spawning ($C0D7)
+  state->allow_spawning++;
+  check_hazard_collisions(state); /* exit via */
 }
 
 /**
@@ -11943,15 +11932,15 @@ static u16 *addr2xpos(chqstate_t *state, int z80addr)
  * road-edge x-positions between two height-table entries and writes them
  * to the appropriate road table via an SP-based write pointer.
  *
- * \param[in] state         Pointer to game state.
- * \param[in] IXlanes       Pointer into road buffer lane data.
- * \param[in] IYheight      Pointer into height table.
- * \param[in] Bfill_pattern Fill pattern.
- * \param[in] Chorizon      Horizon level.
- * \param[in] DEbackbuf     Pointer into backbuffer.
- * \param[in] Lrow          Byte offset within road table page (row index).
+ * \param[in]     state         Pointer to game state.
+ * \param[in]     Bfill_pattern Fill pattern.
+ * \param[in]     Chorizon      Horizon level.
+ * \param[in]     DEbackbuf     Pointer into backbuffer.
+ * \param[in]     Lrow          Byte offset within road table page (row index).
+ * \param[in,out] IXlanesptr    Pointer into road buffer lane data.
+ * \param[in,out] IYheightptr   Pointer into height table.
  */
-static void draw_road_scene_change(chqstate_t *state, u8 *IXlanes, const u8 *IYheight,
+static void draw_road_scene_change(chqstate_t *state,
                                    int Bfill_pattern, int Chorizon, int DEbackbuf, int Lrow,
                                    u8 **IXlanesptr, const u8 **IYheightptr)
 {
@@ -11985,19 +11974,19 @@ static void draw_road_scene_change(chqstate_t *state, u8 *IXlanes, const u8 *IYh
   u8   SM_C445_dir_opcode;  /* stored direction opcode for alternate Bresenham (SM $C445) */
   u8   C_range;             /* Bresenham range in c441 path (was C) */
 
-  A_dist = IYheight - &state->height_table[0];
+  A_dist = *IYheightptr - &state->height_table[0];
   if (A_dist >= 19)
     goto drsc_exit;
 
   // EX AF,AF' -- bank 'dist'
 
-  L_lane_flags = IXlanes[0];
+  L_lane_flags = (*IXlanesptr)[0];
   Adash_curve_bits = L_lane_flags & 0x0C;
   // Jump if any of the ordinary straight track sections, including dirt track
   if (Adash_curve_bits == 0)
     goto drsc_exit;
 
-  IYheight--;
+  (*IYheightptr)--;
 
   /* $C2FA-$C304: adjust H based on bits 5 and 7 of L_lane_flags.
    * Z80 $C4C1 LD H,A left H = (IX[0] & 3) + 0xE7, stored by dr_read_lanes in
@@ -12021,19 +12010,19 @@ static void draw_road_scene_change(chqstate_t *state, u8 *IXlanes, const u8 *IYh
 
   /* $C310-$C354: path 1a -- bit4=1, dist<2 */
   A_curve_step = 0x20;
-  C_ref_height = IYheight[1];
+  C_ref_height = (*IYheightptr)[1];
   if (Adash_curve_bits == 4) {
     A_curve_step = 0x00;
-    C_ref_height = IYheight[2];
+    C_ref_height = (*IYheightptr)[2];
   }
   SM_C345_bend_offset = A_curve_step;
-  if (IYheight[0] <= C_ref_height)
+  if ((*IYheightptr)[0] <= C_ref_height)
     goto advance_height;
 
   // $C32B: C = IY[0] - ref_height (height span), B = C*2
-  C_bresen_range = IYheight[0] - C_ref_height;
+  C_bresen_range = (*IYheightptr)[0] - C_ref_height;
   B_tbl_stride = C_bresen_range * 2;
-  L_left_table_lo = ~((96 - IYheight[0]) << 1); // byte offset
+  L_left_table_lo = ~((96 - (*IYheightptr)[0]) << 1); // byte offset
   HL_xpos_ptr = addr2xpos(state, (H_left_table_hi << 8) | L_left_table_lo);
   SP_output = HL_xpos_ptr;
   DE_roadpos = *HL_xpos_ptr;
@@ -12055,13 +12044,13 @@ bit4_set_far:
   // EX AF,AF' -- unbank 'dist' / bank Adash_curve_bits
   if (A_dist != 4)
     goto advance_height;
-  if (IYheight[0] <= IYheight[2])
+  if ((*IYheightptr)[0] <= (*IYheightptr)[2])
     goto advance_height;
 
   // $C369: C = IY[0] - IY[2] (height span), B = C*2
-  C_bresen_range = IYheight[0] - IYheight[2];
+  C_bresen_range = (*IYheightptr)[0] - (*IYheightptr)[2];
   B_tbl_stride = C_bresen_range * 2;
-  L_left_table_lo = ~((96 - IYheight[0]) << 1); // byte offset
+  L_left_table_lo = ~((96 - (*IYheightptr)[0]) << 1); // byte offset
   HL_xpos_ptr = addr2xpos(state, (H_left_table_hi << 8) | L_left_table_lo);
   SP_output = HL_xpos_ptr;
   DE_roadpos = *HL_xpos_ptr;
@@ -12080,19 +12069,19 @@ bit4_clear:
 
   /* $C37E-$C3C7: path 2 -- bit4=0, dist<2 */
   A_curve_step = 0x20;
-  C_ref_height = IYheight[1];
+  C_ref_height = (*IYheightptr)[1];
   if (Adash_curve_bits == 4) {
     A_curve_step = 0x00;
-    C_ref_height = IYheight[2];
+    C_ref_height = (*IYheightptr)[2];
   }
   SM_C3BD_bend_offset = A_curve_step;
-  if (IYheight[0] <= C_ref_height)
+  if ((*IYheightptr)[0] <= C_ref_height)
     goto advance_height;
 
   // $C39F: C = IY[0] - ref_height (height span), B = C*2
-  C_bresen_range = IYheight[0] - C_ref_height;
+  C_bresen_range = (*IYheightptr)[0] - C_ref_height;
   B_tbl_stride = C_bresen_range * 2;
-  L_left_table_lo = ~((96 - IYheight[0]) << 1); // byte offset
+  L_left_table_lo = ~((96 - (*IYheightptr)[0]) << 1); // byte offset
   HL_xpos_ptr = addr2xpos(state, (H_left_table_hi << 8) | L_left_table_lo);
   SP_output = HL_xpos_ptr;
   H_left_table_hi--;
@@ -12117,13 +12106,13 @@ bit4_clear_far:
   // EX AF,AF' -- unbank 'dist' / bank Adash_curve_bits
   if (A_dist != 4)
     goto advance_height;
-  if (IYheight[0] <= IYheight[2])
+  if ((*IYheightptr)[0] <= (*IYheightptr)[2])
     goto advance_height;
 
   // $C3DB: C = IY[0] - IY[2] (height span), B = C*2
-  C_bresen_range = IYheight[0] - IYheight[2];
+  C_bresen_range = (*IYheightptr)[0] - (*IYheightptr)[2];
   B_tbl_stride = C_bresen_range * 2;
-  L_left_table_lo = ~((96 - IYheight[0]) << 1); // byte offset
+  L_left_table_lo = ~((96 - (*IYheightptr)[0]) << 1); // byte offset
   HL_xpos_ptr = addr2xpos(state, (H_left_table_hi << 8) | L_left_table_lo);
   SP_output = HL_xpos_ptr;
   H_left_table_hi--; // this is different...
@@ -12147,7 +12136,7 @@ compute_step:
 
   /* $C407-$C412: set up SP output pointer */
   SP_output++; // FIXME - this is a byte change. is this realigning the SP?
-  if (IXlanes[0] & (1 << 5))
+  if ((*IXlanesptr)[0] & (1 << 5))
     SP_output -= 256 / 2; // prob. step back by 256 bytes
 
   /* $C413-$C420: derive step and direction */
@@ -12181,7 +12170,7 @@ compute_step:
   } while (--B_iterations > 0);
 
 advance_height:
-  IYheight++; /* $C439: INC IYheight -- advance height pointer for next iteration */
+  (*IYheightptr)++; /* $C439: INC IYheight -- advance height pointer for next iteration */
 drsc_exit:
   dr_set_lane_callback(state, Bfill_pattern, Chorizon, DEbackbuf, Lrow,
                        dr_four_lane_highway, IXlanesptr, IYheightptr); // exit via
@@ -12285,7 +12274,7 @@ static void draw_road(chqstate_t *state)
 /**
  * $C4AD: draw_road: read lanes
  */
-static void dr_read_lanes(chqstate_t *state, u8 *IXlanesptr, u8 *IYheightptr,
+static void dr_read_lanes(chqstate_t *state, u8 *IXlanesptr, const u8 *IYheightptr,
                           int Bfill_pattern, int Ccounter, int DEbackbuf,
                           int Lrow)
 {
@@ -12328,7 +12317,7 @@ static void dr_read_lanes(chqstate_t *state, u8 *IXlanesptr, u8 *IYheightptr,
     }
     state->dr_right_table_hi_2 = state->dr_right_table_hi_1 = Aleft_hand_table_hi;
     state->dr_neg_lane_count = Cdash_neg_lane_count; // Conv: A removed
-    draw_road_scene_change(state, IXlanesptr, IYheightptr, Bfill_pattern, Ccounter,
+    draw_road_scene_change(state, Bfill_pattern, Ccounter,
                            DEbackbuf, Lrow, &IXlanesptr, &IYheightptr); // exit via
   } else {
     /* If bit 6 was clear then it's a special road (tunnel, dirt track or forked road). */
@@ -13233,9 +13222,9 @@ static void pre_shift_backdrop(chqstate_t *state)
  * $EA00/$EC00, fills them right-to-left with verge/road patterns, and
  * updates the road-edge stripe/thickness self-modifying state.
  *
- * \param[in] state Pointer to game state.
- * \param[in] IX    Lanes buffer pointer.
- * \param[in] IY    Height table pointer (into state->height_table).
+ * \param[in] state    Pointer to game state.
+ * \param[in] IXlanes  Lanes buffer pointer.
+ * \param[in] IYheight Height table pointer (into state->height_table).
  */
 static void forked_road_plotter(chqstate_t *state, u8 *IXlanes, u8 *IYheight)
 {
@@ -14468,7 +14457,7 @@ dak_loop1:
 /**
  * $EDCC: Dak move down
  *
- * \param[in] DE    Value.
+ * \param[in] DEscreen Value.
  * \return Non-zero on success.
  */
 static u16 dak_move_down(int DEscreen)
@@ -15266,8 +15255,7 @@ void chq_test_draw_road_scene_change(chqstate_t *state, u8 lane_flags, int heigh
 {
   u8       *local_IX = &lane_flags;
   const u8 *local_IY = &state->height_table[height_offset];
-  draw_road_scene_change(state, &lane_flags, &state->height_table[height_offset],
-                         0 /* fill_pattern */, 0 /* horizon */, 0x0100 /* DEbackbuf */,
+  draw_road_scene_change(state, 0 /* fill_pattern */, 0 /* horizon */, 0x0100 /* DEbackbuf */,
                          0xFF /* Lrow */, &local_IX, &local_IY);
 }
 
