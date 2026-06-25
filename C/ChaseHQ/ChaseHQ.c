@@ -2250,9 +2250,12 @@ static void set_up_stage(chqstate_t        *state,
 {
   int iterations;   /* was B */
 
+  state->road_buffer_offset = &state->road_buffer[0];
   memset(&state->road_buffer[0], 0, 256);
+
   state->session         = saved_game_state;
   state->hazards[0] = saved_game_state_hazard_0;
+
   memset(&state->hazards[1], 0, sizeof(hazard_t) * (MAXHAZARDS - 1));
 
   state->scenedata = *scene_data;
@@ -2261,23 +2264,21 @@ static void set_up_stage(chqstate_t        *state,
 
   // Set backdrop position in horizon table (used to draw attributes)
   state->horizon_attr[0] = 8;
-  state->horizon_attr[1] =
-    0; // initialised strangely, presumed to be zero (needs checking)
-  state->horizon_attr[2] = 0;
+  state->horizon_attr[1] = state->horizon_attr[2] = 0;
 
   // Disable the helicopter and tunnel drawing calls in draw_everything_else
   state->dee_tunnel_1 = 0; // draw tunnel call
   state->dee_helicopter = 0; // draw heli call
   state->dee_tunnel_2 = 0; // draw tunnel call
 
-  state->rm_hazard_byte = 0; // clear current hazard?
-  state->mhc_y_offset = 0; // clear jump counter?
+  state->rm_hazard_byte = 0; // clear current hazard command
+  state->mhc_y_offset = 0; // reset car jump counter
 
   state->hazards[0].hittable.bitmaps = state->stage->bitmaps_perp_car;
 
   // Conv: Duplicate work removed.
 
-  // Run the map reader 32 times [enough to draw the screen?]
+  // Run the map reader 32 times
   iterations = 32;
   do
     rm_cycle_buffer_offset(state, &state->fast_counter);
@@ -2289,6 +2290,7 @@ static void set_up_stage(chqstate_t        *state,
   setup_transition(state, TRANSITIONSTRIDE_REVERSE);
 
   clear_playfield_set_attrs(state);
+  
   // Clear the lights' BRIGHT bit
   set_up_stage_reset_lights(ADDRTOATTRS(MARQUEELIGHT_LEFT_ATTR_ADDR));
   set_up_stage_reset_lights(ADDRTOATTRS(MARQUEELIGHT_RIGHT_ATTR_ADDR));
