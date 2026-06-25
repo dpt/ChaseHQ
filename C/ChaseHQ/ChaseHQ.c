@@ -972,7 +972,7 @@ static void draw_char(chqstate_t *state,
                       u8        **new_attrs);
 
 static u8 keyscan(chqstate_t *state);
-static u8 keyscan_keydefs(chqstate_t *state, const u8 *HLkeydefs, int Eresult);
+static u8 keyscan_keydefs(chqstate_t *state, const u8 *HLkeydefs, int Estopbit);
 static int keyscan_inner(const chqstate_t *state, int Ainput);
 
 static void check_scenery_collisions(chqstate_t *state);
@@ -6522,39 +6522,36 @@ dc_return:
 static u8 keyscan(chqstate_t *state)
 {
   int carry = 0;
-  int Ainput;
-  int E;
-  u8 *HL;
-  u8  A;
-
+  int Akempston;
+  int Akeys;
+  int Ekeys;
+  u8  Aleft_and_right;
+  u8  Aorig;
+  u8  Auser_input;
 
   if (state->kempston_flag) {
-    Ainput = state->speccy->in(state->speccy, port_KEMPSTON_JOYSTICK) & 0x1F;
-    E = 0x20;
-    HL = &state->keydefs[0];
-    A = keyscan_keydefs(state, HL, E);
-    RRC(A);
-    RRC(A);
-    RRC(A);
-    A &= 0xE0;
-    E = A | Ainput;
+    Akempston = state->speccy->in(state->speccy, port_KEMPSTON_JOYSTICK) & 0x1F;
+    // PUSH AF
+    Akeys = keyscan_keydefs(state, &state->keydefs[0], 0x20); // 3 bits max
+    RRC(Akeys);
+    RRC(Akeys);
+    RRC(Akeys);
+    Akeys &= 0xE0; // mask off collected key bits
+    // POP DE
+    Ekeys = Akeys | Akempston;
   } else {
-    E = 1;
-    HL = &state->keydefs[0];
-    A = keyscan_keydefs(state, HL, E);
+    Ekeys = Akeys = keyscan_keydefs(state, &state->keydefs[0], 0x01); // 8 bits max
   }
 
-  A &= 3;
-  A = E; // FIX
-  if (A == 3) {
-    A &= 0xFC;
-    E = A;
+  Aleft_and_right = Akeys & (USERINPUT_RIGHT | USERINPUT_LEFT);
+  Aorig = Ekeys;
+  /* if left and right are both pressed then clear them both */
+  if (Aleft_and_right == (USERINPUT_RIGHT | USERINPUT_LEFT)) {
+    Aorig &= ~(USERINPUT_RIGHT | USERINPUT_LEFT);
+    Ekeys = Aorig;
   }
-  A &= 0x0C;
-  if (A == 0x0C)
-    A = E; // FIX
-  A &= 0xF3;
-  state->user_input = A;
+  /* if up and down are both pressed then clear them both */
+  state->user_input = ((Aorig & (USERINPUT_DOWN | USERINPUT_UP)) != (USERINPUT_DOWN | USERINPUT_UP)) ? Ekeys : Ekeys & ~(USERINPUT_DOWN | USERINPUT_UP);
   return 0;
 }
 
@@ -6562,22 +6559,19 @@ static u8 keyscan(chqstate_t *state)
  * $A112: Scan a key-definition list, rotating each result into an accumulator
  *
  * \param[in] state Pointer to game state.
- * \param[in] HL    Hl.
- * \param[in] E     E.
- * \return Non-zero on success.
+ * \param[in] HLkeydefs Pointer to keydefs.
+ * \param[in] Estopbit  Stop bit - 0x01 or 0x20 - when this bit shifts out we stop.
+ * \return One bit set if key pressed.
  */
-static u8 keyscan_keydefs(chqstate_t *state, const u8 *HLkeydefs, int Eresult)
+static u8 keyscan_keydefs(chqstate_t *state, const u8 *HLkeydefs, int Estopbit)
 {
-  int carry = 0;
-  int A;
+  int carry;
 
   do {
-    A = *HLkeydefs++;
-    carry = !keyscan_inner(state, A); // active low<>high
-    RL(Eresult);
+    carry = !keyscan_inner(state, *HLkeydefs++); // active low<>high
+    RL(Estopbit);
   } while (!carry);
-  return Eresult;
-  return 0;
+  return Estopbit;
 }
 
 static int keyscan_inner(const chqstate_t *state, int Ainput)
