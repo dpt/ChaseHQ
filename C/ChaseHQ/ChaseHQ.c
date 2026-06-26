@@ -11913,9 +11913,9 @@ static void draw_road_scene_change(chqstate_t *state,
   u8   SM_C3BD_bend_offset; /* stored A_curve_step: bend offset for path 2 (SM $C3BD) */
   u16 *SM_C3C4_xpos_ptr;    /* stored HL_xpos_ptr across EX DE,HL (path 2) (SM $C3C4) */
   u16  HL_pos_delta;        /* delta between two road x-positions (was HL) */
-  u8   A_delta_lo;          /* low byte of HL_pos_delta, clamped to become A_step (was A) */
-  u8   A_step;              /* clamped per-scanline displacement for Bresenham (was A) */
-  u8   L_step;              /* copy of A_step used in Bresenham loop (was L) */
+  s8   A_delta_lo;          /* low byte of HL_pos_delta, clamped to become A_step (was A) */
+  s8   A_step;              /* clamped per-scanline displacement for Bresenham (was A) */
+  s8   L_step;              /* copy of A_step used in Bresenham loop (was L) */
   u8   B_range;             /* Bresenham range (was B) */
   u8   A_range;             /* Bresenham range copy for direction comparison (was A) */
   u8   A_dir_opcode;        /* direction opcode: 0x13 INC DE or 0x1B DEC DE (was A) */
@@ -12080,13 +12080,13 @@ compute_step:
   /* $C3EE-$C405: read second table value, compute clamped displacement */
   HL_pos_delta = *HL_xpos_ptr - DE_roadpos;
   A_delta_lo = HL_pos_delta & 0xFF;
-  if ((s8) HL_pos_delta >= 0)
-    A_step = ((s8) A_delta_lo  < 0) ? 0x7F : A_delta_lo;
+  if ((s16) HL_pos_delta >= 0)
+    A_step = (A_delta_lo < 0) ? 0x7F : A_delta_lo;
   else
-    A_step = ((s8) A_delta_lo >= 0) ? 0x81 : A_delta_lo;
+    A_step = (A_delta_lo >= 0) ? (s8)0x81 : A_delta_lo;
 
   /* $C407-$C412: set up SP output pointer */
-  SP_output++; // FIXME - this is a byte change. is this realigning the SP?
+  SP_output = (u16 *)((u8 *)SP_output + 1); /* INC SP: 1-byte advance ($C407) */
   if ((*IXlanesptr)[0] & (1 << 5))
     SP_output -= 256 / 2; // prob. step back by 256 bytes
 
