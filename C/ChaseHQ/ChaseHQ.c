@@ -85,10 +85,8 @@
 #include <assert.h>
 #include <stddef.h>
 #include <stddef.h>
-#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-
 
 #include "C99/Types.h"
 #include "ZXSpectrum/Macros.h"
@@ -1365,7 +1363,6 @@ static void play_engine_sfx_48k(chqstate_t *state)
  */
 static void attract_mode_48k(chqstate_t *state)
 {
-  static void *am_draw_saved = NULL;
   int          carry = 0;
   int          blinker;         /* was $828C (SM) */
   int          keys;            /* was A */
@@ -1374,23 +1371,15 @@ static void attract_mode_48k(chqstate_t *state)
   u8           attract_blinker; /* was A */
   int          style;           /* was A */
 
-#define CHKDRAW_AM(tag) do { \
-  void *d = (void *)state->speccy->draw; \
-  if (am_draw_saved == NULL) am_draw_saved = d; \
-  else if (d != am_draw_saved) { fprintf(stderr, "DRAW CORRUPT (attract_mode_48k) after %s: %p\n", tag, d); abort(); } \
-} while(0)
-
   set_up_stage(state, &state->stage->attract_data);
   blinker = 0;
   state->speed = SPEED_ATTRACT;
   for (;;) {
     keys = keyscan(state);
-    CHKDRAW_AM("keyscan");
     if (keys == USERINPUT_FIRE)
       return;
 
     cpu_driver(state);
-    CHKDRAW_AM("cpu_driver");
 
     messages  = &attract_messages[0];
     nmessages = 1;
@@ -1405,7 +1394,6 @@ static void attract_mode_48k(chqstate_t *state)
       style = *messages;
       messages = print_message(state, style, messages);
     } while (--nmessages > 0);
-    CHKDRAW_AM("print_message");
 
     if (state->transition_control == TRANSITIONCONTROL_STOP) {
       // Alternate between credits and copyright messages
@@ -1414,15 +1402,11 @@ static void attract_mode_48k(chqstate_t *state)
       if (blinker)
         messages = &copyright_messages[0];
       setup_overlay_messages(state, messages);
-      CHKDRAW_AM("setup_overlay_messages");
     }
 
     transition(state);
-    CHKDRAW_AM("transition");
     update_screen(state);
-    CHKDRAW_AM("update_screen");
   }
-#undef CHKDRAW_AM
 }
 
 /**
@@ -1742,20 +1726,11 @@ static void main_loop(chqstate_t *state)
  */
 static void cpu_driver(chqstate_t *state)
 {
-  static void *draw_saved = NULL;
-#define CHKDRAW(tag) do { \
-  void *d = (void *)state->speccy->draw; \
-  if (draw_saved == NULL) draw_saved = d; \
-  if (d != draw_saved) { fprintf(stderr, "DRAW CORRUPT after %s: %p\n", tag, d); abort(); } \
-} while(0)
-
   int roadpos; /* was HL */
   int input;   /* was A */
 
   if (state->host_quit)
     longjmp(state->host_quit_jmp, 1);
-
-  CHKDRAW("entry");
 
   roadpos = state->scenedata.road_pos;
   input = USERINPUT_UP | USERINPUT_RIGHT;
@@ -1773,42 +1748,23 @@ static void cpu_driver(chqstate_t *state)
   state->speccy->stamp(state->speccy);
 
   read_map(state);
-  CHKDRAW("read_map");
   spawn_cars(state);
-  CHKDRAW("spawn_cars");
   cycle_counters(state);
-  CHKDRAW("cycle_counters");
   build_height_table(state);
-  CHKDRAW("build_height_table");
   scroll_horizon(state);
-  CHKDRAW("scroll_horizon");
   layout_road(state);
-  CHKDRAW("layout_road");
   draw_road(state);
-  CHKDRAW("draw_road");
   layout_objects(state);
-  CHKDRAW("layout_objects");
   prepare_tunnel(state);
-  CHKDRAW("prepare_tunnel");
   spawn_hazards(state);
-  CHKDRAW("spawn_hazards");
   choose_dirt_and_stones(state);
-  CHKDRAW("choose_dirt_and_stones");
   layout_dirt_and_stones(state);
-  CHKDRAW("layout_dirt_and_stones");
   draw_all_hazards(state);
-  CHKDRAW("draw_all_hazards");
   move_hero_car(state);
-  CHKDRAW("move_hero_car");
   check_scenery_collisions(state);
-  CHKDRAW("check_scenery_collisions");
-  //draw_everything_else(state);
   animate_hero_car(state); /* exit via */
-  CHKDRAW("animate_hero_car");
 
   state->speccy->sleep(state->speccy, 150000); // guess
-
-#undef CHKDRAW
 }
 
 /**
@@ -11901,14 +11857,13 @@ dt_exit:
 static u8 *xpos2addr(chqstate_t *state, int hi)
 {
   switch (hi) {
-  case 0xE7: return (u8 *)state->xpos_road_left - 256; /* within _gap_e364 */
   case 0xE8: return (u8 *)state->xpos_road_left;
   case 0xE9: return (u8 *)state->xpos_road_centre_left;
   case 0xEA: return (u8 *)state->xpos_road_centre;
   case 0xEB: return (u8 *)state->xpos_road_centre_right;
   case 0xEC: return (u8 *)state->xpos_road_right;
   case 0xED: return (u8 *)state->xpos_road_fork_right;
-  default:   return NULL;
+  default:   assert(0); return NULL;
   }
 }
 

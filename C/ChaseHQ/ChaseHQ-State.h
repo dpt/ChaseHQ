@@ -675,10 +675,6 @@ struct chqstate {
   u8        horizon_attr[3]; // horizon attribute scroll state: [0]=initial delta, [1]=current level, [2]=previous level
   // $E34F
   u8        object_positions[21];
-  // Conv: Z80 gap $E364-$E7FF (1180 bytes). build_curve_table_sub_cca8 writes
-  // backward from table_e800 and can overflow past [0]; in Z80 this landed in
-  // the gap. Replicate that gap so the overrun stays harmless.
-  u8        _gap_e364[0x800 - 0x364]; // 1180 bytes
   // $E800 - Left outer edge (verge/road boundary)
   u16       xpos_road_left[128];
   // $E900 - Left inner edge / centre-left

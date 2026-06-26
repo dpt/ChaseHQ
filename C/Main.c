@@ -284,7 +284,6 @@ static void chq_sdl_main_loop(void *opaque)
           break;
 
         default:
-          printf("Unhandled event code {%d}\n", event.type);
           break;
       }
     }
