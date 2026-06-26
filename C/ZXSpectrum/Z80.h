@@ -5,6 +5,11 @@
 
 #include <stdint.h>
 
+/* Z80 opcode bytes used as self-modifying instruction identifiers. */
+#define Z80_CALL_NN 0xCD /* CALL nn */
+#define Z80_INC_DE  0x13 /* INC DE  */
+#define Z80_DEC_DE  0x1B /* DEC DE  */
+
 /**
  * Shift left arithmetic.
  */

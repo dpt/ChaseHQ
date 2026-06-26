@@ -11563,7 +11563,7 @@ static void prepare_tunnel(chqstate_t *state)
   state->dt_far_wall_mode = A_in_tunnel ^ 1;
 
   /* Self modify #R$8F82 and #R$8FA7 to be CALL draw_tunnel. */
-  state->dee_tunnel_1 = state->dee_tunnel_2 = 0xCD; // opcode of CALL
+  state->dee_tunnel_1 = state->dee_tunnel_2 = Z80_CALL_NN;
 }
 
 /**
@@ -11918,7 +11918,7 @@ static void draw_road_scene_change(chqstate_t *state,
   s8   L_step;              /* copy of A_step used in Bresenham loop (was L) */
   u8   B_range;             /* Bresenham range (was B) */
   u8   A_range;             /* Bresenham range copy for direction comparison (was A) */
-  u8   A_dir_opcode;        /* direction opcode: 0x13 INC DE or 0x1B DEC DE (was A) */
+  u8   A_dir_opcode;        /* direction opcode: Z80_INC_DE or Z80_DEC_DE (was A) */
   u8   SM_C435_dir_opcode;  /* stored direction opcode for normal Bresenham (SM $C435) */
   u8   A_accum;             /* Bresenham accumulator (was A) */
   u8   B_iterations;        /* Bresenham iteration count (was B) */
@@ -12099,11 +12099,11 @@ compute_step:
   if (L_step < 0) {
     L_step = -L_step;
     A_range = B_range;
-    A_dir_opcode = 0x1B; // DEC DE
+    A_dir_opcode = Z80_DEC_DE;
     if (A_range < L_step)
       goto steep_step;
   } else {
-    A_dir_opcode = 0x13; // INC DE
+    A_dir_opcode = Z80_INC_DE;
     if (A_range < L_step)
       goto steep_step;
   }
@@ -12115,7 +12115,7 @@ compute_step:
     A_accum += L_step;
     if (A_accum >= B_range) {
       A_accum -= B_range;
-      DE_roadpos += (SM_C435_dir_opcode == 0x13 /*INC_DE*/) ? +1 : -1;
+      DE_roadpos += (SM_C435_dir_opcode == Z80_INC_DE) ? +1 : -1;
     }
     *--SP_output = DE_roadpos;
   } while (--B_iterations > 0);
@@ -12133,7 +12133,7 @@ steep_step:
   A_accum = 0;
   do {
     for (;;) {
-      DE_roadpos += (SM_C445_dir_opcode == 0x13 /*INC_DE*/) ? +1 : -1;
+      DE_roadpos += (SM_C445_dir_opcode == Z80_INC_DE) ? +1 : -1;
       A_accum += C_range;
       if (A_accum < C_range || A_accum >= L_step) /* overflow or >= step */
         break;
@@ -13697,10 +13697,10 @@ static void build_curve_table_fill(chqstate_t *state,
                                    &state->height_table[0]]; // IY[$1F]; // $E320+
     if ((Ldash & (1 << 7)) != 0) {
       Ldash = -Ldash & 0xFF; // mask here to fix neg?
-      Aopcode = 0x1B; // Opcode for DEC DE
+      Aopcode = Z80_DEC_DE;
       if (Bdash < Ldash) goto bct_endbit_A;
     } else {
-      Aopcode = 0x13; // Opcode for INC DE
+      Aopcode = Z80_INC_DE;
       if (A < Ldash) goto bct_endbit_A;
     }
     A = Bdash >> 1;
@@ -13708,7 +13708,7 @@ static void build_curve_table_fill(chqstate_t *state,
       A += Ldash;
       if (A >= Cdash) {
         A -= Cdash;
-        if (Aopcode == 0x13) DEroadpos++;
+        if (Aopcode == Z80_INC_DE) DEroadpos++;
         else DEroadpos--;
       }
       SPoutput--; *SPoutput = DEroadpos; // PUSH to output table
@@ -13725,12 +13725,12 @@ bct_continue:
   // #REGde is ?
 bct_endbit_A:
   /* Conv: Z80 $CCF8 LD ($CCFC),A stores the opcode into the self-modifying
-   * instruction. A already holds 0x1B or 0x13 (set just before JR C,$CCF8).
+   * instruction. A already holds Z80_DEC_DE or Z80_INC_DE (set just before JR C,$CCF8).
    * Aopcode was set to the same value before the goto, so no overwrite here. */
   Atotal = 0; // Z80 $CCFB XOR A — initialise accumulator
   do {
     do {
-      if (Aopcode == 0x13) DEroadpos++;
+      if (Aopcode == Z80_INC_DE) DEroadpos++;
       else DEroadpos--;
       Atotal += Cdash;
       overflow = Atotal > 0xff;
