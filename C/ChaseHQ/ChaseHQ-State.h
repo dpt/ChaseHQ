@@ -651,9 +651,9 @@ struct chqstate {
   // $C80A (SM) in draw_road
   u8        dr_sky_rows;
   // $C86C (SM) in dr_start_backdrop_fill: offset of first LDI in blit stream (0..18)
-  u8        dr_SM_C86C;
+  u8        dr_backdrop_copy_jump;
   // $C82D in dr_start_backdrop_fill: runtime-selected 18-byte blit instruction stream
-  u8        dr_c82d_instrs[18];
+  u8        dr_backdrop_copy_instrs[18];
   // $C88F (SM) in draw_road
   u8        dr_in_tunnel;
 

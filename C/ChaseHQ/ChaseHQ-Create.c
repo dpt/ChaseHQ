@@ -107,6 +107,13 @@ static void chq_initialise(chqstate_t *state)
   state->debris_table[10] = state->debris_subtables[3];
   state->debris_table[11] = state->debris_subtables[0];
 
+  // $C534/$C68A: SM operands in dr_four_lane_highway / dr_fill_left_stripe
+  state->dr_left_table_hi_1  = 0xE8; // xpos_road_left page
+  state->dr_left_table_hi_2  = 0xE8;
+  state->dr_right_table_hi_1 = 0xEC; // xpos_road_right page
+  state->dr_right_table_hi_2 = 0xEC;
+  state->dr_neg_lane_count   = -4;   // four-lane default
+
   // $E300
   state->height_table[0] = 0x60; // sentinel, hardcoded in Z80 RAM
 

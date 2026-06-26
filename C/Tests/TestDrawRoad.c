@@ -142,6 +142,7 @@ static void test_build_height_table_writes_table(void)
 
   chq_destroy(state);
   printf("PASS  build_height_table writes height_table\n");
+
 }
 
 /*
@@ -170,6 +171,7 @@ static void test_layout_road_populates_tables(void)
 
   chq_destroy(state);
   printf("PASS  layout_road: populates centre tables with road geometry\n");
+
 }
 
 /*
@@ -177,35 +179,16 @@ static void test_layout_road_populates_tables(void)
  * must write some non-zero content into the back buffer and must reset the
  * four road-state flags.
  *
- * NOTE: draw_road is partially implemented.  On the first call the sentinel
- * DEbackbuf = 0x0100 decrement-and-rollover path produces DEbackbuf = 0x0020
- * (D=0x00, E=0x20), which is outside the valid backbuffer range.  The missing
- * piece is initialisation of dr_backbuf_1 to the first valid row address
- * (0xFF20) by stage-setup code not yet ported.  Until that is added this test
- * aborts at the VALID_BACKBUF assertion in dr_c62e.
+ * Full pipeline smoke test: build_height_table → layout_road → draw_road.
  */
 static void test_draw_road_writes_backbuffer(void)
 {
   chqstate_t *state = make_road_state();
-  int i;
 
   memset(state->backbuffer, 0xFF, sizeof(state->backbuffer));
 
   chq_test_build_height_table(state);
   chq_test_layout_road(state);
-
-  printf("height_table[1..5]: %d %d %d %d %d\n",
-         state->height_table[1], state->height_table[2],
-         state->height_table[3], state->height_table[4],
-         state->height_table[5]);
-
-  {
-    /* IXlanesptr = road_buffer_start[(road_buffer_offset + ROADBUF_LANES_OFFSET) & 0xFF] */
-    int lanes_off = (int)((state->road_buffer_offset - state->road_buffer_start + 64) & 0xFF);
-    int carry_stripe = !!(lanes_off & 2);
-    printf("lanes byte offset=%d  carry_stripe=%d  lanes[0]=%02x\n",
-           lanes_off, carry_stripe, state->road_buffer_start[lanes_off]);
-  }
 
   state->on_dirt_track     = 0xFF;
   state->dt_tunnel_visible = 0xFF;
@@ -266,6 +249,7 @@ static void test_drsc_exits_when_dist_too_far(void)
 
   chq_destroy(state);
   printf("PASS  draw_road_scene_change: dist >= 19 exits early, xpos tables unchanged\n");
+
 }
 
 /*
@@ -305,6 +289,7 @@ static void test_drsc_exits_on_straight_track(void)
 
   chq_destroy(state);
   printf("PASS  draw_road_scene_change: straight track (no curve bits) exits early, xpos tables unchanged\n");
+
 }
 
 

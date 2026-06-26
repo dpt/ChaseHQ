@@ -323,9 +323,9 @@ const u8 credits_messages_128[98];
 const u8 best_officers[163];
 
 /* $86F6: backdrop blit instruction templates.
- * Two 18-byte chunks; selected slice is copied to dr_c82d_instrs by
+ * Two 18-byte chunks; selected slice is copied to dr_backdrop_copy_instrs by
  * dr_start_backdrop_fill.  0x2C = INC L (skip), 0xED/0xA0 = LDI (copy). */
-extern const u8 backdrop_shifting_instrs[36];
+extern const u8 backdrop_copy_instrs_template[36];
 
 const u8 marquee_initial[SCREEN_BITMAP_ROWBYTES * MARQUEE_HEIGHT];
 const u8 marquee_attrs[SCREEN_ATTRIBUTES_WIDTH * MARQUEE_HEIGHT / 8];

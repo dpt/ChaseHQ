@@ -5246,9 +5246,9 @@ const u8 marquee_attrs[SCREEN_ATTRIBUTES_WIDTH * MARQUEE_HEIGHT / 8] = {
 /* $86F6: backdrop blit instruction templates (36 bytes, two 18-byte chunks).
  * Chunk 0 (bytes 0–17):  INC L (0x2C) + NOP (0x00) × 9 — skip backdrop bytes.
  * Chunk 1 (bytes 18–35): LDI   (0xED, 0xA0) × 9       — copy backdrop bytes.
- * dr_start_backdrop_fill copies 18 bytes starting at offset dr_SM_C86C into
- * state->dr_c82d_instrs, which the blit loop then interprets. */
-const u8 backdrop_shifting_instrs[36] = {
+ * dr_start_backdrop_fill copies 18 bytes starting at offset dr_backdrop_copy_jump into
+ * state->dr_backdrop_copy_instrs, which the blit loop then interprets. */
+const u8 backdrop_copy_instrs_template[36] = {
   0x2C, 0x00, 0x2C, 0x00, 0x2C, 0x00, 0x2C, 0x00, 0x2C, 0x00,
   0x2C, 0x00, 0x2C, 0x00, 0x2C, 0x00, 0x2C, 0x00,
   0xED, 0xA0, 0xED, 0xA0, 0xED, 0xA0, 0xED, 0xA0, 0xED, 0xA0,
