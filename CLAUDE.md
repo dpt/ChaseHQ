@@ -1,0 +1,199 @@
+# CLAUDE.md
+
+This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+
+## Project Overview
+
+This is a disassembly and C port of the ZX Spectrum 128K game "Chase H.Q." by Ocean Software. The project has two parallel strands: reverse engineering via SkoolKit, and a faithful C reimplementation of the game logic.
+
+## Building
+
+### Disassembly (root directory)
+```bash
+make pristine    # Create pristine snapshot
+make skool       # Generate skool file from control file + snapshot
+make asm         # Build assembly listing
+make tap         # Build TAP file for emulator
+make z80         # Build Z80 snapshot
+make ctl         # Rebuild control file from skool
+make commit      # Commit changes back to control file
+```
+
+### C implementation (C/ directory)
+CMake is the canonical build system. The `Makefile` references outdated source names and is legacy.
+
+```bash
+# From C/
+cmake -S . -B cmake-build-debug
+cmake --build cmake-build-debug
+./cmake-build-debug/ChaseHQ
+```
+
+Formatting uses clang-format via CMake:
+```bash
+# From C/
+cmake --build cmake-build-debug --target format
+```
+
+A unit test binary exists alongside the main build:
+
+```bash
+# From C/
+cmake --build cmake-build-debug --target ChaseHQ_Tests
+./cmake-build-debug/ChaseHQ_Tests
+```
+
+Tests live in `C/Tests/TestDrawRoad.c`. They are built with `-DCHQ_TESTS`, which compiles in thin wrappers at the bottom of `ChaseHQ.c` (inside `#ifdef CHQ_TESTS`) that expose static functions for direct testing. Declarations for those wrappers live in `C/ChaseHQ/ChaseHQ-Tests.h`. When adding a new test hook, add the wrapper to `ChaseHQ.c` and declare it in `ChaseHQ-Tests.h`.
+
+## C Implementation Architecture
+
+### Entry point and lifecycle
+`C/Main.c` owns the SDL window and event loop. Each frame it calls `chq_main(state->game)`. The public game API is in `C/ChaseHQ/ChaseHQ.h`:
+
+```
+chq_create → chq_setup → chq_main (repeated) → chq_destroy
+```
+
+### Layers
+- **Host** (`C/Main.c`): SDL2 window, event loop, `zxconfig_t` callbacks wired to game
+- **ZX emulation facade** (`C/ZXSpectrum/Spectrum.*`): exposes `in`/`out`/`draw`/`stamp`/`sleep` callbacks; game code never calls SDL directly
+- **Game** (`C/ChaseHQ/ChaseHQ.c`): translation-oriented, heavily commented with Z80 addresses; many TODOs and partial stubs
+- **State** (`C/ChaseHQ/ChaseHQ-State.h`): `struct chqstate` — the single source of mutable game state, fields ordered by original Z80 memory addresses
+- **Stage data** (`C/ChaseHQ/ChaseHQ-Stages.h`, `ChaseHQ-Stage1Data.*`, `ChaseHQ-CommonData.*`): read-only game tables consumed by game logic
+
+### Data flow
+- **Rendering**: game mutates `state->speccy->screen` → ZX facade tracks dirty regions → `draw_handler` in `Main.c` calls `zxspectrum_claim_screen` → SDL texture update
+- **Input**: SDL keys → `zxkeyset_t`/`zxkempston_t` → `key_handler` → Spectrum IN ports (`port_KEYBOARD_*`, `port_KEMPSTON_JOYSTICK`)
+- **Audio/border**: hooks are connected but most are placeholder NOPs in `Main.c`
+
+### Stage status
+All 5 stages currently map to `stage1` data in `ChaseHQ-Stages.c`. Per-stage data beyond stage 1 does not exist yet.
+
+## Coding Conventions
+
+- **Types**: use `u8`, `u16`, `s8`, `s16` from `C/C99/Types.h` in game and state code
+- **State**: never introduce globals; pass and mutate `chqstate_t *state` throughout
+- **`(SM)` fields**: each field annotated `(SM)` in `chqstate` corresponds to a Z80 self-modifying instruction at the given address — these are correctness-critical; do not remove or rename carelessly
+- **`Conv:` comments**: mark where the C version intentionally diverges from a direct Z80 translation; preserve them
+- **Address semantics**: macros like `ADDRTOSCREEN`, `BACKBUFTOOFFSET`, `ROADBUFPTR` are correctness-critical
+- **Formatting**: K&R style, 2-space indent, 80 columns, pointer aligned to name (`.astylerc`)
+
+### Variable naming in Z80 translations
+
+This C code is a model of a Z80 program, written to educate. Each C variable
+represents an individual register use, named after the register it came from.
+Variable names deliberately include the register name to make it easy to
+cross-reference the C code against the disassembly when debugging.
+
+All local variables in translated functions must follow this pattern:
+
+- **Name**: `RegisterName_description` — the Z80 register that held the value (e.g. `A_prev_height`, `C_acc`, `HLbackdrop`, `DEscr`). Use the full pair name (`HL`, `DE`, `BC`) when the variable represents a 16-bit quantity. Use a plain noun when there is no single source register (e.g. `carry`).
+- **Placement**: declare all variables at the top of their scope, one per line, before any statements. Never combine declaration with initialisation in the same line.
+- **Order**: ordered by first use, top to bottom.
+- **Comment**: each declaration ends with a brief comment: intent first, then `(was X)` to record the Z80 register. Example:
+
+```c
+int        D;                  /* screen address high byte (was D) */
+int        A_col;              /* backdrop source column; reset per row (was A') */
+const u8  *HLbackdrop;         /* pointer to first byte of the current backdrop row (was HL) */
+```
+
+### Modelling EXX / EX AF,AF' (register banking)
+
+The `EXX` instruction swaps main BC/DE/HL with their shadow (BC'/DE'/HL') and
+`EX AF,AF'` swaps A and F with A' and F'. In C we **ignore the swap itself**:
+the main-register variables are left unchanged. Instead, at the `// EXX` (or
+`// EX AF,AF'`) comment, we assign the shadow-side variables from the
+main-side variables to record what the Z80 banked into shadow:
+
+```c
+// EXX - bank ($xxxx)
+HLdash = HL;   /* HL → HL' */
+DEdash = DE;   /* DE → DE' */
+```
+
+When a second `EXX` restores the main registers from shadow (an "unbank"), the
+same pattern applies in reverse — main-register variables are assigned from the
+shadow variables that hold the banked values. The key points:
+
+- Shadow variables (`HLdash`, `DEdash`, `BCdash`, `Adash`, `Aflip`, …) are a
+  separate set; they are declared at the top of scope like any other variable.
+- The `// EXX` comment marks exactly where the banking occurs; the assignment
+  lines immediately follow it.
+- Because we ignore the swap direction for main registers, a main variable like
+  `HL` may appear to retain its old value past an EXX — that is intentional.
+  Only the shadow side needs updating at each EXX point.
+
+## Verifying translations
+
+When a C translation looks wrong or a variable appears uninitialised, consult the skool file (`ChaseHQ.skool` or the bank files). The skool is the authoritative disassembly. Pay particular attention to:
+
+- Which register holds what value at each Z80 address — registers are reused and a "was B" comment tells you the register name, not which logical value it held at that moment.
+- `EX AF,AF'` / `EXX` banking: a value banked before a branch may arrive at a label with a different register than you expect. Be especially careful when a shadow register is used as a shuttle (e.g. `EX AF,AF'` passes a value through A' so that the main A can hold something else on the other side of a block). The two sides of the exchange hold logically different values even though both are named `A`.
+- Self-modifying instructions (`SM $xxxx` annotations in `chqstate`): these are the C equivalent of Z80 code patching itself at runtime.
+
+## Common translation bugs
+
+See `C/translation-pitfalls.md` for the full catalogue with commit references.
+The most frequently recurring mistakes:
+
+**Signed/unsigned type mismatch** — use `s8` (not `u8`) whenever the Z80
+treats a byte as signed: subtraction can underflow, or a `JP M`/`JP P`
+branches on the result. A `u8` variable can never be `< 0`, so
+`if (X < 0)` on `u8` is always false and the negative-direction branch
+is dead code. When in doubt, check whether the Z80 sets the Sign flag on
+this value.
+
+**Stale register / wrong variable** — Z80 reuses A (and others) for
+different logical values within one function. Give each logical value its
+own C name (`Aheight_diff`, not just `A`) and reference it at all sites
+where the original register is still in scope. Using the generic name
+after it has been overwritten is a silent bug.
+
+**Missing SM field initialisation** — every `(SM)` field added to
+`chqstate_t` must also be initialised in `chq_initialise` in
+`ChaseHQ-Create.c`. Zero from `calloc` is not always the correct default.
+
+**Pointer arithmetic direction** — Z80 SP decrements on PUSH; `SUB $20`
+subtracts (not adds) 32; `JR NC` skips on _no_ carry (i.e. the
+no-borrow branch). Confirm the direction before translating any
+backbuffer or screen-pointer arithmetic.
+
+**Pointer type → element stride** — Z80 `LD A,(HL)` is always a byte
+load. The C pointer must be `u8*`. A `u16*` pointer doubles the offset
+and reads out of bounds.
+
+**Accumulate vs. assign** — `ADD A,IXl; LD IXl,A` accumulates A into
+IXl across iterations. The C translation must keep a running sum; a bare
+`IXl = A` (overwrite) discards the accumulated value.
+
+**Borrow detection via bit 7** — `(result & 0x80)` only reliably detects
+borrow when the difference fits in −128..+127. For differences above 128
+the u8 wraps and bit 7 is wrong. Use a direct comparison instead:
+`if (a <= b)` rather than `if ((a - b) & 0x80)`.
+
+**Macro used as expression** — a macro defined as a pure expression
+(`((base)[...])`) is a no-op when used as a statement. Mutating macros
+must assign back to their argument: `((ptr) = ...)`.
+
+## Known data layout: $E4xx road graphics page
+
+`edge_markings` in `C/ChaseHQ/Data/ChaseHQ-CommonData.c` is a single 256-byte array that represents the entire `$E4xx` Z80 memory page:
+
+| Offset | Z80 address | Content |
+|--------|------------|---------|
+| `0x00..0x0F` | `$E400..$E40F` | Zeros — Z80 "draw nothing" sink (stripe offset = 0 points here) |
+| `0x10..0xCF` | `$E410..$E4CF` | Edge markings: six 32-byte masked variants (widest→thinnest, white/black) |
+| `0xD0..0xFF` | `$E4D0..$E4FF` | Lane markings: three 16-byte unmasked variants (widest→thinnest) |
+
+All road-marking access sites use `&edge_markings[((0xE4 << 8) | Ldash) - 0xE400]` = `&edge_markings[Ldash]`. There is no separate `lane_markings` array. `dr_edge_graphic_offset` ∈ {`0x10`, `0x30`, `0x50`, `0x70`, `0x90`, `0xB0`} and `dr_stripe_table_offset` ∈ {`0x00`, `0xD0`, `0xE0`, `0xF0`} are low bytes of Z80 HL and index directly into this array.
+
+## Known test failure
+
+All five tests pass.
+
+## Safe Editing
+
+- Prefer narrow edits in data files or isolated helpers; avoid broad rewrites inside `ChaseHQ/ChaseHQ.c`
+- When modifying `chqstate_t`, update initialisation in `ChaseHQ/ChaseHQ-Create.c` (`chq_initialise`)
+- When touching `ZXSpectrum/Spectrum.c` locking or dirty-rect code, validate both correctness and host callback behaviour — it is cross-thread glue
