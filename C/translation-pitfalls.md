@@ -22,12 +22,18 @@ on the sign flag.
   `(s8)Aheight_diff > 0`.)
 - `>= 128` boundary miss: `A > 128` fails for `A == 128` (0x80 has Sign flag
   set on Z80). Fix: `A >= 128`.
+- **`s8` cast on a 16-bit `SBC HL,DE` result:** `SBC HL,DE` sets the Sign
+  flag from bit 15 of the 16-bit result. Casting the `u16` result to `s8`
+  tests bit 7 of the low byte only. A value like `0xFF64` is negative as
+  `s16` but has zero in bit 7 of the low byte, so the `(s8)` branch fires
+  incorrectly. Fix: cast to `s16`. (`f21a880`)
 
 **Fix:** Declare the variable `s8` when the Z80 treats it as signed. Remove
 the now-redundant `(s8)` cast at comparison sites. If the value is set by
-subtraction that can underflow, it must be `s8`.
+subtraction that can underflow, it must be `s8`. For 16-bit arithmetic
+(`SBC HL,DE`, `ADD HL,DE`) the cast must be `s16`, not `s8`.
 
-**Commits:** `c8251ba`, `6ce786f`, `4a9eb7f`, `2ab21904`, and this branch tip.
+**Commits:** `c8251ba`, `6ce786f`, `4a9eb7f`, `2ab21904`, `f21a880`.
 
 ---
 
@@ -110,13 +116,22 @@ C translations routinely get the sign or condition inverted.
 
 **Root cause:** Z80 `LD A,(HL)` always loads one byte. If the C pointer is
 `u16*`, `ptr[offset]` treats a byte offset as a word index, doubling it and
-reading far out of bounds.
+reading far out of bounds. The same problem applies to pointer increments:
+`INC SP` advances the stack pointer by exactly 1 byte, but `SP_output++` on
+a `u16*` advances by 2.
 
-**Bug:** `HLdash` in `dr_fill` was `u16*`; `HLdash[Ldash]` treated the byte
-offset 255 as a word index, reading element 255 of a 128-element array (into
-the adjacent `xpos_road_centre_left` table). Fix: `u8*`.
+**Bugs:**
 
-**Commit:** `6217000`
+- `HLdash` in `dr_fill` was `u16*`; `HLdash[Ldash]` treated the byte
+  offset 255 as a word index, reading element 255 of a 128-element array
+  (into the adjacent `xpos_road_centre_left` table). Fix: `u8*`. (`6217000`)
+- `SP_output++` for `INC SP` (`$C407`) advanced the output pointer by 2
+  bytes instead of 1 because `SP_output` is `u16*`. Fix: cast through `u8*`:
+  `SP_output = (u16 *)((u8 *)SP_output + 1)`. (`f21a880`)
+
+**Fix:** Match the C pointer type to the Z80 access width. Byte loads/stores
+and single-byte SP adjustments require `u8*`; any `u16*` arithmetic silently
+doubles the offset.
 
 ---
 
@@ -234,3 +249,30 @@ were a separate array, requiring different index arithmetic.
 `$E400` uniformly and index into this single array.
 
 **Commit:** `9998264`
+
+---
+
+## 13. `addr2xpos` even-byte masking hits the wrong byte lane
+
+**Root cause:** `addr2xpos(state, z80addr)` converts a Z80 address to a
+`u16*` by computing `base[(z80addr & 0xFF) / 2]`. The `/2` rounds odd low
+bytes down to the nearest even index, so the returned `u16*` points at the
+even byte — the position (E) byte of the D:E pair — not the odd byte that
+HL was actually pointing at.
+
+**Bug:** In `dr_fill_left_stripe`, `Lrow` starts at `0xFF` and decrements by 2
+(always odd). Using `addr2xpos(state, (H << 8) | Lrow)` to check the
+on-screen flag dereferenced the position byte instead of the flag byte.
+Every flag read returned a non-zero position value, so the `if (*HL == 0)`
+guard was never true and all edge and lane markings were silently skipped.
+
+A secondary error in the same function: after `Lrow--` the code re-read
+`*HL` to get the position byte, but `HL` still pointed at the old odd
+offset. The position byte is one before that address, so the correct read
+is `HL[-1]`.
+
+**Fix:** Use `hi2xpostab(state, H) + Lrow` to obtain an exact byte pointer.
+This gives a `u8*` at the precise odd offset Lrow without any rounding. For
+the position read after decrement, use `HL[-1]` not `*HL`.
+
+**Commit:** `fccab5a`
