@@ -12669,6 +12669,7 @@ static void dr_fill_left_stripe(chqstate_t *state,
 
   assert(VALID_BACKBUF_PTR_LR(SPoutput, 0, 0x20)); // allow $001F
 
+
   // Conv: use memset
   int n = (15 - jump_index) * 2;
   assert(n >= 0);
@@ -12681,7 +12682,7 @@ static void dr_fill_left_stripe(chqstate_t *state,
   // EXX - Unbank
 
   H = state->dr_left_table_hi_1;
-  HL = (u8*)addr2xpos(state, (H << 8) | Lrow);
+  HL = hi2xpostab(state, H) + Lrow;
   if (*HL == 0) {
     Axpos = *WRAP(HL, -1, hi2xpostab(state, H));
 
@@ -12709,7 +12710,7 @@ static void dr_fill_left_stripe(chqstate_t *state,
   /* $C667 - Draw road lane markings. */
   while (++Bneg_lane_count != 0) {
     H++; // next lane
-    HL = (u8*)addr2xpos(state, (H << 8) | Lrow);
+    HL = hi2xpostab(state, H) + Lrow;
     if (*HL)
       continue;
 
@@ -12732,11 +12733,11 @@ static void dr_fill_left_stripe(chqstate_t *state,
 
   /* $C68A - Right edge. */
   H = state->dr_right_table_hi_1;
-  HL = (u8*)addr2xpos(state, (H << 8) | Lrow);
+  HL = hi2xpostab(state, H) + Lrow;
   A = *HL;
   Lrow--;
   if (*HL == 0) {
-    A = *HL; // ie. HL[-1]
+    A = HL[-1];
 
     // EXX - Bank
 
