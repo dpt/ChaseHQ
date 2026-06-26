@@ -129,21 +129,31 @@
 #define MAP_CMDCODE_GOTO                (0)
 #define MAP_CMDCODE_FORK_END            (1)
 #define MAP_CMDCODE_SPLIT               (2)
+#define MAP_CMDCODE_STOP_BARRIERS       (3)
+#define MAP_CMDCODE_UNKNOWN_HAZARD_6    (6)
+#define MAP_CMDCODE_START_BARRIERS_L    (7)
+#define MAP_CMDCODE_START_BARRIERS_R    (8)
+#define MAP_CMDCODE_START_TWO_BARRIERS  (9)
+#define MAP_CMDCODE_ARROW_OFF           (10)
+#define MAP_CMDCODE_ARROW_L             (11)
+#define MAP_CMDCODE_ARROW_R             (12)
+#define MAP_CMDCODE_START_CARS          (13)
+#define MAP_CMDCODE_STOP_CARS           (14)
 
 // Map commands
 #define MAP_CMD_GOTO(ADDR)              MAP_ESC, MAP_CMDCODE_GOTO, (ADDR) & 0xFF, (ADDR) >> 8
 #define MAP_CMD_FORK_END                MAP_ESC, MAP_CMDCODE_FORK_END
 #define MAP_CMD_SPLIT(LADDR,RADDR)      MAP_ESC, MAP_CMDCODE_SPLIT, (LADDR) & 0xFF, (LADDR) >> 8, (RADDR) & 0xFF, (RADDR) >> 8
-#define MAP_CMD_STOP_BARRIERS           MAP_ESC, (3)
-#define MAP_CMD_UNKNOWN_HAZARD_6        MAP_ESC, (6)
-#define MAP_CMD_START_BARRIERS_L        MAP_ESC, (7)
-#define MAP_CMD_START_BARRIERS_R        MAP_ESC, (8)
-#define MAP_CMD_START_TWO_BARRIERS      MAP_ESC, (9)
-#define MAP_CMD_ARROW_OFF               MAP_ESC, (10)
-#define MAP_CMD_ARROW_L                 MAP_ESC, (11)
-#define MAP_CMD_ARROW_R                 MAP_ESC, (12)
-#define MAP_CMD_START_CARS              MAP_ESC, (13)
-#define MAP_CMD_STOP_CARS               MAP_ESC, (14)
+#define MAP_CMD_STOP_BARRIERS           MAP_ESC, MAP_CMDCODE_STOP_BARRIERS
+#define MAP_CMD_UNKNOWN_HAZARD_6        MAP_ESC, MAP_CMDCODE_UNKNOWN_HAZARD_6
+#define MAP_CMD_START_BARRIERS_L        MAP_ESC, MAP_CMDCODE_START_BARRIERS_L
+#define MAP_CMD_START_BARRIERS_R        MAP_ESC, MAP_CMDCODE_START_BARRIERS_R
+#define MAP_CMD_START_TWO_BARRIERS      MAP_ESC, MAP_CMDCODE_START_TWO_BARRIERS
+#define MAP_CMD_ARROW_OFF               MAP_ESC, MAP_CMDCODE_ARROW_OFF
+#define MAP_CMD_ARROW_L                 MAP_ESC, MAP_CMDCODE_ARROW_L
+#define MAP_CMD_ARROW_R                 MAP_ESC, MAP_CMDCODE_ARROW_R
+#define MAP_CMD_START_CARS              MAP_ESC, MAP_CMDCODE_START_CARS
+#define MAP_CMD_STOP_CARS               MAP_ESC, MAP_CMDCODE_STOP_CARS
 
 // Map curvatures
 #define MAP_CURVE_STRAIGHT(D)           (((D) << 4) | 0)
