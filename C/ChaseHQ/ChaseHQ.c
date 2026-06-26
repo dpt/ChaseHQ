@@ -12852,10 +12852,16 @@ static void dr_fill_left_stripe(chqstate_t *state,
   /* $C6AB - Loop end */
   Lrow = (Lrow - 1) & 0xFF;
   // Conv: This is a loop in the original but since the C conversion splits
-  // draw_road into multiple functions this becomes recursion (!).
-  if (--Ccounter > 0)
+  // draw_road into multiple functions this becomes recursion. The height-check
+  // block below ($C6B0..$C79A) runs ONCE after the Z80 JP NZ loop exits. So
+  // outer recursion levels must return here; only the innermost level (where
+  // --Ccounter reaches 0 and the call is skipped) falls through to the
+  // height-check.
+  if (--Ccounter > 0) {
     state->dr_fill_fn(state, Ccounter, DEbackbuf, Lrow, state->dr_fill_pattern,
                       IXlanesptr, IYheightptr);
+    return;
+  }
 
   // EX AF,AF'
   Bfill_pattern = Adash_fill_pattern;
