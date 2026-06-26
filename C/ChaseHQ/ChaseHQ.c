@@ -126,13 +126,14 @@
 /** Decrement the high byte of a 16-bit word `v` */
 #define HI_DEC(v) ((v) = ((v) - 0x0100) & 0xFFFF)
 
-/** Return ptr advanced by delta modulo 256, assigning back in-place. */
-#define WRAPPING(ptr, delta, base) \
-  ((ptr) = &(base)[((ptr) + delta - (base)) & 0xFF])
+/** Return ptr advanced by delta modulo 256. */
+#define WRAP(ptr, delta, base) &(base)[((ptr) + (delta) - (base)) & 0xFF]
 
-/** Return ptr advanced by 1 modulo 256. */
-#define WRAPPINGINCREMENT(ptr, base) \
-  WRAPPING(ptr, 1, base)
+/** Assign ptr advanced by delta modulo 256. */
+#define WRAP_ASSIGN(ptr, delta, base) ((ptr) = WRAP(ptr, delta, base))
+
+/** Assign ptr advanced by 1 modulo 256. */
+#define WRAP_INCREMENT_ASSIGN(ptr, base) WRAP_ASSIGN(ptr, 1, base)
 
 /* ----------------------------------------------------------------------- */
 
@@ -3419,7 +3420,7 @@ static void draw_everything_else(chqstate_t *state)
 
 continue_after_right_hand_done:
     IXtable_ea00++;
-    WRAPPING(HLroadbuf, 32,
+    WRAP_ASSIGN(HLroadbuf, 32,
              state->road_buffer_start); // advance to left-side column
     assert(HLroadbuf >= state->road_buffer_start
            && HLroadbuf < state->road_buffer_end);
@@ -3431,7 +3432,7 @@ continue_after_right_hand_done:
 
 continue_after_left_hand_done:
     IXtable_ea00++;
-    WRAPPING(HLroadbuf, -33, state->road_buffer_start); // retreat one row
+    WRAP_ASSIGN(HLroadbuf, -33, state->road_buffer_start); // retreat one row
     assert(HLroadbuf >= state->road_buffer_start
            && HLroadbuf < state->road_buffer_end);
 
@@ -6701,7 +6702,7 @@ store_crash_spin:
   RL(A);
   Aobj = *HLbufptr; /* Read a right side object data byte */
   if (carry)
-    WRAPPINGINCREMENT(HLbufptr, state->road_buffer_start);
+    WRAP_INCREMENT_ASSIGN(HLbufptr, state->road_buffer_start);
   Aobj |= *HLbufptr;
   if (Aobj) {
     HLobj = &state->stage->addrof_right_hand_objects[Aobj];
@@ -6727,7 +6728,7 @@ store_crash_spin:
   RL(A);
   Aobj = *HLbufptr; /* Read a left side object data byte */
   if (carry)
-    WRAPPINGINCREMENT(HLbufptr, state->road_buffer_start);
+    WRAP_INCREMENT_ASSIGN(HLbufptr, state->road_buffer_start);
   Aobj |= *HLbufptr;
   if (Aobj) {
     HLobj = &state->stage->addrof_left_hand_objects[Aobj];
@@ -6957,7 +6958,7 @@ load_and_store_right:
 
       // EXX
       objpos2++;
-      WRAPPINGINCREMENT(bufptr, state->road_buffer_start);
+      WRAP_INCREMENT_ASSIGN(bufptr, state->road_buffer_start);
     } while (--iterations > 0);
 
     // $EB00 now contains pairs of 16-bit left,right object positions.
@@ -8028,10 +8029,10 @@ static void spawn_hazards(chqstate_t *state)
   if (--hazard == 0)
     goto sh_add_hazards_done; // if 2
 
-  WRAPPING(roadbuf, 2, state->road_buffer_start);
+  WRAP_ASSIGN(roadbuf, 2, state->road_buffer_start);
   *roadbuf = DEhittable_offset >> 8; // D is zero
 
-  WRAPPING(roadbuf, 2, state->road_buffer_start);
+  WRAP_ASSIGN(roadbuf, 2, state->road_buffer_start);
   *roadbuf = DEhittable_offset >> 8; // D is zero
 
   hazard = DEhittable_offset & 0xFF;
@@ -10383,7 +10384,7 @@ static void update_road_level(chqstate_t *state)
     Aheight++;
   state->incline = Aheight;
 
-  WRAPPING(HLroadbuf, -2, state->road_buffer_start);
+  WRAP_ASSIGN(HLroadbuf, -2, state->road_buffer_start);
   Cheight = Aheight = (s8) * HLroadbuf;
   // OR A
   Bpitch = 0;
@@ -10526,7 +10527,7 @@ static void layout_road(chqstate_t *state)
     if ((*DElanedata & 0xE1) == 0xE1)
       goto lr_forked_road;
 
-    WRAPPINGINCREMENT(DElanedata, DElanedata_base);
+    WRAP_INCREMENT_ASSIGN(DElanedata, DElanedata_base);
     Lcounter++;
   } while (--Biterations > 0);
 
@@ -11854,15 +11855,15 @@ dt_exit:
 }
 
 /** Return byte pointer to the start of the 256-byte Z80 road-position page ($E7..$ED). */
-static u8 *xpos2addr(chqstate_t *state, int hi)
+static u8 *hi2xpostab(chqstate_t *state, int hi)
 {
   switch (hi) {
-  case 0xE8: return (u8 *)state->xpos_road_left;
-  case 0xE9: return (u8 *)state->xpos_road_centre_left;
-  case 0xEA: return (u8 *)state->xpos_road_centre;
-  case 0xEB: return (u8 *)state->xpos_road_centre_right;
-  case 0xEC: return (u8 *)state->xpos_road_right;
-  case 0xED: return (u8 *)state->xpos_road_fork_right;
+  case 0xE8: return (u8 *)&state->xpos_road_left[0];
+  case 0xE9: return (u8 *)&state->xpos_road_centre_left[0];
+  case 0xEA: return (u8 *)&state->xpos_road_centre[0];
+  case 0xEB: return (u8 *)&state->xpos_road_centre_right[0];
+  case 0xEC: return (u8 *)&state->xpos_road_right[0];
+  case 0xED: return (u8 *)&state->xpos_road_fork_right[0];
   default:   assert(0); return NULL;
   }
 }
@@ -11870,9 +11871,8 @@ static u8 *xpos2addr(chqstate_t *state, int hi)
 /** Return word pointer into a road-position table given a Z80 address. */
 static u16 *addr2xpos(chqstate_t *state, int z80addr)
 {
-  u8 *base = xpos2addr(state, z80addr >> 8);
-  assert(base != NULL);
-  return (u16 *)(base + (z80addr & 0xFE));
+  u16 *base = (u16 *) hi2xpostab(state, z80addr >> 8);
+  return &base[(z80addr & 0xFF) / 2];
 }
 
 /**
@@ -12081,9 +12081,9 @@ compute_step:
   HL_pos_delta = *HL_xpos_ptr - DE_roadpos;
   A_delta_lo = HL_pos_delta & 0xFF;
   if ((s16) HL_pos_delta >= 0)
-    A_step = (A_delta_lo < 0) ? 0x7F : A_delta_lo;
+    A_step = (A_delta_lo < 0) ? 127 : A_delta_lo;
   else
-    A_step = (A_delta_lo >= 0) ? (s8)0x81 : A_delta_lo;
+    A_step = (A_delta_lo >= 0) ? -127 : A_delta_lo;
 
   /* $C407-$C412: set up SP output pointer */
   SP_output = (u16 *)((u8 *)SP_output + 1); /* INC SP: 1-byte advance ($C407) */
@@ -12549,7 +12549,7 @@ static void dr_fill(chqstate_t *state,
   Bdash_holds_16 = 16;
   Cdash_mask = 0xF8;
 
-  HLdash_ptr = xpos2addr(state, state->dr_left_table_hi_2) + Ldash_row;
+  HLdash_ptr = hi2xpostab(state, state->dr_left_table_hi_2) + Ldash_row;
   Aleftval = *HLdash_ptr;
   if (Aleftval) {
     Aleft_stripe_width = ((s8) Aleftval < 0) ? 0 : 15;
@@ -12566,7 +12566,7 @@ static void dr_fill(chqstate_t *state,
   Aleft_stripe_width = ~Edash_left_stripe_width + Bdash_holds_16; // (15 - x)
   state->dr_left_stripe_width = Aleft_stripe_width;
 
-  HLdash_ptr = xpos2addr(state, state->dr_right_table_hi_2) + Ldash_row;
+  HLdash_ptr = hi2xpostab(state, state->dr_right_table_hi_2) + Ldash_row;
   Arightval = *HLdash_ptr;
   carry = 0;
   if (Arightval) {
@@ -12595,18 +12595,14 @@ static void dr_fill(chqstate_t *state,
   BCdash_zerofill = 0x0000; // Set road fill to zero
 
   /* Fill right hand road stripes - starting from right hand side. */
-  // Conv: use memset
+  // Conv: uses memset
   int n;
   n = (15 - state->dr_right_stripe_width) * 2;
-  if (n < 0)
-    n = 0;
   memset(SPoutput -= n, HLdash_fill, n);
 
   /* Fill blank road surface - continuing from the right hand side. */
-  // Conv: use memset
+  // Conv: uses memset
   n = (15 - state->dr_road_width) * 2;
-  if (n < 0)
-    n = 0;
   memset(SPoutput -= n, BCdash_zerofill, n);
 
   dr_fill_left_stripe(state,
@@ -12644,12 +12640,12 @@ static void dr_fill_left_stripe(chqstate_t *state,
   // BANKED ON ENTRY
 
   u8        Bdash;
-  u8        Hdash;
+  u8        Hdash_markingsptr_hi;
   u8        H;
   u8       *HL;
   u8        A;
   u8        Axpos;
-  u8        Ldash;
+  u8        Hdash_markingsptr_lo;
   const u8 *HLdash_markingsptr;
   u8        Edash;
   u8       *DEdash_backbufptr;
@@ -12680,20 +12676,20 @@ static void dr_fill_left_stripe(chqstate_t *state,
 
   Bdash = DEbackbuf & 0xFF;
   Cdash_zerofill--; // 0 -> 255
-  Hdash = 0xE4; // edge_markings hi/page
+  Hdash_markingsptr_hi = 0xE4; // edge_markings hi/page
 
   // EXX - Unbank
 
   H = state->dr_left_table_hi_1;
   HL = (u8*)addr2xpos(state, (H << 8) | Lrow);
   if (*HL == 0) {
-    Axpos = HL[-1]; // wraparound needed?
+    Axpos = *WRAP(HL, -1, hi2xpostab(state, H));
 
     // EXX - Bank
 
     /* Build address of road edge marking graphic. */
-    Ldash = ((Axpos & 7) << 2) + state->dr_edge_graphic_offset;
-    HLdash_markingsptr = &edge_markings[((Hdash << 8) | Ldash) - 0xE400];
+    Hdash_markingsptr_lo = ((Axpos & 7) << 2) + state->dr_edge_graphic_offset;
+    HLdash_markingsptr = &edge_markings[((Hdash_markingsptr_hi << 8) | Hdash_markingsptr_lo) - 0xE400];
     assert(HLdash_markingsptr >= &edge_markings[0]);
     assert(HLdash_markingsptr + 2 < &edge_markings[256]);
 
@@ -12722,8 +12718,8 @@ static void dr_fill_left_stripe(chqstate_t *state,
     // EXX - Bank
 
     /* Build address of road lane marking graphic. */
-    Ldash = ((A & 7) << 1) + state->dr_stripe_table_offset;
-    HLdash_markingsptr = &edge_markings[((Hdash << 8) | Ldash) - 0xE400];
+    Hdash_markingsptr_lo = ((A & 7) << 1) + state->dr_stripe_table_offset;
+    HLdash_markingsptr = &edge_markings[((Hdash_markingsptr_hi << 8) | Hdash_markingsptr_lo) - 0xE400];
     Edash = ((A >> 3) & 31) + Bdash;
     DEdash_backbufptr = ADDRTOBACKBUF((DEdash_backbuf & 0xFF00) | Edash);
 
@@ -12745,8 +12741,8 @@ static void dr_fill_left_stripe(chqstate_t *state,
     // EXX - Bank
 
     /* Build address of road edge marking graphic. */
-    Ldash = ((A & 7) << 2) + state->dr_right_edge_offset;
-    HLdash_markingsptr = &edge_markings[((Hdash << 8) | Ldash) - 0xE400];
+    Hdash_markingsptr_lo = ((A & 7) << 2) + state->dr_right_edge_offset;
+    HLdash_markingsptr = &edge_markings[((Hdash_markingsptr_hi << 8) | Hdash_markingsptr_lo) - 0xE400];
     Edash = ((A >> 3) & 31) + Bdash;
     DEdash_backbufptr = ADDRTOBACKBUF((DEdash_backbuf & 0xFF00) | Edash);
 
@@ -12810,7 +12806,7 @@ dr_set_stripes:
   Aprev_height = **IYheightptr;
   (*IYheightptr)++;
 
-  WRAPPINGINCREMENT(*IXlanesptr, state->road_buffer_start);
+  WRAP_INCREMENT_ASSIGN(*IXlanesptr, state->road_buffer_start);
   Aheight_diff = Aprev_height - **IYheightptr;
   if (Aheight_diff == 0)
     goto dr_level_road;
@@ -12879,7 +12875,7 @@ dr_calc_height_delta:
   Cheight_diff = Aheight_diff;
   Anew_diff = **IYheightptr;
   (*IYheightptr)++;
-  WRAPPINGINCREMENT(*IXlanesptr, state->road_buffer_start);
+  WRAP_INCREMENT_ASSIGN(*IXlanesptr, state->road_buffer_start);
   Anew_diff -= **IYheightptr;
   /* Conv: Z80 compares u8 result of SUB; int Anew_diff can be negative so
    * cast to u8 before comparing. Without the cast, negative diffs bypass the
@@ -12907,7 +12903,7 @@ dr_increasing:
 
 dr_backdrop:
   /* $C79A: large rise — fall through to backdrop fill */
-  dr_start_backdrop_fill(state, DEbackbuf, Lrow);
+  dr_start_backdrop_fill(state, DEbackbuf, Lrow); /* was FALLTHROUGH */
 }
 
 /**
@@ -13355,7 +13351,7 @@ frp_c969: /* $C969: 5-zone fork scanline render */
     H_xpos_hi = 0xE8;
 
 #define FRP_LEFT_EDGE(off) \
-    HLtbl = xpos2addr(state, H_xpos_hi); \
+    HLtbl = hi2xpostab(state, H_xpos_hi); \
     if (HLtbl && HLtbl[L] == 0) { \
       A_xpos = HLtbl[(L - 1) & 0xFF]; \
       L_gfx = ((A_xpos & 7) << 2) + (off); \
@@ -13369,7 +13365,7 @@ frp_c969: /* $C969: 5-zone fork scanline render */
       } \
     }
 #define FRP_LANE_MARK(off) \
-    HLtbl = xpos2addr(state, H_xpos_hi); \
+    HLtbl = hi2xpostab(state, H_xpos_hi); \
     if (HLtbl && HLtbl[L] == 0) { \
       A_xpos = HLtbl[(L - 1) & 0xFF]; \
       L_gfx = ((A_xpos & 7) << 1) + (off); \
@@ -13383,7 +13379,7 @@ frp_c969: /* $C969: 5-zone fork scanline render */
       } \
     }
 #define FRP_RIGHT_EDGE(off) \
-    HLtbl = xpos2addr(state, H_xpos_hi); \
+    HLtbl = hi2xpostab(state, H_xpos_hi); \
     if (HLtbl && HLtbl[L] == 0) { \
       A_xpos = HLtbl[(L - 1) & 0xFF]; \
       L_gfx = ((A_xpos & 7) << 2) + (off); \
@@ -13468,7 +13464,7 @@ frp_cb65: /* $CB65 */
 frp_cb90: { /* $CB90 */
     old_h = *IYheight;
     IYheight++;
-    WRAPPINGINCREMENT(IXlanes, state->road_buffer_start);
+    WRAP_INCREMENT_ASSIGN(IXlanes, state->road_buffer_start);
     A = (u8)(old_h - *IYheight);  /* $CB97: SUB (IYheight+$00) */
     if (A == 0) {           /* $CB9A: JR Z,$CB9F */
       L -= 2;
@@ -13838,11 +13834,11 @@ static void build_height_table(chqstate_t *state)
       A = result >> 8;
     }
     A += *pvtab;
-    WRAPPINGINCREMENT(pvtab, pvtabbase);
+    WRAP_INCREMENT_ASSIGN(pvtab, pvtabbase);
 
     *phtab = A; // Write #REGa to the table at $E3xx
-    WRAPPINGINCREMENT(phtab, phtabbase);
-    WRAPPINGINCREMENT(proadbuf_height, proadbuf_height_base);
+    WRAP_INCREMENT_ASSIGN(phtab, phtabbase);
+    WRAP_INCREMENT_ASSIGN(proadbuf_height, proadbuf_height_base);
   } while (--iterations > 0);
 
   *phtab = 0xA0;
@@ -13858,14 +13854,14 @@ static void build_height_table(chqstate_t *state)
     if (res < 0)
       C = A;
     *pdst = C;
-    WRAPPINGINCREMENT(pdst, pdstbase);
-    WRAPPINGINCREMENT(htab2, htabbase2);
+    WRAP_INCREMENT_ASSIGN(pdst, pdstbase);
+    WRAP_INCREMENT_ASSIGN(htab2, htabbase2);
   } while (--iterations2 > 0);
 
   C = A = (C + 3) & 0xF8;
   A -= *pdst;
   *pdst = C;
-  WRAPPINGINCREMENT(pdst, pdstbase);
+  WRAP_INCREMENT_ASSIGN(pdst, pdstbase);
   *pdst = A;
 }
 
@@ -15147,7 +15143,7 @@ void chq_test_draw_road_scene_change(chqstate_t *state, u8 lane_flags, int heigh
   u8       *local_IX;
   const u8 *local_IY;
 
-  /* Conv: IX must point into road_buffer so that WRAPPINGINCREMENT (used by
+  /* Conv: IX must point into road_buffer so that WRAP_INCREMENT_ASSIGN (used by
    * the height-check secondary chain) stays within the buffer. Placing
    * lane_flags at road_buffer_offset works because the immediately following
    * bytes are 0 (calloc) and therefore straight; the height-check chain
