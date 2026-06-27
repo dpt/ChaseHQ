@@ -557,6 +557,10 @@ static u8 *z80offsettobackbuf(chqstate_t *state, int off, int left, int right)
  * (multiples of PERSP_TABLE_COLS). */
 #define COUNTER_TO_PERSP_Y_ROW(x) ((x) - ((x) >> 2) - ((x) >> 4))
 
+/** Map state->fast_counter to a perspective table row index (0..7). */
+#define FAST_COUNTER_PERSP_ROW(s) \
+  (COUNTER_TO_PERSP_Y_ROW((s)->fast_counter & 0xE0) / PERSP_TABLE_COLS)
+
 /* ----------------------------------------------------------------------- */
 
 /* Read an arbitrary native word */
@@ -3531,7 +3535,6 @@ static void draw_overhead(chqstate_t       *state,
 {
   const stretchy_t      *HLstretchy;  /* was HL */
   const depthset_pair_t *DEpairs;     /* was DE */
-  int                    counter;     /* was A */
   u8                    *HLdst;       /* was HL */
   u8                    *DEsrc;       /* was DE */
   int                    Avertical;   /* was A */
@@ -3555,10 +3558,7 @@ static void draw_overhead(chqstate_t       *state,
   //HLstretchy++; - accounted for
   DEpairs = &HLstretchy->set->pairs[0];
 
-  // "Scale down" pattern
-  counter = state->fast_counter & 0xE0;
-  counter = COUNTER_TO_PERSP_Y_ROW(counter);
-  HLvertical = &persp_y_scale[counter / 22][Bparam];
+  HLvertical = &persp_y_scale[FAST_COUNTER_PERSP_ROW(state)][Bparam];
 
   Cparam = IYheight[0] - IYheight[0x35];
   Avertical = *HLvertical;
@@ -3698,7 +3698,6 @@ static void draw_stretchy_object_common(chqstate_t       *state,
 {
   dso_callback_t        *SM_91CD_callback;      /* was $91CD (SM) */
   dso_callback_t        *SM_9244_callback;      /* was $9244 (SM) */
-  int                    counter;               /* was A */
   int                    A;
   int                    SM_91DB_vertical;      /* was $91DB (SM) */
   const stretchy_t      *HLstretchy;            /* was HL */
@@ -3722,13 +3721,7 @@ static void draw_stretchy_object_common(chqstate_t       *state,
   SM_91CD_callback = HLcallback;
   SM_9244_callback = HLcallback;
 
-  // "Scale down" pattern
-  counter = state->fast_counter & 0xE0;
-  // Scale 0..223 (in steps of 16) to 0..153, reducing A by 31.25%, mapping the
-  // incoming value to the 8x22 byte tables. So fast_counter indexes the rows of
-  // the table.
-  counter = COUNTER_TO_PERSP_Y_ROW(counter);
-  SM_91DB_vertical = persp_y_scale[counter / 22][0];
+  SM_91DB_vertical = persp_y_scale[FAST_COUNTER_PERSP_ROW(state)][0];
   HLstretchy = DEstretchy; // was EX DE,HL
   DEbitmapoffset = MIN(Bdepth,
                        DEPTHSET_MAX) * 2 - 1; // prob 1-indexed so the -1 is +1
@@ -3899,16 +3892,12 @@ static void draw_tunnel_light_common(chqstate_t            *state,
                                      const u16             *IXxpos,
                                      const u8              *IYheight)
 {
-  int counter; /* was A */
   int A;
 
   if (Bdepth >= 16)
     return;
 
-  // "Scale down" pattern
-  counter = state->fast_counter & 0xE0;
-  counter = COUNTER_TO_PERSP_Y_ROW(counter);
-  A = persp_y_scale[counter / 22][Bdepth];
+  A = persp_y_scale[FAST_COUNTER_PERSP_ROW(state)][Bdepth];
   A = (A >> 2) - A;
 
   // callback must need to take A
@@ -13526,7 +13515,6 @@ static void build_curve_table(chqstate_t *state, int forked)
   u16       *L_lefttab;          /* left-side xpos output table (was L, SM $CCA7) */
   const u8  *HL_roadbufptr;      /* curvature road buffer pointer (was HL) */
   int        C_curvature;        /* curvature byte from road buffer (was C) */
-  int        A_counter;          /* fast_counter mapping (was A) */
   int        A_scratch;          /* multiply scratch (was A) */
   const u8  *IY_height;          /* perspective x-scale row pointer (was IY) */
   const u16 *IXlanes;            /* bend table pointer (was IX) */
@@ -13556,9 +13544,7 @@ static void build_curve_table(chqstate_t *state, int forked)
   HL_roadbufptr = state->roadbufptr;
   C_curvature = *HL_roadbufptr;
 
-  A_counter = state->fast_counter & 0xE0;
-  A_counter = A_counter - (A_counter >> 2) - (A_counter >> 4); // map (0,32,64,96,...,224) to (0,22,44,66,...,154)
-  IY_height = &persp_x_scale_right[A_counter / 22][0];
+  IY_height = &persp_x_scale_right[FAST_COUNTER_PERSP_ROW(state)][0];
 
   // now need high byte of offset from base of struct, seems to be $E6 or $E7
   A_scratch = 0xE6 + ((IY_height - &persp_x_scale_right[0][0]) >> 8);
@@ -13643,10 +13629,7 @@ static void build_curve_table(chqstate_t *state, int forked)
 
   // repeat of above code - generate left hand table
 
-  A_counter = state->fast_counter & 0xE0;
-  A_counter = A_counter - (A_counter >> 2) - (A_counter >> 4); // map (0,32,64,96,...,224) to (0,22,44,66,...,154)
-
-  HL_rowptr = &persp_x_delta_left[A_counter / 22][0];
+  HL_rowptr = &persp_x_delta_left[FAST_COUNTER_PERSP_ROW(state)][0];
   DEcurvature = &state->curvature_table[0];
   for (Bdash_addloop = 22; Bdash_addloop > 0; Bdash_addloop--)
     *DEcurvature++ += *HL_rowptr++;
@@ -13773,8 +13756,7 @@ static void build_height_table(chqstate_t *state)
   u8       *proadbuf_height;      /* was IY */
   u8       *proadbuf_height_base; // Conv: added
   int       heightbyte;           /* was C */
-  int       counter;              /* was A */
-  int       orig_counter;         /* was B */
+  int       orig_counter;         /* was A, fast_counter masked for multiply */
   const u8 *pvtab;                /* was HL */
   const u8 *pvtabbase;            // Conv: added
   int       C;                    /* was C */
@@ -13796,16 +13778,8 @@ static void build_height_table(chqstate_t *state)
   // Read the current height byte
   heightbyte = *proadbuf_height;
 
-  // "Scale down" pattern
-  counter = state->fast_counter & 0xE0;
-
-  // Scale 0..223 (in steps of 16) to 0..153, reducing <counter> by 31.25%,
-  // mapping the incoming value to the 7x22 byte tables. So fast_counter
-  // indexes the rows of the table.
-  orig_counter = counter; // Copy to be a multiplier later
-  counter = COUNTER_TO_PERSP_Y_ROW(counter);
-
-  pvtabbase = pvtab = &persp_y_scale[counter / 22][1];
+  orig_counter = state->fast_counter & 0xE0;
+  pvtabbase = pvtab = &persp_y_scale[FAST_COUNTER_PERSP_ROW(state)][1];
   C = -multiply(orig_counter, heightbyte);
   // EXX - bank
 
