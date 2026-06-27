@@ -1564,8 +1564,7 @@ const u8 time_up_message[20] = {
 };
 
 // $8D18
-// This will need to be a template copied into state.
-const u8 continue_messages[119] = {
+const u8 continue_messages_template[119] = {
   0x01, 0x01, 0x03,
   attribute_BLACK_OVER_BLACK,
   TWOBYTES(0xF02C),

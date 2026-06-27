@@ -38,11 +38,7 @@ static void chq_initialise(chqstate_t *state)
     // $8C58
     { offsetof(chqstate_t, score_messages), &score_messages_template[0], sizeof(score_messages_template) },
     // $8D18
-    // memcpy(&state->continue_messages[0], &continue_messages[0], sizeof(continue_messages));
-    // $8D77
-    { offsetof(chqstate_t, time_nn), "TIME 1\xB0", 7 },
-    // $8D85
-    { offsetof(chqstate_t, credit_n), "CREDIT \xA0", 8 },
+    { offsetof(chqstate_t, continue_messages), &continue_messages_template[0], sizeof(continue_messages_template) },
     // $CE0C
     { offsetof(chqstate_t, smokes[0]), &smoke_ce0c_template[0], sizeof(smoke_ce0c_template) },
     // $CE19

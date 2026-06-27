@@ -435,7 +435,7 @@ static u8 *z80offsettobackbuf(chqstate_t *state, int off, int left, int right)
 
 #define SPEED_GEAR_CHANGE          (150) /* gear-change threshold: low gear below, high gear at or above */
 #define SPEED_PERP_CHASE           (350) /* perp's base chase speed; also hazard speed cap after impact */
-#define SPEED_ATTRACT_INITIAL        (0) /* scripted drive speed: attract mode camera */ // HACK was 400
+#define SPEED_ATTRACT_INITIAL      ( 0) /* scripted drive speed: attract mode camera */ // HACK was 400
 #define SPEED_PERP_MIN              (70) /* perp slow-down threshold in handle_perp_caught */
 #define SPEED_PERP_CAUGHT          (400) /* scripted drive speed: perp post-arrest */
 
@@ -5576,7 +5576,7 @@ static void check_time_up(chqstate_t *state)
   int       time_up_state;        /* was A */
   int       half_borrow;          /* H flag: low BCD nibble was 0 before decrement */
   int       time_bcd;             /* was A */
-  char     *time_digits;          /* was DE */
+  u8       *time_digits;          /* was DE */
   int       effect;               /* was B */
   int       remaining_subseconds; /* was H */
   int       remaining_seconds_x2; /* was L */
@@ -5649,7 +5649,7 @@ check_credits:
     check_user_input_quit_key(state); /* exit via */
   } else {
     state->credits--;
-    state->credit_n[7] = (state->credits + '0') | EOS;
+    state->continue_messages[CONTINUE_MESSAGES_CREDIT_N] = (state->credits + '0') | EOS;
     state->time_up_state = TIMEUPSTATE_CHECK_RESTART;
     state->tick_remaining_seconds_x2 = 21; // a 10 second countdown, doubled, plus 1
     state->tick_remaining_subseconds = 1;  // force an initial decrement
@@ -5673,7 +5673,7 @@ check_restart:
     return;
   }
 
-  setup_overlay_messages(state, &continue_messages[0]);
+  setup_overlay_messages(state, &state->continue_messages[0]);
 
   // Conv: Original loads these two vars at once.
   remaining_seconds_x2 = state->tick_remaining_seconds_x2;
@@ -5697,7 +5697,8 @@ check_restart:
 
   seconds = remaining_seconds_x2 >> 1;
 
-  time_digits = &state->time_nn[5]; // Load address of nn in "TIME nn"
+
+  time_digits = &state->continue_messages[CONTINUE_MESSAGES_TIME_NN]; // Load address of nn in "TIME nn"
   if (seconds == 10) {
     hidigit = '1'; // ASCII
     lodigit = 0;   // integer

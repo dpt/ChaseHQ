@@ -171,15 +171,17 @@ struct chqstate {
   // $8ABE (SM) in handle_perp_caught
   u8        handle_perp_caught_delay;
 
-#define SCORE_MESSAGES_BASE   (0x8C58)
-#define SCORE_MESSAGES_LENGTH (0x8CB2 - SCORE_MESSAGES_BASE)
+#define SCORE_MESSAGES_BASE         (0x8C58)
+#define SCORE_MESSAGES_LENGTH       (0x8CB2 - SCORE_MESSAGES_BASE)
   // $8C58
   u8        score_messages[SCORE_MESSAGES_LENGTH];
 
-  // $8D77
-  char      time_nn[7]; // initialised to "TIME 10"
-  // $8D85
-  char      credit_n[8]; // initialised to "CREDIT  "
+#define CONTINUE_MESSAGES_BASE      (0x8D18)
+#define CONTINUE_MESSAGES_LENGTH    (0x8D8F - CONTINUE_MESSAGES_BASE)
+#define CONTINUE_MESSAGES_TIME_NN   (0x8D7C - CONTINUE_MESSAGES_BASE)
+#define CONTINUE_MESSAGES_CREDIT_N  (0x8D8C - CONTINUE_MESSAGES_BASE)
+  // $8D18
+  u8        continue_messages[CONTINUE_MESSAGES_LENGTH];
 
   // $8DA1 (SM) in transition
   u8        transition_nframes;
