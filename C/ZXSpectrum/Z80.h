@@ -80,8 +80,10 @@
     acc = (acc & 0xF0) | tmp;                   \
   } while (0)
 
-/// Minimal equivalent of Z80 BCD correct operation (after addition, N=0)
-static uint8_t DAA(uint8_t v, int *carry_out)
+/**
+ * Minimal equivalent of Z80 BCD correct operation (after addition, N=0)
+ */
+static uint8_t DAA_add(uint8_t v, int *carry_out)
 {
   int lo, hi;
   int carry = 0;
@@ -96,13 +98,16 @@ static uint8_t DAA(uint8_t v, int *carry_out)
   return (hi << 4) | (lo << 0);
 }
 
-/// Z80 BCD correct operation after subtraction (N=1).
-/// half_borrow: 1 if the low nibble borrowed (i.e. original low nibble was 0).
+/**
+ * Minimal equivalent of Z80 BCD correct operation (after subtraction, N=0)
+ *
+ * half_borrow: 1 if the low nibble borrowed (i.e. original low nibble was 0).
+ */
 static uint8_t DAA_sub(uint8_t v, int half_borrow, int *carry_out)
 {
   int carry = 0;
 
-  if (half_borrow)  v -= 0x06;
+  if (half_borrow) v -= 0x06;
   if ((v >> 4) > 9) { v -= 0x60; carry = 1; }
 
   if (carry_out)

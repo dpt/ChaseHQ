@@ -5772,7 +5772,7 @@ static void speed_score(chqstate_t *state)
   SRL(A);
   // E = A;
   A += carry;
-  DAA(A, &carry);
+  DAA_add(A, &carry);
   increment_score(state, A, 0, 0); /* exit via */
 }
 
@@ -5853,10 +5853,10 @@ static void increment_score(chqstate_t *state, int lo, int md, int hi)
   u8 *score_bcd; /* was HL */
 
   score_bcd  = &state->score_bcd[0];
-  *score_bcd = DAA(lo + *score_bcd,         &carry); score_bcd++;
-  *score_bcd = DAA(md + *score_bcd + carry, &carry); score_bcd++;
-  *score_bcd = DAA(hi + *score_bcd + carry, &carry); score_bcd++;
-  *score_bcd = DAA(*score_bcd + carry, NULL);
+  *score_bcd = DAA_add(lo + *score_bcd,         &carry); score_bcd++;
+  *score_bcd = DAA_add(md + *score_bcd + carry, &carry); score_bcd++;
+  *score_bcd = DAA_add(hi + *score_bcd + carry, &carry); score_bcd++;
+  *score_bcd = DAA_add(*score_bcd + carry, NULL);
 }
 
 /**
@@ -5881,7 +5881,7 @@ static void calc_overtake_bonus(chqstate_t *state)
   bcd = &state->overtake_bonus_bcd;
   // Increment bonus by 2 up to a max of 128.
   do {
-    counter = DAA(*bcd + 2, &carry);
+    counter = DAA_add(*bcd + 2, &carry);
     if (counter >= 0x80) counter = 0x80;
     *bcd = counter;
     // Set bonus to N * 100.
