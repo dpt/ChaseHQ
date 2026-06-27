@@ -1553,8 +1553,6 @@ static void bootstrap(chqstate_t *state)
     // Start attract mode.
     attract_mode_hook(state);
 
-    assert(0); // shouldn't get here for now
-
     // When attract mode yields then we set up the game.
     state->overtake_bonus_bcd = 0;
 
@@ -1744,7 +1742,7 @@ static void cpu_driver(chqstate_t *state)
   if (state->gear != (state->speed < SPEED_GEAR_CHANGE))
     input |= USERINPUT_FIRE;
 
-  state->user_input = input;
+  state->user_input = 0;//input;
 
   state->speccy->stamp(state->speccy);
 
@@ -2928,7 +2926,7 @@ static void fully_smashed(chqstate_t *state)
   state->smash_counter      = SMASHCOUNTER_MAX;
   state->session.user_input_mask = USERINPUT_PAUSE | USERINPUT_QUIT;
   setup_overlay_messages(state, &pull_over_message[0]);
-  hpc_set_perp_speed(state, SPEED_ATTRACT);
+  hpc_set_perp_speed(state, SPEED_ATTRACT); // FIXME - needs own symbol
 }
 
 /**
@@ -5600,6 +5598,7 @@ static void check_time_up(chqstate_t *state)
 {
   const u8 *ptime_bcd;            /* was HL */
   int       time_up_state;        /* was A */
+  int       half_borrow;          /* H flag: low BCD nibble was 0 before decrement */
   int       time_bcd;             /* was A */
   char     *time_digits;          /* was DE */
   int       effect;               /* was B */
@@ -5642,7 +5641,8 @@ update_remaining_time:
     return;
 
   state->session.time_sixteenths = 15;
-  state->session.time_bcd = time_bcd = DAA(state->session.time_bcd - 1, NULL);
+  half_borrow = (state->session.time_bcd & 0x0F) == 0;
+  state->session.time_bcd = time_bcd = DAA_sub(state->session.time_bcd - 1, half_borrow, NULL);
 
   // When 15s remain Nancy warns that time is running out.
   if (time_bcd == 0x15)
@@ -12535,9 +12535,9 @@ static void dr_fill(chqstate_t *state,
   u16  HLdash_fill;
   u16  BCdash_zerofill;
 
-  /* Z80: writes to ROM/invalid addresses are no-ops; C port: redirect. */
-  if (DEbackbuf < 0xF000 || DEbackbuf > 0x10000)
-    DEbackbuf = 0xFFE0;
+  // /* Z80: writes to ROM/invalid addresses are no-ops; C port: redirect. */
+  // if (DEbackbuf < 0xF000 || DEbackbuf > 0x10000)
+  //   DEbackbuf = 0xFFE0;
 
   state->dr_backbuf_2 = DEbackbuf;
   Arow = Lrow; // byte offset within road table page (0xFF = bottom scanline)
@@ -14952,7 +14952,7 @@ static void handle_perp_caught_128k(chqstate_t *state)
  * $F3B6: Call bank 3 128K
  *
  * \param[in] state     Pointer to game state.
- * \param[in] HLroutine Hlroutine.
+ * \param[in] HLroutine Routine to call.
  * \return Non-zero on success.
  */
 static u8 call_bank_3_128k(chqstate_t *state, int HLroutine)
@@ -14968,7 +14968,8 @@ static u8 call_bank_3_128k(chqstate_t *state, int HLroutine)
   case BANK3_ROUTINE_6:
     break;
   case BANK3_INPUT_SELECTION:
-    break;
+    state->controls_selected = 1; // temp
+    return 0; // cause an exit
   }
   return 1;
 }
@@ -15004,7 +15005,7 @@ static void attract_mode_128k(chqstate_t *state)
   int       enter_pressed;       /* was carry */
   int       routine;             /* was HL */
   int       result;              /* was A */
-  int       attract_cycle;       /* was A */
+  int       controls_selected;   /* was A */
   const u8 *DEmessages;          /* was DE */
   const u8 *HLmessages;          /* was HL */
   int       Atransition_control; /* was A */
@@ -15020,13 +15021,13 @@ call_bank_3:
   set_up_stage(state, &state->stage->attract_data);
 
   state->attract_mode_128k_countdown = 2; // two runs through
-  state->speed = SPEED_ATTRACT;
+  state->speed = 10;//SPEED_ATTRACT;
   for (;;) {
     cpu_driver(state);
 
-    attract_cycle = state->attract_cycle;
+    controls_selected = state->controls_selected;
     DEmessages = &enter_for_options_messages[0];
-    if (attract_cycle) {
+    if (controls_selected) {
       if (keyscan(state) & USERINPUT_FIRE) {
         play_start_noise(state);
         return;

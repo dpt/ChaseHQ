@@ -118,7 +118,7 @@ struct chqstate {
   // $8000
   u8        test_mode;
   // $8001
-  u8        attract_cycle;
+  u8        controls_selected;
   // $8002
   u8        score_bcd[4];
   // $8006
