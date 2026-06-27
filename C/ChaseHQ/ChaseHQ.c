@@ -11152,7 +11152,7 @@ static void rm_cycle_buffer_offset(chqstate_t *state, u8 *pfastcounter)
   if (Aheight_byte >= 240) {
     DEmapheightptr = state->scenedata.road_height_ptr + 1;
     Aheight_byte = *DEmapheightptr;
-    if (Amapcurvebyte == 0) {
+    if (Aheight_byte == 0) {
       // Escape byte (0): read command byte.
 
       // Conv: EX DE,HL register swap was folded in from $BE4E here to $BE75 below
