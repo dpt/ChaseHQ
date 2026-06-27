@@ -1201,9 +1201,9 @@ static void backdrop_fill_choice(chqstate_t *state, int DEbackbuf, int Lrow);
 
 static void build_curve_table(chqstate_t *state, int forked);
 static void build_curve_table_fill(chqstate_t *state,
-                                       int          Bdash_alwayszero,
-                                       u16        *HLtableend,
-                                       int         DEroadpos);
+                                   u16        *HLtableend,
+                                   int         Bdash_alwayszero,
+                                   int         DEroadpos);
 
 static void build_height_table(chqstate_t *state);
 
@@ -13517,20 +13517,21 @@ static void build_curve_table(chqstate_t *state, int forked)
   int        C_curvature;        /* curvature byte from road buffer (was C) */
   int        A_scratch;          /* multiply scratch (was A) */
   const u8  *IY_height;          /* perspective x-scale row pointer (was IY) */
-  const u16 *IXlanes;            /* bend table pointer (was IX) */
+  const u16 *IX_lanes;            /* bend table pointer (was IX) */
   u8        *DE_output;          /* curvature_table write pointer (was DE) */
-  int        Biterations;        /* curvature fill loop count (was B) */
+  int        B_iterations;        /* curvature fill loop count (was B) */
   int        DEdash_roadposacc;  /* banked road_pos accumulator (was DE') */
   int        A_curvature;        /* curvature byte for this iteration (was A) */
-  int        IXl;                /* bend table byte offset accumulator (was IXl) */
+  int        IX_l;                /* bend table byte offset accumulator (was IXl) */
   int        HLdash_multiplied;  /* banked multiplier result (was HL') */
   int        BCdash;             /* banked bend-table entry minus road_pos (was BC') */
   u8         A_height;           /* height (was A) */
   int        carry;              /* carry flag */
   int        DE_roadpos;         /* road position for fill calls (was DE) */
   const u8  *HL_rowptr;          /* persp_x_delta_left row pointer (was HL) */
-  u8        *DEcurvature;        /* curvature_table delta write pointer (was DE) */
-  int        Bdash_addloop;      /* add-loop / second fill count (was B) */
+  u8        *DE_curvature;        /* curvature_table delta write pointer (was DE) */
+  int        Bdash_iterations;   /* add-loop / second fill count (was B) */
+  int        DEdash_roadpos;     /* left hand (was DE') */
 
   // Set up table pointer to *end* of tables we're building.
   if (forked) {
@@ -13553,10 +13554,10 @@ static void build_curve_table(chqstate_t *state, int forked)
   // A expecting $7C to $82 depending on curvature (7C if bending right?)
   A_scratch = (A_scratch - 0x40) / 2; // adjust to index inward_bend_table
   assert(A_scratch >= 0 && A_scratch <= 95);
-  IXlanes = &curvature_to_xpos[A_scratch]; // table is 16-bit
+  IX_lanes = &curvature_to_xpos[A_scratch]; // table is 16-bit
 
   DE_output = &state->curvature_table[0];
-  Biterations = 22; // iterations ($CC17 LD B,$16)
+  B_iterations = 22;
   // EXX Bank
   DEdash_roadposacc = state->scenedata.road_pos;
   // PUSH DEdash; // save on stack
@@ -13577,17 +13578,20 @@ static void build_curve_table(chqstate_t *state, int forked)
     // Z80: ADD A,IXl; LD IXl,A  -- IXl accumulates curvature; table at $E540 = $40 into page
     // Conv: Z80 IXl wraps in 8-bit; values < 0x40 index before the table (adjacent Z80 RAM).
     // Clamp to table bounds rather than letting the pointer escape the array.
-    IXl = (IXlanes - &curvature_to_xpos[0]) * 2 + 0x40;
-    IXl = (IXl + A_curvature) & 0xFF;
-    if (IXl < 0x40) IXl = 0x40;
-    IXlanes = &curvature_to_xpos[(IXl - 0x40) / 2];
+    IX_l = (IX_lanes - &curvature_to_xpos[0]) * 2 + 0x40;
+    IX_l = (IX_l + A_curvature) & 0xFF;
+    if (IX_l < 0x40) IX_l = 0x40;
+    IX_lanes = &curvature_to_xpos[(IX_l - 0x40) / 2];
 
     HLdash_multiplied = 0; // Initialise a multiplier result
-    BCdash = *IXlanes - DEdash_roadposacc;
+    BCdash = *IX_lanes - DEdash_roadposacc;
 
     // reading first byte from table row?
     A_height = *IY_height++; // points into horizontal_e6b0
 
+#if 1
+    HLdash_multiplied = (A_height >> 2) * BCdash;
+#else
     // multiplier
     carry = ((A_height & (1 << 7)) != 0);
     A_height = (A_height << 1) & 0xFF;
@@ -13611,54 +13615,57 @@ static void build_curve_table(chqstate_t *state, int forked)
     carry = ((A_height & (1 << 7)) != 0);          /* $CC55 ADD A,A */
     A_height = (A_height << 1) & 0xFF;
     if (carry) HLdash_multiplied += BCdash;        /* $CC58 ADD HL,BC */
+#endif
 
     HLdash_multiplied = (HLdash_multiplied >> 8) + ((HLdash_multiplied & (1 << 7)) != 0); // rounding ($CC59)
+
     A_curvature = HLdash_multiplied & 0xFF;
-    if (HLdash_multiplied & (1 << 7)) HLdash_multiplied |= 0xFF00;
+    if (HLdash_multiplied & (1 << 7)) // sign extend
+      HLdash_multiplied |= 0xFF00;
 
     DEdash_roadposacc += HLdash_multiplied;
 
     // EXX Unbank
 
     *DE_output++ = A_curvature; // write to curvature_table
-  } while (--Biterations);
+  } while (--B_iterations);
 
   DE_roadpos = state->scenedata.road_pos; /* was POP DE */
-  Biterations = 0; // init counter
+  B_iterations = 0; // init counter
   // EXX Bank
   build_curve_table_fill(state,
-                         Biterations,
                          H_righttab, // table1 is $EE00 or $ED00 (right hand table)
+                         B_iterations,
                          DE_roadpos);
 
   // repeat of above code - generate left hand table
 
   HL_rowptr = &persp_x_delta_left[FAST_COUNTER_PERSP_ROW(state)][0];
-  DEcurvature = &state->curvature_table[0];
-  for (Bdash_addloop = 22; Bdash_addloop > 0; Bdash_addloop--)
-    *DEcurvature++ += *HL_rowptr++;
+  DE_curvature = &state->curvature_table[0];
+  for (Bdash_iterations = 22; Bdash_iterations > 0; Bdash_iterations--)
+    *DE_curvature++ += *HL_rowptr++;
 
-  DE_roadpos = DE_roadpos - 295; // vanishing point config (for left hand)
+  DEdash_roadpos = state->scenedata.road_pos - 295; // vanishing point config (for left hand)
 
-  Bdash_addloop = 0; // init counter
+  Bdash_iterations = 0; // init counter
   // EXX Unbank
   build_curve_table_fill(state,
-                         Bdash_addloop,
                          L_lefttab, // table2 is $EC00 or $E900 (left hand table)
-                         DE_roadpos);
+                         Bdash_iterations,
+                         DEdash_roadpos);
 }
 
 // HL -> points past end of destination table we're filling
 static void build_curve_table_fill(chqstate_t *state,
-                                       int          Bdash_alwayszero,
-                                       u16        *HLtableend,
-                                       int         DEroadpos)
+                                   u16        *HLtableend,
+                                   int         Bdash_alwayszero,
+                                   int         DEroadpos)
 {
   u8  *IYheight_table;
   int  Biterations;
   u16 *SPoutput;
   int  A;
-  int  Bdash;
+  int  Bdash_iterations;
   int  Cdash;
   int  Ldash;
   int  Aopcode;
@@ -13666,9 +13673,7 @@ static void build_curve_table_fill(chqstate_t *state,
   u16  HLdash;
   int  overflow;
 
-
-  IYheight_table =
-    &state->height_table[0]; /* was 0xE300; // addr of height table */
+  IYheight_table = &state->height_table[0];
   Biterations = 21;
   // (restore SP on exit, load SP with HL)
   SPoutput = HLtableend;
@@ -13676,33 +13681,36 @@ static void build_curve_table_fill(chqstate_t *state,
     // EXX Bank
     A = (Bdash_alwayszero - 2 + IYheight_table[0] - IYheight_table[1]) & 0xFF;
     IYheight_table++;
-    if (A >= 128) goto bct_endbit_negative; /* $CCBF JP M: Sign flag = bit 7 set */
+    if (A >= 128)
+      goto bct_endbit_negative; /* $CCBF JP M: Sign flag = bit 7 set */
     A += 2;
     state->object_positions[IYheight_table - 1 - &state->height_table[0]] =
       A; // must write to $E34F+ which is object_positions
     A -= Bdash_alwayszero;
-    Bdash = A;
+    Bdash_iterations = A;
     Cdash = A;
     Ldash = state->curvature_table[IYheight_table - 1 -
                                    &state->height_table[0]]; // IY[$1F]; // $E320+
     if ((Ldash & (1 << 7)) != 0) {
       Ldash = -Ldash & 0xFF; // mask here to fix neg?
       Aopcode = Z80_DEC_DE;
-      if (Bdash < Ldash) goto bct_endbit_A;
+      if (Bdash_iterations < Ldash) goto bct_endbit_A;
     } else {
       Aopcode = Z80_INC_DE;
       if (A < Ldash) goto bct_endbit_A;
     }
-    A = Bdash >> 1;
+    A = Bdash_iterations >> 1;
     do { // $CCE8
       A += Ldash;
       if (A >= Cdash) {
         A -= Cdash;
-        if (Aopcode == Z80_INC_DE) DEroadpos++;
-        else DEroadpos--;
+        if (Aopcode == Z80_INC_DE)
+          DEroadpos++;
+        else
+          DEroadpos--;
       }
       SPoutput--; *SPoutput = DEroadpos; // PUSH to output table
-    } while (--Bdash > 0);
+    } while (--Bdash_iterations > 0);
 bct_continue:
     // EXX Unbank
   } while (--Biterations > 0);
@@ -13728,13 +13736,13 @@ bct_endbit_A:
     } while (!overflow && Atotal < Ldash);
     Atotal -= Ldash;
     SPoutput--; *SPoutput = DEroadpos; // PUSH to output table
-  } while (--Bdash);
+  } while (--Bdash_iterations);
   goto bct_continue;
 
 bct_endbit_negative:
   state->object_positions[IYheight_table - 1 - &state->height_table[0]] = 1;
   if (++A != 0) A++;
-  Bdash = A;
+  Bdash_iterations = A;
   A = state->curvature_table[IYheight_table - 1 -
                              &state->height_table[0]]; // IY[$1F]; // $E320+
   //Ldash = A;
