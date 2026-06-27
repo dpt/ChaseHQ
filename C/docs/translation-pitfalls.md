@@ -42,6 +42,8 @@ A variant is **copy-paste between adjacent sections of the same function:** `rm_
 **Symptoms and fixes:**
 
 - **SM fields never set:** `dr_left_table_hi_1/2`, `dr_right_table_hi_1/2`, `dr_neg_lane_count` — used on the first frame before `dr_four_lane_highway` writes them. Add explicit initialisation in `chq_initialise`. (`c8251ba`)
+- **SM field type truncation:** `ahc_road_pos_b` was declared `u8` but the Z80 SM instruction at $B3A3 is `LD DE,$01D8` — a 16-bit operand. Storing 472 into a `u8` field silently truncates to 216; `DEother_road_pos >> 8` then returns 0 instead of 1, making the upper-bound high-byte comparison always pass for any road_pos ≥ 256. The fix is to declare the field `u16`. Check: does the Z80 SM instruction load a register pair (16-bit operand) or a single register/byte (8-bit)? (`bc1e1cb`)
+- **SM fields `ahc_road_pos_a` / `ahc_road_pos_b` not initialised:** The default `LD DE` operands at $B395 and $B3A3 are 72 and 472. calloc-zero left both at 0, causing the road_pos clamp to fire incorrectly on the very first frame. (`bc1e1cb`)
 - **`road_buffer_offset` not reset in `set_up_stage`:** Z80 zeroes this at stage start; C translation missed it, leaving a stale pointer into the previous stage's buffer. (`dfdaf8b`)
 - **`B_iterations` and `C_range` uninitialised in `draw_road_scene_change`:** Z80 `LD B,C` sets loop count from C; both must be assigned from `C_bresen_range` at the `compute_step` entry point. (`7a12c5b`)
 - **`C_bresen_range`/`B_tbl_stride` set from wrong variable:** Used `A_curve_step` (animation offset) instead of `IYheight[0] - ref_height` (height span). Bresenham range and table stride were wrong in all four setup paths. (`f98088b`)
@@ -103,13 +105,16 @@ A variant is **copy-paste between adjacent sections of the same function:** `rm_
 
 ## 8. Borrow detection via bit 7 is unreliable
 
-**Root cause:** The Z80 pattern `LD A,X; SUB Y; JP C` detects borrow (X < Y) exactly. Translating `JP C` as `if (result & 0x80)` (bit-7 = sign flag) only works when `X - Y` fits in the −128..+127 range. Differences > 128 wrap and lose the sign flag, silently skipping the branch.
+**Root cause:** The Z80 pattern `LD A,X; SUB Y; JP C` (or `JR C`) detects borrow (X < Y) exactly via the carry flag. Translating `JP C` / `JR C` as `if (result & 0x80)` or `if ((s8)result < 0)` (sign flag) only works when `X - Y` fits in the −128..+127 range. Differences in [128, 255] have the carry clear (no borrow, X ≥ Y) but bit 7 set, so the branch fires incorrectly.
 
-**Bug:** `draw_road_scene_change` used `range == 0 || (range & 0x80)` to detect that the setup path should be skipped. For differences above 128 the bit-7 check returned false incorrectly.
+**Bugs:**
 
-**Fix:** Use a direct comparison: `if (IYheight[0] <= C_val)` — exact for all values and more obviously correct.
+- `draw_road_scene_change` used `range == 0 || (range & 0x80)` to detect that the setup path should be skipped. For differences above 128 the bit-7 check returned false incorrectly.
+- `animate_hero_car` lower-bound clamp ($B3A0-$B3A1): `LD A,L; SUB E; JR C` was translated as `if ((s8)(L - E) < 0)`. For L=216, E=72: 216-72=144 = 0x90, carry=0 (no borrow, 216≥72), but (s8)0x90 = -112 triggers incorrectly. The road position 216 was clamped to 72 every frame, causing the road to flicker.
 
-**Commit:** `0f95209`
+**Fix:** Use a direct unsigned comparison: `if (L < E)` (i.e. `if ((HLroad_pos & 0xFF) < (DEother_road_pos & 0xFF))`). Never use `(s8)` or `& 0x80` to recover a carry flag — the sign and carry flags from subtraction are the same only for differences in [0, 127].
+
+**Commits:** `0f95209`, `bc1e1cb`
 
 ---
 
