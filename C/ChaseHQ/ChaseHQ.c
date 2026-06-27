@@ -14603,7 +14603,7 @@ pd_end_of_sample:
 }
 
 /**
- * $FC06: Noise
+ * $F0C6: Noise
  *
  * \param[in] state  Pointer to game state.
  * \param[in] Aparam Aparam.
