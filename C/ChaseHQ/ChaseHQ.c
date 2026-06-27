@@ -13604,11 +13604,15 @@ static void build_curve_table(chqstate_t *state, int forked)
     A_height = (A_height << 1) & 0xFF;
     if (carry) HLdash_multiplied += BCdash;
     HLdash_multiplied <<= 1;
-    carry = ((A_height & (1 << 7)) != 0);
+    carry = ((A_height & (1 << 7)) != 0);        /* $CC50 ADD A,A (bct_mult4) */
     A_height = (A_height << 1) & 0xFF;
-    if (carry) HLdash_multiplied += BCdash;
+    if (carry) HLdash_multiplied += BCdash;        /* $CC53 ADD HL,BC */
+    HLdash_multiplied <<= 1;                       /* $CC54 ADD HL,HL (bct_mult5) */
+    carry = ((A_height & (1 << 7)) != 0);          /* $CC55 ADD A,A */
+    A_height = (A_height << 1) & 0xFF;
+    if (carry) HLdash_multiplied += BCdash;        /* $CC58 ADD HL,BC */
 
-    HLdash_multiplied = (HLdash_multiplied >> 8) + ((HLdash_multiplied & (1 << 7)) != 0); // rounding
+    HLdash_multiplied = (HLdash_multiplied >> 8) + ((HLdash_multiplied & (1 << 7)) != 0); // rounding ($CC59)
     A_curvature = HLdash_multiplied & 0xFF;
     if (HLdash_multiplied & (1 << 7)) HLdash_multiplied |= 0xFF00;
 
