@@ -13763,17 +13763,17 @@ static void build_height_table(chqstate_t *state)
   int       orig_counter;         /* was A, fast_counter masked for multiply */
   const u8 *pvtab;                /* was HL */
   const u8 *pvtabbase;            // Conv: added
-  int       C;                    /* was C */
-  int       iterations;           /* was B' */
+  int       Cmin;                 /* was C */
+  int       Bdash_iterations;     /* was B' */
   u8       *phtab;                /* was DE' */
   u8       *phtabbase;            // Conv: added
-  int       v;                    /* was DE */
-  u16       result;               /* was HL */
+  int       DE_v;                 /* was DE */
+  u16       HL_result;            /* was HL */
   u8        A;                    /* was A */
   u8       *pdst;                 /* was HL */
   u8       *pdstbase;             // Conv: added
-  const u8 *htab2;                /* was DE */
-  const u8 *htabbase2;            // Conv: added
+  const u8 *phtab2;               /* was DE */
+  const u8 *phtabbase2;           // Conv: added
   int       iterations2;          /* was B */
   s8        res;                  /* Conv: added */
 
@@ -13783,40 +13783,47 @@ static void build_height_table(chqstate_t *state)
   heightbyte = *proadbuf_height;
 
   orig_counter = state->fast_counter & 0xE0;
-  pvtabbase = pvtab = &persp_y_scale[FAST_COUNTER_PERSP_ROW(state)][1];
-  C = -multiply(orig_counter, heightbyte);
+  pvtabbase = &persp_y_scale[FAST_COUNTER_PERSP_ROW(state)][0];
+  pvtab = pvtabbase + 1;
+  Cmin = -multiply(orig_counter, heightbyte);
+
   // EXX - bank
 
   // This builds the look-up table at $E301. Assuming it's a height table.
-  iterations = 21;
-  phtabbase = phtab = &state->height_table[1];
+  Bdash_iterations = 21;
+  phtabbase = &state->height_table[0];
+  phtab = &state->height_table[1];
   do {
-    v = *pvtab * 2;
-    result = 0;
-    C = A = C + *proadbuf_height;
-    if (C != 0) {
-      if ((s8) C < 0) {
-        v = -v;
-        A = -C;
+    DE_v = *pvtab * 2;
+    HL_result = 0;
+    Cmin = A = Cmin + *proadbuf_height; // is this Cdash?
+    if (Cmin != 0) {
+      if ((s8) Cmin < 0) {
+        DE_v = -DE_v;
+        A = -Cmin;
       }
 
-      // multiplier
+#if 1
+      // Conv: Equivalent? multiplier
+      A = ((A & 0x7F) * DE_v) >> 7;
+#else
       A <<= 1; // Throw sign bit away?
       carry = (A >> 7) & 1; A <<= 1;
-      if (carry) result = v << 1;
+      if (carry) HL_result = DE_v << 1;
       carry = (A >> 7) & 1; A <<= 1;
-      if (carry) result += v; result <<= 1;
+      if (carry) HL_result += DE_v; HL_result <<= 1;
       carry = (A >> 7) & 1; A <<= 1;
-      if (carry) result += v; result <<= 1;
+      if (carry) HL_result += DE_v; HL_result <<= 1;
       carry = (A >> 7) & 1; A <<= 1;
-      if (carry) result += v; result <<= 1;
+      if (carry) HL_result += DE_v; HL_result <<= 1;
       carry = (A >> 7) & 1; A <<= 1;
-      if (carry) result += v; result <<= 1;
+      if (carry) HL_result += DE_v; HL_result <<= 1;
       carry = (A >> 7) & 1; A <<= 1;
-      if (carry) result += v; result <<= 1;
+      if (carry) HL_result += DE_v; HL_result <<= 1;
       carry = (A >> 7) & 1; //A <<= 1;
-      if (carry) result += v; result <<= 1;
-      A = result >> 8;
+      if (carry) HL_result += DE_v; HL_result <<= 1;
+      A = HL_result >> 8;
+#endif
     }
     A += *pvtab;
     WRAP_INCREMENT_ASSIGN(pvtab, pvtabbase);
@@ -13824,28 +13831,29 @@ static void build_height_table(chqstate_t *state)
     *phtab = A; // Write #REGa to the table at $E3xx
     WRAP_INCREMENT_ASSIGN(phtab, phtabbase);
     WRAP_INCREMENT_ASSIGN(proadbuf_height, proadbuf_height_base);
-  } while (--iterations > 0);
+  } while (--Bdash_iterations > 0);
 
   *phtab = 0xA0;
 
   // Copy the table to $E336 while setting negative values to 96[?]
-  pdstbase  = pdst  = &state->clamped_heights[0]; // destination
-  htabbase2 = htab2 = &state->height_table[1]; // src
+  pdstbase = pdst = &state->clamped_heights[0]; // destination
+  phtabbase2 = &state->height_table[0]; // src
+  phtab2 = phtabbase2 + 1;
+
   iterations2 = 21;
-  C = 96; // limit/minimum?
+  Cmin = 96;
   do {
-    A = *htab2;
-    res = A - C;
-    if (res < 0)
-      C = A;
-    *pdst = C;
-    WRAP_INCREMENT_ASSIGN(pdst, pdstbase);
-    WRAP_INCREMENT_ASSIGN(htab2, htabbase2);
+    A = *phtab2;
+    if (A < Cmin)
+      Cmin = A;
+    *pdst = Cmin;
+    WRAP_INCREMENT_ASSIGN(pdst, pdstbase); // FIXME: this can't wrap
+    WRAP_INCREMENT_ASSIGN(phtab2, phtabbase2); // FIXME: this can't wrap either
   } while (--iterations2 > 0);
 
-  C = A = (C + 3) & 0xF8;
+  Cmin = A = (Cmin + 3) & 0xF8;
   A -= *pdst;
-  *pdst = C;
+  *pdst = Cmin;
   WRAP_INCREMENT_ASSIGN(pdst, pdstbase);
   *pdst = A;
 }
