@@ -44,6 +44,7 @@ Search `ChaseHQ.skool` and the bank skool files
 `-bank-6.skool`, `-bank-7.skool`) for the Z80 address range.
 
 For each instruction in the range note:
+
 - Which register holds which logical value at each label
 - `JP M` / `JP P` — branches on Sign flag (bit 7 of the result)
 - `JP C` / `JP NC` — branches on Carry flag (borrow from subtraction)
@@ -70,6 +71,7 @@ result from a `SUB` that can underflow?
 If yes, the variable should be `s8`.
 
 Dead-branch patterns to flag explicitly:
+
 - `if (X < 0)` where X is `u8` — always false, negative branch is dead
 - `if (X > 0)` where X is `u8` — true for all non-zero, hides negative case;
   the Z80 used `JP P` which is false for 0x80–0xFF (Sign set); correct C is
@@ -110,11 +112,11 @@ For every `LO_ADD`, `HI_ADD`, or raw `+`/`-` on a backbuffer or screen
 address, verify the sign matches the skool:
 
 - `SUB $20` subtracts 32 → `LO_ADD(x, -32)`, not `+32`
-- `JR NC` skips the D-register adjustment on *no* carry, i.e. when E ≥ 32
+- `JR NC` skips the D-register adjustment on _no_ carry, i.e. when E ≥ 32
   before subtraction (result < 224 after)
-- Read-before/after-decrement: Z80 `DEC D; LD A,D` reads D *after* decrement
+- Read-before/after-decrement: Z80 `DEC D; LD A,D` reads D _after_ decrement
 
-Also check that `LO_ADD` and `HI_ADD` macro calls *assign back* to their
+Also check that `LO_ADD` and `HI_ADD` macro calls _assign back_ to their
 argument — if they are pure expressions used as statements they are no-ops.
 
 ---
