@@ -1577,12 +1577,12 @@ const u8 continue_messages[119] = {
   TWOBYTES(0x598A),
   'T', 'H', 'I', 'S', ' ', 'M', 'I', 'S', 'S', 'I', 'O', 'N' | EOS,
   0x01, 0x02,
-  attribute_BLACK_OVER_BLACK,
+  attribute_RED_OVER_BLACK,
   TWOBYTES(0xF868),
   TWOBYTES(0x59E8),
   'P', 'U', 'S', 'H', ' ', 'G', 'E', 'A', 'R', ' ', 'B', 'U', 'T', 'T', 'O', 'N' | EOS,
   0x01, 0x02,
-  attribute_BLACK_OVER_BLACK,
+  attribute_RED_OVER_BLACK,
   TWOBYTES(0xF086),
   TWOBYTES(0x5A06),
   'B', 'E', 'F', 'O', 'R', 'E', ' ', 'T', 'I', 'M', 'E', 'R', ' ', 'R', 'E', 'A', 'C', 'H', 'E', 'S', ' ', '0' | EOS,
@@ -1596,7 +1596,7 @@ const u8 continue_messages[119] = {
   TWOBYTES(0xF8F6),
   TWOBYTES(0x5AF6),
   'C', 'R', 'E', 'D', 'I', 'T', ' ', ' ' | EOS,
-  0x01, 0x03
+  0x03, 0x00
 };
 
 // $98A9
