@@ -12827,7 +12827,8 @@ dr_level_road:
   /* it's a tunnel */
   B = 0xFF;
   Atunnel_visible = 1;
-  if ((Clane_byte & (1 << 2)) == 0) {
+  Ain_tunnel = 1; /* $C728 LD A,$01 runs unconditionally before JR Z,$C740 */
+  if ((Clane_byte & (1 << 2)) != 0) { /* $C72A JR Z,$C740: skip when bit 2 clear */
     state->dt_tunnel_distance = *IYheightptr - &state->height_table[0];
     Atunnel_visible = 1;
     B++; // 255->0
@@ -12855,7 +12856,8 @@ dr_decreasing:
   // EX AF,AF' - preserve Aheight_diff?
   B = 0xFF;
   Atunnel_visible = 1;
-  if ((Clane_byte & (1 << 2)) == 0) {
+  Ain_tunnel = 1; /* $C758 LD A,$01 runs unconditionally before JR Z,$C770 */
+  if ((Clane_byte & (1 << 2)) != 0) { /* $C75A JR Z,$C770: skip when bit 2 clear */
     state->dt_tunnel_distance = *IYheightptr - &state->height_table[0];
     Atunnel_visible = 1;
     B++; // 255->0
