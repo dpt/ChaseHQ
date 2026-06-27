@@ -13567,7 +13567,7 @@ static void build_curve_table(chqstate_t *state, int forked)
   IXlanes = &curvature_to_xpos[A]; // table is 16-bit
 
   DE = &state->curvature_table[0];
-  B = 20; // iterations
+  B = 22; // iterations ($CC17 LD B,$16)
   // EXX Bank
   DEdash = state->scenedata.road_pos;
   // PUSH DEdash; // save on stack
