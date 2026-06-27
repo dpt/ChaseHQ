@@ -2434,10 +2434,11 @@ static void drive_sfx(chqstate_t *state)
   if (state->sfx_index == 0)
     return;
 
+  sfx = &sfx_table[state->sfx_index - 1];
+
   state->sfx_index    = 0;
   state->sfx_priority = 0;
 
-  sfx = &sfx_table[state->sfx_index - 1];
   sfx->handler(state, sfx->arg1, sfx->arg2);
 }
 
