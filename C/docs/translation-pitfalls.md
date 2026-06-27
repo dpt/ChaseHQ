@@ -50,11 +50,20 @@ overwritten by an xpos table read. Because xpos low bytes are 0x48–0x49
 (always < 0x50), the backdrop branch never fired and `draw_road` looped
 forever.
 
+A variant is **copy-paste between adjacent sections of the same function:**
+`rm_cycle_buffer_offset` handles curvature, height, lanes, etc. in parallel
+blocks. The HEIGHT section was copied from the CURVATURE section and the
+escape-byte check was not updated: `if (Amapcurvebyte == 0)` instead of
+`if (Aheight_byte == 0)`. The escape byte was never detected in the height
+stream, stalling `road_height_ptr` on the escape byte and corrupting the
+perspective table. (`f8241bf`)
+
 **Fix:** Give each logical value its own named variable (`Aheight_diff`), not
 just the register name, and reference that at all sites where the original
-register is still in scope.
+register is still in scope. After copy-pasting a parallel block, grep for
+every variable name and confirm each is the right one for the new context.
 
-**Commit:** `8071d1f`
+**Commits:** `8071d1f`, `f8241bf`
 
 ---
 
@@ -276,3 +285,29 @@ This gives a `u8*` at the precise odd offset Lrow without any rounding. For
 the position read after decrement, use `HL[-1]` not `*HL`.
 
 **Commit:** `fccab5a`
+
+---
+
+## 14. Hex loop bound misread — stale table slots accumulate via `+=`
+
+**Root cause:** Z80 loop counts are hex literals. `LD B,$16` is 22 decimal,
+not 16 or 20. When translated as `B = 20`, the fill loop writes too few
+entries. If a subsequent `+=` pass covers the full (larger) range every
+frame, the unfilled trailing slots accumulate the added value unboundedly.
+As a `u8` the slot cycles through 0–255 over many frames, producing
+slow oscillation in any output that depends on it.
+
+**Bug:** `build_curve_table` had `B = 20` for `LD B,$16` (= 22 decimal,
+`$CC17`). `curvature_table[0..19]` was freshly written each frame;
+`curvature_table[20..21]` were stale. The left-side delta add pass ran
+over all 22 entries with `+=`, so `curvature_table[20]` grew by
+`persp_x_delta_left[row][20]` = 3 every frame. Cycling as `u8` every
+~85 frames (~1.7 s at 50 fps), `build_curve_table_fill` read this
+cycling value for the last height segment, making the road near the
+horizon dance left-right visibly.
+
+**Fix:** `B = 22`. Always convert hex loop-count literals to decimal
+explicitly and add `($CCxx LD B,$YY)` in the comment to make the source
+traceable.
+
+**Commit:** `fe9323a`
