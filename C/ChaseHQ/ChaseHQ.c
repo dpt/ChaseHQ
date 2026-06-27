@@ -433,10 +433,11 @@ static u8 *z80offsettobackbuf(chqstate_t *state, int off, int left, int right)
 
 #define RESTART_TIME_BCD          (0x60) /* seconds in BCD */
 
-#define SPEED_PERP_MIN              (70) /* perp slow-down threshold in handle_perp_caught */
 #define SPEED_GEAR_CHANGE          (150) /* gear-change threshold: low gear below, high gear at or above */
 #define SPEED_PERP_CHASE           (350) /* perp's base chase speed; also hazard speed cap after impact */
-#define SPEED_ATTRACT              (400) /* scripted drive speed: attract mode camera, perp post-arrest */
+#define SPEED_ATTRACT_INITIAL        (0) /* scripted drive speed: attract mode camera */ // HACK was 400
+#define SPEED_PERP_MIN              (70) /* perp slow-down threshold in handle_perp_caught */
+#define SPEED_PERP_CAUGHT          (400) /* scripted drive speed: perp post-arrest */
 
 #define MARQUEELIGHT_WIDTH           (5) /* attribute cells */
 #define MARQUEELIGHT_HEIGHT          (4) /* attribute cells */
@@ -1363,7 +1364,7 @@ static void attract_mode_48k(chqstate_t *state)
 
   set_up_stage(state, &state->stage->attract_data);
   blinker = 0;
-  state->speed = SPEED_ATTRACT;
+  state->speed = SPEED_ATTRACT_INITIAL;
   for (;;) {
     keys = keyscan(state);
     if (keys == USERINPUTFLAG_FIRE)
@@ -2916,7 +2917,7 @@ static void fully_smashed(chqstate_t *state)
   state->smash_counter      = SMASHCOUNTER_MAX;
   state->session.user_input_mask = USERINPUTFLAG_PAUSE | USERINPUTFLAG_QUIT;
   setup_overlay_messages(state, &pull_over_message[0]);
-  hpc_set_perp_speed(state, SPEED_ATTRACT); // FIXME - needs own symbol
+  hpc_set_perp_speed(state, SPEED_PERP_CAUGHT);
 }
 
 /**
@@ -15003,7 +15004,7 @@ call_bank_3:
   set_up_stage(state, &state->stage->attract_data);
 
   state->attract_mode_128k_countdown = 2; // two runs through
-  state->speed = 10;//SPEED_ATTRACT;
+  state->speed = SPEED_ATTRACT_INITIAL;
   for (;;) {
     cpu_driver(state);
 
