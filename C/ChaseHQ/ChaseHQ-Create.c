@@ -93,6 +93,10 @@ static void chq_initialise(chqstate_t *state)
   state->roadbuf_start  = &state->road_buffer[0];   // $EE00
   state->roadbuf_end    = &state->road_buffer[256]; // $EF00
 
+  // $B395/$B3A3: SM operands (default LD DE operands) in animate_hero_car
+  state->ahc_road_pos_a =  72; /* lower clamp bound */
+  state->ahc_road_pos_b = 472; /* upper clamp bound */
+
   // $CE33
   state->debris_table[0]  = state->debris_subtables[0];
   state->debris_table[1]  = state->debris_subtables[1];

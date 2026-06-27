@@ -1735,7 +1735,7 @@ static void cpu_driver(chqstate_t *state)
   state->user_input = 0;//input;
 
   state->speccy->stamp(state->speccy);
-
+  
   read_map(state);
   spawn_cars(state);
   cycle_counters(state);
@@ -9226,16 +9226,16 @@ ahc_speed_less_or_eq:
   if ((s8) A >= 0) {
     if (A == 0) {
       A = (HLroad_pos & 0xFF) - (DEother_road_pos & 0xFF); // low diff
-      if ((s8) A < 0)
+      if ((HLroad_pos & 0xFF) < (DEother_road_pos & 0xFF)) // JR C: borrow
         goto ahc_b3b0;
     }
 
     DEother_road_pos = state->ahc_road_pos_b;
     A = HLroad_pos >> 8;
     if (A >= (DEother_road_pos >> 8)) { // carry
-      if (A == 0) {
+      if (A == (DEother_road_pos >> 8)) { // JR NZ: high bytes equal, check low
         A = (HLroad_pos & 0xFF) - (DEother_road_pos & 0xFF); // low diff
-        if ((s8) A < 0)
+        if ((HLroad_pos & 0xFF) < (DEother_road_pos & 0xFF)) // JR C: borrow
           goto ahc_assign_road_pos_2;
       }
 
@@ -12154,7 +12154,7 @@ static void draw_road(chqstate_t *state)
   state->dr_edge_thickness = 3;
 
   IYheightptr = &state->height_table[1];
-  Ccounter = 0x60 - *IYheightptr;
+  Ccounter = 96 - *IYheightptr;
 
   /* Set initial road stripe state */
   IXlanesptr = ROADBUF_FWD2PTR(ROADBUF_LANES_OFFSET);
@@ -12511,9 +12511,12 @@ static void dr_fill(chqstate_t *state,
   u16  HLdash_fill;
   u16  BCdash_zerofill;
 
-  // /* Z80: writes to ROM/invalid addresses are no-ops; C port: redirect. */
-  // if (DEbackbuf < 0xF000 || DEbackbuf > 0x10000)
-  //   DEbackbuf = 0xFFE0;
+  /* Z80: writes to ROM/invalid addresses ($0000-$EFFF) are no-ops.
+   * C port: redirect any out-of-range DEbackbuf to the last backbuffer row
+   * ($FFE0) so all pointer arithmetic (here and in downstream callers,
+   * including dr_fill_left_stripe's secondary dr_read_lanes) stays valid. */
+  if (DEbackbuf < 0xF000 || DEbackbuf > 0x10000)
+    DEbackbuf = 0xFFE0;
 
   state->dr_backbuf_2 = DEbackbuf;
   Arow = Lrow; // byte offset within road table page (0xFF = bottom scanline)

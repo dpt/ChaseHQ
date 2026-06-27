@@ -529,7 +529,7 @@ struct chqstate {
   // $B395 (SM) in animate_hero_car
   u16       ahc_road_pos_a; // a road position
   // $B3A3 (SM) in animate_hero_car
-  u8        ahc_road_pos_b; // another road position
+  u16       ahc_road_pos_b; // another road position
   // $B3DB (SM) in animate_hero_car
   u8        ahc_crash_spin; // controls flipping
   // $B476 (SM) in animate_hero_car
