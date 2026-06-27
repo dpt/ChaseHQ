@@ -25,6 +25,8 @@
 
 #define TWOBYTES(addr) (addr) & 0xFF, (addr) >> 8
 
+#define KEYDEF(key, halfrow) (((key) << 3) | (halfrow))
+
 /* ----------------------------------------------------------------------- */
 
 const u8 bitmap_turbospin[TURBOFRAMELENGTH * TURBOFRAMES];
@@ -307,9 +309,9 @@ const u8 messages_test_mode[151];
 const u8 messages_cannot_be_remodified[127];
 
 const u8 key_names[10 * 8];
-const u8 sinclair_joy[5];
-const u8 cursor_joy[5];
-const u8 shocked[8];
+const u8 sinclair_joy_keydefs[5];
+const u8 cursor_joy_keydefs[5];
+const u8 shocked_keydefs[8];
 
 const u8 drum1[252];
 const u8 drum2[108];

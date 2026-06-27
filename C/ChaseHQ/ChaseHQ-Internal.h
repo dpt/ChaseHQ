@@ -69,8 +69,7 @@
 #define HAZARD_USED                         (0xFF)
 #define HAZARD_UNUSED                       (0x00)
 
-#define USERINPUTMASK_ALLOW_NONE            (0x00)
-#define USERINPUTMASK_ALLOW_ALL             (0xFF)
+/* ----------------------------------------------------------------------- */
 
 #define BITMAPFLAG_DEFAULT                (0 << 0)
 #define BITMAPFLAG_MASKED                 (1 << 0)
@@ -93,6 +92,34 @@
 #define STRETCHY_TYPE_75PC                     (7) // height =  75%
 #define STRETCHY_TYPE_25PC                     (8) // height =  25%
 #define STRETCHY_TYPE_100PC                    (9) // height = 100%
+
+/* ----------------------------------------------------------------------- */
+
+/* Flag constants */
+
+#define USERINPUT_RIGHT                        (0)
+#define USERINPUT_LEFT                         (1)
+#define USERINPUT_DOWN                         (2) /* aka brake */
+#define USERINPUT_UP                           (3) /* aka accelerate */
+#define USERINPUT_FIRE                         (4) /* aka gear */
+#define USERINPUT_TURBO                        (5)
+#define USERINPUT_PAUSE                        (6)
+#define USERINPUT_QUIT                         (7)
+
+#define USERINPUTFLAG_RIGHT (1 << USERINPUT_RIGHT)
+#define USERINPUTFLAG_LEFT  (1 << USERINPUT_LEFT )
+#define USERINPUTFLAG_DOWN  (1 << USERINPUT_DOWN )
+#define USERINPUTFLAG_UP    (1 << USERINPUT_UP   )
+#define USERINPUTFLAG_FIRE  (1 << USERINPUT_FIRE )
+#define USERINPUTFLAG_TURBO (1 << USERINPUT_TURBO)
+#define USERINPUTFLAG_PAUSE (1 << USERINPUT_PAUSE)
+#define USERINPUTFLAG_QUIT  (1 << USERINPUT_QUIT )
+
+#define USERINPUTMASK_NOT_QUIT              (0x7F) /* mask of all input bits except QUIT */
+#define USERINPUTMASK_NONE                  (0x00)
+
+#define USERINPUTMASK_ALLOW_NONE            (0x00)
+#define USERINPUTMASK_ALLOW_ALL             (0xFF)
 
 /* ----------------------------------------------------------------------- */
 

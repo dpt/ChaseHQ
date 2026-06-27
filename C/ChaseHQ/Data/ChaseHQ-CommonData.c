@@ -4894,8 +4894,6 @@ const u8 messages_cannot_be_remodified[127] = {
 
 /* ----------------------------------------------------------------------- */
 
-#define KEYDEF(key, halfrow) (((key) << 3) | (halfrow))
-
 // $EDD6
 const u8 key_names[10 * 8] =
   "B N M SYSP"
@@ -4908,7 +4906,7 @@ const u8 key_names[10 * 8] =
   "V C X Z CP";
 
 // $EE26
-const u8 sinclair_joy[5] = {
+const u8 sinclair_joy_keydefs[5] = {
   KEYDEF(4, 3), // 0
   KEYDEF(3, 3), // 9
   KEYDEF(2, 3), // 8
@@ -4917,7 +4915,7 @@ const u8 sinclair_joy[5] = {
 };
 
 // $EE2B
-const u8 cursor_joy[5] = {
+const u8 cursor_joy_keydefs[5] = {
   KEYDEF(4, 3), // 0
   KEYDEF(1, 3), // 7
   KEYDEF(0, 3), // 6
@@ -4926,7 +4924,7 @@ const u8 cursor_joy[5] = {
 };
 
 // $EE30
-const u8 shocked[8] = {
+const u8 shocked_keydefs[8] = {
   KEYDEF(3, 6), // S
   KEYDEF(0, 1), // H
   KEYDEF(3, 2), // O

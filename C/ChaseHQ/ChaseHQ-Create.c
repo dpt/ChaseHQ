@@ -132,6 +132,16 @@ static void chq_initialise(chqstate_t *state)
       state->flipped[i] = r;
     }
   }
+
+  // Temp until the 128K input code is ported
+  state->keydefs[USERINPUT_RIGHT] = KEYDEF(4,2); // P
+  state->keydefs[USERINPUT_LEFT ] = KEYDEF(3,2); // O
+  state->keydefs[USERINPUT_DOWN ] = KEYDEF(4,5); // Q
+  state->keydefs[USERINPUT_UP   ] = KEYDEF(4,6); // A
+  state->keydefs[USERINPUT_FIRE ] = KEYDEF(2,0); // M
+  state->keydefs[USERINPUT_TURBO] = KEYDEF(4,0); // SPACE
+  state->keydefs[USERINPUT_PAUSE] = KEYDEF(4,4); // 1
+  state->keydefs[USERINPUT_QUIT ] = KEYDEF(4,3); // 0
 }
 
 /* ----------------------------------------------------------------------- */

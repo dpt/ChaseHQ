@@ -505,21 +505,6 @@ static u8 *z80offsettobackbuf(chqstate_t *state, int off, int left, int right)
 
 /* ----------------------------------------------------------------------- */
 
-/* Flag constants */
-
-#define USERINPUT_RIGHT           (1<<0)
-#define USERINPUT_LEFT            (1<<1)
-#define USERINPUT_DOWN            (1<<2) /* aka brake */
-#define USERINPUT_UP              (1<<3) /* aka accelerate */
-#define USERINPUT_FIRE            (1<<4) /* aka gear */
-#define USERINPUT_TURBO           (1<<5)
-#define USERINPUT_PAUSE           (1<<6)
-#define USERINPUT_QUIT            (1<<7)
-#define USERINPUT_NOT_QUIT        (0x7F) /* mask of all input bits except QUIT */
-#define USERINPUT_NONE            (0x00)
-
-/* ----------------------------------------------------------------------- */
-
 /* Other constants */
 
 #define TRANSITIONSTRIDE_FORWARD     (8) /* screen wipe step: attribute rows per frame, top-to-bottom */
@@ -1229,8 +1214,8 @@ static void clear_screen(chqstate_t *state);
 
 static void redefine_keys_48k(chqstate_t *state);
 static u8 keyscan_all(chqstate_t *state, u8 *Dkeydef_out);
-static void define_a_key(chqstate_t *state, int Bindex, int Cindex,
-                         int DEscreen);
+static int define_a_key(chqstate_t *state, int Bindex, int Cindex,
+                        int DEscreen);
 static u16 dak_move_down(int DEscreen);
 
 static void setup_interrupts(chqstate_t *state);
@@ -1381,7 +1366,7 @@ static void attract_mode_48k(chqstate_t *state)
   state->speed = SPEED_ATTRACT;
   for (;;) {
     keys = keyscan(state);
-    if (keys == USERINPUT_FIRE)
+    if (keys == USERINPUTFLAG_FIRE)
       return;
 
     cpu_driver(state);
@@ -1736,15 +1721,15 @@ static void cpu_driver(chqstate_t *state)
     longjmp(state->host_quit_jmp, 1);
 
   roadpos = state->scenedata.road_pos;
-  input = USERINPUT_UP | USERINPUT_RIGHT;
+  input = USERINPUTFLAG_UP | USERINPUTFLAG_RIGHT;
   if (roadpos < ROAD_LEFTMOST) {
-    input = USERINPUT_UP | USERINPUT_LEFT;
+    input = USERINPUTFLAG_UP | USERINPUTFLAG_LEFT;
     if (roadpos >= ROAD_RIGHTMOST)
-      input = USERINPUT_UP;
+      input = USERINPUTFLAG_UP;
   }
 
   if (state->gear != (state->speed < SPEED_GEAR_CHANGE))
-    input |= USERINPUT_FIRE;
+    input |= USERINPUTFLAG_FIRE;
 
   state->user_input = 0;//input;
 
@@ -1895,7 +1880,7 @@ static int run_pregame_screen_loop(chqstate_t *state)
       goto exit;
     }
     if (state->chatter_state < CHATTERSTATE_STOP) {
-      if (keyscan(state) & USERINPUT_FIRE) {
+      if (keyscan(state) & USERINPUTFLAG_FIRE) {
         drive_chatter_stop(state);
         play_start_noise(state); /* exit via */
         rc = 0; // stop
@@ -2296,20 +2281,20 @@ static void check_user_input(chqstate_t *state)
   transctl = state->transition_control;
   puserinput = &state->user_input;
   if (transctl != TRANSITIONCONTROL_FADE) {
-    *puserinput = USERINPUT_NONE;
+    *puserinput = USERINPUTMASK_NONE;
     return;
   }
 
   *puserinput = input = (state->session.user_input_mask & *puserinput);
-  if ((input & (USERINPUT_QUIT | USERINPUT_PAUSE | USERINPUT_TURBO)) == 0)
+  if ((input & (USERINPUTFLAG_QUIT | USERINPUTFLAG_PAUSE | USERINPUTFLAG_TURBO)) == 0)
     return;
 
-  if (input & USERINPUT_QUIT) {
+  if (input & USERINPUTFLAG_QUIT) {
     check_user_input_quit_key(state);
     return;
   }
 
-  if ((input & USERINPUT_PAUSE) == 0) {
+  if ((input & USERINPUTFLAG_PAUSE) == 0) {
     // (If it's not pause it's...) Turbo pressed
     pboost = &state->boost;
     if (*pboost > 0 || state->session.turbos == 0)
@@ -2325,13 +2310,13 @@ static void check_user_input(chqstate_t *state)
     silence_audio_hook(state);
     do
       keys = keyscan(state);
-    while (keys & USERINPUT_PAUSE);
+    while (keys & USERINPUTFLAG_PAUSE);
     do
       keys = keyscan(state);
-    while ((keys & USERINPUT_NOT_QUIT) == 0);
+    while ((keys & USERINPUTMASK_NOT_QUIT) == 0);
     do
       keys = keyscan(state);
-    while ((keys & USERINPUT_NOT_QUIT) != 0);
+    while ((keys & USERINPUTMASK_NOT_QUIT) != 0);
   }
 }
 
@@ -2833,19 +2818,19 @@ assign_perp_pos: // is this in the right place?
   state->hazards[0].horz_pos = A;
   HLroadpos = state->scenedata.road_pos;
   carry = (HLroadpos < ROAD_LEFTMOST); /* was PUSH/SUB/POP */
-  Ainput = USERINPUT_UP | USERINPUT_RIGHT;
+  Ainput = USERINPUTFLAG_UP | USERINPUTFLAG_RIGHT;
   if (!carry)
     goto assign_hero_pos;
 
   HLroadpos -= ROAD_RIGHTMOST; // FIXME set carry here?
-  Ainput = USERINPUT_UP | USERINPUT_LEFT;
+  Ainput = USERINPUTFLAG_UP | USERINPUTFLAG_LEFT;
   if (carry)
     goto assign_hero_pos;
 
-  Ainput = USERINPUT_UP;
+  Ainput = USERINPUTFLAG_UP;
 
 assign_hero_pos:
-  Cinput = Ainput & (USERINPUT_LEFT | USERINPUT_RIGHT);
+  Cinput = Ainput & (USERINPUTFLAG_LEFT | USERINPUTFLAG_RIGHT);
   if (Cinput)
     goto perp_too_far_away;
 
@@ -2876,18 +2861,18 @@ perp_too_far_away:
   carry = (HLspeed < DEspeed);
   HLspeed -= DEspeed;
   if (!carry) {
-    Cinput &= ~USERINPUT_UP;
+    Cinput &= ~USERINPUTFLAG_UP;
     carry = (HLspeed < 50);
     HLspeed -= 50;
     if (!carry)
-      Cinput |= USERINPUT_DOWN;
+      Cinput |= USERINPUTFLAG_DOWN;
   }
   HLspeed = HLspeedpushed; // POP HL
   carry = (HLspeed > SPEED_GEAR_CHANGE);
   HLspeed -= SPEED_GEAR_CHANGE;
   A = state->gear - carry; // set low speed if speed<SPEED_GEAR_CHANGE
   if (A == 0)
-    Cinput |= USERINPUT_FIRE; // change gear
+    Cinput |= USERINPUTFLAG_FIRE; // change gear
   state->user_input = Cinput;
 
   HLspeed = state->hazards[0].speed;
@@ -2929,7 +2914,7 @@ static void fully_smashed(chqstate_t *state)
   state->perp_caught_phase  = PERPCAUGHTPHASE_ALIGNING;
   state->hand_flag          = HANDFLAG_STOP;
   state->smash_counter      = SMASHCOUNTER_MAX;
-  state->session.user_input_mask = USERINPUT_PAUSE | USERINPUT_QUIT;
+  state->session.user_input_mask = USERINPUTFLAG_PAUSE | USERINPUTFLAG_QUIT;
   setup_overlay_messages(state, &pull_over_message[0]);
   hpc_set_perp_speed(state, SPEED_ATTRACT); // FIXME - needs own symbol
 }
@@ -5619,10 +5604,10 @@ static void check_time_up(chqstate_t *state)
     // Ran out of time
     state->time_up_state = TIMEUPSTATE_CHECK_TIME_UP;
     // Stop acceleration/brake/turbo/pause
-    state->session.user_input_mask = USERINPUT_RIGHT |
-                                     USERINPUT_LEFT |
-                                     USERINPUT_FIRE |
-                                     USERINPUT_QUIT;
+    state->session.user_input_mask = USERINPUTFLAG_RIGHT |
+                                     USERINPUTFLAG_LEFT |
+                                     USERINPUTFLAG_FIRE |
+                                     USERINPUTFLAG_QUIT;
     return;
   }
 
@@ -5671,7 +5656,7 @@ check_credits:
   return;
 
 check_restart:
-  if (state->user_input & USERINPUT_FIRE) {
+  if (state->user_input & USERINPUTFLAG_FIRE) {
     // Reset mission
     state->time_up_state           = TIMEUPSTATE_INIT;
     state->smash_level             = 0;
@@ -6490,15 +6475,15 @@ static u8 keyscan(chqstate_t *state)
     Ekeys = Akeys = keyscan_keydefs(state, &state->keydefs[0], 0x01); // 8 bits max
   }
 
-  Aleft_and_right = Akeys & (USERINPUT_RIGHT | USERINPUT_LEFT);
+  Aleft_and_right = Akeys & (USERINPUTFLAG_RIGHT | USERINPUTFLAG_LEFT);
   Aorig = Ekeys;
   /* if left and right are both pressed then clear them both */
-  if (Aleft_and_right == (USERINPUT_RIGHT | USERINPUT_LEFT)) {
-    Aorig &= ~(USERINPUT_RIGHT | USERINPUT_LEFT);
+  if (Aleft_and_right == (USERINPUTFLAG_RIGHT | USERINPUTFLAG_LEFT)) {
+    Aorig &= ~(USERINPUTFLAG_RIGHT | USERINPUTFLAG_LEFT);
     Ekeys = Aorig;
   }
   /* if up and down are both pressed then clear them both */
-  state->user_input = ((Aorig & (USERINPUT_DOWN | USERINPUT_UP)) != (USERINPUT_DOWN | USERINPUT_UP)) ? Ekeys : Ekeys & ~(USERINPUT_DOWN | USERINPUT_UP);
+  state->user_input = ((Aorig & (USERINPUTFLAG_DOWN | USERINPUTFLAG_UP)) != (USERINPUTFLAG_DOWN | USERINPUTFLAG_UP)) ? Ekeys : Ekeys & ~(USERINPUTFLAG_DOWN | USERINPUTFLAG_UP);
   return 0;
 }
 
@@ -8899,8 +8884,8 @@ static void move_hero_car(chqstate_t *state)
     // Hero car is in mid-air, or has just landed
     jump_data = state->mhc_jump_data; // points into hero_car_jump_table
     state->off_road = 0;
-    state->user_input &= ~(USERINPUT_RIGHT | USERINPUT_LEFT | USERINPUT_DOWN |
-                           USERINPUT_UP);
+    state->user_input &= ~(USERINPUTFLAG_RIGHT | USERINPUTFLAG_LEFT | USERINPUTFLAG_DOWN |
+                           USERINPUTFLAG_UP);
     state->dhc_pitch = jump_data[0];
     y_offset = state->dhc_jump_y + jump_data[1];
     state->mhc_jump_data = jump_data + 2;
@@ -8918,11 +8903,11 @@ static void move_hero_car(chqstate_t *state)
   // Handle gear changes
   Cinput = state->user_input;
   if (state->ahc_crashed_flag)
-    Cinput &= USERINPUT_FIRE;
+    Cinput &= USERINPUTFLAG_FIRE;
 
   Ainput = Cinput;
   // PUSH Ainput (PUSH AF)
-  const int fire_pressed = (Ainput & USERINPUT_FIRE);
+  const int fire_pressed = (Ainput & USERINPUTFLAG_FIRE);
   pgear = &state->gear; // could use state
   if (fire_pressed != 0 && state->gear_lockout == 0) {
     *pgear ^= 1; // Toggle gear flag
@@ -8987,9 +8972,9 @@ mhc_low_gear_slowing:
 
 mhc_check_brake:
   Ainput = Cinput; // Conv: was POP AF-PUSH AF
-  if (Ainput & USERINPUT_DOWN) // checks BRAKE key
+  if (Ainput & USERINPUTFLAG_DOWN) // checks BRAKE key
     BCspeed_diff = -20; // braking
-  else if ((Ainput & USERINPUT_UP) == 0) // accelerate NOT pressed
+  else if ((Ainput & USERINPUTFLAG_UP) == 0) // accelerate NOT pressed
     BCspeed_diff = -10; // slow down at half the speed of braking
 
   speed += BCspeed_diff;
@@ -9018,9 +9003,9 @@ mhc_check_brake:
   Bright_turn = state->right_turn;
   Cleft_turn  = state->left_turn;
   if (state->mhc_y_offset == 0) { // if not in the air?
-    if (Hinput & USERINPUT_RIGHT)
+    if (Hinput & USERINPUTFLAG_RIGHT)
       goto mhc_turning_right;
-    if (Hinput & USERINPUT_LEFT)
+    if (Hinput & USERINPUTFLAG_LEFT)
       goto mhc_turning_left;
 
     // User input is not left or right
@@ -14175,21 +14160,20 @@ static void clear_screen(chqstate_t *state)
  */
 static void redefine_keys_48k(chqstate_t *state)
 {
-  u16       DEscr;
-  int       Biterations;
-  int       Cindex;
-  int       A;
-  const u8 *DEshocked;
-  const u8 *HLthing;
+  u16       DE_scr;
+  int       B_iterations;
+  int       C_index;
+  const u8 *DE_shocked;
+  const u8 *HL_keydefs;
 
   for (;;) {
     clear_screen(state);
 
     menu_draw_strings(state, &messages_redefine_keys[0]);
 
-    DEscr = 0x48D6;
-    Biterations = 8;
-    Cindex = 1;
+    DE_scr = 0x48D6;
+    B_iterations = 8;
+    C_index = 1;
     do {
       do {
         // PUSH HL,DE,BC
@@ -14197,30 +14181,29 @@ static void redefine_keys_48k(chqstate_t *state)
         // POP BC,DE,HL
 
         // Wait for the keyboard to clear
-        A = ~state->speccy->in(state->speccy, port_BORDER_EAR_MIC) & 0x1F;
-      } while (A);
+      } while (~state->speccy->in(state->speccy, port_BORDER_EAR_MIC) & 0x1F);
 
-      define_a_key(state, Biterations, Cindex, DEscr);
-      Cindex++;
+      DE_scr = define_a_key(state, B_iterations, C_index, DE_scr);
+      C_index++;
       // HL++; might be stray code
-    } while (--Biterations > 0);
+    } while (--B_iterations > 0);
 
     // All keys are now defined
-    Biterations = 20;
-    do
+    B_iterations = 20;
+    do {
       // PUSH BC
       play_music_48k(state);
-    // POP BC
-    while (--Biterations > 0);
+      // POP BC
+    } while (--B_iterations > 0);
 
     // Test if keys are "SHOCKED<ENTER>"
-    Biterations = 8;
-    DEshocked = &shocked[0];
-    HLthing = &state->temp_keydefs[0];
-    do
-      if (*DEshocked++ != *HLthing++)
+    B_iterations = 8;
+    DE_shocked = &shocked_keydefs[0];
+    HL_keydefs = &state->temp_keydefs[0];
+    do {
+      if (*DE_shocked++ != *HL_keydefs++)
         return;
-    while (--Biterations > 0);
+    } while (--B_iterations > 0);
 
     // Matched: Show the test mode screen
     state->test_mode = 1;
@@ -14230,8 +14213,7 @@ static void redefine_keys_48k(chqstate_t *state)
     // Wait for any key
     for (;;) {
       play_music_48k(state);
-      A = ~state->speccy->in(state->speccy, port_BORDER_EAR_MIC) & 0x1F;
-      if (A)
+      if (~state->speccy->in(state->speccy, port_BORDER_EAR_MIC) & 0x1F)
         break;
     }
   }
@@ -14291,9 +14273,10 @@ static u8 keyscan_all(chqstate_t *state, u8 *Dkeydef_out)
  * \param[in] Bindex Index of ?. (was B)
  * \param[in] Cindex Key index we're defining. (was C)
  * \param[in] DEscreen Screen address to draw at - a Z80 address. (was DE)
+ * \returns Next screen address to draw at
  */
-static void define_a_key(chqstate_t *state, int Bindex, int Cindex,
-                         int DEscreen)
+static int define_a_key(chqstate_t *state, int Bindex, int Cindex,
+                        int DEscreen)
 {
   int       carry;
   u8        Dkeydef;     /* was D */
@@ -14340,6 +14323,7 @@ dak_loop1:
   // POP BC
   if (Bindex == 4)
     DEscreen = dak_move_down(DEscreen);
+  return DEscreen;
 }
 
 /**
@@ -15026,7 +15010,7 @@ call_bank_3:
     controls_selected = state->controls_selected;
     DEmessages = &enter_for_options_messages[0];
     if (controls_selected) {
-      if (keyscan(state) & USERINPUT_FIRE) {
+      if (keyscan(state) & USERINPUTFLAG_FIRE) {
         play_start_noise(state);
         return;
       }
