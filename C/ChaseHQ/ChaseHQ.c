@@ -12648,7 +12648,7 @@ static void dr_fill_left_stripe(chqstate_t *state,
   // Conv: use memset
   int n = (15 - jump_index) * 2;
   assert(n >= 0);
-  memset(SPoutput -= n, Cdash_zerofill, n);
+  memset(SPoutput -= n, Hdash_fill & 0xFF, n);
 
   Bdash = DEbackbuf & 0xFF;
   Cdash_zerofill--; // 0 -> 255
@@ -12675,7 +12675,7 @@ static void dr_fill_left_stripe(chqstate_t *state,
     /* AND-OR masking here. */
     /* Left outer edge ($C643-$C666): AND-OR blend at E, direct copy at E+1 */
     *DEdash_backbufptr = (*DEdash_backbufptr & HLdash_markingsptr[0]) | HLdash_markingsptr[1]; // wraparound needed?
-    HLdash_markingsptr += 2;
+    HLdash_markingsptr += 3;
     DEdash_backbufptr++;
     *DEdash_backbufptr++ = *HLdash_markingsptr++; // also BC--;
 
