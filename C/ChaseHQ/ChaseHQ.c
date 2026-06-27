@@ -1652,7 +1652,7 @@ static void main_loop(chqstate_t *state)
       move_helicopter(state);
       check_scenery_collisions(state);
       play_regular_sfx_hook(state);
-      draw_everything_else(state);
+      // draw_everything_else(state);
       play_regular_sfx_hook(state);
       animate_hero_car(state);
       speed_score(state);
@@ -13517,19 +13517,19 @@ static void build_curve_table(chqstate_t *state, int forked)
   int        C_curvature;        /* curvature byte from road buffer (was C) */
   int        A_scratch;          /* multiply scratch (was A) */
   const u8  *IY_height;          /* perspective x-scale row pointer (was IY) */
-  const u16 *IX_lanes;            /* bend table pointer (was IX) */
+  const u16 *IX_lanes;           /* bend table pointer (was IX) */
   u8        *DE_output;          /* curvature_table write pointer (was DE) */
-  int        B_iterations;        /* curvature fill loop count (was B) */
+  int        B_iterations;       /* curvature fill loop count (was B) */
   int        DEdash_roadposacc;  /* banked road_pos accumulator (was DE') */
   int        A_curvature;        /* curvature byte for this iteration (was A) */
-  int        IX_l;                /* bend table byte offset accumulator (was IXl) */
+  int        IX_l;               /* bend table byte offset accumulator (was IXl) */
   int        HLdash_multiplied;  /* banked multiplier result (was HL') */
   int        BCdash;             /* banked bend-table entry minus road_pos (was BC') */
   u8         A_height;           /* height (was A) */
   int        carry;              /* carry flag */
   int        DE_roadpos;         /* road position for fill calls (was DE) */
   const u8  *HL_rowptr;          /* persp_x_delta_left row pointer (was HL) */
-  u8        *DE_curvature;        /* curvature_table delta write pointer (was DE) */
+  u8        *DE_curvature;       /* curvature_table delta write pointer (was DE) */
   int        Bdash_iterations;   /* add-loop / second fill count (was B) */
   int        DEdash_roadpos;     /* left hand (was DE') */
 
@@ -13567,7 +13567,7 @@ static void build_curve_table(chqstate_t *state, int forked)
   do {
     A_curvature = *HL_roadbufptr;
     if (forked)
-      A_curvature = -A_curvature;
+      A_curvature = (-A_curvature) & 0xFF;
     assert(A_curvature >= 0 && A_curvature <= 255);
 
     if (++HL_roadbufptr == state->roadbuf_end)
