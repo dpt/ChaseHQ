@@ -356,21 +356,21 @@ struct chqstate {
   // $A239
   u8        siren_enabled;
   // $A23A
-  u8        turbo_sfx_noise_pitch;
+  u8        turbo_sfx_pitch;
   // $A23B
   u8        tunnel_sfx;
   // $A23C
-  u8        trigger_right_hand_passed_object_sfx;
+  u8        trigger_righthand_sfx;
   // $A23D
-  u8        trigger_left_hand_passed_object_sfx;
+  u8        trigger_lefthand_sfx;
   // $A23E
   u8        off_road;
   // $A23F
   u8        fast_counter;
   // $A240
-  u8       *road_buffer_offset;
-  u8       *road_buffer_start; // Conv: additional
-  u8       *road_buffer_end; // Conv: additional
+  u8       *roadbufptr;
+  u8       *roadbuf_start; // Conv: additional
+  u8       *roadbuf_end; // Conv: additional
   // $A242
   u8        curvature_byte;
   // $A243
@@ -380,9 +380,9 @@ struct chqstate {
   // $A245
   u8        rightside_byte;
   // $A246
-  u8        hazards_counter_byte; // counter?
+  u8        hazards_counter;
   // $A247
-  u8        lanes_counter_byte;
+  u8        lanes_counter;
   // $A248
   u8        on_dirt_track;
   // $A249
