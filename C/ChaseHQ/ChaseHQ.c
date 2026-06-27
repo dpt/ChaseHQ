@@ -13522,24 +13522,25 @@ static void backdrop_fill_choice(chqstate_t *state, int DEbackbuf, int Lrow)
  */
 static void build_curve_table(chqstate_t *state, int forked)
 {
-  u16       *table1, *table2;
-  const u8  *road_buffer_ptr_HL; /* was HL */
-  int        curvature_C;        /* was C */
-  int        A;
-  int        B;
-  const u8  *IYheight;
-  const u16 *IXlanes;
-  u8        *DE;
-  int        DEdash;
-  int        curvature_A;
-  int        HLdash;
-  int        BCdash;
-  int        carry;
-  int        DEroadpos;          /* was DE */
-  u8        *DEcurvature;
-  const u8  *HLe760;
-  int        IXl;
-  int        Bdash;
+  u16       *table1;             /* right-side xpos output table (was H, SM $CC72) */
+  u16       *table2;             /* left-side xpos output table (was L, SM $CCA7) */
+  const u8  *road_buffer_ptr_HL; /* curvature road buffer pointer (was HL) */
+  int        curvature_C;        /* curvature byte from road buffer (was C) */
+  int        A;                  /* fast_counter mapping / multiply scratch (was A) */
+  const u8  *IYheight;           /* perspective x-scale row pointer (was IY) */
+  const u16 *IXlanes;            /* bend table pointer (was IX) */
+  u8        *DE;                 /* curvature_table write pointer (was DE) */
+  int        B;                  /* curvature fill loop count (was B) */
+  int        DEdash;             /* banked road_pos accumulator (was DE') */
+  int        curvature_A;        /* curvature byte for this iteration (was A) */
+  int        IXl;                /* bend table byte offset accumulator (was IXl) */
+  int        HLdash;             /* banked multiplier result (was HL') */
+  int        BCdash;             /* banked bend-table entry minus road_pos (was BC') */
+  int        carry;              /* carry flag */
+  int        DEroadpos;          /* road position for fill calls (was DE) */
+  const u8  *HLe760;             /* persp_x_delta_left row pointer (was HL) */
+  u8        *DEcurvature;        /* curvature_table delta write pointer (was DE) */
+  int        Bdash;              /* add-loop / second fill count (was B) */
 
   // Set up table pointer to *end* of tables we're building.
   if (forked) {
