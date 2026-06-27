@@ -39,9 +39,28 @@ Find and read the function in `C/ChaseHQ/ChaseHQ.c`. Record:
 
 ### Step 2 — Read the skool
 
-Search `ChaseHQ.skool` and the bank skool files
-(`ChaseHQ-128K-bank-1.skool`, `-bank-3.skool`, `-bank-4.skool`,
-`-bank-6.skool`, `-bank-7.skool`) for the Z80 address range.
+**Two versions of the game exist:** a 48K ZX Spectrum version and a 128K ZX
+Spectrum version. The C port targets the 128K version.
+
+- `ChaseHQ.skool` — the **48K version** (single flat address space, $4000–$FFFF)
+- `ChaseHQ-128K.skool` and `ChaseHQ-128K-bank-N.skool` — the **128K version**,
+  which uses banked memory. Because banks are paged in and out at runtime, the
+  128K files have **overlapping address ranges** — the same Z80 address can
+  appear in multiple bank files with different content. The bank files contain:
+  other stages' road/sprite data (banks 1, 3, 4), sound samples, the
+  end-of-game animation, and 128K-specific features (AY audio, paging).
+
+Search these files in order for the Z80 address range, preferring the 128K
+sources. When the address is ambiguous across banks, use surrounding labels and
+data to identify the correct bank.
+
+1. `ChaseHQ-128K.skool` — 128K main bank / paging code
+2. `ChaseHQ-128K-bank-1.skool`
+3. `ChaseHQ-128K-bank-3.skool`
+4. `ChaseHQ-128K-bank-4.skool`
+5. `ChaseHQ-128K-bank-6.skool`
+6. `ChaseHQ-128K-bank-7.skool`
+7. `ChaseHQ.skool` — 48K version (fallback; use only if not found above)
 
 For each instruction in the range note:
 

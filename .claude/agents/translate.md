@@ -30,15 +30,32 @@ The user provides either:
 
 ### Step 1 — Locate the function in the skool
 
+**Two versions of the game exist:** a 48K ZX Spectrum version and a 128K ZX
+Spectrum version. The skool files are:
+
+- `ChaseHQ.skool` — the **48K version** of the game (single flat address space,
+  $4000–$FFFF)
+- `ChaseHQ-128K.skool` and `ChaseHQ-128K-bank-N.skool` — the **128K version**,
+  which uses banked memory. Because banks are paged in and out at runtime, the
+  128K files have **overlapping address ranges** — the same Z80 address can
+  appear in multiple bank files, each holding different content. The bank files
+  contain: other stages' road/sprite data (banks 1, 3, 4), sound samples, the
+  end-of-game animation, and 128K-specific features (AY audio, paging).
+
+The C port targets the 128K version. When a function exists in both the 48K and
+128K skools, prefer the 128K source. When the address is ambiguous across banks,
+read enough context (preceding labels, surrounding data) to identify the correct
+bank.
+
 Search these files in order for the label or address:
 
-1. `ChaseHQ.skool` — main ROM bank (addresses $4000–$FFFF typically)
-2. `ChaseHQ-128K.skool` — 128K paging code
-3. `ChaseHQ-128K-bank-1.skool`
-4. `ChaseHQ-128K-bank-3.skool`
-5. `ChaseHQ-128K-bank-4.skool`
-6. `ChaseHQ-128K-bank-6.skool`
-7. `ChaseHQ-128K-bank-7.skool`
+1. `ChaseHQ-128K.skool` — 128K main bank / paging code
+2. `ChaseHQ-128K-bank-1.skool`
+3. `ChaseHQ-128K-bank-3.skool`
+4. `ChaseHQ-128K-bank-4.skool`
+5. `ChaseHQ-128K-bank-6.skool`
+6. `ChaseHQ-128K-bank-7.skool`
+7. `ChaseHQ.skool` — 48K version (fallback; use only if not found above)
 
 Read the complete function — from the entry label to the first `RET`/`JP`/`RETI`
 that is not a conditional branch back into the function. Include all labels
