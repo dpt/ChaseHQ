@@ -5876,6 +5876,7 @@ static void calc_overtake_bonus(chqstate_t *state)
  */
 static void update_scoreboard(chqstate_t *state)
 {
+  // CODE MISSING HERE!
   toggle_light_brightness(state, ADDRTOATTRS(MARQUEELIGHT_LEFT_ATTR_ADDR));
   toggle_light_brightness(state, ADDRTOATTRS(MARQUEELIGHT_RIGHT_ATTR_ADDR));
   plot_turbos_and_digits(state);
@@ -8954,15 +8955,17 @@ static void move_hero_car(chqstate_t *state)
 
 mhc_low_gear_slowing:
     if (speed < BCmax_speed)
-      BCspeed_diff = ((-speed >> 4) & 0x3F) | 1;
+      BCspeed_diff = (((BCmax_speed - speed) >> 4) & 0x3F) | 1;
     else
       BCspeed_diff = -(((speed >> 4) & 0x1F) | 1);
   } else {
     if (speed < SpeedHighGearMin) { // mhc_high_gear_slowing
       BCmax_speed = SpeedBoosted;
       // EX AF,AF' (unbank boost+flags)
-      if (!boost)
-        BCspeed_diff = ((speed >> 4) | 1) & 0x1F;
+      if (!boost) {
+        BCspeed_diff = ((speed >> 4) | 1) & 0x1F; // $B18C JR $B19A (skip accel/decel check)
+        goto mhc_check_brake;
+      }
     } else {
       BCmax_speed = SpeedHighGearBoosted;
       // EX AF,AF' (unbank boost+flags)
