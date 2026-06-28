@@ -5877,8 +5877,10 @@ static void calc_overtake_bonus(chqstate_t *state)
 static void update_scoreboard(chqstate_t *state)
 {
   // CODE MISSING HERE!
-  toggle_light_brightness(state, ADDRTOATTRS(MARQUEELIGHT_LEFT_ATTR_ADDR));
-  toggle_light_brightness(state, ADDRTOATTRS(MARQUEELIGHT_RIGHT_ATTR_ADDR));
+  if (state->sighted_flag & state->frame_toggle) { // $9DDC: AND C; JR Z,$9E11
+    toggle_light_brightness(state, ADDRTOATTRS(MARQUEELIGHT_LEFT_ATTR_ADDR));
+    toggle_light_brightness(state, ADDRTOATTRS(MARQUEELIGHT_RIGHT_ATTR_ADDR));
+  }
   plot_turbos_and_digits(state);
 }
 
