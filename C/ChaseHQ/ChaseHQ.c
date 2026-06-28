@@ -8905,8 +8905,8 @@ static void move_hero_car(chqstate_t *state)
   // Gear-speed thresholds
   const int SpeedIdleChatter  =
     120; // trigger "get moving" chatter below this speed
-  const int SpeedOffRoad1     = 110; // max speed with one wheel off-road
-  const int SpeedOffRoad2     = 120; // max speed with both wheels off-road
+  const int SpeedOffRoad1     = 120; // max speed with one wheel off-road
+  const int SpeedOffRoad2     = 110; // max speed with both wheels off-road
   const int SpeedHighGearMin  =
     220; // high gear uses two different max speeds above/below this
   const int SpeedLowGear      =
@@ -8956,6 +8956,7 @@ static void move_hero_car(chqstate_t *state)
   int        BCcount_scaled;       /* was BC */
   int        HLhorizontal_adjust;  /* was HL */
   int        DEadjust;             /* was DE */
+  int        Anet_turn;            /* was A */
 
   y_offset = state->mhc_y_offset; // load jump counter, highest is 8
   if (y_offset) {
@@ -9039,7 +9040,7 @@ mhc_low_gear_slowing:
     if (speed < BCmax_speed)
       BCspeed_diff = (((BCmax_speed - speed) >> 4) & 0x3F) | 1;
     else
-      BCspeed_diff = -(((speed >> 4) & 0x1F) | 1);
+      BCspeed_diff = -((((speed - BCmax_speed) >> 4) & 0x1F) | 1); /* $B15A: excess over cap */
   } else {
     if (speed < SpeedHighGearMin) { // mhc_high_gear_slowing
       BCmax_speed = SpeedBoosted;
@@ -9185,16 +9186,16 @@ mhc_handle_speed:
 
   state->right_turn = saved_Bright_turn; /* was POP BC */
   state->left_turn  = saved_Cleft_turn;
-  Acrashedflag = saved_Cleft_turn - saved_Bright_turn; /* net turning: left − right ($B2B2/$B2B6) */
-  if ((s8) Acrashedflag < 0)
+  Anet_turn = saved_Cleft_turn - saved_Bright_turn; /* net turning: left − right ($B2B2/$B2B6) */
+  if (Anet_turn < 0)
     DEadjust = 0xFF00;
-  DEadjust = (DEadjust & 0xFF00) | (Acrashedflag >> 1); /* was SRA */
+  DEadjust = (DEadjust & 0xFF00) | (Anet_turn >> 1); /* was SRA E ($B2BC) */
   HLhorizontal_adjust += DEadjust;
-  if (Acrashedflag && (s8) Acrashedflag < 0)
-    Acrashedflag = -Acrashedflag;
+  if (Anet_turn < 0)
+    Anet_turn = -Anet_turn; /* take magnitude for cornering/turn_speed below */
 
   Acornering = 0;
-  if (Acrashedflag >= 17) {
+  if (Anet_turn >= 17) {
     if ((s16) HLhorizontal_adjust < 0) {
       if ((s16) DEadjust < 0)
         goto mhc_set_cornering;
@@ -9210,13 +9211,11 @@ mhc_set_cornering:
   state->cornering = Acornering;
   state->scenedata.road_pos += HLhorizontal_adjust;
   Dflip_car = 1;
-  if (Enegative_scrolling < 0) {
+  if (DEadjust < 0) /* $B2F3 JP P: rightward net turn → flip sprite ($B2F7 DEC D) */
     Dflip_car = 0;
-    Acornering = -Acornering;
-  }
 
-  // This could be replaced with a division by six.
-  Bturn_speed = (Acornering < 12) ? (Acornering < 6) ? 0 : 1 :
+  /* $B2FA: turn_speed from |SRA(net_turn)| = half magnitude, compared to 12/6 */
+  Bturn_speed = (Anet_turn / 2 < 12) ? (Anet_turn / 2 < 6) ? 0 : 1 :
                 2; // straight/turn/turn-hard
 
   state->turn_speed = Bturn_speed; // should be 0/1/2
