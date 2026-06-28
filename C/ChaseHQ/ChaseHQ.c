@@ -6819,8 +6819,8 @@ static void csc_hit_scenery(chqstate_t *state, int Aflip_flag, int Adash_speed)
 /**
  * $A4B8: Scenery hit
  *
- * \param[in] state       Pointer to game state.
- * \param[in] Aflip_flag  Flip flag. (was A)
+ * \param[in] state           Pointer to game state.
+ * \param[in] Aflip_flag      Flip flag. (was A)
  * \param[in] Adash_speed Crash speed threshold. (was A')
  */
 static void scenery_hit(chqstate_t *state, int Aflip_flag, int Adash_speed)
@@ -9183,7 +9183,7 @@ mhc_handle_speed:
 
   state->right_turn = saved_Bright_turn; /* was POP BC */
   state->left_turn  = saved_Cleft_turn;
-  Acrashedflag -= saved_Bright_turn; // Seems odd
+  Acrashedflag = saved_Cleft_turn - saved_Bright_turn; /* net turning: left − right ($B2B2/$B2B6) */
   if ((s8) Acrashedflag < 0)
     DEadjust = 0xFF00;
   DEadjust = (DEadjust & 0xFF00) | (Acrashedflag >> 1); /* was SRA */
