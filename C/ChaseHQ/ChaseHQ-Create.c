@@ -117,31 +117,16 @@ static void chq_initialise(chqstate_t *state)
   // $E300
   state->height_table[0] = 0x60; // sentinel, hardcoded in Z80 RAM
 
-  /* $EF00: Build bit-reversal lookup table (done in bootstrap() in the full game) */
-  {
-    int i;
-    for (i = 0; i < 256; i++) {
-      u8 v, r;
-      int b;
-      v = (u8) i;
-      r = 0;
-      for (b = 0; b < 8; b++) {
-        r = (u8) ((r << 1) | (v & 1));
-        v >>= 1;
-      }
-      state->flipped[i] = r;
-    }
-  }
-
-  // Temp until the 128K input code is ported
-  state->keydefs[USERINPUT_RIGHT] = KEYDEF(4,2); // P
-  state->keydefs[USERINPUT_LEFT ] = KEYDEF(3,2); // O
-  state->keydefs[USERINPUT_DOWN ] = KEYDEF(4,5); // Q
-  state->keydefs[USERINPUT_UP   ] = KEYDEF(4,6); // A
-  state->keydefs[USERINPUT_FIRE ] = KEYDEF(2,0); // M
-  state->keydefs[USERINPUT_TURBO] = KEYDEF(4,0); // SPACE
-  state->keydefs[USERINPUT_PAUSE] = KEYDEF(4,4); // 1
-  state->keydefs[USERINPUT_QUIT ] = KEYDEF(4,3); // 0
+  // Temp until the 128K input code is ported.
+  state->kempston_flag = 0;
+  state->keydefs[KEYDEF_QUIT      ] = KEYDEF(4,3); // 0
+  state->keydefs[KEYDEF_PAUSE     ] = KEYDEF(4,4); // 1
+  state->keydefs[KEYDEF_BOOST     ] = KEYDEF(4,0); // SPACE
+  state->keydefs[KEYDEF_GEAR      ] = KEYDEF(2,0); // M
+  state->keydefs[KEYDEF_ACCELERATE] = KEYDEF(4,5); // Q
+  state->keydefs[KEYDEF_BRAKE     ] = KEYDEF(4,6); // A
+  state->keydefs[KEYDEF_LEFT      ] = KEYDEF(3,2); // O
+  state->keydefs[KEYDEF_RIGHT     ] = KEYDEF(4,2); // P
 }
 
 /* ----------------------------------------------------------------------- */

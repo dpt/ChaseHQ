@@ -961,7 +961,7 @@ static void draw_char(chqstate_t *state,
                       u8        **new_attrs);
 
 static u8 keyscan(chqstate_t *state);
-static u8 keyscan_keydefs(chqstate_t *state, const u8 *HLkeydefs, int Estopbit);
+static u8 keyscan_keydefs(chqstate_t *state, const u8 *HLkeydefs, u8 Estopbit);
 static int keyscan_inner(const chqstate_t *state, int Ainput);
 
 static void check_scenery_collisions(chqstate_t *state);
@@ -1607,7 +1607,7 @@ static void main_loop(chqstate_t *state)
     for (;;) {
       state->speccy->stamp(state->speccy);
       drive_sfx(state);
-      keyscan(state);
+      (void) keyscan(state);
       check_time_up(state);
       check_user_input(state);
       read_map(state);
@@ -1735,7 +1735,7 @@ static void cpu_driver(chqstate_t *state)
   state->user_input = 0;//input;
 
   state->speccy->stamp(state->speccy);
-  
+
   read_map(state);
   spawn_cars(state);
   cycle_counters(state);
@@ -2281,13 +2281,13 @@ static void check_user_input(chqstate_t *state)
 
   transctl = state->transition_control;
   puserinput = &state->user_input;
-  if (transctl != TRANSITIONCONTROL_FADE) {
-    *puserinput = USERINPUTMASK_NONE;
+  if (transctl == TRANSITIONCONTROL_FADE) {
+    *puserinput = USERINPUTFLAGMASK_NONE;
     return;
   }
 
   *puserinput = input = (state->session.user_input_mask & *puserinput);
-  if ((input & (USERINPUTFLAG_QUIT | USERINPUTFLAG_PAUSE | USERINPUTFLAG_TURBO)) == 0)
+  if ((input & (USERINPUTFLAG_QUIT | USERINPUTFLAG_PAUSE | USERINPUTFLAG_BOOST)) == 0)
     return;
 
   if (input & USERINPUTFLAG_QUIT) {
@@ -2314,10 +2314,10 @@ static void check_user_input(chqstate_t *state)
     while (keys & USERINPUTFLAG_PAUSE);
     do
       keys = keyscan(state);
-    while ((keys & USERINPUTMASK_NOT_QUIT) == 0);
+    while ((keys & USERINPUTFLAGMASK_NOT_QUIT) == 0);
     do
       keys = keyscan(state);
-    while ((keys & USERINPUTMASK_NOT_QUIT) != 0);
+    while ((keys & USERINPUTFLAGMASK_NOT_QUIT) != 0);
   }
 }
 
@@ -2334,8 +2334,8 @@ static void check_user_input_quit_key(chqstate_t *state)
   drive_chatter_stop(state);
   fill_attributes(state);
 
-  state->session.user_input_mask = USERINPUTMASK_ALLOW_NONE;
-  state->quit_state         = QUITSTATE_START;
+  state->session.user_input_mask = USERINPUTFLAGMASK_ALLOW_NONE;
+  state->quit_state = QUITSTATE_START;
 }
 
 /**
@@ -5630,7 +5630,7 @@ update_remaining_time:
 check_time_up:
   if (*ptime_bcd != 0) {
     state->time_up_state = TIMEUPSTATE_INIT;
-    state->session.user_input_mask = USERINPUTMASK_ALLOW_ALL;
+    state->session.user_input_mask = USERINPUTFLAGMASK_ALLOW_ALL;
     goto update_remaining_time;
   }
 
@@ -5662,7 +5662,7 @@ check_restart:
     state->time_up_state           = TIMEUPSTATE_INIT;
     state->smash_level             = 0;
     state->smash_counter           = 0;
-    state->session.user_input_mask = USERINPUTMASK_ALLOW_ALL;
+    state->session.user_input_mask = USERINPUTFLAGMASK_ALLOW_ALL;
     state->gear_lockout            = 3;
     state->transition_control      = TRANSITIONCONTROL_FILL_ATTRIBUTES;
     state->session.turbos          = MAXTURBOS;
@@ -6486,18 +6486,18 @@ static u8 keyscan(chqstate_t *state)
   }
   /* if up and down are both pressed then clear them both */
   state->user_input = ((Aorig & (USERINPUTFLAG_DOWN | USERINPUTFLAG_UP)) != (USERINPUTFLAG_DOWN | USERINPUTFLAG_UP)) ? Ekeys : Ekeys & ~(USERINPUTFLAG_DOWN | USERINPUTFLAG_UP);
-  return 0;
+  return state->user_input;
 }
 
 /**
  * $A112: Scan a key-definition list, rotating each result into an accumulator
  *
  * \param[in] state     Pointer to game state.
- * \param[in] HLkeydefs Pointer to keydefs.
+ * \param[in] HLkeydefs Pointer to keydefs array[8].
  * \param[in] Estopbit  Stop bit - 0x01 or 0x20 - when this bit shifts out we stop.
  * \return One bit set if key pressed.
  */
-static u8 keyscan_keydefs(chqstate_t *state, const u8 *HLkeydefs, int Estopbit)
+static u8 keyscan_keydefs(chqstate_t *state, const u8 *HLkeydefs, u8 Estopbit)
 {
   int carry;
 

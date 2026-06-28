@@ -1861,7 +1861,7 @@ const u8 *chatter_blocks[CHATTERBLK__LIMIT] = {
 const session_t saved_game_state = {
   1, // spawn_accumulator
   100, // idle_timer
-  USERINPUTMASK_ALLOW_ALL,
+  USERINPUTFLAGMASK_ALLOW_ALL,
   3, // turbos
   0x54, // horizon_level
   20, // perp_halt_counter

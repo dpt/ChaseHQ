@@ -187,3 +187,26 @@ A secondary error in the same function: after `Lrow--` the code re-read `*HL` to
 **Fix:** `B = 22`. Always convert hex loop-count literals to decimal explicitly and add `($CCxx LD B,$YY)` in the comment to make the source traceable.
 
 **Commit:** `fe9323a`
+
+---
+
+## 15. Keydef array ordering — sentinel-shift reverses bit positions
+
+**Root cause:** `keyscan_keydefs` uses a sentinel-bit trick: `Estopbit` starts with a single 1-bit and accumulates key states via repeated `RL E`. Each `RL` shifts the sentinel left and inserts the current key state at bit 0. After eight iterations (for `Estopbit = 0x01`) the sentinel exits through bit 7 into carry, stopping the loop. The result is:
+
+```
+bit 7 = keydefs[0]   (first scanned)
+bit 6 = keydefs[1]
+…
+bit 0 = keydefs[7]   (last scanned)
+```
+
+The `USERINPUTFLAG_*` constants follow the `user_input` bit layout `QPBFUDLR` (bit 7 = QUIT, bit 0 = RIGHT). For the bit positions to match, the keydefs array must be stored in the same order: `keydefs[0]` = the key whose pressed state should appear in bit 7 (QUIT), down to `keydefs[7]` = RIGHT (bit 0).
+
+**Symptom:** The keydefs were initialised with `keydefs[USERINPUT_RIGHT=0]` first and `keydefs[USERINPUT_QUIT=7]` last. This placed the RIGHT key at bit 7 of the result and QUIT at bit 0 — the exact opposite of the `USERINPUTFLAG_*` expectations. In keyboard mode every key action was mapped to the wrong input: pressing P (RIGHT) set bit 7, which the game read as QUIT; pressing 0 (QUIT) set bit 0, which the game read as RIGHT; and so on for all eight keys. Kempston (arrow-key/joystick) input was unaffected because it sets the Kempston register bits directly, which already match the `USERINPUTFLAG_*` positions.
+
+The Z80 post-processing (`ks_common` at `$A0FB`) confirms the expected layout: `AND $03; CP $03` checks bits 0+1 for simultaneous LEFT+RIGHT, and `AND $0C; CP $0C` checks bits 2+3 for simultaneous UP+DOWN — consistent with `USERINPUTFLAG_RIGHT=0x01`, `USERINPUTFLAG_LEFT=0x02`, `USERINPUTFLAG_DOWN=0x04`, `USERINPUTFLAG_UP=0x08`.
+
+**Fix:** Store the keydefs in descending flag order — QUIT at index 0 (→ bit 7), down to RIGHT at index 7 (→ bit 0). Use named physical-order constants (`KEYDEF_QUIT`, …, `KEYDEF_RIGHT`) rather than `USERINPUT_*` values as array indices, since `USERINPUT_*` are bit positions, not keydef slots.
+
+The same ordering is required in Kempston mode: `keyscan_keydefs` scans `keydefs[0..2]` for the three keyboard-only inputs. With the corrected order these are QUIT, PAUSE, TURBO — placed by the subsequent `RRCA×3 + AND $E0` post-processing into bits 7, 6, 5, matching `USERINPUTFLAG_QUIT/PAUSE/TURBO`.
