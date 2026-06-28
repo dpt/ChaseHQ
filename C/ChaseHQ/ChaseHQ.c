@@ -967,7 +967,7 @@ static int keyscan_inner(const chqstate_t *state, int Ainput);
 static void check_scenery_collisions(chqstate_t *state);
 static void csc_hit_scenery(chqstate_t *state, int Aflip_flag, int Adash_speed);
 
-static void scenery_hit(chqstate_t *state, int Aflip_flag, int Adash_speed);
+static void scenery_hit(chqstate_t *state, int Aflip_flag, int Adash_threshold);
 
 static void check_fork_scenery_collisions(chqstate_t *state, int DEdash,
     int HLdash);
@@ -6821,13 +6821,14 @@ static void csc_hit_scenery(chqstate_t *state, int Aflip_flag, int Adash_speed)
  *
  * \param[in] state           Pointer to game state.
  * \param[in] Aflip_flag      Flip flag. (was A)
- * \param[in] Adash_speed Crash speed threshold. (was A')
+ * \param[in] Adash_threshold Crash speed threshold. (was A')
  */
-static void scenery_hit(chqstate_t *state, int Aflip_flag, int Adash_speed)
+static void scenery_hit(chqstate_t *state, int Aflip_flag, int Adash_threshold)
 {
-  int HLspeed;    /* was HL */
-  int Anew_speed; /* was A */
-  int Lspeed;     /* was L */
+  int speed;        /* was HL */
+  int scaled_speed; /* was A */
+  int spin_speed;   /* was L */
+  int threshold;    /* was HL */
 
   if (state->ahc_crashed_flag)
     return; /* already crashed */
@@ -6837,19 +6838,20 @@ static void scenery_hit(chqstate_t *state, int Aflip_flag, int Adash_speed)
   state->ahc_crash_flip_count = Aflip_flag + 1;
   state->ahc_delay            = 5;
 
-  HLspeed = state->speed;
-  Anew_speed = (HLspeed >> 4) + 16;
-  // i.e. Lspeed = MAX(24, Aspeed);
-  Lspeed = 24;
-  if (Anew_speed >= Lspeed)
-    Lspeed = Anew_speed;
-  state->ahc_crash_spin_speed = (HLspeed & ~0xFF) | Lspeed;
+  speed = state->speed;
+  scaled_speed = (speed >> 4) + 16;
 
-  // i.e. HLspeed = MIN(Adash_speed, state->speed);
-  HLspeed = Adash_speed;
-  if (HLspeed >= state->speed)
-    HLspeed = state->speed;
-  state->ahc_crash_speed_threshold = HLspeed;
+  // i.e. spin_speed = MAX(24, Aspeed);
+  spin_speed = 24;
+  if (scaled_speed >= spin_speed)
+    spin_speed = scaled_speed;
+  state->ahc_crash_spin_speed = (speed & ~0xFF) | spin_speed;
+
+  // i.e. HL_threshold = MIN(Adash_threshold, state->speed);
+  threshold = Adash_threshold;
+  if (threshold >= state->speed)
+    threshold = state->speed;
+  state->ahc_crash_speed_threshold = threshold;
 }
 
 /**
@@ -7072,7 +7074,7 @@ void perp_behaviour(chqstate_t *state, hazard_t *IXperp)
   const u8 *HLtab;              /* was HL */
   int       Acurrlane;          /* was A */
   int       BCspawn_lanes;      /* was BC */
-  int       Adash;              /* was A' */
+  int       Adash_threshold;              /* was A' */
 
   int       HLspeed;            /* was HL */
   int       smash_twice;        // Additional
@@ -7357,8 +7359,8 @@ pb_set_delay:
   if (Ahit_timer >= 3)
     Ahit_timer -= 3;
 
-  Adash = (state->boost == 0) ? 200 : 230;
-  scenery_hit(state, Ahit_timer, Adash);
+  Adash_threshold = (state->boost == 0) ? 200 : 230;
+  scenery_hit(state, Ahit_timer, Adash_threshold);
 
   state->ahc_crash_speed_threshold += 40;
 
