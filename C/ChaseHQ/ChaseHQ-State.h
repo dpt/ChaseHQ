@@ -264,10 +264,10 @@ struct chqstate {
   // $9D51
   char      bonus_string[6];
   // $9D5B
-  char      stage_n[7];
+  u8        stage_n[7];
 
   // $9D9B
-  char     *SM_address_of_score_digits; // was self modified
+  const u8 *SM_address_of_score_digits;
 
   // $9E22 (SM) in plot_turbos_and_scores
   u8        turbo_spin_frame;

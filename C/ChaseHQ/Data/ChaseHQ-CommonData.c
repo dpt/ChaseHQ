@@ -1598,6 +1598,11 @@ const u8 continue_messages_template[119] = {
   0x03, 0x00
 };
 
+// $9D5B
+const u8 stage_n_template[7] = {
+  'S', 'T', 'A', 'G', 'E', ' ', ' ' | EOS,
+};
+
 // $98A9
 const u8 chatterblk_pilot_turn_left[6] = {
   CHATTERCHR_PILOT,

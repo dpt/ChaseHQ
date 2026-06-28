@@ -39,6 +39,8 @@ static void chq_initialise(chqstate_t *state)
     { offsetof(chqstate_t, score_messages), &score_messages_template[0], sizeof(score_messages_template) },
     // $8D18
     { offsetof(chqstate_t, continue_messages), &continue_messages_template[0], sizeof(continue_messages_template) },
+    // $9D5B
+    { offsetof(chqstate_t, stage_n), &stage_n_template[0], sizeof(stage_n_template) },
     // $CE0C
     { offsetof(chqstate_t, smokes[0]), &smoke_ce0c_template[0], sizeof(smoke_ce0c_template) },
     // $CE19

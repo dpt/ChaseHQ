@@ -153,9 +153,9 @@
 #define VALID_BACKBUF_PTR_LR(ptr, left, right) \
 ((ptr) >= &state->backbuffer[-left] && (ptr) < &state->backbuffer[BACKBUFFER_LENGTH + right])
 
-#define VALID_SCREEN(ptr)       VALID_SCREEN_LR(ptr, 0, 0)
-#define VALID_ATTRS(ptr)        VALID_ATTRS_LR(ptr, 0, 0)
-#define VALID_BACKBUF_PTR(ptr)  VALID_BACKBUF_PTR_LR(ptr, 0, 0)
+#define VALID_SCREEN_PTR(ptr)  VALID_SCREEN_LR(ptr, 0, 0)
+#define VALID_ATTRS_PTR(ptr)   VALID_ATTRS_LR(ptr, 0, 0)
+#define VALID_BACKBUF_PTR(ptr) VALID_BACKBUF_PTR_LR(ptr, 0, 0)
 
 
 /* Address validators */
@@ -937,13 +937,13 @@ static const u8 *draw_string_with_style(chqstate_t *state,
                                         u8         *backbuf,
                                         const u8   *string,
                                         int          style);
-static const u8 *draw_string_generic(chqstate_t *state,
+static const u8 *draw_string_screen(chqstate_t *state,
                                      int          attrval,
                                      u8         *attrs,
-                                     u8         *backbuf,
+                                     u8         *dst,
                                      const u8   *string);
 static const u8 *draw_string_core(chqstate_t *state,
-                                  u8         *backbuf,
+                                  u8         *dst,
                                   const u8   *string,
                                   int          style,
                                   int          attrval,
@@ -952,7 +952,7 @@ static const u8 *draw_string_core(chqstate_t *state,
 
 static void draw_char(chqstate_t *state,
                       int          character,
-                      u8         *backbuf,
+                      u8         *dst,
                       int          style,
                       int          attrval,
                       int          attrstride,
@@ -5876,11 +5876,93 @@ static void calc_overtake_bonus(chqstate_t *state)
  */
 static void update_scoreboard(chqstate_t *state)
 {
-  // CODE MISSING HERE!
-  if (state->sighted_flag & state->frame_toggle) { // $9DDC: AND C; JR Z,$9E11
+  /* $9D57: "HI"/"LO" gear strings */
+  static const u8 gear_hi[] = { 'H', 'I' | EOS };
+  static const u8 gear_lo[] = { 'L', 'O' | EOS };
+
+  int       A_stagechar;  /* stage digit character (was A) */
+  int       A_bonus_flag; /* trigger_bonus_flag value (was A) */
+  u8       *HL_screen;    /* screen pixel pointer for bonus-area clear (was HL) */
+  int       B_iterations; /* loop counter (was B) */
+  int       A_counter;    /* bonus counter value, shared across goto (was A) */
+  int       carry;        /* SRL carry: bit 0 of A before shift */
+  int       C_attrval;    /* bonus flash attribute colour (was C) */
+  u8       *HL_attrs;     /* attribute pointer for bonus flash (was HL) */
+  int       A_gear;       /* current gear value (was A) */
+
+  /* $9D62 — stage display: draw stage text once on first call */
+  if (state->displayed_stage == 0) {
+    A_stagechar = ('0' + state->wanted_stage_number) | EOS;
+    state->stage_n[6]      = A_stagechar;
+    state->displayed_stage = A_stagechar;
+    /* Conv: attrs/attrval unused by style */
+    draw_string_screen(state,
+                       0,
+                       ADDRTOATTRS(SCREEN_ATTRIBUTES_START_ADDRESS),
+                       ADDRTOSCREEN(0x4486),
+                       &state->stage_n[0]);
+  }
+
+  /* $9D7C us_bonus_start — bonus digit trigger */
+  A_bonus_flag = state->trigger_bonus_flag;
+  if (A_bonus_flag != 0) {
+    state->trigger_bonus_flag = 0;
+    /* $9D86 — clear 5 x 7 pixel area at screen $4168 */
+    HL_screen = ADDRTOSCREEN(0x4168);
+    B_iterations = 7;
+    do {
+      memset(HL_screen, 0, 5); /* Conv: use memset */
+      HL_screen += 256; /* Conv: INC H advances one scanline = +256 in pixel array */
+    } while (--B_iterations);
+    /* $9D9B — draw bonus score digits at screen $4168 */
+    draw_string_screen(state,
+                       0,
+                       ADDRTOATTRS(SCREEN_ATTRIBUTES_START_ADDRESS),
+                       ADDRTOSCREEN(0x4168),
+                       state->SM_address_of_score_digits);
+    A_counter = 8;
+  } else {
+    /* $9DA5 us_bonus_countdown — decrement bonus flash counter */
+    A_counter = state->bonus_counter;
+    if (A_counter == 0)
+      goto us_gear;
+    A_counter--;
+  }
+
+  /* $9DAC - set bonus counter */
+  state->bonus_counter = A_counter;
+  /* $9DAF — SRL: capture bit 0 then shift; carry determines red vs yellow */
+  carry = A_counter & 1;
+  A_counter >>= 1;
+  C_attrval = A_counter;
+  if (C_attrval != 0) {
+    C_attrval = 0x42;  /* BRIGHT + red over black */
+    if (!carry)
+      C_attrval = 0x46; /* BRIGHT + yellow over black */
+  }
+  /* $9DBA — write colour to 5 attribute cells at $5868 */
+  memset(ADDRTOATTRS(0x5868), C_attrval, 5); /* Conv: use memset */
+
+us_gear:
+  /* $9DC3 — gear display: redraw only when gear changes */
+  A_gear = state->gear;
+  /* $9DC9 */
+  if (A_gear != state->session.displayed_gear) {
+    state->session.displayed_gear = (u8)A_gear;
+    /* $9DCF — Conv: AND A/JR Z collapsed to ternary selecting gear string */
+    draw_string_screen(state,
+                       0,
+                       ADDRTOATTRS(SCREEN_ATTRIBUTES_START_ADDRESS),
+                       ADDRTOSCREEN(0x448E),
+                       (A_gear == 0) ? gear_lo : gear_hi);
+  }
+
+  /* $9DDC us_lights */
+  if (state->sighted_flag & state->frame_toggle) {
     toggle_light_brightness(state, ADDRTOATTRS(MARQUEELIGHT_LEFT_ATTR_ADDR));
     toggle_light_brightness(state, ADDRTOATTRS(MARQUEELIGHT_RIGHT_ATTR_ADDR));
   }
+
   plot_turbos_and_digits(state);
 }
 
@@ -6210,37 +6292,37 @@ static const u8 *draw_string_with_style(chqstate_t *state,
 }
 
 /**
- * $9FA3: Draw string
+ * $9FA3: Draw string to screen
  *
  * \param[in] state   Pointer to game state.
  * \param[in] attrval Attribute value. (was A)
  * \param[in] attrs   Attribute address. (was BC)
- * \param[in] backbuf Back buffer address. (was DE)
+ * \param[in] dst     Screen address. (was DE)
  * \param[in] string  String data pointer. (was HL)
  * \return Pointer past last character written.
  */
-static const u8 *draw_string_generic(chqstate_t *state,
-                                     int          attrval,
+static const u8 *draw_string_screen(chqstate_t *state,
+                                     int         attrval,
                                      u8         *attrs,
-                                     u8         *backbuf,
+                                     u8         *dst,
                                      const u8   *string)
 {
   return draw_string_core(state,
-                          backbuf,
+                          dst,
                           string, /*HL*/
-                          DRAWCHARSTYLE_GENERIC, /*A'*/
+                          DRAWCHARSTYLE_SCREEN, /*A'*/
                           attrval, /*C'*/
                           32, /*DE'*/
                           attrs/*HL'*/);
 }
 
 /**
- * $9FA6: Draw string core
+ * $9FA6: Draw string to screen or back buffer
  *
  * Broken out from above.
  *
  * \param[in] state       Pointer to game state.
- * \param[in] backbuf     Back buffer address. (was DE)
+ * \param[in] dst         Screen or back buffer address. (was DE)
  * \param[in] string      String data pointer. (was HL)
  * \param[in] style       Draw style. (was A')
  * \param[in] attrval     Attribute value. (was C')
@@ -6249,7 +6331,7 @@ static const u8 *draw_string_generic(chqstate_t *state,
  * \return Pointer past last character written.
  */
 static const u8 *draw_string_core(chqstate_t *state,
-                                  u8         *backbuf,
+                                  u8         *dst,
                                   const u8   *string,
                                   int         style,
                                   int         attrval,
@@ -6260,19 +6342,19 @@ static const u8 *draw_string_core(chqstate_t *state,
 
   do {
     character = *string & ~EOS;
-    draw_char(state, character, backbuf, style, attrval, attrsstride, attrs,
-              &backbuf, &attrs);
+    draw_char(state, character, dst, style, attrval, attrsstride, attrs,
+              &dst, &attrs);
   } while ((*string++ & EOS) == 0);
 
   return string;
 }
 
 /**
- * $9FB4: Draw char
+ * $9FB4: Draw single character
  *
  * \param[in] state      Pointer to game state.
  * \param[in] character  Character. (was A)
- * \param[in] backbuf     Screen address. (was DE)
+ * \param[in] dst        Screen or backbuffer address. (was DE)
  * \param[in] style      Draw style. (was A')
  * \param[in] attrval    Attribute value. (was C')
  * \param[in] attrstride Attribute stride. (was DE')
@@ -6282,7 +6364,7 @@ static const u8 *draw_string_core(chqstate_t *state,
  */
 static void draw_char(chqstate_t *state,
                       int         character,
-                      u8         *backbuf,
+                      u8         *dst,
                       int         style,
                       int         attrval,
                       int         attrstride,
@@ -6297,15 +6379,14 @@ static void draw_char(chqstate_t *state,
   u8       *orig;       /* was stacked */
   int       i;          // additional
 
-  assert(backbuf);
+  assert(VALID_SCREEN_PTR(dst) || VALID_BACKBUF_PTR(dst));
   assert(style <= DRAWCHARSTYLE__LIMIT);
-  assert(VALID_BACKBUF_PTR(backbuf));
-  assert(VALID_ATTRS(attrs));
+  assert(VALID_ATTRS_PTR(attrs));
 
   character -= ' ';
   if (character == 0) {
     // Space
-    backbuf++;
+    dst++;
     attrs++;
     goto dc_return;
   }
@@ -6338,7 +6419,7 @@ dc_have_single:
 
   /* Conv: if-else ladder replaced with switch. */
   switch (style) {
-  case 1: goto dc_generic;
+  case 1: goto dc_screen;
   case 2: goto dc_single_height;
   case 3: goto dc_double_height;
   case 4: goto dc_single_height_inverted;
@@ -6348,65 +6429,65 @@ dc_have_single:
   }
 
   // Otherwise it's type 0 or anything else
-  orig = backbuf;
+  orig = dst;
   iterations = 4;
   do {
     data = *fontdata++;
-    *backbuf = data;
-    backbuf += 256;
-    *backbuf = data;
-    backbuf += 256;
+    *dst = data;
+    dst += 256;
+    *dst = data;
+    dst += 256;
   } while (--iterations > 0);
-  backbuf -= 8 * 256;
-  backbuf += 32;
+  dst -= 8 * 256;
+  dst += 32;
   iterations = 3;
   do {
     data = *fontdata++;
-    *backbuf = data;
-    backbuf += 256;
-    *backbuf = data;
-    backbuf += 256;
+    *dst = data;
+    dst += 256;
+    *dst = data;
+    dst += 256;
   } while (--iterations > 0);
   goto dc_set_double_attrs;
 
   // double height inverted
 dc_double_height_inverted:
-  orig = backbuf;
+  orig = dst;
   iterations = 7;
   do {
     data = ~*fontdata++;
-    *backbuf = data;
-    backbuf += 256;
-    *backbuf = data;
-    backbuf += 256;
+    *dst = data;
+    dst += 256;
+    *dst = data;
+    dst += 256;
   } while (--iterations > 0);
   goto dc_set_double_attrs;
 
 dc_single_height_inverted:
-  orig = backbuf;
+  orig = dst;
   iterations = 7;
   do {
-    *backbuf = ~*fontdata++;
-    backbuf += 256;
+    *dst = ~*fontdata++;
+    dst += 256;
   } while (--iterations > 0);
   goto dc_set_single_attrs;
 
-  // Plots double-height glyphs. backbuf->backbuf font->glyph def
+  // Plots double-height glyphs. dst->dst font->glyph def
 dc_double_height:
-  orig = backbuf;
-  *backbuf = 0; // leave gap at top
-  backbuf += 256;
+  orig = dst;
+  *dst = 0; // leave gap at top
+  dst += 256;
   for (i = 0; i < 7; i++) { // Conv: rolled up
-    *backbuf = *fontdata;
-    backbuf += 256;
-    *backbuf++ = *fontdata++; /* was LDI, could reuse A */
-    backbuf--; /* was DEC E, could remove if backbuf++ above is dropped */
-    backbuf += 256;
+    *dst = *fontdata;
+    dst += 256;
+    *dst++ = *fontdata++; /* was LDI, could reuse A */
+    dst--; /* was DEC E, could remove if dst++ above is dropped */
+    dst += 256;
   }
-  *backbuf = 0; // leave gap at bottom
+  *dst = 0; // leave gap at bottom
 
 dc_set_double_attrs:
-  backbuf = orig + 1; /* was POP backbuf, INC E */
+  dst = orig + 1; /* was POP dst, INC E */
   *attrs |= attrval;
   attrs += attrstride;
   *attrs |= attrval;
@@ -6415,36 +6496,33 @@ dc_set_double_attrs:
   goto dc_return;
 
 dc_single_height: // seems to store 9 rows
-  orig = backbuf;
-  *backbuf = 0; // leave gap at top
-  backbuf += 256;
+  orig = dst;
+  *dst = 0; // leave gap at top
+  dst += 256;
   for (i = 0; i < 7; i++) { // Conv: rolled up
-    *backbuf++ = *fontdata++;
-    backbuf--; // could drop
-    backbuf += 256;
+    *dst++ = *fontdata++;
+    dst--; // could drop
+    dst += 256;
   }
-  *backbuf = 0; // leave gap at bottom
+  *dst = 0; // leave gap at bottom
 
 dc_set_single_attrs:
-  backbuf = orig + 1; /* was POP backbuf, INC E */
+  dst = orig + 1; /* was POP dst, INC E */
   *attrs |= attrval;
   attrs++; /* was INC L */
   goto dc_return;
 
-dc_generic:
-  orig = backbuf;
+dc_screen:
+  orig = dst;
   iterations = 7;
   do {
-    *backbuf = *fontdata++;
-    backbuf += 256;
-    assert(0);
-    // variation on nextscrrow()
-    // backbuf = nextscrrow(backbuf); // won't work!
+    *dst = *fontdata++;
+    dst = ADDRTOSCREEN(nextscrrow(SCREENTOADDR(dst)));
   } while (--iterations > 0);
-  backbuf = orig + 1; /* was POP backbuf */
+  dst = orig + 1; /* was POP dst */
 
 dc_return:
-  *new_screen = backbuf;
+  *new_screen = dst;
   *new_attrs  = attrs;
 }
 

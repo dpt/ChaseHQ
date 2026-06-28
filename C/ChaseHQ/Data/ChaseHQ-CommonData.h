@@ -109,6 +109,7 @@ const u8 pull_over_message[30];
 const u8 game_over_message[20];
 const u8 time_up_message[20];
 const u8 continue_messages_template[119];
+const u8 stage_n_template[7];
 
 const u8 chatterblk_pilot_turn_left[6];
 const u8 chatterblk_pilot_turn_right[6];
