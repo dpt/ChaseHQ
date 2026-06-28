@@ -12743,7 +12743,7 @@ static void dr_fill_left_stripe(chqstate_t *state,
   // --Ccounter reaches 0 and the call is skipped) falls through to the
   // height-check.
   if (--Ccounter > 0) {
-    state->dr_fill_fn(state, Ccounter, DEbackbuf, Lrow, state->dr_fill_pattern,
+    state->dr_fill_fn(state, Ccounter, DEbackbuf, Lrow, Adash_fill_pattern,
                       IXlanesptr, IYheightptr);
     return;
   }
