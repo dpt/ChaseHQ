@@ -84,7 +84,6 @@
 
 #include <assert.h>
 #include <stddef.h>
-#include <stddef.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -5935,11 +5934,8 @@ static void update_scoreboard(chqstate_t *state)
   carry = A_counter & 1;
   A_counter >>= 1;
   C_attrval = A_counter;
-  if (C_attrval != 0) {
-    C_attrval = 0x42;  /* BRIGHT + red over black */
-    if (!carry)
-      C_attrval = 0x46; /* BRIGHT + yellow over black */
-  }
+  if (C_attrval != 0)
+    C_attrval = (carry) ? attribute_BRIGHT_RED_OVER_BLACK : attribute_BRIGHT_YELLOW_OVER_BLACK;
   /* $9DBA — write colour to 5 attribute cells at $5868 */
   memset(ADDRTOATTRS(0x5868), C_attrval, 5); /* Conv: use memset */
 
@@ -6178,22 +6174,22 @@ ptas_turbo_setup:
 }
 
 /**
- * $9F1E: Ptas led digits
+ * $9F1E: Draw LED digits
  *
  * \param[in] state      Pointer to game state.
  * \param[in] iterations Iterations. (was B)
- * \param[in] digits     Digits. (was DE)
- * \param[in] stored     Stored. (was HL)
+ * \param[in] digits     Address of digits to draw (end of buffer). (was DE)
+ * \param[in] stored     Address of already-drawn digits (end of buffer). (was HL)
  * \param[in] screen     Screen address. (was DE')
  */
 static void ptas_led_digits(chqstate_t *state,
-                            int          iterations,
+                            int         iterations,
                             const u8   *digits,
                             u8         *stored,
                             u8         *screen)
 {
-  int Adigits;
-  int Cdigits;
+  int Adigits; /* was A */
+  int Cdigits; /* was C */
 
   do {
     Adigits = *digits;
@@ -12261,7 +12257,7 @@ static void draw_road(chqstate_t *state)
   state->dr_edge_graphic_offset = Lstripe_height; // 16 or 48
   state->dr_right_edge_offset = Lstripe_height + 1; // 17 or 49
   state->dr_callback = dr_four_lane_highway;
-  Lrow = 0xFF; // row number, or ?
+  Lrow = 0xFF; // row -1
   DEbackbuf = 0x0100; /* a wrapped-around ROM address since we draw by PUSHing! */
   state->dr_fill_pattern = Bfill_pattern;
 
@@ -12648,7 +12644,6 @@ static void dr_fill(chqstate_t *state,
   Ldash_backbuf = (DEdash_backbuf & 0xFF) + 31;
   Hdash_backbuf = DEdash_backbuf >> 8;
   SPoutput = ADDRTOBACKBUF((Hdash_backbuf << 8) | Ldash_backbuf);
-  assert(VALID_BACKBUF_PTR_LR(SPoutput, 0, 0x20)); // allow $001F
 
   // EX AF,AF' - unbank Afill
   RLC(Adash_fill_pattern); // Rotate fill pattern so we checkerboard
@@ -12661,12 +12656,15 @@ static void dr_fill(chqstate_t *state,
   // Conv: uses memset
   int n;
   n = (15 - state->dr_right_stripe_width) * 2;
+  assert(VALID_BACKBUF_PTR(SPoutput));
   memset(SPoutput -= n, HLdash_fill, n);
 
   /* Fill blank road surface - continuing from the right hand side. */
   // Conv: uses memset
   n = (15 - state->dr_road_width) * 2;
-  memset(SPoutput -= n, BCdash_zerofill, n);
+  assert(VALID_BACKBUF_PTR(SPoutput));
+  if (n)
+    memset(SPoutput -= n, BCdash_zerofill, n);
 
   dr_fill_left_stripe(state,
                       SPoutput,
@@ -12730,13 +12728,12 @@ static void dr_fill_left_stripe(chqstate_t *state,
   u8        Cheight_diff;
   s8        Anew_diff;
 
-  assert(VALID_BACKBUF_PTR_LR(SPoutput, 0, 0x20)); // allow $001F
-
-
   // Conv: use memset
   int n = (15 - jump_index) * 2;
   assert(n >= 0);
-  memset(SPoutput -= n, Hdash_fill & 0xFF, n);
+  assert(VALID_BACKBUF_PTR(SPoutput));
+  if (n)
+    memset(SPoutput -= n, Hdash_fill & 0xFF, n);
 
   Bdash = DEbackbuf & 0xFF;
   Cdash_zerofill--; // 0 -> 255
@@ -12994,6 +12991,7 @@ static void dr_start_backdrop_fill(chqstate_t *state, int DEbackbuf, int Lrow)
   int        BC_backdrop_offset; /* row byte offset into backdrop = (24-C)*10 (was BC) */
   int        Ascroll;            /* dr_horizon_x_scroll >> 1, selects shift amount (was A) */
   const u8  *HLbackdrop;         /* pointer to first byte of the current backdrop row (was HL) */
+  int        Ajump;              /* offset for copying instructions (was A) */
   int        Bloop;              /* scanline countdown = dr_sky_rows (was B in DJNZ) */
   int        A_col;              /* backdrop source column; reset per LD L,A via A' (was L/A') */
   const u8  *HLsrc;              /* backdrop source pointer within the current row (was HL in LDI) */
@@ -13050,9 +13048,10 @@ dr_c7db: /* $C7DB */
     Ascroll >>= 1; // halve the actual shift
     // CHECK is this the right way around?
     HLbackdrop = carry ? &state->stage->backdrop[BC_backdrop_offset] : &state->pre_shifted_backdrop[BC_backdrop_offset];
-    A = (u8)(18 - (int)(u8)Ascroll * 2); /* $C7F4-$C7F6 */
-    state->dr_backdrop_copy_jump = (u8)A;
-    memcpy(state->dr_backdrop_copy_instrs, &backdrop_copy_instrs_template[A], 18);
+    Ajump = (u8)(18 - (int)(u8)Ascroll * 2); /* $C7F4-$C7F6 */
+    state->dr_backdrop_copy_jump = (u8)Ajump;
+    assert(Ajump + 18 <= 36);
+    memcpy(&state->dr_backdrop_copy_instrs[0], &backdrop_copy_instrs_template[Ajump], 18);
 
     /* $C80A: BC = (dr_sky_rows<<8) | 0x0A.  $C80E LD A,L gives backdrop row offset.
      * In C: HLbackdrop already points to the correct row, so A_col starts at 0
