@@ -3,16 +3,18 @@ perhaps build unit tests now to flush out problems ahead of time.
 
 # BUGS
 
-- Toggling gear down not working
 - Lane markings don't appear closest to player: draw_road_scene_change
   (Bresenham interpolation) is called at map position 3 (stage 1 lane
   transition) and pushes some xpos entries off-screen at Lrow=0xFF.
   Verify whether this matches Z80 behaviour or is a translation bug.
-- Startup scene obviously wrong road type (should be three lanes)
 - Radio screen sometimes have leftover transition animation parts
+- Perp escape scene causes an immediate crash
+
+
+# TODO
+
 - Main game runs too fast - need to calibrate against original
 - Object plotting broken and commented out for now
-- Perp escape scene causes an immediate crash
 
 
 # IDEAS
@@ -39,6 +41,8 @@ perhaps build unit tests now to flush out problems ahead of time.
 
 # DONE
 
+- Toggling gear down not working
+- Startup scene obviously wrong road type (should be three lanes)
 - Steering seems broken - unsure - is car actually moving?
   - Steeting right is working?
 - Add Code tidying agent - validating for readability too
