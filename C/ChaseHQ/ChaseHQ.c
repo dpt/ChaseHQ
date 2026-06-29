@@ -1650,7 +1650,7 @@ static void main_loop(chqstate_t *state)
       play_regular_sfx_hook(state);
       update_screen(state);
       exit_fork(state);
-      state->speccy->sleep(state->speccy, 100000); // guess
+      state->speccy->sleep(state->speccy, 250000); // guess
 
       if (state->test_mode) {
         keys = ~state->speccy->in(state->speccy, port_KEYBOARD_12345) & 0x1F;
@@ -1752,7 +1752,7 @@ static void cpu_driver(chqstate_t *state)
   check_scenery_collisions(state);
   animate_hero_car(state); /* exit via */
 
-  state->speccy->sleep(state->speccy, 150000); // guess
+  state->speccy->sleep(state->speccy, 250000); // guess
 }
 
 /**
@@ -1892,7 +1892,7 @@ static int run_pregame_screen_loop(chqstate_t *state)
   }
 
 exit:
-  state->speccy->sleep(state->speccy, 250000); // wild guess
+  state->speccy->sleep(state->speccy, 250000); // guess
   return rc; // loop
 }
 
@@ -8986,18 +8986,17 @@ static void move_hero_car(chqstate_t *state)
 
   Ainput = Cinput;
   // PUSH Ainput (PUSH AF)
-  const int fire_pressed = (Ainput & USERINPUTFLAG_FIRE);
+  const int fire_pressed = (Ainput & USERINPUTFLAG_FIRE) != 0;
   pgear = &state->gear; // could use state
-  if (fire_pressed != 0 && state->gear_lockout == 0) {
+  gear_lockout = (s8) state->gear_lockout;
+  if (fire_pressed != 0 && gear_lockout == 0) {
     *pgear ^= 1; // Toggle gear flag
     smoke = gear_lockout = 4;
     if (*pgear)
       state->smoke = smoke;
-  } else {
-    gear_lockout = 0; // Conv: Added
   }
 
-  if ((s8) --gear_lockout >= 0)
+  if (--gear_lockout >= 0)
     state->gear_lockout = gear_lockout;
 
   gear = *pgear;
