@@ -393,7 +393,7 @@ typedef struct stage {
 /* ----------------------------------------------------------------------- */
 
 #define MAX_STAGES    5
-const stage_t *stages[MAX_STAGES];
+const stage_t *stages[MAX_STAGES + 2]; /* [0]=pregame, [1..5]=game stages, [6]=end-sequence */
 
 /* ----------------------------------------------------------------------- */
 

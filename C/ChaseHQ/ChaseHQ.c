@@ -2218,6 +2218,15 @@ static void set_up_stage(chqstate_t        *state,
   state->rm_hazard_byte = 0; // clear current hazard command
   state->mhc_y_offset = 0; // reset car jump counter
 
+  /* Reset map-reader counters so the first rm_cycle_buffer_offset call
+   * reloads from the new scenedata, not the previous stage's stale data. */
+  state->curvature_byte  = 0;
+  state->height_byte     = 0;
+  state->lanes_counter   = 0;
+  state->leftside_byte   = 0;
+  state->rightside_byte  = 0;
+  state->hazards_counter = 0;
+
   state->hazards[0].hittable.bitmaps = state->stage->bitmaps_perp_car;
 
   // Conv: Duplicate work removed.
@@ -14019,7 +14028,7 @@ static void entrypt_common(chqstate_t *state, int Amode_128k, int Bnrelocs)
 #endif
 
   // Conv: Load stage 1 data before attract mode starts (state->stage must not be NULL).
-  state->stage = stages[0];
+  state->stage = stages[1];
 
   bootstrap(state);
 }

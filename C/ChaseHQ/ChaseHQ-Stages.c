@@ -23,10 +23,12 @@
 
 #include "ChaseHQ-Stages.h"
 
-const stage_t *stages[MAX_STAGES] = {
-  &stage1,
-  &stage2,
-  &stage3,
-  &stage4,
-  &stage5
+const stage_t *stages[MAX_STAGES + 2] = {
+  &stage1, /* [0]: pregame (wanted_stage_number=0) */
+  &stage1, /* [1]: game stage 1 */
+  &stage2, /* [2]: game stage 2 */
+  &stage3, /* [3]: game stage 3 */
+  &stage4, /* [4]: game stage 4 */
+  &stage5, /* [5]: game stage 5 */
+  &stage5, /* [6]: end-sequence reload (wanted_stage_number briefly hits 6) */
 };

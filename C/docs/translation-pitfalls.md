@@ -210,3 +210,25 @@ The Z80 post-processing (`ks_common` at `$A0FB`) confirms the expected layout: `
 **Fix:** Store the keydefs in descending flag order — QUIT at index 0 (→ bit 7), down to RIGHT at index 7 (→ bit 0). Use named physical-order constants (`KEYDEF_QUIT`, …, `KEYDEF_RIGHT`) rather than `USERINPUT_*` values as array indices, since `USERINPUT_*` are bit positions, not keydef slots.
 
 The same ordering is required in Kempston mode: `keyscan_keydefs` scans `keydefs[0..2]` for the three keyboard-only inputs. With the corrected order these are QUIT, PAUSE, TURBO — placed by the subsequent `RRCA×3 + AND $E0` post-processing into bits 7, 6, 5, matching `USERINPUTFLAG_QUIT/PAUSE/TURBO`.
+
+---
+
+## 16. Stage array off-by-one — 0-indexed array with 1-indexed stage numbers
+
+**Root cause:** The Z80 game uses stage numbers 1–5. The C `stages[]` lookup array was declared with five entries indexed 0–4 (`stages[0] = &stage1` … `stages[4] = &stage5`). The game sets `wanted_stage_number = 1` at startup and indexes directly with it, so `stages[1]` loaded stage 2's data for stage 1, every stage loaded the wrong data, stage 5 (`stages[5]`) was out of bounds, and the end-of-game reload (`wanted_stage_number = 6`, `stages[6]`) was also out of bounds.
+
+**Symptom:** Stage 1 opened with a four-lane road because it was actually running stage 2's map data (`stage2_map_lanes` starts with `MAP_LANES_4(2)`). Stage 1's three-lane start (`MAP_LANES_3L(30)`) was never seen.
+
+**Fix:** Expand `stages[]` to seven entries. Index 0 holds `&stage1` for the pregame path (`wanted_stage_number = 0`); indices 1–5 hold `&stage1`–`&stage5` for game stages 1–5; index 6 holds `&stage5` as a safe backstop for the brief end-of-game reload.
+
+```c
+const stage_t *stages[MAX_STAGES + 2] = {
+    &stage1, /* [0]: pregame */
+    &stage1, /* [1]: game stage 1 */
+    &stage2, /* [2]: game stage 2 */
+    ...
+    &stage5, /* [6]: end-sequence */
+};
+```
+
+**Check:** whenever `load_stage` indexes `stages[wanted]`, confirm that the maximum value `wanted` can reach (including end-of-game transitions) is within the declared array size.
