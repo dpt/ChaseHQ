@@ -94,6 +94,9 @@
 #include "ZXSpectrum/Z80.h"
 
 #include "ChaseHQ.h"
+
+#include <stdio.h>
+
 #include "Data/ChaseHQ-CommonData.h"
 #include "Data/ChaseHQ-SoundSamples.h"
 #include "Data/ChaseHQ-Stage1Data.h"
@@ -11316,7 +11319,7 @@ static void rm_cycle_buffer_offset(chqstate_t *state, u8 *pfastcounter)
     if (A_rightside_byte >= 240) {
       DE_rightside_ptr = state->scenedata.road_rightside_ptr + 1;
       A_rightside_byte = *DE_rightside_ptr;
-      if (A_rightside_byte == 0) {q
+      if (A_rightside_byte == 0) {
         // Escape byte (0): read command byte.
 
         // Conv: EX DE,HL register swap was folded in from $BF65 here to $BF8E below
@@ -12618,10 +12621,12 @@ static void dr_fill(chqstate_t *state,
     if (Aleft_stripe_width >= Bdash_holds_16)
       Aleft_stripe_width--;
   }
+  assert(Aleft_stripe_width <= 15);
 
   // $C5D3
   Edash_left_stripe_width = Aleft_stripe_width;
   Aleft_stripe_width = ~Edash_left_stripe_width + Bdash_holds_16; // (15 - x)
+  assert(Aleft_stripe_width <= 15);
   state->dr_left_stripe_width = Aleft_stripe_width;
 
   HLdash_ptr = hi2xpostab(state, state->dr_right_table_hi_2) + Ldash_row;
@@ -12633,11 +12638,12 @@ static void dr_fill(chqstate_t *state,
     Aright_stripe_width = (HLdash_ptr[-1] & Cdash_mask) >> 3;
     RR(Aright_stripe_width); /* carry is 0 as set above */
   }
+  assert(Aright_stripe_width <= 15);
 
   // $C5F0
   state->dr_right_stripe_width = Aright_stripe_width;
 
-  // $C5F3
+  // $C5F3 — road_width = (15 - raw_right) + raw_left; valid range 0..30
   state->dr_road_width = ~Aright_stripe_width + Bdash_holds_16 + Edash_left_stripe_width; // another (15 - x + ...)
   assert(state->dr_right_stripe_width <= 15);
   assert(state->dr_left_stripe_width  <= 15);
