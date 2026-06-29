@@ -1132,8 +1132,13 @@ static void prepare_tunnel(chqstate_t *state);
 static void draw_tunnel(chqstate_t *state, u8 *IYheight);
 
 static void draw_road_scene_change(chqstate_t *state,
-                                   int Bfill_pattern, int Chorizon, int DEbackbuf, int Lrow,
-                                   u8 **IXlanesptr, const u8 **IYheightptr);
+                                   int         B_fill_pattern,
+                                   int         C_horizon,
+                                   int         DE_backbuf,
+                                   int         H_left_hand_table_hi,
+                                   int         L_row,
+                                   u8        **IX_lanesptr,
+                                   const u8  **IY_heightptr);
 
 static void draw_road(chqstate_t *state);
 static void dr_read_lanes(chqstate_t *state, u8 *IXlanesptr, const u8 *IYheightptr,
@@ -11937,22 +11942,27 @@ static u8 *addr2xpos(chqstate_t *state, int z80addr)
  * road-edge x-positions between two height-table entries and writes them
  * to the appropriate road table via an SP-based write pointer.
  *
- * \param[in]     state         Pointer to game state.
- * \param[in]     Bfill_pattern Fill pattern.
- * \param[in]     Chorizon      Horizon level.
- * \param[in]     DEbackbuf     Pointer into backbuffer.
- * \param[in]     Lrow          Byte offset within road table page (row index).
- * \param[in,out] IXlanesptr    Pointer into road buffer lane data.
- * \param[in,out] IYheightptr   Pointer into height table.
+ * \param[in]     state                Pointer to game state.
+ * \param[in]     B_fill_pattern       Fill pattern. (was B)
+ * \param[in]     C_horizon            Horizon level. (was C)
+ * \param[in]     DE_backbuf           Pointer into backbuffer. (was DE)
+ * \param[in]     H_left_hand_table_hi Left-hand table hi byte ($E8/../$EC). (was H)
+ * \param[in]     L_row                Byte offset within road table page (row index). (was L)
+ * \param[in,out] IX_lanesptr          Pointer into road buffer lane data. (was IX)
+ * \param[in,out] IY_heightptr         Pointer into height table. (was IY)
  */
 static void draw_road_scene_change(chqstate_t *state,
-                                   int Bfill_pattern, int Chorizon, int DEbackbuf, int Lrow,
-                                   u8 **IXlanesptr, const u8 **IYheightptr)
+                                   int         B_fill_pattern,
+                                   int         C_horizon,
+                                   int         DE_backbuf,
+                                   int         H_left_hand_table_hi,
+                                   int         L_row,
+                                   u8        **IX_lanesptr,
+                                   const u8  **IY_heightptr)
 {
   u8   A_dist;              /* byte offset of IYheight within height_table (was A) */
   u8   L_lane_flags;        /* IXlanes[0] (was L) */
   u8   Adash_curve_bits;    /* lane_flags & 0x0C: bits 2-3 encode curve type (was A') */
-  u8   H_left_table_hi;     /* left-hand table hi byte ($E8/$E9/$EA/$EB/$EC) (was H) */
   u8   A_curve_step;        /* 0x20 or 0x00: per-curve step magnitude (was A) */
   u8   C_ref_height;        /* reference height for boundary check (IYheight[1] or [2]) (was C) */
   u8   SM_C345_bend_offset; /* stored A_curve_step: bend component of animation offset (SM $C345) */
@@ -11979,28 +11989,25 @@ static void draw_road_scene_change(chqstate_t *state,
   u8   SM_C445_dir_opcode;  /* stored direction opcode for alternate Bresenham (SM $C445) */
   u8   C_range;             /* Bresenham range in c441 path (was C) */
 
-  A_dist = *IYheightptr - &state->height_table[0];
+  A_dist = *IY_heightptr - &state->height_table[0];
   if (A_dist >= 19)
     goto drsc_exit;
 
-  // EX AF,AF' -- bank 'dist'
+  // EX AF,AF' -- bank 'A_dist'
 
-  L_lane_flags = (*IXlanesptr)[0];
+  L_lane_flags = (*IX_lanesptr)[0];
   Adash_curve_bits = L_lane_flags & 0x0C;
   // Jump if any of the ordinary straight track sections, including dirt track
   if (Adash_curve_bits == 0)
     goto drsc_exit;
 
-  (*IYheightptr)--;
+  (*IY_heightptr)--;
 
-  /* $C2FA-$C304: adjust H based on bits 5 and 7 of L_lane_flags.
-   * Z80 $C4C1 LD H,A left H = (IX[0] & 3) + 0xE7, stored by dr_read_lanes in
-   * dr_left_table_hi_1; bit-5-clear path uses that default unchanged. */
-  H_left_table_hi = (u8)state->dr_left_table_hi_1;
+  /* $C2FA-$C304: adjust H based on bits 5 and 7 of L_lane_flags. */
   if (L_lane_flags & (1 << 5)) { /* if bit 5 set */
-    H_left_table_hi = 0xEC;
+    H_left_hand_table_hi = 0xEC;
     if ((L_lane_flags & (1 << 7)) == 0) /* bit 7 clear */
-      H_left_table_hi = 0xEB; // was DEC H
+      H_left_hand_table_hi = 0xEB; // was DEC H
   }
 
   // $C305
@@ -12015,26 +12022,26 @@ static void draw_road_scene_change(chqstate_t *state,
 
   /* $C310-$C354: path 1a -- bit4=1, dist<2 */
   A_curve_step = 0x20;
-  C_ref_height = (*IYheightptr)[1];
+  C_ref_height = (*IY_heightptr)[1];
   if (Adash_curve_bits == 4) {
     A_curve_step = 0x00;
-    C_ref_height = (*IYheightptr)[2];
+    C_ref_height = (*IY_heightptr)[2];
   }
   SM_C345_bend_offset = A_curve_step;
-  if ((*IYheightptr)[0] <= C_ref_height)
+  if ((*IY_heightptr)[0] <= C_ref_height)
     goto advance_height;
 
   // $C32B: C = IY[0] - ref_height (height span), B = C*2
-  C_bresen_range = (*IYheightptr)[0] - C_ref_height;
+  C_bresen_range = (*IY_heightptr)[0] - C_ref_height;
   B_tbl_stride = C_bresen_range * 2;
-  L_left_table_lo = ~((96 - (*IYheightptr)[0]) << 1); // byte offset
-  HL_xpos_ptr = addr2xpos(state, (H_left_table_hi << 8) | L_left_table_lo);
+  L_left_table_lo = ~((96 - (*IY_heightptr)[0]) << 1); // byte offset
+  HL_xpos_ptr = addr2xpos(state, (H_left_hand_table_hi << 8) | L_left_table_lo);
   SP_output = HL_xpos_ptr;
   DE_roadpos = *(u16 *)HL_xpos_ptr;
 
   L_left_table_lo -= B_tbl_stride;
-  H_left_table_hi--;
-  HL_xpos_ptr = addr2xpos(state, (H_left_table_hi << 8) | L_left_table_lo);
+  H_left_hand_table_hi--;
+  HL_xpos_ptr = addr2xpos(state, (H_left_hand_table_hi << 8) | L_left_table_lo);
 
   A_anim_offset = ((state->fast_counter >> 3) & 0x1C) + SM_C345_bend_offset;
   SM_C351_xpos_ptr = HL_xpos_ptr;
@@ -12049,20 +12056,20 @@ bit4_set_far:
   // EX AF,AF' -- unbank 'dist' / bank Adash_curve_bits
   if (A_dist != 4)
     goto advance_height;
-  if ((*IYheightptr)[0] <= (*IYheightptr)[2])
+  if ((*IY_heightptr)[0] <= (*IY_heightptr)[2])
     goto advance_height;
 
   // $C369: C = IY[0] - IY[2] (height span), B = C*2
-  C_bresen_range = (*IYheightptr)[0] - (*IYheightptr)[2];
+  C_bresen_range = (*IY_heightptr)[0] - (*IY_heightptr)[2];
   B_tbl_stride = C_bresen_range * 2;
-  L_left_table_lo = ~((96 - (*IYheightptr)[0]) << 1); // byte offset
-  HL_xpos_ptr = addr2xpos(state, (H_left_table_hi << 8) | L_left_table_lo);
+  L_left_table_lo = ~((96 - (*IY_heightptr)[0]) << 1); // byte offset
+  HL_xpos_ptr = addr2xpos(state, (H_left_hand_table_hi << 8) | L_left_table_lo);
   SP_output = HL_xpos_ptr;
   DE_roadpos = *(u16 *)HL_xpos_ptr;
 
   L_left_table_lo -= B_tbl_stride;
-  H_left_table_hi--;
-  HL_xpos_ptr = addr2xpos(state, (H_left_table_hi << 8) | L_left_table_lo);
+  H_left_hand_table_hi--;
+  HL_xpos_ptr = addr2xpos(state, (H_left_hand_table_hi << 8) | L_left_table_lo);
   goto compute_step;
 
 bit4_clear:
@@ -12074,28 +12081,28 @@ bit4_clear:
 
   /* $C37E-$C3C7: path 2 -- bit4=0, dist<2 */
   A_curve_step = 0x20;
-  C_ref_height = (*IYheightptr)[1];
+  C_ref_height = (*IY_heightptr)[1];
   if (Adash_curve_bits == 4) {
     A_curve_step = 0x00;
-    C_ref_height = (*IYheightptr)[2];
+    C_ref_height = (*IY_heightptr)[2];
   }
   SM_C3BD_bend_offset = A_curve_step;
-  if ((*IYheightptr)[0] <= C_ref_height)
+  if ((*IY_heightptr)[0] <= C_ref_height)
     goto advance_height;
 
   // $C39F: C = IY[0] - ref_height (height span), B = C*2
-  C_bresen_range = (*IYheightptr)[0] - C_ref_height;
+  C_bresen_range = (*IY_heightptr)[0] - C_ref_height;
   B_tbl_stride = C_bresen_range * 2;
-  L_left_table_lo = ~((96 - (*IYheightptr)[0]) << 1); // byte offset
-  HL_xpos_ptr = addr2xpos(state, (H_left_table_hi << 8) | L_left_table_lo);
+  L_left_table_lo = ~((96 - (*IY_heightptr)[0]) << 1); // byte offset
+  HL_xpos_ptr = addr2xpos(state, (H_left_hand_table_hi << 8) | L_left_table_lo);
   SP_output = HL_xpos_ptr;
-  H_left_table_hi--;
-  HL_xpos_ptr = addr2xpos(state, (H_left_table_hi << 8) | L_left_table_lo);
+  H_left_hand_table_hi--;
+  HL_xpos_ptr = addr2xpos(state, (H_left_hand_table_hi << 8) | L_left_table_lo);
   DE_roadpos = *(u16 *)HL_xpos_ptr;
 
   L_left_table_lo -= B_tbl_stride;
-  H_left_table_hi++;
-  HL_xpos_ptr = addr2xpos(state, (H_left_table_hi << 8) | L_left_table_lo);
+  H_left_hand_table_hi++;
+  HL_xpos_ptr = addr2xpos(state, (H_left_hand_table_hi << 8) | L_left_table_lo);
 
   SM_C3C4_xpos_ptr = HL_xpos_ptr;
 
@@ -12111,22 +12118,22 @@ bit4_clear_far:
   // EX AF,AF' -- unbank 'dist' / bank Adash_curve_bits
   if (A_dist != 4)
     goto advance_height;
-  if ((*IYheightptr)[0] <= (*IYheightptr)[2])
+  if ((*IY_heightptr)[0] <= (*IY_heightptr)[2])
     goto advance_height;
 
   // $C3DB: C = IY[0] - IY[2] (height span), B = C*2
-  C_bresen_range = (*IYheightptr)[0] - (*IYheightptr)[2];
+  C_bresen_range = (*IY_heightptr)[0] - (*IY_heightptr)[2];
   B_tbl_stride = C_bresen_range * 2;
-  L_left_table_lo = ~((96 - (*IYheightptr)[0]) << 1); // byte offset
-  HL_xpos_ptr = addr2xpos(state, (H_left_table_hi << 8) | L_left_table_lo);
+  L_left_table_lo = ~((96 - (*IY_heightptr)[0]) << 1); // byte offset
+  HL_xpos_ptr = addr2xpos(state, (H_left_hand_table_hi << 8) | L_left_table_lo);
   SP_output = HL_xpos_ptr;
-  H_left_table_hi--; // this is different...
-  HL_xpos_ptr = addr2xpos(state, (H_left_table_hi << 8) | L_left_table_lo);
+  H_left_hand_table_hi--; // this is different...
+  HL_xpos_ptr = addr2xpos(state, (H_left_hand_table_hi << 8) | L_left_table_lo);
   DE_roadpos = *(u16 *)HL_xpos_ptr;
 
   L_left_table_lo -= B_tbl_stride;
-  H_left_table_hi++;
-  HL_xpos_ptr = addr2xpos(state, (H_left_table_hi << 8) | L_left_table_lo);
+  H_left_hand_table_hi++;
+  HL_xpos_ptr = addr2xpos(state, (H_left_hand_table_hi << 8) | L_left_table_lo);
 
   /* no offset -- fall through to compute_step */
 
@@ -12141,7 +12148,7 @@ compute_step:
 
   /* $C407-$C412: set up SP output pointer */
   SP_output += 1; /* INC SP: 1-byte advance ($C407) */
-  if ((*IXlanesptr)[0] & (1 << 5))
+  if ((*IX_lanesptr)[0] & (1 << 5))
     SP_output -= 256; /* step back by 256 bytes ($C408) */
 
   /* $C413-$C420: derive step and direction */
@@ -12175,10 +12182,10 @@ compute_step:
   } while (--B_iterations > 0);
 
 advance_height:
-  (*IYheightptr)++; /* $C439: INC IYheight -- advance height pointer for next iteration */
+  (*IY_heightptr)++; /* $C439: INC IYheight -- advance height pointer for next iteration */
 drsc_exit:
-  dr_set_lane_callback(state, Bfill_pattern, Chorizon, DEbackbuf, Lrow,
-                       dr_four_lane_highway, IXlanesptr, IYheightptr); // exit via
+  dr_set_lane_callback(state, B_fill_pattern, C_horizon, DE_backbuf, L_row,
+                       dr_four_lane_highway, IX_lanesptr, IY_heightptr); // exit via
   return;
 
 steep_step:
@@ -12274,6 +12281,7 @@ static void dr_read_lanes(chqstate_t *state, u8 *IXlanesptr, const u8 *IYheightp
   int Aleft_offset;         /* was A */
   u8  Ldash_lanes;          /* was L' */
   int Aleft_hand_table_hi;  /* was A */
+  int H_left_hand_table_hi; /* was H */
   int Cdash_neg_lane_count; /* was C' */
   int Hdash_in_tunnel;      /* was H' */
   int Atunnel_visible;      /* was A */
@@ -12292,9 +12300,10 @@ static void dr_read_lanes(chqstate_t *state, u8 *IXlanesptr, const u8 *IYheightp
 
   Ldash_lanes = *IXlanesptr; // reload lanes byte
   // convert left hand pos (1+) to table hi byte ($E8+)
-  Aleft_hand_table_hi = 0xE7 + Aleft_offset;
-  state->dr_left_table_hi_1 = state->dr_left_table_hi_2 = Aleft_hand_table_hi;
-  // LD Hdash,A
+  Aleft_hand_table_hi = Aleft_offset + 0xE7;
+  state->dr_left_table_hi_1 = Aleft_hand_table_hi;
+  state->dr_left_table_hi_2 = Aleft_hand_table_hi;
+  H_left_hand_table_hi = Aleft_hand_table_hi;
   SLA(Ldash_lanes);
   if ((Ldash_lanes & (1 << 7)) == 0) {
     /* If bit 6 was clear then it's a normal road (not tunnel, dirt track or forked road). */
@@ -12309,8 +12318,14 @@ static void dr_read_lanes(chqstate_t *state, u8 *IXlanesptr, const u8 *IYheightp
     }
     state->dr_right_table_hi_2 = state->dr_right_table_hi_1 = Aleft_hand_table_hi;
     state->dr_neg_lane_count = Cdash_neg_lane_count; // Conv: A removed
-    draw_road_scene_change(state, Bfill_pattern, Ccounter,
-                           DEbackbuf, Lrow, &IXlanesptr, &IYheightptr); // exit via
+    draw_road_scene_change(state,
+                           Bfill_pattern,
+                           Ccounter,
+                           DEbackbuf,
+                           H_left_hand_table_hi,
+                           Lrow,
+                           &IXlanesptr,
+                           &IYheightptr); /* exit via */
   } else {
     /* If bit 6 was clear then it's a special road (tunnel, dirt track or forked road). */
     if (carry == 0) {
