@@ -11316,7 +11316,7 @@ static void rm_cycle_buffer_offset(chqstate_t *state, u8 *pfastcounter)
     if (A_rightside_byte >= 240) {
       DE_rightside_ptr = state->scenedata.road_rightside_ptr + 1;
       A_rightside_byte = *DE_rightside_ptr;
-      if (A_rightside_byte == 0) {
+      if (A_rightside_byte == 0) {q
         // Escape byte (0): read command byte.
 
         // Conv: EX DE,HL register swap was folded in from $BF65 here to $BF8E below
@@ -12597,6 +12597,9 @@ static void dr_fill(chqstate_t *state,
   state->dr_backbuf_2 = DEbackbuf;
   Arow = Lrow; // byte offset within road table page (0xFF = bottom scanline)
   Bneg_lane_count = state->dr_neg_lane_count;
+  assert(Bneg_lane_count >= -4 && Bneg_lane_count <= -1);
+  assert(state->dr_left_table_hi_2  >= 0xE8 && state->dr_left_table_hi_2  <= 0xED);
+  assert(state->dr_right_table_hi_2 >= 0xE8 && state->dr_right_table_hi_2 <= 0xED);
 
   // EXX - BANK
 
@@ -12636,6 +12639,8 @@ static void dr_fill(chqstate_t *state,
 
   // $C5F3
   state->dr_road_width = ~Aright_stripe_width + Bdash_holds_16 + Edash_left_stripe_width; // another (15 - x + ...)
+  assert(state->dr_right_stripe_width <= 15);
+  assert(state->dr_left_stripe_width  <= 15);
   DEdash_backbuf = state->dr_backbuf_2;
   Ldash_backbuf = (DEdash_backbuf & 0xFF) + 31;
   Hdash_backbuf = DEdash_backbuf >> 8;
@@ -12652,15 +12657,17 @@ static void dr_fill(chqstate_t *state,
   // Conv: uses memset
   int n;
   n = (15 - state->dr_right_stripe_width) * 2;
+  assert(n >= 0 && n <= 30);
   assert(VALID_BACKBUF_PTR(SPoutput));
-  if (n > 0) // DPT CHECK IF THIS -VE STATE HAPPENS IN THE REAL GAME
+  if (n > 0)
     memset(SPoutput -= n, HLdash_fill, n);
 
   /* Fill blank road surface - continuing from the right hand side. */
   // Conv: uses memset
   n = (15 - state->dr_road_width) * 2;
+  assert(n >= 0 && n <= 30);
   assert(VALID_BACKBUF_PTR(SPoutput));
-  if (n > 0) // DPT CHECK IF THIS -VE STATE HAPPENS IN THE REAL GAME
+  if (n > 0)
     memset(SPoutput -= n, BCdash_zerofill, n);
 
   dr_fill_left_stripe(state,
@@ -12725,6 +12732,11 @@ static void dr_fill_left_stripe(chqstate_t *state,
   u8        Cheight_diff;
   s8        Anew_diff;
 
+  assert(jump_index >= 0 && jump_index <= 15);
+  assert(Bneg_lane_count >= -4 && Bneg_lane_count <= -1);
+  assert(state->dr_left_table_hi_1  >= 0xE8 && state->dr_left_table_hi_1  <= 0xED);
+  assert(state->dr_right_table_hi_1 >= 0xE8 && state->dr_right_table_hi_1 <= 0xED);
+
   // Conv: use memset
   int n = (15 - jump_index) * 2;
   assert(n >= 0);
@@ -12767,6 +12779,7 @@ static void dr_fill_left_stripe(chqstate_t *state,
   /* $C667 - Draw road lane markings. */
   while (++Bneg_lane_count != 0) {
     H++; // next lane
+    assert(H >= 0xE8 && H <= 0xED);
     HL = hi2xpostab(state, H) + Lrow;
     if (*HL)
       continue;
@@ -12778,6 +12791,8 @@ static void dr_fill_left_stripe(chqstate_t *state,
     /* Build address of road lane marking graphic. */
     Hdash_markingsptr_lo = ((A & 7) << 1) + state->dr_stripe_table_offset;
     HLdash_markingsptr = &edge_markings[((Hdash_markingsptr_hi << 8) | Hdash_markingsptr_lo) - 0xE400];
+    assert(HLdash_markingsptr >= &edge_markings[0]);
+    assert(HLdash_markingsptr + 1 < &edge_markings[256]);
     Edash = ((A >> 3) & 31) + Bdash;
     DEdash_backbufptr = ADDRTOBACKBUF((DEdash_backbuf & 0xFF00) | Edash);
 
@@ -12801,6 +12816,8 @@ static void dr_fill_left_stripe(chqstate_t *state,
     /* Build address of road edge marking graphic. */
     Hdash_markingsptr_lo = ((A & 7) << 2) + state->dr_right_edge_offset;
     HLdash_markingsptr = &edge_markings[((Hdash_markingsptr_hi << 8) | Hdash_markingsptr_lo) - 0xE400];
+    assert(HLdash_markingsptr >= &edge_markings[0]);
+    assert(HLdash_markingsptr + 2 < &edge_markings[256]);
     Edash = ((A >> 3) & 31) + Bdash;
     DEdash_backbufptr = ADDRTOBACKBUF((DEdash_backbuf & 0xFF00) | Edash);
 
