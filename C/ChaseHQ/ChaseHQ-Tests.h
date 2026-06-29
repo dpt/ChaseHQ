@@ -35,6 +35,13 @@ void chq_test_build_height_table(chqstate_t *state);
 /** Run layout_road in isolation (builds road geometry tables). */
 void chq_test_layout_road(chqstate_t *state);
 
+/** Set up stage from attract_data rather than stage_data. */
+void chq_test_set_up_stage_attract(chqstate_t *state);
+
+/** Return a pointer to the current IXlanesptr slot — the lane byte that
+ *  draw_road will read on its first dr_read_lanes call. */
+u8 *chq_test_lanes_slot(chqstate_t *state);
+
 /** Run draw_road in isolation (renders road to back buffer). */
 void chq_test_draw_road(chqstate_t *state);
 

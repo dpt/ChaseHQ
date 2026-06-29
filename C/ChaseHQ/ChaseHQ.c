@@ -2220,6 +2220,7 @@ static void set_up_stage(chqstate_t        *state,
 
   /* Reset map-reader counters so the first rm_cycle_buffer_offset call
    * reloads from the new scenedata, not the previous stage's stale data. */
+  // DPT: CHECK IF THIS MATCHES THE Z80
   state->curvature_byte  = 0;
   state->height_byte     = 0;
   state->lanes_counter   = 0;
@@ -12653,13 +12654,14 @@ static void dr_fill(chqstate_t *state,
   int n;
   n = (15 - state->dr_right_stripe_width) * 2;
   assert(VALID_BACKBUF_PTR(SPoutput));
-  memset(SPoutput -= n, HLdash_fill, n);
+  if (n > 0) // DPT CHECK IF THIS -VE STATE HAPPENS IN THE REAL GAME
+    memset(SPoutput -= n, HLdash_fill, n);
 
   /* Fill blank road surface - continuing from the right hand side. */
   // Conv: uses memset
   n = (15 - state->dr_road_width) * 2;
   assert(VALID_BACKBUF_PTR(SPoutput));
-  if (n)
+  if (n > 0) // DPT CHECK IF THIS -VE STATE HAPPENS IN THE REAL GAME
     memset(SPoutput -= n, BCdash_zerofill, n);
 
   dr_fill_left_stripe(state,
@@ -15176,6 +15178,16 @@ void chq_test_load_stage(chqstate_t *state)
 void chq_test_set_up_stage(chqstate_t *state)
 {
   set_up_stage(state, &state->stage->stage_data);
+}
+
+void chq_test_set_up_stage_attract(chqstate_t *state)
+{
+  set_up_stage(state, &state->stage->attract_data);
+}
+
+u8 *chq_test_lanes_slot(chqstate_t *state)
+{
+  return ROADBUF_FWD2PTR(ROADBUF_LANES_OFFSET);
 }
 
 void chq_test_prime_road(chqstate_t *state, int iterations)

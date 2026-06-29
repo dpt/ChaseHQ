@@ -355,6 +355,57 @@ static void test_lane_markings_appear_at_bottom_row(void)
   printf("PASS  draw_road: lane markings appear in bottom row when carry_stripe=1\n");
 }
 
+/*
+ * After set_up_stage with stage_data the IXlanesptr slot must hold the
+ * first lane type from the stage map.  For stage 1 that is MAP_LANES_3L_VAL
+ * (0x81): 30 iterations of MAP_LANES_3L prime slots 96-125 and the first
+ * draw_road call reads slot 96.
+ */
+static void test_set_up_stage_lanes_slot_is_3lane(void)
+{
+  chqstate_t *state;
+
+  state = make_road_state(); /* loads stage 1, calls set_up_stage(stage_data) */
+
+  assert(*chq_test_lanes_slot(state) == MAP_LANES_3L_VAL);
+
+  chq_destroy(state);
+  printf("PASS  set_up_stage: stage 1 game data primes lane slot to MAP_LANES_3L_VAL\n");
+}
+
+/*
+ * Regression: set_up_stage must reset map-reader counters (lanes_counter,
+ * curvature_byte, height_byte …) before priming the road buffer.  If they
+ * are left over from the previous scene, the 32 priming iterations write
+ * the OLD rm_lanes_byte into the buffer instead of reading fresh map data.
+ *
+ * Concretely: attract mode primes with MAP_LANES_4 (rm_lanes_byte=0x00,
+ * lanes_counter ≈ 222 remaining).  A subsequent set_up_stage for game
+ * stage 1 must still produce MAP_LANES_3L_VAL in the slot, not 0x00.
+ */
+static void test_set_up_stage_resets_lane_data(void)
+{
+  chqstate_t *state;
+
+  state = chq_create(&g_speccy);
+  assert(state != NULL);
+
+  state->wanted_stage_number  = 1;
+  state->current_stage_number = 0;
+  chq_test_load_stage(state);
+
+  /* Prime with attract data: stage 1 attract starts MAP_LANES_4(254). */
+  chq_test_set_up_stage_attract(state);
+  assert(*chq_test_lanes_slot(state) == MAP_LANES_4_VAL);
+
+  /* Now switch to game stage data: must reload from stage1_map_start_lanes. */
+  chq_test_set_up_stage(state);
+  assert(*chq_test_lanes_slot(state) == MAP_LANES_3L_VAL);
+
+  chq_destroy(state);
+  printf("PASS  set_up_stage: resets lane counters so second call loads new scene data\n");
+}
+
 /* ----------------------------------------------------------------------- */
 
 int main(void)
@@ -367,6 +418,8 @@ int main(void)
   test_drsc_exits_on_straight_track();
   test_draw_road_writes_backbuffer();
   test_lane_markings_appear_at_bottom_row();
+  test_set_up_stage_lanes_slot_is_3lane();
+  test_set_up_stage_resets_lane_data();
 
   printf("\nAll tests passed.\n");
   return 0;
