@@ -1,8 +1,14 @@
+perhaps build unit tests now to flush out problems ahead of time.
+
+
 # BUGS
 
-- Accelerating forward past a point the breaks down [done]
-- Steering seems broken - unsure
-- No turbo LO/HI readout nor 'STAGE 1' readout - update_scoreboard incomplete
+- Toggling gear down not working
+- Lane markings don't appear closest to player: draw_road_scene_change
+  (Bresenham interpolation) is called at map position 3 (stage 1 lane
+  transition) and pushes some xpos entries off-screen at Lrow=0xFF.
+  Verify whether this matches Z80 behaviour or is a translation bug.
+- Startup scene obviously wrong road type (should be three lanes)
 - Radio screen sometimes have leftover transition animation parts
 - Main game runs too fast - need to calibrate against original
 - Object plotting broken and commented out for now
@@ -11,6 +17,12 @@
 
 # IDEAS
 
+- Identify missibg cases where wraparound is required.
+- Remove as much casting as possible (Claude tends to add it).
+- Hoist out all interesting Z80 addresses to constants
+- Lots more unit tests.
+- SHould hi2xpostab return u16* ?
+- Fix all warnings pass
 - Update summaries of major functions to docs/
 - Update CLAUDE.md now the stage data is in
 - Sort macros
@@ -19,10 +31,19 @@
 - Annotate all state members to show which functions consume/mutate them
 - Add deep dives for each area of the game (each main loop item?)
 - Document the game from the moment it starts until it builds the first frame?- Is fixing the keypress thread race important?
+- Have an example of creating a whole new stage.
+- Document how functions are created from source Z80 (eg. coping with banked regs).
+- Document road_pos valid range
+- Big reformat pass once happy with code.
 
 
 # DONE
 
+- Steering seems broken - unsure - is car actually moving?
+  - Steeting right is working?
+- Add Code tidying agent - validating for readability too
+- No turbo LO/HI readout nor 'STAGE 1' readout - update_scoreboard incomplete [done]
+- Accelerating forward past a point the breaks down [done]
 - Rename PERPCAUGHTPHASES [done]
 - Promote all vars if possible [done]
 - Add a CODEOWNERS file [done]
