@@ -11924,10 +11924,9 @@ static u8 *hi2xpostab(chqstate_t *state, int hi)
 }
 
 /** Return word pointer into a road-position table given a Z80 address. */
-static u16 *addr2xpos(chqstate_t *state, int z80addr)
+static u8 *addr2xpos(chqstate_t *state, int z80addr)
 {
-  u16 *base = (u16 *) hi2xpostab(state, z80addr >> 8);
-  return &base[(z80addr & 0xFF) / 2];
+  return hi2xpostab(state, z80addr >> 8) + (z80addr & 0xFF);
 }
 
 /**
@@ -11960,13 +11959,13 @@ static void draw_road_scene_change(chqstate_t *state,
   u8   C_bresen_range;      /* Bresenham range = IYheight[0] - ref_height (was C) */
   u8   B_tbl_stride;        /* table pointer stride = A_curve_step * 2 (was B) */
   u8   L_left_table_lo;     /* low byte of x-position table address (was L) */
-  u16 *HL_xpos_ptr;         /* current pointer into x-position table (was HL) */
-  u16 *SP_output;           /* output pointer into road position buffer (was SP) */
+  u8  *HL_xpos_ptr;         /* current pointer into x-position table (was HL) */
+  u8  *SP_output;           /* output pointer into road position buffer (was SP) */
   u16  DE_roadpos;          /* current road x-position being written (was DE) */
   u8   A_anim_offset;       /* animation offset: (fast_counter >> 3) & 0x1C + bend_offset (was A) */
-  u16 *SM_C351_xpos_ptr;    /* stored HL_xpos_ptr across EX DE,HL (path 1a) (SM $C351) */
+  u8  *SM_C351_xpos_ptr;    /* stored HL_xpos_ptr across EX DE,HL (path 1a) (SM $C351) */
   u8   SM_C3BD_bend_offset; /* stored A_curve_step: bend offset for path 2 (SM $C3BD) */
-  u16 *SM_C3C4_xpos_ptr;    /* stored HL_xpos_ptr across EX DE,HL (path 2) (SM $C3C4) */
+  u8  *SM_C3C4_xpos_ptr;    /* stored HL_xpos_ptr across EX DE,HL (path 2) (SM $C3C4) */
   u16  HL_pos_delta;        /* delta between two road x-positions (was HL) */
   s8   A_delta_lo;          /* low byte of HL_pos_delta, clamped to become A_step (was A) */
   s8   A_step;              /* clamped per-scanline displacement for Bresenham (was A) */
@@ -12031,7 +12030,7 @@ static void draw_road_scene_change(chqstate_t *state,
   L_left_table_lo = ~((96 - (*IYheightptr)[0]) << 1); // byte offset
   HL_xpos_ptr = addr2xpos(state, (H_left_table_hi << 8) | L_left_table_lo);
   SP_output = HL_xpos_ptr;
-  DE_roadpos = *HL_xpos_ptr;
+  DE_roadpos = *(u16 *)HL_xpos_ptr;
 
   L_left_table_lo -= B_tbl_stride;
   H_left_table_hi--;
@@ -12059,7 +12058,7 @@ bit4_set_far:
   L_left_table_lo = ~((96 - (*IYheightptr)[0]) << 1); // byte offset
   HL_xpos_ptr = addr2xpos(state, (H_left_table_hi << 8) | L_left_table_lo);
   SP_output = HL_xpos_ptr;
-  DE_roadpos = *HL_xpos_ptr;
+  DE_roadpos = *(u16 *)HL_xpos_ptr;
 
   L_left_table_lo -= B_tbl_stride;
   H_left_table_hi--;
@@ -12092,7 +12091,7 @@ bit4_clear:
   SP_output = HL_xpos_ptr;
   H_left_table_hi--;
   HL_xpos_ptr = addr2xpos(state, (H_left_table_hi << 8) | L_left_table_lo);
-  DE_roadpos = *HL_xpos_ptr;
+  DE_roadpos = *(u16 *)HL_xpos_ptr;
 
   L_left_table_lo -= B_tbl_stride;
   H_left_table_hi++;
@@ -12123,7 +12122,7 @@ bit4_clear_far:
   SP_output = HL_xpos_ptr;
   H_left_table_hi--; // this is different...
   HL_xpos_ptr = addr2xpos(state, (H_left_table_hi << 8) | L_left_table_lo);
-  DE_roadpos = *HL_xpos_ptr;
+  DE_roadpos = *(u16 *)HL_xpos_ptr;
 
   L_left_table_lo -= B_tbl_stride;
   H_left_table_hi++;
@@ -12133,7 +12132,7 @@ bit4_clear_far:
 
 compute_step:
   /* $C3EE-$C405: read second table value, compute clamped displacement */
-  HL_pos_delta = *HL_xpos_ptr - DE_roadpos;
+  HL_pos_delta = *(u16 *)HL_xpos_ptr - DE_roadpos;
   A_delta_lo = HL_pos_delta & 0xFF;
   if ((s16) HL_pos_delta >= 0)
     A_step = (A_delta_lo < 0) ? 127 : A_delta_lo;
@@ -12141,9 +12140,9 @@ compute_step:
     A_step = (A_delta_lo >= 0) ? -127 : A_delta_lo;
 
   /* $C407-$C412: set up SP output pointer */
-  SP_output = (u16 *)((u8 *)SP_output + 1); /* INC SP: 1-byte advance ($C407) */
+  SP_output += 1; /* INC SP: 1-byte advance ($C407) */
   if ((*IXlanesptr)[0] & (1 << 5))
-    SP_output -= 256 / 2; // prob. step back by 256 bytes
+    SP_output -= 256; /* step back by 256 bytes ($C408) */
 
   /* $C413-$C420: derive step and direction */
   L_step = A_step;
@@ -12172,7 +12171,7 @@ compute_step:
       A_accum -= B_range;
       DE_roadpos += (SM_C435_dir_opcode == Z80_INC_DE) ? +1 : -1;
     }
-    *--SP_output = DE_roadpos;
+    SP_output -= 2; *(u16 *)SP_output = DE_roadpos;
   } while (--B_iterations > 0);
 
 advance_height:
@@ -12194,7 +12193,7 @@ steep_step:
         break;
     }
     A_accum -= L_step;
-    *--SP_output = DE_roadpos;
+    SP_output -= 2; *(u16 *)SP_output = DE_roadpos;
   } while (--B_iterations > 0);
   goto advance_height;
 }
@@ -12669,9 +12668,8 @@ static void dr_fill(chqstate_t *state,
     memset(SPoutput -= n, HLdash_fill, n);
 
   /* Fill blank road surface - continuing from the right hand side. */
-  // Conv: uses memset
+  // Conv: road_width > 15 is valid during transitions; Z80 jump table overshoots → zero fill.
   n = (15 - state->dr_road_width) * 2;
-  assert(n >= 0 && n <= 30);
   assert(VALID_BACKBUF_PTR(SPoutput));
   if (n > 0)
     memset(SPoutput -= n, BCdash_zerofill, n);
