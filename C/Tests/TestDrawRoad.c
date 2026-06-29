@@ -295,6 +295,68 @@ static void test_drsc_exits_on_straight_track(void)
 
 /* ----------------------------------------------------------------------- */
 
+/*
+ * Lane markings closest to player (bottom row of backbuffer = row 127).
+ *
+ * carry_stripe (bit 1 of Blanesdataoffset) controls whether the bottom
+ * road segments use the filled or unfilled rendering path:
+ *   carry_stripe = 0 → unfilled → road surface zeroed, no lane overlays
+ *   carry_stripe = 1 → filled   → road surface zeroed then lane marks written
+ *
+ * After set_up_stage (32 iterations), roadbufptr_idx = 32 →
+ * Blanesdataoffset = 96 → carry_stripe = 0: no lane marks at the bottom.
+ * Two extra prime iterations advance it to 34 → carry_stripe = 1.
+ *
+ * The lanes byte at road_buffer[98] (written by rm_cycle_buffer_offset
+ * call 3 from map data) is 0x86, which would trigger draw_road_scene_change
+ * and push some xpos entries off-screen before the lane loop runs.  Clear it
+ * to force the four-lane highway path so the xpos tables remain valid.
+ *
+ * With carry_stripe = 1 and a clean four-lane road, the centre-left lane
+ * mark (xpos ≈ 156, column 19-20 of row 127) is non-zero and non-0xFF.
+ */
+static void test_lane_markings_appear_at_bottom_row(void)
+{
+  chqstate_t *state;
+  int         col;
+  int         found;
+  const u8   *bottom_row;
+
+  state = make_road_state();
+
+  /* Two extra iterations advance roadbufptr_idx 32→34.
+   * Blanesdataoffset = (34+64) = 98 → bit1=1 → carry_stripe=1.
+   * Height data for idx=34 is at road_buffer[66..97] (valid stage-1 data). */
+  chq_test_prime_road(state, 2);
+
+  /* road_buffer[98] holds the lanes byte for idx=34.  It was written by the
+   * third rm_cycle_buffer_offset call (map position 3) and is non-zero
+   * (0x86), which would trigger draw_road_scene_change and modify the xpos
+   * tables during rendering.  Clear it so dr_read_lanes takes the
+   * four-lane-highway path and the xpos tables are not disturbed. */
+  state->road_buffer[98] = 0;
+
+  memset(state->backbuffer, 0xFF, BACKBUFFER_LENGTH);
+
+  chq_test_build_height_table(state);
+  chq_test_layout_road(state);
+  chq_test_draw_road(state);
+
+  bottom_row = &state->backbuffer[127 * BACKBUFFER_ROWBYTES];
+
+  found = 0;
+  for (col = 0; col <= 31; col++)
+    if (bottom_row[col] != 0x00 && bottom_row[col] != 0xFF)
+      found = 1;
+
+  assert(found);
+
+  chq_destroy(state);
+  printf("PASS  draw_road: lane markings appear in bottom row when carry_stripe=1\n");
+}
+
+/* ----------------------------------------------------------------------- */
+
 int main(void)
 {
   speccy_init();
@@ -304,6 +366,7 @@ int main(void)
   test_drsc_exits_when_dist_too_far();
   test_drsc_exits_on_straight_track();
   test_draw_road_writes_backbuffer();
+  test_lane_markings_appear_at_bottom_row();
 
   printf("\nAll tests passed.\n");
   return 0;
