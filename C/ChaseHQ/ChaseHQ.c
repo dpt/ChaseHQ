@@ -928,7 +928,7 @@ static void ptas_led_digits(chqstate_t *state,
                             u8         *stored,
                             u8         *screen);
 
-static u8 *ledfont_plot(chqstate_t *state, int ord, u8 *screen);
+static u8 *ledfont_plot(int ord, u8 *screen);
 
 static const u8 *draw_string_with_style(chqstate_t *state,
                                         int          attrval,
@@ -6114,9 +6114,9 @@ ptas_turbo_setup:
   A--; // correct for starting early
 
   // Plot speed digits
-  DEscreen = ledfont_plot(state, Ddash, DEscreen); // draw 10,000s
-  DEscreen = ledfont_plot(state, Edash, DEscreen); // draw  1,000s
-  (void) ledfont_plot(state, A, DEscreen); // draw    100s
+  DEscreen = ledfont_plot(Ddash, DEscreen); // draw 10,000s
+  DEscreen = ledfont_plot(Edash, DEscreen); // draw  1,000s
+  (void) ledfont_plot(A, DEscreen); // draw    100s
 
   // Time
   // EXX
@@ -6215,47 +6215,34 @@ ptas_led_next_whole:
 
 ptas_led_plot_1st:
   *stored = Adigits;
-  screen = ledfont_plot(state, Adigits, screen);
+  screen = ledfont_plot(Adigits, screen);
   goto ptas_led_next_half;
 
 ptas_led_plot_2nd:
   *stored = Adigits;
-  screen = ledfont_plot(state, Adigits, screen);
+  screen = ledfont_plot(Adigits, screen);
   goto ptas_led_next_whole;
 }
 
 /**
  * $9F47: Plot an LED font character
  *
- * \param[in] state  Pointer to game state.
  * \param[in] ord    Digit index 0..9. (was A)
  * \param[in] screen Back buffer screen address. (was DE')
  * \return Back buffer address of next character column.
  */
-static u8 *ledfont_plot(chqstate_t *state, int ord, u8 *screen)
+static u8 *ledfont_plot(int ord, u8 *screen)
 {
   const u8 *src;         /* was HL */
-  u8       *screen_copy; /* was stacked */
+  u8       *orig_screen; /* was stacked */
+  int       i;           /* Conv: added */
 
   src = &ledfont[ord * LEDFONT_HEIGHT];
-  screen_copy = screen;
-  *screen = *src++; screen += 256;
-  *screen = *src++; screen += 256;
-  *screen = *src++; screen += 256;
-  *screen = *src++; screen += 256;
-  *screen = *src++; screen += 256;
-  *screen = *src++; screen += 256;
-  *screen = *src++;
-  screen = screen_copy - 256 + 32;
-  *screen = *src++; screen += 256;
-  *screen = *src++; screen += 256;
-  *screen = *src++; screen += 256;
-  *screen = *src++; screen += 256;
-  *screen = *src++; screen += 256;
-  *screen = *src++; screen += 256;
-  *screen = *src++; screen += 256;
-  *screen = *src++;
-  return screen_copy + 1; // move to next column
+  orig_screen = screen;
+  for (i = 0; i < 7; i++) { *screen = *src++; screen += 256; } /* Conv: rolled */
+  screen = orig_screen - 256 + 32;
+  for (i = 0; i < 8; i++) { *screen = *src++; screen += 256; } /* Conv: rolled */
+  return orig_screen + 1;
 }
 
 //0b_010BBLLL_RRRCCCCC (B = band, L = scanline, R = row (group), C = column)
