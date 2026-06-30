@@ -212,12 +212,12 @@ static void test_draw_road_writes_backbuffer(void)
 /* ----------------------------------------------------------------------- */
 
 /*
- * draw_road_scene_change: when IYheight is 19 or more entries past the start
+ * draw_road_lanes_change: when IYheight is 19 or more entries past the start
  * of height_table (A_dist >= 19) the function must exit immediately without
  * modifying the xpos tables.  The exit path calls dr_four_lane_highway, which
  * sets dr_neg_lane_count to -4.
  */
-static void test_drsc_exits_when_dist_too_far(void)
+static void test_drlc_exits_when_dist_too_far(void)
 {
   chqstate_t *state;
   u16 snap_left[128];
@@ -239,7 +239,7 @@ static void test_drsc_exits_when_dist_too_far(void)
   /* MAP_LANES_4TO3L_VAL (0xBD) has non-zero curve bits, so if the dist
    * check were absent this call would proceed into the Bresenham loop.
    * With height_offset=19 the dist-too-far guard fires first. */
-  chq_test_draw_road_scene_change(state, 0xBD /* MAP_LANES_4TO3L_VAL */, 19);
+  chq_test_draw_road_lanes_change(state, 0xBD /* MAP_LANES_4TO3L_VAL */, 19);
 
   assert(memcmp(snap_left,         state->xpos_road_left,         sizeof(snap_left))         == 0);
   assert(memcmp(snap_centre_left,  state->xpos_road_centre_left,  sizeof(snap_centre_left))  == 0);
@@ -248,19 +248,19 @@ static void test_drsc_exits_when_dist_too_far(void)
   assert(memcmp(snap_right,        state->xpos_road_right,        sizeof(snap_right))        == 0);
 
   chq_destroy(state);
-  printf("PASS  draw_road_scene_change: dist >= 19 exits early, xpos tables unchanged\n");
+  printf("PASS  draw_road_lanes_change: dist >= 19 exits early, xpos tables unchanged\n");
 
 }
 
 /*
- * draw_road_scene_change: when the lane byte has no curve bits (bits 2-3 both
+ * draw_road_lanes_change: when the lane byte has no curve bits (bits 2-3 both
  * clear) the function identifies a straight section and exits without touching
  * the xpos tables.  The exit path calls dr_four_lane_highway (dr_neg_lane_count
  * becomes -4).
  *
  * 0x02 = MAP_LANES_2M_VAL: a 2-lane middle section, bits 2-3 = 0.
  */
-static void test_drsc_exits_on_straight_track(void)
+static void test_drlc_exits_on_straight_track(void)
 {
   chqstate_t *state;
   u16 snap_left[128];
@@ -279,7 +279,7 @@ static void test_drsc_exits_on_straight_track(void)
   memcpy(snap_centre_right, state->xpos_road_centre_right, sizeof(snap_centre_right));
   memcpy(snap_right,        state->xpos_road_right,        sizeof(snap_right));
 
-  chq_test_draw_road_scene_change(state, 0x02 /* MAP_LANES_2M_VAL */, 1);
+  chq_test_draw_road_lanes_change(state, 0x02 /* MAP_LANES_2M_VAL */, 1);
 
   assert(memcmp(snap_left,         state->xpos_road_left,         sizeof(snap_left))         == 0);
   assert(memcmp(snap_centre_left,  state->xpos_road_centre_left,  sizeof(snap_centre_left))  == 0);
@@ -288,7 +288,7 @@ static void test_drsc_exits_on_straight_track(void)
   assert(memcmp(snap_right,        state->xpos_road_right,        sizeof(snap_right))        == 0);
 
   chq_destroy(state);
-  printf("PASS  draw_road_scene_change: straight track (no curve bits) exits early, xpos tables unchanged\n");
+  printf("PASS  draw_road_lanes_change: straight track (no curve bits) exits early, xpos tables unchanged\n");
 
 }
 
@@ -308,7 +308,7 @@ static void test_drsc_exits_on_straight_track(void)
  * Two extra prime iterations advance it to 34 → carry_stripe = 1.
  *
  * The lanes byte at road_buffer[98] (written by rm_cycle_buffer_offset
- * call 3 from map data) is 0x86, which would trigger draw_road_scene_change
+ * call 3 from map data) is 0x86, which would trigger draw_road_lanes_change
  * and push some xpos entries off-screen before the lane loop runs.  Clear it
  * to force the four-lane highway path so the xpos tables remain valid.
  *
@@ -331,7 +331,7 @@ static void test_lane_markings_appear_at_bottom_row(void)
 
   /* road_buffer[98] holds the lanes byte for idx=34.  It was written by the
    * third rm_cycle_buffer_offset call (map position 3) and is non-zero
-   * (0x86), which would trigger draw_road_scene_change and modify the xpos
+   * (0x86), which would trigger draw_road_lanes_change and modify the xpos
    * tables during rendering.  Clear it so dr_read_lanes takes the
    * four-lane-highway path and the xpos tables are not disturbed. */
   state->road_buffer[98] = 0;
@@ -414,8 +414,8 @@ int main(void)
 
   test_build_height_table_writes_table();
   test_layout_road_populates_tables();
-  test_drsc_exits_when_dist_too_far();
-  test_drsc_exits_on_straight_track();
+  test_drlc_exits_when_dist_too_far();
+  test_drlc_exits_on_straight_track();
   test_draw_road_writes_backbuffer();
   test_lane_markings_appear_at_bottom_row();
   test_set_up_stage_lanes_slot_is_3lane();

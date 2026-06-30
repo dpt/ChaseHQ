@@ -10,7 +10,7 @@ Recurring mistakes encountered porting Chase H.Q. from Z80 to C. Each entry has:
 
 **Symptoms:**
 
-- `if (X < 0)` on a `u8` is always false — the negative-direction branch is dead code. (`L_step`, `A_step`, `A_delta_lo` in `draw_road_scene_change`; `Anew_diff` in `dr_fill_left_stripe`.)
+- `if (X < 0)` on a `u8` is always false — the negative-direction branch is dead code. (`L_step`, `A_step`, `A_delta_lo` in `draw_road_lanes_change`; `Anew_diff` in `dr_fill_left_stripe`.)
 - `if (X > 0)` on a `u8` is true for all non-zero values — the negative branch is unreachable. (`Aheight_diff > 0` in `dr_fill_left_stripe`, fixed to `(s8)Aheight_diff > 0`.)
 - `>= 128` boundary miss: `A > 128` fails for `A == 128` (0x80 has Sign flag set on Z80). Fix: `A >= 128`.
 - **`s8` cast on a 16-bit `SBC HL,DE` result:** `SBC HL,DE` sets the Sign flag from bit 15 of the 16-bit result. Casting the `u16` result to `s8` tests bit 7 of the low byte only. A value like `0xFF64` is negative as `s16` but has zero in bit 7 of the low byte, so the `(s8)` branch fires incorrectly. Fix: cast to `s16`. (`f21a880`)
@@ -42,10 +42,10 @@ A variant is **copy-paste between adjacent sections of the same function:** `rm_
 **Symptoms and fixes:**
 
 - **SM fields never set:** `dr_left_table_hi_1/2`, `dr_right_table_hi_1/2`, `dr_neg_lane_count` — used on the first frame before `dr_four_lane_highway` writes them. Add explicit initialisation in `chq_initialise`. (`c8251ba`)
-- **SM field type truncation:** `ahc_road_pos_b` was declared `u8` but the Z80 SM instruction at $B3A3 is `LD DE,$01D8` — a 16-bit operand. Storing 472 into a `u8` field silently truncates to 216; `DEother_road_pos >> 8` then returns 0 instead of 1, making the upper-bound high-byte comparison always pass for any road_pos ≥ 256. The fix is to declare the field `u16`. Check: does the Z80 SM instruction load a register pair (16-bit operand) or a single register/byte (8-bit)? (`bc1e1cb`)
+- **SM field type truncation:** `ahc_road_pos_b` was declared `u8` but the Z80 SM instruction at $B3A3 is `LD DE,$01D8`— a 16-bit operand. Storing 472 into a`u8`field silently truncates to 216;`DEother_road_pos >> 8`then returns 0 instead of 1, making the upper-bound high-byte comparison always pass for any road_pos ≥ 256. The fix is to declare the field`u16`. Check: does the Z80 SM instruction load a register pair (16-bit operand) or a single register/byte (8-bit)? (`bc1e1cb`)
 - **SM fields `ahc_road_pos_a` / `ahc_road_pos_b` not initialised:** The default `LD DE` operands at $B395 and $B3A3 are 72 and 472. calloc-zero left both at 0, causing the road_pos clamp to fire incorrectly on the very first frame. (`bc1e1cb`)
 - **`road_buffer_offset` not reset in `set_up_stage`:** Z80 zeroes this at stage start; C translation missed it, leaving a stale pointer into the previous stage's buffer. (`dfdaf8b`)
-- **`B_iterations` and `C_range` uninitialised in `draw_road_scene_change`:** Z80 `LD B,C` sets loop count from C; both must be assigned from `C_bresen_range` at the `compute_step` entry point. (`7a12c5b`)
+- **`B_iterations` and `C_range` uninitialised in `draw_road_lanes_change`:** Z80 `LD B,C` sets loop count from C; both must be assigned from `C_bresen_range` at the `compute_step` entry point. (`7a12c5b`)
 - **`C_bresen_range`/`B_tbl_stride` set from wrong variable:** Used `A_curve_step` (animation offset) instead of `IYheight[0] - ref_height` (height span). Bresenham range and table stride were wrong in all four setup paths. (`f98088b`)
 - **`flipped[]` table not built:** `bootstrap()` builds the bit-reversal lookup; the `RUN_FULL_GAME=0` path bypasses bootstrap and went straight to `chq_initialise` without building the table. All flipped sprites rendered black. (`c5c3e6c`)
 - **Stage not loaded before attract mode:** `state->stage` was NULL when `attract_mode_48k` first accessed it. (`5bd1c47`)
@@ -109,7 +109,7 @@ A variant is **copy-paste between adjacent sections of the same function:** `rm_
 
 **Bugs:**
 
-- `draw_road_scene_change` used `range == 0 || (range & 0x80)` to detect that the setup path should be skipped. For differences above 128 the bit-7 check returned false incorrectly.
+- `draw_road_lanes_change` used `range == 0 || (range & 0x80)` to detect that the setup path should be skipped. For differences above 128 the bit-7 check returned false incorrectly.
 - `animate_hero_car` lower-bound clamp ($B3A0-$B3A1): `LD A,L; SUB E; JR C` was translated as `if ((s8)(L - E) < 0)`. For L=216, E=72: 216-72=144 = 0x90, carry=0 (no borrow, 216≥72), but (s8)0x90 = -112 triggers incorrectly. The road position 216 was clamped to 72 every frame, causing the road to flicker.
 
 **Fix:** Use a direct unsigned comparison: `if (L < E)` (i.e. `if ((HLroad_pos & 0xFF) < (DEother_road_pos & 0xFF))`). Never use `(s8)` or `& 0x80` to recover a carry flag — the sign and carry flags from subtraction are the same only for differences in [0, 127].

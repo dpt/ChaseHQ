@@ -3,12 +3,13 @@ perhaps build unit tests now to flush out problems ahead of time.
 
 # BUGS
 
-- Lane markings don't appear closest to player: draw_road_scene_change
+- Lane markings don't appear closest to player: draw_road_lanes_change
   (Bresenham interpolation) is called at map position 3 (stage 1 lane
   transition) and pushes some xpos entries off-screen at Lrow=0xFF.
   Verify whether this matches Z80 behaviour or is a translation bug.
 - Radio screen sometimes have leftover transition animation parts
 - Perp escape scene causes an immediate crash
+- Message cursor seems to vanish
 
 
 # TODO

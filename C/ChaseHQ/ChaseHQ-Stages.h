@@ -216,6 +216,11 @@
 //     - else if bit 5 clear => dirt track or (unknown)
 //       - if bits 2 or 3 set => (unknown)
 //       - else if bits 2 or 3 clear => dirt track
+//
+// Testing for bits 2 or 3 is used by draw_road_lanes_change to detect lane
+// changing sections, but there must be some other test involved there since
+// tunnel/forked would be included.
+//
 
 #define MAP_LANES_LEFT_OFFSET_MASK      (0x03)
 

@@ -28,8 +28,8 @@ The byte is decoded as follows — bit positions refer to the byte _after_ an SL
 | Condition | Road type | Next call |
 | --- | --- | --- |
 | `left_offset is 0` | full-width / no left taper | `state->dr_callback` (usually `dr_four_lane_highway`) |
-| bit 6 clear, bit 7 clear | 2-lane normal | `draw_road_scene_change` |
-| bit 6 clear, bit 7 set | 3-lane normal | `draw_road_scene_change` |
+| bit 6 clear, bit 7 clear | 2-lane normal | `draw_road_lanes_change` |
+| bit 6 clear, bit 7 set | 3-lane normal | `draw_road_lanes_change` |
 | bit 6 set, bit 7 clear | tunnel (or tunnel transition) | `dr_dispatch` |
 | bit 6 set, bit 7 set, bit 5 set | forked road | `forked_road_plotter` |
 | bit 6 set, bit 7 set, bit 5 clear | dirt track | `dr_set_lane_callback` |
@@ -157,7 +157,7 @@ Called when the road has risen to the horizon (large uphill delta or `dr_increas
 draw_road
  └─ dr_read_lanes
      ├─ [left_offset=0] → dr_four_lane_highway → dr_set_lane_callback
-     ├─ [normal 2/3-lane] → draw_road_scene_change → dr_set_lane_callback
+     ├─ [normal 2/3-lane] → draw_road_lanes_change → dr_set_lane_callback
      ├─ [tunnel]          → dr_dispatch
      ├─ [fork]            → forked_road_plotter
      └─ [dirt]            → dr_set_lane_callback
