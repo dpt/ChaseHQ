@@ -1645,7 +1645,7 @@ static void main_loop(chqstate_t *state)
       move_helicopter(state);
       check_scenery_collisions(state);
       play_regular_sfx_hook(state);
-      // draw_scene_objects(state);
+      draw_scene_objects(state);
       play_regular_sfx_hook(state);
       animate_hero_car(state);
       speed_score(state);
@@ -1758,6 +1758,7 @@ static void cpu_driver(chqstate_t *state)
   draw_all_hazards(state);
   move_hero_car(state);
   check_scenery_collisions(state);
+  draw_scene_objects(state);
   animate_hero_car(state); /* exit via */
 
   state->speccy->sleep(state->speccy, 250000); // guess
@@ -3360,6 +3361,8 @@ static void draw_scene_objects(chqstate_t *state)
   int             Eobj;                /* was E */
   const obj_t    *HLobj;               /* was HL */
 
+  return;
+  
   assert(state->stage != NULL);
   assert(state->roadbuf_start == &state->road_buffer[0]);
   assert(state->roadbuf_end   == &state->road_buffer[256]);
@@ -4197,7 +4200,7 @@ static void draw_object_perspective_entrypt(chqstate_t     *state,
   int Ebitmap_stride;
   int Zflipped;
   int Cwidth_bytes;
-  int Adash;
+  int Adash_width_bytes;
   int Fdash_zero;
   int Fdash_carry;
 
@@ -4223,7 +4226,7 @@ static void draw_object_perspective_entrypt(chqstate_t     *state,
                             IYheight);
   } else {
     Cwidth_bytes = Awidth_bytes;
-    Adash = Awidth_bytes; Fdash_zero = Zflipped;
+    Adash_width_bytes = Awidth_bytes; Fdash_zero = Zflipped;
     Fdash_carry = carry; // was EX AF,AF' -- banking A & carry
     Cpadding = Ebitmap_stride - Cwidth_bytes;
     draw_object_common_flipped(state,
@@ -4231,7 +4234,7 @@ static void draw_object_perspective_entrypt(chqstate_t     *state,
                                Cpadding,
                                Ebitmap_stride,
                                HLbitmap,
-                               Adash,
+                               Adash_width_bytes,
                                Fdash_zero,
                                Fdash_carry,
                                IYheight); /* was FALLTHROUGH */
@@ -4665,7 +4668,7 @@ static void plot_sprite_even(chqstate_t *state,
   assert(jump_offset % 5 == 0);
   assert(jump_offset / 5 >= 0 && jump_offset / 5 <= 3);
   assert(VALID_BACKBUF_PTR(backbuf_addr));
-  assert(height >= 1);
+  assert(height >= 1 && height < 192);
   assert(bitmap_data != NULL);
 
   // Conv: B & C moved into prev_buf_row
