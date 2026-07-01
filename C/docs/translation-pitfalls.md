@@ -213,7 +213,31 @@ The same ordering is required in Kempston mode: `keyscan_keydefs` scans `keydefs
 
 ---
 
-## 16. Stage array off-by-one — 0-indexed array with 1-indexed stage numbers
+## 16. u8 arithmetic instructions — NEG, ADD, SUB results must stay u8
+
+**Root cause:** Z80 arithmetic instructions (`NEG`, `ADD A,n`, `SUB n`, etc.) operate on the 8-bit accumulator; the result always wraps at 256. In C, the variable is typically an `int`, so the operation uses 32-bit arithmetic. For values ≥ 128, the C result and the Z80 result diverge:
+
+- `NEG` of `u8` value 254: Z80 gives 2 (`256 − 254`). C gives `−254`.
+- `ADD A, n` with overflow: Z80 wraps at 256; `int` does not.
+
+If the large (or negative) C result is then used in further arithmetic — a subtraction, a multiply, a sign-flag test — the error cascades.
+
+**Symptom:** `update_road_level` stored the raw curvature byte in `state->current_curvature` (a `u8`). The value 254 (`0xFE`, = signed −2) was read back as `int` 254 and negated with plain `−Acurrent_curvature`, giving −254. A later subtraction of `curvature_ticks` (1) gave −255. `(s8)(−255)` = 1, which is positive, so the 4.5× multiply fired on −255 instead of the correct 1, producing `horizontal_adjust ≈ −132` instead of −4. The car jumped ~130 road-position units per frame on any curve.
+
+**Fix:** When the Z80 instruction is a pure 8-bit arithmetic op on a register that may hold values ≥ 128, cast the result back to `u8` before using it in C arithmetic:
+
+```c
+/* Z80: NEG ; A = -A (u8) */
+Acurrent_curvature = (u8)(-Acurrent_curvature);
+```
+
+The same applies to `ADD` and `SUB` when overflow is expected: `result = (u8)(a + b)` or `result = (u8)(a - b)`. The `(s8)` sign-test at branch sites is unaffected — only the stored/accumulated value needs the cast.
+
+**Commit:** `087c724`
+
+---
+
+## 17. Stage array off-by-one — 0-indexed array with 1-indexed stage numbers
 
 **Root cause:** The Z80 game uses stage numbers 1–5. The C `stages[]` lookup array was declared with five entries indexed 0–4 (`stages[0] = &stage1` … `stages[4] = &stage5`). The game sets `wanted_stage_number = 1` at startup and indexes directly with it, so `stages[1]` loaded stage 2's data for stage 1, every stage loaded the wrong data, stage 5 (`stages[5]`) was out of bounds, and the end-of-game reload (`wanted_stage_number = 6`, `stages[6]`) was also out of bounds.
 

@@ -2664,7 +2664,9 @@ phase2:
   HLroadpos = state->scenedata.road_pos + 12;
   if (HLroadpos >= ROAD_126)
     HLroadpos = ROAD_126;
+#ifndef NDEBUG
   if (state->scenedata.road_pos != (u16) HLroadpos) printf("road_pos: %04X -> %04X [handle_perp_caught]\n", state->scenedata.road_pos, (u16) HLroadpos);
+#endif
   state->scenedata.road_pos = HLroadpos;
 
   fastcounter = state->fast_counter + 32;
@@ -6688,7 +6690,9 @@ static void check_scenery_collisions(chqstate_t *state)
   // Note that is where an object *could be*. There's not necessarily an
   // object always there.
   HLxpos = state->xpos_road_centre[127];
+#ifndef NDEBUG
   if (HLxpos < 0) printf("[csc] xpos[127]=%d negative (left-side underflow?)\n", HLxpos);
+#endif
   if ((HLxpos >> 8) == 0 && HLxpos >= 64) {
     if (HLxpos < 106)
       goto check_right_hand; // not close enough to be off-road
@@ -6710,7 +6714,9 @@ static void check_scenery_collisions(chqstate_t *state)
 check_right_hand:
   // "pos" here is approx 75..368 for (centred .. off-screen on the right).
   HLxpos = state->xpos_road_centre[126];
+#ifndef NDEBUG
   if (HLxpos < 0) printf("[csc] xpos[126]=%d out of useful range [0,+)\n", HLxpos);
+#endif
   Aoff_road = 0;
   if ((HLxpos >> 8) == 0 && HLxpos < 190) {
     if (HLxpos >= 143)
@@ -6724,7 +6730,9 @@ check_right_hand:
 
 store_off_road:
   // 0/1/2 => on-road/one wheel off-road/both wheels off-road
+#ifndef NDEBUG
   if (Aoff_road) printf("[csc] off_road=%d xpos[127]=%d xpos[126]=%d\n", Aoff_road, state->xpos_road_centre[127], state->xpos_road_centre[126]);
+#endif
   state->off_road = Aoff_road;
 
   Ccrash_spin = 0;
@@ -6791,11 +6799,15 @@ store_crash_spin:
 
     // Check for collisions with scenery (right hand side).
     HLxpos = state->xpos_road_centre[126];
+#ifndef NDEBUG
     if (HLxpos < 0) printf("[csc] RIGHT obj: xpos[126]=%d negative (obj=%d bounds=[%d,%d))\n", HLxpos, Aobj, DEdash_min, BCdash_max);
+#endif
     if (HLxpos < BCdash_max && HLxpos > DEdash_min) { /* > not >=: SBC carry-in=1 at $A478 */
+#ifndef NDEBUG
       printf("[csc] RIGHT obj hit: road_pos=%d xpos[126]=%d xpos[127]=%d obj=%d raw=[%d|%d] bounds=[%d,%d) speed_cap=%d\n",
              state->scenedata.road_pos, HLxpos, state->xpos_road_centre[127],
              Aobj, raw_byte1, raw_byte2, DEdash_min, BCdash_max, Aspeed_cap);
+#endif
       // EX AF,AF' -- deliberate bank Aspeed_cap
       csc_hit_scenery(state, 0 /* no flip */, Aspeed_cap); /* exit via */
       return;
@@ -6823,11 +6835,15 @@ store_crash_spin:
 
     // Check for collisions with scenery (left hand side).
     HLxpos = state->xpos_road_centre[127];
+#ifndef NDEBUG
     if (HLxpos < 0) printf("[csc] LEFT obj: xpos[127]=%d negative (obj=%d bounds=[%d,%d))\n", HLxpos, Aobj, BCdash_min, DEdash_max);
+#endif
     if (HLxpos >= BCdash_min && HLxpos < DEdash_max) {
+#ifndef NDEBUG
       printf("[csc] LEFT obj hit: road_pos=%d xpos[127]=%d xpos[126]=%d obj=%d raw=[%d|%d] bounds=[%d,%d) speed_cap=%d\n",
              state->scenedata.road_pos, HLxpos, state->xpos_road_centre[126],
              Aobj, raw_byte1, raw_byte2, BCdash_min, DEdash_max, Aspeed_cap);
+#endif
       // EX AF,AF' -- deliberate bank Aspeed_cap
       csc_hit_scenery(state, 1 /* flip */, Aspeed_cap); /* was FALLTHROUGH */
     }
@@ -6864,7 +6880,9 @@ static void scenery_hit(chqstate_t *state, int Aflip_flag, int Adash_threshold)
   if (state->ahc_crashed_flag)
     return; /* already crashed */
 
+#ifndef NDEBUG
   if (state->ahc_crashed_flag != 1) printf("ahc_crashed_flag: %d -> 1\n", state->ahc_crashed_flag);
+#endif
   state->ahc_crashed_flag     = 1;
   state->ahc_flip_flag        = Aflip_flag;
   state->ahc_crash_flip_count = Aflip_flag + 1;
@@ -9243,6 +9261,7 @@ mhc_handle_speed:
 
 mhc_set_cornering:
   state->cornering = Acornering;
+#ifndef NDEBUG
   if (HLhorizontal_adjust) {
     printf("road_pos: %04X -> %04X [move_hero_car %+d]\n", state->scenedata.road_pos, (u16)(state->scenedata.road_pos + HLhorizontal_adjust), HLhorizontal_adjust);
     if (HLhorizontal_adjust > 50 || HLhorizontal_adjust < -50)
@@ -9252,6 +9271,7 @@ mhc_set_cornering:
              saved_Cleft_turn - saved_Bright_turn,
              Acrashedflag, state->speed);
   }
+#endif
   state->scenedata.road_pos += HLhorizontal_adjust;
   Dflip_car = 1;
   if (DEadjust < 0) /* $B2F3 JP P: rightward net turn → flip sprite ($B2F7 DEC D) */
@@ -9314,7 +9334,9 @@ static void animate_hero_car(chqstate_t *state)
     Aturn_speed = 2; // fast turning
     if (HLspeed < DEquartered_speed) {
 ahc_speed_less_or_eq:
+#ifndef NDEBUG
       if (state->ahc_crashed_flag != 0) printf("ahc_crashed_flag: %d -> 0\n", state->ahc_crashed_flag);
+#endif
       state->ahc_crashed_flag = 0;
       Aturn_speed = 1; // normal turning
     } else {
@@ -9341,8 +9363,10 @@ ahc_speed_less_or_eq:
     }
 
     // $B381
+#ifndef NDEBUG
     if (state->scenedata.road_pos != (u16) HLroad_pos)
       printf("road_pos: %04X -> %04X [animate_hero_car crash]\n", state->scenedata.road_pos, (u16) HLroad_pos);
+#endif
     state->scenedata.road_pos = HLroad_pos;
 
     // Decrement this counter
@@ -9384,7 +9408,9 @@ ahc_b3b0:
   }
 
 ahc_assign_road_pos_2:
+#ifndef NDEBUG
   if (state->scenedata.road_pos != (u16) HLroad_pos) printf("road_pos: %04X -> %04X [animate_hero_car clamp]\n", state->scenedata.road_pos, (u16) HLroad_pos);
+#endif
   state->scenedata.road_pos = HLroad_pos;
   if (state->cornering || state->smoke)
     start_sfx(state, EFFECT_SQUEAL, 5); /* priority 5 */
@@ -10592,11 +10618,13 @@ url_B9C5:
       A = -A;
     }
     state->horizontal_adjust = (B << 8) | A;
+#ifndef NDEBUG
     if (state->horizontal_adjust > 50 || state->horizontal_adjust < -50)
       printf("  [url] large horiz_adj=%d: old_curv=%d ticks=%d diff=%d dir=%d speed=%d new_curv=%d\n",
              state->horizontal_adjust, Acurrent_curvature, Bcurvature_ticks,
              Acurrent_curvature - Bcurvature_ticks, C & 1,
              state->speed, state->current_curvature);
+#endif
   }
   state->horizon_scroll_sub = state->curvature_ticks = 0;
 }
@@ -10763,7 +10791,9 @@ lr_badf:
     HLroadpos = state->scenedata.road_pos;
     HLroadpos_saved = HLroadpos; /* was PUSH HLroadpos */
     HLroadpos += DEforkdistance;
+#ifndef NDEBUG
     if (state->scenedata.road_pos != (u16) HLroadpos) printf("road_pos: %04X -> %04X [layout_road fork+]\n", state->scenedata.road_pos, (u16) HLroadpos);
+#endif
     state->scenedata.road_pos = HLroadpos; // adjust road pos for fork rendering
     build_curve_table(state, /*forked=*/1);
   } else {
@@ -10772,13 +10802,17 @@ lr_badf:
     HLroadpos = state->scenedata.road_pos;
     HLroadpos_saved = HLroadpos; /* was PUSH HLroadpos */
     HLroadpos -= DEforkdistance;
+#ifndef NDEBUG
     if (state->scenedata.road_pos != (u16) HLroadpos) printf("road_pos: %04X -> %04X [layout_road fork-]\n", state->scenedata.road_pos, (u16) HLroadpos);
+#endif
     state->scenedata.road_pos = HLroadpos; // adjust road pos for fork rendering
     build_curve_table(state, /*forked=*/0);
   }
   // $BB07
   HLroadpos = HLroadpos_saved; /* was POP HLroadpos */
+#ifndef NDEBUG
   if (state->scenedata.road_pos != (u16) HLroadpos) printf("road_pos: %04X -> %04X [layout_road restore]\n", state->scenedata.road_pos, (u16) HLroadpos);
+#endif
   state->scenedata.road_pos =
     HLroadpos; // restore normal road pos after fork rendering
   // POP BC
