@@ -3362,7 +3362,7 @@ static void draw_scene_objects(chqstate_t *state)
   const obj_t    *HLobj;               /* was HL */
 
   return;
-  
+
   assert(state->stage != NULL);
   assert(state->roadbuf_start == &state->road_buffer[0]);
   assert(state->roadbuf_end   == &state->road_buffer[256]);
@@ -4658,7 +4658,7 @@ static void plot_sprite(chqstate_t *state,
 static void plot_sprite_even(chqstate_t *state,
                              int         jump_offset,
                              u8         *backbuf_addr,
-                             int          height,
+                             int         height,
                              int         bitmap_stride,
                              const u8   *bitmap_data)
 {
@@ -14106,7 +14106,9 @@ static void entry_common(chqstate_t *state, int Amode_128k, int Bnrelocs)
 #endif
 
   // Conv: Load stage 1 data before attract mode starts (state->stage must not be NULL).
-  state->stage = stages[1];
+  state->wanted_stage_number = 1;
+  state->current_stage_number = 0;
+  load_stage(state);
 
   bootstrap(state);
 }
