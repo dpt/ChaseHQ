@@ -7111,8 +7111,8 @@ static void cycle_counters(chqstate_t *state)
 /**
  * $A637: Perp behaviour
  *
- * \param[in] state Pointer to game state.
- * \param[in] IXxpos  X-position table pointer. (was IX)
+ * \param[in] state  Pointer to game state.
+ * \param[in] IXperp Perp hazard. (was IX)
  */
 void perp_behaviour(chqstate_t *state, hazard_t *IXperp)
 {
@@ -7588,8 +7588,8 @@ static u16 get_spawn_lanes(chqstate_t *state, int extra)
 /**
  * $A8CD: Hazard handler
  *
- * \param[in] state Pointer to game state.
- * \param[in] IXxpos  X-position table pointer. (was IX)
+ * \param[in] state    Pointer to game state.
+ * \param[in] IXhazard Hazard pointer. (was IX)
  */
 void hazard_handler(chqstate_t *state, hazard_t *IXhazard)
 {
