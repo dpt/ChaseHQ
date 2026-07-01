@@ -2391,7 +2391,7 @@ static void clear_playfield(chqstate_t *state)
  *
  * \param[in] state    Pointer to game state.
  * \param[in] index    Sound effect index. (was B)
- * \param[in] priority Priority; higher value wins. (was C)
+ * \param[in] priority Priority; lower value wins (1 = highest priority). (was C)
  */
 static void start_sfx(chqstate_t *state, int index, int priority)
 {
@@ -2829,8 +2829,10 @@ score_store_low:
 move_perp:
   A = state->hazards[0].horz_pos;
   Bdelta = 5;
-  if (A == 35)
+  if (A == 35) {
+    C = A;
     goto assign_perp_pos;
+  }
   else if (A < 35)
     goto change_perp_pos;
   Bdelta = -5; // else greater than
@@ -4220,7 +4222,7 @@ static void draw_object_perspective_entrypt(chqstate_t     *state,
     Awidth_bytes = Ebitmap_stride;
   // Conv: HLbitmap++ removed, now passed as-is into draw_object_common/_9333
   Zflipped = (HLbitmap->flags >> 1) == 0;
-  if (Zflipped == 0) {
+  if (Zflipped) {
     draw_object_clipped(state,
                             Zflipped,
                             carry,
@@ -7388,12 +7390,12 @@ pb_bypass:
 
   // Distance to perp is 12 or less.
   // .
-  // HL += (13 - A) * DE    HL is 230, DE is 30
+  // HL += (13 - Adistance) * DE    HL is 230, DE is 30
   // .
   // This seems to be using the distance to the perp as a scale by which to adjust
   // its horizontal position.
 
-  HLspeed += (13 - A) * DEspeedmult;
+  HLspeed += (13 - Adistance) * DEspeedmult;
 
 pb_a776:
   A = IXperp->distance - 6;
@@ -8931,7 +8933,7 @@ dh_exit_2:
     goto dh_exit_1;
 
   A2 += Ewidth_bits;
-  if (A2 > Ewidth_bits) // carried
+  if (A2 < Ewidth_bits) // carried
     draw_object_left_helicopter_entrypt(state, A2, HLbitmap,
                                         IYheight); /* was exit via */
 }

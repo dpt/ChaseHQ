@@ -18,15 +18,16 @@ perhaps build unit tests now to flush out problems ahead of time.
 - Main game runs too fast - need to calibrate against original
 - Object plotting broken and commented out for now
 - Document expected values/ranges for e.g. xpos arrays
+- Fix stage 2+ data
 
 
 # IDEAS
 
-- Identify missibg cases where wraparound is required.
+- Identify missing cases where wraparound is required.
 - Remove as much casting as possible (Claude tends to add it).
 - Hoist out all interesting Z80 addresses to constants
 - Lots more unit tests.
-- SHould hi2xpostab return u16* ?
+- Should hi2xpostab return u16* ?
 - Fix all warnings pass
 - Update summaries of major functions to docs/
 - Update CLAUDE.md now the stage data is in
