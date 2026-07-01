@@ -256,3 +256,39 @@ const stage_t *stages[MAX_STAGES + 2] = {
 ```
 
 **Check:** whenever `load_stage` indexes `stages[wanted]`, confirm that the maximum value `wanted` can reach (including end-of-game transitions) is within the declared array size.
+
+---
+
+## 18. Partial sign extension with `|= 0xFF00`
+
+**Root cause:** The Z80 sign-extends a byte to a 16-bit register pair by loading H with 0x00 or 0xFF depending on bit 7 of L. The C equivalent is sometimes written as `if (val & 0x80) val |= 0xFF00;`. This is only correct when `val` is already a negative `int` (bits 8–31 are already `0xFF…`). For a *positive* `int` with bit 7 set — e.g. the value 128 (`0x00000080`) — the OR produces `0x0000FF80 = 65408` instead of `−128`. The error is one full `u16` wrap (65536) and propagates into any accumulator the value is added to.
+
+**Symptom:** In `build_curve_table`, the rounded multiply result (`HLdash_multiplied`) could land at 128 or above after the rounding step (`>> 8` + carry bit). The `|= 0xFF00` sign extension then produced 65408 for value 128, 65409 for 129, etc. `DEdash_roadposacc += 65408` drifted by 65536 relative to the Z80 road-position accumulator, corrupting all subsequent curvature table entries for that frame.
+
+**Fix:** Use a `(s8)` cast on the low byte rather than a conditional OR:
+
+```c
+A_curvature       = HLdash_multiplied & 0xFF;
+HLdash_multiplied = (s8) A_curvature; /* sign extend: Z80 DEC H / RRA */
+```
+
+`(s8)` maps 0–127 → 0–127 and 128–255 → −128–−1, exactly matching the Z80 `{H=0x00 or 0xFF, L=A}` construction, regardless of the sign of the `int` being extended.
+
+**Rule:** Never use `|= 0xFFnn` to sign-extend a value that might be a positive `int`. Always cast through `(s8)` (8-bit source) or `(s16)` (16-bit source).
+
+---
+
+## 19. 8-bit subtraction result not masked back to `u8`
+
+**Root cause:** Z80 `SUB n` operates entirely in the 8-bit accumulator; the result always wraps at 256. In C the variable is an `int`, so the subtraction is 32-bit and can go negative. If the result is then used in a subsequent iteration of a loop — rather than being consumed and discarded — the negative C value diverges from the Z80's wrapped-positive value on every future accumulation step.
+
+**Symptom:** In `build_curve_table_fill` (`bct_endbit_A`), `Atotal &= 0xFF` was applied inside the inner loop but not after `Atotal -= Ldash` at the outer loop boundary. When the inner loop exited via overflow (carry set) and the masked `Atotal` was less than `Ldash`, the subtraction produced a negative `int`. On the next outer iteration, `Atotal += Cdash` needed fewer additions before the C overflow check (`Atotal > 0xFF`) fired, compared to the Z80's addition on the wrapped positive byte. This caused one fewer or more DE increment before each PUSH, writing wrong x-position values into the road table.
+
+**Fix:** Apply `& 0xFF` immediately after any subtraction whose result feeds back into 8-bit accumulation:
+
+```c
+Atotal -= Ldash;
+Atotal &= 0xFF; /* Z80 SUB L wraps; without mask Atotal goes negative */
+```
+
+**Rule:** Whenever a Z80 `SUB` (or `ADD`, `NEG`) result persists across loop iterations as an 8-bit accumulator, mask it back to `[0, 255]` after every operation that could leave it outside that range. The guard inside the loop body is not sufficient if a post-loop subtraction can make the value negative before the next iteration begins.

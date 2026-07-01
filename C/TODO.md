@@ -14,8 +14,10 @@ perhaps build unit tests now to flush out problems ahead of time.
 
 # TODO
 
+- Guard words?
 - Main game runs too fast - need to calibrate against original
 - Object plotting broken and commented out for now
+- Document expected values/ranges for e.g. xpos arrays
 
 
 # IDEAS

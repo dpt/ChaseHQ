@@ -1744,23 +1744,25 @@ static void cpu_driver(chqstate_t *state)
 
   state->speccy->stamp(state->speccy);
 
-  read_map(state);
-  spawn_cars(state);
-  cycle_counters(state);
-  build_height_table(state);
-  scroll_horizon(state);
-  layout_road(state);
-  draw_road(state);
-  layout_objects(state);
-  prepare_tunnel(state);
-  spawn_hazards(state);
-  choose_dirt_and_stones(state);
-  layout_dirt_and_stones(state);
-  draw_all_hazards(state);
-  move_hero_car(state);
-  check_scenery_collisions(state);
-  draw_scene_objects(state);
-  animate_hero_car(state); /* exit via */
+#define CHECK do { assert(state->mhc_y_offset >= 0 && state->mhc_y_offset <= 8); } while (0)
+
+  CHECK; read_map(state);
+  CHECK; spawn_cars(state);
+  CHECK; cycle_counters(state);
+  CHECK; build_height_table(state);
+  CHECK; scroll_horizon(state);
+  CHECK; layout_road(state);
+  CHECK; draw_road(state);
+  CHECK; layout_objects(state);
+  CHECK; prepare_tunnel(state);
+  CHECK; spawn_hazards(state);
+  CHECK; choose_dirt_and_stones(state);
+  CHECK; layout_dirt_and_stones(state);
+  CHECK; draw_all_hazards(state);
+  CHECK; move_hero_car(state);
+  CHECK; check_scenery_collisions(state);
+  CHECK; draw_scene_objects(state);
+  CHECK; animate_hero_car(state); /* exit via */
 
   state->speccy->sleep(state->speccy, 250000); // guess
 }
@@ -3676,7 +3678,7 @@ void draw_stretchy_object_left(chqstate_t *state,
  * \param[in] IYheight IYheight register value.
  */
 void draw_stretchy_object_right(chqstate_t *state,
-                                int          Bdepth,
+                                int         Bdepth,
                                 const void *arg,
                                 const s16  *IXxpos,
                                 const u8   *IYheight)
@@ -3700,10 +3702,10 @@ void draw_stretchy_object_right(chqstate_t *state,
  * \param[in] IYheight   Road-table pointer. (was IYheight)
  */
 static void draw_stretchy_object_common(chqstate_t       *state,
-                                        int                Bdepth,
+                                        int               Bdepth,
                                         const stretchy_t *DEstretchy,
                                         dso_callback_t   *HLcallback,
-                                        const s16  *IXxpos,
+                                        const s16        *IXxpos,
                                         const u8         *IYheight)
 {
   dso_callback_t        *SM_91CD_callback;      /* was $91CD (SM) */
@@ -9011,6 +9013,7 @@ static void move_hero_car(chqstate_t *state)
   int        saved_horiz_adj;      /* diagnostic: horizontal_adjust before clear */
 
   y_offset = state->mhc_y_offset; // load jump counter, highest is 8
+  assert(y_offset >= 0 && y_offset <= 8);
   if (y_offset) {
     state->mhc_y_offset = --y_offset;
     if (y_offset == 0) {
@@ -10548,15 +10551,19 @@ static void update_road_level(chqstate_t *state)
       if (!carry) {
         Bprev_road_height = Aprev_road_height;
         Ay_offset = state->mhc_y_offset;
+        assert(Ay_offset >= 0 && Ay_offset <= 8);
         if (Ay_offset) {
           Adiff = Bprev_road_height - (3 - ((state->speed >> 7) &
                                             3)); // result = 1..5? // folded a lot here
           if ((s8) Adiff > 0) { /* was !C && !Z */
             // PUSH HLprev_road_height
-            HLptable_b059 = &car_jump_resume_params[(Adiff * 2) -
-                                                    1]; // use of DE removed, RLC folded in
+            int i = (Adiff * 2) - 1;
+            assert(i >= 0 && i <= 8);
+            HLptable_b059 = &car_jump_resume_params[i]; // use of DE removed, RLC folded in
             Eoffset = *HLptable_b059++; // an offset
+            assert(*HLptable_b059 >= 0 && *HLptable_b059 <= 8);
             state->mhc_y_offset = *HLptable_b059;
+            assert(Eoffset >= 0 && Eoffset <= 19);
             state->mhc_jump_data = &hero_car_jump_table[Eoffset];
             // POP HLprev_road_height
           }
@@ -10639,60 +10646,69 @@ url_B9C5:
 static void layout_road(chqstate_t *state)
 {
   int       carry = 0;
-  u8       *DElanedata_base;
-  u8       *DElanedata;
-  int       Biterations;
-  int       Lcounter;
-  s16      *SProadright;
-  u8        Aiterations;
-  int       Aforkinprogress;
-  s16      *SMroadcentre;
-  s16      *SMroadcentreright;
-  s16      *SMroadcentreleft;
-  s16      *SMroadleft;
-  s16      *SMroadright;
-  s16      *SMveryright;
-  int       BCdash;
-  int       DEdash;
-  int       HLdash;
-  int       DEroadpos;
-  const u8 *HLchatterblk;
-  int       Ca16d;
-  int       HLforkdistance;
-  int       DEforkdistance;
-  int       HLroadpos;
-  int       HLroadpos_saved;
-  u8       *HLunknown;
+  u8       *DElanedata_base;   /* was DE */
+  u8       *DElanedata;        /* was DE */
+  int       Biterations;       /* was B */
+  int       Ldistance_to_fork;          /* was L */
+  s16      *SProadright;       /* was SP */
+  u8        Aiterations;       /* was A */
+  int       Aforkinprogress;   /* was A */
+  s16      *SMroadcentre;      /* was $BA36 (SM) FIXME */
+  s16      *SMroadcentreright; /* was $BA40 (SM) FIXME */
+  s16      *SMroadcentreleft;  /* was $BA45 (SM) FIXME */
+  s16      *SMroadleft;        /* was $BA29 (SM) FIXME */
+  s16      *SMroadright;       /* was $xxxx (SM) FIXME */
+  s16      *SMveryright;       /* was $xxxx (SM) FIXME */
+  int       BCdash;            /* was BC */
+  int       DEdash;            /* was DE */
+  int       HLdash;            /* was HL */
+  int       DEroadpos;         /* was DE */
+  const u8 *HLchatterblk;      /* was HL */
+  int       Ca16d;             /* was ? FIXME  */
+  int       HLforkdistance;    /* was HL */
+  int       DEforkdistance;    /* was DE */
+  int       HLroadpos;         /* was HL */
+  int       HLroadpos_saved;   /* was HL */
+  u8       *HLunknown;         /* was HL */
 
-  // Point at lane data
+  // $B9F4: Point at lane data
   DElanedata_base = DElanedata = ROADBUF_FWD2PTR(ROADBUF_LANES_OFFSET);
+  CHECK;
 
-  // Count the distance to the forked road.
+  // $B9F9: Count the distance to the forked road
   Biterations = 20;
-  Lcounter = 0; // counter
+  Ldistance_to_fork = 0;
   do {
     if ((*DElanedata & 0xE1) == 0xE1)
       goto lr_forked_road;
 
     WRAP_INCREMENT_ASSIGN(DElanedata, DElanedata_base);
-    Lcounter++;
+    Ldistance_to_fork++;
   } while (--Biterations > 0);
+  CHECK;
 
-  // No forked road found.
+#ifndef NDEBUG
+  printf("lr: NOT FORKED\n");
+#endif
+
+  // $BA0B: No forked road found
   build_curve_table(state, /*forked=*/0);
-  // $E800 now contains the left edges and $EC00 contains the right edges.
+  CHECK;
   SProadright = &state->xpos_road_right[0x30 >> 1];
-  Aiterations = 0x30; // 48..256 in steps of 2 = 104 iterations
+  Aiterations = 48 >> 1; // 48..256 in steps of 2 = 104 iterations
+
+  // $BA17: Forked code jumps back here
 lr_calc_single_lane:
   do {
-    SMroadcentre      = &state->xpos_road_centre[Aiterations >> 1];
-    SMroadcentreright = &state->xpos_road_centre_right[Aiterations >> 1];
-    SMroadcentreleft  = &state->xpos_road_centre_left[Aiterations >> 1];
-    SMroadleft        = &state->xpos_road_left[Aiterations >> 1];
+    // $BA20
+    SMroadcentre      = &state->xpos_road_centre[Aiterations];
+    SMroadcentreright = &state->xpos_road_centre_right[Aiterations];
+    SMroadcentreleft  = &state->xpos_road_centre_left[Aiterations];
+    SMroadleft        = &state->xpos_road_left[Aiterations];
 
-    // EXX Bank
+    // $BA26 EXX Bank
 
-    // Centre = Left + (Right - Left) / 2
+    // $BA27: Centre = Left + (Right - Left) / 2
     DEdash = *SMroadleft; // read from road left (s16: negative when road_pos < 295)
     HLdash = *SProadright++; // POP from $ECxx
     HLdash = (HLdash - DEdash) >> 1; // halve total width
@@ -10700,23 +10716,25 @@ lr_calc_single_lane:
     HLdash += DEdash; // calc centre from left
     *SMroadcentre = HLdash; // store centre pos
 
+    // $BA38
     DEdash = BCdash;
     BCdash >>= 1; // halve again for quarter width
     HLdash += BCdash; // calc centre+quarter width
     *SMroadcentreright = HLdash; // store centre-right pos
 
+    // $BA44
     HLdash -= DEdash; // calc centre-halved width
     *SMroadcentreleft = HLdash; // store centre-left pos
 
-    Aiterations += 2;
-
-    // EXX Unbank
-  } while (Aiterations != 0);
+    // $BA47 - moved below
+    // $BA4A EXX Unbank
+  } while (++Aiterations != 128);
   return;
 
 lr_forked_road:
-  state->fork_countdown = Lcounter;
-  HLunknown = &state->height_table[Lcounter];
+  printf("lr: FORKED\n");
+  state->fork_countdown = Ldistance_to_fork;
+  HLunknown = &state->height_table[Ldistance_to_fork];
   Aiterations = 96;
   state->fork_visible = Aiterations; // just a flag AFACIT
   Aiterations = 106 - (Aiterations - *HLunknown);
@@ -13749,8 +13767,8 @@ static void backdrop_fill_dispatch(chqstate_t *state, int DEbackbuf, int Lrow)
  */
 static void build_curve_table(chqstate_t *state, int forked)
 {
-  s16       *H_righttab;         /* right-side xpos output table (was H, SM $CC72) */
-  s16       *L_lefttab;          /* left-side xpos output table (was L, SM $CCA7) */
+  s16       *H_righttab_end;         /* right-side xpos output table (was H, SM $CC72) */
+  s16       *L_lefttab_end;          /* left-side xpos output table (was L, SM $CCA7) */
   const u8  *HL_roadbufptr;      /* curvature road buffer pointer (was HL) */
   int        C_curvature;        /* curvature byte from road buffer (was C) */
   int        A_scratch;          /* multiply scratch (was A) */
@@ -13773,11 +13791,11 @@ static void build_curve_table(chqstate_t *state, int forked)
 
   // Set up table pointer to *end* of tables we're building.
   if (forked) {
-    H_righttab = &state->xpos_road_fork_right[128];   /* was $EE00 */
-    L_lefttab  = &state->xpos_road_centre_right[128]; /* was $EC00 */
+    H_righttab_end = &state->xpos_road_fork_right[128];   /* was $EE00 */
+    L_lefttab_end  = &state->xpos_road_centre_right[128]; /* was $EC00 */
   } else {
-    H_righttab = &state->xpos_road_right[128]; /* was $ED00 - right table */
-    L_lefttab  = &state->xpos_road_left[128];  /* was $E900 - left table */
+    H_righttab_end = &state->xpos_road_right[128]; /* was $ED00 - right table */
+    L_lefttab_end  = &state->xpos_road_left[128];  /* was $E900 - left table */
   }
 
   HL_roadbufptr = state->roadbufptr;
@@ -13785,6 +13803,7 @@ static void build_curve_table(chqstate_t *state, int forked)
 
   IY_height = &persp_x_scale_right[FAST_COUNTER_PERSP_ROW(state)][0];
 
+  CHECK;
   // now need high byte of offset from base of struct, seems to be $E6 or $E7
   A_scratch = 0xE6 + ((IY_height - &persp_x_scale_right[0][0]) >> 8);
   A_scratch = multiply(A_scratch, C_curvature);
@@ -13800,6 +13819,7 @@ static void build_curve_table(chqstate_t *state, int forked)
   DEdash_roadposacc = state->scenedata.road_pos;
   // PUSH DEdash; // save on stack
   // EXX Unbank
+  CHECK;
 
   // Calculate curvature_table
   do {
@@ -13812,6 +13832,7 @@ static void build_curve_table(chqstate_t *state, int forked)
       HL_roadbufptr = state->roadbuf_start;
 
     // EXX Bank
+    CHECK;
 
     // Z80: ADD A,IXl; LD IXl,A  -- IXl accumulates curvature; table at $E540 = $40 into page
     // Conv: Z80 IXl wraps in 8-bit; values < 0x40 index before the table (adjacent Z80 RAM).
@@ -13858,8 +13879,8 @@ static void build_curve_table(chqstate_t *state, int forked)
     HLdash_multiplied = (HLdash_multiplied >> 8) + ((HLdash_multiplied & (1 << 7)) != 0); // rounding ($CC59)
 
     A_curvature = HLdash_multiplied & 0xFF;
-    if (HLdash_multiplied & (1 << 7)) // sign extend
-      HLdash_multiplied |= 0xFF00;
+    HLdash_multiplied = (s8) A_curvature; /* sign extend: Z80 DEC H / RRA ($CC63-$CC64) */
+    CHECK;
 
     DEdash_roadposacc += HLdash_multiplied;
 
@@ -13867,14 +13888,16 @@ static void build_curve_table(chqstate_t *state, int forked)
 
     *DE_output++ = A_curvature; // write to curvature_table
   } while (--B_iterations);
+  CHECK;
 
   DE_roadpos = state->scenedata.road_pos; /* was POP DE */
   B_iterations = 0; // init counter
   // EXX Bank
   build_curve_table_fill(state,
-                         H_righttab, // table1 is $EE00 or $ED00 (right hand table)
+                         H_righttab_end, // table1 is $EE00 or $ED00 (right hand table)
                          B_iterations,
                          DE_roadpos);
+  CHECK;
 
   // repeat of above code - generate left hand table
 
@@ -13884,13 +13907,15 @@ static void build_curve_table(chqstate_t *state, int forked)
     *DE_curvature++ += *HL_rowptr++;
 
   DEdash_roadpos = state->scenedata.road_pos - 295; // vanishing point config (for left hand)
+  CHECK;
 
   Bdash_iterations = 0; // init counter
   // EXX Unbank
   build_curve_table_fill(state,
-                         L_lefttab, // table2 is $EC00 or $E900 (left hand table)
+                         L_lefttab_end, // table2 is $EC00 or $E900 (left hand table)
                          Bdash_iterations,
                          DEdash_roadpos);
+  CHECK;
 }
 
 // HL -> points past end of destination table we're filling
@@ -13911,47 +13936,64 @@ static void build_curve_table_fill(chqstate_t *state,
   u16  HLdash;
   int  overflow;
 
+  assert(Bdash_alwayszero == 0); /* Z80 B' (shadow) is always 0 at call sites */
+  assert(HLtableend == &state->xpos_road_right[128]        ||
+         HLtableend == &state->xpos_road_left[128]         ||
+         HLtableend == &state->xpos_road_fork_right[128]   ||
+         HLtableend == &state->xpos_road_centre_right[128]);
+  assert(DEroadpos >= INT16_MIN && DEroadpos <= INT16_MAX);
+
   IYheight_table = &state->height_table[0];
   Biterations = 21;
   // (restore SP on exit, load SP with HL)
   SPoutput = HLtableend;
+  CHECK;
   do {
     // EXX Bank
     A = (Bdash_alwayszero - 2 + IYheight_table[0] - IYheight_table[1]) & 0xFF;
     IYheight_table++;
     if (A >= 128)
       goto bct_endbit_negative; /* $CCBF JP M: Sign flag = bit 7 set */
+  CHECK;
     A += 2;
     state->object_positions[IYheight_table - 1 - &state->height_table[0]] =
       A; // must write to $E34F+ which is object_positions
+  CHECK;
     A -= Bdash_alwayszero;
     Bdash_iterations = A;
     Cdash = A;
+  CHECK;
     Ldash = state->curvature_table[IYheight_table - 1 -
                                    &state->height_table[0]]; // IY[$1F]; // $E320+
+  CHECK;
+    // $CCCD
     if ((Ldash & (1 << 7)) != 0) {
       Ldash = -Ldash & 0xFF; // mask here to fix neg?
+      A = Bdash_iterations;
       Aopcode = Z80_DEC_DE;
-      if (Bdash_iterations < Ldash) goto bct_endbit_A;
+      if (A < Ldash) goto bct_endbit_A;
     } else {
       Aopcode = Z80_INC_DE;
       if (A < Ldash) goto bct_endbit_A;
     }
+  CHECK;
     A = Bdash_iterations >> 1;
     do { // $CCE8
       A += Ldash;
       if (A >= Cdash) {
         A -= Cdash;
-        if (Aopcode == Z80_INC_DE)
-          DEroadpos++;
-        else
-          DEroadpos--;
+        DEroadpos += (Aopcode == Z80_INC_DE) ? +1 : -1;
       }
+  CHECK;
+      if (SPoutput <= HLtableend - 128)
+        goto bct_continue; /* Conv: Z80 overflows into adjacent table; cap at 128 writes */
       SPoutput--; *SPoutput = DEroadpos; // PUSH to output table
+  CHECK;
     } while (--Bdash_iterations > 0);
 bct_continue:
     ; // EXX Unbank
   } while (--Biterations > 0);
+  CHECK;
   return;
 
   // #REGa is opcode of instruction (INC DE/DEC DE)
@@ -13973,7 +14015,10 @@ bct_endbit_A:
       Atotal &= 0xff;
     } while (!overflow && Atotal < Ldash);
     Atotal -= Ldash;
-    SPoutput--; *SPoutput = DEroadpos; // PUSH to output table
+    Atotal &= 0xff; /* Z80 SUB L wraps; without mask Atotal goes negative across outer iters */
+    if (SPoutput > HLtableend - 128) {
+      SPoutput--; *SPoutput = DEroadpos; // PUSH to output table
+    }
   } while (--Bdash_iterations);
   goto bct_continue;
 
@@ -13989,7 +14034,8 @@ bct_endbit_negative:
   HLdash = (s8) A;
   HLdash += DEroadpos;
   DEroadpos = HLdash; /* was EX */
-  SPoutput--; *SPoutput = DEroadpos; // PUSH to output table
+  if (SPoutput > HLtableend - 128)
+    { SPoutput--; *SPoutput = DEroadpos; } // PUSH to output table
   goto bct_continue;
 }
 
