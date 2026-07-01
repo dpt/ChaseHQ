@@ -1188,7 +1188,7 @@ static void dr_fill_left_stripe(chqstate_t *state,
 
 static void pre_shift_backdrop(chqstate_t *state);
 
-static void draw_forked_road(chqstate_t *state, u8 *IXlanes, u8 *IYheight);
+static void draw_forked_road(chqstate_t *state, const u8 *IXlanes, const u8 *IYheight);
 
 static void dr_start_backdrop_fill(chqstate_t *state, int DEbackbuf, int Lrow);
 static void backdrop_fill_dispatch(chqstate_t *state, int DEbackbuf, int Lrow);
@@ -5812,7 +5812,7 @@ static void add_bonus(chqstate_t *state, int lo, int md, int hi)
          bonus_digit(hi >> 0, &zeroflag, &output) >= 0 &&
          bonus_digit(hi >> 4, &zeroflag, &output) >= 0);
 
-  state->SM_address_of_score_digits = output;
+  state->SM_address_of_score_digits = (const u8 *)output;
   state->trigger_bonus_flag = 1;
   increment_score(state, lo, md, hi); /* was fallthrough */
 }
@@ -10866,9 +10866,9 @@ static void exit_fork(chqstate_t *state)
     /* $BBA1: ef_right */
     curve_type = 0x04;
     lanes_type = 0x03;
-    state->scenedata.road_leftside_ptr  = &forked_road_exit_rightobjs[-1];
-    state->scenedata.road_rightside_ptr = &forked_road_exit_leftobjs[-1];
-    state->scenedata.road_lanes_ptr     = &forked_road_exit_right_lanes[-1];
+    state->scenedata.road_leftside_ptr  = forked_road_exit_rightobjs - 1;
+    state->scenedata.road_rightside_ptr = forked_road_exit_leftobjs - 1;
+    state->scenedata.road_lanes_ptr     = forked_road_exit_right_lanes - 1;
     state->rm_curvature_fork_end_ptr = lookup_map_goto(state,
       state->rm_rightfork_curve);
     state->rm_height_fork_end_ptr    = lookup_map_goto(state,
@@ -10887,9 +10887,9 @@ static void exit_fork(chqstate_t *state)
     /* $BB74: ef_left */
     curve_type = 0xFC;
     lanes_type = 0x01;
-    state->scenedata.road_leftside_ptr  = &forked_road_exit_leftobjs[-1];
-    state->scenedata.road_rightside_ptr = &forked_road_exit_rightobjs[-1];
-    state->scenedata.road_lanes_ptr     = &forked_road_exit_left_lanes[-1];
+    state->scenedata.road_leftside_ptr  = forked_road_exit_leftobjs - 1;
+    state->scenedata.road_rightside_ptr = forked_road_exit_rightobjs - 1;
+    state->scenedata.road_lanes_ptr     = forked_road_exit_left_lanes - 1;
     state->rm_curvature_fork_end_ptr = lookup_map_goto(state,
       state->rm_leftfork_curve);
     state->rm_height_fork_end_ptr    = lookup_map_goto(state,
@@ -10907,9 +10907,9 @@ static void exit_fork(chqstate_t *state)
   }
 
   /* $BBE3: common exit-fork road pointers */
-  state->scenedata.road_curvature_ptr = &forked_road_exit_curvature[-1];
-  state->scenedata.road_height_ptr    = &forked_road_exit_height[-1];
-  state->scenedata.road_hazard_ptr    = &forked_road_exit_hazards[-1];
+  state->scenedata.road_curvature_ptr = forked_road_exit_curvature - 1;
+  state->scenedata.road_height_ptr    = forked_road_exit_height - 1;
+  state->scenedata.road_hazard_ptr    = forked_road_exit_hazards - 1;
 
   /* $BBFD: fill 32 curvature bytes, 32 lanes bytes, 32 object bytes (zeroed) */
   for (i = 0; i < 32; i++)
@@ -12006,7 +12006,7 @@ dt_c2c1:
   } while (--B > 0);
 
 dt_exit:
-  // Conv: SP restore removed
+  ; // Conv: SP restore removed
 }
 
 /** Return byte pointer to the start of the 256-byte Z80 road-position page ($E7..$ED). */
@@ -13354,7 +13354,7 @@ static void pre_shift_backdrop(chqstate_t *state)
  * \param[in] IXlanes  Lanes buffer pointer.
  * \param[in] IYheight Height table pointer (into state->height_table).
  */
-static void draw_forked_road(chqstate_t *state, u8 *IXlanes, u8 *IYheight)
+static void draw_forked_road(chqstate_t *state, const u8 *IXlanes, const u8 *IYheight)
 {
   /* SM fields - all reinitialized from draw_road on each call */
   u8  sm_CB65;   /* road edge thickness countdown */
@@ -13950,7 +13950,7 @@ static void build_curve_table_fill(chqstate_t *state,
       SPoutput--; *SPoutput = DEroadpos; // PUSH to output table
     } while (--Bdash_iterations > 0);
 bct_continue:
-    // EXX Unbank
+    ; // EXX Unbank
   } while (--Biterations > 0);
   return;
 

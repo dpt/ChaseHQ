@@ -167,20 +167,20 @@ const stage_t stage3 = {
   &stage3_perp_face[FACEBITMAPBYTES],
   NULL,  /* no pilot mugshot on this stage */
   0x7070,
-  &stage3_hazard_lods_C22E[0],  /* addrof_hittable_objects */
+  (const hittable_t *)&stage3_hazard_lods_C22E[0],  /* addrof_hittable_objects */
   &stage3_hazard_lods_C22E[2],  /* addrof_right_hand_handlers */
-  &stage3_arrest_messages_C1E8[69],  /* addrof_right_hand_objects */
-  &stage3_obj_defs_C242[0],  /* addrof_right_hand_short_pole_object */
+  (const obj_t *)&stage3_arrest_messages_C1E8[69],  /* addrof_right_hand_objects */
+  (const obj_t *)&stage3_obj_defs_C242[0],  /* addrof_right_hand_short_pole_object */
   &stage3_obj_defs_C257[3],  /* addrof_left_hand_handlers */
-  &stage3_obj_defs_C257[0],  /* addrof_left_hand_objects */
-  &stage3_obj_defs_C26C[0],  /* addrof_left_hand_short_pole_object */
+  (const obj_t *)&stage3_obj_defs_C257[0],  /* addrof_left_hand_objects */
+  (const obj_t *)&stage3_obj_defs_C26C[0],  /* addrof_left_hand_short_pole_object */
   &stage3_perp_description[0],  /* addrof_perp_description */
   &stage3_arrest_messages_C1E8[0],  /* addrof_arrest_messages */
   NULL,  /* TODO: addrof_helicopter_stuff_1 */
   NULL,  /* TODO: addrof_helicopter_stuff_2 */
 
-  &stage3_lods_CDF1[0],  /* bitmaps_stones */
-  &stage3_lods_CDF1[42],  /* bitmaps_dust */
+  (const bitmap_t (*)[SPRITE_FRAMES])&stage3_lods_CDF1[0],  /* bitmaps_stones */
+  (const bitmap_t (*)[SPRITE_FRAMES])&stage3_lods_CDF1[42],  /* bitmaps_dust */
   &stage3_lods_C8E0[0],  /* bitmaps_perp_car */
   { &stage3_lods_C934[0], &stage3_lods_C90A[0], &stage3_lods_C934[0], &stage3_lods_C8E0[0] },  /* bitmaps_vehicles */
 

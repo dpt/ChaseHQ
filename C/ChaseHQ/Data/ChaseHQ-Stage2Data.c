@@ -168,17 +168,17 @@ const stage_t stage2 = {
   &stage2_perp_face[FACEBITMAPBYTES],
   &stage2_pilot_mugshot[0],
   0x3838,
-  &stage2_hazard_lods_E224[0],  /* addrof_hittable_objects */
+  (const hittable_t *)&stage2_hazard_lods_E224[0],  /* addrof_hittable_objects */
   &stage2_hazard_lods_E224[2],  /* addrof_right_hand_handlers */
-  &stage2_arrest_messages_E1DD[70],  /* addrof_right_hand_objects */
-  &stage2_obj_defs_E238[0],  /* addrof_right_hand_short_pole_object */
+  (const obj_t *)&stage2_arrest_messages_E1DD[70],  /* addrof_right_hand_objects */
+  (const obj_t *)&stage2_obj_defs_E238[0],  /* addrof_right_hand_short_pole_object */
   &stage2_obj_defs_E254[3],  /* addrof_left_hand_handlers */
-  &stage2_obj_defs_E254[0],  /* addrof_left_hand_objects */
-  &stage2_obj_defs_E269[0],  /* addrof_left_hand_short_pole_object */
+  (const obj_t *)&stage2_obj_defs_E254[0],  /* addrof_left_hand_objects */
+  (const obj_t *)&stage2_obj_defs_E269[0],  /* addrof_left_hand_short_pole_object */
   &stage2_perp_description[0],  /* addrof_perp_description */
   &stage2_arrest_messages_E1DD[0],  /* addrof_arrest_messages */
-  &stage2_helicopter_ED93[0],  /* addrof_helicopter_stuff_1 */
-  &stage2_helicopter_ED9F[0],  /* addrof_helicopter_stuff_2 */
+  (const heli_bitmap_t (*)[SPRITE_FRAMES])&stage2_helicopter_ED93[0],  /* addrof_helicopter_stuff_1 */
+  (const heli_bitmap_t (*)[SPRITE_FRAMES])&stage2_helicopter_ED9F[0],  /* addrof_helicopter_stuff_2 */
 
   NULL,  /* bitmaps_stones */
   NULL,  /* bitmaps_dust */
