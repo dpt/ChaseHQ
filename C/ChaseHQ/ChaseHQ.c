@@ -649,14 +649,14 @@ static const void *lookup_map_goto(chqstate_t *state, int z80)
 typedef void dso_callback_t(chqstate_t     *state,
                             int             Bdepth,
                             const bitmap_t *HLbitmap,
-                            const u16      *IXxpos,
+                            const s16  *IXxpos,
                             const u8       *IYheight);
 
 typedef void draw_object_entrypt_t(chqstate_t       *state,
                                    int               Acol_offset,
                                    int               Bdepth,
                                    const depthset_t *DEdepthset,
-                                   const u16        *IXxpos,
+                                   const s16  *IXxpos,
                                    const u8         *IYheight);
 
 /* ----------------------------------------------------------------------- */
@@ -751,33 +751,33 @@ static void draw_overhead(chqstate_t       *state,
                           int                Bparam,
                           int                Cparam,
                           const stretchy_t *DEstretchy,
-                          const u16        *IXxpos,
+                          const s16  *IXxpos,
                           const u8         *IYheight);
 
 static void draw_stretchy_object_common(chqstate_t       *state,
                                         int                Bdepth,
                                         const stretchy_t *DEstretchy,
                                         dso_callback_t   *HLcallback,
-                                        const u16        *IXxpos,
+                                        const s16  *IXxpos,
                                         const u8         *IYheight);
 
 static void draw_tunnel_light_common(chqstate_t            *state,
                                      int                     Bdepth,
                                      const depthset_t      *DEdepthset,
                                      draw_object_entrypt_t *HLcallback,
-                                     const u16             *IXxpos,
+                                     const s16  *IXxpos,
                                      const u8              *IYheight);
 
 static void draw_object_left_entrypt(chqstate_t       *state,
                                      int                Acol_offset,
                                      int                Bdepth,
                                      const depthset_t *DEdepthset,
-                                     const u16        *IXxpos,
+                                     const s16  *IXxpos,
                                      const u8         *IYheight);
 static void draw_object_left_stretchy_entrypt(chqstate_t     *state,
     int              Bdepth,
     const bitmap_t *HLbitmap,
-    const u16      *IXxpos,
+    const s16  *IXxpos,
     const u8       *IYheight);
 static void draw_object_left_helicopter_entrypt(chqstate_t     *state,
     int              Awidth_bytes,
@@ -788,12 +788,12 @@ static void draw_object_right_entrypt(chqstate_t       *state,
                                       int                Acol_offset,
                                       int                Bdepth,
                                       const depthset_t *DEdepthset,
-                                      const u16        *IXxpos,
+                                      const s16  *IXxpos,
                                       const u8         *IYheight);
 static void draw_object_right_stretchy_entrypt(chqstate_t     *state,
     int              Bdepth,
     const bitmap_t *HLbitmap,
-    const u16      *IXxpos,
+    const s16  *IXxpos,
     const u8       *IYheight);
 static void draw_object_right_helicopter_entrypt(chqstate_t     *state,
     int              Awidth_bytes,
@@ -1011,7 +1011,7 @@ static hazard_handler_t hazard_hit;
 static void check_hazard_collisions(chqstate_t *state);
 
 static u8 check_collision(chqstate_t *state, int default_retval, int HL,
-                          hazard_t *hazard, u16 *HLout);
+                          hazard_t *hazard, s16 *HLout);
 
 static void draw_all_hazards(chqstate_t *state);
 static void dh_draw_one_hazard(chqstate_t *state,
@@ -1195,7 +1195,7 @@ static void backdrop_fill_dispatch(chqstate_t *state, int DEbackbuf, int Lrow);
 
 static void build_curve_table(chqstate_t *state, int forked);
 static void build_curve_table_fill(chqstate_t *state,
-                                   u16        *HLtableend,
+                                   s16        *HLtableend,
                                    int         Bdash_alwayszero,
                                    int         DEroadpos);
 
@@ -1740,7 +1740,7 @@ static void cpu_driver(chqstate_t *state)
   if (state->gear != (state->speed < SPEED_GEAR_CHANGE))
     input |= USERINPUTFLAG_FIRE;
 
-  state->user_input = 0;//input;
+  state->user_input = input;
 
   state->speccy->stamp(state->speccy);
 
@@ -3348,7 +3348,7 @@ static void draw_scene_objects(chqstate_t *state)
   int             Biterations;         /* was B */
   u8             *IYheight_table;        /* was IY */
   u8             *HLroadbuf;           /* was HL */
-  u16            *IXtable_ea00;        /* was IX */
+  s16            *IXtable_ea00;        /* was IX */
   int             Afloating_arrow;     /* was A */
   int             Aobj;                /* was A */
   const bitmap_t *HLarrow_defn;        /* was HL */
@@ -3538,7 +3538,7 @@ static void draw_overhead(chqstate_t       *state,
                           int                Bparam,
                           int                Cparam,
                           const stretchy_t *DEstretchy, // TODO: Should this be a void * ?
-                          const u16        *IXxpos,
+                          const s16  *IXxpos,
                           const u8         *IYheight)
 {
   const stretchy_t      *HLstretchy;  /* was HL */
@@ -3653,7 +3653,7 @@ do_draw_span:
 void draw_stretchy_object_left(chqstate_t *state,
                                int          Bdepth,
                                const void *arg,
-                               const u16  *IXxpos,
+                               const s16  *IXxpos,
                                const u8   *IYheight)
 {
   draw_stretchy_object_common(state,
@@ -3676,7 +3676,7 @@ void draw_stretchy_object_left(chqstate_t *state,
 void draw_stretchy_object_right(chqstate_t *state,
                                 int          Bdepth,
                                 const void *arg,
-                                const u16  *IXxpos,
+                                const s16  *IXxpos,
                                 const u8   *IYheight)
 {
   draw_stretchy_object_common(state,
@@ -3701,7 +3701,7 @@ static void draw_stretchy_object_common(chqstate_t       *state,
                                         int                Bdepth,
                                         const stretchy_t *DEstretchy,
                                         dso_callback_t   *HLcallback,
-                                        const u16        *IXxpos,
+                                        const s16  *IXxpos,
                                         const u8         *IYheight)
 {
   dso_callback_t        *SM_91CD_callback;      /* was $91CD (SM) */
@@ -3857,7 +3857,7 @@ dso_continue:
 void draw_tunnel_light_left(chqstate_t *state,
                             int          Bdepth,
                             const void *DEarg,
-                            const u16  *IXxpos,
+                            const s16  *IXxpos,
                             const u8   *IYheight)
 {
   draw_tunnel_light_common(state, Bdepth, DEarg, draw_object_left_entrypt, IXxpos,
@@ -3876,7 +3876,7 @@ void draw_tunnel_light_left(chqstate_t *state,
 void draw_tunnel_light_right(chqstate_t *state,
                              int          Bdepth,
                              const void *DEarg,
-                             const u16  *IXxpos,
+                             const s16  *IXxpos,
                              const u8   *IYheight)
 {
   draw_tunnel_light_common(state, Bdepth, DEarg, draw_object_right_entrypt,
@@ -3897,7 +3897,7 @@ static void draw_tunnel_light_common(chqstate_t            *state,
                                      int                     Bdepth,
                                      const depthset_t      *DEdepthset,
                                      draw_object_entrypt_t *HLcallback,
-                                     const u16             *IXxpos,
+                                     const s16  *IXxpos,
                                      const u8              *IYheight)
 {
   int A;
@@ -3925,7 +3925,7 @@ static void draw_tunnel_light_common(chqstate_t            *state,
 void draw_object_left(chqstate_t *state,
                       int          Bdepth,
                       const void *DEdepthset, // a depthset_t *
-                      const u16  *IXxpos,
+                      const s16  *IXxpos,
                       const u8   *IYheight)
 {
   draw_object_left_entrypt(state, 0, Bdepth, DEdepthset, IXxpos, IYheight);
@@ -3945,7 +3945,7 @@ static void draw_object_left_entrypt(chqstate_t       *state,
                                      int                Acol_offset,
                                      int                Bdepth,
                                      const depthset_t *DEdepthset,
-                                     const u16        *IXxpos,
+                                     const s16  *IXxpos,
                                      const u8         *IYheight)
 {
   const depthset_t *ds;      /* was HL */
@@ -3979,7 +3979,7 @@ static void draw_object_left_entrypt(chqstate_t       *state,
 static void draw_object_left_stretchy_entrypt(chqstate_t     *state,
     int              Bdepth,
     const bitmap_t *HLbitmap,
-    const u16      *IXxpos,
+    const s16  *IXxpos,
     const u8       *IYheight)
 {
   int A;
@@ -4094,7 +4094,7 @@ static void draw_object_left_helicopter_entrypt(chqstate_t     *state,
 void draw_object_right(chqstate_t *state,
                        int          Bdepth,
                        const void *DEdepthset,
-                       const u16  *IXxpos,
+                       const s16  *IXxpos,
                        const u8   *IYheight)
 {
   draw_object_right_entrypt(state, 0, Bdepth, DEdepthset, IXxpos, IYheight);
@@ -4114,7 +4114,7 @@ static void draw_object_right_entrypt(chqstate_t       *state,
                                       int                Acol_offset,
                                       int                Bdepth,
                                       const depthset_t *DEdepthset,
-                                      const u16        *IXxpos,
+                                      const s16  *IXxpos,
                                       const u8         *IYheight)
 {
   const depthset_t *ds;      /* was HL */
@@ -4148,7 +4148,7 @@ static void draw_object_right_entrypt(chqstate_t       *state,
 static void draw_object_right_stretchy_entrypt(chqstate_t     *state,
     int              Bdepth,
     const bitmap_t *HLbitmap,
-    const u16      *IXxpos,
+    const s16  *IXxpos,
     const u8       *IYheight)
 {
   int Awidth_bytes;
@@ -6686,6 +6686,7 @@ static void check_scenery_collisions(chqstate_t *state)
   // Note that is where an object *could be*. There's not necessarily an
   // object always there.
   HLxpos = state->xpos_road_centre[127];
+  if (HLxpos < 0) printf("[csc] xpos[127]=%d negative (left-side underflow?)\n", HLxpos);
   if ((HLxpos >> 8) == 0 && HLxpos >= 64) {
     if (HLxpos < 106)
       goto check_right_hand; // not close enough to be off-road
@@ -6707,6 +6708,7 @@ static void check_scenery_collisions(chqstate_t *state)
 check_right_hand:
   // "pos" here is approx 75..368 for (centred .. off-screen on the right).
   HLxpos = state->xpos_road_centre[126];
+  if (HLxpos < 0) printf("[csc] xpos[126]=%d out of useful range [0,+)\n", HLxpos);
   Aoff_road = 0;
   if ((HLxpos >> 8) == 0 && HLxpos < 190) {
     if (HLxpos >= 143)
@@ -6785,6 +6787,7 @@ store_crash_spin:
 
     // Check for collisions with scenery (right hand side).
     HLxpos = state->xpos_road_centre[126];
+    if (HLxpos < 0) printf("[csc] RIGHT obj: xpos[126]=%d negative (obj=%d bounds=[%d,%d))\n", HLxpos, Aobj, DEdash_min, BCdash_max);
     if (HLxpos < BCdash_max && HLxpos > DEdash_min) { /* > not >=: SBC carry-in=1 at $A478 */
       printf("[csc] RIGHT obj hit: xpos[126]=%d obj=%d bounds=[%d,%d) speed_cap=%d\n", HLxpos, Aobj, DEdash_min, BCdash_max, Aspeed_cap);
       // EX AF,AF' -- deliberate bank Aspeed_cap
@@ -6812,6 +6815,7 @@ store_crash_spin:
 
     // Check for collisions with scenery (left hand side).
     HLxpos = state->xpos_road_centre[127];
+    if (HLxpos < 0) printf("[csc] LEFT obj: xpos[127]=%d negative (obj=%d bounds=[%d,%d))\n", HLxpos, Aobj, BCdash_min, DEdash_max);
     if (HLxpos >= BCdash_min && HLxpos < DEdash_max) {
       printf("[csc] LEFT obj hit: xpos[127]=%d obj=%d bounds=[%d,%d) speed_cap=%d\n", HLxpos, Aobj, BCdash_min, DEdash_max, Aspeed_cap);
       // EX AF,AF' -- deliberate bank Aspeed_cap
@@ -6951,7 +6955,7 @@ static void layout_objects(chqstate_t *state)
   u8       *objpos;       /* was HL */
   int       iterations;   /* was B */
   int       total;        /* was A */
-  u16      *SP;
+  s16      *SP;
   u8       *bufptr;       /* was DE */
   const u8 *objpos2;      /* was IY */
   int       countdown;    /* was A */
@@ -6959,7 +6963,7 @@ static void layout_objects(chqstate_t *state)
   u8        lanesbyte2;   /* was E' */
   int       Ldash;
   int       laneoffset;   /* was A */
-  u16      *tabptr;       /* was HL' */
+  s16      *tabptr;       /* was HL' */
   int       laneshift;    /* was A */
   int       L;
   int       A;
@@ -7666,7 +7670,7 @@ static void layout_dirt_and_stones(chqstate_t *state)
   const u8 *obj_pos;             /* was IY */
   int       iterations;          /* was B */
   int       total;               /* was C */
-  u16      *table_ed00;          /* was HL */
+  s16      *table_ed00;          /* was HL */
   u8        A;                   /* was A */
   int       Ldash;
   int       val_from_table_e800;
@@ -7752,7 +7756,7 @@ static void dust_stones_stuff(chqstate_t *state, int Biterations,
 {
   int              carry = 0;
   u8               A;
-  u16             *HLtable;
+  s16             *HLtable;
   const bitmap_t (*DEbitmaps)[SPRITE_FRAMES];
   const bitmap_t  *HLbitmap;
 
@@ -8314,7 +8318,7 @@ static u8 check_collision(chqstate_t *state,
                           int          default_retval,
                           int         HL,
                           hazard_t   *hazard,
-                          u16        *HLout)
+                          s16        *HLout)
 {
   int horz_pos;      /* was L */
   int horz_clip;     /* was H */
@@ -8417,16 +8421,16 @@ static void dh_draw_one_hazard(chqstate_t *state,
   u8        B;
   int       BCwords;
   int       DE;
-  u16       HL;
+  s16       HL;
   int       Biterations;
   u8       *HLp_n_hazards;
   int       An_hazards;
-  u16      *HLtable;
+  s16      *HLtable;
   const u8 *IY;
   u16       HLresult;
   int       Ddistance;
   int       Edist_frac;
-  u16      *DEtable;
+  s16      *DEtable;
   int       is_zero;
 
   C = IXhazard->speed >> 8; // top byte of horz position or accel?
@@ -8622,7 +8626,7 @@ static void draw_arrow_fire_smoke(chqstate_t *state,
     0xFE, 0x00
   };
 
-  u16            *HLtable;             /* was HL */
+  s16            *HLtable;             /* was HL */
   int             A;                   /* was A */
   u8              Awidth_bytes;        /* was A */
   int             Asmash_level;        /* was A */
@@ -10586,15 +10590,15 @@ static void layout_road(chqstate_t *state)
   u8       *DElanedata;
   int       Biterations;
   int       Lcounter;
-  u16      *SProadright;
+  s16      *SProadright;
   u8        Aiterations;
   int       Aforkinprogress;
-  u16      *SMroadcentre;
-  u16      *SMroadcentreright;
-  u16      *SMroadcentreleft;
-  u16      *SMroadleft;
-  u16      *SMroadright;
-  u16      *SMveryright;
+  s16      *SMroadcentre;
+  s16      *SMroadcentreright;
+  s16      *SMroadcentreleft;
+  s16      *SMroadleft;
+  s16      *SMroadright;
+  s16      *SMveryright;
   int       BCdash;
   int       DEdash;
   int       HLdash;
@@ -10636,7 +10640,7 @@ lr_calc_single_lane:
     // EXX Bank
 
     // Centre = Left + (Right - Left) / 2
-    DEdash = *SMroadleft; // read from road left
+    DEdash = *SMroadleft; // read from road left (s16: negative when road_pos < 295)
     HLdash = *SProadright++; // POP from $ECxx
     HLdash = (HLdash - DEdash) >> 1; // halve total width
     BCdash = HLdash; // stash halved width
@@ -10764,7 +10768,7 @@ lr_badf:
     SMroadcentreright = &state->xpos_road_centre_right[Aiterations >> 1]; // output left?
     SMroadright       = &state->xpos_road_right[Aiterations >> 1];
     // EXX Bank for inner loop
-    DEdash = *SMroadleft;
+    DEdash = *SMroadleft; // read from road left (s16: negative when road_pos < 295)
     HLdash = *SProadright++; // POP HLdash // read from $ECxx
     *SMroadcentre      = (HLdash + DEdash) / 2; // (right+left)/2 = new road centre
     *SMroadcentreleft  = (HLdash + DEdash) / 2; // new road centre left
@@ -11592,9 +11596,9 @@ static void prepare_tunnel(chqstate_t *state)
   int  A_c160;
   int  c160_is_zero; // bool, was Z
   u8   A_in_tunnel;
-  u16 *HLtable;
+  s16 *HLtable;
   int  BCtablevalue1;
-  u16 *HLdash_table;
+  s16 *HLdash_table;
   int  DEdash_tablevalue2;
   int  DEtablevalue3;
   int  saved_DE;            /* was stack */
@@ -11673,7 +11677,7 @@ static void draw_tunnel(chqstate_t *state, u8 *IYheight)
   int       Dfill;
   u8        L;
   u8        C;
-  u16      *HL;
+  s16      *HL;
   u8        A;
   u8        D;
   int       E;
@@ -13686,8 +13690,8 @@ static void backdrop_fill_dispatch(chqstate_t *state, int DEbackbuf, int Lrow)
  */
 static void build_curve_table(chqstate_t *state, int forked)
 {
-  u16       *H_righttab;         /* right-side xpos output table (was H, SM $CC72) */
-  u16       *L_lefttab;          /* left-side xpos output table (was L, SM $CCA7) */
+  s16       *H_righttab;         /* right-side xpos output table (was H, SM $CC72) */
+  s16       *L_lefttab;          /* left-side xpos output table (was L, SM $CCA7) */
   const u8  *HL_roadbufptr;      /* curvature road buffer pointer (was HL) */
   int        C_curvature;        /* curvature byte from road buffer (was C) */
   int        A_scratch;          /* multiply scratch (was A) */
@@ -13832,13 +13836,13 @@ static void build_curve_table(chqstate_t *state, int forked)
 
 // HL -> points past end of destination table we're filling
 static void build_curve_table_fill(chqstate_t *state,
-                                   u16        *HLtableend,
+                                   s16        *HLtableend,
                                    int         Bdash_alwayszero,
                                    int         DEroadpos)
 {
   u8  *IYheight_table;
   int  Biterations;
-  u16 *SPoutput;
+  s16 *SPoutput;
   int  A;
   int  Bdash_iterations;
   int  Cdash;

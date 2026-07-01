@@ -472,7 +472,7 @@ struct chqstate {
   // $A9DE (SM) in dust_stones_stuff
   u8        dss_enabled; // makes dust_stones_stuff run
   // $A9E2 (SM) in dust_stones_stuff
-  u16      *dss_fork_xpos_ptr; // a table ptr e.g. $ED28
+  s16      *dss_fork_xpos_ptr; // a table ptr e.g. $ED28
 
   // $AA5A (SM) in draw_helicopter
   u8        dh_heli_vert_base; // y position?
@@ -501,7 +501,7 @@ struct chqstate {
   u16       dh_road_left_xpos;
 
   // $AED0 (SM) in draw_hazards
-  u16      *dh_xpos_table; // points to table e900 for example
+  s16      *dh_xpos_table; // points to table e900 for example
 
   // $AFFB (SM) in dh_aecf
   u8        smoke_bitmap_index; // (smoke) speed factor?
@@ -680,17 +680,17 @@ struct chqstate {
   // $E34F
   u8        object_positions[21];
   // $E800 - Left outer edge (verge/road boundary)
-  u16       xpos_road_left[128];
+  s16       xpos_road_left[128];
   // $E900 - Left inner edge / centre-left
-  u16       xpos_road_centre_left[128];
+  s16       xpos_road_centre_left[128];
   // $EA00 - Road centre line
-  u16       xpos_road_centre[128];
+  s16       xpos_road_centre[128];
   // $EB00 - Right inner edge / centre-right
-  u16       xpos_road_centre_right[128];
+  s16       xpos_road_centre_right[128];
   // $EC00 - Right outer edge (road/verge boundary)
-  u16       xpos_road_right[128];
+  s16       xpos_road_right[128];
   // $ED00 - Right outer edge of right fork (forked roads only); also reused as dirt/stone layout data on dirt tracks
-  u16       xpos_road_fork_right[128];
+  s16       xpos_road_fork_right[128];
   // $EE00
   u8        road_buffer[256];
   // $EF00

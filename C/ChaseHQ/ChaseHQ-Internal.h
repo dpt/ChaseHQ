@@ -135,7 +135,7 @@
 typedef void obj_handler_t(chqstate_t *state,
                            int         Biterations,
                            const void *arg,
-                           const u16  *IXxpos,
+                           const s16  *IXxpos,
                            const u8   *IYheight);
 
 typedef struct hazard hazard_t;
