@@ -14118,7 +14118,7 @@ static void build_height_table(chqstate_t *state)
 
     *phtab = A; // Write #REGa to the table at $E3xx
     phtab++;
-    proadbuf_height++;
+    WRAP_INCREMENT_ASSIGN(proadbuf_height, state->roadbuf_start);
   } while (--Bdash_iterations > 0);
 
   *phtab = 0xA0;
