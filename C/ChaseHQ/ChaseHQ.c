@@ -6699,17 +6699,17 @@ static void check_scenery_collisions(chqstate_t *state)
   //
   // high byte ≠ 0 (off-screen right) => trigger_righthand_sfx = 0; skip off-road
   // high byte = 0, ≥ 190             => on-road right; trigger_righthand_sfx = 0
-  // high byte = 0, 142 – 189         => off_road = 0 (borderline, still on-road), goto store_off_road
-  // high byte = 0, 124 – 141         => off_road = 1
-  // high byte = 0, < 124             => off_road = 2
+  // high byte = 0, 143 – 189         => off_road = 0 (borderline, still on-road), goto store_off_road
+  // high byte = 0, 125 – 142         => off_road = 1
+  // high byte = 0, < 125             => off_road = 2
 check_right_hand:
   // "pos" here is approx 75..368 for (centred .. off-screen on the right).
   HLxpos = state->xpos_road_centre[126];
   Aoff_road = 0;
   if ((HLxpos >> 8) == 0 && HLxpos < 190) {
-    if (HLxpos >= 142)
+    if (HLxpos >= 143)
       goto store_off_road;
-    Aoff_road = (HLxpos >= 124) ? 1 : 2;
+    Aoff_road = (HLxpos >= 125) ? 1 : 2;
   }
 
   // If we don't arrive here we're close to the right hand object
@@ -6735,7 +6735,7 @@ store_off_road:
 
     Ztunnel_body = ((Alanes & (1 << 3)) == 0); // Test lanes bit 2 (note: RLA moved it)
     Aroad_pos_hi = state->scenedata.road_pos >> 8;
-    if (Ztunnel_body) {
+    if (!Ztunnel_body) {
       Croad_pos_hi = Aroad_pos_hi; // save road_pos
       Aspeed = 20;
       // EX AF,AF' - bank
@@ -6885,9 +6885,10 @@ static void check_fork_scenery_collisions(chqstate_t *state,
 
   pos = state->xpos_road_left[127];
   off_road = 0;
-  if ((pos >> 8) == 0) {
-    if (pos >= 0x6A)
-      off_road = (pos >= 0x85) ? 1 : 2;
+  if ((pos >> 8) != 0)
+    goto set_off_road;
+  if (pos >= 0x6A) {
+    off_road = (pos >= 0x85) ? 2 : 1;
     goto set_off_road;
   }
 
@@ -6895,7 +6896,7 @@ static void check_fork_scenery_collisions(chqstate_t *state,
   off_road = 0;
   if ((pos >> 8) == 0)
     if (pos < 0x8E)
-      off_road = (pos >= 0x7C) ? 1 : 2;
+      off_road = (pos >= 0x7D) ? 1 : 2;
 
 set_off_road:
   state->off_road        = off_road;
