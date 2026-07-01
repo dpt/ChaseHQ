@@ -2849,7 +2849,8 @@ assign_perp_pos: // is this in the right place?
   if (!carry)
     goto assign_hero_pos;
 
-  HLroadpos -= ROAD_RIGHTMOST; // FIXME set carry here?
+  HLroadpos -= ROAD_RIGHTMOST;
+  carry = (HLroadpos <= 0); /* Z80: SBC HL,DE with carry_in=1; fires if road_pos <= ROAD_RIGHTMOST */
   Ainput = USERINPUTFLAG_UP | USERINPUTFLAG_LEFT;
   if (carry)
     goto assign_hero_pos;
@@ -10859,7 +10860,7 @@ lr_badf:
 
     Aiterations += 2;
     // EXX Unbank
-  } while (--Aiterations > 0);
+  } while (Aiterations != 0); /* Z80: INC A; INC A; JP NZ — 104 iters, exits on u8 wrap */
   SProadright = &state->xpos_road_right[Aiterations >> 1];
   goto lr_calc_single_lane; // jump into no_fork code
 }
