@@ -6657,6 +6657,8 @@ static void check_scenery_collisions(chqstate_t *state)
   int          Aspeed_cap;
   int          BCdash_min;
   int          DEdash_max;
+  int          raw_byte1;    /* first road-buffer byte before OR */
+  int          raw_byte2;    /* second road-buffer byte after optional INC */
 
   // Note: EXX is treated as a 'stash' operation in this routine.
 
@@ -6774,10 +6776,12 @@ store_crash_spin:
   Adash = ROADBUF_PTR2IDX(HLbufptr); // was EX AF,AF' -- seems to be unused
   A = ROADBUF_FWD2IDX(0);
   RL(A);
-  Aobj = *HLbufptr; /* Read a right side object data byte */
+  raw_byte1 = *HLbufptr; /* Read a right side object data byte */
+  Aobj = raw_byte1;
   if (carry)
     WRAP_INCREMENT_ASSIGN(HLbufptr, state->roadbuf_start);
-  Aobj |= *HLbufptr;
+  raw_byte2 = *HLbufptr;
+  Aobj |= raw_byte2;
   if (Aobj) {
     HLobj = &state->stage->addrof_right_hand_objects[Aobj];
     // Read collision values.
@@ -6789,7 +6793,9 @@ store_crash_spin:
     HLxpos = state->xpos_road_centre[126];
     if (HLxpos < 0) printf("[csc] RIGHT obj: xpos[126]=%d negative (obj=%d bounds=[%d,%d))\n", HLxpos, Aobj, DEdash_min, BCdash_max);
     if (HLxpos < BCdash_max && HLxpos > DEdash_min) { /* > not >=: SBC carry-in=1 at $A478 */
-      printf("[csc] RIGHT obj hit: xpos[126]=%d obj=%d bounds=[%d,%d) speed_cap=%d\n", HLxpos, Aobj, DEdash_min, BCdash_max, Aspeed_cap);
+      printf("[csc] RIGHT obj hit: road_pos=%d xpos[126]=%d xpos[127]=%d obj=%d raw=[%d|%d] bounds=[%d,%d) speed_cap=%d\n",
+             state->scenedata.road_pos, HLxpos, state->xpos_road_centre[127],
+             Aobj, raw_byte1, raw_byte2, DEdash_min, BCdash_max, Aspeed_cap);
       // EX AF,AF' -- deliberate bank Aspeed_cap
       csc_hit_scenery(state, 0 /* no flip */, Aspeed_cap); /* exit via */
       return;
@@ -6802,10 +6808,12 @@ store_crash_spin:
   HLbufptr = ROADBUF_FWD2PTR(ROADBUF_LEFTOBJS_OFFSET);
   A = ROADBUF_FWD2IDX(0);
   RL(A);
-  Aobj = *HLbufptr; /* Read a left side object data byte */
+  raw_byte1 = *HLbufptr; /* Read a left side object data byte */
+  Aobj = raw_byte1;
   if (carry)
     WRAP_INCREMENT_ASSIGN(HLbufptr, state->roadbuf_start);
-  Aobj |= *HLbufptr;
+  raw_byte2 = *HLbufptr;
+  Aobj |= raw_byte2;
   if (Aobj) {
     HLobj = &state->stage->addrof_left_hand_objects[Aobj];
     // Read collision values.
@@ -6817,7 +6825,9 @@ store_crash_spin:
     HLxpos = state->xpos_road_centre[127];
     if (HLxpos < 0) printf("[csc] LEFT obj: xpos[127]=%d negative (obj=%d bounds=[%d,%d))\n", HLxpos, Aobj, BCdash_min, DEdash_max);
     if (HLxpos >= BCdash_min && HLxpos < DEdash_max) {
-      printf("[csc] LEFT obj hit: xpos[127]=%d obj=%d bounds=[%d,%d) speed_cap=%d\n", HLxpos, Aobj, BCdash_min, DEdash_max, Aspeed_cap);
+      printf("[csc] LEFT obj hit: road_pos=%d xpos[127]=%d xpos[126]=%d obj=%d raw=[%d|%d] bounds=[%d,%d) speed_cap=%d\n",
+             state->scenedata.road_pos, HLxpos, state->xpos_road_centre[126],
+             Aobj, raw_byte1, raw_byte2, BCdash_min, DEdash_max, Aspeed_cap);
       // EX AF,AF' -- deliberate bank Aspeed_cap
       csc_hit_scenery(state, 1 /* flip */, Aspeed_cap); /* was FALLTHROUGH */
     }
@@ -8980,6 +8990,7 @@ static void move_hero_car(chqstate_t *state)
   int        HLhorizontal_adjust;  /* was HL */
   int        DEadjust;             /* was DE */
   int        Anet_turn;            /* was A */
+  int        saved_horiz_adj;      /* diagnostic: horizontal_adjust before clear */
 
   y_offset = state->mhc_y_offset; // load jump counter, highest is 8
   if (y_offset) {
@@ -9196,6 +9207,7 @@ mhc_handle_speed:
   }
 
   // No curvature - No scroll required?
+  saved_horiz_adj = state->horizontal_adjust;
   HLhorizontal_adjust = state->horizontal_adjust + BCcount_scaled;
   DEadjust = 0;
   state->horizontal_adjust = 0;
@@ -9231,7 +9243,15 @@ mhc_handle_speed:
 
 mhc_set_cornering:
   state->cornering = Acornering;
-  if (HLhorizontal_adjust) printf("road_pos: %04X -> %04X [move_hero_car %+d]\n", state->scenedata.road_pos, (u16)(state->scenedata.road_pos + HLhorizontal_adjust), HLhorizontal_adjust);
+  if (HLhorizontal_adjust) {
+    printf("road_pos: %04X -> %04X [move_hero_car %+d]\n", state->scenedata.road_pos, (u16)(state->scenedata.road_pos + HLhorizontal_adjust), HLhorizontal_adjust);
+    if (HLhorizontal_adjust > 50 || HLhorizontal_adjust < -50)
+      printf("  [mhc] large delta: horiz_adj=%d curv=%d turn=%d (right=%d left=%d net=%d) crashed=%d speed=%d\n",
+             saved_horiz_adj, BCcount_scaled, DEadjust,
+             saved_Bright_turn, saved_Cleft_turn,
+             saved_Cleft_turn - saved_Bright_turn,
+             Acrashedflag, state->speed);
+  }
   state->scenedata.road_pos += HLhorizontal_adjust;
   Dflip_car = 1;
   if (DEadjust < 0) /* $B2F3 JP P: rightward net turn → flip sprite ($B2F7 DEC D) */
@@ -10559,7 +10579,7 @@ url_B9C5:
   C = 0;
   // EX AF,AF' - unbank Acurrent_curvature
   if ((s8) Acurrent_curvature < 0) {
-    Acurrent_curvature = -Acurrent_curvature;
+    Acurrent_curvature = (u8)(-Acurrent_curvature); /* Z80 NEG is u8 */
     C++;
   }
 
@@ -10572,6 +10592,11 @@ url_B9C5:
       A = -A;
     }
     state->horizontal_adjust = (B << 8) | A;
+    if (state->horizontal_adjust > 50 || state->horizontal_adjust < -50)
+      printf("  [url] large horiz_adj=%d: old_curv=%d ticks=%d diff=%d dir=%d speed=%d new_curv=%d\n",
+             state->horizontal_adjust, Acurrent_curvature, Bcurvature_ticks,
+             Acurrent_curvature - Bcurvature_ticks, C & 1,
+             state->speed, state->current_curvature);
   }
   state->horizon_scroll_sub = state->curvature_ticks = 0;
 }
