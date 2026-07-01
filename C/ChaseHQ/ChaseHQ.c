@@ -4329,6 +4329,7 @@ static void draw_object_clipped(chqstate_t     *state,
   plot_sprite_cb_t *BCdash_callback;
   int               By;
   int               DEbitmap_stride;
+  int               Adash_pushed;
   u8               *HLdash_backbuf_addr;
 
 
@@ -4354,6 +4355,7 @@ doc_9347:
       return;
 
     // PUSH AF  -- push Adash & flags
+    Adash_pushed = Adash1;
 
     Adash1++;
 
@@ -4364,6 +4366,7 @@ doc_9347:
     Adash1 += Dheight;
     // HLbitmap++; // now points at HLbitmap.data
     Diy_diff = 1;
+    D = Adash1;
     goto doc_9390;
 
 doc_9359:
@@ -4379,6 +4382,7 @@ doc_9359:
     Adash1 = IYheight[53];
 
     // PUSH AF  -- push Adash & flags
+    Adash_pushed = Adash1;
     Adash2 = HLbitmap->height - 1 -
              Diy_diff; /* Conv: HLbitmap adjusted, this loads from bitmap.height */
     if ((s8) Adash2 >= 0) // was !carry
@@ -4406,12 +4410,12 @@ doc_9359:
   // AF is pushed here
 
   Adash2++;
+  D = Adash2;
   Diy_diff++;
   // HLbitmap++; Conv: removed - points HL at bitmap.data
 
 doc_9390:
   // PUSH BC,DE
-  D = Adash1; // heightish value
   BCpadding = Cpadding; // was B = 0
   Adash_9395 = state->doc_shift_select;
   carry_shifted = Adash_9395 & 1; Adash_9395 >>= 1;
@@ -4421,7 +4425,7 @@ doc_9390:
   HLbitmap_data += BCpadding;
   state->doc_bitmap_ptr = HLbitmap_data;
   BCwidth_bytes = Ebitmap_stride;
-  Adash3 = D; // was POP AF  (restoring what was DE)
+  Adash3 = Diy_diff - 1; // rows to skip before drawing (was POP AF restoring DE)
   HLbitmap_data += BCwidth_bytes *
                    Adash3; // Conv: multiplier routine replaced with single mul
 
@@ -4434,8 +4438,8 @@ doc_9390:
     Bheight; // was POP BC,AF  (restoring what was BC and the AF which is IYheight[53])
 
   // 0b_1111_LLLL_RRRC_CCCC so A holds ?RRRLLLL and B holds ???CCCCC
-  HLdash_backbuf_addr = OFFSETTOBACKBUF(((Awidth_bytes & 0x0F) << 8) | (((
-                                          Awidth_bytes & 0x70) << 1) + Bdash_height)); // might this overflow?
+  HLdash_backbuf_addr = OFFSETTOBACKBUF(((Adash_pushed & 0x0F) << 8) | (((
+                                          Adash_pushed & 0x70) << 1) + Bdash_height)); // might this overflow?
   assert(VALID_BACKBUF_PTR(HLdash_backbuf_addr));
 
   Adash_type = state->doc_inverted; // set to 0 or 2
@@ -4447,7 +4451,7 @@ doc_9390:
       plot_masked_sprite_inverted(state,
                                   Awidth_bytes,
                                   HLdash_backbuf_addr,
-                                  Bdash_height,
+                                  BCpadding,
                                   DEbitmap_stride,
                                   HLbitmap_data); /* exit via */
       return;
@@ -4461,14 +4465,14 @@ doc_9390:
       draw_part_plot_masked_sprite(state,
                                    Awidth_bytes,
                                    HLdash_backbuf_addr,
-                                   Bdash_height,
+                                   BCpadding,
                                    DEbitmap_stride & 0xFF, /* Conv: Original only used E' */
                                    HLbitmap_data); /* exit via */
     else
       plot_sprite(state,
                   Awidth_bytes,
                   HLdash_backbuf_addr,
-                  Bheight,
+                  BCpadding,
                   DEbitmap_stride,
                   HLbitmap_data); /* exit via */
   } else {
@@ -4476,14 +4480,14 @@ doc_9390:
       plot_masked_sprite_flipped(state,
                                  Awidth_bytes,
                                  HLdash_backbuf_addr,
-                                 Bheight,
+                                 BCpadding,
                                  DEbitmap_stride,
                                  HLbitmap_data); /* exit via */
     else
       plot_sprite_flipped(state,
                           Awidth_bytes,
                           HLdash_backbuf_addr,
-                          Bheight,
+                          BCpadding,
                           DEbitmap_stride,
                           HLbitmap_data); /* exit via */
   }
@@ -4506,6 +4510,7 @@ doc_do_set_callbacks:
 
   // EXX - UNBANK
 
+  By = BCpadding;
   for (;;) {
     Awidth_bytes = state->doc_rows_main - By;
     if ((s8) Awidth_bytes <= 0)
@@ -4519,7 +4524,7 @@ doc_do_set_callbacks:
     state->doc_plot_fn(state,
                        IXjump_offset,
                        HLdash_backbuf_addr,
-                       Bheight,
+                       BCpadding,
                        DEbitmap_stride,
                        HLbitmap_data);
 
@@ -4534,7 +4539,7 @@ doc_do_set_callbacks:
   plot_sprite_even(state,
                    IXjump_offset,
                    HLdash_backbuf_addr,
-                   Bheight,
+                   BCpadding,
                    DEbitmap_stride,
                    HLbitmap_data); /* was exit via */
   return;
@@ -4557,6 +4562,7 @@ doc_9436:
   // EXX - UNBANK
 
   DEbitmap_stride &= 0xFF; // clear top of DEbitmap_stride
+  Bheight = BCpadding;
   for (;;) {
     Ay = state->doc_mask_rows_main - Bheight; // y offset?
     if ((s8) Ay > 0) {
@@ -4570,7 +4576,7 @@ doc_9436:
                          HLdash_backbuf_addr);
 
       HLbitmap_data = state->doc_mask_bitmap_ptr;
-      Bheight = 0;
+      Bheight = state->doc_mask_rows_2nd;
     } else {
       Bheight += Ay;
       plot_masked_sprite(state,
@@ -4585,13 +4591,13 @@ doc_9436:
 
 unmasked_inverted:
   DEbitmap_stride = Ebitmap_stride;
-  HLbitmap_data += (Bheight - 1) * DEbitmap_stride;
+  HLbitmap_data += (BCpadding - 1) * DEbitmap_stride;
   DEbitmap_stride = -DEbitmap_stride;
 
   plot_sprite(state,
               Awidth_bytes,
               HLdash_backbuf_addr,
-              Bheight,
+              BCpadding,
               DEbitmap_stride,
               HLbitmap_data); /* was FALLTHROUGH */
 }
