@@ -3350,10 +3350,10 @@ static u16 draw_smash_bar_solid_bit(chqstate_t *state, int nrows, int backbuf)
  */
 static void draw_scene_objects(chqstate_t *state)
 {
-  u8             *HLheight_table;        /* was HL */
-  u8             *DEclamped_heights;        /* was DE */
+  u8             *HLheight_table;      /* was HL */
+  u8             *DEclamped_heights;   /* was DE */
   int             Biterations;         /* was B */
-  u8             *IYheight_table;        /* was IY */
+  u8             *IYheight_table;      /* was IY */
   u8             *HLroadbuf;           /* was HL */
   s16            *IXtable_ea00;        /* was IX */
   int             Afloating_arrow;     /* was A */
@@ -10491,9 +10491,9 @@ static void update_road_level(chqstate_t *state)
   int       Aheight;            /* was A */
   int       Cheight;            /* was C */
   int       Bpitch;             /* was B */
-  u8       *HLprev_road_height;         /* was HL */
-  int       Aprev_road_height;          /* was A */
-  int       Bprev_road_height;          /* was B */
+  u8       *HLprev_road_height; /* was HL */
+  int       Aprev_road_height;  /* was A */
+  int       Bprev_road_height;  /* was B */
   int       Ay_offset;          /* was A */
   int       Adiff;              /* was A */
   const u8 *HLptable_b059;      /* was HL */
@@ -10555,7 +10555,7 @@ static void update_road_level(chqstate_t *state)
         Bprev_road_height = Aprev_road_height;
         Ay_offset = state->mhc_y_offset;
         assert(Ay_offset >= 0 && Ay_offset <= 8);
-        if (Ay_offset) {
+        if (!Ay_offset) { /* Z80: JR NZ → skip if already airborne */
           Adiff = Bprev_road_height - (3 - ((state->speed >> 7) &
                                             3)); // result = 1..5? // folded a lot here
           if ((s8) Adiff > 0) { /* was !C && !Z */

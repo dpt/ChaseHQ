@@ -292,3 +292,55 @@ Atotal &= 0xFF; /* Z80 SUB L wraps; without mask Atotal goes negative */
 ```
 
 **Rule:** Whenever a Z80 `SUB` (or `ADD`, `NEG`) result persists across loop iterations as an 8-bit accumulator, mask it back to `[0, 255]` after every operation that could leave it outside that range. The guard inside the loop body is not sufficient if a post-loop subtraction can make the value negative before the next iteration begins.
+
+---
+
+## 20. `JR Z` / `JR NZ` branch direction inverted
+
+**Root cause:** `JR NZ, label` means *skip to label if non-zero* — the code that immediately follows the jump runs when the register **is** zero. Translating this as `if (reg != 0) { ... }` puts the code inside the block when the register is non-zero, exactly backwards.
+
+**Bug:** `update_road_level` had `if (Ay_offset) { /* set up jump */ }` where the Z80 was `JR NZ,$B970` (skip jump setup if `mhc_y_offset != 0`). The jump launch code therefore ran only when the car was already airborne and was dead on the ground, so the car never launched off a road drop.
+
+**Fix:** `if (!Ay_offset) { /* set up jump */ }` — enter the block when the tested register is zero, matching `JR NZ → skip`.
+
+**Rule:** For every `JR Z` / `JR NZ` / `JP Z` / `JP NZ` near a translated block, identify what value the register holds at that point and confirm the C `if` condition fires on the **opposite** polarity to the Z80 jump. `JR NZ → skip` = `if (reg == 0)` in C. `JR Z → skip` = `if (reg != 0)` in C.
+
+**Commit:** `136e57d`
+
+---
+
+## 21. SBC carry chain — carry not propagated between chained subtractions
+
+**Root cause:** Z80 `SBC HL,DE` uses the carry flag as borrow input. When two `SBC` instructions appear in sequence, the carry output of the first feeds the carry input of the second. The C translation sets `carry` from the first subtraction, but if the second subtraction is written as plain `-=` the carry is never updated, so `if (carry)` after the second subtraction still reflects the first test.
+
+**Bug:** `handle_perp_caught` (`hpc_move_perp`) computed `carry = (HLroadpos < ROAD_LEFTMOST)` then did `HLroadpos -= ROAD_RIGHTMOST` without updating carry. We only reach the second subtraction when `carry == 1` from the first test, so `if (carry)` after it was always true — the LEFT input was unconditional and the straight-ahead (centre zone) branch was dead code.
+
+**Fix:** After any subtraction that the Z80 models as `SBC` with carry input, recompute carry from the result:
+
+```c
+HLroadpos -= ROAD_RIGHTMOST;
+carry = (HLroadpos <= 0); /* Z80 SBC HL,DE with carry_in=1 */
+```
+
+**Rule:** Whenever two or more `SBC` instructions appear back-to-back in the Z80, the C translation must update `carry` between them. The carry variable is never live across C statements automatically.
+
+**Commit:** `136e57d`
+
+---
+
+## 22. `INC A; INC A; JP NZ` loop — u8 wrap, not decrement
+
+**Root cause:** The Z80 loop pattern `INC A; INC A; JP NZ` advances A by 2 each iteration and continues until A wraps from 254 to 256 = 0 (u8). Translating the loop as `while (--Aiterations > 0)` after `Aiterations += 2` gives a net step of +1 per iteration (not +2), running far more iterations than intended and revisiting each table slot multiple times.
+
+**Bug:** `layout_road` forked-road path started `Aiterations = 0x30` and used `Aiterations >> 1` as the road-table index. With `+= 2` then `-- Aiterations > 0`, the net step was +1, so each index (24, 25, …) was visited twice. The loop ran 207 iterations instead of 104, and the second write of each slot used a different `*SProadright++` value, silently overwriting the first calculation.
+
+**Fix:** Remove the `--` from the loop condition. Since `Aiterations` is `u8`, the wrap to 0 terminates the loop naturally:
+
+```c
+Aiterations += 2;
+} while (Aiterations != 0); /* Z80: INC A; INC A; JP NZ — exits on u8 wrap */
+```
+
+**Rule:** Any Z80 `INC A; … JP NZ` (or `ADD A,n; JP NZ`) loop terminates when A wraps through 0. The C equivalent is `while ((u8)(A += n) != 0)` or a `do { ... A += n; } while (A != 0)` with `u8 A`. Never use `--` inside the condition of such a loop.
+
+**Commit:** `136e57d`

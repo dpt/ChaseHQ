@@ -176,6 +176,23 @@ the u8 wraps and bit 7 is wrong. Use a direct comparison instead:
 (`((base)[...])`) is a no-op when used as a statement. Mutating macros
 must assign back to their argument: `((ptr) = ...)`.
 
+**`JR NZ` / `JR Z` branch direction** — `JR NZ, label` skips *to* label
+when non-zero, so the fallthrough code runs when zero. Translate as
+`if (reg == 0) { ... }`, not `if (reg != 0) { ... }`. Getting this
+backwards produces dead code on one branch and spurious execution on the
+other (`update_road_level` jump launch: `if (Ay_offset)` → `if (!Ay_offset)`).
+
+**SBC carry chain** — Z80 `SBC HL,DE` takes carry as borrow input. A
+sequence of two `SBC` instructions means the carry from the first feeds
+the second. In C, update `carry` after every subtraction that feeds a
+subsequent `if (carry)` test; the C variable never propagates
+automatically between statements.
+
+**`INC A; INC A; JP NZ` loop** — terminates when A wraps (u8) to zero,
+not when it decrements to zero. Use `do { … A += 2; } while (A != 0)`
+with `u8 A`. Never add `--A` to the condition; that turns a +2 step into
+a net +1 step and doubles the iteration count.
+
 ## Known data layout: $E4xx road graphics page
 
 `edge_markings` in `C/ChaseHQ/Data/ChaseHQ-CommonData.c` is a single 256-byte array that represents the entire `$E4xx` Z80 memory page:
