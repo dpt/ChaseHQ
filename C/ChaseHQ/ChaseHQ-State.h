@@ -368,7 +368,7 @@ struct chqstate {
   // $A23D
   u8        trigger_lefthand_sfx;
   // $A23E
-  u8        off_road;
+  u8        off_road; // 0/1/2 => on-road/one wheel off-road/both wheels off-road
   // $A23F
   u8        fast_counter;
   // $A240

@@ -1608,8 +1608,6 @@ static void main_loop(chqstate_t *state)
       start_chatter(state, 0xFF, chatterblk_start_stage);
 
     for (;;) {
-      printf("%d\n", state->xpos_road_centre[127]);
-
       state->speccy->stamp(state->speccy);
       drive_sfx(state);
       (void) keyscan(state);
@@ -6647,9 +6645,9 @@ static void check_scenery_collisions(chqstate_t *state)
 #ifndef NDEBUG
   if (HLxpos < 0) printf("[csc] xpos[127]=%d negative (left-side underflow?)\n", HLxpos);
 #endif
-  if ((HLxpos >> 8) == 0 && HLxpos >= 64) {
+  if ((HLxpos >> 8) == 0 && HLxpos >= 64) { // 64..255
     if (HLxpos < 106)
-      goto check_right_hand; // not close enough to be off-road
+      goto check_right_hand; // 64..105 => not close enough to be off-road
     // how far off-road are we? partially/fully off-road is 1/2
     Aoff_road = (HLxpos < 133) ? 1 : 2;
     goto store_off_road;
@@ -6662,9 +6660,13 @@ static void check_scenery_collisions(chqstate_t *state)
   //
   // high byte ≠ 0 (off-screen right) => trigger_righthand_sfx = 0; skip off-road
   // high byte = 0, ≥ 190             => on-road right; trigger_righthand_sfx = 0
-  // high byte = 0, 143 – 189         => off_road = 0 (borderline, still on-road), goto store_off_road
-  // high byte = 0, 125 – 142         => off_road = 1
+  // high byte = 0, 142 – 189         => off_road = 0 (borderline, still on-road), goto store_off_road
+  // high byte = 0, 125 – 141         => off_road = 1
   // high byte = 0, < 125             => off_road = 2
+  //
+  // $A3EE JR NC uses the carry from the $A3EB SBC HL,$8E test, which is still
+  // live when $A3F2 SBC HL,$7C executes, making the effective lower threshold
+  // $7C+1 = 125 (not $7C = 124).
 check_right_hand:
   // "pos" here is approx 75..368 for (centred .. off-screen on the right).
   HLxpos = state->xpos_road_centre[126];
@@ -6672,10 +6674,10 @@ check_right_hand:
   if (HLxpos < 0) printf("[csc] xpos[126]=%d out of useful range [0,+)\n", HLxpos);
 #endif
   Aoff_road = 0;
-  if ((HLxpos >> 8) == 0 && HLxpos < 190) {
-    if (HLxpos >= 143)
+  if ((HLxpos >> 8) == 0 && HLxpos < 190) { // 0..189
+    if (HLxpos >= 142) // 142..189 => on-road /* $A3E8 LD BC,$8E=142; $A3EE JR NC */
       goto store_off_road;
-    Aoff_road = (HLxpos >= 125) ? 1 : 2;
+    Aoff_road = (HLxpos >= 125) ? 1 : 2; /* carry from $A3EB makes threshold $7C+1=125 */
     goto store_off_road; /* $A3F5/$A3F8 JR: bypass trigger_righthand_sfx reset */
   }
 
@@ -6973,7 +6975,10 @@ positions_loop:
       lanesbyte = *bufptr;
       // EXX
       lanesbyte2 = lanesbyte;
-      Ldash = ~(*objpos2 * 2);
+      /* Conv: Z80 $A5AA-$A5AF: L' = (~(*IY*2)) & 0xFF — odd byte offset into the
+       * xpos page; s16 is read at L'-1 (even) giving index (L'-1)/2 = 127-(N&0x7F).
+       * C translates directly to the s16 index rather than the byte offset. */
+      Ldash = 127 - ((int)*objpos2 & 0x7F);
 
       // Read left hand offset bits (0+1).
       laneoffset = lanesbyte2 & 3;
@@ -7039,9 +7044,10 @@ load_and_store_right:
 
   iterations = A;
   do {
-    L = ~(*objpos2 * 2);
-    --SP; *SP = state->xpos_road_centre[L - 1];
-    --SP; *SP = state->xpos_road_centre_right[L - 1];
+    /* Conv: same byte-offset → s16-index translation as main loop above */
+    L = 127 - ((int)*objpos2 & 0x7F);
+    --SP; *SP = state->xpos_road_centre[L];
+    --SP; *SP = state->xpos_road_centre_right[L];
     objpos2++;
   } while (--iterations > 0);
 }
@@ -10734,8 +10740,8 @@ lr_calc_single_lane:
   do {
     // $BA20
     SMroadcentre      = &state->xpos_road_centre[Aiterations];
-    SMroadcentreright = &state->xpos_road_centre_right[Aiterations];
     SMroadcentreleft  = &state->xpos_road_centre_left[Aiterations];
+    SMroadcentreright = &state->xpos_road_centre_right[Aiterations];
     SMroadleft        = &state->xpos_road_left[Aiterations];
 
     // $BA26 EXX Bank

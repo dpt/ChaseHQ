@@ -17,6 +17,7 @@ perhaps build unit tests now to flush out problems ahead of time.
 
 # TODO
 
+- Ensure if-else structuring is added where sensible (top-down)
 - Identify unrolled ops to roll up
 - Guard words?
 - Object plotting broken and commented out for now
