@@ -124,6 +124,31 @@ shadow variables that hold the banked values. The key points:
   `HL` may appear to retain its old value past an EXX — that is intentional.
   Only the shadow side needs updating at each EXX point.
 
+## High Quality Functions
+
+A high quality translated function satisfies all of the following criteria.
+See `function_comment_template_example.c` for a worked example.
+
+1. **Correct translation** — behaviour matches the original Z80 precisely,
+   verified against the skool.
+2. **Well-named function** — the name describes what it does, not where it
+   lives (e.g. `draw_road_stripe`, not `sub_C5A0`).
+3. **Well-named variables, labels, and constants** — locals follow the
+   `RegisterName_description` pattern; labels use plain English (`dt_exit`,
+   not `label_1`); magic numbers are replaced by named constants.
+4. **Documented variables** — every local variable declaration carries a
+   `/* intent (was X) */` comment.
+5. **Has a prologue** — the function is preceded by a `/** ... */` Doxygen
+   block.
+6. **Prologue has a description** — the first line gives the Z80 address and
+   function name; a following paragraph describes what the function does and
+   any important context.
+7. **Prologue documents parameters** — each parameter has a `\param[in]` (or
+   `[out]`/`[in,out]`) line; include the originating Z80 register in
+   parentheses where applicable.
+8. **Conv: comments** — every deliberate departure from a literal Z80
+   translation is marked `// Conv: ...` explaining what changed and why.
+
 ## Verifying translations
 
 When a C translation looks wrong or a variable appears uninitialised, consult the skool file (`ChaseHQ.skool` or the bank files). The skool is the authoritative disassembly. Pay particular attention to:
