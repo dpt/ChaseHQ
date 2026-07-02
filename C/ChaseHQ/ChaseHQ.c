@@ -10966,67 +10966,90 @@ static void exit_fork(chqstate_t *state)
 // The buffer has the format 0b1111LLLLRRRCCCCC (L = scanline, R = row (group))
 
 /**
- * $BC3E: Copy the backbuf to the real screen
+ * $BC3E: Copy the backbuffer to the screen and update attributes.
  *
- * Called from main loop.
+ * Transfers all 128 rows of the road backbuffer to the playfield area of
+ * the ZX Spectrum screen ($4800–$57FF), then updates the sky/ground
+ * horizon colour row and the smash-meter attribute strip.
  *
- * \param[in] state Pointer to game state.
+ * The Z80 original temporarily hijacks SP to use PUSH/POP as a fast
+ * bulk-copy engine: it POPs 16 (or 14) bytes forward out of the backbuffer
+ * via HL', reverses them onto the screen by PUSHing from HL, and advances H
+ * of each pointer by 1 (= +$100, one ZX scanline) per step.  Two passes
+ * per row-group cover the left 16 bytes ($BC49 ds_loop_16bytes) then the
+ * right 14 bytes ($BCC8 ds_loop_14bytes) of each row.  Eight groups of 16
+ * scanlines account for the full 128-row playfield.  The ZX screen's
+ * non-linear three-band address layout requires a pointer reset to $5011 at
+ * the 64-row midpoint ($BD45) and an offset-based advance at $BD4D when the
+ * backbuffer high nibble overflows.
+ * Conv: All PUSH/POP bulk-copy chains are replaced by memcpy.
+ *
+ * The attribute section ($BD5A ds_attributes) reads the one-frame-lagged
+ * horizon delta from state->horizon_attr[2] to scroll the sky/ground
+ * colour boundary up or down by that many attribute rows.
+ *
+ * The smash-meter section ($BD93 ds_smash_meter) paints six attribute rows
+ * at $5962 with the smash-o-meter colour gradient when a perp is sighted.
+ *
+ * \param[in] state  Pointer to game state.
  */
 static void update_screen(chqstate_t *state)
 {
-  /* dirty rect covering the lower two-thirds of the screen */
-  static const zxbox_t playfield_box = {
-    0,0,SCREEN_WIDTH, PLAYFIELD_HEIGHT
+  /* Conv: Z80 restores SP via a self-modified instruction at $BDBE; C
+   * has no equivalent and passes the dirty rect to the host draw callback. */
+  static const zxbox_t playfield_box = { /* lower two-thirds of screen */
+    0, 0, SCREEN_WIDTH, PLAYFIELD_HEIGHT
   };
 
-  u8        *scr;       /* was HL */
-  u8        *buf;       /* was HL' */
-  u16        bufoffset; // Conv: added
-  ptrdiff_t  scroff;    // Conv: for safe bounds checking
-  u8         H_bufpage;     /* backbuffer start page 0xF0 (was H) */
-  u8         A_buflo;       /* bufoffset low byte for group-advance test (was A) */
-  int        res;           /* Conv: A_buflo − H_bufpage result */
-  int        carry;         /* Conv: unsigned borrow flag */
-  int        overflow;      /* Conv: Z80 V-flag */
-  u8         L_nextlo;      /* next row-group start low byte (was L) */
-  u8         A_cur_delta;   /* current horizon attr delta, $E34C (was A) */
-  u8         E_prev_delta;  /* previous horizon attr delta, $E34D (was E) */
-  u8         D_sign;        /* sign extension of E_prev_delta (was D) */
-  s16        DElevel;       /* signed attr-row offset in bytes (was DE) */
-  u8        *HLattrs;       /* pointer into attr memory (was HL) */
-  u16        BCattrs;       /* attribute colour word (was BC) */
-  u8         Cattr;         /* single attribute byte (was C) */
+  u8        *HLscr;      /* screen write pointer (was HL) */
+  u8        *HLbuf;      /* backbuffer read pointer (was HL') */
+  u16        bufoffset;  /* backbuffer offset for row-group boundary test (Conv: added) */
+  ptrdiff_t  screen_off; /* screen address offset for pointer arithmetic (Conv: added) */
+  u8         H_bufpage;  /* backbuffer start page $F0, used as subtraction base (was H) */
+  u8         A_buflo;    /* low byte of bufoffset; compared against H_bufpage (was A) */
+  int        A_sub;      /* A_buflo − H_bufpage; result of $BD34 SUB H (was A) */
+  int        carry;      /* unsigned borrow: set while row-groups remain */
+  int        overflow;   /* signed overflow of $BD34 SUB H; fires at 64-row midpoint */
+  u8         L_nextlo;   /* low byte of next row-group backbuffer start (was L) */
+  u8         A_cur_delta;  /* current horizon attr delta, $E34C (was A) */
+  u8         E_prev_delta; /* previous horizon attr delta, $E34D (was E) */
+  u8         D_sign;       /* sign extension of E_prev_delta (was D) */
+  s16        DElevel;      /* signed attr-row offset in bytes (was DE) */
+  u8        *HLattrs;      /* pointer into attr memory (was HL) */
+  u16        BCattrs;      /* attribute colour word (was BC) */
+  u8         Cattr;        /* single attribute byte (was C) */
 
-  scr = ADDRTOSCREEN(0x4811); // (136, 64)
-  buf = ADDRTOBACKBUF(0xF001); // (8, 1)
+  HLscr = ADDRTOSCREEN(0x4811); // (136, 64)
+  HLbuf = ADDRTOBACKBUF(0xF001); // (8, 1)
 
   for (;;) {
-    // First do left hand side (original reads forwards, stores backwards)
+    // Conv: $BC49-$BCB8 ds_loop_16bytes: Z80 uses SP/PUSH/POP chains to bulk-copy
+    //       16 bytes per scanline; C uses memcpy. Left-half of each row (bytes 17-32).
     do {
-      memcpy(scr - 16, buf, 16); scr += 256; buf += 256;
-      memcpy(scr - 16, buf, 16); scr += 256; buf += 256;
-      memcpy(scr - 16, buf, 16); scr += 256; buf += 256;
-      memcpy(scr - 16, buf, 16); scr += 256; buf += 256;
-      bufoffset = BACKBUFTOOFFSET_LR(buf, 0, 256); // Conv: convert back to offset
+      memcpy(HLscr - 16, HLbuf, 16); HLscr += 256; HLbuf += 256;
+      memcpy(HLscr - 16, HLbuf, 16); HLscr += 256; HLbuf += 256;
+      memcpy(HLscr - 16, HLbuf, 16); HLscr += 256; HLbuf += 256;
+      memcpy(HLscr - 16, HLbuf, 16); HLscr += 256; HLbuf += 256;
+      bufoffset = BACKBUFTOOFFSET_LR(HLbuf, 0, 256); // Conv: convert back to offset
       // Loop on the first pass (4 lines of 8 done) but not the second
     } while (bufoffset & (1 << 10));
 
-    // Now move over to the right hand side
-    // e.g. (0xF001 + 8*256 - 0x7F0) == 0xF011 on the first pass
-    buf = OFFSETTOBACKBUF(bufoffset - 0x07F0);
-    scroff = SCREENTOOFFSET_LR(scr, 0, 256) - 0x07F2;
-    scr = OFFSETTOSCREEN(scroff);
+    // Conv: $BCBE-$BCC7: advance both pointers to the right-half start.
+    // $BCC8-$BD27 ds_loop_14bytes: 14-byte copy per scanline (bytes 2-15).
+    HLbuf = OFFSETTOBACKBUF(bufoffset - 0x07F0);
+    screen_off = SCREENTOOFFSET_LR(HLscr, 0, 256) - 0x07F2;
+    HLscr = OFFSETTOSCREEN(screen_off);
     do {
-      memcpy(scr - 14, buf, 14); scr += 256; buf += 256;
-      memcpy(scr - 14, buf, 14); scr += 256; buf += 256;
-      memcpy(scr - 14, buf, 14); scr += 256; buf += 256;
-      memcpy(scr - 14, buf, 14); scr += 256; buf += 256;
-      bufoffset = BACKBUFTOOFFSET_LR(buf, 0, 256); // Conv: convert back to offset
+      memcpy(HLscr - 14, HLbuf, 14); HLscr += 256; HLbuf += 256;
+      memcpy(HLscr - 14, HLbuf, 14); HLscr += 256; HLbuf += 256;
+      memcpy(HLscr - 14, HLbuf, 14); HLscr += 256; HLbuf += 256;
+      memcpy(HLscr - 14, HLbuf, 14); HLscr += 256; HLbuf += 256;
+      bufoffset = BACKBUFTOOFFSET_LR(HLbuf, 0, 256); // Conv: convert back to offset
       // Loop on the first pass (4 lines of 8 done) but not the second
     } while (bufoffset & (1 << 10));
 
     if ((bufoffset & (1 << 11)) == 0) {
-      /* buf has advanced past a 0x1000 boundary (bit 11 just cleared),
+      /* HLbuf has advanced past a 0x1000 boundary (bit 11 just cleared),
        * meaning another 16 backbuffer rows have been written and it is
        * time to advance to the next row-group.
        *
@@ -11050,31 +11073,31 @@ static void update_screen(chqstate_t *state)
        *
        * L_nextlo = (A_buflo - H_bufpage) & 0xFF is the low byte of the
        * next row-group's backbuffer start address, so
-       * ADDRTOBACKBUF(0xF000 | L_nextlo) resets buf to the next group.
+       * ADDRTOBACKBUF(0xF000 | L_nextlo) resets HLbuf to the next group.
        */
       H_bufpage = 0xF0;
       A_buflo   = bufoffset & 0xFF;
-      res       = A_buflo - H_bufpage;
+      A_sub       = A_buflo - H_bufpage;
       carry     = (A_buflo < H_bufpage); // unsigned: set while rows remain
-      overflow  = ((H_bufpage ^ A_buflo) & (res ^ A_buflo)) >> 7; // V-flag
-      L_nextlo  = res; // low byte of next group start
+      overflow  = ((H_bufpage ^ A_buflo) & (A_sub ^ A_buflo)) >> 7; // V-flag
+      L_nextlo  = A_sub; // low byte of next group start
 
       if (!carry)
         break; // A_buflo >= 0xF0: all 128 rows written
 
-      buf = ADDRTOBACKBUF((H_bufpage << 8) | L_nextlo); // next row-group
+      HLbuf = ADDRTOBACKBUF((H_bufpage << 8) | L_nextlo); // next row-group
 
       if (!overflow) {
-        scroff = SCREENTOOFFSET_LR(scr, 0, 256) - 0x07EE;
-        scr = OFFSETTOSCREEN(scroff);
+        screen_off = SCREENTOOFFSET_LR(HLscr, 0, 256) - 0x07EE;
+        HLscr = OFFSETTOSCREEN(screen_off);
       } else {
         // 64-row midpoint: jump to the ZX screen's bottom third
-        scr = ADDRTOSCREEN(0x5011); // (136, 128)
+        HLscr = ADDRTOSCREEN(0x5011); // (136, 128)
       }
     } else {
-      scroff = SCREENTOOFFSET_LR(scr, 0, 256) - 0x07EE;
-      scr = OFFSETTOSCREEN(scroff);
-      buf -= 16;
+      screen_off = SCREENTOOFFSET_LR(HLscr, 0, 256) - 0x07EE;
+      HLscr = OFFSETTOSCREEN(screen_off);
+      HLbuf -= 16;
     }
   }
 
