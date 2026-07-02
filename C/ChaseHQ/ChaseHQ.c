@@ -14409,46 +14409,67 @@ void menu_draw_strings(chqstate_t *state, const u8 *strings)
  * \param[in] HLstring Menu string to draw. (was HL)
  * \return Address of next unconsumed byte.
  */
+/**
+ * $EBFF: menu_draw_string — draw one packed string record from the menu table.
+ *
+ * Reads a packed record from HLstring: one attribute byte (top bit = double-height
+ * flag), a two-byte little-endian screen address, then ASCII character bytes with
+ * bit 7 set on the last character.  The double-height flag is extracted from the
+ * attribute byte via RL C / EX AF,AF' / SRL C before the character loop begins.
+ *
+ * The loop calls menu_draw_char for each character, passing screen and attribute
+ * addresses as C pointers; the addresses are re-derived from the updated pointers
+ * after each call.
+ *
+ * \param[in] state    Pointer to game state.
+ * \param[in] HLstring Pointer to packed string record: attribute byte, screen address
+ *                     lo, screen address hi, then character bytes (bit 7 set on the
+ *                     last character) (was HL).
+ * \return             Pointer to the byte past the terminating character.
+ */
 const u8 *menu_draw_string(chqstate_t *state, const u8 *HLstring)
 {
-  int carry = 0;
-  int banked_carry = 0;
-  u8  Cattribute;
-  u16  DEscr;
-  u16  HLattr;
-  int  Aascii;
-  u8  *scr;
-  u8  *attr;
+  u8   C_attribute; /* attribute byte; top bit is double-height flag (was C) */
+  int  carry;       /* carry flag; receives top bit of C_attribute via RL */
+  int  banked_carry; /* double-height flag saved across EX AF,AF' (was F') */
+  u16  DEscr;       /* ZX Spectrum screen address read from string (was DE) */
+  u16  HLattr;      /* ZX Spectrum attribute address derived from DEscr (was HL) */
+  int  A_ascii;     /* ASCII character code masked from string byte (was A) */
+  u8  *DEscr_ptr;   /* C pointer form of DEscr for each character draw (was DE') */
+  u8  *HLattr_ptr;  /* C pointer form of HLattr for each character draw (was HL') */
 
-  Cattribute = *HLstring;
-  RL(Cattribute); // left shift topmost bit to carry (double height flag)
+  carry = 0;
+  C_attribute = *HLstring;
+  RL(C_attribute);   /* $EC00: RL C — rotate left; top bit → carry (double-height) */
   banked_carry = carry;
-  // EX AF,AF' - Bank
-  SRL(Cattribute); // right
+  // Conv: $EC02 EX AF,AF' — Z80 banks carry into A'/F'; C saves to banked_carry
+  SRL(C_attribute);  /* $EC03: SRL C — strip the top bit from the attribute byte */
   HLstring++;
-  DEscr = wordat(HLstring);
+  DEscr = wordat(HLstring); /* $EC06: LD E,(HL); INC HL; LD D,(HL) */
   HLstring += 2;
   // PUSH HLstring
 
-  /* Calculate attribute address from screen address */
+  /* $EC0B: Calculate attribute address from screen address */
   HLattr = (0x5800 + ((DEscr >> 3) & 0x0300)) | (DEscr & 0xFF);
-  // EXX - Bank
+  // EXX - Bank (shadow HL' = HLattr, shadow DE' = DEscr)
   // EX (SP),HLstring
   // PUSH DEdash, BCdash
   do {
-    Aascii = *HLstring & 0x7F;
+    A_ascii = *HLstring & 0x7F;
     // PUSH HLstring
-    scr = ADDRTOSCREEN(DEscr);
-    attr = ADDRTOATTRS(HLattr);
-    menu_draw_char(Aascii,
+    // Conv: Z80 uses DE'/HL' directly as pointers; C converts between u16 address
+    //       and u8* at each character step via ADDRTOSCREEN/ADDRTOATTRS/SCREENTOADDR
+    DEscr_ptr  = ADDRTOSCREEN(DEscr);
+    HLattr_ptr = ADDRTOATTRS(HLattr);
+    menu_draw_char(A_ascii,
                    banked_carry,
-                   Cattribute,
-                   scr,
-                   attr,
-                   &scr,
-                   &attr);
-    DEscr = SCREENTOADDR(scr);
-    HLattr = SCREENTOADDR(attr);
+                   C_attribute,
+                   DEscr_ptr,
+                   HLattr_ptr,
+                   &DEscr_ptr,
+                   &HLattr_ptr);
+    DEscr  = SCREENTOADDR(DEscr_ptr);
+    HLattr = SCREENTOADDR(HLattr_ptr);
     // POP HLstring
   } while ((*HLstring++ & EOS) == 0);
   // EXX - Unbank
