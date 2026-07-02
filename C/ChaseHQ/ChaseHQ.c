@@ -8285,77 +8285,96 @@ chc_continue:
 }
 
 /**
- * $AD51: Check collision
+ * $AD51: Test whether the player car has hit a given hazard.
  *
- * \param[in] state          Pointer to game state.
- * \param[in] default_retval Default retval. (was D)
- * \param[in] HL             Hl.
- * \param[in] hazard         Hazard. (was IX)
- * \param[in] HLout          Hlout.
- * \return Non-zero on success.
+ * Returns 1 (and arms the hazard's hit_timer) if all of the following hold:
+ *   - hit_timer is zero (no recent hit cooldown)
+ *   - horz_clip is zero (hazard fully on screen)
+ *   - distance is below the threshold (2 or 3 depending on hazard_flags)
+ *   - fast_counter sign passes the speed gate for the current distance
+ *   - horizontal position overlaps the player car's bounding zone ($68..$8F)
+ *
+ * The hit_timer value written (1, 2, or 4) encodes the hit severity: 1 for a
+ * glancing blow at close range, 4 for a dead-centre strike.
+ *
+ * Conv: Z80 uses D as both the "no-hit" return value (caller sets D=0 before
+ * the CALL) and the collision flag (set to 1 at $AD9D).  C separates these
+ * into the default_retval parameter and the u8 return value.
+ * Conv: Z80 leaves HL = (horz_clip<<8)|horz_pos at the point of return; C
+ * writes this through the optional HLout pointer instead.
+ *
+ * \param[in]     state          Pointer to game state.
+ * \param[in]     default_retval value returned when no collision (was D).
+ * \param[in]     HL             Initial HL; written to *HLout on the earliest
+ *                               return path, before horz_pos/horz_clip load (was HL).
+ * \param[in,out] hazard         Hazard being tested; hit_timer written on hit (was IX).
+ * \param[out]    HLout          Receives (horz_clip<<8)|horz_pos at return;
+ *                               may be NULL (Conv: C out-param for Z80 HL).
+ * \return 1 on collision, default_retval otherwise (was D).
  */
 static u8 check_collision(chqstate_t *state,
                           int          default_retval,
-                          int         HL,
-                          hazard_t   *hazard,
-                          s16        *HLout)
+                          int          HL,
+                          hazard_t    *hazard,
+                          s16         *HLout)
 {
-  int horz_pos;      /* was L */
-  int horz_clip;     /* was H */
-  int flags;         /* was A */
-  int distance;      /* was A */
-  int max_distance;  /* was C */
-  int new_hit_timer; /* was E */
-  int fast_counter;  /* was A */
-  int Ahorz_pos;     /* was A */
+  int L_horz_pos;  /* hazard horizontal position byte (was L) */
+  int H_horz_clip; /* hazard clip flag byte; non-zero means off-screen (was H) */
+  int A_flags;     /* hazard_flags + 1; non-zero selects 3-distance threshold (was A) */
+  int A_distance;  /* hazard distance; decremented to test range (was A) */
+  int C_max_dist;  /* distance threshold: 3 if A_flags != 0, else 2 (was C) */
+  int E_hit_timer; /* hit severity: 1 glancing, 2 normal, 4 dead centre (was E) */
+  int A_fast_cnt;  /* fast_counter; sign-tested to gate collision at distance 1 (was A) */
+  int A_horz_pos;  /* L_horz_pos masked to $F8; used for bounding-box overlap (was A) */
 
   if (HLout) *HLout = HL;
 
-  if (hazard->hit_timer) // hit counter / delay thing
+  if (hazard->hit_timer) /* still in hit cooldown */
     return default_retval;
 
-  horz_pos = hazard->horz_pos;
-  horz_clip     = hazard->horz_clip;
-  if (HLout) *HLout = (horz_clip << 8) | horz_pos;
+  L_horz_pos  = hazard->horz_pos;
+  H_horz_clip = hazard->horz_clip;
+  if (HLout) *HLout = (H_horz_clip << 8) | L_horz_pos;
 
-  if (hazard->horz_clip) // distance related
+  if (hazard->horz_clip) /* hazard clipped off-screen; no collision */
     return default_retval;
 
-  flags = hazard->hazard_flags + 1; // just for compare
-  distance = hazard->distance;
-  max_distance = (flags != 0) ? 3 : 2;
-  if (distance >= max_distance)
+  A_flags    = hazard->hazard_flags + 1;
+  A_distance = hazard->distance;
+  C_max_dist = (A_flags != 0) ? 3 : 2;
+  if (A_distance >= C_max_dist)
     return default_retval;
 
-  new_hit_timer = 4;
-  distance--;
-  fast_counter = state->fast_counter;
-  if (distance == 0) {
-    if ((s8) fast_counter < 0) /* was JP P - why treating fast_counter as signed? */
-      new_hit_timer = 1;
+  E_hit_timer = 4;
+  A_distance--;
+  A_fast_cnt = state->fast_counter;
+  if (A_distance == 0) {
+    /* $AD76 AND A; $AD77 JP P: at distance 1, only hit if fast_counter is negative */
+    if ((s8) A_fast_cnt < 0)
+      E_hit_timer = 1;
   } else {
-    if ((s8) fast_counter >=
-        0) /* was RET P - why treating fast_counter as signed? */
+    /* $AD7E AND A; $AD7F RET P: at distance > 1, skip collision if fast_counter >= 0 */
+    if ((s8) A_fast_cnt >= 0)
       return default_retval;
   }
 
   // Check horizontal position
-  Ahorz_pos = horz_pos & 0xF8;
-  if (Ahorz_pos >= 144)
+  A_horz_pos = L_horz_pos & 0xF8;
+  if (A_horz_pos >= 144)
     return default_retval;
 
-  Ahorz_pos += hazard->hittable.width;
-  if (Ahorz_pos <= 112)
+  A_horz_pos += hazard->hittable.width;
+  if (A_horz_pos <= 112)
     return default_retval;
 
-  Ahorz_pos -= hazard->hittable.width;
-  if (Ahorz_pos >= 104) {
-    new_hit_timer--;
-    if (Ahorz_pos >= 120)
-      new_hit_timer += 2;
+  A_horz_pos -= hazard->hittable.width;
+  if (A_horz_pos >= 104) {
+    E_hit_timer--;
+    if (A_horz_pos >= 120)
+      E_hit_timer += 2;
   }
 
-  hazard->hit_timer = new_hit_timer;
+  hazard->hit_timer = E_hit_timer;
   return 1;
 }
 
