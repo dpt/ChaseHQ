@@ -4,8 +4,9 @@ perhaps build unit tests now to flush out problems ahead of time.
 # BUGS
 
 - Hitting invisible objects
+- Wonky feeling car speed / anims
 - Car starts level at speed
-- Lane change diagonals not working
+- Lane change diagonal transitions are not working
 - Radio screen sometimes have leftover transition animation parts
 - Perp escape scene causes an immediate crash (prob. tunnel code)
 - Message cursor seems to vanish when idle
@@ -22,6 +23,10 @@ perhaps build unit tests now to flush out problems ahead of time.
 - Document expected values/ranges for e.g. xpos arrays
 - Fix stage 2+ data
 - Fix object names (e.g. "left tree" -> bush)
+- Remove Z80 macros where it clarifies
+- Remove any local vars from state
+- Sort all decls by order of use
+- Sort all params by register
 
 
 # IDEAS

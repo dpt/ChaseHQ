@@ -433,7 +433,7 @@ static u8 *z80offsettobackbuf(chqstate_t *state, int off, int left, int right)
 
 #define SPEED_GEAR_CHANGE          (150) /* gear-change threshold: low gear below, high gear at or above */
 #define SPEED_PERP_CHASE           (350) /* perp's base chase speed; also hazard speed cap after impact */
-#define SPEED_ATTRACT_INITIAL      (40) /* scripted drive speed: attract mode camera */ // HACK was 400
+#define INITIAL_ATTRACT_SPEED      (400) /* scripted drive speed: attract mode camera */ // HACK was 400
 #define SPEED_PERP_MIN              (70) /* perp slow-down threshold in handle_perp_caught */
 #define SPEED_PERP_CAUGHT          (400) /* scripted drive speed: perp post-arrest */
 
@@ -1367,7 +1367,7 @@ static void attract_mode_48k(chqstate_t *state)
 
   set_up_stage(state, &state->stage->attract_data);
   blinker = 0;
-  state->speed = SPEED_ATTRACT_INITIAL;
+  state->speed = INITIAL_ATTRACT_SPEED;
   for (;;) {
     keys = keyscan(state);
     if (keys == USERINPUTFLAG_FIRE)
@@ -15274,62 +15274,61 @@ static void reset_paging_128k(chqstate_t *state)
  */
 static void attract_mode_128k(chqstate_t *state)
 {
-  int       carry;
-  int       enter_pressed;       /* was carry */
-  int       routine;             /* was HL */
-  int       result;              /* was A */
-  int       controls_selected;   /* was A */
-  const u8 *DEmessages;          /* was DE */
-  const u8 *HLmessages;          /* was HL */
-  int       Atransition_control; /* was A */
-  int       Adelay;              /* was A */
+  int       carry;                /* blink pattern (was carry) */
+  int       enter_pressed;        /* was carry */
+  int       HL_routine;           /* address of bank 3 routine to call (was HL) */
+  int       A_result;             /* was A */
+  int       A_controls_selected; /* was A */
+  const u8 *DE_messages;          /* was DE */
+  const u8 *HL_messages;          /* was HL */
+  int       A_transition_control; /* was A */
+  int       A_countdown;              /* was A */
 
 attract_mode_128k_start:
-  routine = BANK3_BOUNCY_LOGO;
+  HL_routine = BANK3_BOUNCY_LOGO;
 call_bank_3:
-  result = call_bank_3_128k(state, routine);
-  if (result == 0)
+  A_result = call_bank_3_128k(state, HL_routine);
+  if (A_result == 0)
     return;
 
   set_up_stage(state, &state->stage->attract_data);
 
   state->attract_mode_128k_countdown = 2; // two runs through
-  state->speed = SPEED_ATTRACT_INITIAL;
+  state->speed = INITIAL_ATTRACT_SPEED;
   for (;;) {
     cpu_driver(state);
 
-    controls_selected = state->controls_selected;
-    DEmessages = &enter_for_options_messages[0];
-    if (controls_selected) {
+    if (state->controls_selected == 0) {
+      DE_messages = &enter_for_options_messages[0];
+    } else {
       if (keyscan(state) & USERINPUTFLAG_FIRE) {
         play_start_noise(state);
         return;
       }
-      DEmessages = &press_gear_messages[0];
+      DE_messages = &press_gear_messages[0];
     }
 
     enter_pressed = ~state->speccy->in(state->speccy,
                                        port_KEYBOARD_ENTERLKJH) & 1; /* Conv: was IN+RRA */
-    routine = BANK3_INPUT_SELECTION;
+    HL_routine = BANK3_INPUT_SELECTION;
     if (enter_pressed)
       goto call_bank_3;
 
-    HLmessages = DEmessages;
-    // must be a flashing delay
-    RRC(state->attract_mode_128k_blink);
+    HL_messages = DE_messages;
+    RRC(state->attract_mode_128k_blink); /* rotating 4-on-4-off pattern */
     if (carry)
-      print_message(state, *HLmessages, HLmessages);
+      print_message(state, *HL_messages, HL_messages);
 
-    Atransition_control = state->transition_control;
-    if (Atransition_control == 0) {
-      Adelay = state->attract_mode_128k_countdown;
-      if (Adelay < 0)
+    A_transition_control = state->transition_control;
+    if (A_transition_control == 0) {
+      A_countdown = state->attract_mode_128k_countdown;
+      if (A_countdown < 0)
         goto attract_mode_128k_start;
-      state->attract_mode_128k_countdown = --Adelay;
-      if (Adelay < 0)
+      state->attract_mode_128k_countdown = --A_countdown;
+      if (A_countdown < 0)
         setup_transition(state, TRANSITIONSTRIDE_FORWARD);
       else
-        setup_overlay_messages(state, (Adelay > 0) ? &credits_messages_128[0] : &best_officers[0]);
+        setup_overlay_messages(state, (A_countdown > 0) ? &credits_messages_128[0] : &best_officers[0]);
     }
 
     transition(state);
