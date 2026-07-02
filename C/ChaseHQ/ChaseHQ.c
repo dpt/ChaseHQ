@@ -14480,15 +14480,28 @@ const u8 *menu_draw_string(chqstate_t *state, const u8 *HLstring)
 }
 
 /**
- * $EC2C: Draw a character (menu system)
+ * $EC2C: menu_draw_char — render one character into the screen and attribute buffers.
  *
- * \param[in]  Achar      ASCII character to draw. (was A)
- * \param[in]  Fdash      Double height flag; if set draw as double height. (was F')
- * \param[in]  Cdash      Screen attribute byte. (was C')
- * \param[in]  DEdash     Screen pixel address. (was DE')
- * \param[in]  HLdash     Screen attribute address. (was HL')
- * \param[out] DEdash_out Updated screen pixel address. (was DE')
- * \param[out] HLdash_out Updated screen attribute address. (was HL')
+ * Maps the ASCII character to a glyph index, then copies the 8×7 font data into
+ * the screen buffer.  A space advances both pointers by one column without writing
+ * pixels.  All other characters are routed through a range table to a glyph index
+ * covering punctuation, digits and letters.
+ *
+ * Two rendering modes: double-height (rows duplicated across two attribute rows,
+ * BRIGHT set on top row) and single-height (seven scanlines, one attribute row).
+ * The mode is selected by Fdash (was the carry in F' from the caller's EX AF,AF').
+ *
+ * The Z80 function operates on the banked shadow register set (F', C', DE', HL')
+ * set up by the caller via EXX / EX AF,AF'.  In C these are plain parameters; the
+ * EXX / PUSH / POP sequences are collapsed to direct assignments.
+ *
+ * \param[in]  Achar      ASCII character to draw (was A).
+ * \param[in]  Fdash      Non-zero = single height; zero = double height (was carry/F').
+ * \param[in]  Cdash      Screen attribute byte (was C').
+ * \param[in]  DEdash     Screen pixel address; one column is added on entry (was DE').
+ * \param[in]  HLdash     Screen attribute address (was HL').
+ * \param[out] DEdash_out Updated screen pixel address after drawing (was DE').
+ * \param[out] HLdash_out Updated screen attribute address after drawing (was HL').
  */
 static void menu_draw_char(int   Achar,
                            int   Fdash,
@@ -14498,11 +14511,11 @@ static void menu_draw_char(int   Achar,
                            u8 **DEdash_out,
                            u8 **HLdash_out)
 {
-  const u8 *HLfont;       /* was HL */
-  u8       *DEscreen;     /* was DE */
-  int       Cglyphid;     /* was C */
-  u8       *HLdash_saved; /* was B' */
-  int       i;            // additional
+  int       Cglyphid;     /* glyph index into font array (was C) */
+  const u8 *HLfont;       /* pointer to first row of current glyph in font (was HL) */
+  u8       *DEscreen;     /* screen pixel write pointer (was DE) */
+  int       row;          /* character row index; no Z80 equivalent (Conv: rolled loops) */
+  u8       *HLdash_saved; /* attribute pointer saved before double-height row advance (was B') */
 
   Achar -= ' ';
   if (Achar == 0) {
@@ -14539,20 +14552,21 @@ mdc_have_glyph:
   HLfont = &font[Cglyphid * 7]; // add symbol for glyph height
   // EXX
   // PUSH DEdash
-  DEdash++; /* was INC E */
+  // Conv: $EC68–$EC6C EXX/PUSH DE/INC E/EXX/POP DE collapsed; C advances DEdash directly
+  DEdash++;
   // EXX
   // POP DE
   DEscreen = DEdash;
   if (!Fdash) { // checking banked carry here
     // double height
-    for (i = 0; i < 4; i++) { // Conv: rolled
+    for (row = 0; row < 4; row++) { // Conv: rolled
       *DEscreen = *HLfont;
       DEscreen += 256;
       *DEscreen = *HLfont++;
       DEscreen += 256;
     }
-    DEscreen += 0xF81F;
-    for (i = 0; i < 3; i++) { // Conv: rolled
+    DEscreen += 0xF81F; /* $EC8B–$EC92: E += $1F, D -= 7; crosses 8-scanline group boundary */
+    for (row = 0; row < 3; row++) { // Conv: rolled
       *DEscreen = *HLfont;
       DEscreen += 256;
       *DEscreen = *HLfont++;
@@ -14560,7 +14574,8 @@ mdc_have_glyph:
     }
     *DEscreen = 0; // final row always blank?
     // EXX
-    HLdash_saved = HLdash; /* was just B' saving L' */
+    // Conv: $ECAB LD B,L saves only L' (column); C saves full pointer for simplicity
+    HLdash_saved = HLdash;
     Cdash |= ATTR_BRIGHT;
     *HLdash = Cdash; // set with bright set
     HLdash += 32; // move to next attr row
@@ -14570,7 +14585,7 @@ mdc_have_glyph:
     // EXX
   } else {
     // single height
-    for (i = 0; i < 7; i++) { // Conv: rolled
+    for (row = 0; row < 7; row++) { // Conv: rolled
       *DEscreen = *HLfont++;
       DEscreen += 256;
     }
