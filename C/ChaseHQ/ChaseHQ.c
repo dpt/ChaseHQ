@@ -4248,7 +4248,7 @@ static void draw_object_perspective_entrypt(chqstate_t     *state,
 }
 
 /**
- * $932B: Draw a flipped object, toggling the shift selector
+ * $932B: Draw a flipped object, A_toggling the shift selector
  *
  * Entry point for horizontally-flipped objects. Inverts the shift-selector
  * byte so that the complementary (shifted) bitmap variant is chosen, then
@@ -11336,7 +11336,7 @@ static void rm_cycle_buffer_offset(chqstate_t *state, u8 *pfastcounter)
 
   /* Set sound effect triggers (before we clobber those bytes) */
   /* We fetch and store these flags separately but the sole user drive_sfx
-   * ultimately just merges them together. */
+   * ultimately just merges them A_together. */
   /* offset 96 -> first byte of right hand objects */
   HL_rightside_ptr = ROADBUF_FWD2PTR(95);
   state->trigger_righthand_sfx |= *HL_rightside_ptr;
@@ -12188,7 +12188,7 @@ static void draw_road_lanes_change(chqstate_t *state,
   u8   SM_C345_bend_offset; /* stored A_curve_step: bend component of animation offset (SM $C345) */
   u8   A_bresen_range;      /* Bresenham range (was A) */
   u8   C_bresen_range;      /* Bresenham range = IYheight[0] - ref_height (was C) */
-  u8   B_tbl_stride;        /* table pointer stride = A_curve_step * 2 (was B) */
+  u8   B_HLzone_stride;        /* table pointer stride = A_curve_step * 2 (was B) */
   u8   L_left_hand_table_lo; /* low byte of x-position table address (was L) */
   u8  *HL_left_hand_table;  /* current pointer into x-position table (was HL) */
   u8  *SP_output;           /* output pointer into road position buffer (was SP) */
@@ -12266,7 +12266,7 @@ static void draw_road_lanes_change(chqstate_t *state,
 
           // $C32B: B = C*2
           C_bresen_range = A_bresen_range;
-          B_tbl_stride = A_bresen_range * 2;
+          B_HLzone_stride = A_bresen_range * 2;
           L_left_hand_table_lo = ~((96 - (*IY_heightptr)[0]) << 1); // byte offset
           HL_left_hand_table = addr_to_xpos(state, (H_left_hand_table_hi << 8) | L_left_hand_table_lo);
 
@@ -12276,7 +12276,7 @@ static void draw_road_lanes_change(chqstate_t *state,
           DE_roadpos = (HL_left_hand_table[0] << 8) + HL_left_hand_table[-1];
 
           // $C33A
-          L_left_hand_table_lo -= B_tbl_stride;
+          L_left_hand_table_lo -= B_HLzone_stride;
           H_left_hand_table_hi--; // widen to left
           HL_left_hand_table = addr_to_xpos(state, (H_left_hand_table_hi << 8) | L_left_hand_table_lo);
 
@@ -12296,14 +12296,14 @@ static void draw_road_lanes_change(chqstate_t *state,
 
           // $C369: C = IY[0] - IY[2] (height span), B = C*2
           C_bresen_range = (*IY_heightptr)[0] - (*IY_heightptr)[2];
-          B_tbl_stride = C_bresen_range * 2;
+          B_HLzone_stride = C_bresen_range * 2;
           L_left_hand_table_lo = ~((96 - (*IY_heightptr)[0]) << 1); // byte offset
           HL_left_hand_table = addr_to_xpos(state, (H_left_hand_table_hi << 8) | L_left_hand_table_lo);
           SP_output = HL_left_hand_table;
           // DPT CHECK
           DE_roadpos = (HL_left_hand_table[0] << 8) + HL_left_hand_table[-1];
 
-          L_left_hand_table_lo -= B_tbl_stride;
+          L_left_hand_table_lo -= B_HLzone_stride;
           H_left_hand_table_hi--;
           HL_left_hand_table = addr_to_xpos(state, (H_left_hand_table_hi << 8) | L_left_hand_table_lo);
         }
@@ -12335,7 +12335,7 @@ static void draw_road_lanes_change(chqstate_t *state,
 
           // $C39F: B = C*2
           C_bresen_range = A_bresen_range;
-          B_tbl_stride = A_bresen_range * 2;
+          B_HLzone_stride = A_bresen_range * 2;
           L_left_hand_table_lo = ~((96 - (*IY_heightptr)[0]) << 1); // byte offset
           HL_left_hand_table = addr_to_xpos(state, (H_left_hand_table_hi << 8) | L_left_hand_table_lo);
 
@@ -12347,7 +12347,7 @@ static void draw_road_lanes_change(chqstate_t *state,
           DE_roadpos = (HL_left_hand_table[0] << 8) + HL_left_hand_table[-1];
 
           // $C3AF
-          L_left_hand_table_lo -= B_tbl_stride;
+          L_left_hand_table_lo -= B_HLzone_stride;
           H_left_hand_table_hi++; // widen to right
           HL_left_hand_table = addr_to_xpos(state, (H_left_hand_table_hi << 8) | L_left_hand_table_lo);
 
@@ -12367,7 +12367,7 @@ static void draw_road_lanes_change(chqstate_t *state,
 
           // $C3DB: C = IY[0] - IY[2] (height span), B = C*2
           C_bresen_range = (*IY_heightptr)[0] - (*IY_heightptr)[2];
-          B_tbl_stride = C_bresen_range * 2;
+          B_HLzone_stride = C_bresen_range * 2;
           L_left_hand_table_lo = ~((96 - (*IY_heightptr)[0]) << 1); // byte offset
           HL_left_hand_table = addr_to_xpos(state, (H_left_hand_table_hi << 8) | L_left_hand_table_lo);
           SP_output = HL_left_hand_table;
@@ -12376,7 +12376,7 @@ static void draw_road_lanes_change(chqstate_t *state,
           // DPT CHECK
           DE_roadpos = (HL_left_hand_table[0] << 8) + HL_left_hand_table[-1];
 
-          L_left_hand_table_lo -= B_tbl_stride;
+          L_left_hand_table_lo -= B_HLzone_stride;
           H_left_hand_table_hi++; // widen to right
           HL_left_hand_table = addr_to_xpos(state, (H_left_hand_table_hi << 8) | L_left_hand_table_lo);
         }
@@ -13479,56 +13479,76 @@ static void pre_shift_backdrop(chqstate_t *state)
  * \param[in] IXlanes  Lanes buffer pointer.
  * \param[in] IYheight Height table pointer (into state->height_table).
  */
+/**
+ * $C8E3: draw_forked_road — render one frame of the forked-road view.
+ *
+ * Called from draw_road when the road is in a fork.  Mirrors the structure of
+ * draw_road but drives five screen zones (left verge, left road, middle verge,
+ * right road, right verge) instead of three.  Zone widths are read from the
+ * six xpos tables ($E8xx–$EDxx) at each scanline.
+ *
+ * On entry the Z80 performs EXX to bank the draw_road shadow context (D, E,
+ * B, C, L) into the main registers, then copies ten SM operands from the
+ * draw_road SM state into the local SM bytes at $CA9D–$CB65.  In C these are
+ * modelled as local variables (sm_CA9D etc.) re-initialised from the
+ * corresponding state fields on every call.
+ *
+ * The function has two inner loops depending on whether the outer B counter
+ * is zero (frp_c923, zero-fill path) or non-zero (frp_c963, 5-zone path).
+ * The $CA00–$CA65 scanline fill (five PUSH sequences) is stubbed out and only
+ * the road-marking update ($CA68–$CB2E) is implemented.
+ *
+ * \param[in]     state     Pointer to game state.
+ * \param[in]     IXlanes   Road-buffer lanes pointer (was IX).
+ * \param[in,out] IYheight  Height table pointer; advanced once per block (was IY).
+ */
 static void draw_forked_road(chqstate_t *state, const u8 *IXlanes, const u8 *IYheight)
 {
-  /* SM fields - all reinitialized from draw_road on each call */
-  u8  sm_CB65;   /* road edge thickness countdown */
-  u8  sm_CB36;   /* stripe state (toggled per scanline pair) */
-  u8  sm_CB5D;   /* XOR operand for sm_CA9D update */
-  u8  sm_CA9D;   /* ADD operand for single-RLCA road-mark path */
-  u8  sm_CB00;   /* ADD operand for dual-RLCA road-mark path */
-  u8  sm_CA7A;   /* ADD operand base */
-  u8  sm_CADC;   /* ADD operand base (second copy) */
-  u8  sm_CB1C;   /* ADD operand = sm_CA7A + 1 */
-  u8  sm_CABB;   /* ADD operand = sm_CA7A + 1 (second copy) */
-  u8  sm_CB40;   /* fill pattern (verge texture) */
-  /* Banked register state (from draw_road shadow context via EXX) */
-  u8  D;         /* screen address high byte */
-  u8  E;         /* screen address low byte */
-  u8  B;         /* inner counter: 0 on first entry, 16 after frp_c969 init */
-  u8  C;         /* scan-block counter (banked C; $F8 = 248 iterations) */
-  u8  L;         /* road table byte index (decrements as road nears) */
-  /* Per-scanline zone widths (each in 2-byte PUSH units, 0..15) */
-  u8  z_lv;      /* lefthand verge width  = pos_E8 */
-  u8  z_lr;      /* lefthand road width   = pos_E9 - pos_E8 */
-  u8  z_mv;      /* middle verge width    = pos_EA - pos_E9 */
-  u8  z_rr;      /* righthand road width  = pos_EC - pos_EA */
-  u8  z_rv;      /* righthand verge width = 15 - pos_EC */
-  /* Zone position accumulators */
-  u8  pos_E8;    /* computed lefthand verge edge position */
-  u8  pos_E9;    /* computed lefthand road end position */
-  u8  pos_EA;    /* computed middle verge end position */
-  u8  pos_EC;    /* computed righthand road end / verge complement */
-  /* Misc */
-  u8  loop_path; /* 0 = use frp_c923 (zero-fill) path; 1 = frp_c963 (5-zone) */
-  u8  af_prime;  /* A' shadow: current scanline fill pattern */
-  int A;
-  int carry;
-  int prev;
-  const u8 *tbl;
-  int        B_row_lo;  /* screen address low byte saved from $CA66 LD B,E (was B) */
-  int        D_row_hi;  /* screen address high byte (was D) */
-  int        H_xpos_hi; /* current xpos-table page hi byte, $E8→$ED (was H) */
-  const u8  *HLtbl;     /* pointer to the current xpos-position table row (was HL) */
-  u8        *DEmark;    /* backbuffer destination for marking write (was DE) */
-  int        E_col;     /* screen column: (xpos >> 3) & 0x1F + row_lo (was E) */
-  int        L_gfx;     /* graphics address: (xpos & 7) << shift + offset (was L) */
-  u8         A_xpos;    /* road x-position byte from xpos table (was A) */
-  u8         tog;
-  u8         newpat;
-  u8         nca9d;
-  u8         newxor;
-  u8         old_h;
+  u8  sm_CB65;    /* road edge thickness countdown (was $CB65) */
+  u8  sm_CB36;    /* stripe-pair toggle state (was $CB36) */
+  u8  sm_CB5D;    /* XOR operand for sm_CA9D update (was $CB5D) */
+  u8  sm_CA9D;    /* ADD operand for single-RLCA road-mark path (was $CA9D) */
+  u8  sm_CB00;    /* ADD operand for dual-RLCA road-mark path (was $CB00) */
+  u8  sm_CA7A;    /* ADD operand base (was $CA7A) */
+  u8  sm_CADC;    /* ADD operand base, second copy (was $CADC) */
+  u8  sm_CB1C;    /* ADD operand = sm_CA7A + 1 (was $CB1C) */
+  u8  sm_CABB;    /* ADD operand = sm_CA7A + 1, second copy (was $CABB) */
+  u8  sm_CB40;    /* verge fill pattern (was $CB40) */
+  u8  D;          /* screen address high byte (was D) */
+  u8  E;          /* screen address low byte (was E) */
+  u8  B;          /* inner counter: 0 on first entry, 16 after frp_c969 init (was B) */
+  u8  C;          /* scan-block counter ($F8 = 248 iterations) (was C) */
+  u8  L;          /* road table byte index; decrements as road nears (was L) */
+  u8  af_prime;   /* current scanline fill pattern, banked in A' (was A') */
+  u8  loop_path;  /* 0 = frp_c923 (zero-fill) path; 1 = frp_c963 (5-zone) */
+  int A_row;      /* scanline row check: (D-1) & 0x0F; drives advance test (was A) */
+  int carry;      /* carry/borrow flag for E underflow in scanline advance */
+  const u8 *HLzone;   /* pointer to zone position table for current zone (was HL) */
+  int A_zone;     /* zone position byte from xpos table; 0 = interpolate (was A) */
+  u8  pos_E8;     /* computed lefthand verge edge position */
+  int A_prev;     /* previous xpos table entry, used for interpolation (was A) */
+  u8  pos_E9;     /* computed lefthand road end position */
+  u8  pos_EA;     /* computed middle verge end position */
+  u8  pos_EC;     /* computed righthand road end / verge complement */
+  u8  z_lv;       /* lefthand verge width = pos_E8 */
+  u8  z_lr;       /* lefthand road width = pos_E9 - pos_E8 */
+  u8  z_mv;       /* middle verge width = pos_EA - pos_E9 */
+  u8  z_rr;       /* righthand road width = pos_EC - pos_EA */
+  u8  z_rv;       /* righthand verge width = 15 - pos_EC */
+  int B_row_lo;   /* screen low byte saved at $CA66 LD B,E; base for column calc (was B) */
+  int D_row_hi;   /* screen high byte at marking time (was D) */
+  int H_xpos_hi;  /* current xpos-table page high byte, $E8→$ED (was H) */
+  const u8 *HLtbl;    /* pointer to xpos-position table row in marking section (was HL) */
+  u8       *DEmark;   /* backbuffer destination for road-marking write (was DE) */
+  int E_col;      /* screen column: (xpos >> 3) & 0x1F + B_row_lo (was E) */
+  int L_gfx;      /* graphics offset: (xpos & 7) << shift + table offset (was L) */
+  u8  A_xpos;     /* road x-position byte from xpos table (was A) */
+  u8  A_tog;      /* toggled sm_CB36 value; drives stripe-pair branch (was A) */
+  u8  A_newpat;   /* new verge fill pattern after XOR $55 (was A) */
+  u8  A_nca9d;    /* new sm_CA9D value after XOR with sm_CB5D (was A) */
+  u8  A_newxor;   /* new XOR operand after +$10; carry check determines edge advance (was A) */
+  u8  A_old_h;    /* height at previous IYheight entry; base for difference (was A) */
+  u8  A_diff;     /* height difference old−new; sign drives re-entry or backdrop (was A) */
 
   /* $C8E4-$C912: Copy SM operands from draw_road's current SM state.
    * In Z80 these are absolute self-modifying writes to the $CA/$CB region.
@@ -13567,10 +13587,10 @@ frp_c915: /* $C915 */
   af_prime = sm_CB40;
 
 frp_c923: /* $C923 */
-  A = D;
+  A_row = D;
   D--;
-  A &= 0x0F;
-  if (A == 0)
+  A_row &= 0x0F;
+  if (A_row == 0)
     goto frp_next_scanline_c929;
 
 frp_c929: /* $C929: zero-fill scanline (inner road, pre-fork area) */
@@ -13598,10 +13618,10 @@ frp_c95a: /* $C95A: B != 0 -- set jump target to frp_c963 (5-zone path) */
   af_prime = sm_CB40;
 
 frp_c963: /* $C963 */
-  A = D;
+  A_row = D;
   D--;
-  A &= 0x0F;
-  if (A == 0)
+  A_row &= 0x0F;
+  if (A_row == 0)
     goto frp_next_scanline_c969;
 
 frp_c969: /* $C969: 5-zone fork scanline render */
@@ -13612,52 +13632,52 @@ frp_c969: /* $C969: 5-zone fork scanline render */
   /* $C973: H = $E8 → read zone widths from road tables $E8/$E9/$EA/$EC */
 
   /* ---- Zone 5: lefthand verge (table $E800) ---- */
-  tbl = (const u8 *)state->xpos_road_left;
-  A   = tbl[L];
-  if (A != 0) {
-    pos_E8 = (A & 0x80) ? 0 : 15;
+  HLzone = (const u8 *)state->xpos_road_left;
+  A_zone   = HLzone[L];
+  if (A_zone != 0) {
+    pos_E8 = (A_zone & 0x80) ? 0 : 15;
   } else {
     /* frp_c984: DEC L; A=HL[-1]; INC L; AND $F8; 3×RRCA; RRA; ADC; CP B; DEC */
-    prev   = tbl[(u8)(L - 1)];
-    pos_E8 = (u8)((prev >> 4) + ((prev >> 3) & 1)); /* 3×RRCA + RRA + ADC */
+    A_prev   = HLzone[(u8)(L - 1)];
+    pos_E8 = (u8)((A_prev >> 4) + ((A_prev >> 3) & 1)); /* 3×RRCA + RRA + ADC */
     if (pos_E8 >= 16)
       pos_E8--;
   }
 
   /* ---- Zone 4: lefthand road (table $E900) ---- */
-  tbl = (const u8 *)state->xpos_road_centre_left;
-  A   = tbl[L];
-  if (A != 0) {
-    pos_E9 = (A & 0x80) ? 0 : 15;
+  HLzone = (const u8 *)state->xpos_road_centre_left;
+  A_zone   = HLzone[L];
+  if (A_zone != 0) {
+    pos_E9 = (A_zone & 0x80) ? 0 : 15;
   } else {
     /* frp_c9aa: DEC L; A=HL[-1]; INC L; AND $F8; 3×RRCA; RRA (no ADC) */
-    prev   = tbl[(u8)(L - 1)];
-    pos_E9 = (u8)((prev & 0xF8) >> 4); /* 3×RRCA + RRA, no rounding */
+    A_prev   = HLzone[(u8)(L - 1)];
+    pos_E9 = (u8)((A_prev & 0xF8) >> 4); /* 3×RRCA + RRA, no rounding */
   }
 
   /* ---- Zone 3: middle verge (table $EA00) ---- */
-  tbl = (const u8 *)state->xpos_road_centre;
-  A   = tbl[L];
-  if (A != 0) {
-    pos_EA = (A & 0x80) ? 0 : 15;
+  HLzone = (const u8 *)state->xpos_road_centre;
+  A_zone   = HLzone[L];
+  if (A_zone != 0) {
+    pos_EA = (A_zone & 0x80) ? 0 : 15;
   } else {
     /* frp_c9c9: DEC L; A=HL[-1]; INC L; AND $F8; 3×RRCA; RRA; ADC; CP B; DEC */
-    prev   = tbl[(u8)(L - 1)];
-    pos_EA = (u8)((prev >> 4) + ((prev >> 3) & 1));
+    A_prev   = HLzone[(u8)(L - 1)];
+    pos_EA = (u8)((A_prev >> 4) + ((A_prev >> 3) & 1));
     if (pos_EA >= 16)
       pos_EA--;
   }
 
   /* ---- Zone 2+1: righthand road + verge (table $EC00, H skips $EB) ---- */
-  tbl = (const u8 *)state->xpos_road_right;
-  A   = tbl[L];
-  if (A != 0) {
-    pos_EC = (A & 0x80) ? 0 : 15;
+  HLzone = (const u8 *)state->xpos_road_right;
+  A_zone   = HLzone[L];
+  if (A_zone != 0) {
+    pos_EC = (A_zone & 0x80) ? 0 : 15;
   } else {
     /* frp_c9f0: DEC L; A=HL[-1] (no INC L -- L stays decremented) */
     L--;
-    prev   = tbl[L]; /* read from new L (= L-1) */
-    pos_EC = (u8)((prev & 0xF8) >> 4); /* 3×RRCA + RRA, no rounding */
+    A_prev   = HLzone[L]; /* read from new L (= L-1) */
+    pos_EC = (u8)((A_prev & 0xF8) >> 4); /* 3×RRCA + RRA, no rounding */
   }
 
   /* Derive zone widths from cumulative positions */
@@ -13778,25 +13798,25 @@ frp_after_marking: /* $CB2F */
   B = af_prime;
 
 frp_loop: { /* $CB36 */
-    tog = sm_CB36 ^ 1;
-    sm_CB36 = tog;
-    if (tog != 0)
+    A_tog = sm_CB36 ^ 1;
+    sm_CB36 = A_tog;
+    if (A_tog != 0)
       goto frp_cb65;
   }
 
   /* sm_CB36 == 0: update fill pattern and ADD operands */
   {
-    newpat = sm_CB40 ^ 0x55;
-    sm_CB40 = newpat;
-    B       = newpat;
+    A_newpat = sm_CB40 ^ 0x55;
+    sm_CB40 = A_newpat;
+    B       = A_newpat;
     sm_CA7A = sm_CA7A ^ 0x20;          /* $CB4D: XOR $20 */
     sm_CADC = sm_CA7A;                 /* $CB50 */
     sm_CB1C = sm_CA7A + 1;             /* $CB54 */
     sm_CABB = sm_CB1C;                 /* $CB57 */
     {
-      nca9d = sm_CA9D ^ sm_CB5D; /* $CB5D: XOR <sm_CB5D> */
-      sm_CA9D = nca9d;                    /* $CB5F */
-      sm_CB00 = nca9d;                    /* $CB62 */
+      A_nca9d = sm_CA9D ^ sm_CB5D; /* $CB5D: XOR <sm_CB5D> */
+      sm_CA9D = A_nca9d;                    /* $CB5F */
+      sm_CB00 = A_nca9d;                    /* $CB62 */
     }
   }
 
@@ -13807,34 +13827,34 @@ frp_cb65: /* $CB65 */
 
   /* sm_CB65 reached zero: advance XOR operand ($CB6E-$CB8D) */
   {
-    newxor = sm_CB5D + 0x10;
-    if (newxor < sm_CB5D) /* carry: $CB73 JR C,$CB90 */
+    A_newxor = sm_CB5D + 0x10;
+    if (A_newxor < sm_CB5D) /* carry: $CB73 JR C,$CB90 */
       goto frp_cb90;
-    sm_CB5D = newxor;             /* $CB75 */
+    sm_CB5D = A_newxor;             /* $CB75 */
     if (sm_CA9D != 0)             /* $CB7C: AND A; JR Z,$CB83 */
-      sm_CA9D = newxor;           /* $CB80 */
+      sm_CA9D = A_newxor;           /* $CB80 */
     sm_CA7A = sm_CA7A + 0x40; /* $CB86: ADD A,$40 */
     sm_CB65 = 5;                  /* $CB8D: reset thickness countdown */
   }
 
 frp_cb90: { /* $CB90 */
-    old_h = *IYheight;
+    A_old_h = *IYheight;
     IYheight++;
     WRAP_INCREMENT_ASSIGN(IXlanes, state->roadbuf_start);
-    A = (u8)(old_h - *IYheight);  /* $CB97: SUB (IYheight+$00) */
-    if (A == 0) {           /* $CB9A: JR Z,$CB9F */
+    A_diff = (u8)(A_old_h - *IYheight);  /* $CB97: SUB (IYheight+$00) */
+    if (A_diff == 0) {           /* $CB9A: JR Z,$CB9F */
       L -= 2;
       goto frp_loop;
     }
-    if ((s8)A > 0) {        /* $CB9C: JP P,$CBC5 */
+    if ((s8)A_diff > 0) {        /* $CB9C: JP P,$CBC5 */
       /* backdrop_fill_dispatch ($CBC5): A < 0x50 → re-enter, A >= 0x50 → backdrop fill */
-      if (A >= 0x50) {
+      if (A_diff >= 0x50) {
         dr_start_backdrop_fill(state, ((int)D << 8) | E, (int)L); /* $CBCB JP $C79A */
         return;
       }
       goto frp_c915; /* $CBC8 JP C,$C915 */
     }
-    /* A < 0 (negative): fall through */
+    /* A_diff < 0 (negative): fall through */
     L = (u8)(L - 2);
     goto frp_loop;
   }
