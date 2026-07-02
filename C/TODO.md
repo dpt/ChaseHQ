@@ -5,16 +5,14 @@ perhaps build unit tests now to flush out problems ahead of time.
 
 - Sky attributes intruding on road
 - Hitting invisible objects
-- Road corrupt in distance
-- Road corrupt (looks like a wall) at looping point
 - Car starts level at speed
 - Lane change diagonals not working
 - Radio screen sometimes have leftover transition animation parts
-- draw_scene_objects => crash
 - Perp escape scene causes an immediate crash
 - Message cursor seems to vanish when idle
 - Car not jumping on steep roads
 - Forks seize the game up
+- draw_scene_objects => crash
 
 
 # TODO
@@ -50,6 +48,8 @@ perhaps build unit tests now to flush out problems ahead of time.
 
 # DONE
 
+- Road corrupt in distance
+- Road corrupt (looks like a wall) at looping point
 - Lane markings don't appear closest to player: draw_road_lanes_change
   (Bresenham interpolation) is called at map position 3 (stage 1 lane
   transition) and pushes some xpos entries off-screen at Lrow=0xFF.

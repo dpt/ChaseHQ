@@ -13039,15 +13039,15 @@ dr_set_stripes:
   state->dr_edge_thickness = Aedge_thickness;
   if (Aedge_thickness == 0) {
     Anew_xor_base = state->dr_stripe_xor_base + 0x10;
-    if (Anew_xor_base > state->dr_stripe_xor_base) { /* no carry */
+    if (Anew_xor_base > state->dr_stripe_xor_base) { /* no carry: $C6E6 JR C skips all of $C6E8-$C700 */
       state->dr_stripe_xor_base = Anew_xor_base;
       Cxor_base = Anew_xor_base;
       Astripe_table_offset = state->dr_stripe_table_offset;
       if (Astripe_table_offset)
         state->dr_stripe_table_offset = Cxor_base;
+      state->dr_edge_graphic_offset += 0x40;
+      state->dr_edge_thickness = 5;
     }
-    state->dr_edge_graphic_offset += 0x40;
-    state->dr_edge_thickness = 5;
   }
 
   /* $C703 */
