@@ -8586,7 +8586,7 @@ dh_call_handler:
  * $AECF: Draw arrow fire smoke
  *
  * \param[in] state       Pointer to game state.
- * \param[in] Biterations Biterations.
+ * \param[in] Biterations Iterations.
  * \param[in] IYheight          IYheight register value.
  */
 static void draw_arrow_fire_smoke(chqstate_t *state,
@@ -8639,6 +8639,7 @@ static void draw_arrow_fire_smoke(chqstate_t *state,
   const u8       *HLarrows;            /* was HL */
   const u8       *HLsmokes;            /* was HL */
   u8              Ahorz_pos;           /* was A */
+  int             Aindex;              /* was A */
   int             Asmash_level_scaled; /* was A */
 
   // is $E900 pairs of (data-word, hazard-ptr) ?
@@ -8651,7 +8652,7 @@ static void draw_arrow_fire_smoke(chqstate_t *state,
   if (--A >= 11)
     A = 10;
   A >>= 1;
-  state->smoke_bitmap_index = A; // speed factor?
+  state->smoke_bitmap_index = A;
 
   DEbitmapoffset = A * 7;
   do {
@@ -8669,34 +8670,31 @@ static void draw_arrow_fire_smoke(chqstate_t *state,
     state->doc_inverted = IXhazard->inverted;
 
     if (IXhazard->hazard_flags + 1 == 0)
-      goto dh_af50;
+      goto dafs_af50;
 
     Ahorz_clip = IXhazard->horz_clip;
     // AND A3
     Ahorz_pos = IXhazard->horz_pos;
-    if (Ahorz_clip < 0)
-      goto dh_af2f;
+    if (Ahorz_clip <= 0) {
     if (Ahorz_clip != 0)
-      goto dh_draw_done_1;
+        goto dafs_draw_done_1;
     if (Ahorz_pos >= 128)
-      goto dh_draw_right_1;
+        goto dafs_draw_right_1;
 
     Ahorz_pos += Ewidth_bits;
-    goto dh_draw_left_1;
-
-dh_af2f:
+    } else {
     Ahorz_pos += Ewidth_bits;
     if (Ahorz_pos + Ewidth_bits < 0x100) // no carry
-      goto dh_draw_done_1;
+        goto dafs_draw_done_1;
+    }
 
-dh_draw_left_1:
     draw_object_left_helicopter_entrypt(state, Ahorz_pos, HLbitmap, IYheight);
-    goto dh_draw_done_1;
+    goto dafs_draw_done_1;
 
-dh_draw_right_1:
+dafs_draw_right_1:
     draw_object_right_helicopter_entrypt(state, Ahorz_pos, HLbitmap, IYheight);
 
-dh_draw_done_1:
+dafs_draw_done_1:
     // POP DE (DEbitmapoffset), BC (Biterations)   ??
 
     state->doc_inverted = 0;
@@ -8710,53 +8708,41 @@ dh_draw_done_1:
   state->dh_xpos_table = HLtable;
   return;
 
-dh_af50:
-  Awidth_bytes = IXhazard->horz_clip;
-  state->dh_SM_B029_horz_clip = Awidth_bytes;
-  // set flags from A here
+dafs_af50:
+  Ahorz_clip = IXhazard->horz_clip;
+  state->dh_SM_B029_horz_clip = Ahorz_clip;
+  Awidth_bytes = Ahorz_clip; // set flags from A here
   Ahorz_pos = IXhazard->horz_pos;
   state->dh_SM_B02C_horz_pos = Ahorz_pos;
-  if ((s8) Awidth_bytes < 0)
-    goto dh_af6c;
+  if ((s8) Awidth_bytes >= 0) {
   if (Awidth_bytes)
-    goto dh_draw_done_1;
+    goto dafs_draw_done_1;
   if (Ahorz_pos >= 128)
-    goto dh_draw_right_2;
+    goto dafs_draw_right_2;
   Awidth_bytes += Ewidth_bits;
-  goto dh_draw_left_2;
-
-dh_af6c:
+  } else {
   Awidth_bytes += Ewidth_bits;
   if ((s8) Awidth_bytes < 0)
-    goto dh_draw_done_1;
+      goto dafs_draw_done_1;
+  }
 
-dh_draw_left_2:
+dafs_draw_left_2:
   draw_object_left_helicopter_entrypt(state, Awidth_bytes, HLbitmap, IYheight);
-  goto dh_done_draw_object;
+  goto dafs_done_draw_object;
 
-dh_draw_right_2:
+dafs_draw_right_2:
   draw_object_right_helicopter_entrypt(state, Awidth_bytes, HLbitmap, IYheight);
 
-dh_done_draw_object:
+dafs_done_draw_object:
   state->dh_col_pos = state->doc_col_pos;
 
-  if (state->smash_level >= 5)
-    goto dh_smash_level;
+  if (state->smash_level < 5 && (Aindex = state->smoke_bitmap_index) < 4) {
+      HLarrows = &arrow_offsets[Aindex]; // Conv: scaling accounted for
+      dh_draw_bitmap(state, HLarrows[0], HLarrows[1], &floating_arrow_here_defn, IYheight);
+    }
 
-  A = state->smoke_bitmap_index;
-  if (A >= 4)
-    goto dh_smash_level;
-
-  HLarrows = &arrow_offsets[A]; // Conv: scaling accounted for
-  Bx = HLarrows[0]; // x offset
-  Cy = HLarrows[1]; // y offset
-  dh_draw_bitmap(state, Bx, Cy, &floating_arrow_here_defn, IYheight);
-
-dh_smash_level:
   Asmash_level = state->smash_level;
-  if (Asmash_level < 4)
-    goto dh_check_smash_level;
-
+  if (Asmash_level >= 4) {
   Asmash_level_scaled = (Asmash_level - 4) * 4;
 
   // EX AF,AF' Bank Asmash_level_scaled
@@ -8775,8 +8761,8 @@ dh_smash_level:
   // PUSH DE (DEbitmapoffset)
 
   dh_draw(state, Bx, Cy, DEbitmapoffset, HLbitmap, IYheight);
+  }
 
-dh_check_smash_level:
   /* Conv: Converted to switch */
   switch (state->smash_level) {
   case 3:
@@ -8786,7 +8772,7 @@ dh_check_smash_level:
   case 1:
     dh_smoke(state, state->smokes[1], IYheight);
   case 0:
-    goto dh_draw_done_1;
+    goto dafs_draw_done_1;
   default:
     assert(0);
   }
