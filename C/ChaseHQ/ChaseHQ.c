@@ -10672,39 +10672,54 @@ url_B9C5:
 }
 
 /**
- * $B9F4: Layout road
+ * $B9F4: Lay out the road x-position tables for the current frame
  *
- * Called from main loop.
+ * Called once per frame from read_map. Scans up to 20 lane-data entries
+ * looking for a fork marker (byte & 0xE1 == 0xE1). Two paths:
+ *
+ * Non-fork: calls build_curve_table (straight road), then fills 104 entries
+ * of xpos_road_centre, xpos_road_centre_right, and xpos_road_centre_left
+ * by interpolating between the already-populated xpos_road_left and
+ * xpos_road_right tables.
+ *
+ * Fork: records which fork the player is taking, triggers chatter, advances
+ * the spawn accumulator and fork_distance, then calls build_curve_table twice
+ * (once per road half, adjusting road_pos temporarily). The fork inner loop
+ * runs Bdash_fork_iters iterations (from the height at the fork), with the
+ * remaining entries handled by falling through to the non-fork path.
  *
  * \param[in] state Pointer to game state.
  */
 static void layout_road(chqstate_t *state)
 {
-  int       carry = 0;
-  u8       *DElanedata_base;   /* was DE */
-  u8       *DElanedata;        /* was DE */
-  int       Biterations;       /* was B */
-  int       Ldistance_to_fork;          /* was L */
-  s16      *SProadright;       /* was SP */
-  u8        Aiterations;       /* was A */
-  int       Aforkinprogress;   /* was A */
-  s16      *SMroadcentre;      /* was $BA36 (SM) FIXME */
-  s16      *SMroadcentreright; /* was $BA40 (SM) FIXME */
-  s16      *SMroadcentreleft;  /* was $BA45 (SM) FIXME */
-  s16      *SMroadleft;        /* was $BA29 (SM) FIXME */
-  s16      *SMroadright;       /* was $xxxx (SM) FIXME */
-  s16      *SMveryright;       /* was $xxxx (SM) FIXME */
-  int       BCdash;            /* was BC */
-  int       DEdash;            /* was DE */
-  int       HLdash;            /* was HL */
-  int       DEroadpos;         /* was DE */
-  const u8 *HLchatterblk;      /* was HL */
-  int       Ca16d;             /* was ? FIXME  */
-  int       HLforkdistance;    /* was HL */
-  int       DEforkdistance;    /* was DE */
-  int       HLroadpos;         /* was HL */
-  int       HLroadpos_saved;   /* was HL */
-  u8       *HLunknown;         /* was HL */
+  int       carry;              /* carry flag */
+  u8       *DElanedata_base;   /* base of lane data in road buffer, for wrap-around (was DE) */
+  u8       *DElanedata;        /* advancing pointer through lane data entries (was DE) */
+  int       Biterations;       /* entries to scan; counts down 20→0 (was B) */
+  int       Ldistance_to_fork; /* count of lane entries before a fork marker (was L) */
+  s16      *SProadright;       /* pointer into xpos_road_right[], post-incremented per entry (was SP) */
+  u8        Aiterations;       /* loop counter: 0x30→0 in steps of 2 (u8 wrap = 104 iters) (was A) */
+  s16      *SMroadcentre;      /* pointer to current xpos_road_centre output slot (was $BA36 SM) */
+  s16      *SMroadcentreright; /* pointer to current xpos_road_centre_right output slot (was $BA40 SM) */
+  s16      *SMroadcentreleft;  /* pointer to current xpos_road_centre_left output slot (was $BA45 SM) */
+  s16      *SMroadleft;        /* pointer to current xpos_road_left input slot (was $BA29 SM) */
+  int       DEdash;            /* road-left x-position read from xpos_road_left (was DE') */
+  int       HLdash;            /* x-position accumulator; updated through each interpolation (was HL') */
+  int       BCdash;            /* half-width copy for centre-right/centre-left calc (was BC') */
+  u8       *HLheight_at_fork;  /* pointer into height_table at fork distance (was HL) */
+  u8        Bdash_fork_iters;  /* DJNZ counter for fork inner loop; from PUSH AF at $BA60 (was B') */
+  int       HLforkdistance;    /* fork_distance; updated and written back (was HL) */
+  int       Aforkinprogress;   /* fork_in_progress minus 1 (was A) */
+  int       DEroadpos;         /* road_pos with D decremented for fork-side detection (was DE) */
+  const u8 *HLchatterblk;      /* pointer to chatter block for correct/incorrect fork (was HL) */
+  int       C_spawn_accum;     /* candidate new spawn_accumulator (was C) */
+  int       DEforkdistance;    /* fork distance copy for temporary road_pos adjustment (was DE) */
+  int       HLroadpos;         /* road_pos shifted for one fork's curve build (was HL) */
+  int       HLroadpos_saved;   /* saved road_pos restored after both fork curve builds (was HL) */
+  s16      *SMveryright;       /* pointer to current xpos_road_fork_right input slot (was SM) */
+  s16      *SMroadright;       /* pointer to current xpos_road_right output slot (was SM) */
+
+  carry = 0;
 
   // $B9F4: Point at lane data
   DElanedata_base = DElanedata = ROADBUF_FWD2PTR(ROADBUF_LANES_OFFSET);
@@ -10769,11 +10784,13 @@ lr_calc_single_lane:
 lr_forked_road:
   printf("lr: FORKED\n");
   state->fork_countdown = Ldistance_to_fork;
-  HLunknown = &state->height_table[Ldistance_to_fork];
+  HLheight_at_fork = &state->height_table[Ldistance_to_fork];
   Aiterations = 96;
   state->fork_visible = Aiterations; // just a flag AFACIT
-  Aiterations = 106 - (Aiterations - *HLunknown);
-  // PUSH AF  // preserve Aiterations
+  // Conv: Z80 $BA5C: SUB (HL); CPL; ADD A,$69 = (8 + *HL) & 0xFF
+  Aiterations = (u8)(8 + *HLheight_at_fork);
+  // Conv: models PUSH AF at $BA60; value recovered at $BB0B POP BC as DJNZ counter
+  Bdash_fork_iters = Aiterations;
   HLforkdistance = state->fork_distance;
   if ((*DElanedata & 4) !=
       0) // check for forked road (have already checked flags for 0xE1)
@@ -10787,11 +10804,13 @@ lr_forked_road:
   Aiterations = 1;
   DEroadpos -= 256; /* was DEC D */
   // Chooses the fork taken based on car's distance from centre
-  if ((DEroadpos >> 8) < 128) { // possibly redundant check
-    if (DEroadpos < 12) { // checking full word - car close to centre?
+  // Conv: Z80 $BA7B JP M,$BA89 fires when D−1 has sign set (D==0 or D≥0x81),
+  //       $BA7E JP NZ,$BA88 fires when D−1 ≠ 0; only D==1 falls through to E<12 test
+  if ((DEroadpos >> 8) == 0) { // D==1: road_pos in 256..511 (centred)
+    if (DEroadpos < 12) { // E < 12: car very close to centre
       Aiterations = 1;
     } else {
-      Aiterations--; // must be doing 1 -> 0
+      Aiterations--; // 1 → 0: left fork
     }
   }
 
@@ -10817,15 +10836,15 @@ lr_check_spawning:
   if (Aiterations == 0)
     goto lr_no_car_spawning;
   Aiterations += state->session.spawn_accumulator;
-  Ca16d = Aiterations; // new value for $A16D
+  C_spawn_accum = Aiterations; // new value for $A16D
   Aiterations -= 2;
   if (Aiterations >= 256 - 2) // carried?
     goto lr_set_var_a16d_from_c;
-  Ca16d = Aiterations; // new value for $A16D
+  C_spawn_accum = Aiterations; // new value for $A16D
   HLforkdistance += 16;
   state->fork_distance = HLforkdistance;
 lr_set_var_a16d_from_c:
-  state->session.spawn_accumulator = Ca16d;
+  state->session.spawn_accumulator = C_spawn_accum;
 lr_no_car_spawning:
   carry = state->session.spawn_accumulator & 1; // CHECK
   Aiterations = state->fast_counter;
@@ -10834,8 +10853,8 @@ lr_no_car_spawning:
   RL(Aiterations);
   RL(Aiterations);
   Aiterations -= 0x10; // sets top nibble to $F
-  HLforkdistance += 0xFF |
-                    Aiterations; // a signed -15..16 value now IS THIS INCREMENT WRONG?
+  // Conv: Z80 $BADB LD E,A; LD D,$FF forms signed DE = 0xFF00|A ∈ {−16..−1}
+  HLforkdistance += (s16)(0xFF00 | (u8)Aiterations);
 lr_badf:
   // PUSH HLforkdistance
   if (state->fork_taken - 1 != 0) {
@@ -10868,33 +10887,43 @@ lr_badf:
 #endif
   state->scenedata.road_pos =
     HLroadpos; // restore normal road pos after fork rendering
-  // POP BC
-  // (set SP restoring op)
-  SProadright = &state->xpos_road_right[0x30 >> 1]; // (set SP to $EC30)
-  Aiterations = 0x30; // 48..256 in steps of 2 = 104 iterations
+  // Conv: $BB0B POP BC restores PUSH AF value into B = Bdash_fork_iters (DJNZ counter)
+  // Conv: $BB0C/$BB10 restore SP to $EC30 (road right) for POP-based reads
+  SProadright = &state->xpos_road_right[0x30 >> 1];
+  Aiterations = 0x30;
   do {
     SMroadcentre      = &state->xpos_road_centre[Aiterations >> 1];
     SMroadcentreleft  = &state->xpos_road_centre_left[Aiterations >> 1];
     SMroadleft        = &state->xpos_road_left[Aiterations >> 1];
-    SMveryright       = &state->xpos_road_fork_right[Aiterations >> 1]; // output right?
-    SMroadcentreright = &state->xpos_road_centre_right[Aiterations >> 1]; // output left?
+    SMveryright       = &state->xpos_road_fork_right[Aiterations >> 1];
+    SMroadcentreright = &state->xpos_road_centre_right[Aiterations >> 1];
     SMroadright       = &state->xpos_road_right[Aiterations >> 1];
     // EXX Bank for inner loop
-    DEdash = *SMroadleft; // read from road left (s16: negative when road_pos < 295)
-    HLdash = *SProadright++; // POP HLdash // read from $ECxx
-    *SMroadcentre      = (HLdash + DEdash) / 2; // (right+left)/2 = new road centre
-    *SMroadcentreleft  = (HLdash + DEdash) / 2; // new road centre left
+    DEdash = *SMroadleft;
+    HLdash = *SProadright++;
+    // Conv: accumulate HLdash through each ADD HL,DE; SRA H; RR L step ($BB32-$BB3F)
+    HLdash = (HLdash + DEdash) / 2; // (right+left)/2 = new road centre
+    *SMroadcentre = HLdash;
+    HLdash = (HLdash + DEdash) / 2; // (centre+left)/2 = new road centre left
+    *SMroadcentreleft = HLdash;
 
     DEdash = *SMveryright;
     HLdash = *SMroadcentreright;
-    *SMroadcentreright = (HLdash + DEdash) / 2;
-    *SMroadright       = (HLdash + DEdash) / 2;
+    HLdash = (HLdash + DEdash) / 2; // (centre-right+fork-right)/2 = new centre-right
+    *SMroadcentreright = HLdash;
+    HLdash = (HLdash + DEdash) / 2; // (new-centre-right+fork-right)/2 = road right
+    *SMroadright = HLdash;
 
     Aiterations += 2;
     // EXX Unbank
-  } while (Aiterations != 0); /* Z80: INC A; INC A; JP NZ — 104 iters, exits on u8 wrap */
+  } while (--Bdash_fork_iters != 0); /* Conv: models DJNZ $BB5C */
+  // Conv: Z80 $BB5E JP Z,$BA4D: if A wrapped to 0, all 104 entries done → exit
+  if (Aiterations == 0)
+    return;
   SProadright = &state->xpos_road_right[Aiterations >> 1];
-  goto lr_calc_single_lane; // jump into no_fork code
+  // Conv: switch Aiterations from raw Z80 form (0x30..0xFE) to halved array index
+  Aiterations >>= 1;
+  goto lr_calc_single_lane;
 }
 
 /**
