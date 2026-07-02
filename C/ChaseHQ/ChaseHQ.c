@@ -8256,40 +8256,53 @@ static void hazard_hit(chqstate_t *state, hazard_t *IXhazard)
 }
 
 /**
- * $AD0D: Check hazard collisions
+ * $AD0D: Test every active hazard for a collision with the player car.
+ *
+ * Walks all 6 hazard slots. Skips any slot whose `used` field is
+ * HAZARD_UNUSED (0x00). For active slots the function also skips the
+ * deferred-hit state: when `hazard_flags == 0xFF` and the perpendicular
+ * distance high byte (`hazard_lane_OR_perp_dist_hi`) is non-zero the hazard
+ * is too far laterally for a hit this frame. Otherwise, if the hazard is
+ * within distance 20 and `check_collision` returns a positive result, the
+ * slot's `hit_handler` is dispatched (provided `hazard_flags` has not already
+ * been set to 0xFF by a prior hit).
+ *
+ * Conv: Z80 uses `RLC (IX+$00); JR NC` to test bit 7 of `used`; C uses
+ * `!= HAZARD_UNUSED`. Equivalent because `used` is always 0x00 or 0xFF.
+ * Conv: Z80 pushes $AD4B (the loop-advance address) before the per-slot
+ * checks so that early `RET`s jump directly to the DJNZ tail; C uses
+ * `goto chc_continue` for the same effect.
  *
  * \param[in] state Pointer to game state.
  */
 static void check_hazard_collisions(chqstate_t *state)
 {
-  hazard_t *hazard;     /* was IX */
-  int       iterations; /* was B */
+  hazard_t *IX_hazard;   /* pointer to current hazard slot under test (was IX) */
+  int       B_iterations; /* countdown over 6 hazard slots (was B) */
 
   if (state->inhibit_collision_detection)
     return;
 
-  // Iterate over all hazards.
-  hazard = &state->hazards[0];
-  iterations = 6;
+  IX_hazard   = &state->hazards[0];
+  B_iterations = 6;
   do {
-    if (hazard->used != HAZARD_UNUSED) {
-      // hazard_flags is a delay of some sort used for hits
-      // hazard_lane_OR_perp_dist_hi is the perp distance high byte when hazard_flags==0xFF
-      if (hazard->hazard_flags == 0xFF && hazard->hazard_lane_OR_perp_dist_hi)
+    if (IX_hazard->used != HAZARD_UNUSED) {
+      /* $AD26: when hazard_flags == 0xFF the slot is in deferred-hit mode;
+       * skip if the perpendicular distance high byte is still non-zero */
+      if (IX_hazard->hazard_flags == 0xFF &&
+          IX_hazard->hazard_lane_OR_perp_dist_hi)
         goto chc_continue;
 
-      // Distance is < 20.
-      // There was a collision.
-      // hazard_flags ?
-      if (hazard->distance < 20 &&
-          check_collision(state, 0, 0, hazard, NULL) > 0 &&
-          hazard->hazard_flags != 0xFF)
-        hazard->hit_handler(state, hazard);
+      /* $AD31: skip if distance >= 20 or no collision; dispatch hit handler */
+      if (IX_hazard->distance < 20 &&
+          check_collision(state, 0, 0, IX_hazard, NULL) > 0 &&
+          IX_hazard->hazard_flags != 0xFF)
+        IX_hazard->hit_handler(state, IX_hazard);
     }
 
 chc_continue:
-    hazard++;
-  } while (--iterations > 0);
+    IX_hazard++;
+  } while (--B_iterations > 0);
 }
 
 /**
