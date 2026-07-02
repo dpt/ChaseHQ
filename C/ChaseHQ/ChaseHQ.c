@@ -4248,17 +4248,23 @@ static void draw_object_perspective_entrypt(chqstate_t     *state,
 }
 
 /**
- * $932B: Draw object common flipped
+ * $932B: Draw a flipped object, toggling the shift selector
+ *
+ * Entry point for horizontally-flipped objects. Inverts the shift-selector
+ * byte so that the complementary (shifted) bitmap variant is chosen, then
+ * unbanks the width and flag values passed through the shadow registers
+ * before delegating to draw_object_clipped ($9333).
  *
  * \param[in] state             Pointer to game state.
- * \param[in] Bheight           Number of rows.
- * \param[in] Cpadding          Cpadding.
- * \param[in] Ebitmap_stride    Source bitmap data.
- * \param[in] HLbitmap          Source bitmap data.
- * \param[in] Adash_width_bytes Bitmap byte width.
- * \param[in] Fdash_zero        Fdash zero.
- * \param[in] Fdash_carry       Fdash carry.
- * \param[in] IYheight          IYheight register value.
+ * \param[in] Bheight           Initial height parameter from caller. (was B)
+ * \param[in] Cpadding          Padding bytes between bitmap rows. (was C)
+ * \param[in] Ebitmap_stride    Full stride of one bitmap row, in bytes. (was E)
+ * \param[in] HLbitmap          Pointer to the bitmap descriptor. (was HL)
+ * \param[in] Adash_width_bytes Draw width of bitmap, in bytes. (was A')
+ * \param[in] Fdash_zero        Non-zero if the object is NOT flipped. (was Z in F')
+ * \param[in] Fdash_carry       Non-zero if the bitmap uses a mask. (was carry in F')
+ * \param[in] IYheight          Pointer to the Y-height table entry for this
+ *                              object slot. (was IY)
  */
 static void draw_object_common_flipped(chqstate_t     *state,
                                        int              Bheight,
@@ -4270,14 +4276,18 @@ static void draw_object_common_flipped(chqstate_t     *state,
                                        int             Fdash_carry,
                                        const u8       *IYheight)
 {
-  int Awidth_bytes;
-  int zero;
-  int carry;
+  int Awidth_bytes; /* draw width in bytes, unbanked from shadow (was A) */
+  int zero;         /* not-flipped flag, unbanked from shadow F' (was Z flag) */
+  int carry;        /* masked flag, unbanked from shadow F' (was carry) */
 
+  // Conv: Z80 reads/complements/writes the byte at $9396 directly;
+  //       here we complement the state field that models that byte.
   state->doc_shift_select = ~state->doc_shift_select;
 
-  Awidth_bytes = Adash_width_bytes; zero = Fdash_zero;
-  carry = Fdash_carry; // was EX AF,AF' -- unbank A & carry? carry might be a is-masked flag
+  // EX AF,AF' - unbank A' and F' into main registers
+  Awidth_bytes = Adash_width_bytes;
+  zero         = Fdash_zero;
+  carry        = Fdash_carry;
 
   draw_object_clipped(state,
                           zero,
