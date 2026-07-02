@@ -11787,82 +11787,108 @@ static void rm_cycle_buffer_offset(chqstate_t *state, u8 *pfastcounter)
 }
 
 /**
- * $C0E1: Prepare tunnel
+ * $C0E1: Prepare tunnel rendering for the current frame.
  *
- * Called from main loop.
+ * Three mutually exclusive paths:
  *
- * \param[in] state Pointer to game state.
+ * 1. Not yet in a tunnel (dt_tunnel_visible == 0, dr_in_tunnel == 0):
+ *    clears tunnel_sfx, NOPs out the draw_tunnel CALL hooks, returns.
+ *
+ * 2. In tunnel but tunnel not yet marked visible (dt_tunnel_visible == 0,
+ *    dr_in_tunnel != 0): scans adjacent pairs of xpos_road_centre entries
+ *    working inward from near-perspective rows, counting how many steps
+ *    before the values converge.  Stores that count as dt_tunnel_distance,
+ *    sets dt_tunnel_visible = 2, and falls through to arm the hooks.
+ *
+ * 3. Tunnel already visible (dt_tunnel_visible != 0): skips the scan and
+ *    falls straight through to arm the hooks.
+ *
+ * Arms the draw_tunnel hooks by patching dee_tunnel_1 / dee_tunnel_2 with
+ * Z80_CALL_NN, and writes dt_far_wall_mode = dr_in_tunnel ^ 1.
+ *
+ * \param[in] state  Pointer to game state.
  */
 static void prepare_tunnel(chqstate_t *state)
 {
-  int  carry;
-  int  A_c160;
-  int  c160_is_zero; // bool, was Z
-  u8   A_in_tunnel;
-  s16 *HLtable;
-  int  BCtablevalue1;
-  s16 *HLdash_table;
-  int  DEdash_tablevalue2;
-  int  DEtablevalue3;
-  int  saved_DE;            /* was stack */
-  int  BCdash_tablevalue4;
+  int   Atunnel_visible; /* dt_tunnel_visible: 0 until tunnel appears (was A at $C0E1) */
+  u8    Ain_tunnel;      /* dr_in_tunnel value; doubles as loop counter (was A at $C0E5) */
+  s16  *HLmain;          /* pointer into xpos_road_centre, main-register stream (was HL) */
+  int   BCmain;          /* previous entry from main stream; updated each iteration (was BC) */
+  int   DEmain;          /* current entry from main stream (was DE) */
+  s16  *HLdash;          /* pointer into xpos_road_centre, shadow-register stream (was HL') */
+  int   DEdash;          /* previous entry from shadow stream (was DE') */
+  int   BCdash;          /* current entry from shadow stream (was BC') */
+  int   carry;           /* carry out of SBC comparisons */
 
-  A_c160 = state->dt_tunnel_visible;
-  c160_is_zero = (A_c160 == 0);
-  A_in_tunnel = state->dr_in_tunnel;
-  if (c160_is_zero) {
-    /* Tunnel hasn't appeared */
-    if (A_in_tunnel == 0) {
-      state->tunnel_sfx = 0;
+  /* $C0E1-$C0E4: read dt_tunnel_visible; AND A preserves Z flag through next LD */
+  Atunnel_visible = state->dt_tunnel_visible;
+  /* $C0E5: read dr_in_tunnel into A without disturbing Z flag */
+  Ain_tunnel = state->dr_in_tunnel;
+  /* $C0E8: JR NZ,$C144 — skip scan if tunnel already visible */
+  if (Atunnel_visible != 0)
+    goto pt_arm_hooks;
 
-      /* NOP out draw_tunnel calls */
-      state->dee_tunnel_1 = 0; /* NOP [$8F83/4 setting removed] */
-      state->dee_tunnel_2 = 0; /* NOP [$8FA8/9 setting removed] */
-      return;
-    }
-
-    /* Tunnel has appeared */
-    state->tunnel_sfx = 5; // This quietens sfx when in the tunnel
-    HLtable = &state->xpos_road_centre[0xF3 /
-                                       2]; // somewhere in road height data table
-    BCtablevalue1 = *HLtable;
-    HLtable -= 4 / 2;
-
-    // EXX - Bank
-    HLdash_table = &state->xpos_road_centre[0xF1 / 2];
-    DEdash_tablevalue2 = *HLdash_table;
-    HLdash_table -= 4 / 2;
-
-    do {
-      // EXX - Unbank
-      DEtablevalue3 = *HLtable;
-      saved_DE = DEtablevalue3; // was PUSH DE
-      HLtable -= 4 / 2;
-      // EX DEtablevalue3,HLtable
-      carry = (DEtablevalue3 < BCtablevalue1); // was SBC HL,BC
-      BCtablevalue1 = saved_DE; // was POP BC
-      if (carry)
-        break; // Jump if #REGhl < #REGbc
-      // EX DEtablevalue3,HLtable
-
-      // EXX - Bank
-      BCdash_tablevalue4 = *HLdash_table;
-      HLdash_table -= 4 / 2;
-      // EX DEdash_tablevalue2,HLdash_table
-      if (DEdash_tablevalue2 < BCdash_tablevalue4) // was SBC HL,BC etc.
-        break;
-      // EX DEdash_tablevalue2,HLdash_table
-      DEdash_tablevalue2 = BCdash_tablevalue4;
-    } while (--A_in_tunnel);
-
-    state->dt_tunnel_distance = 9 - A_in_tunnel;
-    A_in_tunnel = 2; // set so it falls through
-    state->dt_tunnel_visible = A_in_tunnel;
+  /* $C0EA: AND A — test dr_in_tunnel */
+  /* $C0EB: JR NZ,$C100 — jump to scan if in tunnel but not yet marked */
+  if (Ain_tunnel == 0) {
+    /* $C0ED-$C0FF: not in tunnel; clear SFX and NOP out the CALL hooks */
+    state->tunnel_sfx = 0;
+    state->dee_tunnel_1 = 0; /* $8F82 = NOP */
+    state->dee_tunnel_2 = 0; /* $8FA7 = NOP */
+    return;
   }
 
-  state->dt_far_wall_mode = A_in_tunnel ^ 1;
+  /* $C100: pt_yes_a_tunnel — in tunnel, not yet marked visible; scan xpos table */
+  state->tunnel_sfx = 5; /* quietens road-sfx while inside the tunnel */
 
-  /* Self modify #R$8F82 and #R$8FA7 to be CALL draw_tunnel. */
+  /* $C105-$C10D: main-stream initial values at xpos_road_centre[121] and [119].
+   * $EAF3/$EAF2 = index 121 (byte pointer at high byte of s16 pair). */
+  HLmain = &state->xpos_road_centre[0xF2 / 2]; /* index 121 */
+  BCmain = *HLmain;
+  HLmain -= 2; /* HL -= 4 bytes = 2 s16 entries → index 119 */
+
+  /* $C10E EXX Bank; $C10F-$C117: shadow-stream initial values at [120] and [118] */
+  HLdash = &state->xpos_road_centre[0xF0 / 2]; /* index 120 */
+  DEdash = *HLdash;
+  HLdash -= 2; /* index 118 */
+
+  /* $C118: pt_tunnel_loop.
+   * Main stream reads at indices 119, 117, 115 … (step −2), breaks when
+   * current < previous (SBC HL,BC carry: narrowing from one side).
+   * Shadow stream reads at indices 118, 116, 114 … (step −2), breaks when
+   * previous < current (SBC HL,BC carry: narrowing from the other side).
+   * Conv: EX DE,HL pairs at $C120/$C126 and $C12E/$C133 are folded away;
+   *       PUSH DE / POP BC at $C11C/$C123 collapsed to BCmain = DEmain. */
+  do {
+    /* $C118 EXX Unbank; $C119-$C11F: read next main-stream entry */
+    DEmain  = *HLmain;
+    HLmain -= 2;
+    /* $C121 SBC HL,BC (carry=0); $C123 POP BC */
+    carry   = (DEmain < BCmain);
+    BCmain  = DEmain; /* old DE → BC (was PUSH DE / POP BC) */
+    if (carry) /* $C124 JR C */
+      break;
+
+    /* $C127 EXX Bank; $C128-$C12D: read next shadow-stream entry */
+    BCdash  = *HLdash;
+    HLdash -= 2;
+    /* $C12F SBC HL,BC (carry=0 from above): prev < current → converging */
+    if (DEdash < BCdash) /* $C131 JR C */
+      break;
+    DEdash = BCdash; /* $C134-$C135 LD D,B; LD E,C */
+  } while (--Ain_tunnel); /* $C136 DEC A; $C137 JR NZ */
+
+  /* $C139-$C141: CPL; ADD A,$0A gives 9 - A; store distance and mark visible */
+  state->dt_tunnel_distance = 9 - Ain_tunnel;
+  Ain_tunnel = 2;
+  state->dt_tunnel_visible = Ain_tunnel; /* $C141 self-modify $C160 */
+
+pt_arm_hooks: /* $C144 */
+  /* $C144-$C146: dt_far_wall_mode = dr_in_tunnel ^ 1
+   * (= 3 on first appearance with Ain_tunnel=2; dr_in_tunnel^1 when already visible) */
+  state->dt_far_wall_mode = Ain_tunnel ^ 1;
+
+  /* $C149-$C157: patch $8F82/$8FA7 with Z80_CALL_NN to arm draw_tunnel hooks */
   state->dee_tunnel_1 = state->dee_tunnel_2 = Z80_CALL_NN;
 }
 
