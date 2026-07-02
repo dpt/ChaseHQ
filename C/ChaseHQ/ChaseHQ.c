@@ -12369,7 +12369,7 @@ static void draw_road_lanes_change(chqstate_t *state,
 
           // $C336
           SP_output = HL_left_hand_table;
-          // DPT CHECK HL_left_hand_table should point to the *hi* byte of roadpos here
+          /* L is ~(even) = odd → hi byte of s16 pair; [0]=hi, [-1]=lo */
           DE_roadpos = (HL_left_hand_table[0] << 8) + HL_left_hand_table[-1];
 
           // $C33A
@@ -12397,7 +12397,7 @@ static void draw_road_lanes_change(chqstate_t *state,
           L_left_hand_table_lo = ~((96 - (*IY_heightptr)[0]) << 1); // byte offset
           HL_left_hand_table = addr_to_xpos(state, (H_left_hand_table_hi << 8) | L_left_hand_table_lo);
           SP_output = HL_left_hand_table;
-          // DPT CHECK
+          /* L is ~(even) = odd → hi byte; [0]=hi, [-1]=lo */
           DE_roadpos = (HL_left_hand_table[0] << 8) + HL_left_hand_table[-1];
 
           L_left_hand_table_lo -= B_HLzone_stride;
@@ -12440,7 +12440,7 @@ static void draw_road_lanes_change(chqstate_t *state,
           SP_output = HL_left_hand_table;
           H_left_hand_table_hi--; // widen to left
           HL_left_hand_table = addr_to_xpos(state, (H_left_hand_table_hi << 8) | L_left_hand_table_lo);
-          // DPT CHECK HL_left_hand_table should point to the *hi* byte of roadpos here
+          /* L unchanged (odd) → still hi byte; [0]=hi, [-1]=lo */
           DE_roadpos = (HL_left_hand_table[0] << 8) + HL_left_hand_table[-1];
 
           // $C3AF
@@ -12470,7 +12470,7 @@ static void draw_road_lanes_change(chqstate_t *state,
           SP_output = HL_left_hand_table;
           H_left_hand_table_hi--; // widen to left
           HL_left_hand_table = addr_to_xpos(state, (H_left_hand_table_hi << 8) | L_left_hand_table_lo);
-          // DPT CHECK
+          /* L unchanged (odd) → still hi byte; [0]=hi, [-1]=lo */
           DE_roadpos = (HL_left_hand_table[0] << 8) + HL_left_hand_table[-1];
 
           L_left_hand_table_lo -= B_HLzone_stride;
