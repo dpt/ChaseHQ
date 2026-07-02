@@ -11222,45 +11222,60 @@ exit:
 }
 
 /**
- * $BDC1: Clear playfield set attrs
+ * $BDC1: Clear the playfield bitmap and set the attribute colour gradient.
  *
- * \param[in] state Pointer to game state.
+ * Clears the playfield (lower two-thirds of screen) via clear_playfield,
+ * then resets its bitmap to $FF and lays in three attribute bands: two rows
+ * of plain sky (black/cyan), three rows of bright sky (bright black/cyan),
+ * and eleven rows of the stage ground colour. Finally stamps both edge
+ * columns of every playfield attribute row with black-on-black to hide the
+ * road overdraw at the screen borders.
+ *
+ * \param[in] state  Pointer to game state.
  */
 static void clear_playfield_set_attrs(chqstate_t *state)
 {
-  u8 *screen;     /* was HL */
-  u16 stride;     /* was DE */
-  int iterations; /* was B */
+  u8  *HLattrs;  /* attribute pointer walking left/right edge columns (was HL) */
+  int  DEoffset; /* byte distance from left to right edge column in one row (was DE) */
+  int  B;        /* row iteration count (was B) */
 
   clear_playfield(state);
 
-  // Clear the playfield pixels to $FF (bug: duplicates work just done)
+  /* Conv: $BDC4-$BDCF: LDIR re-clears $4800-$57FF with $FF, duplicating work
+   * done by clear_playfield. The Z80 BC=$0FFF causes the copy to overshoot
+   * by one row into $5800-$58FF (top-third attribute rows), but those bytes
+   * are restored by scoreboard drawing immediately after and are harmless. */
   memset(ADDRTOSCREEN(SCREEN_PLAYFIELD_BITMAP_ADDR), 0xFF,
          PLAYFIELD_HEIGHT * SCREEN_BITMAP_ROWBYTES);
 
-  // Clear the playfield attributes to $28 (black over cyan) - first two
-  // rows only
-  memset(ADDRTOATTRS(SCREEN_PLAYFIELD_ATTRS_ADDR), attribute_BLACK_OVER_CYAN,
+  /* $BDD1-$BDDB: rows 0-1 of playfield → $28 (black ink, cyan paper: sky) */
+  memset(ADDRTOATTRS(SCREEN_PLAYFIELD_ATTRS_ADDR),
+         attribute_BLACK_OVER_CYAN,
          2 * SCREEN_ATTRIBUTES_ROWBYTES);
 
-  // Clear the next three rows to $68 (bright, black over cyan)
-  memset(ADDRTOATTRS(0x5940), attribute_BRIGHT_BLACK_OVER_CYAN,
+  /* $BDDD-$BDE1: rows 2-4 of playfield → $68 (bright black/cyan: lit sky) */
+  memset(ADDRTOATTRS(SCREEN_PLAYFIELD_ATTRS_ADDR + 2 * SCREEN_ATTRIBUTES_ROWBYTES),
+         attribute_BRIGHT_BLACK_OVER_CYAN,
          3 * SCREEN_ATTRIBUTES_ROWBYTES);
 
-  // Clear the next 11 rows to the current ground colour
-  // Note: Only using the bottom byte of ground_colour (as orig).
-  memset(ADDRTOATTRS(0x59A0), state->stage->ground_colour,
+  /* $BDE3-$BDEA: rows 5-15 of playfield → stage ground colour */
+  memset(ADDRTOATTRS(SCREEN_PLAYFIELD_ATTRS_ADDR + 5 * SCREEN_ATTRIBUTES_ROWBYTES),
+         state->stage->ground_colour,
          11 * SCREEN_ATTRIBUTES_ROWBYTES);
 
-  // Clear the edges of the playfield to black on black
-  screen = ADDRTOATTRS(SCREEN_PLAYFIELD_ATTRS_ADDR);
-  stride = SCREEN_BITMAP_ROWBYTES - 1;
-  iterations = 16;
+  /* $BDEC-$BDF8: write $00 (black/black) to attribute columns 0 and 31 of
+   * each of the 16 playfield rows. HL starts at row 0 col 0; ADD HL,DE
+   * (DE=$001F=31) steps to col 31 of the same row; INC HL then lands on
+   * col 0 of the next row. D=$00 is both the write value and the high byte
+   * of the stride, so attribute_BLACK_OVER_BLACK is used directly. */
+  HLattrs  = ADDRTOATTRS(SCREEN_PLAYFIELD_ATTRS_ADDR);
+  DEoffset = SCREEN_ATTRIBUTES_ROWBYTES - 1; /* $1F = col 31 offset within a row */
+  B        = 16;
   do {
-    *screen = attribute_BLACK_OVER_BLACK;
-    screen += stride;
-    *screen++ = attribute_BLACK_OVER_BLACK;
-  } while (--iterations > 0);
+    *HLattrs          = attribute_BLACK_OVER_BLACK; /* left edge: col 0 */
+    HLattrs          += DEoffset;
+    *HLattrs++        = attribute_BLACK_OVER_BLACK; /* right edge: col 31 */
+  } while (--B > 0);
 }
 
 /**
