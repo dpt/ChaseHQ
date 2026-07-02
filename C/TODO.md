@@ -17,6 +17,7 @@ perhaps build unit tests now to flush out problems ahead of time.
 
 # TODO
 
+- Identify unrolled ops to roll up
 - Guard words?
 - Object plotting broken and commented out for now
 - Main game runs too fast - need to calibrate against original
@@ -27,7 +28,7 @@ perhaps build unit tests now to flush out problems ahead of time.
 - Remove any local vars from state
 - Sort all decls by order of use
 - Sort all params by register
-
+- Add an ADDRTOBACKBUF that takes (H,L) and does (H<<8)|L itself
 
 # IDEAS
 

@@ -1785,78 +1785,6 @@ static void run_pregame_screen(chqstate_t *state)
   // Conv: Dead code removed
 }
 
-static void test_car_anim(chqstate_t *state)
-{
-  memset(&state->speccy->screen.attributes[256],
-         attribute_BRIGHT_BLACK_OVER_GREEN, 512);
-  memset(&state->backbuffer[0], 0, 4096);
-
-  static int turnitude = 0;
-  static int wobble    = 0;
-  static int pitch     = 0;
-  static int frame     = 0;
-  static int y         = 0;
-  static int yi        = 0;
-  static int boosting  = 0;
-
-  int do_turn  = (rand() % 100) < 20;
-  int turn_rt  = (rand() % 100) < 50;
-  int ch_ptch  = (rand() % 100) < 20;
-  int go_up    = (rand() % 100) < 50;
-  int st_jump  = (rand() % 100) < 1;
-  int st_boost = (rand() % 100) < 10;
-
-  if (do_turn) {
-    if (turn_rt) {
-      if (++turnitude > 2) turnitude = 2;
-    } else {
-      if (--turnitude < -2) turnitude = -2;
-    }
-  }
-
-  if (ch_ptch) {
-    if (go_up) {
-      pitch = (pitch == 0) ? 3 : (pitch == 6) ? 0 : pitch;
-    } else {
-      pitch = (pitch == 0) ? 6 : (pitch == 3) ? 0 : pitch;
-    }
-  }
-
-  if (st_jump && yi == 0) {
-    yi = 5;
-  } else {
-    if (y >= 25)
-      yi = -9;
-  }
-
-  y += yi;
-  if (y < 0) {
-    y = 0;
-    yi = 0;
-  }
-
-  if (st_boost && boosting == 0) {
-    boosting = 20;
-  }
-
-  state->car_y      = 0;
-  state->flip_car   = (turnitude < 0) ? 1 : 0;
-  state->dhc_pitch  = pitch;
-  state->dhc_jump_y = y;
-
-  draw_hero_car(state, abs(turnitude), wobble);
-
-  state->mhc_y_offset = 0;
-
-  if (y == 0 && boosting) {
-    draw_smoke(state, frame % 4, 0); // right hand
-    draw_smoke(state, frame % 4, 1); // left hand
-    boosting--;
-  }
-
-  frame++;
-}
-
 /**
  * $85A8: Run pregame screen loop
  *
@@ -5092,7 +5020,7 @@ static void drive_chatter(chqstate_t *state)
   if (--chatter_state == 0) { // stopping (3)
     if (--state->noise_counter) {
       draw_noise_effect(state, state->noise_counter); /* exit via */
-      return;
+      goto exit;
     }
 
     // enter idle state, hide face by wiping attrs to black on black
@@ -5111,12 +5039,12 @@ static void drive_chatter(chqstate_t *state)
     plot_mini_font_cursor_on(state, x, character); /* exit via */
   else
     plot_mini_font_cursor_off(state, x, character); /* exit via */
-  return;
+  goto exit;
 
 do_noise_effect:
   if (state->noise_counter) {
     drive_noise_effect(state, state->noise_counter); /* exit via */
-    return;
+    goto exit;
   }
   delay = state->chatter_delay;
   if (delay == 0)
@@ -5134,13 +5062,13 @@ do_noise_effect:
     plot_mini_font_cursor_on(state, x, character); /* exit via */
   else
     plot_mini_font_cursor_off(state, x, character); /* exit via */
-  return;
+  goto exit;
 
 clear_line:
   x = state->message_x;
   if (x) {
     pc_clear_line(state, x); /* exit via */
-    return;
+    goto exit;
   }
 
 read_message:
@@ -5148,11 +5076,11 @@ read_message:
   chattercmd = *chatterblk;
   if (chattercmd == CHATTERCMD_STOP) {
     drive_chatter_stop(state);
-    return;
+    goto exit;
   }
   if (chattercmd != CHATTERCMD_PAUSE) {
     pc_chatter_message(state, chatterblk); /* exit via */
-    return;
+    goto exit;
   }
   // Conv: The next byte is no longer an address but an index into table of
   // chatter blocks.
@@ -5167,6 +5095,9 @@ starting:
 clear:
   clear_message_line(state);
   drive_noise_effect(state, 4); /* exit via */
+
+exit:
+  state->speccy->draw(state->speccy, NULL); /* Conv: added */
 }
 
 /**
@@ -6010,6 +5941,8 @@ us_gear:
   }
 
   plot_turbos_and_digits(state);
+
+  state->speccy->draw(state->speccy, NULL); /* Conv: added */
 }
 
 /**
@@ -11041,6 +10974,11 @@ static void exit_fork(chqstate_t *state)
  */
 static void update_screen(chqstate_t *state)
 {
+  /* dirty rect covering the lower two-thirds of the screen */
+  static const zxbox_t playfield_box = {
+    0,0,SCREEN_WIDTH, PLAYFIELD_HEIGHT
+  };
+
   u8        *scr;       /* was HL */
   u8        *buf;       /* was HL' */
   u16        bufoffset; // Conv: added
@@ -11058,7 +10996,6 @@ static void update_screen(chqstate_t *state)
   u8        *HLattrs;       /* pointer into attr memory (was HL) */
   u16        BCattrs;       /* attribute colour word (was BC) */
   u8         Cattr;         /* single attribute byte (was C) */
-  zxbox_t    playfield_box; /* dirty rect covering the lower two-thirds of the screen */
 
   scr = ADDRTOSCREEN(0x4811); // (136, 64)
   buf = ADDRTOBACKBUF(0xF001); // (8, 1)
@@ -11203,10 +11140,6 @@ static void update_screen(chqstate_t *state)
   }
 
 exit:
-  playfield_box.x0 = 0;
-  playfield_box.y0 = SCREEN_HEIGHT - PLAYFIELD_HEIGHT;
-  playfield_box.x1 = SCREEN_WIDTH;
-  playfield_box.y1 = SCREEN_HEIGHT;
   state->speccy->draw(state->speccy, &playfield_box); /* Conv: Added */
 }
 
