@@ -1608,6 +1608,8 @@ static void main_loop(chqstate_t *state)
       start_chatter(state, 0xFF, chatterblk_start_stage);
 
     for (;;) {
+      printf("%d\n", state->xpos_road_centre[127]);
+
       state->speccy->stamp(state->speccy);
       drive_sfx(state);
       (void) keyscan(state);
@@ -8403,182 +8405,231 @@ static void draw_all_hazards(chqstate_t *state)
 }
 
 /**
- * $ADBE: DH draw one hazard
+ * $ADBE: Advance one hazard and insert it into the depth-sorted draw list.
  *
- * \param[in] state    Pointer to game state.
- * \param[in] IXhazard Ixhazard.
- * \param[in] IYbase   Iybase.
+ * Called for each in-use hazard slot.  The function has two phases.
+ *
+ * Phase 1 — distance advance ($ADBE–$ADFF):
+ *   Subtracts the hazard's speed (IX[13]/IX[4]) from dist_frac; any borrow
+ *   increments C_dist.  Adds IX[1] to C_dist to get the new total distance.
+ *   For ordinary hazards (A_flags != 0): retire if C_dist >= 23, else store
+ *   and fall through to phase 2 if < 20.  For the perp-car path (A_flags ==
+ *   0): the lane counter IX[17] is advanced with wrap at 4 before the
+ *   distance update; if the lane counter was already zero the function drops
+ *   into phase 2 immediately.
+ *
+ * Phase 2 — perspective + draw list ($AE00–$AECE):
+ *   Two 8-bit shift-and-accumulate multiplies map dist_frac × height-delta
+ *   to a perspective column, then horz_pos_on_road × road-width to a screen
+ *   x-position.  The result is passed to check_collision ($AE7A), which also
+ *   updates IX[2]/IX[3] (horz_pos/horz_clip).  The hazard is then inserted
+ *   into the depth-sorted draw list at state->xpos_road_centre_left.
+ *   Finally the hit handler is called via the hazard's function pointer.
+ *
+ * Conv: Z80 uses PUSH IX / POP DE to get IX as a pointer into DE; C stores
+ *       the hazard slot index (IXhazard - hazards[0]) instead.
+ * Conv: Z80 calls the hit handler via JP (HL) ($AEC8–$AECE); C calls the
+ *       function pointer directly.
+ * Conv: Z80 LDDR at $AEBA shifts the draw list down by bytes; C uses a
+ *       pointer-decrement loop over s16 words.
+ *
+ * \param[in]     state    Pointer to game state.
+ * \param[in,out] IXhazard Hazard slot to advance and render (was IX).
+ * \param[in]     IYbase   Base of the height table at $E300 (was IY).
  */
 static void dh_draw_one_hazard(chqstate_t *state,
                                hazard_t   *IXhazard,
                                const u8   *IYbase)
 {
-  int       carry = 0;
-  int       C;
-  int       Aflags;
-  u8        A;
-  u8        B;
-  int       BCwords;
-  int       DE;
-  s16       HL;
-  int       Biterations;
-  u8       *HLp_n_hazards;
-  int       An_hazards;
-  s16      *HLtable;
-  const u8 *IY;
-  u16       HLresult;
-  int       Ddistance;
-  int       Edist_frac;
-  s16      *DEtable;
-  int       is_zero;
+  int       C_dist;      /* distance accumulator; speed borrow + IX[1] (was C) */
+  int       A_flags;     /* IX[15]+1; zero selects perp path, non-zero car path (was A) */
+  int       A_lane;      /* IX[17] lane counter; advanced on perp path only (was A) */
+  int       zero;        /* Z-flag: A_lane was zero before distance overwrite */
+  int       A_dist;      /* new distance value to be written to IX[1] (was A) */
+  int       A_fc_inv;    /* ~(fast_counter & $E0); speed gate for overtake check (was A) */
+  int       B_flags;     /* IX[15]+1; carry after RL signals overtake bonus (was B) */
+  int       carry;       /* Z80 carry/borrow flag */
+  const u8 *IY;          /* height table row pointer; IYl = dist offset (was IY) */
+  int       C_ht_hi;     /* IY[1]; upper height bound, held across first multiply (was C) */
+  int       DE;          /* height delta → xpos_road_left → road width (was DE) */
+  u16       HLresult;    /* 8-bit multiply accumulator (was HL) */
+  u8        A_mult;      /* multiplicand for each shift-accumulate loop (was A) */
+  int       Biterations; /* 8-iteration multiply counter; reused for draw-list scan (was B) */
+  int       A_persp;     /* perspective column: (HLresult>>8)>>1 from first multiply (was A) */
+  int       A_xidx;      /* xpos table index derived from C_ht_hi and A_persp (was A) */
+  s16      *HLtable;     /* xpos table and draw-list pointer (was HL) */
+  s16       HL;          /* xpos_road_right value; later hazard screen x-position (was HL) */
+  int       A_xresult;   /* xpos offset: (HLresult>>8)>>1 from second multiply (was A) */
+  int       Ddistance;   /* hazard distance for draw-list depth comparison (was D) */
+  int       Edist_frac;  /* hazard dist_frac for draw-list depth comparison (was E) */
+  u8       *HL_n_hazards;/* pointer to state->n_hazards (was HL) */
+  int       A_n_hazards; /* n_hazards count before increment (was A) */
+  int       BCwords;     /* draw-list entries × 2; word count for shift-down (Conv: added) */
+  s16      *DEtable;     /* source pointer during draw-list downward shift (was DE) */
 
-  C = IXhazard->speed >> 8; // top byte of horz position or accel?
+  carry = 0;
+
+  /* $ADBE: C = IX[14] — top byte of speed (role uncertain) */
+  C_dist = IXhazard->speed >> 8;
+  /* $ADC1-$ADC7: IX[4] -= IX[13]; borrow increments C_dist */
   IXhazard->dist_frac -= IXhazard->speed & 0xFF;
-  if ((s8) IXhazard->dist_frac < 0) // carried
-    C++;
-  C += IXhazard->distance;
-  Aflags = IXhazard->hazard_flags + 1;
-  if (Aflags == 0) {
-    A = IXhazard->hazard_lane_OR_perp_dist_hi;
-    if (C < IXhazard->distance) { // carried
-      A++;
-      if (A >= 5) {
-        A--;
-        C = 0xFF;
+  if ((s8) IXhazard->dist_frac < 0) /* JR NC,$ADCD: borrow → C++ */
+    C_dist++;
+  C_dist += IXhazard->distance; /* $ADCD-$ADD1: C += IX[1] */
+
+  A_flags = IXhazard->hazard_flags + 1; /* $ADD2-$ADD5 */
+  if (A_flags == 0) {                    /* $ADD6 JR NZ → dh_adf0 if non-zero */
+    /* Perp path: advance lane counter IX[17] */
+    A_lane = IXhazard->hazard_lane_OR_perp_dist_hi; /* $ADD8 */
+    if (C_dist < IXhazard->distance) {   /* $ADDB JR NC: carry set by $ADD0 ADD A,C */
+      A_lane++;                           /* $ADDD */
+      if (A_lane >= 5) {                 /* $ADDE CP $04 */
+        A_lane--;                         /* $ADE2 */
+        C_dist = 0xFF;                    /* $ADE3: cap and mark distance max */
       }
-      IXhazard->hazard_lane_OR_perp_dist_hi = A;
+      IXhazard->hazard_lane_OR_perp_dist_hi = A_lane; /* $ADE5 */
     }
-    is_zero = (A == 0);
-    A = C;
-    if (is_zero)
+    zero   = (A_lane == 0); /* $ADE8 AND A: Z set if lane counter was zero */
+    A_dist = C_dist;         /* $ADE9 LD A,C */
+    if (zero)
       goto dh_adfa;
-    IXhazard->distance = A;
+    IXhazard->distance = A_dist; /* $ADEC */
     return;
   }
 
-  A = C;
-  if (A >= 23) {
-    // Hazard gone
-    IXhazard->used = HAZARD_UNUSED;
+  A_dist = C_dist; /* $ADF0 LD A,C */
+  if (A_dist >= 23) {
+    IXhazard->used = HAZARD_UNUSED; /* $ADF5: hazard scrolled past player */
     return;
   }
 
 dh_adfa:
-  IXhazard->distance = A;
-  if (A >= 20)
+  IXhazard->distance = A_dist; /* $ADFA */
+  if (A_dist >= 20)             /* $ADFD CP $14 */
     return;
 
-  if (--A == 0) {
-    A = ~(state->fast_counter & 0xE0);
-    if (A < IXhazard->dist_frac) {
-      B = IXhazard->hazard_flags + 1;
-      if (B) {
-        // Wipe the hazard because car overtaken?
+  if (--A_dist == 0) {          /* $AE00 DEC A; $AE01 JR NZ → dh_ae24 */
+    /* At closest visible distance: check if hazard has been overtaken */
+    A_fc_inv = ~(state->fast_counter & 0xE0); /* $AE03-$AE08 */
+    if (A_fc_inv < IXhazard->dist_frac) {      /* $AE09 CP (IX+$04) */
+      B_flags = IXhazard->hazard_flags + 1;    /* $AE0E-$AE11 */
+      if (B_flags) {
+        /* Car hazard overtaken: retire slot; carry from RL signals bonus */
         IXhazard->used = HAZARD_UNUSED;
-        RL(B);
+        RL(B_flags);                           /* $AE18 */
         if (carry)
-          state->overtake_bonus_counter++;
+          state->overtake_bonus_counter++;     /* $AE1B-$AE1E */
         return;
       }
-      IXhazard->dist_frac = A;
+      IXhazard->dist_frac = A_fc_inv;         /* $AE20: perp path stores speed gate */
     }
-    A = 0;
+    A_dist = 0; /* $AE23 XOR A */
   }
-  A += 0x4E;
 
-  IY = &IYbase[A];
-  C = IY[1];
-  A = C - IY[0];
+  /* $AE24-$AE26: A += $4E; IYl = A — select height table row */
+  IY = &IYbase[A_dist + 0x4E];
 
-  // This is probably equivalent to HLresult = IXhazard->dist_frac * A;
-  DE = A; // multiplier
-  HLresult = 0; // result
-  A = IXhazard->dist_frac; // multiplicand
+  /* $AE28-$AE2C: C = IY[1]; A = C - IY[0] — height range delta */
+  C_ht_hi = IY[1];
+  /* Conv: $AE2F-$AE33 DE=A, HL=0 setup inlined; $AE2C SUB becomes direct expr */
+  DE = C_ht_hi - IY[0]; /* height delta; multiplier for first loop */
+
+  /* $AE34-$AE3E: 8-bit shift-accumulate: HLresult = dist_frac * height_delta */
+  HLresult    = 0;
+  A_mult      = IXhazard->dist_frac; /* $AE34 LD A,(IX+$04) */
   Biterations = 8;
   do {
-    RL(A);
-    if (carry)
-      HLresult += DE;
+    RL(A_mult);
+    if (carry) HLresult += DE;
     HLresult <<= 1;
   } while (--Biterations > 0);
-  A = HLresult >> 8; // high part of result
-  RR(A);
 
-  IXhazard->persp_col = A;
-  A = ~((C - A) << 1);
+  /* $AE40-$AE42: A = H>>1 (RRA); IX[6] = A — perspective column */
+  A_persp             = HLresult >> 8;
+  RR(A_persp);
+  IXhazard->persp_col = A_persp;
 
-  // Would this fetch from the wrong position?
-  // It's loading D, moving down, then loading E...
-  HLtable = &state->xpos_road_left[A / 2]; // road drawing left
-  DE = *HLtable;
-  HLtable = &state->xpos_road_right[A / 2];
-  HL = *HLtable;
+  /* $AE45-$AE49: A = ~((C - A) << 1) — xpos table index */
+  A_xidx = ~((C_ht_hi - A_persp) << 1);
+
+  /* $AE4A-$AE54: D=(E8|A), E=(E8|A-1), H=(EC|A+1), L=(EC|A)
+   * Conv: Z80 uses hardcoded pages $E8/$EC for xpos_road_left/right;
+   *       C uses named arrays. Index A/2 because entries are 16-bit words. */
+  HLtable = &state->xpos_road_left[A_xidx / 2];
+  DE      = *HLtable;
+  HLtable = &state->xpos_road_right[A_xidx / 2];
+  HL      = *HLtable;
 
   state->dh_road_left_xpos = DE;
 
-  // This is probably equivalent to HLresult = IXhazard->horz_pos_on_road * DE;
-  DE = HL - DE; // might be road width
-  HLresult = 0; // result
-  A = IXhazard->horz_pos_on_road;
+  /* $AE56-$AE6E: 8-bit shift-accumulate: HLresult = horz_pos * road_width */
+  DE          = HL - DE; /* road width = right_xpos − left_xpos */
+  HLresult    = 0;
+  A_mult      = IXhazard->horz_pos_on_road; /* $AE61 LD A,(IX+$05) */
   Biterations = 8;
   do {
-    RL(A);
-    if (carry)
-      HLresult += DE;
+    RL(A_mult);
+    if (carry) HLresult += DE;
     HLresult <<= 1;
   } while (--Biterations > 0);
-  A = HLresult >> 8; // high part of result
-  RR(A);
 
-  HL = state->dh_road_left_xpos + A;
-  (void) check_collision(state, /*D*/0, HL, IXhazard,
-                         &HL); // This modifies HL, not sure how to handle
-  IXhazard->distance = HL & 0xFF;
-  IXhazard->horz_clip     = HL >> 8;
-  Ddistance = IXhazard->distance;
-  Edist_frac     = IXhazard->dist_frac;
+  /* $AE6D-$AE6E: A = H>>1 (RRA) — xpos offset within road width */
+  A_xresult = HLresult >> 8;
+  RR(A_xresult);
 
-  HLp_n_hazards = &state->n_hazards;
-  An_hazards = *HLp_n_hazards;
-  (*HLp_n_hazards)++;
+  /* $AE6F-$AE79: C=A; HL=SM+BC (SM was patched to left_xpos at $AE57);
+   * then IX[2]=L, IX[3]=H — write xpos back to hazard
+   * Conv: Z80 self-modifies LD HL at $AE70 to load dh_road_left_xpos then
+   *       adds BC; C computes directly and passes via check_collision HLout */
+  HL = state->dh_road_left_xpos + A_xresult;
+  /* $AE74-$AE79: IX[2],IX[3] = HL (horz_pos, horz_clip) written via HLout */
+  (void) check_collision(state, 0, HL, IXhazard, &HL);
+  IXhazard->distance  = HL & 0xFF;
+  IXhazard->horz_clip = HL >> 8;
 
-  HLtable = &state->xpos_road_centre_left[0]; // road centre left?
-  if (An_hazards) {
-    Biterations = An_hazards;
+  Ddistance  = IXhazard->distance;
+  Edist_frac = IXhazard->dist_frac;
+
+  /* $AE83-$AE8C: load/increment n_hazards; Conv: $AE88 LD HL,$E900 →
+   *              state->xpos_road_centre_left named array */
+  HL_n_hazards  = &state->n_hazards;
+  A_n_hazards   = *HL_n_hazards;
+  (*HL_n_hazards)++;
+  HLtable = &state->xpos_road_centre_left[0];
+
+  /* $AE8E-$AE9D: scan draw list for insertion point (front-to-back order) */
+  if (A_n_hazards) {
+    Biterations = A_n_hazards;
     do {
       HLtable++;
-      if (Ddistance >=
-          HLtable[-1]) { // these offsets are bound to be wrong due to byte/word
-        if (Ddistance != HLtable[-1])
+      if (Ddistance >= (int)(u8) HLtable[-1]) {
+        if (Ddistance != (int)(u8) HLtable[-1])
           goto dh_insert;
-
-        if (Edist_frac < *HLtable)
+        if (Edist_frac < (int)(u8) *HLtable)
           goto dh_insert;
       }
       HLtable += 3;
     } while (--Biterations > 0);
   }
 
-  // Add/store hazard
-  *HLtable++ = Edist_frac | (Ddistance << 8); // big endian store?
-  *HLtable++ = IXhazard -
-               &state->hazards[0]; // Conv: now stores an offset, not a ptr
+  /* $AE9F-$AEAA: append (distance,dist_frac) pair then hazard slot index */
+  *HLtable++ = Edist_frac | (Ddistance << 8);
+  *HLtable++ = IXhazard - &state->hazards[0]; /* Conv: slot index, not ptr */
   goto dh_call_handler;
 
-dh_insert: // deleting or inserting a new hazard?
-  // PUSH DE - Ddistance, Edist_frac
-  BCwords = Biterations *
-            2; // entries * sizeof hazard entry (Conv: WORDS to shift down)
+dh_insert:
+  /* $AEAB-$AEC7: PUSH DE; BC=B*4; LDDR; POP DE — shift draw list down.
+   * Conv: LDDR shifts bytes; C shifts s16 words (BCwords = B*2 entries). */
+  BCwords = Biterations * 2;
   DEtable = HLtable + BCwords + 1;
   HLtable = HLtable + BCwords - 1;
   do { *HLtable-- = *DEtable--; } while (--BCwords > 0);
-  HLtable = DEtable; // was EX DE,HL
-  *HLtable-- = IXhazard -
-               &state->hazards[0]; // Conv: now stores an offset, not a ptr
-  // POP DE - Ddistance, Edist_frac
-  *HLtable-- = Edist_frac | (Ddistance << 8); // big endian store?
+  HLtable    = DEtable;                          /* $AEBC EX DE,HL */
+  *HLtable-- = IXhazard - &state->hazards[0];   /* Conv: slot index, not ptr */
+  *HLtable-- = Edist_frac | (Ddistance << 8);
 
 dh_call_handler:
+  /* $AEC8-$AECE: HL = IX[11:12]; JP (HL) — call via function pointer */
   IXhazard->hit_handler(state, IXhazard);
 }
 
@@ -8587,10 +8638,10 @@ dh_call_handler:
  *
  * \param[in] state       Pointer to game state.
  * \param[in] Biterations Iterations.
- * \param[in] IYheight          IYheight register value.
+ * \param[in] IYheight    IYheight register value.
  */
 static void draw_arrow_fire_smoke(chqstate_t *state,
-                                  int          Biterations,
+                                  int         Biterations,
                                   const u8   *IYheight)
 {
   // $CDEC
@@ -8676,15 +8727,15 @@ static void draw_arrow_fire_smoke(chqstate_t *state,
     // AND A3
     Ahorz_pos = IXhazard->horz_pos;
     if (Ahorz_clip <= 0) {
-    if (Ahorz_clip != 0)
+      if (Ahorz_clip != 0)
         goto dafs_draw_done_1;
-    if (Ahorz_pos >= 128)
+      if (Ahorz_pos >= 128)
         goto dafs_draw_right_1;
 
-    Ahorz_pos += Ewidth_bits;
+      Ahorz_pos += Ewidth_bits;
     } else {
-    Ahorz_pos += Ewidth_bits;
-    if (Ahorz_pos + Ewidth_bits < 0x100) // no carry
+      Ahorz_pos += Ewidth_bits;
+      if (Ahorz_pos + Ewidth_bits < 0x100) // no carry
         goto dafs_draw_done_1;
     }
 
@@ -8715,14 +8766,14 @@ dafs_af50:
   Ahorz_pos = IXhazard->horz_pos;
   state->dh_SM_B02C_horz_pos = Ahorz_pos;
   if ((s8) Awidth_bytes >= 0) {
-  if (Awidth_bytes)
+    if (Awidth_bytes)
     goto dafs_draw_done_1;
   if (Ahorz_pos >= 128)
     goto dafs_draw_right_2;
-  Awidth_bytes += Ewidth_bits;
+    Awidth_bytes += Ewidth_bits;
   } else {
-  Awidth_bytes += Ewidth_bits;
-  if ((s8) Awidth_bytes < 0)
+    Awidth_bytes += Ewidth_bits;
+    if ((s8) Awidth_bytes < 0)
       goto dafs_draw_done_1;
   }
 
@@ -8737,30 +8788,30 @@ dafs_done_draw_object:
   state->dh_col_pos = state->doc_col_pos;
 
   if (state->smash_level < 5 && (Aindex = state->smoke_bitmap_index) < 4) {
-      HLarrows = &arrow_offsets[Aindex]; // Conv: scaling accounted for
-      dh_draw_bitmap(state, HLarrows[0], HLarrows[1], &floating_arrow_here_defn, IYheight);
-    }
+    HLarrows = &arrow_offsets[Aindex]; // Conv: scaling accounted for
+    dh_draw_bitmap(state, HLarrows[0], HLarrows[1], &floating_arrow_here_defn, IYheight);
+  }
 
   Asmash_level = state->smash_level;
   if (Asmash_level >= 4) {
-  Asmash_level_scaled = (Asmash_level - 4) * 4;
+    Asmash_level_scaled = (Asmash_level - 4) * 4;
 
-  // EX AF,AF' Bank Asmash_level_scaled
+    // EX AF,AF' Bank Asmash_level_scaled
 
-  HLsmokes = &smoke_offsets[state->smoke_bitmap_index * 2];
-  Bx = HLsmokes[0];
-  Cy = HLsmokes[1];
+    HLsmokes = &smoke_offsets[state->smoke_bitmap_index * 2];
+    Bx = HLsmokes[0];
+    Cy = HLsmokes[1];
 
-  // EX AF,AF' Unbank Asmash_level_scaled
+    // EX AF,AF' Unbank Asmash_level_scaled
 
-  // Conv: shuffled around
-  Asmash_level_scaled += (state->slow_anim_counter & 1) * 2;
-  HLbitmap = fire_bitmaps[Asmash_level_scaled / 2];
+    // Conv: shuffled around
+    Asmash_level_scaled += (state->slow_anim_counter & 1) * 2;
+    HLbitmap = fire_bitmaps[Asmash_level_scaled / 2];
 
-  // POP DE (DEbitmapoffset)
-  // PUSH DE (DEbitmapoffset)
+    // POP DE (DEbitmapoffset)
+    // PUSH DE (DEbitmapoffset)
 
-  dh_draw(state, Bx, Cy, DEbitmapoffset, HLbitmap, IYheight);
+    dh_draw(state, Bx, Cy, DEbitmapoffset, HLbitmap, IYheight);
   }
 
   /* Conv: Converted to switch */
@@ -8819,11 +8870,11 @@ static void dh_smoke(chqstate_t *state, u8 *HLsmoke, const u8 *IYheight)
  * \param[in] Cy        Y.
  * \param[in] DEoffset  Bitmap index to draw.
  * \param[in] HLbitmaps Source bitmap data.
- * \param[in] IYheight        IYheight register value.
+ * \param[in] IYheight  IYheight register value.
  */
 static void dh_draw(chqstate_t     *state,
-                    int              Bx,
-                    int              Cy,
+                    int             Bx,
+                    int             Cy,
                     int             DEoffset,
                     const bitmap_t *HLbitmaps,
                     const u8       *IYheight)
@@ -8838,11 +8889,11 @@ static void dh_draw(chqstate_t     *state,
  * \param[in] Bx       X.
  * \param[in] Cy       Y.
  * \param[in] HLbitmap Source bitmap data.
- * \param[in] IYheight       IYheight register value.
+ * \param[in] IYheight IYheight register value.
  */
 static void dh_draw_bitmap(chqstate_t     *state,
-                           int              Bx,
-                           int              Cy,
+                           int             Bx,
+                           int             Cy,
                            const bitmap_t *HLbitmap,
                            const u8       *IYheight)
 {
@@ -8856,31 +8907,32 @@ static void dh_draw_bitmap(chqstate_t     *state,
   // Set flags for A here
   A2 = state->dh_SM_B02C_horz_pos;
   if (A1 >= 0) {
-  if (A1)
-    return;
+    if (A1)
+      return;
 
-  A2 += Cy;
-  if (A2 < Cy) // carried
-    return;
+    A2 += Cy;
+    if (A2 < Cy) // carried
+      return;
 
-  if (A2 >= 128) {
-    draw_object_right_helicopter_entrypt(state, A2, HLbitmap,
-                                         IYheight); /* was exit via */
+    if (A2 >= 128) {
+      draw_object_right_helicopter_entrypt(state, A2, HLbitmap,
+                                           IYheight); /* was exit via */
     } else {
 dh_exit_1:
-  A2 += Ewidth_bits; // add pixel width
-  draw_object_left_helicopter_entrypt(state, A2, HLbitmap,
-                                      IYheight); /* was exit via */
+      A2 += Ewidth_bits; // add pixel width
+      draw_object_left_helicopter_entrypt(state, A2, HLbitmap,
+                                          IYheight); /* was exit via */
     }
   } else {
-  A2 += Cy;
-  if (A2 < Cy) // carried
-    goto dh_exit_1;
+    A2 += Cy;
+    if (A2 < Cy) // carried
+      goto dh_exit_1;
 
-  A2 += Ewidth_bits;
-  if (A2 < Ewidth_bits) // carried
-    draw_object_left_helicopter_entrypt(state, A2, HLbitmap,
-                                        IYheight); /* was exit via */
+    A2 += Ewidth_bits;
+    if (A2 < Ewidth_bits) // carried
+      draw_object_left_helicopter_entrypt(state, A2, HLbitmap,
+                                          IYheight); /* was exit via */
+  }
 }
 
 /**
@@ -10668,7 +10720,7 @@ static void layout_road(chqstate_t *state)
   CHECK;
 
 #ifndef NDEBUG
-  printf("lr: NOT FORKED\n");
+  // printf("lr: NOT FORKED\n");
 #endif
 
   // $BA0B: No forked road found
