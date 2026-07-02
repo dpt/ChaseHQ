@@ -10927,18 +10927,30 @@ lr_badf:
 }
 
 /**
- * $BB69: Exit fork
+ * $BB69: Transition the road back to a single lane after a fork exit
  *
- * Called from main loop.
+ * Guards on the high byte of fork_distance being non-zero; returns
+ * immediately if the fork has not progressed far enough.
+ *
+ * Based on fork_taken, selects the left or right exit configuration:
+ * - Points the road data stream pointers at the forked-road exit tables
+ *   (curvature, height, lanes, hazards, side objects).
+ * - Wires the per-command SM handlers via lookup_map_goto for each stream
+ *   on the chosen branch.
+ * - Fills 32 curvature bytes with the turn type, 32 lane bytes with the
+ *   lane type, and zeros 32 object bytes in the road buffer.
+ *
+ * Finally resets all fork and road counters so the engine resumes
+ * single-road rendering.
  *
  * \param[in] state Pointer to game state.
  */
 static void exit_fork(chqstate_t *state)
 {
-  int curve_type; /* was D */
-  int lanes_type; /* was E */
-  int obj_offset; /* was C */
-  int i;          /* was B */
+  int D_curve_type;   /* curvature byte to fill: +4 (right turn) or -4 (left) (was D) */
+  int E_lanes_type;   /* lanes byte to fill: 0x03 (right fork) or 0x01 (left) (was E) */
+  int C_obj_offset;   /* extra road-buffer offset for zeroing object bytes (was C) */
+  int Bfill;        /* fill-loop iteration counter; models DJNZ with B=32 (was B) */
 
   /* $BB69: return if fork_distance high byte is zero */
   if ((state->fork_distance & 0xFF00) == 0)
@@ -10946,8 +10958,8 @@ static void exit_fork(chqstate_t *state)
 
   if (state->fork_taken == 1) {
     /* $BBA1: ef_right */
-    curve_type = 0x04;
-    lanes_type = 0x03;
+    D_curve_type = 0x04;
+    E_lanes_type = 0x03;
     state->scenedata.road_leftside_ptr  = forked_road_exit_rightobjs - 1;
     state->scenedata.road_rightside_ptr = forked_road_exit_leftobjs - 1;
     state->scenedata.road_lanes_ptr     = forked_road_exit_right_lanes - 1;
@@ -10963,12 +10975,12 @@ static void exit_fork(chqstate_t *state)
       state->rm_rightfork_rightside);
     state->rm_leftside_fork_end_ptr  = lookup_map_goto(state,
       state->rm_rightfork_leftside);
-    obj_offset =
-      32; /* rightobjs: ROADBUF_LANES_OFFSET + 32 = ROADBUF_RIGHTOBJS_OFFSET */
+    // Conv: Z80 $BBCA LD A,$20; maps to ROADBUF_LANES_OFFSET + 32 = ROADBUF_RIGHTOBJS_OFFSET
+    C_obj_offset = 32;
   } else {
     /* $BB74: ef_left */
-    curve_type = 0xFC;
-    lanes_type = 0x01;
+    D_curve_type = 0xFC;
+    E_lanes_type = 0x01;
     state->scenedata.road_leftside_ptr  = forked_road_exit_leftobjs - 1;
     state->scenedata.road_rightside_ptr = forked_road_exit_rightobjs - 1;
     state->scenedata.road_lanes_ptr     = forked_road_exit_left_lanes - 1;
@@ -10984,8 +10996,8 @@ static void exit_fork(chqstate_t *state)
       state->rm_leftfork_rightside);
     state->rm_leftside_fork_end_ptr  = lookup_map_goto(state,
       state->rm_leftfork_leftside);
-    obj_offset =
-      64; /* leftobjs: ROADBUF_LANES_OFFSET + 64 = ROADBUF_LEFTOBJS_OFFSET */
+    // Conv: Z80 $BB9D LD A,$40; maps to ROADBUF_LANES_OFFSET + 64 = ROADBUF_LEFTOBJS_OFFSET
+    C_obj_offset = 64;
   }
 
   /* $BBE3: common exit-fork road pointers */
@@ -10994,12 +11006,13 @@ static void exit_fork(chqstate_t *state)
   state->scenedata.road_hazard_ptr    = forked_road_exit_hazards - 1;
 
   /* $BBFD: fill 32 curvature bytes, 32 lanes bytes, 32 object bytes (zeroed) */
-  for (i = 0; i < 32; i++)
-    *ROADBUF_FWD2PTR(ROADBUF_CURVATURE_OFFSET + i) = curve_type;
-  for (i = 0; i < 32; i++)
-    *ROADBUF_FWD2PTR(ROADBUF_LANES_OFFSET + i) = lanes_type;
-  for (i = 0; i < 32; i++)
-    *ROADBUF_FWD2PTR(ROADBUF_LANES_OFFSET + obj_offset + i) = 0;
+  /* Conv: Z80 uses three DJNZ loops (B=32 each); C counts up 0..31 instead */
+  for (Bfill = 0; Bfill < 32; Bfill++)
+    *ROADBUF_FWD2PTR(ROADBUF_CURVATURE_OFFSET + Bfill) = D_curve_type;
+  for (Bfill = 0; Bfill < 32; Bfill++)
+    *ROADBUF_FWD2PTR(ROADBUF_LANES_OFFSET + Bfill) = E_lanes_type;
+  for (Bfill = 0; Bfill < 32; Bfill++)
+    *ROADBUF_FWD2PTR(ROADBUF_LANES_OFFSET + C_obj_offset + Bfill) = 0;
 
   /* $BC15: reset per-frame road state */
   state->curvature_byte         = 0;
