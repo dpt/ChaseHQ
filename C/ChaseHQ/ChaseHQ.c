@@ -11058,6 +11058,7 @@ static void update_screen(chqstate_t *state)
   u8        *HLattrs;       /* pointer into attr memory (was HL) */
   u16        BCattrs;       /* attribute colour word (was BC) */
   u8         Cattr;         /* single attribute byte (was C) */
+  zxbox_t    playfield_box; /* dirty rect covering the lower two-thirds of the screen */
 
   scr = ADDRTOSCREEN(0x4811); // (136, 64)
   buf = ADDRTOBACKBUF(0xF001); // (8, 1)
@@ -11202,8 +11203,11 @@ static void update_screen(chqstate_t *state)
   }
 
 exit:
-  /* Redraw the whole screen (TODO: just the playfield). */
-  state->speccy->draw(state->speccy, NULL); // Conv: Added
+  playfield_box.x0 = 0;
+  playfield_box.y0 = SCREEN_HEIGHT - PLAYFIELD_HEIGHT;
+  playfield_box.x1 = SCREEN_WIDTH;
+  playfield_box.y1 = SCREEN_HEIGHT;
+  state->speccy->draw(state->speccy, &playfield_box); /* Conv: Added */
 }
 
 /**

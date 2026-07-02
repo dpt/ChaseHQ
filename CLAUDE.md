@@ -77,6 +77,7 @@ All 5 stages currently map to `stage1` data in `ChaseHQ-Stages.c`. Per-stage dat
 - **`Conv:` comments**: mark where the C version intentionally diverges from a direct Z80 translation; preserve them
 - **Address semantics**: macros like `ADDRTOSCREEN`, `BACKBUFTOOFFSET`, `ROADBUFPTR` are correctness-critical
 - **Formatting**: K&R style, 2-space indent, 80 columns, pointer aligned to name (`.astylerc`)
+- **C standard**: Target C89/C90. Avoid C99 constructs: no compound literals `(T){…}`, no VLAs, no in-loop declarations (`for (int i = …)`). Single-line `//` comments and `<stdint.h>` types are accepted as widely-supported extensions.
 
 ### Variable naming in Z80 translations
 
