@@ -1121,7 +1121,7 @@ static void update_screen(chqstate_t *state);
 static void clear_playfield_set_attrs(chqstate_t *state);
 
 static void read_map(chqstate_t *state);
-static void rm_cycle_buffer_offset(chqstate_t *state, u8 *pfastcounter);
+static void rm_cycle_buffer_offset(chqstate_t *state, u8 *HLfast_counter);
 
 static void prepare_tunnel(chqstate_t *state);
 
@@ -11329,12 +11329,27 @@ static void read_map(chqstate_t *state)
 }
 
 /**
- * $BE1F: Read map - cycle buffer offset
+ * $BE1F: Cycle road buffer by one slot and decode all map data channels.
  *
- * \param[in] state        Pointer to game state.
- * \param[in] pfastcounter Pfastcounter. (was HL)
+ * Advances roadbufptr by one position in the cyclic road buffer, then decodes
+ * six data channels into the new slot: curvature ($BE3A), height ($BEC4),
+ * lanes ($BEF2), right-side objects ($BF55), left-side objects ($BF9E), and
+ * hazards ($BFE7). Each channel is run-length encoded as $CT bytes where the
+ * high nibble is a countdown counter and the low nibble carries the type. When
+ * the counter expires (i.e. subtracting 16 produces carry), a new map byte is
+ * loaded; a zero escape byte introduces a command — goto (0), fork-end (1), or
+ * fork-split (2). After channel decoding the road level is advanced, all six
+ * hazard slots are ticked ($C01D), and if the dirt/stones copy-back flag is
+ * set ($C0BE) the xpos fork buffer is shifted down by one entry. Exits via
+ * check_hazard_collisions.
+ *
+ * \param[in] state          Pointer to game state.
+ * \param[in] HLfast_counter Pointer to the fast_counter field; the Z80 used
+ *                           HL+1 (= &road_buffer_offset) to advance the buffer.
+ *                           Conv: unused in C — roadbufptr is advanced directly
+ *                           via ROADBUF_FWD2PTR. (was HL)
  */
-static void rm_cycle_buffer_offset(chqstate_t *state, u8 *pfastcounter)
+static void rm_cycle_buffer_offset(chqstate_t *state, u8 *HLfast_counter)
 {
   u8        *HL_rightside_ptr;   /* road buffer right-side objects slot (was HL) */
   u8        *HL_leftside_ptr;    /* road buffer left-side objects slot (was HL) */
@@ -11366,7 +11381,7 @@ static void rm_cycle_buffer_offset(chqstate_t *state, u8 *pfastcounter)
   hazard_t  *IX_hazard;          /* pointer to current hazard slot being updated (was IX) */
   int        C_overtake_bonus;   /* count of scored overtakes this cycle (was C) */
   int        B_iterations;       /* countdown over 6 hazard slots (was B) */
-  u8         old_used;           /* previous used byte before RLC */
+  u8         old_used;           /* hazard[0].used before RLC (was A) */
   int        A_flags_inc;        /* hazard_flags + 1 for signed/zero check (was A) */
 
   u8        *copy_base;          /* base of xpos_road_fork_right for copy-back */
@@ -11379,7 +11394,7 @@ static void rm_cycle_buffer_offset(chqstate_t *state, u8 *pfastcounter)
 
   /* Set sound effect triggers (before we clobber those bytes) */
   /* We fetch and store these flags separately but the sole user drive_sfx
-   * ultimately just merges them A_together. */
+   * ultimately just merges them together. */
   /* offset 96 -> first byte of right hand objects */
   HL_rightside_ptr = ROADBUF_FWD2PTR(95);
   state->trigger_righthand_sfx |= *HL_rightside_ptr;
@@ -11613,7 +11628,7 @@ static void rm_cycle_buffer_offset(chqstate_t *state, u8 *pfastcounter)
       if (A_leftside_byte == 0) {
         // Escape byte (0): read command byte.
 
-        // Conv: EX DE,HL register swap was folded in from $BF65 here to $BF8E below
+        // Conv: EX DE,HL register swap was folded in from $BFAB here to $BFD5 below
 
         DE_leftside_ptr++;
         A_leftside_byte = *DE_leftside_ptr++;
