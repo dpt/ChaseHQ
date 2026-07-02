@@ -110,11 +110,6 @@
 
 /* ----------------------------------------------------------------------- */
 
-// Test rigging enable
-#define RUN_FULL_GAME 1
-
-/* ----------------------------------------------------------------------- */
-
 /* Z80 ish macros */
 
 /** Return an 8-bit value `v` rotated right by `sh` bits */
@@ -1876,14 +1871,8 @@ static int run_pregame_screen_loop(chqstate_t *state)
 
   draw_pregame(state);
   drive_chatter(state);
-  if (!RUN_FULL_GAME) {
-    // forcing the pregame screen loop to do other stuff for now
-    update_scoreboard(state);
-    test_car_anim(state);
-  } else {
-    reveal_perp_car(state);
-    animate_meters(state);
-  }
+  reveal_perp_car(state);
+  animate_meters(state);
   transition(state);
   update_screen(state);
   if (state->transition_control == 0) {
@@ -15352,23 +15341,8 @@ call_bank_3:
 
 CHQ_API void chq_setup(chqstate_t *state)
 {
-  if (RUN_FULL_GAME) {
-    // try to run the full game
-    if (setjmp(state->host_quit_jmp) == 0)
-      entry_128k(state);
-  } else {
-    // run the pregame screen only
-    memcpy(ADDRTOSCREEN(SCREEN_START_ADDRESS), marquee_initial,
-           sizeof(marquee_initial));
-    memcpy(ADDRTOATTRS(SCREEN_ATTRIBUTES_START_ADDRESS), marquee_attrs,
-           sizeof(marquee_attrs));
-    state->current_stage_number = -1; // force load
-    state->wanted_stage_number = 0;
-    load_stage(state);
-    run_pregame_screen(state);
-    while (run_pregame_screen_loop(state)) /* Conv: Split out */
-      ;
-  }
+  if (setjmp(state->host_quit_jmp) == 0)
+    entry_128k(state);
 }
 
 CHQ_API void chq_stop(chqstate_t *state)
@@ -15381,12 +15355,8 @@ CHQ_API void chq_main(chqstate_t *state)
   // There's no point calling this function yet. Not until the game logic is
   // teased apart. The real game logic hangs off of 'bootstrap'.
   assert(0);
-  if (RUN_FULL_GAME) {
-    main_loop(state);
-  } else {
-    while (run_pregame_screen_loop(state)) /* Conv: Split out */
-      ;
-  }
+  while (run_pregame_screen_loop(state)) /* Conv: Split out */
+    ;
 }
 
 /* ----------------------------------------------------------------------- */

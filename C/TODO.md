@@ -21,6 +21,7 @@ perhaps build unit tests now to flush out problems ahead of time.
 - Main game runs too fast - need to calibrate against original
 - Document expected values/ranges for e.g. xpos arrays
 - Fix stage 2+ data
+- Fix object names (e.g. "left tree" -> bush)
 
 
 # IDEAS
