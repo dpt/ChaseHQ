@@ -127,7 +127,7 @@ shadow variables that hold the banked values. The key points:
 ## High Quality Functions
 
 A high quality translated function satisfies all of the following criteria.
-See `function_comment_template_example.c` for a worked example.
+See `C/docs/function_comment_template_example.c` for a worked example.
 
 1. **Correct translation** — behaviour matches the original Z80 precisely,
    verified against the skool.
