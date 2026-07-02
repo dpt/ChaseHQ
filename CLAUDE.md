@@ -137,7 +137,9 @@ See `C/docs/function_comment_template_example.c` for a worked example.
    `RegisterName_description` pattern; labels use plain English (`dt_exit`,
    not `label_1`); magic numbers are replaced by named constants.
 4. **Documented variables** — every local variable declaration carries a
-   `/* intent (was X) */` comment.
+   `/* intent (was X) */` comment. All declarations appear at the top of the
+   outermost scope block (never inside an inner `if`/`for`/etc.), one per
+   line, and are ordered by first use within the function.
 5. **Has a prologue** — the function is preceded by a `/** ... */` Doxygen
    block.
 6. **Prologue has a description** — the first line gives the Z80 address and
