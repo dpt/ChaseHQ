@@ -10491,39 +10491,56 @@ static void scroll_horizon(chqstate_t *state)
 }
 
 /**
- * $B8D2: Update road level
+ * $B8D2: Update per-frame road-level state
+ *
+ * Called once per frame from read_map. Covers six groups of state:
+ *
+ * 1. Horizon level: adjusts session.horizon_level by the accumulated incline
+ *    step, then resets the accumulator.
+ * 2. Incline: reads the next height byte from the road buffer, halves it
+ *    (SRA) to derive the new incline, and stores it.
+ * 3. Pitch: derives the dhc_pitch animation value from the frontmost height
+ *    byte.
+ * 4. Car jump: detects whether the hero car should launch off a road crest and
+ *    selects jump parameters from car_jump_resume_params.
+ * 5. Curvature: reads the new curvature byte (negating for the taken fork),
+ *    derives horizon_curve_index, and updates horizon_x_scroll.
+ * 6. Horizontal adjust: computes the per-frame steering correction from the
+ *    old-vs-new curvature difference, then resets curvature counters.
  *
  * \param[in] state Pointer to game state.
  */
 static void update_road_level(chqstate_t *state)
 {
-  int       carry = 0;
-  int       Bvar_a25a;          /* was B */
-  int       Cnegate_flag;       /* was C */
-  int       Aincline;           /* was A */
-  const u8 *HLroadbuf;          /* was HL */
-  int       Aheight;            /* was A */
-  int       Cheight;            /* was C */
-  int       Bpitch;             /* was B */
-  u8       *HLprev_road_height; /* was HL */
-  int       Aprev_road_height;  /* was A */
-  int       Bprev_road_height;  /* was B */
-  int       Ay_offset;          /* was A */
-  int       Adiff;              /* was A */
-  const u8 *HLptable_b059;      /* was HL */
-  int       Eoffset;            /* was E */
-  int       Acurrent_curvature; /* was A */
-  int       Afork_visible;      /* was A */
-  int       Acurvature_byte;    /* was A */
-  int       Afork_taken;        /* was A */
-  int       Bcurvature_byte;    /* was B */
-  int       Ax_scroll;          /* was A */
-  int       Bcurvature_ticks;   /* was B */
-  int       C;                  /* was C */
-  int       A;                  /* was A */
-  int       B;                  /* was B */
+  int              carry;              /* carry/borrow flag */
+  int              Bhorizon_accum;     /* accumulated horizon step from scroll_horizon (was B) */
+  int              Cnegate_flag;       /* 1 if incline is negative (climbing) (was C) */
+  int              Aincline;           /* current incline value, made positive for arith (was A) */
+  const u8        *HLroadbuf;          /* pointer into road buffer (was HL) */
+  int              Aheight;            /* road height byte, halved for new incline (was A) */
+  int              Cheight;            /* frontmost height byte, kept for pitch (was C) */
+  int              Bpitch;             /* derived pitch value for dhc_pitch (was B) */
+  u8              *HLprev_road_height; /* pointer to state->prev_road_height (was HL) */
+  int              Aprev_road_height;  /* previous road height byte (was A) */
+  int              Bprev_road_height;  /* previous road height, positive copy (was B) */
+  int              Ay_offset;          /* current mhc_y_offset jump counter (was A) */
+  int              Adiff;              /* height difference triggering jump (was A) */
+  const u8        *HLjump_params;      /* pointer into car_jump_resume_params (was HL) */
+  int              Eoffset;            /* jump table row offset into hero_car_jump_table (was E) */
+  int              jump_params_idx;    /* byte index into car_jump_resume_params (no register) */
+  int              Acurrent_curvature; /* curvature value from previous frame (was A) */
+  int              Afork_visible;      /* fork_visible flag (was A) */
+  int              Acurvature_byte;    /* curvature byte read from road buffer (was A) */
+  int              Afork_taken;        /* fork_taken flag (was A) */
+  int              Bcurv_idx;          /* scaled curvature index copy for BC indexing (was B) */
+  int              Ax_scroll;          /* computed horizon x-scroll value (was A) */
+  int              Bcurvature_ticks;   /* accumulated curvature ticks from previous frame (was B) */
+  int              C_curv_dir;         /* 1 if old curvature was negative (was C) */
+  int              A_curv_diff;        /* old-minus-new curvature magnitude (was A) */
+  int              B_sign_ext;         /* sign-extension byte for horizontal_adjust (was B) */
 
-  Bvar_a25a = state->horizon_y_accum; // load and widen
+  carry = 0;
+  Bhorizon_accum = state->horizon_y_accum; // load and widen
   Cnegate_flag = 0;
   Aincline = state->incline;
   if (Aincline < 0) { // if road climbing
@@ -10531,7 +10548,7 @@ static void update_road_level(chqstate_t *state)
     Cnegate_flag = 1; /* was INC C */
   }
 
-  Aincline -= Bvar_a25a;
+  Aincline -= Bhorizon_accum;
   if (Aincline)
     state->session.horizon_level += (Cnegate_flag) ? -Aincline : Aincline;
 
@@ -10574,12 +10591,13 @@ static void update_road_level(chqstate_t *state)
                                             3)); // result = 1..5? // folded a lot here
           if ((s8) Adiff > 0) { /* was !C && !Z */
             // PUSH HLprev_road_height
-            int i = (Adiff * 2) - 1;
-            assert(i >= 0 && i <= 8);
-            HLptable_b059 = &car_jump_resume_params[i]; // use of DE removed, RLC folded in
-            Eoffset = *HLptable_b059++; // an offset
-            assert(*HLptable_b059 >= 0 && *HLptable_b059 <= 8);
-            state->mhc_y_offset = *HLptable_b059;
+            // Conv: RLCA (A*=2) folded into index; table base adjusted by -1 for C 0-indexing
+            jump_params_idx = (Adiff * 2) - 1;
+            assert(jump_params_idx >= 0 && jump_params_idx <= 8);
+            HLjump_params = &car_jump_resume_params[jump_params_idx];
+            Eoffset = *HLjump_params++; // an offset
+            assert(*HLjump_params >= 0 && *HLjump_params <= 8);
+            state->mhc_y_offset = *HLjump_params;
             assert(Eoffset >= 0 && Eoffset <= 19);
             state->mhc_jump_data = &hero_car_jump_table[Eoffset];
             // POP HLprev_road_height
@@ -10613,12 +10631,12 @@ static void update_road_level(chqstate_t *state)
     // Dcurvature_byte = Acurvature_byte; // removed presumed unused
     Acurvature_byte <<= 2;
     state->horizon_curve_index = Acurvature_byte;
-    Bcurvature_byte = Acurvature_byte;
+    Bcurv_idx = Acurvature_byte;
     if (state->horizon_x_scroll)
       goto url_B9C5;
 
     Ax_scroll = horizon_table[((state->speed >> 6) & 6) +
-                              (Bcurvature_byte & 0xFF)]; // use of BC removed
+                              (Bcurv_idx & 0xFF)]; // use of BC removed
   } else {
     Ax_scroll = Acurvature_byte; // Conv: added
   }
@@ -10626,27 +10644,27 @@ static void update_road_level(chqstate_t *state)
 
 url_B9C5:
   Bcurvature_ticks = state->curvature_ticks;
-  C = 0;
+  C_curv_dir = 0;
   // EX AF,AF' - unbank Acurrent_curvature
   if ((s8) Acurrent_curvature < 0) {
     Acurrent_curvature = (u8)(-Acurrent_curvature); /* Z80 NEG is u8 */
-    C++;
+    C_curv_dir++;
   }
 
-  A = Acurrent_curvature - Bcurvature_ticks;
-  if ((s8) A > 0) {
-    A = (A << 2) + (A >> 1);
-    B = 0;
-    if (C & 1) { // invert BA
-      B = 0xFF; /* was DEC B */
-      A = -A;
+  A_curv_diff = Acurrent_curvature - Bcurvature_ticks;
+  if ((s8) A_curv_diff > 0) {
+    A_curv_diff = (A_curv_diff << 2) + (A_curv_diff >> 1);
+    B_sign_ext = 0;
+    if (C_curv_dir & 1) { // invert BA
+      B_sign_ext = 0xFF; /* was DEC B */
+      A_curv_diff = -A_curv_diff;
     }
-    state->horizontal_adjust = (B << 8) | A;
+    state->horizontal_adjust = (B_sign_ext << 8) | A_curv_diff;
 #ifndef NDEBUG
     if (state->horizontal_adjust > 50 || state->horizontal_adjust < -50)
       printf("  [url] large horiz_adj=%d: old_curv=%d ticks=%d diff=%d dir=%d speed=%d new_curv=%d\n",
              state->horizontal_adjust, Acurrent_curvature, Bcurvature_ticks,
-             Acurrent_curvature - Bcurvature_ticks, C & 1,
+             Acurrent_curvature - Bcurvature_ticks, C_curv_dir & 1,
              state->speed, state->current_curvature);
 #endif
   }
