@@ -8814,12 +8814,10 @@ static void dh_smoke(chqstate_t *state, u8 *HLsmoke, const u8 *IYheight)
 /**
  * $B01B: DH draw
  *
- * B,C = x,y offset/position? HL -> graphic definition.
- *
  * \param[in] state     Pointer to game state.
- * \param[in] Bx        Bx.
- * \param[in] Cy        Cy.
- * \param[in] DEoffset  Deoffset.
+ * \param[in] Bx        X.
+ * \param[in] Cy        Y.
+ * \param[in] DEoffset  Bitmap index to draw.
  * \param[in] HLbitmaps Source bitmap data.
  * \param[in] IYheight        IYheight register value.
  */
@@ -8830,18 +8828,15 @@ static void dh_draw(chqstate_t     *state,
                     const bitmap_t *HLbitmaps,
                     const u8       *IYheight)
 {
-  const bitmap_t *HLbitmap;
-
-  HLbitmap = &HLbitmaps[DEoffset / 7];
-  dh_draw_bitmap(state, Bx, Cy, HLbitmap, IYheight);
+  dh_draw_bitmap(state, Bx, Cy, &HLbitmaps[DEoffset / 7], IYheight);
 }
 
 /**
  * $B01C: DH draw bitmap
  *
  * \param[in] state    Pointer to game state.
- * \param[in] Bx       Bx.
- * \param[in] Cy       Cy.
+ * \param[in] Bx       X.
+ * \param[in] Cy       Y.
  * \param[in] HLbitmap Source bitmap data.
  * \param[in] IYheight       IYheight register value.
  */
@@ -8860,27 +8855,24 @@ static void dh_draw_bitmap(chqstate_t     *state,
   A1 = state->dh_SM_B029_horz_clip;
   // Set flags for A here
   A2 = state->dh_SM_B02C_horz_pos;
-  if (A1 < 0)
-    goto dh_exit_2;
+  if (A1 >= 0) {
   if (A1)
     return;
 
   A2 += Cy;
   if (A2 < Cy) // carried
     return;
+
   if (A2 >= 128) {
     draw_object_right_helicopter_entrypt(state, A2, HLbitmap,
                                          IYheight); /* was exit via */
-    return;
-  }
-
+    } else {
 dh_exit_1:
   A2 += Ewidth_bits; // add pixel width
   draw_object_left_helicopter_entrypt(state, A2, HLbitmap,
                                       IYheight); /* was exit via */
-  return;
-
-dh_exit_2:
+    }
+  } else {
   A2 += Cy;
   if (A2 < Cy) // carried
     goto dh_exit_1;
