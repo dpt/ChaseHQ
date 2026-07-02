@@ -3882,12 +3882,21 @@ void draw_tunnel_light_right(chqstate_t *state,
 /**
  * $9255: Draw tunnel light common
  *
+ * Shared core for draw_tunnel_light_left and draw_tunnel_light_right. Returns
+ * immediately if the light's depth index is out of the visible range ($10).
+ * Otherwise looks up the perspective scale for the current animation frame and
+ * depth, derives a negative column offset from it, and invokes the
+ * left- or right-specific drawing callback with that offset.
+ *
+ * The Z80 dispatches to the callback via PUSH HL / RET; here the callback is
+ * passed explicitly.
+ *
  * \param[in] state      Pointer to game state.
- * \param[in] Bdepth     Parameter.
- * \param[in] DEdepthset A depth set.
- * \param[in] HLcallback Object drawing callback.
- * \param[in] IXxpos     IXxpos register value.
- * \param[in] IYheight   IYheight register value.
+ * \param[in] Bdepth     Depth index of the light (0 = nearest). (was B)
+ * \param[in] DEdepthset Depth-set table for the light object. (was DE)
+ * \param[in] HLcallback Left or right object drawing entry point. (was HL)
+ * \param[in] IXxpos     X-position table pointer. (was IX)
+ * \param[in] IYheight   Height table pointer. (was IY)
  */
 static void draw_tunnel_light_common(chqstate_t            *state,
                                      int                     Bdepth,
@@ -3896,17 +3905,16 @@ static void draw_tunnel_light_common(chqstate_t            *state,
                                      const s16  *IXxpos,
                                      const u8              *IYheight)
 {
-  int A;
+  int A; /* perspective-adjusted column offset passed to callback (was A) */
 
-  if (Bdepth >= 16)
+  if (Bdepth >= 16) /* $9256 CP $10; RET NC — light beyond visible depth */
     return;
 
   A = persp_y_scale[FAST_COUNTER_PERSP_ROW(state)][Bdepth];
+  /* Conv: Z80 LD C,A; SRL C; SRL C; SUB C; NEG → -(A - A/4) = A/4 - A. */
   A = (A >> 2) - A;
 
-  // callback must need to take A
-  HLcallback(state, A, Bdepth, DEdepthset, IXxpos,
-             IYheight); // e.g. calls draw_object_left_entrypt
+  HLcallback(state, A, Bdepth, DEdepthset, IXxpos, IYheight);
 }
 
 /**
