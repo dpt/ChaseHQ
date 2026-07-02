@@ -12036,24 +12036,24 @@ dt_exit:
   ; // Conv: SP restore removed
 }
 
-/** Return byte pointer to the start of the 256-byte Z80 road-position page ($E7..$ED). */
-static u8 *hi_to_xpostab(chqstate_t *state, int hi)
+/** Return pointer to the start of the 256-byte Z80 road-position page ($E8..$ED). */
+static s16 *hi_to_xpostab(chqstate_t *state, int hi)
 {
   switch (hi) {
-  case 0xE8: return (u8 *)&state->xpos_road_left[0];
-  case 0xE9: return (u8 *)&state->xpos_road_centre_left[0];
-  case 0xEA: return (u8 *)&state->xpos_road_centre[0];
-  case 0xEB: return (u8 *)&state->xpos_road_centre_right[0];
-  case 0xEC: return (u8 *)&state->xpos_road_right[0];
-  case 0xED: return (u8 *)&state->xpos_road_fork_right[0];
+  case 0xE8: return state->xpos_road_left;
+  case 0xE9: return state->xpos_road_centre_left;
+  case 0xEA: return state->xpos_road_centre;
+  case 0xEB: return state->xpos_road_centre_right;
+  case 0xEC: return state->xpos_road_right;
+  case 0xED: return state->xpos_road_fork_right;
   default:   assert(0); return NULL;
   }
 }
 
-/** Return word pointer into a road-position table given a Z80 address. */
+/** Return byte pointer into a road-position table given a Z80 address. */
 static u8 *addr_to_xpos(chqstate_t *state, int z80addr)
 {
-  return hi_to_xpostab(state, z80addr >> 8) + (z80addr & 0xFF);
+  return (u8 *)hi_to_xpostab(state, z80addr >> 8) + (z80addr & 0xFF);
 }
 
 /**
@@ -12784,7 +12784,7 @@ static void dr_fill(chqstate_t *state,
   Bdash_holds_16 = 16;
   Cdash_mask = 0xF8;
 
-  HLdash_ptr = hi_to_xpostab(state, state->dr_left_table_hi_2) + Ldash_row;
+  HLdash_ptr = (u8 *)hi_to_xpostab(state, state->dr_left_table_hi_2) + Ldash_row;
   Aleftval = *HLdash_ptr;
   if (Aleftval) {
     Aleft_stripe_width = ((s8) Aleftval < 0) ? 0 : 15;
@@ -12803,7 +12803,7 @@ static void dr_fill(chqstate_t *state,
   assert(Aleft_stripe_width <= 15);
   state->dr_left_stripe_width = Aleft_stripe_width;
 
-  HLdash_ptr = hi_to_xpostab(state, state->dr_right_table_hi_2) + Ldash_row;
+  HLdash_ptr = (u8 *)hi_to_xpostab(state, state->dr_right_table_hi_2) + Ldash_row;
   Arightval = *HLdash_ptr;
   carry = 0;
   if (Arightval) {
@@ -12930,9 +12930,9 @@ static void dr_fill_left_stripe(chqstate_t *state,
   // EXX - Unbank
 
   H = state->dr_left_table_hi_1;
-  HL = hi_to_xpostab(state, H) + Lrow;
+  HL = (u8 *)hi_to_xpostab(state, H) + Lrow;
   if (*HL == 0) {
-    Axpos = *WRAP(HL, -1, hi_to_xpostab(state, H));
+    Axpos = *WRAP(HL, -1, (u8 *)hi_to_xpostab(state, H));
 
     // EXX - Bank
 
@@ -12959,7 +12959,7 @@ static void dr_fill_left_stripe(chqstate_t *state,
   while (++Bneg_lane_count != 0) {
     H++; // next lane
     assert(H >= 0xE8 && H <= 0xED);
-    HL = hi_to_xpostab(state, H) + Lrow;
+    HL = (u8 *)hi_to_xpostab(state, H) + Lrow;
     if (*HL)
       continue;
 
@@ -12984,7 +12984,7 @@ static void dr_fill_left_stripe(chqstate_t *state,
 
   /* $C68A - Right edge. */
   H = state->dr_right_table_hi_1;
-  HL = hi_to_xpostab(state, H) + Lrow;
+  HL = (u8 *)hi_to_xpostab(state, H) + Lrow;
   A = *HL;
   Lrow--;
   if (*HL == 0) {
@@ -13609,7 +13609,7 @@ frp_c969: /* $C969: 5-zone fork scanline render */
     H_xpos_hi = 0xE8;
 
 #define FRP_LEFT_EDGE(off) \
-    HLtbl = hi_to_xpostab(state, H_xpos_hi); \
+    HLtbl = (const u8 *)hi_to_xpostab(state, H_xpos_hi); \
     if (HLtbl && HLtbl[L] == 0) { \
       A_xpos = HLtbl[(L - 1) & 0xFF]; \
       L_gfx = ((A_xpos & 7) << 2) + (off); \
@@ -13623,7 +13623,7 @@ frp_c969: /* $C969: 5-zone fork scanline render */
       } \
     }
 #define FRP_LANE_MARK(off) \
-    HLtbl = hi_to_xpostab(state, H_xpos_hi); \
+    HLtbl = (const u8 *)hi_to_xpostab(state, H_xpos_hi); \
     if (HLtbl && HLtbl[L] == 0) { \
       A_xpos = HLtbl[(L - 1) & 0xFF]; \
       L_gfx = ((A_xpos & 7) << 1) + (off); \
@@ -13637,7 +13637,7 @@ frp_c969: /* $C969: 5-zone fork scanline render */
       } \
     }
 #define FRP_RIGHT_EDGE(off) \
-    HLtbl = hi_to_xpostab(state, H_xpos_hi); \
+    HLtbl = (const u8 *)hi_to_xpostab(state, H_xpos_hi); \
     if (HLtbl && HLtbl[L] == 0) { \
       A_xpos = HLtbl[(L - 1) & 0xFF]; \
       L_gfx = ((A_xpos & 7) << 2) + (off); \

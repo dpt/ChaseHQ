@@ -7,9 +7,9 @@ perhaps build unit tests now to flush out problems ahead of time.
 - Car starts level at speed
 - Lane change diagonals not working
 - Radio screen sometimes have leftover transition animation parts
-- Perp escape scene causes an immediate crash
+- Perp escape scene causes an immediate crash (prob. tunnel code)
 - Message cursor seems to vanish when idle
-- Car not jumping on steep roads
+- Car (still) not jumping on steep roads
 - Forks seize the game up
 - draw_scene_objects => crash
 
