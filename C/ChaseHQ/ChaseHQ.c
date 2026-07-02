@@ -11741,108 +11741,126 @@ static void prepare_tunnel(chqstate_t *state)
 /**
  * $C15B: Draw tunnel
  *
- * \param[in] state Pointer to game state.
- * \param[in] IYheight Height table pointer. (was IY)
+ * Renders the tunnel entrance, interior, and far wall into the back buffer
+ * for the current road scanline. Called via a self-modified CALL instruction
+ * patched into the main render loop at $8F82 and $8FA7 when the tunnel is
+ * active.
+ *
+ * Three fill phases are drawn back-to-front using the PUSH-table mechanism
+ * (the Z80 uses SP for speed; modelled here with a fall-through switch):
+ *   1. Main body: left-edge fill (dt_fill_start_a) + right fill (dt_fill_start_b)
+ *   2. Transition rows: right fill only (C = $0F masks every row)
+ *   3. Far wall: right fill only (dt_far_wall_mode controls depth)
+ *
+ * The horizontal fill extents are derived from the road centre-right and left
+ * x-position tables, giving the left and right tunnel wall column positions.
+ *
+ * \param[in] state    Pointer to game state.
+ * \param[in] IYheight Pointer to current row's entry in the height table. (was IY)
  */
 static void draw_tunnel(chqstate_t *state, u8 *IYheight)
 {
   int       carry = 0;
-  int       Adistance;
-  int       Avisible;
-  int       Dfill;
-  u8        L;
-  u8        C;
-  s16      *HL;
-  u8        A;
-  u8        D;
-  int       E;
-  u8        B;
-  int       H;
-  const u8 *DE;
-  u16       DEfill;
-  u8       *HLbackbuf;
-  u8       *SPoutput;
+  int       Adistance;    /* row index of this call; compared to SM trigger (was A) */
+  int       Avisible;     /* tunnel-visible countdown; 1 = entrance frame (was A) */
+  int       Dfill;        /* fill byte: $EE for entrance stripes, $FF for interior (was D) */
+  u8        L;            /* low byte of HL: xpos byte-offset then backbuf low byte (was L) */
+  u8        C;            /* fill width correction derived from road edge positions (was C) */
+  s16      *HL;           /* pointer into xpos table during edge calculation (was HL) */
+  u8        A;            /* Z80 accumulator; reused for multiple transient values (was A) */
+  u8        D;            /* left fill boundary 0..22 (jump-table index), then fill byte (was D) */
+  int       E;            /* right fill boundary 0..16 (jump-table index), then fill byte (was E) */
+  u8        B;            /* road row data, then fill loop iteration count (was B) */
+  int       H;            /* high byte of back-buffer row address ($F0..$FF) (was H) */
+  const u8 *DE;           /* pointer into persp_y_scale table (was DE) */
+  u16       DEfill;       /* 16-bit fill word: fill byte repeated (was DE) */
+  u8       *HLbackbuf;    /* back-buffer row pointer for PUSH-based fill (was HL/SP) */
+  u8       *SPoutput;     /* per-scanline write pointer; simulates Z80 SP (was SP) */
 
   Adistance = IYheight - &state->height_table[0];
   if (Adistance != state->dt_tunnel_distance)
     return;
 
   Avisible = state->dt_tunnel_visible;
-  Dfill = 0xEE; // Set fill value to use for striped tunnel entrance
+  Dfill = 0xEE;
   if (--Avisible)
-    Dfill = 0xFF; // Set fill value to use for (much of) tunnel interior
+    Dfill = 0xFF;
 
-  state->dt_fill_pattern = Dfill * 0x0101; // Widen fill value to $EEEE or $FFFF
-  // Conv: Removed SP store
+  state->dt_fill_pattern = Dfill * 0x0101; /* widen to $EEEE or $FFFF */
+  // Conv: Removed SP store ($C16E LD ($C2E4),SP)
 
   L = ~((IYheight[0x4E] - 2) << 1);
   C = 0;
   HL = &state->xpos_road_centre_right[L / 2];
-  A = *HL & 0xFF; // original loads byte here
+  A = *HL & 0xFF; /* Conv: LD A,(HL) byte load from s16* table */
   if (A == 0)
-    goto dt_c18e;
+    goto dt_centre_right_at_zero;
 
-  // This path is hit only when the tunnel is entered
-  D = 16; // jump table target
+  D = 16;
   if ((s8) A < 0)
-    goto dt_c19c;
+    goto dt_check_left;
 
-dt_c188: // loop?
-  D = 22; // jump table target
+dt_max_fill: /* $C188: xpos is wide/positive — use maximum fill extents */
+  D = 22;
   L = 31;
-  goto dt_c1c8;
+  goto dt_start_fill;
 
-dt_c18e:
-  A = HL[-1 / 2]; // was DEC L:LD A,(HL):INC L
+dt_centre_right_at_zero: /* $C18E */
+  /* Conv: Z80 DEC L; LD A,(HL); INC L. L is always odd so L/2 == (L-1)/2
+   * (truncation), making HL[0] the same element as (HL) after DEC L. */
+  A = (u8)(*HL & 0xFF);
   A = (A & 0xF8) >> 3;
   A >>= 1;
   RR(C);
   A++;
   D = A;
 
-dt_c19c:
+dt_check_left: /* $C19C: switch to left xpos table */
   HL = &state->xpos_road_left[L / 2];
-  A = *HL & 0xFF; // original loads byte here
+  A = *HL & 0xFF; /* Conv: LD A,(HL) byte load from s16* table */
   if (A == 0)
-    goto dt_c1aa;
+    goto dt_left_at_zero;
 
   E = 16;
   if ((s8) A < 0)
-    goto dt_c1bc;
+    goto dt_compute_fill_bounds;
 
-  goto dt_c188;
+  goto dt_max_fill;
 
-dt_c1aa:
-  L--; // should move HL
-  A = *HL + 8; // needs to set carry, or adjust below
+dt_left_at_zero: /* $C1AA: left xpos sentinel is zero; read byte before and add 8 */
+  /* Conv: Z80 DEC L then LD A,(HL). As above, L is odd so DEC L gives the same
+   * s16 element — HL does not need to move. Carry from ADD A,$08 was missing. */
+  L--;
+  { int Atmp = (*HL & 0xFF) + 8; carry = Atmp > 0xFF; A = (u8) Atmp; }
   if (carry)
-    goto dt_c188;
+    goto dt_max_fill;
   A = (A & 0xF8) >> 3;
 
   B = A;
   E = 16 - (A >> 1);
 
-dt_c1bc:
+dt_compute_fill_bounds: /* $C1BC: compute left fill width and correction C from B */
   A = 32 - B;
   L = 32;
   RL(C);
   if (carry)
-    goto dt_c1c7;
+    goto dt_set_fill_c;
 
   L--;
   A--;
 
-dt_c1c7:
+dt_set_fill_c: /* $C1C7 */
   C = A;
 
-dt_c1c8:
-  state->dt_fill_start_a = D; // jump table target
-  state->dt_fill_start_b = E; // jump table target
+dt_start_fill: /* $C1C8: store fill boundaries; compute starting back-buffer address */
+  state->dt_fill_start_a = D;
+  state->dt_fill_start_b = E;
 
   A = IYheight[0x35];
   B = A;
   H = (A & 15) + 0xF0;
-  A = ((B & 0x70) << 1) + L; // needs to set carry
+  /* Conv: Z80 ADD A,A then ADD A,L can overflow — capture the carry. */
+  { int Atmp = ((B & 0x70) << 1) + L; carry = Atmp > 0xFF; A = (u8) Atmp; }
   if (carry)
     A--;
 
@@ -11850,13 +11868,13 @@ dt_c1c8:
   A = 128 - B;
   // EX AF,AF'
   E = state->fast_counter & 0xE0;
-  A = A - (E >> 2) - (E >> 4); // map (0,32,64,96,...,224) to (0,22,44,66,...,154)
-  A += (IYheight - &state->height_table[0]); // was IYl
+  A = A - (E >> 2) - (E >> 4); /* map (0,32,64,...,224) to (0,22,44,...,154) */
+  A += (IYheight - &state->height_table[0]); /* was IYl */
   DE = &persp_y_scale[A / 22][A % 22];
   B = *IYheight - B;
   A = *DE;
   E = A;
-  A = (16 - (IYheight - &state->height_table[0])) + E; // was IYl
+  A = (16 - (IYheight - &state->height_table[0])) + E; /* was IYl */
   // EXX
   B = A;
   // EXX
@@ -11865,22 +11883,23 @@ dt_c1c8:
   // EX AF,AF'
   A += D;
   if ((s8) A >= 0)
-    goto dt_c21a;
+    goto dt_clamp_rows;
 
   E = A;
   D -= A - 0x81;
   A = E;
 
-dt_c21a:
+dt_clamp_rows: /* $C21A */
   // EX AF,AF'
   B = D;
 
-  // Pixels of tunnel loaded here. Top byte, D, seems to affect bottom row? Bottom
-  // byte, E, affects whole pattern. The LD E,D later would explain that.
-  DEfill = state->dt_fill_pattern; // pixels of tunnel
+  DEfill = state->dt_fill_pattern;
+  /* Conv: Z80 LD SP,HL at $C21F — init HLbackbuf from the H:L pair computed above.
+   * Was missing; caused use of uninitialised pointer on first SPoutput = HLbackbuf. */
+  HLbackbuf = ADDRTOBACKBUF((H << 8) | L);
   do {
-    SPoutput = HLbackbuf;
-    A = L; // Preserve destination?
+    SPoutput = HLbackbuf; /* $C21F LD SP,HL */
+    A = L;
     switch (state->dt_fill_start_a) {
     default: assert(0);
     case  0: SPoutput -= 2; *SPoutput = DEfill;
@@ -11901,8 +11920,10 @@ dt_c21a:
     case 15: SPoutput -= 2; *SPoutput = DEfill;
     }
     A -= C;
-    L = A; // restore HLbackbuf dest?
-    SPoutput = HLbackbuf;
+    L = A;
+    /* Conv: $C235 LD SP,HL with updated (L - C). Rebuild directly from H:L
+     * since HLbackbuf still holds the iteration-start address. */
+    SPoutput = ADDRTOBACKBUF((H << 8) | L);
     switch (state->dt_fill_start_b) {
     default: assert(0);
     case  0: SPoutput -= 2; *SPoutput = DEfill;
@@ -11923,7 +11944,10 @@ dt_c21a:
     case 15: SPoutput -= 2; *SPoutput = DEfill;
     }
     A += C;
-    L = A; // ie HLbackbuf
+    L = A;
+    /* Conv: prev_buf_row models $C24B DEC H plus row-boundary L adjustment.
+     * H and L (separate C vars) are not synced back from this; subsequent
+     * iterations use HLbackbuf directly for SPoutput at $C21F. */
     HLbackbuf = ADDRTOBACKBUF(prev_buf_row(BACKBUFTOADDR(HLbackbuf)));
     RLC(D);
     E = D;
@@ -11937,7 +11961,7 @@ dt_c21a:
 
   A += B;
   if ((s8) A >= 0)
-    goto dt_c27b;
+    goto dt_second_phase;
 
   E = A;
   A -= 0x81;
@@ -11946,7 +11970,7 @@ dt_c21a:
   B = A;
   A = E;
 
-dt_c27b:
+dt_second_phase: /* $C27B */
   // EX AF,AF'
   A = B;
   // EXX
@@ -11954,10 +11978,10 @@ dt_c27b:
   A = L;
   A &= 0x0F;
   if (A)
-    goto dt_c285;
+    goto dt_second_loop;
   L--;
 
-dt_c285:
+dt_second_loop: /* $C285 */
   C = 0x0F;
   do {
     SPoutput = HLbackbuf;
@@ -11992,12 +12016,12 @@ dt_c285:
   DE = 0x0000;
   A = state->dt_far_wall_mode;
   if (A == 0)
-    goto dt_c2c1;
+    goto dt_far_wall_loop;
   A--;
   if (A)
     goto dt_exit;
   DE--;
-dt_c2c1:
+dt_far_wall_loop: /* $C2C1 */
   do {
     SPoutput = HLbackbuf;
     switch (state->dt_fill_start_b) {
@@ -12022,7 +12046,7 @@ dt_c2c1:
   } while (--B > 0);
 
 dt_exit:
-  ; // Conv: SP restore removed
+  ; // Conv: SP restore removed ($C2E3 LD SP,$0000)
 }
 
 /** Return pointer to the start of the 256-byte Z80 road-position page ($E8..$ED). */
