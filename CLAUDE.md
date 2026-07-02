@@ -131,6 +131,7 @@ When a C translation looks wrong or a variable appears uninitialised, consult th
 - Which register holds what value at each Z80 address — registers are reused and a "was B" comment tells you the register name, not which logical value it held at that moment.
 - `EX AF,AF'` / `EXX` banking: a value banked before a branch may arrive at a label with a different register than you expect. Be especially careful when a shadow register is used as a shuttle (e.g. `EX AF,AF'` passes a value through A' so that the main A can hold something else on the other side of a block). The two sides of the exchange hold logically different values even though both are named `A`.
 - Self-modifying instructions (`SM $xxxx` annotations in `chqstate`): these are the C equivalent of Z80 code patching itself at runtime.
+- **Pointer arithmetic writes are invisible to literal-address grep.** A `LD (HL),A` after `INC L` (or `INC HL`, `ADD HL,DE`, etc.) will not appear in search results for that address. When "nothing writes `$XXXX`" from a grep, check whether any loop or sequence advances a pointer past the end of a named table and lands on the target. The `build_height_table` write to `$E34C` is a worked example.
 
 ## Common translation bugs
 
@@ -192,6 +193,33 @@ automatically between statements.
 not when it decrements to zero. Use `do { … A += 2; } while (A != 0)`
 with `u8 A`. Never add `--A` to the condition; that turns a +2 step into
 a net +1 step and doubles the iteration count.
+
+**`LD A,E` swap before computation** — when the Z80 does `LD A,E` just
+before a processing block, it is using the *old* E value as the working
+quantity, not whatever A currently holds. Identify which logical value the
+block operates on and use that C variable throughout.
+
+**`LD SP,HL; PUSH × N` backward fill** — `PUSH` decrements SP before
+writing, so N pushes fill 2N bytes *before* the pointer, not after it. In
+C: `memset(ptr − 2*N, value, 2*N)`, not `memset(ptr, …)`.
+
+## Known data layout: $E34B–$E34D horizon attribute scroll
+
+`state->horizon_attr[3]` (Z80 `$E34B–$E34D`) drives the per-frame sky/ground colour boundary update in `update_screen` (`ds_attributes`, `$BD5A`):
+
+| Field | Z80 | Role |
+|-------|-----|------|
+| `horizon_attr[0]` | `$E34B` | Previous rounded Cmin (written by `build_height_table` each frame) |
+| `horizon_attr[1]` | `$E34C` | Current frame's delta: `new_round − old_round`, multiples of 8 |
+| `horizon_attr[2]` | `$E34D` | Previous frame's delta (one-frame lag used by `ds_attributes`) |
+
+**Who writes `$E34C`:** `build_height_table` (`$CDD1–$CDD4`) — the "final bytes" that follow the 21-entry `bht_loop2`. After writing the 21 clamped heights to `$E336–$E34A`, HL points to `$E34B`; the code then writes `C` (rounded Cmin) to `$E34B` and `A = C − old_$E34B` to `$E34C`. In the C port this happens via `pdst = &clamped_heights[21]` which aliases `horizon_attr[0]` by struct layout (both `u8`, consecutive, no padding).
+
+**This write is invisible to a literal-address grep for `$E34C`** — it is reached through pointer arithmetic ending at that address, not a hardcoded `LD ($E34C),A`. Any similar "who writes X?" search must check for pointer arithmetic that ends at the target address, not just literal-constant stores.
+
+**`ds_attributes` logic:** reads the *previous* frame's delta (`$E34D`/`horizon_attr[2]`) to decide whether to act; uses the *current* frame's delta (`$E34C`/`horizon_attr[1]`) as the movement amount for the *next* frame (one-frame lag). The pointer `$A186` (`session.horizon_attribute`) is a Z80 address pointing to the **last byte** (byte 31) of the current sky/ground boundary row. The Z80 fills 30 bytes backward via `LD SP,HL; PUSH BC × 15`; in C this is `memset(ptr − 30, colour, 30)`.
+
+**Initialisation:** `load_scene` (around `$880A`) sets `horizon_attr[0] = 8`, `[1] = 0`, `[2] = 0`. `build_height_table` overwrites `[0]` and `[1]` on the first call; the `8` only matters as the reference point for that first delta.
 
 ## Known data layout: $E4xx road graphics page
 

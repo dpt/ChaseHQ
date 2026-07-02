@@ -344,3 +344,40 @@ Aiterations += 2;
 **Rule:** Any Z80 `INC A; … JP NZ` (or `ADD A,n; JP NZ`) loop terminates when A wraps through 0. The C equivalent is `while ((u8)(A += n) != 0)` or a `do { ... A += n; } while (A != 0)` with `u8 A`. Never use `--` inside the condition of such a loop.
 
 **Commit:** `136e57d`
+
+---
+
+## 23. Stale working register — `LD A,E` swap before computation
+
+**Root cause:** The Z80 sometimes loads a register into A immediately before a computation to use its *old* value, even though a newer value is also in scope. When the C translation sees both variables live at that point, it is easy to use the newer one by mistake — the C port just reads the name, not the timing.
+
+**Bug:** `ds_attributes` (`update_screen`) loads `A = $E34C` (current delta) and `E = $E34D` (previous delta), then saves A to `$E34D`. The Z80 then does `LD A,E` at `$BD67` so that the rest of the block — the sign extension (`SBC A,A`), the shift (`ADD A,A; ADD A,A`), and the pointer adjustment — all operate on the *previous* delta. The C port kept `A` (current delta) as the working value throughout the block, silently using the wrong frame's data for every frame that the block fired.
+
+**Fix:** After the save (`state->horizon_attr[2] = A`), switch to `E` for all subsequent computation inside the `if (E != 0)` block. Compute `D` from `E` first (before shifting it), then shift `E`:
+
+```c
+D = (E >= 64) ? 0xFF : 0x00;   /* sign from previous delta */
+E = (E << 2);                    /* E = previous * 4 */
+```
+
+**Rule:** When the Z80 does `LD A,reg` at the start of a processing block — especially after both the old and new values of `reg` are in registers — find which logical value is needed for the computation (usually the *old* one), and use that C variable, not the one that was most recently updated.
+
+**Commit:** fix ds_attributes A-vs-E bug
+
+---
+
+## 24. `LD SP,HL; PUSH × N` fills backward, not forward
+
+**Root cause:** The Z80 `PUSH` instruction decrements SP by 2 *before* writing. So `LD SP,HL; PUSH BC × 15` fills 30 bytes at addresses `HL−30 … HL−1` (backward from HL, exclusive). In C, `memset(ptr, colour, 30)` fills forward from `ptr` to `ptr+29` — exactly the wrong direction when `ptr` is an end-of-row pointer.
+
+**Bug:** `ds_attributes` (`update_screen`) maintains `horizon_attribute` as a Z80 address pointing to the *last byte* of the current sky/ground boundary row (e.g. `$59BF` = byte 31 of attribute row 13). The Z80 sets `SP = $A186` (that pointer) and pushes 15 words backward, filling bytes 1–30 of the row. The C port called `memset(HLattrs, colour, 30)` which wrote byte 31 of that row and bytes 0–28 of the *next* row, spilling sky colour into the wrong attribute rows every frame the block fired.
+
+**Fix:** Shift the `memset` start back by the fill length:
+
+```c
+memset(HLattrs - 30, colour, 30);   /* backward fill from end-of-row pointer */
+```
+
+**Rule:** Whenever the Z80 does `LD SP,HL` followed by N `PUSH` instructions to fill memory, the C equivalent is `memset(ptr - 2*N, value, 2*N)`. The pointer is an *exclusive upper bound*, not the start of the region. If the pointer is an end-of-line attribute pointer (pointing at byte 31 of a 32-byte row), the fill covers bytes 1–30, leaving bytes 0 and 31 untouched — match that in C.
+
+**Commit:** fix ds_attributes backward-fill bug

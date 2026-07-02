@@ -3,7 +3,6 @@ perhaps build unit tests now to flush out problems ahead of time.
 
 # BUGS
 
-- Sky attributes intruding on road
 - Hitting invisible objects
 - Car starts level at speed
 - Lane change diagonals not working
@@ -48,6 +47,7 @@ perhaps build unit tests now to flush out problems ahead of time.
 
 # DONE
 
+- Sky attributes intruding on road
 - Road corrupt in distance
 - Road corrupt (looks like a wall) at looping point
 - Lane markings don't appear closest to player: draw_road_lanes_change

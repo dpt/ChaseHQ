@@ -10971,18 +10971,19 @@ static void update_screen(chqstate_t *state)
   u8        *buf;       /* was HL' */
   u16        bufoffset; // Conv: added
   ptrdiff_t  scroff;    // Conv: for safe bounds checking
-  u8         H;
-  u8         A;
-  int        res;
-  int        carry;
-  int        overflow;
-  u8         L;
-  u8         E;
-  u8         D;
-  s16        DElevel;
-  u8        *HLattrs;
-  u16        BCattrs;
-  u8         Cattr;
+  u8         H_bufpage;     /* backbuffer start page 0xF0 (was H) */
+  u8         A_buflo;       /* bufoffset low byte for group-advance test (was A) */
+  int        res;           /* Conv: A_buflo − H_bufpage result */
+  int        carry;         /* Conv: unsigned borrow flag */
+  int        overflow;      /* Conv: Z80 V-flag */
+  u8         L_nextlo;      /* next row-group start low byte (was L) */
+  u8         A_cur_delta;   /* current horizon attr delta, $E34C (was A) */
+  u8         E_prev_delta;  /* previous horizon attr delta, $E34D (was E) */
+  u8         D_sign;        /* sign extension of E_prev_delta (was D) */
+  s16        DElevel;       /* signed attr-row offset in bytes (was DE) */
+  u8        *HLattrs;       /* pointer into attr memory (was HL) */
+  u16        BCattrs;       /* attribute colour word (was BC) */
+  u8         Cattr;         /* single attribute byte (was C) */
 
   scr = ADDRTOSCREEN(0x4811); // (136, 64)
   buf = ADDRTOBACKBUF(0xF001); // (8, 1)
@@ -11019,35 +11020,37 @@ static void update_screen(chqstate_t *state)
        *
        * This is a Z80 "SUB H" on the low byte of bufoffset, using H set
        * to 0xF0 — the high byte of BACKBUFFER_START_ADDRESS.  Each time
-       * the magic fires, A holds successive low bytes of the end-of-group
-       * bufoffset: 0x11, 0x31, 0x51, 0x71, 0x91, 0xB1, 0xD1, 0xF1.
+       * the magic fires, A_buflo holds successive low bytes of the
+       * end-of-group bufoffset: 0x11, 0x31, 0x51, 0x71, 0x91, 0xB1,
+       * 0xD1, 0xF1.
        *
-       * carry    (unsigned A < H = 0xF0): set for the first seven groups
-       *          (A = 0x11..0xD1); clear at A = 0xF1, meaning all eight
-       *          groups of 16 rows (128 rows total) are done → break.
+       * carry    (unsigned A_buflo < H_bufpage = 0xF0): set for the first
+       *          seven groups (A_buflo = 0x11..0xD1); clear at 0xF1,
+       *          meaning all eight groups of 16 rows (128 total) → break.
        *
-       * overflow (signed 8-bit overflow of A - H): fires when A + 16
-       *          exceeds +127, i.e. the first time A = 0x71.  That is
-       *          exactly the 64-row midpoint of the backbuffer, which
-       *          corresponds to the boundary between the ZX Spectrum
-       *          screen's middle third (rows 64-127, starting at 0x4811)
-       *          and its bottom third (rows 128-191, starting at 0x5011).
+       * overflow (signed 8-bit overflow of A_buflo - H_bufpage): fires
+       *          when A_buflo + 16 exceeds +127, i.e. the first time
+       *          A_buflo = 0x71. That is exactly the 64-row midpoint of
+       *          the backbuffer, which corresponds to the boundary between
+       *          the ZX Spectrum screen's middle third (rows 64-127,
+       *          starting at 0x4811) and its bottom third (rows 128-191,
+       *          starting at 0x5011).
        *
-       * L = (A - H) & 0xFF is the low byte of the next row-group's
-       * backbuffer start address, so ADDRTOBACKBUF(0xF000 | L) resets
-       * buf to the beginning of the next group.
+       * L_nextlo = (A_buflo - H_bufpage) & 0xFF is the low byte of the
+       * next row-group's backbuffer start address, so
+       * ADDRTOBACKBUF(0xF000 | L_nextlo) resets buf to the next group.
        */
-      H        = 0xF0;
-      A        = bufoffset & 0xFF;
-      res      = A - H;
-      carry    = (A < H); // unsigned: set while rows remain
-      overflow = ((H ^ A) & (res ^ A)) >> 7; // Z80 V-flag formula
-      L        = res; // low byte of next group start
+      H_bufpage = 0xF0;
+      A_buflo   = bufoffset & 0xFF;
+      res       = A_buflo - H_bufpage;
+      carry     = (A_buflo < H_bufpage); // unsigned: set while rows remain
+      overflow  = ((H_bufpage ^ A_buflo) & (res ^ A_buflo)) >> 7; // V-flag
+      L_nextlo  = res; // low byte of next group start
 
       if (!carry)
-        break; // A >= 0xF0: all 128 rows written
+        break; // A_buflo >= 0xF0: all 128 rows written
 
-      buf = ADDRTOBACKBUF((H << 8) | L); // reposition to next row-group
+      buf = ADDRTOBACKBUF((H_bufpage << 8) | L_nextlo); // next row-group
 
       if (!overflow) {
         scroff = SCREENTOOFFSET_LR(scr, 0, 256) - 0x07EE;
@@ -11069,13 +11072,15 @@ static void update_screen(chqstate_t *state)
     if (state->dont_draw_screen_attrs)
       goto exit;
 
-    A = state->horizon_attr[1];
-    E = state->horizon_attr[2]; // current value?
-    state->horizon_attr[2] = A;
-    if (E != 0) { // if moved? some sort of previous/current behaviour here. is table holding deltas?
-      E = (A << 2);
-      D = (A >= 64) ? 0xFF : 0x00; /* was SBC A,A - must be sign extending */
-      DElevel = (D << 8) | E;
+    A_cur_delta  = state->horizon_attr[1]; // current delta ($E34C)
+    E_prev_delta = state->horizon_attr[2]; // previous delta ($E34D)
+    state->horizon_attr[2] = A_cur_delta;  // $E34D = current
+    // $BD67 LD A,E — use the *previous* delta for movement this frame
+    if (E_prev_delta != 0) {
+      // Sign-extend from E_prev_delta before shifting it
+      D_sign       = (E_prev_delta >= 64) ? 0xFF : 0x00; /* was SBC A,A */
+      E_prev_delta = (E_prev_delta << 2); /* previous * 4 (attr bytes) */
+      DElevel      = (D_sign << 8) | E_prev_delta;
 
       assert(state->session.horizon_attribute != 0);
 
@@ -11084,16 +11089,17 @@ static void update_screen(chqstate_t *state)
       // Set sky colour by default
       BCattrs = (attribute_BRIGHT_BLACK_OVER_CYAN << 8) |
                 attribute_BRIGHT_BLACK_OVER_CYAN;
-      // If A was zero then jump (Z => sky, NZ => ground)
+      // $BD76 JR Z — sky if D==0, ground if D!=0
       if (DElevel < 0) {
-        // Set ground colour
+        // Set ground colour; adjust pointer up before filling
         BCattrs = state->stage->ground_colour;
         HLattrs += DElevel;
       }
 
-      // Fill 30 bytes - length of attribute line minus the two blank edges
-      // Conv: We instead use memset() and only use bottom byte of BCattrs
-      memset(HLattrs, BCattrs & 0xFF, 30);
+      // Z80 fills 30 bytes backward via PUSH BC×15 from end-of-row pointer;
+      // equivalent forward fill starts 30 bytes before HLattrs.
+      memset(HLattrs - 30, BCattrs & 0xFF, 30);
+      // $BD8F ADD HL,DE — sky only: advance pointer to next row
       if (DElevel >= 0)
         HLattrs += DElevel;
       state->session.horizon_attribute = ATTRSTOADDR(HLattrs);
