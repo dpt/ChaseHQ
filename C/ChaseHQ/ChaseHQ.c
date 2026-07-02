@@ -3902,7 +3902,7 @@ static void draw_tunnel_light_common(chqstate_t            *state,
                                      int                     Bdepth,
                                      const depthset_t      *DEdepthset,
                                      draw_object_entrypt_t *HLcallback,
-                                     const s16  *IXxpos,
+                                     const s16              *IXxpos,
                                      const u8              *IYheight)
 {
   int A; /* perspective-adjusted column offset passed to callback (was A) */
@@ -4291,17 +4291,24 @@ static void draw_object_common_flipped(chqstate_t     *state,
 }
 
 /**
- * $9333: Draw object: clip to visible area and dispatch to plot function
+ * $9333: Clip object to visible area and dispatch to plot function
  *
- * \param[in] state          Pointer to game state.
- * \param[in] zero_flipped   Zero flipped.
- * \param[in] carry_masked   Carry masked.
- * \param[in] Awidth_bytes   Bitmap byte width.
- * \param[in] Bheight        Number of rows.
- * \param[in] Cpadding       Cpadding.
- * \param[in] Ebitmap_stride Source bitmap data.
- * \param[in] HLbitmap       Source bitmap data.
- * \param[in] IYheight       IYheight register value.
+ * Determines how many rows of the bitmap are visible given the object's
+ * position in the Y-height table, skips invisible leading rows, then
+ * dispatches to the appropriate sprite-plot routine (masked/unmasked,
+ * normal/flipped/inverted, even/odd width).
+ *
+ * \param[in] state           Pointer to game state.
+ * \param[in] zero_flipped    Non-zero if the object is NOT flipped. (was Z flag)
+ * \param[in] carry_masked    Non-zero if the bitmap uses a transparency mask.
+ *                            (was C flag / carry)
+ * \param[in] Awidth_bytes    Draw width of bitmap, in bytes. (was A)
+ * \param[in] Bheight         Initial height parameter from caller. (was B)
+ * \param[in] Cpadding        Padding bytes between bitmap rows. (was C)
+ * \param[in] Ebitmap_stride  Full stride of one bitmap row, in bytes. (was E)
+ * \param[in] HLbitmap        Pointer to the bitmap descriptor. (was HL)
+ * \param[in] IYheight        Pointer to the Y-height table entry for this
+ *                            object slot. (was IY)
  */
 static void draw_object_clipped(chqstate_t     *state,
                                 int             zero_flipped,
@@ -4313,30 +4320,30 @@ static void draw_object_clipped(chqstate_t     *state,
                                 const bitmap_t *HLbitmap,
                                 const u8       *IYheight)
 {
-  int               carry;
-  int               D_933D;
-  int               Adash_iy_diff;
-  int               Adash1;
-  int               Adash2;
-  int               Adash933D;
-  int               Dheight;
-  int               Diy_diff;
-  int               Ay;
-  int               D;
-  int               BCpadding;
-  int               carry_shifted;
-  int               Adash_9395;
-  const u8         *HLbitmap_data;
-  int               BCwidth_bytes;
-  int               Adash3;
-  int               Bdash_height;
-  int               Adash_type;
-  int               IXjump_offset;
-  plot_sprite_cb_t *BCdash_callback;
-  int               By;
-  int               DEbitmap_stride;
-  int               Adash_pushed;
-  u8               *HLdash_backbuf_addr;
+  int               carry;               /* carry flag */
+  int               D_col_pos;           /* self-modified col position ($933D) (was D) */
+  int               Adash_y_range;       /* IY[0]-IY[$35]: vertical range of object (was A') */
+  int               Adash_y_pos;         /* working row-position accumulator (was A') */
+  int               Adash_clip_rows;     /* height - 1 - y_range: rows clipped (was A') */
+  int               Adash_col_adj;       /* col_pos adjusted for bitmap height (was A') */
+  int               Dheight;             /* bitmap height in rows (was D) */
+  int               Diy_diff;            /* y-range difference used for row skip (was D) */
+  int               Ay_remaining;        /* remaining rows after adjustment (was A) */
+  int               D_draw_height;       /* clipped draw height in rows (was D) */
+  int               BCpadding;           /* row padding bytes, B=0 (was BC) */
+  int               carry_shifted;       /* 1 if shifted bitmap selected (was carry) */
+  int               Adash_shift_sel;     /* shift selector byte from self-mod $9395 (was A') */
+  const u8         *HLbitmap_data;       /* pointer into selected bitmap row data (was HL) */
+  int               BCwidth_bytes;       /* bitmap stride copy, used as multiplier (was BC) */
+  int               Adash_skip_rows;     /* rows to skip before drawing (was A') */
+  int               Bdash_height;        /* banked draw height for row loop (was B') */
+  int               Adash_type;          /* doc_inverted value for dispatch (was A') */
+  int               IXjump_offset;       /* jump-table offset into plot routine (was IX) */
+  plot_sprite_cb_t *BCdash_callback;     /* banked pointer to plot callback (was BC') */
+  int               By_row_off;          /* row offset for loop termination (was B') */
+  int               DEbitmap_stride;     /* bitmap stride, widened to int (was DE) */
+  int               Adash_pushed;        /* banked row base, preserved across clipping (was A') */
+  u8               *HLdash_backbuf_addr; /* back-buffer write address (was HL') */
 
 
   if (carry_masked) {
@@ -4350,48 +4357,48 @@ static void draw_object_clipped(chqstate_t     *state,
   // INC HL  - removed
 
   for (;;) {
-    D_933D = state->doc_col_pos;
-    Adash_iy_diff = IYheight[0] - IYheight[53];
-    if (Adash_iy_diff)
-      goto doc_9359;
+    D_col_pos = state->doc_col_pos;
+    Adash_y_range = IYheight[0] - IYheight[53];
+    if (Adash_y_range)
+      goto doc_y_range_nonzero;
 
-doc_9347:
-    Adash1 = IYheight[53] + D_933D;
-    if ((s8) Adash1 < 0)
+doc_y_range_zero:
+    Adash_y_pos = IYheight[53] + D_col_pos;
+    if ((s8) Adash_y_pos < 0)
       return;
 
     // PUSH AF  -- push Adash & flags
-    Adash_pushed = Adash1;
+    Adash_pushed = Adash_y_pos;
 
-    Adash1++;
+    Adash_y_pos++;
 
     Dheight = HLbitmap->height; /* Conv: HLbitmap adjusted, this loads from bitmap.height */
-    Adash1 -= Dheight;
-    if ((s8) Adash1 >= 0) // was !carry
-      Adash1 = 0;
-    Adash1 += Dheight;
+    Adash_y_pos -= Dheight;
+    if ((s8) Adash_y_pos >= 0) // was !carry
+      Adash_y_pos = 0;
+    Adash_y_pos += Dheight;
     // HLbitmap++; // now points at HLbitmap.data
     Diy_diff = 1;
-    D = Adash1;
-    goto doc_9390;
+    D_draw_height = Adash_y_pos;
+    goto doc_compute_bitmap;
 
-doc_9359:
-    if ((D_933D & (1 << 7)) == 0) // checking for +ve?
-      Adash_iy_diff -= D_933D;
+doc_y_range_nonzero:
+    if ((D_col_pos & (1 << 7)) == 0) // checking for +ve?
+      Adash_y_range -= D_col_pos;
     else
-      Adash_iy_diff += D_933D;
+      Adash_y_range += D_col_pos;
 
-    Diy_diff = Adash_iy_diff;
-    if ((s8) Adash_iy_diff <= 0)
-      goto doc_9347;
+    Diy_diff = Adash_y_range;
+    if ((s8) Adash_y_range <= 0)
+      goto doc_y_range_zero;
 
-    Adash1 = IYheight[53];
+    Adash_y_pos = IYheight[53];
 
     // PUSH AF  -- push Adash & flags
-    Adash_pushed = Adash1;
-    Adash2 = HLbitmap->height - 1 -
+    Adash_pushed = Adash_y_pos;
+    Adash_clip_rows = HLbitmap->height - 1 -
              Diy_diff; /* Conv: HLbitmap adjusted, this loads from bitmap.height */
-    if ((s8) Adash2 >= 0) // was !carry
+    if ((s8) Adash_clip_rows >= 0) // was !carry
       break; // was goto _938d
     // POP AF - pop IYheight[53] to discard it?
 
@@ -4400,42 +4407,42 @@ doc_9359:
 
     // inverted
 
-    Adash933D = state->doc_col_pos;
+    Adash_col_adj = state->doc_col_pos;
     Dheight = HLbitmap->height; // reads bitmap.height again
-    Adash933D -= Dheight;
-    if ((s8) Adash933D >= 0)
+    Adash_col_adj -= Dheight;
+    if ((s8) Adash_col_adj >= 0)
       return;
-    state->doc_col_pos = Adash933D;
+    state->doc_col_pos = Adash_col_adj;
 
-    Ay = state->doc_rows_main - Dheight;
-    if ((s8) Ay <= 0)
+    Ay_remaining = state->doc_rows_main - Dheight;
+    if ((s8) Ay_remaining <= 0)
       return;
-    state->doc_rows_main = Ay;
+    state->doc_rows_main = Ay_remaining;
   }
 
   // AF is pushed here
 
-  Adash2++;
-  D = Adash2;
+  Adash_clip_rows++;
+  D_draw_height = Adash_clip_rows;
   Diy_diff++;
   // HLbitmap++; Conv: removed - points HL at bitmap.data
 
-doc_9390:
+doc_compute_bitmap:
   // PUSH BC,DE
   BCpadding = Cpadding; // was B = 0
-  Adash_9395 = state->doc_shift_select;
-  carry_shifted = Adash_9395 & 1; Adash_9395 >>= 1;
+  Adash_shift_sel = state->doc_shift_select;
+  carry_shifted = Adash_shift_sel & 1; Adash_shift_sel >>= 1;
   HLbitmap_data = (carry_shifted) ? HLbitmap->shifted : HLbitmap->data;
   // was HL += 2; Conv: removed - points HL at bitmap.shifted
 
   HLbitmap_data += BCpadding;
   state->doc_bitmap_ptr = HLbitmap_data;
   BCwidth_bytes = Ebitmap_stride;
-  Adash3 = Diy_diff - 1; // rows to skip before drawing (was POP AF restoring DE)
+  Adash_skip_rows = Diy_diff - 1; // rows to skip before drawing (was POP AF restoring DE)
   HLbitmap_data += BCwidth_bytes *
-                   Adash3; // Conv: multiplier routine replaced with single mul
+                   Adash_skip_rows; // Conv: multiplier routine replaced with single mul
 
-  BCpadding = D; //  (B is zero here)  D is heightish value from above
+  BCpadding = D_draw_height; /* draw height resolved from clipping above (was D) */
   DEbitmap_stride = Ebitmap_stride; // widen
 
   // EXX - BANK - first banking op in this routine
@@ -4451,7 +4458,7 @@ doc_9390:
   Adash_type = state->doc_inverted; // set to 0 or 2
   if (Adash_type) {
     if (--Adash_type)
-      goto doc_93df;
+      goto doc_unmasked_rows;
     // EX AF,AF'  -- unbank flags (carry => masked) and Awidth_bytes
     if (carry_masked) {
       plot_masked_sprite_inverted(state,
@@ -4499,26 +4506,26 @@ doc_9390:
   }
   return;
 
-doc_93df:
+doc_unmasked_rows:
   // EX AF,AF'  -- unbank flags (carry => masked) and Awidth_bytes
   if (carry_masked)
-    goto doc_9436;
+    goto doc_masked_rows;
   SRL(Awidth_bytes); // carry set if odd
   if (carry)
-    goto plot_sprite_xxx_odd;
+    goto doc_unmasked_odd;
 
   IXjump_offset = (4 - Awidth_bytes) * 5;
   BCdash_callback = plot_sprite_even;
 
-doc_do_set_callbacks:
+doc_set_callbacks:
   state->doc_plot_fn = BCdash_callback;
   state->doc_plot_fn_2 = BCdash_callback;
 
   // EXX - UNBANK
 
-  By = BCpadding;
+  By_row_off = BCpadding;
   for (;;) {
-    Awidth_bytes = state->doc_rows_main - By;
+    Awidth_bytes = state->doc_rows_main - By_row_off;
     if ((s8) Awidth_bytes <= 0)
       break;
 
@@ -4535,10 +4542,10 @@ doc_do_set_callbacks:
                        HLbitmap_data);
 
     HLbitmap_data = state->doc_bitmap_ptr;
-    By = state->doc_rows_2nd;
+    By_row_off = state->doc_rows_2nd;
   }
 
-  Bdash_height = Awidth_bytes + By;
+  Bdash_height = Awidth_bytes + By_row_off;
 
   // EXX - BANK
 
@@ -4550,13 +4557,13 @@ doc_do_set_callbacks:
                    HLbitmap_data); /* was exit via */
   return;
 
-plot_sprite_xxx_odd:
+doc_unmasked_odd:
   // this will need to become a jump offset and a new entry point for plot_sprite_odd is needed
   IXjump_offset = 5 * (3 - Awidth_bytes);
   BCdash_callback = plot_sprite_odd_entrypt;
-  goto doc_do_set_callbacks;
+  goto doc_set_callbacks;
 
-doc_9436:
+doc_masked_rows:
   IXjump_offset = (8 - Awidth_bytes) * 6; // plot_masked_sprite needs * 6
   state->doc_mask_bitmap_ptr = state->doc_bitmap_ptr;
 
@@ -4570,9 +4577,9 @@ doc_9436:
   DEbitmap_stride &= 0xFF; // clear top of DEbitmap_stride
   Bheight = BCpadding;
   for (;;) {
-    Ay = state->doc_mask_rows_main - Bheight; // y offset?
-    if ((s8) Ay > 0) {
-      state->doc_mask_rows_main = Ay;
+    Ay_remaining = state->doc_mask_rows_main - Bheight;
+    if ((s8) Ay_remaining > 0) {
+      state->doc_mask_rows_main = Ay_remaining;
 
       plot_masked_sprite(state,
                          IXjump_offset,
@@ -4584,7 +4591,7 @@ doc_9436:
       HLbitmap_data = state->doc_mask_bitmap_ptr;
       Bheight = state->doc_mask_rows_2nd;
     } else {
-      Bheight += Ay;
+      Bheight += Ay_remaining;
       plot_masked_sprite(state,
                          IXjump_offset,
                          Bheight,
