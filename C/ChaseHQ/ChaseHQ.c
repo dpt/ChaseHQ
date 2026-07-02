@@ -11279,40 +11279,53 @@ static void clear_playfield_set_attrs(chqstate_t *state)
 }
 
 /**
- * $BDFB: Read map
+ * $BDFB: Read the next map frame into the road buffer.
  *
- * Called from main loop.
+ * Resets the per-frame SFX triggers and the allow-spawning counter, then
+ * decides how many times to advance the cyclic road buffer this frame.
+ * At normal speed (high byte of speed = 0) the buffer advances once only
+ * when fast_counter overflows after accumulating the speed value.  At high
+ * speed (high byte odd) the buffer is advanced once unconditionally before
+ * the accumulation, and a second time if the accumulation overflows.  All
+ * actual buffer advancing and data-channel decoding are delegated to
+ * rm_cycle_buffer_offset.
  *
- * \param[in] state Pointer to game state.
+ * \param[in] state  Pointer to game state.
  */
-static void read_map(chqstate_t *state) {
-  u8 *pfast_counter;  /* was HL */
-  int speed;          /* was DE */
-  int speed_lo;       /* was A */
-  int allow_spawning; /* was A */
+static void read_map(chqstate_t *state)
+{
+  u8  *HLfast_counter; /* pointer to the per-frame accumulator (was HL) */
+  int  DEspeed;        /* current vehicle speed word (was DE) */
+  int  Aspeed_lo;      /* low byte of speed; added to fast_counter each frame (was A) */
 
-  state->trigger_lefthand_sfx = state->trigger_righthand_sfx = 0;
+  state->trigger_lefthand_sfx = state->trigger_righthand_sfx = 0; /* $BDFB-$BE02 */
   state->allow_spawning = 0;
-  pfast_counter = &state->fast_counter;
-  speed = state->speed;
-  speed_lo = speed & 0xFF;
-  if (speed > 255)
-    /* Otherwise we're going fast. This seems to cause the buffer to be
-     * processed twice as often as when in slow mode. */
-      rm_cycle_buffer_offset(state, pfast_counter);
 
-  *pfast_counter += speed_lo;
-  allow_spawning = 0; /* Disallow car spawning */
-  if (*pfast_counter < speed_lo) {
-    /* if carry */
-    rm_cycle_buffer_offset(state, pfast_counter); /* was fallthrough */
+  HLfast_counter = &state->fast_counter; /* $BE05 */
+  DEspeed   = state->speed;              /* $BE08 */
+  Aspeed_lo = DEspeed & 0xFF;            /* $BE0C: LD A,E */
+
+  /* $BE0D-$BE10: RR D sets carry = D's old bit 0; JR NC skips when carry=0.
+   * Extra cycle when D is odd (in practice D is 0 or 1, so this is
+   * equivalent to D != 0). Conv: translated as (DEspeed & 0x100) which
+   * checks bit 0 of D exactly; the prior C `speed > 255` was equivalent
+   * for D in {0,1} but wrong for D >= 2. */
+  if (DEspeed & 0x100)
+    rm_cycle_buffer_offset(state, HLfast_counter);
+
+  /* $BE18-$BE19: fast_counter += low byte of speed */
+  *HLfast_counter += (u8)Aspeed_lo;
+
+  /* $BE1A-$BE1C: LD A,$00; JP NC,$C0D9: if no carry skip to rm_inc_spawning
+   * with A=0. Conv: the $C0D9 ADD A,(HL) with A=0 is a no-op (allow_spawning
+   * stays 0); omitted. */
+  if (*HLfast_counter >= (u8)Aspeed_lo) { /* JP NC: no overflow */
+    check_hazard_collisions(state);
     return;
   }
 
-  /* Conv: Duplicate of rm_allow_car_spawning - rm_cycle_buffer_offset has its
-   * own copy */
-  state->allow_spawning += allow_spawning; /* always zero here - retained for ref. */
-  check_hazard_collisions(state); /* exit via */
+  /* carry: cycle the buffer a second time this frame */
+  rm_cycle_buffer_offset(state, HLfast_counter);
 }
 
 /**
