@@ -1458,8 +1458,8 @@ const scenedata_t escape_scene_data = {
   &perp_escape_curvature[-1],
   &perp_escape_height[-1],
   &perp_escape_lanes[-1],
-  &perp_escape_hazards[5],
-  &perp_escape_hazards[5],
+  &perp_escape_curvature[-1],
+  &perp_escape_curvature[-1],
   &perp_escape_hazards[-1],
 };
 
