@@ -8024,44 +8024,60 @@ static void cycle_counters(chqstate_t *state)
 }
 
 /**
- * $A637: Perp behaviour
+ * $A637: perp_behaviour [Conv: HQ]
  *
- * \param[in] state  Pointer to game state.
- * \param[in] IXperp Perp hazard. (was IX)
+ * Controls the perp car each frame: reacts to collisions, manages lane
+ * changes and scales approach speed by distance.
+ *
+ * IX[7] (hit_timer) drives a three-way FSM on entry:
+ *   - positive: just hit; branch to pb_set_delay to apply crash penalty, add
+ *               bonus and reset timer to $FC.
+ *   - negative ($FC–$FF): still counting down; increment and return.
+ *   - zero:     normal frame; run full lane/speed management.
+ *
+ * In the normal path the function first walks the five non-perp hazard slots
+ * to check whether any active vehicle is in the same lane and within range,
+ * forcing a random lane change if so.  It then picks a new lane via a random
+ * ±1 walk biased by road width, clamps the result to the spawn-lane bounds,
+ * slides horz_pos toward the target position and finally scales the perp's
+ * approach speed by the remaining distance.
+ *
+ * \param[in]     state  Pointer to game state.
+ * \param[in,out] IXperp Perp hazard slot. (was IX)
  */
 void perp_behaviour(chqstate_t *state, hazard_t *IXperp)
 {
-  int       carry = 0;
-  int       Ahit_timer;         /* was A */
-  int       Cperp_distance;     /* was C */
-  hazard_t *IYhazard;           /* was IY */
-  int       DE;
-  int       HL;
-  const u8 *HLtab;              /* was HL */
-  int       Acurrlane;          /* was A */
-  int       BCspawn_lanes;      /* was BC */
-  int       Adash_threshold;              /* was A' */
-
-  int       HLspeed;            /* was HL */
-  int       smash_twice;        // Additional
-  int       Bmin_spawn_lane;    /* was B */
-  int       Cmax_spawn_lane;    /* was C */
-  int       Ccurrentlane;       /* was C */
-  int       Cnewlane;           /* was C */
-  int       Cdelta;             /* was C */
-  int       changing_lane;      /* was C */
-  int       Ahorzpos;           /* was A */
-  u8        A;
-  int       Biterations;        /* was B */
-  int       Adelay;             /* was A */
-  int       Adistance;          /* was A */
-  int       Acounter;           /* was A */
-  int       DEspeedmult;        /* was DE */
-  int       Adistancediff;      /* was A */
-  int       Dbonus_hi;          /* was D */
-  int       Ebonus_mid;         /* was E */
-  int       Bmin_lane;          /* was B */
-  int       Cmax_lane;          /* was C */
+  int       carry;              /* carry from hazard proximity range check (carry) */
+  int       Ahit_timer;         /* hit timer from perp slot: positive=just hit, negative=counting down (was A) */
+  int       Cperp_distance;     /* perp's road buffer offset, used for vehicle proximity check (was C) */
+  int       Biterations;        /* hazard slot loop counter: 5 iterations (was B) */
+  hazard_t *IYhazard;           /* pointer walking the five non-perp hazard slots (was IY) */
+  int       Adistancediff;      /* signed distance difference between hazard car and perp (was A) */
+  u8        A;                  /* accumulator: pb_changing_lane flag, distance byte and bonus shift (was A) */
+  int       HL;                 /* road position remainder for iterative lane-boundary checks (was HL) */
+  int       Bmin_lane;          /* lower lane bound from road-width table (was B) */
+  int       Cmax_lane;          /* upper lane bound from road-width table (was C) */
+  int       DE;                 /* lane-boundary step value: 70 (was DE) */
+  int       Acurrlane;          /* perp's current_lane, updated during lane management (was A) */
+  int       Ccurrentlane;       /* current_lane captured before random ±1 walk (was C) */
+  int       Cnewlane;           /* candidate new lane after random ±1 step (was C) */
+  int       Cdelta;             /* lane correction delta: +2 or −2 when lane is out of range (was C) */
+  int       BCspawn_lanes;      /* packed return from get_spawn_lanes: high byte=min, low byte=max (was BC) */
+  int       Bmin_spawn_lane;    /* minimum valid lane from road buffer, unpacked from BCspawn_lanes (was B) */
+  int       Cmax_spawn_lane;    /* maximum valid lane from road buffer, unpacked from BCspawn_lanes (was C) */
+  const u8 *HLtab;              /* pointer into hazard_pos_speed for the perp's target lane column (was HL) */
+  int       Ahorzpos;           /* perp's horizontal position, slid toward target column each frame (was A) */
+  int       changing_lane;      /* 1 while perp is mid-lane-change, 0 once it reaches target (was C) */
+  int       Adelay;             /* outer approach-delay countdown, 10..1 before distance boost fires (was A) */
+  int       DEspeedmult;        /* speed increment per missing-distance unit: 30 (was DE) */
+  int       HLspeed;            /* perp's approach speed accumulator, base 230 (was HL) */
+  int       Acounter;           /* inner approach-timer countdown; resets from perp_approach_base+rng (was A) */
+  int       Adistance;          /* perp's buffer distance, compared to 13 for close-approach boost (was A) */
+  int       Adash_threshold;    /* crash speed threshold: 200 normally, 230 during turbo boost (was A') */
+  int       Dbonus_hi;          /* high bonus digit: 0 base, +4 for a second smash (was D) */
+  int       smash_twice;        /* 1 when hit hard enough to call smash() twice (was second PUSH HL) */
+  int       Ebonus_mid;         /* middle bonus digit, rotated into position when retry_count is set (was E) */
+  carry = 0;
 
   if (state->perp_caught_phase > 0)
     return;
@@ -8364,26 +8380,40 @@ pb_a7be:
 }
 
 /**
- * $A7F3: Spawn cars
+ * $A7F3: spawn_cars [Conv: HQ]
  *
- * Called from main loop.
+ * Spawns a new traffic car into an empty hazard slot each time the inline
+ * self-modifying counter sc_spawn_counter reaches zero.
+ *
+ * Skips spawning if perp_caught_phase or dont_spawn_cars are set, or if
+ * allow_spawning is zero.  On each call sc_spawn_counter is decremented by
+ * allow_spawning (1 or 2); when it fires, a new delay is drawn from
+ * car_spawn_delay plus a random 0–15 jitter (with an extra +25 when the
+ * perp has been sighted).
+ *
+ * It then walks the five non-perp hazard slots looking for an unused one.
+ * If three or more vehicles are already active it aborts.  Otherwise it
+ * copies hazard_template into the free slot, picks a random lane clamped
+ * to the road bounds, sets the initial horizontal position and speed from
+ * hazard_pos_speed, and assigns a random car bitmap (avoiding the perp
+ * lookalike when sighted).
  *
  * \param[in] state Pointer to game state.
  */
 static void spawn_cars(chqstate_t *state)
 {
-  int       allow_spawning;     /* was A */
-  int       random_extra_delay; /* was C */
-  int       spawn_delay;        /* was A */
-  int       iterations;         /* was B */
-  int       cars_seen;          /* was C */
-  hazard_t *hazard;             /* was IX */
-  int       spawn_lanes;        /* was BC */
-  u8        min_lane;           /* was B */
-  int       max_lane;           /* was C */
-  int       new_lane;           /* was A */
-  const u8 *hazard_pos;         /* was HL */
-  int       bitmap_index;          /* was C */
+  int       allow_spawning;     /* allow_spawning flag: 0=disabled, 1/2=normal/fast (was A) */
+  int       random_extra_delay; /* random 0–15 jitter added to spawn delay (was C) */
+  int       spawn_delay;        /* total spawn delay: base + sighted boost + jitter (was A) */
+  int       iterations;         /* hazard slot loop counter: 5 iterations (was B) */
+  int       cars_seen;          /* bitmask: one bit set per active vehicle seen in the loop (was C) */
+  hazard_t *hazard;             /* pointer to the hazard slot under examination (was IX) */
+  int       spawn_lanes;        /* packed return from get_spawn_lanes: high byte=min, low=max (was BC) */
+  u8        min_lane;           /* minimum spawn lane, unpacked from spawn_lanes (was B) */
+  int       max_lane;           /* maximum spawn lane, unpacked from spawn_lanes (was C) */
+  int       new_lane;           /* randomly chosen spawn lane, clamped to min..max (was A) */
+  const u8 *hazard_pos;         /* pointer into hazard_pos_speed for the chosen lane (was HL) */
+  int       bitmap_index;       /* random even index 0–6 selecting the car bitmap pair (was C) */
 
   // Return without spawning anything if perp_caught_phase is non-zero or the
   // dont_spawn_cars flag is set.
@@ -8462,18 +8492,30 @@ fill_in:
 }
 
 /**
- * $A89C: Get spawn lanes
+ * $A89C: get_spawn_lanes [Conv: HQ]
  *
- * \param[in] state Pointer to game state.
- * \param[in] extra Extra. (was C)
- * \return Non-zero on success.
+ * Reads the lanes byte from the road buffer at the given offset and returns
+ * the min/max lane pair valid for car spawning at that position.
+ *
+ * The return value is a packed u16: high byte = min lane, low byte = max lane.
+ * Possible returns:
+ *   $0104 — four-lane road (or dirt track / fork): lanes 1–4
+ *   $0103 — three-lane road or tunnel: lanes 1–3
+ *   $0204 — three-lane road, right-biased: lanes 2–4
+ *   $0102 — two-lane road, left-biased: lanes 1–2
+ *   $0304 — two-lane road, right-biased: lanes 3–4
+ *
+ * \param[in] state  Pointer to game state.
+ * \param[in] extra  Road buffer offset added to the base index when reading
+ *                   the lane byte. (was C)
+ * \return Packed min/max lane pair (high byte = min, low byte = max).
  */
 static u16 get_spawn_lanes(chqstate_t *state, int extra)
 {
-  int carry;
-  u8 *roadbuf;    /* was HL */
-  u8  lanes;      /* was A */
-  int lanes_copy; /* was E */
+  int carry;       /* carry from SLA of masked lanes byte (carry) */
+  u8 *roadbuf;     /* pointer into road buffer lanes data at the queried offset (was HL) */
+  u8  lanes;       /* raw lanes byte read from road buffer (was A) */
+  int lanes_copy;  /* preserved copy of lanes before masking to $C1 (was E) */
 
   roadbuf = ROADBUF_FWD2PTR(ROADBUF_LANES_OFFSET + 2 + extra);
   lanes = *roadbuf;
@@ -8501,22 +8543,41 @@ static u16 get_spawn_lanes(chqstate_t *state, int extra)
 }
 
 /**
- * $A8CD: Hazard handler
+ * $A8CD: hazard_handler [Conv: HQ]
  *
- * \param[in] state    Pointer to game state.
- * \param[in] IXhazard Hazard pointer. (was IX)
+ * Updates one traffic hazard slot each frame: clamps its lane to the current
+ * road bounds, slides its horizontal position toward the target and handles
+ * a collision with the hero car.
+ *
+ * If perp_caught_phase or dont_spawn_cars are set the hazard is pushed
+ * off-screen by setting its speed word to $01FF.
+ *
+ * Lane clamping: get_spawn_lanes is called for the hazard's current road
+ * position.  If the hazard's assigned lane (hazard_lane_OR_perp_dist_hi)
+ * falls outside the returned min/max range, current_lane is clamped.  When
+ * current_lane differs from the assigned lane the function slides
+ * horz_pos ±5 per frame toward the target column in hazard_pos_speed; on
+ * arrival the assigned lane is updated to match.
+ *
+ * Hit detection: if hit_timer is non-zero (set by the collision engine), the
+ * hazard is marked unused, the overtake bonus is cleared and scenery_hit is
+ * called to apply the crash penalty.
+ *
+ * \param[in]     state     Pointer to game state.
+ * \param[in,out] IXhazard  Hazard slot to update. (was IX)
  */
 void hazard_handler(chqstate_t *state, hazard_t *IXhazard)
 {
-  int       carry = 0;
-  int       spawn_lanes;        /* was BC */
-  u8        min_lane;           /* was B */
-  int       max_lane;           /* was C */
-  int       lane;               /* was A */
-  int       current_lane;       /* was A */
-  int       horz_pos;           /* was A */
-  int       hit_timer;          /* was A */
-  const u8 *phazard_pos_speed;  /* was HL */
+  int       carry;              /* carry from RL min_lane, selects left/right slide direction (carry) */
+  int       spawn_lanes;        /* packed return from get_spawn_lanes: high byte=min, low byte=max (was BC) */
+  u8        min_lane;           /* minimum valid lane for this hazard's road position (was B) */
+  int       max_lane;           /* maximum valid lane for this hazard's road position (was C) */
+  int       lane;               /* hazard's assigned lane from hazard_lane_OR_perp_dist_hi (was A) */
+  int       current_lane;       /* hazard's current_lane after clamping to road bounds (was A) */
+  int       horz_pos;           /* hazard's horizontal position, slid ±5 toward target each frame (was A) */
+  int       hit_timer;          /* hit_timer from hazard slot; non-zero triggers a crash (was A) */
+  const u8 *phazard_pos_speed;  /* pointer into hazard_pos_speed for the target lane column (was HL) */
+  carry = 0;
 
   if (state->perp_caught_phase != 0 || state->dont_spawn_cars != 0)
     IXhazard->speed = 0x1FF;

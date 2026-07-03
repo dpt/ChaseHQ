@@ -15,10 +15,6 @@ Generated from `grep '^ \* \$' ChaseHQ.c | grep -v '\[Conv: HQ\]'`.
 | `$9174` | `draw_stretchy_object_common` | Draw stretchy objects (e.g. trees) |
 | `$929A` | `draw_object_left_helicopter_entrypt` | Draw object left helicopter entry point |
 | `$930E` | `draw_object_perspective_entrypt` | Draw object: compute perspective height/width and dispatch |
-| `$A637` | `perp_behaviour` | Perp behaviour |
-| `$A7F3` | `spawn_cars` | Spawn cars |
-| `$A89C` | `get_spawn_lanes` | Get spawn lanes |
-| `$A8CD` | `hazard_handler` | Hazard handler |
 | `$A955` | `choose_dirt_and_stones` | Choose dirt and stones |
 | `$A97E` | `layout_dirt_and_stones` | Layout dirt and stones |
 | `$A9DE` | `dust_stones_stuff` | Dust stones stuff |
