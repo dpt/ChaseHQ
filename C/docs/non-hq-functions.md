@@ -47,9 +47,6 @@ Generated from `grep '^ \* \$' ChaseHQ.c | grep -v '\[Conv: HQ\]'`.
 | `$8DD8` | `transition_fade_chunk` | Overwrite odd/even UDG rows of the back buffer with a single byte |
 | `$8DF9` | `setup_transition` | Setup transition |
 | `$8E42` | `draw_overlay_messages` | Progressively draw overlay messages to the back buffer |
-| `$8E6C` | `print_message` | Print a message on the back buffer |
-| `$8E7E` | `setup_overlay_messages` | Setup overlay messages |
-| `$8E80` | `setup_overlay_messages_with_transition` | Setup overlay messages with transition |
 | `$8E91` | `draw_mugshots` | Draw the three mugshots to the back buffer |
 | `$8EB7` | `draw_mugshot` | Draw a single mugshot to the back buffer |
 | `$8EE7` | `draw_smash_bar` | Draw the smash bar |
@@ -96,9 +93,6 @@ Generated from `grep '^ \* \$' ChaseHQ.c | grep -v '\[Conv: HQ\]'`.
 | `$9E11` | `plot_turbos_and_digits` | Plot turbos and digits |
 | `$9F1E` | `ptas_led_digits` | Draw LED digits |
 | `$9F47` | `ledfont_plot` | Plot an LED font character |
-| `$9F99` | `draw_string_with_style` | Draw string with style |
-| `$9FA3` | `draw_string_screen` | Draw string to screen |
-| `$9FA6` | `draw_string_core` | Draw string to screen or back buffer |
 | `$9FB4` | `draw_char` | Draw single character |
 | `$A0D6` | `keyscan` | Keyscan |
 | `$A112` | `keyscan_keydefs` | Scan a key-definition list, rotating each result into an accumulator |
@@ -172,9 +166,6 @@ Generated from `grep '^ \* \$' ChaseHQ.c | grep -v '\[Conv: HQ\]'`.
 | `$ED4D` | `keyscan_all` | Keyscan |
 | `$ED6D` | `define_a_key` | Define a single key |
 | `$EDCC` | `dak_move_down` | DAK move down |
-| `$EE40` | `setup_interrupts` | Setup interrupts |
-| `$EE5E` | `reset_music` | Reset music |
-| `$EE6E` | `next_pattern` | Next pattern |
 | `$EE9E` | `play_music_48k` | Play music 48K |
 | `$EF19` | `interrupt_entry` | Interrupt entry |
 | `$EF22` | `playdrum_2` | Playdrum 2 |

@@ -3062,48 +3062,58 @@ static void draw_overlay_messages(chqstate_t *state)
 }
 
 /**
- * $8E6C: Print a message on the back buffer
+ * $8E6C: Draw one overlay-message block to the back buffer [Conv: HQ]
  *
- * This function draws a message to the back buffer using the specified drawing
- * style and message data. The message data includes attributes, the
- * destination back buffer address and screen attribute address.
+ * Reads a 6-byte header from messages[], decoding the attribute byte,
+ * back-buffer destination address and screen attribute address, then calls
+ * draw_string_with_style to render the NUL-terminated string that follows.
+ * Returns a pointer to the byte after the NUL so the caller can chain calls.
  *
- * Note that the screen attribute bytes are drawn directly to the real screen
- * since they have no parallel in the back buffer. The user may briefly see
- * attribute changes prior to the back buffer arriving on-screen.
+ * The Z80 banks the style byte in A' via EX AF,AF' at entry, reads the header
+ * with successive INC HL / LD r,(HL) pairs, then tail-calls $9F99
+ * (draw_string_with_style via its alternate entry point).
+ *
+ * Conv: messages[0] (the flags byte) is skipped with INC HL in the Z80; C
+ *   reads messages[1] directly and ignores messages[0].
+ * Conv: Z80 preserves BC with PUSH/POP around the call; C locals survive
+ *   calls without banking.
  *
  * \param[in] state    Pointer to game state.
- * \param[in] style    Message draw style (e.g. DRAWCHARSTYLE_SINGLE). (was A)
- * \param[in] messages Pointer to message data. (was HL)
- * \return Next byte of message data. (was HL)
+ * \param[in] style    Rendering style selector. (was A)
+ * \param[in] messages Pointer to the start of the message data block. (was HL)
+ * \return Pointer to the byte following the NUL terminator.
  */
 static const u8 *print_message(chqstate_t *state,
                                int         style,
                                const u8   *messages)
 {
-  int attr;     /* was A */
-  u16 backbuf;  /* was DE */
-  u16 attraddr; /* was BC */
+  u8  A_attr;    /* attribute byte for the string (was A) */
+  u16 DEbackbuf; /* back-buffer destination address (was DE) */
+  u16 BCtarget;  /* screen attribute address (was BC) */
 
-  // The style in messages[0] is ignored.
-  attr     = messages[1];
-  backbuf  = wordat(messages + 2);
-  attraddr = wordat(messages + 4);
+  /* Conv: header fields read explicitly rather than via INC HL chains */
+  A_attr    = messages[1]; /* messages[0] is the flags byte skipped by INC HL */
+  DEbackbuf = wordat(messages + 2);
+  BCtarget  = wordat(messages + 4);
   messages += 6;
 
   return draw_string_with_style(state,
-                                attr,
-                                ADDRTOATTRS(attraddr),
-                                ADDRTOBACKBUF(backbuf),
+                                A_attr,
+                                ADDRTOATTRS(BCtarget),
+                                ADDRTOBACKBUF(DEbackbuf),
                                 messages,
                                 style);
 }
 
 /**
- * $8E7E: Setup overlay messages
+ * $8E7E: Arm the overlay-message display for a time-up or arrest sequence [Conv: HQ]
+ *
+ * Convenience wrapper: loads A with TRANSITIONCONTROL_OVERLAY_MESSAGES (2)
+ * then falls through to setup_overlay_messages_with_transition.  In the Z80
+ * the fall-through is literal; in C it is an explicit call.
  *
  * \param[in] state   Pointer to game state.
- * \param[in] message Message data pointer. (was HL)
+ * \param[in] message Pointer to the message data block (delay byte, then records). (was HL)
  */
 static void setup_overlay_messages(chqstate_t *state, const u8 *message)
 {
@@ -3113,20 +3123,30 @@ static void setup_overlay_messages(chqstate_t *state, const u8 *message)
 }
 
 /**
- * $8E80: Setup overlay messages with transition
+ * $8E80: Arm the overlay-message display with a caller-supplied transition code [Conv: HQ]
+ *
+ * Stores the four values needed by draw_overlay_messages so that the main loop
+ * starts rendering the message sequence on the next frame.
+ *
+ * The Z80 uses self-modifying code at $8E49/$8E43/$8E46 (inside draw_overlay_messages)
+ * to store the delay, message pointer and initial count; C stores them in
+ * state fields with equivalent semantics.
+ *
+ * Conv: Z80 SM writes to instructions inside draw_overlay_messages; C uses
+ *   struct fields overlay_delay, overlay_message and overlay_count.
  *
  * \param[in] state      Pointer to game state.
- * \param[in] transition Transition. (was A)
- * \param[in] message    Message. (was HL)
+ * \param[in] transition Transition mode to activate (e.g. TRANSITIONCONTROL_OVERLAY_MESSAGES). (was A)
+ * \param[in] message    Pointer to the message data block; message[0] is the frame delay. (was HL)
  */
 static void setup_overlay_messages_with_transition(chqstate_t *state,
-    int          transition,
-    const u8   *message)
+                                                   int         transition,
+                                                   const u8   *message)
 {
-  state->transition_control = transition;
-  state->overlay_delay      = message[0];
-  state->overlay_message    = &message[1];
-  state->overlay_count      = 1;
+  state->transition_control = transition;  /* $8E80 LD ($A231),A */
+  state->overlay_delay      = message[0];  /* $8E83–$8E84 SM frame delay */
+  state->overlay_message    = &message[1]; /* $8E87–$8E88 SM message pointer */
+  state->overlay_count      = 1;           /* $8E8B–$8E8D SM initial count */
 }
 
 /**
@@ -6349,15 +6369,20 @@ static u8 *ledfont_plot(int ord, u8 *screen)
 //0b_010BBLLL_RRRCCCCC (B = band, L = scanline, R = row (group), C = column)
 
 /**
- * $9F99: Draw string with style
+ * $9F99: Draw a NUL-terminated string to the back buffer with a specified style [Conv: HQ]
+ *
+ * Adapter entry point called from print_message ($8E6C) and keyscan_keydefs
+ * ($A112).  Reorders parameters to match the Z80 register layout expected by
+ * draw_string_core and supplies the constant attribute stride of 32 bytes
+ * (one attribute row).
  *
  * \param[in] state   Pointer to game state.
- * \param[in] attrval Attribute value. (was A)
- * \param[in] attrs   Attribute address. (was BC)
- * \param[in] backbuf Back buffer address. (was DE)
- * \param[in] string  String data pointer. (was HL)
- * \param[in] style   Draw style. (was A')
- * \return Pointer past last character written.
+ * \param[in] attrval Attribute byte to write at each character cell. (was A)
+ * \param[in] attrs   Pointer to the first screen attribute to write. (was BC)
+ * \param[in] backbuf Pointer to the first back-buffer byte to write. (was DE)
+ * \param[in] string  NUL-terminated (top-bit-set) string data. (was HL)
+ * \param[in] style   Draw style selector (e.g. DRAWCHARSTYLE_SINGLE). (was A')
+ * \return Pointer to the byte after the NUL terminator.
  */
 static const u8 *draw_string_with_style(chqstate_t *state,
                                         int          attrval,
@@ -6368,22 +6393,26 @@ static const u8 *draw_string_with_style(chqstate_t *state,
 {
   return draw_string_core(state,
                           backbuf,
-                          string, /*HL*/
-                          style, /*A'*/
-                          attrval, /*C'*/
-                          32, /*DE'*/
-                          attrs/*HL'*/);
+                          string,                /* HL */
+                          style,                 /* A' */
+                          attrval,               /* C' */
+                          32,                    /* DE' — one attribute row */
+                          attrs);                /* HL' */
 }
 
 /**
- * $9FA3: Draw string to screen
+ * $9FA3: Draw a NUL-terminated string directly to the screen bitmap [Conv: HQ]
+ *
+ * Wrapper around draw_string_core that fixes the draw style to
+ * DRAWCHARSTYLE_SCREEN and supplies the constant attribute stride of 32.
+ * Equivalent to draw_string_with_style with style = DRAWCHARSTYLE_SCREEN.
  *
  * \param[in] state   Pointer to game state.
- * \param[in] attrval Attribute value. (was A)
- * \param[in] attrs   Attribute address. (was BC)
- * \param[in] dst     Screen address. (was DE)
- * \param[in] string  String data pointer. (was HL)
- * \return Pointer past last character written.
+ * \param[in] attrval Attribute byte to write at each character cell. (was A)
+ * \param[in] attrs   Pointer to the first screen attribute to write. (was BC)
+ * \param[in] dst     Pointer to the first screen bitmap byte to write. (was DE)
+ * \param[in] string  NUL-terminated (top-bit-set) string data. (was HL)
+ * \return Pointer to the byte after the NUL terminator.
  */
 static const u8 *draw_string_screen(chqstate_t *state,
                                      int         attrval,
@@ -6393,26 +6422,28 @@ static const u8 *draw_string_screen(chqstate_t *state,
 {
   return draw_string_core(state,
                           dst,
-                          string, /*HL*/
-                          DRAWCHARSTYLE_SCREEN, /*A'*/
-                          attrval, /*C'*/
-                          32, /*DE'*/
-                          attrs/*HL'*/);
+                          string,                /* HL */
+                          DRAWCHARSTYLE_SCREEN,  /* A' */
+                          attrval,               /* C' */
+                          32,                    /* DE' — one attribute row */
+                          attrs);                /* HL' */
 }
 
 /**
- * $9FA6: Draw string to screen or back buffer
+ * $9FA6: Draw a NUL-terminated string to the screen or back buffer [Conv: HQ]
  *
- * Broken out from above.
+ * Core string-rendering loop.  Reads each character byte, masks off the EOS
+ * (top-bit) sentinel, passes it to draw_char, then advances the destination
+ * and attribute pointers.  Stops after the byte with the EOS bit set.
  *
- * \param[in] state       Pointer to game state.
- * \param[in] dst         Screen or back buffer address. (was DE)
- * \param[in] string      String data pointer. (was HL)
- * \param[in] style       Draw style. (was A')
- * \param[in] attrval     Attribute value. (was C')
- * \param[in] attrsstride Attribute stride. (was DE')
- * \param[in] attrs       Attribute address. (was HL')
- * \return Pointer past last character written.
+ * \param[in]     state        Pointer to game state.
+ * \param[in,out] dst          Destination bitmap pointer (screen or back buffer). (was DE)
+ * \param[in]     string       NUL-terminated (top-bit-set) string data. (was HL)
+ * \param[in]     style        Draw style selector. (was A')
+ * \param[in]     attrval      Attribute byte to write at each cell. (was C')
+ * \param[in]     attrsstride  Bytes between successive attribute rows. (was DE')
+ * \param[in,out] attrs        Pointer to the first screen attribute to write. (was HL')
+ * \return Pointer to the byte after the NUL terminator.
  */
 static const u8 *draw_string_core(chqstate_t *state,
                                   u8         *dst,
@@ -6422,11 +6453,11 @@ static const u8 *draw_string_core(chqstate_t *state,
                                   int         attrsstride,
                                   u8         *attrs)
 {
-  int character; /* was A */
+  int A_char; /* current character (EOS bit masked off) (was A) */
 
   do {
-    character = *string & ~EOS;
-    draw_char(state, character, dst, style, attrval, attrsstride, attrs,
+    A_char = *string & ~EOS;
+    draw_char(state, A_char, dst, style, attrval, attrsstride, attrs,
               &dst, &attrs);
   } while ((*string++ & EOS) == 0);
 
@@ -14975,38 +15006,61 @@ static u16 dak_move_down(int DEscreen)
 }
 
 /**
- * $EE40: Setup interrupts
+ * $EE40: Configure the Z80 mode-2 interrupt vector table [Conv: HQ]
  *
- * \param[in] state Pointer to game state.
+ * Fills the 257-byte interrupt vector table at $FD00–$FDFF with $FE (so every
+ * vector points to $FEFE), then writes a JP $EF19 at $FEFE and sets I=$FD and
+ * IM 2.  Under mode 2 all interrupts are routed through $EF19 (interrupt_entry).
+ *
+ * Conv: Z80 interrupt wiring has no equivalent in C; SDL delivers events on its
+ *   own thread.  This function is a no-op in the C port.
+ *
+ * \param[in] state  Pointer to game state.
  */
 static void setup_interrupts(chqstate_t *state)
 {
-  // Conv: no equivalent in C
+  /* Conv: no equivalent in C — SDL owns interrupt delivery */
 }
 
 /**
- * $EE5E: Reset music
+ * $EE5E: Reset music playback to the start of the pattern list [Conv: HQ]
  *
- * \param[in] state Pointer to game state.
+ * Clears the three SM operands that carry music state across frames (drum_active,
+ * extra_delay, started), then falls through to the np_start_at_hl entry point
+ * of next_pattern_at_addr with HL = $F0FE (the start of the music pattern table).
+ *
+ * Conv: Z80 writes directly to SM operands at $EF0E, $EF01 and $EEA3; C writes
+ *   to the equivalent state fields.
+ * Conv: Z80 JP $EE78 is a tail call to np_start_at_hl; C calls next_pattern_at_addr.
+ *
+ * \param[in] state  Pointer to game state.
  */
 static void reset_music(chqstate_t *state)
 {
-  state->music.drum_active = 0;
-  state->music.extra_delay = 0;
-  state->music.started = 0;
-  next_pattern_at_addr(state, &music_patterns[0]); /* was FALLTHROUGH */
+  state->music.drum_active = 0; /* $EE5F LD ($EF0E),A */
+  state->music.extra_delay = 0; /* $EE62 LD ($EF01),A */
+  state->music.started     = 0; /* $EE65 LD ($EEA3),A */
+  next_pattern_at_addr(state, &music_patterns[0]); /* $EE68–$EE6B LD HL,$F0FE; JP $EE78 */
 }
 
 /**
- * $EE6E: Next pattern
+ * $EE6E: Advance the music to the next pattern when the repeat count expires [Conv: HQ]
  *
- * \param[in] state Pointer to game state.
+ * Decrements the SM repeat counter at $EE6F (pattern_repeats) and returns
+ * immediately if repeats remain.  When the counter reaches zero the function
+ * falls through to np_next → np_start_at_hl to load the address of the next
+ * pattern and start it.
+ *
+ * Conv: Z80 SM counter at $EE6F → state->music.pattern_repeats.
+ * Conv: Z80 falls through via jp-less control flow; C calls next_pattern_at_addr.
+ *
+ * \param[in] state  Pointer to game state.
  */
 static void next_pattern(chqstate_t *state)
 {
-  if (--state->music.pattern_repeats)
+  if (--state->music.pattern_repeats) /* $EE70 DEC A; $EE71 SM; $EE74 RET NZ */
     return;
-  next_pattern_at_addr(state, state->music.pattern_addr); /* was FALLTHROUGH */
+  next_pattern_at_addr(state, state->music.pattern_addr); /* $EE75–$EE78 np_next */
 }
 
 static void next_pattern_at_addr(chqstate_t *state, const u8 *HLpataddr)
