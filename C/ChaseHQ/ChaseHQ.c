@@ -13539,19 +13539,19 @@ static u8 *addr_to_xpos(chqstate_t *state, int z80addr)
 }
 
 /**
- * $C2E7: Draw road lane change
+ * $C2E7: Draw road lane change [Conv: HQ]
  *
- * Fills road-edge position table entries for a "lane change" section (road
- * narrowing or widening). Uses a Bresenham-style algorithm to interpolate
+ * Fills road-edge position table entries for a lane-change section (road
+ * narrowing or widening).  Uses a Bresenham-style algorithm to interpolate
  * road-edge x-positions between two height-table entries and writes them
  * to the appropriate road table via an SP-based write pointer.
  *
- * \param[in]     state                Pointer to game state.
- * \param[in]     B_fill_pattern       Fill pattern. (was B)
- * \param[in]     C_horizon            Horizon level. (was C)
- * \param[in]     DE_backbuf           Pointer into backbuffer. (was DE)
- * \param[in]     H_left_hand_table_hi Left-hand table hi byte ($E8/../$EC). (was H)
- * \param[in]     L_row                Byte offset within road table page (row index). (was L)
+ * \param[in,out] state                Pointer to game state.
+ * \param[in]     B_fill_pattern       Road fill pattern for the current scanline. (was B)
+ * \param[in]     C_horizon            Horizon scanline counter. (was C)
+ * \param[in]     DE_backbuf           Back-buffer row address. (was DE)
+ * \param[in]     H_left_hand_table_hi High byte of left x-position table ($E8..$EC). (was H)
+ * \param[in]     L_row                Low byte (row index) within the x-position table page. (was L)
  * \param[in,out] IX_lanesptr          Pointer into road buffer lane data. (was IX)
  * \param[in,out] IY_heightptr         Pointer into height table. (was IY)
  */
@@ -13851,27 +13851,30 @@ drlc_steep_step:
 }
 
 /**
- * $C452: Draw road
+ * $C452: Draw road [Conv: HQ]
  *
- * Called from main loop.
+ * Main road-drawing entry point.  Initialises per-frame road state: clears
+ * on_dirt_track, dt_tunnel_visible and dr_in_tunnel; sets dr_edge_thickness
+ * to 3.  Computes the initial horizon counter (96 − height_table[1]).
+ * Determines the stripe phase from the lane-data buffer offset (bit 0 = XOR
+ * base, bit 1 = initial stripe state), sets the stripe parameters, then
+ * falls through to dr_read_lanes to begin the row-by-row road render.
  *
- * This is the big cheese - the main road drawing function.
- *
- * \param[in] state Pointer to game state.
+ * \param[in,out] state  Pointer to game state.
  */
 static void draw_road(chqstate_t *state)
 {
-  u8  *IYheightptr;      /* was IY */
-  int  Ccounter;         /* was C */
-  u8  *IXlanesptr;       /* was IX */
-  int  Blanesdataoffset; /* was B */
-  int  carry_stripe;     /* was carry */
-  int  Htable_offset;    /* was H */
-  int  Lstripe_height;   /* was L */
-  int  Axor_base;        /* was A */
-  u8   Bfill_pattern;    /* was B */
-  u8   Lrow;             /* was L */
-  u16  DEbackbuf;        /* was DE */  // OR is this a *buffer* offset?
+  u8  *IYheightptr;      /* pointer to height_table[1]: starting height entry (was IY) */
+  int  Ccounter;         /* 96 minus the first height value: row count to horizon (was C) */
+  u8  *IXlanesptr;       /* pointer into road_buffer lane data at ROADBUF_LANES_OFFSET (was IX) */
+  int  Blanesdataoffset; /* byte offset of IXlanesptr within road_buffer: selects stripe phase (was B) */
+  int  carry_stripe;     /* bit 1 of Blanesdataoffset: selects XOR-stripe or empty-fill path (carry) */
+  int  Htable_offset;    /* stripe table offset: $D0 (stripe) or $00 (no stripe) (was H) */
+  int  Lstripe_height;   /* dr_edge_graphic_offset value: 16 (stripe) or 48 (no stripe) (was L) */
+  int  Axor_base;        /* dr_stripe_xor_base: always $D0 (was A) */
+  u8   Bfill_pattern;    /* road fill pattern: _X_X_X_X (stripe) or ________ (no stripe) (was B) */
+  u8   Lrow;             /* initial row index: 0xFF (row −1, fills upward) (was L) */
+  u16  DEbackbuf;        /* initial back-buffer address: $0100 (wrapped ROM sentinel) (was DE) */
 
   state->on_dirt_track = 0;
 
@@ -13916,22 +13919,38 @@ static void draw_road(chqstate_t *state)
 }
 
 /**
- * $C4AD: draw_road: read lanes
+ * $C4AD: draw_road — read lanes [Conv: HQ]
+ *
+ * Reads the current road-buffer lane byte, extracts the left-offset field,
+ * and dispatches to the appropriate road-section handler.  If the left
+ * offset is zero the road is a standard un-modified section and dr_callback
+ * is called directly.  Otherwise bit 6 of the lane byte (after SLA)
+ * selects: clear = normal 2/3/4-lane or lane-change section dispatching to
+ * draw_road_lanes_change; set with bit 7 clear = tunnel section dispatching
+ * to dr_dispatch; set with bit 7 set = dirt track or forked road.
+ *
+ * \param[in,out] state        Pointer to game state.
+ * \param[in]     IXlanesptr   Pointer into road_buffer at the current lane byte. (was IX)
+ * \param[in]     IYheightptr  Pointer into height_table at the current row. (was IY)
+ * \param[in]     Bfill_pattern Road fill pattern for this scanline. (was B)
+ * \param[in]     Ccounter     Horizon scanline counter. (was C)
+ * \param[in]     DEbackbuf    Back-buffer row address. (was DE)
+ * \param[in]     Lrow         Row index within the x-position table page. (was L)
  */
 static void dr_read_lanes(chqstate_t *state, u8 *IXlanesptr, const u8 *IYheightptr,
                           int Bfill_pattern, int Ccounter, int DEbackbuf,
                           int Lrow)
 {
-  int carry;                /* was carry */
-  int Aleft_offset;         /* was A */
-  u8  Ldash_lanes;          /* was L' */
-  int Aleft_hand_table_hi;  /* was A */
-  int H_left_hand_table_hi; /* was H */
-  int Cdash_neg_lane_count; /* was C' */
-  int Hdash_in_tunnel;      /* was H' */
-  int Atunnel_visible;      /* was A */
-  int Cdash_fill_pattern;   /* was C' */
-  int Afill_pattern;        /* was A */
+  int carry;                /* carry from SLA of lane byte; indicates left-side occupancy (carry) */
+  int Aleft_offset;         /* left-offset field of the lane byte (was A) */
+  u8  Ldash_lanes;          /* full lane byte banked in L' for bit testing (was L') */
+  int Aleft_hand_table_hi;  /* high byte of left x-position table address (was A) */
+  int H_left_hand_table_hi; /* copy of Aleft_hand_table_hi for draw_road_lanes_change (was H) */
+  int Cdash_neg_lane_count; /* negative lane count: −2 or −3 for 2/3-lane sections (was C') */
+  int Hdash_in_tunnel;      /* 1 when inside a tunnel section, 0 otherwise (was H') */
+  int Atunnel_visible;      /* tunnel visibility state: 1=entering, 2=exiting (was A) */
+  int Cdash_fill_pattern;   /* fill pattern override for tunnel: 0xFF (solid) or 0x00 (open) (was C') */
+  int Afill_pattern;        /* copy of Bfill_pattern used for tunnel dispatch (was A) */
 
   Aleft_offset = *IXlanesptr & MAP_LANES_LEFT_OFFSET_MASK;
   if (Aleft_offset == 0) {
@@ -14020,7 +14039,20 @@ static void dr_read_lanes(chqstate_t *state, u8 *IXlanesptr, const u8 *IYheightp
 }
 
 /**
- * $C534: draw_road: four lane highway
+ * $C534: draw_road — four lane highway [Conv: HQ]
+ *
+ * Sets the left/right x-position table high bytes to the widest possible
+ * road extent ($E8/$EC) and the negative lane count to −4, then falls
+ * through to dr_set_lane_callback to store dr_dispatch as the lane callback
+ * and begin the fill dispatch.
+ *
+ * \param[in,out] state        Pointer to game state.
+ * \param[in]     Bfill_pattern Road fill pattern for this scanline. (was B)
+ * \param[in]     Ccounter     Horizon scanline counter. (was C)
+ * \param[in]     DEbackbuf    Back-buffer row address. (was DE)
+ * \param[in]     Lrow         Row index within the x-position table page. (was L)
+ * \param[in,out] IXlanesptr   Pointer into road_buffer lane data. (was IX)
+ * \param[in,out] IYheightptr  Pointer into height_table. (was IY)
  */
 static void dr_four_lane_highway(chqstate_t *state, int Bfill_pattern,
                                  int Ccounter, int DEbackbuf, int Lrow,
@@ -14040,7 +14072,19 @@ static void dr_four_lane_highway(chqstate_t *state, int Bfill_pattern,
 }
 
 /**
- * $C54D: draw_road: set lane callback and enter fill dispatch
+ * $C54D: draw_road — set lane callback and enter fill dispatch [Conv: HQ]
+ *
+ * Stores HLdash_callback in state->dr_callback (models the Z80
+ * self-modifying `CALL nn` at $C551), then falls through to dr_dispatch.
+ *
+ * \param[in,out] state           Pointer to game state.
+ * \param[in]     Bfill_pattern   Road fill pattern for this scanline. (was B)
+ * \param[in]     Ccounter        Horizon scanline counter. (was C)
+ * \param[in]     DEbackbuf       Back-buffer row address. (was DE)
+ * \param[in]     Lrow            Row index within the x-position table page. (was L)
+ * \param[in]     HLdash_callback Lane callback stored in dr_callback. (was HL')
+ * \param[in,out] IXlanesptr      Pointer into road_buffer lane data. (was IX)
+ * \param[in,out] IYheightptr     Pointer into height_table. (was IY)
  */
 static void dr_set_lane_callback(chqstate_t *state, int Bfill_pattern,
                                  int Ccounter, int DEbackbuf, int Lrow,
@@ -14053,7 +14097,19 @@ static void dr_set_lane_callback(chqstate_t *state, int Bfill_pattern,
 }
 
 /**
- * $C551: draw_road: dispatch to filled or unfilled path
+ * $C551: draw_road — dispatch to filled or unfilled path [Conv: HQ]
+ *
+ * Reads Bfill_pattern; non-zero dispatches to dr_dispatch_filled (the
+ * filled/chequerboard road path), zero sets dr_fill_fn to dr_advance_unfilled
+ * and falls through to dr_advance_unfilled (the empty/sky path).
+ *
+ * \param[in,out] state        Pointer to game state.
+ * \param[in]     Bfill_pattern Non-zero selects the filled road scanline path. (was B)
+ * \param[in]     Ccounter     Horizon scanline counter. (was C)
+ * \param[in]     DEbackbuf    Back-buffer row address. (was DE)
+ * \param[in]     Lrow         Row index within the x-position table page. (was L)
+ * \param[in,out] IXlanesptr   Pointer into road_buffer lane data. (was IX)
+ * \param[in,out] IYheightptr  Pointer into height_table. (was IY)
  */
 static void dr_dispatch(chqstate_t *state, int Bfill_pattern, int Ccounter,
                              int DEbackbuf, int Lrow,
@@ -14061,7 +14117,7 @@ static void dr_dispatch(chqstate_t *state, int Bfill_pattern, int Ccounter,
 {
   // ENTERED UNBANKED
 
-  int Afill_pattern;
+  int Afill_pattern; /* copy of Bfill_pattern; tested for filled/unfilled branch (was A) */
 
   Afill_pattern = Bfill_pattern;
   if (Afill_pattern) {
@@ -14078,7 +14134,20 @@ static void dr_dispatch(chqstate_t *state, int Bfill_pattern, int Ccounter,
 }
 
 /**
- * $C55F: draw_road: advance backbuffer and rollover check (unfilled path)
+ * $C55F: draw_road — advance backbuffer and rollover check (unfilled path) [Conv: HQ]
+ *
+ * Decrements the high byte of DEbackbuf.  When the low nibble of the old
+ * high byte is zero (Spectrum screen row boundary), falls through to
+ * dr_rollover_unfilled to apply the row-group advance; otherwise falls
+ * through to dr_write_scanline_unfilled to write the current row.
+ *
+ * \param[in,out] state              Pointer to game state.
+ * \param[in]     Ccounter           Horizon scanline counter. (was C)
+ * \param[in]     DEbackbuf          Back-buffer row address. (was DE)
+ * \param[in]     Lrow               Row index within the x-position table page. (was L)
+ * \param[in]     Adash_fill_pattern Fill pattern banked in A'. (was A')
+ * \param[in,out] IXlanesptr         Pointer into road_buffer lane data. (was IX)
+ * \param[in,out] IYheightptr        Pointer into height_table. (was IY)
  */
 static void dr_advance_unfilled(chqstate_t *state,
                                 int Ccounter,
@@ -14090,7 +14159,7 @@ static void dr_advance_unfilled(chqstate_t *state,
 {
   // ENTERED UNBANKED (but AF is banked)
 
-  int A;
+  int A; /* high byte of DEbackbuf before decrement; low nibble detects row boundary (was A) */
 
   A = DEbackbuf >> 8;
   HI_DEC(DEbackbuf);
@@ -14103,7 +14172,21 @@ static void dr_advance_unfilled(chqstate_t *state,
 }
 
 /**
- * $C565: draw_road: write unfilled (zero) road scanline
+ * $C565: draw_road — write unfilled (zero) road scanline [Conv: HQ]
+ *
+ * Clamps DEbackbuf to the last valid back-buffer row when it is out of
+ * range (the Z80 would silently write to ROM/invalid addresses).  Stores
+ * DEbackbuf in dr_backbuf_1, then computes the rightmost byte address of
+ * the row and calls dr_fill_left_stripe with a zero fill value and zero
+ * jump index (15 zero bytes written per scanline).
+ *
+ * \param[in,out] state              Pointer to game state.
+ * \param[in]     Ccounter           Horizon scanline counter. (was C)
+ * \param[in]     DEbackbuf          Back-buffer row address. (was DE)
+ * \param[in]     Lrow               Row index within the x-position table page. (was L)
+ * \param[in]     Adash_fill_pattern Fill pattern banked in A'. (was A')
+ * \param[in,out] IXlanesptr         Pointer into road_buffer lane data. (was IX)
+ * \param[in,out] IYheightptr        Pointer into height_table. (was IY)
  */
 static void dr_write_scanline_unfilled(chqstate_t *state, int Ccounter, int DEbackbuf,
                                        int Lrow, int Adash_fill_pattern,
@@ -14111,13 +14194,13 @@ static void dr_write_scanline_unfilled(chqstate_t *state, int Ccounter, int DEba
 {
   // ENTERED UNBANKED (but AF is banked)
 
-  s8   Bneg_lane_count;
-  u16  DEdash_backbuf;
-  u8   Ldash;
-  u8   Hdash;
-  u8  *SPoutput;
-  u16  HLdash_fill;
-  u8   Cdash_zerofill;
+  s8   Bneg_lane_count;    /* −1: passed to dr_fill_left_stripe as lane count (was B) */
+  u16  DEdash_backbuf;     /* banked copy of DEbackbuf (was DE') */
+  u8   Ldash;              /* low byte of DEdash_backbuf + 31: rightmost byte column (was L') */
+  u8   Hdash;              /* high byte of DEdash_backbuf (was H') */
+  u8  *SPoutput;           /* back-buffer pointer for the rightmost byte of this row (was SP) */
+  u16  HLdash_fill;        /* fill word for the unfilled scanline: 0 (was HL') */
+  u8   Cdash_zerofill;     /* fill byte for zero-fill: 0 (was C') */
 
   /* Z80: writes to ROM/invalid addresses ($0000-$EFFF) are no-ops.
    * C port: redirect any out-of-range DEbackbuf to the last backbuffer row
@@ -14154,7 +14237,19 @@ static void dr_write_scanline_unfilled(chqstate_t *state, int Ccounter, int DEba
 }
 
 /**
- * $C57C: draw_road: backbuffer row advance with rollover (filled path)
+ * $C57C: draw_road — backbuffer row advance with rollover (filled path) [Conv: HQ]
+ *
+ * Subtracts 32 from the low byte of DEbackbuf.  When no borrow occurs the
+ * Spectrum row group has not rolled over, so adds 16 to the high byte to
+ * advance by one row group.  Falls through to dr_fill.
+ *
+ * \param[in,out] state              Pointer to game state.
+ * \param[in]     Ccounter           Horizon scanline counter. (was C)
+ * \param[in]     DEbackbuf          Back-buffer row address before rollover adjust. (was DE)
+ * \param[in]     Lrow               Row index within the x-position table page. (was L)
+ * \param[in]     Adash_fill_pattern Fill pattern banked in A'. (was A')
+ * \param[in,out] IXlanesptr         Pointer into road_buffer lane data. (was IX)
+ * \param[in,out] IYheightptr        Pointer into height_table. (was IY)
  */
 static void dr_rollover_filled(chqstate_t *state, int Ccounter, int DEbackbuf,
                                int Lrow, int Adash_fill_pattern,
@@ -14167,7 +14262,18 @@ static void dr_rollover_filled(chqstate_t *state, int Ccounter, int DEbackbuf,
 }
 
 /**
- * $C58A: draw_road: backbuffer row advance with rollover (unfilled path)
+ * $C58A: draw_road — backbuffer row advance with rollover (unfilled path) [Conv: HQ]
+ *
+ * Identical row-group advance logic to dr_rollover_filled but falls through
+ * to dr_write_scanline_unfilled instead of dr_fill.
+ *
+ * \param[in,out] state              Pointer to game state.
+ * \param[in]     Ccounter           Horizon scanline counter. (was C)
+ * \param[in]     DEbackbuf          Back-buffer row address before rollover adjust. (was DE)
+ * \param[in]     Lrow               Row index within the x-position table page. (was L)
+ * \param[in]     Adash_fill_pattern Fill pattern banked in A'. (was A')
+ * \param[in,out] IXlanesptr         Pointer into road_buffer lane data. (was IX)
+ * \param[in,out] IYheightptr        Pointer into height_table. (was IY)
  */
 static void dr_rollover_unfilled(chqstate_t *state, int Ccounter, int DEbackbuf,
                                  int Lrow, int Adash_fill_pattern,
@@ -14180,7 +14286,19 @@ static void dr_rollover_unfilled(chqstate_t *state, int Ccounter, int DEbackbuf,
 }
 
 /**
- * $C598: draw_road: enter filled path (set fill_fn and start advance)
+ * $C598: draw_road — enter filled path [Conv: HQ]
+ *
+ * Stores dr_advance_filled in state->dr_fill_fn (the SM field that switches
+ * between filled and unfilled draw functions), then falls through to
+ * dr_advance_filled with Afill_pattern banked in A'.
+ *
+ * \param[in,out] state        Pointer to game state.
+ * \param[in]     Afill_pattern Non-zero fill pattern for the road surface. (was A)
+ * \param[in]     Ccounter     Horizon scanline counter. (was C)
+ * \param[in]     DEbackbuf    Back-buffer row address. (was DE)
+ * \param[in]     Lrow         Row index within the x-position table page. (was L)
+ * \param[in,out] IXlanesptr   Pointer into road_buffer lane data. (was IX)
+ * \param[in,out] IYheightptr  Pointer into height_table. (was IY)
  */
 static void dr_dispatch_filled(chqstate_t *state, int Afill_pattern, int Ccounter,
                                int DEbackbuf, int Lrow, u8 **IXlanesptr,
@@ -14197,7 +14315,19 @@ static void dr_dispatch_filled(chqstate_t *state, int Afill_pattern, int Ccounte
 }
 
 /**
- * $C5A1: draw_road: advance backbuffer and rollover check (filled path)
+ * $C5A1: draw_road — advance backbuffer and rollover check (filled path) [Conv: HQ]
+ *
+ * Filled-path equivalent of dr_advance_unfilled.  Decrements the high byte
+ * of DEbackbuf; when the low nibble of the old high byte is zero calls
+ * dr_rollover_filled, otherwise falls through to dr_fill.
+ *
+ * \param[in,out] state       Pointer to game state.
+ * \param[in]     Ccounter    Horizon scanline counter. (was C)
+ * \param[in]     DEbackbuf   Back-buffer row address. (was DE)
+ * \param[in]     Lrow        Row index within the x-position table page. (was L)
+ * \param[in]     Adash_fill  Fill pattern banked in A'. (was A')
+ * \param[in,out] IXlanesptr  Pointer into road_buffer lane data. (was IX)
+ * \param[in,out] IYheightptr Pointer into height_table. (was IY)
  */
 static void dr_advance_filled(chqstate_t *state, int Ccounter, int DEbackbuf,
                               int Lrow, int Adash_fill, u8 **IXlanesptr,
@@ -14205,7 +14335,7 @@ static void dr_advance_filled(chqstate_t *state, int Ccounter, int DEbackbuf,
 {
   // ENTERED UNBANKED (but AF is banked)
 
-  int A;
+  int A; /* high byte of DEbackbuf before decrement; low nibble detects row boundary (was A) */
 
   A = DEbackbuf >> 8;
   HI_DEC(DEbackbuf);
@@ -14218,7 +14348,22 @@ static void dr_advance_filled(chqstate_t *state, int Ccounter, int DEbackbuf,
 }
 
 /**
- * $C5A7: draw_road: Setup and draw right verge and centre spans
+ * $C5A7: draw_road — setup and draw right verge and centre spans [Conv: HQ]
+ *
+ * Core road scanline fill function.  Reads the current row from the
+ * x-position tables (via Lrow), looks up the right-verge and left-stripe
+ * widths, builds the fill word from Adash_fill_pattern and a counter-derived
+ * XOR, computes the back-buffer write pointer (SPoutput) from DEbackbuf, then
+ * calls dr_fill_left_stripe with the assembled parameters to write the
+ * right-verge, lane-marking and left-verge bytes to the back buffer.
+ *
+ * \param[in,out] state              Pointer to game state.
+ * \param[in]     Ccounter           Horizon scanline counter. (was C)
+ * \param[in]     DEbackbuf          Back-buffer row address. (was DE)
+ * \param[in]     Lrow               Row index within the x-position table page. (was L)
+ * \param[in]     Adash_fill_pattern Road fill pattern banked in A'. (was A')
+ * \param[in,out] IXlanesptr         Pointer into road_buffer lane data. (was IX)
+ * \param[in,out] IYheightptr        Pointer into height_table. (was IY)
  */
 static void dr_fill(chqstate_t *state,
                     int         Ccounter,
@@ -14230,24 +14375,26 @@ static void dr_fill(chqstate_t *state,
 {
   // ENTERED UNBANKED (but AF is banked)
 
-  int  carry = 0;
-  int  Arow;
-  int  Bneg_lane_count;
-  int  Ldash_row;
-  int  Bdash_holds_16;
-  int  Cdash_mask;
-  u8  *HLdash_ptr;
-  int  Aleftval;
-  u8   Aleft_stripe_width;
-  int  Edash_left_stripe_width;
-  int  Arightval;
-  u8   Aright_stripe_width;
-  u16  DEdash_backbuf;
-  int  Ldash_backbuf;
-  int  Hdash_backbuf;
-  u8  *SPoutput;
-  u16  HLdash_fill;
-  u16  BCdash_zerofill;
+  int  carry;                   /* carry from XOR/stripe computation (carry) */
+  int  Arow;                    /* current row index after counter-to-row conversion (was A) */
+  int  Bneg_lane_count;         /* negative lane count from dr_neg_lane_count (was B) */
+  int  Ldash_row;               /* banked copy of Lrow; row index within x-position page (was L') */
+  int  Bdash_holds_16;          /* 16: constant for XOR cycle computation (was B') */
+  int  Cdash_mask;              /* XOR mask derived from Arow and dr_stripe_xor_base (was C') */
+  u8  *HLdash_ptr;              /* pointer into x-position table for right-edge lookup (was HL') */
+  int  Aleftval;                /* left x-position table value for this row (was A) */
+  u8   Aleft_stripe_width;      /* left stripe width after dr_edge_graphic_offset adjust (was A) */
+  int  Edash_left_stripe_width; /* banked copy of Aleft_stripe_width (was E') */
+  int  Arightval;               /* right x-position table value for this row (was A) */
+  u8   Aright_stripe_width;     /* right stripe width: right table value + dr_right_edge_offset (was A) */
+  u16  DEdash_backbuf;          /* banked DEbackbuf copy; used to build SPoutput (was DE') */
+  int  Ldash_backbuf;           /* low byte of DEdash_backbuf + 31: rightmost column (was L') */
+  int  Hdash_backbuf;           /* high byte of DEdash_backbuf (was H') */
+  u8  *SPoutput;                /* back-buffer write pointer for this scanline's rightmost byte (was SP) */
+  u16  HLdash_fill;             /* fill word: fill_pattern repeated in both bytes (was HL') */
+  u16  BCdash_zerofill;         /* zero fill word: 0x0000 for the verge region (was BC') */
+
+  carry = 0;
 
   /* Z80: writes to ROM/invalid addresses ($0000-$EFFF) are no-ops.
    * C port: redirect any out-of-range DEbackbuf to the last backbuffer row
@@ -14350,7 +14497,30 @@ static void dr_fill(chqstate_t *state,
 }
 
 /**
- * $C62E: draw_road: left hand verge fill, road edges and lane markers
+ * $C62E: draw_road — left verge fill, road edges and lane markers [Conv: HQ]
+ *
+ * Innermost road-scanline renderer.  Writes the right-verge fill bytes to
+ * the back buffer via a fall-through PUSH switch (jump_index selects how
+ * many bytes).  Then reads the left-verge x-position, writes the left-edge
+ * marking (AND-OR masked), iterates over interior lane markings (up to
+ * |Bneg_lane_count| lanes), writes the right-edge marking, and loops back
+ * via dr_read_lanes to process the next scanline.  After the loop, handles
+ * the backdrop/sky fill based on the horizon counter.  Recursion models the
+ * Z80's JP NZ loop.
+ *
+ * \param[in,out] state              Pointer to game state.
+ * \param[in]     SPoutput           Back-buffer write pointer for this scanline's rightmost byte. (was SP)
+ * \param[in]     jump_index         Fall-through index into the fill-byte switch (0 = max fill). (was IX offset)
+ * \param[in]     Bneg_lane_count    Negative lane count: number of interior lanes to mark. (was B)
+ * \param[in]     Ccounter           Horizon scanline counter; loop terminates when it reaches 0. (was C)
+ * \param[in]     DEbackbuf          Back-buffer row address. (was DE)
+ * \param[in]     Lrow               Row index within the x-position table page. (was L)
+ * \param[in]     Adash_fill_pattern Road fill pattern banked in A'. (was A')
+ * \param[in]     Cdash_zerofill     Zero fill byte for the verge region. (was C')
+ * \param[in]     DEdash_backbuf     Banked copy of DEbackbuf for x-position lookups. (was DE')
+ * \param[in]     Hdash_fill         High byte of fill word (same as Cdash_zerofill). (was H')
+ * \param[in,out] IXlanesptr         Pointer into road_buffer lane data. (was IX)
+ * \param[in,out] IYheightptr        Pointer into height_table. (was IY)
  */
 static void dr_fill_left_stripe(chqstate_t *state,
                                 u8         *SPoutput,
@@ -14368,23 +14538,23 @@ static void dr_fill_left_stripe(chqstate_t *state,
 {
   // BANKED ON ENTRY
 
-  u8        Bdash;
-  u8        Hdash_markingsptr_hi;
-  u8        H;
-  u8       *HL;
-  u8        A;
-  u8        Axpos;
-  u8        Hdash_markingsptr_lo;
-  const u8 *HLdash_markingsptr;
-  u8        Edash;
-  u8       *DEdash_backbufptr;
-  u8        Bfill_pattern;
-  u8        Ainitial_stripe_state;
-  u8        Afill_pattern;
-  u8        Aedge_graphic_offset;
-  u8        Astripe_table_offset;
-  u8        Aedge_thickness;
-  u8        Anew_xor_base;
+  u8        Bdash;                /* banked base column offset for marking address: DEdash_backbuf low byte (was B') */
+  u8        Hdash_markingsptr_hi; /* high byte of edge_markings address ($E4): index into edge_markings[] (was H') */
+  u8        H;                    /* high byte of current x-position table address during lane/edge walk (was H) */
+  u8       *HL;                   /* pointer into x-position table for the current row (was HL) */
+  u8        A;                    /* x-position byte read from the table; also scratch (was A) */
+  u8        Axpos;                /* left x-position table value for the left-edge lookup (was A) */
+  u8        Hdash_markingsptr_lo; /* low byte of edge_markings address derived from A (was H') */
+  const u8 *HLdash_markingsptr;   /* pointer into edge_markings[] for the current marking graphic (was HL') */
+  u8        Edash;                /* column byte offset within back-buffer row derived from A (was E') */
+  u8       *DEdash_backbufptr;    /* back-buffer write pointer for the current marking (was DE') */
+  u8        Bfill_pattern;        /* fill pattern loaded from Adash_fill_pattern (was B) */
+  u8        Ainitial_stripe_state; /* dr_initial_stripe_state: selects even/odd stripe XOR cycle (was A) */
+  u8        Afill_pattern;        /* fill pattern read from state->dr_fill_pattern (was A) */
+  u8        Aedge_graphic_offset; /* dr_edge_graphic_offset: selects edge marking variant (was A) */
+  u8        Astripe_table_offset; /* dr_stripe_table_offset: selects stripe sub-table (was A) */
+  u8        Aedge_thickness;      /* dr_edge_thickness: scales edge marking width (was A) */
+  u8        Anew_xor_base;        /* updated dr_stripe_xor_base after XOR cycle wrap (was A) */
   u8        Cxor_base;
   u8        Aprev_height;
   u8        Aheight_diff;
@@ -14648,14 +14818,14 @@ dr_backdrop:
 }
 
 /**
- * $C79A: Backdrop copy + sky fill.
+ * $C79A: Backdrop copy and sky fill [Conv: HQ]
  *
  * Blits dr_sky_rows of backdrop data to the ZX screen above the road, then
  * fills remaining sky rows with 0x00 (clear sky) or 0xFF (tunnel).
  *
- * \param[in] state     Game state.
- * \param[in] DEbackbuf Backbuffer pointer at call site (D=high, E=low).
- * \param[in] Lrow      Unused here; kept for consistent call signature.
+ * \param[in,out] state     Pointer to game state.
+ * \param[in]     DEbackbuf Back-buffer pointer at call site (D=high byte, E=low byte). (was DE)
+ * \param[in]     Lrow      Unused; kept for a consistent call signature across draw_road helpers.
  */
 static void dr_start_backdrop_fill(chqstate_t *state, int DEbackbuf, int Lrow)
 {
@@ -14816,20 +14986,27 @@ dr_blank_sky_fill:
 }
 
 /**
- * $C8BE: Pre shift backdrop
+ * $C8BE: Pre-shift backdrop [Conv: HQ]
  *
- * \param[in] state Pointer to game state.
+ * Copies the stage backdrop bitmap to pre_shifted_backdrop[], then
+ * right-rotates it in-place by one nibble (4 bits) per row.  The
+ * rotation uses the Z80 RRD instruction (modelled as a 4-bit right rotate
+ * through each byte with the carry passing the low nibble to the next
+ * byte).  The result is the pre-shifted backdrop variant used when the
+ * horizontal scroll offset is in the range that requires a half-byte shift.
+ *
+ * \param[in,out] state  Pointer to game state.
  */
 static void pre_shift_backdrop(chqstate_t *state)
 {
-  int       tmp;        // for RRD()
-  const u8 *source;     /* was HL */
-  u8       *preshifted; /* was DE */
-  const u8 *endptr;     /* was DE */
-  u8       *bmptr;      /* was HL */
-  u8        row;        /* was C */
-  u8        col;        /* was B */
-  u8        pix;        /* was A */
+  int       tmp;        /* temporary used by the RRD() macro (Conv: extracted) */
+  const u8 *source;     /* pointer to stage->backdrop[]: copy source (was HL) */
+  u8       *preshifted; /* pointer to pre_shifted_backdrop[]: copy and rotate target (was DE) */
+  const u8 *endptr;     /* pointer to the last byte of the current row: RRD seed (was DE) */
+  u8       *bmptr;      /* pointer walking preshifted[] during the RRD rotation (was HL) */
+  u8        row;        /* row counter: BACKDROP_HEIGHT down to 1 (was C) */
+  u8        col;        /* column counter: BACKDROP_WIDTH down to 1 (was B) */
+  u8        pix;        /* carry nibble between RRD calls: initial value from endptr (was A) */
 
   // Copy whole source bitmap to destination
   source     = &state->stage->backdrop[0];
@@ -14854,18 +15031,6 @@ static void pre_shift_backdrop(chqstate_t *state)
   } while (--row > 0);
 }
 
-/**
- * $C8E3: Forked road plotter
- *
- * Renders the screen scanlines for a road fork (two diverging lanes).
- * Computes five zone widths per scanline from road tables $E800/$E900/
- * $EA00/$EC00, fills them right-to-left with verge/road patterns, and
- * updates the road-edge stripe/thickness self-modifying state.
- *
- * \param[in] state    Pointer to game state.
- * \param[in] IXlanes  Lanes buffer pointer.
- * \param[in] IYheight Height table pointer (into state->height_table).
- */
 /**
  * $C8E3: draw_forked_road — render one frame of the forked-road view. [Conv: HQ]
  *
@@ -15258,15 +15423,16 @@ frp_next_scanline_c969: /* $C93E */
 // mystery_cba4 would go here, if we knew what it did
 
 /**
- * $CBC5: Backdrop fill choice — called when height diff >= 0x50 in forked road.
+ * $CBC5: Backdrop fill choice [Conv: HQ]
  *
- * The A < 0x50 branch (JP C,$C915) must be handled inline by the caller since
- * frp_c915 is a label inside draw_forked_road.  This function handles only
+ * Called from draw_forked_road when the height difference is >= 0x50. The
+ * A < 0x50 branch (JP C,$C915) is handled inline by the caller because
+ * frp_c915 is a label inside draw_forked_road. This function handles only
  * the $CBCB JP $C79A path (diff >= 0x50 → start backdrop fill).
  *
- * \param[in] state     Game state.
- * \param[in] DEbackbuf Screen pointer at call site (D=high, E=low).
- * \param[in] Lrow      Road table row index at call site.
+ * \param[in,out] state     Game state.
+ * \param[in]     DEbackbuf Back-buffer pointer at call site (D=high, E=low).
+ * \param[in]     Lrow      Road table row index at call site.
  */
 static void backdrop_fill_dispatch(chqstate_t *state, int DEbackbuf, int Lrow)
 {
@@ -15274,10 +15440,21 @@ static void backdrop_fill_dispatch(chqstate_t *state, int DEbackbuf, int Lrow)
 }
 
 /**
- * $CBD6: Build curve table
+ * $CBD6: Build curve table [Conv: HQ]
  *
- * \param[in] state  Pointer to game state.
- * \param[in] forked Non-zero if road is forked.
+ * Fills curvature_table[] with 22 per-row x-position deltas derived from the
+ * road buffer and the perspective scale table, then calls build_curve_table_fill
+ * twice to convert those deltas into the right-hand and left-hand x-position
+ * tables (xpos_road_right/xpos_road_left or their forked equivalents).
+ *
+ * The right-hand pass reads persp_x_scale_right and accumulates road_pos
+ * forward from the current scene position. The left-hand pass adds
+ * persp_x_delta_left offsets to the same curvature_table and starts from
+ * road_pos − 295 (the vanishing-point offset for the left edge).
+ *
+ * \param[in,out] state  Pointer to game state.
+ * \param[in]     forked Non-zero if the road is forked; negates curvature bytes
+ *                       and targets the fork tables instead of the main tables.
  */
 static void build_curve_table(chqstate_t *state, int forked)
 {
@@ -15296,7 +15473,7 @@ static void build_curve_table(chqstate_t *state, int forked)
   int        HLdash_multiplied;  /* banked multiplier result (was HL') */
   int        BCdash;             /* banked bend-table entry minus road_pos (was BC') */
   u8         A_height;           /* height (was A) */
-  int        carry;              /* carry flag */
+  int        carry;              /* carry from bit-7 test during multiply (carry) */
   int        DE_roadpos;         /* road position for fill calls (was DE) */
   const u8  *HL_rowptr;          /* persp_x_delta_left row pointer (was HL) */
   u8        *DE_curvature;       /* curvature_table delta write pointer (was DE) */
