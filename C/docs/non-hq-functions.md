@@ -15,12 +15,6 @@ Generated from `grep '^ \* \$' ChaseHQ.c | grep -v '\[Conv: HQ\]'`.
 | `$9174` | `draw_stretchy_object_common` | Draw stretchy objects (e.g. trees) |
 | `$929A` | `draw_object_left_helicopter_entrypt` | Draw object left helicopter entry point |
 | `$930E` | `draw_object_perspective_entrypt` | Draw object: compute perspective height/width and dispatch |
-| `$949C` | `plot_sprite` | Plot an unmasked sprite |
-| `$94B1` | `plot_sprite_even` | Plot an unmasked sprite (even byte widths) |
-| `$94F2` | `plot_sprite_odd` | Plot an unmasked sprite (odd byte widths) |
-| `$9542` | `plot_sprite_flipped` | Plot a flipped sprite |
-| `$9565` | `plot_sprite_flipped_even` | Plot a flipped sprite (even byte widths) |
-| `$95B3` | `plot_sprite_flipped_odd` | Plot a flipped sprite (odd byte widths) |
 | `$9945` | `start_chatter` | Start chatter |
 | `$9965` | `drive_chatter` | Drive chatter |
 | `$99D3` | `drive_chatter_stop` | Stop chatter |

@@ -5021,13 +5021,21 @@ unmasked_inverted:
 }
 
 /**
- * $949C: Plot an unmasked sprite
+ * $949C: Plot an unmasked sprite to the back buffer [Conv: HQ]
  *
- * This function draws the given bitmap to the back buffer.
+ * Dispatches to the odd- or even-width inner loop based on whether
+ * width_bytes is odd or even. For odd widths the low bit is the remainder
+ * byte after dividing by 2; for even widths a jump-table offset selects
+ * where in the unrolled POP loop to enter.
+ *
+ * Conv: Z80 uses `SRL A` to test the carry (bit 0 of A) and halve A
+ *   simultaneously; C uses a bit test and a right shift separately.
+ * Conv: Row advance is via DEC H with a multi-step rollover in the Z80;
+ *   C delegates to prev_buf_row().
  *
  * \param[in] state         Pointer to game state.
- * \param[in] width_bytes   Draw width of bitmap data, in bytes. (was A)
- * \param[in] backbuf_addr  Back buffer address to draw at. (was HL)
+ * \param[in] width_bytes   Draw width of bitmap, in bytes. (was A)
+ * \param[in] backbuf_addr  Back-buffer address to draw at. (was HL)
  * \param[in] height        Number of rows to draw. (was B')
  * \param[in] bitmap_stride Stride of bitmap data, in bytes. (was DE')
  * \param[in] bitmap_data   Source bitmap data. (was HL')
@@ -5039,8 +5047,8 @@ static void plot_sprite(chqstate_t *state,
                         int         bitmap_stride,
                         const u8   *bitmap_data)
 {
-  int odd;         /* was carry */
-  int jump_offset; /* was IX */
+  int odd;         /* non-zero when width_bytes is odd, selecting the odd path (was carry) */
+  int jump_offset; /* byte offset into the unrolled POP jump table (was IX) */
 
   assert(width_bytes >= 1);
   assert(VALID_BACKBUF_PTR(backbuf_addr));
@@ -5068,13 +5076,25 @@ static void plot_sprite(chqstate_t *state,
 }
 
 /**
- * $94B1: Plot an unmasked sprite (for even byte widths)
+ * $94B1: Plot an unmasked sprite (even byte widths) [Conv: HQ]
  *
- * This function draws the given bitmap to the back buffer.
+ * Draws up to 8 bytes per row (4 pairs of 2) into the back buffer using a
+ * POP-unroll inner loop, entered via jump_offset. Each row advances backward
+ * through the back buffer using prev_buf_row.
+ *
+ * Conv: Z80 sets SP = HL (bitmap pointer) and uses POP DE to load two bytes
+ *   at a time — the fastest possible load on Z80. C uses a plain src pointer
+ *   with `*src++` pairs.
+ * Conv: Z80 enters the unrolled POP loop via `JP (IX)` (IX = table base +
+ *   jump_offset); C uses switch/case with fallthrough.
+ * Conv: Z80 self-modifies `LD SP,$0000` at $94BF to save the original SP;
+ *   not needed in C.
+ * Conv: Row advance uses DEC H with multi-step carry correction in Z80; C
+ *   delegates to prev_buf_row().
  *
  * \param[in] state         Pointer to game state.
- * \param[in] jump_offset   Jump table byte offset (e.g. N * 5). (was IX)
- * \param[in] backbuf_addr  Back buffer address to draw at. (was HL)
+ * \param[in] jump_offset   Byte offset into the unrolled POP table. (was IX)
+ * \param[in] backbuf_addr  Back-buffer address to draw at. (was HL)
  * \param[in] height        Number of rows to draw. (was B')
  * \param[in] bitmap_stride Stride of bitmap data, in bytes. (was DE')
  * \param[in] bitmap_data   Source bitmap data. (was HL')
@@ -5086,8 +5106,8 @@ static void plot_sprite_even(chqstate_t *state,
                              int         bitmap_stride,
                              const u8   *bitmap_data)
 {
-  const u8 *src;          /* was SP */
-  u8       *backbuf_orig; /* was A */
+  const u8 *src;          /* bitmap source pointer; Z80 used SP via POP (was SP) */
+  u8       *backbuf_orig; /* row start in back buffer, saved for prev_buf_row (was A) */
 
   assert(jump_offset % 5 == 0);
   assert(jump_offset / 5 >= 0 && jump_offset / 5 <= 3);
@@ -5132,13 +5152,20 @@ plot_sprite_even_start:
 }
 
 /**
- * $94F2: Plot an unmasked sprite (for odd byte widths)
+ * $94F2: Plot an unmasked sprite (odd byte widths) [Conv: HQ]
  *
- * This function draws the given bitmap to the back buffer.
+ * Derives the jump-table offset from width_bytes and delegates to
+ * plot_sprite_odd_entrypt, which runs the odd-width unrolled inner loop.
+ * The Z80 function falls through directly to ps_odd_jumptable.
+ *
+ * Conv: Z80 uses INC A; CPL; ADD A,5 to compute (4 - A) for the jump
+ *   offset; C uses a direct expression.
+ * Conv: Z80 uses SP and POP for source reads; C uses a plain src pointer.
+ * Conv: Row advance uses DEC H with carry correction; C uses prev_buf_row().
  *
  * \param[in] state         Pointer to game state.
- * \param[in] width_bytes   Draw width of bitmap data, in bytes. (was A)
- * \param[in] backbuf_addr  Back buffer address to draw at. (was HL)
+ * \param[in] width_bytes   Number of byte pairs in the bitmap width (halved). (was A)
+ * \param[in] backbuf_addr  Back-buffer address to draw at. (was HL)
  * \param[in] height        Number of rows to draw. (was B')
  * \param[in] bitmap_stride Stride of bitmap data, in bytes. (was DE')
  * \param[in] bitmap_data   Source bitmap data. (was HL')
@@ -5150,7 +5177,7 @@ static void plot_sprite_odd(chqstate_t *state,
                             int         bitmap_stride,
                             const u8   *bitmap_data)
 {
-  int jump_offset; /* was IX */
+  int jump_offset; /* byte offset into the unrolled POP jump table (was IX) */
 
   assert(width_bytes >= 0 && width_bytes <= 3);
   assert(VALID_BACKBUF_PTR(backbuf_addr));
@@ -5221,14 +5248,21 @@ plot_sprite_odd_start:
 }
 
 /**
- * $9542: Plot a flipped sprite
+ * $9542: Plot a horizontally flipped unmasked sprite to the back buffer [Conv: HQ]
  *
- * This function draws the given bitmap to the back buffer while flipping it
- * horizontally.
+ * Advances backbuf_addr by width_bytes so that the back buffer is filled
+ * right-to-left, then dispatches to the odd- or even-width flipped inner
+ * loop. Each byte is bit-reversed via the flip table (state->flipped) before
+ * being written, giving a horizontal mirror of the source sprite.
+ *
+ * Conv: Z80 uses `SRL A` to test the carry (bit 0 of A) and halve A
+ *   simultaneously; C uses a bit test and a right shift separately.
+ * Conv: Row advance via DEC H with carry correction in Z80; C uses
+ *   prev_buf_row().
  *
  * \param[in] state         Pointer to game state.
- * \param[in] width_bytes   Draw width of bitmap data, in bytes. (was A)
- * \param[in] backbuf_addr  Back buffer address to draw at. (was HL)
+ * \param[in] width_bytes   Draw width of bitmap, in bytes. (was A)
+ * \param[in] backbuf_addr  Back-buffer address of the leftmost byte to draw. (was HL)
  * \param[in] height        Number of rows to draw. (was B')
  * \param[in] bitmap_stride Stride of bitmap data, in bytes. (was E')
  * \param[in] bitmap_data   Source bitmap data. (was HL')
@@ -5240,8 +5274,8 @@ static void plot_sprite_flipped(chqstate_t *state,
                                 int          bitmap_stride,
                                 const u8   *bitmap_data)
 {
-  int odd;         /* was carry */
-  int jump_offset; /* was IX */
+  int odd;         /* non-zero when width_bytes is odd, selecting the odd path (was carry) */
+  int jump_offset; /* byte offset into the flipped-POP jump table (was IX) */
 
   assert(width_bytes >= 1);
   assert(VALID_BACKBUF_PTR(backbuf_addr));
@@ -5271,15 +5305,23 @@ static void plot_sprite_flipped(chqstate_t *state,
 }
 
 /**
- * $9565: Plot a flipped sprite (for even byte widths)
+ * $9565: Plot a horizontally flipped sprite (even byte widths) [Conv: HQ]
  *
- * This function draws the given bitmap to the back buffer while flipping it
- * horizontally.
+ * Draws up to 8 bytes per row right-to-left into the back buffer, bit-
+ * reversing each source byte via flip_table. Each pair of bytes is written
+ * using POP reads in the Z80 (SP as source); C uses a plain src pointer.
+ * The unrolled inner loop is entered via jump_offset (9 bytes per operation).
+ *
+ * Conv: Z80 uses SP = HL bitmap pointer and POP DE for two-byte reads; C
+ *   uses a plain src pointer.
+ * Conv: Z80 enters the flip+write loop via `JP (IX)`; C uses switch/case
+ *   with fallthrough.
+ * Conv: Row advance via DEC H with carry correction; C uses prev_buf_row().
  *
  * \param[in] state         Pointer to game state.
- * \param[in] jump_offset   Jump table byte offset (e.g. N * 9). (was IX)
- * \param[in] flip_table    Flipped byte look-up table. (was DE)
- * \param[in] backbuf_addr  Back buffer address to draw at. (was HL)
+ * \param[in] jump_offset   Byte offset into the unrolled flip-POP table. (was IX)
+ * \param[in] flip_table    256-entry bit-reversal look-up table. (was DE)
+ * \param[in] backbuf_addr  Back-buffer address to draw at. (was HL)
  * \param[in] height        Number of rows to draw. (was B')
  * \param[in] bitmap_stride Stride of bitmap data, in bytes. (was DE')
  * \param[in] bitmap_data   Source bitmap data. (was HL')
@@ -5292,8 +5334,8 @@ static void plot_sprite_flipped_even(chqstate_t *state,
                                      int         bitmap_stride,
                                      const u8   *bitmap_data)
 {
-  const u8 *src;          /* was SP */
-  u8       *backbuf_orig; /* was A */
+  const u8 *src;          /* bitmap source pointer; Z80 used SP via POP (was SP) */
+  u8       *backbuf_orig; /* row start in back buffer, saved for prev_buf_row (was A) */
 
   assert(jump_offset % 9 == 0);
   assert(jump_offset / 9 >= 0 && jump_offset / 9 <= 3);
@@ -5338,14 +5380,21 @@ plot_sprite_flipped_even_start:
 }
 
 /**
- * $95B3: Plot a flipped sprite (for odd byte widths)
+ * $95B3: Plot a horizontally flipped sprite (odd byte widths) [Conv: HQ]
  *
- * This function draws the given bitmap to the back buffer while flipping it
- * horizontally.
+ * Draws up to 7 bytes per row (the odd trailing byte plus up to 3 pairs)
+ * right-to-left into the back buffer, bit-reversing each byte via
+ * state->flipped. The Z80 function adds 1 to width_bytes before computing
+ * the jump offset, making the effective range (width_bytes+1) = 1..4 pairs.
+ *
+ * Conv: Z80 uses SP and POP for source reads; C uses a plain src pointer.
+ * Conv: Z80 enters the unrolled loop via `JP (IX)`; C uses switch/case
+ *   with fallthrough.
+ * Conv: Row advance via DEC H with carry correction; C uses prev_buf_row().
  *
  * \param[in] state         Pointer to game state.
- * \param[in] width_bytes   Draw width of bitmap data, in bytes. (was A)
- * \param[in] backbuf_addr  Back buffer address to draw at. (was HL)
+ * \param[in] width_bytes   Number of byte pairs (halved width from caller). (was A)
+ * \param[in] backbuf_addr  Back-buffer address to draw at. (was HL)
  * \param[in] height        Number of rows to draw. (was B')
  * \param[in] bitmap_stride Stride of bitmap data, in bytes. (was E')
  * \param[in] bitmap_data   Source bitmap data. (was HL')
@@ -5357,9 +5406,9 @@ static void plot_sprite_flipped_odd(chqstate_t *state,
                                     int          bitmap_stride,
                                     const u8   *bitmap_data)
 {
-  int       jump_offset;  /* was IX */
-  const u8 *src;          /* was SP */
-  u8       *backbuf_orig; /* was A */
+  int       jump_offset;  /* unroll jump index into the flip-write table (was IX) */
+  const u8 *src;          /* bitmap source pointer; Z80 used SP via POP (was SP) */
+  u8       *backbuf_orig; /* row start in back buffer, saved for prev_buf_row (was A) */
 
   assert(width_bytes >= 0 && width_bytes <= 3);
   assert(VALID_BACKBUF_PTR(backbuf_addr));
