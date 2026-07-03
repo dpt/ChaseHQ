@@ -12,19 +12,8 @@ Generated from `grep '^ \* \$' ChaseHQ.c | grep -v '\[Conv: HQ\]'`.
 | `$865A` | `draw_pregame` | Draw pregame |
 | `$8F5F` | `draw_scene_objects` | Draw everything else |
 | `$9052` | `draw_overhead` | Draw overhead objects |
-| `$916C` | `draw_stretchy_object_left` | Draw stretchy object left |
-| `$9171` | `draw_stretchy_object_right` | Draw stretchy object right |
 | `$9174` | `draw_stretchy_object_common` | Draw stretchy objects (e.g. trees) |
-| `$924D` | `draw_tunnel_light_left` | Draw tunnel light (left) |
-| `$9252` | `draw_tunnel_light_right` | Draw tunnel light (right) |
-| `$9278` | `draw_object_left` | Draw object (left) |
-| `$9279` | `draw_object_left_entrypt` | Draw object (left) entry point |
-| `$9293` | `draw_object_left_stretchy_entrypt` | Draw object left stretchy entry point |
 | `$929A` | `draw_object_left_helicopter_entrypt` | Draw object left helicopter entry point |
-| `$92E1` | `draw_object_right` | Draw object (right) |
-| `$92E2` | `draw_object_right_entrypt` | Draw object (right) entry point |
-| `$92FC` | `draw_object_right_stretchy_entrypt` | Draw object (right) stretchy entry point |
-| `$9309` | `draw_object_right_helicopter_entrypt` | Draw object right helicopter entry point |
 | `$930E` | `draw_object_perspective_entrypt` | Draw object: compute perspective height/width and dispatch |
 | `$949C` | `plot_sprite` | Plot an unmasked sprite |
 | `$94B1` | `plot_sprite_even` | Plot an unmasked sprite (even byte widths) |

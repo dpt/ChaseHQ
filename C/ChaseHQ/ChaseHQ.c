@@ -3951,11 +3951,18 @@ do_draw_span:
 }
 
 /**
- * $916C: Draw stretchy object left
+ * $916C: Draw a left-side stretchy object (e.g. a tree) [Conv: HQ]
+ *
+ * Entry point for left-side objects whose width scales with distance.
+ * Selects draw_object_left_stretchy_entrypt as the per-segment drawing
+ * callback and delegates to draw_stretchy_object_common.
+ *
+ * Conv: The Z80 stores the callback address ($9293) via self-modification
+ *   at $91CE/$9244; C passes it as an explicit function pointer.
  *
  * \param[in] state    Pointer to game state.
- * \param[in] Bdepth   Parameter.
- * \param[in] arg      Object data pointer.
+ * \param[in] Bdepth   Depth index of the object. (was B)
+ * \param[in] arg      Pointer to the stretchy_t data for this object. (was DE)
  * \param[in] IXxpos   X-position table pointer. (was IX)
  * \param[in] IYheight Height table pointer. (was IY)
  */
@@ -3974,13 +3981,20 @@ void draw_stretchy_object_left(chqstate_t *state,
 }
 
 /**
- * $9171: Draw stretchy object right
+ * $9171: Draw a right-side stretchy object (e.g. a tree) [Conv: HQ]
+ *
+ * Entry point for right-side objects whose width scales with distance.
+ * Selects draw_object_right_stretchy_entrypt as the per-segment drawing
+ * callback and delegates to draw_stretchy_object_common.
+ *
+ * Conv: The Z80 stores the callback address ($92FC) via self-modification
+ *   at $91CE/$9244; C passes it as an explicit function pointer.
  *
  * \param[in] state    Pointer to game state.
- * \param[in] Bdepth   Parameter.
- * \param[in] arg      Object data pointer.
- * \param[in] IXxpos   IXxpos register value.
- * \param[in] IYheight IYheight register value.
+ * \param[in] Bdepth   Depth index of the object. (was B)
+ * \param[in] arg      Pointer to the stretchy_t data for this object. (was DE)
+ * \param[in] IXxpos   X-position table pointer. (was IX)
+ * \param[in] IYheight Height table pointer. (was IY)
  */
 void draw_stretchy_object_right(chqstate_t *state,
                                 int         Bdepth,
@@ -4155,11 +4169,18 @@ dso_continue:
 }
 
 /**
- * $924D: Draw tunnel light (left)
+ * $924D: Draw a left-side tunnel light [Conv: HQ]
+ *
+ * Entry point for tunnel lights on the left side of the road. Selects
+ * draw_object_left_entrypt as the callback and delegates to
+ * draw_tunnel_light_common.
+ *
+ * Conv: The Z80 stores the callback address ($9279) in HL then uses
+ *   PUSH HL / RET to dispatch; C passes it as an explicit function pointer.
  *
  * \param[in] state    Pointer to game state.
- * \param[in] Bdepth   Parameter.
- * \param[in] DEarg    Parameter to pass in DE.
+ * \param[in] Bdepth   Depth index of the light (0 = nearest). (was B)
+ * \param[in] DEarg    Depth-set pointer for the light object. (was DE)
  * \param[in] IXxpos   X-position table pointer. (was IX)
  * \param[in] IYheight Height table pointer. (was IY)
  */
@@ -4174,13 +4195,20 @@ void draw_tunnel_light_left(chqstate_t *state,
 }
 
 /**
- * $9252: Draw tunnel light (right)
+ * $9252: Draw a right-side tunnel light [Conv: HQ]
+ *
+ * Entry point for tunnel lights on the right side of the road. Selects
+ * draw_object_right_entrypt as the callback and delegates to
+ * draw_tunnel_light_common.
+ *
+ * Conv: The Z80 stores the callback address ($92E2) in HL then uses
+ *   PUSH HL / RET to dispatch; C passes it as an explicit function pointer.
  *
  * \param[in] state    Pointer to game state.
- * \param[in] Bdepth   Parameter.
- * \param[in] DEarg    Parameter to pass in DE.
- * \param[in] IXxpos   IXxpos register value.
- * \param[in] IYheight IYheight register value.
+ * \param[in] Bdepth   Depth index of the light (0 = nearest). (was B)
+ * \param[in] DEarg    Depth-set pointer for the light object. (was DE)
+ * \param[in] IXxpos   X-position table pointer. (was IX)
+ * \param[in] IYheight Height table pointer. (was IY)
  */
 void draw_tunnel_light_right(chqstate_t *state,
                              int          Bdepth,
@@ -4231,17 +4259,24 @@ static void draw_tunnel_light_common(chqstate_t            *state,
 }
 
 /**
- * $9278: Draw object (left)
+ * $9278: Draw a left-side road object with no column offset [Conv: HQ]
+ *
+ * Entry point used by the object dispatch table for standard left-side
+ * scenery objects (turn signs, lamp posts, etc.). Calls
+ * draw_object_left_entrypt with a column offset of zero.
+ *
+ * Conv: The Z80 uses XOR A (A = 0) then falls through to $9279
+ *   (draw_object_left_entrypt); C calls it directly with col_offset = 0.
  *
  * \param[in] state      Pointer to game state.
- * \param[in] Bdepth     Parameter.
- * \param[in] DEdepthset Parameter to pass in DE.
+ * \param[in] Bdepth     Depth index of the object. (was B)
+ * \param[in] DEdepthset Pointer to the depthset_t for this object. (was DE)
  * \param[in] IXxpos     X-position table pointer. (was IX)
  * \param[in] IYheight   Height table pointer. (was IY)
  */
 void draw_object_left(chqstate_t *state,
                       int          Bdepth,
-                      const void *DEdepthset, // a depthset_t *
+                      const void *DEdepthset,
                       const s16  *IXxpos,
                       const u8   *IYheight)
 {
@@ -4249,14 +4284,28 @@ void draw_object_left(chqstate_t *state,
 }
 
 /**
- * $9279: Draw object (left) entry point
+ * $9279: Resolve depth and bitmap for a left-side object, then draw it [Conv: HQ]
+ *
+ * Stores the column offset, caps the depth index to DEPTHSET_MAX, then
+ * looks up the depth value and bitmap pointer from the depthset table and
+ * dispatches to draw_object_left_stretchy_entrypt.
+ *
+ * In the Z80, this function falls through to the same entrypt after
+ * computing the depth/bitmap via EX DE,HL and indexed HL arithmetic.
+ * The col_offset (A) is stored to state->doc_col_pos via a self-modified
+ * `LD D,x` at $933D; C writes it to doc_col_pos directly.
+ *
+ * Conv: Z80 self-modifies the operand at $933E to hold Acol_offset (later
+ *   read as D in draw_object_common); C stores it in state->doc_col_pos.
+ * Conv: Z80 index arithmetic `HL += A*2−1` / byte reads replaced by struct
+ *   field access on depthset_t.
  *
  * \param[in] state       Pointer to game state.
- * \param[in] Acol_offset Parameter.
- * \param[in] Bdepth      Parameter.
- * \param[in] DEdepthset  A depth set, e.g. turn_sign_left (a depthset_t)
- * \param[in] IXxpos      IXxpos register value.
- * \param[in] IYheight    IYheight register value.
+ * \param[in] Acol_offset Column offset added to the object position. (was A)
+ * \param[in] Bdepth      Depth index into the depthset table. (was B)
+ * \param[in] DEdepthset  Pointer to the depthset for this object. (was DE)
+ * \param[in] IXxpos      X-position table pointer. (was IX)
+ * \param[in] IYheight    Height table pointer. (was IY)
  */
 static void draw_object_left_entrypt(chqstate_t       *state,
                                      int                Acol_offset,
@@ -4265,19 +4314,19 @@ static void draw_object_left_entrypt(chqstate_t       *state,
                                      const s16  *IXxpos,
                                      const u8         *IYheight)
 {
-  const depthset_t *ds;      /* was HL */
-  const bitmap_t   *bitmaps; /* was DE */
-  int               depth;   /* was Bdepth */
-  const bitmap_t   *bitmap;  /* was HL */
+  const depthset_t *ds;      /* depthset pointer from DEdepthset arg (was HL) */
+  const bitmap_t   *bitmaps; /* bitmap array base from ds->bitmaps (was DE) */
+  int               depth;   /* depth value at pairs[Bdepth] (was B) */
+  const bitmap_t   *bitmap;  /* selected bitmap within bitmaps (was HL) */
 
   state->doc_col_pos = Acol_offset;
 
-  if (Bdepth >= DEPTHSET_MAX) // FIXME should be just greater than?
+  if (Bdepth >= DEPTHSET_MAX)
     Bdepth = DEPTHSET_MAX;
 
-  ds = DEdepthset; // EX DE,HL - save arg address
+  ds = DEdepthset; /* EX DE,HL */
 
-  bitmaps = ds->bitmaps; // loads address of e.g. turn_sign_bitmaps
+  bitmaps = ds->bitmaps;
   depth   = ds->pairs[Bdepth].depth;
   bitmap  = &bitmaps[ds->pairs[Bdepth].offset / 7];
 
@@ -4285,13 +4334,18 @@ static void draw_object_left_entrypt(chqstate_t       *state,
 }
 
 /**
- * $9293: Draw object left stretchy entrypt
+ * $9293: Compute left-side screen width then draw the object [Conv: HQ]
+ *
+ * Adds 16 to the x-position table value, subtracts the depth, and returns
+ * early if the result is negative (object entirely off-screen to the left).
+ * Otherwise passes the remaining screen width to
+ * draw_object_left_helicopter_entrypt.
  *
  * \param[in] state    Pointer to game state.
- * \param[in] Bdepth   Parameter.
- * \param[in] HLbitmap Source bitmap data.
- * \param[in] IXxpos   IXxpos register value.
- * \param[in] IYheight IYheight register value.
+ * \param[in] Bdepth   Depth value from the depthset, subtracted from width. (was B)
+ * \param[in] HLbitmap Source bitmap data. (was HL)
+ * \param[in] IXxpos   X-position table pointer. (was IX)
+ * \param[in] IYheight Height table pointer. (was IY)
  */
 static void draw_object_left_stretchy_entrypt(chqstate_t     *state,
     int              Bdepth,
@@ -4299,7 +4353,7 @@ static void draw_object_left_stretchy_entrypt(chqstate_t     *state,
     const s16  *IXxpos,
     const u8       *IYheight)
 {
-  int A;
+  int A; /* available screen width = IX[0] + 16 − depth (was A) */
 
   A = IXxpos[0] + 16;
   if (A < Bdepth)
@@ -4400,11 +4454,18 @@ static void draw_object_left_helicopter_entrypt(chqstate_t     *state,
 }
 
 /**
- * $92E1: Draw object (right)
+ * $92E1: Draw a right-side road object with no column offset [Conv: HQ]
+ *
+ * Entry point used by the object dispatch table for standard right-side
+ * scenery objects. Calls draw_object_right_entrypt with a column offset
+ * of zero.
+ *
+ * Conv: The Z80 uses XOR A (A = 0) then falls through to $92E2
+ *   (draw_object_right_entrypt); C calls it directly with col_offset = 0.
  *
  * \param[in] state      Pointer to game state.
- * \param[in] Bdepth     Parameter.
- * \param[in] DEdepthset Parameter to pass in DE.
+ * \param[in] Bdepth     Depth index of the object. (was B)
+ * \param[in] DEdepthset Pointer to the depthset_t for this object. (was DE)
  * \param[in] IXxpos     X-position table pointer. (was IX)
  * \param[in] IYheight   Height table pointer. (was IY)
  */
@@ -4418,14 +4479,23 @@ void draw_object_right(chqstate_t *state,
 }
 
 /**
- * $92E2: Draw object (right) entry point
+ * $92E2: Resolve depth and bitmap for a right-side object, then draw it [Conv: HQ]
+ *
+ * Right-side mirror of draw_object_left_entrypt ($9279). Stores the column
+ * offset, caps the depth index and looks up the depth value and bitmap pointer
+ * from the depthset table before calling draw_object_right_stretchy_entrypt.
+ *
+ * Conv: Z80 self-modifies the operand at $933E to hold Acol_offset; C
+ *   writes it to state->doc_col_pos.
+ * Conv: Z80 index arithmetic `HL += A*2−1` / byte reads replaced by struct
+ *   field access on depthset_t.
  *
  * \param[in] state       Pointer to game state.
- * \param[in] Acol_offset Parameter.
- * \param[in] Bdepth      Parameter.
- * \param[in] DEdepthset  A depth set, e.g. turn_sign_right (a depthset_t)
- * \param[in] IXxpos      IXxpos register value.
- * \param[in] IYheight    IYheight register value.
+ * \param[in] Acol_offset Column offset added to the object position. (was A)
+ * \param[in] Bdepth      Depth index into the depthset table. (was B)
+ * \param[in] DEdepthset  Pointer to the depthset for this object. (was DE)
+ * \param[in] IXxpos      X-position table pointer. (was IX)
+ * \param[in] IYheight    Height table pointer. (was IY)
  */
 static void draw_object_right_entrypt(chqstate_t       *state,
                                       int                Acol_offset,
@@ -4434,19 +4504,19 @@ static void draw_object_right_entrypt(chqstate_t       *state,
                                       const s16  *IXxpos,
                                       const u8         *IYheight)
 {
-  const depthset_t *ds;      /* was HL */
-  const bitmap_t   *bitmaps; /* was DE */
-  int               depth;   /* was Bdepth */
-  const bitmap_t   *bitmap;  /* was HL */
+  const depthset_t *ds;      /* depthset pointer from DEdepthset arg (was HL) */
+  const bitmap_t   *bitmaps; /* bitmap array base from ds->bitmaps (was DE) */
+  int               depth;   /* depth value at pairs[Bdepth] (was B) */
+  const bitmap_t   *bitmap;  /* selected bitmap within bitmaps (was HL) */
 
   state->doc_col_pos = Acol_offset;
 
-  if (Bdepth >= DEPTHSET_MAX) // FIXME should be just greater than?
+  if (Bdepth >= DEPTHSET_MAX)
     Bdepth = DEPTHSET_MAX;
 
-  ds = DEdepthset; // EX DE,HL
+  ds = DEdepthset; /* EX DE,HL */
 
-  bitmaps = ds->bitmaps; // loads address of e.g. turn_sign_bitmaps
+  bitmaps = ds->bitmaps;
   depth   = ds->pairs[Bdepth].depth;
   bitmap  = &bitmaps[ds->pairs[Bdepth].offset / 7];
 
@@ -4454,13 +4524,21 @@ static void draw_object_right_entrypt(chqstate_t       *state,
 }
 
 /**
- * $92FC: Draw object (right) stretchy entry point
+ * $92FC: Compute right-side available width then draw the object [Conv: HQ]
+ *
+ * Reads the x-position table value and adds the (signed) depth. Returns early
+ * if the result is zero or negative (i.e. the object is off-screen to the
+ * right). Otherwise passes the remaining screen width to
+ * draw_object_right_helicopter_entrypt.
+ *
+ * The Z80 tests B's sign bit to decide whether to add with or without a
+ * carry-out check; C uses an explicit signed cast.
  *
  * \param[in] state    Pointer to game state.
- * \param[in] Bdepth   Parameter.
- * \param[in] HLbitmap Source bitmap data.
- * \param[in] IXxpos   IXxpos register value.
- * \param[in] IYheight IYheight register value.
+ * \param[in] Bdepth   Signed depth value from the depthset. (was B)
+ * \param[in] HLbitmap Source bitmap data. (was HL)
+ * \param[in] IXxpos   X-position table pointer. (was IX)
+ * \param[in] IYheight Height table pointer. (was IY)
  */
 static void draw_object_right_stretchy_entrypt(chqstate_t     *state,
     int              Bdepth,
@@ -4468,7 +4546,7 @@ static void draw_object_right_stretchy_entrypt(chqstate_t     *state,
     const s16  *IXxpos,
     const u8       *IYheight)
 {
-  int Awidth_bytes;
+  int Awidth_bytes; /* available screen width = IX[0] ± depth (was A) */
 
   Awidth_bytes = IXxpos[0];
   if ((s8) Bdepth < 0) {
@@ -4483,19 +4561,23 @@ static void draw_object_right_stretchy_entrypt(chqstate_t     *state,
 }
 
 /**
- * $9309: Draw object right helicopter entrypt
+ * $9309: Guard for right-side perspective draw: skip if width >= 247 [Conv: HQ]
+ *
+ * Returns immediately if Awidth_bytes >= 247 ($F7), indicating the object
+ * is at least partly off the right edge of the screen. Otherwise falls
+ * through to draw_object_perspective_entrypt with a zero padding value.
  *
  * \param[in] state        Pointer to game state.
- * \param[in] Awidth_bytes Bitmap byte width.
- * \param[in] HLbitmap     Source bitmap data.
- * \param[in] IYheight     IYheight register value.
+ * \param[in] Awidth_bytes Available screen width for the object. (was A)
+ * \param[in] HLbitmap     Source bitmap data. (was HL)
+ * \param[in] IYheight     Height table pointer. (was IY)
  */
 static void draw_object_right_helicopter_entrypt(chqstate_t     *state,
     int              Awidth_bytes,
     const bitmap_t *HLbitmap,
     const u8       *IYheight)
 {
-  if (Awidth_bytes < 247)
+  if (Awidth_bytes < 247) /* $9309: CP $F7; RET NC */
     draw_object_perspective_entrypt(state, Awidth_bytes, 0, HLbitmap, IYheight);
 }
 
