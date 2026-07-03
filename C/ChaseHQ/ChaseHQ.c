@@ -2360,19 +2360,28 @@ static void set_up_stage_reset_lights(u8 *attrptr)
 }
 
 /**
- * $8876: Check user input
+ * $8876: Filter user input and dispatch to the active-button handler [Conv: HQ]
  *
- * Called from main loop.
+ * Suppresses all user input during a FADE transition. Otherwise masks
+ * user_input with the stage's input-mask to yield the effective input.
+ * If any of the quit, pause or boost bits are set, dispatches to the
+ * appropriate handler: quit → check_user_input_quit_key; pause → spin
+ * until the button is released then wait for any key then debounce;
+ * boost → arm a 60-tick boost and start turbo chatter.
  *
  * \param[in] state Pointer to game state.
+ *
+ * Conv: Z80 tests for TRANSITIONCONTROL_FADE with CP $04; C uses the
+ *   named constant. The quit-key path at $88A9 is a separate function in C
+ *   (check_user_input_quit_key) rather than a fall-through at $88A9.
  */
 static void check_user_input(chqstate_t *state)
 {
-  int  transctl;   /* was A */
-  u8  *puserinput; /* was HL */
-  int  input;      /* was A */
-  u8  *pboost;     /* was HL */
-  int  keys;       /* was A */
+  int  transctl;   /* transition control value; FADE suppresses input (was A) */
+  u8  *puserinput; /* pointer to user_input field (was HL) */
+  int  input;      /* masked user input flags (was A) */
+  u8  *pboost;     /* pointer to boost timer field (was HL) */
+  int  keys;       /* keyscan result during pause/debounce loop (was A) */
 
   transctl = state->transition_control;
   puserinput = &state->user_input;
@@ -2417,7 +2426,11 @@ static void check_user_input(chqstate_t *state)
 }
 
 /**
- * $88A9: Check user input quit key
+ * $88A9: Initiate the quit sequence when the quit key is pressed [Conv: HQ]
+ *
+ * Ignores the request if a quit is already in progress. Otherwise stops
+ * chatter, fills the attribute file (to blank the screen) and arms the
+ * quit state machine so that escape_scene runs on the next transition.
  *
  * \param[in] state Pointer to game state.
  */
@@ -2492,15 +2505,23 @@ static void start_sfx(chqstate_t *state, int index, int priority)
 }
 
 /**
- * $8903: Drive SFX
+ * $8903: Drive the SFX state machine [Conv: HQ]
  *
- * Called from main loop.
+ * Each frame: if not in a tunnel, ORs left and right cornering triggers
+ * and queues the cornering SFX if the result is non-zero. Then invokes
+ * the engine, siren and register-write hooks. If sfx_index is non-zero,
+ * looks up the SFX entry in the 9-entry table ($893C), clears the index
+ * and priority, and calls the handler with the entry's two parameters.
  *
  * \param[in] state Pointer to game state.
+ *
+ * Conv: Z80 uses RLCA+RLCA to multiply sfx_index by 4 for a 4-byte
+ *   stride table; C uses sfx_index−1 as a direct array index into a
+ *   struct array and calls the handler via a function pointer.
  */
 static void drive_sfx(chqstate_t *state)
 {
-  // $893C
+  /* $893C — four-byte stride: arg1, arg2, hi(handler), lo(handler) */
   static const struct sfxtab {
     u8     arg1;
     u8     arg2;
@@ -2517,7 +2538,7 @@ static void drive_sfx(chqstate_t *state)
     { 0xC8, 0xC8, sfx_bipbow               },
   };
 
-  const struct sfxtab *sfx; /* was HL */
+  const struct sfxtab *sfx; /* pointer to the active SFX table entry (was HL) */
 
   if (state->tunnel_sfx == 0) {
     state->trigger_lefthand_sfx |= state->trigger_righthand_sfx;
@@ -2541,19 +2562,31 @@ static void drive_sfx(chqstate_t *state)
 }
 
 /**
- * $8960: SFX crash
+ * $8960: Play the 48K crash sound effect [Conv: HQ]
+ *
+ * Cycles through a 93-byte waveform table (sfx_crash_table) in state.
+ * For each byte, runs an inner loop of param1 iterations: if the byte's
+ * top bit is set the EAR output bit is set, otherwise it is cleared.
+ * Each iteration rotates the byte left in place via RLC so the next
+ * iteration uses the next bit. The table is modified in place, so
+ * successive calls produce a different waveform.
  *
  * \param[in] state  Pointer to game state.
- * \param[in] param1 First SFX parameter. (was D)
- * \param[in] param2 Second SFX parameter. (was E)
+ * \param[in] param1 Inner loop count; controls pulse width. (was D)
+ * \param[in] param2 Unused. (was E)
+ *
+ * Conv: Z80 drives the border port via OUT ($FE); C has no audio output,
+ *   the inner loop runs as a busy-wait only. RLC (HL) modifies the table
+ *   in place, matching the Z80's in-RAM table at $897C.
  */
 static void sfx_crash(chqstate_t *state, int param1, int param2)
 {
-  int  carry = 0;
-  u8  *tab; /* was HL */
-  int  C;   /* was C */
-  int  B;   /* was B */
-  int  A;   /* was A */
+  int  carry;       /* carry flag used by RLC (carry) */
+  u8  *tab;         /* pointer walking sfx_crash_table (was HL) */
+  int  C;           /* outer iteration count, 93 bytes (was C) */
+  int  B;           /* inner loop counter, param1 times per byte (was B) */
+  int  A;           /* EAR output bit state (was A) */
+  carry = 0;
 
   tab = &state->sfx_crash_table[0];
   C  = 93; // NELEMS(sfx_crash_table);
@@ -2572,15 +2605,23 @@ static void sfx_crash(chqstate_t *state, int param1, int param2)
 }
 
 /**
- * $89D9: SFX thud
+ * $89D9: Play the 48K "thud" impact sound effect [Conv: HQ]
+ *
+ * Steps through a 32-byte delay table ($89EF). Each byte gives the
+ * number of output pulses at the current EAR level. After each group,
+ * the EAR bit is toggled. param1 controls the delay between pulses
+ * (larger = lower pitch). Used for car landings (param1=8) and hazard
+ * hits (param1=3).
  *
  * \param[in] state  Pointer to game state.
- * \param[in] param1 First SFX parameter. (was D)
- * \param[in] param2 Second SFX parameter. (was E)
+ * \param[in] param1 Delay multiplier between pulses; larger = lower pitch. (was D)
+ * \param[in] param2 Unused. (was E)
+ *
+ * Conv: Z80 drives the border port via OUT ($FE); C has no audio output.
  */
 static void sfx_thud(chqstate_t *state, int param1, int param2)
 {
-  // $89EF
+  /* $89EF — each byte is a toggle-count between EAR-bit flips */
   static const u8 sfx_thud_table[32] = {
     0x02, 0x07, 0x05, 0x02, 0x04, 0x0A, 0x01, 0x04,
     0x09, 0x09, 0x06, 0x45, 0x01, 0x01, 0x04, 0x03,
@@ -2588,11 +2629,11 @@ static void sfx_thud(chqstate_t *state, int param1, int param2)
     0x8E, 0xED, 0x01, 0x01, 0x01, 0x06, 0x07, 0x01
   };
 
-  int       C;
-  const u8 *HL;
-  int       A;
-  int       B;
-  int       E;
+  int       C;  /* outer iteration count, 32 bytes (was C) */
+  const u8 *HL; /* pointer walking sfx_thud_table (was HL) */
+  int       A;  /* EAR output bit state, toggled between 0 and 16 (was A) */
+  int       B;  /* pulse count for this table entry (was B) */
+  int       E;  /* per-pulse delay counter (was E) */
 
   C = 32; // NELEMS(sfx_thud_table);
   HL = &sfx_thud_table[0];
@@ -2610,11 +2651,20 @@ static void sfx_thud(chqstate_t *state, int param1, int param2)
 }
 
 /**
- * $8A0F: SFX cornering
+ * $8A0F: Play the 48K cornering noise, running every other call [Conv: HQ]
+ *
+ * Maintains a toggle flag (sfx_cornering_toggle) so that only every
+ * other call proceeds to sfx_cornering_loop_outer; the intervening call
+ * returns immediately. This halves the rate at which the noise fires.
+ * The game always passes duty factor 100 and count 1.
  *
  * \param[in] state  Pointer to game state.
- * \param[in] param1 First SFX parameter. (was D)
- * \param[in] param2 Second SFX parameter. (was E)
+ * \param[in] param1 Duty factor and outer loop count. (was D)
+ * \param[in] param2 Inner loop count. (was E)
+ *
+ * Conv: Z80 uses a self-modifying LD A,n at $8A10 as the toggle; C uses
+ *   state->sfx_cornering_toggle. Z80 falls through to sfx_cornering_loop_outer
+ *   at $8A17; C calls it.
  */
 static void sfx_cornering(chqstate_t *state, int param1, int param2)
 {
@@ -2622,13 +2672,28 @@ static void sfx_cornering(chqstate_t *state, int param1, int param2)
   if (state->sfx_cornering_toggle)
     return;
 
-  sfx_cornering_loop_outer(state, param1, param2); /* was fallthrough */
+  sfx_cornering_loop_outer(state, param1, param2); /* was FALLTHROUGH */
 }
 
+/**
+ * $8A17: Inner cornering noise loop [Conv: HQ]
+ *
+ * Runs a random-noise burst: for each of param2 inner iterations, calls
+ * rng and — if bit 4 is set — toggles the EAR+MIC output bit with two
+ * delay loops (off-phase: 24−param1 cycles; on-phase: param1 cycles).
+ * The outer loop runs param1 times, so heavier cornering (larger param1)
+ * gives more iterations but shorter individual delays.
+ *
+ * \param[in] state  Pointer to game state.
+ * \param[in] param1 Outer loop count and on-phase delay. (was D)
+ * \param[in] param2 Inner loop count. (was E)
+ *
+ * Conv: Z80 drives the border port via OUT ($FE); C has no audio output.
+ */
 static void sfx_cornering_loop_outer(chqstate_t *state, int param1, int param2)
 {
-  int C;
-  int B;
+  int C; /* inner loop counter, param2 down to 1 (was C) */
+  int B; /* delay loop counter (was B) */
 
   do {
     C = param2;
@@ -2646,18 +2711,27 @@ static void sfx_cornering_loop_outer(chqstate_t *state, int param1, int param2)
 }
 
 /**
- * $8A36: SFX bipbow
+ * $8A36: Play the 48K "bip-bow" descending tone effect [Conv: HQ]
+ *
+ * Produces a descending-pitch tone by running 20 outer iterations with a
+ * shrinking on-phase delay (B = C each iteration) and a fixed 5-step
+ * inner burst. Each inner step: delays param1 cycles (the initial delay),
+ * restores param1 from param2, delays 24−C cycles, drives EAR+MIC high,
+ * delays C cycles, drives it low. As C counts down from 20 the on-phase
+ * shortens and off-phase lengthens, creating the falling pitch.
  *
  * \param[in] state  Pointer to game state.
- * \param[in] param1 First SFX parameter. (was D)
- * \param[in] param2 Second SFX parameter. (was E)
+ * \param[in] param1 Initial per-step delay (restored from param2 each step). (was D)
+ * \param[in] param2 Per-step delay reset value. (was E)
+ *
+ * Conv: Z80 drives the border port via OUT ($FE); C has no audio output.
  */
 static void sfx_bipbow(chqstate_t *state, int param1, int param2)
 {
-  int C;
-  int H;
-  int L;
-  int B;
+  int C; /* outer iteration counter, 20 down to 1 (was C) */
+  int H; /* inner burst counter, restored from L each outer step (was H) */
+  int L; /* inner burst reset value, 5 (was L) */
+  int B; /* delay loop counter (was B) */
 
   C = 20;
   H = L = 5;

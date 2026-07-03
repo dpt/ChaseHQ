@@ -10,13 +10,6 @@ Generated from `grep '^ \* \$' ChaseHQ.c | grep -v '\[Conv: HQ\]'`.
 |---------|------------|-------------|
 | `$5C00` | `end_screen` | End screen |
 | `$865A` | `draw_pregame` | Draw pregame |
-| `$8876` | `check_user_input` | Check user input |
-| `$88A9` | `check_user_input_quit_key` | Check user input quit key |
-| `$8903` | `drive_sfx` | Drive SFX |
-| `$8960` | `sfx_crash` | SFX crash |
-| `$89D9` | `sfx_thud` | SFX thud |
-| `$8A0F` | `sfx_cornering` | SFX cornering |
-| `$8A36` | `sfx_bipbow` | SFX bipbow |
 | `$8A57` | `handle_perp_caught` | Handle perp caught |
 | `$8C35` | `hpc_set_perp_speed` | HPC set perp speed |
 | `$8C3A` | `fully_smashed` | Fully smashed |
