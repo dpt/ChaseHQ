@@ -15,14 +15,6 @@ Generated from `grep '^ \* \$' ChaseHQ.c | grep -v '\[Conv: HQ\]'`.
 | `$9174` | `draw_stretchy_object_common` | Draw stretchy objects (e.g. trees) |
 | `$929A` | `draw_object_left_helicopter_entrypt` | Draw object left helicopter entry point |
 | `$930E` | `draw_object_perspective_entrypt` | Draw object: compute perspective height/width and dispatch |
-| `$9945` | `start_chatter` | Start chatter |
-| `$9965` | `drive_chatter` | Drive chatter |
-| `$99D3` | `drive_chatter_stop` | Stop chatter |
-| `$99EC` | `print_chatter` | Print chatter |
-| `$9A24` | `pc_chatter_message` | Print chatter (second entry point) |
-| `$9A30` | `pc_clear_line` | Clear the chatter line |
-| `$9A55` | `drive_noise_effect` | Drive the noise effect |
-| `$9A5C` | `draw_noise_effect` | Draw the noise effect |
 | `$9A98` | `ne_plot_attrs` | Set the noise attribute bytes |
 | `$9AAB` | `plot_face` | Draw the given face |
 | `$9ACE` | `plot_face_attributes` | Set the face attribute bytes |

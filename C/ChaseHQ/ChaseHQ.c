@@ -5565,19 +5565,22 @@ static u8 rng(chqstate_t *state)
 }
 
 /**
- * $9945: Start chatter
+ * $9945: Initiate a chatter sequence if priority allows it [Conv: HQ]
  *
- * Called from main loop.
+ * Sets up a new chatter display. If chatter is already in progress and the
+ * running priority is at least as high as the requested priority, the new
+ * request is silently ignored. Otherwise the state machine is primed with
+ * the new block pointer and reset to CHATTERSTATE_START.
  *
  * \param[in] state      Pointer to game state.
- * \param[in] priority   Priority of this chatter (higher wins). (was A)
- * \param[in] chatterblk Pointer to chatter data block. (was HL)
+ * \param[in] priority   Priority of this chatter; higher values win. (was A)
+ * \param[in] chatterblk Pointer to the chatter data block to play. (was HL)
  */
 static void start_chatter(chqstate_t       *state,
                           chatterpriority_t priority,
                           const u8         *chatterblk)
 {
-  int chatter_state; /* was A */
+  int chatter_state; /* current FSM state, checked against IDLE and STOP (was A) */
 
   assert(chatterblk);
 
@@ -5594,24 +5597,39 @@ static void start_chatter(chqstate_t       *state,
 }
 
 /**
- * $9965: Drive chatter
+ * $9965: Advance the chatter state machine one frame [Conv: HQ]
  *
- * Called from main loop.
+ * Drives the four-state chatter FSM each frame:
+ * - STARTING (1): transitions to RUN, clears the message line and starts the
+ *   noise-in effect.
+ * - RUN (2): if the noise effect is still counting down, drives it; otherwise
+ *   advances the message cursor with an optional blink animation, or reads the
+ *   next chatter command (STOP, PAUSE or a new message block).
+ * - STOPPING (3): counts down noise_counter; on expiry enters IDLE and wipes
+ *   the face attributes to black.
+ * - IDLE (0): blinks a space cursor off-screen (purely cosmetic).
+ *
+ * Triggers a screen draw at the end of every call.
  *
  * \param[in] state Pointer to game state.
+ *
+ * Conv: The idle cursor blink byte ($AA/$55 alternator) was self-modified at
+ * $9982; C reads and writes state->chatter_cursor_blink instead.
  */
 static void drive_chatter(chqstate_t *state)
 {
-  int          carry = 0;
-  int          chatter_state; /* was A */
-  char         character;     /* was D */
-  u8           rotating;      /* was A */
-  int          delay;         /* was A */
-  int          x;             /* was A */
-  u8           B;
-  const char  *HLnextchar;    /* was HL */
-  const u8    *chatterblk;    /* was HL */
-  int          chattercmd;    /* was A */
+  int          carry;         /* carry from RRC/RR operations (carry) */
+  int          chatter_state; /* FSM state at entry, decremented to dispatch (was A) */
+  char         character;     /* character to display: space or message char (was D) */
+  u8           rotating;      /* cursor blink byte, RRC-rotated each frame (was A) */
+  int          delay;         /* chatter display delay counter (was A) */
+  int          x;             /* x position for mini-font cursor plot (was A) */
+  u8           B;             /* copy of chatter_delay used for RR blink-rate test (was B) */
+  const char  *HLnextchar;    /* pointer to current character in message string (was HL) */
+  const u8    *chatterblk;    /* pointer into the chatter data block (was HL) */
+  int          chattercmd;    /* command byte from chatterblk: $FF=stop, $FE=pause (was A) */
+
+  carry = 0;
 
   chatter_state = state->chatter_state;
   if (--chatter_state == 0) // starting (1)
@@ -5702,9 +5720,11 @@ exit:
 }
 
 /**
- * $99D3: Stop chatter
+ * $99D3: Begin the chatter stop sequence [Conv: HQ]
  *
- * Called from main loop.
+ * Primes the noise-out countdown (noise_counter = 4), switches the FSM to
+ * STOPPING, and clears the on-screen message line. The noise effect will
+ * count down over the next four frames before entering IDLE.
  *
  * \param[in] state Pointer to game state.
  */
@@ -5716,23 +5736,27 @@ static void drive_chatter_stop(chqstate_t *state)
 }
 
 /**
- * $99EC: Print chatter
+ * $99EC: Resolve the speaking character and start showing the message [Conv: HQ]
  *
- * This function examines the current chatter block to determine which
- * character is speaking, handling random choice logic for three-way
- * selections. It calculates and displays the appropriate character mugshot
- * at screen position (176,8) based on the character ID, with special handling
- * for the pilot character. Finally, it outputs the associated message using
- * the processed chatter block data.
+ * Walks the current chatter block, skipping RANDOM ($FC) command bytes each
+ * of which triggers a three-way random branch to select the actual sub-block.
+ * The first non-$FC byte is the speaking character's ID (0=pilot, 1=Nancy,
+ * 2=Raymond, 3=Tony). The corresponding face bitmap is plotted at screen
+ * position (176,8), then pc_chatter_message is called to queue the message.
  *
  * \param[in] state Pointer to game state.
+ *
+ * Conv: Z80 computes face bitmap address via repeated ADD HL,DE (multiply by
+ * $B4=180); C indexes directly into bitmap_faces[].
+ * Conv: Chatter block entries were Z80 addresses; C uses table indices into
+ * chatter_blocks[].
  */
 static void print_chatter(chqstate_t *state)
 {
-  const u8 *chatterblk; /* was HL */
-  int       cmd;        /* was A */
-  int       rnd;        /* was A */
-  const u8 *face;       /* was HL */
+  const u8 *chatterblk; /* pointer walking the chatter block data (was HL) */
+  int       cmd;        /* command byte: $FC=random choice, or character ID (was A) */
+  int       rnd;        /* random byte used for three-way branch (was A) */
+  const u8 *face;       /* pointer to the face bitmap for the speaking character (was HL) */
 
   chatterblk = state->chatterblk_ptr;
   assert(chatterblk);
@@ -5766,41 +5790,57 @@ static void print_chatter(chqstate_t *state)
 }
 
 /**
- * $9A24: Print chatter
+ * $9A24: Load the next message string from a chatter block [Conv: HQ]
+ *
+ * Reads a string index from the chatter block, resolves it to a C string
+ * (from common_chatter_strings[] or the stage's per-stage strings), saves the
+ * updated block pointer and the string start in state, then falls through to
+ * pc_clear_line to begin displaying from column 0.
  *
  * \param[in] state      Pointer to game state.
- * \param[in] chatterblk Pointer to chatter data block. (was HL)
+ * \param[in] chatterblk Pointer to the current position in the chatter block.
+ *                       (was HL)
+ *
+ * Conv: Z80 stores a 2-byte message address; C stores a 1-byte index into
+ * common_chatter_strings[] or stage->chatter_strings[].
  */
 static void pc_chatter_message(chqstate_t *state, const u8 *chatterblk)
 {
-  int         index;  // Conv: additional
-  const char *string; /* was DE */
+  int         string_index; /* index into chatter string tables (Conv: no Z80 register) */
+  const char *DEstring;     /* pointer to the resolved message string (was DE) */
 
   // Conv: Original game loads an address directly here.
   assert(*chatterblk < CHATTERSTR__LIMIT);
-  index = *chatterblk++;
-  if (index < CHATTERSTR_PERP_DESC_1) {
-    string = common_chatter_strings[index];
+  string_index = *chatterblk++;
+  if (string_index < CHATTERSTR_PERP_DESC_1) {
+    DEstring = common_chatter_strings[string_index];
   } else {
-    assert(index < CHATTERSTR__LIMIT);
-    string = state->stage->chatter_strings[index - CHATTERSTR_PERP_DESC_1];
+    assert(string_index < CHATTERSTR__LIMIT);
+    DEstring = state->stage->chatter_strings[string_index - CHATTERSTR_PERP_DESC_1];
   }
-  assert(string);
+  assert(DEstring);
   state->chatterblk_ptr = chatterblk;
-  state->next_character = string;
+  state->next_character = DEstring;
   pc_clear_line(state, 0); /* was FALLTHROUGH */
 }
 
 /**
- * $9A30: Clear the chatter line
+ * $9A30: Plot the next character into the chatter message line [Conv: HQ]
+ *
+ * If x is zero, clears the message line first. Reads the next character from
+ * state->next_character (masking the EOS bit), plots it with a cursor block at
+ * column x, and advances the message position. If the EOS bit was set the
+ * character is the last one; a delay of 10 frames is set so the player can
+ * read it before the display cycles on.
  *
  * \param[in] state Pointer to game state.
- * \param[in] x     X position. (was A)
+ * \param[in] x     Column at which to plot the character. Zero triggers a
+ *                  line clear first. (was A)
  */
 static void pc_clear_line(chqstate_t *state, int x)
 {
-  const char *nextch;    /* was HL */
-  char        character; /* was D */
+  const char *nextch;    /* pointer to the current character in the message string (was HL) */
+  char        character; /* character to plot, with EOS bit cleared (was D) */
 
   if (x == 0)
     clear_message_line(state);
@@ -5817,10 +5857,14 @@ static void pc_clear_line(chqstate_t *state, int x)
 }
 
 /**
- * $9A55: Drive the noise effect
+ * $9A55: Advance the noise effect counter and dispatch [Conv: HQ]
+ *
+ * Decrements noise_counter and stores it. If the counter has reached zero the
+ * noise effect is over: calls print_chatter to reveal the face and message.
+ * Otherwise falls through to draw_noise_effect to render the next static frame.
  *
  * \param[in] state   Pointer to game state.
- * \param[in] counter Noise counter. (was A)
+ * \param[in] counter Current noise counter value, decremented before use. (was A)
  */
 static void drive_noise_effect(chqstate_t *state, int counter)
 {
@@ -5832,22 +5876,34 @@ static void drive_noise_effect(chqstate_t *state, int counter)
 }
 
 /**
- * $9A5C: Draw the noise effect
+ * $9A5C: Render one frame of the noise/static effect over the face area [Conv: HQ]
+ *
+ * Uses the bottom bit of counter (via RRA) to alternate between showing a
+ * cursor-on or cursor-off space at x=-1. Then iterates 40 screen rows of
+ * 4 bytes each, computing pseudo-random pixel values by XOR-rotating the
+ * noise_bytes[] state array and writing the result directly to screen memory
+ * in the face area starting at (176,8). Finishes by setting the face
+ * attributes to bright-white-on-black.
  *
  * \param[in] state   Pointer to game state.
- * \param[in] counter Noise counter. (was A)
+ * \param[in] counter Noise counter; bit 0 selects cursor style. (was A)
+ *
+ * Conv: Z80 uses RRA to shift bit 0 into carry; C uses RR(counter) which
+ * updates the local carry variable.
  */
 static void draw_noise_effect(chqstate_t *state, int counter)
 {
-  int   carry = 0;
-  int   x;              /* was A */
-  char  character;      /* was D */
-  u16   DEscreen;       /* was DE */
-  int   C;              /* was C */
-  int   B;              /* was B */
-  u16   DEscreen_saved; /* was stack? */
-  u8   *noisebytes;     /* was HL */
-  u8    A;              /* was A */
+  int   carry;          /* carry from RR(counter), selects cursor-on or off (carry) */
+  int   x;              /* cursor x position, always -1 (0xFF) (was A) */
+  char  character;      /* character to plot, always space (was D) */
+  u16   DEscreen;       /* screen address walking through the face area rows (was DE) */
+  int   C;              /* outer row counter, 40 rows (was C) */
+  int   B;              /* inner column counter, 4 bytes per row (was B) */
+  u16   DEscreen_saved; /* row start saved across the inner column loop (was stack) */
+  u8   *noisebytes;     /* pointer into state->noise_bytes[] (was HL) */
+  u8    A;              /* accumulated noise byte written to screen (was A) */
+
+  carry = 0;
 
   RR(counter);
   x = 0xFF;
