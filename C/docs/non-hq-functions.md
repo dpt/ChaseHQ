@@ -9,11 +9,6 @@ Generated from `grep '^ \* \$' ChaseHQ.c | grep -v '\[Conv: HQ\]'`.
 | Address | C function | Description |
 |---------|------------|-------------|
 | `$5C00` | `end_screen` | End screen |
-| `$83CD` | `bootstrap` | Bootstrap |
-| `$8401` | `main_loop` | Main loop |
-| `$852A` | `cpu_driver` | CPU driver |
-| `$858C` | `run_pregame_screen` | Pre-game radio screen |
-| `$85A8` | `run_pregame_screen_loop` | Run pregame screen loop |
 | `$85E4` | `reveal_perp_car` | Reveal perp car |
 | `$860F` | `animate_meters` | Animate meters |
 | `$8646` | `am_set_attrs` | AM set attrs |

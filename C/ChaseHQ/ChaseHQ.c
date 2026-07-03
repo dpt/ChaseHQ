@@ -1565,17 +1565,30 @@ static void attract_mode_hook(chqstate_t *state)
 }
 
 /**
- * $83CD: Bootstrap
+ * $83CD: Build the flip table, then loop through attract → game → bank 3 [Conv: HQ]
+ *
+ * Builds a 256-entry byte bit-reversal lookup table at state->flipped:
+ * for each index I, flipped[I] is I with its bits in reverse order. The
+ * table is computed by iterating over all 256 byte values and rotating
+ * each bit out of A (via RLCA) into C (via RR C) eight times.
+ *
+ * After the table is ready the function enters an infinite outer loop:
+ * call attract_mode_hook (returns when the player hits fire), reset game
+ * state (overtake bonus, score, stage number, credits), call main_loop,
+ * and optionally call the 128K bank 3 bootstrap routine.
  *
  * \param[in] state Pointer to game state.
+ *
+ * Conv: Z80 loops back via JR $83CD; C uses for(;;). The five-byte
+ *   clear (DJNZ loop) is replaced with memset.
  */
 static void bootstrap(chqstate_t *state)
 {
-  int  carry;
-  u8   Cresult;     /* was C */
-  u8  *HLflipped;   /* was HL */
-  int  Biterations; /* was B */
-  u8   Aindex;      /* was A */
+  int  carry;       /* carry flag used by RLC/RR (carry) */
+  u8   Cresult;     /* bit-reversed result accumulator (was C) */
+  u8  *HLflipped;   /* pointer walking the 256-byte flip table (was HL) */
+  int  Biterations; /* inner loop iteration count, 8 bits per byte (was B) */
+  u8   Aindex;      /* current table index; bit source for RLC (was A) */
 
   // Bootstrap is itself a loop
   for (;;) {
@@ -1615,18 +1628,32 @@ static void bootstrap(chqstate_t *state)
 }
 
 /**
- * $8401: Main loop
+ * $8401: Per-stage game loop [Conv: HQ]
+ *
+ * Drives all stages of the game in sequence. Each iteration loads the
+ * wanted stage, runs the pregame radio screen, sets up the stage and
+ * then frames through the game until the perp is caught or the player
+ * quits. When stage 6 is requested, the end screen runs and control
+ * returns to bootstrap. Called "main loop" in the skool; it is really
+ * a subroutine of bootstrap.
  *
  * \param[in] state Pointer to game state.
+ *
+ * Conv: Z80 uses POP / JP to restart the frame loop on stage transition;
+ *   C uses nested for(;;) loops and break. The quit path at $8A57 in the
+ *   Z80 calls escape_scene then JP $8401; in C escape_scene returns to
+ *   main_loop which then returns to bootstrap. Test-mode shortcuts
+ *   (keys 1–3) are a C addition; the Z80 has no equivalent.
  */
 static void main_loop(chqstate_t *state)
 {
-  int  carry = 0;
-  int  start_speech_index; /* was A */
-  u8   keys;               /* was A */
-  u8  *pstart_speech;      /* was HL */
-  int  quit_state;         /* was A */
-  int  start_speech;       /* was A */
+  int  carry;               /* carry flag used by SRL (carry) */
+  int  start_speech_index;  /* index into the 3-entry speech cycle (was A) */
+  u8   keys;                /* keyboard state in test mode (was A) */
+  u8  *pstart_speech;       /* pointer to start_speech field (was HL) */
+  int  quit_state;          /* current quit-state value (was A) */
+  int  start_speech;        /* speech sample index to play (was A) */
+  carry = 0;
 
   for (;;) {
     load_stage(state);
@@ -1762,14 +1789,26 @@ static void main_loop(chqstate_t *state)
 }
 
 /**
- * $852A: CPU driver
+ * $852A: Drive the attract mode demo with automatic input [Conv: HQ]
+ *
+ * Generates simulated user input from the current road position: steers
+ * left when the road is biased rightward (roadpos < ROAD_LEFTMOST),
+ * right when biased leftward (roadpos >= ROAD_RIGHTMOST), otherwise
+ * straight. Adds a gear-change flag whenever the actual gear does not
+ * match the speed-derived target gear. Then executes a reduced frame
+ * tick (read_map → animate_hero_car) without scoring, hazards or
+ * overlay logic.
  *
  * \param[in] state Pointer to game state.
+ *
+ * Conv: The host_quit longjmp check is a C addition (the Z80 has no
+ *   clean-exit mechanism). The CHECK assert macros are also C-only
+ *   debug guards. The sleep() at the end is a timing approximation.
  */
 static void cpu_driver(chqstate_t *state)
 {
-  int roadpos; /* was HL */
-  int input;   /* was A */
+  int roadpos; /* current lateral road position (was HL) */
+  int input;   /* computed user-input flags (was A) */
 
   if (state->host_quit)
     longjmp(state->host_quit_jmp, 1);
@@ -1813,11 +1852,21 @@ static void cpu_driver(chqstate_t *state)
 }
 
 /**
- * $858C: Pre-game radio screen ("CHASE HQ MONITORING SYSTEM")
+ * $858C: Initialise the pre-game "CHASE HQ MONITORING SYSTEM" screen [Conv: HQ]
  *
- * Called from main loop.
+ * Sets up the stage data, starts a reverse transition, clears the
+ * playfield and initiates the chatter sequence that describes the
+ * current stage's target. The perp car reveal counter is reset to
+ * zero so that reveal_perp_car gradually uncovers the car each frame.
+ *
+ * The pregame frame loop was extracted into run_pregame_screen_loop so
+ * the caller can drive it from main_loop.
  *
  * \param[in] state Pointer to game state.
+ *
+ * Conv: dont_draw_screen_attrs is set to 1; the Z80 used 0xF8 (non-zero
+ *   but with palette bits set). Pregame loop extracted (run_pregame_screen_loop).
+ *   Dead code at the end of the Z80 routine removed.
  */
 static void run_pregame_screen(chqstate_t *state)
 {
@@ -1836,14 +1885,27 @@ static void run_pregame_screen(chqstate_t *state)
 }
 
 /**
- * $85A8: Run pregame screen loop
+ * $85A8: Execute one frame of the pre-game screen [Conv: HQ]
+ *
+ * Called repeatedly from main_loop until it returns zero. Each frame:
+ * draws the pregame scene (perp portrait, speed/distance meters, chatter
+ * text), advances the perp car reveal animation, drives the transition
+ * and flushes the screen. Returns zero once the transition has completed
+ * and the chatter sequence is idle, or immediately if the player presses
+ * fire to skip the intro.
  *
  * \param[in] state Pointer to game state.
- * \return Non-zero on success.
+ *
+ * \return 1 to continue looping; 0 when the pregame screen is complete.
+ *
+ * Conv: In the Z80 this is the tail of run_pregame_screen ($858C); C
+ *   splits it into a separate function so main_loop can control the
+ *   iteration. The sleep() call is a frame-timing approximation.
  */
 static int run_pregame_screen_loop(chqstate_t *state)
 {
-  int rc = 1; // loop
+  int rc; /* loop/stop flag: 1 = continue, 0 = done */
+  rc = 1;
 
   state->speccy->stamp(state->speccy);
 
