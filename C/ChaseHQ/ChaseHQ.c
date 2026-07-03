@@ -15921,11 +15921,22 @@ static void entry_128k(chqstate_t *state)
 }
 
 /**
- * $E81D: Entrypt common
+ * $E81D: Entry common [Conv: HQ]
  *
- * \param[in] state      Pointer to game state.
- * \param[in] Amode_128k Amode 128k.
- * \param[in] Bnrelocs   Bnrelocs.
+ * Shared entry point reached from both entry_48k and entry_128k. Records the
+ * hardware mode, copies the marquee bitmap and attribute data to the screen,
+ * optionally shows the "STOP THE TAPE" prompt (48K only), performs the Z80
+ * table relocations (omitted in the C port), loads stage 1 data, and calls
+ * bootstrap to complete initialisation.
+ *
+ * \param[in,out] state      Pointer to game state.
+ * \param[in]     Amode_128k Non-zero when running on 128K hardware. (was A)
+ * \param[in]     Bnrelocs   Number of relocation entries to copy. (was B)
+ *
+ * Conv: The relocation loop copies Z80 ROM data into RAM pages at fixed Z80
+ *   addresses ($8014, $83B5, $EA00, $EB00, $EC00). In the C port these tables
+ *   are compiled-in constants, so the relocation block is omitted. Similarly,
+ *   the stop_the_tape_48k call is a no-op stub since there is no tape to load.
  */
 static void entry_common(chqstate_t *state, int Amode_128k, int Bnrelocs)
 {
@@ -16225,17 +16236,23 @@ static void clear_screen(chqstate_t *state)
 }
 
 /**
- * $ECF3: Redefine keys 48K
+ * $ECF3: Redefine keys 48K [Conv: HQ]
  *
- * \param[in] state Pointer to game state.
+ * Presents the key-redefinition menu and scans for eight consecutive key
+ * presses. After each press, the keydef is recorded in temp_keydefs and its
+ * name is drawn on screen at the current screen address. After all eight keys
+ * are defined, the sequence is compared against shocked_keydefs; if they
+ * match, test_mode is enabled and a confirmation screen is shown.
+ *
+ * \param[in,out] state Pointer to game state.
  */
 static void redefine_keys_48k(chqstate_t *state)
 {
-  u16       DE_scr;
-  int       B_iterations;
-  int       C_index;
-  const u8 *DE_shocked;
-  const u8 *HL_keydefs;
+  u16       DE_scr;       /* current screen address for key-name drawing (was DE) */
+  int       B_iterations; /* outer loop: 8 keys to define; inner: 20 music ticks to wait (was B) */
+  int       C_index;      /* index into temp_keydefs for the current key being defined (was C) */
+  const u8 *DE_shocked;   /* pointer walking shocked_keydefs[] during the cheat check (was DE) */
+  const u8 *HL_keydefs;   /* pointer walking state->temp_keydefs[] during the cheat check (was HL) */
 
   for (;;) {
     clear_screen(state);
@@ -16291,22 +16308,32 @@ static void redefine_keys_48k(chqstate_t *state)
 }
 
 /**
- * $ED4D: Keyscan
+ * $ED4D: Keyscan all [Conv: HQ]
  *
- * \param[in] state Pointer to game state.
- * \param[out] Dkeydef_out A keydef of the binary form kkkkkrrr (where k=key, r=row).
- * \return Non-zero if keys are pressed. Zero otherwise.
+ * Scans all eight keyboard half-rows by iterating through IN port high bytes
+ * ($FE, $FD, $FB, $F7, $EF, $DF, $BF, $7F). For each row, inverts the five
+ * key bits from the IN result. If exactly one bit is set (unique key press),
+ * shifts the bit out to identify the key column, then packs the row and column
+ * into Dkeydef_out in the form kkkkkrrr. Returns non-zero if any key is found,
+ * zero otherwise.
+ *
+ * \param[in,out] state       Pointer to game state.
+ * \param[out]    Dkeydef_out Receives packed key+row value: bits 7..3 = key column,
+ *                            bits 2..0 = row. (was D)
+ * \return Non-zero if a key is pressed; zero otherwise.
  */
 static u8 keyscan_all(chqstate_t *state, u8 *Dkeydef_out)
 {
-  int carry = 0;
-  int Dflag;      /* was D */
-  int Ekeyandrow; /* was E */
-  u8  Bport_hi;   /* was B */
-  int Cport_lo;   /* was C */
-  int Akeys;      /* was A */
-  u8  Hkeys;      /* was H */
-  int A;          /* was A */
+  int carry;      /* carry from SRL/RLC operations (carry) */
+  int Dflag;      /* sentinel: 0xFF at entry; incremented to 0 on first active row (was D) */
+  int Ekeyandrow; /* packed key+row accumulator; decremented per row (was E) */
+  u8  Bport_hi;   /* high byte of keyboard IN port; shifted through all eight row addresses (was B) */
+  int Cport_lo;   /* low byte of keyboard IN port: constant $FE (was C) */
+  int Akeys;      /* active key bits from IN: inverted and masked to five bits (was A) */
+  u8  Hkeys;      /* copy of Akeys; shifted right to find the set bit column (was H) */
+  int A;          /* column offset: decremented by 8 per SRL until the set bit falls out (was A) */
+
+  carry = 0;
 
   Dflag      = 0xFF;
   Ekeyandrow = 0x2F; // first keydef to try?
@@ -16338,23 +16365,29 @@ static u8 keyscan_all(chqstate_t *state, u8 *Dkeydef_out)
 }
 
 /**
- * $ED6D: Defines a single key
+ * $ED6D: Define a single key [Conv: HQ]
  *
- * \param[in] state Pointer to game state.
- * \param[in] Bindex Index of ?. (was B)
- * \param[in] Cindex Key index we're defining. (was C)
- * \param[in] DEscreen Screen address to draw at - a Z80 address. (was DE)
- * \returns Next screen address to draw at
+ * Waits until keyscan_all reports a key press, checks the keydef has not
+ * already been assigned, records it in temp_keydefs[Cindex], looks up the
+ * key name from key_names[], draws it on screen at DEscreen and advances the
+ * screen address to the next row. If Bindex == 4 (the mid-point of the list)
+ * an extra row skip is inserted.
+ *
+ * \param[in,out] state    Pointer to game state.
+ * \param[in]     Bindex   Position in the eight-key list (1..8); 4 triggers extra gap. (was B)
+ * \param[in]     Cindex   1-based index of the key being defined into temp_keydefs[]. (was C)
+ * \param[in]     DEscreen Z80 screen address at which the key name is drawn. (was DE)
+ * \return Updated screen address after the drawn key name.
  */
 static int define_a_key(chqstate_t *state, int Bindex, int Cindex,
                         int DEscreen)
 {
-  int       carry;
-  u8        Dkeydef;     /* was D */
-  u8       *HLtmpkeys;   /* was HL */
-  const u8 *HLkeynames;  /* was HL */
-  int       Biterations; /* was B */
-  int       Akeydef;     /* was A */
+  int       carry;        /* carry from SRL in keyscan_all (not used directly here) (carry) */
+  u8        Dkeydef;      /* keydef byte returned by keyscan_all: kkkkkrrr (was D) */
+  u8       *HLtmpkeys;    /* pointer walking temp_keydefs[] to check for duplicate assignments (was HL) */
+  const u8 *HLkeynames;   /* pointer into key_names[] for the matched key's display string (was HL) */
+  int       Biterations;  /* duplicate-check loop counter: Cindex−1 already-defined slots (was B) */
+  int       Akeydef;      /* copy of Dkeydef for comparison and storage (was A) */
 
   // PUSH DEscreen,BC -- index
 dak_loop1:
@@ -16398,15 +16431,20 @@ dak_loop1:
 }
 
 /**
- * $EDCC: Dak move down
+ * $EDCC: DAK move down [Conv: HQ]
  *
- * \param[in] DEscreen Value.
- * \return Non-zero on success.
+ * Advances a Z80 screen address by one character row: adds 32 to the low byte
+ * (next column group) and 8 to the high byte (next pixel row within the
+ * character cell), then returns the combined result. Used by define_a_key to
+ * step the screen cursor between key-name slots.
+ *
+ * \param[in] DEscreen Z80 screen address (D = high byte, E = low byte).
+ * \return Screen address of the next character row.
  */
 static u16 dak_move_down(int DEscreen)
 {
-  u8 E;
-  u8 D;
+  u8 E; /* low byte of DEscreen: byte column offset + 32 (was E) */
+  u8 D; /* high byte of DEscreen: pixel row within third + 8 (was D) */
 
   E = (DEscreen & 0xFF) + 32;
   D = (DEscreen >> 8)   + 8;
@@ -16499,18 +16537,27 @@ static void next_pattern_at_addr(chqstate_t *state, const u8 *HLpataddr)
 }
 
 /**
- * $EE9E: Play music 48K
+ * $EE9E: Play music 48K [Conv: HQ]
  *
- * \param[in] state Pointer to game state.
+ * Per-tick music driver for 48K hardware. Clears the IRQ flag, then either
+ * initialises playback on the first call or decrements the note delay counter.
+ * When the delay expires, reads the next byte from the pattern stream; a zero
+ * byte advances to the next pattern. Bytes with bit 6 set carry a one-tick
+ * extra delay flag. The lower three bits select the instrument: 0 = silence,
+ * 1 = playdrum_2, 2 = playdrum_1, 3 = noise. After dispatch, handles the
+ * extra-delay tick and optionally continues drum playback before waiting for
+ * the next hardware interrupt.
+ *
+ * \param[in,out] state Pointer to game state.
  */
 static void play_music_48k(chqstate_t *state)
 {
-  int       Adelay;
-  const u8 *HL;
-  int       A;
-  int       D;
-  int       B;
-  int       Aparam;
+  int       Adelay;  /* note_delay decremented each tick; zero triggers next note (was A) */
+  const u8 *HL;      /* pointer walking the current music pattern byte stream (was HL) */
+  int       A;       /* raw pattern byte minus 1; zero means end-of-pattern sentinel (was A) */
+  int       D;       /* copy of adjusted pattern byte; upper bits = pitch param, lower = instrument (was D) */
+  int       B;       /* instrument index: lower three bits of D (was B) */
+  int       Aparam;  /* pitch/parameter value: upper five bits of D, passed to instrument handler (was A) */
 
   state->music.irq_flag = 0;
 
@@ -16581,9 +16628,17 @@ static void pm_wait_for_interrupt(chqstate_t *state)
 }
 
 /**
- * $EF19: Interrupt entry
+ * $EF19: Interrupt entry [Conv: HQ]
  *
- * \param[in] state Pointer to game state.
+ * Z80 mode-2 interrupt service routine reached via the vector table installed
+ * by setup_interrupts. Sets the IRQ flag to $FF so that pm_wait_for_interrupt
+ * in play_music_48k and playdrum_go knows the interrupt has fired.
+ *
+ * \param[in,out] state Pointer to game state.
+ *
+ * Conv: The Z80 ISR runs in hardware interrupt context with an EI/RETI epilogue.
+ *   In C there is no interrupt hardware; the flag is written directly, and
+ *   pm_wait_for_interrupt spins on it in a busy loop.
  */
 static void interrupt_entry(chqstate_t *state)
 {
@@ -16591,10 +16646,12 @@ static void interrupt_entry(chqstate_t *state)
 }
 
 /**
- * $EF22: Playdrum 2
+ * $EF22: Playdrum 2 [Conv: HQ]
  *
- * \param[in] state  Pointer to game state.
- * \param[in] Aspeed Speed value.
+ * Starts playback of drum sample 2 (108 bytes). Falls through to playdrum_start.
+ *
+ * \param[in,out] state  Pointer to game state.
+ * \param[in]     Aspeed Playback speed: inner loop count per sample byte. (was A)
  */
 static void playdrum_2(chqstate_t *state, int Aspeed)
 {
@@ -16602,10 +16659,12 @@ static void playdrum_2(chqstate_t *state, int Aspeed)
 }
 
 /**
- * $EF29: Playdrum 1
+ * $EF29: Playdrum 1 [Conv: HQ]
  *
- * \param[in] state  Pointer to game state.
- * \param[in] Aspeed Speed value.
+ * Starts playback of drum sample 1 (252 bytes). Falls through to playdrum_start.
+ *
+ * \param[in,out] state  Pointer to game state.
+ * \param[in]     Aspeed Playback speed: inner loop count per sample byte. (was A)
  */
 static void playdrum_1(chqstate_t *state, int Aspeed)
 {
@@ -16613,12 +16672,15 @@ static void playdrum_1(chqstate_t *state, int Aspeed)
 }
 
 /**
- * $EF2E: Playdrum start
+ * $EF2E: Playdrum start [Conv: HQ]
  *
- * \param[in] state   Pointer to game state.
- * \param[in] Aspeed  Speed value.
- * \param[in] Dlength Dlength.
- * \param[in] HLdata  Source bitmap data.
+ * Records the drum speed and marks the drum as active, then falls through to
+ * playdrum_bank_go to begin sample output.
+ *
+ * \param[in,out] state   Pointer to game state.
+ * \param[in]     Aspeed  Inner loop count per sample byte; controls playback rate. (was A)
+ * \param[in]     Dlength Total number of sample bytes to output. (was D)
+ * \param[in]     HLdata  Pointer to the start of the drum sample data. (was HL)
  */
 static void playdrum_start(chqstate_t *state, int Aspeed, int Dlength,
                            const u8 *HLdata)
@@ -16629,30 +16691,45 @@ static void playdrum_start(chqstate_t *state, int Aspeed, int Dlength,
 }
 
 /**
- * $EF38: Playdrum bank go
+ * $EF38: Playdrum bank go [Conv: HQ]
  *
- * \param[in] state        Pointer to game state.
- * \param[in] Ddash_length Ddash length.
- * \param[in] HLdash_data  Source bitmap data.
+ * EXX entry point that banks the sample pointer and length into shadow
+ * registers before calling playdrum_go. In the Z80, EXX swaps BC/DE/HL with
+ * the shadow set; the C port passes the values directly.
+ *
+ * \param[in,out] state        Pointer to game state.
+ * \param[in]     Ddash_length Sample length in bytes, held in D' after EXX. (was D')
+ * \param[in]     HLdash_data  Pointer to sample data, held in HL' after EXX. (was HL')
+ *
+ * Conv: Z80 EXX banks the arguments into shadow registers; C passes them
+ *   directly to playdrum_go, which uses the same parameter names.
  */
 static void playdrum_bank_go(chqstate_t *state, int Ddash_length,
                              const u8 *HLdash_data)
 {
-  // EXX
+  /* EXX */
   playdrum_go(state, Ddash_length, HLdash_data);
 }
 
 /**
- * $EF39: Playdrum go
+ * $EF39: Playdrum go [Conv: HQ]
  *
- * \param[in] state   Pointer to game state.
- * \param[in] Dlength Dlength.
- * \param[in] HLdata  Source bitmap data.
+ * Outputs a PCM drum sample byte-by-byte to the speaker port. For each sample
+ * byte, an inner loop runs drum_speed iterations; each iteration writes bit 7 of
+ * the current sample byte to the EAR bit of port_BORDER_EAR_MIC, then rotates
+ * the sample byte left in-place (RLC). After each byte the IRQ flag is checked;
+ * if an interrupt has fired, the function returns early (suspended playback).
+ * When all Dlength bytes have been output, drum_active is cleared and the
+ * function waits for the next interrupt.
+ *
+ * \param[in,out] state   Pointer to game state.
+ * \param[in]     Dlength Number of sample bytes remaining to output. (was D)
+ * \param[in]     HLdata  Pointer to the next sample byte in drum1[] or drum2[]. (was HL)
  */
 static void playdrum_go(chqstate_t *state, int Dlength, const u8 *HLdata)
 {
-  int Bdash_iterations;
-  int A;
+  int Bdash_iterations; /* inner loop counter: drum_speed ticks per sample byte (was B') */
+  int A;                /* speaker output level: port_MASK_EAR or 0 based on sample bit 7 (was A) */
 
   do {
     Bdash_iterations = state->music.drum_speed; // aka speed
@@ -16678,20 +16755,30 @@ pd_end_of_sample:
 }
 
 /**
- * $F0C6: Noise
+ * $F0C6: Noise [Conv: HQ]
  *
- * \param[in] state  Pointer to game state.
- * \param[in] Aparam Aparam.
+ * Generates a noise burst on the speaker by running an LFSR-like update on
+ * the two-byte rng_seed, then toggling the EAR/MIC outputs whenever bit 4 of
+ * the result is set. The outer loop runs Eduration ticks; each tick iterates
+ * an inner loop of 50 noise steps. On each step the seed bytes are updated
+ * and rotated, and if bit 4 fires, two timed pulses are written to
+ * port_BORDER_EAR_MIC: first high for (24 − Eduration) busy-wait ticks, then
+ * low for Eduration ticks. After all ticks, waits for the next interrupt.
+ *
+ * \param[in,out] state  Pointer to game state.
+ * \param[in]     Aparam Noise duration: outer loop count and pulse timing (was A).
  */
 static void noise(chqstate_t *state, int Aparam)
 {
-  int carry = 0;
-  int Eduration;   /* was E */
-  int Dinner;      /* was D */
-  u8 *seed;        /* was HL */
-  int B;
-  u8  A;
-  int Biterations; /* was B */
+  int carry;       /* carry from RLC/RRC operations on seed bytes (carry) */
+  int Eduration;   /* outer loop count and pulse high/low timing parameter (was E) */
+  int Dinner;      /* inner loop count: 50 noise steps per tick (was D) */
+  u8 *seed;        /* pointer into rng_seed[]: walked for each LFSR step (was HL) */
+  int B;           /* intermediate seed byte read during LFSR update (was B) */
+  u8  A;           /* LFSR result byte; bit 4 gates the speaker pulse (was A) */
+  int Biterations; /* busy-wait loop counter for pulse timing (was B) */
+
+  carry = 0;
 
   Eduration = Aparam; // duration counter
   do {
@@ -16954,14 +17041,26 @@ static void play_turbo_sfx_128k(chqstate_t *state)
 }
 
 /**
- * $F342: Play speech 128K
+ * $F342: Play speech 128K [Conv: HQ]
  *
- * \param[in] state Pointer to game state.
- * \param[in] index Sound effect index. (was A)
+ * Plays one of five digitised speech samples through the AY-3-8912 DAC by
+ * writing each nibble as a volume level to AY channels A, B and C in turn.
+ * Silences the audio, pages in the sample bank, then iterates over
+ * DEdash_length sample bytes. Each byte yields two 4-bit nibbles (high then
+ * low); each nibble is written to AY registers 8, 9 and 10 via OUT (C),A
+ * through port $FFFD (select) and $BFFD (write). A short delay between
+ * nibbles sets the output frequency. After all samples are output,
+ * reset_paging_128k restores the default memory map.
+ *
+ * \param[in,out] state Pointer to game state.
+ * \param[in]     index 1-based speech sample index (1..5). (was A)
+ *
+ * Conv: The Z80 uses EX AF,AF'/EXX to bank registers across the inner loops;
+ *   C passes the values as function parameters and locals instead.
  */
 static void play_speech_128k(chqstate_t *state, int index)
 {
-  // $F32E
+  /* $F32E: speech sample table */
   static const struct {
     u16 length;
     u16 data;
@@ -16973,18 +17072,21 @@ static void play_speech_128k(chqstate_t *state, int index)
     { 0x0ADC, 0xF48A }
   };
 
-  zxspectrum_t *speccy = state->speccy;
-  int           carry = 0;
-  int           Cport_lo;
-  int           Hff;
-  int           Lbf;
-  int           Deight;
-  int           DEdash_length;
-  const u8     *HLdash_samples;
-  int           Cdash_iterations;
-  u8            Asample;
-  int           Bport_hi;
-  int           Aregno;
+  zxspectrum_t *speccy;           /* cached speccy pointer (Conv: extracted) */
+  int           carry;            /* carry from RR nibble rotations (carry) */
+  int           Cport_lo;         /* low byte of AY port address: $FD (was C) */
+  int           Hff;              /* AY select port high byte: $FF → port $FFFD (was H) */
+  int           Lbf;              /* AY write port high byte: $BF → port $BFFD (was L) */
+  int           Deight;           /* AY volume register base: 8 = channel A volume (was D) */
+  int           DEdash_length;    /* number of sample bytes remaining; two nibbles each (was DE') */
+  const u8     *HLdash_samples;   /* pointer walking sound_samples[] for the selected clip (was HL') */
+  int           Cdash_iterations; /* nibble counter: 2 per byte (high then low) (was C') */
+  u8            Asample;          /* current sample byte / nibble being output (was A) */
+  int           Bport_hi;         /* AY port high byte: $FF or $BF depending on op (was B) */
+  int           Aregno;           /* AY register number: 8, 9, 10 for channels A, B, C (was A) */
+
+  speccy = state->speccy;
+  carry = 0;
 
   assert(index >= 1 && index < SAMPLE__LIMIT); // 1-indexed, matching Z80 $F32E
 
@@ -17169,21 +17271,35 @@ static void reset_paging_128k(chqstate_t *state)
 }
 
 /**
- * $F41B: Attract mode 128K
+ * $F41B: Attract mode 128K [Conv: HQ]
  *
- * \param[in] state Pointer to game state.
+ * Top-level attract loop for 128K hardware. Calls the bouncy logo (bank 3),
+ * sets up a stage, then spins in a per-frame loop calling cpu_driver and
+ * update_screen. Each frame shows either "ENTER FOR OPTIONS" or "PRESS GEAR"
+ * depending on whether a controller has been selected. ENTER detected via
+ * keyboard port switches into the input-selection bank-3 routine. An
+ * attract_mode_128k_blink counter produces a 4-on / 4-off text flash.
+ * When transition_control reaches zero, the countdown decrements: positive
+ * values show credits, zero shows best-officers, negative restarts the loop.
+ * FIRE exits attract mode and starts the game.
+ *
+ * \param[in,out] state Pointer to game state.
+ *
+ * Conv: Z80 uses JP for looping and bank-3 call dispatch; C uses gotos and
+ *   call_bank_3_128k which dispatches via switch. The RRA for ENTER detection
+ *   is replaced by a direct bit-0 mask.
  */
 static void attract_mode_128k(chqstate_t *state)
 {
-  int       carry;                /* blink pattern (was carry) */
-  int       enter_pressed;        /* was carry */
-  int       HL_routine;           /* address of bank 3 routine to call (was HL) */
-  int       A_result;             /* was A */
-  int       A_controls_selected; /* was A */
-  const u8 *DE_messages;          /* was DE */
-  const u8 *HL_messages;          /* was HL */
-  int       A_transition_control; /* was A */
-  int       A_countdown;              /* was A */
+  int       carry;               /* carry from RRC of attract_mode_128k_blink (carry) */
+  int       enter_pressed;       /* non-zero when Enter key is held (was carry from RRA) */
+  int       HL_routine;          /* bank-3 routine address constant to invoke (was HL) */
+  int       A_result;            /* return value from call_bank_3_128k: 0 = early return (was A) */
+  int       A_controls_selected; /* controls_selected check: non-zero once a controller is chosen (was A) */
+  const u8 *DE_messages;         /* messages pointer: enter_for_options or press_gear (was DE) */
+  const u8 *HL_messages;         /* copy of DE_messages passed to print_message (was HL) */
+  int       A_transition_control;/* transition_control state: non-zero while transition is running (was A) */
+  int       A_countdown;         /* attract_mode_128k_countdown: 2..negative; triggers scene restart (was A) */
 
 attract_mode_128k_start:
   HL_routine = BANK3_BOUNCY_LOGO;
