@@ -2282,6 +2282,87 @@ static void set_up_stage(chqstate_t        *state,
 
   memset(&state->hazards[1], 0, sizeof(hazard_t) * (MAXHAZARDS - 1));
 
+  state->ay_chan_a_pitch = 0;
+  state->ay_chan_b_pitch = 0;
+  state->ay_chan_c_pitch = 0;
+  state->ay_noise_pitch = 0;
+  state->ay_mixer = 0;
+  state->ay_chan_a_vol = 0;
+  state->ay_chan_b_vol = 0;
+  state->ay_chan_c_vol = 0;
+  state->ay_env_fine = 0;
+  state->dont_draw_screen_attrs = 0;
+  state->inhibit_collision_detection = 0;
+  state->n_hazards = 0;
+  state->displayed_stage = 0;
+  state->helicopter_control = 0;
+  state->dont_spawn_cars = 0;
+  state->correct_fork = 0;
+  state->floating_arrow = 0;
+  state->cherry_light = 0;
+  state->time_up_state = 0;
+  state->car_y = 0;
+  state->overtake_bonus_counter = 0;
+  state->trigger_bonus_flag = 0;
+  state->bonus_counter = 0;
+  state->sighted_flag = 0;
+  state->hand_flag = 0;
+  state->perp_caught_phase = 0;
+  state->transition_control = 0;
+  state->smash_level = 0;
+  state->smash_counter = 0;
+  state->anim_counter = 0;
+  state->frame_toggle = 0;
+  state->slow_anim_counter = 0;
+  state->sfx_index = 0;
+  state->sfx_priority = 0;
+  state->siren_enabled = 0;
+  state->turbo_sfx_pitch = 0;
+  state->tunnel_sfx = 0;
+  state->trigger_righthand_sfx = 0;
+  state->trigger_lefthand_sfx = 0;
+  state->off_road = 0;
+  state->fast_counter = 0;
+  state->roadbufptr = &state->road_buffer[0];   // $EE00
+  state->curvature_byte = 0;
+  state->height_byte = 0;
+  state->leftside_byte = 0;
+  state->rightside_byte = 0;
+  state->hazards_counter = 0;
+  state->lanes_counter = 0;
+  state->on_dirt_track = 0;
+  state->fork_taken = 0;
+  state->speed = 0;
+  state->inclined_counter = 0;
+  state->cornering = 0;
+  state->boost = 0;
+  state->smoke = 0;
+  state->turn_speed = 0;
+  state->flip_car = 0;
+  state->gear_lockout = 0;
+  state->gear = 0;
+  state->allow_spawning = 0;
+  state->distance_bcd[0] = 0;
+  state->distance_bcd[1] = 0;
+  state->incline = 0;
+  state->prev_road_height = 0;
+  state->horizon_y_accum = 0;
+  state->horizon_y_step = 0;
+  state->current_curvature = 0;
+  state->horizon_curve_index = 0;
+  state->horizon_x_scroll = 0;
+  state->horizontal_adjust = 0;
+  state->horizon_scroll_sub = 0;
+  state->curvature_ticks = 0;
+  state->right_turn = 0;
+  state->left_turn = 0;
+  state->fork_visible = 0;
+  state->fork_countdown = 0;
+  state->fork_distance = 0;
+  state->fork_in_progress = 0;
+  state->quit_state = 0;
+  state->start_speech = 0;
+
   state->scenedata = *scene_data;
 
   pre_shift_backdrop(state);
@@ -2297,21 +2378,6 @@ static void set_up_stage(chqstate_t        *state,
 
   state->rm_hazard_byte = 0; // clear current hazard command
   state->mhc_y_offset = 0; // reset car jump counter
-
-  // Initialise speed to zero so player car doesn't move until key is pressed
-  // Conv: added.
-  // TODO How does the original game achieve this reset?
-  state->speed = 0;
-
-  /* Reset map-reader counters so the first rm_cycle_buffer_offset call
-   * reloads from the new scenedata, not the previous stage's stale data. */
-  // DPT: CHECK IF THIS MATCHES THE Z80
-  state->curvature_byte  = 0;
-  state->height_byte     = 0;
-  state->lanes_counter   = 0;
-  state->leftside_byte   = 0;
-  state->rightside_byte  = 0;
-  state->hazards_counter = 0;
 
   state->hazards[0].hittable.bitmaps = state->stage->bitmaps_perp_car;
 
