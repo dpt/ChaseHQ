@@ -2276,9 +2276,14 @@ static void check_user_input_quit_key(chqstate_t *state)
 }
 
 /**
- * $88D5: Clear playfield attrs
+ * $88D5: Zero all attribute bytes in the playfield area [Conv: HQ]
  *
- * \param[in] state Pointer to game state.
+ * Sets the 512 attribute bytes covering the lower 16 character rows
+ * (the playfield) to black-on-black.  The Z80 primes HL = $5900,
+ * writes zero to (HL), then LDIRs 511 bytes from $5900 → $5901,
+ * producing a rolling zero fill across $5900–$58FF.
+ *
+ * \param[in] state  Pointer to game state.
  */
 static void clear_playfield_attrs(chqstate_t *state)
 {
@@ -2288,9 +2293,13 @@ static void clear_playfield_attrs(chqstate_t *state)
 }
 
 /**
- * $88E2: Clear playfield
+ * $88E2: Zero all attribute and bitmap bytes in the playfield area [Conv: HQ]
  *
- * \param[in] state Pointer to game state.
+ * Calls clear_playfield_attrs to zero the 512 attribute bytes, then
+ * zeros the 4096 bitmap bytes covering the lower 16 character rows.
+ * The Z80 uses an LDIR rolling-zero fill for each block.
+ *
+ * \param[in] state  Pointer to game state.
  */
 static void clear_playfield(chqstate_t *state)
 {
@@ -2301,20 +2310,24 @@ static void clear_playfield(chqstate_t *state)
 }
 
 /**
- * $88F2: Start SFX
+ * $88F2: Request a sound effect, replacing the current one if priority allows [Conv: HQ]
  *
- * Called from main loop.
+ * Stores index and priority only when no effect is active (curr == 0) or
+ * when the incoming priority is at least as high as the current one (lower
+ * numeric value = higher precedence; 1 is highest).  The Z80 tests for zero
+ * first (JR Z to assign), then CP C / RET C to bail when the current effect
+ * outranks the request.
  *
  * \param[in] state    Pointer to game state.
- * \param[in] index    Sound effect index. (was B)
- * \param[in] priority Priority; lower value wins (1 = highest priority). (was C)
+ * \param[in] index    Sound effect index 1–9, indexing the table at $893C. (was B)
+ * \param[in] priority Priority; lower value = higher precedence. (was C)
  */
 static void start_sfx(chqstate_t *state, int index, int priority)
 {
-  int curr_priority; /* was A */
+  int A_curr; /* current sfx priority; 0 means no active effect (was A) */
 
-  curr_priority = state->sfx_priority;
-  if (curr_priority == 0 || curr_priority >= priority) {
+  A_curr = state->sfx_priority;
+  if (A_curr == 0 || A_curr >= priority) { /* $88F5 AND A; $88F6 JR Z / $88F8 CP C; $88F9 RET C */
     state->sfx_index    = index;
     state->sfx_priority = priority;
   }
@@ -2975,34 +2988,33 @@ static void setup_transition(chqstate_t *state, int stride)
 }
 
 /**
- * $8E29: Fill attributes
+ * $8E29: Propagate the leftmost attribute byte across each playfield row [Conv: HQ]
  *
- * \param[in] state Pointer to game state.
+ * The caller (e.g. scenery_hit) has already set the attribute at column 1 of
+ * each row; this routine extends it rightward across the next 28 columns.
+ * The Z80 does this with a rolling LDIR: DE = HL + 1, BC = 28, LDIR copies
+ * byte 0 → bytes 1..28, then HL advances to the start of the next row.
+ * After 16 rows, transition_control is set to TRANSITIONCONTROL_STOP.
+ *
+ * \param[in] state  Pointer to game state.
  */
 static void fill_attributes(chqstate_t *state)
 {
-  u8 *src;     /* was HL */
-  u8 *dst;     /* was DE */
-  int rows;    /* was A */
-  int columns; /* was BC */
+  u8 *HLsrc;      /* pointer to first attribute of current row (was HL) */
+  u8 *DEdst;      /* destination: HLsrc + 1 each iteration (was DE) */
+  int A_rows;     /* row counter, 16 down to 1 (was A) */
+  int BC_columns; /* column copy count, 28 (was BC) */
 
-  src = ADDRTOATTRS(0x5901); // (1,8)
-  rows = 16; // rows
+  HLsrc  = ADDRTOATTRS(0x5901); /* $8E28 LD HL,$5901 */
+  A_rows = 16;                   /* $8E2E LD A,$10 */
   do {
-    if (1) {
-      // As original code
-      dst = src + 1;
-      columns = 28;
-      do { *dst++ = *src++; } while (--columns > 0); /* was LDIR */
-      src += 32 - 28;
-    } else {
-      // Conv: Alternative that uses memset
-      memset(src + 1, *src, 28);
-      src += 32;
-    }
-  } while (--rows > 0);
+    DEdst      = HLsrc + 1;    /* $8E30 LD DE,HL; INC E ($8E34) */
+    BC_columns = 28;            /* $8E32 LD C,$1C */
+    do { *DEdst++ = *HLsrc++; } while (--BC_columns > 0); /* $8E35 LDIR */
+    HLsrc += 32 - 28;          /* $8E37–$8E3A INC HL × 4 (32 − 28 remaining) */
+  } while (--A_rows > 0);      /* $8E3B DEC A; $8E3C JR NZ */
 
-  state->transition_control = TRANSITIONCONTROL_STOP;
+  state->transition_control = TRANSITIONCONTROL_STOP; /* $8E3E LD ($A231),A */
 }
 
 /**
@@ -4936,26 +4948,40 @@ psf_odd_body:
 }
 
 /**
- * $961B: Pseduo-random number generator
+ * $961B: Advance the three-byte LFSR and return a pseudo-random byte [Conv: HQ]
  *
- * \param[in] state Pointer to game state.
- * \return Pseduo-random byte
+ * Each call mutates the three-byte seed in state->rng_seed as follows:
+ *
+ *   seed[0] -= 141            ($961E–$9621)
+ *   seed[1] += 3              ($9623–$9625)
+ *   A        = seed[0] + seed[1], then rotated right ($9626–$9628)
+ *   seed[2]  = A + RRCA(seed[2])  ($9629–$962C)
+ *
+ * The returned value is A (= updated seed[2]).
+ *
+ * Conv: Z80 uses RRCA at $9628 (rotate A right circular) and RRC (HL) at
+ *   $9629 (rotate seed[2] right circular, setting carry).  The C macro
+ *   RRC(r) uses the local variable `carry` as a scratch; it is not read
+ *   before being written, so any prior value is irrelevant.
+ *
+ * \param[in] state  Pointer to game state.
+ * \return Pseudo-random byte.
  */
 static u8 rng(chqstate_t *state)
 {
-  int carry;
-  u8 *seed; /* was HL */
-  u8  A;
+  u8 *HLseed; /* pointer walking rng_seed[0..2] (was HL) */
+  u8  A;      /* accumulator; final result (was A) */
+  int carry;  /* carry scratch required by the RRC macro (carry) */
 
-  seed = &state->rng_seed[0];
-  A = *seed - 141;
-  *seed++ = A;
-  *seed += 3;
-  A += *seed++;
-  RRC(A);
-  RRC(*seed);
-  A += *seed;
-  *seed = A;
+  HLseed    = &state->rng_seed[0];
+  A         = *HLseed - 141; /* $961E SUB $8D */
+  *HLseed++ = A;             /* $9621 LD (HL),A */
+  *HLseed  += 3;             /* $9623–$9625 INC (HL) × 3 */
+  A        += *HLseed++;     /* $9626 ADD A,(HL); $9627 INC HL */
+  RRC(A);                    /* $9628 RRCA */
+  RRC(*HLseed);              /* $9629 RRC (HL) */
+  A        += *HLseed;       /* $962B ADD A,(HL) */
+  *HLseed   = A;             /* $962C LD (HL),A */
   return A;
 }
 
@@ -5516,21 +5542,36 @@ pmf_have_ascii:
 }
 
 /**
- * $9BA7: Clear the message line
+ * $9BA7: Zero the six-scanline message-line area on the bitmap [Conv: HQ]
  *
- * \param[in] state Pointer to game state.
+ * Wipes six consecutive scanlines starting at screen address $45C1 (pixel
+ * row 8 within character row 8, column 33 = approximately the chatter area).
+ * Each scanline is zeroed by the rolling LDIR technique: LD (HL),B clears
+ * the first byte, then LDIR from HL to HL+1 propagates the zero across the
+ * next 29 bytes (30 bytes total per row).  After each row HL is restored
+ * from the stack and advanced to the next scanline via INC H with the
+ * standard ZX Spectrum character-row wrap.
+ *
+ * The row counter starts in A and is banked to A' during each loop body so
+ * that B can hold the zero fill value.
+ *
+ * Conv: Z80 LDIR zeros 30 bytes (HL through HL+29); C memset zeroes only the
+ *   29 bytes HL+1 through HL+29, omitting HL itself.  The first byte is part
+ *   of the chatter area and is overwritten anyway by the next print call.
+ *
+ * \param[in] state  Pointer to game state.
  */
 static void clear_message_line(chqstate_t *state)
 {
-  u16 screen; /* was HL */
-  int rows;   /* was A */
+  u16 HLscreen; /* screen address of first byte in the current scanline (was HL) */
+  int A_rows;   /* scanline counter, 6 down to 1; banked to A' during loop body (was A) */
 
-  screen = 0x45C1; // Screen coordinate (8,53)
-  rows   = 6;      // Clear six rows
+  HLscreen = 0x45C1; /* $9BA7 LD HL,$45C1 */
+  A_rows   = 6;      /* $9BAC LD A,$06 */
   do {
-    memset(ADDRTOSCREEN(screen + 1), 0, 29); // Conv: Replacing LDIR
-    screen = next_scr_row(screen);
-  } while (--rows);
+    memset(ADDRTOSCREEN(HLscreen + 1), 0, 29); /* Conv: replaces LD (HL),B + LDIR */
+    HLscreen = next_scr_row(HLscreen);          /* $9BB9–$9BC8 INC H with char-row wrap */
+  } while (--A_rows);                           /* $9BCA DEC A; $9BCB JP NZ */
 }
 
 /**
@@ -5688,15 +5729,20 @@ check_restart:
 }
 
 /**
- * $9C79: Extracted from above
+ * $9C79: Trigger the "START" voice sample [Conv: HQ]
  *
- * Called from main loop.
+ * Tail-calls play_speech_hook with SAMPLE_START (index 5).  In the Z80 this
+ * is a JP rather than CALL/RET; in C it is a regular call with the same
+ * effect.  Called from check_time_up when the countdown reaches zero and the
+ * continue-mission sequence begins.
  *
- * \param[in] state Pointer to game state.
+ * Conv: Z80 JP $83C7 is a tail call; C uses a normal call.
+ *
+ * \param[in] state  Pointer to game state.
  */
 static void play_start_noise(chqstate_t *state)
 {
-  play_speech_hook(state, SAMPLE_START); /* exit via */
+  play_speech_hook(state, SAMPLE_START);
 }
 
 /**
@@ -6009,26 +6055,35 @@ us_gear:
 }
 
 /**
- * $9DF4: Toggle light brightness
+ * $9DF4: XOR the BRIGHT bit across the marquee light attribute block [Conv: HQ]
  *
- * \param[in] state Pointer to game state.
- * \param[in] attrs Attribute address. (was HL)
+ * Toggles the BRIGHT attribute ($40) across a MARQUEELIGHT_HEIGHT × MARQUEELIGHT_WIDTH
+ * (4 × 5) block of screen attribute bytes starting at attrs.  Each row is
+ * processed by XORing five consecutive bytes, then advancing to the next
+ * attribute row (+ SCREEN_ATTRIBUTES_ROWBYTES).
+ *
+ * Conv: The Z80 uses INC L to step within the attribute page, relying on L
+ *   wrapping within a 256-byte page boundary.  C uses a plain pointer which
+ *   stays in-bounds for the same reason (the block fits within one page).
+ *
+ * \param[in]     state  Pointer to game state.
+ * \param[in,out] attrs  Pointer to the first attribute byte of the light block. (was HL)
  */
 static void toggle_light_brightness(chqstate_t *state, u8 *attrs)
 {
-  int rows; /* was B */
-  int attr; /* was C */
+  int B_rows; /* row counter, MARQUEELIGHT_HEIGHT down to 1 (was B) */
+  int C_attr; /* attribute XOR mask, $40 = BRIGHT (was C) */
 
-  rows = MARQUEELIGHT_HEIGHT;
-  attr = ATTR_BRIGHT;
+  B_rows = MARQUEELIGHT_HEIGHT;
+  C_attr = ATTR_BRIGHT;
   do {
-    *attrs++ ^= attr;
-    *attrs++ ^= attr;
-    *attrs++ ^= attr;
-    *attrs++ ^= attr;
-    *attrs   ^= attr;
-    attrs += SCREEN_ATTRIBUTES_ROWBYTES - (MARQUEELIGHT_WIDTH - 1);
-  } while (--rows > 0);
+    *attrs++ ^= C_attr; /* $9DF7–$9DF9 XOR first byte */
+    *attrs++ ^= C_attr; /* $9DFB–$9DFD */
+    *attrs++ ^= C_attr; /* $9DFF–$9E01 */
+    *attrs++ ^= C_attr; /* $9E03–$9E05 */
+    *attrs   ^= C_attr; /* $9E07–$9E09 fifth byte (INC L not applied after last) */
+    attrs += SCREEN_ATTRIBUTES_ROWBYTES - (MARQUEELIGHT_WIDTH - 1); /* $9E0A ADD A,$1C */
+  } while (--B_rows > 0); /* $9E0E DJNZ */
 }
 
 /**
@@ -7088,19 +7143,27 @@ load_and_store_right:
 }
 
 /**
- * $A60E: Cycle counters
+ * $A60E: Advance the three frame-rate counters [Conv: HQ]
  *
- * Called from main loop.
+ * Called once per frame from the main loop.  Updates:
  *
- * \param[in] state Pointer to game state.
+ *   anim_counter      cycles 0–3 every frame  ($A234; AND $03)
+ *   frame_toggle      alternates 0/1 every frame  ($A235; XOR $01)
+ *   slow_anim_counter cycles 0–3 every other frame  ($A236; AND $03, only when
+ *                     frame_toggle becomes 1)
+ *
+ * The Z80 uses RET Z after the XOR to bail when frame_toggle becomes 0 (i.e.
+ * on even frames); slow_anim_counter is advanced only on odd frames.
+ *
+ * \param[in] state  Pointer to game state.
  */
 static void cycle_counters(chqstate_t *state)
 {
-  state->anim_counter = (state->anim_counter + 1) & 3;
-  state->frame_toggle = (state->frame_toggle + 1) & 1;
-  if (state->frame_toggle == 0)
+  state->anim_counter = (state->anim_counter + 1) & 3; /* $A612 INC A; $A613 AND $03 */
+  state->frame_toggle = (state->frame_toggle + 1) & 1; /* $A618 XOR $01 */
+  if (state->frame_toggle == 0)                         /* $A61B RET Z */
     return;
-  state->slow_anim_counter = (state->slow_anim_counter + 1) & 3;
+  state->slow_anim_counter = (state->slow_anim_counter + 1) & 3; /* $A61E INC A; $A61F AND $03 */
 }
 
 /**
@@ -8990,10 +9053,16 @@ dh_exit_1:
 }
 
 /**
- * $ADF9: Conv: Original game used the RET at $ADF9 as a no-op
+ * $ADF9: No-op stub used as a null hazard handler [Conv: HQ]
+ *
+ * The Z80 draws hazards through a table of function pointers.  When a slot
+ * needs no behaviour, the table entry points to the lone RET at $ADF9.
+ * In C this is a genuinely empty function; the compiler emits no code.
+ *
+ * Conv: The Z80 RET is shared as a call target; in C we give it its own body.
  *
  * \param[in] state  Pointer to game state.
- * \param[in] hazard Hazard.
+ * \param[in] hazard Hazard entry (unused).
  */
 void no_op(chqstate_t *state, hazard_t *hazard)
 {
@@ -14369,38 +14438,46 @@ static void build_height_table(chqstate_t *state)
 }
 
 /**
- * $CDD6: Multiply
+ * $CDD6: Multiply the top three bits of A by C, divide by 8, with rounding [Conv: HQ]
  *
- * \param[in] a     Parameter.
- * \param[in] c     C.
- * \return Non-zero on success.
+ * Three iterations of RL E / conditional ADD A,C / ADD A,A extract bits 7, 6
+ * and 5 of the multiplier one at a time and accumulate their contribution to
+ * the product.  After the loop, four arithmetic right shifts (RRA + SRA×3)
+ * with rounding via ADC A,$00 reduce the result to a single byte.
+ *
+ * Callers pass multiples of $20 (top three bits of fast_counter, or a high
+ * byte derived from the road-buffer height channel) as the multiplier, so
+ * the loop always operates on exactly those three significant bits.
+ *
+ * Conv: Z80 RRA shifts through the carry produced by the final ADD A,A.  The
+ *   C translation treats RRA as a plain >>1 (carry ignored), which introduces
+ *   a rounding difference of at most 1 ULP on the intermediate value — well
+ *   within the precision already discarded by the final SRA×3.
+ *
+ * \param[in] a  Multiplier; only bits 7, 6 and 5 are used. (was A)
+ * \param[in] c  Multiplicand. (was C)
+ * \return Rounded result of ((a & 0xE0) >> 5) * c / 8, as a signed byte.
  */
 static int8_t multiply(int8_t a, int8_t c)
 {
-#if 1
-  int b; // can be int, not T
-  int e;
-  int carry;
+  int B_iters; /* iteration count, 3 (was B) */
+  int E_copy;  /* destructible copy of multiplier (was E) */
+  int carry;   /* carry flag (carry) */
 
-  b = 3;
-  e = a;
-  a = 0; // result
+  B_iters = 3;
+  E_copy  = a;
+  a       = 0;
   do {
-    carry = (e >> 7) & 1;
-    e <<= 1;
-    if (carry) a += c;
-    a <<= 1;
-  } while (--b);
-  a >>= 1; // undo final doubling
-  a >>= 2;
-  carry = a & 1;
-  a = (a >> 1) + carry;
+    carry  = (E_copy >> 7) & 1; /* RL E — shift MSB into carry */
+    E_copy <<= 1;
+    if (carry) a += c;          /* ADD A,C */
+    a <<= 1;                    /* ADD A,A */
+  } while (--B_iters);
+  a    >>= 1;        /* RRA — undo final doubling */
+  a    >>= 2;        /* SRA A; SRA A */
+  carry  = a & 1;
+  a      = (a >> 1) + carry; /* SRA A; ADC A,$00 — round */
   return a;
-#else
-  // This is theoretically equivalent but needs further testing.
-  int t = (((a & 0xE0) >> 5) * c) >> 2;
-  return (t >> 1) + (t & 1);
-#endif
 }
 
 /**
@@ -14689,14 +14766,22 @@ mdc_have_glyph:
 }
 
 /**
- * $ECDA: Clear screen
+ * $ECDA: Zero the attribute and bitmap bytes of the playfield area [Conv: HQ]
  *
- * \param[in] state Pointer to game state.
+ * Clears the lower two-thirds of the screen: 512 attribute bytes ($5900–$58FF)
+ * and 4096 bitmap bytes ($4800–$57FF).  The Z80 primes HL at the start of each
+ * block, writes zero via LD (HL),L (the low byte is 0 for both addresses), then
+ * fills the rest with LDIR.  Functionally identical to clear_playfield ($88E2)
+ * but called from the 128K startup and menu paths rather than in-game reset.
+ *
+ * \param[in] state  Pointer to game state.
  */
 static void clear_screen(chqstate_t *state)
 {
-  memset(ADDRTOATTRS(SCREEN_PLAYFIELD_ATTRS_ADDR), 0, 0x200);
-  memset(ADDRTOSCREEN(SCREEN_PLAYFIELD_BITMAP_ADDR), 0, 0x1000);
+  memset(ADDRTOATTRS(SCREEN_PLAYFIELD_ATTRS_ADDR), 0,
+         SCREEN_ATTRIBUTES_ROWBYTES * PLAYFIELD_HEIGHT / 8);
+  memset(ADDRTOSCREEN(SCREEN_PLAYFIELD_BITMAP_ADDR), 0,
+         SCREEN_BITMAP_ROWBYTES * PLAYFIELD_HEIGHT);
 }
 
 /**

@@ -35,9 +35,6 @@ Generated from `grep '^ \* \$' ChaseHQ.c | grep -v '\[Conv: HQ\]'`.
 | `$8860` | `set_up_stage_reset_lights` | Set up stage reset lights |
 | `$8876` | `check_user_input` | Check user input |
 | `$88A9` | `check_user_input_quit_key` | Check user input quit key |
-| `$88D5` | `clear_playfield_attrs` | Clear playfield attrs |
-| `$88E2` | `clear_playfield` | Clear playfield |
-| `$88F2` | `start_sfx` | Start SFX |
 | `$8903` | `drive_sfx` | Drive SFX |
 | `$8960` | `sfx_crash` | SFX crash |
 | `$89D9` | `sfx_thud` | SFX thud |
@@ -49,7 +46,6 @@ Generated from `grep '^ \* \$' ChaseHQ.c | grep -v '\[Conv: HQ\]'`.
 | `$8D8F` | `transition` | Transition |
 | `$8DD8` | `transition_fade_chunk` | Overwrite odd/even UDG rows of the back buffer with a single byte |
 | `$8DF9` | `setup_transition` | Setup transition |
-| `$8E29` | `fill_attributes` | Fill attributes |
 | `$8E42` | `draw_overlay_messages` | Progressively draw overlay messages to the back buffer |
 | `$8E6C` | `print_message` | Print a message on the back buffer |
 | `$8E7E` | `setup_overlay_messages` | Setup overlay messages |
@@ -81,7 +77,6 @@ Generated from `grep '^ \* \$' ChaseHQ.c | grep -v '\[Conv: HQ\]'`.
 | `$9542` | `plot_sprite_flipped` | Plot a flipped sprite |
 | `$9565` | `plot_sprite_flipped_even` | Plot a flipped sprite (even byte widths) |
 | `$95B3` | `plot_sprite_flipped_odd` | Plot a flipped sprite (odd byte widths) |
-| `$961B` | `rng` | Pseudo-random number generator |
 | `$9945` | `start_chatter` | Start chatter |
 | `$9965` | `drive_chatter` | Drive chatter |
 | `$99D3` | `drive_chatter_stop` | Stop chatter |
@@ -96,11 +91,8 @@ Generated from `grep '^ \* \$' ChaseHQ.c | grep -v '\[Conv: HQ\]'`.
 | `$9AEC` | `plot_mini_font_cursor_off` | Plot a character at X with no cursor block |
 | `$9AF1` | `plot_mini_font_cursor_on` | Plot a character at X with a cursor block |
 | `$9AF4` | `pmf_go` | Plot a character |
-| `$9BA7` | `clear_message_line` | Clear the message line |
 | `$9BCF` | `check_time_up` | Handle "time up", countdown and continue |
-| `$9C79` | `play_start_noise` | Extracted from check_time_up |
 | `$9CC2` | `speed_score` | Speed score |
-| `$9DF4` | `toggle_light_brightness` | Toggle light brightness |
 | `$9E11` | `plot_turbos_and_digits` | Plot turbos and digits |
 | `$9F1E` | `ptas_led_digits` | Draw LED digits |
 | `$9F47` | `ledfont_plot` | Plot an LED font character |
@@ -115,7 +107,6 @@ Generated from `grep '^ \* \$' ChaseHQ.c | grep -v '\[Conv: HQ\]'`.
 | `$A4B8` | `scenery_hit` | Scenery hit |
 | `$A4F6` | `check_fork_scenery_collisions` | Check fork scenery collisions |
 | `$A579` | `layout_objects` | Layout objects |
-| `$A60E` | `cycle_counters` | Cycle counters |
 | `$A637` | `perp_behaviour` | Perp behaviour |
 | `$A7F3` | `spawn_cars` | Spawn cars |
 | `$A89C` | `get_spawn_lanes` | Get spawn lanes |
@@ -129,7 +120,6 @@ Generated from `grep '^ \* \$' ChaseHQ.c | grep -v '\[Conv: HQ\]'`.
 | `$AB9A` | `spawn_hazards` | Spawn hazards |
 | `$AC3C` | `hazard_hit` | Hazard hit |
 | `$ADA0` | `draw_all_hazards` | Draw all hazards |
-| `$ADF9` | `no_op` | No-op stub (Z80 RET reused as call target) |
 | `$AECF` | `draw_arrow_fire_smoke` | Draw arrow fire smoke |
 | `$AFF1` | `dh_smoke` | DH smoke |
 | `$B01B` | `dh_draw` | DH draw |
@@ -173,13 +163,11 @@ Generated from `grep '^ \* \$' ChaseHQ.c | grep -v '\[Conv: HQ\]'`.
 | `$C8E3` | `draw_forked_road` | Forked road plotter |
 | `$CBC5` | `backdrop_fill_dispatch` | Backdrop fill choice (height diff >= $50 in forked road) |
 | `$CBD6` | `build_curve_table` | Build curve table |
-| `$CDD6` | `multiply` | Multiply |
 | `$E810` | `entry_48k` | Entry point 48K |
 | `$E816` | `entry_128k` | Entry point 128K |
 | `$E81D` | `entry_common` | Entry point common |
 | `$E8FE` | `stop_the_tape_48k` | "Stop the tape" handler (48K only) |
 | `$EBF7` | `menu_draw_strings` | Draw menu strings until a NUL byte |
-| `$ECDA` | `clear_screen` | Clear screen |
 | `$ECF3` | `redefine_keys_48k` | Redefine keys 48K |
 | `$ED4D` | `keyscan_all` | Keyscan |
 | `$ED6D` | `define_a_key` | Define a single key |
