@@ -157,14 +157,5 @@ Generated from `grep '^ \* \$' ChaseHQ.c | grep -v '\[Conv: HQ\]'`.
 | `$EF38` | `playdrum_bank_go` | Playdrum bank go |
 | `$EF39` | `playdrum_go` | Playdrum go |
 | `$F0C6` | `noise` | Noise |
-| `$F251` | `start_siren_128k` | Start siren 128K |
-| `$F269` | `play_siren_sfx_128k` | Play siren SFX 128K |
-| `$F29D` | `silence_audio_128k` | Silence audio 128K |
-| `$F2A2` | `write_audio_registers_128k` | Write audio registers 128K |
-| `$F2B6` | `engine_sfx_from_speed_128k` | Engine SFX from speed 128K |
-| `$F2F1` | `setup_turbo_sfx_128k` | Setup turbo SFX 128K |
-| `$F2FA` | `play_turbo_sfx_128k` | Play turbo SFX 128K |
 | `$F342` | `play_speech_128k` | Play speech 128K |
-| `$F39F` | `handle_perp_caught_128k` | Handle perp caught 128K |
-| `$F3B6` | `call_bank_3_128k` | Call bank 3 128K |
 | `$F41B` | `attract_mode_128k` | Attract mode 128K |

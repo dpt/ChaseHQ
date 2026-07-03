@@ -15412,14 +15412,23 @@ static void noise(chqstate_t *state, int Aparam)
 // $F220 - load_stage_128k - merged into load_stage
 
 /**
- * $F251: Start siren 128K
+ * $F251: Initialise the police siren AY sound effect [Conv: HQ]
+ *
+ * Presets the AY-3-8912 register soft copies for the alternating
+ * police siren tone: channel A fine pitch 140, channel A volume 14,
+ * channel B volume 12. Seeds the rotating siren pattern and enables
+ * the siren flag.
  *
  * \param[in] state Pointer to game state.
+ *
+ * Conv: Z80 writes only the fine (low) byte of channel A pitch to $A213;
+ *   C assigns the full ay_chan_a_pitch register. The Z80 stores the
+ *   siren pattern to a self-modifying 'LD B,n' operand at $8066 ($F271
+ *   before relocation); C stores to state->siren_pattern.
  */
 static void start_siren_128k(chqstate_t *state)
 {
-  state->ay_chan_a_pitch =
-    140; /* Conv: this sets the whole register, original just did the low byte */
+  state->ay_chan_a_pitch = 140; /* Conv: full register; Z80 wrote low byte only */
   state->ay_chan_a_vol   = 14;
   state->ay_chan_b_vol   = 12;
   state->siren_pattern   = 0xAA;
@@ -15427,15 +15436,29 @@ static void start_siren_128k(chqstate_t *state)
 }
 
 /**
- * $F269: Play siren SFX 128K
+ * $F269: Advance the police siren pitch and write AY registers [Conv: HQ]
+ *
+ * Each frame, rotates the alternating siren pattern left (RLC) to produce
+ * a carry that selects the direction: carry clear → decrease pitch by 3;
+ * carry set → increase pitch by 3. If the new pitch stays within the
+ * 90–139 range the pattern is not updated; if it leaves the range the
+ * new pattern is committed and the pitch is clamped. Writes the updated
+ * fine pitch to channels A and B (B is 4 below A) and flushes all AY
+ * registers.
  *
  * \param[in] state Pointer to game state.
+ *
+ * Conv: Z80 stores the updated pattern to a self-modifying 'LD B,n'
+ *   operand at $8066; C stores to state->siren_pattern. The EX AF,AF'
+ *   pair at $F285/$F28A that preserves the new pitch across the SM write
+ *   is unnecessary in C (locals are not affected by the write).
  */
 static void play_siren_sfx_128k(chqstate_t *state)
 {
-  int carry = 0;
-  u8  pitch;   /* was A */
-  u8  pattern; /* was B */
+  int carry;   /* carry flag; set/cleared by RLC (carry) */
+  u8  pitch;   /* channel A fine pitch, adjusted each frame (was A) */
+  u8  pattern; /* alternating siren pattern; rotated left each frame (was B) */
+  carry = 0;
 
   if (state->siren_enabled == 0)
     return;
@@ -15468,83 +15491,122 @@ set_regs:
 }
 
 /**
- * $F29D: Silence audio 128K
+ * $F29D: Silence all AY audio channels [Conv: HQ]
+ *
+ * Sets the AY mixer register to $3F, disabling all noise and tone
+ * channels for all three voices, then flushes the AY register soft
+ * copies to the hardware.
  *
  * \param[in] state Pointer to game state.
+ *
+ * Conv: Z80 falls through into write_audio_registers_128k; C calls it.
  */
 static void silence_audio_128k(chqstate_t *state)
 {
-  state->ay_mixer = 0x3F; // all noise and tone channels disabled
+  state->ay_mixer = 0x3F; /* disable all noise and tone channels */
   write_audio_registers_128k(state); /* was FALLTHROUGH */
 }
 
 /**
- * $F2A2: Write audio registers 128K
+ * $F2A2: Flush AY-3-8912 register soft copies to hardware [Conv: HQ]
+ *
+ * Writes registers 11 down to 0 from the AY register soft-copy block
+ * (ay_env_fine..ay_chan_a_fine_pitch) by selecting each register via
+ * port $FFFD then writing its value via port $BFFD. The loop uses OUTD
+ * which decrements HL and B after each write; the JP P condition exits
+ * when A underflows from 0 to −1 (i.e. once register 0 has been written).
  *
  * \param[in] state Pointer to game state.
+ *
+ * Conv: Z80 uses the OUTD instruction (LD B,$FF / OUT (C),A / LD B,$BF /
+ *   OUTD in sequence); C issues two separate out() calls per register.
  */
 static void write_audio_registers_128k(chqstate_t *state)
 {
-  const u8 *values; /* was HL */
-  u8        regno;  /* was A */
+  zxspectrum_t *speccy; /* ZX Spectrum callbacks (Conv: C-only) */
+  const u8     *values; /* pointer walking AY soft copies downward (was HL) */
+  u8            regno;  /* AY register index, 11 down to 0 (was A) */
 
-  zxspectrum_t *speccy = state->speccy;
-
-  values = &state->ay_env_fine; // final AY reg soft copy
-  regno = 11; // reg 11
+  speccy  = state->speccy;
+  values  = &state->ay_env_fine;
+  regno   = 11;
   do {
     speccy->out(speccy, 0xFFFD, regno);
-    speccy->out(speccy, 0xBFFD, *values--); // was OUTD
+    speccy->out(speccy, 0xBFFD, *values--); /* was OUTD */
   } while ((s8) --regno >= 0);
 }
 
 /**
- * $F2B6: Engine SFX from speed 128K
+ * $F2B6: Derive AY engine pitch and volume from current car speed [Conv: HQ]
+ *
+ * Computes the AY channel C pitch divisor from the car's speed. The speed
+ * is halved via right-rotate, complemented and then shifted left twice (×4)
+ * to give a pitch inversely proportional to speed. In high gear the divisor
+ * is doubled once more to lower the pitch further. A tunnel-dependent
+ * constant ($0190 outside a tunnel, $0258 inside) is then added. Sets
+ * channel C pitch (12-bit fine+coarse), volume and enables tone C in the
+ * mixer.
  *
  * \param[in] state Pointer to game state.
+ *
+ * Conv: Z80 computes ~(HL>>1) via RR H / LD A,L / RRA / CPL / LD L,A;
+ *   C uses ~(state->speed >> 1) on a u16 directly. The tunnel check
+ *   is restructured to an if-else rather than the Z80's load-default-then-
+ *   overwrite pattern.
  */
 static void engine_sfx_from_speed_128k(chqstate_t *state)
 {
-  u16 pitch;  /* was HL */
-  u16 delta;  /* was DE */
-  u8  volume; /* was A */
+  u16 pitch;  /* AY channel C pitch divisor, derived from speed (was HL) */
+  u16 delta;  /* base pitch divisor: tunnel vs non-tunnel constant (was DE) */
+  u8  volume; /* AY channel C volume (was A) */
 
   pitch = ~(state->speed >> 1);
-  // This is now part of the pitch divisor that we'll set later
   if (state->gear)
-    // We're in high gear.
-    pitch <<= 1; // Double divisor in #REGhl to lower the pitch
-  pitch <<= 2; // Quadruple divisor in #REGhl to lower the pitch more
-  if (!state->tunnel_sfx) { // Conv: moved
-    delta = 0x190; // Not-in-tunnel base divisor (~277Hz)
-    volume = 15; // Not-in-tunnel volume
+    pitch <<= 1; /* double divisor in high gear to lower pitch */
+  pitch <<= 2;   /* quadruple divisor further */
+  // Conv: tunnel check restructured to if-else; Z80 loads non-tunnel defaults then overwrites
+  if (!state->tunnel_sfx) {
+    delta  = 0x190; /* non-tunnel base divisor (~277 Hz) */
+    volume = 15;
   } else {
-    // We're in the tunnel
-    delta = 0x258; // In-tunnel base divisor (~185Hz)
-    volume = 12; // In-tunnel volume
+    delta  = 0x258; /* in-tunnel base divisor (~185 Hz) */
+    volume = 12;
   }
-  pitch += delta; // Add speed divisor to base divisor
-  state->ay_chan_c_pitch =
-    pitch; // Set Channel C pitch divisor (12-bit combined, fine and coarse registers)
-  state->ay_chan_c_vol = volume; // Set Channel C volume
-  state->ay_mixer &= 0x3B;
+  pitch += delta;
+  state->ay_chan_c_pitch = pitch;
+  state->ay_chan_c_vol   = volume;
+  state->ay_mixer       &= 0x3B;
 }
 
 /**
- * $F2F1: Setup turbo SFX 128K
+ * $F2F1: Initialise the turbo boost sound effect [Conv: HQ]
+ *
+ * Seeds both the AY noise pitch and the turbo SFX countdown to $3C
+ * (60). play_turbo_sfx_128k then decrements these each frame to
+ * produce a descending noise burst before handing off to the engine
+ * sound.
  *
  * \param[in] state Pointer to game state.
  */
 static void setup_turbo_sfx_128k(chqstate_t *state)
 {
-  state->ay_noise_pitch        = 0x3C;
+  state->ay_noise_pitch  = 0x3C;
   state->turbo_sfx_pitch = 0x3C;
 }
 
 /**
- * $F2FA: Play turbo SFX 128K
+ * $F2FA: Drive the turbo boost sound effect each frame [Conv: HQ]
+ *
+ * Decrements the turbo SFX countdown and the AY noise pitch each frame
+ * to produce a descending noise burst. When the turbo countdown reaches
+ * zero the effect is complete and control falls through to the engine
+ * sound. The noise pitch register drives AY channel C; once it reaches
+ * zero, tone and noise C are disabled and the engine effect takes over.
  *
  * \param[in] state Pointer to game state.
+ *
+ * Conv: Z80 uses JP $80AA (tail call to engine_sfx_from_speed_128k after
+ *   relocation); C calls it directly.
  */
 static void play_turbo_sfx_128k(chqstate_t *state)
 {
@@ -15679,13 +15741,21 @@ static void play_speech_128k(chqstate_t *state, int index)
 }
 
 /**
- * $F39F: Handle perp caught 128K
+ * $F39F: Celebrate the perpetrator being caught (128K mode) [Conv: HQ]
+ *
+ * Waits until overlay_delay reaches 42, then silences audio, disables
+ * the siren flag, resets the turbo SFX countdown to 1 and triggers the
+ * success music sequence via bank 3.
  *
  * \param[in] state Pointer to game state.
+ *
+ * Conv: Z80 falls through from $F3B3 (LD HL,$C006) into call_bank_3_128k;
+ *   C passes BANK3_ROUTINE_6 explicitly. The LD ($8E4A),A at $F3B0
+ *   self-modifies overlay_delay; C assigns state->overlay_delay directly.
  */
 static void handle_perp_caught_128k(chqstate_t *state)
 {
-  int Adelay;
+  int Adelay; /* overlay frame delay; return early if < 42 (was A) */
 
   Adelay = state->overlay_delay;
   if (Adelay < 42)
@@ -15693,19 +15763,34 @@ static void handle_perp_caught_128k(chqstate_t *state)
 
   silence_audio_hook(state);
 
-  state->siren_enabled         = 0;
+  state->siren_enabled   = 0;
   state->turbo_sfx_pitch = 1;
-  state->overlay_delay         = 1;
+  state->overlay_delay   = 1;
 
   call_bank_3_128k(state, BANK3_ROUTINE_6); /* was FALLTHROUGH */
 }
 
 /**
- * $F3B6: Call bank 3 128K
+ * $F3B6: Page in bank 3 and call a banked routine [Conv: HQ]
+ *
+ * Patches a CALL instruction at $81C5 with HLroutine, backs up the
+ * 4 KB at $B000 to $F000, sets up a temporary stack, pages in bank 3
+ * via page_128k, executes the patched CALL, then pages bank 3 back
+ * out, restores SP and refills $B000 from $F000.
+ *
+ * In C, bank 3 routines are not yet implemented. A switch on HLroutine
+ * dispatches each Z80 entry-point address constant to its C stub.
+ * BANK3_INPUT_SELECTION sets controls_selected and returns 0 to prompt
+ * the caller's loop to exit; all other cases return 1.
  *
  * \param[in] state     Pointer to game state.
- * \param[in] HLroutine Routine to call.
- * \return Non-zero on success.
+ * \param[in] HLroutine Z80 address of the bank 3 routine to invoke. (was HL)
+ *
+ * \return 1 on success; 0 to signal an early return in the caller's loop
+ *   (BANK3_INPUT_SELECTION only).
+ *
+ * Conv: Z80 uses self-modification and 128K hardware memory paging; C
+ *   dispatches via switch on the HLroutine address constants.
  */
 static u8 call_bank_3_128k(chqstate_t *state, int HLroutine)
 {
