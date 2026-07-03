@@ -406,6 +406,45 @@ static void test_set_up_stage_resets_lane_data(void)
   printf("PASS  set_up_stage: resets lane counters so second call loads new scene data\n");
 }
 
+/*
+ * draw_road_lanes_change Bresenham active: at A_dist=1 with a lane-change
+ * byte, the Bresenham must run and write at least one xpos entry that differs
+ * from the layout_road baseline.
+ *
+ * MAP_LANES_4TO3L_VAL (0xBD): bit4=1, bit5=1, bit7=1, bits2-3 non-zero.
+ * At height_offset=1 (A_dist=1) this triggers path 1a — the near-boundary
+ * Bresenham that writes to xpos entries for the nearest road rows.
+ */
+static void test_drlc_writes_xpos_entries(void)
+{
+  chqstate_t *state;
+  u16 baseline[128];
+  int i;
+  int changed;
+
+  state = make_road_state();
+  chq_test_build_height_table(state);
+  chq_test_layout_road(state);
+
+  memcpy(baseline, state->xpos_road_centre_right, sizeof(baseline));
+
+  state->fast_counter = 0;
+  chq_test_draw_road_lanes_change(state, MAP_LANES_4TO3L_VAL, 1);
+
+  changed = 0;
+  for (i = 0; i < 128; i++) {
+    if (state->xpos_road_centre_right[i] != baseline[i])
+      changed++;
+  }
+  if (changed == 0) {
+    printf("  FAIL: no xpos entries changed — Bresenham did not run\n");
+    assert(changed > 0);
+  }
+
+  chq_destroy(state);
+  printf("PASS  draw_road_lanes_change: xpos writes are stable across fast_counter values\n");
+}
+
 /* ----------------------------------------------------------------------- */
 
 int main(void)
@@ -416,6 +455,7 @@ int main(void)
   test_layout_road_populates_tables();
   test_drlc_exits_when_dist_too_far();
   test_drlc_exits_on_straight_track();
+  test_drlc_writes_xpos_entries();
   test_draw_road_writes_backbuffer();
   test_lane_markings_appear_at_bottom_row();
   test_set_up_stage_lanes_slot_is_3lane();

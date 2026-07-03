@@ -12310,7 +12310,7 @@ static void draw_road_lanes_change(chqstate_t *state,
           // $C33D
           A_anim_offset = ((state->fast_counter >> 3) & 0x1C) + SM_C345_bend_offset;
 
-          // $C347: Conv: SM & EX sequence reduced a lot
+          // $C347-$C350: DE = road_pos - anim  ($C34E: SBC HL,DE; $C350: EX DE,HL)
           DE_roadpos -= A_anim_offset;
         } else {
           /* $C357: bit4=1, dist>=2 (must be 4): far-boundary setup, no animation offset */
@@ -12381,7 +12381,9 @@ static void draw_road_lanes_change(chqstate_t *state,
           // $C3B2
           A_anim_offset = ((state->fast_counter >> 3) & 0x1C) + SM_C3BD_bend_offset;
 
-          // $C3BF: Conv: SM & EX sequence reduced a lot
+          // $C3BF-$C3C2: DE = road_pos + anim  ($C3C2: ADD HL,DE; $C3C3: EX DE,HL)
+          // Conv: path 2a adds anim (Z80: ADD HL,DE) whereas path 1a subtracts it
+          // (Z80: SBC HL,DE) — mirror-image treatment of the two road edges.
           DE_roadpos += A_anim_offset;
         } else {
           /* $C3CA: bit4=0, dist>=2 (must be 4): far-boundary setup, no animation offset */
