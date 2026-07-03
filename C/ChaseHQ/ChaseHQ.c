@@ -2298,6 +2298,11 @@ static void set_up_stage(chqstate_t        *state,
   state->rm_hazard_byte = 0; // clear current hazard command
   state->mhc_y_offset = 0; // reset car jump counter
 
+  // Initialise speed to zero so player car doesn't move until key is pressed
+  // Conv: added.
+  // TODO How does the original game achieve this reset?
+  state->speed = 0;
+
   /* Reset map-reader counters so the first rm_cycle_buffer_offset call
    * reloads from the new scenedata, not the previous stage's stale data. */
   // DPT: CHECK IF THIS MATCHES THE Z80
