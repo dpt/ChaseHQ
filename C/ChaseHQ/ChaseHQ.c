@@ -730,14 +730,11 @@ static void setup_overlay_messages_with_transition(chqstate_t *state,
 
 static void draw_mugshots(chqstate_t *state);
 
-static void draw_mugshot(chqstate_t *state,
-                         int         attrs,
-                         int         backbuf,
-                         const u8   *mugshot);
-
+static void draw_mugshot(chqstate_t *state, int BCattrs, int DEbackbuf,
+                         const u8 *HLmugshot);
 static void draw_smash_bar(chqstate_t *state);
-static u16 draw_smash_bar_segments(chqstate_t *state, int nsegs, int backbuf);
-static u16 draw_smash_bar_solid_bit(chqstate_t *state, int nrows, int backbuf);
+static u16 draw_smash_bar_segments(chqstate_t *state, int C_nsegs, int HLbackbuf);
+static u16 draw_smash_bar_solid_bit(chqstate_t *state, int B_nrows, int HLbackbuf);
 
 static void draw_scene_objects(chqstate_t *state);
 
@@ -3187,39 +3184,55 @@ static void draw_mugshots(chqstate_t *state)
 }
 
 /**
- * $8EB7: Draws a single mugshot to the back buffer
+ * $8EB7: Copy one mugshot bitmap into the back buffer and set its attributes [Conv: HQ]
  *
- * \param[in] state   Pointer to game state.
- * \param[in] attrs   Screen address at which to set attributes. (was BC)
- * \param[in] backbuf Back buffer address at which to draw. (was DE)
- * \param[in] mugshot Mugshot data attributes address. Bitmap data precedes. (was HL)
+ * Copies FACEBITMAPBYTES (160 = 32×5 pixels) of bitmap data from the byte
+ * immediately before HLmugshot down to the back buffer at DEbackbuf.  The copy
+ * proceeds four bytes at a time (four LDD instructions per iteration), each
+ * batch writing one four-byte slice across a 4-pixel-wide column and then
+ * advancing the back-buffer pointer to the previous scanline via prev_buf_row.
+ * After all bytes are copied, falls through to plot_face_attributes.
+ *
+ * The Z80 PUSH HL / POP HL preserves the mugshot pointer so that the attribute
+ * address is still in HL after the loop.  C preserves it in HLsaved.
+ *
+ * Conv: Z80 LDD copies (HL)→(DE) with decrement; C indexes backbuffer directly.
+ * Conv: Z80 PUSH/POP HL saves the mugshot attributes pointer; C uses HLsaved.
+ * Conv: Z80 DEC H / rollover for scanline advance; C uses prev_buf_row().
+ * Conv: JP PO branches when BC wraps to zero after LDD; C checks counter == 0.
+ *
+ * \param[in] state       Pointer to game state.
+ * \param[in] BCattrs     Screen attribute address for the face. (was BC)
+ * \param[in] DEbackbuf   Back-buffer address of the last bitmap byte. (was DE)
+ * \param[in] HLmugshot   Pointer to the start of the mugshot attribute data;
+ *                        the bitmap immediately precedes it. (was HL)
  */
 static void draw_mugshot(chqstate_t *state,
-                         int         attrs,
-                         int         backbuf,
-                         const u8   *mugshot)
+                         int         BCattrs,
+                         int         DEbackbuf,
+                         const u8   *HLmugshot)
 {
-  const u8 *orig_mugshot; /* was PUSH-POP */
-  int       counter;      /* was BC */
+  const u8 *HLsaved;   /* saved HL: mugshot attribute pointer (was PUSH HL / POP HL) */
+  int       BC_count;  /* remaining bytes to copy; JP PO exits when 0 (was BC) */
 
-  orig_mugshot = mugshot;
-  mugshot--; // step back from attributes start to bitmap data end
-  counter = FACEBITMAPBYTES;
+  HLsaved  = HLmugshot;
+  HLmugshot--;         /* $8EB9 DEC HL — step back to end of bitmap data */
+  BC_count = FACEBITMAPBYTES; /* $8EBA LD BC,$00A0 */
   for (;;) {
-    backbuf -= BACKBUFFER_START_ADDRESS; // Conv: address -> offset
-    state->backbuffer[backbuf--] = *mugshot--; counter--;
-    state->backbuffer[backbuf--] = *mugshot--; counter--;
-    state->backbuffer[backbuf--] = *mugshot--; counter--;
-    state->backbuffer[backbuf--] = *mugshot--; counter--;
-    backbuf += BACKBUFFER_START_ADDRESS; // Conv: offset -> address
-    backbuf += 4; // Conv: replaces register stash
-    if (counter == 0)
+    DEbackbuf -= BACKBUFFER_START_ADDRESS; /* Conv: Z80 address → array offset */
+    state->backbuffer[DEbackbuf--] = *HLmugshot--; BC_count--; /* $8EBE LDD */
+    state->backbuffer[DEbackbuf--] = *HLmugshot--; BC_count--; /* $8EC0 LDD */
+    state->backbuffer[DEbackbuf--] = *HLmugshot--; BC_count--; /* $8EC2 LDD */
+    state->backbuffer[DEbackbuf--] = *HLmugshot--; BC_count--; /* $8EC4 LDD */
+    DEbackbuf += BACKBUFFER_START_ADDRESS; /* Conv: offset → Z80 address */
+    DEbackbuf += 4; /* $8EC6 LD E,A — restores E to pre-LDD value (Conv: see above) */
+    if (BC_count == 0) /* $8EC7 JP PO — parity overflow = BC wrapped to 0 */
       break;
 
-    backbuf = prev_buf_row(backbuf);
+    DEbackbuf = prev_buf_row(DEbackbuf); /* $8ECA–$8EE2 DEC H with rollover */
   }
 
-  plot_face_attributes(state, attrs, orig_mugshot); /* exit via */
+  plot_face_attributes(state, BCattrs, HLsaved); /* $8EE3–$8EE4 POP HL; JP $9ACE */
 }
 
 /**

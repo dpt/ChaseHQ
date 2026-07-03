@@ -39,7 +39,6 @@ Generated from `grep '^ \* \$' ChaseHQ.c | grep -v '\[Conv: HQ\]'`.
 | `$8DD8` | `transition_fade_chunk` | Overwrite odd/even UDG rows of the back buffer with a single byte |
 | `$8DF9` | `setup_transition` | Setup transition |
 | `$8E42` | `draw_overlay_messages` | Progressively draw overlay messages to the back buffer |
-| `$8EB7` | `draw_mugshot` | Draw a single mugshot to the back buffer |
 | `$8F5F` | `draw_scene_objects` | Draw everything else |
 | `$9052` | `draw_overhead` | Draw overhead objects |
 | `$916C` | `draw_stretchy_object_left` | Draw stretchy object left |
