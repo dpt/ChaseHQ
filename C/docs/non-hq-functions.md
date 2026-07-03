@@ -15,12 +15,6 @@ Generated from `grep '^ \* \$' ChaseHQ.c | grep -v '\[Conv: HQ\]'`.
 | `$9174` | `draw_stretchy_object_common` | Draw stretchy objects (e.g. trees) |
 | `$929A` | `draw_object_left_helicopter_entrypt` | Draw object left helicopter entry point |
 | `$930E` | `draw_object_perspective_entrypt` | Draw object: compute perspective height/width and dispatch |
-| `$9BCF` | `check_time_up` | Handle "time up", countdown and continue |
-| `$9CC2` | `speed_score` | Speed score |
-| `$9E11` | `plot_turbos_and_digits` | Plot turbos and digits |
-| `$9F1E` | `ptas_led_digits` | Draw LED digits |
-| `$9F47` | `ledfont_plot` | Plot an LED font character |
-| `$9FB4` | `draw_char` | Draw single character |
 | `$A0D6` | `keyscan` | Keyscan |
 | `$A112` | `keyscan_keydefs` | Scan a key-definition list, rotating each result into an accumulator |
 | `$A399` | `check_scenery_collisions` | Check scenery collisions |

@@ -6253,31 +6253,38 @@ static void clear_message_line(chqstate_t *state)
 }
 
 /**
- * $9BCF: Handle "time up", countdown and continue
+ * $9BCF: Handle time running out, countdown and continue [Conv: HQ]
  *
- * Called from main loop.
- *
- * This function handles timed events. When 15s or less remain then Nancy warns
- * that our heroes are running of time. When they do run out of time, and
- * sufficient credits remain, a 10s coundown timer and restart query are
- * presented along with a tick-tock sound effect. If restart is initiated the
- * game is partially reset and then continues.
+ * Drives the time-up state machine, called once per frame from the main loop:
+ * - INIT (0): decrements time every 15 frames (1 second); when 15s remain
+ *   Nancy warns that time is running out; when time hits 0 suppresses player
+ *   input and moves to CHECK_TIME_UP.
+ * - CHECK_TIME_UP (1): waits until the hero car stops, then moves to
+ *   CHECK_CREDITS.
+ * - CHECK_CREDITS (2): if credits remain, consumes one, shows the 10-second
+ *   continue countdown and moves to CHECK_RESTART.
+ * - CHECK_RESTART (3): ticks the countdown with a BIP/BOW effect every half
+ *   second; FIRE resets the mission and restarts; expiry triggers quit.
+ * - WAITING (4): quitting is in progress; do nothing.
  *
  * \param[in] state Pointer to game state.
+ *
+ * Conv: Z80 implements the FSM via self-modifying JP; C uses a switch dispatch.
+ * Conv: BCD time decrement uses DAA_sub with the Z80 half-borrow (H flag).
  */
 static void check_time_up(chqstate_t *state)
 {
-  const u8 *ptime_bcd;            /* was HL */
-  int       time_up_state;        /* was A */
-  int       half_borrow;          /* H flag: low BCD nibble was 0 before decrement */
-  int       time_bcd;             /* was A */
-  u8       *time_digits;          /* was DE */
-  int       effect;               /* was B */
-  int       remaining_subseconds; /* was H */
-  int       remaining_seconds_x2; /* was L */
-  int       seconds;              /* was A */
-  int       hidigit;              /* was A */
-  int       lodigit;              /* was L */
+  const u8 *ptime_bcd;            /* pointer to BCD time counter in session state (was HL) */
+  int       time_up_state;        /* FSM state at entry, used as switch index (was A) */
+  int       half_borrow;          /* H flag: low BCD nibble was 0 before decrement (was H flag) */
+  int       time_bcd;             /* updated BCD time value after DAA_sub decrement (was A) */
+  u8       *time_digits;          /* pointer to the two-digit time field in continue_messages (was DE) */
+  int       effect;               /* SFX index: EFFECT_BIP or EFFECT_BOW for the tick-tock sound (was B) */
+  int       remaining_subseconds; /* sub-second frame counter, 6 down to 1 (was H) */
+  int       remaining_seconds_x2; /* doubled countdown: 21 (= 10 seconds × 2 + 1) down to 0 (was L) */
+  int       seconds;              /* countdown in whole seconds, derived by halving remaining_seconds_x2 (was A) */
+  int       hidigit;              /* ASCII high digit of the countdown display: '1' or space (was A) */
+  int       lodigit;              /* low digit of the countdown as integer, converted to ASCII on write (was L) */
 
   if (state->perp_caught_phase > PERPCAUGHTPHASE_NONE ||
       state->transition_control == TRANSITIONCONTROL_FADE)
@@ -6424,18 +6431,29 @@ static void play_start_noise(chqstate_t *state)
 }
 
 /**
- * $9CC2: Speed score
+ * $9CC2: Award a speed-proportional score increment [Conv: HQ]
  *
- * Called from main loop.
+ * Derives a small BCD bonus from the current speed and adds it to the
+ * running score via increment_score. The derivation is unusual: the low byte
+ * of speed is rotated using the carry from the high byte (RR H; RL A), then
+ * divided by four (SRL×2), then BCD-corrected and any remaining carry is
+ * folded in. The result is treated as the low BCD digit pair of the
+ * increment; the high pairs are zero.
  *
  * \param[in] state Pointer to game state.
+ *
+ * Conv: Z80 comment in skool notes "This code makes little sense" — the
+ * rotation direction and carry handling appear to be a coding quirk rather
+ * than an intentional algorithm.
  */
 static void speed_score(chqstate_t *state)
 {
-  int carry = 0;
-  u16 speed; /* was HL */
-  u8  A;
-  u8  H;
+  int carry; /* carry from RR/RL shift operations (carry) */
+  u16 speed; /* current speed value (was HL) */
+  u8  A;     /* speed low byte, shifted and BCD-corrected for score increment (was A) */
+  u8  H;     /* speed high byte, bottom bit merged into A via RR then RL (was H) */
+
+  carry = 0;
 
   // The original code makes little sense...
 
@@ -6765,37 +6783,59 @@ static void toggle_light_brightness(chqstate_t *state, u8 *attrs)
 }
 
 /**
- * $9E11: Plot turbos and digits
+ * $9E11: Plot turbo boost sprites and all HUD digit displays [Conv: HQ]
+ *
+ * Covers three sections:
+ *
+ * 1. Turbo sprites ($9E11): draws one 2-wide × 14-high back-buffer sprite for
+ *    each remaining turbo boost at successive column offsets.  The last turbo
+ *    uses the current spin-animation frame; all others use frame 0 (the
+ *    resting position).
+ *
+ * 2. Speed digits ($9E7B): scales the internal speed (0–511) by 82%, then
+ *    extracts 10,000s, 1,000s and 100s digits and plots them with ledfont_plot.
+ *
+ * 3. Time/distance/score digits ($9EC7–$9F12): delegates to ptas_led_digits
+ *    for each of the three remaining HUD digit groups.
  *
  * \param[in] state Pointer to game state.
+ *
+ * Conv: Z80 uses SP as a fast bitmap source pointer (LD SP,HL; POP DE);
+ * C uses a typed u16* (SPbitmap) with explicit *SPbitmap++ reads.
+ * Conv: Z80 self-modifies $9E45 to store the animation frame address and
+ * $9E79 to restore SP; C uses local variables SM_9e45 and restores nothing.
+ * Conv: EXX banks main DE/HL/BC into shadow registers before the speed
+ * multiply; C uses distinct DEdash/HLdash/BCdash names.
  */
 static void plot_turbos_and_digits(chqstate_t *state)
 {
-  int        carry = 0;
-  int        Aturbos;
-  int        Cturbos;
-  int        Aboost;
-  const u8  *HLbitmap;
-  int        Aframe;
-  int        B;
-  const u16 *SM_9e45;
-  int        A;
-  const u16 *SPbitmap;
-  u8        *HLbackbuf;
-  int        DEbitmap;
-  int        Emask;
-  int        Dbitmap;
-  u8        *DEscreen;
-  int        DEdash_speed;
-  int        Bdash_iterations;
-  u8         Ascale;
-  int        HLdash;
-  int        BCdash;
-  int        Ddash;
-  int        Edash;
-  u8        *DEbcd;
-  int        HLdistance;
-  int        BCdivisor;
+  int        carry;           /* carry from RL/SBC operations in the speed multiply (carry) */
+  int        Aturbos;         /* number of turbo boost sprites remaining to draw (was A) */
+  int        Cturbos;         /* turbo countdown; decremented to select frame (was C) */
+  int        Aboost;          /* current boost time: non-zero means turbos are spinning (was A) */
+  const u8  *HLbitmap;        /* pointer to the turbo sprite frame to draw (was HL) */
+  int        Aframe;          /* turbo spin animation frame index 0–2 (was A, SM $9E22) */
+  int        B;               /* row counter for the sprite draw loop, TURBOHEIGHT down to 1 (was B) */
+  const u16 *SM_9e45;         /* frame data pointer for the last turbo sprite (was SM $9E45) */
+  int        A;               /* back-buffer column offset for each turbo position (was A) */
+  const u16 *SPbitmap;        /* pointer walking the turbo frame bitmap data (was SP) */
+  u8        *HLbackbuf;       /* back-buffer pointer for sprite row writes (was HL) */
+  int        DEbitmap;        /* combined mask+bitmap word from the frame data (was DE) */
+  int        Emask;           /* pixel mask byte extracted from DEbitmap (was E) */
+  int        Dbitmap;         /* pixel bitmap byte extracted from DEbitmap (was D) */
+  u8        *DEscreen;        /* pointer to the speed digit area on screen (was DE) */
+  int        DEdash_speed;    /* raw speed value, banked to shadow DE (was DE') */
+  int        Bdash_iterations;/* bit count for the multiply loop, 7 iterations (was B') */
+  u8         Ascale;          /* scale factor 82, RLA-shifted through for multiply (was A') */
+  int        HLdash;          /* accumulated scaled speed value (was HL') */
+  int        BCdash;          /* divisor for digit extraction: 10000, 1000, or 100 (was BC') */
+  int        Ddash;           /* extracted 10,000s digit (was D') */
+  int        Edash;           /* extracted 1,000s digit (was E') */
+  u8        *DEbcd;           /* pointer into distance_bcd for conversion output (was DE) */
+  int        HLdistance;      /* distance to perp in integer units (was HL) */
+  int        BCdivisor;       /* divisor for distance digit extraction: 1000, 100 or 10 (was BC) */
+
+  carry = 0;
 
   Aturbos = state->session.turbos;
   if (Aturbos) {
@@ -6953,13 +6993,22 @@ ptas_turbo_setup:
 }
 
 /**
- * $9F1E: Draw LED digits
+ * $9F1E: Selectively redraw changed LED digit pairs [Conv: HQ]
  *
- * \param[in] state      Pointer to game state.
- * \param[in] iterations Iterations. (was B)
- * \param[in] digits     Address of digits to draw (end of buffer). (was DE)
- * \param[in] stored     Address of already-drawn digits (end of buffer). (was HL)
- * \param[in] screen     Screen address. (was DE')
+ * Walks a packed-BCD buffer and a parallel "already-drawn" shadow buffer.
+ * For each digit pair, unpacks the high nibble and low nibble separately;
+ * if either digit differs from the shadow, updates the shadow and calls
+ * ledfont_plot to redraw it. Unchanged digits advance the screen pointer
+ * without a redraw, saving time.
+ *
+ * \param[in]     state      Pointer to game state.
+ * \param[in]     iterations Number of BCD byte pairs to process. (was B)
+ * \param[in]     digits     Pointer to the end of the packed-BCD source buffer;
+ *                           walked backwards one byte per pair. (was DE)
+ * \param[in,out] stored     Pointer to the end of the shadow digit buffer;
+ *                           updated in-place when a digit changes. (was HL)
+ * \param[in,out] screen     Pointer to the screen column for the first digit;
+ *                           advanced one column per plotted or skipped digit. (was DE')
  */
 static void ptas_led_digits(chqstate_t *state,
                             int         iterations,
@@ -6967,8 +7016,8 @@ static void ptas_led_digits(chqstate_t *state,
                             u8         *stored,
                             u8         *screen)
 {
-  int Adigits; /* was A */
-  int Cdigits; /* was C */
+  int Adigits; /* packed BCD digit pair read from the digits buffer (was A) */
+  int Cdigits; /* saved copy of Adigits for the low-nibble pass (was C) */
 
   do {
     Adigits = *digits;
@@ -7004,17 +7053,28 @@ ptas_led_plot_2nd:
 }
 
 /**
- * $9F47: Plot an LED font character
+ * $9F47: Plot one LED font digit to the screen [Conv: HQ]
  *
- * \param[in] ord    Digit index 0..9. (was A)
- * \param[in] screen Back buffer screen address. (was DE')
- * \return Back buffer address of next character column.
+ * Draws a single 8×15 LED font glyph at the given screen pointer. The glyph
+ * is stored as 15 bytes: the first 7 occupy the top 7 scanlines of the first
+ * character row, then the final 8 span the top 8 scanlines of the next
+ * character row below. The Z80 uses LDI with INC D/DEC E to step one
+ * scanline down while holding the column fixed; C models this with += 256
+ * (one scanline) and -= 256 + 32 (one scanline up and one column right) to
+ * advance to the second character row.
+ *
+ * \param[in]     ord    Digit index 0–9. (was A)
+ * \param[in,out] screen Pointer to the screen byte to draw the digit at. (was DE')
+ * \return Pointer to the next digit column (orig_screen + 1).
+ *
+ * Conv: Z80 uses EXX to bank main registers around LDI; C uses plain locals.
+ * Conv: LDI (HL→DE, both increment, BC--) unrolled to indexed loops.
  */
 static u8 *ledfont_plot(int ord, u8 *screen)
 {
-  const u8 *src;         /* was HL */
-  u8       *orig_screen; /* was stacked */
-  int       i;           /* Conv: added */
+  const u8 *src;         /* pointer walking the LED font glyph data (was HL) */
+  u8       *orig_screen; /* screen start for this digit, saved for next-column advance (was PUSH DE) */
+  int       i;           /* loop index for unrolled LDI sequences (Conv: no Z80 register) */
 
   src = &ledfont[ord * LEDFONT_HEIGHT];
   orig_screen = screen;
@@ -7123,17 +7183,36 @@ static const u8 *draw_string_core(chqstate_t *state,
 }
 
 /**
- * $9FB4: Draw single character
+ * $9FB4: Draw one character glyph to the screen or back buffer [Conv: HQ]
  *
- * \param[in] state      Pointer to game state.
- * \param[in] character  Character. (was A)
- * \param[in] dst        Screen or backbuffer address. (was DE)
- * \param[in] style      Draw style. (was A')
- * \param[in] attrval    Attribute value. (was C')
- * \param[in] attrstride Attribute stride. (was DE')
- * \param[in] attrs      Attribute address. (was HL')
- * \param[in] new_screen Screen address.
- * \param[in] new_attrs  Attribute address.
+ * Maps an ASCII character to a glyph index, then dispatches on style to one
+ * of six render modes:
+ * - DRAWCHARSTYLE_SCREEN (1): single-height, directly to screen with ZX
+ *   scanline row-advance.
+ * - DRAWCHARSTYLE_SINGLE (2): single-height to back buffer (9 scanlines:
+ *   blank, 7 glyph rows, blank).
+ * - DRAWCHARSTYLE_DOUBLE (3): double-height to back buffer (each row
+ *   repeated on two consecutive scanlines).
+ * - DRAWCHARSTYLE_SINGLE_INV (4): single-height, inverted.
+ * - DRAWCHARSTYLE_DOUBLE_INV (5): double-height, inverted.
+ * - 0: double-height via two separate 4- and 3-row passes with a column
+ *   advance mid-glyph.
+ * Writes the attribute byte (attrval) to the attribute buffer for single-row
+ * styles and to two rows for double-height styles.
+ *
+ * \param[in]  state      Pointer to game state.
+ * \param[in]  character  ASCII character to draw. (was A)
+ * \param[in]  dst        Destination: screen or back-buffer pointer. (was DE)
+ * \param[in]  style      Render style selector (0–5). (was A')
+ * \param[in]  attrval    Attribute byte to OR into the attribute cells. (was C')
+ * \param[in]  attrstride Bytes between successive attribute rows. (was DE')
+ * \param[in]  attrs      Pointer to the attribute cell for this character. (was HL')
+ * \param[out] new_screen Updated screen pointer after drawing. (was DE on exit)
+ * \param[out] new_attrs  Updated attribute pointer after drawing. (was HL' on exit)
+ *
+ * Conv: Z80 uses EX AF,AF' / EXX to bank style and attribute registers;
+ * C passes all values as explicit parameters.
+ * Conv: Z80 dispatch is a DEC C; JP Z ladder; C uses a switch.
  */
 static void draw_char(chqstate_t *state,
                       int         character,
@@ -7145,12 +7224,12 @@ static void draw_char(chqstate_t *state,
                       u8        **new_screen,
                       u8        **new_attrs)
 {
-  int       glyphid;    /* was C */
-  int       data;       /* was A */
-  int       iterations; /* was B */
-  const u8 *fontdata;   /* was HL */
-  u8       *orig;       /* was stacked */
-  int       i;          // additional
+  int       glyphid;    /* glyph index into the font table (was C) */
+  int       data;       /* font byte for the current scanline row (was A) */
+  int       iterations; /* row countdown for each drawing loop (was B) */
+  const u8 *fontdata;   /* pointer to current row of the glyph in font[] (was HL) */
+  u8       *orig;       /* saved dst start; restored to advance one column after drawing (was PUSH DE) */
+  int       i;          /* loop index for rolled-up row copy (Conv: no Z80 register) */
 
   assert(VALID_SCREEN_PTR(dst) || VALID_BACKBUF_PTR(dst));
   assert(style <= DRAWCHARSTYLE__LIMIT);
