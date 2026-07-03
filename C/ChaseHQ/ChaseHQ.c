@@ -908,10 +908,10 @@ static void play_start_noise(chqstate_t *state);
 
 static void speed_score(chqstate_t *state);
 
-static void add_bonus(chqstate_t *state, int lo, int md, int hi);
-static int bonus_digit(int digit, int *zeroflag, char **poutput);
+static void add_bonus(chqstate_t *state, int A_lo, int E_md, int D_hi);
+static int bonus_digit(int Adigit, int *pCzeroflag, char **pHLoutput);
 
-static void increment_score(chqstate_t *state, int lo, int md, int hi);
+static void increment_score(chqstate_t *state, int A_lo, int E_md, int D_hi);
 
 static void calc_overtake_bonus(chqstate_t *state);
 
@@ -5729,115 +5729,155 @@ static void speed_score(chqstate_t *state)
 }
 
 /**
- * $9CD6: Add bonus
+ * $9CD6: Format a BCD bonus value as a decimal string and add it to the score [Conv: HQ]
  *
- * Bug/Limitation: As soon as a non-zero->zero transition is seen the routine.
- * finishes so you can only have a single run of zeroes in the bonus.
+ * Formats the six packed-BCD digits of (D_hi, E_md, A_lo) as a right-aligned
+ * decimal string in state->bonus_string, suppressing leading and trailing zeros.
+ * A non-zero-to-zero digit transition terminates the chain early (see
+ * bonus_digit), so bonus values with an internal zero (e.g. 50500) are not
+ * rendered correctly — this is a Z80 original bug.  Sets SM_address_of_score_digits
+ * to point to the first significant digit, sets trigger_bonus_flag, then falls
+ * through to increment_score to add the bonus to the running score.
  *
- * \param[in] state Pointer to game state.
- * \param[in] lo    Lo. (was A)
- * \param[in] md    Md. (was E)
- * \param[in] hi    Hi. (was D)
+ * The Z80 fills the string right-to-left starting from one byte past the end
+ * of the six-byte buffer ($9D57).  C models this with a double pointer (pHLoutput).
+ *
+ * \param[in] state  Pointer to game state.
+ * \param[in] A_lo   Low two BCD digits of the bonus. (was A)
+ * \param[in] E_md   Middle two BCD digits of the bonus. (was E)
+ * \param[in] D_hi   High two BCD digits of the bonus. (was D)
  */
-static void add_bonus(chqstate_t *state, int lo, int md, int hi)
+static void add_bonus(chqstate_t *state, int A_lo, int E_md, int D_hi)
 {
-  char *output;   /* was HL */
-  int   zeroflag; /* was C */
+  char *HLoutput;  /* pointer walking bonus_string right-to-left (was HL) */
+  int   Czeroflag; /* $FF until first non-zero digit is seen, then 0 (was C) */
 
-  output = &state->bonus_string[6]; // points to byte after buffer
-  zeroflag = 0xFF; // true until non-zero seen
-  // This always runs since zeroflag is set
-  (void) bonus_digit(lo >> 0, &zeroflag, &output);
-  *output |= EOS; // terminate string
+  HLoutput  = &state->bonus_string[6]; /* one past the 6-byte buffer, like Z80's $9D57 */
+  Czeroflag = 0xFF;
+  (void) bonus_digit(A_lo >> 0, &Czeroflag, &HLoutput);
+  *HLoutput |= EOS; /* Conv: SET 7,(HL) — top-bit-terminate the lowest digit */
 
-  // Conv: ab_high_nibble inlined in calls.
-  // Using lazy evaluation here to avoid having a load of gotos
-  (void)(bonus_digit(lo >> 4, &zeroflag, &output) >= 0 &&
-         bonus_digit(md >> 0, &zeroflag, &output) >= 0 &&
-         bonus_digit(md >> 4, &zeroflag, &output) >= 0 &&
-         bonus_digit(hi >> 0, &zeroflag, &output) >= 0 &&
-         bonus_digit(hi >> 4, &zeroflag, &output) >= 0);
+  /* Conv: Z80 alternates CALL $9CF8 (bonus_high_nibble: RRA×4 then fall into
+   * $9CFC) and CALL $9CFC (bonus_digit) for each byte.  C passes (value >> 4)
+   * directly and uses short-circuit && so a -1 return terminates the chain,
+   * mirroring the Z80's POP AF early-exit. */
+  (void)(bonus_digit(A_lo >> 4, &Czeroflag, &HLoutput) >= 0 &&
+         bonus_digit(E_md >> 0, &Czeroflag, &HLoutput) >= 0 &&
+         bonus_digit(E_md >> 4, &Czeroflag, &HLoutput) >= 0 &&
+         bonus_digit(D_hi >> 0, &Czeroflag, &HLoutput) >= 0 &&
+         bonus_digit(D_hi >> 4, &Czeroflag, &HLoutput) >= 0);
 
-  state->SM_address_of_score_digits = (const u8 *)output;
-  state->trigger_bonus_flag = 1;
-  increment_score(state, lo, md, hi); /* was fallthrough */
+  state->SM_address_of_score_digits = (const u8 *)HLoutput;
+  state->trigger_bonus_flag         = 1;
+  increment_score(state, A_lo, E_md, D_hi); /* Conv: Z80 falls through to $9D17 */
 }
 
 /**
- * $9CFC: Subroutine of above broken out
+ * $9CFC: Write one BCD nibble into the bonus string [Conv: HQ]
  *
- * \param[in] digit    Digit.
- * \param[in] zeroflag Zeroflag.
- * \param[in] poutput  Poutput.
- * \return Non-zero on success.
+ * Masks the low nibble of Adigit and writes the corresponding decimal
+ * character into the bonus string at (*pHLoutput - 1), filling right-to-left
+ * (least-significant digit first).  Tracks whether any non-zero digit has been
+ * seen via *pCzeroflag ($FF = all-zero so far, 0 = at least one non-zero seen).
+ *
+ * The entry point at $9CF8 (bonus_high_nibble) RRA×4-shifts the high nibble
+ * into the low nibble before reaching this code; in C, callers pass
+ * (value >> 4) directly so bonus_digit is always entered at $9CFC.
+ *
+ * Returns -1 on a non-zero-to-zero digit transition (suppressing trailing
+ * zeros).  The Z80 models this with POP AF to discard the return address and
+ * jump to bonus_exit; C callers use short-circuit && to achieve the same
+ * early-exit behaviour.
+ *
+ * \param[in]     Adigit     BCD digit to write; only the low nibble is used. (was A)
+ * \param[in,out] pCzeroflag Flag: $FF while all digits so far are zero, 0 once
+ *                           a non-zero digit is seen. (was C)
+ * \param[in,out] pHLoutput  Address of the output pointer; decremented before
+ *                           each write. (was HL)
+ * \return 0 on success; -1 on non-zero-to-zero transition (stop writing).
  */
-static int bonus_digit(int digit, int *zeroflag, char **poutput)
+static int bonus_digit(int Adigit, int *pCzeroflag, char **pHLoutput)
 {
-  digit &= 0x0F;
+  Adigit &= 0x0F;
 
-  if (digit == 0) {
-    if (*zeroflag != 0)
-      goto store;
-
-    // Conv: Was a POP+JP to cause exit.
-    return -1; // Non-zero-to-zero transition
+  if (Adigit == 0) {
+    if (*pCzeroflag != 0)
+      goto bd_store;
+    /* Conv: Z80 uses POP AF to discard the return address and jump to
+     * bonus_exit, causing the caller's call chain to terminate early.
+     * C models this as return -1; callers use short-circuit &&. */
+    return -1;
   }
 
-  *zeroflag = 0; // Clear flag: non-zero digit seen
-store:
-  (*poutput)--;
-  **poutput = digit + '0';
+  *pCzeroflag = 0;
+bd_store:
+  (*pHLoutput)--;
+  **pHLoutput = Adigit + '0';
   return 0;
 }
 
 /**
- * $9D17: Increment score
+ * $9D17: Increment the score by a three-byte BCD value [Conv: HQ]
  *
- * \param[in] state Pointer to game state.
- * \param[in] lo    Low digits.
- * \param[in] md    Middle digits.
- * \param[in] hi    High digits.
+ * Adds (D_hi, E_md, A_lo) to the four-byte packed-BCD score in
+ * state->score_bcd[0..3], propagating carry through all four bytes.  Each
+ * byte holds two decimal digits.  The fourth byte absorbs any carry out of
+ * the high byte so the score never wraps silently.
+ *
+ * \param[in] state  Pointer to game state.
+ * \param[in] A_lo   Low two BCD digits of the increment. (was A)
+ * \param[in] E_md   Middle two BCD digits of the increment. (was E)
+ * \param[in] D_hi   High two BCD digits of the increment. (was D)
  */
-static void increment_score(chqstate_t *state, int lo, int md, int hi)
+static void increment_score(chqstate_t *state, int A_lo, int E_md, int D_hi)
 {
-  int carry = 0;
-  u8 *score_bcd; /* was HL */
+  int  carry;        /* carry flag propagated between BCD additions (was carry flag) */
+  u8  *HLscore_bcd; /* pointer walking state->score_bcd (was HL) */
 
-  score_bcd  = &state->score_bcd[0];
-  *score_bcd = DAA_add(lo + *score_bcd,         &carry); score_bcd++;
-  *score_bcd = DAA_add(md + *score_bcd + carry, &carry); score_bcd++;
-  *score_bcd = DAA_add(hi + *score_bcd + carry, &carry); score_bcd++;
-  *score_bcd = DAA_add(*score_bcd + carry, NULL);
+  carry        = 0;
+  HLscore_bcd  = &state->score_bcd[0];
+  *HLscore_bcd = DAA_add(A_lo + *HLscore_bcd,          &carry); HLscore_bcd++;
+  *HLscore_bcd = DAA_add(E_md + *HLscore_bcd + carry,  &carry); HLscore_bcd++;
+  *HLscore_bcd = DAA_add(D_hi + *HLscore_bcd + carry,  &carry); HLscore_bcd++;
+  *HLscore_bcd = DAA_add(*HLscore_bcd + carry, NULL);
 }
 
 /**
- * $9D2E: Calc overtake bonus
+ * $9D2E: Calculate and apply the overtake bonus [Conv: HQ]
  *
- * Called from main loop.
+ * Called once per frame from the main loop.  Runs overtake_bonus_counter
+ * iterations (one per pending overtake), each time advancing the BCD
+ * accumulator overtake_bonus_bcd by 2 (clamped to $80) and calling
+ * add_bonus with that value as the middle-digit pair (E_md), so the bonus
+ * applied each iteration is accumulator × 100 (e.g. $02 → 200, $04 → 400).
+ * After all iterations the counter is cleared.
+ *
+ * Conv: The Z80 uses EXX before calling add_bonus ($9CD6) to bank B and HL
+ * into shadow registers, protecting them from clobbering during the call, and
+ * a second EXX on return to restore them.  C has no register pressure so the
+ * banking is omitted — Biterations and HLbcd are plain locals that survive
+ * the call naturally.
  *
  * \param[in] state Pointer to game state.
  */
 static void calc_overtake_bonus(chqstate_t *state)
 {
-  int carry = 0;
-  int counter;    /* was A */
-  int iterations; /* was B */
-  u8 *bcd;        /* was HL */
+  int  Acounter;    /* BCD accumulator: current overtake bonus value (was A) */
+  int  Biterations; /* loop count: number of pending overtakes (was B) */
+  u8  *HLbcd;       /* pointer to state->overtake_bonus_bcd (was HL) */
 
-  counter = state->overtake_bonus_counter;
-  if (counter == 0)
+  Acounter = state->overtake_bonus_counter;
+  if (Acounter == 0)
     return;
 
-  iterations = counter;
-  bcd = &state->overtake_bonus_bcd;
-  // Increment bonus by 2 up to a max of 128.
+  Biterations = Acounter;
+  HLbcd       = &state->overtake_bonus_bcd;
   do {
-    counter = DAA_add(*bcd + 2, &carry);
-    if (counter >= 0x80) counter = 0x80;
-    *bcd = counter;
-    // Set bonus to N * 100.
-    add_bonus(state, 0, counter, 0);
-  } while (--iterations > 0);
+    Acounter = DAA_add(*HLbcd + 2, NULL); /* ADD A,$02; DAA */
+    if (Acounter >= 0x80) Acounter = 0x80;
+    *HLbcd = Acounter;
+    add_bonus(state, 0, Acounter, 0); /* bonus = Acounter * 100 */
+  } while (--Biterations > 0);
 
   state->overtake_bonus_counter = 0;
 }
