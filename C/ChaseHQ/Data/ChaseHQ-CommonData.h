@@ -264,7 +264,7 @@ const u8 bitmap_tunnellight_5[1 * 5];
 const u8 bitmap_tunnellight_6[2 * 2 * 6];
 const u8 bitmap_tunnellight_6s[2 * 2 * 6];
 
-const u8 perp_escape_hazards[6];
+const u8 perp_escape_hazards[6 + 5];
 const u8 perp_escape_curvature[5];
 const u8 perp_escape_height[5];
 const u8 perp_escape_lanes[4];

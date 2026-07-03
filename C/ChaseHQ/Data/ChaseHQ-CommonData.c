@@ -4088,11 +4088,14 @@ const u8 bitmap_tunnellight_6s[2 * 2 * 6] = {
 /* ----------------------------------------------------------------------- */
 
 // $E2A4
-const u8 perp_escape_hazards[6] = {
+const u8 perp_escape_hazards[6 + 5] = {
   MAP_HAZARD_WAIT(27),
   MAP_CMD_START_TWO_BARRIERS,
   MAP_HAZARD_WAIT(1),
-  MAP_CMD_STOP_BARRIERS
+  MAP_CMD_STOP_BARRIERS,
+  /* Conv: original would fall through to perp_escape_curvature, must make it explicit here */
+  MAP_HAZARD_WAIT(255),
+  MAP_CMD_GOTO(0xE2AA) // loop
 };
 
 // $E2AA

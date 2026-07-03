@@ -2221,6 +2221,7 @@ static void escape_scene(chqstate_t *state)
     if (state->transition_control != TRANSITIONCONTROL_FADE)
       setup_overlay_messages(state, &game_over_message[0]);
 
+    state->speccy->stamp(state->speccy);
     read_map(state);
     build_height_table(state);
     scroll_horizon(state);
@@ -2235,6 +2236,7 @@ static void escape_scene(chqstate_t *state)
     drive_chatter(state);
     transition(state);
     update_screen(state);
+    state->speccy->sleep(state->speccy, 250000); // guess
 
     // Loop unless the tunnel has appeared - and is right size?
     if (state->dt_tunnel_visible == 0 || state->dt_tunnel_distance >= 7)
@@ -12972,8 +12974,8 @@ static void rm_cycle_buffer_offset(chqstate_t *state, u8 *HLfast_counter)
     if (A_hazards_counter == 0xFF) {
       DE_hazards_ptr = state->scenedata.road_hazard_ptr + 1;
 
-      rm_restart_hazards_read: // $BFF3
-          A_hazards_counter = *DE_hazards_ptr;
+rm_restart_hazards_read: // $BFF3
+      A_hazards_counter = *DE_hazards_ptr;
       if (A_hazards_counter == 0) {
         // Escape byte (0): read command byte.
 
