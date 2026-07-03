@@ -153,8 +153,8 @@ const hazard_t hazard_template;
 const u8 hazard_pos_speed[3 * 4];
 
 const u8 hero_car_jump_table[10 * 2];
-const u8 car_jump_resume_params[5 * 2];
-const u8  horizon_table[32]; // byte table; Z80 $B828
+const u8 car_jump_params[5 * 2];
+const u8 horizon_table[32]; // byte table; Z80 $B828
 
 const u8 smoke_ce0c_template[13];
 const u8 smoke_ce19_template[13];

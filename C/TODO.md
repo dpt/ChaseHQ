@@ -5,19 +5,16 @@ perhaps build unit tests now to flush out problems ahead of time.
 
 - Hitting invisible objects
 - Wonky feeling car speed / anims
-- Car starts level at speed
 - Lane change diagonal transitions are not working
 - Radio screen sometimes have leftover transition animation parts
 - Perp escape scene causes an immediate crash (prob. tunnel code)
 - Message cursor seems to vanish when idle
-- Car (still) not jumping on steep roads
 - Forks seize the game up
 - draw_scene_objects => crash
 
 
 # TODO
 
-- Mark functions as HQ once processed
 - Ensure partial screen updates are correct
 - Ensure if-else structuring is added where sensible (top-down)
 - Identify unrolled ops to roll up
@@ -32,8 +29,10 @@ perhaps build unit tests now to flush out problems ahead of time.
 - Sort all params by register
 - Add an ADDRTOBACKBUF that takes (H,L) and does (H<<8)|L itself
 
+
 # IDEAS
 
+- Build a tiny test level
 - Identify missing cases where wraparound is required.
 - Remove as much casting as possible (Claude tends to add it).
 - Hoist out all interesting Z80 addresses to constants
@@ -56,6 +55,9 @@ perhaps build unit tests now to flush out problems ahead of time.
 
 # DONE
 
+- Car (still) not jumping on steep roads
+- Mark functions as HQ once processed
+- Car starts level at speed
 - Sky attributes intruding on road
 - Road corrupt in distance
 - Road corrupt (looks like a wall) at looping point

@@ -2281,7 +2281,7 @@ const u8 hero_car_jump_table[10 * 2] = {
 // $B059
 //
 // Five pairs of (jump_arc_offset, y_height)
-const u8 car_jump_resume_params[5 * 2] = {
+const u8 car_jump_params[5 * 2] = {
   0x08, 0x02,
   0x06, 0x04,
   0x04, 0x06,

@@ -418,7 +418,7 @@ struct chqstate {
   // TODO check signed use of incline
   s8        incline; // $FD..$03 = climbing/level/descending
   // $A259
-  u8        prev_road_height;
+  s8        prev_road_height;
   // $A25A
   u8        horizon_y_accum; // related to changes in incline (goes 0/1/2)
   // $A25B

@@ -2197,7 +2197,7 @@ dp_repeat_or_plot_tile:
  * $873C: Run the "game over" escape scene [Conv: HQ]
  *
  * Drives the time-limit expiry sequence: silences audio, sets up the
- * escape scene (Nancy's police car driving away), plays the "game over"
+ * escape scene (the perp's car escaping into a tunnel), plays the "game over"
  * chatter, then loops the road/hazard/object pipeline until the perp
  * car clears the tunnel and the chatter finishes. At that point three
  * barriers are activated as the final obstacle.
@@ -11821,32 +11821,32 @@ static void scroll_horizon(chqstate_t *state)
  */
 static void update_road_level(chqstate_t *state)
 {
-  int              carry;              /* carry/borrow flag */
-  int              Bhorizon_accum;     /* accumulated horizon step from scroll_horizon (was B) */
-  int              Cnegate_flag;       /* 1 if incline is negative (climbing) (was C) */
-  int              Aincline;           /* current incline value, made positive for arith (was A) */
-  const u8        *HLroadbuf;          /* pointer into road buffer (was HL) */
-  int              Aheight;            /* road height byte, halved for new incline (was A) */
-  int              Cheight;            /* frontmost height byte, kept for pitch (was C) */
-  int              Bpitch;             /* derived pitch value for dhc_pitch (was B) */
-  u8              *HLprev_road_height; /* pointer to state->prev_road_height (was HL) */
-  int              Aprev_road_height;  /* previous road height byte (was A) */
-  int              Bprev_road_height;  /* previous road height, positive copy (was B) */
-  int              Ay_offset;          /* current mhc_y_offset jump counter (was A) */
-  int              Adiff;              /* height difference triggering jump (was A) */
-  const u8        *HLjump_params;      /* pointer into car_jump_resume_params (was HL) */
-  int              Eoffset;            /* jump table row offset into hero_car_jump_table (was E) */
-  int              jump_params_idx;    /* byte index into car_jump_resume_params (no register) */
-  int              Acurrent_curvature; /* curvature value from previous frame (was A) */
-  int              Afork_visible;      /* fork_visible flag (was A) */
-  int              Acurvature_byte;    /* curvature byte read from road buffer (was A) */
-  int              Afork_taken;        /* fork_taken flag (was A) */
-  int              Bcurv_idx;          /* scaled curvature index copy for BC indexing (was B) */
-  int              Ax_scroll;          /* computed horizon x-scroll value (was A) */
-  int              Bcurvature_ticks;   /* accumulated curvature ticks from previous frame (was B) */
-  int              C_curv_dir;         /* 1 if old curvature was negative (was C) */
-  int              A_curv_diff;        /* old-minus-new curvature magnitude (was A) */
-  int              B_sign_ext;         /* sign-extension byte for horizontal_adjust (was B) */
+  int       carry;              /* carry/borrow flag */
+  int       Bhorizon_accum;     /* accumulated horizon step from scroll_horizon (was B) */
+  int       Cnegate_flag;       /* 1 if incline is negative (climbing) (was C) */
+  int       Aincline;           /* current incline value, made positive for arith (was A) */
+  const u8 *HLroadbuf;          /* pointer into road buffer (was HL) */
+  int       Aheight;            /* road height byte, halved for new incline (was A) */
+  int       Cheight;            /* frontmost height byte, kept for pitch (was C) */
+  int       Bpitch;             /* derived pitch value for dhc_pitch (was B) */
+  s8       *HLprev_road_height; /* pointer to state->prev_road_height (was HL) */
+  int       Aprev_road_height;  /* previous road height byte (was A) */
+  int       Bprev_road_height;  /* previous road height, positive copy (was B) */
+  int       Ay_offset;          /* current mhc_y_offset jump counter (was A) */
+  int       Adiff;              /* height difference triggering jump (was A) */
+  const u8 *HLjump_params;      /* pointer into car_jump_params (was HL) */
+  int       Ehero_car_jump_table_index; /* jump table row offset into hero_car_jump_table (was E) */
+  int       car_jump_params_index; /* byte index into car_jump_params (no register) */
+  int       Acurrent_curvature; /* curvature value from previous frame (was A) */
+  int       Afork_visible;      /* fork_visible flag (was A) */
+  int       Acurvature_byte;    /* curvature byte read from road buffer (was A) */
+  int       Afork_taken;        /* fork_taken flag (was A) */
+  int       Bcurv_idx;          /* scaled curvature index copy for BC indexing (was B) */
+  int       Ax_scroll;          /* computed horizon x-scroll value (was A) */
+  int       Bcurvature_ticks;   /* accumulated curvature ticks from previous frame (was B) */
+  int       C_curv_dir;         /* 1 if old curvature was negative (was C) */
+  int       A_curv_diff;        /* old-minus-new curvature magnitude (was A) */
+  int       B_sign_ext;         /* sign-extension byte for horizontal_adjust (was B) */
 
   carry = 0;
   Bhorizon_accum = state->horizon_y_accum; // load and widen
@@ -11870,8 +11870,9 @@ static void update_road_level(chqstate_t *state)
     Aheight++;
   state->incline = Aheight;
 
+  // $B90F
   WRAP_ASSIGN(HLroadbuf, -2, state->roadbuf_start);
-  Cheight = Aheight = (s8) * HLroadbuf;
+  Cheight = Aheight = (s8) *HLroadbuf;
   // OR A
   Bpitch = 0;
   if (Aheight) {
@@ -11885,9 +11886,10 @@ static void update_road_level(chqstate_t *state)
   }
   state->dhc_pitch = Bpitch;
 
+  // $B92B
   HLprev_road_height = &state->prev_road_height;
   Aprev_road_height = *HLprev_road_height;
-  if ((s8) Aprev_road_height < 0) { // could combine exprs
+  if (Aprev_road_height < 0) { // could combine exprs
     if ((Cheight & (1 << 7)) == 0) { // ie. positive
       Aprev_road_height = -Aprev_road_height;
       carry = Aprev_road_height < 2, Aprev_road_height -= 2;
@@ -11896,19 +11898,18 @@ static void update_road_level(chqstate_t *state)
         Ay_offset = state->mhc_y_offset;
         assert(Ay_offset >= 0 && Ay_offset <= 8);
         if (!Ay_offset) { /* Z80: JR NZ → skip if already airborne */
-          Adiff = Bprev_road_height - (3 - ((state->speed >> 7) &
-                                            3)); // result = 1..5? // folded a lot here
-          if ((s8) Adiff > 0) { /* was !C && !Z */
+          Adiff = Bprev_road_height - (3 - ((state->speed >> 7) & 3)); // result = 1..5? // Conv: folded a lot here
+          if (Adiff > 0) { /* was !C && !Z */
             // PUSH HLprev_road_height
             // Conv: RLCA (A*=2) folded into index; table base adjusted by -1 for C 0-indexing
-            jump_params_idx = (Adiff * 2) - 1;
-            assert(jump_params_idx >= 0 && jump_params_idx <= 8);
-            HLjump_params = &car_jump_resume_params[jump_params_idx];
-            Eoffset = *HLjump_params++; // an offset
-            assert(*HLjump_params >= 0 && *HLjump_params <= 8);
+            car_jump_params_index = (Adiff * 2) - 1;
+            assert(car_jump_params_index >= 0 && car_jump_params_index <= 8);
+            HLjump_params = &car_jump_params[car_jump_params_index];
+            Ehero_car_jump_table_index = *HLjump_params++; // an offset
+            assert(*HLjump_params <= 8);
             state->mhc_y_offset = *HLjump_params;
-            assert(Eoffset >= 0 && Eoffset <= 19);
-            state->mhc_jump_data = &hero_car_jump_table[Eoffset];
+            assert(Ehero_car_jump_table_index >= 0 && Ehero_car_jump_table_index <= 19);
+            state->mhc_jump_data = &hero_car_jump_table[Ehero_car_jump_table_index];
             // POP HLprev_road_height
           }
         }
@@ -12432,7 +12433,7 @@ static void update_screen(chqstate_t *state)
        */
       H_bufpage = 0xF0;
       A_buflo   = bufoffset & 0xFF;
-      A_sub       = A_buflo - H_bufpage;
+      A_sub     = A_buflo - H_bufpage;
       carry     = (A_buflo < H_bufpage); // unsigned: set while rows remain
       overflow  = ((H_bufpage ^ A_buflo) & (A_sub ^ A_buflo)) >> 7; // V-flag
       L_nextlo  = A_sub; // low byte of next group start
