@@ -15,12 +15,6 @@ Generated from `grep '^ \* \$' ChaseHQ.c | grep -v '\[Conv: HQ\]'`.
 | `$9174` | `draw_stretchy_object_common` | Draw stretchy objects (e.g. trees) |
 | `$929A` | `draw_object_left_helicopter_entrypt` | Draw object left helicopter entry point |
 | `$930E` | `draw_object_perspective_entrypt` | Draw object: compute perspective height/width and dispatch |
-| `$9A98` | `ne_plot_attrs` | Set the noise attribute bytes |
-| `$9AAB` | `plot_face` | Draw the given face |
-| `$9ACE` | `plot_face_attributes` | Set the face attribute bytes |
-| `$9AEC` | `plot_mini_font_cursor_off` | Plot a character at X with no cursor block |
-| `$9AF1` | `plot_mini_font_cursor_on` | Plot a character at X with a cursor block |
-| `$9AF4` | `pmf_go` | Plot a character |
 | `$9BCF` | `check_time_up` | Handle "time up", countdown and continue |
 | `$9CC2` | `speed_score` | Speed score |
 | `$9E11` | `plot_turbos_and_digits` | Plot turbos and digits |

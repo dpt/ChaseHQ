@@ -5936,15 +5936,20 @@ static void draw_noise_effect(chqstate_t *state, int counter)
 }
 
 /**
- * $9A98: Set the noise attribute bytes
+ * $9A98: Fill the face-area screen attributes [Conv: HQ]
+ *
+ * Writes attr to a 4-column × 5-row block of attribute bytes starting at
+ * screen attribute address $5836 (row 22, column 1). Called with
+ * attribute_BRIGHT_WHITE_OVER_BLACK when drawing noise, and 0 (black on
+ * black) when wiping the face after the chatter sequence ends.
  *
  * \param[in] state Pointer to game state.
- * \param[in] attr  Attribute byte. (was A)
+ * \param[in] attr  Attribute byte to fill the face area with. (was A)
  */
 static void ne_plot_attrs(chqstate_t *state, int attr)
 {
-  u8 *addr;       /* was HL */
-  int iterations; /* was B */
+  u8 *addr;       /* pointer to the current attribute row in the face area (was HL) */
+  int iterations; /* row countdown, 5 rows (was B) */
 
   // Screen attribute (22,1) (Conv: address -> offset)
   addr       = ADDRTOATTRS(0x5836);
@@ -5957,18 +5962,25 @@ static void ne_plot_attrs(chqstate_t *state, int attr)
 }
 
 /**
- * $9AAB: Draw the given face
+ * $9AAB: Plot a face bitmap and its attribute block to the screen [Conv: HQ]
+ *
+ * Copies FACEBITMAPBYTES (160) bytes of face bitmap data to the ZX Spectrum
+ * screen starting at screen, advancing one scanline at a time using the
+ * standard ZX Spectrum row-advance logic. Falls through to
+ * plot_face_attributes to write the matching colour attribute block.
  *
  * \param[in] state  Pointer to game state.
- * \param[in] screen Screen address to draw at - a Z80 address, always 0x4036. (was DE)
- * \param[in] face   Face data to draw. (was HL)
+ * \param[in] screen ZX Spectrum screen address to start drawing at (always
+ *                   $4036, i.e. row 8 pixel 6 of the display). (was DE)
+ * \param[in] face   Pointer to face data: bitmap bytes followed immediately
+ *                   by attribute bytes. (was HL)
  */
 static void plot_face(chqstate_t *state,
                       int         screen,
                       const u8   *face)
 {
-  u16 saved_screen; /* was stack */
-  int counter;      /* was BC */
+  u16 saved_screen; /* screen start address saved for the attribute pass (was PUSH DE) */
+  int counter;      /* byte countdown: FACEBITMAPBYTES (160) down to 0 (was BC) */
 
   assert(screen >= SCREEN_START_ADDRESS && screen < SCREEN_END_ADDRESS);
   assert(face);
@@ -5991,28 +6003,35 @@ static void plot_face(chqstate_t *state,
 }
 
 /**
- * $9ACE: Set the face attribute bytes
+ * $9ACE: Write the attribute block for a face bitmap [Conv: HQ]
+ *
+ * Derives the attribute-area start address from the saved bitmap screen
+ * address: the high byte encodes the pixel band (0–2), which maps to
+ * attribute rows $58xx–$5Axx. Copies FACEATTRBYTES (20) attribute bytes in
+ * runs of 4, advancing by one attribute row (32 bytes) between runs.
  *
  * \param[in] state  Pointer to game state.
- * \param[in] screen Screen address to draw at. (was stack)
- * \param[in] face   Face data to draw. (was HL)
+ * \param[in] screen ZX Spectrum screen address saved from the bitmap pass;
+ *                   its high byte encodes the display band. (was stack/POP DE)
+ * \param[in] face   Pointer to the attribute bytes that follow the bitmap
+ *                   data in the face data block. (was HL)
  */
 static void plot_face_attributes(chqstate_t *state,
                                  int         screen,
                                  const u8   *face)
 {
-  int carry;
-  u8  A;       /* was A */
-  int counter; /* was BC */
-  int t;
+  int carry;      /* carry from RRC and ADD operations (carry) */
+  u8  A_attrhi;  /* screen high byte, rotated to extract band, then biased to $58 (was A) */
+  int counter;   /* byte countdown: FACEATTRBYTES (20) down to 0 (was BC) */
+  int A_rowadv;  /* low-byte row-stride computation: (screen & 0xFF) + 0x1C (was A) */
 
-  A = screen >> 8;
-  RRC(A);
-  RRC(A);
-  RRC(A);
-  A &= 3; // extract band
-  A += 0x58;
-  screen = (A << 8) | (screen & 0xFF);
+  A_attrhi = screen >> 8;
+  RRC(A_attrhi);
+  RRC(A_attrhi);
+  RRC(A_attrhi);
+  A_attrhi &= 3; // extract band
+  A_attrhi += 0x58;
+  screen = (A_attrhi << 8) | (screen & 0xFF);
   screen -= SCREEN_ATTRIBUTES_START_ADDRESS; // Conv: address -> offset
   counter = FACEATTRBYTES;
   for (;;) {
@@ -6024,19 +6043,23 @@ static void plot_face_attributes(chqstate_t *state,
       break;
 
     // TODO Hoist to next-attr-row macro?
-    t = (screen & 0xFF) + 0x1C;
-    screen = (screen & 0xFF00) | (t & 0xFF);
-    if (t >= 0x100)
+    A_rowadv = (screen & 0xFF) + 0x1C;
+    screen = (screen & 0xFF00) | (A_rowadv & 0xFF);
+    if (A_rowadv >= 0x100)
       screen += 256;
   }
 }
 
 /**
- * $9AEC: Plot a character at horizontal position X with no cursor block
+ * $9AEC: Plot a mini-font character with no cursor underline [Conv: HQ]
+ *
+ * Entry point with BC=0: both extra bitmap bytes are zero so no cursor block
+ * appears beneath the character.
  *
  * \param[in] state     Pointer to game state.
- * \param[in] x         X position. (was A)
- * \param[in] character Character to draw. (was D)
+ * \param[in] x         Column index (0–based); 0xFF means the special
+ *                      off-screen cursor position. (was A)
+ * \param[in] character ASCII character to draw. (was D)
  */
 static void plot_mini_font_cursor_off(chqstate_t *state,
                                       int          x,
@@ -6046,11 +6069,16 @@ static void plot_mini_font_cursor_off(chqstate_t *state,
 }
 
 /**
- * $9AF1: Plot a character at horizontal position X with a cursor block
+ * $9AF1: Plot a mini-font character with a cursor underline [Conv: HQ]
+ *
+ * Entry point with BC=$0780: B=$07 ORs three bits into the left glyph byte
+ * (the cursor underline row) and C=$80 sets the MSB of the right glyph byte,
+ * producing a visible cursor block beneath the character.
  *
  * \param[in] state     Pointer to game state.
- * \param[in] x         X position. (was A)
- * \param[in] character Character to draw. (was D)
+ * \param[in] x         Column index (0–based); 0xFF means the special
+ *                      off-screen cursor position. (was A)
+ * \param[in] character ASCII character to draw. (was D)
  */
 static void plot_mini_font_cursor_on(chqstate_t *state,
                                      int          x,
@@ -6060,13 +6088,28 @@ static void plot_mini_font_cursor_on(chqstate_t *state,
 }
 
 /**
- * $9AF4: Plot a character
+ * $9AF4: Plot one mini-font glyph to the chatter message line [Conv: HQ]
+ *
+ * Computes the screen column byte address and right-shift amount from x,
+ * converts the ASCII character to a glyph ID, looks up the 6-row glyph
+ * bitmap in minifont[], ORs in the extra bitmap bytes (used by the cursor
+ * underline), right-shifts the combined 16-bit word to align it to the pixel
+ * column, masks the left screen byte to preserve adjacent pixels, and writes
+ * two bytes per row for MFHEIGHT (6) rows.
  *
  * \param[in] state    Pointer to game state.
- * \param[in] x        X position. (was A)
- * \param[in] ascii    Character to draw. (was D)
- * \param[in] extrabm1 Additional bitmap data to draw. (was B)
- * \param[in] extrabm2 Additional bitmap data to draw. (was C)
+ * \param[in] x        Column slot (0-based); 0xFF selects the off-screen
+ *                     cursor slot. (was A)
+ * \param[in] ascii    ASCII character to draw. (was D)
+ * \param[in] extrabm1 Extra bits ORed into the left glyph byte (cursor
+ *                     underline pattern or 0). (was B, self-modifies $9B64)
+ * \param[in] extrabm2 Extra bits placed in the right glyph byte (cursor
+ *                     underline MSB or 0). (was C, self-modifies $9B61)
+ *
+ * Conv: Z80 self-modifies three operands ($9B61, $9B64, $9B89) and uses a
+ * jump-table cascade (SRL B; RR C repeated) for the pixel shift; C uses
+ * local variables and a single right-shift of a 16-bit composite word.
+ * Conv: Row counter banked to A' in Z80 (EX AF,AF'); C uses a plain local.
  */
 static void pmf_go(chqstate_t *state,
                    int         x,
@@ -6074,25 +6117,25 @@ static void pmf_go(chqstate_t *state,
                    int         extrabm1,
                    int         extrabm2)
 {
-  int       carry = 0;
+  int       carry;    /* carry from SRL/RR shift operations (carry) */
+  int       extra2;   /* extra bits for right (low) glyph byte; self-modifies $9B61 (was C) */
+  int       extra1;   /* extra bits ORed into left (high) glyph byte; self-modifies $9B64 (was B) */
+  int       mask;     /* left-column pixel mask preserving adjacent bits; self-modifies $9B89 (was A) */
+  int       rotate;   /* right-shift count for pixel column alignment; self-modifies $9B67 (was A) */
+  int       A;        /* scaled x position, reduced to find column and shift (was A) */
+  int       ascii2;   /* copy of ascii used for character classification (was A) */
+  int       row;      /* row countdown, MFHEIGHT down to 1 (was A, banked to A') */
+  int       gid;      /* glyph ID for punctuation lookup (was C) */
+  int       sgid;     /* ASCII value of the glyph, for font table indexing (was A) */
+  u16       screen;   /* ZX Spectrum screen address: D=high byte, E=column offset (was DE) */
+  const u8 *fontdata; /* pointer to current glyph row in minifont[] (was DE after EX DE,HL) */
+  u16       HLscreen; /* working screen address advanced one scanline per row (was HL) */
+  u8        bm2;      /* right (low) bitmap byte after shift (was C) */
+  u8        bm1;      /* left (high) bitmap byte: font byte OR'd with extra1, then shifted (was B) */
+  unsigned  bm;       /* combined 16-bit bitmap word before split into bm1/bm2 (Conv: no Z80 reg) */
+  u8       *screen2;  /* pointer into ZX Spectrum pixel buffer derived from HLscreen (Conv: no Z80 reg) */
 
-  int       extra2;   /* was self modified $9B61 - right extra bitmap */
-  int       extra1;   /* was self modified $9B64 - left extra bitmap */
-  int       mask;     /* was self modified $9B89 */
-  int       rotate;   /* was self modified $96B7 */
-
-  int       A;        /* was A */
-  int       ascii2;   /* was A */
-  int       row;      /* was A */
-  int       gid;      /* was C */
-  int       sgid;     /* was A */
-  u16       screen;   /* was DE */
-  const u8 *fontdata; /* was DE */
-  u16       HLscreen; /* was HL */
-  u8        bm2;      /* was C */
-  u8        bm1;      /* was B */
-  unsigned  bm;
-  u8       *screen2;
+  carry = 0;
 
 #define MFWIDTH  (5)
 #define MFHEIGHT (6)
