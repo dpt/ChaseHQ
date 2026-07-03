@@ -10,13 +10,6 @@ Generated from `grep '^ \* \$' ChaseHQ.c | grep -v '\[Conv: HQ\]'`.
 |---------|------------|-------------|
 | `$5C00` | `end_screen` | End screen |
 | `$865A` | `draw_pregame` | Draw pregame |
-| `$8A57` | `handle_perp_caught` | Handle perp caught |
-| `$8C35` | `hpc_set_perp_speed` | HPC set perp speed |
-| `$8C3A` | `fully_smashed` | Fully smashed |
-| `$8D8F` | `transition` | Transition |
-| `$8DD8` | `transition_fade_chunk` | Overwrite odd/even UDG rows of the back buffer with a single byte |
-| `$8DF9` | `setup_transition` | Setup transition |
-| `$8E42` | `draw_overlay_messages` | Progressively draw overlay messages to the back buffer |
 | `$8F5F` | `draw_scene_objects` | Draw everything else |
 | `$9052` | `draw_overhead` | Draw overhead objects |
 | `$916C` | `draw_stretchy_object_left` | Draw stretchy object left |

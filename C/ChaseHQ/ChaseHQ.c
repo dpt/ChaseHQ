@@ -2751,40 +2751,75 @@ static void sfx_bipbow(chqstate_t *state, int param1, int param2)
 }
 
 /**
- * $8A57: Handle perp caught
+ * $8A57: Drive the perp-caught celebration sequence each frame [Conv: HQ]
  *
- * Called from main loop.
+ * Runs a multi-phase state machine, advancing one phase at a time across
+ * successive frames. Returns non-zero only at phase 6, signalling main_loop
+ * to skip the rest of the frame and proceed to the next stage.
+ *
+ * Phase 0 (NONE)      — not in the catch sequence; return 0 immediately.
+ * Phase 1 (ALIGNING)  — steers the perp car to x=35 and approaches the hero.
+ *                        Once close enough both cars stop and phase advances to 2.
+ * Phase 2 (STOPPING)  — moves hero car upward (car_y += 4) and scrolls
+ *                        road_pos toward ROAD_126; also increments fast_counter
+ *                        to keep the road scrolling. Advances to phase 3 once
+ *                        car_y reaches 16.
+ * Phase 3 (STOPPED)   — counts down 4 frames then triggers the arrest overlay
+ *                        and advances to phase 4.
+ * Phase 4 (SCORE)     — computes the stage-clear bonus (×100,000, or ×10,000
+ *                        on retry) and time-remaining bonus, formats them into
+ *                        score_messages[] and shows the score overlay.
+ * Phase 5 (FADING)    — advances phase to 6 and starts a forward fade.
+ * Phase 6 (ADVANCING) — silences audio, increments wanted_stage_number and
+ *                        returns 1 so main_loop skips to the next stage.
+ *
+ * Conv: At phase 6, the Z80 uses `POP HL; JP $8401` to discard the return
+ *   address and jump directly into main_loop, bypassing the rest of the frame.
+ *   C returns 1 and the caller skips the loop body instead.
+ * Conv: At the phase 5/6 boundary ($8A69) the Z80 banks the remaining phase
+ *   value in A' via EX AF,AF' so that A can test transition_control without
+ *   losing A. C uses explicit conditionals without banking.
+ * Conv: EX AF,AF' pairs throughout the score phase bank ASCII digits via A';
+ *   C uses Adash to hold the banked value.
+ * Conv: The Z80 at $8B3D has a known bug (credit: Russell Marks): EX AF,AF'
+ *   before LD B,A causes B to receive the wrong (pre-exchange) value, so the
+ *   time-bonus increment loop runs zero times for any non-zero low digit.
+ *   C applies the fix: Biterations is assigned from A (the low digit) directly,
+ *   before it could be clobbered.
  *
  * \param[in] state Pointer to game state.
- * \return Non-zero on success.
+ * \return 1 when phase 6 is reached (advance to next stage); 0 otherwise.
  */
 static int handle_perp_caught(chqstate_t *state)
 {
-  int       carry = 0;
-  int       zero  = 0;
-  int       phase;       /* was A */
-  int       car_y;       /* was A */
-  int       fastcounter; /* was A */
-  u8        A;
-  int       Ainput;
-  int       H;
-  int       L;
-  u8        D;
-  int       C = 0; // tmp fix
-  int       Cinput;
-  int       Biterations;
-  int       Bdelta;
-  int       Adash;
-  u8       *DE;
-  int       DEspeed;
-  u8       *HLscore;
-  u8       *HLphc;
-  int       Aperpdistance;
-  int       HLspeed;
-  int       HLspeedpushed;
-  int       HLroadpos;
-  const u8 *HLmessages;
-  u8        Cflag;
+  int       carry;          /* carry flag from SBC/RLC operations (carry) */
+  int       zero;           /* zero flag from SBC operations (zero) */
+  int       phase;          /* perp_caught_phase value read at entry (was A) */
+  int       car_y;          /* hero car y position advancing during phase 2 (was A) */
+  int       fastcounter;    /* fast_counter incremented during phase 2 (was A) */
+  int       HLroadpos;      /* road_pos adjusted in phases 2 and 1 (was HL) */
+  u8        A;              /* general accumulator across phase 3 and score phases (was A) */
+  const u8 *HLmessages;     /* pointer to the stage arrest message list (was HL) */
+  int       H;              /* high ASCII digit for the stage clear bonus (was H) */
+  u8        D;              /* wanted_stage_number, rotated for score increment (was D) */
+  int       L;              /* low ASCII digit for the stage clear bonus (was L) */
+  int       C;              /* (phase 4) time BCD copy; (phase 1) perp x temp (was C) */
+  int       Adash;          /* ASCII digit banked via EX AF,AF' in Z80 (was A') */
+  int       Biterations;    /* score increment loop counter (was B) */
+  u8        Cflag;          /* non-zero once a non-space score digit has been seen (was C) */
+  u8       *DE;             /* pointer walking score_bcd from the high end (was DE) */
+  u8       *HLscore;        /* pointer walking the score message buffer (was HL) */
+  int       Bdelta;         /* perp horizontal position step: +5 or −5 (was B) */
+  int       Ainput;         /* hero input flags before moving into Cinput (was A) */
+  int       Cinput;         /* user input flags computed for the hero car (was C) */
+  u8       *HLphc;          /* pointer to session.perp_halt_counter (was HL) */
+  int       DEspeed;        /* perp target speed passed to hpc_set_perp_speed (was DE) */
+  int       Aperpdistance;  /* perp's current distance from the hero (was A) */
+  int       HLspeed;        /* current speed in comparisons (was HL) */
+  int       HLspeedpushed;  /* hero speed saved across a PUSH/POP pair (was HL) */
+
+  carry = 0;
+  zero  = 0;
 
   phase = state->perp_caught_phase;
   switch (phase) {
@@ -3080,10 +3115,17 @@ set_perp_speed:
 }
 
 /**
- * $8C35: HPC set perp speed
+ * $8C35: Set the perp car's scripted drive speed [Conv: HQ]
+ *
+ * Writes the given speed to hazards[0].speed so that the perp car
+ * follows its scripted velocity during the pull-over sequence.
+ *
+ * The Z80 function is labelled hpc_set_perp_pos_or_accel in the skool
+ * because the role of the written field was unclear during disassembly;
+ * the C port maps it to the speed field of hazards[0].
  *
  * \param[in] state Pointer to game state.
- * \param[in] speed Speed value. (was DE)
+ * \param[in] speed Scripted drive speed to assign. (was DE)
  */
 static void hpc_set_perp_speed(chqstate_t *state, int speed)
 {
@@ -3091,7 +3133,13 @@ static void hpc_set_perp_speed(chqstate_t *state, int speed)
 }
 
 /**
- * $8C3A: Fully smashed
+ * $8C3A: Initiate the pull-over sequence after the perp is fully smashed [Conv: HQ]
+ *
+ * Called once the player's smash_counter reaches its maximum, signalling that
+ * the perp has been disabled. Starts the perp car alignment phase, raises the
+ * stop hand, suppresses player input (only pause and quit are allowed), shows
+ * the "OK! PULL OVER CREEP!" overlay and sets the perp to its post-arrest
+ * scripted drive speed.
  *
  * \param[in] state Pointer to game state.
  */
@@ -3106,19 +3154,29 @@ static void fully_smashed(chqstate_t *state)
 }
 
 /**
- * $8D8F: Transition
+ * $8D8F: Drive the scene transition or overlay effect each frame [Conv: HQ]
  *
- * Called from main loop.
+ * Dispatches on transition_control to perform the per-frame transition work.
+ * Non-FADE modes delegate immediately to draw_mugshots, draw_overlay_messages
+ * or fill_attributes. FADE mode draws eight pairs of back-buffer stripes per
+ * frame by ORing a fade mask into the pixels, stepping through the mask table
+ * by transition_frame_stride each frame until transition_nframes reaches zero.
+ *
+ * The Z80 uses self-modifying instructions to track state: the SM field at
+ * $8DA1 holds the remaining frame count, the word at $8DBB holds the current
+ * mask pointer and the word at $8DB1 holds the per-frame stride. In C these
+ * three values are stored in state->transition_nframes, state->transition_mask
+ * and state->transition_frame_stride respectively.
  *
  * \param[in] state Pointer to game state.
  */
 static void transition(chqstate_t *state)
 {
-  int       iterations;  /* was B' */
-  u16       backbuf;     /* was HL */
-  const u8 *maskptr;     /* was HL' */
-  u16       backbufcopy; /* was D */
-  int       mask;        /* was E */
+  int       iterations;  /* shadow iteration count, 8 chunks (was B') */
+  u16       backbuf;     /* back-buffer high byte packed in u16; L forced per call (was HL) */
+  const u8 *maskptr;     /* pointer walking the transition mask table (was HL') */
+  u16       backbufcopy; /* saved backbuf restored after the odd-chunk call (was D) */
+  int       mask;        /* fade mask byte ORed into each back-buffer pixel (was E) */
 
   switch (state->transition_control) {
   case TRANSITIONCONTROL_STOP:
@@ -3141,40 +3199,45 @@ static void transition(chqstate_t *state)
   if (--state->transition_nframes == 0)
     state->transition_control = TRANSITIONCONTROL_STOP;
   else
-    // Advance before use - initial mask points one earlier/later
+    // Advance before use — initial mask points one entry before the first frame
     state->transition_mask += state->transition_frame_stride;
 
-  backbuf  = 0xFF00; /* was H=$FF */
-  maskptr = state->transition_mask;
+  backbuf    = 0xFF00; /* $8DB7: H=$FF — top-of-back-buffer high byte */
+  maskptr    = state->transition_mask;
   iterations = 8;
   do {
-    mask = *maskptr;
-    backbufcopy = backbuf; // Conv: Original just saved H in D
-    backbuf = (backbuf & ~0xFF) | 0xFE;
+    mask         = *maskptr;
+    backbufcopy  = backbuf; // Conv: Z80 saved only H in D; C saves the full u16
+    backbuf      = (backbuf & ~0xFF) | 0xFE;
     transition_fade_chunk(state, mask, ADDRTOBACKBUF(backbuf));
     backbuf -= 8 << 8;
     transition_fade_chunk(state, mask, ADDRTOBACKBUF(backbuf));
-    backbuf = backbufcopy - 256; // restore
+    backbuf = backbufcopy - 256; // restore H, step down one row
     maskptr++;
   } while (--iterations > 0);
 }
 
 /**
- * $8DD8: Overwrite odd/even UDG rows of the back buffer with a single byte
+ * $8DD8: OR a fade mask into one 8-row stripe of the back buffer [Conv: HQ]
+ *
+ * Writes mask into 30 bytes per row (6 iterations of 5 ORs each) across
+ * 8 rows, stepping backward through the buffer. The two-byte skip at the
+ * end of each row skips the two bytes that fall outside the playfield width.
+ * Called twice per chunk by transition — once for the upper stripe and once
+ * for the lower stripe 8 rows higher.
  *
  * \param[in] state   Pointer to game state.
- * \param[in] mask    Mask. (was E)
- * \param[in] backbuf Back buffer address. (was HL)
+ * \param[in] mask    Fade mask byte ORed into each pixel. (was E)
+ * \param[in] backbuf Pointer to the last byte of the first row to process. (was HL)
  */
 static void transition_fade_chunk(chqstate_t *state, int mask, u8 *backbuf)
 {
-  int rows;       /* was C */
-  int iterations; /* was B */
+  int rows;       /* outer row counter, 8 rows per stripe (was C) */
+  int iterations; /* inner column iteration count, 6 × 5 = 30 bytes per row (was B) */
 
-  rows = 8; // rows
+  rows = 8;
   do {
-    iterations =
-      6; // 6 iterations (of 5 ops each in the loop below) = 30 bytes written (~ a scanline)
+    iterations = 6; /* 6 iterations × 5 ORs = 30 bytes written per row */
     do {
       *backbuf-- |= mask;
       *backbuf-- |= mask;
@@ -3182,36 +3245,50 @@ static void transition_fade_chunk(chqstate_t *state, int mask, u8 *backbuf)
       *backbuf-- |= mask;
       *backbuf-- |= mask;
     } while (--iterations > 0);
-    backbuf -= 2;
+    backbuf -= 2; /* skip the 2 bytes beyond the playfield edge */
   } while (--rows > 0);
 }
 
 /**
- * $8DF9: Setup transition
+ * $8DF9: Set up a new scene transition [Conv: HQ]
  *
- * Called from main loop.
+ * Picks a random entry from the forward or reverse half of the transition
+ * table, then stores the frame count, initial mask pointer and per-frame
+ * stride into state so that transition() can drive the effect each frame.
+ * A positive stride (TRANSITIONSTRIDE_FORWARD = 8) selects the first four
+ * table entries; a negative stride (TRANSITIONSTRIDE_REVERSE = -8) selects
+ * the last four.
+ *
+ * The Z80 stores these values via self-modification: nframes into the
+ * operand of `LD A,n` at $8DA1, the mask pointer into the word at $8DBB
+ * and the stride into the word at $8DB1. C replaces those SM locations with
+ * state->transition_nframes, state->transition_mask and
+ * state->transition_frame_stride.
+ *
+ * Conv: Z80 table index is A * 3 into a byte-packed layout; C reads from
+ *   a transition_t struct array directly.
+ * Conv: Z80 widens the stride into BC by setting B = $FF when negative; C
+ *   uses a signed int throughout.
+ * Conv: Points at non-relocated table transitions_e88e rather than $EC00.
  *
  * \param[in] state  Pointer to game state.
- * \param[in] stride Stride of bitmap data, in bytes. (was A)
+ * \param[in] stride Per-frame mask-pointer step: +8 forward, −8 reverse. (was A)
  */
 static void setup_transition(chqstate_t *state, int stride)
 {
-  int                 frame_stride; /* was BC */
-  const transition_t *transitions;  /* was DE */
-  const transition_t *transition;   /* was HL */
+  int                 frame_stride; /* signed per-frame pointer step (was BC) */
+  const transition_t *transitions;  /* base of forward or reverse table half (was DE) */
+  const transition_t *transition;   /* randomly chosen entry (was HL) */
 
   assert(stride == 8 || stride == -8);
 
   frame_stride = stride;
-  // Conv: Points at non-relocated table.
-  transitions = &transitions_e88e[0];
-  if (frame_stride < 0) // reversed
-    // Conv: Removed widening op (already in frame_stride)
-    transitions = &transitions_e88e[4]; // second half of table
+  transitions  = &transitions_e88e[0]; /* first half: forward */
+  if (frame_stride < 0)
+    transitions = &transitions_e88e[4]; /* second half: reverse */
 
   state->transition_frame_stride = frame_stride;
 
-  // Pick a random entry in the table
   transition = &transitions[rng(state) & 3];
 
   state->transition_nframes = transition->nframes;
@@ -3250,26 +3327,29 @@ static void fill_attributes(chqstate_t *state)
 }
 
 /**
- * $8E42: Progresively draw overlay messages to the back buffer
+ * $8E42: Progressively reveal overlay messages into the back buffer [Conv: HQ]
  *
- * Overlay messages are, for example, the messages shown when the perp has
- * been arrested.
+ * Drives the frame-by-frame reveal of a sequence of overlay message blocks
+ * (e.g. the arrest bonus screen). Each call draws messages [0..count-1] from
+ * the current overlay_message list, then decrements overlay_delay. When the
+ * delay reaches zero a new delay is read from the message stream and
+ * overlay_count is incremented, causing one additional message to appear on
+ * the next call. This continues until a DRAWOVERLAY_STOP sentinel is reached,
+ * at which point transition_control is updated from the byte preceding the
+ * sentinel to trigger the next state.
  *
- * This function draws the overlay_message currently set in state to the back
- * buffer. The initial count is 1 so that the messages are made to
- * progressively appear. Once all messages are drawn the delay value is
- * checked and decremented. While the delay is non-zero the routine returns.
- * When the delay is zero a new delay is set and the number of messages
- * increased. The first message pointed to is the second byte of the message
- * (delay).
+ * The Z80 uses self-modification to track state: HL at $8E45 holds the base
+ * message pointer, B at $8E46 holds the current count and the delay is the
+ * operand at $8E4A. In C these are stored in state->overlay_message,
+ * state->overlay_count and state->overlay_delay respectively.
  *
  * \param[in] state Pointer to game state.
  */
 static void draw_overlay_messages(chqstate_t *state)
 {
-  const u8 *message; /* was HL */
-  int       count;   /* was B */
-  int       style;   /* was A */
+  const u8 *message; /* base pointer to the overlay message stream (was HL) */
+  int       count;   /* number of messages to draw this call (was B) */
+  int       style;   /* style byte of the current message block (was A) */
 
   message = state->overlay_message;
   count   = state->overlay_count;
