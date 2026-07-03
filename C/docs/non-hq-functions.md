@@ -9,13 +9,7 @@ Generated from `grep '^ \* \$' ChaseHQ.c | grep -v '\[Conv: HQ\]'`.
 | Address | C function | Description |
 |---------|------------|-------------|
 | `$5C00` | `end_screen` | End screen |
-| `$85E4` | `reveal_perp_car` | Reveal perp car |
-| `$860F` | `animate_meters` | Animate meters |
-| `$8646` | `am_set_attrs` | AM set attrs |
 | `$865A` | `draw_pregame` | Draw pregame |
-| `$873C` | `escape_scene` | Escape scene |
-| `$87DC` | `set_up_stage` | Set up stage |
-| `$8860` | `set_up_stage_reset_lights` | Set up stage reset lights |
 | `$8876` | `check_user_input` | Check user input |
 | `$88A9` | `check_user_input_quit_key` | Check user input quit key |
 | `$8903` | `drive_sfx` | Drive SFX |

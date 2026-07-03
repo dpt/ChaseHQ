@@ -1938,11 +1938,19 @@ exit:
 }
 
 /**
- * $85E4: Reveal perp car
+ * $85E4: Reveal the perpetrator's car progressively from the bottom up [Conv: HQ]
  *
- * Called from main loop.
+ * Each call increments the reveal height counter by 1, capping at 50.
+ * The perp's car sprite is then plotted using that height as a clip
+ * limit (so fewer rows show until the counter reaches the sprite's full
+ * height). On stage 5 the car is suppressed entirely.
  *
  * \param[in] state Pointer to game state.
+ *
+ * Conv: Z80 stores the reveal height in a self-modifying LD A,n operand
+ *   at $85EB; C uses state->pregame_car_revealed_height. Z80 banks
+ *   parameters via EXX before calling plot_sprite and uses JP (tail
+ *   call); C passes parameters directly and calls plot_sprite.
  */
 static void reveal_perp_car(chqstate_t *state)
 {
@@ -1979,16 +1987,22 @@ static void reveal_perp_car(chqstate_t *state)
 }
 
 /**
- * $860F: Animate meters
+ * $860F: Animate the two signal-strength meters on the pregame screen [Conv: HQ]
  *
- * Called from main loop.
+ * Calls rng twice — once per meter — and uses the sign of the result to
+ * nudge the meter level up (positive) or down (negative), clamping to
+ * 0–7. Each level is rendered by am_set_attrs as a row of up to seven
+ * coloured attribute cells (green = signal, red = noise).
  *
  * \param[in] state Pointer to game state.
+ *
+ * Conv: Z80 stores each meter level in a self-modifying LD A,n operand
+ *   ($8614 and $8631); C uses state->meter_1_level and meter_2_level.
  */
 static void animate_meters(chqstate_t *state)
 {
-  int random; /* was A */
-  int level;  /* was A */
+  int random; /* signed RNG result; sign determines direction (was A) */
+  int level;  /* current meter level, 0–7 (was A) */
 
   random = (s8) rng(state);
   level  = state->meter_1_level;
@@ -2019,14 +2033,22 @@ set_level2:
 }
 
 /**
- * $8646: AM set attrs
+ * $8646: Fill a 7-cell attribute bar with green then red segments [Conv: HQ]
  *
- * \param[in] counter Count. (was A)
- * \param[in] attrs   Attribute address. (was HL)
+ * Writes `counter` green (bright-black-on-green) attribute bytes then
+ * `7 − counter` red (bright-black-on-red) bytes into consecutive screen
+ * attribute cells. Used to draw each signal-strength meter bar on the
+ * pregame screen.
+ *
+ * \param[in] counter Number of green (lit) segments, 0–7. (was A)
+ * \param[in] attrs   Pointer to the first attribute cell of the bar. (was HL)
+ *
+ * Conv: Z80 computes 7−counter via CPL+ADD A,8 (two's-complement trick
+ *   on the low three bits); C uses 7-counter directly.
  */
 static void am_set_attrs(int counter, u8 *attrs)
 {
-  int iterations; /* was B */
+  int iterations; /* DJNZ loop counter (was B) */
 
   if (counter) {
     iterations = counter;
@@ -2162,9 +2184,15 @@ dp_repeat_or_plot_tile:
 }
 
 /**
- * $873C: Escape scene
+ * $873C: Run the "game over" escape scene [Conv: HQ]
  *
- * Called from main loop.
+ * Drives the time-limit expiry sequence: silences audio, sets up the
+ * escape scene (Nancy's police car driving away), plays the "game over"
+ * chatter, then loops the road/hazard/object pipeline until the perp
+ * car clears the tunnel and the chatter finishes. At that point three
+ * barriers are activated as the final obstacle.
+ *
+ * Called from main_loop when escape_scene_requested is set.
  *
  * \param[in] state Pointer to game state.
  */
@@ -2223,17 +2251,28 @@ static void escape_scene(chqstate_t *state)
 }
 
 /**
- * $87DC: Set up stage
+ * $87DC: Initialise stage state from a scene data block [Conv: HQ]
  *
- * Called from main loop.
+ * Resets the road buffer, copies the saved game session back into the
+ * active state, clears all hazard slots except slot 0, copies the
+ * supplied scene data into state->scenedata, pre-shifts the backdrop
+ * image, resets the horizon attribute table, disables helicopter and
+ * tunnel draw calls, primes the map reader by cycling it 32 times, then
+ * sets up a reverse transition, clears the playfield, resets the marquee
+ * lights and silences audio.
  *
  * \param[in] state      Pointer to game state.
- * \param[in] scene_data Source bitmap data.
+ * \param[in] scene_data Scene data to load (attract, stage or escape). (was HL)
+ *
+ * Conv: Z80 uses PUSH HL before zeroing the road buffer (to preserve the
+ *   data pointer) and POP HL after; C has no equivalent need. LDIR zero
+ *   fills are replaced with memset. Struct assignment replaces field-by-
+ *   field LDIR copies.
  */
 static void set_up_stage(chqstate_t        *state,
                          const scenedata_t *scene_data)
 {
-  int iterations; /* was B */
+  int iterations; /* map reader prime loop count (was B) */
 
   state->roadbufptr = &state->road_buffer[0];
   memset(&state->road_buffer[0], 0, 256);
@@ -2295,14 +2334,20 @@ static void set_up_stage(chqstate_t        *state,
 }
 
 /**
- * $8860: Set up stage reset lights
+ * $8860: Clear the BRIGHT bit from a marquee light attribute block [Conv: HQ]
  *
- * \param[in] attrptr Screen attribute address. (was HL)
+ * Walks a MARQUEELIGHT_HEIGHT × MARQUEELIGHT_WIDTH block of screen
+ * attribute bytes, masking out the ATTR_BRIGHT bit in each cell to
+ * return the lights to their dim state. Called twice by set_up_stage
+ * (once for each side light).
+ *
+ * \param[in,out] attrptr Pointer to the top-left attribute cell of the
+ *                        light block. (was HL)
  */
 static void set_up_stage_reset_lights(u8 *attrptr)
 {
-  int rows; /* was C */
-  int cols; /* was B */
+  int rows; /* row counter, MARQUEELIGHT_HEIGHT down to 1 (was C) */
+  int cols; /* column counter, MARQUEELIGHT_WIDTH down to 1 (was B) */
 
   rows = MARQUEELIGHT_HEIGHT;
   do {
