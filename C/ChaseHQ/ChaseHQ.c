@@ -5775,15 +5775,14 @@ static int bonus_digit(int digit, int *zeroflag, char **poutput)
 {
   digit &= 0x0F;
 
-  if (digit != 0)
-    goto non_zero;
-  else if (*zeroflag != 0)
-    goto store;
-  else
+  if (digit == 0) {
+    if (*zeroflag != 0)
+      goto store;
+
     // Conv: Was a POP+JP to cause exit.
     return -1; // Non-zero-to-zero transition
+  }
 
-non_zero:
   *zeroflag = 0; // Clear flag: non-zero digit seen
 store:
   (*poutput)--;
