@@ -198,11 +198,11 @@ struct chqstate {
   u8        overlay_delay;
 
   // $8F82 (SM) in draw_everything_else
-  u8        dee_tunnel_1;
+  u8        dee_draw_tunnel_1;
   // $8FA4 (SM) in draw_everything_else
-  u8        dee_helicopter;
+  u8        dee_draw_helicopter;
   // $8FA7 (SM) in draw_everything_else
-  u8        dee_tunnel_2;
+  u8        dee_draw_tunnel_2;
 
   // $90F1 (SM) in draw_overhead
   u8        do_vert_sub;

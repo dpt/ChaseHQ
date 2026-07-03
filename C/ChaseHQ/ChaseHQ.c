@@ -27,46 +27,46 @@
  * it's still running on a ZX Spectrum, including a Spectrum screen memory
  * layout and IO world. This avoids a full rewrite of the original code and
  * means that we leave some of the Z80-specific micro-optimisations in place.
- * This allows the code to remain a useful basis for comparison and lowers
- * the risk of translation errors. Although it's very tempting to rewrite all
- * the code to be fully idiomatic C the greater the difference from the
- * original disassembly the harder it gets to refer back to it and spot our
- * mistakes. The goal after all is to use this C conversion to expose
- * problem points and feed those back into the disassembly's description.
+ * This allows the code to remain a useful basis for comparison and lowers the
+ * risk of translation errors. Although it's very tempting to rewrite all the
+ * code to be fully idiomatic C the greater the difference from the original
+ * disassembly the harder it gets to refer back to it and spot our mistakes.
+ * The goal after all is to use this C conversion to expose problem points and
+ * feed those back into the disassembly's description.
  *
  * Ideally the ordering of the code will be preserved such that the original
- * game code and this reimplementation have broadly the same structure.
- * Some code will unavoidably need to be changed however, such as the stack
- * trick where PUSH and POP are used to accelerate loads and stores.
+ * game code and this reimplementation have broadly the same structure.  Some
+ * code will unavoidably need to be changed however, such as the stack trick
+ * where PUSH is used to accelerate bulk stores.
  *
  * My original intention was to retain the level data (called "stage" data in
  * this conversion to match the original game) whole in the converted game,
  * including any embedded addresses. I wanted to 'page in' levels by copying
- * the original game data into the game's state structure. This would also
- * mean that any new or adjusted levels produced by means of this conversion
- * would be compatible with the original game. However, it turned out that
- * allowing binary compatibility would have meant duplicating some core
- * functions where the data structures exist in both the engine part and the
- * stage data. So I gave up on that. Having the stage data in C does make it
- * more tweakable, which is good. Long term it would be nice if the stages -
- * at least the map portion - were expressible with a concise text format.
+ * the original game data into the game's state structure. This would also mean
+ * that any new or adjusted levels produced by means of this conversion would
+ * be compatible with the original game. However, it turned out that allowing
+ * binary compatibility would have meant duplicating some core functions where
+ * the data structures exist in both the engine part and the stage data. So I
+ * gave up on that. Having the stage data in C does make it more tweakable,
+ * which is good. Long term it would be nice if the stages - at least the map
+ * portion - were expressible with a concise text format.
  *
  * Pointers present a problem. The original game data uses 16-bit pointers
- * sometimes embedded in byte data but the converted code could be using 32-
- * or 64-bit ones. Instead of embedding huge pointers we'll either use byte
- * tokens or leave the original values in place and indrect them through new
- * tables or switch lookups. For example see the "chatter" code: the code
- * that prints the messages on-screen as the game runs. It previously
- * embedded addresses inline in chatter structures. These are replaced with
- * single bytes that reference a new tables of pointers.
+ * sometimes embedded in byte data but the converted code could be using 32- or
+ * 64-bit ones. Instead of embedding huge pointers we'll either use byte tokens
+ * or leave the original values in place and indrect them through new tables or
+ * switch lookups. For example see the "chatter" code: the code that prints the
+ * messages on-screen as the game runs. It previously embedded addresses inline
+ * in chatter structures. These are replaced with single bytes that reference a
+ * new tables of pointers.
  *
- * Like with TGE a game state structure is added to encapsulate the complete
- * game state. It is passed to every state-accessing function in the game.
- * Globals are banned.
+ * As with my conversion of The Great Escape a state structure is added to
+ * encapsulate the entire current game state. It is passed to every
+ * state-accessing function in the game.  Globals are banned.
  *
- * Screen handling in the original game assumes the alignment of the screen
- * and the back buffer. That can't be guaranteed in a portable conversion. We
- * can address this by converting pointers to offsets when we need to perform
+ * Screen handling in the original game assumes the alignment of the screen and
+ * the back buffer. That can't be guaranteed in a portable conversion. We can
+ * address this by converting pointers to offsets when we need to perform
  * address arithmetic.
  *
  * (SM) means self modified. There is a _lot_ of self-modified code in the
@@ -77,9 +77,8 @@
  */
 
 /* TODOs
- * - Copy whole messages that get modified into the state structure.
  * - Decide how to drive the main loop(s).
- * - Promote variables to int from u8/s8/u16/s16 where possible,
+ * - Promote variables to int from u8/s8/u16/s16 where possible.
  */
 
 #include <stdio.h>
@@ -2140,9 +2139,9 @@ static void set_up_stage(chqstate_t        *state,
   state->horizon_attr[1] = state->horizon_attr[2] = 0;
 
   // Disable the helicopter and tunnel drawing calls in draw_scene_objects
-  state->dee_tunnel_1 = 0; // draw tunnel call
-  state->dee_helicopter = 0; // draw heli call
-  state->dee_tunnel_2 = 0; // draw tunnel call
+  state->dee_draw_tunnel_1 = 0;
+  state->dee_draw_helicopter = 0;
+  state->dee_draw_tunnel_2 = 0;
 
   state->rm_hazard_byte = 0; // clear current hazard command
   state->mhc_y_offset = 0; // reset car jump counter
@@ -2583,9 +2582,6 @@ phase2:
   HLroadpos = state->scenedata.road_pos + 12;
   if (HLroadpos >= ROAD_126)
     HLroadpos = ROAD_126;
-#ifndef NDEBUG
-  if (state->scenedata.road_pos != (u16) HLroadpos) printf("road_pos: %04X -> %04X [handle_perp_caught]\n", state->scenedata.road_pos, (u16) HLroadpos);
-#endif
   state->scenedata.road_pos = HLroadpos;
 
   fastcounter = state->fast_counter + 32;
@@ -3316,7 +3312,7 @@ static void draw_scene_objects(chqstate_t *state)
 
   IYheight_table = &state->height_table[21];
   assert(IYheight_table == &state->height_table[21]);
-  if (state->dee_tunnel_1)
+  if (state->dee_draw_tunnel_1)
     draw_tunnel(state, IYheight_table);
   IYheight_table--;
   assert(IYheight_table == &state->height_table[20]);
@@ -3342,10 +3338,10 @@ static void draw_scene_objects(chqstate_t *state)
 
     dust_stones_stuff(state, Biterations, IYheight_table);
 
-    if (state->dee_helicopter)
+    if (state->dee_draw_helicopter)
       draw_helicopter(state, Biterations, IYheight_table);
 
-    if (state->dee_tunnel_2)
+    if (state->dee_draw_tunnel_2)
       draw_tunnel(state, IYheight_table);
 
     Aobj = *HLroadbuf; // fetch right side object from road buffer
@@ -3377,7 +3373,7 @@ continue_after_left_hand_done:
   assert(IXtable_ea00 ==
          &state->xpos_road_centre[128]); // one-past-end after 20*2 advances from [88]
 
-  if (state->dee_helicopter)
+  if (state->dee_draw_helicopter)
     return;
 
   Afloating_arrow = state->floating_arrow;
@@ -6642,9 +6638,6 @@ static void check_scenery_collisions(chqstate_t *state)
   // Note that is where an object *could be*. There's not necessarily an
   // object always there.
   HLxpos = state->xpos_road_centre[127];
-#ifndef NDEBUG
-  if (HLxpos < 0) printf("[csc] xpos[127]=%d negative (left-side underflow?)\n", HLxpos);
-#endif
   if ((HLxpos >> 8) == 0 && HLxpos >= 64) { // 64..255
     if (HLxpos < 106)
       goto check_right_hand; // 64..105 => not close enough to be off-road
@@ -6670,9 +6663,6 @@ static void check_scenery_collisions(chqstate_t *state)
 check_right_hand:
   // "pos" here is approx 75..368 for (centred .. off-screen on the right).
   HLxpos = state->xpos_road_centre[126];
-#ifndef NDEBUG
-  if (HLxpos < 0) printf("[csc] xpos[126]=%d out of useful range [0,+)\n", HLxpos);
-#endif
   Aoff_road = 0;
   if ((HLxpos >> 8) == 0 && HLxpos < 190) { // 0..189
     if (HLxpos >= 142) // 142..189 => on-road /* $A3E8 LD BC,$8E=142; $A3EE JR NC */
@@ -6686,9 +6676,6 @@ check_right_hand:
 
 store_off_road:
   // 0/1/2 => on-road/one wheel off-road/both wheels off-road
-#ifndef NDEBUG
-  if (Aoff_road) printf("[csc] off_road=%d xpos[127]=%d xpos[126]=%d\n", Aoff_road, state->xpos_road_centre[127], state->xpos_road_centre[126]);
-#endif
   state->off_road = Aoff_road;
 
   Ccrash_spin = 0;
@@ -6755,15 +6742,7 @@ store_crash_spin:
 
     // Check for collisions with scenery (right hand side).
     HLxpos = state->xpos_road_centre[126];
-#ifndef NDEBUG
-    if (HLxpos < 0) printf("[csc] RIGHT obj: xpos[126]=%d negative (obj=%d bounds=[%d,%d))\n", HLxpos, Aobj, DEdash_min, BCdash_max);
-#endif
     if (HLxpos < BCdash_max && HLxpos > DEdash_min) { /* > not >=: SBC carry-in=1 at $A478 */
-#ifndef NDEBUG
-      printf("[csc] RIGHT obj hit: road_pos=%d xpos[126]=%d xpos[127]=%d obj=%d raw=[%d|%d] bounds=[%d,%d) speed_cap=%d\n",
-             state->scenedata.road_pos, HLxpos, state->xpos_road_centre[127],
-             Aobj, raw_byte1, raw_byte2, DEdash_min, BCdash_max, Aspeed_cap);
-#endif
       // EX AF,AF' -- deliberate bank Aspeed_cap
       csc_hit_scenery(state, 0 /* no flip */, Aspeed_cap); /* exit via */
       return;
@@ -6791,15 +6770,7 @@ store_crash_spin:
 
     // Check for collisions with scenery (left hand side).
     HLxpos = state->xpos_road_centre[127];
-#ifndef NDEBUG
-    if (HLxpos < 0) printf("[csc] LEFT obj: xpos[127]=%d negative (obj=%d bounds=[%d,%d))\n", HLxpos, Aobj, BCdash_min, DEdash_max);
-#endif
     if (HLxpos >= BCdash_min && HLxpos < DEdash_max) {
-#ifndef NDEBUG
-      printf("[csc] LEFT obj hit: road_pos=%d xpos[127]=%d xpos[126]=%d obj=%d raw=[%d|%d] bounds=[%d,%d) speed_cap=%d\n",
-             state->scenedata.road_pos, HLxpos, state->xpos_road_centre[126],
-             Aobj, raw_byte1, raw_byte2, BCdash_min, DEdash_max, Aspeed_cap);
-#endif
       // EX AF,AF' -- deliberate bank Aspeed_cap
       csc_hit_scenery(state, 1 /* flip */, Aspeed_cap); /* was FALLTHROUGH */
     }
@@ -6836,9 +6807,6 @@ static void scenery_hit(chqstate_t *state, int Aflip_flag, int Adash_threshold)
   if (state->ahc_crashed_flag)
     return; /* already crashed */
 
-#ifndef NDEBUG
-  if (state->ahc_crashed_flag != 1) printf("ahc_crashed_flag: %d -> 1\n", state->ahc_crashed_flag);
-#endif
   state->ahc_crashed_flag     = 1;
   state->ahc_flip_flag        = Aflip_flag;
   state->ahc_crash_flip_count = Aflip_flag + 1;
@@ -8051,7 +8019,7 @@ hc_set_draw:
   state->mh_heli_centre_y = HL_ab06;
   draw_heli = 1; // true
 hc_exit:
-  state->dee_helicopter = draw_heli;
+  state->dee_draw_helicopter = draw_heli;
   state->helicopter_control = new_heli_ctl;
 }
 
@@ -9282,17 +9250,6 @@ mhc_handle_speed:
 
 mhc_set_cornering:
   state->cornering = Acornering;
-#ifndef NDEBUG
-  if (HLhorizontal_adjust) {
-    printf("road_pos: %04X -> %04X [move_hero_car %+d]\n", state->scenedata.road_pos, (u16)(state->scenedata.road_pos + HLhorizontal_adjust), HLhorizontal_adjust);
-    if (HLhorizontal_adjust > 50 || HLhorizontal_adjust < -50)
-      printf("  [mhc] large delta: horiz_adj=%d curv=%d turn=%d (right=%d left=%d net=%d) crashed=%d speed=%d\n",
-             saved_horiz_adj, BCcount_scaled, DEadjust,
-             saved_Bright_turn, saved_Cleft_turn,
-             saved_Cleft_turn - saved_Bright_turn,
-             Acrashedflag, state->speed);
-  }
-#endif
   state->scenedata.road_pos += HLhorizontal_adjust;
   Dflip_car = 1;
   if (DEadjust < 0) /* $B2F3 JP P: rightward net turn → flip sprite ($B2F7 DEC D) */
@@ -9355,9 +9312,6 @@ static void animate_hero_car(chqstate_t *state)
     Aturn_speed = 2; // fast turning
     if (HLspeed < DEquartered_speed) {
 ahc_speed_less_or_eq:
-#ifndef NDEBUG
-      if (state->ahc_crashed_flag != 0) printf("ahc_crashed_flag: %d -> 0\n", state->ahc_crashed_flag);
-#endif
       state->ahc_crashed_flag = 0;
       Aturn_speed = 1; // normal turning
     } else {
@@ -9384,10 +9338,6 @@ ahc_speed_less_or_eq:
     }
 
     // $B381
-#ifndef NDEBUG
-    if (state->scenedata.road_pos != (u16) HLroad_pos)
-      printf("road_pos: %04X -> %04X [animate_hero_car crash]\n", state->scenedata.road_pos, (u16) HLroad_pos);
-#endif
     state->scenedata.road_pos = HLroad_pos;
 
     // Decrement this counter
@@ -9429,9 +9379,6 @@ ahc_b3b0:
   }
 
 ahc_assign_road_pos_2:
-#ifndef NDEBUG
-  if (state->scenedata.road_pos != (u16) HLroad_pos) printf("road_pos: %04X -> %04X [animate_hero_car clamp]\n", state->scenedata.road_pos, (u16) HLroad_pos);
-#endif
   state->scenedata.road_pos = HLroad_pos;
   if (state->cornering || state->smoke)
     start_sfx(state, EFFECT_SQUEAL, 5); /* priority 5 */
@@ -10661,13 +10608,6 @@ url_B9C5:
       A_curv_diff = -A_curv_diff;
     }
     state->horizontal_adjust = (B_sign_ext << 8) | A_curv_diff;
-#ifndef NDEBUG
-    if (state->horizontal_adjust > 50 || state->horizontal_adjust < -50)
-      printf("  [url] large horiz_adj=%d: old_curv=%d ticks=%d diff=%d dir=%d speed=%d new_curv=%d\n",
-             state->horizontal_adjust, Acurrent_curvature, Bcurvature_ticks,
-             Acurrent_curvature - Bcurvature_ticks, C_curv_dir & 1,
-             state->speed, state->current_curvature);
-#endif
   }
   state->horizon_scroll_sub = state->curvature_ticks = 0;
 }
@@ -10738,10 +10678,6 @@ static void layout_road(chqstate_t *state)
   } while (--Biterations > 0);
   CHECK;
 
-#ifndef NDEBUG
-  // printf("lr: NOT FORKED\n");
-#endif
-
   // $BA0B: No forked road found
   build_curve_table(state, /*forked=*/0);
   CHECK;
@@ -10783,7 +10719,6 @@ lr_calc_single_lane:
   return;
 
 lr_forked_road:
-  printf("lr: FORKED\n");
   state->fork_countdown = Ldistance_to_fork;
   HLheight_at_fork = &state->height_table[Ldistance_to_fork];
   Aiterations = 96;
@@ -10864,9 +10799,6 @@ lr_badf:
     HLroadpos = state->scenedata.road_pos;
     HLroadpos_saved = HLroadpos; /* was PUSH HLroadpos */
     HLroadpos += DEforkdistance;
-#ifndef NDEBUG
-    if (state->scenedata.road_pos != (u16) HLroadpos) printf("road_pos: %04X -> %04X [layout_road fork+]\n", state->scenedata.road_pos, (u16) HLroadpos);
-#endif
     state->scenedata.road_pos = HLroadpos; // adjust road pos for fork rendering
     build_curve_table(state, /*forked=*/1);
   } else {
@@ -10875,17 +10807,11 @@ lr_badf:
     HLroadpos = state->scenedata.road_pos;
     HLroadpos_saved = HLroadpos; /* was PUSH HLroadpos */
     HLroadpos -= DEforkdistance;
-#ifndef NDEBUG
-    if (state->scenedata.road_pos != (u16) HLroadpos) printf("road_pos: %04X -> %04X [layout_road fork-]\n", state->scenedata.road_pos, (u16) HLroadpos);
-#endif
     state->scenedata.road_pos = HLroadpos; // adjust road pos for fork rendering
     build_curve_table(state, /*forked=*/0);
   }
   // $BB07
   HLroadpos = HLroadpos_saved; /* was POP HLroadpos */
-#ifndef NDEBUG
-  if (state->scenedata.road_pos != (u16) HLroadpos) printf("road_pos: %04X -> %04X [layout_road restore]\n", state->scenedata.road_pos, (u16) HLroadpos);
-#endif
   state->scenedata.road_pos =
     HLroadpos; // restore normal road pos after fork rendering
   // Conv: $BB0B POP BC restores PUSH AF value into B = Bdash_fork_iters (DJNZ counter)
@@ -11831,7 +11757,7 @@ static void rm_cycle_buffer_offset(chqstate_t *state, u8 *HLfast_counter)
  * 3. Tunnel already visible (dt_tunnel_visible != 0): skips the scan and
  *    falls straight through to arm the hooks.
  *
- * Arms the draw_tunnel hooks by patching dee_tunnel_1 / dee_tunnel_2 with
+ * Arms the draw_tunnel hooks by patching dee_draw_tunnel_1 / dee_draw_tunnel_2 with
  * Z80_CALL_NN, and writes dt_far_wall_mode = dr_in_tunnel ^ 1.
  *
  * \param[in] state  Pointer to game state.
@@ -11861,8 +11787,8 @@ static void prepare_tunnel(chqstate_t *state)
   if (Ain_tunnel == 0) {
     /* $C0ED-$C0FF: not in tunnel; clear SFX and NOP out the CALL hooks */
     state->tunnel_sfx = 0;
-    state->dee_tunnel_1 = 0; /* $8F82 = NOP */
-    state->dee_tunnel_2 = 0; /* $8FA7 = NOP */
+    state->dee_draw_tunnel_1 = 0; /* $8F82 = NOP */
+    state->dee_draw_tunnel_2 = 0; /* $8FA7 = NOP */
     return;
   }
 
@@ -11917,7 +11843,7 @@ pt_arm_hooks: /* $C144 */
   state->dt_far_wall_mode = Ain_tunnel ^ 1;
 
   /* $C149-$C157: patch $8F82/$8FA7 with Z80_CALL_NN to arm draw_tunnel hooks */
-  state->dee_tunnel_1 = state->dee_tunnel_2 = Z80_CALL_NN;
+  state->dee_draw_tunnel_1 = state->dee_draw_tunnel_2 = Z80_CALL_NN;
 }
 
 /**
@@ -12285,7 +12211,7 @@ static void draw_road_lanes_change(chqstate_t *state,
   u8   SM_C345_bend_offset; /* stored A_curve_step: bend component of animation offset (SM $C345) */
   u8   A_bresen_range;      /* Bresenham range (was A) */
   u8   C_bresen_range;      /* Bresenham range = IYheight[0] - ref_height (was C) */
-  u8   B_HLzone_stride;        /* table pointer stride = A_curve_step * 2 (was B) */
+  u8   B_HLzone_stride;     /* table pointer stride = A_curve_step * 2 (was B) */
   u8   L_left_hand_table_lo; /* low byte of x-position table address (was L) */
   u8  *HL_left_hand_table;  /* current pointer into x-position table (was HL) */
   u8  *SP_output;           /* output pointer into road position buffer (was SP) */
@@ -12299,14 +12225,13 @@ static void draw_road_lanes_change(chqstate_t *state,
   s8   L_step;              /* copy of A_step used in Bresenham loop (was L) */
   u8   B_range;             /* Bresenham range (was B) */
   u8   A_range;             /* Bresenham range copy for direction comparison (was A) */
-  u8   A_dir_opcode;        /* direction opcode: Z80_INC_DE or Z80_DEC_DE (was A) */
-  u8   SM_C435_dir_opcode;  /* stored direction opcode for normal Bresenham (SM $C435) */
+  u8   A_direction;         /* Bresenham direction (+1/-1) (was A) */
   u8   A_accum;             /* Bresenham accumulator (was A) */
-  u8   SM_C445_dir_opcode;  /* stored direction opcode for alternate Bresenham (SM $C445) */
 
   // $C2E7
   A_dist = *IY_heightptr - &state->height_table[0];
-  if (A_dist >= 19) {
+  assert(A_dist < 22);
+  if (A_dist < 19) { /* JP NC,$C43B: exit when IYl >= 19 */
     // $C2EE -- bank A_dist
     // EX AF,AF'
 
@@ -12324,10 +12249,12 @@ static void draw_road_lanes_change(chqstate_t *state,
       /* $C2FA-$C304: adjust H based on bits 5 and 7 of L_lane_flags. */
       if (L_lane_flags & (1 << 5)) { /* bit 5 SET */
         // {4TO3L, 3TO4L, 2TO3L, FORKED}
-        if (L_lane_flags & (1 << 7)) /* bit 7 SET */
+        if (L_lane_flags & (1 << 7)) {
+          /* bit 7 SET */
           // {4TO3L, 3TO4L, FORKED}
+          printf("drlc: b5set {4TO3L, 3TO4L, FORKED} A_dist=%d\n", A_dist);
           H_left_hand_table_hi = 0xEC;
-        else
+        } else
           // {2TO3L}
           H_left_hand_table_hi = 0xEB; // was DEC H
       }
@@ -12336,6 +12263,8 @@ static void draw_road_lanes_change(chqstate_t *state,
       if (L_lane_flags & (1 << 4)) { /* bit 4 SET */
         // {4TO3L, 3TO4R, 2TO3R, TUNNEL_EXIT}
 
+          printf("drlc: b4set {4TO3L, 3TO4R, 2TO3R, TUNNEL_EXIT} A_dist=%d\n", A_dist);
+
         // $C30A -- unbank A_dist / bank Adash_curve_bits
         // EX AF,AF'
 
@@ -12343,6 +12272,7 @@ static void draw_road_lanes_change(chqstate_t *state,
         if (A_dist < 2) {
           // $C310 -- bank A_dist / unbank Adash_curve_bits
           // EX AF,AF'
+          printf("drlc: A_dist < 2 {4TO3L, 3TO4R, 2TO3R, TUNNEL_EXIT} A_dist=%d\n", A_dist);
 
           /* $C311: path 1a -- bit4=1, dist<2 */
           if (Adash_masked_lane_flags != 4) {
@@ -12501,24 +12431,22 @@ static void draw_road_lanes_change(chqstate_t *state,
       A_range = C_bresen_range;
       if (L_step < 0) {
         L_step = -L_step;
-        A_range = B_range; // no point in this?
-        A_dir_opcode = Z80_DEC_DE;
-        if (A_range < L_step)
+        A_direction = -1;
+        if (B_range < L_step) /* Conv: removed A shuffle */
           goto drlc_steep_step;
       } else {
-        A_dir_opcode = Z80_INC_DE;
+        A_direction = +1;
         if (A_range < L_step)
           goto drlc_steep_step;
       }
 
       /* $C42B-$C437: normal Bresenham -- step <= range */
-      SM_C435_dir_opcode = A_dir_opcode;
       A_accum = B_range >> 1;
       do {
         A_accum += L_step;
         if (A_accum >= C_bresen_range) {
           A_accum -= C_bresen_range;
-          DE_roadpos += (SM_C435_dir_opcode == Z80_INC_DE) ? +1 : -1;
+          DE_roadpos += A_direction; /* Conv: self modified code replaced with direction */
         }
         SP_output -= 2;
         SP_output[0] = DE_roadpos & 0xFF;
@@ -12543,11 +12471,10 @@ drlc_continue:
 
 drlc_steep_step:
   /* $C441-$C450: alternate Bresenham -- step > range */
-  SM_C445_dir_opcode = A_dir_opcode;
   A_accum = 0;
   do {
     for (;;) {
-      DE_roadpos += (SM_C445_dir_opcode == Z80_INC_DE) ? +1 : -1;
+      DE_roadpos += A_direction;
       A_accum += C_bresen_range;
       if (A_accum < C_bresen_range || A_accum >= L_step) /* overflow or >= step */
         break;
