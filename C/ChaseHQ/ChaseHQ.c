@@ -3223,79 +3223,101 @@ static void draw_mugshot(chqstate_t *state,
 }
 
 /**
- * $8EE7: Draws the smash bar
+ * $8EE7: Draw the smash-counter bar in the back buffer [Conv: HQ]
  *
- * Called from main loop.
+ * The bar runs vertically on the right edge of the playfield.  It is
+ * composed of three sections drawn bottom-to-top:
  *
- * \param[in] state Pointer to game state.
+ *   BorderHeight (2) solid rows at the bottom.
+ *   smash_counter segments, each 3 rows (2 dashed + 1 solid gap).
+ *   Remaining solid rows up to the total bar height.
+ *
+ * Returns early (invisible bar) when the perp has not yet been sighted or
+ * when the perp has been stopped (perp_caught_phase >= PERPCAUGHTPHASE_STOPPED).
+ *
+ * The Z80 uses D=$0F (scanline mask) and E=$10 (row stride) for the
+ * prev-scanline address arithmetic; C abstracts this into prev_buf_row().
+ *
+ * Conv: Z80 uses EX AF,AF' to preserve smash_counter across the segment call;
+ *   C keeps it in A_nsmashsegs which survives the call naturally.
+ * Conv: Z80 computes nsolid as CPL(A*3)+$3F (bit-complement + 63); C uses the
+ *   equivalent arithmetic expression.
+ *
+ * \param[in] state  Pointer to game state.
  */
 static void draw_smash_bar(chqstate_t *state)
 {
-  const int MaxSegments    = SMASHCOUNTER_MAX;
-  const int SegmentHeight  = 3;
-  const int BorderHeight   = 2;
-  const int TotalBarHeight = MaxSegments * SegmentHeight * BorderHeight * 2;
+  const int MaxSegments    = SMASHCOUNTER_MAX;  /* maximum smash-counter value */
+  const int SegmentHeight  = 3;                 /* scanlines per segment */
+  const int BorderHeight   = 2;                 /* solid border rows top and bottom */
+  const int TotalBarHeight = MaxSegments * SegmentHeight + BorderHeight * 2;
 
-  u16 backbuf;    /* was HL */
-  int nsmashsegs; /* was A */
-  int nsolid;     /* was B */
+  u16 HLbackbuf;    /* back-buffer address walking upward through the bar (was HL) */
+  int A_nsmashsegs; /* current smash_counter value; banked to A' around $8F05 (was A) */
+  int B_nsolid;     /* number of solid rows to fill above the segments (was B) */
 
-  if (state->sighted_flag == 0)
-    return; // Return if the perp has not yet been sighted
+  if (state->sighted_flag == 0)           /* $8EEA AND A; $8EEB RET Z */
+    return;
+  if (state->perp_caught_phase >= PERPCAUGHTPHASE_STOPPED) /* $8EEF CP $03; $8EF1 RET NC */
+    return;
 
-  if (state->perp_caught_phase >= PERPCAUGHTPHASE_STOPPED)
-    return; // Return if perp_caught_phase is >= 3 (car has stopped)
+  HLbackbuf = 0xF7A2; /* $8EF2 LD HL,$F7A2 — bottom of bar in back buffer */
 
-  backbuf = 0xF7A2; // Back buffer address of bottom of bar
-  // Conv: D & E moved into prev_buf_row forward
+  HLbackbuf  = draw_smash_bar_solid_bit(state, BorderHeight, HLbackbuf); /* $8EF8–$8EFA */
+  A_nsmashsegs = state->smash_counter;                                    /* $8EFD LD A */
+  if (A_nsmashsegs > 0)                                                   /* $8F00 AND A */
+    HLbackbuf = draw_smash_bar_segments(state, A_nsmashsegs, HLbackbuf); /* $8F05 CALL */
 
-  // Draws bottom two rows
-  backbuf = draw_smash_bar_solid_bit(state, BorderHeight, backbuf);
-
-  nsmashsegs = state->smash_counter;
-  if (nsmashsegs > 0)
-    backbuf = draw_smash_bar_segments(state, nsmashsegs, backbuf);
-
-  nsolid = TotalBarHeight - BorderHeight - nsmashsegs *
-           SegmentHeight; // Number of solid rows to draw at the top
-  (void) draw_smash_bar_solid_bit(state, nsolid, backbuf); /* exit via */
+  B_nsolid = TotalBarHeight - BorderHeight - A_nsmashsegs * SegmentHeight; /* $8F09–$8F0F */
+  (void) draw_smash_bar_solid_bit(state, B_nsolid, HLbackbuf); /* $8F10 JP $8F47 */
 }
 
 /**
- * $8F13: Draws the specified number of smash bar segments
+ * $8F13: Draw smash-counter segments (dashed pairs with a solid gap) [Conv: HQ]
  *
- * Each segment is three rows high, the last of which is solid.
+ * Each segment is three scanlines: two dashed (X______X) rows and one solid
+ * row drawn by draw_smash_bar_solid_bit.  The loop runs nsegs times upward
+ * through the back buffer.
  *
- * \param[in] state   Pointer to game state.
- * \param[in] nsegs   Number of segments to draw. (was C)
- * \param[in] backbuf Back buffer address at which to draw. (was HL)
+ * The Z80 uses the DEC H / rollover pattern for prev-scanline movement;
+ * C uses prev_buf_row() throughout.
+ *
+ * \param[in] state       Pointer to game state.
+ * \param[in] C_nsegs     Number of segments to draw. (was C)
+ * \param[in] HLbackbuf   Back-buffer address at which to start. (was HL)
+ * \return Back-buffer address after the last row written.
  */
-static u16 draw_smash_bar_segments(chqstate_t *state, int nsegs, int backbuf)
+static u16 draw_smash_bar_segments(chqstate_t *state, int C_nsegs, int HLbackbuf)
 {
   do {
-    *ADDRTOBACKBUF(backbuf) = X______X; // Set 8 pixels
-    backbuf = prev_buf_row(backbuf);
-    *ADDRTOBACKBUF(backbuf) = X______X; // Set 8 pixels
-    backbuf = prev_buf_row(backbuf);
-    backbuf = draw_smash_bar_solid_bit(state, 1, backbuf); // 1 row gap
-  } while (--nsegs > 0);
-  return backbuf;
+    *ADDRTOBACKBUF(HLbackbuf) = X______X;             /* $8F13 LD (HL),$81 */
+    HLbackbuf = prev_buf_row(HLbackbuf);
+    *ADDRTOBACKBUF(HLbackbuf) = X______X;             /* $8F28 LD (HL),$81 */
+    HLbackbuf = prev_buf_row(HLbackbuf);
+    HLbackbuf = draw_smash_bar_solid_bit(state, 1, HLbackbuf); /* $8F3F CALL */
+  } while (--C_nsegs > 0);                            /* $8F42 DEC C; $8F43 JP NZ */
+  return HLbackbuf;
 }
 
 /**
- * $8F47: Draws the specified number of smash bar solid rows
+ * $8F47: Draw a run of solid (fully filled) smash-bar scanlines [Conv: HQ]
  *
- * \param[in] state   Pointer to game state.
- * \param[in] nrows   Number of segments to draw. (was B)
- * \param[in] backbuf Back buffer address at which to draw. (was HL)
+ * Writes $FF (XXXXXXXX) to nrows consecutive scanlines, walking upward through
+ * the back buffer with prev_buf_row().  Used for both the border rows and the
+ * solid fill above the segments.
+ *
+ * \param[in] state       Pointer to game state.
+ * \param[in] B_nrows     Number of solid rows to draw. (was B)
+ * \param[in] HLbackbuf   Back-buffer address at which to start. (was HL)
+ * \return Back-buffer address after the last row written.
  */
-static u16 draw_smash_bar_solid_bit(chqstate_t *state, int nrows, int backbuf)
+static u16 draw_smash_bar_solid_bit(chqstate_t *state, int B_nrows, int HLbackbuf)
 {
   do {
-    *ADDRTOBACKBUF(backbuf) = XXXXXXXX; // Set 8 pixels
-    backbuf = prev_buf_row(backbuf);
-  } while (--nrows > 0);
-  return backbuf;
+    *ADDRTOBACKBUF(HLbackbuf) = XXXXXXXX;  /* $8F47 LD (HL),$FF */
+    HLbackbuf = prev_buf_row(HLbackbuf);   /* $8F49–$8F5B DEC H with rollover */
+  } while (--B_nrows > 0);                 /* $8F5D DEC B; $8F5E JP NZ */
+  return HLbackbuf;
 }
 
 /**

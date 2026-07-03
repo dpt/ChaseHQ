@@ -40,9 +40,6 @@ Generated from `grep '^ \* \$' ChaseHQ.c | grep -v '\[Conv: HQ\]'`.
 | `$8DF9` | `setup_transition` | Setup transition |
 | `$8E42` | `draw_overlay_messages` | Progressively draw overlay messages to the back buffer |
 | `$8EB7` | `draw_mugshot` | Draw a single mugshot to the back buffer |
-| `$8EE7` | `draw_smash_bar` | Draw the smash bar |
-| `$8F13` | `draw_smash_bar_segments` | Draw the specified number of smash bar segments |
-| `$8F47` | `draw_smash_bar_solid_bit` | Draw the specified number of smash bar solid rows |
 | `$8F5F` | `draw_scene_objects` | Draw everything else |
 | `$9052` | `draw_overhead` | Draw overhead objects |
 | `$916C` | `draw_stretchy_object_left` | Draw stretchy object left |
