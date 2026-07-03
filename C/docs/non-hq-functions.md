@@ -173,7 +173,6 @@ Generated from `grep '^ \* \$' ChaseHQ.c | grep -v '\[Conv: HQ\]'`.
 | `$C8E3` | `draw_forked_road` | Forked road plotter |
 | `$CBC5` | `backdrop_fill_dispatch` | Backdrop fill choice (height diff >= $50 in forked road) |
 | `$CBD6` | `build_curve_table` | Build curve table |
-| `$CD3A` | `build_height_table` | Build height table |
 | `$CDD6` | `multiply` | Multiply |
 | `$E810` | `entry_48k` | Entry point 48K |
 | `$E816` | `entry_128k` | Entry point 128K |

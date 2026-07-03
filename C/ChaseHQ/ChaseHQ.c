@@ -14260,106 +14260,112 @@ bct_endbit_negative:
 }
 
 /**
- * $CD3A: Build height table
+ * $CD3A: Build the per-row screen-height lookup table [Conv: HQ]
  *
- * Called from main loop.
+ * Called once per frame from the main loop.  Uses the current road-buffer
+ * height channel and the perspective Y-scale table to produce three outputs:
  *
- * \param[in] state Pointer to game state.
+ * Phase 1 — bht_loop ($CD64, 21 iterations):
+ *   IY walks the road buffer height channel one step per iteration.  For
+ *   each row, Cmin accumulates the incline values seen so far.  The
+ *   perspective scale for the row (from persp_y_scale) is multiplied by
+ *   |Cmin| using the 7-bit shift-and-add routine at $CD84 (negating the
+ *   multiplier when Cmin is negative) and added to the base scale entry.
+ *   The result is written to height_table[1..21], with 0xA0 as a sentinel
+ *   at height_table[22].
+ *
+ * Phase 2 — bht_loop2 ($CDC0, 21 iterations):
+ *   Copies height_table[1..21] to clamped_heights[0..20], tracking the
+ *   running minimum (initialised to 96).  Any entry below the current
+ *   minimum replaces it, so the table never rises above the closest road
+ *   point seen so far.
+ *
+ * Phase 3 — horizon delta ($CDCB):
+ *   Rounds Cmin down to the nearest multiple of 8, writes it to
+ *   horizon_attr[0] (overwriting the previous frame's value), and writes
+ *   the difference to horizon_attr[1].  update_screen reads horizon_attr[2]
+ *   (the one-frame-lagged delta) to scroll the sky/ground colour boundary.
+ *
+ * Conv: IY is used in the Z80 for the height-channel road buffer pointer;
+ *   C uses ROADBUF_FWD2PTR(ROADBUF_HEIGHT_OFFSET) for the same address.
+ * Conv: EXX at $CD63 banks C (Cmin) and HL (HLpvtab) into shadow registers
+ *   so the inner loop can use B, DE and HL freely; C locals need no banking.
+ * Conv: The 7-bit shift-and-add multiply at $CD84–$CDA9 is replaced by the
+ *   equivalent expression ((A_height & 0x7F) * DE_v) >> 7.  Each of the 7
+ *   bits of A contributes DE × 2^(bit_position); summing and taking the high
+ *   byte gives (A & 0x7F) * DE / 128.
+ *
+ * \param[in] state  Pointer to game state.
  */
 static void build_height_table(chqstate_t *state)
 {
-  int       carry = 0;
-  u8       *proadbuf_height;      /* was IY */
-  int       heightbyte;           /* was C */
-  int       orig_counter;         /* was A, fast_counter masked for multiply */
-  const u8 *pvtab;                /* was HL */
-  int       Cmin;                 /* was C */
-  int       Bdash_iterations;     /* was B' */
-  u8       *phtab;                /* was DE' */
-  int       DE_v;                 /* was DE */
-  u16       HL_result;            /* was HL */
-  u8        A;                    /* was A */
-  u8       *pdst;                 /* was HL */
-  const u8 *phtab2;               /* was DE */
-  int       iterations2;          /* was B */
-  s8        res;                  /* Conv: added */
+  u8       *IYroadbuf;     /* road buffer height-channel pointer (was IY) */
+  int       C_heightbyte;  /* height byte read on entry; multiply input (was C) */
+  int       A_counter;     /* fast_counter & 0xE0; perspective row selector and multiply arg (was A/B) */
+  const u8 *HLpvtab;      /* pointer into perspective Y-scale table $E6xx (was HL) */
+  int       Cmin;          /* incline accumulator; becomes running minimum in phase 2 (was C) */
+  int       Bdash_iters;   /* bht_loop iteration count, 21 (was B') */
+  u8       *DEphtab;       /* pointer walking height_table[1..21] (was DE') */
+  int       DE_v;          /* perspective scale entry × 2; shift-multiply input (was DE) */
+  u8        A_height;      /* scaled pixel row height written to height_table (was A) */
+  u8       *HLdst;         /* walks clamped_heights[0..20] then horizon_attr[0..1] (was HL) */
+  const u8 *DEsrc;         /* source pointer walking height_table in phase 2 (was DE) */
+  int       B_iters;       /* bht_loop2 iteration count, 21 (was B) */
 
-  proadbuf_height = ROADBUF_FWD2PTR(ROADBUF_HEIGHT_OFFSET);
+  IYroadbuf    = ROADBUF_FWD2PTR(ROADBUF_HEIGHT_OFFSET);
+  C_heightbyte = *IYroadbuf;
 
-  // Read the current height byte
-  heightbyte = *proadbuf_height;
+  A_counter = state->fast_counter & 0xE0;
+  HLpvtab   = &persp_y_scale[FAST_COUNTER_PERSP_ROW(state)][1];
+  Cmin      = -multiply(A_counter, C_heightbyte);
 
-  orig_counter = state->fast_counter & 0xE0;
-  pvtab = &persp_y_scale[FAST_COUNTER_PERSP_ROW(state)][1];
-  Cmin = -multiply(orig_counter, heightbyte);
-
-  // EXX - bank
-
-  // This builds the look-up table at $E301. Assuming it's a height table.
-  Bdash_iterations = 21;
-  phtab = &state->height_table[1];
+  /* Conv: EXX at $CD63 — Cmin stays in C; HLpvtab stays in HL (shadow).
+   * B' = 21 and DE' = &height_table[1] are loaded into main registers. */
+  Bdash_iters = 21;
+  DEphtab     = &state->height_table[1];
   do {
-    DE_v = *pvtab * 2;
-    HL_result = 0;
-    Cmin = A = Cmin + *proadbuf_height; // is this Cdash?
+    /* $CD69 — unbank: HL (HLpvtab) and C (Cmin) restored from shadow */
+    DE_v     = *HLpvtab * 2;             /* $CD6A SLA E; LD D,0 */
+    Cmin     = A_height = Cmin + *IYroadbuf; /* $CD72 LD A,C; $CD73 ADD A,(IY+0); $CD76 LD C,A */
     if (Cmin != 0) {
-      if ((s8) Cmin < 0) {
-        DE_v = -DE_v;
-        A = -Cmin;
+      if ((s8) Cmin < 0) {              /* $CD79 JP P,$CD84 */
+        DE_v     = -DE_v;               /* $CD7C–$CD80 negate DE */
+        A_height = -Cmin;               /* $CD81–$CD82 NEG */
       }
-
-#if 1
-      // Conv: Equivalent? multiplier
-      A = ((A & 0x7F) * DE_v) >> 7;
-#else
-      A <<= 1; // Throw sign bit away?
-      carry = (A >> 7) & 1; A <<= 1;
-      if (carry) HL_result = DE_v << 1;
-      carry = (A >> 7) & 1; A <<= 1;
-      if (carry) HL_result += DE_v; HL_result <<= 1;
-      carry = (A >> 7) & 1; A <<= 1;
-      if (carry) HL_result += DE_v; HL_result <<= 1;
-      carry = (A >> 7) & 1; A <<= 1;
-      if (carry) HL_result += DE_v; HL_result <<= 1;
-      carry = (A >> 7) & 1; A <<= 1;
-      if (carry) HL_result += DE_v; HL_result <<= 1;
-      carry = (A >> 7) & 1; A <<= 1;
-      if (carry) HL_result += DE_v; HL_result <<= 1;
-      carry = (A >> 7) & 1; //A <<= 1;
-      if (carry) HL_result += DE_v; HL_result <<= 1;
-      A = HL_result >> 8;
-#endif
+      /* Conv: Z80 shift-and-add multiply ($CD84–$CDA9): result H =
+       * (A & 0x7F) * DE / 128.  C uses the equivalent direct expression. */
+      A_height = ((A_height & 0x7F) * DE_v) >> 7; /* $CD84 bht_multiplier */
     }
-    A += *pvtab;
-    pvtab++;
+    A_height += *HLpvtab; /* $CDAB ADD A,(HL) */
+    HLpvtab++;            /* $CDAC INC L */
 
-    *phtab = A; // Write #REGa to the table at $E3xx
-    phtab++;
-    WRAP_INCREMENT_ASSIGN(proadbuf_height, state->roadbuf_start);
-  } while (--Bdash_iterations > 0);
+    *DEphtab = A_height;  /* $CDAE LD (DE),A */
+    DEphtab++;            /* $CDAF INC E */
+    WRAP_INCREMENT_ASSIGN(IYroadbuf, state->roadbuf_start); /* $CDB0 INC IYl */
+  } while (--Bdash_iters > 0);          /* $CDB2 DJNZ bht_loop */
 
-  *phtab = 0xA0;
+  *DEphtab = 0xA0; /* $CDB4–$CDB6 sentinel */
 
-  // Copy the table to $E336 while setting negative values to 96[?]
-  pdst = &state->clamped_heights[0]; // destination
-  phtab2 = &state->height_table[1]; // src
-
-  iterations2 = 21;
-  Cmin = 96;
+  /* Phase 2 — $CDB7 bht_loop2: copy to clamped_heights, tracking minimum */
+  HLdst   = &state->clamped_heights[0];
+  DEsrc   = &state->height_table[1];
+  B_iters = 21;
+  Cmin    = 96; /* $CDBD LD BC,$1560: B=21, C=96 */
   do {
-    A = *phtab2;
-    if (A < Cmin)
-      Cmin = A;
-    *pdst = Cmin;
-    pdst++;
-    phtab2++;
-  } while (--iterations2 > 0);
+    A_height = *DEsrc;           /* $CDC0 LD A,(DE) */
+    if (A_height < Cmin)
+      Cmin = A_height;           /* $CDC5 LD C,A — update running minimum */
+    *HLdst = Cmin;               /* $CDC6 LD (HL),C */
+    HLdst++;
+    DEsrc++;
+  } while (--B_iters > 0);      /* $CDC9 DJNZ bht_loop2 */
 
-  Cmin = A = (Cmin + 3) & 0xF8;
-  A -= *pdst;
-  *pdst = Cmin;
-  pdst++;
-  *pdst = A;
+  /* Phase 3 — $CDCB: round Cmin to multiple of 8 and write horizon delta */
+  Cmin     = A_height = (Cmin + 3) & 0xF8; /* $CDCB–$CDD0: (C+3) & $F8 → C = A */
+  A_height -= *HLdst;                       /* $CDD1 SUB (HL) — delta from last frame */
+  *HLdst   = Cmin;                          /* $CDD2 LD (HL),C — horizon_attr[0] */
+  HLdst++;
+  *HLdst   = A_height;                      /* $CDD4 LD (HL),A — horizon_attr[1] */
 }
 
 /**
