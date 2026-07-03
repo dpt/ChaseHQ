@@ -892,7 +892,7 @@ static void plot_mini_font_cursor_off(chqstate_t *state,
 static void plot_mini_font_cursor_on(chqstate_t *state,
                                      int          x,
                                      char        character);
-static void pmf_go(chqstate_t *state,
+static void plot_mini_font_char(chqstate_t *state,
                    int          x,
                    char        ascii,
                    int          extrabm1,
@@ -6065,7 +6065,7 @@ static void plot_mini_font_cursor_off(chqstate_t *state,
                                       int          x,
                                       char        character)
 {
-  pmf_go(state, x, character, ________, ________);
+  plot_mini_font_char(state, x, character, ________, ________);
 }
 
 /**
@@ -6084,11 +6084,11 @@ static void plot_mini_font_cursor_on(chqstate_t *state,
                                      int          x,
                                      char        character)
 {
-  pmf_go(state, x, character, _____XXX, X_______);
+  plot_mini_font_char(state, x, character, _____XXX, X_______);
 }
 
 /**
- * $9AF4: Plot one mini-font glyph to the chatter message line [Conv: HQ]
+ * $9AF4: Plot one mini-font character to the chatter message line [Conv: HQ]
  *
  * Computes the screen column byte address and right-shift amount from x,
  * converts the ASCII character to a glyph ID, looks up the 6-row glyph
@@ -6111,11 +6111,11 @@ static void plot_mini_font_cursor_on(chqstate_t *state,
  * local variables and a single right-shift of a 16-bit composite word.
  * Conv: Row counter banked to A' in Z80 (EX AF,AF'); C uses a plain local.
  */
-static void pmf_go(chqstate_t *state,
-                   int         x,
-                   char        ascii,
-                   int         extrabm1,
-                   int         extrabm2)
+static void plot_mini_font_char(chqstate_t *state,
+                                int         x,
+                                char        ascii,
+                                int         extrabm1,
+                                int         extrabm2)
 {
   int       carry;    /* carry from SRL/RR shift operations (carry) */
   int       extra2;   /* extra bits for right (low) glyph byte; self-modifies $9B61 (was C) */
