@@ -2184,8 +2184,8 @@ B $7F8D,115,8*14,3
 g $8000 Game status buffer entry at 8000
 @ $8000 label=test_mode_flag
 B $8000,1,1 Test mode enable flag (cheat mode)
-@ $8001 label=attract_cycle
-B $8001,1,1 [128K] Attract mode message cycle. Used by #R$F437. When zero shows the "ENTER FOR OPTIONS" message.
+@ $8001 label=controls_selected
+B $8001,1,1 [128K] Attract mode message cycle. Used by #R$F437. When zero shows the "ENTER FOR OPTIONS" message. Set by banked menu code.
 @ $8002 label=score_bcd
 B $8002,4,4 Score digits as BCD (4 bytes / 8 digits, little endian)
 @ $8006 label=retry_count
@@ -2639,7 +2639,7 @@ C $848F,3 Call play_engine_or_siren_sfx_hook
 C $8492,3 Call move_helicopter
 C $8495,3 Call check_scenery_collisions
 C $8498,3 Call play_engine_or_siren_sfx_hook
-C $849B,3 Call draw_everything_else
+C $849B,3 Call draw_scene_objects
 C $849E,3 Call play_engine_or_siren_sfx_hook
 C $84A1,3 Call animate_hero_car
 C $84A4,3 Call speed_score
@@ -2736,7 +2736,7 @@ C $857A,3 Call layout_dirt_and_stones
 C $857D,3 Call draw_all_hazards
 C $8580,3 Call move_hero_car
 C $8583,3 Call check_scenery_collisions
-C $8586,3 Call draw_everything_else
+C $8586,3 Call draw_scene_objects
 C $8589,3 Exit via animate_hero_car
 c $858C Pre-game radio screen ("CHASE HQ MONITORING SYSTEM")
 D $858C Used by the routine at #R$8401.
@@ -2989,7 +2989,7 @@ C $8781,3 Call layout_objects
 C $8784,3 Call prepare_tunnel
 C $8787,3 Call spawn_hazards
 C $878A,3 Call draw_all_hazards
-C $878D,3 Call draw_everything_else
+C $878D,3 Call draw_scene_objects
 C $8790,3 Call update_scoreboard
 C $8793,3 Call drive_chatter
 C $8796,3 Call transition
@@ -3017,26 +3017,26 @@ C $87DC,1 Preserve data pointer
 N $87DD Zero $EE00..$EEFF and reset road_buffer_offset to $EE00.
 C $87EC,1 A = 0
 N $87ED Copy 47 bytes of saved game state at #R$A13E to #R$A16D.
-N $87F8 Zero 208 bytes at $A19C onwards (hazard_1 onwards).
+N $87F8 Zero 208 bytes at $A19C onwards (hazard_1 up to start_speech).
 C $8801,1 Restore data pointer
 N $8802 Copy the 14 bytes of set up data passed in to #R$A26C (road_pos, road_curvature_ptr, etc.)
 N $8807 Pre-shift the backdrop image.
-N $880A Set backdrop position values in the <road drawing table TBD>.
+N $880A Set backdrop position in horizon table (used to draw attributes).
 C $880A,6 $E34B = 8  -- perhaps a relative value
 C $8810,2 $E34C = 0
 C $8812,1 $E34D = 0
-N $8813 NOP some things TBD.
+N $8813 Disable the helicopter and tunnel drawing calls in draw_scene_objects.
 C $8813,5 $8F82 = NOP (instruction)
 C $8818,2 $8F83 = NOP (instruction)
 C $881A,1 $8F84 = NOP (instruction)
 N $881B NOP the 6 instruction bytes at $8FA4: the helicopter and tunnel drawing calls.
-N $8824 ...
+N $8824 Reset current hazard command.
 C $8824,3 Self modify "LD (HL),x" at #R$C058 to x = 0
 N $8827 Reset car jump counter.
 C $8827,3 Self modify "LD A,x" at #R$B063 to x = 0
 C $882A,6 Set $A191 to the perp's car LOD
 N $8830 Zero $EE00..$EEFF and reset road_buffer_offset to $EE00 [duplicates work from earlier].
-N $883F Run the map reader 32 times [enough to draw the screen?]
+N $883F Run the map reader 32 times.
 C $883F,2 32 iterations
 @ $8841 label=sus_loop
 C $8841,1 Preserve BC
@@ -3065,7 +3065,7 @@ D $8876 Used by the routine at #R$8401.
 @ $8876 label=check_user_input
 C $8876,3 Load transition_control
 C $8879,3 Load address of user_input
-C $887C,4 Ignore the user's input unless transition_control is set to 4
+C $887C,4 Ignore the user's input if transition_control is set to 4
 C $8880,2 Clear user_input
 C $8882,1 Return
 C $8883,5 AND user_input with user input mask
@@ -3115,9 +3115,9 @@ c $8903 Drives sound effects
 D $8903 Used by the routine at #R$8401.
 @ $8903 label=drive_sfx
 C $8903,6 Jump if tunnel_sfx
-N $8909 If trigger_passed_object_sfx or trigger_lane_change_sfx is set then play effect 7 ("tit").
-C $8909,3 Load trigger_passed_object_sfx
-C $890C,3 Load address of trigger_lane_change_sfx
+N $8909 If trigger_right_hand_passed_object_sfx or trigger_left_hand_passed_object_sfx is set then play effect 7 ("tit").
+C $8909,3 Load trigger_right_hand_passed_object_sfx
+C $890C,3 Load address of trigger_left_hand_passed_object_sfx
 C $890F,1 OR together vars and set flags
 C $8910,3 Effect 7 (tit), Priority 4
 C $8913,3 Call start_sfx if non-zero
@@ -3815,7 +3815,7 @@ C $8F5C,2 Loop while iterations remain
 C $8F5E,1 Return
 c $8F5F Draws anything that's not the road or the hero car
 D $8F5F Used by the routines at #R$8401, #R$852A and #R$873C.
-@ $8F5F label=draw_everything_else
+@ $8F5F label=draw_scene_objects
 C $8F5F,3 Point #REGhl at (something above the stack)
 C $8F62,3 Self modify 'LD HL' @ #R$A9E2 to load the stack? address
 C $8F65,6 Self modify 'LD HL' @ #R$AECF to load $E900
@@ -5656,10 +5656,10 @@ C $A0A5,1 E++
 C $A0A7,3 *HL |= C
 C $A0AA,1 L++
 C $A0AC,1 Return
-@ $A0AD label=dc_generic
+@ $A0AD label=dc_screen
 C $A0AD,1 Save screen pointer
 C $A0AE,2 7 iterations/rows
-@ $A0B0 label=dc_generic_loop
+@ $A0B0 label=dc_screen_loop
 C $A0B0,2 Transfer a byte
 C $A0B2,1 Move to next scanline (Y0++)
 C $A0B3,1 Move to next row of glyph data
@@ -5677,7 +5677,7 @@ c $A0CC Keyscan
 @ $A0CC label=kempston_flag
 B $A0CC,1,1 Set to 1 if Kempston joystick is chosen, 0 otherwise
 @ $A0CD label=keydefs
-B $A0CD,8,8 Gear, Accelerate, Brake, Left, Right, Quit, Pause, Turbo
+B $A0CD,8,8 Q / P / SPACE / 0 / 9 / 8 / 6 / 7 -- Sinclair joystick
 @ $A0D5 label=user_input
 B $A0D5,1,1 User input: QPBFUDLR - Quit Pause Boost Fire/Gear Up Down Left Right. Note that attract mode is driven through this var.
 N $A0D6 This entry point is used by the routines at #R$8014, #R$8258, #R$8401, #R$858C, #R$8876 and #R$F220.
@@ -5686,8 +5686,10 @@ C $A0D6,6 If not Kempston then goto #R$A0F3
 C $A0DC,4 Read Kempston joystick port. Returns 000FUDLR active high
 @ $A0F3 label=ks_keyboard
 @ $A0FB label=ks_common
+C $A0FB,2 If left and right are both pressed then clear them both
+C $A105,2 If up and down are both pressed then clear them both
 C $A111,1 Return
-@ $A112 label=keyscan_a112
+@ $A112 label=keyscan_keydefs
 C $A112,1 Outer keyboard loop
 C $A117,1 invert carry
 C $A11A,2 loop while top bit set?
@@ -5881,9 +5883,9 @@ B $A239,1,1 Enables siren. Used by #R$F265 [128K]
 B $A23A,1,1 Copy of noise pitch. Used by #R$F2F6 [128K]
 @ $A23B label=tunnel_sfx
 B $A23B,1,1 Set to 5 when we're in a tunnel. Used to modulate sfx.
-@ $A23C label=trigger_passed_object_sfx
+@ $A23C label=trigger_right_hand_passed_object_sfx
 B $A23C,1,1 #R$8909, #R$BE28 reads. #R$A3FA, #R$BDFF, #R$BE2C writes.
-@ $A23D label=trigger_lane_change_sfx
+@ $A23D label=trigger_left_hand_passed_object_sfx
 B $A23D,1,1 Set whenever an object passes the hero's car. #R$BE33 reads. #R$890F, #R$A3D2, #R$BDFC, #R$BE37 writes.
 @ $A23E label=off_road
 B $A23E,1,1 0 => Fully on-road, 1 => One wheel off-road, 2 => Both wheels off-road [samples: #R$B104, #R$B40C reads  #R$A3FD, #R$A52A, #R$B07D, #R$B322, #R$B404, #R$B443 writes]
@@ -6055,13 +6057,13 @@ C $A3CB,1 A++  -- A == 1 => partially off-road (note: A is zero here)
 C $A3CC,2 Jump to csc_store_off_road if HL < 133 (note: INC A doesn't affect carry)
 C $A3CE,1 A++  -- A == 2 => fully off-road
 C $A3CF,2 Jump to csc_store_off_road
-@ $A3D1 label=csc_clear_var_a23d
-C $A3D1,4 trigger_lane_change_sfx = 0  -- offroad/sfx flag perhaps?
+@ $A3D1 label=csc_clear_trigger_lane_change_sfx
+C $A3D1,4 trigger_left_hand_passed_object_sfx = 0  -- offroad/sfx flag perhaps?
 N $A3D5 Check right hand side of car. Car off road left       ~ (not hit!) Car half off road left  ~ 0x170 ish Car in lane 1           ~ 0x164 Car in lane 2 ~ 0x117 Car in lane 3           ~ 0xe0 Car in lane 4           ~ 0x98 Car half off road right ~ 0x4e Car off road right      ~ 0x4b
 @ $A3D5 label=csc_check_right_hand
 C $A3D5,3 Read signed word at $EAFC [ how is this different to $EAFE? ]
 C $A3D8,2 Set flags from sign of word: 1 when hero car on left side, 0 if right
-C $A3DA,2 Init value for trigger_passed_object_sfx  -- this must stop the passed object sfx from playing
+C $A3DA,2 Init value for trigger_right_hand_passed_object_sfx  -- this must stop the passed object sfx from playing
 C $A3DC,2 Jump to #R$A3FA if non-zero
 C $A3DE,9 Jump to #R$A3FA if HL >= 190
 C $A3E7,9 Jump to #R$A3FD if HL >= 142
@@ -6071,7 +6073,7 @@ C $A3F5,2 Jump to csc_store_off_road if no carry
 C $A3F7,1 A++  -- A == 2 => fully off-road
 C $A3F8,2 Jump to csc_store_off_road
 @ $A3FA label=csc_store_sfx_trigger
-C $A3FA,3 trigger_passed_object_sfx = A
+C $A3FA,3 trigger_right_hand_passed_object_sfx = A
 @ $A3FD label=csc_store_off_road
 C $A3FD,3 off_road = A  -- 0/1/2 => on-road/one wheel off-road/both wheels off-road
 C $A400,1 Set flags
@@ -6089,15 +6091,15 @@ C $A413,2 Jump if set
 N $A415 We arrive here if we're far into the tunnel.
 C $A415,2 Test bit 3 (was bit 2 before RLA)
 C $A417,3 Load road_pos high byte
-C $A41A,2 Jump if clear
+C $A41A,2 Jump if bit 3 clear
 C $A41C,1 C = A
 C $A41D,2 A = 20
 C $A41F,1 Bank it
 C $A420,3 A = C & 1
 C $A423,3 Exit via scenery_hit
 @ $A426 label=csc_a426
-C $A426,3 HL = $00D1
-C $A429,3 DE = $0195
+C $A426,3 HL = 209
+C $A429,3 DE = 405
 C $A42C,1 Unbank from #R$A39F
 C $A42D,1 Set flags [A is ?]
 C $A42E,2 C = 1
@@ -6107,15 +6109,15 @@ C $A433,1 Preserve BC
 C $A434,3 Effect 6 (tunnel wall hit), Priority 4
 C $A437,3 Call start_sfx
 C $A43A,1 Restore BC
-@ $A43B label=csc_a43b
+@ $A43B label=csc_store_crash_spin
 C $A43B,1 A = C
 C $A43C,3 ($B3DC) = A
 C $A440,3 ($B396) = HL
 C $A443,4 ($B3A4) = DE
 C $A447,1 Set flags from A (was C)
 C $A448,1 Return if non-zero
+N $A449 -- RIGHT SIDE OBJECT HIT CHECKING --
 C $A449,3 Load road_buffer_offset.lo into #REGa
-N $A44C -- RIGHT SIDE OBJECT HIT CHECKING --
 C $A44C,2 Add 96 so it's the right side objects data offset
 C $A44E,1 Point #REGhl at road buffer right side objects data
 C $A44F,1 Bank road buffer offset
@@ -6133,14 +6135,14 @@ C $A45D,12 HL = (*#R$5CFA)[A * 7]
 N $A469 Read collision values.
 C $A469,2 C = *HL++  -- e.g. $5E5B. a higher value
 C $A46B,2 E = *HL++  -- e.g. $5E5C. a lower value
-C $A46D,1 A = *HL     -- e.g. $5E5D. TBD
+C $A46D,1 A = *HL     -- e.g. $5E5D. a speed cap
 C $A46E,1 DE = E, BC = C  -- #REGb is zero from #R$A463 above
 N $A46F Check for collisions with scenery (right hand side).
 C $A46F,3 HL = *$EAFC  -- near end of road drawing words (centre)... must be position of car
 C $A472,6 Jump to csc_a480 if HL >= BC
 C $A478,4 Jump to csc_a480 if HL < DE
-C $A47C,1 Unbank road buffer offset
-C $A47D,1 A = 0  -- perhaps a right hand flag
+C $A47C,1 Bank speed cap
+C $A47D,1 Set flip flag to 0
 C $A47E,2 Jump to csc_hit_scenery
 @ $A480 label=csc_a480
 C $A480,1 Unbank road buffer offset or/and bank mystery value in A
@@ -6159,14 +6161,14 @@ C $A490,12 HL = (*#R$5D00)[A * 7]  -- indexing left hand objects
 N $A49C Read collision values.
 C $A49C,2 C = *HL++  -- must be min/left hit coord
 C $A49E,2 E = *HL++  -- must be max/right hit coord
-C $A4A0,1 A = *HL
+C $A4A0,1 A = *HL  -- a speed cap
 C $A4A1,1 DE = E, BC = C  -- #REGb is zero from #R$A496 above
 N $A4A2 Check for collisions with scenery (left hand side).
 C $A4A2,3 HL = *$EAFE  -- suspected position of car/road
 C $A4A5,5 Return if HL < BC
 C $A4AA,3 Return if HL >= DE
-C $A4AD,1 ?Unbank road buffer offset
-C $A4AE,2 A = 1  -- perhaps a left hand flag
+C $A4AD,1 Bank speed cap
+C $A4AE,2 Set flip flag to 1
 N $A4B0 Arrive here if hit scenery, e.g. drove into a tree or a lamp post.
 @ $A4B0 label=csc_hit_scenery
 C $A4B0,1 Preserve AF  -- suspected left hand flag
@@ -6182,21 +6184,20 @@ C $A4BB,2 Set flags
 C $A4BD,1 Return if already crashed
 @ $A4BE label=sch_new_crash
 C $A4BE,2 Set crashed flag
-C $A4C0,4 *$B36F = A++  -- set flip flag (0/1 = right/left)
-C $A4C4,3 *$B38E = A
+C $A4C0,3 *$B36F = A  -- set flip flag (0/1 = right/left)
+C $A4C3,4 *$B38E = A + 1
 C $A4C7,5 *$B385 = 5
 C $A4CC,3 Load speed into #REGhl
 C $A4CF,1 Preserve speed
 C $A4D0,5 A = HL >> 1
 C $A4D5,8 A = (A >> 3) + 16
-C $A4DD,2 L = 24
-C $A4E2,1 L = A
+C $A4DD,6 L = MAX(24, A)
 @ $A4E3 label=sch_a4e3
 C $A4E3,3 Self modify 'LD HL,$xxxx' @ #R$B356
 C $A4E7,3 HL = A'
 C $A4EA,1 Restore speed
 C $A4EC,2 HL -= DE
-@ $A4F2 label=sch_a4f2
+@ $A4F2 label=sch_exit
 C $A4F2,3 Self modify 'LD BC' @ #R$B32E to load HL
 C $A4F5,1 Return
 c $A4F6 Fork completed
@@ -8036,14 +8037,14 @@ C $B317,1 Return
 c $B318 Animates the hero car
 D $B318 Used by the routines at #R$8401 and #R$852A.
 @ $B318 label=animate_hero_car
-C $B318,7 Jump to #R$B325 if speed > 0
-N $B31F #REGa is zero here.
+C $B318,7 Jump to #R$B325 if speed != 0
+N $B31F Speed is zero.
 C $B31F,3 Self modify 'LD A' @ #R$B3DB (below) to load zero
 C $B322,3 off_road = 0
 @ $B325 label=ahc_check_crashed
 C $B325,2 A = <self modified>  -- crashed flag set by #R$A4BE
 C $B327,3 Jump if not crashed
-N $B32A Crashed. #REGa is non-zero here.
+N $B32A Crashed.
 @ $B32A label=ahc_crashed
 C $B32A,3 cornering = A (which is non-zero here)
 C $B32D,1 Preserve speed
@@ -8056,13 +8057,13 @@ C $B336,8 Divide speed by four (#REGd becomes zero since game max speed is 511)
 C $B33E,2 A |= 3  -- perhaps rounding up
 C $B340,1 E = A
 C $B341,2 HL -= DE  -- overall expr is  new_speed = (speed - ((speed / 4) | 3))
-C $B343,2 Jump to #R$B349 if equal (to zero?)
-C $B345,2 Turn speed = 2 (fastest)
+C $B343,2 Jump to #R$B349 if equal
+C $B345,2 Turn speed = 2 (fast turning)
 C $B347,2 Jump to #R$B350 if HL > DE
 N $B349 Otherwise HL < DE.
 @ $B349 label=ahc_speed_less_or_eq
 C $B349,4 Clear crashed flag
-C $B34D,1 Turn speed = 1 (middle)
+C $B34D,1 Turn speed = 1 (normal turning)
 C $B34E,2 Jump to set turn speed
 @ $B350 label=ahc_assign_speed
 C $B350,3 Set speed to #REGhl
@@ -8990,7 +8991,7 @@ C $BA32,2 BC = HL  [keep a copy]
 C $BA34,1 HL += DE  == (*$ECxx - *$E8xx) / 2 + *$E8xx  [calc centre from left]
 C $BA35,3 *$EAxx = HL (xx = self modified) (road centre)  [store centre pos]
 C $BA38,2 DE = BC  [copy halved width again]
-C $BA3A,4 Divide BC by 2   [divide by 2 again for quarter width]
+C $BA3A,4 Divide BC by 2 again for quarter width
 C $BA3E,1 == [centre] + [quarter width]
 C $BA3F,3 *$EBxx = HL (xx = self modified) (road centre right) [store centre-right pos]
 C $BA42,2 == [[centre] + [quarter width]] - [half total width]
@@ -9329,8 +9330,8 @@ c $BDFB Map reader
 D $BDFB Used by the routines at #R$8401, #R$852A and #R$873C.
 @ $BDFB label=read_map
 C $BDFB,1 Prepare to clear
-C $BDFC,3 Clear trigger_lane_change_sfx
-C $BDFF,3 Clear trigger_passed_object_sfx
+C $BDFC,3 Clear trigger_left_hand_passed_object_sfx
+C $BDFF,3 Clear trigger_right_hand_passed_object_sfx
 C $BE02,3 Clear allow_spawning
 C $BE05,3 Load address of fast_counter
 C $BE08,4 Load speed
@@ -9348,12 +9349,12 @@ N $BE1F This entry point is used by the routine at #R$87DC.
 @ $BE1F label=rm_cycle_buffer_offset
 C $BE1F,1 Set #REGhl to address of road_buffer_offset
 C $BE20,3 Load, increment and update road_buffer_offset.lo (wrapping around)
-C $BE23,5 HL = $EE00 | (A + 95)  -- calculate final byte of lanes data
-C $BE28,7 trigger_passed_object_sfx |= *HL  -- final lanes byte
-C $BE2F,4 L += 32    -- offset 127
-C $BE33,7 trigger_lane_change_sfx |= *HL
+C $BE23,5 Point HL at first byte of right hand object data
+C $BE28,7 Set trigger_right_hand_passed_object_sfx
+C $BE2F,4 Point HL at first byte of left hand object data
+C $BE33,7 Set trigger_left_hand_passed_object_sfx
 N $BE3A -- CURVATURE --
-C $BE3A,4 L -= 96    -- offset 31
+C $BE3A,4 Step back 96 bytes to the now-end of curvature?
 N $BE3E The top nibble of each byte is a counter. The bottom nibble is curvature data.
 C $BE3E,5 Decrement down the counter nibble
 C $BE43,2 Jump to rm_save_curvature_byte if curvature_byte >= 16
@@ -9943,11 +9944,11 @@ C $C2E1,2 Next scanline ?
 C $C2E3,3 Restore original #REGsp (self modified)
 C $C2E6,1 Return
 c $C2E7 Subroutine of draw_road
-D $C2E7 This seems to get called around changes in scene, e.g. at the start of a level, after a split, before a tunnel, after a tunnel or when the final loop restarts.
+D $C2E7 This seems to get called around changes in lanes, e.g. at the start of a level, after a split, before a tunnel, after a tunnel or when the final loop restarts.
 D $C2E7 Used by the routine at #R$C452.
 R $C2E7 I:IX ... sampled: $EE60.. (road buffer lane data pointer)
 R $C2E7 I:IY ... sampled: $E301..E315 (height table pointer)
-@ $C2E7 label=draw_road_scene_change
+@ $C2E7 label=draw_road_lanes_change
 C $C2E7,2 Load #REGiy.low (distance)
 C $C2E9,2 Compare to 19
 C $C2EB,3 Jump to exit if >= 19
@@ -9964,7 +9965,7 @@ C $C2FE,2 Bit 7 of L set?
 C $C300,2 H = $EC  -- must be a top byte of address
 C $C302,2 Jump if set
 C $C304,1 H = $EB
-@ $C305 label=sub_c2e7_1
+@ $C305 label=drlc_1
 C $C305,2 Bit 4 of L set?
 C $C307,3 Jump if clear
 C $C30A,1 Unbank distance / bank masked-lane-flags
@@ -9977,7 +9978,7 @@ C $C315,3 C = IY[1]
 C $C318,2 Jump if != 4
 C $C31A,1 A = 0
 C $C31B,3 C = IY[2]
-@ $C31E label=sub_c2e7_2
+@ $C31E label=drlc_2
 C $C31E,3 Self modify 'ADD A,x' @ #R$C345
 C $C321,4 A = IY[0] - C
 C $C325,6 Jump if A was <= C
@@ -9990,7 +9991,7 @@ C $C33A,2 L = A - B
 C $C33C,1 H--
 C $C33D,8 A = (fast_counter ROR 3) & 0b00011100
 C $C345,2 A += <self modified>
-C $C347,3 Self modify 'LD HL,x' @ #R$C351 below
+C $C347,3 Self modify 'LD HL,x' @ #R$C351 below  -- stash left hand table ptr
 C $C34A,1 Swap
 C $C34B,3 DE = A
 C $C34E,2 HL -= DE
@@ -9998,7 +9999,7 @@ C $C350,1 Swap
 C $C351,3 HL = <self modified>
 C $C354,3 Jump
 N $C357 Another case.
-@ $C357 label=sub_c2e7_3
+@ $C357 label=drlc_3
 C $C357,1 Bank
 C $C358,2 Compare to 4
 C $C35A,3 Jump if non-zero
@@ -10014,7 +10015,7 @@ C $C377,1 E = *HL
 C $C378,2 L = A - B
 C $C37A,1 H--
 C $C37B,3 Jump
-@ $C37E label=sub_c2e7_4
+@ $C37E label=drlc_4
 C $C37E,1 Bank/unbank
 C $C37F,2 Compare to 2
 N $C381 This entry point is used by the routine at #R$E8CE. (PHANTOM)
@@ -10026,7 +10027,7 @@ C $C389,3 C = IY[1]
 C $C38C,2 Jump if non-zero
 C $C38E,1 A = 0
 C $C38F,3 C = IY[2]
-@ $C392 label=sub_c2e7_5
+@ $C392 label=drlc_5
 C $C392,3 Self modify 'ADD A,x' @ #R$C3BD below
 C $C395,3 A = IY[0]
 C $C398,1 A -= C
@@ -10049,7 +10050,7 @@ C $C3C2,1 HL += DE
 C $C3C3,1 Swap
 C $C3C4,3 HL = <self modified>
 C $C3C7,3 Jump
-@ $C3CA label=sub_c2e7_6
+@ $C3CA label=drlc_6
 C $C3CA,1 Swap
 C $C3CB,2 Compare to 4
 C $C3CD,2 Jump if non-zero
@@ -10067,77 +10068,72 @@ C $C3EA,1 E = *HL
 C $C3EB,2 L = A - B
 C $C3ED,1 H++
 N $C3EE Continuation point.
-@ $C3EE label=sub_c2e7_7
-C $C3EE,1 A = *HL
-C $C3EF,1 L--
-C $C3F0,1 L = *HL
-C $C3F1,1 H = A
-C $C3F2,1 Set flags
+@ $C3EE label=drlc_7
+C $C3EE,4 HL = wordat(HL); L--
+C $C3F2,1 Set/clear flags before SBC
 C $C3F3,2 HL -= DE
 C $C3F5,1 A = L
 C $C3F6,3 Jump if negative
-C $C3F9,1 Set flags
+C $C3F9,1 Set flags from A
 C $C3FA,3 Jump if positive
 C $C3FD,2 A = 127
 C $C3FF,2 Jump
 N $C401 Negative case.
-@ $C401 label=sub_c2e7_8
+@ $C401 label=drlc_8
 C $C401,1 Set flags
 C $C402,3 Jump if negative
-C $C405,2 A = $81
+C $C405,2 A = -127
 N $C407 Positive case.
-@ $C407 label=sub_c2e7_9
+@ $C407 label=drlc_9
 C $C407,1 SP++
 C $C408,4 Bit 5 of IX[0] set?
 C $C40C,2 Jump if clear
 C $C40E,5 Move SP 256 bytes back
-@ $C413 label=sub_c2e7_10
+@ $C413 label=drlc_10
 C $C413,1 L = A
 C $C414,1 B = C
 C $C415,1 A = C
 C $C416,2 Bit 7 of L set?
 C $C418,2 Jump if clear
-C $C41A,1 A = L
-C $C41B,2 A = -A
-C $C41D,1 L = A
+N $C41A Otherwise negative
+C $C41A,4 L = -L
 C $C41E,1 A = B
 C $C41F,1 Compare to L
 C $C420,2 Load opcode of 'DEC DE'
-C $C422,2 Jump if A was < L
+C $C422,2 Jump if prev A was < L
 C $C424,2 Jump
-@ $C426 label=sub_c2e7_11
+@ $C426 label=drlc_11
 C $C426,1 Compare to L
 C $C427,2 Load opcode of 'INC DE'
-C $C429,2 Jump if A was < L
-@ $C42B label=sub_c2e7_self_modify
+C $C429,2 Jump if prev A was < L
+@ $C42B label=drlc_self_modify
 C $C42B,3 Self modify instruction at #R$C435 below
 C $C42E,2 A = B >> 1
-N $C430 Divider?
-@ $C430 label=sub_c2e7_possible_divide_loop
+@ $C430 label=drlc_bresenham_loop
 C $C430,1 A = L
 C $C431,1 Compare to C
 C $C432,2 Jump if A < C
 C $C434,1 A -= C
 C $C435,1 <self modified instruction> DE++ or DE--
-@ $C436 label=sub_c2e7_14
+@ $C436 label=drlc_14
 C $C436,1 Stack DE
 C $C437,2 Loop
-@ $C439 label=sub_c2e7_15
+@ $C439 label=drlc_15
 C $C439,2 IY++
 N $C43B Four lane highway?
-@ $C43B label=sub_c2e7_16
+@ $C43B label=drlc_16
 C $C43B,3 Set instruction #R$C4B2 to call dr_four_lane_highway/#R$C534
 C $C43E,3 Jump
-@ $C441 label=sub_c2e7_17
+@ $C441 label=drlc_alt_bresenham
 C $C441,3 Self modify instruction at #R$C445
 C $C444,1 A = 0  -- init counter
-@ $C445 label=sub_c2e7_18_something_loop
+@ $C445 label=drlc_alt_bresenham_loop
 C $C445,1 <self modified instruction> DE++ or DE--
 C $C446,1 A += C
 C $C447,2 Jump if carry
 C $C449,1 Compare to L
 C $C44A,2 Loop if A < L
-@ $C44C label=sub_c2e7_19
+@ $C44C label=drlc_19
 C $C44C,1 A -= L
 C $C44D,1 Stack DE
 C $C44E,2 Loop
@@ -10207,7 +10203,7 @@ C $C4D5,3 Self modify 'LD H,x' @ #R$C5D9
 C $C4D8,3 Self modify 'LD H,x' @ #R$C68A
 C $C4DB,1 Set #REGa to $FD or $FE (from #REGc)
 C $C4DC,3 Self modify 'LD B,x' @ #R$C5AC
-C $C4DF,3 Exit via draw_road_scene_change/#R$C2E7  [this is its only caller]
+C $C4DF,3 Exit via draw_road_lanes_change/#R$C2E7  [this is its only caller]
 N $C4E2 If bit 6 was clear then it's a special road (tunnel, dirt track or forked road).
 @ $C4E2 label=dr_special_road
 C $C4E2,2 Jump to dr_dirt_track if carry set (bit 7 of lanes byte - dirt track flag)
@@ -10376,7 +10372,7 @@ C $C601,1 Put it in #REGsp (so we can use PUSH for speed)
 C $C602,1 Unbank fill byte
 C $C603,1 Rotate fill pattern so we checkerboard
 C $C604,2 Widen stripe fill byte to whole word
-C $C606,1 Unbank
+C $C606,1 Bank fill byte
 C $C607,3 Set road fill to zero (but only when drawing stripes)
 N $C60A Fill right hand road stripes - starting from right hand side.
 @ $C60A refs=:$C60A
@@ -11200,7 +11196,7 @@ C $CC6C,1 Pop road position
 C $CC6D,2 B = 0  -- not self modified
 C $CC6F,1 Bank
 C $CC70,3 SELF MODIFIED output address $ED00 or $EE00
-C $CC73,3 Call bct_cca8
+C $CC73,3 Call build_curve_table_fill
 C $CC76,3 Load fast_counter
 C $CC79,2 Take top three bits
 C $CC7B,1 Move result to #REGb
@@ -11230,7 +11226,7 @@ C $CCA2,2 Initialise total/counter
 C $CCA4,1 Unbank
 C $CCA5,3 SELF MODIFIED destination address $E900 or $EC00
 N $CCA8 Called as subroutine, also fallthrough.
-@ $CCA8 label=bct_cca8
+@ $CCA8 label=build_curve_table_fill
 C $CCA8,4 Address of height table (22 bytes long)
 C $CCAC,2 21 iterations
 C $CCAE,4 Save #REGsp to restore on exit (self modify)
@@ -12950,7 +12946,7 @@ C $ED2D,2 Advance
 C $ED2F,1 Return if no match
 C $ED30,2 Loop rdk_loop_3 while #REGb > 0
 N $ED32 Matched: Show the test mode screen.
-C $ED32,5 Set test mode fla
+C $ED32,5 Set test mode flag
 C $ED37,3 Call clear_screen
 C $ED3A,3 Load address of TEST MODE strings
 C $ED3D,3 Call menu_draw_strings
@@ -13603,7 +13599,7 @@ C $F429,5 var or self modify or ..?
 C $F42E,6 Set speed to $190
 @ $F434 label=am1_loop
 C $F434,3 Call cpu_driver
-C $F437,3 Load attract_cycle
+C $F437,3 Load controls_selected
 C $F43A,1 Set flags
 C $F43B,3 -> enter_for_options_messages
 C $F43E,2 Jump to f44b_key_check
