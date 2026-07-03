@@ -152,6 +152,10 @@ See `C/docs/function_comment_template_example.c` for a worked example.
 8. **Conv: comments** — every deliberate departure from a literal Z80
    translation is marked `// Conv: ...` explaining what changed and why.
 
+Once all eight criteria are met, add `[Conv: HQ]` to the end of the first
+line of the prologue (the `$XXXX: name` line). This makes HQ status
+greppable: `grep "\[Conv: HQ\]" ChaseHQ.c`.
+
 ## Verifying translations
 
 When a C translation looks wrong or a variable appears uninitialised, consult the skool file (`ChaseHQ.skool` or the bank files). The skool is the authoritative disassembly. Pay particular attention to:
