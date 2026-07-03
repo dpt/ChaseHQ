@@ -100,7 +100,6 @@ Generated from `grep '^ \* \$' ChaseHQ.c | grep -v '\[Conv: HQ\]'`.
 | `$9BCF` | `check_time_up` | Handle "time up", countdown and continue |
 | `$9C79` | `play_start_noise` | Extracted from check_time_up |
 | `$9CC2` | `speed_score` | Speed score |
-| `$9D62` | `update_scoreboard` | Update scoreboard |
 | `$9DF4` | `toggle_light_brightness` | Toggle light brightness |
 | `$9E11` | `plot_turbos_and_digits` | Plot turbos and digits |
 | `$9F1E` | `ptas_led_digits` | Draw LED digits |

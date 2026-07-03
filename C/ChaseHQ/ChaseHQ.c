@@ -5883,9 +5883,40 @@ static void calc_overtake_bonus(chqstate_t *state)
 }
 
 /**
- * $9D62: Update scoreboard
+ * $9D62: Refresh the scoreboard HUD for the current frame [Conv: HQ]
  *
- * Called from main loop.
+ * Covers five sections in sequence:
+ *
+ * 1. Stage display ($9D62): on the first call after a stage change
+ *    (displayed_stage == 0), formats the current stage number into the
+ *    "STAGE N" string, marks it displayed, and draws it to screen $4486.
+ *
+ * 2. Bonus trigger ($9D7C us_bonus_start): if trigger_bonus_flag is set,
+ *    clears the 5×7-pixel bonus area at screen $4168 and redraws it from
+ *    SM_address_of_score_digits (the start of the significant digits in
+ *    bonus_string, set by add_bonus via the SM field at $9D9C).  Resets
+ *    bonus_counter to 8 to start the flash sequence.
+ *
+ * 3. Bonus flash ($9DAC us_bonus_set_counter): decrements bonus_counter
+ *    each frame while it is non-zero.  Uses SRL to derive a colour: zero
+ *    → black, odd → bright red, even → bright yellow.  Writes the colour
+ *    to the five attribute cells at $5868 covering the bonus digit area.
+ *
+ * 4. Gear display ($9DC3 us_gear): redraws the "HI"/"LO" gear string at
+ *    screen $448E only when gear differs from session.displayed_gear.
+ *
+ * 5. Lights ($9DDC us_lights): when a perp is sighted and frame_toggle is
+ *    set, toggles the BRIGHT bit on the two marquee light attribute blocks.
+ *    Falls through to plot_turbos_and_digits.
+ *
+ * Conv: The Z80 instruction at $9D9B is self-modified by add_bonus ($9D0E
+ *   LD ($9D9C),HL) to point HL at the first significant digit of
+ *   bonus_string.  C models this via state->SM_address_of_score_digits.
+ * Conv: The five-byte clear loop ($9D8D) and the five-cell attribute write
+ *   ($9DBF) are replaced by memset.
+ * Conv: INC H to advance one ZX scanline is modelled as += 256 in the
+ *   pixel array.
+ * Conv: draw_string_screen passes 0/dummy attrs because style=0 ignores them.
  *
  * \param[in] state Pointer to game state.
  */
@@ -5895,44 +5926,42 @@ static void update_scoreboard(chqstate_t *state)
   static const u8 gear_hi[] = { 'H', 'I' | EOS };
   static const u8 gear_lo[] = { 'L', 'O' | EOS };
 
-  int       A_stagechar;  /* stage digit character (was A) */
-  int       A_bonus_flag; /* trigger_bonus_flag value (was A) */
-  u8       *HL_screen;    /* screen pixel pointer for bonus-area clear (was HL) */
-  int       B_iterations; /* loop counter (was B) */
-  int       A_counter;    /* bonus counter value, shared across goto (was A) */
-  int       carry;        /* SRL carry: bit 0 of A before shift */
-  int       C_attrval;    /* bonus flash attribute colour (was C) */
-  u8       *HL_attrs;     /* attribute pointer for bonus flash (was HL) */
-  int       A_gear;       /* current gear value (was A) */
+  int  A_stagechar;  /* stage digit as EOS-terminated ASCII character (was A) */
+  int  A_bonus_flag; /* trigger_bonus_flag snapshot (was A) */
+  u8  *HL_screen;    /* pixel pointer walking the bonus clear area (was HL) */
+  int  B_iterations; /* scanline loop counter for the bonus clear (was B) */
+  int  A_counter;    /* bonus counter; shared between trigger and countdown paths (was A) */
+  int  carry;        /* bit 0 of A_counter before SRL; selects red vs yellow (was carry) */
+  int  C_attrval;    /* bonus flash attribute colour written to five cells (was C) */
+  int  A_gear;       /* current gear value (was A) */
 
-  /* $9D62 — stage display: draw stage text once on first call */
+  /* $9D62 — stage display: draw stage text once per stage */
   if (state->displayed_stage == 0) {
-    A_stagechar = ('0' + state->wanted_stage_number) | EOS;
+    A_stagechar            = ('0' + state->wanted_stage_number) | EOS;
     state->stage_n[6]      = A_stagechar;
     state->displayed_stage = A_stagechar;
-    /* Conv: attrs/attrval unused by style */
     draw_string_screen(state,
                        0,
-                       ADDRTOATTRS(SCREEN_ATTRIBUTES_START_ADDRESS),
+                       ADDRTOATTRS(SCREEN_ATTRIBUTES_START_ADDRESS), /* Conv: dummy */
                        ADDRTOSCREEN(0x4486),
                        &state->stage_n[0]);
   }
 
-  /* $9D7C us_bonus_start — bonus digit trigger */
+  /* $9D7C us_bonus_start — draw new bonus value if flagged */
   A_bonus_flag = state->trigger_bonus_flag;
   if (A_bonus_flag != 0) {
     state->trigger_bonus_flag = 0;
-    /* $9D86 — clear 5 x 7 pixel area at screen $4168 */
-    HL_screen = ADDRTOSCREEN(0x4168);
+    /* $9D86 — clear 5×7 pixel area at screen $4168 */
+    HL_screen    = ADDRTOSCREEN(0x4168);
     B_iterations = 7;
     do {
-      memset(HL_screen, 0, 5); /* Conv: use memset */
-      HL_screen += 256; /* Conv: INC H advances one scanline = +256 in pixel array */
+      memset(HL_screen, 0, 5);
+      HL_screen += 256; /* Conv: INC H = one ZX scanline = +256 in pixel array */
     } while (--B_iterations);
-    /* $9D9B — draw bonus score digits at screen $4168 */
+    /* $9D9B — draw bonus digits; HL is self-modified by add_bonus ($9D0E) */
     draw_string_screen(state,
                        0,
-                       ADDRTOATTRS(SCREEN_ATTRIBUTES_START_ADDRESS),
+                       ADDRTOATTRS(SCREEN_ATTRIBUTES_START_ADDRESS), /* Conv: dummy */
                        ADDRTOSCREEN(0x4168),
                        state->SM_address_of_score_digits);
     A_counter = 8;
@@ -5944,32 +5973,31 @@ static void update_scoreboard(chqstate_t *state)
     A_counter--;
   }
 
-  /* $9DAC - set bonus counter */
+  /* $9DAC us_bonus_set_counter */
   state->bonus_counter = A_counter;
-  /* $9DAF — SRL: capture bit 0 then shift; carry determines red vs yellow */
-  carry = A_counter & 1;
+  /* $9DAF — SRL: bit 0 → carry, result → C; zero = no colour, odd = red, even = yellow */
+  carry     = A_counter & 1;
   A_counter >>= 1;
-  C_attrval = A_counter;
+  C_attrval  = A_counter;
   if (C_attrval != 0)
-    C_attrval = (carry) ? attribute_BRIGHT_RED_OVER_BLACK : attribute_BRIGHT_YELLOW_OVER_BLACK;
+    C_attrval = carry ? attribute_BRIGHT_RED_OVER_BLACK : attribute_BRIGHT_YELLOW_OVER_BLACK;
   /* $9DBA — write colour to 5 attribute cells at $5868 */
-  memset(ADDRTOATTRS(0x5868), C_attrval, 5); /* Conv: use memset */
+  memset(ADDRTOATTRS(0x5868), C_attrval, 5);
 
 us_gear:
-  /* $9DC3 — gear display: redraw only when gear changes */
+  /* $9DC3 — gear display: redraw only on change */
   A_gear = state->gear;
-  /* $9DC9 */
   if (A_gear != state->session.displayed_gear) {
     state->session.displayed_gear = (u8)A_gear;
-    /* $9DCF — Conv: AND A/JR Z collapsed to ternary selecting gear string */
+    /* Conv: Z80 AND A / JR Z selects LO string when A=0; collapsed to ternary */
     draw_string_screen(state,
                        0,
-                       ADDRTOATTRS(SCREEN_ATTRIBUTES_START_ADDRESS),
+                       ADDRTOATTRS(SCREEN_ATTRIBUTES_START_ADDRESS), /* Conv: dummy */
                        ADDRTOSCREEN(0x448E),
                        (A_gear == 0) ? gear_lo : gear_hi);
   }
 
-  /* $9DDC us_lights */
+  /* $9DDC us_lights — toggle marquee lights while perp is sighted */
   if (state->sighted_flag & state->frame_toggle) {
     toggle_light_brightness(state, ADDRTOATTRS(MARQUEELIGHT_LEFT_ATTR_ADDR));
     toggle_light_brightness(state, ADDRTOATTRS(MARQUEELIGHT_RIGHT_ATTR_ADDR));
