@@ -8859,23 +8859,37 @@ dss_bitmaps:
 }
 
 /**
- * $AA38: Draw helicopter
+ * $AA38: draw_helicopter [Conv: HQ]
  *
- * \param[in] state       Pointer to game state.
- * \param[in] Biterations Biterations.
- * \param[in] IYheight Height table pointer. (was IY)
+ * Renders the helicopter sprite at the current frame. Returns immediately
+ * unless Biterations equals 3, the only distance at which the helicopter
+ * is visible.
+ *
+ * The rotor animation position is derived by multiplying the top three bits
+ * of fast_counter by the height delta IY[79] − IY[78], using an 8-bit
+ * shift-and-add loop. The high byte of the result, halved, becomes
+ * dh_heli_rotor_pos. The body y-offset is computed from dh_heli_vert_base
+ * minus IY[78].
+ *
+ * Five body parts are drawn in a loop via draw_helicoper_part, followed by
+ * a sixth rotor entry drawn separately using the self-modified rotor position.
+ *
+ * \param[in] state        Pointer to game state.
+ * \param[in] Biterations  Distance counter; must equal 3 to render. (was B)
+ * \param[in] IYheight     Pointer into the height table. (was IY)
  */
 static void draw_helicopter(chqstate_t *state, int Biterations, u8 *IYheight)
 {
-  int                   carry = 0;
-  int                   diff;            /* was DE */
-  u16                   total;           /* was HL */
-  u8                    fast_counter;    /* was A */
-  int                   Biterations2;    /* was B */
-  u8                    Atotal;          /* was A */
-  int                   frame;           /* was A */
-  const heli_bitmap_t (*helibitmaps)[SPRITE_FRAMES]; /* was HL */
-  const heli_bitmap_t  *helibitmap;      /* was DE */
+  int                   carry;           /* carry from RLA in the rotor multiply loop (carry) */
+  int                   diff;            /* height delta IY[79] − IY[78], multiply operand (was DE) */
+  u16                   total;           /* shift-and-add multiply accumulator (was HL) */
+  u8                    fast_counter;    /* top three bits of fast_counter, shifted through multiply (was A) */
+  int                   Biterations2;    /* loop counter: 8 for multiply, 5 for body-part draw (was B) */
+  u8                    Atotal;          /* high byte of multiply result, halved for rotor position (was A) */
+  int                   frame;           /* animation frame index: anim_counter bit 0 selects bitmap set (was A) */
+  const heli_bitmap_t (*helibitmaps)[SPRITE_FRAMES]; /* pointer to current helicopter bitmap LOD table (was HL) */
+  const heli_bitmap_t  *helibitmap;      /* current bitmap entry for each body part drawn (was DE) */
+  carry = 0;
 
   if (Biterations != 3)
     return;
@@ -8970,20 +8984,30 @@ static void draw_helicoper_part(chqstate_t                *state,
 }
 
 /**
- * $AAC6: Move helicopter
+ * $AAC6: move_helicopter [Conv: HQ]
  *
- * Called from main loop.
+ * Advances the helicopter's position and animation each frame. Returns
+ * immediately if helicopter_control is zero.
+ *
+ * The vertical position (mh_height) descends by 2 pixels per frame toward
+ * 97. The animation frame cycles 0–3; when it wraps back to 0 the horizontal
+ * swing direction is negated. The direction value accumulates into mh_offset
+ * which, added to height, gives dh_heli_vert_base for the draw function.
+ *
+ * The horizontal screen position dhl_helipos is updated by adding the
+ * road_pos delta since the last frame. The result is then stepped 8 pixels
+ * per frame toward the screen centre (112), clamping when it would overshoot.
  *
  * \param[in] state Pointer to game state.
  */
 static void move_helicopter(chqstate_t *state)
 {
-  int height;     /* was A & C */
-  int direction;  /* was A */
-  int offset;     /* was A */
-  int helipos;    /* was HL */
-  int newhelipos; /* was HL */
-  int centre;     /* was DE */
+  int height;      /* helicopter height SM field, descending toward 97 each frame (was A, then C) */
+  int direction;   /* horizontal swing direction: +1 or −1, negated each anim cycle (was A) */
+  int offset;      /* accumulated swing offset, added to height for dh_heli_vert_base (was A) */
+  int helipos;     /* horizontal position: dhl_helipos adjusted by road_pos delta (was HL) */
+  int centre;      /* screen centre column target for helipos: 112 (was DE) */
+  int newhelipos;  /* updated helipos after one 8-pixel step toward centre (was HL) */
 
   if (state->helicopter_control == 0)
     return;
@@ -9033,20 +9057,34 @@ set_newpos:
 }
 
 /**
- * $AB33: Drive helicopter
+ * $AB33: drive_helicopter [Conv: HQ]
  *
- * Called from main loop.
+ * State machine controlling the helicopter event sequence. Returns
+ * immediately if helicopter_control is zero.
+ *
+ * States on entry:
+ *   1: set centre_y to −56 and transition to state 2.
+ *   2: helicopter on approach; waits until dhl_helipos reaches 0 then
+ *      disables the helicopter (state 0).
+ *   3: helicopter turning left; initialise SM fields, play pilot chatter
+ *      and set centre_y to 112, transition to state 5.
+ *   4: helicopter turning right; same as state 3 with right-turn chatter.
+ *   5+: not yet active; return immediately.
+ *
+ * When the helicopter is enabled, dee_draw_helicopter is set to 1 and the
+ * call site at $8FA4 is self-modified to CALL draw_helicopter. When disabled
+ * it is patched back to NOPs.
  *
  * \param[in] state Pointer to game state.
  */
 static void drive_helicopter(chqstate_t *state)
 {
-  int       heli_ctl;     /* was A */
-  int       helipos;      /* was A */
-  int       draw_heli;    /* was A */
-  int       new_heli_ctl; /* was A */
-  int       HL_ab06;      /* was HL */
-  const u8 *chatterblk;   /* was HL */
+  int       heli_ctl;      /* helicopter_control value on entry; decremented to dispatch (was A) */
+  int       helipos;       /* dhl_helipos low byte; checked for zero in state 2 (was A) */
+  int       draw_heli;     /* 1 to enable helicopter rendering, 0 to disable (was A) */
+  int       new_heli_ctl;  /* new value to write back to helicopter_control (was A) */
+  int       HL_centre_y;   /* starting centre_y for mh_heli_centre_y: −56 or 112 (was HL) */
+  const u8 *chatterblk;    /* pointer to pilot chatter block for turn-left or turn-right (was HL) */
 
   heli_ctl = state->helicopter_control;
   if (heli_ctl == 0)
@@ -9069,7 +9107,7 @@ static void drive_helicopter(chqstate_t *state)
   goto hc_exit;
 
 hc_1:
-  HL_ab06 = -56;
+  HL_centre_y = -56;
   new_heli_ctl = 2; // New value for helicopter_control is 2
   goto hc_set_draw;
 
@@ -9090,12 +9128,12 @@ hc_pick_direction:
   state->mh_offset      = 0;
   state->mh_direction   = 1;
   start_chatter(state, 15, chatterblk);
-  HL_ab06 = 112;
+  HL_centre_y = 112;
   // Set starting vertical position of the helicopter.
   state->mh_height = 133;
   new_heli_ctl = 5; // New value for helicopter_control is 5
 hc_set_draw:
-  state->mh_heli_centre_y = HL_ab06;
+  state->mh_heli_centre_y = HL_centre_y;
   draw_heli = 1; // true
 hc_exit:
   state->dee_draw_helicopter = draw_heli;
