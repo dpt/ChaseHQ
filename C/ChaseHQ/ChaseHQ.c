@@ -14559,9 +14559,17 @@ static int8_t multiply(int8_t a, int8_t c)
 }
 
 /**
- * $E810: Entrypt 48K
+ * $E810: 48K game entry point [Conv: HQ]
+ *
+ * Initialises the game for 48K mode. Sets the 128K mode flag to zero and
+ * calls the common entry path with a relocation count of three.
+ *
+ * In the Z80 version the mode flag is set via XOR A, B is loaded with 3,
+ * then JP $E81D transfers control to entry_common.
  *
  * \param[in] state Pointer to game state.
+ *
+ * Conv: Z80 uses JP $E81D; C calls entry_common directly.
  */
 static void entry_48k(chqstate_t *state)
 {
@@ -14569,9 +14577,18 @@ static void entry_48k(chqstate_t *state)
 }
 
 /**
- * $E816: Entrypt 128K
+ * $E816: 128K game entry point [Conv: HQ]
+ *
+ * Initialises the game for 128K mode. Clears the playfield attribute file,
+ * sets the 128K mode flag to one and calls the common entry path with a
+ * relocation count of five.
+ *
+ * In the Z80 version the code falls through from $E816 into entry_common
+ * at $E81D after storing A (mode flag) and B (relocation count).
  *
  * \param[in] state Pointer to game state.
+ *
+ * Conv: Z80 falls through to $E81D; C calls entry_common explicitly.
  */
 static void entry_128k(chqstate_t *state)
 {
@@ -14633,19 +14650,40 @@ static void entry_common(chqstate_t *state, int Amode_128k, int Bnrelocs)
 }
 
 /**
- * $E8FE: "Stop the tape" handler (48K mode only)
+ * $E8FE: Display "Stop the tape" and collect the controller choice [Conv: HQ]
+ *
+ * Initialises interrupts and music, clears the screen and shows the
+ * "STOP THE TAPE / PRESS ANY KEY" message to prompt the user to stop the
+ * cassette player. After a key press and release, an input selection menu
+ * (Sinclair, Cursor or Kempston joystick, or keyboard) is displayed and
+ * the chosen controller is stored in controls_selected.
+ *
+ * Only reached in 48K mode; entry_128k does not call this function.
  *
  * \param[in] state Pointer to game state.
+ *
+ * Conv: Removed. The C host loads the game directly without tape loading,
+ *   so neither the tape prompt nor the controller menu is needed.
  */
 void stop_the_tape_48k(chqstate_t *state)
 {
 }
 
 /**
- * $EBF7: Draws menu strings until it hits a NUL byte
+ * $EBF7: Draw a NUL-terminated sequence of menu string records [Conv: HQ]
+ *
+ * Calls menu_draw_string repeatedly, advancing through the record list,
+ * until a zero byte is found at the start of the next record.
+ *
+ * In the Z80 version this is a tight three-instruction loop: CALL $EBFF;
+ * LD A,(HL); AND A; RET Z; JR loop. C uses a do-while to preserve the
+ * Z80 "call first, check after" ordering.
  *
  * \param[in] state   Pointer to game state.
- * \param[in] strings List of menu strings to draw. NUL terminated. (was HL)
+ * \param[in] strings Pointer to the first menu string record. (was HL)
+ *
+ * Conv: Z80 loop uses JR and RET Z; C uses a do-while. Behaviour is
+ *   identical: the terminator check follows each draw call.
  */
 void menu_draw_strings(chqstate_t *state, const u8 *strings)
 {
@@ -15689,9 +15727,17 @@ static u8 call_bank_3_128k(chqstate_t *state, int HLroutine)
 }
 
 /**
- * $F3E2: Page 128K
+ * $F3E2: Copy 128K memory banks for audio playback [Conv: HQ]
+ *
+ * Iterates across four 4 KB windows starting at $C000. For each window,
+ * copies 4096 bytes to $B000, calls setup_engine_sfx, then replays the
+ * window byte-by-byte via LDI with a write-back before calling
+ * reset_paging_128k to restore the memory pager. Driven entirely by 128K
+ * hardware memory-bank switching.
  *
  * \param[in] state Pointer to game state.
+ *
+ * Conv: Removed. C has no 128K memory-paging hardware to drive.
  */
 static void page_128k(chqstate_t *state)
 {
@@ -15699,9 +15745,14 @@ static void page_128k(chqstate_t *state)
 }
 
 /**
- * $F414: Reset paging 128K
+ * $F414: Reset the 128K memory pager to bank 0 [Conv: HQ]
+ *
+ * Writes zero to the 128K paging register at port $7FFD via OUT (C),A,
+ * restoring the default memory layout (ROM 0, RAM bank 0, screen 0).
  *
  * \param[in] state Pointer to game state.
+ *
+ * Conv: Removed. C has no hardware OUT port for 128K memory paging.
  */
 static void reset_paging_128k(chqstate_t *state)
 {

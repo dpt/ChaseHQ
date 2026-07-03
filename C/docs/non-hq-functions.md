@@ -144,11 +144,7 @@ Generated from `grep '^ \* \$' ChaseHQ.c | grep -v '\[Conv: HQ\]'`.
 | `$C8E3` | `draw_forked_road` | Forked road plotter |
 | `$CBC5` | `backdrop_fill_dispatch` | Backdrop fill choice (height diff >= $50 in forked road) |
 | `$CBD6` | `build_curve_table` | Build curve table |
-| `$E810` | `entry_48k` | Entry point 48K |
-| `$E816` | `entry_128k` | Entry point 128K |
 | `$E81D` | `entry_common` | Entry point common |
-| `$E8FE` | `stop_the_tape_48k` | "Stop the tape" handler (48K only) |
-| `$EBF7` | `menu_draw_strings` | Draw menu strings until a NUL byte |
 | `$ECF3` | `redefine_keys_48k` | Redefine keys 48K |
 | `$ED4D` | `keyscan_all` | Keyscan |
 | `$ED6D` | `define_a_key` | Define a single key |
@@ -171,6 +167,4 @@ Generated from `grep '^ \* \$' ChaseHQ.c | grep -v '\[Conv: HQ\]'`.
 | `$F342` | `play_speech_128k` | Play speech 128K |
 | `$F39F` | `handle_perp_caught_128k` | Handle perp caught 128K |
 | `$F3B6` | `call_bank_3_128k` | Call bank 3 128K |
-| `$F3E2` | `page_128k` | Page 128K |
-| `$F414` | `reset_paging_128k` | Reset paging 128K |
 | `$F41B` | `attract_mode_128k` | Attract mode 128K |
