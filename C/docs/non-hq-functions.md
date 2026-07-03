@@ -15,11 +15,6 @@ Generated from `grep '^ \* \$' ChaseHQ.c | grep -v '\[Conv: HQ\]'`.
 | `$9174` | `draw_stretchy_object_common` | Draw stretchy objects (e.g. trees) |
 | `$929A` | `draw_object_left_helicopter_entrypt` | Draw object left helicopter entry point |
 | `$930E` | `draw_object_perspective_entrypt` | Draw object: compute perspective height/width and dispatch |
-| `$A399` | `check_scenery_collisions` | Check scenery collisions |
-| `$A4B0` | `csc_hit_scenery` | Arrive here if hit scenery (e.g. drove into a tree or lamp post) |
-| `$A4B8` | `scenery_hit` | Scenery hit |
-| `$A4F6` | `check_fork_scenery_collisions` | Check fork scenery collisions |
-| `$A579` | `layout_objects` | Layout objects |
 | `$A637` | `perp_behaviour` | Perp behaviour |
 | `$A7F3` | `spawn_cars` | Spawn cars |
 | `$A89C` | `get_spawn_lanes` | Get spawn lanes |

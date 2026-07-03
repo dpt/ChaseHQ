@@ -7489,39 +7489,60 @@ static int keyscan_inner(const chqstate_t *state, int Ainput)
 }
 
 /**
- * $A399: Check scenery collisions
+ * $A399: Test for off-road and object collisions each frame [Conv: HQ]
  *
- * Called from main loop.
+ * Checks whether the hero car has gone off-road or struck a roadside object:
+ *
+ * 1. Fork shortcut: if the fork is visible and fork_countdown is zero,
+ *    delegates entirely to check_fork_scenery_collisions and returns.
+ *
+ * 2. Left/right edge: reads xpos_road_centre[127] and [126] to determine
+ *    whether the car is on-road (0), partially off-road (1) or fully
+ *    off-road (2).  Inside a tunnel, off-road means hitting a wall; the
+ *    road_pos high byte selects which wall.  The result is stored in
+ *    state->off_road and state->ahc_crash_spin.
+ *
+ * 3. Object collision: reads right- then left-side object IDs from the
+ *    road buffer, looks up their collision thresholds, and calls
+ *    csc_hit_scenery if the car's x position falls within the zone.
  *
  * \param[in] state Pointer to game state.
+ *
+ * Conv: EXX at entry banks HLdash_road_pos_a/$0048 and DEdash_road_pos_b/
+ * $01D8 into shadow registers as default ahc_road_pos values; a second EXX
+ * inside the tunnel path overwrites them with tunnel-specific values.  C
+ * models both banks as named locals that are written to state fields at
+ * store_crash_spin.
  */
 static void check_scenery_collisions(chqstate_t *state)
 {
-  int          carry = 0;
-  int          HLdash_road_pos_a; /* was HL' */
-  int          DEdash_road_pos_b; /* was DE' */
-  int          Afork_countdown;   /* was A */
-  s16          HLxpos;            /* was HL' */
-  int          Aoff_road;         /* was A */
-  int          Ccrash_spin;       /* was C */
-  u8          *HLbufptr;          /* was HL' */
-  u8           Alanes;            /* was A */
-  int          Ztunnel_body;      /* was Z */
-  int          Aroad_pos_hi;      /* was A */
-  int          Croad_pos_hi;      /* was C' */
-  int          Aspeed;            /* was A */
-  int          Adash_flip;        /* was A' */
-  int          Adash;
-  u8           A;
-  int          Aobj;
-  const obj_t *HLobj;
-  int          BCdash_max;
-  int          DEdash_min;
-  int          Aspeed_cap;
-  int          BCdash_min;
-  int          DEdash_max;
-  int          raw_byte1;    /* first road-buffer byte before OR */
-  int          raw_byte2;    /* second road-buffer byte after optional INC */
+  int          carry;             /* carry from RL operations testing the road buffer (carry) */
+  int          HLdash_road_pos_a; /* road position A, banked to shadow HL, written to ahc_road_pos_a (was HL') */
+  int          DEdash_road_pos_b; /* road position B, banked to shadow DE, written to ahc_road_pos_b (was DE') */
+  int          Afork_countdown;   /* fork_countdown snapshot; decremented to detect imminent fork (was A) */
+  s16          HLxpos;            /* x position from xpos_road_centre, used for boundary checks (was HL') */
+  int          Aoff_road;         /* off-road level: 0=on, 1=one wheel off, 2=both wheels off (was A) */
+  int          Ccrash_spin;       /* crash spin type: 0=none, 1=left tunnel wall, 2=right wall (was C) */
+  u8          *HLbufptr;          /* pointer into the road buffer at the relevant object offset (was HL') */
+  u8           Alanes;            /* road buffer lanes byte, tested for tunnel/fork/dirt flags (was A) */
+  int          Ztunnel_body;      /* non-zero when inside a tunnel body (not a portal) (was Z flag) */
+  int          Aroad_pos_hi;      /* high byte of road_pos, distinguishes left/right tunnel wall (was A) */
+  int          Croad_pos_hi;      /* road_pos high byte saved to shadow C before scenery_hit call (was C') */
+  int          Aspeed;            /* speed cap (20) passed to scenery_hit for tunnel wall impact (was A) */
+  int          Adash_flip;        /* flip flag for tunnel wall: low bit of road_pos high byte (was A') */
+  int          Adash;             /* road buffer offset banked to shadow A via EX AF,AF' (was A') */
+  u8           A;                 /* road buffer forward index used for RL carry test (was A) */
+  int          Aobj;              /* object ID byte OR'd from two consecutive road buffer positions (was A) */
+  const obj_t *HLobj;             /* pointer to the struck object's data record (was HL') */
+  int          BCdash_max;        /* upper x collision threshold from right-side object data (was BC') */
+  int          DEdash_min;        /* lower x collision threshold from right-side object data (was DE') */
+  int          Aspeed_cap;        /* impact speed cap read from object data (was A') */
+  int          BCdash_min;        /* lower x collision threshold from left-side object data (was BC') */
+  int          DEdash_max;        /* upper x collision threshold from left-side object data (was DE') */
+  int          raw_byte1;         /* first road-buffer byte before OR (no Z80 register) */
+  int          raw_byte2;         /* second road-buffer byte after optional pointer advance (no Z80 register) */
+
+  carry = 0;
 
   // Note: EXX is treated as a 'stash' operation in this routine.
 
@@ -7691,11 +7712,16 @@ store_crash_spin:
 }
 
 /**
- * $A4B0: Arrive here if hit scenery, e.g. drove into a tree or a lamp post.
+ * $A4B0: Play the scenery-hit sound then initiate the crash sequence [Conv: HQ]
+ *
+ * Plays EFFECT_SCENERY_HIT at priority 3, then falls through to scenery_hit
+ * to set up the crash state.  Called when the hero car drives into a tree,
+ * lamp post or other roadside object.
  *
  * \param[in] state       Pointer to game state.
- * \param[in] Aflip_flag  Flip flag. (was A)
- * \param[in] Adash_speed Crash speed threshold. (was A')
+ * \param[in] Aflip_flag  Flip flag: 0 = right-side hit, 1 = left-side hit.
+ *                        (was A)
+ * \param[in] Adash_speed Impact speed cap passed to scenery_hit. (was A')
  */
 static void csc_hit_scenery(chqstate_t *state, int Aflip_flag, int Adash_speed)
 {
@@ -7704,18 +7730,29 @@ static void csc_hit_scenery(chqstate_t *state, int Aflip_flag, int Adash_speed)
 }
 
 /**
- * $A4B8: Scenery hit
+ * $A4B8: Set up the crash state after a scenery or tunnel-wall impact [Conv: HQ]
+ *
+ * Guards against double-entry (returns immediately if already crashed).
+ * Computes the initial crash spin speed as max(24, speed/16 + 16) and the
+ * crash speed threshold as min(Adash_threshold, current speed).  Writes
+ * the crash flags, flip direction, delay counter, spin speed and speed
+ * threshold into the appropriate state fields.
  *
  * \param[in] state           Pointer to game state.
- * \param[in] Aflip_flag      Flip flag. (was A)
- * \param[in] Adash_threshold Crash speed threshold. (was A')
+ * \param[in] Aflip_flag      Flip flag: 0 = right-side, 1 = left-side. (was A)
+ * \param[in] Adash_threshold Speed cap for the crash: the animation starts
+ *                            at min(speed, threshold). (was A')
+ *
+ * Conv: Z80 self-modifies operands at $B357 (spin speed) and $B32F (threshold)
+ * via LD (addr),HL; C writes directly to state->ahc_crash_spin_speed and
+ * state->ahc_crash_speed_threshold.
  */
 static void scenery_hit(chqstate_t *state, int Aflip_flag, int Adash_threshold)
 {
-  int speed;        /* was HL */
-  int scaled_speed; /* was A */
-  int spin_speed;   /* was L */
-  int threshold;    /* was HL */
+  int speed;        /* hero car speed at time of impact (was HL) */
+  int scaled_speed; /* speed scaled to crash spin rate: speed/16 + 16 (was A) */
+  int spin_speed;   /* actual spin speed: max(24, scaled_speed) (was L) */
+  int threshold;    /* crash speed cap: min(Adash_threshold, speed) (was HL) */
 
   if (state->ahc_crashed_flag)
     return; /* already crashed */
@@ -7742,23 +7779,31 @@ static void scenery_hit(chqstate_t *state, int Aflip_flag, int Adash_threshold)
 }
 
 /**
- * $A4F6: Check fork scenery collisions
+ * $A4F6: Check off-road and pole collisions at a road fork [Conv: HQ]
+ *
+ * Variant of check_scenery_collisions used when the road fork is visible and
+ * fork_countdown has reached zero.  Uses xpos_road_left[127] and
+ * xpos_road_fork_right[126] rather than the normal centre tables to detect
+ * off-road, and checks the short pole object on whichever side of the fork
+ * the player did NOT take.
  *
  * \param[in] state  Pointer to game state.
- * \param[in] DEdash Dedash.
- * \param[in] HLdash Hldash.
+ * \param[in] DEdash Road position B value inherited from check_scenery_collisions;
+ *                   stored directly to ahc_road_pos_b. (was DE')
+ * \param[in] HLdash Road position A value inherited from check_scenery_collisions;
+ *                   stored directly to ahc_road_pos_a. (was HL')
  */
 static void check_fork_scenery_collisions(chqstate_t *state,
                                           int         DEdash,
                                           int         HLdash)
 {
-  int          pos;            /* was HL */
-  int          off_road;       /* was A */
-  const obj_t *shortpoleobj;   /* was HL */
-  int          hit_max_or_min; /* was BC' */
-  int          hit_min_or_max; /* was DE' */
-  int          A;              /* was A */
-  int          pos2;           /* was HL' */
+  int          pos;            /* x position from road table used for off-road check (was HL) */
+  int          off_road;       /* off-road level: 0=on, 1=one wheel off, 2=both off (was A) */
+  const obj_t *shortpoleobj;   /* pointer to the short pole object on the non-taken fork side (was HL) */
+  int          hit_max_or_min; /* upper collision threshold from the pole object data (was BC') */
+  int          hit_min_or_max; /* lower collision threshold from the pole object data (was DE') */
+  int          A;              /* impact_speed_cap loaded from object but overridden to 0x8C (was A) */
+  int          pos2;           /* x position from xpos_road_centre for the final collision test (was HL') */
 
   pos = state->xpos_road_left[127];
   off_road = 0;
@@ -7808,30 +7853,51 @@ set_off_road:
 }
 
 /**
- * $A579: Layout objects
+ * $A579: Populate the object x-position pairs for the current frame [Conv: HQ]
  *
- * Called from main loop.
+ * Two passes over up to 21 road slots:
+ *
+ * 1. Prefix-sum ($A57F): walks object_positions[] and converts the run of
+ *    per-slot sizes into cumulative totals, so each entry holds the starting
+ *    offset of that slot's object strip.
+ *
+ * 2. Position fill ($A5A7): for each slot reads the lanes byte from the
+ *    road buffer, then pushes a (left, right) pair of s16 x positions onto a
+ *    stack that grows down from $EB00 (xpos_road_centre_right[]).  The lane
+ *    offset bits (bits 1:0) select which xpos table to use for the left
+ *    boundary; bits 7:2 determine the right boundary table via a separate
+ *    lane-shift calculation.  Fork slots use the centre and centre-right
+ *    tables directly.
  *
  * \param[in] state Pointer to game state.
+ *
+ * Conv: Z80 uses SP as a descending stack pointer into $EB00; C uses an
+ * explicit s16 pointer SP walked with prefix decrement.
+ * Conv: Z80 byte offset L' = (~(IY[0]*2)) & 0xFF; C translates directly to
+ * the s16 array index 127 - (objpos2[0] & 0x7F).
+ * Conv: EXX banks DE (lanes byte) and IY/HL' (tables) around the inner
+ * loop body; C uses distinct named locals.
  */
 static void layout_objects(chqstate_t *state)
 {
-  int       carry = 0;
-  u8       *objpos;       /* was HL */
-  int       iterations;   /* was B */
-  int       total;        /* was A */
-  s16      *SP;
-  u8       *bufptr;       /* was DE */
-  const u8 *objpos2;      /* was IY */
-  int       countdown;    /* was A */
-  int       lanesbyte;    /* was A */
-  u8        lanesbyte2;   /* was E' */
-  int       Ldash;
-  int       laneoffset;   /* was A */
-  s16      *tabptr;       /* was HL' */
-  int       laneshift;    /* was A */
-  int       L;
-  int       A;
+  int       carry;      /* carry from RL(lanesbyte2), selects tunnel vs. fork/dirt path (carry) */
+  u8       *objpos;     /* pointer walking object_positions[] in the prefix-sum pass (was HL) */
+  int       iterations; /* loop countdown: 21 slots, or fork_countdown for the fork path (was B) */
+  int       total;      /* running prefix sum accumulated across object_positions[] (was A) */
+  s16      *SP;         /* descending stack pointer into xpos_road_centre_right[] (was SP) */
+  u8       *bufptr;     /* pointer to current road-buffer lane byte for this slot (was DE) */
+  const u8 *objpos2;    /* pointer walking object_positions[] in the position-fill pass (was IY) */
+  int       countdown;  /* fork_countdown snapshot used to split normal vs. fork iterations (was A) */
+  int       lanesbyte;  /* lanes byte read from road buffer before EXX bank (was A) */
+  u8        lanesbyte2; /* lanes byte after EXX, rotated to test fork/tunnel/dirt flags (was E') */
+  int       Ldash;      /* xpos table row index: 127 - (objpos2[0] & 0x7F) (was L') */
+  int       laneoffset; /* lane offset bits 1:0 from lanesbyte2, selects left table (was A) */
+  s16      *tabptr;     /* pointer into the selected xpos table for right-boundary lookup (was HL') */
+  int       laneshift;  /* right-boundary table selector, derived from lanes byte bit pattern (was A) */
+  int       L;          /* xpos row index for the fork tail pass (was L) */
+  int       A;          /* remaining slots for the fork tail pass: 21 - fork_countdown (was A) */
+
+  carry = 0;
 
   objpos = &state->object_positions[0];
   iterations = 21; // iterations
