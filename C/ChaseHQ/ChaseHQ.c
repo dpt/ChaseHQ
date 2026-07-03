@@ -9772,11 +9772,23 @@ dh_call_handler:
 }
 
 /**
- * $AECF: Draw arrow fire smoke
+ * $AECF: draw_arrow_fire_smoke [Conv: HQ]
  *
- * \param[in] state       Pointer to game state.
- * \param[in] Biterations Iterations.
- * \param[in] IYheight    IYheight register value.
+ * Per-hazard render callback invoked for each depth-sorted draw-list entry
+ * whose distance matches Biterations. Returns immediately if the first
+ * draw-table word does not match.
+ *
+ * For each hazard at the current depth it fetches the bitmap via the LOD
+ * table, computes the screen x position from horz_pos/horz_clip and dispatches
+ * to draw_object_left/right_helicopter_entrypt. The perp-car path
+ * (hazard_flags == 0xFF) additionally saves the position into SM fields used
+ * by dh_draw_bitmap, then draws: the floating "HERE!" arrow (if smash_level
+ * < 5), fire overlays (if smash_level >= 4) and trailing smoke (smash_level
+ * 1–3 via a fallthrough switch).
+ *
+ * \param[in] state        Pointer to game state.
+ * \param[in] Biterations  Current draw depth; must match draw-table entry. (was B)
+ * \param[in] IYheight     Pointer into the height table. (was IY)
  */
 static void draw_arrow_fire_smoke(chqstate_t *state,
                                   int         Biterations,
@@ -9814,22 +9826,22 @@ static void draw_arrow_fire_smoke(chqstate_t *state,
     0xFE, 0x00
   };
 
-  s16            *HLtable;             /* was HL */
-  int             A;                   /* was A */
-  u8              Awidth_bytes;        /* was A */
-  int             Asmash_level;        /* was A */
-  int             DEbitmapoffset;      /* was DE */
-  const bitmap_t *HLbitmap;            /* was HL */
-  int             Ewidth_bits;         /* was E */
-  const hazard_t *IXhazard;            /* was IX */
-  u8              Bx;                  /* was B */
-  u8              Cy;                  /* was C */
-  int             Ahorz_clip;          /* was A */
-  const u8       *HLarrows;            /* was HL */
-  const u8       *HLsmokes;            /* was HL */
-  u8              Ahorz_pos;           /* was A */
-  int             Aindex;              /* was A */
-  int             Asmash_level_scaled; /* was A */
+  s16            *HLtable;             /* pointer into the depth-sorted draw table at dh_xpos_table (was HL) */
+  int             A;                   /* Biterations copy: distance comparison and LOD index (was A) */
+  int             DEbitmapoffset;      /* bitmap frame index × 7: byte offset into hittable.bitmaps (was DE) */
+  const hazard_t *IXhazard;            /* hazard slot loaded from the current draw-list entry (was IX) */
+  const bitmap_t *HLbitmap;            /* selected bitmap for the current hazard (was HL) */
+  int             Ewidth_bits;         /* pixel width of selected bitmap: width_bytes * 8 (was E) */
+  int             Ahorz_clip;          /* hazard's horizontal clip flag: zero=on-screen, non-zero=clipped (was A) */
+  u8              Ahorz_pos;           /* hazard's horizontal screen position (was A) */
+  u8              Awidth_bytes;        /* perp-path copy of Ahorz_clip, repurposed as width accumulator (was A) */
+  int             Aindex;              /* smoke_bitmap_index: LOD level for the arrow offset lookup (was A) */
+  const u8       *HLarrows;            /* pointer into arrow_offsets for the floating arrow x,y (was HL) */
+  int             Asmash_level;        /* smash_level at time of fire/smoke dispatch (was A) */
+  int             Asmash_level_scaled; /* (smash_level − 4) * 4 plus animation frame offset (was A) */
+  const u8       *HLsmokes;            /* pointer into smoke_offsets for the smoke x,y (was HL) */
+  u8              Bx;                  /* smoke or fire x position read from smoke_offsets (was B) */
+  u8              Cy;                  /* smoke or fire y position read from smoke_offsets (was C) */
 
   // is $E900 pairs of (data-word, hazard-ptr) ?
 
@@ -9968,21 +9980,28 @@ dafs_done_draw_object:
 }
 
 /**
- * $AFF1: DH smoke
+ * $AFF1: dh_smoke [Conv: HQ]
  *
- * Decrements a counter 5..1 then repeats this must be the car-on-fire animation.
+ * Advances one smoke particle's frame counter and draws a smoke puff at the
+ * computed position.
  *
- * \param[in] state   Pointer to game state.
- * \param[in] HLsmoke Hlsmoke.
- * \param[in] IYheight Height table pointer. (was IY)
+ * The counter in HLsmoke[0] counts down 5..1 and resets to 5. The smoke
+ * animation index is smoke_bitmap_index + counter. If this exceeds 5 the
+ * particle is not yet visible and the function returns. Otherwise it reads
+ * x,y offsets from HLsmoke at stride index*2, subtracts counter from x and
+ * calls dh_draw with the matching smoke_defns frame.
+ *
+ * \param[in]     state     Pointer to game state.
+ * \param[in,out] HLsmoke   Smoke particle data: [0]=counter, [1+]=x,y pairs. (was HL)
+ * \param[in]     IYheight  Pointer into the height table. (was IY)
  */
 static void dh_smoke(chqstate_t *state, u8 *HLsmoke, const u8 *IYheight)
 {
-  int counter;   /* was A, E */
-  int index;     /* was A */
-  int newindex;  /* was A, C, D */
-  u8  x;         /* was B */
-  u8  y;         /* was C */
+  int counter;   /* frame counter: counts down 5..1, resets to 5 at zero (was A, then E) */
+  int index;     /* smoke_bitmap_index: base LOD level (was A) */
+  int newindex;  /* combined index: smoke_bitmap_index + counter; selects smoke frame (was A, C, D) */
+  u8  x;         /* smoke x position from table, shifted left by counter (was B) */
+  u8  y;         /* smoke y position from table (was C) */
 
   counter = HLsmoke[0] - 1;
   if (counter <= 0)
@@ -10001,14 +10020,18 @@ static void dh_smoke(chqstate_t *state, u8 *HLsmoke, const u8 *IYheight)
 }
 
 /**
- * $B01B: DH draw
+ * $B01B: dh_draw [Conv: HQ]
  *
- * \param[in] state     Pointer to game state.
- * \param[in] Bx        X.
- * \param[in] Cy        Y.
- * \param[in] DEoffset  Bitmap index to draw.
- * \param[in] HLbitmaps Source bitmap data.
- * \param[in] IYheight  IYheight register value.
+ * Wrapper around dh_draw_bitmap that selects a bitmap entry from an array by
+ * byte offset. DEoffset is divided by 7 (size of bitmap_t) to produce the
+ * array index before forwarding to dh_draw_bitmap.
+ *
+ * \param[in] state      Pointer to game state.
+ * \param[in] Bx         Horizontal offset added to doc_col_pos. (was B)
+ * \param[in] Cy         Vertical offset applied to horz_pos. (was C)
+ * \param[in] DEoffset   Byte offset into HLbitmaps; divided by 7 for index. (was DE)
+ * \param[in] HLbitmaps  Base of the bitmap_t array to index into. (was HL)
+ * \param[in] IYheight   Pointer into the height table. (was IY)
  */
 static void dh_draw(chqstate_t     *state,
                     int             Bx,
@@ -10021,13 +10044,22 @@ static void dh_draw(chqstate_t     *state,
 }
 
 /**
- * $B01C: DH draw bitmap
+ * $B01C: dh_draw_bitmap [Conv: HQ]
  *
- * \param[in] state    Pointer to game state.
- * \param[in] Bx       X.
- * \param[in] Cy       Y.
- * \param[in] HLbitmap Source bitmap data.
- * \param[in] IYheight IYheight register value.
+ * Draws a single sprite bitmap at a position derived from the SM fields
+ * dh_SM_B029_horz_clip and dh_SM_B02C_horz_pos, shifted by Bx and Cy. These
+ * SM fields are written by draw_arrow_fire_smoke for the current perp hazard.
+ *
+ * If horz_clip is positive and non-zero the sprite is fully off-screen and
+ * the function returns without drawing. Otherwise it adds Cy to horz_pos,
+ * checks for carry and dispatches to draw_object_left/right based on whether
+ * the result is >= 128.
+ *
+ * \param[in] state     Pointer to game state.
+ * \param[in] Bx        Horizontal column offset added to dh_col_pos. (was B)
+ * \param[in] Cy        Vertical offset added to the SM horz_pos value. (was C)
+ * \param[in] HLbitmap  Bitmap definition to draw. (was HL)
+ * \param[in] IYheight  Pointer into the height table. (was IY)
  */
 static void dh_draw_bitmap(chqstate_t     *state,
                            int             Bx,
@@ -10035,40 +10067,40 @@ static void dh_draw_bitmap(chqstate_t     *state,
                            const bitmap_t *HLbitmap,
                            const u8       *IYheight)
 {
-  int Ewidth_bits;
-  int A1;
-  u8  A2;
+  int Ewidth_bits;  /* pixel width of bitmap: width_bytes * 8 (was E) */
+  int Ahorz_clip;   /* SM horz_clip value: sign and zero determine draw path (was A) */
+  u8  Ahorz_pos;    /* SM horz_pos value adjusted by Cy; unsigned for carry detection (was A) */
 
   Ewidth_bits = HLbitmap->width_bytes * 8;
   state->doc_col_pos = state->dh_col_pos + Bx;
-  A1 = state->dh_SM_B029_horz_clip;
+  Ahorz_clip = state->dh_SM_B029_horz_clip;
   // Set flags for A here
-  A2 = state->dh_SM_B02C_horz_pos;
-  if (A1 >= 0) {
-    if (A1)
+  Ahorz_pos = state->dh_SM_B02C_horz_pos;
+  if (Ahorz_clip >= 0) {
+    if (Ahorz_clip)
       return;
 
-    A2 += Cy;
-    if (A2 < Cy) // carried
+    Ahorz_pos += Cy;
+    if (Ahorz_pos < Cy) // carried
       return;
 
-    if (A2 >= 128) {
-      draw_object_right_helicopter_entrypt(state, A2, HLbitmap,
+    if (Ahorz_pos >= 128) {
+      draw_object_right_helicopter_entrypt(state, Ahorz_pos, HLbitmap,
                                            IYheight); /* was exit via */
     } else {
 dh_exit_1:
-      A2 += Ewidth_bits; // add pixel width
-      draw_object_left_helicopter_entrypt(state, A2, HLbitmap,
+      Ahorz_pos += Ewidth_bits; // add pixel width
+      draw_object_left_helicopter_entrypt(state, Ahorz_pos, HLbitmap,
                                           IYheight); /* was exit via */
     }
   } else {
-    A2 += Cy;
-    if (A2 < Cy) // carried
+    Ahorz_pos += Cy;
+    if (Ahorz_pos < Cy) // carried
       goto dh_exit_1;
 
-    A2 += Ewidth_bits;
-    if (A2 < Ewidth_bits) // carried
-      draw_object_left_helicopter_entrypt(state, A2, HLbitmap,
+    Ahorz_pos += Ewidth_bits;
+    if (Ahorz_pos < Ewidth_bits) // carried
+      draw_object_left_helicopter_entrypt(state, Ahorz_pos, HLbitmap,
                                           IYheight); /* was exit via */
   }
 }

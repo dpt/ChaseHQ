@@ -15,10 +15,6 @@ Generated from `grep '^ \* \$' ChaseHQ.c | grep -v '\[Conv: HQ\]'`.
 | `$9174` | `draw_stretchy_object_common` | Draw stretchy objects (e.g. trees) |
 | `$929A` | `draw_object_left_helicopter_entrypt` | Draw object left helicopter entry point |
 | `$930E` | `draw_object_perspective_entrypt` | Draw object: compute perspective height/width and dispatch |
-| `$AECF` | `draw_arrow_fire_smoke` | Draw arrow fire smoke |
-| `$AFF1` | `dh_smoke` | DH smoke |
-| `$B01B` | `dh_draw` | DH draw |
-| `$B01C` | `dh_draw_bitmap` | DH draw bitmap |
 | `$B063` | `move_hero_car` | Move hero car |
 | `$B318` | `animate_hero_car` | Animate hero car |
 | `$B457` | `ahc_check_hand_flag` | AHC check hand flag |
