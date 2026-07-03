@@ -26,7 +26,6 @@ perhaps build unit tests now to flush out problems ahead of time.
 - Main game runs too fast - need to calibrate against original
 - Document expected values/ranges for e.g. xpos arrays
 - Fix stage 2+ data
-- Fix object names (e.g. "left tree" -> bush)
 - Remove Z80 macros where it clarifies
 - Remove any local vars from state
 - Sort all decls by order of use

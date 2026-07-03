@@ -253,10 +253,10 @@
 #define MAP_OBJ_NONE_VAL                (0) // common to all stages?
 #define MAP_OBJ_SHORT_POLE_VAL          (3) // common to all stages?
 
-#define MAP_OBJ_S1_NONE_VAL             (0) // perhaps a dupe
+#define MAP_OBJ_S1_NONE_VAL             (0) // perhaps a dupe/common across all levels
 #define MAP_OBJ_S1_TUNNEL_LIGHT_VAL     (1)
-#define MAP_OBJ_S1_UNKNOWN_2_VAL        (2)
-#define MAP_OBJ_S1_SHORT_POLE_VAL       (3) // perhaps a dupe
+#define MAP_OBJ_S1_UNKNOWN_2_VAL        (2) // unused
+#define MAP_OBJ_S1_SHORT_POLE_VAL       (3) // perhaps a dupe/common
 #define MAP_OBJ_S1_TREE_VAL             (4)
 #define MAP_OBJ_S1_BUSH_VAL             (5)
 #define MAP_OBJ_S1_STREET_LAMP_VAL      (6)

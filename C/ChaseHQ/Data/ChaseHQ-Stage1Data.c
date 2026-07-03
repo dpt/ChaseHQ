@@ -144,8 +144,8 @@ static const u8 stage1_bitmap_telegraphpoletop_4[2 * 2 * 5];
 static const u8 stage1_bitmap_telegraphpoletop_4s[2 * 2 * 5];
 static const u8 stage1_bitmap_telegraphpoletop_5[2 * 2 * 4];
 static const u8 stage1_bitmap_telegraphpoletop_5s[2 * 2 * 4];
-static const stretchy_t stage1_stretchy_tree_right[SPRITE_FRAMES];
-static const stretchy_t stage1_stretchy_tree_left[4];
+static const stretchy_t stage1_stretchy_tree[SPRITE_FRAMES];
+static const stretchy_t stage1_stretchy_bush[4];
 static const depthset_t stage1_tree_bottom;
 static const depthset_t stage1_tree_bottommiddle;
 static const depthset_t stage1_tree_middle;
@@ -330,8 +330,8 @@ static const obj_t stage1_right_hand_graphics_defs[9] = {
   { 111, 41, 80, &tunnellight,                         draw_tunnel_light_right    },
   {   0,  0,  0, NULL,                                 NULL },
   { 144, 92, 40, &stretchy_shortpole,                  draw_stretchy_object_right },
-  {  94, 36, 60, &stage1_stretchy_tree_right,          draw_stretchy_object_right },
-  { 110, 49, 80, &stage1_stretchy_tree_left,           draw_stretchy_object_right },
+  {  94, 36, 60, &stage1_stretchy_tree,                draw_stretchy_object_right },
+  { 110, 49, 80, &stage1_stretchy_bush,                draw_stretchy_object_right },
   { 110, 53, 80, &stage1_stretchy_streetlamp_right,    draw_stretchy_object_right },
   { 110, 53, 80, &stage1_stretchy_telegraphpole_right, draw_stretchy_object_right },
   { 100, 24, 70, &stage1_turn_sign_left,               draw_object_right          },
@@ -343,8 +343,8 @@ static const obj_t stage1_left_hand_graphics_defs[9] = {
   { 126, 188, 80, &tunnellight,                        draw_tunnel_light_left    },
   {   0,  0,  0,  NULL,                                NULL },
   {  96, 144, 40, &stretchy_shortpole,                 draw_stretchy_object_left },
-  { 140, 196, 60, &stage1_stretchy_tree_right,         draw_stretchy_object_left },
-  { 124, 208, 80, &stage1_stretchy_tree_left,          draw_stretchy_object_left },
+  { 140, 196, 60, &stage1_stretchy_tree,               draw_stretchy_object_left },
+  { 124, 208, 80, &stage1_stretchy_bush,               draw_stretchy_object_left },
   { 132, 182, 80, &stage1_stretchy_streetlamp_left,    draw_stretchy_object_left },
   { 132, 182, 80, &stage1_stretchy_telegraphpole_left, draw_stretchy_object_left },
   { 129, 182, 70, &stage1_turn_sign_left,              draw_object_left          },
@@ -2466,19 +2466,19 @@ static const u8 stage1_bitmap_barrier_4s[2 * 2 * 7] = {
 // $6ED1
 static const stretchy_t stage1_stretchy_streetlamp_right[5] = {
   { STRETCHY_TYPE_FIXED, &streetlampbottom_right     },
-  { STRETCHY_TYPE_50PC, &streetlampmiddle2_right    },
+  { STRETCHY_TYPE_50PC,  &streetlampmiddle2_right    },
   { STRETCHY_TYPE_113PC, &streetlampmiddle_right     },
   { STRETCHY_TYPE_FIXED, &stage1_streetlamptop_right },
-  { STRETCHY_TYPE_END, NULL }
+  { STRETCHY_TYPE_END,   NULL }
 };
 
 // $6EDE
 static const stretchy_t stage1_stretchy_streetlamp_left[5] = {
   { STRETCHY_TYPE_FIXED, &streetlampbottom_left     },
-  { STRETCHY_TYPE_50PC, &streetlampmiddle2_left    },
+  { STRETCHY_TYPE_50PC,  &streetlampmiddle2_left    },
   { STRETCHY_TYPE_113PC, &streetlampmiddle_left     },
   { STRETCHY_TYPE_FIXED, &stage1_streetlamptop_left },
-  { STRETCHY_TYPE_END, NULL }
+  { STRETCHY_TYPE_END,   NULL }
 };
 
 // $6EEB
@@ -2765,9 +2765,9 @@ static const u8 stage1_bitmap_telegraphpoletop_5s[2 * 2 * 4] = {
 /* ----------------------------------------------------------------------- */
 
 // $70F6
-static const stretchy_t stage1_stretchy_tree_right[SPRITE_FRAMES] = {
+static const stretchy_t stage1_stretchy_tree[SPRITE_FRAMES] = {
   { STRETCHY_TYPE_FIXED, &stage1_tree_bottom       },
-  { STRETCHY_TYPE_38PC, &stage1_tree_bottommiddle },
+  { STRETCHY_TYPE_38PC,  &stage1_tree_bottommiddle },
   { STRETCHY_TYPE_FIXED, &stage1_tree_middle       },
   { STRETCHY_TYPE_113PC, &stage1_tree_topmiddle    },
   { STRETCHY_TYPE_FIXED, &stage1_tree_top          },
@@ -2775,11 +2775,9 @@ static const stretchy_t stage1_stretchy_tree_right[SPRITE_FRAMES] = {
 };
 
 // $7106
-//
-// Note: Two fewer elements than the right version (smaller/bush?)
-static const stretchy_t stage1_stretchy_tree_left[4] = {
+static const stretchy_t stage1_stretchy_bush[4] = {
   { STRETCHY_TYPE_FIXED, &stage1_tree_middle    },
-  { STRETCHY_TYPE_38PC, &stage1_tree_topmiddle },
+  { STRETCHY_TYPE_38PC,  &stage1_tree_topmiddle },
   { STRETCHY_TYPE_FIXED, &stage1_tree_top       },
   { STRETCHY_TYPE_END, NULL }
 };
