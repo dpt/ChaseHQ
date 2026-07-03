@@ -8637,15 +8637,23 @@ void hazard_handler(chqstate_t *state, hazard_t *IXhazard)
 }
 
 /**
- * $A955: Choose dirt and stones
+ * $A955: choose_dirt_and_stones [Conv: HQ]
  *
- * Called from main loop.
+ * Initialises one stone or dirt particle entry per frame on dirt-track
+ * sections.  Returns immediately unless on_dirt_track and allow_spawning are
+ * both non-zero.
+ *
+ * A random byte from rng() determines the particle type: non-negative gives
+ * 1 (stone), negative gives 2 (dirt).  A second random byte provides the
+ * horizontal position.  Both are written to the $ED28 particle table and the
+ * three SM flags driving layout_dirt_and_stones and dust_stones_stuff are
+ * set to 1.
  *
  * \param[in] state Pointer to game state.
  */
 static void choose_dirt_and_stones(chqstate_t *state)
 {
-  u8 *table;  /* was DE */
+  u8 *table;  /* byte pointer into the $ED28 particle table: [0]=type, [1]=position (was DE) */
 
   if (state->on_dirt_track == 0 || state->allow_spawning == 0)
     return;
@@ -8662,26 +8670,38 @@ static void choose_dirt_and_stones(chqstate_t *state)
 }
 
 /**
- * $A97E: Layout dirt and stones
+ * $A97E: layout_dirt_and_stones [Conv: HQ]
  *
- * Called from main loop.
+ * Computes screen x-positions for up to 20 stone/dirt particles each frame.
+ * Returns immediately if the ldas_enabled SM flag is zero.
+ *
+ * The function walks the $ED28 particle table in 4-byte strides.  For each
+ * entry whose type byte is non-zero it reads the road left and right edge
+ * values at the object's road position and multiplies a scale byte by the
+ * road width using an 8-bit shift-and-add loop.  The scaled result is written
+ * back into the table entry so dust_stones_stuff can use it for rendering.
+ *
+ * When the pass completes with a zero total (all entries were zero), the
+ * three SM flags ldas_enabled, rm_do_dirt_and_stones_thing and dss_enabled
+ * are cleared.
  *
  * \param[in] state Pointer to game state.
  */
 static void layout_dirt_and_stones(chqstate_t *state)
 {
-  int       carry = 0;
-  const u8 *obj_pos;             /* was IY */
-  int       iterations;          /* was B */
-  int       total;               /* was C */
-  s16      *table_ed00;          /* was HL */
-  u8        A;                   /* was A */
-  int       Ldash;
-  int       val_from_table_e800;
-  int       val_from_table_ec00; /* was HL' */
-  u16       result;              /* was HL' */
-  int       iterations2;         /* was B' */
-  int       Cdash;
+  int       carry;               /* carry from the 8-bit multiply RLA (carry) */
+  const u8 *obj_pos;             /* pointer walking object_positions backward from index 18 (was IY) */
+  int       iterations;          /* outer loop counter: 20 table entries (was B) */
+  int       total;               /* count of non-zero particle entries processed this call (was C) */
+  s16      *table_ed00;          /* pointer walking the $ED28 particle table in 4-byte strides (was HL) */
+  u8        A;                   /* particle scale byte read from table; drives multiply loop (was A) */
+  int       Ldash;               /* negated-doubled IY[1]: index into road edge tables (was L') */
+  int       val_from_table_e800; /* left road edge value, then road width after subtraction (was DE') */
+  int       val_from_table_ec00; /* right road edge value read from xpos_road_right (was HL') */
+  u16       result;              /* multiply accumulator, initialised to zero each particle (was HL') */
+  int       iterations2;         /* multiply loop counter: 8 iterations (was B') */
+  int       Cdash;               /* multiply high byte, halved via RRA and added to result (was C') */
+  carry = 0;
 
   if (state->ldas_enabled == 0)
     return;
@@ -8749,24 +8769,35 @@ ldas_do_work:
 }
 
 /**
- * $A9DE: Dust stones stuff
+ * $A9DE: dust_stones_stuff [Conv: HQ]
  *
- * \param[in] state       Pointer to game state.
- * \param[in] Biterations Biterations.
- * \param[in] IYheight Height table pointer. (was IY)
+ * Renders one stone or dirt particle per frame using position data written
+ * by layout_dirt_and_stones.  Returns immediately if the dss_enabled SM flag
+ * is zero.
+ *
+ * On each call it reads the current entry from dss_fork_xpos_ptr.  If the
+ * type byte is zero the slot is inactive and the pointer advances past it.
+ * Otherwise it selects stones_lods or dust_lods based on the type byte,
+ * clamps Biterations to 10, halves it as a LOD index and dispatches to
+ * draw_object_left/right_helicopter_entrypt with the computed x-position.
+ *
+ * \param[in] state        Pointer to game state.
+ * \param[in] Biterations  Distance-based counter; clamped to 10 for LOD
+ *                         selection. (was B)
+ * \param[in] IYheight     Pointer into the height table. (was IY)
  */
 static void dust_stones_stuff(chqstate_t *state, int Biterations,
                               const u8 *IYheight)
 {
-  int              carry = 0;
-  u8               A;
-  s16             *HLtable;
-  const bitmap_t (*DEbitmaps)[SPRITE_FRAMES];
-  const bitmap_t  *HLbitmap;
-
-  int              C;
-  int              E;
-  int              saved_A;
+  int              carry;          /* carry from pixel-width overflow check (carry) */
+  s16             *HLtable;        /* pointer into the $ED28 table via dss_fork_xpos_ptr (was HL) */
+  u8               A;              /* type byte: 1=stone, 2=dirt; reused as LOD index (was A) */
+  const bitmap_t (*DEbitmaps)[SPRITE_FRAMES]; /* bitmap LOD array: stones_lods or dust_lods (was DE) */
+  int              C;              /* horizontal position byte from the particle table (was C) */
+  const bitmap_t  *HLbitmap;       /* selected bitmap frame for the current LOD level (was HL) */
+  int              E;              /* pixel width of selected bitmap: width_bytes * 8 (was E) */
+  int              saved_A;        /* banked value from table[3]; sign selects left/right draw path (was A') */
+  carry = 0;
 
   if (state->dss_enabled == 0)
     return;

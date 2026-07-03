@@ -15,9 +15,6 @@ Generated from `grep '^ \* \$' ChaseHQ.c | grep -v '\[Conv: HQ\]'`.
 | `$9174` | `draw_stretchy_object_common` | Draw stretchy objects (e.g. trees) |
 | `$929A` | `draw_object_left_helicopter_entrypt` | Draw object left helicopter entry point |
 | `$930E` | `draw_object_perspective_entrypt` | Draw object: compute perspective height/width and dispatch |
-| `$A955` | `choose_dirt_and_stones` | Choose dirt and stones |
-| `$A97E` | `layout_dirt_and_stones` | Layout dirt and stones |
-| `$A9DE` | `dust_stones_stuff` | Dust stones stuff |
 | `$AA38` | `draw_helicopter` | Draw helicopter |
 | `$AAC6` | `move_helicopter` | Move helicopter |
 | `$AB33` | `drive_helicopter` | Drive helicopter |
