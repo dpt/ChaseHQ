@@ -17,6 +17,8 @@ perhaps build unit tests now to flush out problems ahead of time.
 
 # TODO
 
+- Mark functions as HQ once processed
+- Ensure partial screen updates are correct
 - Ensure if-else structuring is added where sensible (top-down)
 - Identify unrolled ops to roll up
 - Guard words?

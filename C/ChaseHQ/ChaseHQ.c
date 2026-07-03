@@ -3804,7 +3804,7 @@ void draw_tunnel_light_right(chqstate_t *state,
 }
 
 /**
- * $9255: Draw tunnel light common
+ * $9255: Draw tunnel light common [Conv: HQ]
  *
  * Shared core for draw_tunnel_light_left and draw_tunnel_light_right. Returns
  * immediately if the light's depth index is out of the visible range ($10).
@@ -4172,7 +4172,7 @@ static void draw_object_perspective_entrypt(chqstate_t     *state,
 }
 
 /**
- * $932B: Draw a flipped object, A_toggling the shift selector
+ * $932B: Draw a flipped object, A_toggling the shift selector [Conv: HQ]
  *
  * Entry point for horizontally-flipped objects. Inverts the shift-selector
  * byte so that the complementary (shifted) bitmap variant is chosen, then
@@ -4225,7 +4225,7 @@ static void draw_object_common_flipped(chqstate_t     *state,
 }
 
 /**
- * $9333: Clip object to visible area and dispatch to plot function
+ * $9333: Clip object to visible area and dispatch to plot function [Conv: HQ]
  *
  * Determines how many rows of the bitmap are visible given the object's
  * position in the Y-height table, skips invisible leading rows, then
@@ -8223,7 +8223,7 @@ static void hazard_hit(chqstate_t *state, hazard_t *IXhazard)
 }
 
 /**
- * $AD0D: Test every active hazard for a collision with the player car.
+ * $AD0D: Test every active hazard for a collision with the player car. [Conv: HQ]
  *
  * Walks all 6 hazard slots. Skips any slot whose `used` field is
  * HAZARD_UNUSED (0x00). For active slots the function also skips the
@@ -8273,7 +8273,7 @@ chc_continue:
 }
 
 /**
- * $AD51: Test whether the player car has hit a given hazard.
+ * $AD51: Test whether the player car has hit a given hazard. [Conv: HQ]
  *
  * Returns 1 (and arms the hazard's hit_timer) if all of the following hold:
  *   - hit_timer is zero (no recent hit cooldown)
@@ -8391,7 +8391,7 @@ static void draw_all_hazards(chqstate_t *state)
 }
 
 /**
- * $ADBE: Advance one hazard and insert it into the depth-sorted draw list.
+ * $ADBE: Advance one hazard and insert it into the depth-sorted draw list. [Conv: HQ]
  *
  * Called for each in-use hazard slot.  The function has two phases.
  *
@@ -10438,7 +10438,7 @@ static void scroll_horizon(chqstate_t *state)
 }
 
 /**
- * $B8D2: Update per-frame road-level state
+ * $B8D2: Update per-frame road-level state [Conv: HQ]
  *
  * Called once per frame from read_map. Covers six groups of state:
  *
@@ -10612,7 +10612,7 @@ url_B9C5:
 }
 
 /**
- * $B9F4: Lay out the road x-position tables for the current frame
+ * $B9F4: Lay out the road x-position tables for the current frame [Conv: HQ]
  *
  * Called once per frame from read_map. Scans up to 20 lane-data entries
  * looking for a fork marker (byte & 0xE1 == 0xE1). Two paths:
@@ -10853,7 +10853,7 @@ lr_badf:
 }
 
 /**
- * $BB69: Transition the road back to a single lane after a fork exit
+ * $BB69: Transition the road back to a single lane after a fork exit [Conv: HQ]
  *
  * Guards on the high byte of fork_distance being non-zero; returns
  * immediately if the fork has not progressed far enough.
@@ -10959,7 +10959,7 @@ static void exit_fork(chqstate_t *state)
 // The buffer has the format 0b1111LLLLRRRCCCCC (L = scanline, R = row (group))
 
 /**
- * $BC3E: Copy the backbuffer to the screen and update attributes.
+ * $BC3E: Copy the backbuffer to the screen and update attributes. [Conv: HQ]
  *
  * Transfers all 128 rows of the road backbuffer to the playfield area of
  * the ZX Spectrum screen ($4800–$57FF), then updates the sky/ground
@@ -11160,7 +11160,7 @@ exit:
 }
 
 /**
- * $BDC1: Clear the playfield bitmap and set the attribute colour gradient.
+ * $BDC1: Clear the playfield bitmap and set the attribute colour gradient. [Conv: HQ]
  *
  * Clears the playfield (lower two-thirds of screen) via clear_playfield,
  * then resets its bitmap to $FF and lays in three attribute bands: two rows
@@ -11217,7 +11217,7 @@ static void clear_playfield_set_attrs(chqstate_t *state)
 }
 
 /**
- * $BDFB: Read the next map frame into the road buffer.
+ * $BDFB: Read the next map frame into the road buffer. [Conv: HQ]
  *
  * Resets the per-frame SFX triggers and the allow-spawning counter, then
  * decides how many times to advance the cyclic road buffer this frame.
@@ -11267,7 +11267,7 @@ static void read_map(chqstate_t *state)
 }
 
 /**
- * $BE1F: Cycle road buffer by one slot and decode all map data channels.
+ * $BE1F: Cycle road buffer by one slot and decode all map data channels. [Conv: HQ]
  *
  * Advances roadbufptr by one position in the cyclic road buffer, then decodes
  * six data channels into the new slot: curvature ($BE3A), height ($BEC4),
@@ -11740,7 +11740,7 @@ static void rm_cycle_buffer_offset(chqstate_t *state, u8 *HLfast_counter)
 }
 
 /**
- * $C0E1: Prepare tunnel rendering for the current frame.
+ * $C0E1: Prepare tunnel rendering for the current frame. [Conv: HQ]
  *
  * Three mutually exclusive paths:
  *
@@ -11846,7 +11846,7 @@ pt_arm_hooks: /* $C144 */
 }
 
 /**
- * $C15B: Draw tunnel
+ * $C15B: Draw tunnel [Conv: HQ]
  *
  * Renders the tunnel entrance, interior, and far wall into the back buffer
  * for the current road scanline. Called via a self-modified CALL instruction
@@ -13505,7 +13505,7 @@ static void pre_shift_backdrop(chqstate_t *state)
  * \param[in] IYheight Height table pointer (into state->height_table).
  */
 /**
- * $C8E3: draw_forked_road — render one frame of the forked-road view.
+ * $C8E3: draw_forked_road — render one frame of the forked-road view. [Conv: HQ]
  *
  * Called from draw_road when the road is in a fork.  Mirrors the structure of
  * draw_road but drives five screen zones (left verge, left road, middle verge,
@@ -14435,7 +14435,7 @@ void menu_draw_strings(chqstate_t *state, const u8 *strings)
  * \return Address of next unconsumed byte.
  */
 /**
- * $EBFF: menu_draw_string — draw one packed string record from the menu table.
+ * $EBFF: menu_draw_string — draw one packed string record from the menu table. [Conv: HQ]
  *
  * Reads a packed record from HLstring: one attribute byte (top bit = double-height
  * flag), a two-byte little-endian screen address, then ASCII character bytes with
@@ -14505,7 +14505,7 @@ const u8 *menu_draw_string(chqstate_t *state, const u8 *HLstring)
 }
 
 /**
- * $EC2C: menu_draw_char — render one character into the screen and attribute buffers.
+ * $EC2C: menu_draw_char — render one character into the screen and attribute buffers. [Conv: HQ]
  *
  * Maps the ASCII character to a glyph index, then copies the 8×7 font data into
  * the screen buffer.  A space advances both pointers by one column without writing
