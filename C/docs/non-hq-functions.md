@@ -9,10 +9,6 @@ Generated from `grep '^ \* \$' ChaseHQ.c | grep -v '\[Conv: HQ\]'`.
 | Address | C function | Description |
 |---------|------------|-------------|
 | `$5C00` | `end_screen` | End screen |
-| `$8014` | `load_stage` | Load stage |
-| `$8204` | `setup_engine_sfx_48k` | Setup engine SFX 48K |
-| `$8234` | `play_engine_sfx_48k` | Play engine SFX 48K |
-| `$8258` | `attract_mode_48k` | Attract mode 48K |
 | `$83CD` | `bootstrap` | Bootstrap |
 | `$8401` | `main_loop` | Main loop |
 | `$852A` | `cpu_driver` | CPU driver |

@@ -1264,23 +1264,32 @@ static void end_screen(chqstate_t *state)
 }
 
 /**
- * $8014: Load stage
+ * $8014: Switch the active stage data to the wanted stage [Conv: HQ]
  *
- * Called from main loop.
+ * Returns immediately if the wanted stage is already loaded. Otherwise
+ * records the new stage number and updates the stage pointer.
+ *
+ * In the Z80 version this is a full tape-loading routine: it clears the
+ * screen, initiates a reverse transition, reads a header from tape to
+ * identify the stage, then loads 6896 bytes of stage data to $5C00.
+ * All tape handling is removed in C; stage data is pre-loaded as
+ * read-only arrays in ChaseHQ-Stage1Data.c (and future stage files).
  *
  * \param[in] state Pointer to game state.
+ *
+ * Conv: Tape loading, header validation, screen clearing and transition
+ *   setup are all removed. C switches state->stage to the pre-loaded
+ *   data table for the requested stage.
  */
 static void load_stage(chqstate_t *state)
 {
-  int wanted; /* was A */
+  int wanted; /* wanted stage number (was A) */
 
-  // Return if the stage is already loaded
   wanted = state->wanted_stage_number;
   if (wanted == state->current_stage_number)
     return;
 
   state->current_stage_number = wanted;
-
   state->stage = stages[wanted];
 }
 
@@ -1289,16 +1298,30 @@ static void load_stage(chqstate_t *state)
 // $81DD start_stage_chatter - was hoisted
 
 /**
- * $8204: Setup engine SFX 48K
+ * $8204: Derive 48K engine tone parameters from speed and gear [Conv: HQ]
+ *
+ * Computes the iteration count (nloops) and off/on-phase delay counts
+ * for the 48K border-port engine sound. The speed is halved and
+ * complemented to give an inverse-speed divisor, right-shifted by 2 and
+ * OR'd with 1 to keep it odd and non-zero. In high gear nloops is
+ * halved again (higher speed → more loops → higher pitch). In a tunnel,
+ * the off-phase delay is reduced from 3 to 1. The computed values are
+ * stored in SM fields and play_engine_sfx_48k is called to emit a tone
+ * pulse.
  *
  * \param[in] state Pointer to game state.
+ *
+ * Conv: Z80 stores nloops and delays via self-modifying LD C,n / LD B,n
+ *   instructions inside play_engine_sfx_48k at $8243/$8249/$8251; C
+ *   stores to the SM fields engine_sfx_nloops, engine_sfx_off_cycle and
+ *   engine_sfx_on_cycle in chqstate.
  */
 static void setup_engine_sfx_48k(chqstate_t *state)
 {
-  int nloops;    /* was L */
-  int off_cycle; /* was H */
+  int nloops;    /* tone pulse iteration count (was L) */
+  int off_cycle; /* off-phase delay loop count (was H) */
 
-  nloops = ((~(state->speed >> 1)) >> 2) | 1;
+  nloops    = ((~(state->speed >> 1)) >> 2) | 1;
   off_cycle = 3;
 
   if (state->gear == 0)
@@ -1315,16 +1338,28 @@ static void setup_engine_sfx_48k(chqstate_t *state)
 }
 
 /**
- * $8234: Play engine SFX 48K
+ * $8234: Emit one 48K border-port engine tone burst [Conv: HQ]
+ *
+ * Runs only on every 4th call (the counter skips three out of four
+ * invocations). Suppressed when the perp-caught phase has the car
+ * stopped. Toggles port $FE between 0 and $18 (EAR+MIC) nloops times,
+ * with off-phase and on-phase delay loops to tune the pitch. The Z80
+ * inner loop body is: OUT ($FE),0; B DJNZ loops; OUT ($FE),$18; B DJNZ
+ * loops; DEC C; JR NZ.
  *
  * \param[in] state Pointer to game state.
+ *
+ * Conv: Z80 uses OUT ($FE) to drive the border/speaker port; the
+ *   idle busy-loops (DJNZ) set the duty cycle. C has no audio output
+ *   for this path; the loops are kept as busy-waits but produce no
+ *   sound.
  */
 static void play_engine_sfx_48k(chqstate_t *state)
 {
-  int phase;   /* was A */
-  int counter; /* was A */
-  int nloops;  /* was C */
-  int c;       /* was B */
+  int phase;   /* perp-caught phase; suppresses effect when car is stopped (was A) */
+  int counter; /* per-call skip counter; fires every 4th call (was A) */
+  int nloops;  /* tone pulse iteration count (was C) */
+  int c;       /* delay loop counter (was B) */
 
   phase = state->perp_caught_phase;
   if (phase >= PERPCAUGHTPHASE_STOPPED)
@@ -1336,30 +1371,44 @@ static void play_engine_sfx_48k(chqstate_t *state)
     return;
 
   nloops = state->engine_sfx_nloops;
-  {
-    // OUT $(FE),0 // output zero
+  do {
+    /* OUT ($FE),0 — off phase */
     c = state->engine_sfx_off_cycle;
     do {/*idle*/} while (--c);
-    // OUT $(FE),24 // output EAR+MIC
+    /* OUT ($FE),$18 — on phase (EAR+MIC) */
     c = state->engine_sfx_on_cycle;
     do {/*idle*/} while (--c);
   } while (--nloops > 0);
 }
 
 /**
- * $8258: Attract mode 48K
+ * $8258: Run the 48K attract mode demo loop [Conv: HQ]
+ *
+ * Sets up the attract stage and drives the game in demonstration mode.
+ * Each frame: scans for the fire button (returns immediately if pressed),
+ * runs a game tick, then draws the "CHASE HQ / PRESS GEAR TO PLAY"
+ * messages. The second message blinks by rotating a pattern through RRCA
+ * each frame. When the transition is stopped, alternates between showing
+ * the credits and copyright messages via setup_overlay_messages.
  *
  * \param[in] state Pointer to game state.
+ *
+ * Conv: Z80 uses two self-modifying LD A,n operands: one at $8277 for
+ *   the RRCA blink pattern (C field: state->attract_blinker) and one at
+ *   $828C for the credits/copyright toggle (C local: blinker). The
+ *   speed initialisation (LD HL,$0190; LD ($A24A),HL) is reproduced as
+ *   state->speed = INITIAL_ATTRACT_SPEED.
  */
 static void attract_mode_48k(chqstate_t *state)
 {
-  int          carry = 0;
-  int          blinker;         /* was $828C (SM) */
-  int          keys;            /* was A */
-  const u8    *messages;        /* was HL */
-  int          nmessages;       /* was B */
-  u8           attract_blinker; /* was A */
-  int          style;           /* was A */
+  int          carry;           /* carry flag used by RRC (carry) */
+  int          blinker;         /* credits/copyright toggle; SM at $828C (was $828C) */
+  int          keys;            /* keyscan result (was A) */
+  const u8    *messages;        /* pointer to current message record (was HL) */
+  int          nmessages;       /* number of messages to draw (was B) */
+  u8           attract_blinker; /* rotating blink pattern for the second message (was A) */
+  int          style;           /* message style byte read from record (was A) */
+  carry = 0;
 
   set_up_stage(state, &state->stage->attract_data);
   blinker = 0;
