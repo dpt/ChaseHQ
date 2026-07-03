@@ -13,14 +13,6 @@ Generated from `grep '^ \* \$' ChaseHQ.c | grep -v '\[Conv: HQ\]'`.
 | `$8204` | `setup_engine_sfx_48k` | Setup engine SFX 48K |
 | `$8234` | `play_engine_sfx_48k` | Play engine SFX 48K |
 | `$8258` | `attract_mode_48k` | Attract mode 48K |
-| `$83B5` | `start_siren_hook` | Start siren hook |
-| `$83B8` | `play_regular_sfx_hook` | Play engine or siren SFX hook |
-| `$83BB` | `silence_audio_hook` | Silence audio hook |
-| `$83BE` | `write_audio_registers_hook` | Write audio registers hook |
-| `$83C1` | `setup_engine_sfx_hook` | Setup engine SFX hook |
-| `$83C4` | `play_engine_sfx_hook` | Play engine SFX hook |
-| `$83C7` | `play_speech_hook` | Play speech hook |
-| `$83CA` | `attract_mode_hook` | Attract mode hook |
 | `$83CD` | `bootstrap` | Bootstrap |
 | `$8401` | `main_loop` | Main loop |
 | `$852A` | `cpu_driver` | CPU driver |
@@ -47,7 +39,6 @@ Generated from `grep '^ \* \$' ChaseHQ.c | grep -v '\[Conv: HQ\]'`.
 | `$8DD8` | `transition_fade_chunk` | Overwrite odd/even UDG rows of the back buffer with a single byte |
 | `$8DF9` | `setup_transition` | Setup transition |
 | `$8E42` | `draw_overlay_messages` | Progressively draw overlay messages to the back buffer |
-| `$8E91` | `draw_mugshots` | Draw the three mugshots to the back buffer |
 | `$8EB7` | `draw_mugshot` | Draw a single mugshot to the back buffer |
 | `$8EE7` | `draw_smash_bar` | Draw the smash bar |
 | `$8F13` | `draw_smash_bar_segments` | Draw the specified number of smash bar segments |

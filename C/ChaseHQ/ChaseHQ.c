@@ -670,7 +670,7 @@ static void silence_audio_hook(chqstate_t *state);
 static void write_audio_registers_hook(chqstate_t *state);
 static void setup_engine_sfx_hook(chqstate_t *state);
 static void play_engine_sfx_hook(chqstate_t *state);
-static void play_speech_hook(chqstate_t *state, int Asample);
+static void play_speech_hook(chqstate_t *state, int Asample); /* (was A) */
 static void attract_mode_hook(chqstate_t *state);
 
 static void bootstrap(chqstate_t *state);
@@ -1403,9 +1403,14 @@ static void attract_mode_48k(chqstate_t *state)
 }
 
 /**
- * $83B5: Start siren hook
+ * $83B5: Dispatch siren start to the 128K or 48K audio driver [Conv: HQ]
  *
- * \param[in] state Pointer to game state.
+ * In the Z80, each hook address holds a single JP instruction.  On 128K
+ * hardware, bank 3 is paged in so the jump target contains the 128K audio
+ * code.  On 48K hardware, the target is a NOP stub at $8A56.  C replaces the
+ * paged jump with an explicit mode check throughout all eight hooks.
+ *
+ * \param[in] state  Pointer to game state.
  */
 static void start_siren_hook(chqstate_t *state)
 {
@@ -1416,11 +1421,11 @@ static void start_siren_hook(chqstate_t *state)
 }
 
 /**
- * $83B8: Play engine or siren SFX hook
+ * $83B8: Dispatch engine or siren SFX to the 128K or 48K audio driver [Conv: HQ]
  *
- * Called from main loop.
+ * See start_siren_hook for the paged-jump dispatch pattern common to all hooks.
  *
- * \param[in] state Pointer to game state.
+ * \param[in] state  Pointer to game state.
  */
 static void play_regular_sfx_hook(chqstate_t *state)
 {
@@ -1431,50 +1436,50 @@ static void play_regular_sfx_hook(chqstate_t *state)
 }
 
 /**
- * $83BB: Silence audio hook
+ * $83BB: Silence audio via the 128K driver; no-op on 48K [Conv: HQ]
  *
- * Called from main loop.
+ * See start_siren_hook for the paged-jump dispatch pattern.
  *
- * \param[in] state Pointer to game state.
+ * \param[in] state  Pointer to game state.
  */
 static void silence_audio_hook(chqstate_t *state)
 {
   if (state->mode_128k)
     silence_audio_128k(state);
-  else
-    ; // NOP
-  }
+}
 
 /**
- * $83BE: Write audio registers hook
+ * $83BE: Flush audio register writes via the 128K driver; no-op on 48K [Conv: HQ]
  *
- * \param[in] state Pointer to game state.
+ * See start_siren_hook for the paged-jump dispatch pattern.
+ *
+ * \param[in] state  Pointer to game state.
  */
 static void write_audio_registers_hook(chqstate_t *state)
 {
   if (state->mode_128k)
     write_audio_registers_128k(state);
-  else
-    ; // NOP
 }
 
 /**
- * $83C1: Setup engine SFX hook
+ * $83C1: Configure the engine SFX via the 128K driver; no-op on 48K [Conv: HQ]
  *
- * \param[in] state Pointer to game state.
+ * See start_siren_hook for the paged-jump dispatch pattern.
+ *
+ * \param[in] state  Pointer to game state.
  */
 static void setup_engine_sfx_hook(chqstate_t *state)
 {
   if (state->mode_128k)
     setup_turbo_sfx_128k(state);
-  else
-    ; // NOP
 }
 
 /**
- * $83C4: Play engine SFX hook
+ * $83C4: Drive engine SFX via the 128K or 48K audio driver [Conv: HQ]
  *
- * \param[in] state Pointer to game state.
+ * See start_siren_hook for the paged-jump dispatch pattern.
+ *
+ * \param[in] state  Pointer to game state.
  */
 static void play_engine_sfx_hook(chqstate_t *state)
 {
@@ -1485,25 +1490,25 @@ static void play_engine_sfx_hook(chqstate_t *state)
 }
 
 /**
- * $83C7: Play speech hook
+ * $83C7: Play a speech sample via the 128K driver; no-op on 48K [Conv: HQ]
  *
- * Called from main loop.
+ * See start_siren_hook for the paged-jump dispatch pattern.
  *
- * \param[in] state  Pointer to game state.
- * \param[in] sample Index of sample to play. (was A)
+ * \param[in] state    Pointer to game state.
+ * \param[in] Asample  Index of the sample to play. (was A)
  */
-static void play_speech_hook(chqstate_t *state, int sample)
+static void play_speech_hook(chqstate_t *state, int Asample)
 {
   if (state->mode_128k)
-    play_speech_128k(state, sample);
-  else
-    ; // NOP
+    play_speech_128k(state, Asample);
 }
 
 /**
- * $83CA: Attract mode hook
+ * $83CA: Dispatch attract mode to the 128K or 48K driver [Conv: HQ]
  *
- * \param[in] state Pointer to game state.
+ * See start_siren_hook for the paged-jump dispatch pattern.
+ *
+ * \param[in] state  Pointer to game state.
  */
 static void attract_mode_hook(chqstate_t *state)
 {
@@ -3150,11 +3155,18 @@ static void setup_overlay_messages_with_transition(chqstate_t *state,
 }
 
 /**
- * $8E91: Draws the three mugshots to the back buffer
+ * $8E91: Draw the perp's and officers' mugshots to the back buffer [Conv: HQ]
  *
- * Used when the perp is caught.
+ * Draws three 4×5-character (32×40-pixel) face bitmaps to the back buffer:
+ * the perp (from stage data), Tony (bitmap_faces row 2) and Raymond (row 1).
+ * Each face is drawn from the end of its bitmap upwards via draw_mugshot.
+ * Afterwards falls through to draw_overlay_messages via JR in the Z80.
  *
- * \param[in] state Pointer to game state.
+ * Conv: Z80 loads the perp mugshot address from ($5CF0) — the end of the
+ *   per-stage mugshot data; C reads it from state->stage->addrof_perp_mugshot_attributes.
+ * Conv: Z80 JR $8E42 tail-calls draw_overlay_messages; C calls it directly.
+ *
+ * \param[in] state  Pointer to game state.
  */
 static void draw_mugshots(chqstate_t *state)
 {
