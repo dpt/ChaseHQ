@@ -14466,15 +14466,6 @@ void menu_draw_strings(chqstate_t *state, const u8 *strings)
 }
 
 /**
- * $EBFF: Draws a menu string
- *
- * A menu string has the structure: (byte: attribute byte, word: destination screen address, bytes: top bit set terminated ASCII string).
- *
- * \param[in] state    Pointer to game state.
- * \param[in] HLstring Menu string to draw. (was HL)
- * \return Address of next unconsumed byte.
- */
-/**
  * $EBFF: menu_draw_string — draw one packed string record from the menu table. [Conv: HQ]
  *
  * Reads a packed record from HLstring: one attribute byte (top bit = double-height
