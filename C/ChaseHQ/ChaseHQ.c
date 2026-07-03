@@ -7379,22 +7379,33 @@ dc_return:
 }
 
 /**
- * $A0D6: Keyscan
+ * $A0D6: Read all active inputs and store the result [Conv: HQ]
  *
- * Called from main loop.
+ * Scans the keyboard (and optionally the Kempston joystick) and resolves
+ * conflicting inputs:
+ * - Kempston path: reads the joystick port (5 bits, active high), then
+ *   scans the keyboard with a 3-bit stop mask and rotates the result into
+ *   the high bits before merging with the joystick reading.
+ * - Keyboard-only path: scans with a 1-bit stop mask, collecting 8 bits.
+ * After merging, simultaneous LEFT+RIGHT or UP+DOWN are cleared (both
+ * cancel). The result is written to state->user_input and returned.
  *
  * \param[in] state Pointer to game state.
- * \return Non-zero on success.
+ * \return The new user_input byte.
+ *
+ * Conv: Z80 PUSH AF/POP DE to shuttle the Kempston reading past the
+ * keyscan_keydefs call; C uses a local variable Akempston instead.
  */
 static u8 keyscan(chqstate_t *state)
 {
-  int carry = 0;
-  int Akempston;
-  int Akeys;
-  int Ekeys;
-  u8  Aleft_and_right;
-  u8  Aorig;
-  u8  Auser_input;
+  int carry;          /* carry from RRC operations when rotating keyboard bits (carry) */
+  int Akempston;      /* raw Kempston joystick reading, 5 bits active-high (was A) */
+  int Akeys;          /* keyboard scan result used for left/right conflict check (was A) */
+  int Ekeys;          /* merged input byte: keyboard bits and/or Kempston bits (was E) */
+  u8  Aleft_and_right;/* left and right bits isolated for simultaneous-press check (was A) */
+  u8  Aorig;          /* working copy of Ekeys during conflict stripping (was A) */
+
+  carry = 0;
 
   if (state->kempston_flag) {
     Akempston = state->speccy->in(state->speccy, port_KEMPSTON_JOYSTICK) & 0x1F;
@@ -7423,16 +7434,28 @@ static u8 keyscan(chqstate_t *state)
 }
 
 /**
- * $A112: Scan a key-definition list, rotating each result into an accumulator
+ * $A112: Scan a keydef list, rotating each result into an accumulator [Conv: HQ]
+ *
+ * Walks HLkeydefs one byte at a time, passing each byte to keyscan_inner to
+ * test whether the corresponding key is pressed. The result (active low in
+ * Z80, inverted to active high in C) is left-rotated into Estopbit. Scanning
+ * continues until the stop bit rotates into carry (i.e. all slots have been
+ * filled). The number of keys scanned equals the number of bits between the
+ * stop bit's initial position and bit 8.
  *
  * \param[in] state     Pointer to game state.
- * \param[in] HLkeydefs Pointer to keydefs array[8].
- * \param[in] Estopbit  Stop bit - 0x01 or 0x20 - when this bit shifts out we stop.
- * \return One bit set if key pressed.
+ * \param[in] HLkeydefs Pointer to the keydef byte array. (was HL)
+ * \param[in] Estopbit  Sentinel: $01 for 8-key scan, $20 for 3-key scan;
+ *                      scanning stops when this bit rotates out of the byte.
+ *                      (was E)
+ * \return Packed key state in bits 7..0 (or 7..5 for the 3-key path).
+ *
+ * Conv: Z80 CCF inverts carry after CALL keyscan_inner (active-low result);
+ * C uses logical NOT on the return value instead.
  */
 static u8 keyscan_keydefs(chqstate_t *state, const u8 *HLkeydefs, u8 Estopbit)
 {
-  int carry;
+  int carry; /* carry from RL(Estopbit): set when the stop bit rotates out (carry) */
 
   do {
     carry = !keyscan_inner(state, *HLkeydefs++); // active low<>high

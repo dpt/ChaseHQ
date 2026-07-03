@@ -15,8 +15,6 @@ Generated from `grep '^ \* \$' ChaseHQ.c | grep -v '\[Conv: HQ\]'`.
 | `$9174` | `draw_stretchy_object_common` | Draw stretchy objects (e.g. trees) |
 | `$929A` | `draw_object_left_helicopter_entrypt` | Draw object left helicopter entry point |
 | `$930E` | `draw_object_perspective_entrypt` | Draw object: compute perspective height/width and dispatch |
-| `$A0D6` | `keyscan` | Keyscan |
-| `$A112` | `keyscan_keydefs` | Scan a key-definition list, rotating each result into an accumulator |
 | `$A399` | `check_scenery_collisions` | Check scenery collisions |
 | `$A4B0` | `csc_hit_scenery` | Arrive here if hit scenery (e.g. drove into a tree or lamp post) |
 | `$A4B8` | `scenery_hit` | Scenery hit |
