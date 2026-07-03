@@ -1252,11 +1252,14 @@ static void attract_mode_128k(chqstate_t *state);
 /* ----------------------------------------------------------------------- */
 
 /**
- * $5C00: End screen
+ * $5C00: End screen [Conv: HQ]
  *
- * Called from main loop.
+ * Displays the end-of-game results screen.
  *
- * \param[in] state Pointer to game state.
+ * Conv: Not yet implemented; the Z80 version drives a full results/credits
+ *   sequence.  This stub returns immediately.
+ *
+ * \param[in] state  Pointer to game state.
  */
 static void end_screen(chqstate_t *state)
 {
@@ -2067,29 +2070,36 @@ static void am_set_attrs(int counter, u8 *attrs)
 }
 
 /**
- * $865A: Draw pregame
+ * $865A: Draw pregame [Conv: HQ]
  *
- * Called from main loop.
+ * Interprets a compact command stream in pregame_data[] to paint the
+ * pre-game title screen into the back buffer.  Commands select a draw
+ * direction (horizontal/vertical), set a background attribute colour,
+ * set the current write address, or plot one or more 8x1-row tiles from
+ * pregame_tiles[].  After the STOP command, prints four overlay message
+ * strings via print_message.
  *
- * \param[in] state Pointer to game state.
+ * \param[in,out] state  Pointer to game state.
  */
 static void draw_pregame(chqstate_t *state)
 {
-  int       carry = 0;
-  const u8 *cmds;       /* was HL */
-  int       cmd;        /* was A */
-  u16       cmdaddr;    /* was DE */
-  int       tileidx;    /* was A */
-  const u8 *srctile;    /* was DE */
-  u8       *backbuf;    /* was HL */
-  int       tile_count; /* was B */
-  int       iterations; /* was B */
-  u16       bufoffset;  /* was BC */
-  int       E;          /* was E */
-  u8        rows;       /* was ? */
-  int       bgattr;     /* was A */
-  const u8 *messages;   /* was HL */
-  u16       attrs;      /* was DE */
+  int       carry;      /* carry from attribute-address shift computation (carry) */
+  const u8 *cmds;       /* pointer walking pregame_data[] command stream (was HL) */
+  int       cmd;        /* current command byte from the stream (was A) */
+  u16       cmdaddr;    /* current Z80 back-buffer write address from SET_ADDR command (was DE) */
+  int       tileidx;    /* tile index into pregame_tiles[] (was A) */
+  const u8 *srctile;    /* pointer to the current tile pixel data in pregame_tiles[] (was DE) */
+  u8       *backbuf;    /* back-buffer pointer derived from cmdaddr (was HL) */
+  int       tile_count; /* number of tiles to repeat from a REPEAT command (was B) */
+  int       iterations; /* 8: row counter for one tile; 4: message loop counter (was B) */
+  u16       bufoffset;  /* BACKBUF offset after tile draw; encodes column + row field (was BC) */
+  int       E;          /* column portion of attribute address: (offset & 0x1F) | row-bit (was E) */
+  u8        rows;       /* row field from bufoffset, shifted left for attribute address (was ?) */
+  int       bgattr;     /* draw_pregame_background: OR'd into attribute cell if non-zero (was A) */
+  const u8 *messages;   /* pointer walking pregame_messages[] for print_message calls (was HL) */
+  u16       attrs;      /* computed attribute address for the tile just drawn (was DE) */
+
+  carry = 0;
 
   cmds = &pregame_data[0];
 dp_get_command:
@@ -3715,33 +3725,43 @@ static u16 draw_smash_bar_solid_bit(chqstate_t *state, int B_nrows, int HLbackbu
 }
 
 /**
- * $8F5F: Draw everything else
+ * $8F5F: Draw scene objects [Conv: HQ]
  *
- * Called from main loop.
+ * Draws all non-road, non-hero scene elements each frame: road-edge scenery
+ * (signs, poles, trees, barriers), the perp-vehicle floating arrow, overhead
+ * objects (bridges), and hazard cars via draw_all_hazards.  Adjusts
+ * height_table and clamped_heights by +32 to convert from road-buffer
+ * coordinates to screen coordinates, then walks the object table for the
+ * current road section drawing each object through its type-specific
+ * callback.
  *
- * \param[in] state Pointer to game state.
+ * Conv: The function body begins with an early `return` because the full
+ *   draw pipeline is not yet wired up.  The declarations and asserts below
+ *   reflect the intended implementation.
+ *
+ * \param[in,out] state  Pointer to game state.
  */
 static void draw_scene_objects(chqstate_t *state)
 {
-  u8             *HLheight_table;      /* was HL */
-  u8             *DEclamped_heights;   /* was DE */
-  int             Biterations;         /* was B */
-  u8             *IYheight_table;      /* was IY */
-  u8             *HLroadbuf;           /* was HL */
-  s16            *IXtable_ea00;        /* was IX */
-  int             Afloating_arrow;     /* was A */
-  int             Aobj;                /* was A */
-  const bitmap_t *HLarrow_defn;        /* was HL */
-  int             Ex;                  /* was E */
-  int             Dy;                  /* was D */
-  int             Cwidth_bytes;        /* was C */
-  int             Bdash_flip_flag;     /* was B */
-  int             Edash_bitmap_stride; /* was E */
-  int             Cdash;               /* was C */
-  int             Bheight;             /* was B */
-  const u8       *HLbitmap;            /* was HL */
-  int             Eobj;                /* was E */
-  const obj_t    *HLobj;               /* was HL */
+  u8             *HLheight_table;      /* pointer walking height_table[], adjusted +32 (was HL) */
+  u8             *DEclamped_heights;   /* pointer walking clamped_heights[], adjusted +32 (was DE) */
+  int             Biterations;         /* loop counter for table-adjustment and object passes (was B) */
+  u8             *IYheight_table;      /* pointer into height_table for per-object calls (was IY) */
+  u8             *HLroadbuf;           /* pointer into road_buffer for right-side object scan (was HL) */
+  s16            *IXtable_ea00;        /* pointer into xpos_road_centre at offset 88 ($EAB0) (was IX) */
+  int             Afloating_arrow;     /* non-zero when the floating target arrow should be drawn (was A) */
+  int             Aobj;                /* current object byte from the road buffer (was A) */
+  const bitmap_t *HLarrow_defn;        /* pointer to the floating arrow bitmap definition (was HL) */
+  int             Ex;                  /* horizontal position for the arrow draw (was E) */
+  int             Dy;                  /* vertical position for the arrow draw (was D) */
+  int             Cwidth_bytes;        /* sprite byte width for the arrow (was C) */
+  int             Bdash_flip_flag;     /* flip flag banked at EXX for the arrow draw (was B') */
+  int             Edash_bitmap_stride; /* bitmap stride banked at EXX for the arrow draw (was E') */
+  int             Cdash;               /* start offset banked at EXX for the arrow draw (was C') */
+  int             Bheight;             /* sprite row count for the arrow (was B) */
+  const u8       *HLbitmap;            /* pointer to arrow pixel data (was HL) */
+  int             Eobj;                /* object index used to look up the object table entry (was E) */
+  const obj_t    *HLobj;               /* pointer to the current scene object descriptor (was HL) */
 
   return;
 
@@ -3905,37 +3925,49 @@ left_hand_stuff:
 }
 
 /**
- * $9052: Draws overhead objects
+ * $9052: Draw overhead objects [Conv: HQ]
  *
- * \param[in] state      Pointer to game state.
- * \param[in] Bparam     Parameter.
- * \param[in] Cparam     Parameter.
- * \param[in] DEstretchy DEstretchy.
- * \param[in] IXxpos  X-position table pointer. (was IX)
- * \param[in] IYheight Height table pointer. (was IY)
+ * Draws overhead spanning objects such as bridges.  First calls
+ * draw_stretchy_object_left if IXxpos[1] is zero.  Looks up the perspective
+ * y-scale for the current frame row, computes the vertical offset written
+ * to do_vert_sub, and selects the depth-set pair index as
+ * MIN(Bparam − 1, 9).  Then checks the xpos table entries on both sides of
+ * the current position to determine visibility and clipping extent (D and E
+ * width fields).  Draws the overhead graphic row-by-row using the depth-set
+ * pair data.
+ *
+ * \param[in,out] state      Pointer to game state.
+ * \param[in]     Bparam     Depth scale index; also selects the pair entry (0..9). (was B)
+ * \param[in]     Cparam     Row index within the depth-set pair. (was C)
+ * \param[in]     DEstretchy Pointer to the stretchy object descriptor array. (was DE)
+ * \param[in]     IXxpos     Pointer into xpos_road_centre for this object slot. (was IX)
+ * \param[in]     IYheight   Pointer into height_table for this object slot. (was IY)
  */
 static void draw_overhead(chqstate_t       *state,
                           int                Bparam,
                           int                Cparam,
-                          const stretchy_t *DEstretchy, // TODO: Should this be a void * ?
+                          const stretchy_t *DEstretchy,
                           const s16  *IXxpos,
                           const u8         *IYheight)
 {
-  const stretchy_t      *HLstretchy;  /* was HL */
-  const depthset_pair_t *DEpairs;     /* was DE */
-  u8                    *HLdst;       /* was HL */
-  u8                    *DEsrc;       /* was DE */
-  int                    Avertical;   /* was A */
-  int                    A;
-  int                    Aminheight;  /* was A */
-  int                    Bminheight;  /* was B */
-  const u8              *HLvertical;  /* was HL */
-  int                    D, E, H, L;
-  const depthset_pair_t *HLpair;      /* was HL */
-  int                    Cdepth;      /* was C */
-  const u8              *HL;
-  int                    Acopy;       /* was A */
-  int                    B;
+  const stretchy_t      *HLstretchy;  /* pointer to the stretchy descriptor (was HL) */
+  const depthset_pair_t *DEpairs;     /* pointer to the depth-set pairs array (was DE) */
+  u8                    *HLdst;       /* destination pointer during row copy (was HL) */
+  u8                    *DEsrc;       /* source pointer during row copy (was DE) */
+  int                    Avertical;   /* raw vertical scale value from persp_y_scale (was A) */
+  int                    A;           /* scratch accumulator: visibility tests and offsets (was A) */
+  int                    Aminheight;  /* MIN(Bparam−1, 9): pair index into depth-set (was A) */
+  int                    Bminheight;  /* copy of Aminheight for draw loop (was B) */
+  const u8              *HLvertical;  /* pointer into persp_y_scale for current frame row (was HL) */
+  int                    D;           /* left-clip width in bytes for the right edge of the span (was D) */
+  int                    E;           /* right-clip extent: 0x1F minus visibility offset (was E) */
+  int                    H;           /* row counter / byte copy loop index (was H) */
+  int                    L;           /* column byte offset within the object row (was L) */
+  const depthset_pair_t *HLpair;      /* pointer to the chosen depth-set pair entry (was HL) */
+  int                    Cdepth;      /* depth value from the selected pair entry (was C) */
+  const u8              *HL;          /* scratch pointer reused for column byte source (was HL) */
+  int                    Acopy;       /* scratch copy of A during sub-loop (was A) */
+  int                    B;           /* sub-loop counter for per-row byte writes (was B) */
 
   // PUSH IXxpos/DE/BC
   if (IXxpos[1] == 0) // buffer offset/distance
@@ -4082,14 +4114,24 @@ void draw_stretchy_object_right(chqstate_t *state,
 }
 
 /**
- * $9174: Draws stretchy objects, such as trees
+ * $9174: Draw stretchy objects [Conv: HQ]
  *
- * \param[in] state      Pointer to game state.
- * \param[in] Bdepth     Depth scale index. (was B)
- * \param[in] DEstretchy An array of stretchy_t. (was DE)
- * \param[in] HLcallback Per-object draw callback. (was HL)
- * \param[in] IXxpos     Height-offset table pointer. (was IXxpos)
- * \param[in] IYheight   Road-table pointer. (was IYheight)
+ * Draws depth-scaled repeating scenery objects (trees, poles, signs) using
+ * a variable-resolution representation called "stretchy" objects.  Iterates
+ * through a stretchy_t[] array; each entry supplies a depthset (a set of
+ * bitmaps at different scales) and a type byte.  Type 1 (STRETCHY_TYPE_END)
+ * terminates the loop.  Type 2 draws via SM_91CD_callback.  Other types
+ * draw a scaled single pixel column via SM_9244_callback with a derived
+ * vertical height from persp_y_scale.  SM_91BA_bitmap_offset and
+ * SM_91CD/9244_callback are stored as SM fields to share state between
+ * this function and its callbacks.
+ *
+ * \param[in,out] state      Pointer to game state.
+ * \param[in]     Bdepth     Depth scale index; caps at DEPTHSET_MAX. (was B)
+ * \param[in]     DEstretchy Pointer to the stretchy_t descriptor array. (was DE)
+ * \param[in]     HLcallback Per-entry draw callback stored in SM fields. (was HL)
+ * \param[in]     IXxpos     Pointer into the xpos table for this object slot. (was IX)
+ * \param[in]     IYheight   Pointer into height_table for this object slot. (was IY)
  */
 static void draw_stretchy_object_common(chqstate_t       *state,
                                         int               Bdepth,
@@ -4098,26 +4140,26 @@ static void draw_stretchy_object_common(chqstate_t       *state,
                                         const s16        *IXxpos,
                                         const u8         *IYheight)
 {
-  dso_callback_t        *SM_91CD_callback;      /* was $91CD (SM) */
-  dso_callback_t        *SM_9244_callback;      /* was $9244 (SM) */
-  int                    A;
-  int                    SM_91DB_vertical;      /* was $91DB (SM) */
-  const stretchy_t      *HLstretchy;            /* was HL */
-  u16                    DEbitmapoffset;
-  int                    C_total;
-  u16                    SM_91BA_bitmap_offset; /* was $91BA (SM) */
-  int                    Bstretchy_type;
-  const depthset_t      *DEdepthset;
-  const depthset_t      *HLdepthset;
-  const bitmap_t        *DEbitmap;
-  const depthset_pair_t *HLpair;
-  int                    Apairdepth;
-  u16                    HLoffset;
-  const bitmap_t        *HLbitmap;
-  int                    Bwidthbytes;
-  int                    Bpairdepth;
-  int                    Avertical;
-  int                    Bvertical;
+  dso_callback_t        *SM_91CD_callback;      /* SM: type-2 draw callback (was $91CD) */
+  dso_callback_t        *SM_9244_callback;      /* SM: single-column draw callback (was $9244) */
+  int                    A;                     /* scratch accumulator: type check and vertical scale (was A) */
+  int                    SM_91DB_vertical;      /* SM: vertical scale value from persp_y_scale (was $91DB) */
+  const stretchy_t      *HLstretchy;            /* pointer walking DEstretchy[] (was HL) */
+  u16                    DEbitmapoffset;        /* (MIN(Bdepth,DEPTHSET_MAX) * 2 − 1): pair index (was DE) */
+  int                    C_total;               /* running column total; negated into doc_col_pos (was C) */
+  u16                    SM_91BA_bitmap_offset; /* SM: copy of DEbitmapoffset for use by callbacks (was $91BA) */
+  int                    Bstretchy_type;        /* stretchy type byte minus 1; 0=end, 1=type2, else=column (was B) */
+  const depthset_t      *DEdepthset;            /* depthset pointer from the current stretchy entry (was DE) */
+  const depthset_t      *HLdepthset;            /* copy of DEdepthset after EX DE,HL (was HL) */
+  const bitmap_t        *DEbitmap;              /* pointer to the depthset's bitmap array (was DE) */
+  const depthset_pair_t *HLpair;                /* pointer to the chosen depth-set pair entry (was HL) */
+  int                    Apairdepth;            /* depth value from the selected pair (was A) */
+  u16                    HLoffset;              /* bitmap offset from the pair entry (was HL) */
+  const bitmap_t        *HLbitmap;              /* pointer to the selected bitmap definition (was HL) */
+  int                    Bwidthbytes;           /* bitmap width in bytes minus 2, for column callback (was B) */
+  int                    Bpairdepth;            /* copy of Apairdepth passed to SM_91CD_callback (was B) */
+  int                    Avertical;             /* vertical scale from SM_91DB, halved for column height (was A) */
+  int                    Bvertical;             /* half of Avertical: column height in pixels (was B) */
 
   // These just duplicate the HLcallback arg so could be removed in time.
   SM_91CD_callback = HLcallback;
@@ -4436,27 +4478,34 @@ static void draw_object_left_stretchy_entrypt(chqstate_t     *state,
 }
 
 /**
- * $929A: Draw object left helicopter entrypt
+ * $929A: Draw object — left-side clipping entry point [Conv: HQ]
  *
- * \param[in] state        Pointer to game state.
- * \param[in] Awidth_bytes Bitmap byte width.
- * \param[in] HLbitmap     Source bitmap data.
- * \param[in] IYheight     Height table pointer. (was IY)
+ * Entry point for objects that arrive at the left-hand edge of the screen.
+ * Returns immediately if Awidth_bytes < 8 (object fully off-screen left).
+ * Otherwise computes the visible column count and padding from the bitmap
+ * width and the clipping width, sets doc_shift_select, and dispatches to
+ * draw_object_clipped or draw_object_common_flipped depending on the
+ * BITMAPFLAG_FLIPPED bit.
+ *
+ * \param[in,out] state        Pointer to game state.
+ * \param[in]     Awidth_bytes Available pixel width at the left edge. (was A)
+ * \param[in]     HLbitmap     Pointer to the bitmap descriptor. (was HL)
+ * \param[in]     IYheight     Pointer into height_table for this object slot. (was IY)
  */
 static void draw_object_left_helicopter_entrypt(chqstate_t     *state,
     int              Awidth_bytes,
     const bitmap_t *HLbitmap,
     const u8       *IYheight)
 {
-  int zero;
-  int carry;
-  int Cpadding;
-  int Ebitmap_stride;
-  int Bheight;
-  int Dwidth_bytes;
-  int Adash;
-  int Fdash_zero;
-  int Fdash_carry;
+  int zero;            /* non-zero when bitmap is NOT flipped (BITMAPFLAG_FLIPPED clear) (was Z) */
+  int carry;           /* non-zero when bitmap uses a mask (BITMAPFLAG_MASKED set) (carry) */
+  int Cpadding;        /* byte padding between visible and full-width columns (was C) */
+  int Ebitmap_stride;  /* full bitmap row stride in bytes from HLbitmap->width_bytes (was E) */
+  int Bheight;         /* height correction: 1 in both paths; decremented in flipped path (was B) */
+  int Dwidth_bytes;    /* visible width saved while padding is computed (was D) */
+  int Adash;           /* Awidth_bytes banked for EX AF,AF' into flipped path (was A') */
+  int Fdash_zero;      /* zero flag banked for EX AF,AF' into flipped path (was Z in F') */
+  int Fdash_carry;     /* carry banked for EX AF,AF' into flipped path (was carry in F') */
 
   if (Awidth_bytes < 8)
     return;
@@ -4653,13 +4702,20 @@ static void draw_object_right_helicopter_entrypt(chqstate_t     *state,
 }
 
 /**
- * $930E: Draw object: compute perspective height/width and dispatch
+ * $930E: Draw object — perspective height/width entry point [Conv: HQ]
  *
- * \param[in] state        Pointer to game state.
- * \param[in] Awidth_bytes Bitmap byte width.
- * \param[in] Cpadding     Cpadding.
- * \param[in] HLbitmap     Source bitmap data.
- * \param[in] IYheight     Height table pointer. (was IY)
+ * Derives the height and draw-width for a depth-scaled object from the
+ * clipping width Awidth_bytes.  Right-shifts by 2 (then 1 more) to get the
+ * height index, stores it in doc_shift_select, and computes the visible
+ * column count as MAX(width_bytes, 31 − height).  Dispatches to
+ * draw_object_clipped or draw_object_common_flipped depending on the
+ * BITMAPFLAG_FLIPPED bit.
+ *
+ * \param[in,out] state        Pointer to game state.
+ * \param[in]     Awidth_bytes Clipping pixel width from the xpos table. (was A)
+ * \param[in]     Cpadding     Byte padding between visible and full columns. (was C)
+ * \param[in]     HLbitmap     Pointer to the bitmap descriptor. (was HL)
+ * \param[in]     IYheight     Pointer into height_table for this object slot. (was IY)
  */
 static void draw_object_perspective_entrypt(chqstate_t     *state,
                                      int              Awidth_bytes,
@@ -4667,14 +4723,16 @@ static void draw_object_perspective_entrypt(chqstate_t     *state,
                                      const bitmap_t *HLbitmap,
                                      const u8       *IYheight)
 {
-  int carry = 0;
-  int Bheight;
-  int Ebitmap_stride;
-  int Zflipped;
-  int Cwidth_bytes;
-  int Adash_width_bytes;
-  int Fdash_zero;
-  int Fdash_carry;
+  int carry;               /* carry from RRA steps; always 0 at entry (carry) */
+  int Bheight;             /* height index: Awidth_bytes >> 3, used as doc_shift_select (was B) */
+  int Ebitmap_stride;      /* full bitmap row stride from HLbitmap->width_bytes (was E) */
+  int Zflipped;            /* non-zero when bitmap is NOT flipped (BITMAPFLAG_FLIPPED clear) (was Z) */
+  int Cwidth_bytes;        /* computed draw width: MAX(Ebitmap_stride, 31 − Bheight) (was C) */
+  int Adash_width_bytes;   /* Cwidth_bytes banked for EX AF,AF' into flipped path (was A') */
+  int Fdash_zero;          /* Zflipped banked for EX AF,AF' (was Z in F') */
+  int Fdash_carry;         /* carry banked for EX AF,AF' (was carry in F') */
+
+  carry = 0;
 
   Awidth_bytes >>= 2; /* was AND-RRCA-RRCA */
   state->doc_shift_select = Awidth_bytes;

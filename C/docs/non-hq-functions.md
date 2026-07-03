@@ -8,13 +8,6 @@ Generated from `grep '^ \* \$' ChaseHQ.c | grep -v '\[Conv: HQ\]'`.
 
 | Address | C function | Description |
 |---------|------------|-------------|
-| `$5C00` | `end_screen` | End screen |
-| `$865A` | `draw_pregame` | Draw pregame |
-| `$8F5F` | `draw_scene_objects` | Draw everything else |
-| `$9052` | `draw_overhead` | Draw overhead objects |
-| `$9174` | `draw_stretchy_object_common` | Draw stretchy objects (e.g. trees) |
-| `$929A` | `draw_object_left_helicopter_entrypt` | Draw object left helicopter entry point |
-| `$930E` | `draw_object_perspective_entrypt` | Draw object: compute perspective height/width and dispatch |
 | `$C2E7` | `draw_road_lanes_change` | Draw road lane change |
 | `$C452` | `draw_road` | Draw road |
 | `$C4AD` | `dr_read_lanes` | draw_road: read lanes |
