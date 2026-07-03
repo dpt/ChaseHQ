@@ -10122,70 +10122,74 @@ void no_op(chqstate_t *state, hazard_t *hazard)
 }
 
 /**
- * $B063: Move hero car
+ * $B063: Move hero car [Conv: HQ]
  *
- * Called from main loop.
+ * Called every frame from the main loop to advance the hero car's physical
+ * state.  Decrements the jump counter and feeds pitch and y-position from
+ * the jump table while airborne.  Manages the boost timer, smoke counter and
+ * gear-change lockout.  Computes the speed limit from gear, boost and
+ * off-road state, applies a pitch-derived correction when inclined, then
+ * clamps speed to [0, 511].  Accumulates left/right turning forces from user
+ * input and caps them against the current speed.  Converts curvature scroll
+ * ticks to a road_pos delta.  Writes turn_speed (0/1/2) and flip_car for
+ * the sprite renderer.
  *
- * \param[in] state Pointer to game state.
+ * \param[in,out] state  Pointer to game state.
  */
 static void move_hero_car(chqstate_t *state)
 {
-  // Gear-speed thresholds
-  const int SpeedIdleChatter  =
-    120; // trigger "get moving" chatter below this speed
-  const int SpeedOffRoad1     = 120; // max speed with one wheel off-road
-  const int SpeedOffRoad2     = 110; // max speed with both wheels off-road
-  const int SpeedHighGearMin  =
-    220; // high gear uses two different max speeds above/below this
-  const int SpeedLowGear      =
-    230; // low gear max without boost; high gear max below SpeedHighGearMin
-  const int SpeedBoosted      =
-    470; // max speed with boost active (low gear, or high gear < SpeedHighGearMin)
-  const int SpeedHighGear     = 360; // high gear max without boost
-  const int SpeedHighGearBoosted = 695; // high gear max with boost
+  /* Gear-speed thresholds */
+  const int SpeedIdleChatter     = 120; /* trigger "get moving" chatter below this speed */
+  const int SpeedOffRoad1        = 120; /* max speed with one wheel off-road */
+  const int SpeedOffRoad2        = 110; /* max speed with both wheels off-road */
+  const int SpeedHighGearMin     = 220; /* high gear uses two different max speeds above/below this */
+  const int SpeedLowGear         = 230; /* low gear max without boost; high gear max below SpeedHighGearMin */
+  const int SpeedBoosted         = 470; /* max speed with boost active (low gear, or high gear < SpeedHighGearMin) */
+  const int SpeedHighGear        = 360; /* high gear max without boost */
+  const int SpeedHighGearBoosted = 695; /* high gear max with boost */
 
-  // TODO Sort these decls by use
-  int        y_offset;             /* was A */
-  const u8  *jump_data;            /* was HL */
-  int        boost;                /* was A */
-  int        Cinput;               /* was C */
-  int        Ainput;               /* was A */
-  u8        *pgear;                /* was HL */
-  int        smoke;                /* was A */
-  int        gear_lockout;         /* was A */
-  int        gear;                 /* was A */
-  int        speed;                /* was HL */
-  int        off_road;             /* was A */
-  int        BCmax_speed;          /* was BC */
-  int        BCspeed_diff;         /* was BC */
-  int        Ainclined;            /* was A */
-  int        Apitch;               /* was A */
-  int        Cleft_turn;           /* was C */
-  int        Hinput;               /* was H */
-  int        Bright_turn;          /* was B */
-  int        BCpitch_speed_delta;  /* was BC */
-  int        DEoldspeed;           /* was DE */
-  int        Bturn_speed;          /* was B */
-  int        Dflip_car;            /* was D */
-  int        Acornering;           /* was A */
-  int        Acurrent_curvature;   /* was A */
-  const u8  *HLhorizon_table;      /* was HL */
-  int        saved_Cleft_turn;     /* was C */
-  int        saved_Bright_turn;    /* was B */
-  int        Acrashedflag;         /* was A */
-  int        Aturn_speed;          /* was A */
-  int        Bcount;               /* was B */
-  int        Chorizon_scroll_sub;  /* was C */
-  int        Enegative_scrolling;  /* was E */
-  int        Ahorizon_scroll_sub;  /* was A */
-  int        Acounter;             /* was A' */
-  int        Chorz_tab_value;      /* was C */
-  int        Acount;               /* was A' */
-  int        BCcount_scaled;       /* was BC */
-  int        HLhorizontal_adjust;  /* was HL */
-  int        DEadjust;             /* was DE */
-  int        Anet_turn;            /* was A */
-  int        saved_horiz_adj;      /* diagnostic: horizontal_adjust before clear */
+  int        y_offset;             /* jump counter: 8..1 while airborne, 0 when landed (was A) */
+  const u8  *jump_data;            /* pointer into hero_car_jump_table for current air frame (was HL) */
+  int        Cinput;               /* latched user_input; masked to fire-only when crashed (was C) */
+  int        Ainput;               /* copy of Cinput used for fire and brake/accel checks (was A) */
+  int        fire_pressed;         /* non-zero when FIRE held and gear lockout is zero (Conv: extracted) */
+  u8        *pgear;                /* pointer to state->gear for toggle/read (was HL) */
+  int        gear_lockout;         /* gear-change lockout counter; counts down each frame (was A) */
+  int        smoke;                /* value written to state->smoke on gear change (was A) */
+  int        gear;                 /* current gear: 0=low, 1=high (was A) */
+  int        speed;                /* current hero car speed in game units (was HL) */
+  int        off_road;             /* off-road flags: 0=on, 1=one wheel off, 2=both off (was A) */
+  int        BCmax_speed;          /* speed cap for current gear/boost/off-road combination (was BC) */
+  int        BCspeed_diff;         /* signed delta applied to speed each frame (was BC) */
+  int        boost;                /* turbo boost active flag; non-zero while boosting (was A) */
+  int        Ainclined;            /* inclined_counter decremented; negative triggers pitch adjust (was A) */
+  int        Apitch;               /* dhc_pitch value: selects pitch-speed-delta entry (was A) */
+  int        BCpitch_speed_delta;  /* speed correction from road pitch: (Apitch − 5) | 1 (was BC) */
+  int        DEoldspeed;           /* pre-pitch speed, restored if result exceeds 695 (was DE) */
+  int        Hinput;               /* copy of Cinput used for left/right turn detection (was H) */
+  int        Bright_turn;          /* rightward turning force accumulator, capped at 36 (was B) */
+  int        Cleft_turn;           /* leftward turning force accumulator, capped at 36 (was C) */
+  int        Aturn_speed;          /* speed-derived cap applied to turning forces (was A) */
+  int        saved_Bright_turn;    /* Bright_turn saved across curvature scroll section (was B) */
+  int        saved_Cleft_turn;     /* Cleft_turn saved across curvature scroll section (was C) */
+  int        Bcount;               /* horizon scroll ticks consumed this frame (was B) */
+  int        BCcount_scaled;       /* Bcount x 3, negated when scrolling right (was BC) */
+  int        Enegative_scrolling;  /* non-zero when curvature is negative (rightward) (was E) */
+  int        Acurrent_curvature;   /* current_curvature magnitude; index into horizon_table (was A) */
+  const u8  *HLhorizon_table;      /* pointer into horizon_table for the current curvature (was HL) */
+  int        Chorizon_scroll_sub;  /* horizon_scroll_sub: sub-pixel carry from last frame (was C) */
+  int        Ahorizon_scroll_sub;  /* accumulated horizon scroll sub, updated after each tick (was A) */
+  int        Acounter;             /* remaining fast_counter ticks minus horizon_scroll_sub (was A') */
+  int        Chorz_tab_value;      /* horizon_table entry for this curvature (was C) */
+  int        Acount;               /* copy of Bcount for curvature_ticks accumulation (was A') */
+  int        saved_horiz_adj;      /* horizontal_adjust before clearing; diagnostic only (Conv: added) */
+  int        HLhorizontal_adjust;  /* horizontal position delta: curvature scroll + net turn (was HL) */
+  int        DEadjust;             /* horizontal adjustment when crashed: low byte of HL (was DE) */
+  int        Acrashedflag;         /* ahc_crashed_flag on entry (was A) */
+  int        Anet_turn;            /* net turning force: left_turn − right_turn (was A) */
+  int        Acornering;           /* cornering flag written back to state (was A) */
+  int        Dflip_car;            /* car sprite flip direction: 1=right, 0=left (was D) */
+  int        Bturn_speed;          /* animation rate: 0=straight, 1=turn, 2=turn-hard (was B) */
 
   y_offset = state->mhc_y_offset; // load jump counter, highest is 8
   assert(y_offset >= 0 && y_offset <= 8);
@@ -10223,7 +10227,7 @@ static void move_hero_car(chqstate_t *state)
 
   Ainput = Cinput;
   // PUSH Ainput (PUSH AF)
-  const int fire_pressed = (Ainput & USERINPUTFLAG_FIRE) != 0;
+  fire_pressed = (Ainput & USERINPUTFLAG_FIRE) != 0;
   pgear = &state->gear; // could use state
   gear_lockout = (s8) state->gear_lockout;
   if (fire_pressed != 0 && gear_lockout == 0) {
@@ -10455,33 +10459,39 @@ mhc_set_cornering:
 }
 
 /**
- * $B318: Animate hero car
+ * $B318: Animate hero car [Conv: HQ]
  *
- * Called from main loop.
+ * Called every frame after move_hero_car.  Handles the crash-spin FSM:
+ * while ahc_crashed_flag is set, decays speed by a quarter each frame,
+ * clears the flag when speed falls below ahc_crash_speed_threshold, and
+ * advances the crash-spin position via ahc_crash_spin_speed.  Clamps
+ * road_pos to ahc_road_pos_a/b bounds.  Drives the perp-caught animation
+ * phase.  Calls draw_debris, ahc_check_hand_flag, draw_hero_car and
+ * (when cornering or boosting) draw_smoke.
  *
- * \param[in] state Pointer to game state.
+ * \param[in,out] state  Pointer to game state.
  */
 static void animate_hero_car(chqstate_t *state)
 {
-  int HLspeed;            /* was HL */
-  int DEquartered_speed;  /* was DE */
-  int Acrashed_flag;      /* was A */
-  int Aturn_speed;        /* was A */
-  int HL_b356;            /* was HL */
-  int DE_b356;            /* was DE */
-  int HLroad_pos;         /* was HL */
-  int Cflip_flag;         /* was C */
-  int Adelay;             /* was A */
-  int DEother_road_pos;   /* was DE */
-  int A;                  /* was A */
-  int Aperp_caught_phase; /* was A */
-  int Aflipping;          /* was A */
-  int Cflipping;          /* was C */
-  int Acounter_A;         /* was A */
-  int Bdash_anim_counter; /* was B */
-  int Cdash;              /* was A */
-  int Bwobble;            /* was B */
-  int Bsmoke_anim_frame;  /* was B */
+  int HLspeed;            /* current hero car speed (was HL) */
+  int DEquartered_speed;  /* speed / 4 | 3: friction ramp during crash (was DE) */
+  int Acrashed_flag;      /* ahc_crashed_flag on entry (was A) */
+  int Aturn_speed;        /* turn_speed value set during crash (was A) */
+  int HL_b356;            /* crash spin speed decayed by 1/16 each frame (was HL) */
+  int DE_b356;            /* copy of HL_b356 after EX DE,HL (was DE) */
+  int HLroad_pos;         /* scenedata.road_pos, clamped to bounds (was HL) */
+  int Cflip_flag;         /* ahc_flip_flag: selects add or subtract spin direction (was C) */
+  int Adelay;             /* ahc_delay countdown; 0 triggers crash-spin frame advance (was A) */
+  int DEother_road_pos;   /* road_pos bound from ahc_road_pos_a or ahc_road_pos_b (was DE) */
+  int A;                  /* scratch: high-byte comparison result (was A) */
+  int Aperp_caught_phase; /* perp_caught_phase: drives caught-criminal animation (was A) */
+  int Aflipping;          /* ahc_crash_spin value: non-zero while crash spinning (was A) */
+  int Cflipping;          /* spin frame index: Aflipping * 3 + 24, adjusted for turn rate (was C) */
+  int Acounter_A;         /* anim_counter used to compute Bdash_anim_counter (was A) */
+  int Bdash_anim_counter; /* anim_counter & 1: selects even/odd crash frame (was B) */
+  int Cdash;              /* Bdash_anim_counter << 1: second frame parity argument (was A) */
+  int Bwobble;            /* off-road vertical wobble offset: 0 or 3 at half rate (was B) */
+  int Bsmoke_anim_frame;  /* animation counter fed to draw_smoke (was B) */
 
   if ((HLspeed = state->speed) == 0) {
     state->ahc_crash_spin = 0;
@@ -10631,19 +10641,26 @@ ahc_load_flip_flag:
 }
 
 /**
- * $B457: AHC check hand flag
+ * $B457: AHC check hand flag [Conv: HQ]
  *
- * \param[in] state Pointer to game state.
+ * Draws the "stop" hand overlay shown when the perp has been caught.  Three
+ * modes: HANDFLAG_NONE returns immediately; any other non-HANDFLAG_ANIMATING
+ * value draws the static hand at frame 36 or 37 via draw_crash; HANDFLAG_ANIMATING
+ * advances a two-speed delay counter (ahc_hand_delay/ahc_hand_step) through
+ * 7 animation frames, enables the cherry light on the final frame, and draws
+ * one or two hand sprites per tick via draw_crash_unflipped.
+ *
+ * \param[in,out] state  Pointer to game state.
  */
 static void ahc_check_hand_flag(chqstate_t *state)
 {
-  int Ahand_flag;      /* was A */
-  int Bdash_flip_flag; /* was B */
-  int Cdash;           /* was C */
-  int Chand_flag;      /* was C */
-  int Ahand_frame;     /* was A */
-  int Bhand_frame;     /* was B */
-  int Chand_frame;     /* was C */
+  int Ahand_flag;      /* hand_flag on entry: HANDFLAG_NONE/ANIMATING/static (was A) */
+  int Bdash_flip_flag; /* hand_flag banked for EXX; passed to draw_crash (was B) */
+  int Cdash;           /* hand_flag banked for EXX; passed to draw_crash (was C) */
+  int Chand_flag;      /* ahc_hand_step: current animation step 0..6 (was C) */
+  int Ahand_frame;     /* animation frame index derived from ahc_hand_delay/step (was A) */
+  int Bhand_frame;     /* reset delay value: 2 normally, 3 on step 2 (was B) */
+  int Chand_frame;     /* copy of Ahand_frame used for the second draw_crash_unflipped call (was C) */
 
   Ahand_flag = state->hand_flag;
   if (Ahand_flag == HANDFLAG_NONE)
@@ -10709,9 +10726,16 @@ static void ahc_check_hand_flag(chqstate_t *state)
 }
 
 /**
- * $B4CC: Start chase
+ * $B4CC: Start chase [Conv: HQ]
  *
- * \param[in] state Pointer to game state.
+ * Triggers when the perp vehicle is first sighted.  Resets the hand
+ * animation state (ahc_hand_step, ahc_hand_delay) and sets hand_flag to
+ * HANDFLAG_ANIMATING.  Enables sighted_flag (flashing lights and smash
+ * bar).  Resets the time limit (15 sixteenths, BCD 60 seconds).  Toggles
+ * the marquee left light brightness, shows the sighting overlay message,
+ * and starts the siren.
+ *
+ * \param[in,out] state  Pointer to game state.
  */
 static void start_chase(chqstate_t *state)
 {
@@ -10736,15 +10760,22 @@ static void start_chase(chqstate_t *state)
 }
 
 /**
- * $B4F0: Smash
+ * $B4F0: Smash [Conv: HQ]
  *
- * \param[in] state Pointer to game state.
+ * Called each time the hero car rams the perp.  Advances the
+ * smash_cycling_counter (0..3) to select the next debris sub-table, resets
+ * the debris frame counter to 9, and increments smash_counter.  When
+ * smash_counter reaches SMASHCOUNTER_MAX the perp is fully smashed via
+ * fully_smashed; one below that triggers a "one more time" chatter.
+ * Updates smash_level (0..6) from a stepped threshold table of hit counts.
+ *
+ * \param[in,out] state  Pointer to game state.
  */
 static void smash(chqstate_t *state)
 {
-  int counter; /* was A */
-  int hits;    /* was A */
-  int level;   /* was C */
+  int counter; /* smash_cycling_counter incremented mod 4; selects debris sub-table (was A) */
+  int hits;    /* smash_counter after increment: total ram count this stage (was A) */
+  int level;   /* smash_level 0..6 derived from hit count thresholds (was C) */
 
   counter = (state->smash_cycling_counter + 1) & 3;
   state->smash_cycling_counter = counter;
@@ -10785,27 +10816,35 @@ static void smash(chqstate_t *state)
 }
 
 /**
- * $B549: Draw debris
+ * $B549: Draw debris [Conv: HQ]
  *
- * \param[in] state Pointer to game state.
+ * Draws the three debris pieces that fly off when the perp is rammed.
+ * dd_SM_B549_frame_counter counts down from 9; when it reaches zero the
+ * function returns early and draws nothing.  Each of the three sub-tables
+ * pointed to by dd_debris_subtables_start holds a 0..3 per-piece cycling
+ * counter followed by a 9-entry y/x position table.  The counter selects
+ * the bitmap frame (12 bytes per frame in bitmap_debris_1); the current
+ * dd_frame_offset selects the y/x pair within the sub-table.  Each piece is
+ * drawn via draw_part_entrypt2 at 6×1 bytes masked.
+ *
+ * \param[in,out] state  Pointer to game state.
  */
 static void draw_debris(chqstate_t *state)
 {
-  int       Aframe_counter;    /* was A */
-  int       Biterations;       /* was B */
-  u8      **HLsubtables;       /* was HL */
-  u8       *DEsubtable;        /* was DE */
-  int       Cframe_offset;     /* was C */
-  int       HLoffset;          /* was HL */
-  int       BCframe_offset;    /* was BC */
-  u8       *HLsubtable;        /* was HL */
-  u8        Dy;                /* was D */
-  u8        Ex;                /* was E */
-  const u8 *HLbitmap;          /* was HL */
-  u8        Bheight;           /* was B */
-  u8        Cwidth_bytes;      /* was C */
-  int       BCdash;            /* was BC */
-  u8        Edash_width_bytes; /* was E */
+  int       Aframe_counter;    /* dd_SM_B549_frame_counter: counts 9..1, 0=skip (was A) */
+  int       Biterations;       /* loop counter: 3 debris pieces per smash (was B) */
+  u8      **HLsubtables;       /* pointer walking dd_debris_subtables_start array (was HL) */
+  u8       *DEsubtable;        /* pointer into the current debris sub-table (was DE) */
+  int       BCframe_offset;    /* piece cycling counter x 12: byte offset into bitmap_debris_1 (was BC) */
+  int       HLoffset;          /* dd_frame_offset: selects y/x pair within the sub-table (was HL) */
+  u8       *HLsubtable;        /* pointer to the y byte in the sub-table position entry (was HL) */
+  u8        Dy;                /* y screen position for this debris piece (was D) */
+  u8        Ex;                /* x screen position for this debris piece (was E) */
+  const u8 *HLbitmap;          /* pointer into bitmap_debris_1 at the chosen frame offset (was HL) */
+  u8        Bheight;           /* sprite height: 6 rows (was B) */
+  u8        Cwidth_bytes;      /* sprite width in bytes: 1 (was C) */
+  int       BCdash;            /* shadow BC banked at EXX: 0 for no extra offset (was BC) */
+  u8        Edash_width_bytes; /* shadow E banked at EXX: 1 byte wide (was E) */
 
   Aframe_counter = state->dd_SM_B549_frame_counter;
   if (Aframe_counter == 0)
