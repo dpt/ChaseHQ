@@ -9141,20 +9141,33 @@ hc_exit:
 }
 
 /**
- * $AB9A: Spawn hazards
+ * $AB9A: spawn_hazards [Conv: HQ]
  *
- * Called from main loop.
+ * Spawns hittable obstacles (barriers or tumbleweeds) into hazard slots based
+ * on the road-buffer hazard byte at the current spawning distance. Returns
+ * immediately if allow_spawning is zero.
+ *
+ * The spawning distance is 20 − allow_spawning (18 or 19). If the road-buffer
+ * hazard byte at that offset is zero, nothing is spawned.
+ *
+ * A hazard byte of 4 or more selects the heavier hittable variant (index 3)
+ * and subtracts 3 before dispatch. The remaining value controls count and
+ * placement:
+ *   1: one obstacle at x=50.
+ *   2: one obstacle at x=220.
+ *   3: two or three obstacles; barriers when inhibit_collision_detection is
+ *      set, tumbleweeds otherwise.
  *
  * \param[in] state Pointer to game state.
  */
 static void spawn_hazards(chqstate_t *state)
 {
-  int allow_spawning;    /* was A */
-  int Cdistance;         /* was C */
-  u8 *roadbuf;           /* was HL */
-  int hazard;            /* was A */
-  int DEhittable_offset; /* was DE */
-  int horz_pos;          /* was B */
+  int allow_spawning;    /* allow_spawning flag: 0=disabled, 1/2=normal/fast (was A) */
+  int Cdistance;         /* spawn distance: 20 − allow_spawning; used as road-buffer offset (was C) */
+  u8 *roadbuf;           /* pointer into road buffer at the hazards data offset (was HL) */
+  int hazard;            /* hazard type byte from road buffer, dispatches spawn variant (was A) */
+  int DEhittable_offset; /* hittable object table offset: 0=light variant, 3=heavy variant (was DE) */
+  int horz_pos;          /* x position for the final (or only) spawned hazard (was B) */
 
   allow_spawning = state->allow_spawning;
   if (allow_spawning == 0)
@@ -9260,10 +9273,26 @@ sh_found_free:
 }
 
 /**
- * $AC3C: Hazard hit
+ * $AC3C: hazard_hit [Conv: HQ]
  *
- * \param[in] state    Pointer to game state.
- * \param[in] IXhazard Ixhazard.
+ * Hit handler for static road hazards (barriers and tumbleweeds). Registered
+ * as the hit_handler function pointer in each hazard slot spawned by
+ * spawn_hazards.
+ *
+ * hazard_flags drives a three-state FSM:
+ *   0: first-hit phase. If hit_timer is zero the hit has not yet registered;
+ *      return immediately. Otherwise look up wobble parameters in table_ad03
+ *      based on hero speed, store them in hazard_lane_OR_perp_dist_hi and
+ *      current_lane, scale the approach speed, play EFFECT_HAZARD_HIT and
+ *      set hazard_flags to 2.
+ *   1: wobble complete; return immediately (--flags reaches zero).
+ *   2+: wobble animation. Each call advances the hit_wobble index through
+ *      table_acdb, decays speed by 1/32, toggles the inverted bit and
+ *      decrements the current_lane countdown. When it reaches zero, speed
+ *      and inverted are zeroed and hazard_flags reverts to 1.
+ *
+ * \param[in]     state     Pointer to game state.
+ * \param[in,out] IXhazard  Hazard slot that was hit. (was IX)
  */
 static void hazard_hit(chqstate_t *state, hazard_t *IXhazard)
 {
@@ -9288,11 +9317,11 @@ static void hazard_hit(chqstate_t *state, hazard_t *IXhazard)
     0x14, 0x00
   };
 
-  int       flags;    /* was A */
-  int       hit_timer;     /* was A */
-  int       speed;    /* was DE, BC */
-  int       index;    // added
-  const u8 *ptable;   /* was HL */
+  int       flags;      /* hazard_flags on entry; drives three-state FSM (was A) */
+  int       hit_timer;  /* IX[7]: zero=no hit yet, negative=max-speed hit, positive=normal hit (was A) */
+  int       speed;      /* hero car speed at time of impact; 280 when hit_timer is negative (was DE, BC) */
+  int       index;      /* speed-derived index into table_ad03, two bytes per entry (Conv: added) */
+  const u8 *ptable;     /* pointer into table_ad03 for the current speed bracket (was HL) */
 
   flags = IXhazard->hazard_flags;
   if (flags == 0) {
@@ -9485,17 +9514,22 @@ static u8 check_collision(chqstate_t *state,
 }
 
 /**
- * $ADA0: Draw all hazards
+ * $ADA0: draw_all_hazards [Conv: HQ]
  *
- * Called from main loop.
+ * Resets n_hazards to zero then walks all six hazard slots, calling
+ * dh_draw_one_hazard for each active slot.
+ *
+ * dh_draw_one_hazard advances the hazard's distance, performs perspective
+ * projection, inserts it into the depth-sorted draw list and fires its hit
+ * handler. The height table pointer passed to it indexes the $E300 buffer.
  *
  * \param[in] state Pointer to game state.
  */
 static void draw_all_hazards(chqstate_t *state)
 {
-  const u8 *height_table; /* was IY */
-  hazard_t *hazard;     /* was IX */
-  int       iterations; /* was B */
+  const u8 *height_table; /* pointer to state->height_table[0] at $E300 (was IY) */
+  hazard_t *hazard;        /* pointer to current hazard slot under examination (was IX) */
+  int       iterations;    /* loop counter: 6 hazard slots (was B) */
 
   state->n_hazards = 0;
   height_table = &state->height_table[0];
