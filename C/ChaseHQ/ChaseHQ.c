@@ -10897,26 +10897,33 @@ static void draw_debris(chqstate_t *state)
 }
 
 /**
- * $B58E: Draw hero car
+ * $B58E: Draw hero car [Conv: HQ]
  *
- * \param[in] state       Pointer to game state.
- * \param[in] Aturn_speed Speed value.
- * \param[in] Bwobble     Bwobble.
+ * Draws the full hero car sprite at its current vertical position.  First
+ * draws the shadow (56-px wide) at y=120.  Computes the car body index
+ * (0..8) from turn_speed, Bwobble and dhc_pitch, looks up the hero_car_parts
+ * entry, computes the back-buffer address from the adjusted y, then calls
+ * plot_sprite or plot_sprite_flipped depending on flip_car.  Finishes by
+ * drawing the windscreen, wheels and both side panels via draw_hero_car_part.
+ *
+ * \param[in,out] state       Pointer to game state.
+ * \param[in]     Aturn_speed Turning speed index 0..2: straight/turn/turn-hard. (was A)
+ * \param[in]     Bwobble     Vertical wobble offset added to car body index. (was B)
  */
 static void draw_hero_car(chqstate_t *state, int Aturn_speed, int Bwobble)
 {
-  int              Cturn_speed;
-  const carpart_t *HLcarpart;
-  u8               Dy;
-  u8               Ey;
-  int              Acar_direction;
-  u16              DEbackbuf_addr;
-  u8               Bdash_height;
-  const u8        *HLbitmap_data;
-  u8               Awidth_bytes;
-  u16              DEbitmap_stride;
-  u16              HLdash_backbuf_addr;
-  int              Adash_flip_car;
+  int              Cturn_speed;          /* copy of Aturn_speed preserved across shadow draw (was C) */
+  u8               Dy;                   /* vertical screen position: 117 minus dhc_jump_y (was D) */
+  int              Acar_direction;       /* body part index 0..8: turn + wobble + pitch (was A) */
+  const carpart_t *HLcarpart;            /* pointer into hero_car_parts[Acar_direction] (was HL) */
+  u8               Ey;                   /* adjusted y after subtracting car_y and part y offset (was E) */
+  u16              DEbackbuf_addr;       /* back-buffer plot address derived from Ey (was DE) */
+  u8               Bdash_height;         /* sprite row count from carpart (was B') */
+  const u8        *HLbitmap_data;        /* pointer to car body bitmap data (was HL') */
+  u8               Awidth_bytes;         /* sprite byte width: 5 (was A) */
+  u16              DEbitmap_stride;      /* bitmap row stride: 5 (was DE') */
+  u16              HLdash_backbuf_addr;  /* copy of DEbackbuf_addr for plot call (was HL') */
+  int              Adash_flip_car;       /* flip_car flag: 0=normal, 1=flipped (was A') */
 
   assert(Aturn_speed < 3);
   assert(Bwobble == 0 || Bwobble == 3);
@@ -10999,14 +11006,20 @@ static void draw_hero_car(chqstate_t *state, int Aturn_speed, int Bwobble)
 }
 
 /**
- * $B627: Draw a portion of the hero car
+ * $B627: Draw a portion of the hero car [Conv: HQ]
  *
- * \param[in] state        Pointer to game state.
- * \param[in] Cwidth_bytes Byte width (drawing and/or stride?). (was C)
- * \param[in] Dy           Y position (in rows). (was D)
- * \param[in] Ex           X position (in pixels). (was E)
- * \param[in] HLpart       Car part to draw. (was HL)
- * \return Next car part. (was HL)
+ * Draws one car part (shadow, windscreen, wheels or side panel) by reading
+ * the y-offset and row count from the carpart_t entry, subtracting the
+ * part's y from Dy, and calling draw_part.  flip_car selects the start
+ * offset (Cdash): 0 when unflipped, Cwidth_bytes − 1 when flipped.
+ * Returns a pointer to the next carpart_t entry so callers can chain draws.
+ *
+ * \param[in,out] state        Pointer to game state.
+ * \param[in]     Cwidth_bytes Sprite width in bytes; also the bitmap stride. (was C)
+ * \param[in]     Dy           Base vertical screen position of the car body. (was D)
+ * \param[in]     Ex           Horizontal screen position in pixels. (was E)
+ * \param[in]     HLpart       Pointer to the carpart_t entry to draw. (was HL)
+ * \return Pointer to the following carpart_t entry. (was HL)
  */
 static const carpart_t *draw_hero_car_part(chqstate_t      *state,
     int               Cwidth_bytes,
@@ -11014,13 +11027,13 @@ static const carpart_t *draw_hero_car_part(chqstate_t      *state,
     int               Ex,
     const carpart_t *HLpart)
 {
-  int       Ay;                   /* was A */
-  u8        Dnew_y;               /* was D */
-  const u8 *HLbitmap;             /* was HL */
-  u8        Bheight;              /* was B */
-  int       Bdash_flip_flag;      /* was B' */
-  u8        Edash_bitmap_stride;  /* was E' */
-  u8        Cdash;                /* was C' */
+  int       Ay;                   /* copy of Dy: base y before part offset subtraction (was A) */
+  u8        Dnew_y;               /* Ay minus the part's y offset (was D) */
+  u8        Bheight;              /* row count from the carpart entry (was B) */
+  const u8 *HLbitmap;             /* pointer to bitmap data from the carpart entry (was HL) */
+  int       Bdash_flip_flag;      /* flip_car banked for EXX; passed to draw_part (was B') */
+  u8        Edash_bitmap_stride;  /* bitmap stride = Cwidth_bytes, banked at EXX (was E') */
+  u8        Cdash;                /* start offset: 0 unflipped, Cwidth_bytes−1 flipped (was C') */
 
   Ay = Dy;
   // PUSH DE -- preserve x,y until return
@@ -11051,24 +11064,30 @@ static const carpart_t *draw_hero_car_part(chqstate_t      *state,
 }
 
 /**
- * $B648: Draw smoke
+ * $B648: Draw smoke [Conv: HQ]
  *
- * \param[in] state           Pointer to game state.
- * \param[in] Aanim_frame     Animation frame index. (was A)
- * \param[in] Adash_flip_flag Non-zero to draw flipped. (was A')
+ * Draws one turbo-exhaust smoke cloud.  Looks up the frame in
+ * hero_car_turbo_smoke[Aanim_frame].  Returns immediately if the car is
+ * airborne (mhc_y_offset != 0).  When unflipped, Cdash is set to 0 and x
+ * comes from unflipped_x; when flipped, Cdash is width − 1 and x comes
+ * from flipped_x.  Draws via draw_part at y=119, centred at x + 127.
+ *
+ * \param[in,out] state           Pointer to game state.
+ * \param[in]     Aanim_frame     Index into hero_car_turbo_smoke[]. (was A)
+ * \param[in]     Adash_flip_flag Non-zero to draw flipped (left exhaust). (was A')
  */
 static void draw_smoke(chqstate_t *state, int Aanim_frame, int Adash_flip_flag)
 {
-  const carsmokeframe_t *HLframe;
-  u8                     Cwidth;
-  u8                     Bheight;
-  u8                     Dflipped_x;
-  u8                     Eunflipped_x;
-  const u8              *HLbitmap;
-  u8                     Cdash;
-  u8                     Bdash_flip_flag;
-  u8                     Edash_width_bytes;
-  u8                     Ax;
+  const carsmokeframe_t *HLframe;           /* pointer to the chosen smoke animation frame (was HL) */
+  u8                     Cwidth;            /* sprite byte width from the frame (was C) */
+  u8                     Bheight;           /* sprite row count from the frame (was B) */
+  u8                     Dflipped_x;        /* horizontal position used when flipped (was D) */
+  u8                     Eunflipped_x;      /* horizontal position used when unflipped (was E) */
+  const u8              *HLbitmap;          /* pointer to sprite pixel data from the frame (was HL) */
+  u8                     Cdash;             /* start offset: 0 unflipped, width−1 flipped (was C') */
+  u8                     Bdash_flip_flag;   /* Adash_flip_flag banked at EXX (was B') */
+  u8                     Edash_width_bytes; /* stride = Cwidth, banked at EXX (was E') */
+  u8                     Ax;               /* selected horizontal position, offset by 127 (was A) */
 
   HLframe = &hero_car_turbo_smoke[Aanim_frame];
 
@@ -11110,20 +11129,26 @@ static void draw_smoke(chqstate_t *state, int Aanim_frame, int Adash_flip_flag)
 }
 
 /**
- * $B67C: Draw cherry light
+ * $B67C: Draw cherry light [Conv: HQ]
  *
- * \param[in] state        Pointer to game state.
- * \param[in] Aframe_index Sound effect index.
- * \param[in] Bturn_limit  Bturn limit.
- * \param[in] Cturn_delta  Cturn delta.
+ * Draws the spinning cherry (police) light on the car roof.  Advances
+ * Aframe_index by the slow_anim_counter LSB for the base flicker.  When
+ * turn_speed is at or above Bturn_limit, adds Cturn_delta once (straight)
+ * or twice (flipped) to shift to the turned-light frames.  Renders via
+ * draw_crash_unflipped.
+ *
+ * \param[in,out] state        Pointer to game state.
+ * \param[in]     Aframe_index Base frame index into the cherry-light sprite table. (was A)
+ * \param[in]     Bturn_limit  Minimum turn_speed that triggers the turn-offset path. (was B)
+ * \param[in]     Cturn_delta  Frame delta applied once or twice when turning. (was C)
  */
 static void draw_cherry_light(chqstate_t *state,
                               int          Aframe_index,
                               int          Bturn_limit,
                               int          Cturn_delta)
 {
-  int Aturn_speed; /* was A */
-  int Cturn_speed; /* was C */
+  int Aturn_speed; /* turn-derived frame offset: Cturn_delta * 1 or 2 (was A) */
+  int Cturn_speed; /* copy of Aturn_speed passed to Aframe_index (was C) */
 
   Aframe_index += state->slow_anim_counter & 1;
 
@@ -11143,10 +11168,13 @@ static void draw_cherry_light(chqstate_t *state,
 }
 
 /**
- * $B699: Draw crash frame with no flip and no extra offset (calls draw_crash defaults)
+ * $B699: Draw crash frame with no flip and no extra offset [Conv: HQ]
  *
- * \param[in] state        Pointer to game state.
- * \param[in] Aframe_index Sound effect index.
+ * Convenience entry point that calls draw_crash with Bdash_flip_flag=0 and
+ * Cdash=0, producing an unflipped render with no horizontal start offset.
+ *
+ * \param[in,out] state        Pointer to game state.
+ * \param[in]     Aframe_index Frame index into car_frames[]. (was A)
  */
 static void draw_crash_unflipped(chqstate_t *state, int Aframe_index)
 {
@@ -11154,27 +11182,32 @@ static void draw_crash_unflipped(chqstate_t *state, int Aframe_index)
 }
 
 /**
- * $B69E: Draw crash
+ * $B69E: Draw crash [Conv: HQ]
  *
- * \param[in] state           Pointer to game state.
- * \param[in] Aframe_index    Sound effect index.
- * \param[in] Bdash_flip_flag Bdash flip flag.
- * \param[in] Cdash           Cdash.
+ * Draws one frame of the crash/hand/smash animation.  Looks up the
+ * car_frames[Aframe_index] entry for the x/y offset and adornment index,
+ * reads the adornment's dimensions and bitmap, adjusts y for jump height
+ * and road pitch, then calls draw_part.
+ *
+ * \param[in,out] state           Pointer to game state.
+ * \param[in]     Aframe_index    Index into car_frames[]. (was A)
+ * \param[in]     Bdash_flip_flag Non-zero to draw the frame horizontally flipped. (was B')
+ * \param[in]     Cdash           Horizontal start offset within the sprite (was C')
  */
 static void draw_crash(chqstate_t *state,
                        int          Aframe_index,
                        int          Bdash_flip_flag,
                        int          Cdash)
 {
-  u8                    x;             /* was E */
-  const carframe_t     *frame;         /* was HL */
-  u8                    y;             /* was D */
-  const caradornment_t *adornment;     /* was HL */
-  u8                    height;        /* was B */
-  u8                    width;         /* was C */
-  const u8             *bitmap;        /* was HL */
-  u8                    bitmap_stride; /* was E */
-  int                   pitch;         /* was A */
+  const carframe_t     *frame;         /* pointer to car_frames[Aframe_index] (was HL) */
+  u8                    y;             /* base vertical position: frame->y + 121 adjusted for jump/pitch (was D) */
+  u8                    x;             /* horizontal position: 128 + frame->x (was E) */
+  const caradornment_t *adornment;     /* pointer to car_adornments[frame->index / 4] (was HL) */
+  u8                    height;        /* sprite row count from the adornment (was B) */
+  u8                    width;         /* sprite byte width from the adornment (was C) */
+  const u8             *bitmap;        /* pointer to sprite pixel data from the adornment (was HL) */
+  u8                    bitmap_stride; /* bitmap row stride: equals width (was E) */
+  int                   pitch;         /* dhc_pitch >> 1: 0/1/3 vertical correction from road incline (was A) */
 
   x = 128;
   frame = &car_frames[Aframe_index];
@@ -11200,17 +11233,21 @@ static void draw_crash(chqstate_t *state,
 }
 
 /**
- * $B6D6: Reduces y by car_y then falls through to draw_part_entrypt2
+ * $B6D6: Reduce y by car_y then draw part [Conv: HQ]
  *
- * \param[in] state               Pointer to game state.
- * \param[in] height              Number of rows to draw. (was B)
- * \param[in] width               Bitmap byte width. (was C)
- * \param[in] y                   Y position. (was D)
- * \param[in] x                   X position. (was E)
- * \param[in] bitmap              Source bitmap data. (was HL)
- * \param[in] Bdash_flip_flag     Non-zero to draw flipped horizontally. (was B')
- * \param[in] Cdash               Horizontal start offset. (was C')
- * \param[in] Edash_bitmap_stride Stride of bitmap data, in bytes. (was E')
+ * Subtracts state->car_y from y before forwarding all parameters to
+ * draw_part_entrypt2.  car_y encodes the on-screen vertical slot of the
+ * car; subtracting it converts an absolute row number to a back-buffer row.
+ *
+ * \param[in,out] state               Pointer to game state.
+ * \param[in]     height              Number of pixel rows to draw. (was B)
+ * \param[in]     width               Sprite byte width. (was C)
+ * \param[in]     y                   Absolute vertical screen row before car_y adjustment. (was D)
+ * \param[in]     x                   Horizontal screen position in pixels. (was E)
+ * \param[in]     bitmap              Source sprite data. (was HL)
+ * \param[in]     Bdash_flip_flag     Non-zero to draw horizontally flipped. (was B')
+ * \param[in]     Cdash               Horizontal start offset within the sprite. (was C')
+ * \param[in]     Edash_bitmap_stride Sprite row stride in bytes. (was E')
  */
 static void draw_part(chqstate_t *state,
                       int          height,
@@ -11234,17 +11271,24 @@ static void draw_part(chqstate_t *state,
 }
 
 /**
- * $B6DD: Second entry point into draw_part
+ * $B6DD: Draw part — second entry point [Conv: HQ]
  *
- * \param[in] state               Pointer to game state.
- * \param[in] Bheight             Number of rows to draw. (was B)
- * \param[in] Cwidth_bytes        Bitmap byte width. (was C)
- * \param[in] Dy                  Y position. (was D)
- * \param[in] Ex                  X position. (was E)
- * \param[in] HLbitmap_data       Source bitmap data. (was HL)
- * \param[in] Bdash_flip_flag     Non-zero to draw flipped horizontally. (was B')
- * \param[in] Cdash               Horizontal start offset. (was C')
- * \param[in] Edash_bitmap_stride Stride of bitmap data, in bytes. (was E')
+ * Core sprite compositor shared by all car-part draws.  Computes the
+ * back-buffer address from (Dy, Ex) using the ZX Spectrum screen layout
+ * formula (bits 3..6 of y to RRR, bits 0..3 of y to LLLL, x >> 3 to
+ * CCCCC), adds Cdash as a horizontal sub-byte offset, then dispatches to
+ * plot_masked_sprite_flipped_entrypt2 (when Bdash_flip_flag is set) or
+ * draw_part_plot_masked_sprite (when clear).
+ *
+ * \param[in,out] state               Pointer to game state.
+ * \param[in]     Bheight             Number of pixel rows to draw. (was B)
+ * \param[in]     Cwidth_bytes        Sprite byte width. (was C)
+ * \param[in]     Dy                  Vertical screen row after car_y adjustment. (was D)
+ * \param[in]     Ex                  Horizontal screen position in pixels. (was E)
+ * \param[in]     HLbitmap_data       Source sprite data. (was HL)
+ * \param[in]     Bdash_flip_flag     Non-zero to draw horizontally flipped. (was B')
+ * \param[in]     Cdash               Horizontal start offset within the sprite. (was C')
+ * \param[in]     Edash_bitmap_stride Sprite row stride in bytes. (was E')
  */
 static void draw_part_entrypt2(chqstate_t *state,
                              int          Bheight,
@@ -11256,12 +11300,12 @@ static void draw_part_entrypt2(chqstate_t *state,
                              int          Cdash,
                              int          Edash_bitmap_stride)
 {
-  int carry_flip_flag; /* was carry */
-  u8  Ay;              /* was A */
-  u16 DEbackbuf;       /* was DE */
-  u8  Estride;         /* was E */
-  u16 HLdash_backbuf;  /* was HL' */
-  u8  Awidth_bytes;    /* was A */
+  int carry_flip_flag; /* LSB of Bdash_flip_flag: 1=flip, 0=normal (was carry) */
+  u8  Ay;              /* copy of Dy banked across EX AF,AF' (was A) */
+  u16 DEbackbuf;       /* back-buffer address assembled from x and y fields (was DE) */
+  u8  Estride;         /* bitmap stride doubled: Cwidth_bytes << 1 (was E) */
+  u16 HLdash_backbuf;  /* copy of DEbackbuf with Cdash added for EXX (was HL') */
+  u8  Awidth_bytes;    /* sprite stride from Edash_bitmap_stride (was A) */
 
   // The buffer has the format 0b1111LLLLRRRCCCCC (L = scanline, R = row (group))
 
@@ -11298,14 +11342,19 @@ static void draw_part_entrypt2(chqstate_t *state,
 }
 
 /**
- * $B701: Draw part plot masked sprite
+ * $B701: Draw part — plot masked sprite [Conv: HQ]
  *
- * \param[in] state               Pointer to game state.
- * \param[in] Awidth_bytes        Bitmap byte width.
- * \param[in] HLbackbuf_addr      Back buffer address.
- * \param[in] Bdash_height        Number of rows.
- * \param[in] Edash_bitmap_stride Source bitmap data.
- * \param[in] HLdash_bitmap_data  Source bitmap data.
+ * Converts Awidth_bytes (1..8) to an IX jump-table offset
+ * ((8 − Awidth_bytes) × 6) and forwards to plot_masked_sprite.  The jump
+ * offset selects the fall-through case in the unrolled byte-copy loop so
+ * that only Awidth_bytes bytes are written per row.
+ *
+ * \param[in,out] state               Pointer to game state.
+ * \param[in]     Awidth_bytes        Sprite width in bytes, 1..8. (was A)
+ * \param[in]     HLbackbuf_addr      Back-buffer write address. (was HL')
+ * \param[in]     Bdash_height        Number of pixel rows to draw. (was B')
+ * \param[in]     Edash_bitmap_stride Sprite row stride in bytes. (was E')
+ * \param[in]     HLdash_bitmap_data  Source masked sprite data. (was HL')
  */
 static void draw_part_plot_masked_sprite(chqstate_t *state,
     int          Awidth_bytes,
@@ -11314,7 +11363,7 @@ static void draw_part_plot_masked_sprite(chqstate_t *state,
     int          Edash_bitmap_stride,
     const u8   *HLdash_bitmap_data)
 {
-  int IXjump_offset;
+  int IXjump_offset; /* fall-through index: (8 − Awidth_bytes) × 6 (was IX) */
 
   IXjump_offset = (8 - Awidth_bytes) * 6;
   // B = 15; // Conv: Mask removed
@@ -11329,16 +11378,21 @@ static void draw_part_plot_masked_sprite(chqstate_t *state,
 }
 
 /**
- * $B716: Plot a masked sprite
+ * $B716: Plot a masked sprite [Conv: HQ]
  *
- * This function draws the given masked bitmap to the back buffer.
+ * Draws a masked sprite to the back buffer using a fall-through switch that
+ * mimics the Z80's jump-table dispatch.  Each row writes up to 8 pairs of
+ * (mask, data) bytes: the back-buffer byte is ANDed with mask then ORed
+ * with data.  After each row the source pointer is advanced by bitmap_stride
+ * and the back-buffer pointer is reset to the row-start address plus one
+ * (Spectrum scanline advance).  Iterates until height rows are drawn.
  *
- * \param[in] state         Pointer to game state.
- * \param[in] jump_offset   Jump table byte offset (e.g. N * 6). (was IX)
- * \param[in] height        Number of rows. (was B)
- * \param[in] bitmap_stride Draw width of bitmap data, in bytes. (was DE)
- * \param[in] bitmap_data   Source bitmap data. (was HL)
- * \param[in] backbuf_addr  Back buffer address to draw at. (was HL')
+ * \param[in,out] state         Pointer to game state (unused but required by signature).
+ * \param[in]     jump_offset   Fall-through start index: (8 − width) × 6. (was IX)
+ * \param[in]     height        Number of pixel rows to draw. (was B)
+ * \param[in]     bitmap_stride Source bitmap row stride in bytes. (was DE)
+ * \param[in]     bitmap_data   Source masked sprite data (mask/data byte pairs). (was HL)
+ * \param[in]     backbuf_addr  Back-buffer write address for the first row. (was HL')
  */
 static void plot_masked_sprite(chqstate_t *state,
                                int         jump_offset,
@@ -11347,10 +11401,10 @@ static void plot_masked_sprite(chqstate_t *state,
                                const u8   *bitmap_data,
                                u8         *backbuf_addr)
 {
-  const u8 *src;          /* was SP */
-  u8       *backbuf_orig; /* was C */
-  u8        mask;         /* was E */
-  u8        data;         /* was D */
+  const u8 *src;          /* pointer to current mask/data byte pair in the source (was SP) */
+  u8       *backbuf_orig; /* start of current back-buffer row; advanced each scanline (was C) */
+  u8        mask;         /* mask byte: ANDed with back-buffer byte before OR (was E) */
+  u8        data;         /* data byte: ORed into back-buffer byte after masking (was D) */
 
   assert(jump_offset / 6 >= 0);
   assert(jump_offset / 6 <= 7);
@@ -11405,17 +11459,18 @@ plot_masked_sprite_entry:
 }
 
 /**
- * $B76C: Plot a flipped and masked sprite
+ * $B76C: Plot a flipped and masked sprite [Conv: HQ]
  *
- * This function draws the given masked bitmap to the back buffer while flipping
- * it horizontally.
+ * Adjusts backbuf_addr forward by width_bytes so that the second entry
+ * point begins at the right edge of the sprite, then falls through to
+ * plot_masked_sprite_flipped_entrypt2 which draws rightward-to-leftward.
  *
- * \param[in] state         Pointer to game state.
- * \param[in] width_bytes   Draw width of bitmap data, in bytes. (was A)
- * \param[in] backbuf_addr  Back buffer address to draw at. (was HL)
- * \param[in] height        Number of rows. (was B')
- * \param[in] bitmap_stride Stride of bitmap data, in bytes. (was E')
- * \param[in] bitmap_data   Source bitmap data. (was HL')
+ * \param[in,out] state         Pointer to game state.
+ * \param[in]     width_bytes   Sprite width in bytes. (was A)
+ * \param[in]     backbuf_addr  Back-buffer address of the left edge of the sprite. (was HL)
+ * \param[in]     height        Number of pixel rows to draw. (was B')
+ * \param[in]     bitmap_stride Source bitmap row stride in bytes. (was E')
+ * \param[in]     bitmap_data   Source masked sprite data. (was HL')
  */
 static void plot_masked_sprite_flipped(chqstate_t *state,
                                        int          width_bytes,
@@ -11433,14 +11488,23 @@ static void plot_masked_sprite_flipped(chqstate_t *state,
 }
 
 /**
- * $B770: Plot a flipped and masked sprite (2nd entry point)
+ * $B770: Plot a flipped and masked sprite — second entry point [Conv: HQ]
  *
- * \param[in] state         Pointer to game state.
- * \param[in] width_bytes   Draw width of bitmap data, in bytes. (was A)
- * \param[in] backbuf_addr  Back buffer address to draw at. (was HL)
- * \param[in] height        Number of rows. (was B')
- * \param[in] bitmap_stride Stride of bitmap data, in bytes. (was E')
- * \param[in] bitmap_data   Source bitmap data. (was HL')
+ * Draws a horizontally flipped masked sprite.  backbuf_addr points one byte
+ * past the right edge of the sprite (the first byte written is at
+ * backbuf_addr − 1).  Selects a fall-through case in a descending switch
+ * (case 0 = widest, case 7 = narrowest): each step reads a (mask, data) pair
+ * from the source, bit-reverses both via state->flipped[], and writes the
+ * combined byte leftward through the back buffer.  After each row the source
+ * pointer advances by bitmap_stride and the back buffer returns to the
+ * row-start address less one.
+ *
+ * \param[in,out] state         Pointer to game state (flipped[] lookup table).
+ * \param[in]     width_bytes   Sprite width in bytes, 1..8. (was A)
+ * \param[in]     backbuf_addr  Back-buffer address one byte past the right edge. (was HL)
+ * \param[in]     height        Number of pixel rows to draw. (was B')
+ * \param[in]     bitmap_stride Source bitmap row stride in bytes. (was E')
+ * \param[in]     bitmap_data   Source masked sprite data. (was HL')
  */
 static void plot_masked_sprite_flipped_entrypt2(chqstate_t *state,
     int          width_bytes,
@@ -11449,11 +11513,11 @@ static void plot_masked_sprite_flipped_entrypt2(chqstate_t *state,
     int         bitmap_stride,
     const u8   *bitmap_data)
 {
-  int       jump_offset;   /* was IX */
-  const u8 *src;           /* was SP */
-  u8       *backbuf_orig;  /* was A'?? */
-  u8        mask;          /* was C */
-  u8        data;          /* was B */
+  int       jump_offset;   /* fall-through start: 8 − width_bytes (was IX) */
+  const u8 *src;           /* pointer to current mask/data pair in the source (was SP) */
+  u8       *backbuf_orig;  /* start of current back-buffer row; reset after each row (was A') */
+  u8        mask;          /* mask byte, bit-reversed via state->flipped[] (was C) */
+  u8        data;          /* data byte, bit-reversed via state->flipped[] (was B) */
 
   assert(VALID_BACKBUF_PTR(backbuf_addr));
 
@@ -11512,30 +11576,32 @@ pmsf_start:
 }
 
 /**
- * $B7EF: likely an inverted variation
+ * $B7EF: Plot a masked sprite drawn bottom-to-top [Conv: HQ]
  *
- * hit when barriers are flipped over.
- * sampled.
- * A' = 0, BC' = $0704  B'=height, DE' = $0004, HL' = $6EB5  bitmap_barrier_4s (which is 2bytes x 2 x 7).
+ * Used when barriers are flipped upside-down.  Computes the address of the
+ * last row of the bitmap ((height − 1) × stride + base), negates the stride,
+ * and calls plot_masked_sprite so the bitmap is consumed in reverse row order,
+ * producing a vertically inverted render.  Observed with BC' = $0704 (7 rows,
+ * 4-byte stride) and HL' = bitmap_barrier_4s.
  *
- * \param[in] state               Pointer to game state.
- * \param[in] Awidth_bytes        Bitmap byte width.
- * \param[in] HLbackbuf_addr      Back buffer address.
- * \param[in] Bdash_height        Number of rows.
- * \param[in] Edash_bitmap_stride Source bitmap data.
- * \param[in] HLdash_bitmap_data  Source bitmap data.
+ * \param[in,out] state               Pointer to game state.
+ * \param[in]     Awidth_bytes        Sprite width in bytes. (was A)
+ * \param[in]     HLbackbuf_addr      Back-buffer write address for the first (topmost) row. (was HL)
+ * \param[in]     Bdash_height        Number of pixel rows to draw. (was B')
+ * \param[in]     Edash_bitmap_stride Source bitmap row stride in bytes (positive). (was E')
+ * \param[in]     HLdash_bitmap_data  Pointer to the first byte of the source bitmap. (was HL')
  */
 static void plot_masked_sprite_inverted(chqstate_t *state,
                                         int          Awidth_bytes,
                                         u8         *HLbackbuf_addr,
-                                        int          Bdash_height, // what's in C'?
+                                        int          Bdash_height,
                                         int         Edash_bitmap_stride,
                                         const u8   *HLdash_bitmap_data)
 {
-  int       jump_offset;              /* was IX */
-  u16       DEdash_bitmap_stride;     /* was DE */
-  const u8 *HLdash_bitmap_data_final; /* was HL' */
-  u8        Bheight;                  /* was B */
+  int       jump_offset;              /* fall-through index: (8 − Awidth_bytes) × 6 (was IX) */
+  u16       DEdash_bitmap_stride;     /* stride then negated; unsigned to allow 16-bit negation (was DE) */
+  const u8 *HLdash_bitmap_data_final; /* pointer to the last bitmap row (was HL') */
+  u8        Bheight;                  /* copy of Bdash_height passed to plot_masked_sprite (was B) */
 
   // Conv: Setting SP restore removed
   jump_offset = (8 - Awidth_bytes) * 6; // jump table index * entry size
@@ -11557,28 +11623,37 @@ static void plot_masked_sprite_inverted(chqstate_t *state,
 }
 
 /**
- * $B848: Scroll horizon
+ * $B848: Scroll horizon [Conv: HQ]
  *
- * Called from main loop.
+ * Updates the horizon scroll state each frame.  Returns immediately when
+ * speed is zero.  Horizontal section: when current_curvature is non-zero,
+ * derives a scroll-rate entry from horizon_table using a speed-scaled index,
+ * decrements horizon_x_scroll, and on underflow wraps dr_horizon_x_scroll
+ * (0..19) by the table value's direction byte.  Vertical section: reads the
+ * current incline, looks up the per-step threshold, counts how many ticks
+ * have elapsed since the last horizon_y_step, accumulates the delta into
+ * horizon_y_accum, and adjusts session.horizon_level and horizon_y_step.
  *
- * \param[in] state Pointer to game state.
+ * \param[in,out] state  Pointer to game state.
  */
 static void scroll_horizon(chqstate_t *state)
 {
-  int        carry = 0;
-  int        speed;                     /* was HL */
-  int        current_curvature;         /* was A */
-  u8         Adash;                     /* was A' */
-  const u8  *HLhorizon_table;           /* was HL */
-  u8         BChorizon_table_value;     /* was BC */
-  int        Aregular;                  /* was A */
-  int        Aincline;                  /* was A */
-  int        Adiff;                     /* was A */
-  int        Bcounter;                  /* was C */
-  int        Eset_if_incline_negative;  /* was C */
-  int        Chorizon_table_value;      /* was C */
-  int        Ahorizon_y_a25a_delta;     /* was A */
-  int        BCcounter;                 /* was BC */
+  int        carry;                     /* carry from RL operations on Adash (carry) */
+  int        speed;                     /* hero car speed; early-out if zero (was HL) */
+  int        current_curvature;         /* current_curvature: selects horizontal scroll path (was A) */
+  u8         Adash;                     /* banked A': speed high byte used for speed-scaled index (was A') */
+  const u8  *HLhorizon_table;           /* pointer into horizon_table for incline-rate lookup (was HL) */
+  u8         BChorizon_table_value;     /* byte pair from horizon_table for horizontal scroll (was BC) */
+  int        Aregular;                  /* dr_horizon_x_scroll after wrap, 0..19 (was A) */
+  int        Aincline;                  /* state->incline value; magnitude used for table index (was A) */
+  int        Adiff;                     /* fast_counter minus horizon_y_step: ticks since last advance (was A) */
+  int        Bcounter;                  /* number of horizon_y ticks consumed this frame (was C) */
+  int        Eset_if_incline_negative;  /* 1 when incline is negative (downhill); sign-extends BCcounter (was E) */
+  int        Chorizon_table_value;      /* threshold from horizon_table for the vertical scroll rate (was C) */
+  int        Ahorizon_y_a25a_delta;     /* accumulated sub-step delta added to horizon_y_accum (was A) */
+  int        BCcounter;                 /* signed tick count: positive=uphill, negative=downhill (was BC) */
+
+  carry = 0;
 
   if ((speed = state->speed) == 0)
     return;

@@ -15,20 +15,6 @@ Generated from `grep '^ \* \$' ChaseHQ.c | grep -v '\[Conv: HQ\]'`.
 | `$9174` | `draw_stretchy_object_common` | Draw stretchy objects (e.g. trees) |
 | `$929A` | `draw_object_left_helicopter_entrypt` | Draw object left helicopter entry point |
 | `$930E` | `draw_object_perspective_entrypt` | Draw object: compute perspective height/width and dispatch |
-| `$B58E` | `draw_hero_car` | Draw hero car |
-| `$B627` | `draw_hero_car_part` | Draw a portion of the hero car |
-| `$B648` | `draw_smoke` | Draw smoke |
-| `$B67C` | `draw_cherry_light` | Draw cherry light |
-| `$B699` | `draw_crash_unflipped` | Draw crash frame with no flip and no extra offset |
-| `$B69E` | `draw_crash` | Draw crash |
-| `$B6D6` | `draw_part` | Reduce y by car_y then fall through to draw_part_entrypt2 |
-| `$B6DD` | `draw_part_entrypt2` | Second entry point into draw_part |
-| `$B701` | `draw_part_plot_masked_sprite` | Draw part plot masked sprite |
-| `$B716` | `plot_masked_sprite` | Plot a masked sprite |
-| `$B76C` | `plot_masked_sprite_flipped` | Plot a flipped and masked sprite |
-| `$B770` | `plot_masked_sprite_flipped_entrypt2` | Plot a flipped and masked sprite (2nd entry point) |
-| `$B7EF` | `plot_masked_sprite_inverted` | Plot an inverted masked sprite |
-| `$B848` | `scroll_horizon` | Scroll horizon |
 | `$C2E7` | `draw_road_lanes_change` | Draw road lane change |
 | `$C452` | `draw_road` | Draw road |
 | `$C4AD` | `dr_read_lanes` | draw_road: read lanes |
