@@ -13582,9 +13582,9 @@ static s16 *hi_to_xpostab(chqstate_t *state, int hi)
 }
 
 /** Return byte pointer into a road-position table given a Z80 address. */
-static u8 *addr_to_xpos(chqstate_t *state, int z80addr)
+static u8 *addr_to_xpos(chqstate_t *state, int H, int L)
 {
-  return (u8 *)hi_to_xpostab(state, z80addr >> 8) + (z80addr & 0xFF);
+  return (u8 *)hi_to_xpostab(state, H) + L;
 }
 
 /**
@@ -13705,7 +13705,7 @@ static void draw_road_lanes_change(chqstate_t *state,
           C_bresen_range = A_bresen_range;
           B_HLzone_stride = A_bresen_range * 2;
           L_left_hand_table_lo = ~((96 - (*IY_heightptr)[0]) << 1); // byte offset
-          HL_left_hand_table = addr_to_xpos(state, (H_left_hand_table_hi << 8) | L_left_hand_table_lo);
+          HL_left_hand_table = addr_to_xpos(state, H_left_hand_table_hi, L_left_hand_table_lo);
 
           // $C336
           SP_output = HL_left_hand_table;
@@ -13715,7 +13715,7 @@ static void draw_road_lanes_change(chqstate_t *state,
           // $C33A
           L_left_hand_table_lo -= B_HLzone_stride;
           H_left_hand_table_hi--; // widen to left
-          HL_left_hand_table = addr_to_xpos(state, (H_left_hand_table_hi << 8) | L_left_hand_table_lo);
+          HL_left_hand_table = addr_to_xpos(state, H_left_hand_table_hi, L_left_hand_table_lo);
 
           // $C33D
           A_anim_offset = ((state->fast_counter >> 3) & 0x1C) + SM_C345_bend_offset;
@@ -13735,14 +13735,14 @@ static void draw_road_lanes_change(chqstate_t *state,
           C_bresen_range = (*IY_heightptr)[0] - (*IY_heightptr)[2];
           B_HLzone_stride = C_bresen_range * 2;
           L_left_hand_table_lo = ~((96 - (*IY_heightptr)[0]) << 1); // byte offset
-          HL_left_hand_table = addr_to_xpos(state, (H_left_hand_table_hi << 8) | L_left_hand_table_lo);
+          HL_left_hand_table = addr_to_xpos(state, H_left_hand_table_hi, L_left_hand_table_lo);
           SP_output = HL_left_hand_table;
           /* L is ~(even) = odd → hi byte; [0]=hi, [-1]=lo */
           DE_roadpos = (HL_left_hand_table[0] << 8) + HL_left_hand_table[-1];
 
           L_left_hand_table_lo -= B_HLzone_stride;
           H_left_hand_table_hi--;
-          HL_left_hand_table = addr_to_xpos(state, (H_left_hand_table_hi << 8) | L_left_hand_table_lo);
+          HL_left_hand_table = addr_to_xpos(state, H_left_hand_table_hi, L_left_hand_table_lo);
         }
       } else { /* bit 4 CLEAR */
         // {4TO3R, 3TO4L, 3TO2L, 3TO2R, 2TO3L, TUNNEL_ENTRY, FORKED}
@@ -13774,19 +13774,19 @@ static void draw_road_lanes_change(chqstate_t *state,
           C_bresen_range = A_bresen_range;
           B_HLzone_stride = A_bresen_range * 2;
           L_left_hand_table_lo = ~((96 - (*IY_heightptr)[0]) << 1); // byte offset
-          HL_left_hand_table = addr_to_xpos(state, (H_left_hand_table_hi << 8) | L_left_hand_table_lo);
+          HL_left_hand_table = addr_to_xpos(state, H_left_hand_table_hi, L_left_hand_table_lo);
 
           // $C3AA
           SP_output = HL_left_hand_table;
           H_left_hand_table_hi--; // widen to left
-          HL_left_hand_table = addr_to_xpos(state, (H_left_hand_table_hi << 8) | L_left_hand_table_lo);
+          HL_left_hand_table = addr_to_xpos(state, H_left_hand_table_hi, L_left_hand_table_lo);
           /* L unchanged (odd) → still hi byte; [0]=hi, [-1]=lo */
           DE_roadpos = (HL_left_hand_table[0] << 8) + HL_left_hand_table[-1];
 
           // $C3AF
           L_left_hand_table_lo -= B_HLzone_stride;
           H_left_hand_table_hi++; // widen to right
-          HL_left_hand_table = addr_to_xpos(state, (H_left_hand_table_hi << 8) | L_left_hand_table_lo);
+          HL_left_hand_table = addr_to_xpos(state, H_left_hand_table_hi, L_left_hand_table_lo);
 
           // $C3B2
           A_anim_offset = ((state->fast_counter >> 3) & 0x1C) + SM_C3BD_bend_offset;
@@ -13808,16 +13808,16 @@ static void draw_road_lanes_change(chqstate_t *state,
           C_bresen_range = (*IY_heightptr)[0] - (*IY_heightptr)[2];
           B_HLzone_stride = C_bresen_range * 2;
           L_left_hand_table_lo = ~((96 - (*IY_heightptr)[0]) << 1); // byte offset
-          HL_left_hand_table = addr_to_xpos(state, (H_left_hand_table_hi << 8) | L_left_hand_table_lo);
+          HL_left_hand_table = addr_to_xpos(state, H_left_hand_table_hi, L_left_hand_table_lo);
           SP_output = HL_left_hand_table;
           H_left_hand_table_hi--; // widen to left
-          HL_left_hand_table = addr_to_xpos(state, (H_left_hand_table_hi << 8) | L_left_hand_table_lo);
+          HL_left_hand_table = addr_to_xpos(state, H_left_hand_table_hi, L_left_hand_table_lo);
           /* L unchanged (odd) → still hi byte; [0]=hi, [-1]=lo */
           DE_roadpos = (HL_left_hand_table[0] << 8) + HL_left_hand_table[-1];
 
           L_left_hand_table_lo -= B_HLzone_stride;
           H_left_hand_table_hi++; // widen to right
-          HL_left_hand_table = addr_to_xpos(state, (H_left_hand_table_hi << 8) | L_left_hand_table_lo);
+          HL_left_hand_table = addr_to_xpos(state, H_left_hand_table_hi, L_left_hand_table_lo);
         }
       }
 
