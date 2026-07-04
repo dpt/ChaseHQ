@@ -3787,7 +3787,7 @@ static void draw_scene_objects(chqstate_t *state)
   int             Eobj;                /* object index used to look up the object table entry (was E) */
   const obj_t    *HLobj;               /* pointer to the current scene object descriptor (was HL) */
 
-  return;
+//  return;
 
   assert(state->stage != NULL);
   assert(state->roadbuf_start == &state->road_buffer[0]);
@@ -5263,7 +5263,11 @@ static void plot_sprite_even(chqstate_t *state,
   u8       *backbuf_orig; /* row start in back buffer, saved for prev_buf_row (was A) */
 
   assert(jump_offset % 5 == 0);
-  assert(jump_offset / 5 >= 0 && jump_offset / 5 <= 3);
+  /* Conv: case 4 (jump_offset=20) is valid: Z80 offset 20 lands at $94DC
+   * (LD L,A), the post-table row-restore that follows all four plot entries,
+   * drawing 0 pairs. This happens when the sprite is clipped to 0 bytes wide
+   * at the right edge. */
+  assert(jump_offset / 5 >= 0 && jump_offset / 5 <= 4);
   assert(VALID_BACKBUF_PTR(backbuf_addr));
   assert(height >= 1 && height < 192);
   assert(bitmap_data != NULL);
@@ -5299,6 +5303,8 @@ plot_sprite_even_start:
     case 3:
       *backbuf_addr++ = *src++;
       *backbuf_addr = *src++;
+    case 4:
+      break; /* 0 pairs: Z80 lands at $94DC (LD L,A) skipping all plots */
     }
     backbuf_addr = ADDRTOBACKBUF(prev_buf_row(BACKBUFTOADDR(backbuf_orig)));
   }
