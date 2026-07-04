@@ -3943,8 +3943,11 @@ left_hand_stuff:
          && Eobj <= 9); // valid index range given base ptr at [-1] of a 9-element array
   assert(state->stage->addrof_left_hand_objects != NULL);
   assert(Bheight != 255);
-  if (Aobj != 2
-      && ((u8 *)IXtable_ea00)[1]) { // Z80: LD A,(IX+1) -- buffer offset/distance
+  // Conv: Z80 $9024 jumps to handler directly if A==2 (skips IX[1] check).
+  //       $902C exits without calling handler if IX[1] != 0.
+  //       Handler runs when: Aobj == 2 OR IX[1] == 0.
+  if (Aobj == 2
+      || !((u8 *)IXtable_ea00)[1]) { // Z80: LD A,(IX+1) -- buffer offset/distance
     HLobj = &state->stage->addrof_left_hand_objects[Eobj];
     assert(HLobj->handler != NULL);
     HLobj->handler(state, Biterations, HLobj->arg, IXtable_ea00, IYheight_table);
