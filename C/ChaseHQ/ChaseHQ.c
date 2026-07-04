@@ -4751,7 +4751,7 @@ static void draw_object_perspective_entrypt(chqstate_t     *state,
   int Bheight;             /* height index: Awidth_bytes >> 3, used as doc_shift_select (was B) */
   int Ebitmap_stride;      /* full bitmap row stride from HLbitmap->width_bytes (was E) */
   int Zflipped;            /* non-zero when bitmap is NOT flipped (BITMAPFLAG_FLIPPED clear) (was Z) */
-  int Cwidth_bytes;        /* computed draw width: MAX(Ebitmap_stride, 31 − Bheight) (was C) */
+  int Cwidth_bytes;        /* computed draw width: MIN(Ebitmap_stride, 31 − Bheight) (was C) */
   int Adash_width_bytes;   /* Cwidth_bytes banked for EX AF,AF' into flipped path (was A') */
   int Fdash_zero;          /* Zflipped banked for EX AF,AF' (was Z in F') */
   int Fdash_carry;         /* carry banked for EX AF,AF' (was carry in F') */
@@ -4764,7 +4764,7 @@ static void draw_object_perspective_entrypt(chqstate_t     *state,
   Bheight = Awidth_bytes;
   Ebitmap_stride = HLbitmap->width_bytes;
   Awidth_bytes = 31 - Awidth_bytes;
-  if (Ebitmap_stride >= Awidth_bytes)
+  if (Ebitmap_stride < Awidth_bytes)
     Awidth_bytes = Ebitmap_stride;
   // Conv: HLbitmap++ removed, now passed as-is into draw_object_common/_9333
   Zflipped = (HLbitmap->flags >> 1) == 0;
