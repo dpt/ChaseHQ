@@ -4945,10 +4945,8 @@ doc_y_range_zero:
     goto doc_compute_bitmap;
 
 doc_y_range_nonzero:
-    if ((D_col_pos & (1 << 7)) == 0) // checking for +ve?
-      Adash_y_range -= D_col_pos;
-    else
-      Adash_y_range += D_col_pos;
+    // Conv: Z80 ADD A,D with D a signed byte; u8 doc_col_pos must be sign-extended.
+    Adash_y_range += (s8) D_col_pos;
 
     Diy_diff = Adash_y_range;
     if ((s8) Adash_y_range <= 0)
