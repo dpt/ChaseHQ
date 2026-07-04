@@ -7,7 +7,6 @@ perhaps build unit tests now to flush out problems ahead of time.
 - Wonky feeling car speed / anims
 - Lane change diagonal transitions are not working
 - Radio screen sometimes have leftover transition animation parts
-- Perp escape scene causes an immediate crash (prob. tunnel code)
 - Message cursor seems to vanish when idle
 - Forks seize the game up
 - draw_scene_objects => crash
@@ -32,6 +31,7 @@ perhaps build unit tests now to flush out problems ahead of time.
 
 # IDEAS
 
+- Scan for type problems
 - Build a tiny test level
 - Identify missing cases where wraparound is required.
 - Remove as much casting as possible (Claude tends to add it).
@@ -55,6 +55,7 @@ perhaps build unit tests now to flush out problems ahead of time.
 
 # DONE
 
+- Perp escape scene causes an immediate crash (prob. tunnel code)
 - Car (still) not jumping on steep roads
 - Mark functions as HQ once processed
 - Car starts level at speed

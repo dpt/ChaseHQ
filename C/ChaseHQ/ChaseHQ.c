@@ -2004,6 +2004,9 @@ static void reveal_perp_car(chqstate_t *state)
  */
 static void animate_meters(chqstate_t *state)
 {
+  static const zxbox_t meters_box = { /* speed meter columns 23–29, attr rows 16 and 18 */
+    184, 40, 240, 64
+  };
   int random; /* signed RNG result; sign determines direction (was A) */
   int level;  /* current meter level, 0–7 (was A) */
 
@@ -2033,6 +2036,7 @@ set_level:
 set_level2:
   state->meter_2_level = level;
   am_set_attrs(level, ADDRTOATTRS(0x5A57));
+  state->speccy->draw(state->speccy, &meters_box); /* Conv: added */
 }
 
 /**
@@ -2098,6 +2102,9 @@ static void draw_pregame(chqstate_t *state)
   int       bgattr;     /* draw_pregame_background: OR'd into attribute cell if non-zero (was A) */
   const u8 *messages;   /* pointer walking pregame_messages[] for print_message calls (was HL) */
   u16       attrs;      /* computed attribute address for the tile just drawn (was DE) */
+  static const zxbox_t playfield_box = { /* lower two-thirds of screen */
+    0, 0, SCREEN_WIDTH, PLAYFIELD_HEIGHT
+  };
 
   carry = 0;
 
@@ -2191,6 +2198,7 @@ dp_repeat_or_plot_tile:
                              DRAWCHARSTYLE_SINGLE_INVERTED,
                              messages);
   while (--iterations > 0);
+  state->speccy->draw(state->speccy, &playfield_box); /* Conv: added */
 }
 
 /**
@@ -2541,9 +2549,14 @@ static void check_user_input_quit_key(chqstate_t *state)
  */
 static void clear_playfield_attrs(chqstate_t *state)
 {
+  static const zxbox_t playfield_box = { /* lower two-thirds of screen */
+    0, 0, SCREEN_WIDTH, PLAYFIELD_HEIGHT
+  };
+
   memset(ADDRTOATTRS(SCREEN_PLAYFIELD_ATTRS_ADDR),
          attribute_BLACK_OVER_BLACK,
          SCREEN_ATTRIBUTES_ROWBYTES * PLAYFIELD_HEIGHT / 8);
+  state->speccy->draw(state->speccy, &playfield_box); /* Conv: added */
 }
 
 /**
@@ -2557,10 +2570,15 @@ static void clear_playfield_attrs(chqstate_t *state)
  */
 static void clear_playfield(chqstate_t *state)
 {
+  static const zxbox_t playfield_box = { /* lower two-thirds of screen */
+    0, 0, SCREEN_WIDTH, PLAYFIELD_HEIGHT
+  };
+
   clear_playfield_attrs(state);
   memset(ADDRTOSCREEN(SCREEN_PLAYFIELD_BITMAP_ADDR),
          ________,
          SCREEN_BITMAP_ROWBYTES * PLAYFIELD_HEIGHT);
+  state->speccy->draw(state->speccy, &playfield_box); /* Conv: added */
 }
 
 /**
@@ -3392,6 +3410,9 @@ static void setup_transition(chqstate_t *state, int stride)
  */
 static void fill_attributes(chqstate_t *state)
 {
+  static const zxbox_t playfield_box = { /* lower two-thirds of screen */
+    0, 0, SCREEN_WIDTH, PLAYFIELD_HEIGHT
+  };
   u8 *HLsrc;      /* pointer to first attribute of current row (was HL) */
   u8 *DEdst;      /* destination: HLsrc + 1 each iteration (was DE) */
   int A_rows;     /* row counter, 16 down to 1 (was A) */
@@ -3407,6 +3428,7 @@ static void fill_attributes(chqstate_t *state)
   } while (--A_rows > 0);      /* $8E3B DEC A; $8E3C JR NZ */
 
   state->transition_control = TRANSITIONCONTROL_STOP; /* $8E3E LD ($A231),A */
+  state->speccy->draw(state->speccy, &playfield_box); /* Conv: added */
 }
 
 /**
@@ -6008,6 +6030,9 @@ static void draw_noise_effect(chqstate_t *state, int counter)
  */
 static void ne_plot_attrs(chqstate_t *state, int attr)
 {
+  static const zxbox_t face_box = { /* face area: ZX rows 8–47, cols 22–25 */
+    176, 144, 208, 184
+  };
   u8 *addr;       /* pointer to the current attribute row in the face area (was HL) */
   int iterations; /* row countdown, 5 rows (was B) */
 
@@ -6019,6 +6044,7 @@ static void ne_plot_attrs(chqstate_t *state, int attr)
     memset(addr, attr, FACEATTRWIDTH);
     addr += SCREEN_ATTRIBUTES_WIDTH;
   } while (--iterations > 0);
+  state->speccy->draw(state->speccy, &face_box); /* Conv: added */
 }
 
 /**
@@ -6080,6 +6106,9 @@ static void plot_face_attributes(chqstate_t *state,
                                  int         screen,
                                  const u8   *face)
 {
+  static const zxbox_t face_box = { /* face area: ZX rows 8–47, cols 22–25 */
+    176, 144, 208, 184
+  };
   int carry;      /* carry from RRC and ADD operations (carry) */
   u8  A_attrhi;  /* screen high byte, rotated to extract band, then biased to $58 (was A) */
   int counter;   /* byte countdown: FACEATTRBYTES (20) down to 0 (was BC) */
@@ -6108,6 +6137,7 @@ static void plot_face_attributes(chqstate_t *state,
     if (A_rowadv >= 0x100)
       screen += 256;
   }
+  state->speccy->draw(state->speccy, &face_box); /* Conv: added */
 }
 
 /**
@@ -6177,6 +6207,9 @@ static void plot_mini_font_char(chqstate_t *state,
                                 int         extrabm1,
                                 int         extrabm2)
 {
+  static const zxbox_t message_line_box = { /* chatter message area: ZX rows 53–58 */
+    0, 133, SCREEN_WIDTH, 139
+  };
   int       carry;    /* carry from SRL/RR shift operations (carry) */
   int       extra2;   /* extra bits for right (low) glyph byte; self-modifies $9B61 (was C) */
   int       extra1;   /* extra bits ORed into left (high) glyph byte; self-modifies $9B64 (was B) */
@@ -6277,6 +6310,7 @@ pmf_have_ascii:
     fontdata++;
     HLscreen = next_scr_row(HLscreen);
   } while (--row > 0);
+  state->speccy->draw(state->speccy, &message_line_box); /* Conv: added */
 }
 
 /**
@@ -6301,6 +6335,9 @@ pmf_have_ascii:
  */
 static void clear_message_line(chqstate_t *state)
 {
+  static const zxbox_t message_line_box = { /* chatter message area: ZX rows 53–58 */
+    0, 133, SCREEN_WIDTH, 139
+  };
   u16 HLscreen; /* screen address of first byte in the current scanline (was HL) */
   int A_rows;   /* scanline counter, 6 down to 1; banked to A' during loop body (was A) */
 
@@ -6310,6 +6347,7 @@ static void clear_message_line(chqstate_t *state)
     memset(ADDRTOSCREEN(HLscreen + 1), 0, 29); /* Conv: replaces LD (HL),B + LDIR */
     HLscreen = next_scr_row(HLscreen);          /* $9BB9–$9BC8 INC H with char-row wrap */
   } while (--A_rows);                           /* $9BCA DEC A; $9BCB JP NZ */
+  state->speccy->draw(state->speccy, &message_line_box); /* Conv: added */
 }
 
 /**
@@ -6827,6 +6865,9 @@ us_gear:
  */
 static void toggle_light_brightness(chqstate_t *state, u8 *attrs)
 {
+  static const zxbox_t lights_box = { /* marquee lights: ZX rows 8–39, full width */
+    0, 152, SCREEN_WIDTH, 184
+  };
   int B_rows; /* row counter, MARQUEELIGHT_HEIGHT down to 1 (was B) */
   int C_attr; /* attribute XOR mask, $40 = BRIGHT (was C) */
 
@@ -6840,6 +6881,7 @@ static void toggle_light_brightness(chqstate_t *state, u8 *attrs)
     *attrs   ^= C_attr; /* $9E07–$9E09 fifth byte (INC L not applied after last) */
     attrs += SCREEN_ATTRIBUTES_ROWBYTES - (MARQUEELIGHT_WIDTH - 1); /* $9E0A ADD A,$1C */
   } while (--B_rows > 0); /* $9E0E DJNZ */
+  state->speccy->draw(state->speccy, &lights_box); /* Conv: added */
 }
 
 /**
@@ -12538,6 +12580,9 @@ exit:
  */
 static void clear_playfield_set_attrs(chqstate_t *state)
 {
+  static const zxbox_t playfield_box = { /* lower two-thirds of screen */
+    0, 0, SCREEN_WIDTH, PLAYFIELD_HEIGHT
+  };
   u8  *HLattrs;  /* attribute pointer walking left/right edge columns (was HL) */
   int  DEoffset; /* byte distance from left to right edge column in one row (was DE) */
   int  B;        /* row iteration count (was B) */
@@ -12579,6 +12624,7 @@ static void clear_playfield_set_attrs(chqstate_t *state)
     HLattrs          += DEoffset;
     *HLattrs++        = attribute_BLACK_OVER_BLACK; /* right edge: col 31 */
   } while (--B > 0);
+  state->speccy->draw(state->speccy, &playfield_box); /* Conv: added */
 }
 
 /**
@@ -15985,6 +16031,7 @@ static void entry_common(chqstate_t *state, int Amode_128k, int Bnrelocs)
   load_stage(state);
 
   bootstrap(state);
+  state->speccy->draw(state->speccy, NULL); /* Conv: added — full-screen marquee copy */
 }
 
 /**
@@ -16232,10 +16279,15 @@ mdc_have_glyph:
  */
 static void clear_screen(chqstate_t *state)
 {
+  static const zxbox_t playfield_box = { /* lower two-thirds of screen */
+    0, 0, SCREEN_WIDTH, PLAYFIELD_HEIGHT
+  };
+
   memset(ADDRTOATTRS(SCREEN_PLAYFIELD_ATTRS_ADDR), 0,
          SCREEN_ATTRIBUTES_ROWBYTES * PLAYFIELD_HEIGHT / 8);
   memset(ADDRTOSCREEN(SCREEN_PLAYFIELD_BITMAP_ADDR), 0,
          SCREEN_BITMAP_ROWBYTES * PLAYFIELD_HEIGHT);
+  state->speccy->draw(state->speccy, &playfield_box); /* Conv: added */
 }
 
 /**
