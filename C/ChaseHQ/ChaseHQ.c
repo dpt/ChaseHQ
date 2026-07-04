@@ -4555,6 +4555,9 @@ static void draw_object_left_helicopter_entrypt(chqstate_t     *state,
     Awidth_bytes >>= 2;
     state->doc_shift_select = Awidth_bytes;
     Awidth_bytes = Ebitmap_stride - 1;
+    // Conv: if width_bytes == 1, Awidth_bytes == 0 → nothing to draw.
+    if (Awidth_bytes == 0)
+      return;
     Bheight = 1;
     Cpadding = 1;
   } else {
@@ -5037,14 +5040,14 @@ doc_compute_bitmap:
 
   // EX AF,AF'  -- unbank flags (carry => masked) and Awidth_bytes
   if (zero_flipped) { // Z set if flipped
-    if (carry_masked)
+    if (carry_masked) {
       draw_part_plot_masked_sprite(state,
                                    Awidth_bytes,
                                    HLdash_backbuf_addr,
                                    BCpadding,
                                    DEbitmap_stride & 0xFF, /* Conv: Original only used E' */
                                    HLbitmap_data); /* exit via */
-    else
+    } else
       plot_sprite(state,
                   Awidth_bytes,
                   HLdash_backbuf_addr,
