@@ -3837,16 +3837,20 @@ static void draw_scene_objects(chqstate_t *state)
     assert(IXtable_ea00 >= &state->xpos_road_centre[0]
            && IXtable_ea00 < &state->xpos_road_centre[128]);
 
-    if (state->n_hazards)
+
+    if (state->n_hazards) {
       draw_arrow_fire_smoke(state, Biterations, IYheight_table);
+    }
 
     dust_stones_stuff(state, Biterations, IYheight_table);
 
-    if (state->dee_draw_helicopter)
+    if (state->dee_draw_helicopter) {
       draw_helicopter(state, Biterations, IYheight_table);
+    }
 
-    if (state->dee_draw_tunnel_2)
+    if (state->dee_draw_tunnel_2) {
       draw_tunnel(state, IYheight_table);
+    }
 
     Aobj = *HLroadbuf; // fetch right side object from road buffer
     assert(Aobj <= 9); // object indices are 0..9
@@ -5081,38 +5085,37 @@ doc_set_callbacks:
 
   // EXX - UNBANK
 
-  By_row_off = BCpadding;
-  for (;;) {
-    Awidth_bytes = state->doc_rows_main - By_row_off;
-    if ((s8) Awidth_bytes <= 0)
-      break;
-
-    state->doc_rows_main = Awidth_bytes;
-
-    // EXX - BANK
-
-    // call e.g. plot_sprite_even
+  // Conv: Z80 $9404–$941D is NOT a loop.  It is two sequential CALL/JP plot
+  // calls with a conditional skip of the first.  $9407 = JP M,$941A: if
+  // (doc_rows_main − BCpadding) < 0 jump directly to the ADD A,B / B=A /
+  // JP-final sequence, bypassing the first call and the doc_rows_2nd load.
+  Awidth_bytes = state->doc_rows_main - BCpadding; // $9404: A = SM − B
+  if ((s8) Awidth_bytes > 0) {                     // $9407: JP M,$941A if negative
+    state->doc_rows_main = Awidth_bytes;            // $940B: SM($9405) = A
+    // $940F: CALL doc_plot_fn (first call, height = BCpadding)
     state->doc_plot_fn(state,
                        IXjump_offset,
                        HLdash_backbuf_addr,
                        BCpadding,
                        DEbitmap_stride,
                        HLbitmap_data);
-
-    HLbitmap_data = state->doc_bitmap_ptr;
-    By_row_off = state->doc_rows_2nd;
+    HLbitmap_data = state->doc_bitmap_ptr;          // $9412: HL = SM (bitmap ptr)
+    Bdash_height = state->doc_rows_2nd;             // $9415: B = SM (doc_rows_2nd)
+    Awidth_bytes += Bdash_height;                   // $941A: A += B
+  } else {
+    Awidth_bytes += BCpadding;                      // $941A: A += B (B = original BCpadding)
   }
-
-  Bdash_height = Awidth_bytes + By_row_off;
-
-  // EXX - BANK
-
-  plot_sprite_even(state,
-                   IXjump_offset,
-                   HLdash_backbuf_addr,
-                   BCpadding,
-                   DEbitmap_stride,
-                   HLbitmap_data); /* was exit via */
+  Bdash_height = Awidth_bytes;                      // $941B: B = A (main B; not height)
+  // $941D: JP doc_plot_fn_2.  Z80 passes height via B' (banked = D_draw_height = BCpadding),
+  // not via main B. Bdash_height (main B) is used for the back-buffer address, not the row count.
+  // Conv: both calls use BCpadding as height; the updated backbuf addr from the first call
+  // is not yet propagated (TODO when plot_sprite_even exposes its final HL).
+  state->doc_plot_fn_2(state,
+                       IXjump_offset,
+                       HLdash_backbuf_addr,
+                       BCpadding,
+                       DEbitmap_stride,
+                       HLbitmap_data); /* exit via */
   return;
 
 doc_unmasked_odd:
