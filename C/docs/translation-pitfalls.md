@@ -381,3 +381,72 @@ memset(HLattrs - 30, colour, 30);   /* backward fill from end-of-row pointer */
 **Rule:** Whenever the Z80 does `LD SP,HL` followed by N `PUSH` instructions to fill memory, the C equivalent is `memset(ptr - 2*N, value, 2*N)`. The pointer is an *exclusive upper bound*, not the start of the region. If the pointer is an end-of-line attribute pointer (pointing at byte 31 of a 32-byte row), the fill covers bytes 1–30, leaving bytes 0 and 31 untouched — match that in C.
 
 **Commit:** fix ds_attributes backward-fill bug
+
+---
+
+## 25. `JP M` / `JP P` as conditional skip — not a loop
+
+**Root cause:** `JP M, addr` jumps *forward* when the Sign flag is set (result negative). When two CALL instructions are separated by a `JP M`, it is a conditional skip over the first CALL, not a backwards branch. The structure looks like:
+
+```
+CALL first_routine      ; may be skipped
+JP M, after_second      ; if first's setup result was negative, skip to after second
+CALL second_routine     ; reached only when first was not skipped
+after_second:
+```
+
+Translating this as `for(;;)` (or any loop) creates an infinite loop when the first CALL's row-count is 0 — the `JP M` condition fires immediately and the loop never terminates.
+
+**Bug:** `draw_object_clipped` at `$9404–$941D` has two sequential plot calls. When `doc_rows_main − BCpadding < 0`, `JP M,$941A` skips the first CALL and jumps to the `ADD A,B` / `B=A` / jump-dispatch sequence. The `for(;;)` translation never terminated when `doc_rows_2nd == 0` (e.g. a 2-byte-wide bitmap), hanging `draw_scene_objects` on any frame containing a telegraph pole or similar narrow stretchy segment.
+
+**Fix:** Replace the loop with two straight-line call sites and an `if` guard over the first one:
+
+```c
+if (rows_adjusted >= 0) {
+    plot_sprite_even(..., rows_main);
+}
+plot_sprite_even(..., rows_second);
+```
+
+**Rule:** When you see `CALL; JP M/P, skip_target; CALL`, it is two operations with a conditional skip, never a loop. Look for the forward address of the jump target to confirm the direction.
+
+**Commit:** `7e54fb2`
+
+---
+
+## 26. `DEC HL` after `LD A,(HL)` — pointer moves, value is unchanged
+
+**Root cause:** Z80 `LD A,(HL)` reads the byte at HL into A; a following `DEC HL` (or `DEC HL; DEC HL`) moves the pointer backward. The value in A is not affected. The C equivalent is `A = *ptr; ptr -= N`. Writing `A = *ptr - N` or `*ptr -= N` instead modifies the *value* and leaves the pointer unchanged.
+
+**Bug:** `draw_stretchy_object_common` at `$9237` does `LD A,(HL); DEC HL; DEC HL` to read the `rows_2nd` field and step past it. The C translation had `doc_rows_2nd = width_bytes - 2` — subtracting 2 from the value instead of the pointer. For a `width_bytes == 2` masked bitmap (tree trunks), this produced `doc_rows_2nd = 0`, causing `plot_masked_sprite` to be called with `height=0` and loop indefinitely past the end of the bitmap array (ASan global-buffer-overflow at `ChaseHQ.c:11568 case 7`).
+
+**Fix:**
+
+```c
+doc_rows_2nd = *HLptr;   /* LD A,(HL) */
+HLptr -= 2;              /* DEC HL; DEC HL */
+```
+
+**Rule:** Whenever the Z80 does `LD A,(HL)` followed by `DEC HL` / `INC HL` (or any HL arithmetic), the value in A is frozen at the moment of the load. The subsequent HL adjustment is purely a pointer movement; model it as `ptr ±= N`, never as `value ±= N`.
+
+**Commit:** `dd973cb`
+
+---
+
+## 27. Signed Z80 register used in arithmetic — cast to `(s8)` at the use site
+
+**Root cause:** A Z80 register field annotated as a signed offset (SM field, column adjustment, etc.) may be declared `u8` in C because it can hold values 0–255. When the Z80 uses it in `ADD A,D` (a signed addition), the C `+= D_col_pos` treats it as unsigned, giving wildly wrong results for values ≥ 128.
+
+**Symptom:** `draw_object_clipped` maintains `D_col_pos` as a self-modified signed column offset. `D_col_pos = 248` represents −8 (s8). In the `doc_y_range_nonzero` adjustment, `Adash_y_range += D_col_pos` with `D_col_pos` as `u8` computed `+= 248` instead of `+= −8`, giving `Diy_diff = 258` instead of 1. The too-large difference caused `Adash_clip_rows` to wrap to −256, which `(s8)`-cast to 0, triggering the early exit and producing `D_draw_height = −255`, which asserted inside `plot_sprite_even`.
+
+**Fix:** Cast at the arithmetic site:
+
+```c
+Adash_y_range += (s8)D_col_pos;   /* Z80 ADD A,D — D is a signed offset */
+```
+
+Or declare the field `s8` if it is never used as unsigned.
+
+**Rule:** Any Z80 SM field or register that represents a signed offset must be cast to `(s8)` (or declared `s8`) before use in C arithmetic. The bit-7 conditional approach (`if (D & 0x80) A -= (256 - D); else A += D`) is error-prone and verbose; `(s8)` cast is always correct.
+
+**Commits:** `944371a`

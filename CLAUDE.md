@@ -235,6 +235,29 @@ block operates on and use that C variable throughout.
 writing, so N pushes fill 2N bytes *before* the pointer, not after it. In
 C: `memset(ptr − 2*N, value, 2*N)`, not `memset(ptr, …)`.
 
+**`JP M` / `JP P` as conditional skip, not loop** — `JP M, addr` jumps
+*forward* to `addr` when the Sign flag is set (result negative). A
+sequence of two CALLs linked by `JP M` is two sequential operations with
+a conditional skip over the first, not a loop. Translating it as
+`for(;;)` produces an infinite loop when the skipped call's row-count
+is 0 (`draw_object_clipped` `$9404–$941D`).
+
+**`DEC HL` adjusts the pointer, not the value** — Z80 `LD A,(HL); DEC HL;
+DEC HL` reads the value at HL then moves the pointer back 2 bytes. The
+C equivalent is `A = *HL; HL -= 2;`. Writing `A = *HL - 2` or
+`*HL -= 2` instead modifies the *value* and leaves the pointer unchanged
+(`draw_stretchy_object_common` `$9237`: `doc_rows_2nd = width_bytes - 2`
+instead of `doc_rows_2nd = *ptr; ptr -= 2`).
+
+**Signed Z80 register used in arithmetic — cast to `(s8)` at the use site**
+— when a Z80 register holds a signed offset (e.g. a self-modified `D`
+representing a column adjustment), `ADD A,D` in Z80 is a signed addition.
+In C, if `D_col_pos` is declared `u8`, `+= D_col_pos` treats it as
+unsigned (0–255). Declare such fields `s8`, or cast at the use site:
+`Arange += (s8)D_col_pos`. Do not substitute a bit-7 conditional — that
+only works for values in [−128, +127]; `(s8)` cast is always correct
+(`draw_object_clipped` `$941F` `D_col_pos` sign-extension bug).
+
 ## Known data layout: $E34B–$E34D horizon attribute scroll
 
 `state->horizon_attr[3]` (Z80 `$E34B–$E34D`) drives the per-frame sky/ground colour boundary update in `update_screen` (`ds_attributes`, `$BD5A`):
