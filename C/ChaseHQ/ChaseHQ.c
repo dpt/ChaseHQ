@@ -4298,7 +4298,7 @@ dso_continue:
     Bvertical += A;
 
   state->doc_rows_main = Bvertical;
-  state->doc_rows_2nd = HLbitmap->width_bytes - 2;
+  state->doc_rows_2nd = HLbitmap->width_bytes;
   state->doc_inverted = 2; // inverted
 
   // EX AF,AF' -- restore Adepth
