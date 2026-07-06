@@ -1835,25 +1835,23 @@ static void cpu_driver(chqstate_t *state)
 
   state->speccy->stamp(state->speccy);
 
-#define CHECK do { assert(state->mhc_y_offset >= 0 && state->mhc_y_offset <= 8); } while (0)
-
-  CHECK; read_map(state);
-  CHECK; spawn_cars(state);
-  CHECK; cycle_counters(state);
-  CHECK; build_height_table(state);
-  CHECK; scroll_horizon(state);
-  CHECK; layout_road(state);
-  CHECK; draw_road(state);
-  CHECK; layout_objects(state);
-  CHECK; prepare_tunnel(state);
-  CHECK; spawn_hazards(state);
-  CHECK; choose_dirt_and_stones(state);
-  CHECK; layout_dirt_and_stones(state);
-  CHECK; draw_all_hazards(state);
-  CHECK; move_hero_car(state);
-  CHECK; check_scenery_collisions(state);
-  CHECK; draw_scene_objects(state);
-  CHECK; animate_hero_car(state); /* exit via */
+  read_map(state);
+  spawn_cars(state);
+  cycle_counters(state);
+  build_height_table(state);
+  scroll_horizon(state);
+  layout_road(state);
+  draw_road(state);
+  layout_objects(state);
+  prepare_tunnel(state);
+  spawn_hazards(state);
+  choose_dirt_and_stones(state);
+  layout_dirt_and_stones(state);
+  draw_all_hazards(state);
+  move_hero_car(state);
+  check_scenery_collisions(state);
+  draw_scene_objects(state);
+  animate_hero_car(state); /* exit via */
 
   state->speccy->sleep(state->speccy, 250000); // guess
 }
@@ -12084,7 +12082,6 @@ static void layout_road(chqstate_t *state)
 
   // $B9F4: Point at lane data
   DElanedata_base = DElanedata = ROADBUF_FWD2PTR(ROADBUF_LANES_OFFSET);
-  CHECK;
 
   // $B9F9: Count the distance to the forked road
   Biterations = 22; /* $B9FC LD B,$16 */
@@ -12096,11 +12093,9 @@ static void layout_road(chqstate_t *state)
     WRAP_INCREMENT_ASSIGN(DElanedata, DElanedata_base);
     Ldistance_to_fork++;
   } while (--Biterations > 0);
-  CHECK;
 
   // $BA0B: No forked road found
   build_curve_table(state, /*forked=*/0);
-  CHECK;
   SProadright = &state->xpos_road_right[0x30 >> 1];
   Aiterations = 48 >> 1; // 48..256 in steps of 2 = 104 iterations
 
@@ -15557,7 +15552,6 @@ static void build_curve_table(chqstate_t *state, int forked)
 
   IY_height = &persp_x_scale_right[FAST_COUNTER_PERSP_ROW(state)][0];
 
-  CHECK;
   // now need high byte of offset from base of struct, seems to be $E6 or $E7
   A_scratch = 0xE6 + ((IY_height - &persp_x_scale_right[0][0]) >> 8);
   A_scratch = multiply(A_scratch, C_curvature);
@@ -15573,7 +15567,6 @@ static void build_curve_table(chqstate_t *state, int forked)
   DEdash_roadposacc = state->scenedata.road_pos;
   // PUSH DEdash; // save on stack
   // EXX Unbank
-  CHECK;
 
   // Calculate curvature_table
   do {
@@ -15586,7 +15579,6 @@ static void build_curve_table(chqstate_t *state, int forked)
       HL_roadbufptr = state->roadbuf_start;
 
     // EXX Bank
-    CHECK;
 
     // Z80: ADD A,IXl; LD IXl,A  -- IXl accumulates curvature; table at $E540 = $40 into page
     // Conv: Z80 IXl wraps in 8-bit; values < 0x40 index before the table (adjacent Z80 RAM).
@@ -15634,7 +15626,6 @@ static void build_curve_table(chqstate_t *state, int forked)
 
     A_curvature = HLdash_multiplied & 0xFF;
     HLdash_multiplied = (s8) A_curvature; /* sign extend: Z80 DEC H / RRA ($CC63-$CC64) */
-    CHECK;
 
     DEdash_roadposacc += HLdash_multiplied;
 
@@ -15642,7 +15633,6 @@ static void build_curve_table(chqstate_t *state, int forked)
 
     *DE_output++ = A_curvature; // write to curvature_table
   } while (--B_iterations);
-  CHECK;
 
   DE_roadpos = state->scenedata.road_pos; /* was POP DE */
   B_iterations = 0; // init counter
@@ -15651,7 +15641,6 @@ static void build_curve_table(chqstate_t *state, int forked)
                          H_righttab_end, // table1 is $EE00 or $ED00 (right hand table)
                          B_iterations,
                          DE_roadpos);
-  CHECK;
 
   // repeat of above code - generate left hand table
 
@@ -15661,7 +15650,6 @@ static void build_curve_table(chqstate_t *state, int forked)
     *DE_curvature++ += *HL_rowptr++;
 
   DEdash_roadpos = state->scenedata.road_pos - 295; // vanishing point config (for left hand)
-  CHECK;
 
   Bdash_iterations = 0; // init counter
   // EXX Unbank
@@ -15669,7 +15657,6 @@ static void build_curve_table(chqstate_t *state, int forked)
                          L_lefttab_end, // table2 is $EC00 or $E900 (left hand table)
                          Bdash_iterations,
                          DEdash_roadpos);
-  CHECK;
 }
 
 // HL -> points past end of destination table we're filling
@@ -15701,25 +15688,20 @@ static void build_curve_table_fill(chqstate_t *state,
   Biterations = 21;
   // (restore SP on exit, load SP with HL)
   SPoutput = HLtableend;
-  CHECK;
   do {
     // EXX Bank
     A = (Bdash_alwayszero - 2 + IYheight_table[0] - IYheight_table[1]) & 0xFF;
     IYheight_table++;
     if (A >= 128)
       goto bct_endbit_negative; /* $CCBF JP M: Sign flag = bit 7 set */
-  CHECK;
     A += 2;
     state->object_positions[IYheight_table - 1 - &state->height_table[0]] =
       A; // must write to $E34F+ which is object_positions
-  CHECK;
     A -= Bdash_alwayszero;
     Bdash_iterations = A;
     Cdash = A;
-  CHECK;
     Ldash = state->curvature_table[IYheight_table - 1 -
                                    &state->height_table[0]]; // IY[$1F]; // $E320+
-  CHECK;
     // $CCCD
     if ((Ldash & (1 << 7)) != 0) {
       Ldash = -Ldash & 0xFF; // mask here to fix neg?
@@ -15730,7 +15712,6 @@ static void build_curve_table_fill(chqstate_t *state,
       Aopcode = Z80_INC_DE;
       if (A < Ldash) goto bct_endbit_A;
     }
-  CHECK;
     A = Bdash_iterations >> 1;
     do { // $CCE8
       A += Ldash;
@@ -15738,16 +15719,13 @@ static void build_curve_table_fill(chqstate_t *state,
         A -= Cdash;
         DEroadpos += (Aopcode == Z80_INC_DE) ? +1 : -1;
       }
-  CHECK;
       if (SPoutput <= HLtableend - 128)
         goto bct_continue; /* Conv: Z80 overflows into adjacent table; cap at 128 writes */
       SPoutput--; *SPoutput = DEroadpos; // PUSH to output table
-  CHECK;
     } while (--Bdash_iterations > 0);
 bct_continue:
     ; // EXX Unbank
   } while (--Biterations > 0);
-  CHECK;
   return;
 
   // #REGa is opcode of instruction (INC DE/DEC DE)
