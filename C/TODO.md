@@ -4,7 +4,8 @@ perhaps build unit tests now to flush out problems ahead of time.
 # BUGS
 
 - Hitting invisible objects
-- Wonky feeling car speed / anims
+- Backdrop does not horizontally scroll
+- Wonky feeling car speed / anims at start
 - Lane change diagonal transitions are not working
 - Radio screen sometimes have leftover transition animation parts
 - Message cursor seems to vanish when idle

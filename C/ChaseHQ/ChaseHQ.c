@@ -11750,7 +11750,7 @@ static void scroll_horizon(chqstate_t *state)
   int        carry;                     /* carry from RL operations on Adash (carry) */
   int        speed;                     /* hero car speed; early-out if zero (was HL) */
   int        current_curvature;         /* current_curvature: selects horizontal scroll path (was A) */
-  u8         Adash;                     /* banked A': speed high byte used for speed-scaled index (was A') */
+  u8         Adash;                     /* banked A': approximated as 0 — Z80 carried this in from $B296 (was A') */
   const u8  *HLhorizon_table;           /* pointer into horizon_table for incline-rate lookup (was HL) */
   u8         BChorizon_table_value;     /* byte pair from horizon_table for horizontal scroll (was BC) */
   int        Aregular;                  /* dr_horizon_x_scroll after wrap, 0..19 (was A) */
@@ -11759,7 +11759,7 @@ static void scroll_horizon(chqstate_t *state)
   int        Bcounter;                  /* number of horizon_y ticks consumed this frame (was C) */
   int        Eset_if_incline_negative;  /* 1 when incline is negative (downhill); sign-extends BCcounter (was E) */
   int        Chorizon_table_value;      /* threshold from horizon_table for the vertical scroll rate (was C) */
-  int        Ahorizon_y_a25a_delta;     /* accumulated sub-step delta added to horizon_y_accum (was A) */
+  int        Ahorizon_y_a25a_delta;     /* accumulated sub-step delta added to horizon_y_step (was A') in loop */
   int        BCcounter;                 /* signed tick count: positive=uphill, negative=downhill (was BC) */
 
   carry = 0;
@@ -11771,12 +11771,14 @@ static void scroll_horizon(chqstate_t *state)
   //
 
   if ((current_curvature = state->current_curvature) != 0) {
-    // A' is used here uninitialised. The original game may be relying on it
-    // being last set in move_hero_car at $B296. Or it might be a bug.
-    //
-
-    // EX AF,AF'  (suspect this should be LD A,L)
+    // Conv: current_curvature is banked into A' by EX AF,AF' at $B854 and is
+    // never read back — it is immediately overwritten by LD A,C at $B873.
+    // The RLA sequence operates on the old A' value (Adash), which the Z80
+    // carries in from move_hero_car ($B296). Its only contribution after AND
+    // $06 is bit 7 → bit 1 of the table index; we approximate with 0 here.
+    // Conv: $B854: EX AF,AF' banks current_curvature; $B855: RR H gives carry
     carry = (speed >> 8) & 1;
+    Adash = 0; /* Conv: uninitialised in Z80 — approximated as 0 */
     RL(Adash);
     RL(Adash);
     RL(Adash);
@@ -11822,8 +11824,8 @@ static void scroll_horizon(chqstate_t *state)
   HLhorizon_table = &horizon_table[(-1 + Aincline) /
                                    2]; // CHECK: Scaling / offset
   Adiff = state->fast_counter - state->horizon_y_step;
-  if (Adiff)
-    return;
+  if (!Adiff)
+    return; /* $B8A6: RET Z — no ticks elapsed, nothing to do */
 
   Chorizon_table_value = *HLhorizon_table;
   for (;;) {
@@ -11839,15 +11841,15 @@ static void scroll_horizon(chqstate_t *state)
   if (Bcounter == 0)
     return;
 
-  state->horizon_y_accum += Ahorizon_y_a25a_delta;
+  state->horizon_y_accum += Bcounter; /* $B8B4: var_a25a += B (Bcounter) */
 
   // Sign extend based on low bit of Eset_if_incline_negative
   BCcounter = (Eset_if_incline_negative) ? -Bcounter : Bcounter;
 
   // Adjust horizon_level
   state->session.horizon_level += BCcounter;
-  // EX AF,AF'
-  state->horizon_y_step += Bcounter;
+  // EX AF,AF' — unbanks Ahorizon_y_a25a_delta (accumulated in loop)
+  state->horizon_y_step += Ahorizon_y_a25a_delta; /* $B8CC: var_a25b += A (delta) */
 }
 
 /**
