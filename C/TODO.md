@@ -3,7 +3,7 @@ perhaps build unit tests now to flush out problems ahead of time.
 
 # BUGS
 
-- Hitting invisible objects
+- Hitting invisible objects (right hand objects mispositioned on 3-lane)
 - Backdrop does not horizontally scroll
 - Wonky feeling car speed / anims at start
 - Lane change diagonal transitions are not working
@@ -47,8 +47,9 @@ perhaps build unit tests now to flush out problems ahead of time.
 - Merge draw_road backinto one big unholy lump
 - Annotate all state members to show which functions consume/mutate them
 - Add deep dives for each area of the game (each main loop item?)
-- Document the game from the moment it starts until it builds the first frame?- Is fixing the keypress thread race important?
-- Have an example of creating a whole new stage.
+- Document the game from the moment it starts until it builds the first frame?
+- Is fixing the keypress thread race important?
+- Have an example of creating a whole new stage. Then backporting it to the Speccy.
 - Document how functions are created from source Z80 (eg. coping with banked regs).
 - Document road_pos valid range
 - Big reformat pass once happy with code.

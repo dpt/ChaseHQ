@@ -643,14 +643,14 @@ static const void *lookup_map_goto(chqstate_t *state, int z80)
 typedef void dso_callback_t(chqstate_t     *state,
                             int             Bdepth,
                             const bitmap_t *HLbitmap,
-                            const s16  *IXxpos,
+                            const s16      *IXxpos,
                             const u8       *IYheight);
 
 typedef void draw_object_entrypt_t(chqstate_t       *state,
                                    int               Acol_offset,
                                    int               Bdepth,
                                    const depthset_t *DEdepthset,
-                                   const s16  *IXxpos,
+                                   const s16        *IXxpos,
                                    const u8         *IYheight);
 
 /* ----------------------------------------------------------------------- */
@@ -720,7 +720,7 @@ static void fill_attributes(chqstate_t *state);
 static void draw_overlay_messages(chqstate_t *state);
 
 static const u8 *print_message(chqstate_t *state,
-                               int          style,
+                               int         style,
                                const u8   *messages);
 
 static void setup_overlay_messages(chqstate_t *state, const u8 *message);
@@ -739,70 +739,74 @@ static u16 draw_smash_bar_solid_bit(chqstate_t *state, int B_nrows, int HLbackbu
 static void draw_scene_objects(chqstate_t *state);
 
 static void draw_overhead(chqstate_t       *state,
-                          int                Bparam,
-                          int                Cparam,
+                          int               Bparam,
+                          int               Cparam,
                           const stretchy_t *DEstretchy,
-                          const s16  *IXxpos,
+                          const s16        *IXxpos,
                           const u8         *IYheight);
 
 static void draw_stretchy_object_common(chqstate_t       *state,
-                                        int                Bdepth,
+                                        int               Bdepth,
                                         const stretchy_t *DEstretchy,
                                         dso_callback_t   *HLcallback,
-                                        const s16  *IXxpos,
+                                        const s16        *IXxpos,
                                         const u8         *IYheight);
 
 static void draw_tunnel_light_common(chqstate_t            *state,
-                                     int                     Bdepth,
+                                     int                    Bdepth,
                                      const depthset_t      *DEdepthset,
                                      draw_object_entrypt_t *HLcallback,
-                                     const s16  *IXxpos,
+                                     const s16             *IXxpos,
                                      const u8              *IYheight);
 
 static void draw_object_left_entrypt(chqstate_t       *state,
-                                     int                Acol_offset,
-                                     int                Bdepth,
+                                     int               Acol_offset,
+                                     int               Bdepth,
                                      const depthset_t *DEdepthset,
-                                     const s16  *IXxpos,
+                                     const s16        *IXxpos,
                                      const u8         *IYheight);
+
 static void draw_object_left_stretchy_entrypt(chqstate_t     *state,
-    int              Bdepth,
-    const bitmap_t *HLbitmap,
-    const s16  *IXxpos,
-    const u8       *IYheight);
+                                              int             Bdepth,
+                                              const bitmap_t *HLbitmap,
+                                              const s16      *IXxpos,
+                                              const u8       *IYheight);
+
 static void draw_object_left_helicopter_entrypt(chqstate_t     *state,
-    int              Awidth_bytes,
-    const bitmap_t *HLbitmap,
-    const u8       *IYheight);
+                                                int             Awidth_bytes,
+                                                const bitmap_t *HLbitmap,
+                                                const u8       *IYheight);
 
 static void draw_object_right_entrypt(chqstate_t       *state,
-                                      int                Acol_offset,
-                                      int                Bdepth,
+                                      int               Acol_offset,
+                                      int               Bdepth,
                                       const depthset_t *DEdepthset,
-                                      const s16  *IXxpos,
+                                      const s16        *IXxpos,
                                       const u8         *IYheight);
+
 static void draw_object_right_stretchy_entrypt(chqstate_t     *state,
-    int              Bdepth,
-    const bitmap_t *HLbitmap,
-    const s16  *IXxpos,
-    const u8       *IYheight);
+                                               int             Bdepth,
+                                               const bitmap_t *HLbitmap,
+                                               const s16      *IXxpos,
+                                               const u8       *IYheight);
+
 static void draw_object_right_helicopter_entrypt(chqstate_t     *state,
-    int              Awidth_bytes,
-    const bitmap_t *HLbitmap,
-    const u8       *IYheight);
+                                                 int             Awidth_bytes,
+                                                 const bitmap_t *HLbitmap,
+                                                 const u8       *IYheight);
 
 static void draw_object_perspective_entrypt(chqstate_t     *state,
-                                     int              Awidth_bytes,
-                                     int              Cpadding,
-                                     const bitmap_t *HLbitmap,
-                                     const u8       *IYheight);
+                                            int             Awidth_bytes,
+                                            int             Cpadding,
+                                            const bitmap_t *HLbitmap,
+                                            const u8       *IYheight);
 
 static void draw_object_common_flipped(chqstate_t     *state,
-                                       int              Bheight,
-                                       int              Cpadding,
-                                       int              Ebitmap_stride,
+                                       int             Bheight,
+                                       int             Cpadding,
+                                       int             Ebitmap_stride,
                                        const bitmap_t *HLbitmap,
-                                       int              Adash_width_bytes,
+                                       int             Adash_width_bytes,
                                        int             Fdash_zero,
                                        int             Fdash_carry,
                                        const u8       *IYheight);
@@ -818,48 +822,48 @@ static void draw_object_clipped(chqstate_t     *state,
                                 const u8       *IYheight);
 
 static void plot_sprite(chqstate_t *state,
-                        int          width_bytes,
+                        int         width_bytes,
                         u8         *backbuf_addr,
-                        int          height,
+                        int         height,
                         int         bitmap_stride,
                         const u8   *bitmap_data);
 static void plot_sprite_even(chqstate_t *state,
                              int         jump_offset,
                              u8         *backbuf_addr,
-                             int          height,
+                             int         height,
                              int         bitmap_stride,
                              const u8   *bitmap_data);
 static void plot_sprite_odd(chqstate_t *state,
-                            int          width_bytes,
+                            int         width_bytes,
                             u8         *backbuf_addr,
-                            int          height,
+                            int         height,
                             int         bitmap_stride,
                             const u8   *bitmap_data);
 static void plot_sprite_odd_entrypt(chqstate_t *state,
-                                  int         jump_offset,
-                                  u8         *backbuf_addr,
-                                  int          height,
-                                  int         bitmap_stride,
-                                  const u8   *bitmap_data);
+                                    int         jump_offset,
+                                    u8         *backbuf_addr,
+                                    int         height,
+                                    int         bitmap_stride,
+                                    const u8   *bitmap_data);
 
 static void plot_sprite_flipped(chqstate_t *state,
-                                int          width_bytes,
+                                int         width_bytes,
                                 u8         *backbuf_addr,
-                                int          height,
-                                int          bitmap_stride,
+                                int         height,
+                                int         bitmap_stride,
                                 const u8   *bitmap_data);
 static void plot_sprite_flipped_even(chqstate_t *state,
                                      int         jump_offset,
                                      const u8   *flip_table,
                                      u8         *backbuf_addr,
-                                     int          height,
+                                     int         height,
                                      int         bitmap_stride,
                                      const u8   *bitmap_data);
 static void plot_sprite_flipped_odd(chqstate_t *state,
-                                    int          width_bytes,
+                                    int         width_bytes,
                                     u8         *backbuf_addr,
-                                    int          height,
-                                    int          bitmap_stride,
+                                    int         height,
+                                    int         bitmap_stride,
                                     const u8   *bitmap_data);
 
 static u8 rng(chqstate_t *state);
@@ -887,16 +891,16 @@ static void plot_face_attributes(chqstate_t *state,
                                  const u8   *face);
 
 static void plot_mini_font_cursor_off(chqstate_t *state,
-                                      int          x,
+                                      int         x,
                                       char        character);
 static void plot_mini_font_cursor_on(chqstate_t *state,
-                                     int          x,
+                                     int         x,
                                      char        character);
 static void plot_mini_font_char(chqstate_t *state,
-                   int          x,
-                   char        ascii,
-                   int          extrabm1,
-                   int          extrabm2);
+                                int         x,
+                                char        ascii,
+                                int         extrabm1,
+                                int         extrabm2);
 
 static void clear_message_line(chqstate_t *state);
 
@@ -918,7 +922,7 @@ static void toggle_light_brightness(chqstate_t *state, u8 *attrs);
 
 static void plot_turbos_and_digits(chqstate_t *state);
 static void ptas_led_digits(chqstate_t *state,
-                            int          iterations,
+                            int         iterations,
                             const u8   *digits,
                             u8         *stored,
                             u8         *screen);
@@ -926,22 +930,22 @@ static void ptas_led_digits(chqstate_t *state,
 static u8 *ledfont_plot(int ord, u8 *screen);
 
 static const u8 *draw_string_with_style(chqstate_t *state,
-                                        int          attrval,
+                                        int         attrval,
                                         u8         *attrs,
                                         u8         *backbuf,
                                         const u8   *string,
-                                        int          style);
+                                        int         style);
 static const u8 *draw_string_screen(chqstate_t *state,
-                                     int          attrval,
-                                     u8         *attrs,
-                                     u8         *dst,
-                                     const u8   *string);
+                                     int        attrval,
+                                     u8        *attrs,
+                                     u8        *dst,
+                                     const u8  *string);
 static const u8 *draw_string_core(chqstate_t *state,
                                   u8         *dst,
                                   const u8   *string,
-                                  int          style,
-                                  int          attrval,
-                                  int          attrsstride,
+                                  int         style,
+                                  int         attrval,
+                                  int         attrsstride,
                                   u8         *attrs);
 
 static void draw_char(chqstate_t *state,
@@ -1252,14 +1256,14 @@ static void attract_mode_128k(chqstate_t *state);
 /* ----------------------------------------------------------------------- */
 
 /**
- * $5C00: End screen [Conv: HQ]
+ * $5C00: End screen
  *
  * Displays the end-of-game results screen.
  *
  * Conv: Not yet implemented; the Z80 version drives a full results/credits
  *   sequence.  This stub returns immediately.
  *
- * \param[in] state  Pointer to game state.
+ * \param[in] state Pointer to game state.
  */
 static void end_screen(chqstate_t *state)
 {
@@ -1267,7 +1271,7 @@ static void end_screen(chqstate_t *state)
 }
 
 /**
- * $8014: Switch the active stage data to the wanted stage [Conv: HQ]
+ * $8014: Switch the active stage data to the wanted stage
  *
  * Returns immediately if the wanted stage is already loaded. Otherwise
  * records the new stage number and updates the stage pointer.
@@ -1301,7 +1305,7 @@ static void load_stage(chqstate_t *state)
 // $81DD start_stage_chatter - was hoisted
 
 /**
- * $8204: Derive 48K engine tone parameters from speed and gear [Conv: HQ]
+ * $8204: Derive 48K engine tone parameters from speed and gear
  *
  * Computes the iteration count (nloops) and off/on-phase delay counts
  * for the 48K border-port engine sound. The speed is halved and
@@ -1341,7 +1345,7 @@ static void setup_engine_sfx_48k(chqstate_t *state)
 }
 
 /**
- * $8234: Emit one 48K border-port engine tone burst [Conv: HQ]
+ * $8234: Emit one 48K border-port engine tone burst
  *
  * Runs only on every 4th call (the counter skips three out of four
  * invocations). Suppressed when the perp-caught phase has the car
@@ -1385,7 +1389,7 @@ static void play_engine_sfx_48k(chqstate_t *state)
 }
 
 /**
- * $8258: Run the 48K attract mode demo loop [Conv: HQ]
+ * $8258: Run the 48K attract mode demo loop
  *
  * Sets up the attract stage and drives the game in demonstration mode.
  * Each frame: scans for the fire button (returns immediately if pressed),
@@ -1452,14 +1456,14 @@ static void attract_mode_48k(chqstate_t *state)
 }
 
 /**
- * $83B5: Dispatch siren start to the 128K or 48K audio driver [Conv: HQ]
+ * $83B5: Dispatch siren start to the 128K or 48K audio driver
  *
  * In the Z80, each hook address holds a single JP instruction.  On 128K
  * hardware, bank 3 is paged in so the jump target contains the 128K audio
  * code.  On 48K hardware, the target is a NOP stub at $8A56.  C replaces the
  * paged jump with an explicit mode check throughout all eight hooks.
  *
- * \param[in] state  Pointer to game state.
+ * \param[in] state Pointer to game state.
  */
 static void start_siren_hook(chqstate_t *state)
 {
@@ -1470,11 +1474,11 @@ static void start_siren_hook(chqstate_t *state)
 }
 
 /**
- * $83B8: Dispatch engine or siren SFX to the 128K or 48K audio driver [Conv: HQ]
+ * $83B8: Dispatch engine or siren SFX to the 128K or 48K audio driver
  *
  * See start_siren_hook for the paged-jump dispatch pattern common to all hooks.
  *
- * \param[in] state  Pointer to game state.
+ * \param[in] state Pointer to game state.
  */
 static void play_regular_sfx_hook(chqstate_t *state)
 {
@@ -1485,11 +1489,11 @@ static void play_regular_sfx_hook(chqstate_t *state)
 }
 
 /**
- * $83BB: Silence audio via the 128K driver; no-op on 48K [Conv: HQ]
+ * $83BB: Silence audio via the 128K driver; no-op on 48K
  *
  * See start_siren_hook for the paged-jump dispatch pattern.
  *
- * \param[in] state  Pointer to game state.
+ * \param[in] state Pointer to game state.
  */
 static void silence_audio_hook(chqstate_t *state)
 {
@@ -1498,11 +1502,11 @@ static void silence_audio_hook(chqstate_t *state)
 }
 
 /**
- * $83BE: Flush audio register writes via the 128K driver; no-op on 48K [Conv: HQ]
+ * $83BE: Flush audio register writes via the 128K driver; no-op on 48K
  *
  * See start_siren_hook for the paged-jump dispatch pattern.
  *
- * \param[in] state  Pointer to game state.
+ * \param[in] state Pointer to game state.
  */
 static void write_audio_registers_hook(chqstate_t *state)
 {
@@ -1511,11 +1515,11 @@ static void write_audio_registers_hook(chqstate_t *state)
 }
 
 /**
- * $83C1: Configure the engine SFX via the 128K driver; no-op on 48K [Conv: HQ]
+ * $83C1: Configure the engine SFX via the 128K driver; no-op on 48K
  *
  * See start_siren_hook for the paged-jump dispatch pattern.
  *
- * \param[in] state  Pointer to game state.
+ * \param[in] state Pointer to game state.
  */
 static void setup_engine_sfx_hook(chqstate_t *state)
 {
@@ -1524,11 +1528,11 @@ static void setup_engine_sfx_hook(chqstate_t *state)
 }
 
 /**
- * $83C4: Drive engine SFX via the 128K or 48K audio driver [Conv: HQ]
+ * $83C4: Drive engine SFX via the 128K or 48K audio driver
  *
  * See start_siren_hook for the paged-jump dispatch pattern.
  *
- * \param[in] state  Pointer to game state.
+ * \param[in] state Pointer to game state.
  */
 static void play_engine_sfx_hook(chqstate_t *state)
 {
@@ -1539,7 +1543,7 @@ static void play_engine_sfx_hook(chqstate_t *state)
 }
 
 /**
- * $83C7: Play a speech sample via the 128K driver; no-op on 48K [Conv: HQ]
+ * $83C7: Play a speech sample via the 128K driver; no-op on 48K
  *
  * See start_siren_hook for the paged-jump dispatch pattern.
  *
@@ -1553,11 +1557,11 @@ static void play_speech_hook(chqstate_t *state, int Asample)
 }
 
 /**
- * $83CA: Dispatch attract mode to the 128K or 48K driver [Conv: HQ]
+ * $83CA: Dispatch attract mode to the 128K or 48K driver
  *
  * See start_siren_hook for the paged-jump dispatch pattern.
  *
- * \param[in] state  Pointer to game state.
+ * \param[in] state Pointer to game state.
  */
 static void attract_mode_hook(chqstate_t *state)
 {
@@ -1568,7 +1572,7 @@ static void attract_mode_hook(chqstate_t *state)
 }
 
 /**
- * $83CD: Build the flip table, then loop through attract → game → bank 3 [Conv: HQ]
+ * $83CD: Build the flip table, then loop through attract → game → bank 3
  *
  * Builds a 256-entry byte bit-reversal lookup table at state->flipped:
  * for each index I, flipped[I] is I with its bits in reverse order. The
@@ -1631,7 +1635,7 @@ static void bootstrap(chqstate_t *state)
 }
 
 /**
- * $8401: Per-stage game loop [Conv: HQ]
+ * $8401: Per-stage game loop
  *
  * Drives all stages of the game in sequence. Each iteration loads the
  * wanted stage, runs the pregame radio screen, sets up the stage and
@@ -1792,7 +1796,7 @@ static void main_loop(chqstate_t *state)
 }
 
 /**
- * $852A: Drive the attract mode demo with automatic input [Conv: HQ]
+ * $852A: Drive the attract mode demo with automatic input
  *
  * Generates simulated user input from the current road position: steers
  * left when the road is biased rightward (roadpos < ROAD_LEFTMOST),
@@ -1855,7 +1859,7 @@ static void cpu_driver(chqstate_t *state)
 }
 
 /**
- * $858C: Initialise the pre-game "CHASE HQ MONITORING SYSTEM" screen [Conv: HQ]
+ * $858C: Initialise the pre-game "CHASE HQ MONITORING SYSTEM" screen
  *
  * Sets up the stage data, starts a reverse transition, clears the
  * playfield and initiates the chatter sequence that describes the
@@ -1888,7 +1892,7 @@ static void run_pregame_screen(chqstate_t *state)
 }
 
 /**
- * $85A8: Execute one frame of the pre-game screen [Conv: HQ]
+ * $85A8: Execute one frame of the pre-game screen
  *
  * Called repeatedly from main_loop until it returns zero. Each frame:
  * draws the pregame scene (perp portrait, speed/distance meters, chatter
@@ -1941,7 +1945,7 @@ exit:
 }
 
 /**
- * $85E4: Reveal the perpetrator's car progressively from the bottom up [Conv: HQ]
+ * $85E4: Reveal the perpetrator's car progressively from the bottom up
  *
  * Each call increments the reveal height counter by 1, capping at 50.
  * The perp's car sprite is then plotted using that height as a clip
@@ -1990,7 +1994,7 @@ static void reveal_perp_car(chqstate_t *state)
 }
 
 /**
- * $860F: Animate the two signal-strength meters on the pregame screen [Conv: HQ]
+ * $860F: Animate the two signal-strength meters on the pregame screen
  *
  * Calls rng twice — once per meter — and uses the sign of the result to
  * nudge the meter level up (positive) or down (negative), clamping to
@@ -2040,7 +2044,7 @@ set_level2:
 }
 
 /**
- * $8646: Fill a 7-cell attribute bar with green then red segments [Conv: HQ]
+ * $8646: Fill a 7-cell attribute bar with green then red segments
  *
  * Writes `counter` green (bright-black-on-green) attribute bytes then
  * `7 − counter` red (bright-black-on-red) bytes into consecutive screen
@@ -2074,7 +2078,7 @@ static void am_set_attrs(int counter, u8 *attrs)
 }
 
 /**
- * $865A: Draw pregame [Conv: HQ]
+ * $865A: Draw pregame
  *
  * Interprets a compact command stream in pregame_data[] to paint the
  * pre-game title screen into the back buffer.  Commands select a draw
@@ -2083,7 +2087,7 @@ static void am_set_attrs(int counter, u8 *attrs)
  * pregame_tiles[].  After the STOP command, prints four overlay message
  * strings via print_message.
  *
- * \param[in,out] state  Pointer to game state.
+ * \param[in,out] state Pointer to game state.
  */
 static void draw_pregame(chqstate_t *state)
 {
@@ -2202,7 +2206,7 @@ dp_repeat_or_plot_tile:
 }
 
 /**
- * $873C: Run the "game over" escape scene [Conv: HQ]
+ * $873C: Run the "game over" escape scene
  *
  * Drives the time-limit expiry sequence: silences audio, sets up the
  * escape scene (the perp's car escaping into a tunnel), plays the "game over"
@@ -2271,7 +2275,7 @@ static void escape_scene(chqstate_t *state)
 }
 
 /**
- * $87DC: Initialise stage state from a scene data block [Conv: HQ]
+ * $87DC: Initialise stage state from a scene data block
  *
  * Resets the road buffer, copies the saved game session back into the
  * active state, clears all hazard slots except slot 0, copies the
@@ -2425,7 +2429,7 @@ static void set_up_stage(chqstate_t        *state,
 }
 
 /**
- * $8860: Clear the BRIGHT bit from a marquee light attribute block [Conv: HQ]
+ * $8860: Clear the BRIGHT bit from a marquee light attribute block
  *
  * Walks a MARQUEELIGHT_HEIGHT × MARQUEELIGHT_WIDTH block of screen
  * attribute bytes, masking out the ATTR_BRIGHT bit in each cell to
@@ -2451,7 +2455,7 @@ static void set_up_stage_reset_lights(u8 *attrptr)
 }
 
 /**
- * $8876: Filter user input and dispatch to the active-button handler [Conv: HQ]
+ * $8876: Filter user input and dispatch to the active-button handler
  *
  * Suppresses all user input during a FADE transition. Otherwise masks
  * user_input with the stage's input-mask to yield the effective input.
@@ -2517,7 +2521,7 @@ static void check_user_input(chqstate_t *state)
 }
 
 /**
- * $88A9: Initiate the quit sequence when the quit key is pressed [Conv: HQ]
+ * $88A9: Initiate the quit sequence when the quit key is pressed
  *
  * Ignores the request if a quit is already in progress. Otherwise stops
  * chatter, fills the attribute file (to blank the screen) and arms the
@@ -2538,14 +2542,14 @@ static void check_user_input_quit_key(chqstate_t *state)
 }
 
 /**
- * $88D5: Zero all attribute bytes in the playfield area [Conv: HQ]
+ * $88D5: Zero all attribute bytes in the playfield area
  *
  * Sets the 512 attribute bytes covering the lower 16 character rows
  * (the playfield) to black-on-black.  The Z80 primes HL = $5900,
  * writes zero to (HL), then LDIRs 511 bytes from $5900 → $5901,
  * producing a rolling zero fill across $5900–$58FF.
  *
- * \param[in] state  Pointer to game state.
+ * \param[in] state Pointer to game state.
  */
 static void clear_playfield_attrs(chqstate_t *state)
 {
@@ -2560,13 +2564,13 @@ static void clear_playfield_attrs(chqstate_t *state)
 }
 
 /**
- * $88E2: Zero all attribute and bitmap bytes in the playfield area [Conv: HQ]
+ * $88E2: Zero all attribute and bitmap bytes in the playfield area
  *
  * Calls clear_playfield_attrs to zero the 512 attribute bytes, then
  * zeros the 4096 bitmap bytes covering the lower 16 character rows.
  * The Z80 uses an LDIR rolling-zero fill for each block.
  *
- * \param[in] state  Pointer to game state.
+ * \param[in] state Pointer to game state.
  */
 static void clear_playfield(chqstate_t *state)
 {
@@ -2582,7 +2586,7 @@ static void clear_playfield(chqstate_t *state)
 }
 
 /**
- * $88F2: Request a sound effect, replacing the current one if priority allows [Conv: HQ]
+ * $88F2: Request a sound effect, replacing the current one if priority allows
  *
  * Stores index and priority only when no effect is active (curr == 0) or
  * when the incoming priority is at least as high as the current one (lower
@@ -2606,7 +2610,7 @@ static void start_sfx(chqstate_t *state, int index, int priority)
 }
 
 /**
- * $8903: Drive the SFX state machine [Conv: HQ]
+ * $8903: Drive the SFX state machine
  *
  * Each frame: if not in a tunnel, ORs left and right cornering triggers
  * and queues the cornering SFX if the result is non-zero. Then invokes
@@ -2663,7 +2667,7 @@ static void drive_sfx(chqstate_t *state)
 }
 
 /**
- * $8960: Play the 48K crash sound effect [Conv: HQ]
+ * $8960: Play the 48K crash sound effect
  *
  * Cycles through a 93-byte waveform table (sfx_crash_table) in state.
  * For each byte, runs an inner loop of param1 iterations: if the byte's
@@ -2672,7 +2676,7 @@ static void drive_sfx(chqstate_t *state)
  * iteration uses the next bit. The table is modified in place, so
  * successive calls produce a different waveform.
  *
- * \param[in] state  Pointer to game state.
+ * \param[in] state Pointer to game state.
  * \param[in] param1 Inner loop count; controls pulse width. (was D)
  * \param[in] param2 Unused. (was E)
  *
@@ -2706,7 +2710,7 @@ static void sfx_crash(chqstate_t *state, int param1, int param2)
 }
 
 /**
- * $89D9: Play the 48K "thud" impact sound effect [Conv: HQ]
+ * $89D9: Play the 48K "thud" impact sound effect
  *
  * Steps through a 32-byte delay table ($89EF). Each byte gives the
  * number of output pulses at the current EAR level. After each group,
@@ -2714,7 +2718,7 @@ static void sfx_crash(chqstate_t *state, int param1, int param2)
  * (larger = lower pitch). Used for car landings (param1=8) and hazard
  * hits (param1=3).
  *
- * \param[in] state  Pointer to game state.
+ * \param[in] state Pointer to game state.
  * \param[in] param1 Delay multiplier between pulses; larger = lower pitch. (was D)
  * \param[in] param2 Unused. (was E)
  *
@@ -2752,14 +2756,14 @@ static void sfx_thud(chqstate_t *state, int param1, int param2)
 }
 
 /**
- * $8A0F: Play the 48K cornering noise, running every other call [Conv: HQ]
+ * $8A0F: Play the 48K cornering noise, running every other call
  *
  * Maintains a toggle flag (sfx_cornering_toggle) so that only every
  * other call proceeds to sfx_cornering_loop_outer; the intervening call
  * returns immediately. This halves the rate at which the noise fires.
  * The game always passes duty factor 100 and count 1.
  *
- * \param[in] state  Pointer to game state.
+ * \param[in] state Pointer to game state.
  * \param[in] param1 Duty factor and outer loop count. (was D)
  * \param[in] param2 Inner loop count. (was E)
  *
@@ -2777,7 +2781,7 @@ static void sfx_cornering(chqstate_t *state, int param1, int param2)
 }
 
 /**
- * $8A17: Inner cornering noise loop [Conv: HQ]
+ * $8A17: Inner cornering noise loop
  *
  * Runs a random-noise burst: for each of param2 inner iterations, calls
  * rng and — if bit 4 is set — toggles the EAR+MIC output bit with two
@@ -2785,7 +2789,7 @@ static void sfx_cornering(chqstate_t *state, int param1, int param2)
  * The outer loop runs param1 times, so heavier cornering (larger param1)
  * gives more iterations but shorter individual delays.
  *
- * \param[in] state  Pointer to game state.
+ * \param[in] state Pointer to game state.
  * \param[in] param1 Outer loop count and on-phase delay. (was D)
  * \param[in] param2 Inner loop count. (was E)
  *
@@ -2812,7 +2816,7 @@ static void sfx_cornering_loop_outer(chqstate_t *state, int param1, int param2)
 }
 
 /**
- * $8A36: Play the 48K "bip-bow" descending tone effect [Conv: HQ]
+ * $8A36: Play the 48K "bip-bow" descending tone effect
  *
  * Produces a descending-pitch tone by running 20 outer iterations with a
  * shrinking on-phase delay (B = C each iteration) and a fixed 5-step
@@ -2821,7 +2825,7 @@ static void sfx_cornering_loop_outer(chqstate_t *state, int param1, int param2)
  * delays C cycles, drives it low. As C counts down from 20 the on-phase
  * shortens and off-phase lengthens, creating the falling pitch.
  *
- * \param[in] state  Pointer to game state.
+ * \param[in] state Pointer to game state.
  * \param[in] param1 Initial per-step delay (restored from param2 each step). (was D)
  * \param[in] param2 Per-step delay reset value. (was E)
  *
@@ -2852,7 +2856,7 @@ static void sfx_bipbow(chqstate_t *state, int param1, int param2)
 }
 
 /**
- * $8A57: Drive the perp-caught celebration sequence each frame [Conv: HQ]
+ * $8A57: Drive the perp-caught celebration sequence each frame
  *
  * Runs a multi-phase state machine, advancing one phase at a time across
  * successive frames. Returns non-zero only at phase 6, signalling main_loop
@@ -2860,19 +2864,19 @@ static void sfx_bipbow(chqstate_t *state, int param1, int param2)
  *
  * Phase 0 (NONE)      — not in the catch sequence; return 0 immediately.
  * Phase 1 (ALIGNING)  — steers the perp car to x=35 and approaches the hero.
- *                        Once close enough both cars stop and phase advances to 2.
+ *                       Once close enough both cars stop and phase advances to 2.
  * Phase 2 (STOPPING)  — moves hero car upward (car_y += 4) and scrolls
- *                        road_pos toward ROAD_126; also increments fast_counter
- *                        to keep the road scrolling. Advances to phase 3 once
- *                        car_y reaches 16.
+ *                       road_pos toward ROAD_126; also increments fast_counter
+ *                       to keep the road scrolling. Advances to phase 3 once
+ *                       car_y reaches 16.
  * Phase 3 (STOPPED)   — counts down 4 frames then triggers the arrest overlay
- *                        and advances to phase 4.
+ *                       and advances to phase 4.
  * Phase 4 (SCORE)     — computes the stage-clear bonus (×100,000, or ×10,000
- *                        on retry) and time-remaining bonus, formats them into
- *                        score_messages[] and shows the score overlay.
+ *                       on retry) and time-remaining bonus, formats them into
+ *                       score_messages[] and shows the score overlay.
  * Phase 5 (FADING)    — advances phase to 6 and starts a forward fade.
  * Phase 6 (ADVANCING) — silences audio, increments wanted_stage_number and
- *                        returns 1 so main_loop skips to the next stage.
+ *                       returns 1 so main_loop skips to the next stage.
  *
  * Conv: At phase 6, the Z80 uses `POP HL; JP $8401` to discard the return
  *   address and jump directly into main_loop, bypassing the rest of the frame.
@@ -2893,31 +2897,31 @@ static void sfx_bipbow(chqstate_t *state, int param1, int param2)
  */
 static int handle_perp_caught(chqstate_t *state)
 {
-  int       carry;          /* carry flag from SBC/RLC operations (carry) */
-  int       zero;           /* zero flag from SBC operations (zero) */
-  int       phase;          /* perp_caught_phase value read at entry (was A) */
-  int       car_y;          /* hero car y position advancing during phase 2 (was A) */
-  int       fastcounter;    /* fast_counter incremented during phase 2 (was A) */
-  int       HLroadpos;      /* road_pos adjusted in phases 2 and 1 (was HL) */
-  u8        A;              /* general accumulator across phase 3 and score phases (was A) */
-  const u8 *HLmessages;     /* pointer to the stage arrest message list (was HL) */
-  int       H;              /* high ASCII digit for the stage clear bonus (was H) */
-  u8        D;              /* wanted_stage_number, rotated for score increment (was D) */
-  int       L;              /* low ASCII digit for the stage clear bonus (was L) */
-  int       C;              /* (phase 4) time BCD copy; (phase 1) perp x temp (was C) */
-  int       Adash;          /* ASCII digit banked via EX AF,AF' in Z80 (was A') */
-  int       Biterations;    /* score increment loop counter (was B) */
-  u8        Cflag;          /* non-zero once a non-space score digit has been seen (was C) */
-  u8       *DE;             /* pointer walking score_bcd from the high end (was DE) */
-  u8       *HLscore;        /* pointer walking the score message buffer (was HL) */
-  int       Bdelta;         /* perp horizontal position step: +5 or −5 (was B) */
-  int       Ainput;         /* hero input flags before moving into Cinput (was A) */
-  int       Cinput;         /* user input flags computed for the hero car (was C) */
-  u8       *HLphc;          /* pointer to session.perp_halt_counter (was HL) */
-  int       DEspeed;        /* perp target speed passed to hpc_set_perp_speed (was DE) */
-  int       Aperpdistance;  /* perp's current distance from the hero (was A) */
-  int       HLspeed;        /* current speed in comparisons (was HL) */
-  int       HLspeedpushed;  /* hero speed saved across a PUSH/POP pair (was HL) */
+  int       carry;         /* carry flag from SBC/RLC operations (carry) */
+  int       zero;          /* zero flag from SBC operations (zero) */
+  int       phase;         /* perp_caught_phase value read at entry (was A) */
+  int       car_y;         /* hero car y position advancing during phase 2 (was A) */
+  int       fastcounter;   /* fast_counter incremented during phase 2 (was A) */
+  int       HLroadpos;     /* road_pos adjusted in phases 2 and 1 (was HL) */
+  u8        A;             /* general accumulator across phase 3 and score phases (was A) */
+  const u8 *HLmessages;    /* pointer to the stage arrest message list (was HL) */
+  int       H;             /* high ASCII digit for the stage clear bonus (was H) */
+  u8        D;             /* wanted_stage_number, rotated for score increment (was D) */
+  int       L;             /* low ASCII digit for the stage clear bonus (was L) */
+  int       C;             /* (phase 4) time BCD copy; (phase 1) perp x temp (was C) */
+  int       Adash;         /* ASCII digit banked via EX AF,AF' in Z80 (was A') */
+  int       Biterations;   /* score increment loop counter (was B) */
+  u8        Cflag;         /* non-zero once a non-space score digit has been seen (was C) */
+  u8       *DE;            /* pointer walking score_bcd from the high end (was DE) */
+  u8       *HLscore;       /* pointer walking the score message buffer (was HL) */
+  int       Bdelta;        /* perp horizontal position step: +5 or −5 (was B) */
+  int       Ainput;        /* hero input flags before moving into Cinput (was A) */
+  int       Cinput;        /* user input flags computed for the hero car (was C) */
+  u8       *HLphc;         /* pointer to session.perp_halt_counter (was HL) */
+  int       DEspeed;       /* perp target speed passed to hpc_set_perp_speed (was DE) */
+  int       Aperpdistance; /* perp's current distance from the hero (was A) */
+  int       HLspeed;       /* current speed in comparisons (was HL) */
+  int       HLspeedpushed; /* hero speed saved across a PUSH/POP pair (was HL) */
 
   carry = 0;
   zero  = 0;
@@ -3216,7 +3220,7 @@ set_perp_speed:
 }
 
 /**
- * $8C35: Set the perp car's scripted drive speed [Conv: HQ]
+ * $8C35: Set the perp car's scripted drive speed
  *
  * Writes the given speed to hazards[0].speed so that the perp car
  * follows its scripted velocity during the pull-over sequence.
@@ -3234,7 +3238,7 @@ static void hpc_set_perp_speed(chqstate_t *state, int speed)
 }
 
 /**
- * $8C3A: Initiate the pull-over sequence after the perp is fully smashed [Conv: HQ]
+ * $8C3A: Initiate the pull-over sequence after the perp is fully smashed
  *
  * Called once the player's smash_counter reaches its maximum, signalling that
  * the perp has been disabled. Starts the perp car alignment phase, raises the
@@ -3255,7 +3259,7 @@ static void fully_smashed(chqstate_t *state)
 }
 
 /**
- * $8D8F: Drive the scene transition or overlay effect each frame [Conv: HQ]
+ * $8D8F: Drive the scene transition or overlay effect each frame
  *
  * Dispatches on transition_control to perform the per-frame transition work.
  * Non-FADE modes delegate immediately to draw_mugshots, draw_overlay_messages
@@ -3319,7 +3323,7 @@ static void transition(chqstate_t *state)
 }
 
 /**
- * $8DD8: OR a fade mask into one 8-row stripe of the back buffer [Conv: HQ]
+ * $8DD8: OR a fade mask into one 8-row stripe of the back buffer
  *
  * Writes mask into 30 bytes per row (6 iterations of 5 ORs each) across
  * 8 rows, stepping backward through the buffer. The two-byte skip at the
@@ -3351,7 +3355,7 @@ static void transition_fade_chunk(chqstate_t *state, int mask, u8 *backbuf)
 }
 
 /**
- * $8DF9: Set up a new scene transition [Conv: HQ]
+ * $8DF9: Set up a new scene transition
  *
  * Picks a random entry from the forward or reverse half of the transition
  * table, then stores the frame count, initial mask pointer and per-frame
@@ -3372,7 +3376,7 @@ static void transition_fade_chunk(chqstate_t *state, int mask, u8 *backbuf)
  *   uses a signed int throughout.
  * Conv: Points at non-relocated table transitions_e88e rather than $EC00.
  *
- * \param[in] state  Pointer to game state.
+ * \param[in] state Pointer to game state.
  * \param[in] stride Per-frame mask-pointer step: +8 forward, −8 reverse. (was A)
  */
 static void setup_transition(chqstate_t *state, int stride)
@@ -3398,7 +3402,7 @@ static void setup_transition(chqstate_t *state, int stride)
 }
 
 /**
- * $8E29: Propagate the leftmost attribute byte across each playfield row [Conv: HQ]
+ * $8E29: Propagate the leftmost attribute byte across each playfield row
  *
  * The caller (e.g. scenery_hit) has already set the attribute at column 1 of
  * each row; this routine extends it rightward across the next 28 columns.
@@ -3406,33 +3410,34 @@ static void setup_transition(chqstate_t *state, int stride)
  * byte 0 → bytes 1..28, then HL advances to the start of the next row.
  * After 16 rows, transition_control is set to TRANSITIONCONTROL_STOP.
  *
- * \param[in] state  Pointer to game state.
+ * \param[in] state Pointer to game state.
  */
 static void fill_attributes(chqstate_t *state)
 {
   static const zxbox_t playfield_box = { /* lower two-thirds of screen */
     0, 0, SCREEN_WIDTH, PLAYFIELD_HEIGHT
   };
+
   u8 *HLsrc;      /* pointer to first attribute of current row (was HL) */
   u8 *DEdst;      /* destination: HLsrc + 1 each iteration (was DE) */
   int A_rows;     /* row counter, 16 down to 1 (was A) */
   int BC_columns; /* column copy count, 28 (was BC) */
 
-  HLsrc  = ADDRTOATTRS(0x5901); /* $8E28 LD HL,$5901 */
-  A_rows = 16;                   /* $8E2E LD A,$10 */
+  HLsrc  = ADDRTOATTRS(0x5901);
+  A_rows = 16;
   do {
-    DEdst      = HLsrc + 1;    /* $8E30 LD DE,HL; INC E ($8E34) */
-    BC_columns = 28;            /* $8E32 LD C,$1C */
-    do { *DEdst++ = *HLsrc++; } while (--BC_columns > 0); /* $8E35 LDIR */
-    HLsrc += 32 - 28;          /* $8E37–$8E3A INC HL × 4 (32 − 28 remaining) */
-  } while (--A_rows > 0);      /* $8E3B DEC A; $8E3C JR NZ */
+    DEdst      = HLsrc + 1;
+    BC_columns = 28;
+    do { *DEdst++ = *HLsrc++; } while (--BC_columns > 0);
+    HLsrc += 32 - 28;
+  } while (--A_rows > 0);
 
   state->transition_control = TRANSITIONCONTROL_STOP; /* $8E3E LD ($A231),A */
   state->speccy->draw(state->speccy, &playfield_box); /* Conv: added */
 }
 
 /**
- * $8E42: Progressively reveal overlay messages into the back buffer [Conv: HQ]
+ * $8E42: Progressively reveal overlay messages into the back buffer
  *
  * Drives the frame-by-frame reveal of a sequence of overlay message blocks
  * (e.g. the arrest bonus screen). Each call draws messages [0..count-1] from
@@ -3479,7 +3484,7 @@ static void draw_overlay_messages(chqstate_t *state)
 }
 
 /**
- * $8E6C: Draw one overlay-message block to the back buffer [Conv: HQ]
+ * $8E6C: Draw one overlay-message block to the back buffer
  *
  * Reads a 6-byte header from messages[], decoding the attribute byte,
  * back-buffer destination address and screen attribute address, then calls
@@ -3523,7 +3528,7 @@ static const u8 *print_message(chqstate_t *state,
 }
 
 /**
- * $8E7E: Arm the overlay-message display for a time-up or arrest sequence [Conv: HQ]
+ * $8E7E: Arm the overlay-message display for a time-up or arrest sequence
  *
  * Convenience wrapper: loads A with TRANSITIONCONTROL_OVERLAY_MESSAGES (2)
  * then falls through to setup_overlay_messages_with_transition.  In the Z80
@@ -3540,7 +3545,7 @@ static void setup_overlay_messages(chqstate_t *state, const u8 *message)
 }
 
 /**
- * $8E80: Arm the overlay-message display with a caller-supplied transition code [Conv: HQ]
+ * $8E80: Arm the overlay-message display with a caller-supplied transition code
  *
  * Stores the four values needed by draw_overlay_messages so that the main loop
  * starts rendering the message sequence on the next frame.
@@ -3567,7 +3572,7 @@ static void setup_overlay_messages_with_transition(chqstate_t *state,
 }
 
 /**
- * $8E91: Draw the perp's and officers' mugshots to the back buffer [Conv: HQ]
+ * $8E91: Draw the perp's and officers' mugshots to the back buffer
  *
  * Draws three 4×5-character (32×40-pixel) face bitmaps to the back buffer:
  * the perp (from stage data), Tony (bitmap_faces row 2) and Raymond (row 1).
@@ -3578,7 +3583,7 @@ static void setup_overlay_messages_with_transition(chqstate_t *state,
  *   per-stage mugshot data; C reads it from state->stage->addrof_perp_mugshot_attributes.
  * Conv: Z80 JR $8E42 tail-calls draw_overlay_messages; C calls it directly.
  *
- * \param[in] state  Pointer to game state.
+ * \param[in] state Pointer to game state.
  */
 static void draw_mugshots(chqstate_t *state)
 {
@@ -3599,7 +3604,7 @@ static void draw_mugshots(chqstate_t *state)
 }
 
 /**
- * $8EB7: Copy one mugshot bitmap into the back buffer and set its attributes [Conv: HQ]
+ * $8EB7: Copy one mugshot bitmap into the back buffer and set its attributes
  *
  * Copies FACEBITMAPBYTES (160 = 32×5 pixels) of bitmap data from the byte
  * immediately before HLmugshot down to the back buffer at DEbackbuf.  The copy
@@ -3616,11 +3621,11 @@ static void draw_mugshots(chqstate_t *state)
  * Conv: Z80 DEC H / rollover for scanline advance; C uses prev_buf_row().
  * Conv: JP PO branches when BC wraps to zero after LDD; C checks counter == 0.
  *
- * \param[in] state       Pointer to game state.
- * \param[in] BCattrs     Screen attribute address for the face. (was BC)
- * \param[in] DEbackbuf   Back-buffer address of the last bitmap byte. (was DE)
- * \param[in] HLmugshot   Pointer to the start of the mugshot attribute data;
- *                        the bitmap immediately precedes it. (was HL)
+ * \param[in] state     Pointer to game state.
+ * \param[in] BCattrs   Screen attribute address for the face. (was BC)
+ * \param[in] DEbackbuf Back-buffer address of the last bitmap byte. (was DE)
+ * \param[in] HLmugshot Pointer to the start of the mugshot attribute data;
+ *                      the bitmap immediately precedes it. (was HL)
  */
 static void draw_mugshot(chqstate_t *state,
                          int         BCattrs,
@@ -3651,7 +3656,7 @@ static void draw_mugshot(chqstate_t *state,
 }
 
 /**
- * $8EE7: Draw the smash-counter bar in the back buffer [Conv: HQ]
+ * $8EE7: Draw the smash-counter bar in the back buffer
  *
  * The bar runs vertically on the right edge of the playfield.  It is
  * composed of three sections drawn bottom-to-top:
@@ -3671,7 +3676,7 @@ static void draw_mugshot(chqstate_t *state,
  * Conv: Z80 computes nsolid as CPL(A*3)+$3F (bit-complement + 63); C uses the
  *   equivalent arithmetic expression.
  *
- * \param[in] state  Pointer to game state.
+ * \param[in] state Pointer to game state.
  */
 static void draw_smash_bar(chqstate_t *state)
 {
@@ -3684,7 +3689,7 @@ static void draw_smash_bar(chqstate_t *state)
   int A_nsmashsegs; /* current smash_counter value; banked to A' around $8F05 (was A) */
   int B_nsolid;     /* number of solid rows to fill above the segments (was B) */
 
-  if (state->sighted_flag == 0)           /* $8EEA AND A; $8EEB RET Z */
+  if (state->sighted_flag == 0) /* $8EEA AND A; $8EEB RET Z */
     return;
   if (state->perp_caught_phase >= PERPCAUGHTPHASE_STOPPED) /* $8EEF CP $03; $8EF1 RET NC */
     return;
@@ -3692,8 +3697,8 @@ static void draw_smash_bar(chqstate_t *state)
   HLbackbuf = 0xF7A2; /* $8EF2 LD HL,$F7A2 — bottom of bar in back buffer */
 
   HLbackbuf  = draw_smash_bar_solid_bit(state, BorderHeight, HLbackbuf); /* $8EF8–$8EFA */
-  A_nsmashsegs = state->smash_counter;                                    /* $8EFD LD A */
-  if (A_nsmashsegs > 0)                                                   /* $8F00 AND A */
+  A_nsmashsegs = state->smash_counter;                                   /* $8EFD LD A */
+  if (A_nsmashsegs > 0)                                                  /* $8F00 AND A */
     HLbackbuf = draw_smash_bar_segments(state, A_nsmashsegs, HLbackbuf); /* $8F05 CALL */
 
   B_nsolid = TotalBarHeight - BorderHeight - A_nsmashsegs * SegmentHeight; /* $8F09–$8F0F */
@@ -3701,7 +3706,7 @@ static void draw_smash_bar(chqstate_t *state)
 }
 
 /**
- * $8F13: Draw smash-counter segments (dashed pairs with a solid gap) [Conv: HQ]
+ * $8F13: Draw smash-counter segments (dashed pairs with a solid gap)
  *
  * Each segment is three scanlines: two dashed (X______X) rows and one solid
  * row drawn by draw_smash_bar_solid_bit.  The loop runs nsegs times upward
@@ -3728,7 +3733,7 @@ static u16 draw_smash_bar_segments(chqstate_t *state, int C_nsegs, int HLbackbuf
 }
 
 /**
- * $8F47: Draw a run of solid (fully filled) smash-bar scanlines [Conv: HQ]
+ * $8F47: Draw a run of solid (fully filled) smash-bar scanlines
  *
  * Writes $FF (XXXXXXXX) to nrows consecutive scanlines, walking upward through
  * the back buffer with prev_buf_row().  Used for both the border rows and the
@@ -3749,7 +3754,7 @@ static u16 draw_smash_bar_solid_bit(chqstate_t *state, int B_nrows, int HLbackbu
 }
 
 /**
- * $8F5F: Draw scene objects [Conv: HQ]
+ * $8F5F: Draw scene objects
  *
  * Draws all non-road, non-hero scene elements each frame: road-edge scenery
  * (signs, poles, trees, barriers), the perp-vehicle floating arrow, overhead
@@ -3903,14 +3908,14 @@ continue_after_left_hand_done:
   HLbitmap      = HLarrow_defn->data;
   assert(HLbitmap != NULL);
   draw_part_entrypt2(state,
-                   Bheight,
-                   Cwidth_bytes,
-                   Dy,
-                   Ex,
-                   HLbitmap,
-                   Bdash_flip_flag,
-                   Cdash,
-                   Edash_bitmap_stride); /* exit via */
+                     Bheight,
+                     Cwidth_bytes,
+                     Dy,
+                     Ex,
+                     HLbitmap,
+                     Bdash_flip_flag,
+                     Cdash,
+                     Edash_bitmap_stride); /* exit via */
   return;
 
 right_hand_stuff:
@@ -3946,7 +3951,7 @@ left_hand_stuff:
 }
 
 /**
- * $9052: Draw overhead objects [Conv: HQ]
+ * $9052: Draw overhead objects
  *
  * Draws overhead spanning objects such as bridges.  First calls
  * draw_stretchy_object_left if IXxpos[1] is zero.  Looks up the perspective
@@ -3965,10 +3970,10 @@ left_hand_stuff:
  * \param[in]     IYheight   Pointer into height_table for this object slot. (was IY)
  */
 static void draw_overhead(chqstate_t       *state,
-                          int                Bparam,
-                          int                Cparam,
+                          int               Bparam,
+                          int               Cparam,
                           const stretchy_t *DEstretchy,
-                          const s16  *IXxpos,
+                          const s16        *IXxpos,
                           const u8         *IYheight)
 {
   const stretchy_t      *HLstretchy;  /* pointer to the stretchy descriptor (was HL) */
@@ -4075,7 +4080,7 @@ do_draw_span:
 }
 
 /**
- * $916C: Draw a left-side stretchy object (e.g. a tree) [Conv: HQ]
+ * $916C: Draw a left-side stretchy object (e.g. a tree)
  *
  * Entry point for left-side objects whose width scales with distance.
  * Selects draw_object_left_stretchy_entrypt as the per-segment drawing
@@ -4105,7 +4110,7 @@ void draw_stretchy_object_left(chqstate_t *state,
 }
 
 /**
- * $9171: Draw a right-side stretchy object (e.g. a tree) [Conv: HQ]
+ * $9171: Draw a right-side stretchy object (e.g. a tree)
  *
  * Entry point for right-side objects whose width scales with distance.
  * Selects draw_object_right_stretchy_entrypt as the per-segment drawing
@@ -4135,7 +4140,7 @@ void draw_stretchy_object_right(chqstate_t *state,
 }
 
 /**
- * $9174: Draw stretchy objects [Conv: HQ]
+ * $9174: Draw stretchy objects
  *
  * Draws depth-scaled repeating scenery objects (trees, poles, signs) using
  * a variable-resolution representation called "stretchy" objects.  Iterates
@@ -4303,7 +4308,7 @@ dso_continue:
 }
 
 /**
- * $924D: Draw a left-side tunnel light [Conv: HQ]
+ * $924D: Draw a left-side tunnel light
  *
  * Entry point for tunnel lights on the left side of the road. Selects
  * draw_object_left_entrypt as the callback and delegates to
@@ -4329,7 +4334,7 @@ void draw_tunnel_light_left(chqstate_t *state,
 }
 
 /**
- * $9252: Draw a right-side tunnel light [Conv: HQ]
+ * $9252: Draw a right-side tunnel light
  *
  * Entry point for tunnel lights on the right side of the road. Selects
  * draw_object_right_entrypt as the callback and delegates to
@@ -4355,7 +4360,7 @@ void draw_tunnel_light_right(chqstate_t *state,
 }
 
 /**
- * $9255: Draw tunnel light common [Conv: HQ]
+ * $9255: Draw tunnel light common
  *
  * Shared core for draw_tunnel_light_left and draw_tunnel_light_right. Returns
  * immediately if the light's depth index is out of the visible range ($10).
@@ -4393,7 +4398,7 @@ static void draw_tunnel_light_common(chqstate_t            *state,
 }
 
 /**
- * $9278: Draw a left-side road object with no column offset [Conv: HQ]
+ * $9278: Draw a left-side road object with no column offset
  *
  * Entry point used by the object dispatch table for standard left-side
  * scenery objects (turn signs, lamp posts, etc.). Calls
@@ -4418,7 +4423,7 @@ void draw_object_left(chqstate_t *state,
 }
 
 /**
- * $9279: Resolve depth and bitmap for a left-side object, then draw it [Conv: HQ]
+ * $9279: Resolve depth and bitmap for a left-side object, then draw it
  *
  * Stores the column offset, caps the depth index to DEPTHSET_MAX, then
  * looks up the depth value and bitmap pointer from the depthset table and
@@ -4470,7 +4475,7 @@ static void draw_object_left_entrypt(chqstate_t       *state,
 }
 
 /**
- * $9293: Compute left-side screen width then draw the object [Conv: HQ]
+ * $9293: Compute left-side screen width then draw the object
  *
  * Adds 16 to the x-position table value, subtracts the depth, and returns
  * early if the result is negative (object entirely off-screen to the left).
@@ -4501,7 +4506,7 @@ static void draw_object_left_stretchy_entrypt(chqstate_t     *state,
 }
 
 /**
- * $929A: Draw object — left-side clipping entry point [Conv: HQ]
+ * $929A: Draw object — left-side clipping entry point
  *
  * Entry point for objects that arrive at the left-hand edge of the screen.
  * Returns immediately if Awidth_bytes < 8 (object fully off-screen left).
@@ -4600,7 +4605,7 @@ static void draw_object_left_helicopter_entrypt(chqstate_t     *state,
 }
 
 /**
- * $92E1: Draw a right-side road object with no column offset [Conv: HQ]
+ * $92E1: Draw a right-side road object with no column offset
  *
  * Entry point used by the object dispatch table for standard right-side
  * scenery objects. Calls draw_object_right_entrypt with a column offset
@@ -4625,7 +4630,7 @@ void draw_object_right(chqstate_t *state,
 }
 
 /**
- * $92E2: Resolve depth and bitmap for a right-side object, then draw it [Conv: HQ]
+ * $92E2: Resolve depth and bitmap for a right-side object, then draw it
  *
  * Right-side mirror of draw_object_left_entrypt ($9279). Stores the column
  * offset, caps the depth index and looks up the depth value and bitmap pointer
@@ -4672,7 +4677,7 @@ static void draw_object_right_entrypt(chqstate_t       *state,
 }
 
 /**
- * $92FC: Compute right-side available width then draw the object [Conv: HQ]
+ * $92FC: Compute right-side available width then draw the object
  *
  * Reads the x-position table value and adds the (signed) depth. Returns early
  * if the result is zero or overflows u8 (i.e. the object is off-screen to the
@@ -4709,7 +4714,7 @@ static void draw_object_right_stretchy_entrypt(chqstate_t     *state,
 }
 
 /**
- * $9309: Guard for right-side perspective draw: skip if width >= 247 [Conv: HQ]
+ * $9309: Guard for right-side perspective draw: skip if width >= 247
  *
  * Returns immediately if Awidth_bytes >= 247 ($F7), indicating the object
  * is at least partly off the right edge of the screen. Otherwise falls
@@ -4730,7 +4735,7 @@ static void draw_object_right_helicopter_entrypt(chqstate_t     *state,
 }
 
 /**
- * $930E: Draw object — perspective height/width entry point [Conv: HQ]
+ * $930E: Draw object — perspective height/width entry point
  *
  * Derives the height and draw-width for a depth-scaled object from the
  * clipping width Awidth_bytes.  Right-shifts by 2 (then 1 more) to get the
@@ -4800,7 +4805,7 @@ static void draw_object_perspective_entrypt(chqstate_t     *state,
 }
 
 /**
- * $932B: Draw a flipped object, A_toggling the shift selector [Conv: HQ]
+ * $932B: Draw a flipped object, A_toggling the shift selector
  *
  * Entry point for horizontally-flipped objects. Inverts the shift-selector
  * byte so that the complementary (shifted) bitmap variant is chosen, then
@@ -4853,7 +4858,7 @@ static void draw_object_common_flipped(chqstate_t     *state,
 }
 
 /**
- * $9333: Clip object to visible area and dispatch to plot function [Conv: HQ]
+ * $9333: Clip object to visible area and dispatch to plot function
  *
  * Determines how many rows of the bitmap are visible given the object's
  * position in the Y-height table, skips invisible leading rows, then
@@ -5175,7 +5180,7 @@ unmasked_inverted:
 }
 
 /**
- * $949C: Plot an unmasked sprite to the back buffer [Conv: HQ]
+ * $949C: Plot an unmasked sprite to the back buffer
  *
  * Dispatches to the odd- or even-width inner loop based on whether
  * width_bytes is odd or even. For odd widths the low bit is the remainder
@@ -5230,7 +5235,7 @@ static void plot_sprite(chqstate_t *state,
 }
 
 /**
- * $94B1: Plot an unmasked sprite (even byte widths) [Conv: HQ]
+ * $94B1: Plot an unmasked sprite (even byte widths)
  *
  * Draws up to 8 bytes per row (4 pairs of 2) into the back buffer using a
  * POP-unroll inner loop, entered via jump_offset. Each row advances backward
@@ -5312,7 +5317,7 @@ plot_sprite_even_start:
 }
 
 /**
- * $94F2: Plot an unmasked sprite (odd byte widths) [Conv: HQ]
+ * $94F2: Plot an unmasked sprite (odd byte widths)
  *
  * Derives the jump-table offset from width_bytes and delegates to
  * plot_sprite_odd_entrypt, which runs the odd-width unrolled inner loop.
@@ -5408,7 +5413,7 @@ plot_sprite_odd_start:
 }
 
 /**
- * $9542: Plot a horizontally flipped unmasked sprite to the back buffer [Conv: HQ]
+ * $9542: Plot a horizontally flipped unmasked sprite to the back buffer
  *
  * Advances backbuf_addr by width_bytes so that the back buffer is filled
  * right-to-left, then dispatches to the odd- or even-width flipped inner
@@ -5465,7 +5470,7 @@ static void plot_sprite_flipped(chqstate_t *state,
 }
 
 /**
- * $9565: Plot a horizontally flipped sprite (even byte widths) [Conv: HQ]
+ * $9565: Plot a horizontally flipped sprite (even byte widths)
  *
  * Draws up to 8 bytes per row right-to-left into the back buffer, bit-
  * reversing each source byte via flip_table. Each pair of bytes is written
@@ -5540,7 +5545,7 @@ plot_sprite_flipped_even_start:
 }
 
 /**
- * $95B3: Plot a horizontally flipped sprite (odd byte widths) [Conv: HQ]
+ * $95B3: Plot a horizontally flipped sprite (odd byte widths)
  *
  * Draws up to 7 bytes per row (the odd trailing byte plus up to 3 pairs)
  * right-to-left into the back buffer, bit-reversing each byte via
@@ -5616,7 +5621,7 @@ psf_odd_body:
 }
 
 /**
- * $961B: Advance the three-byte LFSR and return a pseudo-random byte [Conv: HQ]
+ * $961B: Advance the three-byte LFSR and return a pseudo-random byte
  *
  * Each call mutates the three-byte seed in state->rng_seed as follows:
  *
@@ -5632,7 +5637,7 @@ psf_odd_body:
  *   RRC(r) uses the local variable `carry` as a scratch; it is not read
  *   before being written, so any prior value is irrelevant.
  *
- * \param[in] state  Pointer to game state.
+ * \param[in] state Pointer to game state.
  * \return Pseudo-random byte.
  */
 static u8 rng(chqstate_t *state)
@@ -5654,7 +5659,7 @@ static u8 rng(chqstate_t *state)
 }
 
 /**
- * $9945: Initiate a chatter sequence if priority allows it [Conv: HQ]
+ * $9945: Initiate a chatter sequence if priority allows it
  *
  * Sets up a new chatter display. If chatter is already in progress and the
  * running priority is at least as high as the requested priority, the new
@@ -5686,7 +5691,7 @@ static void start_chatter(chqstate_t       *state,
 }
 
 /**
- * $9965: Advance the chatter state machine one frame [Conv: HQ]
+ * $9965: Advance the chatter state machine one frame
  *
  * Drives the four-state chatter FSM each frame:
  * - STARTING (1): transitions to RUN, clears the message line and starts the
@@ -5809,7 +5814,7 @@ exit:
 }
 
 /**
- * $99D3: Begin the chatter stop sequence [Conv: HQ]
+ * $99D3: Begin the chatter stop sequence
  *
  * Primes the noise-out countdown (noise_counter = 4), switches the FSM to
  * STOPPING, and clears the on-screen message line. The noise effect will
@@ -5825,7 +5830,7 @@ static void drive_chatter_stop(chqstate_t *state)
 }
 
 /**
- * $99EC: Resolve the speaking character and start showing the message [Conv: HQ]
+ * $99EC: Resolve the speaking character and start showing the message
  *
  * Walks the current chatter block, skipping RANDOM ($FC) command bytes each
  * of which triggers a three-way random branch to select the actual sub-block.
@@ -5879,7 +5884,7 @@ static void print_chatter(chqstate_t *state)
 }
 
 /**
- * $9A24: Load the next message string from a chatter block [Conv: HQ]
+ * $9A24: Load the next message string from a chatter block
  *
  * Reads a string index from the chatter block, resolves it to a C string
  * (from common_chatter_strings[] or the stage's per-stage strings), saves the
@@ -5914,7 +5919,7 @@ static void pc_chatter_message(chqstate_t *state, const u8 *chatterblk)
 }
 
 /**
- * $9A30: Plot the next character into the chatter message line [Conv: HQ]
+ * $9A30: Plot the next character into the chatter message line
  *
  * If x is zero, clears the message line first. Reads the next character from
  * state->next_character (masking the EOS bit), plots it with a cursor block at
@@ -5946,7 +5951,7 @@ static void pc_clear_line(chqstate_t *state, int x)
 }
 
 /**
- * $9A55: Advance the noise effect counter and dispatch [Conv: HQ]
+ * $9A55: Advance the noise effect counter and dispatch
  *
  * Decrements noise_counter and stores it. If the counter has reached zero the
  * noise effect is over: calls print_chatter to reveal the face and message.
@@ -5965,7 +5970,7 @@ static void drive_noise_effect(chqstate_t *state, int counter)
 }
 
 /**
- * $9A5C: Render one frame of the noise/static effect over the face area [Conv: HQ]
+ * $9A5C: Render one frame of the noise/static effect over the face area
  *
  * Uses the bottom bit of counter (via RRA) to alternate between showing a
  * cursor-on or cursor-off space at x=-1. Then iterates 40 screen rows of
@@ -6025,7 +6030,7 @@ static void draw_noise_effect(chqstate_t *state, int counter)
 }
 
 /**
- * $9A98: Fill the face-area screen attributes [Conv: HQ]
+ * $9A98: Fill the face-area screen attributes
  *
  * Writes attr to a 4-column × 5-row block of attribute bytes starting at
  * screen attribute address $5836 (row 22, column 1). Called with
@@ -6055,14 +6060,14 @@ static void ne_plot_attrs(chqstate_t *state, int attr)
 }
 
 /**
- * $9AAB: Plot a face bitmap and its attribute block to the screen [Conv: HQ]
+ * $9AAB: Plot a face bitmap and its attribute block to the screen
  *
  * Copies FACEBITMAPBYTES (160) bytes of face bitmap data to the ZX Spectrum
  * screen starting at screen, advancing one scanline at a time using the
  * standard ZX Spectrum row-advance logic. Falls through to
  * plot_face_attributes to write the matching colour attribute block.
  *
- * \param[in] state  Pointer to game state.
+ * \param[in] state Pointer to game state.
  * \param[in] screen ZX Spectrum screen address to start drawing at (always
  *                   $4036, i.e. row 8 pixel 6 of the display). (was DE)
  * \param[in] face   Pointer to face data: bitmap bytes followed immediately
@@ -6096,14 +6101,14 @@ static void plot_face(chqstate_t *state,
 }
 
 /**
- * $9ACE: Write the attribute block for a face bitmap [Conv: HQ]
+ * $9ACE: Write the attribute block for a face bitmap
  *
  * Derives the attribute-area start address from the saved bitmap screen
  * address: the high byte encodes the pixel band (0–2), which maps to
  * attribute rows $58xx–$5Axx. Copies FACEATTRBYTES (20) attribute bytes in
  * runs of 4, advancing by one attribute row (32 bytes) between runs.
  *
- * \param[in] state  Pointer to game state.
+ * \param[in] state Pointer to game state.
  * \param[in] screen ZX Spectrum screen address saved from the bitmap pass;
  *                   its high byte encodes the display band. (was stack/POP DE)
  * \param[in] face   Pointer to the attribute bytes that follow the bitmap
@@ -6148,7 +6153,7 @@ static void plot_face_attributes(chqstate_t *state,
 }
 
 /**
- * $9AEC: Plot a mini-font character with no cursor underline [Conv: HQ]
+ * $9AEC: Plot a mini-font character with no cursor underline
  *
  * Entry point with BC=0: both extra bitmap bytes are zero so no cursor block
  * appears beneath the character.
@@ -6166,7 +6171,7 @@ static void plot_mini_font_cursor_off(chqstate_t *state,
 }
 
 /**
- * $9AF1: Plot a mini-font character with a cursor underline [Conv: HQ]
+ * $9AF1: Plot a mini-font character with a cursor underline
  *
  * Entry point with BC=$0780: B=$07 ORs three bits into the left glyph byte
  * (the cursor underline row) and C=$80 sets the MSB of the right glyph byte,
@@ -6185,7 +6190,7 @@ static void plot_mini_font_cursor_on(chqstate_t *state,
 }
 
 /**
- * $9AF4: Plot one mini-font character to the chatter message line [Conv: HQ]
+ * $9AF4: Plot one mini-font character to the chatter message line
  *
  * Computes the screen column byte address and right-shift amount from x,
  * converts the ASCII character to a glyph ID, looks up the 6-row glyph
@@ -6321,7 +6326,7 @@ pmf_have_ascii:
 }
 
 /**
- * $9BA7: Zero the six-scanline message-line area on the bitmap [Conv: HQ]
+ * $9BA7: Zero the six-scanline message-line area on the bitmap
  *
  * Wipes six consecutive scanlines starting at screen address $45C1 (pixel
  * row 8 within character row 8, column 33 = approximately the chatter area).
@@ -6338,7 +6343,7 @@ pmf_have_ascii:
  *   29 bytes HL+1 through HL+29, omitting HL itself.  The first byte is part
  *   of the chatter area and is overwritten anyway by the next print call.
  *
- * \param[in] state  Pointer to game state.
+ * \param[in] state Pointer to game state.
  */
 static void clear_message_line(chqstate_t *state)
 {
@@ -6358,7 +6363,7 @@ static void clear_message_line(chqstate_t *state)
 }
 
 /**
- * $9BCF: Handle time running out, countdown and continue [Conv: HQ]
+ * $9BCF: Handle time running out, countdown and continue
  *
  * Drives the time-up state machine, called once per frame from the main loop:
  * - INIT (0): decrements time every 15 frames (1 second); when 15s remain
@@ -6519,7 +6524,7 @@ check_restart:
 }
 
 /**
- * $9C79: Trigger the "START" voice sample [Conv: HQ]
+ * $9C79: Trigger the "START" voice sample
  *
  * Tail-calls play_speech_hook with SAMPLE_START (index 5).  In the Z80 this
  * is a JP rather than CALL/RET; in C it is a regular call with the same
@@ -6528,7 +6533,7 @@ check_restart:
  *
  * Conv: Z80 JP $83C7 is a tail call; C uses a normal call.
  *
- * \param[in] state  Pointer to game state.
+ * \param[in] state Pointer to game state.
  */
 static void play_start_noise(chqstate_t *state)
 {
@@ -6536,7 +6541,7 @@ static void play_start_noise(chqstate_t *state)
 }
 
 /**
- * $9CC2: Award a speed-proportional score increment [Conv: HQ]
+ * $9CC2: Award a speed-proportional score increment
  *
  * Derives a small BCD bonus from the current speed and adds it to the
  * running score via increment_score. The derivation is unusual: the low byte
@@ -6576,7 +6581,7 @@ static void speed_score(chqstate_t *state)
 }
 
 /**
- * $9CD6: Format a BCD bonus value as a decimal string and add it to the score [Conv: HQ]
+ * $9CD6: Format a BCD bonus value as a decimal string and add it to the score
  *
  * Formats the six packed-BCD digits of (D_hi, E_md, A_lo) as a right-aligned
  * decimal string in state->bonus_string, suppressing leading and trailing zeros.
@@ -6589,7 +6594,7 @@ static void speed_score(chqstate_t *state)
  * The Z80 fills the string right-to-left starting from one byte past the end
  * of the six-byte buffer ($9D57).  C models this with a double pointer (pHLoutput).
  *
- * \param[in] state  Pointer to game state.
+ * \param[in] state Pointer to game state.
  * \param[in] A_lo   Low two BCD digits of the bonus. (was A)
  * \param[in] E_md   Middle two BCD digits of the bonus. (was E)
  * \param[in] D_hi   High two BCD digits of the bonus. (was D)
@@ -6620,7 +6625,7 @@ static void add_bonus(chqstate_t *state, int A_lo, int E_md, int D_hi)
 }
 
 /**
- * $9CFC: Write one BCD nibble into the bonus string [Conv: HQ]
+ * $9CFC: Write one BCD nibble into the bonus string
  *
  * Masks the low nibble of Adigit and writes the corresponding decimal
  * character into the bonus string at (*pHLoutput - 1), filling right-to-left
@@ -6664,14 +6669,14 @@ bd_store:
 }
 
 /**
- * $9D17: Increment the score by a three-byte BCD value [Conv: HQ]
+ * $9D17: Increment the score by a three-byte BCD value
  *
  * Adds (D_hi, E_md, A_lo) to the four-byte packed-BCD score in
  * state->score_bcd[0..3], propagating carry through all four bytes.  Each
  * byte holds two decimal digits.  The fourth byte absorbs any carry out of
  * the high byte so the score never wraps silently.
  *
- * \param[in] state  Pointer to game state.
+ * \param[in] state Pointer to game state.
  * \param[in] A_lo   Low two BCD digits of the increment. (was A)
  * \param[in] E_md   Middle two BCD digits of the increment. (was E)
  * \param[in] D_hi   High two BCD digits of the increment. (was D)
@@ -6690,7 +6695,7 @@ static void increment_score(chqstate_t *state, int A_lo, int E_md, int D_hi)
 }
 
 /**
- * $9D2E: Calculate and apply the overtake bonus [Conv: HQ]
+ * $9D2E: Calculate and apply the overtake bonus
  *
  * Called once per frame from the main loop.  Runs overtake_bonus_counter
  * iterations (one per pending overtake), each time advancing the BCD
@@ -6730,7 +6735,7 @@ static void calc_overtake_bonus(chqstate_t *state)
 }
 
 /**
- * $9D62: Refresh the scoreboard HUD for the current frame [Conv: HQ]
+ * $9D62: Refresh the scoreboard HUD for the current frame
  *
  * Covers five sections in sequence:
  *
@@ -6856,7 +6861,7 @@ us_gear:
 }
 
 /**
- * $9DF4: XOR the BRIGHT bit across the marquee light attribute block [Conv: HQ]
+ * $9DF4: XOR the BRIGHT bit across the marquee light attribute block
  *
  * Toggles the BRIGHT attribute ($40) across a MARQUEELIGHT_HEIGHT × MARQUEELIGHT_WIDTH
  * (4 × 5) block of screen attribute bytes starting at attrs.  Each row is
@@ -6867,7 +6872,7 @@ us_gear:
  *   wrapping within a 256-byte page boundary.  C uses a plain pointer which
  *   stays in-bounds for the same reason (the block fits within one page).
  *
- * \param[in]     state  Pointer to game state.
+ * \param[in]     state Pointer to game state.
  * \param[in,out] attrs  Pointer to the first attribute byte of the light block. (was HL)
  */
 static void toggle_light_brightness(chqstate_t *state, u8 *attrs)
@@ -6892,7 +6897,7 @@ static void toggle_light_brightness(chqstate_t *state, u8 *attrs)
 }
 
 /**
- * $9E11: Plot turbo boost sprites and all HUD digit displays [Conv: HQ]
+ * $9E11: Plot turbo boost sprites and all HUD digit displays
  *
  * Covers three sections:
  *
@@ -7102,7 +7107,7 @@ ptas_turbo_setup:
 }
 
 /**
- * $9F1E: Selectively redraw changed LED digit pairs [Conv: HQ]
+ * $9F1E: Selectively redraw changed LED digit pairs
  *
  * Walks a packed-BCD buffer and a parallel "already-drawn" shadow buffer.
  * For each digit pair, unpacks the high nibble and low nibble separately;
@@ -7162,7 +7167,7 @@ ptas_led_plot_2nd:
 }
 
 /**
- * $9F47: Plot one LED font digit to the screen [Conv: HQ]
+ * $9F47: Plot one LED font digit to the screen
  *
  * Draws a single 8×15 LED font glyph at the given screen pointer. The glyph
  * is stored as 15 bytes: the first 7 occupy the top 7 scanlines of the first
@@ -7196,7 +7201,7 @@ static u8 *ledfont_plot(int ord, u8 *screen)
 //0b_010BBLLL_RRRCCCCC (B = band, L = scanline, R = row (group), C = column)
 
 /**
- * $9F99: Draw a NUL-terminated string to the back buffer with a specified style [Conv: HQ]
+ * $9F99: Draw a NUL-terminated string to the back buffer with a specified style
  *
  * Adapter entry point called from print_message ($8E6C) and keyscan_keydefs
  * ($A112).  Reorders parameters to match the Z80 register layout expected by
@@ -7228,7 +7233,7 @@ static const u8 *draw_string_with_style(chqstate_t *state,
 }
 
 /**
- * $9FA3: Draw a NUL-terminated string directly to the screen bitmap [Conv: HQ]
+ * $9FA3: Draw a NUL-terminated string directly to the screen bitmap
  *
  * Wrapper around draw_string_core that fixes the draw style to
  * DRAWCHARSTYLE_SCREEN and supplies the constant attribute stride of 32.
@@ -7257,7 +7262,7 @@ static const u8 *draw_string_screen(chqstate_t *state,
 }
 
 /**
- * $9FA6: Draw a NUL-terminated string to the screen or back buffer [Conv: HQ]
+ * $9FA6: Draw a NUL-terminated string to the screen or back buffer
  *
  * Core string-rendering loop.  Reads each character byte, masks off the EOS
  * (top-bit) sentinel, passes it to draw_char, then advances the destination
@@ -7292,7 +7297,7 @@ static const u8 *draw_string_core(chqstate_t *state,
 }
 
 /**
- * $9FB4: Draw one character glyph to the screen or back buffer [Conv: HQ]
+ * $9FB4: Draw one character glyph to the screen or back buffer
  *
  * Maps an ASCII character to a glyph index, then dispatches on style to one
  * of six render modes:
@@ -7488,7 +7493,7 @@ dc_return:
 }
 
 /**
- * $A0D6: Read all active inputs and store the result [Conv: HQ]
+ * $A0D6: Read all active inputs and store the result
  *
  * Scans the keyboard (and optionally the Kempston joystick) and resolves
  * conflicting inputs:
@@ -7543,7 +7548,7 @@ static u8 keyscan(chqstate_t *state)
 }
 
 /**
- * $A112: Scan a keydef list, rotating each result into an accumulator [Conv: HQ]
+ * $A112: Scan a keydef list, rotating each result into an accumulator
  *
  * Walks HLkeydefs one byte at a time, passing each byte to keyscan_inner to
  * test whether the corresponding key is pressed. The result (active low in
@@ -7598,7 +7603,7 @@ static int keyscan_inner(const chqstate_t *state, int Ainput)
 }
 
 /**
- * $A399: Test for off-road and object collisions each frame [Conv: HQ]
+ * $A399: Test for off-road and object collisions each frame
  *
  * Checks whether the hero car has gone off-road or struck a roadside object:
  *
@@ -7821,7 +7826,7 @@ store_crash_spin:
 }
 
 /**
- * $A4B0: Play the scenery-hit sound then initiate the crash sequence [Conv: HQ]
+ * $A4B0: Play the scenery-hit sound then initiate the crash sequence
  *
  * Plays EFFECT_SCENERY_HIT at priority 3, then falls through to scenery_hit
  * to set up the crash state.  Called when the hero car drives into a tree,
@@ -7839,7 +7844,7 @@ static void csc_hit_scenery(chqstate_t *state, int Aflip_flag, int Adash_speed)
 }
 
 /**
- * $A4B8: Set up the crash state after a scenery or tunnel-wall impact [Conv: HQ]
+ * $A4B8: Set up the crash state after a scenery or tunnel-wall impact
  *
  * Guards against double-entry (returns immediately if already crashed).
  * Computes the initial crash spin speed as max(24, speed/16 + 16) and the
@@ -7888,7 +7893,7 @@ static void scenery_hit(chqstate_t *state, int Aflip_flag, int Adash_threshold)
 }
 
 /**
- * $A4F6: Check off-road and pole collisions at a road fork [Conv: HQ]
+ * $A4F6: Check off-road and pole collisions at a road fork
  *
  * Variant of check_scenery_collisions used when the road fork is visible and
  * fork_countdown has reached zero.  Uses xpos_road_left[127] and
@@ -7896,7 +7901,7 @@ static void scenery_hit(chqstate_t *state, int Aflip_flag, int Adash_threshold)
  * off-road, and checks the short pole object on whichever side of the fork
  * the player did NOT take.
  *
- * \param[in] state  Pointer to game state.
+ * \param[in] state Pointer to game state.
  * \param[in] DEdash Road position B value inherited from check_scenery_collisions;
  *                   stored directly to ahc_road_pos_b. (was DE')
  * \param[in] HLdash Road position A value inherited from check_scenery_collisions;
@@ -7962,7 +7967,7 @@ set_off_road:
 }
 
 /**
- * $A579: Populate the object x-position pairs for the current frame [Conv: HQ]
+ * $A579: Populate the object x-position pairs for the current frame
  *
  * Two passes over up to 21 road slots:
  *
@@ -8109,7 +8114,7 @@ load_and_store_right:
 }
 
 /**
- * $A60E: Advance the three frame-rate counters [Conv: HQ]
+ * $A60E: Advance the three frame-rate counters
  *
  * Called once per frame from the main loop.  Updates:
  *
@@ -8121,7 +8126,7 @@ load_and_store_right:
  * The Z80 uses RET Z after the XOR to bail when frame_toggle becomes 0 (i.e.
  * on even frames); slow_anim_counter is advanced only on odd frames.
  *
- * \param[in] state  Pointer to game state.
+ * \param[in] state Pointer to game state.
  */
 static void cycle_counters(chqstate_t *state)
 {
@@ -8133,7 +8138,7 @@ static void cycle_counters(chqstate_t *state)
 }
 
 /**
- * $A637: perp_behaviour [Conv: HQ]
+ * $A637: perp_behaviour
  *
  * Controls the perp car each frame: reacts to collisions, manages lane
  * changes and scales approach speed by distance.
@@ -8151,7 +8156,7 @@ static void cycle_counters(chqstate_t *state)
  * slides horz_pos toward the target position and finally scales the perp's
  * approach speed by the remaining distance.
  *
- * \param[in]     state  Pointer to game state.
+ * \param[in]     state Pointer to game state.
  * \param[in,out] IXperp Perp hazard slot. (was IX)
  */
 void perp_behaviour(chqstate_t *state, hazard_t *IXperp)
@@ -8489,7 +8494,7 @@ pb_a7be:
 }
 
 /**
- * $A7F3: spawn_cars [Conv: HQ]
+ * $A7F3: spawn_cars
  *
  * Spawns a new traffic car into an empty hazard slot each time the inline
  * self-modifying counter sc_spawn_counter reaches zero.
@@ -8601,7 +8606,7 @@ fill_in:
 }
 
 /**
- * $A89C: get_spawn_lanes [Conv: HQ]
+ * $A89C: get_spawn_lanes
  *
  * Reads the lanes byte from the road buffer at the given offset and returns
  * the min/max lane pair valid for car spawning at that position.
@@ -8614,7 +8619,7 @@ fill_in:
  *   $0102 — two-lane road, left-biased: lanes 1–2
  *   $0304 — two-lane road, right-biased: lanes 3–4
  *
- * \param[in] state  Pointer to game state.
+ * \param[in] state Pointer to game state.
  * \param[in] extra  Road buffer offset added to the base index when reading
  *                   the lane byte. (was C)
  * \return Packed min/max lane pair (high byte = min, low byte = max).
@@ -8652,7 +8657,7 @@ static u16 get_spawn_lanes(chqstate_t *state, int extra)
 }
 
 /**
- * $A8CD: hazard_handler [Conv: HQ]
+ * $A8CD: hazard_handler
  *
  * Updates one traffic hazard slot each frame: clamps its lane to the current
  * road bounds, slides its horizontal position toward the target and handles
@@ -8746,7 +8751,7 @@ void hazard_handler(chqstate_t *state, hazard_t *IXhazard)
 }
 
 /**
- * $A955: choose_dirt_and_stones [Conv: HQ]
+ * $A955: choose_dirt_and_stones
  *
  * Initialises one stone or dirt particle entry per frame on dirt-track
  * sections.  Returns immediately unless on_dirt_track and allow_spawning are
@@ -8779,7 +8784,7 @@ static void choose_dirt_and_stones(chqstate_t *state)
 }
 
 /**
- * $A97E: layout_dirt_and_stones [Conv: HQ]
+ * $A97E: layout_dirt_and_stones
  *
  * Computes screen x-positions for up to 20 stone/dirt particles each frame.
  * Returns immediately if the ldas_enabled SM flag is zero.
@@ -8878,7 +8883,7 @@ ldas_do_work:
 }
 
 /**
- * $A9DE: dust_stones_stuff [Conv: HQ]
+ * $A9DE: dust_stones_stuff
  *
  * Renders one stone or dirt particle per frame using position data written
  * by layout_dirt_and_stones.  Returns immediately if the dss_enabled SM flag
@@ -8968,7 +8973,7 @@ dss_bitmaps:
 }
 
 /**
- * $AA38: draw_helicopter [Conv: HQ]
+ * $AA38: draw_helicopter
  *
  * Renders the helicopter sprite at the current frame. Returns immediately
  * unless Biterations equals 3, the only distance at which the helicopter
@@ -9093,7 +9098,7 @@ static void draw_helicoper_part(chqstate_t                *state,
 }
 
 /**
- * $AAC6: move_helicopter [Conv: HQ]
+ * $AAC6: move_helicopter
  *
  * Advances the helicopter's position and animation each frame. Returns
  * immediately if helicopter_control is zero.
@@ -9166,7 +9171,7 @@ set_newpos:
 }
 
 /**
- * $AB33: drive_helicopter [Conv: HQ]
+ * $AB33: drive_helicopter
  *
  * State machine controlling the helicopter event sequence. Returns
  * immediately if helicopter_control is zero.
@@ -9250,7 +9255,7 @@ hc_exit:
 }
 
 /**
- * $AB9A: spawn_hazards [Conv: HQ]
+ * $AB9A: spawn_hazards
  *
  * Spawns hittable obstacles (barriers or tumbleweeds) into hazard slots based
  * on the road-buffer hazard byte at the current spawning distance. Returns
@@ -9382,7 +9387,7 @@ sh_found_free:
 }
 
 /**
- * $AC3C: hazard_hit [Conv: HQ]
+ * $AC3C: hazard_hit
  *
  * Hit handler for static road hazards (barriers and tumbleweeds). Registered
  * as the hit_handler function pointer in each hazard slot spawned by
@@ -9479,7 +9484,7 @@ static void hazard_hit(chqstate_t *state, hazard_t *IXhazard)
 }
 
 /**
- * $AD0D: Test every active hazard for a collision with the player car. [Conv: HQ]
+ * $AD0D: Test every active hazard for a collision with the player car.
  *
  * Walks all 6 hazard slots. Skips any slot whose `used` field is
  * HAZARD_UNUSED (0x00). For active slots the function also skips the
@@ -9529,7 +9534,7 @@ chc_continue:
 }
 
 /**
- * $AD51: Test whether the player car has hit a given hazard. [Conv: HQ]
+ * $AD51: Test whether the player car has hit a given hazard.
  *
  * Returns 1 (and arms the hazard's hit_timer) if all of the following hold:
  *   - hit_timer is zero (no recent hit cooldown)
@@ -9623,7 +9628,7 @@ static u8 check_collision(chqstate_t *state,
 }
 
 /**
- * $ADA0: draw_all_hazards [Conv: HQ]
+ * $ADA0: draw_all_hazards
  *
  * Resets n_hazards to zero then walks all six hazard slots, calling
  * dh_draw_one_hazard for each active slot.
@@ -9652,7 +9657,7 @@ static void draw_all_hazards(chqstate_t *state)
 }
 
 /**
- * $ADBE: Advance one hazard and insert it into the depth-sorted draw list. [Conv: HQ]
+ * $ADBE: Advance one hazard and insert it into the depth-sorted draw list.
  *
  * Called for each in-use hazard slot.  The function has two phases.
  *
@@ -9881,7 +9886,7 @@ dh_call_handler:
 }
 
 /**
- * $AECF: draw_arrow_fire_smoke [Conv: HQ]
+ * $AECF: draw_arrow_fire_smoke
  *
  * Per-hazard render callback invoked for each depth-sorted draw-list entry
  * whose distance matches Biterations. Returns immediately if the first
@@ -10089,7 +10094,7 @@ dafs_done_draw_object:
 }
 
 /**
- * $AFF1: dh_smoke [Conv: HQ]
+ * $AFF1: dh_smoke
  *
  * Advances one smoke particle's frame counter and draws a smoke puff at the
  * computed position.
@@ -10129,7 +10134,7 @@ static void dh_smoke(chqstate_t *state, u8 *HLsmoke, const u8 *IYheight)
 }
 
 /**
- * $B01B: dh_draw [Conv: HQ]
+ * $B01B: dh_draw
  *
  * Wrapper around dh_draw_bitmap that selects a bitmap entry from an array by
  * byte offset. DEoffset is divided by 7 (size of bitmap_t) to produce the
@@ -10153,7 +10158,7 @@ static void dh_draw(chqstate_t     *state,
 }
 
 /**
- * $B01C: dh_draw_bitmap [Conv: HQ]
+ * $B01C: dh_draw_bitmap
  *
  * Draws a single sprite bitmap at a position derived from the SM fields
  * dh_SM_B029_horz_clip and dh_SM_B02C_horz_pos, shifted by Bx and Cy. These
@@ -10215,7 +10220,7 @@ dh_exit_1:
 }
 
 /**
- * $ADF9: No-op stub used as a null hazard handler [Conv: HQ]
+ * $ADF9: No-op stub used as a null hazard handler
  *
  * The Z80 draws hazards through a table of function pointers.  When a slot
  * needs no behaviour, the table entry points to the lone RET at $ADF9.
@@ -10223,7 +10228,7 @@ dh_exit_1:
  *
  * Conv: The Z80 RET is shared as a call target; in C we give it its own body.
  *
- * \param[in] state  Pointer to game state.
+ * \param[in] state Pointer to game state.
  * \param[in] hazard Hazard entry (unused).
  */
 void no_op(chqstate_t *state, hazard_t *hazard)
@@ -10231,7 +10236,7 @@ void no_op(chqstate_t *state, hazard_t *hazard)
 }
 
 /**
- * $B063: Move hero car [Conv: HQ]
+ * $B063: Move hero car
  *
  * Called every frame from the main loop to advance the hero car's physical
  * state.  Decrements the jump counter and feeds pitch and y-position from
@@ -10243,7 +10248,7 @@ void no_op(chqstate_t *state, hazard_t *hazard)
  * ticks to a road_pos delta.  Writes turn_speed (0/1/2) and flip_car for
  * the sprite renderer.
  *
- * \param[in,out] state  Pointer to game state.
+ * \param[in,out] state Pointer to game state.
  */
 static void move_hero_car(chqstate_t *state)
 {
@@ -10568,7 +10573,7 @@ mhc_set_cornering:
 }
 
 /**
- * $B318: Animate hero car [Conv: HQ]
+ * $B318: Animate hero car
  *
  * Called every frame after move_hero_car.  Handles the crash-spin FSM:
  * while ahc_crashed_flag is set, decays speed by a quarter each frame,
@@ -10578,7 +10583,7 @@ mhc_set_cornering:
  * phase.  Calls draw_debris, ahc_check_hand_flag, draw_hero_car and
  * (when cornering or boosting) draw_smoke.
  *
- * \param[in,out] state  Pointer to game state.
+ * \param[in,out] state Pointer to game state.
  */
 static void animate_hero_car(chqstate_t *state)
 {
@@ -10750,7 +10755,7 @@ ahc_load_flip_flag:
 }
 
 /**
- * $B457: AHC check hand flag [Conv: HQ]
+ * $B457: AHC check hand flag
  *
  * Draws the "stop" hand overlay shown when the perp has been caught.  Three
  * modes: HANDFLAG_NONE returns immediately; any other non-HANDFLAG_ANIMATING
@@ -10759,7 +10764,7 @@ ahc_load_flip_flag:
  * 7 animation frames, enables the cherry light on the final frame, and draws
  * one or two hand sprites per tick via draw_crash_unflipped.
  *
- * \param[in,out] state  Pointer to game state.
+ * \param[in,out] state Pointer to game state.
  */
 static void ahc_check_hand_flag(chqstate_t *state)
 {
@@ -10835,7 +10840,7 @@ static void ahc_check_hand_flag(chqstate_t *state)
 }
 
 /**
- * $B4CC: Start chase [Conv: HQ]
+ * $B4CC: Start chase
  *
  * Triggers when the perp vehicle is first sighted.  Resets the hand
  * animation state (ahc_hand_step, ahc_hand_delay) and sets hand_flag to
@@ -10844,7 +10849,7 @@ static void ahc_check_hand_flag(chqstate_t *state)
  * the marquee left light brightness, shows the sighting overlay message,
  * and starts the siren.
  *
- * \param[in,out] state  Pointer to game state.
+ * \param[in,out] state Pointer to game state.
  */
 static void start_chase(chqstate_t *state)
 {
@@ -10869,7 +10874,7 @@ static void start_chase(chqstate_t *state)
 }
 
 /**
- * $B4F0: Smash [Conv: HQ]
+ * $B4F0: Smash
  *
  * Called each time the hero car rams the perp.  Advances the
  * smash_cycling_counter (0..3) to select the next debris sub-table, resets
@@ -10878,7 +10883,7 @@ static void start_chase(chqstate_t *state)
  * fully_smashed; one below that triggers a "one more time" chatter.
  * Updates smash_level (0..6) from a stepped threshold table of hit counts.
  *
- * \param[in,out] state  Pointer to game state.
+ * \param[in,out] state Pointer to game state.
  */
 static void smash(chqstate_t *state)
 {
@@ -10925,7 +10930,7 @@ static void smash(chqstate_t *state)
 }
 
 /**
- * $B549: Draw debris [Conv: HQ]
+ * $B549: Draw debris
  *
  * Draws the three debris pieces that fly off when the perp is rammed.
  * dd_SM_B549_frame_counter counts down from 9; when it reaches zero the
@@ -10936,7 +10941,7 @@ static void smash(chqstate_t *state)
  * dd_frame_offset selects the y/x pair within the sub-table.  Each piece is
  * drawn via draw_part_entrypt2 at 6×1 bytes masked.
  *
- * \param[in,out] state  Pointer to game state.
+ * \param[in,out] state Pointer to game state.
  */
 static void draw_debris(chqstate_t *state)
 {
@@ -11006,7 +11011,7 @@ static void draw_debris(chqstate_t *state)
 }
 
 /**
- * $B58E: Draw hero car [Conv: HQ]
+ * $B58E: Draw hero car
  *
  * Draws the full hero car sprite at its current vertical position.  First
  * draws the shadow (56-px wide) at y=120.  Computes the car body index
@@ -11115,7 +11120,7 @@ static void draw_hero_car(chqstate_t *state, int Aturn_speed, int Bwobble)
 }
 
 /**
- * $B627: Draw a portion of the hero car [Conv: HQ]
+ * $B627: Draw a portion of the hero car
  *
  * Draws one car part (shadow, windscreen, wheels or side panel) by reading
  * the y-offset and row count from the carpart_t entry, subtracting the
@@ -11173,7 +11178,7 @@ static const carpart_t *draw_hero_car_part(chqstate_t      *state,
 }
 
 /**
- * $B648: Draw smoke [Conv: HQ]
+ * $B648: Draw smoke
  *
  * Draws one turbo-exhaust smoke cloud.  Looks up the frame in
  * hero_car_turbo_smoke[Aanim_frame].  Returns immediately if the car is
@@ -11238,7 +11243,7 @@ static void draw_smoke(chqstate_t *state, int Aanim_frame, int Adash_flip_flag)
 }
 
 /**
- * $B67C: Draw cherry light [Conv: HQ]
+ * $B67C: Draw cherry light
  *
  * Draws the spinning cherry (police) light on the car roof.  Advances
  * Aframe_index by the slow_anim_counter LSB for the base flicker.  When
@@ -11277,7 +11282,7 @@ static void draw_cherry_light(chqstate_t *state,
 }
 
 /**
- * $B699: Draw crash frame with no flip and no extra offset [Conv: HQ]
+ * $B699: Draw crash frame with no flip and no extra offset
  *
  * Convenience entry point that calls draw_crash with Bdash_flip_flag=0 and
  * Cdash=0, producing an unflipped render with no horizontal start offset.
@@ -11291,7 +11296,7 @@ static void draw_crash_unflipped(chqstate_t *state, int Aframe_index)
 }
 
 /**
- * $B69E: Draw crash [Conv: HQ]
+ * $B69E: Draw crash
  *
  * Draws one frame of the crash/hand/smash animation.  Looks up the
  * car_frames[Aframe_index] entry for the x/y offset and adornment index,
@@ -11342,7 +11347,7 @@ static void draw_crash(chqstate_t *state,
 }
 
 /**
- * $B6D6: Reduce y by car_y then draw part [Conv: HQ]
+ * $B6D6: Reduce y by car_y then draw part
  *
  * Subtracts state->car_y from y before forwarding all parameters to
  * draw_part_entrypt2.  car_y encodes the on-screen vertical slot of the
@@ -11380,7 +11385,7 @@ static void draw_part(chqstate_t *state,
 }
 
 /**
- * $B6DD: Draw part — second entry point [Conv: HQ]
+ * $B6DD: Draw part — second entry point
  *
  * Core sprite compositor shared by all car-part draws.  Computes the
  * back-buffer address from (Dy, Ex) using the ZX Spectrum screen layout
@@ -11451,7 +11456,7 @@ static void draw_part_entrypt2(chqstate_t *state,
 }
 
 /**
- * $B701: Draw part — plot masked sprite [Conv: HQ]
+ * $B701: Draw part — plot masked sprite
  *
  * Converts Awidth_bytes (1..8) to an IX jump-table offset
  * ((8 − Awidth_bytes) × 6) and forwards to plot_masked_sprite.  The jump
@@ -11487,7 +11492,7 @@ static void draw_part_plot_masked_sprite(chqstate_t *state,
 }
 
 /**
- * $B716: Plot a masked sprite [Conv: HQ]
+ * $B716: Plot a masked sprite
  *
  * Draws a masked sprite to the back buffer using a fall-through switch that
  * mimics the Z80's jump-table dispatch.  Each row writes up to 8 pairs of
@@ -11568,7 +11573,7 @@ plot_masked_sprite_entry:
 }
 
 /**
- * $B76C: Plot a flipped and masked sprite [Conv: HQ]
+ * $B76C: Plot a flipped and masked sprite
  *
  * Adjusts backbuf_addr forward by width_bytes so that the second entry
  * point begins at the right edge of the sprite, then falls through to
@@ -11597,7 +11602,7 @@ static void plot_masked_sprite_flipped(chqstate_t *state,
 }
 
 /**
- * $B770: Plot a flipped and masked sprite — second entry point [Conv: HQ]
+ * $B770: Plot a flipped and masked sprite — second entry point
  *
  * Draws a horizontally flipped masked sprite.  backbuf_addr points one byte
  * past the right edge of the sprite (the first byte written is at
@@ -11685,7 +11690,7 @@ pmsf_start:
 }
 
 /**
- * $B7EF: Plot a masked sprite drawn bottom-to-top [Conv: HQ]
+ * $B7EF: Plot a masked sprite drawn bottom-to-top
  *
  * Used when barriers are flipped upside-down.  Computes the address of the
  * last row of the bitmap ((height − 1) × stride + base), negates the stride,
@@ -11732,7 +11737,7 @@ static void plot_masked_sprite_inverted(chqstate_t *state,
 }
 
 /**
- * $B848: Scroll horizon [Conv: HQ]
+ * $B848: Scroll horizon
  *
  * Updates the horizon scroll state each frame.  Returns immediately when
  * speed is zero.  Horizontal section: when current_curvature is non-zero,
@@ -11743,7 +11748,7 @@ static void plot_masked_sprite_inverted(chqstate_t *state,
  * have elapsed since the last horizon_y_step, accumulates the delta into
  * horizon_y_accum, and adjusts session.horizon_level and horizon_y_step.
  *
- * \param[in,out] state  Pointer to game state.
+ * \param[in,out] state Pointer to game state.
  */
 static void scroll_horizon(chqstate_t *state)
 {
@@ -11853,7 +11858,7 @@ static void scroll_horizon(chqstate_t *state)
 }
 
 /**
- * $B8D2: Update per-frame road-level state [Conv: HQ]
+ * $B8D2: Update per-frame road-level state
  *
  * Called once per frame from read_map. Covers six groups of state:
  *
@@ -12028,7 +12033,7 @@ url_B9C5:
 }
 
 /**
- * $B9F4: Lay out the road x-position tables for the current frame [Conv: HQ]
+ * $B9F4: Lay out the road x-position tables for the current frame
  *
  * Called once per frame from read_map. Scans up to 20 lane-data entries
  * looking for a fork marker (byte & 0xE1 == 0xE1). Two paths:
@@ -12269,7 +12274,7 @@ lr_badf:
 }
 
 /**
- * $BB69: Transition the road back to a single lane after a fork exit [Conv: HQ]
+ * $BB69: Transition the road back to a single lane after a fork exit
  *
  * Guards on the high byte of fork_distance being non-zero; returns
  * immediately if the fork has not progressed far enough.
@@ -12375,7 +12380,7 @@ static void exit_fork(chqstate_t *state)
 // The buffer has the format 0b1111LLLLRRRCCCCC (L = scanline, R = row (group))
 
 /**
- * $BC3E: Copy the backbuffer to the screen and update attributes. [Conv: HQ]
+ * $BC3E: Copy the backbuffer to the screen and update attributes.
  *
  * Transfers all 128 rows of the road backbuffer to the playfield area of
  * the ZX Spectrum screen ($4800–$57FF), then updates the sky/ground
@@ -12400,7 +12405,7 @@ static void exit_fork(chqstate_t *state)
  * The smash-meter section ($BD93 ds_smash_meter) paints six attribute rows
  * at $5962 with the smash-o-meter colour gradient when a perp is sighted.
  *
- * \param[in] state  Pointer to game state.
+ * \param[in] state Pointer to game state.
  */
 static void update_screen(chqstate_t *state)
 {
@@ -12576,7 +12581,7 @@ exit:
 }
 
 /**
- * $BDC1: Clear the playfield bitmap and set the attribute colour gradient. [Conv: HQ]
+ * $BDC1: Clear the playfield bitmap and set the attribute colour gradient.
  *
  * Clears the playfield (lower two-thirds of screen) via clear_playfield,
  * then resets its bitmap to $FF and lays in three attribute bands: two rows
@@ -12585,7 +12590,7 @@ exit:
  * columns of every playfield attribute row with black-on-black to hide the
  * road overdraw at the screen borders.
  *
- * \param[in] state  Pointer to game state.
+ * \param[in] state Pointer to game state.
  */
 static void clear_playfield_set_attrs(chqstate_t *state)
 {
@@ -12637,7 +12642,7 @@ static void clear_playfield_set_attrs(chqstate_t *state)
 }
 
 /**
- * $BDFB: Read the next map frame into the road buffer. [Conv: HQ]
+ * $BDFB: Read the next map frame into the road buffer.
  *
  * Resets the per-frame SFX triggers and the allow-spawning counter, then
  * decides how many times to advance the cyclic road buffer this frame.
@@ -12648,7 +12653,7 @@ static void clear_playfield_set_attrs(chqstate_t *state)
  * actual buffer advancing and data-channel decoding are delegated to
  * rm_cycle_buffer_offset.
  *
- * \param[in] state  Pointer to game state.
+ * \param[in] state Pointer to game state.
  */
 static void read_map(chqstate_t *state)
 {
@@ -12687,7 +12692,7 @@ static void read_map(chqstate_t *state)
 }
 
 /**
- * $BE1F: Cycle road buffer by one slot and decode all map data channels. [Conv: HQ]
+ * $BE1F: Cycle road buffer by one slot and decode all map data channels.
  *
  * Advances roadbufptr by one position in the cyclic road buffer, then decodes
  * six data channels into the new slot: curvature ($BE3A), height ($BEC4),
@@ -13160,7 +13165,7 @@ rm_restart_hazards_read: // $BFF3
 }
 
 /**
- * $C0E1: Prepare tunnel rendering for the current frame. [Conv: HQ]
+ * $C0E1: Prepare tunnel rendering for the current frame.
  *
  * Three mutually exclusive paths:
  *
@@ -13179,7 +13184,7 @@ rm_restart_hazards_read: // $BFF3
  * Arms the draw_tunnel hooks by patching dee_draw_tunnel_1 / dee_draw_tunnel_2 with
  * Z80_CALL_NN, and writes dt_far_wall_mode = dr_in_tunnel ^ 1.
  *
- * \param[in] state  Pointer to game state.
+ * \param[in] state Pointer to game state.
  */
 static void prepare_tunnel(chqstate_t *state)
 {
@@ -13266,7 +13271,7 @@ pt_arm_hooks: /* $C144 */
 }
 
 /**
- * $C15B: Draw tunnel [Conv: HQ]
+ * $C15B: Draw tunnel
  *
  * Renders the tunnel entrance, interior, and far wall into the back buffer
  * for the current road scanline. Called via a self-modified CALL instruction
@@ -13597,7 +13602,7 @@ static u8 *addr_to_xpos(chqstate_t *state, int H, int L)
 }
 
 /**
- * $C2E7: Draw road lane change [Conv: HQ]
+ * $C2E7: Draw road lane change
  *
  * Fills road-edge position table entries for a lane-change section (road
  * narrowing or widening).  Uses a Bresenham-style algorithm to interpolate
@@ -13909,7 +13914,7 @@ drlc_steep_step:
 }
 
 /**
- * $C452: Draw road [Conv: HQ]
+ * $C452: Draw road
  *
  * Main road-drawing entry point.  Initialises per-frame road state: clears
  * on_dirt_track, dt_tunnel_visible and dr_in_tunnel; sets dr_edge_thickness
@@ -13918,7 +13923,7 @@ drlc_steep_step:
  * base, bit 1 = initial stripe state), sets the stripe parameters, then
  * falls through to dr_read_lanes to begin the row-by-row road render.
  *
- * \param[in,out] state  Pointer to game state.
+ * \param[in,out] state Pointer to game state.
  */
 static void draw_road(chqstate_t *state)
 {
@@ -13977,7 +13982,7 @@ static void draw_road(chqstate_t *state)
 }
 
 /**
- * $C4AD: draw_road — read lanes [Conv: HQ]
+ * $C4AD: draw_road — read lanes
  *
  * Reads the current road-buffer lane byte, extracts the left-offset field,
  * and dispatches to the appropriate road-section handler.  If the left
@@ -14097,7 +14102,7 @@ static void dr_read_lanes(chqstate_t *state, u8 *IXlanesptr, const u8 *IYheightp
 }
 
 /**
- * $C534: draw_road — four lane highway [Conv: HQ]
+ * $C534: draw_road — four lane highway
  *
  * Sets the left/right x-position table high bytes to the widest possible
  * road extent ($E8/$EC) and the negative lane count to −4, then falls
@@ -14130,7 +14135,7 @@ static void dr_four_lane_highway(chqstate_t *state, int Bfill_pattern,
 }
 
 /**
- * $C54D: draw_road — set lane callback and enter fill dispatch [Conv: HQ]
+ * $C54D: draw_road — set lane callback and enter fill dispatch
  *
  * Stores HLdash_callback in state->dr_callback (models the Z80
  * self-modifying `CALL nn` at $C551), then falls through to dr_dispatch.
@@ -14155,7 +14160,7 @@ static void dr_set_lane_callback(chqstate_t *state, int Bfill_pattern,
 }
 
 /**
- * $C551: draw_road — dispatch to filled or unfilled path [Conv: HQ]
+ * $C551: draw_road — dispatch to filled or unfilled path
  *
  * Reads Bfill_pattern; non-zero dispatches to dr_dispatch_filled (the
  * filled/chequerboard road path), zero sets dr_fill_fn to dr_advance_unfilled
@@ -14192,7 +14197,7 @@ static void dr_dispatch(chqstate_t *state, int Bfill_pattern, int Ccounter,
 }
 
 /**
- * $C55F: draw_road — advance backbuffer and rollover check (unfilled path) [Conv: HQ]
+ * $C55F: draw_road — advance backbuffer and rollover check (unfilled path)
  *
  * Decrements the high byte of DEbackbuf.  When the low nibble of the old
  * high byte is zero (Spectrum screen row boundary), falls through to
@@ -14230,7 +14235,7 @@ static void dr_advance_unfilled(chqstate_t *state,
 }
 
 /**
- * $C565: draw_road — write unfilled (zero) road scanline [Conv: HQ]
+ * $C565: draw_road — write unfilled (zero) road scanline
  *
  * Clamps DEbackbuf to the last valid back-buffer row when it is out of
  * range (the Z80 would silently write to ROM/invalid addresses).  Stores
@@ -14295,7 +14300,7 @@ static void dr_write_scanline_unfilled(chqstate_t *state, int Ccounter, int DEba
 }
 
 /**
- * $C57C: draw_road — backbuffer row advance with rollover (filled path) [Conv: HQ]
+ * $C57C: draw_road — backbuffer row advance with rollover (filled path)
  *
  * Subtracts 32 from the low byte of DEbackbuf.  When no borrow occurs the
  * Spectrum row group has not rolled over, so adds 16 to the high byte to
@@ -14320,7 +14325,7 @@ static void dr_rollover_filled(chqstate_t *state, int Ccounter, int DEbackbuf,
 }
 
 /**
- * $C58A: draw_road — backbuffer row advance with rollover (unfilled path) [Conv: HQ]
+ * $C58A: draw_road — backbuffer row advance with rollover (unfilled path)
  *
  * Identical row-group advance logic to dr_rollover_filled but falls through
  * to dr_write_scanline_unfilled instead of dr_fill.
@@ -14344,7 +14349,7 @@ static void dr_rollover_unfilled(chqstate_t *state, int Ccounter, int DEbackbuf,
 }
 
 /**
- * $C598: draw_road — enter filled path [Conv: HQ]
+ * $C598: draw_road — enter filled path
  *
  * Stores dr_advance_filled in state->dr_fill_fn (the SM field that switches
  * between filled and unfilled draw functions), then falls through to
@@ -14373,7 +14378,7 @@ static void dr_dispatch_filled(chqstate_t *state, int Afill_pattern, int Ccounte
 }
 
 /**
- * $C5A1: draw_road — advance backbuffer and rollover check (filled path) [Conv: HQ]
+ * $C5A1: draw_road — advance backbuffer and rollover check (filled path)
  *
  * Filled-path equivalent of dr_advance_unfilled.  Decrements the high byte
  * of DEbackbuf; when the low nibble of the old high byte is zero calls
@@ -14406,7 +14411,7 @@ static void dr_advance_filled(chqstate_t *state, int Ccounter, int DEbackbuf,
 }
 
 /**
- * $C5A7: draw_road — setup and draw right verge and centre spans [Conv: HQ]
+ * $C5A7: draw_road — setup and draw right verge and centre spans
  *
  * Core road scanline fill function.  Reads the current row from the
  * x-position tables (via Lrow), looks up the right-verge and left-stripe
@@ -14555,7 +14560,7 @@ static void dr_fill(chqstate_t *state,
 }
 
 /**
- * $C62E: draw_road — left verge fill, road edges and lane markers [Conv: HQ]
+ * $C62E: draw_road — left verge fill, road edges and lane markers
  *
  * Innermost road-scanline renderer.  Writes the right-verge fill bytes to
  * the back buffer via a fall-through PUSH switch (jump_index selects how
@@ -14876,7 +14881,7 @@ dr_backdrop:
 }
 
 /**
- * $C79A: Backdrop copy and sky fill [Conv: HQ]
+ * $C79A: Backdrop copy and sky fill
  *
  * Blits dr_sky_rows of backdrop data to the ZX screen above the road, then
  * fills remaining sky rows with 0x00 (clear sky) or 0xFF (tunnel).
@@ -15044,7 +15049,7 @@ dr_blank_sky_fill:
 }
 
 /**
- * $C8BE: Pre-shift backdrop [Conv: HQ]
+ * $C8BE: Pre-shift backdrop
  *
  * Copies the stage backdrop bitmap to pre_shifted_backdrop[], then
  * right-rotates it in-place by one nibble (4 bits) per row.  The
@@ -15053,7 +15058,7 @@ dr_blank_sky_fill:
  * byte).  The result is the pre-shifted backdrop variant used when the
  * horizontal scroll offset is in the range that requires a half-byte shift.
  *
- * \param[in,out] state  Pointer to game state.
+ * \param[in,out] state Pointer to game state.
  */
 static void pre_shift_backdrop(chqstate_t *state)
 {
@@ -15090,7 +15095,7 @@ static void pre_shift_backdrop(chqstate_t *state)
 }
 
 /**
- * $C8E3: draw_forked_road — render one frame of the forked-road view. [Conv: HQ]
+ * $C8E3: draw_forked_road — render one frame of the forked-road view.
  *
  * Called from draw_road when the road is in a fork.  Mirrors the structure of
  * draw_road but drives five screen zones (left verge, left road, middle verge,
@@ -15481,7 +15486,7 @@ frp_next_scanline_c969: /* $C93E */
 // mystery_cba4 would go here, if we knew what it did
 
 /**
- * $CBC5: Backdrop fill choice [Conv: HQ]
+ * $CBC5: Backdrop fill choice
  *
  * Called from draw_forked_road when the height difference is >= 0x50. The
  * A < 0x50 branch (JP C,$C915) is handled inline by the caller because
@@ -15498,7 +15503,7 @@ static void backdrop_fill_dispatch(chqstate_t *state, int DEbackbuf, int Lrow)
 }
 
 /**
- * $CBD6: Build curve table [Conv: HQ]
+ * $CBD6: Build curve table
  *
  * Fills curvature_table[] with 22 per-row x-position deltas derived from the
  * road buffer and the perspective scale table, then calls build_curve_table_fill
@@ -15510,7 +15515,7 @@ static void backdrop_fill_dispatch(chqstate_t *state, int DEbackbuf, int Lrow)
  * persp_x_delta_left offsets to the same curvature_table and starts from
  * road_pos − 295 (the vanishing-point offset for the left edge).
  *
- * \param[in,out] state  Pointer to game state.
+ * \param[in,out] state Pointer to game state.
  * \param[in]     forked Non-zero if the road is forked; negates curvature bytes
  *                       and targets the fork tables instead of the main tables.
  */
@@ -15789,7 +15794,7 @@ bct_endbit_negative:
 }
 
 /**
- * $CD3A: Build the per-row screen-height lookup table [Conv: HQ]
+ * $CD3A: Build the per-row screen-height lookup table
  *
  * Called once per frame from the main loop.  Uses the current road-buffer
  * height channel and the perspective Y-scale table to produce three outputs:
@@ -15824,7 +15829,7 @@ bct_endbit_negative:
  *   bits of A contributes DE × 2^(bit_position); summing and taking the high
  *   byte gives (A & 0x7F) * DE / 128.
  *
- * \param[in] state  Pointer to game state.
+ * \param[in] state Pointer to game state.
  */
 static void build_height_table(chqstate_t *state)
 {
@@ -15898,7 +15903,7 @@ static void build_height_table(chqstate_t *state)
 }
 
 /**
- * $CDD6: Multiply the top three bits of A by C, divide by 8, with rounding [Conv: HQ]
+ * $CDD6: Multiply the top three bits of A by C, divide by 8, with rounding
  *
  * Three iterations of RL E / conditional ADD A,C / ADD A,A extract bits 7, 6
  * and 5 of the multiplier one at a time and accumulate their contribution to
@@ -15941,7 +15946,7 @@ static int8_t multiply(int8_t a, int8_t c)
 }
 
 /**
- * $E810: 48K game entry point [Conv: HQ]
+ * $E810: 48K game entry point
  *
  * Initialises the game for 48K mode. Sets the 128K mode flag to zero and
  * calls the common entry path with a relocation count of three.
@@ -15959,7 +15964,7 @@ static void entry_48k(chqstate_t *state)
 }
 
 /**
- * $E816: 128K game entry point [Conv: HQ]
+ * $E816: 128K game entry point
  *
  * Initialises the game for 128K mode. Clears the playfield attribute file,
  * sets the 128K mode flag to one and calls the common entry path with a
@@ -15979,7 +15984,7 @@ static void entry_128k(chqstate_t *state)
 }
 
 /**
- * $E81D: Entry common [Conv: HQ]
+ * $E81D: Entry common
  *
  * Shared entry point reached from both entry_48k and entry_128k. Records the
  * hardware mode, copies the marquee bitmap and attribute data to the screen,
@@ -16044,7 +16049,7 @@ static void entry_common(chqstate_t *state, int Amode_128k, int Bnrelocs)
 }
 
 /**
- * $E8FE: Display "Stop the tape" and collect the controller choice [Conv: HQ]
+ * $E8FE: Display "Stop the tape" and collect the controller choice
  *
  * Initialises interrupts and music, clears the screen and shows the
  * "STOP THE TAPE / PRESS ANY KEY" message to prompt the user to stop the
@@ -16064,7 +16069,7 @@ void stop_the_tape_48k(chqstate_t *state)
 }
 
 /**
- * $EBF7: Draw a NUL-terminated sequence of menu string records [Conv: HQ]
+ * $EBF7: Draw a NUL-terminated sequence of menu string records
  *
  * Calls menu_draw_string repeatedly, advancing through the record list,
  * until a zero byte is found at the start of the next record.
@@ -16087,7 +16092,7 @@ void menu_draw_strings(chqstate_t *state, const u8 *strings)
 }
 
 /**
- * $EBFF: menu_draw_string — draw one packed string record from the menu table. [Conv: HQ]
+ * $EBFF: menu_draw_string — draw one packed string record from the menu table.
  *
  * Reads a packed record from HLstring: one attribute byte (top bit = double-height
  * flag), a two-byte little-endian screen address, then ASCII character bytes with
@@ -16157,7 +16162,7 @@ const u8 *menu_draw_string(chqstate_t *state, const u8 *HLstring)
 }
 
 /**
- * $EC2C: menu_draw_char — render one character into the screen and attribute buffers. [Conv: HQ]
+ * $EC2C: menu_draw_char — render one character into the screen and attribute buffers.
  *
  * Maps the ASCII character to a glyph index, then copies the 8×7 font data into
  * the screen buffer.  A space advances both pointers by one column without writing
@@ -16276,7 +16281,7 @@ mdc_have_glyph:
 }
 
 /**
- * $ECDA: Zero the attribute and bitmap bytes of the playfield area [Conv: HQ]
+ * $ECDA: Zero the attribute and bitmap bytes of the playfield area
  *
  * Clears the lower two-thirds of the screen: 512 attribute bytes ($5900–$58FF)
  * and 4096 bitmap bytes ($4800–$57FF).  The Z80 primes HL at the start of each
@@ -16284,7 +16289,7 @@ mdc_have_glyph:
  * fills the rest with LDIR.  Functionally identical to clear_playfield ($88E2)
  * but called from the 128K startup and menu paths rather than in-game reset.
  *
- * \param[in] state  Pointer to game state.
+ * \param[in] state Pointer to game state.
  */
 static void clear_screen(chqstate_t *state)
 {
@@ -16300,7 +16305,7 @@ static void clear_screen(chqstate_t *state)
 }
 
 /**
- * $ECF3: Redefine keys 48K [Conv: HQ]
+ * $ECF3: Redefine keys 48K
  *
  * Presents the key-redefinition menu and scans for eight consecutive key
  * presses. After each press, the keydef is recorded in temp_keydefs and its
@@ -16372,7 +16377,7 @@ static void redefine_keys_48k(chqstate_t *state)
 }
 
 /**
- * $ED4D: Keyscan all [Conv: HQ]
+ * $ED4D: Keyscan all
  *
  * Scans all eight keyboard half-rows by iterating through IN port high bytes
  * ($FE, $FD, $FB, $F7, $EF, $DF, $BF, $7F). For each row, inverts the five
@@ -16429,7 +16434,7 @@ static u8 keyscan_all(chqstate_t *state, u8 *Dkeydef_out)
 }
 
 /**
- * $ED6D: Define a single key [Conv: HQ]
+ * $ED6D: Define a single key
  *
  * Waits until keyscan_all reports a key press, checks the keydef has not
  * already been assigned, records it in temp_keydefs[Cindex], looks up the
@@ -16495,7 +16500,7 @@ dak_loop1:
 }
 
 /**
- * $EDCC: DAK move down [Conv: HQ]
+ * $EDCC: DAK move down
  *
  * Advances a Z80 screen address by one character row: adds 32 to the low byte
  * (next column group) and 8 to the high byte (next pixel row within the
@@ -16517,7 +16522,7 @@ static u16 dak_move_down(int DEscreen)
 }
 
 /**
- * $EE40: Configure the Z80 mode-2 interrupt vector table [Conv: HQ]
+ * $EE40: Configure the Z80 mode-2 interrupt vector table
  *
  * Fills the 257-byte interrupt vector table at $FD00–$FDFF with $FE (so every
  * vector points to $FEFE), then writes a JP $EF19 at $FEFE and sets I=$FD and
@@ -16526,7 +16531,7 @@ static u16 dak_move_down(int DEscreen)
  * Conv: Z80 interrupt wiring has no equivalent in C; SDL delivers events on its
  *   own thread.  This function is a no-op in the C port.
  *
- * \param[in] state  Pointer to game state.
+ * \param[in] state Pointer to game state.
  */
 static void setup_interrupts(chqstate_t *state)
 {
@@ -16534,7 +16539,7 @@ static void setup_interrupts(chqstate_t *state)
 }
 
 /**
- * $EE5E: Reset music playback to the start of the pattern list [Conv: HQ]
+ * $EE5E: Reset music playback to the start of the pattern list
  *
  * Clears the three SM operands that carry music state across frames (drum_active,
  * extra_delay, started), then falls through to the np_start_at_hl entry point
@@ -16544,7 +16549,7 @@ static void setup_interrupts(chqstate_t *state)
  *   to the equivalent state fields.
  * Conv: Z80 JP $EE78 is a tail call to np_start_at_hl; C calls next_pattern_at_addr.
  *
- * \param[in] state  Pointer to game state.
+ * \param[in] state Pointer to game state.
  */
 static void reset_music(chqstate_t *state)
 {
@@ -16555,7 +16560,7 @@ static void reset_music(chqstate_t *state)
 }
 
 /**
- * $EE6E: Advance the music to the next pattern when the repeat count expires [Conv: HQ]
+ * $EE6E: Advance the music to the next pattern when the repeat count expires
  *
  * Decrements the SM repeat counter at $EE6F (pattern_repeats) and returns
  * immediately if repeats remain.  When the counter reaches zero the function
@@ -16565,7 +16570,7 @@ static void reset_music(chqstate_t *state)
  * Conv: Z80 SM counter at $EE6F → state->music.pattern_repeats.
  * Conv: Z80 falls through via jp-less control flow; C calls next_pattern_at_addr.
  *
- * \param[in] state  Pointer to game state.
+ * \param[in] state Pointer to game state.
  */
 static void next_pattern(chqstate_t *state)
 {
@@ -16601,7 +16606,7 @@ static void next_pattern_at_addr(chqstate_t *state, const u8 *HLpataddr)
 }
 
 /**
- * $EE9E: Play music 48K [Conv: HQ]
+ * $EE9E: Play music 48K
  *
  * Per-tick music driver for 48K hardware. Clears the IRQ flag, then either
  * initialises playback on the first call or decrements the note delay counter.
@@ -16692,7 +16697,7 @@ static void pm_wait_for_interrupt(chqstate_t *state)
 }
 
 /**
- * $EF19: Interrupt entry [Conv: HQ]
+ * $EF19: Interrupt entry
  *
  * Z80 mode-2 interrupt service routine reached via the vector table installed
  * by setup_interrupts. Sets the IRQ flag to $FF so that pm_wait_for_interrupt
@@ -16710,11 +16715,11 @@ static void interrupt_entry(chqstate_t *state)
 }
 
 /**
- * $EF22: Playdrum 2 [Conv: HQ]
+ * $EF22: Playdrum 2
  *
  * Starts playback of drum sample 2 (108 bytes). Falls through to playdrum_start.
  *
- * \param[in,out] state  Pointer to game state.
+ * \param[in,out] state Pointer to game state.
  * \param[in]     Aspeed Playback speed: inner loop count per sample byte. (was A)
  */
 static void playdrum_2(chqstate_t *state, int Aspeed)
@@ -16723,11 +16728,11 @@ static void playdrum_2(chqstate_t *state, int Aspeed)
 }
 
 /**
- * $EF29: Playdrum 1 [Conv: HQ]
+ * $EF29: Playdrum 1
  *
  * Starts playback of drum sample 1 (252 bytes). Falls through to playdrum_start.
  *
- * \param[in,out] state  Pointer to game state.
+ * \param[in,out] state Pointer to game state.
  * \param[in]     Aspeed Playback speed: inner loop count per sample byte. (was A)
  */
 static void playdrum_1(chqstate_t *state, int Aspeed)
@@ -16736,7 +16741,7 @@ static void playdrum_1(chqstate_t *state, int Aspeed)
 }
 
 /**
- * $EF2E: Playdrum start [Conv: HQ]
+ * $EF2E: Playdrum start
  *
  * Records the drum speed and marks the drum as active, then falls through to
  * playdrum_bank_go to begin sample output.
@@ -16755,7 +16760,7 @@ static void playdrum_start(chqstate_t *state, int Aspeed, int Dlength,
 }
 
 /**
- * $EF38: Playdrum bank go [Conv: HQ]
+ * $EF38: Playdrum bank go
  *
  * EXX entry point that banks the sample pointer and length into shadow
  * registers before calling playdrum_go. In the Z80, EXX swaps BC/DE/HL with
@@ -16776,7 +16781,7 @@ static void playdrum_bank_go(chqstate_t *state, int Ddash_length,
 }
 
 /**
- * $EF39: Playdrum go [Conv: HQ]
+ * $EF39: Playdrum go
  *
  * Outputs a PCM drum sample byte-by-byte to the speaker port. For each sample
  * byte, an inner loop runs drum_speed iterations; each iteration writes bit 7 of
@@ -16819,7 +16824,7 @@ pd_end_of_sample:
 }
 
 /**
- * $F0C6: Noise [Conv: HQ]
+ * $F0C6: Noise
  *
  * Generates a noise burst on the speaker by running an LFSR-like update on
  * the two-byte rng_seed, then toggling the EAR/MIC outputs whenever bit 4 of
@@ -16829,7 +16834,7 @@ pd_end_of_sample:
  * port_BORDER_EAR_MIC: first high for (24 − Eduration) busy-wait ticks, then
  * low for Eduration ticks. After all ticks, waits for the next interrupt.
  *
- * \param[in,out] state  Pointer to game state.
+ * \param[in,out] state Pointer to game state.
  * \param[in]     Aparam Noise duration: outer loop count and pulse timing (was A).
  */
 static void noise(chqstate_t *state, int Aparam)
@@ -16887,7 +16892,7 @@ static void noise(chqstate_t *state, int Aparam)
 // $F220 - load_stage_128k - merged into load_stage
 
 /**
- * $F251: Initialise the police siren AY sound effect [Conv: HQ]
+ * $F251: Initialise the police siren AY sound effect
  *
  * Presets the AY-3-8912 register soft copies for the alternating
  * police siren tone: channel A fine pitch 140, channel A volume 14,
@@ -16911,7 +16916,7 @@ static void start_siren_128k(chqstate_t *state)
 }
 
 /**
- * $F269: Advance the police siren pitch and write AY registers [Conv: HQ]
+ * $F269: Advance the police siren pitch and write AY registers
  *
  * Each frame, rotates the alternating siren pattern left (RLC) to produce
  * a carry that selects the direction: carry clear → decrease pitch by 3;
@@ -16966,7 +16971,7 @@ set_regs:
 }
 
 /**
- * $F29D: Silence all AY audio channels [Conv: HQ]
+ * $F29D: Silence all AY audio channels
  *
  * Sets the AY mixer register to $3F, disabling all noise and tone
  * channels for all three voices, then flushes the AY register soft
@@ -16983,7 +16988,7 @@ static void silence_audio_128k(chqstate_t *state)
 }
 
 /**
- * $F2A2: Flush AY-3-8912 register soft copies to hardware [Conv: HQ]
+ * $F2A2: Flush AY-3-8912 register soft copies to hardware
  *
  * Writes registers 11 down to 0 from the AY register soft-copy block
  * (ay_env_fine..ay_chan_a_fine_pitch) by selecting each register via
@@ -17012,7 +17017,7 @@ static void write_audio_registers_128k(chqstate_t *state)
 }
 
 /**
- * $F2B6: Derive AY engine pitch and volume from current car speed [Conv: HQ]
+ * $F2B6: Derive AY engine pitch and volume from current car speed
  *
  * Computes the AY channel C pitch divisor from the car's speed. The speed
  * is halved via right-rotate, complemented and then shifted left twice (×4)
@@ -17054,7 +17059,7 @@ static void engine_sfx_from_speed_128k(chqstate_t *state)
 }
 
 /**
- * $F2F1: Initialise the turbo boost sound effect [Conv: HQ]
+ * $F2F1: Initialise the turbo boost sound effect
  *
  * Seeds both the AY noise pitch and the turbo SFX countdown to $3C
  * (60). play_turbo_sfx_128k then decrements these each frame to
@@ -17070,7 +17075,7 @@ static void setup_turbo_sfx_128k(chqstate_t *state)
 }
 
 /**
- * $F2FA: Drive the turbo boost sound effect each frame [Conv: HQ]
+ * $F2FA: Drive the turbo boost sound effect each frame
  *
  * Decrements the turbo SFX countdown and the AY noise pitch each frame
  * to produce a descending noise burst. When the turbo countdown reaches
@@ -17105,7 +17110,7 @@ static void play_turbo_sfx_128k(chqstate_t *state)
 }
 
 /**
- * $F342: Play speech 128K [Conv: HQ]
+ * $F342: Play speech 128K
  *
  * Plays one of five digitised speech samples through the AY-3-8912 DAC by
  * writing each nibble as a volume level to AY channels A, B and C in turn.
@@ -17231,7 +17236,7 @@ static void play_speech_128k(chqstate_t *state, int index)
 }
 
 /**
- * $F39F: Celebrate the perpetrator being caught (128K mode) [Conv: HQ]
+ * $F39F: Celebrate the perpetrator being caught (128K mode)
  *
  * Waits until overlay_delay reaches 42, then silences audio, disables
  * the siren flag, resets the turbo SFX countdown to 1 and triggers the
@@ -17261,7 +17266,7 @@ static void handle_perp_caught_128k(chqstate_t *state)
 }
 
 /**
- * $F3B6: Page in bank 3 and call a banked routine [Conv: HQ]
+ * $F3B6: Page in bank 3 and call a banked routine
  *
  * Patches a CALL instruction at $81C5 with HLroutine, backs up the
  * 4 KB at $B000 to $F000, sets up a temporary stack, pages in bank 3
@@ -17302,7 +17307,7 @@ static u8 call_bank_3_128k(chqstate_t *state, int HLroutine)
 }
 
 /**
- * $F3E2: Copy 128K memory banks for audio playback [Conv: HQ]
+ * $F3E2: Copy 128K memory banks for audio playback
  *
  * Iterates across four 4 KB windows starting at $C000. For each window,
  * copies 4096 bytes to $B000, calls setup_engine_sfx, then replays the
@@ -17320,7 +17325,7 @@ static void page_128k(chqstate_t *state)
 }
 
 /**
- * $F414: Reset the 128K memory pager to bank 0 [Conv: HQ]
+ * $F414: Reset the 128K memory pager to bank 0
  *
  * Writes zero to the 128K paging register at port $7FFD via OUT (C),A,
  * restoring the default memory layout (ROM 0, RAM bank 0, screen 0).
@@ -17335,7 +17340,7 @@ static void reset_paging_128k(chqstate_t *state)
 }
 
 /**
- * $F41B: Attract mode 128K [Conv: HQ]
+ * $F41B: Attract mode 128K
  *
  * Top-level attract loop for 128K hardware. Calls the bouncy logo (bank 3),
  * sets up a stage, then spins in a per-frame loop calling cpu_driver and
