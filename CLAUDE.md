@@ -277,6 +277,15 @@ variable that was live in A just before the swap. Getting this wrong silently
 swaps two state-field updates (`scroll_horizon` `$B8CB`: `horizon_y_accum`
 and `horizon_y_step` were exchanged).
 
+**`EX AF,AF'` restores flags — `JP P`/`JP M` tests the banked value's sign** —
+`EX AF,AF'` swaps the full flag register F as well as A. A `JP P` or `JP M`
+immediately after the EX tests the *restored* flags, not flags from any
+instruction that ran since the last bank. When a new value is loaded into A
+between the EX and the branch (`LD A,C; JP P`), the branch is independent of
+that value. Trace back to the flag-setting instruction before the original
+`EX AF,AF'` to find what is actually tested (`scroll_horizon` `$B874`:
+`JP P` tests the sign of `current_curvature`, not the table byte in C).
+
 ## Known data layout: $E34B–$E34D horizon attribute scroll
 
 `state->horizon_attr[3]` (Z80 `$E34B–$E34D`) drives the per-frame sky/ground colour boundary update in `update_screen` (`ds_attributes`, `$BD5A`):

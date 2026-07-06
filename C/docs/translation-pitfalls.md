@@ -566,3 +566,25 @@ if (A <= 255) {            /* $90D5: JR C,$90E4 — skip on u8 overflow */
 **Rule:** After a Z80 `ADD A,x; JR C` (or `RET C`), the C guard is `if (A > 255)` for the carry branch and `if (A <= 255)` for the no-carry branch. Never use `(s8)` to recover a carry signal from an addition result.
 
 **Commit:** `55be0c6`
+
+---
+
+## 33. `EX AF,AF'` restores flags — `JP P`/`JP M` tests the *banked* value's sign
+
+**Root cause:** `EX AF,AF'` swaps both A and F with their shadow counterparts. When it restores AF from a bank, the entire flag register F is restored — Sign, Zero, Carry, all of it. A `JP P` or `JP M` immediately after the EX therefore tests the *restored* flags, not the flags set by whatever instruction just ran. If a new value is loaded into A between the EX and the branch (`LD A,C; JP P`), the branch is entirely independent of that new value: it reflects the sign of whichever instruction set the flags that were originally banked.
+
+**Bug:** `scroll_horizon` (`$B848`): at `$B872 EX AF,AF'`, AF is restored from the bank made at `$B854`. Those flags come from `AND A` at `$B851`, which set Sign based on `current_curvature`. The immediately following `$B873 LD A,C` loads the table's C byte into A, but `LD A,C` does not alter flags on Z80. `$B874 JP P,$B879` therefore branches on the sign of `current_curvature`, not the sign of C. The C translation tested `if ((s8) Aregular < 0)` — the sign of the table value — which is always non-negative (all table C bytes are `0x01`–`0x7F`), so NEG was never applied and the backdrop could only scroll rightward.
+
+**Fix:**
+
+```c
+// EX AF,AF' — $B872 restores AF from the bank made at $B854;
+// F holds Sign from AND A ($B851), reflecting sign of current_curvature.
+Aregular = Chorizon_x_delta;         /* $B873: LD A,C */
+if ((s8) current_curvature < 0)      /* $B874: JP P — tests banked AF, not C */
+    Aregular = -Aregular;
+```
+
+**Rule:** When `JP P` or `JP M` follows an `EX AF,AF'`, the branch condition is the sign of the value that set the flags *at the time they were originally banked*, not the current A register. Trace back to the flag-setting instruction (typically `AND A`, `OR A`, `CP`, or arithmetic) that preceded the earlier `EX AF,AF'` to identify what is actually being tested.
+
+**Commit:** `87f70fa`
