@@ -474,7 +474,11 @@ Or declare the field `s8` if it is never used as unsigned.
 
 **Rule:** `ADD A,B; RET C` is an overflow guard, not a magnitude comparison. Translate it as: add first, then check if the result exceeds 255. The condition `A < B` (which checks whether the *inputs* have a certain order) is unrelated to carry from addition.
 
-**Commit:** `9409d37`
+The inverse form, `ADD A,B; RET NC`, returns when there is **no** carry (sum ≤ 255) and falls through only on overflow. C equivalent: `A += B; if (A <= 255) return;`. Do not use `if (A >= B) return` — that fires on a magnitude comparison and is almost always true for any positive A.
+
+**Bug (RET NC):** `dust_stones_stuff` at `$AA33–$AA34` does `ADD A,E; RET NC` to skip the left-helicopter draw when the x-position plus pixel-width does not overflow (object is not wrapping). The C code `if (A >= E) return` checked whether the sum was at least as large as the pixel-width addend — true for almost any non-zero A — making the draw call unreachable.
+
+**Commits:** `9409d37`, `55be0c6`
 
 ---
 
@@ -510,4 +514,55 @@ state->horizon_y_step += Ahorizon_y_a25a_delta; /* $B8CC: var_a25b += A (delta) 
 
 **Rule:** After a paired `EX AF,AF'` that terminates a loop, trace which C variable was being accumulated in A vs A' and assign the correct one to each state field. The variable that was in A' (banked) during the loop is retrieved by the final EX; do not confuse it with the variable that was live in A just before the EX.
 
-**Commit:** `41de175`
+A second form: `EX AF,AF'` used as a **simple bank-then-unbank shuttle** (no loop). The C convention is to assign the shadow variable at the bank point (`// EX AF,AF'` comment where A is saved) and read it back at the unbank point. The mistake is to place the assignment at the unbank point instead, which captures whatever A holds at that moment — usually a completely different value.
+
+**Bug (shuttle):** `dust_stones_stuff` (`$A9FF`): `EX AF,AF'` banks table byte 3 into A', then A is overwritten by the LOD index computation. The paired `EX AF,AF'` at `$AA21` should unbank table byte 3. In C, `saved_A = A` appeared at the second `// EX AF,AF'` comment (unbank), capturing the LOD index (0–5, always ≥ 0) rather than the table byte. The `if (saved_A < 0)` branch was therefore dead code on every frame.
+
+**Fix:** Place `saved_A = A` at the first `// EX AF,AF'` comment (the bank), immediately after the value is loaded. Do not reassign it at the unbank point.
+
+**Commits:** `41de175`, `55be0c6`
+
+---
+
+## 31. `int` accumulator — carry idiom `sum < addend` always false
+
+**Root cause:** The standard unsigned-arithmetic trick for detecting u8 overflow after `sum += addend` is `if (sum < addend)` — if the byte wrapped, the truncated sum is less than the addend. This idiom only works when `sum` is a true `u8` (or other unsigned type that wraps at its maximum). When `sum` is `int`, the addition never wraps and `sum < addend` is always false after a non-negative addition.
+
+**Bug:** `dh_draw_one_hazard` (`$ADCD–$ADD1`): `C_dist += IXhazard->distance` adds the hazard distance to a running accumulator. The Z80 `ADD A,C` sets carry when the byte overflows, advancing the perpendicular lane counter. The C variable `C_dist` was declared `int`; the idiom `if (C_dist < IXhazard->distance)` was therefore always false, making the perp lane-advance path dead code on every frame.
+
+**Fix:** Check `if (C_dist > 255)` — the `int` sum exceeds 255 exactly when the Z80 8-bit addition would have carried.
+
+```c
+C_dist += IXhazard->distance;   /* $ADD0: ADD A,C */
+if (C_dist > 255) {             /* $ADDB: JR NC — carry from ADD */
+    A_lane++;
+    ...
+}
+```
+
+**Rule:** Never use `sum < addend` to detect u8 carry when `sum` is `int`. Use `sum > 255` instead. The idiom `sum < addend` is only valid for unsigned integer types that actually wrap.
+
+**Commit:** `55be0c6`
+
+---
+
+## 32. `(s8)` cast on ADD result used as carry guard
+
+**Root cause:** After a Z80 `ADD A,C`, carry signals overflow (`A + C > 255`). The sign flag is a separate bit, set when bit 7 of the result is 1. Using `(s8) A >= 0` (or `(s8) A < 0`) to decide whether to enter a block tests the sign flag, not carry. For sums in the range 128–255 (carry clear, bit 7 set), the sign test fires incorrectly — entering or skipping a block the Z80 would take the other path.
+
+This is the addition counterpart of pitfall 8 (which covers subtraction borrow). Both mistakes replace a carry/borrow check with a sign-flag check, but the affected instruction and the direction of the error differ.
+
+**Bug:** `draw_overhead` (`$90D4–$90D5`): `A = IXxpos[0] + Cdepth; JR C,$90E4` exits early when the addition overflows. The C code `if ((s8) A >= 0)` entered the span-width computation when bit 7 was clear. For sums 128–255 (no carry, bit 7 set) the C code skipped the block while the Z80 entered it, computing a narrower display span than intended.
+
+**Fix:**
+
+```c
+A = IXxpos[0] + Cdepth;   /* $90D1-$90D4: ADD A,C */
+if (A <= 255) {            /* $90D5: JR C,$90E4 — skip on u8 overflow */
+    ...
+}
+```
+
+**Rule:** After a Z80 `ADD A,x; JR C` (or `RET C`), the C guard is `if (A > 255)` for the carry branch and `if (A <= 255)` for the no-carry branch. Never use `(s8)` to recover a carry signal from an addition result.
+
+**Commit:** `55be0c6`
