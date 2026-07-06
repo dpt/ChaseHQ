@@ -75,7 +75,9 @@ A variant is **copy-paste between adjacent sections of the same function:** `rm_
 - `HLdash` in `dr_fill` was `u16*`; `HLdash[Ldash]` treated the byte offset 255 as a word index, reading element 255 of a 128-element array (into the adjacent `xpos_road_centre_left` table). Fix: `u8*`. (`6217000`)
 - `SP_output++` for `INC SP` (`$C407`) advanced the output pointer by 2 bytes instead of 1 because `SP_output` is `u16*`. Fix: cast through `u8*`: `SP_output = (u16 *)((u8 *)SP_output + 1)`. (`f21a880`)
 
-**Fix:** Match the C pointer type to the Z80 access width. Byte loads/stores and single-byte SP adjustments require `u8*`; any `u16*` arithmetic silently doubles the offset.
+A third form: a `u8[]` table is indexed via `LD HL, table-1; ADD HL,BC` which gives a **byte** offset of `BC − 1` from the table base. The C translation sometimes halves this index (`&table[(BC - 1) / 2]`) under the incorrect assumption that the table holds 16-bit words. For a `u8` table the correct index is simply `BC - 1` with no division. (`scroll_horizon` vertical section, `$B898`)
+
+**Fix:** Match the C pointer type to the Z80 access width. Byte loads/stores and single-byte SP adjustments require `u8*`; any `u16*` arithmetic silently doubles the offset. For `u8` tables accessed by `ADD HL,BC`, the C index is the byte offset with no scaling.
 
 ---
 
@@ -147,6 +149,8 @@ A variant is **copy-paste between adjacent sections of the same function:** `rm_
 **Bug:** `plot_sprite_flipped_even`: `*src++ >> 8` always gave 0 for the second byte of every pair, rendering half the flipped pixels blank.
 
 **Fix:** Two separate `flip_table[*src++]` calls, matching the odd-width path.
+
+A second form of the same mistake: the Z80 reads two consecutive bytes with `LD B,(HL); INC HL; LD C,(HL)` and packs them into a `u16` register pair. The C translation sometimes packs them into a single `u8` variable then extracts the "high byte" with `>> 8`. Shifting a `u8` right 8 bits is always zero (the value fits in 8 bits). Fix: read the two bytes into two separate `u8` variables matching the Z80 B and C registers. (`scroll_horizon`, `$B868–$B86A`)
 
 **Commit:** `c5c3e6c`
 
@@ -450,3 +454,60 @@ Or declare the field `s8` if it is never used as unsigned.
 **Rule:** Any Z80 SM field or register that represents a signed offset must be cast to `(s8)` (or declared `s8`) before use in C arithmetic. The bit-7 conditional approach (`if (D & 0x80) A -= (256 - D); else A += D`) is error-prone and verbose; `(s8)` cast is always correct.
 
 **Commits:** `944371a`
+
+---
+
+## 28. `ADD A,B; RET C` — carry means u8 overflow, not `A < B`
+
+**Root cause:** The Z80 `ADD A,B` instruction sets carry when the 8-bit result overflows (`A + B > 255`). `RET C` then returns on that overflow. The C translation sometimes replaces this with `if (A < B) return` — a comparison that fires when A is less than B, which is a completely different (and almost opposite) condition for typical small positive B values.
+
+**Bug:** `draw_object_right_stretchy_entrypt` at `$9306–$9307` does `ADD A,B; RET C` to skip drawing right-side objects when the road edge plus the depth offset wraps past 255 (i.e., the object is off-screen right). The C translation had `if (Awidth_bytes < Bdepth) return`, which fired when the x-position was *less than* the depth (a completely different guard). For near-horizon rows where `xpos_road_centre[k]` is small (e.g. 5–35) and depth is 16–36, the wrong guard returned early, silently dropping those objects. On 3-lane sections where small xpos values occur most often, entire rows of right-side scenery vanished, making the road surface visible through the empty space — appearing as if objects were intruding into the road.
+
+**Fix:**
+
+```c
+} else {
+    Awidth_bytes += Bdepth;         /* $9306: ADD A,B */
+    if (Awidth_bytes > 255) return; /* $9307: RET C — u8 overflow */
+}
+```
+
+**Rule:** `ADD A,B; RET C` is an overflow guard, not a magnitude comparison. Translate it as: add first, then check if the result exceeds 255. The condition `A < B` (which checks whether the *inputs* have a certain order) is unrelated to carry from addition.
+
+**Commit:** `9409d37`
+
+---
+
+## 29. `RET Z` / `RET NZ` early exit — polarity is the inverse of the fallthrough code
+
+**Root cause:** `RET Z` returns *when the tested register is zero*. Translating this as `if (value) return` inverts the condition: the function now returns when the value is non-zero (i.e., when there is work to do) and only falls through when the value is zero (when there is nothing to do).
+
+**Bug:** `scroll_horizon` at `$B8A5–$B8A6` does `AND A; RET Z` to return early when `fast_counter − horizon_y_step == 0` (no ticks have elapsed). The C code `if (Adiff) return` returned whenever the two counters *differed*, which is exactly when the vertical scroll should run. The function was therefore a no-op every frame that any scrolling was due, and only fell through (to do nothing meaningful) on the rare frame when the counters happened to be equal.
+
+**Fix:** `if (!Adiff) return;`
+
+**Rule:** For every `RET Z` / `RET NZ` (or `JP Z` / `JR Z`), the C `if` must use the **opposite** polarity to the Z80 instruction. `RET Z` → `if (value == 0) return` (or `if (!value) return`). `RET NZ` → `if (value != 0) return`. Cross-check: the fallthrough code should be the "there is work to do" path.
+
+**Commit:** `41de175`
+
+---
+
+## 30. `EX AF,AF'` accumulator swap — wrong variable receives the banked value
+
+**Root cause:** `EX AF,AF'` (or `EXX`) inside a processing loop shuttles one accumulator through A' while the main register computes something else. On the paired `EX AF,AF'` that restores the main register, A gets the banked accumulated value and A' gets the current main value. The C variables for the two logical values must be assigned from the correct sides after each swap.
+
+**Bug:** `scroll_horizon` (`$B848`): inside the vertical-scroll loop, `EX AF,AF'` at `$B8AC` banks Adiff (ticks remaining) into A' and unbanks Ahorizon_y_a25a_delta (accumulated delta) into A. The loop then does `ADD A,C` to accumulate into A, and the paired `EX AF,AF'` at `$B8AE` puts the accumulated delta back into A'. After the loop, `EX AF,AF'` at `$B8CB` hands A (= adjusted Bcounter) to `var_a25b` and A' (= Ahorizon_y_a25a_delta) to `var_a25a`. In C, the two update assignments were swapped: `horizon_y_accum += Ahorizon_y_a25a_delta` and `horizon_y_step += Bcounter`, where the Z80 does the opposite (`var_a25a += B`, `var_a25b += A'`).
+
+**Fix:**
+
+```c
+state->horizon_y_accum += Bcounter;             /* $B8B4: var_a25a += B */
+/* ... sign-extend BCcounter ... */
+state->session.horizon_level += BCcounter;
+/* EX AF,AF' unbanks Ahorizon_y_a25a_delta */
+state->horizon_y_step += Ahorizon_y_a25a_delta; /* $B8CC: var_a25b += A (delta) */
+```
+
+**Rule:** After a paired `EX AF,AF'` that terminates a loop, trace which C variable was being accumulated in A vs A' and assign the correct one to each state field. The variable that was in A' (banked) during the loop is retrieved by the final EX; do not confuse it with the variable that was live in A just before the EX.
+
+**Commit:** `41de175`

@@ -11752,11 +11752,12 @@ static void scroll_horizon(chqstate_t *state)
   int        current_curvature;         /* current_curvature: selects horizontal scroll path (was A) */
   u8         Adash;                     /* banked A': approximated as 0 — Z80 carried this in from $B296 (was A') */
   const u8  *HLhorizon_table;           /* pointer into horizon_table for incline-rate lookup (was HL) */
-  u8         BChorizon_table_value;     /* byte pair from horizon_table for horizontal scroll (was BC) */
+  u8         Bhorizon_table_value;      /* high byte of horizon_table entry: reload for horizon_x_scroll (was B) */
+  u8         Chorizon_x_delta;         /* low byte of horizon_table entry: signed direction for x-scroll (was C) */
   int        Aregular;                  /* dr_horizon_x_scroll after wrap, 0..19 (was A) */
   int        Aincline;                  /* state->incline value; magnitude used for table index (was A) */
   int        Adiff;                     /* fast_counter minus horizon_y_step: ticks since last advance (was A) */
-  int        Bcounter;                  /* number of horizon_y ticks consumed this frame (was C) */
+  int        Bcounter;                  /* number of horizon_y ticks consumed this frame (was B) */
   int        Eset_if_incline_negative;  /* 1 when incline is negative (downhill); sign-extends BCcounter (was E) */
   int        Chorizon_table_value;      /* threshold from horizon_table for the vertical scroll rate (was C) */
   int        Ahorizon_y_a25a_delta;     /* accumulated sub-step delta added to horizon_y_step (was A') in loop */
@@ -11783,16 +11784,15 @@ static void scroll_horizon(chqstate_t *state)
     RL(Adash);
     RL(Adash);
     Adash &= 6; // get top two bits of speed, scaled up by 2
-    BChorizon_table_value = horizon_table[(state->horizon_curve_index + Adash) /
-                                          2]; // CHECK scaling / offset
-    BChorizon_table_value = (BChorizon_table_value >> 8) | (BChorizon_table_value <<
-                            8); // Conv: Swap
+    /* $B864: HL = horizon_table; $B867: HL += BC; $B868: B=(HL); $B869: INC HL; $B86A: C=(HL) */
+    Bhorizon_table_value = horizon_table[state->horizon_curve_index + Adash];
+    Chorizon_x_delta     = horizon_table[state->horizon_curve_index + Adash + 1];
 
     // Decrement horizon_a25e
     if (--state->horizon_x_scroll == 0) {
-      state->horizon_x_scroll = BChorizon_table_value >> 8;
+      state->horizon_x_scroll = Bhorizon_table_value; /* $B871: LD (HL),B */
       // EX AF,AF' - bank so we can keep Aregular
-      Aregular = BChorizon_table_value & 0xFF;
+      Aregular = Chorizon_x_delta; /* $B873: LD A,C */
       if ((s8) Aregular < 0)
         Aregular = -Aregular;
 
@@ -11821,8 +11821,8 @@ static void scroll_horizon(chqstate_t *state)
     Aincline = -Aincline;
   }
 
-  HLhorizon_table = &horizon_table[(-1 + Aincline) /
-                                   2]; // CHECK: Scaling / offset
+  /* $B898: HL = horizon_table-1; $B89B: BC=Aincline; $B89C: HL+=BC → byte offset = Aincline-1 */
+  HLhorizon_table = &horizon_table[Aincline - 1];
   Adiff = state->fast_counter - state->horizon_y_step;
   if (!Adiff)
     return; /* $B8A6: RET Z — no ticks elapsed, nothing to do */

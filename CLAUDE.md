@@ -258,6 +258,25 @@ unsigned (0–255). Declare such fields `s8`, or cast at the use site:
 only works for values in [−128, +127]; `(s8)` cast is always correct
 (`draw_object_clipped` `$941F` `D_col_pos` sign-extension bug).
 
+**`ADD A,B; RET C` is an overflow guard, not a comparison** — `RET C`
+returns when the 8-bit addition overflows (`A + B > 255`). Translating
+this as `if (A < B) return` fires on a completely different (and nearly
+opposite) condition. Fix: add first, then check `if (result > 255) return`
+(`draw_object_right_stretchy_entrypt` `$9306–$9307`).
+
+**`RET Z` / `RET NZ` early-exit polarity** — `RET Z` returns when the
+register is zero. `if (value) return` inverts this: the function exits
+when there is work to do and only falls through when there is nothing to
+do. Fix: `if (!value) return` (`scroll_horizon` `$B8A6`).
+
+**`EX AF,AF'` banked accumulator — assign to the correct variable** — after
+a loop that banks one accumulator in A' via `EX AF,AF'`, the paired `EX`
+at exit hands A' back to the main register. The C variable that was
+accumulating in A' must be assigned from the retrieved A, not from the
+variable that was live in A just before the swap. Getting this wrong silently
+swaps two state-field updates (`scroll_horizon` `$B8CB`: `horizon_y_accum`
+and `horizon_y_step` were exchanged).
+
 ## Known data layout: $E34B–$E34D horizon attribute scroll
 
 `state->horizon_attr[3]` (Z80 `$E34B–$E34D`) drives the per-frame sky/ground colour boundary update in `update_screen` (`ds_attributes`, `$BD5A`):
