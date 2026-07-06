@@ -3759,11 +3759,7 @@ static u16 draw_smash_bar_solid_bit(chqstate_t *state, int B_nrows, int HLbackbu
  * current road section drawing each object through its type-specific
  * callback.
  *
- * Conv: The function body begins with an early `return` because the full
- *   draw pipeline is not yet wired up.  The declarations and asserts below
- *   reflect the intended implementation.
- *
- * \param[in,out] state  Pointer to game state.
+ * \param[in,out] state Pointer to game state.
  */
 static void draw_scene_objects(chqstate_t *state)
 {
@@ -3786,8 +3782,6 @@ static void draw_scene_objects(chqstate_t *state)
   const u8       *HLbitmap;            /* pointer to arrow pixel data (was HL) */
   int             Eobj;                /* object index used to look up the object table entry (was E) */
   const obj_t    *HLobj;               /* pointer to the current scene object descriptor (was HL) */
-
-//  return;
 
   assert(state->stage != NULL);
   assert(state->roadbuf_start == &state->road_buffer[0]);
@@ -3837,20 +3831,16 @@ static void draw_scene_objects(chqstate_t *state)
     assert(IXtable_ea00 >= &state->xpos_road_centre[0]
            && IXtable_ea00 < &state->xpos_road_centre[128]);
 
-
-    if (state->n_hazards) {
+    if (state->n_hazards)
       draw_arrow_fire_smoke(state, Biterations, IYheight_table);
-    }
 
     dust_stones_stuff(state, Biterations, IYheight_table);
 
-    if (state->dee_draw_helicopter) {
+    if (state->dee_draw_helicopter)
       draw_helicopter(state, Biterations, IYheight_table);
-    }
 
-    if (state->dee_draw_tunnel_2) {
+    if (state->dee_draw_tunnel_2)
       draw_tunnel(state, IYheight_table);
-    }
 
     Aobj = *HLroadbuf; // fetch right side object from road buffer
     assert(Aobj <= 9); // object indices are 0..9
@@ -3890,20 +3880,20 @@ continue_after_left_hand_done:
 
   // Draw the floating arrow
   assert(Afloating_arrow == 1 || Afloating_arrow == 2);
-  HLarrow_defn = &floating_arrow_left_defn;
-  Ex = 120; // horz pos
-  if (Afloating_arrow != 1) {
+  if (Afloating_arrow == 1) {
+    HLarrow_defn = &floating_arrow_left_defn;
+    Ex = 120;
+  } else {
     HLarrow_defn = &floating_arrow_right_defn;
     Ex = 128;
   }
   assert(HLarrow_defn != NULL);
   assert(HLarrow_defn->data != NULL);
   assert(Ex == 120 || Ex == 128);
-  Dy           = 48; // vert pos
-  assert(Dy == 48);
+  Dy           = 48;
   Cwidth_bytes = HLarrow_defn->width_bytes;
   assert(Cwidth_bytes == 3); // both arrow bitmaps have width_bytes=3
-  Bdash_flip_flag = HLarrow_defn->flags >> 1; // goes in B'
+  Bdash_flip_flag = HLarrow_defn->flags >> 1;
   Edash_bitmap_stride = Cwidth_bytes;
   assert(Edash_bitmap_stride == Cwidth_bytes);
   Cdash        = 0; // this must be passed in
@@ -4442,7 +4432,8 @@ void draw_object_left(chqstate_t *state,
  * Conv: Z80 self-modifies the operand at $933E to hold Acol_offset (later
  *   read as D in draw_object_common); C stores it in state->doc_col_pos.
  * Conv: Z80 index arithmetic `HL += A*2−1` / byte reads replaced by struct
- *   field access on depthset_t.
+ *   field access on depthset_t.  The Z80 indexing is 1-based (A=1 → pair[0]);
+ *   C uses pairs[Bdepth-1] to match.
  *
  * \param[in] state       Pointer to game state.
  * \param[in] Acol_offset Column offset added to the object position. (was A)
@@ -4471,8 +4462,9 @@ static void draw_object_left_entrypt(chqstate_t       *state,
   ds = DEdepthset; /* EX DE,HL */
 
   bitmaps = ds->bitmaps;
-  depth   = ds->pairs[Bdepth].depth;
-  bitmap  = &bitmaps[ds->pairs[Bdepth].offset / 7];
+  // Conv: Z80 uses A*2-1 indexing (1-based); pairs[Bdepth-1] corrects for C's 0-based array.
+  depth   = ds->pairs[Bdepth - 1].depth;
+  bitmap  = &bitmaps[ds->pairs[Bdepth - 1].offset / 7];
 
   draw_object_left_stretchy_entrypt(state, depth, bitmap, IXxpos, IYheight);
 }
@@ -4642,7 +4634,8 @@ void draw_object_right(chqstate_t *state,
  * Conv: Z80 self-modifies the operand at $933E to hold Acol_offset; C
  *   writes it to state->doc_col_pos.
  * Conv: Z80 index arithmetic `HL += A*2−1` / byte reads replaced by struct
- *   field access on depthset_t.
+ *   field access on depthset_t.  The Z80 indexing is 1-based (A=1 → pair[0]);
+ *   C uses pairs[Bdepth-1] to match.
  *
  * \param[in] state       Pointer to game state.
  * \param[in] Acol_offset Column offset added to the object position. (was A)
@@ -4671,8 +4664,9 @@ static void draw_object_right_entrypt(chqstate_t       *state,
   ds = DEdepthset; /* EX DE,HL */
 
   bitmaps = ds->bitmaps;
-  depth   = ds->pairs[Bdepth].depth;
-  bitmap  = &bitmaps[ds->pairs[Bdepth].offset / 7];
+  // Conv: Z80 uses A*2-1 indexing (1-based); pairs[Bdepth-1] corrects for C's 0-based array.
+  depth   = ds->pairs[Bdepth - 1].depth;
+  bitmap  = &bitmaps[ds->pairs[Bdepth - 1].offset / 7];
 
   draw_object_right_stretchy_entrypt(state, depth, bitmap, IXxpos, IYheight);
 }
@@ -4681,12 +4675,13 @@ static void draw_object_right_entrypt(chqstate_t       *state,
  * $92FC: Compute right-side available width then draw the object [Conv: HQ]
  *
  * Reads the x-position table value and adds the (signed) depth. Returns early
- * if the result is zero or negative (i.e. the object is off-screen to the
+ * if the result is zero or overflows u8 (i.e. the object is off-screen to the
  * right). Otherwise passes the remaining screen width to
  * draw_object_right_helicopter_entrypt.
  *
- * The Z80 tests B's sign bit to decide whether to add with or without a
- * carry-out check; C uses an explicit signed cast.
+ * Z80 flow: `BIT 7,B; JR Z,$9306` — positive B jumps to $9306 which does
+ * `ADD A,B; RET C` (return on u8 carry, i.e. A+B > 255); negative B path
+ * ($9303) adds without a carry check. Both paths share `RET Z` at $9308.
  *
  * \param[in] state    Pointer to game state.
  * \param[in] Bdepth   Signed depth value from the depthset. (was B)
@@ -4704,11 +4699,10 @@ static void draw_object_right_stretchy_entrypt(chqstate_t     *state,
 
   Awidth_bytes = IXxpos[0];
   if ((s8) Bdepth < 0) {
-    Awidth_bytes += Bdepth;
+    Awidth_bytes += Bdepth;            /* $9303: ADD A,B (negative B, no carry check) */
   } else {
-    if (Awidth_bytes < Bdepth)
-      return;
-    Awidth_bytes += Bdepth;
+    Awidth_bytes += Bdepth;            /* $9306: ADD A,B */
+    if (Awidth_bytes > 255) return;    /* $9307: RET C — u8 overflow */
   }
   if (Awidth_bytes)
     draw_object_right_helicopter_entrypt(state, Awidth_bytes, HLbitmap, IYheight);
@@ -11406,14 +11400,14 @@ static void draw_part(chqstate_t *state,
  * \param[in]     Edash_bitmap_stride Sprite row stride in bytes. (was E')
  */
 static void draw_part_entrypt2(chqstate_t *state,
-                             int          Bheight,
-                             int          Cwidth_bytes,
-                             int          Dy,
-                             int          Ex,
-                             const u8   *HLbitmap_data,
-                             int          Bdash_flip_flag,
-                             int          Cdash,
-                             int          Edash_bitmap_stride)
+                               int         Bheight,
+                               int         Cwidth_bytes,
+                               int         Dy,
+                               int         Ex,
+                               const u8  *HLbitmap_data,
+                               int         Bdash_flip_flag,
+                               int         Cdash,
+                               int         Edash_bitmap_stride)
 {
   int carry_flip_flag; /* LSB of Bdash_flip_flag: 1=flip, 0=normal (was carry) */
   u8  Ay;              /* copy of Dy banked across EX AF,AF' (was A) */
@@ -11511,7 +11505,7 @@ static void draw_part_plot_masked_sprite(chqstate_t *state,
  */
 static void plot_masked_sprite(chqstate_t *state,
                                int         jump_offset,
-                               int          height,
+                               int         height,
                                int         bitmap_stride,
                                const u8   *bitmap_data,
                                u8         *backbuf_addr)
@@ -11588,9 +11582,9 @@ plot_masked_sprite_entry:
  * \param[in]     bitmap_data   Source masked sprite data. (was HL')
  */
 static void plot_masked_sprite_flipped(chqstate_t *state,
-                                       int          width_bytes,
+                                       int         width_bytes,
                                        u8         *backbuf_addr,
-                                       int          height,
+                                       int         height,
                                        int         bitmap_stride,
                                        const u8   *bitmap_data)
 {
@@ -11622,9 +11616,9 @@ static void plot_masked_sprite_flipped(chqstate_t *state,
  * \param[in]     bitmap_data   Source masked sprite data. (was HL')
  */
 static void plot_masked_sprite_flipped_entrypt2(chqstate_t *state,
-    int          width_bytes,
+    int         width_bytes,
     u8         *backbuf_addr,
-    int          height,
+    int         height,
     int         bitmap_stride,
     const u8   *bitmap_data)
 {
