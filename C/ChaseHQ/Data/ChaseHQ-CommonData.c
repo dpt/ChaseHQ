@@ -4208,16 +4208,7 @@ const u8 forked_road_exit_right_lanes[12] = {
 /* ----------------------------------------------------------------------- */
 
 // $E364
-const u8 spiral_transition_mask[13 * 8] = {
-  ________,
-  ________,
-  ________,
-  ________,
-  ________,
-  ________,
-  ________,
-  ________,
-
+const u8 spiral_transition_mask[12 * 8] = {
   XXXXXXXX,
   ________,
   ________,
@@ -4674,8 +4665,8 @@ const transition_t transitions_e88e[8] = {
   {  7, &diamond_transition_mask[-1 * 8] },
 
   // reverse
-  {  6, &square_transition_mask[5 * 8] }, // too far outside?
-  { 12, &spiral_transition_mask[11 * 8] },
+  {  6, &square_transition_mask[5 * 8] },
+  { 12, &spiral_transition_mask[12 * 8] },
   {  8, &circle_transition_mask[7 * 8] },
   {  7, &diamond_transition_mask[6 * 8] },
 };

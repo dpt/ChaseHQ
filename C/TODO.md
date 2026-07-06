@@ -4,10 +4,8 @@ perhaps build unit tests now to flush out problems ahead of time.
 # BUGS
 
 - Hitting invisible objects (right hand objects mispositioned on 3-lane)
-- Backdrop does not horizontally scroll
 - Wonky feeling car speed / anims at start
 - Lane change diagonal transitions are not working
-- Radio screen sometimes have leftover transition animation parts
 - Message cursor seems to vanish when idle
 - Forks seize the game up
 - draw_scene_objects => crash
@@ -57,6 +55,8 @@ perhaps build unit tests now to flush out problems ahead of time.
 
 # DONE
 
+- The pregame radio screen sometimes has leftover transition animation parts
+- Backdrop does not horizontally scroll (to the right)
 - Perp escape scene causes an immediate crash (prob. tunnel code)
 - Car (still) not jumping on steep roads
 - Mark functions as HQ once processed

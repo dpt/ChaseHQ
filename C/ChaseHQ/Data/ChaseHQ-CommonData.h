@@ -281,7 +281,7 @@ const u8 forked_road_exit_height[5];
 const u8 forked_road_exit_left_lanes[12];
 const u8 forked_road_exit_right_lanes[12];
 
-const u8 spiral_transition_mask[13 * 8];
+const u8 spiral_transition_mask[12 * 8];
 const u8 circle_transition_mask[7 * 8];
 
 const u8 edge_markings[256]; /* full $E4xx page: zeros/$E400, edges/$E410, lanes/$E4D0 */
