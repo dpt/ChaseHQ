@@ -2089,6 +2089,10 @@ static void am_set_attrs(int counter, u8 *attrs)
  */
 static void draw_pregame(chqstate_t *state)
 {
+  static const zxbox_t playfield_box = { /* lower two-thirds of screen */
+    0, 0, SCREEN_WIDTH, PLAYFIELD_HEIGHT
+  };
+
   int       carry;      /* carry from attribute-address shift computation (carry) */
   const u8 *cmds;       /* pointer walking pregame_data[] command stream (was HL) */
   int       cmd;        /* current command byte from the stream (was A) */
@@ -2104,9 +2108,6 @@ static void draw_pregame(chqstate_t *state)
   int       bgattr;     /* draw_pregame_background: OR'd into attribute cell if non-zero (was A) */
   const u8 *messages;   /* pointer walking pregame_messages[] for print_message calls (was HL) */
   u16       attrs;      /* computed attribute address for the tile just drawn (was DE) */
-  static const zxbox_t playfield_box = { /* lower two-thirds of screen */
-    0, 0, SCREEN_WIDTH, PLAYFIELD_HEIGHT
-  };
 
   carry = 0;
 
@@ -11794,9 +11795,12 @@ static void scroll_horizon(chqstate_t *state)
     // Decrement horizon_a25e
     if (--state->horizon_x_scroll == 0) {
       state->horizon_x_scroll = Bhorizon_table_value; /* $B871: LD (HL),B */
-      // EX AF,AF' - bank so we can keep Aregular
+      // EX AF,AF' - $B872 restores AF from the bank made at $B854;
+      // F now holds the Sign flag from AND A ($B851) which reflects the
+      // sign of current_curvature.  JP P ($B874) therefore branches on the
+      // sign of current_curvature, not on the sign of C.
       Aregular = Chorizon_x_delta; /* $B873: LD A,C */
-      if ((s8) Aregular < 0)
+      if ((s8) current_curvature < 0) /* $B874: JP P,$B879 — tests restored AF */
         Aregular = -Aregular;
 
       Aregular += state->dr_horizon_x_scroll; // 0..19
