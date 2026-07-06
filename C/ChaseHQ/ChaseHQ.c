@@ -4039,8 +4039,8 @@ static void draw_overhead(chqstate_t       *state,
   if ((s8) A < 0)
     return;
   if (A == 0) {
-    A = IXxpos[0] + Cdepth;
-    if ((s8) A >= 0) {
+    A = IXxpos[0] + Cdepth;   /* $90D1-$90D4: ADD A,C */
+    if (A <= 255) {           /* $90D5: JR C,$90E4 — skip on u8 overflow */
       if (A) {
         if (A < 0xF7) // -8
           E = A >> 3;
@@ -8933,7 +8933,8 @@ dss_bitmaps:
 
   C = *HLtable++;
   A = *HLtable++;
-  // EX AF,AF'
+  // EX AF,AF' -- bank table byte 3 ($A9FF)
+  saved_A = A;
   state->dss_fork_xpos_ptr = HLtable;
   state->doc_col_pos = 0;
   // H = 0;
@@ -8945,8 +8946,7 @@ dss_bitmaps:
   HLbitmap = DEbitmaps[A];
   E = HLbitmap->width_bytes * 8;
 
-  // EX AF,AF'
-  saved_A = A;
+  // EX AF,AF' -- unbank A' (table byte 3) into A ($AA21)
   A = C;
   C = 0;
   if (saved_A >= 0) {
@@ -8964,7 +8964,7 @@ dss_bitmaps:
     }
   } else {
     A += E;
-    if (A >= E) //carry? check
+    if (A <= 255) /* $AA34: RET NC — no u8 overflow → return */
       return;
 
     draw_object_left_helicopter_entrypt(state, A, HLbitmap,
@@ -9733,7 +9733,7 @@ static void dh_draw_one_hazard(chqstate_t *state,
   if (A_flags == 0) {                    /* $ADD6 JR NZ → dh_adf0 if non-zero */
     /* Perp path: advance lane counter IX[17] */
     A_lane = IXhazard->hazard_lane_OR_perp_dist_hi; /* $ADD8 */
-    if (C_dist < IXhazard->distance) {   /* $ADDB JR NC: carry set by $ADD0 ADD A,C */
+    if (C_dist > 255) {                   /* $ADDB JR NC: carry set by $ADD0 ADD A,C */
       A_lane++;                           /* $ADDD */
       if (A_lane >= 5) {                 /* $ADDE CP $04 */
         A_lane--;                         /* $ADE2 */
@@ -12087,7 +12087,7 @@ static void layout_road(chqstate_t *state)
   CHECK;
 
   // $B9F9: Count the distance to the forked road
-  Biterations = 20;
+  Biterations = 22; /* $B9FC LD B,$16 */
   Ldistance_to_fork = 0;
   do {
     if ((*DElanedata & 0xE1) == 0xE1)
