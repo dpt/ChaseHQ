@@ -126,6 +126,20 @@ STRETCHY_TYPE_NAMES: Dict[int, str] = {
     10: "STRETCHY_TYPE_200PC",
 }
 
+# Maps raw DEFW values (before adding bank_offset) to common depthset C names.
+# These depthsets are shared across all stages; their pointers appear in every
+# stage's stretchy data as [out-of-bounds] DEFWs because the depthsets live in
+# a different bank (bank 1, common data). The raw values are constant across
+# all stages regardless of the stage's bank_offset.
+COMMON_DEPTHSET_RAW_MAP: Dict[int, str] = {
+    0x7E38: "streetlampbottom_left",
+    0x7E4E: "streetlampbottom_right",
+    0x7E64: "streetlampmiddle2_left",
+    0x7E7A: "streetlampmiddle2_right",
+    0x7E90: "streetlampmiddle_left",
+    0x7EA6: "streetlampmiddle_right",
+}
+
 BITMAP_FLAGS = {
     0: "BITMAPFLAG_DEFAULT",
     1: "BITMAPFLAG_MASKED",
@@ -1373,7 +1387,8 @@ def register_stretchy_names(
         addr = sec.start_addr
         if _is_stretchy_entries(sec):
             sub_arrays = _parse_stretchy_entries(sec, bank_offset)
-            if len(sub_arrays) == 2:
+            n_sa = len(sub_arrays)
+            if n_sa == 2:
                 abs_to_name[addr] = f"stage{stage}_stretchy_{addr:04X}_right"
                 # The right sub-array occupies (N_entries × 3 + 1) Z80 bytes.
                 n_non_term = sum(1 for t, _ in sub_arrays[0] if t != 1)
@@ -1381,8 +1396,24 @@ def register_stretchy_names(
                 abs_to_name[addr + right_z80_size] = (
                     f"stage{stage}_stretchy_{addr:04X}_left"
                 )
+            elif n_sa > 2 and n_sa % 2 == 0:
+                # Multiple right/left pairs packed consecutively.
+                # Register each sub-array's actual start address so that obj_defs
+                # pointers into the middle of the block resolve correctly.
+                offset = 0
+                for pi in range(n_sa // 2):
+                    letter = "ABCDEFGHIJ"[pi]
+                    for side, entries in (
+                        ("right", sub_arrays[pi * 2]),
+                        ("left",  sub_arrays[pi * 2 + 1]),
+                    ):
+                        abs_to_name[addr + offset] = (
+                            f"stage{stage}_stretchy_{addr:04X}_{letter}_{side}"
+                        )
+                        n_non_term = sum(1 for t, _ in entries if t != 1)
+                        offset += n_non_term * 3 + 1
             else:
-                # 1 sub-array (normal) or 3+ sub-arrays (unsupported, falls back to raw u8)
+                # 1 sub-array (normal) or odd count (unsupported, falls back to raw u8)
                 abs_to_name[addr] = f"stage{stage}_stretchy_{addr:04X}"
         else:
             data = sec.bytes_flat
@@ -1408,15 +1439,26 @@ def emit_stretchy_typed(
 
     if _is_stretchy_entries(sec):
         sub_arrays = _parse_stretchy_entries(sec, bank_offset)
-        suffixes = [""] if len(sub_arrays) == 1 else ["_right", "_left"]
-        if len(sub_arrays) not in (1, 2):
-            # Unexpected structure — fall back to raw bytes
+        n_sa = len(sub_arrays)
+        if n_sa == 1:
+            suffix_entries = [("", sub_arrays[0])]
+        elif n_sa == 2:
+            suffix_entries = [("_right", sub_arrays[0]), ("_left", sub_arrays[1])]
+        elif n_sa % 2 == 0:
+            # Multiple right/left pairs: A_right, A_left, B_right, B_left, …
+            suffix_entries = []
+            for pi in range(n_sa // 2):
+                letter = "ABCDEFGHIJ"[pi]
+                suffix_entries.append((f"_{letter}_right", sub_arrays[pi * 2]))
+                suffix_entries.append((f"_{letter}_left",  sub_arrays[pi * 2 + 1]))
+        else:
+            # Unexpected odd structure — fall back to raw bytes
             data = sec.bytes_flat
             nm = f"stage{stage}_stretchy_{sec.start_addr:04X}"
             lines.extend(emit_raw_array(nm, data, 8, sec.start_addr))
             fwd_decls.append(f"static const u8 {nm}[{len(data)}];")
             return lines, fwd_decls
-        for suffix, entries in zip(suffixes, sub_arrays):
+        for suffix, entries in suffix_entries:
             nm = f"stage{stage}_stretchy_{sec.start_addr:04X}{suffix}"
             n = len(entries)
             lines.append(f"static const stretchy_t {nm}[{n}] = {{")
@@ -1430,6 +1472,10 @@ def emit_stretchy_typed(
                         if abs_ptr is not None
                         else None
                     )
+                    if dep_nm is None and abs_ptr is not None:
+                        dep_nm = COMMON_DEPTHSET_RAW_MAP.get(
+                            abs_ptr - bank_offset
+                        )
                     if dep_nm:
                         lines.append(f"  {{ {type_name}, &{dep_nm} }},")
                     else:

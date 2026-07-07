@@ -2596,17 +2596,17 @@ static const u8 stage5_bitmap_D7D6[252] = {
 
 // $D8D2
 static const stretchy_t stage5_stretchy_D8D2_right[5] = {
-  { STRETCHY_TYPE_FIXED, NULL /* TODO: depthset $E24E */ },
-  { STRETCHY_TYPE_50PC, NULL /* TODO: depthset $E27A */ },
-  { STRETCHY_TYPE_113PC, NULL /* TODO: depthset $E2A6 */ },
+  { STRETCHY_TYPE_FIXED, &streetlampbottom_right },
+  { STRETCHY_TYPE_50PC, &streetlampmiddle2_right },
+  { STRETCHY_TYPE_113PC, &streetlampmiddle_right },
   { STRETCHY_TYPE_FIXED, &stage5_depthset_D8EC },
   { STRETCHY_TYPE_END, NULL },
 };
 
 static const stretchy_t stage5_stretchy_D8D2_left[5] = {
-  { STRETCHY_TYPE_FIXED, NULL /* TODO: depthset $E238 */ },
-  { STRETCHY_TYPE_50PC, NULL /* TODO: depthset $E264 */ },
-  { STRETCHY_TYPE_113PC, NULL /* TODO: depthset $E290 */ },
+  { STRETCHY_TYPE_FIXED, &streetlampbottom_left },
+  { STRETCHY_TYPE_50PC, &streetlampmiddle2_left },
+  { STRETCHY_TYPE_113PC, &streetlampmiddle_left },
   { STRETCHY_TYPE_FIXED, &stage5_depthset_D902 },
   { STRETCHY_TYPE_END, NULL },
 };
@@ -2682,15 +2682,15 @@ static const u8 stage5_bitmap_D93B[148] = {
 
 // $D9CF
 static const stretchy_t stage5_stretchy_D9CF_right[4] = {
-  { STRETCHY_TYPE_FIXED, NULL /* TODO: depthset $E24E */ },
-  { STRETCHY_TYPE_113PC, NULL /* TODO: depthset $E2A6 */ },
+  { STRETCHY_TYPE_FIXED, &streetlampbottom_right },
+  { STRETCHY_TYPE_113PC, &streetlampmiddle_right },
   { STRETCHY_TYPE_FIXED, &stage5_depthset_D9F9 },
   { STRETCHY_TYPE_END, NULL },
 };
 
 static const stretchy_t stage5_stretchy_D9CF_left[4] = {
-  { STRETCHY_TYPE_FIXED, NULL /* TODO: depthset $E238 */ },
-  { STRETCHY_TYPE_113PC, NULL /* TODO: depthset $E290 */ },
+  { STRETCHY_TYPE_FIXED, &streetlampbottom_left },
+  { STRETCHY_TYPE_113PC, &streetlampmiddle_left },
   { STRETCHY_TYPE_FIXED, &stage5_depthset_D9E3 },
   { STRETCHY_TYPE_END, NULL },
 };

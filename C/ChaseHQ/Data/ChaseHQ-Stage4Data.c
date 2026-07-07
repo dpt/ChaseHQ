@@ -2269,17 +2269,17 @@ static const u8 stage4_bitmap_F502[498] = {
 
 // $F6F4
 static const stretchy_t stage4_stretchy_F6F4_right[5] = {
-  { STRETCHY_TYPE_FIXED, NULL /* TODO: depthset $1024E */ },
-  { STRETCHY_TYPE_50PC, NULL /* TODO: depthset $1027A */ },
-  { STRETCHY_TYPE_113PC, NULL /* TODO: depthset $102A6 */ },
+  { STRETCHY_TYPE_FIXED, &streetlampbottom_right },
+  { STRETCHY_TYPE_50PC, &streetlampmiddle2_right },
+  { STRETCHY_TYPE_113PC, &streetlampmiddle_right },
   { STRETCHY_TYPE_FIXED, &stage4_depthset_F70E },
   { STRETCHY_TYPE_END, NULL },
 };
 
 static const stretchy_t stage4_stretchy_F6F4_left[5] = {
-  { STRETCHY_TYPE_FIXED, NULL /* TODO: depthset $10238 */ },
-  { STRETCHY_TYPE_50PC, NULL /* TODO: depthset $10264 */ },
-  { STRETCHY_TYPE_113PC, NULL /* TODO: depthset $10290 */ },
+  { STRETCHY_TYPE_FIXED, &streetlampbottom_left },
+  { STRETCHY_TYPE_50PC, &streetlampmiddle2_left },
+  { STRETCHY_TYPE_113PC, &streetlampmiddle_left },
   { STRETCHY_TYPE_FIXED, &stage4_depthset_F724 },
   { STRETCHY_TYPE_END, NULL },
 };
