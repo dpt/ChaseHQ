@@ -138,7 +138,7 @@ static const bitmap_t stage2_lods_F958[5];
 static const bitmap_t stage2_lods_FA0F[6];
 static const u8 stage2_bitmap_E97D[1046];
 static const u8 stage2_bitmap_F21E[747];
-static const u8 stage2_bitmap_F696[636];
+static const u8 stage2_bitmap_F768[426];
 static const u8 stage2_bitmap_F97B[148];
 static const u8 stage2_bitmap_FA39[1479];
 
@@ -2606,127 +2606,100 @@ static const depthset_t stage2_depthset_F65D = {
 
 // $F673
 static const bitmap_t stage2_lods_F673[35] = {
-  { 5, BITMAPFLAG_DEFAULT, 4,  &stage2_bitmap_F696[210], &stage2_bitmap_F696[210] },  // [0]
-  { 4, BITMAPFLAG_DEFAULT, 11, &stage2_bitmap_F696[230], &stage2_bitmap_F696[230] },  // [1]
-  { 5, BITMAPFLAG_DEFAULT, 8,  &stage2_bitmap_F696[274], &stage2_bitmap_F696[274] },  // [2]
-  { 4, BITMAPFLAG_DEFAULT, 6,  &stage2_bitmap_F696[314], &stage2_bitmap_F696[314] },  // [3]
-  { 3, BITMAPFLAG_DEFAULT, 4,  &stage2_bitmap_F696[338], &stage2_bitmap_F696[338] },  // [4]
-  // $F696: 30 further LODs packed as 7-byte structs followed by pixel data
-  { 3, BITMAPFLAG_DEFAULT, 4,  &stage2_bitmap_F696[350], &stage2_bitmap_F696[350] },  // [5]
-  { 4, BITMAPFLAG_DEFAULT, 11, &stage2_bitmap_F696[362], &stage2_bitmap_F696[362] },  // [6]
-  { 3, BITMAPFLAG_DEFAULT, 4,  &stage2_bitmap_F696[406], &stage2_bitmap_F696[406] },  // [7]
-  { 2, BITMAPFLAG_DEFAULT, 2,  &stage2_bitmap_F696[418], &stage2_bitmap_F696[418] },  // [8]
-  { 2, BITMAPFLAG_DEFAULT, 5,  &stage2_bitmap_F696[422], &stage2_bitmap_F696[422] },  // [9]
-  { 3, BITMAPFLAG_DEFAULT, 4,  &stage2_bitmap_F696[432], &stage2_bitmap_F696[432] },  // [10]
-  { 2, BITMAPFLAG_DEFAULT, 4,  &stage2_bitmap_F696[446], &stage2_bitmap_F696[446] },  // [11]
-  { 2, BITMAPFLAG_DEFAULT, 2,  &stage2_bitmap_F696[454], &stage2_bitmap_F696[454] },  // [12]
-  { 2, BITMAPFLAG_DEFAULT, 4,  &stage2_bitmap_F696[458], &stage2_bitmap_F696[458] },  // [13]
-  { 2, BITMAPFLAG_DEFAULT, 4,  &stage2_bitmap_F696[466], &stage2_bitmap_F696[466] },  // [14]
-  { 2, BITMAPFLAG_DEFAULT, 2,  &stage2_bitmap_F696[474], &stage2_bitmap_F696[474] },  // [15]
-  { 1, BITMAPFLAG_MASKED,  3,  &stage2_bitmap_F696[478], &stage2_bitmap_F696[478] },  // [16]
-  { 1, BITMAPFLAG_MASKED,  3,  &stage2_bitmap_F696[484], &stage2_bitmap_F696[484] },  // [17]
-  { 1, BITMAPFLAG_MASKED,  3,  &stage2_bitmap_F696[490], &stage2_bitmap_F696[490] },  // [18]
-  { 1, BITMAPFLAG_MASKED,  2,  &stage2_bitmap_F696[496], &stage2_bitmap_F696[496] },  // [19]
-  { 1, BITMAPFLAG_MASKED,  2,  &stage2_bitmap_F696[500], &stage2_bitmap_F696[500] },  // [20]
-  { 1, BITMAPFLAG_MASKED,  2,  &stage2_bitmap_F696[504], &stage2_bitmap_F696[504] },  // [21]
-  { 1, BITMAPFLAG_MASKED,  2,  &stage2_bitmap_F696[508], &stage2_bitmap_F696[508] },  // [22]
-  { 1, BITMAPFLAG_MASKED,  2,  &stage2_bitmap_F696[512], &stage2_bitmap_F696[512] },  // [23]
-  { 1, BITMAPFLAG_MASKED,  2,  &stage2_bitmap_F696[516], &stage2_bitmap_F696[516] },  // [24]
-  { 1, BITMAPFLAG_MASKED,  2,  &stage2_bitmap_F696[520], &stage2_bitmap_F696[520] },  // [25]
-  { 1, BITMAPFLAG_MASKED,  2,  &stage2_bitmap_F696[524], &stage2_bitmap_F696[524] },  // [26]
-  { 1, BITMAPFLAG_MASKED,  2,  &stage2_bitmap_F696[528], &stage2_bitmap_F696[528] },  // [27]
-  { 2, BITMAPFLAG_MASKED,  1,  &stage2_bitmap_F696[532], &stage2_bitmap_F696[584] },  // [28]
-  { 2, BITMAPFLAG_MASKED,  1,  &stage2_bitmap_F696[536], &stage2_bitmap_F696[588] },  // [29]
-  { 2, BITMAPFLAG_MASKED,  2,  &stage2_bitmap_F696[540], &stage2_bitmap_F696[592] },  // [30]
-  { 2, BITMAPFLAG_MASKED,  1,  &stage2_bitmap_F696[548], &stage2_bitmap_F696[600] },  // [31]
-  { 2, BITMAPFLAG_MASKED,  3,  &stage2_bitmap_F696[552], &stage2_bitmap_F696[604] },  // [32]
-  { 2, BITMAPFLAG_MASKED,  3,  &stage2_bitmap_F696[564], &stage2_bitmap_F696[616] },  // [33]
-  { 2, BITMAPFLAG_MASKED,  2,  &stage2_bitmap_F696[576], &stage2_bitmap_F696[628] },  // [34]
+  { 5, BITMAPFLAG_DEFAULT, 4,  &stage2_bitmap_F768[0],   &stage2_bitmap_F768[0]   },  // [0]
+  { 4, BITMAPFLAG_DEFAULT, 11, &stage2_bitmap_F768[20],  &stage2_bitmap_F768[20]  },  // [1]
+  { 5, BITMAPFLAG_DEFAULT, 8,  &stage2_bitmap_F768[64],  &stage2_bitmap_F768[64]  },  // [2]
+  { 4, BITMAPFLAG_DEFAULT, 6,  &stage2_bitmap_F768[104], &stage2_bitmap_F768[104] },  // [3]
+  { 3, BITMAPFLAG_DEFAULT, 4,  &stage2_bitmap_F768[128], &stage2_bitmap_F768[128] },  // [4]
+  { 3, BITMAPFLAG_DEFAULT, 4,  &stage2_bitmap_F768[140], &stage2_bitmap_F768[140] },  // [5]
+  { 4, BITMAPFLAG_DEFAULT, 11, &stage2_bitmap_F768[152], &stage2_bitmap_F768[152] },  // [6]
+  { 3, BITMAPFLAG_DEFAULT, 4,  &stage2_bitmap_F768[196], &stage2_bitmap_F768[196] },  // [7]
+  { 2, BITMAPFLAG_DEFAULT, 2,  &stage2_bitmap_F768[208], &stage2_bitmap_F768[208] },  // [8]
+  { 2, BITMAPFLAG_DEFAULT, 5,  &stage2_bitmap_F768[212], &stage2_bitmap_F768[212] },  // [9]
+  { 3, BITMAPFLAG_DEFAULT, 4,  &stage2_bitmap_F768[222], &stage2_bitmap_F768[222] },  // [10]
+  { 2, BITMAPFLAG_DEFAULT, 4,  &stage2_bitmap_F768[236], &stage2_bitmap_F768[236] },  // [11]
+  { 2, BITMAPFLAG_DEFAULT, 2,  &stage2_bitmap_F768[244], &stage2_bitmap_F768[244] },  // [12]
+  { 2, BITMAPFLAG_DEFAULT, 4,  &stage2_bitmap_F768[248], &stage2_bitmap_F768[248] },  // [13]
+  { 2, BITMAPFLAG_DEFAULT, 4,  &stage2_bitmap_F768[256], &stage2_bitmap_F768[256] },  // [14]
+  { 2, BITMAPFLAG_DEFAULT, 2,  &stage2_bitmap_F768[264], &stage2_bitmap_F768[264] },  // [15]
+  { 1, BITMAPFLAG_MASKED,  3,  &stage2_bitmap_F768[268], &stage2_bitmap_F768[268] },  // [16]
+  { 1, BITMAPFLAG_MASKED,  3,  &stage2_bitmap_F768[274], &stage2_bitmap_F768[274] },  // [17]
+  { 1, BITMAPFLAG_MASKED,  3,  &stage2_bitmap_F768[280], &stage2_bitmap_F768[280] },  // [18]
+  { 1, BITMAPFLAG_MASKED,  2,  &stage2_bitmap_F768[286], &stage2_bitmap_F768[286] },  // [19]
+  { 1, BITMAPFLAG_MASKED,  2,  &stage2_bitmap_F768[290], &stage2_bitmap_F768[290] },  // [20]
+  { 1, BITMAPFLAG_MASKED,  2,  &stage2_bitmap_F768[294], &stage2_bitmap_F768[294] },  // [21]
+  { 1, BITMAPFLAG_MASKED,  2,  &stage2_bitmap_F768[298], &stage2_bitmap_F768[298] },  // [22]
+  { 1, BITMAPFLAG_MASKED,  2,  &stage2_bitmap_F768[302], &stage2_bitmap_F768[302] },  // [23]
+  { 1, BITMAPFLAG_MASKED,  2,  &stage2_bitmap_F768[306], &stage2_bitmap_F768[306] },  // [24]
+  { 1, BITMAPFLAG_MASKED,  2,  &stage2_bitmap_F768[310], &stage2_bitmap_F768[310] },  // [25]
+  { 1, BITMAPFLAG_MASKED,  2,  &stage2_bitmap_F768[314], &stage2_bitmap_F768[314] },  // [26]
+  { 1, BITMAPFLAG_MASKED,  2,  &stage2_bitmap_F768[318], &stage2_bitmap_F768[318] },  // [27]
+  { 2, BITMAPFLAG_MASKED,  1,  &stage2_bitmap_F768[322], &stage2_bitmap_F768[374] },  // [28]
+  { 2, BITMAPFLAG_MASKED,  1,  &stage2_bitmap_F768[326], &stage2_bitmap_F768[378] },  // [29]
+  { 2, BITMAPFLAG_MASKED,  2,  &stage2_bitmap_F768[330], &stage2_bitmap_F768[382] },  // [30]
+  { 2, BITMAPFLAG_MASKED,  1,  &stage2_bitmap_F768[338], &stage2_bitmap_F768[390] },  // [31]
+  { 2, BITMAPFLAG_MASKED,  3,  &stage2_bitmap_F768[342], &stage2_bitmap_F768[394] },  // [32]
+  { 2, BITMAPFLAG_MASKED,  3,  &stage2_bitmap_F768[354], &stage2_bitmap_F768[406] },  // [33]
+  { 2, BITMAPFLAG_MASKED,  2,  &stage2_bitmap_F768[366], &stage2_bitmap_F768[418] },  // [34]
 };
 
-// $F696
+// $F768
 // clang-format off
-static const u8 stage2_bitmap_F696[636] = {
-  ______XX, ________, _____X__, XXXX_X__, _XXX__XX, XXXX_X__, _XXX__XX, _____X__,
-  ________, ____X_XX, ________, _XXX_X__, ________, _XXX_X__, ______XX, ________,
-  _____X__, __X_XX__, _XXX_X__, __X_XX__, _XXX_X__, ______X_, ________, ______X_,
-  __XXX___, _XXX_X__, __XXX___, _XXX_X__, ______X_, ________, _____X_X, __XXXX__,
-  _XXX_X__, __XXXX__, _XXX_X__, ______XX, ________, _____X__, _X___XX_, _XXX_X__,
-  _X___XX_, _XXX_X__, ______X_, ________, _____X__, _X_X_X__, _XXX_X__, _X_X_X__,
-  _XXX_X__, ______X_, ________, ______X_, _X_XXX__, _XXX_X__, _X_XXX__, _XXX_X__,
-  ______X_, ________, _____X__, _XX_____, _XXX_X__, _XX_____, _XXX_X__, ______X_,
-  ________, _____X__, _XX_X___, _XXX_X__, _XX_X___, _XXX_X__, ______X_, ________,
-  ______X_, _XXX____, _XXX_X__, _XXX____, _XXX_X__, _______X, _______X, ______XX,
-  _XXX_X__, _XXX_X__, _XXX_X__, _XXX_X__, _______X, _______X, ______XX, _XXXX_X_,
-  _XXX_X__, _XXXX_X_, _XXX_X__, _______X, _______X, ______XX, X_______, _XXX_X__,
-  X_______, _XXX_X__, _______X, _______X, ______X_, X____XX_, _XXX_X__, X____XX_,
-  _XXX_X__, _______X, _______X, ______X_, X___X_X_, _XXX_X__, X___X_X_, _XXX_X__,
-  _______X, _______X, ______X_, X___XXX_, _XXX_X__, X___XXX_, _XXX_X__, _______X,
-  _______X, ______X_, X__X__X_, _XXX_X__, X__X__X_, _XXX_X__, _______X, _______X,
-  ______X_, X__X_XX_, _XXX_X__, X__X_XX_, _XXX_X__, _______X, _______X, ______X_,
-  X__XX_X_, _XXX_X__, X__XX_X_, _XXX_X__, _______X, _______X, ______X_, X__XXXX_,
-  _XXX_X__, X__XXXX_, _XXX_X__, _______X, _______X, ______X_, X_X___X_, _XXX_X__,
-  X_X___X_, _XXX_X__, _______X, _______X, ______X_, X_X__XX_, _XXX_X__, X_X__XX_,
-  _XXX_X__, ______X_, _______X, _______X, X_X_X_X_, _XXX_X__, XX_XXXX_, _XXX_X__,
-  ______X_, _______X, _______X, X_X_XXX_, _XXX_X__, XXX___X_, _XXX_X__, ______X_,
-  _______X, ______X_, X_XX__X_, _XXX_X__, XXX__XX_, _XXX_X__, ______X_, _______X,
-  _______X, X_XXX_X_, _XXX_X__, XXX_XXX_, _XXX_X__, ______X_, _______X, ______XX,
-  X_XXXXX_, _XXX_X__, XXXX__X_, _XXX_X__, ______X_, _______X, ______XX, XX__X_X_,
-  _XXX_X__, XXXXXXX_, _XXX_X__, ______X_, _______X, ______X_, XX_X_XX_, _XXX_X__,
-  ____X_X_, _XXX_X_X, _X_X_X_X, XXXXXXXX, XXXXXXXX, XXXXXXXX, X_X_X_X_, XXXXXXXX,
-  XXXXXXXX, _X_XXXXX, XXXXXXXX, XXXXXXXX, __X__XXX, XXXXXXXX, _____XXX, XXXXXXXX,
-  XX_X____, _______X, _X_X__XX, _XX_XX_X, _X_X_X__, ________, ____X___, __X_XXX_,
-  XXX_____, ____XXX_, ___X_X__, __XX__XX, X_XX____, __XXX_X_, ___X__XX, X__XXXXX,
-  _X_XXXXX, XXX__XX_, ___XX_X_, XXXX_XX_, XX_XXX__, X__X_X__, _XXXXX__, X_XX_XX_,
-  _X_XXXX_, X___XX__, X_XX_X_X, __XXXX_X, _XX_XXXX, XX_XXXXX, XX_XXXXX, __XXXX__,
-  XX__XXXX, XXXXXX_X, _X__X_X_, _X_XXX__, _X_XXX_X, XXX_X_XX, _XXX___X, X__XX_X_,
-  _XXXX_X_, _X___XX_, __X__X_X, XX_XX__X, XXX_X_X_, __XXXX__, __XXX__X, _X__X___,
-  X___X__X, _XX_X___, _XXXX__X, _XXX_XX_, XX_XXX_X, X__XX_XX, X__X__X_, _XX__XXX,
-  XXXXX__X, XXXXXXXX, __XXXX__, _XXX_X_X, __X__X_X, XXXXXXXX, XXXXXXXX, XXXXXXXX,
-  XXXXXX_X, __XXX___, X_X_X_XX, XX_XXXXX, X_X_XXXX, XXX_X_X_, ___XX__X, ___X__XX,
-  X___XXXX, __X___X_, _X__XX__, ____XXX_, ___X__XX, X___X_XX, X__X__X_, __XX____,
-  _____XXX, __X__XXX, _XXXX_XX, _XXXXX_X, _XX_____, _______X, XXX_XXXX, ___X_XXX,
-  X___X_XX, X___XX__, _XXXXXXX, ___X_XXX, XXXXXXX_, __XX_X__, X_XXXXX_, X_X__XXX,
-  _XXXXXXX, XX__XX__, X__XXX__, _XX_XXXX, __XX_XX_, _X__X___, _X_X__X_, XX_X___X,
-  X__X__X_, __XX____, __XX_XXX, _XX_____, XX__X__X, _XX_____, ____XXXX, X_______,
-  __XXXXXX, X_______, ____XXXX, XXXXXXXX, XXXX____, XXXXXXXX, XXXXXXXX, XXXXXXXX,
-  __XXXXXX, XX____XX, XXXXXXX_, ___XX_X_, XX_X_X_X, _X__X___, XX__XX_X, XXXX____,
-  __XX____, X_XXX_XX, XX__XXXX, XX__X___, X_XXXX_X, X_X_XX__, X_X_X___, X___XXXX,
-  X_X_XXX_, X__XX___, _____XXX, XX_X_XXX, _XXX_XXX, XXXX_X__, _____X_X, _XX___XX,
-  __X_XX_X, XX__XX__, _XX__XX_, _X_XX_X_, XXXXX__X, __X_X___, X_XX_XXX, X_XX___X,
-  __X_XX__, XX_X____, X__XXXX_, ___XX_XX, _X_XXXXX, __X_X___, XX__XXXX, ___XXXXX,
-  XXXXXXXX, XXXX_X__, XX_X__XX, _XXXX_XX, XX_X_XXX, XX_XX___, _XX__X__, X_XXX__X,
-  X__X__X_, X__X____, __XXX___, X_XXX__X, XXX_XXX_, _XX_____, ____XX_X, _XXX_XX_,
-  XX____XX, X__XX___, _____XXX, XXXX__X_, XXXXXXX_, _XX_X___, XXX_XX_X, XX_XXXXX,
-  X__XX___, X_X_X_X_, _XX_X_X_, _X_X____, XXXX_X__, __X__X_X, __X_____, _XXXX___,
-  ___XXXXX, XX______, XXXXXXXX, XXXXXX__, _XXX___X, XXX_X___, __X__XXX, XX____XX,
-  _X_XX_XX, __XXXX_X, XX_XXXXX, _XXXX_X_, _XX__XX_, X_XXXXX_, X_X_X_XX, __XXXX_X,
-  _____XX_, X__X__X_, X_X___XX, _____X_X, XX__XXXX, _XX__XX_, ______X_, _XXXX_XX,
-  XXXXXX_X, _______X, ___XX_XX, X__X__X_, ________, ________, XX_XX__X, X_X_XXX_,
-  XXXX_X_X, _XXXX_X_, _X__X_X_, X__X_X__, __XXXX__, _XXXX___, XXXXXXXX, XXXXX___,
-  _XXX_X_X, XXXX____, __XXX_XX, _XXXXX__, _X_X_XXX, _XXXXX__, X_XXX_XX, X_XXXX__,
-  _X_XX__X, _XXX_X__, XX__XX_X, XXX__X__, _XXXXXXX, X__XX_X_, X___X_XX, XXX_XXX_,
-  _XXXX__X, X__XX_X_, _X_X__XX, _X___X__, __XXXX__, XXXXX___, ______XX, X____X__,
-  ______XX, X_XXXX__, ______XX, XX___X__, X_____XX, _X___X__, X_____XX, _X_XXX__,
-  X_____XX, _XX__X__, XX_____X, __X___X_, XX_____X, __XX__X_, XX_____X, __X_XXX_,
-  X_____XX, _X___X__, X_____XX, _X_XXX__, XX____XX, __X_XX__, XX____XX, __XX_X__,
-  XXX____X, ___X_XX_, XXX____X, ___XX_X_, XXX____X, ___X__X_, XXX____X, ___X__X_,
-  XXXX___X, ____X_X_, XXXX___X, ____X_X_, XXXXX___, _____X_X, XXXXX___, _____X_X,
-  XXXX___X, ____X_X_, XXXX___X, ____X_X_, XXXXX__X, _____XX_, XXXXX__X, _____XX_,
-  XXXXXX__, ______XX, XXXXXX__, ______XX, ________, XXXXXXXX, ____XXXX, XXXX____,
-  XXXX___X, ____XXX_, XXXXXXXX, ________, XXXXX__X, _____XX_, XXXXXXXX, ________,
-  XXXXX__X, _____XX_, XXXXXXXX, ________, XXXXX___, _____XXX, XXXXXXXX, ________,
-  XX______, __XXXXX_, ___XXXXX, XXX_____, XX______, __XX_XXX, ____XXXX, _XXX____,
-  X_______, _X_XX_XX, ____XXXX, XXXX____, ________, XXX_X__X, ____XXXX, _X_X____,
-  ________, X_XXXXXX, ____XXXX, XXX_____, X_______, _X__XX_X, ____XXXX, _X_X____,
-  XX______, __XXX__X, ___XXXXX, __X_____, XXX_____, ___XXXXX, __XXXXXX, XX______,
-  XXXX____, ____XXXX, ________, XXXXXXXX, XXXXXXXX, ________, ___XXXXX, XXX_____,
-  XXXXXXXX, ________, X__XXXXX, _XX_____, XXXXXXXX, ________, X__XXXXX, _XX_____,
-  XXXXXXXX, ________, X___XXXX, _XXX____, XXXXXX__, ______XX, _______X, XXX_XXX_,
-  XXXXXX__, ______XX, ________, _XXX_XXX, XXXXX___, _____X_X, ________, X_XXXXXX,
-  XXXX____, ____XXX_, ________, X__X_X_X, XXXX____, ____X_XX, ________, XXXXXXX_,
-  XXXXX___, _____X__, ________, XX_X_X_X, XXXXXX__, ______XX, _______X, X__X__X_,
-  XXXXXXX_, _______X, ______XX, XXXXXX__,
+static const u8 stage2_bitmap_F768[426] = {
+  _X_X_X_X, XXXXXXXX, XXXXXXXX, XXXXXXXX, X_X_X_X_, XXXXXXXX, XXXXXXXX, _X_XXXXX,
+  XXXXXXXX, XXXXXXXX, __X__XXX, XXXXXXXX, _____XXX, XXXXXXXX, XX_X____, _______X,
+  _X_X__XX, _XX_XX_X, _X_X_X__, ________, ____X___, __X_XXX_, XXX_____, ____XXX_,
+  ___X_X__, __XX__XX, X_XX____, __XXX_X_, ___X__XX, X__XXXXX, _X_XXXXX, XXX__XX_,
+  ___XX_X_, XXXX_XX_, XX_XXX__, X__X_X__, _XXXXX__, X_XX_XX_, _X_XXXX_, X___XX__,
+  X_XX_X_X, __XXXX_X, _XX_XXXX, XX_XXXXX, XX_XXXXX, __XXXX__, XX__XXXX, XXXXXX_X,
+  _X__X_X_, _X_XXX__, _X_XXX_X, XXX_X_XX, _XXX___X, X__XX_X_, _XXXX_X_, _X___XX_,
+  __X__X_X, XX_XX__X, XXX_X_X_, __XXXX__, __XXX__X, _X__X___, X___X__X, _XX_X___,
+  _XXXX__X, _XXX_XX_, XX_XXX_X, X__XX_XX, X__X__X_, _XX__XXX, XXXXX__X, XXXXXXXX,
+  __XXXX__, _XXX_X_X, __X__X_X, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXX_X, __XXX___,
+  X_X_X_XX, XX_XXXXX, X_X_XXXX, XXX_X_X_, ___XX__X, ___X__XX, X___XXXX, __X___X_,
+  _X__XX__, ____XXX_, ___X__XX, X___X_XX, X__X__X_, __XX____, _____XXX, __X__XXX,
+  _XXXX_XX, _XXXXX_X, _XX_____, _______X, XXX_XXXX, ___X_XXX, X___X_XX, X___XX__,
+  _XXXXXXX, ___X_XXX, XXXXXXX_, __XX_X__, X_XXXXX_, X_X__XXX, _XXXXXXX, XX__XX__,
+  X__XXX__, _XX_XXXX, __XX_XX_, _X__X___, _X_X__X_, XX_X___X, X__X__X_, __XX____,
+  __XX_XXX, _XX_____, XX__X__X, _XX_____, ____XXXX, X_______, __XXXXXX, X_______,
+  ____XXXX, XXXXXXXX, XXXX____, XXXXXXXX, XXXXXXXX, XXXXXXXX, __XXXXXX, XX____XX,
+  XXXXXXX_, ___XX_X_, XX_X_X_X, _X__X___, XX__XX_X, XXXX____, __XX____, X_XXX_XX,
+  XX__XXXX, XX__X___, X_XXXX_X, X_X_XX__, X_X_X___, X___XXXX, X_X_XXX_, X__XX___,
+  _____XXX, XX_X_XXX, _XXX_XXX, XXXX_X__, _____X_X, _XX___XX, __X_XX_X, XX__XX__,
+  _XX__XX_, _X_XX_X_, XXXXX__X, __X_X___, X_XX_XXX, X_XX___X, __X_XX__, XX_X____,
+  X__XXXX_, ___XX_XX, _X_XXXXX, __X_X___, XX__XXXX, ___XXXXX, XXXXXXXX, XXXX_X__,
+  XX_X__XX, _XXXX_XX, XX_X_XXX, XX_XX___, _XX__X__, X_XXX__X, X__X__X_, X__X____,
+  __XXX___, X_XXX__X, XXX_XXX_, _XX_____, ____XX_X, _XXX_XX_, XX____XX, X__XX___,
+  _____XXX, XXXX__X_, XXXXXXX_, _XX_X___, XXX_XX_X, XX_XXXXX, X__XX___, X_X_X_X_,
+  _XX_X_X_, _X_X____, XXXX_X__, __X__X_X, __X_____, _XXXX___, ___XXXXX, XX______,
+  XXXXXXXX, XXXXXX__, _XXX___X, XXX_X___, __X__XXX, XX____XX, _X_XX_XX, __XXXX_X,
+  XX_XXXXX, _XXXX_X_, _XX__XX_, X_XXXXX_, X_X_X_XX, __XXXX_X, _____XX_, X__X__X_,
+  X_X___XX, _____X_X, XX__XXXX, _XX__XX_, ______X_, _XXXX_XX, XXXXXX_X, _______X,
+  ___XX_XX, X__X__X_, ________, ________, XX_XX__X, X_X_XXX_, XXXX_X_X, _XXXX_X_,
+  _X__X_X_, X__X_X__, __XXXX__, _XXXX___, XXXXXXXX, XXXXX___, _XXX_X_X, XXXX____,
+  __XXX_XX, _XXXXX__, _X_X_XXX, _XXXXX__, X_XXX_XX, X_XXXX__, _X_XX__X, _XXX_X__,
+  XX__XX_X, XXX__X__, _XXXXXXX, X__XX_X_, X___X_XX, XXX_XXX_, _XXXX__X, X__XX_X_,
+  _X_X__XX, _X___X__, __XXXX__, XXXXX___, ______XX, X____X__, ______XX, X_XXXX__,
+  ______XX, XX___X__, X_____XX, _X___X__, X_____XX, _X_XXX__, X_____XX, _XX__X__,
+  XX_____X, __X___X_, XX_____X, __XX__X_, XX_____X, __X_XXX_, X_____XX, _X___X__,
+  X_____XX, _X_XXX__, XX____XX, __X_XX__, XX____XX, __XX_X__, XXX____X, ___X_XX_,
+  XXX____X, ___XX_X_, XXX____X, ___X__X_, XXX____X, ___X__X_, XXXX___X, ____X_X_,
+  XXXX___X, ____X_X_, XXXXX___, _____X_X, XXXXX___, _____X_X, XXXX___X, ____X_X_,
+  XXXX___X, ____X_X_, XXXXX__X, _____XX_, XXXXX__X, _____XX_, XXXXXX__, ______XX,
+  XXXXXX__, ______XX, ________, XXXXXXXX, ____XXXX, XXXX____, XXXX___X, ____XXX_,
+  XXXXXXXX, ________, XXXXX__X, _____XX_, XXXXXXXX, ________, XXXXX__X, _____XX_,
+  XXXXXXXX, ________, XXXXX___, _____XXX, XXXXXXXX, ________, XX______, __XXXXX_,
+  ___XXXXX, XXX_____, XX______, __XX_XXX, ____XXXX, _XXX____, X_______, _X_XX_XX,
+  ____XXXX, XXXX____, ________, XXX_X__X, ____XXXX, _X_X____, ________, X_XXXXXX,
+  ____XXXX, XXX_____, X_______, _X__XX_X, ____XXXX, _X_X____, XX______, __XXX__X,
+  ___XXXXX, __X_____, XXX_____, ___XXXXX, __XXXXXX, XX______, XXXX____, ____XXXX,
+  ________, XXXXXXXX, XXXXXXXX, ________, ___XXXXX, XXX_____, XXXXXXXX, ________,
+  X__XXXXX, _XX_____, XXXXXXXX, ________, X__XXXXX, _XX_____, XXXXXXXX, ________,
+  X___XXXX, _XXX____, XXXXXX__, ______XX, _______X, XXX_XXX_, XXXXXX__, ______XX,
+  ________, _XXX_XXX, XXXXX___, _____X_X, ________, X_XXXXXX, XXXX____, ____XXX_,
+  ________, X__X_X_X, XXXX____, ____X_XX, ________, XXXXXXX_, XXXXX___, _____X__,
+  ________, XX_X_X_X, XXXXXX__, ______XX, _______X, X__X__X_, XXXXXXX_, _______X,
+  ______XX, XXXXXX__,
 };
 // clang-format on
 

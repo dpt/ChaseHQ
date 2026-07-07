@@ -4944,8 +4944,11 @@ doc_y_range_zero:
     goto doc_compute_bitmap;
 
 doc_y_range_nonzero:
-    // Conv: Z80 ADD A,D with D a signed byte; u8 doc_col_pos must be sign-extended.
-    Adash_y_range += (s8) D_col_pos;
+    // Conv: Z80 $9359 BIT 7,D; JR NZ,$9361 selects SUB D (positive) or ADD A,D
+    // (negative).  Net effect: A -= |D| in both cases.  doc_col_pos is s8 and
+    // in practice only 0 or negative, so the ADD branch is always taken and
+    // += D_col_pos is equivalent.
+    Adash_y_range += D_col_pos;
 
     Diy_diff = Adash_y_range;
     if ((s8) Adash_y_range <= 0)
@@ -5082,37 +5085,38 @@ doc_set_callbacks:
 
   // EXX - UNBANK
 
-  // Conv: Z80 $9404–$941D is NOT a loop.  It is two sequential CALL/JP plot
-  // calls with a conditional skip of the first.  $9407 = JP M,$941A: if
-  // (doc_rows_main − BCpadding) < 0 jump directly to the ADD A,B / B=A /
-  // JP-final sequence, bypassing the first call and the doc_rows_2nd load.
-  Awidth_bytes = state->doc_rows_main - BCpadding; // $9404: A = SM − B
-  if ((s8) Awidth_bytes > 0) {                     // $9407: JP M,$941A if negative
-    state->doc_rows_main = Awidth_bytes;            // $940B: SM($9405) = A
-    // $940F: CALL doc_plot_fn (first call, height = BCpadding)
-    state->doc_plot_fn(state,
-                       IXjump_offset,
-                       HLdash_backbuf_addr,
-                       BCpadding,
-                       DEbitmap_stride,
-                       HLbitmap_data);
-    HLbitmap_data = state->doc_bitmap_ptr;          // $9412: HL = SM (bitmap ptr)
-    Bdash_height = state->doc_rows_2nd;             // $9415: B = SM (doc_rows_2nd)
-    Awidth_bytes += Bdash_height;                   // $941A: A += B
-  } else {
-    Awidth_bytes += BCpadding;                      // $941A: A += B (B = original BCpadding)
+  // Conv: $9404–$941D is a loop (back-edge at $9417 JP $9404), structurally
+  // identical to the doc_masked_rows loop below.  Each iteration subtracts the
+  // current section height (B = BCpadding, then doc_rows_2nd) from
+  // doc_rows_main; exits via $9407 JR Z / $9409 JR C when remaining ≤ 0.
+  // $941A ADD A,B recovers the final (partial) section height; $941D JP falls
+  // through to doc_plot_fn_2.  B' (= D_draw_height, banked) carries the actual
+  // row count into each plot call; main B ($941B LD B,A) is for the back-buffer
+  // address only.
+  for (;;) {
+    Awidth_bytes = state->doc_rows_main - BCpadding; // $9404/$9406
+    if ((s8) Awidth_bytes > 0) {                     // $9407 JR Z / $9409 JR C
+      state->doc_rows_main = Awidth_bytes;            // $940B: update SM
+      state->doc_plot_fn(state,
+                         IXjump_offset,
+                         HLdash_backbuf_addr,
+                         BCpadding,
+                         DEbitmap_stride,
+                         HLbitmap_data);              // $940F: CALL doc_plot_fn
+      HLbitmap_data = state->doc_bitmap_ptr;          // $9412: HL = SM bitmap ptr
+      BCpadding = state->doc_rows_2nd;                // $9415: B = SM doc_rows_2nd
+    } else {
+      Awidth_bytes += BCpadding;                      // $941A: A += B
+      break;
+    }
   }
-  Bdash_height = Awidth_bytes;                      // $941B: B = A (main B; not height)
-  // $941D: JP doc_plot_fn_2.  Z80 passes height via B' (banked = D_draw_height = BCpadding),
-  // not via main B. Bdash_height (main B) is used for the back-buffer address, not the row count.
-  // Conv: both calls use BCpadding as height; the updated backbuf addr from the first call
-  // is not yet propagated (TODO when plot_sprite_even exposes its final HL).
+  Bdash_height = Awidth_bytes;                        // $941B: B = A
   state->doc_plot_fn_2(state,
                        IXjump_offset,
                        HLdash_backbuf_addr,
                        BCpadding,
                        DEbitmap_stride,
-                       HLbitmap_data); /* exit via */
+                       HLbitmap_data); /* exit via $941D */
   return;
 
 doc_unmasked_odd:
