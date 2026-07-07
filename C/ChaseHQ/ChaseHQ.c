@@ -4442,10 +4442,10 @@ void draw_object_left(chqstate_t *state,
  * \param[in] IYheight    Height table pointer. (was IY)
  */
 static void draw_object_left_entrypt(chqstate_t       *state,
-                                     int                Acol_offset,
-                                     int                Bdepth,
+                                     int               Acol_offset,
+                                     int               Bdepth,
                                      const depthset_t *DEdepthset,
-                                     const s16  *IXxpos,
+                                     const s16        *IXxpos,
                                      const u8         *IYheight)
 {
   const depthset_t *ds;      /* depthset pointer from DEdepthset arg (was HL) */
@@ -4615,7 +4615,7 @@ static void draw_object_left_helicopter_entrypt(chqstate_t     *state,
  * \param[in] IYheight   Height table pointer. (was IY)
  */
 void draw_object_right(chqstate_t *state,
-                       int          Bdepth,
+                       int         Bdepth,
                        const void *DEdepthset,
                        const s16  *IXxpos,
                        const u8   *IYheight)
@@ -4644,10 +4644,10 @@ void draw_object_right(chqstate_t *state,
  * \param[in] IYheight    Height table pointer. (was IY)
  */
 static void draw_object_right_entrypt(chqstate_t       *state,
-                                      int                Acol_offset,
-                                      int                Bdepth,
+                                      int               Acol_offset,
+                                      int               Bdepth,
                                       const depthset_t *DEdepthset,
-                                      const s16  *IXxpos,
+                                      const s16        *IXxpos,
                                       const u8         *IYheight)
 {
   const depthset_t *ds;      /* depthset pointer from DEdepthset arg (was HL) */
@@ -4689,10 +4689,10 @@ static void draw_object_right_entrypt(chqstate_t       *state,
  * \param[in] IYheight Height table pointer. (was IY)
  */
 static void draw_object_right_stretchy_entrypt(chqstate_t     *state,
-    int              Bdepth,
-    const bitmap_t *HLbitmap,
-    const s16  *IXxpos,
-    const u8       *IYheight)
+                                               int             Bdepth,
+                                               const bitmap_t *HLbitmap,
+                                               const s16      *IXxpos,
+                                               const u8       *IYheight)
 {
   int Awidth_bytes; /* available screen width = IX[0] ± depth (was A) */
 
@@ -4720,9 +4720,9 @@ static void draw_object_right_stretchy_entrypt(chqstate_t     *state,
  * \param[in] IYheight     Height table pointer. (was IY)
  */
 static void draw_object_right_helicopter_entrypt(chqstate_t     *state,
-    int              Awidth_bytes,
-    const bitmap_t *HLbitmap,
-    const u8       *IYheight)
+                                                 int             Awidth_bytes,
+                                                 const bitmap_t *HLbitmap,
+                                                 const u8       *IYheight)
 {
   if (Awidth_bytes < 247) /* $9309: CP $F7; RET NC */
     draw_object_perspective_entrypt(state, Awidth_bytes, 0, HLbitmap, IYheight);
@@ -4818,11 +4818,11 @@ static void draw_object_perspective_entrypt(chqstate_t     *state,
  *                              object slot. (was IY)
  */
 static void draw_object_common_flipped(chqstate_t     *state,
-                                       int              Bheight,
-                                       int              Cpadding,
-                                       int              Ebitmap_stride,
+                                       int             Bheight,
+                                       int             Cpadding,
+                                       int             Ebitmap_stride,
                                        const bitmap_t *HLbitmap,
-                                       int              Adash_width_bytes,
+                                       int             Adash_width_bytes,
                                        int             Fdash_zero,
                                        int             Fdash_carry,
                                        const u8       *IYheight)
@@ -4841,14 +4841,14 @@ static void draw_object_common_flipped(chqstate_t     *state,
   carry        = Fdash_carry;
 
   draw_object_clipped(state,
-                          zero,
-                          carry,
-                          Awidth_bytes,
-                          Bheight,
-                          Cpadding,
-                          Ebitmap_stride,
-                          HLbitmap,
-                          IYheight);
+                      zero,
+                      carry,
+                      Awidth_bytes,
+                      Bheight,
+                      Cpadding,
+                      Ebitmap_stride,
+                      HLbitmap,
+                      IYheight);
 }
 
 /**
@@ -5461,7 +5461,7 @@ static void plot_sprite_flipped_even(chqstate_t *state,
                                      int         jump_offset,
                                      const u8   *flip_table,
                                      u8         *backbuf_addr,
-                                     int          height,
+                                     int         height,
                                      int         bitmap_stride,
                                      const u8   *bitmap_data)
 {

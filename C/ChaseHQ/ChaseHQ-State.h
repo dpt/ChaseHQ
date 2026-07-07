@@ -212,7 +212,7 @@ struct chqstate {
   // $9396 (SM) in draw_object_common
   u8        doc_shift_select;
   // $933D (SM) in draw_object_common
-  u8        doc_col_pos;
+  u8        doc_col_pos; // prob should be signed
   // $93C0 (SM) in draw_object_common
   u8        doc_inverted; // controls sprite plotting (2 => inverted, 1 => ?, 0 => ?)
   // $9404 (SM) in draw_object_common
