@@ -13268,24 +13268,24 @@ pt_arm_hooks: /* $C144 */
 static void draw_tunnel(chqstate_t *state, u8 *IYheight)
 {
   int       carry = 0;
-  int       Adistance;    /* row index of this call; compared to SM trigger (was A) */
-  int       Avisible;     /* tunnel-visible countdown; 1 = entrance frame (was A) */
-  int       Dfill;        /* fill byte: $EE for entrance stripes, $FF for interior (was D) */
-  u8        L;            /* low byte of HL: xpos byte-offset then backbuf low byte (was L) */
-  u8        C;            /* fill width correction derived from road edge positions (was C) */
-  s16      *HL;           /* pointer into xpos table during edge calculation (was HL) */
-  u8        A;            /* Z80 accumulator; reused for multiple transient values (was A) */
-  u8        D;            /* left fill boundary 0..22 (jump-table index), then fill byte (was D) */
-  int       E;            /* right fill boundary 0..16 (jump-table index), then fill byte (was E) */
-  u8        B;            /* road row data, then fill loop iteration count (was B) */
-  int       H;            /* high byte of back-buffer row address ($F0..$FF) (was H) */
-  const u8 *DE;           /* pointer into persp_y_scale table (was DE) */
-  u16       DEfill;       /* 16-bit fill word: fill byte repeated (was DE) */
-  u8       *HLbackbuf;    /* back-buffer row pointer for PUSH-based fill (was HL/SP) */
-  u8       *SPoutput;     /* per-scanline write pointer; simulates Z80 SP (was SP) */
-  int       Adash;        /* A' = 128 - B_step35, banked via EX AF,AF' at $C1E5 (was A') */
-  int       n_a;          /* PUSH count for first fill: 16 - dt_fill_start_a (Conv: no Z80 register) */
-  int       n_b;          /* PUSH count for second fill: 16 - dt_fill_start_b (Conv: no Z80 register) */
+  int       Adistance; /* row index of this call; compared to SM trigger (was A) */
+  int       Avisible;  /* tunnel-visible countdown; 1 = entrance frame (was A) */
+  int       Dfill;     /* fill byte: $EE for entrance stripes, $FF for interior (was D) */
+  u8        L;         /* low byte of HL: xpos byte-offset then backbuf low byte (was L) */
+  u8        C;         /* fill width correction derived from road edge positions (was C) */
+  s16      *HL;        /* pointer into xpos table during edge calculation (was HL) */
+  u8        A;         /* Z80 accumulator; reused for multiple transient values (was A) */
+  u8        D;         /* left fill boundary 0..22 (jump-table index), then fill byte (was D) */
+  int       E;         /* right fill boundary 0..16 (jump-table index), then fill byte (was E) */
+  u8        B;         /* road row data, then fill loop iteration count (was B) */
+  int       H;         /* high byte of back-buffer row address ($F0..$FF) (was H) */
+  const u8 *DE;        /* pointer into persp_y_scale table (was DE) */
+  u16       DEfill;    /* 16-bit fill word: fill byte repeated (was DE) */
+  u8       *HLbackbuf; /* back-buffer row pointer for PUSH-based fill (was HL/SP) */
+  u8       *SPoutput;  /* per-scanline write pointer; simulates Z80 SP (was SP) */
+  int       Adash;     /* A' = 128 - B_step35, banked via EX AF,AF' at $C1E5 (was A') */
+  int       n_a;       /* PUSH count for first fill: (16 - dt_fill_start_a) (Conv: added) */
+  int       n_b;       /* PUSH count for second fill: (16 - dt_fill_start_b) (Conv: added) */
 
   Adistance = IYheight - &state->height_table[0];
   if (Adistance != state->dt_tunnel_distance)
@@ -13297,6 +13297,7 @@ static void draw_tunnel(chqstate_t *state, u8 *IYheight)
     Dfill = 0xFF;
 
   state->dt_fill_pattern = Dfill * 0x0101; /* widen to $EEEE or $FFFF */
+
   // Conv: Removed SP store ($C16E LD ($C2E4),SP)
 
   L = ~((IYheight[0x4E] - 2) << 1);
