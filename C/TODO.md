@@ -3,12 +3,14 @@ perhaps build unit tests now to flush out problems ahead of time.
 
 # BUGS
 
-- Hitting invisible objects (right hand objects mispositioned on 3-lane)
 - Wonky feeling car speed / anims at start
 - Lane change diagonal transitions are not working
 - Message cursor seems to vanish when idle
 - Forks seize the game up
 - draw_scene_objects => crash
+- Transitions still not always right (perhaps just spiral?)
+- Floating fork arrow vanishes too soon
+- Tunnel drawing wrong
 
 
 # TODO
@@ -55,6 +57,7 @@ perhaps build unit tests now to flush out problems ahead of time.
 
 # DONE
 
+- Hitting invisible objects (right hand objects mispositioned on 3-lane)
 - The pregame radio screen sometimes has leftover transition animation parts
 - Backdrop does not horizontally scroll (to the right)
 - Perp escape scene causes an immediate crash (prob. tunnel code)
