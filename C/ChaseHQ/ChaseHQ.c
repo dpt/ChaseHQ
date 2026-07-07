@@ -738,13 +738,6 @@ static u16 draw_smash_bar_solid_bit(chqstate_t *state, int B_nrows, int HLbackbu
 
 static void draw_scene_objects(chqstate_t *state);
 
-static void draw_overhead(chqstate_t       *state,
-                          int               Bparam,
-                          int               Cparam,
-                          const stretchy_t *DEstretchy,
-                          const s16        *IXxpos,
-                          const u8         *IYheight);
-
 static void draw_stretchy_object_common(chqstate_t       *state,
                                         int               Bdepth,
                                         const stretchy_t *DEstretchy,
@@ -3963,23 +3956,23 @@ left_hand_stuff:
  *
  * \param[in,out] state      Pointer to game state.
  * \param[in]     Bparam     Depth scale index; also selects the pair entry (0..9). (was B)
- * \param[in]     Cparam     Row index within the depth-set pair. (was C)
- * \param[in]     DEstretchy Pointer to the stretchy object descriptor array. (was DE)
+ * \param[in]     arg        Pointer to the stretchy object descriptor array. (was DE)
  * \param[in]     IXxpos     Pointer into xpos_road_centre for this object slot. (was IX)
  * \param[in]     IYheight   Pointer into height_table for this object slot. (was IY)
  */
-static void draw_overhead(chqstate_t       *state,
-                          int               Bparam,
-                          int               Cparam,
-                          const stretchy_t *DEstretchy,
-                          const s16        *IXxpos,
-                          const u8         *IYheight)
+void draw_overhead(chqstate_t *state,
+                   int         Bparam,
+                   const void *arg,
+                   const s16  *IXxpos,
+                   const u8   *IYheight)
 {
+  const stretchy_t      *DEstretchy;  /* pointer to the stretchy object descriptor array (was DE) */
   const stretchy_t      *HLstretchy;  /* pointer to the stretchy descriptor (was HL) */
   const depthset_pair_t *DEpairs;     /* pointer to the depth-set pairs array (was DE) */
   u8                    *HLdst;       /* destination pointer during row copy (was HL) */
   u8                    *DEsrc;       /* source pointer during row copy (was DE) */
   int                    Avertical;   /* raw vertical scale value from persp_y_scale (was A) */
+  int                    Cparam;      /* scratch: computed vertical offset (was C) */
   int                    A;           /* scratch accumulator: visibility tests and offsets (was A) */
   int                    Aminheight;  /* MIN(Bparam−1, 9): pair index into depth-set (was A) */
   int                    Bminheight;  /* copy of Aminheight for draw loop (was B) */
@@ -3994,9 +3987,11 @@ static void draw_overhead(chqstate_t       *state,
   int                    Acopy;       /* scratch copy of A during sub-loop (was A) */
   int                    B;           /* sub-loop counter for per-row byte writes (was B) */
 
+  DEstretchy = (const stretchy_t *) arg;
+
   // PUSH IXxpos/DE/BC
   if (IXxpos[1] == 0) // buffer offset/distance
-    draw_stretchy_object_left(state, Bparam, DEstretchy, IXxpos, IYheight);
+    draw_stretchy_object_left(state, Bparam, arg, IXxpos, IYheight);
   // POP BC/HL/IXxpos
 
   HLstretchy = DEstretchy; // e.g. $6F26 in Stage 3's data, loads $6F2D
@@ -4239,7 +4234,7 @@ dso_loop_continue:
   // Conv: Dispatch ladder converted to switch.
   // Bstretchy_type = data_type - 2 (two decrements already applied).
   switch (Bstretchy_type) {
-  default: assert(0);
+  default:                       /* data type STRETCHY_TYPE_200PC (and any higher) */
   case 1: goto dso_case_150pc;  /* data type STRETCHY_TYPE_150PC */
   case 2: goto dso_case_50pc;   /* data type STRETCHY_TYPE_50PC */
   case 3: goto dso_case_113pc;  /* data type STRETCHY_TYPE_113PC */
@@ -4248,7 +4243,7 @@ dso_loop_continue:
   case 6: goto dso_case_25pc;   /* data type STRETCHY_TYPE_25PC */
   case 7: goto dso_continue;    /* data type STRETCHY_TYPE_100PC */
   }
-  Avertical *= 2;
+  Avertical *= 2;                /* data type STRETCHY_TYPE_200PC: Z80 ADD A,A */
   goto dso_continue;
 
 dso_case_25pc:
@@ -17078,7 +17073,7 @@ static void play_speech_128k(chqstate_t *state, int index)
   // EXX - Bank
   // EX AF,AF' - Unbank index
   DEdash_length  = speech_samples_table[index - 1].length;
-  HLdash_samples = &sound_samples[speech_samples_table[index - 1].data];
+  HLdash_samples = &sound_samples[speech_samples_table[index - 1].data - SOUND_SAMPLES_Z80_BASE];
 
   // There are two samples per byte so we iterate here.
   do {

@@ -50,105 +50,167 @@ from typing import Optional, List, Tuple, Dict
 # ── Encoding tables ──────────────────────────────────────────────────────────
 
 CURVE_TYPES = {
-    0: 'STRAIGHT', 1: 'RIGHT', 2: 'RIGHT_HARD', 3: 'RIGHT_VERY_HARD',
-    9: 'LEFT', 10: 'LEFT_HARD', 11: 'LEFT_VERY_HARD',
+    0: "STRAIGHT",
+    1: "RIGHT",
+    2: "RIGHT_HARD",
+    3: "RIGHT_VERY_HARD",
+    9: "LEFT",
+    10: "LEFT_HARD",
+    11: "LEFT_VERY_HARD",
 }
 
 HEIGHT_TYPES = {
-    1: 'UP7', 3: 'UP5', 5: 'UP3', 7: 'UP1',
-    8: 'LEVEL', 9: 'DOWN1', 11: 'DOWN3', 13: 'DOWN5', 15: 'DOWN7',
+    1: "UP7",
+    3: "UP5",
+    5: "UP3",
+    7: "UP1",
+    8: "LEVEL",
+    9: "DOWN1",
+    11: "DOWN3",
+    13: "DOWN5",
+    15: "DOWN7",
 }
 
 LANE_VALS = {
-    0x00: '4',      0x81: '3L',     0x82: '3R',
-    0x01: '2L',     0x02: '2M',     0x03: '2R',
-    0xBD: '4TO3L',  0x8E: '4TO3R',  0xAD: '3TO4L',  0x9E: '3TO4R',
-    0x06: '3TO2L',  0x0F: '3TO2R',  0x2D: '2TO3L',  0x1F: '2TO3R',
-    0x45: 'TUNNEL_ENTRY', 0x59: 'TUNNEL_EXIT',
-    0xC1: 'DIRTTRACK', 0xED: 'FORKED',
+    0x00: "4",
+    0x81: "3L",
+    0x82: "3R",
+    0x01: "2L",
+    0x02: "2M",
+    0x03: "2R",
+    0xBD: "4TO3L",
+    0x8E: "4TO3R",
+    0xAD: "3TO4L",
+    0x9E: "3TO4R",
+    0x06: "3TO2L",
+    0x0F: "3TO2R",
+    0x2D: "2TO3L",
+    0x1F: "2TO3R",
+    0x45: "TUNNEL_ENTRY",
+    0x59: "TUNNEL_EXIT",
+    0xC1: "DIRTTRACK",
+    0xED: "FORKED",
 }
 
 # ESC command byte → macro name (None = needs special handling)
 HAZARD_CMDS = {
-    0:  None,                    # GOTO/LOOP
-    1:  'MAP_CMD_FORK_END',
-    2:  None,                    # SPLIT
-    3:  'MAP_CMD_STOP_BARRIERS',
-    4:  'MAP_ESC, (4)',          # HAZARD1_L (Stage 2+) / START_BARRIERS_L (S1)
-    5:  'MAP_ESC, (5)',          # HAZARD1_R
-    6:  'MAP_CMD_UNKNOWN_HAZARD_6',
-    7:  'MAP_CMD_START_BARRIERS_L',
-    8:  'MAP_CMD_START_BARRIERS_R',
-    9:  'MAP_CMD_START_TWO_BARRIERS',
-    10: 'MAP_CMD_ARROW_OFF',
-    11: 'MAP_CMD_ARROW_L',
-    12: 'MAP_CMD_ARROW_R',
-    13: 'MAP_CMD_START_CARS',
-    14: 'MAP_CMD_STOP_CARS',
-    15: 'MAP_ESC, (15)',         # stop helicopter
-    17: 'MAP_ESC, (17)',         # start heli left
+    0: None,  # GOTO/LOOP
+    1: "MAP_CMD_FORK_END",
+    2: None,  # SPLIT
+    3: "MAP_CMD_STOP_BARRIERS",
+    4: "MAP_ESC, (4)",  # HAZARD1_L (Stage 2+) / START_BARRIERS_L (S1)
+    5: "MAP_ESC, (5)",  # HAZARD1_R
+    6: "MAP_CMD_UNKNOWN_HAZARD_6",
+    7: "MAP_CMD_START_BARRIERS_L",
+    8: "MAP_CMD_START_BARRIERS_R",
+    9: "MAP_CMD_START_TWO_BARRIERS",
+    10: "MAP_CMD_ARROW_OFF",
+    11: "MAP_CMD_ARROW_L",
+    12: "MAP_CMD_ARROW_R",
+    13: "MAP_CMD_START_CARS",
+    14: "MAP_CMD_STOP_CARS",
+    15: "MAP_ESC, (15)",  # stop helicopter
+    17: "MAP_ESC, (17)",  # start heli left
 }
 
-BITMAP_FLAGS = {0: 'BITMAPFLAG_DEFAULT', 1: 'BITMAPFLAG_MASKED',
-                2: 'BITMAPFLAG_FLIPPED', 3: 'BITMAPFLAG_MASKED|BITMAPFLAG_FLIPPED'}
+STRETCHY_TYPE_NAMES: Dict[int, str] = {
+    1: "STRETCHY_TYPE_END",
+    2: "STRETCHY_TYPE_FIXED",
+    3: "STRETCHY_TYPE_150PC",
+    4: "STRETCHY_TYPE_50PC",
+    5: "STRETCHY_TYPE_113PC",
+    6: "STRETCHY_TYPE_38PC",
+    7: "STRETCHY_TYPE_75PC",
+    8: "STRETCHY_TYPE_25PC",
+    9: "STRETCHY_TYPE_100PC",
+    10: "STRETCHY_TYPE_200PC",
+}
+
+BITMAP_FLAGS = {
+    0: "BITMAPFLAG_DEFAULT",
+    1: "BITMAPFLAG_MASKED",
+    2: "BITMAPFLAG_FLIPPED",
+    3: "BITMAPFLAG_MASKED|BITMAPFLAG_FLIPPED",
+}
+
+# Z80 runtime addresses of handler routines (stable across all stages).
+HANDLER_ADDRESS_MAP: Dict[int, str] = {
+    0x9252: "draw_tunnel_light_right",
+    0x924D: "draw_tunnel_light_left",
+    0x9171: "draw_stretchy_object_right",
+    0x916C: "draw_stretchy_object_left",
+    0x9052: "draw_overhead",
+    0x92E1: "draw_object_right",
+    0x9278: "draw_object_left",
+}
 
 CHATTERCHR_NAMES = {
-    0: 'CHATTERCHR_PILOT', 1: 'CHATTERCHR_NANCY',
-    2: 'CHATTERCHR_RAYMOND', 3: 'CHATTERCHR_TONY',
+    0: "CHATTERCHR_PILOT",
+    1: "CHATTERCHR_NANCY",
+    2: "CHATTERCHR_RAYMOND",
+    3: "CHATTERCHR_TONY",
 }
 
 DRAWCHARSTYLE_NAMES = {
-    1: 'DRAWCHARSTYLE_GENERIC',
-    2: 'DRAWCHARSTYLE_SINGLE',
-    3: 'DRAWCHARSTYLE_DOUBLE',
-    4: 'DRAWCHARSTYLE_SINGLE_INVERTED',
-    5: 'DRAWCHARSTYLE_DOUBLE_INVERTED',
+    1: "DRAWCHARSTYLE_GENERIC",
+    2: "DRAWCHARSTYLE_SINGLE",
+    3: "DRAWCHARSTYLE_DOUBLE",
+    4: "DRAWCHARSTYLE_SINGLE_INVERTED",
+    5: "DRAWCHARSTYLE_DOUBLE_INVERTED",
 }
 
 TRANSITIONCONTROL_NAMES = {
-    0: 'TRANSITIONCONTROL_STOP',
-    1: 'TRANSITIONCONTROL_DRAW_MUGSHOTS',
-    2: 'TRANSITIONCONTROL_OVERLAY_MESSAGES',
-    3: 'TRANSITIONCONTROL_FILL_ATTRIBUTES',
-    4: 'TRANSITIONCONTROL_FADE',
+    0: "TRANSITIONCONTROL_STOP",
+    1: "TRANSITIONCONTROL_DRAW_MUGSHOTS",
+    2: "TRANSITIONCONTROL_OVERLAY_MESSAGES",
+    3: "TRANSITIONCONTROL_FILL_ATTRIBUTES",
+    4: "TRANSITIONCONTROL_FADE",
 }
 
 ATTR_COLOR_NAMES = {
-    0: 'ATTR_BLACK', 1: 'ATTR_BLUE',    2: 'ATTR_RED',    3: 'ATTR_MAGENTA',
-    4: 'ATTR_GREEN', 5: 'ATTR_CYAN',    6: 'ATTR_YELLOW', 7: 'ATTR_WHITE',
+    0: "ATTR_BLACK",
+    1: "ATTR_BLUE",
+    2: "ATTR_RED",
+    3: "ATTR_MAGENTA",
+    4: "ATTR_GREEN",
+    5: "ATTR_CYAN",
+    6: "ATTR_YELLOW",
+    7: "ATTR_WHITE",
 }
+
 
 def _mkattr(f: int, b: int, p: int, i: int) -> int:
     return (f << 7) | (b << 6) | (p << 3) | i
 
+
 # Maps the byte values of every named enum entry in ZXSpectrum/Spectrum.h
 ATTRIBUTE_MAP: Dict[int, str] = {
-    _mkattr(0, 0, 0, 0): 'attribute_BLACK_OVER_BLACK',
-    _mkattr(0, 0, 0, 1): 'attribute_BLUE_OVER_BLACK',
-    _mkattr(0, 0, 0, 2): 'attribute_RED_OVER_BLACK',
-    _mkattr(0, 0, 0, 3): 'attribute_MAGENTA_OVER_BLACK',
-    _mkattr(0, 0, 0, 4): 'attribute_GREEN_OVER_BLACK',
-    _mkattr(0, 0, 0, 5): 'attribute_CYAN_OVER_BLACK',
-    _mkattr(0, 0, 0, 6): 'attribute_YELLOW_OVER_BLACK',
-    _mkattr(0, 0, 0, 7): 'attribute_WHITE_OVER_BLACK',
-    _mkattr(0, 1, 0, 1): 'attribute_BRIGHT_BLUE_OVER_BLACK',
-    _mkattr(0, 1, 0, 2): 'attribute_BRIGHT_RED_OVER_BLACK',
-    _mkattr(0, 1, 0, 3): 'attribute_BRIGHT_MAGENTA_OVER_BLACK',
-    _mkattr(0, 1, 0, 4): 'attribute_BRIGHT_GREEN_OVER_BLACK',
-    _mkattr(0, 1, 0, 5): 'attribute_BRIGHT_CYAN_OVER_BLACK',
-    _mkattr(0, 1, 0, 6): 'attribute_BRIGHT_YELLOW_OVER_BLACK',
-    _mkattr(0, 1, 0, 7): 'attribute_BRIGHT_WHITE_OVER_BLACK',
-    _mkattr(0, 1, 1, 0): 'attribute_BRIGHT_BLACK_OVER_BLUE',
-    _mkattr(0, 1, 2, 0): 'attribute_BRIGHT_BLACK_OVER_RED',
-    _mkattr(0, 1, 3, 0): 'attribute_BRIGHT_BLACK_OVER_MAGENTA',
-    _mkattr(0, 1, 4, 0): 'attribute_BRIGHT_BLACK_OVER_GREEN',
-    _mkattr(0, 1, 5, 0): 'attribute_BRIGHT_BLACK_OVER_CYAN',
-    _mkattr(0, 1, 6, 0): 'attribute_BRIGHT_BLACK_OVER_YELLOW',
-    _mkattr(0, 1, 7, 0): 'attribute_BRIGHT_BLACK_OVER_WHITE',
-    _mkattr(0, 0, 4, 0): 'attribute_BLACK_OVER_GREEN',
-    _mkattr(0, 0, 5, 0): 'attribute_BLACK_OVER_CYAN',
-    _mkattr(0, 0, 6, 0): 'attribute_BLACK_OVER_YELLOW',
-    _mkattr(0, 0, 7, 0): 'attribute_BLACK_OVER_WHITE',
+    _mkattr(0, 0, 0, 0): "attribute_BLACK_OVER_BLACK",
+    _mkattr(0, 0, 0, 1): "attribute_BLUE_OVER_BLACK",
+    _mkattr(0, 0, 0, 2): "attribute_RED_OVER_BLACK",
+    _mkattr(0, 0, 0, 3): "attribute_MAGENTA_OVER_BLACK",
+    _mkattr(0, 0, 0, 4): "attribute_GREEN_OVER_BLACK",
+    _mkattr(0, 0, 0, 5): "attribute_CYAN_OVER_BLACK",
+    _mkattr(0, 0, 0, 6): "attribute_YELLOW_OVER_BLACK",
+    _mkattr(0, 0, 0, 7): "attribute_WHITE_OVER_BLACK",
+    _mkattr(0, 1, 0, 1): "attribute_BRIGHT_BLUE_OVER_BLACK",
+    _mkattr(0, 1, 0, 2): "attribute_BRIGHT_RED_OVER_BLACK",
+    _mkattr(0, 1, 0, 3): "attribute_BRIGHT_MAGENTA_OVER_BLACK",
+    _mkattr(0, 1, 0, 4): "attribute_BRIGHT_GREEN_OVER_BLACK",
+    _mkattr(0, 1, 0, 5): "attribute_BRIGHT_CYAN_OVER_BLACK",
+    _mkattr(0, 1, 0, 6): "attribute_BRIGHT_YELLOW_OVER_BLACK",
+    _mkattr(0, 1, 0, 7): "attribute_BRIGHT_WHITE_OVER_BLACK",
+    _mkattr(0, 1, 1, 0): "attribute_BRIGHT_BLACK_OVER_BLUE",
+    _mkattr(0, 1, 2, 0): "attribute_BRIGHT_BLACK_OVER_RED",
+    _mkattr(0, 1, 3, 0): "attribute_BRIGHT_BLACK_OVER_MAGENTA",
+    _mkattr(0, 1, 4, 0): "attribute_BRIGHT_BLACK_OVER_GREEN",
+    _mkattr(0, 1, 5, 0): "attribute_BRIGHT_BLACK_OVER_CYAN",
+    _mkattr(0, 1, 6, 0): "attribute_BRIGHT_BLACK_OVER_YELLOW",
+    _mkattr(0, 1, 7, 0): "attribute_BRIGHT_BLACK_OVER_WHITE",
+    _mkattr(0, 0, 4, 0): "attribute_BLACK_OVER_GREEN",
+    _mkattr(0, 0, 5, 0): "attribute_BLACK_OVER_CYAN",
+    _mkattr(0, 0, 6, 0): "attribute_BLACK_OVER_YELLOW",
+    _mkattr(0, 0, 7, 0): "attribute_BLACK_OVER_WHITE",
 }
 
 
@@ -156,84 +218,107 @@ def byte_to_attr(b: int) -> str:
     """Return the attribute_* name for b, or MKATTR(...) if not in the enum."""
     if b in ATTRIBUTE_MAP:
         return ATTRIBUTE_MAP[b]
-    f  = (b >> 7) & 1
+    f = (b >> 7) & 1
     br = (b >> 6) & 1
-    p  = (b >> 3) & 7
-    i  = b & 7
-    return f'MKATTR({f}, {br}, {ATTR_COLOR_NAMES[p]}, {ATTR_COLOR_NAMES[i]})'
+    p = (b >> 3) & 7
+    i = b & 7
+    return f"MKATTR({f}, {br}, {ATTR_COLOR_NAMES[p]}, {ATTR_COLOR_NAMES[i]})"
+
+
+def extract_arg_from_comment(comment: str) -> Optional[str]:
+    """Extract a C arg expression from an obj_t DEFW inline comment.
+
+    Matches 'Argument - name' patterns; returns '&name' or None.
+    """
+    m = re.search(r"[Aa]rgument\s*[-–]\s*(\w+)", comment)
+    if m:
+        name = m.group(1)
+        if name.lower() not in ("null", "none"):
+            return f"&{name}"
+    return None
 
 
 # Face/mugshot layout constants (must match ChaseHQ-Internal.h)
-FACE_ROW_BYTES   = 4   # FACEROWBYTES  = FACEWIDTH / 8 = 32 / 8
+FACE_ROW_BYTES = 4  # FACEROWBYTES  = FACEWIDTH / 8 = 32 / 8
 FACE_BITMAP_ROWS = 40  # FACEHEIGHT
-FACE_ATTR_ROWS   = 5   # FACEATTRHEIGHT
+FACE_ATTR_ROWS = 5  # FACEATTRHEIGHT
 FACE_BITMAP_BYTES = FACE_ROW_BYTES * FACE_BITMAP_ROWS  # 160
-FACE_ATTR_BYTES   = FACE_ROW_BYTES * FACE_ATTR_ROWS    # 20
+FACE_ATTR_BYTES = FACE_ROW_BYTES * FACE_ATTR_ROWS  # 20
 
 
-def emit_face_mugshot_array(name: str, data: List[int],
-                            z80_addr: int) -> List[str]:
+def emit_face_mugshot_array(name: str, data: List[int], z80_addr: int) -> List[str]:
     """Emit a face/mugshot array: pixel names for the bitmap rows, attribute
     names for the final FACE_ATTR_ROWS rows."""
-    lines = [f'// ${z80_addr:04X}', '// clang-format off',
-             f'static const u8 {name}[{len(data)}] = {{']
+    lines = [
+        f"// ${z80_addr:04X}",
+        "// clang-format off",
+        f"static const u8 {name}[{len(data)}] = {{",
+    ]
 
     for i in range(0, FACE_BITMAP_BYTES, FACE_ROW_BYTES):
-        chunk = data[i:i + FACE_ROW_BYTES]
-        lines.append('  ' + ', '.join(byte_to_pixel(b) for b in chunk) + ',')
+        chunk = data[i : i + FACE_ROW_BYTES]
+        lines.append("  " + ", ".join(byte_to_pixel(b) for b in chunk) + ",")
 
-    lines.append('')
+    lines.append("")
 
-    for i in range(FACE_BITMAP_BYTES, FACE_BITMAP_BYTES + FACE_ATTR_BYTES,
-                   FACE_ROW_BYTES):
-        chunk = data[i:i + FACE_ROW_BYTES]
-        lines.append('  ' + ', '.join(byte_to_attr(b) for b in chunk) + ',')
+    for i in range(
+        FACE_BITMAP_BYTES, FACE_BITMAP_BYTES + FACE_ATTR_BYTES, FACE_ROW_BYTES
+    ):
+        chunk = data[i : i + FACE_ROW_BYTES]
+        lines.append("  " + ", ".join(byte_to_attr(b) for b in chunk) + ",")
 
-    lines.append('};')
-    lines.append('// clang-format on')
+    lines.append("};")
+    lines.append("// clang-format on")
     return lines
 
 
 CHATTERCMD_NAMES = {
-    0xFC: 'CHATTERCMD_RANDOM',
-    0xFE: 'CHATTERCMD_PAUSE',
-    0xFF: 'CHATTERCMD_STOP',
+    0xFC: "CHATTERCMD_RANDOM",
+    0xFE: "CHATTERCMD_PAUSE",
+    0xFF: "CHATTERCMD_STOP",
 }
 
 # Fields of stage_t that come from perstage words 3..13.
 PERSTAGE_PTR_FIELDS = [
-    'addrof_hittable_objects',
-    'addrof_right_hand_handlers',
-    'addrof_right_hand_objects',
-    'addrof_right_hand_short_pole_object',
-    'addrof_left_hand_handlers',
-    'addrof_left_hand_objects',
-    'addrof_left_hand_short_pole_object',
-    'addrof_perp_description',
-    'addrof_arrest_messages',
-    'addrof_helicopter_stuff_1',
-    'addrof_helicopter_stuff_2',
+    "addrof_hittable_objects",
+    "addrof_right_hand_handlers",
+    "addrof_right_hand_objects",
+    "addrof_right_hand_short_pole_object",
+    "addrof_left_hand_handlers",
+    "addrof_left_hand_objects",
+    "addrof_left_hand_short_pole_object",
+    "addrof_perp_description",
+    "addrof_arrest_messages",
+    "addrof_helicopter_stuff_1",
+    "addrof_helicopter_stuff_2",
 ]
 
 # ── Skool parser ─────────────────────────────────────────────────────────────
 
+
 def parse_hex(s: str) -> int:
     """Parse $XX or 0xXX or decimal."""
     s = s.strip()
-    if s.startswith('$'):
+    if s.startswith("$"):
         return int(s[1:], 16)
-    if s.startswith('0x') or s.startswith('0X'):
+    if s.startswith("0x") or s.startswith("0X"):
         return int(s[2:], 16)
     return int(s)
 
 
 class SkoolRecord:
-    def __init__(self, addr: int, rtype: str, values: List[int], comment: str,
-                 annotations: List[int]):
-        self.addr = addr          # Z80 absolute address
-        self.rtype = rtype        # 'B'=bytes, 'W'=words, 'C'=section label
-        self.values = values      # list of ints (bytes or words)
-        self.comment = comment    # inline comment text (stripped)
+    def __init__(
+        self,
+        addr: int,
+        rtype: str,
+        values: List[int],
+        comment: str,
+        annotations: List[int],
+    ):
+        self.addr = addr  # Z80 absolute address
+        self.rtype = rtype  # 'B'=bytes, 'W'=words, 'C'=section label
+        self.values = values  # list of ints (bytes or words)
+        self.comment = comment  # inline comment text (stripped)
         self.annotations = annotations  # resolved addresses from [$XXXX] in comment
 
 
@@ -244,12 +329,12 @@ def parse_skool(path: str) -> Tuple[List[SkoolRecord], List[str]]:
     """
     records: List[SkoolRecord] = []
     section_comments: List[str] = []
-    pending_section = ''
+    pending_section = ""
 
     def _annots(cmt: str) -> List[int]:
-        return [int(m, 16) for m in re.findall(r'\[\$([0-9A-Fa-f]+)\]', cmt)]
+        return [int(m, 16) for m in re.findall(r"\[\$([0-9A-Fa-f]+)\]", cmt)]
 
-    with open(path, encoding='utf-8', errors='replace') as f:
+    with open(path, encoding="utf-8", errors="replace") as f:
         for line in f:
             line = line.rstrip()
             if not line:
@@ -261,10 +346,10 @@ def parse_skool(path: str) -> Tuple[List[SkoolRecord], List[str]]:
             #  - Non-trivial comments that classify to a recognised type
             #    (not 'unknown') overwrite when type or text changes
             #  - Non-trivial comments set pending if it is currently empty
-            if line.startswith('; '):
+            if line.startswith("; "):
                 txt = line[2:].strip()
-                trivial = txt in ('', '.', '}', '{', ';', 'LOD')
-                is_stage_hdr = bool(re.match(r'\[Stage \d+\]', txt))
+                trivial = txt in ("", ".", "}", "{", ";", "LOD")
+                is_stage_hdr = bool(re.match(r"\[Stage \d+\]", txt))
                 if is_stage_hdr:
                     pending_section = txt
                 elif not trivial:
@@ -273,23 +358,30 @@ def parse_skool(path: str) -> Tuple[List[SkoolRecord], List[str]]:
                     else:
                         new_type = classify_section(txt)
                         cur_type = classify_section(pending_section)
-                        if (new_type != 'unknown' and
-                                (new_type != cur_type or txt != pending_section)):
+                        is_subentry = new_type == "obj_defs_entry" and cur_type in (
+                            "obj_defs_right",
+                            "obj_defs_left",
+                        )
+                        if (
+                            new_type != "unknown"
+                            and (new_type != cur_type or txt != pending_section)
+                            and not is_subentry
+                        ):
                             pending_section = txt
                 continue
 
             # Labelled byte data: b$ADDR DEFB ...
-            m = re.match(r'^([bcw]?)\$([0-9A-Fa-f]+)\s+(DEFB|DEFW)\s+(.*)', line)
+            m = re.match(r"^([bcw]?)\$([0-9A-Fa-f]+)\s+(DEFB|DEFW)\s+(.*)", line)
             if not m:
                 # Continuation line: ' $ADDR DEFB ...' or ' $ADDR DEFW ...'
-                m = re.match(r'^\s+\$([0-9A-Fa-f]+)\s+(DEFB|DEFW)\s+(.*)', line)
+                m = re.match(r"^\s+\$([0-9A-Fa-f]+)\s+(DEFB|DEFW)\s+(.*)", line)
                 if m:
                     addr = int(m.group(1), 16)
                     dtype = m.group(2)
                     rest = m.group(3)
                 else:
                     continue
-                prefix = ''
+                prefix = ""
             else:
                 prefix = m.group(1)
                 addr = int(m.group(2), 16)
@@ -297,28 +389,28 @@ def parse_skool(path: str) -> Tuple[List[SkoolRecord], List[str]]:
                 rest = m.group(4)
 
             # Split rest into value list and comment
-            if ';' in rest:
-                val_part, cmt_part = rest.split(';', 1)
+            if ";" in rest:
+                val_part, cmt_part = rest.split(";", 1)
                 cmt_part = cmt_part.strip()
             else:
                 val_part = rest
-                cmt_part = ''
+                cmt_part = ""
 
             # Parse values
             values = []
-            for tok in re.split(r'[,\s]+', val_part.strip()):
+            for tok in re.split(r"[,\s]+", val_part.strip()):
                 if tok and tok.strip():
                     try:
                         values.append(parse_hex(tok))
                     except ValueError:
                         pass
 
-            rtype = 'W' if dtype == 'DEFW' else 'B'
+            rtype = "W" if dtype == "DEFW" else "B"
             rec = SkoolRecord(addr, rtype, values, cmt_part, _annots(cmt_part))
             records.append(rec)
             section_comments.append(pending_section)
             if prefix:  # new labelled section resets pending comment
-                pending_section = ''
+                pending_section = ""
 
     return records, section_comments
 
@@ -328,7 +420,7 @@ def build_addr_map(records: List[SkoolRecord]) -> Dict[int, int]:
     m: Dict[int, int] = {}
     for rec in records:
         addr = rec.addr
-        if rec.rtype == 'W':
+        if rec.rtype == "W":
             for w in rec.values:
                 m[addr] = w & 0xFF
                 m[addr + 1] = (w >> 8) & 0xFF
@@ -346,7 +438,7 @@ def compute_bank_offset(records: List[SkoolRecord]) -> int:
     first DEFW record with a [$XXXX] annotation that is > its raw value.
     """
     for rec in records:
-        if rec.rtype == 'W' and rec.annotations and rec.values:
+        if rec.rtype == "W" and rec.annotations and rec.values:
             raw = rec.values[0]
             ann = rec.annotations[0]
             diff = ann - raw
@@ -362,7 +454,7 @@ def parse_defm_text(rest: str) -> str:
     for i, ch in enumerate(rest):
         if ch == '"':
             in_q = not in_q
-        elif ch == ';' and not in_q:
+        elif ch == ";" and not in_q:
             rest = rest[:i]
             break
     rest = rest.strip()
@@ -374,29 +466,29 @@ def parse_defm_text(rest: str) -> str:
             i += 1
             while i < len(rest) and rest[i] != '"':
                 c = rest[i]
-                if c == '\\':
-                    c_chars.append('\\\\')
+                if c == "\\":
+                    c_chars.append("\\\\")
                 elif c == '"':
                     c_chars.append('\\"')
                 else:
                     c_chars.append(c)
                 i += 1
             i += 1  # skip closing quote
-        elif rest[i] in (' ', ','):
+        elif rest[i] in (" ", ","):
             i += 1
-        elif rest[i] == '$':
-            b = int(rest[i + 1:i + 3], 16)
-            c_chars.append(f'\\x{b:02X}')
+        elif rest[i] == "$":
+            b = int(rest[i + 1 : i + 3], 16)
+            c_chars.append(f"\\x{b:02X}")
             i += 3
         elif rest[i].isdigit():
             j = i
             while j < len(rest) and rest[j].isdigit():
                 j += 1
-            c_chars.append(f'\\x{int(rest[i:j]):02X}')
+            c_chars.append(f"\\x{int(rest[i:j]):02X}")
             i = j
         else:
             i += 1
-    return '"' + ''.join(c_chars) + '"'
+    return '"' + "".join(c_chars) + '"'
 
 
 def _parse_defm_raw(rest: str) -> List[int]:
@@ -405,7 +497,7 @@ def _parse_defm_raw(rest: str) -> List[int]:
     for i, ch in enumerate(rest):
         if ch == '"':
             in_q = not in_q
-        elif ch == ';' and not in_q:
+        elif ch == ";" and not in_q:
             rest = rest[:i]
             break
     rest = rest.strip()
@@ -418,10 +510,10 @@ def _parse_defm_raw(rest: str) -> List[int]:
                 result.append(ord(rest[i]))
                 i += 1
             i += 1
-        elif rest[i] in (' ', ','):
+        elif rest[i] in (" ", ","):
             i += 1
-        elif rest[i] == '$':
-            result.append(int(rest[i + 1:i + 3], 16))
+        elif rest[i] == "$":
+            result.append(int(rest[i + 1 : i + 3], 16))
             i += 3
         elif rest[i].isdigit():
             j = i
@@ -441,14 +533,14 @@ def parse_defm_map(path: str) -> Tuple[Dict[int, str], Dict[int, List[int]]]:
     and bytemap maps addr → raw byte list.  Skool label addresses are
     already absolute so no bank offset is applied.
     """
-    strings:  Dict[int, str]       = {}
-    bytemap:  Dict[int, List[int]] = {}
-    with open(path, encoding='utf-8', errors='replace') as f:
+    strings: Dict[int, str] = {}
+    bytemap: Dict[int, List[int]] = {}
+    with open(path, encoding="utf-8", errors="replace") as f:
         for line in f:
             line = line.rstrip()
-            m = re.match(r'^[bcw]?\$([0-9A-Fa-f]+)\s+DEFM\s+(.*)', line)
+            m = re.match(r"^[bcw]?\$([0-9A-Fa-f]+)\s+DEFM\s+(.*)", line)
             if not m:
-                m = re.match(r'^\s+\$([0-9A-Fa-f]+)\s+DEFM\s+(.*)', line)
+                m = re.match(r"^\s+\$([0-9A-Fa-f]+)\s+DEFM\s+(.*)", line)
             if m:
                 addr = int(m.group(1), 16)
                 rest = m.group(2)
@@ -458,6 +550,7 @@ def parse_defm_map(path: str) -> Tuple[Dict[int, str], Dict[int, List[int]]]:
 
 
 # ── Map data decoders ─────────────────────────────────────────────────────────
+
 
 def decode_curvature(stream: List[int]) -> List[str]:
     """Decode a curvature byte stream into MAP_CURVE_xxx macros."""
@@ -472,9 +565,9 @@ def decode_curvature(stream: List[int]) -> List[str]:
         ttype = b & 0x0F
         name = CURVE_TYPES.get(ttype)
         if name and count > 0:
-            out.append(f'MAP_CURVE_{name}({count}),')
+            out.append(f"MAP_CURVE_{name}({count}),")
         else:
-            out.append(f'/* unknown curvature 0x{b:02X} */')
+            out.append(f"/* unknown curvature 0x{b:02X} */")
         i += 1
     return out
 
@@ -492,9 +585,9 @@ def decode_height(stream: List[int]) -> List[str]:
         ttype = b & 0x0F
         name = HEIGHT_TYPES.get(ttype)
         if name and count > 0:
-            out.append(f'MAP_HEIGHT_{name}({count}),')
+            out.append(f"MAP_HEIGHT_{name}({count}),")
         else:
-            out.append(f'/* unknown height 0x{b:02X} */')
+            out.append(f"/* unknown height 0x{b:02X} */")
         i += 1
     return out
 
@@ -515,9 +608,9 @@ def decode_lanes(stream: List[int]) -> List[str]:
         val = stream[i + 1]
         name = LANE_VALS.get(val)
         if name:
-            out.append(f'MAP_LANES_{name}({count}),')
+            out.append(f"MAP_LANES_{name}({count}),")
         else:
-            out.append(f'/* unknown lanes val=0x{val:02X} */ {count}, 0x{val:02X},')
+            out.append(f"/* unknown lanes val=0x{val:02X} */ {count}, 0x{val:02X},")
         i += 2
     return out
 
@@ -529,7 +622,7 @@ def decode_hazards(stream: List[int]) -> List[str]:
     while i < len(stream):
         b = stream[i]
         if b != 0:
-            out.append(f'MAP_HAZARD_WAIT({b}),')
+            out.append(f"MAP_HAZARD_WAIT({b}),")
             i += 1
         else:
             # ESC sequence
@@ -537,20 +630,20 @@ def decode_hazards(stream: List[int]) -> List[str]:
                 break
             cmd = stream[i + 1]
             macro = HAZARD_CMDS.get(cmd)
-            if cmd == 0:   # GOTO/LOOP: needs DEFW
+            if cmd == 0:  # GOTO/LOOP: needs DEFW
                 out.append(None)
                 break
             elif cmd == 1:
-                out.append('MAP_CMD_FORK_END,')
+                out.append("MAP_CMD_FORK_END,")
                 i += 2
             elif cmd == 2:  # SPLIT: needs 2×DEFW
                 out.append(None)
                 break
             elif macro:
-                out.append(f'{macro},')
+                out.append(f"{macro},")
                 i += 2
             else:
-                out.append(f'MAP_ESC, ({cmd}),')
+                out.append(f"MAP_ESC, ({cmd}),")
                 i += 2
     return out
 
@@ -568,9 +661,9 @@ def decode_objects(stream: List[int], stage: int, obj_names: List[str]) -> List[
         otype = b & 0x0F
         if count > 0 and otype < len(obj_names):
             name = obj_names[otype]
-            out.append(f'MAP_OBJ_S{stage}_{name}({count}),')
+            out.append(f"MAP_OBJ_S{stage}_{name}({count}),")
         else:
-            out.append(f'/* obj 0x{b:02X} */')
+            out.append(f"/* obj 0x{b:02X} */")
         i += 1
     return out
 
@@ -578,13 +671,14 @@ def decode_objects(stream: List[int], stage: int, obj_names: List[str]) -> List[
 # ── Section identification ────────────────────────────────────────────────────
 
 MAP_SECTION_TYPES = {
-    'curvature': decode_curvature,
-    'height':    decode_height,
-    'lanes':     decode_lanes,
-    'hazards':   decode_hazards,
-    'left object': None,   # objects – set below
-    'right object': None,
+    "curvature": decode_curvature,
+    "height": decode_height,
+    "lanes": decode_lanes,
+    "hazards": decode_hazards,
+    "left object": None,  # objects – set below
+    "right object": None,
 }
+
 
 def classify_section(comment: str) -> Optional[str]:
     """
@@ -592,58 +686,61 @@ def classify_section(comment: str) -> Optional[str]:
     The comment is like 'Stage 2] Map curvature data'.
     """
     c = comment.lower()
-    if 'horizon graphic' in c or 'backdrop' in c:
-        return 'backdrop'
-    if 'per-stage data' in c:
-        return 'perstage'
-    if 'per-stage difficulty' in c:
-        return 'difficulty'
-    if 'per-stage setup data' in c:
-        return 'setupdata'
-    if 'per-stage attract' in c:
-        return 'attractdata'
-    if 'table of addresses of lods' in c:
-        return 'lodaddrs'
-    if 'map curvature' in c:
-        return 'curvature'
-    if 'map height' in c:
-        return 'height'
-    if 'map lanes' in c:
-        return 'lanes'
-    if 'map hazards' in c:
-        return 'hazards'
-    if 'map left object' in c:
-        return 'leftobjs'
-    if 'map right object' in c:
-        return 'rightobjs'
+    if "horizon graphic" in c or "backdrop" in c:
+        return "backdrop"
+    if "per-stage data" in c:
+        return "perstage"
+    if "per-stage difficulty" in c:
+        return "difficulty"
+    if "per-stage setup data" in c:
+        return "setupdata"
+    if "per-stage attract" in c:
+        return "attractdata"
+    if "table of addresses of lods" in c:
+        return "lodaddrs"
+    if "map curvature" in c:
+        return "curvature"
+    if "map height" in c:
+        return "height"
+    if "map lanes" in c:
+        return "lanes"
+    if "map hazards" in c:
+        return "hazards"
+    if "map left object" in c:
+        return "leftobjs"
+    if "map right object" in c:
+        return "rightobjs"
     if "perp's mugshot" in c or "perp mugshot" in c:
-        return 'perp_mugshot'
+        return "perp_mugshot"
     if "pilot's mugshot" in c or "pilot mugshot" in c:
-        return 'pilot_mugshot'
-    if 'lod table' in c:
-        return 'lod_table'
-    if 'hittable hazard' in c:
-        return 'hazard_lods'
-    if 'helicopter data' in c:
-        return 'helicopter'
-    if 'object graphic definitions' in c or 'graphic definition for object' in c:
-        return 'obj_defs'
-    if 'hittable hazards' in c:
-        return 'hittable'
-    if 'arrest messages' in c:
-        return 'arrest_msgs'
+        return "pilot_mugshot"
+    if "lod table" in c:
+        return "lod_table"
+    if "hittable" in c:
+        return "hittable_objects"
+    if "helicopter data" in c:
+        return "helicopter"
+    if "object graphic definitions" in c:
+        if "(right)" in c:
+            return "obj_defs_right"
+        if "(left)" in c:
+            return "obj_defs_left"
+        return "obj_defs_right"
+    if "graphic definition for object" in c:
+        return "obj_defs_entry"
+    if "arrest messages" in c:
+        return "arrest_msgs"
     if "nancy's perp description" in c or "perp description" in c:
-        return 'perp_desc'
-    if 'stretchy graphic' in c:
-        return 'stretchy'
-    if 'lod table' in c:
-        return 'lod_table'
-    if 'bitmap data' in c or '{bitmap' in c or 'pointed to by helicopter' in c:
-        return 'bitmap'
-    return 'unknown'
+        return "perp_desc"
+    if "stretchy graphic" in c:
+        return "stretchy"
+    if "bitmap data" in c or "{bitmap" in c or "pointed to by helicopter" in c:
+        return "bitmap"
+    return "unknown"
 
 
 # ── Section collector ─────────────────────────────────────────────────────────
+
 
 class Section:
     def __init__(self, stype: str, start_addr: int, header_comment: str):
@@ -657,7 +754,7 @@ class Section:
         """All bytes in address order, treating DEFW as 2 bytes LE."""
         result = []
         for rec in self.records:
-            if rec.rtype == 'W':
+            if rec.rtype == "W":
                 for w in rec.values:
                     result.append(w & 0xFF)
                     result.append((w >> 8) & 0xFF)
@@ -670,15 +767,16 @@ class Section:
         """List of (raw_word, absolute_addr_or_-1, record_addr)."""
         result = []
         for rec in self.records:
-            if rec.rtype == 'W':
+            if rec.rtype == "W":
                 for idx, w in enumerate(rec.values):
                     ann = rec.annotations[idx] if idx < len(rec.annotations) else -1
                     result.append((w, ann, rec.addr + idx * 2))
         return result
 
 
-def split_into_sections(records: List[SkoolRecord],
-                         section_comments: List[str]) -> List[Section]:
+def split_into_sections(
+    records: List[SkoolRecord], section_comments: List[str]
+) -> List[Section]:
     """Group records by section, detecting section type from comments."""
     sections: List[Section] = []
     cur: Optional[Section] = None
@@ -687,17 +785,24 @@ def split_into_sections(records: List[SkoolRecord],
 
     for rec, cmt in zip(records, section_comments):
         stype = classify_section(cmt)
+        # Sub-entries of an obj_defs container are absorbed into the parent section
+        # rather than starting a new one; the right→left transition still splits
+        # because obj_defs_left != obj_defs_right.
+        is_obj_entry = stype == "obj_defs_entry" and prev_type in (
+            "obj_defs_right",
+            "obj_defs_left",
+        )
         # Start a new section when the comment is non-empty AND either:
         #   - the type has changed, OR
         #   - the comment itself has changed (e.g. two consecutive lod_tables)
-        if cmt and (stype != prev_type or cmt != prev_cmt):
+        if cmt and (stype != prev_type or cmt != prev_cmt) and not is_obj_entry:
             if cur is not None:
                 sections.append(cur)
-            cur = Section(stype or 'unknown', rec.addr, cmt)
+            cur = Section(stype or "unknown", rec.addr, cmt)
             prev_type = stype
             prev_cmt = cmt
         if cur is None:
-            cur = Section('unknown', rec.addr, cmt)
+            cur = Section("unknown", rec.addr, cmt)
         cur.records.append(rec)
 
     if cur is not None:
@@ -707,38 +812,47 @@ def split_into_sections(records: List[SkoolRecord],
 
 # ── Code generators ───────────────────────────────────────────────────────────
 
+
 def array_name(stage: int, stype: str, addr: int) -> str:
     """Generate a C array name from stage, section type and address."""
     prefixes = {
-        'backdrop':    f'stage{stage}_backdrop',
-        'curvature':   f'stage{stage}_map_curv_{addr:04X}',
-        'height':      f'stage{stage}_map_height_{addr:04X}',
-        'lanes':       f'stage{stage}_map_lanes_{addr:04X}',
-        'hazards':     f'stage{stage}_map_hazards_{addr:04X}',
-        'leftobjs':    f'stage{stage}_map_lobjs_{addr:04X}',
-        'rightobjs':   f'stage{stage}_map_robjs_{addr:04X}',
-        'perp_mugshot': f'stage{stage}_perp_face',
-        'pilot_mugshot': f'stage{stage}_pilot_mugshot',
-        'bitmap':       f'stage{stage}_bitmap_{addr:04X}',
-        'lod_table':    f'stage{stage}_lods_{addr:04X}',
-        'hazard_lods':  f'stage{stage}_hazard_lods_{addr:04X}',
-        'arrest_msgs':  f'stage{stage}_arrest_messages_{addr:04X}',
-        'perp_desc':    f'stage{stage}_perp_description',
-        'obj_defs':     f'stage{stage}_obj_defs_{addr:04X}',
-        'helicopter':   f'stage{stage}_helicopter_{addr:04X}',
-        'lodaddrs':     f'stage{stage}_lod_addrs_{addr:04X}',
-        'stretchy':     f'stage{stage}_stretchy_{addr:04X}',
+        "backdrop": f"stage{stage}_backdrop",
+        "curvature": f"stage{stage}_map_curv_{addr:04X}",
+        "height": f"stage{stage}_map_height_{addr:04X}",
+        "lanes": f"stage{stage}_map_lanes_{addr:04X}",
+        "hazards": f"stage{stage}_map_hazards_{addr:04X}",
+        "leftobjs": f"stage{stage}_map_lobjs_{addr:04X}",
+        "rightobjs": f"stage{stage}_map_robjs_{addr:04X}",
+        "perp_mugshot": f"stage{stage}_perp_face",
+        "pilot_mugshot": f"stage{stage}_pilot_mugshot",
+        "bitmap": f"stage{stage}_bitmap_{addr:04X}",
+        "lod_table": f"stage{stage}_lods_{addr:04X}",
+        "hazard_lods": f"stage{stage}_hazard_lods_{addr:04X}",
+        "arrest_msgs": f"stage{stage}_arrest_messages_{addr:04X}",
+        "perp_desc": f"stage{stage}_perp_description",
+        "obj_defs": f"stage{stage}_obj_defs_{addr:04X}",
+        "obj_defs_right": f"stage{stage}_right_obj_defs_{addr:04X}",
+        "obj_defs_left": f"stage{stage}_left_obj_defs_{addr:04X}",
+        "hittable_objects": f"stage{stage}_hittable_objects_{addr:04X}",
+        "helicopter": f"stage{stage}_helicopter_{addr:04X}",
+        "lodaddrs": f"stage{stage}_lod_addrs_{addr:04X}",
+        "stretchy": f"stage{stage}_stretchy_{addr:04X}",
     }
-    return prefixes.get(stype, f'stage{stage}_data_{addr:04X}')
+    return prefixes.get(stype, f"stage{stage}_data_{addr:04X}")
 
 
 def byte_to_pixel(b: int) -> str:
     """Return the Pixels.h macro name for b (e.g. 0xA5 → 'X_X__X_X')."""
-    return ''.join('X' if (b >> (7 - i)) & 1 else '_' for i in range(8))
+    return "".join("X" if (b >> (7 - i)) & 1 else "_" for i in range(8))
 
 
-def emit_raw_array(name: str, data: List[int], per_row: int = 8,
-                   z80_addr: int = 0, use_pixels: bool = False) -> List[str]:
+def emit_raw_array(
+    name: str,
+    data: List[int],
+    per_row: int = 8,
+    z80_addr: int = 0,
+    use_pixels: bool = False,
+) -> List[str]:
     """Emit a 'static const u8 name[] = { ... };' array.
 
     When use_pixels is True the bytes are written using the Pixels.h macro
@@ -746,26 +860,31 @@ def emit_raw_array(name: str, data: List[int], per_row: int = 8,
     clang-format off/on so the visual rows are not reformatted.
     """
     lines = []
-    lines.append(f'// ${z80_addr:04X}')
+    lines.append(f"// ${z80_addr:04X}")
     if use_pixels:
-        lines.append('// clang-format off')
-    lines.append(f'static const u8 {name}[{len(data)}] = {{')
+        lines.append("// clang-format off")
+    lines.append(f"static const u8 {name}[{len(data)}] = {{")
     for i in range(0, len(data), per_row):
-        chunk = data[i:i + per_row]
+        chunk = data[i : i + per_row]
         if use_pixels:
-            row = ', '.join(byte_to_pixel(b) for b in chunk)
+            row = ", ".join(byte_to_pixel(b) for b in chunk)
         else:
-            row = ', '.join(f'0x{b:02X}' for b in chunk)
-        lines.append(f'  {row},')
-    lines.append('};')
+            row = ", ".join(f"0x{b:02X}" for b in chunk)
+        lines.append(f"  {row},")
+    lines.append("};")
     if use_pixels:
-        lines.append('// clang-format on')
+        lines.append("// clang-format on")
     return lines
 
 
-def emit_map_section(stage: int, stype: str, sec: Section,
-                     obj_names: List[str], bank_offset: int,
-                     abs_to_name: Dict[int, str]) -> Tuple[List[str], Dict[int, str]]:
+def emit_map_section(
+    stage: int,
+    stype: str,
+    sec: Section,
+    obj_names: List[str],
+    bank_offset: int,
+    abs_to_name: Dict[int, str],
+) -> Tuple[List[str], Dict[int, str]]:
     """
     Decode a map section into C macros.
     Returns (lines, goto_map) where goto_map maps raw_defw_value → array_name.
@@ -778,24 +897,24 @@ def emit_map_section(stage: int, stype: str, sec: Section,
     # Collect DEFW records for GOTO/SPLIT extraction
     defw_seq: List[Tuple[int, int]] = []  # (raw_word, abs_addr_or_-1)
     for rec in sec.records:
-        if rec.rtype == 'W':
+        if rec.rtype == "W":
             for idx, w in enumerate(rec.values):
                 ann = rec.annotations[idx] if idx < len(rec.annotations) else -1
                 defw_seq.append((w, ann))
 
     # Choose decoder
-    if stype == 'curvature':
+    if stype == "curvature":
         decoded = decode_curvature(raw)
-    elif stype == 'height':
+    elif stype == "height":
         decoded = decode_height(raw)
-    elif stype == 'lanes':
+    elif stype == "lanes":
         decoded = decode_lanes(raw)
-    elif stype == 'hazards':
+    elif stype == "hazards":
         decoded = decode_hazards(raw)
-    elif stype in ('leftobjs', 'rightobjs'):
+    elif stype in ("leftobjs", "rightobjs"):
         decoded = decode_objects(raw, stage, obj_names)
     else:
-        decoded = [f'/* 0x{b:02X} */' for b in raw]
+        decoded = [f"/* 0x{b:02X} */" for b in raw]
 
     content_lines = [l for l in decoded if l is not None]
 
@@ -803,7 +922,7 @@ def emit_map_section(stage: int, stype: str, sec: Section,
     # For lanes (paired bytes), ESC is only valid at even positions.
     # For hazards, there may be multiple ESC sequences; the terminal is always last.
     terminal_cmd = None
-    if stype == 'lanes':
+    if stype == "lanes":
         for i in range(0, len(raw) - 1, 2):
             if raw[i] == 0 and raw[i + 1] in (0, 1, 2):
                 terminal_cmd = raw[i + 1]
@@ -817,9 +936,9 @@ def emit_map_section(stage: int, stype: str, sec: Section,
         raw_tgt, abs_tgt = defw_seq[0]
         if abs_tgt < 0:
             abs_tgt = raw_tgt + bank_offset
-        tgt_name = abs_to_name.get(abs_tgt, f'/* ${abs_tgt:04X} */')
+        tgt_name = abs_to_name.get(abs_tgt, f"/* ${abs_tgt:04X} */")
         goto_map[raw_tgt] = tgt_name
-        content_lines.append(f'MAP_CMD_GOTO(0x{raw_tgt:04X})')
+        content_lines.append(f"MAP_CMD_GOTO(0x{raw_tgt:04X})")
     elif terminal_cmd == 2 and len(defw_seq) >= 2:
         # SPLIT — two DEFW targets
         raw_l, abs_l = defw_seq[0]
@@ -828,52 +947,84 @@ def emit_map_section(stage: int, stype: str, sec: Section,
             abs_l = raw_l + bank_offset
         if abs_r < 0:
             abs_r = raw_r + bank_offset
-        name_l = abs_to_name.get(abs_l, f'/* ${abs_l:04X} */')
-        name_r = abs_to_name.get(abs_r, f'/* ${abs_r:04X} */')
+        name_l = abs_to_name.get(abs_l, f"/* ${abs_l:04X} */")
+        name_r = abs_to_name.get(abs_r, f"/* ${abs_r:04X} */")
         goto_map[raw_l] = name_l
         goto_map[raw_r] = name_r
-        content_lines.append(f'MAP_CMD_SPLIT(0x{raw_l:04X}, 0x{raw_r:04X})')
+        content_lines.append(f"MAP_CMD_SPLIT(0x{raw_l:04X}, 0x{raw_r:04X})")
     elif terminal_cmd == 1:
-        content_lines.append('MAP_CMD_FORK_END')
+        content_lines.append("MAP_CMD_FORK_END")
 
-    lines = [f'// ${sec.start_addr:04X}']
-    lines.append(f'static const u8 {name}[] = {{')
+    lines = [f"// ${sec.start_addr:04X}"]
+    lines.append(f"static const u8 {name}[] = {{")
     for cl in content_lines:
-        lines.append(f'  {cl}')
-    lines.append('};')
+        lines.append(f"  {cl}")
+    lines.append("};")
     return lines, goto_map
 
 
-def resolve_section_ptr(abs_addr: int,
-                        abs_to_name: Dict[int, str]) -> Optional[str]:
+def resolve_section_ptr(abs_addr: int, abs_to_name: Dict[int, str]) -> Optional[str]:
     """Resolve abs_addr to &array[offset] using registered section starts."""
     if abs_addr in abs_to_name:
-        return f'&{abs_to_name[abs_addr]}[0]'
-    candidates = [(base, nm) for base, nm in abs_to_name.items()
-                  if base <= abs_addr]
+        return f"&{abs_to_name[abs_addr]}[0]"
+    candidates = [(base, nm) for base, nm in abs_to_name.items() if base <= abs_addr]
     if candidates:
         base, nm = max(candidates, key=lambda x: x[0])
-        return f'&{nm}[{abs_addr - base}]'
+        return f"&{nm}[{abs_addr - base}]"
     return None
 
 
-def resolve_bitmap_ref(abs_addr: int, bitmap_names: Dict[int, str],
-                       stage: int) -> str:
+_OBJ_ENTRY_Z80_SIZE = 7  # 3 × DEFB + 2 × DEFW per obj_t in Z80
+_OBJ_ARG_Z80_OFFSET = 3  # byte offset of the .arg DEFW within a Z80 obj entry
+
+
+def resolve_obj_ptr(abs_addr: int, abs_to_name: Dict[int, str]) -> Optional[str]:
+    """Resolve a Z80 address into a typed &obj_array[idx] or &obj_array[idx].arg.
+
+    Handles the [-1] entry (one entry before the array start) that the Z80
+    perstage data uses for the handlers/objects pointers.
+    """
+    obj_bases = [(b, nm) for b, nm in abs_to_name.items() if "_obj_defs_" in nm]
+    best: Optional[Tuple[int, str, int]] = None
+    best_dist = 0
+    for base, nm in obj_bases:
+        diff = abs_addr - base
+        if diff < -_OBJ_ENTRY_Z80_SIZE or diff > 300:
+            continue
+        # Python % is always non-negative, matching floor division
+        if diff % _OBJ_ENTRY_Z80_SIZE not in (0, _OBJ_ARG_Z80_OFFSET):
+            continue
+        dist = abs(diff)
+        if best is None or dist < best_dist:
+            best = (base, nm, diff)
+            best_dist = dist
+    if best is None:
+        return None
+    _, nm, diff = best
+    entry_idx = diff // _OBJ_ENTRY_Z80_SIZE
+    field_off = diff % _OBJ_ENTRY_Z80_SIZE
+    if field_off == _OBJ_ARG_Z80_OFFSET:
+        return f"&{nm}[{entry_idx}].arg"
+    return f"&{nm}[{entry_idx}]"
+
+
+def resolve_bitmap_ref(abs_addr: int, bitmap_names: Dict[int, str], stage: int) -> str:
     """Return a C expression (&array[offset]) for a bitmap at abs_addr."""
     if abs_addr in bitmap_names:
-        return f'&{bitmap_names[abs_addr]}[0]'
-    candidates = [(base, name) for base, name in bitmap_names.items()
-                  if base <= abs_addr]
+        return f"&{bitmap_names[abs_addr]}[0]"
+    candidates = [
+        (base, name) for base, name in bitmap_names.items() if base <= abs_addr
+    ]
     if candidates:
         base, name = max(candidates, key=lambda x: x[0])
-        return f'&{name}[{abs_addr - base}]'
-    return f'&stage{stage}_bitmap_{abs_addr:04X}[0]'
+        return f"&{name}[{abs_addr - base}]"
+    return f"&stage{stage}_bitmap_{abs_addr:04X}[0]"
 
 
 def emit_perp_description(stage: int, sec: Section) -> List[str]:
     """Decode a perp_desc section into CHATTERCHR/CHATTERSTR/CHATTERCMD/CHATTERBLK."""
     data = sec.bytes_flat
-    nm = f'stage{stage}_perp_description'
+    nm = f"stage{stage}_perp_description"
 
     # Expected layout (12 raw bytes):
     #   [0]      DEFB  char_id
@@ -883,24 +1034,124 @@ def emit_perp_description(stage: int, sec: Section) -> List[str]:
     if len(data) < 12:
         return emit_raw_array(nm, data, 8, sec.start_addr)
 
-    char_name = CHATTERCHR_NAMES.get(data[0], f'({data[0]})')
-    cmd_name  = CHATTERCMD_NAMES.get(data[9], f'0x{data[9]:02X}')
+    char_name = CHATTERCHR_NAMES.get(data[0], f"({data[0]})")
+    cmd_name = CHATTERCMD_NAMES.get(data[9], f"0x{data[9]:02X}")
 
-    lines = [f'// ${sec.start_addr:04X}']
-    lines.append(f'static const u8 {nm}[7] = {{')
-    lines.append(f'  {char_name},')
-    lines.append(f'  CHATTERSTR_PERP_DESC_1,')
-    lines.append(f'  CHATTERSTR_PERP_DESC_2,')
-    lines.append(f'  CHATTERSTR_PERP_DESC_3,')
-    lines.append(f'  CHATTERSTR_PERP_DESC_4,')
-    lines.append(f'  {cmd_name},')
-    lines.append(f'  CHATTERBLK_HEROES_ACKNOWLEDGE')
-    lines.append('};')
+    lines = [f"// ${sec.start_addr:04X}"]
+    lines.append(f"static const u8 {nm}[7] = {{")
+    lines.append(f"  {char_name},")
+    lines.append(f"  CHATTERSTR_PERP_DESC_1,")
+    lines.append(f"  CHATTERSTR_PERP_DESC_2,")
+    lines.append(f"  CHATTERSTR_PERP_DESC_3,")
+    lines.append(f"  CHATTERSTR_PERP_DESC_4,")
+    lines.append(f"  {cmd_name},")
+    lines.append(f"  CHATTERBLK_HEROES_ACKNOWLEDGE")
+    lines.append("};")
     return lines
 
 
-def emit_lod_table(stage: int, sec: Section, bank_offset: int,
-                   bitmap_names: Dict[int, str]) -> Tuple[List[str], int]:
+def emit_hittable_array(
+    stage: int, sec: Section, abs_to_name: Dict[int, str]
+) -> Tuple[List[str], int]:
+    """Emit a hittable_t array from alternating DEFB (width) + DEFW (bitmaps) records."""
+    nm = array_name(stage, "hittable_objects", sec.start_addr)
+    entries = []
+    recs = sec.records
+    i = 0
+    while i + 1 < len(recs):
+        if recs[i].rtype == "B" and recs[i + 1].rtype == "W":
+            width = recs[i].values[0] if recs[i].values else 0
+            w_rec = recs[i + 1]
+            raw_w = w_rec.values[0] if w_rec.values else 0
+            ann = w_rec.annotations[0] if w_rec.annotations else -1
+            if ann < 0 and raw_w:
+                ann = raw_w
+            ref = resolve_section_ptr(ann, abs_to_name) if ann >= 0 else None
+            bitmaps_str = ref if ref else f"NULL /* TODO: bitmaps ${ann:04X} */"
+            entries.append(f"  {{ {width}, {bitmaps_str} }}")
+        i += 2
+    n = len(entries)
+    lines = [f"// ${sec.start_addr:04X}", f"static const hittable_t {nm}[{n}] = {{"]
+    for e in entries:
+        lines.append(e + ",")
+    lines.append("};")
+    return lines, n
+
+
+def emit_obj_array(
+    stage: int, sec: Section, abs_to_name: Dict[int, str]
+) -> Tuple[List[str], int]:
+    """Emit an obj_t array from 5-record groups (3 DEFB + 2 DEFW) per entry."""
+    nm = array_name(stage, sec.stype, sec.start_addr)
+
+    # Flatten records to a typed field list: (rtype, value, comment, ann)
+    fields: List[Tuple[str, int, str, int]] = []
+    for rec in sec.records:
+        if rec.rtype == "W":
+            for idx, val in enumerate(rec.values):
+                ann = rec.annotations[idx] if idx < len(rec.annotations) else -1
+                fields.append(("W", val, rec.comment if idx == 0 else "", ann))
+        else:
+            for val in rec.values:
+                fields.append(("B", val, "", -1))
+
+    entries = []
+    i = 0
+    while i + 4 < len(fields):
+        if (
+            fields[i][0] == "B"
+            and fields[i + 1][0] == "B"
+            and fields[i + 2][0] == "B"
+            and fields[i + 3][0] == "W"
+            and fields[i + 4][0] == "W"
+        ):
+            b0 = fields[i][1]
+            b1 = fields[i + 1][1]
+            b2 = fields[i + 2][1]
+            arg_val, arg_cmt, arg_ann = (
+                fields[i + 3][1],
+                fields[i + 3][2],
+                fields[i + 3][3],
+            )
+            hdl_val = fields[i + 4][1]
+
+            if arg_val == 0:
+                arg_str = "NULL"
+            else:
+                arg_str = extract_arg_from_comment(arg_cmt)
+                if not arg_str:
+                    if arg_ann >= 0:
+                        ref = resolve_section_ptr(arg_ann, abs_to_name)
+                        arg_str = ref if ref else f"NULL /* TODO: arg ${arg_ann:04X} */"
+                    else:
+                        arg_str = f"NULL /* TODO: arg ${arg_val:04X} */"
+
+            if hdl_val == 0:
+                hdl_str = "NULL"
+            else:
+                hdl_str = HANDLER_ADDRESS_MAP.get(
+                    hdl_val, f"NULL /* TODO: handler ${hdl_val:04X} */"
+                )
+
+            entries.append((b0, b1, b2, arg_str, hdl_str))
+            i += 5
+        else:
+            i += 1
+
+    n = len(entries)
+    lines = [f"// ${sec.start_addr:04X}", f"static const obj_t {nm}[{n}] = {{"]
+    for b0, b1, b2, arg_str, hdl_str in entries:
+        if b0 == 0 and b1 == 0 and b2 == 0 and arg_str == "NULL" and hdl_str == "NULL":
+            lines.append("  { 0, 0, 0, NULL, NULL },")
+        else:
+            lines.append(f"  {{ {b0}, {b1}, {b2}, {arg_str}, {hdl_str} }},")
+    lines.append("};")
+    return lines, n
+
+
+def emit_lod_table(
+    stage: int, sec: Section, bank_offset: int, bitmap_names: Dict[int, str]
+) -> Tuple[List[str], int]:
     """
     Decode a LOD table (7-byte bitmap_t records).
     Counts actual LOD entries from 'Width (bytes)' inline comments so that
@@ -908,8 +1159,7 @@ def emit_lod_table(stage: int, sec: Section, bank_offset: int,
     Returns (C lines, n_lod_entries).
     """
     # Count LOD entries: each entry's first byte has comment 'Width (bytes)'
-    n_lods = sum(1 for rec in sec.records
-                 if 'width (bytes)' in rec.comment.lower())
+    n_lods = sum(1 for rec in sec.records if "width (bytes)" in rec.comment.lower())
 
     data = sec.bytes_flat
     if n_lods == 0:
@@ -917,8 +1167,15 @@ def emit_lod_table(stage: int, sec: Section, bank_offset: int,
         if len(data) % 7 == 0:
             n_lods = len(data) // 7
         else:
-            return emit_raw_array(array_name(stage, 'lod_table', sec.start_addr),
-                                  data, 7, sec.start_addr), 0
+            return (
+                emit_raw_array(
+                    array_name(stage, "lod_table", sec.start_addr),
+                    data,
+                    7,
+                    sec.start_addr,
+                ),
+                0,
+            )
 
     # Cap at first entry with invalid flags (valid: 0=default, 1=masked,
     # 2=flipped, 3=both). Bitmap bytes mixed into the section can have
@@ -932,9 +1189,9 @@ def emit_lod_table(stage: int, sec: Section, bank_offset: int,
     n_lods = valid_lods
 
     lod_end = n_lods * 7
-    name = array_name(stage, 'lod_table', sec.start_addr)
-    lines = [f'// ${sec.start_addr:04X}']
-    lines.append(f'static const bitmap_t {name}[{n_lods}] = {{')
+    name = array_name(stage, "lod_table", sec.start_addr)
+    lines = [f"// ${sec.start_addr:04X}"]
+    lines.append(f"static const bitmap_t {name}[{n_lods}] = {{")
     for i in range(n_lods):
         off = i * 7
         if off + 6 >= len(data):
@@ -946,33 +1203,34 @@ def emit_lod_table(stage: int, sec: Section, bank_offset: int,
         shft_raw = (data[off + 6] << 8) | data[off + 5]
         data_abs = data_raw + bank_offset
         shft_abs = shft_raw + bank_offset
-        flag_str = BITMAP_FLAGS.get(flags, f'0x{flags:02X}')
+        flag_str = BITMAP_FLAGS.get(flags, f"0x{flags:02X}")
         d_ref = resolve_bitmap_ref(data_abs, bitmap_names, stage)
         s_ref = resolve_bitmap_ref(shft_abs, bitmap_names, stage)
-        lines.append(f'  {{ {width}, {flag_str}, {height},'
-                     f' {d_ref}, {s_ref} }},  // [{i}]')
-    lines.append('};')
+        lines.append(
+            f"  {{ {width}, {flag_str}, {height}," f" {d_ref}, {s_ref} }},  // [{i}]"
+        )
+    lines.append("};")
 
     # Emit any remaining data (bitmap bytes that follow the LOD entries)
     if lod_end < len(data):
         remainder = data[lod_end:]
         rem_addr = sec.start_addr + lod_end
-        rem_name = f'stage{stage}_bitmap_{rem_addr:04X}'
-        lines.append('')
-        lines.extend(emit_raw_array(rem_name, remainder, 8, rem_addr,
-                                    use_pixels=True))
+        rem_name = f"stage{stage}_bitmap_{rem_addr:04X}"
+        lines.append("")
+        lines.extend(emit_raw_array(rem_name, remainder, 8, rem_addr, use_pixels=True))
         bitmap_names[rem_addr] = rem_name  # register for cross-references
 
     return lines, n_lods
 
 
-def emit_arrest_messages(stage: int, sec: Section,
-                         defm_bytes: Dict[int, List[int]]) -> Tuple[List[str], int]:
+def emit_arrest_messages(
+    stage: int, sec: Section, defm_bytes: Dict[int, List[int]]
+) -> Tuple[List[str], int]:
     """Decode an arrest_msgs section using delay/DRAWCHARSTYLE/TWOBYTES/EOS macros.
 
     Returns (C lines, total byte count including embedded DEFM text).
     """
-    nm = f'stage{stage}_arrest_messages_{sec.start_addr:04X}'
+    nm = f"stage{stage}_arrest_messages_{sec.start_addr:04X}"
     recs = sec.records
     n = len(recs)
     content: List[str] = []
@@ -985,193 +1243,384 @@ def emit_arrest_messages(stage: int, sec: Section,
         nonlocal total
         parts = []
         for j, b in enumerate(data):
-            if j == len(data) - 1:           # last byte carries EOS in top bit
+            if j == len(data) - 1:  # last byte carries EOS in top bit
                 base = b & 0x7F
-                lit = f"'{chr(base)}'" if 0x20 <= base <= 0x7E and chr(base) not in ("'", '\\') \
-                      else f'0x{base:02X}'
-                parts.append(f'{lit} | EOS')
+                lit = (
+                    f"'{chr(base)}'"
+                    if 0x20 <= base <= 0x7E and chr(base) not in ("'", "\\")
+                    else f"0x{base:02X}"
+                )
+                parts.append(f"{lit} | EOS")
             else:
-                parts.append(f"'{chr(b)}'" if 0x20 <= b <= 0x7E and chr(b) not in ("'", '\\')
-                             else f'0x{b:02X}')
-        content.append('  ' + ', '.join(parts) + ',')
+                parts.append(
+                    f"'{chr(b)}'"
+                    if 0x20 <= b <= 0x7E and chr(b) not in ("'", "\\")
+                    else f"0x{b:02X}"
+                )
+        content.append("  " + ", ".join(parts) + ",")
         total += len(data)
 
     i = 0
     # Initial delay
-    if i < n and recs[i].rtype == 'B':
-        content.append(f'  {val(recs[i])},  // initial delay')
+    if i < n and recs[i].rtype == "B":
+        content.append(f"  {val(recs[i])},  // initial delay")
         total += 1
         i += 1
 
     while i < n:
         # Message block: DEFB delay, DEFB flags, DEFB attr, DEFW backbuf, DEFW attr_addr
-        if (i + 4 < n
-                and recs[i].rtype == 'B'
-                and recs[i + 1].rtype == 'B'
-                and recs[i + 2].rtype == 'B'
-                and recs[i + 3].rtype == 'W'
-                and recs[i + 4].rtype == 'W'):
+        if (
+            i + 4 < n
+            and recs[i].rtype == "B"
+            and recs[i + 1].rtype == "B"
+            and recs[i + 2].rtype == "B"
+            and recs[i + 3].rtype == "W"
+            and recs[i + 4].rtype == "W"
+        ):
             style = DRAWCHARSTYLE_NAMES.get(val(recs[i + 1]), str(val(recs[i + 1])))
             defm_addr = recs[i + 4].addr + 2
-            content.append('')
-            content.append(f'  {val(recs[i])},  // delay')
-            content.append(f'  {style},')
-            content.append(f'  {val(recs[i + 2])},  // attribute')
-            content.append(f'  TWOBYTES(0x{val(recs[i + 3]):04X}),  // backbuf')
-            content.append(f'  TWOBYTES(0x{val(recs[i + 4]):04X}),  // attr')
-            total += 7   # 3 × DEFB + 2 × DEFW
+            content.append("")
+            content.append(f"  {val(recs[i])},  // delay")
+            content.append(f"  {style},")
+            content.append(f"  {val(recs[i + 2])},  // attribute")
+            content.append(f"  TWOBYTES(0x{val(recs[i + 3]):04X}),  // backbuf")
+            content.append(f"  TWOBYTES(0x{val(recs[i + 4]):04X}),  // attr")
+            total += 7  # 3 × DEFB + 2 × DEFW
             if defm_addr in defm_bytes:
                 emit_text(defm_bytes[defm_addr])
             i += 5
         else:
             # End markers: first byte = TRANSITIONCONTROL, last = DRAWOVERLAY_STOP
-            content.append('')
+            content.append("")
             end_bytes = [b for r in recs[i:] for b in r.values]
             for k, b in enumerate(end_bytes):
                 if k < len(end_bytes) - 1:
                     name = TRANSITIONCONTROL_NAMES.get(b, str(b))
-                    content.append(f'  {name},  // transition_control')
+                    content.append(f"  {name},  // transition_control")
                 else:
-                    content.append(f'  DRAWOVERLAY_STOP')
+                    content.append(f"  DRAWOVERLAY_STOP")
                 total += 1
             break
 
-    lines = [f'// ${sec.start_addr:04X}',
-             '// clang-format off',
-             f'static const u8 {nm}[{total}] = {{']
+    lines = [
+        f"// ${sec.start_addr:04X}",
+        "// clang-format off",
+        f"static const u8 {nm}[{total}] = {{",
+    ]
     lines.extend(content)
-    lines.append('};')
-    lines.append('// clang-format on')
+    lines.append("};")
+    lines.append("// clang-format on")
     return lines, total
+
+
+# ── Stretchy / depthset decoders ─────────────────────────────────────────────
+
+
+def _is_stretchy_entries(sec: "Section") -> bool:
+    """True if the section holds stretchy_t entries (first record is DEFB)."""
+    return bool(sec.records) and sec.records[0].rtype == "B"
+
+
+def _parse_stretchy_entries(
+    sec: "Section", bank_offset: int
+) -> List[List[Tuple[int, Optional[int]]]]:
+    """Parse a stretchy-entries section into one or two sub-arrays.
+
+    Each sub-array is a list of (type_byte, abs_depthset_addr_or_None) tuples.
+    The END entry (type=1) carries None as the address.
+    Two sub-arrays arise when right and left entries are packed consecutively.
+    """
+    sub_arrays: List[List[Tuple[int, Optional[int]]]] = []
+    current: List[Tuple[int, Optional[int]]] = []
+    records = sec.records
+    i = 0
+    while i < len(records):
+        rec = records[i]
+        if rec.rtype == "B":
+            type_byte = rec.values[0] if rec.values else 0
+            if type_byte == 1:  # STRETCHY_TYPE_END
+                current.append((1, None))
+                sub_arrays.append(current)
+                current = []
+                i += 1
+            elif i + 1 < len(records) and records[i + 1].rtype == "W":
+                w_rec = records[i + 1]
+                raw_ptr = w_rec.values[0] if w_rec.values else 0
+                ann = w_rec.annotations[0] if w_rec.annotations else -1
+                abs_ptr = ann if ann >= 0 else (raw_ptr + bank_offset)
+                current.append((type_byte, abs_ptr))
+                i += 2
+            else:
+                i += 1
+        else:
+            i += 1
+    if current:
+        sub_arrays.append(current)
+    return sub_arrays
+
+
+def register_stretchy_names(
+    stage: int,
+    sections: List["Section"],
+    bank_offset: int,
+    abs_to_name: Dict[int, str],
+    abs_to_depthset_name: Dict[int, str],
+) -> None:
+    """First-pass: register stretchy_t array names and depthset_t struct names."""
+    for sec in sections:
+        if sec.stype != "stretchy":
+            continue
+        addr = sec.start_addr
+        if _is_stretchy_entries(sec):
+            sub_arrays = _parse_stretchy_entries(sec, bank_offset)
+            if len(sub_arrays) == 2:
+                abs_to_name[addr] = f"stage{stage}_stretchy_{addr:04X}_right"
+                # The right sub-array occupies (N_entries × 3 + 1) Z80 bytes.
+                n_non_term = sum(1 for t, _ in sub_arrays[0] if t != 1)
+                right_z80_size = n_non_term * 3 + 1
+                abs_to_name[addr + right_z80_size] = (
+                    f"stage{stage}_stretchy_{addr:04X}_left"
+                )
+            else:
+                # 1 sub-array (normal) or 3+ sub-arrays (unsupported, falls back to raw u8)
+                abs_to_name[addr] = f"stage{stage}_stretchy_{addr:04X}"
+        else:
+            data = sec.bytes_flat
+            n = len(data) // 22
+            for i in range(n):
+                dep_addr = addr + i * 22
+                abs_to_depthset_name[dep_addr] = f"stage{stage}_depthset_{dep_addr:04X}"
+
+
+def emit_stretchy_typed(
+    stage: int,
+    sec: "Section",
+    bank_offset: int,
+    abs_to_name: Dict[int, str],
+    abs_to_depthset_name: Dict[int, str],
+) -> Tuple[List[str], List[str]]:
+    """Emit stretchy_t arrays or depthset_t structs for a stretchy section.
+
+    Returns (lines, fwd_decls).
+    """
+    lines: List[str] = [f"// ${sec.start_addr:04X}"]
+    fwd_decls: List[str] = []
+
+    if _is_stretchy_entries(sec):
+        sub_arrays = _parse_stretchy_entries(sec, bank_offset)
+        suffixes = [""] if len(sub_arrays) == 1 else ["_right", "_left"]
+        if len(sub_arrays) not in (1, 2):
+            # Unexpected structure — fall back to raw bytes
+            data = sec.bytes_flat
+            nm = f"stage{stage}_stretchy_{sec.start_addr:04X}"
+            lines.extend(emit_raw_array(nm, data, 8, sec.start_addr))
+            fwd_decls.append(f"static const u8 {nm}[{len(data)}];")
+            return lines, fwd_decls
+        for suffix, entries in zip(suffixes, sub_arrays):
+            nm = f"stage{stage}_stretchy_{sec.start_addr:04X}{suffix}"
+            n = len(entries)
+            lines.append(f"static const stretchy_t {nm}[{n}] = {{")
+            for type_byte, abs_ptr in entries:
+                type_name = STRETCHY_TYPE_NAMES.get(type_byte, f"({type_byte})")
+                if type_byte == 1:
+                    lines.append(f"  {{ {type_name}, NULL }},")
+                else:
+                    dep_nm = (
+                        abs_to_depthset_name.get(abs_ptr)
+                        if abs_ptr is not None
+                        else None
+                    )
+                    if dep_nm:
+                        lines.append(f"  {{ {type_name}, &{dep_nm} }},")
+                    else:
+                        lines.append(
+                            f"  {{ {type_name},"
+                            f" NULL /* TODO: depthset ${abs_ptr:04X} */ }},"
+                        )
+            lines.append("};")
+            lines.append("")
+            fwd_decls.append(f"static const stretchy_t {nm}[{n}];")
+    else:
+        # Depthset block: groups of 22 bytes (2-byte bitmap ptr + 10 × 2-byte pairs).
+        data = sec.bytes_flat
+        n = len(data) // 22
+        remainder = len(data) % 22
+        for i in range(n):
+            dep_addr = sec.start_addr + i * 22
+            off = i * 22
+            raw_ptr = data[off] | (data[off + 1] << 8)
+            abs_ptr = raw_ptr + bank_offset
+            bitmaps_nm = abs_to_name.get(abs_ptr)
+            bitmaps_ref = (
+                f"&{bitmaps_nm}[0]"
+                if bitmaps_nm
+                else f"NULL /* TODO: bitmaps ${abs_ptr:04X} */"
+            )
+            nm = f"stage{stage}_depthset_{dep_addr:04X}"
+            lines.append(f"static const depthset_t {nm} = {{")
+            lines.append(f"  {bitmaps_ref},")
+            lines.append("  {")
+            for j in range(10):
+                depth = data[off + 2 + j * 2]
+                offset_val = data[off + 3 + j * 2]
+                lines.append(f"    0x{depth:02X}, 0x{offset_val:02X},")
+            lines.append("  }")
+            lines.append("};")
+            lines.append("")
+            fwd_decls.append(f"static const depthset_t {nm};")
+        if remainder:
+            # Stray bytes after last complete depthset — emit as raw.
+            rem_addr = sec.start_addr + n * 22
+            rem_nm = f"stage{stage}_stretchy_{rem_addr:04X}"
+            rem_data = data[n * 22 :]
+            lines.extend(emit_raw_array(rem_nm, rem_data, 8, rem_addr))
+            lines.append("")
+            fwd_decls.append(f"static const u8 {rem_nm}[{len(rem_data)}];")
+
+    return lines, fwd_decls
 
 
 # ── Stage struct emitter ──────────────────────────────────────────────────────
 
-def emit_stage_struct(stage: int, sections: List[Section],
-                      abs_to_name: Dict[int, str],
-                      bank_offset: int) -> List[str]:
+
+def emit_stage_struct(
+    stage: int, sections: List[Section], abs_to_name: Dict[int, str], bank_offset: int
+) -> List[str]:
     """Emit const stage_t stageN = { ... };"""
 
     def find_first(stype: str) -> Optional[Section]:
         return next((s for s in sections if s.stype == stype), None)
 
-    backdrop_sec    = find_first('backdrop')
-    perstage_sec    = find_first('perstage')
-    difficulty_sec  = find_first('difficulty')
-    setupdata_sec   = find_first('setupdata')
-    attractdata_sec = find_first('attractdata')
-    pilot_sec       = find_first('pilot_mugshot')
-    lodaddrs_sec    = find_first('lodaddrs')
+    backdrop_sec = find_first("backdrop")
+    perstage_sec = find_first("perstage")
+    difficulty_sec = find_first("difficulty")
+    setupdata_sec = find_first("setupdata")
+    attractdata_sec = find_first("attractdata")
+    pilot_sec = find_first("pilot_mugshot")
+    lodaddrs_sec = find_first("lodaddrs")
 
     lines: List[str] = []
     addr = backdrop_sec.start_addr if backdrop_sec else 0
-    lines.append(f'// ${addr:04X}')
-    lines.append(f'const stage_t stage{stage} = {{')
+    lines.append(f"// ${addr:04X}")
+    lines.append(f"const stage_t stage{stage} = {{")
 
     # Backdrop – embedded inline
     if backdrop_sec:
         data = backdrop_sec.bytes_flat
-        lines.append(f'  /* ${backdrop_sec.start_addr:04X} backdrop */')
-        lines.append('  // clang-format off')
-        lines.append('  {')
+        lines.append(f"  /* ${backdrop_sec.start_addr:04X} backdrop */")
+        lines.append("  // clang-format off")
+        lines.append("  {")
         for i in range(0, len(data), 10):
-            row = data[i:i + 10]
-            lines.append('    ' + ', '.join(byte_to_pixel(b) for b in row) + ',')
-        lines.append('  },')
-        lines.append('  // clang-format on')
+            row = data[i : i + 10]
+            lines.append("    " + ", ".join(byte_to_pixel(b) for b in row) + ",")
+        lines.append("  },")
+        lines.append("  // clang-format on")
     else:
-        lines.append('  { 0 },  /* TODO: backdrop */')
+        lines.append("  { 0 },  /* TODO: backdrop */")
 
     # perstage: perp face attributes, pilot mugshot, ground colour
     perstage_addr = perstage_sec.start_addr if perstage_sec else 0
-    lines.append(f'  /* ${perstage_addr:04X} perstage */')
-    lines.append(f'  &stage{stage}_perp_face[FACEBITMAPBYTES],')
+    lines.append(f"  /* ${perstage_addr:04X} perstage */")
+    lines.append(f"  &stage{stage}_perp_face[FACEBITMAPBYTES],")
     if pilot_sec:
-        lines.append(f'  &stage{stage}_pilot_mugshot[0],')
+        lines.append(f"  &stage{stage}_pilot_mugshot[0],")
     else:
-        lines.append(f'  NULL,  /* no pilot mugshot on this stage */')
+        lines.append(f"  NULL,  /* no pilot mugshot on this stage */")
     if perstage_sec:
         pws = perstage_sec.words_with_annots
         gc = pws[2][0] if len(pws) > 2 else 0
-        lines.append(f'  0x{gc:04X},')
+        lines.append(f"  0x{gc:04X},")
     else:
-        lines.append('  0,  /* TODO: ground_colour */')
+        lines.append("  0,  /* TODO: ground_colour */")
 
     # Pointer fields (perstage words 3..13)
+    # Fields 1-6 point into obj_t arrays (possibly at [-1] or [-1].arg);
+    # use resolve_obj_ptr for those and resolve_section_ptr for the rest.
+    _OBJ_FIELDS = {1, 2, 3, 4, 5, 6}
     pws = perstage_sec.words_with_annots if perstage_sec else []
     for i, field in enumerate(PERSTAGE_PTR_FIELDS):
         abs_a = pws[i + 3][1] if i + 3 < len(pws) else -1
         if abs_a >= 0:
-            ref = resolve_section_ptr(abs_a, abs_to_name)
+            ref = (
+                resolve_obj_ptr(abs_a, abs_to_name)
+                if i in _OBJ_FIELDS
+                else resolve_section_ptr(abs_a, abs_to_name)
+            )
             if ref:
-                lines.append(f'  {ref},  /* {field} */')
+                lines.append(f"  {ref},  /* {field} */")
                 continue
-        hint = f' (${abs_a:04X})' if abs_a >= 0 else ''
-        lines.append(f'  NULL,  /* TODO: {field}{hint} */')
+        hint = f" (${abs_a:04X})" if abs_a >= 0 else ""
+        lines.append(f"  NULL,  /* TODO: {field}{hint} */")
 
-    lines.append('')
+    lines.append("")
     lws = lodaddrs_sec.words_with_annots if lodaddrs_sec else []
 
     def lod_ref(idx: int) -> str:
         if idx >= len(lws):
-            return 'NULL'
+            return "NULL"
         raw_w, abs_a, _ = lws[idx]
         if raw_w == 0:
-            return 'NULL'
+            return "NULL"
         if abs_a < 0:
             abs_a = raw_w + bank_offset
         ref = resolve_section_ptr(abs_a, abs_to_name)
-        return ref if ref else f'NULL  /* TODO: ${abs_a:04X} */'
+        return ref if ref else f"NULL  /* TODO: ${abs_a:04X} */"
 
-    lines.append(f'  {lod_ref(0)},  /* bitmaps_stones */')
-    lines.append(f'  {lod_ref(1)},  /* bitmaps_dust */')
-    lines.append(f'  {lod_ref(2)},  /* bitmaps_perp_car */')
-    vehicles = ', '.join(lod_ref(3 + j) for j in range(4))
-    lines.append(f'  {{ {vehicles} }},  /* bitmaps_vehicles */')
-    lines.append('')
+    lines.append(f"  {lod_ref(0)},  /* bitmaps_stones */")
+    lines.append(f"  {lod_ref(1)},  /* bitmaps_dust */")
+    lines.append(f"  {lod_ref(2)},  /* bitmaps_perp_car */")
+    vehicles = ", ".join(lod_ref(3 + j) for j in range(4))
+    lines.append(f"  {{ {vehicles} }},  /* bitmaps_vehicles */")
+    lines.append("")
 
     # Difficulty: car_spawn_delay, perp_lane_change_base, perp_approach_base
     if difficulty_sec:
         diff = difficulty_sec.bytes_flat
-        lines.append(f'  /* ${difficulty_sec.start_addr:04X} difficulty */')
-        lines.append(f'  {diff[0] if diff else 0},  /* car_spawn_delay */')
-        lines.append(f'  {diff[1] if len(diff) > 1 else 0},  /* perp_lane_change_base */')
-        lines.append(f'  {diff[2] if len(diff) > 2 else 0},  /* perp_approach_base */')
+        lines.append(f"  /* ${difficulty_sec.start_addr:04X} difficulty */")
+        lines.append(f"  {diff[0] if diff else 0},  /* car_spawn_delay */")
+        lines.append(
+            f"  {diff[1] if len(diff) > 1 else 0},  /* perp_lane_change_base */"
+        )
+        lines.append(f"  {diff[2] if len(diff) > 2 else 0},  /* perp_approach_base */")
     else:
-        lines.append('  0,  /* TODO: car_spawn_delay */')
-        lines.append('  0,  /* TODO: perp_lane_change_base */')
-        lines.append('  0,  /* TODO: perp_approach_base */')
-    lines.append('')
+        lines.append("  0,  /* TODO: car_spawn_delay */")
+        lines.append("  0,  /* TODO: perp_lane_change_base */")
+        lines.append("  0,  /* TODO: perp_approach_base */")
+    lines.append("")
 
     def emit_scenedata(sec: Optional[Section], label: str) -> List[str]:
         if not sec:
-            return [f'  {{ 0 }},  /* TODO: {label} */']
+            return [f"  {{ 0 }},  /* TODO: {label} */"]
         ws = sec.words_with_annots
-        sl = [f'  /* ${sec.start_addr:04X} {label} */', '  {']
-        sl.append(f'    {ws[0][0] if ws else 0},')
+        sl = [f"  /* ${sec.start_addr:04X} {label} */", "  {"]
+        sl.append(f"    {ws[0][0] if ws else 0},")
         for idx in range(1, 7):
             if idx < len(ws):
                 raw_w, abs_a, _ = ws[idx]
                 if abs_a < 0:
                     abs_a = raw_w + bank_offset
                 nm = abs_to_name.get(abs_a + 1)
-                sl.append(f'    &{nm}[-1],' if nm
-                          else f'    NULL,  /* TODO: ${abs_a + 1:04X} */')
+                sl.append(
+                    f"    &{nm}[-1],"
+                    if nm
+                    else f"    NULL,  /* TODO: ${abs_a + 1:04X} */"
+                )
             else:
-                sl.append(f'    NULL,  /* TODO: missing word {idx} */')
-        sl.append('  },')
+                sl.append(f"    NULL,  /* TODO: missing word {idx} */")
+        sl.append("  },")
         return sl
 
-    lines.extend(emit_scenedata(setupdata_sec, 'setupdata'))
-    lines.append('')
-    lines.extend(emit_scenedata(attractdata_sec, 'attractdata'))
-    lines.append('')
-    lines.append(f'  stage{stage}_chatter_strings')
-    lines.append('};')
+    lines.extend(emit_scenedata(setupdata_sec, "setupdata"))
+    lines.append("")
+    lines.extend(emit_scenedata(attractdata_sec, "attractdata"))
+    lines.append("")
+    lines.append(f"  stage{stage}_chatter_strings")
+    lines.append("};")
     return lines
 
 
 # ── Main conversion ───────────────────────────────────────────────────────────
+
 
 def convert(skool_path: str, stage: int, obj_names: List[str]) -> None:
     records, section_comments = parse_skool(skool_path)
@@ -1182,8 +1631,8 @@ def convert(skool_path: str, stage: int, obj_names: List[str]) -> None:
     # First pass: collect all bitmap section names so LOD tables can reference them
     bitmap_names: Dict[int, str] = {}
     for sec in sections:
-        if sec.stype == 'bitmap':
-            bname = array_name(stage, 'bitmap', sec.start_addr)
+        if sec.stype == "bitmap":
+            bname = array_name(stage, "bitmap", sec.start_addr)
             bitmap_names[sec.start_addr] = bname
 
     # Also pre-register the remainder blobs that lod_table sections will emit,
@@ -1191,11 +1640,10 @@ def convert(skool_path: str, stage: int, obj_names: List[str]) -> None:
     # Collect forward declarations for those blobs too.
     lod_remainder_fwd: List[str] = []
     for sec in sections:
-        if sec.stype != 'lod_table':
+        if sec.stype != "lod_table":
             continue
         data = sec.bytes_flat
-        n = sum(1 for rec in sec.records
-                if 'width (bytes)' in rec.comment.lower())
+        n = sum(1 for rec in sec.records if "width (bytes)" in rec.comment.lower())
         if n == 0:
             n = len(data) // 7 if len(data) % 7 == 0 else 0
         valid = 0
@@ -1207,20 +1655,20 @@ def convert(skool_path: str, stage: int, obj_names: List[str]) -> None:
         lod_end = valid * 7
         if lod_end < len(data):
             rem_addr = sec.start_addr + lod_end
-            rem_name = f'stage{stage}_bitmap_{rem_addr:04X}'
+            rem_name = f"stage{stage}_bitmap_{rem_addr:04X}"
             rem_size = len(data) - lod_end
             bitmap_names[rem_addr] = rem_name
-            lod_remainder_fwd.append(f'static const u8 {rem_name}[{rem_size}];')
+            lod_remainder_fwd.append(f"static const u8 {rem_name}[{rem_size}];")
 
     # ── Header ───────────────────────────────────────────────────────────────
-    print(f'/**')
-    print(f' * ChaseHQ-Stage{stage}Data.c  (generated by convert_stage.py)')
-    print(f' *')
-    print(f' * Review all TODO comments before use.')
-    print(f' */')
+    print(f"/**")
+    print(f" * ChaseHQ-Stage{stage}Data.c  (generated by convert_stage.py)")
+    print(f" *")
+    print(f" * Review all TODO comments before use.")
+    print(f" */")
     print()
-    print('#include <assert.h>')
-    print('#include <stddef.h>')
+    print("#include <assert.h>")
+    print("#include <stddef.h>")
     print()
     print('#include "C99/Types.h"')
     print('#include "ZXSpectrum/Pixels.h"')
@@ -1231,33 +1679,52 @@ def convert(skool_path: str, stage: int, obj_names: List[str]) -> None:
     print()
     print(f'#include "ChaseHQ-Stage{stage}Data.h"')
     print()
-    print('/* ----------------------------------------------------------------------- */')
+    print(
+        "/* ----------------------------------------------------------------------- */"
+    )
     print()
 
     # Object macros header
-    print(f'/* Stage {stage} object type macros */')
+    print(f"/* Stage {stage} object type macros */")
     for i, oname in enumerate(obj_names):
         if oname:
-            print(f'#define MAP_OBJ_S{stage}_{oname}_VAL  ({i})')
+            print(f"#define MAP_OBJ_S{stage}_{oname}_VAL  ({i})")
     print()
     for i, oname in enumerate(obj_names):
         if oname:
-            print(f'#define MAP_OBJ_S{stage}_{oname}(D)   '
-                  f'(((D) << 4) | MAP_OBJ_S{stage}_{oname}_VAL)')
+            print(
+                f"#define MAP_OBJ_S{stage}_{oname}(D)   "
+                f"(((D) << 4) | MAP_OBJ_S{stage}_{oname}_VAL)"
+            )
     print()
-    print('/* ----------------------------------------------------------------------- */')
+    print(
+        "/* ----------------------------------------------------------------------- */"
+    )
     print()
 
     # ── First pass: build abs_addr → array_name map ──────────────────────────
-    map_stypes = {'curvature', 'height', 'lanes', 'hazards', 'leftobjs', 'rightobjs'}
+    map_stypes = {"curvature", "height", "lanes", "hazards", "leftobjs", "rightobjs"}
     named_stypes = map_stypes | {
-        'arrest_msgs', 'perp_desc', 'hazard_lods',
-        'helicopter', 'obj_defs', 'lodaddrs', 'lod_table',
+        "arrest_msgs",
+        "perp_desc",
+        "hazard_lods",
+        "helicopter",
+        "obj_defs",
+        "obj_defs_right",
+        "obj_defs_left",
+        "hittable_objects",
+        "lodaddrs",
+        "lod_table",
     }
     abs_to_name: Dict[int, str] = {}
     for sec in sections:
         if sec.stype in named_stypes:
             abs_to_name[sec.start_addr] = array_name(stage, sec.stype, sec.start_addr)
+
+    abs_to_depthset_name: Dict[int, str] = {}
+    register_stretchy_names(
+        stage, sections, bank_offset, abs_to_name, abs_to_depthset_name
+    )
 
     # ── Generate code for each section ───────────────────────────────────────
     all_lines: List[str] = []
@@ -1267,145 +1734,170 @@ def convert(skool_path: str, stage: int, obj_names: List[str]) -> None:
 
     for sec in sections:
         if sec.stype in map_stypes:
-            lines, gm = emit_map_section(stage, sec.stype, sec, obj_names,
-                                         bank_offset, abs_to_name)
+            lines, gm = emit_map_section(
+                stage, sec.stype, sec, obj_names, bank_offset, abs_to_name
+            )
             all_lines.extend(lines)
-            all_lines.append('')
+            all_lines.append("")
             goto_map.update(gm)
             nm = array_name(stage, sec.stype, sec.start_addr)
-            fwd_decls.append(f'static const u8 {nm}[];')
+            fwd_decls.append(f"static const u8 {nm}[];")
 
-        elif sec.stype == 'backdrop':
-            fwd_decls.append('// backdrop declared inline in stage struct')
+        elif sec.stype == "backdrop":
+            fwd_decls.append("// backdrop declared inline in stage struct")
 
-        elif sec.stype in ('perp_mugshot', 'pilot_mugshot'):
+        elif sec.stype in ("perp_mugshot", "pilot_mugshot"):
             data = sec.bytes_flat
             nm = array_name(stage, sec.stype, sec.start_addr)
             all_lines.extend(emit_face_mugshot_array(nm, data, sec.start_addr))
-            all_lines.append('')
-            fwd_decls.append(f'static const u8 {nm}[{len(data)}];')
+            all_lines.append("")
+            fwd_decls.append(f"static const u8 {nm}[{len(data)}];")
 
-        elif sec.stype == 'bitmap':
+        elif sec.stype == "bitmap":
             data = sec.bytes_flat
-            nm = array_name(stage, 'bitmap', sec.start_addr)
+            nm = array_name(stage, "bitmap", sec.start_addr)
             # Try to parse width×height from comment (e.g. "Bitmap data 5 bytes x 8")
-            m = re.search(r'(\d+)\s+bytes?\s+x\s+(\d+)', sec.header_comment, re.I)
-            per = int(m.group(1)) * 2 if m and 'masked' in sec.header_comment.lower() else \
-                  int(m.group(1)) if m else 8
-            all_lines.extend(emit_raw_array(nm, data, per, sec.start_addr,
-                                            use_pixels=True))
-            all_lines.append('')
-            fwd_decls.append(f'static const u8 {nm}[{len(data)}];')
+            m = re.search(r"(\d+)\s+bytes?\s+x\s+(\d+)", sec.header_comment, re.I)
+            per = (
+                int(m.group(1)) * 2
+                if m and "masked" in sec.header_comment.lower()
+                else int(m.group(1)) if m else 8
+            )
+            all_lines.extend(
+                emit_raw_array(nm, data, per, sec.start_addr, use_pixels=True)
+            )
+            all_lines.append("")
+            fwd_decls.append(f"static const u8 {nm}[{len(data)}];")
             bitmap_sections.append((nm, sec.start_addr))
 
-        elif sec.stype == 'lod_table':
+        elif sec.stype == "lod_table":
             lines, n_lods = emit_lod_table(stage, sec, bank_offset, bitmap_names)
             all_lines.extend(lines)
-            all_lines.append('')
-            nm = array_name(stage, 'lod_table', sec.start_addr)
+            all_lines.append("")
+            nm = array_name(stage, "lod_table", sec.start_addr)
             if n_lods > 0:
-                fwd_decls.append(f'static const bitmap_t {nm}[{n_lods}];')
+                fwd_decls.append(f"static const bitmap_t {nm}[{n_lods}];")
             else:
-                fwd_decls.append(f'static const u8 {nm}[{len(sec.bytes_flat)}];')
+                fwd_decls.append(f"static const u8 {nm}[{len(sec.bytes_flat)}];")
 
-        elif sec.stype == 'arrest_msgs':
+        elif sec.stype == "arrest_msgs":
             lines, total = emit_arrest_messages(stage, sec, defm_bytes)
             all_lines.extend(lines)
-            all_lines.append('')
-            nm = array_name(stage, 'arrest_msgs', sec.start_addr)
-            fwd_decls.append(f'static const u8 {nm}[{total}];')
+            all_lines.append("")
+            nm = array_name(stage, "arrest_msgs", sec.start_addr)
+            fwd_decls.append(f"static const u8 {nm}[{total}];")
 
-        elif sec.stype == 'perp_desc':
+        elif sec.stype == "perp_desc":
             all_lines.extend(emit_perp_description(stage, sec))
-            all_lines.append('')
-            fwd_decls.append(f'static const u8 stage{stage}_perp_description[7];')
+            all_lines.append("")
+            fwd_decls.append(f"static const u8 stage{stage}_perp_description[7];")
 
             # The first four DEFW words in the header are pointers to the
             # chatter strings (DEFM lines).  Resolve each via defm_strings.
             ws = sec.words_with_annots
-            strings = [defm_strings[w[1]]
-                       for w in ws[:4] if w[1] >= 0 and w[1] in defm_strings]
+            strings = [
+                defm_strings[w[1]] for w in ws[:4] if w[1] >= 0 and w[1] in defm_strings
+            ]
             if strings:
-                chat_nm = f'stage{stage}_chatter_strings'
-                all_lines.append(f'static const char *{chat_nm}[{len(strings)}] = {{')
+                chat_nm = f"stage{stage}_chatter_strings"
+                all_lines.append(f"static const char *{chat_nm}[{len(strings)}] = {{")
                 for s in strings:
-                    all_lines.append(f'  {s},')
-                all_lines.append('};')
-                all_lines.append('')
-                fwd_decls.append(f'static const char *{chat_nm}[{len(strings)}];')
+                    all_lines.append(f"  {s},")
+                all_lines.append("};")
+                all_lines.append("")
+                fwd_decls.append(f"static const char *{chat_nm}[{len(strings)}];")
 
-        elif sec.stype == 'hazard_lods':
+        elif sec.stype == "hittable_objects":
+            lines, n = emit_hittable_array(stage, sec, abs_to_name)
+            all_lines.extend(lines)
+            all_lines.append("")
+            nm = array_name(stage, "hittable_objects", sec.start_addr)
+            fwd_decls.append(f"static const hittable_t {nm}[{n}];")
+
+        elif sec.stype in ("obj_defs_right", "obj_defs_left"):
+            lines, n = emit_obj_array(stage, sec, abs_to_name)
+            all_lines.extend(lines)
+            all_lines.append("")
+            nm = array_name(stage, sec.stype, sec.start_addr)
+            fwd_decls.append(f"static const obj_t {nm}[{n}];")
+
+        elif sec.stype == "hazard_lods":
             data = sec.bytes_flat
-            nm = array_name(stage, 'hazard_lods', sec.start_addr)
+            nm = array_name(stage, "hazard_lods", sec.start_addr)
             all_lines.extend(emit_raw_array(nm, data, 3, sec.start_addr))
-            all_lines.append('')
-            fwd_decls.append(f'static const u8 {nm}[{len(data)}];')
+            all_lines.append("")
+            fwd_decls.append(f"static const u8 {nm}[{len(data)}];")
 
-        elif sec.stype == 'helicopter':
+        elif sec.stype == "helicopter":
             data = sec.bytes_flat
-            nm = array_name(stage, 'helicopter', sec.start_addr)
+            nm = array_name(stage, "helicopter", sec.start_addr)
             all_lines.extend(emit_raw_array(nm, data, 8, sec.start_addr))
-            all_lines.append('')
-            fwd_decls.append(f'static const u8 {nm}[{len(data)}];')
+            all_lines.append("")
+            fwd_decls.append(f"static const u8 {nm}[{len(data)}];")
 
-        elif sec.stype == 'obj_defs':
+        elif sec.stype == "obj_defs":
             data = sec.bytes_flat
-            nm = array_name(stage, 'obj_defs', sec.start_addr)
+            nm = array_name(stage, "obj_defs", sec.start_addr)
             all_lines.extend(emit_raw_array(nm, data, 7, sec.start_addr))
-            all_lines.append('')
-            fwd_decls.append(f'static const u8 {nm}[{len(data)}];')
+            all_lines.append("")
+            fwd_decls.append(f"static const u8 {nm}[{len(data)}];")
 
-        elif sec.stype == 'lodaddrs':
+        elif sec.stype == "lodaddrs":
             data = sec.bytes_flat
-            nm = array_name(stage, 'lodaddrs', sec.start_addr)
+            nm = array_name(stage, "lodaddrs", sec.start_addr)
             all_lines.extend(emit_raw_array(nm, data, 2, sec.start_addr))
-            all_lines.append('')
-            fwd_decls.append(f'static const u8 {nm}[{len(data)}];')
+            all_lines.append("")
+            fwd_decls.append(f"static const u8 {nm}[{len(data)}];")
 
-        elif sec.stype == 'stretchy':
-            data = sec.bytes_flat
-            nm = array_name(stage, 'stretchy', sec.start_addr)
-            all_lines.extend(emit_raw_array(nm, data, 8, sec.start_addr))
-            all_lines.append('')
-            fwd_decls.append(f'static const u8 {nm}[{len(data)}];')
+        elif sec.stype == "stretchy":
+            s_lines, s_fwd = emit_stretchy_typed(
+                stage, sec, bank_offset, abs_to_name, abs_to_depthset_name
+            )
+            all_lines.extend(s_lines)
+            all_lines.append("")
+            fwd_decls.extend(s_fwd)
 
-        elif sec.stype in ('perstage', 'difficulty', 'setupdata', 'attractdata'):
+        elif sec.stype in ("perstage", "difficulty", "setupdata", "attractdata"):
             pass  # data inlined into stage_t struct by emit_stage_struct
 
-        elif sec.stype in ('hittable', 'unknown'):
-            all_lines.append(f'/* TODO: ${sec.start_addr:04X} [{sec.stype}]')
-            all_lines.append(f'   {sec.header_comment}')
+        elif sec.stype == "unknown":
+            all_lines.append(f"/* TODO: ${sec.start_addr:04X} [{sec.stype}]")
+            all_lines.append(f"   {sec.header_comment}")
             # Emit raw hex as a comment
             data = sec.bytes_flat
             if data:
-                hex_str = ' '.join(f'0x{b:02X}' for b in data[:64])
+                hex_str = " ".join(f"0x{b:02X}" for b in data[:64])
                 if len(data) > 64:
-                    hex_str += f' ... ({len(data)} bytes total)'
-                all_lines.append(f'   Raw: {hex_str}')
+                    hex_str += f" ... ({len(data)} bytes total)"
+                all_lines.append(f"   Raw: {hex_str}")
             # For word sections, show annotations
             wlist = sec.words_with_annots
             if wlist:
                 for raw_w, abs_a, waddr in wlist[:16]:
-                    ann = f'→ ${abs_a:04X}' if abs_a >= 0 else '(out-of-bounds)'
-                    all_lines.append(f'   ${waddr:04X}: DEFW ${raw_w:04X}  {ann}')
-            all_lines.append('*/')
-            all_lines.append('')
+                    ann = f"→ ${abs_a:04X}" if abs_a >= 0 else "(out-of-bounds)"
+                    all_lines.append(f"   ${waddr:04X}: DEFW ${raw_w:04X}  {ann}")
+            all_lines.append("*/")
+            all_lines.append("")
 
     # ── Emit forward declarations ─────────────────────────────────────────────
-    print('/* Forward declarations */')
+    print("/* Forward declarations */")
     for d in fwd_decls:
         print(d)
     for d in lod_remainder_fwd:
         print(d)
     print()
-    print('/* ----------------------------------------------------------------------- */')
+    print(
+        "/* ----------------------------------------------------------------------- */"
+    )
     print()
 
     # ── Stage struct ──────────────────────────────────────────────────────────
     for line in emit_stage_struct(stage, sections, abs_to_name, bank_offset):
         print(line)
     print()
-    print('/* ----------------------------------------------------------------------- */')
+    print(
+        "/* ----------------------------------------------------------------------- */"
+    )
     print()
 
     # ── Data sections ─────────────────────────────────────────────────────────
@@ -1413,49 +1905,53 @@ def convert(skool_path: str, stage: int, obj_names: List[str]) -> None:
         print(line)
 
     # ── lookup_map_goto ───────────────────────────────────────────────────────
-    tname = f'stage{stage}_map_goto_table'
-    print(f'static const struct {{ u16 z80; const void *ptr; }} {tname}[] = {{')
+    tname = f"stage{stage}_map_goto_table"
+    print(f"static const struct {{ u16 z80; const void *ptr; }} {tname}[] = {{")
     for raw_addr, name in sorted(goto_map.items()):
         if name:
-            print(f'  {{ 0x{raw_addr:04X}, &{name}[0] }},')
+            print(f"  {{ 0x{raw_addr:04X}, &{name}[0] }},")
         else:
             raw = raw_addr - bank_offset if raw_addr > bank_offset else raw_addr
-            print(f'  /* TODO: 0x{raw:04X} -> find array name for abs ${raw_addr:04X} */')
-    print('};')
+            print(
+                f"  /* TODO: 0x{raw:04X} -> find array name for abs ${raw_addr:04X} */"
+            )
+    print("};")
     print()
-    print(f'const void *stage{stage}_lookup_map_goto(chqstate_t *state, u16 z80)')
-    print('{')
-    print('  int lo, hi, mid;')
+    print(f"const void *stage{stage}_lookup_map_goto(chqstate_t *state, u16 z80)")
+    print("{")
+    print("  int lo, hi, mid;")
     print()
-    print(f'  lo  = 0;')
-    print(f'  hi  = (int)NELEMS({tname}) - 1;')
-    print(f'  while (lo <= hi) {{')
-    print(f'    mid = lo + (hi - lo) / 2;')
-    print(f'    if ({tname}[mid].z80 == z80) return {tname}[mid].ptr;')
-    print(f'    if ({tname}[mid].z80 < z80)  lo = mid + 1;')
-    print(f'    else                          hi = mid - 1;')
-    print(f'  }}')
+    print(f"  lo  = 0;")
+    print(f"  hi  = (int)NELEMS({tname}) - 1;")
+    print(f"  while (lo <= hi) {{")
+    print(f"    mid = lo + (hi - lo) / 2;")
+    print(f"    if ({tname}[mid].z80 == z80) return {tname}[mid].ptr;")
+    print(f"    if ({tname}[mid].z80 < z80)  lo = mid + 1;")
+    print(f"    else                          hi = mid - 1;")
+    print(f"  }}")
     print(f'  assert("Unknown Z80 address (stage {stage})" == NULL);')
-    print('  return NULL;')
-    print('}')
+    print("  return NULL;")
+    print("}")
 
 
 def main():
-    parser = argparse.ArgumentParser(description='Convert skool file to C stage data.')
-    parser.add_argument('skool', help='Input .skool file')
-    parser.add_argument('stage', type=int, help='Stage number (2-5)')
-    parser.add_argument('--obj-names', default='NONE,TUNNEL_LIGHT,OBJ2,SHORT_POLE,'
-                        'OBJ4,OBJ5,OBJ6,OBJ7,OBJ8',
-                        help='Comma-separated object type names for indices 0-8')
+    parser = argparse.ArgumentParser(description="Convert skool file to C stage data.")
+    parser.add_argument("skool", help="Input .skool file")
+    parser.add_argument("stage", type=int, help="Stage number (2-5)")
+    parser.add_argument(
+        "--obj-names",
+        default="NONE,TUNNEL_LIGHT,OBJ2,SHORT_POLE," "OBJ4,OBJ5,OBJ6,OBJ7,OBJ8",
+        help="Comma-separated object type names for indices 0-8",
+    )
     args = parser.parse_args()
 
-    obj_names = [n.strip() for n in args.obj_names.split(',')]
+    obj_names = [n.strip() for n in args.obj_names.split(",")]
     # Pad or trim to exactly 16 (max nibble value 0xF = 15)
     while len(obj_names) < 16:
-        obj_names.append(f'OBJ{len(obj_names)}')
+        obj_names.append(f"OBJ{len(obj_names)}")
 
     convert(args.skool, args.stage, obj_names)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

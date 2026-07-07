@@ -24,6 +24,8 @@
  * Each sample occupies a contiguous slice of the 16 KiB sound_samples[] array
  * packed consecutively from offset 0. Callers pass these values directly;
  * play_speech_128k subtracts 1 when indexing the internal table. */
+#define SOUND_SAMPLES_Z80_BASE (0xC000) /* bank 4 base address where samples are mapped */
+
 #define SAMPLE_GIDDY_UP (1) /* "Giddy up boy!"        - $C000..$CA8B - 2700 bytes */
 #define SAMPLE_LETS_GO  (2) /* "Let's go Mr. Driver!" - $CA8C..$DF71 - 5350 bytes */
 #define SAMPLE_HOLD_ON  (3) /* "Hold on man!"         - $DF72..$E9CB - 2650 bytes */

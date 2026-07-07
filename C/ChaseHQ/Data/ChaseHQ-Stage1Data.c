@@ -214,7 +214,7 @@ const stage_t stage1 = {
     ___X_XXX, ________, ________, ________, ________, ________, ________, ________, ________, ________
   },
   &stage1_perp_face[FACEBITMAPBYTES],
-  NULL, // no bitmap given on this level
+  NULL, // no mugshot given on this level
   attribute_BRIGHT_BLACK_OVER_YELLOW | (attribute_BRIGHT_BLACK_OVER_YELLOW << 8),
   &stage1_hittable_object_defs[0],
   &stage1_right_hand_graphics_defs[-1].arg,

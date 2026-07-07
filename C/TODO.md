@@ -11,6 +11,7 @@ perhaps build unit tests now to flush out problems ahead of time.
 - Transitions still not always right (perhaps just spiral?)
 - Floating fork arrow vanishes too soon
 - Tunnel drawing wrong
+- No hazards
 
 
 # TODO

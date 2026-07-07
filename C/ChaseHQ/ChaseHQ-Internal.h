@@ -92,6 +92,7 @@
 #define STRETCHY_TYPE_75PC                     (7) // height =  75%
 #define STRETCHY_TYPE_25PC                     (8) // height =  25%
 #define STRETCHY_TYPE_100PC                    (9) // height = 100%
+#define STRETCHY_TYPE_200PC                   (10) // height = 200%; Z80 dispatch ADD A,A fall-through
 
 /* ----------------------------------------------------------------------- */
 
@@ -184,6 +185,7 @@ obj_handler_t draw_tunnel_light_left;
 obj_handler_t draw_tunnel_light_right;
 obj_handler_t draw_object_left;
 obj_handler_t draw_object_right;
+obj_handler_t draw_overhead;
 
 /* ----------------------------------------------------------------------- */
 

@@ -61,19 +61,9 @@ static const u8 stage3_lod_addrs_C10C[14];
 static const u8 stage3_perp_description[7];
 static const char *stage3_chatter_strings[4];
 static const u8 stage3_arrest_messages_C1E8[70];
-static const u8 stage3_hazard_lods_C22E[6];
-static const u8 stage3_obj_defs_C234[7];
-static const u8 stage3_obj_defs_C23B[7];
-static const u8 stage3_obj_defs_C242[7];
-static const u8 stage3_obj_defs_C249[7];
-static const u8 stage3_obj_defs_C250[7];
-static const u8 stage3_obj_defs_C257[7];
-static const u8 stage3_obj_defs_C25E[7];
-static const u8 stage3_obj_defs_C265[7];
-static const u8 stage3_obj_defs_C26C[7];
-static const u8 stage3_obj_defs_C273[7];
-static const u8 stage3_obj_defs_C27A[7];
-static const u8 stage3_obj_defs_C281[7];
+static const hittable_t stage3_hittable_objects_C22E[2];
+static const obj_t stage3_right_obj_defs_C234[6];
+static const obj_t stage3_left_obj_defs_C25E[6];
 static const u8 stage3_map_curv_C288[];
 static const u8 stage3_map_height_C2AC[];
 static const u8 stage3_map_lanes_C2CD[];
@@ -109,18 +99,25 @@ static const bitmap_t stage3_lods_C8E0[6];
 static const bitmap_t stage3_lods_C90A[6];
 static const bitmap_t stage3_lods_C934[6];
 static const bitmap_t stage3_lods_CDF1[12];
-static const u8 stage3_stretchy_CEA1[10];
-static const u8 stage3_stretchy_CEAB[66];
+static const stretchy_t stage3_stretchy_CEA1[4];
+static const depthset_t stage3_depthset_CEAB;
+static const depthset_t stage3_depthset_CEC1;
+static const depthset_t stage3_depthset_CED7;
 static const bitmap_t stage3_lods_CEED[5];
-static const u8 stage3_stretchy_D2BB[7];
-static const u8 stage3_stretchy_D2C2[44];
+static const stretchy_t stage3_stretchy_D2BB[3];
+static const depthset_t stage3_depthset_D2C2;
+static const depthset_t stage3_depthset_D2D8;
 static const bitmap_t stage3_lods_D2EE[5];
 static const bitmap_t stage3_lods_D64F[6];
-static const u8 stage3_stretchy_D79E[20];
-static const u8 stage3_stretchy_D7B2[44];
+static const stretchy_t stage3_stretchy_D79E_right[4];
+static const stretchy_t stage3_stretchy_D79E_left[4];
+static const depthset_t stage3_depthset_D7B2;
+static const depthset_t stage3_depthset_D7C8;
 static const bitmap_t stage3_lods_D7DE[5];
-static const u8 stage3_stretchy_D9D6[20];
-static const u8 stage3_stretchy_D9EA[44];
+static const stretchy_t stage3_stretchy_D9D6_right[4];
+static const stretchy_t stage3_stretchy_D9D6_left[4];
+static const depthset_t stage3_depthset_D9EA;
+static const depthset_t stage3_depthset_DA00;
 static const bitmap_t stage3_lods_DA16[5];
 static const u8 stage3_bitmap_C95E[1171];
 static const u8 stage3_bitmap_CE45[92];
@@ -167,20 +164,20 @@ const stage_t stage3 = {
   &stage3_perp_face[FACEBITMAPBYTES],
   NULL,  /* no pilot mugshot on this stage */
   0x7070,
-  (const hittable_t *)&stage3_hazard_lods_C22E[0],  /* addrof_hittable_objects */
-  &stage3_hazard_lods_C22E[2],  /* addrof_right_hand_handlers */
-  (const obj_t *)&stage3_arrest_messages_C1E8[69],  /* addrof_right_hand_objects */
-  (const obj_t *)&stage3_obj_defs_C242[0],  /* addrof_right_hand_short_pole_object */
-  &stage3_obj_defs_C257[3],  /* addrof_left_hand_handlers */
-  (const obj_t *)&stage3_obj_defs_C257[0],  /* addrof_left_hand_objects */
-  (const obj_t *)&stage3_obj_defs_C26C[0],  /* addrof_left_hand_short_pole_object */
+  &stage3_hittable_objects_C22E[0],  /* addrof_hittable_objects */
+  &stage3_right_obj_defs_C234[-1].arg,  /* addrof_right_hand_handlers */
+  &stage3_right_obj_defs_C234[-1],  /* addrof_right_hand_objects */
+  &stage3_right_obj_defs_C234[2],  /* addrof_right_hand_short_pole_object */
+  &stage3_left_obj_defs_C25E[-1].arg,  /* addrof_left_hand_handlers */
+  &stage3_left_obj_defs_C25E[-1],  /* addrof_left_hand_objects */
+  &stage3_left_obj_defs_C25E[2],  /* addrof_left_hand_short_pole_object */
   &stage3_perp_description[0],  /* addrof_perp_description */
   &stage3_arrest_messages_C1E8[0],  /* addrof_arrest_messages */
   NULL,  /* TODO: addrof_helicopter_stuff_1 */
   NULL,  /* TODO: addrof_helicopter_stuff_2 */
 
-  (const bitmap_t (*)[SPRITE_FRAMES])&stage3_lods_CDF1[0],  /* bitmaps_stones */
-  (const bitmap_t (*)[SPRITE_FRAMES])&stage3_lods_CDF1[42],  /* bitmaps_dust */
+  &stage3_lods_CDF1[0],  /* bitmaps_stones */
+  &stage3_lods_CDF1[42],  /* bitmaps_dust */
   &stage3_lods_C8E0[0],  /* bitmaps_perp_car */
   { &stage3_lods_C934[0], &stage3_lods_C90A[0], &stage3_lods_C934[0], &stage3_lods_C8E0[0] },  /* bitmaps_vehicles */
 
@@ -270,69 +267,29 @@ static const u8 stage3_arrest_messages_C1E8[70] = {
 // clang-format on
 
 // $C22E
-static const u8 stage3_hazard_lods_C22E[6] = {
-  0x10, 0x4F, 0x72,
-  0x20, 0xBF, 0x72,
+static const hittable_t stage3_hittable_objects_C22E[2] = {
+  { 16, &stage3_lods_D64F[0] },
+  { 32, &stage3_lods_D64F[112] },
 };
 
 // $C234
-static const u8 stage3_obj_defs_C234[7] = {
-  0x6F, 0x29, 0x50, 0xE9, 0xE1, 0x52, 0x92,
-};
-
-// $C23B
-static const u8 stage3_obj_defs_C23B[7] = {
-  0x6F, 0x35, 0x46, 0xBB, 0x6E, 0x71, 0x91,
-};
-
-// $C242
-static const u8 stage3_obj_defs_C242[7] = {
-  0x90, 0x5C, 0x28, 0x05, 0x7E, 0x71, 0x91,
-};
-
-// $C249
-static const u8 stage3_obj_defs_C249[7] = {
-  0x50, 0x10, 0x3C, 0xA1, 0x6A, 0x71, 0x91,
-};
-
-// $C250
-static const u8 stage3_obj_defs_C250[7] = {
-  0x6E, 0x35, 0x50, 0x9E, 0x73, 0x71, 0x91,
-};
-
-// $C257
-static const u8 stage3_obj_defs_C257[7] = {
-  0x6E, 0x35, 0x50, 0xD6, 0x75, 0x71, 0x91,
+static const obj_t stage3_right_obj_defs_C234[6] = {
+  { 111, 41, 80, &tunnellight, draw_tunnel_light_right },
+  { 111, 53, 70, &stage3_stretchy_D2BB[0], draw_stretchy_object_right },
+  { 144, 92, 40, &stretchy_shortpole, draw_stretchy_object_right },
+  { 80, 16, 60, &stage3_stretchy_CEA1[0], draw_stretchy_object_right },
+  { 110, 53, 80, &stage3_stretchy_D79E_right[0], draw_stretchy_object_right },
+  { 110, 53, 80, &stage3_stretchy_D9D6_right[0], draw_stretchy_object_right },
 };
 
 // $C25E
-static const u8 stage3_obj_defs_C25E[7] = {
-  0x7E, 0xBC, 0x50, 0xE9, 0xE1, 0x4D, 0x92,
-};
-
-// $C265
-static const u8 stage3_obj_defs_C265[7] = {
-  0x78, 0x9A, 0x46, 0x26, 0x6F, 0x52, 0x90,
-};
-
-// $C26C
-static const u8 stage3_obj_defs_C26C[7] = {
-  0x60, 0x90, 0x28, 0x05, 0x7E, 0x6C, 0x91,
-};
-
-// $C273
-static const u8 stage3_obj_defs_C273[7] = {
-  0xA8, 0xF0, 0x3C, 0xA1, 0x6A, 0x6C, 0x91,
-};
-
-// $C27A
-static const u8 stage3_obj_defs_C27A[7] = {
-  0x84, 0xB6, 0x50, 0xA8, 0x73, 0x6C, 0x91,
-};
-
-// $C281
-static const u8 stage3_obj_defs_C281[7] = {
-  0x84, 0xB6, 0x50, 0xE0, 0x75, 0x6C, 0x91,
+static const obj_t stage3_left_obj_defs_C25E[6] = {
+  { 126, 188, 80, &tunnellight, draw_tunnel_light_left },
+  { 120, 154, 70, NULL /* TODO: arg $6F26 */, draw_overhead },
+  { 96, 144, 40, &stretchy_shortpole, draw_stretchy_object_left },
+  { 168, 240, 60, &stage3_stretchy_CEA1[0], draw_stretchy_object_left },
+  { 132, 182, 80, &stage3_stretchy_D79E_left[0], draw_stretchy_object_left },
+  { 132, 182, 80, &stage3_stretchy_D9D6_left[0], draw_stretchy_object_left },
 };
 
 // $C288
@@ -2017,23 +1974,63 @@ static const u8 stage3_bitmap_CE45[92] = {
 // clang-format on
 
 // $CEA1
-static const u8 stage3_stretchy_CEA1[10] = {
-  0x02, 0xAB, 0x6A, 0x0A, 0xC1, 0x6A, 0x02, 0xD7,
-  0x6A, 0x01,
+static const stretchy_t stage3_stretchy_CEA1[4] = {
+  { STRETCHY_TYPE_FIXED, &stage3_depthset_CEAB },
+  { STRETCHY_TYPE_200PC, &stage3_depthset_CEC1 },
+  { STRETCHY_TYPE_FIXED, &stage3_depthset_CED7 },
+  { STRETCHY_TYPE_END, NULL },
 };
 
+
 // $CEAB
-static const u8 stage3_stretchy_CEAB[66] = {
-  0xED, 0x6A, 0x48, 0x02, 0x38, 0x09, 0x30, 0x09,
-  0x28, 0x10, 0x20, 0x10, 0x20, 0x17, 0x1C, 0x17,
-  0x18, 0x1E, 0x14, 0x1E, 0x10, 0x25, 0xED, 0x6A,
-  0x48, 0x2C, 0x38, 0x33, 0x30, 0x33, 0x28, 0x3A,
-  0x20, 0x3A, 0x20, 0x41, 0x1C, 0x41, 0x18, 0x48,
-  0x14, 0x48, 0x10, 0x4F, 0xED, 0x6A, 0x48, 0x56,
-  0x38, 0x5D, 0x30, 0x5D, 0x28, 0x64, 0x20, 0x64,
-  0x20, 0x6B, 0x1C, 0x6B, 0x18, 0x72, 0x14, 0x72,
-  0x10, 0x79,
+static const depthset_t stage3_depthset_CEAB = {
+  &stage3_lods_CEED[0],
+  {
+    0x48, 0x02,
+    0x38, 0x09,
+    0x30, 0x09,
+    0x28, 0x10,
+    0x20, 0x10,
+    0x20, 0x17,
+    0x1C, 0x17,
+    0x18, 0x1E,
+    0x14, 0x1E,
+    0x10, 0x25,
+  }
 };
+
+static const depthset_t stage3_depthset_CEC1 = {
+  &stage3_lods_CEED[0],
+  {
+    0x48, 0x2C,
+    0x38, 0x33,
+    0x30, 0x33,
+    0x28, 0x3A,
+    0x20, 0x3A,
+    0x20, 0x41,
+    0x1C, 0x41,
+    0x18, 0x48,
+    0x14, 0x48,
+    0x10, 0x4F,
+  }
+};
+
+static const depthset_t stage3_depthset_CED7 = {
+  &stage3_lods_CEED[0],
+  {
+    0x48, 0x56,
+    0x38, 0x5D,
+    0x30, 0x5D,
+    0x28, 0x64,
+    0x20, 0x64,
+    0x20, 0x6B,
+    0x1C, 0x6B,
+    0x18, 0x72,
+    0x14, 0x72,
+    0x10, 0x79,
+  }
+};
+
 
 // $CEED
 static const bitmap_t stage3_lods_CEED[5] = {
@@ -2169,19 +2166,46 @@ static const u8 stage3_bitmap_CF10[939] = {
 // clang-format on
 
 // $D2BB
-static const u8 stage3_stretchy_D2BB[7] = {
-  0x03, 0xC2, 0x6E, 0x02, 0xD8, 0x6E, 0x01,
+static const stretchy_t stage3_stretchy_D2BB[3] = {
+  { STRETCHY_TYPE_150PC, &stage3_depthset_D2C2 },
+  { STRETCHY_TYPE_FIXED, &stage3_depthset_D2D8 },
+  { STRETCHY_TYPE_END, NULL },
 };
 
+
 // $D2C2
-static const u8 stage3_stretchy_D2C2[44] = {
-  0xEE, 0x6E, 0x24, 0x02, 0x1C, 0x02, 0x18, 0x09,
-  0x18, 0x09, 0x14, 0x10, 0x14, 0x10, 0x14, 0x17,
-  0x10, 0x17, 0x10, 0x17, 0x10, 0x17, 0xEE, 0x6E,
-  0x24, 0x1E, 0x1C, 0x1E, 0x18, 0x25, 0x18, 0x25,
-  0x14, 0x2C, 0x14, 0x2C, 0x14, 0x33, 0x10, 0x33,
-  0x10, 0x33, 0x10, 0x33,
+static const depthset_t stage3_depthset_D2C2 = {
+  &stage3_lods_D2EE[0],
+  {
+    0x24, 0x02,
+    0x1C, 0x02,
+    0x18, 0x09,
+    0x18, 0x09,
+    0x14, 0x10,
+    0x14, 0x10,
+    0x14, 0x17,
+    0x10, 0x17,
+    0x10, 0x17,
+    0x10, 0x17,
+  }
 };
+
+static const depthset_t stage3_depthset_D2D8 = {
+  &stage3_lods_D2EE[0],
+  {
+    0x24, 0x1E,
+    0x1C, 0x1E,
+    0x18, 0x25,
+    0x18, 0x25,
+    0x14, 0x2C,
+    0x14, 0x2C,
+    0x14, 0x33,
+    0x10, 0x33,
+    0x10, 0x33,
+    0x10, 0x33,
+  }
+};
+
 
 // $D2EE
 static const bitmap_t stage3_lods_D2EE[5] = {
@@ -2356,21 +2380,54 @@ static const u8 stage3_bitmap_D679[293] = {
 // clang-format on
 
 // $D79E
-static const u8 stage3_stretchy_D79E[20] = {
-  0x02, 0x4E, 0x7E, 0x06, 0xA6, 0x7E, 0x02, 0xC8,
-  0x73, 0x01, 0x02, 0x38, 0x7E, 0x04, 0x90, 0x7E,
-  0x02, 0xB2, 0x73, 0x01,
+static const stretchy_t stage3_stretchy_D79E_right[4] = {
+  { STRETCHY_TYPE_FIXED, NULL /* TODO: depthset $E24E */ },
+  { STRETCHY_TYPE_38PC, NULL /* TODO: depthset $E2A6 */ },
+  { STRETCHY_TYPE_FIXED, &stage3_depthset_D7C8 },
+  { STRETCHY_TYPE_END, NULL },
 };
 
-// $D7B2
-static const u8 stage3_stretchy_D7B2[44] = {
-  0xDE, 0x73, 0x20, 0x02, 0x18, 0x02, 0x10, 0x09,
-  0x10, 0x09, 0x0C, 0x10, 0x0C, 0x10, 0x10, 0x17,
-  0x10, 0x17, 0x0C, 0x1E, 0x0C, 0x1E, 0xDE, 0x73,
-  0x20, 0x02, 0x18, 0x02, 0x10, 0x09, 0x10, 0x09,
-  0x0C, 0x10, 0x0C, 0x10, 0x08, 0x17, 0x08, 0x17,
-  0x04, 0x1E, 0x04, 0x1E,
+static const stretchy_t stage3_stretchy_D79E_left[4] = {
+  { STRETCHY_TYPE_FIXED, NULL /* TODO: depthset $E238 */ },
+  { STRETCHY_TYPE_50PC, NULL /* TODO: depthset $E290 */ },
+  { STRETCHY_TYPE_FIXED, &stage3_depthset_D7B2 },
+  { STRETCHY_TYPE_END, NULL },
 };
+
+
+// $D7B2
+static const depthset_t stage3_depthset_D7B2 = {
+  &stage3_lods_D7DE[0],
+  {
+    0x20, 0x02,
+    0x18, 0x02,
+    0x10, 0x09,
+    0x10, 0x09,
+    0x0C, 0x10,
+    0x0C, 0x10,
+    0x10, 0x17,
+    0x10, 0x17,
+    0x0C, 0x1E,
+    0x0C, 0x1E,
+  }
+};
+
+static const depthset_t stage3_depthset_D7C8 = {
+  &stage3_lods_D7DE[0],
+  {
+    0x20, 0x02,
+    0x18, 0x02,
+    0x10, 0x09,
+    0x10, 0x09,
+    0x0C, 0x10,
+    0x0C, 0x10,
+    0x08, 0x17,
+    0x08, 0x17,
+    0x04, 0x1E,
+    0x04, 0x1E,
+  }
+};
+
 
 // $D7DE
 static const bitmap_t stage3_lods_D7DE[5] = {
@@ -2447,21 +2504,54 @@ static const u8 stage3_bitmap_D801[469] = {
 // clang-format on
 
 // $D9D6
-static const u8 stage3_stretchy_D9D6[20] = {
-  0x02, 0x4E, 0x7E, 0x05, 0xA6, 0x7E, 0x02, 0x00,
-  0x76, 0x01, 0x02, 0x38, 0x7E, 0x05, 0x90, 0x7E,
-  0x02, 0xEA, 0x75, 0x01,
+static const stretchy_t stage3_stretchy_D9D6_right[4] = {
+  { STRETCHY_TYPE_FIXED, NULL /* TODO: depthset $E24E */ },
+  { STRETCHY_TYPE_113PC, NULL /* TODO: depthset $E2A6 */ },
+  { STRETCHY_TYPE_FIXED, &stage3_depthset_DA00 },
+  { STRETCHY_TYPE_END, NULL },
 };
 
-// $D9EA
-static const u8 stage3_stretchy_D9EA[44] = {
-  0x16, 0x76, 0x20, 0x02, 0x18, 0x02, 0x10, 0x09,
-  0x10, 0x09, 0x0C, 0x10, 0x0C, 0x10, 0x10, 0x17,
-  0x10, 0x17, 0x0C, 0x1E, 0x0C, 0x1E, 0x16, 0x76,
-  0x20, 0x02, 0x18, 0x02, 0x10, 0x09, 0x10, 0x09,
-  0x0C, 0x10, 0x0C, 0x10, 0x08, 0x17, 0x08, 0x17,
-  0x04, 0x1E, 0x04, 0x1E,
+static const stretchy_t stage3_stretchy_D9D6_left[4] = {
+  { STRETCHY_TYPE_FIXED, NULL /* TODO: depthset $E238 */ },
+  { STRETCHY_TYPE_113PC, NULL /* TODO: depthset $E290 */ },
+  { STRETCHY_TYPE_FIXED, &stage3_depthset_D9EA },
+  { STRETCHY_TYPE_END, NULL },
 };
+
+
+// $D9EA
+static const depthset_t stage3_depthset_D9EA = {
+  &stage3_lods_DA16[0],
+  {
+    0x20, 0x02,
+    0x18, 0x02,
+    0x10, 0x09,
+    0x10, 0x09,
+    0x0C, 0x10,
+    0x0C, 0x10,
+    0x10, 0x17,
+    0x10, 0x17,
+    0x0C, 0x1E,
+    0x0C, 0x1E,
+  }
+};
+
+static const depthset_t stage3_depthset_DA00 = {
+  &stage3_lods_DA16[0],
+  {
+    0x20, 0x02,
+    0x18, 0x02,
+    0x10, 0x09,
+    0x10, 0x09,
+    0x0C, 0x10,
+    0x0C, 0x10,
+    0x08, 0x17,
+    0x08, 0x17,
+    0x04, 0x1E,
+    0x04, 0x1E,
+  }
+};
+
 
 // $DA16
 static const bitmap_t stage3_lods_DA16[5] = {
