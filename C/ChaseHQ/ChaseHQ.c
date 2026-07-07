@@ -8076,10 +8076,12 @@ set_right_hand:
         // Otherwise it's 3 lane or 3/4 lane widening/narrowing
       }
 
-      switch (laneshift) {
-      case 1: tabptr = &state->xpos_road_left[Ldash]; break;
-      case 2: tabptr = &state->xpos_road_centre_left[Ldash]; break;
-      case 3: tabptr = &state->xpos_road_centre[Ldash]; break;
+      /* Right table page = $E8 + (laneoffset-1) + laneshift, i.e. left table + laneshift. */
+      switch (laneoffset + laneshift - 1) {
+      case 2: tabptr = &state->xpos_road_centre[Ldash]; break;
+      case 3: tabptr = &state->xpos_road_centre_right[Ldash]; break;
+      case 4: tabptr = &state->xpos_road_right[Ldash]; break;
+      case 5: tabptr = &state->xpos_road_fork_right[Ldash]; break;
       default: assert(0);
       }
 
