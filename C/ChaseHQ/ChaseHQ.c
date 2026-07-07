@@ -13311,6 +13311,7 @@ static void draw_tunnel(chqstate_t *state, u8 *IYheight)
   u16       DEfill;       /* 16-bit fill word: fill byte repeated (was DE) */
   u8       *HLbackbuf;    /* back-buffer row pointer for PUSH-based fill (was HL/SP) */
   u8       *SPoutput;     /* per-scanline write pointer; simulates Z80 SP (was SP) */
+  int       Adash;        /* A' = 128 - B_step35, banked via EX AF,AF' at $C1E5 (was A') */
 
   Adistance = IYheight - &state->height_table[0];
   if (Adistance != state->dt_tunnel_distance)
@@ -13327,12 +13328,12 @@ static void draw_tunnel(chqstate_t *state, u8 *IYheight)
   L = ~((IYheight[0x4E] - 2) << 1);
   C = 0;
   HL = &state->xpos_road_centre_right[L / 2];
-  A = *HL & 0xFF; /* Conv: LD A,(HL) byte load from s16* table */
+  A = (*HL >> 8) & 0xFF; /* Conv: LD A,(HL) with L odd reads the high byte of the little-endian s16 */
   if (A == 0)
     goto dt_centre_right_at_zero;
 
   D = 16;
-  if ((s8) A < 0)
+  if ((s8) A >= 0)
     goto dt_check_left;
 
 dt_max_fill: /* $C188: xpos is wide/positive — use maximum fill extents */
@@ -13352,7 +13353,7 @@ dt_centre_right_at_zero: /* $C18E */
 
 dt_check_left: /* $C19C: switch to left xpos table */
   HL = &state->xpos_road_left[L / 2];
-  A = *HL & 0xFF; /* Conv: LD A,(HL) byte load from s16* table */
+  A = (*HL >> 8) & 0xFF; /* Conv: LD A,(HL) with L odd reads the high byte of the little-endian s16 */
   if (A == 0)
     goto dt_left_at_zero;
 
@@ -13400,22 +13401,24 @@ dt_start_fill: /* $C1C8: store fill boundaries; compute starting back-buffer add
     A--;
 
   L = A;
-  A = 128 - B;
-  // EX AF,AF'
+  Adash = 128 - B;
+  // EX AF,AF' — banks Adash = 128-B to A'
   E = state->fast_counter & 0xE0;
-  A = A - (E >> 2) - (E >> 4); /* map (0,32,64,...,224) to (0,22,44,...,154) */
+  /* Conv: Z80 $C1E6 LD A,(fast_counter) overwrites A immediately after EX AF,AF',
+   * so COUNTER_TO_PERSP_Y_ROW operates on E (fast_counter & $E0), not on 128-B. */
+  A = E - (E >> 2) - (E >> 4); /* map (0,32,64,...,224) to (0,22,44,...,154) */
   A += (IYheight - &state->height_table[0]); /* was IYl */
   DE = &persp_y_scale[A / 22][A % 22];
   B = *IYheight - B;
   A = *DE;
   E = A;
   A = (16 - (IYheight - &state->height_table[0])) + E; /* was IYl */
-  // EXX
-  B = A;
+  // EXX — B retains pre-EXX value (*IYheight - B_step35) per EXX convention
   // EXX
   A -= B;
   D = A;
-  // EX AF,AF'
+  // EX AF,AF' — restores Adash = 128-B to A
+  A = Adash;
   A += D;
   if ((s8) A >= 0)
     goto dt_clamp_rows;
@@ -13437,46 +13440,47 @@ dt_clamp_rows: /* $C21A */
     A = L;
     switch (state->dt_fill_start_a) {
     default: assert(0);
-    case  0: SPoutput -= 2; *SPoutput = DEfill;
-    case  1: SPoutput -= 2; *SPoutput = DEfill;
-    case  2: SPoutput -= 2; *SPoutput = DEfill;
-    case  3: SPoutput -= 2; *SPoutput = DEfill;
-    case  4: SPoutput -= 2; *SPoutput = DEfill;
-    case  5: SPoutput -= 2; *SPoutput = DEfill;
-    case  6: SPoutput -= 2; *SPoutput = DEfill;
-    case  7: SPoutput -= 2; *SPoutput = DEfill;
-    case  8: SPoutput -= 2; *SPoutput = DEfill;
-    case  9: SPoutput -= 2; *SPoutput = DEfill;
-    case 10: SPoutput -= 2; *SPoutput = DEfill;
-    case 11: SPoutput -= 2; *SPoutput = DEfill;
-    case 12: SPoutput -= 2; *SPoutput = DEfill;
-    case 13: SPoutput -= 2; *SPoutput = DEfill;
-    case 14: SPoutput -= 2; *SPoutput = DEfill;
-    case 15: SPoutput -= 2; *SPoutput = DEfill;
+    case  0: SPoutput -= 2; SPoutput[0] = SPoutput[1] = (u8)DEfill;
+    case  1: SPoutput -= 2; SPoutput[0] = SPoutput[1] = (u8)DEfill;
+    case  2: SPoutput -= 2; SPoutput[0] = SPoutput[1] = (u8)DEfill;
+    case  3: SPoutput -= 2; SPoutput[0] = SPoutput[1] = (u8)DEfill;
+    case  4: SPoutput -= 2; SPoutput[0] = SPoutput[1] = (u8)DEfill;
+    case  5: SPoutput -= 2; SPoutput[0] = SPoutput[1] = (u8)DEfill;
+    case  6: SPoutput -= 2; SPoutput[0] = SPoutput[1] = (u8)DEfill;
+    case  7: SPoutput -= 2; SPoutput[0] = SPoutput[1] = (u8)DEfill;
+    case  8: SPoutput -= 2; SPoutput[0] = SPoutput[1] = (u8)DEfill;
+    case  9: SPoutput -= 2; SPoutput[0] = SPoutput[1] = (u8)DEfill;
+    case 10: SPoutput -= 2; SPoutput[0] = SPoutput[1] = (u8)DEfill;
+    case 11: SPoutput -= 2; SPoutput[0] = SPoutput[1] = (u8)DEfill;
+    case 12: SPoutput -= 2; SPoutput[0] = SPoutput[1] = (u8)DEfill;
+    case 13: SPoutput -= 2; SPoutput[0] = SPoutput[1] = (u8)DEfill;
+    case 14: SPoutput -= 2; SPoutput[0] = SPoutput[1] = (u8)DEfill;
+    case 15: SPoutput -= 2; SPoutput[0] = SPoutput[1] = (u8)DEfill;
     }
     A -= C;
     L = A;
-    /* Conv: $C235 LD SP,HL with updated (L - C). Rebuild directly from H:L
-     * since HLbackbuf still holds the iteration-start address. */
-    SPoutput = ADDRTOBACKBUF((H << 8) | L);
+    /* Conv: $C235 LD SP,HL with updated (L - C). H comes from the current
+     * HLbackbuf row (Z80 DEC H advances H each iteration via the loop header),
+     * not the frozen initial H variable. */
+    SPoutput = ADDRTOBACKBUF((BACKBUFTOADDR(HLbackbuf) & 0xFF00) | L);
     switch (state->dt_fill_start_b) {
     default: assert(0);
-    case  0: SPoutput -= 2; *SPoutput = DEfill;
-    case  1: SPoutput -= 2; *SPoutput = DEfill;
-    case  2: SPoutput -= 2; *SPoutput = DEfill;
-    case  3: SPoutput -= 2; *SPoutput = DEfill;
-    case  4: SPoutput -= 2; *SPoutput = DEfill;
-    case  5: SPoutput -= 2; *SPoutput = DEfill;
-    case  6: SPoutput -= 2; *SPoutput = DEfill;
-    case  7: SPoutput -= 2; *SPoutput = DEfill;
-    case  8: SPoutput -= 2; *SPoutput = DEfill;
-    case  9: SPoutput -= 2; *SPoutput = DEfill;
-    case 10: SPoutput -= 2; *SPoutput = DEfill;
-    case 11: SPoutput -= 2; *SPoutput = DEfill;
-    case 12: SPoutput -= 2; *SPoutput = DEfill;
-    case 13: SPoutput -= 2; *SPoutput = DEfill;
-    case 14: SPoutput -= 2; *SPoutput = DEfill;
-    case 15: SPoutput -= 2; *SPoutput = DEfill;
+    case  0: SPoutput -= 2; SPoutput[0] = SPoutput[1] = (u8)DEfill;
+    case  1: SPoutput -= 2; SPoutput[0] = SPoutput[1] = (u8)DEfill;
+    case  2: SPoutput -= 2; SPoutput[0] = SPoutput[1] = (u8)DEfill;
+    case  3: SPoutput -= 2; SPoutput[0] = SPoutput[1] = (u8)DEfill;
+    case  4: SPoutput -= 2; SPoutput[0] = SPoutput[1] = (u8)DEfill;
+    case  5: SPoutput -= 2; SPoutput[0] = SPoutput[1] = (u8)DEfill;
+    case  6: SPoutput -= 2; SPoutput[0] = SPoutput[1] = (u8)DEfill;
+    case  7: SPoutput -= 2; SPoutput[0] = SPoutput[1] = (u8)DEfill;
+    case  8: SPoutput -= 2; SPoutput[0] = SPoutput[1] = (u8)DEfill;
+    case  9: SPoutput -= 2; SPoutput[0] = SPoutput[1] = (u8)DEfill;
+    case 10: SPoutput -= 2; SPoutput[0] = SPoutput[1] = (u8)DEfill;
+    case 11: SPoutput -= 2; SPoutput[0] = SPoutput[1] = (u8)DEfill;
+    case 12: SPoutput -= 2; SPoutput[0] = SPoutput[1] = (u8)DEfill;
+    case 13: SPoutput -= 2; SPoutput[0] = SPoutput[1] = (u8)DEfill;
+    case 14: SPoutput -= 2; SPoutput[0] = SPoutput[1] = (u8)DEfill;
+    case 15: SPoutput -= 2; SPoutput[0] = SPoutput[1] = (u8)DEfill;
     }
     A += C;
     L = A;
@@ -13490,7 +13494,8 @@ dt_clamp_rows: /* $C21A */
 
   // EXX
   B = (B >> 1) - (B >> 3);
-  // EX AF,AF'
+  // EX AF,AF' — restores Adash = 128-B to A
+  A = Adash;
   if ((s8) A < 0)
     goto dt_exit;
 
@@ -13522,28 +13527,29 @@ dt_second_loop: /* $C285 */
     SPoutput = HLbackbuf;
     switch (state->dt_fill_start_b) {
     default: assert(0);
-    case  0: SPoutput -= 2; *SPoutput = DEfill;
-    case  1: SPoutput -= 2; *SPoutput = DEfill;
-    case  2: SPoutput -= 2; *SPoutput = DEfill;
-    case  3: SPoutput -= 2; *SPoutput = DEfill;
-    case  4: SPoutput -= 2; *SPoutput = DEfill;
-    case  5: SPoutput -= 2; *SPoutput = DEfill;
-    case  6: SPoutput -= 2; *SPoutput = DEfill;
-    case  7: SPoutput -= 2; *SPoutput = DEfill;
-    case  8: SPoutput -= 2; *SPoutput = DEfill;
-    case  9: SPoutput -= 2; *SPoutput = DEfill;
-    case 10: SPoutput -= 2; *SPoutput = DEfill;
-    case 11: SPoutput -= 2; *SPoutput = DEfill;
-    case 12: SPoutput -= 2; *SPoutput = DEfill;
-    case 13: SPoutput -= 2; *SPoutput = DEfill;
-    case 14: SPoutput -= 2; *SPoutput = DEfill;
+    case  0: SPoutput -= 2; SPoutput[0] = SPoutput[1] = (u8)DEfill;
+    case  1: SPoutput -= 2; SPoutput[0] = SPoutput[1] = (u8)DEfill;
+    case  2: SPoutput -= 2; SPoutput[0] = SPoutput[1] = (u8)DEfill;
+    case  3: SPoutput -= 2; SPoutput[0] = SPoutput[1] = (u8)DEfill;
+    case  4: SPoutput -= 2; SPoutput[0] = SPoutput[1] = (u8)DEfill;
+    case  5: SPoutput -= 2; SPoutput[0] = SPoutput[1] = (u8)DEfill;
+    case  6: SPoutput -= 2; SPoutput[0] = SPoutput[1] = (u8)DEfill;
+    case  7: SPoutput -= 2; SPoutput[0] = SPoutput[1] = (u8)DEfill;
+    case  8: SPoutput -= 2; SPoutput[0] = SPoutput[1] = (u8)DEfill;
+    case  9: SPoutput -= 2; SPoutput[0] = SPoutput[1] = (u8)DEfill;
+    case 10: SPoutput -= 2; SPoutput[0] = SPoutput[1] = (u8)DEfill;
+    case 11: SPoutput -= 2; SPoutput[0] = SPoutput[1] = (u8)DEfill;
+    case 12: SPoutput -= 2; SPoutput[0] = SPoutput[1] = (u8)DEfill;
+    case 13: SPoutput -= 2; SPoutput[0] = SPoutput[1] = (u8)DEfill;
+    case 14: SPoutput -= 2; SPoutput[0] = SPoutput[1] = (u8)DEfill;
     }
     HLbackbuf = ADDRTOBACKBUF(prev_buf_row(BACKBUFTOADDR(HLbackbuf)));
     RLC(D);
     E = D;
   } while (--B > 0);
 
-  // EX AF,AF'
+  // EX AF,AF' — restores Adash = 128-B to A
+  A = Adash;
   if ((s8) A < 0)
     goto dt_exit;
 
@@ -13561,21 +13567,21 @@ dt_far_wall_loop: /* $C2C1 */
     SPoutput = HLbackbuf;
     switch (state->dt_fill_start_b) {
     default: assert(0);
-    case  0: SPoutput -= 2; *SPoutput = DEfill;
-    case  1: SPoutput -= 2; *SPoutput = DEfill;
-    case  2: SPoutput -= 2; *SPoutput = DEfill;
-    case  3: SPoutput -= 2; *SPoutput = DEfill;
-    case  4: SPoutput -= 2; *SPoutput = DEfill;
-    case  5: SPoutput -= 2; *SPoutput = DEfill;
-    case  6: SPoutput -= 2; *SPoutput = DEfill;
-    case  7: SPoutput -= 2; *SPoutput = DEfill;
-    case  8: SPoutput -= 2; *SPoutput = DEfill;
-    case  9: SPoutput -= 2; *SPoutput = DEfill;
-    case 10: SPoutput -= 2; *SPoutput = DEfill;
-    case 11: SPoutput -= 2; *SPoutput = DEfill;
-    case 12: SPoutput -= 2; *SPoutput = DEfill;
-    case 13: SPoutput -= 2; *SPoutput = DEfill;
-    case 14: SPoutput -= 2; *SPoutput = DEfill;
+    case  0: SPoutput -= 2; SPoutput[0] = SPoutput[1] = (u8)DEfill;
+    case  1: SPoutput -= 2; SPoutput[0] = SPoutput[1] = (u8)DEfill;
+    case  2: SPoutput -= 2; SPoutput[0] = SPoutput[1] = (u8)DEfill;
+    case  3: SPoutput -= 2; SPoutput[0] = SPoutput[1] = (u8)DEfill;
+    case  4: SPoutput -= 2; SPoutput[0] = SPoutput[1] = (u8)DEfill;
+    case  5: SPoutput -= 2; SPoutput[0] = SPoutput[1] = (u8)DEfill;
+    case  6: SPoutput -= 2; SPoutput[0] = SPoutput[1] = (u8)DEfill;
+    case  7: SPoutput -= 2; SPoutput[0] = SPoutput[1] = (u8)DEfill;
+    case  8: SPoutput -= 2; SPoutput[0] = SPoutput[1] = (u8)DEfill;
+    case  9: SPoutput -= 2; SPoutput[0] = SPoutput[1] = (u8)DEfill;
+    case 10: SPoutput -= 2; SPoutput[0] = SPoutput[1] = (u8)DEfill;
+    case 11: SPoutput -= 2; SPoutput[0] = SPoutput[1] = (u8)DEfill;
+    case 12: SPoutput -= 2; SPoutput[0] = SPoutput[1] = (u8)DEfill;
+    case 13: SPoutput -= 2; SPoutput[0] = SPoutput[1] = (u8)DEfill;
+    case 14: SPoutput -= 2; SPoutput[0] = SPoutput[1] = (u8)DEfill;
     }
     HLbackbuf = ADDRTOBACKBUF(prev_buf_row(BACKBUFTOADDR(HLbackbuf)));
   } while (--B > 0);
