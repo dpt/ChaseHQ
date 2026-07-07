@@ -646,3 +646,67 @@ memcpy(backbuf_addr, src, (size_t)n);
 Note that `backbuf_addr` is reset via `prev_buf_row` immediately after the copy, so its post-copy value is irrelevant — only the bytes written matter.
 
 **Rule:** A Z80 `SP=source; POP × N` sequence that writes each byte verbatim to a destination is a `memcpy`. Compute the byte count from the jump-table entry index. Flipped or masked sprites are not candidates: they apply a per-byte lookup or AND/OR transform that `memcpy` cannot replicate.
+
+---
+
+## 36. `Conv: NOT a loop` — back-edge missed when reading the skool
+
+**Root cause:** `draw_object_clipped` `$9404–$941D` was annotated `Conv: Z80 $9404–$941D is NOT a loop` based on a partial read. `$9417 JP $9404` is an unconditional back-jump that makes the entire block a loop. The C translated the body as an `if/else`, running the loop function at most once.
+
+```asm
+$9404 LD A,SM($9405)  ; A = doc_rows_main
+$9406 SUB B
+$9407 JR Z,$941A      ; exit if zero
+$9409 JR C,$941A      ; exit if borrow
+$940B LD ($9405),A
+$940F CALL SM($940F)  ; doc_plot_fn
+$9412 LD HL,SM($9413)
+$9415 LD B,SM($9416)  ; load doc_rows_2nd for next iteration
+$9417 JP $9404        ; ← back-edge — this IS a loop
+$941A ADD A,B         ; exit: recover partial height
+$941B LD B,A
+$941D JP SM($941D)    ; doc_plot_fn_2
+```
+
+**Fix:**
+
+```c
+for (;;) {
+    Awidth_bytes = state->doc_rows_main - BCpadding;
+    if ((s8) Awidth_bytes > 0) {
+        state->doc_rows_main = Awidth_bytes;
+        state->doc_plot_fn(…);
+        HLbitmap_data = state->doc_bitmap_ptr;
+        BCpadding = state->doc_rows_2nd;      /* $9415: B updated for next iteration */
+    } else {
+        Awidth_bytes += BCpadding;            /* $941A */
+        break;
+    }
+}
+state->doc_plot_fn_2(…);
+```
+
+**Rule:** Before writing any `Conv: NOT a loop` comment, grep the skool for every `JP`, `JR`, or `DJNZ` that targets an address inside the block. A single back-edge makes it a loop regardless of whether the surrounding structure looks sequential.
+
+---
+
+## 37. `JR Z` + `JR NC` two-exit sequence — combined condition is `<= 0`, not `< 0`
+
+**Root cause:** `draw_stretchy_object_common` `$921F–$9222` has two consecutive early exits after a `SUB C`:
+
+```asm
+$921F SUB C
+$9220 JR Z,$9224   ; clamp to 1 if result == 0
+$9222 JR NC,$9226  ; keep A if result > 0 (no borrow)
+; fallthrough only when result < 0
+```
+
+Together they mean: clamp to 1 when result ≤ 0 (either zero or negative). The C translated this as `if ((s8) Avertical < 0) Avertical = 1` — missing the `JR Z` zero case so a sprite exactly filling the available height was left with height 0 instead of 1. The `(s8)` cast was also wrong on an `int` accumulator (see pitfall #32).
+
+**Fix:**
+
+```c
+if (Avertical <= 0) Avertical = 1;
+```
+
+**Rule:** When two consecutive conditional jumps both exit a subtraction block — typically `JR Z` (zero) followed by `JR NC` (no-borrow/positive) — the single condition that replaces them is `<= 0`, not `< 0`. Read both branches together before translating; the zero case is easy to miss when focusing on the sign-flag branch.

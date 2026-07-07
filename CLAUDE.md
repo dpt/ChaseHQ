@@ -251,6 +251,22 @@ a conditional skip over the first, not a loop. Translating it as
 `for(;;)` produces an infinite loop when the skipped call's row-count
 is 0 (`draw_object_clipped` `$9404–$941D`).
 
+**`Conv: NOT a loop` — verify back-edges before annotating** — before
+writing a `Conv: NOT a loop` comment, grep the skool for every `JP`,
+`JR`, and `DJNZ` that targets an address inside the block. A single
+unconditional back-jump makes the block a genuine loop regardless of how
+sequential the surrounding code looks. `draw_object_clipped` `$9417 JP
+$9404` was missed this way; the block is structurally identical to the
+adjacent masked-rows loop (see pitfall #36).
+
+**`JR Z` + `JR NC` two-exit sequence — combined condition is `<= 0`** —
+when `SUB C` is followed by `JR Z,exit` (clamp to 1 on zero) then `JR
+NC,keep` (keep value when positive), the block that falls through runs
+only when the result is negative. Together the two exits mean clamp when
+result ≤ 0. Translating as `if ((s8)Avertical < 0)` drops the zero case
+(`draw_stretchy_object_common` `$9220–$9222`). Fix: `if (Avertical <= 0)`
+(see pitfall #37).
+
 **`DEC HL` adjusts the pointer, not the value** — Z80 `LD A,(HL); DEC HL;
 DEC HL` reads the value at HL then moves the pointer back 2 bytes. The
 C equivalent is `A = *HL; HL -= 2;`. Writing `A = *HL - 2` or

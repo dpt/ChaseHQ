@@ -4217,7 +4217,7 @@ static void draw_stretchy_object_common(chqstate_t       *state,
       break;
 
     // Type 2
-    Bwidthbytes = HLbitmap->width_bytes - 2;
+    Bwidthbytes = HLbitmap->width_bytes;
     // PUSH (Bwidthbytes,C_total)
     Bpairdepth = Apairdepth;
     SM_91CD_callback(state, Bpairdepth, HLbitmap, IXxpos, IYheight);
@@ -4277,13 +4277,13 @@ dso_case_150pc:
 
 dso_continue:
   Avertical -= C_total;
-  if ((s8) Avertical < 0)
+  if (Avertical <= 0)
     Avertical = 1;
 
   Bvertical = Avertical;
   // PUSH BC
   A = IYheight[53] + 1 - C_total - Bvertical;
-  if (A < Bvertical) // was carry
+  if (A < 0) // was carry
     Bvertical += A;
 
   state->doc_rows_main = Bvertical;
@@ -4295,8 +4295,7 @@ dso_continue:
   Bpairdepth = Apairdepth; // might be Bwidthbytes?
   SM_9244_callback(state, Bpairdepth, HLbitmap, IXxpos,
                    IYheight); // does this update B?
-  Bwidthbytes =
-    0; // Conv: added this - TODO will need to test this behaviour since B is used to advance Ctotal
+  Bwidthbytes = Bvertical; // $91D0–$91D3: POP BC restores saved Bvertical; C += B
   state->doc_inverted = 0;
   goto dso_loop_continue;
 }
