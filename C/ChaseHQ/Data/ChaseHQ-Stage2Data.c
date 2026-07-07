@@ -129,7 +129,7 @@ static const depthset_t stage2_depthset_F61B;
 static const depthset_t stage2_depthset_F631;
 static const depthset_t stage2_depthset_F647;
 static const depthset_t stage2_depthset_F65D;
-static const bitmap_t stage2_lods_F673[5];
+static const bitmap_t stage2_lods_F673[35];
 static const stretchy_t stage2_stretchy_F912_right[5];
 static const stretchy_t stage2_stretchy_F912_left[5];
 static const depthset_t stage2_depthset_F92C;
@@ -2605,12 +2605,43 @@ static const depthset_t stage2_depthset_F65D = {
 
 
 // $F673
-static const bitmap_t stage2_lods_F673[5] = {
-  { 5, BITMAPFLAG_DEFAULT, 4, &stage2_bitmap_F696[210], &stage2_bitmap_F696[210] },  // [0]
+static const bitmap_t stage2_lods_F673[35] = {
+  { 5, BITMAPFLAG_DEFAULT, 4,  &stage2_bitmap_F696[210], &stage2_bitmap_F696[210] },  // [0]
   { 4, BITMAPFLAG_DEFAULT, 11, &stage2_bitmap_F696[230], &stage2_bitmap_F696[230] },  // [1]
-  { 5, BITMAPFLAG_DEFAULT, 8, &stage2_bitmap_F696[274], &stage2_bitmap_F696[274] },  // [2]
-  { 4, BITMAPFLAG_DEFAULT, 6, &stage2_bitmap_F696[314], &stage2_bitmap_F696[314] },  // [3]
-  { 3, BITMAPFLAG_DEFAULT, 4, &stage2_bitmap_F696[338], &stage2_bitmap_F696[338] },  // [4]
+  { 5, BITMAPFLAG_DEFAULT, 8,  &stage2_bitmap_F696[274], &stage2_bitmap_F696[274] },  // [2]
+  { 4, BITMAPFLAG_DEFAULT, 6,  &stage2_bitmap_F696[314], &stage2_bitmap_F696[314] },  // [3]
+  { 3, BITMAPFLAG_DEFAULT, 4,  &stage2_bitmap_F696[338], &stage2_bitmap_F696[338] },  // [4]
+  // $F696: 30 further LODs packed as 7-byte structs followed by pixel data
+  { 3, BITMAPFLAG_DEFAULT, 4,  &stage2_bitmap_F696[350], &stage2_bitmap_F696[350] },  // [5]
+  { 4, BITMAPFLAG_DEFAULT, 11, &stage2_bitmap_F696[362], &stage2_bitmap_F696[362] },  // [6]
+  { 3, BITMAPFLAG_DEFAULT, 4,  &stage2_bitmap_F696[406], &stage2_bitmap_F696[406] },  // [7]
+  { 2, BITMAPFLAG_DEFAULT, 2,  &stage2_bitmap_F696[418], &stage2_bitmap_F696[418] },  // [8]
+  { 2, BITMAPFLAG_DEFAULT, 5,  &stage2_bitmap_F696[422], &stage2_bitmap_F696[422] },  // [9]
+  { 3, BITMAPFLAG_DEFAULT, 4,  &stage2_bitmap_F696[432], &stage2_bitmap_F696[432] },  // [10]
+  { 2, BITMAPFLAG_DEFAULT, 4,  &stage2_bitmap_F696[446], &stage2_bitmap_F696[446] },  // [11]
+  { 2, BITMAPFLAG_DEFAULT, 2,  &stage2_bitmap_F696[454], &stage2_bitmap_F696[454] },  // [12]
+  { 2, BITMAPFLAG_DEFAULT, 4,  &stage2_bitmap_F696[458], &stage2_bitmap_F696[458] },  // [13]
+  { 2, BITMAPFLAG_DEFAULT, 4,  &stage2_bitmap_F696[466], &stage2_bitmap_F696[466] },  // [14]
+  { 2, BITMAPFLAG_DEFAULT, 2,  &stage2_bitmap_F696[474], &stage2_bitmap_F696[474] },  // [15]
+  { 1, BITMAPFLAG_MASKED,  3,  &stage2_bitmap_F696[478], &stage2_bitmap_F696[478] },  // [16]
+  { 1, BITMAPFLAG_MASKED,  3,  &stage2_bitmap_F696[484], &stage2_bitmap_F696[484] },  // [17]
+  { 1, BITMAPFLAG_MASKED,  3,  &stage2_bitmap_F696[490], &stage2_bitmap_F696[490] },  // [18]
+  { 1, BITMAPFLAG_MASKED,  2,  &stage2_bitmap_F696[496], &stage2_bitmap_F696[496] },  // [19]
+  { 1, BITMAPFLAG_MASKED,  2,  &stage2_bitmap_F696[500], &stage2_bitmap_F696[500] },  // [20]
+  { 1, BITMAPFLAG_MASKED,  2,  &stage2_bitmap_F696[504], &stage2_bitmap_F696[504] },  // [21]
+  { 1, BITMAPFLAG_MASKED,  2,  &stage2_bitmap_F696[508], &stage2_bitmap_F696[508] },  // [22]
+  { 1, BITMAPFLAG_MASKED,  2,  &stage2_bitmap_F696[512], &stage2_bitmap_F696[512] },  // [23]
+  { 1, BITMAPFLAG_MASKED,  2,  &stage2_bitmap_F696[516], &stage2_bitmap_F696[516] },  // [24]
+  { 1, BITMAPFLAG_MASKED,  2,  &stage2_bitmap_F696[520], &stage2_bitmap_F696[520] },  // [25]
+  { 1, BITMAPFLAG_MASKED,  2,  &stage2_bitmap_F696[524], &stage2_bitmap_F696[524] },  // [26]
+  { 1, BITMAPFLAG_MASKED,  2,  &stage2_bitmap_F696[528], &stage2_bitmap_F696[528] },  // [27]
+  { 2, BITMAPFLAG_MASKED,  1,  &stage2_bitmap_F696[532], &stage2_bitmap_F696[584] },  // [28]
+  { 2, BITMAPFLAG_MASKED,  1,  &stage2_bitmap_F696[536], &stage2_bitmap_F696[588] },  // [29]
+  { 2, BITMAPFLAG_MASKED,  2,  &stage2_bitmap_F696[540], &stage2_bitmap_F696[592] },  // [30]
+  { 2, BITMAPFLAG_MASKED,  1,  &stage2_bitmap_F696[548], &stage2_bitmap_F696[600] },  // [31]
+  { 2, BITMAPFLAG_MASKED,  3,  &stage2_bitmap_F696[552], &stage2_bitmap_F696[604] },  // [32]
+  { 2, BITMAPFLAG_MASKED,  3,  &stage2_bitmap_F696[564], &stage2_bitmap_F696[616] },  // [33]
+  { 2, BITMAPFLAG_MASKED,  2,  &stage2_bitmap_F696[576], &stage2_bitmap_F696[628] },  // [34]
 };
 
 // $F696

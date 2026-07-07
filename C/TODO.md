@@ -12,6 +12,7 @@ perhaps build unit tests now to flush out problems ahead of time.
 - Floating fork arrow vanishes too soon
 - Tunnel drawing wrong
 - No hazards
+- Wonky use of BCpadding in draw_object_clipped - passed as a height
 
 
 # TODO

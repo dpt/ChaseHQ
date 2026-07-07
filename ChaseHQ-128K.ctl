@@ -2948,9 +2948,9 @@ W $871C,2,2 Set road_curvature_ptr to #R$E2AA - 1
 W $871E,2,2 Set road_height_ptr to #R$E2AF - 1
 @ $8720 ssub=DEFW perp_escape_lanes - 1
 W $8720,2,2 Set road_lanes_ptr to #R$E2B4 - 1
-@ $8722 ssub=DEFW perp_escape_hazards + 5
+@ $8722 ssub=DEFW perp_escape_curvature - 1
 W $8722,2,2 Set road_rightside_ptr to #R$E2AA - 1 (note: reuse of road curvature data)
-@ $8724 ssub=DEFW perp_escape_hazards + 5
+@ $8724 ssub=DEFW perp_escape_curvature - 1
 W $8724,2,2 Set road_leftside_ptr to #R$E2AA - 1 (note: reuse of road curvature data)
 @ $8726 ssub=DEFW perp_escape_hazards - 1
 W $8726,2,2 Set road_hazard_ptr to #R$E2A4 - 1
@@ -4196,7 +4196,7 @@ C $92D3,3 D = *HL >> 1
 C $92D9,1 B--
 C $92DA,1 A++
 C $92DB,2 C = 0
-C $92DE,3 Exit via draw_object_common
+C $92DE,3 Exit via draw_object_common_flipped
 c $92E1 Draws objects (right hand version)
 R $92E1 I:B ?
 R $92E1 I:IX ?
@@ -4242,12 +4242,19 @@ C $9323,3 Jump if zero
 C $9326,1 C = A
 C $9328,3 C = E - C
 N $932B This entry point is used by the routine at #R$9278.
-@ $932B label=draw_object_common
+@ $932B label=draw_object_common_flipped
 C $932B,7 Self modify 'LD A,x' at #R$9395 to be (~x)
 N $9333 This entry point is used by the routine at #R$9278.
-@ $9333 label=draw_object_9333
-C $933C,1 HL++
-C $933D,2 D = <self modified>
+@ $9333 label=draw_object_clipped
+C $9333,2 Jump if NOT masked
+C $9335,1 Preserve carry (masked flag)
+C $9336,2 Double padding
+C $9338,2 Double bitmap stride
+C $933A,1 Restore carry
+C $933B,1 Bank A (width bytes) and carry (masked flag)
+C $933C,1 Advance HL (bitmap address) to flags field
+@ $933D label=doc_loop
+C $933D,2 Load <self modified> col_pos
 C $933F,6 A = IY[0] - IY[$35]
 C $9347,4 A = IY[$35] + D
 C $934D,1 A++
@@ -8958,7 +8965,7 @@ C $B9F4,3 Load road_buffer_offset.lo into #REGa [as byte]
 C $B9F7,2 Add 64 so it's the lanes data offset (wrapping around)
 C $B9F9,3 Point #REGde at road buffer lanes data
 N $B9FC Count the distance to the forked road.
-C $B9FC,3 #REGb = 20 iterations, #REGc = $E1 (a mask)  [forked road is $ED]
+C $B9FC,3 #REGb = 22 iterations, #REGc = $E1 (a mask)  [forked road is $ED]
 C $B9FF,2 Counter
 @ $BA01 label=lr_loop1
 C $BA01,1 Load a lanes byte
