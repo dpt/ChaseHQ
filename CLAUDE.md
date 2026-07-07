@@ -233,7 +233,16 @@ block operates on and use that C variable throughout.
 
 **`LD SP,HL; PUSH × N` backward fill** — `PUSH` decrements SP before
 writing, so N pushes fill 2N bytes *before* the pointer, not after it. In
-C: `memset(ptr − 2*N, value, 2*N)`, not `memset(ptr, …)`.
+C: `memset(ptr − 2*N, value, 2*N)`, not `memset(ptr, …)`. When the Z80
+uses `JP (IX)` to enter a PUSH chain at position `start` (variable-N),
+compute `n = max − start` then `memset(ptr − 2*n, value, 2*n)` — no
+switch needed (see pitfall #34).
+
+**`LD SP,HL; POP × N` sprite copy** — the Z80 uses SP = bitmap source and
+POP to load sprite bytes two at a time. When bytes are written verbatim
+(no mask, no flip table), the C equivalent is `memcpy(dst, src, n)` where
+n is derived from the jump-table entry index. Masked or flipped sprites
+are not candidates (see pitfall #35).
 
 **`JP M` / `JP P` as conditional skip, not loop** — `JP M, addr` jumps
 *forward* to `addr` when the Sign flag is set (result negative). A

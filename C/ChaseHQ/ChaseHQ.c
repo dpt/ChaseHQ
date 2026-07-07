@@ -5266,6 +5266,7 @@ static void plot_sprite_even(chqstate_t *state,
 {
   const u8 *src;          /* bitmap source pointer; Z80 used SP via POP (was SP) */
   u8       *backbuf_orig; /* row start in back buffer, saved for prev_buf_row (was A) */
+  int       n;            /* bytes to copy this row: (4 − case) × 2 (Conv: no Z80 register) */
 
   assert(jump_offset % 5 == 0);
   /* Conv: case 4 (jump_offset=20) is valid: Z80 offset 20 lands at $94DC
@@ -5292,25 +5293,9 @@ plot_sprite_even_start:
     src = bitmap_data;
     // EXX - unbank
     backbuf_orig = backbuf_addr;
-    switch (jump_offset / 5) {
-    default:
-      assert(0);
-    case 0:
-      // Conv: Original uses POP that loads 16 bits at a time
-      *backbuf_addr++ = *src++;
-      *backbuf_addr++ = *src++;
-    case 1:
-      *backbuf_addr++ = *src++;
-      *backbuf_addr++ = *src++;
-    case 2:
-      *backbuf_addr++ = *src++;
-      *backbuf_addr++ = *src++;
-    case 3:
-      *backbuf_addr++ = *src++;
-      *backbuf_addr = *src++;
-    case 4:
-      break; /* 0 pairs: Z80 lands at $94DC (LD L,A) skipping all plots */
-    }
+    /* Conv: Z80 jump table (4 − case) POP pairs → (4 − case)×2 bytes. */
+    n = (4 - jump_offset / 5) * 2;
+    memcpy(backbuf_addr, src, (size_t)n);
     backbuf_addr = ADDRTOBACKBUF(prev_buf_row(BACKBUFTOADDR(backbuf_orig)));
   }
 }
@@ -5368,6 +5353,7 @@ static void plot_sprite_odd_entrypt(chqstate_t *state,
 {
   const u8 *src;          /* was SP */
   u8       *backbuf_orig; /* was A */
+  int       n;            /* bytes to copy this row: (4 − case)×2 − 1 (Conv: no Z80 register) */
 
   assert(jump_offset % 5 == 0);
   assert(jump_offset / 5 >= 0 && jump_offset / 5 <= 3);
@@ -5390,23 +5376,9 @@ plot_sprite_odd_start:
     src = bitmap_data;
     // EXX - unbank
     backbuf_orig = backbuf_addr;
-// ps_odd_jumptable:
-    switch (jump_offset / 5) {
-    default:
-      assert(0);
-    case 0:
-      // Conv: Original uses POP that loads 16 bits at a time
-      *backbuf_addr++ = *src++;
-      *backbuf_addr++ = *src++;
-    case 1:
-      *backbuf_addr++ = *src++;
-      *backbuf_addr++ = *src++;
-    case 2:
-      *backbuf_addr++ = *src++;
-      *backbuf_addr++ = *src++;
-    case 3:
-      *backbuf_addr = *src++;
-    }
+    /* Conv: Z80 jump table 3 POP pairs + 1 odd byte → (4 − case)×2 − 1 bytes. */
+    n = (4 - jump_offset / 5) * 2 - 1;
+    memcpy(backbuf_addr, src, (size_t)n);
     backbuf_addr = ADDRTOBACKBUF(prev_buf_row(BACKBUFTOADDR(backbuf_orig)));
   }
 }
@@ -13312,6 +13284,8 @@ static void draw_tunnel(chqstate_t *state, u8 *IYheight)
   u8       *HLbackbuf;    /* back-buffer row pointer for PUSH-based fill (was HL/SP) */
   u8       *SPoutput;     /* per-scanline write pointer; simulates Z80 SP (was SP) */
   int       Adash;        /* A' = 128 - B_step35, banked via EX AF,AF' at $C1E5 (was A') */
+  int       n_a;          /* PUSH count for first fill: 16 - dt_fill_start_a (Conv: no Z80 register) */
+  int       n_b;          /* PUSH count for second fill: 16 - dt_fill_start_b (Conv: no Z80 register) */
 
   Adistance = IYheight - &state->height_table[0];
   if (Adistance != state->dt_tunnel_distance)
@@ -13438,30 +13412,11 @@ dt_clamp_rows: /* $C21A */
   do {
     SPoutput = HLbackbuf; /* $C21F LD SP,HL */
     A = L;
-    /* Conv: Z80 JR jump table indexed 0–16+ where entry N executes (16-N) PUSHes.
-     * D=16 → 0 PUSHes; D=22 (dt_max_fill) → also 0 PUSHes for the first fill
-     * (the Z80 overshoots into the second fill chain, which C models separately). */
-    switch (state->dt_fill_start_a) {
-    default: assert(0);
-    case 22: break; /* dt_max_fill: Z80 jumps past first fill into second fill chain */
-    case 16: break; /* 0 PUSHes */
-    case  0: SPoutput -= 2; SPoutput[0] = SPoutput[1] = (u8)DEfill;
-    case  1: SPoutput -= 2; SPoutput[0] = SPoutput[1] = (u8)DEfill;
-    case  2: SPoutput -= 2; SPoutput[0] = SPoutput[1] = (u8)DEfill;
-    case  3: SPoutput -= 2; SPoutput[0] = SPoutput[1] = (u8)DEfill;
-    case  4: SPoutput -= 2; SPoutput[0] = SPoutput[1] = (u8)DEfill;
-    case  5: SPoutput -= 2; SPoutput[0] = SPoutput[1] = (u8)DEfill;
-    case  6: SPoutput -= 2; SPoutput[0] = SPoutput[1] = (u8)DEfill;
-    case  7: SPoutput -= 2; SPoutput[0] = SPoutput[1] = (u8)DEfill;
-    case  8: SPoutput -= 2; SPoutput[0] = SPoutput[1] = (u8)DEfill;
-    case  9: SPoutput -= 2; SPoutput[0] = SPoutput[1] = (u8)DEfill;
-    case 10: SPoutput -= 2; SPoutput[0] = SPoutput[1] = (u8)DEfill;
-    case 11: SPoutput -= 2; SPoutput[0] = SPoutput[1] = (u8)DEfill;
-    case 12: SPoutput -= 2; SPoutput[0] = SPoutput[1] = (u8)DEfill;
-    case 13: SPoutput -= 2; SPoutput[0] = SPoutput[1] = (u8)DEfill;
-    case 14: SPoutput -= 2; SPoutput[0] = SPoutput[1] = (u8)DEfill;
-    case 15: SPoutput -= 2; SPoutput[0] = SPoutput[1] = (u8)DEfill;
-    }
+    /* Conv: Z80 JR jump table indexed 0–16+ where entry N executes (16-N) PUSHes
+     * backward from SP. C computes the count and uses memset. D=16 or D=22 → 0 fills. */
+    n_a = (state->dt_fill_start_a <= 15) ? (16 - state->dt_fill_start_a) : 0;
+    SPoutput -= n_a * 2;
+    memset(SPoutput, (u8)DEfill, (size_t)(n_a * 2));
     A -= C;
     L = A;
     /* Conv: $C235 LD SP,HL with updated (L - C). H comes from the current
@@ -13469,26 +13424,9 @@ dt_clamp_rows: /* $C21A */
      * not the frozen initial H variable. */
     SPoutput = ADDRTOBACKBUF((BACKBUFTOADDR(HLbackbuf) & 0xFF00) | L);
     /* Conv: Z80 second fill JR table indexed 0–16; entry 16 → 0 PUSHes. */
-    switch (state->dt_fill_start_b) {
-    default: assert(0);
-    case 16: break; /* 0 PUSHes */
-    case  0: SPoutput -= 2; SPoutput[0] = SPoutput[1] = (u8)DEfill;
-    case  1: SPoutput -= 2; SPoutput[0] = SPoutput[1] = (u8)DEfill;
-    case  2: SPoutput -= 2; SPoutput[0] = SPoutput[1] = (u8)DEfill;
-    case  3: SPoutput -= 2; SPoutput[0] = SPoutput[1] = (u8)DEfill;
-    case  4: SPoutput -= 2; SPoutput[0] = SPoutput[1] = (u8)DEfill;
-    case  5: SPoutput -= 2; SPoutput[0] = SPoutput[1] = (u8)DEfill;
-    case  6: SPoutput -= 2; SPoutput[0] = SPoutput[1] = (u8)DEfill;
-    case  7: SPoutput -= 2; SPoutput[0] = SPoutput[1] = (u8)DEfill;
-    case  8: SPoutput -= 2; SPoutput[0] = SPoutput[1] = (u8)DEfill;
-    case  9: SPoutput -= 2; SPoutput[0] = SPoutput[1] = (u8)DEfill;
-    case 10: SPoutput -= 2; SPoutput[0] = SPoutput[1] = (u8)DEfill;
-    case 11: SPoutput -= 2; SPoutput[0] = SPoutput[1] = (u8)DEfill;
-    case 12: SPoutput -= 2; SPoutput[0] = SPoutput[1] = (u8)DEfill;
-    case 13: SPoutput -= 2; SPoutput[0] = SPoutput[1] = (u8)DEfill;
-    case 14: SPoutput -= 2; SPoutput[0] = SPoutput[1] = (u8)DEfill;
-    case 15: SPoutput -= 2; SPoutput[0] = SPoutput[1] = (u8)DEfill;
-    }
+    n_b = (state->dt_fill_start_b <= 15) ? (16 - state->dt_fill_start_b) : 0;
+    SPoutput -= n_b * 2;
+    memset(SPoutput, (u8)DEfill, (size_t)(n_b * 2));
     A += C;
     L = A;
     /* Conv: prev_buf_row models $C24B DEC H plus row-boundary L adjustment.
@@ -13532,26 +13470,9 @@ dt_second_loop: /* $C285 */
   C = 0x0F;
   do {
     SPoutput = HLbackbuf;
-    switch (state->dt_fill_start_b) {
-    default: assert(0);
-    case 16: break; /* 0 PUSHes */
-    case  0: SPoutput -= 2; SPoutput[0] = SPoutput[1] = (u8)DEfill;
-    case  1: SPoutput -= 2; SPoutput[0] = SPoutput[1] = (u8)DEfill;
-    case  2: SPoutput -= 2; SPoutput[0] = SPoutput[1] = (u8)DEfill;
-    case  3: SPoutput -= 2; SPoutput[0] = SPoutput[1] = (u8)DEfill;
-    case  4: SPoutput -= 2; SPoutput[0] = SPoutput[1] = (u8)DEfill;
-    case  5: SPoutput -= 2; SPoutput[0] = SPoutput[1] = (u8)DEfill;
-    case  6: SPoutput -= 2; SPoutput[0] = SPoutput[1] = (u8)DEfill;
-    case  7: SPoutput -= 2; SPoutput[0] = SPoutput[1] = (u8)DEfill;
-    case  8: SPoutput -= 2; SPoutput[0] = SPoutput[1] = (u8)DEfill;
-    case  9: SPoutput -= 2; SPoutput[0] = SPoutput[1] = (u8)DEfill;
-    case 10: SPoutput -= 2; SPoutput[0] = SPoutput[1] = (u8)DEfill;
-    case 11: SPoutput -= 2; SPoutput[0] = SPoutput[1] = (u8)DEfill;
-    case 12: SPoutput -= 2; SPoutput[0] = SPoutput[1] = (u8)DEfill;
-    case 13: SPoutput -= 2; SPoutput[0] = SPoutput[1] = (u8)DEfill;
-    case 14: SPoutput -= 2; SPoutput[0] = SPoutput[1] = (u8)DEfill;
-    case 15: SPoutput -= 2; SPoutput[0] = SPoutput[1] = (u8)DEfill;
-    }
+    n_b = (state->dt_fill_start_b <= 15) ? (16 - state->dt_fill_start_b) : 0;
+    SPoutput -= n_b * 2;
+    memset(SPoutput, (u8)DEfill, (size_t)(n_b * 2));
     HLbackbuf = ADDRTOBACKBUF(prev_buf_row(BACKBUFTOADDR(HLbackbuf)));
     RLC(D);
     E = D;
@@ -13574,26 +13495,9 @@ dt_second_loop: /* $C285 */
 dt_far_wall_loop: /* $C2C1 */
   do {
     SPoutput = HLbackbuf;
-    switch (state->dt_fill_start_b) {
-    default: assert(0);
-    case 16: break; /* 0 PUSHes */
-    case  0: SPoutput -= 2; SPoutput[0] = SPoutput[1] = (u8)DEfill;
-    case  1: SPoutput -= 2; SPoutput[0] = SPoutput[1] = (u8)DEfill;
-    case  2: SPoutput -= 2; SPoutput[0] = SPoutput[1] = (u8)DEfill;
-    case  3: SPoutput -= 2; SPoutput[0] = SPoutput[1] = (u8)DEfill;
-    case  4: SPoutput -= 2; SPoutput[0] = SPoutput[1] = (u8)DEfill;
-    case  5: SPoutput -= 2; SPoutput[0] = SPoutput[1] = (u8)DEfill;
-    case  6: SPoutput -= 2; SPoutput[0] = SPoutput[1] = (u8)DEfill;
-    case  7: SPoutput -= 2; SPoutput[0] = SPoutput[1] = (u8)DEfill;
-    case  8: SPoutput -= 2; SPoutput[0] = SPoutput[1] = (u8)DEfill;
-    case  9: SPoutput -= 2; SPoutput[0] = SPoutput[1] = (u8)DEfill;
-    case 10: SPoutput -= 2; SPoutput[0] = SPoutput[1] = (u8)DEfill;
-    case 11: SPoutput -= 2; SPoutput[0] = SPoutput[1] = (u8)DEfill;
-    case 12: SPoutput -= 2; SPoutput[0] = SPoutput[1] = (u8)DEfill;
-    case 13: SPoutput -= 2; SPoutput[0] = SPoutput[1] = (u8)DEfill;
-    case 14: SPoutput -= 2; SPoutput[0] = SPoutput[1] = (u8)DEfill;
-    case 15: SPoutput -= 2; SPoutput[0] = SPoutput[1] = (u8)DEfill;
-    }
+    n_b = (state->dt_fill_start_b <= 15) ? (16 - state->dt_fill_start_b) : 0;
+    SPoutput -= n_b * 2;
+    memset(SPoutput, (u8)DEfill, (size_t)(n_b * 2));
     HLbackbuf = ADDRTOBACKBUF(prev_buf_row(BACKBUFTOADDR(HLbackbuf)));
   } while (--B > 0);
 

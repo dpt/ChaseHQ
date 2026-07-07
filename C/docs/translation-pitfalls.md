@@ -588,3 +588,61 @@ if ((s8) current_curvature < 0)      /* $B874: JP P — tests banked AF, not C *
 **Rule:** When `JP P` or `JP M` follows an `EX AF,AF'`, the branch condition is the sign of the value that set the flags *at the time they were originally banked*, not the current A register. Trace back to the flag-setting instruction (typically `AND A`, `OR A`, `CP`, or arithmetic) that preceded the earlier `EX AF,AF'` to identify what is actually being tested.
 
 **Commit:** `87f70fa`
+
+---
+
+## 34. `JP (IX)` into a `PUSH × N` chain — variable-N backward fill
+
+**Root cause:** `draw_tunnel` uses a Z80 jump table where entry point N causes (max − N) `PUSH` instructions to execute, filling `2*(max − N)` bytes backward from SP. In C this was initially written as a fall-through `switch` with 16 identical cases:
+
+```c
+case  0: SPoutput -= 2; SPoutput[0] = SPoutput[1] = (u8)fill;
+case  1: SPoutput -= 2; SPoutput[0] = SPoutput[1] = (u8)fill;
+/* … 14 more identical lines … */
+case 15: SPoutput -= 2; SPoutput[0] = SPoutput[1] = (u8)fill;
+```
+
+This is correct but needlessly verbose (16 identical case bodies). The PUSH count is simply `max − start`, and the backward fill is a single `memset`.
+
+**Fix:**
+
+```c
+int n = (start <= 15) ? (16 - start) : 0;
+SPoutput -= n * 2;
+memset(SPoutput, (u8)fill, (size_t)(n * 2));
+```
+
+**Rule:** A Z80 `JP (IX)` dispatch into a fixed-size PUSH chain where each PUSH writes the same fill value is a variable-length backward `memset`. Compute the PUSH count from the entry index, subtract `2*n` from the pointer, then `memset`. No switch needed.
+
+---
+
+## 35. `LD SP,HL; POP × N` sprite copy — variable-N forward `memcpy`
+
+**Root cause:** The Z80 uses `LD SP,HL` (set SP to the bitmap source) plus a sequence of `POP DE` to load sprite bytes two at a time into DE, then writes them to the back buffer. `plot_sprite_even` and `plot_sprite_odd` initially translated this as a fall-through switch:
+
+```c
+case 0: *backbuf_addr++ = *src++; *backbuf_addr++ = *src++;
+case 1: *backbuf_addr++ = *src++; *backbuf_addr++ = *src++;
+/* … */
+case 3: *backbuf_addr = *src++;
+```
+
+Since the source bytes are copied verbatim (no mask, no flip), this is a plain `memcpy`. The byte count follows directly from the jump-table case.
+
+**Fix (even widths — 0, 2, 4, 6, 8 bytes):**
+
+```c
+int n = (4 - jump_offset / 5) * 2;
+memcpy(backbuf_addr, src, (size_t)n);
+```
+
+**Fix (odd widths — 1, 3, 5, 7 bytes):**
+
+```c
+int n = (4 - jump_offset / 5) * 2 - 1;
+memcpy(backbuf_addr, src, (size_t)n);
+```
+
+Note that `backbuf_addr` is reset via `prev_buf_row` immediately after the copy, so its post-copy value is irrelevant — only the bytes written matter.
+
+**Rule:** A Z80 `SP=source; POP × N` sequence that writes each byte verbatim to a destination is a `memcpy`. Compute the byte count from the jump-table entry index. Flipped or masked sprites are not candidates: they apply a per-byte lookup or AND/OR transform that `memcpy` cannot replicate.
