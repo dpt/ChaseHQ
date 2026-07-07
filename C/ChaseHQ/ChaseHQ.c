@@ -12055,7 +12055,7 @@ url_B9C5:
  */
 static void layout_road(chqstate_t *state)
 {
-  int       carry;              /* carry flag */
+  int       carry;             /* carry flag */
   u8       *DElanedata_base;   /* base of lane data in road buffer, for wrap-around (was DE) */
   u8       *DElanedata;        /* advancing pointer through lane data entries (was DE) */
   int       Biterations;       /* entries to scan; counts down 20→0 (was B) */
@@ -12088,7 +12088,7 @@ static void layout_road(chqstate_t *state)
   DElanedata_base = DElanedata = ROADBUF_FWD2PTR(ROADBUF_LANES_OFFSET);
 
   // $B9F9: Count the distance to the forked road
-  Biterations = 22; /* $B9FC LD B,$16 */
+  Biterations = 22;
   Ldistance_to_fork = 0;
   do {
     if ((*DElanedata & 0xE1) == 0xE1)
@@ -12100,7 +12100,7 @@ static void layout_road(chqstate_t *state)
 
   // $BA0B: No forked road found
   build_curve_table(state, /*forked=*/0);
-  SProadright = &state->xpos_road_right[0x30 >> 1];
+  SProadright = &state->xpos_road_right[48 >> 1];
   Aiterations = 48 >> 1; // 48..256 in steps of 2 = 104 iterations
 
   // $BA17: Forked code jumps back here
@@ -12353,6 +12353,7 @@ static void exit_fork(chqstate_t *state)
 
   /* $BBFD: fill 32 curvature bytes, 32 lanes bytes, 32 object bytes (zeroed) */
   /* Conv: Z80 uses three DJNZ loops (B=32 each); C counts up 0..31 instead */
+  // TODO: use memset
   for (Bfill = 0; Bfill < 32; Bfill++)
     *ROADBUF_FWD2PTR(ROADBUF_CURVATURE_OFFSET + Bfill) = D_curve_type;
   for (Bfill = 0; Bfill < 32; Bfill++)
@@ -12361,18 +12362,18 @@ static void exit_fork(chqstate_t *state)
     *ROADBUF_FWD2PTR(ROADBUF_LANES_OFFSET + C_obj_offset + Bfill) = 0;
 
   /* $BC15: reset per-frame road state */
-  state->curvature_byte         = 0;
-  state->height_byte            = 0;
-  state->leftside_byte          = 0;
-  state->rightside_byte         = 0;
+  state->curvature_byte            = 0;
+  state->height_byte               = 0;
+  state->leftside_byte             = 0;
+  state->rightside_byte            = 0;
   state->hazards_counter           = 0;
-  state->lanes_counter     = 0;
-  state->fork_in_progress       = 0;
-  state->fork_taken             = 0;
-  state->fork_visible           = 0;
-  state->session.no_objects_flag = 1;
+  state->lanes_counter             = 0;
+  state->fork_in_progress          = 0;
+  state->fork_taken                = 0;
+  state->fork_visible              = 0;
+  state->session.no_objects_flag   = 1;
   state->session.spawn_accumulator = 1;
-  state->fork_distance          = 0;
+  state->fork_distance             = 0;
 }
 
 // The screen has the format 0b010BBLLLRRRCCCCC (B = band, L = scanline, R = row (group), C = column)
@@ -12414,16 +12415,16 @@ static void update_screen(chqstate_t *state)
     0, 0, SCREEN_WIDTH, PLAYFIELD_HEIGHT
   };
 
-  u8        *HLscr;      /* screen write pointer (was HL) */
-  u8        *HLbuf;      /* backbuffer read pointer (was HL') */
-  u16        bufoffset;  /* backbuffer offset for row-group boundary test (Conv: added) */
-  ptrdiff_t  screen_off; /* screen address offset for pointer arithmetic (Conv: added) */
-  u8         H_bufpage;  /* backbuffer start page $F0, used as subtraction base (was H) */
-  u8         A_buflo;    /* low byte of bufoffset; compared against H_bufpage (was A) */
-  int        A_sub;      /* A_buflo − H_bufpage; result of $BD34 SUB H (was A) */
-  int        carry;      /* unsigned borrow: set while row-groups remain */
-  int        overflow;   /* signed overflow of $BD34 SUB H; fires at 64-row midpoint */
-  u8         L_nextlo;   /* low byte of next row-group backbuffer start (was L) */
+  u8        *HLscr;        /* screen write pointer (was HL) */
+  u8        *HLbuf;        /* backbuffer read pointer (was HL') */
+  u16        bufoffset;    /* backbuffer offset for row-group boundary test (Conv: added) */
+  ptrdiff_t  screen_off;   /* screen address offset for pointer arithmetic (Conv: added) */
+  u8         H_bufpage;    /* backbuffer start page $F0, used as subtraction base (was H) */
+  u8         A_buflo;      /* low byte of bufoffset; compared against H_bufpage (was A) */
+  int        A_sub;        /* A_buflo − H_bufpage; result of $BD34 SUB H (was A) */
+  int        carry;        /* unsigned borrow: set while row-groups remain */
+  int        overflow;     /* signed overflow of $BD34 SUB H; fires at 64-row midpoint */
+  u8         L_nextlo;     /* low byte of next row-group backbuffer start (was L) */
   u8         A_cur_delta;  /* current horizon attr delta, $E34C (was A) */
   u8         E_prev_delta; /* previous horizon attr delta, $E34D (was E) */
   u8         D_sign;       /* sign extension of E_prev_delta (was D) */
@@ -12596,9 +12597,10 @@ static void clear_playfield_set_attrs(chqstate_t *state)
   static const zxbox_t playfield_box = { /* lower two-thirds of screen */
     0, 0, SCREEN_WIDTH, PLAYFIELD_HEIGHT
   };
-  u8  *HLattrs;  /* attribute pointer walking left/right edge columns (was HL) */
-  int  DEoffset; /* byte distance from left to right edge column in one row (was DE) */
-  int  B;        /* row iteration count (was B) */
+
+  u8  *HLattrs;     /* attribute pointer walking left/right edge columns (was HL) */
+  int  DEoffset;    /* byte distance from left to right edge column in one row (was DE) */
+  int  Biterations; /* row iteration count (was B) */
 
   clear_playfield(state);
 
@@ -12631,12 +12633,12 @@ static void clear_playfield_set_attrs(chqstate_t *state)
    * of the stride, so attribute_BLACK_OVER_BLACK is used directly. */
   HLattrs  = ADDRTOATTRS(SCREEN_PLAYFIELD_ATTRS_ADDR);
   DEoffset = SCREEN_ATTRIBUTES_ROWBYTES - 1; /* $1F = col 31 offset within a row */
-  B        = 16;
+  Biterations = 16;
   do {
-    *HLattrs          = attribute_BLACK_OVER_BLACK; /* left edge: col 0 */
-    HLattrs          += DEoffset;
-    *HLattrs++        = attribute_BLACK_OVER_BLACK; /* right edge: col 31 */
-  } while (--B > 0);
+    *HLattrs   = attribute_BLACK_OVER_BLACK; /* left edge: col 0 */
+    HLattrs   += DEoffset;
+    *HLattrs++ = attribute_BLACK_OVER_BLACK; /* right edge: col 31 */
+  } while (--Biterations > 0);
   state->speccy->draw(state->speccy, &playfield_box); /* Conv: added */
 }
 
@@ -13175,12 +13177,12 @@ rm_restart_hazards_read: // $BFF3
  *    dr_in_tunnel != 0): scans adjacent pairs of xpos_road_centre entries
  *    working inward from near-perspective rows, counting how many steps
  *    before the values converge.  Stores that count as dt_tunnel_distance,
- *    sets dt_tunnel_visible = 2, and falls through to arm the hooks.
+ *    sets dt_tunnel_visible = 2 and falls through to arm the hooks.
  *
  * 3. Tunnel already visible (dt_tunnel_visible != 0): skips the scan and
  *    falls straight through to arm the hooks.
  *
- * Arms the draw_tunnel hooks by patching dee_draw_tunnel_1 / dee_draw_tunnel_2 with
+ * Sets the draw_tunnel hooks by patching dee_draw_tunnel_1 / dee_draw_tunnel_2 with
  * Z80_CALL_NN, and writes dt_far_wall_mode = dr_in_tunnel ^ 1.
  *
  * \param[in] state Pointer to game state.
