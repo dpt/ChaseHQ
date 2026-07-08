@@ -56,7 +56,7 @@ struct hazard {
   u8                hit_wobble;        // horizontal wobble offset from hit animation table (table_acdb), subtracted from persp_col
   u8                hazard_lane_OR_perp_dist_hi; // perp: high byte of distance; hazard: current lane index
   u8                current_lane;      // target lane (counts down to 0 during lane-change animation)
-  u8                inverted;          // sprite plot mode: 0=normal, 1=stopped/neutral, 2=inverted
+  u8                inverted;          // sprite plot mode: 0=normal, 1=inverted
 };
 
 struct session {
@@ -209,7 +209,7 @@ struct chqstate {
   // $9115 (SM) in draw_overhead
   u8        do_span_width_words;
 
-  // $9396 (SM) in draw_object_common
+  // $9395 (SM) in draw_object_common
   u8        doc_shift_select;
   // $933D (SM) in draw_object_common
   s8        doc_col_pos;

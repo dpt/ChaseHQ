@@ -13,6 +13,7 @@ perhaps build unit tests now to flush out problems ahead of time.
 - Tunnel drawing wrong
 - No hazards
 - Wonky use of BCpadding in draw_object_clipped - passed as a height
+- Should IYheight be a signed value?
 
 
 # TODO
