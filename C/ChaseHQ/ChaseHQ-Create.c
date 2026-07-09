@@ -119,6 +119,8 @@ static void chq_initialise(chqstate_t *state)
   // $E300
   state->height_table[0] = 0x60; // sentinel, hardcoded in Z80 RAM
 
+  state->test_mode = 1;
+
   // Temp until the 128K input code is ported.
   state->kempston_flag = 0;
   state->keydefs[KEYDEF_QUIT      ] = KEYDEF(4,3); // 0

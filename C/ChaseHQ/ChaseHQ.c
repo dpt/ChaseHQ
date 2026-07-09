@@ -1617,7 +1617,7 @@ static void bootstrap(chqstate_t *state)
     state->retry_count = 0;
 
     // Reset wanted_stage_number and credits.
-    state->wanted_stage_number = 5;
+    state->wanted_stage_number = 1;
     state->credits = 2;
     main_loop(state);
 
