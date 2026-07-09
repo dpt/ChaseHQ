@@ -676,7 +676,7 @@ static void attract_mode_hook(chqstate_t *state);
 static void bootstrap(chqstate_t *state);
 static void main_loop(chqstate_t *state);
 
-static void cpu_driver(chqstate_t *state);
+static void drive_attract_demo(chqstate_t *state);
 
 static void run_pregame_screen(chqstate_t *state);
 static int run_pregame_screen_loop(chqstate_t *state);
@@ -1419,7 +1419,7 @@ static void attract_mode_48k(chqstate_t *state)
     if (keys == USERINPUTFLAG_FIRE)
       return;
 
-    cpu_driver(state);
+    drive_attract_demo(state);
 
     messages  = &attract_messages[0];
     nmessages = 1;
@@ -1806,7 +1806,7 @@ static void main_loop(chqstate_t *state)
  *   clean-exit mechanism). The CHECK assert macros are also C-only
  *   debug guards. The sleep() at the end is a timing approximation.
  */
-static void cpu_driver(chqstate_t *state)
+static void drive_attract_demo(chqstate_t *state)
 {
   int roadpos; /* current lateral road position (was HL) */
   int input;   /* computed user-input flags (was A) */
@@ -3756,7 +3756,7 @@ static u16 draw_smash_bar_solid_bit(chqstate_t *state, int B_nrows, int HLbackbu
  *
  * Draws all non-road, non-hero scene elements each frame: road-edge scenery
  * (signs, poles, trees, barriers), the perp-vehicle floating arrow, overhead
- * objects (bridges), and hazard cars via advance_hazards.  Adjusts
+ * objects (bridges), and hazard cars via draw_arrow_fire_smoke.  Adjusts
  * height_table and clamped_heights by +32 to convert from road-buffer
  * coordinates to screen coordinates, then walks the object table for the
  * current road section drawing each object through its type-specific
@@ -17433,7 +17433,7 @@ static void reset_paging_128k(chqstate_t *state)
  * $F41B: Attract mode 128K
  *
  * Top-level attract loop for 128K hardware. Calls the bouncy logo (bank 3),
- * sets up a stage, then spins in a per-frame loop calling cpu_driver and
+ * sets up a stage, then spins in a per-frame loop calling drive_attract_demo and
  * update_screen. Each frame shows either "ENTER FOR OPTIONS" or "PRESS GEAR"
  * depending on whether a controller has been selected. ENTER detected via
  * keyboard port switches into the input-selection bank-3 routine. An
@@ -17472,7 +17472,7 @@ call_bank_3:
   state->attract_mode_128k_countdown = 2; // two runs through
   state->speed = INITIAL_ATTRACT_SPEED;
   for (;;) {
-    cpu_driver(state);
+    drive_attract_demo(state);
 
     if (state->controls_selected == 0) {
       DE_messages = &enter_for_options_messages[0];

@@ -44,7 +44,7 @@ CHQ_API chqstate_t *chq_create(zxspectrum_t *speccy);
 CHQ_API void chq_destroy(chqstate_t *state);
 
 /**
- * Signal the game to stop at its next cpu_driver call.
+ * Signal the game to stop at its next drive_attract_demo call.
  * Call this before SDL_WaitThread to ensure the game thread exits cleanly.
  */
 CHQ_API void chq_stop(chqstate_t *state);
