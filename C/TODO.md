@@ -3,6 +3,8 @@ perhaps build unit tests now to flush out problems ahead of time.
 
 # BUGS
 
+- Missing repeated sectsion in scaled graphics
+- Near objects being truncated
 - Wonky feeling car speed / anims at start
 - Lane change diagonal transitions are not working correctly
 - Message cursor seems to vanish when idle
@@ -11,27 +13,29 @@ perhaps build unit tests now to flush out problems ahead of time.
 - Transitions still not always right (perhaps just spiral?)
 - Floating fork arrow vanishes too soon
 - Tunnel drawing wrong
-- No hazards
+- No hazards at all
 - Wonky use of BCpadding in draw_object_clipped - passed as a height
-- Should IYheight be a signed value? (Claude says no...)
 
 
 # TODO
 
+- Overhead graphic format / handler
 - Helicopter data
 - 'TEST' marker not drawn when in test mode (might need more menu work)
-- Ensure partial screen updates are correct
 - Ensure if-else structuring is added where sensible (top-down)
 - Identify unrolled ops to roll up
 - Guard words?
 - Object plotting broken and commented out for now
 - Main game runs too fast - need to calibrate against original
 - Document expected values/ranges for e.g. xpos arrays
-- Fix stage 2+ data
 - Remove Z80 macros where it clarifies
 - Remove any local vars from state
 - Sort all decls by order of use
 - Sort all params by register
+- Sound effects, music, timing, ...
+- Ensure partial screen updates are correct
+- Complete decoding of all stage data
+- Why don't watchpoints work in CLion?
 
 
 # IDEAS
@@ -42,7 +46,6 @@ perhaps build unit tests now to flush out problems ahead of time.
 - Remove as much casting as possible (Claude tends to add it).
 - Hoist out all interesting Z80 addresses to constants
 - Lots more unit tests.
-- Should hi2xpostab return u16* ?
 - Fix all warnings pass
 - Update summaries of major functions to docs/
 - Update CLAUDE.md now the stage data is in
@@ -61,6 +64,9 @@ perhaps build unit tests now to flush out problems ahead of time.
 
 # DONE
 
+- Fix stage 2+ data [done ish]
+- Should hi2xpostab return u16* ?
+- Should IYheight be a signed value? (Claude says no...)
 - Add an ADDRTOBACKBUF that takes (H,L) and does (H<<8)|L itself
 - Hitting invisible objects (right hand objects mispositioned on 3-lane)
 - The pregame radio screen sometimes has leftover transition animation parts

@@ -8539,7 +8539,7 @@ static void spawn_cars(chqstate_t *state)
   u8        min_lane;           /* minimum spawn lane, unpacked from spawn_lanes (was B) */
   int       max_lane;           /* maximum spawn lane, unpacked from spawn_lanes (was C) */
   int       new_lane;           /* randomly chosen spawn lane, clamped to min..max (was A) */
-  const u8 *hazard_pos;         /* pointer into hazard_pos_speed for the chosen lane (was HL) */
+  const u8 *phazard_pos_speed;  /* pointer into hazard_pos_speed for the chosen lane (was HL) */
   int       bitmap_index;       /* random even index 0–6 selecting the car bitmap pair (was C) */
 
   // Return without spawning anything if perp_caught_phase is non-zero or the
@@ -8555,7 +8555,7 @@ static void spawn_cars(chqstate_t *state)
   // Reduce inline spawn delay counter by the value of allow_spawning (1 or 2
   // here).
   state->sc_spawn_counter -= allow_spawning;
-  if (state->sc_spawn_counter > 0)
+  if (state->sc_spawn_counter > allow_spawning)
     return;
 
   random_extra_delay = rng(state) & 0x0F;
@@ -8604,9 +8604,9 @@ fill_in:
   hazard->current_lane                = new_lane;
 
   // Copy hazard_pos_speed values to hazard position and speed.
-  hazard_pos = &hazard_pos_speed[-1 + new_lane];
-  hazard->horz_pos_on_road = hazard_pos[0];
-  hazard->speed            = hazard_pos[state->sighted_flag ? 8 : 4];
+  phazard_pos_speed = &hazard_pos_speed[new_lane - 1];
+  hazard->horz_pos_on_road = phazard_pos_speed[0];
+  hazard->speed            = phazard_pos_speed[state->sighted_flag ? 8 : 4];
 
   // Now pick a random car bitmap to show.
   bitmap_index = rng(state) & 6;
@@ -9307,7 +9307,7 @@ static void spawn_hazards(chqstate_t *state)
   Cdistance = 20 - allow_spawning;
 
   // Point #REGhl at hazards data.
-  roadbuf = ROADBUF_FWD2PTR(160 + Cdistance);
+  roadbuf = ROADBUF_FWD2PTR(ROADBUF_HAZARDS_OFFSET + Cdistance);
 
   // Do we have a hazard?
   hazard = *roadbuf;
@@ -13066,20 +13066,25 @@ rm_restart_hazards_read: // $BFF3
 
         DE_hazards_ptr++;
         A_hazards_byte = *DE_hazards_ptr++;
-        if (A_hazards_byte != MAP_CMDCODE_GOTO) { /* not 0 */
+        if (A_hazards_byte != MAP_CMDCODE_GOTO) {
+          /* cmd was NOT 0 */
           A_hazards_byte--;
-          if (A_hazards_byte != 0) { /* cmd was 1 */
+          if (A_hazards_byte != 0) {
+            /* cmd was NOT 1 either */
             A_hazards_byte--;
-            if (A_hazards_byte != 0) { /* cmd was 2 */
-              A_hazards_byte--; // A = cmd - 3
-              if (A_hazards_byte >= 7) { /* cmd 10+ */
-                if (A_hazards_byte >= 10) { /* cmd 13+ */
-                  if (A_hazards_byte >= 12) /* cmd 15+ */
-                    // cmd >= 15: helicopter control = cmd - 14
-                      state->helicopter_control = A_hazards_byte - 11;
+            if (A_hazards_byte != 0) {
+              /* cmd was NOT 2 either */
+              A_hazards_byte--;
+              if (A_hazards_byte >= 7) {
+                /* cmd 10+ */
+                if (A_hazards_byte >= 10) {
+                  /* cmd 13+ */
+                  if (A_hazards_byte >= 12)
+                    /* cmd 15+: helicopter control = cmd - 14 */
+                    state->helicopter_control = A_hazards_byte - 11;
                   else
-                    // $C018: cmd 13/14 → dont_spawn_cars = cmd - 13
-                      state->dont_spawn_cars = A_hazards_byte - 10;
+                    /* $C018: cmd 13/14 → dont_spawn_cars = cmd - 13 */
+                    state->dont_spawn_cars = A_hazards_byte - 10;
                 } else {
                   // $C01F: cmd 10/11/12 → floating_arrow = cmd - 10
                   A_hazards_byte -= 7; // floating_arrow = A - 7 (from A = cmd-3)
