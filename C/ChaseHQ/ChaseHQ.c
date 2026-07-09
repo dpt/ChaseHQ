@@ -9705,31 +9705,34 @@ static void dh_draw_one_hazard(chqstate_t *state,
                                hazard_t   *IXhazard,
                                const u8   *IYbase)
 {
-  int       C_dist;      /* distance accumulator; speed borrow + IX[1] (was C) */
-  int       A_flags;     /* IX[15]+1; zero selects perp path, non-zero car path (was A) */
-  int       A_lane;      /* IX[17] lane counter; advanced on perp path only (was A) */
-  int       zero;        /* Z-flag: A_lane was zero before distance overwrite */
-  int       A_dist;      /* new distance value to be written to IX[1] (was A) */
-  int       A_fc_inv;    /* ~(fast_counter & $E0); speed gate for overtake check (was A) */
-  int       B_flags;     /* IX[15]+1; carry after RL signals overtake bonus (was B) */
-  int       carry;       /* Z80 carry/borrow flag */
-  const u8 *IY;          /* height table row pointer; IYl = dist offset (was IY) */
-  int       C_ht_hi;     /* IY[1]; upper height bound, held across first multiply (was C) */
-  int       DE;          /* height delta → xpos_road_left → road width (was DE) */
-  u16       HLresult;    /* 8-bit multiply accumulator (was HL) */
-  u8        A_mult;      /* multiplicand for each shift-accumulate loop (was A) */
-  int       Biterations; /* 8-iteration multiply counter; reused for draw-list scan (was B) */
-  int       A_persp;     /* perspective column: (HLresult>>8)>>1 from first multiply (was A) */
-  int       A_xidx;      /* xpos table index derived from C_ht_hi and A_persp (was A) */
-  s16      *HLtable;     /* xpos table and draw-list pointer (was HL) */
-  s16       HL;          /* xpos_road_right value; later hazard screen x-position (was HL) */
-  int       A_xresult;   /* xpos offset: (HLresult>>8)>>1 from second multiply (was A) */
-  int       Ddistance;   /* hazard distance for draw-list depth comparison (was D) */
-  int       Edist_frac;  /* hazard dist_frac for draw-list depth comparison (was E) */
-  u8       *HL_n_hazards;/* pointer to state->n_hazards (was HL) */
-  int       A_n_hazards; /* n_hazards count before increment (was A) */
-  int       BCwords;     /* draw-list entries × 2; word count for shift-down (Conv: added) */
-  s16      *DEtable;     /* source pointer during draw-list downward shift (was DE) */
+  int       C_dist;       /* distance accumulator; speed borrow + IX[1] (was C) */
+  int       A_flags;      /* IX[15]+1; zero selects perp path, non-zero car path (was A) */
+  int       A_lane;       /* IX[17] lane counter; advanced on perp path only (was A) */
+  int       zero;         /* Z-flag: A_lane was zero before distance overwrite */
+  int       A_dist;       /* new distance value to be written to IX[1] (was A) */
+  int       A_fc_inv;     /* ~(fast_counter & $E0); speed gate for overtake check (was A) */
+  int       B_flags;      /* IX[15]+1; carry after RL signals overtake bonus (was B) */
+  int       carry;        /* Z80 carry/borrow flag */
+  const u8 *IY;           /* height table row pointer; IYl = dist offset (was IY) */
+  int       C_ht_hi;      /* IY[1]; upper height bound, held across first multiply (was C) */
+  int       DE;           /* height delta → xpos_road_left → road width (was DE) */
+  u16       HLresult;     /* 8-bit multiply accumulator (was HL) */
+  u8        A_mult;       /* multiplicand for each shift-accumulate loop (was A) */
+  int       Biterations;  /* 8-iteration multiply counter; reused for draw-list scan (was B) */
+  int       A_persp;      /* perspective column: (HLresult>>8)>>1 from first multiply (was A) */
+  int       A_xidx;       /* xpos table index derived from C_ht_hi and A_persp (was A) */
+  s16      *HLtable;      /* xpos table and draw-list pointer (was HL) */
+  s16       HL;           /* xpos_road_right value; later hazard screen x-position (was HL) */
+  int       A_xresult;    /* xpos offset: (HLresult>>8)>>1 from second multiply (was A) */
+  int       hl_carry;     /* ADD HL,HL carry-out, captured for the post-loop RRA (Conv: added) */
+  int       Ddistance;    /* hazard distance for draw-list depth comparison (was D) */
+  int       Edist_frac;   /* hazard dist_frac for draw-list depth comparison (was E) */
+  u8       *HL_n_hazards; /* pointer to state->n_hazards (was HL) */
+  int       A_n_hazards;  /* n_hazards count before increment (was A) */
+  u16       HLword0;      /* draw-list record word0: distance | (frac << 8) (Conv: added) */
+  int       BCwords;      /* draw-list entries × 2; word count for shift-down (Conv: added) */
+  s16      *DEtable;      /* source pointer during draw-list downward shift (was HL) */
+  s16      *HLstart;      /* freed record slot for the new entry (Conv: added) */
 
   carry = 0;
 
@@ -9742,19 +9745,19 @@ static void dh_draw_one_hazard(chqstate_t *state,
   C_dist += IXhazard->distance; /* $ADCD-$ADD1: C += IX[1] */
 
   A_flags = IXhazard->hazard_flags + 1; /* $ADD2-$ADD5 */
-  if (A_flags == 0) {                    /* $ADD6 JR NZ → dh_adf0 if non-zero */
+  if (A_flags == 0) {                   /* $ADD6 JR NZ → dh_adf0 if non-zero */
     /* Perp path: advance lane counter IX[17] */
     A_lane = IXhazard->hazard_lane_OR_perp_dist_hi; /* $ADD8 */
-    if (C_dist > 255) {                   /* $ADDB JR NC: carry set by $ADD0 ADD A,C */
-      A_lane++;                           /* $ADDD */
-      if (A_lane >= 5) {                 /* $ADDE CP $04 */
-        A_lane--;                         /* $ADE2 */
-        C_dist = 0xFF;                    /* $ADE3: cap and mark distance max */
+    if (C_dist > 255) {                 /* $ADDB JR NC: carry set by $ADD0 ADD A,C */
+      A_lane++;                         /* $ADDD */
+      if (A_lane >= 4) {                /* $ADDE CP $04 */
+        A_lane--;                       /* $ADE2 */
+        C_dist = 0xFF;                  /* $ADE3: cap and mark distance max */
       }
       IXhazard->hazard_lane_OR_perp_dist_hi = A_lane; /* $ADE5 */
     }
     zero   = (A_lane == 0); /* $ADE8 AND A: Z set if lane counter was zero */
-    A_dist = C_dist;         /* $ADE9 LD A,C */
+    A_dist = C_dist;        /* $ADE9 LD A,C */
     if (zero)
       goto dh_adfa;
     IXhazard->distance = A_dist; /* $ADEC */
@@ -9769,20 +9772,20 @@ static void dh_draw_one_hazard(chqstate_t *state,
 
 dh_adfa:
   IXhazard->distance = A_dist; /* $ADFA */
-  if (A_dist >= 20)             /* $ADFD CP $14 */
+  if (A_dist >= 20)            /* $ADFD CP $14 */
     return;
 
   if (--A_dist == 0) {          /* $AE00 DEC A; $AE01 JR NZ → dh_ae24 */
     /* At closest visible distance: check if hazard has been overtaken */
     A_fc_inv = ~(state->fast_counter & 0xE0); /* $AE03-$AE08 */
-    if (A_fc_inv < IXhazard->dist_frac) {      /* $AE09 CP (IX+$04) */
-      B_flags = IXhazard->hazard_flags + 1;    /* $AE0E-$AE11 */
+    if (A_fc_inv < IXhazard->dist_frac) {     /* $AE09 CP (IX+$04) */
+      B_flags = IXhazard->hazard_flags + 1;   /* $AE0E-$AE11 */
       if (B_flags) {
         /* Car hazard overtaken: retire slot; carry from RL signals bonus */
         IXhazard->used = HAZARD_UNUSED;
-        RL(B_flags);                           /* $AE18 */
+        RL(B_flags);                          /* $AE18 */
         if (carry)
-          state->overtake_bonus_counter++;     /* $AE1B-$AE1E */
+          state->overtake_bonus_counter++;    /* $AE1B-$AE1E */
         return;
       }
       IXhazard->dist_frac = A_fc_inv;         /* $AE20: perp path stores speed gate */
@@ -9805,16 +9808,18 @@ dh_adfa:
   do {
     RL(A_mult);
     if (carry) HLresult += DE;
+    hl_carry = (HLresult >> 15) & 1; /* ADD HL,HL carry-out, before it is lost to truncation */
     HLresult <<= 1;
   } while (--Biterations > 0);
 
   /* $AE40-$AE42: A = H>>1 (RRA); IX[6] = A — perspective column */
-  A_persp             = HLresult >> 8;
+  A_persp = HLresult >> 8;
+  carry = hl_carry; /* Conv: RRA consumes the final loop's ADD HL,HL carry, not RLA's */
   RR(A_persp);
   IXhazard->persp_col = A_persp;
 
   /* $AE45-$AE49: A = ~((C - A) << 1) — xpos table index */
-  A_xidx = ~((C_ht_hi - A_persp) << 1);
+  A_xidx = ~((C_ht_hi - A_persp) << 1) & 0xFF; /* 8-bit NEG/ADD/CPL chain wraps mod 256 */
 
   /* $AE4A-$AE54: D=(E8|A), E=(E8|A-1), H=(EC|A+1), L=(EC|A)
    * Conv: Z80 uses hardcoded pages $E8/$EC for xpos_road_left/right;
@@ -9834,11 +9839,13 @@ dh_adfa:
   do {
     RL(A_mult);
     if (carry) HLresult += DE;
+    hl_carry = (HLresult >> 15) & 1; /* ADD HL,HL carry-out, before it is lost to truncation */
     HLresult <<= 1;
   } while (--Biterations > 0);
 
   /* $AE6D-$AE6E: A = H>>1 (RRA) — xpos offset within road width */
   A_xresult = HLresult >> 8;
+  carry     = hl_carry; /* Conv: RRA consumes the final loop's ADD HL,HL carry, not RLA's */
   RR(A_xresult);
 
   /* $AE6F-$AE79: C=A; HL=SM+BC (SM was patched to left_xpos at $AE57);
@@ -9861,36 +9868,41 @@ dh_adfa:
   (*HL_n_hazards)++;
   HLtable = &state->xpos_road_centre_left[0];
 
-  /* $AE8E-$AE9D: scan draw list for insertion point (front-to-back order) */
+  /* $AE8E-$AE9D: scan draw list for insertion point (front-to-back order).
+   * Each record is 2 words: word0 = distance (low byte) | frac (high byte),
+   * word1 = hazard slot. HLtable stays on word0 of the current record so
+   * both bytes can be tested without walking into the next record. */
   if (A_n_hazards) {
     Biterations = A_n_hazards;
     do {
-      HLtable++;
-      if (Ddistance >= (int)(u8) HLtable[-1]) {
-        if (Ddistance != (int)(u8) HLtable[-1])
+      HLword0 = (u16) *HLtable;
+      if (Ddistance >= (int)(u8) HLword0) {
+        if (Ddistance != (int)(u8) HLword0)
           goto dh_insert;
-        if (Edist_frac < (int)(u8) *HLtable)
+        if (Edist_frac < (int)(u8) (HLword0 >> 8))
           goto dh_insert;
       }
-      HLtable += 3;
+      HLtable += 2;
     } while (--Biterations > 0);
   }
 
   /* $AE9F-$AEAA: append (distance,dist_frac) pair then hazard slot index */
-  *HLtable++ = Edist_frac | (Ddistance << 8);
+  *HLtable++ = Ddistance | (Edist_frac << 8);
   *HLtable++ = IXhazard - &state->hazards[0]; /* Conv: slot index, not ptr */
   goto dh_call_handler;
 
 dh_insert:
-  /* $AEAB-$AEC7: PUSH DE; BC=B*4; LDDR; POP DE — shift draw list down.
+  /* $AEAB-$AEC7: PUSH DE; BC=B*4; LDDR; POP DE — shift the remaining
+   * Biterations records (this one and all after it) up by one record to
+   * make room, then write the new record into the freed slot.
    * Conv: LDDR shifts bytes; C shifts s16 words (BCwords = B*2 entries). */
+  HLstart = HLtable;
   BCwords = Biterations * 2;
-  DEtable = HLtable + BCwords + 1;
-  HLtable = HLtable + BCwords - 1;
+  DEtable = HLtable + BCwords - 1;
+  HLtable = DEtable + BCwords;
   do { *HLtable-- = *DEtable--; } while (--BCwords > 0);
-  HLtable    = DEtable;                          /* $AEBC EX DE,HL */
-  *HLtable-- = IXhazard - &state->hazards[0];   /* Conv: slot index, not ptr */
-  *HLtable-- = Edist_frac | (Ddistance << 8);
+  HLstart[0] = Ddistance | (Edist_frac << 8);
+  HLstart[1] = IXhazard - &state->hazards[0]; /* Conv: slot index, not ptr */
 
 dh_call_handler:
   /* $AEC8-$AECE: HL = IX[11:12]; JP (HL) — call via function pointer */
