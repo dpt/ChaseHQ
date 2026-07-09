@@ -188,8 +188,8 @@ const stage_t stage2 = {
   &stage2_left_obj_defs_E25B[2],  /* addrof_left_hand_short_pole_object */
   &stage2_perp_description[0],  /* addrof_perp_description */
   &stage2_arrest_messages_E1DD[0],  /* addrof_arrest_messages */
-  &stage2_helicopter_ED93[0],  /* addrof_helicopter_stuff_1 */
-  &stage2_helicopter_ED9F[0],  /* addrof_helicopter_stuff_2 */
+  NULL,  /* TODO: addrof_helicopter_stuff_1 ($ED93) - raw data, not decoded yet */
+  NULL,  /* TODO: addrof_helicopter_stuff_2 ($ED9F) - raw data, not decoded yet */
 
   NULL,  /* bitmaps_stones */
   NULL,  /* bitmaps_dust */

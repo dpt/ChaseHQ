@@ -9000,6 +9000,9 @@ static void draw_helicopter(chqstate_t *state, int Biterations, u8 *IYheight)
   if (Biterations != 3)
     return;
 
+  if (state->stage->addrof_helicopter_stuff_1 == NULL)
+    return;
+
   diff = IYheight[0x4F] - IYheight[0x4E]; // in the $E315 buffer?
   total = 0;
   fast_counter = state->fast_counter & 0xE0;

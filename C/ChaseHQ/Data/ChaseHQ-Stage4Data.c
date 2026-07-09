@@ -174,8 +174,8 @@ const stage_t stage4 = {
   &stage4_left_obj_defs_E25D[2],  /* addrof_left_hand_short_pole_object */
   &stage4_perp_description[0],  /* addrof_perp_description */
   &stage4_arrest_messages_E1D5[0],  /* addrof_arrest_messages */
-  &stage4_helicopter_EC6E[0],  /* addrof_helicopter_stuff_1 */
-  &stage4_helicopter_EC7A[0],  /* addrof_helicopter_stuff_2 */
+  NULL,  /* TODO: addrof_helicopter_stuff_1 ($EC6E) - raw data, not decoded yet */
+  NULL,  /* TODO: addrof_helicopter_stuff_2 ($EC7A) - raw data, not decoded yet */
 
   NULL,  /* bitmaps_stones */
   NULL,  /* bitmaps_dust */
