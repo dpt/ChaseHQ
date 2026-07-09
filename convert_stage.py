@@ -1760,12 +1760,36 @@ def convert(skool_path: str, stage: int, obj_names: List[str]) -> None:
 
     # When a bank contains multiple stages (e.g. bank 1 has stages 1+2, bank 6
     # has stages 3+4), keep only sections whose [Stage N] header matches the
-    # requested stage, plus sections with no stage header at all.
+    # requested stage. Untagged sections (no [Stage N] header) belong to
+    # whichever tagged stage's address region they physically fall inside:
+    # the region for stage T runs from T's own earliest tagged address up to
+    # (but not including) the next tagged stage's earliest address. Without
+    # this, untagged shared assets (car/hazard/stretchy sprites) get
+    # duplicated into every stage sharing the same bank file.
     _stage_re = re.compile(r"\[Stage (\d+)\]")
     def _section_stage(sec: Section) -> int:
         m = _stage_re.match(sec.header_comment)
         return int(m.group(1)) if m else 0
-    sections = [s for s in sections if _section_stage(s) in (0, stage)]
+
+    stage_starts = sorted(
+        set((s.start_addr, _section_stage(s)) for s in sections if _section_stage(s) != 0)
+    )
+
+    def _region_stage(addr: int) -> int:
+        region = 0
+        for start_addr, stage_num in stage_starts:
+            if addr >= start_addr:
+                region = stage_num
+            else:
+                break
+        return region
+
+    sections = [
+        s
+        for s in sections
+        if _section_stage(s) == stage
+        or (_section_stage(s) == 0 and _region_stage(s.start_addr) == stage)
+    ]
 
     # First pass: collect all bitmap section names so LOD tables can reference them
     bitmap_names: Dict[int, str] = {}
