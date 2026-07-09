@@ -502,7 +502,7 @@ struct chqstate {
   // $AB06 (SM) in move_helicopter
   u16       mh_heli_centre_y;
 
-  // $AE70 (SM) in dh_draw_one_hazard
+  // $AE70 (SM) in advance_hazard
   u16       dh_road_left_xpos;
 
   // $AED0 (SM) in draw_hazards

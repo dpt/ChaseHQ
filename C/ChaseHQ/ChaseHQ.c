@@ -1001,8 +1001,8 @@ static void check_hazard_collisions(chqstate_t *state);
 static u8 check_collision(chqstate_t *state, int default_retval, int HL,
                           hazard_t *hazard, s16 *HLout);
 
-static void draw_all_hazards(chqstate_t *state);
-static void dh_draw_one_hazard(chqstate_t *state,
+static void advance_hazards(chqstate_t *state);
+static void advance_hazard(chqstate_t *state,
                                hazard_t   *IXhazard,
                                const u8   *IYbase);
 static void draw_arrow_fire_smoke(chqstate_t *state,
@@ -1713,7 +1713,7 @@ static void main_loop(chqstate_t *state)
       drive_helicopter(state);
       choose_dirt_and_stones(state);
       play_regular_sfx_hook(state);
-      draw_all_hazards(state);
+      advance_hazards(state);
       layout_dirt_and_stones(state);
       play_regular_sfx_hook(state);
       move_helicopter(state);
@@ -1841,7 +1841,7 @@ static void cpu_driver(chqstate_t *state)
   spawn_hazards(state);
   choose_dirt_and_stones(state);
   layout_dirt_and_stones(state);
-  draw_all_hazards(state);
+  advance_hazards(state);
   move_hero_car(state);
   check_scenery_collisions(state);
   draw_scene_objects(state);
@@ -2235,7 +2235,7 @@ static void escape_scene(chqstate_t *state)
     layout_objects(state);
     prepare_tunnel(state);
     spawn_hazards(state);
-    draw_all_hazards(state);
+    advance_hazards(state);
     draw_scene_objects(state);
     update_scoreboard(state);
     drive_chatter(state);
@@ -3756,7 +3756,7 @@ static u16 draw_smash_bar_solid_bit(chqstate_t *state, int B_nrows, int HLbackbu
  *
  * Draws all non-road, non-hero scene elements each frame: road-edge scenery
  * (signs, poles, trees, barriers), the perp-vehicle floating arrow, overhead
- * objects (bridges), and hazard cars via draw_all_hazards.  Adjusts
+ * objects (bridges), and hazard cars via advance_hazards.  Adjusts
  * height_table and clamped_heights by +32 to convert from road-buffer
  * coordinates to screen coordinates, then walks the object table for the
  * current road section drawing each object through its type-specific
@@ -9640,22 +9640,22 @@ static u8 check_collision(chqstate_t *state,
 }
 
 /**
- * $ADA0: draw_all_hazards
+ * $ADA0: advance_hazards
  *
  * Resets n_hazards to zero then walks all six hazard slots, calling
- * dh_draw_one_hazard for each active slot.
+ * advance_hazard for each active slot.
  *
- * dh_draw_one_hazard advances the hazard's distance, performs perspective
+ * advance_hazard advances the hazard's distance, performs perspective
  * projection, inserts it into the depth-sorted draw list and fires its hit
  * handler. The height table pointer passed to it indexes the $E300 buffer.
  *
  * \param[in] state Pointer to game state.
  */
-static void draw_all_hazards(chqstate_t *state)
+static void advance_hazards(chqstate_t *state)
 {
   const u8 *height_table; /* pointer to state->height_table[0] at $E300 (was IY) */
-  hazard_t *hazard;        /* pointer to current hazard slot under examination (was IX) */
-  int       iterations;    /* loop counter: 6 hazard slots (was B) */
+  hazard_t *hazard;       /* pointer to current hazard slot under examination (was IX) */
+  int       iterations;   /* loop counter: 6 hazard slots (was B) */
 
   state->n_hazards = 0;
   height_table = &state->height_table[0];
@@ -9663,7 +9663,7 @@ static void draw_all_hazards(chqstate_t *state)
   iterations = 6;
   do {
     if (hazard->used == HAZARD_USED)
-      dh_draw_one_hazard(state, hazard, height_table); // called with regs banked
+      advance_hazard(state, hazard, height_table); // called with regs banked
     hazard++;
   } while (--iterations > 0);
 }
@@ -9701,7 +9701,7 @@ static void draw_all_hazards(chqstate_t *state)
  * \param[in,out] IXhazard Hazard slot to advance and render (was IX).
  * \param[in]     IYbase   Base of the height table at $E300 (was IY).
  */
-static void dh_draw_one_hazard(chqstate_t *state,
+static void advance_hazard(chqstate_t *state,
                                hazard_t   *IXhazard,
                                const u8   *IYbase)
 {

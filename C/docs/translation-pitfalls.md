@@ -528,7 +528,7 @@ A second form: `EX AF,AF'` used as a **simple bank-then-unbank shuttle** (no loo
 
 **Root cause:** The standard unsigned-arithmetic trick for detecting u8 overflow after `sum += addend` is `if (sum < addend)` — if the byte wrapped, the truncated sum is less than the addend. This idiom only works when `sum` is a true `u8` (or other unsigned type that wraps at its maximum). When `sum` is `int`, the addition never wraps and `sum < addend` is always false after a non-negative addition.
 
-**Bug:** `dh_draw_one_hazard` (`$ADCD–$ADD1`): `C_dist += IXhazard->distance` adds the hazard distance to a running accumulator. The Z80 `ADD A,C` sets carry when the byte overflows, advancing the perpendicular lane counter. The C variable `C_dist` was declared `int`; the idiom `if (C_dist < IXhazard->distance)` was therefore always false, making the perp lane-advance path dead code on every frame.
+**Bug:** `advance_hazard` (`$ADCD–$ADD1`): `C_dist += IXhazard->distance` adds the hazard distance to a running accumulator. The Z80 `ADD A,C` sets carry when the byte overflows, advancing the perpendicular lane counter. The C variable `C_dist` was declared `int`; the idiom `if (C_dist < IXhazard->distance)` was therefore always false, making the perp lane-advance path dead code on every frame.
 
 **Fix:** Check `if (C_dist > 255)` — the `int` sum exceeds 255 exactly when the Z80 8-bit addition would have carried.
 
