@@ -2673,9 +2673,9 @@ static void drive_sfx(chqstate_t *state)
  * \param[in] param1 Inner loop count; controls pulse width. (was D)
  * \param[in] param2 Unused. (was E)
  *
- * Conv: Z80 drives the border port via OUT ($FE); C has no audio output,
- *   the inner loop runs as a busy-wait only. RLC (HL) modifies the table
- *   in place, matching the Z80's in-RAM table at $897C.
+ * Conv: Z80 drives the border port via OUT ($FE); C issues the equivalent
+ *   write via speccy->out. RLC (HL) modifies the table in place, matching
+ *   the Z80's in-RAM table at $897C.
  */
 static void sfx_crash(chqstate_t *state, int param1, int param2)
 {
@@ -2691,10 +2691,10 @@ static void sfx_crash(chqstate_t *state, int param1, int param2)
   do {
     B = param1;
     do {
-      A = 1 << 4; // EAR bit
+      A = port_MASK_EAR;
       if (*tab & (1 << 7))
-        A &= ~(1 << 4);
-      // OUT ($FE),A
+        A &= ~port_MASK_EAR;
+      state->speccy->out(state->speccy, port_BORDER_EAR_MIC, A);
       RLC(*tab);
       // NOP (twice)
     } while (--B > 0);
@@ -2715,7 +2715,8 @@ static void sfx_crash(chqstate_t *state, int param1, int param2)
  * \param[in] param1 Delay multiplier between pulses; larger = lower pitch. (was D)
  * \param[in] param2 Unused. (was E)
  *
- * Conv: Z80 drives the border port via OUT ($FE); C has no audio output.
+ * Conv: Z80 drives the border port via OUT ($FE); C issues the equivalent
+ *   write via speccy->out.
  */
 static void sfx_thud(chqstate_t *state, int param1, int param2)
 {
@@ -2739,7 +2740,7 @@ static void sfx_thud(chqstate_t *state, int param1, int param2)
   do {
     B = *HL;
     do {
-      // OUT $(FE),A
+      state->speccy->out(state->speccy, port_BORDER_EAR_MIC, A);
       E = param1;
       do {/*delay*/} while (--E > 0);
     } while (--B > 0);
@@ -2786,7 +2787,8 @@ static void sfx_cornering(chqstate_t *state, int param1, int param2)
  * \param[in] param1 Outer loop count and on-phase delay. (was D)
  * \param[in] param2 Inner loop count. (was E)
  *
- * Conv: Z80 drives the border port via OUT ($FE); C has no audio output.
+ * Conv: Z80 drives the border port via OUT ($FE); C issues the equivalent
+ *   write via speccy->out.
  */
 static void sfx_cornering_loop_outer(chqstate_t *state, int param1, int param2)
 {
@@ -2799,10 +2801,11 @@ static void sfx_cornering_loop_outer(chqstate_t *state, int param1, int param2)
       if (rng(state) & (1 << 4)) {
         B = 24 - param1;
         do {/*delay*/} while (--B > 0);
-        // OUT ($FE),8 + 16; // EAR + MIC bits
+        state->speccy->out(state->speccy, port_BORDER_EAR_MIC,
+                            port_MASK_EAR | port_MASK_MIC);
         B = param1;
         do {/*delay*/} while (--B > 0);
-        // OUT ($FE),0
+        state->speccy->out(state->speccy, port_BORDER_EAR_MIC, 0);
       }
     } while (--C > 0);
   } while (--param1 > 0);
@@ -2822,7 +2825,8 @@ static void sfx_cornering_loop_outer(chqstate_t *state, int param1, int param2)
  * \param[in] param1 Initial per-step delay (restored from param2 each step). (was D)
  * \param[in] param2 Per-step delay reset value. (was E)
  *
- * Conv: Z80 drives the border port via OUT ($FE); C has no audio output.
+ * Conv: Z80 drives the border port via OUT ($FE); C issues the equivalent
+ *   write via speccy->out.
  */
 static void sfx_bipbow(chqstate_t *state, int param1, int param2)
 {
@@ -2839,10 +2843,11 @@ static void sfx_bipbow(chqstate_t *state, int param1, int param2)
       param1 = param2;
       B = 24 - C;
       do {/* delay */} while (--B);
-      // OUT ($FE),8 + 16; // EAR + MIC bits
+      state->speccy->out(state->speccy, port_BORDER_EAR_MIC,
+                          port_MASK_EAR | port_MASK_MIC);
       B = C;
       do {/* delay */} while (--B);
-      // OUT ($FE),0
+      state->speccy->out(state->speccy, port_BORDER_EAR_MIC, 0);
     } while (--H > 0);
     H = L;
   } while (--C > 0);
