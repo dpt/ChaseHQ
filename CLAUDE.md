@@ -8,6 +8,12 @@ This is a disassembly and C port of the ZX Spectrum 128K game "Chase H.Q." by Oc
 
 ## Building
 
+### Stage data converter (root directory)
+
+`convert_stage.py` turns a bank skool file into a C stage data skeleton.
+See `C/docs/convert-stage.md` for full usage, options and what requires
+manual completion afterwards.
+
 ### Disassembly (root directory)
 ```bash
 make pristine    # Create pristine snapshot

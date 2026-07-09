@@ -1163,23 +1163,51 @@ def emit_obj_array(
     return lines, n
 
 
+def _count_all_lods(data: List[int], n_annotated: int) -> int:
+    """Count valid LOD entries in data.
+
+    Starts from n_annotated (entries marked with 'Width (bytes)' comments),
+    caps at the first entry whose flags byte is outside {0,1,2,3}, then
+    auto-extends through any further consecutive valid 7-byte groups.  Stops
+    when flags ∉ {0,1,2,3} or height == 0 (both indicate bitmap pixel data
+    rather than a LOD descriptor).
+    """
+    n = 0
+    for j in range(n_annotated):
+        off = j * 7
+        if off + 1 >= len(data) or data[off + 1] not in (0, 1, 2, 3):
+            break
+        n += 1
+    while n * 7 + 7 <= len(data):
+        off = n * 7
+        width  = data[off]
+        flags  = data[off + 1]
+        height = data[off + 2]
+        if flags not in (0, 1, 2, 3) or width == 0 or width > 8 or height == 0:
+            break
+        n += 1
+    return n
+
+
 def emit_lod_table(
     stage: int, sec: Section, bank_offset: int, bitmap_names: Dict[int, str]
 ) -> Tuple[List[str], int]:
     """
     Decode a LOD table (7-byte bitmap_t records).
     Counts actual LOD entries from 'Width (bytes)' inline comments so that
-    bitmap data appended to the same section is handled separately.
+    bitmap data appended to the same section is handled separately.  Any
+    additional valid 7-byte groups that immediately follow the annotated
+    entries are auto-detected and included (see _count_all_lods).
     Returns (C lines, n_lod_entries).
     """
     # Count LOD entries: each entry's first byte has comment 'Width (bytes)'
-    n_lods = sum(1 for rec in sec.records if "width (bytes)" in rec.comment.lower())
+    n_annotated = sum(1 for rec in sec.records if "width (bytes)" in rec.comment.lower())
 
     data = sec.bytes_flat
-    if n_lods == 0:
+    if n_annotated == 0:
         # Fallback: divide by 7 if cleanly possible
         if len(data) % 7 == 0:
-            n_lods = len(data) // 7
+            n_annotated = len(data) // 7
         else:
             return (
                 emit_raw_array(
@@ -1191,16 +1219,7 @@ def emit_lod_table(
                 0,
             )
 
-    # Cap at first entry with invalid flags (valid: 0=default, 1=masked,
-    # 2=flipped, 3=both). Bitmap bytes mixed into the section can have
-    # spurious Width(bytes) annotations, so we stop at garbage entries.
-    valid_lods = 0
-    for j in range(n_lods):
-        off = j * 7
-        if off + 1 >= len(data) or data[off + 1] not in (0, 1, 2, 3):
-            break
-        valid_lods += 1
-    n_lods = valid_lods
+    n_lods = _count_all_lods(data, n_annotated)
 
     lod_end = n_lods * 7
     name = array_name(stage, "lod_table", sec.start_addr)
@@ -1689,16 +1708,10 @@ def convert(skool_path: str, stage: int, obj_names: List[str]) -> None:
         if sec.stype != "lod_table":
             continue
         data = sec.bytes_flat
-        n = sum(1 for rec in sec.records if "width (bytes)" in rec.comment.lower())
-        if n == 0:
-            n = len(data) // 7 if len(data) % 7 == 0 else 0
-        valid = 0
-        for j in range(n):
-            off = j * 7
-            if off + 1 >= len(data) or data[off + 1] not in (0, 1, 2, 3):
-                break
-            valid += 1
-        lod_end = valid * 7
+        n_ann = sum(1 for rec in sec.records if "width (bytes)" in rec.comment.lower())
+        if n_ann == 0:
+            n_ann = len(data) // 7 if len(data) % 7 == 0 else 0
+        lod_end = _count_all_lods(data, n_ann) * 7
         if lod_end < len(data):
             rem_addr = sec.start_addr + lod_end
             rem_name = f"stage{stage}_bitmap_{rem_addr:04X}"

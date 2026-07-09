@@ -4,7 +4,7 @@ perhaps build unit tests now to flush out problems ahead of time.
 # BUGS
 
 - Wonky feeling car speed / anims at start
-- Lane change diagonal transitions are not working
+- Lane change diagonal transitions are not working correctly
 - Message cursor seems to vanish when idle
 - Forks seize the game up
 - draw_scene_objects => crash
@@ -13,11 +13,12 @@ perhaps build unit tests now to flush out problems ahead of time.
 - Tunnel drawing wrong
 - No hazards
 - Wonky use of BCpadding in draw_object_clipped - passed as a height
-- Should IYheight be a signed value?
+- Should IYheight be a signed value? (Claude says no...)
 
 
 # TODO
 
+- 'TEST' marker not drawn when in test mode (might need more menu work)
 - Ensure partial screen updates are correct
 - Ensure if-else structuring is added where sensible (top-down)
 - Identify unrolled ops to roll up
@@ -30,7 +31,6 @@ perhaps build unit tests now to flush out problems ahead of time.
 - Remove any local vars from state
 - Sort all decls by order of use
 - Sort all params by register
-- Add an ADDRTOBACKBUF that takes (H,L) and does (H<<8)|L itself
 
 
 # IDEAS
@@ -60,6 +60,7 @@ perhaps build unit tests now to flush out problems ahead of time.
 
 # DONE
 
+- Add an ADDRTOBACKBUF that takes (H,L) and does (H<<8)|L itself
 - Hitting invisible objects (right hand objects mispositioned on 3-lane)
 - The pregame radio screen sometimes has leftover transition animation parts
 - Backdrop does not horizontally scroll (to the right)

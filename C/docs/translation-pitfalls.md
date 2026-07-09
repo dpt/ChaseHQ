@@ -265,7 +265,7 @@ const stage_t *stages[MAX_STAGES + 2] = {
 
 ## 18. Partial sign extension with `|= 0xFF00`
 
-**Root cause:** The Z80 sign-extends a byte to a 16-bit register pair by loading H with 0x00 or 0xFF depending on bit 7 of L. The C equivalent is sometimes written as `if (val & 0x80) val |= 0xFF00;`. This is only correct when `val` is already a negative `int` (bits 8–31 are already `0xFF…`). For a *positive* `int` with bit 7 set — e.g. the value 128 (`0x00000080`) — the OR produces `0x0000FF80 = 65408` instead of `−128`. The error is one full `u16` wrap (65536) and propagates into any accumulator the value is added to.
+**Root cause:** The Z80 sign-extends a byte to a 16-bit register pair by loading H with 0x00 or 0xFF depending on bit 7 of L. The C equivalent is sometimes written as `if (val & 0x80) val |= 0xFF00;`. This is only correct when `val` is already a negative `int` (bits 8–31 are already `0xFF…`). For a _positive_ `int` with bit 7 set — e.g. the value 128 (`0x00000080`) — the OR produces `0x0000FF80 = 65408` instead of `−128`. The error is one full `u16` wrap (65536) and propagates into any accumulator the value is added to.
 
 **Symptom:** In `build_curve_table`, the rounded multiply result (`HLdash_multiplied`) could land at 128 or above after the rounding step (`>> 8` + carry bit). The `|= 0xFF00` sign extension then produced 65408 for value 128, 65409 for 129, etc. `DEdash_roadposacc += 65408` drifted by 65536 relative to the Z80 road-position accumulator, corrupting all subsequent curvature table entries for that frame.
 
@@ -301,7 +301,7 @@ Atotal &= 0xFF; /* Z80 SUB L wraps; without mask Atotal goes negative */
 
 ## 20. `JR Z` / `JR NZ` branch direction inverted
 
-**Root cause:** `JR NZ, label` means *skip to label if non-zero* — the code that immediately follows the jump runs when the register **is** zero. Translating this as `if (reg != 0) { ... }` puts the code inside the block when the register is non-zero, exactly backwards.
+**Root cause:** `JR NZ, label` means _skip to label if non-zero_ — the code that immediately follows the jump runs when the register **is** zero. Translating this as `if (reg != 0) { ... }` puts the code inside the block when the register is non-zero, exactly backwards.
 
 **Bug:** `update_road_level` had `if (Ay_offset) { /* set up jump */ }` where the Z80 was `JR NZ,$B970` (skip jump setup if `mhc_y_offset != 0`). The jump launch code therefore ran only when the car was already airborne and was dead on the ground, so the car never launched off a road drop.
 
@@ -353,9 +353,9 @@ Aiterations += 2;
 
 ## 23. Stale working register — `LD A,E` swap before computation
 
-**Root cause:** The Z80 sometimes loads a register into A immediately before a computation to use its *old* value, even though a newer value is also in scope. When the C translation sees both variables live at that point, it is easy to use the newer one by mistake — the C port just reads the name, not the timing.
+**Root cause:** The Z80 sometimes loads a register into A immediately before a computation to use its _old_ value, even though a newer value is also in scope. When the C translation sees both variables live at that point, it is easy to use the newer one by mistake — the C port just reads the name, not the timing.
 
-**Bug:** `ds_attributes` (`update_screen`) loads `A = $E34C` (current delta) and `E = $E34D` (previous delta), then saves A to `$E34D`. The Z80 then does `LD A,E` at `$BD67` so that the rest of the block — the sign extension (`SBC A,A`), the shift (`ADD A,A; ADD A,A`), and the pointer adjustment — all operate on the *previous* delta. The C port kept `A` (current delta) as the working value throughout the block, silently using the wrong frame's data for every frame that the block fired.
+**Bug:** `ds_attributes` (`update_screen`) loads `A = $E34C` (current delta) and `E = $E34D` (previous delta), then saves A to `$E34D`. The Z80 then does `LD A,E` at `$BD67` so that the rest of the block — the sign extension (`SBC A,A`), the shift (`ADD A,A; ADD A,A`), and the pointer adjustment — all operate on the _previous_ delta. The C port kept `A` (current delta) as the working value throughout the block, silently using the wrong frame's data for every frame that the block fired.
 
 **Fix:** After the save (`state->horizon_attr[2] = A`), switch to `E` for all subsequent computation inside the `if (E != 0)` block. Compute `D` from `E` first (before shifting it), then shift `E`:
 
@@ -364,7 +364,7 @@ D = (E >= 64) ? 0xFF : 0x00;   /* sign from previous delta */
 E = (E << 2);                    /* E = previous * 4 */
 ```
 
-**Rule:** When the Z80 does `LD A,reg` at the start of a processing block — especially after both the old and new values of `reg` are in registers — find which logical value is needed for the computation (usually the *old* one), and use that C variable, not the one that was most recently updated.
+**Rule:** When the Z80 does `LD A,reg` at the start of a processing block — especially after both the old and new values of `reg` are in registers — find which logical value is needed for the computation (usually the _old_ one), and use that C variable, not the one that was most recently updated.
 
 **Commit:** fix ds_attributes A-vs-E bug
 
@@ -372,9 +372,9 @@ E = (E << 2);                    /* E = previous * 4 */
 
 ## 24. `LD SP,HL; PUSH × N` fills backward, not forward
 
-**Root cause:** The Z80 `PUSH` instruction decrements SP by 2 *before* writing. So `LD SP,HL; PUSH BC × 15` fills 30 bytes at addresses `HL−30 … HL−1` (backward from HL, exclusive). In C, `memset(ptr, colour, 30)` fills forward from `ptr` to `ptr+29` — exactly the wrong direction when `ptr` is an end-of-row pointer.
+**Root cause:** The Z80 `PUSH` instruction decrements SP by 2 _before_ writing. So `LD SP,HL; PUSH BC × 15` fills 30 bytes at addresses `HL−30 … HL−1` (backward from HL, exclusive). In C, `memset(ptr, colour, 30)` fills forward from `ptr` to `ptr+29` — exactly the wrong direction when `ptr` is an end-of-row pointer.
 
-**Bug:** `ds_attributes` (`update_screen`) maintains `horizon_attribute` as a Z80 address pointing to the *last byte* of the current sky/ground boundary row (e.g. `$59BF` = byte 31 of attribute row 13). The Z80 sets `SP = $A186` (that pointer) and pushes 15 words backward, filling bytes 1–30 of the row. The C port called `memset(HLattrs, colour, 30)` which wrote byte 31 of that row and bytes 0–28 of the *next* row, spilling sky colour into the wrong attribute rows every frame the block fired.
+**Bug:** `ds_attributes` (`update_screen`) maintains `horizon_attribute` as a Z80 address pointing to the _last byte_ of the current sky/ground boundary row (e.g. `$59BF` = byte 31 of attribute row 13). The Z80 sets `SP = $A186` (that pointer) and pushes 15 words backward, filling bytes 1–30 of the row. The C port called `memset(HLattrs, colour, 30)` which wrote byte 31 of that row and bytes 0–28 of the _next_ row, spilling sky colour into the wrong attribute rows every frame the block fired.
 
 **Fix:** Shift the `memset` start back by the fill length:
 
@@ -382,7 +382,7 @@ E = (E << 2);                    /* E = previous * 4 */
 memset(HLattrs - 30, colour, 30);   /* backward fill from end-of-row pointer */
 ```
 
-**Rule:** Whenever the Z80 does `LD SP,HL` followed by N `PUSH` instructions to fill memory, the C equivalent is `memset(ptr - 2*N, value, 2*N)`. The pointer is an *exclusive upper bound*, not the start of the region. If the pointer is an end-of-line attribute pointer (pointing at byte 31 of a 32-byte row), the fill covers bytes 1–30, leaving bytes 0 and 31 untouched — match that in C.
+**Rule:** Whenever the Z80 does `LD SP,HL` followed by N `PUSH` instructions to fill memory, the C equivalent is `memset(ptr - 2*N, value, 2*N)`. The pointer is an _exclusive upper bound_, not the start of the region. If the pointer is an end-of-line attribute pointer (pointing at byte 31 of a 32-byte row), the fill covers bytes 1–30, leaving bytes 0 and 31 untouched — match that in C.
 
 **Commit:** fix ds_attributes backward-fill bug
 
@@ -390,7 +390,7 @@ memset(HLattrs - 30, colour, 30);   /* backward fill from end-of-row pointer */
 
 ## 25. `JP M` / `JP P` as conditional skip — not a loop
 
-**Root cause:** `JP M, addr` jumps *forward* when the Sign flag is set (result negative). When two CALL instructions are separated by a `JP M`, it is a conditional skip over the first CALL, not a backwards branch. The structure looks like:
+**Root cause:** `JP M, addr` jumps _forward_ when the Sign flag is set (result negative). When two CALL instructions are separated by a `JP M`, it is a conditional skip over the first CALL, not a backwards branch. The structure looks like:
 
 ```
 CALL first_routine      ; may be skipped
@@ -420,7 +420,7 @@ plot_sprite_even(..., rows_second);
 
 ## 26. `DEC HL` after `LD A,(HL)` — pointer moves, value is unchanged
 
-**Root cause:** Z80 `LD A,(HL)` reads the byte at HL into A; a following `DEC HL` (or `DEC HL; DEC HL`) moves the pointer backward. The value in A is not affected. The C equivalent is `A = *ptr; ptr -= N`. Writing `A = *ptr - N` or `*ptr -= N` instead modifies the *value* and leaves the pointer unchanged.
+**Root cause:** Z80 `LD A,(HL)` reads the byte at HL into A; a following `DEC HL` (or `DEC HL; DEC HL`) moves the pointer backward. The value in A is not affected. The C equivalent is `A = *ptr; ptr -= N`. Writing `A = *ptr - N` or `*ptr -= N` instead modifies the _value_ and leaves the pointer unchanged.
 
 **Bug:** `draw_stretchy_object_common` at `$9237` does `LD A,(HL); DEC HL; DEC HL` to read the `rows_2nd` field and step past it. The C translation had `doc_rows_2nd = width_bytes - 2` — subtracting 2 from the value instead of the pointer. For a `width_bytes == 2` masked bitmap (tree trunks), this produced `doc_rows_2nd = 0`, causing `plot_masked_sprite` to be called with `height=0` and loop indefinitely past the end of the bitmap array (ASan global-buffer-overflow at `ChaseHQ.c:11568 case 7`).
 
@@ -461,7 +461,7 @@ Or declare the field `s8` if it is never used as unsigned.
 
 **Root cause:** The Z80 `ADD A,B` instruction sets carry when the 8-bit result overflows (`A + B > 255`). `RET C` then returns on that overflow. The C translation sometimes replaces this with `if (A < B) return` — a comparison that fires when A is less than B, which is a completely different (and almost opposite) condition for typical small positive B values.
 
-**Bug:** `draw_object_right_stretchy_entrypt` at `$9306–$9307` does `ADD A,B; RET C` to skip drawing right-side objects when the road edge plus the depth offset wraps past 255 (i.e., the object is off-screen right). The C translation had `if (Awidth_bytes < Bdepth) return`, which fired when the x-position was *less than* the depth (a completely different guard). For near-horizon rows where `xpos_road_centre[k]` is small (e.g. 5–35) and depth is 16–36, the wrong guard returned early, silently dropping those objects. On 3-lane sections where small xpos values occur most often, entire rows of right-side scenery vanished, making the road surface visible through the empty space — appearing as if objects were intruding into the road.
+**Bug:** `draw_object_right_stretchy_entrypt` at `$9306–$9307` does `ADD A,B; RET C` to skip drawing right-side objects when the road edge plus the depth offset wraps past 255 (i.e., the object is off-screen right). The C translation had `if (Awidth_bytes < Bdepth) return`, which fired when the x-position was _less than_ the depth (a completely different guard). For near-horizon rows where `xpos_road_centre[k]` is small (e.g. 5–35) and depth is 16–36, the wrong guard returned early, silently dropping those objects. On 3-lane sections where small xpos values occur most often, entire rows of right-side scenery vanished, making the road surface visible through the empty space — appearing as if objects were intruding into the road.
 
 **Fix:**
 
@@ -472,7 +472,7 @@ Or declare the field `s8` if it is never used as unsigned.
 }
 ```
 
-**Rule:** `ADD A,B; RET C` is an overflow guard, not a magnitude comparison. Translate it as: add first, then check if the result exceeds 255. The condition `A < B` (which checks whether the *inputs* have a certain order) is unrelated to carry from addition.
+**Rule:** `ADD A,B; RET C` is an overflow guard, not a magnitude comparison. Translate it as: add first, then check if the result exceeds 255. The condition `A < B` (which checks whether the _inputs_ have a certain order) is unrelated to carry from addition.
 
 The inverse form, `ADD A,B; RET NC`, returns when there is **no** carry (sum ≤ 255) and falls through only on overflow. C equivalent: `A += B; if (A <= 255) return;`. Do not use `if (A >= B) return` — that fires on a magnitude comparison and is almost always true for any positive A.
 
@@ -484,9 +484,9 @@ The inverse form, `ADD A,B; RET NC`, returns when there is **no** carry (sum ≤
 
 ## 29. `RET Z` / `RET NZ` early exit — polarity is the inverse of the fallthrough code
 
-**Root cause:** `RET Z` returns *when the tested register is zero*. Translating this as `if (value) return` inverts the condition: the function now returns when the value is non-zero (i.e., when there is work to do) and only falls through when the value is zero (when there is nothing to do).
+**Root cause:** `RET Z` returns _when the tested register is zero_. Translating this as `if (value) return` inverts the condition: the function now returns when the value is non-zero (i.e., when there is work to do) and only falls through when the value is zero (when there is nothing to do).
 
-**Bug:** `scroll_horizon` at `$B8A5–$B8A6` does `AND A; RET Z` to return early when `fast_counter − horizon_y_step == 0` (no ticks have elapsed). The C code `if (Adiff) return` returned whenever the two counters *differed*, which is exactly when the vertical scroll should run. The function was therefore a no-op every frame that any scrolling was due, and only fell through (to do nothing meaningful) on the rare frame when the counters happened to be equal.
+**Bug:** `scroll_horizon` at `$B8A5–$B8A6` does `AND A; RET Z` to return early when `fast_counter − horizon_y_step == 0` (no ticks have elapsed). The C code `if (Adiff) return` returned whenever the two counters _differed_, which is exactly when the vertical scroll should run. The function was therefore a no-op every frame that any scrolling was due, and only fell through (to do nothing meaningful) on the rare frame when the counters happened to be equal.
 
 **Fix:** `if (!Adiff) return;`
 
@@ -569,9 +569,9 @@ if (A <= 255) {            /* $90D5: JR C,$90E4 — skip on u8 overflow */
 
 ---
 
-## 33. `EX AF,AF'` restores flags — `JP P`/`JP M` tests the *banked* value's sign
+## 33. `EX AF,AF'` restores flags — `JP P`/`JP M` tests the _banked_ value's sign
 
-**Root cause:** `EX AF,AF'` swaps both A and F with their shadow counterparts. When it restores AF from a bank, the entire flag register F is restored — Sign, Zero, Carry, all of it. A `JP P` or `JP M` immediately after the EX therefore tests the *restored* flags, not the flags set by whatever instruction just ran. If a new value is loaded into A between the EX and the branch (`LD A,C; JP P`), the branch is entirely independent of that new value: it reflects the sign of whichever instruction set the flags that were originally banked.
+**Root cause:** `EX AF,AF'` swaps both A and F with their shadow counterparts. When it restores AF from a bank, the entire flag register F is restored — Sign, Zero, Carry, all of it. A `JP P` or `JP M` immediately after the EX therefore tests the _restored_ flags, not the flags set by whatever instruction just ran. If a new value is loaded into A between the EX and the branch (`LD A,C; JP P`), the branch is entirely independent of that new value: it reflects the sign of whichever instruction set the flags that were originally banked.
 
 **Bug:** `scroll_horizon` (`$B848`): at `$B872 EX AF,AF'`, AF is restored from the bank made at `$B854`. Those flags come from `AND A` at `$B851`, which set Sign based on `current_curvature`. The immediately following `$B873 LD A,C` loads the table's C byte into A, but `LD A,C` does not alter flags on Z80. `$B874 JP P,$B879` therefore branches on the sign of `current_curvature`, not the sign of C. The C translation tested `if ((s8) Aregular < 0)` — the sign of the table value — which is always non-negative (all table C bytes are `0x01`–`0x7F`), so NEG was never applied and the backdrop could only scroll rightward.
 
@@ -585,7 +585,7 @@ if ((s8) current_curvature < 0)      /* $B874: JP P — tests banked AF, not C *
     Aregular = -Aregular;
 ```
 
-**Rule:** When `JP P` or `JP M` follows an `EX AF,AF'`, the branch condition is the sign of the value that set the flags *at the time they were originally banked*, not the current A register. Trace back to the flag-setting instruction (typically `AND A`, `OR A`, `CP`, or arithmetic) that preceded the earlier `EX AF,AF'` to identify what is actually being tested.
+**Rule:** When `JP P` or `JP M` follows an `EX AF,AF'`, the branch condition is the sign of the value that set the flags _at the time they were originally banked_, not the current A register. Trace back to the flag-setting instruction (typically `AND A`, `OR A`, `CP`, or arithmetic) that preceded the earlier `EX AF,AF'` to identify what is actually being tested.
 
 **Commit:** `87f70fa`
 
