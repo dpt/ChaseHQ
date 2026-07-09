@@ -1,14 +1,8 @@
-> $C000 ; ChaseHQ-128K-bank-1.skool
-> $C000 ;
-> $C000 ; Bank 1 holds the data for stages 1 and 2.
-> $C000 ;
-> $C000
-@ $C000 org
 b $C000 [Stage 1] Horizon graphic
 B $C000,240,8
 b $C0F0 [Stage 1] Per-stage data
-W $C0F0,2,2 [$C82A] Address of perp's mugshot attributes
-W $C0F2,2,2 [$6400] Address of perp's mugshot bitmap
+W $C0F0,2,2 [$C82A] Address of perp's mugshot (attributes)
+W $C0F2,2,2 [out-of-bounds] Address of pilot's mugshot (bitmap)
 W $C0F4,2,2 [$D470] Screen attributes used for the ground colour (a pair of matching bytes)
 W $C0F6,2,2 [$C240] Address of table of LODs for tumbleweeds, barriers.
 W $C0F8,2,2 [$C242] (points at a handler address)
@@ -19,20 +13,20 @@ W $C100,2,2 [$C27E] Address of left hand graphics entry/entries (-7 bytes)
 W $C102,2,2 [$C293] (points at a handler address)
 W $C104,2,2 [$C139] Address of Nancy's perp description
 W $C106,2,2 [$C1ED] Address of arrest messages
-W $C108,2,2 [$6400] Helicopter related 1
-W $C10A,2,2 [$640C] Helicopter related 2
+W $C108,2,2 [out-of-bounds] Helicopter data 1
+W $C10A,2,2 [out-of-bounds] Helicopter data 2
 w $C10C [Stage 1] Table of addresses of LODs
-W $C10C,2,2 [$CE46] Address of LOD of stone/dust?
-W $C10E,2,2 [$CE70] Address of LOD of stone/dust?
-W $C110,2,2 [$C892] Address of LOD of car (the perp's car)
-W $C112,2,2 [$C83E] Address of LOD of car (a Lambo in S1)
-W $C114,2,2 [$C868] Address of LOD of car (a truck in S1)
-W $C116,2,2 [$C83E] Address of LOD of car (a Lambo in S1)
-W $C118,2,2 [$C892] Address of LOD of car (a generic car in S1)
+W $C10C,2,2 [$CE46] Address of LOD of Hazard (stone/dust)
+W $C10E,2,2 [$CE70] Address of LOD of Hazard (stone/dust)
+W $C110,2,2 [$C892] Address of LOD of Car A (the perp's car)
+W $C112,2,2 [$C83E] Address of LOD of Car B (a Lambo in S1)
+W $C114,2,2 [$C868] Address of LOD of Car C (a truck in S1)
+W $C116,2,2 [$C83E] Address of LOD of Car D (a Lambo in S1)
+W $C118,2,2 [$C892] Address of LOD of Car E (a generic car in S1)
 b $C11A [Stage 1] Per-stage difficulty settings
 B $C11A,1,1 How often cars spawn. Lower values spawn cars more often.
-B $C11B,1,1 Smash related parameter
-B $C11C,1,1 Smash related parameter
+B $C11B,1,1 Smash config parameter TBD
+B $C11C,1,1 Smash config parameter TBD
 w $C11D [Stage 1] Per-stage setup data
 W $C11D,2,2 road_pos
 W $C11F,2,2 [$C2C3] Address of start stretch, curvature
@@ -55,8 +49,8 @@ W $C13A,2,2 [$C145] Perp description pointer
 W $C13C,2,2 [$C16D] Perp description pointer
 W $C13E,2,2 [$C195] Perp description pointer
 W $C140,2,2 [$C1BF] Perp description pointer
-B $C142,1,1 terminator?
-B $C143,2,2
+B $C142,1,1 Escape: Jump
+W $C143,2,2 Address of next message (always $98BD)
 T $C145,40,39:n1 "THIS IS NANCY AT CHASE H.Q. WE'VE GOT AN"
 T $C16D,40,39:n1 "EMERGENCY HERE. RALPH THE IDAHO SLASHER,"
 T $C195,42,41:n1 "IS FLEEING TOWARDS THE SUBURBS. THE TARGET"
@@ -88,94 +82,116 @@ B $C240,1,1 ?id
 W $C241,2,2 [$D182] Address of LODs
 B $C243,1,1 ?id
 W $C244,2,2 [$D1F2] Address of LODs
-b $C246 [Stage 1] Graphic definition
-N $C246 Definition
-B $C246,1,1 Hit coord max/min (R/L)
-B $C247,1,1 Hit coord min/max (R/L)
-B $C248,1,1 ?how far to push hero car away if hit
-W $C249,2,2 Argument for routine passed in #REGde
-W $C24B,2,2 Address of routine draw_tunnel_light_right
-N $C24D Definition
-B $C24D,1,1 Hit coord max/min (R/L)
-B $C24E,1,1 Hit coord min/max (R/L)
-B $C24F,1,1 ?how far to push hero car away if hit
-W $C250,2,2 Argument for routine passed in #REGde
-W $C252,2,2 Address of routine TBD
-N $C254 Definition
-B $C254,1,1 Hit coord max/min (R/L)
-B $C255,1,1 Hit coord min/max (R/L)
-B $C256,1,1 ?how far to push hero car away if hit
-W $C257,2,2 Argument for routine passed in #REGde
-W $C259,2,2 Address of routine draw_stretchy_object_right
-N $C25B Definition
-B $C25B,1,1 Hit coord max/min (R/L)
-B $C25C,1,1 Hit coord min/max (R/L)
-B $C25D,1,1 ?how far to push hero car away if hit
-W $C25E,2,2 Argument for routine passed in #REGde
-W $C260,2,2 Address of routine draw_stretchy_object_right
-N $C262 Definition
-B $C262,1,1 Hit coord max/min (R/L)
-B $C263,1,1 Hit coord min/max (R/L)
-B $C264,1,1 ?how far to push hero car away if hit
-W $C265,2,2 Argument for routine passed in #REGde
-W $C267,2,2 Address of routine draw_stretchy_object_right
-N $C269 Definition
-B $C269,1,1 Hit coord max/min (R/L)
-B $C26A,1,1 Hit coord min/max (R/L)
-B $C26B,1,1 ?how far to push hero car away if hit
-W $C26C,2,2 Argument for routine passed in #REGde
-W $C26E,2,2 Address of routine draw_stretchy_object_right
-N $C270 Definition
-B $C270,1,1 Hit coord max/min (R/L)
-B $C271,1,1 Hit coord min/max (R/L)
-B $C272,1,1 ?how far to push hero car away if hit
-W $C273,2,2 Argument for routine passed in #REGde
-W $C275,2,2 Address of routine draw_stretchy_object_right
-B $C277,14,8,6
-b $C285 [Stage 1] Graphic definition
-N $C285 Definition
-B $C285,1,1 Hit coord max/min (R/L)
-B $C286,1,1 Hit coord min/max (R/L)
-B $C287,1,1 ?how far to push hero car away if hit
-W $C288,2,2 Argument for routine passed in #REGde
-W $C28A,2,2 Address of routine draw_tunnel_light_left
-N $C28C Definition
-B $C28C,1,1 Hit coord max/min (R/L)
-B $C28D,1,1 Hit coord min/max (R/L)
-B $C28E,1,1 ?how far to push hero car away if hit
-W $C28F,2,2 Argument for routine passed in #REGde
-W $C291,2,2 Address of routine TBD
-N $C293 Definition
-B $C293,1,1 Hit coord max/min (R/L)
-B $C294,1,1 Hit coord min/max (R/L)
-B $C295,1,1 ?how far to push hero car away if hit
-W $C296,2,2 Argument for routine passed in #REGde
-W $C298,2,2 Address of routine draw_stretchy_object_left
-N $C29A Definition
-B $C29A,1,1 Hit coord max/min (R/L)
-B $C29B,1,1 Hit coord min/max (R/L)
-B $C29C,1,1 ?how far to push hero car away if hit
-W $C29D,2,2 Argument for routine passed in #REGde
-W $C29F,2,2 Address of routine draw_stretchy_object_left
-N $C2A1 Definition
-B $C2A1,1,1 Hit coord max/min (R/L)
-B $C2A2,1,1 Hit coord min/max (R/L)
-B $C2A3,1,1 ?how far to push hero car away if hit
-W $C2A4,2,2 Argument for routine passed in #REGde
-W $C2A6,2,2 Address of routine draw_stretchy_object_left
-N $C2A8 Definition
-B $C2A8,1,1 Hit coord max/min (R/L)
-B $C2A9,1,1 Hit coord min/max (R/L)
-B $C2AA,1,1 ?how far to push hero car away if hit
-W $C2AB,2,2 Argument for routine passed in #REGde
-W $C2AD,2,2 Address of routine draw_stretchy_object_left
-N $C2AF Definition
-B $C2AF,1,1 Hit coord max/min (R/L)
-B $C2B0,1,1 Hit coord min/max (R/L)
-B $C2B1,1,1 ?how far to push hero car away if hit
-W $C2B2,2,2 Argument for routine passed in #REGde
-W $C2B4,2,2 Address of routine draw_stretchy_object_left
-B $C2B6,14,8,6
+b $C246 [Stage 1] Object graphic definitions (right)
+N $C246 Graphic definition for object 1 - TUNNEL_LIGHT
+B $C246,1,1 Hit coord max (furthest)
+B $C247,1,1 Hit coord min (nearest)
+B $C248,1,1 How far to push hero car away if hit
+W $C249,2,2 Argument - tunnellight
+W $C24B,2,2 [out-of-bounds] Address of routine draw_tunnel_light_right
+N $C24D Graphic definition for object 2 - (object 2 - unused)
+B $C24D,1,1 Hit coord max (furthest)
+B $C24E,1,1 Hit coord min (nearest)
+B $C24F,1,1 How far to push hero car away if hit
+W $C250,2,2 Argument - (null)
+W $C252,2,2 [out-of-bounds] Address of routine (null)
+N $C254 Graphic definition for object 3 - SHORT_POLE
+B $C254,1,1 Hit coord max (furthest)
+B $C255,1,1 Hit coord min (nearest)
+B $C256,1,1 How far to push hero car away if hit
+W $C257,2,2 Argument - stretchy_shortpole
+W $C259,2,2 [out-of-bounds] Address of routine draw_stretchy_object_right
+N $C25B Graphic definition for object 4 - TREE
+B $C25B,1,1 Hit coord max (furthest)
+B $C25C,1,1 Hit coord min (nearest)
+B $C25D,1,1 How far to push hero car away if hit
+W $C25E,2,2 [$D4F6] Argument for routine passed in #REGde
+W $C260,2,2 [out-of-bounds] Address of routine draw_stretchy_object_right
+N $C262 Graphic definition for object 5 - BUSH
+B $C262,1,1 Hit coord max (furthest)
+B $C263,1,1 Hit coord min (nearest)
+B $C264,1,1 How far to push hero car away if hit
+W $C265,2,2 [$D506] Argument for routine passed in #REGde
+W $C267,2,2 [out-of-bounds] Address of routine draw_stretchy_object_right
+N $C269 Graphic definition for object 6 - STREET_LAMP
+B $C269,1,1 Hit coord max (furthest)
+B $C26A,1,1 Hit coord min (nearest)
+B $C26B,1,1 How far to push hero car away if hit
+W $C26C,2,2 [$D2D1] Argument for routine passed in #REGde
+W $C26E,2,2 [out-of-bounds] Address of routine draw_stretchy_object_right
+N $C270 Graphic definition for object 7 - TELEGRAPH_POLE
+B $C270,1,1 Hit coord max (furthest)
+B $C271,1,1 Hit coord min (nearest)
+B $C272,1,1 How far to push hero car away if hit
+W $C273,2,2 [$D3DC] Argument for routine passed in #REGde
+W $C275,2,2 [out-of-bounds] Address of routine draw_stretchy_object_right
+N $C277 Graphic definition for object 8 - TURN_SIGN_POINTING_LEFT
+B $C277,1,1 Hit coord max (furthest)
+B $C278,1,1 Hit coord min (nearest)
+B $C279,1,1 How far to push hero car away if hit
+W $C27A,2,2 [$CF0C] Argument for routine passed in #REGde
+W $C27C,2,2 [out-of-bounds] Address of routine draw_object_right
+N $C27E Graphic definition for object 9 - TURN_SIGN_POINTING_RIGHT
+B $C27E,1,1 Hit coord max (furthest)
+B $C27F,1,1 Hit coord min (nearest)
+B $C280,1,1 How far to push hero car away if hit
+W $C281,2,2 [$CEF6] Argument for routine passed in #REGde
+W $C283,2,2 [out-of-bounds] Address of routine draw_object_right
+b $C285 [Stage 1] Object graphic definitions (left)
+N $C285 Graphic definition for object 1 - TUNNEL_LIGHT
+B $C285,1,1 Hit coord min (furthest)
+B $C286,1,1 Hit coord max (nearest)
+B $C287,1,1 How far to push hero car away if hit
+W $C288,2,2 Argument - tunnellight
+W $C28A,2,2 [out-of-bounds] Address of routine draw_tunnel_light_left
+N $C28C Graphic definition for object 2 - (object 2 - unused)
+B $C28C,1,1 Hit coord min (furthest)
+B $C28D,1,1 Hit coord max (nearest)
+B $C28E,1,1 How far to push hero car away if hit
+W $C28F,2,2 Argument - (null)
+W $C291,2,2 [out-of-bounds] Address of routine (null)
+N $C293 Graphic definition for object 3 - SHORT_POLE
+B $C293,1,1 Hit coord min (furthest)
+B $C294,1,1 Hit coord max (nearest)
+B $C295,1,1 How far to push hero car away if hit
+W $C296,2,2 Argument - stretchy_shortpole
+W $C298,2,2 [out-of-bounds] Address of routine draw_stretchy_object_left
+N $C29A Graphic definition for object 4 - TREE
+B $C29A,1,1 Hit coord min (furthest)
+B $C29B,1,1 Hit coord max (nearest)
+B $C29C,1,1 How far to push hero car away if hit
+W $C29D,2,2 [$D4F6] Argument for routine passed in #REGde
+W $C29F,2,2 [out-of-bounds] Address of routine draw_stretchy_object_left
+N $C2A1 Graphic definition for object 5 - BUSH
+B $C2A1,1,1 Hit coord min (furthest)
+B $C2A2,1,1 Hit coord max (nearest)
+B $C2A3,1,1 How far to push hero car away if hit
+W $C2A4,2,2 [$D506] Argument for routine passed in #REGde
+W $C2A6,2,2 [out-of-bounds] Address of routine draw_stretchy_object_left
+N $C2A8 Graphic definition for object 6 - STREET_LAMP
+B $C2A8,1,1 Hit coord min (furthest)
+B $C2A9,1,1 Hit coord max (nearest)
+B $C2AA,1,1 How far to push hero car away if hit
+W $C2AB,2,2 [$D2DE] Argument for routine passed in #REGde
+W $C2AD,2,2 [out-of-bounds] Address of routine draw_stretchy_object_left
+N $C2AF Graphic definition for object 7 - TELEGRAPH_POLE
+B $C2AF,1,1 Hit coord min (furthest)
+B $C2B0,1,1 Hit coord max (nearest)
+B $C2B1,1,1 How far to push hero car away if hit
+W $C2B2,2,2 [$D3E6] Argument for routine passed in #REGde
+W $C2B4,2,2 [out-of-bounds] Address of routine draw_stretchy_object_left
+N $C2B6 Graphic definition for object 8 - TURN_SIGN_POINTING_LEFT
+B $C2B6,1,1 Hit coord min (furthest)
+B $C2B7,1,1 Hit coord max (nearest)
+B $C2B8,1,1 How far to push hero car away if hit
+W $C2B9,2,2 [$CF0C] Argument for routine passed in #REGde
+W $C2BB,2,2 [out-of-bounds] Address of routine draw_object_left
+N $C2BD Graphic definition for object 9 - TURN_SIGN_POINTING_RIGHT
+B $C2BD,1,1 Hit coord min (furthest)
+B $C2BE,1,1 Hit coord max (nearest)
+B $C2BF,1,1 How far to push hero car away if hit
+W $C2C0,2,2 [$CEF6] Argument for routine passed in #REGde
+W $C2C2,2,2 [out-of-bounds] Address of routine draw_object_left
 b $C2C4 [Stage 1] Map curvature data
 B $C2C4,1,1 Curve Straight for 30 units
 B $C2C5,1,1
@@ -260,166 +276,145 @@ W $C326,2,2 [$C409] Left target
 W $C328,2,2 [$C4EF] Right target
 b $C32A [Stage 1] Map left object data
 B $C32A,1,1 BUSH for 1 units
-B $C32B,1,1 (nothing) for 1 units
+B $C32B,1,1 EMPTY for 1 units
 B $C32C,1,1 BUSH for 1 units
-B $C32D,1,1 (nothing) for 3 units
+B $C32D,1,1 EMPTY for 3 units
 B $C32E,1,1 BUSH for 1 units
-B $C32F,1,1 (nothing) for 3 units
+B $C32F,1,1 EMPTY for 3 units
 B $C330,1,1 BUSH for 1 units
-B $C331,1,1 (nothing) for 3 units
+B $C331,1,1 EMPTY for 3 units
 B $C332,1,1 BUSH for 1 units
-B $C333,1,1 (nothing) for 5 units
+B $C333,1,1 EMPTY for 5 units
 B $C334,1,1 BUSH for 1 units
-B $C335,1,1 (nothing) for 1 units
+B $C335,1,1 EMPTY for 1 units
 B $C336,1,1 BUSH for 1 units
-B $C337,1,1 (nothing) for 3 units
+B $C337,1,1 EMPTY for 3 units
 B $C338,1,1 BUSH for 1 units
-B $C339,1,1 (nothing) for 7 units
+B $C339,1,1 EMPTY for 7 units
 B $C33A,1,1 TREE for 1 units
-B $C33B,1,1 (nothing) for 3 units
+B $C33B,1,1 EMPTY for 3 units
 B $C33C,1,1 TREE for 1 units
-B $C33D,1,1 (nothing) for 5 units
-B $C33E,1,1 TREE for 1 units
-B $C33F,1,1 (nothing) for 1 units
-B $C340,1,1 TREE for 1 units
-B $C341,1,1 (nothing) for 1 units
-B $C342,1,1 TREE for 1 units
-B $C343,1,1 (nothing) for 11 units
+B $C33D,1,1 Alternating (TREE, EMPTY) for 4 units
+B $C33E,4,4
+B $C342,1,1 TREE for 6 units
+B $C343,1,1 EMPTY for 11 units
 B $C344,1,1 TREE for 1 units
-B $C345,1,1 (nothing) for 7 units
+B $C345,1,1 EMPTY for 7 units
 B $C346,1,1 BUSH for 1 units
-B $C347,1,1 (nothing) for 3 units
+B $C347,1,1 EMPTY for 3 units
 B $C348,1,1 BUSH for 1 units
-B $C349,1,1 (nothing) for 3 units
+B $C349,1,1 EMPTY for 3 units
 B $C34A,1,1 TREE for 1 units
-B $C34B,1,1 (nothing) for 3 units
+B $C34B,1,1 EMPTY for 3 units
 B $C34C,1,1 TREE for 1 units
-B $C34D,1,1 (nothing) for 3 units
+B $C34D,1,1 EMPTY for 3 units
 B $C34E,1,1 TREE for 1 units
-B $C34F,1,1 (nothing) for 5 units
+B $C34F,1,1 EMPTY for 5 units
 B $C350,1,1 TREE for 1 units
-B $C351,1,1 (nothing) for 5 units
+B $C351,1,1 EMPTY for 5 units
 B $C352,1,1 TREE for 1 units
-B $C353,1,1 (nothing) for 5 units
+B $C353,1,1 EMPTY for 5 units
 B $C354,1,1 TREE for 1 units
-B $C355,1,1 (nothing) for 3 units
+B $C355,1,1 EMPTY for 3 units
 B $C356,1,1 TREE for 1 units
-B $C357,1,1 (nothing) for 3 units
+B $C357,1,1 EMPTY for 3 units
 B $C358,1,1 TREE for 1 units
-B $C359,1,1 (nothing) for 3 units
+B $C359,1,1 EMPTY for 3 units
 B $C35A,1,1 BUSH for 1 units
-B $C35B,1,1 (nothing) for 1 units
+B $C35B,1,1 EMPTY for 1 units
 B $C35C,1,1 BUSH for 1 units
-B $C35D,1,1 (nothing) for 5 units
+B $C35D,1,1 EMPTY for 5 units
 B $C35E,1,1 STREET_LAMP for 1 units
-B $C35F,1,1 (nothing) for 3 units
+B $C35F,1,1 EMPTY for 3 units
 B $C360,1,1 STREET_LAMP for 1 units
-B $C361,1,1 (nothing) for 3 units
+B $C361,1,1 EMPTY for 3 units
 B $C362,1,1 STREET_LAMP for 1 units
-B $C363,1,1 (nothing) for 3 units
+B $C363,1,1 EMPTY for 3 units
 B $C364,1,1 STREET_LAMP for 1 units
-B $C365,1,1 (nothing) for 3 units
+B $C365,1,1 EMPTY for 3 units
 B $C366,1,1 STREET_LAMP for 1 units
-B $C367,1,1 (nothing) for 3 units
+B $C367,1,1 EMPTY for 3 units
 B $C368,1,1 STREET_LAMP for 1 units
-B $C369,1,1 (nothing) for 3 units
+B $C369,1,1 EMPTY for 3 units
 B $C36A,1,1 STREET_LAMP for 1 units
-B $C36B,1,1 (nothing) for 3 units
+B $C36B,1,1 EMPTY for 3 units
 B $C36C,1,1 STREET_LAMP for 1 units
-B $C36D,1,1 (nothing) for 3 units
+B $C36D,1,1 EMPTY for 3 units
 B $C36E,1,1 STREET_LAMP for 1 units
-B $C36F,1,1 (nothing) for 3 units
+B $C36F,1,1 EMPTY for 3 units
 B $C370,1,1 STREET_LAMP for 1 units
-B $C371,1,1 (nothing) for 1 units
+B $C371,1,1 EMPTY for 1 units
 B $C372,1,1 <Esc> Split
 B $C373,1,1
 W $C374,2,2 [$C411] Left target
 W $C376,2,2 [$C509] Right target
 b $C378 [Stage 1] Map right object data
 B $C378,1,1 TREE for 1 units
-B $C379,1,1 (nothing) for 3 units
+B $C379,1,1 EMPTY for 3 units
 B $C37A,1,1 TREE for 1 units
-B $C37B,1,1 (nothing) for 3 units
+B $C37B,1,1 EMPTY for 3 units
 B $C37C,1,1 TREE for 1 units
-B $C37D,1,1 (nothing) for 1 units
+B $C37D,1,1 EMPTY for 1 units
 B $C37E,1,1 TREE for 1 units
-B $C37F,1,1 (nothing) for 9 units
-B $C380,1,1 TREE for 1 units
-B $C381,1,1 (nothing) for 1 units
-B $C382,1,1 TREE for 1 units
-B $C383,1,1 (nothing) for 1 units
-B $C384,1,1 TREE for 1 units
-B $C385,1,1 (nothing) for 3 units
+B $C37F,1,1 Alternating (TREE, EMPTY) for 4 units
+B $C380,4,4
+B $C384,1,1 TREE for 10 units
+B $C385,1,1 EMPTY for 3 units
 B $C386,1,1 TREE for 1 units
-B $C387,1,1 (nothing) for 3 units
+B $C387,1,1 EMPTY for 3 units
 B $C388,1,1 TREE for 1 units
-B $C389,1,1 (nothing) for 7 units
+B $C389,1,1 EMPTY for 7 units
 B $C38A,1,1 TREE for 1 units
-B $C38B,1,1 (nothing) for 3 units
-B $C38C,1,1 TREE for 1 units
-B $C38D,1,1 (nothing) for 1 units
-B $C38E,1,1 TREE for 1 units
-B $C38F,1,1 (nothing) for 1 units
-B $C390,1,1 TREE for 1 units
-B $C391,1,1 (nothing) for 7 units
+B $C38B,1,1 Alternating (TREE, EMPTY) for 4 units
+B $C38C,4,4
+B $C390,1,1 TREE for 4 units
+B $C391,1,1 EMPTY for 7 units
 B $C392,1,1 BUSH for 1 units
-B $C393,1,1 (nothing) for 3 units
+B $C393,1,1 EMPTY for 3 units
 B $C394,1,1 BUSH for 1 units
-B $C395,1,1 (nothing) for 1 units
+B $C395,1,1 EMPTY for 1 units
 B $C396,1,1 TREE for 1 units
-B $C397,1,1 (nothing) for 3 units
-B $C398,1,1 TREE for 1 units
-B $C399,1,1 (nothing) for 1 units
-B $C39A,1,1 TREE for 1 units
-B $C39B,1,1 (nothing) for 1 units
-B $C39C,1,1 TREE for 1 units
-B $C39D,1,1 (nothing) for 1 units
-B $C39E,1,1 TREE for 1 units
-B $C39F,1,1 (nothing) for 1 units
-B $C3A0,1,1 BUSH for 1 units
-B $C3A1,1,1 (nothing) for 1 units
+B $C397,1,1 Alternating (TREE, EMPTY) for 8 units
+B $C398,8,8
+B $C3A0,1,1 BUSH for 4 units
+B $C3A1,1,1 EMPTY for 1 units
 B $C3A2,1,1 BUSH for 1 units
-B $C3A3,1,1 (nothing) for 3 units
+B $C3A3,1,1 EMPTY for 3 units
 B $C3A4,1,1 TREE for 1 units
-B $C3A5,1,1 (nothing) for 3 units
+B $C3A5,1,1 EMPTY for 3 units
 B $C3A6,1,1 TREE for 1 units
-B $C3A7,1,1 (nothing) for 3 units
+B $C3A7,1,1 EMPTY for 3 units
 B $C3A8,1,1 TREE for 1 units
-B $C3A9,1,1 (nothing) for 7 units
-B $C3AA,1,1 TREE for 1 units
-B $C3AB,1,1 (nothing) for 1 units
-B $C3AC,1,1 TREE for 1 units
-B $C3AD,1,1 (nothing) for 1 units
-B $C3AE,1,1 TREE for 1 units
-B $C3AF,1,1 (nothing) for 1 units
-B $C3B0,1,1 TREE for 1 units
-B $C3B1,1,1 (nothing) for 5 units
+B $C3A9,1,1 Alternating (TREE, EMPTY) for 6 units
+B $C3AA,6,6
+B $C3B0,1,1 TREE for 8 units
+B $C3B1,1,1 EMPTY for 5 units
 B $C3B2,1,1 TREE for 1 units
-B $C3B3,1,1 (nothing) for 1 units
+B $C3B3,1,1 EMPTY for 1 units
 B $C3B4,1,1 TREE for 1 units
-B $C3B5,1,1 (nothing) for 5 units
+B $C3B5,1,1 EMPTY for 5 units
 B $C3B6,1,1 TREE for 1 units
-B $C3B7,1,1 (nothing) for 5 units
+B $C3B7,1,1 EMPTY for 5 units
 B $C3B8,1,1 STREET_LAMP for 1 units
-B $C3B9,1,1 (nothing) for 3 units
+B $C3B9,1,1 EMPTY for 3 units
 B $C3BA,1,1 STREET_LAMP for 1 units
-B $C3BB,1,1 (nothing) for 3 units
+B $C3BB,1,1 EMPTY for 3 units
 B $C3BC,1,1 STREET_LAMP for 1 units
-B $C3BD,1,1 (nothing) for 3 units
+B $C3BD,1,1 EMPTY for 3 units
 B $C3BE,1,1 STREET_LAMP for 1 units
-B $C3BF,1,1 (nothing) for 3 units
+B $C3BF,1,1 EMPTY for 3 units
 B $C3C0,1,1 STREET_LAMP for 1 units
-B $C3C1,1,1 (nothing) for 3 units
+B $C3C1,1,1 EMPTY for 3 units
 B $C3C2,1,1 STREET_LAMP for 1 units
-B $C3C3,1,1 (nothing) for 3 units
+B $C3C3,1,1 EMPTY for 3 units
 B $C3C4,1,1 STREET_LAMP for 1 units
-B $C3C5,1,1 (nothing) for 3 units
+B $C3C5,1,1 EMPTY for 3 units
 B $C3C6,1,1 STREET_LAMP for 1 units
-B $C3C7,1,1 (nothing) for 3 units
+B $C3C7,1,1 EMPTY for 3 units
 B $C3C8,1,1 STREET_LAMP for 1 units
-B $C3C9,1,1 (nothing) for 3 units
+B $C3C9,1,1 EMPTY for 3 units
 B $C3CA,1,1 STREET_LAMP for 1 units
-B $C3CB,1,1 (nothing) for 1 units
+B $C3CB,1,1 EMPTY for 1 units
 B $C3CC,1,1 <Esc> Split
 B $C3CD,1,1
 W $C3CE,2,2 [$C452] Left target
@@ -477,120 +472,68 @@ B $C40D,1,1 <Esc> Jump
 B $C40E,1,1
 W $C40F,2,2 [$C5B9] Target
 b $C411 [Stage 1] Map left object data
-B $C411,1,1 (nothing) for 4 units
-B $C412,1,1 TREE for 1 units
-B $C413,1,1 (nothing) for 1 units
-B $C414,1,1 TREE for 1 units
-B $C415,1,1 (nothing) for 1 units
-B $C416,1,1 TREE for 1 units
-B $C417,1,1 (nothing) for 3 units
+B $C411,1,1 Alternating (TREE, EMPTY) for 4 units
+B $C412,4,4
+B $C416,1,1 TREE for 5 units
+B $C417,1,1 EMPTY for 3 units
 B $C418,1,1 TREE for 1 units
-B $C419,1,1 (nothing) for 1 units
+B $C419,1,1 EMPTY for 1 units
 B $C41A,1,1 TREE for 1 units
-B $C41B,1,1 (nothing) for 3 units
-B $C41C,1,1 TREE for 1 units
-B $C41D,1,1 (nothing) for 1 units
-B $C41E,1,1 TREE for 1 units
-B $C41F,1,1 (nothing) for 1 units
-B $C420,1,1 TREE for 1 units
-B $C421,1,1 (nothing) for 3 units
-B $C422,1,1 TELEGRAPH_POLE for 1 units
-B $C423,1,1 (nothing) for 1 units
-B $C424,1,1 TELEGRAPH_POLE for 1 units
-B $C425,1,1 (nothing) for 1 units
-B $C426,1,1 TELEGRAPH_POLE for 1 units
-B $C427,1,1 (nothing) for 3 units
-B $C428,1,1 TELEGRAPH_POLE for 1 units
-B $C429,1,1 (nothing) for 1 units
-B $C42A,1,1 TELEGRAPH_POLE for 1 units
-B $C42B,1,1 (nothing) for 1 units
-B $C42C,1,1 TELEGRAPH_POLE for 1 units
-B $C42D,1,1 (nothing) for 3 units
+B $C41B,1,1 Alternating (TREE, EMPTY) for 4 units
+B $C41C,4,4
+B $C420,1,1 TREE for 4 units
+B $C421,1,1 Alternating (TELEGRAPH_POLE, EMPTY) for 4 units
+B $C422,4,4
+B $C426,1,1 TELEGRAPH_POLE for 4 units
+B $C427,1,1 Alternating (TELEGRAPH_POLE, EMPTY) for 4 units
+B $C428,4,4
+B $C42C,1,1 TELEGRAPH_POLE for 4 units
+B $C42D,1,1 EMPTY for 3 units
 B $C42E,1,1 TELEGRAPH_POLE for 1 units
-B $C42F,1,1 (nothing) for 3 units
+B $C42F,1,1 EMPTY for 3 units
 B $C430,1,1 TELEGRAPH_POLE for 1 units
-B $C431,1,1 (nothing) for 3 units
+B $C431,1,1 EMPTY for 3 units
 B $C432,1,1 TELEGRAPH_POLE for 1 units
-B $C433,1,1 (nothing) for 3 units
-B $C434,1,1 TELEGRAPH_POLE for 1 units
-B $C435,1,1 (nothing) for 1 units
-B $C436,1,1 TELEGRAPH_POLE for 1 units
-B $C437,1,1 (nothing) for 1 units
-B $C438,1,1 TELEGRAPH_POLE for 1 units
-B $C439,1,1 (nothing) for 1 units
-B $C43A,1,1 TELEGRAPH_POLE for 1 units
-B $C43B,1,1 (nothing) for 1 units
-B $C43C,1,1 TELEGRAPH_POLE for 1 units
-B $C43D,1,1 (nothing) for 7 units
+B $C433,1,1 Alternating (TELEGRAPH_POLE, EMPTY) for 8 units
+B $C434,8,8
+B $C43C,1,1 TELEGRAPH_POLE for 4 units
+B $C43D,1,1 EMPTY for 7 units
 B $C43E,1,1 TELEGRAPH_POLE for 1 units
-B $C43F,1,1 (nothing) for 3 units
+B $C43F,1,1 EMPTY for 3 units
 B $C440,1,1 TELEGRAPH_POLE for 1 units
-B $C441,1,1 (nothing) for 15 units
-B $C442,1,1 STREET_LAMP for 1 units
-B $C443,1,1 (nothing) for 1 units
-B $C444,1,1 STREET_LAMP for 1 units
-B $C445,1,1 (nothing) for 1 units
-B $C446,1,1 STREET_LAMP for 1 units
-B $C447,1,1 (nothing) for 3 units
-B $C448,1,1 STREET_LAMP for 1 units
-B $C449,1,1 (nothing) for 1 units
-B $C44A,1,1 STREET_LAMP for 1 units
-B $C44B,1,1 (nothing) for 1 units
-B $C44C,1,1 STREET_LAMP for 1 units
-B $C44D,1,1 (nothing) for 2 units
+B $C441,1,1 Alternating (STREET_LAMP, EMPTY) for 4 units
+B $C442,4,4
+B $C446,1,1 STREET_LAMP for 16 units
+B $C447,1,1 Alternating (STREET_LAMP, EMPTY) for 4 units
+B $C448,4,4
+B $C44C,1,1 STREET_LAMP for 4 units
+B $C44D,1,1 EMPTY for 2 units
 B $C44E,1,1 <Esc> Jump
 B $C44F,1,1
 W $C450,2,2 [$C5BE] Target
 b $C452 [Stage 1] Map right object data
-B $C452,1,1 (nothing) for 31 units
-B $C453,2,2
-B $C455,1,1 TELEGRAPH_POLE for 1 units
-B $C456,1,1 (nothing) for 1 units
-B $C457,1,1 TELEGRAPH_POLE for 1 units
-B $C458,1,1 (nothing) for 1 units
-B $C459,1,1 TELEGRAPH_POLE for 1 units
-B $C45A,1,1 (nothing) for 10 units
+B $C452,1,1 Alternating (EMPTY, TELEGRAPH_POLE) for 6 units
+B $C453,7,7
+B $C45A,1,1 EMPTY for 40 units
 B $C45B,1,1 TELEGRAPH_POLE for 1 units
-B $C45C,1,1 (nothing) for 3 units
+B $C45C,1,1 EMPTY for 3 units
 B $C45D,1,1 TELEGRAPH_POLE for 1 units
-B $C45E,1,1 (nothing) for 3 units
+B $C45E,1,1 EMPTY for 3 units
 B $C45F,1,1 TELEGRAPH_POLE for 1 units
-B $C460,1,1 (nothing) for 1 units
+B $C460,1,1 EMPTY for 1 units
 B $C461,1,1 TELEGRAPH_POLE for 1 units
-B $C462,1,1 (nothing) for 3 units
+B $C462,1,1 EMPTY for 3 units
 B $C463,1,1 TELEGRAPH_POLE for 1 units
-B $C464,1,1 (nothing) for 3 units
+B $C464,1,1 EMPTY for 3 units
 B $C465,1,1 TELEGRAPH_POLE for 1 units
-B $C466,1,1 (nothing) for 3 units
+B $C466,1,1 EMPTY for 3 units
 B $C467,1,1 TELEGRAPH_POLE for 1 units
-B $C468,1,1 (nothing) for 7 units
-B $C469,1,1 STREET_LAMP for 1 units
-B $C46A,1,1 (nothing) for 1 units
-B $C46B,1,1 STREET_LAMP for 1 units
-B $C46C,1,1 (nothing) for 1 units
-B $C46D,1,1 STREET_LAMP for 1 units
-B $C46E,1,1 (nothing) for 1 units
-B $C46F,1,1 STREET_LAMP for 1 units
-B $C470,1,1 (nothing) for 1 units
-B $C471,1,1 STREET_LAMP for 1 units
-B $C472,1,1 (nothing) for 1 units
-B $C473,1,1 STREET_LAMP for 1 units
-B $C474,1,1 (nothing) for 1 units
-B $C475,1,1 STREET_LAMP for 1 units
-B $C476,1,1 (nothing) for 1 units
-B $C477,1,1 STREET_LAMP for 1 units
-B $C478,1,1 (nothing) for 1 units
-B $C479,1,1 STREET_LAMP for 1 units
-B $C47A,1,1 (nothing) for 1 units
-B $C47B,1,1 STREET_LAMP for 1 units
-B $C47C,1,1 (nothing) for 3 units
-B $C47D,1,1 STREET_LAMP for 1 units
-B $C47E,1,1 (nothing) for 1 units
-B $C47F,1,1 STREET_LAMP for 1 units
-B $C480,1,1 (nothing) for 1 units
-B $C481,1,1 STREET_LAMP for 1 units
-B $C482,1,1 (nothing) for 1 units
-B $C483,1,1 STREET_LAMP for 1 units
+B $C468,1,1 Alternating (STREET_LAMP, EMPTY) for 18 units
+B $C469,18,8*2,2
+B $C47B,1,1 STREET_LAMP for 8 units
+B $C47C,1,1 Alternating (STREET_LAMP, EMPTY) for 6 units
+B $C47D,6,6
+B $C483,1,1 STREET_LAMP for 4 units
 B $C484,1,1 <Esc> Jump
 B $C485,1,1
 W $C486,2,2 [$C5C9] Target
@@ -698,22 +641,22 @@ B $C4EC,1,1
 W $C4ED,2,2 [$C5A5] Target
 b $C4EF [Stage 1] Map hazards data
 B $C4EF,1,1 Wait for 10 units
-B $C4F0,1,1 Start Spawning Two Barriers
+B $C4F0,1,1 Start Spawning HAZARD_2 Both Sides
 B $C4F1,1,1
 B $C4F2,1,1 Wait for 1 units
-B $C4F3,1,1 Stop Spawning Barriers 6?
+B $C4F3,1,1 Start Spawning HAZARD_1 Both Sides
 B $C4F4,1,1
 B $C4F5,1,1 Wait for 41 units
-B $C4F6,1,1 Start Spawning Two Barriers
+B $C4F6,1,1 Start Spawning HAZARD_2 Both Sides
 B $C4F7,1,1
 B $C4F8,1,1 Wait for 4 units
-B $C4F9,1,1 Stop Spawning Barriers 6?
+B $C4F9,1,1 Start Spawning HAZARD_1 Both Sides
 B $C4FA,1,1
 B $C4FB,1,1 Wait for 42 units
-B $C4FC,1,1 Start Spawning Two Barriers
+B $C4FC,1,1 Start Spawning HAZARD_2 Both Sides
 B $C4FD,1,1
 B $C4FE,1,1 Wait for 2 units
-B $C4FF,1,1 Stop Spawning Barriers 3?
+B $C4FF,1,1 Stop Spawning Hazards
 B $C500,1,1
 B $C501,1,1 Wait for 1 units
 B $C502,1,1 Enable Car Spawning
@@ -723,108 +666,64 @@ B $C505,1,1 <Esc> Jump
 B $C506,1,1
 W $C507,2,2 [$C5B9] Target
 b $C509 [Stage 1] Map left object data
-B $C509,1,1 (nothing) for 10 units
+B $C509,1,1 EMPTY for 10 units
 B $C50A,1,1 SHORT_POLE for 1 units
-B $C50B,1,1 (nothing) for 7 units
-B $C50C,1,1 TELEGRAPH_POLE for 1 units
-B $C50D,1,1 (nothing) for 1 units
-B $C50E,1,1 TELEGRAPH_POLE for 1 units
-B $C50F,1,1 (nothing) for 1 units
-B $C510,1,1 TELEGRAPH_POLE for 1 units
-B $C511,1,1 (nothing) for 1 units
-B $C512,1,1 TELEGRAPH_POLE for 1 units
-B $C513,1,1 (nothing) for 1 units
-B $C514,1,1 TELEGRAPH_POLE for 1 units
-B $C515,1,1 (nothing) for 1 units
-B $C516,1,1 TELEGRAPH_POLE for 1 units
-B $C517,1,1 (nothing) for 5 units
+B $C50B,1,1 Alternating (TELEGRAPH_POLE, EMPTY) for 10 units
+B $C50C,10,8,2
+B $C516,1,1 TELEGRAPH_POLE for 8 units
+B $C517,1,1 EMPTY for 5 units
 B $C518,1,1 TELEGRAPH_POLE for 1 units
-B $C519,1,1 (nothing) for 1 units
+B $C519,1,1 EMPTY for 1 units
 B $C51A,1,1 TELEGRAPH_POLE for 1 units
-B $C51B,1,1 (nothing) for 5 units
+B $C51B,1,1 EMPTY for 5 units
 B $C51C,1,1 TELEGRAPH_POLE for 1 units
-B $C51D,1,1 (nothing) for 3 units
-B $C51E,1,1 TELEGRAPH_POLE for 1 units
-B $C51F,1,1 (nothing) for 1 units
-B $C520,1,1 TELEGRAPH_POLE for 1 units
-B $C521,1,1 (nothing) for 1 units
-B $C522,1,1 TELEGRAPH_POLE for 1 units
-B $C523,1,1 (nothing) for 1 units
-B $C524,1,1 TELEGRAPH_POLE for 1 units
-B $C525,1,1 (nothing) for 3 units
+B $C51D,1,1 Alternating (TELEGRAPH_POLE, EMPTY) for 6 units
+B $C51E,6,6
+B $C524,1,1 TELEGRAPH_POLE for 4 units
+B $C525,1,1 EMPTY for 3 units
 B $C526,1,1 TELEGRAPH_POLE for 1 units
-B $C527,1,1 (nothing) for 1 units
+B $C527,1,1 EMPTY for 1 units
 B $C528,1,1 TELEGRAPH_POLE for 1 units
-B $C529,1,1 (nothing) for 3 units
+B $C529,1,1 EMPTY for 3 units
 B $C52A,1,1 TELEGRAPH_POLE for 1 units
-B $C52B,1,1 (nothing) for 1 units
+B $C52B,1,1 EMPTY for 1 units
 B $C52C,1,1 TELEGRAPH_POLE for 1 units
-B $C52D,1,1 (nothing) for 7 units
-B $C52E,1,1 TELEGRAPH_POLE for 1 units
-B $C52F,1,1 (nothing) for 1 units
-B $C530,1,1 TELEGRAPH_POLE for 1 units
-B $C531,1,1 (nothing) for 1 units
-B $C532,1,1 TELEGRAPH_POLE for 1 units
-B $C533,1,1 (nothing) for 1 units
-B $C534,1,1 TELEGRAPH_POLE for 1 units
-B $C535,1,1 (nothing) for 13 units
-B $C536,1,1 TELEGRAPH_POLE for 1 units
-B $C537,1,1 (nothing) for 1 units
-B $C538,1,1 TELEGRAPH_POLE for 1 units
-B $C539,1,1 (nothing) for 1 units
-B $C53A,1,1 TELEGRAPH_POLE for 1 units
-B $C53B,1,1 (nothing) for 5 units
+B $C52D,1,1 Alternating (TELEGRAPH_POLE, EMPTY) for 6 units
+B $C52E,6,6
+B $C534,1,1 TELEGRAPH_POLE for 8 units
+B $C535,1,1 Alternating (TELEGRAPH_POLE, EMPTY) for 4 units
+B $C536,4,4
+B $C53A,1,1 TELEGRAPH_POLE for 14 units
+B $C53B,1,1 EMPTY for 5 units
 B $C53C,1,1 STREET_LAMP for 1 units
-B $C53D,1,1 (nothing) for 1 units
+B $C53D,1,1 EMPTY for 1 units
 B $C53E,1,1 STREET_LAMP for 1 units
 B $C53F,1,1 <Esc> Jump
 B $C540,1,1
 W $C541,2,2 [$C5BE] Target
 b $C543 [Stage 1] Map right object data
 B $C543,1,1 STREET_LAMP for 1 units
-B $C544,1,1 (nothing) for 3 units
+B $C544,1,1 EMPTY for 3 units
 B $C545,1,1 STREET_LAMP for 1 units
-B $C546,1,1 (nothing) for 3 units
+B $C546,1,1 EMPTY for 3 units
 B $C547,1,1 STREET_LAMP for 1 units
-B $C548,1,1 (nothing) for 1 units
+B $C548,1,1 EMPTY for 1 units
 B $C549,1,1 SHORT_POLE for 1 units
-B $C54A,1,1 (nothing) for 11 units
-B $C54B,1,1 TELEGRAPH_POLE for 1 units
-B $C54C,1,1 (nothing) for 1 units
-B $C54D,1,1 TELEGRAPH_POLE for 1 units
-B $C54E,1,1 (nothing) for 1 units
-B $C54F,1,1 TELEGRAPH_POLE for 1 units
-B $C550,1,1 (nothing) for 1 units
-B $C551,1,1 TELEGRAPH_POLE for 1 units
-B $C552,1,1 (nothing) for 9 units
+B $C54A,1,1 Alternating (TELEGRAPH_POLE, EMPTY) for 6 units
+B $C54B,6,6
+B $C551,1,1 TELEGRAPH_POLE for 12 units
+B $C552,1,1 EMPTY for 9 units
 B $C553,1,1 TELEGRAPH_POLE for 1 units
-B $C554,1,1 (nothing) for 1 units
+B $C554,1,1 EMPTY for 1 units
 B $C555,1,1 TELEGRAPH_POLE for 1 units
-B $C556,1,1 (nothing) for 7 units
+B $C556,1,1 EMPTY for 7 units
 B $C557,1,1 TELEGRAPH_POLE for 1 units
-B $C558,1,1 (nothing) for 15 units
-B $C559,1,1 TELEGRAPH_POLE for 1 units
-B $C55A,1,1 (nothing) for 1 units
-B $C55B,1,1 TELEGRAPH_POLE for 1 units
-B $C55C,1,1 (nothing) for 1 units
-B $C55D,1,1 TELEGRAPH_POLE for 1 units
-B $C55E,1,1 (nothing) for 1 units
-B $C55F,1,1 TELEGRAPH_POLE for 1 units
-B $C560,1,1 (nothing) for 1 units
-B $C561,1,1 TELEGRAPH_POLE for 1 units
-B $C562,1,1 (nothing) for 1 units
-B $C563,1,1 TELEGRAPH_POLE for 1 units
-B $C564,1,1 (nothing) for 1 units
-B $C565,1,1 TELEGRAPH_POLE for 1 units
-B $C566,1,1 (nothing) for 1 units
-B $C567,1,1 TELEGRAPH_POLE for 1 units
-B $C568,1,1 (nothing) for 1 units
-B $C569,1,1 TELEGRAPH_POLE for 1 units
-B $C56A,1,1 (nothing) for 1 units
-B $C56B,1,1 TELEGRAPH_POLE for 1 units
-B $C56C,1,1 (nothing) for 13 units
+B $C558,1,1 Alternating (TELEGRAPH_POLE, EMPTY) for 18 units
+B $C559,18,8*2,2
+B $C56B,1,1 TELEGRAPH_POLE for 16 units
+B $C56C,1,1 EMPTY for 13 units
 B $C56D,1,1 TELEGRAPH_POLE for 1 units
-B $C56E,1,1 (nothing) for 8 units
+B $C56E,1,1 EMPTY for 8 units
 B $C56F,1,1 <Esc> Jump
 B $C570,1,1
 W $C571,2,2 [$C5C9] Target
@@ -901,20 +800,20 @@ B $C5BA,1,1 <Esc> Jump
 B $C5BB,1,1
 W $C5BC,2,2 [$C677] Target
 b $C5BE [Stage 1] Map left object data
-B $C5BE,1,1 (nothing) for 30 units
+B $C5BE,1,1 EMPTY for 30 units
 B $C5BF,1,1
 B $C5C0,1,1 TUNNEL_LIGHT for 51 units
 B $C5C1,3,3
-B $C5C4,1,1 (nothing) for 14 units
+B $C5C4,1,1 EMPTY for 14 units
 B $C5C5,1,1 <Esc> Jump
 B $C5C6,1,1
 W $C5C7,2,2 [$C694] Target
 b $C5C9 [Stage 1] Map right object data
-B $C5C9,1,1 (nothing) for 30 units
+B $C5C9,1,1 EMPTY for 30 units
 B $C5CA,1,1
 B $C5CB,1,1 TUNNEL_LIGHT for 51 units
 B $C5CC,3,3
-B $C5CF,1,1 (nothing) for 14 units
+B $C5CF,1,1 EMPTY for 14 units
 B $C5D0,1,1 <Esc> Jump
 B $C5D1,1,1
 W $C5D2,2,2 [$C714] Target
@@ -1064,280 +963,183 @@ B $C674,1,1
 W $C675,2,2 [$C65D] Target
 b $C677 [Stage 1] Map hazards data
 B $C677,1,1 Wait for 42 units
-B $C678,1,1 Start Spawning Barriers Left
+B $C678,1,1 Start Spawning HAZARD_2 Left
 B $C679,1,1
 B $C67A,1,1 Wait for 2 units
-B $C67B,1,1 Stop Spawning Barriers 3?
+B $C67B,1,1 Stop Spawning Hazards
 B $C67C,1,1
 B $C67D,1,1 Wait for 4 units
-B $C67E,1,1 Start Spawning Barriers Left
+B $C67E,1,1 Start Spawning HAZARD_2 Left
 B $C67F,1,1
 B $C680,1,1 Wait for 2 units
-B $C681,1,1 Stop Spawning Barriers 3?
+B $C681,1,1 Stop Spawning Hazards
 B $C682,1,1
 B $C683,1,1 Wait for 27 units
-B $C684,1,1 Start Spawning Barriers Right
+B $C684,1,1 Start Spawning HAZARD_2 Right
 B $C685,1,1
 B $C686,1,1 Wait for 2 units
-B $C687,1,1 Stop Spawning Barriers 3?
+B $C687,1,1 Stop Spawning Hazards
 B $C688,1,1
 B $C689,1,1 Wait for 99 units
-B $C68A,1,1 Start Spawning Barriers Right
+B $C68A,1,1 Start Spawning HAZARD_2 Right
 B $C68B,1,1
 B $C68C,1,1 Wait for 1 units
-B $C68D,1,1 Stop Spawning Barriers 3?
+B $C68D,1,1 Stop Spawning Hazards
 B $C68E,1,1
 B $C68F,1,1 Wait for 46 units
 B $C690,1,1 <Esc> Loop
 B $C691,1,1
 W $C692,2,2 [$C677] Target
 b $C694 [Stage 1] Map left object data
-B $C694,1,1 (nothing) for 3 units
-B $C695,1,1 STREET_LAMP for 1 units
-B $C696,1,1 (nothing) for 1 units
-B $C697,1,1 STREET_LAMP for 1 units
-B $C698,1,1 (nothing) for 1 units
-B $C699,1,1 STREET_LAMP for 1 units
-B $C69A,1,1 (nothing) for 6 units
-B $C69B,1,1 TURN_SIGN_POINTING_RIGHT for 1 units
-B $C69C,1,1 (nothing) for 1 units
-B $C69D,1,1 TURN_SIGN_POINTING_RIGHT for 1 units
-B $C69E,1,1 (nothing) for 1 units
-B $C69F,1,1 TURN_SIGN_POINTING_RIGHT for 1 units
-B $C6A0,1,1 (nothing) for 5 units
-B $C6A1,1,1 TELEGRAPH_POLE for 1 units
-B $C6A2,1,1 (nothing) for 1 units
-B $C6A3,1,1 TELEGRAPH_POLE for 1 units
-B $C6A4,1,1 (nothing) for 1 units
-B $C6A5,1,1 TELEGRAPH_POLE for 1 units
-B $C6A6,1,1 (nothing) for 1 units
-B $C6A7,1,1 TELEGRAPH_POLE for 1 units
-B $C6A8,1,1 (nothing) for 3 units
+B $C694,1,1 Alternating (STREET_LAMP, EMPTY) for 4 units
+B $C695,4,4
+B $C699,1,1 STREET_LAMP for 4 units
+B $C69A,1,1 Alternating (TURN_SIGN_POINTING_RIGHT, EMPTY) for 4 units
+B $C69B,4,4
+B $C69F,1,1 TURN_SIGN_POINTING_RIGHT for 7 units
+B $C6A0,1,1 Alternating (TELEGRAPH_POLE, EMPTY) for 6 units
+B $C6A1,6,6
+B $C6A7,1,1 TELEGRAPH_POLE for 6 units
+B $C6A8,1,1 EMPTY for 3 units
 B $C6A9,1,1 TELEGRAPH_POLE for 1 units
-B $C6AA,1,1 (nothing) for 1 units
+B $C6AA,1,1 EMPTY for 1 units
 B $C6AB,1,1 TELEGRAPH_POLE for 1 units
-B $C6AC,1,1 (nothing) for 3 units
-B $C6AD,1,1 TURN_SIGN_POINTING_RIGHT for 1 units
-B $C6AE,1,1 (nothing) for 1 units
-B $C6AF,1,1 TURN_SIGN_POINTING_RIGHT for 1 units
-B $C6B0,1,1 (nothing) for 1 units
-B $C6B1,1,1 TURN_SIGN_POINTING_RIGHT for 1 units
-B $C6B2,1,1 (nothing) for 1 units
-B $C6B3,1,1 TURN_SIGN_POINTING_RIGHT for 1 units
-B $C6B4,1,1 (nothing) for 9 units
-B $C6B5,1,1 TURN_SIGN_POINTING_RIGHT for 1 units
-B $C6B6,1,1 (nothing) for 1 units
-B $C6B7,1,1 TURN_SIGN_POINTING_RIGHT for 1 units
-B $C6B8,1,1 (nothing) for 1 units
-B $C6B9,1,1 TURN_SIGN_POINTING_RIGHT for 1 units
-B $C6BA,1,1 (nothing) for 3 units
-B $C6BB,1,1 TELEGRAPH_POLE for 1 units
-B $C6BC,1,1 (nothing) for 1 units
-B $C6BD,1,1 TURN_SIGN_POINTING_LEFT for 1 units
-B $C6BE,1,1 (nothing) for 1 units
-B $C6BF,1,1 TURN_SIGN_POINTING_LEFT for 1 units
-B $C6C0,1,1 (nothing) for 3 units
+B $C6AC,1,1 Alternating (TURN_SIGN_POINTING_RIGHT, EMPTY) for 6 units
+B $C6AD,6,6
+B $C6B3,1,1 TURN_SIGN_POINTING_RIGHT for 4 units
+B $C6B4,1,1 Alternating (TURN_SIGN_POINTING_RIGHT, EMPTY) for 4 units
+B $C6B5,4,4
+B $C6B9,1,1 TURN_SIGN_POINTING_RIGHT for 10 units
+B $C6BA,1,1 EMPTY for 3 units
+B $C6BB,1,1 Alternating (EMPTY, TURN_SIGN_POINTING_LEFT) for 4 units
+B $C6BC,4,4
+B $C6C0,1,1 EMPTY for 4 units
 B $C6C1,1,1 TELEGRAPH_POLE for 1 units
-B $C6C2,1,1 (nothing) for 1 units
+B $C6C2,1,1 EMPTY for 1 units
 B $C6C3,1,1 TELEGRAPH_POLE for 1 units
-B $C6C4,1,1 (nothing) for 7 units
+B $C6C4,1,1 EMPTY for 7 units
 B $C6C5,1,1 TURN_SIGN_POINTING_LEFT for 1 units
-B $C6C6,1,1 (nothing) for 1 units
+B $C6C6,1,1 EMPTY for 1 units
 B $C6C7,1,1 TURN_SIGN_POINTING_LEFT for 1 units
-B $C6C8,1,1 (nothing) for 15 units
-B $C6C9,1,1 STREET_LAMP for 1 units
-B $C6CA,1,1 (nothing) for 1 units
-B $C6CB,1,1 STREET_LAMP for 1 units
-B $C6CC,1,1 (nothing) for 1 units
-B $C6CD,1,1 STREET_LAMP for 1 units
-B $C6CE,1,1 (nothing) for 3 units
-B $C6CF,1,1 TURN_SIGN_POINTING_RIGHT for 1 units
-B $C6D0,1,1 (nothing) for 1 units
-B $C6D1,1,1 TURN_SIGN_POINTING_RIGHT for 1 units
-B $C6D2,1,1 (nothing) for 1 units
-B $C6D3,1,1 TURN_SIGN_POINTING_RIGHT for 1 units
-B $C6D4,1,1 (nothing) for 3 units
-B $C6D5,1,1 STREET_LAMP for 1 units
-B $C6D6,1,1 (nothing) for 1 units
-B $C6D7,1,1 STREET_LAMP for 1 units
-B $C6D8,1,1 (nothing) for 1 units
-B $C6D9,1,1 STREET_LAMP for 1 units
-B $C6DA,1,1 (nothing) for 11 units
+B $C6C8,1,1 Alternating (STREET_LAMP, EMPTY) for 4 units
+B $C6C9,4,4
+B $C6CD,1,1 STREET_LAMP for 16 units
+B $C6CE,1,1 Alternating (TURN_SIGN_POINTING_RIGHT, EMPTY) for 4 units
+B $C6CF,4,4
+B $C6D3,1,1 TURN_SIGN_POINTING_RIGHT for 4 units
+B $C6D4,1,1 Alternating (STREET_LAMP, EMPTY) for 4 units
+B $C6D5,4,4
+B $C6D9,1,1 STREET_LAMP for 4 units
+B $C6DA,1,1 EMPTY for 11 units
 B $C6DB,1,1 TREE for 1 units
-B $C6DC,1,1 (nothing) for 3 units
+B $C6DC,1,1 EMPTY for 3 units
 B $C6DD,1,1 TREE for 1 units
-B $C6DE,1,1 (nothing) for 3 units
-B $C6DF,1,1 TREE for 1 units
-B $C6E0,1,1 (nothing) for 1 units
-B $C6E1,1,1 BUSH for 1 units
-B $C6E2,1,1 (nothing) for 1 units
-B $C6E3,1,1 BUSH for 1 units
-B $C6E4,1,1 (nothing) for 5 units
+B $C6DE,1,1 EMPTY for 3 units
+B $C6DF,1,1 Alternating (EMPTY, BUSH) for 4 units
+B $C6E0,4,4
+B $C6E4,1,1 EMPTY for 6 units
 B $C6E5,1,1 TREE for 1 units
-B $C6E6,1,1 (nothing) for 1 units
+B $C6E6,1,1 EMPTY for 1 units
 B $C6E7,1,1 TREE for 1 units
-B $C6E8,1,1 (nothing) for 5 units
+B $C6E8,1,1 EMPTY for 5 units
 B $C6E9,1,1 TREE for 1 units
-B $C6EA,1,1 (nothing) for 1 units
+B $C6EA,1,1 EMPTY for 1 units
 B $C6EB,1,1 TREE for 1 units
-B $C6EC,1,1 (nothing) for 5 units
-B $C6ED,1,1 BUSH for 1 units
-B $C6EE,1,1 (nothing) for 1 units
-B $C6EF,1,1 BUSH for 1 units
-B $C6F0,1,1 (nothing) for 1 units
-B $C6F1,1,1 BUSH for 1 units
-B $C6F2,1,1 (nothing) for 3 units
+B $C6EC,1,1 Alternating (BUSH, EMPTY) for 4 units
+B $C6ED,4,4
+B $C6F1,1,1 BUSH for 6 units
+B $C6F2,1,1 EMPTY for 3 units
 B $C6F3,1,1 TREE for 1 units
-B $C6F4,1,1 (nothing) for 3 units
+B $C6F4,1,1 EMPTY for 3 units
 B $C6F5,1,1 TREE for 1 units
-B $C6F6,1,1 (nothing) for 3 units
+B $C6F6,1,1 EMPTY for 3 units
 B $C6F7,1,1 TREE for 1 units
-B $C6F8,1,1 (nothing) for 1 units
+B $C6F8,1,1 EMPTY for 1 units
 B $C6F9,1,1 TREE for 1 units
-B $C6FA,1,1 (nothing) for 3 units
-B $C6FB,1,1 STREET_LAMP for 1 units
-B $C6FC,1,1 (nothing) for 1 units
-B $C6FD,1,1 STREET_LAMP for 1 units
-B $C6FE,1,1 (nothing) for 1 units
-B $C6FF,1,1 STREET_LAMP for 1 units
-B $C700,1,1 (nothing) for 3 units
+B $C6FA,1,1 Alternating (STREET_LAMP, EMPTY) for 4 units
+B $C6FB,4,4
+B $C6FF,1,1 STREET_LAMP for 4 units
+B $C700,1,1 EMPTY for 3 units
 B $C701,1,1 STREET_LAMP for 1 units
-B $C702,1,1 (nothing) for 9 units
-B $C703,1,1 TURN_SIGN_POINTING_RIGHT for 1 units
-B $C704,1,1 (nothing) for 1 units
-B $C705,1,1 TURN_SIGN_POINTING_RIGHT for 1 units
-B $C706,1,1 (nothing) for 1 units
-B $C707,1,1 TURN_SIGN_POINTING_RIGHT for 1 units
-B $C708,1,1 (nothing) for 1 units
-B $C709,1,1 TURN_SIGN_POINTING_RIGHT for 1 units
-B $C70A,1,1 (nothing) for 1 units
-B $C70B,1,1 TURN_SIGN_POINTING_RIGHT for 1 units
-B $C70C,1,1 (nothing) for 7 units
+B $C702,1,1 Alternating (TURN_SIGN_POINTING_RIGHT, EMPTY) for 8 units
+B $C703,8,8
+B $C70B,1,1 TURN_SIGN_POINTING_RIGHT for 10 units
+B $C70C,1,1 EMPTY for 7 units
 B $C70D,1,1 STREET_LAMP for 1 units
-B $C70E,1,1 (nothing) for 1 units
+B $C70E,1,1 EMPTY for 1 units
 B $C70F,1,1 STREET_LAMP for 1 units
 B $C710,1,1 <Esc> Loop
 B $C711,1,1
 W $C712,2,2 [$C694] Target
 b $C714 [Stage 1] Map right object data
-B $C714,1,1 (nothing) for 2 units
-B $C715,1,1 TURN_SIGN_POINTING_LEFT for 1 units
-B $C716,1,1 (nothing) for 1 units
-B $C717,1,1 TURN_SIGN_POINTING_LEFT for 1 units
-B $C718,1,1 (nothing) for 1 units
-B $C719,1,1 TURN_SIGN_POINTING_LEFT for 1 units
-B $C71A,1,1 (nothing) for 1 units
-B $C71B,1,1 TURN_SIGN_POINTING_LEFT for 1 units
-B $C71C,1,1 (nothing) for 3 units
-B $C71D,1,1 TELEGRAPH_POLE for 1 units
-B $C71E,1,1 (nothing) for 1 units
-B $C71F,1,1 TELEGRAPH_POLE for 1 units
-B $C720,1,1 (nothing) for 1 units
-B $C721,1,1 TELEGRAPH_POLE for 1 units
-B $C722,1,1 (nothing) for 7 units
-B $C723,1,1 TELEGRAPH_POLE for 1 units
-B $C724,1,1 (nothing) for 1 units
-B $C725,1,1 TELEGRAPH_POLE for 1 units
-B $C726,1,1 (nothing) for 1 units
-B $C727,1,1 TELEGRAPH_POLE for 1 units
-B $C728,1,1 (nothing) for 1 units
-B $C729,1,1 TELEGRAPH_POLE for 1 units
-B $C72A,1,1 (nothing) for 1 units
-B $C72B,1,1 TELEGRAPH_POLE for 1 units
-B $C72C,1,1 (nothing) for 5 units
-B $C72D,1,1 TURN_SIGN_POINTING_RIGHT for 1 units
-B $C72E,1,1 (nothing) for 1 units
-B $C72F,1,1 TURN_SIGN_POINTING_RIGHT for 1 units
-B $C730,1,1 (nothing) for 1 units
-B $C731,1,1 TURN_SIGN_POINTING_RIGHT for 1 units
-B $C732,1,1 (nothing) for 1 units
-B $C733,1,1 TURN_SIGN_POINTING_RIGHT for 1 units
-B $C734,1,1 (nothing) for 1 units
-B $C735,1,1 TURN_SIGN_POINTING_RIGHT for 1 units
-B $C736,1,1 (nothing) for 1 units
-B $C737,1,1 TURN_SIGN_POINTING_RIGHT for 1 units
-B $C738,1,1 (nothing) for 15 units
+B $C714,1,1 Alternating (TURN_SIGN_POINTING_LEFT, EMPTY) for 6 units
+B $C715,6,6
+B $C71B,1,1 TURN_SIGN_POINTING_LEFT for 3 units
+B $C71C,1,1 Alternating (TELEGRAPH_POLE, EMPTY) for 4 units
+B $C71D,4,4
+B $C721,1,1 TELEGRAPH_POLE for 4 units
+B $C722,1,1 Alternating (TELEGRAPH_POLE, EMPTY) for 8 units
+B $C723,8,8
+B $C72B,1,1 TELEGRAPH_POLE for 8 units
+B $C72C,1,1 Alternating (TURN_SIGN_POINTING_RIGHT, EMPTY) for 10 units
+B $C72D,10,8,2
+B $C737,1,1 TURN_SIGN_POINTING_RIGHT for 6 units
+B $C738,1,1 EMPTY for 15 units
 B $C739,1,1 TELEGRAPH_POLE for 1 units
-B $C73A,1,1 (nothing) for 3 units
+B $C73A,1,1 EMPTY for 3 units
 B $C73B,1,1 TELEGRAPH_POLE for 1 units
-B $C73C,1,1 (nothing) for 3 units
-B $C73D,1,1 TURN_SIGN_POINTING_LEFT for 1 units
-B $C73E,1,1 (nothing) for 1 units
-B $C73F,1,1 TURN_SIGN_POINTING_LEFT for 1 units
-B $C740,1,1 (nothing) for 1 units
-B $C741,1,1 TURN_SIGN_POINTING_LEFT for 1 units
-B $C742,1,1 (nothing) for 1 units
-B $C743,1,1 TURN_SIGN_POINTING_LEFT for 1 units
-B $C744,1,1 (nothing) for 7 units
-B $C745,1,1 STREET_LAMP for 1 units
-B $C746,1,1 (nothing) for 1 units
-B $C747,1,1 STREET_LAMP for 1 units
-B $C748,1,1 (nothing) for 1 units
-B $C749,1,1 STREET_LAMP for 1 units
-B $C74A,1,1 (nothing) for 1 units
-B $C74B,1,1 STREET_LAMP for 1 units
-B $C74C,1,1 (nothing) for 3 units
+B $C73C,1,1 Alternating (TURN_SIGN_POINTING_LEFT, EMPTY) for 6 units
+B $C73D,6,6
+B $C743,1,1 TURN_SIGN_POINTING_LEFT for 4 units
+B $C744,1,1 Alternating (STREET_LAMP, EMPTY) for 6 units
+B $C745,6,6
+B $C74B,1,1 STREET_LAMP for 8 units
+B $C74C,1,1 EMPTY for 3 units
 B $C74D,1,1 STREET_LAMP for 1 units
-B $C74E,1,1 (nothing) for 3 units
+B $C74E,1,1 EMPTY for 3 units
 B $C74F,1,1 STREET_LAMP for 1 units
-B $C750,1,1 (nothing) for 9 units
-B $C751,1,1 TURN_SIGN_POINTING_RIGHT for 1 units
-B $C752,1,1 (nothing) for 1 units
-B $C753,1,1 TURN_SIGN_POINTING_RIGHT for 1 units
-B $C754,1,1 (nothing) for 1 units
-B $C755,1,1 TURN_SIGN_POINTING_RIGHT for 1 units
-B $C756,1,1 (nothing) for 1 units
-B $C757,1,1 TURN_SIGN_POINTING_RIGHT for 1 units
-B $C758,1,1 (nothing) for 21 units
-B $C759,1,1
-B $C75A,1,1 BUSH for 1 units
-B $C75B,1,1 (nothing) for 1 units
-B $C75C,1,1 BUSH for 1 units
-B $C75D,1,1 (nothing) for 1 units
-B $C75E,1,1 BUSH for 1 units
-B $C75F,1,1 (nothing) for 5 units
+B $C750,1,1 Alternating (TURN_SIGN_POINTING_RIGHT, EMPTY) for 6 units
+B $C751,6,6
+B $C757,1,1 TURN_SIGN_POINTING_RIGHT for 10 units
+B $C758,1,1 Alternating (BUSH, EMPTY) for 4 units
+B $C759,5,5
+B $C75E,1,1 BUSH for 22 units
+B $C75F,1,1 EMPTY for 5 units
 B $C760,1,1 BUSH for 1 units
-B $C761,1,1 (nothing) for 3 units
+B $C761,1,1 EMPTY for 3 units
 B $C762,1,1 BUSH for 1 units
-B $C763,1,1 (nothing) for 3 units
+B $C763,1,1 EMPTY for 3 units
 B $C764,1,1 TREE for 1 units
-B $C765,1,1 (nothing) for 3 units
+B $C765,1,1 EMPTY for 3 units
 B $C766,1,1 TREE for 1 units
-B $C767,1,1 (nothing) for 5 units
+B $C767,1,1 EMPTY for 5 units
 B $C768,1,1 TREE for 1 units
-B $C769,1,1 (nothing) for 3 units
+B $C769,1,1 EMPTY for 3 units
 B $C76A,1,1 TREE for 1 units
-B $C76B,1,1 (nothing) for 3 units
+B $C76B,1,1 EMPTY for 3 units
 B $C76C,1,1 TREE for 1 units
-B $C76D,1,1 (nothing) for 11 units
-B $C76E,1,1 TREE for 1 units
-B $C76F,1,1 (nothing) for 1 units
-B $C770,1,1 TREE for 1 units
-B $C771,1,1 (nothing) for 1 units
-B $C772,1,1 TREE for 1 units
-B $C773,1,1 (nothing) for 9 units
-B $C774,1,1 TURN_SIGN_POINTING_RIGHT for 1 units
-B $C775,1,1 (nothing) for 1 units
-B $C776,1,1 TURN_SIGN_POINTING_RIGHT for 1 units
-B $C777,1,1 (nothing) for 1 units
-B $C778,1,1 TURN_SIGN_POINTING_RIGHT for 1 units
-B $C779,1,1 (nothing) for 1 units
-B $C77A,1,1 TURN_SIGN_POINTING_RIGHT for 1 units
-B $C77B,1,1 (nothing) for 1 units
-B $C77C,1,1 TURN_SIGN_POINTING_RIGHT for 1 units
-B $C77D,1,1 (nothing) for 3 units
+B $C76D,1,1 Alternating (TREE, EMPTY) for 4 units
+B $C76E,4,4
+B $C772,1,1 TREE for 12 units
+B $C773,1,1 Alternating (TURN_SIGN_POINTING_RIGHT, EMPTY) for 8 units
+B $C774,8,8
+B $C77C,1,1 TURN_SIGN_POINTING_RIGHT for 10 units
+B $C77D,1,1 EMPTY for 3 units
 B $C77E,1,1 TURN_SIGN_POINTING_RIGHT for 1 units
-B $C77F,1,1 (nothing) for 1 units
+B $C77F,1,1 EMPTY for 1 units
 B $C780,1,1 TURN_SIGN_POINTING_RIGHT for 1 units
-B $C781,1,1 (nothing) for 5 units
+B $C781,1,1 EMPTY for 5 units
 B $C782,1,1 STREET_LAMP for 1 units
-B $C783,1,1 (nothing) for 1 units
+B $C783,1,1 EMPTY for 1 units
 B $C784,1,1 STREET_LAMP for 1 units
-B $C785,1,1 (nothing) for 2 units
+B $C785,1,1 EMPTY for 2 units
 B $C786,1,1 <Esc> Loop
 B $C787,1,1
 W $C788,2,2 [$C714] Target
-B $C78A,180,8*22,4
+b $C78A [Stage 1] Perp's mugshot
+B $C78A,160,4 Bitmap data for the perp's mugshot (32x40). Stored top-down.
+B $C82A,20,4 Attribute data for the perp's mugshot (4x5). Stored top-down.
+N $C83E LOD table for "Car B (a Lambo in S1)"
 N $C83E LOD
 B $C83E,1,1 Width (bytes)
 B $C83F,1,1 Flags
@@ -1374,6 +1176,7 @@ B $C862,1,1 Flags
 B $C863,1,1 Height (pixels)
 W $C864,2,2 [$CD1A] Bitmap address
 W $C866,2,2 [$CD4A] Pre-shifted bitmap address
+N $C868 LOD table for "Car C (a truck in S1)"
 N $C868 LOD
 B $C868,1,1 Width (bytes)
 B $C869,1,1 Flags
@@ -1410,6 +1213,7 @@ B $C88C,1,1 Flags
 B $C88D,1,1 Height (pixels)
 W $C88E,2,2 [$CD7A] Bitmap address
 W $C890,2,2 [$CDAA] Pre-shifted bitmap address
+N $C892 LOD table for "Car A (the perp's car)"
 N $C892 LOD
 B $C892,1,1 Width (bytes)
 B $C893,1,1 Flags
@@ -1455,12 +1259,13 @@ B $CB86,60,3 Bitmap data 3 bytes x 20
 B $CBC2,186,6 Bitmap data 6 bytes x 31
 B $CC7C,110,5 Bitmap data 5 bytes x 22
 B $CCEA,48,3 Bitmap data 3 bytes x 16
-B $CD1A,48,3 Bitmap data (masked) 3 bytes x 8
-B $CD4A,48,3 Pre-shifted bitmap data (masked) 3 bytes x 8
-B $CD7A,48,2 Bitmap data (masked) 2 bytes x 12
-B $CDAA,48,2 Pre-shifted bitmap data (masked) 2 bytes x 12
-B $CDDA,54,3 Bitmap data (masked) 3 bytes x 9
-B $CE10,54,3 Pre-shifted bitmap data (masked) 3 bytes x 9
+B $CD1A,48,6 Bitmap data (masked) 6 bytes x 8
+B $CD4A,48,6 Pre-shifted bitmap data (masked) 6 bytes x 8
+B $CD7A,48,4 Bitmap data (masked) 4 bytes x 12
+B $CDAA,48,4 Pre-shifted bitmap data (masked) 4 bytes x 12
+B $CDDA,54,6 Bitmap data (masked) 6 bytes x 9
+B $CE10,54,6 Pre-shifted bitmap data (masked) 6 bytes x 9
+N $CE46 LOD table for "Hazard (stone/dust)"
 N $CE46 LOD
 B $CE46,1,1 Width (bytes)
 B $CE47,1,1 Flags
@@ -1497,6 +1302,7 @@ B $CE6A,1,1 Flags
 B $CE6B,1,1 Height (pixels)
 W $CE6C,2,2 [$CEEE] Bitmap address
 W $CE6E,2,2 [$CEF0] Pre-shifted bitmap address
+N $CE70 LOD table for "Hazard (stone/dust)"
 N $CE70 LOD
 B $CE70,1,1 Width (bytes)
 B $CE71,1,1 Flags
@@ -1533,18 +1339,110 @@ B $CE94,1,1 Flags
 B $CE95,1,1 Height (pixels)
 W $CE96,2,2 [$CEF2] Bitmap address
 W $CE98,2,2 [$CEF4] Pre-shifted bitmap address
-B $CE9A,20,2 Bitmap data (masked) 2 bytes x 5
-B $CEAE,16,2 Bitmap data (masked) 2 bytes x 4
-B $CEBE,16,2 Pre-shifted bitmap data (masked) 2 bytes x 4
-B $CECE,12,2 Bitmap data (masked) 2 bytes x 3
-B $CEDA,12,2 Pre-shifted bitmap data (masked) 2 bytes x 3
-B $CEE6,4,1 Bitmap data (masked) 1 bytes x 2
-B $CEEA,4,1 Pre-shifted bitmap data (masked) 1 bytes x 2
-B $CEEE,2,1 Bitmap data (masked) 1 bytes x 1
-B $CEF0,2,1 Pre-shifted bitmap data (masked) 1 bytes x 1
-B $CEF2,2,1 Bitmap data (masked) 1 bytes x 1
-B $CEF4,2,1 Pre-shifted bitmap data (masked) 1 bytes x 1
-B $CEF6,652,8*81,4
+B $CE9A,20,4 Bitmap data (masked) 4 bytes x 5
+B $CEAE,16,4 Bitmap data (masked) 4 bytes x 4
+B $CEBE,16,4 Pre-shifted bitmap data (masked) 4 bytes x 4
+B $CECE,12,4 Bitmap data (masked) 4 bytes x 3
+B $CEDA,12,4 Pre-shifted bitmap data (masked) 4 bytes x 3
+B $CEE6,4,2 Bitmap data (masked) 2 bytes x 2
+B $CEEA,4,2 Pre-shifted bitmap data (masked) 2 bytes x 2
+B $CEEE,2,2 Bitmap data (masked) 2 bytes x 1
+B $CEF0,2,2 Pre-shifted bitmap data (masked) 2 bytes x 1
+B $CEF2,2,2 Bitmap data (masked) 2 bytes x 1
+B $CEF4,2,2 Pre-shifted bitmap data (masked) 2 bytes x 1
+N $CEF6 draw_object_left/right graphic data
+W $CEF6,2,2 [$CF22] LOD ptr
+W $CEF8,2,2 TBD
+W $CEFA,2,2 TBD
+W $CEFC,2,2 TBD
+W $CEFE,2,2 TBD
+W $CF00,2,2 TBD
+W $CF02,2,2 TBD
+W $CF04,2,2 TBD
+W $CF06,2,2 TBD
+W $CF08,2,2 TBD
+W $CF0A,2,2 TBD
+N $CF0C draw_object_left/right graphic data
+W $CF0C,2,2 [$CF22] LOD ptr
+W $CF0E,2,2 TBD
+W $CF10,2,2 TBD
+W $CF12,2,2 TBD
+W $CF14,2,2 TBD
+W $CF16,2,2 TBD
+W $CF18,2,2 TBD
+W $CF1A,2,2 TBD
+W $CF1C,2,2 TBD
+W $CF1E,2,2 TBD
+W $CF20,2,2 TBD
+N $CF22 LOD table for "non-stretchy"
+N $CF22 LOD
+B $CF22,1,1 Width (bytes)
+B $CF23,1,1 Flags
+B $CF24,1,1 Height (pixels)
+W $CF25,2,2 [$CF68] Bitmap address
+W $CF27,2,2 [$CF68] Pre-shifted bitmap address
+N $CF29 LOD
+B $CF29,1,1 Width (bytes)
+B $CF2A,1,1 Flags
+B $CF2B,1,1 Height (pixels)
+W $CF2C,2,2 [$D008] Bitmap address
+W $CF2E,2,2 [$D008] Pre-shifted bitmap address
+N $CF30 LOD
+B $CF30,1,1 Width (bytes)
+B $CF31,1,1 Flags
+B $CF32,1,1 Height (pixels)
+W $CF33,2,2 [$D062] Bitmap address
+W $CF35,2,2 [$D062] Pre-shifted bitmap address
+N $CF37 LOD
+B $CF37,1,1 Width (bytes)
+B $CF38,1,1 Flags
+B $CF39,1,1 Height (pixels)
+W $CF3A,2,2 [$D08A] Bitmap address
+W $CF3C,2,2 [$D08A] Pre-shifted bitmap address
+N $CF3E LOD
+B $CF3E,1,1 Width (bytes)
+B $CF3F,1,1 Flags
+B $CF40,1,1 Height (pixels)
+W $CF41,2,2 [$D0CA] Bitmap address
+W $CF43,2,2 [$D0FE] Pre-shifted bitmap address
+N $CF45 LOD
+B $CF45,1,1 Width (bytes)
+B $CF46,1,1 Flags
+B $CF47,1,1 Height (pixels)
+W $CF48,2,2 [$CF68] Bitmap address
+W $CF4A,2,2 [$CF68] Pre-shifted bitmap address
+N $CF4C LOD
+B $CF4C,1,1 Width (bytes)
+B $CF4D,1,1 Flags
+B $CF4E,1,1 Height (pixels)
+W $CF4F,2,2 [$D008] Bitmap address
+W $CF51,2,2 [$D008] Pre-shifted bitmap address
+N $CF53 LOD
+B $CF53,1,1 Width (bytes)
+B $CF54,1,1 Flags
+B $CF55,1,1 Height (pixels)
+W $CF56,2,2 [$D062] Bitmap address
+W $CF58,2,2 [$D062] Pre-shifted bitmap address
+N $CF5A LOD
+B $CF5A,1,1 Width (bytes)
+B $CF5B,1,1 Flags
+B $CF5C,1,1 Height (pixels)
+W $CF5D,2,2 [$D08A] Bitmap address
+W $CF5F,2,2 [$D08A] Pre-shifted bitmap address
+N $CF61 LOD
+B $CF61,1,1 Width (bytes)
+B $CF62,1,1 Flags
+B $CF63,1,1 Height (pixels)
+W $CF64,2,2 [$D0CA] Bitmap address
+W $CF66,2,2 [$D0FE] Pre-shifted bitmap address
+B $CF68,160,4 Bitmap data 4 bytes x 40
+B $D008,90,3 Bitmap data 3 bytes x 30
+B $D062,40,2 Bitmap data 2 bytes x 20
+B $D08A,64,4 Bitmap data (masked) 4 bytes x 16
+B $D0CA,52,4 Bitmap data (masked) 4 bytes x 13
+B $D0FE,52,4 Pre-shifted bitmap data (masked) 4 bytes x 13
+B $D132,80,8
+N $D182 LOD table for "hittable hazard"
 N $D182 LOD
 B $D182,1,1 Width (bytes)
 B $D183,1,1 Flags
@@ -1585,6 +1483,7 @@ B $D1AC,32,2 Bitmap data 2 bytes x 16
 B $D1CC,22,2 Bitmap data 2 bytes x 11
 B $D1E2,9,1 Bitmap data 1 bytes x 9
 B $D1EB,7,1 Bitmap data 1 bytes x 7
+N $D1F2 LOD table for "hittable hazard"
 N $D1F2 LOD
 B $D1F2,1,1 Width (bytes)
 B $D1F3,1,1 Flags
@@ -1624,9 +1523,319 @@ W $D21A,2,2 [$D2B5] Pre-shifted bitmap address
 B $D21C,68,4 Bitmap data 4 bytes x 17
 B $D260,39,3 Bitmap data 3 bytes x 13
 B $D287,18,2 Bitmap data 2 bytes x 9
-B $D299,28,2 Bitmap data (masked) 2 bytes x 7
-B $D2B5,28,2 Pre-shifted bitmap data (masked) 2 bytes x 7
-B $D2D1,3375,8*421,7
+B $D299,28,4 Bitmap data (masked) 4 bytes x 7
+B $D2B5,28,4 Pre-shifted bitmap data (masked) 4 bytes x 7
+N $D2D1 Stretchy graphic
+B $D2D1,1,1 ?index
+W $D2D2,2,2 [out-of-bounds] Pointer to stretchy_graphic_part
+B $D2D4,1,1 ?index
+W $D2D5,2,2 [out-of-bounds] Pointer to stretchy_graphic_part
+B $D2D7,1,1 ?index
+W $D2D8,2,2 [out-of-bounds] Pointer to stretchy_graphic_part
+B $D2DA,1,1 ?index
+W $D2DB,2,2 [$D2EB] Pointer to stretchy_graphic_part
+B $D2DD,1,1 Terminator
+N $D2DE Stretchy graphic
+B $D2DE,1,1 ?index
+W $D2DF,2,2 [out-of-bounds] Pointer to stretchy_graphic_part
+B $D2E1,1,1 ?index
+W $D2E2,2,2 [out-of-bounds] Pointer to stretchy_graphic_part
+B $D2E4,1,1 ?index
+W $D2E5,2,2 [out-of-bounds] Pointer to stretchy_graphic_part
+B $D2E7,1,1 ?index
+W $D2E8,2,2 [$D301] Pointer to stretchy_graphic_part
+B $D2EA,1,1 Terminator
+N $D2EB Stretchy graphic part
+W $D2EB,2,2 [$D317] LOD ptr
+W $D2ED,2,2 TBD
+W $D2EF,2,2 TBD
+W $D2F1,2,2 TBD
+W $D2F3,2,2 TBD
+W $D2F5,2,2 TBD
+W $D2F7,2,2 TBD
+W $D2F9,2,2 TBD
+W $D2FB,2,2 TBD
+W $D2FD,2,2 TBD
+W $D2FF,2,2 TBD
+N $D301 Stretchy graphic part
+W $D301,2,2 [$D33A] LOD ptr
+W $D303,2,2 TBD
+W $D305,2,2 TBD
+W $D307,2,2 TBD
+W $D309,2,2 TBD
+W $D30B,2,2 TBD
+W $D30D,2,2 TBD
+W $D30F,2,2 TBD
+W $D311,2,2 TBD
+W $D313,2,2 TBD
+W $D315,2,2 TBD
+N $D317 LOD table for "stretchy"
+N $D317 LOD
+B $D317,1,1 Width (bytes)
+B $D318,1,1 Flags
+B $D319,1,1 Height (pixels)
+W $D31A,2,2 [$D35D] Bitmap address
+W $D31C,2,2 [$D35D] Pre-shifted bitmap address
+N $D31E LOD
+B $D31E,1,1 Width (bytes)
+B $D31F,1,1 Flags
+B $D320,1,1 Height (pixels)
+W $D321,2,2 [$D37D] Bitmap address
+W $D323,2,2 [$D37D] Pre-shifted bitmap address
+N $D325 LOD
+B $D325,1,1 Width (bytes)
+B $D326,1,1 Flags
+B $D327,1,1 Height (pixels)
+W $D328,2,2 [$D38C] Bitmap address
+W $D32A,2,2 [$D398] Pre-shifted bitmap address
+N $D32C LOD
+B $D32C,1,1 Width (bytes)
+B $D32D,1,1 Flags
+B $D32E,1,1 Height (pixels)
+W $D32F,2,2 [$D3A4] Bitmap address
+W $D331,2,2 [$D3B4] Pre-shifted bitmap address
+N $D333 LOD
+B $D333,1,1 Width (bytes)
+B $D334,1,1 Flags
+B $D335,1,1 Height (pixels)
+W $D336,2,2 [$D3C4] Bitmap address
+W $D338,2,2 [$D3D0] Pre-shifted bitmap address
+N $D33A LOD table for "stretchy"
+N $D33A LOD
+B $D33A,1,1 Width (bytes)
+B $D33B,1,1 Flags
+B $D33C,1,1 Height (pixels)
+W $D33D,2,2 [$D35D] Bitmap address
+W $D33F,2,2 [$D35D] Pre-shifted bitmap address
+N $D341 LOD
+B $D341,1,1 Width (bytes)
+B $D342,1,1 Flags
+B $D343,1,1 Height (pixels)
+W $D344,2,2 [$D37D] Bitmap address
+W $D346,2,2 [$D37D] Pre-shifted bitmap address
+N $D348 LOD
+B $D348,1,1 Width (bytes)
+B $D349,1,1 Flags
+B $D34A,1,1 Height (pixels)
+W $D34B,2,2 [$D38C] Bitmap address
+W $D34D,2,2 [$D398] Pre-shifted bitmap address
+N $D34F LOD
+B $D34F,1,1 Width (bytes)
+B $D350,1,1 Flags
+B $D351,1,1 Height (pixels)
+W $D352,2,2 [$D3A4] Bitmap address
+W $D354,2,2 [$D3B4] Pre-shifted bitmap address
+N $D356 LOD
+B $D356,1,1 Width (bytes)
+B $D357,1,1 Flags
+B $D358,1,1 Height (pixels)
+W $D359,2,2 [$D3C4] Bitmap address
+W $D35B,2,2 [$D3D0] Pre-shifted bitmap address
+B $D35D,32,4 Bitmap data 4 bytes x 8
+B $D37D,15,3 Bitmap data 3 bytes x 5
+B $D38C,12,3 Bitmap data 3 bytes x 4
+B $D398,12,3 Pre-shifted bitmap data 3 bytes x 4
+B $D3A4,16,4 Bitmap data (masked) 4 bytes x 4
+B $D3B4,16,4 Pre-shifted bitmap data (masked) 4 bytes x 4
+B $D3C4,12,4 Bitmap data (masked) 4 bytes x 3
+B $D3D0,12,4 Pre-shifted bitmap data (masked) 4 bytes x 3
+N $D3DC Stretchy graphic
+B $D3DC,1,1 ?index
+W $D3DD,2,2 [out-of-bounds] Pointer to stretchy_graphic_part
+B $D3DF,1,1 ?index
+W $D3E0,2,2 [out-of-bounds] Pointer to stretchy_graphic_part
+B $D3E2,1,1 ?index
+W $D3E3,2,2 [$D406] Pointer to stretchy_graphic_part
+B $D3E5,1,1 Terminator
+N $D3E6 Stretchy graphic
+B $D3E6,1,1 ?index
+W $D3E7,2,2 [out-of-bounds] Pointer to stretchy_graphic_part
+B $D3E9,1,1 ?index
+W $D3EA,2,2 [out-of-bounds] Pointer to stretchy_graphic_part
+B $D3EC,1,1 ?index
+W $D3ED,2,2 [$D3F0] Pointer to stretchy_graphic_part
+B $D3EF,1,1 Terminator
+N $D3F0 Stretchy graphic part
+W $D3F0,2,2 [$D41C] LOD ptr
+W $D3F2,2,2 TBD
+W $D3F4,2,2 TBD
+W $D3F6,2,2 TBD
+W $D3F8,2,2 TBD
+W $D3FA,2,2 TBD
+W $D3FC,2,2 TBD
+W $D3FE,2,2 TBD
+W $D400,2,2 TBD
+W $D402,2,2 TBD
+W $D404,2,2 TBD
+N $D406 Stretchy graphic part
+W $D406,2,2 [$D41C] LOD ptr
+W $D408,2,2 TBD
+W $D40A,2,2 TBD
+W $D40C,2,2 TBD
+W $D40E,2,2 TBD
+W $D410,2,2 TBD
+W $D412,2,2 TBD
+W $D414,2,2 TBD
+W $D416,2,2 TBD
+W $D418,2,2 TBD
+W $D41A,2,2 TBD
+N $D41C LOD table for "stretchy"
+N $D41C LOD
+B $D41C,1,1 Width (bytes)
+B $D41D,1,1 Flags
+B $D41E,1,1 Height (pixels)
+W $D41F,2,2 [$D43F] Bitmap address
+W $D421,2,2 [$D43F] Pre-shifted bitmap address
+N $D423 LOD
+B $D423,1,1 Width (bytes)
+B $D424,1,1 Flags
+B $D425,1,1 Height (pixels)
+W $D426,2,2 [$D466] Bitmap address
+W $D428,2,2 [$D466] Pre-shifted bitmap address
+N $D42A LOD
+B $D42A,1,1 Width (bytes)
+B $D42B,1,1 Flags
+B $D42C,1,1 Height (pixels)
+W $D42D,2,2 [$D484] Bitmap address
+W $D42F,2,2 [$D499] Pre-shifted bitmap address
+N $D431 LOD
+B $D431,1,1 Width (bytes)
+B $D432,1,1 Flags
+B $D433,1,1 Height (pixels)
+W $D434,2,2 [$D4AE] Bitmap address
+W $D436,2,2 [$D4C2] Pre-shifted bitmap address
+N $D438 LOD
+B $D438,1,1 Width (bytes)
+B $D439,1,1 Flags
+B $D43A,1,1 Height (pixels)
+W $D43B,2,2 [$D4D6] Bitmap address
+W $D43D,2,2 [$D4E6] Pre-shifted bitmap address
+B $D43F,39,3 Bitmap data 3 bytes x 13
+B $D466,30,3 Bitmap data 3 bytes x 10
+B $D484,21,3 Bitmap data 3 bytes x 7
+B $D499,21,3 Pre-shifted bitmap data 3 bytes x 7
+B $D4AE,20,4 Bitmap data (masked) 4 bytes x 5
+B $D4C2,20,4 Pre-shifted bitmap data (masked) 4 bytes x 5
+B $D4D6,16,4 Bitmap data (masked) 4 bytes x 4
+B $D4E6,16,4 Pre-shifted bitmap data (masked) 4 bytes x 4
+N $D4F6 Stretchy graphic
+B $D4F6,1,1 ?index
+W $D4F7,2,2 [$D510] Pointer to stretchy_graphic_part
+B $D4F9,1,1 ?index
+W $D4FA,2,2 [$D526] Pointer to stretchy_graphic_part
+B $D4FC,1,1 ?index
+W $D4FD,2,2 [$D53C] Pointer to stretchy_graphic_part
+B $D4FF,1,1 ?index
+W $D500,2,2 [$D552] Pointer to stretchy_graphic_part
+B $D502,1,1 ?index
+W $D503,2,2 [$D568] Pointer to stretchy_graphic_part
+B $D505,1,1 Terminator
+N $D506 Stretchy graphic
+B $D506,1,1 ?index
+W $D507,2,2 [$D53C] Pointer to stretchy_graphic_part
+B $D509,1,1 ?index
+W $D50A,2,2 [$D552] Pointer to stretchy_graphic_part
+B $D50C,1,1 ?index
+W $D50D,2,2 [$D568] Pointer to stretchy_graphic_part
+B $D50F,1,1 Terminator
+N $D510 Stretchy graphic part
+W $D510,2,2 [$D57E] LOD ptr
+W $D512,2,2 TBD
+W $D514,2,2 TBD
+W $D516,2,2 TBD
+W $D518,2,2 TBD
+W $D51A,2,2 TBD
+W $D51C,2,2 TBD
+W $D51E,2,2 TBD
+W $D520,2,2 TBD
+W $D522,2,2 TBD
+W $D524,2,2 TBD
+N $D526 Stretchy graphic part
+W $D526,2,2 [$D57E] LOD ptr
+W $D528,2,2 TBD
+W $D52A,2,2 TBD
+W $D52C,2,2 TBD
+W $D52E,2,2 TBD
+W $D530,2,2 TBD
+W $D532,2,2 TBD
+W $D534,2,2 TBD
+W $D536,2,2 TBD
+W $D538,2,2 TBD
+W $D53A,2,2 TBD
+N $D53C Stretchy graphic part
+W $D53C,2,2 [$D57E] LOD ptr
+W $D53E,2,2 TBD
+W $D540,2,2 TBD
+W $D542,2,2 TBD
+W $D544,2,2 TBD
+W $D546,2,2 TBD
+W $D548,2,2 TBD
+W $D54A,2,2 TBD
+W $D54C,2,2 TBD
+W $D54E,2,2 TBD
+W $D550,2,2 TBD
+N $D552 Stretchy graphic part
+W $D552,2,2 [$D57E] LOD ptr
+W $D554,2,2 TBD
+W $D556,2,2 TBD
+W $D558,2,2 TBD
+W $D55A,2,2 TBD
+W $D55C,2,2 TBD
+W $D55E,2,2 TBD
+W $D560,2,2 TBD
+W $D562,2,2 TBD
+W $D564,2,2 TBD
+W $D566,2,2 TBD
+N $D568 Stretchy graphic part
+W $D568,2,2 [$D57E] LOD ptr
+W $D56A,2,2 TBD
+W $D56C,2,2 TBD
+W $D56E,2,2 TBD
+W $D570,2,2 TBD
+W $D572,2,2 TBD
+W $D574,2,2 TBD
+W $D576,2,2 TBD
+W $D578,2,2 TBD
+W $D57A,2,2 TBD
+W $D57C,2,2 TBD
+N $D57E LOD table for "stretchy"
+N $D57E LOD
+B $D57E,1,1 Width (bytes)
+B $D57F,1,1 Flags
+B $D580,1,1 Height (pixels)
+W $D581,2,2 [$D62D] Bitmap address
+W $D583,2,2 [$D62D] Pre-shifted bitmap address
+N $D585 LOD
+B $D585,1,1 Width (bytes)
+B $D586,1,1 Flags
+B $D587,1,1 Height (pixels)
+W $D588,2,2 [$D6AD] Bitmap address
+W $D58A,2,2 [$D6AD] Pre-shifted bitmap address
+N $D58C LOD
+B $D58C,1,1 Width (bytes)
+B $D58D,1,1 Flags
+B $D58E,1,1 Height (pixels)
+W $D58F,2,2 [$D6D5] Bitmap address
+W $D591,2,2 [$D6D5] Pre-shifted bitmap address
+N $D593 LOD
+B $D593,1,1 Width (bytes)
+B $D594,1,1 Flags
+B $D595,1,1 Height (pixels)
+W $D596,2,2 [$D6E5] Bitmap address
+W $D598,2,2 [$D6E5] Pre-shifted bitmap address
+N $D59A LOD
+B $D59A,1,1 Width (bytes)
+B $D59B,1,1 Flags
+B $D59C,1,1 Height (pixels)
+W $D59D,2,2 [$D70D] Bitmap address
+W $D59F,2,2 [$D70D] Pre-shifted bitmap address
+B $D5A1,140,8*17,4
+B $D62D,128,8 Bitmap data 8 bytes x 16
+B $D6AD,40,8 Bitmap data 8 bytes x 5
+B $D6D5,16,2 Bitmap data 2 bytes x 8
+B $D6E5,40,8 Bitmap data 8 bytes x 5
+B $D70D,72,6 Bitmap data 6 bytes x 12
+B $D755,10411,8*1301,3
 b $E000 [Stage 2] Horizon graphic
 B $E000,240,8
 b $E0F0 [Stage 2] Per-stage data

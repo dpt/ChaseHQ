@@ -4246,24 +4246,28 @@ N $932B This entry point is used by the routine at #R$9278.
 C $932B,7 Self modify 'LD A,x' at #R$9395 to be (~x)
 N $9333 This entry point is used by the routine at #R$9278.
 @ $9333 label=draw_object_clipped
-C $9333,2 Jump if NOT masked
+C $9333,2 Jump if NOT masked {A=width_bytes} {B=height} {C=padding} {E=bitmap_stride} {HL=bitmap} {IY=height_tab} {F=masked_flag} {SP=stack}
 C $9335,1 Preserve carry (masked flag)
 C $9336,2 Double padding
-C $9338,2 Double bitmap stride
+C $9338,2 Double bitmap_stride
 C $933A,1 Restore carry
-C $933B,1 Bank A (width bytes) and carry (masked flag)
-C $933C,1 Advance HL (bitmap address) to flags field
+C $933B,1 Bank width_bytes and carry (masked flag)
+C $933C,1 Advance bitmap to height field
 @ $933D label=doc_loop
-C $933D,2 Load <self modified> col_pos
-C $933F,6 A = IY[0] - IY[$35]
-C $9347,4 A = IY[$35] + D
+C $933D,2 Load <self modified> {D=col_pos}
+C $933F,6 A = IY[0] - IY[$35] {A=y_range}
+N $9347 Otherwise heights equal.
+@ $9347 label=doc_equal_heights
+C $9347,4 A = IY[$35] + D {A=clip_rows}
 C $934D,1 A++
-C $934E,1 D = *HL
-C $934F,1 A -= D
-C $9352,1 A = 0
+C $934E,1 Load bitmap.height {D=bitmap_height}
+C $934F,1 A -= D (height)
+C $9352,1 A = 0 {A=something}
+@ $9353 label=doc_potato
 C $9353,1 A += D
 C $9354,1 HL++
-C $9355,2 D = 1
+C $9355,2 D = 1 {D=bitmap_height}
+@ $9359 label=doc_y_range_nonzero
 C $9359,4 Jump if D is -ve
 C $935D,1 A -= D
 C $9361,1 A += D
@@ -4271,29 +4275,34 @@ C $9362,1 D = A
 C $9369,3 A = IY[$35]
 C $936D,3 A = *HL - 1 - D
 C $9370,3 Jump if no carry
+C $9373,1 Discard?
 C $9374,3 Read A from 'LD A,x' @ #R$93C0 below
 C $9377,1 Set flags
 C $9378,1 Return if zero
 C $9379,3 Read A from 'LD D,x' @ #R$933D above
-C $937C,1 D = *HL
+C $937C,1 Read bitmap.height
 C $937D,1 A -= D
 C $937E,1 Return if positive
 C $937F,3 *$933E = A
 C $9382,4 A = *$9405 - D
 C $9386,2 Return if carry or zero
 C $9388,3 *$9405 = A
-C $938B,2 Loop?
+C $938B,2 Loop
+@ $938D label=doc_loop_exit
 C $938D,1 A++
 C $938E,1 D++
 C $938F,1 HL++
+@ $9390 label=doc_compute_bitmap
 C $9392,1 D = A
-C $9393,2 B = 0  -- not self modified AFAICT
+C $9393,2 BC = C
 C $9395,2 A = <self modified>
 C $939A,2 HL += 2
-C $939C,5 HL = wordat(HL) + BC
-C $93A1,3 Self modify 'LD HL,xxxx' @ #R$9412 to load HL
+C $939C,4 HL = wordat(HL) + BC (padding)
+C $93A1,3 Self modify 'LD HL,xxxx' @ #R$9412 to load HL (bitmap ptr)
 C $93A4,1 C = E
+C $93A5,1 AF = DE (from $9391 PUSH)
 C $93A6,1 A--
+@ $93A9 label=doc_multiplier
 C $93A9,1 HL += BC
 C $93AA,1 A--
 C $93AE,1 B = D
@@ -4302,7 +4311,7 @@ C $93B4,1 D = A
 C $93B5,5 H = (A & $0F) + $F0
 C $93BA,1 A = D
 C $93BB,5 L = (A & $70) * 2 + B
-C $93C0,2 A = <self modified>
+C $93C0,2 A = <self modified> inverted flag
 C $93C2,1 Set flags
 C $93C6,1 A--
 C $93D3,3 Exit via draw_part_entry3 if carry
