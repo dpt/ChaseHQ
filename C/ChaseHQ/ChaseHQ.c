@@ -1005,7 +1005,7 @@ static void advance_hazards(chqstate_t *state);
 static void advance_hazard(chqstate_t *state,
                                hazard_t   *IXhazard,
                                const u8   *IYbase);
-static void draw_arrow_fire_smoke(chqstate_t *state,
+static void draw_hazard_sprites(chqstate_t *state,
                                   int          Biterations,
                                   const u8   *IYheight);
 static void dh_smoke(chqstate_t *state, u8 *HLsmoke, const u8 *IYheight);
@@ -3756,7 +3756,7 @@ static u16 draw_smash_bar_solid_bit(chqstate_t *state, int B_nrows, int HLbackbu
  *
  * Draws all non-road, non-hero scene elements each frame: road-edge scenery
  * (signs, poles, trees, barriers), the perp-vehicle floating arrow, overhead
- * objects (bridges), and hazard cars via draw_arrow_fire_smoke.  Adjusts
+ * objects (bridges), and hazard cars via draw_hazard_sprites.  Adjusts
  * height_table and clamped_heights by +32 to convert from road-buffer
  * coordinates to screen coordinates, then walks the object table for the
  * current road section drawing each object through its type-specific
@@ -3835,7 +3835,7 @@ static void draw_scene_objects(chqstate_t *state)
            && IXtable_ea00 < &state->xpos_road_centre[128]);
 
     if (state->n_hazards)
-      draw_arrow_fire_smoke(state, Biterations, IYheight_table);
+      draw_hazard_sprites(state, Biterations, IYheight_table);
 
     dust_stones_stuff(state, Biterations, IYheight_table);
 
@@ -9910,7 +9910,7 @@ dh_call_handler:
 }
 
 /**
- * $AECF: draw_arrow_fire_smoke
+ * $AECF: draw_hazard_sprites
  *
  * Per-hazard render callback invoked for each depth-sorted draw-list entry
  * whose distance matches Biterations. Returns immediately if the first
@@ -9928,9 +9928,9 @@ dh_call_handler:
  * \param[in] Biterations  Current draw depth; must match draw-table entry. (was B)
  * \param[in] IYheight     Pointer into the height table. (was IY)
  */
-static void draw_arrow_fire_smoke(chqstate_t *state,
-                                  int         Biterations,
-                                  const u8   *IYheight)
+static void draw_hazard_sprites(chqstate_t *state,
+                                int         Biterations,
+                                const u8   *IYheight)
 {
   // $CDEC
   //
@@ -10186,7 +10186,7 @@ static void dh_draw(chqstate_t     *state,
  *
  * Draws a single sprite bitmap at a position derived from the SM fields
  * dh_SM_B029_horz_clip and dh_SM_B02C_horz_pos, shifted by Bx and Cy. These
- * SM fields are written by draw_arrow_fire_smoke for the current perp hazard.
+ * SM fields are written by draw_hazard_sprites for the current perp hazard.
  *
  * If horz_clip is positive and non-zero the sprite is fully off-screen and
  * the function returns without drawing. Otherwise it adds Cy to horz_pos,
