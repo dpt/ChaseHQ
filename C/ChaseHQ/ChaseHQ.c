@@ -4289,14 +4289,14 @@ dso_continue:
 
   state->doc_rows_main = Bvertical;
   state->doc_rows_2nd = HLbitmap->width_bytes;
-  state->doc_inverted = 2; // inverted
+  state->doc_plot_mode = 2; // inverted
 
   // EX AF,AF' -- restore Adepth
 
   Bpairdepth = Apairdepth; // might be Bwidthbytes?
   SM_9244_callback(state, Bpairdepth, HLbitmap, IXxpos, IYheight); // does this update B?
   Bwidthbytes = Bvertical; // $91D0–$91D3: POP BC restores saved Bvertical; C += B
-  state->doc_inverted = 0; // reset
+  state->doc_plot_mode = 0; // reset
   goto dso_loop_continue;
 }
 
@@ -4892,7 +4892,7 @@ static void draw_object_clipped(chqstate_t     *state,
   int               BC_width_bytes;      /* bitmap stride copy, used as multiplier (was BC) */
   int               Adash_row_skip;      /* rows to skip before drawing (was A') */
   int               Bdash_height;        /* banked draw height for row loop (was B') */
-  int               Adash_inverted;      /* doc_inverted value for dispatch (was A') */
+  int               Adash_inverted;      /* doc_plot_mode value for dispatch (was A') */
   int               IX_jump_offset;      /* jump-table offset into plot routine (was IX) */
   plot_sprite_cb_t *BCdash_callback;     /* banked pointer to plot callback (was BC') */
   int               B_y_row_offset;      /* row offset for loop termination (was B') */
@@ -4957,7 +4957,7 @@ doc_y_range_nonzero:
 
     // POP AF - discard Adash_y_pos_pushed
 
-    if (state->doc_inverted == 0) // set to 0 or 2
+    if (state->doc_plot_mode == 0) // set to 0 or 2
       return;
 
     // inverted
@@ -5028,7 +5028,7 @@ doc_compute_bitmap:
   assert(VALID_BACKBUF_PTR(HLdash_backbuf_addr));
 
   // $93C0
-  Adash_inverted = state->doc_inverted; // set to 0 or 2
+  Adash_inverted = state->doc_plot_mode; // set to 0 or 2
 
   if (Adash_inverted) {
     if (--Adash_inverted)
@@ -9974,7 +9974,7 @@ static void draw_arrow_fire_smoke(chqstate_t *state,
 
     Ewidth_bits = HLbitmap->width_bytes << 3;
     state->doc_col_pos = IXhazard->persp_col - IXhazard->hit_wobble;
-    state->doc_inverted = IXhazard->inverted;
+    state->doc_plot_mode = IXhazard->inverted;
 
     if (IXhazard->hazard_flags + 1 == 0)
       goto dafs_af50;
@@ -10004,7 +10004,7 @@ dafs_draw_right_1:
 dafs_draw_done_1:
     // POP DE (DEbitmapoffset), BC (Biterations)   ??
 
-    state->doc_inverted = 0;
+    state->doc_plot_mode = 0;
 
     if (--state->n_hazards == 0)
       return; // no more hazards

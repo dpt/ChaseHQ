@@ -214,7 +214,12 @@ struct chqstate {
   // $933D (SM) in draw_object_common
   s8        doc_col_pos;
   // $93C0 (SM) in draw_object_common
-  u8        doc_inverted; // controls sprite plotting (2 => inverted, 1 => ?, 0 => ?)
+  // Dispatch selector at $93B4 in draw_object_common: 0 = normal plot;
+  // 1 = vertically-inverted plot (hazard hit-wobble flip, e.g. barriers);
+  // 2 = multi-section column plot (draw_stretchy_object_common's single-
+  // pixel-column case for poles/signs); unrelated to inversion despite
+  // sharing this field.
+  u8        doc_plot_mode;
   // $9404 (SM) in draw_object_common
   u8        doc_rows_main;
   // $940F (SM) in draw_object_common
