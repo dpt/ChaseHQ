@@ -123,7 +123,7 @@ static const depthset_t stage5_depthset_D75B;
 static const depthset_t stage5_depthset_D771;
 static const depthset_t stage5_depthset_D787;
 static const depthset_t stage5_depthset_D79D;
-static const bitmap_t stage5_lods_D7B3[5];
+static const bitmap_t stage5_lods_D7B3[15];
 static const stretchy_t stage5_stretchy_D8D2_right[5];
 static const stretchy_t stage5_stretchy_D8D2_left[5];
 static const depthset_t stage5_depthset_D8EC;
@@ -2548,12 +2548,22 @@ static const depthset_t stage5_depthset_D79D = {
 
 
 // $D7B3
-static const bitmap_t stage5_lods_D7B3[5] = {
-  { 3, BITMAPFLAG_DEFAULT, 4, &stage5_bitmap_D7D6[70], &stage5_bitmap_D7D6[70] },  // [0]
-  { 3, BITMAPFLAG_DEFAULT, 13, &stage5_bitmap_D7D6[82], &stage5_bitmap_D7D6[82] },  // [1]
-  { 1, BITMAPFLAG_DEFAULT, 7, &stage5_bitmap_D7D6[121], &stage5_bitmap_D7D6[121] },  // [2]
-  { 2, BITMAPFLAG_DEFAULT, 3, &stage5_bitmap_D7D6[128], &stage5_bitmap_D7D6[128] },  // [3]
-  { 1, BITMAPFLAG_DEFAULT, 2, &stage5_bitmap_D7D6[134], &stage5_bitmap_D7D6[134] },  // [4]
+static const bitmap_t stage5_lods_D7B3[15] = {
+  { 3, BITMAPFLAG_DEFAULT, 4,  &stage5_bitmap_D7D6[70],  &stage5_bitmap_D7D6[70]  },  // [0]  $D7B3
+  { 3, BITMAPFLAG_DEFAULT, 13, &stage5_bitmap_D7D6[82],  &stage5_bitmap_D7D6[82]  },  // [1]  $D7BA
+  { 1, BITMAPFLAG_DEFAULT, 7,  &stage5_bitmap_D7D6[121], &stage5_bitmap_D7D6[121] },  // [2]  $D7C1
+  { 2, BITMAPFLAG_DEFAULT, 3,  &stage5_bitmap_D7D6[128], &stage5_bitmap_D7D6[128] },  // [3]  $D7C8
+  { 1, BITMAPFLAG_DEFAULT, 2,  &stage5_bitmap_D7D6[134], &stage5_bitmap_D7D6[134] },  // [4]  $D7CF
+  { 1, BITMAPFLAG_DEFAULT, 6,  &stage5_bitmap_D7D6[136], &stage5_bitmap_D7D6[136] },  // [5]  $D7D6
+  { 1, BITMAPFLAG_DEFAULT, 2,  &stage5_bitmap_D7D6[142], &stage5_bitmap_D7D6[142] },  // [6]  $D7DD
+  { 1, BITMAPFLAG_DEFAULT, 2,  &stage5_bitmap_D7D6[144], &stage5_bitmap_D7D6[144] },  // [7]  $D7E4
+  { 1, BITMAPFLAG_DEFAULT, 5,  &stage5_bitmap_D7D6[150], &stage5_bitmap_D7D6[150] },  // [8]  $D7EB
+  { 1, BITMAPFLAG_DEFAULT, 2,  &stage5_bitmap_D7D6[154], &stage5_bitmap_D7D6[154] },  // [9]  $D7F2
+  { 2, BITMAPFLAG_MASKED,  3,  &stage5_bitmap_D7D6[156], &stage5_bitmap_D7D6[156] },  // [10] $D7F9
+  { 2, BITMAPFLAG_MASKED,  9,  &stage5_bitmap_D7D6[168], &stage5_bitmap_D7D6[168] },  // [11] $D800
+  { 2, BITMAPFLAG_MASKED,  2,  &stage5_bitmap_D7D6[204], &stage5_bitmap_D7D6[228] },  // [12] $D807
+  { 1, BITMAPFLAG_MASKED,  2,  &stage5_bitmap_D7D6[212], &stage5_bitmap_D7D6[236] },  // [13] $D80E
+  { 1, BITMAPFLAG_MASKED,  6,  &stage5_bitmap_D7D6[216], &stage5_bitmap_D7D6[240] },  // [14] $D815
 };
 
 // $D7D6

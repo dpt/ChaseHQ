@@ -4185,7 +4185,7 @@ static void draw_stretchy_object_common(chqstate_t       *state,
   SM_91CD_callback = HLcallback;
   SM_9244_callback = HLcallback;
 
-  SM_91DB_vertical = persp_y_scale[FAST_COUNTER_PERSP_ROW(state)][0];
+  SM_91DB_vertical = persp_y_scale[FAST_COUNTER_PERSP_ROW(state)][Bdepth];
   HLstretchy = DEstretchy; // was EX DE,HL
   DEbitmapoffset = MIN(Bdepth,
                        DEPTHSET_MAX) * 2 - 1; // prob 1-indexed so the -1 is +1
@@ -4529,7 +4529,7 @@ static void draw_object_left_helicopter_entrypt(chqstate_t     *state,
   Cpadding = 0;
   Ebitmap_stride = HLbitmap->width_bytes << 3;
   Awidth_bytes -= Ebitmap_stride;
-  if ((s8) Awidth_bytes >= 0) {
+  if (Awidth_bytes >= 0) {
     if (Awidth_bytes >= 8) {
       draw_object_perspective_entrypt(state, Awidth_bytes, Cpadding, HLbitmap, IYheight); /* exit via */
       return;
@@ -4547,7 +4547,7 @@ static void draw_object_left_helicopter_entrypt(chqstate_t     *state,
     Cpadding = 1;
   } else {
     Ebitmap_stride = HLbitmap->width_bytes;
-    Awidth_bytes = (Awidth_bytes & 0xFC) >> 2;
+    Awidth_bytes = ((u8)Awidth_bytes & 0xFC) >> 2;
     state->doc_shift_select = Awidth_bytes;
     carry = 0; RR(Awidth_bytes);
     Bheight = Awidth_bytes;
@@ -4753,8 +4753,6 @@ static void draw_object_perspective_entrypt(chqstate_t     *state,
   int Fdash_zero;        /* Zflipped banked for EX AF,AF' (was Z in F') */
   int Fdash_carry;       /* carry banked for EX AF,AF' (was carry in F') */
 
-  carry = 0;
-
   Awidth_bytes >>= 2; /* was AND-RRCA-RRCA */
   state->doc_shift_select = Awidth_bytes;
   Awidth_bytes >>= 1; /* was RRA */
@@ -4763,8 +4761,13 @@ static void draw_object_perspective_entrypt(chqstate_t     *state,
   Awidth_bytes = 31 - Awidth_bytes;
   if (Ebitmap_stride < Awidth_bytes)
     Awidth_bytes = Ebitmap_stride;
+  // Conv: Bheight=31 gives Awidth_bytes=0 (no columns to draw); Z80 executes a
+  // zero-width sprite which reads past the jump table — skip it.
+  if (Awidth_bytes <= 0)
+    return;
   // Conv: HLbitmap++ removed, now passed as-is into draw_object_common/_9333
   Zflipped = (HLbitmap->flags >> 1) == 0;
+  carry = HLbitmap->flags & BITMAPFLAG_MASKED; /* $9321 SRL D: carry = flags bit 0 */
   if (Zflipped) {
     draw_object_clipped(state,
                         Zflipped,
@@ -4967,7 +4970,7 @@ doc_y_range_nonzero:
 
     // $9382
     Ay_remaining = state->doc_rows_main - D_height;
-    if ((s8) Ay_remaining <= 0) // need this cast?
+    if (Ay_remaining <= 0)
       return;
     state->doc_rows_main = Ay_remaining;
   }
@@ -5002,9 +5005,19 @@ doc_compute_bitmap:
 
   // $93B1 - EXX - BANK - first banking op in this routine
 
+  // Conv: B_height = 0 from perspective calc means Awidth_bytes was in [1,3]; the Z80
+  // would wrap B to 255 and plot 256 garbage rows — treat as nothing to draw.
+  if (B_height <= 0)
+    return;
+
   // POP BC - restoring B_height & Cpadding to Bdash and Cdash
   Bdash_height = B_height;
   // Cdash_padding = Cpadding; // restore if we find this is used
+  // Conv: Z80 reads past bitmap end into adjacent ROM when B_height > B_clip_rows
+  // (perspective index can exceed bitmap height at close range). Clamp draw height
+  // to clipped row count; Bdash_height retains the unclamped value for backbuf addr.
+  if (B_height > (int)B_clip_rows)
+    B_height = (int)B_clip_rows;
   // POP AF - restoring Adash_y_pos_pushed & flags
 
   // $93B4
@@ -5091,15 +5104,16 @@ doc_set_callbacks:
 
   // Conv: $9404–$941D is a loop (back-edge at $9417 JP $9404), structurally
   // identical to the doc_masked_rows loop below.  Each iteration subtracts the
-  // current section height (B = BCpadding, then doc_rows_2nd) from
+  // current section height (B = B_clip_rows, then doc_rows_2nd) from
   // doc_rows_main; exits via $9407 JR Z / $9409 JR C when remaining ≤ 0.
   // $941A ADD A,B recovers the final (partial) section height; $941D JP falls
   // through to doc_plot_fn_2.  B' (= D_draw_height, banked) carries the actual
   // row count into each plot call; main B ($941B LD B,A) is for the back-buffer
   // address only.
+  BC_padding = B_clip_rows; /* $9403 EXX: MAIN B = B_clip_rows for first iteration */
   for (;;) {
-    A_width_bytes = state->doc_rows_main - B_height; // $9404/$9406
-    if ((s8) A_width_bytes > 0) {                   // $9407 JR Z / $9409 JR C
+    A_width_bytes = state->doc_rows_main - BC_padding; // $9404/$9406
+    if (A_width_bytes > 0) {                           // $9407 JR Z / $9409 JR C
       state->doc_rows_main = A_width_bytes;         // $940B: update SM
       state->doc_plot_fn(state,
                          IX_jump_offset,
@@ -5142,10 +5156,10 @@ doc_masked_rows:
   // EXX - UNBANK
 
   DE_bitmap_stride &= 0xFF; // clear top of DEbitmap_stride
-  B_height = BC_padding;
+  /* $945C EXX: MAIN B = B_height (function parameter, restored from shadow) */
   for (;;) {
     Ay_remaining = state->doc_mask_rows_main - B_height;
-    if ((s8) Ay_remaining > 0) {
+    if (Ay_remaining > 0) {
       state->doc_mask_rows_main = Ay_remaining;
 
       plot_masked_sprite(state,
