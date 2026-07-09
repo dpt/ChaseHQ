@@ -18,6 +18,7 @@ perhaps build unit tests now to flush out problems ahead of time.
 
 # TODO
 
+- Helicopter data
 - 'TEST' marker not drawn when in test mode (might need more menu work)
 - Ensure partial screen updates are correct
 - Ensure if-else structuring is added where sensible (top-down)

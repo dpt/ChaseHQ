@@ -429,6 +429,8 @@ int main(void)
     chq_sdl_main_loop(&state);
 
   chq_stop(state.game);
+
+#ifdef CHQ_GRACEFUL_SHUTDOWN
   SDL_WaitThread(state.game_thread, NULL);
 
   chq_destroy(state.game);
@@ -439,6 +441,13 @@ int main(void)
   SDL_DestroyWindow(window);
 
   SDL_Quit();
+#else
+  // Give the game thread 500ms to exit cleanly, then bail out. A hung game
+  // thread (translation bug in an inner loop that never calls sleep) would
+  // block SDL_WaitThread indefinitely.
+  SDL_DetachThread(state.game_thread);
+  usleep(500000);
+#endif
 
   printf("(quit)\n");
 
