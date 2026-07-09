@@ -4206,6 +4206,7 @@ static void draw_stretchy_object_common(chqstate_t       *state,
     // PUSH HLstretchy/IXxpos/(Bstretchy_n,C_total)
     HLdepthset = DEdepthset; // was EX DE,HL
     DEbitmap = HLdepthset->bitmaps;
+    assert(DEbitmap);
     HLpair = &HLdepthset->pairs[(SM_91BA_bitmap_offset - 1) /
                                 2]; // use of BC removed here
     Apairdepth = HLpair->depth;

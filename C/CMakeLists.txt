@@ -89,7 +89,7 @@ add_custom_target(convert_stages
   COMMAND sh -c "python3 ${CONVERT_SCRIPT} ${SKOOL_DIR}/Stage5.skool 5\
  --obj-names NONE,TUNNEL_LIGHT,OVERHEAD_BRIDGE,OBJ3,CACTUS,DOUBLE_STREET_LAMP,HUGE_ROCK,TELEGRAPH_POLE\
  > ${DATA_DIR}/ChaseHQ-Stage5Data.c"
-  COMMENT "Regenerating stage 2-5 data from skool files"
+  COMMENT "Regenerating stage 2-5 data from stage skool files"
   VERBATIM)
 
 # ---- Formatting -------------------------------------------------------------

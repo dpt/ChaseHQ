@@ -8,33 +8,40 @@
 python3 convert_stage.py <skool_file> <stage_num> [options] > ChaseHQ-StageNData.c
 ```
 
-`skool_file` is typically one of the bank files (`ChaseHQ-128K-bank-3.skool`, etc.). `stage_num` is 2–5.
+`skool_file` is one of the per-stage skool files. These are separately maintained extracts of the full 128K bank files and contain more annotations than the bank files (extra section headers, perp mugshot data, object definitions, etc.).
+
+| Stage | Skool file      |
+| ----- | --------------- |
+| 2     | `Stage2.skool`  |
+| 3     | `Stage3.skool`  |
+| 4     | `Stage4.skool`  |
+| 5     | `Stage5.skool`  |
+
+The CMake `convert_stages` target (`cmake --build <dir> --target convert_stages`) runs all four invocations automatically.
 
 ### Options
 
 | Flag | Default | Effect |
 | --- | --- | --- |
-| `--obj-names A,B,C,D,E` | `OBJ4,OBJ5,OBJ6,OBJ7,OBJ8` | Names for object types 4–8 (beyond NONE/LIGHT/UNUSED/SHORT_POLE) |
-| `--turn-signs` | off | Stage has turn signs (objects 8 and 9) |
-| `--no-turn-signs` | on | Stage has no turn signs |
+| `--obj-names A,B,...` | `NONE,TUNNEL_LIGHT,OBJ2,SHORT_POLE,OBJ4,...` | Names for all object type indices 0–15 |
 
-Per-stage invocations used for stages 2–5:
+Per-stage invocations (also encoded in `CMakeLists.txt`):
 
 ```bash
-python3 convert_stage.py ChaseHQ-128K-bank-3.skool 2 \
-    --obj-names TREE,LIGHT_RIGHT,LIGHT_LEFT,BUSH,BILLBOARD \
+python3 convert_stage.py Stage2.skool 2 \
+    --obj-names NONE,TUNNEL_LIGHT,OBJ2,SHORT_POLE,HUGE_ROCK,PALM_TREE,LEAVES,DOUBLE_LAMP,OBJ8 \
     > C/ChaseHQ/Data/ChaseHQ-Stage2Data.c
 
-python3 convert_stage.py ChaseHQ-128K-bank-4.skool 3 \
-    --obj-names TREE,LIGHT,CONE,BARRIER,SIGN --turn-signs \
+python3 convert_stage.py Stage3.skool 3 \
+    --obj-names NONE,TUNNEL_LIGHT,OVERHEAD_BRIDGE,SHORT_POLE,TOWER_BLOCK,SPEED_LIMIT_SIGN,TELEGRAPH_POLE,OBJ7 \
     > C/ChaseHQ/Data/ChaseHQ-Stage3Data.c
 
-python3 convert_stage.py ChaseHQ-128K-bank-6.skool 4 \
-    --obj-names PALM,LIGHT_RIGHT,LIGHT_LEFT,CONE,BARRIER \
+python3 convert_stage.py Stage4.skool 4 \
+    --obj-names NONE,TUNNEL_LIGHT,OBJ2,SHORT_POLE,NEAR_COLUMN,FAR_COLUMN,PILE_OF_ROCKS,STREET_LAMP,TURN_SIGN_POINTING_LEFT,TURN_SIGN_POINTING_RIGHT \
     > C/ChaseHQ/Data/ChaseHQ-Stage4Data.c
 
-python3 convert_stage.py ChaseHQ-128K-bank-7.skool 5 \
-    --obj-names TREE,LIGHT_RIGHT,LIGHT_LEFT,CONE,BARRIER \
+python3 convert_stage.py Stage5.skool 5 \
+    --obj-names NONE,TUNNEL_LIGHT,OVERHEAD_BRIDGE,OBJ3,CACTUS,DOUBLE_STREET_LAMP,HUGE_ROCK,TELEGRAPH_POLE \
     > C/ChaseHQ/Data/ChaseHQ-Stage5Data.c
 ```
 
@@ -79,7 +86,9 @@ Any bytes that follow the last valid LOD entry are emitted as a separate `stageN
 
 ## Bank offset
 
-The script auto-detects the bank offset (the difference between Z80 absolute addresses stored as `DEFW` and their raw values) from the first annotated pointer in the file. Stages 2–5 live in RAM banks 3/4/6/7 so the offset is `$6400` for all of them.
+The script auto-detects a global bank offset (the difference between Z80 absolute addresses stored as `DEFW` and their raw values) from the first annotated pointer in the file. For all stage skool files the global offset is `$6400`.
+
+Some LOD table sections use a different local pointer base (stage 2's stretchy graphic data uses `$8400` rather than `$6400`). When annotated `DEFW` records within a section imply a different offset, the script derives a per-section `local_offset` and uses it as the fallback for un-annotated entries within that section.
 
 ## Stage 1
 

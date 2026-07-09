@@ -950,7 +950,7 @@ def emit_map_section(
         raw_tgt, abs_tgt = defw_seq[0]
         if abs_tgt < 0:
             abs_tgt = raw_tgt + bank_offset
-        tgt_name = abs_to_name.get(abs_tgt, f"/* ${abs_tgt:04X} */")
+        tgt_name = abs_to_name.get(abs_tgt)  # None if unresolved
         goto_map[raw_tgt] = tgt_name
         content_lines.append(f"MAP_CMD_GOTO(0x{raw_tgt:04X})")
     elif terminal_cmd == 2 and len(defw_seq) >= 2:
@@ -961,8 +961,8 @@ def emit_map_section(
             abs_l = raw_l + bank_offset
         if abs_r < 0:
             abs_r = raw_r + bank_offset
-        name_l = abs_to_name.get(abs_l, f"/* ${abs_l:04X} */")
-        name_r = abs_to_name.get(abs_r, f"/* ${abs_r:04X} */")
+        name_l = abs_to_name.get(abs_l)  # None if unresolved
+        name_r = abs_to_name.get(abs_r)  # None if unresolved
         goto_map[raw_l] = name_l
         goto_map[raw_r] = name_r
         content_lines.append(f"MAP_CMD_SPLIT(0x{raw_l:04X}, 0x{raw_r:04X})")
@@ -1081,6 +1081,9 @@ def emit_hittable_array(
             if ann < 0 and raw_w:
                 ann = raw_w
             ref = resolve_section_ptr(ann, abs_to_name) if ann >= 0 else None
+            # Only use ref when it points to a LOD table (const bitmap_t array).
+            if ref and "_lods_" not in ref:
+                ref = None
             bitmaps_str = ref if ref else f"NULL /* TODO: bitmaps ${ann:04X} */"
             entries.append(f"  {{ {width}, {bitmaps_str} }}")
         i += 2
@@ -1221,6 +1224,23 @@ def emit_lod_table(
 
     n_lods = _count_all_lods(data, n_annotated)
 
+    # words_with_annots contains only the DEFW records (not DEFB).
+    # Each LOD entry has exactly 2 DEFWs (bitmap addr + pre-shifted addr),
+    # so LOD entry i uses wwa[i*2] and wwa[i*2+1].
+    wwa = sec.words_with_annots
+
+    # Derive a local bank_offset from annotated DEFWs in this section.
+    # When a section's internal pointers use a different base than the global
+    # bank_offset (e.g. stage 2 data in bank 1 uses +$8400 not +$6400),
+    # annotated DEFWs reveal the correct per-section offset.
+    local_offset = bank_offset
+    for raw_w, ann_w, _ in wwa:
+        if ann_w >= 0 and raw_w > 0:
+            candidate = ann_w - raw_w
+            if candidate != bank_offset and 0 < candidate < 0x10000:
+                local_offset = candidate
+                break
+
     lod_end = n_lods * 7
     name = array_name(stage, "lod_table", sec.start_addr)
     lines = [f"// ${sec.start_addr:04X}"]
@@ -1234,8 +1254,10 @@ def emit_lod_table(
         height = data[off + 2]
         data_raw = (data[off + 4] << 8) | data[off + 3]
         shft_raw = (data[off + 6] << 8) | data[off + 5]
-        data_abs = data_raw + bank_offset
-        shft_abs = shft_raw + bank_offset
+        d_ann = wwa[i * 2][1] if i * 2 < len(wwa) else -1
+        s_ann = wwa[i * 2 + 1][1] if i * 2 + 1 < len(wwa) else -1
+        data_abs = d_ann if d_ann >= 0 else (data_raw + local_offset)
+        shft_abs = s_ann if s_ann >= 0 else (shft_raw + local_offset)
         flag_str = BITMAP_FLAGS.get(flags, f"0x{flags:02X}")
         d_ref = resolve_bitmap_ref(data_abs, bitmap_names, stage)
         s_ref = resolve_bitmap_ref(shft_abs, bitmap_names, stage)
@@ -1507,20 +1529,36 @@ def emit_stretchy_typed(
             fwd_decls.append(f"static const stretchy_t {nm}[{n}];")
     else:
         # Depthset block: groups of 22 bytes (2-byte bitmap ptr + 10 × 2-byte pairs).
+        # Each depthset is 11 words; word 0 is the bitmaps ptr.
         data = sec.bytes_flat
+        wwa = sec.words_with_annots  # (raw, ann, addr) per word
         n = len(data) // 22
         remainder = len(data) % 22
         for i in range(n):
             dep_addr = sec.start_addr + i * 22
             off = i * 22
             raw_ptr = data[off] | (data[off + 1] << 8)
-            abs_ptr = raw_ptr + bank_offset
+            bm_wwa = wwa[i * 11] if i * 11 < len(wwa) else None
+            ann = bm_wwa[1] if bm_wwa else -1
+            abs_ptr = ann if ann >= 0 else (raw_ptr + bank_offset)
             bitmaps_nm = abs_to_name.get(abs_ptr)
-            bitmaps_ref = (
-                f"&{bitmaps_nm}[0]"
-                if bitmaps_nm
-                else f"NULL /* TODO: bitmaps ${abs_ptr:04X} */"
-            )
+            if bitmaps_nm:
+                bitmaps_ref = f"&{bitmaps_nm}[0]"
+            else:
+                # abs_ptr may be an offset into an existing LOD table.
+                # Find the nearest preceding lod_table entry and compute the
+                # index as (abs_ptr - base) / 7 (7 bytes per Z80 LOD entry).
+                lod_prefix = f"stage{stage}_lods_"
+                lod_candidates = [
+                    (base, nm) for base, nm in abs_to_name.items()
+                    if nm.startswith(lod_prefix) and base <= abs_ptr
+                ]
+                if lod_candidates:
+                    lod_base, lod_nm = max(lod_candidates, key=lambda x: x[0])
+                    lod_idx = (abs_ptr - lod_base) // 7
+                    bitmaps_ref = f"&{lod_nm}[{lod_idx}]"
+                else:
+                    bitmaps_ref = f"NULL /* TODO: bitmaps ${abs_ptr:04X} */"
             nm = f"stage{stage}_depthset_{dep_addr:04X}"
             lines.append(f"static const depthset_t {nm} = {{")
             lines.append(f"  {bitmaps_ref},")
@@ -1561,6 +1599,7 @@ def emit_stage_struct(
     difficulty_sec = find_first("difficulty")
     setupdata_sec = find_first("setupdata")
     attractdata_sec = find_first("attractdata")
+    perp_sec = find_first("perp_mugshot")
     pilot_sec = find_first("pilot_mugshot")
     lodaddrs_sec = find_first("lodaddrs")
 
@@ -1586,7 +1625,10 @@ def emit_stage_struct(
     # perstage: perp face attributes, pilot mugshot, ground colour
     perstage_addr = perstage_sec.start_addr if perstage_sec else 0
     lines.append(f"  /* ${perstage_addr:04X} perstage */")
-    lines.append(f"  &stage{stage}_perp_face[FACEBITMAPBYTES],")
+    if perp_sec:
+        lines.append(f"  &stage{stage}_perp_face[FACEBITMAPBYTES],")
+    else:
+        lines.append(f"  NULL,  /* no perp face on this stage */")
     if pilot_sec:
         lines.append(f"  &stage{stage}_pilot_mugshot[0],")
     else:
@@ -1603,8 +1645,16 @@ def emit_stage_struct(
     # use resolve_obj_ptr for those and resolve_section_ptr for the rest.
     _OBJ_FIELDS = {1, 2, 3, 4, 5, 6}
     pws = perstage_sec.words_with_annots if perstage_sec else []
+    _HELI_FIELDS = {"addrof_helicopter_stuff_1", "addrof_helicopter_stuff_2"}
     for i, field in enumerate(PERSTAGE_PTR_FIELDS):
         abs_a = pws[i + 3][1] if i + 3 < len(pws) else -1
+        if field in _HELI_FIELDS:
+            # Helicopter data is raw bytes, not yet decoded to heli_bitmap_t.
+            # Always emit NULL to avoid pointer type mismatch; draw_helicopter
+            # has a null guard for this.
+            hint = f" (${abs_a:04X})" if abs_a >= 0 else ""
+            lines.append(f"  NULL,  /* TODO: {field}{hint} - raw data, not decoded yet */")
+            continue
         if abs_a >= 0:
             ref = (
                 resolve_obj_ptr(abs_a, abs_to_name)
@@ -1620,7 +1670,12 @@ def emit_stage_struct(
     lines.append("")
     lws = lodaddrs_sec.words_with_annots if lodaddrs_sec else []
 
-    def lod_ref(idx: int) -> str:
+    def lod_ref(idx: int, as_array_ptr: bool = False) -> str:
+        """Return a C expression for lodaddrs word idx.
+
+        as_array_ptr=True: field type is const bitmap_t (*)[SPRITE_FRAMES] —
+        emit &array (address of the whole array) rather than &array[N].
+        """
         if idx >= len(lws):
             return "NULL"
         raw_w, abs_a, _ = lws[idx]
@@ -1629,10 +1684,20 @@ def emit_stage_struct(
         if abs_a < 0:
             abs_a = raw_w + bank_offset
         ref = resolve_section_ptr(abs_a, abs_to_name)
-        return ref if ref else f"NULL  /* TODO: ${abs_a:04X} */"
+        # Only use ref if it points into a LOD table (const bitmap_t array).
+        # Pointers into raw byte arrays (map_robjs, bitmap data) are
+        # incompatible with const bitmap_t *.
+        if ref and "_lods_" not in ref:
+            ref = None
+        if not ref:
+            return f"NULL  /* TODO: ${abs_a:04X} */"
+        if as_array_ptr:
+            # Convert "&name[N]" → "(const bitmap_t (*)[SPRITE_FRAMES])&name[N]"
+            ref = f"(const bitmap_t (*)[SPRITE_FRAMES]){ref}"
+        return ref
 
-    lines.append(f"  {lod_ref(0)},  /* bitmaps_stones */")
-    lines.append(f"  {lod_ref(1)},  /* bitmaps_dust */")
+    lines.append(f"  {lod_ref(0, as_array_ptr=True)},  /* bitmaps_stones */")
+    lines.append(f"  {lod_ref(1, as_array_ptr=True)},  /* bitmaps_dust */")
     lines.append(f"  {lod_ref(2)},  /* bitmaps_perp_car */")
     vehicles = ", ".join(lod_ref(3 + j) for j in range(4))
     lines.append(f"  {{ {vehicles} }},  /* bitmaps_vehicles */")
@@ -1692,6 +1757,15 @@ def convert(skool_path: str, stage: int, obj_names: List[str]) -> None:
     bank_offset = compute_bank_offset(records)
     defm_strings, defm_bytes = parse_defm_map(skool_path)
     sections = split_into_sections(records, section_comments)
+
+    # When a bank contains multiple stages (e.g. bank 1 has stages 1+2, bank 6
+    # has stages 3+4), keep only sections whose [Stage N] header matches the
+    # requested stage, plus sections with no stage header at all.
+    _stage_re = re.compile(r"\[Stage (\d+)\]")
+    def _section_stage(sec: Section) -> int:
+        m = _stage_re.match(sec.header_comment)
+        return int(m.group(1)) if m else 0
+    sections = [s for s in sections if _section_stage(s) in (0, stage)]
 
     # First pass: collect all bitmap section names so LOD tables can reference them
     bitmap_names: Dict[int, str] = {}

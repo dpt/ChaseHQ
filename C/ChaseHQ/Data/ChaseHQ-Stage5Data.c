@@ -188,8 +188,8 @@ const stage_t stage5 = {
   &stage5_left_obj_defs_C270[2],  /* addrof_left_hand_short_pole_object */
   &stage5_perp_description[0],  /* addrof_perp_description */
   &stage5_arrest_messages_C1E6[0],  /* addrof_arrest_messages */
-  NULL,  /* TODO: addrof_helicopter_stuff_1 */
-  NULL,  /* TODO: addrof_helicopter_stuff_2 */
+  NULL,  /* TODO: addrof_helicopter_stuff_1 - raw data, not decoded yet */
+  NULL,  /* TODO: addrof_helicopter_stuff_2 - raw data, not decoded yet */
 
   NULL,  /* bitmaps_stones */
   NULL,  /* bitmaps_dust */
@@ -2037,7 +2037,7 @@ static const stretchy_t stage5_stretchy_CEF6[5] = {
 
 // $CF03
 static const depthset_t stage5_depthset_CF03 = {
-  NULL /* TODO: bitmaps $CFE7 */,
+  &stage5_lods_CF5B[20],
   {
     0x08, 0x17,
     0x08, 0x17,
@@ -2053,7 +2053,7 @@ static const depthset_t stage5_depthset_CF03 = {
 };
 
 static const depthset_t stage5_depthset_CF19 = {
-  NULL /* TODO: bitmaps $CFE7 */,
+  &stage5_lods_CF5B[20],
   {
     0x10, 0x10,
     0x10, 0x10,
@@ -2069,7 +2069,7 @@ static const depthset_t stage5_depthset_CF19 = {
 };
 
 static const depthset_t stage5_depthset_CF2F = {
-  NULL /* TODO: bitmaps $CFE7 */,
+  &stage5_lods_CF5B[20],
   {
     0x10, 0x09,
     0x10, 0x09,
@@ -2085,7 +2085,7 @@ static const depthset_t stage5_depthset_CF2F = {
 };
 
 static const depthset_t stage5_depthset_CF45 = {
-  NULL /* TODO: bitmaps $CFE7 */,
+  &stage5_lods_CF5B[20],
   {
     0x20, 0x02,
     0x20, 0x02,
@@ -2108,11 +2108,11 @@ static const bitmap_t stage5_lods_CF5B[40] = {
   { 7, BITMAPFLAG_DEFAULT, 8, &stage5_bitmap_D073[381], &stage5_bitmap_D073[381] },  // [2]
   { 8, BITMAPFLAG_FLIPPED, 8, &stage5_bitmap_D073[152], &stage5_bitmap_D073[152] },  // [3]
   { 3, BITMAPFLAG_FLIPPED, 4, &stage5_bitmap_D073[216], &stage5_bitmap_D073[216] },  // [4]
-  { 4, BITMAPFLAG_FLIPPED, 4, &stage5_bitmap_D073[228], &stage5_bitmap_D073[228] },  // [5]
-  { 5, BITMAPFLAG_DEFAULT, 6, &stage5_bitmap_D073[437], &stage5_bitmap_D073[437] },  // [6]
-  { 6, BITMAPFLAG_FLIPPED, 6, &stage5_bitmap_D073[279], &stage5_bitmap_D073[279] },  // [7]
-  { 2, BITMAPFLAG_FLIPPED, 4, &stage5_bitmap_D073[315], &stage5_bitmap_D073[315] },  // [8]
-  { 3, BITMAPFLAG_FLIPPED, 3, &stage5_bitmap_D073[323], &stage5_bitmap_D073[323] },  // [9]
+  { 4, BITMAPFLAG_FLIPPED, 4, &stage5_bitmap_D073[0], &stage5_bitmap_D073[0] },  // [5]
+  { 5, BITMAPFLAG_DEFAULT, 6, &stage5_bitmap_D073[40], &stage5_bitmap_D073[40] },  // [6]
+  { 6, BITMAPFLAG_FLIPPED, 6, &stage5_bitmap_D073[96], &stage5_bitmap_D073[96] },  // [7]
+  { 2, BITMAPFLAG_FLIPPED, 4, &stage5_bitmap_D073[152], &stage5_bitmap_D073[152] },  // [8]
+  { 3, BITMAPFLAG_FLIPPED, 3, &stage5_bitmap_D073[216], &stage5_bitmap_D073[216] },  // [9]
   { 3, BITMAPFLAG_DEFAULT, 4, &stage5_bitmap_D073[467], &stage5_bitmap_D073[467] },  // [10]
   { 4, BITMAPFLAG_FLIPPED, 4, &stage5_bitmap_D073[344], &stage5_bitmap_D073[344] },  // [11]
   { 1, BITMAPFLAG_FLIPPED, 3, &stage5_bitmap_D073[360], &stage5_bitmap_D073[360] },  // [12]

@@ -2306,7 +2306,7 @@ static const depthset_t stage4_depthset_F70E = {
 };
 
 static const depthset_t stage4_depthset_F724 = {
-  NULL /* TODO: bitmaps $F75D */,
+  &stage4_lods_F73A[5],
   {
     0x18, 0x02,
     0x10, 0x02,
