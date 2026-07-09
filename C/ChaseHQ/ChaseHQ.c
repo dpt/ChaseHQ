@@ -1176,7 +1176,8 @@ static void dr_fill_left_stripe(chqstate_t *state,
 
 static void pre_shift_backdrop(chqstate_t *state);
 
-static void draw_forked_road(chqstate_t *state, const u8 *IXlanes, const u8 *IYheight);
+static void draw_forked_road(chqstate_t *state, const u8 *IXlanes, const u8 *IYheight,
+                             int Bfill_pattern, int Ccounter, int DEbackbuf, int Lrow);
 
 static void dr_start_backdrop_fill(chqstate_t *state, int DEbackbuf, int Lrow);
 static void backdrop_fill_dispatch(chqstate_t *state, int DEbackbuf, int Lrow);
@@ -3840,6 +3841,13 @@ static void draw_scene_objects(chqstate_t *state)
       draw_tunnel(state, IYheight_table);
 
     Aobj = *HLroadbuf; // fetch right side object from road buffer
+    if (Aobj > 9) /* ponytail: diagnostics for out-of-range object id, remove once root cause found */
+      fprintf(stderr,
+              "draw_scene_objects: bad right Aobj=%u Biterations=%d "
+              "fork_taken=%d fork_in_progress=%d rightside_byte=%u "
+              "roadbuf_idx=%d\n",
+              Aobj, Biterations, state->fork_taken, state->fork_in_progress,
+              state->rightside_byte, (int)ROADBUF_PTR2IDX(HLroadbuf));
     assert(Aobj <= 9); // object indices are 0..9
     if (Aobj)
       goto right_hand_stuff;
@@ -3852,6 +3860,13 @@ continue_after_right_hand_done:
            && HLroadbuf < state->roadbuf_end);
 
     Aobj = *HLroadbuf; // fetch left side object from road buffer
+    if (Aobj > 9) /* ponytail: diagnostics for out-of-range object id, remove once root cause found */
+      fprintf(stderr,
+              "draw_scene_objects: bad left Aobj=%u Biterations=%d "
+              "fork_taken=%d fork_in_progress=%d leftside_byte=%u "
+              "roadbuf_idx=%d\n",
+              Aobj, Biterations, state->fork_taken, state->fork_in_progress,
+              state->leftside_byte, (int)ROADBUF_PTR2IDX(HLroadbuf));
     assert(Aobj <= 9); // object indices are 0..9
     if (Aobj)
       goto left_hand_stuff;
@@ -12746,6 +12761,15 @@ static void rm_cycle_buffer_offset(chqstate_t *state, u8 *HLfast_counter)
   u8        *DE_dst;             /* copy-back loop destination pointer (was DE) */
   int        BC_count;           /* copy-back loop byte count (was BC) */
 
+  /* ponytail: road_buffer corruption diagnostics (temporary) */
+  static u8  rb_prewrite[256];
+  int        rb_i;
+
+  /* ponytail: road_buffer corruption diagnostics -- snapshot before this
+   * frame's six channel writes so we can report any OTHER index that
+   * changes. Remove once the draw_scene_objects Aobj>9 corruption is found. */
+  memcpy(rb_prewrite, state->road_buffer, 256);
+
   /* Advance roadbufptr */
   state->roadbufptr = ROADBUF_FWD2PTR(1);
 
@@ -13155,6 +13179,28 @@ rm_restart_hazards_read: // $BFF3
 
   // rm_allow_car_spawning ($C0D7)
   state->allow_spawning++;
+
+  /* ponytail: road_buffer corruption diagnostics -- report any index that
+   * changed outside the six channel writers just performed this call.
+   * Remove once the draw_scene_objects Aobj>9 corruption is found. */
+  for (rb_i = 0; rb_i < 256; rb_i++) {
+    if (state->road_buffer[rb_i] == rb_prewrite[rb_i])
+      continue;
+    if (&state->road_buffer[rb_i] == HL_curve_ptr ||
+        &state->road_buffer[rb_i] == HL_height_ptr ||
+        &state->road_buffer[rb_i] == HL_lanes_ptr ||
+        &state->road_buffer[rb_i] == HL_rightside_ptr ||
+        &state->road_buffer[rb_i] == HL_leftside_ptr ||
+        &state->road_buffer[rb_i] == HL_hazards_ptr)
+      continue;
+    fprintf(stderr,
+            "rm_cycle_buffer_offset: unexpected road_buffer[%d] change "
+            "%u -> %u (roadbufptr_idx=%d, rm_do_dirt_and_stones_thing=%d)\n",
+            rb_i, rb_prewrite[rb_i], state->road_buffer[rb_i],
+            (int)ROADBUF_PTR2IDX(state->roadbufptr),
+            state->rm_do_dirt_and_stones_thing);
+  }
+
   check_hazard_collisions(state); /* exit via */
 }
 
@@ -14032,7 +14078,8 @@ static void dr_read_lanes(chqstate_t *state, u8 *IXlanesptr, const u8 *IYheightp
 
       if (Ldash_lanes & (1 << 6)) {
         /* If bit 5 was set then it's a forked road. */
-        draw_forked_road(state, IXlanesptr, IYheightptr); // was exit via
+        draw_forked_road(state, IXlanesptr, IYheightptr,
+                         Bfill_pattern, Ccounter, DEbackbuf, Lrow); // was exit via
       } else {
         /* If bit 5 was clear then it's a dirt track section. */
         /* Note: This is a mystery. There's a check here which sets conditionally
@@ -15052,16 +15099,29 @@ static void pre_shift_backdrop(chqstate_t *state)
  * modelled as local variables (sm_CA9D etc.) re-initialised from the
  * corresponding state fields on every call.
  *
+ * The banked D, E, B, C, L come from draw_road's own register state at the
+ * point it dispatches into the fork/dirt-track branch ($C4E2 JR C,$C519 —
+ * taken with no intervening register writes), which is the same state
+ * dr_dispatch and draw_road_lanes_change receive as Bfill_pattern, Ccounter,
+ * DEbackbuf and Lrow. Conv: rather than re-deriving these via a full EXX
+ * shadow-register model in draw_road, they are threaded through as
+ * parameters, exactly as they already are for the sibling dispatch calls.
+ *
  * The function has two inner loops depending on whether the outer B counter
  * is zero (frp_c923, zero-fill path) or non-zero (frp_c963, 5-zone path).
  * The $CA00–$CA65 scanline fill (five PUSH sequences) is stubbed out and only
  * the road-marking update ($CA68–$CB2E) is implemented.
  *
- * \param[in]     state     Pointer to game state.
- * \param[in]     IXlanes   Road-buffer lanes pointer (was IX).
- * \param[in,out] IYheight  Height table pointer; advanced once per block (was IY).
+ * \param[in]     state         Pointer to game state.
+ * \param[in]     IXlanes       Road-buffer lanes pointer (was IX).
+ * \param[in,out] IYheight      Height table pointer; advanced once per block (was IY).
+ * \param[in]     Bfill_pattern Banked initial B: fill pattern byte (was B).
+ * \param[in]     Ccounter      Banked initial C: horizon scanline counter (was C).
+ * \param[in]     DEbackbuf     Banked initial DE: back-buffer address (was DE).
+ * \param[in]     Lrow          Banked initial L: row index (was L).
  */
-static void draw_forked_road(chqstate_t *state, const u8 *IXlanes, const u8 *IYheight)
+static void draw_forked_road(chqstate_t *state, const u8 *IXlanes, const u8 *IYheight,
+                             int Bfill_pattern, int Ccounter, int DEbackbuf, int Lrow)
 {
   u8  sm_CB65;    /* road edge thickness countdown (was $CB65) */
   u8  sm_CB36;    /* stripe-pair toggle state (was $CB36) */
@@ -15075,8 +15135,9 @@ static void draw_forked_road(chqstate_t *state, const u8 *IXlanes, const u8 *IYh
   u8  sm_CB40;    /* verge fill pattern (was $CB40) */
   u8  D;          /* screen address high byte (was D) */
   u8  E;          /* screen address low byte (was E) */
-  u8  B;          /* inner counter: 0 on first entry, 16 after frp_c969 init (was B) */
-  u8  C;          /* scan-block counter ($F8 = 248 iterations) (was C) */
+  u8  B;          /* inner counter: banked from Bfill_pattern, 16 after frp_c969 init (was B) */
+  u8  C;          /* per-pass scratch counter: reset every scanline pass, has no effect on loop exit (was C) */
+  u8  Cdash;       /* scan-block exit counter: banked from Ccounter, decremented once per pass (was C') */
   u8  L;          /* road table byte index; decrements as road nears (was L) */
   u8  af_prime;   /* current scanline fill pattern, banked in A' (was A') */
   u8  loop_path;  /* 0 = frp_c923 (zero-fill) path; 1 = frp_c963 (5-zone) */
@@ -15094,11 +15155,15 @@ static void draw_forked_road(chqstate_t *state, const u8 *IXlanes, const u8 *IYh
   u8  z_mv;       /* middle verge width = pos_EA - pos_E9 */
   u8  z_rr;       /* righthand road width = pos_EC - pos_EA */
   u8  z_rv;       /* righthand verge width = 15 - pos_EC */
+  u8  A_rot_pat;  /* verge fill byte: af_prime rotated left one bit (was A, via A') */
+  int fill_end_addr; /* Z80 address one past the fillable region: (D<<8)|(E+31) (was HL/SP) */
+  u8       *SPfill;   /* backward-fill cursor for the five PUSH-chain zones (was SP) */
   int B_row_lo;   /* screen low byte saved at $CA66 LD B,E; base for column calc (was B) */
   int D_row_hi;   /* screen high byte at marking time (was D) */
   int H_xpos_hi;  /* current xpos-table page high byte, $E8→$ED (was H) */
   const u8 *HLtbl;    /* pointer to xpos-position table row in marking section (was HL) */
   u8       *DEmark;   /* backbuffer destination for road-marking write (was DE) */
+  int DEaddr;     /* candidate Z80 address for DEmark, checked before conversion (was DE) */
   int E_col;      /* screen column: (xpos >> 3) & 0x1F + B_row_lo (was E) */
   int L_gfx;      /* graphics offset: (xpos & 7) << shift + table offset (was L) */
   u8  A_xpos;     /* road x-position byte from xpos table (was A) */
@@ -15108,6 +15173,24 @@ static void draw_forked_road(chqstate_t *state, const u8 *IXlanes, const u8 *IYh
   u8  A_newxor;   /* new XOR operand after +$10; carry check determines edge advance (was A) */
   u8  A_old_h;    /* height at previous IYheight entry; base for difference (was A) */
   u8  A_diff;     /* height difference old−new; sign drives re-entry or backdrop (was A) */
+  unsigned long frp_guard; /* runaway-loop instrumentation counter (debug only) */
+
+  /* ponytail: lock-up diagnostics. Traces every backward-jump decision
+   * point; if any single call spins past FRP_GUARD_LIMIT passes through
+   * one label, dump state and abort so the stuck loop is identifiable
+   * from stderr instead of a plain hang. Remove once the lock-up is
+   * found and fixed. */
+#define FRP_GUARD_LIMIT 2000000UL
+#define FRP_TRACE(where) \
+  do { \
+    if (++frp_guard > FRP_GUARD_LIMIT) { \
+      fprintf(stderr, \
+              "draw_forked_road: stuck at %s after %lu iters " \
+              "(D=%02X E=%02X B=%u C=%u Cdash=%u L=%u loop_path=%d A_diff=%d)\n", \
+              (where), frp_guard, D, E, B, C, Cdash, L, loop_path, (int)(s8)A_diff); \
+      abort(); \
+    } \
+  } while (0)
 
   /* $C8E4-$C912: Copy SM operands from draw_road's current SM state.
    * In Z80 these are absolute self-modifying writes to the $CA/$CB region.
@@ -15124,19 +15207,27 @@ static void draw_forked_road(chqstate_t *state, const u8 *IXlanes, const u8 *IYh
   sm_CB40  = state->dr_fill_pattern;
 
   /* EXX: restore banked register context (draw_road shadow registers).
-   * In Z80 the shadow context holds the screen address and counters.
-   * In C we approximate from available state; exact values require the
-   * full EXX infrastructure to be implemented in draw_road. */
-  D = state->dr_backbuf_1 >> 8;    /* screen high byte */
-  E = state->dr_backbuf_1 & 0xFF;  /* screen low byte */
-  B = 0;                               /* 0 on first call (banked B uninit) */
-  C = 0xF8;                            /* scan-block count ($F8 = 248) */
-  /* Banked L: set by draw_road at $C5B0 as 'LD L,C' where C = 96 - IYheight[0] */
-  L = 0x60 - *IYheight;
+   * These are draw_road's own D, E, B, C, L at the point it dispatched into
+   * this branch, threaded through as parameters (see prologue). */
+  D = (u8)(DEbackbuf >> 8);   /* screen high byte */
+  E = (u8)(DEbackbuf & 0xFF); /* screen low byte */
+  B = (u8)Bfill_pattern;      /* fill pattern byte, banked from draw_road */
+  C = (u8)Ccounter;           /* horizon scanline counter, banked from draw_road */
+  L = (u8)Lrow;                /* row index, banked from draw_road */
+  /* Conv: the marking section ($CA68-$CB2E) contains 13 EXX instructions
+   * (odd), so the loop-exit test at $CB31 actually reads shadow C', not the
+   * main C decremented at $CA67/via the six LDIs. Since draw_road's own C
+   * (== Ccounter) was still live in the main register just before its own
+   * EXX into this context, shadow C' == main C == Ccounter at entry, so we
+   * seed Cdash the same way and decrement it once per pass (see
+   * frp_after_marking) independently of C's per-pass resets below. */
+  Cdash = C;
 
   af_prime = sm_CB40; /* EX AF,AF': current scanline fill pattern */
+  frp_guard = 0;
 
 frp_c915: /* $C915 */
+  FRP_TRACE("frp_c915");
   if (B != 0)
     goto frp_c95a;
 
@@ -15146,6 +15237,7 @@ frp_c915: /* $C915 */
   af_prime = sm_CB40;
 
 frp_c923: /* $C923 */
+  FRP_TRACE("frp_c923");
   A_row = D;
   D--;
   A_row &= 0x0F;
@@ -15153,18 +15245,25 @@ frp_c923: /* $C923 */
     goto frp_next_scanline_c929;
 
 frp_c929: /* $C929: zero-fill scanline (inner road, pre-fork area) */
-#if 0
-  /* $C929: LD ($C92F),DE  -- store current screen address
-   * $C92E: LD DE,<SM>     -- reload
-   * HL = DE+$1F, SP = HL, HL = 0, C = E+$1F
-   * JP $CA57: 15 x PUSH HL (fills 30 bytes with 0) */
-#endif
-  C = E + 0x1F;
-  B = E;  /* $CA66: LD B,E */
-  C--;    /* $CA67: DEC C */
-  goto frp_after_marking;
+  /* $C929-$C93A: LD ($C92F),DE; LD DE,<SM>; HL = DE+$1F; SP = HL; HL = 0.
+   * $CA57: 15 x PUSH HL (fills the same 30 bytes as the 5-zone fill below,
+   * but uniformly with 0 -- there is no fork yet, so the whole scanline
+   * width between the two marking columns is plain road). */
+  fill_end_addr = ((int)D << 8) | (u8)(E + 31);
+  if (VALID_BACKBUF_ADDR(fill_end_addr) && VALID_BACKBUF_ADDR(((int)D << 8) | E)) {
+    SPfill = ADDRTOBACKBUF(fill_end_addr);
+    memset(SPfill - 30, 0, 30);
+  }
+  C = 0;  /* $C937-$C93A: HL = 0; C = L = 0 */
+  L = 0;
+  /* $CA57 falls through the 15 PUSHes into the shared $CA66 marking
+   * code below -- must not skip straight to frp_after_marking, or the
+   * marking section (and its real C-- accounting) never runs and the
+   * scan-block counter never reaches zero. */
+  goto frp_ca66;
 
 frp_next_scanline_c929: /* $C94C */
+  FRP_TRACE("frp_next_scanline_c929");
   carry = (E < 0x20);
   E     = E - 0x20;
   if (!carry)
@@ -15177,6 +15276,7 @@ frp_c95a: /* $C95A: B != 0 -- set jump target to frp_c963 (5-zone path) */
   af_prime = sm_CB40;
 
 frp_c963: /* $C963 */
+  FRP_TRACE("frp_c963");
   A_row = D;
   D--;
   A_row &= 0x0F;
@@ -15184,6 +15284,7 @@ frp_c963: /* $C963 */
     goto frp_next_scanline_c969;
 
 frp_c969: /* $C969: 5-zone fork scanline render */
+  FRP_TRACE("frp_c969");
   /* $C970: LD BC,$10F8  (B=16 inner counter, C=$F8 scan-block mask) */
   B = 16;
   C = 0xF8; /* Conv: this is the banked C used to drive the scan-block loop */
@@ -15246,56 +15347,72 @@ frp_c969: /* $C969: 5-zone fork scanline render */
   z_rr = (u8)(pos_EC - pos_EA);         /* righthand road */
   z_rv = (u8)(15    - pos_EC);          /* righthand verge */
 
-#if 0
   /* $CA00-$CA65: Fill scanline right-to-left using SP as pointer.
-   * DE = SM_CA01 (current scanline address); HL = DE+$1F; SP = HL.
+   * DE = current scanline address; HL = DE+$1F (truncating low-byte add,
+   * no carry into H -- always safe since E is 32-byte row aligned); SP = HL.
    * EX AF,AF': rotate stripe fill pattern ($CA09-$CA0D).
-   * BC = 0 (road fill = black); HL = rotated stripe pattern.
+   * BC = 0 (road fill = black); HL = rotated stripe pattern (both bytes).
    * Five jump-table JRs (self-modified) skip into PUSH sequences:
    *   $CA11 JR → 0..15 × PUSH HL  = righthand verge  (z_rv pairs)
    *   $CA22 JR → 0..15 × PUSH BC  = righthand road   (z_rr pairs)
    *   $CA33 JR → 0..15 × PUSH HL  = middle verge     (z_mv pairs)
    *   $CA44 JR → 0..15 × PUSH BC  = lefthand road    (z_lr pairs)
    *   $CA55 JR → 0..15 × PUSH HL  = lefthand verge   (z_lv pairs)
-   * Total = 15 pairs = 30 bytes; scanline is 32 bytes. */
-  {
-    /* JR offsets: $CA12=15-z_rv, $CA23=15-z_rr, $CA34=15-z_mv,
-     *             $CA45=15-z_lr, $CA56=15-z_lv */
-    u8  verge_pat = af_prime ^ (af_prime << 8);   /* HL fill = pattern */
-    u16 road_pat  = 0;                            /* BC fill = 0 */
-    u16 *sp = ... /* screen_ptr(DE) + 15; fill backwards */
-              (void)z_lv; (void)z_lr; (void)z_mv; (void)z_rr; (void)z_rv;
-    (void)verge_pat; (void)road_pat;
+   * Total = 15 pairs = 30 bytes; scanline is 32 bytes -- the leftmost and
+   * rightmost bytes are left untouched here for the marking section below.
+   * Conv: PUSH decrements SP before writing, so N pushes fill 2N bytes
+   * before the pointer, not after it (see translation-pitfalls.md #34). */
+  A_rot_pat = (u8)((af_prime << 1) | (af_prime >> 7)); /* $CA0A RLCA */
+  fill_end_addr = ((int)D << 8) | (u8)(E + 31);        /* $CA03-$CA06 */
+  /* Conv: D can drift below BACKBUFFER_START_ADDRESS over enough scanlines
+   * (see D-- in frp_c923/frp_c963); skip the write rather than let
+   * ADDRTOBACKBUF assert, mirroring the marking-section guard below. */
+  if (VALID_BACKBUF_ADDR(fill_end_addr) && VALID_BACKBUF_ADDR(((int)D << 8) | E)) {
+    SPfill = ADDRTOBACKBUF(fill_end_addr);
+    SPfill -= (size_t)z_rv * 2; memset(SPfill, A_rot_pat, (size_t)z_rv * 2);
+    SPfill -= (size_t)z_rr * 2; memset(SPfill, 0,         (size_t)z_rr * 2);
+    SPfill -= (size_t)z_mv * 2; memset(SPfill, A_rot_pat, (size_t)z_mv * 2);
+    SPfill -= (size_t)z_lr * 2; memset(SPfill, 0,         (size_t)z_lr * 2);
+    SPfill -= (size_t)z_lv * 2; memset(SPfill, A_rot_pat, (size_t)z_lv * 2);
   }
-#endif
-  (void)z_lv; (void)z_lr; (void)z_mv; (void)z_rr; (void)z_rv;
 
-  /* $CA66: B = E (save screen low byte); C-- */
+frp_ca66: /* $CA66: B = E (save screen low byte); C-- -- shared by both
+           * the zero-fill (frp_c929) and 5-zone (frp_c969) fill paths.
+           * Conv: this DEC C hits main C, which the loop-exit test never
+           * reads (see Cdash above) -- omitted since C has no other use
+           * in this port. */
   B = E;
-  C--;
 
   /* $CA68-$CB2E: Road marking update — six fixed boundaries for the fork.
    * Boundaries step through xpos pages $E8→$ED.  Sections 1 and 4 are
    * left-edge format (AND-OR blend + LDI copy); sections 3 and 6 are
    * right-edge format (LDI copy + AND-OR blend); sections 2 and 5 are
    * lane-marking format (two direct copies).  Section 6 has a permanent
-   * DEC L at $CB11 that precedes the xpos check. */
+   * DEC L at $CB11 that takes effect only after its own xpos check. */
   {
     B_row_lo = B;
     D_row_hi = D;
     H_xpos_hi = 0xE8;
 
+    /* Conv: D_row_hi can drift below BACKBUFFER_START_ADDRESS over enough
+     * scanlines (see D-- in frp_c923/frp_c963). On real Z80 hardware that
+     * is a harmless write into ROM/unused address space; the C port must
+     * skip the write rather than let ADDRTOBACKBUF assert, mirroring the
+     * DEbackbuf clamp in dr_write_scanline_unfilled. */
 #define FRP_LEFT_EDGE(off) \
     HLtbl = (const u8 *)hi_to_xpostab(state, H_xpos_hi); \
     if (HLtbl && HLtbl[L] == 0) { \
       A_xpos = HLtbl[(L - 1) & 0xFF]; \
       L_gfx = ((A_xpos & 7) << 2) + (off); \
       E_col = ((A_xpos >> 3) & 0x1F) + B_row_lo; \
-      DEmark = ADDRTOBACKBUF((D_row_hi << 8) | (u8)E_col); \
-      if (VALID_BACKBUF_PTR(DEmark) && VALID_BACKBUF_PTR(DEmark + 1)) { \
-        if (L_gfx + 3 < (int)sizeof(edge_markings)) { \
-          DEmark[0] = (DEmark[0] & edge_markings[L_gfx]) | edge_markings[L_gfx + 1]; \
-          DEmark[1] = edge_markings[L_gfx + 3]; \
+      DEaddr = (D_row_hi << 8) | (u8)E_col; \
+      if (VALID_BACKBUF_ADDR(DEaddr)) { \
+        DEmark = ADDRTOBACKBUF(DEaddr); \
+        if (VALID_BACKBUF_PTR(DEmark) && VALID_BACKBUF_PTR(DEmark + 1)) { \
+          if (L_gfx + 3 < (int)sizeof(edge_markings)) { \
+            DEmark[0] = (DEmark[0] & edge_markings[L_gfx]) | edge_markings[L_gfx + 1]; \
+            DEmark[1] = edge_markings[L_gfx + 3]; \
+          } \
         } \
       } \
     }
@@ -15305,11 +15422,14 @@ frp_c969: /* $C969: 5-zone fork scanline render */
       A_xpos = HLtbl[(L - 1) & 0xFF]; \
       L_gfx = ((A_xpos & 7) << 1) + (off); \
       E_col = ((A_xpos >> 3) & 0x1F) + B_row_lo; \
-      DEmark = ADDRTOBACKBUF((D_row_hi << 8) | (u8)E_col); \
-      if (VALID_BACKBUF_PTR(DEmark) && VALID_BACKBUF_PTR(DEmark + 1)) { \
-        if (L_gfx + 1 < (int)sizeof(edge_markings)) { \
-          DEmark[0] = edge_markings[L_gfx]; \
-          DEmark[1] = edge_markings[L_gfx + 1]; \
+      DEaddr = (D_row_hi << 8) | (u8)E_col; \
+      if (VALID_BACKBUF_ADDR(DEaddr)) { \
+        DEmark = ADDRTOBACKBUF(DEaddr); \
+        if (VALID_BACKBUF_PTR(DEmark) && VALID_BACKBUF_PTR(DEmark + 1)) { \
+          if (L_gfx + 1 < (int)sizeof(edge_markings)) { \
+            DEmark[0] = edge_markings[L_gfx]; \
+            DEmark[1] = edge_markings[L_gfx + 1]; \
+          } \
         } \
       } \
     }
@@ -15319,11 +15439,14 @@ frp_c969: /* $C969: 5-zone fork scanline render */
       A_xpos = HLtbl[(L - 1) & 0xFF]; \
       L_gfx = ((A_xpos & 7) << 2) + (off); \
       E_col = ((A_xpos >> 3) & 0x1F) + B_row_lo; \
-      DEmark = ADDRTOBACKBUF((D_row_hi << 8) | (u8)E_col); \
-      if (VALID_BACKBUF_PTR(DEmark) && VALID_BACKBUF_PTR(DEmark + 1)) { \
-        if (L_gfx + 2 < (int)sizeof(edge_markings)) { \
-          DEmark[0] = edge_markings[L_gfx]; \
-          DEmark[1] = (DEmark[1] & edge_markings[L_gfx + 1]) | edge_markings[L_gfx + 2]; \
+      DEaddr = (D_row_hi << 8) | (u8)E_col; \
+      if (VALID_BACKBUF_ADDR(DEaddr)) { \
+        DEmark = ADDRTOBACKBUF(DEaddr); \
+        if (VALID_BACKBUF_PTR(DEmark) && VALID_BACKBUF_PTR(DEmark + 1)) { \
+          if (L_gfx + 2 < (int)sizeof(edge_markings)) { \
+            DEmark[0] = edge_markings[L_gfx]; \
+            DEmark[1] = (DEmark[1] & edge_markings[L_gfx + 1]) | edge_markings[L_gfx + 2]; \
+          } \
         } \
       } \
     }
@@ -15333,8 +15456,11 @@ frp_c969: /* $C969: 5-zone fork scanline render */
     FRP_RIGHT_EDGE(sm_CABB) H_xpos_hi++; /* $CAAD: H=$EA */
     FRP_LEFT_EDGE(sm_CADC) H_xpos_hi++;  /* $CACE: H=$EB */
     FRP_LANE_MARK(sm_CB00) H_xpos_hi++;  /* $CAF2: H=$EC */
-    L--;                                  /* $CB11: permanent DEC L before section 6 */
-    FRP_RIGHT_EDGE(sm_CB1C) H_xpos_hi++; /* $CB0F: H=$ED */
+    /* $CB0F-$CB11: test/interpolate use the same L as section 5 left it;
+     * the DEC L at $CB11 only takes effect afterwards, permanently. */
+    FRP_RIGHT_EDGE(sm_CB1C)
+    L--;                                  /* $CB11: permanent DEC L after section 6 */
+    H_xpos_hi++;                          /* $CB0F: H=$ED */
 
 #undef FRP_LEFT_EDGE
 #undef FRP_LANE_MARK
@@ -15343,8 +15469,11 @@ frp_c969: /* $C969: 5-zone fork scanline render */
 
 frp_after_marking: /* $CB2F */
   L--;  /* $CB2F: DEC L */
-  C--;  /* $CB30: DEC C (banked C) */
-  if (C != 0) {
+  /* $CB30: DEC C -- this DEC lands on shadow C' due to the marking
+   * section's odd EXX count (see Cdash setup above); Cdash is the
+   * loop-exit counter, not the main-register C. */
+  Cdash--;
+  if (Cdash != 0) {
     /* $CB31: JP NZ, SM_CB32 */
     if (loop_path == 0)
       goto frp_c923;
@@ -15357,6 +15486,7 @@ frp_after_marking: /* $CB2F */
   B = af_prime;
 
 frp_loop: { /* $CB36 */
+    FRP_TRACE("frp_loop");
     A_tog = sm_CB36 ^ 1;
     sm_CB36 = A_tog;
     if (A_tog != 0)
@@ -15397,6 +15527,7 @@ frp_cb65: /* $CB65 */
   }
 
 frp_cb90: { /* $CB90 */
+    FRP_TRACE("frp_cb90");
     A_old_h = *IYheight;
     IYheight++;
     WRAP_INCREMENT_ASSIGN(IXlanes, state->roadbuf_start);
@@ -15408,7 +15539,14 @@ frp_cb90: { /* $CB90 */
     if ((s8)A_diff > 0) {        /* $CB9C: JP P,$CBC5 */
       /* backdrop_fill_dispatch ($CBC5): A < 0x50 → re-enter, A >= 0x50 → backdrop fill */
       if (A_diff >= 0x50) {
-        dr_start_backdrop_fill(state, ((int)D << 8) | E, (int)L); /* $CBCB JP $C79A */
+        /* Conv: D can drift below BACKBUFFER_START_ADDRESS over enough
+         * scanlines (see D-- in frp_c923/frp_c963); on real Z80 hardware
+         * dr_start_backdrop_fill's INC E doesn't touch D, so this address
+         * carries the same drift into its own backbuffer writes. Skip the
+         * call rather than let ADDRTOBACKBUF assert, mirroring the
+         * marking-section guard above. */
+        if (VALID_BACKBUF_ADDR(((int)D << 8) | E))
+          dr_start_backdrop_fill(state, ((int)D << 8) | E, (int)L); /* $CBCB JP $C79A */
         return;
       }
       goto frp_c915; /* $CBC8 JP C,$C915 */
@@ -15419,12 +15557,15 @@ frp_cb90: { /* $CB90 */
   }
 
 frp_next_scanline_c969: /* $C93E */
+  FRP_TRACE("frp_next_scanline_c969");
   carry = (E < 0x20);
   E     = E - 0x20;
   if (!carry)
     D = D + 0x10;
   goto frp_c969;
 }
+#undef FRP_TRACE
+#undef FRP_GUARD_LIMIT
 
 // $CBA4
 // mystery_cba4 would go here, if we knew what it did
