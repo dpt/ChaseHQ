@@ -23,6 +23,10 @@
 
 #include "SDL.h"
 
+#ifdef __APPLE__
+#include <CoreFoundation/CoreFoundation.h>
+#endif
+
 #include "ZXSpectrum/Spectrum.h"
 #include "ZXSpectrum/Keyboard.h"
 #include "ZXSpectrum/Kempston.h"
@@ -317,7 +321,7 @@ static void chq_sdl_main_loop(void *opaque)
 
     /* Clear screen */
     // TODO: This ought to be the border colour, but CHQ's is always black.
-    SDL_SetRenderDrawColor(state->renderer, 0x1F, 0x1F, 0x1F, 0xFF);
+    SDL_SetRenderDrawColor(state->renderer, 0x00, 0x00, 0x00, 0xFF);
     SDL_RenderClear(state->renderer);
 
     /* Offset the image */
@@ -352,6 +356,15 @@ int main(void)
   state.paused    = 0;
   state.quit      = 0;
   // state.menu      = 1;
+
+#ifdef __APPLE__
+  // Conv: disable macOS press-and-hold accent popover so held keys repeat
+  // instead of opening the accent picker.
+  CFPreferencesSetAppValue(CFSTR("ApplePressAndHoldEnabled"),
+                            kCFBooleanFalse,
+                            kCFPreferencesCurrentApplication);
+  CFPreferencesAppSynchronize(kCFPreferencesCurrentApplication);
+#endif
 
   if (SDL_Init(SDL_INIT_VIDEO) < 0)
   {

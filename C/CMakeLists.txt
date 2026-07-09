@@ -44,6 +44,9 @@ add_executable(ChaseHQ ${SOURCE_FILES})
 target_compile_definitions(ChaseHQ PRIVATE TGE_SDL)
 target_include_directories(ChaseHQ PRIVATE ${SDL2_INCLUDE_DIRS} .)
 target_link_libraries(ChaseHQ ${SDL2_LIBRARIES})
+if(APPLE)
+  target_link_libraries(ChaseHQ "-framework CoreFoundation")
+endif()
 
 # ---- Unit tests (no SDL2 dependency) ------------------------------------
 
