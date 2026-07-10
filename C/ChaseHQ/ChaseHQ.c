@@ -4312,7 +4312,13 @@ dso_continue:
     Bvertical += A;
 
   state->doc_rows_main = Bvertical;
-  state->doc_rows_2nd = HLbitmap->width_bytes;
+  // Conv: $9236 `LD A,(HL)` reads the same HLbitmap pointer as the Type 2
+  // case above ($91C8), which is the bitmap struct's `height` field, not
+  // `width_bytes` (see the Conv: comment at the Type 2 assignment). This is
+  // the per-tile repeat height for the doc_rows_main/doc_rows_2nd split loop
+  // in draw_object_clipped; reading width_bytes here made each repeat
+  // section too short, doubling the visible repeat count at half height.
+  state->doc_rows_2nd = HLbitmap->height;
   state->doc_plot_mode = 2; // inverted
 
   // EX AF,AF' -- restore Adepth
