@@ -6471,10 +6471,10 @@ static void check_time_up(chqstate_t *state)
   }
 
 update_remaining_time:
-  if (--state->session.time_sixteenths > 0)
+  if (--state->session.time_fifteenths > 0)
     return;
 
-  state->session.time_sixteenths = 15;
+  state->session.time_fifteenths = 15;
   half_borrow = (state->session.time_bcd & 0x0F) == 0;
   state->session.time_bcd = time_bcd = DAA_sub(state->session.time_bcd - 1, half_borrow, NULL);
 
@@ -10923,8 +10923,8 @@ static void start_chase(chqstate_t *state)
   // This is animation frame related?
   state->ahc_hand_delay = 2;
 
-  state->session.time_sixteenths = 15;
-  state->session.time_bcd        = 0x60;
+  state->session.time_fifteenths = 15;
+  state->session.time_bcd        = 0x60; /* 60s */
 
   // Toggle the left light's brightness
   toggle_light_brightness(state, ADDRTOATTRS(MARQUEELIGHT_LEFT_ATTR_ADDR));
