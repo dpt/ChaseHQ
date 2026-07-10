@@ -13171,16 +13171,17 @@ rm_restart_hazards_read: // $BFF3
     A_flags_inc = (u8) (IX_hazard->hazard_flags + 1);
     /* Conv: truncate to 8 bits so 0xFF wraps to 0, matching Z80 INC A */
     if (A_flags_inc == 0) { // hazard_flags was 0xFF: rm_c096
-      A_flags_inc = IX_hazard->distance;
-      if (A_flags_inc == 0) { // rm_c0b2: distance was 0
+      A_flags_inc = IX_hazard->distance; // value before the subtract, for the borrow test
+      // SUB $01 always executes and always stores, wrapping 0 -> 255 (Conv:
+      // the u8 field assignment performs the wraparound).
+      IX_hazard->distance = (u8) (A_flags_inc - 1);
+      if (A_flags_inc == 0) { // rm_c0b2: distance was already 0 -> borrowed
         IX_hazard->hazard_lane_OR_perp_dist_hi--;
         continue;
       }
-      A_flags_inc--;
-      IX_hazard->distance = A_flags_inc;
-      if (A_flags_inc != 0) // non-zero: keep going
+      if (IX_hazard->distance != 0) // non-zero result: keep going
         continue;
-      // distance just hit 0
+      // distance just hit 0 (no borrow)
       if (IX_hazard->hazard_lane_OR_perp_dist_hi != 0)
         continue;
       IX_hazard->distance = 1;
