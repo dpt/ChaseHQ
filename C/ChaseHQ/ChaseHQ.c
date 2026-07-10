@@ -4575,7 +4575,13 @@ static void draw_object_left_width_entrypt(chqstate_t     *state,
     }
 
     Ebitmap_stride = HLbitmap->width_bytes;
-    Awidth_bytes >>= 2;
+    // Conv: Z80 $92AE-$92AF is RRCA RRCA on the raw (unmasked) byte, not a
+    // shift -- unlike the negative-width branch below, which ANDs off the low
+    // 2 bits with $FC before rotating. Here bits rotated off the bottom wrap
+    // into bits 7-6, so a plain >>= 2 silently drops them instead of setting
+    // them (pitfall: rotate mistranslated as shift).
+    RRC(Awidth_bytes);
+    RRC(Awidth_bytes);
     state->doc_shift_select = Awidth_bytes;
     Awidth_bytes = Ebitmap_stride - 1;
     // Conv: if width_bytes == 1, Awidth_bytes == 0 → nothing to draw.

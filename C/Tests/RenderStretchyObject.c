@@ -104,17 +104,29 @@ static chqstate_t *make_state(int stage)
   return state;
 }
 
+/*
+ * Reproduce draw_scene_objects' index arithmetic (ChaseHQ.c:3819-3880):
+ * IXtable_ea00 starts at &xpos_road_centre[88] and is incremented once after
+ * the right-hand call and again after the left-hand call, so iteration i's
+ * right-hand entry is at 88+2i and its left-hand entry is at 89+2i — not
+ * 88+i, whichever side is being rendered.
+ */
+static int xpos_index(int row, const char *side)
+{
+  return 88 + 2 * row + (strcmp(side, "left") == 0 ? 1 : 0);
+}
+
 /* Pick the first row (0..19) satisfying the same "object present" gate
  * draw_scene_objects checks at ChaseHQ.c:3933 before drawing: the high byte
  * of the s16 xpos_road_centre entry for this row must be zero. Returns -1
  * if none qualify. */
-static int pick_row(const chqstate_t *state)
+static int pick_row(const chqstate_t *state, const char *side)
 {
   int row;
   const u8 *high_byte;
 
   for (row = 0; row <= 19; row++) {
-    high_byte = (const u8 *)&state->xpos_road_centre[88 + row];
+    high_byte = (const u8 *)&state->xpos_road_centre[xpos_index(row, side)];
     if (high_byte[1] == 0)
       return row;
   }
@@ -219,7 +231,7 @@ int main(int argc, char **argv)
   state = make_state(stage);
 
   if (row == -1) {
-    row = pick_row(state);
+    row = pick_row(state, side);
     if (row == -1) {
       fprintf(stderr,
               "no row 0-19 satisfies the object-present gate for stage %d; "
@@ -254,9 +266,11 @@ int main(int argc, char **argv)
 
   memset(state->backbuffer, 0xFF, BACKBUFFER_LENGTH);
 
-  obj->handler(state, row + 1, obj->arg,
-              &state->xpos_road_centre[88 + row],
-              &state->height_table[21 - row]);
+  /* Biterations counts down from 20 (nearest row) to 1 (farthest); row 0 is
+   * the first iteration, so Biterations = 20 - row (ChaseHQ.c:3821-3880). */
+  obj->handler(state, 20 - row, obj->arg,
+              &state->xpos_road_centre[xpos_index(row, side)],
+              &state->height_table[20 - row]);
 
   {
     int written = 0;
