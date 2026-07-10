@@ -13150,6 +13150,9 @@ rm_restart_hazards_read: // $BFF3
                   else
                     /* $C018: cmd 13/14 → dont_spawn_cars = cmd - 13 */
                     state->dont_spawn_cars = A_hazards_byte - 10;
+                  // $C016/$C01D
+                  // DE_hazards_ptr ↔ HL_lanes_ptr; // was EX DE,HL (folded away)
+                  goto rm_restart_hazards_read;
                 } else {
                   // $C01F: cmd 10/11/12 → floating_arrow = cmd - 10
                   A_hazards_byte -= 7; // floating_arrow = A - 7 (from A = cmd-3)
