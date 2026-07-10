@@ -1000,7 +1000,7 @@ static hazard_handler_t hazard_hit;
 static void check_hazard_collisions(chqstate_t *state);
 
 static u8 check_collision(chqstate_t *state, int default_retval, int HL,
-                          hazard_t *hazard, s16 *HLout);
+                          hazard_t *hazard);
 
 static void advance_hazards(chqstate_t *state);
 static void advance_hazard(chqstate_t *state,
@@ -9521,7 +9521,7 @@ static void check_hazard_collisions(chqstate_t *state)
 
       /* $AD31: skip if distance >= 20 or no collision; dispatch hit handler */
       if (IX_hazard->distance < 20 &&
-          check_collision(state, 0, 0, IX_hazard, NULL) > 0 &&
+          check_collision(state, 0, 0, IX_hazard) > 0 &&
           IX_hazard->hazard_flags != 0xFF)
         IX_hazard->hit_handler(state, IX_hazard);
     }
@@ -9547,23 +9547,21 @@ chc_continue:
  * Conv: Z80 uses D as both the "no-hit" return value (caller sets D=0 before
  * the CALL) and the collision flag (set to 1 at $AD9D). C separates these into
  * the [default_retval] parameter and the u8 return value. Conv: Z80 leaves [HL]
- * = (horz_clip<<8)|horz_pos at the point of return; C writes this through the
- * optional [HLout] pointer instead.
+ * = (horz_clip<<8)|horz_pos at the point of return, but the one call site that
+ * mattered ($AE7A) discards it -- horz_pos/horz_clip are written by the caller
+ * before the CALL, not read back after -- so the C port has no output parameter.
  *
  * \param[in]     state Pointer to game state.
  * \param[in]     default_retval value returned when no collision (was D).
- * \param[in]     HL Initial HL; written to *[HLout] on the earliest
- * return path, before horz_pos/horz_clip load (was [HL]).
+ * \param[in]     HL Initial HL; unused within the function body, kept for
+ * skool traceability of the original register (was [HL]).
  * \param[in,out] hazard Hazard being tested; hit_timer written on hit (was IX).
- * \param[out]    HLout Receives (horz_clip<<8)|horz_pos at return;
- * may be NULL (Conv: C out-param for Z80 [HL]).
  * \return 1 on collision, [default_retval] otherwise (was D).
  */
 static u8 check_collision(chqstate_t *state,
                           int          default_retval,
                           int          HL,
-                          hazard_t    *hazard,
-                          s16         *HLout)
+                          hazard_t    *hazard)
 {
   int L_horz_pos;  /* hazard horizontal position byte (was L) */
   int H_horz_clip; /* hazard clip flag byte; non-zero means off-screen (was H) */
@@ -9574,14 +9572,13 @@ static u8 check_collision(chqstate_t *state,
   int A_fast_cnt;  /* fast_counter; sign-tested to gate collision at distance 1 (was A) */
   int A_horz_pos;  /* L_horz_pos masked to $F8; used for bounding-box overlap (was A) */
 
-  if (HLout) *HLout = HL;
+  (void) HL;
 
   if (hazard->hit_timer) /* still in hit cooldown */
     return default_retval;
 
   L_horz_pos  = hazard->horz_pos;
   H_horz_clip = hazard->horz_clip;
-  if (HLout) *HLout = (H_horz_clip << 8) | L_horz_pos;
 
   if (hazard->horz_clip) /* hazard clipped off-screen; no collision */
     return default_retval;
@@ -9839,12 +9836,13 @@ dh_adfa:
   /* $AE6F-$AE79: C=A; HL=SM+BC (SM was patched to left_xpos at $AE57);
    * then IX[2]=L, IX[3]=H — write xpos back to hazard
    * Conv: Z80 self-modifies LD HL at $AE70 to load dh_road_left_xpos then
-   *       adds BC; C computes directly and passes via check_collision HLout */
+   *       adds BC; C computes directly and writes the two fields below. */
   HL = state->dh_road_left_xpos + A_xresult;
-  /* $AE74-$AE79: IX[2],IX[3] = HL (horz_pos, horz_clip) written via HLout */
-  (void) check_collision(state, 0, HL, IXhazard, &HL);
+  /* $AE74-$AE79: IX[2],IX[3] = HL (horz_pos, horz_clip); written before the
+   * call, matching skool -- $AE7A's result is discarded by the caller. */
   IXhazard->horz_pos  = HL & 0xFF;
   IXhazard->horz_clip = HL >> 8;
+  (void) check_collision(state, 0, HL, IXhazard);
 
   Ddistance  = IXhazard->distance;
   Edist_frac = IXhazard->dist_frac;
