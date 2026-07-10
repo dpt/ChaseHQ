@@ -766,7 +766,7 @@ static void draw_object_left_stretchy_entrypt(chqstate_t     *state,
                                               const s16      *IX_xpos,
                                               const u8       *IY_height);
 
-static void draw_object_left_helicopter_entrypt(chqstate_t     *state,
+static void draw_object_left_width_entrypt(chqstate_t     *state,
                                                 int             Awidth_bytes,
                                                 const bitmap_t *HLbitmap,
                                                 const u8       *IYheight);
@@ -784,7 +784,7 @@ static void draw_object_right_stretchy_entrypt(chqstate_t     *state,
                                                const s16      *IXxpos,
                                                const u8       *IYheight);
 
-static void draw_object_right_helicopter_entrypt(chqstate_t     *state,
+static void draw_object_right_width_entrypt(chqstate_t     *state,
                                                  int             Awidth_bytes,
                                                  const bitmap_t *HLbitmap,
                                                  const u8       *IYheight);
@@ -3792,7 +3792,7 @@ static void draw_scene_objects(chqstate_t *state)
   assert(state->dh_xpos_table >= &state->xpos_road_centre_left[0] &&
          state->dh_xpos_table < &state->xpos_road_centre_left[128]);
 
-  HLheight_table = &state->height_table[1]; // table of objects?
+  HLheight_table = &state->height_table[1];
   DEclamped_heights = &state->clamped_heights[0];
   Biterations = 21;
   do {
@@ -4493,7 +4493,7 @@ static void draw_object_left_entrypt(chqstate_t       *state,
  *
  * Adds 16 to the x-position table value, subtracts the depth, and returns early
  * if the result is negative (object entirely off-screen to the left). Otherwise
- * passes the remaining screen width to draw_object_left_helicopter_entrypt.
+ * passes the remaining screen width to draw_object_left_width_entrypt.
  *
  * \param[in] state Pointer to game state.
  * \param[in] B_depth Depth value from the depthset, subtracted from width.
@@ -4512,7 +4512,7 @@ static void draw_object_left_stretchy_entrypt(chqstate_t     *state,
 
   A_width_bytes = IX_xpos[0] + 16;
   if (A_width_bytes >= B_depth)
-    draw_object_left_helicopter_entrypt(state, A_width_bytes - B_depth, HL_bitmap, IY_height); /* was FALLTHROUGH */
+    draw_object_left_width_entrypt(state, A_width_bytes - B_depth, HL_bitmap, IY_height); /* was FALLTHROUGH */
 }
 
 /**
@@ -4531,7 +4531,7 @@ static void draw_object_left_stretchy_entrypt(chqstate_t     *state,
  * \param[in]     IYheight Pointer into height_table for this object slot.
  *   (was IY)
  */
-static void draw_object_left_helicopter_entrypt(chqstate_t     *state,
+static void draw_object_left_width_entrypt(chqstate_t     *state,
                                                 int             Awidth_bytes,
                                                 const bitmap_t *HLbitmap,
                                                 const u8       *IYheight)
@@ -4691,7 +4691,7 @@ static void draw_object_right_entrypt(chqstate_t       *state,
  * Reads the x-position table value and adds the (signed) depth. Returns early
  * if the result is zero or overflows u8 (i.e. the object is off-screen to the
  * right). Otherwise passes the remaining screen width to
- * draw_object_right_helicopter_entrypt.
+ * draw_object_right_width_entrypt.
  *
  * Z80 flow: `BIT 7,B; JR Z,$9306` — positive B jumps to $9306 which does `ADD
  * A,B; RET C` (return on u8 carry, i.e. A+B > 255); negative B path ($9303)
@@ -4719,7 +4719,7 @@ static void draw_object_right_stretchy_entrypt(chqstate_t     *state,
     if (A_width_bytes > 255) return; /* $9307: RET C — u8 overflow */
   }
   if (A_width_bytes)
-    draw_object_right_helicopter_entrypt(state, A_width_bytes, HLbitmap, IYheight);
+    draw_object_right_width_entrypt(state, A_width_bytes, HLbitmap, IYheight);
 }
 
 /**
@@ -4734,7 +4734,7 @@ static void draw_object_right_stretchy_entrypt(chqstate_t     *state,
  * \param[in] HLbitmap Source bitmap data. (was HL)
  * \param[in] IYheight Height table pointer. (was IY)
  */
-static void draw_object_right_helicopter_entrypt(chqstate_t     *state,
+static void draw_object_right_width_entrypt(chqstate_t     *state,
                                                  int             Awidth_bytes,
                                                  const bitmap_t *HLbitmap,
                                                  const u8       *IYheight)
@@ -8898,7 +8898,7 @@ ldas_do_work:
  * byte is zero the slot is inactive and the pointer advances past it. Otherwise
  * it selects stones_lods or dust_lods based on the type byte, clamps
  * [Biterations] to 10, halves it as a LOD index and dispatches to
- * draw_object_left/right_helicopter_entrypt with the computed x-position.
+ * draw_object_left/right_width_entrypt with the computed x-position.
  *
  * \param[in] state Pointer to game state.
  * \param[in] Biterations Distance-based counter; clamped to 10 for LOD
@@ -8960,11 +8960,11 @@ dss_bitmaps:
 
     // So it's zero
     if (A >= 128) {
-      draw_object_right_helicopter_entrypt(state, A, HLbitmap,
+      draw_object_right_width_entrypt(state, A, HLbitmap,
                                            IYheight); /* exit via */
     } else {
       A += E;
-      draw_object_left_helicopter_entrypt(state, A, HLbitmap,
+      draw_object_left_width_entrypt(state, A, HLbitmap,
                                           IYheight); /* exit via */
     }
   } else {
@@ -8972,7 +8972,7 @@ dss_bitmaps:
     if (A <= 255) /* $AA34: RET NC — no u8 overflow → return */
       return;
 
-    draw_object_left_helicopter_entrypt(state, A, HLbitmap,
+    draw_object_left_width_entrypt(state, A, HLbitmap,
                                         IYheight);  /* exit via */
   }
 }
@@ -9087,11 +9087,11 @@ static void draw_helicoper_part(chqstate_t                *state,
       return;
 
     if (Abot >= 0x80) { // or -ve?
-      draw_object_right_helicopter_entrypt(state, Abot, HLbitmap,
+      draw_object_right_width_entrypt(state, Abot, HLbitmap,
                                            IYheight); /* exit via */
     } else {
       Abot += Bwidth;
-      draw_object_left_helicopter_entrypt(state, Abot, HLbitmap,
+      draw_object_left_width_entrypt(state, Abot, HLbitmap,
                                           IYheight); /* exit via */
     }
   } else {
@@ -9100,7 +9100,7 @@ static void draw_helicoper_part(chqstate_t                *state,
     if (!carry)
       return;
 
-    draw_object_left_helicopter_entrypt(state, Abot, HLbitmap,
+    draw_object_left_width_entrypt(state, Abot, HLbitmap,
                                         IYheight); /* exit via */
   }
 }
@@ -9902,7 +9902,7 @@ dh_call_handler:
  *
  * For each hazard at the current depth it fetches the bitmap via the LOD table,
  * computes the screen x position from horz_pos/horz_clip and dispatches to
- * draw_object_left/right_helicopter_entrypt. The perp-car path (hazard_flags ==
+ * draw_object_left/right_width_entrypt. The perp-car path (hazard_flags ==
  * 0xFF) additionally saves the position into SM fields used by dh_draw_bitmap,
  * then draws: the floating "HERE!" arrow (if smash_level < 5), fire overlays
  * (if smash_level >= 4) and trailing smoke (smash_level 1–3 via a fallthrough
@@ -9973,7 +9973,7 @@ static void draw_hazard_sprites(chqstate_t *state,
   if (A != (*HLtable & 0xFF)) // Conv: original CP (HL) tests only the low byte
     return;
 
-  if (--A >= 11)
+  if (--A >= 11) // DPT WE NEVER EVEN GET HERE
     A = 10;
   A >>= 1;
   state->smoke_bitmap_index = A;
@@ -10012,11 +10012,11 @@ static void draw_hazard_sprites(chqstate_t *state,
         goto dafs_draw_done_1;
     }
 
-    draw_object_left_helicopter_entrypt(state, Ahorz_pos, HLbitmap, IYheight);
+    draw_object_left_width_entrypt(state, Ahorz_pos, HLbitmap, IYheight);
     goto dafs_draw_done_1;
 
 dafs_draw_right_1:
-    draw_object_right_helicopter_entrypt(state, Ahorz_pos, HLbitmap, IYheight);
+    draw_object_right_width_entrypt(state, Ahorz_pos, HLbitmap, IYheight);
 
 dafs_draw_done_1:
     // POP DE (DEbitmapoffset), BC (Biterations)   ??
@@ -10051,11 +10051,11 @@ dafs_af50:
   }
 
 dafs_draw_left_2:
-  draw_object_left_helicopter_entrypt(state, Awidth_bytes, HLbitmap, IYheight);
+  draw_object_left_width_entrypt(state, Awidth_bytes, HLbitmap, IYheight);
   goto dafs_done_draw_object;
 
 dafs_draw_right_2:
-  draw_object_right_helicopter_entrypt(state, Ahorz_pos, HLbitmap, IYheight);
+  draw_object_right_width_entrypt(state, Ahorz_pos, HLbitmap, IYheight);
 
 dafs_done_draw_object:
   state->dh_col_pos = state->doc_col_pos;
@@ -10214,12 +10214,12 @@ static void dh_draw_bitmap(chqstate_t     *state,
       return;
 
     if (Ahorz_pos >= 128) {
-      draw_object_right_helicopter_entrypt(state, Ahorz_pos, HLbitmap,
+      draw_object_right_width_entrypt(state, Ahorz_pos, HLbitmap,
                                            IYheight); /* was exit via */
     } else {
 dh_exit_1:
       Ahorz_pos += Ewidth_bits; // add pixel width
-      draw_object_left_helicopter_entrypt(state, Ahorz_pos, HLbitmap,
+      draw_object_left_width_entrypt(state, Ahorz_pos, HLbitmap,
                                           IYheight); /* was exit via */
     }
   } else {
@@ -10229,7 +10229,7 @@ dh_exit_1:
 
     Ahorz_pos += Ewidth_bits;
     if (Ahorz_pos < Ewidth_bits) // carried
-      draw_object_left_helicopter_entrypt(state, Ahorz_pos, HLbitmap,
+      draw_object_left_width_entrypt(state, Ahorz_pos, HLbitmap,
                                           IYheight); /* was exit via */
   }
 }
