@@ -113,10 +113,11 @@ A third form: a `u8[]` table is indexed via `LD HL, table-1; ADD HL,BC` which gi
 
 - `draw_road_lanes_change` used `range == 0 || (range & 0x80)` to detect that the setup path should be skipped. For differences above 128 the bit-7 check returned false incorrectly.
 - `animate_hero_car` lower-bound clamp ($B3A0-$B3A1): `LD A,L; SUB E; JR C` was translated as `if ((s8)(L - E) < 0)`. For L=216, E=72: 216-72=144 = 0x90, carry=0 (no borrow, 216≥72), but (s8)0x90 = -112 triggers incorrectly. The road position 216 was clamped to 72 every frame, causing the road to flicker.
+- `advance_hazard` (`$ADC1-$ADC7`): `LD A,(IX+$04); SUB (IX+$0D); LD (IX+$04),A; JR NC,$ADCD` subtracts the speed low byte from `dist_frac` and increments the distance accumulator (`C_dist`) on borrow. The C translation stored the subtraction result straight into the `u8` struct field, then tested `if ((s8) IXhazard->dist_frac < 0)` on the already-wrapped result — the same sign-bit-after-the-fact mistake, on a struct field this time rather than a local. Fixed by capturing both operands before the subtraction and comparing them directly: `if (A_old_frac < A_speed_lo) C_dist++;`.
 
-**Fix:** Use a direct unsigned comparison: `if (L < E)` (i.e. `if ((HLroad_pos & 0xFF) < (DEother_road_pos & 0xFF))`). Never use `(s8)` or `& 0x80` to recover a carry flag — the sign and carry flags from subtraction are the same only for differences in [0, 127].
+**Fix:** Use a direct unsigned comparison: `if (L < E)` (i.e. `if ((HLroad_pos & 0xFF) < (DEother_road_pos & 0xFF))`). Never use `(s8)` or `& 0x80` to recover a carry flag — the sign and carry flags from subtraction are the same only for differences in [0, 127]. This applies equally when the subtraction result is written straight into a struct field rather than held in a local: capture the pre-subtraction operands first if the comparison needs them.
 
-**Commits:** `0f95209`, `bc1e1cb`
+**Commits:** `0f95209`, `bc1e1cb`, `02d2a5a`
 
 ---
 
@@ -710,3 +711,59 @@ if (Avertical <= 0) Avertical = 1;
 ```
 
 **Rule:** When two consecutive conditional jumps both exit a subtraction block — typically `JR Z` (zero) followed by `JR NC` (no-borrow/positive) — the single condition that replaces them is `<= 0`, not `< 0`. Read both branches together before translating; the zero case is easy to miss when focusing on the sign-flag branch.
+
+---
+
+## 38. `LD (IX+n),reg` — writing to the wrong struct field of the same object
+
+**Root cause:** A function that writes several `IX+n` fields of the same struct in quick succession is easy to mistranslate if two of those fields hold conceptually related values (e.g. both are "positions"). The comment above the write may correctly identify the intended field, but the assignment targets a different one that happens to already exist on the struct and compile without complaint.
+
+**Bug:** `advance_hazard` (`$AE74–$AE79`): `LD (IX+$02),L` / `LD (IX+$03),H` writes the `check_collision` result into `horz_pos` (offset 2) and `horz_clip` (offset 3). The C translation wrote the low byte into `IXhazard->distance` (offset 1) instead of `IXhazard->horz_pos`:
+
+```c
+IXhazard->distance  = HL & 0xFF;   /* wrong field: offset 1, not 2 */
+IXhazard->horz_clip = HL >> 8;
+```
+
+This clobbered the distance value that had just been correctly accumulated a few lines earlier at `dh_adfa` (`IXhazard->distance = A_dist`), overwriting it every frame with the hazard's on-screen horizontal position. Since the depth-sorted draw list built immediately afterwards reads `IXhazard->distance` to place the hazard, the recorded distance was essentially garbage (frequently 0), and the draw loop — which matches depth exactly against `Biterations` counting 20 downto 1 — could never find the hazard at any depth. `draw_hazard_sprites` was entered but the depth-match test failed on every call, so hazards were computed every frame but never drawn.
+
+**Fix:**
+
+```c
+IXhazard->horz_pos  = HL & 0xFF;   /* $AE74: IX[2] */
+IXhazard->horz_clip = HL >> 8;     /* $AE77: IX[3] */
+```
+
+**Rule:** When translating consecutive `LD (IX+n),reg` writes, check the struct's field-offset table (declared IX+n comments elsewhere in the same function) against the actual C member name used at each write site — don't rely on the prose in the surrounding comment alone. A field that was written correctly by name in an *earlier* part of the function (e.g. `distance` at `dh_adfa`) is a red flag if it reappears as the target of an unrelated write later in the same function; re-verify against the skool offset, not the variable's plausible-sounding name.
+
+**Commit:** `02d2a5a`
+
+---
+
+## 39. Invented "output parameter" writes back stale state instead of passing the caller's value through
+
+**Root cause:** When a Z80 `CALL` is followed by code that clearly doesn't use the returned register (the skool marks it "result ignored", or no subsequent instruction reads it), a C translation can still be tempted to give the callee an output parameter "for completeness" — especially if the callee happens to read and reconstruct that same register from struct fields internally, for its own unrelated purposes (e.g. a bounding-box test). If the C translation then writes that internally-reloaded value back through the invented output pointer, it silently discards whatever the caller actually passed in.
+
+**Bug:** `advance_hazard` (`$AE74–$AE79`) writes the freshly-computed screen position into `horz_pos`/`horz_clip` and then calls `check_collision` (`$AE7A`) purely for its side effect (setting `hit_timer` on a hit). The skool comment at `$AE7A` reads "Call check_collision (result ignored)" — the Z80 caller never reads HL again. But `check_collision` internally reloads `hazard->horz_pos`/`horz_clip` (its *own* current struct values, needed for its bounding-box overlap test) into local variables also named for HL's halves, and the C port wired those locals up to an `HLout` output parameter:
+
+```c
+if (HLout) *HLout = HL;                              /* caller's input, correct so far */
+...
+L_horz_pos  = hazard->horz_pos;                       /* reloaded for check_collision's own use */
+H_horz_clip = hazard->horz_clip;
+if (HLout) *HLout = (H_horz_clip << 8) | L_horz_pos;  /* overwrites with STALE struct state */
+```
+
+The caller then wrote this stale value back into the hazard: `IXhazard->horz_pos = HL & 0xFF;` — permanently pinning every hazard near its *previous* (often template-default, i.e. 0) screen position regardless of the position just computed a few lines above. Symptom: hazard sprites collapsed to a sliver at screen x≈0, moved with distance/height as normal, and never triggered a collision (the hero's hit box at x∈[104,144] never reached x≈0).
+
+**Fix:** Match the skool ordering — write the struct fields *before* the call, and drop the output parameter entirely once no caller needs it:
+
+```c
+IXhazard->horz_pos  = HL & 0xFF;   /* $AE74: IX[2] — written before the CALL */
+IXhazard->horz_clip = HL >> 8;     /* $AE77: IX[3] */
+(void) check_collision(state, 0, HL, IXhazard);   /* result genuinely ignored */
+```
+
+**Rule:** Before adding an output parameter to a translated helper, check every call site's skool for what happens to the relevant register immediately after the `CALL` returns. "Result ignored" (or no subsequent read of that register before it's next written) means the C port should not invent one either — even if the callee's internal logic happens to touch a same-named register for its own purposes. An output parameter that exists only because *a* register of that name is reloaded inside the callee, without confirming the *caller* ever reads it back, is a fabricated data path that can overwrite a value the caller already computed correctly.
+
+**Commit:** `be0ef28`
