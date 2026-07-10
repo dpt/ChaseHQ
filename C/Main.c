@@ -41,16 +41,24 @@
 #define GAMEWIDTH     256
 #define GAMEHEIGHT    192
 #define BORDER        32
-#define GAMESCALE     2
 
-#define SCALEDWIDTH   (GAMEWIDTH  * GAMESCALE)
-#define SCALEDHEIGHT  (GAMEHEIGHT * GAMESCALE)
-#define SCALEDBORDER  (BORDER * GAMESCALE)
-
-#define WINDOWWIDTH   (SCALEDWIDTH  + (SCALEDBORDER * 2))
-#define WINDOWHEIGHT  (SCALEDHEIGHT + (SCALEDBORDER * 2))
+#define SCALE_DEFAULT (2)
+#define SCALE_MIN     (1)
+#define SCALE_MAX     (4)
 
 #define MAXSTAMPS       (4)     // max depth of timestamps stack
+
+// -----------------------------------------------------------------------------
+
+static int chq_window_width(int scale)
+{
+  return (GAMEWIDTH + BORDER * 2) * scale;
+}
+
+static int chq_window_height(int scale)
+{
+  return (GAMEHEIGHT + BORDER * 2) * scale;
+}
 
 // -----------------------------------------------------------------------------
 
@@ -66,9 +74,12 @@ typedef struct
   int           paused; // bool
   // int           menu; // bool
 
+  int           scale; // window/render scale, SCALE_MIN..SCALE_MAX
+
   struct timeval stamps[MAXSTAMPS];
   int            nstamps;
 
+  SDL_Window   *window;
   SDL_Renderer *renderer;
   SDL_Texture  *texture;
   SDL_Thread   *game_thread;
@@ -228,6 +239,29 @@ static void chq_sdl_key_pressed(chq_sdl_state_t         *state,
     return;
   }
 
+  if (sym == SDLK_MINUS || sym == SDLK_EQUALS)
+  {
+    if (k->type == SDL_KEYDOWN && !k->repeat)
+    {
+      int scale;
+
+      scale = state->scale + (sym == SDLK_MINUS ? -1 : 1);
+      if (scale < SCALE_MIN)
+        scale = SCALE_MIN;
+      if (scale > SCALE_MAX)
+        scale = SCALE_MAX;
+
+      if (scale != state->scale)
+      {
+        state->scale = scale;
+        SDL_SetWindowSize(state->window,
+                          chq_window_width(scale),
+                          chq_window_height(scale));
+      }
+    }
+    return;
+  }
+
   switch (sym)
   {
     case SDLK_LEFT:  j = zxjoystick_LEFT;    break;
@@ -259,9 +293,13 @@ static void chq_sdl_key_pressed(chq_sdl_state_t         *state,
 // type: em_arg_callback_func
 static void chq_sdl_main_loop(void *opaque)
 {
-  static const SDL_Rect dstrect = { SCALEDBORDER, SCALEDBORDER, SCALEDWIDTH, SCALEDHEIGHT };
-
   chq_sdl_state_t *state = opaque;
+  SDL_Rect          dstrect;
+
+  dstrect.x = BORDER     * state->scale;
+  dstrect.y = BORDER     * state->scale;
+  dstrect.w = GAMEWIDTH  * state->scale;
+  dstrect.h = GAMEHEIGHT * state->scale;
 
   {
     SDL_Event event;
@@ -363,6 +401,7 @@ int main(void)
   state.kempston  = 0;
   state.paused    = 0;
   state.quit      = 0;
+  state.scale     = SCALE_DEFAULT;
   // state.menu      = 1;
 
 #ifdef __APPLE__
@@ -382,13 +421,16 @@ int main(void)
 
   window = SDL_CreateWindow("Chase H.Q.",
                             SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED,
-                            WINDOWWIDTH, WINDOWHEIGHT,
+                            chq_window_width(state.scale),
+                            chq_window_height(state.scale),
                             SDL_WINDOW_SHOWN);
   if (window == NULL)
   {
     fprintf(stderr, "Error: SDL_CreateWindow: %s\n", SDL_GetError());
     goto failure;
   }
+
+  state.window = window;
 
   state.renderer = SDL_CreateRenderer(window,
                                       -1,
