@@ -71,6 +71,16 @@ add_executable(ChaseHQ_Tests ${TEST_SOURCE_FILES})
 target_compile_definitions(ChaseHQ_Tests PRIVATE CHQ_TESTS)
 target_include_directories(ChaseHQ_Tests PRIVATE .)
 
+# ---- Stretchy object renderer (visual debug tool, no SDL2 dependency) ------
+
+set(STRETCHY_SOURCE_FILES ${TEST_SOURCE_FILES})
+list(REMOVE_ITEM STRETCHY_SOURCE_FILES Tests/TestDrawRoad.c)
+list(APPEND STRETCHY_SOURCE_FILES Tests/RenderStretchyObject.c)
+
+add_executable(StretchyRenderer ${STRETCHY_SOURCE_FILES})
+target_compile_definitions(StretchyRenderer PRIVATE CHQ_TESTS)
+target_include_directories(StretchyRenderer PRIVATE .)
+
 # ---- Stage data generation --------------------------------------------------
 # Regenerate committed .c files from their skool sources.
 # Usage: cmake --build <dir> --target convert_stages

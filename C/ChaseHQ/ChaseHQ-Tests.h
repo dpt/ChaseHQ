@@ -54,6 +54,19 @@ void chq_test_draw_road(chqstate_t *state);
 void chq_test_draw_road_lanes_change(chqstate_t *state, u8 lane_flags,
                                      int height_offset);
 
+/*
+ * draw_stretchy_object_left/right already have external linkage in
+ * ChaseHQ.c (they are the real game entry points, not static helpers); they
+ * just have no declaration outside it. Declared here, not in ChaseHQ.h,
+ * because only test/tool code needs to call them directly.
+ */
+void draw_stretchy_object_left(chqstate_t *state, int Bdepth,
+                               const void *DEarg, const s16 *IXxpos,
+                               const u8 *IYheight);
+void draw_stretchy_object_right(chqstate_t *state, int Bdepth,
+                                const void *DEarg, const s16 *IXxpos,
+                                const u8 *IYheight);
+
 #endif /* CHQ_TESTS */
 
 #endif /* CHASEHQ_TESTS_H */
