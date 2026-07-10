@@ -42,7 +42,7 @@ A variant is **copy-paste between adjacent sections of the same function:** `rm_
 **Symptoms and fixes:**
 
 - **SM fields never set:** `dr_left_table_hi_1/2`, `dr_right_table_hi_1/2`, `dr_neg_lane_count` — used on the first frame before `dr_four_lane_highway` writes them. Add explicit initialisation in `chq_initialise`. (`c8251ba`)
-- **SM field type truncation:** `ahc_road_pos_b` was declared `u8` but the Z80 SM instruction at $B3A3 is `LD DE,$01D8`— a 16-bit operand. Storing 472 into a`u8`field silently truncates to 216;`DEother_road_pos >> 8`then returns 0 instead of 1, making the upper-bound high-byte comparison always pass for any road_pos ≥ 256. The fix is to declare the field`u16`. Check: does the Z80 SM instruction load a register pair (16-bit operand) or a single register/byte (8-bit)? (`bc1e1cb`)
+- **SM field type truncation:** `ahc_road_pos_b` was declared `u8` but the Z80 SM instruction at $B3A3 is `LD DE,$01D8` — a 16-bit operand. Storing 472 into a `u8` field silently truncates to 216; `DEother_road_pos >> 8` then returns 0 instead of 1, making the upper-bound high-byte comparison always pass for any road_pos ≥ 256. Fix: declare the field `u16`. Check whether the Z80 SM instruction loads a register pair (16-bit) or a single register/byte (8-bit). (`bc1e1cb`)
 - **SM fields `ahc_road_pos_a` / `ahc_road_pos_b` not initialised:** The default `LD DE` operands at $B395 and $B3A3 are 72 and 472. calloc-zero left both at 0, causing the road_pos clamp to fire incorrectly on the very first frame. (`bc1e1cb`)
 - **`road_buffer_offset` not reset in `set_up_stage`:** Z80 zeroes this at stage start; C translation missed it, leaving a stale pointer into the previous stage's buffer. (`dfdaf8b`)
 - **`B_iterations` and `C_range` uninitialised in `draw_road_lanes_change`:** Z80 `LD B,C` sets loop count from C; both must be assigned from `C_bresen_range` at the `compute_step` entry point. (`7a12c5b`)
@@ -105,7 +105,7 @@ A third form: a `u8[]` table is indexed via `LD HL, table-1; ADD HL,BC` which gi
 
 ---
 
-## 8. Borrow detection via bit 7 is unreliable
+## 8. Carry/borrow via bit 7 (sign flag) is unreliable
 
 **Root cause:** The Z80 pattern `LD A,X; SUB Y; JP C` (or `JR C`) detects borrow (X < Y) exactly via the carry flag. Translating `JP C` / `JR C` as `if (result & 0x80)` or `if ((s8)result < 0)` (sign flag) only works when `X - Y` fits in the −128..+127 range. Differences in [128, 255] have the carry clear (no borrow, X ≥ Y) but bit 7 set, so the branch fires incorrectly.
 
@@ -114,8 +114,9 @@ A third form: a `u8[]` table is indexed via `LD HL, table-1; ADD HL,BC` which gi
 - `draw_road_lanes_change` used `range == 0 || (range & 0x80)` to detect that the setup path should be skipped. For differences above 128 the bit-7 check returned false incorrectly.
 - `animate_hero_car` lower-bound clamp ($B3A0-$B3A1): `LD A,L; SUB E; JR C` was translated as `if ((s8)(L - E) < 0)`. For L=216, E=72: 216-72=144 = 0x90, carry=0 (no borrow, 216≥72), but (s8)0x90 = -112 triggers incorrectly. The road position 216 was clamped to 72 every frame, causing the road to flicker.
 - `advance_hazard` (`$ADC1-$ADC7`): `LD A,(IX+$04); SUB (IX+$0D); LD (IX+$04),A; JR NC,$ADCD` subtracts the speed low byte from `dist_frac` and increments the distance accumulator (`C_dist`) on borrow. The C translation stored the subtraction result straight into the `u8` struct field, then tested `if ((s8) IXhazard->dist_frac < 0)` on the already-wrapped result — the same sign-bit-after-the-fact mistake, on a struct field this time rather than a local. Fixed by capturing both operands before the subtraction and comparing them directly: `if (A_old_frac < A_speed_lo) C_dist++;`.
+- **Two-exit variant** — `draw_stretchy_object_common` `$921F–$9222` chains `JR Z,exit` (clamp to 1 if result==0) with `JR NC,keep` (keep A if positive) after a `SUB C`. Together they mean clamp to 1 when result **≤ 0**, not `< 0`. The C code `if ((s8) Avertical < 0) Avertical = 1` missed the zero case, leaving a sprite exactly filling the available height at height 0 instead of 1. Fix: `if (Avertical <= 0) Avertical = 1;`.
 
-**Fix:** Use a direct unsigned comparison: `if (L < E)` (i.e. `if ((HLroad_pos & 0xFF) < (DEother_road_pos & 0xFF))`). Never use `(s8)` or `& 0x80` to recover a carry flag — the sign and carry flags from subtraction are the same only for differences in [0, 127]. This applies equally when the subtraction result is written straight into a struct field rather than held in a local: capture the pre-subtraction operands first if the comparison needs them.
+**Fix:** Use a direct unsigned comparison: `if (L < E)` (i.e. `if ((HLroad_pos & 0xFF) < (DEother_road_pos & 0xFF))`). Never use `(s8)` or `& 0x80` to recover a carry flag — the sign and carry flags from subtraction are the same only for differences in [0, 127]. This applies equally when the subtraction result is written straight into a struct field rather than held in a local: capture the pre-subtraction operands first if the comparison needs them. When two conditional jumps follow the same `SUB` (typically `JR Z` then `JR NC`), read both together — the combined condition is usually `<= 0`, not `< 0`.
 
 **Commits:** `0f95209`, `bc1e1cb`, `02d2a5a`
 
@@ -143,7 +144,7 @@ A third form: a `u8[]` table is indexed via `LD HL, table-1; ADD HL,BC` which gi
 
 ---
 
-## 11. `>> 8` on a `u8*` is always 0
+## 11. `>> 8` on a `u8` is always 0
 
 **Root cause:** A `u8` value promoted to `int` shifted right 8 is zero for all 8-bit inputs. The shift was intended to read a second byte from a packed pixel pair.
 
@@ -151,7 +152,7 @@ A third form: a `u8[]` table is indexed via `LD HL, table-1; ADD HL,BC` which gi
 
 **Fix:** Two separate `flip_table[*src++]` calls, matching the odd-width path.
 
-A second form of the same mistake: the Z80 reads two consecutive bytes with `LD B,(HL); INC HL; LD C,(HL)` and packs them into a `u16` register pair. The C translation sometimes packs them into a single `u8` variable then extracts the "high byte" with `>> 8`. Shifting a `u8` right 8 bits is always zero (the value fits in 8 bits). Fix: read the two bytes into two separate `u8` variables matching the Z80 B and C registers. (`scroll_horizon`, `$B868–$B86A`)
+A second form of the same mistake: the Z80 reads two consecutive bytes with `LD B,(HL); INC HL; LD C,(HL)` and packs them into a `u16` register pair. The C translation sometimes packs them into a single `u8` variable then extracts the "high byte" with `>> 8`. Fix: read the two bytes into two separate `u8` variables matching the Z80 B and C registers. (`scroll_horizon`, `$B868–$B86A`)
 
 **Commit:** `c5c3e6c`
 
@@ -208,7 +209,7 @@ bit 0 = keydefs[7]   (last scanned)
 
 The `USERINPUTFLAG_*` constants follow the `user_input` bit layout `QPBFUDLR` (bit 7 = QUIT, bit 0 = RIGHT). For the bit positions to match, the keydefs array must be stored in the same order: `keydefs[0]` = the key whose pressed state should appear in bit 7 (QUIT), down to `keydefs[7]` = RIGHT (bit 0).
 
-**Symptom:** The keydefs were initialised with `keydefs[USERINPUT_RIGHT=0]` first and `keydefs[USERINPUT_QUIT=7]` last. This placed the RIGHT key at bit 7 of the result and QUIT at bit 0 — the exact opposite of the `USERINPUTFLAG_*` expectations. In keyboard mode every key action was mapped to the wrong input: pressing P (RIGHT) set bit 7, which the game read as QUIT; pressing 0 (QUIT) set bit 0, which the game read as RIGHT; and so on for all eight keys. Kempston (arrow-key/joystick) input was unaffected because it sets the Kempston register bits directly, which already match the `USERINPUTFLAG_*` positions.
+**Symptom:** The keydefs were initialised with `keydefs[USERINPUT_RIGHT=0]` first and `keydefs[USERINPUT_QUIT=7]` last — the exact opposite of the `USERINPUTFLAG_*` expectations. In keyboard mode every key action was mapped to the wrong input: pressing P (RIGHT) set bit 7, read as QUIT; pressing 0 (QUIT) set bit 0, read as RIGHT; and so on for all eight keys. Kempston input was unaffected because it sets the Kempston register bits directly, already matching `USERINPUTFLAG_*` positions.
 
 The Z80 post-processing (`ks_common` at `$A0FB`) confirms the expected layout: `AND $03; CP $03` checks bits 0+1 for simultaneous LEFT+RIGHT, and `AND $0C; CP $0C` checks bits 2+3 for simultaneous UP+DOWN — consistent with `USERINPUTFLAG_RIGHT=0x01`, `USERINPUTFLAG_LEFT=0x02`, `USERINPUTFLAG_DOWN=0x04`, `USERINPUTFLAG_UP=0x08`.
 
@@ -218,25 +219,23 @@ The same ordering is required in Kempston mode: `keyscan_keydefs` scans `keydefs
 
 ---
 
-## 16. u8 arithmetic instructions — NEG, ADD, SUB results must stay u8
+## 16. u8 wraparound arithmetic — NEG, ADD, SUB, and sign extension
 
-**Root cause:** Z80 arithmetic instructions (`NEG`, `ADD A,n`, `SUB n`, etc.) operate on the 8-bit accumulator; the result always wraps at 256. In C, the variable is typically an `int`, so the operation uses 32-bit arithmetic. For values ≥ 128, the C result and the Z80 result diverge:
+**Root cause:** Z80 8-bit arithmetic (`NEG`, `ADD A,n`, `SUB n`) and sign-extension (`H=0x00/0xFF` from bit 7 of L) always wrap/extend within an 8-bit accumulator. In C the variable is typically an `int`, so:
 
-- `NEG` of `u8` value 254: Z80 gives 2 (`256 − 254`). C gives `−254`.
-- `ADD A, n` with overflow: Z80 wraps at 256; `int` does not.
+- `NEG` on `int` gives a large negative number instead of the wrapped positive Z80 result (e.g. Z80 `NEG` of 254 gives 2; C gives −254).
+- `ADD`/`SUB` overflow does not wrap at 256 the way Z80 does.
+- A common but wrong sign-extension idiom, `if (val & 0x80) val |= 0xFF00;`, only works when `val` is already a negative `int`. For a positive `int` with bit 7 set (e.g. 128), it produces `0xFF80 = 65408` instead of `−128` — a full 65536 error that propagates into any accumulator the value feeds.
 
-If the large (or negative) C result is then used in further arithmetic — a subtraction, a multiply, a sign-flag test — the error cascades.
+If left unmasked/unextended, the error cascades into later subtraction, multiplication, or sign-flag tests fed by the same value.
 
-**Symptom:** `update_road_level` stored the raw curvature byte in `state->current_curvature` (a `u8`). The value 254 (`0xFE`, = signed −2) was read back as `int` 254 and negated with plain `−Acurrent_curvature`, giving −254. A later subtraction of `curvature_ticks` (1) gave −255. `(s8)(−255)` = 1, which is positive, so the 4.5× multiply fired on −255 instead of the correct 1, producing `horizontal_adjust ≈ −132` instead of −4. The car jumped ~130 road-position units per frame on any curve.
+**Bugs:**
 
-**Fix:** When the Z80 instruction is a pure 8-bit arithmetic op on a register that may hold values ≥ 128, cast the result back to `u8` before using it in C arithmetic:
+- `update_road_level` stored the raw curvature byte (254 = signed −2) in a `u8` field, read it back as `int` 254, and negated it with plain `-Acurrent_curvature`, giving −254 instead of 2. A later subtraction and `(s8)` cast produced the wrong sign, so the 4.5× multiply fired on −255 instead of 1, jumping the car ~130 road-position units per frame on any curve. (`087c724`)
+- `build_curve_table`'s sign extension used `|= 0xFF00` on a rounded multiply result that could be a positive `int` ≥ 128, producing a 65536 drift in the road-position accumulator every frame it fired.
+- `build_curve_table_fill` (`bct_endbit_A`) masked `Atotal &= 0xFF` inside the inner loop but not after `Atotal -= Ldash` at the outer loop boundary; when that subtraction went negative, the next outer iteration needed fewer additions to trip the C overflow check than the Z80's wrapped byte would have, writing wrong x-position table values.
 
-```c
-/* Z80: NEG ; A = -A (u8) */
-Acurrent_curvature = (u8)(-Acurrent_curvature);
-```
-
-The same applies to `ADD` and `SUB` when overflow is expected: `result = (u8)(a + b)` or `result = (u8)(a - b)`. The `(s8)` sign-test at branch sites is unaffected — only the stored/accumulated value needs the cast.
+**Fix:** Cast the result of any 8-bit-wrapping op back to `u8` immediately: `result = (u8)(-A)`, `result = (u8)(a + b)`, `result = (u8)(a - b)`. For sign extension, cast the low byte through `(s8)` (or `(s16)` for a 16-bit source) rather than OR-ing in `0xFFnn`. Whenever a Z80 `SUB`/`ADD`/`NEG` result persists across loop iterations as an accumulator, mask or cast it back into range after every operation that could push it outside `[0, 255]` — a guard inside the loop body is not enough if a post-loop step can leave it out of range before the next iteration begins.
 
 **Commit:** `087c724`
 
@@ -264,57 +263,22 @@ const stage_t *stages[MAX_STAGES + 2] = {
 
 ---
 
-## 18. Partial sign extension with `|= 0xFF00`
+## 18. `JR Z` / `JR NZ` / `RET Z` / `RET NZ` — branch polarity inverted
 
-**Root cause:** The Z80 sign-extends a byte to a 16-bit register pair by loading H with 0x00 or 0xFF depending on bit 7 of L. The C equivalent is sometimes written as `if (val & 0x80) val |= 0xFF00;`. This is only correct when `val` is already a negative `int` (bits 8–31 are already `0xFF…`). For a _positive_ `int` with bit 7 set — e.g. the value 128 (`0x00000080`) — the OR produces `0x0000FF80 = 65408` instead of `−128`. The error is one full `u16` wrap (65536) and propagates into any accumulator the value is added to.
+**Root cause:** `JR NZ, label` (or `RET NZ`) means _act if non-zero_ — the code that immediately follows a skipped jump, or the code that falls through a `RET`, runs on the **opposite** condition to what the mnemonic suggests at a glance. Translating `JR NZ` as `if (reg != 0) { ...code that should run on skip... }`, or `RET Z` as `if (value) return`, inverts the condition.
 
-**Symptom:** In `build_curve_table`, the rounded multiply result (`HLdash_multiplied`) could land at 128 or above after the rounding step (`>> 8` + carry bit). The `|= 0xFF00` sign extension then produced 65408 for value 128, 65409 for 129, etc. `DEdash_roadposacc += 65408` drifted by 65536 relative to the Z80 road-position accumulator, corrupting all subsequent curvature table entries for that frame.
+**Bugs:**
 
-**Fix:** Use a `(s8)` cast on the low byte rather than a conditional OR:
+- `update_road_level` had `if (Ay_offset) { /* set up jump */ }` where the Z80 was `JR NZ,$B970` (skip jump setup if `mhc_y_offset != 0`). The jump launch code therefore ran only when the car was already airborne, so the car never launched off a road drop. Fix: `if (!Ay_offset) { /* set up jump */ }`.
+- `scroll_horizon` at `$B8A5–$B8A6` does `AND A; RET Z` to return early when two counters are equal (no ticks elapsed). The C code `if (Adiff) return` returned whenever the counters _differed_ — exactly when the vertical scroll should run — making the function a no-op on every frame that scrolling was due. Fix: `if (!Adiff) return;`.
 
-```c
-A_curvature       = HLdash_multiplied & 0xFF;
-HLdash_multiplied = (s8) A_curvature; /* sign extend: Z80 DEC H / RRA */
-```
+**Rule:** For every `JR Z`/`JR NZ`/`JP Z`/`JP NZ`, the C `if` guarding the fallthrough code uses the **opposite** polarity to the jump: `JR NZ → skip` = `if (reg == 0)` in C; `JR Z → skip` = `if (reg != 0)` in C. For `RET Z`/`RET NZ`, the same inversion applies to the early-exit guard: `RET Z` → `if (value == 0) return`; `RET NZ` → `if (value != 0) return`. Cross-check: the code that falls through should be the "there is work to do" path.
 
-`(s8)` maps 0–127 → 0–127 and 128–255 → −128–−1, exactly matching the Z80 `{H=0x00 or 0xFF, L=A}` construction, regardless of the sign of the `int` being extended.
-
-**Rule:** Never use `|= 0xFFnn` to sign-extend a value that might be a positive `int`. Always cast through `(s8)` (8-bit source) or `(s16)` (16-bit source).
+**Commits:** `136e57d`, `41de175`
 
 ---
 
-## 19. 8-bit subtraction result not masked back to `u8`
-
-**Root cause:** Z80 `SUB n` operates entirely in the 8-bit accumulator; the result always wraps at 256. In C the variable is an `int`, so the subtraction is 32-bit and can go negative. If the result is then used in a subsequent iteration of a loop — rather than being consumed and discarded — the negative C value diverges from the Z80's wrapped-positive value on every future accumulation step.
-
-**Symptom:** In `build_curve_table_fill` (`bct_endbit_A`), `Atotal &= 0xFF` was applied inside the inner loop but not after `Atotal -= Ldash` at the outer loop boundary. When the inner loop exited via overflow (carry set) and the masked `Atotal` was less than `Ldash`, the subtraction produced a negative `int`. On the next outer iteration, `Atotal += Cdash` needed fewer additions before the C overflow check (`Atotal > 0xFF`) fired, compared to the Z80's addition on the wrapped positive byte. This caused one fewer or more DE increment before each PUSH, writing wrong x-position values into the road table.
-
-**Fix:** Apply `& 0xFF` immediately after any subtraction whose result feeds back into 8-bit accumulation:
-
-```c
-Atotal -= Ldash;
-Atotal &= 0xFF; /* Z80 SUB L wraps; without mask Atotal goes negative */
-```
-
-**Rule:** Whenever a Z80 `SUB` (or `ADD`, `NEG`) result persists across loop iterations as an 8-bit accumulator, mask it back to `[0, 255]` after every operation that could leave it outside that range. The guard inside the loop body is not sufficient if a post-loop subtraction can make the value negative before the next iteration begins.
-
----
-
-## 20. `JR Z` / `JR NZ` branch direction inverted
-
-**Root cause:** `JR NZ, label` means _skip to label if non-zero_ — the code that immediately follows the jump runs when the register **is** zero. Translating this as `if (reg != 0) { ... }` puts the code inside the block when the register is non-zero, exactly backwards.
-
-**Bug:** `update_road_level` had `if (Ay_offset) { /* set up jump */ }` where the Z80 was `JR NZ,$B970` (skip jump setup if `mhc_y_offset != 0`). The jump launch code therefore ran only when the car was already airborne and was dead on the ground, so the car never launched off a road drop.
-
-**Fix:** `if (!Ay_offset) { /* set up jump */ }` — enter the block when the tested register is zero, matching `JR NZ → skip`.
-
-**Rule:** For every `JR Z` / `JR NZ` / `JP Z` / `JP NZ` near a translated block, identify what value the register holds at that point and confirm the C `if` condition fires on the **opposite** polarity to the Z80 jump. `JR NZ → skip` = `if (reg == 0)` in C. `JR Z → skip` = `if (reg != 0)` in C.
-
-**Commit:** `136e57d`
-
----
-
-## 21. SBC carry chain — carry not propagated between chained subtractions
+## 19. SBC carry chain — carry not propagated between chained subtractions
 
 **Root cause:** Z80 `SBC HL,DE` uses the carry flag as borrow input. When two `SBC` instructions appear in sequence, the carry output of the first feeds the carry input of the second. The C translation sets `carry` from the first subtraction, but if the second subtraction is written as plain `-=` the carry is never updated, so `if (carry)` after the second subtraction still reflects the first test.
 
@@ -333,7 +297,7 @@ carry = (HLroadpos <= 0); /* Z80 SBC HL,DE with carry_in=1 */
 
 ---
 
-## 22. `INC A; INC A; JP NZ` loop — u8 wrap, not decrement
+## 20. `INC A; INC A; JP NZ` loop — u8 wrap, not decrement
 
 **Root cause:** The Z80 loop pattern `INC A; INC A; JP NZ` advances A by 2 each iteration and continues until A wraps from 254 to 256 = 0 (u8). Translating the loop as `while (--Aiterations > 0)` after `Aiterations += 2` gives a net step of +1 per iteration (not +2), running far more iterations than intended and revisiting each table slot multiple times.
 
@@ -352,13 +316,13 @@ Aiterations += 2;
 
 ---
 
-## 23. Stale working register — `LD A,E` swap before computation
+## 21. Stale working register — `LD A,E` swap before computation
 
 **Root cause:** The Z80 sometimes loads a register into A immediately before a computation to use its _old_ value, even though a newer value is also in scope. When the C translation sees both variables live at that point, it is easy to use the newer one by mistake — the C port just reads the name, not the timing.
 
-**Bug:** `ds_attributes` (`update_screen`) loads `A = $E34C` (current delta) and `E = $E34D` (previous delta), then saves A to `$E34D`. The Z80 then does `LD A,E` at `$BD67` so that the rest of the block — the sign extension (`SBC A,A`), the shift (`ADD A,A; ADD A,A`), and the pointer adjustment — all operate on the _previous_ delta. The C port kept `A` (current delta) as the working value throughout the block, silently using the wrong frame's data for every frame that the block fired.
+**Bug:** `ds_attributes` (`update_screen`) loads `A = $E34C` (current delta) and `E = $E34D` (previous delta), then saves A to `$E34D`. The Z80 then does `LD A,E` at `$BD67` so that the rest of the block — sign extension, shift, pointer adjustment — all operate on the _previous_ delta. The C port kept `A` (current delta) as the working value throughout, silently using the wrong frame's data every time the block fired.
 
-**Fix:** After the save (`state->horizon_attr[2] = A`), switch to `E` for all subsequent computation inside the `if (E != 0)` block. Compute `D` from `E` first (before shifting it), then shift `E`:
+**Fix:** After the save (`state->horizon_attr[2] = A`), switch to `E` for all subsequent computation. Compute `D` from `E` first (before shifting it), then shift `E`:
 
 ```c
 D = (E >= 64) ? 0xFF : 0x00;   /* sign from previous delta */
@@ -371,25 +335,23 @@ E = (E << 2);                    /* E = previous * 4 */
 
 ---
 
-## 24. `LD SP,HL; PUSH × N` fills backward, not forward
+## 22. SP-based bulk fill/copy — `PUSH` fills backward, `POP` copies forward
 
-**Root cause:** The Z80 `PUSH` instruction decrements SP by 2 _before_ writing. So `LD SP,HL; PUSH BC × 15` fills 30 bytes at addresses `HL−30 … HL−1` (backward from HL, exclusive). In C, `memset(ptr, colour, 30)` fills forward from `ptr` to `ptr+29` — exactly the wrong direction when `ptr` is an end-of-row pointer.
+**Root cause:** `PUSH` decrements SP by 2 _before_ writing; `POP` reads 2 bytes then increments SP by 2 _after_. `LD SP,HL; PUSH BC × N` therefore fills `2N` bytes backward from HL (at `HL−2N … HL−1`), not forward. `LD SP,HL; POP DE × N` reads `2N` bytes forward from HL, verbatim, into the destination. Naive C translations get the fill direction wrong, or unroll the byte-copy loop as a repetitive switch instead of a `memcpy`/`memset`.
 
-**Bug:** `ds_attributes` (`update_screen`) maintains `horizon_attribute` as a Z80 address pointing to the _last byte_ of the current sky/ground boundary row (e.g. `$59BF` = byte 31 of attribute row 13). The Z80 sets `SP = $A186` (that pointer) and pushes 15 words backward, filling bytes 1–30 of the row. The C port called `memset(HLattrs, colour, 30)` which wrote byte 31 of that row and bytes 0–28 of the _next_ row, spilling sky colour into the wrong attribute rows every frame the block fired.
+**Bugs:**
 
-**Fix:** Shift the `memset` start back by the fill length:
+- `ds_attributes` maintains `horizon_attribute` as a pointer to the _last byte_ of the current sky/ground boundary row. The Z80 sets `SP` to that pointer and pushes 15 words backward, filling bytes 1–30 of the row. The C port called `memset(HLattrs, colour, 30)` (forward), spilling sky colour into the wrong attribute rows every frame the block fired. Fix: `memset(HLattrs - 30, colour, 30);` — the pointer is an exclusive upper bound.
+- `draw_tunnel` uses `JP (IX)` to enter a fixed 16-slot `PUSH` chain at a variable offset, filling `2 * (16 − start)` bytes backward. A 16-case fall-through `switch` works but is needless; the count is `n = 16 - start`, so `SPoutput -= n * 2; memset(SPoutput, fill, n * 2);` replaces it entirely.
+- `plot_sprite_even`/`plot_sprite_odd` copy sprite bytes verbatim via `LD SP,HL; POP DE` pairs. A fall-through switch copying byte-by-byte works but the byte count follows directly from the jump-table index, so a single `memcpy(dst, src, n)` replaces it — valid only because the bytes are copied verbatim with no mask or flip transform.
 
-```c
-memset(HLattrs - 30, colour, 30);   /* backward fill from end-of-row pointer */
-```
+**Rule:** `LD SP,HL` followed by N `PUSH`es is `memset(ptr - 2*N, value, 2*N)` — backward from an exclusive upper-bound pointer. `LD SP,HL` followed by N `POP`s that write each byte verbatim is `memcpy(dst, ptr, 2*N)` — forward. Compute N from the jump-table entry index rather than unrolling a switch. Flipped or masked sprites are not candidates for `memcpy`: they apply a per-byte lookup/transform.
 
-**Rule:** Whenever the Z80 does `LD SP,HL` followed by N `PUSH` instructions to fill memory, the C equivalent is `memset(ptr - 2*N, value, 2*N)`. The pointer is an _exclusive upper bound_, not the start of the region. If the pointer is an end-of-line attribute pointer (pointing at byte 31 of a 32-byte row), the fill covers bytes 1–30, leaving bytes 0 and 31 untouched — match that in C.
-
-**Commit:** fix ds_attributes backward-fill bug
+**Commits:** fix ds_attributes backward-fill bug (`draw_tunnel`, `plot_sprite_even`/`odd` simplifications)
 
 ---
 
-## 25. `JP M` / `JP P` as conditional skip — not a loop
+## 23. `JP M` / `JP P` as conditional skip — not a loop
 
 **Root cause:** `JP M, addr` jumps _forward_ when the Sign flag is set (result negative). When two CALL instructions are separated by a `JP M`, it is a conditional skip over the first CALL, not a backwards branch. The structure looks like:
 
@@ -402,7 +364,7 @@ after_second:
 
 Translating this as `for(;;)` (or any loop) creates an infinite loop when the first CALL's row-count is 0 — the `JP M` condition fires immediately and the loop never terminates.
 
-**Bug:** `draw_object_clipped` at `$9404–$941D` has two sequential plot calls. When `doc_rows_main − BCpadding < 0`, `JP M,$941A` skips the first CALL and jumps to the `ADD A,B` / `B=A` / jump-dispatch sequence. The `for(;;)` translation never terminated when `doc_rows_2nd == 0` (e.g. a 2-byte-wide bitmap), hanging `draw_scene_objects` on any frame containing a telegraph pole or similar narrow stretchy segment.
+**Bug:** `draw_object_clipped` at `$9404–$941D` has two sequential plot calls. When `doc_rows_main − BCpadding < 0`, `JP M,$941A` skips the first CALL and jumps to the exit sequence. The `for(;;)` translation never terminated when `doc_rows_2nd == 0` (e.g. a 2-byte-wide bitmap), hanging `draw_scene_objects` on any frame containing a telegraph pole or similar narrow stretchy segment.
 
 **Fix:** Replace the loop with two straight-line call sites and an `if` guard over the first one:
 
@@ -413,13 +375,13 @@ if (rows_adjusted >= 0) {
 plot_sprite_even(..., rows_second);
 ```
 
-**Rule:** When you see `CALL; JP M/P, skip_target; CALL`, it is two operations with a conditional skip, never a loop. Look for the forward address of the jump target to confirm the direction.
+**Rule:** When you see `CALL; JP M/P, skip_target; CALL`, it is two operations with a conditional skip, never a loop. Look for the forward address of the jump target to confirm the direction. Before writing any `Conv: NOT a loop` comment for a similar block, grep the skool for every `JP`/`JR`/`DJNZ` that targets an address inside it — a single back-edge (e.g. `draw_object_clipped` `$9417 JP $9404`) makes it a genuine loop regardless of how sequential the surrounding code looks.
 
 **Commit:** `7e54fb2`
 
 ---
 
-## 26. `DEC HL` after `LD A,(HL)` — pointer moves, value is unchanged
+## 24. `DEC HL` after `LD A,(HL)` — pointer moves, value is unchanged
 
 **Root cause:** Z80 `LD A,(HL)` reads the byte at HL into A; a following `DEC HL` (or `DEC HL; DEC HL`) moves the pointer backward. The value in A is not affected. The C equivalent is `A = *ptr; ptr -= N`. Writing `A = *ptr - N` or `*ptr -= N` instead modifies the _value_ and leaves the pointer unchanged.
 
@@ -438,7 +400,7 @@ HLptr -= 2;              /* DEC HL; DEC HL */
 
 ---
 
-## 27. Signed Z80 register used in arithmetic — cast to `(s8)` at the use site
+## 25. Signed Z80 register used in arithmetic — cast to `(s8)` at the use site
 
 **Root cause:** A Z80 register field annotated as a signed offset (SM field, column adjustment, etc.) may be declared `u8` in C because it can hold values 0–255. When the Z80 uses it in `ADD A,D` (a signed addition), the C `+= D_col_pos` treats it as unsigned, giving wildly wrong results for values ≥ 128.
 
@@ -454,267 +416,51 @@ Or declare the field `s8` if it is never used as unsigned.
 
 **Rule:** Any Z80 SM field or register that represents a signed offset must be cast to `(s8)` (or declared `s8`) before use in C arithmetic. The bit-7 conditional approach (`if (D & 0x80) A -= (256 - D); else A += D`) is error-prone and verbose; `(s8)` cast is always correct.
 
-**Commits:** `944371a`
+**Commit:** `944371a`
 
 ---
 
-## 28. `ADD A,B; RET C` — carry means u8 overflow, not `A < B`
+## 26. Addition carry mistranslated — overflow guards, `(s8)` sign tests, and `int` accumulators
 
-**Root cause:** The Z80 `ADD A,B` instruction sets carry when the 8-bit result overflows (`A + B > 255`). `RET C` then returns on that overflow. The C translation sometimes replaces this with `if (A < B) return` — a comparison that fires when A is less than B, which is a completely different (and almost opposite) condition for typical small positive B values.
+**Root cause:** After `ADD A,B`, carry means the 8-bit sum overflowed (`A + B > 255`) — a completely different condition from a magnitude comparison of the inputs, and unrelated to the sign flag (bit 7 of the result). Three related mistakes recur:
 
-**Bug:** `draw_object_right_stretchy_entrypt` at `$9306–$9307` does `ADD A,B; RET C` to skip drawing right-side objects when the road edge plus the depth offset wraps past 255 (i.e., the object is off-screen right). The C translation had `if (Awidth_bytes < Bdepth) return`, which fired when the x-position was _less than_ the depth (a completely different guard). For near-horizon rows where `xpos_road_centre[k]` is small (e.g. 5–35) and depth is 16–36, the wrong guard returned early, silently dropping those objects. On 3-lane sections where small xpos values occur most often, entire rows of right-side scenery vanished, making the road surface visible through the empty space — appearing as if objects were intruding into the road.
+- Translating `ADD A,B; RET C` as `if (A < B) return` — a magnitude comparison, not an overflow check.
+- Translating `ADD A,C; JR C` as `if ((s8) A < 0)` — testing the sign flag (bit 7) instead of carry. For sums in [128, 255], carry is clear (no overflow) but bit 7 is set, so the sign test fires when it shouldn't.
+- Using the unsigned-wrap idiom `if (sum < addend)` to detect u8 overflow when `sum` is declared `int`. Since `int` never wraps, this is always false after a non-negative addition.
 
-**Fix:**
+**Bugs:**
 
-```c
-} else {
-    Awidth_bytes += Bdepth;         /* $9306: ADD A,B */
-    if (Awidth_bytes > 255) return; /* $9307: RET C — u8 overflow */
-}
-```
+- `draw_object_right_stretchy_entrypt` (`$9306–$9307`, `ADD A,B; RET C`): C had `if (Awidth_bytes < Bdepth) return`, an unrelated magnitude guard. For near-horizon rows with small xpos and larger depth, this returned early and dropped right-side scenery objects, making the road surface visible through empty space. Fix: `Awidth_bytes += Bdepth; if (Awidth_bytes > 255) return;`.
+- `dust_stones_stuff` (`$AA33–$AA34`, `ADD A,E; RET NC` — inverse form, returns when there is *no* carry): C had `if (A >= E) return`, true for almost any positive A, making the draw call unreachable. Fix: `A += E; if (A <= 255) return;`.
+- `draw_overhead` (`$90D4–$90D5`, `ADD A,C; JR C`): C used `if ((s8) A >= 0)` (sign test) instead of `if (A <= 255)` (carry test), skipping the span-width computation for sums in [128, 255] where the Z80 would have entered it.
+- `advance_hazard` (`$ADCD–$ADD1`, `ADD A,C`): `C_dist` was declared `int`; `if (C_dist < IXhazard->distance)` was always false. Fix: `if (C_dist > 255)` — the `int` sum exceeds 255 exactly when the Z80 8-bit addition would have carried.
 
-**Rule:** `ADD A,B; RET C` is an overflow guard, not a magnitude comparison. Translate it as: add first, then check if the result exceeds 255. The condition `A < B` (which checks whether the _inputs_ have a certain order) is unrelated to carry from addition.
-
-The inverse form, `ADD A,B; RET NC`, returns when there is **no** carry (sum ≤ 255) and falls through only on overflow. C equivalent: `A += B; if (A <= 255) return;`. Do not use `if (A >= B) return` — that fires on a magnitude comparison and is almost always true for any positive A.
-
-**Bug (RET NC):** `dust_stones_stuff` at `$AA33–$AA34` does `ADD A,E; RET NC` to skip the left-helicopter draw when the x-position plus pixel-width does not overflow (object is not wrapping). The C code `if (A >= E) return` checked whether the sum was at least as large as the pixel-width addend — true for almost any non-zero A — making the draw call unreachable.
+**Fix/Rule:** Add first, then check the *sum*, never the inputs or the sign bit: `A += B; if (A > 255) { /* carry branch */ }` or `if (A <= 255) { /* no-carry branch */ }`. When the accumulator is `int`, use `sum > 255` in place of the unsigned-wrap idiom `sum < addend`.
 
 **Commits:** `9409d37`, `55be0c6`
 
 ---
 
-## 29. `RET Z` / `RET NZ` early exit — polarity is the inverse of the fallthrough code
+## 27. `EX AF,AF'` — wrong side receives the banked value, or restored flags misread
 
-**Root cause:** `RET Z` returns _when the tested register is zero_. Translating this as `if (value) return` inverts the condition: the function now returns when the value is non-zero (i.e., when there is work to do) and only falls through when the value is zero (when there is nothing to do).
+**Root cause:** `EX AF,AF'` swaps both A and F (all flags) with their shadow counterparts. Two related mistakes:
 
-**Bug:** `scroll_horizon` at `$B8A5–$B8A6` does `AND A; RET Z` to return early when `fast_counter − horizon_y_step == 0` (no ticks have elapsed). The C code `if (Adiff) return` returned whenever the two counters _differed_, which is exactly when the vertical scroll should run. The function was therefore a no-op every frame that any scrolling was due, and only fell through (to do nothing meaningful) on the rare frame when the counters happened to be equal.
+1. **Wrong variable assigned after unbank.** Inside a shuttle or loop, one C variable is accumulated in A while another is banked in A'. At the paired `EX AF,AF'` that restores the main register, A receives the banked value and A' receives the value that was live in A — the two C variables must be assigned to the correct sides, not swapped, and not both captured at the unbank point (the value banked at the *first* `EX AF,AF'` must be captured there, immediately after it is loaded — capturing it at the unbank point instead grabs whatever unrelated value A holds by then).
+2. **Restored flags, not current A, drive the next branch.** A `JP P`/`JP M` immediately after an `EX AF,AF'` tests the flags restored by that EX — which reflect whatever instruction set them *before* the original bank — not any instruction that ran between the EX and the branch. If a new value is loaded into A in between (`LD A,C; JP P`), the branch is independent of that value.
 
-**Fix:** `if (!Adiff) return;`
+**Bugs:**
 
-**Rule:** For every `RET Z` / `RET NZ` (or `JP Z` / `JR Z`), the C `if` must use the **opposite** polarity to the Z80 instruction. `RET Z` → `if (value == 0) return` (or `if (!value) return`). `RET NZ` → `if (value != 0) return`. Cross-check: the fallthrough code should be the "there is work to do" path.
+- `scroll_horizon` vertical-scroll loop: `EX AF,AF'` banks `Adiff` (ticks remaining) and unbanks `Ahorizon_y_a25a_delta` (accumulated delta). The final `EX AF,AF'` after the loop hands A (adjusted counter) to `var_a25b` and A' (accumulated delta) to `var_a25a`. The C update assignments were swapped (`horizon_y_accum += Ahorizon_y_a25a_delta` instead of `+= Bcounter`, and vice versa for `horizon_y_step`).
+- `dust_stones_stuff` (`$A9FF`): `EX AF,AF'` banks a table byte into A', then A is overwritten by an unrelated LOD index computation. The C code captured `saved_A = A` at the *second* (unbank) `EX AF,AF'` comment, grabbing the LOD index (always ≥ 0) instead of the table byte, making the intended `if (saved_A < 0)` branch dead code on every frame. Fix: assign `saved_A = A` at the *first* (bank) comment, immediately after the value is loaded.
+- `scroll_horizon` (`$B872`): the restored AF reflects `AND A` at `$B851` (sign of `current_curvature`). The immediately following `LD A,C; JP P,$B879` (`LD A,C` doesn't affect flags) branches on `current_curvature`'s sign, not C's. The C code tested `if ((s8) Aregular < 0)` (the table value C, always non-negative), so NEG was never applied and the backdrop could only scroll rightward. Fix: test `if ((s8) current_curvature < 0)` instead.
 
-**Commit:** `41de175`
+**Rule:** At a bank-point `EX AF,AF'`, assign the shadow C variable immediately, not at the unbank point. After a loop-terminating `EX AF,AF'`, trace which C variable was live in A vs A' and assign each to the correct state field. When `JP P`/`JP M` follows an `EX AF,AF'`, trace back to the flag-setting instruction (`AND A`, `OR A`, `CP`, or arithmetic) that preceded the *original* bank to identify what is actually being tested — not the current A register.
 
----
-
-## 30. `EX AF,AF'` accumulator swap — wrong variable receives the banked value
-
-**Root cause:** `EX AF,AF'` (or `EXX`) inside a processing loop shuttles one accumulator through A' while the main register computes something else. On the paired `EX AF,AF'` that restores the main register, A gets the banked accumulated value and A' gets the current main value. The C variables for the two logical values must be assigned from the correct sides after each swap.
-
-**Bug:** `scroll_horizon` (`$B848`): inside the vertical-scroll loop, `EX AF,AF'` at `$B8AC` banks Adiff (ticks remaining) into A' and unbanks Ahorizon_y_a25a_delta (accumulated delta) into A. The loop then does `ADD A,C` to accumulate into A, and the paired `EX AF,AF'` at `$B8AE` puts the accumulated delta back into A'. After the loop, `EX AF,AF'` at `$B8CB` hands A (= adjusted Bcounter) to `var_a25b` and A' (= Ahorizon_y_a25a_delta) to `var_a25a`. In C, the two update assignments were swapped: `horizon_y_accum += Ahorizon_y_a25a_delta` and `horizon_y_step += Bcounter`, where the Z80 does the opposite (`var_a25a += B`, `var_a25b += A'`).
-
-**Fix:**
-
-```c
-state->horizon_y_accum += Bcounter;             /* $B8B4: var_a25a += B */
-/* ... sign-extend BCcounter ... */
-state->session.horizon_level += BCcounter;
-/* EX AF,AF' unbanks Ahorizon_y_a25a_delta */
-state->horizon_y_step += Ahorizon_y_a25a_delta; /* $B8CC: var_a25b += A (delta) */
-```
-
-**Rule:** After a paired `EX AF,AF'` that terminates a loop, trace which C variable was being accumulated in A vs A' and assign the correct one to each state field. The variable that was in A' (banked) during the loop is retrieved by the final EX; do not confuse it with the variable that was live in A just before the EX.
-
-A second form: `EX AF,AF'` used as a **simple bank-then-unbank shuttle** (no loop). The C convention is to assign the shadow variable at the bank point (`// EX AF,AF'` comment where A is saved) and read it back at the unbank point. The mistake is to place the assignment at the unbank point instead, which captures whatever A holds at that moment — usually a completely different value.
-
-**Bug (shuttle):** `dust_stones_stuff` (`$A9FF`): `EX AF,AF'` banks table byte 3 into A', then A is overwritten by the LOD index computation. The paired `EX AF,AF'` at `$AA21` should unbank table byte 3. In C, `saved_A = A` appeared at the second `// EX AF,AF'` comment (unbank), capturing the LOD index (0–5, always ≥ 0) rather than the table byte. The `if (saved_A < 0)` branch was therefore dead code on every frame.
-
-**Fix:** Place `saved_A = A` at the first `// EX AF,AF'` comment (the bank), immediately after the value is loaded. Do not reassign it at the unbank point.
-
-**Commits:** `41de175`, `55be0c6`
+**Commits:** `41de175`, `55be0c6`, `87f70fa`
 
 ---
 
-## 31. `int` accumulator — carry idiom `sum < addend` always false
-
-**Root cause:** The standard unsigned-arithmetic trick for detecting u8 overflow after `sum += addend` is `if (sum < addend)` — if the byte wrapped, the truncated sum is less than the addend. This idiom only works when `sum` is a true `u8` (or other unsigned type that wraps at its maximum). When `sum` is `int`, the addition never wraps and `sum < addend` is always false after a non-negative addition.
-
-**Bug:** `advance_hazard` (`$ADCD–$ADD1`): `C_dist += IXhazard->distance` adds the hazard distance to a running accumulator. The Z80 `ADD A,C` sets carry when the byte overflows, advancing the perpendicular lane counter. The C variable `C_dist` was declared `int`; the idiom `if (C_dist < IXhazard->distance)` was therefore always false, making the perp lane-advance path dead code on every frame.
-
-**Fix:** Check `if (C_dist > 255)` — the `int` sum exceeds 255 exactly when the Z80 8-bit addition would have carried.
-
-```c
-C_dist += IXhazard->distance;   /* $ADD0: ADD A,C */
-if (C_dist > 255) {             /* $ADDB: JR NC — carry from ADD */
-    A_lane++;
-    ...
-}
-```
-
-**Rule:** Never use `sum < addend` to detect u8 carry when `sum` is `int`. Use `sum > 255` instead. The idiom `sum < addend` is only valid for unsigned integer types that actually wrap.
-
-**Commit:** `55be0c6`
-
----
-
-## 32. `(s8)` cast on ADD result used as carry guard
-
-**Root cause:** After a Z80 `ADD A,C`, carry signals overflow (`A + C > 255`). The sign flag is a separate bit, set when bit 7 of the result is 1. Using `(s8) A >= 0` (or `(s8) A < 0`) to decide whether to enter a block tests the sign flag, not carry. For sums in the range 128–255 (carry clear, bit 7 set), the sign test fires incorrectly — entering or skipping a block the Z80 would take the other path.
-
-This is the addition counterpart of pitfall 8 (which covers subtraction borrow). Both mistakes replace a carry/borrow check with a sign-flag check, but the affected instruction and the direction of the error differ.
-
-**Bug:** `draw_overhead` (`$90D4–$90D5`): `A = IXxpos[0] + Cdepth; JR C,$90E4` exits early when the addition overflows. The C code `if ((s8) A >= 0)` entered the span-width computation when bit 7 was clear. For sums 128–255 (no carry, bit 7 set) the C code skipped the block while the Z80 entered it, computing a narrower display span than intended.
-
-**Fix:**
-
-```c
-A = IXxpos[0] + Cdepth;   /* $90D1-$90D4: ADD A,C */
-if (A <= 255) {            /* $90D5: JR C,$90E4 — skip on u8 overflow */
-    ...
-}
-```
-
-**Rule:** After a Z80 `ADD A,x; JR C` (or `RET C`), the C guard is `if (A > 255)` for the carry branch and `if (A <= 255)` for the no-carry branch. Never use `(s8)` to recover a carry signal from an addition result.
-
-**Commit:** `55be0c6`
-
----
-
-## 33. `EX AF,AF'` restores flags — `JP P`/`JP M` tests the _banked_ value's sign
-
-**Root cause:** `EX AF,AF'` swaps both A and F with their shadow counterparts. When it restores AF from a bank, the entire flag register F is restored — Sign, Zero, Carry, all of it. A `JP P` or `JP M` immediately after the EX therefore tests the _restored_ flags, not the flags set by whatever instruction just ran. If a new value is loaded into A between the EX and the branch (`LD A,C; JP P`), the branch is entirely independent of that new value: it reflects the sign of whichever instruction set the flags that were originally banked.
-
-**Bug:** `scroll_horizon` (`$B848`): at `$B872 EX AF,AF'`, AF is restored from the bank made at `$B854`. Those flags come from `AND A` at `$B851`, which set Sign based on `current_curvature`. The immediately following `$B873 LD A,C` loads the table's C byte into A, but `LD A,C` does not alter flags on Z80. `$B874 JP P,$B879` therefore branches on the sign of `current_curvature`, not the sign of C. The C translation tested `if ((s8) Aregular < 0)` — the sign of the table value — which is always non-negative (all table C bytes are `0x01`–`0x7F`), so NEG was never applied and the backdrop could only scroll rightward.
-
-**Fix:**
-
-```c
-// EX AF,AF' — $B872 restores AF from the bank made at $B854;
-// F holds Sign from AND A ($B851), reflecting sign of current_curvature.
-Aregular = Chorizon_x_delta;         /* $B873: LD A,C */
-if ((s8) current_curvature < 0)      /* $B874: JP P — tests banked AF, not C */
-    Aregular = -Aregular;
-```
-
-**Rule:** When `JP P` or `JP M` follows an `EX AF,AF'`, the branch condition is the sign of the value that set the flags _at the time they were originally banked_, not the current A register. Trace back to the flag-setting instruction (typically `AND A`, `OR A`, `CP`, or arithmetic) that preceded the earlier `EX AF,AF'` to identify what is actually being tested.
-
-**Commit:** `87f70fa`
-
----
-
-## 34. `JP (IX)` into a `PUSH × N` chain — variable-N backward fill
-
-**Root cause:** `draw_tunnel` uses a Z80 jump table where entry point N causes (max − N) `PUSH` instructions to execute, filling `2*(max − N)` bytes backward from SP. In C this was initially written as a fall-through `switch` with 16 identical cases:
-
-```c
-case  0: SPoutput -= 2; SPoutput[0] = SPoutput[1] = (u8)fill;
-case  1: SPoutput -= 2; SPoutput[0] = SPoutput[1] = (u8)fill;
-/* … 14 more identical lines … */
-case 15: SPoutput -= 2; SPoutput[0] = SPoutput[1] = (u8)fill;
-```
-
-This is correct but needlessly verbose (16 identical case bodies). The PUSH count is simply `max − start`, and the backward fill is a single `memset`.
-
-**Fix:**
-
-```c
-int n = (start <= 15) ? (16 - start) : 0;
-SPoutput -= n * 2;
-memset(SPoutput, (u8)fill, (size_t)(n * 2));
-```
-
-**Rule:** A Z80 `JP (IX)` dispatch into a fixed-size PUSH chain where each PUSH writes the same fill value is a variable-length backward `memset`. Compute the PUSH count from the entry index, subtract `2*n` from the pointer, then `memset`. No switch needed.
-
----
-
-## 35. `LD SP,HL; POP × N` sprite copy — variable-N forward `memcpy`
-
-**Root cause:** The Z80 uses `LD SP,HL` (set SP to the bitmap source) plus a sequence of `POP DE` to load sprite bytes two at a time into DE, then writes them to the back buffer. `plot_sprite_even` and `plot_sprite_odd` initially translated this as a fall-through switch:
-
-```c
-case 0: *backbuf_addr++ = *src++; *backbuf_addr++ = *src++;
-case 1: *backbuf_addr++ = *src++; *backbuf_addr++ = *src++;
-/* … */
-case 3: *backbuf_addr = *src++;
-```
-
-Since the source bytes are copied verbatim (no mask, no flip), this is a plain `memcpy`. The byte count follows directly from the jump-table case.
-
-**Fix (even widths — 0, 2, 4, 6, 8 bytes):**
-
-```c
-int n = (4 - jump_offset / 5) * 2;
-memcpy(backbuf_addr, src, (size_t)n);
-```
-
-**Fix (odd widths — 1, 3, 5, 7 bytes):**
-
-```c
-int n = (4 - jump_offset / 5) * 2 - 1;
-memcpy(backbuf_addr, src, (size_t)n);
-```
-
-Note that `backbuf_addr` is reset via `prev_buf_row` immediately after the copy, so its post-copy value is irrelevant — only the bytes written matter.
-
-**Rule:** A Z80 `SP=source; POP × N` sequence that writes each byte verbatim to a destination is a `memcpy`. Compute the byte count from the jump-table entry index. Flipped or masked sprites are not candidates: they apply a per-byte lookup or AND/OR transform that `memcpy` cannot replicate.
-
----
-
-## 36. `Conv: NOT a loop` — back-edge missed when reading the skool
-
-**Root cause:** `draw_object_clipped` `$9404–$941D` was annotated `Conv: Z80 $9404–$941D is NOT a loop` based on a partial read. `$9417 JP $9404` is an unconditional back-jump that makes the entire block a loop. The C translated the body as an `if/else`, running the loop function at most once.
-
-```asm
-$9404 LD A,SM($9405)  ; A = doc_rows_main
-$9406 SUB B
-$9407 JR Z,$941A      ; exit if zero
-$9409 JR C,$941A      ; exit if borrow
-$940B LD ($9405),A
-$940F CALL SM($940F)  ; doc_plot_fn
-$9412 LD HL,SM($9413)
-$9415 LD B,SM($9416)  ; load doc_rows_2nd for next iteration
-$9417 JP $9404        ; ← back-edge — this IS a loop
-$941A ADD A,B         ; exit: recover partial height
-$941B LD B,A
-$941D JP SM($941D)    ; doc_plot_fn_2
-```
-
-**Fix:**
-
-```c
-for (;;) {
-    Awidth_bytes = state->doc_rows_main - BCpadding;
-    if ((s8) Awidth_bytes > 0) {
-        state->doc_rows_main = Awidth_bytes;
-        state->doc_plot_fn(…);
-        HLbitmap_data = state->doc_bitmap_ptr;
-        BCpadding = state->doc_rows_2nd;      /* $9415: B updated for next iteration */
-    } else {
-        Awidth_bytes += BCpadding;            /* $941A */
-        break;
-    }
-}
-state->doc_plot_fn_2(…);
-```
-
-**Rule:** Before writing any `Conv: NOT a loop` comment, grep the skool for every `JP`, `JR`, or `DJNZ` that targets an address inside the block. A single back-edge makes it a loop regardless of whether the surrounding structure looks sequential.
-
----
-
-## 37. `JR Z` + `JR NC` two-exit sequence — combined condition is `<= 0`, not `< 0`
-
-**Root cause:** `draw_stretchy_object_common` `$921F–$9222` has two consecutive early exits after a `SUB C`:
-
-```asm
-$921F SUB C
-$9220 JR Z,$9224   ; clamp to 1 if result == 0
-$9222 JR NC,$9226  ; keep A if result > 0 (no borrow)
-; fallthrough only when result < 0
-```
-
-Together they mean: clamp to 1 when result ≤ 0 (either zero or negative). The C translated this as `if ((s8) Avertical < 0) Avertical = 1` — missing the `JR Z` zero case so a sprite exactly filling the available height was left with height 0 instead of 1. The `(s8)` cast was also wrong on an `int` accumulator (see pitfall #32).
-
-**Fix:**
-
-```c
-if (Avertical <= 0) Avertical = 1;
-```
-
-**Rule:** When two consecutive conditional jumps both exit a subtraction block — typically `JR Z` (zero) followed by `JR NC` (no-borrow/positive) — the single condition that replaces them is `<= 0`, not `< 0`. Read both branches together before translating; the zero case is easy to miss when focusing on the sign-flag branch.
-
----
-
-## 38. `LD (IX+n),reg` — writing to the wrong struct field of the same object
+## 28. `LD (IX+n),reg` — writing to the wrong struct field of the same object
 
 **Root cause:** A function that writes several `IX+n` fields of the same struct in quick succession is easy to mistranslate if two of those fields hold conceptually related values (e.g. both are "positions"). The comment above the write may correctly identify the intended field, but the assignment targets a different one that happens to already exist on the struct and compile without complaint.
 
@@ -740,7 +486,7 @@ IXhazard->horz_clip = HL >> 8;     /* $AE77: IX[3] */
 
 ---
 
-## 39. Invented "output parameter" writes back stale state instead of passing the caller's value through
+## 29. Invented "output parameter" writes back stale state instead of passing the caller's value through
 
 **Root cause:** When a Z80 `CALL` is followed by code that clearly doesn't use the returned register (the skool marks it "result ignored", or no subsequent instruction reads it), a C translation can still be tempted to give the callee an output parameter "for completeness" — especially if the callee happens to read and reconstruct that same register from struct fields internally, for its own unrelated purposes (e.g. a bounding-box test). If the C translation then writes that internally-reloaded value back through the invented output pointer, it silently discards whatever the caller actually passed in.
 
@@ -767,3 +513,26 @@ IXhazard->horz_clip = HL >> 8;     /* $AE77: IX[3] */
 **Rule:** Before adding an output parameter to a translated helper, check every call site's skool for what happens to the relevant register immediately after the `CALL` returns. "Result ignored" (or no subsequent read of that register before it's next written) means the C port should not invent one either — even if the callee's internal logic happens to touch a same-named register for its own purposes. An output parameter that exists only because *a* register of that name is reloaded inside the callee, without confirming the *caller* ever reads it back, is a fabricated data path that can overwrite a value the caller already computed correctly.
 
 **Commit:** `be0ef28`
+
+---
+
+## 30. `SUB $01; JR C` pre-check instead of post-decrement — u8 never wraps
+
+**Root cause:** Z80 `SUB $01` always executes and always stores its wrapped 8-bit result before branching on the carry flag it sets. A C translation that instead checks `if (value == 0)` *before* decrementing, and only decrements a different field in that branch, never lets the original field wrap to 255 — it gets stuck at 0 forever, while the sibling field it decrements instead underflows unboundedly on every subsequent frame.
+
+**Bug:** `read_map`'s perp-distance countdown (`$C096–$C0B9`) does `LD A,(IX+1); SUB $01; LD (IX+1),A; JR C,...`: the low byte is decremented and stored unconditionally, and the carry (0 → 255 wrap) selects whether the high byte is also decremented. The C translation instead pre-checked `if (distance == 0)` and, on that branch, decremented `hazard_lane_OR_perp_dist_hi` while leaving `distance` at 0 forever. Once `distance` first hit exactly 0 with a nonzero high byte, the high byte underflowed every frame thereafter, producing a runaway combined distance that tripped `assert(HLdistance >= 0 && HLdistance < 10000)` in `plot_turbos_and_digits`.
+
+**Fix:**
+
+```c
+A_flags_inc = IX_hazard->distance;              /* value before the subtract, for the borrow test */
+IX_hazard->distance = (u8)(A_flags_inc - 1);     /* SUB $01 always executes and stores, wrapping 0->255 */
+if (A_flags_inc == 0) {                          /* pre-decrement value was 0 -> this subtract borrowed */
+    IX_hazard->hazard_lane_OR_perp_dist_hi--;
+    continue;
+}
+```
+
+**Rule:** Never gate a Z80 `SUB $01`/`DEC` on the pre-subtraction value to decide *whether* to store the wrapped result. Always perform and store the wrap first; use the captured pre-subtraction value only to detect the borrow/zero condition for the branch that follows.
+
+**Commit:** `507aa97`
