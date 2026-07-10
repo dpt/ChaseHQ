@@ -104,8 +104,8 @@ static const depthset_t stage4_depthset_F03F;
 static const depthset_t stage4_depthset_F055;
 static const depthset_t stage4_depthset_F06B;
 static const bitmap_t stage4_lods_F081[15];
-static const stretchy_t stage4_stretchy_F25A_right[5];
-static const stretchy_t stage4_stretchy_F25A_left[5];
+static const stretchy_t stage4_stretchy_F25A[5];
+static const stretchy_t stage4_stretchy_F267[5];
 static const depthset_t stage4_depthset_F274;
 static const depthset_t stage4_depthset_F28A;
 static const depthset_t stage4_depthset_F2A0;
@@ -115,17 +115,24 @@ static const depthset_t stage4_depthset_F2E2;
 static const depthset_t stage4_depthset_F2F8;
 static const bitmap_t stage4_lods_F30E[20];
 static const bitmap_t stage4_lods_F4D8[6];
-static const stretchy_t stage4_stretchy_F6F4_right[5];
-static const stretchy_t stage4_stretchy_F6F4_left[5];
+static const bitmap_t stage4_lods_F615[6];
+static const stretchy_t stage4_stretchy_F6F4[5];
+static const stretchy_t stage4_stretchy_F701[5];
 static const depthset_t stage4_depthset_F70E;
 static const depthset_t stage4_depthset_F724;
-static const bitmap_t stage4_lods_F73A[10];
+static const bitmap_t stage4_lods_F73A[5];
+static const bitmap_t stage4_lods_F75D[5];
+static const u8 stage4_lods_F7FF[22];
+static const u8 stage4_lods_F815[22];
 static const bitmap_t stage4_lods_F82B[10];
 static const u8 stage4_bitmap_E870[1022];
 static const u8 stage4_bitmap_F0EA[368];
 static const u8 stage4_bitmap_F39A[318];
-static const u8 stage4_bitmap_F502[498];
-static const u8 stage4_bitmap_F780[171];
+static const u8 stage4_bitmap_F502[275];
+static const u8 stage4_bitmap_F63F[181];
+static const u8 stage4_bitmap_F780[127];
+static const u8 stage4_bitmap_F7FF[22];
+static const u8 stage4_bitmap_F815[22];
 static const u8 stage4_bitmap_F871[1935];
 
 /* ----------------------------------------------------------------------- */
@@ -270,7 +277,7 @@ static const u8 stage4_arrest_messages_E1D5[67] = {
 // $E218
 static const hittable_t stage4_hittable_objects_E218[2] = {
   { 16, &stage4_lods_F4D8[0] },
-  { 32, &stage4_lods_F4D8[317] },
+  { 32, &stage4_lods_F615[0] },
 };
 
 // $E21E
@@ -280,10 +287,10 @@ static const obj_t stage4_right_obj_defs_E21E[9] = {
   { 144, 92, 40, &stretchy_shortpole, draw_stretchy_object_right },
   { 115, 35, 60, &stage4_stretchy_EFE9[0], draw_stretchy_object_right },
   { 67, 16, 60, &stage4_stretchy_F035[0], draw_stretchy_object_right },
-  { 116, 52, 70, &stage4_stretchy_F25A_right[0], draw_stretchy_object_right },
-  { 110, 53, 70, &stage4_stretchy_F6F4_right[0], draw_stretchy_object_right },
-  { 100, 24, 70, &stage4_lods_F73A[219], draw_object_right },
-  { 100, 24, 70, &stage4_lods_F73A[197], draw_object_right },
+  { 116, 52, 70, &stage4_stretchy_F25A[0], draw_stretchy_object_right },
+  { 110, 53, 70, &stage4_stretchy_F6F4[0], draw_stretchy_object_right },
+  { 100, 24, 70, &stage4_lods_F815[0], draw_object_right },
+  { 100, 24, 70, &stage4_lods_F7FF[0], draw_object_right },
 };
 
 // $E25D
@@ -293,10 +300,10 @@ static const obj_t stage4_left_obj_defs_E25D[9] = {
   { 96, 144, 40, &stretchy_shortpole, draw_stretchy_object_left },
   { 127, 202, 60, &stage4_stretchy_EFE9[0], draw_stretchy_object_left },
   { 175, 240, 60, &stage4_stretchy_F035[0], draw_stretchy_object_left },
-  { 122, 200, 70, &stage4_stretchy_F25A_left[0], draw_stretchy_object_left },
-  { 132, 182, 70, &stage4_stretchy_F6F4_left[0], draw_stretchy_object_left },
-  { 129, 200, 70, &stage4_lods_F73A[219], draw_object_left },
-  { 129, 200, 70, &stage4_lods_F73A[197], draw_object_left },
+  { 122, 200, 70, &stage4_stretchy_F267[0], draw_stretchy_object_left },
+  { 132, 182, 70, &stage4_stretchy_F701[0], draw_stretchy_object_left },
+  { 129, 200, 70, &stage4_lods_F815[0], draw_object_left },
+  { 129, 200, 70, &stage4_lods_F7FF[0], draw_object_left },
 };
 
 // $E29C
@@ -1826,6 +1833,8 @@ static const depthset_t stage4_depthset_EFF3 = {
   }
 };
 
+
+// $F009
 static const depthset_t stage4_depthset_F009 = {
   &stage4_lods_F081[0],
   {
@@ -1842,6 +1851,8 @@ static const depthset_t stage4_depthset_F009 = {
   }
 };
 
+
+// $F01F
 static const depthset_t stage4_depthset_F01F = {
   &stage4_lods_F081[0],
   {
@@ -1885,6 +1896,8 @@ static const depthset_t stage4_depthset_F03F = {
   }
 };
 
+
+// $F055
 static const depthset_t stage4_depthset_F055 = {
   &stage4_lods_F081[0],
   {
@@ -1901,6 +1914,8 @@ static const depthset_t stage4_depthset_F055 = {
   }
 };
 
+
+// $F06B
 static const depthset_t stage4_depthset_F06B = {
   &stage4_lods_F081[0],
   {
@@ -1990,7 +2005,7 @@ static const u8 stage4_bitmap_F0EA[368] = {
 // clang-format on
 
 // $F25A
-static const stretchy_t stage4_stretchy_F25A_right[5] = {
+static const stretchy_t stage4_stretchy_F25A[5] = {
   { STRETCHY_TYPE_FIXED, &stage4_depthset_F274 },
   { STRETCHY_TYPE_FIXED, &stage4_depthset_F28A },
   { STRETCHY_TYPE_FIXED, &stage4_depthset_F2A0 },
@@ -1998,7 +2013,9 @@ static const stretchy_t stage4_stretchy_F25A_right[5] = {
   { STRETCHY_TYPE_END, NULL },
 };
 
-static const stretchy_t stage4_stretchy_F25A_left[5] = {
+
+// $F267
+static const stretchy_t stage4_stretchy_F267[5] = {
   { STRETCHY_TYPE_FIXED, &stage4_depthset_F274 },
   { STRETCHY_TYPE_FIXED, &stage4_depthset_F2CC },
   { STRETCHY_TYPE_FIXED, &stage4_depthset_F2E2 },
@@ -2024,6 +2041,8 @@ static const depthset_t stage4_depthset_F274 = {
   }
 };
 
+
+// $F28A
 static const depthset_t stage4_depthset_F28A = {
   &stage4_lods_F30E[0],
   {
@@ -2040,6 +2059,8 @@ static const depthset_t stage4_depthset_F28A = {
   }
 };
 
+
+// $F2A0
 static const depthset_t stage4_depthset_F2A0 = {
   &stage4_lods_F30E[0],
   {
@@ -2056,6 +2077,8 @@ static const depthset_t stage4_depthset_F2A0 = {
   }
 };
 
+
+// $F2B6
 static const depthset_t stage4_depthset_F2B6 = {
   &stage4_lods_F30E[0],
   {
@@ -2072,6 +2095,8 @@ static const depthset_t stage4_depthset_F2B6 = {
   }
 };
 
+
+// $F2CC
 static const depthset_t stage4_depthset_F2CC = {
   &stage4_lods_F30E[0],
   {
@@ -2088,6 +2113,8 @@ static const depthset_t stage4_depthset_F2CC = {
   }
 };
 
+
+// $F2E2
 static const depthset_t stage4_depthset_F2E2 = {
   &stage4_lods_F30E[0],
   {
@@ -2104,6 +2131,8 @@ static const depthset_t stage4_depthset_F2E2 = {
   }
 };
 
+
+// $F2F8
 static const depthset_t stage4_depthset_F2F8 = {
   &stage4_lods_F30E[0],
   {
@@ -2203,7 +2232,7 @@ static const bitmap_t stage4_lods_F4D8[6] = {
 
 // $F502
 // clang-format off
-static const u8 stage4_bitmap_F502[498] = {
+static const u8 stage4_bitmap_F502[275] = {
   ________, _XXXXXXX, XXX_____, ______XX, XX_X_X_X, XXXXX___, ____XX__, ______X_,
   XXXXXX__, __XX____, _______X, XXXXXXX_, _X______, ______X_, XXXXXXX_, _XX_____,
   X___X__X, _XXXXXX_, _X______, _______X, XXXXX_X_, _X______, X_____X_, XXXXXX__,
@@ -2238,40 +2267,51 @@ static const u8 stage4_bitmap_F502[498] = {
   _____X_X, ___XXXXX, XXX_____, XXXXXX__, ______XX, XXXXXXXX, ________, X____XXX,
   _XXXX___, _____XXX, X_XXX___, _____XXX, X__XX___, _____XXX, XX__X___, X___XXXX,
   _XXX____, XXXX____, ____XXXX, XXX_____, ___X_XXX, XXX_____, ___X__XX, XXX_____,
-  ___XX__X, XXXX___X, ____XXX_, _____X__, ________, ___X___X, __XXXXXX, _XXX__X_,
-  __XXXXXX, _XXX__X_, _____X__, ________, ___X___X, __XXXXXX, _XXX__X_, __XXXXXX,
-  _XXX__X_, ______XX, ________, ____XX_X, X_____XX, _XXX__X_, X_____XX, _XXX__X_,
-  ______X_, ________, ____X__X, X_X_X_X_, _XXX__X_, X_X_X_X_, _XXX__X_, ______X_,
-  ________, ____X__X, X_X_X_X_, _XXX__X_, X_X_X_X_, _XXX__X_, ______X_, _______X,
-  _____XXX, X_XXXX__, _XXX__X_, XX_XX___, _XXX__X_, ___XXXXX, XX______, ______XX,
-  XXXXX___, ___XXXX_, _X____XX, XX____XX, _X__X___, ____XX_X, __X___XX, _X___XX_,
-  X__X____, ____XXX_, X_X___XX, XX___XXX, _X_X____, _____XXX, _X_X__XX, _X__XXX_,
-  X_X_____, _____XX_, X__X_XX_, X_X_XX_X, __X_____, ______XX, _X__XXXX, __XXX_X_,
-  _X______, ______XX, X_X_XXX_, X_XXXX_X, _X______, XXXXXXXX, XXXXXXXX, XXXXXXXX,
-  XXXXXXXX, XXXXXX_X, _XXXXXX_, _XXXXXX_, X_XXXXXX, XXXXX___, _XXXXX__, __XXXXX_,
-  ___XXXXX, XXXXX___, _XXXXX__, __XXXXX_, ___XXXXX, XXXXX___, _XXXXX__, __XXXXX_,
-  ___XXXXX, XXXXX___, _XXXXX__, __XXXXX_, ___XXXXX, X_X_X___, _X_X_X__, __X_X_X_,
-  ___X_X_X, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, ________, ____XXXX, XXXXX___,
-  ________, __XXXXXX, ________, XXXXXX__, __XXX_XX, ___XXX__, XX_X_X__, ___XXX_X,
-  X__X_X_X, X_X_X___, ___XX_X_, X_XX_X_X, XX__X___, ____XX_X, X_X_X_XX, X__X____,
-  ____XXX_, _XXXXXXX, XX_X____, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXX_XX, XXXX_XXX,
-  X_X_XXXX, XXXX___X, XXX__XXX, X___XXXX, XXXX___X, XXX__XXX, X___XXXX, X__X___X,
-  __X__X__, X___X__X, XXXXXXXX, XXXXXXXX, XXXXXXXX, ________, _XXXXXX_, ________,
-  _XXXX___, ___XXXX_, _XX_X__X, X__XX_X_, __XX_X_X, X_XX_X__, __XXXX_X, X_XXXX__,
-  XXXXXXXX, XXXXXXXX, XXX__XXX, __XXX__X, X_X__X_X, __X_X__X, XXXXXXXX, XXXXXXXX,
-  ______XX, XX______, X__XXXXX, _XX_____, X__XXXXX, _XX_____, X___X__X, _XXX_XX_,
-  ___XXXXX, XXX_____, XX______, __XXXXXX, __XXXXXX, XX______, ________, XXXXXXXX,
-  ____XXXX, XXXX____, ________, X__XX__X, ____XXXX, X__X____, ________, XXXXXXXX,
-  ____XXXX, XXXX____, XXXX____, ____XXXX, XXXXXXXX, ________, XXXXX__X, _____XX_,
-  XXXXX__X, _____XX_, XXXXX___, _____XXX, X__X___X, _XX_XXX_, XXXXXX__, ______XX,
-  ______XX, XXXXXX__, XXXX____, ____XXXX, ________, XXXXXXXX, XXXX____, ____X__X,
-  ________, X__XX__X, XXXX____, ____XXXX, ________, XXXXXXXX, XXXXXXXX, ________,
-  ____XXXX, XXXX____,
+  ___XX__X, XXXX___X, ____XXX_,
+};
+// clang-format on
+
+// $F615
+static const bitmap_t stage4_lods_F615[6] = {
+  { 4, BITMAPFLAG_DEFAULT, 17, &stage4_bitmap_F63F[0], &stage4_bitmap_F63F[0] },  // [0]
+  { 4, BITMAPFLAG_DEFAULT, 17, &stage4_bitmap_F63F[0], &stage4_bitmap_F63F[0] },  // [1]
+  { 3, BITMAPFLAG_DEFAULT, 13, &stage4_bitmap_F63F[68], &stage4_bitmap_F63F[68] },  // [2]
+  { 2, BITMAPFLAG_DEFAULT, 9, &stage4_bitmap_F63F[107], &stage4_bitmap_F63F[107] },  // [3]
+  { 2, BITMAPFLAG_DEFAULT, 9, &stage4_bitmap_F63F[107], &stage4_bitmap_F63F[107] },  // [4]
+  { 2, BITMAPFLAG_MASKED, 7, &stage4_bitmap_F63F[125], &stage4_bitmap_F63F[153] },  // [5]
+};
+
+// $F63F
+// clang-format off
+static const u8 stage4_bitmap_F63F[181] = {
+  ___XXXXX, XX______, ______XX, XXXXX___, ___XXXX_, _X____XX, XX____XX, _X__X___,
+  ____XX_X, __X___XX, _X___XX_, X__X____, ____XXX_, X_X___XX, XX___XXX, _X_X____,
+  _____XXX, _X_X__XX, _X__XXX_, X_X_____, _____XX_, X__X_XX_, X_X_XX_X, __X_____,
+  ______XX, _X__XXXX, __XXX_X_, _X______, ______XX, X_X_XXX_, X_XXXX_X, _X______,
+  XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXX_X, _XXXXXX_, _XXXXXX_, X_XXXXXX,
+  XXXXX___, _XXXXX__, __XXXXX_, ___XXXXX, XXXXX___, _XXXXX__, __XXXXX_, ___XXXXX,
+  XXXXX___, _XXXXX__, __XXXXX_, ___XXXXX, XXXXX___, _XXXXX__, __XXXXX_, ___XXXXX,
+  X_X_X___, _X_X_X__, __X_X_X_, ___X_X_X, XXXXXXXX, XXXXXXXX, XXXXXXXX, XXXXXXXX,
+  ________, ____XXXX, XXXXX___, ________, __XXXXXX, ________, XXXXXX__, __XXX_XX,
+  ___XXX__, XX_X_X__, ___XXX_X, X__X_X_X, X_X_X___, ___XX_X_, X_XX_X_X, XX__X___,
+  ____XX_X, X_X_X_XX, X__X____, ____XXX_, _XXXXXXX, XX_X____, XXXXXXXX, XXXXXXXX,
+  XXXXXXXX, XXXXX_XX, XXXX_XXX, X_X_XXXX, XXXX___X, XXX__XXX, X___XXXX, XXXX___X,
+  XXX__XXX, X___XXXX, X__X___X, __X__X__, X___X__X, XXXXXXXX, XXXXXXXX, XXXXXXXX,
+  ________, _XXXXXX_, ________, _XXXX___, ___XXXX_, _XX_X__X, X__XX_X_, __XX_X_X,
+  X_XX_X__, __XXXX_X, X_XXXX__, XXXXXXXX, XXXXXXXX, XXX__XXX, __XXX__X, X_X__X_X,
+  __X_X__X, XXXXXXXX, XXXXXXXX, ______XX, XX______, X__XXXXX, _XX_____, X__XXXXX,
+  _XX_____, X___X__X, _XXX_XX_, ___XXXXX, XXX_____, XX______, __XXXXXX, __XXXXXX,
+  XX______, ________, XXXXXXXX, ____XXXX, XXXX____, ________, X__XX__X, ____XXXX,
+  X__X____, ________, XXXXXXXX, ____XXXX, XXXX____, XXXX____, ____XXXX, XXXXXXXX,
+  ________, XXXXX__X, _____XX_, XXXXX__X, _____XX_, XXXXX___, _____XXX, X__X___X,
+  _XX_XXX_, XXXXXX__, ______XX, ______XX, XXXXXX__, XXXX____, ____XXXX, ________,
+  XXXXXXXX, XXXX____, ____X__X, ________, X__XX__X, XXXX____, ____XXXX, ________,
+  XXXXXXXX, XXXXXXXX, ________, ____XXXX, XXXX____,
 };
 // clang-format on
 
 // $F6F4
-static const stretchy_t stage4_stretchy_F6F4_right[5] = {
+static const stretchy_t stage4_stretchy_F6F4[5] = {
   { STRETCHY_TYPE_FIXED, &streetlampbottom_right },
   { STRETCHY_TYPE_50PC, &streetlampmiddle2_right },
   { STRETCHY_TYPE_113PC, &streetlampmiddle_right },
@@ -2279,7 +2319,9 @@ static const stretchy_t stage4_stretchy_F6F4_right[5] = {
   { STRETCHY_TYPE_END, NULL },
 };
 
-static const stretchy_t stage4_stretchy_F6F4_left[5] = {
+
+// $F701
+static const stretchy_t stage4_stretchy_F701[5] = {
   { STRETCHY_TYPE_FIXED, &streetlampbottom_left },
   { STRETCHY_TYPE_50PC, &streetlampmiddle2_left },
   { STRETCHY_TYPE_113PC, &streetlampmiddle_left },
@@ -2305,8 +2347,10 @@ static const depthset_t stage4_depthset_F70E = {
   }
 };
 
+
+// $F724
 static const depthset_t stage4_depthset_F724 = {
-  &stage4_lods_F73A[5],
+  &stage4_lods_F75D[0],
   {
     0x18, 0x02,
     0x10, 0x02,
@@ -2323,22 +2367,26 @@ static const depthset_t stage4_depthset_F724 = {
 
 
 // $F73A
-static const bitmap_t stage4_lods_F73A[10] = {
+static const bitmap_t stage4_lods_F73A[5] = {
   { 4, BITMAPFLAG_DEFAULT, 8, &stage4_bitmap_F780[0], &stage4_bitmap_F780[0] },  // [0]
   { 3, BITMAPFLAG_DEFAULT, 5, &stage4_bitmap_F780[32], &stage4_bitmap_F780[32] },  // [1]
   { 3, BITMAPFLAG_DEFAULT, 4, &stage4_bitmap_F780[47], &stage4_bitmap_F780[59] },  // [2]
   { 2, BITMAPFLAG_MASKED, 4, &stage4_bitmap_F780[71], &stage4_bitmap_F780[87] },  // [3]
   { 2, BITMAPFLAG_MASKED, 3, &stage4_bitmap_F780[103], &stage4_bitmap_F780[115] },  // [4]
-  { 4, BITMAPFLAG_FLIPPED, 8, &stage4_bitmap_F780[0], &stage4_bitmap_F780[0] },  // [5]
-  { 3, BITMAPFLAG_FLIPPED, 5, &stage4_bitmap_F780[32], &stage4_bitmap_F780[32] },  // [6]
-  { 3, BITMAPFLAG_FLIPPED, 4, &stage4_bitmap_F780[47], &stage4_bitmap_F780[59] },  // [7]
-  { 2, BITMAPFLAG_MASKED|BITMAPFLAG_FLIPPED, 4, &stage4_bitmap_F780[71], &stage4_bitmap_F780[87] },  // [8]
-  { 2, BITMAPFLAG_MASKED|BITMAPFLAG_FLIPPED, 3, &stage4_bitmap_F780[103], &stage4_bitmap_F780[115] },  // [9]
+};
+
+// $F75D
+static const bitmap_t stage4_lods_F75D[5] = {
+  { 4, BITMAPFLAG_FLIPPED, 8, &stage4_bitmap_F780[0], &stage4_bitmap_F780[0] },  // [0]
+  { 3, BITMAPFLAG_FLIPPED, 5, &stage4_bitmap_F780[32], &stage4_bitmap_F780[32] },  // [1]
+  { 3, BITMAPFLAG_FLIPPED, 4, &stage4_bitmap_F780[47], &stage4_bitmap_F780[59] },  // [2]
+  { 2, BITMAPFLAG_MASKED|BITMAPFLAG_FLIPPED, 4, &stage4_bitmap_F780[71], &stage4_bitmap_F780[87] },  // [3]
+  { 2, BITMAPFLAG_MASKED|BITMAPFLAG_FLIPPED, 3, &stage4_bitmap_F780[103], &stage4_bitmap_F780[115] },  // [4]
 };
 
 // $F780
 // clang-format off
-static const u8 stage4_bitmap_F780[171] = {
+static const u8 stage4_bitmap_F780[127] = {
   ________, ________, ________, XXX__X__, ___XXXXX, XXXXXXX_, _______X, X_X__X__,
   __X_____, _______X, _____XXX, __X__X__, __X_____, _______X, __XXXX__, XX___X__,
   _XX_X_X_, X_X_X_XX, XXX___XX, _X___X__, X_XXXXXX, XXXXXXX_, ___XXX__, _XX_XX__,
@@ -2354,15 +2402,25 @@ static const u8 stage4_bitmap_F780[171] = {
   __X____X, ___X__XX, X_X_XX__, XXX____X, ___XXXX_, XXXXXXXX, ________, XXXXXXX_,
   _______X, _XXXXXXX, X_______, ________, X___XXXX, _XXXXXXX, X_______, ____XXXX,
   XXXX____, XXXXXXXX, ________, XXXXXXXX, ________, XXX__XXX, ___XX___, XXXX____,
-  ____X___, _____XXX, XXXXX___, XXXX____, ____XXXX, XXXXXXXX, ________, __X_X_XX,
-  _XXX_X__, __X__X__, ________, ___XXX__, ________, ___XX___, _____XXX, ___XX___,
-  _____XXX, ___X_X__, ____XXX_, ___X_X__, ____XXX_, ___X_X__, ___X_X_X, ___X____,
-  ___X_X_X, ___X____, ___XXX__, ___X____, ___XXX__, __X_X_XX, _XXX_X__, __X__X__,
-  __X___XX, ___XXX__, __X___XX, ___XX___, __X_X_X_, ___XX___, __X_X_X_, ___X_X__,
-  __XX___X, ___X_X__, __XX___X, ___X_X__, __XXX___, ___X____, __XXX___, ___X____,
-  __XXXXXX, ___X____, __XXXXXX,
+  ____X___, _____XXX, XXXXX___, XXXX____, ____XXXX, XXXXXXXX, ________,
 };
 // clang-format on
+
+// $F7FF
+static const u8 stage4_lods_F7FF[22] = {
+  0x2B, 0x74, 0x24, 0x00, 0x1C, 0x00, 0x18,
+  0x07, 0x18, 0x07, 0x14, 0x0E, 0x14, 0x0E,
+  0x14, 0x15, 0x10, 0x15, 0x10, 0x1C, 0x10,
+  0x1C,
+};
+
+// $F815
+static const u8 stage4_lods_F815[22] = {
+  0x2B, 0x74, 0x24, 0x23, 0x1C, 0x23, 0x18,
+  0x2A, 0x18, 0x2A, 0x14, 0x31, 0x14, 0x31,
+  0x14, 0x38, 0x10, 0x38, 0x10, 0x3F, 0x10,
+  0x3F,
+};
 
 // $F82B
 static const bitmap_t stage4_lods_F82B[10] = {

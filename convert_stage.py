@@ -336,14 +336,20 @@ class SkoolRecord:
         self.annotations = annotations  # resolved addresses from [$XXXX] in comment
 
 
-def parse_skool(path: str) -> Tuple[List[SkoolRecord], List[str]]:
+def parse_skool(path: str) -> Tuple[List[SkoolRecord], List[str], List[bool]]:
     """
-    Return (records, section_comments).
+    Return (records, section_comments, fresh_header_flags).
     section_comments[i] is the comment line immediately before records[i].
+    fresh_header_flags[i] is True if a non-trivial header comment was seen
+    immediately before records[i], even if its text is identical to the
+    still-pending previous header (e.g. two consecutive "LOD table for
+    'stretchy'" tables at different addresses) - see split_into_sections.
     """
     records: List[SkoolRecord] = []
     section_comments: List[str] = []
+    fresh_header_flags: List[bool] = []
     pending_section = ""
+    just_saw_header = False
 
     def _annots(cmt: str) -> List[int]:
         return [int(m, 16) for m in re.findall(r"\[\$([0-9A-Fa-f]+)\]", cmt)]
@@ -366,7 +372,9 @@ def parse_skool(path: str) -> Tuple[List[SkoolRecord], List[str]]:
                 is_stage_hdr = bool(re.match(r"\[Stage \d+\]", txt))
                 if is_stage_hdr:
                     pending_section = txt
+                    just_saw_header = True
                 elif not trivial:
+                    just_saw_header = True
                     if not pending_section:
                         pending_section = txt
                     else:
@@ -423,10 +431,12 @@ def parse_skool(path: str) -> Tuple[List[SkoolRecord], List[str]]:
             rec = SkoolRecord(addr, rtype, values, cmt_part, _annots(cmt_part))
             records.append(rec)
             section_comments.append(pending_section)
+            fresh_header_flags.append(just_saw_header)
+            just_saw_header = False
             if prefix:  # new labelled section resets pending comment
                 pending_section = ""
 
-    return records, section_comments
+    return records, section_comments, fresh_header_flags
 
 
 def build_addr_map(records: List[SkoolRecord]) -> Dict[int, int]:
@@ -789,7 +799,9 @@ class Section:
 
 
 def split_into_sections(
-    records: List[SkoolRecord], section_comments: List[str]
+    records: List[SkoolRecord],
+    section_comments: List[str],
+    fresh_header_flags: List[bool],
 ) -> List[Section]:
     """Group records by section, detecting section type from comments."""
     sections: List[Section] = []
@@ -797,7 +809,7 @@ def split_into_sections(
     prev_type = None
     prev_cmt = None
 
-    for rec, cmt in zip(records, section_comments):
+    for rec, cmt, fresh in zip(records, section_comments, fresh_header_flags):
         stype = classify_section(cmt)
         # Sub-entries of an obj_defs container are absorbed into the parent section
         # rather than starting a new one; the right→left transition still splits
@@ -808,8 +820,13 @@ def split_into_sections(
         )
         # Start a new section when the comment is non-empty AND either:
         #   - the type has changed, OR
-        #   - the comment itself has changed (e.g. two consecutive lod_tables)
-        if cmt and (stype != prev_type or cmt != prev_cmt) and not is_obj_entry:
+        #   - the comment itself has changed (e.g. two consecutive lod_tables), OR
+        #   - a new header comment was seen right here, even if its text is
+        #     identical to the still-pending previous header (e.g. two
+        #     consecutive "LOD table for 'stretchy'" tables at different
+        #     addresses - without this, the second table's records get
+        #     silently absorbed into the first table's section)
+        if cmt and (stype != prev_type or cmt != prev_cmt or fresh) and not is_obj_entry:
             if cur is not None:
                 sections.append(cur)
             cur = Section(stype or "unknown", rec.addr, cmt)
@@ -1753,10 +1770,10 @@ def emit_stage_struct(
 
 
 def convert(skool_path: str, stage: int, obj_names: List[str]) -> None:
-    records, section_comments = parse_skool(skool_path)
+    records, section_comments, fresh_header_flags = parse_skool(skool_path)
     bank_offset = compute_bank_offset(records)
     defm_strings, defm_bytes = parse_defm_map(skool_path)
-    sections = split_into_sections(records, section_comments)
+    sections = split_into_sections(records, section_comments, fresh_header_flags)
 
     # When a bank contains multiple stages (e.g. bank 1 has stages 1+2, bank 6
     # has stages 3+4), keep only sections whose [Stage N] header matches the

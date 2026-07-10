@@ -111,11 +111,12 @@ static const depthset_t stage2_depthset_F180;
 static const depthset_t stage2_depthset_F196;
 static const depthset_t stage2_depthset_F1AC;
 static const depthset_t stage2_depthset_F1C2;
-static const bitmap_t stage2_lods_F1D8[40];
-static const stretchy_t stage2_stretchy_F509_A_right[10];
-static const stretchy_t stage2_stretchy_F509_A_left[10];
-static const stretchy_t stage2_stretchy_F509_B_right[4];
-static const stretchy_t stage2_stretchy_F509_B_left[4];
+static const bitmap_t stage2_lods_F1D8[20];
+static const bitmap_t stage2_lods_F264[20];
+static const stretchy_t stage2_stretchy_F509[10];
+static const stretchy_t stage2_stretchy_F525[10];
+static const stretchy_t stage2_stretchy_F541[4];
+static const stretchy_t stage2_stretchy_F54B[4];
 static const depthset_t stage2_depthset_F555;
 static const depthset_t stage2_depthset_F56B;
 static const depthset_t stage2_depthset_F581;
@@ -130,8 +131,8 @@ static const depthset_t stage2_depthset_F631;
 static const depthset_t stage2_depthset_F647;
 static const depthset_t stage2_depthset_F65D;
 static const bitmap_t stage2_lods_F673[35];
-static const stretchy_t stage2_stretchy_F912_right[5];
-static const stretchy_t stage2_stretchy_F912_left[5];
+static const stretchy_t stage2_stretchy_F912[5];
+static const stretchy_t stage2_stretchy_F91F[5];
 static const depthset_t stage2_depthset_F92C;
 static const depthset_t stage2_depthset_F942;
 static const bitmap_t stage2_lods_F958[5];
@@ -293,9 +294,9 @@ static const obj_t stage2_right_obj_defs_E22A[7] = {
   { 0, 0, 0, NULL, NULL },
   { 144, 92, 40, &stretchy_shortpole, draw_stretchy_object_right },
   { 127, 16, 60, &stage2_stretchy_F10E[0], draw_stretchy_object_right },
-  { 107, 53, 70, &stage2_stretchy_F509_A_right[0], draw_stretchy_object_right },
-  { 116, 33, 80, &stage2_stretchy_F509_B_right[0], draw_stretchy_object_right },
-  { 110, 53, 80, &stage2_stretchy_F912_right[0], draw_stretchy_object_right },
+  { 107, 53, 70, &stage2_stretchy_F509[0], draw_stretchy_object_right },
+  { 116, 33, 80, &stage2_stretchy_F541[0], draw_stretchy_object_right },
+  { 110, 53, 80, &stage2_stretchy_F912[0], draw_stretchy_object_right },
 };
 
 // $E25B
@@ -304,9 +305,9 @@ static const obj_t stage2_left_obj_defs_E25B[7] = {
   { 0, 0, 0, NULL, NULL },
   { 96, 144, 40, &stretchy_shortpole, draw_stretchy_object_left },
   { 112, 224, 60, &stage2_stretchy_F173[0], draw_stretchy_object_left },
-  { 136, 187, 80, &stage2_stretchy_F509_A_left[0], draw_stretchy_object_left },
-  { 124, 200, 80, &stage2_stretchy_F509_B_left[0], draw_stretchy_object_left },
-  { 132, 182, 80, &stage2_stretchy_F912_left[0], draw_stretchy_object_left },
+  { 136, 187, 80, &stage2_stretchy_F525[0], draw_stretchy_object_left },
+  { 124, 200, 80, &stage2_stretchy_F54B[0], draw_stretchy_object_left },
+  { 132, 182, 80, &stage2_stretchy_F91F[0], draw_stretchy_object_left },
 };
 
 // $E28C
@@ -2113,6 +2114,8 @@ static const depthset_t stage2_depthset_F11B = {
   }
 };
 
+
+// $F131
 static const depthset_t stage2_depthset_F131 = {
   &stage2_lods_F1D8[0],
   {
@@ -2129,6 +2132,8 @@ static const depthset_t stage2_depthset_F131 = {
   }
 };
 
+
+// $F147
 static const depthset_t stage2_depthset_F147 = {
   &stage2_lods_F1D8[0],
   {
@@ -2145,6 +2150,8 @@ static const depthset_t stage2_depthset_F147 = {
   }
 };
 
+
+// $F15D
 static const depthset_t stage2_depthset_F15D = {
   &stage2_lods_F1D8[0],
   {
@@ -2174,7 +2181,7 @@ static const stretchy_t stage2_stretchy_F173[5] = {
 
 // $F180
 static const depthset_t stage2_depthset_F180 = {
-  &stage2_lods_F1D8[20],
+  &stage2_lods_F264[0],
   {
     0x08, 0x17,
     0x08, 0x17,
@@ -2189,8 +2196,10 @@ static const depthset_t stage2_depthset_F180 = {
   }
 };
 
+
+// $F196
 static const depthset_t stage2_depthset_F196 = {
-  &stage2_lods_F1D8[20],
+  &stage2_lods_F264[0],
   {
     0x10, 0x10,
     0x10, 0x10,
@@ -2205,8 +2214,10 @@ static const depthset_t stage2_depthset_F196 = {
   }
 };
 
+
+// $F1AC
 static const depthset_t stage2_depthset_F1AC = {
-  &stage2_lods_F1D8[20],
+  &stage2_lods_F264[0],
   {
     0x10, 0x09,
     0x10, 0x09,
@@ -2221,8 +2232,10 @@ static const depthset_t stage2_depthset_F1AC = {
   }
 };
 
+
+// $F1C2
 static const depthset_t stage2_depthset_F1C2 = {
-  &stage2_lods_F1D8[20],
+  &stage2_lods_F264[0],
   {
     0x20, 0x02,
     0x20, 0x02,
@@ -2239,17 +2252,17 @@ static const depthset_t stage2_depthset_F1C2 = {
 
 
 // $F1D8
-static const bitmap_t stage2_lods_F1D8[40] = {
+static const bitmap_t stage2_lods_F1D8[20] = {
   { 5, BITMAPFLAG_FLIPPED, 8, &stage2_bitmap_F2F0[0], &stage2_bitmap_F2F0[0] },  // [0]
   { 7, BITMAPFLAG_FLIPPED, 8, &stage2_bitmap_F2F0[40], &stage2_bitmap_F2F0[40] },  // [1]
   { 7, BITMAPFLAG_DEFAULT, 8, &stage2_bitmap_F2F0[381], &stage2_bitmap_F2F0[381] },  // [2]
   { 8, BITMAPFLAG_FLIPPED, 8, &stage2_bitmap_F2F0[152], &stage2_bitmap_F2F0[152] },  // [3]
   { 3, BITMAPFLAG_FLIPPED, 4, &stage2_bitmap_F2F0[216], &stage2_bitmap_F2F0[216] },  // [4]
-  { 4, BITMAPFLAG_FLIPPED, 4, &stage2_bitmap_F2F0[0], &stage2_bitmap_F2F0[0] },  // [5]
-  { 5, BITMAPFLAG_DEFAULT, 6, &stage2_bitmap_F2F0[40], &stage2_bitmap_F2F0[40] },  // [6]
-  { 6, BITMAPFLAG_FLIPPED, 6, &stage2_bitmap_F2F0[96], &stage2_bitmap_F2F0[96] },  // [7]
-  { 2, BITMAPFLAG_FLIPPED, 4, &stage2_bitmap_F2F0[152], &stage2_bitmap_F2F0[152] },  // [8]
-  { 3, BITMAPFLAG_FLIPPED, 3, &stage2_bitmap_F2F0[216], &stage2_bitmap_F2F0[216] },  // [9]
+  { 4, BITMAPFLAG_FLIPPED, 4, &stage2_bitmap_F2F0[228], &stage2_bitmap_F2F0[228] },  // [5]
+  { 5, BITMAPFLAG_DEFAULT, 6, &stage2_bitmap_F2F0[437], &stage2_bitmap_F2F0[437] },  // [6]
+  { 6, BITMAPFLAG_FLIPPED, 6, &stage2_bitmap_F2F0[279], &stage2_bitmap_F2F0[279] },  // [7]
+  { 2, BITMAPFLAG_FLIPPED, 4, &stage2_bitmap_F2F0[315], &stage2_bitmap_F2F0[315] },  // [8]
+  { 3, BITMAPFLAG_FLIPPED, 3, &stage2_bitmap_F2F0[323], &stage2_bitmap_F2F0[323] },  // [9]
   { 3, BITMAPFLAG_DEFAULT, 4, &stage2_bitmap_F2F0[467], &stage2_bitmap_F2F0[467] },  // [10]
   { 4, BITMAPFLAG_FLIPPED, 4, &stage2_bitmap_F2F0[344], &stage2_bitmap_F2F0[344] },  // [11]
   { 1, BITMAPFLAG_FLIPPED, 3, &stage2_bitmap_F2F0[360], &stage2_bitmap_F2F0[360] },  // [12]
@@ -2260,26 +2273,30 @@ static const bitmap_t stage2_lods_F1D8[40] = {
   { 2, BITMAPFLAG_MASKED|BITMAPFLAG_FLIPPED, 1, &stage2_bitmap_F2F0[487], &stage2_bitmap_F2F0[513] },  // [17]
   { 2, BITMAPFLAG_MASKED, 2, &stage2_bitmap_F2F0[491], &stage2_bitmap_F2F0[517] },  // [18]
   { 3, BITMAPFLAG_MASKED|BITMAPFLAG_FLIPPED, 2, &stage2_bitmap_F2F0[499], &stage2_bitmap_F2F0[525] },  // [19]
-  { 5, BITMAPFLAG_DEFAULT, 8, &stage2_bitmap_F2F0[0], &stage2_bitmap_F2F0[0] },  // [20]
-  { 7, BITMAPFLAG_DEFAULT, 8, &stage2_bitmap_F2F0[40], &stage2_bitmap_F2F0[40] },  // [21]
-  { 7, BITMAPFLAG_DEFAULT, 8, &stage2_bitmap_F2F0[96], &stage2_bitmap_F2F0[96] },  // [22]
-  { 8, BITMAPFLAG_DEFAULT, 8, &stage2_bitmap_F2F0[152], &stage2_bitmap_F2F0[152] },  // [23]
-  { 3, BITMAPFLAG_DEFAULT, 4, &stage2_bitmap_F2F0[216], &stage2_bitmap_F2F0[216] },  // [24]
-  { 4, BITMAPFLAG_DEFAULT, 4, &stage2_bitmap_F2F0[228], &stage2_bitmap_F2F0[228] },  // [25]
-  { 5, BITMAPFLAG_DEFAULT, 6, &stage2_bitmap_F2F0[249], &stage2_bitmap_F2F0[249] },  // [26]
-  { 6, BITMAPFLAG_DEFAULT, 6, &stage2_bitmap_F2F0[279], &stage2_bitmap_F2F0[279] },  // [27]
-  { 2, BITMAPFLAG_DEFAULT, 4, &stage2_bitmap_F2F0[315], &stage2_bitmap_F2F0[315] },  // [28]
-  { 3, BITMAPFLAG_DEFAULT, 3, &stage2_bitmap_F2F0[323], &stage2_bitmap_F2F0[323] },  // [29]
-  { 3, BITMAPFLAG_DEFAULT, 4, &stage2_bitmap_F2F0[332], &stage2_bitmap_F2F0[332] },  // [30]
-  { 4, BITMAPFLAG_DEFAULT, 4, &stage2_bitmap_F2F0[344], &stage2_bitmap_F2F0[344] },  // [31]
-  { 1, BITMAPFLAG_DEFAULT, 3, &stage2_bitmap_F2F0[360], &stage2_bitmap_F2F0[360] },  // [32]
-  { 2, BITMAPFLAG_DEFAULT, 3, &stage2_bitmap_F2F0[363], &stage2_bitmap_F2F0[363] },  // [33]
-  { 2, BITMAPFLAG_DEFAULT, 3, &stage2_bitmap_F2F0[369], &stage2_bitmap_F2F0[369] },  // [34]
-  { 3, BITMAPFLAG_DEFAULT, 2, &stage2_bitmap_F2F0[375], &stage2_bitmap_F2F0[375] },  // [35]
-  { 1, BITMAPFLAG_MASKED, 1, &stage2_bitmap_F2F0[485], &stage2_bitmap_F2F0[511] },  // [36]
-  { 2, BITMAPFLAG_MASKED, 1, &stage2_bitmap_F2F0[487], &stage2_bitmap_F2F0[513] },  // [37]
-  { 2, BITMAPFLAG_MASKED, 2, &stage2_bitmap_F2F0[491], &stage2_bitmap_F2F0[517] },  // [38]
-  { 3, BITMAPFLAG_MASKED, 2, &stage2_bitmap_F2F0[499], &stage2_bitmap_F2F0[525] },  // [39]
+};
+
+// $F264
+static const bitmap_t stage2_lods_F264[20] = {
+  { 5, BITMAPFLAG_DEFAULT, 8, &stage2_bitmap_F2F0[0], &stage2_bitmap_F2F0[0] },  // [0]
+  { 7, BITMAPFLAG_DEFAULT, 8, &stage2_bitmap_F2F0[40], &stage2_bitmap_F2F0[40] },  // [1]
+  { 7, BITMAPFLAG_DEFAULT, 8, &stage2_bitmap_F2F0[96], &stage2_bitmap_F2F0[96] },  // [2]
+  { 8, BITMAPFLAG_DEFAULT, 8, &stage2_bitmap_F2F0[152], &stage2_bitmap_F2F0[152] },  // [3]
+  { 3, BITMAPFLAG_DEFAULT, 4, &stage2_bitmap_F2F0[216], &stage2_bitmap_F2F0[216] },  // [4]
+  { 4, BITMAPFLAG_DEFAULT, 4, &stage2_bitmap_F2F0[228], &stage2_bitmap_F2F0[228] },  // [5]
+  { 5, BITMAPFLAG_DEFAULT, 6, &stage2_bitmap_F2F0[249], &stage2_bitmap_F2F0[249] },  // [6]
+  { 6, BITMAPFLAG_DEFAULT, 6, &stage2_bitmap_F2F0[279], &stage2_bitmap_F2F0[279] },  // [7]
+  { 2, BITMAPFLAG_DEFAULT, 4, &stage2_bitmap_F2F0[315], &stage2_bitmap_F2F0[315] },  // [8]
+  { 3, BITMAPFLAG_DEFAULT, 3, &stage2_bitmap_F2F0[323], &stage2_bitmap_F2F0[323] },  // [9]
+  { 3, BITMAPFLAG_DEFAULT, 4, &stage2_bitmap_F2F0[332], &stage2_bitmap_F2F0[332] },  // [10]
+  { 4, BITMAPFLAG_DEFAULT, 4, &stage2_bitmap_F2F0[344], &stage2_bitmap_F2F0[344] },  // [11]
+  { 1, BITMAPFLAG_DEFAULT, 3, &stage2_bitmap_F2F0[360], &stage2_bitmap_F2F0[360] },  // [12]
+  { 2, BITMAPFLAG_DEFAULT, 3, &stage2_bitmap_F2F0[363], &stage2_bitmap_F2F0[363] },  // [13]
+  { 2, BITMAPFLAG_DEFAULT, 3, &stage2_bitmap_F2F0[369], &stage2_bitmap_F2F0[369] },  // [14]
+  { 3, BITMAPFLAG_DEFAULT, 2, &stage2_bitmap_F2F0[375], &stage2_bitmap_F2F0[375] },  // [15]
+  { 1, BITMAPFLAG_MASKED, 1, &stage2_bitmap_F2F0[485], &stage2_bitmap_F2F0[511] },  // [16]
+  { 2, BITMAPFLAG_MASKED, 1, &stage2_bitmap_F2F0[487], &stage2_bitmap_F2F0[513] },  // [17]
+  { 2, BITMAPFLAG_MASKED, 2, &stage2_bitmap_F2F0[491], &stage2_bitmap_F2F0[517] },  // [18]
+  { 3, BITMAPFLAG_MASKED, 2, &stage2_bitmap_F2F0[499], &stage2_bitmap_F2F0[525] },  // [19]
 };
 
 // $F2F0
@@ -2357,7 +2374,7 @@ static const u8 stage2_bitmap_F2F0[537] = {
 // clang-format on
 
 // $F509
-static const stretchy_t stage2_stretchy_F509_A_right[10] = {
+static const stretchy_t stage2_stretchy_F509[10] = {
   { STRETCHY_TYPE_FIXED, &stage2_depthset_F555 },
   { STRETCHY_TYPE_FIXED, &stage2_depthset_F56B },
   { STRETCHY_TYPE_FIXED, &stage2_depthset_F56B },
@@ -2370,7 +2387,9 @@ static const stretchy_t stage2_stretchy_F509_A_right[10] = {
   { STRETCHY_TYPE_END, NULL },
 };
 
-static const stretchy_t stage2_stretchy_F509_A_left[10] = {
+
+// $F525
+static const stretchy_t stage2_stretchy_F525[10] = {
   { STRETCHY_TYPE_FIXED, &stage2_depthset_F555 },
   { STRETCHY_TYPE_FIXED, &stage2_depthset_F5EF },
   { STRETCHY_TYPE_FIXED, &stage2_depthset_F5EF },
@@ -2383,14 +2402,18 @@ static const stretchy_t stage2_stretchy_F509_A_left[10] = {
   { STRETCHY_TYPE_END, NULL },
 };
 
-static const stretchy_t stage2_stretchy_F509_B_right[4] = {
+
+// $F541
+static const stretchy_t stage2_stretchy_F541[4] = {
   { STRETCHY_TYPE_FIXED, &stage2_depthset_F5AD },
   { STRETCHY_TYPE_FIXED, &stage2_depthset_F5C3 },
   { STRETCHY_TYPE_FIXED, &stage2_depthset_F5D9 },
   { STRETCHY_TYPE_END, NULL },
 };
 
-static const stretchy_t stage2_stretchy_F509_B_left[4] = {
+
+// $F54B
+static const stretchy_t stage2_stretchy_F54B[4] = {
   { STRETCHY_TYPE_FIXED, &stage2_depthset_F631 },
   { STRETCHY_TYPE_FIXED, &stage2_depthset_F647 },
   { STRETCHY_TYPE_FIXED, &stage2_depthset_F65D },
@@ -2415,6 +2438,8 @@ static const depthset_t stage2_depthset_F555 = {
   }
 };
 
+
+// $F56B
 static const depthset_t stage2_depthset_F56B = {
   &stage2_lods_F673[0],
   {
@@ -2431,6 +2456,8 @@ static const depthset_t stage2_depthset_F56B = {
   }
 };
 
+
+// $F581
 static const depthset_t stage2_depthset_F581 = {
   &stage2_lods_F673[0],
   {
@@ -2447,6 +2474,8 @@ static const depthset_t stage2_depthset_F581 = {
   }
 };
 
+
+// $F597
 static const depthset_t stage2_depthset_F597 = {
   &stage2_lods_F673[0],
   {
@@ -2463,6 +2492,8 @@ static const depthset_t stage2_depthset_F597 = {
   }
 };
 
+
+// $F5AD
 static const depthset_t stage2_depthset_F5AD = {
   &stage2_lods_F673[0],
   {
@@ -2479,6 +2510,8 @@ static const depthset_t stage2_depthset_F5AD = {
   }
 };
 
+
+// $F5C3
 static const depthset_t stage2_depthset_F5C3 = {
   &stage2_lods_F673[0],
   {
@@ -2495,6 +2528,8 @@ static const depthset_t stage2_depthset_F5C3 = {
   }
 };
 
+
+// $F5D9
 static const depthset_t stage2_depthset_F5D9 = {
   &stage2_lods_F673[0],
   {
@@ -2511,6 +2546,8 @@ static const depthset_t stage2_depthset_F5D9 = {
   }
 };
 
+
+// $F5EF
 static const depthset_t stage2_depthset_F5EF = {
   &stage2_lods_F673[0],
   {
@@ -2527,6 +2564,8 @@ static const depthset_t stage2_depthset_F5EF = {
   }
 };
 
+
+// $F605
 static const depthset_t stage2_depthset_F605 = {
   &stage2_lods_F673[0],
   {
@@ -2543,6 +2582,8 @@ static const depthset_t stage2_depthset_F605 = {
   }
 };
 
+
+// $F61B
 static const depthset_t stage2_depthset_F61B = {
   &stage2_lods_F673[0],
   {
@@ -2559,6 +2600,8 @@ static const depthset_t stage2_depthset_F61B = {
   }
 };
 
+
+// $F631
 static const depthset_t stage2_depthset_F631 = {
   &stage2_lods_F673[0],
   {
@@ -2575,6 +2618,8 @@ static const depthset_t stage2_depthset_F631 = {
   }
 };
 
+
+// $F647
 static const depthset_t stage2_depthset_F647 = {
   &stage2_lods_F673[0],
   {
@@ -2591,6 +2636,8 @@ static const depthset_t stage2_depthset_F647 = {
   }
 };
 
+
+// $F65D
 static const depthset_t stage2_depthset_F65D = {
   &stage2_lods_F673[0],
   {
@@ -2708,7 +2755,7 @@ static const u8 stage2_bitmap_F768[426] = {
 // clang-format on
 
 // $F912
-static const stretchy_t stage2_stretchy_F912_right[5] = {
+static const stretchy_t stage2_stretchy_F912[5] = {
   { STRETCHY_TYPE_FIXED, &streetlampbottom_right },
   { STRETCHY_TYPE_50PC, &streetlampmiddle2_right },
   { STRETCHY_TYPE_113PC, &streetlampmiddle_right },
@@ -2716,7 +2763,9 @@ static const stretchy_t stage2_stretchy_F912_right[5] = {
   { STRETCHY_TYPE_END, NULL },
 };
 
-static const stretchy_t stage2_stretchy_F912_left[5] = {
+
+// $F91F
+static const stretchy_t stage2_stretchy_F91F[5] = {
   { STRETCHY_TYPE_FIXED, &streetlampbottom_left },
   { STRETCHY_TYPE_50PC, &streetlampmiddle2_left },
   { STRETCHY_TYPE_113PC, &streetlampmiddle_left },
@@ -2742,6 +2791,8 @@ static const depthset_t stage2_depthset_F92C = {
   }
 };
 
+
+// $F942
 static const depthset_t stage2_depthset_F942 = {
   &stage2_lods_F958[0],
   {
