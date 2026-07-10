@@ -9766,7 +9766,8 @@ dh_adfa:
     /* At closest visible distance: check if hazard has been overtaken */
     A_fc_inv = ~(state->fast_counter & 0xE0); /* $AE03-$AE08 */
     if (A_fc_inv < IXhazard->dist_frac) {     /* $AE09 CP (IX+$04) */
-      B_flags = IXhazard->hazard_flags + 1;   /* $AE0E-$AE11 */
+      B_flags = (u8) (IXhazard->hazard_flags + 1); /* $AE0E-$AE11 */
+      /* Conv: truncate to 8 bits so 0xFF wraps to 0, matching Z80 INC A */
       if (B_flags) {
         /* Car hazard overtaken: retire slot; carry from RL signals bonus */
         IXhazard->used = HAZARD_UNUSED;
@@ -9997,7 +9998,7 @@ static void draw_hazard_sprites(chqstate_t *state,
     state->doc_col_pos = IXhazard->persp_col - IXhazard->hit_wobble;
     state->doc_plot_mode = IXhazard->inverted;
 
-    if (IXhazard->hazard_flags + 1 == 0)
+    if ((u8) (IXhazard->hazard_flags + 1) == 0) /* Conv: truncate to 8 bits so 0xFF wraps to 0, matching Z80 INC A */
       goto dafs_af50;
 
     Ahorz_clip = IXhazard->horz_clip;
