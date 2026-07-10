@@ -4959,10 +4959,14 @@ doc_y_range_is_zero:
       Adash_clip_rows++;
 
       D_height = HLbitmap->height; /* Conv: HLbitmap adjusted, this loads from bitmap.height */
-      Adash_clip_rows -= D_height;
-      if ((s8) Adash_clip_rows >= 0) // was !carry
-        Adash_clip_rows = 0;
-      Adash_clip_rows += D_height;
+      // Conv: Z80 $934F SUB D; JR C,$9353 tests unsigned borrow (was
+      // Adash_clip_rows < D_height before the subtraction), not the sign of
+      // the wrapped 8-bit difference. Close-up objects give height values
+      // large enough that (s8)(Adash_clip_rows - D_height) does not track
+      // true borrow (pitfall #8) -- use a direct unsigned comparison, giving
+      // Adash_clip_rows = min(Adash_clip_rows, D_height).
+      if ((u8) Adash_clip_rows >= (u8) D_height)
+        Adash_clip_rows = D_height;
       // INC HL  - point HL at data field -- removed
       D_y_range = 1;
       goto doc_compute_bitmap;
@@ -4982,9 +4986,18 @@ doc_y_range_nonzero:
     Adash_y_pos = IYheight[53];
     Adash_y_pos_pushed = Adash_y_pos; // PUSH AF  -- push Adash_y_pos (& flags)
 
-    Adash_clip_rows = HLbitmap->height - 1 - D_y_range; /* Conv: HLbitmap adjusted, this loads from bitmap.height */
-    if ((s8) Adash_clip_rows >= 0) // need this cast?
+    // Conv: $936F SUB D; $9370 JP NC tests true unsigned borrow (whether
+    // height-1 < D_y_range), not the sign of the wrapped 8-bit difference --
+    // same pitfall as the zero-y-range branch's clamp above ($9350). Close-up
+    // percentage bands push HLbitmap->height past 127, at which point
+    // (s8)(height-1-D_y_range) stops tracking the true borrow and this branch
+    // wrongly falls into the "inverted" re-clip path instead of breaking out
+    // to draw, chopping rows off the top of the band.
+    D_height = HLbitmap->height; /* Conv: HLbitmap adjusted, this loads from bitmap.height */
+    if ((u8) (D_height - 1) >= (u8) D_y_range) {
+      Adash_clip_rows = D_height - 1 - D_y_range;
       break;
+    }
 
     // POP AF - discard Adash_y_pos_pushed
 
@@ -5195,7 +5208,15 @@ doc_masked_rows:
   // EXX - UNBANK
 
   DE_bitmap_stride &= 0xFF; // clear top of DEbitmap_stride
-  /* $945C EXX: MAIN B = B_height (function parameter, restored from shadow) */
+  // Conv: $9442 `LD B,$00` (masked jump-table offset scratch) clobbers the
+  // B_height that was popped into this bank at $93B2 before it is ever read;
+  // the value the real Z80 actually uses for the first iteration below is
+  // B_clip_rows, banked away at $93AE and restored by the $945C EXX -- this
+  // mirrors the unmasked loop above, which explicitly seeds its first
+  // iteration with `BC_padding = B_clip_rows`. Using the raw B_height
+  // parameter here (unclipped) skipped the first-section split for
+  // tall/close objects, truncating their top rows.
+  B_height = B_clip_rows; /* $945C EXX: MAIN B = B_clip_rows for first iteration */
   for (;;) {
     Ay_remaining = state->doc_mask_rows_main - B_height;
     if (Ay_remaining > 0) {
