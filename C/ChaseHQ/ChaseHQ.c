@@ -4196,7 +4196,7 @@ static void draw_stretchy_object_common(chqstate_t       *state,
   int                    Apairdepth;            /* depth value from the selected pair (was A) */
   u16                    HLoffset;              /* bitmap offset from the pair entry (was HL) */
   const bitmap_t        *HLbitmap;              /* pointer to the selected bitmap definition (was HL) */
-  int                    Bwidthbytes;           /* bitmap width in bytes minus 2, for column callback (was B) */
+  int                    Bcoltotal_delta;       /* amount added to C_total after each band's draw (was B) */
   int                    Bpairdepth;            /* copy of Apairdepth passed to SM_91CD_callback (was B) */
   int                    Avertical;             /* vertical scale from SM_91DB, halved for column height (was A) */
   int                    Bvertical;             /* half of Avertical: column height in pixels (was B) */
@@ -4238,14 +4238,18 @@ static void draw_stretchy_object_common(chqstate_t       *state,
       break;
 
     // Type 2
-    Bwidthbytes = HLbitmap->width_bytes;
-    // PUSH (Bwidthbytes,C_total)
+    // Conv: $91C8 `LD B,(HL)` reads *before* the `DEC HL` x2 at $91C9-$91CA
+    // that backs HL up to the bitmap struct's start (byte 0 = width_bytes)
+    // for the callback call below. So at $91C8, HL still points at
+    // struct_start + 2, which is the `height` field, not `width_bytes`.
+    Bcoltotal_delta = HLbitmap->height;
+    // PUSH (Bcoltotal_delta,C_total)
     Bpairdepth = Apairdepth;
     SM_91CD_callback(state, Bpairdepth, HLbitmap, IXxpos, IYheight);
 
 dso_loop_continue:
-    // POP (Bwidthbytes,C_total)
-    C_total += Bwidthbytes;
+    // POP (Bcoltotal_delta,C_total)
+    C_total += Bcoltotal_delta;
     // POP IXxpos/HLstretchy
   }
 
@@ -4313,9 +4317,9 @@ dso_continue:
 
   // EX AF,AF' -- restore Adepth
 
-  Bpairdepth = Apairdepth; // might be Bwidthbytes?
-  SM_9244_callback(state, Bpairdepth, HLbitmap, IXxpos, IYheight); // does this update B?
-  Bwidthbytes = Bvertical; // $91D0–$91D3: POP BC restores saved Bvertical; C += B
+  Bpairdepth = Apairdepth;
+  SM_9244_callback(state, Bpairdepth, HLbitmap, IXxpos, IYheight);
+  Bcoltotal_delta = Bvertical; // $91D0-$91D3: POP BC restores saved Bvertical; C += B
   state->doc_plot_mode = 0; // reset
   goto dso_loop_continue;
 }
@@ -5140,10 +5144,14 @@ doc_set_callbacks:
       // Conv: the Z80 leaves the advanced backbuffer address in shadow HL'
       // across the CALL (it is never reloaded from a fixed value); the C
       // callback returns it explicitly so it carries into the next iteration.
+      // Conv: the row count drawn each call is the section height just
+      // subtracted (BC_padding), not the outer B_height — mirrors the
+      // doc_masked_rows loop below, which reuses the same variable for both
+      // roles instead of a separate constant.
       HLdash_backbuf_addr = state->doc_plot_fn(state,
                          IX_jump_offset,
                          HLdash_backbuf_addr,
-                         B_height,
+                         BC_padding,
                          DE_bitmap_stride,
                          HL_bitmap_data);           // $940F: CALL doc_plot_fn
       HL_bitmap_data = state->doc_bitmap_ptr;       // $9412: HL = SM bitmap ptr
@@ -5158,7 +5166,7 @@ doc_set_callbacks:
   state->doc_plot_fn_2(state,
                        IX_jump_offset,
                        HLdash_backbuf_addr,
-                       B_height,
+                       Bdash_height,
                        DE_bitmap_stride,
                        HL_bitmap_data); /* exit via $941D */
   return;

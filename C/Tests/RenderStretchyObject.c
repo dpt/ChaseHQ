@@ -129,17 +129,18 @@ static int pick_row(const chqstate_t *state)
  * handful of bytes the object actually touched.
  */
 /*
- * state->backbuffer preserves the ZX Spectrum screen's interleaved row
- * order (it is a shadow buffer at $F000 mimicking the real screen's layout
- * at $4000 — see ADDRTOBACKBUF_M in ChaseHQ.c, a straight offset from the
- * Z80 address, meaning array order == interleaved address order, not linear
- * top-to-bottom order). Same transpose as Screen.c's screen-to-texture
- * conversion, just for two thirds (128 rows) instead of three (192).
+ * state->backbuffer uses its own interleave, distinct from the real screen's
+ * — see the format comment above update_screen() in ChaseHQ.c:
+ *   screen format: 0b010BBLLLRRRCCCCC (B=band, L=scanline, R=row-group)
+ *   buffer format: 0b1111LLLLRRRCCCCC (L=scanline, R=row-group)
+ * i.e. the buffer's low nibble is the fine scanline (*256) and the next 3
+ * bits are the row-group (*32) — no band component, since the whole 128-row
+ * buffer is one contiguous $F000 page. This matches the (y&0x0F)<<8 |
+ * (y&0x70)<<1 address formula in draw_object_clipped exactly.
  */
 static int deinterleave_row(int linear_y)
 {
-  return (linear_y / 64) * 2048 + ((linear_y % 64) / 8) * 32 +
-         (linear_y % 8) * 256;
+  return (linear_y & 0x0F) * 256 + ((linear_y >> 4) & 0x07) * 32;
 }
 
 static void write_pgm(const chqstate_t *state, FILE *out)
