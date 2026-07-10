@@ -220,6 +220,14 @@ static void chq_sdl_key_pressed(chq_sdl_state_t         *state,
   zxjoystick_t j;
 
   sym = k->keysym.sym;
+
+  if (sym == SDLK_F1)
+  {
+    if (k->type == SDL_KEYDOWN && !k->repeat)
+      state->paused = !state->paused;
+    return;
+  }
+
   switch (sym)
   {
     case SDLK_LEFT:  j = zxjoystick_LEFT;    break;
