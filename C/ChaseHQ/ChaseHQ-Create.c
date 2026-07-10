@@ -86,6 +86,9 @@ static void chq_initialise(chqstate_t *state)
   // $A13B
   state->start_speech_cycle = 4;
 
+  // $9982
+  state->chatter_cursor_blink = 0xAA;
+
   // $A240
   state->roadbufptr = &state->road_buffer[0];   // $EE00
   state->roadbuf_start  = &state->road_buffer[0];   // $EE00
