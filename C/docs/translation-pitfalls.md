@@ -42,7 +42,7 @@ A variant is **copy-paste between adjacent sections of the same function:** `rm_
 **Symptoms and fixes:**
 
 - **SM fields never set:** `dr_left_table_hi_1/2`, `dr_right_table_hi_1/2`, `dr_neg_lane_count` — used on the first frame before `dr_four_lane_highway` writes them. Add explicit initialisation in `chq_initialise`. (`c8251ba`)
-- **SM field type truncation:** `ahc_road_pos_b` was declared `u8` but the Z80 SM instruction at $B3A3 is `LD DE,$01D8` — a 16-bit operand. Storing 472 into a `u8` field silently truncates to 216; `DEother_road_pos >> 8` then returns 0 instead of 1, making the upper-bound high-byte comparison always pass for any road_pos ≥ 256. Fix: declare the field `u16`. Check whether the Z80 SM instruction loads a register pair (16-bit) or a single register/byte (8-bit). (`bc1e1cb`)
+- **SM field type truncation:** `ahc_road_pos_b` was declared `u8` but the Z80 SM instruction at $B3A3 is `LD DE,$01D8`— a 16-bit operand. Storing 472 into a`u8`field silently truncates to 216;`DEother_road_pos >> 8`then returns 0 instead of 1, making the upper-bound high-byte comparison always pass for any road_pos ≥ 256. Fix: declare the field`u16`. Check whether the Z80 SM instruction loads a register pair (16-bit) or a single register/byte (8-bit). (`bc1e1cb`)
 - **SM fields `ahc_road_pos_a` / `ahc_road_pos_b` not initialised:** The default `LD DE` operands at $B395 and $B3A3 are 72 and 472. calloc-zero left both at 0, causing the road_pos clamp to fire incorrectly on the very first frame. (`bc1e1cb`)
 - **`road_buffer_offset` not reset in `set_up_stage`:** Z80 zeroes this at stage start; C translation missed it, leaving a stale pointer into the previous stage's buffer. (`dfdaf8b`)
 - **`B_iterations` and `C_range` uninitialised in `draw_road_lanes_change`:** Z80 `LD B,C` sets loop count from C; both must be assigned from `C_bresen_range` at the `compute_step` entry point. (`7a12c5b`)
@@ -431,11 +431,11 @@ Or declare the field `s8` if it is never used as unsigned.
 **Bugs:**
 
 - `draw_object_right_stretchy_entrypt` (`$9306–$9307`, `ADD A,B; RET C`): C had `if (Awidth_bytes < Bdepth) return`, an unrelated magnitude guard. For near-horizon rows with small xpos and larger depth, this returned early and dropped right-side scenery objects, making the road surface visible through empty space. Fix: `Awidth_bytes += Bdepth; if (Awidth_bytes > 255) return;`.
-- `dust_stones_stuff` (`$AA33–$AA34`, `ADD A,E; RET NC` — inverse form, returns when there is *no* carry): C had `if (A >= E) return`, true for almost any positive A, making the draw call unreachable. Fix: `A += E; if (A <= 255) return;`.
+- `dust_stones_stuff` (`$AA33–$AA34`, `ADD A,E; RET NC` — inverse form, returns when there is _no_ carry): C had `if (A >= E) return`, true for almost any positive A, making the draw call unreachable. Fix: `A += E; if (A <= 255) return;`.
 - `draw_overhead` (`$90D4–$90D5`, `ADD A,C; JR C`): C used `if ((s8) A >= 0)` (sign test) instead of `if (A <= 255)` (carry test), skipping the span-width computation for sums in [128, 255] where the Z80 would have entered it.
 - `advance_hazard` (`$ADCD–$ADD1`, `ADD A,C`): `C_dist` was declared `int`; `if (C_dist < IXhazard->distance)` was always false. Fix: `if (C_dist > 255)` — the `int` sum exceeds 255 exactly when the Z80 8-bit addition would have carried.
 
-**Fix/Rule:** Add first, then check the *sum*, never the inputs or the sign bit: `A += B; if (A > 255) { /* carry branch */ }` or `if (A <= 255) { /* no-carry branch */ }`. When the accumulator is `int`, use `sum > 255` in place of the unsigned-wrap idiom `sum < addend`.
+**Fix/Rule:** Add first, then check the _sum_, never the inputs or the sign bit: `A += B; if (A > 255) { /* carry branch */ }` or `if (A <= 255) { /* no-carry branch */ }`. When the accumulator is `int`, use `sum > 255` in place of the unsigned-wrap idiom `sum < addend`.
 
 **Commits:** `9409d37`, `55be0c6`
 
@@ -445,16 +445,16 @@ Or declare the field `s8` if it is never used as unsigned.
 
 **Root cause:** `EX AF,AF'` swaps both A and F (all flags) with their shadow counterparts. Two related mistakes:
 
-1. **Wrong variable assigned after unbank.** Inside a shuttle or loop, one C variable is accumulated in A while another is banked in A'. At the paired `EX AF,AF'` that restores the main register, A receives the banked value and A' receives the value that was live in A — the two C variables must be assigned to the correct sides, not swapped, and not both captured at the unbank point (the value banked at the *first* `EX AF,AF'` must be captured there, immediately after it is loaded — capturing it at the unbank point instead grabs whatever unrelated value A holds by then).
-2. **Restored flags, not current A, drive the next branch.** A `JP P`/`JP M` immediately after an `EX AF,AF'` tests the flags restored by that EX — which reflect whatever instruction set them *before* the original bank — not any instruction that ran between the EX and the branch. If a new value is loaded into A in between (`LD A,C; JP P`), the branch is independent of that value.
+1. **Wrong variable assigned after unbank.** Inside a shuttle or loop, one C variable is accumulated in A while another is banked in A'. At the paired `EX AF,AF'` that restores the main register, A receives the banked value and A' receives the value that was live in A — the two C variables must be assigned to the correct sides, not swapped, and not both captured at the unbank point (the value banked at the _first_ `EX AF,AF'` must be captured there, immediately after it is loaded — capturing it at the unbank point instead grabs whatever unrelated value A holds by then).
+2. **Restored flags, not current A, drive the next branch.** A `JP P`/`JP M` immediately after an `EX AF,AF'` tests the flags restored by that EX — which reflect whatever instruction set them _before_ the original bank — not any instruction that ran between the EX and the branch. If a new value is loaded into A in between (`LD A,C; JP P`), the branch is independent of that value.
 
 **Bugs:**
 
 - `scroll_horizon` vertical-scroll loop: `EX AF,AF'` banks `Adiff` (ticks remaining) and unbanks `Ahorizon_y_a25a_delta` (accumulated delta). The final `EX AF,AF'` after the loop hands A (adjusted counter) to `var_a25b` and A' (accumulated delta) to `var_a25a`. The C update assignments were swapped (`horizon_y_accum += Ahorizon_y_a25a_delta` instead of `+= Bcounter`, and vice versa for `horizon_y_step`).
-- `dust_stones_stuff` (`$A9FF`): `EX AF,AF'` banks a table byte into A', then A is overwritten by an unrelated LOD index computation. The C code captured `saved_A = A` at the *second* (unbank) `EX AF,AF'` comment, grabbing the LOD index (always ≥ 0) instead of the table byte, making the intended `if (saved_A < 0)` branch dead code on every frame. Fix: assign `saved_A = A` at the *first* (bank) comment, immediately after the value is loaded.
+- `dust_stones_stuff` (`$A9FF`): `EX AF,AF'` banks a table byte into A', then A is overwritten by an unrelated LOD index computation. The C code captured `saved_A = A` at the _second_ (unbank) `EX AF,AF'` comment, grabbing the LOD index (always ≥ 0) instead of the table byte, making the intended `if (saved_A < 0)` branch dead code on every frame. Fix: assign `saved_A = A` at the _first_ (bank) comment, immediately after the value is loaded.
 - `scroll_horizon` (`$B872`): the restored AF reflects `AND A` at `$B851` (sign of `current_curvature`). The immediately following `LD A,C; JP P,$B879` (`LD A,C` doesn't affect flags) branches on `current_curvature`'s sign, not C's. The C code tested `if ((s8) Aregular < 0)` (the table value C, always non-negative), so NEG was never applied and the backdrop could only scroll rightward. Fix: test `if ((s8) current_curvature < 0)` instead.
 
-**Rule:** At a bank-point `EX AF,AF'`, assign the shadow C variable immediately, not at the unbank point. After a loop-terminating `EX AF,AF'`, trace which C variable was live in A vs A' and assign each to the correct state field. When `JP P`/`JP M` follows an `EX AF,AF'`, trace back to the flag-setting instruction (`AND A`, `OR A`, `CP`, or arithmetic) that preceded the *original* bank to identify what is actually being tested — not the current A register.
+**Rule:** At a bank-point `EX AF,AF'`, assign the shadow C variable immediately, not at the unbank point. After a loop-terminating `EX AF,AF'`, trace which C variable was live in A vs A' and assign each to the correct state field. When `JP P`/`JP M` follows an `EX AF,AF'`, trace back to the flag-setting instruction (`AND A`, `OR A`, `CP`, or arithmetic) that preceded the _original_ bank to identify what is actually being tested — not the current A register.
 
 **Commits:** `41de175`, `55be0c6`, `87f70fa`
 
@@ -480,7 +480,7 @@ IXhazard->horz_pos  = HL & 0xFF;   /* $AE74: IX[2] */
 IXhazard->horz_clip = HL >> 8;     /* $AE77: IX[3] */
 ```
 
-**Rule:** When translating consecutive `LD (IX+n),reg` writes, check the struct's field-offset table (declared IX+n comments elsewhere in the same function) against the actual C member name used at each write site — don't rely on the prose in the surrounding comment alone. A field that was written correctly by name in an *earlier* part of the function (e.g. `distance` at `dh_adfa`) is a red flag if it reappears as the target of an unrelated write later in the same function; re-verify against the skool offset, not the variable's plausible-sounding name.
+**Rule:** When translating consecutive `LD (IX+n),reg` writes, check the struct's field-offset table (declared IX+n comments elsewhere in the same function) against the actual C member name used at each write site — don't rely on the prose in the surrounding comment alone. A field that was written correctly by name in an _earlier_ part of the function (e.g. `distance` at `dh_adfa`) is a red flag if it reappears as the target of an unrelated write later in the same function; re-verify against the skool offset, not the variable's plausible-sounding name.
 
 **Commit:** `02d2a5a`
 
@@ -490,7 +490,7 @@ IXhazard->horz_clip = HL >> 8;     /* $AE77: IX[3] */
 
 **Root cause:** When a Z80 `CALL` is followed by code that clearly doesn't use the returned register (the skool marks it "result ignored", or no subsequent instruction reads it), a C translation can still be tempted to give the callee an output parameter "for completeness" — especially if the callee happens to read and reconstruct that same register from struct fields internally, for its own unrelated purposes (e.g. a bounding-box test). If the C translation then writes that internally-reloaded value back through the invented output pointer, it silently discards whatever the caller actually passed in.
 
-**Bug:** `advance_hazard` (`$AE74–$AE79`) writes the freshly-computed screen position into `horz_pos`/`horz_clip` and then calls `check_collision` (`$AE7A`) purely for its side effect (setting `hit_timer` on a hit). The skool comment at `$AE7A` reads "Call check_collision (result ignored)" — the Z80 caller never reads HL again. But `check_collision` internally reloads `hazard->horz_pos`/`horz_clip` (its *own* current struct values, needed for its bounding-box overlap test) into local variables also named for HL's halves, and the C port wired those locals up to an `HLout` output parameter:
+**Bug:** `advance_hazard` (`$AE74–$AE79`) writes the freshly-computed screen position into `horz_pos`/`horz_clip` and then calls `check_collision` (`$AE7A`) purely for its side effect (setting `hit_timer` on a hit). The skool comment at `$AE7A` reads "Call check_collision (result ignored)" — the Z80 caller never reads HL again. But `check_collision` internally reloads `hazard->horz_pos`/`horz_clip` (its _own_ current struct values, needed for its bounding-box overlap test) into local variables also named for HL's halves, and the C port wired those locals up to an `HLout` output parameter:
 
 ```c
 if (HLout) *HLout = HL;                              /* caller's input, correct so far */
@@ -500,9 +500,9 @@ H_horz_clip = hazard->horz_clip;
 if (HLout) *HLout = (H_horz_clip << 8) | L_horz_pos;  /* overwrites with STALE struct state */
 ```
 
-The caller then wrote this stale value back into the hazard: `IXhazard->horz_pos = HL & 0xFF;` — permanently pinning every hazard near its *previous* (often template-default, i.e. 0) screen position regardless of the position just computed a few lines above. Symptom: hazard sprites collapsed to a sliver at screen x≈0, moved with distance/height as normal, and never triggered a collision (the hero's hit box at x∈[104,144] never reached x≈0).
+The caller then wrote this stale value back into the hazard: `IXhazard->horz_pos = HL & 0xFF;` — permanently pinning every hazard near its _previous_ (often template-default, i.e. 0) screen position regardless of the position just computed a few lines above. Symptom: hazard sprites collapsed to a sliver at screen x≈0, moved with distance/height as normal, and never triggered a collision (the hero's hit box at x∈[104,144] never reached x≈0).
 
-**Fix:** Match the skool ordering — write the struct fields *before* the call, and drop the output parameter entirely once no caller needs it:
+**Fix:** Match the skool ordering — write the struct fields _before_ the call, and drop the output parameter entirely once no caller needs it:
 
 ```c
 IXhazard->horz_pos  = HL & 0xFF;   /* $AE74: IX[2] — written before the CALL */
@@ -510,7 +510,7 @@ IXhazard->horz_clip = HL >> 8;     /* $AE77: IX[3] */
 (void) check_collision(state, 0, HL, IXhazard);   /* result genuinely ignored */
 ```
 
-**Rule:** Before adding an output parameter to a translated helper, check every call site's skool for what happens to the relevant register immediately after the `CALL` returns. "Result ignored" (or no subsequent read of that register before it's next written) means the C port should not invent one either — even if the callee's internal logic happens to touch a same-named register for its own purposes. An output parameter that exists only because *a* register of that name is reloaded inside the callee, without confirming the *caller* ever reads it back, is a fabricated data path that can overwrite a value the caller already computed correctly.
+**Rule:** Before adding an output parameter to a translated helper, check every call site's skool for what happens to the relevant register immediately after the `CALL` returns. "Result ignored" (or no subsequent read of that register before it's next written) means the C port should not invent one either — even if the callee's internal logic happens to touch a same-named register for its own purposes. An output parameter that exists only because _a_ register of that name is reloaded inside the callee, without confirming the _caller_ ever reads it back, is a fabricated data path that can overwrite a value the caller already computed correctly.
 
 **Commit:** `be0ef28`
 
@@ -518,7 +518,7 @@ IXhazard->horz_clip = HL >> 8;     /* $AE77: IX[3] */
 
 ## 30. `SUB $01; JR C` pre-check instead of post-decrement — u8 never wraps
 
-**Root cause:** Z80 `SUB $01` always executes and always stores its wrapped 8-bit result before branching on the carry flag it sets. A C translation that instead checks `if (value == 0)` *before* decrementing, and only decrements a different field in that branch, never lets the original field wrap to 255 — it gets stuck at 0 forever, while the sibling field it decrements instead underflows unboundedly on every subsequent frame.
+**Root cause:** Z80 `SUB $01` always executes and always stores its wrapped 8-bit result before branching on the carry flag it sets. A C translation that instead checks `if (value == 0)` _before_ decrementing, and only decrements a different field in that branch, never lets the original field wrap to 255 — it gets stuck at 0 forever, while the sibling field it decrements instead underflows unboundedly on every subsequent frame.
 
 **Bug:** `read_map`'s perp-distance countdown (`$C096–$C0B9`) does `LD A,(IX+1); SUB $01; LD (IX+1),A; JR C,...`: the low byte is decremented and stored unconditionally, and the carry (0 → 255 wrap) selects whether the high byte is also decremented. The C translation instead pre-checked `if (distance == 0)` and, on that branch, decremented `hazard_lane_OR_perp_dist_hi` while leaving `distance` at 0 forever. Once `distance` first hit exactly 0 with a nonzero high byte, the high byte underflowed every frame thereafter, producing a runaway combined distance that tripped `assert(HLdistance >= 0 && HLdistance < 10000)` in `plot_turbos_and_digits`.
 
@@ -533,6 +533,6 @@ if (A_flags_inc == 0) {                          /* pre-decrement value was 0 ->
 }
 ```
 
-**Rule:** Never gate a Z80 `SUB $01`/`DEC` on the pre-subtraction value to decide *whether* to store the wrapped result. Always perform and store the wrap first; use the captured pre-subtraction value only to detect the borrow/zero condition for the branch that follows.
+**Rule:** Never gate a Z80 `SUB $01`/`DEC` on the pre-subtraction value to decide _whether_ to store the wrapped result. Always perform and store the wrap first; use the captured pre-subtraction value only to detect the borrow/zero condition for the branch that follows.
 
 **Commit:** `507aa97`

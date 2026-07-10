@@ -11,11 +11,11 @@ python3 convert_stage.py <skool_file> <stage_num> [options] > ChaseHQ-StageNData
 `skool_file` is one of the 128K bank skool files. A bank file can contain more than one stage ([Stage N] sections); `convert_stage.py` filters to the requested stage number and ignores sections belonging to other stages.
 
 | Stage | Skool file                  |
-| ----- | ---------------------------- |
-| 2     | `ChaseHQ-128K-bank-1.skool`  |
-| 3     | `ChaseHQ-128K-bank-6.skool`  |
-| 4     | `ChaseHQ-128K-bank-6.skool`  |
-| 5     | `ChaseHQ-128K-bank-7.skool`  |
+| ----- | --------------------------- |
+| 2     | `ChaseHQ-128K-bank-1.skool` |
+| 3     | `ChaseHQ-128K-bank-6.skool` |
+| 4     | `ChaseHQ-128K-bank-6.skool` |
+| 5     | `ChaseHQ-128K-bank-7.skool` |
 
 The CMake `convert_stages` target (`cmake --build <dir> --target convert_stages`) runs all four invocations automatically.
 
