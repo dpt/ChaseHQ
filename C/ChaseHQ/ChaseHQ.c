@@ -9957,7 +9957,7 @@ static void draw_hazard_sprites(chqstate_t *state,
   int             Ewidth_bits;         /* pixel width of selected bitmap: width_bytes * 8 (was E) */
   int             Ahorz_clip;          /* hazard's horizontal clip flag: zero=on-screen, non-zero=clipped (was A) */
   u8              Ahorz_pos;           /* hazard's horizontal screen position (was A) */
-  u8              Awidth_bytes;        /* perp-path copy of Ahorz_clip, repurposed as width accumulator (was A) */
+  int             Asum;                /* Ahorz_pos + Ewidth_bits; wide int to detect the 8-bit carry (was A) */
   int             Aindex;              /* smoke_bitmap_index: LOD level for the arrow offset lookup (was A) */
   const u8       *HLarrows;            /* pointer into arrow_offsets for the floating arrow x,y (was HL) */
   int             Asmash_level;        /* smash_level at time of fire/smoke dispatch (was A) */
@@ -9999,17 +9999,18 @@ static void draw_hazard_sprites(chqstate_t *state,
     Ahorz_clip = IXhazard->horz_clip;
     // AND A3
     Ahorz_pos = IXhazard->horz_pos;
-    if (Ahorz_clip <= 0) {
-      if (Ahorz_clip != 0)
+    if (Ahorz_clip < 0) {
+      Asum = Ahorz_pos + Ewidth_bits;
+      if (Asum < 0x100) // no carry
         goto dafs_draw_done_1;
+      Ahorz_pos = (u8) Asum;
+    } else if (Ahorz_clip != 0) {
+      goto dafs_draw_done_1;
+    } else {
       if (Ahorz_pos >= 128)
         goto dafs_draw_right_1;
 
       Ahorz_pos += Ewidth_bits;
-    } else {
-      Ahorz_pos += Ewidth_bits;
-      if (Ahorz_pos + Ewidth_bits < 0x100) // no carry
-        goto dafs_draw_done_1;
     }
 
     draw_object_left_width_entrypt(state, Ahorz_pos, HLbitmap, IYheight);
@@ -10035,23 +10036,24 @@ dafs_draw_done_1:
 dafs_af50:
   Ahorz_clip = IXhazard->horz_clip;
   state->dh_SM_B029_horz_clip = Ahorz_clip;
-  Awidth_bytes = Ahorz_clip; // set flags from A here
   Ahorz_pos = IXhazard->horz_pos;
   state->dh_SM_B02C_horz_pos = Ahorz_pos;
-  if ((s8) Awidth_bytes >= 0) {
-    if (Awidth_bytes)
-    goto dafs_draw_done_1;
-  if (Ahorz_pos >= 128)
-    goto dafs_draw_right_2;
-    Awidth_bytes += Ewidth_bits;
-  } else {
-    Awidth_bytes += Ewidth_bits;
-    if ((s8) Awidth_bytes < 0)
+  if (Ahorz_clip < 0) {
+    Asum = Ahorz_pos + Ewidth_bits;
+    if (Asum < 0x100) // no carry
       goto dafs_draw_done_1;
+    Ahorz_pos = (u8) Asum;
+  } else if (Ahorz_clip != 0) {
+    goto dafs_draw_done_1;
+  } else {
+    if (Ahorz_pos >= 128)
+      goto dafs_draw_right_2;
+
+    Ahorz_pos += Ewidth_bits;
   }
 
 dafs_draw_left_2:
-  draw_object_left_width_entrypt(state, Awidth_bytes, HLbitmap, IYheight);
+  draw_object_left_width_entrypt(state, Ahorz_pos, HLbitmap, IYheight);
   goto dafs_done_draw_object;
 
 dafs_draw_right_2:
