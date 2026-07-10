@@ -10959,7 +10959,7 @@ static void smash(chqstate_t *state)
  * function returns early and draws nothing. Each of the three sub-tables
  * pointed to by dd_debris_subtables_start holds a 0..3 per-piece cycling
  * counter followed by a 9-entry y/x position table. The counter selects the
- * bitmap frame (12 bytes per frame in bitmap_debris_1); the current
+ * bitmap frame (12 bytes per frame in bitmap_debris); the current
  * dd_frame_offset selects the y/x pair within the sub-table. Each piece is
  * drawn via draw_part_entrypt2 at 6×1 bytes masked.
  *
@@ -10971,12 +10971,12 @@ static void draw_debris(chqstate_t *state)
   int       Biterations;       /* loop counter: 3 debris pieces per smash (was B) */
   u8      **HLsubtables;       /* pointer walking dd_debris_subtables_start array (was HL) */
   u8       *DEsubtable;        /* pointer into the current debris sub-table (was DE) */
-  int       BCframe_offset;    /* piece cycling counter x 12: byte offset into bitmap_debris_1 (was BC) */
+  int       BCframe_offset;    /* piece cycling counter x 12: byte offset into bitmap_debris (was BC) */
   int       HLoffset;          /* dd_frame_offset: selects y/x pair within the sub-table (was HL) */
   u8       *HLsubtable;        /* pointer to the y byte in the sub-table position entry (was HL) */
   u8        Dy;                /* y screen position for this debris piece (was D) */
   u8        Ex;                /* x screen position for this debris piece (was E) */
-  const u8 *HLbitmap;          /* pointer into bitmap_debris_1 at the chosen frame offset (was HL) */
+  const u8 *HLbitmap;          /* pointer into bitmap_debris at the chosen frame offset (was HL) */
   u8        Bheight;           /* sprite height: 6 rows (was B) */
   u8        Cwidth_bytes;      /* sprite width in bytes: 1 (was C) */
   int       BCdash;            /* shadow BC banked at EXX: 0 for no extra offset (was BC) */
@@ -11008,8 +11008,7 @@ static void draw_debris(chqstate_t *state)
     Dy = *HLsubtable++;
     Ex = *HLsubtable;
 
-    HLbitmap = &bitmap_debris_1[0] +
-               BCframe_offset; // TODO: Make bitmap_debris_X an array
+    HLbitmap = &bitmap_debris[0][0] + BCframe_offset;
 
     Bheight = 6; // rows
     Cwidth_bytes = 1; // 1 byte wide masked?

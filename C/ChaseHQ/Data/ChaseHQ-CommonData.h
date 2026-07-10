@@ -166,10 +166,7 @@ const u8 debris_subtable_3_template[19];
 const u8 debris_subtable_4_template[19];
 const u8 debris_subtable_5_template[19];
 
-const u8 bitmap_debris_1[2 * 6];
-const u8 bitmap_debris_2[2 * 6];
-const u8 bitmap_debris_3[2 * 6];
-const u8 bitmap_debris_4[2 * 6];
+const u8 bitmap_debris[4][2 * 6];
 
 const carpart_t hero_car_parts[9][5];
 const carpart_t hero_car_shadow[3];

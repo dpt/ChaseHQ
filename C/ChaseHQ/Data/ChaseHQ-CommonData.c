@@ -2370,44 +2370,43 @@ const u8 debris_subtable_5_template[19] = {
 
 /* ----------------------------------------------------------------------- */
 
-// $CEAA
-const u8 bitmap_debris_1[2 * 6] = {
-  XXXX___X, ____XXX_,
-  _______X, XXXX__X_,
-  ________, X______X,
-  ________, X_____XX,
-  X______X, _X__XXX_,
-  XX__XXXX, __XX____
-};
-
-// $CEB6
-const u8 bitmap_debris_2[2 * 6] = {
-  XXX___XX, ___XXX__,
-  X______X, _XXX_XX_,
-  X______X, _X____X_,
-  X______X, _X____X_,
-  XX_____X, __X_XXX_,
-  XX__XXXX, __XX____
-};
-
-// $CEC2
-const u8 bitmap_debris_3[2 * 6] = {
-  XXX__XXX, ___XX___,
-  XX___XXX, __X_X___,
-  XX____XX, __X__X__,
-  XX____XX, __X__X__,
-  XXX___XX, ___X_X__,
-  XXXX_XXX, ____X___
-};
-
-// $CECE
-const u8 bitmap_debris_4[2 * 6] = {
-  XXX___XX, ___XXX__,
-  X______X, _XXX_XX_,
-  X______X, _X____X_,
-  X______X, _X____X_,
-  XX_____X, __X_XXX_,
-  XX__XXXX, __XX____
+// $CEAA-$CED9: four 12-byte debris frames, contiguous in the original ROM.
+// draw_debris indexes this as one 48-byte table (frame * 12), so it must stay
+// a single array; C does not guarantee the relative placement of four
+// separate globals.
+const u8 bitmap_debris[4][2 * 6] = {
+  { // $CEAA
+    XXXX___X, ____XXX_,
+    _______X, XXXX__X_,
+    ________, X______X,
+    ________, X_____XX,
+    X______X, _X__XXX_,
+    XX__XXXX, __XX____
+  },
+  { // $CEB6
+    XXX___XX, ___XXX__,
+    X______X, _XXX_XX_,
+    X______X, _X____X_,
+    X______X, _X____X_,
+    XX_____X, __X_XXX_,
+    XX__XXXX, __XX____
+  },
+  { // $CEC2
+    XXX__XXX, ___XX___,
+    XX___XXX, __X_X___,
+    XX____XX, __X__X__,
+    XX____XX, __X__X__,
+    XXX___XX, ___X_X__,
+    XXXX_XXX, ____X___
+  },
+  { // $CECE
+    XXX___XX, ___XXX__,
+    X______X, _XXX_XX_,
+    X______X, _X____X_,
+    X______X, _X____X_,
+    XX_____X, __X_XXX_,
+    XX__XXXX, __XX____
+  }
 };
 
 /* ----------------------------------------------------------------------- */
