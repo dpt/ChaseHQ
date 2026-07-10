@@ -9690,6 +9690,8 @@ static void advance_hazard(chqstate_t *state,
                                const u8   *IYbase)
 {
   int       C_dist;       /* distance accumulator; speed borrow + IX[1] (was C) */
+  u8        A_old_frac;   /* dist_frac before the speed subtraction, for borrow detection (was A) */
+  u8        A_speed_lo;   /* speed low byte subtracted from dist_frac (was A) */
   int       A_flags;      /* IX[15]+1; zero selects perp path, non-zero car path (was A) */
   int       A_lane;       /* IX[17] lane counter; advanced on perp path only (was A) */
   int       zero;         /* Z-flag: A_lane was zero before distance overwrite */
@@ -9723,8 +9725,10 @@ static void advance_hazard(chqstate_t *state,
   /* $ADBE: C = IX[14] — top byte of speed (role uncertain) */
   C_dist = IXhazard->speed >> 8;
   /* $ADC1-$ADC7: IX[4] -= IX[13]; borrow increments C_dist */
-  IXhazard->dist_frac -= IXhazard->speed & 0xFF;
-  if ((s8) IXhazard->dist_frac < 0) /* JR NC,$ADCD: borrow → C++ */
+  A_old_frac         = IXhazard->dist_frac;
+  A_speed_lo         = IXhazard->speed & 0xFF;
+  IXhazard->dist_frac = A_old_frac - A_speed_lo;
+  if (A_old_frac < A_speed_lo) /* JR NC,$ADCD: borrow → C++ */
     C_dist++;
   C_dist += IXhazard->distance; /* $ADCD-$ADD1: C += IX[1] */
 
@@ -9839,7 +9843,7 @@ dh_adfa:
   HL = state->dh_road_left_xpos + A_xresult;
   /* $AE74-$AE79: IX[2],IX[3] = HL (horz_pos, horz_clip) written via HLout */
   (void) check_collision(state, 0, HL, IXhazard, &HL);
-  IXhazard->distance  = HL & 0xFF;
+  IXhazard->horz_pos  = HL & 0xFF;
   IXhazard->horz_clip = HL >> 8;
 
   Ddistance  = IXhazard->distance;
