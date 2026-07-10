@@ -65,6 +65,9 @@ static void chq_initialise(chqstate_t *state)
   for (i = 0; i < NELEMS(copies); i++)
     memcpy((char *) state + copies[i].dstoff, copies[i].src, copies[i].n);
 
+  // $8000
+  state->test_mode = 1;
+
   // $8007
   state->wanted_stage_number   = 1;
   state->current_stage_number  = 1;
@@ -83,16 +86,20 @@ static void chq_initialise(chqstate_t *state)
   state->rng_seed[1] = 0x2D;
   state->rng_seed[2] = 0xE9;
 
-  // $A13B
-  state->start_speech_cycle = 4;
-
   // $9982
   state->chatter_cursor_blink = 0xAA;
 
+  // $A13B
+  state->start_speech_cycle = 4;
+
   // $A240
-  state->roadbufptr = &state->road_buffer[0];   // $EE00
-  state->roadbuf_start  = &state->road_buffer[0];   // $EE00
-  state->roadbuf_end    = &state->road_buffer[256]; // $EF00
+  state->roadbufptr    = &state->road_buffer[0];   // $EE00
+  state->roadbuf_start = &state->road_buffer[0];   // $EE00
+  state->roadbuf_end   = &state->road_buffer[256]; // $EF00
+
+  // $A69C/$A74A
+  state->pb_lane_change_timer = 20;
+  state->pb_approach_timer    = 20;
 
   // $A804
   state->sc_spawn_counter = 20;
@@ -124,8 +131,6 @@ static void chq_initialise(chqstate_t *state)
 
   // $E300
   state->height_table[0] = 0x60; // sentinel, hardcoded in Z80 RAM
-
-  state->test_mode = 1;
 
   // Temp until the 128K input code is ported.
   state->kempston_flag = 0;
