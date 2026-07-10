@@ -9919,7 +9919,7 @@ static void draw_hazard_sprites(chqstate_t *state,
 {
   // $CDEC
   //
-  // 4 pair of X,Y - are these signed?
+  // 4 pair of X,Y
   static const u8 arrow_offsets[4 * 2] = {
     0xDE, 0x30,
     0xE6, 0x20,
@@ -9939,7 +9939,7 @@ static void draw_hazard_sprites(chqstate_t *state,
 
   // $CE00
   //
-  // 6 pair of X,Y - are these signed?
+  // 6 pair of X,Y
   static const u8 smoke_offsets[6 * 2] = {
     0xEE, 0x08,
     0xF3, 0x08,
@@ -9970,7 +9970,7 @@ static void draw_hazard_sprites(chqstate_t *state,
 
   HLtable = state->dh_xpos_table; // sampled = $E900
   A = Biterations;
-  if (A != *HLtable) // this is a word, original tested a byte, use *HLtable & 0xFF perhaps?
+  if (A != (*HLtable & 0xFF)) // Conv: original CP (HL) tests only the low byte
     return;
 
   if (--A >= 11)
@@ -10027,7 +10027,7 @@ dafs_draw_done_1:
       return; // no more hazards
 
     // POP HL (HLtable)
-  } while (*HLtable == Biterations); // again, test low byte only here?
+  } while ((*HLtable & 0xFF) == Biterations); // Conv: original CP B tests only the low byte
 
   state->dh_xpos_table = HLtable;
   return;
@@ -10055,13 +10055,13 @@ dafs_draw_left_2:
   goto dafs_done_draw_object;
 
 dafs_draw_right_2:
-  draw_object_right_helicopter_entrypt(state, Awidth_bytes, HLbitmap, IYheight);
+  draw_object_right_helicopter_entrypt(state, Ahorz_pos, HLbitmap, IYheight);
 
 dafs_done_draw_object:
   state->dh_col_pos = state->doc_col_pos;
 
   if (state->smash_level < 5 && (Aindex = state->smoke_bitmap_index) < 4) {
-    HLarrows = &arrow_offsets[Aindex]; // Conv: scaling accounted for
+    HLarrows = &arrow_offsets[Aindex * 2];
     dh_draw_bitmap(state, HLarrows[0], HLarrows[1], &floating_arrow_here_defn, IYheight);
   }
 
@@ -10089,16 +10089,20 @@ dafs_done_draw_object:
 
   /* Conv: Converted to switch */
   switch (state->smash_level) {
-  case 3:
-    dh_smoke(state, state->smokes[2], IYheight);
-  case 2:
-    dh_smoke(state, state->smokes[0], IYheight);
-  case 1:
-    dh_smoke(state, state->smokes[1], IYheight);
   case 0:
     goto dafs_draw_done_1;
-  default:
-    assert(0);
+  case 1:
+    dh_smoke(state, state->smokes[1], IYheight);
+    break;
+  case 2:
+    dh_smoke(state, state->smokes[0], IYheight);
+    dh_smoke(state, state->smokes[1], IYheight);
+    break;
+  default: /* Conv: 3 and above all fall through to the same smoke draw */
+    dh_smoke(state, state->smokes[2], IYheight);
+    dh_smoke(state, state->smokes[0], IYheight);
+    dh_smoke(state, state->smokes[1], IYheight);
+    break;
   }
 }
 
