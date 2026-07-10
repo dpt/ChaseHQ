@@ -1880,9 +1880,11 @@ const session_t saved_game_state = {
   0x59BF // horizon_attribute
 };
 
-const hazard_t saved_game_state_hazard_0 = {
+#define PERP_INITIAL_DISTANCE (868)
+
+const hazard_t saved_game_state_perp_hazard = {
   0,
-  100, // distance
+  PERP_INITIAL_DISTANCE & 0xFF,
   0,
   0,
   0,
@@ -1895,7 +1897,7 @@ const hazard_t saved_game_state_hazard_0 = {
   0x003C,
   0xFF,
   0,
-  3,
+  PERP_INITIAL_DISTANCE >> 8,
   2,
   0
 };
@@ -2246,7 +2248,7 @@ const hazard_t hazard_template = {
   { 0x28, NULL },
   hazard_handler,
   0, // speed
-  0x80, // hazard_flags
+  0x80, // hazard_flags = spawned vehicle
   0,
   0,
   0,

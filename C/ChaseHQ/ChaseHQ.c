@@ -915,8 +915,7 @@ static void update_scoreboard(chqstate_t *state);
 static void toggle_light_brightness(chqstate_t *state, u8 *attrs);
 
 static void plot_turbos_and_digits(chqstate_t *state);
-static void ptas_led_digits(chqstate_t *state,
-                            int         iterations,
+static void ptas_led_digits(int         iterations,
                             const u8   *digits,
                             u8         *stored,
                             u8         *screen);
@@ -2287,7 +2286,7 @@ static void set_up_stage(chqstate_t        *state,
   memset(&state->road_buffer[0], 0, 256);
 
   state->session = saved_game_state;
-  state->hazards[0] = saved_game_state_hazard_0;
+  state->hazards[0] = saved_game_state_perp_hazard;
 
   memset(&state->hazards[1], 0, sizeof(hazard_t) * (MAXHAZARDS - 1));
 
@@ -7063,7 +7062,7 @@ ptas_turbo_setup:
 
   // Time
   // EXX
-  ptas_led_digits(state, 1, &state->session.time_bcd,
+  ptas_led_digits(1, &state->session.time_bcd,
                   &state->session.time_digits[1],
                   ADDRTOSCREEN(0x412F)); // (120,9)
 
@@ -7073,6 +7072,7 @@ ptas_turbo_setup:
   // hazard_lane_OR_perp_dist_hi is the high byte of the perp's distance
   HLdistance = (state->hazards[0].hazard_lane_OR_perp_dist_hi << 8) |
                state->hazards[0].distance;
+  assert(HLdistance >= 0 && HLdistance < 10000);
 
   // Count 1,000s (no loop required)
   BCdivisor = 1000;
@@ -7106,13 +7106,13 @@ ptas_turbo_setup:
   A |= HLdistance & 0xFF; // OR in remainder
   DEbcd[-1] = A;
 
-  ptas_led_digits(state, 2, &state->distance_bcd[1],
+  ptas_led_digits(2, &state->distance_bcd[1],
                   &state->session.distance_digits[3],
                   ADDRTOSCREEN(0x4191)); /* was fallthrough */
 
   // Score
 
-  ptas_led_digits(state, 4, &state->score_bcd[3], &state->session.score_digits[7],
+  ptas_led_digits(4, &state->score_bcd[3], &state->session.score_digits[7],
                   ADDRTOSCREEN(0x4126)); /* was fallthrough */
 }
 
@@ -7134,8 +7134,7 @@ ptas_turbo_setup:
  * \param[in,out] screen Pointer to the screen column for the first digit;
  * advanced one column per plotted or skipped digit. (was DE')
  */
-static void ptas_led_digits(chqstate_t *state,
-                            int         iterations,
+static void ptas_led_digits(int         iterations,
                             const u8   *digits,
                             u8         *stored,
                             u8         *screen)
@@ -7200,6 +7199,8 @@ static u8 *ledfont_plot(int ord, u8 *screen)
   const u8 *src;         /* pointer walking the LED font glyph data (was HL) */
   u8       *orig_screen; /* screen start for this digit, saved for next-column advance (was PUSH DE) */
   int       i;           /* loop index for unrolled LDI sequences (Conv: no Z80 register) */
+
+  assert(ord >= 0 && ord < 10);
 
   src = &ledfont[ord * LEDFONT_HEIGHT];
   orig_screen = screen;
@@ -9583,7 +9584,7 @@ static u8 check_collision(chqstate_t *state,
   if (hazard->horz_clip) /* hazard clipped off-screen; no collision */
     return default_retval;
 
-  A_flags    = hazard->hazard_flags + 1;
+  A_flags    = (u8) (hazard->hazard_flags + 1); /* Conv: truncate to 8 bits so 0xFF wraps to 0, matching Z80 INC A */
   A_distance = hazard->distance;
   C_max_dist = (A_flags != 0) ? 3 : 2;
   if (A_distance >= C_max_dist)
@@ -9683,8 +9684,8 @@ static void advance_hazards(chqstate_t *state)
  * \param[in]     IYbase Base of the height table at $E300 (was IY).
  */
 static void advance_hazard(chqstate_t *state,
-                               hazard_t   *IXhazard,
-                               const u8   *IYbase)
+                           hazard_t   *IXhazard,
+                           const u8   *IYbase)
 {
   int       C_dist;       /* distance accumulator; speed borrow + IX[1] (was C) */
   u8        A_old_frac;   /* dist_frac before the speed subtraction, for borrow detection (was A) */
@@ -9729,7 +9730,8 @@ static void advance_hazard(chqstate_t *state,
     C_dist++;
   C_dist += IXhazard->distance; /* $ADCD-$ADD1: C += IX[1] */
 
-  A_flags = IXhazard->hazard_flags + 1; /* $ADD2-$ADD5 */
+  A_flags = (u8) (IXhazard->hazard_flags + 1); /* $ADD2-$ADD5 */
+  /* Conv: truncate to 8 bits so 0xFF wraps to 0, matching Z80 INC A */
   if (A_flags == 0) {                   /* $ADD6 JR NZ → dh_adf0 if non-zero */
     /* Perp path: advance lane counter IX[17] */
     A_lane = IXhazard->hazard_lane_OR_perp_dist_hi; /* $ADD8 */
@@ -13166,7 +13168,8 @@ rm_restart_hazards_read: // $BFF3
       continue;
 
     // rm_c080: bit 7 was set (hazard is active)
-    A_flags_inc = IX_hazard->hazard_flags + 1;
+    A_flags_inc = (u8) (IX_hazard->hazard_flags + 1);
+    /* Conv: truncate to 8 bits so 0xFF wraps to 0, matching Z80 INC A */
     if (A_flags_inc == 0) { // hazard_flags was 0xFF: rm_c096
       A_flags_inc = IX_hazard->distance;
       if (A_flags_inc == 0) { // rm_c0b2: distance was 0
