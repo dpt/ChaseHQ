@@ -821,24 +821,24 @@ static void plot_sprite(chqstate_t *state,
                         int         height,
                         int         bitmap_stride,
                         const u8   *bitmap_data);
-static void plot_sprite_even(chqstate_t *state,
-                             int         jump_offset,
-                             u8         *backbuf_addr,
-                             int         height,
-                             int         bitmap_stride,
-                             const u8   *bitmap_data);
-static void plot_sprite_odd(chqstate_t *state,
-                            int         width_bytes,
+static u8 *plot_sprite_even(chqstate_t *state,
+                            int         jump_offset,
                             u8         *backbuf_addr,
                             int         height,
                             int         bitmap_stride,
                             const u8   *bitmap_data);
-static void plot_sprite_odd_entrypt(chqstate_t *state,
-                                    int         jump_offset,
-                                    u8         *backbuf_addr,
-                                    int         height,
-                                    int         bitmap_stride,
-                                    const u8   *bitmap_data);
+static u8 *plot_sprite_odd(chqstate_t *state,
+                           int         width_bytes,
+                           u8         *backbuf_addr,
+                           int         height,
+                           int         bitmap_stride,
+                           const u8   *bitmap_data);
+static u8 *plot_sprite_odd_entrypt(chqstate_t *state,
+                                   int         jump_offset,
+                                   u8         *backbuf_addr,
+                                   int         height,
+                                   int         bitmap_stride,
+                                   const u8   *bitmap_data);
 
 static void plot_sprite_flipped(chqstate_t *state,
                                 int         width_bytes,
@@ -1074,12 +1074,12 @@ static void draw_part_plot_masked_sprite(chqstate_t *state,
     int          Edash_bitmap_stride,
     const u8   *HLdash_bitmap_data);
 
-static void plot_masked_sprite(chqstate_t *state,
-                               int         jump_offset,
-                               int          height,
-                               int         bitmap_stride,
-                               const u8   *bitmap_data,
-                               u8         *backbuf_addr);
+static u8 *plot_masked_sprite(chqstate_t *state,
+                              int         jump_offset,
+                              int          height,
+                              int         bitmap_stride,
+                              const u8   *bitmap_data,
+                              u8         *backbuf_addr);
 
 static void plot_masked_sprite_flipped(chqstate_t *state,
                                        int          width_bytes,
@@ -5137,7 +5137,10 @@ doc_set_callbacks:
     A_width_bytes = state->doc_rows_main - BC_padding; // $9404/$9406
     if (A_width_bytes > 0) {                           // $9407 JR Z / $9409 JR C
       state->doc_rows_main = A_width_bytes;         // $940B: update SM
-      state->doc_plot_fn(state,
+      // Conv: the Z80 leaves the advanced backbuffer address in shadow HL'
+      // across the CALL (it is never reloaded from a fixed value); the C
+      // callback returns it explicitly so it carries into the next iteration.
+      HLdash_backbuf_addr = state->doc_plot_fn(state,
                          IX_jump_offset,
                          HLdash_backbuf_addr,
                          B_height,
@@ -5184,7 +5187,9 @@ doc_masked_rows:
     if (Ay_remaining > 0) {
       state->doc_mask_rows_main = Ay_remaining;
 
-      plot_masked_sprite(state,
+      // Conv: same backbuffer-address carry as the unmasked repeat loop
+      // above (see the doc_plot_fn comment) — must be captured across calls.
+      HLdash_backbuf_addr = plot_masked_sprite(state,
                          IX_jump_offset,
                          B_height,
                          DE_bitmap_stride,
@@ -5295,12 +5300,12 @@ static void plot_sprite(chqstate_t *state,
  * \param[in] bitmap_stride Stride of bitmap data, in bytes. (was DE')
  * \param[in] bitmap_data Source bitmap data. (was HL')
  */
-static void plot_sprite_even(chqstate_t *state,
-                             int         jump_offset,
-                             u8         *backbuf_addr,
-                             int         height,
-                             int         bitmap_stride,
-                             const u8   *bitmap_data)
+static u8 *plot_sprite_even(chqstate_t *state,
+                            int         jump_offset,
+                            u8         *backbuf_addr,
+                            int         height,
+                            int         bitmap_stride,
+                            const u8   *bitmap_data)
 {
   const u8 *src;          /* bitmap source pointer; Z80 used SP via POP (was SP) */
   u8       *backbuf_orig; /* row start in back buffer, saved for prev_buf_row (was A) */
@@ -5323,7 +5328,7 @@ static void plot_sprite_even(chqstate_t *state,
   for (;;) {
     // EXX - bank
     if (--height == 0)
-      return;
+      return backbuf_addr;
 
     bitmap_data += bitmap_stride; // Advance to start of next row
 
@@ -5359,12 +5364,12 @@ plot_sprite_even_start:
  * \param[in] bitmap_stride Stride of bitmap data, in bytes. (was DE')
  * \param[in] bitmap_data Source bitmap data. (was HL')
  */
-static void plot_sprite_odd(chqstate_t *state,
-                            int          width_bytes,
-                            u8         *backbuf_addr,
-                            int          height,
-                            int         bitmap_stride,
-                            const u8   *bitmap_data)
+static u8 *plot_sprite_odd(chqstate_t *state,
+                           int          width_bytes,
+                           u8         *backbuf_addr,
+                           int          height,
+                           int         bitmap_stride,
+                           const u8   *bitmap_data)
 {
   int jump_offset; /* byte offset into the unrolled POP jump table (was IX) */
 
@@ -5375,21 +5380,21 @@ static void plot_sprite_odd(chqstate_t *state,
 
   jump_offset = 5 * (3 - width_bytes); // 5 bytes/op
 
-  plot_sprite_odd_entrypt(state,
-                        jump_offset,
-                        backbuf_addr,
-                        height,
-                        bitmap_stride,
-                        bitmap_data); /* was FALLTHROUGH */
+  return plot_sprite_odd_entrypt(state,
+                                 jump_offset,
+                                 backbuf_addr,
+                                 height,
+                                 bitmap_stride,
+                                 bitmap_data); /* was FALLTHROUGH */
 }
 
 // Direct entry point for plot_sprite_odd
-static void plot_sprite_odd_entrypt(chqstate_t *state,
-                                  int         jump_offset,
-                                  u8         *backbuf_addr,
-                                  int          height,
-                                  int         bitmap_stride,
-                                  const u8   *bitmap_data)
+static u8 *plot_sprite_odd_entrypt(chqstate_t *state,
+                                   int         jump_offset,
+                                   u8         *backbuf_addr,
+                                   int          height,
+                                   int         bitmap_stride,
+                                   const u8   *bitmap_data)
 {
   const u8 *src;          /* was SP */
   u8       *backbuf_orig; /* was A */
@@ -5408,7 +5413,7 @@ static void plot_sprite_odd_entrypt(chqstate_t *state,
   for (;;) {
     // EXX - bank
     if (--height == 0)
-      return;
+      return backbuf_addr;
 
     bitmap_data += bitmap_stride;
 
@@ -11544,12 +11549,12 @@ static void draw_part_plot_masked_sprite(chqstate_t *state,
  * \param[in]     backbuf_addr Back-buffer write address for the first row.
  *   (was HL')
  */
-static void plot_masked_sprite(chqstate_t *state,
-                               int         jump_offset,
-                               int         height,
-                               int         bitmap_stride,
-                               const u8   *bitmap_data,
-                               u8         *backbuf_addr)
+static u8 *plot_masked_sprite(chqstate_t *state,
+                              int         jump_offset,
+                              int         height,
+                              int         bitmap_stride,
+                              const u8   *bitmap_data,
+                              u8         *backbuf_addr)
 {
   const u8 *src;          /* pointer to current mask/data byte pair in the source (was SP) */
   u8       *backbuf_orig; /* start of current back-buffer row; advanced each scanline (was C) */
@@ -11565,7 +11570,7 @@ static void plot_masked_sprite(chqstate_t *state,
   for (;;) {
     // EXX - Unbank
     if (--height == 0)
-      return;
+      return backbuf_addr;
 
     bitmap_data += bitmap_stride; // Advance to start of next row
 

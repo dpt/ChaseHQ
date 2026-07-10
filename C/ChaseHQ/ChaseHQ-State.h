@@ -30,12 +30,15 @@
 
 typedef void (dr_callback_t)(chqstate_t *state, int Bfill_pattern, int Chorizon, int DEscreen_ptr, int Lrow, u8 **IXlanesptr, const u8 **IYheightptr);
 
-typedef void (plot_sprite_cb_t)(chqstate_t *state,
-                                int         IXjump_offset,
-                                u8         *HLbackbuf_addr,
-                                int         Bdash_height,
-                                int         DEdash_bitmap_stride,
-                                const u8   *HLdash_bitmap_data);
+/* Returns the back-buffer address advanced past the rows just drawn: on the
+ * Z80 this value survives in the shadow HL' register across the repeat
+ * loop's CALLs; the C translation must pass it back explicitly instead. */
+typedef u8 *(plot_sprite_cb_t)(chqstate_t *state,
+                               int         IXjump_offset,
+                               u8         *HLbackbuf_addr,
+                               int         Bdash_height,
+                               int         DEdash_bitmap_stride,
+                               const u8   *HLdash_bitmap_data);
 
 /// A hazard in Chase HQ is something that's on the road. It might be a moving
 /// object like the perp or NPC cars, or a fixed item like a barrier or a
