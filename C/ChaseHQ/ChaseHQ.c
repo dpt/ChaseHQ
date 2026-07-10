@@ -11770,7 +11770,8 @@ static void plot_masked_sprite_inverted(chqstate_t *state,
   plot_masked_sprite(state,
                      jump_offset,
                      Bheight,
-                     DEdash_bitmap_stride,
+                     (s16)DEdash_bitmap_stride, /* Conv: sign-extend; u16 -> int
+                                                    would otherwise drop the sign */
                      HLdash_bitmap_data_final,
                      HLbackbuf_addr); /* was exit via pms_entry */
 }
