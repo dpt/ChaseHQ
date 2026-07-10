@@ -2384,7 +2384,7 @@ static const bitmap_t stage1_barrier_bitmaps[SPRITE_FRAMES] = {
   { 4, BITMAPFLAG_DEFAULT, 17, &stage1_bitmap_barrier_1[0], &stage1_bitmap_barrier_1[0]  },
   { 3, BITMAPFLAG_DEFAULT, 13, &stage1_bitmap_barrier_2[0], &stage1_bitmap_barrier_2[0]  },
   { 2, BITMAPFLAG_DEFAULT,  9, &stage1_bitmap_barrier_3[0], &stage1_bitmap_barrier_3[0]  },
-  { 2, BITMAPFLAG_MASKED,   9, &stage1_bitmap_barrier_3[0], &stage1_bitmap_barrier_3[0]  },
+  { 2, BITMAPFLAG_DEFAULT,  9, &stage1_bitmap_barrier_3[0], &stage1_bitmap_barrier_3[0]  },
   { 2, BITMAPFLAG_MASKED,   7, &stage1_bitmap_barrier_4[0], &stage1_bitmap_barrier_4s[0] }
 };
 
