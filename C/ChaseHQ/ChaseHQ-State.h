@@ -80,7 +80,7 @@ struct session {
   // $A175
   u8        score_digits[8];
   // $A17D
-  u8        time_fifteenths;
+  u8        subsecond_ticks;
   // $A17E
   u8        time_bcd;
   // $A17F

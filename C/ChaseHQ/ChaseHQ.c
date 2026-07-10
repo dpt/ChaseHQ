@@ -478,6 +478,8 @@ static u8 *z80offsettobackbuf(chqstate_t *state, int off, int left, int right)
 #define EFFECT_BIP                   (8) /* high-pitched countdown beep */
 #define EFFECT_BOW                   (9) /* low-pitched countdown beep */
 
+#define SUBSECOND_TICKS_PER_SECOND   (15)
+
 #define TIMEUPSTATE_INIT             (0)
 #define TIMEUPSTATE_CHECK_TIME_UP    (1)
 #define TIMEUPSTATE_CHECK_CREDITS    (2)
@@ -6471,10 +6473,10 @@ static void check_time_up(chqstate_t *state)
   }
 
 update_remaining_time:
-  if (--state->session.time_fifteenths > 0)
+  if (--state->session.subsecond_ticks > 0)
     return;
 
-  state->session.time_fifteenths = 15;
+  state->session.subsecond_ticks = SUBSECOND_TICKS_PER_SECOND;
   half_borrow = (state->session.time_bcd & 0x0F) == 0;
   state->session.time_bcd = time_bcd = DAA_sub(state->session.time_bcd - 1, half_borrow, NULL);
 
@@ -10923,7 +10925,7 @@ static void start_chase(chqstate_t *state)
   // This is animation frame related?
   state->ahc_hand_delay = 2;
 
-  state->session.time_fifteenths = 15;
+  state->session.subsecond_ticks = SUBSECOND_TICKS_PER_SECOND;
   state->session.time_bcd        = 0x60; /* 60s */
 
   // Toggle the left light's brightness
