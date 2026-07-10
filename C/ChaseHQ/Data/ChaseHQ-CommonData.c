@@ -1873,7 +1873,7 @@ const session_t saved_game_state = {
   0xFF, // displayed_gear
   { 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF }, // score digits
   15, // sixteenths
-  0x60, // time_bcd
+  INITIAL_TIME_BCD,
   { 0xFF, 0xFF }, // time_digits
   { 0xFF, 0xFF, 0xFF, 0xFF }, // distance_digits
   1, // no_objects_flag

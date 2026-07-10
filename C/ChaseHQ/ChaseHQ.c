@@ -428,8 +428,6 @@ static u8 *z80offsettobackbuf(chqstate_t *state, int off, int left, int right)
 
 #define MAXTURBOS                    (3) /* max turbo boosts player starts each stage with */
 
-#define RESTART_TIME_BCD          (0x60) /* seconds in BCD */
-
 #define SPEED_GEAR_CHANGE          (150) /* gear-change threshold: low gear below, high gear at or above */
 #define SPEED_PERP_CHASE           (350) /* perp's base chase speed; also hazard speed cap after impact */
 #define INITIAL_ATTRACT_SPEED      (400) /* scripted drive speed: attract mode camera */ // HACK was 400
@@ -443,6 +441,13 @@ static u8 *z80offsettobackbuf(chqstate_t *state, int off, int left, int right)
 #define MAXSTAGE                     (5)
 
 #define SMASHCOUNTER_MAX            (20) /* fully smashed; also the smash bar segment count */
+
+#define STANDARD_SLEEP          (220167) /* calibrated so in-game timer is 60s */
+/* TODO: Individually calibrate each of these _SLEEP values. */
+#define MAIN_LOOP_SLEEP   STANDARD_SLEEP
+#define ATTRACT_SLEEP     STANDARD_SLEEP
+#define PREGAME_SLEEP     STANDARD_SLEEP
+#define ESCAPE_SLEEP      STANDARD_SLEEP
 
 /* ----------------------------------------------------------------------- */
 
@@ -478,7 +483,7 @@ static u8 *z80offsettobackbuf(chqstate_t *state, int off, int left, int right)
 #define EFFECT_BIP                   (8) /* high-pitched countdown beep */
 #define EFFECT_BOW                   (9) /* low-pitched countdown beep */
 
-#define SUBSECOND_TICKS_PER_SECOND   (15)
+#define SUBSECOND_TICKS_PER_SECOND  (15)
 
 #define TIMEUPSTATE_INIT             (0)
 #define TIMEUPSTATE_CHECK_TIME_UP    (1)
@@ -1730,7 +1735,7 @@ static void main_loop(chqstate_t *state)
       play_regular_sfx_hook(state);
       update_screen(state);
       exit_fork(state);
-      state->speccy->sleep(state->speccy, 250000); // guess
+      state->speccy->sleep(state->speccy, MAIN_LOOP_SLEEP);
 
       if (state->test_mode) {
         keys = ~state->speccy->in(state->speccy, port_KEYBOARD_12345) & 0x1F;
@@ -1844,7 +1849,7 @@ static void drive_attract_demo(chqstate_t *state)
   draw_scene_objects(state);
   animate_hero_car(state); /* exit via */
 
-  state->speccy->sleep(state->speccy, 250000); // guess
+  state->speccy->sleep(state->speccy, ATTRACT_SLEEP);
 }
 
 /**
@@ -1928,7 +1933,7 @@ static int run_pregame_screen_loop(chqstate_t *state)
   }
 
 exit:
-  state->speccy->sleep(state->speccy, 250000); // guess
+  state->speccy->sleep(state->speccy, PREGAME_SLEEP);
   return rc; // loop
 }
 
@@ -2236,7 +2241,7 @@ static void escape_scene(chqstate_t *state)
     drive_chatter(state);
     transition(state);
     update_screen(state);
-    state->speccy->sleep(state->speccy, 250000); // guess
+    state->speccy->sleep(state->speccy, ESCAPE_SLEEP);
 
     // Loop unless the tunnel has appeared - and is right size?
     if (state->dt_tunnel_visible == 0 || state->dt_tunnel_distance >= 7)
@@ -6481,7 +6486,7 @@ update_remaining_time:
   state->session.time_bcd = time_bcd = DAA_sub(state->session.time_bcd - 1, half_borrow, NULL);
 
   // When 15s remain Nancy warns that time is running out.
-  if (time_bcd == 0x15)
+  if (time_bcd == LOW_TIME_WARNING)
     // Note: This passes time_bcd as the priority which is 21.
     start_chatter(state, time_bcd,
                   chatterblk_nancy_time_running_out); /* exit via */
@@ -10926,7 +10931,7 @@ static void start_chase(chqstate_t *state)
   state->ahc_hand_delay = 2;
 
   state->session.subsecond_ticks = SUBSECOND_TICKS_PER_SECOND;
-  state->session.time_bcd        = 0x60; /* 60s */
+  state->session.time_bcd        = CHASE_TIME_BCD;
 
   // Toggle the left light's brightness
   toggle_light_brightness(state, ADDRTOATTRS(MARQUEELIGHT_LEFT_ATTR_ADDR));

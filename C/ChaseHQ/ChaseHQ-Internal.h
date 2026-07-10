@@ -22,6 +22,15 @@
 
 /* ----------------------------------------------------------------------- */
 
+/* Configuration constants */
+
+#define INITIAL_TIME_BCD                    (0x60) /* seconds in BCD */
+#define CHASE_TIME_BCD                      (0x60)
+#define RESTART_TIME_BCD                    (0x60)
+#define LOW_TIME_WARNING                    (0x15)
+
+/* ----------------------------------------------------------------------- */
+
 #define BACKBUFFER_WIDTH      (256)
 #define BACKBUFFER_ROWBYTES   (BACKBUFFER_WIDTH / 8)
 #define BACKBUFFER_HEIGHT     (128)
