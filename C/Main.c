@@ -21,7 +21,7 @@
 #include <sys/time.h>
 #include <unistd.h>
 
-#include "SDL.h"
+#include <SDL3/SDL.h>
 
 #ifdef __APPLE__
 #include <CoreFoundation/CoreFoundation.h>
@@ -91,7 +91,7 @@ typedef struct
   SDL_Renderer      *renderer;
   SDL_Texture       *texture;
   SDL_Thread        *game_thread;
-  SDL_AudioDeviceID  audio_dev;
+  SDL_AudioStream   *audio_stream;
 }
 chq_sdl_state_t;
 
@@ -218,29 +218,50 @@ static void chq_ay_out_handler(uint16_t port, uint8_t byte, void *opaque)
 
   // Guard against races with chq_audio_callback, which runs on SDL's audio
   // thread and reads the chip's state concurrently.
-  SDL_LockAudioDevice(state->audio_dev);
+  SDL_LockAudioStream(state->audio_stream);
   if (port == port_AY_REGISTER)
     state->ay_latched_reg = byte;
   else // port_AY_DATA
     slopay_chip_write_register(state->ay, state->ay_latched_reg, byte);
-  SDL_UnlockAudioDevice(state->audio_dev);
+  SDL_UnlockAudioStream(state->audio_stream);
 }
 
-// Runs on SDL's audio thread.
-static void chq_audio_callback(void *opaque, Uint8 *stream, int len)
+// Runs on SDL's audio thread. Called whenever SDL wants more data queued.
+static void chq_audio_callback(void            *opaque,
+                               SDL_AudioStream *stream,
+                               int              additional_amount,
+                               int              total_amount)
 {
   chq_sdl_state_t     *state = opaque;
-  int16_t             *out  = (int16_t *) stream;
+  int16_t              buf[512]; // 256 stereo pairs per chunk
   int                  npairs;
+  int                  framebytes; // bytes per stereo frame (L + R, 16-bit)
+  int                  chunkbytes;
   int                  i;
   slopay_chip_sample_t sample;
 
-  npairs = len / (int) sizeof(*out) / 2;
-  for (i = 0; i < npairs; i++)
+  (void) total_amount;
+
+  framebytes = 2 * (int) sizeof(*buf);
+
+  while (additional_amount > 0)
   {
-    sample = slopay_chip_get_sample(state->ay);
-    out[i * 2 + 0] = (int16_t) (sample & 0xFFFF);         // left
-    out[i * 2 + 1] = (int16_t) ((sample >> 16) & 0xFFFF); // right
+    npairs = additional_amount / framebytes;
+    if (npairs > (int) (sizeof(buf) / sizeof(*buf) / 2))
+      npairs = sizeof(buf) / sizeof(*buf) / 2;
+    if (npairs <= 0)
+      break;
+
+    for (i = 0; i < npairs; i++)
+    {
+      sample = slopay_chip_get_sample(state->ay);
+      buf[i * 2 + 0] = (int16_t) (sample & 0xFFFF);         // left
+      buf[i * 2 + 1] = (int16_t) ((sample >> 16) & 0xFFFF); // right
+    }
+
+    chunkbytes = npairs * framebytes;
+    SDL_PutAudioStreamData(stream, buf, chunkbytes);
+    additional_amount -= chunkbytes;
   }
 }
 
@@ -262,18 +283,18 @@ static void chq_sdl_key_pressed(chq_sdl_state_t         *state,
   int          down;
   zxjoystick_t j;
 
-  sym = k->keysym.sym;
+  sym = k->key;
 
   if (sym == SDLK_F1)
   {
-    if (k->type == SDL_KEYDOWN && !k->repeat)
+    if (k->down && !k->repeat)
       state->paused = !state->paused;
     return;
   }
 
   if (sym == SDLK_MINUS || sym == SDLK_EQUALS)
   {
-    if (k->type == SDL_KEYDOWN && !k->repeat)
+    if (k->down && !k->repeat)
     {
       int scale;
 
@@ -304,7 +325,7 @@ static void chq_sdl_key_pressed(chq_sdl_state_t         *state,
     default:         j = zxjoystick_UNKNOWN; break;
   }
 
-  down = (k->type == SDL_KEYDOWN);
+  down = k->down;
 
   if (j != zxjoystick_UNKNOWN)
   {
@@ -316,9 +337,9 @@ static void chq_sdl_key_pressed(chq_sdl_state_t         *state,
 
     keys = &state->keys;
     if (down)
-      zxkeyset_setchar(keys, k->keysym.sym);
+      zxkeyset_setchar(keys, k->key);
     else
-      zxkeyset_clearchar(keys, k->keysym.sym);
+      zxkeyset_clearchar(keys, k->key);
   }
 }
 
@@ -326,7 +347,7 @@ static void chq_sdl_key_pressed(chq_sdl_state_t         *state,
 static void chq_sdl_main_loop(void *opaque)
 {
   chq_sdl_state_t *state = opaque;
-  SDL_Rect          dstrect;
+  SDL_FRect         dstrect;
 
   dstrect.x = BORDER     * state->scale;
   dstrect.y = BORDER     * state->scale;
@@ -341,28 +362,24 @@ static void chq_sdl_main_loop(void *opaque)
     {
       switch (event.type)
       {
-        case SDL_QUIT:
+        case SDL_EVENT_QUIT:
           state->quit = 1;
-          SDL_Log("Quitting after %i ticks", event.quit.timestamp);
+          SDL_Log("Quitting after %llu ns", (unsigned long long) event.quit.timestamp);
           break;
 
-        case SDL_WINDOWEVENT:
-          // PrintEvent(&event);
-          break;
-
-        case SDL_KEYDOWN:
-        case SDL_KEYUP:
+        case SDL_EVENT_KEY_DOWN:
+        case SDL_EVENT_KEY_UP:
           chq_sdl_key_pressed(state, &event.key);
           break;
 
-        case SDL_TEXTEDITING:
-        case SDL_TEXTINPUT:
+        case SDL_EVENT_TEXT_EDITING:
+        case SDL_EVENT_TEXT_INPUT:
           break;
 
-        case SDL_MOUSEMOTION:
-        case SDL_MOUSEBUTTONDOWN:
-        case SDL_MOUSEBUTTONUP:
-        case SDL_MOUSEWHEEL:
+        case SDL_EVENT_MOUSE_MOTION:
+        case SDL_EVENT_MOUSE_BUTTON_DOWN:
+        case SDL_EVENT_MOUSE_BUTTON_UP:
+        case SDL_EVENT_MOUSE_WHEEL:
           break;
 
         default:
@@ -405,7 +422,7 @@ static void chq_sdl_main_loop(void *opaque)
     /* Offset the image */
     // Note that this will inhibit image stretching.
 
-    SDL_RenderCopy(state->renderer, state->texture, NULL, &dstrect);
+    SDL_RenderTexture(state->renderer, state->texture, NULL, &dstrect);
     SDL_RenderPresent(state->renderer);
 
     SDL_Delay(1000 / FPS);
@@ -414,13 +431,14 @@ static void chq_sdl_main_loop(void *opaque)
 
 int main(void)
 {
-  chq_sdl_state_t  state;
-  zxconfig_t       zxconfig;
-  SDL_Window      *window;
-  SDL_RendererInfo rinfo;
-  Uint32           native_fmt;
-  Uint32           Rmask, Gmask, Bmask, Amask;
-  int              bpp;
+  chq_sdl_state_t         state;
+  zxconfig_t              zxconfig;
+  SDL_Window             *window;
+  SDL_PropertiesID        renderer_props;
+  const SDL_PixelFormat  *texture_formats;
+  SDL_PixelFormat         native_fmt;
+  Uint32                  Rmask, Gmask, Bmask, Amask;
+  int                     bpp;
 
   printf("CHASE H.Q.\n");
   printf("==========\n");
@@ -445,17 +463,16 @@ int main(void)
   CFPreferencesAppSynchronize(kCFPreferencesCurrentApplication);
 #endif
 
-  if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_AUDIO) < 0)
+  if (!SDL_Init(SDL_INIT_VIDEO | SDL_INIT_AUDIO))
   {
     fprintf(stderr, "Error: SDL_Init: %s\n", SDL_GetError());
     goto failure;
   }
 
   window = SDL_CreateWindow("Chase H.Q.",
-                            SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED,
                             chq_window_width(state.scale),
                             chq_window_height(state.scale),
-                            SDL_WINDOW_SHOWN);
+                            0);
   if (window == NULL)
   {
     fprintf(stderr, "Error: SDL_CreateWindow: %s\n", SDL_GetError());
@@ -464,18 +481,22 @@ int main(void)
 
   state.window = window;
 
-  state.renderer = SDL_CreateRenderer(window,
-                                      -1,
-                                      SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC);
+  state.renderer = SDL_CreateRenderer(window, NULL);
   if (state.renderer == NULL)
   {
     fprintf(stderr, "Error: SDL_CreateRenderer: %s\n", SDL_GetError());
     goto failure;
   }
 
-  SDL_GetRendererInfo(state.renderer, &rinfo);
-  native_fmt = rinfo.texture_formats[0];
-  SDL_PixelFormatEnumToMasks(native_fmt, &bpp, &Rmask, &Gmask, &Bmask, &Amask);
+  SDL_SetRenderVSync(state.renderer, 1);
+
+  renderer_props  = SDL_GetRendererProperties(state.renderer);
+  texture_formats = SDL_GetPointerProperty(renderer_props,
+                                           SDL_PROP_RENDERER_TEXTURE_FORMATS_POINTER,
+                                           NULL);
+  native_fmt = (texture_formats != NULL) ? texture_formats[0]
+                                          : SDL_PIXELFORMAT_RGBA8888;
+  SDL_GetMasksForPixelFormat(native_fmt, &bpp, &Rmask, &Gmask, &Bmask, &Amask);
 
   zxconfig.width    = GAMEWIDTH / 8;
   zxconfig.height   = GAMEHEIGHT / 8;
@@ -507,23 +528,23 @@ int main(void)
   slopay_chip_set_volume(state.ay, AY_VOLUME_PCT);
 
   {
-    SDL_AudioSpec desired = {0}, obtained;
+    SDL_AudioSpec desired = {0};
 
     desired.freq     = AY_SAMPLE_RATE;
-    desired.format   = AUDIO_S16SYS;
+    desired.format   = SDL_AUDIO_S16;
     desired.channels = 2;
-    desired.samples  = 1024;
-    desired.callback = &chq_audio_callback;
-    desired.userdata = &state;
 
-    state.audio_dev = SDL_OpenAudioDevice(NULL, 0, &desired, &obtained, 0);
-    if (state.audio_dev == 0)
+    state.audio_stream = SDL_OpenAudioDeviceStream(SDL_AUDIO_DEVICE_DEFAULT_PLAYBACK,
+                                                    &desired,
+                                                    &chq_audio_callback,
+                                                    &state);
+    if (state.audio_stream == NULL)
     {
-      fprintf(stderr, "Error: SDL_OpenAudioDevice: %s\n", SDL_GetError());
+      fprintf(stderr, "Error: SDL_OpenAudioDeviceStream: %s\n", SDL_GetError());
       goto failure;
     }
 
-    SDL_PauseAudioDevice(state.audio_dev, 0);
+    SDL_ResumeAudioStreamDevice(state.audio_stream);
   }
 
   state.texture = SDL_CreateTexture(state.renderer,
@@ -536,11 +557,15 @@ int main(void)
     goto failure;
   }
 
-  if (SDL_SetTextureBlendMode(state.texture, SDL_BLENDMODE_NONE) < 0)
+  if (!SDL_SetTextureBlendMode(state.texture, SDL_BLENDMODE_NONE))
   {
     fprintf(stderr, "Error: SDL_SetTextureBlendMode: %s\n", SDL_GetError());
     goto failure;
   }
+
+  // Conv: nearest-neighbour keeps ZX Spectrum pixels crisp when the window
+  // is scaled up; SDL3's default is linear, which blurs them.
+  SDL_SetTextureScaleMode(state.texture, SDL_SCALEMODE_NEAREST);
 
   state.game = chq_create(state.zx);
   if (state.game == NULL)
@@ -564,7 +589,7 @@ int main(void)
   chq_destroy(state.game);
   zxspectrum_destroy(state.zx);
 
-  SDL_CloseAudioDevice(state.audio_dev);
+  SDL_DestroyAudioStream(state.audio_stream);
   slopay_chip_destroy(state.ay);
 
   SDL_DestroyTexture(state.texture);
