@@ -334,16 +334,18 @@ Translating this as a loop creates an infinite loop when the first call's row-co
 
 1. **Wrong variable assigned after unbank.** Inside a shuttle or loop, one C variable is accumulated in A while another is banked in A'. At the paired `EX AF,AF'`, A receives the banked value and A' receives what was live in A — capture the value banked at the *first* EX immediately there, not at the unbank point (which by then holds an unrelated value).
 2. **Restored flags, not current A, drive the next branch.** `JP P`/`JP M` right after an `EX AF,AF'` tests the flags *restored* by that EX — set by whatever ran before the *original* bank — not any instruction that ran in between, even a `LD A,C` immediately before the branch.
+3. **Wrong variable compared after unbank.** When two values ping-pong through A/A' across several branches, a `CP` after an odd number of swaps tests the *other* value. Count the EX instructions on the actual path to the comparison to know which side is live in A.
 
 **Bugs:**
 
 - `scroll_horizon` vertical-scroll loop: the final `EX AF,AF'` hands A (adjusted counter) to `var_a25b` and A' (accumulated delta) to `var_a25a`; the C update assignments were swapped.
 - `dust_stones_stuff` (`$A9FF`): `EX AF,AF'` banks a table byte into A', then A is overwritten by an unrelated LOD index. The C code captured `saved_A = A` at the *unbank* comment (grabbing the always-non-negative LOD index) instead of the *bank* comment, making the intended `if (saved_A < 0)` branch permanently dead. Fix: assign at the bank point.
 - `scroll_horizon` (`$B872`): the restored AF reflects `AND A` at `$B851` (sign of `current_curvature`); the following `LD A,C; JP P,$B879` (LD doesn't affect flags) branches on curvature's sign, not C's. The C code tested `(s8)Aregular < 0` (the always-non-negative table value C), so NEG was never applied and the backdrop could only scroll rightward. Fix: test `(s8)current_curvature < 0`.
+- `draw_road_lanes_change` (`$C357`/`$C3CA`): the distance (IYl) and the masked lane flags shuttle through A/A'. The path to each far-boundary branch passes through `$C2EE` (bank distance), `$C30A`/`$C37E` (unbank distance for `CP $02`) and then a third EX at the branch itself, so the `CP $04` there tests the *masked lane flags*, not the distance. The C tested `A_dist != 4` — the correct `// EX AF,AF'` comments were present but the wrong variable was read — so the angled transition piece only drew when a slot happened to sit at distance 4, and the masked==8/12 classes ran the interpolation with the wrong reference height, smearing the verge across the road. Fix: test `Adash_masked_lane_flags != 4`.
 
 **Rule:** Assign the shadow variable at the bank-point `EX AF,AF'`, never the unbank point. After a loop-terminating `EX AF,AF'`, trace which variable was live in A vs A' and assign each to the correct field. When `JP P`/`JP M` follows an `EX AF,AF'`, trace back to the flag-setting instruction before the *original* bank to find what's actually tested.
 
-**Commits:** `41de175`, `55be0c6`, `87f70fa`
+**Commits:** `41de175`, `55be0c6`, `87f70fa`, `a0e41fd`
 
 ---
 
