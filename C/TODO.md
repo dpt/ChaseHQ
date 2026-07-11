@@ -3,22 +3,18 @@ perhaps build unit tests now to flush out problems ahead of time.
 
 # BUGS
 
-- Missing repeated sectsion in scaled graphics
 - Near objects being truncated
-- Wonky feeling car speed / anims at start
+- Floating fork arrow vanishes too soon [perhaps road fork related]
 - Lane change diagonal transitions are not working correctly
-- Message cursor seems to vanish when idle
 - Forks seize the game up
-- draw_scene_objects => crash
 - Transitions still not always right (perhaps just spiral?)
-- Floating fork arrow vanishes too soon
 - Tunnel drawing wrong
-- No hazards at all
-- Wonky use of BCpadding in draw_object_clipped - passed as a height
+- Stretchy test app produces crap output
 
 
 # TODO
 
+- Look at timer accuracy - is the original game approx right in its coundown?
 - Overhead graphic format / handler
 - Helicopter data
 - 'TEST' marker not drawn when in test mode (might need more menu work)
@@ -40,6 +36,9 @@ perhaps build unit tests now to flush out problems ahead of time.
 
 # IDEAS
 
+- Discuss the black screen edges and the overdraw it disguises
+- Factor our the 22 depth levels value out to a constant
+- Merge draw_road backinto one big unholy lump
 - Scan for type problems
 - Build a tiny test level
 - Identify missing cases where wraparound is required.
@@ -51,7 +50,6 @@ perhaps build unit tests now to flush out problems ahead of time.
 - Update CLAUDE.md now the stage data is in
 - Sort macros
 - Design a text format for holding stages
-- Merge draw_road backinto one big unholy lump
 - Annotate all state members to show which functions consume/mutate them
 - Add deep dives for each area of the game (each main loop item?)
 - Document the game from the moment it starts until it builds the first frame?
@@ -64,7 +62,13 @@ perhaps build unit tests now to flush out problems ahead of time.
 
 # DONE
 
+- Wonky feeling car speed / anims at start [gone?]
+- Message chatter cursor seems to vanish when idle - should blink
+- Missing repeated sections in scaled graphics
+- No hazards at all
+- draw_scene_objects => crash
 - Fix stage 2+ data [done ish]
+- Wonky use of BCpadding in draw_object_clipped - passed as a height
 - Should hi2xpostab return u16* ?
 - Should IYheight be a signed value? (Claude says no...)
 - Add an ADDRTOBACKBUF that takes (H,L) and does (H<<8)|L itself
@@ -116,4 +120,35 @@ speccy->draw calls zx_draw
 zx_draw does all the box merging - no screen pixels are converted until asked for
 zx_draw calls draw_handler 
 draw_handler doesn't have to do anything, but it's best to.
+
+
+
+
+Decompiler
+----------
+Reads in a SkoolKit function and traces register and flag creation-use.
+Like SSA but then retains registers that are mutated.
+Z80 specialties.
+Generates unique vars names.
+Can name vars using {C=foo} in SkoolKit comments.
+
+TODO: basic blocks
+within basic blocks can do constant folding
+
+Knows about self modifying locations.
+
+Knows about constants.
+
+Outputs to a text table or a graphviz dot file.
+
+TODO: Output C decls and expressions.
+
+
+
+Ideas
+-----
+- add new levels
+- fix all the rough masks to improve the look
+- arcade machine based on this code
+- just tony and raymond having a chat
 
