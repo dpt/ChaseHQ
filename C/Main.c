@@ -63,6 +63,10 @@
 // waveform reflects the write history rather than a single stale snapshot.
 #define AY_QUEUE_CAPACITY (16384) // ~1.9s of nibble writes at ~8.4KHz; ample headroom
 
+// Replay cursor anchor cushion; see the replay cursor comment in
+// chq_sdl_state_t.
+#define AY_REPLAY_CUSHION_NS (30000000ULL)
+
 // -----------------------------------------------------------------------------
 
 static int chq_window_width(int scale)
@@ -112,13 +116,21 @@ typedef struct
   int                ay_queue_head;
   int                ay_queue_tail;
 
-  // Virtual playback clock: audio_origin_ns is captured on the first audio
-  // callback; samples_played counts every generated sample since then, so
-  // sample N's virtual time is exactly audio_origin_ns + N*1e9/AY_SAMPLE_RATE
-  // (computed fresh each time rather than accumulated, so no rounding drift).
-  int                audio_origin_set; // bool
-  Uint64             audio_origin_ns;
+  // Replay cursor: maps generated samples onto event timestamps. The wall
+  // clock and the audio device's sample clock drift apart (measured ~1.4ms/s
+  // here), so event times are never compared against a wall-clock-anchored
+  // sample time. Instead, whenever the queue runs dry the cursor re-anchors
+  // to the next event's timestamp minus AY_REPLAY_CUSHION_NS, then advances
+  // by exactly one sample period per generated sample. Spacing within a
+  // burst is preserved regardless of drift and every gap in the sound
+  // re-syncs the two clocks. The cushion (extra output latency) absorbs
+  // consumer-fast drift so a continuous stream (a speech sample) does not
+  // starve mid-burst: at the measured drift, 30ms lasts ~21s of continuous
+  // writes and speech samples are only ~1-2s long.
   Uint64             samples_played;
+  Uint64             replay_anchor_ns;     // event time at the last anchor
+  Uint64             replay_anchor_sample; // samples_played at the last anchor
+  int                replay_anchored;      // bool; cleared when queue runs dry
 
   SDL_Window        *window;
   SDL_Renderer      *renderer;
@@ -278,24 +290,55 @@ static void chq_ay_out_handler(uint16_t port, uint8_t byte, void *opaque)
   SDL_UnlockMutex(state->ay_queue_mutex);
 }
 
-// Applies any queued AY register writes timestamped at or before
-// sample_time_ns. Called once per generated sample from chq_audio_callback
-// so rapid writes (e.g. sampled speech) land on the correct output sample
+// Applies any queued AY register writes due at the current replay cursor
+// position. Called once per generated sample from chq_audio_callback so
+// rapid writes (e.g. sampled speech) land on the correct output sample
 // rather than all being collapsed into whichever value was current when the
-// audio callback happened to run.
-static void chq_ay_apply_due_events(chq_sdl_state_t *state, Uint64 sample_time_ns)
+// audio callback happened to run. See the replay cursor comment in
+// chq_sdl_state_t for how clock drift is handled.
+static void chq_ay_apply_due_events(chq_sdl_state_t *state)
 {
+  Uint64 cursor_ns;
+
   SDL_LockMutex(state->ay_queue_mutex);
-  while (state->ay_queue_head != state->ay_queue_tail)
+
+  if (state->ay_queue_head == state->ay_queue_tail)
   {
-    chq_ay_event_t *ev = &state->ay_queue[state->ay_queue_head];
-
-    if (ev->time_ns > sample_time_ns)
-      break;
-
-    slopay_chip_write_register(state->ay, ev->reg, ev->value);
-    state->ay_queue_head = (state->ay_queue_head + 1) % AY_QUEUE_CAPACITY;
+    state->replay_anchored = 0;
   }
+  else
+  {
+    if (!state->replay_anchored)
+    {
+      Uint64 head_time_ns = state->ay_queue[state->ay_queue_head].time_ns;
+
+      // SDL_GetTicksNS() starts near zero, so guard the cushion subtraction
+      // against underflow for writes made just after launch.
+      state->replay_anchor_ns =
+        (head_time_ns > AY_REPLAY_CUSHION_NS) ?
+          head_time_ns - AY_REPLAY_CUSHION_NS : 0;
+      state->replay_anchor_sample = state->samples_played;
+      state->replay_anchored = 1;
+    }
+
+    // Computed fresh from the anchor rather than accumulated, so truncation
+    // never drifts the cursor away from the sample count.
+    cursor_ns = state->replay_anchor_ns +
+                ((state->samples_played - state->replay_anchor_sample) *
+                 1000000000ULL) / AY_SAMPLE_RATE;
+
+    while (state->ay_queue_head != state->ay_queue_tail)
+    {
+      chq_ay_event_t *ev = &state->ay_queue[state->ay_queue_head];
+
+      if (ev->time_ns > cursor_ns)
+        break;
+
+      slopay_chip_write_register(state->ay, ev->reg, ev->value);
+      state->ay_queue_head = (state->ay_queue_head + 1) % AY_QUEUE_CAPACITY;
+    }
+  }
+
   SDL_UnlockMutex(state->ay_queue_mutex);
 }
 
@@ -312,17 +355,10 @@ static void chq_audio_callback(void            *opaque,
   int                  chunkbytes;
   int                  i;
   slopay_chip_sample_t sample;
-  Uint64               sample_time_ns;
 
   (void) total_amount;
 
   framebytes = 2 * (int) sizeof(*buf);
-
-  if (!state->audio_origin_set)
-  {
-    state->audio_origin_ns = SDL_GetTicksNS();
-    state->audio_origin_set = 1;
-  }
 
   while (additional_amount > 0)
   {
@@ -334,11 +370,7 @@ static void chq_audio_callback(void            *opaque,
 
     for (i = 0; i < npairs; i++)
     {
-      // Computed fresh from samples_played rather than accumulated, so
-      // truncation never drifts the virtual clock away from real time.
-      sample_time_ns = state->audio_origin_ns +
-                        (state->samples_played * 1000000000ULL) / AY_SAMPLE_RATE;
-      chq_ay_apply_due_events(state, sample_time_ns);
+      chq_ay_apply_due_events(state);
 
       sample = slopay_chip_get_sample(state->ay);
       buf[i * 2 + 0] = (int16_t) (sample & 0xFFFF);         // left
