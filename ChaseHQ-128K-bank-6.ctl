@@ -1535,7 +1535,7 @@ B $DAA8,20,4 Bitmap data (masked) 4 bytes x 5
 B $DABC,20,4 Pre-shifted bitmap data (masked) 4 bytes x 5
 B $DAD0,16,4 Bitmap data (masked) 4 bytes x 4
 B $DAE0,16,4 Pre-shifted bitmap data (masked) 4 bytes x 4
-B $DAF0,9488,8
+B $DAF0,1296,8
 b $E000 [Stage 4] Horizon graphic
 B $E000,240,8
 b $E0F0 [Stage 4] Per-stage data

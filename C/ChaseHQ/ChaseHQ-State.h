@@ -483,11 +483,11 @@ struct chqstate {
   s16      *dss_fork_xpos_ptr; // a table ptr e.g. $ED28
 
   // $AA5A (SM) in draw_helicopter
-  u8        dh_heli_vert_base; // y position?
+  u8        dhs_heli_vert_base; // y position?
   // $AA76 (SM) in draw_helicopter
-  u8        dh_heli_body_y_offset;
+  u8        dhs_heli_body_y_offset;
   // $AA8C (SM) in draw_helicopter
-  u8        dh_heli_rotor_pos;
+  u8        dhs_heli_rotor_pos;
 
   // $AA94 (SM) in dhl_aa94
   s16       dhl_helipos;
@@ -506,20 +506,20 @@ struct chqstate {
   u16       mh_heli_centre_y;
 
   // $AE70 (SM) in advance_hazard
-  u16       dh_road_left_xpos;
+  u16       dhs_road_left_xpos;
 
   // $AED0 (SM) in draw_hazards
-  s16      *dh_xpos_table; // points to table e900 for example
+  s16      *dhs_xpos_table; // points to table e900 for example
 
-  // $AFFB (SM) in dh_aecf
+  // $AFFB (SM) in dhs_aecf
   u8        smoke_bitmap_index; // (smoke) speed factor?
 
   // $B023 (SM) in ...
-  u8        dh_col_pos;
+  u8        dhs_col_pos;
   // $B029 (SM) in ...
-  s8        dh_SM_B029_horz_clip;
+  s8        dhs_SM_B029_horz_clip;
   // $B02C (SM) in ...
-  u8        dh_SM_B02C_horz_pos;
+  u8        dhs_SM_B02C_horz_pos;
 
   // $B063 (SM) in move_hero_car
   u8        mhc_y_offset; // jump counter
