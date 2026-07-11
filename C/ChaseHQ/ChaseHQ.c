@@ -1256,10 +1256,10 @@ static void interrupt_entry(chqstate_t *state);
 static void playdrum_2(chqstate_t *state, int Aspeed);
 static void playdrum_1(chqstate_t *state, int Aspeed);
 static void playdrum_start(chqstate_t *state, int Aspeed, int Dlength,
-                           const u8 *HLdata);
+                           u8 *HLdata);
 static void playdrum_bank_go(chqstate_t *state, int Ddash_length,
-                             const u8 *HLdash_data);
-static void playdrum_go(chqstate_t *state, int Dlength, const u8 *HLdata);
+                             u8 *HLdash_data);
+static void playdrum_go(chqstate_t *state, int Dlength, u8 *HLdata);
 static void play_noise(chqstate_t *state, int Aparam);
 
 static void load_stage_128k(chqstate_t *state);
@@ -1868,6 +1868,8 @@ static void drive_attract_demo(chqstate_t *state)
   state->user_input = input;
 
   state->speccy->stamp(state->speccy);
+
+  play_music_48k(state);
 
   read_map(state);
   spawn_cars(state);
@@ -16964,9 +16966,13 @@ pm_reset_pattern:
   }
 
   if (state->music.drum_active == 1) {
-    // FIXME playdrum_bank_go(state, Ddash_length, HLdash_data); /* exit via */
-  } else
+    /* $EF10: JP Z,$EF38 — resume a drum sample suspended by an interrupt,
+     * with position and length still banked in HL'/D'. Conv: unreachable in
+     * C — playdrum_go sees no mid-sample interrupts, always plays to
+     * completion and clears drum_active before returning. */
+  } else {
     pm_wait_for_interrupt(state); /* was FALLTHROUGH */
+  }
 }
 
 static void pm_wait_for_interrupt(chqstate_t *state)
@@ -17005,7 +17011,7 @@ static void interrupt_entry(chqstate_t *state)
  */
 static void playdrum_2(chqstate_t *state, int Aspeed)
 {
-  playdrum_start(state, Aspeed, 108, &drum2[0]); /* exit via */
+  playdrum_start(state, Aspeed, 108, &state->drum2[0]); /* exit via */
 }
 
 /**
@@ -17020,7 +17026,7 @@ static void playdrum_2(chqstate_t *state, int Aspeed)
  */
 static void playdrum_1(chqstate_t *state, int Aspeed)
 {
-  playdrum_start(state, Aspeed, 252, &drum1[0]); /* was FALLTHROUGH */
+  playdrum_start(state, Aspeed, 252, &state->drum1[0]); /* was FALLTHROUGH */
 }
 
 /**
@@ -17036,7 +17042,7 @@ static void playdrum_1(chqstate_t *state, int Aspeed)
  * \param[in]     HLdata Pointer to the start of the drum sample data. (was HL)
  */
 static void playdrum_start(chqstate_t *state, int Aspeed, int Dlength,
-                           const u8 *HLdata)
+                           u8 *HLdata)
 {
   state->music.drum_speed = Aspeed;
   state->music.drum_active  = 1;
@@ -17060,7 +17066,7 @@ static void playdrum_start(chqstate_t *state, int Aspeed, int Dlength,
  * directly to playdrum_go, which uses the same parameter names.
  */
 static void playdrum_bank_go(chqstate_t *state, int Ddash_length,
-                             const u8 *HLdash_data)
+                             u8 *HLdash_data)
 {
   /* EXX */
   playdrum_go(state, Ddash_length, HLdash_data);
@@ -17072,21 +17078,32 @@ static void playdrum_bank_go(chqstate_t *state, int Ddash_length,
  * Outputs a PCM drum sample byte-by-byte to the speaker port. For each sample
  * byte, an inner loop runs drum_speed iterations; each iteration writes bit 7
  * of the current sample byte to the EAR bit of port_BORDER_EAR_MIC, then
- * rotates the sample byte left in-place (RLC). After each byte the IRQ flag is
- * checked; if an interrupt has fired, the function returns early (suspended
- * playback). When all [Dlength] bytes have been output, drum_active is cleared
- * and the function waits for the next interrupt.
+ * rotates the sample byte left in-place (RLC) so successive iterations output
+ * successive bits — 1-bit PCM at drum_speed bits per byte. After each byte
+ * the IRQ flag is checked; if an interrupt has fired, the function returns
+ * early (suspended playback). When all [Dlength] bytes have been output,
+ * drum_active is cleared and the function waits for the next interrupt.
  *
  * \param[in,out] state Pointer to game state.
  * \param[in]     Dlength Number of sample bytes remaining to output. (was D)
- * \param[in]     HLdata Pointer to the next sample byte in drum1[] or drum2[].
- *   (was HL)
+ * \param[in]     HLdata Pointer to the next sample byte in state->drum1[] or
+ *   state->drum2[]. (was HL)
+ *
+ * Conv: the RLC (HL) rotation mutates the sample data in place (only a full
+ * 8-bit rotation restores it), so the drum samples live in state as mutable
+ * copies of drum1_template/drum2_template. Conv: the inter-OUT delay code is
+ * modelled as speccy->addtime so the host can reconstruct the bit timing.
+ * Conv: C has no mid-sample interrupts (irq_flag stays 0 for the whole
+ * call), so the early-return resume path never triggers and the sample
+ * always plays to completion in one call.
  */
-static void playdrum_go(chqstate_t *state, int Dlength, const u8 *HLdata)
+static void playdrum_go(chqstate_t *state, int Dlength, u8 *HLdata)
 {
   int Bdash_iterations; /* inner loop counter: drum_speed ticks per sample byte (was B') */
   int A;                /* speaker output level: port_MASK_EAR or 0 based on sample bit 7 (was A) */
+  int carry;            /* carry flag used by RLC (carry) */
 
+  carry = 0;
   do {
     Bdash_iterations = state->music.drum_speed; // aka speed
     do {
@@ -17095,13 +17112,18 @@ static void playdrum_go(chqstate_t *state, int Dlength, const u8 *HLdata)
       if ((*HLdata & (1 << 7)) == 0)
         A = 0;
       state->speccy->out(state->speccy, port_BORDER_EAR_MIC, A);
-      // FIXME This rotates the sample byte in-place ... RLC(*HLdata);
+      RLC(*HLdata); /* $EF46: rotate sample byte in place */
+      /* $EF46: RLC (HL); DJNZ; LD A,$10; NOP; BIT 7,(HL); JR —
+       * inter-bit cost 15+13+7+4+12+12 (bit-set path) */
+      state->speccy->addtime(state->speccy, 63);
     } while (--Bdash_iterations > 0);
     HLdata++;
+    /* $EF4A: INC HL; DEC D; JR Z; LD A,(nn); AND A; JP Z; LD B,n
+     * (6+4+7+13+4+10+7), less the DJNZ not-taken saving */
+    state->speccy->addtime(state->speccy, 46);
     if (--Dlength == 0)
       goto pd_end_of_sample;
-    A = state->music.irq_flag;
-  } while (A == 0);
+  } while (state->music.irq_flag == 0);
   // EXX unbank
   return;
 
@@ -17118,12 +17140,17 @@ pd_end_of_sample:
  * result is set. The outer loop runs Eduration ticks; each tick iterates an
  * inner loop of 50 noise steps. On each step the seed bytes are updated and
  * rotated, and if bit 4 fires, two timed pulses are written to
- * port_BORDER_EAR_MIC: first high for (24 − Eduration) busy-wait ticks, then
- * low for Eduration ticks. After all ticks, waits for the next interrupt.
+ * port_BORDER_EAR_MIC: first high after (24 − Eduration) delay iterations,
+ * then low after Eduration iterations. After all ticks, waits for the next
+ * interrupt.
  *
  * \param[in,out] state Pointer to game state.
  * \param[in]     Aparam Noise duration: outer loop count and pulse timing
  *   (was A).
+ *
+ * Conv: Z80 drives the border port via OUT ($FE); C issues the equivalent
+ * write via speccy->out and models the delay loops as speccy->addtime so the
+ * host can reconstruct the pulse timing.
  */
 static void play_noise(chqstate_t *state, int Aparam)
 {
@@ -17133,7 +17160,6 @@ static void play_noise(chqstate_t *state, int Aparam)
   u8 *seed;        /* pointer into rng_seed[]: walked for each LFSR step (was HL) */
   int B;           /* intermediate seed byte read during LFSR update (was B) */
   u8  A;           /* LFSR result byte; bit 4 gates the speaker pulse (was A) */
-  int Biterations; /* busy-wait loop counter for pulse timing (was B) */
 
   carry = 0;
 
@@ -17153,17 +17179,24 @@ static void play_noise(chqstate_t *state, int Aparam)
       RRC(*seed);
       A += *seed;
       *seed = A;
+      /* $F0C9: LFSR step through rng_seed + AND $10 (127 T-states) */
+      state->speccy->addtime(state->speccy, 127);
       if (A & (1 << 4)) {
-        Biterations = 24 - Eduration;
-        while (--Biterations)
-          ;
+        /* $F0DE: JR Z not taken; LD A,$18; SUB E; LD B,A (7+7+4+4) + DJNZ */
+        state->speccy->addtime(state->speccy,
+                               22 + DJNZ_LOOP_TSTATES(24 - Eduration));
         state->speccy->out(state->speccy,
                            port_BORDER_EAR_MIC,
                            port_MASK_EAR | port_MASK_MIC);
-        Biterations = Eduration;
-        while (--Biterations)
-          ;
+        /* $F0EA: LD B,E; DJNZ; XOR A (4 + loop + 4) */
+        state->speccy->addtime(state->speccy,
+                               8 + DJNZ_LOOP_TSTATES(Eduration));
         state->speccy->out(state->speccy, port_BORDER_EAR_MIC, 0);
+        /* $F0F0: DEC D; JR NZ (4+12) */
+        state->speccy->addtime(state->speccy, 16);
+      } else {
+        /* $F0DE: JR Z taken; DEC D; JR NZ (12+4+12) */
+        state->speccy->addtime(state->speccy, 28);
       }
     } while (--Dinner > 0);
 

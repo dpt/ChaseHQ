@@ -724,6 +724,12 @@ struct chqstate {
     u8        drum_speed;
   } music;
 
+  // $EF5E — drum 1 PCM sample; playdrum_go's RLC (HL) rotates the bytes in
+  // place, so like sfx_crash_table this is a mutable copy of a template
+  u8        drum1[252];
+  // $F05A — drum 2 PCM sample; as drum1
+  u8        drum2[108];
+
   // $F000
   u8        backbuffer[BACKBUFFER_LENGTH + BACKBUFFER_OVERFLOW];
 };

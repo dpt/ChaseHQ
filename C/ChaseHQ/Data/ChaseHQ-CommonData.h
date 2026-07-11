@@ -311,8 +311,8 @@ const u8 sinclair_joy_keydefs[5];
 const u8 cursor_joy_keydefs[5];
 const u8 shocked_keydefs[8];
 
-const u8 drum1[252];
-const u8 drum2[108];
+const u8 drum1_template[252];
+const u8 drum2_template[108];
 
 const u8 music_patterns[19];
 const u8 music_data[271];
