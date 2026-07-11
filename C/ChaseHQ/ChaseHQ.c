@@ -5080,8 +5080,11 @@ doc_compute_bitmap:
 
   // $93B4
   // 0b_1111_LLLL_RRRC_CCCC so A holds ?RRRLLLL and B holds ???CCCCC
-  HLdash_backbuf_addr = OFFSETTOBACKBUF(((Adash_y_pos_pushed & 0x0F) << 8) |
-                                        (((Adash_y_pos_pushed & 0x70) << 1) + Bdash_height));
+  HLdash_backbuf_addr = OFFSETTOBACKBUF(
+      ((Adash_y_pos_pushed & 0x0F) << 8) |
+      ((((Adash_y_pos_pushed & 0x70) << 1) + Bdash_height) & 0xFF)); // Conv: $93BE ADD A,B wraps
+                                                                      // 8-bit; mask before OR'ing
+                                                                      // into high byte
   assert(VALID_BACKBUF_PTR(HLdash_backbuf_addr));
 
   // $93C0
