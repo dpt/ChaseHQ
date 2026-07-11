@@ -53,6 +53,16 @@
 #define AY_SAMPLE_RATE   (44100)
 #define AY_VOLUME_PCT       (10) // 0..AY_MASTER_VOLUME_MAX
 
+// Sampled speech drives the AY DAC by writing a new volume-register value
+// every ~120us (~8.4KHz) from the game thread. The audio thread only pulls
+// PCM from slopay_chip_get_sample() in bursts whenever SDL wants more data,
+// so a naive "read the current register value" approach loses every write
+// that happened between bursts. Instead, register writes are queued here
+// with a timestamp and replayed one sample at a time against a matching
+// virtual audio clock (see chq_ay_apply_due_events), so the reconstructed
+// waveform reflects the write history rather than a single stale snapshot.
+#define AY_QUEUE_CAPACITY (16384) // ~1.9s of nibble writes at ~8.4KHz; ample headroom
+
 // -----------------------------------------------------------------------------
 
 static int chq_window_width(int scale)
@@ -66,6 +76,14 @@ static int chq_window_height(int scale)
 }
 
 // -----------------------------------------------------------------------------
+
+typedef struct
+{
+  Uint64             time_ns; // when this write happened, relative to SDL_GetTicksNS()
+  slopay_chip_reg_t  reg;
+  Uint8              value;
+}
+chq_ay_event_t;
 
 typedef struct
 {
@@ -86,6 +104,21 @@ typedef struct
 
   slopay_chip_t     *ay;
   slopay_chip_reg_t  ay_latched_reg; // register selected by last port_AY_REGISTER write
+
+  // Timestamped AY register write queue: game thread produces, audio thread
+  // consumes. ay_queue_mutex guards head/tail and the slots between them.
+  SDL_Mutex         *ay_queue_mutex;
+  chq_ay_event_t     ay_queue[AY_QUEUE_CAPACITY];
+  int                ay_queue_head;
+  int                ay_queue_tail;
+
+  // Virtual playback clock: audio_origin_ns is captured on the first audio
+  // callback; samples_played counts every generated sample since then, so
+  // sample N's virtual time is exactly audio_origin_ns + N*1e9/AY_SAMPLE_RATE
+  // (computed fresh each time rather than accumulated, so no rounding drift).
+  int                audio_origin_set; // bool
+  Uint64             audio_origin_ns;
+  Uint64             samples_played;
 
   SDL_Window        *window;
   SDL_Renderer      *renderer;
@@ -216,14 +249,54 @@ static void chq_ay_out_handler(uint16_t port, uint8_t byte, void *opaque)
 {
   chq_sdl_state_t *state = opaque;
 
-  // Guard against races with chq_audio_callback, which runs on SDL's audio
-  // thread and reads the chip's state concurrently.
-  SDL_LockAudioStream(state->audio_stream);
   if (port == port_AY_REGISTER)
+  {
+    // Register select: only ever touched from the game thread, immediately
+    // followed by the paired data write below, so no queuing needed here.
     state->ay_latched_reg = byte;
-  else // port_AY_DATA
-    slopay_chip_write_register(state->ay, state->ay_latched_reg, byte);
-  SDL_UnlockAudioStream(state->audio_stream);
+    return;
+  }
+
+  // port_AY_DATA: queue the write with a timestamp instead of applying it
+  // immediately, so chq_audio_callback can replay it at the right sample
+  // position (see the AY_QUEUE_CAPACITY comment above).
+  SDL_LockMutex(state->ay_queue_mutex);
+  {
+    int next_tail = (state->ay_queue_tail + 1) % AY_QUEUE_CAPACITY;
+
+    if (next_tail != state->ay_queue_head) // drop write if the queue is full
+    {
+      chq_ay_event_t *ev = &state->ay_queue[state->ay_queue_tail];
+
+      ev->time_ns = SDL_GetTicksNS();
+      ev->reg     = state->ay_latched_reg;
+      ev->value   = byte;
+
+      state->ay_queue_tail = next_tail;
+    }
+  }
+  SDL_UnlockMutex(state->ay_queue_mutex);
+}
+
+// Applies any queued AY register writes timestamped at or before
+// sample_time_ns. Called once per generated sample from chq_audio_callback
+// so rapid writes (e.g. sampled speech) land on the correct output sample
+// rather than all being collapsed into whichever value was current when the
+// audio callback happened to run.
+static void chq_ay_apply_due_events(chq_sdl_state_t *state, Uint64 sample_time_ns)
+{
+  SDL_LockMutex(state->ay_queue_mutex);
+  while (state->ay_queue_head != state->ay_queue_tail)
+  {
+    chq_ay_event_t *ev = &state->ay_queue[state->ay_queue_head];
+
+    if (ev->time_ns > sample_time_ns)
+      break;
+
+    slopay_chip_write_register(state->ay, ev->reg, ev->value);
+    state->ay_queue_head = (state->ay_queue_head + 1) % AY_QUEUE_CAPACITY;
+  }
+  SDL_UnlockMutex(state->ay_queue_mutex);
 }
 
 // Runs on SDL's audio thread. Called whenever SDL wants more data queued.
@@ -239,10 +312,17 @@ static void chq_audio_callback(void            *opaque,
   int                  chunkbytes;
   int                  i;
   slopay_chip_sample_t sample;
+  Uint64               sample_time_ns;
 
   (void) total_amount;
 
   framebytes = 2 * (int) sizeof(*buf);
+
+  if (!state->audio_origin_set)
+  {
+    state->audio_origin_ns = SDL_GetTicksNS();
+    state->audio_origin_set = 1;
+  }
 
   while (additional_amount > 0)
   {
@@ -254,9 +334,16 @@ static void chq_audio_callback(void            *opaque,
 
     for (i = 0; i < npairs; i++)
     {
+      // Computed fresh from samples_played rather than accumulated, so
+      // truncation never drifts the virtual clock away from real time.
+      sample_time_ns = state->audio_origin_ns +
+                        (state->samples_played * 1000000000ULL) / AY_SAMPLE_RATE;
+      chq_ay_apply_due_events(state, sample_time_ns);
+
       sample = slopay_chip_get_sample(state->ay);
       buf[i * 2 + 0] = (int16_t) (sample & 0xFFFF);         // left
       buf[i * 2 + 1] = (int16_t) ((sample >> 16) & 0xFFFF); // right
+      state->samples_played++;
     }
 
     chunkbytes = npairs * framebytes;
@@ -518,6 +605,13 @@ int main(void)
   if (state.ay == NULL)
     goto failure;
 
+  state.ay_queue_mutex = SDL_CreateMutex();
+  if (state.ay_queue_mutex == NULL)
+  {
+    fprintf(stderr, "Error: SDL_CreateMutex: %s\n", SDL_GetError());
+    goto failure;
+  }
+
   // Conv: force mono output. The chip defaults to ABC stereo separation
   // (left = A+B, right = B+C), which sounds right-heavy or left-heavy
   // depending on which channels a given tune favours; we don't know whether
@@ -591,6 +685,7 @@ int main(void)
 
   SDL_DestroyAudioStream(state.audio_stream);
   slopay_chip_destroy(state.ay);
+  SDL_DestroyMutex(state.ay_queue_mutex);
 
   SDL_DestroyTexture(state.texture);
   SDL_DestroyRenderer(state.renderer);

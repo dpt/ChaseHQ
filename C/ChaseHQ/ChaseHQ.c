@@ -449,6 +449,12 @@ static u8 *z80offsettobackbuf(chqstate_t *state, int off, int left, int right)
 #define PREGAME_SLEEP     STANDARD_SLEEP
 #define ESCAPE_SLEEP      STANDARD_SLEEP
 
+/* $F36E-$F393: one nibble of play_speech_128k (AND $0F .. JR NZ,$F36E),
+ * summed from the skool T-state counts. Covers the three OUT (C),A triplets
+ * and the LD B,$13/DJNZ delay loop, so a single stamp/sleep models the whole
+ * per-nibble output rate, not just the explicit delay. */
+#define SPEECH_NIBBLE_TSTATES     (419)
+
 /* ----------------------------------------------------------------------- */
 
 /* Memory constants */
@@ -17403,6 +17409,8 @@ static void play_speech_128k(chqstate_t *state, int index)
     RR(Asample);
     RR(Asample);
     do {
+      speccy->stamp(speccy); // stamp at $F36E, start of the per-nibble body
+
       Asample &= 0x0F;
       // EX AF,AF' - Bank Asample
       // EXX - Unbank
@@ -17443,10 +17451,9 @@ static void play_speech_128k(chqstate_t *state, int index)
                   Asample); // OUT (C),A -- Write to $BFFD to write volume register
       // EXX - Bank
 
-      // TODO Sort out delay handling
-      // Delay for 19 DJNZ's.
-      speccy->stamp(speccy); // stamp at start of loop?
-      speccy->sleep(speccy, 19); // Delay loop (lower value => higher frequency)
+      // Sleeps out the whole per-nibble body timed from the stamp() above,
+      // not just the LD B,$13/DJNZ delay loop (see SPEECH_NIBBLE_TSTATES).
+      speccy->sleep(speccy, SPEECH_NIBBLE_TSTATES);
 
       Asample = *HLdash_samples; // Load next sample (same byte, but next nibble)
     } while (--Cdash_iterations > 0); // Decrement nibble counter
