@@ -1246,7 +1246,7 @@ static void silence_audio_128k(chqstate_t *state);
 static void write_audio_registers_128k(chqstate_t *state);
 static void engine_sfx_from_speed_128k(chqstate_t *state);
 static void setup_turbo_sfx_128k(chqstate_t *state);
-static void play_turbo_sfx_128k(chqstate_t *state);
+static void play_engine_or_turbo_sfx_128k(chqstate_t *state);
 static void play_speech_128k(chqstate_t *state, int index);
 static void handle_perp_caught_128k(chqstate_t *state);
 static u8 call_bank_3_128k(chqstate_t *state, int HLroutine);
@@ -1535,7 +1535,7 @@ static void setup_engine_sfx_hook(chqstate_t *state)
 static void play_engine_sfx_hook(chqstate_t *state)
 {
   if (state->mode_128k)
-    play_turbo_sfx_128k(state);
+    play_engine_or_turbo_sfx_128k(state);
   else
     setup_engine_sfx_48k(state);
 }
@@ -17230,28 +17230,27 @@ static void write_audio_registers_128k(chqstate_t *state)
  *
  * Conv: Z80 computes ~(HL>>1) via RR H / LD A,L / RRA / CPL / LD L,A; C uses
  * ~(state->speed >> 1) on a u16 directly. The tunnel check is restructured to
- * an if-else rather than the Z80's load-default-then- overwrite pattern.
+ * an if-else rather than the Z80's load-default-then-overwrite pattern.
  */
 static void engine_sfx_from_speed_128k(chqstate_t *state)
 {
-  u16 pitch;  /* AY channel C pitch divisor, derived from speed (was HL) */
-  u16 delta;  /* base pitch divisor: tunnel vs non-tunnel constant (was DE) */
-  u8  volume; /* AY channel C volume (was A) */
+  u16 pitch;      /* AY channel C pitch divisor, derived from speed (was HL) */
+  u16 base_pitch; /* base pitch divisor: tunnel vs non-tunnel constant (was DE) */
+  u8  volume;     /* AY channel C volume (was A) */
 
-  pitch = ~(state->speed >> 1);
+  pitch = (~(state->speed >> 1)) & 0xFF;
   if (state->gear)
     pitch <<= 1; /* double divisor in high gear to lower pitch */
   pitch <<= 2;   /* quadruple divisor further */
   // Conv: tunnel check restructured to if-else; Z80 loads non-tunnel defaults then overwrites
-  if (!state->tunnel_sfx) {
-    delta  = 0x190; /* non-tunnel base divisor (~277 Hz) */
+  if (state->tunnel_sfx == 0) {
+    base_pitch  = 0x190; /* non-tunnel base divisor (~277 Hz) */
     volume = 15;
   } else {
-    delta  = 0x258; /* in-tunnel base divisor (~185 Hz) */
+    base_pitch  = 0x258; /* in-tunnel base divisor (~185 Hz) */
     volume = 12;
   }
-  pitch += delta;
-  state->ay_chan_c_pitch = pitch;
+  state->ay_chan_c_pitch = pitch + base_pitch;
   state->ay_chan_c_vol   = volume;
   state->ay_mixer       &= 0x3B;
 }
@@ -17285,13 +17284,14 @@ static void setup_turbo_sfx_128k(chqstate_t *state)
  * Conv: Z80 uses JP $80AA (tail call to engine_sfx_from_speed_128k after
  * relocation); C calls it directly.
  */
-static void play_turbo_sfx_128k(chqstate_t *state)
+static void play_engine_or_turbo_sfx_128k(chqstate_t *state)
 {
   if (state->turbo_sfx_pitch == 0) {
     engine_sfx_from_speed_128k(state); /* exit via */
     return;
   }
-  if (--state->turbo_sfx_pitch == 0)
+
+  if (state->turbo_sfx_pitch == 1)
     return;
 
   if (--state->ay_noise_pitch) {

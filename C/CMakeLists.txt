@@ -16,6 +16,8 @@ set(SOURCE_FILES
         ZXSpectrum/Pixels.h
         ZXSpectrum/Screen.c
         ZXSpectrum/Screen.h
+        ZXSpectrum/slopay-chip.c
+        ZXSpectrum/slopay-chip.h
         ZXSpectrum/Spectrum.c
         ZXSpectrum/Spectrum.h
         ZXSpectrum/Z80.h
@@ -55,6 +57,7 @@ set(TEST_SOURCE_FILES
         ZXSpectrum/Kempston.c
         ZXSpectrum/Keyboard.c
         ZXSpectrum/Screen.c
+        ZXSpectrum/slopay-chip.c
         ZXSpectrum/Spectrum.c
         ChaseHQ/ChaseHQ.c
         ChaseHQ/ChaseHQ-Create.c

@@ -30,6 +30,7 @@
 #include "ZXSpectrum/Spectrum.h"
 #include "ZXSpectrum/Keyboard.h"
 #include "ZXSpectrum/Kempston.h"
+#include "ZXSpectrum/slopay-chip.h"
 
 #include "ChaseHQ/ChaseHQ.h"
 
@@ -37,16 +38,20 @@
 
 // Configuration
 //
-#define FPS           15
-#define GAMEWIDTH     256
-#define GAMEHEIGHT    192
-#define BORDER        32
+#define FPS                 (15)
+#define GAMEWIDTH          (256)
+#define GAMEHEIGHT         (192)
+#define BORDER              (32)
 
-#define SCALE_DEFAULT (2)
-#define SCALE_MIN     (1)
-#define SCALE_MAX     (4)
+#define SCALE_DEFAULT        (2)
+#define SCALE_MIN            (1)
+#define SCALE_MAX            (4)
 
-#define MAXSTAMPS       (4)     // max depth of timestamps stack
+#define MAXSTAMPS            (4) // max depth of timestamps stack
+
+#define AY_CLOCK_FREQ  (1773400) // ZX Spectrum 128K AY-3-8912 clock rate
+#define AY_SAMPLE_RATE   (44100)
+#define AY_VOLUME_PCT       (10) // 0..AY_MASTER_VOLUME_MAX
 
 // -----------------------------------------------------------------------------
 
@@ -64,27 +69,29 @@ static int chq_window_height(int scale)
 
 typedef struct
 {
-  zxspectrum_t *zx;
-  chqstate_t   *game;
+  zxspectrum_t      *zx;
+  chqstate_t        *game;
 
-  zxkeyset_t    keys;
-  zxkempston_t  kempston;
+  zxkeyset_t         keys;
+  zxkempston_t       kempston;
 
-  int           quit; // bool
-  int           paused; // bool
-  // int           menu; // bool
+  int                quit; // bool
+  int                paused; // bool
+  // int                  menu; // bool
 
-  int           scale; // window/render scale, SCALE_MIN..SCALE_MAX
+  int                scale; // window/render scale, SCALE_MIN..SCALE_MAX
 
-  struct timeval stamps[MAXSTAMPS];
-  int            nstamps;
+  struct timeval     stamps[MAXSTAMPS];
+  int                nstamps;
 
-  SDL_Window   *window;
-  SDL_Renderer *renderer;
-  SDL_Texture  *texture;
-  SDL_Thread   *game_thread;
+  slopay_chip_t     *ay;
+  slopay_chip_reg_t  ay_latched_reg; // register selected by last port_AY_REGISTER write
 
-  int           sleep_us; // us to sleep for on the next loop
+  SDL_Window        *window;
+  SDL_Renderer      *renderer;
+  SDL_Texture       *texture;
+  SDL_Thread        *game_thread;
+  SDL_AudioDeviceID  audio_dev;
 }
 chq_sdl_state_t;
 
@@ -202,14 +209,39 @@ static void chq_speaker_handler(int on_off, void *opaque)
 {
   chq_sdl_state_t *state = opaque;
 
-  // TODO: All sound.
+  // TODO: Speaker sound.
 }
 
 static void chq_ay_out_handler(uint16_t port, uint8_t byte, void *opaque)
 {
   chq_sdl_state_t *state = opaque;
 
-  // TODO: AY-3-8912 audio.
+  // Guard against races with chq_audio_callback, which runs on SDL's audio
+  // thread and reads the chip's state concurrently.
+  SDL_LockAudioDevice(state->audio_dev);
+  if (port == port_AY_REGISTER)
+    state->ay_latched_reg = byte;
+  else // port_AY_DATA
+    slopay_chip_write_register(state->ay, state->ay_latched_reg, byte);
+  SDL_UnlockAudioDevice(state->audio_dev);
+}
+
+// Runs on SDL's audio thread.
+static void chq_audio_callback(void *opaque, Uint8 *stream, int len)
+{
+  chq_sdl_state_t     *state = opaque;
+  int16_t             *out  = (int16_t *) stream;
+  int                  npairs;
+  int                  i;
+  slopay_chip_sample_t sample;
+
+  npairs = len / (int) sizeof(*out) / 2;
+  for (i = 0; i < npairs; i++)
+  {
+    sample = slopay_chip_get_sample(state->ay);
+    out[i * 2 + 0] = (int16_t) (sample & 0xFFFF);         // left
+    out[i * 2 + 1] = (int16_t) ((sample >> 16) & 0xFFFF); // right
+  }
 }
 
 static int chq_game_thread(void *opaque)
@@ -413,7 +445,7 @@ int main(void)
   CFPreferencesAppSynchronize(kCFPreferencesCurrentApplication);
 #endif
 
-  if (SDL_Init(SDL_INIT_VIDEO) < 0)
+  if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_AUDIO) < 0)
   {
     fprintf(stderr, "Error: SDL_Init: %s\n", SDL_GetError());
     goto failure;
@@ -461,6 +493,39 @@ int main(void)
   if (state.zx == NULL)
     goto failure;
 
+  state.ay = slopay_chip_create(AY_CLOCK_FREQ, AY_SAMPLE_RATE);
+  if (state.ay == NULL)
+    goto failure;
+
+  // Conv: force mono output. The chip defaults to ABC stereo separation
+  // (left = A+B, right = B+C), which sounds right-heavy or left-heavy
+  // depending on which channels a given tune favours; we don't know whether
+  // this game's music assumes ABC, ACB, or no separation at all, so mono
+  // sidesteps the question. Volume is turned down from the chip's own
+  // default (10%) as three channels plus envelope can otherwise clip loud.
+  slopay_chip_set_stereo_mode(state.ay, SLOPAY_CHIP_STEREO_MODE_MONO);
+  slopay_chip_set_volume(state.ay, AY_VOLUME_PCT);
+
+  {
+    SDL_AudioSpec desired = {0}, obtained;
+
+    desired.freq     = AY_SAMPLE_RATE;
+    desired.format   = AUDIO_S16SYS;
+    desired.channels = 2;
+    desired.samples  = 1024;
+    desired.callback = &chq_audio_callback;
+    desired.userdata = &state;
+
+    state.audio_dev = SDL_OpenAudioDevice(NULL, 0, &desired, &obtained, 0);
+    if (state.audio_dev == 0)
+    {
+      fprintf(stderr, "Error: SDL_OpenAudioDevice: %s\n", SDL_GetError());
+      goto failure;
+    }
+
+    SDL_PauseAudioDevice(state.audio_dev, 0);
+  }
+
   state.texture = SDL_CreateTexture(state.renderer,
                                     native_fmt,
                                     SDL_TEXTUREACCESS_STREAMING,
@@ -498,6 +563,9 @@ int main(void)
 
   chq_destroy(state.game);
   zxspectrum_destroy(state.zx);
+
+  SDL_CloseAudioDevice(state.audio_dev);
+  slopay_chip_destroy(state.ay);
 
   SDL_DestroyTexture(state.texture);
   SDL_DestroyRenderer(state.renderer);
