@@ -602,11 +602,17 @@ static u16 prev_buf_row(int backbuf)
   orig = backbuf;
   backbuf -= 0x0100;
   if ((orig & 0x0F00) == 0) { /* field LLLL was zero on entry */
-    backbuf += 0x1000; /* 1110 -> 1111 */
     t = (backbuf & 0xFF) - 32; /* decrement field RRRC */
     backbuf = (backbuf & 0xFF00) | (t & 0xFF);
-    // DPT: Claude deleted this bit here and I don't trust it.
-    /* t < 0 means L borrowed; the Z80 8-bit wrap is already captured by (t & 0xFF) above */
+    /* Conv: skool $B763 JR C,$B71C only restores the 1111 marker nibble
+     * (1110 -> 1111) when the RRRC subtraction above did NOT borrow. When
+     * RRR itself wraps past zero the marker is deliberately left
+     * uncompensated. A previous translation applied this unconditionally,
+     * corrupting the address whenever a sprite's row advance crossed the
+     * very top of the back buffer (visible as missing top rows on tall,
+     * close objects). */
+    if (t >= 0)
+      backbuf += 0x1000; /* 1110 -> 1111 */
   }
   assert(VALID_BACKBUF_ADDR(backbuf));
   return backbuf;
@@ -4986,11 +4992,18 @@ doc_y_range_is_zero:
     }
 
 doc_y_range_nonzero:
-    // Conv: Z80 $9359 BIT 7,D; JR NZ,$9361 selects SUB D (positive) or ADD A,D
-    // (negative).  Net effect: A -= |D| in both cases.  doc_col_pos is s8 and
-    // in practice only 0 or negative, so the ADD branch is always taken and
-    // += D_col_pos is equivalent.
-    Adash_y_range += D_col_pos;
+    // Conv: Z80 $9359 BIT 7,D; JR NZ,$9361 selects ADD A,D (D negative) or
+    // SUB D (D positive/zero) -- net effect is always A -= |D|. doc_col_pos
+    // (D_col_pos) is s8 and CAN be positive: draw_hazard_sprites sets it to
+    // persp_col - hit_wobble ($AF04-$AF0A), which is commonly positive for
+    // cars and hazards. A plain `+= D_col_pos` only matches the Z80 for D_col_pos <= 0;
+    // for positive D_col_pos it added instead of subtracted, inflating
+    // Adash_y_range and pushing close-range objects into the "inverted"
+    // re-clip path below, which then chops rows off their top.
+    if (D_col_pos < 0)
+      Adash_y_range += D_col_pos;
+    else
+      Adash_y_range -= D_col_pos;
 
     D_y_range = Adash_y_range;
     if ((s8) Adash_y_range <= 0)
@@ -5071,11 +5084,18 @@ doc_compute_bitmap:
   // POP BC - restoring B_height & Cpadding to Bdash and Cdash
   Bdash_height = B_height;
   // Cdash_padding = Cpadding; // restore if we find this is used
-  // Conv: Z80 reads past bitmap end into adjacent ROM when B_height > B_clip_rows
-  // (perspective index can exceed bitmap height at close range). Clamp draw height
-  // to clipped row count; Bdash_height retains the unclamped value for backbuf addr.
-  if (B_height > (int)B_clip_rows)
-    B_height = (int)B_clip_rows;
+  // Conv: $93AE/$93B1 bank B_clip_rows into shadow B' before the POP BC above
+  // restores the unrelated B_height/Cpadding pair into main BC. Every plot
+  // dispatched below reads its row count from shadow B', i.e. B_clip_rows,
+  // not from B_height — Bdash_height (unclamped B_height) is used only for
+  // the backbuf address calculation just below. A previous translation
+  // instead clamped B_height to B_clip_rows (min of the two), which is only
+  // correct when B_height > B_clip_rows; whenever B_height <= B_clip_rows
+  // (the common case for perspective-derived and fixed-height=1 callers)
+  // it wrongly drew B_height rows instead of B_clip_rows, truncating the
+  // top of tall/close objects. This mirrors the fix already applied to the
+  // doc_masked_rows loop below (see its comment at $945C).
+  B_height = B_clip_rows;
   // POP AF - restoring Adash_y_pos_pushed & flags
 
   // $93B4
