@@ -72,6 +72,13 @@ static void chq_initialise(chqstate_t *state)
   state->wanted_stage_number   = 1;
   state->current_stage_number  = 1;
 
+  // $8244, $8249, $8251 — engine sfx SM operands as assembled: 3 iterations
+  // with zero (= 256 via DJNZ) delay counts until setup_engine_sfx_48k
+  // stores real values
+  state->engine_sfx_nloops    = 3;
+  state->engine_sfx_off_cycle = 0;
+  state->engine_sfx_on_cycle  = 0;
+
   // $824B
   state->attract_mode_128k_blink = 0xF0;
 
@@ -131,6 +138,16 @@ static void chq_initialise(chqstate_t *state)
 
   // $E300
   state->height_table[0] = 0x60; // sentinel, hardcoded in Z80 RAM
+
+  // $EE76/$EEBF/$EECA: music driver SM pointer operands. The Z80 assembles
+  // all three as $0000 — harmless there (a stray read lands in ROM) but a
+  // crash as NULL in C — so point them at the starts of the pattern table
+  // and music data instead. pattern_start_ptr skips music_data's leading
+  // per-pattern delay byte, preserving the driver's invariant that it never
+  // points at a delay byte.
+  state->music.pattern_addr      = &music_patterns[0]; // $F0FE
+  state->music.data_ptr          = &music_data[1];
+  state->music.pattern_start_ptr = &music_data[1];     // $F112
 
   // Temp until the 128K input code is ported.
   state->kempston_flag = 0;

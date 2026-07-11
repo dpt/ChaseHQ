@@ -197,6 +197,17 @@ struct zxspectrum
    */
   int (*sleep)(zxspectrum_t *state, int duration);
 
+  /**
+   * The game calls this to account for Z80 time consumed by delay loops.
+   *
+   * It advances a virtual T-state clock which timestamps speaker output,
+   * letting bit-banged audio retain its original timing even though the C
+   * code runs the "delay" in no time at all.
+   *
+   * \param[in] duration Elapsed time in T-states.
+   */
+  void (*addtime)(zxspectrum_t *state, int duration);
+
   zxscreen_t screen;
 };
 
@@ -226,8 +237,11 @@ typedef struct zxconfig
   /** App callback called to set the border colour. */
   void (*border)(int colour, void *opaque);
 
-  /** App callback called to sound the speaker. */
-  void (*speaker)(int on_off, void *opaque);
+  /** App callback called to sound the speaker. 'tstates' is the virtual
+   *  T-state clock at the moment of the OUT, advanced by the game via
+   *  addtime; it gives the callback the inter-toggle spacing that
+   *  wall-clock time cannot (the C "delay loops" run in no time). */
+  void (*speaker)(int on_off, uint64_t tstates, void *opaque);
 
   /** App callback for AY-3-8912 register select (port_AY_REGISTER) and
    *  data write (port_AY_DATA). May be NULL. */

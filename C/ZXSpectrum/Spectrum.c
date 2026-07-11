@@ -125,6 +125,8 @@ typedef struct zxspectrum_private
 
   unsigned int    prev_border;
 
+  uint64_t        tstates; // virtual Z80 clock; game thread only (see addtime)
+
   mutex_t         lock;
   zxbox_t         dirty;
   zxscreen_t      screen_copy; // most recent 'complete' screen
@@ -200,7 +202,10 @@ static void zx_out(zxspectrum_t *state, uint16_t address, uint8_t byte)
       }
 
       if (prv->config.speaker)
-        prv->config.speaker(ear != 0, prv->config.opaque);
+      {
+        prv->tstates += 11; // OUT (n),A itself costs 11 T-states
+        prv->config.speaker(ear != 0, prv->tstates, prv->config.opaque);
+      }
     }
     break;
 
@@ -326,6 +331,13 @@ static int zx_sleep(zxspectrum_t *state, int duration)
   return prv->config.sleep(duration, prv->config.opaque);
 }
 
+static void zx_addtime(zxspectrum_t *state, int duration)
+{
+  zxspectrum_private_t *prv = (zxspectrum_private_t *) state;
+
+  prv->tstates += duration;
+}
+
 /* ----------------------------------------------------------------------- */
 
 zxspectrum_t *zxspectrum_create(const zxconfig_t *config)
@@ -341,6 +353,7 @@ zxspectrum_t *zxspectrum_create(const zxconfig_t *config)
   prv->pub.draw          = zx_draw;
   prv->pub.stamp         = zx_stamp;
   prv->pub.sleep         = zx_sleep;
+  prv->pub.addtime       = zx_addtime;
   prv->pub.screen.width  = config->width;
   prv->pub.screen.height = config->height;
 
@@ -351,6 +364,7 @@ zxspectrum_t *zxspectrum_create(const zxconfig_t *config)
   zxbox_invalidate(&prv->dirty);
 
   prv->prev_border = ~0;
+  prv->tstates     = 0;
 
 
   return &prv->pub;

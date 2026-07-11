@@ -27,6 +27,7 @@
 #include <CoreFoundation/CoreFoundation.h>
 #endif
 
+#include "ZXSpectrum/Macros.h"
 #include "ZXSpectrum/Spectrum.h"
 #include "ZXSpectrum/Keyboard.h"
 #include "ZXSpectrum/Kempston.h"
@@ -53,14 +54,19 @@
 #define AY_SAMPLE_RATE   (44100)
 #define AY_VOLUME_PCT       (10) // 0..AY_MASTER_VOLUME_MAX
 
+#define BEEPER_VOLUME_PCT   (20) // 48K beeper level, percent of full scale
+#define BEEPER_AMPLITUDE (32767 * BEEPER_VOLUME_PCT / 100)
+
 // Sampled speech drives the AY DAC by writing a new volume-register value
 // every ~120us (~8.4KHz) from the game thread. The audio thread only pulls
 // PCM from slopay_chip_get_sample() in bursts whenever SDL wants more data,
 // so a naive "read the current register value" approach loses every write
 // that happened between bursts. Instead, register writes are queued here
 // with a timestamp and replayed one sample at a time against a matching
-// virtual audio clock (see chq_ay_apply_due_events), so the reconstructed
+// virtual audio clock (see chq_apply_due_audio_events), so the reconstructed
 // waveform reflects the write history rather than a single stale snapshot.
+// The same queue carries 48K beeper level changes, timestamped from the
+// game's virtual T-state clock (see chq_speaker_handler).
 #define AY_QUEUE_CAPACITY (16384) // ~1.9s of nibble writes at ~8.4KHz; ample headroom
 
 // Replay cursor anchor cushion; see the replay cursor comment in
@@ -81,13 +87,21 @@ static int chq_window_height(int scale)
 
 // -----------------------------------------------------------------------------
 
+typedef enum
+{
+  CHQ_AUDIO_EVENT_AY,     // AY register write (128K music/speech)
+  CHQ_AUDIO_EVENT_SPEAKER // beeper EAR level change (48K bit-banged sfx)
+}
+chq_audio_event_type_t;
+
 typedef struct
 {
-  Uint64             time_ns; // when this write happened, relative to SDL_GetTicksNS()
-  slopay_chip_reg_t  reg;
-  Uint8              value;
+  Uint64                 time_ns; // when this write happened, relative to SDL_GetTicksNS()
+  chq_audio_event_type_t type;
+  slopay_chip_reg_t      reg;     // AY events only
+  Uint8                  value;   // AY: register value; speaker: level 0/1
 }
-chq_ay_event_t;
+chq_audio_event_t;
 
 typedef struct
 {
@@ -109,12 +123,23 @@ typedef struct
   slopay_chip_t     *ay;
   slopay_chip_reg_t  ay_latched_reg; // register selected by last port_AY_REGISTER write
 
-  // Timestamped AY register write queue: game thread produces, audio thread
-  // consumes. ay_queue_mutex guards head/tail and the slots between them.
-  SDL_Mutex         *ay_queue_mutex;
-  chq_ay_event_t     ay_queue[AY_QUEUE_CAPACITY];
-  int                ay_queue_head;
-  int                ay_queue_tail;
+  // Timestamped audio event queue (AY register writes and beeper level
+  // changes): game thread produces, audio thread consumes. audio_queue_mutex
+  // guards head/tail and the slots between them.
+  SDL_Mutex         *audio_queue_mutex;
+  chq_audio_event_t  audio_queue[AY_QUEUE_CAPACITY];
+  int                audio_queue_head;
+  int                audio_queue_tail;
+
+  // Speaker (beeper) state. The anchor maps the facade's virtual T-state
+  // clock onto wall-clock ns: within a burst of toggles wall time barely
+  // advances, so event times extrapolate from the anchor at the T-state
+  // rate; when the T-state clock falls behind the wall clock a new burst
+  // has begun and the anchor resets. Game thread only.
+  Uint64             speaker_anchor_ns;
+  Uint64             speaker_anchor_tstates;
+  int                speaker_last_level; // last queued level (game thread)
+  int                speaker_level;      // current replay level (audio thread)
 
   // Replay cursor: maps generated samples onto event timestamps. The wall
   // clock and the audio device's sample clock drift apart (measured ~1.4ms/s
@@ -250,11 +275,54 @@ static void chq_border_handler(int colour, void *opaque)
   // TODO: Set border colour.
 }
 
-static void chq_speaker_handler(int on_off, void *opaque)
+static void chq_audio_queue_push(chq_sdl_state_t       *state,
+                                 Uint64                 time_ns,
+                                 chq_audio_event_type_t type,
+                                 slopay_chip_reg_t      reg,
+                                 Uint8                  value)
+{
+  SDL_LockMutex(state->audio_queue_mutex);
+  {
+    int next_tail = (state->audio_queue_tail + 1) % AY_QUEUE_CAPACITY;
+
+    if (next_tail != state->audio_queue_head) // drop event if the queue is full
+    {
+      chq_audio_event_t *ev = &state->audio_queue[state->audio_queue_tail];
+
+      ev->time_ns = time_ns;
+      ev->type    = type;
+      ev->reg     = reg;
+      ev->value   = value;
+
+      state->audio_queue_tail = next_tail;
+    }
+  }
+  SDL_UnlockMutex(state->audio_queue_mutex);
+}
+
+static void chq_speaker_handler(int on_off, uint64_t tstates, void *opaque)
 {
   chq_sdl_state_t *state = opaque;
+  Uint64           now_ns;
+  Uint64           event_ns;
 
-  // TODO: Speaker sound.
+  if (on_off == state->speaker_last_level)
+    return; // level unchanged: no edge to reproduce
+  state->speaker_last_level = on_off;
+
+  // Map the game's virtual T-state clock onto wall time (see the speaker
+  // state comment in chq_sdl_state_t). 1 T-state = 1e9/3.5e6 = 2000/7 ns.
+  now_ns   = SDL_GetTicksNS();
+  event_ns = state->speaker_anchor_ns +
+             (tstates - state->speaker_anchor_tstates) * 2000 / 7;
+  if (event_ns < now_ns) // T-state clock fell behind wall clock: new burst
+  {
+    state->speaker_anchor_ns      = now_ns;
+    state->speaker_anchor_tstates = tstates;
+    event_ns = now_ns;
+  }
+
+  chq_audio_queue_push(state, event_ns, CHQ_AUDIO_EVENT_SPEAKER, 0, on_off);
 }
 
 static void chq_ay_out_handler(uint16_t port, uint8_t byte, void *opaque)
@@ -272,45 +340,49 @@ static void chq_ay_out_handler(uint16_t port, uint8_t byte, void *opaque)
   // port_AY_DATA: queue the write with a timestamp instead of applying it
   // immediately, so chq_audio_callback can replay it at the right sample
   // position (see the AY_QUEUE_CAPACITY comment above).
-  SDL_LockMutex(state->ay_queue_mutex);
-  {
-    int next_tail = (state->ay_queue_tail + 1) % AY_QUEUE_CAPACITY;
-
-    if (next_tail != state->ay_queue_head) // drop write if the queue is full
-    {
-      chq_ay_event_t *ev = &state->ay_queue[state->ay_queue_tail];
-
-      ev->time_ns = SDL_GetTicksNS();
-      ev->reg     = state->ay_latched_reg;
-      ev->value   = byte;
-
-      state->ay_queue_tail = next_tail;
-    }
-  }
-  SDL_UnlockMutex(state->ay_queue_mutex);
+  chq_audio_queue_push(state,
+                       SDL_GetTicksNS(),
+                       CHQ_AUDIO_EVENT_AY,
+                       state->ay_latched_reg,
+                       byte);
 }
 
-// Applies any queued AY register writes due at the current replay cursor
-// position. Called once per generated sample from chq_audio_callback so
-// rapid writes (e.g. sampled speech) land on the correct output sample
-// rather than all being collapsed into whichever value was current when the
-// audio callback happened to run. See the replay cursor comment in
-// chq_sdl_state_t for how clock drift is handled.
-static void chq_ay_apply_due_events(chq_sdl_state_t *state)
+// Applies any queued audio events (AY register writes and beeper level
+// changes) due within the current output sample's period, and returns the
+// beeper contribution for that sample. Called once per generated sample
+// from chq_audio_callback so rapid writes (e.g. sampled speech) land on the
+// correct output sample rather than all being collapsed into whichever
+// value was current when the audio callback happened to run. See the replay
+// cursor comment in chq_sdl_state_t for how clock drift is handled.
+//
+// Beeper level changes can arrive faster than the sample rate (the 48K
+// engine tone toggles every ~60 T-states, under one 44.1kHz sample), so
+// sampling the instantaneous level would alias or silence them entirely.
+// Instead the level is integrated over the sample period (a box filter):
+// the returned value is BEEPER_AMPLITUDE scaled by the fraction of the
+// period the speaker spent high.
+static int chq_apply_due_audio_events(chq_sdl_state_t *state)
 {
-  Uint64 cursor_ns;
+  Uint64 start_ns; // sample period start on the replay cursor timeline
+  Uint64 end_ns;   // sample period end
+  Uint64 level_ns; // start of the current beeper level within the period
+  Uint64 high_ns;  // time spent high within the period
+  int    beeper;
 
-  SDL_LockMutex(state->ay_queue_mutex);
+  SDL_LockMutex(state->audio_queue_mutex);
 
-  if (state->ay_queue_head == state->ay_queue_tail)
+  if (state->audio_queue_head == state->audio_queue_tail)
   {
     state->replay_anchored = 0;
+
+    // No pending edges: the speaker holds its level for the whole period.
+    beeper = state->speaker_level ? BEEPER_AMPLITUDE : 0;
   }
   else
   {
     if (!state->replay_anchored)
     {
-      Uint64 head_time_ns = state->ay_queue[state->ay_queue_head].time_ns;
+      Uint64 head_time_ns = state->audio_queue[state->audio_queue_head].time_ns;
 
       // SDL_GetTicksNS() starts near zero, so guard the cushion subtraction
       // against underflow for writes made just after launch.
@@ -323,23 +395,53 @@ static void chq_ay_apply_due_events(chq_sdl_state_t *state)
 
     // Computed fresh from the anchor rather than accumulated, so truncation
     // never drifts the cursor away from the sample count.
-    cursor_ns = state->replay_anchor_ns +
-                ((state->samples_played - state->replay_anchor_sample) *
-                 1000000000ULL) / AY_SAMPLE_RATE;
+    start_ns = state->replay_anchor_ns +
+               ((state->samples_played - state->replay_anchor_sample) *
+                1000000000ULL) / AY_SAMPLE_RATE;
+    end_ns   = state->replay_anchor_ns +
+               ((state->samples_played + 1 - state->replay_anchor_sample) *
+                1000000000ULL) / AY_SAMPLE_RATE;
 
-    while (state->ay_queue_head != state->ay_queue_tail)
+    level_ns = start_ns;
+    high_ns  = 0;
+
+    while (state->audio_queue_head != state->audio_queue_tail)
     {
-      chq_ay_event_t *ev = &state->ay_queue[state->ay_queue_head];
+      chq_audio_event_t *ev = &state->audio_queue[state->audio_queue_head];
 
-      if (ev->time_ns > cursor_ns)
+      if (ev->time_ns > end_ns)
         break;
 
-      slopay_chip_write_register(state->ay, ev->reg, ev->value);
-      state->ay_queue_head = (state->ay_queue_head + 1) % AY_QUEUE_CAPACITY;
+      if (ev->type == CHQ_AUDIO_EVENT_AY)
+      {
+        slopay_chip_write_register(state->ay, ev->reg, ev->value);
+      }
+      else
+      {
+        Uint64 edge_ns = ev->time_ns;
+
+        if (edge_ns < start_ns) // overdue edge: takes effect at period start
+          edge_ns = start_ns;
+        if (state->speaker_level)
+          high_ns += edge_ns - level_ns;
+        level_ns = edge_ns;
+        state->speaker_level = ev->value;
+      }
+
+      state->audio_queue_head = (state->audio_queue_head + 1) %
+                                AY_QUEUE_CAPACITY;
     }
+
+    if (state->speaker_level)
+      high_ns += end_ns - level_ns;
+
+    beeper = (int) ((Uint64) BEEPER_AMPLITUDE * high_ns /
+                    (end_ns - start_ns));
   }
 
-  SDL_UnlockMutex(state->ay_queue_mutex);
+  SDL_UnlockMutex(state->audio_queue_mutex);
+
+  return beeper;
 }
 
 // Runs on SDL's audio thread. Called whenever SDL wants more data queued.
@@ -370,11 +472,17 @@ static void chq_audio_callback(void            *opaque,
 
     for (i = 0; i < npairs; i++)
     {
-      chq_ay_apply_due_events(state);
+      int beeper;
+      int left;
+      int right;
+
+      beeper = chq_apply_due_audio_events(state);
 
       sample = slopay_chip_get_sample(state->ay);
-      buf[i * 2 + 0] = (int16_t) (sample & 0xFFFF);         // left
-      buf[i * 2 + 1] = (int16_t) ((sample >> 16) & 0xFFFF); // right
+      left   = (int16_t) (sample & 0xFFFF)         + beeper;
+      right  = (int16_t) ((sample >> 16) & 0xFFFF) + beeper;
+      buf[i * 2 + 0] = (int16_t) CLAMP(left,  INT16_MIN, INT16_MAX);
+      buf[i * 2 + 1] = (int16_t) CLAMP(right, INT16_MIN, INT16_MAX);
       state->samples_played++;
     }
 
@@ -637,8 +745,8 @@ int main(void)
   if (state.ay == NULL)
     goto failure;
 
-  state.ay_queue_mutex = SDL_CreateMutex();
-  if (state.ay_queue_mutex == NULL)
+  state.audio_queue_mutex = SDL_CreateMutex();
+  if (state.audio_queue_mutex == NULL)
   {
     fprintf(stderr, "Error: SDL_CreateMutex: %s\n", SDL_GetError());
     goto failure;
@@ -717,7 +825,7 @@ int main(void)
 
   SDL_DestroyAudioStream(state.audio_stream);
   slopay_chip_destroy(state.ay);
-  SDL_DestroyMutex(state.ay_queue_mutex);
+  SDL_DestroyMutex(state.audio_queue_mutex);
 
   SDL_DestroyTexture(state.texture);
   SDL_DestroyRenderer(state.renderer);

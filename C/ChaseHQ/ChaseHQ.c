@@ -455,6 +455,17 @@ static u8 *z80offsettobackbuf(chqstate_t *state, int off, int left, int right)
  * per-nibble output rate, not just the explicit delay. */
 #define SPEECH_NIBBLE_TSTATES     (419) // TODO: Calibrate (~375 sounds correct)
 
+/* 48K beeper sfx timing. The Z80 pitches its bit-banged speaker output with
+ * busy-wait delay loops; the C translations do no busy-waiting and instead
+ * advance the speccy's virtual T-state clock via speccy->addtime so the host
+ * can reconstruct the pulse spacing. Costs are summed from the skool
+ * listings and exclude the OUT ($FE) itself (11 T-states, accounted
+ * centrally in zx_out). */
+/* TODO: Calibrate these against the original beeper sfx. */
+#define DJNZ_LOOP_TSTATES(b)  (((b) - 1) * 13 + 8)  /* DJNZ-to-self, b >= 1 iterations */
+#define DECJR_LOOP_TSTATES(n) (((n) - 1) * 16 + 11) /* DEC r; JR NZ,-3 self-loop, n >= 1 iterations */
+#define RNG_TSTATES           (143) /* CALL $961B (17) + rng body (126) */
+
 /* ----------------------------------------------------------------------- */
 
 /* Memory constants */
@@ -1340,7 +1351,10 @@ static void setup_engine_sfx_48k(chqstate_t *state)
   int nloops;    /* tone pulse iteration count (was L) */
   int off_cycle; /* off-phase delay loop count (was H) */
 
-  nloops    = ((~(state->speed >> 1)) >> 2) | 1;
+  /* Conv: mask to 8 bits — the Z80 CPL and SRLs at $820B-$820E operate on
+   * A. Without the mask C's ~ yields a negative int and nloops | 1 stays
+   * negative, collapsing every engine burst to a single pulse. */
+  nloops    = (((~(state->speed >> 1)) & 0xFF) >> 2) | 1;
   off_cycle = 3;
 
   if (state->gear == 0)
@@ -1367,16 +1381,18 @@ static void setup_engine_sfx_48k(chqstate_t *state)
  *
  * \param[in] state Pointer to game state.
  *
- * Conv: Z80 uses OUT ($FE) to drive the border/speaker port; the idle
- * busy-loops (DJNZ) set the duty cycle. C has no audio output for this path;
- * the loops are kept as busy-waits but produce no sound.
+ * Conv: Z80 uses OUT ($FE) to drive the border/speaker port and idle DJNZ
+ * busy-loops to set the duty cycle. C issues the OUTs via speccy->out and
+ * models the busy-loops as speccy->addtime so the host can reconstruct the
+ * pulse timing.
  */
 static void play_engine_sfx_48k(chqstate_t *state)
 {
-  int phase;   /* perp-caught phase; suppresses effect when car is stopped (was A) */
-  int counter; /* per-call skip counter; fires every 4th call (was A) */
-  int nloops;  /* tone pulse iteration count (was C) */
-  int c;       /* delay loop counter (was B) */
+  int phase;     /* perp-caught phase; suppresses effect when car is stopped (was A) */
+  int counter;   /* per-call skip counter; fires every 4th call (was A) */
+  int nloops;    /* tone pulse iteration count (was C) */
+  int off_cycle; /* off-phase delay loop count; 0 means 256 as DJNZ (was B) */
+  int on_cycle;  /* on-phase delay loop count; 0 means 256 as DJNZ (was B) */
 
   phase = state->perp_caught_phase;
   if (phase >= PERPCAUGHTPHASE_STOPPED)
@@ -1387,14 +1403,24 @@ static void play_engine_sfx_48k(chqstate_t *state)
   if (counter)
     return;
 
+  /* Conv: DJNZ with B = 0 loops 256 times */
+  off_cycle = state->engine_sfx_off_cycle ? state->engine_sfx_off_cycle : 256;
+  on_cycle  = state->engine_sfx_on_cycle  ? state->engine_sfx_on_cycle  : 256;
+
   nloops = state->engine_sfx_nloops;
   do {
-    /* OUT ($FE),0 — off phase */
-    c = state->engine_sfx_off_cycle;
-    do {/*idle*/} while (--c);
-    /* OUT ($FE),$18 — on phase (EAR+MIC) */
-    c = state->engine_sfx_on_cycle;
-    do {/*idle*/} while (--c);
+    /* $8245: XOR A; OUT ($FE),A — speaker low (off phase) */
+    state->speccy->out(state->speccy, port_BORDER_EAR_MIC, 0);
+    /* $8248: LD B,n; DJNZ $824A; LD A,$18 — off-phase delay (7 + loop + 7) */
+    state->speccy->addtime(state->speccy,
+                           14 + DJNZ_LOOP_TSTATES(off_cycle));
+    /* $824E: OUT ($FE),A — speaker high (on phase, EAR+MIC) */
+    state->speccy->out(state->speccy, port_BORDER_EAR_MIC,
+                       port_MASK_EAR | port_MASK_MIC);
+    /* $8250: LD B,n; DJNZ $8252; DEC C; JR NZ; XOR A — on-phase delay
+     * (7 + loop + 4 + 12 + 4) */
+    state->speccy->addtime(state->speccy,
+                           27 + DJNZ_LOOP_TSTATES(on_cycle));
   } while (--nloops > 0);
 }
 
@@ -2681,9 +2707,10 @@ static void drive_sfx(chqstate_t *state)
  * \param[in] param1 Inner loop count; controls pulse width. (was D)
  * \param[in] param2 Unused. (was E)
  *
- * Conv: Z80 drives the border port via OUT ($FE); C issues the equivalent write
- * via speccy->out. RLC (HL) modifies the table in place, matching the Z80's
- * in-RAM table at $897C.
+ * Conv: Z80 drives the border port via OUT ($FE); C issues the equivalent
+ * write via speccy->out and models the delay code as speccy->addtime so the
+ * host can reconstruct the pulse timing. RLC (HL) modifies the table in
+ * place, matching the Z80's in-RAM table at $897C.
  */
 static void sfx_crash(chqstate_t *state, int param1, int param2)
 {
@@ -2700,13 +2727,19 @@ static void sfx_crash(chqstate_t *state, int param1, int param2)
     B = param1;
     do {
       A = port_MASK_EAR;
-      if (*tab & (1 << 7))
-        A &= ~port_MASK_EAR;
+      /* Conv: $896A JR NZ skips the RES when bit 7 is set, so EAR follows
+       * bit 7 — the previous C inverted this. */
+      if (!(*tab & (1 << 7)))
+        A &= ~port_MASK_EAR; /* $896C: RES 4,A */
       state->speccy->out(state->speccy, port_BORDER_EAR_MIC, A);
       RLC(*tab);
-      // NOP (twice)
+      /* $8970: RLC (HL); NOP; NOP; DJNZ; LD A,$10; BIT 7,(HL); JR —
+       * inter-pulse cost 15+4+4+13+7+12+12 (bit-set path) */
+      state->speccy->addtime(state->speccy, 67);
     } while (--B > 0);
     tab++;
+    /* $8976: INC HL; DEC C; JP NZ (6+4+10), less the DJNZ not-taken saving */
+    state->speccy->addtime(state->speccy, 15);
   } while (--C > 0);
 }
 
@@ -2723,8 +2756,9 @@ static void sfx_crash(chqstate_t *state, int param1, int param2)
  *   (was D)
  * \param[in] param2 Unused. (was E)
  *
- * Conv: Z80 drives the border port via OUT ($FE); C issues the equivalent write
- * via speccy->out.
+ * Conv: Z80 drives the border port via OUT ($FE); C issues the equivalent
+ * write via speccy->out and models the delay loops as speccy->addtime so the
+ * host can reconstruct the pulse timing.
  */
 static void sfx_thud(chqstate_t *state, int param1, int param2)
 {
@@ -2740,7 +2774,6 @@ static void sfx_thud(chqstate_t *state, int param1, int param2)
   const u8 *HL; /* pointer walking sfx_thud_table (was HL) */
   int       A;  /* EAR output bit state, toggled between 0 and 16 (was A) */
   int       B;  /* pulse count for this table entry (was B) */
-  int       E;  /* per-pulse delay counter (was E) */
 
   C = 32; // NELEMS(sfx_thud_table);
   HL = &sfx_thud_table[0];
@@ -2749,11 +2782,15 @@ static void sfx_thud(chqstate_t *state, int param1, int param2)
     B = *HL;
     do {
       state->speccy->out(state->speccy, port_BORDER_EAR_MIC, A);
-      E = param1;
-      do {/*delay*/} while (--E > 0);
+      /* $89E2: LD E,D; DEC E/JR NZ x param1; DJNZ (4 + loop + 13) */
+      state->speccy->addtime(state->speccy,
+                             17 + DECJR_LOOP_TSTATES(param1));
     } while (--B > 0);
     A ^= 16; // EAR bit
     HL++;
+    /* $89E8: XOR $10; INC HL; DEC C; JR NZ; LD B,(HL) (7+6+4+12+7), less
+     * the DJNZ not-taken saving */
+    state->speccy->addtime(state->speccy, 31);
   } while (--C > 0);
 }
 
@@ -2795,8 +2832,9 @@ static void sfx_cornering(chqstate_t *state, int param1, int param2)
  * \param[in] param1 Outer loop count and on-phase delay. (was D)
  * \param[in] param2 Inner loop count. (was E)
  *
- * Conv: Z80 drives the border port via OUT ($FE); C issues the equivalent write
- * via speccy->out.
+ * Conv: Z80 drives the border port via OUT ($FE); C issues the equivalent
+ * write via speccy->out and models the delay loops as speccy->addtime so the
+ * host can reconstruct the pulse timing.
  */
 static void sfx_cornering_loop_outer(chqstate_t *state, int param1, int param2)
 {
@@ -2806,14 +2844,28 @@ static void sfx_cornering_loop_outer(chqstate_t *state, int param1, int param2)
   do {
     C = param2;
     do {
+      /* $8A18: CALL rng; AND $10 */
+      state->speccy->addtime(state->speccy, RNG_TSTATES + 7);
       if (rng(state) & (1 << 4)) {
-        B = 24 - param1;
-        do {/*delay*/} while (--B > 0);
+        /* $8A1F: LD A,$18; SUB D; LD B,A — u8 wrap when param1 > 24;
+         * B == 0 makes the DJNZ loop 256 times */
+        B = (24 - param1) & 0xFF;
+        if (B == 0)
+          B = 256;
+        /* JR Z not taken; LD A; SUB; LD B (7+7+4+4) + DJNZ */
+        state->speccy->addtime(state->speccy,
+                               22 + DJNZ_LOOP_TSTATES(B));
         state->speccy->out(state->speccy, port_BORDER_EAR_MIC,
                             port_MASK_EAR | port_MASK_MIC);
-        B = param1;
-        do {/*delay*/} while (--B > 0);
+        /* $8A29: LD B,D; DJNZ; XOR A (4 + loop + 4) */
+        state->speccy->addtime(state->speccy,
+                               8 + DJNZ_LOOP_TSTATES(param1));
         state->speccy->out(state->speccy, port_BORDER_EAR_MIC, 0);
+        /* $8A2F: DEC C; JR NZ (4+12) */
+        state->speccy->addtime(state->speccy, 16);
+      } else {
+        /* $8A1D: JR Z taken; DEC C; JR NZ (12+4+12) */
+        state->speccy->addtime(state->speccy, 28);
       }
     } while (--C > 0);
   } while (--param1 > 0);
@@ -2834,29 +2886,34 @@ static void sfx_cornering_loop_outer(chqstate_t *state, int param1, int param2)
  *   (was D)
  * \param[in] param2 Per-step delay reset value. (was E)
  *
- * Conv: Z80 drives the border port via OUT ($FE); C issues the equivalent write
- * via speccy->out.
+ * Conv: Z80 drives the border port via OUT ($FE); C issues the equivalent
+ * write via speccy->out and models the delay loops as speccy->addtime so the
+ * host can reconstruct the pulse timing.
  */
 static void sfx_bipbow(chqstate_t *state, int param1, int param2)
 {
   int C; /* outer iteration counter, 20 down to 1 (was C) */
   int H; /* inner burst counter, restored from L each outer step (was H) */
   int L; /* inner burst reset value, 5 (was L) */
-  int B; /* delay loop counter (was B) */
 
   C = 20;
   H = L = 5;
   do {
     do {
-      do {/* delay */} while (--param1);
+      /* $8A3B: DEC D/JR NZ x param1; LD D,E (loop + 4) */
+      state->speccy->addtime(state->speccy,
+                             4 + DECJR_LOOP_TSTATES(param1));
       param1 = param2;
-      B = 24 - C;
-      do {/* delay */} while (--B);
+      /* $8A3F: LD A,$18; SUB C; LD B,A; DJNZ (7+4+4 + loop) */
+      state->speccy->addtime(state->speccy,
+                             15 + DJNZ_LOOP_TSTATES(24 - C));
       state->speccy->out(state->speccy, port_BORDER_EAR_MIC,
                           port_MASK_EAR | port_MASK_MIC);
-      B = C;
-      do {/* delay */} while (--B);
+      /* $8A49: LD B,C; DJNZ; XOR A (4 + loop + 4) */
+      state->speccy->addtime(state->speccy, 8 + DJNZ_LOOP_TSTATES(C));
       state->speccy->out(state->speccy, port_BORDER_EAR_MIC, 0);
+      /* $8A4F: DEC H; JR NZ (4+12) */
+      state->speccy->addtime(state->speccy, 16);
     } while (--H > 0);
     H = L;
   } while (--C > 0);
@@ -16362,7 +16419,7 @@ const u8 *menu_draw_string(chqstate_t *state, const u8 *HLstring)
                    &DEscr_ptr,
                    &HLattr_ptr);
     DEscr  = SCREENTOADDR(DEscr_ptr);
-    HLattr = SCREENTOADDR(HLattr_ptr);
+    HLattr = ATTRSTOADDR(HLattr_ptr);
     // POP HLstring
   } while ((*HLstring++ & EOS) == 0);
   // EXX - Unbank
