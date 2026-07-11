@@ -13795,7 +13795,6 @@ static void draw_road_lanes_change(chqstate_t *state,
         if (L_lane_flags & (1 << 7)) {
           /* bit 7 SET */
           // {4TO3L, 3TO4L, FORKED}
-          printf("drlc: b5set {4TO3L, 3TO4L, FORKED} A_dist=%d\n", A_dist);
           H_left_hand_table_hi = 0xEC;
         } else
           // {2TO3L}
@@ -13806,8 +13805,6 @@ static void draw_road_lanes_change(chqstate_t *state,
       if (L_lane_flags & (1 << 4)) { /* bit 4 SET */
         // {4TO3L, 3TO4R, 2TO3R, TUNNEL_EXIT}
 
-          printf("drlc: b4set {4TO3L, 3TO4R, 2TO3R, TUNNEL_EXIT} A_dist=%d\n", A_dist);
-
         // $C30A -- unbank A_dist / bank Adash_curve_bits
         // EX AF,AF'
 
@@ -13815,7 +13812,6 @@ static void draw_road_lanes_change(chqstate_t *state,
         if (A_dist < 2) {
           // $C310 -- bank A_dist / unbank Adash_curve_bits
           // EX AF,AF'
-          printf("drlc: A_dist < 2 {4TO3L, 3TO4R, 2TO3R, TUNNEL_EXIT} A_dist=%d\n", A_dist);
 
           /* $C311: path 1a -- bit4=1, dist<2 */
           if (Adash_masked_lane_flags != 4) {
@@ -13861,7 +13857,8 @@ static void draw_road_lanes_change(chqstate_t *state,
           // $C357 -- unbank A_dist / bank Adash_curve_bits
           // EX AF,AF'
 
-          if (A_dist != 4 || (*IY_heightptr)[0] <= (*IY_heightptr)[2])
+          if (Adash_masked_lane_flags != 4 ||
+              (*IY_heightptr)[0] <= (*IY_heightptr)[2])
             goto drlc_continue;
 
           // $C369: C = IY[0] - IY[2] (height span), B = C*2
@@ -13934,7 +13931,8 @@ static void draw_road_lanes_change(chqstate_t *state,
           // $C3CA -- unbank A_dist / bank Adash_curve_bits
           // EX AF,AF'
 
-          if (A_dist != 4 || (*IY_heightptr)[0] <= (*IY_heightptr)[2])
+          if (Adash_masked_lane_flags != 4 ||
+              (*IY_heightptr)[0] <= (*IY_heightptr)[2])
             goto drlc_continue;
 
           // $C3DB: C = IY[0] - IY[2] (height span), B = C*2
