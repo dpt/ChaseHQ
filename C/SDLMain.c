@@ -44,7 +44,7 @@
 #define GAMEHEIGHT         (192)
 #define BORDER              (32)
 
-#define SCALE_DEFAULT        (2)
+#define SCALE_DEFAULT        (4)
 #define SCALE_MIN            (1)
 #define SCALE_MAX            (4)
 
@@ -74,6 +74,83 @@
 #define AY_REPLAY_CUSHION_NS (30000000ULL)
 
 // -----------------------------------------------------------------------------
+
+// CRT post-effect prototype. Runs the game texture through a Metal fragment
+// shader via SDL's GPU API instead of the plain SDL_Renderer blit, so we can
+// add scanlines/vignette. Fullscreen triangle is generated in the vertex
+// shader from vertex_id, so no vertex buffer is needed.
+//
+// ponytail: MSL source is handed to SDL_CreateGPUShader() as
+// SDL_GPU_SHADERFORMAT_MSL and compiled at runtime by Metal; no offline
+// .metallib build step. This is macOS/iOS-only (Metal backend only) -
+// fine for a prototype, would need SPIR-V/DXIL variants to run elsewhere.
+static const char *const chq_crt_vertex_msl =
+  "#include <metal_stdlib>\n"
+  "using namespace metal;\n"
+  "struct VSOut { float4 position [[position]]; float2 uv; };\n"
+  "vertex VSOut vs_main(uint vid [[vertex_id]]) {\n"
+  "  float2 pos[3] = { float2(-1,-1), float2(3,-1), float2(-1,3) };\n"
+  "  float2 uv[3]  = { float2(0,1),  float2(2,1),  float2(0,-1) };\n"
+  "  VSOut out;\n"
+  "  out.position = float4(pos[vid], 0.0, 1.0);\n"
+  "  out.uv = uv[vid];\n"
+  "  return out;\n"
+  "}\n";
+
+// Port of a reference Three.js/GLSL CRTShader. Its uniforms (curvature,
+// bloom threshold/intensity, brightness/contrast/saturation, scanline
+// count/intensity, adaptive intensity, vignette strength) are hardcoded
+// below rather than plumbed through as tunable uniforms - none of them
+// change at runtime in this game; the constants have been re-tuned by eye
+// against this game's screen and no longer match the reference's own
+// defaults.
+// ponytail: the reference's rgbShift channel-separation effect and its
+// time-driven flicker are dropped - rgbShift defaults to 0.0 (a no-op in
+// the source shader too), and flicker needs no game logic to justify the
+// per-frame uniform push it would otherwise require.
+static const char *const chq_crt_fragment_msl =
+  "#include <metal_stdlib>\n"
+  "using namespace metal;\n"
+  "struct VSOut { float4 position [[position]]; float2 uv; };\n"
+  "fragment float4 fs_main(VSOut in [[stage_in]],\n"
+  "                         texture2d<float> tex [[texture(0)]],\n"
+  "                         sampler samp [[sampler(0)]]) {\n"
+  // curveRemapUV: barrel distortion via dot(coord,coord) radial distance.
+  "  float2 coord = in.uv * 2.0 - 1.0;\n"
+  "  coord *= 1.0 + dot(coord, coord) * 0.025;\n"
+  "  float2 uv = coord * 0.5 + 0.5;\n"
+  "  if (uv.x < 0.0 || uv.x > 1.0 || uv.y < 0.0 || uv.y > 1.0)\n"
+  "    return float4(0.0, 0.0, 0.0, 1.0);\n"
+  "  float4 c = tex.sample(samp, uv);\n"
+  // sampleBloom: threshold-gated centre + 4-tap cross sample.
+  "  float2 texel = float2(1.0 / 256.0, 1.0 / 192.0);\n"
+  "  float3 bloom = float3(0.0);\n"
+  "  float3 bc = c.rgb;\n"
+  "  float3 bn = tex.sample(samp, uv + float2(0.0, texel.y)).rgb;\n"
+  "  float3 bs = tex.sample(samp, uv - float2(0.0, texel.y)).rgb;\n"
+  "  float3 be = tex.sample(samp, uv + float2(texel.x, 0.0)).rgb;\n"
+  "  float3 bw = tex.sample(samp, uv - float2(texel.x, 0.0)).rgb;\n"
+  "  if (max(bc.r, max(bc.g, bc.b)) > 0.5) bloom += bc;\n"
+  "  if (max(bn.r, max(bn.g, bn.b)) > 0.5) bloom += bn;\n"
+  "  if (max(bs.r, max(bs.g, bs.b)) > 0.5) bloom += bs;\n"
+  "  if (max(be.r, max(be.g, be.b)) > 0.5) bloom += be;\n"
+  "  if (max(bw.r, max(bw.g, bw.b)) > 0.5) bloom += bw;\n"
+  "  c.rgb += bloom * 0.05;\n"
+  // brightness / contrast / saturation.
+  "  c.rgb = (c.rgb - 0.5) * 1.1 + 0.5;\n"
+  "  c.rgb *= 1.2;\n"
+  "  float lum = dot(c.rgb, float3(0.299, 0.587, 0.114));\n"
+  "  c.rgb = mix(float3(lum), c.rgb, 0.7);\n"
+  // scanlines, intensity adapted to local luminance.
+  "  float scan = sin(uv.y * 384.0 * 3.14159265) * 0.5 + 0.5;\n"
+  "  float adaptive = mix(0.85, 0.85 * (1.0 - lum), 0.5);\n"
+  "  c.rgb *= 1.0 - adaptive * scan;\n"
+  // vignetteApprox: Chebyshev (max-component) distance falloff.
+  "  float2 d = abs(uv - 0.5) * 2.0;\n"
+  "  float vignette = 1.0 - max(d.x, d.y) * max(d.x, d.y) * 0.3;\n"
+  "  c.rgb *= vignette;\n"
+  "  return c;\n"
+  "}\n";
 
 static int chq_window_width(int scale)
 {
@@ -158,11 +235,14 @@ typedef struct
   int                replay_anchored;      // bool; cleared when queue runs dry
   int                audio_muted;          // bool; mute sound if true
 
-  SDL_Window        *window;
-  SDL_Renderer      *renderer;
-  SDL_Texture       *texture;
-  SDL_Thread        *game_thread;
-  SDL_AudioStream   *audio_stream;
+  SDL_Window              *window;
+  SDL_GPUDevice           *gpu;
+  SDL_GPUTexture          *gpu_texture; // holds the game's converted screen
+  SDL_GPUTransferBuffer   *transfer_buffer; // staging buffer for the upload above
+  SDL_GPUSampler          *sampler;
+  SDL_GPUGraphicsPipeline *pipeline;
+  SDL_Thread              *game_thread;
+  SDL_AudioStream         *audio_stream;
 }
 chq_sdl_state_t;
 
@@ -584,12 +664,14 @@ static void chq_sdl_key_pressed(chq_sdl_state_t         *state,
 static void chq_sdl_main_loop(void *opaque)
 {
   chq_sdl_state_t *state = opaque;
-  SDL_FRect         dstrect;
+  SDL_GPUViewport   viewport;
 
-  dstrect.x = BORDER     * state->scale;
-  dstrect.y = BORDER     * state->scale;
-  dstrect.w = GAMEWIDTH  * state->scale;
-  dstrect.h = GAMEHEIGHT * state->scale;
+  viewport.x         = BORDER     * state->scale;
+  viewport.y         = BORDER     * state->scale;
+  viewport.w         = GAMEWIDTH  * state->scale;
+  viewport.h         = GAMEHEIGHT * state->scale;
+  viewport.min_depth = 0.0f;
+  viewport.max_depth = 1.0f;
 
   {
     SDL_Event event;
@@ -642,25 +724,74 @@ static void chq_sdl_main_loop(void *opaque)
     //   run_main(state->game);
     // }
 
-    /* Update the texture from the game's converted screen buffer. */
+    /* Upload the game's converted screen buffer to the GPU texture. */
     {
-      uint32_t *pixels;
+      uint32_t              *pixels;
+      void                   *mapped;
+      SDL_GPUCommandBuffer   *upload_cmdbuf;
+      SDL_GPUCopyPass        *copy_pass;
+      SDL_GPUTextureTransferInfo src;
+      SDL_GPUTextureRegion    dst;
 
       pixels = zxspectrum_claim_screen(state->zx);
-      SDL_UpdateTexture(state->texture, NULL, pixels, GAMEWIDTH * 4);
+      mapped = SDL_MapGPUTransferBuffer(state->gpu, state->transfer_buffer, true);
+      memcpy(mapped, pixels, GAMEWIDTH * GAMEHEIGHT * 4);
+      SDL_UnmapGPUTransferBuffer(state->gpu, state->transfer_buffer);
       zxspectrum_release_screen(state->zx);
+
+      memset(&src, 0, sizeof(src));
+      src.transfer_buffer = state->transfer_buffer;
+      src.pixels_per_row   = GAMEWIDTH;
+      src.rows_per_layer   = GAMEHEIGHT;
+
+      memset(&dst, 0, sizeof(dst));
+      dst.texture = state->gpu_texture;
+      dst.w       = GAMEWIDTH;
+      dst.h       = GAMEHEIGHT;
+      dst.d       = 1;
+
+      upload_cmdbuf = SDL_AcquireGPUCommandBuffer(state->gpu);
+      copy_pass     = SDL_BeginGPUCopyPass(upload_cmdbuf);
+      SDL_UploadToGPUTexture(copy_pass, &src, &dst, true);
+      SDL_EndGPUCopyPass(copy_pass);
+
+      /* Render the uploaded texture through the CRT shader pipeline. */
+      {
+        SDL_GPUTexture           *swapchain_texture;
+        SDL_GPUColorTargetInfo    color_target;
+        SDL_GPURenderPass        *render_pass;
+        SDL_GPUTextureSamplerBinding tex_binding;
+
+        if (SDL_WaitAndAcquireGPUSwapchainTexture(upload_cmdbuf, state->window,
+                                                  &swapchain_texture, NULL, NULL) &&
+            swapchain_texture != NULL)
+        {
+          memset(&color_target, 0, sizeof(color_target));
+          color_target.texture     = swapchain_texture;
+          color_target.load_op     = SDL_GPU_LOADOP_CLEAR;
+          color_target.store_op    = SDL_GPU_STOREOP_STORE;
+          color_target.clear_color.r = 0.0f;
+          color_target.clear_color.g = 0.0f;
+          color_target.clear_color.b = 0.0f;
+          color_target.clear_color.a = 1.0f;
+
+          render_pass = SDL_BeginGPURenderPass(upload_cmdbuf, &color_target, 1, NULL);
+
+          SDL_BindGPUGraphicsPipeline(render_pass, state->pipeline);
+          SDL_SetGPUViewport(render_pass, &viewport);
+
+          tex_binding.texture = state->gpu_texture;
+          tex_binding.sampler = state->sampler;
+          SDL_BindGPUFragmentSamplers(render_pass, 0, &tex_binding, 1);
+
+          SDL_DrawGPUPrimitives(render_pass, 3, 1, 0, 0);
+
+          SDL_EndGPURenderPass(render_pass);
+        }
+      }
+
+      SDL_SubmitGPUCommandBuffer(upload_cmdbuf);
     }
-
-    /* Clear screen */
-    // TODO: This ought to be the border colour, but CHQ's is always black.
-    SDL_SetRenderDrawColor(state->renderer, 0x00, 0x00, 0x00, 0xFF);
-    SDL_RenderClear(state->renderer);
-
-    /* Offset the image */
-    // Note that this will inhibit image stretching.
-
-    SDL_RenderTexture(state->renderer, state->texture, NULL, &dstrect);
-    SDL_RenderPresent(state->renderer);
 
     SDL_Delay(1000 / FPS);
   }
@@ -671,11 +802,6 @@ int main(void)
   chq_sdl_state_t         state;
   zxconfig_t              zxconfig;
   SDL_Window             *window;
-  SDL_PropertiesID        renderer_props;
-  const SDL_PixelFormat  *texture_formats;
-  SDL_PixelFormat         native_fmt;
-  Uint32                  Rmask, Gmask, Bmask, Amask;
-  int                     bpp;
 
   printf("CHASE H.Q.\n");
   printf("==========\n");
@@ -718,23 +844,24 @@ int main(void)
 
   state.window = window;
 
-  state.renderer = SDL_CreateRenderer(window, NULL);
-  if (state.renderer == NULL)
+  state.gpu = SDL_CreateGPUDevice(SDL_GPU_SHADERFORMAT_MSL, false, NULL);
+  if (state.gpu == NULL)
   {
-    fprintf(stderr, "Error: SDL_CreateRenderer: %s\n", SDL_GetError());
+    fprintf(stderr, "Error: SDL_CreateGPUDevice: %s\n", SDL_GetError());
     goto failure;
   }
 
-  SDL_SetRenderVSync(state.renderer, 1);
+  if (!SDL_ClaimWindowForGPUDevice(state.gpu, window))
+  {
+    fprintf(stderr, "Error: SDL_ClaimWindowForGPUDevice: %s\n", SDL_GetError());
+    goto failure;
+  }
 
-  renderer_props  = SDL_GetRendererProperties(state.renderer);
-  texture_formats = SDL_GetPointerProperty(renderer_props,
-                                           SDL_PROP_RENDERER_TEXTURE_FORMATS_POINTER,
-                                           NULL);
-  native_fmt = (texture_formats != NULL) ? texture_formats[0]
-                                          : SDL_PIXELFORMAT_RGBA8888;
-  SDL_GetMasksForPixelFormat(native_fmt, &bpp, &Rmask, &Gmask, &Bmask, &Amask);
-
+  // The GPU texture is always SDL_GPU_TEXTUREFORMAT_R8G8B8A8_UNORM (R in the
+  // lowest memory byte), which is what Screen.c's palette_abgr table packs
+  // when bgr_pixels is true - despite the name, "bgr_pixels" selects which
+  // palette table to use, not which byte order it produces. See the
+  // 0x00RRGGBB/0x00BBGGRR comments in Screen.c.
   zxconfig.width    = GAMEWIDTH / 8;
   zxconfig.height   = GAMEHEIGHT / 8;
   zxconfig.opaque   = &state;
@@ -745,7 +872,7 @@ int main(void)
   zxconfig.border   = &chq_border_handler;
   zxconfig.speaker  = &chq_speaker_handler;
   zxconfig.ay_out   = &chq_ay_out_handler;
-  zxconfig.bgr_pixels = (Rmask < Bmask); /* R in lower byte = BGR format */
+  zxconfig.bgr_pixels = true;
 
   state.zx = zxspectrum_create(&zxconfig);
   if (state.zx == NULL)
@@ -791,25 +918,113 @@ int main(void)
     SDL_ResumeAudioStreamDevice(state.audio_stream);
   }
 
-  state.texture = SDL_CreateTexture(state.renderer,
-                                    native_fmt,
-                                    SDL_TEXTUREACCESS_STREAMING,
-                                    GAMEWIDTH, GAMEHEIGHT);
-  if (state.texture == NULL)
   {
-    fprintf(stderr, "Error: SDL_CreateTexture: %s\n", SDL_GetError());
-    goto failure;
-  }
+    SDL_GPUTextureCreateInfo         texture_info;
+    SDL_GPUTransferBufferCreateInfo  transfer_info;
+    SDL_GPUSamplerCreateInfo         sampler_info;
+    SDL_GPUShaderCreateInfo          shader_info;
+    SDL_GPUColorTargetDescription    color_target_desc;
+    SDL_GPUGraphicsPipelineCreateInfo pipeline_info;
+    SDL_GPUShader                    *vertex_shader;
+    SDL_GPUShader                    *fragment_shader;
 
-  if (!SDL_SetTextureBlendMode(state.texture, SDL_BLENDMODE_NONE))
-  {
-    fprintf(stderr, "Error: SDL_SetTextureBlendMode: %s\n", SDL_GetError());
-    goto failure;
-  }
+    memset(&texture_info, 0, sizeof(texture_info));
+    texture_info.type   = SDL_GPU_TEXTURETYPE_2D;
+    texture_info.format = SDL_GPU_TEXTUREFORMAT_R8G8B8A8_UNORM;
+    texture_info.usage  = SDL_GPU_TEXTUREUSAGE_SAMPLER;
+    texture_info.width  = GAMEWIDTH;
+    texture_info.height = GAMEHEIGHT;
+    texture_info.layer_count_or_depth = 1;
+    texture_info.num_levels           = 1;
+    texture_info.sample_count         = SDL_GPU_SAMPLECOUNT_1;
 
-  // Conv: nearest-neighbour keeps ZX Spectrum pixels crisp when the window
-  // is scaled up; SDL3's default is linear, which blurs them.
-  SDL_SetTextureScaleMode(state.texture, SDL_SCALEMODE_NEAREST);
+    state.gpu_texture = SDL_CreateGPUTexture(state.gpu, &texture_info);
+    if (state.gpu_texture == NULL)
+    {
+      fprintf(stderr, "Error: SDL_CreateGPUTexture: %s\n", SDL_GetError());
+      goto failure;
+    }
+
+    memset(&transfer_info, 0, sizeof(transfer_info));
+    transfer_info.usage = SDL_GPU_TRANSFERBUFFERUSAGE_UPLOAD;
+    transfer_info.size  = GAMEWIDTH * GAMEHEIGHT * 4;
+
+    state.transfer_buffer = SDL_CreateGPUTransferBuffer(state.gpu, &transfer_info);
+    if (state.transfer_buffer == NULL)
+    {
+      fprintf(stderr, "Error: SDL_CreateGPUTransferBuffer: %s\n", SDL_GetError());
+      goto failure;
+    }
+
+    // Linear filtering: the CRT shader (curvature, bloom, scanlines) reads
+    // this softer look as part of the effect rather than the crisp pixels
+    // nearest-neighbour gave the plain blit.
+    memset(&sampler_info, 0, sizeof(sampler_info));
+    sampler_info.min_filter     = SDL_GPU_FILTER_LINEAR;
+    sampler_info.mag_filter     = SDL_GPU_FILTER_LINEAR;
+    sampler_info.address_mode_u = SDL_GPU_SAMPLERADDRESSMODE_CLAMP_TO_EDGE;
+    sampler_info.address_mode_v = SDL_GPU_SAMPLERADDRESSMODE_CLAMP_TO_EDGE;
+
+    state.sampler = SDL_CreateGPUSampler(state.gpu, &sampler_info);
+    if (state.sampler == NULL)
+    {
+      fprintf(stderr, "Error: SDL_CreateGPUSampler: %s\n", SDL_GetError());
+      goto failure;
+    }
+
+    memset(&shader_info, 0, sizeof(shader_info));
+    shader_info.code       = (const Uint8 *) chq_crt_vertex_msl;
+    shader_info.code_size  = strlen(chq_crt_vertex_msl);
+    shader_info.entrypoint = "vs_main";
+    shader_info.format     = SDL_GPU_SHADERFORMAT_MSL;
+    shader_info.stage      = SDL_GPU_SHADERSTAGE_VERTEX;
+
+    vertex_shader = SDL_CreateGPUShader(state.gpu, &shader_info);
+    if (vertex_shader == NULL)
+    {
+      fprintf(stderr, "Error: SDL_CreateGPUShader (vertex): %s\n", SDL_GetError());
+      goto failure;
+    }
+
+    memset(&shader_info, 0, sizeof(shader_info));
+    shader_info.code         = (const Uint8 *) chq_crt_fragment_msl;
+    shader_info.code_size    = strlen(chq_crt_fragment_msl);
+    shader_info.entrypoint   = "fs_main";
+    shader_info.format       = SDL_GPU_SHADERFORMAT_MSL;
+    shader_info.stage        = SDL_GPU_SHADERSTAGE_FRAGMENT;
+    shader_info.num_samplers = 1;
+
+    fragment_shader = SDL_CreateGPUShader(state.gpu, &shader_info);
+    if (fragment_shader == NULL)
+    {
+      fprintf(stderr, "Error: SDL_CreateGPUShader (fragment): %s\n", SDL_GetError());
+      goto failure;
+    }
+
+    memset(&color_target_desc, 0, sizeof(color_target_desc));
+    color_target_desc.format = SDL_GetGPUSwapchainTextureFormat(state.gpu, window);
+
+    memset(&pipeline_info, 0, sizeof(pipeline_info));
+    pipeline_info.vertex_shader   = vertex_shader;
+    pipeline_info.fragment_shader = fragment_shader;
+    pipeline_info.primitive_type  = SDL_GPU_PRIMITIVETYPE_TRIANGLELIST;
+    pipeline_info.target_info.color_target_descriptions = &color_target_desc;
+    pipeline_info.target_info.num_color_targets          = 1;
+
+    state.pipeline = SDL_CreateGPUGraphicsPipeline(state.gpu, &pipeline_info);
+
+    // Conv: pipelines don't retain the shader modules internally past this
+    // call, so these can be released immediately rather than kept alive
+    // for the lifetime of the app.
+    SDL_ReleaseGPUShader(state.gpu, vertex_shader);
+    SDL_ReleaseGPUShader(state.gpu, fragment_shader);
+
+    if (state.pipeline == NULL)
+    {
+      fprintf(stderr, "Error: SDL_CreateGPUGraphicsPipeline: %s\n", SDL_GetError());
+      goto failure;
+    }
+  }
 
   state.game = chq_create(state.zx);
   if (state.game == NULL)
@@ -837,8 +1052,12 @@ int main(void)
   slopay_chip_destroy(state.ay);
   SDL_DestroyMutex(state.audio_queue_mutex);
 
-  SDL_DestroyTexture(state.texture);
-  SDL_DestroyRenderer(state.renderer);
+  SDL_ReleaseGPUGraphicsPipeline(state.gpu, state.pipeline);
+  SDL_ReleaseGPUSampler(state.gpu, state.sampler);
+  SDL_ReleaseGPUTransferBuffer(state.gpu, state.transfer_buffer);
+  SDL_ReleaseGPUTexture(state.gpu, state.gpu_texture);
+  SDL_ReleaseWindowFromGPUDevice(state.gpu, window);
+  SDL_DestroyGPUDevice(state.gpu);
   SDL_DestroyWindow(window);
 
   SDL_Quit();
