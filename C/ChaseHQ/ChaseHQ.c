@@ -453,7 +453,7 @@ static u8 *z80offsettobackbuf(chqstate_t *state, int off, int left, int right)
  * summed from the skool T-state counts. Covers the three OUT (C),A triplets
  * and the LD B,$13/DJNZ delay loop, so a single stamp/sleep models the whole
  * per-nibble output rate, not just the explicit delay. */
-#define SPEECH_NIBBLE_TSTATES     (419)
+#define SPEECH_NIBBLE_TSTATES     (419) // TODO: Calibrate (~375 sounds correct)
 
 /* ----------------------------------------------------------------------- */
 
