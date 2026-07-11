@@ -173,7 +173,7 @@ When a C translation looks wrong or a variable appears uninitialised, consult th
 
 ## Common translation bugs
 
-See `C/translation-pitfalls.md` for the full catalogue with commit references.
+See `C/docs/translation-pitfalls.md` for the full catalogue with commit references.
 The most frequently recurring mistakes:
 
 **Signed/unsigned type mismatch** — use `s8` (not `u8`) whenever the Z80
