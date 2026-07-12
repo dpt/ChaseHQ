@@ -156,6 +156,7 @@ typedef struct
   Uint64             replay_anchor_ns;     // event time at the last anchor
   Uint64             replay_anchor_sample; // samples_played at the last anchor
   int                replay_anchored;      // bool; cleared when queue runs dry
+  int                audio_muted;          // bool; mute sound if true
 
   SDL_Window        *window;
   SDL_Renderer      *renderer;
@@ -481,6 +482,8 @@ static void chq_audio_callback(void            *opaque,
       sample = slopay_chip_get_sample(state->ay);
       left   = (int16_t) (sample & 0xFFFF)         + beeper;
       right  = (int16_t) ((sample >> 16) & 0xFFFF) + beeper;
+      if (state->audio_muted)
+        left = right = 0;
       buf[i * 2 + 0] = (int16_t) CLAMP(left,  INT16_MIN, INT16_MAX);
       buf[i * 2 + 1] = (int16_t) CLAMP(right, INT16_MIN, INT16_MAX);
       state->samples_played++;
@@ -516,6 +519,13 @@ static void chq_sdl_key_pressed(chq_sdl_state_t         *state,
   {
     if (k->down && !k->repeat)
       state->paused = !state->paused;
+    return;
+  }
+
+  if (sym == SDLK_F2)
+  {
+    if (k->down && !k->repeat)
+      state->audio_muted = !state->audio_muted;
     return;
   }
 
