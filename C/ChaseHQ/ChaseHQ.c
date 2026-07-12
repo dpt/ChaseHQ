@@ -7814,7 +7814,11 @@ static void check_scenery_collisions(chqstate_t *state)
     /* The fork is visible. */
     Afork_countdown = state->fork_countdown;
     if (Afork_countdown == 0) {
-      check_fork_scenery_collisions(state, HLdash_road_pos_a, DEdash_road_pos_b); /* exit via */
+      /* Conv: parameter order is (DEdash, HLdash) — passing (HL, DE) here
+       * stored the road clamp bounds swapped (min 472, max 72), making
+       * animate_hero_car slam road_pos to alternate ends every fork frame
+       * (the whole-screen left/right flicker). */
+      check_fork_scenery_collisions(state, DEdash_road_pos_b, HLdash_road_pos_a); /* exit via */
       return;
     }
 
@@ -13104,8 +13108,12 @@ static void rm_cycle_buffer_offset(chqstate_t *state, u8 *HLfast_counter)
         DE_lanes_ptr = lookup_map_goto(state, wordat(DE_lanes_ptr));
       }
 
-      // $BF12
-      A_lanes_byte = *DE_lanes_ptr;
+      // $BF12-$BF13: the reload lands in A_lanes_counter — the Z80 keeps the
+      // counter byte in A through $BF13/$BF14. Reading it into A_lanes_byte
+      // left the $BF15 store computing 0 - 1 = 255 after any lanes command,
+      // stalling the channel for ~256 steps (tunnel walls arrived long after
+      // the tunnel lights). Same shape as the hazards-channel fix.
+      A_lanes_counter = *DE_lanes_ptr;
     }
 
     // $BF14 - save lanes bytes
@@ -15600,9 +15608,11 @@ dfr_c969: /* $C969: 5-zone fork scanline render */
   if (A_zone != 0) {
     pos_ED = (A_zone & 0x80) ? 0 : 15;
   } else {
-    /* dfr_c9f0: DEC L; A=HL[-1] (no INC L -- L stays decremented) */
-    L--;
-    A_prev   = HLzone[Ldash]; /* read from new L (= L-1) */
+    /* dfr_c9f0: DEC L; A=HL[-1] (no INC L -- L' stays decremented, but only
+     * on the banked side; main L must not change or every following row's
+     * reads flip parity and the road vanishes towards the horizon) */
+    Ldash--;
+    A_prev   = HLzone[Ldash]; /* read from new L' (= L'-1) */
     pos_ED = (u8)((A_prev & 0xF8) >> 4); /* 3×RRCA + RRA, no rounding */
   }
 
@@ -15629,6 +15639,11 @@ dfr_c969: /* $C969: 5-zone fork scanline render */
    * Conv: PUSH decrements SP before writing, so N pushes fill 2N bytes
    * before the pointer, not after it (see translation-pitfalls.md #34). */
   A_rot_pat = (u8)((af_prime << 1) | (af_prime >> 7)); /* $CA0A RLCA */
+  /* $CA09/$CA0D EX AF,AF' pair: the RLCA result is banked BACK into A', so
+   * the pattern rotates once per scanline (0x55 <-> 0xAA), producing the
+   * stippled verge. Without this write-back every scanline used the same
+   * byte and the verges rendered as solid vertical stripes. */
+  af_prime = A_rot_pat;
   fill_end_addr = ((int)D << 8) | (u8)(E + 31);        /* $CA03-$CA06 */
   /* Conv: D can drift below BACKBUFFER_START_ADDRESS over enough scanlines
    * (see D-- in dfr_c923/dfr_c963); skip the write rather than let
@@ -17922,6 +17937,12 @@ void chq_test_game_frame(chqstate_t *state)
   scroll_horizon(state);
   layout_road(state);
   draw_road(state);
+  /* Debug aid: snapshot the road-only backbuffer (before sprites) so the
+   * test can dump it for visual inspection alongside the final screen. */
+  {
+    extern u8 chq_test_backbuf_snapshot[];
+    memcpy(chq_test_backbuf_snapshot, state->backbuffer, BACKBUFFER_LENGTH);
+  }
   layout_objects(state);
   prepare_tunnel(state);
   spawn_hazards(state);
@@ -17964,6 +17985,9 @@ int chq_test_max_side_object(chqstate_t *state)
   } while (--Biterations > 0);
   return max;
 }
+
+/* Debug aid: road-only backbuffer snapshot taken by chq_test_game_frame. */
+u8 chq_test_backbuf_snapshot[BACKBUFFER_LENGTH];
 
 void chq_test_draw_road(chqstate_t *state)
 {

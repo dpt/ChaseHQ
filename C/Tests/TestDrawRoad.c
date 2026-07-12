@@ -535,10 +535,11 @@ static void test_full_frame_no_corruption(void)
       assert(max_obj <= 9);
     }
 
-    /* Debug aid: set CHQ_DUMP_DIR to dump raw ZX screens around the first
-     * fork (frames 180-260) as .scr files for visual inspection. */
+    /* Debug aid: set CHQ_DUMP_DIR to dump raw ZX screens (.scr) and
+     * post-draw_road backbuffers (.bbuf) around the first fork for visual
+     * inspection (see scr2png-style converters in the session notes). */
     if (getenv("CHQ_DUMP_DIR") != NULL &&
-        ((frame >= 180 && frame <= 260 && (frame % 8) == 0) || frame == 100)) {
+        ((frame >= 180 && frame <= 260) || frame == 100)) {
       char  fname[256];
       FILE *fp;
       snprintf(fname, sizeof(fname), "%s/screen-%05d.scr",
@@ -547,6 +548,16 @@ static void test_full_frame_no_corruption(void)
       if (fp) {
         fwrite(g_speccy.screen.pixels, 1, sizeof(g_speccy.screen.pixels), fp);
         fclose(fp);
+      }
+      {
+        extern u8 chq_test_backbuf_snapshot[];
+        snprintf(fname, sizeof(fname), "%s/road-%05d.bbuf",
+                 getenv("CHQ_DUMP_DIR"), frame);
+        fp = fopen(fname, "wb");
+        if (fp) {
+          fwrite(chq_test_backbuf_snapshot, 1, BACKBUFFER_LENGTH, fp);
+          fclose(fp);
+        }
       }
     }
   }
