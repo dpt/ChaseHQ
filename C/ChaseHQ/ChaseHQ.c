@@ -15755,16 +15755,21 @@ dfr_ca66: /* $CA66: B = E (save screen low byte); C-- -- shared by both
       } \
     }
 
-    FRP_LEFT_EDGE(sm_CA7A)                /* $CA68: H=$E8 */
-    FRP_LANE_MARK(sm_CA9D) H_xpos_hi++;  /* $CA90: H=$E9 */
-    FRP_RIGHT_EDGE(sm_CABB) H_xpos_hi++; /* $CAAD: H=$EA */
-    FRP_LEFT_EDGE(sm_CADC) H_xpos_hi++;  /* $CACE: H=$EB */
-    FRP_LANE_MARK(sm_CB00) H_xpos_hi++;  /* $CAF2: H=$EC */
+    /* Conv: each of sections 2-6 begins with INC H ($CA90/$CAAD/$CACE/
+     * $CAF2/$CB0F), so the increment must happen BEFORE that section's
+     * table read. A previous translation incremented after, shifting every
+     * section from 2 on onto the previous section's table: the lane dash
+     * drew at the left-edge position, the edges walked inward one boundary
+     * and $ED (the right road's right edge) never got a marking. */
+    FRP_LEFT_EDGE(sm_CA7A)               /* $CA68: H=$E8 */
+    H_xpos_hi++; FRP_LANE_MARK(sm_CA9D)  /* $CA90: INC H → $E9 */
+    H_xpos_hi++; FRP_RIGHT_EDGE(sm_CABB) /* $CAAD: INC H → $EA */
+    H_xpos_hi++; FRP_LEFT_EDGE(sm_CADC)  /* $CACE: INC H → $EB */
+    H_xpos_hi++; FRP_LANE_MARK(sm_CB00)  /* $CAF2: INC H → $EC */
     /* $CB0F-$CB11: test/interpolate use the same L as section 5 left it;
      * the DEC L at $CB11 only takes effect afterwards, permanently. */
-    FRP_RIGHT_EDGE(sm_CB1C)
+    H_xpos_hi++; FRP_RIGHT_EDGE(sm_CB1C) /* $CB0F: INC H → $ED */
     L--;                                  /* $CB11: permanent DEC L after section 6 */
-    H_xpos_hi++;                          /* $CB0F: H=$ED */
 
 #undef FRP_LEFT_EDGE
 #undef FRP_LANE_MARK

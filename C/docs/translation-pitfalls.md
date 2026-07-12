@@ -363,6 +363,7 @@ Translating this as a loop creates an infinite loop when the first call's row-co
 
 - `advance_hazard` (`$AE74–$AE79`): `LD (IX+$02),L` / `LD (IX+$03),H` writes `horz_pos`/`horz_clip`, but the C port wrote the low byte into `distance` (offset 1) instead of `horz_pos` (offset 2), clobbering the distance value computed a few lines earlier. Since the depth-sorted draw list matches on `distance`, hazards were computed every frame but never drawn.
 - `advance_hazard` (`$AE74–$AE79`, `check_collision` call): the skool marks the following `check_collision` call's result "ignored", but `check_collision` internally reloads `hazard->horz_pos`/`horz_clip` for its own bounding-box test, and the C port piped that reload through an `HLout` parameter the caller then wrote back into the hazard — pinning every hazard near its stale (often 0) previous position and preventing collisions.
+- **Swapped call arguments:** `check_fork_scenery_collisions(state, DEdash, HLdash)` was called as `(state, HLdash_road_pos_a, DEdash_road_pos_b)`, crossing the pair over so the road clamp bounds `ahc_road_pos_a/b` stored swapped (min 472, max 72) while the fork was active; `animate_hero_car` then latched `road_pos` to alternating ends of the road every frame — a whole-screen two-frame flicker. When parameters are named after registers, check each call site against the *callee's* declared order, which need not match the caller's variable-declaration order. (`1c611dd`)
 
 **Fix:** Cross-check the struct's field-offset table against the actual C member written at each site — don't trust the surrounding comment's prose alone; a field written correctly earlier in the function is a red flag if it reappears as an unrelated write target later. Before adding an output parameter, check every call site's skool for what happens to the register immediately after `CALL` returns — "result ignored" means don't invent one, even if the callee's internals happen to touch a same-named register. Match the skool ordering (write struct fields before the call) and drop the parameter once no caller needs it.
 
@@ -452,7 +453,7 @@ Translating this as a loop creates an infinite loop when the first call's row-co
 
 **Rule:** For any `(*ptr)[N]` parameter, element access is `(*ptr)[i]`; `ptr[i]` is a table stride. `draw_helicopter` still contains the suspect form (`helibitmap = *helibitmaps++;` next to a "can't be right" comment) — audit it against `$AA38` when helicopter data is completed.
 
-**Commit:** (uncommitted — dust_stones_stuff fix)
+**Commit:** `e457f6b`
 
 ---
 
@@ -460,8 +461,37 @@ Translating this as a loop creates an infinite loop when the first call's row-co
 
 **Root cause:** `draw_forked_road` derives five scanline fill widths as differences of cumulative zone positions (each 0..15). The Z80 emits each zone by a self-modified `JR` into its own fixed 15-`PUSH` chain (`$CA11–$CA65`), so each zone is structurally capped at 15 pairs and a crossed boundary (negative difference) at worst makes the `JR` skip past its chain — a bounded one-scanline glitch. The C `(u8)(a − b)` wrapped a crossed boundary to ~250 and the `memset`s ran hundreds of bytes backwards out of the backbuffer, overwriting `road_buffer` with the 0xAA stripe pattern.
 
-**Bug:** On transient rows during dirt/fork transitions the zone positions cross (`pos_E9 < pos_E8` etc.). Frame-deterministic corruption: `road_buffer` right-side object slots took the stripe fill byte, tripping the `draw_scene_objects` `Aobj <= 9` assert many frames later when the scan window reached the byte. Fix: compute the widths as `int` and skip the whole fill when any difference is negative.
+**Bug:** On transient rows during dirt/fork transitions the zone positions cross (`pos_EA < pos_E8` etc.). Frame-deterministic corruption: `road_buffer` right-side object slots took the stripe fill byte, tripping the `draw_scene_objects` `Aobj <= 9` assert many frames later when the scan window reached the byte. Fix: compute the widths as `int` and fill with a 15-pair budget — each zone takes at most its non-negative width, right to left, and the lefthand verge takes the remainder, so the scanline is always exactly filled and the cursor cannot escape.
 
 **Rule:** When the Z80's worst-case damage is bounded by *code structure* — fixed-length PUSH chains, page-wrapped `INC L`, self-modified low bytes — plain C arithmetic does not inherit the bound. Reproduce the structural cap explicitly (clamp, mask or skip) and say so in a `Conv:` comment. A wild write that stays inside `chqstate` is invisible to ASan; the road-buffer corruption diagnostics (`rm_prewrite`, `chq_test_max_side_object`) and a bisecting watchpoint found this one.
 
-**Commit:** (uncommitted — draw_forked_road fix)
+**Commits:** `e457f6b`, `c5b6347`
+
+---
+
+## 31. Chained self-modified sections — apply each section's `INC H` at its entry, with its exact count
+
+**Root cause:** `draw_forked_road` walks the xpos pages twice per scanline: the fill boundary reads and the six marking sections both advance H by `INC H` at the *start* of each step, and the counts are irregular. Two opposite miscounts, months apart, in the same function:
+
+- **Fill boundaries** (`$C973–$C9F6`): the Z80 walks `$E8`, `INC H ×2` → `$EA`, `INC H` → `$EB`, `INC H ×2` → `$ED` (left road, median, right road). The C read consecutive `$E8/$E9/$EA/$EC`, shaping every fork scanline from the wrong tables — striped garbage across the whole fork.
+- **Marking sections** (`$CA90/$CAAD/$CACE/$CAF2/$CB0F`): each of sections 2–6 *begins* with a single `INC H`. The C incremented *after* each section, so every section from 2 on read the previous section's table: the lane dash drew at the left-edge position ("dashed centre line where the left edge should be"), the edge markings walked inward one boundary, and `$ED` — the right road's right edge — never received a marking ("no right edge, just ragged fill").
+
+**Rule:** For a chain of self-modified sections, transcribe each section's exact `INC H` count at its entry point and verify every read's H page against the skool's address comments. Do not assume the pages are consecutive (the fill skips two) or that a shared increment can trail the section body (the markings advance before reading).
+
+**Commits:** `c5b6347`, `a5f0989`
+
+---
+
+## 32. One C variable modelling both banks of a register — shadow-side mutations leak into the main side
+
+**Root cause:** The Z80 banks L via `EXX`: `draw_forked_road`'s zone boundary reads run on a shadow L′ reloaded from main L every scanline pass (`$C96D LD A,L; EXX; LD L,A`), so boundary 4's `DEC L` (`$C9F0`) and the zero-fill path's `LD HL,$0000` (`$C937` — the PUSH fill *value*) touch only the shadow side. The C used a single `L` for both banks.
+
+**Bugs:**
+
+- The zero-fill path's `L = 0` zeroed the main row index, scrambling every zone and marking read for the rest of the frame.
+- Boundary 4's `L--` leaked into main L the moment the fork-right table came on-screen, flipping the row parity for all subsequent rows: boundary reads then treated s16 low bytes as flag bytes, the zones collapsed to full-width verge and the road vanished towards the horizon.
+- The first fix converted three of the four boundary reads to a distinct `Ldash`; the fourth survived because the conversion was applied by exact-string matching and that site's comment differed. Grep for every mutation of the shared name after such a conversion.
+
+**Rule:** Give the banked side its own variable (`Ldash`, per the CLAUDE.md EXX convention), assigned at the bank point every pass, and afterwards audit every `L--`/`L -= n` in the function for which bank it belongs to.
+
+**Commits:** `c5b6347`, `1c611dd`
