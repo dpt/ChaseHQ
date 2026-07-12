@@ -6589,8 +6589,9 @@ check_credits:
   if (state->credits == 0) {
     check_user_input_quit_key(state); /* exit via */
   } else {
-    state->credits--;
+    // Display the pre-decrement count: Z80 loads A before DEC (HL) ($9C39/$9C3E)
     state->continue_messages[CONTINUE_MESSAGES_CREDIT_N] = (state->credits + '0') | EOS;
+    state->credits--;
     state->time_up_state = TIMEUPSTATE_CHECK_RESTART;
     state->tick_remaining_seconds_x2 = 21; // a 10 second countdown, doubled, plus 1
     state->tick_remaining_subseconds = 1;  // force an initial decrement
@@ -6624,7 +6625,7 @@ check_restart:
     --remaining_seconds_x2;
 
     // Play a "bip" or a "bow" sound effect every half second (this is why we double the countdown)
-    effect = (remaining_seconds_x2 & 1) ? EFFECT_BIP : EFFECT_BOW;
+    effect = (remaining_seconds_x2 & 1) ? EFFECT_BOW : EFFECT_BIP; // odd = bow ($9C92 JR NC keeps bip)
     start_sfx(state, effect, 1); /* priority 1 => high */
 
     if (remaining_seconds_x2 == 0) {
