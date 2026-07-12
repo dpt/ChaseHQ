@@ -9178,9 +9178,8 @@ static void draw_helicopter(chqstate_t *state, int Biterations, u8 *IYheight)
   Biterations2 = 5; // iterations (draw first five)
   frame = state->anim_counter & 1; // heli frame
 
-  helibitmaps = state->stage->addrof_helicopter_stuff_1;
-  if (frame != 0)
-    helibitmaps = state->stage->addrof_helicopter_stuff_2;
+  helibitmaps = (frame == 0) ? state->stage->addrof_helicopter_stuff_1 :
+                               state->stage->addrof_helicopter_stuff_2;
 
   // FIXME: wrong data model — currently unreachable (all stages define the
   // helicopter tables as NULL). Decoded from the skool ($AA71-$AA8E):
@@ -15389,25 +15388,29 @@ static void draw_forked_road(chqstate_t *state, const u8 *IXlanes, const u8 *IYh
   u8  C;          /* per-pass scratch counter: reset every scanline pass, has no effect on loop exit (was C) */
   u8  Cdash;       /* scan-block exit counter: banked from Ccounter, decremented once per pass (was C') */
   u8  L;          /* road table byte index; decrements as road nears (was L) */
+  u8  Ldash;      /* banked row index for the zone boundary reads; reloaded from L each pass (was L') */
   u8  af_prime;   /* current scanline fill pattern, banked in A' (was A') */
   u8  loop_path;  /* 0 = dfr_c923 (zero-fill) path; 1 = dfr_c963 (5-zone) */
   int A_row;      /* scanline row check: (D-1) & 0x0F; drives advance test (was A) */
   int carry;      /* carry/borrow flag for E underflow in scanline advance */
   const u8 *HLzone;   /* pointer to zone position table for current zone (was HL) */
   int A_zone;     /* zone position byte from xpos table; 0 = interpolate (was A) */
-  u8  pos_E8;     /* computed lefthand verge edge position */
+  u8  pos_E8;     /* lefthand verge end: road left boundary ($E8) */
   int A_prev;     /* previous xpos table entry, used for interpolation (was A) */
-  u8  pos_E9;     /* computed lefthand road end position */
-  u8  pos_EA;     /* computed middle verge end position */
-  u8  pos_EC;     /* computed righthand road end / verge complement */
-  int z_lv;       /* lefthand verge width = pos_E8 */
-  int z_lr;       /* lefthand road width = pos_E9 - pos_E8 */
-  int z_mv;       /* middle verge width = pos_EA - pos_E9 */
-  int z_rr;       /* righthand road width = pos_EC - pos_EA */
-  int z_rv;       /* righthand verge width = 15 - pos_EC */
+  u8  pos_EA;     /* lefthand road end: road centre boundary ($EA) */
+  u8  pos_EB;     /* median verge end: road centre right boundary ($EB) */
+  u8  pos_ED;     /* righthand road end: fork right boundary ($ED) */
+  int z_lr;       /* lefthand road width = pos_EA - pos_E8 */
+  int z_mv;       /* median verge width = pos_EB - pos_EA */
+  int z_rr;       /* righthand road width = pos_ED - pos_EB */
+  int z_rv;       /* righthand verge width = 15 - pos_ED */
   u8  A_rot_pat;  /* verge fill byte: af_prime rotated left one bit (was A, via A') */
   int fill_end_addr; /* Z80 address one past the fillable region: (D<<8)|(E+31) (was HL/SP) */
   u8       *SPfill;   /* backward-fill cursor for the five PUSH-chain zones (was SP) */
+  int zone_widths[4]; /* zone pair counts, right to left: rv, rr, mv, lr (Conv) */
+  int remaining;      /* pairs left of the 15-pair scanline budget (Conv) */
+  int take;           /* pairs taken by the current zone (Conv) */
+  int zi;             /* zone index for the budgeted fill loop (Conv) */
   int B_row_lo;   /* screen low byte saved at $CA66 LD B,E; base for column calc (was B) */
   int D_row_hi;   /* screen high byte at marking time (was D) */
   int H_xpos_hi;  /* current xpos-table page high byte, $E8→$ED (was H) */
@@ -15504,8 +15507,11 @@ dfr_c929: /* $C929: zero-fill scanline (inner road, pre-fork area) */
     SPfill = ADDRTOBACKBUF(fill_end_addr);
     memset(SPfill - 30, 0, 30);
   }
-  C = 0;  /* $C937-$C93A: HL = 0; C = L = 0 */
-  L = 0;
+  /* $C937-$C93A: HL' = 0 (the PUSH fill value) and C' = L' = 0 — all on the
+   * banked side. Conv: a previous translation zeroed the MAIN row index L
+   * here, scrambling every zone and marking read for the rest of the frame;
+   * main L must survive untouched. Shadow C' is modelled by C (scratch). */
+  C = 0;
   /* $CA57 falls through the 15 PUSHes into the shared $CA66 marking
    * code below -- must not skip straight to dfr_after_marking, or the
    * marking section (and its real C-- accounting) never runs and the
@@ -15538,64 +15544,74 @@ dfr_c969: /* $C969: 5-zone fork scanline render */
   /* $C970: LD BC,$10F8  (B=16 inner counter, C=$F8 scan-block mask) */
   B = 16;
   C = 0xF8; /* Conv: this is the banked C used to drive the scan-block loop */
+  /* $C96D-$C96F: LD A,L; EXX; LD L,A — the zone boundary reads run on the
+   * BANKED L', reloaded from main L every pass. Boundary 4's DEC L ($C9F0)
+   * therefore does not persist into the next pass or the marking section,
+   * which runs on main L after the $CA6A EXX. */
+  Ldash = L;
 
-  /* $C973: H = $E8 → read zone widths from road tables $E8/$E9/$EA/$EC */
+  /* $C973: H = $E8 → read zone boundaries from road tables $E8/$EA/$EB/$ED.
+   * Conv: the Z80 walks H as $E8, INC H ×2 → $EA, INC H → $EB, INC H ×2 →
+   * $ED. During a fork the left road spans left..centre ($E8..$EA), the
+   * median gap centre..centre-right ($EA..$EB) and the right road
+   * centre-right..fork-right ($EB..$ED). A previous translation misread
+   * the INC H counts as $E8/$E9/$EA/$EC, garbling every fork scanline. */
 
-  /* ---- Zone 5: lefthand verge (table $E800) ---- */
+  /* ---- Boundary 1: lefthand verge end (table $E800, road left) ---- */
   HLzone = (const u8 *)state->xpos_road_left;
-  A_zone   = HLzone[L];
+  A_zone   = HLzone[Ldash];
   if (A_zone != 0) {
     pos_E8 = (A_zone & 0x80) ? 0 : 15;
   } else {
     /* dfr_c984: DEC L; A=HL[-1]; INC L; AND $F8; 3×RRCA; RRA; ADC; CP B; DEC */
-    A_prev   = HLzone[(u8)(L - 1)];
+    A_prev   = HLzone[(u8)(Ldash - 1)];
     pos_E8 = (u8)((A_prev >> 4) + ((A_prev >> 3) & 1)); /* 3×RRCA + RRA + ADC */
     if (pos_E8 >= 16)
       pos_E8--;
   }
 
-  /* ---- Zone 4: lefthand road (table $E900) ---- */
-  HLzone = (const u8 *)state->xpos_road_centre_left;
-  A_zone   = HLzone[L];
-  if (A_zone != 0) {
-    pos_E9 = (A_zone & 0x80) ? 0 : 15;
-  } else {
-    /* dfr_c9aa: DEC L; A=HL[-1]; INC L; AND $F8; 3×RRCA; RRA (no ADC) */
-    A_prev   = HLzone[(u8)(L - 1)];
-    pos_E9 = (u8)((A_prev & 0xF8) >> 4); /* 3×RRCA + RRA, no rounding */
-  }
-
-  /* ---- Zone 3: middle verge (table $EA00) ---- */
+  /* ---- Boundary 2: lefthand road end (table $EA00, road centre) ---- */
   HLzone = (const u8 *)state->xpos_road_centre;
-  A_zone   = HLzone[L];
+  A_zone   = HLzone[Ldash];
   if (A_zone != 0) {
     pos_EA = (A_zone & 0x80) ? 0 : 15;
   } else {
-    /* dfr_c9c9: DEC L; A=HL[-1]; INC L; AND $F8; 3×RRCA; RRA; ADC; CP B; DEC */
-    A_prev   = HLzone[(u8)(L - 1)];
-    pos_EA = (u8)((A_prev >> 4) + ((A_prev >> 3) & 1));
-    if (pos_EA >= 16)
-      pos_EA--;
+    /* dfr_c9aa: DEC L; A=HL[-1]; INC L; AND $F8; 3×RRCA; RRA (no ADC) */
+    A_prev   = HLzone[(u8)(Ldash - 1)];
+    pos_EA = (u8)((A_prev & 0xF8) >> 4); /* 3×RRCA + RRA, no rounding */
   }
 
-  /* ---- Zone 2+1: righthand road + verge (table $EC00, H skips $EB) ---- */
-  HLzone = (const u8 *)state->xpos_road_right;
-  A_zone   = HLzone[L];
+  /* ---- Boundary 3: median verge end (table $EB00, road centre right) ---- */
+  HLzone = (const u8 *)state->xpos_road_centre_right;
+  A_zone   = HLzone[Ldash];
   if (A_zone != 0) {
-    pos_EC = (A_zone & 0x80) ? 0 : 15;
+    pos_EB = (A_zone & 0x80) ? 0 : 15;
+  } else {
+    /* dfr_c9c9: DEC L; A=HL[-1]; INC L; AND $F8; 3×RRCA; RRA; ADC; CP B; DEC */
+    A_prev   = HLzone[(u8)(Ldash - 1)];
+    pos_EB = (u8)((A_prev >> 4) + ((A_prev >> 3) & 1));
+    if (pos_EB >= 16)
+      pos_EB--;
+  }
+
+  /* ---- Boundary 4: righthand road end (table $ED00, fork right) ---- */
+  HLzone = (const u8 *)state->xpos_road_fork_right;
+  A_zone   = HLzone[Ldash];
+  if (A_zone != 0) {
+    pos_ED = (A_zone & 0x80) ? 0 : 15;
   } else {
     /* dfr_c9f0: DEC L; A=HL[-1] (no INC L -- L stays decremented) */
     L--;
-    A_prev   = HLzone[L]; /* read from new L (= L-1) */
-    pos_EC = (u8)((A_prev & 0xF8) >> 4); /* 3×RRCA + RRA, no rounding */
+    A_prev   = HLzone[Ldash]; /* read from new L (= L-1) */
+    pos_ED = (u8)((A_prev & 0xF8) >> 4); /* 3×RRCA + RRA, no rounding */
   }
 
-  /* Derive zone widths from cumulative positions */
-  z_lv = pos_E8;                        /* lefthand verge */
-  z_lr = pos_E9 - pos_E8;               /* lefthand road */
-  z_mv = pos_EA - pos_E9;               /* middle verge */
-  z_rr = pos_EC - pos_EA;               /* righthand road */
-  z_rv = 15    - pos_EC;                /* righthand verge */
+  /* Derive zone widths from cumulative positions; the lefthand verge width
+   * (pos_E8) is taken as the fill budget remainder below */
+  z_lr = pos_EA - pos_E8;               /* lefthand road */
+  z_mv = pos_EB - pos_EA;               /* middle verge */
+  z_rr = pos_ED - pos_EB;               /* righthand road */
+  z_rv = 15    - pos_ED;                /* righthand verge */
 
   /* $CA00-$CA65: Fill scanline right-to-left using SP as pointer.
    * DE = current scanline address; HL = DE+$1F (truncating low-byte add,
@@ -15618,22 +15634,35 @@ dfr_c969: /* $C969: 5-zone fork scanline render */
    * (see D-- in dfr_c923/dfr_c963); skip the write rather than let
    * ADDRTOBACKBUF assert, mirroring the marking-section guard below. */
   /* Conv: the Z80 enters five fixed 15-PUSH chains via self-modified JR
-   * displacements, so each zone can only ever emit 0..15 pairs and the
-   * total is exactly 15 when the positions are monotone. When the zone
-   * positions cross (transient rows during dirt/fork transitions) a JR
-   * skips past its own chain — a bounded one-scanline glitch on the Z80.
-   * In C the u8 subtraction wrapped to ~250 and the memsets ran hundreds
-   * of bytes backwards out of the backbuffer, scribbling the 0xAA stripe
-   * pattern over road_buffer (the draw_scene_objects Aobj=170 assert).
-   * Skip the fill for crossed rows instead. */
-  if (z_lr >= 0 && z_mv >= 0 && z_rr >= 0 &&
-      VALID_BACKBUF_ADDR(fill_end_addr) && VALID_BACKBUF_ADDR(((int)D << 8) | E)) {
+   * displacements, so a scanline always receives exactly 15 pairs; when
+   * the zone positions cross (transient rows during dirt/fork
+   * transitions) a JR overshoots its own chain and the pairs land in a
+   * garbled but bounded pattern. In C the u8 width subtraction wrapped to
+   * ~250 and the memsets ran hundreds of bytes backwards out of the
+   * backbuffer, scribbling the 0xAA stripe pattern over road_buffer (the
+   * draw_scene_objects Aobj=170 assert). Model the structural bound with
+   * a 15-pair budget: each zone takes at most its (non-negative) width,
+   * right to left, and the lefthand verge takes whatever remains, so the
+   * scanline is always fully filled and the cursor can never escape. */
+  if (VALID_BACKBUF_ADDR(fill_end_addr) && VALID_BACKBUF_ADDR(((int)D << 8) | E)) {
+    zone_widths[0] = z_rv; /* righthand verge (pattern) */
+    zone_widths[1] = z_rr; /* righthand road (black) */
+    zone_widths[2] = z_mv; /* middle verge (pattern) */
+    zone_widths[3] = z_lr; /* lefthand road (black); z_lv = remainder */
     SPfill = ADDRTOBACKBUF(fill_end_addr);
-    SPfill -= (size_t)z_rv * 2; memset(SPfill, A_rot_pat, (size_t)z_rv * 2);
-    SPfill -= (size_t)z_rr * 2; memset(SPfill, 0,         (size_t)z_rr * 2);
-    SPfill -= (size_t)z_mv * 2; memset(SPfill, A_rot_pat, (size_t)z_mv * 2);
-    SPfill -= (size_t)z_lr * 2; memset(SPfill, 0,         (size_t)z_lr * 2);
-    SPfill -= (size_t)z_lv * 2; memset(SPfill, A_rot_pat, (size_t)z_lv * 2);
+    remaining = 15;
+    for (zi = 0; zi < 4; zi++) {
+      take = zone_widths[zi];
+      if (take < 0)
+        take = 0;
+      else if (take > remaining)
+        take = remaining;
+      remaining -= take;
+      SPfill -= (size_t)take * 2;
+      memset(SPfill, (zi & 1) ? 0 : A_rot_pat, (size_t)take * 2);
+    }
+    SPfill -= (size_t)remaining * 2;
+    memset(SPfill, A_rot_pat, (size_t)remaining * 2);
   }
 
 dfr_ca66: /* $CA66: B = E (save screen low byte); C-- -- shared by both
@@ -15797,6 +15826,12 @@ dfr_cb90: { /* $CB90 */
       goto dfr_loop;
     }
     if ((s8)A_diff > 0) {        /* $CB9C: JP P,$CBC5 */
+      /* $CBC5 LD C,A: the height difference becomes the next scan-block
+       * counter — each block draws A_diff scanlines then re-checks the
+       * height walk. Omitting this left Cdash free-running (256-scanline
+       * blocks) so the function never terminated at the backdrop and
+       * repainted the whole buffer with drifted addresses. */
+      Cdash = A_diff;
       /* backdrop_fill_dispatch ($CBC5): A < 0x50 → re-enter, A >= 0x50 → backdrop fill */
       if (A_diff >= 0x50) {
         /* Conv: D can drift below BACKBUFFER_START_ADDRESS over enough
