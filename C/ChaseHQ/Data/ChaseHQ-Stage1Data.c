@@ -214,7 +214,7 @@ const stage_t stage1 = {
     ___X_XXX, ________, ________, ________, ________, ________, ________, ________, ________, ________
   },
   &stage1_perp_face[FACEBITMAPBYTES],
-  NULL, // no mugshot given on this level
+  NULL, // no pilot mugshot given on this level
   attribute_BRIGHT_BLACK_OVER_YELLOW | (attribute_BRIGHT_BLACK_OVER_YELLOW << 8),
   &stage1_hittable_object_defs[0],
   &stage1_right_hand_graphics_defs[-1].arg,
@@ -1960,26 +1960,28 @@ static const u8 stage1_bitmap_truck_4s[2 * 2 * 12] = {
 
 // $69DA
 static const u8 stage1_bitmap_car_4[3 * 2 * 9] = {
-  ________, XXXXXXXX, _______X, XXXXXXX_, XXXXXXXX, ________,
-  X_______, _XXXXXXX, ______XX, XXXXXX__, XXXXXXXX, ________,
-  ________, XX_XXX_X, _______X, _X_XXXX_, XXXXXXXX, ________,
-  ________, X_XX_XXX, _______X, XXX_XXX_, XXXXXXXX, ________,
-  ________, X_X__XX_, _______X, X_X__XX_, XXXXXXXX, ________,
-  X_______, _X_XXXXX, ______XX, XXXXXX__, XXXXXXXX, ________,
-  _X______, X_XXX_X_, _____X_X, X_XXX_X_, XXXXXXXX, ________,
-  ________, XXXXXXXX, _______X, XXXXXXX_, XXXXXXXX, ________,
+  X_______, _XXXXXXX, _______X, XXXXXXX_, XXXXXXXX, ________,
+  ________, XXX_XXXX, ________, XXXX_XXX, XXXXXXXX, ________,
+  ________, XX_X_X_X, ________, _X_X__XX, XXXXXXXX, ________,
+  X_______, _X__X_X_, _______X, X_X___X_, XXXXXXXX, ________,
+  X_______, _XXX_XXX, _______X, XX_XXXX_, XXXXXXXX, ________,
+  X_______, _XX_____, _______X, _____XX_, XXXXXXXX, ________,
+  X_______, _X_XXXXX, _______X, XXXXX_X_, XXXXXXXX, ________,
+  XX___XXX, __X_X___, X_X___XX, _X_X_X__, XXXXXXXX, ________,
+  XXXX____, ____XXXX, ____XXXX, XXXX____, XXXXXXXX, ________,
 };
 
 // $6A10
 static const u8 stage1_bitmap_car_4s[3 * 2 * 9] = {
-  XXXX____, ____XXXX, ________, XXXXXXXX, ___XXXXX, XXX_____,
-  XXXXX___, _____XXX, ________, XXXXXXXX, __XXXXXX, XX______,
-  XXXX____, ____XX_X, ________, XX_X_X_X, ___XXXXX, XXX_____,
-  XXXX____, ____X_XX, ________, _XXXXXX_, ___XXXXX, XXX_____,
-  XXXX____, ____X_X_, ________, _XX_X_X_, ___XXXXX, _XX_____,
-  XXXXX___, _____X_X, ________, XXXXXXXX, __XXXXXX, XX______,
-  XXXX_X__, ____X_XX, ________, X_X_X_XX, _X_XXXXX, X_X_____,
-  XXXX____, ____XXXX, ________, XXXXXXXX, ___XXXXX, XXX_____,
+  XXXXX___, _____XXX, ________, XXXXXXXX, ___XXXXX, XXX_____,
+  XXXX____, ____XXX_, ________, XXXXXXXX, ____XXXX, _XXX____,
+  XXXX____, ____XX_X, ________, _X_X_X_X, ____XXXX, __XX____,
+  XXXXX___, _____X__, ________, X_X_X_X_, ___XXXXX, __X_____,
+  XXXXX___, _____XXX, ________, _XXXXX_X, ___XXXXX, XXX_____,
+  XXXXX___, _____XX_, ________, ________, ___XXXXX, _XX_____,
+  XXXXX___, _____X_X, ________, XXXXXXXX, ___XXXXX, X_X_____,
+  XXXXXX__, ______X_, _XXXX_X_, X____X_X, __XXXXXX, _X______,
+  XXXXXXXX, ________, ________, XXXXXXXX, XXXXXXXX, ________,
 };
 
 /* ----------------------------------------------------------------------- */
