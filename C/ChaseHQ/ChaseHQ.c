@@ -3493,7 +3493,7 @@ static void fill_attributes(chqstate_t *state)
     DEdst      = HLsrc + 1;
     BC_columns = 28;
     do { *DEdst++ = *HLsrc++; } while (--BC_columns > 0);
-    HLsrc += 32 - 28;
+    HLsrc += SCREEN_ATTRIBUTES_WIDTH - 28;
   } while (--A_rows > 0);
 
   state->transition_control = TRANSITIONCONTROL_STOP; /* $8E3E LD ($A231),A */
