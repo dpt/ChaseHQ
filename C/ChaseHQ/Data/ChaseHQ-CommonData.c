@@ -4209,8 +4209,8 @@ const u8 forked_road_exit_right_lanes[12] = {
 /* ----------------------------------------------------------------------- */
 
 // $E364
-const u8 spiral_transition_mask[12 * 8] = {
-  XXXXXXXX,
+const u8 spiral_transition_frames[11 * 8] = {
+  XXXXXXXX, // 1
   ________,
   ________,
   ________,
@@ -4219,7 +4219,7 @@ const u8 spiral_transition_mask[12 * 8] = {
   ________,
   ________,
 
-  XXXXXXXX,
+  XXXXXXXX, // 2
   _______X,
   _______X,
   _______X,
@@ -4228,7 +4228,7 @@ const u8 spiral_transition_mask[12 * 8] = {
   _______X,
   _______X,
 
-  XXXXXXXX,
+  XXXXXXXX, // 3
   _______X,
   _______X,
   _______X,
@@ -4237,7 +4237,7 @@ const u8 spiral_transition_mask[12 * 8] = {
   _______X,
   XXXXXXXX,
 
-  XXXXXXXX,
+  XXXXXXXX, // 4
   X______X,
   X______X,
   X______X,
@@ -4246,7 +4246,7 @@ const u8 spiral_transition_mask[12 * 8] = {
   X______X,
   XXXXXXXX,
 
-  XXXXXXXX,
+  XXXXXXXX,// 5
   XXXXXXXX,
   X______X,
   X______X,
@@ -4255,25 +4255,25 @@ const u8 spiral_transition_mask[12 * 8] = {
   X______X,
   XXXXXXXX,
 
-  XXXXXXXX,
-  XXXXXXXX,
-  X_____XX,
-  X_____XX,
-  X_____XX,
-  X_____XX,
-  X_____XX,
-  XXXXXXXX,
-
-  XXXXXXXX,
+  XXXXXXXX, // 6
   XXXXXXXX,
   X_____XX,
   X_____XX,
   X_____XX,
   X_____XX,
-  XXXXXXXX,
+  X_____XX,
   XXXXXXXX,
 
+  XXXXXXXX, // 7
   XXXXXXXX,
+  X_____XX,
+  X_____XX,
+  X_____XX,
+  X_____XX,
+  XXXXXXXX,
+  XXXXXXXX,
+
+  XXXXXXXX, // 8
   XXXXXXXX,
   XX____XX,
   XX____XX,
@@ -4282,7 +4282,7 @@ const u8 spiral_transition_mask[12 * 8] = {
   XXXXXXXX,
   XXXXXXXX,
 
-  XXXXXXXX,
+  XXXXXXXX, // 9
   XXXXXXXX,
   XXXXXXXX,
   XX____XX,
@@ -4291,7 +4291,7 @@ const u8 spiral_transition_mask[12 * 8] = {
   XXXXXXXX,
   XXXXXXXX,
 
-  XXXXXXXX,
+  XXXXXXXX, // 10
   XXXXXXXX,
   XXXXXXXX,
   XX___XXX,
@@ -4300,7 +4300,7 @@ const u8 spiral_transition_mask[12 * 8] = {
   XXXXXXXX,
   XXXXXXXX,
 
-  XXXXXXXX,
+  XXXXXXXX, // 11
   XXXXXXXX,
   XXXXXXXX,
   XXXXXXXX,
@@ -4311,8 +4311,8 @@ const u8 spiral_transition_mask[12 * 8] = {
 };
 
 // $E3BC
-const u8 circle_transition_mask[7 * 8] = {
-  ________,
+const u8 circle_transition_frames[7 * 8] = {
+  ________, // 1
   ________,
   ________,
   ___XX___,
@@ -4321,34 +4321,34 @@ const u8 circle_transition_mask[7 * 8] = {
   ________,
   ________,
 
-  ________,
-  ________,
-  ___XX___,
-  __XXXX__,
-  __XXXX__,
-  ___XX___,
-  ________,
-  ________,
-
+  ________, // 2
   ________,
   ___XX___,
   __XXXX__,
-  _XXXXXX_,
-  _XXXXXX_,
   __XXXX__,
   ___XX___,
+  ________,
   ________,
 
+  ________, // 3
   ___XX___,
   __XXXX__,
   _XXXXXX_,
+  _XXXXXX_,
+  __XXXX__,
+  ___XX___,
+  ________,
+
+  ___XX___, // 4
+  __XXXX__,
+  _XXXXXX_,
   XXXXXXXX,
   XXXXXXXX,
   _XXXXXX_,
   __XXXX__,
   ___XX___,
 
-  __XXXX__,
+  __XXXX__, // 5
   _XXXXXX_,
   XXXXXXXX,
   XXXXXXXX,
@@ -4357,7 +4357,7 @@ const u8 circle_transition_mask[7 * 8] = {
   _XXXXXX_,
   __XXXX__,
 
-  _XXXXXX_,
+  _XXXXXX_, // 6
   XXXXXXXX,
   XXXXXXXX,
   XXXXXXXX,
@@ -4366,7 +4366,7 @@ const u8 circle_transition_mask[7 * 8] = {
   XXXXXXXX,
   _XXXXXX_,
 
-  XXXXXXXX,
+  XXXXXXXX, // 7
   XXXXXXXX,
   XXXXXXXX,
   XXXXXXXX,
@@ -4658,23 +4658,23 @@ const u8 persp_x_delta_left[8][22] = {
 // $E88E
 // Conv: Changed to point at fixed data only. Original game copied two of the
 // transition frames around during relocation.
-const transition_t transitions_e88e[8] = {
-  // forward
-  {  6, &square_transition_mask[-1 * 8] },
-  { 12, &spiral_transition_mask[-1 * 8] },
-  {  8, &circle_transition_mask[-1 * 8] },
-  {  7, &diamond_transition_mask[-1 * 8] },
+const transition_t transitions[8] = {
+  /* Forward animations */
+  {  6, &square_transition_frames[-1 * 8] },
+  { 12, &spiral_transition_frames[-1 * 8] },
+  {  8, &circle_transition_frames[-1 * 8] },
+  {  7, &diamond_transition_frames[-1 * 8] },
 
-  // reverse
-  {  6, &square_transition_mask[5 * 8] },
-  { 12, &spiral_transition_mask[12 * 8] },
-  {  8, &circle_transition_mask[7 * 8] },
-  {  7, &diamond_transition_mask[6 * 8] },
+  /* Reverse animations */
+  {  6, &square_transition_frames[5 * 8] },
+  { 12, &spiral_transition_frames[11 * 8] },
+  {  8, &circle_transition_frames[7 * 8] },
+  {  7, &diamond_transition_frames[6 * 8] },
 };
 
 // 0xE8A6
-const u8 square_transition_mask[5 * 8] = {
-  ________,
+const u8 square_transition_frames[5 * 8] = {
+  ________, // 1
   ________,
   ________,
   ___X____,
@@ -4683,7 +4683,7 @@ const u8 square_transition_mask[5 * 8] = {
   ________,
   ________,
 
-  ________,
+  ________, // 2
   ________,
   ________,
   ___XX___,
@@ -4692,7 +4692,7 @@ const u8 square_transition_mask[5 * 8] = {
   ________,
   ________,
 
-  ________,
+  ________, // 3
   ________,
   __XXXX__,
   __XXXX__,
@@ -4701,7 +4701,7 @@ const u8 square_transition_mask[5 * 8] = {
   ________,
   ________,
 
-  ________,
+  ________, // 4
   _XXXXXX_,
   _XXXXXX_,
   _XXXXXX_,
@@ -4710,7 +4710,7 @@ const u8 square_transition_mask[5 * 8] = {
   _XXXXXX_,
   ________,
 
-  XXXXXXXX,
+  XXXXXXXX, // 5
   XXXXXXXX,
   XXXXXXXX,
   XXXXXXXX,
@@ -4721,8 +4721,8 @@ const u8 square_transition_mask[5 * 8] = {
 };
 
 // 0xE8CE
-const u8 diamond_transition_mask[6 * 8] = {
-  X______X,
+const u8 diamond_transition_frames[6 * 8] = {
+  X______X, // 1
   _X____X_,
   __X__X__,
   ___XX___,
@@ -4731,7 +4731,7 @@ const u8 diamond_transition_mask[6 * 8] = {
   _X____X_,
   X______X,
 
-  X______X,
+  X______X, // 2
   XX____XX,
   _XX__XX_,
   __XXXX__,
@@ -4740,7 +4740,7 @@ const u8 diamond_transition_mask[6 * 8] = {
   XX____XX,
   X______X,
 
-  XX____XX,
+  XX____XX, // 3
   XXX__XXX,
   _XXXXXX_,
   __XXXX__,
@@ -4749,7 +4749,7 @@ const u8 diamond_transition_mask[6 * 8] = {
   XXX__XXX,
   XX____XX,
 
-  XX____XX,
+  XX____XX, // 4
   XXX__XXX,
   XXXXXXXX,
   _XXXXXX_,
@@ -4758,7 +4758,7 @@ const u8 diamond_transition_mask[6 * 8] = {
   XXX__XXX,
   XX____XX,
 
-  XXX__XXX,
+  XXX__XXX, // 5
   XXXXXXXX,
   XXXXXXXX,
   _XXXXXX_,
@@ -4767,7 +4767,7 @@ const u8 diamond_transition_mask[6 * 8] = {
   XXXXXXXX,
   XXX__XXX,
 
-  XXXXXXXX,
+  XXXXXXXX, // 6
   XXXXXXXX,
   XXXXXXXX,
   XXXXXXXX,

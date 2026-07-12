@@ -278,8 +278,8 @@ const u8 forked_road_exit_height[5];
 const u8 forked_road_exit_left_lanes[12];
 const u8 forked_road_exit_right_lanes[12];
 
-const u8 spiral_transition_mask[12 * 8];
-const u8 circle_transition_mask[7 * 8];
+const u8 spiral_transition_frames[11 * 8];
+const u8 circle_transition_frames[7 * 8];
 
 const u8 edge_markings[256]; /* full $E4xx page: zeros/$E400, edges/$E410, lanes/$E4D0 */
 
@@ -291,14 +291,14 @@ const u8 persp_x_scale_right[8][22];
 const u8 persp_x_delta_left[8][22];
 
 typedef struct {
-  u8        nframes;  // stores nframes+1
-  const u8 *maskbase; // points to the frame before/after the base
+  u8        nframes; // stores nframes+1
+  const u8 *frames;  // points to the frame before/after the base
 } transition_t;
 
-const transition_t transitions_e88e[8];
+const transition_t transitions[8];
 
-const u8 square_transition_mask[5 * 8];
-const u8 diamond_transition_mask[6 * 8];
+const u8 square_transition_frames[5 * 8];
+const u8 diamond_transition_frames[6 * 8];
 
 const u8 messages_stop_the_tape[45];
 const u8 messages_input_methods[112];

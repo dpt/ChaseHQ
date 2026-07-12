@@ -3447,23 +3447,21 @@ static void transition_fade_chunk(chqstate_t *state, int mask, u8 *backbuf)
  */
 static void setup_transition(chqstate_t *state, int stride)
 {
-  int                 frame_stride; /* signed per-frame pointer step (was BC) */
-  const transition_t *transitions;  /* base of forward or reverse table half (was DE) */
-  const transition_t *transition;   /* randomly chosen entry (was HL) */
+  int                 frame_stride;   /* signed per-frame pointer step (was BC) */
+  const transition_t *transition_set; /* base of forward or reverse table half (was DE) */
+  const transition_t *transition;     /* randomly chosen entry (was HL) */
 
   assert(stride == 8 || stride == -8);
 
   frame_stride = stride;
-  transitions  = &transitions_e88e[0]; /* first half: forward */
-  if (frame_stride < 0)
-    transitions = &transitions_e88e[4]; /* second half: reverse */
+  transition_set = &transitions[(frame_stride >= 0) ? 0 : 4]; /* select forward or reverse set */
 
   state->transition_frame_stride = frame_stride;
 
-  transition = &transitions[rng(state) & 3];
+  transition = &transition_set[rng(state) & 3];
 
   state->transition_nframes = transition->nframes;
-  state->transition_mask    = transition->maskbase;
+  state->transition_mask    = transition->frames;
   state->transition_control = TRANSITIONCONTROL_FADE;
 }
 
@@ -16341,9 +16339,9 @@ static void entry_common(chqstate_t *state, int Amode_128k, int Bnrelocs)
     ptrdiff_t dst;
     size_t    len;
   } relocations[] = {
-    { transitions_e88e, offsetof(chqstate_t, transitions_ec00), sizeof(transitions_e88e) },
-    { square_transition_mask, 0xEB00, sizeof(square_transition_mask) },
-    { diamond_transition_mask, 0xEA00, sizeof(diamond_transition_mask) },
+    { transitions, offsetof(chqstate_t, transitions_ec00), sizeof(transitions) },
+    { square_transition_frames, 0xEB00, sizeof(square_transition_frames) },
+    { diamond_transition_frames, 0xEA00, sizeof(diamond_transition_frames) },
     // { 0xF220, 0x8014, 926 }, // copies load_stage_128k into place
     // { 0xE876, 0x83B5, 24 },  // copies hooks_128k
   };
