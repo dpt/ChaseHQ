@@ -13238,7 +13238,8 @@ static void rm_cycle_buffer_offset(chqstate_t *state, u8 *HLfast_counter)
 
     HL_hazards_ptr = state->roadbuf_start + ROADBUF_PTR2IDX(HL_leftside_ptr + 32);
 
-    /* Format: $CC $TT where [CC]ounter; Hazard [TT]ype */
+    /* Format: single $CC counter bytes only — the written hazard value is
+     * the self-modified rm_hazard_byte ($C058), set by commands 3..9. */
     A_hazards_counter = state->hazards_counter - 1;
     /* If it runs out we need to load a new hazards byte */
     if (A_hazards_counter == 0xFF) {
@@ -13306,12 +13307,17 @@ rm_restart_hazards_read: // $BFF3
 
         // $C04E: pointer already set up; byte is always regular here
         // DE_hazards_ptr ↔ HL_lanes_ptr; // was EX DE,HL (folded away)
-        A_hazards_byte = *DE_hazards_ptr;
+        // Conv: the reload lands in A_hazards_counter — the Z80 keeps the
+        // regular data byte in A through $C04F/$C054/$C055. Reading it into
+        // A_hazards_byte left the $C055 store holding the escape byte (0),
+        // swallowing the first WAIT after any command (the fork arrow
+        // vanished ~2 steps after the SPLIT instead of after WAIT(12)).
+        A_hazards_counter = *DE_hazards_ptr;
       }
 
       // $C050
       state->scenedata.road_hazard_ptr = DE_hazards_ptr;
-      A_hazards_byte--;
+      A_hazards_counter--; /* $C054 DEC A: counter byte is stored decremented */
     }
 
     // $C055
