@@ -247,6 +247,8 @@ Recurring mistakes encountered porting Chase H.Q. from Z80 to C. Each entry has:
 
 **Fix:** Expand to seven entries: index 0 = `&stage1` (pregame), 1–5 = `&stage1`–`&stage5`, 6 = `&stage5` (end-sequence backstop). Whenever `load_stage` indexes `stages[wanted]`, confirm the maximum reachable `wanted` (including end-of-game transitions) stays within bounds.
 
+**Related bug — table addressed via `base − 2` for 1-indexed access:** `car_jump_params` (`$B059`): the Z80 forms `HL = $B057 + 2A` — the table base minus 2, so that 1-indexed `A` lands on pair `A−1`. The C used `(Adiff * 2) − 1` (always odd, misaligned into the second half of each pair) instead of `(Adiff − 1) * 2`. Additionally `Adiff` can reach 6 (height byte −8 at top speed), where even the Z80 reads the two *code* bytes following the table at `$B063` — the C clamps to 5 (longest jump) with a `Conv:` note. When the skool loads a table pointer at `table ± k`, derive the C index from the computed landing offset, not from the loop variable's face value.
+
 ---
 
 ## 18. `JR Z` / `JR NZ` / `RET Z` / `RET NZ` — branch polarity inverted
@@ -257,6 +259,7 @@ Recurring mistakes encountered porting Chase H.Q. from Z80 to C. Each entry has:
 
 - `update_road_level`: `if (Ay_offset) { /* jump setup */ }` where the Z80 was `JR NZ,$B970` (skip setup if `mhc_y_offset != 0`) — the launch code ran only when the car was already airborne. Fix: `if (!Ay_offset) { … }`.
 - `scroll_horizon` (`$B8A5–$B8A6`, `AND A; RET Z`): `if (Adiff) return` returned exactly when scrolling was due, making the function a no-op. Fix: `if (!Adiff) return;`.
+- Three-way ladder collapsed to two-way — `layout_road` fork-side choice (`$BA7A–$BA88`): `DEC D; JP M,right; JP NZ,left; <D==1: E<12 test>`. The C handled only the `D==1` case and defaulted everything else to the right fork, but the Z80 takes the *left* fork for `D−1` in 1..0x7F. Every exit of a branch ladder needs its own C arm; do not fold the middle exits into the default. (`f47f822`)
 
 **Rule:** `JR NZ → skip` = `if (reg == 0)` in C; `JR Z → skip` = `if (reg != 0)`. `RET Z` → `if (value == 0) return`; `RET NZ` → `if (value != 0) return`. The code that falls through should always be the "there is work to do" path.
 
@@ -423,3 +426,42 @@ Translating this as a loop creates an infinite loop when the first call's row-co
 **Rule:** For every value the code can store into a jump-table `JR` operand, compute the landing address by hand and read what actually executes from there — including which set-up instructions between chains get skipped. When several fill loops sit side by side, check each one for the presence or absence of its own jump table rather than assuming they share the first loop's shape.
 
 **Commit:** `e0cf3a9`
+
+---
+
+## 28. `u16` state field holds a mod-65536 value that goes transiently negative — cast `(s16)` at every load
+
+**Root cause:** Z80 16-bit arithmetic wraps mod 65536 and downstream `SBC`/comparisons interpret the value as signed. A C `u16` field wraps correctly on *store*, but loading it into a wider `int` loses the sign: −6 arrives as 65530. This is the 16-bit sibling of pitfall 16 — there the store-side wrap was missing; here the store is fine and the *load* side is wrong.
+
+**Bugs:**
+
+- During a road fork, `layout_road` temporarily sets `road_pos = road_pos ± fork_distance`, which legitimately goes negative once `fork_distance` (growing +16 per spawning frame) exceeds `road_pos`. `build_curve_table` reloaded the `u16` field as ~65530 and the geometry blew up — assert in `build_curve_table_fill` in debug builds, garbage road or a seize in release. This was the long-standing "forks seize the game up" bug. Fix: `(s16)` cast at all three `road_pos` load sites in `build_curve_table`.
+- Same crash, contributing cause: the fork-distance delta at `$BAD0–$BADE` dropped the `AND $0F` (`$BAD7`), so the per-frame delta was −256..−1 instead of −16..−1, driving `fork_distance` negative far sooner.
+
+**Rule:** When a `u16` state field models a Z80 register pair used in signed arithmetic, every load into a wider type needs `(s16)`, with a `Conv:` comment. Grep for other readers of the same field when adding the cast — one unsigned load re-introduces the bug.
+
+**Commit:** `f47f822`
+
+---
+
+## 29. Pointer-to-array parameter indexed directly — steps whole tables, not elements
+
+**Root cause:** Stage bitmap tables are declared `const bitmap_t (*x)[SPRITE_FRAMES]` — pointer to a whole 6-entry table. `x[A]` advances by A *tables* (A×6 entries); the A-th element is `(*x)[A]`. Both forms compile silently because both yield a `const bitmap_t *`.
+
+**Bug:** `dust_stones_stuff` (`$AA13–$AA19`: `L = A*7; ADD HL,DE` — one 7-byte entry per LOD) used `DEbitmaps[A]`, reading up to 30 entries past `stage1_stones_bitmaps` (ASan: read just past `stage1_map_goto_table`). The garbage bitmap descriptor was handed to the sprite plotter, which scribbled 0xAA dither bytes over `road_buffer` — surfacing as the `draw_scene_objects` `Aobj=170` assert on dirt-track sections. Fix: `HLbitmap = &(*DEbitmaps)[A];`.
+
+**Rule:** For any `(*ptr)[N]` parameter, element access is `(*ptr)[i]`; `ptr[i]` is a table stride. `draw_helicopter` still contains the suspect form (`helibitmap = *helibitmaps++;` next to a "can't be right" comment) — audit it against `$AA38` when helicopter data is completed.
+
+**Commit:** (uncommitted — dust_stones_stuff fix)
+
+---
+
+## 30. Zone widths as `u8` differences — the Z80's fixed PUSH chains bound the damage; C arithmetic escapes it
+
+**Root cause:** `draw_forked_road` derives five scanline fill widths as differences of cumulative zone positions (each 0..15). The Z80 emits each zone by a self-modified `JR` into its own fixed 15-`PUSH` chain (`$CA11–$CA65`), so each zone is structurally capped at 15 pairs and a crossed boundary (negative difference) at worst makes the `JR` skip past its chain — a bounded one-scanline glitch. The C `(u8)(a − b)` wrapped a crossed boundary to ~250 and the `memset`s ran hundreds of bytes backwards out of the backbuffer, overwriting `road_buffer` with the 0xAA stripe pattern.
+
+**Bug:** On transient rows during dirt/fork transitions the zone positions cross (`pos_E9 < pos_E8` etc.). Frame-deterministic corruption: `road_buffer` right-side object slots took the stripe fill byte, tripping the `draw_scene_objects` `Aobj <= 9` assert many frames later when the scan window reached the byte. Fix: compute the widths as `int` and skip the whole fill when any difference is negative.
+
+**Rule:** When the Z80's worst-case damage is bounded by *code structure* — fixed-length PUSH chains, page-wrapped `INC L`, self-modified low bytes — plain C arithmetic does not inherit the bound. Reproduce the structural cap explicitly (clamp, mask or skip) and say so in a `Conv:` comment. A wild write that stays inside `chqstate` is invisible to ASan; the road-buffer corruption diagnostics (`rm_prewrite`, `chq_test_max_side_object`) and a bisecting watchpoint found this one.
+
+**Commit:** (uncommitted — draw_forked_road fix)

@@ -9088,7 +9088,10 @@ dss_bitmaps:
     A = 10;
 
   SRL(A);
-  HLbitmap = DEbitmaps[A];
+  // Conv: $AA13-$AA19: L = A * 7; ADD HL,DE — each LOD entry is 7 bytes, so
+  // this selects the A-th bitmap_t within the single table. DEbitmaps[A]
+  // would step A whole 6-entry tables (A*6 bitmap_t) and read out of bounds.
+  HLbitmap = &(*DEbitmaps)[A];
   E = HLbitmap->width_bytes * 8;
 
   // EX AF,AF' -- unbank A' (table byte 3) into A ($AA21)
@@ -10465,8 +10468,8 @@ static void move_hero_car(chqstate_t *state)
   int        Dflip_car;            /* car sprite flip direction: 1=right, 0=left (was D) */
   int        Bturn_speed;          /* animation rate: 0=straight, 1=turn, 2=turn-hard (was B) */
 
-  y_offset = state->mhc_y_offset; // load jump counter, highest is 8
-  assert(y_offset >= 0 && y_offset <= 8);
+  y_offset = state->mhc_y_offset; // load jump counter, highest is 10
+  assert(y_offset >= 0 && y_offset <= 10);
   if (y_offset) {
     state->mhc_y_offset = --y_offset;
     if (y_offset == 0) {
@@ -12136,17 +12139,25 @@ static void update_road_level(chqstate_t *state)
       if (!carry) {
         Bprev_road_height = Aprev_road_height;
         Ay_offset = state->mhc_y_offset;
-        assert(Ay_offset >= 0 && Ay_offset <= 8);
+        assert(Ay_offset >= 0 && Ay_offset <= 10); /* table y_heights reach 10 */
         if (!Ay_offset) { /* Z80: JR NZ → skip if already airborne */
-          Adiff = Bprev_road_height - (3 - ((state->speed >> 7) & 3)); // result = 1..5? // Conv: folded a lot here
+          Adiff = Bprev_road_height - (3 - ((state->speed >> 7) & 3)); // result = 1..6 // Conv: folded a lot here
           if (Adiff > 0) { /* was !C && !Z */
             // PUSH HLprev_road_height
-            // Conv: RLCA (A*=2) folded into index; table base adjusted by -1 for C 0-indexing
-            car_jump_params_index = (Adiff * 2) - 1;
+            // Conv: $B95A-$B961: RLCA (A*=2) folded into the index. Z80 forms
+            // HL = $B057 + 2A but the table starts at $B059, so the byte
+            // offset is (A-1)*2 — always the first byte of a pair.
+            // Conv: clamp Adiff to 5. For Adiff == 6 (height byte -8 at top
+            // speed) the Z80 reads the two code bytes at $B063 that follow
+            // the table, yielding a garbage jump; use the longest jump
+            // instead.
+            if (Adiff > 5)
+              Adiff = 5;
+            car_jump_params_index = (Adiff - 1) * 2;
             assert(car_jump_params_index >= 0 && car_jump_params_index <= 8);
             HLjump_params = &car_jump_params[car_jump_params_index];
             Ehero_car_jump_table_index = *HLjump_params++; // an offset
-            assert(*HLjump_params <= 8);
+            assert(*HLjump_params <= 10);
             state->mhc_y_offset = *HLjump_params;
             assert(Ehero_car_jump_table_index >= 0 && Ehero_car_jump_table_index <= 19);
             state->mhc_jump_data = &hero_car_jump_table[Ehero_car_jump_table_index];
@@ -15376,11 +15387,11 @@ static void draw_forked_road(chqstate_t *state, const u8 *IXlanes, const u8 *IYh
   u8  pos_E9;     /* computed lefthand road end position */
   u8  pos_EA;     /* computed middle verge end position */
   u8  pos_EC;     /* computed righthand road end / verge complement */
-  u8  z_lv;       /* lefthand verge width = pos_E8 */
-  u8  z_lr;       /* lefthand road width = pos_E9 - pos_E8 */
-  u8  z_mv;       /* middle verge width = pos_EA - pos_E9 */
-  u8  z_rr;       /* righthand road width = pos_EC - pos_EA */
-  u8  z_rv;       /* righthand verge width = 15 - pos_EC */
+  int z_lv;       /* lefthand verge width = pos_E8 */
+  int z_lr;       /* lefthand road width = pos_E9 - pos_E8 */
+  int z_mv;       /* middle verge width = pos_EA - pos_E9 */
+  int z_rr;       /* righthand road width = pos_EC - pos_EA */
+  int z_rv;       /* righthand verge width = 15 - pos_EC */
   u8  A_rot_pat;  /* verge fill byte: af_prime rotated left one bit (was A, via A') */
   int fill_end_addr; /* Z80 address one past the fillable region: (D<<8)|(E+31) (was HL/SP) */
   u8       *SPfill;   /* backward-fill cursor for the five PUSH-chain zones (was SP) */
@@ -15568,10 +15579,10 @@ dfr_c969: /* $C969: 5-zone fork scanline render */
 
   /* Derive zone widths from cumulative positions */
   z_lv = pos_E8;                        /* lefthand verge */
-  z_lr = (u8)(pos_E9 - pos_E8);         /* lefthand road */
-  z_mv = (u8)(pos_EA - pos_E9);         /* middle verge */
-  z_rr = (u8)(pos_EC - pos_EA);         /* righthand road */
-  z_rv = (u8)(15    - pos_EC);          /* righthand verge */
+  z_lr = pos_E9 - pos_E8;               /* lefthand road */
+  z_mv = pos_EA - pos_E9;               /* middle verge */
+  z_rr = pos_EC - pos_EA;               /* righthand road */
+  z_rv = 15    - pos_EC;                /* righthand verge */
 
   /* $CA00-$CA65: Fill scanline right-to-left using SP as pointer.
    * DE = current scanline address; HL = DE+$1F (truncating low-byte add,
@@ -15593,7 +15604,17 @@ dfr_c969: /* $C969: 5-zone fork scanline render */
   /* Conv: D can drift below BACKBUFFER_START_ADDRESS over enough scanlines
    * (see D-- in dfr_c923/dfr_c963); skip the write rather than let
    * ADDRTOBACKBUF assert, mirroring the marking-section guard below. */
-  if (VALID_BACKBUF_ADDR(fill_end_addr) && VALID_BACKBUF_ADDR(((int)D << 8) | E)) {
+  /* Conv: the Z80 enters five fixed 15-PUSH chains via self-modified JR
+   * displacements, so each zone can only ever emit 0..15 pairs and the
+   * total is exactly 15 when the positions are monotone. When the zone
+   * positions cross (transient rows during dirt/fork transitions) a JR
+   * skips past its own chain — a bounded one-scanline glitch on the Z80.
+   * In C the u8 subtraction wrapped to ~250 and the memsets ran hundreds
+   * of bytes backwards out of the backbuffer, scribbling the 0xAA stripe
+   * pattern over road_buffer (the draw_scene_objects Aobj=170 assert).
+   * Skip the fill for crossed rows instead. */
+  if (z_lr >= 0 && z_mv >= 0 && z_rr >= 0 &&
+      VALID_BACKBUF_ADDR(fill_end_addr) && VALID_BACKBUF_ADDR(((int)D << 8) | E)) {
     SPfill = ADDRTOBACKBUF(fill_end_addr);
     SPfill -= (size_t)z_rv * 2; memset(SPfill, A_rot_pat, (size_t)z_rv * 2);
     SPfill -= (size_t)z_rr * 2; memset(SPfill, 0,         (size_t)z_rr * 2);
@@ -17833,6 +17854,67 @@ void chq_test_layout_road(chqstate_t *state)
 void chq_test_exit_fork(chqstate_t *state)
 {
   exit_fork(state);
+}
+
+void chq_test_game_frame(chqstate_t *state)
+{
+  /* Mirrors the run_game main-loop frame ($8401), omitting input and audio
+   * calls that need a live host (keyscan, check_user_input, drive_sfx and the
+   * sfx hooks). Ordering matches run_game; keep in sync when the main loop
+   * changes. Callers should top up time_bcd and keep hazards[0].used set to
+   * HAZARD_USED as run_game's pre-loop setup does. */
+  check_time_up(state);
+  read_map(state);
+  if (handle_perp_caught(state))
+    return;
+  move_hero_car(state);
+  spawn_cars(state);
+  cycle_counters(state);
+  build_height_table(state);
+  scroll_horizon(state);
+  layout_road(state);
+  draw_road(state);
+  layout_objects(state);
+  prepare_tunnel(state);
+  spawn_hazards(state);
+  drive_helicopter(state);
+  choose_dirt_and_stones(state);
+  advance_hazards(state);
+  layout_dirt_and_stones(state);
+  move_helicopter(state);
+  check_scenery_collisions(state);
+  draw_scene_objects(state);
+  animate_hero_car(state);
+  speed_score(state);
+  update_scoreboard(state);
+  calc_overtake_bonus(state);
+  drive_chatter(state);
+  draw_smash_bar(state);
+  transition(state);
+  update_screen(state);
+  exit_fork(state);
+}
+
+int chq_test_max_side_object(chqstate_t *state)
+{
+  u8  *HLroadbuf;   /* pointer into road_buffer, as in draw_scene_objects */
+  int  Biterations; /* loop counter, as in draw_scene_objects */
+  int  max;         /* largest object byte seen */
+
+  /* Replicates the draw_scene_objects right/left object scan so tests can
+   * detect corrupt object ids (> 9) without running the full draw. */
+  HLroadbuf = ROADBUF_FWD2PTR(115);
+  max = 0;
+  Biterations = 20;
+  do {
+    if (*HLroadbuf > max)
+      max = *HLroadbuf;
+    WRAP_ASSIGN(HLroadbuf, 32, state->roadbuf_start);
+    if (*HLroadbuf > max)
+      max = *HLroadbuf;
+    WRAP_ASSIGN(HLroadbuf, -33, state->roadbuf_start);
+  } while (--Biterations > 0);
+  return max;
 }
 
 void chq_test_draw_road(chqstate_t *state)

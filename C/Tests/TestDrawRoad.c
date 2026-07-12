@@ -458,6 +458,7 @@ static void test_fork_progression(void)
   int         frame;       /* frame counter */
   int         saw_fork;    /* set once fork_visible goes non-zero */
   int         fork_frames; /* frames spent with the fork active */
+  int         max_obj;     /* largest side-object byte this frame */
 
   state = make_road_state();
   saw_fork = 0;
@@ -470,26 +471,74 @@ static void test_fork_progression(void)
     chq_test_layout_road(state);
     chq_test_exit_fork(state);
 
-    if (state->fork_visible)
-      saw_fork = 1;
-    if (saw_fork) {
+    max_obj = chq_test_max_side_object(state);
+    if (max_obj > 9) {
+      printf("  FAIL: side object byte %d (> 9) at frame %d "
+             "(vis=%u prog=%u taken=%u dist=%d)\n",
+             max_obj, frame, state->fork_visible, state->fork_in_progress,
+             state->fork_taken, (int)state->fork_distance);
+      assert(max_obj <= 9);
+    }
+
+    if (state->fork_visible) {
+      if (fork_frames == 0)
+        saw_fork++;
       fork_frames++;
-      if (state->fork_visible == 0) {
-        printf("  fork completed after %d active frames (frame %d)\n",
-               fork_frames, frame);
-        break;
-      }
       if (fork_frames >= 5000) {
         printf("  FAIL: fork still active after %d frames — seized\n",
                fork_frames);
         assert(fork_frames < 5000);
       }
+    } else if (fork_frames) {
+      printf("  fork %d completed after %d active frames (frame %d)\n",
+             saw_fork, fork_frames, frame);
+      fork_frames = 0;
     }
   }
 
   assert(saw_fork);
   chq_destroy(state);
   printf("PASS  fork progression: fork completes without crashing\n");
+}
+
+/*
+ * Run whole game frames (via chq_test_game_frame, which mirrors the run_game
+ * main loop) through the stage-1 forks, watching for road buffer corruption:
+ * side-object bytes > 9, as asserted by draw_scene_objects. Reproduces the
+ * in-game Aobj=170 assert seen after the fork fixes.
+ */
+static void test_full_frame_no_corruption(void)
+{
+  chqstate_t *state;    /* game state under test */
+  int         frame;    /* frame counter */
+  int         saw_fork; /* set once fork_visible goes non-zero */
+  int         max_obj;  /* largest side-object byte this frame */
+
+  state = make_road_state();
+  saw_fork = 0;
+  state->hazards[0].used = HAZARD_USED; /* keep perp spawned, as run_game */
+
+  for (frame = 0; frame < 30000; frame++) {
+    state->speed = 0x0180;    /* keep the car moving at speed */
+    state->session.time_bcd = 0x60; /* top up the clock: never expires */
+    chq_test_game_frame(state);
+
+    if (state->fork_visible)
+      saw_fork = 1;
+
+    max_obj = chq_test_max_side_object(state);
+    if (max_obj > 9) {
+      printf("  FAIL: side object byte %d (> 9) at frame %d "
+             "(vis=%u prog=%u taken=%u dist=%d)\n",
+             max_obj, frame, state->fork_visible, state->fork_in_progress,
+             state->fork_taken, (int)state->fork_distance);
+      assert(max_obj <= 9);
+    }
+  }
+
+  assert(saw_fork);
+  chq_destroy(state);
+  printf("PASS  full frames: no road buffer corruption across forks\n");
 }
 
 /* ----------------------------------------------------------------------- */
@@ -508,6 +557,7 @@ int main(void)
   test_set_up_stage_lanes_slot_is_3lane();
   test_set_up_stage_resets_lane_data();
   test_fork_progression();
+  test_full_frame_no_corruption();
 
   printf("\nAll tests passed.\n");
   return 0;
