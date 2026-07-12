@@ -9184,13 +9184,22 @@ static void draw_helicopter(chqstate_t *state, int Biterations, u8 *IYheight)
   if (frame != 0)
     helibitmaps = state->stage->addrof_helicopter_stuff_2;
 
+  // FIXME: wrong data model — currently unreachable (all stages define the
+  // helicopter tables as NULL). Decoded from the skool ($AA71-$AA8E):
+  // - The table is six 16-bit POINTERS to per-part blocks (HL advances 2
+  //   bytes per part), not six consecutive heli_bitmap_t structs. The
+  //   correct C type is an array of six pointers; `*helibitmaps++` here
+  //   steps a whole 6-struct table per part (pitfall #29).
+  // - Parts 1-5 blocks are [y_offset, horz_offset, bitmap]: A = block[0],
+  //   then INC DE so dhl_aa94 reads horz_offset at offset 1.
+  // - Part 6 (rotor, $AA86): A comes from the self-modified rotor position
+  //   and there is NO INC DE — the block has no y_offset byte; it is a bare
+  //   heli_bitmap_inner_t. Restructure the types when helicopter data lands.
   do {
     helibitmap = *helibitmaps++;
     draw_helicoper_part(state, helibitmap->y_offset + state->dhs_heli_body_y_offset,
                         &helibitmap->inner, IYheight);
   } while (--Biterations2 > 0);
-
-  // BUT final entry seems to be a different format, so this can't be right.
 
   helibitmap = *helibitmaps;
   // A = 0; // an apparently useless op
