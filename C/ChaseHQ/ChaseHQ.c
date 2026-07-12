@@ -13839,7 +13839,7 @@ static void draw_road_lanes_change(chqstate_t *state,
   s8   L_step;              /* copy of A_step used in Bresenham loop (was L) */
   u8   B_range;             /* Bresenham range (was B) */
   u8   A_range;             /* Bresenham range copy for direction comparison (was A) */
-  u8   A_direction;         /* Bresenham direction (+1/-1) (was A) */
+  s8   A_direction;         /* Bresenham direction (+1/-1) (was A) */
   u8   A_accum;             /* Bresenham accumulator (was A) */
 
   // $C2E7
