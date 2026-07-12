@@ -35,6 +35,9 @@ void chq_test_build_height_table(chqstate_t *state);
 /** Run layout_road in isolation (builds road geometry tables). */
 void chq_test_layout_road(chqstate_t *state);
 
+/** Run exit_fork in isolation (fork-to-single-road transition). */
+void chq_test_exit_fork(chqstate_t *state);
+
 /** Set up stage from attract_data rather than stage_data. */
 void chq_test_set_up_stage_attract(chqstate_t *state);
 

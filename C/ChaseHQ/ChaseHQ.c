@@ -12253,7 +12253,8 @@ static void layout_road(chqstate_t *state)
   u8        Bdash_fork_iters;  /* DJNZ counter for fork inner loop; from PUSH AF at $BA60 (was B') */
   int       HLforkdistance;    /* fork_distance; updated and written back (was HL) */
   int       Aforkinprogress;   /* fork_in_progress minus 1 (was A) */
-  int       DEroadpos;         /* road_pos with D decremented for fork-side detection (was DE) */
+  int       DEroadpos;         /* road_pos for fork-side detection (was DE) */
+  int       D_side;            /* road_pos high byte minus 1; sign/zero selects fork side (was D) */
   const u8 *HLchatterblk;      /* pointer to chatter block for correct/incorrect fork (was HL) */
   int       C_spawn_accum;     /* candidate new spawn_accumulator (was C) */
   int       DEforkdistance;    /* fork distance copy for temporary road_pos adjustment (was DE) */
@@ -12337,16 +12338,17 @@ lr_forked_road:
   state->fork_in_progress = -Aforkinprogress; // why negate, is this a counter?
   DEroadpos = state->scenedata.road_pos;
   Aiterations = 1;
-  DEroadpos -= 256; /* was DEC D */
+  D_side = ((DEroadpos >> 8) - 1) & 0xFF; /* was DEC D */
   // Chooses the fork taken based on car's distance from centre
-  // Conv: Z80 $BA7B JP M,$BA89 fires when D−1 has sign set (D==0 or D≥0x81),
-  //       $BA7E JP NZ,$BA88 fires when D−1 ≠ 0; only D==1 falls through to E<12 test
-  if ((DEroadpos >> 8) == 0) { // D==1: road_pos in 256..511 (centred)
-    if (DEroadpos < 12) { // E < 12: car very close to centre
-      Aiterations = 1;
-    } else {
-      Aiterations--; // 1 → 0: left fork
-    }
+  // Conv: Z80 $BA7B JP M,$BA89 fires when D−1 is negative as a byte (D==0 or
+  //       D≥0x81): right fork with A==1. $BA7E JP NZ,$BA88 fires when D−1 is
+  //       1..0x7F: left fork. Only D==1 falls through to the E<12 test.
+  if (D_side & 0x80) {
+    // Right fork: Aiterations stays 1
+  } else if (D_side != 0) {
+    Aiterations--; // 1 → 0: left fork
+  } else if ((DEroadpos & 0xFF) >= 12) { // E >= 12: not close to centre
+    Aiterations--; // 1 → 0: left fork
   }
 
   //lr_check_correct_fork_taken:
@@ -12387,6 +12389,7 @@ lr_no_car_spawning:
   RL(Aiterations);
   RL(Aiterations);
   RL(Aiterations);
+  Aiterations &= 0x0F; // $BAD7: keep rotated-in bits only
   Aiterations -= 0x10; // sets top nibble to $F
   // Conv: Z80 $BADB LD E,A; LD D,$FF forms signed DE = 0xFF00|A ∈ {−16..−1}
   HLforkdistance += (s16)(0xFF00 | (u8)Aiterations);
@@ -15878,7 +15881,10 @@ static void build_curve_table(chqstate_t *state, int forked)
   DE_output = &state->curvature_table[0];
   B_iterations = 22;
   // EXX Bank
-  DEdash_roadposacc = state->scenedata.road_pos;
+  // Conv: (s16) cast: during a fork layout_road temporarily sets road_pos to
+  // road_pos ± fork_distance, which can go negative. The Z80 works mod 65536
+  // throughout; the u16 field must be re-signed when loaded into a wider int.
+  DEdash_roadposacc = (s16)state->scenedata.road_pos;
   // PUSH DEdash; // save on stack
   // EXX Unbank
 
@@ -15948,7 +15954,7 @@ static void build_curve_table(chqstate_t *state, int forked)
     *DE_output++ = A_curvature; // write to curvature_table
   } while (--B_iterations);
 
-  DE_roadpos = state->scenedata.road_pos; /* was POP DE */
+  DE_roadpos = (s16)state->scenedata.road_pos; /* was POP DE; (s16): see above */
   B_iterations = 0; // init counter
   // EXX Bank
   build_curve_table_fill(state,
@@ -15963,7 +15969,7 @@ static void build_curve_table(chqstate_t *state, int forked)
   for (Bdash_iterations = 22; Bdash_iterations > 0; Bdash_iterations--)
     *DE_curvature++ += *HL_rowptr++;
 
-  DEdash_roadpos = state->scenedata.road_pos - 295; // vanishing point config (for left hand)
+  DEdash_roadpos = (s16)state->scenedata.road_pos - 295; // vanishing point config (for left hand); (s16): see above
 
   Bdash_iterations = 0; // init counter
   // EXX Unbank
@@ -17822,6 +17828,11 @@ void chq_test_build_height_table(chqstate_t *state)
 void chq_test_layout_road(chqstate_t *state)
 {
   layout_road(state);
+}
+
+void chq_test_exit_fork(chqstate_t *state)
+{
+  exit_fork(state);
 }
 
 void chq_test_draw_road(chqstate_t *state)

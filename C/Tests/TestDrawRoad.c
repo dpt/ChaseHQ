@@ -445,6 +445,53 @@ static void test_drlc_writes_xpos_entries(void)
   printf("PASS  draw_road_lanes_change: xpos writes are stable across fast_counter values\n");
 }
 
+/*
+ * Drive the road pipeline frame by frame through the first stage-1 fork and
+ * out the other side, mirroring the main loop ordering: read_map (modelled as
+ * allow_spawning reset + one rm_cycle_buffer_offset) → build_height_table →
+ * layout_road → exit_fork. The game has been crashing/seizing whenever the
+ * hero car reaches the fork; this reproduces that headlessly.
+ */
+static void test_fork_progression(void)
+{
+  chqstate_t *state;       /* game state under test */
+  int         frame;       /* frame counter */
+  int         saw_fork;    /* set once fork_visible goes non-zero */
+  int         fork_frames; /* frames spent with the fork active */
+
+  state = make_road_state();
+  saw_fork = 0;
+  fork_frames = 0;
+
+  for (frame = 0; frame < 30000; frame++) {
+    state->allow_spawning = 0; /* read_map does this each frame */
+    chq_test_prime_road(state, 1);
+    chq_test_build_height_table(state);
+    chq_test_layout_road(state);
+    chq_test_exit_fork(state);
+
+    if (state->fork_visible)
+      saw_fork = 1;
+    if (saw_fork) {
+      fork_frames++;
+      if (state->fork_visible == 0) {
+        printf("  fork completed after %d active frames (frame %d)\n",
+               fork_frames, frame);
+        break;
+      }
+      if (fork_frames >= 5000) {
+        printf("  FAIL: fork still active after %d frames — seized\n",
+               fork_frames);
+        assert(fork_frames < 5000);
+      }
+    }
+  }
+
+  assert(saw_fork);
+  chq_destroy(state);
+  printf("PASS  fork progression: fork completes without crashing\n");
+}
+
 /* ----------------------------------------------------------------------- */
 
 int main(void)
@@ -460,6 +507,7 @@ int main(void)
   test_lane_markings_appear_at_bottom_row();
   test_set_up_stage_lanes_slot_is_3lane();
   test_set_up_stage_resets_lane_data();
+  test_fork_progression();
 
   printf("\nAll tests passed.\n");
   return 0;
