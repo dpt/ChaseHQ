@@ -242,13 +242,13 @@ writing, so N pushes fill 2N bytes *before* the pointer, not after it. In
 C: `memset(ptr − 2*N, value, 2*N)`, not `memset(ptr, …)`. When the Z80
 uses `JP (IX)` to enter a PUSH chain at position `start` (variable-N),
 compute `n = max − start` then `memset(ptr − 2*n, value, 2*n)` — no
-switch needed (see pitfall #34).
+switch needed (see pitfall #21).
 
 **`LD SP,HL; POP × N` sprite copy** — the Z80 uses SP = bitmap source and
 POP to load sprite bytes two at a time. When bytes are written verbatim
 (no mask, no flip table), the C equivalent is `memcpy(dst, src, n)` where
 n is derived from the jump-table entry index. Masked or flipped sprites
-are not candidates (see pitfall #35).
+are not candidates (see pitfall #21).
 
 **`JP M` / `JP P` as conditional skip, not loop** — `JP M, addr` jumps
 *forward* to `addr` when the Sign flag is set (result negative). A
@@ -263,7 +263,7 @@ writing a `Conv: NOT a loop` comment, grep the skool for every `JP`,
 unconditional back-jump makes the block a genuine loop regardless of how
 sequential the surrounding code looks. `draw_object_clipped` `$9417 JP
 $9404` was missed this way; the block is structurally identical to the
-adjacent masked-rows loop (see pitfall #36).
+adjacent masked-rows loop (see pitfall #20).
 
 **`JR Z` + `JR NC` two-exit sequence — combined condition is `<= 0`** —
 when `SUB C` is followed by `JR Z,exit` (clamp to 1 on zero) then `JR
@@ -271,7 +271,7 @@ NC,keep` (keep value when positive), the block that falls through runs
 only when the result is negative. Together the two exits mean clamp when
 result ≤ 0. Translating as `if ((s8)Avertical < 0)` drops the zero case
 (`draw_stretchy_object_common` `$9220–$9222`). Fix: `if (Avertical <= 0)`
-(see pitfall #37).
+(see pitfall #8).
 
 **`DEC HL` adjusts the pointer, not the value** — Z80 `LD A,(HL); DEC HL;
 DEC HL` reads the value at HL then moves the pointer back 2 bytes. The

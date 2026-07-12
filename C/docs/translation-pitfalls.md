@@ -408,3 +408,18 @@ Translating this as a loop creates an infinite loop when the first call's row-co
 **Rule:** When a user-reported symptom persists after a fix that is individually verified correct against the skool, don't stop — the fix may be real but not sufficient. Audit every candidate computation feeding the same visible effect (source pointer, destination pointer, and row/height *count* can each carry an independent bug) before concluding the investigation. A left/right (or otherwise asymmetric) symptom is a strong clue: look for the one code path that is genuinely side-specific, not just the shared body both sides call into.
 
 **Commit:** `c41e508`
+
+---
+
+## 27. Jump-table `JR` offsets can land inside a *later* PUSH chain — compute the landing address, don't assume the range
+
+**Root cause:** A self-modified `JR` used as a jump table (`JR <offset>` where the offset selects how many `PUSH`es to skip) is not bounded by its own chain. The Z80 jump target is simply `PC + 2 + offset`, so a large offset sails past the end of the first chain, past any instructions between the chains and into the middle of the *next* one. The translation must be derived from the computed landing address of every offset the code can store, not from the assumption that offset N means "skip N of these 16 pushes".
+
+**Bugs (`draw_tunnel`, `$C21F–$C2E1`, commit `e0cf3a9`):**
+
+- `$C221 JR <D>` with `D = 22` (the `dt_max_fill` case) lands at `$C239` — midway into the *second* PUSH chain. The row is one combined 15-push (30-byte) fill from the original SP, and crucially the skipped instructions include `$C233 SUB C` and the second `LD SP,HL`, so the later `$C248 ADD A,C` nets `L += C` instead of restoring L. The C treated `D = 22` as "first fill empty" followed by a normal second fill — drawing little or nothing on exactly the widest rows of the tunnel mouth.
+- The second-phase loop (`$C287`) and far-wall loop (`$C2C1`) look structurally identical to the first loop but contain **no jump table at all**: 15 unconditional `PUSH`es, a full-width fill every row. The C copied the first loop's `dt_fill_start_b` gating into both, drawing partial bands (or nothing when the stored index was 16).
+
+**Rule:** For every value the code can store into a jump-table `JR` operand, compute the landing address by hand and read what actually executes from there — including which set-up instructions between chains get skipped. When several fill loops sit side by side, check each one for the presence or absence of its own jump table rather than assuming they share the first loop's shape.
+
+**Commit:** `e0cf3a9`

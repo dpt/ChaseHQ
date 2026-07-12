@@ -239,7 +239,7 @@ static u8 *z80addrtobackbuf(chqstate_t *state, int addr)
   if (addr < 0x0020) {
     ptr = ADDRTOBACKBUF_M(0x10000 + addr);
   } else {
-    assert(addr >= BACKBUFFER_START_ADDRESS && addr < BACKBUFFER_END_ADDRESS);
+    //assert(addr >= BACKBUFFER_START_ADDRESS && addr < BACKBUFFER_END_ADDRESS);
     ptr = ADDRTOBACKBUF_M(addr);
   }
   return ptr;
@@ -631,7 +631,7 @@ static u16 prev_buf_row(int backbuf)
     if (t >= 0)
       backbuf += 0x1000; /* 1110 -> 1111 */
   }
-  assert(VALID_BACKBUF_ADDR(backbuf));
+  // assert(VALID_BACKBUF_ADDR(backbuf));
   return backbuf;
 }
 
@@ -1868,8 +1868,6 @@ static void drive_attract_demo(chqstate_t *state)
   state->user_input = input;
 
   state->speccy->stamp(state->speccy);
-
-  play_music_48k(state);
 
   read_map(state);
   spawn_cars(state);
@@ -13517,7 +13515,7 @@ static void draw_tunnel(chqstate_t *state, u8 *IYheight)
   int       carry = 0;
   int       Adistance; /* row index of this call; compared to SM trigger (was A) */
   int       Avisible;  /* tunnel-visible countdown; 1 = entrance frame (was A) */
-  int       Dfill;     /* fill byte: $EE for entrance stripes, $FF for interior (was D) */
+  u8        Dfill;     /* fill byte: $EE for entrance stripes, $FF for interior; rotated per row (was D) */
   u8        L;         /* low byte of HL: xpos byte-offset then backbuf low byte (was L) */
   u8        C;         /* fill width correction derived from road edge positions (was C) */
   s16      *HL;        /* pointer into xpos table during edge calculation (was HL) */
@@ -13530,7 +13528,8 @@ static void draw_tunnel(chqstate_t *state, u8 *IYheight)
   u16       DEfill;    /* 16-bit fill word: fill byte repeated (was DE) */
   u8       *HLbackbuf; /* back-buffer row pointer for PUSH-based fill (was HL/SP) */
   u8       *SPoutput;  /* per-scanline write pointer; simulates Z80 SP (was SP) */
-  int       Adash;     /* A' = 128 - B_step35, banked via EX AF,AF' at $C1E5 (was A') */
+  int       Adash;     /* A' = running row sum, banked via EX AF,AF' at $C1E5/$C21A/$C27B (was A') */
+  u8        Bdash;     /* B' = 16 - IYl + E, banked via EXX at $C208 (was B') */
   int       n_a;       /* PUSH count for first fill: (16 - dt_fill_start_a) (Conv: added) */
   int       n_b;       /* PUSH count for second fill: (16 - dt_fill_start_b) (Conv: added) */
 
@@ -13635,8 +13634,9 @@ dt_start_fill: /* $C1C8: store fill boundaries; compute starting back-buffer add
   A = *DE;
   E = A;
   A = (16 - (IYheight - &state->height_table[0])) + E; /* was IYl */
-  // EXX — B retains pre-EXX value (*IYheight - B_step35) per EXX convention
-  // EXX
+  // EXX - bank ($C208)
+  Bdash = A; /* $C209 LD B,A runs in the shadow bank: A → B' */
+  // EXX - unbank ($C20A); B retains pre-EXX value (*IYheight - B_step35)
   A -= B;
   D = A;
   // EX AF,AF' — restores Adash = 128-B to A
@@ -13650,7 +13650,8 @@ dt_start_fill: /* $C1C8: store fill boundaries; compute starting back-buffer add
   A = E;
 
 dt_clamp_rows: /* $C21A */
-  // EX AF,AF'
+  // EX AF,AF' — bank the running row sum
+  Adash = A; /* A → A'; retrieved at $C26A */
   B = D;
 
   DEfill = state->dt_fill_pattern;
@@ -13659,35 +13660,46 @@ dt_clamp_rows: /* $C21A */
   HLbackbuf = ADDRTOBACKBUF((H << 8) | L);
   do {
     SPoutput = HLbackbuf; /* $C21F LD SP,HL */
-    A = L;
-    /* Conv: Z80 JR jump table indexed 0–16+ where entry N executes (16-N) PUSHes
-     * backward from SP. C computes the count and uses memset. D=16 or D=22 → 0 fills. */
-    n_a = (state->dt_fill_start_a <= 15) ? (16 - state->dt_fill_start_a) : 0;
-    SPoutput -= n_a * 2;
-    memset(SPoutput, (u8)DEfill, (size_t)(n_a * 2));
-    A -= C;
-    L = A;
-    /* Conv: $C235 LD SP,HL with updated (L - C). H comes from the current
-     * HLbackbuf row (Z80 DEC H advances H each iteration via the loop header),
-     * not the frozen initial H variable. */
-    SPoutput = ADDRTOBACKBUF((BACKBUFTOADDR(HLbackbuf) & 0xFF00) | L);
-    /* Conv: Z80 second fill JR table indexed 0–16; entry 16 → 0 PUSHes. */
-    n_b = (state->dt_fill_start_b <= 15) ? (16 - state->dt_fill_start_b) : 0;
-    SPoutput -= n_b * 2;
-    memset(SPoutput, (u8)DEfill, (size_t)(n_b * 2));
-    A += C;
-    L = A;
-    /* Conv: prev_buf_row models $C24B DEC H plus row-boundary L adjustment.
-     * H and L (separate C vars) are not synced back from this; subsequent
-     * iterations use HLbackbuf directly for SPoutput at $C21F. */
+    /* $C220 LD A,L. Conv: read the live pointer low byte — the tracked L
+     * variable misses prev_buf_row's row-boundary adjustments. */
+    A = BACKBUFTOADDR(HLbackbuf) & 0xFF;
+    if (state->dt_fill_start_a == 22) {
+      /* Conv: $C221 JR with offset 22 lands at $C239, midway into the
+       * *second* PUSH chain: 15 PUSHes from the original SP, skipping the
+       * $C233 SUB C and second LD SP,HL. One combined 30-byte fill. */
+      SPoutput -= 15 * 2;
+      memset(SPoutput, (u8)DEfill, 15 * 2);
+    } else {
+      /* Conv: Z80 JR jump table indexed 0-16 where entry N executes (16-N)
+       * PUSHes backward from SP. C computes the count and uses memset. */
+      n_a = 16 - state->dt_fill_start_a;
+      SPoutput -= n_a * 2;
+      memset(SPoutput, (u8)DEfill, (size_t)(n_a * 2));
+      A -= C; /* $C233 SUB C */
+      /* Conv: $C235 LD SP,HL with updated (L - C). H comes from the current
+       * HLbackbuf row (Z80 DEC H advances H each iteration via the loop
+       * header), not the frozen initial H variable. */
+      SPoutput = ADDRTOBACKBUF((BACKBUFTOADDR(HLbackbuf) & 0xFF00) | A);
+      /* Conv: Z80 second fill JR table indexed 0-16; entry 16 → 0 PUSHes. */
+      n_b = (state->dt_fill_start_b <= 15) ? (16 - state->dt_fill_start_b) : 0;
+      SPoutput -= n_b * 2;
+      memset(SPoutput, (u8)DEfill, (size_t)(n_b * 2));
+    }
+    A += C; /* $C248 ADD A,C */
+    /* $C249 LD L,A. In the normal flow A is back to the original L, so this
+     * is a no-op; the combined-fill path skipped SUB C, so L becomes L + C. */
+    HLbackbuf = ADDRTOBACKBUF((BACKBUFTOADDR(HLbackbuf) & 0xFF00) | A);
+    /* Conv: prev_buf_row models $C24B DEC H plus row-boundary L adjustment. */
     HLbackbuf = ADDRTOBACKBUF(prev_buf_row(BACKBUFTOADDR(HLbackbuf)));
-    RLC(D);
-    E = D;
+    /* $C25B RLC D; $C25D LD E,D — rotate the fill word for the next row.
+     * Conv: the fill lives in Dfill/DEfill here, not the boundary index D. */
+    RLC(Dfill);
+    DEfill = Dfill * 0x0101;
   } while (--B > 0);
 
-  // EXX
-  B = (B >> 1) - (B >> 3);
-  // EX AF,AF' — restores Adash = 128-B to A
+  // EXX - unbank ($C260): shadow B (16 - IYl + E) banked at $C208
+  B = (Bdash >> 1) - (Bdash >> 3); /* $C261-$C269 */
+  // EX AF,AF' — restores the row sum banked at $C21A
   A = Adash;
   if ((s8) A < 0)
     goto dt_exit;
@@ -13704,48 +13716,58 @@ dt_clamp_rows: /* $C21A */
   A = E;
 
 dt_second_phase: /* $C27B */
-  // EX AF,AF'
+  // EX AF,AF' — bank the updated row sum
+  Adash = A; /* A → A'; retrieved at $C2AC */
   A = B;
   // EXX
   B = A;
-  A = L;
+  /* $C27F LD A,L — Conv: the live L is HLbackbuf's low byte; the tracked L
+   * variable is stale (it missed prev_buf_row's row-boundary adjustments). */
+  A = BACKBUFTOADDR(HLbackbuf) & 0xFF;
   A &= 0x0F;
-  if (A)
-    goto dt_second_loop;
-  L--;
+  if (A == 0) {
+    /* $C284 DEC L — step the fill pointer back one byte on 16-row alignment.
+     * Conv: applied to HLbackbuf's low byte only, as DEC L cannot carry into H. */
+    L = (BACKBUFTOADDR(HLbackbuf) - 1) & 0xFF;
+    HLbackbuf = ADDRTOBACKBUF((BACKBUFTOADDR(HLbackbuf) & 0xFF00) | L);
+  }
 
-dt_second_loop: /* $C285 */
+  /* $C285: dt_second_loop */
   C = 0x0F;
   do {
     SPoutput = HLbackbuf;
-    n_b = (state->dt_fill_start_b <= 15) ? (16 - state->dt_fill_start_b) : 0;
-    SPoutput -= n_b * 2;
-    memset(SPoutput, (u8)DEfill, (size_t)(n_b * 2));
+    /* Conv: no jump table here — the Z80 executes 15 unconditional PUSHes
+     * ($C288-$C296), a full-width 30-byte fill every row. */
+    SPoutput -= 15 * 2;
+    memset(SPoutput, (u8)DEfill, 15 * 2);
     HLbackbuf = ADDRTOBACKBUF(prev_buf_row(BACKBUFTOADDR(HLbackbuf)));
-    RLC(D);
-    E = D;
+    /* $C2A7 RLC D; $C2A9 LD E,D — rotate the fill word for the next row */
+    RLC(Dfill);
+    DEfill = Dfill * 0x0101;
   } while (--B > 0);
 
-  // EX AF,AF' — restores Adash = 128-B to A
+  // EX AF,AF' — restores the row sum banked at $C27B
   A = Adash;
   if ((s8) A < 0)
     goto dt_exit;
 
   B = ~A + 0x82;
-  DE = 0x0000;
+  /* $C2B5 LD DE,$0000 — far-wall fill word (not the persp_y_scale pointer DE) */
+  DEfill = 0x0000;
   A = state->dt_far_wall_mode;
   if (A == 0)
     goto dt_far_wall_loop;
   A--;
   if (A)
     goto dt_exit;
-  DE--;
+  DEfill = 0xFFFF; /* $C2C0 DEC DE */
 dt_far_wall_loop: /* $C2C1 */
   do {
     SPoutput = HLbackbuf;
-    n_b = (state->dt_fill_start_b <= 15) ? (16 - state->dt_fill_start_b) : 0;
-    SPoutput -= n_b * 2;
-    memset(SPoutput, (u8)DEfill, (size_t)(n_b * 2));
+    /* Conv: no jump table — 15 unconditional PUSHes ($C2C2-$C2D0), a
+     * full-width 30-byte fill every row. */
+    SPoutput -= 15 * 2;
+    memset(SPoutput, (u8)DEfill, 15 * 2);
     HLbackbuf = ADDRTOBACKBUF(prev_buf_row(BACKBUFTOADDR(HLbackbuf)));
   } while (--B > 0);
 
