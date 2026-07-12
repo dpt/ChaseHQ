@@ -3914,13 +3914,6 @@ static void draw_scene_objects(chqstate_t *state)
       draw_tunnel(state, IYheight_table);
 
     Aobj = *HLroadbuf; // fetch right side object from road buffer
-    if (Aobj > 9) /* ponytail: diagnostics for out-of-range object id, remove once root cause found */
-      fprintf(stderr,
-              "draw_scene_objects: bad right Aobj=%u Biterations=%d "
-              "fork_taken=%d fork_in_progress=%d rightside_byte=%u "
-              "roadbuf_idx=%d\n",
-              Aobj, Biterations, state->fork_taken, state->fork_in_progress,
-              state->rightside_byte, (int)ROADBUF_PTR2IDX(HLroadbuf));
     assert(Aobj <= 9); // object indices are 0..9
     if (Aobj)
       goto right_hand_stuff;
@@ -3933,13 +3926,6 @@ continue_after_right_hand_done:
            && HLroadbuf < state->roadbuf_end);
 
     Aobj = *HLroadbuf; // fetch left side object from road buffer
-    if (Aobj > 9) /* ponytail: diagnostics for out-of-range object id, remove once root cause found */
-      fprintf(stderr,
-              "draw_scene_objects: bad left Aobj=%u Biterations=%d "
-              "fork_taken=%d fork_in_progress=%d leftside_byte=%u "
-              "roadbuf_idx=%d\n",
-              Aobj, Biterations, state->fork_taken, state->fork_in_progress,
-              state->leftside_byte, (int)ROADBUF_PTR2IDX(HLroadbuf));
     assert(Aobj <= 9); // object indices are 0..9
     if (Aobj)
       goto left_hand_stuff;
@@ -12954,15 +12940,6 @@ static void rm_cycle_buffer_offset(chqstate_t *state, u8 *HLfast_counter)
   u8        *DE_dst;             /* copy-back loop destination pointer (was DE) */
   int        BC_count;           /* copy-back loop byte count (was BC) */
 
-  /* ponytail: road_buffer corruption diagnostics (temporary) */
-  static u8  rb_prewrite[256];
-  int        rb_i;
-
-  /* ponytail: road_buffer corruption diagnostics -- snapshot before this
-   * frame's six channel writes so we can report any OTHER index that
-   * changes. Remove once the draw_scene_objects Aobj>9 corruption is found. */
-  memcpy(rb_prewrite, state->road_buffer, 256);
-
   /* Advance roadbufptr */
   state->roadbufptr = ROADBUF_FWD2PTR(1);
 
@@ -13392,27 +13369,6 @@ rm_restart_hazards_read: // $BFF3
 
   // rm_allow_car_spawning ($C0D7)
   state->allow_spawning++;
-
-  /* ponytail: road_buffer corruption diagnostics -- report any index that
-   * changed outside the six channel writers just performed this call.
-   * Remove once the draw_scene_objects Aobj>9 corruption is found. */
-  for (rb_i = 0; rb_i < 256; rb_i++) {
-    if (state->road_buffer[rb_i] == rb_prewrite[rb_i])
-      continue;
-    if (&state->road_buffer[rb_i] == HL_curve_ptr ||
-        &state->road_buffer[rb_i] == HL_height_ptr ||
-        &state->road_buffer[rb_i] == HL_lanes_ptr ||
-        &state->road_buffer[rb_i] == HL_rightside_ptr ||
-        &state->road_buffer[rb_i] == HL_leftside_ptr ||
-        &state->road_buffer[rb_i] == HL_hazards_ptr)
-      continue;
-    fprintf(stderr,
-            "rm_cycle_buffer_offset: unexpected road_buffer[%d] change "
-            "%u -> %u (roadbufptr_idx=%d, rm_do_dirt_and_stones_thing=%d)\n",
-            rb_i, rb_prewrite[rb_i], state->road_buffer[rb_i],
-            (int)ROADBUF_PTR2IDX(state->roadbufptr),
-            state->rm_do_dirt_and_stones_thing);
-  }
 
   check_hazard_collisions(state); /* exit via */
 }
@@ -15434,24 +15390,7 @@ static void draw_forked_road(chqstate_t *state, const u8 *IXlanes, const u8 *IYh
   u8  A_newxor;   /* new XOR operand after +$10; carry check determines edge advance (was A) */
   u8  A_old_h;    /* height at previous IYheight entry; base for difference (was A) */
   u8  A_diff;     /* height difference old−new; sign drives re-entry or backdrop (was A) */
-  unsigned long dfr_guard; /* runaway-loop instrumentation counter (debug only) */
 
-  /* ponytail: lock-up diagnostics. Traces every backward-jump decision
-   * point; if any single call spins past FRP_GUARD_LIMIT passes through
-   * one label, dump state and abort so the stuck loop is identifiable
-   * from stderr instead of a plain hang. Remove once the lock-up is
-   * found and fixed. */
-#define FRP_GUARD_LIMIT 2000000UL
-#define FRP_TRACE(where) \
-  do { \
-    if (++dfr_guard > FRP_GUARD_LIMIT) { \
-      fprintf(stderr, \
-              "draw_forked_road: stuck at %s after %lu iters " \
-              "(D=%02X E=%02X B=%u C=%u Cdash=%u L=%u loop_path=%d A_diff=%d)\n", \
-              (where), dfr_guard, D, E, B, C, Cdash, L, loop_path, (int)(s8)A_diff); \
-      abort(); \
-    } \
-  } while (0)
 
   /* $C8E4-$C912: Copy SM operands from draw_road's current SM state.
    * In Z80 these are absolute self-modifying writes to the $CA/$CB region.
@@ -15485,10 +15424,8 @@ static void draw_forked_road(chqstate_t *state, const u8 *IXlanes, const u8 *IYh
   Cdash = C;
 
   af_prime = sm_CB40; /* EX AF,AF': current scanline fill pattern */
-  dfr_guard = 0;
 
 dfr_c915: /* $C915 */
-  FRP_TRACE("dfr_c915");
   if (B != 0)
     goto dfr_c95a;
 
@@ -15498,7 +15435,6 @@ dfr_c915: /* $C915 */
   af_prime = sm_CB40;
 
 dfr_c923: /* $C923 */
-  FRP_TRACE("dfr_c923");
   A_row = D;
   D--;
   A_row &= 0x0F;
@@ -15527,7 +15463,6 @@ dfr_c929: /* $C929: zero-fill scanline (inner road, pre-fork area) */
   goto dfr_ca66;
 
 dfr_next_scanline_c929: /* $C94C */
-  FRP_TRACE("dfr_next_scanline_c929");
   carry = (E < 0x20);
   E     = E - 0x20;
   if (!carry)
@@ -15540,7 +15475,6 @@ dfr_c95a: /* $C95A: B != 0 -- set jump target to dfr_c963 (5-zone path) */
   af_prime = sm_CB40;
 
 dfr_c963: /* $C963 */
-  FRP_TRACE("dfr_c963");
   A_row = D;
   D--;
   A_row &= 0x0F;
@@ -15548,7 +15482,6 @@ dfr_c963: /* $C963 */
     goto dfr_next_scanline_c969;
 
 dfr_c969: /* $C969: 5-zone fork scanline render */
-  FRP_TRACE("dfr_c969");
   /* $C970: LD BC,$10F8  (B=16 inner counter, C=$F8 scan-block mask) */
   B = 16;
   C = 0xF8; /* Conv: this is the banked C used to drive the scan-block loop */
@@ -15795,7 +15728,6 @@ dfr_after_marking: /* $CB2F */
   B = af_prime;
 
 dfr_loop: { /* $CB36 */
-    FRP_TRACE("dfr_loop");
     A_tog = sm_CB36 ^ 1;
     sm_CB36 = A_tog;
     if (A_tog != 0)
@@ -15836,7 +15768,6 @@ dfr_cb65: /* $CB65 */
   }
 
 dfr_cb90: { /* $CB90 */
-    FRP_TRACE("dfr_cb90");
     A_old_h = *IYheight;
     IYheight++;
     WRAP_INCREMENT_ASSIGN(IXlanes, state->roadbuf_start);
@@ -15872,15 +15803,12 @@ dfr_cb90: { /* $CB90 */
   }
 
 dfr_next_scanline_c969: /* $C93E */
-  FRP_TRACE("dfr_next_scanline_c969");
   carry = (E < 0x20);
   E     = E - 0x20;
   if (!carry)
     D = D + 0x10;
   goto dfr_c969;
 }
-#undef FRP_TRACE
-#undef FRP_GUARD_LIMIT
 
 // $CBA4
 // mystery_cba4 would go here, if we knew what it did
