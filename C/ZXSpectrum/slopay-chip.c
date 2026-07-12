@@ -129,6 +129,7 @@ struct slopay_chip {
 slopay_chip_t *slopay_chip_create(int clock_freq, int sample_rate)
 {
   slopay_chip_t *ay;
+  int            ch;
 
   ay = calloc(sizeof(slopay_chip_t), 1);
   if (ay == NULL)
@@ -145,7 +146,7 @@ slopay_chip_t *slopay_chip_create(int clock_freq, int sample_rate)
   ay->mixer.master_volume = AY_MASTER_VOLUME_MAX;
   ay->mixer.stereo_mode   = SLOPAY_CHIP_STEREO_MODE_ABC;
 
-  for (int ch = 0; ch < AY_CHANNELS; ch++)
+  for (ch = 0; ch < AY_CHANNELS; ch++)
     ay->tone[ch].phase = 1;
 
   return ay;
