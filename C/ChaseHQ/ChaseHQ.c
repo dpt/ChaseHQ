@@ -1260,7 +1260,6 @@ static void playdrum_bank_go(chqstate_t *state, int Ddash_length,
 static void playdrum_go(chqstate_t *state, int Dlength, u8 *HLdata);
 static void play_noise(chqstate_t *state, int Aparam);
 
-static void load_stage_128k(chqstate_t *state);
 static void start_siren_128k(chqstate_t *state);
 static void play_siren_sfx_128k(chqstate_t *state);
 static void silence_audio_128k(chqstate_t *state);
@@ -4031,7 +4030,6 @@ left_hand_stuff:
   assert(Eobj >= 1
          && Eobj <= 9); // valid index range given base ptr at [-1] of a 9-element array
   assert(state->stage->addrof_left_hand_objects != NULL);
-  assert(Bheight != 255);
   // Conv: Z80 $9024 jumps to handler directly if A==2 (skips IX[1] check).
   //       $902C exits without calling handler if IX[1] != 0.
   //       Handler runs when: Aobj == 2 OR IX[1] == 0.
@@ -4083,8 +4081,6 @@ void draw_overhead(chqstate_t *state,
   const u8              *HLvertical;  /* pointer into persp_y_scale for current frame row (was HL) */
   int                    D;           /* left-clip width in bytes for the right edge of the span (was D) */
   int                    E;           /* right-clip extent: 0x1F minus visibility offset (was E) */
-  int                    H;           /* row counter / byte copy loop index (was H) */
-  int                    L;           /* column byte offset within the object row (was L) */
   const depthset_pair_t *HLpair;      /* pointer to the chosen depth-set pair entry (was HL) */
   int                    Cdepth;      /* depth value from the selected pair entry (was C) */
   const u8              *HL;          /* scratch pointer reused for column byte source (was HL) */
@@ -5014,20 +5010,17 @@ static void draw_object_clipped(chqstate_t     *state,
   int               Ay_remaining;        /* remaining rows after adjustment (was A) */
   int               BC_padding;          /* row padding bytes, B=0 (was BC) */
   const u8         *HL_bitmap_data;      /* pointer into selected bitmap row data (was HL) */
-  int               BC_width_bytes;      /* bitmap stride copy, used as multiplier (was BC) */
   int               Adash_row_skip;      /* rows to skip before drawing (was A') */
   int               Bdash_height;        /* banked draw height for row loop (was B') */
   int               Adash_inverted;      /* doc_plot_mode value for dispatch (was A') */
   int               IX_jump_offset;      /* jump-table offset into plot routine (was IX) */
   plot_sprite_cb_t *BCdash_callback;     /* banked pointer to plot callback (was BC') */
-  int               B_y_row_offset;      /* row offset for loop termination (was B') */
   int               DE_bitmap_stride;    /* bitmap stride, widened to int (was DE) */
   int               Adash_y_pos_pushed;  /* banked row base, preserved across clipping (was A') */
   u8               *HLdash_backbuf_addr; /* back-buffer write address (was HL') */
   u8                D_clip_rows;
   u16               BC_bitmap_stride;
   u8                B_clip_rows;
-  u8                Cdash_padding;
 
   if (carry_masked_flag) {
     // EX AF,AF'  - preserve carry while we double these args (since they're masked)
@@ -13902,7 +13895,6 @@ static void draw_road_lanes_change(chqstate_t *state,
   u16  DE_roadpos;          /* current road x-position being written (was DE) */
   u8   A_anim_offset;       /* animation offset: (fast_counter >> 3) & 0x1C + bend_offset (was A) */
   u8   SM_C3BD_bend_offset; /* stored A_curve_step: bend offset for path 2 (SM $C3BD) */
-  u8  *SM_C3C4_left_hand_table; /* stored HL_xpos_ptr across EX DE,HL (path 2) (SM $C3C4) */
   u16  HL_pos_delta;        /* delta between two road x-positions (was HL) */
   s8   A_pos_delta_lo;      /* low byte of HL_pos_delta, clamped to become A_step (was A) */
   s8   A_step;              /* clamped per-scanline displacement for Bresenham (was A) */
@@ -14273,7 +14265,6 @@ static void dr_read_lanes(chqstate_t *state, u8 *IXlanesptr, const u8 *IYheightp
   int Hdash_in_tunnel;      /* 1 when inside a tunnel section, 0 otherwise (was H') */
   int Atunnel_visible;      /* tunnel visibility state: 1=entering, 2=exiting (was A) */
   int Cdash_fill_pattern;   /* fill pattern override for tunnel: 0xFF (solid) or 0x00 (open) (was C') */
-  int Afill_pattern;        /* copy of Bfill_pattern used for tunnel dispatch (was A) */
 
   Aleft_offset = *IXlanesptr & MAP_LANES_LEFT_OFFSET_MASK;
   if (Aleft_offset == 0) {
@@ -17798,15 +17789,14 @@ static void reset_paging_128k(chqstate_t *state)
  */
 static void attract_mode_128k(chqstate_t *state)
 {
-  int       carry;               /* carry from RRC of attract_mode_128k_blink (carry) */
-  int       enter_pressed;       /* non-zero when Enter key is held (was carry from RRA) */
-  int       HL_routine;          /* bank-3 routine address constant to invoke (was HL) */
-  int       A_result;            /* return value from call_bank_3_128k: 0 = early return (was A) */
-  int       A_controls_selected; /* controls_selected check: non-zero once a controller is chosen (was A) */
-  const u8 *DE_messages;         /* messages pointer: enter_for_options or press_gear (was DE) */
-  const u8 *HL_messages;         /* copy of DE_messages passed to print_message (was HL) */
-  int       A_transition_control;/* transition_control state: non-zero while transition is running (was A) */
-  int       A_countdown;         /* attract_mode_128k_countdown: 2..negative; triggers scene restart (was A) */
+  int       carry;                /* carry from RRC of attract_mode_128k_blink (carry) */
+  int       enter_pressed;        /* non-zero when Enter key is held (was carry from RRA) */
+  int       HL_routine;           /* bank-3 routine address constant to invoke (was HL) */
+  int       A_result;             /* return value from call_bank_3_128k: 0 = early return (was A) */
+  const u8 *DE_messages;          /* messages pointer: enter_for_options or press_gear (was DE) */
+  const u8 *HL_messages;          /* copy of DE_messages passed to print_message (was HL) */
+  int       A_transition_control; /* transition_control state: non-zero while transition is running (was A) */
+  int       A_countdown;          /* attract_mode_128k_countdown: 2..negative; triggers scene restart (was A) */
 
 attract_mode_128k_start:
   HL_routine = BANK3_BOUNCY_LOGO;
