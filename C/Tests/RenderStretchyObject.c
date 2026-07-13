@@ -31,10 +31,10 @@
 #include <string.h>
 
 #include "ChaseHQ/ChaseHQ.h"
-#include "ChaseHQ/ChaseHQ-Internal.h"
-#include "ChaseHQ/ChaseHQ-State.h"
-#include "ChaseHQ/ChaseHQ-Stages.h"
-#include "ChaseHQ/ChaseHQ-Tests.h"
+#include "ChaseHQ/Internal.h"
+#include "ChaseHQ/State.h"
+#include "ChaseHQ/Stages.h"
+#include "ChaseHQ/Tests.h"
 #include "ZXSpectrum/Spectrum.h"
 
 /* ----------------------------------------------------------------------- */

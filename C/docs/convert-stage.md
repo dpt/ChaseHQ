@@ -30,19 +30,19 @@ Per-stage invocations (also encoded in `CMakeLists.txt`):
 ```bash
 python3 convert_stage.py ChaseHQ-128K-bank-1.skool 2 \
     --obj-names NONE,TUNNEL_LIGHT,OBJ2,SHORT_POLE,HUGE_ROCK,PALM_TREE,LEAVES,DOUBLE_LAMP,OBJ8 \
-    > C/ChaseHQ/Data/ChaseHQ-Stage2Data.c
+    > C/ChaseHQ/Data/Stage2Data.c
 
 python3 convert_stage.py ChaseHQ-128K-bank-6.skool 3 \
     --obj-names NONE,TUNNEL_LIGHT,OVERHEAD_BRIDGE,SHORT_POLE,TOWER_BLOCK,SPEED_LIMIT_SIGN,TELEGRAPH_POLE,OBJ7 \
-    > C/ChaseHQ/Data/ChaseHQ-Stage3Data.c
+    > C/ChaseHQ/Data/Stage3Data.c
 
 python3 convert_stage.py ChaseHQ-128K-bank-6.skool 4 \
     --obj-names NONE,TUNNEL_LIGHT,OBJ2,SHORT_POLE,NEAR_COLUMN,FAR_COLUMN,PILE_OF_ROCKS,STREET_LAMP,TURN_SIGN_POINTING_LEFT,TURN_SIGN_POINTING_RIGHT \
-    > C/ChaseHQ/Data/ChaseHQ-Stage4Data.c
+    > C/ChaseHQ/Data/Stage4Data.c
 
 python3 convert_stage.py ChaseHQ-128K-bank-7.skool 5 \
     --obj-names NONE,TUNNEL_LIGHT,OVERHEAD_BRIDGE,OBJ3,CACTUS,DOUBLE_STREET_LAMP,HUGE_ROCK,TELEGRAPH_POLE \
-    > C/ChaseHQ/Data/ChaseHQ-Stage5Data.c
+    > C/ChaseHQ/Data/Stage5Data.c
 ```
 
 ## What the script generates
@@ -92,4 +92,4 @@ Some LOD table sections use a different local pointer base (stage 2's stretchy g
 
 ## Stage 1
 
-Stage 1 data (`ChaseHQ-Stage1Data.c`) is hand-crafted and should not be regenerated with this script.
+Stage 1 data (`Stage1Data.c`) is hand-crafted and should not be regenerated with this script.

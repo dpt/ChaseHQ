@@ -97,15 +97,15 @@
 
 #include <stdio.h>
 
-#include "Data/ChaseHQ-CommonData.h"
-#include "Data/ChaseHQ-SoundSamples.h"
-#include "Data/ChaseHQ-Stage1Data.h"
-#include "Data/ChaseHQ-Stage2Data.h"
-#include "Data/ChaseHQ-Stage3Data.h"
-#include "Data/ChaseHQ-Stage4Data.h"
-#include "Data/ChaseHQ-Stage5Data.h"
-#include "ChaseHQ-Stages.h"
-#include "ChaseHQ-State.h"
+#include "Data/CommonData.h"
+#include "Data/SoundSamples.h"
+#include "Data/Stage1Data.h"
+#include "Data/Stage2Data.h"
+#include "Data/Stage3Data.h"
+#include "Data/Stage4Data.h"
+#include "Data/Stage5Data.h"
+#include "Stages.h"
+#include "State.h"
 
 /* ----------------------------------------------------------------------- */
 
@@ -1302,7 +1302,7 @@ static void show_end_screen(chqstate_t *state)
  * initiates a reverse transition, reads a header from tape to identify the
  * stage, then loads 6896 bytes of stage data to $5C00. All tape handling is
  * removed in C; stage data is pre-loaded as read-only arrays in
- * ChaseHQ-Stage1Data.c (and future stage files).
+ * Stage1Data.c (and future stage files).
  *
  * \param[in] state Pointer to game state.
  *
@@ -17874,7 +17874,7 @@ CHQ_API void chq_main(chqstate_t *state)
 
 #ifdef CHQ_TESTS
 
-#include "ChaseHQ/ChaseHQ-Tests.h"
+#include "ChaseHQ/Tests.h"
 
 void chq_test_load_stage(chqstate_t *state)
 {

@@ -134,5 +134,5 @@ The road surface uses a different technique for the same illusion: horizontal sc
 
 - `road-drawing.md` — road surface drawing technique and perspective pipeline.
 - `draw-road-internals.md` — call chain for `draw_road` including lane markings, edge graphics and object pass entry points.
-- `ChaseHQ-Stages.h` — type definitions (`stretchy_t`, `depthset_t`, `bitmap_t`).
+- `Stages.h` — type definitions (`stretchy_t`, `depthset_t`, `bitmap_t`).
 - `ChaseHQ.c` — implementation of `draw_stretchy_object_common()` and the callback dispatch logic.

@@ -1,5 +1,5 @@
 /**
- * ChaseHQ-CommonData.h
+ * CommonData.h
  *
  * This file is part of "Chase H.Q. in C".
  *
@@ -19,7 +19,7 @@
 #define CHASEHQ_COMMONDATA_H
 
 #include "C99/Types.h"
-#include "../ChaseHQ-State.h"
+#include "../State.h"
 
 /* ----------------------------------------------------------------------- */
 

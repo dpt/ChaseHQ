@@ -1,5 +1,5 @@
 /**
- * ChaseHQ-CommonData.c
+ * CommonData.c
  *
  * This file is part of "Chase H.Q. in C".
  *
@@ -21,7 +21,7 @@
 
 #include "C99/Types.h"
 #include "../ChaseHQ.h"
-#include "ChaseHQ-CommonData.h"
+#include "CommonData.h"
 
 /* ----------------------------------------------------------------------- */
 

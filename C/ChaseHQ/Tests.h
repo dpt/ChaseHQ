@@ -1,5 +1,5 @@
 /**
- * ChaseHQ-Tests.h
+ * Tests.h
  *
  * Test hook declarations — only compiled when CHQ_TESTS is defined.
  *
@@ -12,7 +12,7 @@
 
 #ifdef CHQ_TESTS
 
-#include "ChaseHQ/ChaseHQ-State.h"
+#include "ChaseHQ/State.h"
 
 /** Force a stage load for the current wanted_stage_number. */
 void chq_test_load_stage(chqstate_t *state);

@@ -1,5 +1,5 @@
 /**
- * ChaseHQ-Stages.c
+ * Stages.c
  *
  * This file is part of "Chase H.Q. in C".
  *
@@ -15,13 +15,13 @@
  * The recreated version is copyright (c) 2023-2026 David Thomas
  */
 
-#include "Data/ChaseHQ-Stage1Data.h"
-#include "Data/ChaseHQ-Stage2Data.h"
-#include "Data/ChaseHQ-Stage3Data.h"
-#include "Data/ChaseHQ-Stage4Data.h"
-#include "Data/ChaseHQ-Stage5Data.h"
+#include "Data/Stage1Data.h"
+#include "Data/Stage2Data.h"
+#include "Data/Stage3Data.h"
+#include "Data/Stage4Data.h"
+#include "Data/Stage5Data.h"
 
-#include "ChaseHQ-Stages.h"
+#include "Stages.h"
 
 const stage_t *stages[MAX_STAGES + 2] = {
   &stage1, /* [0]: pregame (wanted_stage_number=0) */

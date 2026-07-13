@@ -1,5 +1,5 @@
 /**
- * ChaseHQ-State.h
+ * State.h
  *
  * This file is part of "Chase H.Q. in C".
  *
@@ -24,7 +24,7 @@
 #include "ZXSpectrum/Spectrum.h"
 
 #include "ChaseHQ.h"
-#include "ChaseHQ-Stages.h"
+#include "Stages.h"
 
 /* ----------------------------------------------------------------------- */
 

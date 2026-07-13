@@ -1,5 +1,5 @@
 /**
- * ChaseHQ-Stage1Data.c
+ * Stage1Data.c
  *
  * This file is part of "Chase H.Q. in C".
  *
@@ -23,9 +23,9 @@
 #include "ZXSpectrum/Spectrum.h"
 
 #include "../ChaseHQ.h"
-#include "ChaseHQ-CommonData.h"
+#include "CommonData.h"
 
-#include "ChaseHQ-Stage1Data.h"
+#include "Stage1Data.h"
 
 /* ----------------------------------------------------------------------- */
 

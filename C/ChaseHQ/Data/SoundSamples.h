@@ -1,5 +1,5 @@
 /**
- * ChaseHQ-SoundSamples.h
+ * SoundSamples.h
  *
  * This file is part of "Chase H.Q. in C".
  *

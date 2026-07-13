@@ -49,7 +49,7 @@ cmake --build cmake-build-debug --target ChaseHQ_Tests
 ./cmake-build-debug/ChaseHQ_Tests
 ```
 
-Tests live in `C/Tests/TestDrawRoad.c`. They are built with `-DCHQ_TESTS`, which compiles in thin wrappers at the bottom of `ChaseHQ.c` (inside `#ifdef CHQ_TESTS`) that expose static functions for direct testing. Declarations for those wrappers live in `C/ChaseHQ/ChaseHQ-Tests.h`. When adding a new test hook, add the wrapper to `ChaseHQ.c` and declare it in `ChaseHQ-Tests.h`.
+Tests live in `C/Tests/TestDrawRoad.c`. They are built with `-DCHQ_TESTS`, which compiles in thin wrappers at the bottom of `ChaseHQ.c` (inside `#ifdef CHQ_TESTS`) that expose static functions for direct testing. Declarations for those wrappers live in `C/ChaseHQ/Tests.h`. When adding a new test hook, add the wrapper to `ChaseHQ.c` and declare it in `Tests.h`.
 
 ## C Implementation Architecture
 
@@ -64,8 +64,8 @@ chq_create → chq_setup → chq_main (repeated) → chq_destroy
 - **Host** (`C/Main.c`): SDL2 window, event loop, `zxconfig_t` callbacks wired to game
 - **ZX emulation facade** (`C/ZXSpectrum/Spectrum.*`): exposes `in`/`out`/`draw`/`stamp`/`sleep` callbacks; game code never calls SDL directly
 - **Game** (`C/ChaseHQ/ChaseHQ.c`): translation-oriented, heavily commented with Z80 addresses; many TODOs and partial stubs
-- **State** (`C/ChaseHQ/ChaseHQ-State.h`): `struct chqstate` — the single source of mutable game state, fields ordered by original Z80 memory addresses
-- **Stage data** (`C/ChaseHQ/ChaseHQ-Stages.h`, `ChaseHQ-Stage1Data.*`, `ChaseHQ-CommonData.*`): read-only game tables consumed by game logic
+- **State** (`C/ChaseHQ/State.h`): `struct chqstate` — the single source of mutable game state, fields ordered by original Z80 memory addresses
+- **Stage data** (`C/ChaseHQ/Stages.h`, `Stage1Data.*`, `CommonData.*`): read-only game tables consumed by game logic
 
 ### Data flow
 - **Rendering**: game mutates `state->speccy->screen` → ZX facade tracks dirty regions → `draw_handler` in `Main.c` calls `zxspectrum_claim_screen` → SDL texture update
@@ -73,7 +73,7 @@ chq_create → chq_setup → chq_main (repeated) → chq_destroy
 - **Audio/border**: hooks are connected but most are placeholder NOPs in `Main.c`
 
 ### Stage status
-All 5 stages currently map to `stage1` data in `ChaseHQ-Stages.c`. Per-stage data beyond stage 1 does not exist yet.
+All 5 stages currently map to `stage1` data in `Stages.c`. Per-stage data beyond stage 1 does not exist yet.
 
 ## Coding Conventions
 
@@ -191,7 +191,7 @@ after it has been overwritten is a silent bug.
 
 **Missing SM field initialisation** — every `(SM)` field added to
 `chqstate_t` must also be initialised in `chq_initialise` in
-`ChaseHQ-Create.c`. Zero from `calloc` is not always the correct default.
+`Create.c`. Zero from `calloc` is not always the correct default.
 
 **Pointer arithmetic direction** — Z80 SP decrements on PUSH; `SUB $20`
 subtracts (not adds) 32; `JR NC` skips on _no_ carry (i.e. the
@@ -337,7 +337,7 @@ that value. Trace back to the flag-setting instruction before the original
 
 ## Known data layout: $E4xx road graphics page
 
-`edge_markings` in `C/ChaseHQ/Data/ChaseHQ-CommonData.c` is a single 256-byte array that represents the entire `$E4xx` Z80 memory page:
+`edge_markings` in `C/ChaseHQ/Data/CommonData.c` is a single 256-byte array that represents the entire `$E4xx` Z80 memory page:
 
 | Offset | Z80 address | Content |
 |--------|------------|---------|
@@ -354,5 +354,5 @@ All five tests pass.
 ## Safe Editing
 
 - Prefer narrow edits in data files or isolated helpers; avoid broad rewrites inside `ChaseHQ/ChaseHQ.c`
-- When modifying `chqstate_t`, update initialisation in `ChaseHQ/ChaseHQ-Create.c` (`chq_initialise`)
+- When modifying `chqstate_t`, update initialisation in `ChaseHQ/Create.c` (`chq_initialise`)
 - When touching `ZXSpectrum/Spectrum.c` locking or dirty-rect code, validate both correctness and host callback behaviour — it is cross-thread glue

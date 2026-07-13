@@ -1,5 +1,5 @@
 /**
- * ChaseHQ-Stage4Data.h
+ * Stage4Data.h
  *
  * This file is part of "Chase H.Q. in C".
  *
@@ -18,7 +18,7 @@
 #ifndef CHASEHQ_STAGE4DATA_H
 #define CHASEHQ_STAGE4DATA_H
 
-#include "../ChaseHQ-Stages.h"
+#include "../Stages.h"
 
 const stage_t stage4;
 const void *stage4_lookup_map_goto(chqstate_t *state, u16 z80);

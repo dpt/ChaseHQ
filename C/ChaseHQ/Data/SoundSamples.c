@@ -1,5 +1,5 @@
 /**
- * ChaseHQ-SoundSamples.c
+ * SoundSamples.c
  *
  * This file is part of "Chase H.Q. in C".
  *
@@ -15,7 +15,7 @@
  * The recreated version is copyright (c) 2023-2026 David Thomas
  */
 
-#include "ChaseHQ-SoundSamples.h"
+#include "SoundSamples.h"
 
 const u8 sound_samples[16384] = {
   // Sample: "Giddy up boy!"

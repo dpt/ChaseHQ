@@ -1,5 +1,5 @@
 /**
- * ChaseHQ-Create.c
+ * Create.c
  *
  * This file is part of "Chase H.Q. in C".
  *
@@ -21,8 +21,8 @@
 
 #include "ChaseHQ/ChaseHQ.h"
 
-#include "ChaseHQ/Data/ChaseHQ-CommonData.h"
-#include "ChaseHQ/ChaseHQ-State.h"
+#include "ChaseHQ/Data/CommonData.h"
+#include "ChaseHQ/State.h"
 
 /* ----------------------------------------------------------------------- */
 

@@ -1,5 +1,5 @@
 /**
- * ChaseHQ-Stages.h
+ * Stages.h
  *
  * This file is part of "Chase H.Q. in C".
  *
@@ -19,7 +19,7 @@
 #define CHASEHQ_STAGES_H
 
 #include "C99/Types.h"
-#include "ChaseHQ-Internal.h"
+#include "Internal.h"
 
 /* ----------------------------------------------------------------------- */
 

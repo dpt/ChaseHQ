@@ -1,5 +1,5 @@
 /**
- * ChaseHQ-Internal.h
+ * Internal.h
  *
  * This file is part of "Chase H.Q. in C".
  *
