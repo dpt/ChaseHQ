@@ -3841,7 +3841,7 @@ C $8F93,3 Counter #REGb = 20, Stride #REGc = 32
 @ $8F96 label=dee_second_loop
 C $8F96,4 Preserve IX, HL, BC
 C $8F9A,7 Call draw_arrow_fire_smoke if n_hazards is set
-C $8FA1,3 Call dust_stones_stuff
+C $8FA1,3 Call draw_dirt_and_stones
 C $8FA4,3 Self modified: either CALL draw_helicopter, or NOPs
 C $8FA7,3 Self modified: either CALL draw_tunnel, or NOPs
 C $8FAA,4 Restore IX, HL, BC
@@ -6886,7 +6886,7 @@ c $A9DE Dust/Stones stuff
 D $A9DE If disabled this stops stones and dirt from rendering.
 D $A9DE Used by the routine at #R$8F5F.
 R $A9DE I:B Counter?
-@ $A9DE label=dust_stones_stuff
+@ $A9DE label=draw_dirt_and_stones
 C $A9DE,2 A = <self modified>  Self modified by #R$A97A, #R$A9A3
 C $A9E0,1 Set flags
 C $A9E1,1 Return if zero

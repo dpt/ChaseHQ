@@ -115,6 +115,11 @@ static void chq_initialise(chqstate_t *state)
   // $A804
   state->sc_spawn_counter = 20;
 
+  // $A97F/$A9DF/$C0BC: dirt-and-stones SM flags, assembled as zero
+  state->ldas_enabled = 0;
+  state->ddas_enabled = 0;
+  state->rm_scroll_dirt_particles = 0;
+
   // $B395/$B3A3: SM operands (default LD DE operands) in animate_hero_car
   state->ahc_road_pos_a =  72; /* lower clamp bound */
   state->ahc_road_pos_b = 472; /* upper clamp bound */

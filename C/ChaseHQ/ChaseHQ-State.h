@@ -477,10 +477,10 @@ struct chqstate {
   // $A97E (SM) in layout_dirt_and_stones
   u8        ldas_enabled; // makes layout_dirt_and_stones run
 
-  // $A9DE (SM) in dust_stones_stuff
-  u8        dss_enabled; // makes dust_stones_stuff run
-  // $A9E2 (SM) in dust_stones_stuff
-  s16      *dss_fork_xpos_ptr; // a table ptr e.g. $ED28
+  // $A9DE (SM) in draw_dirt_and_stones
+  u8        ddas_enabled; // makes draw_dirt_and_stones run
+  // $A9E2 (SM) in draw_dirt_and_stones
+  u8       *ddas_particle_ptr; // byte ptr into the $ED28 particle table
 
   // $AA5A (SM) in draw_helicopter
   u8        dhs_heli_vert_base; // y position?
@@ -605,7 +605,7 @@ struct chqstate {
   // $C058 (SM) in read_map
   u8        rm_hazard_byte; // current hazard command
   // $C0BB (SM) in read_map
-  u8        rm_do_dirt_and_stones_thing;
+  u8        rm_scroll_dirt_particles;
 
   // $C15D (SM) in draw_tunnel
   u8        dt_tunnel_distance; // size related [15 when tunnel is small, 6 when fills screen]
