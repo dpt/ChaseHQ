@@ -38,6 +38,10 @@ void chq_test_layout_road(chqstate_t *state);
 /** Run exit_fork in isolation (fork-to-single-road transition). */
 void chq_test_exit_fork(chqstate_t *state);
 
+/** Run advance_hazards in isolation (advances and depth-sorts all active
+ *  hazard slots into the draw list at xpos_road_centre_left). */
+void chq_test_advance_hazards(chqstate_t *state);
+
 /** Return the largest right/left-side object byte visible to
  *  draw_scene_objects (values > 9 indicate road buffer corruption). */
 int chq_test_max_side_object(chqstate_t *state);

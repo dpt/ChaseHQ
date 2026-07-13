@@ -790,6 +790,71 @@ static void test_draw_overhead_stops_at_right_edge(void)
   printf("PASS  draw_overhead: bridge deck span stops at the computed right edge\n");
 }
 
+/*
+ * advance_hazards: when three hazards are advanced in slot order with
+ * strictly increasing distance (5, 10, 15), each later hazard must be
+ * inserted *before* the earlier ones already in the depth-sorted draw list
+ * (state->xpos_road_centre_left), forcing the dhs_insert shift path with a
+ * growing number of records to move (B=1, then B=2).
+ *
+ * Regression check for a reversed source/destination copy in the shift
+ * loop: the pointer arithmetic for the shift matched real Z80 LDDR
+ * semantics ((DE) <- (HL)), but the loop body wrote `*HLtable-- =
+ * *DEtable--` -- backwards -- which duplicated stale/garbage entries over
+ * the live records instead of shifting them up, losing the queued hazards.
+ * With three hazards and slot order 0,1,2 the final insert must shift two
+ * live records (B=2), which is exactly the case that corrupted data.
+ */
+static void test_advance_hazards_insert_shift_preserves_records(void)
+{
+  chqstate_t *state;
+  s16        *rec;
+
+  state = make_road_state();
+  chq_test_build_height_table(state);
+
+  memset(state->hazards, 0, sizeof(state->hazards));
+
+  state->hazards[0].used             = HAZARD_USED;
+  state->hazards[0].distance         = 5;
+  state->hazards[0].dist_frac        = 0;
+  state->hazards[0].speed            = 0;
+  state->hazards[0].hazard_flags     = 0;
+  state->hazards[0].horz_pos_on_road = 0;
+  state->hazards[0].hit_handler      = no_op;
+
+  state->hazards[1].used             = HAZARD_USED;
+  state->hazards[1].distance         = 10;
+  state->hazards[1].dist_frac        = 0;
+  state->hazards[1].speed            = 0;
+  state->hazards[1].hazard_flags     = 0;
+  state->hazards[1].horz_pos_on_road = 0;
+  state->hazards[1].hit_handler      = no_op;
+
+  state->hazards[2].used             = HAZARD_USED;
+  state->hazards[2].distance         = 15;
+  state->hazards[2].dist_frac        = 0;
+  state->hazards[2].speed            = 0;
+  state->hazards[2].hazard_flags     = 0;
+  state->hazards[2].horz_pos_on_road = 0;
+  state->hazards[2].hit_handler      = no_op;
+
+  chq_test_advance_hazards(state);
+
+  assert(state->n_hazards == 3);
+
+  /* Draw list must be sorted with the largest distance first: slot 2 (15),
+   * then slot 1 (10), then slot 0 (5) -- none lost, none corrupted. */
+  rec = state->xpos_road_centre_left;
+  assert((rec[0] & 0xFF) == 15); assert(rec[1] == 2);
+  assert((rec[2] & 0xFF) == 10); assert(rec[3] == 1);
+  assert((rec[4] & 0xFF) == 5);  assert(rec[5] == 0);
+
+  chq_destroy(state);
+  printf("PASS  advance_hazards: insert-shift preserves queued draw-list "
+         "records\n");
+}
+
 /* ----------------------------------------------------------------------- */
 
 int main(void)
@@ -810,6 +875,7 @@ int main(void)
   test_draw_overhead_stops_at_right_edge();
   test_helicopter_draws();
   test_perp_caught_progression();
+  test_advance_hazards_insert_shift_preserves_records();
 
   printf("\nAll tests passed.\n");
   return 0;

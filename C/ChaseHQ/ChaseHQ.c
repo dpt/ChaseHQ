@@ -9938,7 +9938,7 @@ static void advance_hazard(chqstate_t *state,
   int       A_n_hazards;  /* n_hazards count before increment (was A) */
   u16       HLword0;      /* draw-list record word0: distance | (frac << 8) (Conv: added) */
   int       BCwords;      /* draw-list entries × 2; word count for shift-down (Conv: added) */
-  s16      *DEtable;      /* source pointer during draw-list downward shift (was HL) */
+  s16      *DEtable;      /* destination pointer during draw-list upward shift (was DE) */
   s16      *HLstart;      /* freed record slot for the new entry (Conv: added) */
 
   carry = 0;
@@ -10109,12 +10109,15 @@ dhs_insert:
   /* $AEAB-$AEC7: PUSH DE; BC=B*4; LDDR; POP DE — shift the remaining
    * Biterations records (this one and all after it) up by one record to
    * make room, then write the new record into the freed slot.
-   * Conv: LDDR shifts bytes; C shifts s16 words (BCwords = B*2 entries). */
+   * Conv: LDDR shifts bytes; C shifts s16 words (BCwords = B*2 entries).
+   * LDDR copies (DE) <- (HL): HLtable is the source (last word of the
+   * block), DEtable is the destination (last word of the shifted block,
+   * one record higher); both walk backward together. */
   HLstart = HLtable;
   BCwords = Biterations * 2;
-  DEtable = HLtable + BCwords + 1; /* source: one record past the shift block */
-  HLtable = HLtable + BCwords - 1; /* dest: both computed from the original HLtable */
-  do { *HLtable-- = *DEtable--; } while (--BCwords > 0);
+  DEtable = HLtable + BCwords + 1; /* dest: one record past the shift block */
+  HLtable = HLtable + BCwords - 1; /* src: both computed from the original HLtable */
+  do { *DEtable-- = *HLtable--; } while (--BCwords > 0);
   HLstart[0] = Ddistance | (Edist_frac << 8);
   HLstart[1] = IXhazard - &state->hazards[0]; /* Conv: slot index, not ptr */
 
@@ -17944,6 +17947,11 @@ void chq_test_layout_road(chqstate_t *state)
 void chq_test_exit_fork(chqstate_t *state)
 {
   exit_fork(state);
+}
+
+void chq_test_advance_hazards(chqstate_t *state)
+{
+  advance_hazards(state);
 }
 
 void chq_test_game_frame(chqstate_t *state)
