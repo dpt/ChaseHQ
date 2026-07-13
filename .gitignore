@@ -2,3 +2,4 @@ build
 *.d
 *.swp
 .DS_Store
+.idea/
