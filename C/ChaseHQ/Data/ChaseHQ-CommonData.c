@@ -3912,7 +3912,7 @@ const bitmap_t fire3_defns[SPRITE_FRAMES] = {
   { 2, BITMAPFLAG_MASKED,   4, bitmap_fire5 + 4,  bitmap_fire5s + 4  },
   { 2, BITMAPFLAG_MASKED,   3, bitmap_fire5 + 8,  bitmap_fire5s + 8  },
   { 2, BITMAPFLAG_MASKED,   2, bitmap_fire5 + 12, bitmap_fire5s + 12 },
-  { 2, BITMAPFLAG_MASKED,   1, bitmap_fire5 + 16, bitmap_fire5s + 12 }
+  { 2, BITMAPFLAG_MASKED,   1, bitmap_fire5 + 16, bitmap_fire5s + 16 }
 };
 
 // $E130
@@ -3928,7 +3928,7 @@ const bitmap_t fire4_defns[SPRITE_FRAMES] = {
 // $E15A
 const bitmap_t fire5_defns[SPRITE_FRAMES] = {
   { 4, BITMAPFLAG_DEFAULT,  6, bitmap_fire1 + 40, bitmap_fire1 + 40  },
-  { 3, BITMAPFLAG_MASKED,   3, bitmap_fire3 + 40, bitmap_fire3 + 40  },
+  { 3, BITMAPFLAG_MASKED,   3, bitmap_fire3 + 30, bitmap_fire3 + 30  },
   { 2, BITMAPFLAG_MASKED,   3, bitmap_fire5 + 8,  bitmap_fire5s + 8  },
   { 2, BITMAPFLAG_MASKED,   2, bitmap_fire5 + 12, bitmap_fire5s + 12 },
   { 2, BITMAPFLAG_MASKED,   1, bitmap_fire5 + 16, bitmap_fire5s + 16 },
@@ -3938,7 +3938,7 @@ const bitmap_t fire5_defns[SPRITE_FRAMES] = {
 // $E184
 const bitmap_t fire6_defns[SPRITE_FRAMES] = {
   { 4, BITMAPFLAG_DEFAULT, 6, bitmap_fire2 + 40, bitmap_fire2 + 40  },
-  { 3, BITMAPFLAG_MASKED,  3, bitmap_fire4 + 40, bitmap_fire4 + 40  },
+  { 3, BITMAPFLAG_MASKED,  3, bitmap_fire4 + 30, bitmap_fire4 + 30  },
   { 2, BITMAPFLAG_MASKED,  3, bitmap_fire6 + 12, bitmap_fire6s + 12 },
   { 2, BITMAPFLAG_MASKED,  2, bitmap_fire6 + 16, bitmap_fire6s + 16 },
   { 2, BITMAPFLAG_MASKED,  1, bitmap_fire6 + 20, bitmap_fire6s + 20 },
