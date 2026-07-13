@@ -30,7 +30,7 @@ CMake is the canonical build system. The `Makefile` references outdated source n
 
 ```bash
 # From C/
-cmake -S . -B cmake-build-debug
+cmake -S . -B cmake-build-debug -DCMAKE_BUILD_TYPE=Debug
 cmake --build cmake-build-debug
 ./cmake-build-debug/ChaseHQ
 ```
