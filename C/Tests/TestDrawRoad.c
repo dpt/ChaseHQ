@@ -638,6 +638,73 @@ static void test_perp_caught_progression(void)
          "(caught at frame %d)\n", frame);
 }
 
+/*
+ * Force the stage-2 helicopter straight into its turn-left approach
+ * (helicopter_control = 3, see drive_helicopter's hc_pick_direction) and run
+ * whole game frames, checking that dee_draw_helicopter engages and that the
+ * road buffer is not corrupted while draw_helicopter runs. Regression check
+ * for pitfall #29: helitable was stepped as an array of heli_bitmap_t
+ * (12 bytes) rather than an array of pointers (2 bytes), which walked far
+ * outside CommonData and produced garbage or crashed.
+ */
+static void test_helicopter_draws(void)
+{
+  chqstate_t *state;   /* game state under test */
+  int         frame;   /* frame counter */
+  int         saw_draw; /* set once dee_draw_helicopter goes non-zero */
+  int         max_obj; /* largest side-object byte this frame */
+
+  state = chq_create(&g_speccy);
+  assert(state != NULL);
+
+  state->wanted_stage_number  = 2;
+  state->current_stage_number = 0; /* force load */
+  chq_test_load_stage(state);
+  assert(state->stage != NULL);
+  chq_test_set_up_stage(state);
+
+  state->hazards[0].used = HAZARD_USED; /* keep perp spawned, as run_game */
+  state->helicopter_control = 3; /* dispatch straight to turn-left sequence */
+
+  saw_draw = 0;
+
+  for (frame = 0; frame < 500; frame++) {
+    state->speed = 0x0180;
+    state->session.time_bcd = 0x60;
+    chq_test_game_frame(state);
+
+    if (state->dee_draw_helicopter)
+      saw_draw = 1;
+
+    max_obj = chq_test_max_side_object(state);
+    if (max_obj > 9) {
+      printf("  FAIL: side object byte %d (> 9) at frame %d "
+             "(dee_draw_helicopter=%u)\n",
+             max_obj, frame, state->dee_draw_helicopter);
+      assert(max_obj <= 9);
+    }
+
+    /* Debug aid: set CHQ_DUMP_DIR to dump raw ZX screens (.scr) for visual
+     * inspection of the rendered helicopter sprite. */
+    if (getenv("CHQ_DUMP_DIR") != NULL && frame < 100) {
+      char  fname[256];
+      FILE *fp;
+      snprintf(fname, sizeof(fname), "%s/heli-%05d.scr",
+               getenv("CHQ_DUMP_DIR"), frame);
+      fp = fopen(fname, "wb");
+      if (fp) {
+        fwrite(g_speccy.screen.pixels, 1, sizeof(g_speccy.screen.pixels), fp);
+        fclose(fp);
+      }
+    }
+  }
+
+  assert(saw_draw);
+  chq_destroy(state);
+  printf("PASS  helicopter draws: dee_draw_helicopter engages without "
+         "road buffer corruption\n");
+}
+
 /* ----------------------------------------------------------------------- */
 
 int main(void)
@@ -655,6 +722,7 @@ int main(void)
   test_set_up_stage_resets_lane_data();
   test_fork_progression();
   test_full_frame_no_corruption();
+  test_helicopter_draws();
   test_perp_caught_progression();
 
   printf("\nAll tests passed.\n");

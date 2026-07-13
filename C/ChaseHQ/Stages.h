@@ -303,6 +303,13 @@ typedef struct heli_bitmap {
   heli_bitmap_inner_t inner;
 } heli_bitmap_t;
 
+// Table of 6 part pointers used by draw_helicopter: entries 0-4 point to a
+// heli_bitmap_t (body parts, which carry a y_offset); entry 5 points to a
+// bare heli_bitmap_inner_t (the rotor, whose Z80 block has no y_offset
+// byte). The Z80 never type-checks these, so the C table is a flat array of
+// untyped pointers, cast to the right type at each of the two use sites.
+typedef const void *heli_part_ptr_t;
+
 /// Depth Set offset
 /// (7 is original game sizeof(bitmap_t))
 /// M is a bodge factor since the streetlamp values seem to be +2.
@@ -377,8 +384,8 @@ typedef struct stage {
   const obj_t      *addrof_left_hand_short_pole_object;
   const u8         *addrof_perp_description;
   const u8         *addrof_arrest_messages;
-  const heli_bitmap_t (*addrof_helicopter_stuff_1)[SPRITE_FRAMES];
-  const heli_bitmap_t (*addrof_helicopter_stuff_2)[SPRITE_FRAMES];
+  const heli_part_ptr_t *addrof_helicopter_stuff_1;
+  const heli_part_ptr_t *addrof_helicopter_stuff_2;
 
   const bitmap_t  (*bitmaps_stones)[SPRITE_FRAMES];
   const bitmap_t  (*bitmaps_dust)[SPRITE_FRAMES];

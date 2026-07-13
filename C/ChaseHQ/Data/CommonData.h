@@ -261,6 +261,23 @@ const u8 bitmap_tunnellight_5[1 * 5];
 const u8 bitmap_tunnellight_6[2 * 2 * 6];
 const u8 bitmap_tunnellight_6s[2 * 2 * 6];
 
+// Helicopter sprite (stages 2 and 4 share identical part data; only the
+// per-stage bank addresses of the two frame tables differ in the original).
+const u8 bitmap_helicopter[590];
+const heli_bitmap_t heli_part0;
+const heli_bitmap_t heli_part1_frame0;
+const heli_bitmap_t heli_part1_frame1;
+const heli_bitmap_t heli_part2_frame0;
+const heli_bitmap_t heli_part2_frame1;
+const heli_bitmap_t heli_part3_frame0;
+const heli_bitmap_t heli_part3_frame1;
+const heli_bitmap_t heli_part4_frame0;
+const heli_bitmap_t heli_part4_frame1;
+const heli_bitmap_inner_t heli_rotor_frame0;
+const heli_bitmap_inner_t heli_rotor_frame1;
+const heli_part_ptr_t heli_table_frame0[SPRITE_FRAMES];
+const heli_part_ptr_t heli_table_frame1[SPRITE_FRAMES];
+
 const u8 perp_escape_hazards[6 + 5];
 const u8 perp_escape_curvature[5];
 const u8 perp_escape_height[5];

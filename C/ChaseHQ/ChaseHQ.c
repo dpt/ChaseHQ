@@ -1006,9 +1006,9 @@ static void layout_dirt_and_stones(chqstate_t *state);
 static void draw_dirt_and_stones(chqstate_t *state, int Biterations,
                               const u8 *IYheight);
 
-static void draw_helicopter(chqstate_t *state, int Biterations, u8 *IYheight);
+static void draw_helicopter(chqstate_t *state, int Bdistance, u8 *IYheight);
 static void draw_helicoper_part(chqstate_t                *state,
-                                int                         A,
+                                int                         Acol_pos,
                                 const heli_bitmap_inner_t *DEinnerbitmap,
                                 const u8                  *IYheight);
 
@@ -3886,10 +3886,10 @@ static void draw_scene_objects(chqstate_t *state)
   assert(state->roadbuf_start == &state->road_buffer[0]);
   assert(state->roadbuf_end   == &state->road_buffer[256]);
 
-  state->ddas_particle_ptr = (u8 *) state->xpos_road_fork_right + 0x28; // $ED28
+  state->ddas_particle = (u8 *) state->xpos_road_fork_right + 0x28; // $ED28
   state->dhs_xpos_table = &state->xpos_road_centre_left[0];
-  assert(state->ddas_particle_ptr >= (u8 *) &state->xpos_road_fork_right[0] &&
-         state->ddas_particle_ptr < (u8 *) &state->xpos_road_fork_right[128]);
+  assert(state->ddas_particle >= (u8 *) &state->xpos_road_fork_right[0] &&
+         state->ddas_particle < (u8 *) &state->xpos_road_fork_right[128]);
   assert(state->dhs_xpos_table >= &state->xpos_road_centre_left[0] &&
          state->dhs_xpos_table < &state->xpos_road_centre_left[128]);
 
@@ -4525,7 +4525,7 @@ static void draw_tunnel_light_common(chqstate_t            *state,
  * \param[in] IYheight Height table pointer. (was IY)
  */
 void draw_object_left(chqstate_t *state,
-                      int          Bdepth,
+                      int         Bdepth,
                       const void *DEdepthset,
                       const s16  *IXxpos,
                       const u8   *IYheight)
@@ -4629,9 +4629,9 @@ static void draw_object_left_stretchy_entrypt(chqstate_t     *state,
  *   (was IY)
  */
 static void draw_object_left_width_entrypt(chqstate_t     *state,
-                                                int             Awidth_bytes,
-                                                const bitmap_t *HLbitmap,
-                                                const u8       *IYheight)
+                                           int             Awidth_bytes,
+                                           const bitmap_t *HLbitmap,
+                                           const u8       *IYheight)
 {
   int zero;           /* non-zero when bitmap is NOT flipped (BITMAPFLAG_FLIPPED clear) (was Z) */
   int carry;          /* non-zero when bitmap uses a mask (BITMAPFLAG_MASKED set) (carry) */
@@ -4838,9 +4838,9 @@ static void draw_object_right_stretchy_entrypt(chqstate_t     *state,
  * \param[in] IYheight Height table pointer. (was IY)
  */
 static void draw_object_right_width_entrypt(chqstate_t     *state,
-                                                 int             Awidth_bytes,
-                                                 const bitmap_t *HLbitmap,
-                                                 const u8       *IYheight)
+                                            int             Awidth_bytes,
+                                            const bitmap_t *HLbitmap,
+                                            const u8       *IYheight)
 {
   if (Awidth_bytes < 247) /* $9309: CP $F7; RET NC */
     draw_object_perspective_entrypt(state, Awidth_bytes, 0, HLbitmap, IYheight);
@@ -9073,77 +9073,77 @@ ldas_do_work:
  * \param[in] IYheight Pointer into the height table. (was IY)
  */
 static void draw_dirt_and_stones(chqstate_t *state, int Biterations,
-                              const u8 *IYheight)
+                                 const u8 *IYheight)
 {
-  int              carry;          /* carry from pixel-width overflow check (carry) */
-  u8              *HLtable;        /* byte pointer into the $ED28 table via ddas_particle_ptr (was HL) */
-  u8               A;              /* type byte: 1=stone, 2=dirt; reused as LOD index (was A) */
+  u8              *HLparticle;                /* byte pointer into the $ED28 table via ddas_particle_ptr (was HL) */
+  u8               Atype;                     /* type byte: 1=stone, 2=dirt (was A) */
   const bitmap_t (*DEbitmaps)[SPRITE_FRAMES]; /* bitmap LOD array: stones_lods or dust_lods (was DE) */
-  int              C;              /* x-position low byte from the particle table (was C) */
-  const bitmap_t  *HLbitmap;       /* selected bitmap frame for the current LOD level (was HL) */
-  int              E;              /* pixel width of selected bitmap: width_bytes * 8 (was E) */
-  int              saved_A;        /* banked x-position high byte; sign selects the draw path (was A') */
-  carry = 0;
+  int              Cx;                        /* x-position low byte from the particle table (was C) */
+  int              Ax;                        /* LOD index (was A) */
+  const bitmap_t  *HLbitmap;                  /* selected bitmap frame for the current LOD level (was HL) */
+  int              Ewidth;                    /* pixel width of selected bitmap: width_bytes * 8 (was E) */
+  int              saved_A;                   /* banked x-position high byte; sign selects the draw path (was A') */
+  int              Aiterations;               /* (was A) */
 
   if (state->ddas_enabled == 0)
     return;
 
-  HLtable = state->ddas_particle_ptr; // table ptr
-  A = *HLtable;  /* type byte */
-  HLtable += 2;  /* skip the type and position bytes */
-  if (A)
+  HLparticle = state->ddas_particle; // table ptr
+  Atype = *HLparticle;  /* type byte */
+  HLparticle += 2;  /* skip the type and position bytes */
+  if (Atype)
     goto ddas_bitmaps;
 
-  HLtable += 2;  /* skip the unused x-position word */
-  state->ddas_particle_ptr = HLtable;
+  HLparticle += 2;  /* skip the unused x-position word */
+  state->ddas_particle = HLparticle;
   return;
 
 ddas_bitmaps:
   DEbitmaps = state->stage->bitmaps_stones;
-  if (--A)
+  if (--Atype)
     DEbitmaps = state->stage->bitmaps_dust;
 
-  C = *HLtable++; /* x-position low byte */
-  A = *HLtable++; /* x-position high byte */
+  Cx = *HLparticle++; /* x-position low byte */
+  Ax = *HLparticle++; /* x-position high byte */
   // EX AF,AF' -- bank the x-position high byte ($A9FF)
-  saved_A = (s8) A; /* Conv: JP M at $AA26 tests bit 7 so sign-extend */
-  state->ddas_particle_ptr = HLtable;
+  saved_A = (s8) Ax; /* Conv: JP M at $AA26 tests bit 7 so sign-extend */
+  state->ddas_particle = HLparticle;
   state->doc_col_pos = 0;
   // H = 0;
-  A = Biterations - 1;
-  if (A > 10)
-    A = 10;
+  Aiterations = Biterations - 1;
+  if (Aiterations > 10)
+    Aiterations = 10;
 
-  SRL(A);
+  Aiterations >>= 1;
   // Conv: $AA13-$AA19: L = A * 7; ADD HL,DE — each LOD entry is 7 bytes, so
   // this selects the A-th bitmap_t within the single table. DEbitmaps[A]
   // would step A whole 6-entry tables (A*6 bitmap_t) and read out of bounds.
-  HLbitmap = &(*DEbitmaps)[A];
-  E = HLbitmap->width_bytes * 8;
+  HLbitmap = &(*DEbitmaps)[Aiterations];
+  Ewidth = HLbitmap->width_bytes * 8;
 
   // EX AF,AF' -- unbank A' (table byte 3) into A ($AA21)
-  A = C;
-  C = 0;
+  Ax = Cx;
+  Cx = 0;
   if (saved_A >= 0) {
     if (saved_A)
       return;
 
     // So it's zero
-    if (A >= 128) {
-      draw_object_right_width_entrypt(state, A, HLbitmap,
-                                           IYheight); /* exit via */
+    if (Ax >= 128) {
+      draw_object_right_width_entrypt(state, Ax, HLbitmap,
+                                      IYheight); /* exit via */
     } else {
-      A += E;
-      draw_object_left_width_entrypt(state, A, HLbitmap,
-                                          IYheight); /* exit via */
+      Ax += Ewidth;
+      draw_object_left_width_entrypt(state, Ax, HLbitmap,
+                                     IYheight); /* exit via */
     }
   } else {
-    if (A + E <= 255) /* $AA33: ADD A,E; RET NC - fully off-screen when the add doesn't overflow */
+    if (Ax + Ewidth <= 255) /* $AA33: ADD A,E; RET NC - fully off-screen when the add doesn't overflow */
       return;
 
-    A += E; /* Conv: wraps as the Z80 ADD does */
-    draw_object_left_width_entrypt(state, A, HLbitmap,
-                                        IYheight);  /* exit via */
+    Ax += Ewidth; /* Conv: wraps as the Z80 ADD does */
+    draw_object_left_width_entrypt(state, Ax, HLbitmap,
+                                   IYheight);  /* exit via */
   }
 }
 
@@ -9155,38 +9155,53 @@ ddas_bitmaps:
  * visible.
  *
  * The rotor animation position is derived by multiplying the top three bits of
- * fast_counter by the height delta IY[79] − IY[78], using an 8-bit
- * shift-and-add loop. The high byte of the result, halved, becomes
- * dhs_heli_rotor_pos. The body y-offset is computed from dhs_heli_vert_base minus
- * IY[78].
+ * fast_counter by the height delta object_positions[Biterations] −
+ * object_positions[Biterations − 1], using an 8-bit shift-and-add loop. The
+ * high byte of the result, halved, becomes dhs_heli_rotor_pos. The body
+ * y-offset is computed from dhs_heli_vert_base minus
+ * object_positions[Biterations − 1].
+ *
+ * Conv: the original reads these two bytes via IY+$4E/IY+$4F, where IY is the
+ * same pointer draw_scene_objects walks down through height_table ($E300 +
+ * Biterations). Because the Z80 address space is flat, those two offsets
+ * actually land past height_table, past clamped_heights, past horizon_attr
+ * and one unused byte, inside the separate 21-byte object_positions buffer
+ * at $E34F (see layout_objects, $A579) — specifically at
+ * object_positions[Biterations − 1] and object_positions[Biterations]. A
+ * literal port that kept indexing off the height_table pointer would read 78
+ * and 79 bytes past a 32-byte C array instead.
  *
  * Five body parts are drawn in a loop via draw_helicoper_part, followed by a
  * sixth rotor entry drawn separately using the self-modified rotor position.
  *
  * \param[in] state Pointer to game state.
- * \param[in] Biterations Distance counter; must equal 3 to render. (was B)
- * \param[in] IYheight Pointer into the height table. (was IY)
+ * \param[in] Bdistance Distance counter; must equal 3 to render. (was B)
+ * \param[in] IYheight Pointer into the height table, passed through to
+ *            draw_helicoper_part for object plotting. (was IY)
  */
-static void draw_helicopter(chqstate_t *state, int Biterations, u8 *IYheight)
+static void draw_helicopter(chqstate_t *state, int Bdistance, u8 *IYheight)
 {
-  int                   carry;           /* carry from RLA in the rotor multiply loop (carry) */
-  int                   diff;            /* height delta IY[79] − IY[78], multiply operand (was DE) */
-  u16                   total;           /* shift-and-add multiply accumulator (was HL) */
-  u8                    fast_counter;    /* top three bits of fast_counter, shifted through multiply (was A) */
-  int                   Biterations2;    /* loop counter: 8 for multiply, 5 for body-part draw (was B) */
-  u8                    Atotal;          /* high byte of multiply result, halved for rotor position (was A) */
-  int                   frame;           /* animation frame index: anim_counter bit 0 selects bitmap set (was A) */
-  const heli_bitmap_t (*helibitmaps)[SPRITE_FRAMES]; /* pointer to current helicopter bitmap LOD table (was HL) */
-  const heli_bitmap_t  *helibitmap;      /* current bitmap entry for each body part drawn (was DE) */
+  int                        carry;        /* carry from RLA in the rotor multiply loop (carry) */
+  int                        diff;         /* object_positions height delta, multiply operand (was DE) */
+  u16                        total;        /* shift-and-add multiply accumulator (was HL) */
+  u8                         fast_counter; /* top three bits of fast_counter, shifted through multiply (was A) */
+  int                        Biterations2; /* loop counter: 8 for multiply, 5 for body-part draw (was B) */
+  u8                         Atotal;       /* high byte of multiply result, halved for rotor position (was A) */
+  int                        frame;        /* animation frame index: anim_counter bit 0 selects bitmap set (was A) */
+  const heli_part_ptr_t     *helitable;    /* pointer to current 6-entry table of part pointers (was HL) */
+  const heli_bitmap_t       *helipart;     /* body part block: y_offset + inner bitmap (was DE) */
+  const heli_bitmap_inner_t *helirotor;    /* rotor block: bare inner bitmap, no y_offset (was DE) */
+
   carry = 0;
 
-  if (Biterations != 3)
+  if (Bdistance != 3)
     return;
 
   if (state->stage->addrof_helicopter_stuff_1 == NULL)
     return;
 
-  diff = IYheight[0x4F] - IYheight[0x4E]; // in the $E315 buffer?
+  diff = state->object_positions[Bdistance] -
+         state->object_positions[Bdistance - 1]; // Conv: see prologue
   total = 0;
   fast_counter = state->fast_counter & 0xE0;
   Biterations2 = 8;
@@ -9202,44 +9217,38 @@ static void draw_helicopter(chqstate_t *state, int Biterations, u8 *IYheight)
   RR(Atotal); // halve?
   state->dhs_heli_rotor_pos = Atotal;
 
-  state->dhs_heli_body_y_offset = state->dhs_heli_vert_base - IYheight[0x4E];
+  state->dhs_heli_y_offset =
+    state->dhs_heli_vert_base - state->object_positions[Bdistance - 1];
 
   Biterations2 = 5; // iterations (draw first five)
   frame = state->anim_counter & 1; // heli frame
 
-  helibitmaps = (frame == 0) ? state->stage->addrof_helicopter_stuff_1 :
-                               state->stage->addrof_helicopter_stuff_2;
+  helitable = (frame == 0) ? state->stage->addrof_helicopter_stuff_1 :
+                             state->stage->addrof_helicopter_stuff_2;
 
-  // FIXME: wrong data model — currently unreachable (all stages define the
-  // helicopter tables as NULL). Decoded from the skool ($AA71-$AA8E):
-  // - The table is six 16-bit POINTERS to per-part blocks (HL advances 2
-  //   bytes per part), not six consecutive heli_bitmap_t structs. The
-  //   correct C type is an array of six pointers; `*helibitmaps++` here
-  //   steps a whole 6-struct table per part (pitfall #29).
-  // - Parts 1-5 blocks are [y_offset, horz_offset, bitmap]: A = block[0],
-  //   then INC DE so dhl_aa94 reads horz_offset at offset 1.
-  // - Part 6 (rotor, $AA86): A comes from the self-modified rotor position
-  //   and there is NO INC DE — the block has no y_offset byte; it is a bare
-  //   heli_bitmap_inner_t. Restructure the types when helicopter data lands.
+  // Conv: the table is six 16-bit pointers to per-part blocks (HL advances 2
+  // bytes per part; pitfall #29), not six consecutive heli_bitmap_t structs.
+  // Parts 1-5 are heli_bitmap_t (y_offset + inner); part 6 (rotor, $AA86) is
+  // a bare heli_bitmap_inner_t with no y_offset byte, so it is read via a
+  // separate pointer type after the loop.
   do {
-    helibitmap = *helibitmaps++;
-    draw_helicoper_part(state, helibitmap->y_offset + state->dhs_heli_body_y_offset,
-                        &helibitmap->inner, IYheight);
+    helipart = (const heli_bitmap_t *)*helitable++;
+    draw_helicoper_part(state, helipart->y_offset + state->dhs_heli_y_offset,
+                        &helipart->inner, IYheight);
   } while (--Biterations2 > 0);
 
-  helibitmap = *helibitmaps;
+  helirotor = (const heli_bitmap_inner_t *)*helitable;
   // A = 0; // an apparently useless op
-  draw_helicoper_part(state, state->dhs_heli_rotor_pos, &helibitmap->inner,
-                      IYheight);
+  draw_helicoper_part(state, state->dhs_heli_rotor_pos, helirotor, IYheight);
 }
 
 static void draw_helicoper_part(chqstate_t                *state,
-                                int                         A,
+                                int                        Acol_pos,
                                 const heli_bitmap_inner_t *DEinnerbitmap,
                                 const u8                  *IYheight)
 {
   int             carry;
-  int             BC;         /* was BC */
+  int             BC_helipos; /* was BC */
   int             screen_pos; /* was HL/DE */
   const bitmap_t *HLbitmap;   /* was HL */
   int             Bwidth;     /* was B */
@@ -9247,11 +9256,10 @@ static void draw_helicoper_part(chqstate_t                *state,
   int             Abot;       /* was A */
   int             C;          /* was C */
 
-  BC = state->dhl_helipos;
-  state->doc_col_pos = -A; // in draw_object_common
+  BC_helipos = state->dhl_helipos;
+  state->doc_col_pos = -Acol_pos; // in draw_object_common
 
-  screen_pos = DEinnerbitmap->horz_offset + BC;
-
+  screen_pos = DEinnerbitmap->horz_offset + BC_helipos;
 
   HLbitmap  = &DEinnerbitmap->bm; // Conv: Ops shuffled a bit
 
@@ -9296,7 +9304,9 @@ static void draw_helicoper_part(chqstate_t                *state,
  *
  * The horizontal screen position dhl_helipos is updated by adding the road_pos
  * delta since the last frame. The result is then stepped 8 pixels per frame
- * toward the screen centre (112), clamping when it would overshoot.
+ * toward mh_heli_centre_y (normally 112, the screen centre; drive_helicopter
+ * redirects it to −56 to fly the helicopter off-screen during the exit
+ * sequence), clamping when it would overshoot.
  *
  * \param[in] state Pointer to game state.
  */
@@ -9306,7 +9316,7 @@ static void move_helicopter(chqstate_t *state)
   int direction;   /* horizontal swing direction: +1 or −1, negated each anim cycle (was A) */
   int offset;      /* accumulated swing offset, added to height for dhs_heli_vert_base (was A) */
   int helipos;     /* horizontal position: dhl_helipos adjusted by road_pos delta (was HL) */
-  int centre;      /* screen centre column target for helipos: 112 (was DE) */
+  int centre;      /* screen centre column target for helipos: mh_heli_centre_y (was DE) */
   int newhelipos;  /* updated helipos after one 8-pixel step toward centre (was HL) */
 
   if (state->helicopter_control == 0)
@@ -9336,7 +9346,7 @@ static void move_helicopter(chqstate_t *state)
   state->mh_prevroadpos = state->scenedata.road_pos; // update
 
   helipos += state->dhl_helipos;
-  centre = 112; // const
+  centre = state->mh_heli_centre_y; // Conv: SM constant, redirected by drive_helicopter
   if (helipos != centre) {
     newhelipos = helipos + (helipos > centre ? -8 : 8);
     if (newhelipos >= centre) {
@@ -9362,10 +9372,12 @@ set_newpos:
  * State machine controlling the helicopter event sequence. Returns immediately
  * if helicopter_control is zero.
  *
- * States on entry: 1: set centre_y to −56 and transition to state 2. 2:
- * helicopter on approach; waits until dhl_helipos reaches 0 then disables the
- * helicopter (state 0). 3: helicopter turning left; initialise SM fields, play
- * pilot chatter and set centre_y to 112, transition to state 5. 4: helicopter
+ * States on entry: 1: redirect mh_heli_centre_y to −56 (off-screen) so
+ * move_helicopter flies the helicopter away, and transition to state 2. 2:
+ * helicopter departing; waits while dhl_helipos is still non-negative
+ * (on-screen), then disables the helicopter (state 0) once it has gone
+ * negative. 3: helicopter turning left; initialise SM fields, play pilot
+ * chatter and set centre_y to 112, transition to state 5. 4: helicopter
  * turning right; same as state 3 with right-turn chatter. 5+: not yet active;
  * return immediately.
  *
@@ -9378,7 +9390,7 @@ set_newpos:
 static void drive_helicopter(chqstate_t *state)
 {
   int       heli_ctl;      /* helicopter_control value on entry; decremented to dispatch (was A) */
-  int       helipos;       /* dhl_helipos low byte; checked for zero in state 2 (was A) */
+  int       helipos;       /* dhl_helipos; sign checked in state 2 (was A, high byte of HL) */
   int       draw_heli;     /* 1 to enable helicopter rendering, 0 to disable (was A) */
   int       new_heli_ctl;  /* new value to write back to helicopter_control (was A) */
   int       HL_centre_y;   /* starting centre_y for mh_heli_centre_y: −56 or 112 (was HL) */
@@ -9396,8 +9408,11 @@ static void drive_helicopter(chqstate_t *state)
 
   // Otherwise helicopter_control is 2.
 
-  helipos = state->dhl_helipos; // Conv: Original only checks low byte
-  if (helipos == 0)
+  helipos = state->dhl_helipos;
+  // Conv: original tests the high byte of the 16-bit dhl_helipos word for
+  // zero (RET Z), i.e. waits while dhl_helipos is still non-negative and
+  // falls through to disable once it has gone negative (flown off-screen).
+  if (helipos >= 0)
     return;
 
   draw_heli = 0; // false

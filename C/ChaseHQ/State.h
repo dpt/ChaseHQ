@@ -480,12 +480,12 @@ struct chqstate {
   // $A9DE (SM) in draw_dirt_and_stones
   u8        ddas_enabled; // makes draw_dirt_and_stones run
   // $A9E2 (SM) in draw_dirt_and_stones
-  u8       *ddas_particle_ptr; // byte ptr into the $ED28 particle table
+  u8       *ddas_particle; // byte ptr into the $ED28 particle table
 
   // $AA5A (SM) in draw_helicopter
   u8        dhs_heli_vert_base; // y position?
   // $AA76 (SM) in draw_helicopter
-  u8        dhs_heli_body_y_offset;
+  u8        dhs_heli_y_offset;
   // $AA8C (SM) in draw_helicopter
   u8        dhs_heli_rotor_pos;
 
@@ -503,7 +503,7 @@ struct chqstate {
   // $AAF6 (SM) in move_helicopter
   u16       mh_prevroadpos; // previous road pos
   // $AB06 (SM) in move_helicopter
-  u16       mh_heli_centre_y;
+  s16       mh_heli_centre_y; // 112 normally; −56 during the exit sequence
 
   // $AE70 (SM) in advance_hazard
   u16       dhs_road_left_xpos;
