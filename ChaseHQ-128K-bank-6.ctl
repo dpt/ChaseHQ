@@ -124,7 +124,7 @@ N $C265 Graphic definition for object 2 - OVERHEAD_BRIDGE
 B $C265,1,1 Hit coord min (furthest)
 B $C266,1,1 Hit coord max (nearest)
 B $C267,1,1 How far to push hero car away if hit
-W $C268,2,2 Argument - (null)
+W $C268,2,2 [$D326] Argument for routine passed in #REGde
 W $C26A,2,2 [out-of-bounds] Address of routine draw_overhead
 N $C26C Graphic definition for object 3 - SHORT_POLE
 B $C26C,1,1 Hit coord min (furthest)
@@ -1284,7 +1284,108 @@ B $D30B,1,1 Flags
 B $D30C,1,1 Height (pixels)
 W $D30D,2,2 [$D4A7] Bitmap address
 W $D30F,2,2 [$D4A7] Pre-shifted bitmap address
-B $D311,342,8*42,6
+N $D311 LOD
+B $D311,1,1 Width (bytes)
+B $D312,1,1 Flags
+B $D313,1,1 Height (pixels)
+W $D314,2,2 [$D59A] Bitmap address
+W $D316,2,2 [$D59A] Pre-shifted bitmap address
+N $D318 LOD
+B $D318,1,1 Width (bytes)
+B $D319,1,1 Flags
+B $D31A,1,1 Height (pixels)
+W $D31B,2,2 [$D614] Bitmap address
+W $D31D,2,2 [$D614] Pre-shifted bitmap address
+N $D31F LOD
+B $D31F,1,1 Width (bytes)
+B $D320,1,1 Flags
+B $D321,1,1 Height (pixels)
+W $D322,2,2 [$D641] Bitmap address
+W $D324,2,2 [$D641] Pre-shifted bitmap address
+N $D326 Stretchy graphic
+B $D326,1,1 ?index
+W $D327,2,2 [$D32D] Pointer to stretchy_graphic_part
+B $D329,1,1 ?index
+W $D32A,2,2 [$D361] Pointer to stretchy_graphic_part
+B $D32C,1,1 Terminator
+N $D32D Stretchy graphic part
+W $D32D,2,2 [$D377] LOD ptr
+W $D32F,2,2 TBD
+W $D331,2,2 TBD
+W $D333,2,2 TBD
+W $D335,2,2 TBD
+W $D337,2,2 TBD
+W $D339,2,2 TBD
+W $D33B,2,2 TBD
+W $D33D,2,2 TBD
+W $D33F,2,2 TBD
+W $D341,2,2 TBD
+N $D343 Bitmap data 3 bytes x 10
+B $D343,30,8*3,6
+N $D361 Stretchy graphic part
+W $D361,2,2 [$D377] LOD ptr
+W $D363,2,2 TBD
+W $D365,2,2 TBD
+W $D367,2,2 TBD
+W $D369,2,2 TBD
+W $D36B,2,2 TBD
+W $D36D,2,2 TBD
+W $D36F,2,2 TBD
+W $D371,2,2 TBD
+W $D373,2,2 TBD
+W $D375,2,2 TBD
+N $D377 LOD table for "stretchy"
+N $D377 LOD
+B $D377,1,1 Width (bytes)
+B $D378,1,1 Flags
+B $D379,1,1 Height (pixels)
+W $D37A,2,2 [$D3AF] Bitmap address
+W $D37C,2,2 [$D3AF] Pre-shifted bitmap address
+N $D37E LOD
+B $D37E,1,1 Width (bytes)
+B $D37F,1,1 Flags
+B $D380,1,1 Height (pixels)
+W $D381,2,2 [$D507] Bitmap address
+W $D383,2,2 [$D507] Pre-shifted bitmap address
+N $D385 LOD
+B $D385,1,1 Width (bytes)
+B $D386,1,1 Flags
+B $D387,1,1 Height (pixels)
+W $D388,2,2 [$D5D0] Bitmap address
+W $D38A,2,2 [$D5D0] Pre-shifted bitmap address
+N $D38C LOD
+B $D38C,1,1 Width (bytes)
+B $D38D,1,1 Flags
+B $D38E,1,1 Height (pixels)
+W $D38F,2,2 [$D62C] Bitmap address
+W $D391,2,2 [$D62C] Pre-shifted bitmap address
+N $D393 LOD
+B $D393,1,1 Width (bytes)
+B $D394,1,1 Flags
+B $D395,1,1 Height (pixels)
+W $D396,2,2 [$D3EF] Bitmap address
+W $D398,2,2 [$D3EF] Pre-shifted bitmap address
+N $D39A LOD
+B $D39A,1,1 Width (bytes)
+B $D39B,1,1 Flags
+B $D39C,1,1 Height (pixels)
+W $D39D,2,2 [$D52B] Bitmap address
+W $D39F,2,2 [$D52B] Pre-shifted bitmap address
+N $D3A1 LOD
+B $D3A1,1,1 Width (bytes)
+B $D3A2,1,1 Flags
+B $D3A3,1,1 Height (pixels)
+W $D3A4,2,2 [$D5E0] Bitmap address
+W $D3A6,2,2 [$D5E0] Pre-shifted bitmap address
+N $D3A8 LOD
+B $D3A8,1,1 Width (bytes)
+B $D3A9,1,1 Flags
+B $D3AA,1,1 Height (pixels)
+W $D3AB,2,2 [$D630] Bitmap address
+W $D3AD,2,2 [$D630] Pre-shifted bitmap address
+B $D3AF,64,4 Bitmap data 4 bytes x 16
+B $D3EF,96,4 Bitmap data 4 bytes x 24
+B $D44F,24,8*3
 B $D467,64,4 Bitmap data 4 bytes x 16
 B $D4A7,96,4 Bitmap data 4 bytes x 24
 B $D507,111,8*13,7
