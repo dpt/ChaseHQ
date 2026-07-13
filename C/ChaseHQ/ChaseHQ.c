@@ -3120,6 +3120,9 @@ have_high_digit:
 
 store_time_bonus_high:
   A = Adash;
+  // $8B34 EX AF,AF' is a swap: A' takes the old main A, which is 0 on both
+  // entry paths, so a zero low digit later stores '0' not the high digit.
+  Adash = 0;
   state->score_messages[0x8C8A - SCORE_MESSAGES_BASE] =
     A; // Write to TIME BONUS line
   A = C & 0x0F;
@@ -3153,7 +3156,7 @@ store_time_bonus_low:
     if (A)
       goto score_have_high_digit;
 
-    RLC(A);
+    RLC(Cflag); /* $8B60 RLC C: test the saw-a-digit flag, not A */
     if (carry)
       goto score_have_high_digit;
     A = ' ';
@@ -3207,6 +3210,9 @@ assign_perp_pos: // is this in the right place?
   A = C;
   state->hazards[0].horz_pos = A;
   HLroadpos = state->scenedata.road_pos;
+  // Conv: $8BA8 SBC HL,$0105 has carry_in=1 when the perp moved right-to-left
+  // ($8B9B ADD A,$FB set carry), making the Z80 test road_pos < 0x0106 in
+  // that case; this models carry_in=0 unconditionally (one boundary value).
   carry = (HLroadpos < ROAD_LEFTMOST); /* was PUSH/SUB/POP */
   Ainput = USERINPUTFLAG_UP | USERINPUTFLAG_RIGHT;
   if (!carry)
@@ -3245,7 +3251,10 @@ perp_too_far_away:
   Aperpdistance = state->hazards[0].distance;
   HLspeed = SPEED_PERP_CHASE;
   if (Aperpdistance < 15)
-    HLspeed -= 20 * (16 - Aperpdistance);
+    // Conv: $8BEF CPL; ADD A,$0F gives 14-distance (not 16-), and the ADD
+    // leaves carry set so the first SBC HL,DE subtracts 21. Z80 edge case
+    // distance==14 gives B=0 so DJNZ loops 256 times; here it subtracts 1.
+    HLspeed -= 20 * (14 - Aperpdistance) + 1;
   DEspeed = HLspeed; // perp's adjusted speed
   HLspeed = state->speed; // our speed
   HLspeedpushed = HLspeed; // PUSH HL
@@ -3259,7 +3268,7 @@ perp_too_far_away:
       Cinput |= USERINPUTFLAG_DOWN;
   }
   HLspeed = HLspeedpushed; // POP HL
-  carry = (HLspeed > SPEED_GEAR_CHANGE);
+  carry = (HLspeed < SPEED_GEAR_CHANGE); /* $8C12 SBC HL,DE: carry when speed < 150 */
   HLspeed -= SPEED_GEAR_CHANGE;
   A = state->gear - carry; // set low speed if speed<SPEED_GEAR_CHANGE
   if (A == 0)

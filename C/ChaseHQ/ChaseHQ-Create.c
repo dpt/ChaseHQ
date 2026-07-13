@@ -92,6 +92,9 @@ static void chq_initialise(chqstate_t *state)
   // $8277
   state->attract_blinker = 0xF0;
 
+  // $8ABE: SM operand in handle_perp_caught, assembled as zero
+  state->handle_perp_caught_delay = 0;
+
   // $9618
   state->rng_seed[0] = 0x7B;
   state->rng_seed[1] = 0x2D;
