@@ -252,7 +252,8 @@ int main(int argc, char **argv)
       : &state->stage->addrof_left_hand_objects[index];
 
   if (obj->handler != draw_stretchy_object_left &&
-      obj->handler != draw_stretchy_object_right) {
+      obj->handler != draw_stretchy_object_right &&
+      obj->handler != draw_overhead) {
     /* obj_t.handler also covers non-stretchy objects (e.g. draw_overhead
      * for tunnels/bridges) with the same pointer signature but different
      * expectations about state and arg; calling those here crashes. */

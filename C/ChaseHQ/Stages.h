@@ -322,9 +322,20 @@ typedef struct depthset_pair {
   u8 offset; // byte offset from 'bitmaps' in parent structure
 } depthset_pair_t;
 
+// Conv: In the Z80 data, overhead-spanning objects (bridges) pack an extra
+// 10-entry table directly after 'pairs' in ROM: draw_overhead reads past
+// pairs[10] with raw pointer arithmetic to reach it. Modelled explicitly
+// here rather than as an out-of-bounds read. Only overhead-bridge depthsets
+// populate 'spans'; all other depthset_t instances leave it NULL.
+typedef struct overhead_span {
+  u8        nrows;      // number of scanlines in the span
+  const u8 *fill_bytes; // one fill byte per scanline, nrows entries
+} overhead_span_t;
+
 typedef struct depthset {
-  const bitmap_t *bitmaps; // -> array of bitmaps
-  depthset_pair_t pairs[DEPTHSET_MAX]; // maps depths to offsets
+  const bitmap_t        *bitmaps; // -> array of bitmaps
+  depthset_pair_t        pairs[DEPTHSET_MAX]; // maps depths to offsets
+  const overhead_span_t *spans; // overhead-bridge span table, or NULL
 } depthset_t;
 
 // root objects (an array of these) used with routine draw_stretchy_object_left/right

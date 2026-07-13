@@ -111,7 +111,7 @@ static const depthset_t stage3_depthset_D2D8;
 static const bitmap_t stage3_lods_D2EE[8];
 static const stretchy_t stage3_stretchy_D326[3];
 static const depthset_t stage3_depthset_D32D;
-static const u8 stage3_bitmap_D343[30];
+static const overhead_span_t stage3_overhead_spans_D343[10];
 static const depthset_t stage3_depthset_D361;
 static const bitmap_t stage3_lods_D377[8];
 static const bitmap_t stage3_lods_D64F[6];
@@ -2260,25 +2260,26 @@ static const depthset_t stage3_depthset_D32D = {
     0x10, 0x17,
     0x10, 0x17,
     0x10, 0x17,
-  }
+  },
+  &stage3_overhead_spans_D343[0]
 };
 
 
-// $D343
-// clang-format off
-static const u8 stage3_bitmap_D343[30] = {
-  ___XX___, _X__XXXX, _XXX____,
-  ___XX___, _X__XXXX, _XXX____,
-  ___X__X_, _XX__X__, _XXX___X,
-  ___X__X_, _XX__X__, _XXX___X,
-  ____XX__, XXXXX___, _XXX___X,
-  ____XX__, XXXXX___, _XXX___X,
-  _____XXX, __XX_XX_, _XXX__X_,
-  _____XXX, __XX_XX_, _XXX__X_,
-  _____XXX, __XX_XX_, _XXX__X_,
-  _____XXX, __XX_XX_, _XXX__X_,
+// $D343: overhead-bridge span table (Conv: modelled explicitly; see
+// overhead_span_t in Stages.h). Each entry's fill_bytes points into
+// stage3_bitmap_D3AF, which is defined further below.
+static const overhead_span_t stage3_overhead_spans_D343[10] = {
+  { 0x18, &stage3_bitmap_D3AF[160] },
+  { 0x18, &stage3_bitmap_D3AF[160] },
+  { 0x12, &stage3_bitmap_D3AF[437] },
+  { 0x12, &stage3_bitmap_D3AF[437] },
+  { 0x0C, &stage3_bitmap_D3AF[585] },
+  { 0x0C, &stage3_bitmap_D3AF[585] },
+  { 0x07, &stage3_bitmap_D3AF[647] },
+  { 0x07, &stage3_bitmap_D3AF[647] },
+  { 0x07, &stage3_bitmap_D3AF[647] },
+  { 0x07, &stage3_bitmap_D3AF[647] },
 };
-// clang-format on
 
 // $D361
 static const depthset_t stage3_depthset_D361 = {

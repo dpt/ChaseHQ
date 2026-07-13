@@ -4042,6 +4042,9 @@ left_hand_stuff:
   goto continue_after_left_hand_done;
 }
 
+/* Total LD (HL),A writes in the unrolled deck-fill loop at $9117-$9151. */
+#define BRIDGE_DECK_LOOP_WRITES (30)
+
 /**
  * $9052: Draw overhead objects
  *
@@ -4051,7 +4054,9 @@ left_hand_stuff:
  * do_vert_sub, and selects the depth-set pair index as MIN([Bparam] − 1, 9).
  * Then checks the xpos table entries on both sides of the current position to
  * determine visibility and clipping extent (D and E width fields). Draws the
- * overhead graphic row-by-row using the depth-set pair data.
+ * overhead deck row-by-row: each depth level has an overhead_span_t entry
+ * (a row count plus one solid fill byte per row) selected by Bminheight;
+ * every row is a single-colour memset spanning the clipped width.
  *
  * \param[in,out] state Pointer to game state.
  * \param[in]     Bparam Depth scale index; also selects the pair entry (0..9).
@@ -4072,7 +4077,7 @@ void draw_overhead(chqstate_t *state,
   const stretchy_t      *HLstretchy;  /* pointer to the stretchy descriptor (was HL) */
   const depthset_pair_t *DEpairs;     /* pointer to the depth-set pairs array (was DE) */
   u8                    *HLdst;       /* destination pointer during row copy (was HL) */
-  u8                    *DEsrc;       /* source pointer during row copy (was DE) */
+  const u8              *DEsrc;       /* source pointer during row copy (was DE) */
   int                    Avertical;   /* raw vertical scale value from persp_y_scale (was A) */
   int                    Cparam;      /* scratch: computed vertical offset (was C) */
   int                    A;           /* scratch accumulator: visibility tests and offsets (was A) */
@@ -4083,14 +4088,16 @@ void draw_overhead(chqstate_t *state,
   int                    E;           /* right-clip extent: 0x1F minus visibility offset (was E) */
   const depthset_pair_t *HLpair;      /* pointer to the chosen depth-set pair entry (was HL) */
   int                    Cdepth;      /* depth value from the selected pair entry (was C) */
-  const u8              *HL;          /* scratch pointer reused for column byte source (was HL) */
+  const overhead_span_t *HLspan;      /* chosen overhead span-fill entry (was HL) */
   int                    Acopy;       /* scratch copy of A during sub-loop (was A) */
   int                    B;           /* sub-loop counter for per-row byte writes (was B) */
 
   DEstretchy = (const stretchy_t *) arg;
 
   // PUSH IXxpos/DE/BC
-  if (IXxpos[1] == 0) // buffer offset/distance
+  // Conv: IXxpos[1] would index the *next* s16 element (see pitfall: index-
+  // before-u8-cast); (IX+1) in the Z80 is the high byte of *this* entry.
+  if (((const u8 *) IXxpos)[1] == 0) // buffer offset/distance
     draw_stretchy_object_left(state, Bparam, arg, IXxpos, IYheight);
   // POP BC/HL/IXxpos
 
@@ -4108,28 +4115,35 @@ void draw_overhead(chqstate_t *state,
   Bminheight = Aminheight;
   HLpair = &DEpairs[Aminheight];
   Cdepth = HLpair->depth;
-  HL = (const u8 *) &DEpairs[10] + Bminheight *
-       3; // depthsets seem to have more data than expected...
+  HLspan = &HLstretchy->set->spans[Bminheight];
 
   D = 1;
-  A = IXxpos[1]; // buffer offset/distance
+  A = ((const u8 *) IXxpos)[1]; // buffer offset/distance
   if ((s8) A >= 0) {
     if (A)
       return;
-    A = IXxpos[0] + 24 - Cdepth;
-    if ((s8) A >= 0) {
-      A -= 8;
-      if ((s8) A >= 0) {
-        if (A >= 8)
+    A = (IXxpos[0] + 24) & 0xFF; // $90AD-$90B0: ADD A,$18 (8-bit wrap)
+    // Conv: each Z80 SUB below sets carry (borrow) when the subtrahend
+    // exceeds A; a sign-bit test on the difference is only reliable while
+    // the difference fits -128..+127; direct unsigned comparisons are used
+    // instead (see pitfall: borrow detection via bit 7).
+    if (A >= Cdepth) { // $90B2-$90B3: SUB C; JR C (skip on borrow)
+      A -= Cdepth;
+      if (A >= 8) { // $90B5-$90B7: SUB $08; JR C (skip on borrow)
+        A -= 8;
+        if (A >= 8) // $90B9-$90BB: CP $08; JR C (skip on carry)
           D = A >> 3;
       }
     }
   }
 
-  IXxpos -= 2;
+  // Conv: Z80 `DEC IX; DEC IX` moves back 2 *bytes* = 1 entry in a table of
+  // s16 words (the paired right-hand slot for this row). IXxpos -= 2 on a
+  // s16* moves back 2 *elements* (4 bytes), landing one row too far.
+  IXxpos -= 1;
 
   E = 0x1F;
-  A = IXxpos[1]; // buffer offset/distance
+  A = ((const u8 *) IXxpos)[1]; // buffer offset/distance
   if ((s8) A < 0)
     return;
   if (A == 0) {
@@ -4151,13 +4165,13 @@ void draw_overhead(chqstate_t *state,
 
   // PUSH AF
   Acopy = A + 1;
-  B = *HL;
+  B = HLspan->nrows;
   Acopy -= B;
   if ((s8) Acopy < 0) {
     Acopy += B;
     B = Acopy;
   }
-  DEsrc = NULL; // TODO wordat(++HL); // load bitmap?
+  DEsrc = HLspan->fill_bytes;
   // POP AF
   HLdst = ADDRTOBACKBUF((((A & 0x0F) + 0xF0) << 8) | ((A & 0x70) * 2 + Cparam));
   goto do_draw_span;
@@ -4168,7 +4182,15 @@ void draw_overhead(chqstate_t *state,
       return;
 
 do_draw_span:
-    memset(HLdst, *DEsrc, state->do_span_width_words / 2);
+    // Conv: state->do_span_width_words is the JR displacement self-modified
+    // at $9116, which selects an entry point into the 30-write unrolled
+    // fill loop ($9117-$9151, LD (HL),A / INC L pairs, 2 bytes each). A
+    // larger displacement skips further into the loop, leaving FEWER writes
+    // before the fixed end at $9151 — so the byte count is (30 - words/2),
+    // not words/2. Using words/2 directly inverts the clip: as the deck
+    // narrows towards the right edge (words grows), the span was drawn
+    // *wider* instead of narrower, overrunning past the edge.
+    memset(HLdst, *DEsrc, BRIDGE_DECK_LOOP_WRITES - state->do_span_width_words / 2);
     HLdst = ADDRTOBACKBUF(prev_buf_row(BACKBUFTOADDR(HLdst)));
   }
 }
@@ -10179,7 +10201,7 @@ static void draw_hazard_sprites(chqstate_t *state,
   if (A != (*HLtable & 0xFF)) // Conv: original CP (HL) tests only the low byte
     return;
 
-  if (--A >= 11) // DPT WE NEVER EVEN GET HERE
+  if (--A >= 11)
     A = 10;
   A >>= 1;
   state->smoke_bitmap_index = A;

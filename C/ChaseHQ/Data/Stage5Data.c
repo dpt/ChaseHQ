@@ -116,7 +116,7 @@ static const depthset_t stage5_depthset_D2A9;
 static const bitmap_t stage5_lods_D2BF[8];
 static const stretchy_t stage5_stretchy_D2F7[3];
 static const depthset_t stage5_depthset_D2FE;
-static const u8 stage5_bitmap_D314[30];
+static const overhead_span_t stage5_overhead_spans_D314[10];
 static const depthset_t stage5_depthset_D332;
 static const bitmap_t stage5_lods_D348[8];
 static const bitmap_t stage5_lods_D620[6];
@@ -2319,25 +2319,26 @@ static const depthset_t stage5_depthset_D2FE = {
     0x10, 0x17,
     0x10, 0x17,
     0x10, 0x17,
-  }
+  },
+  &stage5_overhead_spans_D314[0]
 };
 
 
-// $D314
-// clang-format off
-static const u8 stage5_bitmap_D314[30] = {
-  ___XX___, __X_____, _XXX____,
-  ___XX___, __X_____, _XXX____,
-  ___X__X_, __XX_X_X, _XXX___X,
-  ___X__X_, __XX_X_X, _XXX___X,
-  ____XX__, XX__X__X, _XXX___X,
-  ____XX__, XX__X__X, _XXX___X,
-  _____XXX, _____XXX, _XXX__X_,
-  _____XXX, _____XXX, _XXX__X_,
-  _____XXX, _____XXX, _XXX__X_,
-  _____XXX, _____XXX, _XXX__X_,
+// $D314: overhead-bridge span table (Conv: modelled explicitly; see
+// overhead_span_t in Stages.h). Each entry's fill_bytes points into
+// stage5_bitmap_D380, which is defined further below.
+static const overhead_span_t stage5_overhead_spans_D314[10] = {
+  { 0x18, &stage5_bitmap_D380[160] },
+  { 0x18, &stage5_bitmap_D380[160] },
+  { 0x12, &stage5_bitmap_D380[437] },
+  { 0x12, &stage5_bitmap_D380[437] },
+  { 0x0C, &stage5_bitmap_D380[585] },
+  { 0x0C, &stage5_bitmap_D380[585] },
+  { 0x07, &stage5_bitmap_D380[647] },
+  { 0x07, &stage5_bitmap_D380[647] },
+  { 0x07, &stage5_bitmap_D380[647] },
+  { 0x07, &stage5_bitmap_D380[647] },
 };
-// clang-format on
 
 // $D332
 static const depthset_t stage5_depthset_D332 = {

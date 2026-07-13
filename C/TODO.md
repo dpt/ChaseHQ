@@ -2,14 +2,13 @@
 
 ## P1 — Bugs / broken behaviour
 
-- Jittery hazards (teleporting)
+- Jittery hazards (cars teleporting / other odds?)
 - Jittery perp too — check out the whole `perp_behaviour` routine
 - 48k music routine seizes up
-- Fix: Burst of randomish noises when the game is quit
+- Fix: Burst of randomish noises when the game is quit [put in main loop checks]
 
 ## P2 — Game feel / calibration
 
-- timing: Perp-caught-mugshots phase seems too fast
 - Restart bip-bow ticking twice as fast as it should
 - Beeper sfx: calibrate per-loop T-state constants + pick BEEPER_VOLUME_PCT
 - timing: Properly calibrate the game against the original (needs emulator T-state recording)
@@ -25,6 +24,7 @@
 - Stretchy test app produces crap output
 - Ensure partial screen updates are correct
 - Draw road pipeline: merge `draw_road` back into one big unholy lump (cohesion)
+- Fix "Awidth_bytes" vars which seem to be x coords
 
 ## P5 — Clarity pass
 
@@ -34,6 +34,7 @@
 - Remove any local vars from state
 - Sort all decls by order of use
 - Sort all params by register
+- Fix Claude referring to ROM all the time
 
 ## P6 — Features / extras
 
@@ -76,6 +77,7 @@
 - Improved AI driver
 - Lua/Python integration
 - Diagram generation for stretchy graphics
+- Emscripten build
 
 ## FOR WRITEUP / NOTES
 

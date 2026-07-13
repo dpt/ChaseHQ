@@ -705,6 +705,91 @@ static void test_helicopter_draws(void)
          "road buffer corruption\n");
 }
 
+/*
+ * draw_overhead ($9052): the bridge deck span must stop where the Z80's
+ * unrolled fill loop ($9117-$9151, BRIDGE_DECK_LOOP_WRITES entries) would
+ * stop, not run past it. Regression test for the "central part of the
+ * object that spans the road fails to stop at the right edge" report: the
+ * memset byte count was taken directly from do_span_width_words/2 (the JR
+ * displacement into the loop) instead of BRIDGE_DECK_LOOP_WRITES minus that
+ * value, which inverted the clip -- the span grew wider as the deck should
+ * have been narrowing towards the edge.
+ *
+ * All values below (Avertical, do_vert_sub, D, E, do_span_width_words, dest
+ * address) are hand-derived from the skool at $90A3-$9169 for this specific
+ * fixture; see the comment block beside the assertions.
+ */
+static void test_draw_overhead_stops_at_right_edge(void)
+{
+  chqstate_t      *state;
+  overhead_span_t  span;
+  u8               fill_byte;
+  depthset_t       set;
+  stretchy_t       obj;
+  s16              xpos[4];
+  u8               height[0x36];
+  const u8        *row;
+  int              expected_off;
+  int              expected_row;
+  int              expected_col;
+  int              expected_writes;
+  int              i;
+
+  state = chq_create(&g_speccy);
+  assert(state != NULL);
+
+  memset(state->backbuffer, 0xFF, sizeof(state->backbuffer));
+
+  fill_byte = 0xAA;
+  span.nrows = 1;
+  span.fill_bytes = &fill_byte;
+
+  memset(&set, 0, sizeof(set));
+  set.pairs[0].depth = 10; /* Cdepth, selected via Aminheight = MIN(Bparam-1,9) = 0 */
+  set.spans = &span;
+
+  obj.type = STRETCHY_TYPE_FIXED; /* unused by draw_overhead */
+  obj.set  = &set;
+
+  memset(xpos, 0, sizeof(xpos));
+  xpos[1] = 100; /* previous-row entry: high byte 0 -> exercises the E chain */
+  xpos[2] = -1;  /* current-row entry: negative -> skips left-leg draw and the D chain (D stays 1) */
+
+  memset(height, 0, sizeof(height));
+  height[0]    = 200;
+  height[0x35] = 200; /* build_height_table diff (height[0]-height[0x35]) = 0 */
+
+  draw_overhead(state, 1 /* Bparam */, &obj, &xpos[2], height);
+
+  /* fast_counter=0 (fresh state) -> persp_y_scale row 0, column Bparam=1 ->
+   * Avertical = 0x4A (74). do_vert_sub = (74>>1)+74-0 = 111.
+   * Row select A = height[0x35](200) - 111 = 89.
+   * D = 1 (xpos[2] high byte negative skips the D chain).
+   * E: xpos[1]=100, Cdepth=10 -> A=110 -> E = 110>>3 = 13.
+   * do_span_width_words = ~((13-1)*2)+61 = 36 (mod 256).
+   * Deck loop write count = BRIDGE_DECK_LOOP_WRITES(30) - 36/2 = 12.
+   * Dest addr = (((89&0x0F)+0xF0)<<8) | ((89&0x70)*2 + D(1)) = 0xF900|0xA1 = 0xF9A1. */
+  assert(state->do_span_width_words == 36);
+
+  expected_off    = 0xF9A1 - BACKBUFFER_START_ADDRESS;
+  expected_row    = expected_off / BACKBUFFER_ROWBYTES;
+  expected_col    = expected_off % BACKBUFFER_ROWBYTES;
+  expected_writes = 12;
+
+  row = &state->backbuffer[expected_row * BACKBUFFER_ROWBYTES];
+
+  for (i = 0; i < expected_writes; i++)
+    assert(row[expected_col + i] == fill_byte);
+
+  /* The byte immediately past the span must be untouched -- this is the
+   * right-edge stop. Before the BRIDGE_DECK_LOOP_WRITES fix the buggy
+   * formula wrote 18 bytes here instead of 12, overrunning this check. */
+  assert(row[expected_col + expected_writes] == 0xFF);
+
+  chq_destroy(state);
+  printf("PASS  draw_overhead: bridge deck span stops at the computed right edge\n");
+}
+
 /* ----------------------------------------------------------------------- */
 
 int main(void)
@@ -722,6 +807,7 @@ int main(void)
   test_set_up_stage_resets_lane_data();
   test_fork_progression();
   test_full_frame_no_corruption();
+  test_draw_overhead_stops_at_right_edge();
   test_helicopter_draws();
   test_perp_caught_progression();
 
