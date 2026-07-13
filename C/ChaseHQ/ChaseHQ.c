@@ -3225,8 +3225,11 @@ assign_perp_pos: // is this in the right place?
   Ainput = USERINPUTFLAG_UP;
 
 assign_hero_pos:
-  Cinput = Ainput & (USERINPUTFLAG_LEFT | USERINPUTFLAG_RIGHT);
-  if (Cinput)
+  /* $8BBA LD C,A keeps the full input in C; $8BBB AND $03 only tests the
+   * LEFT/RIGHT bits in A. Cinput must retain UP or the hero never
+   * accelerates. */
+  Cinput = Ainput;
+  if (Ainput & (USERINPUTFLAG_LEFT | USERINPUTFLAG_RIGHT))
     goto perp_too_far_away;
 
   if (state->hazards[0].distance >= 3)

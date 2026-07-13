@@ -567,6 +567,77 @@ static void test_full_frame_no_corruption(void)
   printf("PASS  full frames: no road buffer corruption across forks\n");
 }
 
+/*
+ * Drive the perp-caught state machine end to end. Simulates the state that
+ * fully_smashed ($8C3A) leaves behind, then runs whole game frames and
+ * checks that the sequence progresses: the synthesised input accelerates
+ * the hero (regression check for the assign_hero_pos stale-register bug
+ * which stripped the UP bit, halting the hero while the perp raced off),
+ * the perp is caught (phase 2), the car pulls in (phase 3) and the score
+ * phase (4) is reached.
+ */
+static void test_perp_caught_progression(void)
+{
+  chqstate_t *state;        /* game state under test */
+  int         frame;        /* frame counter */
+  int         saw_accel;    /* set once the synthesised input includes UP */
+  int         max_phase;    /* highest perp_caught_phase reached */
+
+  state = make_road_state();
+  state->hazards[0].used = HAZARD_USED; /* keep perp spawned, as run_game */
+  saw_accel = 0;
+  max_phase = 0;
+
+  /* Warm up: drive normally for a while so hazard/perp state is live. */
+  for (frame = 0; frame < 400; frame++) {
+    state->speed = 0x0180;
+    state->session.time_bcd = 0x60;
+    chq_test_game_frame(state);
+  }
+
+  /* Mimic fully_smashed ($8C3A): phase 1, stop hand, input masked to
+   * pause/quit only, perp scripted to speed 400. */
+  state->perp_caught_phase = 1;
+  state->hand_flag = 2;
+  state->smash_counter = 20;
+  state->session.user_input_mask = 0xC0;
+  state->hazards[0].speed = 400;
+  state->hazards[0].distance = 5;
+  state->speed = 0x0180;
+
+  for (frame = 0; frame < 2000; frame++) {
+    state->session.time_bcd = 0x60;
+    chq_test_game_frame(state);
+    if (state->user_input & 0x08) /* USERINPUTFLAG_UP */
+      saw_accel = 1;
+    if (state->perp_caught_phase > max_phase)
+      max_phase = state->perp_caught_phase;
+    if (state->perp_caught_phase >= 4)
+      break;
+  }
+
+  if (!saw_accel) {
+    printf("  FAIL: synthesised input never accelerated the hero\n");
+    assert(saw_accel);
+  }
+  if (max_phase < 4) {
+    printf("  FAIL: stuck in phase %d after %d frames "
+           "(speed=%d input=%02x perp dist=%d speed=%d)\n",
+           max_phase, frame, (int)state->speed, state->user_input,
+           (int)state->hazards[0].distance, (int)state->hazards[0].speed);
+    assert(max_phase >= 4);
+  }
+  /* Phase 2 must have stopped both cars before handing over. */
+  assert(state->speed == 0);
+  assert(state->hazards[0].speed == 0);
+  assert(state->hazards[0].distance == 1);
+  assert(state->car_y >= 16);
+
+  chq_destroy(state);
+  printf("PASS  perp caught: sequence reaches the score phase "
+         "(caught at frame %d)\n", frame);
+}
+
 /* ----------------------------------------------------------------------- */
 
 int main(void)
@@ -584,6 +655,7 @@ int main(void)
   test_set_up_stage_resets_lane_data();
   test_fork_progression();
   test_full_frame_no_corruption();
+  test_perp_caught_progression();
 
   printf("\nAll tests passed.\n");
   return 0;
