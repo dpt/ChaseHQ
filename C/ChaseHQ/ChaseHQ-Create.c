@@ -111,8 +111,10 @@ static void chq_initialise(chqstate_t *state)
   state->roadbuf_start = &state->road_buffer[0];   // $EE00
   state->roadbuf_end   = &state->road_buffer[256]; // $EF00
 
-  // $A69C/$A74A
+  // $A68F (SM), $A69C (SM), $A73E (SM), $A74A (SM)
+  state->pb_changing_lane     = 0;
   state->pb_lane_change_timer = 20;
+  state->pb_delay             = 0;
   state->pb_approach_timer    = 20;
 
   // $A804

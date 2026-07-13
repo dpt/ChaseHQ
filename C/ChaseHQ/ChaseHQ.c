@@ -8313,8 +8313,13 @@ void perp_behaviour(chqstate_t *state, hazard_t *IXperp)
   int       Cperp_distance;     /* perp's road buffer offset, used for vehicle proximity check (was C) */
   int       Biterations;        /* hazard slot loop counter: 5 iterations (was B) */
   hazard_t *IYhazard;           /* pointer walking the five non-perp hazard slots (was IY) */
-  int       Adistancediff;      /* signed distance difference between hazard car and perp (was A) */
-  u8        A;                  /* accumulator: pb_changing_lane flag, distance byte and bonus shift (was A) */
+  s8        Adistancediff;      /* signed distance difference between hazard car and perp (was A) */
+  u8        Achanging_lane_flag; /* pb_changing_lane flag read (was A) */
+  u8        Adist_lane_gate;    /* perp distance compared to 7, gating the lane-change timer path (was A) */
+  u8        Alane_timer;        /* lane-change countdown value, decremented then reloaded on zero (was A) */
+  u8        Acurrlane_bound;    /* current_lane re-read for boundary check against Bmin_lane/Cmax_lane (was A) */
+  u8        Adist_minus_6;      /* distance-6 scratch value; result is discarded (dead code) (was A) */
+  u8        Abonus_rotate;      /* bonus digit rotated left 4 bits for the retry_count case (was A) */
   int       HL;                 /* road position remainder for iterative lane-boundary checks (was HL) */
   int       Bmin_lane;          /* lower lane bound from road-width table (was B) */
   int       Cmax_lane;          /* upper lane bound from road-width table (was C) */
@@ -8411,27 +8416,27 @@ pb_ensure_vehicle:
 pb_check_changing_lane_flag:
   // load "changing lane" flag that appears to be set to 1 when the perp
   // changes lane
-  A = state->pb_changing_lane;
-  if (A)
+  Achanging_lane_flag = state->pb_changing_lane;
+  if (Achanging_lane_flag)
     goto pb_check_lane;
 
   // Otherwise not changing lane?
-  A = IXperp->distance;
-  if (A >= 7)
+  Adist_lane_gate = IXperp->distance;
+  if (Adist_lane_gate >= 7)
     goto pb_check_lane;
 
   // Delay between perp lane changes: pb_lane_change_timer counts down; on
   // zero it resets to perp_lane_change_base + (rng & 31).
   // In-place decrementing counter.
-  A = state->pb_lane_change_timer - 1;
-  if (A)
+  Alane_timer = state->pb_lane_change_timer - 1;
+  if (Alane_timer)
     goto pb_update_counter;
 
   // When it hits zero we pick a random number...
-  A = state->stage->perp_lane_change_base + (rng(state) & 31);
+  Alane_timer = state->stage->perp_lane_change_base + (rng(state) & 31);
 
 pb_update_counter:
-  state->pb_lane_change_timer = A;
+  state->pb_lane_change_timer = Alane_timer;
 
   // This smells like it's detecting position and turning that into lanes.
   // The values are like those used by get_spawn_lanes.
@@ -8456,10 +8461,10 @@ pb_update_counter:
   Cmax_lane = 1;
 
 pb_a6cf:
-  A = IXperp->current_lane;
-  if (A == Cmax_lane)
+  Acurrlane_bound = IXperp->current_lane;
+  if (Acurrlane_bound == Cmax_lane)
     goto pb_random_move_left_or_right;
-  if (A != Bmin_lane)
+  if (Acurrlane_bound != Bmin_lane)
     goto pb_check_lane;
 
 pb_random_move_left_or_right:
@@ -8586,10 +8591,10 @@ pb_bypass:
   HLspeed += (13 - Adistance) * DEspeedmult;
 
 pb_a776:
-  A = IXperp->distance - 6;
-  if ((s8) A < 0) {
+  Adist_minus_6 = IXperp->distance - 6;
+  if ((s8) Adist_minus_6 < 0) {
     // Distance to perp is 5 or less
-    A = (A + 5) * 8; // Bug? we do nothing with #REGa...
+    Adist_minus_6 = (Adist_minus_6 + 5) * 8; // Bug? we do nothing with #REGa...
     HLspeed += DEspeedmult;
   }
   IXperp->speed = HLspeed;
@@ -8622,13 +8627,13 @@ pb_a7be:
   Dbonus_hi += state->wanted_stage_number;
   Ebonus_mid = 0;
   if (state->retry_count) {
-    A = Dbonus_hi;
+    Abonus_rotate = Dbonus_hi;
     Dbonus_hi = Ebonus_mid;
-    RLC(A);
-    RLC(A);
-    RLC(A);
-    RLC(A);
-    Ebonus_mid = A;
+    RLC(Abonus_rotate);
+    RLC(Abonus_rotate);
+    RLC(Abonus_rotate);
+    RLC(Abonus_rotate);
+    Ebonus_mid = Abonus_rotate;
   }
   add_bonus(state, 0, Ebonus_mid, Dbonus_hi);
   state->pb_delay = 5; // set delay counter to 5 turns
