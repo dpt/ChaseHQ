@@ -17658,7 +17658,14 @@ static void handle_perp_caught_128k(chqstate_t *state)
 
   state->siren_enabled   = 0;
   state->turbo_sfx_pitch = 1;
-  state->overlay_delay   = 1;
+  // Conv: Z80 sets overlay_delay = 1 here because the blocking call below
+  // pages in bank 3 and plays the success-music jingle, burning roughly the
+  // remaining delay in real T-states before returning. call_bank_3_128k's
+  // BANK3_ROUTINE_6 case is not yet implemented (see TODO.md), so it returns
+  // instantly; truncating overlay_delay here without that compensating delay
+  // makes the arrest-message overlay collapse right after this message
+  // instead of holding for its full duration. Leave overlay_delay alone
+  // until bank 3 music playback exists.
 
   call_bank_3_128k(state, BANK3_ROUTINE_6); /* was FALLTHROUGH */
 }
