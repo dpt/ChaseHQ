@@ -9544,11 +9544,11 @@ sh_found_free:
  *
  * hazard_flags drives a three-state FSM: 0: first-hit phase. If hit_timer is
  * zero the hit has not yet registered; return immediately. Otherwise look up
- * wobble parameters in table_ad03 based on hero speed, store them in
+ * wobble parameters in wobble_params_by_speed based on hero speed, store them in
  * hazard_lane_OR_perp_dist_hi and current_lane, scale the approach speed, play
  * EFFECT_HAZARD_HIT and set hazard_flags to 2. 1: wobble complete; return
  * immediately (--flags reaches zero). 2+: wobble animation. Each call advances
- * the hit_wobble index through table_acdb, decays speed by 1/32, toggles the
+ * the hit_wobble index through wobble_amplitudes, decays speed by 1/32, toggles the
  * inverted bit and decrements the current_lane countdown. When it reaches zero,
  * speed and inverted are zeroed and hazard_flags reverts to 1.
  *
@@ -9558,7 +9558,12 @@ sh_found_free:
 static void hazard_hit(chqstate_t *state, hazard_t *IXhazard)
 {
   // $ACDB
-  static const u8 table_acdb[] = {
+  //
+  // Per-frame wobble amplitudes: a series of ever-smaller humps, each
+  // rising to a peak, falling back and ending in a zero. A hit enters
+  // part-way through (see wobble_params_by_speed) and reads one value
+  // per frame, so the hazard's shudder decays away to nothing.
+  static const u8 wobble_amplitudes[] = {
     0x19, 0x28, 0x32, 0x37, 0x39, 0x37, 0x32, 0x28,
     0x19, 0x00, 0x0F, 0x19, 0x1F, 0x22, 0x24, 0x22,
     0x1F, 0x19, 0x0F, 0x00, 0x0A, 0x10, 0x13, 0x15,
@@ -9568,9 +9573,10 @@ static void hazard_hit(chqstate_t *state, hazard_t *IXhazard)
 
   // $AD03
   //
-  // pairs of (hazard_lane_OR_perp_dist_hi, current_lane) for different speed ranges and hit types (normal vs fast)?
-  // current_lane byte isn't a lanes byte though
-  static const u8 table_ad03[5 * 2] = {
+  // Pairs of (start index into wobble_amplitudes, wobble frame countdown)
+  // for five speed brackets, slowest first. Faster hits start earlier in
+  // the amplitude table so the wobble is bigger and lasts longer.
+  static const u8 wobble_params_by_speed[5 * 2] = {
     0x06, 0x22,
     0x0C, 0x1C,
     0x0E, 0x14,
@@ -9581,8 +9587,8 @@ static void hazard_hit(chqstate_t *state, hazard_t *IXhazard)
   int       A_hazard_flags; /* hazard_flags on entry; drives three-state FSM (was A) */
   int       hit_timer;  /* IX[7]: zero=no hit yet, negative=max-speed hit, positive=normal hit (was A) */
   int       speed;      /* hero car speed at time of impact; 280 when hit_timer is negative (was DE, BC) */
-  int       index;      /* speed-derived index into table_ad03, two bytes per entry (Conv: added) */
-  const u8 *ptable;     /* pointer into table_ad03 for the current speed bracket (was HL) */
+  int       index;      /* speed-derived index into wobble_params_by_speed, two bytes per entry (Conv: added) */
+  const u8 *ptable;     /* pointer into wobble_params_by_speed for the current speed bracket (was HL) */
 
   A_hazard_flags = IXhazard->hazard_flags;
   if (A_hazard_flags == 0) {
@@ -9592,8 +9598,10 @@ static void hazard_hit(chqstate_t *state, hazard_t *IXhazard)
     // If we arrive here then a hit has occurred.
     speed = (hit_timer >= 0) ? state->speed : 280;
 
-    index = ((speed >> 7) & 3) + (speed & 1); // CHECK - not convinced
-    ptable = &table_ad03[index * 2];
+    // Conv: $AC56-$AC60: RL E/RLA/AND 3 yields (speed >> 7) & 3; RR D puts
+    // bit 8 of speed into carry which ADC A,D adds back.
+    index = ((speed >> 7) & 3) + ((speed >> 8) & 1);
+    ptable = &wobble_params_by_speed[index * 2];
 
     IXhazard->hazard_lane_OR_perp_dist_hi = ptable[0];
     IXhazard->current_lane = ptable[1];
@@ -9616,7 +9624,15 @@ static void hazard_hit(chqstate_t *state, hazard_t *IXhazard)
     return;
   }
 
-  IXhazard->hit_wobble = table_acdb[IXhazard->hazard_lane_OR_perp_dist_hi++];
+  // Conv: wobble_params_by_speed entry 4 starts the index at 20 with a countdown of 0,
+  // which wraps to 255 and marches the index past the 40-byte table. The Z80
+  // harmlessly reads whatever follows $ACDB; here we clamp to 0 (the table's
+  // settled value) to avoid the out-of-bounds read.
+  if (IXhazard->hazard_lane_OR_perp_dist_hi < sizeof(wobble_amplitudes))
+    IXhazard->hit_wobble = wobble_amplitudes[IXhazard->hazard_lane_OR_perp_dist_hi];
+  else
+    IXhazard->hit_wobble = 0;
+  IXhazard->hazard_lane_OR_perp_dist_hi++;
   IXhazard->speed -= IXhazard->speed / 32;
   IXhazard->inverted ^= 1; // toggle inverted
   if (--IXhazard->current_lane == 0) {
