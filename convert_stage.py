@@ -758,6 +758,12 @@ def classify_section(comment: str) -> Optional[str]:
         return "perp_desc"
     if "stretchy graphic" in c:
         return "stretchy"
+    if "draw_object_left/right graphic data" in c:
+        # Plain depthset_t blocks (2-byte bitmaps ptr + 10 depth/offset pairs)
+        # used directly by non-stretchy draw_object_left/right, as opposed to
+        # depthsets reached via a stretchy_t layer. Same 22-byte-block shape,
+        # so it is handled by the same stretchy/depthset pipeline.
+        return "stretchy"
     if "bitmap data" in c or "{bitmap" in c or "pointed to by helicopter" in c:
         return "bitmap"
     return "unknown"
@@ -994,8 +1000,19 @@ def emit_map_section(
     return lines, goto_map
 
 
-def resolve_section_ptr(abs_addr: int, abs_to_name: Dict[int, str]) -> Optional[str]:
-    """Resolve abs_addr to &array[offset] using registered section starts."""
+def resolve_section_ptr(
+    abs_addr: int,
+    abs_to_name: Dict[int, str],
+    abs_to_depthset_name: Optional[Dict[int, str]] = None,
+) -> Optional[str]:
+    """Resolve abs_addr to &array[offset] using registered section starts.
+
+    depthset_t structs are checked first and matched exactly (not by nearest
+    preceding base + byte offset) since they are single structs, not arrays;
+    a byte-offset match against them would index past the struct.
+    """
+    if abs_to_depthset_name and abs_addr in abs_to_depthset_name:
+        return f"&{abs_to_depthset_name[abs_addr]}"
     if abs_addr in abs_to_name:
         return f"&{abs_to_name[abs_addr]}[0]"
     candidates = [(base, nm) for base, nm in abs_to_name.items() if base <= abs_addr]
@@ -1113,7 +1130,10 @@ def emit_hittable_array(
 
 
 def emit_obj_array(
-    stage: int, sec: Section, abs_to_name: Dict[int, str]
+    stage: int,
+    sec: Section,
+    abs_to_name: Dict[int, str],
+    abs_to_depthset_name: Dict[int, str],
 ) -> Tuple[List[str], int]:
     """Emit an obj_t array from 5-record groups (3 DEFB + 2 DEFW) per entry."""
     nm = array_name(stage, sec.stype, sec.start_addr)
@@ -1155,7 +1175,9 @@ def emit_obj_array(
                 arg_str = extract_arg_from_comment(arg_cmt)
                 if not arg_str:
                     if arg_ann >= 0:
-                        ref = resolve_section_ptr(arg_ann, abs_to_name)
+                        ref = resolve_section_ptr(
+                            arg_ann, abs_to_name, abs_to_depthset_name
+                        )
                         arg_str = ref if ref else f"NULL /* TODO: arg ${arg_ann:04X} */"
                     else:
                         arg_str = f"NULL /* TODO: arg ${arg_val:04X} */"
@@ -1989,7 +2011,7 @@ def convert(skool_path: str, stage: int, obj_names: List[str]) -> None:
             fwd_decls.append(f"static const hittable_t {nm}[{n}];")
 
         elif sec.stype in ("obj_defs_right", "obj_defs_left"):
-            lines, n = emit_obj_array(stage, sec, abs_to_name)
+            lines, n = emit_obj_array(stage, sec, abs_to_name, abs_to_depthset_name)
             all_lines.extend(lines)
             all_lines.append("")
             nm = array_name(stage, sec.stype, sec.start_addr)
