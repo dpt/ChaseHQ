@@ -685,6 +685,8 @@ struct chqstate {
   u8        clamped_heights[21]; // running-minimum clamp of height_table[1..21]; built by build_height_table
   // $E34B
   u8        horizon_attr[3]; // horizon attribute scroll state: [0]=initial delta, [1]=current level, [2]=previous level
+  // $E34E - unused pad byte; kept so pointer arithmetic ending at $E34E/$E34F (advance_hazard, draw_tunnel) lands correctly
+  u8        horizon_attr_pad;
   // $E34F
   u8        object_positions[21];
   // $E800 - Left outer edge (verge/road boundary)

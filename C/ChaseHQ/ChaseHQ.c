@@ -10043,6 +10043,8 @@ dhs_adfa:
   state->dhs_road_left_xpos = DE;
 
   /* $AE56-$AE6E: 8-bit shift-accumulate: HLresult = horz_pos * road_width */
+  /* $AE56 AND A; $AE5B SBC HL,DE: borrow feeds the loop's first RLA below */
+  carry       = (u16) HL < (u16) DE;
   DE          = HL - DE; /* road width = right_xpos − left_xpos */
   HLresult    = 0;
   A_mult      = IXhazard->horz_pos_on_road; /* $AE61 LD A,(IX+$05) */
@@ -10110,8 +10112,8 @@ dhs_insert:
    * Conv: LDDR shifts bytes; C shifts s16 words (BCwords = B*2 entries). */
   HLstart = HLtable;
   BCwords = Biterations * 2;
-  DEtable = HLtable + BCwords - 1;
-  HLtable = DEtable + BCwords;
+  DEtable = HLtable + BCwords + 1; /* source: one record past the shift block */
+  HLtable = HLtable + BCwords - 1; /* dest: both computed from the original HLtable */
   do { *HLtable-- = *DEtable--; } while (--BCwords > 0);
   HLstart[0] = Ddistance | (Edist_frac << 8);
   HLstart[1] = IXhazard - &state->hazards[0]; /* Conv: slot index, not ptr */
