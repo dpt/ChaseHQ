@@ -1,44 +1,46 @@
-perhaps build unit tests now to flush out problems ahead of time.
-
-
-# BUGS
-
-- Near objects being truncated
-- Floating fork arrow vanishes too soon [perhaps road fork related]
-- Lane change diagonal transitions are not working correctly
-- Forks seize the game up
-- Transitions still not always right (perhaps just spiral?)
-- Tunnel drawing wrong
-- Stretchy test app produces crap output
-
-
 # TODO
 
-- Look at timer accuracy - is the original game approx right in its coundown?
+## BUGS
+
+- Stretchy test app produces crap output
+- Jittery hazards (teleporting)
+- (bitmap?) Crash when during the smash phase
+- 48k music routine seizes up
+
+
+## TODO
+
+- Fix Burst of randomish noises when the game is quit
+- Restart bip-bow ticking twice as fast as it should [game pacing / calibration?]
+- Beeper sfx: implemented (virtual T-state clock + box-filter mixing).
+  Remaining: calibrate the per-loop T-state constants (DJNZ_LOOP_TSTATES
+  sites in ChaseHQ.c) against the original, and pick a final
+  BEEPER_VOLUME_PCT (Main.c).
 - Overhead graphic format / handler
 - Helicopter data
 - 'TEST' marker not drawn when in test mode (might need more menu work)
 - Ensure if-else structuring is added where sensible (top-down)
 - Identify unrolled ops to roll up
 - Guard words?
-- Object plotting broken and commented out for now
-- Main game runs too fast - need to calibrate against original
 - Document expected values/ranges for e.g. xpos arrays
 - Remove Z80 macros where it clarifies
 - Remove any local vars from state
 - Sort all decls by order of use
 - Sort all params by register
-- Sound effects, music, timing, ...
+- Sound effects, music, timing, menu animation
 - Ensure partial screen updates are correct
 - Complete decoding of all stage data
 - Why don't watchpoints work in CLion?
-
-
-# IDEAS
-
-- Discuss the black screen edges and the overdraw it disguises
-- Factor our the 22 depth levels value out to a constant
+- Properly calibrate the game against the original. Would need an emulator
+  where I can record the T-states elapsed between two points.
 - Merge draw_road backinto one big unholy lump
+- Investigate Claude fixes in case they've made the C diverge from the asm.
+- Drop 'ChaseHQ-' from all the source filenames.
+
+
+## IDEAS
+
+- Factor our the 22 depth levels value out to a constant
 - Scan for type problems
 - Build a tiny test level
 - Identify missing cases where wraparound is required.
@@ -47,7 +49,6 @@ perhaps build unit tests now to flush out problems ahead of time.
 - Lots more unit tests.
 - Fix all warnings pass
 - Update summaries of major functions to docs/
-- Update CLAUDE.md now the stage data is in
 - Sort macros
 - Design a text format for holding stages
 - Annotate all state members to show which functions consume/mutate them
@@ -58,59 +59,26 @@ perhaps build unit tests now to flush out problems ahead of time.
 - Document how functions are created from source Z80 (eg. coping with banked regs).
 - Document road_pos valid range
 - Big reformat pass once happy with code.
+- Add new levels
+- Fix all the rough masks to improve the look
+- Arcade machine based on this code
+- Just tony and raymond having a chat, describing the game
+- Random level generator (on the fly?)
+- Extra bumpy roads
+- Improved AI driver
+- Lua/Python integration
+- Diagram generation for stretchy graphics (via stretchy test app)
 
 
-# DONE
+## FOR WRITEUP
 
-- Wonky feeling car speed / anims at start [gone?]
-- Message chatter cursor seems to vanish when idle - should blink
-- Missing repeated sections in scaled graphics
-- No hazards at all
-- draw_scene_objects => crash
-- Fix stage 2+ data [done ish]
-- Wonky use of BCpadding in draw_object_clipped - passed as a height
-- Should hi2xpostab return u16* ?
-- Should IYheight be a signed value? (Claude says no...)
-- Add an ADDRTOBACKBUF that takes (H,L) and does (H<<8)|L itself
-- Hitting invisible objects (right hand objects mispositioned on 3-lane)
-- The pregame radio screen sometimes has leftover transition animation parts
-- Backdrop does not horizontally scroll (to the right)
-- Perp escape scene causes an immediate crash (prob. tunnel code)
-- Car (still) not jumping on steep roads
-- Mark functions as HQ once processed
-- Car starts level at speed
-- Sky attributes intruding on road
-- Road corrupt in distance
-- Road corrupt (looks like a wall) at looping point
-- Lane markings don't appear closest to player: draw_road_lanes_change
-  (Bresenham interpolation) is called at map position 3 (stage 1 lane
-  transition) and pushes some xpos entries off-screen at Lrow=0xFF.
-  Verify whether this matches Z80 behaviour or is a translation bug.
-  [unsure what fixed this...]
-- Toggling gear down not working
-- Startup scene obviously wrong road type (should be three lanes)
-- Steering seems broken - unsure - is car actually moving?
-  - Steeting right is working?
-- Add Code tidying agent - validating for readability too
-- No turbo LO/HI readout nor 'STAGE 1' readout - update_scoreboard incomplete [done]
-- Accelerating forward past a point the breaks down [done]
-- Rename PERPCAUGHTPHASES [done]
-- Promote all vars if possible [done]
-- Add a CODEOWNERS file [done]
-- Improve arg names [done]
-- Add symbols for states of hand_flag [done]
-- Add symbols for smash_counter max value, for perp speed [done]
-- LO_ADD -> U16_ADD_LO [done]
-- Start unit tests [done]
-- Fix stageXdata TODOs [part done]
-- Convert hex in stageXdata to __XX__ style [part done]
-- Promote args where possible [done]
-- While the road drawing looks mostly correct the checkerboard pattern isn't right [done]
+- Discuss the black screen edges and the overdraw it disguises
 
 
-# NOTES
+## NOTES
 
-Claude on medium effort + advisor seems to solve more issues than Claude itself on high effort. Though the advisor API seems intermittent...
+- Claude on medium effort + advisor seems to solve more issues than Claude
+  itself on high effort. Though the advisor API seems intermittent...
 
 
 Drawing
@@ -120,8 +88,6 @@ speccy->draw calls zx_draw
 zx_draw does all the box merging - no screen pixels are converted until asked for
 zx_draw calls draw_handler 
 draw_handler doesn't have to do anything, but it's best to.
-
-
 
 
 Decompiler
@@ -142,13 +108,4 @@ Knows about constants.
 Outputs to a text table or a graphviz dot file.
 
 TODO: Output C decls and expressions.
-
-
-
-Ideas
------
-- add new levels
-- fix all the rough masks to improve the look
-- arcade machine based on this code
-- just tony and raymond having a chat
 
