@@ -1455,6 +1455,9 @@ static void attract_mode_48k(chqstate_t *state)
   blinker = 0;
   state->speed = INITIAL_ATTRACT_SPEED;
   for (;;) {
+    if (state->host_quit)
+      longjmp(state->host_quit_jmp, 1);
+
     keys = keyscan(state);
     if (keys == USERINPUTFLAG_FIRE)
       return;
@@ -1633,6 +1636,9 @@ static void bootstrap(chqstate_t *state)
 
   // Bootstrap is itself a loop
   for (;;) {
+    if (state->host_quit)
+      longjmp(state->host_quit_jmp, 1);
+
     /* Build a table of flipped bytes at "$EF00" */
     carry = 0;
     Cresult = 0; // Conv: Original didn't initialise C
@@ -1696,6 +1702,9 @@ static void main_loop(chqstate_t *state)
   carry = 0;
 
   for (;;) {
+    if (state->host_quit)
+      longjmp(state->host_quit_jmp, 1);
+
     load_stage(state);
 
     if (state->wanted_stage_number == 6) {
@@ -1725,6 +1734,9 @@ static void main_loop(chqstate_t *state)
       start_chatter(state, 0xFF, chatterblk_start_stage);
 
     for (;;) {
+      if (state->host_quit)
+        longjmp(state->host_quit_jmp, 1);
+
       state->speccy->stamp(state->speccy);
       drive_sfx(state);
       (void) keyscan(state);
@@ -1942,6 +1954,9 @@ static int run_pregame_screen_loop(chqstate_t *state)
 {
   int rc; /* loop/stop flag: 1 = continue, 0 = done */
   rc = 1;
+
+  if (state->host_quit)
+    longjmp(state->host_quit_jmp, 1);
 
   state->speccy->stamp(state->speccy);
 
@@ -2258,6 +2273,9 @@ static void escape_scene(chqstate_t *state)
   start_chatter(state, 0xFF, &chatterblk_nancy_berates_hero[0]);
 
   for (;;) {
+    if (state->host_quit)
+      longjmp(state->host_quit_jmp, 1);
+
     // Print "GAME OVER" once the transition has completed.
     if (state->transition_control != TRANSITIONCONTROL_FADE)
       setup_overlay_messages(state, &game_over_message[0]);
@@ -17787,6 +17805,9 @@ call_bank_3:
   state->attract_mode_128k_countdown = 2; // two runs through
   state->speed = INITIAL_ATTRACT_SPEED;
   for (;;) {
+    if (state->host_quit)
+      longjmp(state->host_quit_jmp, 1);
+
     drive_attract_demo(state);
 
     if (state->controls_selected == 0) {
