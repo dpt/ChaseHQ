@@ -426,8 +426,6 @@ static u8 *z80offsettobackbuf(chqstate_t *state, int off, int left, int right)
 
 /* Configuration constants */
 
-#define MAXTURBOS                    (3) /* max turbo boosts player starts each stage with */
-
 #define SPEED_GEAR_CHANGE          (150) /* gear-change threshold: low gear below, high gear at or above */
 #define SPEED_PERP_CHASE           (350) /* perp's base chase speed; also hazard speed cap after impact */
 #define INITIAL_ATTRACT_SPEED      (400) /* scripted drive speed: attract mode camera */ // HACK was 400
@@ -6616,7 +6614,7 @@ check_restart:
     state->session.user_input_mask = USERINPUTFLAGMASK_ALLOW_ALL;
     state->gear_lockout            = 3;
     state->transition_control      = TRANSITIONCONTROL_FILL_ATTRIBUTES;
-    state->session.turbos          = MAXTURBOS;
+    state->session.turbos          = RESTART_BOOSTS;
     state->session.time_bcd        = RESTART_TIME_BCD;
     state->retry_count++;
 

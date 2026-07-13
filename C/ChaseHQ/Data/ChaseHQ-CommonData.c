@@ -1867,7 +1867,7 @@ const session_t saved_game_state = {
   1, // spawn_accumulator
   100, // idle_timer
   USERINPUTFLAGMASK_ALLOW_ALL,
-  3, // turbos
+  INITIAL_BOOSTS, // turbos
   0x54, // horizon_level
   20, // perp_halt_counter
   0xFF, // displayed_gear

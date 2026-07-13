@@ -24,6 +24,9 @@
 
 /* Configuration constants */
 
+#define INITIAL_BOOSTS                         (3) /* number of boosts player starts each stage with */
+#define RESTART_BOOSTS              INITIAL_BOOSTS /* number of boosts player receives on restart */
+
 #define INITIAL_TIME_BCD                    (0x60) /* seconds in BCD */
 #define CHASE_TIME_BCD                      (0x60)
 #define RESTART_TIME_BCD                    (0x60)
