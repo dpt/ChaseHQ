@@ -4,7 +4,7 @@
 > $C000 ;
 > $C000
 @ $C000 org
-@ $C000 remote=main:$8000,$8002,$8007
+@ $C000 remote=main:$8000,$8001,$8002,$8007
 @ $C000 remote=main:$8401,$84C2
 @ $C000 remote=bank1:$C78A,$D272
 @ $C000 remote=bank1:$F05A,$F225
@@ -367,7 +367,7 @@ T $C567,18,3
 B $C579,6,6 Padding
 B $C57F,31,8*3,7
 c $C59E Routine at C59E
-D $C59E Title-screen driver: picks one of 5 pre-scripted animation scenes, populates the 9-entry animated-object array at $BB00 from the chosen scene's object table, draws overlay text (title/credits, and an "insert coin" prompt when in coin-op mode), then falls into the attract-mode wait loop (#R$C61E) which animates the scene each frame while polling for coin/fire/keyboard input to start a game.
+D $C59E Title-screen driver: picks one of 5 pre-scripted animation scenes, populates the 9-entry animated-object array at $BB00 from the chosen scene's object table, draws overlay text (title/credits, "PRESS ENTER FOR OPTIONS" always, and "PRESS GEAR TO PLAY" once controls have been selected -- #R$8001@main), then falls into the attract-mode wait loop (#R$C61E) which animates the scene each frame while polling for coin/fire/keyboard input to start a game.
 R $C59E Used by the routines at #R$C000 and #R$FBC8.
 @ $C59E label=title_screen_driver
 C $C59E,3 Clear the screen bitmap and attribute buffers
@@ -380,9 +380,9 @@ C $C5CE,13 Zero the whole $BB00-$BB4F object array (9 records x 9 bytes -- see #
 C $C5DB,39 Copy the 5-byte-per-object scene table (pointed to by the popped HL) into the 9 object records, one object per iteration, reordering into fields: script pointer low/high (+$07/+$08), then two more bytes into +$06 and +$04/+$05
 C $C602,3 (not traced in detail here -- appears unrelated setup, e.g. sound/interrupt state)
 C $C605,3 Draw the first animation frame before entering the wait loop, so the scene is visible immediately
-C $C608,3 Draw the "BEST OFFICERS"-style title text block
-C $C60E,3 If in coin-op (arcade) mode...
-C $C612,3 ...also draw the "insert coin" text block
+C $C608,3 Draw the "PRESS ENTER FOR OPTIONS" text block ($CC9D), unconditionally
+C $C60E,3 If controls have already been selected (#R$8001@main, set by the options menu)...
+C $C612,3 ...also draw the "PRESS GEAR TO PLAY" text block (#R$CC88)
 C $C619,3 (not traced -- likely sound-related)
 C $C61D,1 Sync to the next interrupt before the wait loop
 N $C61E Attract-mode wait loop: animates the current scene once per interrupt and polls for coin-insert / fire / any-key input to start the game or jump to a fresh title screen. Re-entered every frame via #R$C61E; #R$C59E is re-run (new scene) when a key other than fire is pressed.
