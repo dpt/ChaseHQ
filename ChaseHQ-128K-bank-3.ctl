@@ -366,7 +366,7 @@ N $C567 $C567: the 6-entry stage-code table indexed by #R$C06E ($C09F) to fill e
 T $C567,18,3
 B $C579,6,6 Padding
 B $C57F,31,8*3,7
-c $C59E Routine at C59E
+c $C59E Title-screen driver: picks a scene, sets up the objects and drives the attract-mode wait loop
 D $C59E Title-screen driver: picks one of 5 pre-scripted animation scenes, populates the 9-entry animated-object array at $BB00 from the chosen scene's object table, draws overlay text (title/credits, "PRESS ENTER FOR OPTIONS" always, and "PRESS GEAR TO PLAY" once controls have been selected -- #R$8001@main), then falls into the attract-mode wait loop (#R$C61E) which animates the scene each frame while polling for coin/fire/keyboard input to start a game.
 R $C59E Used by the routines at #R$C000 and #R$FBC8.
 @ $C59E label=title_screen_driver
@@ -936,7 +936,7 @@ W $D45C,2,2 Bitmap pointer
 B $D45E,1,1 Height/2
 B $D45F,1,1 Width in bytes
 W $D460,2,2 Bitmap pointer
-b $D462 Graphics
+b $D462 Title-screen logo letter bitmaps (C, H, A, S, E, Q and punctuation)
 B $D462,112,4 Bitmap: "C" 32x28
 B $D4D2,112,4 Bitmap: "C" 32x28 shifted right 4?
 B $D542,112,4 Bitmap: "C" 32x28 shifted right 8?
@@ -1089,10 +1089,12 @@ C $EBF6,3 A = 0 here: clear a driver-internal flag
 C $EBF9,1 A = 1: mark the tempo counter for an immediate
 C $EBFA,3 refresh (see #R$EC71)
 C $EBFD,3 Flag the tune as active
-b $EC01 The 3 channel-tracker records (37 bytes each) used by the music driver, initialised by #R$EB9E and processed each frame by #R$EC71.
+b $EC01 The 3 channel-tracker records used by the music driver
+D $EC01 37 bytes each, initialised by #R$EB9E and processed each frame by #R$EC71.
 B $EC01,112,8
-c $EC71 Per-frame music service. If no tune is active, does nothing (falls straight through to #R$ECCA which returns immediately). Otherwise: decrements the tempo counter ($EC70) and, once it reaches zero, re-processes all 3 channel-tracker records (#R$EDD6) one tracker "row" further and resets the counter; then (every frame, tick or not) recomputes the AY tone-period/volume register values for all 3 channels from their current tracker state (#R$EE9E) into the register cache at #R$EFAF-$EFB9; finally outputs the full cached register block ($EFBA onward, registers 11 down to 0) to the AY chip via ports $FFFD/$BFFD.
-D $EC71 Used by the routine at #R$F82F.
+c $EC71 Per-frame music service: advances tracker patterns and refreshes the AY registers
+D $EC71 If no tune is active, does nothing (falls straight through to #R$ECCA which returns immediately). Otherwise: decrements the tempo counter ($EC70) and, once it reaches zero, re-processes all 3 channel-tracker records (#R$EDD6) one tracker "row" further and resets the counter; then (every frame, tick or not) recomputes the AY tone-period/volume register values for all 3 channels from their current tracker state (#R$EE9E) into the register cache at #R$EFAF-$EFB9; finally outputs the full cached register block ($EFBA onward, registers 11 down to 0) to the AY chip via ports $FFFD/$BFFD.
+R $EC71 Used by the routine at #R$F82F.
 @ $EC71 label=ts_music_service
 C $EC71,3 Tune-active flag
 C $EC78,2 Clear a driver-internal flag (consumed elsewhere
@@ -1205,28 +1207,32 @@ C $EE9B,1 C = displacement to the handler
 C $EE9C,1 HL = table slot + displacement = handler address
 N $EE9E Recompute this channel's AY tone-period and volume/envelope register values from its current tracker state (note, envelope index, effect flags) for the per-frame register cache write at #R$EC71. Returns the tone period in HL and the volume/mixer byte in A (see the callers at #R$ECA2/$ECAF/$ECBC). Five phases, in order: 1. #R$EEA1-$EED0: envelope amplitude advance. If status bit 5 (+$00) is set, decrements the envelope-step counter (+$19); on underflow, reloads it from the speed value (+$0F) and reads the next byte from the envelope-shape table pointer (+$16/+$17, advanced by 1 unless the byte read has bit 7 set, an end-of-table marker that halts the pointer), storing that byte as the current amplitude (+$18). Either way, +$18 is copied into +$13, the volume value this call returns. 2. #R$EED0-$EEFC: tone-period lookup. Note index = (+$12) [set by #R$EDEA from the pattern's raw note + transpose (+$20)] plus a pitch-offset byte read from a per-channel offset sequence at +$0B/+$0C (default/loop start +$09/+$0A): if the byte's bit 7 is clear it is used as-is and the pointer advances; if set, it is a 7-bit end-of-sequence delta and the pointer resets to +$09/+$0A for next time. (note + offset) indexes the 2-byte-per-note tone-period table at #R$EFBC@bank4, giving the base tone period in DE. 3. #R$EEFC-$EF4B: vibrato. Only runs if +$1D bit 6 is set (skips to phase 4 otherwise). +$1C is a triangle-wave phase counter that ping-pongs between 0 and (+$1A)*2 by +/-(+$1B) each call, direction tracked in +$1D bit 5 (bit 7 and status bit 0 gate whether the phase updates this call at all, at #R$EF09-$EF12 -- not fully resolved). The phase is centred (-depth..+depth), sign-extended, then left-shifted a note-dependent number of times (the $EF3D-$EF47 loop, incrementing a counter seeded from the note index by $18 until it overflows) to scale a linear vibrato depth into the tone-period domain, where pitch and period are inversely related. The scaled offset is added onto the phase-2 tone period. 4. #R$EF4B-$EF76: portamento/slide. Status bit 0 (+$00) is unconditionally toggled every call. If status bit 2 was set (slide active, #R$ED6F), a countdown in +$0E ticks down; when it reaches zero it reloads and the signed step (+$0D) is sign-extended into BC and accumulated into +$07/+$08, which is then added onto the tone period. 5. #R$EF76-$EFAE: mixer/volume finalisation. Every 4th call (via the bit-0 toggle from phase 4), XORs bit 3 of a global byte ($EC79) into $ECC6 (purpose not established elsewhere in this bank). Merges this channel's tone-enable bits into the shared mixer cache at $EFB6 using the same replace-bits-under-mask idiom as #R$ED36 (mask = +$24). If +$1F was just set to $FF (#R$EDCB, "mute"), handles the one-shot mute transition: clears bit 7 of +$1F (so this only fires once), clears this channel's noise-enable bits in the $EFB6 cache, and forces $ECC6 to $41. Returns the phase-3/4 tone period in HL and the phase-1 volume (+$13) in A.
 @ $EE9E label=compute_channel_ay_registers
-b $EFAF Data block at EFAF
+b $EFAF Per-frame AY register cache and tone-period lookup table
 D $EFAF $EFAF-$EFBA (12 bytes): the per-frame AY register cache, refreshed each frame by #R$EC71/#R$EE9E and flushed to the AY chip by #R$ECCA (registers 0-11: 3 channels' tone-period pairs, noise period, mixer, 3 channels' volumes, envelope-period-fine). Initial contents here are just start-up defaults, overwritten before first use.
 R $EFAF $EFBC onward: an AY tone-period lookup table (2 bytes/entry, one per
 R $EFAF note), indexed by note number via #R$EE9E ($EEF1 LD HL,$EFBC).
 N $EFAF Further sub-tables referenced elsewhere in this driver, contents not decoded byte-by-byte (raw lookup data, not algorithmic): $F07C (indexed pointer table, see #R$EE5A), $F123 (indexed pointer table, see #R$EE7E), $F1AE (an alternate entry point jumped to from the unreferenced code at $ED33), $F225 (the per-tune channel-pointer table used by #R$EB9E, 7 bytes/entry -- see #R$EB9E for the layout).
 B $EFAF,2043,8*255,3
-c $F7AA Set up the classic ZX Spectrum IM2 "257-byte table" interrupt vector trick: fills $BC00-$BDBD with the byte $BD so that, whatever the low byte of the interrupt vector happens to be, I:HL together always resolve to the single byte at $BDBD; patches that byte to a JP opcode ($C3) whose operand ($BDBE/$BDBF) is set to #R$F8AD, making $F8AD the interrupt handler for every subsequent interrupt. Sets I to the table's page and enables IM 2.
-D $F7AA Used by the routines at #R$C06E, #R$C59E, #R$F7C7 and #R$FB99.
+c $F7AA Sets up the classic ZX Spectrum IM2 "257-byte table" interrupt vector trick
+D $F7AA Fills $BC00-$BDBD with the byte $BD so that, whatever the low byte of the interrupt vector happens to be, I:HL together always resolve to the single byte at $BDBD; patches that byte to a JP opcode ($C3) whose operand ($BDBE/$BDBF) is set to #R$F8AD, making $F8AD the interrupt handler for every subsequent interrupt. Sets I to the table's page and enables IM 2.
+R $F7AA Used by the routines at #R$C06E, #R$C59E, #R$F7C7 and #R$FB99.
 @ $F7AA label=setup_im2_interrupt_table
-c $F7C7 Boot entry point: sets up interrupts, starts tune 1, then loops forever calling the SFX/music per-frame service (#R$F82F) once per 50Hz interrupt (synchronised via HALT).
-D $F7C7 Used by the routine at #R$C000.
+c $F7C7 Boot entry point: sets up interrupts and starts tune 1
+D $F7C7 Loops forever calling the SFX/music per-frame service (#R$F82F) once per 50Hz interrupt (synchronised via HALT).
+R $F7C7 Used by the routine at #R$C000.
 @ $F7C7 label=boot_and_run_sound_loop
 @ $F7D1 label=basl_service_loop
-c $F7D6 Start playing tune A (via #R$EB9E), then set up this tune's sound effect trigger table: looks up a pointer in the table at $FA75 (indexed by A*2) into a per-tune SFX script, and clears the 3 SFX "busy" flags at $F837/$F895/$F8A2. Falls into the script reader below, whose byte-code and interaction with #R$F82F's SFX dispatch is documented at #R$F7F4.
-D $F7D6 Used by the routines at #R$C06E, #R$C16A, #R$C59E, #R$F7C7, #R$FB99 and #R$FBC8.
+c $F7D6 Starts tune A and sets up its sound-effect trigger table
+D $F7D6 Plays tune A (via #R$EB9E), looks up a pointer in the table at $FA75 (indexed by A*2) into a per-tune SFX script, and clears the 3 SFX "busy" flags at $F837/$F895/$F8A2. Falls into the script reader below, whose byte-code and interaction with #R$F82F's SFX dispatch is documented at #R$F7F4.
+R $F7D6 Used by the routines at #R$C06E, #R$C16A, #R$C59E, #R$F7C7, #R$FB99 and #R$FBC8.
 @ $F7D6 label=start_tune_and_sfx_table
 N $F7DB This entry point is used by the routine at #R$C59E.
 @ $F7DB label=stst_load_sfx_script
 N $F7F4 SFX script byte-code reader: reads opcode bytes from the script pointer at $F7FC, with $FE meaning "jump to a new script pointer read from the following 2 bytes" ($F823) and $FF meaning "end of script, disable interrupts and stop the tune" (#R$ED0B via $F829). Any other byte is a delay/repeat value (stored to $F7F5 and used to throttle #R$F7F4's own re-entry -- it decrements $F7F5 and returns early via RET NZ until it counts down to 0). The *following* script byte is a raw byte offset (not a scaled index) into the table at $FAA4: each entry there is 3 bytes -- a selector byte (copied to both $F84E and $F842, read back by #R$F82F) followed by a 2-byte pointer (stored to $F85E, the reload source for #R$F82F's sample-selector-stream pointer at $F853). This entry point is used by the routine at #R$F82F.
 @ $F7F4 label=sfx_script_advance
 @ $F7FE label=ssa_read_opcode
-c $F82F Per-frame SFX/music service: runs the AY music driver (#R$EC71), then dispatches the current sound effect's parameter byte (set up by #R$F7DB/#R$F7FE) to one of three 1-bit "digitised sample" bit-bang players: two fixed 8-row sample tables (#R$F8F2, #R$F95A, played via the shared loop at $F8CD which pulses port $FE from bitmap data clocked out with RLC (HL)/DJNZ) or the procedural routine at #R$FA3A. $F8AD (installed as the IM2 handler by #R$F7AA) just sets a "frame occurred" flag ($F8A8) consumed here and re-enables interrupts.
+c $F82F Per-frame SFX/music service: drives the AY driver and the three sample players
+D $F82F Runs the AY music driver (#R$EC71), then dispatches the current sound effect's parameter byte (set up by #R$F7DB/#R$F7FE) to one of three 1-bit "digitised sample" bit-bang players: two fixed 8-row sample tables (#R$F8F2, #R$F95A, played via the shared loop at $F8CD which pulses port $FE from bitmap data clocked out with RLC (HL)/DJNZ) or the procedural routine at #R$FA3A. $F8AD (installed as the IM2 handler by #R$F7AA) just sets a "frame occurred" flag ($F8A8) consumed here and re-enables interrupts.
 D $F82F All the "LD A,$00" / "LD HL,$0000" instructions below are self-modified: the operand byte(s) immediately following each opcode double as a persistent state variable, written directly (not via the instruction) by this routine and by #R$F7D6/$F7DB/$F7FE. Three such state bytes are the SFX "busy" flags named at #R$F7D6: $F837 (SFX slot 1), $F895 (SFX slot 2), $F8A2 (1-bit sample playback active).
 R $F82F Slot 1 ($F836-$F894): if $F837 = 0 (idle), arms it (=1) and reloads
 R $F82F the sample-selector-stream read pointer ($F853) from the reload
@@ -1291,16 +1297,18 @@ N $F8AD IM2 interrupt handler (installed by #R$F7AA): just sets the "frame occur
 @ $F8AD label=frame_interrupt_handler
 N $F8CD 1-bit sample bit-bang loop: pulses port $FE (border/speaker) from bitmap data at HL, one row of 8 bits per iteration, RLC (HL) rotating the next bit into carry-adjacent position; D counts rows remaining.
 @ $F8CD label=play_sample_row
-c $F8EB Clears the "sample playing" flag and jumps back to #R$F8A7 to wait for the next frame -- the tail end of #R$F82F's sample playback path.
-D $F8EB Used by the routine at #R$F82F.
+c $F8EB Clears the "sample playing" flag and returns to #R$F8A7 to wait for the next frame
+D $F8EB The tail end of #R$F82F's sample playback path.
+R $F8EB Used by the routine at #R$F82F.
 @ $F8EB label=finish_sample_playback
-b $F8F2 Data block at F8F2
-D $F8F2 1-bit digitised sample: 104 bytes (see #R$F8B6, D=$68=104), each byte one playback "row" of 8 bits, played back by #R$F82F/#R$F8CD.
+b $F8F2 1-bit digitised sample (104 bytes)
+D $F8F2 See #R$F8B6, D=$68=104; each byte one playback "row" of 8 bits, played back by #R$F82F/#R$F8CD.
 B $F8F2,104,8
-b $F95A Data block at F95A
-D $F95A 1-bit digitised sample: 224 bytes (see #R$F8BD, D=$E0=224), played back the same way as #R$F8F2.
+b $F95A 1-bit digitised sample (224 bytes)
+D $F95A See #R$F8BD, D=$E0=224; played back the same way as #R$F8F2.
 B $F95A,224,8
-c $FA3A Procedural engine/tyre-noise generator: repeatedly reads and updates self-modifying state bytes at $FA72-$FA74 (a running counter/pitch value nudged each call) to derive a variable duty-cycle square wave, toggling port $FE (speaker/border) through busy-wait delay loops (#R$FA58/#R$FA5F) whose lengths are driven by that state -- this is how the beeper engine-note pitch varies with speed/RPM. Loops D=$32 times per call, and E times overall (#R$FA6C), polling the frame flag (#R$F8A7's $F8A8) to bail out early if a new frame has started.
+c $FA3A Procedural engine/tyre-noise generator (variable duty-cycle square wave)
+D $FA3A Repeatedly reads and updates self-modifying state bytes at $FA72-$FA74 (a running counter/pitch value nudged each call) to derive the wave, toggling port $FE (speaker/border) through busy-wait delay loops (#R$FA58/#R$FA5F) whose lengths are driven by that state -- this is how the beeper engine-note pitch varies with speed/RPM. Loops D=$32 times per call, and E times overall (#R$FA6C), polling the frame flag (#R$F8A7's $F8A8) to bail out early if a new frame has started.
 D $FA3A A (-> E) is the pitch/rate parameter from #R$F82F (the dispatch byte's upper 5 bits). Two nested loops: outer E times (#R$FA6C/$FA6D), inner D = 50 times each (#R$FA64/$FA65); each inner iteration advances the 3-byte self-modified state at $FA72-$FA74 (a phase counter, a wrapping accumulator subtracting a fixed constant, and a rotating byte mixed back into the accumulator) and tests bit 4 of the result to decide whether to emit a click this iteration -- a bit-4 test on a steadily-advancing counter behaves like a variable duty-cycle gate, the source of the engine/tyre buzz. When a click fires, the ON delay is $18-E cycles and the OFF delay is E cycles (#R$FA58/#R$FA5F): a larger E (higher dispatch parameter) shortens the ON wait but lengthens the OFF wait, lowering the effective pitch -- consistent with this parameter tracking engine RPM/speed. After each inner-loop pass, the frame flag ($F8A8, set by #R$F8AD) is checked; note that the "AND A" immediately before "RET C" always clears the carry flag, so that RET C can never actually fire -- an apparent dead check preserved as found in the original code, not a translation artifact. Once the outer loop completes, control falls into #R$F8A7 to wait for the next frame.
 R $FA3A Used by the routine at #R$F82F.
 @ $FA3A label=procedural_engine_noise
@@ -1318,13 +1326,14 @@ C $FA67,3 Frame flag check (see comment above: RET C here
 C $FA6A,1 never fires, AND A always clears carry)
 C $FA6C,1 Outer loop
 C $FA6F,3 Done: wait for the next frame
-b $FA72 Data block at FA72
+b $FA72 Self-modifying engine-noise state, SFX tables and pattern data
 D $FA72 $FA72-$FA74: self-modifying counter/pitch state read and rewritten by #R$FA3A on every call (the procedural engine-noise generator).
 R $FA72 $FA75 onward: the per-tune SFX trigger-script pointer table indexed by
 R $FA72 tune-number*2, referenced by #R$F7DB.
 N $FA72 $FAA4 onward: the per-sound-ID parameter table read by #R$F7FE's script interpreter (3 bytes/entry: 1 selector byte + a 2-byte pointer -- see #R$F7F4), giving each triggered sound its sample table selector and pointer. The remainder of this block is raw pattern/parameter data consumed by the SFX scripts and not decoded byte-by-byte here.
 B $FA72,295,8*36,7
-c $FB99 Options menu driver (reached from the title screen's "PRESS ENTER FOR OPTIONS" prompt, see the text block at #R$CC50). Boots interrupts and tune 0, then loops: draws the control-select screen text (#R$FC29 via #R$FD9C -- "ENTER OPTION" / P1. SINCLAIR JOYSTICK / P2. CURSOR JOYSTICK / P3. KEMPSTON JOYSTICK / P4. KEYBOARD / P5. DEFINE KEYS) and polls the keyboard (port $FE, keys 1-5 read as a 5-bit mask) to dispatch into one of the five listed choices.
+c $FB99 Options menu driver: draws the control-select screen and dispatches on keypress
+D $FB99 Reached from the title screen's "PRESS ENTER FOR OPTIONS" prompt (see the text block at #R$CC50). Boots interrupts and tune 0, then loops: draws the control-select screen text (#R$FC29 via #R$FD9C -- "ENTER OPTION" / P1. SINCLAIR JOYSTICK / P2. CURSOR JOYSTICK / P3. KEMPSTON JOYSTICK / P4. KEYBOARD / P5. DEFINE KEYS) and polls the keyboard (port $FE, keys 1-5 read as a 5-bit mask) to dispatch into one of the five listed choices.
 D $FB99 Keys are read from half-row $F7FE (keys "1"-"5"), which is exactly the "P1"-"P5" option-select row shown by the #R$FC29 "ENTER OPTION" text. #R$FBB2-$FBB3 inverts and masks to a 5-bit "pressed" mask (bit 0 = key "1" .. bit 4 = key "5"); no key pressed loops back to poll again. #R$FBB7-$FBC1 then shifts that mask right one bit at a time via RRA, testing each bit's carry in turn: key "1" -> #R$FBD4 (Sinclair joystick, control-key list A), "2" -> #R$FBD9 (Cursor joystick, list B, shares the copy loop at #R$FBDC), "3" -> #R$FC14 (Kempston joystick detect), "4" -> #R$FBE4 (keyboard, handled inline). Key "5" falls through the whole RRA chain unbranched, so it is the default action: #R$FEA9, the "DEFINE KEYS" key-redefinition screen.
 R $FB99 Used by the routine at #R$C000.
 @ $FB99 label=options_menu_driver
@@ -1340,34 +1349,40 @@ C $FBBA,1 Key "2"
 C $FBBD,1 Key "3"
 C $FBC0,1 Key "4"
 C $FBC3,3 Key "5" (default): "DEFINE KEYS" screen
-c $FBC8 Runs one frame of the SFX/music service (#R$F82F) and, if no tune is currently active, restarts tune 0 -- keeps the options-menu background music looping.
-D $FBC8 Used by the routines at #R$FB99, #R$FC14, #R$FEA9 and #R$FF2C.
+c $FBC8 Services sound each frame and keeps the options-menu tune looping
+D $FBC8 Runs one frame of the SFX/music service (#R$F82F) and, if no tune is currently active, restarts tune 0.
+R $FBC8 Used by the routines at #R$FB99, #R$FC14, #R$FEA9 and #R$FF2C.
 @ $FBC8 label=service_sound_and_loop_tune0
 N $FBD4 This entry point is used by the routine at #R$FB99.
 N $FBD9 This entry point is used by the routine at #R$FB99.
 N $FBE4 This entry point is used by the routine at #R$FB99.
 N $FBE5 This entry point is used by the routine at #R$FC14.
-c $FC14 Joystick-present detector for the control-select sub-screen: samples the Kempston port ($1F) $14=20 times, servicing sound each iteration (#R$FBC8), and bails out to the main poll loop (#R$FBAB) as soon as the port's value changes (i.e. a joystick is moving/present); otherwise falls through to #R$FBE5 with A=1 (no joystick detected).
-D $FC14 Used by the routine at #R$FB99.
+c $FC14 Joystick-present detector for the control-select sub-screen
+D $FC14 Samples the Kempston port ($1F) $14=20 times, servicing sound each iteration (#R$FBC8), and bails out to the main poll loop (#R$FBAB) as soon as the port's value changes (i.e. a joystick is moving/present); otherwise falls through to #R$FBE5 with A=1 (no joystick detected).
+R $FC14 Used by the routine at #R$FB99.
 @ $FC14 label=detect_kempston_joystick
-b $FC29 Data block at FC29
+b $FC29 Options-menu, key-redefinition and hidden test-mode screen text
 D $FC29 Text for the options menu and hidden test/service menu screens (same position+attribute+ASCII-with-bit7-terminator encoding as #R$CC50), printed via #R$FD9C from pointers set up in #R$FB99/#R$FEA9: - Control select: "ENTER OPTION" / P1. SINCLAIR JOYSTICK / P2. CURSOR JOYSTICK / P3. KEMPSTON JOYSTICK / P4. KEYBOARD / P5. DEFINE KEYS - Key redefinition: "REDEFINE KEYS" / GEAR / ACCELERATE / BRAKE / LEFT / RIGHT / QUIT / PAUSE / TURBO - Test mode: "CHASE H.Q. TEST MODE" / TITLE SCREEN / 1 TO 5. LOGO ANIMATION / 6. SCORE ENTRY / PIN GAME / P1. RESTART LEVEL / P2. NEXT LEVEL / P3. END SCREEN / P4. EXTRA CREDIT. Text runs to $FD95, followed by a single $00 pad byte at $FD96.
 B $FC29,366,8*45,6
-b $FD97 Runtime scratch buffer, not static data: #R$FF2C ($FF6D-$FF7F) writes the looked-up character and its attribute byte here, alongside the caller's screen address, before calling #R$FD9C to print it. The bytes shown are simply whatever was resident when this snapshot was taken.
+b $FD97 Runtime scratch buffer, not static data
+D $FD97 #R$FF2C ($FF6D-$FF7F) writes the looked-up character and its attribute byte here, alongside the caller's screen address, before calling #R$FD9C to print it. The bytes shown are simply whatever was resident when this snapshot was taken.
 B $FD97,5,5
-c $FD9C Print-string loop: calls #R$FDA4 to print the character at (HL), advances HL, and loops until a byte with bit 7 set is printed (the string terminator).
+c $FD9C Print-string loop: prints each character at (HL) until the terminator is printed
+D $FD9C Calls #R$FDA4 to print the character at (HL), advances HL, and loops until a byte with bit 7 set (the string terminator) is printed.
 D $FD9C This and #R$FDA4 were previously misclassified as part of the #R$FC29 text data block -- the text ends at $FD96; see that block's header.
 R $FD9C Used by the routines at #R$C06E, #R$C59E, #R$FB99 and #R$FEA9.
 @ $FD9C label=print_string
-c $FDA4 Prints a single character: unpacks a packed row/column position byte from (HL) into a screen address, then blits the character's 8-row bitmap to screen via LDI (one of two colour paths, selected by a carry test partway through).
-D $FDA4 Used by the routines at #R$C59E, #R$FD9C and #R$FF2C.
+c $FDA4 Prints a single character: unpacks its position and blits the glyph bitmap to screen
+D $FDA4 Unpacks a packed row/column position byte from (HL) into a screen address, then blits the character's 8-row bitmap via LDI (one of two colour paths, selected by a carry test partway through).
 R $FDA4 Used by the routine at #R$FD9C's loop, and directly by #R$C59E and #R$FF2C ($FF7F) wherever only one character needs printing.
 @ $FDA4 label=print_character
-c $FE7F Clears the options-menu screen area: attribute memory from $5900 (511 bytes) and screen bitmap from $4800 and $4000, each via a self-filling LDIR pass ("LD (HL),L" seeds the first byte, then LDIR propagates it), servicing sound (#R$FBC8) between passes.
+c $FE7F Clears the options-menu screen area (attributes and bitmap)
+D $FE7F Attribute memory from $5900 (511 bytes) and screen bitmap from $4800 and $4000, each via a self-filling LDIR pass ("LD (HL),L" seeds the first byte, then LDIR propagates it), servicing sound (#R$FBC8) between passes.
 D $FE7F Falls through into #R$FBC8 at the end via a tail jump, not a RET.
 R $FE7F Used by the routines at #R$C59E, #R$FB99 and #R$FEA9.
 @ $FE7F label=clear_options_screen
-c $FEA9 "Redefine keys" screen driver. Prints the title/prompt text and the 8 control-name labels (#R$FC29: gear, accelerate, brake, left, right, quit, pause, turbo) via #R$FD9C, then for each of the 8 controls in turn (BC=$0801 at #R$FEBE) waits for a fresh keypress (#R$FF2C) and stores the chosen key, redrawing its name on screen.
+c $FEA9 "Redefine keys" screen driver: prompts for and stores each control's key
+D $FEA9 Prints the title/prompt text and the 8 control-name labels (#R$FC29: gear, accelerate, brake, left, right, quit, pause, turbo) via #R$FD9C, then for each of the 8 controls in turn (BC=$0801 at #R$FEBE) waits for a fresh keypress (#R$FF2C) and stores the chosen key, redrawing its name on screen.
 D $FEA9 Hidden test-mode unlock ($FEE2-$FEF1): compares the 8 keys just chosen against a fixed 8-byte reference sequence at $FFEF (in the same scan-key-code encoding documented at #R$FF2C). Decoding those 8 bytes through that encoding spells S, H, O, C, K, E, D, ENTER -- i.e. this is a hidden cheat code: redefining the 8 controls to spell "SHOCKED" followed by ENTER. On any mismatch the loop's RET NZ returns immediately (the ordinary case -- the new key mapping is simply kept and control returns to the caller, #R$FB99). On an exact match it falls through, sets the test-mode/cheat flag at $8000 (see #R$84C2@main in the main skool), shows a "TEST ... CHASE H.Q. TEST MODE" confirmation ($FCF0 text) and waits for fire, then loops back to $FEA9 to redisplay the redefine-keys screen (there is no path back to the caller once the secret code has been entered other than through this routine itself).
 R $FEA9 Used by the routine at #R$FB99.
 @ $FEA9 label=redefine_keys_screen
@@ -1376,17 +1391,19 @@ C $FEE4,3 DE -> fixed reference key sequence
 C $FEE7,3 HL -> the 8 keys just chosen
 C $FEEE,1 Mismatch -> ordinary case, return to caller
 C $FEF1,2 All 8 matched -> enable test mode
-c $FF0C Scans the ZX Spectrum keyboard matrix (the classic 8 half-row ports $FEFE, $FDFE, ..., $7FFE, walked by rotating the row-select byte in B via RLC) for a single currently-held key. D starts at $FF and is incremented once per row found to have any key held, then overwritten with the key's bit-position within its row (via the SRL/JR NC shift- count at $FF1D-$FF21); E counts down the row number. Returns NZ (an early RET NZ at $FF1A/$FF23) if more than one row has a key held (reject as ambiguous); otherwise always returns with Z set (via the unconditional CP A at $FF2A) and the caller (#R$FF2C) tells "no key" from "one key" by checking whether D is still $FF.
-D $FF0C Used by the routine at #R$FF2C.
+c $FF0C Scans the keyboard matrix for a single currently-held key
+D $FF0C Walks the classic 8 half-row ports ($FEFE, $FDFE, ..., $7FFE, rotating the row-select byte in B via RLC). D starts at $FF and is incremented once per row found to have any key held, then overwritten with the key's bit-position within its row (via the SRL/JR NC shift-count at $FF1D-$FF21); E counts down the row number. Returns NZ (an early RET NZ at $FF1A/$FF23) if more than one row has a key held (reject as ambiguous); otherwise always returns with Z set (via the unconditional CP A at $FF2A) and the caller (#R$FF2C) tells "no key" from "one key" by checking whether D is still $FF.
+R $FF0C Used by the routine at #R$FF2C.
 @ $FF0C label=scan_keyboard_matrix
-c $FF2C Waits for a fresh single keypress (servicing sound each poll via #R$FBC8 and scanning via #R$FF0C), rejecting it and retrying if it is an ambiguous multi-row press (NZ from #R$FF0C) or "no key held" (D still $FF).
+c $FF2C Waits for a fresh single keypress, rejecting ambiguous or empty scans
+D $FF2C Services sound each poll via #R$FBC8 and scans via #R$FF0C, rejecting and retrying if the scan is an ambiguous multi-row press (NZ from #R$FF0C) or "no key held" (D still $FF).
 D $FF2C Duplicate check ($FF3D-$FF48): compares the new key code against the C-1 entries already stored at $FFF7 (C is the 1-based control index from the caller); a match rejects and loops back to re-scan.
 R $FF2C Store ($FF4C-$FF52): the new key code is written to $FFF6+C (i.e.
 R $FF2C $FFF7 for control 1, ... $ FFFE for control 8) -- the growing list
 R $FF2C used by the duplicate check above and read back by #R$FEE2-$FEF1.
 N $FF2C Name lookup ($FF53-$FF68): the scan-matrix key code (bits 0-2 = column/bit-within-row 0-4, bits 3+ = row 0-7, from #R$FF0C) is unpacked into row and bit, then re-combined as index = 5*bit + row (a column-major layout, not row-major) to index the 2-bytes/entry name table at #R$FF95. Print ($FF6D-$FF7F): the looked-up character and a second byte (with bit 7 forced set, presumably an attribute/terminator flag for the string printer) are written into a 2-character scratch buffer at $FD97-$FD9B alongside the caller's screen address (DE), then #R$FDA4 prints it. Column advance ($FF82-$FF94): restores the caller's screen address and steps it on by $20 (one label column); on overflow (E wraps past $FF) also bumps D by 8 to drop down a pixel row. The same step is applied unconditionally once more when the caller's remaining loop count B is exactly 4 (#R$FF87-$FF8A) -- the extra step that wraps from the first row of 4 control labels to the second row of 4. Used by the routine at #R$FEA9.
 @ $FF2C label=read_new_key_definition
-b $FF95 Data block at FF95
+b $FF95 Key-name lookup table for the "redefine keys" screen, plus joystick key-lists
 D $FF95 $FF95-$FFE4: key-name lookup table for the "redefine keys" screen (2 bytes/entry -- printable character + space, with SYMBOL SHIFT/SPACE/ ENTER/CAPS SHIFT spelled out as two-letter codes -- indexed by #R$FF2C's row/bit arithmetic). The entries run in *reverse* matrix order: row 7 ($7FFE) down to row 0 ($FEFE), and within each row bit 4 down to bit 0 -- e.g. the first 5 entries (B, N, M, SY, SP) are row 7's keys read backwards, matching #R$FF2C's index = 5*(7-row) + (4-bit).
 R $FF95 $FFE5-$ FFE9 ("list A", installed by #R$FBD4 for the "SINCLAIR
 R $FF95 JOYSTICK" option) and $FFEA-$FFEE ("list B", by #R$FBD9 for "CURSOR
