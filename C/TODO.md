@@ -2,10 +2,8 @@
 
 ## P1 — Bugs / broken behaviour
 
-- Jittery hazards (cars teleporting / other odds?)
-- Jittery perp too — check out the whole `perp_behaviour` routine
+- Jittery perp too — check out the whole `perp_behaviour` routine because the perp leaps around when being pursued
 - 48k music routine seizes up
-- Fix: Burst of randomish noises when the game is quit [put in main loop checks]
 
 ## P2 — Game feel / calibration
 
@@ -15,32 +13,31 @@
 
 ## P3 — Incomplete / missing content
 
-- Helicopter data
-- Overhead graphic format / handler
 - Complete decoding of all stage data
 
 ## P4 — Polish / visual correctness
 
 - Stretchy test app produces crap output
 - Ensure partial screen updates are correct
-- Draw road pipeline: merge `draw_road` back into one big unholy lump (cohesion)
-- Fix "Awidth_bytes" vars which seem to be x coords
+- Draw road pipeline: merge `draw_road` back into one big unholy lump
+- 'TEST' marker not drawn when in test mode
 
 ## P5 — Clarity pass
 
-- 'TEST' marker not drawn when in test mode
+- Fix "Awidth_bytes" vars which seem to be x coords
 - Document expected values/ranges for e.g. xpos arrays
 - Remove Z80 macros where it clarifies
-- Remove any local vars from state
+- Remove any vars which could be local from state
 - Sort all decls by order of use
 - Sort all params by register
 - Fix Claude referring to ROM all the time
+- Audit "Conv: added" vars
+- Stage5 bitmap data has a load of cruft at the end of it - delete
 
 ## P6 — Features / extras
 
 - 128K menu: music, animation, high score, etc.
 - game finish screen
-- Drop 'ChaseHQ-' from all source filenames
 
 ## P7 — Investigation / meta
 
@@ -78,6 +75,7 @@
 - Lua/Python integration
 - Diagram generation for stretchy graphics
 - Emscripten build
+- Pull across the demo version of the game
 
 ## FOR WRITEUP / NOTES
 
