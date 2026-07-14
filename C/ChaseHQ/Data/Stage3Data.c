@@ -370,7 +370,7 @@ static const u8 stage3_map_height_C2AC[] = {
 // $C2CD
 static const u8 stage3_map_lanes_C2CD[] = {
   MAP_LANES_3R(60),
-  MAP_LANES_3TO4R(2),
+  MAP_LANES_3RTO4(2),
   MAP_LANES_4(254),
   MAP_LANES_4(84),
   MAP_CMD_SPLIT(0x604B, 0x6104)
@@ -926,7 +926,7 @@ static const u8 stage3_map_height_C4EF[] = {
 static const u8 stage3_map_lanes_C504[] = {
   MAP_LANES_4(56),
   MAP_LANES_4TO3R(134),
-  MAP_LANES_3TO4R(2),
+  MAP_LANES_3RTO4(2),
   MAP_LANES_4(18),
   MAP_CMD_GOTO(0x61B6)
 };
@@ -1106,7 +1106,7 @@ static const u8 stage3_map_lanes_C5B6[] = {
   MAP_LANES_4(8),
   MAP_LANES_4TO3L(2),
   MAP_LANES_3L(178),
-  MAP_LANES_3TO4L(2),
+  MAP_LANES_3LTO4(2),
   MAP_LANES_4(2),
   MAP_CMD_GOTO(0x62DC)
 };
@@ -1400,17 +1400,17 @@ static const u8 stage3_map_height_C69D[] = {
 static const u8 stage3_map_lanes_C6DC[] = {
   MAP_LANES_4(82),
   MAP_LANES_4TO3R(8),
-  MAP_LANES_3TO4R(2),
+  MAP_LANES_3RTO4(2),
   MAP_LANES_4(50),
   MAP_LANES_4TO3R(4),
-  MAP_LANES_3TO4R(2),
+  MAP_LANES_3RTO4(2),
   MAP_LANES_4(10),
   MAP_LANES_4TO3L(2),
   MAP_LANES_3L(2),
-  MAP_LANES_3TO4L(2),
+  MAP_LANES_3LTO4(2),
   MAP_LANES_4(250),
   MAP_LANES_3L(26),
-  MAP_LANES_3TO4L(2),
+  MAP_LANES_3LTO4(2),
   MAP_LANES_4(2),
   MAP_CMD_GOTO(0x62DC)
 };

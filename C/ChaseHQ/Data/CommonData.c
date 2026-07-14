@@ -4357,9 +4357,9 @@ const u8 forked_road_exit_height[5] = {
 // $E2E8
 const u8 forked_road_exit_left_lanes[12] = {
   MAP_LANES_2L(10),
-  MAP_LANES_2TO3L(2),
+  MAP_LANES_2LTO3L(2),
   MAP_LANES_3L(10),
-  MAP_LANES_3TO4L(2),
+  MAP_LANES_3LTO4(2),
   MAP_LANES_4(12),
   MAP_CMD_FORK_END
 };
@@ -4367,9 +4367,9 @@ const u8 forked_road_exit_left_lanes[12] = {
 // $E2F4
 const u8 forked_road_exit_right_lanes[12] = {
   MAP_LANES_2R(10),
-  MAP_LANES_2TO3R(2),
+  MAP_LANES_2RTO3R(2),
   MAP_LANES_3R(10),
-  MAP_LANES_3TO4R(2),
+  MAP_LANES_3RTO4(2),
   MAP_LANES_4(12),
   MAP_CMD_FORK_END
 };

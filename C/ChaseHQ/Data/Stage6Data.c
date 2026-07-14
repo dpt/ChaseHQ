@@ -206,18 +206,18 @@ static const u8 height[] = {
 // $C6BB
 static const u8 lanes[] = {
   MAP_LANES_2L(2),
-  MAP_LANES_2TO3L(2),
+  MAP_LANES_2LTO3L(2),
   MAP_LANES_3L(8),
-  MAP_LANES_3TO2L(2),
-  // MAP_LANES_2M(2),
+  MAP_LANES_3LTO2M(2),
+  MAP_LANES_2M(2),
   // MAP_LANES_2R(2),
   // MAP_LANES_4(114),
   // MAP_LANES_4TO3R(36),
-  // MAP_LANES_3TO4R(2),
+  // MAP_LANES_3RTO4(2),
   // MAP_LANES_4(4),
   // MAP_LANES_4TO3L(2),
   // MAP_LANES_3L(8),
-  // MAP_LANES_3TO4L(2),
+  // MAP_LANES_3LTO4(2),
   // MAP_LANES_4(22),
   MAP_CMD_GOTO(0xC6BB)
 };

@@ -400,11 +400,11 @@ static const u8 stage2_map_height_E2B0[] = {
 static const u8 stage2_map_lanes_E2E6[] = {
   MAP_LANES_4(2),
   MAP_LANES_4TO3R(30),
-  MAP_LANES_3TO4R(2),
+  MAP_LANES_3RTO4(2),
   MAP_LANES_4(10),
   MAP_LANES_4TO3L(2),
   MAP_LANES_3L(130),
-  MAP_LANES_3TO4L(2),
+  MAP_LANES_3LTO4(2),
   MAP_LANES_4(222),
   MAP_CMD_SPLIT(0x6074, 0x6161)
 };
@@ -774,10 +774,10 @@ static const u8 stage2_map_lanes_E474[] = {
   MAP_LANES_4(78),
   MAP_LANES_4TO3L(2),
   MAP_LANES_3L(10),
-  MAP_LANES_3TO4L(2),
+  MAP_LANES_3LTO4(2),
   MAP_LANES_4(42),
   MAP_LANES_4TO3R(4),
-  MAP_LANES_3TO4R(2),
+  MAP_LANES_3RTO4(2),
   MAP_LANES_4(70),
   MAP_CMD_GOTO(0x622F)
 };
@@ -1005,8 +1005,8 @@ static const u8 stage2_map_lanes_E561[] = {
   MAP_LANES_3L(40),
   /* unknown lanes val=0x3D */ 2, 0x3D,
   MAP_LANES_2L(38),
-  MAP_LANES_2TO3L(2),
-  MAP_LANES_3TO4L(2),
+  MAP_LANES_2LTO3L(2),
+  MAP_LANES_3LTO4(2),
   MAP_LANES_4(64),
   MAP_CMD_GOTO(0x622F)
 };
@@ -1198,7 +1198,7 @@ static const u8 stage2_map_lanes_E62F[] = {
   MAP_LANES_TUNNEL_ENTRY(122),
   MAP_LANES_TUNNEL_EXIT(2),
   MAP_LANES_3L(10),
-  MAP_LANES_3TO4L(2),
+  MAP_LANES_3LTO4(2),
   MAP_LANES_4(34),
   MAP_CMD_GOTO(0x62E0)
 };
@@ -1369,7 +1369,7 @@ static const u8 stage2_map_height_E69C[] = {
 static const u8 stage2_map_lanes_E6E0[] = {
   MAP_LANES_4(92),
   MAP_LANES_3L(46),
-  MAP_LANES_3TO4L(2),
+  MAP_LANES_3LTO4(2),
   MAP_LANES_4(102),
   MAP_LANES_3R(6),
   MAP_LANES_4(202),

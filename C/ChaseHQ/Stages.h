@@ -185,12 +185,12 @@
 #define MAP_LANES_2R_VAL                (0x03) // 0000_0011
 #define MAP_LANES_4TO3L_VAL             (0xBD) // 1011_1101
 #define MAP_LANES_4TO3R_VAL             (0x8E) // 1000_1110
-#define MAP_LANES_3TO4L_VAL             (0xAD) // 1010_1101
-#define MAP_LANES_3TO4R_VAL             (0x9E) // 1001_1110
-#define MAP_LANES_3TO2L_VAL             (0x06) // 0000_0110
-#define MAP_LANES_3TO2R_VAL             (0x0F) // 0000_1111
-#define MAP_LANES_2TO3L_VAL             (0x2D) // 0010_1101
-#define MAP_LANES_2TO3R_VAL             (0x1F) // 0001_1111
+#define MAP_LANES_3LTO4_VAL             (0xAD) // 1010_1101
+#define MAP_LANES_3RTO4_VAL             (0x9E) // 1001_1110
+#define MAP_LANES_3LTO2M_VAL            (0x06) // 0000_0110
+#define MAP_LANES_3RTO2R_VAL            (0x0F) // 0000_1111
+#define MAP_LANES_2LTO3L_VAL            (0x2D) // 0010_1101
+#define MAP_LANES_2RTO3R_VAL            (0x1F) // 0001_1111
 #define MAP_LANES_TUNNEL_VAL            (0x41) // 0100_0001 // engine-derived tunnel body value; used in runtime comparisons
 #define MAP_LANES_TUNNEL_ENTRY_VAL      (0x45) // 0100_0101
 #define MAP_LANES_TUNNEL_EXIT_VAL       (0x59) // 0101_1001
@@ -232,12 +232,12 @@
 #define MAP_LANES_2R(D)                 (D), (MAP_LANES_2R_VAL)
 #define MAP_LANES_4TO3L(D)              (D), (MAP_LANES_4TO3L_VAL)
 #define MAP_LANES_4TO3R(D)              (D), (MAP_LANES_4TO3R_VAL)
-#define MAP_LANES_3TO4L(D)              (D), (MAP_LANES_3TO4L_VAL)
-#define MAP_LANES_3TO4R(D)              (D), (MAP_LANES_3TO4R_VAL)
-#define MAP_LANES_3TO2L(D)              (D), (MAP_LANES_3TO2L_VAL)
-#define MAP_LANES_3TO2R(D)              (D), (MAP_LANES_3TO2R_VAL)
-#define MAP_LANES_2TO3L(D)              (D), (MAP_LANES_2TO3L_VAL)
-#define MAP_LANES_2TO3R(D)              (D), (MAP_LANES_2TO3R_VAL)
+#define MAP_LANES_3LTO4(D)              (D), (MAP_LANES_3LTO4_VAL)
+#define MAP_LANES_3RTO4(D)              (D), (MAP_LANES_3RTO4_VAL)
+#define MAP_LANES_3LTO2M(D)             (D), (MAP_LANES_3LTO2M_VAL)
+#define MAP_LANES_3RTO2R(D)             (D), (MAP_LANES_3RTO2R_VAL)
+#define MAP_LANES_2LTO3L(D)             (D), (MAP_LANES_2LTO3L_VAL)
+#define MAP_LANES_2RTO3R(D)             (D), (MAP_LANES_2RTO3R_VAL)
 #define MAP_LANES_TUNNEL_ENTRY(D)       (D), (MAP_LANES_TUNNEL_ENTRY_VAL)
 #define MAP_LANES_TUNNEL_EXIT(D)        (D), (MAP_LANES_TUNNEL_EXIT_VAL)
 #define MAP_LANES_DIRTTRACK(D)          (D), (MAP_LANES_DIRTTRACK_VAL)
