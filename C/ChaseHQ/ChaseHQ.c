@@ -19067,7 +19067,7 @@ static u8 call_bank_3_128k(chqstate_t *state, int HLroutine)
     assert(0);
     break;
   case BANK3_BOUNCY_LOGO:
-    title_screen_driver(state);
+    // title_screen_driver(state);
     break;
   case BANK3_ROUTINE_3:
     break;
