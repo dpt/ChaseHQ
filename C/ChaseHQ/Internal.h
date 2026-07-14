@@ -162,6 +162,8 @@ typedef u8 chatterpriority_t;
 
 typedef struct session session_t;
 
+typedef struct title_tune_channel title_tune_channel_t;
+
 typedef struct carpart {
   u8        y;
   u8        rows;

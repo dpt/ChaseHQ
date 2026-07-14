@@ -163,6 +163,107 @@ static void chq_initialise(chqstate_t *state)
   state->music.data_ptr          = &music_data[1];
   state->music.pattern_start_ptr = &music_data[1];     // $F112
 
+  // $EC01/$EC26/$EC4B (128K bank 3): title-tune channel-tracker records.
+  // start_tune ($EB9E) properly initialises these once a tune is selected,
+  // but compute_channel_ay_registers ($EE9E) can in principle run before
+  // that, so give every field a defined value here rather than leaving
+  // calloc's zero fill as the only guarantee. pattern_ptr/pattern_data_ptr
+  // and the Conv-only pattern_base/pattern_len stay NULL/0 here; start_tune
+  // resolves them for real from tune_patterns (tunes 0/1 only -- see
+  // start_tune's Translation notes). pitch_offset_default/_cur and
+  // envelope_shape_default/_ptr are set by decode_pattern_command's
+  // as-yet-unported pitch-offset/envelope-shape select tables, not by
+  // start_tune.
+  {
+    int titlechan;
+
+    for (titlechan = 0; titlechan < 3; titlechan++) {
+      state->title_music.channel[titlechan].status                 = 0;
+      state->title_music.channel[titlechan].pattern_ptr            = NULL; // set for real by start_tune
+      state->title_music.channel[titlechan].pattern_data_ptr       = NULL; // never read elsewhere in bank 3
+      state->title_music.channel[titlechan].pattern_base           = NULL; // Conv: set for real by start_tune
+      state->title_music.channel[titlechan].pattern_len            = 0;    // Conv: set for real by start_tune
+      state->title_music.channel[titlechan].speed_divider          = 0;
+      state->title_music.channel[titlechan].counter                = 0;
+      state->title_music.channel[titlechan].slide_accum            = 0;
+      state->title_music.channel[titlechan].pitch_offset_default   = NULL; // TODO: set once decode_pattern_command's pitch-offset table exists
+      state->title_music.channel[titlechan].pitch_offset_cur       = NULL; // TODO: as above
+      state->title_music.channel[titlechan].slide_step             = 0;
+      state->title_music.channel[titlechan].slide_countdown        = 0;
+      state->title_music.channel[titlechan].envelope_speed         = 0;
+      state->title_music.channel[titlechan].row_wait               = 0;
+      state->title_music.channel[titlechan].row_wait_reload        = 0;
+      state->title_music.channel[titlechan].note_index             = 0;
+      state->title_music.channel[titlechan].volume                 = 0;
+      state->title_music.channel[titlechan].envelope_shape_default = NULL; // TODO: set once decode_pattern_command's envelope-shape table exists
+      state->title_music.channel[titlechan].envelope_shape_ptr     = NULL; // TODO: as above
+      state->title_music.channel[titlechan].envelope_amplitude     = 0;
+      state->title_music.channel[titlechan].envelope_step_counter  = 0;
+      state->title_music.channel[titlechan].vibrato_depth          = 0;
+      state->title_music.channel[titlechan].vibrato_increment      = 0;
+      state->title_music.channel[titlechan].vibrato_phase          = 0;
+      state->title_music.channel[titlechan].flags                  = 0;
+      state->title_music.channel[titlechan].slide_update_flag      = 0;
+      state->title_music.channel[titlechan].mute_pending           = 0;
+      state->title_music.channel[titlechan].transpose              = 0;
+      state->title_music.channel[titlechan].misc_playback_state    = 0;
+      /* mixer_mask is static initial RAM content in the Z80 (not written by
+       * start_tune), confirmed against the skool's DEFB data: channel-tracker
+       * $EC01 -> $EC25=$09, $EC26 -> $EC4A=$12, $EC4B -> $EC6F=$24. */
+      switch (titlechan) {
+      case 0:
+        state->title_music.channel[titlechan].mixer_mask = 0x09;
+        break;
+      case 1:
+        state->title_music.channel[titlechan].mixer_mask = 0x12;
+        break;
+      case 2:
+        state->title_music.channel[titlechan].mixer_mask = 0x24;
+        break;
+      }
+    }
+  }
+
+  // $EC70 (128K bank 3): per-tick tempo countdown; start_tune sets this to 1
+  // on tune start, so 0 here is just a harmless pre-tune-start default (the
+  // tune-active flag being clear means ts_music_service never reads it
+  // before then).
+  state->title_music.tempo_counter = 0x00; // $EC70
+
+  // $EC79/$ECC6 (SM, 128K bank 3): scratch bytes are the operands of
+  // "LD A,$00" instructions in ts_music_service, so 0 is the assembled
+  // reset value for both.
+  state->title_music.shared_note_value    = 0x00; // $EC79
+  state->title_music.driver_internal_flag = 0x00; // $ECC6
+
+  // $EC9A/$EED1/$EF7A (128K bank 3): further scratch bytes written by
+  // start_tune/advance_channel_pattern; 0 matches start_tune's explicit
+  // clear of $EED1 and is the natural power-on state of the other two.
+  state->title_music.tune_tempo         = 0x00; // $EC9A
+  state->title_music.pattern_driver_flag = 0x00; // $EED1
+  state->title_music.pending_mixer_bits  = 0x00; // $EF7A
+
+  // $F223/$F224 (128K bank 3): tune-active flag and its companion byte.
+  // start_tune clears both on entry and arms tune_active=1 once a tune's
+  // channel-tracker records are initialised; 0 here matches the power-on
+  // state (no tune active) before start_tune is ever called.
+  state->title_music.tune_active           = 0x00; // $F223
+  state->title_music.tune_active_companion = 0x00; // $F224
+
+  // $EFAF-$EFBA (128K bank 3): title-tune AY register cache. Matches the
+  // skool's DEFB bytes at $EFAF-$EFBA exactly; per the skool comment these
+  // are placeholder start-up defaults, overwritten every frame once a tune
+  // is playing (mixer = 0x3F disables all tone/noise channels until then).
+  state->title_ay_regs.chan_a_pitch = 0x0000;
+  state->title_ay_regs.chan_b_pitch = 0x0000;
+  state->title_ay_regs.chan_c_pitch = 0x0000;
+  state->title_ay_regs.noise_pitch  = 0x00;
+  state->title_ay_regs.mixer        = 0x3F;
+  state->title_ay_regs.chan_a_vol   = 0x0F;
+  state->title_ay_regs.chan_b_vol   = 0x0F;
+  state->title_ay_regs.chan_c_vol   = 0x0F;
+  state->title_ay_regs.env_fine     = 0x00;
+
   // Temp until the 128K input code is ported.
   state->kempston_flag = 0;
   state->keydefs[KEYDEF_QUIT      ] = KEYDEF(4,3); // 0
