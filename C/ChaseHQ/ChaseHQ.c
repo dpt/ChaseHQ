@@ -17773,6 +17773,104 @@ static u8 acp_read_byte(title_tune_channel_t *IX_channel,
   return A_byte;
 }
 
+/* Pitch-offset sequences: real data from bank3.bin's $F07C table
+ * (24 x 1-byte self-referential-displacement entries, each pointing
+ * to a byte sequence terminated by a bit-7-set marker byte). See
+ * decode_pattern_command's pitch-select branch ($EE55-$EE6C). */
+static const u8 title_pitch_offset_seq_00[] = { 0x80 };
+static const u8 title_pitch_offset_seq_01[] = { 0x0C, 0x0C, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x80 };
+static const u8 title_pitch_offset_seq_02[] = { 0x00, 0x04, 0x87 };
+static const u8 title_pitch_offset_seq_03[] = { 0x00, 0x03, 0x88 };
+static const u8 title_pitch_offset_seq_04[] = { 0x00, 0x05, 0x89 };
+static const u8 title_pitch_offset_seq_05[] = { 0x00, 0x00, 0x00, 0x03, 0x03, 0x83 };
+static const u8 title_pitch_offset_seq_06[] = { 0x00, 0x00, 0x00, 0x05, 0x05, 0x85 };
+static const u8 title_pitch_offset_seq_07[] = { 0x00, 0x00, 0x00, 0x04, 0x04, 0x84 };
+static const u8 title_pitch_offset_seq_08[] = { 0x00, 0x8C };
+static const u8 title_pitch_offset_seq_09[] = { 0x00, 0x00, 0x00, 0x08, 0x08, 0x88 };
+static const u8 title_pitch_offset_seq_10[] = { 0x0C, 0x0C, 0x0C, 0x0C, 0x0C, 0x0C, 0x00, 0x00, 0x00, 0x00, 0x00, 0x80 };
+static const u8 title_pitch_offset_seq_11[] = { 0x00, 0x00, 0x03, 0x03, 0x07, 0x87 };
+static const u8 title_pitch_offset_seq_12[] = { 0x0C, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x80 };
+static const u8 title_pitch_offset_seq_13[] = { 0x00, 0x05, 0x07, 0x8C };
+static const u8 title_pitch_offset_seq_14[] = { 0x00, 0x05, 0x0A, 0x8C };
+static const u8 title_pitch_offset_seq_15[] = { 0x00, 0x05, 0x09, 0x8C };
+static const u8 title_pitch_offset_seq_16[] = { 0x00, 0x00, 0x00, 0x00, 0x04, 0x04, 0x04, 0x04, 0x07, 0x07, 0x07, 0x07, 0x0C, 0x0C, 0x0C, 0x8C };
+static const u8 title_pitch_offset_seq_17[] = { 0x1C, 0x01, 0x0B, 0x01, 0xFC };
+static const u8 title_pitch_offset_seq_18[] = { 0xEF };
+static const u8 title_pitch_offset_seq_19[] = { 0xC8 };
+static const u8 title_pitch_offset_seq_20[] = { 0x51, 0x01, 0x3E, 0x01, 0x2C, 0x01, 0x1C, 0x01, 0x0B, 0x01, 0xFC };
+static const u8 title_pitch_offset_seq_21[] = { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x80 };
+static const u8 title_pitch_offset_seq_22[] = { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x80 };
+static const u8 title_pitch_offset_seq_23[] = { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x80 };
+
+/* Envelope-shape sequences: real data from bank3.bin's $F123 table
+ * (16 x 2-byte pointers; byte at ptr-1 is the envelope speed, sequence
+ * runs from ptr until a bit-7-set halt marker). Entries 11-15 have no
+ * valid pointer in bank3.bin (never referenced by tunes 0/1's
+ * extracted pattern data) -- stubbed silent/single-halt-byte. See
+ * decode_pattern_command's envelope-select branch ($EE7E-$EE93). */
+static const u8 title_envelope_shape_00[] = { 0x0F, 0x0F, 0x0E, 0x0D, 0x0C, 0x08, 0x87 };
+static const u8 title_envelope_shape_01[] = { 0x0E, 0x0F, 0x0E, 0x87 };
+static const u8 title_envelope_shape_02[] = { 0x0E, 0x0F, 0x0B, 0x87 };
+static const u8 title_envelope_shape_03[] = { 0x0F, 0x0F, 0x0F, 0x0E, 0x0D, 0x0A, 0x87 };
+static const u8 title_envelope_shape_04[] = { 0x0F, 0x09, 0x08, 0x06, 0x05, 0x04, 0x03, 0x87 };
+static const u8 title_envelope_shape_05[] = { 0x0F, 0x0E, 0x0D, 0x0C, 0x0B, 0x06, 0x87 };
+static const u8 title_envelope_shape_06[] = { 0x0F, 0x0F, 0x0E, 0x0D, 0x0C, 0x0B, 0x0A, 0x09, 0x08, 0x07, 0x06, 0x05, 0x04, 0x03, 0x02, 0x01, 0x00, 0x87 };
+static const u8 title_envelope_shape_07[] = { 0x09, 0x0A, 0x0B, 0x0C, 0x0D, 0x0E, 0x0F, 0x0E, 0x0D, 0x0C, 0x0B, 0x0A, 0x09, 0x08, 0x07, 0x06, 0x05, 0x04, 0x03, 0x02, 0x01, 0x00, 0x87 };
+static const u8 title_envelope_shape_08[] = { 0x0F, 0x0E, 0x0C, 0x06, 0x87 };
+static const u8 title_envelope_shape_09[] = { 0x0F, 0x0D, 0x0C, 0x0A, 0x08, 0x07, 0x06, 0x87 };
+static const u8 title_envelope_shape_10[] = { 0x0A, 0x0B, 0x0C, 0x0D, 0x0E, 0x0F, 0x0E, 0x0D, 0x0C, 0x0B, 0x0A, 0x09, 0x08, 0x07, 0x87 };
+static const u8 title_envelope_shape_11[] = { 0x80 };
+static const u8 title_envelope_shape_12[] = { 0x80 };
+static const u8 title_envelope_shape_13[] = { 0x80 };
+static const u8 title_envelope_shape_14[] = { 0x80 };
+static const u8 title_envelope_shape_15[] = { 0x80 };
+
+static const struct { const u8 *base; u16 len; } pitch_offset_table[24] = {
+  { title_pitch_offset_seq_00, sizeof(title_pitch_offset_seq_00) },
+  { title_pitch_offset_seq_01, sizeof(title_pitch_offset_seq_01) },
+  { title_pitch_offset_seq_02, sizeof(title_pitch_offset_seq_02) },
+  { title_pitch_offset_seq_03, sizeof(title_pitch_offset_seq_03) },
+  { title_pitch_offset_seq_04, sizeof(title_pitch_offset_seq_04) },
+  { title_pitch_offset_seq_05, sizeof(title_pitch_offset_seq_05) },
+  { title_pitch_offset_seq_06, sizeof(title_pitch_offset_seq_06) },
+  { title_pitch_offset_seq_07, sizeof(title_pitch_offset_seq_07) },
+  { title_pitch_offset_seq_08, sizeof(title_pitch_offset_seq_08) },
+  { title_pitch_offset_seq_09, sizeof(title_pitch_offset_seq_09) },
+  { title_pitch_offset_seq_10, sizeof(title_pitch_offset_seq_10) },
+  { title_pitch_offset_seq_11, sizeof(title_pitch_offset_seq_11) },
+  { title_pitch_offset_seq_12, sizeof(title_pitch_offset_seq_12) },
+  { title_pitch_offset_seq_13, sizeof(title_pitch_offset_seq_13) },
+  { title_pitch_offset_seq_14, sizeof(title_pitch_offset_seq_14) },
+  { title_pitch_offset_seq_15, sizeof(title_pitch_offset_seq_15) },
+  { title_pitch_offset_seq_16, sizeof(title_pitch_offset_seq_16) },
+  { title_pitch_offset_seq_17, sizeof(title_pitch_offset_seq_17) },
+  { title_pitch_offset_seq_18, sizeof(title_pitch_offset_seq_18) },
+  { title_pitch_offset_seq_19, sizeof(title_pitch_offset_seq_19) },
+  { title_pitch_offset_seq_20, sizeof(title_pitch_offset_seq_20) },
+  { title_pitch_offset_seq_21, sizeof(title_pitch_offset_seq_21) },
+  { title_pitch_offset_seq_22, sizeof(title_pitch_offset_seq_22) },
+  { title_pitch_offset_seq_23, sizeof(title_pitch_offset_seq_23) },
+};
+
+static const struct { const u8 *base; u16 len; u8 speed; } envelope_shape_table[16] = {
+  { title_envelope_shape_00, sizeof(title_envelope_shape_00), 0x01 },
+  { title_envelope_shape_01, sizeof(title_envelope_shape_01), 0x02 },
+  { title_envelope_shape_02, sizeof(title_envelope_shape_02), 0x02 },
+  { title_envelope_shape_03, sizeof(title_envelope_shape_03), 0x04 },
+  { title_envelope_shape_04, sizeof(title_envelope_shape_04), 0x04 },
+  { title_envelope_shape_05, sizeof(title_envelope_shape_05), 0x00 },
+  { title_envelope_shape_06, sizeof(title_envelope_shape_06), 0x02 },
+  { title_envelope_shape_07, sizeof(title_envelope_shape_07), 0x06 },
+  { title_envelope_shape_08, sizeof(title_envelope_shape_08), 0x00 },
+  { title_envelope_shape_09, sizeof(title_envelope_shape_09), 0x01 },
+  { title_envelope_shape_10, sizeof(title_envelope_shape_10), 0x02 },
+  { title_envelope_shape_11, sizeof(title_envelope_shape_11), 0x00 },
+  { title_envelope_shape_12, sizeof(title_envelope_shape_12), 0x00 },
+  { title_envelope_shape_13, sizeof(title_envelope_shape_13), 0x00 },
+  { title_envelope_shape_14, sizeof(title_envelope_shape_14), 0x00 },
+  { title_envelope_shape_15, sizeof(title_envelope_shape_15), 0x00 },
+};
+
 static void advance_channel_pattern(chqstate_t *state,
                                     title_tune_channel_t *IX_channel)
 {
@@ -17935,15 +18033,21 @@ static void advance_channel_pattern(chqstate_t *state,
       state->title_music.tune_tempo = (u8) (A_byte - 0xB0 + 1); /* $EC9A */
       continue;
     } else if (A_byte < 0xD0) {
-      /* $EE59: TODO -- select a pitch-offset sequence via the $F07C table
-       * (24 entries, index A_byte-0xB8, self-referential 1-byte-displacement
-       * encoding); table not yet ported, so pitch_offset_cur/_default are
-       * left unchanged for now. */
+      /* $EE59-$EE6C: select a pitch-offset sequence via the $F07C table (24
+       * entries, index A_byte-0xB8). Sets both the "current" and "default"
+       * pointers immediately (unlike the envelope-shape select below, which
+       * only sets the default). */
+      HL_ptr = pitch_offset_table[A_byte - 0xB8].base;
+      IX_channel->pitch_offset_cur     = HL_ptr; /* +$0B/$0C */
+      IX_channel->pitch_offset_default = HL_ptr; /* +$09/$0A */
       continue;
     } else if (A_byte < 0xE0) {
-      /* $EE7E: TODO -- select an envelope shape via the $F123 pointer table
-       * (16 entries, index A_byte-0xD0); table not yet ported, so
-       * envelope_shape_default/envelope_speed are left unchanged for now. */
+      /* $EE7E-$EE93: select an envelope shape via the $F123 pointer table (16
+       * entries, index A_byte-0xD0). Sets envelope_shape_default and
+       * envelope_speed; envelope_shape_ptr is only reset from the default at
+       * the next note event (see the note-value branch above). */
+      IX_channel->envelope_shape_default = envelope_shape_table[A_byte - 0xD0].base; /* +$14/$15 */
+      IX_channel->envelope_speed         = envelope_shape_table[A_byte - 0xD0].speed; /* +$0F */
       continue;
     } else {
       /* $EE77: set the per-row wait reload value. */
@@ -18963,7 +19067,7 @@ static u8 call_bank_3_128k(chqstate_t *state, int HLroutine)
     assert(0);
     break;
   case BANK3_BOUNCY_LOGO:
-    // title_screen_driver(state);
+    title_screen_driver(state);
     break;
   case BANK3_ROUTINE_3:
     break;
