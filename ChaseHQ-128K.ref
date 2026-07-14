@@ -9,6 +9,24 @@ GameDir=ChaseHQ
 [Paths]
 CodeFiles={address:04X}.html
 
+; Each 128K RAM bank is paged into the same $C000-$FFFF window, so it gets
+; its own OtherCode disassembly rather than sharing the main one. This lets
+; #R address@bankN link between banks despite the overlapping addresses.
+[OtherCode:bank1]
+Source=ChaseHQ-128K-bank-1.skool
+
+[OtherCode:bank3]
+Source=ChaseHQ-128K-bank-3.skool
+
+[OtherCode:bank4]
+Source=ChaseHQ-128K-bank-4.skool
+
+[OtherCode:bank6]
+Source=ChaseHQ-128K-bank-6.skool
+
+[OtherCode:bank7]
+Source=ChaseHQ-128K-bank-7.skool
+
 [Game]
 Game=Chase H.Q.
 Release=The incomplete Chase H.Q. disassembly 20250130
@@ -35,6 +53,7 @@ MemoryMaps
 Graphics
 DataTables
 Reference
+OtherCode
 
 [Index:Game:Game]
 MapFormat

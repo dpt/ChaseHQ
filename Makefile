@@ -77,7 +77,7 @@ $(SKOOL): $(PRISTINEZ80) $(CTL) $(CTLBANK1) $(CTLBANK3) $(CTLBANK4) $(CTLBANK6) 
 	sna2skool.py $(OPTIONS) --ctl $(CTLBANK7) --page 7 --start 49152 --end 65536 $(PRISTINEZ80) > $(SKOOLBANK7)
 
 .PHONY: disasm
-disasm: $(SKOOL)
+disasm: $(SKOOL) $(SKOOLBANK1) $(SKOOLBANK3) $(SKOOLBANK4) $(SKOOLBANK6) $(SKOOLBANK7)
 	skool2html.py $(OPTIONS) --asm-labels --rebuild-images --output-dir $(BUILD) $(SKOOL) $(REF)
 
 .PHONY: asm
