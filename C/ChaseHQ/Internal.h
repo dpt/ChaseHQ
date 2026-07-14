@@ -24,13 +24,16 @@
 
 /* Configuration constants */
 
-#define INITIAL_BOOSTS                         (3) /* number of boosts player starts each stage with */
-#define RESTART_BOOSTS              INITIAL_BOOSTS /* number of boosts player receives on restart */
+#define INITIAL_BOOSTS               (3) /* number of boosts player starts each stage with */
+#define RESTART_BOOSTS               (3) /* number of boosts player receives on restart */
 
-#define INITIAL_TIME_BCD                    (0x60) /* seconds in BCD */
-#define CHASE_TIME_BCD                      (0x60)
-#define RESTART_TIME_BCD                    (0x60)
-#define LOW_TIME_WARNING                    (0x15)
+#define INITIAL_TIME_BCD          (0x60) /* seconds in BCD */
+#define CHASE_TIME_BCD            (0x60)
+#define RESTART_TIME_BCD          (0x60)
+#define LOW_TIME_WARNING          (0x15)
+
+#define MINSTAGE                     (1)
+#define MAXSTAGE                     (6) /* five original stages plus a test level */
 
 /* ----------------------------------------------------------------------- */
 

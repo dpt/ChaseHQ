@@ -104,6 +104,7 @@
 #include "Data/Stage3Data.h"
 #include "Data/Stage4Data.h"
 #include "Data/Stage5Data.h"
+#include "Data/Stage6Data.h"
 #include "Stages.h"
 #include "State.h"
 
@@ -435,9 +436,6 @@ static u8 *z80offsettobackbuf(chqstate_t *state, int off, int left, int right)
 #define MARQUEELIGHT_WIDTH           (5) /* attribute cells */
 #define MARQUEELIGHT_HEIGHT          (4) /* attribute cells */
 
-#define MINSTAGE                     (1)
-#define MAXSTAGE                     (5)
-
 #define SMASHCOUNTER_MAX            (20) /* fully smashed; also the smash bar segment count */
 
 #define STANDARD_SLEEP          (220167) /* calibrated so in-game timer is 60s */
@@ -648,6 +646,7 @@ static const void *lookup_map_goto(chqstate_t *state, int z80)
     stage3_lookup_map_goto,
     stage4_lookup_map_goto,
     stage5_lookup_map_goto,
+    stage6_lookup_map_goto,
   };
 
   switch (z80) {
@@ -662,7 +661,7 @@ static const void *lookup_map_goto(chqstate_t *state, int z80)
   case 0xE2D1: return &forked_road_lanes[0];
   default:
     assert(state->current_stage_number >= 1 &&
-           state->current_stage_number < (int)NELEMS(stage_lookup_fns));
+           state->current_stage_number <= (int)NELEMS(stage_lookup_fns));
     return stage_lookup_fns[state->current_stage_number - 1](state, z80);
   }
 }
@@ -1663,7 +1662,7 @@ static void bootstrap(chqstate_t *state)
     state->retry_count = 0;
 
     // Reset wanted_stage_number and credits.
-    state->wanted_stage_number = 1;
+    state->wanted_stage_number = 6;
     state->credits = 2;
     main_loop(state);
 
@@ -1706,11 +1705,11 @@ static void main_loop(chqstate_t *state)
 
     load_stage(state);
 
-    if (state->wanted_stage_number == 6) {
+    if (state->wanted_stage_number == MAXSTAGE + 1) {
       show_end_screen(state);
-      state->wanted_stage_number = 1;
+      state->wanted_stage_number = MINSTAGE;
       load_stage(state);
-      state->wanted_stage_number = 6; // not sure why
+      state->wanted_stage_number = MAXSTAGE + 1; // not sure why
       return;
     }
 
@@ -2012,7 +2011,7 @@ static void reveal_perp_car(chqstate_t *state)
   int             height;          /* was B (banked?) */
   const u8       *bitmap;          /* was HL (banked?) */
 
-  if (state->wanted_stage_number == MAXSTAGE)
+  if (state->wanted_stage_number == 5)
     return; // perp car is hidden on stage 5
 
   revealed_height = state->pregame_car_revealed_height + 1;
@@ -6115,7 +6114,7 @@ static void pc_clear_line(chqstate_t *state, int x)
   nextch = state->next_character;
   assert(nextch);
   character = *nextch & ~EOS; // remove any terminator
-  assert(character >= ' ' && character < 'Z');
+  assert(character >= ' ' && character <= 'Z');
   plot_mini_font_cursor_on(state, x, character);
   if (*nextch++ & EOS) // if terminated
     state->chatter_delay = 10; // pause at end of string

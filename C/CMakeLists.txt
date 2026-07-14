@@ -41,7 +41,9 @@ set(SOURCE_FILES
         ChaseHQ/Data/Stage4Data.c
         ChaseHQ/Data/Stage4Data.h
         ChaseHQ/Data/Stage5Data.c
-        ChaseHQ/Data/Stage5Data.h)
+        ChaseHQ/Data/Stage5Data.h
+        ChaseHQ/Data/Stage6Data.c
+        ChaseHQ/Data/Stage6Data.h)
 
 add_executable(ChaseHQ ${SOURCE_FILES})
 target_compile_definitions(ChaseHQ PRIVATE TGE_SDL)
