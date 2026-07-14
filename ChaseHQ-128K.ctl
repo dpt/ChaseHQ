@@ -6836,7 +6836,7 @@ C $A97E,2 A = <self modified>  -- Self modified by #R$A974
 C $A980,2 Return if #REGa is zero
 C $A982,6 #REGiy = $E361
 C $A988,3 BC = $1400
-C $A98B,3 Point #REGhl at (something above the stack)
+C $A98B,3 Point #REGhl at xpos_road_fork_right[20]
 N $A98E Scan through whatever-it-is for a non-zero byte. Move 4 bytes per iteration.
 @ $A98E label=ldas_loop1
 C $A98E,1 A = *HL++
@@ -11119,7 +11119,7 @@ C $CBC2,3 Exit via #R$C915
 c $CBC5 Routine at CBC5
 D $CBC5 Used by the routine at #R$C95A.
 N $CBC5 This gets hit during road forks.
-@ $CBC5 label=backdrop_fill_choice
+@ $CBC5 label=backdrop_fill_dispatch
 C $CBC5,1 C = A
 C $CBC6,5 Jump if A < 80
 C $CBCB,3 Exit via #R$C79A/dr_start_backdrop_fill
@@ -12602,25 +12602,25 @@ C $E888,3 Replaces 48K play_speech_hook
 C $E88B,3 Replaces 48K attract_mode_hook
 N $E88E Copied to $EC00 - transitions?
 @ $E88E label=data_e88e
-B $E88E,1,1
-W $E88F,2,2
-B $E891,1,1
-W $E892,2,2
-B $E894,1,1
+B $E88E,1,1 6 frames
+W $E88F,2,2 Address of frames
+B $E891,1,1 12 frames
+W $E892,2,2 Address of frames
+B $E894,1,1 8 frames
 @ $E895 keep
-W $E895,2,2
-B $E897,1,1
-W $E898,2,2
-B $E89A,1,1
-W $E89B,2,2
-B $E89D,1,1
+W $E895,2,2 Address of frames
+B $E897,1,1 7 frames
+W $E898,2,2 Address of frames
+B $E89A,1,1 6 frames
+W $E89B,2,2 Address of frames
+B $E89D,1,1 12 frames
 @ $E89E keep
-W $E89E,2,2
-B $E8A0,1,1
+W $E89E,2,2 Address of frames
+B $E8A0,1,1 8 frames
 @ $E8A1 keep
-W $E8A1,2,2
-B $E8A3,1,1
-W $E8A4,2,2
+W $E8A1,2,2 Address of frames
+B $E8A3,1,1 7 frames
+W $E8A4,2,2 Address of frames
 N $E8A6 Square zoom in animation mask (8x8, 5 frames)
 N $E8A6 This is relocated.
 N $E8A6 #HTML[#CALL(anim($E8A6,8,8,0,0,5))]

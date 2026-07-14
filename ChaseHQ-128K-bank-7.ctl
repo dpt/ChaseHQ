@@ -1351,7 +1351,7 @@ W $D37C,2,2 [$D601] Bitmap address
 W $D37E,2,2 [$D601] Pre-shifted bitmap address
 B $D380,64,4 Bitmap data 4 bytes x 16
 B $D3C0,96,4 Bitmap data 4 bytes x 24
-B $D420,24,8*3
+B $D420,24,8
 B $D438,64,4 Bitmap data 4 bytes x 16
 B $D478,96,4 Bitmap data 4 bytes x 24
 B $D4D8,111,8*13,7

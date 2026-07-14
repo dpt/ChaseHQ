@@ -1385,7 +1385,7 @@ W $D3AB,2,2 [$D630] Bitmap address
 W $D3AD,2,2 [$D630] Pre-shifted bitmap address
 B $D3AF,64,4 Bitmap data 4 bytes x 16
 B $D3EF,96,4 Bitmap data 4 bytes x 24
-B $D44F,24,8*3
+B $D44F,24,8
 B $D467,64,4 Bitmap data 4 bytes x 16
 B $D4A7,96,4 Bitmap data 4 bytes x 24
 B $D507,111,8*13,7
