@@ -6,7 +6,7 @@
 @ $C000 org
 c $C000 Entry points
 C $C000,3 Title animations
-C $C003,3 Called from bootstrap
+C $C003,3 Check high score
 C $C006,3 Plays success music
 C $C009,3 Entry point for keyboard/joystick selection menu
 c $C00C Format the score and check the high-score table
@@ -71,7 +71,7 @@ C $C072,2 Row 1 (bottom of the table) -> nothing below to shift
 C $C074,3 DE -> one past the last table row (shift destination)
 C $C077,3 HL -> last table row (shift source)
 C $C07A,5 Shift 26 bytes of the row down into the row below
-C $C07F,9 then step both pointers back the rest of the 33-byte row stride without copying -- the trailing 7 bytes of each row are the player-entered name, which the entry loop below fills in fresh rather than shifting
+C $C07F,9 then step both pointers back the rest of the 33-byte row stride without copying -- the trailing 7 bytes of each row (2 padding bytes + the row's own 5-char rank suffix, e.g. "2ND  " -- see the data at #R$C3AF) are static labels, not player data, so they are simply left untouched by the shift
 C $C088,1 One row done
 C $C089,2 Loop up through the rows above the insertion point
 @ $C08B label=ihe_write_row
@@ -242,13 +242,123 @@ C $C38A,3 Resume the #R$C2B1 scroll loop
 C $C3AB,1 Restore the caller's BC/DE/HL
 C $C3AC,3 Next character
 b $C3AF High-score table screen: strings, preset rows and layout tables
-D $C3AF Each text string here is encoded as 2 position-control bytes, 1 attribute byte, then ASCII text with the final character's bit 7 set to mark the end of the string (consumed by the print routine reached via #R$C122). Confirmed strings: "BEST OFFICERS", "ENTER YOUR INITIALS", the cursor placeholder ".  .  .", and the column headers "RANK  SCORE  STAGE  PLAY NAME".
+D $C3AF Each text string here is encoded as 2 position-control bytes, 1 attribute byte, then ASCII text with the final character's bit 7 set to mark the end of the string (consumed by the print routine reached via #R$C122). The four strings, decoded in full: $C3AF pos=$02,$0A attr=$48 "BEST OFFICERS" $C3BF pos=$C6,$67 attr=$48 "ENTER YOUR INITIALS" $C3D5 pos=$07,$8E attr=$48 ". . ." (3-initial cursor placeholder) $C3DD pos=$C6,$C0 attr=$48 "RANK    SCORE  STAGE  PLAY  NAME" The last string's terminator byte falls exactly at $C3FF, where the preset-rows table below begins.
 R $C3AF These are followed by the 10 preset high-score table rows themselves (the
-R $C3AF same 33-byte layout #R$C06E writes into: rank suffix "1ST".."10TH", 8-digit
-R $C3AF score, stage code, play/attempt count, 3-character initials). The preset
-R $C3AF initials include "JOB" (row 2) -- John O'Brien, this game's programmer.
+R $C3AF same 33-byte layout #R$C06E writes into: 8-digit score, stage code,
+R $C3AF play/attempt count, 3-character initials -- full field breakdown at
+R $C3AF $C400 below). The preset initials include "JOB" (row 1) -- John O'Brien,
+R $C3AF this game's programmer.
 N $C3AF At $C54B: 10 packed 2-byte values, copied by #R$C06E into the row-offset table at $C401 (one per high-score row, for #R$C2B1's scroll). At $C567: the 6-entry, 3-byte-per-stage code table read by #R$C06E (" 1 ", " 2 ", " 3 ", " 4 ", " 5 ", "ALL" -- indexed by wanted_stage_number, #R$8007, which is 1..5 or 6 for the end screen). At $C55F: the 8-byte score-digit buffer written by #R$C00C and read by #R$C06E (initialised here to "00000000").
-B $C3AF,495,8*61,7
+B $C3AF,2,2 Position
+B $C3B1,1,1 Attribute
+T $C3B2,13,12:n1 "BEST OFFICERS"
+B $C3BF,2,2 Position
+B $C3C1,1,1 Attribute
+T $C3C2,19,18:n1 "ENTER YOUR INITIALS"
+B $C3D5,2,2 Position
+B $C3D7,1,1 Attribute
+T $C3D8,5,4:n1 ". . ."
+B $C3DD,2,2 Position
+B $C3DF,1,1 Attribute
+T $C3E0,32,31:n1 "RANK    SCORE  STAGE  PLAY  NAME"
+N $C400 Ten preset rows follow, 33 bytes each (base $C408, stride #R$C065): score (8 ASCII digits), a 4-byte gap, stage code (3 chars), a 5-byte gap, retry digit (1 ASCII char), a 2-byte gap, 3-char name (bit-7 terminated, written by #R$C06E), then a 7-byte tail. The tail is 2 zero bytes followed by the *next* row's 5-char rank suffix ("2ND  " etc) -- these suffixes are static screen labels tucked into the previous row's unused stride, not part of the row that follows. Row 10 has no eleventh row to label, so its tail instead begins the packed offset table at $C54B.
+B $C400,3,3 Padding
+T $C403,5,5 Row 1's rank suffix
+T $C408,8,8 Row 1 score
+B $C410,4,4 Gap
+T $C414,3,3 Row 1 stage code
+B $C417,5,5 Gap
+B $C41C,1,1 Row 1 retry attempt '2'
+B $C41D,2,2 Gap
+T $C41F,3,2:n1 "JOB" (row 1 name)
+B $C422,2,2 Padding
+T $C424,5,5 Row 2's rank suffix
+T $C429,8,8 Row 2 score
+B $C431,4,4 Gap
+T $C435,3,3 Row 2 stage code
+B $C438,5,5 Gap
+B $C43D,1,1 Row 2 retry attempt '2'
+B $C43E,2,2 Gap
+T $C440,3,2:n1 "BIL" (row 2 name)
+B $C443,2,2 Padding
+T $C445,5,5 Row 3's rank suffix
+T $C44A,8,8 Row 3 score
+B $C452,4,4 Gap
+T $C456,3,3 Row 3 stage code
+B $C459,5,5 Gap
+B $C45E,1,1 Row 3 retry attempt '1'
+B $C45F,2,2 Gap
+T $C461,3,2:n1 "JON" (row 3 name)
+B $C464,2,2 Padding
+T $C466,5,5 Row 4's rank suffix
+T $C46B,8,8 Row 4 score
+B $C473,4,4 Gap
+T $C477,3,3 Row 4 stage code
+B $C47A,5,5 Gap
+B $C47F,1,1 Row 4 retry attempt '2'
+B $C480,2,2 Gap
+T $C482,3,2:n1 "JAM" (row 4 name)
+B $C485,2,2 Padding
+T $C487,5,5 Row 5's rank suffix
+T $C48C,8,8 Row 5 score
+B $C494,4,4 Gap
+T $C498,3,3 Row 5 stage code
+B $C49B,5,5 Gap
+B $C4A0,1,1 Row 5 retry attempt '1'
+B $C4A1,2,2 Gap
+T $C4A3,3,2:n1 "ROB" (row 5 name)
+B $C4A6,2,2 Padding
+T $C4A8,5,5 Row 6's rank suffix
+T $C4AD,8,8 Row 6 score
+B $C4B5,4,4 Gap
+T $C4B9,3,3 Row 6 stage code
+B $C4BC,5,5 Gap
+B $C4C1,1,1 Row 6 retry attempt '1'
+B $C4C2,2,2 Gap
+T $C4C4,3,2:n1 "J.B" (row 6 name)
+B $C4C7,2,2 Padding
+T $C4C9,5,5 Row 7's rank suffix
+T $C4CE,8,8 Row 7 score
+B $C4D6,4,4 Gap
+T $C4DA,3,3 Row 7 stage code
+B $C4DD,5,5 Gap
+B $C4E2,1,1 Row 7 retry attempt '1'
+B $C4E3,2,2 Gap
+T $C4E5,3,2:n1 "M.L" (row 7 name)
+B $C4E8,2,2 Padding
+T $C4EA,5,5 Row 8's rank suffix
+T $C4EF,8,8 Row 8 score
+B $C4F7,4,4 Gap
+T $C4FB,3,3 Row 8 stage code
+B $C4FE,5,5 Gap
+B $C503,1,1 Row 8 retry attempt '1'
+B $C504,2,2 Gap
+T $C506,3,2:n1 "STE" (row 8 name)
+B $C509,2,2 Padding
+T $C50B,5,5 Row 9's rank suffix
+T $C510,8,8 Row 9 score
+B $C518,4,4 Gap
+T $C51C,3,3 Row 9 stage code
+B $C51F,5,5 Gap
+B $C524,1,1 Row 9 retry attempt '1'
+B $C525,2,2 Gap
+T $C527,3,2:n1 "PIX" (row 9 name)
+B $C52A,2,2 Padding
+T $C52C,5,5 Row 10's rank suffix
+T $C531,8,8 Row 10 score
+B $C539,4,4 Gap
+T $C53D,3,3 Row 10 stage code
+B $C540,5,5 Gap
+B $C545,1,1 Row 10 retry attempt '1'
+B $C546,2,2 Gap
+T $C548,3,2:n1 "IES" (row 10 name)
+N $C54B $C54B: 10 packed 2-byte values, copied by #R$C06E into the row-offset table at $C401 (screen/attribute address pairs used by the scroll code).
+B $C54B,20,8*2,4
+T $C55F,8,8 Score-digit entry buffer
+N $C567 $C567: the 6-entry stage-code table indexed by #R$C06E ($C09F) to fill each row's stage-code field.
+T $C567,18,3
+B $C579,6,6 Padding
+B $C57F,31,8*3,7
 c $C59E Routine at C59E
 D $C59E Title-screen driver: picks one of 5 pre-scripted animation scenes, populates the 9-entry animated-object array at $BB00 from the chosen scene's object table, draws overlay text (title/credits, and an "insert coin" prompt when in coin-op mode), then falls into the attract-mode wait loop (#R$C61E) which animates the scene each frame while polling for coin/fire/keyboard input to start a game.
 R $C59E Used by the routines at #R$C000 and #R$FBC8.
