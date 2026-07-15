@@ -15,29 +15,29 @@
  * The recreated version is copyright (c) 2023-2026 David Thomas
  */
 
-/* Important Note
- *
- * While this code _looks_ plausible and compiles in its current state know
- * that it's all sorts of broken!
- */
-
 /* Notes
  *
- * Like with my conversion of The Great Escape to C we model the game as if
+ * This is a conversion to C of the ZX Spectrum version of Chase H.Q. It was
+ * created by analysing the original game binary to the point where its Z80
+ * functions could be disassembled and reimplemented and its data could be
+ * marshalled into portable structures.
+ *
+ * Like with my conversion of "The Great Escape" to C we model the game as if
  * it's still running on a ZX Spectrum, including a Spectrum screen memory
- * layout and IO world. This avoids a full rewrite of the original code and
- * means that we leave some of the Z80-specific micro-optimisations in place.
- * This allows the code to remain a useful basis for comparison and lowers the
- * risk of translation errors. Although it's very tempting to rewrite all the
- * code to be fully idiomatic C the greater the difference from the original
- * disassembly the harder it gets to refer back to it and spot our mistakes.
- * The goal after all is to use this C conversion to expose problem points and
- * feed those back into the disassembly's description.
+ * layout, keyboard and sound. This avoids a full rewrite of the original code
+ * and means that we leave numerous Z80-specific patterns in place. This allows
+ * the code to remain a useful basis for comparison and lowers, but certainly
+ * doesn't eliminate, the risk of translation errors. Although it's very
+ * tempting to rewrite all the code to be fully idiomatic C the greater the
+ * difference from the original disassembly the harder it gets to refer back to
+ * it and realise our mistakes. The goal after all is to use this C conversion
+ * to expose problem points and feed those back into the disassembly's
+ * description.
  *
  * Ideally the ordering of the code will be preserved such that the original
- * game code and this reimplementation have broadly the same structure.  Some
- * code will unavoidably need to be changed however, such as the stack trick
- * where PUSH is used to accelerate bulk stores.
+ * game code and this reimplementation have broadly the same layout and
+ * structure. Some code will unavoidably need to be changed however, such as
+ * the stack trick where PUSH is used to accelerate bulk stores.
  *
  * My original intention was to retain the level data (called "stage" data in
  * this conversion to match the original game) whole in the converted game,
@@ -62,7 +62,7 @@
  *
  * As with my conversion of The Great Escape a state structure is added to
  * encapsulate the entire current game state. It is passed to every
- * state-accessing function in the game.  Globals are banned.
+ * state-accessing function in the game. Globals are banned.
  *
  * Screen handling in the original game assumes the alignment of the screen and
  * the back buffer. That can't be guaranteed in a portable conversion. We can
@@ -71,9 +71,6 @@
  *
  * (SM) means self modified. There is a _lot_ of self-modified code in the
  * game.
- *
- * Remember that much of this code is in progress and untested - or just
- * broken.
  */
 
 /* TODOs
