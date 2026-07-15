@@ -8118,11 +8118,11 @@ static void check_fork_scenery_collisions(chqstate_t *state,
   int          A;              /* impact_speed_cap loaded from object but overridden to 0x8C (was A) */
   int          pos2;           /* x position from xpos_road_centre for the final collision test (was HL') */
 
+  // $A4FB/$A4FD: both JR NZ,$A510 (H!=0) and JR C,$A510 (pos<0x6A) fall into
+  // the fc_a510 right-hand check below; only pos in [0x6A,0xFF] with H==0
+  // resolves off-road here without checking the right side.
   pos = state->xpos_road_left[127];
-  off_road = 0;
-  if ((pos >> 8) != 0)
-    goto set_off_road;
-  if (pos >= 0x6A) {
+  if ((pos >> 8) == 0 && pos >= 0x6A) {
     off_road = (pos >= 0x85) ? 2 : 1;
     goto set_off_road;
   }
@@ -10573,6 +10573,7 @@ static void move_hero_car(chqstate_t *state)
   int        Anet_turn;            /* net turning force: left_turn − right_turn (was A) */
   int        Acornering;           /* cornering flag written back to state (was A) */
   int        Dflip_car;            /* car sprite flip direction: 1=right, 0=left (was D) */
+  int        Aturn_mag;            /* abs(DEadjust): magnitude of the SRA'd net turn (was A, $B2F2-$B2F8) */
   int        Bturn_speed;          /* animation rate: 0=straight, 1=turn, 2=turn-hard (was B) */
 
   y_offset = state->mhc_y_offset; // load jump counter, highest is 10
@@ -10754,7 +10755,7 @@ mhc_handle_speed:
     if ((s8) Acurrent_curvature < 0) {
       // Negative scroll => scroll horizon right.
       Enegative_scrolling++; // 0 -> 1
-      Acurrent_curvature = -Acurrent_curvature;
+      Acurrent_curvature = (u8)(-Acurrent_curvature); /* Z80 NEG is u8 */
     }
 
     // Positive scroll => scroll horizon left. (or negative - it falls through)
@@ -10832,8 +10833,12 @@ mhc_set_cornering:
   if (DEadjust < 0) /* $B2F3 JP P: rightward net turn → flip sprite ($B2F7 DEC D) */
     Dflip_car = 0;
 
-  /* $B2FA: turn_speed from |SRA(net_turn)| = half magnitude, compared to 12/6 */
-  Bturn_speed = (Anet_turn / 2 < 12) ? (Anet_turn / 2 < 6) ? 0 : 1 :
+  /* $B2FA: turn_speed from |SRA(net_turn)|, compared to 12/6. Conv: must use
+   * DEadjust (the already-SRA'd value) rather than re-deriving from the
+   * truncating-divide Anet_turn/2 — they differ by 1 for odd negative
+   * net_turn values, e.g. |SRA(-5)|=3 but |-5|/2=2. */
+  Aturn_mag = (DEadjust < 0) ? -DEadjust : DEadjust;
+  Bturn_speed = (Aturn_mag < 12) ? (Aturn_mag < 6) ? 0 : 1 :
                 2; // straight/turn/turn-hard
 
   state->turn_speed = Bturn_speed; // should be 0/1/2
