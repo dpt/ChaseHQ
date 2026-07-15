@@ -813,12 +813,19 @@ struct chqstate {
     // translated); never read anywhere in bank 3. Purpose not established.
     u8        pattern_driver_flag;
 
-    // $EF7A (128K bank 3): shared per-channel AY mixer (tone/noise enable)
-    // bit cache. Write-only, merged into by advance_channel_pattern's
-    // mixer-bit pattern-command handlers ($ED36/$ED4B/$ED5F) using the same
-    // replace-bits-under-mask idiom as the $EFB6 mixer cache in
-    // compute_channel_ay_registers; never read anywhere in bank 3. Purpose
-    // not established (see skool comment at $ED36).
+    // $EF7A (SM): operand of "LD A,$00" at $EF79 in
+    // compute_channel_ay_registers ($EE9E@bank3), phase 5. Merged into by
+    // advance_channel_pattern's mixer-bit pattern-command handlers
+    // ($ED36/$ED4B/$ED5F) using the same replace-bits-under-mask idiom as
+    // the $EFB6 mixer cache. Read back every frame at $EF79 -- the
+    // "LD A,$00" instruction there executes with whatever value was last
+    // patched into its own operand byte, so on any frame where the JR NZ at
+    // $EF7B is taken (skipping the $EC79-derived $07 path), the mixer merge
+    // uses this self-modified value rather than a literal 0. Confirmed
+    // against a genuine ChaseHQ.ay dump (SlopAY project corpus): the
+    // pristine snapshot's static operand byte is 0x00 (the pre-pattern-data
+    // startup default), but the real tune patches it via the pattern
+    // commands above, driving the AY mixer's noise-enable bits.
     u8        pending_mixer_bits;
 
     // $F223 (128K bank 3): tune-active flag. Tested by ts_music_service

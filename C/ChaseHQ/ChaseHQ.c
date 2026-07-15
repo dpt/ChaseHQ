@@ -18268,7 +18268,12 @@ static u16 compute_channel_ay_registers(chqstate_t *state,
     state->title_music.driver_internal_flag = A_shared;      // $ECC6 (SM)
     A_mixer_val = 0x07;
   } else {
-    A_mixer_val = 0x00;
+    // Conv: $EF79 "LD A,$00" reads its own self-modified operand byte
+    // ($EF7A, pending_mixer_bits), not a literal 0 -- see State.h. A literal
+    // 0x00 here permanently forces every channel's noise-enable bit on,
+    // producing constant harsh noise; the real driver patches this operand
+    // via advance_channel_pattern's mixer-bit commands.
+    A_mixer_val = state->title_music.pending_mixer_bits; // $EF7A (SM)
   }
 
   /* Replace-bits-under-mask: merge this channel's tone-enable bits into the
