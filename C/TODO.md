@@ -2,6 +2,7 @@
 
 ## P1 — Bugs / broken behaviour
 
+- Hero car flying off the road when cornering?
 - Jittery perp too — check out the whole `perp_behaviour` routine because the perp leaps around when being pursued
 - 48k music routine seizes up
 
