@@ -2,7 +2,6 @@
 
 ## P1 — Bugs / broken behaviour
 
-- Hero car flying off the road when cornering?
 - Jittery perp too — check out the whole `perp_behaviour` routine because the perp leaps around when being pursued
 - 48k music routine seizes up
 
@@ -34,6 +33,7 @@
 - Fix Claude referring to ROM all the time
 - Audit "Conv: added" vars
 - Stage5 bitmap data has a load of cruft at the end of it - delete
+- Match up menu funcs for string printing with the main code - are they the same code?
 
 ## P6 — Features / extras
 
@@ -59,14 +59,11 @@
 - Sort macros
 - Design a text format for holding stages
 - Annotate all state members to show which functions consume/mutate them
-- Add deep dives for each area of the game
 - Document the game from start until first frame built
 - Is fixing the keypress thread race important?
-- Example: creating a whole new stage + backporting to Speccy
-- Document how functions are created from source Z80
 - Document `road_pos` valid range
 - Big reformat pass once happy with code
-- Add new levels
+- Add new level(s)
 - Fix all the rough masks to improve the look
 - Arcade machine based on this code
 - Just Tony and Raymond having a chat
@@ -80,5 +77,8 @@
 
 ## FOR WRITEUP / NOTES
 
+- Document how functions are created from source Z80
+- Add deep dives for each area of the game
 - Discuss black screen edges and overdraw
 - Claude on medium effort + advisor notes
+- Example: creating a whole new stage + backporting to Speccy
