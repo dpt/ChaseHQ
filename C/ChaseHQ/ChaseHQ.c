@@ -19410,11 +19410,8 @@ static u8 omd_redraw_and_poll(chqstate_t *state)
 redraw: /* $FBA2 */
   clear_options_screen(state); /* $FBA2 CALL $FE7F */
 
-  /* TODO: CALL print_string(state, $FC29) ($FD9C) -- print_string itself is
-   * ported (see above); what's missing is the $FC29-$FD96 data block, a
-   * ~366-byte multi-screen table ("ENTER OPTION"/P1-P5, redefine-keys,
-   * test-mode and title-credits text runs, per #R$FC29's skool comment).
-   * Porting that table is a separate task from the blitter itself. */
+  print_string(state, &options_menu_text[0]); /* $FBA5-$FBA8: "ENTER OPTION" /
+                                                * P1-P5 control-scheme list. */
 
 poll: /* $FBAB omd_service_and_read_keys */
   do {

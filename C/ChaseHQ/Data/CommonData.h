@@ -354,6 +354,8 @@ const u8 messages_cannot_be_remodified[127];
 
 const u8 title_screen_overlay_text[47];
 
+const u8 options_menu_text[366];
+
 const u8 key_names[10 * 8];
 const u8 sinclair_joy_keydefs[5];
 const u8 cursor_joy_keydefs[5];

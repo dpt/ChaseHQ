@@ -5071,6 +5071,113 @@ const u8 title_screen_overlay_text[47] = {
   'P', 'R', 'E', 'S', 'S', ' ', 'E', 'N', 'T', 'E', 'R', ' ', 'F', 'O', 'R', ' ', 'O', 'P', 'T', 'I', 'O', 'N', 'S' | EOS
 };
 
+// $FC29-$FD96 -- 128K control-select, key-redefinition and hidden test-mode
+// screen text, printed via print_string/print_character. Unlike the
+// messages_* lists above, print_string does not walk an end-marker-terminated
+// list: each 0x00 below terminates whichever call is in progress, so this one
+// data block actually holds four independent entry points, each reached via
+// its own literal HL constant in the original:
+//   offset   0 ($FC29): control-select screen -- wired into
+//                       omd_redraw_and_poll below.
+//   offset 114 ($FC9B): key-redefinition screen, header + GEAR/ACCELERATE/
+//                       BRAKE -- not yet wired up (needs redefine_keys_screen,
+//                       $FEA9).
+//   offset 160 ($FCC9): key-redefinition screen continued, LEFT/RIGHT/QUIT/
+//                       PAUSE/TURBO -- not yet wired up (see above).
+//   offset 199 ($FCF0): hidden test-mode screen -- not yet wired up (needs a
+//                       128K test-mode driver, $C06E).
+// "P1."-"P4."/"P5." labels in the skool comments are missing their leading
+// "P" in the actual data (confirmed byte-for-byte against the skool) --
+// presumably drawn as a separate fixed graphic; transcribed faithfully as-is.
+const u8 options_menu_text[366] = {
+  // $FC29 (offset 0): control-select screen
+  attribute_RED_OVER_BLACK,
+  TWOBYTES(0x484A),
+  'E', 'N', 'T', 'E', 'R', ' ', 'O', 'P', 'T', 'I', 'O', 'N' | EOS,
+  attribute_CYAN_OVER_BLACK,
+  TWOBYTES(0x48C6),
+  '1', '.', ' ', 'S', 'I', 'N', 'C', 'L', 'A', 'I', 'R', ' ', 'J', 'O', 'Y', 'S', 'T', 'I', 'C', 'K' | EOS,
+  attribute_CYAN_OVER_BLACK,
+  TWOBYTES(0x5006),
+  '2', '.', ' ', 'C', 'U', 'R', 'S', 'O', 'R', ' ', 'J', 'O', 'Y', 'S', 'T', 'I', 'C', 'K' | EOS,
+  attribute_CYAN_OVER_BLACK,
+  TWOBYTES(0x5046),
+  '3', '.', ' ', 'K', 'E', 'M', 'P', 'S', 'T', 'O', 'N', ' ', 'J', 'O', 'Y', 'S', 'T', 'I', 'C', 'K' | EOS,
+  attribute_CYAN_OVER_BLACK,
+  TWOBYTES(0x5086),
+  '4', '.', ' ', 'K', 'E', 'Y', 'B', 'O', 'A', 'R', 'D' | EOS,
+  attribute_CYAN_OVER_BLACK,
+  TWOBYTES(0x50C6),
+  '5', '.', ' ', 'D', 'E', 'F', 'I', 'N', 'E', ' ', 'K', 'E', 'Y', 'S' | EOS,
+  0, // terminator ($FC9A)
+
+  // $FC9B (offset 114): key-redefinition screen, header + first 3 labels
+  attribute_RED_OVER_BLACK,
+  TWOBYTES(0x4849),
+  'R', 'E', 'D', 'E', 'F', 'I', 'N', 'E', ' ', ' ', 'K', 'E', 'Y', 'S' | EOS,
+  0xC6, // attribute_BRIGHT_YELLOW_OVER_BLACK + single height bit
+  TWOBYTES(0x48C9),
+  'G', 'E', 'A', 'R' | EOS,
+  0xC6,
+  TWOBYTES(0x48E9),
+  'A', 'C', 'C', 'E', 'L', 'E', 'R', 'A', 'T', 'E' | EOS,
+  0xC6,
+  TWOBYTES(0x5009),
+  'B', 'R', 'A', 'K', 'E' | EOS,
+  0, // terminator ($FCC8)
+
+  // $FCC9 (offset 160): key-redefinition screen, remaining 5 labels
+  0xC6,
+  TWOBYTES(0x5029),
+  'L', 'E', 'F', 'T' | EOS,
+  0xC6,
+  TWOBYTES(0x5049),
+  'R', 'I', 'G', 'H', 'T' | EOS,
+  0xC4, // attribute_BRIGHT_GREEN_OVER_BLACK + single height bit
+  TWOBYTES(0x5089),
+  'Q', 'U', 'I', 'T' | EOS,
+  0xC4,
+  TWOBYTES(0x50A9),
+  'P', 'A', 'U', 'S', 'E' | EOS,
+  0xC4,
+  TWOBYTES(0x50C9),
+  'T', 'U', 'R', 'B', 'O' | EOS,
+  0, // terminator ($FCEF)
+
+  // $FCF0 (offset 199): hidden test-mode screen
+  0xC1, // attribute_BRIGHT_BLUE_OVER_BLACK + single height bit
+  TWOBYTES(0x4000),
+  'T', 'E', 'S', 'T' | EOS,
+  attribute_RED_OVER_BLACK,
+  TWOBYTES(0x4826),
+  'C', 'H', 'A', 'S', 'E', ' ', 'H', '.', 'Q', '.', ' ', 'T', 'E', 'S', 'T', ' ', 'M', 'O', 'D', 'E' | EOS,
+  0xC5, // attribute_BRIGHT_CYAN_OVER_BLACK + single height bit
+  TWOBYTES(0x48A2),
+  'T', 'I', 'T', 'L', 'E', ' ', 'S', 'C', 'R', 'E', 'E', 'N' | EOS,
+  0xC3, // attribute_BRIGHT_MAGENTA_OVER_BLACK + single height bit
+  TWOBYTES(0x48E2),
+  '1', ' ', 'T', 'O', ' ', '5', '.', ' ', 'L', 'O', 'G', 'O', ' ', 'A', 'N', 'I', 'M', 'A', 'T', 'I', 'O', 'N' | EOS,
+  0xC3,
+  TWOBYTES(0x5007),
+  '6', '.', ' ', 'S', 'C', 'O', 'R', 'E', ' ', 'E', 'N', 'T', 'R', 'Y' | EOS,
+  0xC5,
+  TWOBYTES(0x5042),
+  'I', 'N', ' ', 'G', 'A', 'M', 'E' | EOS,
+  0xC4,
+  TWOBYTES(0x5087),
+  '1', '.', ' ', 'R', 'E', 'S', 'T', 'A', 'R', 'T', ' ', 'L', 'E', 'V', 'E', 'L' | EOS,
+  0xC4,
+  TWOBYTES(0x50A7),
+  '2', '.', ' ', 'N', 'E', 'X', 'T', ' ', 'L', 'E', 'V', 'E', 'L' | EOS,
+  0xC4,
+  TWOBYTES(0x50C7),
+  '3', '.', ' ', 'E', 'N', 'D', ' ', 'S', 'C', 'R', 'E', 'E', 'N' | EOS,
+  0xC4,
+  TWOBYTES(0x50E7),
+  '4', '.', ' ', 'E', 'X', 'T', 'R', 'A', ' ', 'C', 'R', 'E', 'D', 'I', 'T' | EOS,
+  0 // terminator / pad byte ($FD96)
+};
+
 /* ----------------------------------------------------------------------- */
 
 // $EDD6
