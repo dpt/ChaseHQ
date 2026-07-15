@@ -607,6 +607,12 @@ static void test_perp_caught_progression(void)
 
   for (frame = 0; frame < 2000; frame++) {
     state->session.time_bcd = 0x60;
+    /* chq_test_game_frame omits keyscan/check_user_input, so nothing
+     * resets user_input to the real no-keys-pressed baseline each frame
+     * as it would in run_game; without this, a stale UP synthesised by
+     * assign_hero_pos during the ALIGNING phase would keep re-accelerating
+     * the hero through the STOPPING/STOPPED/SCORE phases. */
+    state->user_input = 0;
     chq_test_game_frame(state);
     if (state->user_input & 0x08) /* USERINPUTFLAG_UP */
       saw_accel = 1;

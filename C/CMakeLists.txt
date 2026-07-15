@@ -71,7 +71,8 @@ set(TEST_SOURCE_FILES
         ChaseHQ/Data/Stage2Data.c
         ChaseHQ/Data/Stage3Data.c
         ChaseHQ/Data/Stage4Data.c
-        ChaseHQ/Data/Stage5Data.c)
+        ChaseHQ/Data/Stage5Data.c
+        ChaseHQ/Data/Stage6Data.c)
 
 add_executable(ChaseHQ_Tests ${TEST_SOURCE_FILES})
 target_compile_definitions(ChaseHQ_Tests PRIVATE CHQ_TESTS)
