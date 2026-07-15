@@ -5059,6 +5059,18 @@ const u8 messages_cannot_be_remodified[127] = {
   0
 };
 
+// $CC88 -- drawn directly by title_screen_driver via print_character (not
+// walked as a list: no end marker, matching the Z80, which runs straight
+// into the $CCB7 scene tables afterwards).
+const u8 title_screen_overlay_text[47] = {
+  0xC7, // attribute_BRIGHT_WHITE_OVER_BLACK + single height bit
+  TWOBYTES(0x4826),
+  'P', 'R', 'E', 'S', 'S', ' ', 'G', 'E', 'A', 'R', ' ', 'T', 'O', ' ', 'P', 'L', 'A', 'Y' | EOS,
+  0xC4, // attribute_BRIGHT_GREEN_OVER_BLACK + single height bit
+  TWOBYTES(0x4864),
+  'P', 'R', 'E', 'S', 'S', ' ', 'E', 'N', 'T', 'E', 'R', ' ', 'F', 'O', 'R', ' ', 'O', 'P', 'T', 'I', 'O', 'N', 'S' | EOS
+};
+
 /* ----------------------------------------------------------------------- */
 
 // $EDD6

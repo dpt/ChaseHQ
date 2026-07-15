@@ -1281,12 +1281,17 @@ static void frame_interrupt_handler(chqstate_t *state);
 static void sfx_music_service(chqstate_t *state);
 static void start_tune_and_sfx_table(chqstate_t *state, u8 A_tune);
 static void ts_animate_frame(chqstate_t *state);
+static void clear_screen_bitmap_and_attrs(chqstate_t *state);
+static void clear_and_fill_border_attrs(chqstate_t *state);
 static void title_screen_driver(chqstate_t *state);
 static u8 ts_wait_loop(chqstate_t *state);
 static void ts_coin_inserted(chqstate_t *state);
 static void ts_refresh_name_table(chqstate_t *state);
 static void service_sound_and_loop_tune0(chqstate_t *state);
 static u8 detect_kempston_joystick(chqstate_t *state);
+static const u8 *print_character(chqstate_t *state, const u8 *HL_record);
+static void print_string(chqstate_t *state, const u8 *HLstring);
+static void clear_options_screen(chqstate_t *state);
 static u8 omd_redraw_and_poll(chqstate_t *state);
 static u8 options_menu_driver(chqstate_t *state);
 static void boot_and_run_sound_loop(chqstate_t *state);
@@ -16698,7 +16703,14 @@ mdc_have_glyph:
       *DEscreen = *HLfont++;
       DEscreen += 256;
     }
-    DEscreen += 0xF81F; /* $EC8B–$EC92: E += $1F, D -= 7; crosses 8-scanline group boundary */
+    /* $EC8B-$EC92: crosses 8-scanline group boundary. Conv: the literal Z80
+     * does E += 0x1F, D -= 7 on the *register* DE (D0+7, E0+1 at this
+     * point), landing on (D0, E0+32). The rolled loop above instead
+     * advances DEscreen by 256 twice per font byte, so it is already 255
+     * bytes further along (D0+8, E0) than the literal register state.
+     * 0xF820, not 0xF81F, is the constant that lands this pointer on the
+     * same (D0, E0+32) target. */
+    DEscreen += 0xF820;
     for (row = 0; row < 3; row++) { // Conv: rolled
       *DEscreen = *HLfont;
       DEscreen += 256;
@@ -18739,6 +18751,60 @@ static void sfx_music_service(chqstate_t *state)
 }
 
 /**
+ * $C890: Clear the screen bitmap and attribute area
+ *
+ * Zero-fills the attribute area $5900-$5AFF and the bitmap $4800-$57FF --
+ * the lower two-thirds of the screen, leaving $4000-$47FF (the top third)
+ * untouched. Called by $C0EC and clear_and_fill_border_attrs ($C8A9).
+ *
+ * \param[in,out] state Pointer to game state.
+ *
+ * Conv: the Z80 self-fills via `LD (HL),L` (both ranges start on a $x00
+ * boundary, so L is already zero) then LDIR; this collapses to two plain
+ * memset calls, per the skool's own Conv note at $C890.
+ */
+static void clear_screen_bitmap_and_attrs(chqstate_t *state)
+{
+  memset(ADDRTOATTRS(0x5900), 0, 0x200); /* $C890-$C89B */
+  memset(ADDRTOSCREEN(0x4800), 0, 0x1000); /* $C89C-$C8A7 */
+}
+
+/**
+ * $C8A9: Clear the screen then paint the border attribute rows
+ *
+ * Calls clear_screen_bitmap_and_attrs, then overwrites the attribute area
+ * $5900-$5AFF with a fixed pattern, 32 bytes at a time (16 times, covering
+ * all 512 bytes): 2 bytes of attribute 0 (black), 28 bytes of attribute
+ * $45 (flash bit set; paper/ink in bits 0-5), then 2 more bytes of
+ * attribute 0.
+ *
+ * \param[in,out] state Pointer to game state.
+ */
+static void clear_and_fill_border_attrs(chqstate_t *state)
+{
+  u8 *HLattr;   /* attribute write cursor (was HL) */
+  int C_count;  /* outer repeat count, 16 (was C) */
+  int B_middle; /* middle-band countdown, 28 (was B) */
+
+  clear_screen_bitmap_and_attrs(state); /* $C8A9 CALL $C890 */
+
+  HLattr = ADDRTOATTRS(0x5900);
+  C_count = 0x10;
+  do {
+    *HLattr++ = 0; /* $C8B2/$C8B4 */
+    *HLattr++ = 0;
+
+    B_middle = 0x1C;
+    do {
+      *HLattr++ = 0x45; /* $C8B8 */
+    } while (--B_middle);
+
+    *HLattr++ = 0; /* $C8BD/$C8BF */
+    *HLattr++ = 0;
+  } while (--C_count);
+}
+
+/**
  * $C59E: Title-screen driver
  *
  * Picks one of 5 pre-scripted animation scenes, populates the 9-entry
@@ -18751,20 +18817,24 @@ static void sfx_music_service(chqstate_t *state)
  *
  * \param[in,out] state Pointer to game state.
  *
- * Conv: $C5A1-$C618 ("visual setup") is stubbed as a single TODO block, per
- * scope decision -- none of $C8A9 (clear screen), $FD9C/$FDA4 (text-block
- * blitters), or the five scene tables ($CCB7/$CD4F/$CF10/$CFCD/$D16C) exist
- * in the C port yet, and drawing/animation is out of scope for this task
- * (the same decision that stubbed ts_animate_frame). The self-modified scene
- * selector operand at $C5A2 is part of that same stubbed mechanism; see the
- * TODO in ts_wait_loop where the "any key" restart path reseeds it.
+ * Conv: $C5A2-$C602 (scene-table pick and object-array population) is
+ * stubbed as a TODO, per scope decision -- the five scene tables
+ * ($CCB7/$CD4F/$CF10/$CFCD/$D16C) and the object-animation script
+ * interpreter do not exist in the C port yet, and drawing/animation is out
+ * of scope for this task (the same decision that stubbed ts_animate_frame).
+ * The screen clear ($C8A9, clear_and_fill_border_attrs) and the overlay text
+ * ($FDA4, print_character) are both ported and called below. The
+ * self-modified scene selector operand at $C5A2 is part of the stubbed
+ * mechanism; see the TODO in ts_wait_loop where the "any key" restart path
+ * reseeds it.
  *
  * Conv: signature is `void`, not `u8`, even though $FBA2 (fire pressed) is a
- * real early-exit path in the Z80. That path is deferred (see ts_wait_loop),
- * so nothing in the current C port ever needs a return value from this
- * function. A future task should change this to `u8` (1 = fire pressed,
- * start the game) once the fire-key exit is wired up to a real
- * options_menu_driver.
+ * real early-exit path in the Z80. It stays `void`: ts_wait_loop's fire-key
+ * branch now calls options_menu_driver's omd_redraw_and_poll directly and
+ * returns its result, which in the Z80 is itself a `JP $C59E` hand-off back
+ * to this function -- so the fire path rejoins this loop exactly like the
+ * "any key" and test-mode restarts, and no caller of title_screen_driver
+ * ever needs to see it.
  *
  * Conv: despite the above, this function is *not* guaranteed to loop
  * forever even today -- ts_wait_loop has two genuine RET paths of its own
@@ -18782,14 +18852,16 @@ static void sfx_music_service(chqstate_t *state)
 static void title_screen_driver(chqstate_t *state)
 {
   for (;;) {
-    /* $C59E-$C5C7: clear the screen, pick one of 5 scene tables via the
-     * self-modified rotating selector at $C5A2, and push the chosen table
-     * pointer. $C5C7-$C5CE: draw the copyright/credits text block. $C5CE-
-     * $C602: zero the $BB00-$BB4F object array and copy the 5-byte-per-
-     * object scene table into it, reordering fields. Conv: out of scope --
-     * see prologue. */
-    /* TODO: visual setup ($C59E-$C602) -- screen clear, scene-table pick,
-     * object-array population; needs $C8A9/$FD9C and the scene tables. */
+    clear_and_fill_border_attrs(state); /* $C59E CALL $C8A9 */
+
+    /* $C5A2-$C5C7: pick one of 5 scene tables via the self-modified
+     * rotating selector at $C5A2, and push the chosen table pointer.
+     * $C5C7-$C5CE: draw the copyright/credits text block. $C5CE-$C602: zero
+     * the $BB00-$BB4F object array and copy the 5-byte-per-object scene
+     * table into it, reordering fields. Conv: out of scope -- see
+     * prologue. */
+    /* TODO: scene-table pick and object-array population ($C5A2-$C602) --
+     * needs the scene tables and the animation script interpreter. */
 
     setup_im2_interrupt_table(state); /* $C602 CALL $F7AA */
 
@@ -18797,12 +18869,17 @@ static void title_screen_driver(chqstate_t *state)
                                * immediately, so the scene is visible before
                                * the wait loop starts polling. */
 
-    /* $C608-$C616: draw "PRESS ENTER FOR OPTIONS" unconditionally, and
-     * "PRESS GEAR TO PLAY" only once state->controls_selected is non-zero.
-     * Conv: out of scope -- see prologue; $FDA4 does not exist in the C
-     * port yet, and both text blocks are purely visual with no other side
-     * effect. */
-    /* TODO: overlay text ($C608-$C616) -- needs $FDA4 */
+    print_character(state, &title_screen_overlay_text[21]); /* $C608-$C60B:
+                                                               * "PRESS ENTER
+                                                               * FOR OPTIONS"
+                                                               * ($CC9D),
+                                                               * unconditionally. */
+
+    if (state->controls_selected) /* $C60E-$C611 */
+      print_character(state, &title_screen_overlay_text[0]); /* $C612-$C615:
+                                                                * "PRESS GEAR
+                                                                * TO PLAY"
+                                                                * ($CC88). */
 
     start_tune_and_sfx_table(state, 0); /* $C618 XOR A / $C619 CALL $F7D6 */
 
@@ -18911,10 +18988,11 @@ static u8 ts_wait_loop(chqstate_t *state)
      * Conv: was IN+CPL+RRA; RRA only tests bit 0, so this is collapsed to a
      * direct bit-0 mask (cf. attract_mode_128k's ENTER check). */
     A_fire = ~state->speccy->in(state->speccy, port_KEYBOARD_ENTERLKJH);
-    if (A_fire & 1) { /* $C63D RRA / $C63E JP C,$FBA2 */
-      /* TODO: fire pressed -> start the game via $FBA2, deferred pending a
-       * real options_menu_driver */
-    }
+    if (A_fire & 1) /* $C63D RRA / $C63E JP C,$FBA2 */
+      return omd_redraw_and_poll(state); /* hands off to the options menu;
+        * its own $C59E hand-off matches this function's own "restart
+        * title_screen_driver" return contract, so the value passes straight
+        * through. */
 
     /* $C641-$C64C: coin-op mode / coin-slot check. Conv: $8001 is the same
      * address as state->controls_selected; the skool's prose calls it a
@@ -19093,6 +19171,201 @@ static u8 detect_kempston_joystick(chqstate_t *state)
 }
 
 /**
+ * $FDA4: Print one packed text record (position + colour + characters)
+ *
+ * Unpacks a 3-byte record header -- style/colour byte, then a 2-byte screen
+ * pixel address -- then draws each following character until one with bit 7
+ * set (the record terminator) is printed. Despite the "print a single
+ * character" name inherited from the skool, this draws a whole run of
+ * characters sharing one position/colour, since its own internal loop
+ * (mdc-style) only returns after the terminator; #print_string only calls
+ * this again if further records follow in memory.
+ *
+ * Each character byte in the stream (with bit 7 masked off) is either a
+ * literal space ($20, advances the column without drawing) or a metric byte
+ * mapped through a range ladder to one of 41 glyphs in #font, blitted
+ * double-height (7 font bytes -> 15 scanlines across two attribute rows,
+ * BRIGHT set on the upper row) or single-height (7 font bytes, one scanline
+ * each), selected by the header's style bit.
+ *
+ * \param[in,out] state Pointer to game state.
+ * \param[in] HL_record Pointer to the 3-byte header + character stream (was HL).
+ * \return Pointer to the byte following the record's terminator (was HL).
+ *
+ * Conv: $FDA4-$FDB9 (header unpack), the classification ladder ($FDDA-$FDFE)
+ * and the double/single-height blits ($FE16-$FE7E) all follow menu_draw_char
+ * ($EC2C) precedent -- an essentially identical blit for an essentially
+ * identical font -- but this function has no cross-call persisted state to
+ * carry via EXX, so the shadow-register dance the Z80 uses to snapshot the
+ * per-character screen pointer ($FE0D-$FE11: EXX/PUSH DE/INC E/EXX/POP DE,
+ * "pop scr addr as-was") collapses to a plain local: compute DEscreen from
+ * the *current* E_screen, then increment E_screen for the next character.
+ * Similarly, $FDBA EXX/$FDBB EX (SP),HL (banking the metric/shape stream
+ * pointer while the attribute address sits in shadow HL') has no observable
+ * effect in C beyond naming which quantity is "the shape cursor" from this
+ * point on; modelled as a plain assignment, not a literal register swap.
+ */
+static const u8 *print_character(chqstate_t *state, const u8 *HL_record)
+{
+  u8         C_byte0;      /* packed style-bit + colour byte (was C) */
+  u8         C_colour;     /* colour value, bits 0-6 of byte0 (was C) */
+  u8         A_style_bit;  /* byte0 bit 7: 0 = double-height shaded glyph, 1 = single-height flat glyph (was carry via EX AF,AF') */
+  u8         E_screen;     /* pixel screen address low byte; advances one per column (was E) */
+  u8         D_screen;     /* pixel screen address high byte; constant across the whole call (was D) */
+  u8         H_attr;       /* attribute address high byte: $58 + third (was H) */
+  u8         L_attr;       /* attribute address low byte; advances one per column (was L) */
+  const u8  *HLshape;      /* metric/shape-byte stream cursor (was HL) */
+  u8         A_metric;     /* current column's metric byte, bits 0-6 (was A) */
+  u8         A_terminator; /* bit 7 of the metric byte: terminates the outer loop (was flags) */
+  u8         A_diff;       /* metric - $20; classification input (was A) */
+  u8         C_class;      /* width-class index (was C) */
+  const u8  *HLfont;       /* pointer to this glyph's 7-byte font[] entry (was HL) */
+  u8        *DEscreen;     /* pixel destination for this glyph (was DE) */
+  int        row;          /* row loop counter; no Z80 equivalent (Conv: rolled) */
+
+  C_byte0     = *HL_record;           /* $FDA4-$FDA9 */
+  C_colour    = C_byte0 & 0x7F;
+  A_style_bit = (C_byte0 >> 7) & 1;
+
+  E_screen = HL_record[1]; /* $FDAA-$FDAE */
+  D_screen = HL_record[2];
+  HL_record += 3;
+
+  H_attr = (u8) (0x58 + ((D_screen >> 3) & 0x03)); /* $FDB0-$FDB9 */
+  L_attr = E_screen;
+
+  HLshape = HL_record; /* // EXX / EX (SP),HL - bank ($FDBA-$FDBB) */
+
+  do {
+    A_metric = *HLshape & 0x7F; /* $FDBE-$FDBF */
+
+    if (A_metric == 0x20) {
+      /* $FDD1-$FDD9: space */
+      E_screen++;
+      L_attr++;
+    } else {
+      A_diff = (u8) (A_metric - 0x20); /* $FDD1 */
+
+      /* $FDDA-$FDFE classification ladder */
+      if (A_diff >= 0x21) {
+        C_class = (u8) (A_diff - 18);
+      } else if (A_diff >= 0x10) {
+        C_class = (u8) (A_diff - 11);
+      } else if (A_diff == 1) {
+        C_class = 0;
+      } else if (A_diff == 8) {
+        C_class = 1;
+      } else if (A_diff == 9) {
+        C_class = 2;
+      } else if (A_diff == 12) {
+        C_class = 3;
+      } else {
+        C_class = 4;
+      }
+
+      HLfont = &font[C_class * 7]; /* $FDFE-$FE0C */
+
+      /* $FE0D-$FE11: shared destination snapshot for both branches below. */
+      DEscreen = ADDRTOSCREEN((D_screen << 8) | E_screen);
+      E_screen++;
+
+      if (!A_style_bit) { /* $FE12-$FE15 */
+        /* $FE16-$FE4E: double-height, 7 font bytes -> 15 rows */
+        for (row = 0; row < 4; row++) { /* Conv: rolled */
+          *DEscreen = *HLfont;
+          DEscreen += 256;
+          *DEscreen = *HLfont++;
+          DEscreen += 256;
+        }
+        /* $FE30-$FE37: crosses 8-scanline group boundary. Conv: the literal
+         * Z80 does E += 0x1F, D -= 7 on the *register* DE (D0+7, E0+1 at
+         * this point), landing on (D0, E0+32). The rolled loop above instead
+         * advances DEscreen by 256 twice per font byte, so it is already 255
+         * bytes further along (D0+8, E0) than the literal register state.
+         * 0xF820, not 0xF81F, is the constant that lands this pointer on the
+         * same (D0, E0+32) target. */
+        DEscreen += 0xF820;
+        for (row = 0; row < 3; row++) { /* Conv: rolled */
+          *DEscreen = *HLfont;
+          DEscreen += 256;
+          *DEscreen = *HLfont++;
+          DEscreen += 256;
+        }
+        *DEscreen = 0; /* $FE4D-$FE4E: final row always blank */
+
+        *ADDRTOATTRS((H_attr << 8) | L_attr) = C_colour | ATTR_BRIGHT; /* $FE50-$FE53 */
+        *ADDRTOATTRS((H_attr << 8) | (u8) (L_attr + 0x20)) = C_colour & ~ATTR_BRIGHT; /* $FE54-$FE5A */
+        L_attr++; /* $FE5B-$FE5C */
+      } else {
+        /* $FE5F-$FE78: single-height, 7 font bytes, one row each */
+        for (row = 0; row < 7; row++) { /* Conv: rolled */
+          *DEscreen = *HLfont++;
+          DEscreen += 256;
+        }
+
+        *ADDRTOATTRS((H_attr << 8) | L_attr) = C_colour; /* $FE7B */
+        L_attr++; /* $FE7C */
+      }
+    }
+
+    A_terminator = *HLshape & 0x80; /* $FDC6 */
+    HLshape++; /* $FDC8 */
+  } while (!A_terminator); /* $FDC9 */
+
+  return HLshape; /* $FDCB-$FDD0 */
+}
+
+/**
+ * $FD9C: Print one or more back-to-back packed text records
+ *
+ * Calls print_character to draw the record at HLstring, then repeats for the
+ * next record if the byte immediately following the terminator is non-zero.
+ * The final zero byte is a pad, not part of any record (e.g. the $FC29
+ * block's "$FD96 pad byte").
+ *
+ * \param[in,out] state Pointer to game state.
+ * \param[in] HLstring Pointer to the first record (was HL).
+ */
+static void print_string(chqstate_t *state, const u8 *HLstring)
+{
+  for (;;) {
+    HLstring = print_character(state, HLstring); /* $FD9C CALL $FDA4 */
+    if (*HLstring == 0) /* $FD9F-$FDA1 */
+      return;
+  }
+}
+
+/**
+ * $FE7F: Clears the options-menu screen area (attributes and bitmap)
+ *
+ * Zero-fills the same $5900-$5AFF attribute range and $4800-$57FF bitmap
+ * range as clear_screen_bitmap_and_attrs, servicing sound (sfx_music_service,
+ * via service_sound_and_loop_tune0) between passes so the title tune keeps
+ * advancing during the fill. Called from omd_redraw_and_poll ($FBA2 and
+ * $FBE5) and, once ported, the "define keys" screen ($FEA9/$FEF6).
+ *
+ * \param[in,out] state Pointer to game state.
+ *
+ * Conv: the Z80 does this as three LDIR chunks (attrs, then bitmap split
+ * into two chunks of $082F and $07D0 bytes) with a sound-service call
+ * between each pair; the bitmap fill collapses to one memset since nothing
+ * observes it mid-way, but all three service calls are kept, in the same
+ * order, so the tune advances by the same number of steps as the Z80.
+ * Falls through into service_sound_and_loop_tune0 via a tail jump in the
+ * Z80 ($FEA6 JP $FBC8), modelled here as a plain call before returning.
+ */
+static void clear_options_screen(chqstate_t *state)
+{
+  memset(ADDRTOATTRS(0x5900), 0, 0x200); /* $FE7F-$FE8A */
+  service_sound_and_loop_tune0(state); /* $FE8B CALL $FBC8 */
+
+  memset(ADDRTOSCREEN(0x4800), 0, 0x1000); /* $FE8E-$FEA5 */
+  service_sound_and_loop_tune0(state); /* $FE9C CALL $FBC8 */
+
+  service_sound_and_loop_tune0(state); /* $FEA6 JP $FBC8 (tail call) */
+}
+
+/**
  * $FBA2 (omd_redraw_and_poll): options-menu redraw + poll + dispatch loop
  *
  * Draws the control-select screen text, then polls half-row $F7FE (keys
@@ -19138,11 +19411,13 @@ static u8 omd_redraw_and_poll(chqstate_t *state)
                                 * joystick detected (was A) */
 
 redraw: /* $FBA2 */
-  /* TODO: CALL clear_options_screen ($FE7F) -- not yet ported, needs
-   * screen/attribute clear. */
+  clear_options_screen(state); /* $FBA2 CALL $FE7F */
 
-  /* TODO: CALL print_string(state, $FC29) ($FD9C) -- not yet ported, needs
-   * the text-block blitter ("ENTER OPTION" / P1-P5 menu text). */
+  /* TODO: CALL print_string(state, $FC29) ($FD9C) -- print_string itself is
+   * ported (see above); what's missing is the $FC29-$FD96 data block, a
+   * ~366-byte multi-screen table ("ENTER OPTION"/P1-P5, redefine-keys,
+   * test-mode and title-credits text runs, per #R$FC29's skool comment).
+   * Porting that table is a separate task from the blitter itself. */
 
 poll: /* $FBAB omd_service_and_read_keys */
   do {
@@ -19186,13 +19461,13 @@ install_joystick_keys:
   A_flag = 0; /* $FBE4 XOR A */
 
 shared_tail: /* $FBE5 */
-  /* TODO: CALL clear_options_screen ($FE7F) -- not yet ported. */
-
   /* TODO: install the active-control-config header at ($8008): write
    * A_flag, then copy control_keys[5..7] (quit/pause/turbo) followed by
    * control_keys[0..4] (gear/accelerate/brake/left/right) into a 9-byte
    * destination -- $FBE5-$FBF8. Needs a real design once the gameplay
    * input reader that consumes this is ported; not modelled yet. */
+
+  clear_options_screen(state); /* $FBFA CALL $FE7F */
 
   do {
     state->speccy->stamp(state->speccy);
