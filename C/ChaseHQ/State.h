@@ -870,6 +870,14 @@ struct chqstate {
 
   // $F000
   u8        backbuffer[BACKBUFFER_LENGTH + BACKBUFFER_OVERFLOW];
+
+  // $FFF7-$FFFE (128K bank 3): live scan-key-code buffer for the currently
+  // active control scheme. Not fixed ROM data -- installed from the
+  // Sinclair/Cursor joystick key lists by options_menu_driver ($FBDC), or
+  // (once ported) written key-by-key by read_new_key_definition ($FF2C).
+  // Layout: [0..4] = gear/accelerate/brake/left/right (joystick-mappable),
+  // [5..7] = quit/pause/turbo (keyboard-only).
+  u8        control_keys[8];
 };
 
 #endif /* CHASEHQ_STATE_H */

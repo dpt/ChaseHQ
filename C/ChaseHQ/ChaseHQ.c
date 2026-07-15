@@ -1285,6 +1285,10 @@ static void title_screen_driver(chqstate_t *state);
 static u8 ts_wait_loop(chqstate_t *state);
 static void ts_coin_inserted(chqstate_t *state);
 static void ts_refresh_name_table(chqstate_t *state);
+static void service_sound_and_loop_tune0(chqstate_t *state);
+static u8 detect_kempston_joystick(chqstate_t *state);
+static u8 omd_redraw_and_poll(chqstate_t *state);
+static u8 options_menu_driver(chqstate_t *state);
 static void boot_and_run_sound_loop(chqstate_t *state);
 static u8 call_bank_3_128k(chqstate_t *state, int HLroutine);
 static void page_128k(chqstate_t *state);
@@ -19023,6 +19027,224 @@ static void ts_refresh_name_table(chqstate_t *state)
   /* TODO: copy 3 rows of high-score name/rank data from $C403 into the
    * buffer pointed to by ($800A) -- needs a destination buffer/state field,
    * out of scope for this task. */
+}
+
+/* $FFE5-$FFE9: "list A" -- Sinclair Interface II joystick key-scan codes,
+ * installed into state->control_keys[0..4] when "1. SINCLAIR JOYSTICK" is
+ * chosen. Genuine emulation of the classic Interface II wiring (keys 6-0),
+ * not arbitrary key choices. */
+static const u8 sinclair_joystick_keys[5] = { 0x23, 0x1B, 0x13, 0x03, 0x0B };
+
+/* $FFEA-$FFEE: "list B" -- Cursor/Protek joystick key-scan codes, installed
+ * when "2. CURSOR JOYSTICK" is chosen (keys 5,6,7,8,0). */
+static const u8 cursor_joystick_keys[5]  = { 0x23, 0x0B, 0x03, 0x04, 0x13 };
+
+/**
+ * $FBC8: Services sound each frame and keeps the options-menu tune looping
+ *
+ * Runs one frame of the SFX/music service and, if no tune is currently
+ * active, restarts tune 0.
+ *
+ * \param[in,out] state Pointer to game state.
+ */
+static void service_sound_and_loop_tune0(chqstate_t *state)
+{
+  sfx_music_service(state); /* $FBC8 CALL $F82F */
+
+  if (!state->title_music.tune_active) /* $FBCB-$FBCF LD A,($F223); AND A; RET NZ */
+    start_tune_and_sfx_table(state, 0); /* $FBD0 XOR A / $FBD1 JP $F7D6 */
+}
+
+/**
+ * $FC14: Joystick-present detector for the control-select sub-screen
+ *
+ * Samples the Kempston port 20 times, servicing sound each iteration, and
+ * bails out as soon as the port's value changes (a joystick is moving or
+ * present).
+ *
+ * \param[in,out] state Pointer to game state.
+ *
+ * \return 0 if Kempston port activity was detected within the sample
+ * window -- the caller must return to the poll loop without installing any
+ * control scheme. 1 if no joystick was detected -- the caller falls into
+ * the shared control-install tail with the input-method flag set to 1.
+ */
+static u8 detect_kempston_joystick(chqstate_t *state)
+{
+  int B_count;     /* sample loop countdown, 20 iterations (was B) */
+  u8  C_baseline;  /* first Kempston sample (was C) */
+  u8  A_sample;    /* current Kempston sample (was A) */
+
+  A_sample   = state->speccy->in(state->speccy, port_KEMPSTON_JOYSTICK); /* $FC16 */
+  C_baseline = A_sample; /* $FC18 LD C,A */
+
+  B_count = 0x14; /* $FC14 LD B,$14 */
+  do {
+    A_sample = state->speccy->in(state->speccy, port_KEMPSTON_JOYSTICK); /* $FC19 */
+    if (A_sample != C_baseline) /* $FC1B CP C / $FC1C JR NZ,$FBAB */
+      return 0;
+
+    service_sound_and_loop_tune0(state); /* $FC1E PUSH BC / $FC1F CALL $FBC8 / $FC22 POP BC */
+    state->speccy->sleep(state->speccy, STANDARD_SLEEP);
+    state->speccy->stamp(state->speccy);
+  } while (--B_count); /* $FC23 DJNZ $FC19 */
+
+  return 1; /* $FC25 LD A,$01 / $FC27 JR $FBE5 */
+}
+
+/**
+ * $FBA2 (omd_redraw_and_poll): options-menu redraw + poll + dispatch loop
+ *
+ * Draws the control-select screen text, then polls half-row $F7FE (keys
+ * "1"-"5") and dispatches: "1" -> Sinclair joystick key list, "2" -> Cursor
+ * joystick key list (both installed via a shared 5-byte copy), "3" ->
+ * Kempston-joystick detection, "4" -> keyboard (no key-list copy, keeps
+ * whatever is already in state->control_keys), "5" (falls through
+ * unbranched, the default) -> "DEFINE KEYS" screen, after which the whole
+ * loop redraws and re-polls.
+ *
+ * Once a scheme is chosen (any path other than "5"), installs the
+ * active-control-config header and hands off to the title screen.
+ *
+ * \param[in,out] state Pointer to game state.
+ *
+ * \return 1 always, at the point corresponding to the Z80's `JP $C59E`
+ * ($FC11) -- the caller should now (re-)run title_screen_driver.
+ *
+ * Conv: this function uses goto/labels rather than nested structured loops.
+ * $FBA2 (full redraw) and $FBAB (poll only, no redraw) are two genuinely
+ * distinct restart points reached from different call sites -- the "no
+ * key" and "key 5" exits target $FBA2; the Kempston-detector's bail-out
+ * targets $FBAB. Modelling both with a single loop would either duplicate
+ * the redraw block or redraw when the Z80 does not.
+ *
+ * Conv: $FBAE-$FBB3 (`LD A,$F7` / `IN A,($FE)` / `CPL` / `AND $1F`)
+ * collapses to a single inverted, masked port_KEYBOARD_12345 read (same
+ * collapse as ts_wait_loop's fire/coin/anykey checks).
+ *
+ * Conv: $FBB7-$FBC1 (four `RRA` / `JR C` pairs testing bits 0-3 of the
+ * 5-bit mask in turn) collapse to direct bit tests against A_key_mask; key
+ * "5" is whatever remains after all four bits test false, matching the
+ * Z80's unbranched fallthrough default.
+ */
+static u8 omd_redraw_and_poll(chqstate_t *state)
+{
+  u8         A_key_mask;      /* keys "1".."5" pressed bitmask, bit0=key"1"..
+                                * bit3=key"4" (was A) */
+  const u8  *HL_ctrl_list;    /* joystick key-list source, list A or B (was HL) */
+  u8         A_flag;          /* input-method flag written to the active-
+                                * config header byte: 0 = joystick/keyboard
+                                * scheme installed normally, 1 = no Kempston
+                                * joystick detected (was A) */
+
+redraw: /* $FBA2 */
+  /* TODO: CALL clear_options_screen ($FE7F) -- not yet ported, needs
+   * screen/attribute clear. */
+
+  /* TODO: CALL print_string(state, $FC29) ($FD9C) -- not yet ported, needs
+   * the text-block blitter ("ENTER OPTION" / P1-P5 menu text). */
+
+poll: /* $FBAB omd_service_and_read_keys */
+  do {
+    state->speccy->stamp(state->speccy);
+    service_sound_and_loop_tune0(state); /* $FBAB CALL $FBC8 */
+
+    A_key_mask = (u8) (~state->speccy->in(state->speccy, port_KEYBOARD_12345) & 0x1F); /* $FBAE-$FBB3 */
+
+    if (A_key_mask == 0) /* $FBB5 JR Z,$FBAB */
+      state->speccy->sleep(state->speccy, STANDARD_SLEEP);
+  } while (A_key_mask == 0);
+
+  if (A_key_mask & 0x01) { /* $FBB7/$FBB8: key "1" -> Sinclair joystick */
+    HL_ctrl_list = sinclair_joystick_keys; /* $FBD4 LD HL,$FFE5 */
+    goto install_joystick_keys;
+  }
+  if (A_key_mask & 0x02) { /* $FBBA/$FBBB: key "2" -> Cursor joystick */
+    HL_ctrl_list = cursor_joystick_keys; /* $FBD9 LD HL,$FFEA */
+    goto install_joystick_keys;
+  }
+  if (A_key_mask & 0x04) { /* $FBBD/$FBBE: key "3" -> Kempston detect */
+    if (!detect_kempston_joystick(state)) /* $FC14 */
+      goto poll; /* $FC1C JR NZ,$FBAB: joystick activity seen, poll again */
+    A_flag = 1; /* $FC25 LD A,$01 */
+    goto shared_tail;
+  }
+  if (A_key_mask & 0x08) { /* $FBC0/$FBC1: key "4" -> keyboard, inline */
+    A_flag = 0; /* $FBE4 XOR A */
+    goto shared_tail;
+  }
+
+  /* $FBC3: key "5" (default, falls through unbranched) -> "DEFINE KEYS" */
+  /* TODO: CALL redefine_keys_screen(state) ($FEA9) -- not yet ported; key-
+   * name printing, per-control key capture, the hidden test-mode unlock. */
+  goto redraw; /* $FBC6 JR $FBA2 */
+
+install_joystick_keys:
+  memcpy(state->control_keys, HL_ctrl_list, 5); /* $FBDC LD DE,$FFF7 /
+                                                  * $FBDF LD BC,$0005 /
+                                                  * $FBE2 LDIR */
+  A_flag = 0; /* $FBE4 XOR A */
+
+shared_tail: /* $FBE5 */
+  /* TODO: CALL clear_options_screen ($FE7F) -- not yet ported. */
+
+  /* TODO: install the active-control-config header at ($8008): write
+   * A_flag, then copy control_keys[5..7] (quit/pause/turbo) followed by
+   * control_keys[0..4] (gear/accelerate/brake/left/right) into a 9-byte
+   * destination -- $FBE5-$FBF8. Needs a real design once the gameplay
+   * input reader that consumes this is ported; not modelled yet. */
+
+  do {
+    state->speccy->stamp(state->speccy);
+    service_sound_and_loop_tune0(state); /* $FBFD CALL $FBC8 */
+
+    A_key_mask = (u8) (~state->speccy->in(state->speccy, port_KEYBOARD_12345) & 0x1F); /* $FC00-$FC04 */
+
+    if (A_key_mask != 0) /* $FC06 JR NZ,$FBFD: debounce -- wait for the
+                          * selection key to be released before proceeding */
+      state->speccy->sleep(state->speccy, STANDARD_SLEEP);
+  } while (A_key_mask != 0);
+
+  /* TODO: CALL stop_music_and_silence ($ED0B) -- AY driver internals not
+   * yet wired up (see start_tune_and_sfx_table). */
+
+  state->controls_selected = 1; /* $FC0B LD A,$01 / $FC0D LD ($8001),A */
+
+  /* $FC10 DI: omitted -- SDL owns interrupt delivery, matching every other
+   * DI/EI site in this file (see ts_wait_loop's prologue). */
+
+  return 1; /* $FC11 JP $C59E: hand off to title_screen_driver */
+}
+
+/**
+ * $FB99: Options-menu driver entry point
+ *
+ * One-time setup for the control-select menu: arms the IM2 interrupt
+ * vector table, starts tune 0, and syncs to the next interrupt, then falls
+ * into the redraw+poll loop at omd_redraw_and_poll ($FBA2).
+ *
+ * Called once from the cold-boot entry point ($C009, BANK3_INPUT_SELECTION,
+ * not yet wired up here). The fire-key exit from the title screen's
+ * attract-mode wait loop (ts_wait_loop, $C63E JP C,$FBA2) re-enters at
+ * omd_redraw_and_poll directly, skipping this one-time setup -- ts_wait_loop's
+ * existing TODO ("fire pressed -> start the game via $FBA2") should call
+ * omd_redraw_and_poll(state), not this function.
+ *
+ * \param[in,out] state Pointer to game state.
+ *
+ * \return 1 always -- see omd_redraw_and_poll's return-value doc.
+ */
+static u8 options_menu_driver(chqstate_t *state)
+{
+  setup_im2_interrupt_table(state);   /* $FB99 CALL $F7AA */
+  start_tune_and_sfx_table(state, 0); /* $FB9C XOR A / $FB9D CALL $F7D6 */
+
+  state->speccy->stamp(state->speccy); /* $FBA0 EI / $FBA1 HALT: sync to the
+                                         * next interrupt before entering the
+                                         * poll loop (same EI/HALT -> stamp()
+                                         * convention as title_screen_driver). */
+
+  return omd_redraw_and_poll(state); /* $FBA2: falls straight in */
 }
 
 /**
