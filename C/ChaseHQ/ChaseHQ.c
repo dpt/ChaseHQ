@@ -470,12 +470,12 @@ static u8 *z80offsettobackbuf(chqstate_t *state, int off, int left, int right)
 #define MARQUEELIGHT_LEFT_ATTR_ADDR  (0x5820) /* screen attribute address of left marquee light */
 #define MARQUEELIGHT_RIGHT_ATTR_ADDR (0x583B) /* screen attribute address of right marquee light */
 
-#define BANK3_BOUNCY_LOGO       (0xC000)
-#define BANK3_ROUTINE_3         (0xC003) /* bootstrap */
-#define BANK3_ROUTINE_6         (0xC006) /* success music */
+#define BANK3_TITLE_SCREEN      (0xC000)
+#define BANK3_HI_SCORE          (0xC003)
+#define BANK3_SUCCESS_MUSIC     (0xC006)
 #define BANK3_INPUT_SELECTION   (0xC009)
 
-#define BASL_JINGLE_FRAMES      (0xB4) /* success-jingle duration; see boot_and_run_sound_loop Conv: */
+#define BASL_JINGLE_FRAMES        (0xB4) /* success-jingle duration; see boot_and_run_sound_loop Conv: */
 
 /* ----------------------------------------------------------------------- */
 
@@ -1692,7 +1692,7 @@ static void bootstrap(chqstate_t *state)
 
     // Call the 128K/bank 3 ?bootstrap routine.
     if (state->mode_128k)
-      call_bank_3_128k(state, BANK3_ROUTINE_3);
+      call_bank_3_128k(state, BANK3_HI_SCORE);
   }
 }
 
@@ -17709,9 +17709,9 @@ static void play_speech_128k(chqstate_t *state, int index)
  * \param[in] state Pointer to game state.
  *
  * Conv: Z80 falls through from $F3B3 (LD HL,$C006) into call_bank_3_128k; C
- * passes BANK3_ROUTINE_6 explicitly. The LD ($8E4A),A at $F3B0 self-modifies
+ * passes BANK3_SUCCESS_MUSIC explicitly. The LD ($8E4A),A at $F3B0 self-modifies
  * overlay_delay; C assigns state->overlay_delay directly. Now that
- * BANK3_ROUTINE_6 blocks for BASL_JINGLE_FRAMES frames of real playback
+ * BANK3_SUCCESS_MUSIC blocks for BASL_JINGLE_FRAMES frames of real playback
  * (see boot_and_run_sound_loop), truncating overlay_delay to 1 here is safe:
  * the blocking call itself holds the arrest-message overlay for the
  * jingle's duration, matching the Z80.
@@ -17730,7 +17730,7 @@ static void handle_perp_caught_128k(chqstate_t *state)
   state->turbo_sfx_pitch = 1;
   state->overlay_delay   = 1;
 
-  call_bank_3_128k(state, BANK3_ROUTINE_6); /* was FALLTHROUGH */
+  call_bank_3_128k(state, BANK3_SUCCESS_MUSIC); /* was FALLTHROUGH */
 }
 
 /**
@@ -19529,7 +19529,7 @@ static u8 options_menu_driver(chqstate_t *state)
  *
  * \return Nothing (was RET never reached).
  *
- * Conv: reached from BANK3_ROUTINE_6 (the perp-caught success jingle) via
+ * Conv: reached from BANK3_SUCCESS_MUSIC (the perp-caught success jingle) via
  * call_bank_3_128k, whose caller (handle_perp_caught_128k, and in turn its
  * own caller's phase4 state machine) expects a normal return so scoring and
  * fading can proceed on the same call — an infinite loop here would
@@ -19583,12 +19583,12 @@ static u8 call_bank_3_128k(chqstate_t *state, int HLroutine)
   default:
     assert(0);
     break;
-  case BANK3_BOUNCY_LOGO:
-    // title_screen_driver(state);
+  case BANK3_TITLE_SCREEN:
+    title_screen_driver(state);
     break;
-  case BANK3_ROUTINE_3:
+  case BANK3_HI_SCORE:
     break;
-  case BANK3_ROUTINE_6:
+  case BANK3_SUCCESS_MUSIC:
     boot_and_run_sound_loop(state);
     break;
   case BANK3_INPUT_SELECTION:
@@ -19662,7 +19662,7 @@ static void attract_mode_128k(chqstate_t *state)
   int       A_countdown;          /* attract_mode_128k_countdown: 2..negative; triggers scene restart (was A) */
 
 attract_mode_128k_start:
-  HL_routine = BANK3_BOUNCY_LOGO;
+  HL_routine = BANK3_TITLE_SCREEN;
 call_bank_3:
   A_result = call_bank_3_128k(state, HL_routine);
   if (A_result == 0)
