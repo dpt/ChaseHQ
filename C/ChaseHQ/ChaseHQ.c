@@ -8363,7 +8363,7 @@ void perp_behaviour(chqstate_t *state, hazard_t *IXperp)
   int       Cperp_distance;     /* perp's road buffer offset, used for vehicle proximity check (was C) */
   int       Biterations;        /* hazard slot loop counter: 5 iterations (was B) */
   hazard_t *IYhazard;           /* pointer walking the five non-perp hazard slots (was IY) */
-  s8        Adistancediff;      /* signed distance difference between hazard car and perp (was A) */
+  u8        Adistancediff;      /* distance difference between hazard car and perp, mod 256 (was A) */
   u8        Achanging_lane_flag; /* pb_changing_lane flag read (was A) */
   u8        Adist_lane_gate;    /* perp distance compared to 7, gating the lane-change timer path (was A) */
   u8        Alane_timer;        /* lane-change countdown value, decremented then reloaded on zero (was A) */
@@ -8445,14 +8445,17 @@ pb_ensure_vehicle:
     goto pb_find_unused_hazard_continue;
 
   // Calculate distance between current hazard-car and the perp.
-  Adistancediff = IYhazard->distance - Cperp_distance;
-  if ((s8) Adistancediff < 0)
+  Adistancediff = (u8) (IYhazard->distance - Cperp_distance);
+  if (IYhazard->distance < Cperp_distance) {
     // Otherwise hazard-car is behind perp...
-    Adistancediff += 2; // move it two lanes away?
-  else
+    carry = Adistancediff > (u8) (0xFF - 2); // carry out of ADD A,2
+    Adistancediff += 2;                      // move it two lanes away?
+  } else {
+    carry = Adistancediff < 3; // borrow out of SUB A,3
     Adistancediff -= 3;
+  }
 
-  if (!carry) // FIXME out of range?
+  if (!carry) // out of range: hazard too far from perp's distance to matter
     goto pb_find_unused_hazard_continue;
 
   // compare to perp's lane
@@ -8653,6 +8656,7 @@ pb_a776:
   // If I meddle with this value the perp seems to race off too fast to catch.
 pb_set_delay:
   IXperp->hit_timer = -4; // $FC
+  carry = Ahit_timer < 3; // carry from CP $03, saved by PUSH AF before the SUB
   // PUSH AF // Ahit_timer
   if (Ahit_timer >= 3)
     Ahit_timer -= 3;
