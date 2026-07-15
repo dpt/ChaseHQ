@@ -63,7 +63,7 @@ static void chq_initialise(chqstate_t *state)
     { offsetof(chqstate_t, drum2), &drum2_template[0], sizeof(drum2_template) },
   };
 
-  int i;
+  size_t i;
 
   // Copy various blocks into place in state
   for (i = 0; i < NELEMS(copies); i++)

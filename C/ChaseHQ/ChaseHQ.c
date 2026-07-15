@@ -13630,6 +13630,18 @@ static void draw_tunnel(chqstate_t *state, u8 *IYheight)
   int       n_a;       /* PUSH count for first fill: (16 - dt_fill_start_a) (Conv: added) */
   int       n_b;       /* PUSH count for second fill: (16 - dt_fill_start_b) (Conv: added) */
 
+  /* Conv: dt_max_fill ($C188) and the $C1A4 JP M,$C1BC path leave E and B
+   * unset in the Z80 too — both are genuine stale-register reads there.
+   * For E, every path into dt_max_fill also sets dt_fill_start_a == 22,
+   * which makes dt_start_fill's consumer skip dt_fill_start_b entirely, so
+   * the stale value is never actually read. For B, dt_compute_fill_bounds
+   * does use it (to derive C, the fill-width correction) — that path reads
+   * whatever B held on entry to draw_tunnel, and we haven't traced callers
+   * to know what that is. Zero-initialised here to avoid C-level UB; the B
+   * case may not match original hardware behaviour. */
+  E = 0;
+  B = 0;
+
   Adistance = IYheight - &state->height_table[0];
   if (Adistance != state->dt_tunnel_distance)
     return;

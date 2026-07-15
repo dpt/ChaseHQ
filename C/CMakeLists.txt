@@ -2,6 +2,13 @@ cmake_minimum_required(VERSION 4.1)
 project(ChaseHQ C)
 
 set(CMAKE_C_STANDARD 90)
+# ponytail: -Wmissing-braces/-Wmissing-field-initializers fire ~950 times on
+# the nested-struct data tables' idiomatic partial-brace initializers; not
+# bugs, just noise for this codebase's style. Re-enable if that changes.
+# -Wunterminated-string-initialization fires on key_names (CommonData.c):
+# a packed row-major char table sized to its exact content, never treated
+# as a NUL-terminated string.
+add_compile_options(-Wall -Wextra -Wno-missing-braces -Wno-missing-field-initializers -Wno-unterminated-string-initialization)
 add_compile_options($<$<CONFIG:Debug>:-fsanitize=address>)
 add_link_options($<$<CONFIG:Debug>:-fsanitize=address>)
 
