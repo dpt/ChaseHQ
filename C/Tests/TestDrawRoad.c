@@ -20,10 +20,10 @@
 #include <string.h>
 
 #include "ChaseHQ/ChaseHQ.h"
-#include "ChaseHQ/Internal.h"
-#include "ChaseHQ/State.h"
-#include "ChaseHQ/Stages.h"
-#include "ChaseHQ/Tests.h"
+#include "ChaseHQ/Engine/Internal.h"
+#include "ChaseHQ/Engine/State.h"
+#include "ChaseHQ/Data/Stages.h"
+#include "ChaseHQ/Engine/Tests.h"
 #include "ZXSpectrum/Spectrum.h"
 
 /* ----------------------------------------------------------------------- */

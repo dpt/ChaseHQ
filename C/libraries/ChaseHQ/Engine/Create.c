@@ -22,7 +22,7 @@
 #include "ChaseHQ/ChaseHQ.h"
 
 #include "ChaseHQ/Data/CommonData.h"
-#include "ChaseHQ/State.h"
+#include "ChaseHQ/Engine/State.h"
 
 /* ----------------------------------------------------------------------- */
 

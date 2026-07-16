@@ -12,7 +12,7 @@
 
 #ifdef CHQ_TESTS
 
-#include "ChaseHQ/State.h"
+#include "ChaseHQ/Engine/State.h"
 
 /** Force a stage load for the current wanted_stage_number. */
 void chq_test_load_stage(chqstate_t *state);

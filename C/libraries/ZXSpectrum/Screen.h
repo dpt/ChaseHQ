@@ -8,7 +8,7 @@
 #ifndef ZXSPECTRUM_SCREEN_H
 #define ZXSPECTRUM_SCREEN_H
 
-#include "Spectrum.h"
+#include "ZXSpectrum/Spectrum.h"
 
 #ifdef __cplusplus
 extern "C"

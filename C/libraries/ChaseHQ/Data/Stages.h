@@ -19,7 +19,7 @@
 #define CHASEHQ_STAGES_H
 
 #include "C99/Types.h"
-#include "Internal.h"
+#include "ChaseHQ/Engine/Internal.h"
 
 /* ----------------------------------------------------------------------- */
 

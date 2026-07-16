@@ -14,48 +14,52 @@ add_link_options($<$<CONFIG:Debug>:-fsanitize=address>)
 
 find_package(SDL3 REQUIRED)
 
+set(INCLUDE_DIRS include libraries)
+
 set(SOURCE_FILES
         SDLMain.c
-        ZXSpectrum/Kempston.c
-        ZXSpectrum/Kempston.h
-        ZXSpectrum/Keyboard.c
-        ZXSpectrum/Keyboard.h
-        ZXSpectrum/Macros.h
-        ZXSpectrum/Pixels.h
-        ZXSpectrum/Screen.c
-        ZXSpectrum/Screen.h
-        ZXSpectrum/slopay-chip.c
-        ZXSpectrum/slopay-chip.h
-        ZXSpectrum/Spectrum.c
-        ZXSpectrum/Spectrum.h
-        ZXSpectrum/Z80.h
-        ChaseHQ/Bank3.c
-        ChaseHQ/Main.c
-        ChaseHQ/ChaseHQ.h
-        ChaseHQ/Create.c
-        ChaseHQ/Internal.h
-        ChaseHQ/Stages.c
-        ChaseHQ/Stages.h
-        ChaseHQ/Data/CommonData.c
-        ChaseHQ/Data/CommonData.h
-        ChaseHQ/Data/SoundSamples.c
-        ChaseHQ/Data/SoundSamples.h
-        ChaseHQ/Data/Stage1Data.c
-        ChaseHQ/Data/Stage1Data.h
-        ChaseHQ/Data/Stage2Data.c
-        ChaseHQ/Data/Stage2Data.h
-        ChaseHQ/Data/Stage3Data.c
-        ChaseHQ/Data/Stage3Data.h
-        ChaseHQ/Data/Stage4Data.c
-        ChaseHQ/Data/Stage4Data.h
-        ChaseHQ/Data/Stage5Data.c
-        ChaseHQ/Data/Stage5Data.h
-        ChaseHQ/Data/Stage6Data.c
-        ChaseHQ/Data/Stage6Data.h)
+        include/ZXSpectrum/Kempston.h
+        include/ZXSpectrum/Keyboard.h
+        include/ZXSpectrum/Macros.h
+        include/ZXSpectrum/Pixels.h
+        include/ZXSpectrum/slopay-chip.h
+        include/ZXSpectrum/Spectrum.h
+        include/ZXSpectrum/Z80.h
+        include/ChaseHQ/ChaseHQ.h
+        libraries/ZXSpectrum/Kempston.c
+        libraries/ZXSpectrum/Keyboard.c
+        libraries/ZXSpectrum/Screen.c
+        libraries/ZXSpectrum/Screen.h
+        libraries/ZXSpectrum/slopay-chip.c
+        libraries/ZXSpectrum/Spectrum.c
+        libraries/ChaseHQ/Engine/Bank3.c
+        libraries/ChaseHQ/Engine/Main.c
+        libraries/ChaseHQ/Engine/Create.c
+        libraries/ChaseHQ/Engine/Internal.h
+        libraries/ChaseHQ/Engine/State.h
+        libraries/ChaseHQ/Engine/Tests.h
+        libraries/ChaseHQ/Data/CommonData.c
+        libraries/ChaseHQ/Data/CommonData.h
+        libraries/ChaseHQ/Data/SoundSamples.c
+        libraries/ChaseHQ/Data/SoundSamples.h
+        libraries/ChaseHQ/Data/Stages.c
+        libraries/ChaseHQ/Data/Stages.h
+        libraries/ChaseHQ/Data/Stage1Data.c
+        libraries/ChaseHQ/Data/Stage1Data.h
+        libraries/ChaseHQ/Data/Stage2Data.c
+        libraries/ChaseHQ/Data/Stage2Data.h
+        libraries/ChaseHQ/Data/Stage3Data.c
+        libraries/ChaseHQ/Data/Stage3Data.h
+        libraries/ChaseHQ/Data/Stage4Data.c
+        libraries/ChaseHQ/Data/Stage4Data.h
+        libraries/ChaseHQ/Data/Stage5Data.c
+        libraries/ChaseHQ/Data/Stage5Data.h
+        libraries/ChaseHQ/Data/Stage6Data.c
+        libraries/ChaseHQ/Data/Stage6Data.h)
 
 add_executable(ChaseHQ ${SOURCE_FILES})
 target_compile_definitions(ChaseHQ PRIVATE TGE_SDL)
-target_include_directories(ChaseHQ PRIVATE .)
+target_include_directories(ChaseHQ PRIVATE ${INCLUDE_DIRS})
 target_link_libraries(ChaseHQ SDL3::SDL3)
 if(APPLE)
   target_link_libraries(ChaseHQ "-framework CoreFoundation")
@@ -65,27 +69,27 @@ endif()
 
 set(TEST_SOURCE_FILES
         Tests/TestDrawRoad.c
-        ZXSpectrum/Kempston.c
-        ZXSpectrum/Keyboard.c
-        ZXSpectrum/Screen.c
-        ZXSpectrum/slopay-chip.c
-        ZXSpectrum/Spectrum.c
-        ChaseHQ/Bank3.c
-        ChaseHQ/Main.c
-        ChaseHQ/Create.c
-        ChaseHQ/Stages.c
-        ChaseHQ/Data/CommonData.c
-        ChaseHQ/Data/SoundSamples.c
-        ChaseHQ/Data/Stage1Data.c
-        ChaseHQ/Data/Stage2Data.c
-        ChaseHQ/Data/Stage3Data.c
-        ChaseHQ/Data/Stage4Data.c
-        ChaseHQ/Data/Stage5Data.c
-        ChaseHQ/Data/Stage6Data.c)
+        libraries/ZXSpectrum/Kempston.c
+        libraries/ZXSpectrum/Keyboard.c
+        libraries/ZXSpectrum/Screen.c
+        libraries/ZXSpectrum/slopay-chip.c
+        libraries/ZXSpectrum/Spectrum.c
+        libraries/ChaseHQ/Engine/Bank3.c
+        libraries/ChaseHQ/Engine/Main.c
+        libraries/ChaseHQ/Engine/Create.c
+        libraries/ChaseHQ/Data/Stages.c
+        libraries/ChaseHQ/Data/CommonData.c
+        libraries/ChaseHQ/Data/SoundSamples.c
+        libraries/ChaseHQ/Data/Stage1Data.c
+        libraries/ChaseHQ/Data/Stage2Data.c
+        libraries/ChaseHQ/Data/Stage3Data.c
+        libraries/ChaseHQ/Data/Stage4Data.c
+        libraries/ChaseHQ/Data/Stage5Data.c
+        libraries/ChaseHQ/Data/Stage6Data.c)
 
 add_executable(ChaseHQ_Tests ${TEST_SOURCE_FILES})
 target_compile_definitions(ChaseHQ_Tests PRIVATE CHQ_TESTS)
-target_include_directories(ChaseHQ_Tests PRIVATE .)
+target_include_directories(ChaseHQ_Tests PRIVATE ${INCLUDE_DIRS})
 
 # ---- Stretchy object renderer (visual debug tool, no SDL2 dependency) ------
 
@@ -95,7 +99,7 @@ list(APPEND STRETCHY_SOURCE_FILES Tests/RenderStretchyObject.c)
 
 add_executable(StretchyRenderer ${STRETCHY_SOURCE_FILES})
 target_compile_definitions(StretchyRenderer PRIVATE CHQ_TESTS)
-target_include_directories(StretchyRenderer PRIVATE .)
+target_include_directories(StretchyRenderer PRIVATE ${INCLUDE_DIRS})
 
 # ---- Stage data generation --------------------------------------------------
 # Regenerate committed .c files from their skool sources.
@@ -103,7 +107,7 @@ target_include_directories(StretchyRenderer PRIVATE .)
 
 set(CONVERT_SCRIPT ${CMAKE_SOURCE_DIR}/../convert_stage.py)
 set(SKOOL_DIR      ${CMAKE_SOURCE_DIR}/..)
-set(DATA_DIR       ${CMAKE_SOURCE_DIR}/ChaseHQ/Data)
+set(DATA_DIR       ${CMAKE_SOURCE_DIR}/libraries/ChaseHQ/Data)
 
 add_custom_target(convert_stages
   COMMAND sh -c "python3 ${CONVERT_SCRIPT} ${SKOOL_DIR}/ChaseHQ-128K-bank-1.skool 2\

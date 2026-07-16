@@ -23,8 +23,8 @@
 #include "C99/Types.h"
 #include "ZXSpectrum/Spectrum.h"
 
-#include "ChaseHQ.h"
-#include "Stages.h"
+#include "ChaseHQ/ChaseHQ.h"
+#include "ChaseHQ/Data/Stages.h"
 
 /* ----------------------------------------------------------------------- */
 

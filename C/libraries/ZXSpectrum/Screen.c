@@ -8,7 +8,7 @@
 #include <assert.h>
 #include <stdlib.h>
 
-#include "Macros.h"
+#include "ZXSpectrum/Macros.h"
 
 #include "Screen.h"
 

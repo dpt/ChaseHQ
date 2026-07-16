@@ -11,7 +11,7 @@
 
 #include <stdint.h>
 
-#include "slopay-chip.h"
+#include "ZXSpectrum/slopay-chip.h"
 
 #include <stdlib.h>
 

@@ -18,7 +18,7 @@
 #ifndef CHASEHQ_INTERNAL_H
 #define CHASEHQ_INTERNAL_H
 
-#include "ChaseHQ.h"
+#include "ChaseHQ/ChaseHQ.h"
 
 /* ----------------------------------------------------------------------- */
 

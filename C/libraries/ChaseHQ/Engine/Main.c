@@ -90,20 +90,20 @@
 #include "ZXSpectrum/Spectrum.h"
 #include "ZXSpectrum/Z80.h"
 
-#include "ChaseHQ.h"
+#include "ChaseHQ/ChaseHQ.h"
 
 #include <stdio.h>
 
-#include "Data/CommonData.h"
-#include "Data/SoundSamples.h"
-#include "Data/Stage1Data.h"
-#include "Data/Stage2Data.h"
-#include "Data/Stage3Data.h"
-#include "Data/Stage4Data.h"
-#include "Data/Stage5Data.h"
-#include "Data/Stage6Data.h"
-#include "Stages.h"
-#include "State.h"
+#include "ChaseHQ/Data/CommonData.h"
+#include "ChaseHQ/Data/SoundSamples.h"
+#include "ChaseHQ/Data/Stage1Data.h"
+#include "ChaseHQ/Data/Stage2Data.h"
+#include "ChaseHQ/Data/Stage3Data.h"
+#include "ChaseHQ/Data/Stage4Data.h"
+#include "ChaseHQ/Data/Stage5Data.h"
+#include "ChaseHQ/Data/Stage6Data.h"
+#include "ChaseHQ/Data/Stages.h"
+#include "ChaseHQ/Engine/State.h"
 
 /* ----------------------------------------------------------------------- */
 
@@ -17843,7 +17843,7 @@ CHQ_API void chq_main(chqstate_t *state)
 
 #ifdef CHQ_TESTS
 
-#include "ChaseHQ/Tests.h"
+#include "ChaseHQ/Engine/Tests.h"
 
 void chq_test_load_stage(chqstate_t *state)
 {

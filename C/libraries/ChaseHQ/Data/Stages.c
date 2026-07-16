@@ -1,5 +1,5 @@
 /**
- * Stage6Data.h
+ * Stages.c
  *
  * This file is part of "Chase H.Q. in C".
  *
@@ -15,12 +15,22 @@
  * The recreated version is copyright (c) 2023-2026 David Thomas
  */
 
-#ifndef CHASEHQ_STAGE6DATA_H
-#define CHASEHQ_STAGE6DATA_H
+#include "Stage1Data.h"
+#include "Stage2Data.h"
+#include "Stage3Data.h"
+#include "Stage4Data.h"
+#include "Stage5Data.h"
+#include "Stage6Data.h"
 
-#include "../Stages.h"
+#include "Stages.h"
 
-const stage_t stage6;
-const void *stage6_lookup_map_goto(chqstate_t *state, u16 z80);
-
-#endif /* CHASEHQ_STAGE6DATA_H */
+const stage_t *stages[MAXSTAGE + 2] = {
+  &stage1, /* [0]: pregame (wanted_stage_number=0) */
+  &stage1, /* [1]: game stage 1 */
+  &stage2, /* [2]: game stage 2 */
+  &stage3, /* [3]: game stage 3 */
+  &stage4, /* [4]: game stage 4 */
+  &stage5, /* [5]: game stage 5 */
+  &stage6, /* [6]: game stage 6 (Conv: additional for testing) */
+  &stage5, /* [7]: end-sequence reload (wanted_stage_number briefly hits 6) */
+};

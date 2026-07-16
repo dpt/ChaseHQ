@@ -34,11 +34,11 @@
 #include "ZXSpectrum/Spectrum.h"
 #include "ZXSpectrum/Z80.h"
 
-#include "ChaseHQ.h"
-#include "Internal.h"
-#include "Stages.h"
-#include "State.h"
-#include "Data/CommonData.h"
+#include "ChaseHQ/ChaseHQ.h"
+#include "ChaseHQ/Engine/Internal.h"
+#include "ChaseHQ/Data/Stages.h"
+#include "ChaseHQ/Engine/State.h"
+#include "ChaseHQ/Data/CommonData.h"
 
 /* ----------------------------------------------------------------------- */
 
