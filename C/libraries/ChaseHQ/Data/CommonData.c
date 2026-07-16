@@ -5059,6 +5059,18 @@ const u8 messages_cannot_be_remodified[127] = {
   0
 };
 
+// $CC50 -- copyright/credits text, drawn by title_screen_driver via
+// print_string ($FD9C) before the $CCB7 scene tables.
+const u8 title_screen_credits_text[56] = {
+  0xC2, // attribute_BRIGHT_RED_OVER_BLACK + single height bit
+  TWOBYTES(0x50C3),
+  '(', 'C', ')', ' ', '1', '9', '8', '9', ' ', 'O', 'C', 'E', 'A', 'N', ' ', 'S', 'O', 'F', 'T', 'W', 'A', 'R', 'E' | EOS,
+  0xC2, // attribute_BRIGHT_RED_OVER_BLACK + single height bit
+  TWOBYTES(0x50E2),
+  '(', 'C', ')', ' ', '1', '9', '8', '8', ' ', 'T', 'A', 'I', 'T', 'O', ' ', 'C', 'O', 'R', 'P', 'O', 'R', 'A', 'T', 'I', 'O', 'N' | EOS,
+  0
+};
+
 // $CC88 -- drawn directly by title_screen_driver via print_character (not
 // walked as a list: no end marker, matching the Z80, which runs straight
 // into the $CCB7 scene tables afterwards).

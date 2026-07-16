@@ -55,7 +55,9 @@ set(SOURCE_FILES
         libraries/ChaseHQ/Data/Stage5Data.c
         libraries/ChaseHQ/Data/Stage5Data.h
         libraries/ChaseHQ/Data/Stage6Data.c
-        libraries/ChaseHQ/Data/Stage6Data.h)
+        libraries/ChaseHQ/Data/Stage6Data.h
+        libraries/ChaseHQ/Data/TitleScreenData.c
+        libraries/ChaseHQ/Data/TitleScreenData.h)
 
 add_executable(ChaseHQ ${SOURCE_FILES})
 target_compile_definitions(ChaseHQ PRIVATE TGE_SDL)
@@ -85,7 +87,8 @@ set(TEST_SOURCE_FILES
         libraries/ChaseHQ/Data/Stage3Data.c
         libraries/ChaseHQ/Data/Stage4Data.c
         libraries/ChaseHQ/Data/Stage5Data.c
-        libraries/ChaseHQ/Data/Stage6Data.c)
+        libraries/ChaseHQ/Data/Stage6Data.c
+        libraries/ChaseHQ/Data/TitleScreenData.c)
 
 add_executable(ChaseHQ_Tests ${TEST_SOURCE_FILES})
 target_compile_definitions(ChaseHQ_Tests PRIVATE CHQ_TESTS)

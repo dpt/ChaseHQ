@@ -264,6 +264,28 @@ static void chq_initialise(chqstate_t *state)
   state->title_ay_regs.chan_c_vol   = 0x0F;
   state->title_ay_regs.env_fine     = 0x00;
 
+  // $C5A2 (SM): pristine operand value for the "LD A,$00" self-modified by
+  // title_screen_driver; rotates/increments on each restart.
+  state->title_scene_selector = 0x00;
+
+  // $BB00-$BB4F (128K bank 3): title-screen animated-object array, repopulated
+  // from a scene table on every title_screen_driver restart; zeroed here so an
+  // object drawn before the first restart (should never happen) is inert.
+  {
+    int titleobj;
+
+    for (titleobj = 0; titleobj < 9; titleobj++) {
+      state->title_objects[titleobj].opcode = 0x00;
+      state->title_objects[titleobj].wait   = 0x00;
+      state->title_objects[titleobj].x_step = 0;
+      state->title_objects[titleobj].y_step = 0;
+      state->title_objects[titleobj].script = NULL;
+      state->title_objects[titleobj].row    = 0x00;
+      state->title_objects[titleobj].x      = 0x00;
+      state->title_objects[titleobj].y      = 0x00;
+    }
+  }
+
   // Temp until the 128K input code is ported.
   state->kempston_flag = 0;
   state->keydefs[KEYDEF_QUIT      ] = KEYDEF(4,3); // 0

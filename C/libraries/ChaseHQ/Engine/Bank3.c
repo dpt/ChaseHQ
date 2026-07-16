@@ -39,6 +39,7 @@
 #include "ChaseHQ/Data/Stages.h"
 #include "ChaseHQ/Engine/State.h"
 #include "ChaseHQ/Data/CommonData.h"
+#include "ChaseHQ/Data/TitleScreenData.h"
 
 /* ----------------------------------------------------------------------- */
 
@@ -47,6 +48,23 @@
 /* state is always the enclosing function's chqstate_t* parameter. */
 #define ADDRTOSCREEN(addr) z80addrtoscreen(state, addr, 0, 0)
 #define ADDRTOATTRS(addr)  z80addrtoattrs(state, addr, 0, 0)
+
+/* ----------------------------------------------------------------------- */
+
+/**
+ * Destination address and glyph-table lookup result shared by
+ * compute_glyph_blit_params and compute_glyph_blit_params_b ($C8C5, $C94F).
+ */
+typedef struct glyph_blit_geometry
+{
+  int        H;               /* destination screen address high byte (was D) */
+  int        L;               /* destination screen address low byte (was E) */
+  const u8  *HLsrc;            /* glyph bitmap pointer (was HL) */
+  int        B_height_pairs;   /* scanline-pairs remaining to draw (was B) */
+  int        C_width_select;   /* width selector, 1-7 (was C) */
+  int        carry_initial;    /* true: Y was within range, nothing to skip (was Carry) */
+  u8         A_excess;         /* Y clamp excess; valid only when !carry_initial (was A') */
+} glyph_blit_geometry_t;
 
 /* ----------------------------------------------------------------------- */
 
@@ -64,6 +82,46 @@ static void setup_im2_interrupt_table(chqstate_t *state);
 static void frame_interrupt_handler(chqstate_t *state);
 static void start_tune_and_sfx_table(chqstate_t *state, u8 A_tune);
 static void ts_animate_frame(chqstate_t *state);
+static void clear_playfield_buffer(chqstate_t *state);
+static void object_script_step(chqstate_t *state);
+static u8   oss_lookup_speed(u8 C_idx);
+static void oss_apply_x_step(struct title_object *rec);
+static void oss_apply_y_step(struct title_object *rec);
+static void oss_op_velocity(struct title_object *rec);
+static void oss_op_decel_x(struct title_object *rec);
+static void oss_op_decel_y(struct title_object *rec);
+static void oss_op_accel_x_a(struct title_object *rec);
+static void oss_op_accel_x_b(struct title_object *rec);
+static void oss_op_accel_x_c(struct title_object *rec);
+static void compute_glyph_geometry(u8 B_y, u8 C_x, u8 L_row,
+                                    glyph_blit_geometry_t *out);
+static void advance_glyph_scanline(int *H, int *L);
+static void blit_glyph_rows(chqstate_t *state, int H, int L, const u8 *src,
+                            int B_height_pairs, int row_bytes);
+static void blit_width1(chqstate_t *state, int H, int L, const u8 *src,
+                        int B_height_pairs);
+static void blit_width2(chqstate_t *state, int H, int L, const u8 *src,
+                        int B_height_pairs);
+static void blit_width3(chqstate_t *state, int H, int L, const u8 *src,
+                        int B_height_pairs);
+static void blit_width4(chqstate_t *state, int H, int L, const u8 *src,
+                        int B_height_pairs);
+static void blit_width5(chqstate_t *state, int H, int L, const u8 *src,
+                        int B_height_pairs);
+static void blit_width6(chqstate_t *state, int H, int L, const u8 *src,
+                        int B_height_pairs);
+static void blit_width7(chqstate_t *state, int H, int L, const u8 *src,
+                        int B_height_pairs);
+static void blit_masked_sprite_dispatch(chqstate_t *state, int H, int L,
+                                        const u8 *src, int B_height_pairs,
+                                        int C_width_select);
+static void blit_masked_sprite_dispatch_b(chqstate_t *state, int H, int L,
+                                          const u8 *src, int B_height_pairs,
+                                          int C_width_select);
+static void compute_glyph_blit_params(chqstate_t *state, u8 B_y, u8 C_x,
+                                       u8 L_row);
+static void compute_glyph_blit_params_b(chqstate_t *state, u8 B_y, u8 C_x,
+                                         u8 L_row);
 static void sfx_music_service(chqstate_t *state);
 static void clear_screen_bitmap_and_attrs(chqstate_t *state);
 static void clear_and_fill_border_attrs(chqstate_t *state);
@@ -1039,6 +1097,421 @@ static void start_tune_and_sfx_table(chqstate_t *state, u8 A_tune)
 }
 
 /**
+ * $C804: Look up a deceleration/acceleration curve magnitude
+ *
+ * Shared by all five countdown-driven movement modes (oss_op_decel_x/y and
+ * oss_op_accel_x_a/b/c): fetch the curve byte at the given index and halve
+ * it twice.
+ *
+ * \param[in] C_idx Countdown/curve index (was C).
+ *
+ * \return Curve magnitude for this index (was A).
+ *
+ * Conv: the Z80 shuttles the outer object-loop's B (DJNZ counter) through A
+ * around this lookup (LD A,B / LD B,$00 / ... / LD B,A) purely to protect it
+ * from being clobbered by the table-relative ADD HL,BC. With no shared
+ * register file in C the outer loop counter cannot be affected by this call,
+ * so the shuttle has no equivalent and is omitted.
+ *
+ * Conv: the skool's own commentary on this table disagrees with itself --
+ * one paragraph calls it a 256-byte table, another documents it as a
+ * 36-entry table "indexed by a 0-35 countdown value" (matching the 36 bytes
+ * actually transcribed into title_speed_curve). A scripted object whose
+ * decel/accel phase runs long enough (or whose curve counter is seeded from
+ * a bad upstream value) can drive C_idx past 35; on real hardware that would
+ * just read whatever byte follows the table in ROM, but this port's table is
+ * a 36-byte array, so an unclamped index is a genuine out-of-bounds read
+ * (caught by AddressSanitizer). Clamp to the last documented entry rather
+ * than fabricate data for the disputed 256-byte range.
+ */
+static u8 oss_lookup_speed(u8 C_idx)
+{
+  if (C_idx >= sizeof(title_speed_curve))
+    C_idx = sizeof(title_speed_curve) - 1;
+
+  return title_speed_curve[C_idx] >> 2;
+}
+
+/**
+ * $C7A2: Apply the current X step to the X position
+ *
+ * \param[in,out] rec Object record to update (was IX).
+ */
+static void oss_apply_x_step(struct title_object *rec)
+{
+  rec->x += rec->x_step; /* $C7A2-$C7A8 */
+}
+
+/**
+ * $C7AC: Apply the current Y step to the Y position
+ *
+ * \param[in,out] rec Object record to update (was IX).
+ */
+static void oss_apply_y_step(struct title_object *rec)
+{
+  rec->y += rec->y_step; /* $C7AC-$C7B2 */
+}
+
+/**
+ * $C78D: Active mode -- constant velocity
+ *
+ * Position += velocity every frame; no curve lookup, unlike the other five
+ * active modes.
+ *
+ * \param[in,out] rec Object record to update (was IX).
+ */
+static void oss_op_velocity(struct title_object *rec)
+{
+  rec->x += rec->x_step; /* $C78D-$C793 */
+  rec->y += rec->y_step; /* $C796-$C79C */
+}
+
+/**
+ * $C7ED: Active mode -- decelerate X
+ *
+ * X moves at its constant step (oss_apply_x_step); Y moves by a curve-table
+ * magnitude subtracted from Y each frame, looked up from an incrementing
+ * counter that overloads the y_step field for the lifetime of this mode
+ * (the fetch-side operand order that seeds it is in object_script_step's
+ * $CA/$CB case).
+ *
+ * \param[in,out] rec Object record to update (was IX).
+ *
+ * Conv: NEG followed by ADD A,(IX+$08) collapses to a single subtraction.
+ */
+static void oss_op_decel_x(struct title_object *rec)
+{
+  u8 C_idx;   /* curve counter, aliases the y_step field for this mode (was C, from (IX+3)) */
+  u8 A_speed; /* looked-up curve magnitude (was A) */
+
+  oss_apply_x_step(rec); /* $C7ED CALL $C7A2 */
+
+  C_idx   = (u8) rec->y_step;        /* $C7F0 LD C,(IX+3) */
+  A_speed = oss_lookup_speed(C_idx); /* $C7F3 CALL $C804 */
+  rec->y -= A_speed;                 /* $C7F6 NEG / $C7F8-$C7FB ADD A,(IX+8) */
+  rec->y_step = (s8) (C_idx + 1);    /* $C7FE INC (IX+3) */
+}
+
+/**
+ * $C812: Active mode -- decelerate Y
+ *
+ * Mirrors oss_op_decel_x: X still moves at its constant step; Y moves by the
+ * same curve lookup, added (not subtracted) and counted down instead of up.
+ *
+ * \param[in,out] rec Object record to update (was IX).
+ */
+static void oss_op_decel_y(struct title_object *rec)
+{
+  u8 C_idx;   /* curve counter, aliases the y_step field for this mode (was C, from (IX+3)) */
+  u8 A_speed; /* looked-up curve magnitude (was A) */
+
+  oss_apply_x_step(rec); /* $C812 CALL $C7A2 */
+
+  C_idx   = (u8) rec->y_step;        /* $C815 LD C,(IX+3) */
+  A_speed = oss_lookup_speed(C_idx); /* $C818 CALL $C804 */
+  rec->y += A_speed;                 /* $C81B-$C81E ADD A,(IX+8) */
+  rec->y_step = (s8) (C_idx - 1);    /* $C821 DEC (IX+3) */
+}
+
+/**
+ * $C827: Active mode -- accelerate X, variant a (negated speed, counts down)
+ *
+ * Y moves at its constant step (oss_apply_y_step); X moves by a curve-table
+ * magnitude negated and subtracted from X each frame, looked up from a
+ * counter that overloads the x_step field for the lifetime of this mode
+ * (seeded via object_script_step's $CC/$CD/$CE case).
+ *
+ * \param[in,out] rec Object record to update (was IX).
+ *
+ * Conv: NEG followed by ADD A,(IX+$07) collapses to a single subtraction.
+ */
+static void oss_op_accel_x_a(struct title_object *rec)
+{
+  u8 C_idx;   /* curve counter, aliases the x_step field for this mode (was C, from (IX+2)) */
+  u8 A_speed; /* looked-up curve magnitude (was A) */
+
+  oss_apply_y_step(rec); /* $C827 CALL $C7AC */
+
+  C_idx   = (u8) rec->x_step;        /* $C82A LD C,(IX+2) */
+  A_speed = oss_lookup_speed(C_idx); /* $C82D CALL $C804 */
+  rec->x -= A_speed;                 /* $C830 NEG / $C832-$C835 ADD A,(IX+7) */
+  rec->x_step = (s8) (C_idx - 1);    /* $C838 DEC (IX+2) */
+}
+
+/**
+ * $C83E: Active mode -- accelerate X, variant b (positive speed, counts down)
+ *
+ * Same shape as oss_op_accel_x_a, without the negation.
+ *
+ * \param[in,out] rec Object record to update (was IX).
+ */
+static void oss_op_accel_x_b(struct title_object *rec)
+{
+  u8 C_idx;   /* curve counter, aliases the x_step field for this mode (was C, from (IX+2)) */
+  u8 A_speed; /* looked-up curve magnitude (was A) */
+
+  oss_apply_y_step(rec); /* $C83E CALL $C7AC */
+
+  C_idx   = (u8) rec->x_step;        /* $C841 LD C,(IX+2) */
+  A_speed = oss_lookup_speed(C_idx); /* $C844 CALL $C804 */
+  rec->x += A_speed;                 /* $C847-$C84A ADD A,(IX+7) */
+  rec->x_step = (s8) (C_idx - 1);    /* $C84D DEC (IX+2) */
+}
+
+/**
+ * $C853: Active mode -- accelerate X, variant c (positive speed, counts up)
+ *
+ * Same shape as oss_op_accel_x_b, counting the curve index up instead of
+ * down.
+ *
+ * \param[in,out] rec Object record to update (was IX).
+ */
+static void oss_op_accel_x_c(struct title_object *rec)
+{
+  u8 C_idx;   /* curve counter, aliases the x_step field for this mode (was C, from (IX+2)) */
+  u8 A_speed; /* looked-up curve magnitude (was A) */
+
+  oss_apply_y_step(rec); /* $C853 CALL $C7AC */
+
+  C_idx   = (u8) rec->x_step;        /* $C856 LD C,(IX+2) */
+  A_speed = oss_lookup_speed(C_idx); /* $C859 CALL $C804 */
+  rec->x += A_speed;                 /* $C85C-$C85F ADD A,(IX+7) */
+  rec->x_step = (s8) (C_idx + 1);    /* $C862 INC (IX+2) */
+}
+
+/**
+ * $C705: Object animation script interpreter [Conv: HQ]
+ *
+ * Advances all 9 title-screen objects (state->title_objects[9]) by one
+ * frame. Each object record carries a byte-code cursor into
+ * title_scene_data; this is a state machine with two dispatch chains that
+ * share six "active movement mode" opcodes ($C9-$CE):
+ *
+ *  - Active dispatch (oss_object_loop, $C70E): when an object's stored
+ *    opcode is non-zero, runs one frame's worth of movement for whichever
+ *    mode is active, then ticks its wait counter (oss_countdown, $C731),
+ *    going idle (opcode -> 0) once it reaches zero.
+ *  - Fetch dispatch (oss_fetch_opcode/_cont, $C740/$C746): when idle, reads
+ *    script bytes until it hits a mode-setting opcode. Bytes with the sign
+ *    bit clear ($00-$7F) are immediate 2-axis step deltas applied at once
+ *    (oss_op_immediate_step, $C868); opcode $C8 (set row) and $D0 (jump to
+ *    absolute position) act immediately too and keep fetching; a
+ *    mode-setting opcode ($C9-$CF, or any other byte >= $80 as a fallback)
+ *    is stored as the new active opcode, its operand bytes are read, and the
+ *    object is re-dispatched through the active chain immediately -- so a
+ *    freshly fetched mode runs its first frame of movement in the same call
+ *    that fetched it.
+ *
+ * The six active modes are: constant velocity ($C9, oss_op_velocity);
+ * decelerate X/Y ($CA/$CB, oss_op_decel_x/oss_op_decel_y); and three
+ * accelerate-X variants ($CC/$CD/$CE, oss_op_accel_x_a/oss_op_accel_x_c/
+ * oss_op_accel_x_b -- note the fetch dispatch maps CD to variant c and CE to
+ * variant b, not alphabetically). See those functions' own prologues for
+ * how the decelerate/accelerate modes overload the x_step/y_step fields as
+ * curve-lookup counters.
+ *
+ * \param[in,out] state Pointer to game state.
+ *
+ * Conv: opcode $D2 ("end of script") is `POP HL; RET` on real hardware --
+ * with no PUSH anywhere in this call chain, that pops object_script_step's
+ * own return address as data and returns via the frame beneath it, aborting
+ * all the way back into ts_animate_frame's *caller* and skipping the rest of
+ * that frame's work (clear_playfield_buffer, background-object draw,
+ * stamp/sleep). This is the same class of self-looping/stack-unwind escape
+ * hatch already left unmodelled in ts_animate_frame's own prologue (its
+ * $C702 self-jump and the blitters' overrun escape). Since this port already
+ * treats ts_animate_frame as a plain function that always returns to its
+ * caller once per frame, the in-scope equivalent here is to stop processing
+ * any further objects this frame (an early `return`) rather than unwind into
+ * frames this function does not own.
+ *
+ * Conv: oss_op_immediate_step's Y-magnitude extraction rotates A right
+ * through the carry flag 3 times before masking with AND $03; the carry bit
+ * fed into the first rotation (left over from the preceding ADD A,(IX+$07))
+ * lands in a bit position the following AND discards, so the result is
+ * carry-independent and equals `(byte >> 3) & 0x03`. Translated directly as
+ * a shift rather than modelling the rotate/carry chain.
+ *
+ * Conv: the "JP $C70E" at the end of oss_save_cursor (re-dispatching a
+ * freshly fetched mode through the active chain in the same call) is a
+ * genuine back-edge, not sequential code -- modelled here as the `continue`
+ * of the outer per-object loop, distinct from the `continue`s inside the
+ * fetch loop that model oss_fetch_opcode_cont's own re-fetch jumps ($C8,
+ * $D0). See the project's "verify back-edges" pitfall.
+ */
+static void object_script_step(chqstate_t *state)
+{
+  int                  obj;       /* object-loop index, 0-8 (was B, DJNZ counter) */
+  struct title_object *rec;       /* current object record (was IX) */
+  const u8            *HLscript;  /* script byte-code cursor while fetching (was HL) */
+  u8                   A_byte;    /* fetched script byte (was A) */
+  s8                   A_x_delta; /* immediate-step X delta (was A) */
+  s8                   A_y_delta; /* immediate-step Y delta (was A) */
+
+  for (obj = 0; obj < 9; obj++) {
+    rec = &state->title_objects[obj];
+
+    for (;;) { /* models the "JP $C70E" re-entry after fetching a new opcode */
+      if (rec->opcode == 0) {
+        /* $C740-$C743 oss_fetch_opcode: idle -- fetch from the script. */
+        HLscript = rec->script;
+
+        for (;;) { /* $C746 oss_fetch_opcode_cont: fetch/instant-op loop */
+          A_byte = *HLscript++;
+
+          if ((s8) A_byte >= 0) {
+            /* $C868-$C88D oss_op_immediate_step: immediate 2-axis step. */
+            A_x_delta = (A_byte & 0x03) << 1;     /* $C869-$C871 */
+            if (A_byte & 0x04)                     /* $C86B/$C86D BIT 2,C */
+              A_x_delta = -A_x_delta;              /* $C86F NEG */
+            rec->x += A_x_delta;                   /* $C873-$C876 */
+
+            A_y_delta = ((A_byte >> 3) & 0x03) << 1; /* $C87A-$C87D */
+            if (A_byte & 0x20)                        /* $C87F BIT 5,C */
+              A_y_delta = -A_y_delta;                 /* $C883 NEG */
+            rec->y += A_y_delta;                      /* $C885-$C88A */
+
+            continue; /* $C88D JP $C746 */
+          }
+
+          /* Sign bit set: a "real" opcode -- store it as the new active
+           * opcode, then read its operand bytes (if any). */
+          rec->opcode = A_byte; /* $C74C */
+
+          switch (A_byte) {
+            case 0xC8: /* set screen-row byte, 1 operand */
+              rec->row = *HLscript++; /* $C7C2-$C7C4 */
+              continue;               /* $C7C7 JP $C746 */
+
+            case 0xC9: /* set velocity, 3 operand bytes: x,y,wait */
+              rec->x_step = (s8) *HLscript++; /* $C77B-$C77D */
+              rec->y_step = (s8) *HLscript++; /* $C780-$C782 */
+              rec->wait   = *HLscript++;      /* $C785-$C787 */
+              break;                          /* -> save cursor below */
+
+            case 0xCA: /* decelerate X, 3 operand bytes */
+            case 0xCB: /* decelerate Y, same operand layout */
+              /* $C7DC-$C7E8: note the y_step slot is read first here -- it
+               * seeds the deceleration-curve counter, not a real Y step; see
+               * oss_op_decel_x/oss_op_decel_y. */
+              rec->y_step = (s8) *HLscript++;
+              rec->wait   = *HLscript++;
+              rec->x_step = (s8) *HLscript++;
+              break;
+
+            case 0xCC: /* accelerate X variant a */
+            case 0xCD: /* accelerate X variant c */
+            case 0xCE: /* accelerate X variant b */
+              /* $C7CA-$C7D6: the x_step slot seeds the acceleration-curve
+               * counter here, not a real X step; see oss_op_accel_x_*. */
+              rec->x_step = (s8) *HLscript++;
+              rec->wait   = *HLscript++;
+              rec->y_step = (s8) *HLscript++;
+              break;
+
+            case 0xCF: /* "wait N frames", 1 operand byte */
+              rec->wait = *HLscript++; /* $C785-$C787 (oss_read_wait_operand) */
+              break;
+
+            case 0xD0: /* jump to absolute position, 2 operand bytes */
+              rec->x = *HLscript++; /* $C7B6-$C7B8 */
+              rec->y = *HLscript++; /* $C7BB-$C7BD */
+              continue;             /* $C7C0 JR $C746 */
+
+            case 0xD2: /* end of script -- see this function's own Conv note */
+              return;
+
+            default: /* $D1 and anything else: no operand bytes, falls
+                      * straight to oss_save_cursor ($C76C-$C772) */
+              break;
+          }
+
+          /* $C772-$C778 oss_save_cursor: persist the advanced cursor. */
+          rec->script = HLscript;
+          break; /* leave the fetch loop; the outer `continue` below
+                  * re-dispatches this object immediately ("JP $C70E") */
+        }
+
+        continue; /* re-check rec->opcode (now non-zero) at the top */
+      }
+
+      /* $C70E-$C72F oss_object_loop: active-mode dispatch. */
+      switch (rec->opcode) {
+        case 0xC9: oss_op_velocity(rec);  break;
+        case 0xCA: oss_op_decel_x(rec);   break;
+        case 0xCB: oss_op_decel_y(rec);   break;
+        case 0xCC: oss_op_accel_x_a(rec); break;
+        case 0xCD: oss_op_accel_x_c(rec); break;
+        case 0xCE: oss_op_accel_x_b(rec); break;
+        default: break; /* 0xCF ("wait") and any fallback opcode: no
+                         * per-frame movement of its own -- falls straight
+                         * to the countdown below */
+      }
+
+      /* $C731-$C737 oss_countdown: tick the wait counter; go idle (so the
+       * next frame re-fetches) once it reaches 0. */
+      if (--rec->wait == 0)
+        rec->opcode = 0;
+
+      break; /* $C73B oss_next_object: move on to the next object */
+    }
+  }
+}
+
+/**
+ * $CC04: Clear the playfield bitmap
+ *
+ * Zero-fills the bitmap area used by the title-screen object sprites: all
+ * of screen third 2 ($4800-$4FFF, all 8 character rows) and the top 5
+ * character rows of screen third 3 ($5000-$57FF), leaving third 3's bottom
+ * 3 character rows untouched so the fixed overlay text printed once by
+ * title_screen_driver (print_character) is not wiped out every frame. Only
+ * 28 of each scanline's 32 bytes are cleared (screen columns 2-29), leaving
+ * a 2-column margin on each edge. Classic "LD SP,HL; PUSH x N" fast-fill
+ * trick (see the project's known translation pitfall of the same name): SP
+ * is repointed at the bitmap and 14 PUSH DE instructions (DE=0) fill 28
+ * bytes backward from HL, DJNZ-looped 8 times per character row, stepping
+ * through the $x00 third boundary via the usual ADD A,$20 / carry pattern.
+ *
+ * \param[in,out] state Pointer to game state.
+ *
+ * Conv: the PUSH-fill collapses to one memset per scanline; the real stack
+ * save/restore at $CC04/$CC4C-$CC4F has no C equivalent (SP is never
+ * repurposed as a data pointer here) and is omitted.
+ */
+static void clear_playfield_buffer(chqstate_t *state)
+{
+  int H;          /* screen address high byte (was H) */
+  int L;          /* screen address low byte (was L) */
+  int B_scanline; /* scanline countdown within one character row, 8 (was B) */
+
+  H = 0x48; /* $CC08 LD HL,$481E */
+  L = 0x1E;
+
+  do { /* $CC10-$CC29: screen third 2, all 8 character rows */
+    B_scanline = 8; /* $CC0E/$CC10 LD B,C (C=$08) */
+    do {
+      memset(ADDRTOSCREEN((H << 8) | L) - 28, 0, 28); /* $CC11-$CC1F */
+      H++; /* $CC20 INC H */
+    } while (--B_scanline); /* $CC21 DJNZ */
+    H = 0x48; /* $CC23 */
+    L += 0x20; /* $CC25-$CC28 */
+  } while (L <= 0xFF); /* $CC29 JP NC,$CC10 */
+  L &= 0xFF;
+  H = 0x50; /* $CC2C */
+
+  do { /* $CC2E-$CC49: screen third 3, top 5 character rows only */
+    B_scanline = 8; /* $CC2E LD B,C */
+    do {
+      memset(ADDRTOSCREEN((H << 8) | L) - 28, 0, 28); /* $CC2F-$CC3D */
+      H++; /* $CC3E INC H */
+    } while (--B_scanline); /* $CC3F DJNZ */
+    H = 0x50; /* $CC41 */
+    L += 0x20; /* $CC43-$CC46 */
+  } while (L < 0xA0); /* $CC47-$CC49 JP C,$CC2E */
+}
+
+/**
  * $C6C4: Per-frame title-screen animation driver
  *
  * Syncs to the next interrupt, draws the 6 foreground objects ($BB00-$BB2C)
@@ -1053,23 +1526,490 @@ static void start_tune_and_sfx_table(chqstate_t *state, u8 A_tune)
  *
  * \param[in,out] state Pointer to game state.
  *
- * Conv: sprite/logo animation is out of scope for this task (per scope
- * decision). The self-looping structure and its stack-unwind escape hatch
- * are not modelled; this function always draws (stubbed) then returns after
- * exactly one frame, matching how other per-frame functions in this port
- * are called once per iteration from a caller-owned loop. Only the
- * EI/HALT frame-pacing point is translated, via the same stamp/sleep idiom
- * used elsewhere (e.g. drive_attract_demo). The foreground/background
- * blitter loops and the object-script interpreter are stubbed — see $C705,
- * $C8C5, $C94F.
+ * Conv: the self-looping structure and its stack-unwind escape hatch are not
+ * modelled; this function always draws one frame then returns, matching how
+ * other per-frame functions in this port are called once per iteration from
+ * a caller-owned loop (e.g. drive_attract_demo). Only the EI/HALT
+ * frame-pacing point is translated, via the same stamp/sleep idiom used
+ * elsewhere. Continuous animation during the attract-mode wait is driven by
+ * ts_wait_loop calling this function once per iteration — see its own Conv
+ * note for why that caller-owned loop, rather than this function's literal
+ * self-loop, is where repeated invocation lives in the C port.
+ *
+ * Conv: the fg/bg draw loops' EXX pairs ($C6D0/$C6DD, $C6E2, $C6E9/$C6FD)
+ * only protect the loop counter (B) and record-stride (DE) from being
+ * clobbered by the blitter call -- they do not carry any value between main
+ * and shadow sets that survives past the following EXX. This is register
+ * protection around a call, not persistent banking, so it needs no shadow
+ * variables in C: the loop counter is a plain C `for`, and the blitter is
+ * called directly with the fields it needs.
+ *
+ * Conv: added a speccy->draw() call after the bg objects are blitted. The
+ * Z80 has no equivalent -- it draws straight into the real display memory
+ * -- but the SDL port renders into an off-screen buffer that must be
+ * explicitly presented every frame, or the host window only ever shows the
+ * single frame drawn by title_screen_driver before this function starts
+ * looping.
  */
 static void ts_animate_frame(chqstate_t *state)
 {
+  static const zxbox_t  playfield_box = { /* lower two-thirds of screen */
+    0, 0, SCREEN_WIDTH, PLAYFIELD_HEIGHT
+  };
+  int                   obj; /* object index within the fg/bg loop (was B, DJNZ counter) */
+  struct title_object  *rec; /* current object record (was IX) */
+
   state->speccy->stamp(state->speccy);
 
-  /* TODO: object/script animation, out of scope — see $C705, $C8C5, $C94F */
+  for (obj = 0; obj < 6; obj++) { /* $C6C7-$C6E0: 6 foreground objects */
+    rec = &state->title_objects[obj];
+    compute_glyph_blit_params(state, rec->y, rec->x, rec->row); /* $C6DA */
+  }
+
+  object_script_step(state); /* $C6E3 */
+
+  clear_playfield_buffer(state); /* $C6E6 */
+
+  for (obj = 6; obj < 9; obj++) { /* $C6EA-$C700: 3 background objects */
+    rec = &state->title_objects[obj];
+    compute_glyph_blit_params_b(state, rec->y, rec->x, rec->row); /* $C6FA */
+  }
+
+  state->speccy->draw(state->speccy, &playfield_box); /* Conv: added */
 
   state->speccy->sleep(state->speccy, STANDARD_SLEEP);
+}
+
+/**
+ * $C8CD-$C902 / $C957-$C98C: Compute destination address and glyph-table
+ * entry for a title-screen object
+ *
+ * Shared by compute_glyph_blit_params and compute_glyph_blit_params_b, which
+ * are otherwise identical apart from the row-offset walk and dispatch table
+ * they feed. Clamps the object's Y screen position to a maximum of $6F
+ * (rows below that are off the bottom of the drawable window and must be
+ * partially skipped by the caller), builds the destination screen address
+ * from the clamped Y and the X position, and looks up the glyph's row-pair
+ * count/width/bitmap pointer by index (row + ((x >> 1) & 3)) into
+ * title_glyph_table.
+ *
+ * \param[in]  B_y   Object Y screen position (was B).
+ * \param[in]  C_x   Object X screen position (was C).
+ * \param[in]  L_row Object row/height byte, selects which of 4 glyph
+ *                    variants for this animation row (was L).
+ * \param[out] out   Filled with the destination address, glyph pointer, row-
+ *                    pair count, width selector and Y-clamp state.
+ *
+ * Conv: the two "RRA/SCF/RRA/RRA" then "XOR B ; AND mask ; XOR B" sequences
+ * that build D and E are translated literally with the RR/RLC macros from
+ * Z80.h and the replace-bits-under-a-mask idiom, matching the style already
+ * used for the AY register merge in compute_channel_ay_registers.
+ */
+static void compute_glyph_geometry(u8 B_y, u8 C_x, u8 L_row,
+                                    glyph_blit_geometry_t *out)
+{
+  u8  B_clamped;         /* Y, clamped to a maximum of $6F (was B) */
+  u8  A;                 /* working accumulator (was A) */
+  int carry;             /* Z80 carry flag, used by the RR/RLC macros */
+  u8  B_screen_rows;     /* $AF - B_clamped, reused as the mask-merge operand (was B) */
+  u8  D;                 /* destination screen address high byte (was D) */
+  u8  E;                 /* destination screen address low byte (was E) */
+  int glyph_index;       /* index into title_glyph_table (was BC, table offset / 4) */
+  const title_glyph_t *glyph;
+
+  /* $C8C5-$C8CC / $C94F-$C956 */
+  if (B_y < 0x70) {
+    B_clamped           = B_y;
+    out->A_excess       = 0;    /* unused: carry_initial skips the row-offset walk */
+    out->carry_initial  = 1;
+  } else {
+    B_clamped           = 0x6F;
+    out->A_excess       = (u8) (B_y - 0x6F);
+    out->carry_initial  = 0;
+  }
+
+  /* $C8CE-$C8DC / $C958-$C966: D = destination screen address high byte. */
+  B_screen_rows = (u8) (0xAF - B_clamped);
+  A = B_screen_rows;
+  carry = 0; RR(A); /* AND A ; RRA */
+  carry = 1; RR(A); /* SCF   ; RRA */
+  carry = 0; RR(A); /* AND A ; RRA */
+  A ^= B_screen_rows;
+  A &= 0xF8;
+  A ^= B_screen_rows;
+  D = A;
+
+  /* $C8DD-$C8E7 / $C967-$C971: E = destination screen address low byte. */
+  A = C_x;
+  RLC(A); RLC(A); RLC(A);
+  A ^= B_screen_rows;
+  A &= 0xC7;
+  A ^= B_screen_rows;
+  RLC(A); RLC(A);
+  E = A;
+
+  out->H = D;
+  out->L = E;
+
+  /* $C8E8-$C901 / $C972-$C98B: glyph table lookup. The 4-byte table entry
+     (height_pairs, width_bytes, bitmap lo, bitmap hi) is title_glyph_t's
+     layout exactly, so the raw byte reads collapse to direct indexing. */
+  glyph_index = L_row + ((C_x >> 1) & 0x03);
+  assert(glyph_index >= 0 && glyph_index < TITLE_GLYPH_COUNT);
+
+  glyph = &title_glyph_table[glyph_index];
+  out->B_height_pairs = glyph->height_pairs;
+  out->C_width_select = glyph->width_bytes;
+  out->HLsrc          = glyph->bitmap;
+}
+
+/**
+ * $C9F3 (and the 13 further copies at $CA05, $CA40, $CA52, $CA98, $CAAA,
+ * $CAF3, $CB05, $CB57, $CB69, $CBA1, $CBB3, $CBE0, $CBF2): Advance a glyph-
+ * blit screen address to the next scanline
+ *
+ * The caller increments H before calling this; this function applies the
+ * ZX Spectrum screen memory's non-linear "third boundary" correction when a
+ * character row completes (H & 7 == 0 after the increment).
+ *
+ * \param[in,out] H Screen address high byte.
+ * \param[in,out] L Screen address low byte.
+ *
+ * Conv: factored into a shared helper rather than repeating the 14 near-
+ * identical inline copies in the disassembly -- the same "Conv: extracted to
+ * function" treatment next_scr_row got in Main.c. next_scr_row itself is
+ * static to Main.c and not visible here; clear_playfield_buffer above
+ * already established this file's own precedent of modelling this exact
+ * address math locally rather than sharing it across files, so this helper
+ * follows that precedent instead of exposing next_scr_row.
+ */
+static void advance_glyph_scanline(int *H, int *L)
+{
+  if ((*H & 0x07) != 0)
+    return;
+
+  *H -= 0x08;
+  *L += 0x20;
+  if (*L > 0xFF) {
+    *L &= 0xFF;
+    *H += 0x08;
+  }
+}
+
+/**
+ * $C9D5 (and identically-shaped copies at $CA17, $CA64, $CABC, $CB17,
+ * $CB7B, $CBC5): Masked-sprite OR-blit, row_bytes wide
+ *
+ * Draws B_height_pairs row-pairs (2 scanlines each) from src into the
+ * screen bitmap starting at (H,L), OR-ing row_bytes source bytes into each
+ * scanline so the glyph never overwrites bits already set by an overlapping
+ * sprite. Advances the screen address one scanline at a time via
+ * advance_glyph_scanline.
+ *
+ * \param[in,out] state         Pointer to game state.
+ * \param[in]     H             Destination screen address high byte.
+ * \param[in]     L             Destination screen address low byte.
+ * \param[in]     src           Glyph bitmap source pointer.
+ * \param[in]     B_height_pairs Number of row-pairs to draw.
+ * \param[in]     row_bytes     Bytes to OR into each scanline.
+ *
+ * Conv: the Z80 draws each row-pair via "LD SP,HL; POP DE", i.e. two source
+ * bytes at a time (E first, then D) -- see the project's known "LD SP,HL;
+ * POP x N sprite copy" translation pitfall. Since the bytes are written
+ * verbatim with no mask table or flip, this collapses to a plain sequential
+ * `*src++` per byte, matching the pitfall's documented equivalence. The 7
+ * width-specific unrolled routines ($C9D5-$CBC5) share this exact shape
+ * (only row_bytes and the reachable dispatch entry differ), so they are
+ * modelled as one parameterised helper rather than 7 near-duplicate bodies.
+ * Each width routine's own fixed delay loop (e.g. $C9E8-$C9EB, present on
+ * widths 1-5 only) exists purely to pad out real hardware frame timing; the
+ * C port has no such deadline to protect (see compute_glyph_blit_params'
+ * Conv note on $C93C/$C93D), so none of the delay loops are translated.
+ *
+ * Conv: compute_glyph_blit_params only clamps the *top* of the glyph (see
+ * its own Conv note on the $C906-$C916 skip loop); the disassembly has no
+ * symmetric clamp for the bottom, so a fast-moving object (e.g. one driven
+ * by oss_op_velocity) can walk this loop's (H,L) address below screen third
+ * 3 and off the bottom of the physical display. On real hardware that just
+ * pokes stray bytes into attribute memory (or further afield) -- harmless
+ * enough that nobody noticed. This port's screen is a fixed-size struct, not
+ * flat memory, so the equivalent out-of-range write is skipped instead of
+ * performed, rather than asserting or corrupting adjacent struct fields; the
+ * address/source advance below still runs unconditionally so the timing and
+ * any later in-range rows stay correct.
+ */
+static void blit_glyph_rows(chqstate_t *state, int H, int L, const u8 *src,
+                            int B_height_pairs, int row_bytes)
+{
+  u8 *dst;    /* current scanline's destination byte(s) (was HL) */
+  int row;    /* 0 or 1: which scanline of the current row-pair */
+  int i;      /* byte offset within the current scanline */
+  int addr;   /* destination Z80 screen address for this scanline */
+
+  do {
+    for (row = 0; row < 2; row++) {
+      addr = (H << 8) | L;
+      if (addr >= SCREEN_START_ADDRESS &&
+          addr <  SCREEN_START_ADDRESS + SCREEN_BITMAP_LENGTH) {
+        dst = ADDRTOSCREEN(addr);
+        for (i = 0; i < row_bytes; i++)
+          dst[i] |= *src++;
+      } else {
+        src += row_bytes; /* Conv: off-screen scanline, see note above */
+      }
+      H++;
+      advance_glyph_scanline(&H, &L);
+    }
+  } while (--B_height_pairs);
+}
+
+/**
+ * $C9D5: Width-1 masked-sprite OR-blit (1 byte per scanline).
+ */
+static void blit_width1(chqstate_t *state, int H, int L, const u8 *src,
+                        int B_height_pairs)
+{
+  blit_glyph_rows(state, H, L, src, B_height_pairs, 1);
+}
+
+/**
+ * $CA17: Width-2 masked-sprite OR-blit (2 bytes per scanline).
+ */
+static void blit_width2(chqstate_t *state, int H, int L, const u8 *src,
+                        int B_height_pairs)
+{
+  blit_glyph_rows(state, H, L, src, B_height_pairs, 2);
+}
+
+/**
+ * $CA64: Width-3 masked-sprite OR-blit (3 bytes per scanline).
+ */
+static void blit_width3(chqstate_t *state, int H, int L, const u8 *src,
+                        int B_height_pairs)
+{
+  blit_glyph_rows(state, H, L, src, B_height_pairs, 3);
+}
+
+/**
+ * $CABC: Width-4 masked-sprite OR-blit (4 bytes per scanline).
+ */
+static void blit_width4(chqstate_t *state, int H, int L, const u8 *src,
+                        int B_height_pairs)
+{
+  blit_glyph_rows(state, H, L, src, B_height_pairs, 4);
+}
+
+/**
+ * $CB17: Width-5 masked-sprite OR-blit (5 bytes per scanline).
+ */
+static void blit_width5(chqstate_t *state, int H, int L, const u8 *src,
+                        int B_height_pairs)
+{
+  blit_glyph_rows(state, H, L, src, B_height_pairs, 5);
+}
+
+/**
+ * $CB7B: "Width-6" masked-sprite OR-blit
+ *
+ * Conv/bug preserved literally: despite its position in the dispatch chain
+ * (reached when the glyph's width selector is 6 or more), this routine's
+ * instructions are byte-for-byte identical in shape to blit_width2 -- it
+ * draws only 2 bytes per scanline, not 6. The source pointer only advances
+ * 2 bytes per scanline to match. This is verified against the disassembly,
+ * not assumed: every LD (HL),A / INC L pair at $CB7B-$CB99 matches
+ * $CA17-$CA3B exactly. Any glyph whose real width_bytes is 6 or 7 would
+ * therefore be drawn with its rightmost columns missing and its source data
+ * under-consumed -- an original-game quirk, not a translation bug, and is
+ * not "fixed" here.
+ */
+static void blit_width6(chqstate_t *state, int H, int L, const u8 *src,
+                        int B_height_pairs)
+{
+  blit_glyph_rows(state, H, L, src, B_height_pairs, 2);
+}
+
+/**
+ * $CBC5: "Width-7" masked-sprite OR-blit
+ *
+ * Conv/bug preserved literally: only reachable via
+ * blit_masked_sprite_dispatch_b's default case. Byte-for-byte identical in
+ * shape to blit_width1 -- draws only 1 byte per scanline despite its
+ * position at the end of the width-7 dispatch chain. See blit_width6's note
+ * above; the same quirk applies here one width class down.
+ */
+static void blit_width7(chqstate_t *state, int H, int L, const u8 *src,
+                        int B_height_pairs)
+{
+  blit_glyph_rows(state, H, L, src, B_height_pairs, 1);
+}
+
+/**
+ * $C917: Masked-sprite blit dispatch (foreground objects)
+ *
+ * Selects one of the 7 width-specific OR-blit routines by C_width_select,
+ * decremented against 1..5 with an explicit test; anything else (6 or more)
+ * falls through to blit_width6 -- blit_width7 is unreachable from this
+ * dispatcher (see its own Conv note).
+ *
+ * \param[in,out] state          Pointer to game state.
+ * \param[in]     H              Destination screen address high byte.
+ * \param[in]     L              Destination screen address low byte.
+ * \param[in]     src            Glyph bitmap source pointer.
+ * \param[in]     B_height_pairs Number of row-pairs to draw.
+ * \param[in]     C_width_select Width selector, 1-7.
+ */
+static void blit_masked_sprite_dispatch(chqstate_t *state, int H, int L,
+                                        const u8 *src, int B_height_pairs,
+                                        int C_width_select)
+{
+  switch (C_width_select) {
+  case 1:  blit_width1(state, H, L, src, B_height_pairs); break;
+  case 2:  blit_width2(state, H, L, src, B_height_pairs); break;
+  case 3:  blit_width3(state, H, L, src, B_height_pairs); break;
+  case 4:  blit_width4(state, H, L, src, B_height_pairs); break;
+  case 5:  blit_width5(state, H, L, src, B_height_pairs); break;
+  default: blit_width6(state, H, L, src, B_height_pairs); break;
+  }
+}
+
+/**
+ * $C9AF: Masked-sprite blit dispatch (background objects)
+ *
+ * Structurally identical to blit_masked_sprite_dispatch but tests widths
+ * 1..6 explicitly, so blit_width7 (unreachable from the foreground
+ * dispatcher above) is reached here as the default case.
+ *
+ * \param[in,out] state          Pointer to game state.
+ * \param[in]     H              Destination screen address high byte.
+ * \param[in]     L              Destination screen address low byte.
+ * \param[in]     src            Glyph bitmap source pointer.
+ * \param[in]     B_height_pairs Number of row-pairs to draw.
+ * \param[in]     C_width_select Width selector, 1-7.
+ */
+static void blit_masked_sprite_dispatch_b(chqstate_t *state, int H, int L,
+                                          const u8 *src, int B_height_pairs,
+                                          int C_width_select)
+{
+  switch (C_width_select) {
+  case 1:  blit_width1(state, H, L, src, B_height_pairs); break;
+  case 2:  blit_width2(state, H, L, src, B_height_pairs); break;
+  case 3:  blit_width3(state, H, L, src, B_height_pairs); break;
+  case 4:  blit_width4(state, H, L, src, B_height_pairs); break;
+  case 5:  blit_width5(state, H, L, src, B_height_pairs); break;
+  case 6:  blit_width6(state, H, L, src, B_height_pairs); break;
+  default: blit_width7(state, H, L, src, B_height_pairs); break;
+  }
+}
+
+/**
+ * $C8C5: Draw a foreground title-screen object's glyph [Conv: HQ]
+ *
+ * Computes the destination address and glyph-table entry via
+ * compute_glyph_geometry, then, if the object's Y position was clamped
+ * (partially off the bottom of the drawable window), walks the source
+ * pointer forward one row-pair's worth of bytes at a time until the clamp
+ * excess is consumed, decrementing the row-pair count in step. If the
+ * row-pair count reaches zero first, the object is entirely off-screen and
+ * nothing is drawn. Otherwise dispatches to the width-specific OR-blit
+ * routine.
+ *
+ * \param[in,out] state Pointer to game state.
+ * \param[in]     B_y   Object Y screen position (was B).
+ * \param[in]     C_x   Object X screen position (was C).
+ * \param[in]     L_row Object row/height byte (was L).
+ *
+ * Conv: $C93D onwards, the Z80 saves the real SP, repoints SP at the glyph
+ * source so the blit routines can POP bytes from it, then restores the real
+ * SP before returning (or via blit_abort_restore_sp on early abort). This
+ * whole mechanism is a way of getting fast sequential byte reads out of the
+ * Z80's POP instruction; it has no bearing on control flow -- every path
+ * still returns cleanly to this function's caller, exactly like an ordinary
+ * nested C call. clear_playfield_buffer above established the same
+ * conclusion for its own "LD SP,HL; PUSH x N" fast-fill trick. Accordingly
+ * the real-SP save/restore is omitted entirely; blit_glyph_rows above reads
+ * the source with plain sequential `*src++`, and both dispatchers return
+ * normally with no simulated stack juggling. cgb_delay_tail's fixed delay
+ * loop is likewise a hardware frame-timing pad with no C equivalent (there
+ * is no frame deadline to protect) and is not translated.
+ *
+ * Conv: the row-offset skip loop ($C906-$C916) is a post-test loop that
+ * decrements the row-pair count first and only tests the skip count
+ * afterwards. When the Y clamp excess is exactly 1 (Y = $70 or $71), excess
+ * >> 1 is 0, and the u8 skip counter wraps from 0 to 255 on its first
+ * decrement, effectively running the skip loop until the row-pair count
+ * itself reaches zero -- silently drawing nothing for those two Y values.
+ * This is a latent quirk of the original code (compute_glyph_blit_params_b
+ * below guards against it explicitly), not a translation bug, and is
+ * preserved via A_skip_pairs' u8 wraparound rather than "fixed".
+ */
+static void compute_glyph_blit_params(chqstate_t *state, u8 B_y, u8 C_x,
+                                       u8 L_row)
+{
+  glyph_blit_geometry_t g;
+  u8                    A_skip_pairs; /* row-pairs of source to skip (was A) */
+
+  compute_glyph_geometry(B_y, C_x, L_row, &g);
+
+  if (!g.carry_initial) {
+    /* $C906-$C916 */
+    A_skip_pairs = (u8) (g.A_excess >> 1);
+    do {
+      g.HLsrc += g.C_width_select * 2;
+      if (--g.B_height_pairs == 0)
+        return; /* entirely off-screen -- draw nothing */
+    } while (--A_skip_pairs != 0); /* u8 wrap intentional, see Conv note above */
+  }
+
+  blit_masked_sprite_dispatch(state, g.H, g.L, g.HLsrc, g.B_height_pairs,
+                              g.C_width_select);
+}
+
+/**
+ * $C94F: Draw a background title-screen object's glyph [Conv: HQ]
+ *
+ * Structurally identical to compute_glyph_blit_params above (see its Conv
+ * notes for the SP-as-pointer and frame-timing decisions, which apply here
+ * unchanged), but feeds blit_masked_sprite_dispatch_b, and its row-offset
+ * skip loop computes the per-row-pair source stride differently for the
+ * "width-6"/"width-7" quirk routines (4 bytes for width 6, 2 bytes for
+ * width 7, matching blit_width6/blit_width7's real 2-byte/1-byte-per-row
+ * consumption) and explicitly guards the skip count against the u8-wrap
+ * quirk noted in compute_glyph_blit_params (forcing a minimum of 1).
+ *
+ * \param[in,out] state Pointer to game state.
+ * \param[in]     B_y   Object Y screen position (was B).
+ * \param[in]     C_x   Object X screen position (was C).
+ * \param[in]     L_row Object row/height byte (was L).
+ */
+static void compute_glyph_blit_params_b(chqstate_t *state, u8 B_y, u8 C_x,
+                                         u8 L_row)
+{
+  glyph_blit_geometry_t g;
+  u8                    A_skip_pairs; /* row-pairs of source to skip (was A) */
+  u8                    E_stride;     /* per-row-pair source advance, bytes (was E) */
+
+  compute_glyph_geometry(B_y, C_x, L_row, &g);
+
+  if (!g.carry_initial) {
+    /* $C990-$C9AE */
+    if (g.C_width_select < 6)
+      E_stride = (u8) (g.C_width_select << 1);
+    else
+      E_stride = (u8) ((8 - g.C_width_select) << 1); /* width 6 -> 4, width 7 -> 2 */
+
+    A_skip_pairs = (u8) (g.A_excess >> 1);
+    if (A_skip_pairs == 0)
+      A_skip_pairs = 1; /* $C9A3-$C9A5: guards the wrap quirk noted above */
+
+    do {
+      g.HLsrc += E_stride;
+      if (--g.B_height_pairs == 0)
+        return; /* entirely off-screen -- draw nothing */
+    } while (--A_skip_pairs != 0);
+  }
+
+  blit_masked_sprite_dispatch_b(state, g.H, g.L, g.HLsrc, g.B_height_pairs,
+                                g.C_width_select);
 }
 
 /**
@@ -1205,18 +2145,71 @@ static void title_screen_driver(chqstate_t *state)
   static const zxbox_t playfield_box = { /* lower two-thirds of screen */
     0, 0, SCREEN_WIDTH, PLAYFIELD_HEIGHT
   };
+  u8         A_scene_bits;   /* rotating scene-selector pseudo-random value (was A) */
+  int        carry;          /* required by the RLC/RR macros (carry) */
+  int        bit;            /* scene-table bit-test index, 0-3 (Conv: rolled RRA/JR C chain) */
+  int        scene_idx;      /* chosen scene table index, 0-4 */
+  const u8  *HL_scene_table; /* chosen scene table's object-record base (was HL) */
+  int        obj;            /* object-record loop index, 0-8 (was B) */
+  u16        DEscript_addr;  /* script pointer, reassembled from 2 Z80-address bytes (was DE) */
 
   for (;;) {
     clear_and_fill_border_attrs(state); /* $C59E CALL $C8A9 */
 
-    /* $C5A2-$C5C7: pick one of 5 scene tables via the self-modified
-     * rotating selector at $C5A2, and push the chosen table pointer.
-     * $C5C7-$C5CE: draw the copyright/credits text block. $C5CE-$C602: zero
-     * the $BB00-$BB4F object array and copy the 5-byte-per-object scene
-     * table into it, reordering fields. Conv: out of scope -- see
-     * prologue. */
-    /* TODO: scene-table pick and object-array population ($C5A2-$C602) --
-     * needs the scene tables and the animation script interpreter. */
+    /* $C5A1-$C5A9: read the persisted scene selector, rotate it left,
+     * mask to 5 bits, and force it to 1 if that leaves zero -- then persist
+     * the new value for the next restart. */
+    A_scene_bits = state->title_scene_selector; /* $C5A1 LD A,$00 (SM) */
+    RLC(A_scene_bits); /* $C5A3 RLCA */
+    A_scene_bits &= 0x1F; /* $C5A4 AND $1F */
+    if (!A_scene_bits) /* $C5A6 JR NZ,$C5A9 */
+      A_scene_bits++; /* $C5A8 INC A */
+    state->title_scene_selector = A_scene_bits; /* $C5A9 LD ($C5A2),A */
+
+    /* $C5AC-$C5C7: pick one of 5 scene tables by testing successive bits of
+     * A via RRA; the first bit found set selects the table, defaulting to
+     * the 5th if none of the low 4 bits are set.
+     * Conv: the four unrolled "LD HL,addr / RRA / JR C" checks collapse to a
+     * loop over the same 4 bit tests; behaviourally identical. */
+    scene_idx = 4;
+    for (bit = 0; bit < 4; bit++) {
+      RR(A_scene_bits); /* $C5AF/$C5B5/$C5BB/$C5C1 RRA */
+      if (carry) {
+        scene_idx = bit;
+        break;
+      }
+    }
+    HL_scene_table = &title_scene_data[title_scene_table_offset[scene_idx]];
+
+    print_string(state, title_screen_credits_text); /* $C5C8-$C5CB: draw the
+                                                       * copyright/credits
+                                                       * text block ($CC50). */
+
+    /* $C5CE-$C602: zero the $BB00-$BB4F object array, then copy the chosen
+     * scene's 9 5-byte object records into it, reordering each record's
+     * bytes [x, y, row, script_lo, script_hi] into the object fields
+     * x/y/row/script (confirmed against object_script_step's own (IX+n)
+     * accesses at $C740-$C7AC, not the (misleading) inline comment at
+     * $C5DB-$C5E3, which names the wrong offsets for the script pointer). */
+    for (obj = 0; obj < 9; obj++) {
+      state->title_objects[obj].opcode = 0; /* $C5CE-$C5D9 zero-fill */
+      state->title_objects[obj].wait   = 0;
+      state->title_objects[obj].x_step = 0;
+      state->title_objects[obj].y_step = 0;
+
+      state->title_objects[obj].x = HL_scene_table[0]; /* $C5E5-$C5E7 */
+      state->title_objects[obj].y = HL_scene_table[1]; /* $C5EA-$C5EC */
+      state->title_objects[obj].row = HL_scene_table[2]; /* $C5EF-$C5F1 */
+
+      DEscript_addr = (u16) (HL_scene_table[3] | (HL_scene_table[4] << 8)); /* $C5F4-$C5FB */
+      state->title_objects[obj].script =
+        &title_scene_data[DEscript_addr - TITLE_SCENE_DATA_BASE];
+
+      HL_scene_table += 5; /* the 5 INC HL's in the $C5E5-$C5FB read loop;
+                             * the Z80's own $C5FE ADD IX,DE (DE=$0009)
+                             * instead advances the *destination* record
+                             * pointer, modelled here by the obj loop index. */
+    }
 
     setup_im2_interrupt_table(state); /* $C602 CALL $F7AA */
 
@@ -1270,6 +2263,19 @@ static void title_screen_driver(chqstate_t *state)
  * per-frame loop in this file (attract_mode_128k, drive_attract_demo,
  * run_pregame_screen_loop).
  *
+ * Conv: real hardware drives continuous scene animation from ts_animate_frame
+ * ($C6C4) itself -- it never returns under normal operation (see its own
+ * prologue). Since the established Conv already treats ts_animate_frame as a
+ * single-frame-per-call function (matching its one call site at $C605, which
+ * only ever draws frame 1), this loop is the actual caller-owned per-frame
+ * loop that must invoke it repeatedly for the scene to animate while waiting
+ * for input -- the same shape as drive_attract_demo calling its own per-frame
+ * worker once per iteration. ts_animate_frame(state) therefore replaces this
+ * loop's own stamp() call below (it already does its own stamp()/sleep(),
+ * sandwiching the frame's draw/script-step work), and the two "balance this
+ * iteration's stamp()" sleep() calls before `continue` are removed --
+ * they are already balanced by ts_animate_frame's internal sleep().
+ *
  * Conv: DI/EI have no C equivalent (SDL owns interrupt delivery, matching
  * setup_im2_interrupt_table) and are omitted throughout.
  *
@@ -1303,7 +2309,8 @@ static u8 ts_wait_loop(chqstate_t *state)
     if (state->host_quit)
       longjmp(state->host_quit_jmp, 1);
 
-    state->speccy->stamp(state->speccy);
+    ts_animate_frame(state); /* Conv: drives continuous scene animation from
+                               * this caller-owned loop -- see prologue. */
 
     sfx_music_service(state); /* $C61E CALL $F82F */
 
@@ -1377,9 +2384,8 @@ static u8 ts_wait_loop(chqstate_t *state)
      * "any key" check below too, not just this one. */
     A_test_mode = state->test_mode; /* $C64F LD A,($8000) */
     if (!A_test_mode) {
-      state->speccy->sleep(state->speccy, STANDARD_SLEEP); /* Conv: balance
-        * this iteration's stamp() (see prologue) before restarting the loop */
-      continue;
+      continue; /* Conv: no balancing sleep() needed -- already closed out by
+                 * ts_animate_frame's own sleep() (see prologue) */
     }
 
     /* was IN+CPL */
@@ -1408,9 +2414,7 @@ static u8 ts_wait_loop(chqstate_t *state)
     /* was IN+CPL */
     A_anykey = ~state->speccy->in(state->speccy, port_KEYBOARD_12345);
     if ((A_anykey & 0x1F) == 0) { /* $C686 AND $1F; $C688 JP Z,$C61E */
-      state->speccy->sleep(state->speccy, STANDARD_SLEEP); /* Conv: balance
-        * this iteration's stamp() (see prologue) before restarting the loop */
-      continue;
+      continue; /* Conv: no balancing sleep() needed -- see prologue */
     }
 
     RRC(A_anykey); /* $C68B RRCA */

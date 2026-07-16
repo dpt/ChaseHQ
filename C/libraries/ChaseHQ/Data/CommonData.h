@@ -352,6 +352,7 @@ const u8 messages_redefine_keys[138];
 const u8 messages_test_mode[151];
 const u8 messages_cannot_be_remodified[127];
 
+const u8 title_screen_credits_text[56];
 const u8 title_screen_overlay_text[47];
 
 const u8 options_menu_text[366];
