@@ -28,7 +28,13 @@
 
 /* ----------------------------------------------------------------------- */
 
-typedef void (dr_callback_t)(chqstate_t *state, int Bfill_pattern, int Chorizon, int DEscreen_ptr, int Lrow, u8 **IXlanesptr, const u8 **IYheightptr);
+typedef void (dr_callback_t)(chqstate_t *state,
+                             int Bfill_pattern,
+                             int Chorizon,
+                             int DEscreen_ptr,
+                             int Lrow,
+                             u8 **IXlanesptr,
+                             const u8 **IYheightptr);
 
 /* Returns the back-buffer address advanced past the rows just drawn: on the
  * Z80 this value survives in the shadow HL' register across the repeat
@@ -44,22 +50,22 @@ typedef u8 *(plot_sprite_cb_t)(chqstate_t *state,
 /// object like the perp or NPC cars, or a fixed item like a barrier or a
 /// tumbleweed.
 struct hazard {
-  u8                used;              // HAZARD_USED (0xFF) or HAZARD_UNUSED (0x00)
-  u8                distance;          // approach counter (21..0); also reused as road-col low byte during draw
-  u8                horz_pos;          // horizontal screen position
-  s8                horz_clip;         // high byte of computed road X: 0=on screen, <0=clip left, >0=clip right
-  u8                dist_frac;         // fixed-point fractional distance; decremented by speed, carry advances distance
-  u8                horz_pos_on_road;  // lane/road position (0..255 across road width)
-  u8                persp_col;         // perspective-scaled column: (dist_frac * scale) >> 8; used for sprite column and road-edge row lookup
-  s8                hit_timer;         // hit sequence timer: 0=clear, >0=vehicle hit in progress, <0=perp hit cooldown ($FC=-4, counts to 0)
+  u8                used;                        // HAZARD_USED (0xFF) or HAZARD_UNUSED (0x00)
+  u8                distance;                    // approach counter (21..0); also reused as road-col low byte during draw
+  u8                horz_pos;                    // horizontal screen position
+  s8                horz_clip;                   // high byte of computed road X: 0=on screen, <0=clip left, >0=clip right
+  u8                dist_frac;                   // fixed-point fractional distance; decremented by speed, carry advances distance
+  u8                horz_pos_on_road;            // lane/road position (0..255 across road width)
+  u8                persp_col;                   // perspective-scaled column: (dist_frac * scale) >> 8; used for sprite column and road-edge row lookup
+  s8                hit_timer;                   // hit sequence timer: 0=clear, >0=vehicle hit in progress, <0=perp hit cooldown ($FC=-4, counts to 0)
   hittable_t        hittable;
   hazard_handler_t *hit_handler;
-  u16               speed;             // fixed-point approach rate: high byte = whole distance units/frame added to distance counter; low byte = fractional units/frame subtracted from dist_frac (carry advances distance)
-  u8                hazard_flags;      // 0x80=spawned vehicle; 0xFF=perp car; 1/2=post-hit damage state; bit 7 = is vehicle
-  u8                hit_wobble;        // horizontal wobble offset from hit animation table (table_acdb), subtracted from persp_col
+  u16               speed;                       // fixed-point approach rate: high byte = whole distance units/frame added to distance counter; low byte = fractional units/frame subtracted from dist_frac (carry advances distance)
+  u8                hazard_flags;                // 0x80=spawned vehicle; 0xFF=perp car; 1/2=post-hit damage state; bit 7 = is vehicle
+  u8                hit_wobble;                  // horizontal wobble offset from hit animation table (table_acdb), subtracted from persp_col
   u8                hazard_lane_OR_perp_dist_hi; // perp: high byte of distance; hazard: current lane index
-  u8                current_lane;      // target lane (counts down to 0 during lane-change animation)
-  u8                inverted;          // sprite plot mode: 0=normal, 1=inverted
+  u8                current_lane;                // target lane (counts down to 0 during lane-change animation)
+  u8                inverted;                    // sprite plot mode: 0=normal, 1=inverted
 };
 
 struct session {
@@ -101,36 +107,36 @@ struct session {
 /// exhaustively) -- most likely unused padding in the 37-byte record. Do not
 /// invent their layout.
 struct title_tune_channel {
-  u8         status;                // +$00 note/status; bit0 toggled every call, bit1 set by pcmd_set_status_bit1, bit2 slide active, bit3 slide direction/upkeep gate, bit5 envelope active, bits 3&7 set by pcmd_set_status_bits_3_7
-  const u8  *pattern_ptr;           // +$01/+$02 current read position in the pattern-command byte stream; initialised by start_tune from the first 2 bytes of the pattern-data block that pattern_data_ptr points to (an "envelope-pointer header")
-  const u8  *pattern_data_ptr;      // +$03/+$04 raw pattern-data block pointer for this channel, read from the tune-select table by start_tune; never read elsewhere in bank 3
-  const u8  *pattern_base;          // Conv: start of the extracted pattern_ptr array; not a Z80 field. Lets advance_channel_pattern wrap pattern_ptr back to the start once it runs off the end of the finite extracted prefix, since the real Z80 data (and its true loop point) is not fully transcribed into C
-  u16        pattern_len;           // Conv: byte length of the array pattern_base points to; paired with pattern_base for the same reason
-  u8         speed_divider;         // +$05 initial speed/divider value, reset to 2 by start_tune; never read elsewhere in bank 3 (purpose beyond initialisation not established)
-  u8         counter;               // +$06 counter, reset to 0 by start_tune; never read elsewhere in bank 3 (purpose beyond initialisation not established)
-  u16        slide_accum;           // +$07/+$08 accumulated portamento/slide value
-  const u8  *pitch_offset_default;  // +$09/+$0A default/loop-start pitch-offset sequence pointer
-  const u8  *pitch_offset_cur;      // +$0B/+$0C current pitch-offset sequence pointer
-  s8         slide_step;            // +$0D signed per-tick portamento step
-  u8         slide_countdown;       // +$0E portamento reload countdown
-  u8         envelope_speed;        // +$0F envelope-step reload value
-  u8         row_wait;              // +$10 per-row wait countdown; also doubles as the channel enable flag (start_tune sets it to 1)
-  u8         row_wait_reload;       // +$11 reload value for row_wait, set by the row-duration pattern command
-  u8         note_index;            // +$12 current note index (post-transpose)
-  u8         volume;                // +$13 volume/envelope amplitude; returned to caller
+  u8         status;                 // +$00 note/status; bit0 toggled every call, bit1 set by pcmd_set_status_bit1, bit2 slide active, bit3 slide direction/upkeep gate, bit5 envelope active, bits 3&7 set by pcmd_set_status_bits_3_7
+  const u8  *pattern_ptr;            // +$01/+$02 current read position in the pattern-command byte stream; initialised by start_tune from the first 2 bytes of the pattern-data block that pattern_data_ptr points to (an "envelope-pointer header")
+  const u8  *pattern_data_ptr;       // +$03/+$04 raw pattern-data block pointer for this channel, read from the tune-select table by start_tune; never read elsewhere in bank 3
+  const u8  *pattern_base;           // Conv: start of the extracted pattern_ptr array; not a Z80 field. Lets advance_channel_pattern wrap pattern_ptr back to the start once it runs off the end of the finite extracted prefix, since the real Z80 data (and its true loop point) is not fully transcribed into C
+  u16        pattern_len;            // Conv: byte length of the array pattern_base points to; paired with pattern_base for the same reason
+  u8         speed_divider;          // +$05 initial speed/divider value, reset to 2 by start_tune; never read elsewhere in bank 3 (purpose beyond initialisation not established)
+  u8         counter;                // +$06 counter, reset to 0 by start_tune; never read elsewhere in bank 3 (purpose beyond initialisation not established)
+  u16        slide_accum;            // +$07/+$08 accumulated portamento/slide value
+  const u8  *pitch_offset_default;   // +$09/+$0A default/loop-start pitch-offset sequence pointer
+  const u8  *pitch_offset_cur;       // +$0B/+$0C current pitch-offset sequence pointer
+  s8         slide_step;             // +$0D signed per-tick portamento step
+  u8         slide_countdown;        // +$0E portamento reload countdown
+  u8         envelope_speed;         // +$0F envelope-step reload value
+  u8         row_wait;               // +$10 per-row wait countdown; also doubles as the channel enable flag (start_tune sets it to 1)
+  u8         row_wait_reload;        // +$11 reload value for row_wait, set by the row-duration pattern command
+  u8         note_index;             // +$12 current note index (post-transpose)
+  u8         volume;                 // +$13 volume/envelope amplitude; returned to caller
   const u8  *envelope_shape_default; // +$14/$15 default/base envelope-shape table pointer, reloaded into envelope_shape_ptr on every note
-  const u8  *envelope_shape_ptr;    // +$16/+$17 envelope shape table pointer
-  u8         envelope_amplitude;    // +$18 current envelope amplitude
-  u8         envelope_step_counter; // +$19 envelope-step counter; 0 = due for reload
-  u8         vibrato_depth;         // +$1A vibrato depth * 2
-  u8         vibrato_increment;     // +$1B vibrato per-tick increment
-  u8         vibrato_phase;         // +$1C vibrato triangle-wave phase counter
-  u8         flags;                 // +$1D bit5 vibrato direction, bit6 vibrato enable, bit7 vibrato update gate
-  u8         slide_update_flag;     // +$1E bit0 gates whether a new note is echoed to title_music.shared_note_value; set/cleared by the mixer-bit pattern commands
-  u8         mute_pending;          // +$1F bit7 = one-shot mute-transition gate
-  u8         transpose;             // +$20 added to each raw note value read from the pattern stream before storing to note_index
-  u8         misc_playback_state;   // +$21 write-only; reset to 0 alongside transpose by start_tune ("reset misc playback state for this channel"); never read elsewhere in bank 3; purpose not established
-  u8         mixer_mask;            // +$24 mask applied when merging into the shared mixer cache
+  const u8  *envelope_shape_ptr;     // +$16/+$17 envelope shape table pointer
+  u8         envelope_amplitude;     // +$18 current envelope amplitude
+  u8         envelope_step_counter;  // +$19 envelope-step counter; 0 = due for reload
+  u8         vibrato_depth;          // +$1A vibrato depth * 2
+  u8         vibrato_increment;      // +$1B vibrato per-tick increment
+  u8         vibrato_phase;          // +$1C vibrato triangle-wave phase counter
+  u8         flags;                  // +$1D bit5 vibrato direction, bit6 vibrato enable, bit7 vibrato update gate
+  u8         slide_update_flag;      // +$1E bit0 gates whether a new note is echoed to title_music.shared_note_value; set/cleared by the mixer-bit pattern commands
+  u8         mute_pending;           // +$1F bit7 = one-shot mute-transition gate
+  u8         transpose;              // +$20 added to each raw note value read from the pattern stream before storing to note_index
+  u8         misc_playback_state;    // +$21 write-only; reset to 0 alongside transpose by start_tune ("reset misc playback state for this channel"); never read elsewhere in bank 3; purpose not established
+  u8         mixer_mask;             // +$24 mask applied when merging into the shared mixer cache
 };
 
 /// One 9-byte animated-object record used by the 128K bank-3 title screen
@@ -138,14 +144,14 @@ struct title_tune_channel {
 /// title_screen_driver, drawn each frame by ts_animate_frame, and advanced
 /// by object_script_step ($C705).
 struct title_object {
-  u8         opcode;  // +$00 active movement-mode opcode, or 0 (idle: fetch next script opcode)
-  u8         wait;    // +$01 "wait N frames" countdown, also reused as the decel/accel countdown
-  s8         x_step;  // +$02 X velocity/step
-  s8         y_step;  // +$03 Y velocity/step
-  const u8  *script;  // +$04/+$05 script byte-code cursor
-  u8         row;     // +$06 screen row/height byte consumed by the blitters
-  u8         x;       // +$07 current X screen position
-  u8         y;       // +$08 current Y screen position
+  u8        opcode; // +$00 active movement-mode opcode, or 0 (idle: fetch next script opcode)
+  u8        wait;   // +$01 "wait N frames" countdown, also reused as the decel/accel countdown
+  s8        x_step; // +$02 X velocity/step
+  s8        y_step; // +$03 Y velocity/step
+  const u8 *script; // +$04/+$05 script byte-code cursor
+  u8        row;    // +$06 screen row/height byte consumed by the blitters
+  u8        x;      // +$07 current X screen position
+  u8        y;      // +$08 current Y screen position
 };
 
 /* ----------------------------------------------------------------------- */
@@ -289,11 +295,11 @@ struct chqstate {
   // $941D (SM) in draw_object_common
   plot_sprite_cb_t *doc_plot_fn_2;
   // $945F (SM) in draw_object_common
-  u8       doc_mask_rows_main;
+  u8        doc_mask_rows_main;
   // $946C (SM) in draw_object_common
   const u8 *doc_mask_bitmap_ptr; // bitmap data ptr
   // $946F (SM) in draw_object_common
-  u8       doc_mask_rows_2nd;
+  u8        doc_mask_rows_2nd;
 
   // $9618
   u8        rng_seed[3];
@@ -912,4 +918,3 @@ struct chqstate {
 };
 
 #endif /* CHASEHQ_STATE_H */
-

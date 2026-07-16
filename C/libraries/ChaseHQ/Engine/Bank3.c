@@ -169,8 +169,8 @@ static void boot_and_run_sound_loop(chqstate_t *state);
  *    falls into acp_reset_row_counter: reload the wait countdown, store the
  *    advanced pattern pointer, and normalise a pending one-shot mute request.
  *
- * \param[in,out] state      Pointer to game state.
  * \param[in,out] IX_channel Pointer to this channel's tracker record. (was IX)
+ * \param[in,out] DE_pattern ...
  *
  * Conv: $EE96 dispatch_pattern_command reaches the fixed-length handlers at
  * $ED36-$EDD1 via a computed jump through a table at $EC9D that stores a
@@ -209,13 +209,13 @@ static void boot_and_run_sound_loop(chqstate_t *state);
  * true loop point was not transcribed.
  */
 static u8 acp_read_byte(title_tune_channel_t *IX_channel,
-                         const u8 **DE_pattern)
+                        const u8            **DE_pattern)
 {
   u8 A_byte; /* byte read before advancing the cursor (was A) */
 
   A_byte = *(*DE_pattern)++;
-  if (*DE_pattern >= IX_channel->pattern_base + IX_channel->pattern_len)
-    *DE_pattern = IX_channel->pattern_base; /* Conv: wrap to extracted prefix start */
+  if (*DE_pattern >= &IX_channel->pattern_base[IX_channel->pattern_len])
+    *DE_pattern = &IX_channel->pattern_base[0]; /* Conv: wrap to extracted prefix start */
   return A_byte;
 }
 
@@ -271,63 +271,70 @@ static const u8 title_envelope_shape_13[] = { 0x80 };
 static const u8 title_envelope_shape_14[] = { 0x80 };
 static const u8 title_envelope_shape_15[] = { 0x80 };
 
-static const struct { const u8 *base; u16 len; } pitch_offset_table[24] = {
-  { title_pitch_offset_seq_00, sizeof(title_pitch_offset_seq_00) },
-  { title_pitch_offset_seq_01, sizeof(title_pitch_offset_seq_01) },
-  { title_pitch_offset_seq_02, sizeof(title_pitch_offset_seq_02) },
-  { title_pitch_offset_seq_03, sizeof(title_pitch_offset_seq_03) },
-  { title_pitch_offset_seq_04, sizeof(title_pitch_offset_seq_04) },
-  { title_pitch_offset_seq_05, sizeof(title_pitch_offset_seq_05) },
-  { title_pitch_offset_seq_06, sizeof(title_pitch_offset_seq_06) },
-  { title_pitch_offset_seq_07, sizeof(title_pitch_offset_seq_07) },
-  { title_pitch_offset_seq_08, sizeof(title_pitch_offset_seq_08) },
-  { title_pitch_offset_seq_09, sizeof(title_pitch_offset_seq_09) },
-  { title_pitch_offset_seq_10, sizeof(title_pitch_offset_seq_10) },
-  { title_pitch_offset_seq_11, sizeof(title_pitch_offset_seq_11) },
-  { title_pitch_offset_seq_12, sizeof(title_pitch_offset_seq_12) },
-  { title_pitch_offset_seq_13, sizeof(title_pitch_offset_seq_13) },
-  { title_pitch_offset_seq_14, sizeof(title_pitch_offset_seq_14) },
-  { title_pitch_offset_seq_15, sizeof(title_pitch_offset_seq_15) },
-  { title_pitch_offset_seq_16, sizeof(title_pitch_offset_seq_16) },
-  { title_pitch_offset_seq_17, sizeof(title_pitch_offset_seq_17) },
-  { title_pitch_offset_seq_18, sizeof(title_pitch_offset_seq_18) },
-  { title_pitch_offset_seq_19, sizeof(title_pitch_offset_seq_19) },
-  { title_pitch_offset_seq_20, sizeof(title_pitch_offset_seq_20) },
-  { title_pitch_offset_seq_21, sizeof(title_pitch_offset_seq_21) },
-  { title_pitch_offset_seq_22, sizeof(title_pitch_offset_seq_22) },
-  { title_pitch_offset_seq_23, sizeof(title_pitch_offset_seq_23) },
+static const struct {
+  const u8 *base;
+  u16       len;
+} pitch_offset_table[24] = {
+  { &title_pitch_offset_seq_00[0], sizeof(title_pitch_offset_seq_00) },
+  { &title_pitch_offset_seq_01[0], sizeof(title_pitch_offset_seq_01) },
+  { &title_pitch_offset_seq_02[0], sizeof(title_pitch_offset_seq_02) },
+  { &title_pitch_offset_seq_03[0], sizeof(title_pitch_offset_seq_03) },
+  { &title_pitch_offset_seq_04[0], sizeof(title_pitch_offset_seq_04) },
+  { &title_pitch_offset_seq_05[0], sizeof(title_pitch_offset_seq_05) },
+  { &title_pitch_offset_seq_06[0], sizeof(title_pitch_offset_seq_06) },
+  { &title_pitch_offset_seq_07[0], sizeof(title_pitch_offset_seq_07) },
+  { &title_pitch_offset_seq_08[0], sizeof(title_pitch_offset_seq_08) },
+  { &title_pitch_offset_seq_09[0], sizeof(title_pitch_offset_seq_09) },
+  { &title_pitch_offset_seq_10[0], sizeof(title_pitch_offset_seq_10) },
+  { &title_pitch_offset_seq_11[0], sizeof(title_pitch_offset_seq_11) },
+  { &title_pitch_offset_seq_12[0], sizeof(title_pitch_offset_seq_12) },
+  { &title_pitch_offset_seq_13[0], sizeof(title_pitch_offset_seq_13) },
+  { &title_pitch_offset_seq_14[0], sizeof(title_pitch_offset_seq_14) },
+  { &title_pitch_offset_seq_15[0], sizeof(title_pitch_offset_seq_15) },
+  { &title_pitch_offset_seq_16[0], sizeof(title_pitch_offset_seq_16) },
+  { &title_pitch_offset_seq_17[0], sizeof(title_pitch_offset_seq_17) },
+  { &title_pitch_offset_seq_18[0], sizeof(title_pitch_offset_seq_18) },
+  { &title_pitch_offset_seq_19[0], sizeof(title_pitch_offset_seq_19) },
+  { &title_pitch_offset_seq_20[0], sizeof(title_pitch_offset_seq_20) },
+  { &title_pitch_offset_seq_21[0], sizeof(title_pitch_offset_seq_21) },
+  { &title_pitch_offset_seq_22[0], sizeof(title_pitch_offset_seq_22) },
+  { &title_pitch_offset_seq_23[0], sizeof(title_pitch_offset_seq_23) },
 };
 
-static const struct { const u8 *base; u16 len; u8 speed; } envelope_shape_table[16] = {
-  { title_envelope_shape_00, sizeof(title_envelope_shape_00), 0x01 },
-  { title_envelope_shape_01, sizeof(title_envelope_shape_01), 0x02 },
-  { title_envelope_shape_02, sizeof(title_envelope_shape_02), 0x02 },
-  { title_envelope_shape_03, sizeof(title_envelope_shape_03), 0x04 },
-  { title_envelope_shape_04, sizeof(title_envelope_shape_04), 0x04 },
-  { title_envelope_shape_05, sizeof(title_envelope_shape_05), 0x00 },
-  { title_envelope_shape_06, sizeof(title_envelope_shape_06), 0x02 },
-  { title_envelope_shape_07, sizeof(title_envelope_shape_07), 0x06 },
-  { title_envelope_shape_08, sizeof(title_envelope_shape_08), 0x00 },
-  { title_envelope_shape_09, sizeof(title_envelope_shape_09), 0x01 },
-  { title_envelope_shape_10, sizeof(title_envelope_shape_10), 0x02 },
-  { title_envelope_shape_11, sizeof(title_envelope_shape_11), 0x00 },
-  { title_envelope_shape_12, sizeof(title_envelope_shape_12), 0x00 },
-  { title_envelope_shape_13, sizeof(title_envelope_shape_13), 0x00 },
-  { title_envelope_shape_14, sizeof(title_envelope_shape_14), 0x00 },
-  { title_envelope_shape_15, sizeof(title_envelope_shape_15), 0x00 },
+static const struct {
+  const u8 *base;
+  u16       len;
+  u8        speed;
+} envelope_shape_table[16] = {
+  { &title_envelope_shape_00[0], sizeof(title_envelope_shape_00), 0x01 },
+  { &title_envelope_shape_01[0], sizeof(title_envelope_shape_01), 0x02 },
+  { &title_envelope_shape_02[0], sizeof(title_envelope_shape_02), 0x02 },
+  { &title_envelope_shape_03[0], sizeof(title_envelope_shape_03), 0x04 },
+  { &title_envelope_shape_04[0], sizeof(title_envelope_shape_04), 0x04 },
+  { &title_envelope_shape_05[0], sizeof(title_envelope_shape_05), 0x00 },
+  { &title_envelope_shape_06[0], sizeof(title_envelope_shape_06), 0x02 },
+  { &title_envelope_shape_07[0], sizeof(title_envelope_shape_07), 0x06 },
+  { &title_envelope_shape_08[0], sizeof(title_envelope_shape_08), 0x00 },
+  { &title_envelope_shape_09[0], sizeof(title_envelope_shape_09), 0x01 },
+  { &title_envelope_shape_10[0], sizeof(title_envelope_shape_10), 0x02 },
+  { &title_envelope_shape_11[0], sizeof(title_envelope_shape_11), 0x00 },
+  { &title_envelope_shape_12[0], sizeof(title_envelope_shape_12), 0x00 },
+  { &title_envelope_shape_13[0], sizeof(title_envelope_shape_13), 0x00 },
+  { &title_envelope_shape_14[0], sizeof(title_envelope_shape_14), 0x00 },
+  { &title_envelope_shape_15[0], sizeof(title_envelope_shape_15), 0x00 },
 };
 
-static void advance_channel_pattern(chqstate_t *state,
+static void advance_channel_pattern(chqstate_t           *state,
                                     title_tune_channel_t *IX_channel)
 {
-  u8         A_status;    /* status byte tested by channel_slide_upkeep (was A, IX+$00) */
-  const u8  *DE_pattern;  /* pattern-command byte stream cursor (was DE, IX+$01/$02) */
-  u8         A_byte;      /* raw byte just read from the pattern stream (was A) */
-  u8         A_note;      /* raw note value + transpose, before storing to note_index (was A) */
-  const u8  *HL_ptr;      /* scratch pointer, reused for the pitch-offset then envelope-shape reset (was HL) */
-  u8         A_env_byte;  /* envelope shape byte read at note time (was A) */
-  u8         A_mix;       /* scratch accumulator for the replace-bits-under-mask mixer merge (was A) */
-  u8         A_operand;   /* second operand byte of a 2-operand pattern command (was A) */
+  u8        A_status;   /* status byte tested by channel_slide_upkeep (was A, IX+$00) */
+  const u8 *DE_pattern; /* pattern-command byte stream cursor (was DE, IX+$01/$02) */
+  u8        A_byte;     /* raw byte just read from the pattern stream (was A) */
+  u8        A_note;     /* raw note value + transpose, before storing to note_index (was A) */
+  const u8 *HL_ptr;     /* scratch pointer, reused for the pitch-offset then envelope-shape reset (was HL) */
+  u8        A_env_byte; /* envelope shape byte read at note time (was A) */
+  u8        A_mix;      /* scratch accumulator for the replace-bits-under-mask mixer merge (was A) */
+  u8        A_operand;  /* second operand byte of a 2-operand pattern command (was A) */
 
   if (IX_channel->pattern_ptr == NULL)
     return; /* Conv: tune not extracted (tunes 2/3) -- channel stays silent */
@@ -406,7 +413,7 @@ static void advance_channel_pattern(chqstate_t *state,
       case 0x84: /* pcmd_set_slide_target ($ED6F) */
         IX_channel->slide_step      = (s8) acp_read_byte(IX_channel, &DE_pattern); /* operand 1 */
         IX_channel->slide_accum     = 0;
-        IX_channel->status         |= 0x04;               /* slide active */
+        IX_channel->status         |= 0x04; /* slide active */
         IX_channel->slide_countdown = acp_read_byte(IX_channel, &DE_pattern);      /* operand 2 */
         continue;
 
@@ -416,18 +423,18 @@ static void advance_channel_pattern(chqstate_t *state,
 
       case 0x88: /* pcmd_set_envelope_params ($ED8C) */
         IX_channel->vibrato_increment = acp_read_byte(IX_channel, &DE_pattern); /* operand 1 -> +$1B */
-        A_operand = acp_read_byte(IX_channel, &DE_pattern);                      /* operand 2, stored twice */
-        IX_channel->vibrato_depth = A_operand;           /* +$1A */
-        IX_channel->vibrato_phase = A_operand;           /* +$1C */
+        A_operand = acp_read_byte(IX_channel, &DE_pattern);                     /* operand 2, stored twice */
+        IX_channel->vibrato_depth = A_operand; /* +$1A */
+        IX_channel->vibrato_phase = A_operand; /* +$1C */
         continue;
 
       case 0x89: /* pcmd_set_driver_flag ($ED85) */
-        state->title_music.pattern_driver_flag = acp_read_byte(IX_channel, &DE_pattern); /* $EED1 */
+        state->title_music.pattern_driver_flag = acp_read_byte(IX_channel, &DE_pattern);
         continue;
 
       case 0x8A: /* pcmd_set_mixer_bits_high3 ($ED4B) */
         A_mix  = (u8) (IX_channel->mixer_mask & 0x38);
-        A_mix ^= state->title_music.pending_mixer_bits; /* $EF7A */
+        A_mix ^= state->title_music.pending_mixer_bits;
         A_mix &= IX_channel->mixer_mask;
         A_mix ^= state->title_music.pending_mixer_bits;
         state->title_music.pending_mixer_bits = A_mix;
@@ -436,7 +443,7 @@ static void advance_channel_pattern(chqstate_t *state,
 
       case 0x8B: /* pcmd_set_mixer_bits_low3 ($ED36) */
         A_mix  = (u8) (IX_channel->mixer_mask & 0x07);
-        A_mix ^= state->title_music.pending_mixer_bits; /* $EF7A */
+        A_mix ^= state->title_music.pending_mixer_bits;
         A_mix &= IX_channel->mixer_mask;
         A_mix ^= state->title_music.pending_mixer_bits;
         state->title_music.pending_mixer_bits = A_mix;
@@ -476,7 +483,7 @@ static void advance_channel_pattern(chqstate_t *state,
       }
     } else if (A_byte < 0xB8) {
       /* $EE6F: set the tune tempo/speed byte. */
-      state->title_music.tune_tempo = (u8) (A_byte - 0xB0 + 1); /* $EC9A */
+      state->title_music.tune_tempo = (u8) (A_byte - 0xB0 + 1);
       continue;
     } else if (A_byte < 0xD0) {
       /* $EE59-$EE6C: select a pitch-offset sequence via the $F07C table (24
@@ -505,7 +512,7 @@ static void advance_channel_pattern(chqstate_t *state,
 reset_row_counter:
   /* $EE22 acp_reset_row_counter. */
   IX_channel->row_wait    = IX_channel->row_wait_reload; /* +$10 = +$11 */
-  IX_channel->pattern_ptr = DE_pattern;                   /* +$01/+$02 */
+  IX_channel->pattern_ptr = DE_pattern;                  /* +$01/+$02 */
 
   if (IX_channel->mute_pending)
     IX_channel->mute_pending = 0xFF; /* normalise any nonzero value to the one-shot gate */
@@ -571,9 +578,9 @@ reset_row_counter:
  * phase into D via the carry flag from the preceding SUB. C's (s8)->(s16)
  * cast performs the same sign extension natively.
  */
-static u16 compute_channel_ay_registers(chqstate_t *state,
+static u16 compute_channel_ay_registers(chqstate_t           *state,
                                         title_tune_channel_t *IX_channel,
-                                        u8 *A_volume_out)
+                                        u8                   *A_volume_out)
 {
   u8         C_status;          /* channel status/flags byte, unchanged through most of the function (was C, IX+$00) */
   u8         A_env_step;        /* envelope-step counter, then reload value (was A, IX+$19) */
@@ -711,7 +718,7 @@ static u16 compute_channel_ay_registers(chqstate_t *state,
   if (A_mixer_test == 0) {
     /* Every 4th call. */
     A_shared = state->title_music.shared_note_value ^ 0x08; // $EC79
-    state->title_music.driver_internal_flag = A_shared;      // $ECC6 (SM)
+    state->title_music.driver_internal_flag = A_shared;     // $ECC6 (SM)
     A_mixer_val = 0x07;
   } else {
     // Conv: $EF79 "LD A,$00" reads its own self-modified operand byte
@@ -803,18 +810,25 @@ static u16 compute_channel_ay_registers(chqstate_t *state,
  * rather than silent or crashing. TODO: replace with the real $F07C/$F123
  * tables once extracted.
  */
-static const u8 default_pitch_offset_seq[] = { 0x80 };       /* Conv: marker bit set, payload 0 -- always resets to itself with zero offset */
-static const u8 default_envelope_shape[]   = { 0x0F, 0x80 }; /* Conv: constant amplitude 15, then a halt marker */
-
 static void start_tune(chqstate_t *state, u8 A_tune)
 {
-  static const struct { const u8 *base; u16 len; } tune_patterns[2][3] = {
-    { { title_tune0_ch1_pattern, sizeof(title_tune0_ch1_pattern) },
+  static const u8 default_pitch_offset_seq[] = { 0x80 };       /* Conv: marker bit set, payload 0 -- always resets to itself with zero offset */
+  static const u8 default_envelope_shape[]   = { 0x0F, 0x80 }; /* Conv: constant amplitude 15, then a halt marker */
+
+  static const struct {
+    const u8 *base;
+    u16       len;
+  } tune_patterns[2][3] = {
+    {
+      { title_tune0_ch1_pattern, sizeof(title_tune0_ch1_pattern) },
       { title_tune0_ch2_pattern, sizeof(title_tune0_ch2_pattern) },
-      { title_tune0_ch3_pattern, sizeof(title_tune0_ch3_pattern) } },
-    { { title_tune1_ch1_pattern, sizeof(title_tune1_ch1_pattern) },
+      { title_tune0_ch3_pattern, sizeof(title_tune0_ch3_pattern) }
+    },
+    {
+      { title_tune1_ch1_pattern, sizeof(title_tune1_ch1_pattern) },
       { title_tune1_ch2_pattern, sizeof(title_tune1_ch2_pattern) },
-      { title_tune1_ch3_pattern, sizeof(title_tune1_ch3_pattern) } }
+      { title_tune1_ch3_pattern, sizeof(title_tune1_ch3_pattern) }
+    }
   };                                      /* Conv: real pattern data for tunes 0/1; see prologue */
   int                    BC_offset;       /* byte offset into tune_select_table = A_tune * 7 (was BC) */
   const u8              *HL_tune_entry;   /* -> this tune's 7-byte entry in the tune-select table (was HL) */
@@ -824,8 +838,8 @@ static void start_tune(chqstate_t *state, u8 A_tune)
   u16                    DE_pattern_addr; /* raw Z80 address of this channel's pattern-data block, read from the tune-select table (was DE) */
 
   /* $EB9E-$EBA4: clear the tune-active flag and its companion byte. */
-  state->title_music.tune_active           = 0; /* $F223 */
-  state->title_music.tune_active_companion = 0; /* $F224 */
+  state->title_music.tune_active           = 0;
+  state->title_music.tune_active_companion = 0;
 
   /* $EBA6-$EBAB: BC = A_tune * 7 (the tune-select table's entry stride). */
   BC_offset = A_tune * 7; // Conv: collapses the ADD A,A/ADD A,C doubling sequence
@@ -836,7 +850,7 @@ static void start_tune(chqstate_t *state, u8 A_tune)
 
   /* $EBB2-$EBB6: first byte = tempo/speed, saved for later use. */
   A_tempo = *HL_tune_entry;
-  state->title_music.tune_tempo = A_tempo; /* $EC9A */
+  state->title_music.tune_tempo = A_tempo;
   HL_tune_entry++;
 
   /* $EBB7-$EBBD: IX -> first channel-tracker record; BC = 37 (record
@@ -896,13 +910,13 @@ static void start_tune(chqstate_t *state, u8 A_tune)
   }
 
   /* $EBF6: clear a driver-internal flag. */
-  state->title_music.pattern_driver_flag = 0; /* $EED1 */
+  state->title_music.pattern_driver_flag = 0;
 
   /* $EBF9-$EBFA: mark the tempo counter for an immediate refresh. */
-  state->title_music.tempo_counter = 1; /* $EC70 */
+  state->title_music.tempo_counter = 1;
 
   /* $EBFD: flag the tune as active. */
-  state->title_music.tune_active = 1; /* $F223 */
+  state->title_music.tune_active = 1;
 }
 
 /**
@@ -931,8 +945,8 @@ static void write_title_ay_registers(chqstate_t *state)
   values = &state->title_ay_regs.env_fine;
   regno  = 11;
   do {
-    speccy->out(speccy, 0xFFFD, regno);
-    speccy->out(speccy, 0xBFFD, *values--); /* was OUTD */
+    speccy->out(speccy, port_AY_REGISTER, regno);
+    speccy->out(speccy, port_AY_DATA, *values--); /* was OUTD */
   } while ((s8) --regno >= 0);
 }
 
@@ -993,27 +1007,27 @@ static void ts_music_service(chqstate_t *state)
       advance_channel_pattern(state, IX_channel);
 
       /* $EC99-$EC9B: reset the tempo counter (see Conv note above). */
-      state->title_music.tempo_counter = 1; /* $EC70 */
+      state->title_music.tempo_counter = 1;
     }
 
     /* $EC9E-$ECA8 tms_refresh_registers: recompute the AY register values
      * for channel 1 from its current tracker state. */
     IX_channel = &state->title_music.channel[0];
     HL_period  = compute_channel_ay_registers(state, IX_channel, &A_volume);
-    state->title_ay_regs.chan_a_pitch = HL_period; /* $EFAF/$EFB0 */
-    state->title_ay_regs.chan_a_vol   = A_volume;  /* $EFB7 */
+    state->title_ay_regs.chan_a_pitch = HL_period;
+    state->title_ay_regs.chan_a_vol   = A_volume;
 
     /* $ECAB-$ECB5: channel 2. */
     IX_channel = &state->title_music.channel[1];
     HL_period  = compute_channel_ay_registers(state, IX_channel, &A_volume);
-    state->title_ay_regs.chan_b_pitch = HL_period; /* $EFB1/$EFB2 */
-    state->title_ay_regs.chan_b_vol   = A_volume;  /* $EFB8 */
+    state->title_ay_regs.chan_b_pitch = HL_period;
+    state->title_ay_regs.chan_b_vol   = A_volume;
 
     /* $ECB8-$ECC2: channel 3. */
     IX_channel = &state->title_music.channel[2];
     HL_period  = compute_channel_ay_registers(state, IX_channel, &A_volume);
-    state->title_ay_regs.chan_c_pitch = HL_period; /* $EFB3/$EFB4 */
-    state->title_ay_regs.chan_c_vol   = A_volume;  /* $EFB9 */
+    state->title_ay_regs.chan_c_pitch = HL_period;
+    state->title_ay_regs.chan_c_vol   = A_volume;
 
     /* $ECC5-$ECC7: the operand of this "LD A,$00" is $ECC6 --
      * driver_internal_flag -- the same self-modified byte that
@@ -1022,7 +1036,7 @@ static void ts_music_service(chqstate_t *state)
      * value was last patched there rather than actually loading a literal 0;
      * see the Conv note above and the driver_internal_flag field comment in
      * State.h. */
-    state->title_ay_regs.noise_pitch = state->title_music.driver_internal_flag; /* $EFB5 */
+    state->title_ay_regs.noise_pitch = state->title_music.driver_internal_flag;
   }
 
   /* $ECCA-$ECCE tms_output_registers: re-check the tune-active flag -- see
@@ -1139,7 +1153,7 @@ static u8 oss_lookup_speed(u8 C_idx)
  */
 static void oss_apply_x_step(struct title_object *rec)
 {
-  rec->x += rec->x_step; /* $C7A2-$C7A8 */
+  rec->x += rec->x_step;
 }
 
 /**
@@ -1149,7 +1163,7 @@ static void oss_apply_x_step(struct title_object *rec)
  */
 static void oss_apply_y_step(struct title_object *rec)
 {
-  rec->y += rec->y_step; /* $C7AC-$C7B2 */
+  rec->y += rec->y_step;
 }
 
 /**
@@ -1162,8 +1176,8 @@ static void oss_apply_y_step(struct title_object *rec)
  */
 static void oss_op_velocity(struct title_object *rec)
 {
-  rec->x += rec->x_step; /* $C78D-$C793 */
-  rec->y += rec->y_step; /* $C796-$C79C */
+  rec->x += rec->x_step;
+  rec->y += rec->y_step;
 }
 
 /**
@@ -1184,12 +1198,12 @@ static void oss_op_decel_x(struct title_object *rec)
   u8 C_idx;   /* curve counter, aliases the y_step field for this mode (was C, from (IX+3)) */
   u8 A_speed; /* looked-up curve magnitude (was A) */
 
-  oss_apply_x_step(rec); /* $C7ED CALL $C7A2 */
+  oss_apply_x_step(rec);
 
-  C_idx   = (u8) rec->y_step;        /* $C7F0 LD C,(IX+3) */
-  A_speed = oss_lookup_speed(C_idx); /* $C7F3 CALL $C804 */
-  rec->y -= A_speed;                 /* $C7F6 NEG / $C7F8-$C7FB ADD A,(IX+8) */
-  rec->y_step = (s8) (C_idx + 1);    /* $C7FE INC (IX+3) */
+  C_idx   = (u8) rec->y_step;
+  A_speed = oss_lookup_speed(C_idx);
+  rec->y -= A_speed;
+  rec->y_step = (s8) (C_idx + 1);
 }
 
 /**
@@ -1205,12 +1219,12 @@ static void oss_op_decel_y(struct title_object *rec)
   u8 C_idx;   /* curve counter, aliases the y_step field for this mode (was C, from (IX+3)) */
   u8 A_speed; /* looked-up curve magnitude (was A) */
 
-  oss_apply_x_step(rec); /* $C812 CALL $C7A2 */
+  oss_apply_x_step(rec);
 
-  C_idx   = (u8) rec->y_step;        /* $C815 LD C,(IX+3) */
-  A_speed = oss_lookup_speed(C_idx); /* $C818 CALL $C804 */
-  rec->y += A_speed;                 /* $C81B-$C81E ADD A,(IX+8) */
-  rec->y_step = (s8) (C_idx - 1);    /* $C821 DEC (IX+3) */
+  C_idx   = (u8) rec->y_step;
+  A_speed = oss_lookup_speed(C_idx);
+  rec->y += A_speed;
+  rec->y_step = (s8) (C_idx - 1);
 }
 
 /**
@@ -1230,12 +1244,12 @@ static void oss_op_accel_x_a(struct title_object *rec)
   u8 C_idx;   /* curve counter, aliases the x_step field for this mode (was C, from (IX+2)) */
   u8 A_speed; /* looked-up curve magnitude (was A) */
 
-  oss_apply_y_step(rec); /* $C827 CALL $C7AC */
+  oss_apply_y_step(rec);
 
-  C_idx   = (u8) rec->x_step;        /* $C82A LD C,(IX+2) */
-  A_speed = oss_lookup_speed(C_idx); /* $C82D CALL $C804 */
-  rec->x -= A_speed;                 /* $C830 NEG / $C832-$C835 ADD A,(IX+7) */
-  rec->x_step = (s8) (C_idx - 1);    /* $C838 DEC (IX+2) */
+  C_idx   = (u8) rec->x_step;
+  A_speed = oss_lookup_speed(C_idx);
+  rec->x -= A_speed;
+  rec->x_step = (s8) (C_idx - 1);
 }
 
 /**
@@ -1250,12 +1264,12 @@ static void oss_op_accel_x_b(struct title_object *rec)
   u8 C_idx;   /* curve counter, aliases the x_step field for this mode (was C, from (IX+2)) */
   u8 A_speed; /* looked-up curve magnitude (was A) */
 
-  oss_apply_y_step(rec); /* $C83E CALL $C7AC */
+  oss_apply_y_step(rec);
 
-  C_idx   = (u8) rec->x_step;        /* $C841 LD C,(IX+2) */
-  A_speed = oss_lookup_speed(C_idx); /* $C844 CALL $C804 */
-  rec->x += A_speed;                 /* $C847-$C84A ADD A,(IX+7) */
-  rec->x_step = (s8) (C_idx - 1);    /* $C84D DEC (IX+2) */
+  C_idx   = (u8) rec->x_step;
+  A_speed = oss_lookup_speed(C_idx);
+  rec->x += A_speed;
+  rec->x_step = (s8) (C_idx - 1);
 }
 
 /**
@@ -1271,12 +1285,12 @@ static void oss_op_accel_x_c(struct title_object *rec)
   u8 C_idx;   /* curve counter, aliases the x_step field for this mode (was C, from (IX+2)) */
   u8 A_speed; /* looked-up curve magnitude (was A) */
 
-  oss_apply_y_step(rec); /* $C853 CALL $C7AC */
+  oss_apply_y_step(rec);
 
-  C_idx   = (u8) rec->x_step;        /* $C856 LD C,(IX+2) */
-  A_speed = oss_lookup_speed(C_idx); /* $C859 CALL $C804 */
-  rec->x += A_speed;                 /* $C85C-$C85F ADD A,(IX+7) */
-  rec->x_step = (s8) (C_idx + 1);    /* $C862 INC (IX+2) */
+  C_idx   = (u8) rec->x_step;
+  A_speed = oss_lookup_speed(C_idx);
+  rec->x += A_speed;
+  rec->x_step = (s8) (C_idx + 1);
 }
 
 /**
@@ -1371,32 +1385,32 @@ static void object_script_step(chqstate_t *state)
 
           if ((s8) A_byte >= 0) {
             /* $C868-$C88D oss_op_immediate_step: immediate 2-axis step. */
-            A_x_delta = (A_byte & 0x03) << 1;     /* $C869-$C871 */
-            if (A_byte & 0x04)                     /* $C86B/$C86D BIT 2,C */
-              A_x_delta = -A_x_delta;              /* $C86F NEG */
-            rec->x += A_x_delta;                   /* $C873-$C876 */
+            A_x_delta = (A_byte & 0x03) << 1;
+            if (A_byte & 0x04)
+              A_x_delta = -A_x_delta;
+            rec->x += A_x_delta;
 
-            A_y_delta = ((A_byte >> 3) & 0x03) << 1; /* $C87A-$C87D */
-            if (A_byte & 0x20)                        /* $C87F BIT 5,C */
-              A_y_delta = -A_y_delta;                 /* $C883 NEG */
-            rec->y += A_y_delta;                      /* $C885-$C88A */
+            A_y_delta = ((A_byte >> 3) & 0x03) << 1;
+            if (A_byte & 0x20)
+              A_y_delta = -A_y_delta;
+            rec->y += A_y_delta;
 
-            continue; /* $C88D JP $C746 */
+            continue;
           }
 
           /* Sign bit set: a "real" opcode -- store it as the new active
            * opcode, then read its operand bytes (if any). */
-          rec->opcode = A_byte; /* $C74C */
+          rec->opcode = A_byte;
 
           switch (A_byte) {
             case 0xC8: /* set screen-row byte, 1 operand */
-              rec->row = *HLscript++; /* $C7C2-$C7C4 */
-              continue;               /* $C7C7 JP $C746 */
+              rec->row = *HLscript++;
+              continue;
 
             case 0xC9: /* set velocity, 3 operand bytes: x,y,wait */
-              rec->x_step = (s8) *HLscript++; /* $C77B-$C77D */
-              rec->y_step = (s8) *HLscript++; /* $C780-$C782 */
-              rec->wait   = *HLscript++;      /* $C785-$C787 */
+              rec->x_step = (s8) *HLscript++;
+              rec->y_step = (s8) *HLscript++;
+              rec->wait   = *HLscript++;
               break;                          /* -> save cursor below */
 
             case 0xCA: /* decelerate X, 3 operand bytes */
@@ -1424,9 +1438,9 @@ static void object_script_step(chqstate_t *state)
               break;
 
             case 0xD0: /* jump to absolute position, 2 operand bytes */
-              rec->x = *HLscript++; /* $C7B6-$C7B8 */
-              rec->y = *HLscript++; /* $C7BB-$C7BD */
-              continue;             /* $C7C0 JR $C746 */
+              rec->x = *HLscript++;
+              rec->y = *HLscript++;
+              continue;
 
             case 0xD2: /* end of script -- see this function's own Conv note */
               return;
@@ -1507,30 +1521,30 @@ static void clear_playfield_buffer(chqstate_t *state)
   int L;          /* screen address low byte (was L) */
   int B_scanline; /* scanline countdown within one character row, 8 (was B) */
 
-  H = 0x48; /* $CC08 LD HL,$481E */
+  H = 0x48;
   L = 0x1E;
 
   do { /* $CC10-$CC29: screen third 2, all 8 character rows */
-    B_scanline = 8; /* $CC0E/$CC10 LD B,C (C=$08) */
+    B_scanline = 8;
     do {
-      memset(ADDRTOSCREEN((H << 8) | L) - 28, 0, 28); /* $CC11-$CC1F */
-      H++; /* $CC20 INC H */
-    } while (--B_scanline); /* $CC21 DJNZ */
-    H = 0x48; /* $CC23 */
-    L += 0x20; /* $CC25-$CC28 */
-  } while (L <= 0xFF); /* $CC29 JP NC,$CC10 */
+      memset(ADDRTOSCREEN((H << 8) | L) - 28, 0, 28);
+      H++;
+    } while (--B_scanline);
+    H = 0x48;
+    L += 0x20;
+  } while (L <= 0xFF);
   L &= 0xFF;
-  H = 0x50; /* $CC2C */
+  H = 0x50;
 
   do { /* $CC2E-$CC49: screen third 3, top 5 character rows only */
-    B_scanline = 8; /* $CC2E LD B,C */
+    B_scanline = 8;
     do {
-      memset(ADDRTOSCREEN((H << 8) | L) - 28, 0, 28); /* $CC2F-$CC3D */
-      H++; /* $CC3E INC H */
-    } while (--B_scanline); /* $CC3F DJNZ */
-    H = 0x50; /* $CC41 */
-    L += 0x20; /* $CC43-$CC46 */
-  } while (L < 0xA0); /* $CC47-$CC49 JP C,$CC2E */
+      memset(ADDRTOSCREEN((H << 8) | L) - 28, 0, 28);
+      H++;
+    } while (--B_scanline);
+    H = 0x50;
+    L += 0x20;
+  } while (L < 0xA0);
 }
 
 /**
@@ -1585,16 +1599,16 @@ static void ts_animate_frame(chqstate_t *state)
 
   for (obj = 0; obj < 6; obj++) { /* $C6C7-$C6E0: 6 foreground objects */
     rec = &state->title_objects[obj];
-    compute_glyph_blit_params(state, rec->y, rec->x, rec->row); /* $C6DA */
+    compute_glyph_blit_params(state, rec->y, rec->x, rec->row);
   }
 
-  object_script_step(state); /* $C6E3 */
+  object_script_step(state);
 
-  clear_playfield_buffer(state); /* $C6E6 */
+  clear_playfield_buffer(state);
 
   for (obj = 6; obj < 9; obj++) { /* $C6EA-$C700: 3 background objects */
     rec = &state->title_objects[obj];
-    compute_glyph_blit_params_b(state, rec->y, rec->x, rec->row); /* $C6FA */
+    compute_glyph_blit_params_b(state, rec->y, rec->x, rec->row);
   }
 
   state->speccy->draw(state->speccy, &playfield_box); /* Conv: added */
@@ -1639,7 +1653,7 @@ static void compute_glyph_geometry(u8 B_y, u8 C_x, u8 L_row,
   int glyph_index;       /* index into title_glyph_table (was BC, table offset / 4) */
   const title_glyph_t *glyph;
 
-  /* $C8C5-$C8CC / $C94F-$C956 */
+
   if (B_y < 0x70) {
     B_clamped           = B_y;
     out->A_excess       = 0;    /* unused: carry_initial skips the row-offset walk */
@@ -1973,7 +1987,7 @@ static void compute_glyph_blit_params(chqstate_t *state, u8 B_y, u8 C_x,
   compute_glyph_geometry(B_y, C_x, L_row, &g);
 
   if (!g.carry_initial) {
-    /* $C906-$C916 */
+
     A_skip_pairs = (u8) (g.A_excess >> 1);
     do {
       g.HLsrc += g.C_width_select * 2;
@@ -2013,7 +2027,7 @@ static void compute_glyph_blit_params_b(chqstate_t *state, u8 B_y, u8 C_x,
   compute_glyph_geometry(B_y, C_x, L_row, &g);
 
   if (!g.carry_initial) {
-    /* $C990-$C9AE */
+
     if (g.C_width_select < 6)
       E_stride = (u8) (g.C_width_select << 1);
     else
@@ -2078,8 +2092,8 @@ static void sfx_music_service(chqstate_t *state)
  */
 static void clear_screen_bitmap_and_attrs(chqstate_t *state)
 {
-  memset(ADDRTOATTRS(SCREEN_PLAYFIELD_ATTRS_ADDR), 0, 0x200); /* $C890-$C89B */
-  memset(ADDRTOSCREEN(SCREEN_PLAYFIELD_BITMAP_ADDR), 0, 0x1000); /* $C89C-$C8A7 */
+  memset(ADDRTOATTRS(SCREEN_PLAYFIELD_ATTRS_ADDR), 0, 0x200);
+  memset(ADDRTOSCREEN(SCREEN_PLAYFIELD_BITMAP_ADDR), 0, 0x1000);
 }
 
 /**
@@ -2163,17 +2177,17 @@ static void title_screen_driver(chqstate_t *state)
   u16        DEscript_addr;  /* script pointer, reassembled from 2 Z80-address bytes (was DE) */
 
   for (;;) {
-    clear_and_fill_border_attrs(state); /* $C59E CALL $C8A9 */
+    clear_and_fill_border_attrs(state);
 
     /* $C5A1-$C5A9: read the persisted scene selector, rotate it left,
      * mask to 5 bits, and force it to 1 if that leaves zero -- then persist
      * the new value for the next restart. */
     A_scene_bits = state->title_scene_selector; /* $C5A1 LD A,$00 (SM) */
-    RLC(A_scene_bits); /* $C5A3 RLCA */
-    A_scene_bits &= 0x1F; /* $C5A4 AND $1F */
-    if (!A_scene_bits) /* $C5A6 JR NZ,$C5A9 */
-      A_scene_bits++; /* $C5A8 INC A */
-    state->title_scene_selector = A_scene_bits; /* $C5A9 LD ($C5A2),A */
+    RLC(A_scene_bits);
+    A_scene_bits &= 0x1F;
+    if (!A_scene_bits)
+      A_scene_bits++;
+    state->title_scene_selector = A_scene_bits;
 
     /* $C5AC-$C5C7: pick one of 5 scene tables by testing successive bits of
      * A via RRA; the first bit found set selects the table, defaulting to
@@ -2182,7 +2196,7 @@ static void title_screen_driver(chqstate_t *state)
      * loop over the same 4 bit tests; behaviourally identical. */
     scene_idx = 4;
     for (bit = 0; bit < 4; bit++) {
-      RR(A_scene_bits); /* $C5AF/$C5B5/$C5BB/$C5C1 RRA */
+      RR(A_scene_bits);
       if (carry) {
         scene_idx = bit;
         break;
@@ -2206,11 +2220,11 @@ static void title_screen_driver(chqstate_t *state)
       state->title_objects[obj].x_step = 0;
       state->title_objects[obj].y_step = 0;
 
-      state->title_objects[obj].x = HL_scene_table[0]; /* $C5E5-$C5E7 */
-      state->title_objects[obj].y = HL_scene_table[1]; /* $C5EA-$C5EC */
-      state->title_objects[obj].row = HL_scene_table[2]; /* $C5EF-$C5F1 */
+      state->title_objects[obj].x = HL_scene_table[0];
+      state->title_objects[obj].y = HL_scene_table[1];
+      state->title_objects[obj].row = HL_scene_table[2];
 
-      DEscript_addr = (u16) (HL_scene_table[3] | (HL_scene_table[4] << 8)); /* $C5F4-$C5FB */
+      DEscript_addr = (u16) (HL_scene_table[3] | (HL_scene_table[4] << 8));
       state->title_objects[obj].script =
         &title_scene_data[DEscript_addr - TITLE_SCENE_DATA_BASE];
 
@@ -2220,7 +2234,7 @@ static void title_screen_driver(chqstate_t *state)
                              * pointer, modelled here by the obj loop index. */
     }
 
-    setup_im2_interrupt_table(state); /* $C602 CALL $F7AA */
+    setup_im2_interrupt_table(state);
 
     ts_animate_frame(state); /* $C605 CALL $C6C4 -- draw the first frame
                                * immediately, so the scene is visible before
@@ -2232,13 +2246,13 @@ static void title_screen_driver(chqstate_t *state)
                                                                * ($CC9D),
                                                                * unconditionally. */
 
-    if (state->controls_selected) /* $C60E-$C611 */
+    if (state->controls_selected)
       print_character(state, &title_screen_overlay_text[0]); /* $C612-$C615:
                                                                 * "PRESS GEAR
                                                                 * TO PLAY"
                                                                 * ($CC88). */
 
-    start_tune_and_sfx_table(state, 0); /* $C618 XOR A / $C619 CALL $F7D6 */
+    start_tune_and_sfx_table(state, 0);
 
     state->speccy->draw(state->speccy, &playfield_box); /* Conv: added */
 
@@ -2321,9 +2335,9 @@ static u8 ts_wait_loop(chqstate_t *state)
     ts_animate_frame(state); /* Conv: drives continuous scene animation from
                                * this caller-owned loop -- see prologue. */
 
-    sfx_music_service(state); /* $C61E CALL $F82F */
+    sfx_music_service(state);
 
-    /* $C621-$C625: LD A,($F223); AND A; JR NZ,$C638 */
+
     if (!state->title_music.tune_active) {
       /* $C627-$C637: wait out ~180 frames (one sfx_music_service call per
        * iteration) before falling through to the coin/name-table refresh
@@ -2341,16 +2355,16 @@ static u8 ts_wait_loop(chqstate_t *state)
       /* TODO: CALL stst_load_sfx_script ($F7DB) -- SFX-table setup for
        * tune #4, out of scope (digitised-sample SFX subsystem). */
 
-      B_wait = 0xB4; /* $C62C LD B,$B4 */
+      B_wait = 0xB4;
       do {
-        sfx_music_service(state); /* $C62F CALL $F82F */
+        sfx_music_service(state);
         state->speccy->sleep(state->speccy, STANDARD_SLEEP);
         state->speccy->stamp(state->speccy);
-      } while (--B_wait); /* $C633 DJNZ $C62E */
+      } while (--B_wait);
       /* $C635 INC B (B wraps 0 -> 1) has no further use of B afterwards --
        * Conv: DJNZ bookkeeping, omitted. */
 
-      ts_refresh_name_table(state); /* $C636 JR $C69A */
+      ts_refresh_name_table(state);
       return 0; /* $C6C3 RET -- returns to title_screen_driver's own caller.
                  * Conv: contrary to the usual framing of this loop as
                  * unbounded, this path is a genuine early exit in the Z80 --
@@ -2361,7 +2375,7 @@ static u8 ts_wait_loop(chqstate_t *state)
      * Conv: was IN+CPL+RRA; RRA only tests bit 0, so this is collapsed to a
      * direct bit-0 mask (cf. attract_mode_128k's ENTER check). */
     A_fire = ~state->speccy->in(state->speccy, port_KEYBOARD_ENTERLKJH);
-    if (A_fire & 1) /* $C63D RRA / $C63E JP C,$FBA2 */
+    if (A_fire & 1)
       return omd_redraw_and_poll(state); /* hands off to the options menu;
         * its own $C59E hand-off matches this function's own "restart
         * title_screen_driver" return contract, so the value passes straight
@@ -2373,13 +2387,13 @@ static u8 ts_wait_loop(chqstate_t *state)
      * coin-op configuration doubling as "controls selected") or just loose
      * wording -- either way this reuses the existing field rather than
      * inventing a second one. */
-    A_coin_mode = state->controls_selected; /* $C641 LD A,($8001) */
-    if (A_coin_mode) { /* $C644-$C645 AND A; JR Z,$C64F */
+    A_coin_mode = state->controls_selected;
+    if (A_coin_mode) {
       /* TODO: CALL $800E (coin-slot input read) -- common-RAM routine, not
        * disassembled in this bank and no C equivalent yet; treated as "no
        * coin" for now. */
       A_coin_input = 0;
-      if (A_coin_input & 0x10) { /* $C64A AND $10; $C64C JP NZ,$C696 */
+      if (A_coin_input & 0x10) {
         ts_coin_inserted(state);
         return 0;
       }
@@ -2391,7 +2405,7 @@ static u8 ts_wait_loop(chqstate_t *state)
     /* $C652-$C653: AND A; JR Z,$C61E -- a loop-restart, not a skip-this-
      * block branch: $C61E is the loop head, so test_mode == 0 skips the
      * "any key" check below too, not just this one. */
-    A_test_mode = state->test_mode; /* $C64F LD A,($8000) */
+    A_test_mode = state->test_mode;
     if (!A_test_mode) {
       continue; /* Conv: no balancing sleep() needed -- already closed out by
                  * ts_animate_frame's own sleep() (see prologue) */
@@ -2399,15 +2413,15 @@ static u8 ts_wait_loop(chqstate_t *state)
 
     /* was IN+CPL */
     A_key6 = ~state->speccy->in(state->speccy, port_KEYBOARD_09876);
-    if (A_key6 & 0x10) { /* $C65A AND $10; $C65C JP Z,$C681 */
+    if (A_key6 & 0x10) {
       /* $C65F-$C67B: seed a placeholder score of $87654321, stage 6,
        * 3 retries, check it against the high-score table, then restart. */
-      state->score_bcd[0] = 0x21; /* $C666 */
-      state->score_bcd[1] = 0x43; /* $C669 */
-      state->score_bcd[2] = 0x65; /* $C66C */
-      state->score_bcd[3] = 0x87; /* $C66F */
-      state->wanted_stage_number = 0x06; /* $C671/$C673 */
-      state->retry_count = 0x03; /* $C676/$C678 */
+      state->score_bcd[0] = 0x21;
+      state->score_bcd[1] = 0x43;
+      state->score_bcd[2] = 0x65;
+      state->score_bcd[3] = 0x87;
+      state->wanted_stage_number = 0x06;
+      state->retry_count = 0x03;
 
       /* TODO: CALL stop_music_and_silence ($ED0B) -- clears tune_active
        * and the AY mixer/noise register cache; AY driver internals not
@@ -2422,11 +2436,11 @@ static u8 ts_wait_loop(chqstate_t *state)
      * screen with a freshly seeded scene selector. */
     /* was IN+CPL */
     A_anykey = ~state->speccy->in(state->speccy, port_KEYBOARD_12345);
-    if ((A_anykey & 0x1F) == 0) { /* $C686 AND $1F; $C688 JP Z,$C61E */
+    if ((A_anykey & 0x1F) == 0) {
       continue; /* Conv: no balancing sleep() needed -- see prologue */
     }
 
-    RRC(A_anykey); /* $C68B RRCA */
+    RRC(A_anykey);
     /* TODO: seed scene-selector SM operand ($C5A2) with A_anykey -- the
      * whole scene-selection self-modifying byte is out of scope for this
      * task (see title_screen_driver's $C5A1-$C5C7 stub); when that is
@@ -2548,29 +2562,29 @@ static u8 scan_keyboard_matrix(chqstate_t *state, u8 *D_key_code_out)
   B_port_hi   = 0xFE; /* $FF0F LD BC,$FEFE: B half */
 
   do {
-    A_pressed_mask = (u8) (~state->speccy->in(state->speccy, (u16) ((B_port_hi << 8) | 0xFE)) & 0x1F); /* $FF12-$FF15 */
+    A_pressed_mask = (u8) (~state->speccy->in(state->speccy, (u16) ((B_port_hi << 8) | 0xFE)) & 0x1F);
 
-    if (A_pressed_mask != 0) { /* $FF17 JR Z,$FF25 */
+    if (A_pressed_mask != 0) {
       D_key_code++;
       if (D_key_code != 0)
         return 1; /* $FF1A RET NZ: a second row is also held -- ambiguous */
 
-      H_bits = A_pressed_mask; /* $FF1B */
-      A_code = (u8) E_row_value; /* $FF1C */
+      H_bits = A_pressed_mask;
+      A_code = (u8) E_row_value;
       do {
         A_code -= 8;
         SRL(H_bits);
-      } while (!carry); /* $FF21 JR NC,$FF1D */
+      } while (!carry);
 
       if (H_bits != 0)
         return 1; /* $FF23 RET NZ: more than one bit held in this row */
 
-      D_key_code = A_code; /* $FF24 */
+      D_key_code = A_code;
     }
 
-    E_row_value--; /* $FF25 DEC E */
-    RLC(B_port_hi); /* $FF26 RLC B */
-  } while (carry); /* $FF28 JR C,$FF12 */
+    E_row_value--;
+    RLC(B_port_hi);
+  } while (carry);
 
   *D_key_code_out = D_key_code; /* $FF2A-$FF2B CP A / RET (Z always set here) */
   return 0;
@@ -2594,13 +2608,13 @@ static u16 advance_key_label_column(u16 DE_screen)
   u8  E;     /* low byte of DE_screen: byte column offset + 32 (was E) */
   u8  D;     /* high byte of DE_screen: pixel row within third (was D) */
 
-  E_sum = (DE_screen & 0xFF) + 32; /* $FF8B-$FF8C */
+  E_sum = (DE_screen & 0xFF) + 32;
   carry = E_sum > 0xFF;
-  E     = (u8) E_sum; /* $FF8E */
+  E     = (u8) E_sum;
 
   D = (u8) (DE_screen >> 8);
-  if (carry) /* $FF8F RET NC */
-    D += 8; /* $FF90-$FF93 */
+  if (carry)
+    D += 8;
 
   return (u16) ((D << 8) | E);
 }
@@ -2642,42 +2656,42 @@ static void read_new_key_definition(chqstate_t *state, u16 *DE_screen,
 
 rescan:
   for (;;) {
-    service_sound_and_loop_tune0(state); /* $FF2E CALL $FBC8 */
+    service_sound_and_loop_tune0(state);
 
-    ambiguous = scan_keyboard_matrix(state, &D_key_code); /* $FF31 CALL $FF0C */
-    if (ambiguous) /* $FF34 JR NZ,$FF2E */
+    ambiguous = scan_keyboard_matrix(state, &D_key_code);
+    if (ambiguous)
       continue;
 
-    if (D_key_code == 0xFF) /* $FF36 INC D / $FF37 JR Z,$FF2E */
+    if (D_key_code == 0xFF)
       continue;
 
     break;
   }
-  A_key_code = D_key_code; /* $FF39-$FF3A DEC D / LD A,D */
+  A_key_code = D_key_code;
 
-  B_dup_count = (u8) (C_control_index - 1); /* $FF40-$FF41 LD B,C / DEC B */
-  for (dup_i = 0; dup_i < B_dup_count; dup_i++) { /* $FF42 JR Z,$FF4A */
-    if (A_key_code == state->control_keys[dup_i]) /* $FF44 CP (HL) */
+  B_dup_count = (u8) (C_control_index - 1);
+  for (dup_i = 0; dup_i < B_dup_count; dup_i++) {
+    if (A_key_code == state->control_keys[dup_i])
       goto rescan; /* $FF45 JR Z,$FF2E: duplicate -- rescan */
   }
 
-  state->control_keys[C_control_index - 1] = A_key_code; /* $FF4C-$FF52 */
+  state->control_keys[C_control_index - 1] = A_key_code;
 
-  index_bytes = 10 * (A_key_code & 0x07) + 2 * (A_key_code >> 3); /* $FF53-$FF68 */
-  char0 = control_key_names[index_bytes];           /* $FF71 */
-  char1 = control_key_names[index_bytes + 1] | EOS; /* $FF76-$FF77 */
+  index_bytes = 10 * (A_key_code & 0x07) + 2 * (A_key_code >> 3);
+  char0 = control_key_names[index_bytes];
+  char1 = control_key_names[index_bytes + 1] | EOS;
 
   state->options_key_string[0] = 0xC7; /* Conv: fixed constant resident at
                                          * $FD97; never rewritten by this
                                          * routine (see key-name-table
                                          * comment in the skool). */
-  setwordat(&state->options_key_string[1], *DE_screen); /* $FF6D LD ($FD98),DE */
-  state->options_key_string[3] = char0; /* $FF72 */
-  state->options_key_string[4] = char1; /* $FF79 */
-  print_character(state, &state->options_key_string[0]); /* $FF7C-$FF7F */
+  setwordat(&state->options_key_string[1], *DE_screen);
+  state->options_key_string[3] = char0;
+  state->options_key_string[4] = char1;
+  print_character(state, &state->options_key_string[0]);
 
-  *DE_screen = advance_key_label_column(*DE_screen); /* $FF82-$FF83 */
-  if (B_remaining == 4) /* $FF87-$FF88 */
+  *DE_screen = advance_key_label_column(*DE_screen);
+  if (B_remaining == 4)
     *DE_screen = advance_key_label_column(*DE_screen); /* $FF8A: mid-list row wrap */
 }
 
@@ -2720,53 +2734,53 @@ static void redefine_keys_screen(chqstate_t *state)
   u8  B_shocked_i;     /* "SHOCKED"+ENTER compare loop index (was B) */
 
   for (;;) {
-    clear_options_screen(state); /* $FEA9 CALL $FE7F */
+    clear_options_screen(state);
 
     print_string(state, &options_menu_text[114]); /* $FEAC-$FEAF: header +
                                                     * GEAR/ACCELERATE/BRAKE */
-    service_sound_and_loop_tune0(state); /* $FEB2 CALL $FBC8 */
+    service_sound_and_loop_tune0(state);
     print_string(state, &options_menu_text[160]); /* $FEB5-$FEB8:
                                                     * LEFT/RIGHT/QUIT/PAUSE/TURBO */
 
     state->speccy->draw(state->speccy, &playfield_box); /* Conv: added */
 
-    DE_screen       = 0x48D6; /* $FEBB LD DE,$48D6 */
+    DE_screen       = 0x48D6;
     B_remaining     = 8;      /* $FEBE LD BC,$0801: B half */
     C_control_index = 1;      /* $FEBE LD BC,$0801: C half */
 
     do {
       do {
-        service_sound_and_loop_tune0(state); /* $FEC4 CALL $FBC8 */
+        service_sound_and_loop_tune0(state);
 
-        A_key_mask = (u8) (~state->speccy->in(state->speccy, port_KEYBOARD_12345) & 0x1F); /* $FECA-$FECE */
+        A_key_mask = (u8) (~state->speccy->in(state->speccy, port_KEYBOARD_12345) & 0x1F);
       } while (A_key_mask != 0); /* $FED0 JR NZ,$FEC1: wait for keys "1"-"5" to be released */
 
-      read_new_key_definition(state, &DE_screen, B_remaining, C_control_index); /* $FED2 CALL $FF2C */
+      read_new_key_definition(state, &DE_screen, B_remaining, C_control_index);
 
-      C_control_index++; /* $FED5 INC C */
-    } while (--B_remaining != 0); /* $FED7 DJNZ $FEC1 */
+      C_control_index++;
+    } while (--B_remaining != 0);
 
-    B_wait = 0x14; /* $FED9 LD B,$14 */
+    B_wait = 0x14;
     do {
-      service_sound_and_loop_tune0(state); /* $FEDC CALL $FBC8 */
-    } while (--B_wait != 0); /* $FEE0 DJNZ $FEDB */
+      service_sound_and_loop_tune0(state);
+    } while (--B_wait != 0);
 
-    for (B_shocked_i = 0; B_shocked_i < 8; B_shocked_i++) { /* $FEE2-$FEEF */
-      if (state->control_keys[B_shocked_i] != shocked_keydef_sequence[B_shocked_i]) /* $FEEA-$FEEC */
+    for (B_shocked_i = 0; B_shocked_i < 8; B_shocked_i++) {
+      if (state->control_keys[B_shocked_i] != shocked_keydef_sequence[B_shocked_i])
         return; /* $FEEE RET NZ: mismatch -- ordinary case, keep the new mapping */
     }
 
-    state->test_mode = 1; /* $FEF1-$FEF3 */
+    state->test_mode = 1;
 
-    clear_options_screen(state); /* $FEF6 CALL $FE7F */
+    clear_options_screen(state);
     print_string(state, &options_menu_text[199]); /* $FEF9-$FEFC: test-mode confirmation text */
 
     state->speccy->draw(state->speccy, &playfield_box); /* Conv: added */
 
     do {
-      service_sound_and_loop_tune0(state); /* $FEFF CALL $FBC8 */
+      service_sound_and_loop_tune0(state);
 
-      A_key_mask = (u8) (~state->speccy->in(state->speccy, port_KEYBOARD_12345) & 0x1F); /* $FF02-$FF06 */
+      A_key_mask = (u8) (~state->speccy->in(state->speccy, port_KEYBOARD_12345) & 0x1F);
     } while (A_key_mask == 0); /* $FF08 JR Z,$FEFF: wait for any key */
   }
 }
@@ -2781,10 +2795,10 @@ static void redefine_keys_screen(chqstate_t *state)
  */
 static void service_sound_and_loop_tune0(chqstate_t *state)
 {
-  sfx_music_service(state); /* $FBC8 CALL $F82F */
+  sfx_music_service(state);
 
-  if (!state->title_music.tune_active) /* $FBCB-$FBCF LD A,($F223); AND A; RET NZ */
-    start_tune_and_sfx_table(state, 0); /* $FBD0 XOR A / $FBD1 JP $F7D6 */
+  if (!state->title_music.tune_active)
+    start_tune_and_sfx_table(state, 0);
 }
 
 /**
@@ -2807,21 +2821,21 @@ static u8 detect_kempston_joystick(chqstate_t *state)
   u8  C_baseline;  /* first Kempston sample (was C) */
   u8  A_sample;    /* current Kempston sample (was A) */
 
-  A_sample   = state->speccy->in(state->speccy, port_KEMPSTON_JOYSTICK); /* $FC16 */
-  C_baseline = A_sample; /* $FC18 LD C,A */
+  A_sample   = state->speccy->in(state->speccy, port_KEMPSTON_JOYSTICK);
+  C_baseline = A_sample;
 
-  B_count = 0x14; /* $FC14 LD B,$14 */
+  B_count = 0x14;
   do {
-    A_sample = state->speccy->in(state->speccy, port_KEMPSTON_JOYSTICK); /* $FC19 */
-    if (A_sample != C_baseline) /* $FC1B CP C / $FC1C JR NZ,$FBAB */
+    A_sample = state->speccy->in(state->speccy, port_KEMPSTON_JOYSTICK);
+    if (A_sample != C_baseline)
       return 0;
 
-    service_sound_and_loop_tune0(state); /* $FC1E PUSH BC / $FC1F CALL $FBC8 / $FC22 POP BC */
+    service_sound_and_loop_tune0(state);
     state->speccy->sleep(state->speccy, STANDARD_SLEEP);
     state->speccy->stamp(state->speccy);
-  } while (--B_count); /* $FC23 DJNZ $FC19 */
+  } while (--B_count);
 
-  return 1; /* $FC25 LD A,$01 / $FC27 JR $FBE5 */
+  return 1;
 }
 
 /**
@@ -2877,28 +2891,28 @@ static const u8 *print_character(chqstate_t *state, const u8 *HL_record)
   u8        *DEscreen;     /* pixel destination for this glyph (was DE) */
   int        row;          /* row loop counter; no Z80 equivalent (Conv: rolled) */
 
-  C_byte0     = *HL_record;           /* $FDA4-$FDA9 */
+  C_byte0     = *HL_record;
   C_colour    = C_byte0 & 0x7F;
   A_style_bit = (C_byte0 >> 7) & 1;
 
-  E_screen = HL_record[1]; /* $FDAA-$FDAE */
+  E_screen = HL_record[1];
   D_screen = HL_record[2];
   HL_record += 3;
 
-  H_attr = (u8) (0x58 + ((D_screen >> 3) & 0x03)); /* $FDB0-$FDB9 */
+  H_attr = (u8) (0x58 + ((D_screen >> 3) & 0x03));
   L_attr = E_screen;
 
   HLshape = HL_record; /* // EXX / EX (SP),HL - bank ($FDBA-$FDBB) */
 
   do {
-    A_metric = *HLshape & 0x7F; /* $FDBE-$FDBF */
+    A_metric = *HLshape & 0x7F;
 
     if (A_metric == 0x20) {
       /* $FDD1-$FDD9: space */
       E_screen++;
       L_attr++;
     } else {
-      A_diff = (u8) (A_metric - 0x20); /* $FDD1 */
+      A_diff = (u8) (A_metric - 0x20);
 
       /* $FDDA-$FDFE classification ladder */
       if (A_diff >= 0x21) {
@@ -2917,13 +2931,13 @@ static const u8 *print_character(chqstate_t *state, const u8 *HL_record)
         C_class = 4;
       }
 
-      HLfont = &font[C_class * 7]; /* $FDFE-$FE0C */
+      HLfont = &font[C_class * 7];
 
       /* $FE0D-$FE11: shared destination snapshot for both branches below. */
       DEscreen = ADDRTOSCREEN((D_screen << 8) | E_screen);
       E_screen++;
 
-      if (!A_style_bit) { /* $FE12-$FE15 */
+      if (!A_style_bit) {
         /* $FE16-$FE4E: double-height, 7 font bytes -> 15 rows */
         for (row = 0; row < 4; row++) { /* Conv: rolled */
           *DEscreen = *HLfont;
@@ -2949,9 +2963,9 @@ static const u8 *print_character(chqstate_t *state, const u8 *HL_record)
         }
         *DEscreen = 0; /* $FE4D-$FE4E: final row always blank */
 
-        *ADDRTOATTRS((H_attr << 8) | L_attr) = C_colour | ATTR_BRIGHT; /* $FE50-$FE53 */
-        *ADDRTOATTRS((H_attr << 8) | (u8) (L_attr + 0x20)) = C_colour & ~ATTR_BRIGHT; /* $FE54-$FE5A */
-        L_attr++; /* $FE5B-$FE5C */
+        *ADDRTOATTRS((H_attr << 8) | L_attr) = C_colour | ATTR_BRIGHT;
+        *ADDRTOATTRS((H_attr << 8) | (u8) (L_attr + 0x20)) = C_colour & ~ATTR_BRIGHT;
+        L_attr++;
       } else {
         /* $FE5F-$FE78: single-height, 7 font bytes, one row each */
         for (row = 0; row < 7; row++) { /* Conv: rolled */
@@ -2959,16 +2973,16 @@ static const u8 *print_character(chqstate_t *state, const u8 *HL_record)
           DEscreen += 256;
         }
 
-        *ADDRTOATTRS((H_attr << 8) | L_attr) = C_colour; /* $FE7B */
-        L_attr++; /* $FE7C */
+        *ADDRTOATTRS((H_attr << 8) | L_attr) = C_colour;
+        L_attr++;
       }
     }
 
-    A_terminator = *HLshape & 0x80; /* $FDC6 */
-    HLshape++; /* $FDC8 */
-  } while (!A_terminator); /* $FDC9 */
+    A_terminator = *HLshape & 0x80;
+    HLshape++;
+  } while (!A_terminator);
 
-  return HLshape; /* $FDCB-$FDD0 */
+  return HLshape;
 }
 
 /**
@@ -2985,8 +2999,8 @@ static const u8 *print_character(chqstate_t *state, const u8 *HL_record)
 static void print_string(chqstate_t *state, const u8 *HLstring)
 {
   for (;;) {
-    HLstring = print_character(state, HLstring); /* $FD9C CALL $FDA4 */
-    if (*HLstring == 0) /* $FD9F-$FDA1 */
+    HLstring = print_character(state, HLstring);
+    if (*HLstring == 0)
       return;
   }
 }
@@ -3012,13 +3026,13 @@ static void print_string(chqstate_t *state, const u8 *HLstring)
  */
 static void clear_options_screen(chqstate_t *state)
 {
-  memset(ADDRTOATTRS(0x5900), 0, 0x200); /* $FE7F-$FE8A */
-  service_sound_and_loop_tune0(state); /* $FE8B CALL $FBC8 */
+  memset(ADDRTOATTRS(SCREEN_PLAYFIELD_ATTRS_ADDR), 0, 0x200);
+  service_sound_and_loop_tune0(state);
 
-  memset(ADDRTOSCREEN(0x4800), 0, 0x1000); /* $FE8E-$FEA5 */
-  service_sound_and_loop_tune0(state); /* $FE9C CALL $FBC8 */
+  memset(ADDRTOSCREEN(SCREEN_PLAYFIELD_BITMAP_ADDR), 0, 0x1000);
+  service_sound_and_loop_tune0(state);
 
-  service_sound_and_loop_tune0(state); /* $FEA6 JP $FBC8 (tail call) */
+  service_sound_and_loop_tune0(state); /* tail call */
 }
 
 /**
@@ -3058,20 +3072,20 @@ static void clear_options_screen(chqstate_t *state)
  */
 static u8 omd_redraw_and_poll(chqstate_t *state)
 {
-  static const zxbox_t playfield_box = { /* lower two-thirds of screen */
+  static const zxbox_t playfield_box = {
     0, 0, SCREEN_WIDTH, PLAYFIELD_HEIGHT
   };
 
-  u8         A_key_mask;      /* keys "1".."5" pressed bitmask, bit0=key"1"..
-                                * bit3=key"4" (was A) */
-  const u8  *HL_ctrl_list;    /* joystick key-list source, list A or B (was HL) */
-  u8         A_flag;          /* input-method flag written to the active-
-                                * config header byte: 0 = joystick/keyboard
-                                * scheme installed normally, 1 = no Kempston
-                                * joystick detected (was A) */
+  u8        A_key_mask;   /* keys "1".."5" pressed bitmask, bit0=key"1"..
+                           * bit3=key"4" (was A) */
+  const u8 *HL_ctrl_list; /* joystick key-list source, list A or B (was HL) */
+  u8        A_flag;       /* input-method flag written to the active-
+                           * config header byte: 0 = joystick/keyboard
+                           * scheme installed normally, 1 = no Kempston
+                           * joystick detected (was A) */
 
-redraw: /* $FBA2 */
-  clear_options_screen(state); /* $FBA2 CALL $FE7F */
+redraw:
+  clear_options_screen(state);
 
   print_string(state, &options_menu_text[0]); /* $FBA5-$FBA8: "ENTER OPTION" /
                                                 * P1-P5 control-scheme list. */
@@ -3081,59 +3095,57 @@ redraw: /* $FBA2 */
 poll: /* $FBAB omd_service_and_read_keys */
   do {
     state->speccy->stamp(state->speccy);
-    service_sound_and_loop_tune0(state); /* $FBAB CALL $FBC8 */
+    service_sound_and_loop_tune0(state);
 
-    A_key_mask = (u8) (~state->speccy->in(state->speccy, port_KEYBOARD_12345) & 0x1F); /* $FBAE-$FBB3 */
+    A_key_mask = (u8) (~state->speccy->in(state->speccy, port_KEYBOARD_12345) & 0x1F);
 
-    if (A_key_mask == 0) /* $FBB5 JR Z,$FBAB */
+    if (A_key_mask == 0)
       state->speccy->sleep(state->speccy, STANDARD_SLEEP);
   } while (A_key_mask == 0);
 
   if (A_key_mask & 0x01) { /* $FBB7/$FBB8: key "1" -> Sinclair joystick */
-    HL_ctrl_list = sinclair_joystick_keys; /* $FBD4 LD HL,$FFE5 */
+    HL_ctrl_list = sinclair_joystick_keys;
     goto install_joystick_keys;
   }
   if (A_key_mask & 0x02) { /* $FBBA/$FBBB: key "2" -> Cursor joystick */
-    HL_ctrl_list = cursor_joystick_keys; /* $FBD9 LD HL,$FFEA */
+    HL_ctrl_list = cursor_joystick_keys;
     goto install_joystick_keys;
   }
   if (A_key_mask & 0x04) { /* $FBBD/$FBBE: key "3" -> Kempston detect */
-    if (!detect_kempston_joystick(state)) /* $FC14 */
+    if (!detect_kempston_joystick(state))
       goto poll; /* $FC1C JR NZ,$FBAB: joystick activity seen, poll again */
-    A_flag = 1; /* $FC25 LD A,$01 */
+    A_flag = 1;
     goto shared_tail;
   }
   if (A_key_mask & 0x08) { /* $FBC0/$FBC1: key "4" -> keyboard, inline */
-    A_flag = 0; /* $FBE4 XOR A */
+    A_flag = 0;
     goto shared_tail;
   }
 
   /* $FBC3: key "5" (default, falls through unbranched) -> "DEFINE KEYS" */
-  redefine_keys_screen(state); /* $FBC3 CALL $FEA9 */
-  goto redraw; /* $FBC6 JR $FBA2 */
+  redefine_keys_screen(state);
+  goto redraw;
 
 install_joystick_keys:
-  memcpy(state->control_keys, HL_ctrl_list, 5); /* $FBDC LD DE,$FFF7 /
-                                                  * $FBDF LD BC,$0005 /
-                                                  * $FBE2 LDIR */
-  A_flag = 0; /* $FBE4 XOR A */
+  memcpy(state->control_keys, HL_ctrl_list, 5);
+  A_flag = 0;
 
-shared_tail: /* $FBE5 */
+shared_tail:
   /* TODO: install the active-control-config header at ($8008): write
    * A_flag, then copy control_keys[5..7] (quit/pause/turbo) followed by
    * control_keys[0..4] (gear/accelerate/brake/left/right) into a 9-byte
    * destination -- $FBE5-$FBF8. Needs a real design once the gameplay
    * input reader that consumes this is ported; not modelled yet. */
 
-  clear_options_screen(state); /* $FBFA CALL $FE7F */
+  clear_options_screen(state);
 
   state->speccy->draw(state->speccy, &playfield_box); /* Conv: added */
 
   do {
     state->speccy->stamp(state->speccy);
-    service_sound_and_loop_tune0(state); /* $FBFD CALL $FBC8 */
+    service_sound_and_loop_tune0(state);
 
-    A_key_mask = (u8) (~state->speccy->in(state->speccy, port_KEYBOARD_12345) & 0x1F); /* $FC00-$FC04 */
+    A_key_mask = (u8) (~state->speccy->in(state->speccy, port_KEYBOARD_12345) & 0x1F);
 
     if (A_key_mask != 0) /* $FC06 JR NZ,$FBFD: debounce -- wait for the
                           * selection key to be released before proceeding */
@@ -3143,7 +3155,7 @@ shared_tail: /* $FBE5 */
   /* TODO: CALL stop_music_and_silence ($ED0B) -- AY driver internals not
    * yet wired up (see start_tune_and_sfx_table). */
 
-  state->controls_selected = 1; /* $FC0B LD A,$01 / $FC0D LD ($8001),A */
+  state->controls_selected = 1;
 
   /* $FC10 DI: omitted -- SDL owns interrupt delivery, matching every other
    * DI/EI site in this file (see ts_wait_loop's prologue). */
@@ -3171,8 +3183,8 @@ shared_tail: /* $FBE5 */
  */
 static u8 options_menu_driver(chqstate_t *state)
 {
-  setup_im2_interrupt_table(state);   /* $FB99 CALL $F7AA */
-  start_tune_and_sfx_table(state, 0); /* $FB9C XOR A / $FB9D CALL $F7D6 */
+  setup_im2_interrupt_table(state);
+  start_tune_and_sfx_table(state, 0);
 
   state->speccy->stamp(state->speccy); /* $FBA0 EI / $FBA1 HALT: sync to the
                                          * next interrupt before entering the
@@ -3216,7 +3228,7 @@ static void boot_and_run_sound_loop(chqstate_t *state)
   B_wait = BASL_JINGLE_FRAMES;
   do {
     state->speccy->stamp(state->speccy);
-    sfx_music_service(state); /* $F7D1 CALL $F82F */
+    sfx_music_service(state);
     state->speccy->sleep(state->speccy, STANDARD_SLEEP);
   } while (--B_wait);
 }
