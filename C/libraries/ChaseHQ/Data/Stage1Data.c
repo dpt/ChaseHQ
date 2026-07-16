@@ -3212,7 +3212,7 @@ static const struct { u16 z80; const void *ptr; } stage1_map_goto_table[] = {
   { 0x6314, &stage1_map_loop_rightobjs[0]    },
 };
 
-const void *stage1_lookup_map_goto(chqstate_t *state, u16 z80)
+const void *stage1_lookup_map_goto(u16 z80)
 {
   int lo, hi, mid;
 

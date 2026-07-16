@@ -2972,7 +2972,7 @@ static const struct { u16 z80; const void *ptr; } stage2_map_goto_table[] = {
   { 0x639B, &stage2_map_robjs_E79B[0] },
 };
 
-const void *stage2_lookup_map_goto(chqstate_t *state, u16 z80)
+const void *stage2_lookup_map_goto(u16 z80)
 {
   int lo, hi, mid;
 

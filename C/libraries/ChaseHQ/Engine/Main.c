@@ -616,9 +616,9 @@ static u16 prev_buf_row(int backbuf)
  * This is for mapping addresses that I've decided to leave in-place for the
  * time being.
  */
-static const void *lookup_map_goto(chqstate_t *state, int z80)
+static const void *lookup_map_goto(int current_stage_number, int z80)
 {
-  static const void *(*const stage_lookup_fns[])(chqstate_t *, u16) = {
+  static const void *(*const stage_lookup_fns[])(u16) = {
     stage1_lookup_map_goto,
     stage2_lookup_map_goto,
     stage3_lookup_map_goto,
@@ -638,9 +638,9 @@ static const void *lookup_map_goto(chqstate_t *state, int z80)
   case 0xE2CC: return &forked_road_height[0];
   case 0xE2D1: return &forked_road_lanes[0];
   default:
-    assert(state->current_stage_number >= 1 &&
-           state->current_stage_number <= (int)NELEMS(stage_lookup_fns));
-    return stage_lookup_fns[state->current_stage_number - 1](state, z80);
+    assert(current_stage_number >= 1 &&
+           current_stage_number <= (int)NELEMS(stage_lookup_fns));
+    return stage_lookup_fns[current_stage_number - 1](z80);
   }
 }
 
@@ -12573,17 +12573,17 @@ static void exit_fork(chqstate_t *state)
     state->scenedata.road_leftside_ptr  = forked_road_exit_rightobjs - 1;
     state->scenedata.road_rightside_ptr = forked_road_exit_leftobjs - 1;
     state->scenedata.road_lanes_ptr     = forked_road_exit_right_lanes - 1;
-    state->rm_curvature_fork_end_ptr = lookup_map_goto(state,
+    state->rm_curvature_fork_end_ptr = lookup_map_goto(state->current_stage_number,
       state->rm_rightfork_curve);
-    state->rm_height_fork_end_ptr    = lookup_map_goto(state,
+    state->rm_height_fork_end_ptr    = lookup_map_goto(state->current_stage_number,
       state->rm_rightfork_height);
-    state->rm_lanes_fork_end_ptr     = lookup_map_goto(state,
+    state->rm_lanes_fork_end_ptr     = lookup_map_goto(state->current_stage_number,
       state->rm_rightfork_lanes);
-    state->rm_hazards_fork_end_ptr   = lookup_map_goto(state,
+    state->rm_hazards_fork_end_ptr   = lookup_map_goto(state->current_stage_number,
       state->rm_rightfork_hazards);
-    state->rm_rightside_fork_end_ptr = lookup_map_goto(state,
+    state->rm_rightside_fork_end_ptr = lookup_map_goto(state->current_stage_number,
       state->rm_rightfork_rightside);
-    state->rm_leftside_fork_end_ptr  = lookup_map_goto(state,
+    state->rm_leftside_fork_end_ptr  = lookup_map_goto(state->current_stage_number,
       state->rm_rightfork_leftside);
     // Conv: Z80 $BBCA LD A,$20; maps to ROADBUF_LANES_OFFSET + 32 = ROADBUF_RIGHTOBJS_OFFSET
     C_obj_offset = 32;
@@ -12594,17 +12594,17 @@ static void exit_fork(chqstate_t *state)
     state->scenedata.road_leftside_ptr  = forked_road_exit_leftobjs - 1;
     state->scenedata.road_rightside_ptr = forked_road_exit_rightobjs - 1;
     state->scenedata.road_lanes_ptr     = forked_road_exit_left_lanes - 1;
-    state->rm_curvature_fork_end_ptr = lookup_map_goto(state,
+    state->rm_curvature_fork_end_ptr = lookup_map_goto(state->current_stage_number,
       state->rm_leftfork_curve);
-    state->rm_height_fork_end_ptr    = lookup_map_goto(state,
+    state->rm_height_fork_end_ptr    = lookup_map_goto(state->current_stage_number,
       state->rm_leftfork_height);
-    state->rm_lanes_fork_end_ptr     = lookup_map_goto(state,
+    state->rm_lanes_fork_end_ptr     = lookup_map_goto(state->current_stage_number,
       state->rm_leftfork_lanes);
-    state->rm_hazards_fork_end_ptr   = lookup_map_goto(state,
+    state->rm_hazards_fork_end_ptr   = lookup_map_goto(state->current_stage_number,
       state->rm_leftfork_hazards);
-    state->rm_rightside_fork_end_ptr = lookup_map_goto(state,
+    state->rm_rightside_fork_end_ptr = lookup_map_goto(state->current_stage_number,
       state->rm_leftfork_rightside);
-    state->rm_leftside_fork_end_ptr  = lookup_map_goto(state,
+    state->rm_leftside_fork_end_ptr  = lookup_map_goto(state->current_stage_number,
       state->rm_leftfork_leftside);
     // Conv: Z80 $BB9D LD A,$40; maps to ROADBUF_LANES_OFFSET + 64 = ROADBUF_LEFTOBJS_OFFSET
     C_obj_offset = 64;
@@ -13060,7 +13060,7 @@ static void rm_cycle_buffer_offset(chqstate_t *state, u8 *HLfast_counter)
         }
       } else {
         // $BE71 - Goto command (0)
-        DE_curve_ptr = lookup_map_goto(state, wordat(DE_curve_ptr));
+        DE_curve_ptr = lookup_map_goto(state->current_stage_number, wordat(DE_curve_ptr));
       }
 
       // $BE75
@@ -13110,7 +13110,7 @@ static void rm_cycle_buffer_offset(chqstate_t *state, u8 *HLfast_counter)
         }
       } else {
         // $BEC3 - Goto command (0)
-        DE_height_ptr = lookup_map_goto(state, wordat(DE_height_ptr));
+        DE_height_ptr = lookup_map_goto(state->current_stage_number, wordat(DE_height_ptr));
       }
 
       // $BEC7
@@ -13157,7 +13157,7 @@ static void rm_cycle_buffer_offset(chqstate_t *state, u8 *HLfast_counter)
         }
       } else {
         // $BF0E - Goto command (0)
-        DE_lanes_ptr = lookup_map_goto(state, wordat(DE_lanes_ptr));
+        DE_lanes_ptr = lookup_map_goto(state->current_stage_number, wordat(DE_lanes_ptr));
       }
 
       // $BF12-$BF13: the reload lands in A_lanes_counter — the Z80 keeps the
@@ -13227,7 +13227,7 @@ static void rm_cycle_buffer_offset(chqstate_t *state, u8 *HLfast_counter)
           }
         } else {
           // $BF88 - Goto command (0)
-          DE_rightside_ptr = lookup_map_goto(state, wordat(DE_rightside_ptr));
+          DE_rightside_ptr = lookup_map_goto(state->current_stage_number, wordat(DE_rightside_ptr));
         }
 
         // $BF8C
@@ -13274,7 +13274,7 @@ static void rm_cycle_buffer_offset(chqstate_t *state, u8 *HLfast_counter)
           }
         } else {
           // $BFD1 - Goto command (0)
-          DE_leftside_ptr = lookup_map_goto(state, wordat(DE_leftside_ptr));
+          DE_leftside_ptr = lookup_map_goto(state->current_stage_number, wordat(DE_leftside_ptr));
         }
 
         // $BFD5
@@ -13359,7 +13359,7 @@ rm_restart_hazards_read: // $BFF3
           }
         } else {
           // $C04A - Goto command (0)
-          DE_hazards_ptr = lookup_map_goto(state, wordat(DE_hazards_ptr));
+          DE_hazards_ptr = lookup_map_goto(state->current_stage_number, wordat(DE_hazards_ptr));
         }
 
         // $C04E: pointer already set up; byte is always regular here

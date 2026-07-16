@@ -546,7 +546,7 @@ static const struct { u16 z80; const void *ptr; } stage6_map_goto_table[] = {
   { 0xC7A5, &rightside[0] },
 };
 
-const void *stage6_lookup_map_goto(chqstate_t *state, u16 z80)
+const void *stage6_lookup_map_goto(u16 z80)
 {
   int lo, hi, mid;
 

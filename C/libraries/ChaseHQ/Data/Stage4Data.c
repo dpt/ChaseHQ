@@ -2623,7 +2623,7 @@ static const struct { u16 z80; const void *ptr; } stage4_map_goto_table[] = {
   { 0x62B7, &stage4_map_robjs_E6B7[0] },
 };
 
-const void *stage4_lookup_map_goto(chqstate_t *state, u16 z80)
+const void *stage4_lookup_map_goto(u16 z80)
 {
   int lo, hi, mid;
 

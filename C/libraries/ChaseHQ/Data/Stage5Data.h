@@ -21,6 +21,6 @@
 #include "Stages.h"
 
 const stage_t stage5;
-const void *stage5_lookup_map_goto(chqstate_t *state, u16 z80);
+const void *stage5_lookup_map_goto(u16 z80);
 
 #endif /* CHASEHQ_STAGE5DATA_H */
