@@ -3,12 +3,13 @@
 ## P1 — Bugs / broken behaviour
 
 - Jittery perp too — check out the whole `perp_behaviour` routine because the perp leaps around when being pursued
+- Perp car in wrong place when caught? Original bug?
 - 48k music routine seizes up
 
-## P2 — Game feel / calibration
+## P2 — Game feel / calibration / timing
 
 - Restart bip-bow ticking twice as fast as it should
-- Beeper sfx: calibrate per-loop T-state constants + pick BEEPER_VOLUME_PCT
+- Beeper sfx: calibrate per-loop T-state constants + pick `BEEPER_VOLUME_PCT`
 - timing: Properly calibrate the game against the original (needs emulator T-state recording)
 
 ## P3 — Incomplete / missing content
@@ -24,7 +25,7 @@
 
 ## P5 — Clarity pass
 
-- Fix "Awidth_bytes" vars which seem to be x coords
+- Fix `Awidth_bytes` vars which seem to be x coords
 - Document expected values/ranges for e.g. xpos arrays
 - Remove Z80 macros where it clarifies
 - Remove any vars which could be local from state
@@ -77,8 +78,11 @@
 
 ## FOR WRITEUP / NOTES
 
+- Explain that it's "Actual C code" designed to be read by humans - not machine generated grot
+- Also it omits unneeded ops - it should be efficient (but nowhere near the original)
 - Document how functions are created from source Z80
 - Add deep dives for each area of the game
 - Discuss black screen edges and overdraw
 - Claude on medium effort + advisor notes
 - Example: creating a whole new stage + backporting to Speccy
+

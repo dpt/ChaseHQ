@@ -1667,6 +1667,7 @@ static void bootstrap(chqstate_t *state)
       longjmp(state->host_quit_jmp, 1);
 
     /* Build a table of flipped bytes at "$EF00" */
+    // It's unclear why this is part of the overall game loop when it's constant.
     carry = 0;
     Cresult = 0; // Conv: Original didn't initialise C
     HLflipped = &state->flipped[0];
@@ -1693,9 +1694,11 @@ static void bootstrap(chqstate_t *state)
     // Reset wanted_stage_number and credits.
     state->wanted_stage_number = 1;
     state->credits = 2;
+
+    // Run the main game loop.
     main_loop(state);
 
-    // Call the 128K/bank 3 ?bootstrap routine.
+    // If in 128K mode, call the 128K/bank 3 high score routine.
     if (state->mode_128k)
       call_bank_3_128k(state, BANK3_HI_SCORE);
   }
