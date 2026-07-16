@@ -14,7 +14,7 @@
 
 ## P3 — Incomplete / missing content
 
-- Complete decoding of all stage data
+- Complete decoding of all stage data (via the level converter script)
 
 ## P4 — Polish / visual correctness
 
@@ -48,6 +48,7 @@
 
 ## IDEAS (backlog)
 
+- VSync
 - Factor the 22 depth levels value out to a constant
 - Scan for type problems
 - Build a tiny test level

@@ -1290,7 +1290,15 @@ static void oss_op_accel_x_c(struct title_object *rec)
  *  - Active dispatch (oss_object_loop, $C70E): when an object's stored
  *    opcode is non-zero, runs one frame's worth of movement for whichever
  *    mode is active, then ticks its wait counter (oss_countdown, $C731),
- *    going idle (opcode -> 0) once it reaches zero.
+ *    going idle (opcode -> 0) once it reaches zero. This tick only happens
+ *    for opcodes $C9-$CF: any other stored opcode (the fetch chain below
+ *    can store one as a fallback) never reaches oss_countdown, so the
+ *    object's wait counter is frozen forever and it can never go idle
+ *    again. This is not a hypothetical edge case -- every one of the 5
+ *    title-screen scenes has an object whose script emits the dead value
+ *    $D1 (see the ctl note at $C705/$CC50), so that object permanently
+ *    stops moving partway through the animation. Faithfully reproduced
+ *    here, not a bug in this port.
  *  - Fetch dispatch (oss_fetch_opcode/_cont, $C740/$C746): when idle, reads
  *    script bytes until it hits a mode-setting opcode. Bytes with the sign
  *    bit clear ($00-$7F) are immediate 2-axis step deltas applied at once
@@ -1347,6 +1355,8 @@ static void object_script_step(chqstate_t *state)
   u8                   A_byte;    /* fetched script byte (was A) */
   s8                   A_x_delta; /* immediate-step X delta (was A) */
   s8                   A_y_delta; /* immediate-step Y delta (was A) */
+  int                  recognized; /* true if rec->opcode is $C9-$CF (was Z
+                                     * flag out of the $C72E DEC-chain) */
 
   for (obj = 0; obj < 9; obj++) {
     rec = &state->title_objects[obj];
@@ -1436,6 +1446,7 @@ static void object_script_step(chqstate_t *state)
       }
 
       /* $C70E-$C72F oss_object_loop: active-mode dispatch. */
+      recognized = 1;
       switch (rec->opcode) {
         case 0xC9: oss_op_velocity(rec);  break;
         case 0xCA: oss_op_decel_x(rec);   break;
@@ -1443,15 +1454,26 @@ static void object_script_step(chqstate_t *state)
         case 0xCC: oss_op_accel_x_a(rec); break;
         case 0xCD: oss_op_accel_x_c(rec); break;
         case 0xCE: oss_op_accel_x_b(rec); break;
-        default: break; /* 0xCF ("wait") and any fallback opcode: no
-                         * per-frame movement of its own -- falls straight
-                         * to the countdown below */
+        case 0xCF: break; /* "wait": no per-frame movement of its own --
+                           * falls straight to the countdown below */
+        default:
+          /* $C72F JR NZ,$C73B: any opcode outside $C9-$CF (e.g. the dead
+           * value $D1 emitted by every title scene's object 0 script --
+           * see this function's own prologue and the ctl note at $C705)
+           * never reaches oss_countdown, so the object's wait counter is
+           * never decremented and it can never go idle again. A genuine
+           * original-game quirk, faithfully reproduced -- not a bug in
+           * this port. */
+          recognized = 0;
+          break;
       }
 
-      /* $C731-$C737 oss_countdown: tick the wait counter; go idle (so the
-       * next frame re-fetches) once it reaches 0. */
-      if (--rec->wait == 0)
-        rec->opcode = 0;
+      if (recognized) {
+        /* $C731-$C737 oss_countdown: tick the wait counter; go idle (so the
+         * next frame re-fetches) once it reaches 0. */
+        if (--rec->wait == 0)
+          rec->opcode = 0;
+      }
 
       break; /* $C73B oss_next_object: move on to the next object */
     }
@@ -2102,16 +2124,9 @@ static void clear_and_fill_border_attrs(chqstate_t *state)
  *
  * \param[in,out] state Pointer to game state.
  *
- * Conv: $C5A2-$C602 (scene-table pick and object-array population) is
- * stubbed as a TODO, per scope decision -- the five scene tables
- * ($CCB7/$CD4F/$CF10/$CFCD/$D16C) and the object-animation script
- * interpreter do not exist in the C port yet, and drawing/animation is out
- * of scope for this task (the same decision that stubbed ts_animate_frame).
- * The screen clear ($C8A9, clear_and_fill_border_attrs) and the overlay text
- * ($FDA4, print_character) are both ported and called below. The
- * self-modified scene selector operand at $C5A2 is part of the stubbed
- * mechanism; see the TODO in ts_wait_loop where the "any key" restart path
- * reseeds it.
+ * Conv: the self-modified scene-selector operand at $C5A2 is modelled as
+ * state->title_scene_selector; see the TODO in ts_wait_loop where the "any
+ * key" restart path reseeds it.
  *
  * Conv: signature is `void`, not `u8`, even though $FBA2 (fire pressed) is a
  * real early-exit path in the Z80. It stays `void`: ts_wait_loop's fire-key
