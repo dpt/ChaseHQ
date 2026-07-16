@@ -20,7 +20,7 @@ produces, so it can never collide with real stage data.
 
 ## Byte value design
 
-Verified directly against the source (`ChaseHQ.c:13918-14208`), not just the
+Verified directly against the source (`Main.c:13918-14208`), not just the
 `Stages.h` decode comment:
 
 - Bit 7 must be **0** — this is what makes `dr_read_lanes` render the road at
@@ -58,7 +58,7 @@ Add stream macros after `MAP_LANES_3RTO2R(D)` (~line 238):
 #define MAP_LANES_3RTO2M(D)             (D), (MAP_LANES_3RTO2M_VAL)
 ```
 
-## 2. `ChaseHQ.c`: `draw_road_lanes_change` (~line 13918)
+## 2. `Main.c`: `draw_road_lanes_change` (~line 13918)
 
 **Geometry.** For both new shapes the fixed edge is the one already passed
 in (`H_left_hand_table_hi = offset + 0xE7`, the 2-lane endpoint's own left
@@ -174,7 +174,7 @@ bit 1 of the lane byte. `0x3D` (bit7=0, bit1=0) yields the same
 yields the same result as steady `MAP_LANES_2M_VAL`. Both are exactly the
 results wanted for traffic spawning during these transitions.
 
-## 4. Test harness fix — `chq_test_draw_road_lanes_change` (`ChaseHQ.c:19356`)
+## 4. Test harness fix — `chq_test_draw_road_lanes_change` (`Main.c:19356`)
 
 This wrapper currently hardcodes `0xEC` for `H_left_hand_table_hi`
 regardless of `lane_flags`:

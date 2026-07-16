@@ -19,7 +19,7 @@
  *   cmake --build cmake-build-debug --target StretchyRenderer
  *
  * ponytail: --index is capped at 6, not the nominal 9 the assert in
- * draw_scene_objects allows (ChaseHQ.c:3929). addrof_{left,right}_hand_
+ * draw_scene_objects allows (Main.c:3929). addrof_{left,right}_hand_
  * objects arrays are sized per stage with no length field, and several
  * stages' tables are shorter than 9 entries (checked empirically: 7-9
  * overflows on stage 2-5 under ASan). Raise the cap only alongside a real
@@ -105,7 +105,7 @@ static chqstate_t *make_state(int stage)
 }
 
 /*
- * Reproduce draw_scene_objects' index arithmetic (ChaseHQ.c:3819-3880):
+ * Reproduce draw_scene_objects' index arithmetic (Main.c:3819-3880):
  * IXtable_ea00 starts at &xpos_road_centre[88] and is incremented once after
  * the right-hand call and again after the left-hand call, so iteration i's
  * right-hand entry is at 88+2i and its left-hand entry is at 89+2i — not
@@ -117,7 +117,7 @@ static int xpos_index(int row, const char *side)
 }
 
 /* Pick the first row (0..19) satisfying the same "object present" gate
- * draw_scene_objects checks at ChaseHQ.c:3933 before drawing: the high byte
+ * draw_scene_objects checks at Main.c:3933 before drawing: the high byte
  * of the s16 xpos_road_centre entry for this row must be zero. Returns -1
  * if none qualify. */
 static int pick_row(const chqstate_t *state, const char *side)
@@ -142,7 +142,7 @@ static int pick_row(const chqstate_t *state, const char *side)
  */
 /*
  * state->backbuffer uses its own interleave, distinct from the real screen's
- * — see the format comment above update_screen() in ChaseHQ.c:
+ * — see the format comment above update_screen() in Main.c:
  *   screen format: 0b010BBLLLRRRCCCCC (B=band, L=scanline, R=row-group)
  *   buffer format: 0b1111LLLLRRRCCCCC (L=scanline, R=row-group)
  * i.e. the buffer's low nibble is the fine scanline (*256) and the next 3
@@ -268,7 +268,7 @@ int main(int argc, char **argv)
   memset(state->backbuffer, 0xFF, BACKBUFFER_LENGTH);
 
   /* Biterations counts down from 20 (nearest row) to 1 (farthest); row 0 is
-   * the first iteration, so Biterations = 20 - row (ChaseHQ.c:3821-3880). */
+   * the first iteration, so Biterations = 20 - row (Main.c:3821-3880). */
   obj->handler(state, 20 - row, obj->arg,
               &state->xpos_road_centre[xpos_index(row, side)],
               &state->height_table[20 - row]);

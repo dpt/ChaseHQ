@@ -5,7 +5,7 @@
  *   build_height_table → layout_road → draw_road
  *
  * The test binary is built with -DCHQ_TESTS, which exposes thin wrappers
- * around the static functions in ChaseHQ.c via Tests.h.
+ * around the static functions in Main.c via Tests.h.
  *
  * Running:
  *   cmake --build cmake-build-debug --target ChaseHQ_Tests

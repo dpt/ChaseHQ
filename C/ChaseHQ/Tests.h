@@ -3,7 +3,7 @@
  *
  * Test hook declarations — only compiled when CHQ_TESTS is defined.
  *
- * These thin wrappers expose static functions in ChaseHQ.c so that
+ * These thin wrappers expose static functions in Main.c so that
  * the test binary can call them without modifying the production API.
  */
 
@@ -71,7 +71,7 @@ void chq_test_draw_road_lanes_change(chqstate_t *state, u8 lane_flags,
 
 /*
  * draw_stretchy_object_left/right already have external linkage in
- * ChaseHQ.c (they are the real game entry points, not static helpers); they
+ * Main.c (they are the real game entry points, not static helpers); they
  * just have no declaration outside it. Declared here, not in ChaseHQ.h,
  * because only test/tool code needs to call them directly.
  */

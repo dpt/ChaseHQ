@@ -1,7 +1,7 @@
 ---
 name: check-translation
 description: >
-  Audits a named C function in ChaseHQ.c against the skool disassembly and
+  Audits a named C function in Main.c against the skool disassembly and
   applies the project's known Z80→C pitfall checklist. Use after translating
   any new function, or when a function is suspected to contain a translation
   bug. Invoke as /check-translation <function-name>.
@@ -25,7 +25,7 @@ provide a Z80 address instead, locate the C function that covers it.
 
 ### Step 1 — Read the C function
 
-Find and read the function in `C/ChaseHQ/ChaseHQ.c`. Record:
+Find and read the function in `C/ChaseHQ/Main.c`. Record:
 
 - Every local variable declaration, its type (`u8`, `s8`, `int`, `u16*`, …),
   and its `/* was X */` register comment

@@ -195,7 +195,7 @@ state->speccy->out(state->speccy, port_BORDER_EAR_MIC, 0);
 
 **Screen memory access** — Z80 addresses $4000–$57FF are pixel memory; $5800–$5AFF
 are attribute memory. Never use raw pointers to fixed addresses; use the project
-macros from `ChaseHQ.c`:
+macros from `Main.c`:
 
 | Access pattern                                 | C translation                                                               |
 | ---------------------------------------------- | --------------------------------------------------------------------------- |
@@ -244,7 +244,7 @@ that must be added:
 
 ### Step 4 — Output
 
-Emit the complete C function, ready to paste into `ChaseHQ.c`. Then a short
+Emit the complete C function, ready to paste into `Main.c`. Then a short
 section:
 
 ```

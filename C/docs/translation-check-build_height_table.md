@@ -2,7 +2,7 @@
 
 ## Function Overview
 
-The `build_height_table` function in ChaseHQ.c is responsible for building a perspective height lookup table used in road rendering. It translates Z80 assembly code that processes road buffer data to generate height values based on distance and perspective scaling.
+The `build_height_table` function in Main.c is responsible for building a perspective height lookup table used in road rendering. It translates Z80 assembly code that processes road buffer data to generate height values based on distance and perspective scaling.
 
 ## Key Components
 

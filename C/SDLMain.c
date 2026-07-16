@@ -1,5 +1,5 @@
 /**
- * Main.c
+ * SDLMain.c
  *
  * This file is part of "Chase H.Q. in C".
  *

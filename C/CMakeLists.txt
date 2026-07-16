@@ -15,7 +15,7 @@ add_link_options($<$<CONFIG:Debug>:-fsanitize=address>)
 find_package(SDL3 REQUIRED)
 
 set(SOURCE_FILES
-        Main.c
+        SDLMain.c
         ZXSpectrum/Kempston.c
         ZXSpectrum/Kempston.h
         ZXSpectrum/Keyboard.c
@@ -29,7 +29,8 @@ set(SOURCE_FILES
         ZXSpectrum/Spectrum.c
         ZXSpectrum/Spectrum.h
         ZXSpectrum/Z80.h
-        ChaseHQ/ChaseHQ.c
+        ChaseHQ/Bank3.c
+        ChaseHQ/Main.c
         ChaseHQ/ChaseHQ.h
         ChaseHQ/Create.c
         ChaseHQ/Internal.h
@@ -69,7 +70,8 @@ set(TEST_SOURCE_FILES
         ZXSpectrum/Screen.c
         ZXSpectrum/slopay-chip.c
         ZXSpectrum/Spectrum.c
-        ChaseHQ/ChaseHQ.c
+        ChaseHQ/Bank3.c
+        ChaseHQ/Main.c
         ChaseHQ/Create.c
         ChaseHQ/Stages.c
         ChaseHQ/Data/CommonData.c

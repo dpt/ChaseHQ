@@ -49,21 +49,21 @@ cmake --build cmake-build-debug --target ChaseHQ_Tests
 ./cmake-build-debug/ChaseHQ_Tests
 ```
 
-Tests live in `C/Tests/TestDrawRoad.c`. They are built with `-DCHQ_TESTS`, which compiles in thin wrappers at the bottom of `ChaseHQ.c` (inside `#ifdef CHQ_TESTS`) that expose static functions for direct testing. Declarations for those wrappers live in `C/ChaseHQ/Tests.h`. When adding a new test hook, add the wrapper to `ChaseHQ.c` and declare it in `Tests.h`.
+Tests live in `C/Tests/TestDrawRoad.c`. They are built with `-DCHQ_TESTS`, which compiles in thin wrappers at the bottom of `ChaseHQ/Main.c` (inside `#ifdef CHQ_TESTS`) that expose static functions for direct testing. Declarations for those wrappers live in `C/ChaseHQ/Tests.h`. When adding a new test hook, add the wrapper to `ChaseHQ/Main.c` and declare it in `Tests.h`.
 
 ## C Implementation Architecture
 
 ### Entry point and lifecycle
-`C/Main.c` owns the SDL window and event loop. Each frame it calls `chq_main(state->game)`. The public game API is in `C/ChaseHQ/ChaseHQ.h`:
+`C/SDLMain.c` owns the SDL window and event loop. Each frame it calls `chq_main(state->game)`. The public game API is in `C/ChaseHQ/ChaseHQ.h`:
 
 ```
 chq_create → chq_setup → chq_main (repeated) → chq_destroy
 ```
 
 ### Layers
-- **Host** (`C/Main.c`): SDL2 window, event loop, `zxconfig_t` callbacks wired to game
+- **Host** (`C/SDLMain.c`): SDL2 window, event loop, `zxconfig_t` callbacks wired to game
 - **ZX emulation facade** (`C/ZXSpectrum/Spectrum.*`): exposes `in`/`out`/`draw`/`stamp`/`sleep` callbacks; game code never calls SDL directly
-- **Game** (`C/ChaseHQ/ChaseHQ.c`): translation-oriented, heavily commented with Z80 addresses; many TODOs and partial stubs
+- **Game** (`C/ChaseHQ/Main.c`): translation-oriented, heavily commented with Z80 addresses; many TODOs and partial stubs
 - **State** (`C/ChaseHQ/State.h`): `struct chqstate` — the single source of mutable game state, fields ordered by original Z80 memory addresses
 - **Stage data** (`C/ChaseHQ/Stages.h`, `Stage1Data.*`, `CommonData.*`): read-only game tables consumed by game logic
 
@@ -160,7 +160,7 @@ See `C/docs/function_comment_template_example.c` for a worked example.
 
 Once all eight criteria are met, add `[Conv: HQ]` to the end of the first
 line of the prologue (the `$XXXX: name` line). This makes HQ status
-greppable: `grep "\[Conv: HQ\]" ChaseHQ.c`.
+greppable: `grep "\[Conv: HQ\]" ChaseHQ/Main.c`.
 
 ## Verifying translations
 
@@ -353,6 +353,6 @@ All five tests pass.
 
 ## Safe Editing
 
-- Prefer narrow edits in data files or isolated helpers; avoid broad rewrites inside `ChaseHQ/ChaseHQ.c`
+- Prefer narrow edits in data files or isolated helpers; avoid broad rewrites inside `ChaseHQ/Main.c`
 - When modifying `chqstate_t`, update initialisation in `ChaseHQ/Create.c` (`chq_initialise`)
 - When touching `ZXSpectrum/Spectrum.c` locking or dirty-rect code, validate both correctness and host callback behaviour — it is cross-thread glue

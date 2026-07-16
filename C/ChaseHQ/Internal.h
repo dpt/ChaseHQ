@@ -148,6 +148,28 @@
 
 /* ----------------------------------------------------------------------- */
 
+#define STANDARD_SLEEP          (220167) /* calibrated so in-game timer is 60s */
+
+/* Bank 3 (128K) dispatch -- see Bank3.c */
+
+#define BANK3_TITLE_SCREEN      (0xC000)
+#define BANK3_HI_SCORE          (0xC003)
+#define BANK3_SUCCESS_MUSIC     (0xC006)
+#define BANK3_INPUT_SELECTION   (0xC009)
+
+u8 call_bank_3_128k(chqstate_t *state, int HLroutine);
+
+/* ----------------------------------------------------------------------- */
+
+/* Shared with Bank3.c */
+
+u8   *z80addrtoscreen(chqstate_t *state, int addr, int left, int right);
+u8   *z80addrtoattrs(chqstate_t *state, int addr, int left, int right);
+u16   wordat(const u8 *addr);
+void  setwordat(u8 *addr, int value);
+
+/* ----------------------------------------------------------------------- */
+
 typedef void obj_handler_t(chqstate_t *state,
                            int         Biterations,
                            const void *arg,
