@@ -32,6 +32,7 @@ set(SOURCE_FILES
         libraries/ZXSpectrum/Screen.h
         libraries/ZXSpectrum/slopay-chip.c
         libraries/ZXSpectrum/Spectrum.c
+        libraries/ZXSpectrum/Z80.c
         libraries/ChaseHQ/Engine/Bank3.c
         libraries/ChaseHQ/Engine/Main.c
         libraries/ChaseHQ/Engine/Create.c
@@ -76,6 +77,7 @@ set(TEST_SOURCE_FILES
         libraries/ZXSpectrum/Screen.c
         libraries/ZXSpectrum/slopay-chip.c
         libraries/ZXSpectrum/Spectrum.c
+        libraries/ZXSpectrum/Z80.c
         libraries/ChaseHQ/Engine/Bank3.c
         libraries/ChaseHQ/Engine/Main.c
         libraries/ChaseHQ/Engine/Create.c
