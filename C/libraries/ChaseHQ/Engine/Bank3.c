@@ -1923,9 +1923,11 @@ static const u8 *print_character(chqstate_t *state, const u8 *HL_record)
          * this point), landing on (D0, E0+32). The rolled loop above instead
          * advances DEscreen by 256 twice per font byte, so it is already 255
          * bytes further along (D0+8, E0) than the literal register state.
-         * 0xF820, not 0xF81F, is the constant that lands this pointer on the
-         * same (D0, E0+32) target. */
-        DEscreen += 0xF820;
+         * -2016 is the byte delta that lands this pointer on the same
+         * (D0, E0+32) target; 0xF820 (65536-2016) is only equivalent to that
+         * under 16-bit modular register arithmetic, not real pointer
+         * arithmetic, so it must not be added directly to DEscreen. */
+        DEscreen -= 2016;
         for (row = 0; row < 3; row++) { /* Conv: rolled */
           *DEscreen = *HLfont;
           DEscreen += 256;
