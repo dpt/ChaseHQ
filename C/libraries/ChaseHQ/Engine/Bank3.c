@@ -1202,6 +1202,10 @@ static void clear_and_fill_border_attrs(chqstate_t *state)
  */
 static void title_screen_driver(chqstate_t *state)
 {
+  static const zxbox_t playfield_box = { /* lower two-thirds of screen */
+    0, 0, SCREEN_WIDTH, PLAYFIELD_HEIGHT
+  };
+
   for (;;) {
     clear_and_fill_border_attrs(state); /* $C59E CALL $C8A9 */
 
@@ -1233,6 +1237,8 @@ static void title_screen_driver(chqstate_t *state)
                                                                 * ($CC88). */
 
     start_tune_and_sfx_table(state, 0); /* $C618 XOR A / $C619 CALL $F7D6 */
+
+    state->speccy->draw(state->speccy, &playfield_box); /* Conv: added */
 
     state->speccy->stamp(state->speccy); /* $C61C EI / $C61D HALT: sync to
                                            * the next interrupt before
@@ -1689,6 +1695,10 @@ rescan:
  */
 static void redefine_keys_screen(chqstate_t *state)
 {
+  static const zxbox_t playfield_box = { /* lower two-thirds of screen */
+    0, 0, SCREEN_WIDTH, PLAYFIELD_HEIGHT
+  };
+
   u16 DE_screen;       /* current label print position (was DE) */
   u8  B_remaining;     /* controls remaining, counts down from 8 (was B) */
   u8  C_control_index; /* 1-based control index, counts up from 1 (was C) */
@@ -1704,6 +1714,8 @@ static void redefine_keys_screen(chqstate_t *state)
     service_sound_and_loop_tune0(state); /* $FEB2 CALL $FBC8 */
     print_string(state, &options_menu_text[160]); /* $FEB5-$FEB8:
                                                     * LEFT/RIGHT/QUIT/PAUSE/TURBO */
+
+    state->speccy->draw(state->speccy, &playfield_box); /* Conv: added */
 
     DE_screen       = 0x48D6; /* $FEBB LD DE,$48D6 */
     B_remaining     = 8;      /* $FEBE LD BC,$0801: B half */
@@ -1735,6 +1747,8 @@ static void redefine_keys_screen(chqstate_t *state)
 
     clear_options_screen(state); /* $FEF6 CALL $FE7F */
     print_string(state, &options_menu_text[199]); /* $FEF9-$FEFC: test-mode confirmation text */
+
+    state->speccy->draw(state->speccy, &playfield_box); /* Conv: added */
 
     do {
       service_sound_and_loop_tune0(state); /* $FEFF CALL $FBC8 */
@@ -2029,6 +2043,10 @@ static void clear_options_screen(chqstate_t *state)
  */
 static u8 omd_redraw_and_poll(chqstate_t *state)
 {
+  static const zxbox_t playfield_box = { /* lower two-thirds of screen */
+    0, 0, SCREEN_WIDTH, PLAYFIELD_HEIGHT
+  };
+
   u8         A_key_mask;      /* keys "1".."5" pressed bitmask, bit0=key"1"..
                                 * bit3=key"4" (was A) */
   const u8  *HL_ctrl_list;    /* joystick key-list source, list A or B (was HL) */
@@ -2042,6 +2060,8 @@ redraw: /* $FBA2 */
 
   print_string(state, &options_menu_text[0]); /* $FBA5-$FBA8: "ENTER OPTION" /
                                                 * P1-P5 control-scheme list. */
+
+  state->speccy->draw(state->speccy, &playfield_box); /* Conv: added */
 
 poll: /* $FBAB omd_service_and_read_keys */
   do {
@@ -2091,6 +2111,8 @@ shared_tail: /* $FBE5 */
    * input reader that consumes this is ported; not modelled yet. */
 
   clear_options_screen(state); /* $FBFA CALL $FE7F */
+
+  state->speccy->draw(state->speccy, &playfield_box); /* Conv: added */
 
   do {
     state->speccy->stamp(state->speccy);

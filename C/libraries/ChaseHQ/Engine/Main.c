@@ -16423,6 +16423,8 @@ static void entry_common(chqstate_t *state, int Amode_128k, int Bnrelocs)
          sizeof(marquee_initial));
   memcpy(ADDRTOATTRS(SCREEN_ATTRIBUTES_START_ADDRESS), marquee_attrs,
          sizeof(marquee_attrs));
+  state->speccy->draw(state->speccy, NULL); /* Conv: added — full-screen marquee copy */
+
   if (Amode_128k == 0) {
     // stop_the_tape_48k(state);
   }
@@ -16442,7 +16444,6 @@ static void entry_common(chqstate_t *state, int Amode_128k, int Bnrelocs)
   load_stage(state);
 
   bootstrap(state);
-  state->speccy->draw(state->speccy, NULL); /* Conv: added — full-screen marquee copy */
 }
 
 /**
