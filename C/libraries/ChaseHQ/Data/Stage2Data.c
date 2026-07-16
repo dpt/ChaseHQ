@@ -57,7 +57,6 @@
 
 /* Forward declarations */
 // backdrop declared inline in stage struct
-static const u8 stage2_lod_addrs_E10C[14];
 static const u8 stage2_perp_description[7];
 static const char *stage2_chatter_strings[4];
 static const u8 stage2_arrest_messages_E1DD[71];
@@ -226,17 +225,6 @@ const stage_t stage2 = {
 };
 
 /* ----------------------------------------------------------------------- */
-
-// $E10C
-static const u8 stage2_lod_addrs_E10C[14] = {
-  0x00, 0x00,
-  0x00, 0x00,
-  0xFF, 0x64,
-  0x53, 0x65,
-  0x29, 0x65,
-  0x53, 0x65,
-  0xFF, 0x64,
-};
 
 // $E139
 static const u8 stage2_perp_description[7] = {
