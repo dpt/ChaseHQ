@@ -575,29 +575,29 @@ static u16 compute_channel_ay_registers(chqstate_t *state,
                                         title_tune_channel_t *IX_channel,
                                         u8 *A_volume_out)
 {
-  u8         C_status;         /* channel status/flags byte, unchanged through most of the function (was C, IX+$00) */
-  u8         A_env_step;       /* envelope-step counter, then reload value (was A, IX+$19) */
-  const u8  *HL_env_shape;     /* envelope shape table pointer (was HL, IX+$16/$17) */
-  u8         A_env_byte;       /* envelope shape byte just read (was A) */
-  u8         B_note;           /* base note index for the tone lookup (was B, IX+$12) */
-  const u8  *HL_offset_ptr;    /* pitch-offset sequence pointer (was HL, IX+$0B/$0C) */
-  u8         A_offset_byte;    /* pitch-offset byte read from the sequence (was A) */
-  u8         A_note_combined;  /* offset byte + note index, before doubling (was A) */
-  u8         A_note_lookup;    /* doubled combined index: byte offset into the tone-period table, reused in phase 3 as the vibrato scale seed (was A/H) */
-  u16        DE_period;        /* running tone period (was DE) */
-  u8         B_vib_range;      /* doubled vibrato depth; clamp bound for the phase counter (was B, IX+$1A after SLA) */
-  u8         A_vib_phase;      /* vibrato triangle-wave phase counter (was A, IX+$1C) */
-  s16        DEvib_offset;     /* signed, scaled vibrato pitch offset (was DE) */
-  u16        A_shift_test;     /* shift-loop overflow accumulator (was A, tested via carry) */
+  u8         C_status;          /* channel status/flags byte, unchanged through most of the function (was C, IX+$00) */
+  u8         A_env_step;        /* envelope-step counter, then reload value (was A, IX+$19) */
+  const u8  *HL_env_shape;      /* envelope shape table pointer (was HL, IX+$16/$17) */
+  u8         A_env_byte;        /* envelope shape byte just read (was A) */
+  u8         B_note;            /* base note index for the tone lookup (was B, IX+$12) */
+  const u8  *HL_offset_ptr;     /* pitch-offset sequence pointer (was HL, IX+$0B/$0C) */
+  u8         A_offset_byte;     /* pitch-offset byte read from the sequence (was A) */
+  u8         A_note_combined;   /* offset byte + note index, before doubling (was A) */
+  u8         A_note_lookup;     /* doubled combined index: byte offset into the tone-period table, reused in phase 3 as the vibrato scale seed (was A/H) */
+  u16        DE_period;         /* running tone period (was DE) */
+  u8         B_vib_range;       /* doubled vibrato depth; clamp bound for the phase counter (was B, IX+$1A after SLA) */
+  u8         A_vib_phase;       /* vibrato triangle-wave phase counter (was A, IX+$1C) */
+  s16        DEvib_offset;      /* signed, scaled vibrato pitch offset (was DE) */
+  u16        A_shift_test;      /* shift-loop overflow accumulator (was A, tested via carry) */
   u8         B_slide_countdown; /* portamento reload countdown (was B, IX+$0E) */
-  s8         C_slide_step;     /* signed per-tick portamento step (was C, IX+$0D) */
-  u16        HL_slide_accum;   /* accumulated portamento/slide value (was HL, IX+$07/$08) */
-  u8         A_status_new;     /* status with bit 0 toggled; stored back and re-tested in phase 5 (was A) */
-  u8         A_mixer_test;     /* ~status & 3; nonzero except every 4th call (was A) */
-  u8         A_shared;         /* shared driver byte, XORed and forwarded (was A, $EC79) */
-  u8         A_mixer_val;      /* value merged into the shared mixer cache (was A) */
-  u8         A_mute_flag;      /* one-shot mute-transition gate (was A, IX+$1F) */
-  u8         A_noise_mask;     /* this channel's noise-enable bits, complemented for clearing (was A) */
+  s8         C_slide_step;      /* signed per-tick portamento step (was C, IX+$0D) */
+  u16        HL_slide_accum;    /* accumulated portamento/slide value (was HL, IX+$07/$08) */
+  u8         A_status_new;      /* status with bit 0 toggled; stored back and re-tested in phase 5 (was A) */
+  u8         A_mixer_test;      /* ~status & 3; nonzero except every 4th call (was A) */
+  u8         A_shared;          /* shared driver byte, XORed and forwarded (was A, $EC79) */
+  u8         A_mixer_val;       /* value merged into the shared mixer cache (was A) */
+  u8         A_mute_flag;       /* one-shot mute-transition gate (was A, IX+$1F) */
+  u8         A_noise_mask;      /* this channel's noise-enable bits, complemented for clearing (was A) */
 
   /* $EE9E-$EED0: phase 1, envelope amplitude advance. */
   C_status = IX_channel->status;
@@ -858,10 +858,10 @@ static void start_tune(chqstate_t *state, u8 A_tune)
 
     /* Conv: seed the pitch-offset/envelope-shape pointers with the synthetic
      * safe defaults (see prologue) rather than leaving them NULL. */
-    IX_channel->pitch_offset_default  = default_pitch_offset_seq; /* +$09/$0A */
-    IX_channel->pitch_offset_cur      = default_pitch_offset_seq; /* +$0B/$0C */
-    IX_channel->envelope_shape_default = default_envelope_shape;  /* +$14/$15 */
-    IX_channel->envelope_shape_ptr     = default_envelope_shape;  /* +$16/$17 */
+    IX_channel->pitch_offset_default   = default_pitch_offset_seq; /* +$09/$0A */
+    IX_channel->pitch_offset_cur       = default_pitch_offset_seq; /* +$0B/$0C */
+    IX_channel->envelope_shape_default = default_envelope_shape;   /* +$14/$15 */
+    IX_channel->envelope_shape_ptr     = default_envelope_shape;   /* +$16/$17 */
 
     /* $EBCC: enable the channel. */
     IX_channel->row_wait = 1; /* +$10 */
@@ -2056,8 +2056,8 @@ static void sfx_music_service(chqstate_t *state)
  */
 static void clear_screen_bitmap_and_attrs(chqstate_t *state)
 {
-  memset(ADDRTOATTRS(0x5900), 0, 0x200); /* $C890-$C89B */
-  memset(ADDRTOSCREEN(0x4800), 0, 0x1000); /* $C89C-$C8A7 */
+  memset(ADDRTOATTRS(SCREEN_PLAYFIELD_ATTRS_ADDR), 0, 0x200); /* $C890-$C89B */
+  memset(ADDRTOSCREEN(SCREEN_PLAYFIELD_BITMAP_ADDR), 0, 0x1000); /* $C89C-$C8A7 */
 }
 
 /**
@@ -2073,25 +2073,19 @@ static void clear_screen_bitmap_and_attrs(chqstate_t *state)
  */
 static void clear_and_fill_border_attrs(chqstate_t *state)
 {
-  u8 *HLattr;   /* attribute write cursor (was HL) */
-  int C_count;  /* outer repeat count, 16 (was C) */
-  int B_middle; /* middle-band countdown, 28 (was B) */
+  u8 *HLattr;  /* attribute write cursor (was HL) */
+  int C_count; /* outer repeat count, 16 (was C) */
 
-  clear_screen_bitmap_and_attrs(state); /* $C8A9 CALL $C890 */
+  clear_screen_bitmap_and_attrs(state);
 
-  HLattr = ADDRTOATTRS(0x5900);
-  C_count = 0x10;
+  HLattr = ADDRTOATTRS(SCREEN_PLAYFIELD_ATTRS_ADDR);
+  C_count = PLAYFIELD_HEIGHT / 8;
   do {
-    *HLattr++ = 0; /* $C8B2/$C8B4 */
-    *HLattr++ = 0;
-
-    B_middle = 0x1C;
-    do {
-      *HLattr++ = 0x45; /* $C8B8 */
-    } while (--B_middle);
-
-    *HLattr++ = 0; /* $C8BD/$C8BF */
-    *HLattr++ = 0;
+    *HLattr++ = attribute_BLACK_OVER_BLACK;
+    *HLattr++ = attribute_BLACK_OVER_BLACK;
+    memset(HLattr, attribute_BRIGHT_CYAN_OVER_BLACK, 28); HLattr += 28; /* Conv: replaced loop */
+    *HLattr++ = attribute_BLACK_OVER_BLACK;
+    *HLattr++ = attribute_BLACK_OVER_BLACK;
   } while (--C_count);
 }
 
@@ -2527,12 +2521,12 @@ static const u8 shocked_keydef_sequence[8] = {
 static u8 scan_keyboard_matrix(chqstate_t *state, u8 *D_key_code_out)
 {
   int carry;          /* carry from SRL/RLC operations (carry) */
-  u8  D_key_code;      /* sentinel 0xFF at entry; row-found flag/result (was D) */
-  int E_row_value;     /* row's contribution to the packed code, decremented per row (was E) */
-  u8  B_port_hi;       /* high byte of keyboard IN port; rotated through all eight rows (was B) */
-  u8  A_pressed_mask;  /* active key bits for the current row: inverted, masked to 5 bits (was A) */
-  u8  H_bits;          /* copy of A_pressed_mask, shifted right to find the set bit (was H) */
-  u8  A_code;          /* row/bit code accumulator, decremented by 8 per shift (was A) */
+  u8  D_key_code;     /* sentinel 0xFF at entry; row-found flag/result (was D) */
+  int E_row_value;    /* row's contribution to the packed code, decremented per row (was E) */
+  u8  B_port_hi;      /* high byte of keyboard IN port; rotated through all eight rows (was B) */
+  u8  A_pressed_mask; /* active key bits for the current row: inverted, masked to 5 bits (was A) */
+  u8  H_bits;         /* copy of A_pressed_mask, shifted right to find the set bit (was H) */
+  u8  A_code;         /* row/bit code accumulator, decremented by 8 per shift (was A) */
 
   D_key_code  = 0xFF; /* $FF0C LD DE,$FF2F: D half */
   E_row_value = 0x2F; /* $FF0C LD DE,$FF2F: E half */
@@ -2621,15 +2615,15 @@ static u16 advance_key_label_column(u16 DE_screen)
 static void read_new_key_definition(chqstate_t *state, u16 *DE_screen,
                                      u8 B_remaining, u8 C_control_index)
 {
-  u8  ambiguous;     /* scan_keyboard_matrix ambiguity flag (was flags) */
-  u8  D_key_code;    /* packed key code from scan_keyboard_matrix (was D) */
-  u8  A_key_code;    /* accepted key code, used for storage/lookup (was A) */
-  u8  B_dup_count;   /* duplicate-check count: C_control_index-1 already-
-                      * assigned slots (was B) */
-  u8  dup_i;         /* duplicate-check loop index (was HL-$FFF7) */
-  int index_bytes;   /* byte offset into control_key_names[] (was HL-$FF95) */
-  u8  char0;         /* first character of the looked-up key name (was A) */
-  u8  char1;         /* second character, with the EOS bit set (was A) */
+  u8  ambiguous;   /* scan_keyboard_matrix ambiguity flag (was flags) */
+  u8  D_key_code;  /* packed key code from scan_keyboard_matrix (was D) */
+  u8  A_key_code;  /* accepted key code, used for storage/lookup (was A) */
+  u8  B_dup_count; /* duplicate-check count: C_control_index-1 already-
+                    * assigned slots (was B) */
+  u8  dup_i;       /* duplicate-check loop index (was HL-$FFF7) */
+  int index_bytes; /* byte offset into control_key_names[] (was HL-$FF95) */
+  u8  char0;       /* first character of the looked-up key name (was A) */
+  u8  char1;       /* second character, with the EOS bit set (was A) */
 
 rescan:
   for (;;) {

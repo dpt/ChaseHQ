@@ -1452,6 +1452,18 @@ const u8 copyright_messages[92] = {
   0
 };
 
+/* $86F6: backdrop blit instruction templates (36 bytes, two 18-byte chunks).
+ * Chunk 0 (bytes 0–17):  INC L (0x2C) + NOP (0x00) × 9 — skip backdrop bytes.
+ * Chunk 1 (bytes 18–35): LDI   (0xED, 0xA0) × 9       — copy backdrop bytes.
+ * dr_start_backdrop_fill copies 18 bytes starting at offset dr_backdrop_copy_jump into
+ * state->dr_backdrop_copy_instrs, which the blit loop then interprets. */
+const u8 backdrop_copy_instrs_template[36] = {
+  0x2C, 0x00, 0x2C, 0x00, 0x2C, 0x00, 0x2C, 0x00, 0x2C, 0x00,
+  0x2C, 0x00, 0x2C, 0x00, 0x2C, 0x00, 0x2C, 0x00,
+  0xED, 0xA0, 0xED, 0xA0, 0xED, 0xA0, 0xED, 0xA0, 0xED, 0xA0,
+  0xED, 0xA0, 0xED, 0xA0, 0xED, 0xA0, 0xED, 0xA0
+};
+
 // $871A
 const scenedata_t escape_scene_data = {
   308, // road_pos
@@ -5016,7 +5028,7 @@ const u8 messages_redefine_keys[138] = {
 // $EAE1
 const u8 messages_test_mode[151] = {
   0xC1,
-  TWOBYTES(0x4000),
+  TWOBYTES(SCREEN_START_ADDRESS),
   'T', 'E', 'S', 'T' | EOS,
   attribute_RED_OVER_BLACK,
   TWOBYTES(0x4824),
@@ -5539,17 +5551,13 @@ const u8 marquee_attrs[SCREEN_ATTRIBUTES_WIDTH * MARQUEE_HEIGHT / 8] = {
   0x78, 0x78, 0x78, 0x78, 0x78, 0x78, 0x78, 0x78
 };
 
-/* $86F6: backdrop blit instruction templates (36 bytes, two 18-byte chunks).
- * Chunk 0 (bytes 0–17):  INC L (0x2C) + NOP (0x00) × 9 — skip backdrop bytes.
- * Chunk 1 (bytes 18–35): LDI   (0xED, 0xA0) × 9       — copy backdrop bytes.
- * dr_start_backdrop_fill copies 18 bytes starting at offset dr_backdrop_copy_jump into
- * state->dr_backdrop_copy_instrs, which the blit loop then interprets. */
-const u8 backdrop_copy_instrs_template[36] = {
-  0x2C, 0x00, 0x2C, 0x00, 0x2C, 0x00, 0x2C, 0x00, 0x2C, 0x00,
-  0x2C, 0x00, 0x2C, 0x00, 0x2C, 0x00, 0x2C, 0x00,
-  0xED, 0xA0, 0xED, 0xA0, 0xED, 0xA0, 0xED, 0xA0, 0xED, 0xA0,
-  0xED, 0xA0, 0xED, 0xA0, 0xED, 0xA0, 0xED, 0xA0
-};
+
+
+
+/// BANK 3 DATA ///
+
+
+
 
 /* 128K bank 3: title-tune engine AY tone-period lookup table, $EFBC-$F07B.
  * 96 entries, one per note, transcribed directly from the skool's DEFB bytes
