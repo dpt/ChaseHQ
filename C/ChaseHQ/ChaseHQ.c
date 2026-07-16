@@ -1289,6 +1289,11 @@ static u8 detect_kempston_joystick(chqstate_t *state);
 static const u8 *print_character(chqstate_t *state, const u8 *HL_record);
 static void print_string(chqstate_t *state, const u8 *HLstring);
 static void clear_options_screen(chqstate_t *state);
+static u8 scan_keyboard_matrix(chqstate_t *state, u8 *D_key_code_out);
+static u16 advance_key_label_column(u16 DE_screen);
+static void read_new_key_definition(chqstate_t *state, u16 *DE_screen,
+                                     u8 B_remaining, u8 C_control_index);
+static void redefine_keys_screen(chqstate_t *state);
 static u8 omd_redraw_and_poll(chqstate_t *state);
 static u8 options_menu_driver(chqstate_t *state);
 static void boot_and_run_sound_loop(chqstate_t *state);
@@ -16881,9 +16886,10 @@ static u8 redefine_keyscan(chqstate_t *state, u8 *Dkeydef_out)
       do {
         A -= 8;
         SRL(Hkeys);
-      } while (carry);
-      if (A)
-        return 1; // Additional bits are set
+      } while (!carry); // Conv: fixed -- JR NC loops while carry clear
+      if (Hkeys)
+        return 1; // Conv: fixed -- RET NZ tests H (bits remaining) after the
+                   // shift, not A (the row/column accumulator)
 
       Dflag = A;
     }
@@ -16966,23 +16972,36 @@ dak_loop1:
 /**
  * $EDCC: DAK move down
  *
- * Advances a Z80 screen address by one character row: adds 32 to the low byte
- * (next column group) and 8 to the high byte (next pixel row within the
- * character cell), then returns the combined result. Used by define_a_key to
- * step the screen cursor between key-name slots.
+ * Advances a Z80 screen address by one character row: adds 32 to the low
+ * byte (next column group), then adds 8 to the high byte (next pixel row
+ * within the character cell) only if that addition overflowed -- i.e. only
+ * once every 8 columns, when the low byte wraps back round. Used by
+ * define_a_key to step the screen cursor between key-name slots.
  *
  * \param[in] DEscreen Z80 screen address (D = high byte, E = low byte).
  * \return Screen address of the next character row.
+ *
+ * Conv: fixed -- previously added 8 to D unconditionally on every call; the
+ * Z80's `RET NC` at $EDD0 only takes that step when the E+=32 addition
+ * overflows (JR NC / RET NC = skip on no-carry, so the D increment is
+ * conditional on carry, not automatic).
  */
 static u16 dak_move_down(int DEscreen)
 {
-  u8 E; /* low byte of DEscreen: byte column offset + 32 (was E) */
-  u8 D; /* high byte of DEscreen: pixel row within third + 8 (was D) */
+  int carry;   /* carry out of the E += 32 addition (carry) */
+  int E_sum;   /* E + 32 before truncation, to test for overflow (was A) */
+  u8  E;       /* low byte of DEscreen: byte column offset + 32 (was E) */
+  u8  D;       /* high byte of DEscreen: pixel row within third (was D) */
 
-  E = (DEscreen & 0xFF) + 32;
-  D = (DEscreen >> 8)   + 8;
+  E_sum = (DEscreen & 0xFF) + 32;
+  carry = E_sum > 0xFF;
+  E     = (u8) E_sum;
 
-  return (D << 8) | E;
+  D = (u8) (DEscreen >> 8);
+  if (carry)
+    D += 8;
+
+  return (u16) ((D << 8) | E);
 }
 
 /**
@@ -19114,6 +19133,281 @@ static const u8 sinclair_joystick_keys[5] = { 0x23, 0x1B, 0x13, 0x03, 0x0B };
  * when "2. CURSOR JOYSTICK" is chosen (keys 5,6,7,8,0). */
 static const u8 cursor_joystick_keys[5]  = { 0x23, 0x0B, 0x03, 0x04, 0x13 };
 
+/* $FF95-$FFE4: key-name lookup table for the "redefine keys" screen (40
+ * 2-byte entries: printable character + space, with SYMBOL SHIFT/SPACE/
+ * ENTER/CAPS SHIFT spelled out as two-letter codes). Indexed by
+ * read_new_key_definition via the same key/halfrow packing produced by
+ * scan_keyboard_matrix. Byte-for-byte identical to the 48K ROM's key_names[]
+ * ($EDD6, CommonData.c) -- kept as a separate array since it is a distinct
+ * copy at a distinct bank-3 address in the original. */
+static const u8 control_key_names[80] = {
+  'B', ' ', 'N', ' ', 'M', ' ', 'S', 'Y',
+  'S', 'P', 'H', ' ', 'J', ' ', 'K', ' ',
+  'L', ' ', 'E', 'N', 'Y', ' ', 'U', ' ',
+  'I', ' ', 'O', ' ', 'P', ' ', '6', ' ',
+  '7', ' ', '8', ' ', '9', ' ', '0', ' ',
+  '5', ' ', '4', ' ', '3', ' ', '2', ' ',
+  '1', ' ', 'T', ' ', 'R', ' ', 'E', ' ',
+  'W', ' ', 'Q', ' ', 'G', ' ', 'F', ' ',
+  'D', ' ', 'S', ' ', 'A', ' ', 'V', ' ',
+  'C', ' ', 'X', ' ', 'Z', ' ', 'C', 'P',
+};
+
+/* $FFEF-$FFF6: "SHOCKED"+ENTER secret test-mode-unlock reference sequence,
+ * checked by redefine_keys_screen against the 8 keys just chosen. Byte-for-
+ * byte identical to the 48K ROM's shocked_keydefs[] ($EE30, CommonData.c). */
+static const u8 shocked_keydef_sequence[8] = {
+  0x1E, 0x01, 0x1A, 0x0F, 0x11, 0x15, 0x16, 0x21
+};
+
+/**
+ * $FF0C: Scans the keyboard matrix for a single currently-held key
+ *
+ * Walks the eight keyboard half-row ports ($FEFE, $FDFE, $FBFE, $F7FE,
+ * $EFFE, $DFFE, $BFFE, $7FFE), rotating the row-select byte through all
+ * eight in turn. Whichever row (if any) has a key held has its bit
+ * position within that row's 5-bit mask found by repeated halving, and
+ * combined with the row number into a single packed code (see
+ * read_new_key_definition for how the code is unpacked again).
+ *
+ * \param[in,out] state Pointer to game state.
+ * \param[out] D_key_code_out Packed key code: 8*(4-bit) + (7-row). Left at
+ * 0xFF if no key was held in any row (was D).
+ * \return 1 if more than one row (or more than one bit within a row) was
+ * held simultaneously -- an ambiguous scan the caller should reject and
+ * retry. 0 otherwise (D_key_code_out is 0xFF for "no key", or a valid
+ * packed code for exactly one key held).
+ */
+static u8 scan_keyboard_matrix(chqstate_t *state, u8 *D_key_code_out)
+{
+  int carry;          /* carry from SRL/RLC operations (carry) */
+  u8  D_key_code;      /* sentinel 0xFF at entry; row-found flag/result (was D) */
+  int E_row_value;     /* row's contribution to the packed code, decremented per row (was E) */
+  u8  B_port_hi;       /* high byte of keyboard IN port; rotated through all eight rows (was B) */
+  u8  A_pressed_mask;  /* active key bits for the current row: inverted, masked to 5 bits (was A) */
+  u8  H_bits;          /* copy of A_pressed_mask, shifted right to find the set bit (was H) */
+  u8  A_code;          /* row/bit code accumulator, decremented by 8 per shift (was A) */
+
+  D_key_code  = 0xFF; /* $FF0C LD DE,$FF2F: D half */
+  E_row_value = 0x2F; /* $FF0C LD DE,$FF2F: E half */
+  B_port_hi   = 0xFE; /* $FF0F LD BC,$FEFE: B half */
+
+  do {
+    A_pressed_mask = (u8) (~state->speccy->in(state->speccy, (u16) ((B_port_hi << 8) | 0xFE)) & 0x1F); /* $FF12-$FF15 */
+
+    if (A_pressed_mask != 0) { /* $FF17 JR Z,$FF25 */
+      D_key_code++;
+      if (D_key_code != 0)
+        return 1; /* $FF1A RET NZ: a second row is also held -- ambiguous */
+
+      H_bits = A_pressed_mask; /* $FF1B */
+      A_code = (u8) E_row_value; /* $FF1C */
+      do {
+        A_code -= 8;
+        SRL(H_bits);
+      } while (!carry); /* $FF21 JR NC,$FF1D */
+
+      if (H_bits != 0)
+        return 1; /* $FF23 RET NZ: more than one bit held in this row */
+
+      D_key_code = A_code; /* $FF24 */
+    }
+
+    E_row_value--; /* $FF25 DEC E */
+    RLC(B_port_hi); /* $FF26 RLC B */
+  } while (carry); /* $FF28 JR C,$FF12 */
+
+  *D_key_code_out = D_key_code; /* $FF2A-$FF2B CP A / RET (Z always set here) */
+  return 0;
+}
+
+/**
+ * $FF8B: Advance the key-label print position by one label column
+ *
+ * Adds 32 to the low byte of the screen address, then adds 8 to the high
+ * byte only if that addition overflowed -- i.e. only once every 8 columns,
+ * when the low byte wraps back round. Same step as dak_move_down ($EDCC),
+ * the 48K equivalent.
+ *
+ * \param[in] DE_screen Z80 screen address (was DE).
+ * \return Screen address advanced by one label column.
+ */
+static u16 advance_key_label_column(u16 DE_screen)
+{
+  int carry; /* carry out of the E += 32 addition (carry) */
+  int E_sum; /* E + 32 before truncation, to test for overflow (was A) */
+  u8  E;     /* low byte of DE_screen: byte column offset + 32 (was E) */
+  u8  D;     /* high byte of DE_screen: pixel row within third (was D) */
+
+  E_sum = (DE_screen & 0xFF) + 32; /* $FF8B-$FF8C */
+  carry = E_sum > 0xFF;
+  E     = (u8) E_sum; /* $FF8E */
+
+  D = (u8) (DE_screen >> 8);
+  if (carry) /* $FF8F RET NC */
+    D += 8; /* $FF90-$FF93 */
+
+  return (u16) ((D << 8) | E);
+}
+
+/**
+ * $FF2C: Waits for a fresh single keypress and stores it as one control's key
+ *
+ * Repeatedly scans the keyboard (scan_keyboard_matrix) until exactly one key
+ * is held that is not already assigned to an earlier control in this
+ * session (state->control_keys[0..C_control_index-2]), rejecting ambiguous
+ * scans, "no key held" scans, and duplicates by looping back to rescan.
+ * Stores the accepted key code at state->control_keys[C_control_index-1],
+ * looks up its two-character display name in control_key_names[], prints it
+ * at *DE_screen via print_character, then advances *DE_screen by one label
+ * column (twice, when B_remaining is exactly 4 -- see
+ * advance_key_label_column).
+ *
+ * \param[in,out] state Pointer to game state.
+ * \param[in,out] DE_screen Screen address to print the key's name at;
+ * updated to the next label position on return (was DE).
+ * \param[in] B_remaining Controls remaining in the outer 8-control loop,
+ * including this one; when exactly 4, an extra column advance is applied
+ * (was B).
+ * \param[in] C_control_index 1-based index of the control being defined,
+ * into state->control_keys[] (was C).
+ */
+static void read_new_key_definition(chqstate_t *state, u16 *DE_screen,
+                                     u8 B_remaining, u8 C_control_index)
+{
+  u8  ambiguous;     /* scan_keyboard_matrix ambiguity flag (was flags) */
+  u8  D_key_code;    /* packed key code from scan_keyboard_matrix (was D) */
+  u8  A_key_code;    /* accepted key code, used for storage/lookup (was A) */
+  u8  B_dup_count;   /* duplicate-check count: C_control_index-1 already-
+                      * assigned slots (was B) */
+  u8  dup_i;         /* duplicate-check loop index (was HL-$FFF7) */
+  int index_bytes;   /* byte offset into control_key_names[] (was HL-$FF95) */
+  u8  char0;         /* first character of the looked-up key name (was A) */
+  u8  char1;         /* second character, with the EOS bit set (was A) */
+
+rescan:
+  for (;;) {
+    service_sound_and_loop_tune0(state); /* $FF2E CALL $FBC8 */
+
+    ambiguous = scan_keyboard_matrix(state, &D_key_code); /* $FF31 CALL $FF0C */
+    if (ambiguous) /* $FF34 JR NZ,$FF2E */
+      continue;
+
+    if (D_key_code == 0xFF) /* $FF36 INC D / $FF37 JR Z,$FF2E */
+      continue;
+
+    break;
+  }
+  A_key_code = D_key_code; /* $FF39-$FF3A DEC D / LD A,D */
+
+  B_dup_count = (u8) (C_control_index - 1); /* $FF40-$FF41 LD B,C / DEC B */
+  for (dup_i = 0; dup_i < B_dup_count; dup_i++) { /* $FF42 JR Z,$FF4A */
+    if (A_key_code == state->control_keys[dup_i]) /* $FF44 CP (HL) */
+      goto rescan; /* $FF45 JR Z,$FF2E: duplicate -- rescan */
+  }
+
+  state->control_keys[C_control_index - 1] = A_key_code; /* $FF4C-$FF52 */
+
+  index_bytes = 10 * (A_key_code & 0x07) + 2 * (A_key_code >> 3); /* $FF53-$FF68 */
+  char0 = control_key_names[index_bytes];           /* $FF71 */
+  char1 = control_key_names[index_bytes + 1] | EOS; /* $FF76-$FF77 */
+
+  state->options_key_string[0] = 0xC7; /* Conv: fixed constant resident at
+                                         * $FD97; never rewritten by this
+                                         * routine (see key-name-table
+                                         * comment in the skool). */
+  setwordat(&state->options_key_string[1], *DE_screen); /* $FF6D LD ($FD98),DE */
+  state->options_key_string[3] = char0; /* $FF72 */
+  state->options_key_string[4] = char1; /* $FF79 */
+  print_character(state, &state->options_key_string[0]); /* $FF7C-$FF7F */
+
+  *DE_screen = advance_key_label_column(*DE_screen); /* $FF82-$FF83 */
+  if (B_remaining == 4) /* $FF87-$FF88 */
+    *DE_screen = advance_key_label_column(*DE_screen); /* $FF8A: mid-list row wrap */
+}
+
+/**
+ * $FEA9: "Redefine keys" screen driver
+ *
+ * Prints the title/prompt text and the 8 control-name labels (gear,
+ * accelerate, brake, left, right, quit, pause, turbo), then captures a
+ * fresh keypress for each of the 8 controls in turn via
+ * read_new_key_definition, waiting out a keys-"1"-"5" debounce before each
+ * capture. After all 8 keys are set, waits ~20 frames, then compares the 8
+ * keys just chosen against shocked_keydef_sequence (the hidden "SHOCKED" +
+ * ENTER cheat code): on a match, enables test mode, shows the confirmation
+ * screen, waits for any key, then loops back to redisplay this screen; on
+ * any mismatch, returns immediately (the ordinary case -- the new mapping
+ * is kept).
+ *
+ * \param[in,out] state Pointer to game state.
+ *
+ * Conv: modelled as an outer for(;;) that only exits via return (mismatch)
+ * -- matching the Z80, which has no path back to the caller once the
+ * secret code has been entered other than by looping back to $FEA9 itself.
+ *
+ * Conv: $FEC1/$FED6 (`PUSH HL` / `INC HL`) walk a pointer that is never
+ * read back before the next iteration's `PUSH HL` overwrites it -- dead
+ * code, as with the identical stray HL increment noted in redefine_keys_48k
+ * ($ECF3). Not modelled.
+ */
+static void redefine_keys_screen(chqstate_t *state)
+{
+  u16 DE_screen;       /* current label print position (was DE) */
+  u8  B_remaining;     /* controls remaining, counts down from 8 (was B) */
+  u8  C_control_index; /* 1-based control index, counts up from 1 (was C) */
+  u8  A_key_mask;      /* keys "1".."5" pressed bitmask (was A) */
+  u8  B_wait;          /* ~20-frame post-capture wait counter (was B) */
+  u8  B_shocked_i;     /* "SHOCKED"+ENTER compare loop index (was B) */
+
+  for (;;) {
+    clear_options_screen(state); /* $FEA9 CALL $FE7F */
+
+    print_string(state, &options_menu_text[114]); /* $FEAC-$FEAF: header +
+                                                    * GEAR/ACCELERATE/BRAKE */
+    service_sound_and_loop_tune0(state); /* $FEB2 CALL $FBC8 */
+    print_string(state, &options_menu_text[160]); /* $FEB5-$FEB8:
+                                                    * LEFT/RIGHT/QUIT/PAUSE/TURBO */
+
+    DE_screen       = 0x48D6; /* $FEBB LD DE,$48D6 */
+    B_remaining     = 8;      /* $FEBE LD BC,$0801: B half */
+    C_control_index = 1;      /* $FEBE LD BC,$0801: C half */
+
+    do {
+      do {
+        service_sound_and_loop_tune0(state); /* $FEC4 CALL $FBC8 */
+
+        A_key_mask = (u8) (~state->speccy->in(state->speccy, port_KEYBOARD_12345) & 0x1F); /* $FECA-$FECE */
+      } while (A_key_mask != 0); /* $FED0 JR NZ,$FEC1: wait for keys "1"-"5" to be released */
+
+      read_new_key_definition(state, &DE_screen, B_remaining, C_control_index); /* $FED2 CALL $FF2C */
+
+      C_control_index++; /* $FED5 INC C */
+    } while (--B_remaining != 0); /* $FED7 DJNZ $FEC1 */
+
+    B_wait = 0x14; /* $FED9 LD B,$14 */
+    do {
+      service_sound_and_loop_tune0(state); /* $FEDC CALL $FBC8 */
+    } while (--B_wait != 0); /* $FEE0 DJNZ $FEDB */
+
+    for (B_shocked_i = 0; B_shocked_i < 8; B_shocked_i++) { /* $FEE2-$FEEF */
+      if (state->control_keys[B_shocked_i] != shocked_keydef_sequence[B_shocked_i]) /* $FEEA-$FEEC */
+        return; /* $FEEE RET NZ: mismatch -- ordinary case, keep the new mapping */
+    }
+
+    state->test_mode = 1; /* $FEF1-$FEF3 */
+
+    clear_options_screen(state); /* $FEF6 CALL $FE7F */
+    print_string(state, &options_menu_text[199]); /* $FEF9-$FEFC: test-mode confirmation text */
+
+    do {
+      service_sound_and_loop_tune0(state); /* $FEFF CALL $FBC8 */
+
+      A_key_mask = (u8) (~state->speccy->in(state->speccy, port_KEYBOARD_12345) & 0x1F); /* $FF02-$FF06 */
+    } while (A_key_mask == 0); /* $FF08 JR Z,$FEFF: wait for any key */
+  }
+}
+
 /**
  * $FBC8: Services sound each frame and keeps the options-menu tune looping
  *
@@ -19444,8 +19738,7 @@ poll: /* $FBAB omd_service_and_read_keys */
   }
 
   /* $FBC3: key "5" (default, falls through unbranched) -> "DEFINE KEYS" */
-  /* TODO: CALL redefine_keys_screen(state) ($FEA9) -- not yet ported; key-
-   * name printing, per-control key capture, the hidden test-mode unlock. */
+  redefine_keys_screen(state); /* $FBC3 CALL $FEA9 */
   goto redraw; /* $FBC6 JR $FBA2 */
 
 install_joystick_keys:
