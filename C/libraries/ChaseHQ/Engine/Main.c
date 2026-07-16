@@ -17825,7 +17825,10 @@ call_bank_3:
 CHQ_API void chq_setup(chqstate_t *state)
 {
   if (setjmp(state->host_quit_jmp) == 0)
-    entry_128k(state);
+    if (1)
+      entry_128k(state);
+    else
+      entry_48k(state);
 }
 
 CHQ_API void chq_stop(chqstate_t *state)
