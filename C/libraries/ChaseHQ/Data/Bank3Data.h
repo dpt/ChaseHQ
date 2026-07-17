@@ -25,11 +25,25 @@ const u8 title_screen_overlay_text[47];
 
 const u8 options_menu_text[366];
 
+/* Index names for note_periods[] below, in scientific pitch notation
+ * (A4 = 440 Hz, C4 = middle C), derived from each entry's AY tone period. */
+enum note_index {
+  NOTE_AS0, NOTE_B0,
+  NOTE_C1, NOTE_CS1, NOTE_D1, NOTE_DS1, NOTE_E1, NOTE_F1, NOTE_FS1, NOTE_G1, NOTE_GS1, NOTE_A1, NOTE_AS1, NOTE_B1,
+  NOTE_C2, NOTE_CS2, NOTE_D2, NOTE_DS2, NOTE_E2, NOTE_F2, NOTE_FS2, NOTE_G2, NOTE_GS2, NOTE_A2, NOTE_AS2, NOTE_B2,
+  NOTE_C3, NOTE_CS3, NOTE_D3, NOTE_DS3, NOTE_E3, NOTE_F3, NOTE_FS3, NOTE_G3, NOTE_GS3, NOTE_A3, NOTE_AS3, NOTE_B3,
+  NOTE_C4, NOTE_CS4, NOTE_D4, NOTE_DS4, NOTE_E4, NOTE_F4, NOTE_FS4, NOTE_G4, NOTE_GS4, NOTE_A4, NOTE_AS4, NOTE_B4,
+  NOTE_C5, NOTE_CS5, NOTE_D5, NOTE_DS5, NOTE_E5, NOTE_F5, NOTE_FS5, NOTE_G5, NOTE_GS5, NOTE_A5, NOTE_AS5, NOTE_B5,
+  NOTE_C6, NOTE_CS6, NOTE_D6, NOTE_DS6, NOTE_E6, NOTE_F6, NOTE_FS6, NOTE_G6, NOTE_GS6, NOTE_A6, NOTE_AS6, NOTE_B6,
+  NOTE_C7, NOTE_CS7, NOTE_D7, NOTE_DS7, NOTE_E7, NOTE_F7, NOTE_FS7, NOTE_G7, NOTE_GS7, NOTE_A7, NOTE_AS7, NOTE_B7,
+  NOTE_C8, NOTE_CS8, NOTE_D8, NOTE_DS8, NOTE_E8, NOTE_F8, NOTE_FS8, NOTE_G8, NOTE_GS8, NOTE_A8
+};
+
 /* 128K bank 3: title-tune engine AY tone-period lookup table, $EFBC-$F07B,
  * 96 entries (2 bytes/note, little-endian), indexed by
  * compute_channel_ay_registers ($EE9E@bank3). $F07C onward is a different,
  * unrelated table (an indexed pointer table, see $EE5A@bank3) -- do not
- * extend this array into it. */
+ * extend this array into it. Indices name-checked against enum note_index. */
 const u16 note_periods[96];
 
 /* One tune's entry in the tune-select table below: a tempo/speed byte plus

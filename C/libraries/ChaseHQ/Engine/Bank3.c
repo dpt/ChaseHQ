@@ -345,14 +345,13 @@ static void advance_channel_phrase(title_tune_channel_t *IX_channel,
 
   for (;;) {
     /* $F1D5-$F1D9: read a little-endian word at HL_entry. */
-    DE_word   = (u16) (HL_entry[0] | (HL_entry[1] << 8));
-    HL_entry += 1;
+    DE_word = wordat(HL_entry++);
 
     if (DE_word == PHRASE_TABLE_RESET) {
       /* $F1DC-$F1E7: table exhausted -- restart from this channel's own
        * header word, offset reset to the table's start (2). */
       HL_entry        = IX_channel->pattern_data_ptr;
-      DE_word         = (u16) (HL_entry[0] | (HL_entry[1] << 8));
+      DE_word         = wordat(HL_entry);
       BC_table_offset = 2;
       *DE_pattern     = resolve_phrase_addr(DE_word);
       goto finalize;
@@ -361,9 +360,8 @@ static void advance_channel_phrase(title_tune_channel_t *IX_channel,
     if (DE_word == PHRASE_TABLE_TRANSPOSE_PREFIX) {
       /* $F1F8-$F202: inline transpose override -- apply it and re-read the
        * next word, 3 bytes further into the table. */
-      HL_entry += 1;
-      IX_channel->transpose = *HL_entry;
-      HL_entry += 1;
+      IX_channel->transpose = *++HL_entry;
+      HL_entry++;
       BC_table_offset += 3;
       continue;
     }
@@ -373,10 +371,9 @@ static void advance_channel_phrase(title_tune_channel_t *IX_channel,
        * Leaves BC_table_offset at the pointer's own low byte, so the next
        * lookup at this same table position re-reads it as a plain pointer
        * (see the "else" case below) once the repeats are exhausted. */
-      HL_entry     += 1;
-      A_new_repeat  = *HL_entry;
-      HL_entry     += 1;
-      DE_new_ptr    = (u16) (HL_entry[0] | (HL_entry[1] << 8));
+      A_new_repeat = *++HL_entry;
+      HL_entry++;
+      DE_new_ptr = wordat(HL_entry);
 
       IX_channel->phrase_repeat_count = A_new_repeat;
       IX_channel->phrase_ptr          = resolve_phrase_addr(DE_new_ptr);
@@ -397,34 +394,38 @@ finalize:
   IX_channel->phrase_table_offset = BC_table_offset;
 }
 
+/* Shared end-of-sequence marker bit, e.g. title_pitch_offset_seq_* and
+ * title_envelope_shape_* tables. */
+#define SEQ_END_BIT (0x80) /* bit7: tested via (s8) < 0; cleared via &~ to recover the payload */
+
 /* Pitch-offset sequences: real data from bank3.bin's $F07C table
  * (24 x 1-byte self-referential-displacement entries, each pointing
  * to a byte sequence terminated by a bit-7-set marker byte). See
  * decode_pattern_command's pitch-select branch ($EE55-$EE6C). */
-static const u8 title_pitch_offset_seq_00[] = { 0x80 };
-static const u8 title_pitch_offset_seq_01[] = { 0x0C, 0x0C, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x80 };
-static const u8 title_pitch_offset_seq_02[] = { 0x00, 0x04, 0x87 };
-static const u8 title_pitch_offset_seq_03[] = { 0x00, 0x03, 0x88 };
-static const u8 title_pitch_offset_seq_04[] = { 0x00, 0x05, 0x89 };
-static const u8 title_pitch_offset_seq_05[] = { 0x00, 0x00, 0x00, 0x03, 0x03, 0x83 };
-static const u8 title_pitch_offset_seq_06[] = { 0x00, 0x00, 0x00, 0x05, 0x05, 0x85 };
-static const u8 title_pitch_offset_seq_07[] = { 0x00, 0x00, 0x00, 0x04, 0x04, 0x84 };
-static const u8 title_pitch_offset_seq_08[] = { 0x00, 0x8C };
-static const u8 title_pitch_offset_seq_09[] = { 0x00, 0x00, 0x00, 0x08, 0x08, 0x88 };
-static const u8 title_pitch_offset_seq_10[] = { 0x0C, 0x0C, 0x0C, 0x0C, 0x0C, 0x0C, 0x00, 0x00, 0x00, 0x00, 0x00, 0x80 };
-static const u8 title_pitch_offset_seq_11[] = { 0x00, 0x00, 0x03, 0x03, 0x07, 0x87 };
-static const u8 title_pitch_offset_seq_12[] = { 0x0C, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x80 };
-static const u8 title_pitch_offset_seq_13[] = { 0x00, 0x05, 0x07, 0x8C };
-static const u8 title_pitch_offset_seq_14[] = { 0x00, 0x05, 0x0A, 0x8C };
-static const u8 title_pitch_offset_seq_15[] = { 0x00, 0x05, 0x09, 0x8C };
-static const u8 title_pitch_offset_seq_16[] = { 0x00, 0x00, 0x00, 0x00, 0x04, 0x04, 0x04, 0x04, 0x07, 0x07, 0x07, 0x07, 0x0C, 0x0C, 0x0C, 0x8C };
-static const u8 title_pitch_offset_seq_17[] = { 0x1C, 0x01, 0x0B, 0x01, 0xFC };
-static const u8 title_pitch_offset_seq_18[] = { 0xEF };
-static const u8 title_pitch_offset_seq_19[] = { 0xC8 };
-static const u8 title_pitch_offset_seq_20[] = { 0x51, 0x01, 0x3E, 0x01, 0x2C, 0x01, 0x1C, 0x01, 0x0B, 0x01, 0xFC };
-static const u8 title_pitch_offset_seq_21[] = { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x80 };
-static const u8 title_pitch_offset_seq_22[] = { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x80 };
-static const u8 title_pitch_offset_seq_23[] = { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x80 };
+static const u8 title_pitch_offset_seq_00[] = { SEQ_END_BIT };
+static const u8 title_pitch_offset_seq_01[] = { 0x0C, 0x0C, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, SEQ_END_BIT };
+static const u8 title_pitch_offset_seq_02[] = { 0x00, 0x04, SEQ_END_BIT | 0x07 };
+static const u8 title_pitch_offset_seq_03[] = { 0x00, 0x03, SEQ_END_BIT | 0x08 };
+static const u8 title_pitch_offset_seq_04[] = { 0x00, 0x05, SEQ_END_BIT | 0x09 };
+static const u8 title_pitch_offset_seq_05[] = { 0x00, 0x00, 0x00, 0x03, 0x03, SEQ_END_BIT | 0x03 };
+static const u8 title_pitch_offset_seq_06[] = { 0x00, 0x00, 0x00, 0x05, 0x05, SEQ_END_BIT | 0x05 };
+static const u8 title_pitch_offset_seq_07[] = { 0x00, 0x00, 0x00, 0x04, 0x04, SEQ_END_BIT | 0x04 };
+static const u8 title_pitch_offset_seq_08[] = { 0x00, SEQ_END_BIT | 0x0C };
+static const u8 title_pitch_offset_seq_09[] = { 0x00, 0x00, 0x00, 0x08, 0x08, SEQ_END_BIT | 0x08 };
+static const u8 title_pitch_offset_seq_10[] = { 0x0C, 0x0C, 0x0C, 0x0C, 0x0C, 0x0C, 0x00, 0x00, 0x00, 0x00, 0x00, SEQ_END_BIT };
+static const u8 title_pitch_offset_seq_11[] = { 0x00, 0x00, 0x03, 0x03, 0x07, SEQ_END_BIT | 0x07 };
+static const u8 title_pitch_offset_seq_12[] = { 0x0C, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, SEQ_END_BIT };
+static const u8 title_pitch_offset_seq_13[] = { 0x00, 0x05, 0x07, SEQ_END_BIT | 0x0C };
+static const u8 title_pitch_offset_seq_14[] = { 0x00, 0x05, 0x0A, SEQ_END_BIT | 0x0C };
+static const u8 title_pitch_offset_seq_15[] = { 0x00, 0x05, 0x09, SEQ_END_BIT | 0x0C };
+static const u8 title_pitch_offset_seq_16[] = { 0x00, 0x00, 0x00, 0x00, 0x04, 0x04, 0x04, 0x04, 0x07, 0x07, 0x07, 0x07, 0x0C, 0x0C, 0x0C, SEQ_END_BIT | 0x0C };
+static const u8 title_pitch_offset_seq_17[] = { 0x1C, 0x01, 0x0B, 0x01, SEQ_END_BIT | 0x7C };
+static const u8 title_pitch_offset_seq_18[] = { SEQ_END_BIT | 0x6F };
+static const u8 title_pitch_offset_seq_19[] = { SEQ_END_BIT | 0x48 };
+static const u8 title_pitch_offset_seq_20[] = { 0x51, 0x01, 0x3E, 0x01, 0x2C, 0x01, 0x1C, 0x01, 0x0B, 0x01, SEQ_END_BIT | 0x7C };
+static const u8 title_pitch_offset_seq_21[] = { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, SEQ_END_BIT };
+static const u8 title_pitch_offset_seq_22[] = { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, SEQ_END_BIT };
+static const u8 title_pitch_offset_seq_23[] = { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, SEQ_END_BIT };
 
 /* Envelope-shape sequences: real data from bank3.bin's $F123 table
  * (16 x 2-byte pointers; byte at ptr-1 is the envelope speed, sequence
@@ -432,22 +433,22 @@ static const u8 title_pitch_offset_seq_23[] = { 0x00, 0x00, 0x00, 0x00, 0x00, 0x
  * valid pointer in bank3.bin (never referenced by tunes 0/1's
  * extracted pattern data) -- stubbed silent/single-halt-byte. See
  * decode_pattern_command's envelope-select branch ($EE7E-$EE93). */
-static const u8 title_envelope_shape_00[] = { 0x0F, 0x0F, 0x0E, 0x0D, 0x0C, 0x08, 0x87 };
-static const u8 title_envelope_shape_01[] = { 0x0E, 0x0F, 0x0E, 0x87 };
-static const u8 title_envelope_shape_02[] = { 0x0E, 0x0F, 0x0B, 0x87 };
-static const u8 title_envelope_shape_03[] = { 0x0F, 0x0F, 0x0F, 0x0E, 0x0D, 0x0A, 0x87 };
-static const u8 title_envelope_shape_04[] = { 0x0F, 0x09, 0x08, 0x06, 0x05, 0x04, 0x03, 0x87 };
-static const u8 title_envelope_shape_05[] = { 0x0F, 0x0E, 0x0D, 0x0C, 0x0B, 0x06, 0x87 };
-static const u8 title_envelope_shape_06[] = { 0x0F, 0x0F, 0x0E, 0x0D, 0x0C, 0x0B, 0x0A, 0x09, 0x08, 0x07, 0x06, 0x05, 0x04, 0x03, 0x02, 0x01, 0x00, 0x87 };
-static const u8 title_envelope_shape_07[] = { 0x09, 0x0A, 0x0B, 0x0C, 0x0D, 0x0E, 0x0F, 0x0E, 0x0D, 0x0C, 0x0B, 0x0A, 0x09, 0x08, 0x07, 0x06, 0x05, 0x04, 0x03, 0x02, 0x01, 0x00, 0x87 };
-static const u8 title_envelope_shape_08[] = { 0x0F, 0x0E, 0x0C, 0x06, 0x87 };
-static const u8 title_envelope_shape_09[] = { 0x0F, 0x0D, 0x0C, 0x0A, 0x08, 0x07, 0x06, 0x87 };
-static const u8 title_envelope_shape_10[] = { 0x0A, 0x0B, 0x0C, 0x0D, 0x0E, 0x0F, 0x0E, 0x0D, 0x0C, 0x0B, 0x0A, 0x09, 0x08, 0x07, 0x87 };
-static const u8 title_envelope_shape_11[] = { 0x80 };
-static const u8 title_envelope_shape_12[] = { 0x80 };
-static const u8 title_envelope_shape_13[] = { 0x80 };
-static const u8 title_envelope_shape_14[] = { 0x80 };
-static const u8 title_envelope_shape_15[] = { 0x80 };
+static const u8 title_envelope_shape_00[] = { 0x0F, 0x0F, 0x0E, 0x0D, 0x0C, 0x08, SEQ_END_BIT | 0x07 };
+static const u8 title_envelope_shape_01[] = { 0x0E, 0x0F, 0x0E, SEQ_END_BIT | 0x07 };
+static const u8 title_envelope_shape_02[] = { 0x0E, 0x0F, 0x0B, SEQ_END_BIT | 0x07 };
+static const u8 title_envelope_shape_03[] = { 0x0F, 0x0F, 0x0F, 0x0E, 0x0D, 0x0A, SEQ_END_BIT | 0x07 };
+static const u8 title_envelope_shape_04[] = { 0x0F, 0x09, 0x08, 0x06, 0x05, 0x04, 0x03, SEQ_END_BIT | 0x07 };
+static const u8 title_envelope_shape_05[] = { 0x0F, 0x0E, 0x0D, 0x0C, 0x0B, 0x06, SEQ_END_BIT | 0x07 };
+static const u8 title_envelope_shape_06[] = { 0x0F, 0x0F, 0x0E, 0x0D, 0x0C, 0x0B, 0x0A, 0x09, 0x08, 0x07, 0x06, 0x05, 0x04, 0x03, 0x02, 0x01, 0x00, SEQ_END_BIT | 0x07 };
+static const u8 title_envelope_shape_07[] = { 0x09, 0x0A, 0x0B, 0x0C, 0x0D, 0x0E, 0x0F, 0x0E, 0x0D, 0x0C, 0x0B, 0x0A, 0x09, 0x08, 0x07, 0x06, 0x05, 0x04, 0x03, 0x02, 0x01, 0x00, SEQ_END_BIT | 0x07 };
+static const u8 title_envelope_shape_08[] = { 0x0F, 0x0E, 0x0C, 0x06, SEQ_END_BIT | 0x07 };
+static const u8 title_envelope_shape_09[] = { 0x0F, 0x0D, 0x0C, 0x0A, 0x08, 0x07, 0x06, SEQ_END_BIT | 0x07 };
+static const u8 title_envelope_shape_10[] = { 0x0A, 0x0B, 0x0C, 0x0D, 0x0E, 0x0F, 0x0E, 0x0D, 0x0C, 0x0B, 0x0A, 0x09, 0x08, 0x07, SEQ_END_BIT | 0x07 };
+static const u8 title_envelope_shape_11[] = { SEQ_END_BIT };
+static const u8 title_envelope_shape_12[] = { SEQ_END_BIT };
+static const u8 title_envelope_shape_13[] = { SEQ_END_BIT };
+static const u8 title_envelope_shape_14[] = { SEQ_END_BIT };
+static const u8 title_envelope_shape_15[] = { SEQ_END_BIT };
 
 static const struct {
   const u8 *base;
@@ -619,7 +620,7 @@ static void advance_channel_pattern(chqstate_t           *state,
 
       IX_channel->status |= CHSTATUS_ENVELOPE_ACTIVE;
 
-      break; /* fall into acp_reset_row_counter below */
+      break; /* fall into reset_row_counter below */
     }
 
     /* $EE49 decode_pattern_command: command/effect byte. */
@@ -857,7 +858,7 @@ static u16 compute_channel_ay_registers(chqstate_t           *state,
       HL_env_shape = IX_channel->envelope_shape_ptr;
       HL_env_shape++;
       A_env_byte = *HL_env_shape;
-      if ((s8) A_env_byte >= 0) {
+      if ((s8) A_env_byte >= 0) { /* SEQ_END_BIT clear */
         /* Not an end-of-table marker: commit the advance. */
         IX_channel->envelope_shape_ptr = HL_env_shape;
         IX_channel->envelope_amplitude = A_env_byte;
@@ -875,11 +876,11 @@ static u16 compute_channel_ay_registers(chqstate_t           *state,
   HL_offset_ptr = IX_channel->pitch_offset_cur;
   A_offset_byte = *HL_offset_ptr;
   HL_offset_ptr++;
-  if ((s8) A_offset_byte < 0) {
+  if ((s8) A_offset_byte < 0) { /* SEQ_END_BIT set */
     /* End-of-sequence marker: reset to the default/loop-start pointer and
      * strip the marker bit. */
     HL_offset_ptr = IX_channel->pitch_offset_default;
-    A_offset_byte &= 0x7F;
+    A_offset_byte &= (u8) ~SEQ_END_BIT;
   }
   IX_channel->pitch_offset_cur = HL_offset_ptr;
 
@@ -1050,8 +1051,8 @@ static u16 compute_channel_ay_registers(chqstate_t           *state,
  */
 static void start_tune(chqstate_t *state, u8 A_tune)
 {
-  static const u8 default_pitch_offset_seq[] = { 0x80 };       /* Conv: marker bit set, payload 0 -- always resets to itself with zero offset */
-  static const u8 default_envelope_shape[]   = { 0x0F, 0x80 }; /* Conv: constant amplitude 15, then a halt marker */
+  static const u8 default_pitch_offset_seq[] = { SEQ_END_BIT }; /* Conv: marker bit set, payload 0 -- always resets to itself with zero offset */
+  static const u8 default_envelope_shape[]   = { 0x0F, SEQ_END_BIT }; /* Conv: constant amplitude 15, then a halt marker */
 
   /* Conv: byte length of the fixed wraparound prefix extracted for each
    * tune/channel (see pattern_base/pattern_len in the prologue above); not
