@@ -217,10 +217,26 @@ static void play_success_music(chqstate_t *state);
 static u8 acp_read_byte(title_tune_channel_t *IX_channel,
                         const u8            **DE_pattern)
 {
-  u8 A_byte; /* byte read before advancing the cursor (was A) */
+  u8        A_byte;    /* byte read before advancing the cursor (was A) */
+  const u8 *array_end; /* end of whichever tune array this channel's data lives in */
 
   A_byte = *(*DE_pattern)++;
-  if (*DE_pattern >= &IX_channel->pattern_base[IX_channel->pattern_len])
+
+  /* Conv: the wrap must be checked against the whole extracted tune array,
+   * not this channel's own initial pattern_base/pattern_len prefix --
+   * advance_channel_phrase's PCMD_ADVANCE_PHRASE can legitimately re-point
+   * DE_pattern far outside that channel's own header block, into a region
+   * physically owned by another channel's data within the same tune (see
+   * the tune0ch1 header at $F26B jumping to $F4E1). Bounding against
+   * pattern_len there mistook every such jump for running off the end of
+   * the transcribed data and reset the cursor back to pattern_base on the
+   * very next byte, permanently stuck replaying the 3-byte header
+   * (including PCMD_RESET_ROW_COUNTER_CLEAR_ENV, which zeroes volume) --
+   * the channel never spoke again. */
+  array_end = (IX_channel->pattern_base >= title_tune1_data)
+                ? &title_tune1_data[NELEMS(title_tune1_data)]
+                : &title_tune0_data[NELEMS(title_tune0_data)];
+  if (*DE_pattern >= array_end)
     *DE_pattern = &IX_channel->pattern_base[0]; /* Conv: wrap to extracted prefix start */
   return A_byte;
 }
@@ -347,7 +363,8 @@ static void advance_channel_phrase(title_tune_channel_t *IX_channel,
     /* $F1D5-$F1D9: read a little-endian word at HL_entry. */
     DE_word = wordat(HL_entry++);
 
-    if (DE_word == PHRASE_TABLE_RESET) {
+    switch (DE_word) {
+    case PHRASE_TABLE_RESET:
       /* $F1DC-$F1E7: table exhausted -- restart from this channel's own
        * header word, offset reset to the table's start (2). */
       HL_entry        = IX_channel->pattern_data_ptr;
@@ -355,18 +372,16 @@ static void advance_channel_phrase(title_tune_channel_t *IX_channel,
       BC_table_offset = 2;
       *DE_pattern     = resolve_phrase_addr(DE_word);
       goto finalize;
-    }
 
-    if (DE_word == PHRASE_TABLE_TRANSPOSE_PREFIX) {
+    case PHRASE_TABLE_TRANSPOSE_PREFIX:
       /* $F1F8-$F202: inline transpose override -- apply it and re-read the
        * next word, 3 bytes further into the table. */
       IX_channel->transpose = *++HL_entry;
       HL_entry++;
       BC_table_offset += 3;
       continue;
-    }
 
-    if (DE_word == PHRASE_TABLE_REPEATING_ENTRY) {
+    case PHRASE_TABLE_REPEATING_ENTRY:
       /* $F20B-$F21D: repeating entry -- repeat count then pointer follow.
        * Leaves BC_table_offset at the pointer's own low byte, so the next
        * lookup at this same table position re-reads it as a plain pointer
@@ -381,12 +396,13 @@ static void advance_channel_phrase(title_tune_channel_t *IX_channel,
       BC_table_offset += 3;
       *DE_pattern = IX_channel->phrase_ptr;
       goto finalize;
-    }
 
-    /* $F21F-$F221: plain phrase-pointer word -- use it directly. */
-    BC_table_offset += 2;
-    *DE_pattern = resolve_phrase_addr(DE_word);
-    goto finalize;
+    default:
+      /* $F21F-$F221: plain phrase-pointer word -- use it directly. */
+      BC_table_offset += 2;
+      *DE_pattern = resolve_phrase_addr(DE_word);
+      goto finalize;
+    }
   }
 
 finalize:
@@ -606,7 +622,7 @@ static void advance_channel_pattern(chqstate_t           *state,
       if (IX_channel->slide_update_flag & CHSLIDE_ECHO_NOTE)
         state->title_music.shared_note_value = A_note; /* $EC79 (SM) */
 
-      HL_ptr = IX_channel->pitch_offset_default;   /* +$09/$0A */
+      HL_ptr = IX_channel->pitch_offset_default;    /* +$09/$0A */
       IX_channel->pitch_offset_cur = HL_ptr;        /* +$0B/$0C: reset to loop start */
 
       HL_ptr = IX_channel->envelope_shape_default;  /* +$14/$15 */
@@ -1061,11 +1077,11 @@ static void start_tune(chqstate_t *state, u8 A_tune)
     { 157, 160, 447 },
     { 190, 173, 156 }
   };
-  const tune_t *HL_tune_entry;   /* -> this tune's entry in the tune-select table (was HL) */
-  u8                         A_tempo;         /* this tune's tempo/speed byte (was A) */
-  int                        channel_index;   /* channel 0..2 (was A, counted down 3..1 in the Z80) */
-  title_tune_channel_t      *IX_channel;      /* this channel's tracker record (was IX) */
-  u16                        DE_pattern_addr; /* raw Z80 address of this channel's pattern-data block, read from the tune-select table (was DE) */
+
+  const tune_t         *HL_tune_entry;   /* -> this tune's entry in the tune-select table (was HL) */
+  int                   channel_index;   /* channel 0..2 (was A, counted down 3..1 in the Z80) */
+  title_tune_channel_t *IX_channel;      /* this channel's tracker record (was IX) */
+  u16                   DE_pattern_addr; /* raw Z80 address of this channel's pattern-data block, read from the tune-select table (was DE) */
 
   /* $EB9E-$EBA4: clear the tune-active flag and its companion byte. */
   state->title_music.tune_active           = 0;
@@ -1078,8 +1094,7 @@ static void start_tune(chqstate_t *state, u8 A_tune)
   HL_tune_entry = &tunes[A_tune];
 
   /* $EBB2-$EBB6: tempo/speed byte, saved for later use. */
-  A_tempo = HL_tune_entry->tempo;
-  state->title_music.tune_tempo = A_tempo;
+  state->title_music.tune_tempo = HL_tune_entry->tempo;
 
   /* $EBB7-$EBBD: IX -> first channel-tracker record; BC = 37 (record
    * stride, folded into array indexing below). */
