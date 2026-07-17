@@ -1762,7 +1762,7 @@ static void object_script_step(chqstate_t *state)
  * repurposed as a data pointer here) and is omitted.
  */
 static void clear_playfield_buffer(chqstate_t *state)
-{
+{return;
   int H;          /* screen address high byte (was H) */
   int L;          /* screen address low byte (was L) */
   int B_scanline; /* scanline countdown within one character row, 8 (was B) */

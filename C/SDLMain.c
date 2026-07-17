@@ -52,7 +52,7 @@
 
 #define AY_CLOCK_FREQ  (1773400) // ZX Spectrum 128K AY-3-8912 clock rate
 #define AY_SAMPLE_RATE   (44100)
-#define AY_VOLUME_PCT       (10) // 0..AY_MASTER_VOLUME_MAX
+#define AY_VOLUME_PCT       (1) // 0..AY_MASTER_VOLUME_MAX
 
 #define BEEPER_VOLUME_PCT   (20) // 48K beeper level, percent of full scale
 #define BEEPER_AMPLITUDE (32767 * BEEPER_VOLUME_PCT / 100)
