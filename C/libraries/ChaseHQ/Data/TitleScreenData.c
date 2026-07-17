@@ -2,9 +2,10 @@
 
 #include "C99/Types.h"
 #include "ZXSpectrum/Pixels.h"
-#include "TitleScreenData.h"
 
-#include "CommonData.h"
+#include "ChaseHQ/Engine/Types.h"
+
+#include "TitleScreenData.h"
 
 /* $CCB7-$D271: 5 scene tables (9x5-byte object records [x,y,row,ptr] + script bytecode). */
 const u8 title_scene_data[1467] = {

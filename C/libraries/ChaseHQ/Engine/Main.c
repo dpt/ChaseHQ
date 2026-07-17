@@ -90,10 +90,6 @@
 #include "ZXSpectrum/Spectrum.h"
 #include "ZXSpectrum/Z80.h"
 
-#include "ChaseHQ/ChaseHQ.h"
-
-#include <stdio.h>
-
 #include "ChaseHQ/Data/CommonData.h"
 #include "ChaseHQ/Data/SoundSamples.h"
 #include "ChaseHQ/Data/Stage1Data.h"
@@ -103,7 +99,12 @@
 #include "ChaseHQ/Data/Stage5Data.h"
 #include "ChaseHQ/Data/Stage6Data.h"
 #include "ChaseHQ/Data/Stages.h"
-#include "ChaseHQ/Engine/State.h"
+
+#include "Types.h"
+#include "State.h"
+#include "Bank3.h"
+
+#include "ChaseHQ/ChaseHQ.h"
 
 /* ----------------------------------------------------------------------- */
 
@@ -421,7 +422,6 @@ static u8 *z80offsettobackbuf(chqstate_t *state, int off, int left, int right)
 
 #define SMASHCOUNTER_MAX            (20) /* fully smashed; also the smash bar segment count */
 
-#define STANDARD_SLEEP          (220167) /* calibrated so in-game timer is 60s */
 /* TODO: Individually calibrate each of these _SLEEP values. */
 #define MAIN_LOOP_SLEEP   STANDARD_SLEEP
 #define ATTRACT_SLEEP     STANDARD_SLEEP
@@ -7268,7 +7268,6 @@ ptad_turbo_setup:
  * redraw it. Unchanged [digits] advance the [screen] pointer without a redraw,
  * saving time.
  *
- * \param[in]     state Pointer to game state.
  * \param[in]     iterations Number of BCD byte pairs to process. (was B)
  * \param[in]     digits Pointer to the end of the packed-BCD source buffer;
  * walked backwards one byte per pair. (was DE)

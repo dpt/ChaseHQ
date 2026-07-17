@@ -11,7 +11,7 @@
 #include "ZXSpectrum/Pixels.h"
 #include "ZXSpectrum/Spectrum.h"
 
-#include "ChaseHQ/ChaseHQ.h"
+#include "ChaseHQ/Engine/Types.h"
 #include "CommonData.h"
 
 #include "Stage3Data.h"

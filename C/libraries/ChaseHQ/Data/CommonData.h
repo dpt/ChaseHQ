@@ -23,8 +23,6 @@
 
 /* ----------------------------------------------------------------------- */
 
-#define TWOBYTES(addr) (addr) & 0xFF, (addr) >> 8
-
 #define KEYDEF(key, halfrow) (((key) << 3) | (halfrow))
 
 /* ----------------------------------------------------------------------- */
@@ -312,35 +310,6 @@ const u8 persp_y_scale[8][22];
 const u8 persp_x_scale_right[8][22];
 const u8 persp_x_delta_left[8][22];
 
-/* 128K bank 3: title-tune engine AY tone-period lookup table, $EFBC-$F07B,
- * 96 entries (2 bytes/note, little-endian), indexed by
- * compute_channel_ay_registers ($EE9E@bank3). $F07C onward is a different,
- * unrelated table (an indexed pointer table, see $EE5A@bank3) -- do not
- * extend this array into it. */
-const u16 title_tune_note_periods[96];
-
-/* 128K bank 3: title-tune engine tune-select table, $F225-$F240, 4 entries
- * (7 bytes/tune: 1 tempo byte + 3 x 2-byte little-endian pattern-data
- * pointers). Indexed by start_tune ($EB9E@bank3). The pattern-data pointers
- * are raw Z80 addresses into pattern-data blocks that have not themselves
- * been extracted as C data yet -- see start_tune's Translation notes. */
-const u8 tune_select_table[28];
-
-/* 128K bank 3: title-tune engine pattern-command byte streams for tunes 0
- * (title screen) and 1 (perp-caught success jingle), transcribed byte-exact
- * from bank3.bin at the addresses reached by following tune_select_table's
- * pointers through their 2-byte header word (see start_tune's Translation
- * notes). Each array covers a fixed 120-row prefix of the real data -- not
- * proven to be the tune's full loop length, just a generous bound comfortably
- * covering BASL_JINGLE_FRAMES/ts_wait_loop's playback window. Tunes 2 and 3
- * are not extracted (unreachable from the code paths wired up so far). */
-const u8 title_tune0_ch1_pattern[157];
-const u8 title_tune0_ch2_pattern[160];
-const u8 title_tune0_ch3_pattern[447];
-const u8 title_tune1_ch1_pattern[190];
-const u8 title_tune1_ch2_pattern[173];
-const u8 title_tune1_ch3_pattern[156];
-
 typedef struct {
   u8        nframes; // stores nframes+1
   const u8 *frames;  // points to the frame before/after the base
@@ -356,11 +325,6 @@ const u8 messages_input_methods[112];
 const u8 messages_redefine_keys[138];
 const u8 messages_test_mode[151];
 const u8 messages_cannot_be_remodified[127];
-
-const u8 title_screen_credits_text[56];
-const u8 title_screen_overlay_text[47];
-
-const u8 options_menu_text[366];
 
 const u8 key_names[10 * 8];
 const u8 sinclair_joy_keydefs[5];

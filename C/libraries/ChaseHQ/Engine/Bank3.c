@@ -35,11 +35,16 @@
 #include "ZXSpectrum/Z80.h"
 
 #include "ChaseHQ/ChaseHQ.h"
-#include "ChaseHQ/Engine/Internal.h"
-#include "ChaseHQ/Data/Stages.h"
-#include "ChaseHQ/Engine/State.h"
+
+#include "ChaseHQ/Data/Bank3Data.h"
 #include "ChaseHQ/Data/CommonData.h"
 #include "ChaseHQ/Data/TitleScreenData.h"
+
+#include "Types.h"
+#include "Internal.h"
+#include "State.h"
+
+#include "Bank3.h"
 
 /* ----------------------------------------------------------------------- */
 
@@ -989,7 +994,7 @@ static void ts_music_service(chqstate_t *state)
   if (state->title_music.tune_active) {
     /* $EC78-$EC7A: clear a driver-internal flag (consumed elsewhere in the
      * pattern processing, not traced in the skool). */
-    state->title_music.driver_internal_flag = 0x00; /* $ECC6 (SM) */
+    state->title_music.driver_internal_flag = 0; /* $ECC6 (SM) */
 
     /* $EC7D-$EC81: decrement the tempo counter; only re-process the tracker
      * patterns when it reaches zero. */
@@ -1042,11 +1047,9 @@ static void ts_music_service(chqstate_t *state)
   /* $ECCA-$ECCE tms_output_registers: re-check the tune-active flag -- see
    * Conv note above -- registers are only ever written while a tune is
    * active. */
-  if (!state->title_music.tune_active)
-    return;
-
   /* $ECCF-$ECE2: output the cached register block. */
-  write_title_ay_registers(state);
+  if (state->title_music.tune_active)
+    write_title_ay_registers(state);
 }
 
 /**
@@ -1294,7 +1297,7 @@ static void oss_op_accel_x_c(struct title_object *rec)
 }
 
 /**
- * $C705: Object animation script interpreter [Conv: HQ]
+ * $C705: Object animation script interpreter
  *
  * Advances all 9 title-screen objects (state->title_objects[9]) by one
  * frame. Each object record carries a byte-code cursor into
@@ -1938,7 +1941,7 @@ static void blit_masked_sprite_dispatch_b(chqstate_t *state, int H, int L,
 }
 
 /**
- * $C8C5: Draw a foreground title-screen object's glyph [Conv: HQ]
+ * $C8C5: Draw a foreground title-screen object's glyph
  *
  * Computes the destination address and glyph-table entry via
  * compute_glyph_geometry, then, if the object's Y position was clamped
@@ -1987,7 +1990,6 @@ static void compute_glyph_blit_params(chqstate_t *state, u8 B_y, u8 C_x,
   compute_glyph_geometry(B_y, C_x, L_row, &g);
 
   if (!g.carry_initial) {
-
     A_skip_pairs = (u8) (g.A_excess >> 1);
     do {
       g.HLsrc += g.C_width_select * 2;
@@ -2001,7 +2003,7 @@ static void compute_glyph_blit_params(chqstate_t *state, u8 B_y, u8 C_x,
 }
 
 /**
- * $C94F: Draw a background title-screen object's glyph [Conv: HQ]
+ * $C94F: Draw a background title-screen object's glyph
  *
  * Structurally identical to compute_glyph_blit_params above (see its Conv
  * notes for the SP-as-pointer and frame-timing decisions, which apply here
@@ -2026,7 +2028,6 @@ static void compute_glyph_blit_params_b(chqstate_t *state, u8 B_y, u8 C_x, u8 L_
   compute_glyph_geometry(B_y, C_x, L_row, &g);
 
   if (!g.carry_initial) {
-
     if (g.C_width_select < 6)
       E_stride = (u8) (g.C_width_select << 1);
     else
@@ -2072,7 +2073,7 @@ static void sfx_music_service(chqstate_t *state)
 {
   ts_music_service(state);
 
-  /* TODO: digitised-sample SFX subsystem, out of scope — see
+  /* TODO: digitised sample SFX subsystem, out of scope — see
    * $F837 (slot 1), $F895 (slot 2), $F8A2 (1-bit sample playback active). */
 }
 
@@ -2083,6 +2084,8 @@ static void sfx_music_service(chqstate_t *state)
  * the lower two-thirds of the screen, leaving $4000-$47FF (the top third)
  * untouched. Called by $C0EC and clear_and_fill_border_attrs ($C8A9).
  *
+ * Same as clear_screen (which this bank overlaps).
+ *
  * \param[in,out] state Pointer to game state.
  *
  * Conv: the Z80 self-fills via `LD (HL),L` (both ranges start on a $x00
@@ -2091,8 +2094,15 @@ static void sfx_music_service(chqstate_t *state)
  */
 static void clear_screen_bitmap_and_attrs(chqstate_t *state)
 {
-  memset(ADDRTOATTRS(SCREEN_PLAYFIELD_ATTRS_ADDR), 0, 0x200);
-  memset(ADDRTOSCREEN(SCREEN_PLAYFIELD_BITMAP_ADDR), 0, 0x1000);
+  static const zxbox_t playfield_box = { /* lower two-thirds of screen */
+    0, 0, SCREEN_WIDTH, PLAYFIELD_HEIGHT
+  };
+
+  memset(ADDRTOATTRS(SCREEN_PLAYFIELD_ATTRS_ADDR), 0,
+         SCREEN_ATTRIBUTES_ROWBYTES * PLAYFIELD_HEIGHT / 8);
+  memset(ADDRTOSCREEN(SCREEN_PLAYFIELD_BITMAP_ADDR), 0,
+         SCREEN_BITMAP_ROWBYTES * PLAYFIELD_HEIGHT);
+  state->speccy->draw(state->speccy, &playfield_box); /* Conv: added */
 }
 
 /**
@@ -2246,7 +2256,7 @@ static void title_screen_driver(chqstate_t *state)
 
     /* $C61C EI / $C61D HALT: sync to the next interrupt before entering the
      * wait loop, so the first frame drawn above is actually presented. */
-    state->speccy->stamp(state->speccy);
+    // state->speccy->stamp(state->speccy);
 
     if (!ts_wait_loop(state)) /* $C61D falls through to $C61E */
       return;
@@ -2342,9 +2352,9 @@ static u8 ts_wait_loop(chqstate_t *state)
 
       B_wait = 0xB4;
       do {
+        state->speccy->stamp(state->speccy);
         sfx_music_service(state);
         state->speccy->sleep(state->speccy, STANDARD_SLEEP);
-        state->speccy->stamp(state->speccy);
       } while (--B_wait);
       /* $C635 INC B (B wraps 0 -> 1) has no further use of B afterwards --
        * Conv: DJNZ bookkeeping, omitted. */

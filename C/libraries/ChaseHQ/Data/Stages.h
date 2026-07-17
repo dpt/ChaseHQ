@@ -23,10 +23,6 @@
 
 /* ----------------------------------------------------------------------- */
 
-#define EOS (1<<7) // End of String - string terminator bit
-
-/* ----------------------------------------------------------------------- */
-
 #define BACKDROP_WIDTH  (10) // bytes
 #define BACKDROP_HEIGHT (24) // rows
 #define BACKDROP_LENGTH (BACKDROP_WIDTH * BACKDROP_HEIGHT)

@@ -29,12 +29,12 @@
 /* ----------------------------------------------------------------------- */
 
 typedef void (dr_callback_t)(chqstate_t *state,
-                             int Bfill_pattern,
-                             int Chorizon,
-                             int DEscreen_ptr,
-                             int Lrow,
-                             u8 **IXlanesptr,
-                             const u8 **IYheightptr);
+                             int         Bfill_pattern,
+                             int         Chorizon,
+                             int         DEscreen_ptr,
+                             int         Lrow,
+                             u8        **IXlanesptr,
+                             const u8  **IYheightptr);
 
 /* Returns the back-buffer address advanced past the rows just drawn: on the
  * Z80 this value survives in the shadow HL' register across the repeat

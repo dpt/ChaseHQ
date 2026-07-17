@@ -35,6 +35,9 @@
 #define MINSTAGE                     (1)
 #define MAXSTAGE                     (6) /* five original stages plus a test level */
 
+// Long term this should vanish.
+#define STANDARD_SLEEP          (220167) /* calibrated so in-game timer is 60s */
+
 /* ----------------------------------------------------------------------- */
 
 #define BACKBUFFER_WIDTH      (256)
@@ -145,19 +148,6 @@
 
 #define USERINPUTFLAGMASK_ALLOW_NONE        (0x00)
 #define USERINPUTFLAGMASK_ALLOW_ALL         (0xFF)
-
-/* ----------------------------------------------------------------------- */
-
-#define STANDARD_SLEEP          (220167) /* calibrated so in-game timer is 60s */
-
-/* Bank 3 (128K) dispatch -- see Bank3.c */
-
-#define BANK3_TITLE_SCREEN      (0xC000)
-#define BANK3_HI_SCORE          (0xC003)
-#define BANK3_SUCCESS_MUSIC     (0xC006)
-#define BANK3_INPUT_SELECTION   (0xC009)
-
-u8 call_bank_3_128k(chqstate_t *state, int HLroutine);
 
 /* ----------------------------------------------------------------------- */
 
