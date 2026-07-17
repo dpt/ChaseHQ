@@ -75,6 +75,9 @@ typedef struct glyph_blit_geometry
 
 static u8   acp_read_byte(title_tune_channel_t *IX_channel,
                           const u8 **DE_pattern);
+static const u8 *resolve_phrase_addr(u16 addr);
+static void advance_channel_phrase(title_tune_channel_t *IX_channel,
+                                   const u8 **DE_pattern);
 static void advance_channel_pattern(chqstate_t *state,
                                     title_tune_channel_t *IX_channel);
 static u16  compute_channel_ay_registers(chqstate_t *state,
@@ -184,26 +187,24 @@ static void play_success_music(chqstate_t *state);
  * The skool could not resolve this statically ("no entry-point markers");
  * the mapping below was recovered by reading bank3.bin directly and
  * evaluating the displacement arithmetic for every byte value 0x80-0xAF.
- * Only 16 of the 48 possible values resolve to one of the named handlers'
+ * Only 17 of the 48 possible values resolve to one of the named handlers'
  * entry points -- these become the `switch` cases below (0xA8 lands exactly
  * on acp_reset_row_counter's entry point, $EE22, even though it isn't one of
- * the primary pcmd_* handlers). Three further values are reachable but do
- * not target a handler entry point: 0x85 lands mid-instruction inside
- * pcmd_set_status_bits_3_7 (skipping its first SET 7, executing only SET 3),
- * 0x87 lands on the orphaned "JP $F1AE" at $ED33, and 0x8E lands on a bare
- * "POP HL; JP $ED0B" that would pop the real return address off the stack
- * and jump into stop_music_and_silence -- almost certainly a crash, so this
- * byte is assumed never to appear in real pattern data. The remaining values
+ * the primary pcmd_* handlers; 0x87 lands on the orphaned "JP $F1AE" at
+ * $ED33, handled below via advance_channel_phrase). Two further values are
+ * reachable but do not target a handler entry point: 0x85 lands
+ * mid-instruction inside pcmd_set_status_bits_3_7 (skipping its first SET 7,
+ * executing only SET 3), and 0x8E lands on a bare "POP HL; JP $ED0B" that
+ * would pop the real return address off the stack and jump into
+ * stop_music_and_silence -- almost certainly a crash, so this byte is
+ * assumed never to appear as an executed command (bytes with this value seen
+ * in the real pattern data all sit at stream positions consistent with an
+ * end-of-data marker, not a command dispatch). The remaining values
  * (0x92-0xA7, 0xA9-0xAF) land on arbitrary bytes inside the handler block
  * and are equally assumed unused. All of these fall into the `default` case
  * below, which -- unlike the Z80 -- treats them as a no-op rather than
  * replicating undefined/crashing behaviour. See Translation notes for the
  * full derivation.
- *
- * Conv: the $F07C (pitch-offset sequence select, command bytes $B8-$CF) and
- * $F123 (envelope-shape select, command bytes $D0-$DF) lookup tables are not
- * yet ported to C -- both branches are TODO stubs that leave the affected
- * fields unchanged rather than asserting or dereferencing an invented table.
  *
  * Conv: pattern_ptr/pattern_base/pattern_len (State.h) are only populated for
  * tunes 0 and 1 (see start_tune) -- a channel with pattern_ptr == NULL (tunes
@@ -222,6 +223,178 @@ static u8 acp_read_byte(title_tune_channel_t *IX_channel,
   if (*DE_pattern >= &IX_channel->pattern_base[IX_channel->pattern_len])
     *DE_pattern = &IX_channel->pattern_base[0]; /* Conv: wrap to extracted prefix start */
   return A_byte;
+}
+
+#define PHRASE_TABLE_RESET            0 /* table exhausted -- restart from this channel's own header */
+#define PHRASE_TABLE_TRANSPOSE_PREFIX 1 /* next byte is an inline transpose override */
+#define PHRASE_TABLE_REPEATING_ENTRY  2 /* 1-byte repeat count + 2-byte pointer follow */
+
+/**
+ * Resolve a raw Z80 address from the title-tune phrase-pointer table (or its
+ * 2-byte pattern-data header) to a C pointer into the transcribed raw data.
+ *
+ * \param[in] addr Raw Z80 address, as stored little-endian in the table or
+ *                  header. (was DE/HL)
+ *
+ * Conv: not a Z80 routine of its own -- pattern_data_ptr/pattern_ptr/
+ * phrase_ptr are C pointers into title_tune0_raw_data/title_tune1_raw_data,
+ * not simulated Z80 memory, so an address read out of the pattern stream
+ * must be translated via range/offset arithmetic against those two arrays
+ * rather than dereferenced directly.
+ */
+static const u8 *resolve_phrase_addr(u16 addr)
+{
+  if (addr >= 0xF241 && addr < 0xF241 + NELEMS(title_tune0_raw_data))
+    return &title_tune0_raw_data[addr - 0xF241];
+  if (addr >= 0xF601 && addr < 0xF601 + NELEMS(title_tune1_raw_data))
+    return &title_tune1_raw_data[addr - 0xF601];
+  assert(0); /* address outside both tunes' transcribed raw data */
+  return NULL;
+}
+
+/**
+ * $F1AE (bank 3): Walk a channel's phrase-pointer table for pattern command
+ * 0x87
+ *
+ * Reached via advance_channel_pattern's computed dispatch for pattern
+ * command byte 0x87 (see that function's Conv note on the dispatch table).
+ * Unlike every other command, 0x87 does not fall through to read the next
+ * pattern byte, or into acp_reset_row_counter -- it hands the read loop a
+ * brand-new cursor, taken from this channel's own phrase-pointer table.
+ *
+ * Each channel's raw pattern-data block (pattern_data_ptr, +$03/$04) begins
+ * with the 2-byte header word start_tune dereferences to seed pattern_ptr,
+ * immediately followed at offset 2 by the phrase-pointer table proper: a
+ * sequence of little-endian words, each either a literal marker (0 or 1) or
+ * a Z80 address. phrase_table_offset (+$05/$06) is this channel's current
+ * byte offset into that table.
+ *
+ * phrase_repeat_count (+$21) gates whether a new table word is read at all:
+ * while it is still counting down, this call just decrements it and resumes
+ * reading from phrase_ptr (+$22/$23, left unchanged) -- the phrase most
+ * recently activated by a repeating entry. Once it underflows, a new table
+ * word is read and dispatched:
+ *
+ * - PHRASE_TABLE_RESET: table exhausted -- re-read this channel's own header
+ *   word and restart the table at offset 2.
+ * - PHRASE_TABLE_TRANSPOSE_PREFIX: the following byte is an inline transpose
+ *   override for the next phrase; apply it to transpose (+$20) and re-read
+ *   the next table word, 3 bytes further on.
+ * - PHRASE_TABLE_REPEATING_ENTRY: a 1-byte repeat count and 2-byte pointer
+ *   follow; store both (phrase_repeat_count, phrase_ptr) and use the
+ *   pointer as the resume cursor.
+ * - anything else: a plain phrase-pointer word -- use it directly as the
+ *   resume cursor.
+ *
+ * Either way, the resulting cursor is written back through DE_pattern, ready
+ * for advance_channel_pattern's byte-read loop to resume from (was "JP
+ * $EDE4").
+ *
+ * \param[in,out] IX_channel Pointer to this channel's tracker record. (was IX)
+ * \param[out]    DE_pattern Receives the new pattern-read cursor. (was DE)
+ *
+ * Conv: raw Z80 addresses read from the table (the header word, and any
+ * phrase pointer) are resolved to C pointers via resolve_phrase_addr rather
+ * than simulating a flat address space.
+ *
+ * Conv: the Z80 also clears B to 0 at every exit ($F1EA/$F1ED "LD B,$00");
+ * this has no C equivalent since BC is not otherwise modelled here.
+ */
+static void advance_channel_phrase(title_tune_channel_t *IX_channel,
+                                   const u8            **DE_pattern)
+{
+  u16       BC_table_offset; /* byte offset into this channel's phrase table (was BC, +$05/$06) */
+  const u8 *HL_entry;        /* -> current phrase-table entry (was HL) */
+  s8        A_repeat;        /* decremented repeat count, tested for underflow (was A, +$21) */
+  u16       DE_word;         /* word read from the phrase table, or the resolved resume cursor (was DE) */
+  u8        A_new_repeat;    /* freshly-read repeat count for a repeating entry (was A) */
+  u16       DE_new_ptr;      /* freshly-read pointer for a repeating entry (was DE) */
+
+  BC_table_offset = IX_channel->phrase_table_offset;
+
+  for (;;) {
+    /* $F1B4: HL -> this table position. */
+    HL_entry = IX_channel->pattern_data_ptr + BC_table_offset;
+
+    /* $F1BB-$F1BF: decrement the repeat count; underflow means this
+     * position's repeats are exhausted and a new table word must be read. */
+    A_repeat = (s8) (IX_channel->phrase_repeat_count - 1);
+    if (A_repeat < 0)
+      break; /* -> $F1D1, read a new table word */
+
+    /* $F1C2-$F1CF: repeats remain -- store the decrement, then either
+     * resume the already-active phrase (repeats still remain after this
+     * one) or, on the exact call that brings the count to 0, fall through
+     * to re-examine the next table slot instead. Conv: tests A_repeat, not
+     * phrase_ptr -- $F1C2-$F1C8 (the two LD (IX+d),reg / LD reg,(IX+d)
+     * stores) do not affect flags, so $F1CB's JR NZ still reads the Z flag
+     * left over from $F1BE's DEC A, not phrase_ptr's contents. */
+    IX_channel->phrase_repeat_count = (u8) A_repeat;
+
+    if (A_repeat != 0) {
+      *DE_pattern = IX_channel->phrase_ptr;
+      goto finalize;
+    }
+
+    BC_table_offset += 2;
+  }
+
+  /* $F1D1: a new table word must be read -- reset this phrase's transpose
+   * override to none. */
+  IX_channel->transpose = 0;
+
+  for (;;) {
+    /* $F1D5-$F1D9: read a little-endian word at HL_entry. */
+    DE_word   = (u16) (HL_entry[0] | (HL_entry[1] << 8));
+    HL_entry += 1;
+
+    if (DE_word == PHRASE_TABLE_RESET) {
+      /* $F1DC-$F1E7: table exhausted -- restart from this channel's own
+       * header word, offset reset to the table's start (2). */
+      HL_entry        = IX_channel->pattern_data_ptr;
+      DE_word         = (u16) (HL_entry[0] | (HL_entry[1] << 8));
+      BC_table_offset = 2;
+      *DE_pattern     = resolve_phrase_addr(DE_word);
+      goto finalize;
+    }
+
+    if (DE_word == PHRASE_TABLE_TRANSPOSE_PREFIX) {
+      /* $F1F8-$F202: inline transpose override -- apply it and re-read the
+       * next word, 3 bytes further into the table. */
+      HL_entry += 1;
+      IX_channel->transpose = *HL_entry;
+      HL_entry += 1;
+      BC_table_offset += 3;
+      continue;
+    }
+
+    if (DE_word == PHRASE_TABLE_REPEATING_ENTRY) {
+      /* $F20B-$F21D: repeating entry -- repeat count then pointer follow.
+       * Leaves BC_table_offset at the pointer's own low byte, so the next
+       * lookup at this same table position re-reads it as a plain pointer
+       * (see the "else" case below) once the repeats are exhausted. */
+      HL_entry     += 1;
+      A_new_repeat  = *HL_entry;
+      HL_entry     += 1;
+      DE_new_ptr    = (u16) (HL_entry[0] | (HL_entry[1] << 8));
+
+      IX_channel->phrase_repeat_count = A_new_repeat;
+      IX_channel->phrase_ptr          = resolve_phrase_addr(DE_new_ptr);
+
+      BC_table_offset += 3;
+      *DE_pattern = IX_channel->phrase_ptr;
+      goto finalize;
+    }
+
+    /* $F21F-$F221: plain phrase-pointer word -- use it directly. */
+    BC_table_offset += 2;
+    *DE_pattern = resolve_phrase_addr(DE_word);
+    goto finalize;
+  }
+
+finalize:
+  /* $F1E8-$F1EB: persist the table cursor for next time. */
+  IX_channel->phrase_table_offset = BC_table_offset;
 }
 
 /* Pitch-offset sequences: real data from bank3.bin's $F07C table
@@ -426,6 +599,10 @@ static void advance_channel_pattern(chqstate_t           *state,
         IX_channel->status |= 0x88; /* bits 7 and 3 */
         continue;
 
+      case 0x87: /* advance_channel_phrase ($F1AE) -- see its own prologue */
+        advance_channel_phrase(IX_channel, &DE_pattern);
+        continue;
+
       case 0x88: /* pcmd_set_envelope_params ($ED8C) */
         IX_channel->vibrato_increment = acp_read_byte(IX_channel, &DE_pattern); /* operand 1 -> +$1B */
         A_operand = acp_read_byte(IX_channel, &DE_pattern);                     /* operand 2, stored twice */
@@ -481,9 +658,9 @@ static void advance_channel_pattern(chqstate_t           *state,
         goto reset_row_counter;
 
       default:
-        /* 0x85, 0x87, 0x8E and the rest of 0x92-0xAF: not a real handler
-         * entry point -- see the Conv note above the prologue. Conv: treat
-         * as a no-op. */
+        /* 0x85, 0x8E and the rest of 0x92-0xAF: not a real handler entry
+         * point -- see the Conv note above the prologue. Conv: treat as a
+         * no-op. */
         continue;
       }
     } else if (A_byte < 0xB8) {
@@ -790,51 +967,43 @@ static u16 compute_channel_ay_registers(chqstate_t           *state,
  * Conv: the pattern-data blocks tune_select_table's pointers reference have
  * been extracted from bank3.bin as C data for tunes 0 and 1 only (the title
  * tune and the perp-caught success jingle -- the only tunes reachable from
- * code paths wired up so far; see title_tune0_ch*_pattern/title_tune1_ch*_pattern
- * in Data/CommonData.c). Each array covers a fixed 120-row prefix, not the
- * whole tune, so pattern_base/pattern_len are stored alongside pattern_ptr
- * (State.h, Conv fields with no Z80 counterpart) to let advance_channel_pattern
- * wrap back to the start once it runs off the end, rather than reading out of
- * bounds. Tunes 2 and 3 are not extracted; their channels are left with
- * pattern_ptr/pattern_base = NULL, which advance_channel_pattern must treat as
- * silent/idle. DE_pattern_addr (the raw Z80 pointer read from the table) is
- * still read for translation fidelity but is superseded by the tune_patterns
- * lookup below rather than dereferenced as a real address.
+ * code paths wired up so far; see title_tune0_raw_data/title_tune1_raw_data
+ * in Data/Bank3Data.c). DE_pattern_addr (the raw Z80 pointer read from the
+ * table) is resolved to a C pointer into one of those two blobs via
+ * resolve_phrase_addr; pattern_ptr is then seeded by following that pointer
+ * to the 2-byte envelope-pointer header every pattern begins with, exactly
+ * as the Z80 does. pattern_base/pattern_len (State.h, Conv fields with no
+ * Z80 counterpart) cover only a fixed prefix of the real tune, not the whole
+ * thing, and let advance_channel_pattern wrap back to the start once it runs
+ * off the end rather than reading out of bounds; the lengths come from
+ * tune_pattern_lens below. Tunes 2 and 3 are not extracted; their channels
+ * are left with pattern_ptr/pattern_data_ptr/pattern_base = NULL, which
+ * advance_channel_pattern must treat as silent/idle.
  *
- * Conv: pitch_offset_default/_cur and envelope_shape_default/_ptr are meant
- * to be set by the pattern stream's $F07C (pitch-offset select) and $F123
- * (envelope-shape select) commands, neither of which is ported yet
- * (advance_channel_pattern's decode_pattern_command TODO stubs for command
- * bytes $B8-$CF/$D0-$DF leave them unchanged). With real pattern data now
- * flowing, a note event dereferences both unconditionally
- * (advance_channel_pattern's note-value branch, compute_channel_ay_registers'
- * phase 1/2) -- leaving them NULL crashes on the first note. start_tune seeds
- * all 3 channels with default_pitch_offset_seq/default_envelope_shape (below):
- * synthetic single-entry tables, not transcribed Z80 data, that decode to "no
- * pitch offset" / "constant amplitude 15" so playback is audible and stable
- * rather than silent or crashing. TODO: replace with the real $F07C/$F123
- * tables once extracted.
+ * Conv: pitch_offset_default/_cur and envelope_shape_default/_ptr are set
+ * for real once a note stream issues the pattern-command bytes $B8-$CF
+ * (pitch-offset select) or $D0-$DF (envelope-shape select) -- see
+ * dispatch_pattern_command's pitch_offset_table/envelope_shape_table
+ * handling. Before that first select command runs, though, a note event
+ * still dereferences both unconditionally (advance_channel_pattern's
+ * note-value branch, compute_channel_ay_registers' phase 1/2), so start_tune
+ * seeds all 3 channels with default_pitch_offset_seq/default_envelope_shape
+ * (below): synthetic single-entry tables, not transcribed Z80 data, that
+ * decode to "no pitch offset" / "constant amplitude 15" so playback is
+ * audible and stable rather than crashing before the first select command.
  */
 static void start_tune(chqstate_t *state, u8 A_tune)
 {
   static const u8 default_pitch_offset_seq[] = { 0x80 };       /* Conv: marker bit set, payload 0 -- always resets to itself with zero offset */
   static const u8 default_envelope_shape[]   = { 0x0F, 0x80 }; /* Conv: constant amplitude 15, then a halt marker */
 
-  static const struct {
-    const u8 *base;
-    u16       len;
-  } tune_patterns[2][3] = {
-    {
-      { title_tune0_ch1_pattern, sizeof(title_tune0_ch1_pattern) },
-      { title_tune0_ch2_pattern, sizeof(title_tune0_ch2_pattern) },
-      { title_tune0_ch3_pattern, sizeof(title_tune0_ch3_pattern) }
-    },
-    {
-      { title_tune1_ch1_pattern, sizeof(title_tune1_ch1_pattern) },
-      { title_tune1_ch2_pattern, sizeof(title_tune1_ch2_pattern) },
-      { title_tune1_ch3_pattern, sizeof(title_tune1_ch3_pattern) }
-    }
-  };                                      /* Conv: real pattern data for tunes 0/1; see prologue */
+  /* Conv: byte length of the fixed wraparound prefix extracted for each
+   * tune/channel (see pattern_base/pattern_len in the prologue above); not
+   * itself Z80 data. */
+  static const u16 tune_pattern_lens[2][3] = {
+    { 157, 160, 447 },
+    { 190, 173, 156 }
+  };
   int                    BC_offset;       /* byte offset into tune_select_table = A_tune * 7 (was BC) */
   const u8              *HL_tune_entry;   /* -> this tune's 7-byte entry in the tune-select table (was HL) */
   u8                     A_tempo;         /* this tune's tempo/speed byte, first byte of the entry (was A) */
@@ -873,7 +1042,7 @@ static void start_tune(chqstate_t *state, u8 A_tune)
 
     /* $EBC4-$EBC8: reset misc playback state for this channel. */
     IX_channel->transpose           = 0; /* +$20 */
-    IX_channel->misc_playback_state = 0; /* +$21 */
+    IX_channel->phrase_repeat_count = 0; /* +$21 */
 
     /* Conv: seed the pitch-offset/envelope-shape pointers with the synthetic
      * safe defaults (see prologue) rather than leaving them NULL. */
@@ -891,27 +1060,33 @@ static void start_tune(chqstate_t *state, u8 A_tune)
     IX_channel->mute_pending = 0; /* +$1F */
 
     /* $EBD9-$EBDC: store the raw pattern-data pointer. */
-    IX_channel->pattern_data_ptr = NULL; /* +$03/+$04: Conv: raw Z80 address
-                                           * (DE_pattern_addr) is not modelled as a
-                                           * dereferenceable C pointer; never read
-                                           * elsewhere in bank 3 (see State.h). */
+    if (A_tune < NELEMS(tune_pattern_lens))
+      IX_channel->pattern_data_ptr = resolve_phrase_addr(DE_pattern_addr); /* +$03/+$04 */
+    else
+      IX_channel->pattern_data_ptr = NULL; /* +$03/+$04: tune not extracted -- treated as silent */
 
     /* $EBDF-$EBE2: follow the pattern pointer to read a second,
      * effect/envelope pointer from the start of the pattern data itself --
      * every pattern begins with an envelope-pointer header. */
-    if (A_tune < NELEMS(tune_patterns)) {
-      IX_channel->pattern_ptr  = tune_patterns[A_tune][channel_index].base;  /* +$01/+$02 */
-      IX_channel->pattern_base = tune_patterns[A_tune][channel_index].base; /* Conv: wraparound base, see prologue */
-      IX_channel->pattern_len  = tune_patterns[A_tune][channel_index].len;  /* Conv: wraparound length, see prologue */
+    if (IX_channel->pattern_data_ptr != NULL) {
+      IX_channel->pattern_ptr  = resolve_phrase_addr(wordat(IX_channel->pattern_data_ptr)); /* +$01/+$02 */
+      IX_channel->pattern_base = IX_channel->pattern_ptr; /* Conv: wraparound base, see prologue */
+      IX_channel->pattern_len  = tune_pattern_lens[A_tune][channel_index]; /* Conv: wraparound length, see prologue */
     } else {
       IX_channel->pattern_ptr  = NULL; /* +$01/$02: tune not extracted -- treated as silent */
       IX_channel->pattern_base = NULL;
       IX_channel->pattern_len  = 0;
     }
 
-    /* $EBE3-$EBE7: initial speed/divider = 2, counter = 0. */
-    IX_channel->speed_divider = 2; /* +$05 */
-    IX_channel->counter       = 0; /* +$06 */
+    /* $EBE3-$EBE7: phrase-table cursor starts just past the 2-byte header;
+     * no phrase is active yet. */
+    IX_channel->phrase_table_offset = 2;    /* +$05/$06 */
+    IX_channel->phrase_ptr          = NULL; /* +$22/$23: Conv: real Z80 never
+                                              * initialises this either; the
+                                              * first advance_channel_phrase
+                                              * call always underflows
+                                              * phrase_repeat_count first
+                                              * (see State.h). */
   }
 
   /* $EBF6: clear a driver-internal flag. */

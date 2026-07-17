@@ -169,22 +169,19 @@ static void chq_initialise(chqstate_t *state)
   // that, so give every field a defined value here rather than leaving
   // calloc's zero fill as the only guarantee. pattern_ptr/pattern_data_ptr
   // and the Conv-only pattern_base/pattern_len stay NULL/0 here; start_tune
-  // resolves them for real from tune_patterns (tunes 0/1 only -- see
-  // start_tune's Translation notes). pitch_offset_default/_cur and
-  // envelope_shape_default/_ptr are set by decode_pattern_command's
-  // as-yet-unported pitch-offset/envelope-shape select tables, not by
-  // start_tune.
+  // resolves them for real (tunes 0/1 only -- see start_tune's Translation
+  // notes). pitch_offset_default/_cur and envelope_shape_default/_ptr are
+  // seeded there too with synthetic safe defaults.
   {
     int titlechan;
 
     for (titlechan = 0; titlechan < 3; titlechan++) {
       state->title_music.channel[titlechan].status                 = 0;
       state->title_music.channel[titlechan].pattern_ptr            = NULL; // set for real by start_tune
-      state->title_music.channel[titlechan].pattern_data_ptr       = NULL; // never read elsewhere in bank 3
+      state->title_music.channel[titlechan].pattern_data_ptr       = NULL; // set for real by start_tune
       state->title_music.channel[titlechan].pattern_base           = NULL; // Conv: set for real by start_tune
       state->title_music.channel[titlechan].pattern_len            = 0;    // Conv: set for real by start_tune
-      state->title_music.channel[titlechan].speed_divider          = 0;
-      state->title_music.channel[titlechan].counter                = 0;
+      state->title_music.channel[titlechan].phrase_table_offset    = 0;
       state->title_music.channel[titlechan].slide_accum            = 0;
       state->title_music.channel[titlechan].pitch_offset_default   = NULL; // TODO: set once decode_pattern_command's pitch-offset table exists
       state->title_music.channel[titlechan].pitch_offset_cur       = NULL; // TODO: as above
@@ -206,7 +203,8 @@ static void chq_initialise(chqstate_t *state)
       state->title_music.channel[titlechan].slide_update_flag      = 0;
       state->title_music.channel[titlechan].mute_pending           = 0;
       state->title_music.channel[titlechan].transpose              = 0;
-      state->title_music.channel[titlechan].misc_playback_state    = 0;
+      state->title_music.channel[titlechan].phrase_repeat_count    = 0;
+      state->title_music.channel[titlechan].phrase_ptr             = NULL;
       /* mixer_mask is static initial RAM content in the Z80 (not written by
        * start_tune), confirmed against the skool's DEFB data: channel-tracker
        * $EC01 -> $EC25=$09, $EC26 -> $EC4A=$12, $EC4B -> $EC6F=$24. */

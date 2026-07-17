@@ -102,18 +102,16 @@ struct session {
 /// One 37-byte channel-tracker record used by the 128K bank-3 title-tune
 /// engine ($EC01/$EC26/$EC4B). Offsets read/written by
 /// compute_channel_ay_registers ($EE9E), advance_channel_pattern ($EDD6) and
-/// start_tune ($EB9E) are modelled. Offsets $22/$23 are not written by
-/// start_tune either, and are not referenced anywhere else in bank 3 (checked
-/// exhaustively) -- most likely unused padding in the 37-byte record. Do not
-/// invent their layout.
+/// start_tune ($EB9E) are modelled, along with the phrase-pointer-table
+/// fields read/written by advance_channel_phrase ($F1AE, reached via pattern
+/// command 0x87) -- see that function's prologue for the table format.
 struct title_tune_channel {
   u8         status;                 // +$00 note/status; bit0 toggled every call, bit1 set by pcmd_set_status_bit1, bit2 slide active, bit3 slide direction/upkeep gate, bit5 envelope active, bits 3&7 set by pcmd_set_status_bits_3_7
   const u8  *pattern_ptr;            // +$01/+$02 current read position in the pattern-command byte stream; initialised by start_tune from the first 2 bytes of the pattern-data block that pattern_data_ptr points to (an "envelope-pointer header")
-  const u8  *pattern_data_ptr;       // +$03/+$04 raw pattern-data block pointer for this channel, read from the tune-select table by start_tune; never read elsewhere in bank 3
+  const u8  *pattern_data_ptr;       // +$03/+$04 raw pattern-data block pointer for this channel, read from the tune-select table by start_tune; base address for phrase_table_offset and the header re-read on phrase-table exhaustion (advance_channel_phrase)
   const u8  *pattern_base;           // Conv: start of the extracted pattern_ptr array; not a Z80 field. Lets advance_channel_pattern wrap pattern_ptr back to the start once it runs off the end of the finite extracted prefix, since the real Z80 data (and its true loop point) is not fully transcribed into C
   u16        pattern_len;            // Conv: byte length of the array pattern_base points to; paired with pattern_base for the same reason
-  u8         speed_divider;          // +$05 initial speed/divider value, reset to 2 by start_tune; never read elsewhere in bank 3 (purpose beyond initialisation not established)
-  u8         counter;                // +$06 counter, reset to 0 by start_tune; never read elsewhere in bank 3 (purpose beyond initialisation not established)
+  u16        phrase_table_offset;    // +$05/+$06 byte offset from pattern_data_ptr to the current phrase-pointer-table entry; starts at 2 (immediately past the 2-byte header) and advances by 2 or 3 per table word (advance_channel_phrase)
   u16        slide_accum;            // +$07/+$08 accumulated portamento/slide value
   const u8  *pitch_offset_default;   // +$09/+$0A default/loop-start pitch-offset sequence pointer
   const u8  *pitch_offset_cur;       // +$0B/+$0C current pitch-offset sequence pointer
@@ -134,8 +132,9 @@ struct title_tune_channel {
   u8         flags;                  // +$1D bit5 vibrato direction, bit6 vibrato enable, bit7 vibrato update gate
   u8         slide_update_flag;      // +$1E bit0 gates whether a new note is echoed to title_music.shared_note_value; set/cleared by the mixer-bit pattern commands
   u8         mute_pending;           // +$1F bit7 = one-shot mute-transition gate
-  u8         transpose;              // +$20 added to each raw note value read from the pattern stream before storing to note_index
-  u8         misc_playback_state;    // +$21 write-only; reset to 0 alongside transpose by start_tune ("reset misc playback state for this channel"); never read elsewhere in bank 3; purpose not established
+  u8         transpose;              // +$20 added to each raw note value read from the pattern stream before storing to note_index; also reset to 0, or set from an inline phrase-table override, by advance_channel_phrase
+  u8         phrase_repeat_count;    // +$21 decrementing repeat count for the phrase currently held in phrase_ptr; 0 means due for a new phrase-table lookup (advance_channel_phrase); reset to 0 by start_tune
+  const u8  *phrase_ptr;             // +$22/+$23 pattern-stream cursor for the phrase most recently activated by a repeating (marker==2) phrase-table entry; reused while phrase_repeat_count is still counting down (advance_channel_phrase)
   u8         mixer_mask;             // +$24 mask applied when merging into the shared mixer cache
 };
 

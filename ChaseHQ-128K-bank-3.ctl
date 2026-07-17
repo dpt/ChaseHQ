@@ -1135,7 +1135,7 @@ N $ED0B Stop any playing tune and silence the AY chip. This entry point is used 
 @ $ED0B label=stop_music_and_silence
 C $ED0C,3 Clear the tune-active flag
 C $ED12,1 Clear the per-channel mixer/noise register cache
-N $ED1D Not traced (structural pass) -- nothing in this bank jumps or calls into $ED1D-$ED32; the instruction stream here does not obviously cohere (an SBC/ADD/ADC/SUB chain feeding register loads with no clear purpose before falling into a POP HL/JP). Likely either dead code or a misdisassembled data table; revisit if $F1AE below turns out to need it.
+N $ED1D Not traced (structural pass) -- nothing in this bank jumps or calls into $ED1D-$ED32; the instruction stream here does not obviously cohere (an SBC/ADD/ADC/SUB chain feeding register loads with no clear purpose before falling into a POP HL/JP). Likely either dead code or a misdisassembled data table. Ruled out as related to #R$F1AE: that routine is a self-contained phrase-pointer table walker, fully traced, and does not fall through from or into this range.
 N $ED36 Pattern command/effect opcode handlers ($ED36-$EDD1), reached only via the computed jump at #R$EE96 (never by a direct CALL/JP visible to the disassembler, hence no entry-point markers below). Each handler consumes a fixed number of further bytes from the pattern stream (DE) and stores them into fields of the current channel's 37-byte tracker record (see #R$EC01), then rejoins the main interpreter at #R$EDE4 or #R$EE22. Traced mechanically below; the AY-level meaning of $EF7A and +$1D/+$1F is inferred (marked "likely"), not confirmed against a working build. Handlers 1-3 all bit-merge P = (IX+$24) into the shared byte $EF7A using the "A XOR M; A AND mask; A XOR M" replace-bits-under-mask idiom; $EF7A is likely a per-channel AY mixer (tone/noise enable) bit cache, given $EEA0 onward outputs a mixer byte to the AY.
 @ $ED36 label=pcmd_set_mixer_bits_low3
 C $ED36,3 Merge (P AND $07) into $EF7A under mask P; likely
@@ -1211,8 +1211,89 @@ b $EFAF Per-frame AY register cache and tone-period lookup table
 D $EFAF $EFAF-$EFBA (12 bytes): the per-frame AY register cache, refreshed each frame by #R$EC71/#R$EE9E and flushed to the AY chip by #R$ECCA (registers 0-11: 3 channels' tone-period pairs, noise period, mixer, 3 channels' volumes, envelope-period-fine). Initial contents here are just start-up defaults, overwritten before first use.
 R $EFAF $EFBC onward: an AY tone-period lookup table (2 bytes/entry, one per
 R $EFAF note), indexed by note number via #R$EE9E ($EEF1 LD HL,$EFBC).
-N $EFAF Further sub-tables referenced elsewhere in this driver, contents not decoded byte-by-byte (raw lookup data, not algorithmic): $F07C (indexed pointer table, see #R$EE5A), $F123 (indexed pointer table, see #R$EE7E), $F1AE (an alternate entry point jumped to from the unreferenced code at $ED33), $F225 (the per-tune channel-pointer table used by #R$EB9E, 7 bytes/entry -- see #R$EB9E for the layout).
-B $EFAF,2043,8*255,3
+N $EFAF Further sub-tables referenced elsewhere in this driver, contents not decoded byte-by-byte (raw lookup data, not algorithmic): $F07C (indexed pointer table, see #R$EE5A), $F123 (indexed pointer table, see #R$EE7E). $F225 onward: the per-tune channel-pointer table used by #R$EB9E, 7 bytes/entry -- see #R$EB9E for the layout.
+B $EFAF,511,8
+c $F1AE Phrase-pointer table walker for a channel's pattern stream, reached via the computed jump at #R$ED33 (pattern command byte $87). Traced mechanically below (explicit instruction lengths, to avoid the auto-disassembler misreading the DD-prefixed IX-offset forms). Confirmed against a working build (see #R$EE9E's C translation, advance_channel_phrase). The phrase-pointer table read from $F1D5 onward is a sequence of little-endian words, each either a literal marker or a raw address: marker $0000 means the table is exhausted (restart from this channel's own header word); marker $0001 is followed by a 1-byte transpose override then another table word; marker $0002 is followed by a 1-byte repeat count and a 2-byte pointer (a "repeating" phrase); anything else is a plain phrase-pointer word, used directly.
+@ $F1AE label=advance_channel_phrase
+C $F1AE,3 BC = (IX+$05)/(IX+$06), this channel's byte offset into its own phrase-pointer table
+C $F1B1,3
+@ $F1B4 label=acph_repeat_loop
+C $F1B4,3 HL = (IX+$03)/(IX+$04)
+C $F1B7,3
+C $F1BA,1 HL = HL + BC (-> this table position)
+C $F1BB,3 A = (IX+$21) (the repeat count for the phrase in (IX+$22)/(IX+$23)); A -= 1
+C $F1BE,1
+C $F1BF,3 if A < 0, jump to $F1D1 (repeats exhausted -- read a new table word)
+C $F1C2,3 else (IX+$21) = A (store the decremented repeat count)
+C $F1C5,3 DE = (IX+$22)/(IX+$23) (the phrase pointer this repeat count belongs to)
+C $F1C8,3
+C $F1CB,2 if A (the value decremented at $F1BE, tested via the Z flag it left behind -- $F1C2-$F1C8 are LD (IX+d),reg/LD reg,(IX+d) and do not affect flags) != 0, jump to $F1E8 (repeats remain -- resume this phrase)
+C $F1CD,1 else BC += 2 (repeat count reached exactly 0 -- this slot is done; advance to the next table word)
+C $F1CE,1
+C $F1CF,2 and loop back to $F1B4 (re-add BC to HL)
+@ $F1D1 label=acph_new_word
+C $F1D1,4 (IX+$20) = 0 (clear this phrase's transpose override)
+@ $F1D5 label=acph_read_word
+C $F1D5,1 A = (HL); HL += 1
+C $F1D6,1
+C $F1D7,1 D = (HL); E = A (DE = the table word just read)
+C $F1D8,1
+C $F1D9,1 if DE != $0000 (not the table-exhausted marker), jump to $F1F3
+C $F1DA,2
+C $F1DC,3 else HL = (IX+$03)/(IX+$04) (table exhausted -- re-read this channel's own header word)
+C $F1DF,3
+C $F1E2,3 BC = 2 (table offset resets to just past the header)
+C $F1E5,1 E = (HL); HL += 1; D = (HL) (DE = the header word, used as the resume pointer)
+C $F1E6,1
+C $F1E7,1
+@ $F1E8 label=acph_finalize
+C $F1E8,3 (IX+$05) = C; (IX+$06) = B (persist the table offset cursor)
+C $F1EB,3
+C $F1EE,2 B = 0
+C $F1F0,3 jump to $EDE4 (acp_read_pattern_byte), resuming the pattern stream from DE
+@ $F1F3 label=acph_check_transpose
+C $F1F3,1 DE -= 1 (test for the transpose-prefix marker, value $0001)
+C $F1F4,1 if DE != 0 (word was not $0001), jump to $F204
+C $F1F5,1
+C $F1F6,2
+C $F1F8,1 else HL += 1; A = (HL) (read the inline transpose override byte)
+C $F1F9,1
+C $F1FA,3 (IX+$20) = A
+C $F1FD,1 HL += 1; BC += 3; DE += 1
+C $F1FE,1
+C $F1FF,1
+C $F200,1
+C $F201,1
+C $F202,2 and loop back to $F1D5 to read the next table word
+@ $F204 label=acph_check_repeat
+C $F204,1 DE -= 1 (test for the repeating-entry marker, value $0002; DE already holds word-1 from $F1F3)
+C $F205,1 if DE != 0 (word was not $0002), jump to $F21F
+C $F206,1
+C $F207,1
+C $F208,1
+C $F209,2
+C $F20B,1 else HL += 1; A = (HL); (IX+$21) = A (repeat count operand)
+C $F20C,1
+C $F20D,3
+C $F210,1 HL += 1; E = (HL); (IX+$22) = E (phrase pointer operand, low byte)
+C $F211,1
+C $F212,3
+C $F215,1 HL += 1; D = (HL); (IX+$23) = D (phrase pointer operand, high byte)
+C $F216,1
+C $F217,3
+C $F21A,1 BC += 3
+C $F21B,1
+C $F21C,1
+C $F21D,2 and jump to $F1E8 (DE = the new phrase pointer, used as the resume cursor)
+@ $F21F label=acph_plain_pointer
+C $F21F,1 BC += 2 (word was a plain phrase-pointer, not a marker)
+C $F220,1
+C $F221,2 and jump to $F1E8 (DE = the table word itself, used as the resume cursor)
+C $F223,1 padding (unreachable)
+C $F224,1
+b $F225 Per-tune channel-pointer table and pattern/phrase byte data
+D $F225 $F225-$F240 (28 bytes, 7 bytes/entry): the per-tune channel-pointer table used by #R$EB9E, see #R$EB9E for the layout. $F241 onward: pattern/phrase byte streams and per-channel phrase-pointer tables referenced by #R$F1AE and the channel tracker records set up by #R$EB9E; not decoded byte-by-byte.
+B $F225,1413,8
 c $F7AA Sets up the classic ZX Spectrum IM2 "257-byte table" interrupt vector trick
 D $F7AA Fills $BC00-$BDBD with the byte $BD so that, whatever the low byte of the interrupt vector happens to be, I:HL together always resolve to the single byte at $BDBD; patches that byte to a JP opcode ($C3) whose operand ($BDBE/$BDBF) is set to #R$F8AD, making $F8AD the interrupt handler for every subsequent interrupt. Sets I to the table's page and enables IM 2.
 R $F7AA Used by the routines at #R$C06E, #R$C59E, #R$F7C7 and #R$FB99.
