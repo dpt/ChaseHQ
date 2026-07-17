@@ -163,7 +163,7 @@ const u8 options_menu_text[366] = {
  * 96 entries, one per note, transcribed directly from the skool's DEFB bytes
  * (little-endian pairs). Used by compute_channel_ay_registers ($EE9E@bank3)
  * to convert a note index into an AY tone-period value. */
-const u16 title_tune_note_periods[96] = {
+const u16 note_periods[96] = {
   0x0EF8,
   0x0E10,
   0x0D60,
@@ -268,13 +268,13 @@ const u16 title_tune_note_periods[96] = {
  * by start_tune ($EB9E@bank3). Tune 0's channel-1 pointer ($F241) lands
  * exactly on the byte immediately following this table, confirming its
  * 4-entry extent. The pattern-data blocks these pointers reference are
- * extracted as title_tune0_raw_data/title_tune1_raw_data below, for tunes 0
+ * extracted as title_tune0_data/title_tune1_data below, for tunes 0
  * and 1 -- see start_tune's Translation notes. */
-const u8 tune_select_table[4 * 7] = {
-  2, TWOBYTES(0xF241), TWOBYTES(0xF25A), TWOBYTES(0xF265), /* tune 0: tempo=2, ch1=$F241, ch2=$F25A, ch3=$F265 */
-  4, TWOBYTES(0xF601), TWOBYTES(0xF605), TWOBYTES(0xF609), /* tune 1: tempo=4, ch1=$F601, ch2=$F605, ch3=$F609 */
-  2, TWOBYTES(0xF666), TWOBYTES(0xF66A), TWOBYTES(0xF66E), /* tune 2: tempo=2, ch1=$F666, ch2=$F66A, ch3=$F66E */
-  3, TWOBYTES(0xF6F4), TWOBYTES(0xF6F8), TWOBYTES(0xF6FE)  /* tune 3: tempo=3, ch1=$F6F4, ch2=$F6F8, ch3=$F6FE */
+const tune_t tunes[4] = {
+  { 2, { 0xF241, 0xF25A, 0xF265 } },
+  { 4, { 0xF601, 0xF605, 0xF609 } },
+  { 2, { 0xF666, 0xF66A, 0xF66E } },
+  { 3, { 0xF6F4, 0xF6F8, 0xF6FE } }
 };
 
 /* 128K bank 3: title-tune engine raw pattern-data regions for tunes 0 (title
@@ -282,7 +282,8 @@ const u8 tune_select_table[4 * 7] = {
  * bank3.bin. See declaration comments in Bank3Data.h. Tunes 2 and 3 are not
  * extracted (unreachable from the code paths wired up so far). */
 
-const u8 title_tune0_raw_data[960] = {  /* $F241-$F600 */
+/* $F241-$F600 */
+const u8 title_tune0_data[960] = {
   0x6E, 0xF2, 0x02, 0x00, 0x08, 0x6E, 0xF2, 0x97, 0xF2, 0x88, 0xF2, 0xA7,
   0xF2, 0x88, 0xF2, 0x88, 0xF2, 0x97, 0xF2, 0x88, 0xF2, 0x39, 0xF3, 0x00,
   0x00, 0x6B, 0xF2, 0x02, 0x00, 0x07, 0x6B, 0xF2, 0xE1, 0xF4, 0x00, 0x00,
@@ -365,7 +366,8 @@ const u8 title_tune0_raw_data[960] = {  /* $F241-$F600 */
   0x3E, 0x80, 0x42, 0x80, 0x40, 0x80, 0x3E, 0x80, 0x3D, 0x3B, 0x39, 0x8E,
 };
 
-const u8 title_tune1_raw_data[222] = {  /* $F601-$F6DE */
+/* $F601-$F6DE */
+const u8 title_tune1_data[222] = {
   0x0D, 0xF6, 0x00, 0x00, 0x2E, 0xF6, 0x00, 0x00, 0x43, 0xF6, 0x00, 0x00,
   0x8A, 0xC0, 0x81, 0xD4, 0x91, 0xE1, 0x3C, 0x3C, 0x3C, 0xE3, 0x3B, 0x37,
   0x3A, 0x3A, 0xE1, 0x3A, 0xE3, 0x39, 0x35, 0xE1, 0x38, 0x38, 0x38, 0xE3,

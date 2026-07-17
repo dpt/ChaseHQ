@@ -30,14 +30,20 @@ const u8 options_menu_text[366];
  * compute_channel_ay_registers ($EE9E@bank3). $F07C onward is a different,
  * unrelated table (an indexed pointer table, see $EE5A@bank3) -- do not
  * extend this array into it. */
-const u16 title_tune_note_periods[96];
+const u16 note_periods[96];
 
-/* 128K bank 3: title-tune engine tune-select table, $F225-$F240, 4 entries
- * (7 bytes/tune: 1 tempo byte + 3 x 2-byte little-endian pattern-data
- * pointers). Indexed by start_tune ($EB9E@bank3). The pattern-data pointers
- * are raw Z80 addresses, resolved into title_tune0_raw_data/
- * title_tune1_raw_data below by start_tune and advance_channel_phrase. */
-const u8 tune_select_table[4 * 7];
+/* One tune's entry in the tune-select table below: a tempo/speed byte plus
+ * the raw Z80 address of each of the 3 channels' pattern-data blocks. */
+typedef struct tune {
+  u8  tempo;                   /* tune tempo/speed byte */
+  u16 channel_pattern_addr[3]; /* raw Z80 address of each channel's pattern-data block */
+} tune_t;
+
+/* 128K bank 3: title-tune engine tune-select table, $F225-$F240, 4 entries,
+ * one per tune. Indexed by start_tune ($EB9E@bank3). The pattern-data
+ * pointers are raw Z80 addresses, resolved into title_tune0_data/
+ * title_tune1_data below by start_tune and advance_channel_phrase. */
+const tune_t tunes[4];
 
 /* 128K bank 3: title-tune engine raw pattern-data region for tune 0 (title
  * screen), transcribed byte-exact from bank3.bin, $F241-$F600 (the byte
@@ -48,14 +54,14 @@ const u8 tune_select_table[4 * 7];
  * table are walked. Addresses read from the header or phrase table are
  * resolved to a C pointer into this array via simple offset arithmetic from
  * $F241 (see resolve_phrase_addr in Bank3.c). */
-const u8 title_tune0_raw_data[960];
+const u8 title_tune0_data[960];
 
-/* As title_tune0_raw_data, for tune 1 (perp-caught success jingle),
+/* As title_tune0_data, for tune 1 (perp-caught success jingle),
  * $F601-$F6DE -- covers channel 3's wraparound pattern prefix (156 bytes,
  * see tune_pattern_lens in start_tune) in full, the deepest of the three
  * channels' reach into this region. Tune 2 begins at $F666, inside this
  * range; tune 2 is not itself extracted. */
-const u8 title_tune1_raw_data[222];
+const u8 title_tune1_data[222];
 
 /* ----------------------------------------------------------------------- */
 
