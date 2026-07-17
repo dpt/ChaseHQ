@@ -266,7 +266,7 @@ static void chq_initialise(chqstate_t *state)
 
   // $C5A2 (SM): pristine operand value for the "LD A,$00" self-modified by
   // title_screen_driver; rotates/increments on each restart.
-  state->title_scene_selector = 0x00;
+  state->title_animation = 0x00;
 
   // $BB00-$BB4F (128K bank 3): title-screen animated-object array, repopulated
   // from a scene table on every title_screen_driver restart; zeroed here so an

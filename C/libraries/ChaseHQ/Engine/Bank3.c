@@ -43,7 +43,7 @@
 
 /* ----------------------------------------------------------------------- */
 
-#define BASL_JINGLE_FRAMES (0xB4) /* success-jingle duration; see boot_and_run_sound_loop Conv: */
+#define BASL_JINGLE_FRAMES (0xB4) /* success-jingle duration; see play_success_music Conv: */
 
 /* state is always the enclosing function's chqstate_t* parameter. */
 #define ADDRTOSCREEN(addr) z80addrtoscreen(state, addr, 0, 0)
@@ -134,14 +134,14 @@ static u16  advance_key_label_column(u16 DE_screen);
 static void read_new_key_definition(chqstate_t *state, u16 *DE_screen,
                                      u8 B_remaining, u8 C_control_index);
 static void redefine_keys_screen(chqstate_t *state);
-static void service_sound_and_loop_tune0(chqstate_t *state);
+static void run_title_tune(chqstate_t *state);
 static u8   detect_kempston_joystick(chqstate_t *state);
 static const u8 *print_character(chqstate_t *state, const u8 *HL_record);
 static void print_string(chqstate_t *state, const u8 *HLstring);
 static void clear_options_screen(chqstate_t *state);
 static u8   omd_redraw_and_poll(chqstate_t *state);
 static u8   options_menu_driver(chqstate_t *state);
-static void boot_and_run_sound_loop(chqstate_t *state);
+static void play_success_music(chqstate_t *state);
 
 /* ----------------------------------------------------------------------- */
 
@@ -1074,7 +1074,7 @@ static void setup_im2_interrupt_table(chqstate_t *state)
  * Z80 IM2 interrupt service routine installed by setup_im2_interrupt_table.
  * Sets the "frame occurred" flag at $F8A8, polled by wait_for_frame_flag, and
  * returns. The actual per-frame music/SFX work happens synchronously from the
- * title-screen main loop (ts_wait_loop / boot_and_run_sound_loop), not here.
+ * title-screen main loop (ts_wait_loop / play_success_music), not here.
  *
  * Conv: no equivalent in C — nothing in this port ever waits on the $F8A8
  * flag (the title-screen loops call sfx_music_service directly once per
@@ -1592,8 +1592,9 @@ static void ts_animate_frame(chqstate_t *state)
   static const zxbox_t  playfield_box = { /* lower two-thirds of screen */
     0, 0, SCREEN_WIDTH, PLAYFIELD_HEIGHT
   };
-  int                   obj; /* object index within the fg/bg loop (was B, DJNZ counter) */
-  struct title_object  *rec; /* current object record (was IX) */
+
+  int                  obj; /* object index within the fg/bg loop (was B, DJNZ counter) */
+  struct title_object *rec; /* current object record (was IX) */
 
   state->speccy->stamp(state->speccy);
 
@@ -1613,7 +1614,7 @@ static void ts_animate_frame(chqstate_t *state)
 
   state->speccy->draw(state->speccy, &playfield_box); /* Conv: added */
 
-  state->speccy->sleep(state->speccy, STANDARD_SLEEP);
+  state->speccy->sleep(state->speccy, 220167*55/100); // hacking
 }
 
 /**
@@ -1642,17 +1643,16 @@ static void ts_animate_frame(chqstate_t *state)
  * used for the AY register merge in compute_channel_ay_registers.
  */
 static void compute_glyph_geometry(u8 B_y, u8 C_x, u8 L_row,
-                                    glyph_blit_geometry_t *out)
+                                   glyph_blit_geometry_t *out)
 {
-  u8  B_clamped;         /* Y, clamped to a maximum of $6F (was B) */
-  u8  A;                 /* working accumulator (was A) */
-  int carry;             /* Z80 carry flag, used by the RR/RLC macros */
-  u8  B_screen_rows;     /* $AF - B_clamped, reused as the mask-merge operand (was B) */
-  u8  D;                 /* destination screen address high byte (was D) */
-  u8  E;                 /* destination screen address low byte (was E) */
-  int glyph_index;       /* index into title_glyph_table (was BC, table offset / 4) */
+  u8                   B_clamped;     /* Y, clamped to a maximum of $6F (was B) */
+  u8                   A;             /* working accumulator (was A) */
+  int                  carry;         /* Z80 carry flag, used by the RR/RLC macros */
+  u8                   B_screen_rows; /* $AF - B_clamped, reused as the mask-merge operand (was B) */
+  u8                   D;             /* destination screen address high byte (was D) */
+  u8                   E;             /* destination screen address low byte (was E) */
+  int                  glyph_index;   /* index into title_glyph_table (was BC, table offset / 4) */
   const title_glyph_t *glyph;
-
 
   if (B_y < 0x70) {
     B_clamped           = B_y;
@@ -2017,8 +2017,7 @@ static void compute_glyph_blit_params(chqstate_t *state, u8 B_y, u8 C_x,
  * \param[in]     C_x   Object X screen position (was C).
  * \param[in]     L_row Object row/height byte (was L).
  */
-static void compute_glyph_blit_params_b(chqstate_t *state, u8 B_y, u8 C_x,
-                                         u8 L_row)
+static void compute_glyph_blit_params_b(chqstate_t *state, u8 B_y, u8 C_x, u8 L_row)
 {
   glyph_blit_geometry_t g;
   u8                    A_skip_pairs; /* row-pairs of source to skip (was A) */
@@ -2139,7 +2138,7 @@ static void clear_and_fill_border_attrs(chqstate_t *state)
  * \param[in,out] state Pointer to game state.
  *
  * Conv: the self-modified scene-selector operand at $C5A2 is modelled as
- * state->title_scene_selector; see the TODO in ts_wait_loop where the "any
+ * state->title_animation; see the TODO in ts_wait_loop where the "any
  * key" restart path reseeds it.
  *
  * Conv: signature is `void`, not `u8`, even though $FBA2 (fire pressed) is a
@@ -2168,26 +2167,25 @@ static void title_screen_driver(chqstate_t *state)
   static const zxbox_t playfield_box = { /* lower two-thirds of screen */
     0, 0, SCREEN_WIDTH, PLAYFIELD_HEIGHT
   };
-  u8         A_scene_bits;   /* rotating scene-selector pseudo-random value (was A) */
-  int        carry;          /* required by the RLC/RR macros (carry) */
-  int        bit;            /* scene-table bit-test index, 0-3 (Conv: rolled RRA/JR C chain) */
-  int        scene_idx;      /* chosen scene table index, 0-4 */
-  const u8  *HL_scene_table; /* chosen scene table's object-record base (was HL) */
-  int        obj;            /* object-record loop index, 0-8 (was B) */
-  u16        DEscript_addr;  /* script pointer, reassembled from 2 Z80-address bytes (was DE) */
+
+  u8        A_anim;         /* rotating anim-selector pseudo-random value (was A) */
+  int       carry;          /* required by the RLC/RR macros (carry) */
+  int       bit;            /* scene-table bit-test index, 0-3 (Conv: rolled RRA/JR C chain) */
+  int       scene_idx;      /* chosen scene table index, 0-4 */
+  const u8 *HL_scene_table; /* chosen scene table's object-record base (was HL) */
+  int       obj;            /* object-record loop index, 0-8 (was B) */
+  u16       DE_pscript;     /* script pointer, reassembled from 2 Z80-address bytes (was DE) */
 
   for (;;) {
     clear_and_fill_border_attrs(state);
 
-    /* $C5A1-$C5A9: read the persisted scene selector, rotate it left,
-     * mask to 5 bits, and force it to 1 if that leaves zero -- then persist
+    /* $C5A1-$C5A9: read the stored animation index, rotate (shift) it left,
+     * mask to 5 bits, and force it to 1 if that leaves zero -- then store
      * the new value for the next restart. */
-    A_scene_bits = state->title_scene_selector; /* $C5A1 LD A,$00 (SM) */
-    RLC(A_scene_bits);
-    A_scene_bits &= 0x1F;
-    if (!A_scene_bits)
-      A_scene_bits++;
-    state->title_scene_selector = A_scene_bits;
+    A_anim = (state->title_animation << 1) & 0x1F;
+    if (A_anim == 0)
+      A_anim = 1;
+    state->title_animation = A_anim;
 
     /* $C5AC-$C5C7: pick one of 5 scene tables by testing successive bits of
      * A via RRA; the first bit found set selects the table, defaulting to
@@ -2196,7 +2194,7 @@ static void title_screen_driver(chqstate_t *state)
      * loop over the same 4 bit tests; behaviourally identical. */
     scene_idx = 4;
     for (bit = 0; bit < 4; bit++) {
-      RR(A_scene_bits);
+      RR(A_anim);
       if (carry) {
         scene_idx = bit;
         break;
@@ -2204,9 +2202,8 @@ static void title_screen_driver(chqstate_t *state)
     }
     HL_scene_table = &title_scene_data[title_scene_table_offset[scene_idx]];
 
-    print_string(state, title_screen_credits_text); /* $C5C8-$C5CB: draw the
-                                                       * copyright/credits
-                                                       * text block ($CC50). */
+    /* $C5C8-$C5CB: draw the copyright/credits text block ($CC50). */
+    print_string(state, title_screen_credits_text);
 
     /* $C5CE-$C602: zero the $BB00-$BB4F object array, then copy the chosen
      * scene's 9 5-byte object records into it, reordering each record's
@@ -2215,52 +2212,41 @@ static void title_screen_driver(chqstate_t *state)
      * accesses at $C740-$C7AC, not the (misleading) inline comment at
      * $C5DB-$C5E3, which names the wrong offsets for the script pointer). */
     for (obj = 0; obj < 9; obj++) {
-      state->title_objects[obj].opcode = 0; /* $C5CE-$C5D9 zero-fill */
+      state->title_objects[obj].opcode = 0;
       state->title_objects[obj].wait   = 0;
       state->title_objects[obj].x_step = 0;
       state->title_objects[obj].y_step = 0;
 
-      state->title_objects[obj].x = HL_scene_table[0];
-      state->title_objects[obj].y = HL_scene_table[1];
+      state->title_objects[obj].x   = HL_scene_table[0];
+      state->title_objects[obj].y   = HL_scene_table[1];
       state->title_objects[obj].row = HL_scene_table[2];
 
-      DEscript_addr = (u16) (HL_scene_table[3] | (HL_scene_table[4] << 8));
-      state->title_objects[obj].script =
-        &title_scene_data[DEscript_addr - TITLE_SCENE_DATA_BASE];
+      DE_pscript = wordat(HL_scene_table + 3);
+      state->title_objects[obj].script = &title_scene_data[DE_pscript - TITLE_SCENE_DATA_BASE];
 
-      HL_scene_table += 5; /* the 5 INC HL's in the $C5E5-$C5FB read loop;
-                             * the Z80's own $C5FE ADD IX,DE (DE=$0009)
-                             * instead advances the *destination* record
-                             * pointer, modelled here by the obj loop index. */
+      HL_scene_table += 5;
     }
 
     setup_im2_interrupt_table(state);
 
-    ts_animate_frame(state); /* $C605 CALL $C6C4 -- draw the first frame
-                               * immediately, so the scene is visible before
-                               * the wait loop starts polling. */
+    /* draw the first frame immediately, so the scene is visible before the wait
+     * loop starts polling. */
+    ts_animate_frame(state);
 
-    print_character(state, &title_screen_overlay_text[21]); /* $C608-$C60B:
-                                                               * "PRESS ENTER
-                                                               * FOR OPTIONS"
-                                                               * ($CC9D),
-                                                               * unconditionally. */
+    /* Show "PRESS ENTER FOR OPTIONS" unconditionally. */
+    print_character(state, &title_screen_overlay_text[21]);
 
+    /* Show "PRESS GEAR TO PLAY" once controls have been selected. */
     if (state->controls_selected)
-      print_character(state, &title_screen_overlay_text[0]); /* $C612-$C615:
-                                                                * "PRESS GEAR
-                                                                * TO PLAY"
-                                                                * ($CC88). */
+      print_character(state, &title_screen_overlay_text[0]);
 
     start_tune_and_sfx_table(state, 0);
 
     state->speccy->draw(state->speccy, &playfield_box); /* Conv: added */
 
-    state->speccy->stamp(state->speccy); /* $C61C EI / $C61D HALT: sync to
-                                           * the next interrupt before
-                                           * entering the wait loop, so the
-                                           * first frame drawn above is
-                                           * actually presented. */
+    /* $C61C EI / $C61D HALT: sync to the next interrupt before entering the
+     * wait loop, so the first frame drawn above is actually presented. */
+    state->speccy->stamp(state->speccy);
 
     if (!ts_wait_loop(state)) /* $C61D falls through to $C61E */
       return;
@@ -2336,7 +2322,6 @@ static u8 ts_wait_loop(chqstate_t *state)
                                * this caller-owned loop -- see prologue. */
 
     sfx_music_service(state);
-
 
     if (!state->title_music.tune_active) {
       /* $C627-$C637: wait out ~180 frames (one sfx_music_service call per
@@ -2656,7 +2641,7 @@ static void read_new_key_definition(chqstate_t *state, u16 *DE_screen,
 
 rescan:
   for (;;) {
-    service_sound_and_loop_tune0(state);
+    run_title_tune(state);
 
     ambiguous = scan_keyboard_matrix(state, &D_key_code);
     if (ambiguous)
@@ -2738,7 +2723,7 @@ static void redefine_keys_screen(chqstate_t *state)
 
     print_string(state, &options_menu_text[114]); /* $FEAC-$FEAF: header +
                                                     * GEAR/ACCELERATE/BRAKE */
-    service_sound_and_loop_tune0(state);
+    run_title_tune(state);
     print_string(state, &options_menu_text[160]); /* $FEB5-$FEB8:
                                                     * LEFT/RIGHT/QUIT/PAUSE/TURBO */
 
@@ -2750,7 +2735,7 @@ static void redefine_keys_screen(chqstate_t *state)
 
     do {
       do {
-        service_sound_and_loop_tune0(state);
+        run_title_tune(state);
 
         A_key_mask = (u8) (~state->speccy->in(state->speccy, port_KEYBOARD_12345) & 0x1F);
       } while (A_key_mask != 0); /* $FED0 JR NZ,$FEC1: wait for keys "1"-"5" to be released */
@@ -2762,7 +2747,7 @@ static void redefine_keys_screen(chqstate_t *state)
 
     B_wait = 0x14;
     do {
-      service_sound_and_loop_tune0(state);
+      run_title_tune(state);
     } while (--B_wait != 0);
 
     for (B_shocked_i = 0; B_shocked_i < 8; B_shocked_i++) {
@@ -2778,7 +2763,7 @@ static void redefine_keys_screen(chqstate_t *state)
     state->speccy->draw(state->speccy, &playfield_box); /* Conv: added */
 
     do {
-      service_sound_and_loop_tune0(state);
+      run_title_tune(state);
 
       A_key_mask = (u8) (~state->speccy->in(state->speccy, port_KEYBOARD_12345) & 0x1F);
     } while (A_key_mask == 0); /* $FF08 JR Z,$FEFF: wait for any key */
@@ -2793,10 +2778,11 @@ static void redefine_keys_screen(chqstate_t *state)
  *
  * \param[in,out] state Pointer to game state.
  */
-static void service_sound_and_loop_tune0(chqstate_t *state)
+static void run_title_tune(chqstate_t *state)
 {
   sfx_music_service(state);
 
+  /* restart the tune if it's finished */
   if (!state->title_music.tune_active)
     start_tune_and_sfx_table(state, 0);
 }
@@ -2830,7 +2816,7 @@ static u8 detect_kempston_joystick(chqstate_t *state)
     if (A_sample != C_baseline)
       return 0;
 
-    service_sound_and_loop_tune0(state);
+    run_title_tune(state);
     state->speccy->sleep(state->speccy, STANDARD_SLEEP);
     state->speccy->stamp(state->speccy);
   } while (--B_count);
@@ -3010,7 +2996,7 @@ static void print_string(chqstate_t *state, const u8 *HLstring)
  *
  * Zero-fills the same $5900-$5AFF attribute range and $4800-$57FF bitmap
  * range as clear_screen_bitmap_and_attrs, servicing sound (sfx_music_service,
- * via service_sound_and_loop_tune0) between passes so the title tune keeps
+ * via run_title_tune) between passes so the title tune keeps
  * advancing during the fill. Called from omd_redraw_and_poll ($FBA2 and
  * $FBE5) and, once ported, the "define keys" screen ($FEA9/$FEF6).
  *
@@ -3021,18 +3007,18 @@ static void print_string(chqstate_t *state, const u8 *HLstring)
  * between each pair; the bitmap fill collapses to one memset since nothing
  * observes it mid-way, but all three service calls are kept, in the same
  * order, so the tune advances by the same number of steps as the Z80.
- * Falls through into service_sound_and_loop_tune0 via a tail jump in the
+ * Falls through into run_title_tune via a tail jump in the
  * Z80 ($FEA6 JP $FBC8), modelled here as a plain call before returning.
  */
 static void clear_options_screen(chqstate_t *state)
 {
   memset(ADDRTOATTRS(SCREEN_PLAYFIELD_ATTRS_ADDR), 0, 0x200);
-  service_sound_and_loop_tune0(state);
+  run_title_tune(state);
 
   memset(ADDRTOSCREEN(SCREEN_PLAYFIELD_BITMAP_ADDR), 0, 0x1000);
-  service_sound_and_loop_tune0(state);
+  run_title_tune(state);
 
-  service_sound_and_loop_tune0(state); /* tail call */
+  run_title_tune(state); /* tail call */
 }
 
 /**
@@ -3095,12 +3081,12 @@ redraw:
 poll: /* $FBAB omd_service_and_read_keys */
   do {
     state->speccy->stamp(state->speccy);
-    service_sound_and_loop_tune0(state);
+    run_title_tune(state);
 
     A_key_mask = (u8) (~state->speccy->in(state->speccy, port_KEYBOARD_12345) & 0x1F);
 
     if (A_key_mask == 0)
-      state->speccy->sleep(state->speccy, STANDARD_SLEEP);
+      state->speccy->sleep(state->speccy, STANDARD_SLEEP); // keyscan sleep
   } while (A_key_mask == 0);
 
   if (A_key_mask & 0x01) { /* $FBB7/$FBB8: key "1" -> Sinclair joystick */
@@ -3143,13 +3129,10 @@ shared_tail:
 
   do {
     state->speccy->stamp(state->speccy);
-    service_sound_and_loop_tune0(state);
-
+    run_title_tune(state);
     A_key_mask = (u8) (~state->speccy->in(state->speccy, port_KEYBOARD_12345) & 0x1F);
-
-    if (A_key_mask != 0) /* $FC06 JR NZ,$FBFD: debounce -- wait for the
-                          * selection key to be released before proceeding */
-      state->speccy->sleep(state->speccy, STANDARD_SLEEP);
+    state->speccy->sleep(state->speccy, STANDARD_SLEEP); // keyscan sleep
+    /* debounce: wait for the selection key to be released before proceeding */
   } while (A_key_mask != 0);
 
   /* TODO: CALL stop_music_and_silence ($ED0B) -- AY driver internals not
@@ -3218,7 +3201,7 @@ static u8 options_menu_driver(chqstate_t *state)
  * count is a guess at the jingle's real duration; TODO: tune by ear once
  * pattern data exists to actually hear it.
  */
-static void boot_and_run_sound_loop(chqstate_t *state)
+static void play_success_music(chqstate_t *state)
 {
   int B_wait; /* jingle frame countdown (was B, unbounded in the Z80) */
 
@@ -3267,7 +3250,7 @@ u8 call_bank_3_128k(chqstate_t *state, int HLroutine)
   case BANK3_HI_SCORE:
     break;
   case BANK3_SUCCESS_MUSIC:
-    boot_and_run_sound_loop(state);
+    play_success_music(state);
     break;
   case BANK3_INPUT_SELECTION:
     state->controls_selected = 1; // temp

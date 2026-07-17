@@ -886,7 +886,7 @@ struct chqstate {
   // $C5A2 (SM, 128K bank 3 only): title-screen scene selector, rotated and
   // tested bit-by-bit by title_screen_driver to pick one of the 5 scene
   // tables each time the title screen restarts.
-  u8                 title_scene_selector;
+  u8                 title_animation;
 
   // $BB00-$BB4F (128K bank 3 only): the 9 animated-object records populated
   // from the chosen scene table by title_screen_driver, drawn each frame by
