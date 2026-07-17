@@ -68,7 +68,7 @@ const tune_t tunes[4];
  * table are walked. Addresses read from the header or phrase table are
  * resolved to a C pointer into this array via simple offset arithmetic from
  * $F241 (see resolve_phrase_addr in Bank3.c). */
-const u8 title_tune0_data[960];
+const u8 title_tune0_data[1026];
 
 /* As title_tune0_data, for tune 1 (perp-caught success jingle),
  * $F601-$F6DE -- covers channel 3's wraparound pattern prefix (156 bytes,

@@ -1860,7 +1860,7 @@ static void ts_animate_frame(chqstate_t *state)
 
   state->speccy->draw(state->speccy, &playfield_box); /* Conv: added */
 
-  state->speccy->sleep(state->speccy, 220167*55/100); // hacking
+  state->speccy->sleep(state->speccy, 220167*57/100); // hacking
 }
 
 /**

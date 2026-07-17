@@ -282,8 +282,8 @@ const tune_t tunes[4] = {
  * bank3.bin. See declaration comments in Bank3Data.h. Tunes 2 and 3 are not
  * extracted (unreachable from the code paths wired up so far). */
 
-/* $F241-$F600 */
-const u8 title_tune0_data[960] = {
+/* $F241-$F642 */
+const u8 title_tune0_data[1026] = {
   0x6E, /* $F241: HEADER_PATTERN_PTR [tune0ch0] */
   0xF2, /* $F242: (high byte) */
   0x02, /* $F243: PHRASE_TABLE_WORD */
@@ -1244,6 +1244,83 @@ const u8 title_tune0_data[960] = {
   0x3B, /* $F5FE: -- unreached by tune 0/1 playback -- */
   0x39, /* $F5FF: -- unreached by tune 0/1 playback -- */
   0x8E, /* $F600: -- unreached by tune 0/1 playback -- */
+  /* Conv: extension past the original $F600 cut -- ch1's real command
+   * stream runs on into what the original transcription window called
+   * "$F601-$F6DE" (tune 1's own header block), because the ROM packs both
+   * tunes' data back-to-back with no tune0/tune1 boundary in the byte
+   * stream itself; only the phrase-table entries that resolve_phrase_addr
+   * is asked to follow define which tune "owns" which bytes. Duplicated
+   * verbatim from bank3.bin here so ch1's PHRASE_TABLE_RESET loop
+   * ($F25C-$F263) reaches its real PCMD_ADVANCE_PHRASE at $F642 instead of
+   * hitting acp_read_byte's finite-array wrap guard early and restarting
+   * from the header ($F26B) 350+ bytes too soon -- see the sync-drift fix.
+   */
+  0x0D, /* $F601: NOTE(0x0d) [tune0ch1] */
+  0xF6, /* $F602: PCMD_SET_ROW_WAIT(23) [tune0ch1] */
+  0x00, /* $F603: NOTE(0x00) [tune0ch1] */
+  0x00, /* $F604: NOTE(0x00) [tune0ch1] */
+  0x2E, /* $F605: NOTE(0x2e) [tune0ch1] */
+  0xF6, /* $F606: PCMD_SET_ROW_WAIT(23) [tune0ch1] */
+  0x00, /* $F607: NOTE(0x00) [tune0ch1] */
+  0x00, /* $F608: NOTE(0x00) [tune0ch1] */
+  0x43, /* $F609: NOTE(0x43) [tune0ch1] */
+  0xF6, /* $F60A: PCMD_SET_ROW_WAIT(23) [tune0ch1] */
+  0x00, /* $F60B: NOTE(0x00) [tune0ch1] */
+  0x00, /* $F60C: NOTE(0x00) [tune0ch1] */
+  0x8A, /* $F60D: PCMD_SET_MIXER_BITS_HIGH3 [tune0ch1] */
+  0xC0, /* $F60E: PCMD_SELECT_PITCH_OFFSET(8) [tune0ch1] */
+  0x81, /* $F60F: PCMD_VIBRATO_OFF [tune0ch1] */
+  0xD4, /* $F610: PCMD_SELECT_ENVELOPE_SHAPE(4) [tune0ch1] */
+  0x91, /* $F611: PCMD_UNMUTE_CHANNEL [tune0ch1] */
+  0xE1, /* $F612: PCMD_SET_ROW_WAIT(2) [tune0ch1] */
+  0x3C, /* $F613: NOTE(0x3c) [tune0ch1] */
+  0x3C, /* $F614: NOTE(0x3c) [tune0ch1] */
+  0x3C, /* $F615: NOTE(0x3c) [tune0ch1] */
+  0xE3, /* $F616: PCMD_SET_ROW_WAIT(4) [tune0ch1] */
+  0x3B, /* $F617: NOTE(0x3b) [tune0ch1] */
+  0x37, /* $F618: NOTE(0x37) [tune0ch1] */
+  0x3A, /* $F619: NOTE(0x3a) [tune0ch1] */
+  0x3A, /* $F61A: NOTE(0x3a) [tune0ch1] */
+  0xE1, /* $F61B: PCMD_SET_ROW_WAIT(2) [tune0ch1] */
+  0x3A, /* $F61C: NOTE(0x3a) [tune0ch1] */
+  0xE3, /* $F61D: PCMD_SET_ROW_WAIT(4) [tune0ch1] */
+  0x39, /* $F61E: NOTE(0x39) [tune0ch1] */
+  0x35, /* $F61F: NOTE(0x35) [tune0ch1] */
+  0xE1, /* $F620: PCMD_SET_ROW_WAIT(2) [tune0ch1] */
+  0x38, /* $F621: NOTE(0x38) [tune0ch1] */
+  0x38, /* $F622: NOTE(0x38) [tune0ch1] */
+  0x38, /* $F623: NOTE(0x38) [tune0ch1] */
+  0xE3, /* $F624: PCMD_SET_ROW_WAIT(4) [tune0ch1] */
+  0x37, /* $F625: NOTE(0x37) [tune0ch1] */
+  0x33, /* $F626: NOTE(0x33) [tune0ch1] */
+  0xE7, /* $F627: PCMD_SET_ROW_WAIT(8) [tune0ch1] */
+  0x35, /* $F628: NOTE(0x35) [tune0ch1] */
+  0xE1, /* $F629: PCMD_SET_ROW_WAIT(2) [tune0ch1] */
+  0x80, /* $F62A: PCMD_RESET_ROW_COUNTER_CLEAR_ENV [tune0ch1] */
+  0xE7, /* $F62B: PCMD_SET_ROW_WAIT(8) [tune0ch1] */
+  0x80, /* $F62C: PCMD_RESET_ROW_COUNTER_CLEAR_ENV [tune0ch1] */
+  0x8E, /* $F62D: unmapped no-op [tune0ch1] */
+  0x8A, /* $F62E: PCMD_SET_MIXER_BITS_HIGH3 [tune0ch1] */
+  0x90, /* $F62F: PCMD_MUTE_CHANNEL [tune0ch1] */
+  0xD3, /* $F630: PCMD_SELECT_ENVELOPE_SHAPE(3) [tune0ch1] */
+  0xC2, /* $F631: PCMD_SELECT_PITCH_OFFSET(10) [tune0ch1] */
+  0x81, /* $F632: PCMD_VIBRATO_OFF [tune0ch1] */
+  0xEB, /* $F633: PCMD_SET_ROW_WAIT(12) [tune0ch1] */
+  0x18, /* $F634: NOTE(0x18) [tune0ch1] */
+  0xE3, /* $F635: PCMD_SET_ROW_WAIT(4) [tune0ch1] */
+  0x80, /* $F636: PCMD_RESET_ROW_COUNTER_CLEAR_ENV [tune0ch1] */
+  0xEB, /* $F637: PCMD_SET_ROW_WAIT(12) [tune0ch1] */
+  0x16, /* $F638: NOTE(0x16) [tune0ch1] */
+  0xE3, /* $F639: PCMD_SET_ROW_WAIT(4) [tune0ch1] */
+  0x80, /* $F63A: PCMD_RESET_ROW_COUNTER_CLEAR_ENV [tune0ch1] */
+  0xEB, /* $F63B: PCMD_SET_ROW_WAIT(12) [tune0ch1] */
+  0x14, /* $F63C: NOTE(0x14) [tune0ch1] */
+  0xE3, /* $F63D: PCMD_SET_ROW_WAIT(4) [tune0ch1] */
+  0x80, /* $F63E: PCMD_RESET_ROW_COUNTER_CLEAR_ENV [tune0ch1] */
+  0xE7, /* $F63F: PCMD_SET_ROW_WAIT(8) [tune0ch1] */
+  0x11, /* $F640: NOTE(0x11) [tune0ch1] */
+  0x80, /* $F641: PCMD_RESET_ROW_COUNTER_CLEAR_ENV [tune0ch1] */
+  0x87, /* $F642: PCMD_ADVANCE_PHRASE [tune0ch1] */
 };
 
 /* $F601-$F6DE */
