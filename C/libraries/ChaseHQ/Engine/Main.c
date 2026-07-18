@@ -8869,8 +8869,10 @@ void hazard_handler(chqstate_t *state, hazard_t *IXhazard)
 
   current_lane = IXhazard->current_lane;
   if (current_lane != IXhazard->hazard_lane_OR_perp_dist_hi) {
-    RL(min_lane); // I'm not understanding these rotates
-    phazard_pos_speed = &hazard_pos_speed[current_lane];
+    RL(min_lane); // captures the CP borrow from the current_lane vs.
+                  // assigned-lane compare above through the round trip to
+                  // RR below; see $A900-$A90B
+    phazard_pos_speed = &hazard_pos_speed[current_lane - 1];
     horz_pos = IXhazard->horz_pos_on_road;
     RR(min_lane);
     if (carry) {
