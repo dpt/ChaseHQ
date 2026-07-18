@@ -2419,6 +2419,8 @@ static void title_screen_driver(chqstate_t *state)
     0, 0, SCREEN_WIDTH, PLAYFIELD_HEIGHT
   };
 
+  return; // TEMP
+
   u8        A_anim;         /* rotating anim-selector pseudo-random value (was A) */
   int       carry;          /* required by the RLC/RR macros (carry) */
   int       bit;            /* scene-table bit-test index, 0-3 (Conv: rolled RRA/JR C chain) */
