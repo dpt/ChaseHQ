@@ -48,11 +48,18 @@
 #define SCALE_MIN            (1)
 #define SCALE_MAX            (4)
 
+// Set to 0 to fall back to the plain SDL_Renderer blit (no shader, any GPU
+// backend, nearest-neighbour scaling); set to 1 for the SDL3 GPU/Metal CRT
+// post-effect pipeline (Metal only). Override with -DCHQ_CRT_SHADER=1.
+#ifndef CHQ_CRT_SHADER
+#define CHQ_CRT_SHADER       (0)
+#endif
+
 #define MAXSTAMPS            (4) // max depth of timestamps stack
 
 #define AY_CLOCK_FREQ  (1773400) // ZX Spectrum 128K AY-3-8912 clock rate
 #define AY_SAMPLE_RATE   (44100)
-#define AY_VOLUME_PCT       (1) // 0..AY_MASTER_VOLUME_MAX
+#define AY_VOLUME_PCT       (5) // 0..AY_MASTER_VOLUME_MAX
 
 #define BEEPER_VOLUME_PCT   (20) // 48K beeper level, percent of full scale
 #define BEEPER_AMPLITUDE (32767 * BEEPER_VOLUME_PCT / 100)
@@ -74,6 +81,8 @@
 #define AY_REPLAY_CUSHION_NS (30000000ULL)
 
 // -----------------------------------------------------------------------------
+
+#if CHQ_CRT_SHADER
 
 // CRT post-effect prototype. Runs the game texture through a Metal fragment
 // shader via SDL's GPU API instead of the plain SDL_Renderer blit, so we can
@@ -135,15 +144,15 @@ static const char *const chq_crt_fragment_msl =
   "  if (max(bs.r, max(bs.g, bs.b)) > 0.5) bloom += bs;\n"
   "  if (max(be.r, max(be.g, be.b)) > 0.5) bloom += be;\n"
   "  if (max(bw.r, max(bw.g, bw.b)) > 0.5) bloom += bw;\n"
-  "  c.rgb += bloom * 0.05;\n"
+  "  c.rgb += bloom * 0.025;\n"
   // brightness / contrast / saturation.
   "  c.rgb = (c.rgb - 0.5) * 1.1 + 0.5;\n"
-  "  c.rgb *= 1.2;\n"
+  "  c.rgb *= 1.1;\n"
   "  float lum = dot(c.rgb, float3(0.299, 0.587, 0.114));\n"
-  "  c.rgb = mix(float3(lum), c.rgb, 0.7);\n"
+  "  c.rgb = mix(float3(lum), c.rgb, 1.0);\n"
   // scanlines, intensity adapted to local luminance.
   "  float scan = sin(uv.y * 384.0 * 3.14159265) * 0.5 + 0.5;\n"
-  "  float adaptive = mix(0.85, 0.85 * (1.0 - lum), 0.5);\n"
+  "  float adaptive = mix(0.75, 0.75 * (1.0 - lum), 0.5);\n"
   "  c.rgb *= 1.0 - adaptive * scan;\n"
   // vignetteApprox: Chebyshev (max-component) distance falloff.
   "  float2 d = abs(uv - 0.5) * 2.0;\n"
@@ -151,6 +160,8 @@ static const char *const chq_crt_fragment_msl =
   "  c.rgb *= vignette;\n"
   "  return c;\n"
   "}\n";
+
+#endif // CHQ_CRT_SHADER
 
 static int chq_window_width(int scale)
 {
@@ -236,11 +247,16 @@ typedef struct
   int                audio_muted;          // bool; mute sound if true
 
   SDL_Window              *window;
+#if CHQ_CRT_SHADER
   SDL_GPUDevice           *gpu;
   SDL_GPUTexture          *gpu_texture; // holds the game's converted screen
   SDL_GPUTransferBuffer   *transfer_buffer; // staging buffer for the upload above
   SDL_GPUSampler          *sampler;
   SDL_GPUGraphicsPipeline *pipeline;
+#else
+  SDL_Renderer            *renderer;
+  SDL_Texture             *texture;
+#endif
   SDL_Thread              *game_thread;
   SDL_AudioStream         *audio_stream;
 }
@@ -664,6 +680,7 @@ static void chq_sdl_key_pressed(chq_sdl_state_t         *state,
 static void chq_sdl_main_loop(void *opaque)
 {
   chq_sdl_state_t *state = opaque;
+#if CHQ_CRT_SHADER
   SDL_GPUViewport   viewport;
 
   viewport.x         = BORDER     * state->scale;
@@ -672,6 +689,14 @@ static void chq_sdl_main_loop(void *opaque)
   viewport.h         = GAMEHEIGHT * state->scale;
   viewport.min_depth = 0.0f;
   viewport.max_depth = 1.0f;
+#else
+  SDL_FRect         dstrect;
+
+  dstrect.x = BORDER     * state->scale;
+  dstrect.y = BORDER     * state->scale;
+  dstrect.w = GAMEWIDTH  * state->scale;
+  dstrect.h = GAMEHEIGHT * state->scale;
+#endif
 
   {
     SDL_Event event;
@@ -724,6 +749,7 @@ static void chq_sdl_main_loop(void *opaque)
     //   run_main(state->game);
     // }
 
+#if CHQ_CRT_SHADER
     /* Upload the game's converted screen buffer to the GPU texture. */
     {
       uint32_t              *pixels;
@@ -792,6 +818,27 @@ static void chq_sdl_main_loop(void *opaque)
 
       SDL_SubmitGPUCommandBuffer(upload_cmdbuf);
     }
+#else
+    /* Update the texture from the game's converted screen buffer. */
+    {
+      uint32_t *pixels;
+
+      pixels = zxspectrum_claim_screen(state->zx);
+      SDL_UpdateTexture(state->texture, NULL, pixels, GAMEWIDTH * 4);
+      zxspectrum_release_screen(state->zx);
+    }
+
+    /* Clear screen */
+    // TODO: This ought to be the border colour, but CHQ's is always black.
+    SDL_SetRenderDrawColor(state->renderer, 0x00, 0x00, 0x00, 0xFF);
+    SDL_RenderClear(state->renderer);
+
+    /* Offset the image */
+    // Note that this will inhibit image stretching.
+
+    SDL_RenderTexture(state->renderer, state->texture, NULL, &dstrect);
+    SDL_RenderPresent(state->renderer);
+#endif
 
     SDL_Delay(1000 / FPS);
   }
@@ -802,6 +849,13 @@ int main(void)
   chq_sdl_state_t         state;
   zxconfig_t              zxconfig;
   SDL_Window             *window;
+#if !CHQ_CRT_SHADER
+  SDL_PropertiesID        renderer_props;
+  const SDL_PixelFormat  *texture_formats;
+  SDL_PixelFormat         native_fmt;
+  Uint32                  Rmask, Gmask, Bmask, Amask;
+  int                     bpp;
+#endif
 
   printf("CHASE H.Q.\n");
   printf("==========\n");
@@ -844,6 +898,7 @@ int main(void)
 
   state.window = window;
 
+#if CHQ_CRT_SHADER
   state.gpu = SDL_CreateGPUDevice(SDL_GPU_SHADERFORMAT_MSL, false, NULL);
   if (state.gpu == NULL)
   {
@@ -856,6 +911,24 @@ int main(void)
     fprintf(stderr, "Error: SDL_ClaimWindowForGPUDevice: %s\n", SDL_GetError());
     goto failure;
   }
+#else
+  state.renderer = SDL_CreateRenderer(window, NULL);
+  if (state.renderer == NULL)
+  {
+    fprintf(stderr, "Error: SDL_CreateRenderer: %s\n", SDL_GetError());
+    goto failure;
+  }
+
+  SDL_SetRenderVSync(state.renderer, 1);
+
+  renderer_props  = SDL_GetRendererProperties(state.renderer);
+  texture_formats = SDL_GetPointerProperty(renderer_props,
+                                           SDL_PROP_RENDERER_TEXTURE_FORMATS_POINTER,
+                                           NULL);
+  native_fmt = (texture_formats != NULL) ? texture_formats[0]
+                                          : SDL_PIXELFORMAT_RGBA8888;
+  SDL_GetMasksForPixelFormat(native_fmt, &bpp, &Rmask, &Gmask, &Bmask, &Amask);
+#endif
 
   // The GPU texture is always SDL_GPU_TEXTUREFORMAT_R8G8B8A8_UNORM (R in the
   // lowest memory byte), which is what Screen.c's palette_abgr table packs
@@ -872,7 +945,11 @@ int main(void)
   zxconfig.border   = &chq_border_handler;
   zxconfig.speaker  = &chq_speaker_handler;
   zxconfig.ay_out   = &chq_ay_out_handler;
+#if CHQ_CRT_SHADER
   zxconfig.bgr_pixels = true;
+#else
+  zxconfig.bgr_pixels = (Rmask < Bmask); /* R in lower byte = BGR format */
+#endif
 
   state.zx = zxspectrum_create(&zxconfig);
   if (state.zx == NULL)
@@ -918,6 +995,7 @@ int main(void)
     SDL_ResumeAudioStreamDevice(state.audio_stream);
   }
 
+#if CHQ_CRT_SHADER
   {
     SDL_GPUTextureCreateInfo         texture_info;
     SDL_GPUTransferBufferCreateInfo  transfer_info;
@@ -1025,6 +1103,27 @@ int main(void)
       goto failure;
     }
   }
+#else
+  state.texture = SDL_CreateTexture(state.renderer,
+                                    native_fmt,
+                                    SDL_TEXTUREACCESS_STREAMING,
+                                    GAMEWIDTH, GAMEHEIGHT);
+  if (state.texture == NULL)
+  {
+    fprintf(stderr, "Error: SDL_CreateTexture: %s\n", SDL_GetError());
+    goto failure;
+  }
+
+  if (!SDL_SetTextureBlendMode(state.texture, SDL_BLENDMODE_NONE))
+  {
+    fprintf(stderr, "Error: SDL_SetTextureBlendMode: %s\n", SDL_GetError());
+    goto failure;
+  }
+
+  // Conv: nearest-neighbour keeps ZX Spectrum pixels crisp when the window
+  // is scaled up; SDL3's default is linear, which blurs them.
+  SDL_SetTextureScaleMode(state.texture, SDL_SCALEMODE_NEAREST);
+#endif
 
   state.game = chq_create(state.zx);
   if (state.game == NULL)
@@ -1052,12 +1151,17 @@ int main(void)
   slopay_chip_destroy(state.ay);
   SDL_DestroyMutex(state.audio_queue_mutex);
 
+#if CHQ_CRT_SHADER
   SDL_ReleaseGPUGraphicsPipeline(state.gpu, state.pipeline);
   SDL_ReleaseGPUSampler(state.gpu, state.sampler);
   SDL_ReleaseGPUTransferBuffer(state.gpu, state.transfer_buffer);
   SDL_ReleaseGPUTexture(state.gpu, state.gpu_texture);
   SDL_ReleaseWindowFromGPUDevice(state.gpu, window);
   SDL_DestroyGPUDevice(state.gpu);
+#else
+  SDL_DestroyTexture(state.texture);
+  SDL_DestroyRenderer(state.renderer);
+#endif
   SDL_DestroyWindow(window);
 
   SDL_Quit();

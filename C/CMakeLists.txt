@@ -71,6 +71,7 @@ target_include_directories(ChaseHQ PRIVATE ${INCLUDE_DIRS})
 target_link_libraries(ChaseHQ SDL3::SDL3)
 if(APPLE)
   target_link_libraries(ChaseHQ "-framework CoreFoundation")
+  target_compile_definitions(ChaseHQ PRIVATE CHQ_CRT_SHADER=1)
 endif()
 
 # ---- Unit tests (no SDL2 dependency) ------------------------------------
