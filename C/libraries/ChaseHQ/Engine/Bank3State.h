@@ -27,6 +27,8 @@
 
 #include "C99/Types.h"
 
+#include "State.h"
+
 /* ----------------------------------------------------------------------- */
 
 /// One 37-byte channel-tracker record used by the 128K bank-3 title-tune
@@ -185,19 +187,11 @@ struct chq_bank3_state {
   // title-tune engine, refreshed by compute_channel_ay_registers ($EE9E) and
   // flushed to the AY chip by ts_music_service ($EC71) via
   // write_title_ay_registers.
-  // Separate from the in-game AY block at $A213 (chqstate_t, same numeric
-  // address range, different bank/context) -- do not alias the two.
-  struct {
-    u16       chan_a_pitch; // $EFAF/$EFB0
-    u16       chan_b_pitch; // $EFB1/$EFB2
-    u16       chan_c_pitch; // $EFB3/$EFB4
-    u8        noise_pitch;  // $EFB5
-    u8        mixer;        // $EFB6 -- read-modify-written by compute_channel_ay_registers
-    u8        chan_a_vol;   // $EFB7
-    u8        chan_b_vol;   // $EFB8
-    u8        chan_c_vol;   // $EFB9
-    u8        env_fine;     // $EFBA
-  } title_ay_regs;
+  // Separate from the in-game AY block at $A213 (chqstate_t::ay_regs, same
+  // numeric address range, different bank/context) -- do not alias the two.
+  // Field layout is ay_register_cache_t (State.h) -- read-modify-written by
+  // compute_channel_ay_registers.
+  ay_register_cache_t title_ay_regs;
 
   // $FD97-$FD9B (128K bank 3): print_character scratch record built by
   // read_new_key_definition ($FF2C) each time a control's key name is

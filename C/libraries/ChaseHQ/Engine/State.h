@@ -105,6 +105,25 @@ struct session {
 /// any other translation unit.
 struct chq_bank3_state;
 
+/// Per-frame AY-3-8912 register soft-copy cache, shared by the in-game audio
+/// engine (chqstate::ay_regs) and the 128K bank 3 title-tune engine
+/// (chq_bank3_state::title_ay_regs -- see Bank3State.h). write_audio_registers_128k
+/// (and its title-tune equivalent) walk this struct backwards as raw bytes
+/// from env_fine to chan_a_pitch's low byte, one AY register per byte, so
+/// field order and the absence of padding are correctness-critical -- do not
+/// reorder, insert, or remove fields.
+typedef struct {
+  u16       chan_a_pitch;
+  u16       chan_b_pitch;
+  u16       chan_c_pitch;
+  u8        noise_pitch;
+  u8        mixer;
+  u8        chan_a_vol;
+  u8        chan_b_vol;
+  u8        chan_c_vol;
+  u8        env_fine;
+} ay_register_cache_t;
+
 /* ----------------------------------------------------------------------- */
 
 /**
@@ -317,15 +336,7 @@ struct chqstate {
   hazard_t  hazards[MAXHAZARDS];
 
   // $A213
-  u16       ay_chan_a_pitch;
-  u16       ay_chan_b_pitch;
-  u16       ay_chan_c_pitch;
-  u8        ay_noise_pitch;
-  u8        ay_mixer;
-  u8        ay_chan_a_vol;
-  u8        ay_chan_b_vol;
-  u8        ay_chan_c_vol;
-  u8        ay_env_fine;
+  ay_register_cache_t ay_regs;
 
   // $A220
   u8        dont_draw_screen_attrs;

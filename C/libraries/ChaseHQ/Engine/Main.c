@@ -2323,15 +2323,15 @@ static void set_up_stage(chqstate_t        *state,
 
   memset(&state->hazards[1], 0, sizeof(hazard_t) * (MAXHAZARDS - 1));
 
-  state->ay_chan_a_pitch = 0;
-  state->ay_chan_b_pitch = 0;
-  state->ay_chan_c_pitch = 0;
-  state->ay_noise_pitch = 0;
-  state->ay_mixer = 0;
-  state->ay_chan_a_vol = 0;
-  state->ay_chan_b_vol = 0;
-  state->ay_chan_c_vol = 0;
-  state->ay_env_fine = 0;
+  state->ay_regs.chan_a_pitch = 0;
+  state->ay_regs.chan_b_pitch = 0;
+  state->ay_regs.chan_c_pitch = 0;
+  state->ay_regs.noise_pitch = 0;
+  state->ay_regs.mixer = 0;
+  state->ay_regs.chan_a_vol = 0;
+  state->ay_regs.chan_b_vol = 0;
+  state->ay_regs.chan_c_vol = 0;
+  state->ay_regs.env_fine = 0;
   state->dont_draw_screen_attrs = 0;
   state->inhibit_collision_detection = 0;
   state->n_hazards = 0;
@@ -17349,9 +17349,9 @@ static void play_noise(chqstate_t *state, int Aparam)
  */
 static void start_siren_128k(chqstate_t *state)
 {
-  state->ay_chan_a_pitch = 140; /* Conv: full register; Z80 wrote low byte only */
-  state->ay_chan_a_vol   = 14;
-  state->ay_chan_b_vol   = 12;
+  state->ay_regs.chan_a_pitch = 140; /* Conv: full register; Z80 wrote low byte only */
+  state->ay_regs.chan_a_vol   = 14;
+  state->ay_regs.chan_b_vol   = 12;
   state->siren_pattern   = 0xAA;
   state->siren_enabled   = 0xAA;
 }
@@ -17383,7 +17383,7 @@ static void play_siren_sfx_128k(chqstate_t *state)
   if (state->siren_enabled == 0)
     return;
 
-  pitch = state->ay_chan_a_pitch & 0xFF;
+  pitch = state->ay_regs.chan_a_pitch & 0xFF;
   pattern = state->siren_pattern;
   RLC(pattern);
   if (!carry) {
@@ -17404,9 +17404,9 @@ static void play_siren_sfx_128k(chqstate_t *state)
 set_regs:
   // Arrive here if new fine pitch is 90..139.
   // CHECK Need to preserve high byte?
-  state->ay_chan_a_pitch = (state->ay_chan_a_pitch & 0xFF00) | pitch;
-  state->ay_chan_b_pitch = (state->ay_chan_b_pitch & 0xFF00) | (pitch - 4);
-  state->ay_mixer &= 0x3C; // enable tone A & B
+  state->ay_regs.chan_a_pitch = (state->ay_regs.chan_a_pitch & 0xFF00) | pitch;
+  state->ay_regs.chan_b_pitch = (state->ay_regs.chan_b_pitch & 0xFF00) | (pitch - 4);
+  state->ay_regs.mixer &= 0x3C; // enable tone A & B
   write_audio_registers_128k(state); /* tail call */
 }
 
@@ -17422,7 +17422,7 @@ set_regs:
  */
 static void silence_audio_128k(chqstate_t *state)
 {
-  state->ay_mixer = 0x3F; /* disable all noise and tone channels */
+  state->ay_regs.mixer = 0x3F; /* disable all noise and tone channels */
   write_audio_registers_128k(state); /* was FALLTHROUGH */
 }
 
@@ -17430,7 +17430,7 @@ static void silence_audio_128k(chqstate_t *state)
  * $F2A2: Flush AY-3-8912 register soft copies to hardware
  *
  * Writes registers 11 down to 0 from the AY register soft-copy block
- * (ay_env_fine..ay_chan_a_fine_pitch) by selecting each register via port $FFFD
+ * (ay_regs.env_fine..ay_regs.chan_a_pitch's low byte) by selecting each register via port $FFFD
  * then writing its value via port $BFFD. The loop uses OUTD which decrements HL
  * and B after each write; the JP P condition exits when A underflows from 0 to
  * −1 (i.e. once register 0 has been written).
@@ -17447,7 +17447,7 @@ static void write_audio_registers_128k(chqstate_t *state)
   u8            regno;  /* AY register index, 11 down to 0 (was A) */
 
   speccy  = state->speccy;
-  values  = &state->ay_env_fine;
+  values  = &state->ay_regs.env_fine;
   regno   = 11;
   do {
     speccy->out(speccy, 0xFFFD, regno);
@@ -17489,9 +17489,9 @@ static void engine_sfx_from_speed_128k(chqstate_t *state)
     base_pitch  = 0x258; /* in-tunnel base divisor (~185 Hz) */
     volume = 12;
   }
-  state->ay_chan_c_pitch = pitch + base_pitch;
-  state->ay_chan_c_vol   = volume;
-  state->ay_mixer       &= 0x3B;
+  state->ay_regs.chan_c_pitch = pitch + base_pitch;
+  state->ay_regs.chan_c_vol   = volume;
+  state->ay_regs.mixer       &= 0x3B;
 }
 
 /**
@@ -17505,7 +17505,7 @@ static void engine_sfx_from_speed_128k(chqstate_t *state)
  */
 static void setup_turbo_sfx_128k(chqstate_t *state)
 {
-  state->ay_noise_pitch  = 0x3C;
+  state->ay_regs.noise_pitch  = 0x3C;
   state->turbo_sfx_pitch = 0x3C;
 }
 
@@ -17533,14 +17533,14 @@ static void play_engine_or_turbo_sfx_128k(chqstate_t *state)
   if (state->turbo_sfx_pitch == 1)
     return;
 
-  if (--state->ay_noise_pitch) {
-    state->ay_chan_c_pitch = state->ay_noise_pitch + 10;
-    state->ay_mixer &= 0x1B; // Set mixer to enable Tone C and Noise C
-    state->ay_chan_c_vol = 13;
+  if (--state->ay_regs.noise_pitch) {
+    state->ay_regs.chan_c_pitch = state->ay_regs.noise_pitch + 10;
+    state->ay_regs.mixer &= 0x1B; // Set mixer to enable Tone C and Noise C
+    state->ay_regs.chan_c_vol = 13;
     return;
   }
 
-  state->ay_mixer |= 0x24; // Set mixer to disable Tone C and Noise C
+  state->ay_regs.mixer |= 0x24; // Set mixer to disable Tone C and Noise C
   state->turbo_sfx_pitch = 0;
   engine_sfx_from_speed_128k(state); /* tail call */
 }
