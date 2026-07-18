@@ -891,8 +891,17 @@ static u16 compute_channel_ay_registers(chqstate_t           *state,
 
   A_note_combined = (u8) (A_offset_byte + B_note);
   A_note_lookup   = (u8) (A_note_combined * 2); // ADD A,A: 8-bit doubling, wraps mod 256
-  assert((A_note_lookup >> 1) < NELEMS(note_periods));
-  DE_period = note_periods[A_note_lookup >> 1];
+
+  /* Conv: real hardware ($EEF1-$EEFB) indexes $EFBC+2*note with no bounds
+   * check. Tune 1 channel 3's real pattern data ($F666, raw note byte $72)
+   * genuinely produces an out-of-range index here, reading into the
+   * unrelated indexed-pointer table at $F07C onward instead of
+   * note_periods. Verified against bank3.bin: at that index ($F0A0) the
+   * real memory is zero, so DE_period comes out as 0 on real hardware.
+   * Reproduce that rather than reading past note_periods' bounds in C. */
+  DE_period = ((A_note_lookup >> 1) < NELEMS(note_periods))
+                ? note_periods[A_note_lookup >> 1]
+                : 0;
 
   /* $EEFC-$EF4B: phase 3, vibrato. */
   if (IX_channel->flags & CHFLAGS_VIBRATO_ENABLE) {
