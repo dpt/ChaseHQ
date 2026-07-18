@@ -6,7 +6,7 @@ Project started: March 2023
 
 ![Using Spectrum Analyser to investigate the game while turning the road background green](static-images/spectrum-analyser.png)
 
-This is an in-progress disassembly of the [ZX Spectrum conversion of Chase H.Q. by Ocean Software](https://spectrumcomputing.co.uk/entry/903/ZX-Spectrum/Chase_HQ).
+This is an in-progress disassembly and rebuild of the [ZX Spectrum conversion of Chase H.Q. by Ocean Software](https://spectrumcomputing.co.uk/entry/903/ZX-Spectrum/Chase_HQ).
 
 **Note: I'm currently working on the 128K version of the game over on [the 128k branch](https://github.com/dpt/ChaseHQ/tree/128k). I've also started porting the game logic to C.**
 
@@ -18,7 +18,17 @@ The current disassembly output is [available here](https://dpt.github.io/ChaseHQ
 
 To find out how it works! (and maybe one day we could make new levels...)
 
-## How To
+## Status
+
+**Disassembly**: both the 48K (`ChaseHQ.ctl`) and 128K (`ChaseHQ-128K.ctl`) versions are under active disassembly. Most current effort is on 128K bank 3 — the title screen and its music/sound-effect driver.
+
+**C port** (`C/`): a hand-written, human-readable reimplementation of the game engine — not a decompiler dump — built with CMake and SDL3.
+
+- Engine logic translated across `Main.c` (~18k lines) and `Bank3.c` (~3.7k lines of 128K title-screen/tune code).
+- All five stages now have real per-stage road and hazard data (`Stage1Data.c`–`Stage5Data.c`).
+- The game runs and plays through the stages, but with known rough edges: title screen music/animation timing, perp-car jitter, an incomplete 128K options menu, and no game-finish screen yet — see `C/TODO.md` for the full list.
+
+## How To Disassemble
 
 - Install SkoolKit:
 
