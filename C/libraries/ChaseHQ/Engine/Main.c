@@ -9249,7 +9249,7 @@ static void draw_helicoper_part(chqstate_t                *state,
   const bitmap_t *HLbitmap;   /* was HL */
   int             Bwidth;     /* was B */
   int             Atop;       /* was A */
-  int             Abot;       /* was A */
+  u8              Abot;       /* was A; Conv: u8 so += wraps mod 256 like the Z80 ADD A,B */
   int             C;          /* was C */
 
   BC_helipos = state->dhl_helipos;
