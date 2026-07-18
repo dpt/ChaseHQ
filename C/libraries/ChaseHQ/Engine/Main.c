@@ -8316,7 +8316,7 @@ static void cycle_counters(chqstate_t *state)
  */
 void perp_behaviour(chqstate_t *state, hazard_t *IXperp)
 {
-  int       carry;              /* carry from hazard proximity range check (carry) */
+  int       carry;              /* modelled Z80 carry flag: hazard proximity check, then SBC HL,DE carry-in (carry) */
   int       Ahit_timer;         /* hit timer from perp slot: positive=just hit, negative=counting down (was A) */
   int       Cperp_distance;     /* perp's road buffer offset, used for vehicle proximity check (was C) */
   int       Biterations;        /* hazard slot loop counter: 5 iterations (was B) */
@@ -8435,6 +8435,8 @@ pb_check_changing_lane_flag:
   Adist_lane_gate = IXperp->distance;
   if (Adist_lane_gate >= 7)
     goto pb_check_lane;
+  carry = 1; // Conv: CP $07 ($A697) leaves carry set here (distance < 7); it
+             // survives to the SBC HL,DE at $A6B4 on the fall-through path.
 
   // Delay between perp lane changes: pb_lane_change_timer counts down; on
   // zero it resets to perp_lane_change_base + (rng & 31).
@@ -8445,6 +8447,8 @@ pb_check_changing_lane_flag:
 
   // When it hits zero we pick a random number...
   Alane_timer = state->stage->perp_lane_change_base + (rng(state) & 31);
+  carry = 0; // Conv: carry from ADD A,C ($A6AA); never set for any stage's
+             // perp_lane_change_base, so this path subtracts 164 exactly.
 
 pb_update_counter:
   state->pb_lane_change_timer = Alane_timer;
@@ -8452,7 +8456,7 @@ pb_update_counter:
   // This smells like it's detecting position and turning that into lanes.
   // The values are like those used by get_spawn_lanes.
 
-  HL = state->scenedata.road_pos - 164;
+  HL = state->scenedata.road_pos - 164 - carry; // SBC HL,DE ($A6B4) takes carry-in
   Bmin_lane = 4; Cmax_lane = 4;
   if ((s16) HL < 0) // carried, HL < 164
     goto pb_a6cf;
@@ -8534,7 +8538,7 @@ pb_reread_current_lane:
   if (Ahorzpos < *HLtab)
     goto pb_check_high;
   Ahorzpos -= 10;
-  if ((s8) Ahorzpos < 0) // carried?
+  if (Ahorzpos < 0) // carried: original position was < 10 ($A725 JR C)
     goto pb_set_lane_from_table_1;
 
   if (Ahorzpos >= *HLtab)
@@ -8585,7 +8589,7 @@ pb_set_horz_pos:
   // Count down outer delay loop.
 pb_bypass:
   state->pb_delay = --Adelay;
-  if (Adelay)
+  if (Adelay == 0) // $A766 JR Z: skip boost only on the frame delay reaches 0
     goto pb_a776;
 
   Adistance = IXperp->distance;
