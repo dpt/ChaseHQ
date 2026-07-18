@@ -464,6 +464,11 @@ struct chqstate {
   s16       horizontal_adjust;
   // $A261
   u8        horizon_scroll_sub;
+  // Models the Z80 AF' shadow register as banked by move_hero_car's EX AF,AF'
+  // at $B296 (holding BCcount_scaled) and read back by scroll_horizon's EX
+  // AF,AF' at $B854. Not a memory address; only written when move_hero_car
+  // actually reaches $B296 (current_curvature != 0 and ticks elapsed).
+  u8        curvature_scroll_shadow;
   // $A262
   u8        curvature_ticks;
   // $A263
