@@ -77,7 +77,7 @@ Both functions share the same shape:
 
 ## `dr_write_scanline_unfilled` ($C565)
 
-Writes a fully zeroed (blank) scanline — used for the section of the road above the horizon where no kerb fill is needed. Redirects out-of-range `DEbackbuf` values (which in the Z80 would land in ROM and silently be discarded) to the last backbuffer row. Falls through to `dr_fill_left_stripe` with `jump_index = 0` (writes 15 zero words = 30 bytes of verge).
+Writes a fully zeroed (blank) scanline — used for the section of the road above the horizon where no kerb fill is needed. Redirects out-of-range `DEbackbuf` values (which in the Z80 would land in unintended low memory and silently be discarded) to the last backbuffer row. Falls through to `dr_fill_left_stripe` with `jump_index = 0` (writes 15 zero words = 30 bytes of verge).
 
 ---
 

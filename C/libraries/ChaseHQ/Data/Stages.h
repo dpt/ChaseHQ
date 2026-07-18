@@ -319,7 +319,7 @@ typedef struct depthset_pair {
 } depthset_pair_t;
 
 // Conv: In the Z80 data, overhead-spanning objects (bridges) pack an extra
-// 10-entry table directly after 'pairs' in ROM: draw_overhead reads past
+// 10-entry table directly after 'pairs' in memory: draw_overhead reads past
 // pairs[10] with raw pointer arithmetic to reach it. Modelled explicitly
 // here rather than as an out-of-bounds read. Only overhead-bridge depthsets
 // populate 'spans'; all other depthset_t instances leave it NULL.

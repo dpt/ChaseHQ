@@ -201,12 +201,12 @@ struct chq_bank3_state {
 
   // $FD97-$FD9B (128K bank 3): print_character scratch record built by
   // read_new_key_definition ($FF2C) each time a control's key name is
-  // drawn. Not fixed ROM data -- same role as messages_key_string for the
+  // drawn. Not fixed/static data -- same role as messages_key_string for the
   // 48K equivalent (define_a_key).
   u8        options_key_string[5];
 
   // $FFF7-$FFFE (128K bank 3): live scan-key-code buffer for the currently
-  // active control scheme. Not fixed ROM data -- installed from the
+  // active control scheme. Not fixed/static data -- installed from the
   // Sinclair/Cursor joystick key lists by options_menu_driver ($FBDC), or
   // written key-by-key by read_new_key_definition ($FF2C).
   // Layout: [0..4] = gear/accelerate/brake/left/right (joystick-mappable),

@@ -2384,7 +2384,7 @@ const u8 debris_subtable_5_template[19] = {
 
 /* ----------------------------------------------------------------------- */
 
-// $CEAA-$CED9: four 12-byte debris frames, contiguous in the original ROM.
+// $CEAA-$CED9: four 12-byte debris frames, contiguous in the original binary.
 // draw_debris indexes this as one 48-byte table (frame * 12), so it must stay
 // a single array; C does not guarantee the relative placement of four
 // separate globals.

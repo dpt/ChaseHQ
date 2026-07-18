@@ -1377,7 +1377,7 @@ static void start_tune_and_sfx_table(chqstate_t *state, u8 A_tune)
  * actually transcribed into title_speed_curve). A scripted object whose
  * decel/accel phase runs long enough (or whose curve counter is seeded from
  * a bad upstream value) can drive C_idx past 35; on real hardware that would
- * just read whatever byte follows the table in ROM, but this port's table is
+ * just read whatever byte follows the table in memory, but this port's table is
  * a 36-byte array, so an unclamped index is a genuine out-of-bounds read
  * (caught by AddressSanitizer). Clamp to the last documented entry rather
  * than fabricate data for the disputed 256-byte range.
@@ -2744,7 +2744,7 @@ static const u8 cursor_joystick_keys[5]  = { 0x23, 0x0B, 0x03, 0x04, 0x13 };
  * 2-byte entries: printable character + space, with SYMBOL SHIFT/SPACE/
  * ENTER/CAPS SHIFT spelled out as two-letter codes). Indexed by
  * read_new_key_definition via the same key/halfrow packing produced by
- * scan_keyboard_matrix. Byte-for-byte identical to the 48K ROM's key_names[]
+ * scan_keyboard_matrix. Byte-for-byte identical to the 48K version's key_names[]
  * ($EDD6, CommonData.c) -- kept as a separate array since it is a distinct
  * copy at a distinct bank-3 address in the original. */
 static const u8 control_key_names[80] = {
@@ -2762,7 +2762,7 @@ static const u8 control_key_names[80] = {
 
 /* $FFEF-$FFF6: "SHOCKED"+ENTER secret test-mode-unlock reference sequence,
  * checked by redefine_keys_screen against the 8 keys just chosen. Byte-for-
- * byte identical to the 48K ROM's shocked_keydefs[] ($EE30, CommonData.c). */
+ * byte identical to the 48K version's shocked_keydefs[] ($EE30, CommonData.c). */
 static const u8 shocked_keydef_sequence[8] = {
   0x1E, 0x01, 0x1A, 0x0F, 0x11, 0x15, 0x16, 0x21
 };

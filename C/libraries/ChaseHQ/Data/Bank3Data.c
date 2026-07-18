@@ -1246,7 +1246,7 @@ const u8 title_tune0_data[1026] = {
   0x8E, /* $F600: -- unreached by tune 0/1 playback -- */
   /* Conv: extension past the original $F600 cut -- ch1's real command
    * stream runs on into what the original transcription window called
-   * "$F601-$F6DE" (tune 1's own header block), because the ROM packs both
+   * "$F601-$F6DE" (tune 1's own header block), because bank3.bin packs both
    * tunes' data back-to-back with no tune0/tune1 boundary in the byte
    * stream itself; only the phrase-table entries that resolve_phrase_addr
    * is asked to follow define which tune "owns" which bytes. Duplicated

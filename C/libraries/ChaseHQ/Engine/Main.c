@@ -14518,7 +14518,7 @@ static void dr_advance_unfilled(chqstate_t *state,
  * $C565: draw_road — write unfilled (zero) road scanline
  *
  * Clamps [DEbackbuf] to the last valid back-buffer row when it is out of range
- * (the Z80 would silently write to ROM/invalid addresses). Stores [DEbackbuf]
+ * (the Z80 would silently write to unintended low memory). Stores [DEbackbuf]
  * in dr_backbuf_1, then computes the rightmost byte address of the row and
  * calls dr_fill_left_stripe with a zero fill value and zero jump index (15 zero
  * bytes written per scanline).
@@ -14545,7 +14545,9 @@ static void dr_write_scanline_unfilled(chqstate_t *state, int Ccounter, int DEba
   u16  HLdash_fill;        /* fill word for the unfilled scanline: 0 (was HL') */
   u8   Cdash_zerofill;     /* fill byte for zero-fill: 0 (was C') */
 
-  /* Z80: writes to ROM/invalid addresses ($0000-$EFFF) are no-ops.
+  /* Z80: writes below the backbuffer landing anywhere in $0000-$EFFF don't
+   * crash the original -- a no-op in ROM ($0000-$3FFF), a harmless stray
+   * write elsewhere in RAM otherwise.
    * C port: redirect any out-of-range DEbackbuf to the last backbuffer row
    * ($FFE0) so all pointer arithmetic (here and in downstream callers,
    * including dr_fill_left_stripe's secondary dr_read_lanes) stays valid. */
@@ -14742,7 +14744,9 @@ static void dr_fill(chqstate_t *state,
 
   carry = 0;
 
-  /* Z80: writes to ROM/invalid addresses ($0000-$EFFF) are no-ops.
+  /* Z80: writes below the backbuffer landing anywhere in $0000-$EFFF don't
+   * crash the original -- a no-op in ROM ($0000-$3FFF), a harmless stray
+   * write elsewhere in RAM otherwise.
    * C port: redirect any out-of-range DEbackbuf to the last backbuffer row
    * ($FFE0) so all pointer arithmetic (here and in downstream callers,
    * including dr_fill_left_stripe's secondary dr_read_lanes) stays valid. */
@@ -15720,7 +15724,7 @@ dfr_ca66: /* $CA66: B = E (save screen low byte); C-- -- shared by both
 
     /* Conv: D_row_hi can drift below BACKBUFFER_START_ADDRESS over enough
      * scanlines (see D-- in dfr_c923/dfr_c963). On real Z80 hardware that
-     * is a harmless write into ROM/unused address space; the C port must
+     * is a harmless write into low ROM or unused RAM; the C port must
      * skip the write rather than let ADDRTOBACKBUF assert, mirroring the
      * DEbackbuf clamp in dr_write_scanline_unfilled. */
 #define FRP_LEFT_EDGE(off) \
@@ -16396,10 +16400,11 @@ static void entry_128k(chqstate_t *state)
  * \param[in]     Amode_128k Non-zero when running on 128K hardware. (was A)
  * \param[in]     Bnrelocs Number of relocation entries to copy. (was B)
  *
- * Conv: The relocation loop copies Z80 ROM data into RAM pages at fixed Z80
- * addresses ($8014, $83B5, $EA00, $EB00, $EC00). In the C port these tables are
- * compiled-in constants, so the relocation block is omitted. Similarly, the
- * stop_the_tape_48k call is a no-op stub since there is no tape to load.
+ * Conv: The relocation loop copies blocks of the loaded game binary between
+ * RAM pages at fixed Z80 addresses ($8014, $83B5, $EA00, $EB00, $EC00). In
+ * the C port these tables are compiled-in constants, so the relocation
+ * block is omitted. Similarly, the stop_the_tape_48k call is a no-op stub
+ * since there is no tape to load.
  */
 static void entry_common(chqstate_t *state, int Amode_128k, int Bnrelocs)
 {

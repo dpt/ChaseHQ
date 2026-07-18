@@ -11,11 +11,11 @@ fixed (`3L→2L`, `3R→2M`), even though the steady-state endpoints for both
 (`3L`, `2L`, `3R`, `2M`) already exist and are fully supported by the
 parametric per-scanline renderer.
 
-This is genuinely new game content with no Z80 ROM counterpart — every other
+This is genuinely new game content with no Z80 counterpart — every other
 line in `draw_road_lanes_change` mirrors a specific disassembled Z80
 instruction. The new code must be clearly marked as invented (not a `Conv:`
 departure from an existing translation, since there is nothing in the
-original to depart from), and must use a bit pattern the original ROM never
+original to depart from), and must use a bit pattern the original game never
 produces, so it can never collide with real stage data.
 
 ## Byte value design
