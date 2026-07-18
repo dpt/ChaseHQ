@@ -196,7 +196,7 @@ typedef struct carframe {
   u8        index;
 } carframe_t;
 
-typedef struct aradornment {
+typedef struct caradornment {
   u8        height;
   u8        width;
   const u8 *bitmap;
