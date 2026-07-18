@@ -18,10 +18,10 @@
 /* Notes
  *
  * This file holds the C translation of ZX Spectrum 128K "bank 3" -- the
- * animated title screen, its music/SFX service, and the keyboard/joystick
+ * animated title screen, the title/success music, and the keyboard/joystick
  * control-select and key-redefinition screens reached from it. These
  * routines are paged into $C000-$FFFF and dispatched from mainline code
- * (Main.c) via call_bank_3_128k, whose entry point and BANK3_* dispatch
+ * (Main.c) via call_bank_3_128k(), whose entry point and BANK3_* dispatch
  * constants are declared in Internal.h alongside the handful of low-level
  * helpers (z80addrtoscreen, z80addrtoattrs, setwordat) and the bank-4 title-
  * tune functions (start_tune, ts_music_service) shared with this file.
