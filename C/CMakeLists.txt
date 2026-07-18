@@ -62,7 +62,8 @@ set(SOURCE_FILES
         libraries/ChaseHQ/Data/Bank3Data.c
         libraries/ChaseHQ/Data/Bank3Data.h
         libraries/ChaseHQ/Engine/Types.h
-        libraries/ChaseHQ/Engine/Bank3.h)
+        libraries/ChaseHQ/Engine/Bank3.h
+        libraries/ChaseHQ/Engine/Bank3State.h)
 
 add_executable(ChaseHQ ${SOURCE_FILES})
 target_compile_definitions(ChaseHQ PRIVATE TGE_SDL)

@@ -31,6 +31,17 @@
 
 u8 call_bank_3_128k(chqstate_t *state, int HLroutine);
 
+/**
+ * Allocates and initialises state->bank3.
+ * \return 0 on success, -1 on allocation failure.
+ */
+int bank3_state_create(chqstate_t *state);
+
+/**
+ * Frees state->bank3 and clears the pointer.
+ */
+void bank3_state_destroy(chqstate_t *state);
+
 /* ----------------------------------------------------------------------- */
 
 #endif /* CHASEHQ_BANK3_H */

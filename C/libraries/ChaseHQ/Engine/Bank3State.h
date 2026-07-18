@@ -1,0 +1,219 @@
+/**
+ * Bank3State.h
+ *
+ * This file is part of "Chase H.Q. in C".
+ *
+ * This project recreates the ZX Spectrum version of the chase-and-smash game
+ * "Chase H.Q." in portable C code. It is free software provided without
+ * warranty in the interests of education and software preservation.
+ *
+ * The arcade original was created by Taito Corporation in 1988. It was then
+ * ported to the ZX Spectrum by Ocean Software Limited and released in 1989.
+ *
+ * The original game and design is copyright (c) 1988 Taito Corporation.
+ * The ZX Spectrum version is copyright (c) 1989 Ocean Software Limited.
+ * The recreated version is copyright (c) 2023-2026 David Thomas.
+ *
+ * -----------------------------------------------------------------------
+ *
+ * Full definition of chqstate's opaque bank3 pointer (State.h only forward
+ * declares struct chq_bank3_state). Private to the 128K bank 3 title-screen
+ * and title-tune engine -- only Bank3.c includes this header, so no other
+ * translation unit can see or touch these fields directly.
+ */
+
+#ifndef CHASEHQ_BANK3STATE_H
+#define CHASEHQ_BANK3STATE_H
+
+#include "C99/Types.h"
+
+/* ----------------------------------------------------------------------- */
+
+/// One 37-byte channel-tracker record used by the 128K bank-3 title-tune
+/// engine ($EC01/$EC26/$EC4B). Offsets read/written by
+/// compute_channel_ay_registers ($EE9E), advance_channel_pattern ($EDD6) and
+/// start_tune ($EB9E) are modelled, along with the phrase-pointer-table
+/// fields read/written by advance_channel_phrase ($F1AE, reached via pattern
+/// command 0x87) -- see that function's prologue for the table format.
+struct title_tune_channel {
+  u8         status;                 // +$00 note/status; bit0 toggled every call, bit1 set by pcmd_set_status_bit1, bit2 slide active, bit3 slide direction/upkeep gate, bit5 envelope active, bits 3&7 set by pcmd_set_status_bits_3_7
+  const u8  *pattern_ptr;            // +$01/+$02 current read position in the pattern-command byte stream; initialised by start_tune from the first 2 bytes of the pattern-data block that pattern_data_ptr points to (an "envelope-pointer header")
+  const u8  *pattern_data_ptr;       // +$03/+$04 raw pattern-data block pointer for this channel, read from the tune-select table by start_tune; base address for phrase_table_offset and the header re-read on phrase-table exhaustion (advance_channel_phrase)
+  const u8  *pattern_base;           // Conv: start of the extracted pattern_ptr array; not a Z80 field. Lets advance_channel_pattern wrap pattern_ptr back to the start once it runs off the end of the finite extracted prefix, since the real Z80 data (and its true loop point) is not fully transcribed into C
+  u16        pattern_len;            // Conv: byte length of the array pattern_base points to; paired with pattern_base for the same reason
+  u16        phrase_table_offset;    // +$05/+$06 byte offset from pattern_data_ptr to the current phrase-pointer-table entry; starts at 2 (immediately past the 2-byte header) and advances by 2 or 3 per table word (advance_channel_phrase)
+  u16        slide_accum;            // +$07/+$08 accumulated portamento/slide value
+  const u8  *pitch_offset_default;   // +$09/+$0A default/loop-start pitch-offset sequence pointer
+  const u8  *pitch_offset_cur;       // +$0B/+$0C current pitch-offset sequence pointer
+  s8         slide_step;             // +$0D signed per-tick portamento step
+  u8         slide_countdown;        // +$0E portamento reload countdown
+  u8         envelope_speed;         // +$0F envelope-step reload value
+  u8         row_wait;               // +$10 per-row wait countdown; also doubles as the channel enable flag (start_tune sets it to 1)
+  u8         row_wait_reload;        // +$11 reload value for row_wait, set by the row-duration pattern command
+  u8         note_index;             // +$12 current note index (post-transpose)
+  u8         volume;                 // +$13 volume/envelope amplitude; returned to caller
+  const u8  *envelope_shape_default; // +$14/$15 default/base envelope-shape table pointer, reloaded into envelope_shape_ptr on every note
+  const u8  *envelope_shape_ptr;     // +$16/+$17 envelope shape table pointer
+  u8         envelope_amplitude;     // +$18 current envelope amplitude
+  u8         envelope_step_counter;  // +$19 envelope-step counter; 0 = due for reload
+  u8         vibrato_depth;          // +$1A vibrato depth * 2
+  u8         vibrato_increment;      // +$1B vibrato per-tick increment
+  u8         vibrato_phase;          // +$1C vibrato triangle-wave phase counter
+  u8         flags;                  // +$1D bit5 vibrato direction, bit6 vibrato enable, bit7 vibrato update gate
+  u8         slide_update_flag;      // +$1E bit0 gates whether a new note is echoed to title_music.shared_note_value; set/cleared by the mixer-bit pattern commands
+  u8         mute_pending;           // +$1F bit7 = one-shot mute-transition gate
+  u8         transpose;              // +$20 added to each raw note value read from the pattern stream before storing to note_index; also reset to 0, or set from an inline phrase-table override, by advance_channel_phrase
+  u8         phrase_repeat_count;    // +$21 decrementing repeat count for the phrase currently held in phrase_ptr; 0 means due for a new phrase-table lookup (advance_channel_phrase); reset to 0 by start_tune
+  const u8  *phrase_ptr;             // +$22/+$23 pattern-stream cursor for the phrase most recently activated by a repeating (marker==2) phrase-table entry; reused while phrase_repeat_count is still counting down (advance_channel_phrase)
+  u8         mixer_mask;             // +$24 mask applied when merging into the shared mixer cache
+};
+
+/// One 9-byte animated-object record used by the 128K bank-3 title screen
+/// ($BB00-$BB4F, 9 records). Populated from a scene table by
+/// title_screen_driver, drawn each frame by ts_animate_frame, and advanced
+/// by object_script_step ($C705).
+struct title_object {
+  u8        opcode; // +$00 active movement-mode opcode, or 0 (idle: fetch next script opcode)
+  u8        wait;   // +$01 "wait N frames" countdown, also reused as the decel/accel countdown
+  s8        x_step; // +$02 X velocity/step
+  s8        y_step; // +$03 Y velocity/step
+  const u8 *script; // +$04/+$05 script byte-code cursor
+  u8        row;    // +$06 screen row/height byte consumed by the blitters
+  u8        x;      // +$07 current X screen position
+  u8        y;      // +$08 current Y screen position
+};
+
+/* ----------------------------------------------------------------------- */
+
+/**
+ * State private to the 128K bank 3 title-screen / title-tune engine.
+ * chqstate_t only holds a pointer to this (see State.h); the fields below
+ * are reachable only from within Bank3.c.
+ */
+struct chq_bank3_state {
+  // $EC01-$F224 (128K bank 3 only) -- title-screen tune engine channel
+  // trackers and self-modifying scratch bytes. Same numeric address range as
+  // the 48K `music` state but a different bank/context; kept as a distinct
+  // struct rather than aliased onto it (see compute_channel_ay_registers,
+  // $EE9E@bank3).
+  struct {
+    // $EC01/$EC26/$EC4B
+    struct title_tune_channel channel[3];
+
+    // $EC70 (128K bank 3): per-tick tempo countdown, decremented by
+    // ts_music_service ($EC71) each call; the 3
+    // channels' patterns only advance one row when it reaches zero, after
+    // which it always reloads to a fixed 1 -- per the skool's own comment at
+    // $EC99, *not* the tune's stored tempo/speed byte (tune_tempo, $EC9A),
+    // so the driver appears to always tick every other call regardless of
+    // the selected tune. Set to 1 by start_tune ($EBF9-$EBFA) so the very
+    // first service call after a tune starts always advances.
+    u8        tempo_counter;
+
+    // $EC79 (SM): operand of "LD A,$00" at $EC78 in ts_music_service
+    // ($EC71@bank3); written by advance_channel_pattern
+    // ($EDF6@bank3); read by compute_channel_ay_registers.
+    // Purpose not established elsewhere in bank 3 (see skool comment at $EE9E).
+    u8        shared_note_value;
+
+    // $EC9A (128K bank 3): tune tempo/speed byte. Written by start_tune
+    // ($EBB3, not yet translated) and by advance_channel_pattern's
+    // decode_pattern_command cascade ($EE71); not currently read anywhere in
+    // bank 3 (see the skool comment at $EC9B in ts_music_service).
+    u8        tune_tempo;
+
+    // $ECC6 (SM): operand of "LD A,$00" at $ECC5 in ts_music_service
+    // ($EC71@bank3). Written within compute_channel_ay_registers (forced to
+    // a computed value or to $41 on the mute transition); also written
+    // directly to 0 by ts_music_service itself at $EC7A on entry. Read back
+    // by ts_music_service at $ECC5 -- the "LD A,$00" instruction there
+    // executes with whatever value was last patched into its own operand
+    // byte, so it is not actually loading a literal 0 once
+    // compute_channel_ay_registers has run -- and stored into the
+    // noise_pitch AY register cache ($EFB5). Purpose beyond that plumbing
+    // not established.
+    u8        driver_internal_flag;
+
+    // $EED1 (128K bank 3): driver-internal flag. Write-only, set by
+    // advance_channel_pattern's pcmd_set_driver_flag handler ($ED87) from a
+    // pattern-stream operand byte; cleared to 0 by start_tune ($EBF6, not yet
+    // translated); never read anywhere in bank 3. Purpose not established.
+    u8        pattern_driver_flag;
+
+    // $EF7A (SM): operand of "LD A,$00" at $EF79 in
+    // compute_channel_ay_registers ($EE9E@bank3), phase 5. Merged into by
+    // advance_channel_pattern's mixer-bit pattern-command handlers
+    // ($ED36/$ED4B/$ED5F) using the same replace-bits-under-mask idiom as
+    // the $EFB6 mixer cache. Read back every frame at $EF79 -- the
+    // "LD A,$00" instruction there executes with whatever value was last
+    // patched into its own operand byte, so on any frame where the JR NZ at
+    // $EF7B is taken (skipping the $EC79-derived $07 path), the mixer merge
+    // uses this self-modified value rather than a literal 0. Confirmed
+    // against a genuine ChaseHQ.ay dump (SlopAY project corpus): the
+    // pristine snapshot's static operand byte is 0x00 (the pre-pattern-data
+    // startup default), but the real tune patches it via the pattern
+    // commands above, driving the AY mixer's noise-enable bits.
+    u8        pending_mixer_bits;
+
+    // $F223 (128K bank 3): tune-active flag. Tested by ts_music_service
+    // ($EC71/$ECCA) to decide whether to advance
+    // patterns / recompute and flush AY registers at all; also tested
+    // directly by the title-screen driver at $C621. Armed to 1 by start_tune
+    // ($EBFD) once the 3 channel-tracker records are initialised; cleared to
+    // 0 both by start_tune's own entry (so a tune restart is briefly
+    // inactive while re-initialising) and by the stop routine at $ED0B (not
+    // yet translated).
+    u8        tune_active;
+
+    // $F224 (128K bank 3): cleared to 0 alongside tune_active by start_tune
+    // ($EBA1, "its companion byte"); never read anywhere in bank 3. Purpose
+    // not established beyond being cleared in lockstep with tune_active.
+    u8        tune_active_companion;
+  } title_music;
+
+  // $BB00-$BB4F (128K bank 3 only): the 9 animated-object records populated
+  // from the chosen scene table by title_screen_driver, drawn each frame by
+  // ts_animate_frame, and advanced by object_script_step ($C705).
+  struct title_object title_objects[9];
+
+  // $C5A2 (SM, 128K bank 3 only): title-screen scene selector, rotated and
+  // tested bit-by-bit by title_screen_driver to pick one of the 5 scene
+  // tables each time the title screen restarts.
+  u8                 title_animation;
+
+  // $EFAF-$EFBA (128K bank 3 only) -- per-frame AY register cache for the
+  // title-tune engine, refreshed by compute_channel_ay_registers ($EE9E) and
+  // flushed to the AY chip by ts_music_service ($EC71) via
+  // write_title_ay_registers.
+  // Separate from the in-game AY block at $A213 (chqstate_t, same numeric
+  // address range, different bank/context) -- do not alias the two.
+  struct {
+    u16       chan_a_pitch; // $EFAF/$EFB0
+    u16       chan_b_pitch; // $EFB1/$EFB2
+    u16       chan_c_pitch; // $EFB3/$EFB4
+    u8        noise_pitch;  // $EFB5
+    u8        mixer;        // $EFB6 -- read-modify-written by compute_channel_ay_registers
+    u8        chan_a_vol;   // $EFB7
+    u8        chan_b_vol;   // $EFB8
+    u8        chan_c_vol;   // $EFB9
+    u8        env_fine;     // $EFBA
+  } title_ay_regs;
+
+  // $FD97-$FD9B (128K bank 3): print_character scratch record built by
+  // read_new_key_definition ($FF2C) each time a control's key name is
+  // drawn. Not fixed ROM data -- same role as messages_key_string for the
+  // 48K equivalent (define_a_key).
+  u8        options_key_string[5];
+
+  // $FFF7-$FFFE (128K bank 3): live scan-key-code buffer for the currently
+  // active control scheme. Not fixed ROM data -- installed from the
+  // Sinclair/Cursor joystick key lists by options_menu_driver ($FBDC), or
+  // written key-by-key by read_new_key_definition ($FF2C).
+  // Layout: [0..4] = gear/accelerate/brake/left/right (joystick-mappable),
+  // [5..7] = quit/pause/turbo (keyboard-only).
+  u8        control_keys[8];
+};
+
+/* ----------------------------------------------------------------------- */
+
+#endif /* CHASEHQ_BANK3STATE_H */
