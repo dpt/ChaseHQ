@@ -446,10 +446,8 @@ static const u8 title_pitch_offset_seq_22[] = { 0x00, 0x00, 0x00, 0x00, 0x00, 0x
 static const u8 title_pitch_offset_seq_23[] = { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, SEQ_END_BIT };
 
 /* Envelope-shape sequences: real data from bank3.bin's $F123 table
- * (16 x 2-byte pointers; byte at ptr-1 is the envelope speed, sequence
- * runs from ptr until a bit-7-set halt marker). Entries 11-15 have no
- * valid pointer in bank3.bin (never referenced by tunes 0/1's
- * extracted pattern data) -- stubbed silent/single-halt-byte. See
+ * (11 x 2-byte pointers; byte at ptr-1 is the envelope speed, sequence
+ * runs from ptr until a bit-7-set halt marker). See
  * decode_pattern_command's envelope-select branch ($EE7E-$EE93). */
 static const u8 title_envelope_shape_00[] = { 0x0F, 0x0F, 0x0E, 0x0D, 0x0C, 0x08, SEQ_END_BIT | 0x07 };
 static const u8 title_envelope_shape_01[] = { 0x0E, 0x0F, 0x0E, SEQ_END_BIT | 0x07 };
@@ -462,63 +460,52 @@ static const u8 title_envelope_shape_07[] = { 0x09, 0x0A, 0x0B, 0x0C, 0x0D, 0x0E
 static const u8 title_envelope_shape_08[] = { 0x0F, 0x0E, 0x0C, 0x06, SEQ_END_BIT | 0x07 };
 static const u8 title_envelope_shape_09[] = { 0x0F, 0x0D, 0x0C, 0x0A, 0x08, 0x07, 0x06, SEQ_END_BIT | 0x07 };
 static const u8 title_envelope_shape_10[] = { 0x0A, 0x0B, 0x0C, 0x0D, 0x0E, 0x0F, 0x0E, 0x0D, 0x0C, 0x0B, 0x0A, 0x09, 0x08, 0x07, SEQ_END_BIT | 0x07 };
-static const u8 title_envelope_shape_11[] = { SEQ_END_BIT };
-static const u8 title_envelope_shape_12[] = { SEQ_END_BIT };
-static const u8 title_envelope_shape_13[] = { SEQ_END_BIT };
-static const u8 title_envelope_shape_14[] = { SEQ_END_BIT };
-static const u8 title_envelope_shape_15[] = { SEQ_END_BIT };
 
 static const struct {
   const u8 *base;
-  u16       len;
 } pitch_offset_table[24] = {
-  { &title_pitch_offset_seq_00[0], sizeof(title_pitch_offset_seq_00) },
-  { &title_pitch_offset_seq_01[0], sizeof(title_pitch_offset_seq_01) },
-  { &title_pitch_offset_seq_02[0], sizeof(title_pitch_offset_seq_02) },
-  { &title_pitch_offset_seq_03[0], sizeof(title_pitch_offset_seq_03) },
-  { &title_pitch_offset_seq_04[0], sizeof(title_pitch_offset_seq_04) },
-  { &title_pitch_offset_seq_05[0], sizeof(title_pitch_offset_seq_05) },
-  { &title_pitch_offset_seq_06[0], sizeof(title_pitch_offset_seq_06) },
-  { &title_pitch_offset_seq_07[0], sizeof(title_pitch_offset_seq_07) },
-  { &title_pitch_offset_seq_08[0], sizeof(title_pitch_offset_seq_08) },
-  { &title_pitch_offset_seq_09[0], sizeof(title_pitch_offset_seq_09) },
-  { &title_pitch_offset_seq_10[0], sizeof(title_pitch_offset_seq_10) },
-  { &title_pitch_offset_seq_11[0], sizeof(title_pitch_offset_seq_11) },
-  { &title_pitch_offset_seq_12[0], sizeof(title_pitch_offset_seq_12) },
-  { &title_pitch_offset_seq_13[0], sizeof(title_pitch_offset_seq_13) },
-  { &title_pitch_offset_seq_14[0], sizeof(title_pitch_offset_seq_14) },
-  { &title_pitch_offset_seq_15[0], sizeof(title_pitch_offset_seq_15) },
-  { &title_pitch_offset_seq_16[0], sizeof(title_pitch_offset_seq_16) },
-  { &title_pitch_offset_seq_17[0], sizeof(title_pitch_offset_seq_17) },
-  { &title_pitch_offset_seq_18[0], sizeof(title_pitch_offset_seq_18) },
-  { &title_pitch_offset_seq_19[0], sizeof(title_pitch_offset_seq_19) },
-  { &title_pitch_offset_seq_20[0], sizeof(title_pitch_offset_seq_20) },
-  { &title_pitch_offset_seq_21[0], sizeof(title_pitch_offset_seq_21) },
-  { &title_pitch_offset_seq_22[0], sizeof(title_pitch_offset_seq_22) },
-  { &title_pitch_offset_seq_23[0], sizeof(title_pitch_offset_seq_23) },
+  { &title_pitch_offset_seq_00[0] },
+  { &title_pitch_offset_seq_01[0] },
+  { &title_pitch_offset_seq_02[0] },
+  { &title_pitch_offset_seq_03[0] },
+  { &title_pitch_offset_seq_04[0] },
+  { &title_pitch_offset_seq_05[0] },
+  { &title_pitch_offset_seq_06[0] },
+  { &title_pitch_offset_seq_07[0] },
+  { &title_pitch_offset_seq_08[0] },
+  { &title_pitch_offset_seq_09[0] },
+  { &title_pitch_offset_seq_10[0] },
+  { &title_pitch_offset_seq_11[0] },
+  { &title_pitch_offset_seq_12[0] },
+  { &title_pitch_offset_seq_13[0] },
+  { &title_pitch_offset_seq_14[0] },
+  { &title_pitch_offset_seq_15[0] },
+  { &title_pitch_offset_seq_16[0] },
+  { &title_pitch_offset_seq_17[0] },
+  { &title_pitch_offset_seq_18[0] },
+  { &title_pitch_offset_seq_19[0] },
+  { &title_pitch_offset_seq_20[0] },
+  { &title_pitch_offset_seq_21[0] },
+  { &title_pitch_offset_seq_22[0] },
+  { &title_pitch_offset_seq_23[0] },
 };
 
+// $F123
 static const struct {
   const u8 *base;
-  u16       len;
   u8        speed;
 } envelope_shape_table[16] = {
-  { &title_envelope_shape_00[0], sizeof(title_envelope_shape_00), 1 },
-  { &title_envelope_shape_01[0], sizeof(title_envelope_shape_01), 2 },
-  { &title_envelope_shape_02[0], sizeof(title_envelope_shape_02), 2 },
-  { &title_envelope_shape_03[0], sizeof(title_envelope_shape_03), 4 },
-  { &title_envelope_shape_04[0], sizeof(title_envelope_shape_04), 4 },
-  { &title_envelope_shape_05[0], sizeof(title_envelope_shape_05), 0 },
-  { &title_envelope_shape_06[0], sizeof(title_envelope_shape_06), 2 },
-  { &title_envelope_shape_07[0], sizeof(title_envelope_shape_07), 6 },
-  { &title_envelope_shape_08[0], sizeof(title_envelope_shape_08), 0 },
-  { &title_envelope_shape_09[0], sizeof(title_envelope_shape_09), 1 },
-  { &title_envelope_shape_10[0], sizeof(title_envelope_shape_10), 2 },
-  { &title_envelope_shape_11[0], sizeof(title_envelope_shape_11), 0 },
-  { &title_envelope_shape_12[0], sizeof(title_envelope_shape_12), 0 },
-  { &title_envelope_shape_13[0], sizeof(title_envelope_shape_13), 0 },
-  { &title_envelope_shape_14[0], sizeof(title_envelope_shape_14), 0 },
-  { &title_envelope_shape_15[0], sizeof(title_envelope_shape_15), 0 },
+  { &title_envelope_shape_00[0], 1 },
+  { &title_envelope_shape_01[0], 2 },
+  { &title_envelope_shape_02[0], 2 },
+  { &title_envelope_shape_03[0], 4 },
+  { &title_envelope_shape_04[0], 4 },
+  { &title_envelope_shape_05[0], 0 },
+  { &title_envelope_shape_06[0], 2 },
+  { &title_envelope_shape_07[0], 6 },
+  { &title_envelope_shape_08[0], 0 },
+  { &title_envelope_shape_09[0], 1 },
+  { &title_envelope_shape_10[0], 2 },
 };
 
 /* title_tune_channel.status bits (see State.h). */
