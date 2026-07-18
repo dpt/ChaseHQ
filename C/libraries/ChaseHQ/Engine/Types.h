@@ -10,9 +10,9 @@
  * The arcade original was created by Taito Corporation in 1988. It was then
  * ported to the ZX Spectrum by Ocean Software Limited and released in 1989.
  *
- * The original game and design is copyright (c) 1988 Taito Corporation
- * The ZX Spectrum version is copyright (c) 1989 Ocean Software Limited
- * The recreated version is copyright (c) 2023-2026 David Thomas
+ * The original game and design is copyright (c) 1988 Taito Corporation.
+ * The ZX Spectrum version is copyright (c) 1989 Ocean Software Limited.
+ * The recreated version is copyright (c) 2023-2026 David Thomas.
  */
 
 #ifndef CHASEHQ_TYPES_H
